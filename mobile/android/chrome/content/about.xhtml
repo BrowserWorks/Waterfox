@@ -22,7 +22,7 @@
 </head>
 
 <body dir="&locale.dir;">
-  <div id="header">
+  <div id="header" dir="ltr">
     <div id="wordmark"></div>
 #expand <p id="version">__MOZ_APP_VERSION_DISPLAY__</p>
   </div>
@@ -59,19 +59,21 @@
       <li><a id="supportURL">&aboutPage.support.label;</a></li>
       <li><a id="privacyURL">&aboutPage.privacyPolicy.label;</a></li>
       <li><a href="about:rights">&aboutPage.rights.label;</a></li>
+#ifndef NIGHTLY_BUILD
       <li><a id="releaseNotesURL">&aboutPage.relNotes.label;</a></li>
+#endif
       <li><a id="creditsURL">&aboutPage.credits.label;</a></li>
       <li><a href="about:license">&aboutPage.license.label;</a></li>
       <div class="bottom-border"></div>
     </ul>
 
-#ifdef RELEASE_BUILD
+#ifdef RELEASE_OR_BETA
     <div id="aboutDetails">
       <p>&aboutPage.logoTrademark;</p>
     </div>
 #endif
 
-    <script type="application/javascript;version=1.8" src="chrome://browser/content/about.js" />
+    <script type="application/javascript" src="chrome://browser/content/about.js" />
 
 </body>
 </html>

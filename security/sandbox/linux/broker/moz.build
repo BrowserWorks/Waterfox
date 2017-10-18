@@ -14,15 +14,14 @@ SOURCES += [
     'SandboxBroker.cpp',
     'SandboxBrokerCommon.cpp',
     'SandboxBrokerPolicyFactory.cpp',
+    'SandboxBrokerRealpath.cpp',
 ]
 
-if CONFIG['OS_TARGET'] == 'Android':
-    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-        DEFINES['HAVE_ANDROID_OS'] = True
+if CONFIG['MOZ_ALSA']:
+    DEFINES['MOZ_ALSA'] = True
 
 LOCAL_INCLUDES += [
-    '/security/sandbox/linux', # SandboxLogging.h
-    '/security/sandbox/linux/common', # SandboxInfo.h
+    '/security/sandbox/linux', # SandboxLogging.h, SandboxInfo.h
 ]
 
 # Need this for mozilla::ipc::FileDescriptor etc.
@@ -34,5 +33,7 @@ LOCAL_INCLUDES += [
     '/security/sandbox/chromium',
 ]
 
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+    CXXFLAGS += CONFIG['GLIB_CFLAGS']
 
 FINAL_LIBRARY = 'xul'

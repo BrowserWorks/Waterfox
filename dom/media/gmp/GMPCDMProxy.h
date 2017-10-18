@@ -12,7 +12,9 @@
 #include "GMPDecryptorProxy.h"
 
 namespace mozilla {
+
 class MediaRawData;
+class DecryptJob;
 
 // Implementation of CDMProxy which is based on GMP architecture.
 class GMPCDMProxy : public CDMProxy {
@@ -20,19 +22,19 @@ public:
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPCDMProxy, override)
 
-  typedef MozPromise<DecryptResult, DecryptResult, /* IsExclusive = */ true> DecryptPromise;
-
   GMPCDMProxy(dom::MediaKeys* aKeys,
               const nsAString& aKeySystem,
               GMPCrashHelper* aCrashHelper,
               bool aDistinctiveIdentifierRequired,
-              bool aPersistentStateRequired);
+              bool aPersistentStateRequired,
+              nsIEventTarget* aMainThread);
 
   void Init(PromiseId aPromiseId,
             const nsAString& aOrigin,
             const nsAString& aTopLevelOrigin,
-            const nsAString& aGMPName,
-            bool aInPrivateBrowsing) override;
+            const nsAString& aGMPName) override;
+
+  void OnSetDecryptorId(uint32_t aId) override;
 
   void CreateSession(uint32_t aCreateSessionToken,
                      dom::MediaKeySessionType aSessionType,
@@ -41,6 +43,7 @@ public:
                      nsTArray<uint8_t>& aInitData) override;
 
   void LoadSession(PromiseId aPromiseId,
+                   dom::MediaKeySessionType aSessionType,
                    const nsAString& aSessionId) override;
 
   void SetServerCertificate(PromiseId aPromiseId,
@@ -109,6 +112,8 @@ public:
   bool IsOnOwnerThread() override;
 #endif
 
+  uint32_t GetDecryptorId() override;
+
 private:
   friend class gmp_InitDoneCallback;
   friend class gmp_InitGetGMPDecryptorCallback;
@@ -119,15 +124,14 @@ private:
     nsString mTopLevelOrigin;
     nsString mGMPName;
     RefPtr<GMPCrashHelper> mCrashHelper;
-    bool mInPrivateBrowsing;
   };
 
   // GMP thread only.
-  void gmp_Init(nsAutoPtr<InitData>&& aData);
-  void gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData);
+  void gmp_Init(UniquePtr<InitData>&& aData);
+  void gmp_InitDone(GMPDecryptorProxy* aCDM, UniquePtr<InitData>&& aData);
   void gmp_InitGetGMPDecryptor(nsresult aResult,
                                const nsACString& aNodeId,
-                               nsAutoPtr<InitData>&& aData);
+                               UniquePtr<InitData>&& aData);
 
   // GMP thread only.
   void gmp_Shutdown();
@@ -143,21 +147,21 @@ private:
     nsTArray<uint8_t> mInitData;
   };
   // GMP thread only.
-  void gmp_CreateSession(nsAutoPtr<CreateSessionData> aData);
+  void gmp_CreateSession(UniquePtr<CreateSessionData>&& aData);
 
   struct SessionOpData {
     PromiseId mPromiseId;
     nsCString mSessionId;
   };
   // GMP thread only.
-  void gmp_LoadSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_LoadSession(UniquePtr<SessionOpData>&& aData);
 
   struct SetServerCertificateData {
     PromiseId mPromiseId;
     nsTArray<uint8_t> mCert;
   };
   // GMP thread only.
-  void gmp_SetServerCertificate(nsAutoPtr<SetServerCertificateData> aData);
+  void gmp_SetServerCertificate(UniquePtr<SetServerCertificateData>&& aData);
 
   struct UpdateSessionData {
     PromiseId mPromiseId;
@@ -165,38 +169,14 @@ private:
     nsTArray<uint8_t> mResponse;
   };
   // GMP thread only.
-  void gmp_UpdateSession(nsAutoPtr<UpdateSessionData> aData);
+  void gmp_UpdateSession(UniquePtr<UpdateSessionData>&& aData);
 
   // GMP thread only.
-  void gmp_CloseSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_CloseSession(UniquePtr<SessionOpData>&& aData);
 
   // GMP thread only.
-  void gmp_RemoveSession(nsAutoPtr<SessionOpData> aData);
+  void gmp_RemoveSession(UniquePtr<SessionOpData>&& aData);
 
-  class DecryptJob {
-  public:
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DecryptJob)
-
-    explicit DecryptJob(MediaRawData* aSample)
-      : mId(0)
-      , mSample(aSample)
-    {
-    }
-
-    void PostResult(DecryptStatus aResult,
-                    const nsTArray<uint8_t>& aDecryptedData);
-    void PostResult(DecryptStatus aResult);
-
-    RefPtr<DecryptPromise> Ensure() {
-      return mPromise.Ensure(__func__);
-    }
-
-    uint32_t mId;
-    RefPtr<MediaRawData> mSample;
-  private:
-    ~DecryptJob() {}
-    MozPromiseHolder<DecryptPromise> mPromise;
-  };
   // GMP thread only.
   void gmp_Decrypt(RefPtr<DecryptJob> aJob);
 
@@ -211,13 +191,14 @@ private:
                       PromiseId aId,
                       nsresult aCode,
                       const nsCString& aReason)
-      : mProxy(aProxy)
+      : Runnable("GMPCDMProxy::RejectPromiseTask")
+      , mProxy(aProxy)
       , mId(aId)
       , mCode(aCode)
       , mReason(aReason)
     {
     }
-    NS_METHOD Run() {
+    NS_IMETHOD Run() override {
       mProxy->RejectPromise(mId, mCode, mReason);
       return NS_OK;
     }
@@ -234,24 +215,19 @@ private:
 
   GMPDecryptorProxy* mCDM;
 
-  CDMCaps mCapabilites;
-
-  nsAutoPtr<GMPCDMCallbackProxy> mCallback;
+  UniquePtr<GMPCDMCallbackProxy> mCallback;
 
   // Decryption jobs sent to CDM, awaiting result.
   // GMP thread only.
   nsTArray<RefPtr<DecryptJob>> mDecryptionJobs;
 
-  // Number of buffers we've decrypted. Used to uniquely identify
-  // decryption jobs sent to CDM. Note we can't just use the length of
-  // mDecryptionJobs as that shrinks as jobs are completed and removed
-  // from it.
-  // GMP thread only.
-  uint32_t mDecryptionJobCount;
-
   // True if GMPCDMProxy::gmp_Shutdown was called.
   // GMP thread only.
   bool mShutdownCalled;
+
+  uint32_t mDecryptorId;
+
+  PromiseId mCreatePromiseId;
 };
 
 

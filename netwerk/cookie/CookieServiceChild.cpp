@@ -4,13 +4,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/net/CookieServiceChild.h"
+#include "mozilla/LoadInfo.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/net/NeckoChild.h"
+#include "nsIChannel.h"
 #include "nsIURI.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsServiceManagerUtils.h"
-#include "SerializedLoadContext.h"
 
 using namespace mozilla::ipc;
 
@@ -42,8 +45,15 @@ NS_IMPL_ISUPPORTS(CookieServiceChild,
 CookieServiceChild::CookieServiceChild()
   : mCookieBehavior(nsICookieService::BEHAVIOR_ACCEPT)
   , mThirdPartySession(false)
+  , mIPCOpen(false)
 {
   NS_ASSERTION(IsNeckoChild(), "not a child process");
+
+  mozilla::dom::ContentChild* cc =
+    static_cast<mozilla::dom::ContentChild*>(gNeckoChild->Manager());
+  if (cc->IsShuttingDown()) {
+    return;
+  }
 
   // This corresponds to Release() in DeallocPCookieService.
   NS_ADDREF_THIS();
@@ -52,10 +62,12 @@ CookieServiceChild::CookieServiceChild()
   NeckoChild::InitNeckoChild();
   gNeckoChild->SendPCookieServiceConstructor(this);
 
+  mIPCOpen = true;
+
   // Init our prefs and observer.
   nsCOMPtr<nsIPrefBranch> prefBranch =
     do_GetService(NS_PREFSERVICE_CONTRACTID);
-  NS_WARN_IF_FALSE(prefBranch, "no prefservice");
+  NS_WARNING_ASSERTION(prefBranch, "no prefservice");
   if (prefBranch) {
     prefBranch->AddObserver(kPrefCookieBehavior, this, true);
     prefBranch->AddObserver(kPrefThirdPartySession, this, true);
@@ -66,6 +78,12 @@ CookieServiceChild::CookieServiceChild()
 CookieServiceChild::~CookieServiceChild()
 {
   gCookieService = nullptr;
+}
+
+void
+CookieServiceChild::ActorDestroy(ActorDestroyReason why)
+{
+  mIPCOpen = false;
 }
 
 void
@@ -99,8 +117,7 @@ CookieServiceChild::RequireThirdPartyCheck()
 nsresult
 CookieServiceChild::GetCookieStringInternal(nsIURI *aHostURI,
                                             nsIChannel *aChannel,
-                                            char **aCookieString,
-                                            bool aFromHttp)
+                                            char **aCookieString)
 {
   NS_ENSURE_ARG(aHostURI);
   NS_ENSURE_ARG_POINTER(aCookieString);
@@ -122,10 +139,20 @@ CookieServiceChild::GetCookieStringInternal(nsIURI *aHostURI,
   URIParams uriParams;
   SerializeURI(aHostURI, uriParams);
 
+  mozilla::OriginAttributes attrs;
+  if (aChannel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+    if (loadInfo) {
+      attrs = loadInfo->GetOriginAttributes();
+    }
+  }
+
   // Synchronously call the parent.
+  if (!mIPCOpen) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
   nsAutoCString result;
-  SendGetCookieString(uriParams, !!isForeign, aFromHttp,
-                      IPC::SerializedLoadContext(aChannel), &result);
+  SendGetCookieString(uriParams, !!isForeign, attrs, &result);
   if (!result.IsEmpty())
     *aCookieString = ToNewCString(result);
 
@@ -162,9 +189,19 @@ CookieServiceChild::SetCookieStringInternal(nsIURI *aHostURI,
   URIParams uriParams;
   SerializeURI(aHostURI, uriParams);
 
+  mozilla::OriginAttributes attrs;
+  if (aChannel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+    if (loadInfo) {
+      attrs = loadInfo->GetOriginAttributes();
+    }
+  }
+
   // Synchronously call the parent.
-  SendSetCookieString(uriParams, !!isForeign, cookieString, serverTime,
-                      aFromHttp, IPC::SerializedLoadContext(aChannel));
+  if (mIPCOpen) {
+    SendSetCookieString(uriParams, !!isForeign, cookieString, serverTime,
+                        attrs, aFromHttp);
+  }
   return NS_OK;
 }
 
@@ -187,7 +224,7 @@ CookieServiceChild::GetCookieString(nsIURI *aHostURI,
                                     nsIChannel *aChannel,
                                     char **aCookieString)
 {
-  return GetCookieStringInternal(aHostURI, aChannel, aCookieString, false);
+  return GetCookieStringInternal(aHostURI, aChannel, aCookieString);
 }
 
 NS_IMETHODIMP
@@ -196,7 +233,7 @@ CookieServiceChild::GetCookieStringFromHttp(nsIURI *aHostURI,
                                             nsIChannel *aChannel,
                                             char **aCookieString)
 {
-  return GetCookieStringInternal(aHostURI, aChannel, aCookieString, true);
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
@@ -215,10 +252,16 @@ CookieServiceChild::SetCookieStringFromHttp(nsIURI     *aHostURI,
                                             nsIPrompt  *aPrompt,
                                             const char *aCookieString,
                                             const char *aServerTime,
-                                            nsIChannel *aChannel) 
+                                            nsIChannel *aChannel)
 {
   return SetCookieStringInternal(aHostURI, aChannel, aCookieString,
                                  aServerTime, true);
+}
+
+NS_IMETHODIMP
+CookieServiceChild::RunInTransaction(nsICookieTransactionCallback* aCallback)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 } // namespace net

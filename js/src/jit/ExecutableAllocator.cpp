@@ -30,14 +30,7 @@
 #include "jit/JitCompartment.h"
 #include "js/MemoryMetrics.h"
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-#endif
-
 using namespace js::jit;
-
-size_t ExecutableAllocator::pageSize = 0;
-size_t ExecutableAllocator::largeAllocSize = 0;
 
 ExecutablePool::~ExecutablePool()
 {
@@ -158,11 +151,11 @@ ExecutableAllocator::poolForSize(size_t n)
     }
 
     // If the request is large, we just provide a unshared allocator
-    if (n > largeAllocSize)
+    if (n > ExecutableCodePageSize)
         return createPool(n);
 
     // Create a new allocator
-    ExecutablePool* pool = createPool(largeAllocSize);
+    ExecutablePool* pool = createPool(ExecutableCodePageSize);
     if (!pool)
         return nullptr;
     // At this point, local |pool| is the owner.
@@ -197,12 +190,6 @@ ExecutableAllocator::poolForSize(size_t n)
 /* static */ size_t
 ExecutableAllocator::roundUpAllocationSize(size_t request, size_t granularity)
 {
-    // Something included via windows.h defines a macro with this name,
-    // which causes the function below to fail to compile.
-#ifdef _MSC_VER
-# undef max
-#endif
-
     if ((std::numeric_limits<size_t>::max() - granularity) <= request)
         return OVERSIZE_ALLOCATION;
 
@@ -218,7 +205,7 @@ ExecutableAllocator::createPool(size_t n)
 {
     MOZ_ASSERT(rt_->jitRuntime()->preventBackedgePatching());
 
-    size_t allocSize = roundUpAllocationSize(n, pageSize);
+    size_t allocSize = roundUpAllocationSize(n, ExecutableCodePageSize);
     if (allocSize == OVERSIZE_ALLOCATION)
         return nullptr;
 
@@ -236,8 +223,8 @@ ExecutableAllocator::createPool(size_t n)
     }
 
     if (!m_pools.put(pool)) {
+        // Note: this will call |systemRelease(a)|.
         js_delete(pool);
-        systemRelease(a);
         return nullptr;
     }
 
@@ -245,7 +232,7 @@ ExecutableAllocator::createPool(size_t n)
 }
 
 void*
-ExecutableAllocator::alloc(size_t n, ExecutablePool** poolp, CodeKind type)
+ExecutableAllocator::alloc(JSContext* cx, size_t n, ExecutablePool** poolp, CodeKind type)
 {
     // Don't race with reprotectAll called from the signal handler.
     JitRuntime::AutoPreventBackedgePatching apbp(rt_);
@@ -268,6 +255,9 @@ ExecutableAllocator::alloc(size_t n, ExecutablePool** poolp, CodeKind type)
     // (found, or created if necessary) a pool that had enough space.
     void* result = (*poolp)->alloc(n, type);
     MOZ_ASSERT(result);
+
+    cx->zone()->updateJitCodeMallocBytes(n);
+
     return result;
 }
 
@@ -298,28 +288,6 @@ ExecutableAllocator::purge()
     m_smallPools.clear();
 }
 
-/* static */ void
-ExecutableAllocator::initStatic()
-{
-    if (!pageSize) {
-        pageSize = determinePageSize();
-        // On Windows, VirtualAlloc effectively allocates in 64K chunks.
-        // (Technically, it allocates in page chunks, but the starting
-        // address is always a multiple of 64K, so each allocation uses up
-        // 64K of address space.)  So a size less than that would be
-        // pointless.  But it turns out that 64KB is a reasonable size for
-        // all platforms.  (This assumes 4KB pages.) On 64-bit windows,
-        // AllocateExecutableMemory prepends an extra page for structured
-        // exception handling data (see comments in function) onto whatever
-        // is passed in, so subtract one page here.
-#if defined(JS_CPU_X64) && defined(XP_WIN)
-        largeAllocSize = pageSize * 15;
-#else
-        largeAllocSize = pageSize * 16;
-#endif
-    }
-}
-
 void
 ExecutableAllocator::addSizeOfCode(JS::CodeSizes* sizes) const
 {
@@ -341,26 +309,23 @@ ExecutableAllocator::addSizeOfCode(JS::CodeSizes* sizes) const
 void
 ExecutableAllocator::reprotectAll(ProtectionSetting protection)
 {
-#ifdef NON_WRITABLE_JIT_CODE
     if (!m_pools.initialized())
         return;
 
     for (ExecPoolHashSet::Range r = m_pools.all(); !r.empty(); r.popFront())
         reprotectPool(rt_, r.front(), protection);
-#endif
 }
 
 /* static */ void
 ExecutableAllocator::reprotectPool(JSRuntime* rt, ExecutablePool* pool, ProtectionSetting protection)
 {
-#ifdef NON_WRITABLE_JIT_CODE
     // Don't race with reprotectAll called from the signal handler.
-    MOZ_ASSERT(rt->jitRuntime()->preventBackedgePatching() || rt->handlingJitInterrupt());
+    MOZ_ASSERT(rt->jitRuntime()->preventBackedgePatching() ||
+               rt->activeContext()->handlingJitInterrupt());
 
     char* start = pool->m_allocation.pages;
-    if (!reprotectRegion(start, pool->m_freePtr - start, protection))
+    if (!ReprotectRegion(start, pool->m_freePtr - start, protection))
         MOZ_CRASH();
-#endif
 }
 
 /* static */ void
@@ -390,7 +355,7 @@ ExecutableAllocator::poisonCode(JSRuntime* rt, JitPoisonRangeVector& ranges)
         // Use the pool's mark bit to indicate we made the pool writable.
         // This avoids reprotecting a pool multiple times.
         if (!pool->isMarked()) {
-            reprotectPool(rt, pool, Writable);
+            reprotectPool(rt, pool, ProtectionSetting::Writable);
             pool->mark();
         }
 
@@ -401,9 +366,23 @@ ExecutableAllocator::poisonCode(JSRuntime* rt, JitPoisonRangeVector& ranges)
     for (size_t i = 0; i < ranges.length(); i++) {
         ExecutablePool* pool = ranges[i].pool;
         if (pool->isMarked()) {
-            reprotectPool(rt, pool, Executable);
+            reprotectPool(rt, pool, ProtectionSetting::Executable);
             pool->unmark();
         }
         pool->release();
     }
+}
+
+ExecutablePool::Allocation
+ExecutableAllocator::systemAlloc(size_t n)
+{
+    void* allocation = AllocateExecutableMemory(n, ProtectionSetting::Executable);
+    ExecutablePool::Allocation alloc = { reinterpret_cast<char*>(allocation), n };
+    return alloc;
+}
+
+void
+ExecutableAllocator::systemRelease(const ExecutablePool::Allocation& alloc)
+{
+    DeallocateExecutableMemory(alloc.pages, alloc.size);
 }

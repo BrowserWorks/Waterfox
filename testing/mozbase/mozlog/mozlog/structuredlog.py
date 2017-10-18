@@ -11,7 +11,7 @@ import sys
 import time
 import traceback
 
-from logtypes import Unicode, TestId, Status, SubStatus, Dict, List, Int, Any
+from logtypes import Unicode, TestId, TestList, Status, SubStatus, Dict, List, Int, Any, Tuple
 from logtypes import log_action, convertor_registry
 
 """Structured Logging for recording test results.
@@ -46,6 +46,11 @@ Allowed actions, and subfields:
       command - Command line of the process
       data - Output data from the process
 
+  assertion_count
+      count - Number of assertions produced
+      min_expected - Minimum expected number of assertions
+      max_expected - Maximum expected number of assertions
+
   log
       level [CRITICAL | ERROR | WARNING |
              INFO | DEBUG] - level of the logging message
@@ -62,6 +67,7 @@ Subfields for all messages:
 
 _default_logger_name = None
 
+
 def get_default_logger(component=None):
     """Gets the default logger if available, optionally tagged with component
     name. Will return None if not yet set
@@ -74,6 +80,7 @@ def get_default_logger(component=None):
         return None
 
     return StructuredLogger(_default_logger_name, component=component)
+
 
 def set_default_logger(default_logger):
     """Sets the default logger to logger.
@@ -90,23 +97,35 @@ def set_default_logger(default_logger):
 
     _default_logger_name = default_logger.name
 
+
 log_levels = dict((k.upper(), v) for v, k in
                   enumerate(["critical", "error", "warning", "info", "debug"]))
+
+lint_levels = ["ERROR", "WARNING"]
+
 
 def log_actions():
     """Returns the set of actions implemented by mozlog."""
     return set(convertor_registry.keys())
 
+
 class LoggerState(object):
+
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.handlers = []
         self.running_tests = set()
         self.suite_started = False
         self.component_states = {}
 
+
 class ComponentState(object):
+
     def __init__(self):
         self.filter_ = None
+
 
 class StructuredLogger(object):
     _lock = Lock()
@@ -138,6 +157,13 @@ class StructuredLogger(object):
     def remove_handler(self, handler):
         """Remove a handler from the current logger"""
         self._state.handlers.remove(handler)
+
+    def reset_state(self):
+        """Resets the logger to a brand new state. This means all handlers
+        are removed, running tests are discarded and components are reset.
+        """
+        self._state.reset()
+        self._component_state = self._state.component_states[self.component] = ComponentState()
 
     def send_message(self, topic, command, *args):
         """Send a message to each handler configured for this logger. This
@@ -184,7 +210,7 @@ class StructuredLogger(object):
         if action in ("test_status", "test_end"):
             if (data["expected"] == data["status"] or
                 data["status"] == "SKIP" or
-                "expected" not in raw_data):
+                    "expected" not in raw_data):
                 del data["expected"]
 
         if not self._ensure_suite_state(action, data):
@@ -229,8 +255,9 @@ class StructuredLogger(object):
     def _ensure_suite_state(self, action, data):
         if action == 'suite_start':
             if self._state.suite_started:
+                # limit data to reduce unnecessary log bloat
                 self.error("Got second suite_start message before suite_end. " +
-                           "Logged with data: {}".format(json.dumps(data)))
+                           "Logged with data: {}".format(json.dumps(data)[:100]))
                 return False
             self._state.suite_started = True
         elif action == 'suite_end':
@@ -241,17 +268,18 @@ class StructuredLogger(object):
             self._state.suite_started = False
         return True
 
-    @log_action(List("tests", Unicode),
-                Dict("run_info", default=None, optional=True),
-                Dict("version_info", default=None, optional=True),
-                Dict("device_info", default=None, optional=True),
-                Dict("extra", default=None, optional=True))
+    @log_action(TestList("tests"),
+                Dict(Any, "run_info", default=None, optional=True),
+                Dict(Any, "version_info", default=None, optional=True),
+                Dict(Any, "device_info", default=None, optional=True),
+                Dict(Any, "extra", default=None, optional=True))
     def suite_start(self, data):
         """Log a suite_start message
 
-        :param list tests: Test identifiers that will be run in the suite.
+        :param dict tests: Test identifiers that will be run in the suite, keyed by group name.
         :param dict run_info: Optional information typically provided by mozinfo.
-        :param dict version_info: Optional target application version information provided by mozversion.
+        :param dict version_info: Optional target application version information provided
+          by mozversion.
         :param dict device_info: Optional target device information provided by mozdevice.
         """
         if not self._ensure_suite_state('suite_start', data):
@@ -259,7 +287,7 @@ class StructuredLogger(object):
 
         self._log_data("suite_start", data)
 
-    @log_action(Dict("extra", default=None, optional=True))
+    @log_action(Dict(Any, "extra", default=None, optional=True))
     def suite_end(self, data):
         """Log a suite_end message"""
         if not self._ensure_suite_state('suite_end', data):
@@ -293,7 +321,7 @@ class StructuredLogger(object):
                 SubStatus("expected", default="PASS"),
                 Unicode("message", default=None, optional=True),
                 Unicode("stack", default=None, optional=True),
-                Dict("extra", default=None, optional=True))
+                Dict(Any, "extra", default=None, optional=True))
     def test_status(self, data):
         """
         Log a test_status message indicating a subtest result. Tests that
@@ -309,7 +337,7 @@ class StructuredLogger(object):
         """
 
         if (data["expected"] == data["status"] or
-            data["status"] == "SKIP"):
+                data["status"] == "SKIP"):
             del data["expected"]
 
         if data["test"] not in self._state.running_tests:
@@ -324,7 +352,7 @@ class StructuredLogger(object):
                 Status("expected", default="OK"),
                 Unicode("message", default=None, optional=True),
                 Unicode("stack", default=None, optional=True),
-                Dict("extra", default=None, optional=True))
+                Dict(Any, "extra", default=None, optional=True))
     def test_end(self, data):
         """
         Log a test_end message indicating that a test completed. For tests
@@ -341,7 +369,7 @@ class StructuredLogger(object):
         """
 
         if (data["expected"] == data["status"] or
-             data["status"] == "SKIP"):
+                data["status"] == "SKIP"):
             del data["expected"]
 
         if data["test"] not in self._state.running_tests:
@@ -373,7 +401,7 @@ class StructuredLogger(object):
                 Int("stackwalk_retcode", default=None, optional=True),
                 Unicode("stackwalk_stdout", default=None, optional=True),
                 Unicode("stackwalk_stderr", default=None, optional=True),
-                List("stackwalk_errors", Unicode, default=None))
+                List(Unicode, "stackwalk_errors", default=None))
     def crash(self, data):
         if data["stackwalk_errors"] is None:
             data["stackwalk_errors"] = []
@@ -381,7 +409,7 @@ class StructuredLogger(object):
         self._log_data("crash", data)
 
     @log_action(Unicode("primary", default=None),
-                List("secondary", Unicode, default=None))
+                List(Unicode, "secondary", default=None))
     def valgrind_error(self, data):
         self._log_data("valgrind_error", data)
 
@@ -411,6 +439,19 @@ class StructuredLogger(object):
         """
         self._log_data("process_exit", data)
 
+    @log_action(TestId("test"),
+                Int("count"),
+                Int("min_expected"),
+                Int("max_expected"))
+    def assertion_count(self, data):
+        """Log count of assertions produced when running a test.
+
+        :param count: - Number of assertions produced
+        :param min_expected: - Minimum expected number of assertions
+        :param max_expected: - Maximum expected number of assertions
+        """
+        self._log_data("assertion_count", data)
+
 
 def _log_func(level_name):
     @log_action(Unicode("message"),
@@ -439,9 +480,44 @@ def _log_func(level_name):
     return log
 
 
-# Create all the methods on StructuredLog for debug levels
+def _lint_func(level_name):
+    @log_action(Unicode("path"),
+                Unicode("message", default=""),
+                Int("lineno", default=0),
+                Int("column", default=None, optional=True),
+                Unicode("hint", default=None, optional=True),
+                Unicode("source", default=None, optional=True),
+                Unicode("rule", default=None, optional=True),
+                Tuple((Int, Int), "lineoffset", default=None, optional=True),
+                Unicode("linter", default=None, optional=True))
+    def lint(self, data):
+        data["level"] = level_name
+        self._log_data("lint", data)
+    lint.__doc__ = """Log an error resulting from a failed lint check
+
+        :param linter: name of the linter that flagged this error
+        :param path: path to the file containing the error
+        :param message: text describing the error
+        :param lineno: line number that contains the error
+        :param column: column containing the error
+        :param hint: suggestion for fixing the error (optional)
+        :param source: source code context of the error (optional)
+        :param rule: name of the rule that was violated (optional)
+        :param lineoffset: denotes an error spans multiple lines, of the form
+                           (<lineno offset>, <num lines>) (optional)
+        """
+    lint.__name__ = str("lint_%s" % level_name)
+    return lint
+
+
+# Create all the methods on StructuredLog for log/lint levels
 for level_name in log_levels:
     setattr(StructuredLogger, level_name.lower(), _log_func(level_name))
+
+for level_name in lint_levels:
+    level_name = level_name.lower()
+    name = "lint_%s" % level_name
+    setattr(StructuredLogger, name, _lint_func(level_name))
 
 
 class StructuredLogFileLike(object):
@@ -456,6 +532,7 @@ class StructuredLogFileLike(object):
     :param level: log level to use for each write.
     :param prefix: String prefix to prepend to each log entry.
     """
+
     def __init__(self, logger, level="info", prefix=None):
         self.logger = logger
         self.log_func = getattr(self.logger, level)
@@ -472,4 +549,3 @@ class StructuredLogFileLike(object):
 
     def flush(self):
         pass
-

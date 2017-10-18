@@ -5,17 +5,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MediaBufferDecoder.h"
-#include "BufferDecoder.h"
 #include "mozilla/dom/AudioContextBinding.h"
+#include "mozilla/dom/BaseAudioContextBinding.h"
+#include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/AbstractThread.h"
 #include <speex/speex_resampler.h>
 #include "nsXPCOMCIDInternal.h"
 #include "nsComponentManagerUtils.h"
-#include "MediaDecoderReader.h"
+#include "MediaFormatReader.h"
+#include "MediaQueue.h"
 #include "BufferMediaResource.h"
 #include "DecoderTraits.h"
 #include "AudioContext.h"
 #include "AudioBuffer.h"
+#include "MediaContainerType.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIScriptError.h"
@@ -25,33 +29,10 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/Telemetry.h"
 #include "nsPrintfCString.h"
-#include "GMPService.h"
 
 namespace mozilla {
 
 extern LazyLogModule gMediaDecoderLog;
-
-NS_IMPL_CYCLE_COLLECTION_CLASS(WebAudioDecodeJob)
-
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(WebAudioDecodeJob)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mContext)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mOutput)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSuccessCallback)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mFailureCallback)
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
-
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(WebAudioDecodeJob)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContext)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOutput)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSuccessCallback)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFailureCallback)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(WebAudioDecodeJob)
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebAudioDecodeJob, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebAudioDecodeJob, Release)
 
 using namespace dom;
 
@@ -61,14 +42,15 @@ public:
   ReportResultTask(WebAudioDecodeJob& aDecodeJob,
                    WebAudioDecodeJob::ResultFn aFunction,
                    WebAudioDecodeJob::ErrorCode aErrorCode)
-    : mDecodeJob(aDecodeJob)
+    : Runnable("ReportResultTask")
+    , mDecodeJob(aDecodeJob)
     , mFunction(aFunction)
     , mErrorCode(aErrorCode)
   {
     MOZ_ASSERT(aFunction);
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -97,10 +79,12 @@ enum class PhaseEnum : int
 class MediaDecodeTask final : public Runnable
 {
 public:
-  MediaDecodeTask(const char* aContentType, uint8_t* aBuffer,
+  MediaDecodeTask(const MediaContainerType& aContainerType,
+                  uint8_t* aBuffer,
                   uint32_t aLength,
                   WebAudioDecodeJob& aDecodeJob)
-    : mContentType(aContentType)
+    : Runnable("MediaDecodeTask")
+    , mContainerType(aContainerType)
     , mBuffer(aBuffer)
     , mLength(aLength)
     , mDecodeJob(aDecodeJob)
@@ -113,7 +97,11 @@ public:
 
   NS_IMETHOD Run();
   bool CreateReader();
-  MediaDecoderReader* Reader() { MOZ_ASSERT(mDecoderReader); return mDecoderReader; }
+  MediaFormatReader* Reader()
+  {
+    MOZ_ASSERT(mDecoderReader);
+    return mDecoderReader;
+  }
 
 private:
   void ReportFailureOnMainThread(WebAudioDecodeJob::ErrorCode aErrorCode) {
@@ -122,20 +110,21 @@ private:
       mDecodeJob.OnFailure(aErrorCode);
     } else {
       // Take extra care to cleanup on the main thread
-      NS_DispatchToMainThread(NewRunnableMethod(this, &MediaDecodeTask::Cleanup));
+      mMainThread->Dispatch(NewRunnableMethod(
+        "MediaDecodeTask::Cleanup", this, &MediaDecodeTask::Cleanup));
 
       nsCOMPtr<nsIRunnable> event =
         new ReportResultTask(mDecodeJob, &WebAudioDecodeJob::OnFailure, aErrorCode);
-      NS_DispatchToMainThread(event);
+      mMainThread->Dispatch(event.forget());
     }
   }
 
   void Decode();
-  void OnMetadataRead(MetadataHolder* aMetadata);
-  void OnMetadataNotRead(ReadMetadataFailureReason aReason);
+  void OnMetadataRead(MetadataHolder&& aMetadata);
+  void OnMetadataNotRead(const MediaResult& aError);
   void RequestSample();
-  void SampleDecoded(MediaData* aData);
-  void SampleNotDecoded(MediaDecoderReader::NotDecodedReason aReason);
+  void SampleDecoded(RefPtr<AudioData> aData);
+  void SampleNotDecoded(const MediaResult& aError);
   void FinishDecode();
   void AllocateBuffer();
   void CallbackTheResult();
@@ -143,30 +132,26 @@ private:
   void Cleanup()
   {
     MOZ_ASSERT(NS_IsMainThread());
-    // MediaDecoderReader expects that BufferDecoder is alive.
-    // Destruct MediaDecoderReader first.
     mDecoderReader = nullptr;
-    mBufferDecoder = nullptr;
     JS_free(nullptr, mBuffer);
   }
 
 private:
-  nsCString mContentType;
+  MediaContainerType mContainerType;
   uint8_t* mBuffer;
   uint32_t mLength;
   WebAudioDecodeJob& mDecodeJob;
   PhaseEnum mPhase;
-  RefPtr<BufferDecoder> mBufferDecoder;
-  RefPtr<MediaDecoderReader> mDecoderReader;
+  RefPtr<MediaFormatReader> mDecoderReader;
   MediaInfo mMediaInfo;
-  MediaQueue<MediaData> mAudioQueue;
+  MediaQueue<AudioData> mAudioQueue;
+  RefPtr<AbstractThread> mMainThread;
   bool mFirstFrameDecoded;
 };
 
 NS_IMETHODIMP
 MediaDecodeTask::Run()
 {
-  MOZ_ASSERT(mBufferDecoder);
   MOZ_ASSERT(mDecoderReader);
   switch (mPhase) {
   case PhaseEnum::Decode:
@@ -182,48 +167,32 @@ MediaDecodeTask::Run()
   return NS_OK;
 }
 
-class BufferDecoderGMPCrashHelper : public GMPCrashHelper
-{
-public:
-  explicit BufferDecoderGMPCrashHelper(nsPIDOMWindowInner* aParent)
-    : mParent(do_GetWeakReference(aParent))
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-  }
-  already_AddRefed<nsPIDOMWindowInner> GetPluginCrashedEventTarget() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryReferent(mParent);
-    return window.forget();
-  }
-private:
-  nsWeakPtr mParent;
-};
-
 bool
 MediaDecodeTask::CreateReader()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  nsPIDOMWindowInner* parent = mDecodeJob.mContext->GetParentObject();
+  MOZ_ASSERT(parent);
 
   nsCOMPtr<nsIPrincipal> principal;
-  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(mDecodeJob.mContext->GetParentObject());
+  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(parent);
   if (sop) {
     principal = sop->GetPrincipal();
   }
 
   RefPtr<BufferMediaResource> resource =
-    new BufferMediaResource(static_cast<uint8_t*> (mBuffer),
-                            mLength, principal, mContentType);
+    new BufferMediaResource(static_cast<uint8_t*>(mBuffer), mLength, principal);
 
-  MOZ_ASSERT(!mBufferDecoder);
-  mBufferDecoder = new BufferDecoder(resource,
-    new BufferDecoderGMPCrashHelper(mDecodeJob.mContext->GetParentObject()));
+  mMainThread =
+    mDecodeJob.mContext->GetOwnerGlobal()->AbstractMainThreadFor(TaskCategory::Other);
 
   // If you change this list to add support for new decoders, please consider
   // updating HTMLMediaElement::CreateDecoder as well.
 
-  mDecoderReader = DecoderTraits::CreateReader(mContentType, mBufferDecoder);
+  MediaFormatReaderInit init;
+  init.mResource = resource;
+  mDecoderReader = DecoderTraits::CreateReader(mContainerType, init);
 
   if (!mDecoderReader) {
     return false;
@@ -268,12 +237,6 @@ MediaDecodeTask::Decode()
 {
   MOZ_ASSERT(!NS_IsMainThread());
 
-  mBufferDecoder->BeginDecoding(mDecoderReader->OwnerThread());
-
-  // Tell the decoder reader that we are not going to play the data directly,
-  // and that we should not reject files with more channels than the audio
-  // backend support.
-  mDecoderReader->SetIgnoreAudioOutputFormat();
 
   mDecoderReader->AsyncReadMetadata()->Then(mDecoderReader->OwnerThread(), __func__, this,
                                        &MediaDecodeTask::OnMetadataRead,
@@ -281,9 +244,9 @@ MediaDecodeTask::Decode()
 }
 
 void
-MediaDecodeTask::OnMetadataRead(MetadataHolder* aMetadata)
+MediaDecodeTask::OnMetadataRead(MetadataHolder&& aMetadata)
 {
-  mMediaInfo = aMetadata->mInfo;
+  mMediaInfo = *aMetadata.mInfo;
   if (!mMediaInfo.HasAudio()) {
     mDecoderReader->Shutdown();
     ReportFailureOnMainThread(WebAudioDecodeJob::NoAudio);
@@ -294,23 +257,25 @@ MediaDecodeTask::OnMetadataRead(MetadataHolder* aMetadata)
   if (!mMediaInfo.mAudio.GetAsAudioInfo()->mMimeType.IsEmpty()) {
     codec = nsPrintfCString("webaudio; %s", mMediaInfo.mAudio.GetAsAudioInfo()->mMimeType.get());
   } else {
-    codec = nsPrintfCString("webaudio;resource; %s", mContentType.get());
+    codec = nsPrintfCString("webaudio;resource; %s",
+                            mContainerType.Type().AsString().Data());
   }
 
-  nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([codec]() -> void {
-    MOZ_ASSERT(!codec.IsEmpty());
-    MOZ_LOG(gMediaDecoderLog,
-            LogLevel::Debug,
-            ("Telemetry (WebAudio) MEDIA_CODEC_USED= '%s'", codec.get()));
-    Telemetry::Accumulate(Telemetry::ID::MEDIA_CODEC_USED, codec);
-  });
-  AbstractThread::MainThread()->Dispatch(task.forget());
+  nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction(
+    "MediaDecodeTask::OnMetadataRead", [codec]() -> void {
+      MOZ_ASSERT(!codec.IsEmpty());
+      MOZ_LOG(gMediaDecoderLog,
+              LogLevel::Debug,
+              ("Telemetry (WebAudio) MEDIA_CODEC_USED= '%s'", codec.get()));
+      Telemetry::Accumulate(Telemetry::HistogramID::MEDIA_CODEC_USED, codec);
+    });
+  SystemGroup::Dispatch(TaskCategory::Other, task.forget());
 
   RequestSample();
 }
 
 void
-MediaDecodeTask::OnMetadataNotRead(ReadMetadataFailureReason aReason)
+MediaDecodeTask::OnMetadataNotRead(const MediaResult& aReason)
 {
   mDecoderReader->Shutdown();
   ReportFailureOnMainThread(WebAudioDecodeJob::InvalidContent);
@@ -325,7 +290,7 @@ MediaDecodeTask::RequestSample()
 }
 
 void
-MediaDecodeTask::SampleDecoded(MediaData* aData)
+MediaDecodeTask::SampleDecoded(RefPtr<AudioData> aData)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   mAudioQueue.Push(aData);
@@ -337,15 +302,14 @@ MediaDecodeTask::SampleDecoded(MediaData* aData)
 }
 
 void
-MediaDecodeTask::SampleNotDecoded(MediaDecoderReader::NotDecodedReason aReason)
+MediaDecodeTask::SampleNotDecoded(const MediaResult& aError)
 {
   MOZ_ASSERT(!NS_IsMainThread());
-  if (aReason == MediaDecoderReader::DECODE_ERROR) {
+  if (aError == NS_ERROR_DOM_MEDIA_END_OF_STREAM) {
+    FinishDecode();
+  } else {
     mDecoderReader->Shutdown();
     ReportFailureOnMainThread(WebAudioDecodeJob::InvalidContent);
-  } else {
-    MOZ_ASSERT(aReason == MediaDecoderReader::END_OF_STREAM);
-    FinishDecode();
   }
 }
 
@@ -392,9 +356,8 @@ MediaDecodeTask::FinishDecode()
     return;
   }
 
-  RefPtr<MediaData> mediaData;
-  while ((mediaData = mAudioQueue.PopFront())) {
-    RefPtr<AudioData> audioData = mediaData->As<AudioData>();
+  RefPtr<AudioData> audioData;
+  while ((audioData = mAudioQueue.PopFront())) {
     audioData->EnsureAudioBuffer(); // could lead to a copy :(
     AudioDataValue* bufferData = static_cast<AudioDataValue*>
       (audioData->mAudioBuffer->Data());
@@ -454,7 +417,7 @@ MediaDecodeTask::FinishDecode()
   }
 
   mPhase = PhaseEnum::AllocateBuffer;
-  NS_DispatchToMainThread(this);
+  mMainThread->Dispatch(do_AddRef(this));
 }
 
 void
@@ -491,7 +454,7 @@ WebAudioDecodeJob::AllocateBuffer()
   // Now create the AudioBuffer
   ErrorResult rv;
   uint32_t channelCount = mBuffer->GetChannels();
-  mOutput = AudioBuffer::Create(mContext, channelCount,
+  mOutput = AudioBuffer::Create(mContext->GetOwner(), channelCount,
                                 mWriteIndex, mContext->SampleRate(),
                                 mBuffer.forget(), rv);
   return !rv.Failed();
@@ -501,27 +464,29 @@ void
 AsyncDecodeWebAudio(const char* aContentType, uint8_t* aBuffer,
                     uint32_t aLength, WebAudioDecodeJob& aDecodeJob)
 {
+  Maybe<MediaContainerType> containerType = MakeMediaContainerType(aContentType);
   // Do not attempt to decode the media if we were not successful at sniffing
-  // the content type.
+  // the container type.
   if (!*aContentType ||
-      strcmp(aContentType, APPLICATION_OCTET_STREAM) == 0) {
+      strcmp(aContentType, APPLICATION_OCTET_STREAM) == 0 ||
+      !containerType) {
     nsCOMPtr<nsIRunnable> event =
       new ReportResultTask(aDecodeJob,
                            &WebAudioDecodeJob::OnFailure,
                            WebAudioDecodeJob::UnknownContent);
     JS_free(nullptr, aBuffer);
-    NS_DispatchToMainThread(event);
+    aDecodeJob.mContext->Dispatch(event.forget());
     return;
   }
 
   RefPtr<MediaDecodeTask> task =
-    new MediaDecodeTask(aContentType, aBuffer, aLength, aDecodeJob);
+    new MediaDecodeTask(*containerType, aBuffer, aLength, aDecodeJob);
   if (!task->CreateReader()) {
     nsCOMPtr<nsIRunnable> event =
       new ReportResultTask(aDecodeJob,
                            &WebAudioDecodeJob::OnFailure,
                            WebAudioDecodeJob::UnknownError);
-    NS_DispatchToMainThread(event);
+    aDecodeJob.mContext->Dispatch(event.forget());
   } else {
     // If we did this without a temporary:
     //   task->Reader()->OwnerThread()->Dispatch(task.forget())
@@ -612,7 +577,11 @@ WebAudioDecodeJob::OnFailure(ErrorCode aErrorCode)
   // Ignore errors in calling the callback, since there is not much that we can
   // do about it here.
   if (mFailureCallback) {
-    mFailureCallback->Call();
+    nsAutoCString errorString(errorMessage);
+    RefPtr<DOMException> exception =
+      DOMException::Create(NS_ERROR_DOM_ENCODING_NOT_SUPPORTED_ERR,
+                           errorString);
+    mFailureCallback->Call(*exception);
   }
 
   mPromise->MaybeReject(NS_ERROR_DOM_ENCODING_NOT_SUPPORTED_ERR);
@@ -647,4 +616,3 @@ WebAudioDecodeJob::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 } // namespace mozilla
-

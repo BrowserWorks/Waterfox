@@ -9,7 +9,7 @@
 
 #include "mozilla/Compiler.h"
 
-#if !defined(__arm__) && !(defined(LINUX) || defined(ANDROID) || defined(XP_IOS))
+#if !defined(__arm__) || !(defined(LINUX) || defined(ANDROID) || defined(XP_IOS))
 #error "This code is for Linux/iOS ARM only. Check that it works on your system, too.\nBeware that this code is highly compiler dependent."
 #endif
 
@@ -144,7 +144,7 @@ NS_InvokeByIndex(nsISupports* that, uint32_t methodIndex,
  * for arm-linux GNU g++ >= 2.8.1 (including egcs and gcc-2.95.[1-3])!
  *
  */
- 
+
   vtable_func *vtable, func;
   int base_size = (paramCount > 1) ? paramCount : 2;
 
@@ -167,7 +167,7 @@ NS_InvokeByIndex(nsISupports* that, uint32_t methodIndex,
   return func(that, stack_space[base_size * 2 - 3],
                     stack_space[base_size * 2 - 2],
                     stack_space[base_size * 2 - 1]);
-}    
+}
 
 #else /* __ARM_PCS_VFP */
 

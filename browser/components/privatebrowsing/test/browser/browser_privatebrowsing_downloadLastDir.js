@@ -12,7 +12,7 @@ function test() {
     Cu.import("resource://gre/modules/DownloadLastDir.jsm", {}).DownloadLastDir;
   let MockFilePicker = SpecialPowers.MockFilePicker;
   let launcher = {
-    source: Services.io.newURI("http://test1.com/file", null, null)
+    source: Services.io.newURI("http://test1.com/file")
   };
 
   MockFilePicker.init(window);
@@ -31,7 +31,7 @@ function test() {
   let file3 = newFileInDirectory(dir3);
 
   // cleanup functions registration
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref("browser.download.lastDir");
     [dir1, dir2, dir3].forEach(dir => dir.remove(true));
     MockFilePicker.cleanup();
@@ -55,10 +55,10 @@ function test() {
     is(gDownloadLastDir.file.path, aDisplayDir.path,
        "gDownloadLastDir should be the expected display dir");
 
-    MockFilePicker.returnFiles = [aFile];
+    MockFilePicker.setFiles([aFile]);
     MockFilePicker.displayDirectory = null;
 
-    launcher.saveDestinationAvailable = function (file) {
+    launcher.saveDestinationAvailable = function(file) {
       ok(!!file, "promptForSaveToFile correctly returned a file");
 
       // File picker should start with expected display dir.
@@ -81,10 +81,10 @@ function test() {
 
   testOnWindow(false, function(win, downloadDir) {
     testDownloadDir(win, downloadDir, file1, tmpDir, dir1, dir1, function() {
-      testOnWindow(true, function(win, downloadDir) {
-        testDownloadDir(win, downloadDir, file2, dir1, dir1, dir2, function() {
-          testOnWindow(false, function(win, downloadDir) {
-            testDownloadDir(win, downloadDir, file3, dir1, dir3, dir3, finish);
+      testOnWindow(true, function(win1, downloadDir1) {
+        testDownloadDir(win1, downloadDir1, file2, dir1, dir1, dir2, function() {
+          testOnWindow(false, function(win2, downloadDir2) {
+            testDownloadDir(win2, downloadDir2, file3, dir1, dir3, dir3, finish);
           });
         });
       });

@@ -1,9 +1,11 @@
+/* eslint-env mozilla/chrome-worker */
+
 importScripts("resource://gre/modules/workers/require.js");
 importScripts("resource://gre/modules/osfile.jsm");
 
 
 function do_print(x) {
-  //self.postMessage({kind: "do_print", args: [x]});
+  // self.postMessage({kind: "do_print", args: [x]});
   dump("TEST-INFO: " + x + "\n");
 }
 
@@ -25,7 +27,7 @@ function do_check_eq(a, b) {
 }
 
 function do_test_complete() {
-  self.postMessage({kind: "do_test_complete", args:[]});
+  self.postMessage({kind: "do_test_complete", args: []});
 }
 
 self.onmessage = function() {

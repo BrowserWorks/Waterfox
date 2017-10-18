@@ -24,6 +24,8 @@ interface Addon {
   readonly attribute boolean isEnabled;
   // If the add-on is currently active in the browser.
   readonly attribute boolean isActive;
+  // If the add-on may be uninstalled
+  readonly attribute boolean canUninstall;
 
   Promise<boolean> uninstall();
   Promise<void> setEnabled(boolean value);
@@ -75,9 +77,18 @@ interface AddonManager : EventTarget {
    */
   Promise<AddonInstall> createInstall(optional addonInstallOptions options);
 
+  // Indicator to content whether permissions prompts are enabled
+  readonly attribute boolean permissionPromptsEnabled;
+
   /* Hooks for managing event listeners */
   [ChromeOnly]
   void eventListenerWasAdded(DOMString type);
   [ChromeOnly]
   void eventListenerWasRemoved(DOMString type);
 };
+
+[ChromeOnly,Exposed=System,HeaderFile="mozilla/AddonManagerWebAPI.h"]
+interface AddonManagerPermissions {
+  static boolean isHostPermitted(DOMString host);
+};
+

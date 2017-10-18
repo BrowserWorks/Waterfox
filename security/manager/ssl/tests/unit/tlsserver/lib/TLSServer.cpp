@@ -10,7 +10,7 @@
 
 #include "base64.h"
 #include "mozilla/Move.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nspr.h"
 #include "nss.h"
 #include "plarenas.h"
@@ -488,6 +488,9 @@ ConfigSecureServerWithNamedCert(PRFileDesc* fd, const char* certName,
   if (keaOut) {
     *keaOut = certKEA;
   }
+
+  SSL_OptionSet(fd, SSL_NO_CACHE, false);
+  SSL_OptionSet(fd, SSL_ENABLE_SESSION_TICKETS, true);
 
   return SECSuccess;
 }

@@ -30,6 +30,7 @@
 #define HB_OPEN_TYPE_PRIVATE_HH
 
 #include "hb-private.hh"
+#include "hb-face-private.hh"
 
 
 namespace OT {
@@ -101,10 +102,11 @@ static inline Type& StructAfter(TObject &X)
 #define DEFINE_SIZE_STATIC(size) \
   DEFINE_INSTANCE_ASSERTION (sizeof (*this) == (size)); \
   static const unsigned int static_size = (size); \
-  static const unsigned int min_size = (size)
+  static const unsigned int min_size = (size); \
+  inline unsigned int get_size (void) const { return (size); }
 
 #define DEFINE_SIZE_UNION(size, _member) \
-  DEFINE_INSTANCE_ASSERTION (this->u._member.static_size == (size)); \
+  DEFINE_INSTANCE_ASSERTION (0*sizeof(this->u._member.static_size) + sizeof(this->u._member) == (size)); \
   static const unsigned int min_size = (size)
 
 #define DEFINE_SIZE_MIN(size) \
@@ -649,7 +651,9 @@ struct IntType
   DEFINE_SIZE_STATIC (Size);
 };
 
+typedef	IntType<int8_t	, 1> CHAR;	/* 8-bit signed integer. */
 typedef	IntType<uint8_t	, 1> BYTE;	/* 8-bit unsigned integer. */
+typedef	IntType<int8_t	, 1> INT8;	/* 8-bit signed integer. */
 typedef IntType<uint16_t, 2> USHORT;	/* 16-bit unsigned integer. */
 typedef IntType<int16_t,  2> SHORT;	/* 16-bit signed integer. */
 typedef IntType<uint32_t, 4> ULONG;	/* 32-bit unsigned integer. */
@@ -669,6 +673,15 @@ struct F2DOT14 : SHORT
   //inline void set_float (float f) { v.set (f * ???); }
   public:
   DEFINE_SIZE_STATIC (2);
+};
+
+/* 32-bit signed fixed-point number (16.16). */
+struct Fixed: LONG
+{
+  //inline float to_float (void) const { return ???; }
+  //inline void set_float (float f) { v.set (f * ???); }
+  public:
+  DEFINE_SIZE_STATIC (4);
 };
 
 /* Date represented in number of seconds since 12:00 midnight, January 1,
@@ -795,6 +808,7 @@ struct OffsetTo : Offset<OffsetType>
     if (unlikely (!c->check_struct (this))) return_trace (false);
     unsigned int offset = *this;
     if (unlikely (!offset)) return_trace (true);
+    if (unlikely (!c->check_range (base, offset))) return_trace (false);
     const Type &obj = StructAtOffset<Type> (base, offset);
     return_trace (likely (obj.sanitize (c)) || neuter (c));
   }
@@ -805,6 +819,7 @@ struct OffsetTo : Offset<OffsetType>
     if (unlikely (!c->check_struct (this))) return_trace (false);
     unsigned int offset = *this;
     if (unlikely (!offset)) return_trace (true);
+    if (unlikely (!c->check_range (base, offset))) return_trace (false);
     const Type &obj = StructAtOffset<Type> (base, offset);
     return_trace (likely (obj.sanitize (c, user_data)) || neuter (c));
   }
@@ -815,6 +830,7 @@ struct OffsetTo : Offset<OffsetType>
   }
   DEFINE_SIZE_STATIC (sizeof(OffsetType));
 };
+template <typename Type> struct LOffsetTo : OffsetTo<Type, ULONG> {};
 template <typename Base, typename OffsetType, typename Type>
 static inline const Type& operator + (const Base &base, const OffsetTo<Type, OffsetType> &offset) { return offset (base); }
 template <typename Base, typename OffsetType, typename Type>
@@ -936,10 +952,11 @@ struct ArrayOf
   public:
   DEFINE_SIZE_ARRAY (sizeof (LenType), array);
 };
+template <typename Type> struct LArrayOf : ArrayOf<Type, ULONG> {};
 
 /* Array of Offset's */
-template <typename Type>
-struct OffsetArrayOf : ArrayOf<OffsetTo<Type> > {};
+template <typename Type, typename OffsetType=USHORT>
+struct OffsetArrayOf : ArrayOf<OffsetTo<Type, OffsetType> > {};
 
 /* Array of offsets relative to the beginning of the array itself. */
 template <typename Type>
@@ -1044,6 +1061,104 @@ struct SortedArrayOf : ArrayOf<Type, LenType>
     }
     return -1;
   }
+};
+
+
+/* Lazy struct and blob loaders. */
+
+/* Logic is shared between hb_lazy_loader_t and hb_lazy_table_loader_t */
+template <typename T>
+struct hb_lazy_loader_t
+{
+  inline void init (hb_face_t *face_)
+  {
+    face = face_;
+    instance = NULL;
+  }
+
+  inline void fini (void)
+  {
+    if (instance && instance != &OT::Null(T))
+    {
+      instance->fini();
+      free (instance);
+    }
+  }
+
+  inline const T* get (void) const
+  {
+  retry:
+    T *p = (T *) hb_atomic_ptr_get (&instance);
+    if (unlikely (!p))
+    {
+      p = (T *) calloc (1, sizeof (T));
+      if (unlikely (!p))
+        p = const_cast<T *> (&OT::Null(T));
+      else
+	p->init (face);
+      if (unlikely (!hb_atomic_ptr_cmpexch (const_cast<T **>(&instance), NULL, p)))
+      {
+	if (p != &OT::Null(T))
+	  p->fini ();
+	goto retry;
+      }
+    }
+    return p;
+  }
+
+  inline const T* operator-> (void) const
+  {
+    return get ();
+  }
+
+  private:
+  hb_face_t *face;
+  T *instance;
+};
+
+/* Logic is shared between hb_lazy_loader_t and hb_lazy_table_loader_t */
+template <typename T>
+struct hb_lazy_table_loader_t
+{
+  inline void init (hb_face_t *face_)
+  {
+    face = face_;
+    instance = NULL;
+    blob = NULL;
+  }
+
+  inline void fini (void)
+  {
+    hb_blob_destroy (blob);
+  }
+
+  inline const T* get (void) const
+  {
+  retry:
+    T *p = (T *) hb_atomic_ptr_get (&instance);
+    if (unlikely (!p))
+    {
+      hb_blob_t *blob_ = OT::Sanitizer<T>::sanitize (face->reference_table (T::tableTag));
+      p = const_cast<T *>(OT::Sanitizer<T>::lock_instance (blob_));
+      if (!hb_atomic_ptr_cmpexch (const_cast<T **>(&instance), NULL, p))
+      {
+	hb_blob_destroy (blob_);
+	goto retry;
+      }
+      blob = blob_;
+    }
+    return p;
+  }
+
+  inline const T* operator-> (void) const
+  {
+    return get();
+  }
+
+  private:
+  hb_face_t *face;
+  T *instance;
+  mutable hb_blob_t *blob;
 };
 
 

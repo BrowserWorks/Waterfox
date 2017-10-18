@@ -9,6 +9,8 @@
 /* globals document, window */
 "use strict";
 
+const {setTooltipVariableContent} = require("devtools/client/shared/widgets/tooltip/VariableContentHelper");
+
 /**
  * Functions handling the variables bubble UI.
  */
@@ -44,8 +46,8 @@ VariableBubbleView.prototype = {
 
     this._toolbox = DebuggerController._toolbox;
     this._editorContainer = document.getElementById("editor");
-    this._editorContainer.addEventListener("mousemove", this._onMouseMove, false);
-    this._editorContainer.addEventListener("mouseout", this._onMouseOut, false);
+    this._editorContainer.addEventListener("mousemove", this._onMouseMove);
+    this._editorContainer.addEventListener("mouseout", this._onMouseOut);
 
     this._tooltip = new Tooltip(document, {
       closeOnEvents: [{
@@ -71,8 +73,8 @@ VariableBubbleView.prototype = {
     dumpn("Destroying the VariableBubbleView");
 
     this._tooltip.panel.removeEventListener("popuphiding", this._onPopupHiding);
-    this._editorContainer.removeEventListener("mousemove", this._onMouseMove, false);
-    this._editorContainer.removeEventListener("mouseout", this._onMouseOut, false);
+    this._editorContainer.removeEventListener("mousemove", this._onMouseMove);
+    this._editorContainer.removeEventListener("mouseout", this._onMouseOut);
   },
 
   /**
@@ -154,7 +156,7 @@ VariableBubbleView.prototype = {
           dumpn(msg);
         }
       })
-      .then(null, err => {
+      .catch(err => {
         let msg = "Couldn't evaluate: " + err.message;
         console.error(msg);
         dumpn(msg);
@@ -198,7 +200,7 @@ VariableBubbleView.prototype = {
         }
       }]);
     } else {
-      this._tooltip.setVariableContent(objectActor, {
+      setTooltipVariableContent(this._tooltip, objectActor, {
         searchPlaceholder: L10N.getStr("emptyPropertiesFilterText"),
         searchEnabled: Prefs.variablesSearchboxVisible,
         eval: (variable, value) => {

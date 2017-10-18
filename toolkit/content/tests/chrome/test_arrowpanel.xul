@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin" type="text/css"?>
-<?xml-stylesheet href="/tests/SimpleTest/test.css" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
 
 <window title="Arrow Panels"
         style="padding: 10px;"
@@ -25,12 +25,12 @@
 
 <panel id="panel" type="arrow" animate="false"
        onpopupshown="checkPanelPosition(this)" onpopuphidden="runNextTest.next()">
-  <label id="panellabel" value="This is some text..." height="65"/>
+  <box width="115" height="65"/>
 </panel>
 
 <panel id="bigpanel" type="arrow" animate="false"
        onpopupshown="checkBigPanel(this)" onpopuphidden="runNextTest.next()">
-  <button label="This is some text..." height="3000"/>
+  <box width="125" height="3000"/>
 </panel>
 
 <panel id="animatepanel" type="arrow"
@@ -59,7 +59,7 @@ function startTest()
   runNextTest.next();
 }
 
-function nextTest()
+function* nextTest()
 {
   var panel = $("panel");
 
@@ -183,18 +183,14 @@ function nextTest()
   // Test that a transition occurs when opening or closing the popup. The transition is
   // disabled on Linux.
   if (navigator.platform.indexOf("Linux") == -1) {
-    var transitions = 0;
     function transitionEnded(event) {
-      transitions++;
-      // Two properties transition so continue on the second one finishing.
-      if (!(transitions % 2)) {
+      if ($("animatepanel").state != "open") {
+        is($("animatepanel").state, "showing", "state is showing during transitionend");
+        ok(!animatedPopupShown, "popupshown not fired yet")
+      } else {
         is($("animatepanel").state, "open", "state is open after transitionend");
         ok(animatedPopupShown, "popupshown now fired")
         SimpleTest.executeSoon(() => runNextTest.next());
-      }
-      else {
-        is($("animatepanel").state, "showing", "state is showing during transitionend");
-        ok(!animatedPopupShown, "popupshown not fired yet")
       }
     }
 
@@ -211,7 +207,6 @@ function nextTest()
   }
 
   SimpleTest.finish()
-  yield;
 }
 
 function setScale(win, scale)
@@ -229,7 +224,7 @@ function checkPanelPosition(panel)
   let anchor = panel.anchorNode;
   let adj = 0, hwinpos = 0, vwinpos = 0;
   if (anchor.ownerDocument != document) {
-    var framerect = anchor.ownerDocument.defaultView.frameElement.getBoundingClientRect();
+    var framerect = anchor.ownerGlobal.frameElement.getBoundingClientRect();
     hwinpos = framerect.left;
     vwinpos = framerect.top;
   }
@@ -245,23 +240,23 @@ function checkPanelPosition(panel)
 
   var panelRect = panel.getBoundingClientRect();
   var anchorRect = anchor.getBoundingClientRect();
-  var labelBO = $("panellabel").boxObject;
-  var labelRect = { top: labelBO.y,
-                    left: labelBO.x,
-                    bottom: labelBO.y + labelBO.height,
-                    right: labelBO.x + labelBO.width };
+  var contentBO = panel.firstChild.boxObject;
+  var contentRect = { top: contentBO.y,
+                      left: contentBO.x,
+                      bottom: contentBO.y + contentBO.height,
+                      right: contentBO.x + contentBO.width };
   switch (expectedSide) {
     case "top":
-      ok(labelRect.top > vwinpos + anchorRect.bottom * zoomFactor + 5, "panel label is below");
+      ok(contentRect.top > vwinpos + anchorRect.bottom * zoomFactor + 5, "panel content is below");
       break;
     case "bottom":
-      ok(labelRect.bottom < vwinpos + anchorRect.top * zoomFactor - 5, "panel label is above");
+      ok(contentRect.bottom < vwinpos + anchorRect.top * zoomFactor - 5, "panel content is above");
       break;
     case "left":
-      ok(labelRect.left > hwinpos + anchorRect.right * zoomFactor + 5, "panel label is right");
+      ok(contentRect.left > hwinpos + anchorRect.right * zoomFactor + 5, "panel content is right");
       break;
     case "right":
-      ok(labelRect.right < hwinpos + anchorRect.left * zoomFactor - 5, "panel label is left");
+      ok(contentRect.right < hwinpos + anchorRect.left * zoomFactor - 5, "panel content is left");
       break;
   }
 

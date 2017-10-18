@@ -12,14 +12,12 @@
 #define WEBRTC_COMMON_AUDIO_VAD_MOCK_MOCK_VAD_H_
 
 #include "webrtc/common_audio/vad/include/vad.h"
-
-#include "testing/gmock/include/gmock/gmock.h"
+#include "webrtc/test/gmock.h"
 
 namespace webrtc {
 
 class MockVad : public Vad {
  public:
-  explicit MockVad(enum Aggressiveness mode) : Vad(mode) {}
   virtual ~MockVad() { Die(); }
   MOCK_METHOD0(Die, void());
 
@@ -27,6 +25,7 @@ class MockVad : public Vad {
                enum Activity(const int16_t* audio,
                              size_t num_samples,
                              int sample_rate_hz));
+  MOCK_METHOD0(Reset, void());
 };
 
 }  // namespace webrtc

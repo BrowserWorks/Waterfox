@@ -16,14 +16,14 @@ function run_test() {
 
   gTestFiles = gTestFilesCompleteSuccess;
   gTestDirs = gTestDirsCompleteSuccess;
-  setupUpdaterTest(FILE_COMPLETE_MAR, undefined);
+  setupUpdaterTest(FILE_COMPLETE_MAR, false);
 }
 
 /**
  * Called after the call to setupUpdaterTest finishes.
  */
 function setupUpdaterTestFinished() {
-  stageUpdate();
+  stageUpdate(true);
 }
 
 /**
@@ -32,7 +32,7 @@ function setupUpdaterTestFinished() {
 function stageUpdateFinished() {
   checkPostUpdateRunningFile(false);
   checkFilesAfterUpdateSuccess(getStageDirFile, true, false);
-  checkUpdateLogContents(LOG_COMPLETE_SUCCESS_STAGE, true);
+  checkUpdateLogContents(LOG_COMPLETE_SUCCESS, true);
   lockDirectory(getAppBaseDir().path);
   // Switch the application to the staged application that was updated.
   runUpdateUsingApp(STATE_SUCCEEDED);

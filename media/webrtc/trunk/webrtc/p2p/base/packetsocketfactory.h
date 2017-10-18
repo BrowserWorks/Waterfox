@@ -11,6 +11,7 @@
 #ifndef WEBRTC_P2P_BASE_PACKETSOCKETFACTORY_H_
 #define WEBRTC_P2P_BASE_PACKETSOCKETFACTORY_H_
 
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/base/proxyinfo.h"
 
 namespace rtc {
@@ -21,21 +22,27 @@ class AsyncResolverInterface;
 class PacketSocketFactory {
  public:
   enum Options {
-    OPT_SSLTCP = 0x01,  // Pseudo-TLS.
-    OPT_TLS = 0x02,
     OPT_STUN = 0x04,
+
+    // The TLS options below are mutually exclusive.
+    OPT_TLS = 0x02,           // Real and secure TLS.
+    OPT_TLS_FAKE = 0x01,      // Fake TLS with a dummy SSL handshake.
+    OPT_TLS_INSECURE = 0x08,  // Insecure TLS without certificate validation.
+
+    // Deprecated, use OPT_TLS_FAKE.
+    OPT_SSLTCP = OPT_TLS_FAKE,
   };
 
   PacketSocketFactory() { }
   virtual ~PacketSocketFactory() { }
 
   virtual AsyncPacketSocket* CreateUdpSocket(const SocketAddress& address,
-                                             uint16 min_port,
-                                             uint16 max_port) = 0;
+                                             uint16_t min_port,
+                                             uint16_t max_port) = 0;
   virtual AsyncPacketSocket* CreateServerTcpSocket(
       const SocketAddress& local_address,
-      uint16 min_port,
-      uint16 max_port,
+      uint16_t min_port,
+      uint16_t max_port,
       int opts) = 0;
 
   // TODO: |proxy_info| and |user_agent| should be set
@@ -50,7 +57,7 @@ class PacketSocketFactory {
   virtual AsyncResolverInterface* CreateAsyncResolver() = 0;
 
  private:
-  DISALLOW_EVIL_CONSTRUCTORS(PacketSocketFactory);
+  RTC_DISALLOW_COPY_AND_ASSIGN(PacketSocketFactory);
 };
 
 }  // namespace rtc

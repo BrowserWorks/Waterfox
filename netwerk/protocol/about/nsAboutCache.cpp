@@ -14,7 +14,6 @@
 #include "nsEscape.h"
 #include "nsAboutProtocolUtils.h"
 #include "nsPrintfCString.h"
-#include "nsDOMString.h"
 
 #include "nsICacheStorageService.h"
 #include "nsICacheStorage.h"
@@ -129,7 +128,10 @@ nsAboutCache::Channel::Init(nsIURI* aURI, nsILoadInfo* aLoadInfo)
         mBuffer.AppendLiteral("\">Back to overview</a>");
     }
 
-    FlushBuffer();
+    rv = FlushBuffer();
+    if (NS_FAILED(rv)) {
+        NS_WARNING("Failed to flush buffer");
+    }
 
     return NS_OK;
 }
@@ -222,7 +224,10 @@ nsAboutCache::Channel::VisitNextStorage()
     // from visitor callback.  The cache v1 service doesn't like it.
     // TODO - mayhemer, bug 913828, remove this dispatch and call
     // directly.
-    return NS_DispatchToMainThread(mozilla::NewRunnableMethod(this, &nsAboutCache::Channel::FireVisitStorage));
+    return NS_DispatchToMainThread(
+      mozilla::NewRunnableMethod("nsAboutCache::Channel::FireVisitStorage",
+                                 this,
+                                 &nsAboutCache::Channel::FireVisitStorage));
 }
 
 void
@@ -246,7 +251,10 @@ nsAboutCache::Channel::FireVisitStorage()
             free(escaped);
         }
 
-        FlushBuffer();
+        rv = FlushBuffer();
+        if (NS_FAILED(rv)) {
+            NS_WARNING("Failed to flush buffer");
+        }
 
         // Simulate finish of a visit cycle, this tries the next storage
         // or closes the output stream (i.e. the UI loader will stop spinning)
@@ -372,7 +380,10 @@ nsAboutCache::Channel::OnCacheStorageInfo(uint32_t aEntryCount, uint64_t aConsum
     // The entries header is added on encounter of the first entry
     mEntriesHeaderAdded = false;
 
-    FlushBuffer();
+    nsresult rv = FlushBuffer();
+    if (NS_FAILED(rv)) {
+        NS_WARNING("Failed to flush buffer");
+    }
 
     if (mOverview) {
         // OnCacheEntryVisitCompleted() is not called when we do not iterate
@@ -388,7 +399,7 @@ NS_IMETHODIMP
 nsAboutCache::Channel::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
                                         int64_t aDataSize, int32_t aFetchCount,
                                         uint32_t aLastModified, uint32_t aExpirationTime,
-                                        bool aPinned)
+                                        bool aPinned, nsILoadContextInfo* aInfo)
 {
     // We need mStream for this
     if (!mStream || mCancel) {
@@ -483,7 +494,13 @@ nsAboutCache::Channel::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnha
 
     // Expires time
     mBuffer.AppendLiteral("    <td>");
-    if (aExpirationTime < 0xFFFFFFFF) {
+
+    // Bug - 633747.
+    // When expiration time is 0, we show 1970-01-01 01:00:00 which is confusing.
+    // So we check if time is 0, then we show a message, "Expired Immediately"
+    if (aExpirationTime == 0) {
+        mBuffer.AppendLiteral("Expired Immediately");
+    } else if (aExpirationTime < 0xFFFFFFFF) {
         PrintTimeString(buf, sizeof(buf), aExpirationTime);
         mBuffer.Append(buf);
     } else {
@@ -529,7 +546,10 @@ nsAboutCache::Channel::OnCacheEntryVisitCompleted()
     // We are done!
     mBuffer.AppendLiteral("</body>\n"
                           "</html>\n");
-    FlushBuffer();
+    nsresult rv = FlushBuffer();
+    if (NS_FAILED(rv)) {
+        NS_WARNING("Failed to flush buffer");
+    }
     mStream->Close();
 
     return NS_OK;
@@ -554,15 +574,8 @@ nsAboutCache::Channel::FlushBuffer()
 NS_IMETHODIMP
 nsAboutCache::GetURIFlags(nsIURI *aURI, uint32_t *result)
 {
-    *result = 0;
+    *result = nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT;
     return NS_OK;
-}
-
-NS_IMETHODIMP
-nsAboutCache::GetIndexedDBOriginPostfix(nsIURI *aURI, nsAString &result)
-{
-    SetDOMStringToNull(result);
-    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 // static

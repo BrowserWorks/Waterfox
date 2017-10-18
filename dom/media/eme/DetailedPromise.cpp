@@ -22,8 +22,8 @@ DetailedPromise::DetailedPromise(nsIGlobalObject* aGlobal,
 
 DetailedPromise::DetailedPromise(nsIGlobalObject* aGlobal,
                                  const nsACString& aName,
-                                 Telemetry::ID aSuccessLatencyProbe,
-                                 Telemetry::ID aFailureLatencyProbe)
+                                 Telemetry::HistogramID aSuccessLatencyProbe,
+                                 Telemetry::HistogramID aFailureLatencyProbe)
   : DetailedPromise(aGlobal, aName)
 {
   mSuccessLatencyProbe.Construct(aSuccessLatencyProbe);
@@ -36,17 +36,17 @@ DetailedPromise::~DetailedPromise()
   // GetPromiseState() == PromiseState::Rejected.  But by now we've been
   // unlinked, so don't have a reference to our actual JS Promise object
   // anymore.
-  MaybeReportTelemetry(Failed);
+  MaybeReportTelemetry(kFailed);
 }
 
 void
 DetailedPromise::MaybeReject(nsresult aArg, const nsACString& aReason)
 {
-  nsPrintfCString msg("%s promise rejected 0x%x '%s'", mName.get(), aArg,
-                      PromiseFlatCString(aReason).get());
-  EME_LOG(msg.get());
+  nsPrintfCString msg("%s promise rejected 0x%" PRIx32 " '%s'", mName.get(),
+                      static_cast<uint32_t>(aArg), PromiseFlatCString(aReason).get());
+  EME_LOG("%s", msg.get());
 
-  MaybeReportTelemetry(Failed);
+  MaybeReportTelemetry(kFailed);
 
   LogToBrowserConsole(NS_ConvertUTF8toUTF16(msg));
 
@@ -75,8 +75,8 @@ DetailedPromise::Create(nsIGlobalObject* aGlobal,
 DetailedPromise::Create(nsIGlobalObject* aGlobal,
                         ErrorResult& aRv,
                         const nsACString& aName,
-                        Telemetry::ID aSuccessLatencyProbe,
-                        Telemetry::ID aFailureLatencyProbe)
+                        Telemetry::HistogramID aSuccessLatencyProbe,
+                        Telemetry::HistogramID aFailureLatencyProbe)
 {
   RefPtr<DetailedPromise> promise = new DetailedPromise(aGlobal, aName, aSuccessLatencyProbe, aFailureLatencyProbe);
   promise->CreateWrapper(nullptr, aRv);
@@ -84,7 +84,7 @@ DetailedPromise::Create(nsIGlobalObject* aGlobal,
 }
 
 void
-DetailedPromise::MaybeReportTelemetry(Status aStatus)
+DetailedPromise::MaybeReportTelemetry(eStatus aStatus)
 {
   if (mResponded) {
     return;
@@ -95,9 +95,9 @@ DetailedPromise::MaybeReportTelemetry(Status aStatus)
   }
   uint32_t latency = (TimeStamp::Now() - mStartTime).ToMilliseconds();
   EME_LOG("%s %s latency %ums reported via telemetry", mName.get(),
-          ((aStatus == Succeeded) ? "succcess" : "failure"), latency);
-  Telemetry::ID tid = (aStatus == Succeeded) ? mSuccessLatencyProbe.Value()
-                                             : mFailureLatencyProbe.Value();
+          ((aStatus == kSucceeded) ? "succcess" : "failure"), latency);
+  Telemetry::HistogramID tid = (aStatus == kSucceeded) ? mSuccessLatencyProbe.Value()
+                                                      : mFailureLatencyProbe.Value();
   Telemetry::Accumulate(tid, latency);
 }
 

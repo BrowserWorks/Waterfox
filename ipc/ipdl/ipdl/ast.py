@@ -4,9 +4,12 @@
 
 import sys
 
+NOT_NESTED = 1
+INSIDE_SYNC_NESTED = 2
+INSIDE_CPOW_NESTED = 3
+
 NORMAL_PRIORITY = 1
 HIGH_PRIORITY = 2
-URGENT_PRIORITY = 3
 
 class Visitor:
     def defaultVisit(self, node):
@@ -53,31 +56,14 @@ class Visitor:
     def visitProtocol(self, p):
         for namespace in p.namespaces:
             namespace.accept(self)
-        for spawns in p.spawnsStmts:
-            spawns.accept(self)
-        for bridges in p.bridgesStmts:
-            bridges.accept(self)
-        for opens in p.opensStmts:
-            opens.accept(self)
         for mgr in p.managers:
             mgr.accept(self)
         for managed in p.managesStmts:
             managed.accept(self)
         for msgDecl in p.messageDecls:
             msgDecl.accept(self)
-        for transitionStmt in p.transitionStmts:
-            transitionStmt.accept(self)
 
     def visitNamespace(self, ns):
-        pass
-
-    def visitSpawnsStmt(self, spawns):
-        pass
-
-    def visitBridgesStmt(self, bridges):
-        pass
-
-    def visitOpensStmt(self, opens):
         pass
 
     def visitManager(self, mgr):
@@ -91,18 +77,6 @@ class Visitor:
             inParam.accept(self)
         for outParam in md.outParams:
             outParam.accept(self)
-
-    def visitTransitionStmt(self, ts):
-        ts.state.accept(self)
-        for trans in ts.transitions:
-            trans.accept(self)
-
-    def visitTransition(self, t):
-        for toState in t.toStates:
-            toState.accept(self)
-
-    def visitState(self, s):
-        pass
 
     def visitParam(self, decl):
         pass
@@ -147,7 +121,7 @@ class NamespacedNode(Node):
     def __init__(self, loc=Loc.NONE, name=None):
         Node.__init__(self, loc)
         self.name = name
-        self.namespaces = [ ]  
+        self.namespaces = [ ]
 
     def addOuterNamespace(self, namespace):
         self.namespaces.insert(0, namespace)
@@ -211,7 +185,7 @@ class PrettyPrinted:
     def __hash__(cls): return hash(cls.pretty)
     @classmethod
     def __str__(cls):  return cls.pretty
-    
+
 class ASYNC(PrettyPrinted):
     pretty = 'async'
 class INTR(PrettyPrinted):
@@ -236,15 +210,10 @@ class Protocol(NamespacedNode):
     def __init__(self, loc):
         NamespacedNode.__init__(self, loc)
         self.sendSemantics = ASYNC
-        self.priority = NORMAL_PRIORITY
-        self.spawnsStmts = [ ]
-        self.bridgesStmts = [ ]
-        self.opensStmts = [ ]
+        self.nested = NOT_NESTED
         self.managers = [ ]
         self.managesStmts = [ ]
         self.messageDecls = [ ]
-        self.transitionStmts = [ ]
-        self.startStates = [ ]
 
 class StructField(Node):
     def __init__(self, loc, type, name):
@@ -262,25 +231,6 @@ class UnionDecl(NamespacedNode):
         NamespacedNode.__init__(self, loc, name)
         self.components = components
 
-class SpawnsStmt(Node):
-    def __init__(self, loc, side, proto, spawnedAs):
-        Node.__init__(self, loc)
-        self.side = side
-        self.proto = proto
-        self.spawnedAs = spawnedAs
-
-class BridgesStmt(Node):
-    def __init__(self, loc, parentSide, childSide):
-        Node.__init__(self, loc)
-        self.parentSide = parentSide
-        self.childSide = childSide
-
-class OpensStmt(Node):
-    def __init__(self, loc, side, proto):
-        Node.__init__(self, loc)
-        self.side = side
-        self.proto = proto
-
 class Manager(Node):
     def __init__(self, loc, managerName):
         Node.__init__(self, loc)
@@ -296,7 +246,8 @@ class MessageDecl(Node):
         Node.__init__(self, loc)
         self.name = None
         self.sendSemantics = ASYNC
-        self.priority = NORMAL_PRIORITY
+        self.nested = NOT_NESTED
+        self.prio = NORMAL_PRIORITY
         self.direction = None
         self.inParams = [ ]
         self.outParams = [ ]
@@ -318,83 +269,6 @@ class MessageDecl(Node):
             elif modifier != '':
                 raise Exception, "Unexpected message modifier `%s'"% modifier
 
-class Transition(Node):
-    def __init__(self, loc, trigger, msg, toStates):
-        Node.__init__(self, loc)
-        self.trigger = trigger
-        self.msg = msg
-        self.toStates = toStates
-
-    def __cmp__(self, o):
-        c = cmp(self.msg, o.msg)
-        if c: return c
-        c = cmp(self.trigger, o.trigger)
-        if c: return c
-
-    def __hash__(self): return hash(str(self))
-    def __str__(self): return '%s %s'% (self.trigger, self.msg)
-
-    @staticmethod
-    def nameToTrigger(name):
-        return { 'send': SEND, 'recv': RECV, 'call': CALL, 'answer': ANSWER }[name]
-
-Transition.NULL = Transition(Loc.NONE, None, None, [ ])
-
-class TransitionStmt(Node):
-    def __init__(self, loc, state, transitions):
-        Node.__init__(self, loc)
-        self.state = state
-        self.transitions = transitions
-
-    @staticmethod
-    def makeNullStmt(state):
-        return TransitionStmt(Loc.NONE, state, [ Transition.NULL ])
-
-class SEND:
-    pretty = 'send'
-    @classmethod
-    def __hash__(cls): return hash(cls.pretty)
-    @classmethod
-    def direction(cls): return OUT
-class RECV:
-    pretty = 'recv'
-    @classmethod
-    def __hash__(cls): return hash(cls.pretty)
-    @classmethod
-    def direction(cls): return IN
-class CALL:
-    pretty = 'call'
-    @classmethod
-    def __hash__(cls): return hash(cls.pretty)
-    @classmethod
-    def direction(cls): return OUT
-class ANSWER:
-    pretty = 'answer'
-    @classmethod
-    def __hash__(cls): return hash(cls.pretty)
-    @classmethod
-    def direction(cls): return IN
-
-class State(Node):
-    def __init__(self, loc, name, start=False):
-        Node.__init__(self, loc)
-        self.name = name
-        self.start = start
-    def __eq__(self, o):
-         return (isinstance(o, State)
-                 and o.name == self.name
-                 and o.start == self.start)
-    def __hash__(self):
-        return hash(repr(self))
-    def __ne__(self, o):
-        return not (self == o)
-    def __repr__(self): return '<State %r start=%r>'% (self.name, self.start)
-    def __str__(self): return '<State %s start=%s>'% (self.name, self.start)
-
-State.ANY = State(Loc.NONE, '[any]', start=True)
-State.DEAD = State(Loc.NONE, '[dead]', start=False)
-State.DYING = State(Loc.NONE, '[dying]', start=False)
-
 class Param(Node):
     def __init__(self, loc, typespec, name):
         Node.__init__(self, loc)
@@ -402,21 +276,13 @@ class Param(Node):
         self.typespec = typespec
 
 class TypeSpec(Node):
-    def __init__(self, loc, spec, state=None, array=0, nullable=0,
-                 myChmod=None, otherChmod=None):
+    def __init__(self, loc, spec):
         Node.__init__(self, loc)
         self.spec = spec                # QualifiedId
-        self.state = state              # None or State
-        self.array = array              # bool
-        self.nullable = nullable        # bool
-        self.myChmod = myChmod          # None or string
-        self.otherChmod = otherChmod    # None or string
-
+        self.array = 0                  # bool
+        self.nullable = 0               # bool
     def basename(self):
         return self.spec.baseid
-
-    def isActor(self):
-        return self.state is not None
 
     def __str__(self):  return str(self.spec)
 

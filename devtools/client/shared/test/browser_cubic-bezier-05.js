@@ -11,10 +11,10 @@ const {CubicBezierPresetWidget} =
 const {PREDEFINED, PRESETS, DEFAULT_PRESET_CATEGORY} =
   require("devtools/client/shared/widgets/CubicBezierPresets");
 
-const TEST_URI = `data:text/html,<div id="cubic-bezier-container" />`;
+const TEST_URI = CHROME_URL_ROOT + "doc_cubic-bezier-01.html";
 
 add_task(function* () {
-  let [host, win, doc] = yield createHost("bottom", TEST_URI);
+  let [host,, doc] = yield createHost("bottom", TEST_URI);
 
   let container = doc.querySelector("#cubic-bezier-container");
   let w = new CubicBezierPresetWidget(container);
@@ -26,7 +26,7 @@ add_task(function* () {
     "The default category is selected");
   is(w._activePreset, null, "There is no selected category");
 
-  w.refreshMenu(PREDEFINED["linear"]);
+  w.refreshMenu(PREDEFINED.linear);
   is(w.activeCategory, container.querySelector("#ease-in-out"),
      "The ease-in-out category is active");
   is(w._activePreset, container.querySelector("#ease-in-out-linear"),

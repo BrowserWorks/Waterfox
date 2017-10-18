@@ -37,7 +37,7 @@ var addonIDs = ["test_bug393285_1@tests.mozilla.org",
 
 // A window watcher to deal with the blocklist UI dialog.
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, args) {
+  openWindow(parent, url, name, features, args) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
 
@@ -48,12 +48,12 @@ var WindowWatcher = {
         aItem.disable = true;
     });
 
-    //run the code after the blocklist is closed
-    Services.obs.notifyObservers(null, "addon-blocklist-closed", null);
+    // run the code after the blocklist is closed
+    Services.obs.notifyObservers(null, "addon-blocklist-closed");
 
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsIWindowWatcher)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -70,7 +70,7 @@ function load_blocklist(aFile, aCallback) {
     Services.obs.removeObserver(arguments.callee, "blocklist-updated");
 
     do_execute_soon(aCallback);
-  }, "blocklist-updated", false);
+  }, "blocklist-updated");
 
   Services.prefs.setCharPref("extensions.blocklist.url", "http://localhost:" +
                              gPort + "/data/" + aFile);

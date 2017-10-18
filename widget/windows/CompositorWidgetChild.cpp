@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CompositorWidgetChild.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/widget/CompositorWidgetVsyncObserver.h"
 #include "nsBaseWidget.h"
 #include "VsyncDispatcher.h"
@@ -60,18 +60,18 @@ CompositorWidgetChild::GetTransparentDC() const
   return nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorWidgetChild::RecvObserveVsync()
 {
   mVsyncDispatcher->SetCompositorVsyncObserver(mVsyncObserver);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CompositorWidgetChild::RecvUnobserveVsync()
 {
   mVsyncDispatcher->SetCompositorVsyncObserver(nullptr);
-  return true;
+  return IPC_OK();
 }
 
 } // namespace widget

@@ -42,14 +42,12 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 
-this.__defineGetter__("gDecimalSymbol", function() {
-    delete this.gDecimalSymbol;
-      return this.gDecimalSymbol = Number(5.4).toLocaleString().match(/\D/);
-});
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 var localeNumberFormatCache = new Map();
 function getLocaleNumberFormat(fractionDigits) {
@@ -76,27 +74,31 @@ var gStr = {
   transferSameUnits: "transferSameUnits2",
   transferDiffUnits: "transferDiffUnits2",
   transferNoTotal: "transferNoTotal2",
-  timePair: "timePair2",
-  timeLeftSingle: "timeLeftSingle2",
-  timeLeftDouble: "timeLeftDouble2",
-  timeFewSeconds: "timeFewSeconds",
-  timeUnknown: "timeUnknown",
+  timePair: "timePair3",
+  timeLeftSingle: "timeLeftSingle3",
+  timeLeftDouble: "timeLeftDouble3",
+  timeFewSeconds: "timeFewSeconds2",
+  timeUnknown: "timeUnknown2",
   monthDate: "monthDate2",
   yesterday: "yesterday",
   doneScheme: "doneScheme2",
   doneFileScheme: "doneFileScheme",
   units: ["bytes", "kilobyte", "megabyte", "gigabyte"],
   // Update timeSize in convertTimeUnits if changing the length of this array
-  timeUnits: ["seconds", "minutes", "hours", "days"],
+  timeUnits: ["shortSeconds", "shortMinutes", "shortHours", "shortDays"],
   infiniteRate: "infiniteRate",
 };
 
 // This lazily initializes the string bundle upon first use.
-this.__defineGetter__("gBundle", function() {
-  delete this.gBundle;
-  return this.gBundle = Cc["@mozilla.org/intl/stringbundle;1"].
-                        getService(Ci.nsIStringBundleService).
-                        createBundle(kDownloadProperties);
+Object.defineProperty(this, "gBundle", {
+  configurable: true,
+  enumerable: true,
+  get() {
+    delete this.gBundle;
+    return this.gBundle = Cc["@mozilla.org/intl/stringbundle;1"].
+                          getService(Ci.nsIStringBundleService).
+                          createBundle(kDownloadProperties);
+  },
 });
 
 // Keep track of at most this many second/lastSec pairs so that multiple calls
@@ -120,8 +122,7 @@ this.DownloadUtils = {
    * @return A pair: [download status text, new value of "last seconds"]
    */
   getDownloadStatus: function DU_getDownloadStatus(aCurrBytes, aMaxBytes,
-                                                   aSpeed, aLastSec)
-  {
+                                                   aSpeed, aLastSec) {
     let [transfer, timeLeft, newLast, normalizedSpeed]
       = this._deriveTransferRate(aCurrBytes, aMaxBytes, aSpeed, aLastSec);
 
@@ -133,8 +134,7 @@ this.DownloadUtils = {
       let params = [transfer, gBundle.GetStringFromName(gStr.infiniteRate), timeLeft];
       status = gBundle.formatStringFromName(gStr.statusFormatInfiniteRate, params,
                                             params.length);
-    }
-    else {
+    } else {
       let params = [transfer, rate, unit, timeLeft];
       status = gBundle.formatStringFromName(gStr.statusFormat, params,
                                             params.length);
@@ -160,8 +160,7 @@ this.DownloadUtils = {
    */
   getDownloadStatusNoRate:
   function DU_getDownloadStatusNoRate(aCurrBytes, aMaxBytes, aSpeed,
-                                      aLastSec)
-  {
+                                      aLastSec) {
     let [transfer, timeLeft, newLast]
       = this._deriveTransferRate(aCurrBytes, aMaxBytes, aSpeed, aLastSec);
 
@@ -187,8 +186,7 @@ this.DownloadUtils = {
    */
   _deriveTransferRate: function DU__deriveTransferRate(aCurrBytes,
                                                        aMaxBytes, aSpeed,
-                                                       aLastSec)
-  {
+                                                       aLastSec) {
     if (aMaxBytes == null)
       aMaxBytes = -1;
     if (aSpeed == null)
@@ -216,8 +214,7 @@ this.DownloadUtils = {
    *        Total number of bytes or -1 for unknown
    * @return The transfer progress text
    */
-  getTransferTotal: function DU_getTransferTotal(aCurrBytes, aMaxBytes)
-  {
+  getTransferTotal: function DU_getTransferTotal(aCurrBytes, aMaxBytes) {
     if (aMaxBytes == null)
       aMaxBytes = -1;
 
@@ -264,8 +261,7 @@ this.DownloadUtils = {
    *        Last time remaining in seconds or Infinity for unknown
    * @return A pair: [time left text, new value of "last seconds"]
    */
-  getTimeLeft: function DU_getTimeLeft(aSeconds, aLastSec)
-  {
+  getTimeLeft: function DU_getTimeLeft(aSeconds, aLastSec) {
     if (aLastSec == null)
       aLastSec = Infinity;
 
@@ -343,50 +339,39 @@ this.DownloadUtils = {
    *        and time of invocation is used if this parameter is omitted.
    * @return A pair: [compact text, complete text]
    */
-  getReadableDates: function DU_getReadableDates(aDate, aNow)
-  {
+  getReadableDates: function DU_getReadableDates(aDate, aNow) {
     if (!aNow) {
       aNow = new Date();
     }
 
-    let dts = Cc["@mozilla.org/intl/scriptabledateformat;1"]
-              .getService(Ci.nsIScriptableDateFormat);
-
     // Figure out when today begins
     let today = new Date(aNow.getFullYear(), aNow.getMonth(), aNow.getDate());
 
-    // Figure out if the time is from today, yesterday, this week, etc.
     let dateTimeCompact;
+    let dateTimeFull;
+
+    // Figure out if the time is from today, yesterday, this week, etc.
     if (aDate >= today) {
-      // After today started, show the time
-      dateTimeCompact = dts.FormatTime("",
-                                       dts.timeFormatNoSeconds,
-                                       aDate.getHours(),
-                                       aDate.getMinutes(),
-                                       0);
-    } else if (today - aDate < (24 * 60 * 60 * 1000)) {
+      let dts = Services.intl.createDateTimeFormat(undefined, {
+        timeStyle: "short"
+      });
+      dateTimeCompact = dts.format(aDate);
+    } else if (today - aDate < (MS_PER_DAY)) {
       // After yesterday started, show yesterday
       dateTimeCompact = gBundle.GetStringFromName(gStr.yesterday);
-    } else if (today - aDate < (6 * 24 * 60 * 60 * 1000)) {
+    } else if (today - aDate < (6 * MS_PER_DAY)) {
       // After last week started, show day of week
-      dateTimeCompact = aDate.toLocaleFormat("%A");
+      dateTimeCompact = aDate.toLocaleDateString(undefined, { weekday: "long" });
     } else {
       // Show month/day
-      let month = aDate.toLocaleFormat("%B");
-      // Remove leading 0 by converting the date string to a number
-      let date = Number(aDate.toLocaleFormat("%d"));
+      let month = aDate.toLocaleDateString(undefined, { month: "long" });
+      let date = aDate.getDate();
       dateTimeCompact = gBundle.formatStringFromName(gStr.monthDate, [month, date], 2);
     }
 
-    let dateTimeFull = dts.FormatDateTime("",
-                                          dts.dateFormatLong,
-                                          dts.timeFormatNoSeconds,
-                                          aDate.getFullYear(),
-                                          aDate.getMonth() + 1,
-                                          aDate.getDate(),
-                                          aDate.getHours(),
-                                          aDate.getMinutes(),
-                                          0);
+    const dtOptions = { dateStyle: "long", timeStyle: "short" };
+    dateTimeFull =
+      Services.intl.createDateTimeFormat(undefined, dtOptions).format(aDate);
 
     return [dateTimeCompact, dateTimeFull];
   },
@@ -399,8 +384,7 @@ this.DownloadUtils = {
    *        The URI string to try getting an eTLD + 1, etc.
    * @return A pair: [display host for the URI string, full host name]
    */
-  getURIHost: function DU_getURIHost(aURIString)
-  {
+  getURIHost: function DU_getURIHost(aURIString) {
     let ioService = Cc["@mozilla.org/network/io-service;1"].
                     getService(Ci.nsIIOService);
     let eTLDService = Cc["@mozilla.org/network/effective-tld-service;1"].
@@ -411,7 +395,7 @@ this.DownloadUtils = {
     // Get a URI that knows about its components
     let uri;
     try {
-      uri = ioService.newURI(aURIString, null, null);
+      uri = ioService.newURI(aURIString);
     } catch (ex) {
       return ["", ""];
     }
@@ -468,8 +452,7 @@ this.DownloadUtils = {
    *        Number of bytes to convert
    * @return A pair: [new value with 3 sig. figs., its unit]
    */
-  convertByteUnits: function DU_convertByteUnits(aBytes)
-  {
+  convertByteUnits: function DU_convertByteUnits(aBytes) {
     let unitIndex = 0;
 
     // Convert to next unit if it needs 4 digits (after rounding), but only if
@@ -488,16 +471,7 @@ this.DownloadUtils = {
     if (aBytes === Infinity) {
       aBytes = "Infinity";
     } else {
-      if (typeof Intl != "undefined") {
-        aBytes = getLocaleNumberFormat(fractionDigits)
-                   .format(aBytes);
-      } else {
-        // FIXME: Fall back to the old hack, will be fixed in bug 1200494.
-        aBytes = aBytes.toFixed(fractionDigits);
-        if (gDecimalSymbol != ".") {
-          aBytes = aBytes.replace(".", gDecimalSymbol);
-        }
-      }
+      aBytes = getLocaleNumberFormat(fractionDigits).format(aBytes);
     }
 
     return [aBytes, gBundle.GetStringFromName(gStr.units[unitIndex])];
@@ -511,8 +485,7 @@ this.DownloadUtils = {
    *        Seconds to convert into the appropriate 2 units
    * @return 4-item array [first value, its unit, second value, its unit]
    */
-  convertTimeUnits: function DU_convertTimeUnits(aSecs)
-  {
+  convertTimeUnits: function DU_convertTimeUnits(aSecs) {
     // These are the maximum values for seconds, minutes, hours corresponding
     // with gStr.timeUnits without the last item
     let timeSize = [60, 60, 24];
@@ -553,8 +526,7 @@ this.DownloadUtils = {
  *        Time value for display
  * @return An integer value for the time rounded down
  */
-function convertTimeUnitsValue(aTime)
-{
+function convertTimeUnitsValue(aTime) {
   return Math.floor(aTime);
 }
 
@@ -567,8 +539,7 @@ function convertTimeUnitsValue(aTime)
  *        Index into gStr.timeUnits for the appropriate unit
  * @return The appropriate plural form of the unit for the time
  */
-function convertTimeUnitsUnits(aTime, aIndex)
-{
+function convertTimeUnitsUnits(aTime, aIndex) {
   // Negative index would be an invalid unit, so just give empty
   if (aIndex < 0)
     return "";
@@ -582,8 +553,7 @@ function convertTimeUnitsUnits(aTime, aIndex)
  * @param aMsg
  *        Error message to log or an array of strings to concat
  */
-function log(aMsg)
-{
+function log(aMsg) {
   let msg = "DownloadUtils.jsm: " + (aMsg.join ? aMsg.join("") : aMsg);
   Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).
     logStringMessage(msg);

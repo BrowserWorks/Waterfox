@@ -11,6 +11,7 @@
 #include "RuleProcessorCache.h"
 
 #include <algorithm>
+#include "mozilla/CSSStyleSheet.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsThreadUtils.h"
 
@@ -24,10 +25,12 @@ NS_IMETHODIMP
 RuleProcessorCache::CollectReports(nsIHandleReportCallback* aHandleReport,
                                    nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/layout/rule-processor-cache", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(RuleProcessorCacheMallocSizeOf),
     "Memory used for cached rule processors.");
+
+  return NS_OK;
 }
 
 RuleProcessorCache::~RuleProcessorCache()
@@ -140,8 +143,8 @@ RuleProcessorCache::StopTracking(nsCSSRuleProcessor* aRuleProcessor)
 void
 RuleProcessorCache::DoRemoveSheet(CSSStyleSheet* aSheet)
 {
-  Entry* last = std::remove_if(mEntries.begin(), mEntries.end(),
-                               HasSheet_ThenRemoveRuleProcessors(this, aSheet));
+  auto last = std::remove_if(mEntries.begin(), mEntries.end(),
+                             HasSheet_ThenRemoveRuleProcessors(this, aSheet));
   mEntries.TruncateLength(last - mEntries.begin());
 }
 

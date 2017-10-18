@@ -17,7 +17,7 @@ class nsIURI;
 
 /**
  * Class to track what element is referenced by a given ID.
- * 
+ *
  * To use it, call Reset() to set it up to watch a given URI. Call get()
  * anytime to determine the referenced element (which may be null if
  * the element isn't found). When the element changes, ElementChanged
@@ -36,7 +36,9 @@ class nsReferencedElement {
 public:
   typedef mozilla::dom::Element Element;
 
-  nsReferencedElement() {}
+  nsReferencedElement()
+    : mReferencingImage(false)
+  {}
   ~nsReferencedElement() {
     Unlink();
   }
@@ -80,7 +82,7 @@ public:
   void Unlink();
 
   void Traverse(nsCycleCollectionTraversalCallback* aCB);
-  
+
 protected:
   /**
    * Override this to be notified of element changes. Don't forget
@@ -103,7 +105,7 @@ protected:
    */
   void HaveNewDocument(nsIDocument* aDocument, bool aWatch,
                        const nsString& aRef);
-  
+
 private:
   static bool Observe(Element* aOldElement,
                         Element* aNewElement, void* aData);
@@ -127,8 +129,12 @@ private:
   {
   public:
     ChangeNotification(nsReferencedElement* aTarget,
-                       Element* aFrom, Element* aTo)
-      : Notification(aTarget), mFrom(aFrom), mTo(aTo)
+                       Element* aFrom,
+                       Element* aTo)
+      : mozilla::Runnable("nsReferencedElement::ChangeNotification")
+      , Notification(aTarget)
+      , mFrom(aFrom)
+      , mTo(aTo)
     {}
 
     NS_DECL_ISUPPORTS_INHERITED
@@ -175,7 +181,7 @@ private:
     nsString mRef;
   };
   friend class DocumentLoadNotification;
-  
+
   nsCOMPtr<nsIAtom>      mWatchID;
   nsCOMPtr<nsIDocument>  mWatchDocument;
   RefPtr<Element> mElement;

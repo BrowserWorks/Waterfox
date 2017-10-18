@@ -8,13 +8,14 @@
 #define MFTDecoder_h_
 
 #include "WMF.h"
-#include "mozilla/RefPtr.h"
 #include "mozilla/ReentrantMonitor.h"
+#include "mozilla/RefPtr.h"
 #include "nsIThread.h"
 
 namespace mozilla {
 
-class MFTDecoder final {
+class MFTDecoder final
+{
   ~MFTDecoder();
 
 public:
@@ -36,7 +37,8 @@ public:
   //  - aOutputType needs at least major and minor types set.
   //    This is used to select the matching output type out
   //    of all the available output types of the MFT.
-  typedef HRESULT (*ConfigureOutputCallback)(IMFMediaType* aOutputType, void* aData);
+  typedef HRESULT (*ConfigureOutputCallback)(IMFMediaType* aOutputType,
+                                             void* aData);
   HRESULT SetMediaTypes(IMFMediaType* aInputType,
                         IMFMediaType* aOutputType,
                         ConfigureOutputCallback aCallback = nullptr,
@@ -85,11 +87,10 @@ public:
   // Sends a message to the MFT.
   HRESULT SendMFTMessage(MFT_MESSAGE_TYPE aMsg, ULONG_PTR aData);
 
-
-  HRESULT SetDecoderOutputType(ConfigureOutputCallback aCallback, void* aData);
+  HRESULT SetDecoderOutputType(bool aMatchAllAttributes,
+                               ConfigureOutputCallback aCallback,
+                               void* aData);
 private:
-
-
   HRESULT CreateOutputSample(RefPtr<IMFSample>* aOutSample);
 
   MFT_INPUT_STREAM_INFO mInputStreamInfo;
@@ -100,10 +101,10 @@ private:
   RefPtr<IMFMediaType> mOutputType;
 
   // True if the IMFTransform allocates the samples that it returns.
-  bool mMFTProvidesOutputSamples;
+  bool mMFTProvidesOutputSamples = false;
 
   // True if we need to mark the next sample as a discontinuity.
-  bool mDiscontinuity;
+  bool mDiscontinuity = true;
 };
 
 } // namespace mozilla

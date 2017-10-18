@@ -18,7 +18,7 @@
 
   <body>
 
-    <script type="application/javascript;version=1.8">
+    <script type="application/javascript">
       "use strict";
 
       const { utils: Cu } = Components;
@@ -33,7 +33,7 @@
       testEmitter({});
 
       Task.spawn(testPromise)
-          .then(null, ok.bind(null, false))
+          .catch(ok.bind(null, false))
           .then(SimpleTest.finish);
 
       function testEmitter(aObject) {

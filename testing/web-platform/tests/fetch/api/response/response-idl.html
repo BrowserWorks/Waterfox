@@ -18,6 +18,7 @@
       [NoInterfaceObject,
       Exposed=(Window,Worker)]
       interface Body {
+        readonly attribute ReadableStream? body;
         readonly attribute boolean bodyUsed;
         [NewObject] Promise<ArrayBuffer> arrayBuffer();
         [NewObject] Promise<Blob> blob();
@@ -40,7 +41,7 @@
         readonly attribute boolean ok;
         readonly attribute ByteString statusText;
         [SameObject] readonly attribute Headers headers;
-        readonly attribute ReadableStream? body;
+        readonly attribute Promise<Headers> trailer;
 
         [NewObject] Response clone();
       };
@@ -56,8 +57,8 @@
     </script>
     <script>
       var idlsArray = new IdlArray();
-      var idl = document.getElementById("body-idl").innerHTML
-      idl += document.getElementById("response-idl").innerHTML
+      var idl = document.getElementById("body-idl").textContent
+      idl += document.getElementById("response-idl").textContent
 
       idlsArray.add_idls(idl);
       idlsArray.add_untested_idls("interface Headers {};");

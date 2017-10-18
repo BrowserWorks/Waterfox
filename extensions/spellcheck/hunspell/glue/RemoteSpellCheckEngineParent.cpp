@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "RemoteSpellCheckEngineParent.h"
+#include "mozilla/Unused.h"
 #include "nsISpellChecker.h"
 #include "nsServiceManagerUtils.h"
 
@@ -18,17 +19,34 @@ RemoteSpellcheckEngineParent::~RemoteSpellcheckEngineParent()
 {
 }
 
-bool
+mozilla::ipc::IPCResult
 RemoteSpellcheckEngineParent::RecvSetDictionary(
   const nsString& aDictionary,
   bool* success)
 {
   nsresult rv = mSpellChecker->SetCurrentDictionary(aDictionary);
   *success = NS_SUCCEEDED(rv);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
+RemoteSpellcheckEngineParent::RecvSetDictionaryFromList(
+                                nsTArray<nsString>&& aList,
+                                const intptr_t& aPromiseId)
+{
+  for (auto& dictionary : aList) {
+    MOZ_ASSERT(!dictionary.IsEmpty());
+    nsresult rv = mSpellChecker->SetCurrentDictionary(dictionary);
+    if (NS_SUCCEEDED(rv)) {
+      Unused << SendNotifyOfCurrentDictionary(dictionary, aPromiseId);
+      return IPC_OK();
+    }
+  }
+  Unused << SendNotifyOfCurrentDictionary(EmptyString(), aPromiseId);
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
 RemoteSpellcheckEngineParent::RecvCheck(
   const nsString& aWord,
   bool* aIsMisspelled)
@@ -38,10 +56,10 @@ RemoteSpellcheckEngineParent::RecvCheck(
   // If CheckWord failed, we can't tell whether the word is correctly spelled.
   if (NS_FAILED(rv))
     *aIsMisspelled = false;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemoteSpellcheckEngineParent::RecvCheckAndSuggest(
   const nsString& aWord,
   bool* aIsMisspelled,
@@ -52,7 +70,7 @@ RemoteSpellcheckEngineParent::RecvCheckAndSuggest(
     aSuggestions->Clear();
     *aIsMisspelled = false;
   }
-  return true;
+  return IPC_OK();
 }
 
 void

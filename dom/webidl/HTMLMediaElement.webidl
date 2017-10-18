@@ -17,18 +17,18 @@ interface HTMLMediaElement : HTMLElement {
   readonly attribute MediaError? error;
 
   // network state
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute DOMString src;
   readonly attribute DOMString currentSrc;
 
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute DOMString? crossOrigin;
   const unsigned short NETWORK_EMPTY = 0;
   const unsigned short NETWORK_IDLE = 1;
   const unsigned short NETWORK_LOADING = 2;
   const unsigned short NETWORK_NO_SOURCE = 3;
   readonly attribute unsigned short networkState;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute DOMString preload;
   [NewObject]
   readonly attribute TimeRanges buffered;
@@ -63,12 +63,12 @@ interface HTMLMediaElement : HTMLElement {
   [NewObject]
   readonly attribute TimeRanges seekable;
   readonly attribute boolean ended;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute boolean autoplay;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute boolean loop;
   [Throws]
-  void play();
+  Promise<void> play();
   [Throws]
   void pause();
 
@@ -78,12 +78,12 @@ interface HTMLMediaElement : HTMLElement {
   //         attribute MediaController? controller;
 
   // controls
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute boolean controls;
   [SetterThrows]
            attribute double volume;
            attribute boolean muted;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute boolean defaultMuted;
 
   // TODO: Bug 847379
@@ -100,10 +100,12 @@ interface HTMLMediaElement : HTMLElement {
 
 // Mozilla extensions:
 partial interface HTMLMediaElement {
-  [ChromeOnly]
+  [Func="HasDebuggerOrTabsPrivilege"]
   readonly attribute MediaSource? mozMediaSourceObject;
-  [ChromeOnly]
+  [Func="HasDebuggerOrTabsPrivilege"]
   readonly attribute DOMString mozDebugReaderData;
+  [Func="HasDebuggerOrTabsPrivilege", NewObject]
+  Promise<DOMString> mozRequestDebugInfo();
 
   [Pref="media.test.dumpDebugInfo"]
   void mozDumpDebugInfo();
@@ -137,36 +139,22 @@ partial interface HTMLMediaElement {
   // it is equal to the media duration.
   readonly attribute double mozFragmentEnd;
 
-  // Mozilla extension: an audio channel type for media elements.
-  // Read AudioChannel.webidl for more information about this attribute.
-  [SetterThrows, Pref="media.useAudioChannelAPI"]
-  attribute AudioChannel mozAudioChannelType;
-
-  // In addition the media element has this new events:
-  // * onmozinterruptbegin - called when the media element is interrupted
-  //   because of the audiochannel manager.
-  // * onmozinterruptend - called when the interruption is concluded
-  [Pref="media.useAudioChannelAPI"]
-  attribute EventHandler onmozinterruptbegin;
-
-  [Pref="media.useAudioChannelAPI"]
-  attribute EventHandler onmozinterruptend;
+  [ChromeOnly]
+  void reportCanPlayTelemetry();
 };
 
-#ifdef MOZ_EME
 // Encrypted Media Extensions
 partial interface HTMLMediaElement {
-  [Pref="media.eme.apiVisible"]
   readonly attribute MediaKeys? mediaKeys;
 
   // void, not any: https://www.w3.org/Bugs/Public/show_bug.cgi?id=26457
-  [Pref="media.eme.apiVisible", NewObject]
+  [NewObject]
   Promise<void> setMediaKeys(MediaKeys? mediaKeys);
 
-  [Pref="media.eme.apiVisible"]
   attribute EventHandler onencrypted;
+
+  attribute EventHandler onwaitingforkey;
 };
-#endif
 
 // This is just for testing
 partial interface HTMLMediaElement {
@@ -211,4 +199,21 @@ partial interface HTMLMediaElement {
 partial interface HTMLMediaElement {
   [Throws, Pref="media.seekToNextFrame.enabled"]
   Promise<void> seekToNextFrame();
+};
+
+/*
+ * This is an API for simulating visibility changes to help debug and write
+ * tests about suspend-video-decoding.
+ *
+ * - SetVisible() is for simulating visibility changes.
+ * - HasSuspendTaint() is for querying that the element's decoder cannot suspend
+ *   video decoding because it has been tainted by an operation, such as
+ *   drawImage().
+ */
+partial interface HTMLMediaElement {
+  [Pref="media.test.video-suspend"]
+  void setVisible(boolean aVisible);
+
+  [Pref="media.test.video-suspend"]
+  boolean hasSuspendTaint();
 };

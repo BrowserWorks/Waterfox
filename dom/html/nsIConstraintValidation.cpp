@@ -8,6 +8,7 @@
 
 #include "nsAString.h"
 #include "nsGenericHTMLElement.h"
+#include "mozilla/ErrorResult.h"
 #include "mozilla/dom/HTMLFormElement.h"
 #include "mozilla/dom/HTMLFieldSetElement.h"
 #include "mozilla/dom/HTMLInputElement.h"
@@ -54,8 +55,9 @@ nsIConstraintValidation::GetValidity(nsIDOMValidityState** aValidity)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsIConstraintValidation::GetValidationMessage(nsAString& aValidationMessage)
+void
+nsIConstraintValidation::GetValidationMessage(nsAString& aValidationMessage,
+                                              ErrorResult& aError)
 {
   aValidationMessage.Truncate();
 
@@ -79,6 +81,8 @@ nsIConstraintValidation::GetValidationMessage(nsAString& aValidationMessage)
       }
     } else if (GetValidityState(VALIDITY_STATE_TOO_LONG)) {
       GetValidationMessage(aValidationMessage, VALIDITY_STATE_TOO_LONG);
+    } else if (GetValidityState(VALIDITY_STATE_TOO_SHORT)) {
+      GetValidationMessage(aValidationMessage, VALIDITY_STATE_TOO_SHORT);
     } else if (GetValidityState(VALIDITY_STATE_VALUE_MISSING)) {
       GetValidationMessage(aValidationMessage, VALIDITY_STATE_VALUE_MISSING);
     } else if (GetValidityState(VALIDITY_STATE_TYPE_MISMATCH)) {
@@ -95,13 +99,12 @@ nsIConstraintValidation::GetValidationMessage(nsAString& aValidationMessage)
       GetValidationMessage(aValidationMessage, VALIDITY_STATE_BAD_INPUT);
     } else {
       // There should not be other validity states.
-      return NS_ERROR_UNEXPECTED;
+      aError.Throw(NS_ERROR_UNEXPECTED);
+      return;
     }
   } else {
     aValidationMessage.Truncate();
   }
-
-  return NS_OK;
 }
 
 bool

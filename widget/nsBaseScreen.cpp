@@ -13,8 +13,6 @@ NS_IMPL_ISUPPORTS(nsBaseScreen, nsIScreen)
 
 nsBaseScreen::nsBaseScreen()
 {
-  for (uint32_t i = 0; i < nsIScreen::BRIGHTNESS_LEVELS; i++)
-    mBrightnessLocks[i] = 0;
 }
 
 nsBaseScreen::~nsBaseScreen() { }
@@ -34,48 +32,6 @@ nsBaseScreen::GetAvailRectDisplayPix(int32_t *outLeft,  int32_t *outTop,
 }
 
 NS_IMETHODIMP
-nsBaseScreen::LockMinimumBrightness(uint32_t aBrightness)
-{
-  MOZ_ASSERT(aBrightness < nsIScreen::BRIGHTNESS_LEVELS,
-             "Invalid brightness level to lock");
-  mBrightnessLocks[aBrightness]++;
-  MOZ_ASSERT(mBrightnessLocks[aBrightness] > 0,
-             "Overflow after locking brightness level");
-
-  CheckMinimumBrightness();
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsBaseScreen::UnlockMinimumBrightness(uint32_t aBrightness)
-{
-  MOZ_ASSERT(aBrightness < nsIScreen::BRIGHTNESS_LEVELS,
-             "Invalid brightness level to lock");
-  MOZ_ASSERT(mBrightnessLocks[aBrightness] > 0,
-             "Unlocking a brightness level with no corresponding lock");
-  mBrightnessLocks[aBrightness]--;
-
-  CheckMinimumBrightness();
-
-  return NS_OK;
-}
-
-void
-nsBaseScreen::CheckMinimumBrightness()
-{
-  uint32_t brightness = nsIScreen::BRIGHTNESS_LEVELS;
-  for (int32_t i = nsIScreen::BRIGHTNESS_LEVELS - 1; i >=0; i--) {
-    if (mBrightnessLocks[i] > 0) {
-      brightness = i;
-      break;
-    }
-  }
-
-  ApplyMinimumBrightness(brightness);
-}
-
-NS_IMETHODIMP
 nsBaseScreen::GetContentsScaleFactor(double* aContentsScaleFactor)
 {
   *aContentsScaleFactor = 1.0;
@@ -86,5 +42,12 @@ NS_IMETHODIMP
 nsBaseScreen::GetDefaultCSSScaleFactor(double* aScaleFactor)
 {
   *aScaleFactor = 1.0;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsBaseScreen::GetDpi(float* aDPI)
+{
+  *aDPI = 96;
   return NS_OK;
 }

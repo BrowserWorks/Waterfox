@@ -19,6 +19,7 @@ class imgIContainer;
 class imgRequestProxy;
 
 class nsBulletFrame;
+class BulletRenderer;
 
 class nsBulletListener final : public imgINotificationObserver,
                                public imgIOnloadBlocker
@@ -46,19 +47,20 @@ class nsBulletFrame final : public nsFrame {
   typedef mozilla::image::DrawResult DrawResult;
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBulletFrame)
 #ifdef DEBUG
-  NS_DECL_QUERYFRAME_TARGET(nsBulletFrame)
   NS_DECL_QUERYFRAME
 #endif
 
   explicit nsBulletFrame(nsStyleContext* aContext)
-    : nsFrame(aContext)
+    : nsFrame(aContext, kClassID)
     , mPadding(GetWritingMode())
     , mIntrinsicSize(GetWritingMode())
+    , mOrdinal(0)
     , mRequestRegistered(false)
     , mBlockingOnload(false)
-  { }
+  {}
+
   virtual ~nsBulletFrame();
 
   NS_IMETHOD Notify(imgIRequest* aRequest, int32_t aType, const nsIntRect* aData);
@@ -70,7 +72,6 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
-  virtual nsIAtom* GetType() const override;
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -80,11 +81,11 @@ public:
                       ReflowOutput& aMetrics,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus& aStatus) override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-  void AddInlineMinISize(nsRenderingContext* aRenderingContext,
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
+  void AddInlineMinISize(gfxContext* aRenderingContext,
                          nsIFrame::InlineMinISizeData* aData) override;
-  void AddInlinePrefISize(nsRenderingContext* aRenderingContext,
+  void AddInlinePrefISize(gfxContext* aRenderingContext,
                           nsIFrame::InlinePrefISizeData* aData) override;
 
   // nsBulletFrame
@@ -95,11 +96,13 @@ public:
   void GetListItemText(nsAString& aResult);
 
   void GetSpokenText(nsAString& aText);
-                         
-  DrawResult PaintBullet(nsRenderingContext& aRenderingContext, nsPoint aPt,
+
+  Maybe<BulletRenderer>
+  CreateBulletRenderer(gfxContext& aRenderingContext, nsPoint aPt);
+  DrawResult PaintBullet(gfxContext& aRenderingContext, nsPoint aPt,
                          const nsRect& aDirtyRect, uint32_t aFlags,
                          bool aDisableSubpixelAA);
-  
+
   virtual bool IsEmpty() override;
   virtual bool IsSelfEmpty() override;
   virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;
@@ -120,7 +123,7 @@ protected:
   void AppendSpacingToPadding(nsFontMetrics* aFontMetrics,
                               mozilla::LogicalMargin* aPadding);
   void GetDesiredSize(nsPresContext* aPresContext,
-                      nsRenderingContext *aRenderingContext,
+                      gfxContext *aRenderingContext,
                       ReflowOutput& aMetrics,
                       float aFontSizeInflation,
                       mozilla::LogicalMargin* aPadding);

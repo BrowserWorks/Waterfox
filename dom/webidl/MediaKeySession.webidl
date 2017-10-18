@@ -10,13 +10,11 @@
  * W3C liability, trademark and document use rules apply.
  */
 
-[Pref="media.eme.apiVisible"]
 interface MediaKeySession : EventTarget {
   // error state
   readonly attribute MediaKeyError? error;
 
   // session properties
-  readonly attribute DOMString keySystem;
   readonly attribute DOMString sessionId;
 
   readonly attribute unrestricted double expiration;
@@ -24,6 +22,10 @@ interface MediaKeySession : EventTarget {
   readonly attribute Promise<void> closed;
 
   readonly attribute MediaKeyStatusMap keyStatuses;
+
+  attribute EventHandler onkeystatuseschange;
+
+  attribute EventHandler onmessage;
 
   [NewObject]
   Promise<void> generateRequest(DOMString initDataType, BufferSource initData);

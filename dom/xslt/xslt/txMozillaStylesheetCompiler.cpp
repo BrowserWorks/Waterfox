@@ -37,11 +37,10 @@
 #include "nsError.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 #include "mozilla/UniquePtr.h"
 
 using namespace mozilla;
-using mozilla::dom::EncodingUtils;
 using mozilla::net::ReferrerPolicy;
 
 static NS_DEFINE_CID(kCParserCID, NS_PARSER_CID);
@@ -84,8 +83,9 @@ public:
     NS_IMETHOD WillInterrupt(void) override { return NS_OK; }
     NS_IMETHOD WillResume(void) override { return NS_OK; }
     NS_IMETHOD SetParser(nsParserBase* aParser) override { return NS_OK; }
-    virtual void FlushPendingNotifications(mozFlushType aType) override { }
-    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override { return NS_OK; }
+    virtual void FlushPendingNotifications(mozilla::FlushType aType) override { }
+    virtual void SetDocumentCharset(NotNull<const Encoding*> aEncoding)
+      override { }
     virtual nsISupports *GetTarget() override { return nullptr; }
 
 private:
@@ -133,7 +133,7 @@ txStylesheetSink::HandleStartElement(const char16_t *aName,
 
         return rv;
     }
-    
+
     return NS_OK;
 }
 
@@ -217,9 +217,9 @@ txStylesheetSink::ReportError(const char16_t *aErrorText,
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 txStylesheetSink::DidBuildModel(bool aTerminated)
-{  
+{
     return mCompiler->doneLoading();
 }
 
@@ -257,19 +257,20 @@ txStylesheetSink::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext)
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
 
     // check channel's charset...
+    const Encoding* encoding = nullptr;
     nsAutoCString charsetVal;
-    nsAutoCString charset;
     if (NS_SUCCEEDED(channel->GetContentCharset(charsetVal))) {
-        if (EncodingUtils::FindEncodingForLabel(charsetVal, charset)) {
+        encoding = Encoding::ForLabel(charsetVal);
+        if (encoding) {
             charsetSource = kCharsetFromChannel;
         }
     }
 
-    if (charset.IsEmpty()) {
-      charset.AssignLiteral("UTF-8");
+    if (!encoding) {
+        encoding = UTF_8_ENCODING;
     }
 
-    mParser->SetDocumentCharset(charset, charsetSource);
+    mParser->SetDocumentCharset(WrapNotNull(encoding), charsetSource);
 
     nsAutoCString contentType;
     channel->GetContentType(contentType);
@@ -308,7 +309,7 @@ txStylesheetSink::OnStopRequest(nsIRequest *aRequest, nsISupports *aContext,
 
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(aRequest);
     if (httpChannel) {
-        httpChannel->GetRequestSucceeded(&success);
+        Unused << httpChannel->GetRequestSucceeded(&success);
     }
 
     nsresult result = aStatusCode;
@@ -414,7 +415,7 @@ txCompileObserver::loadURI(const nsAString& aUri,
     rv = NS_NewURI(getter_AddRefs(referrerUri), aReferrerUri);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> referrerPrincipal =
       BasePrincipal::CreateCodebasePrincipal(referrerUri, attrs);
     NS_ENSURE_TRUE(referrerPrincipal, NS_ERROR_FAILURE);
@@ -462,14 +463,17 @@ txCompileObserver::startLoad(nsIURI* aUri, txStylesheetCompiler* aCompiler,
 
     nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
     if (httpChannel) {
-        httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
-                                      NS_LITERAL_CSTRING("*/*"),
-                                      false);
+        DebugOnly<nsresult> rv;
+        rv = httpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
+                                           NS_LITERAL_CSTRING("*/*"),
+                                           false);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
 
         nsCOMPtr<nsIURI> referrerURI;
         aReferrerPrincipal->GetURI(getter_AddRefs(referrerURI));
         if (referrerURI) {
-            httpChannel->SetReferrerWithPolicy(referrerURI, aReferrerPolicy);
+            rv = httpChannel->SetReferrerWithPolicy(referrerURI, aReferrerPolicy);
+            MOZ_ASSERT(NS_SUCCEEDED(rv));
         }
     }
 
@@ -518,7 +522,7 @@ static nsresult
 handleNode(nsINode* aNode, txStylesheetCompiler* aCompiler)
 {
     nsresult rv = NS_OK;
-    
+
     if (aNode->IsElement()) {
         dom::Element* element = aNode->AsElement();
 
@@ -551,7 +555,7 @@ handleNode(nsINode* aNode, txStylesheetCompiler* aCompiler)
         for (nsIContent* child = element->GetFirstChild();
              child;
              child = child->GetNextSibling()) {
-             
+
             rv = handleNode(child, aCompiler);
             NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -569,7 +573,7 @@ handleNode(nsINode* aNode, txStylesheetCompiler* aCompiler)
         for (nsIContent* child = aNode->GetFirstChild();
              child;
              child = child->GetNextSibling()) {
-             
+
             rv = handleNode(child, aCompiler);
             NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -619,7 +623,7 @@ txSyncCompileObserver::loadURI(const nsAString& aUri,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIPrincipal> referrerPrincipal =
-      BasePrincipal::CreateCodebasePrincipal(referrerUri, PrincipalOriginAttributes());
+      BasePrincipal::CreateCodebasePrincipal(referrerUri, OriginAttributes());
     NS_ENSURE_TRUE(referrerPrincipal, NS_ERROR_FAILURE);
 
     // This is probably called by js, a loadGroup for the channel doesn't
@@ -671,12 +675,12 @@ TX_CompileStylesheet(nsINode* aNode, txMozillaXSLTProcessor* aProcessor,
     if (aNode->IsNodeOfType(nsINode::eCONTENT)) {
       uri = static_cast<nsIContent*>(aNode)->GetBaseURI();
     }
-    else { 
+    else {
       NS_ASSERTION(aNode->IsNodeOfType(nsINode::eDOCUMENT), "not a doc");
       uri = static_cast<nsIDocument*>(aNode)->GetBaseURI();
     }
     NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
-    
+
     nsAutoCString spec;
     uri->GetSpec(spec);
     NS_ConvertUTF8toUTF16 baseURI(spec);
@@ -710,7 +714,7 @@ TX_CompileStylesheet(nsINode* aNode, txMozillaXSLTProcessor* aProcessor,
 
     rv = compiler->doneLoading();
     NS_ENSURE_SUCCESS(rv, rv);
-    
+
     *aStylesheet = compiler->getStylesheet();
     NS_ADDREF(*aStylesheet);
 

@@ -16,7 +16,7 @@ function testLinkVistedObserver()
   const NS_LINK_VISITED_EVENT_TOPIC = "link-visited";
   var ios = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService);
-  var testURI = ios.newURI("http://google.com/", null, null);
+  var testURI = ios.newURI("http://google.com/");
 
   var gh = Cc["@mozilla.org/browser/global-history;2"].
            getService(Ci.nsIGlobalHistory2);
@@ -35,7 +35,7 @@ function testLinkVistedObserver()
 
   var os = Cc["@mozilla.org/observer-service;1"].
            getService(Ci.nsIObserverService);
-  os.addObserver(obs, NS_LINK_VISITED_EVENT_TOPIC, false);
+  os.addObserver(obs, NS_LINK_VISITED_EVENT_TOPIC);
 
   var dh = Components.classesByID[NS_DOWNLOADHISTORY_CID].
            getService(Ci.nsIDownloadHistory);

@@ -5,19 +5,19 @@
 // the urlbar also shows the URLs embedded in action URIs unescaped.  See bug
 // 1233672.
 
-add_task(function* injectJSON() {
+add_task(async function injectJSON() {
   let inputStrs = [
-    'http://example.com/ ", "url": "bar' ,
-    'http://example.com/\\' ,
-    'http://example.com/"' ,
-    'http://example.com/","url":"evil.com' ,
-    'http://mozilla.org/\\u0020' ,
-    'http://www.mozilla.org/","url":1e6,"some-key":"foo' ,
-    'http://www.mozilla.org/","url":null,"some-key":"foo' ,
-    'http://www.mozilla.org/","url":["foo","bar"],"some-key":"foo' ,
+    'http://example.com/ ", "url": "bar',
+    "http://example.com/\\",
+    'http://example.com/"',
+    'http://example.com/","url":"evil.com',
+    "http://mozilla.org/\\u0020",
+    'http://www.mozilla.org/","url":1e6,"some-key":"foo',
+    'http://www.mozilla.org/","url":null,"some-key":"foo',
+    'http://www.mozilla.org/","url":["foo","bar"],"some-key":"foo',
   ];
   for (let inputStr of inputStrs) {
-    yield checkInput(inputStr);
+    await checkInput(inputStr);
   }
   gURLBar.value = "";
   gURLBar.handleRevert();
@@ -25,19 +25,21 @@ add_task(function* injectJSON() {
 });
 
 add_task(function losslessDecode() {
-  let url = "http://example.com/\u30a2\u30a4\u30a6\u30a8\u30aa";
+  let urlNoScheme = "example.com/\u30a2\u30a4\u30a6\u30a8\u30aa";
+  let url = "http://" + urlNoScheme;
   gURLBar.textValue = url;
-  Assert.equal(gURLBar.inputField.value, url,
+  // Since this is directly setting textValue, it is expected to be trimmed.
+  Assert.equal(gURLBar.inputField.value, urlNoScheme,
                "The string displayed in the textbox should not be escaped");
   gURLBar.value = "";
   gURLBar.handleRevert();
   gURLBar.blur();
 });
 
-add_task(function* actionURILosslessDecode() {
+add_task(async function actionURILosslessDecode() {
   let urlNoScheme = "example.com/\u30a2\u30a4\u30a6\u30a8\u30aa";
   let url = "http://" + urlNoScheme;
-  yield promiseAutocompleteResultPopup(url);
+  await promiseAutocompleteResultPopup(url);
 
   // At this point the heuristic result is selected but the urlbar's value is
   // simply `url`.  Key down and back around until the heuristic result is
@@ -48,7 +50,7 @@ add_task(function* actionURILosslessDecode() {
     gURLBar.controller.handleKeyNavigation(KeyEvent.DOM_VK_DOWN);
   } while (gURLBar.popup.selectedIndex != 0);
 
-  let [, type, params] = gURLBar.value.match(/^moz-action:([^,]+),(.*)$/);
+  let [, type, ] = gURLBar.value.match(/^moz-action:([^,]+),(.*)$/);
   Assert.equal(type, "visiturl",
                "visiturl action URI should be in the urlbar");
 
@@ -60,8 +62,8 @@ add_task(function* actionURILosslessDecode() {
   gURLBar.blur();
 });
 
-function* checkInput(inputStr) {
-  yield promiseAutocompleteResultPopup(inputStr);
+async function checkInput(inputStr) {
+  await promiseAutocompleteResultPopup(inputStr);
 
   let item = gURLBar.popup.richlistbox.firstChild;
   Assert.ok(item, "Should have a result");
@@ -84,12 +86,12 @@ function* checkInput(inputStr) {
   let expectedURL = "moz-action:" + type + "," + JSON.stringify(params);
   Assert.equal(item.getAttribute("url"), expectedURL, "url");
 
-  Assert.equal(item.getAttribute("title"), inputStr.replace("\\","/"), "title");
+  Assert.equal(item.getAttribute("title"), inputStr.replace("\\", "/"), "title");
   Assert.equal(item.getAttribute("text"), inputStr, "text");
 
   let itemType = item.getAttribute("type");
   Assert.equal(itemType, "visiturl");
 
-  Assert.equal(item._titleText.textContent, inputStr.replace("\\","/"), "Visible title");
+  Assert.equal(item._titleText.textContent, inputStr.replace("\\", "/"), "Visible title");
   Assert.equal(item._actionText.textContent, "Visit", "Visible action");
 }

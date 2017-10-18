@@ -12,6 +12,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
+Cu.import('resource://gre/modules/Services.jsm');
 
 ////////////////////////////////////////////////////////////////////////////////
 //// nsWebHandler class
@@ -76,7 +77,7 @@ nsWebHandlerApp.prototype = {
     var uriSpecToSend = this.uriTemplate.replace("%s", escapedUriSpecToHandle);
     var ioService = Cc["@mozilla.org/network/io-service;1"].
                     getService(Ci.nsIIOService);
-    var uriToSend = ioService.newURI(uriSpecToSend, null, null);
+    var uriToSend = ioService.newURI(uriSpecToSend);
     
     // if we have a window context, use the URI loader to load there
     if (aWindowContext) {
@@ -141,9 +142,10 @@ nsWebHandlerApp.prototype = {
 
     // openURI
     browserDOMWin.openURI(uriToSend,
-                          null, // no window.opener 
+                          null, // no window.opener
                           Ci.nsIBrowserDOMWindow.OPEN_DEFAULTWINDOW,
-                          Ci.nsIBrowserDOMWindow.OPEN_NEW);
+                          Ci.nsIBrowserDOMWindow.OPEN_NEW,
+                          Services.scriptSecurityManager.getSystemPrincipal());
       
     return;
   },

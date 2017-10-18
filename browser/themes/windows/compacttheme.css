@@ -1,0 +1,248 @@
+% This Source Code Form is subject to the terms of the Mozilla Public
+% License, v. 2.0. If a copy of the MPL was not distributed with this
+% file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+%include ../shared/compacttheme.inc.css
+
+:root {
+   /* Matches the #browser-border-start, #browser-border-end color */
+  --chrome-nav-bar-separator-color: rgba(10, 31, 51, 0.35);
+}
+
+/* The window background is white due to no accentcolor in the lightweight
+   theme. It can't be changed to transparent when there is no compositor
+   (Win 7 in classic / basic theme), or else dragging and focus become
+   broken. So instead just show the normal titlebar in that case, and override
+   the window color as transparent when the compositor is available. */
+@media (-moz-windows-compositor: 0) {
+  #main-window[tabsintitlebar] #titlebar:-moz-lwtheme {
+    visibility: visible;
+  }
+
+  #main-window {
+    background: var(--chrome-background-color) !important;
+  }
+}
+
+@media (-moz-windows-compositor) {
+  #main-window {
+    background: transparent !important;
+  }
+}
+
+#TabsToolbar::after {
+  display: none;
+}
+
+.tabbrowser-tab {
+  background-color: var(--tab-background-color);
+}
+
+#toolbar-menubar {
+  text-shadow: none !important;
+}
+
+.findbar-closebutton:-moz-lwtheme-brighttext,
+/* Tab styling - make sure to use an inverted icon for the selected tab
+   (brighttext only covers the unselected tabs) */
+.tab-close-button[selected=true] {
+  list-style-image: url("chrome://global/skin/icons/close-inverted.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  .findbar-closebutton:-moz-lwtheme-brighttext,
+  .tab-close-button[selected=true] {
+    list-style-image: url("chrome://global/skin/icons/close-inverted@2x.png");
+  }
+}
+
+/* Override tab close icon (to disable inversion) for better contrast with
+   light theme on Windows 7 Classic theme. */
+@media not all and (min-resolution: 1.1dppx) {
+  #TabsToolbar[brighttext] .tab-close-button:-moz-lwtheme-darktext:not([selected="true"]) {
+    list-style-image: url("chrome://global/skin/icons/close.png");
+  }
+}
+
+@media (min-resolution: 1.1dppx) {
+  #TabsToolbar[brighttext] .tab-close-button:-moz-lwtheme-darktext:not([selected="true"]) {
+    list-style-image: url("chrome://global/skin/icons/close@2x.png");
+  }
+}
+
+@media (-moz-os-version: windows-win7),
+       (-moz-os-version: windows-win8) {
+%ifndef MOZ_PHOTON_THEME
+  :root {
+    --space-above-tabbar: 15px;
+  }
+%endif
+  /* It'd be nice if there was an element in the scrollbox's inner content
+     that collapsed to the current width of the tabs. Since there isn't we
+     need to handle overflowing and non-overflowing tabs separately.
+
+     In the case of overflowing tabs, set a border-top on the entire container,
+     otherwise we need to set it on each element individually */
+  #main-window[sizemode=normal] .tabbrowser-tabs[overflow="true"] {
+    background-clip: padding-box;
+    border-top: 1px solid var(--chrome-nav-bar-separator-color);
+    border-inline-end: 1px solid var(--chrome-nav-bar-separator-color);
+    background-color: var(--tab-background-color); /* Make sure there is no transparent gap during tab close animation */
+  }
+
+  /* Add a border to the left of the first tab (or scroll arrow).  Using .tabbrowser-tabs
+     instead of #TabsToolbar because it will work even in customize mode. */
+  #main-window[sizemode=normal] .tabbrowser-tabs {
+    background-clip: padding-box;
+    border-inline-start: 1px solid var(--chrome-nav-bar-separator-color);
+    border-inline-end: 1px solid transparent;
+  }
+
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabbrowser-tab,
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabbrowser-arrowscrollbox > .scrollbutton-down,
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabbrowser-arrowscrollbox > .scrollbutton-up,
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabs-newtab-button {
+    background-clip: padding-box;
+    border-top: 1px solid var(--chrome-nav-bar-separator-color);
+  }
+
+  /* Allow the border-top rule to take effect */
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabbrowser-tab {
+    -moz-border-top-colors: none;
+  }
+
+  #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .closing-tabs-spacer {
+    background-clip: padding-box;
+    border-inline-start: 1px solid var(--chrome-nav-bar-separator-color);
+  }
+
+  .tabs-newtab-button {
+    background: var(--tab-background-color);
+  }
+
+  /* Use default window colors when in non-maximized mode */
+  #tabbrowser-tabs,
+  #TabsToolbar,
+  #browser-panel,
+  #titlebar-content {
+    background: transparent;
+  }
+
+  /* Ensure that the entire background is styled when maximized/fullscreen */
+  #main-window:not([sizemode="normal"]):not([customizing]) #browser-panel {
+    background: var(--chrome-background-color) !important;
+  }
+
+  /* The menu items need to be visible when the entire background is styled */
+  #main-window:not([sizemode="normal"]) #main-menubar {
+    color: var(--chrome-color);
+    background-color: transparent;
+  }
+
+  #main-window[sizemode="maximized"] #main-menubar > menu:not(:-moz-window-inactive) {
+    color: inherit;
+  }
+
+  /* Use proper menu text styling in Win7 classic mode (copied from browser.css) */
+  @media (-moz-windows-compositor: 0),
+         (-moz-windows-default-theme: 0) {
+    :root[tabsintitlebar]:not([inFullscreen]) {
+      --titlebar-text-color: CaptionText;
+    }
+
+    :root[tabsintitlebar]:not([inFullscreen]):-moz-window-inactive {
+      --titlebar-text-color: InactiveCaptionText;
+    }
+
+    #main-window[tabsintitlebar] #main-menubar > menu {
+      color: inherit;
+    }
+  }
+
+  /* Use less opacity than normal since this is very dark, and on top of the default toolbar color */
+  .tabbrowser-arrowscrollbox > .scrollbutton-up[disabled],
+  .tabbrowser-arrowscrollbox > .scrollbutton-down[disabled] {
+    opacity: .6;
+  }
+
+  /* Override scrollbutton gradients in normal and hover state */
+  .tabbrowser-arrowscrollbox > .scrollbutton-down,
+  .tabbrowser-arrowscrollbox > .scrollbutton-up {
+    background-image: none !important;
+    transition: none; /* scrollbutton-down has an unwanted transition on background color */
+  }
+
+  /* Restore draggable space on the sides of tabs when maximized */
+  #main-window[sizemode="maximized"] .tabbrowser-arrowscrollbox > .arrowscrollbox-scrollbox {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  /* Override the padding that's intended to compensate for tabs that can overlap border-radius on nav-bar in default theme. */
+  #main-window[sizemode=normal]:not([customizing]) #TabsToolbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Restored windows get an artificial border on windows, because the lwtheme background
+ * overlaps the regular window border. That isn't the case for us, so we avoid painting
+ * over the native border with our custom borders: */
+#browser-panel {
+  /* These are !important to avoid specificity-wars with the selectors that add borders here. */
+  background-image: none !important;
+  border-top: none !important;
+}
+
+#navigator-toolbox {
+  /* The side borders on the toolbox also look out-of-place because we don't paint over
+   * the native background color at all, and these are !important for the same reason as above. */
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Disable dragging like in the default theme: */
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):-moz-lwtheme {
+  -moz-window-dragging: no-drag;
+}
+
+@media (-moz-os-version: windows-win7),
+       (-moz-os-version: windows-win8) {
+  /* And then we add them back on toolbars so that they don't look borderless: */
+  #main-window:not([customizing])[sizemode=normal] #navigator-toolbox::after,
+  #main-window:not([customizing])[sizemode=normal] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar) {
+    border-left: 1px solid hsla(209,67%,12%,0.35);
+    border-right: 1px solid hsla(209,67%,12%,0.35);
+  }
+}
+
+@media (-moz-os-version: windows-win10) {
+  /* Always keep draggable space on the sides of tabs since there is no top margin on Win10 */
+  #main-window .tabbrowser-arrowscrollbox > .arrowscrollbox-scrollbox {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .titlebar-button:-moz-lwtheme {
+    -moz-context-properties: stroke;
+    stroke: currentColor;
+  }
+  #titlebar-min:-moz-lwtheme {
+    list-style-image: url(chrome://browser/skin/window-controls/minimize.svg);
+  }
+  #titlebar-max:-moz-lwtheme {
+    list-style-image: url(chrome://browser/skin/window-controls/maximize.svg);
+  }
+  :root[sizemode="maximized"] #titlebar-max:-moz-lwtheme {
+    list-style-image: url(chrome://browser/skin/window-controls/restore.svg);
+  }
+  #titlebar-close:-moz-lwtheme {
+    list-style-image: url(chrome://browser/skin/window-controls/close.svg);
+  }
+}
+
+.ac-type-icon {
+  /* Left-align the type icon in awesomebar popup results with the icon in the
+     urlbar. */
+  margin-inline-start: 13px;
+}

@@ -11,7 +11,6 @@ config = {
         'build',
         'upload-files',
         'sendchange',
-        # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'debug_build': True,
@@ -24,10 +23,10 @@ clang.manifest",
     'enable_talos_sendchange': False,
     'enable_unittest_sendchange': False,
     'objdir': MOZ_OBJDIR,
+    'perfherder_extra_options': ['static-analysis'],
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,
         'TINDERBOX_OUTPUT': '1',

@@ -81,11 +81,10 @@ gfxASurface::AddRef(void)
         }
 
         return (nsrefcnt) cairo_surface_get_reference_count(mSurface);
-    } else {
-        // the surface isn't valid, but we still need to refcount
-        // the gfxASurface
-        return ++mFloatingRefs;
     }
+    // the surface isn't valid, but we still need to refcount
+    // the gfxASurface
+    return ++mFloatingRefs;
 }
 
 nsrefcnt
@@ -103,14 +102,12 @@ gfxASurface::Release(void)
         // |this| may not be valid any more, don't use it!
 
         return --refcnt;
-    } else {
-        if (--mFloatingRefs == 0) {
-            delete this;
-            return 0;
-        }
-
-        return mFloatingRefs;
     }
+    if (--mFloatingRefs == 0) {
+        delete this;
+        return 0;
+    }
+    return mFloatingRefs;
 }
 
 void
@@ -343,14 +340,6 @@ gfxASurface::CairoStatus()
     return cairo_surface_status(mSurface);
 }
 
-/* static */
-int32_t
-gfxASurface::FormatStrideForWidth(gfxImageFormat format, int32_t width)
-{
-    cairo_format_t cformat = GfxFormatToCairoFormat(format);
-    return cairo_format_stride_for_width(cformat, (int)width);
-}
-
 nsresult
 gfxASurface::BeginPrinting(const nsAString& aTitle, const nsAString& aPrintToFileName)
 {
@@ -457,16 +446,16 @@ static const SurfaceMemoryReporterAttrs sSurfaceMemoryReporterAttrs[] = {
     {"gfx-surface-subsurface", nullptr},
 };
 
-PR_STATIC_ASSERT(MOZ_ARRAY_LENGTH(sSurfaceMemoryReporterAttrs) ==
-                 size_t(gfxSurfaceType::Max));
-PR_STATIC_ASSERT(uint32_t(CAIRO_SURFACE_TYPE_SKIA) ==
-                 uint32_t(gfxSurfaceType::Skia));
+static_assert(MOZ_ARRAY_LENGTH(sSurfaceMemoryReporterAttrs) ==
+                 size_t(gfxSurfaceType::Max), "sSurfaceMemoryReporterAttrs exceeds max capacity");
+static_assert(uint32_t(CAIRO_SURFACE_TYPE_SKIA) ==
+                 uint32_t(gfxSurfaceType::Skia), "CAIRO_SURFACE_TYPE_SKIA not equal to gfxSurfaceType::Skia");
 
 /* Surface size memory reporting */
 
 class SurfaceMemoryReporter final : public nsIMemoryReporter
 {
-    ~SurfaceMemoryReporter() {}
+    ~SurfaceMemoryReporter() = default;
 
     // We can touch this array on several different threads, and we don't
     // want to introduce memory barriers when recording the memory used.  To
@@ -482,11 +471,14 @@ public:
         // ordering.  So separate out the read and write operations.
         sSurfaceMemoryUsed[size_t(aType)] = sSurfaceMemoryUsed[size_t(aType)] + aBytes;
     };
-    
-    NS_DECL_ISUPPORTS
 
-    NS_IMETHOD CollectReports(nsIMemoryReporterCallback *aCb,
-                              nsISupports *aClosure, bool aAnonymize) override
+    // This memory reporter is sometimes allocated on the compositor thread,
+    // but always released on the main thread, so its refcounting needs to be
+    // threadsafe.
+    NS_DECL_THREADSAFE_ISUPPORTS
+
+    NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                              nsISupports *aData, bool aAnonymize) override
     {
         const size_t len = ArrayLength(sSurfaceMemoryReporterAttrs);
         for (size_t i = 0; i < len; i++) {
@@ -499,11 +491,9 @@ public:
                     desc = sDefaultSurfaceDescription;
                 }
 
-                nsresult rv = aCb->Callback(EmptyCString(), nsCString(path),
-                                            KIND_OTHER, UNITS_BYTES,
-                                            amount,
-                                            nsCString(desc), aClosure);
-                NS_ENSURE_SUCCESS(rv, rv);
+                aHandleReport->Callback(
+                    EmptyCString(), nsCString(path), KIND_OTHER, UNITS_BYTES,
+                    amount, nsCString(desc), aData);
             }
         }
 

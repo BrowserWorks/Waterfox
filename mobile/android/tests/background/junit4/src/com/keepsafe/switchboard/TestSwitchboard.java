@@ -1,16 +1,17 @@
 package com.keepsafe.switchboard;
 
 import android.content.Context;
-import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mozilla.gecko.background.testhelpers.TestRunner;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
+import org.mozilla.gecko.switchboard.DeviceUuidFactory;
+import org.mozilla.gecko.switchboard.Preferences;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 import org.mozilla.gecko.util.IOUtils;
 import org.robolectric.RuntimeEnvironment;
 

@@ -10,20 +10,22 @@
 
 package org.webrtc.voiceengine;
 
-import java.lang.Thread;
-import java.nio.ByteBuffer;
+import android.util.Log;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Process;
-import android.util.Log;
+
+import java.lang.Thread;
+import java.nio.ByteBuffer;
 
 import org.mozilla.gecko.annotation.WebRTCJNITarget;
 
 @WebRTCJNITarget
-class WebRtcAudioTrack {
+public class WebRtcAudioTrack {
   private static final boolean DEBUG = false;
 
   private static final String TAG = "WebRtcAudioTrack";
@@ -47,6 +49,11 @@ class WebRtcAudioTrack {
   private AudioTrack audioTrack;
   private AudioTrackThread audioThread = null;
 
+  // Samples to be played are replaced by zeros if |speakerMute| is set to true.
+  // Can be used to ensure that the speaker is fully muted.
+  private static volatile boolean speakerMute = false;
+  private byte[] emptyBytes;
+
   /**
    * Audio thread which keeps calling AudioTrack.write() to stream audio.
    * Data is periodically acquired from the native WebRTC layer using the
@@ -63,7 +70,7 @@ class WebRtcAudioTrack {
     @Override
     public void run() {
       Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-      Logd("AudioTrackThread" + WebRtcAudioUtils.getThreadInfo());
+      Log.d(TAG, "AudioTrackThread" + WebRtcAudioUtils.getThreadInfo());
 
       try {
         // In MODE_STREAM mode we can optionally prime the output buffer by
@@ -73,7 +80,8 @@ class WebRtcAudioTrack {
         audioTrack.play();
         assertTrue(audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING);
       } catch (IllegalStateException e) {
-          Loge("AudioTrack.play failed: " + e.getMessage());
+        Log.e(TAG, "AudioTrack.play failed: " + e.getMessage());
+        releaseAudioResources();
         return;
       }
 
@@ -90,18 +98,19 @@ class WebRtcAudioTrack {
         // Upon return, the buffer position will have been advanced to reflect
         // the amount of data that was successfully written to the AudioTrack.
         assertTrue(sizeInBytes <= byteBuffer.remaining());
+        if (speakerMute) {
+          byteBuffer.clear();
+          byteBuffer.put(emptyBytes);
+          byteBuffer.position(0);
+        }
         int bytesWritten = 0;
         if (WebRtcAudioUtils.runningOnLollipopOrHigher()) {
-          bytesWritten = audioTrack.write(byteBuffer,
-                                          sizeInBytes,
-                                          AudioTrack.WRITE_BLOCKING);
+          bytesWritten = writeOnLollipop(audioTrack, byteBuffer, sizeInBytes);
         } else {
-          bytesWritten = audioTrack.write(byteBuffer.array(),
-                                          byteBuffer.arrayOffset(),
-                                          sizeInBytes);
+          bytesWritten = writePreLollipop(audioTrack, byteBuffer, sizeInBytes);
         }
         if (bytesWritten != sizeInBytes) {
-          Loge("AudioTrack.write failed: " + bytesWritten);
+          Log.e(TAG, "AudioTrack.write failed: " + bytesWritten);
           if (bytesWritten == AudioTrack.ERROR_INVALID_OPERATION) {
             keepAlive = false;
           }
@@ -119,10 +128,19 @@ class WebRtcAudioTrack {
       try {
         audioTrack.stop();
       } catch (IllegalStateException e) {
-        Loge("AudioTrack.stop failed: " + e.getMessage());
+        Log.e(TAG, "AudioTrack.stop failed: " + e.getMessage());
       }
       assertTrue(audioTrack.getPlayState() == AudioTrack.PLAYSTATE_STOPPED);
       audioTrack.flush();
+    }
+
+    @TargetApi(21)
+    private int writeOnLollipop(AudioTrack audioTrack, ByteBuffer byteBuffer, int sizeInBytes) {
+      return audioTrack.write(byteBuffer, sizeInBytes, AudioTrack.WRITE_BLOCKING);
+    }
+
+    private int writePreLollipop(AudioTrack audioTrack, ByteBuffer byteBuffer, int sizeInBytes) {
+      return audioTrack.write(byteBuffer.array(), byteBuffer.arrayOffset(), sizeInBytes);
     }
 
     public void joinThread() {
@@ -138,23 +156,21 @@ class WebRtcAudioTrack {
   }
 
   WebRtcAudioTrack(Context context, long nativeAudioTrack) {
-    Logd("ctor" + WebRtcAudioUtils.getThreadInfo());
+    Log.d(TAG, "ctor" + WebRtcAudioUtils.getThreadInfo());
     this.context = context;
     this.nativeAudioTrack = nativeAudioTrack;
-    audioManager = (AudioManager) context.getSystemService(
-        Context.AUDIO_SERVICE);
+    audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     if (DEBUG) {
       WebRtcAudioUtils.logDeviceInfo(TAG);
     }
   }
 
-  private int InitPlayout(int sampleRate, int channels) {
-    Logd("InitPlayout(sampleRate=" + sampleRate + ", channels=" +
-         channels + ")");
+  private boolean initPlayout(int sampleRate, int channels) {
+    Log.d(TAG, "initPlayout(sampleRate=" + sampleRate + ", channels=" + channels + ")");
     final int bytesPerFrame = channels * (BITS_PER_SAMPLE / 8);
-    byteBuffer = ByteBuffer.allocateDirect(
-        bytesPerFrame * (sampleRate / BUFFERS_PER_SECOND));
-    Logd("byteBuffer.capacity: " + byteBuffer.capacity());
+    byteBuffer = ByteBuffer.allocateDirect(bytesPerFrame * (sampleRate / BUFFERS_PER_SECOND));
+    Log.d(TAG, "byteBuffer.capacity: " + byteBuffer.capacity());
+    emptyBytes = new byte[byteBuffer.capacity()];
     // Rather than passing the ByteBuffer with every callback (requiring
     // the potentially expensive GetDirectBufferAddress) we simply have the
     // the native class cache the address to the memory once.
@@ -164,107 +180,172 @@ class WebRtcAudioTrack {
     // AudioTrack object to be created in the MODE_STREAM mode.
     // Note that this size doesn't guarantee a smooth playback under load.
     // TODO(henrika): should we extend the buffer size to avoid glitches?
-    final int minBufferSizeInBytes = AudioTrack.getMinBufferSize(
-        sampleRate,
-        AudioFormat.CHANNEL_OUT_MONO,
-        AudioFormat.ENCODING_PCM_16BIT);
-    Logd("AudioTrack.getMinBufferSize: " + minBufferSizeInBytes);
-    assertTrue(audioTrack == null);
-
+    final int channelConfig = channelCountToConfiguration(channels);
+    final int minBufferSizeInBytes =
+        AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
+    Log.d(TAG, "AudioTrack.getMinBufferSize: " + minBufferSizeInBytes);
     // For the streaming mode, data must be written to the audio sink in
     // chunks of size (given by byteBuffer.capacity()) less than or equal
-    // to the total buffer size |minBufferSizeInBytes|.
-    assertTrue(byteBuffer.capacity() < minBufferSizeInBytes);
+    // to the total buffer size |minBufferSizeInBytes|. But, we have seen
+    // reports of "getMinBufferSize(): error querying hardware". Hence, it
+    // can happen that |minBufferSizeInBytes| contains an invalid value.
+    if (minBufferSizeInBytes < byteBuffer.capacity()) {
+      Log.e(TAG, "AudioTrack.getMinBufferSize returns an invalid value.");
+      return false;
+    }
+
+    // Ensure that prevision audio session was stopped correctly before trying
+    // to create a new AudioTrack.
+    if (audioTrack != null) {
+      Log.e(TAG, "Conflict with existing AudioTrack.");
+      return false;
+    }
     try {
       // Create an AudioTrack object and initialize its associated audio buffer.
       // The size of this buffer determines how long an AudioTrack can play
       // before running out of data.
-      audioTrack = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
-                                  sampleRate,
-                                  AudioFormat.CHANNEL_OUT_MONO,
-                                  AudioFormat.ENCODING_PCM_16BIT,
-                                  minBufferSizeInBytes,
-                                  AudioTrack.MODE_STREAM);
+      audioTrack = new AudioTrack(AudioManager.STREAM_VOICE_CALL, sampleRate, channelConfig,
+          AudioFormat.ENCODING_PCM_16BIT, minBufferSizeInBytes, AudioTrack.MODE_STREAM);
     } catch (IllegalArgumentException e) {
-      Logd(e.getMessage());
-      return -1;
+      Log.d(TAG, e.getMessage());
+      releaseAudioResources();
+      return false;
     }
-    assertTrue(audioTrack.getState() == AudioTrack.STATE_INITIALIZED);
-    assertTrue(audioTrack.getPlayState() == AudioTrack.PLAYSTATE_STOPPED);
-    assertTrue(audioTrack.getStreamType() == AudioManager.STREAM_VOICE_CALL);
 
-    // Return a delay estimate in milliseconds given the minimum buffer size.
-    // TODO(henrika): improve estimate and use real measurements of total
-    // latency instead. We can most likely ignore this value.
-    return (1000 * (minBufferSizeInBytes / bytesPerFrame) / sampleRate);
+    // It can happen that an AudioTrack is created but it was not successfully
+    // initialized upon creation. Seems to be the case e.g. when the maximum
+    // number of globally available audio tracks is exceeded.
+    if (audioTrack == null || audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
+      Log.e(TAG, "Initialization of audio track failed.");
+      releaseAudioResources();
+      return false;
+    }
+    logMainParameters();
+    logMainParametersExtended();
+    return true;
   }
 
-  private boolean StartPlayout() {
-    Logd("StartPlayout");
+  private boolean startPlayout() {
+    Log.d(TAG, "startPlayout");
     assertTrue(audioTrack != null);
     assertTrue(audioThread == null);
+    if (audioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
+      Log.e(TAG, "AudioTrack instance is not successfully initialized.");
+      return false;
+    }
     audioThread = new AudioTrackThread("AudioTrackJavaThread");
     audioThread.start();
     return true;
   }
 
-  private boolean StopPlayout() {
-    Logd("StopPlayout");
+  private boolean stopPlayout() {
+    Log.d(TAG, "stopPlayout");
     assertTrue(audioThread != null);
+    logUnderrunCount();
     audioThread.joinThread();
     audioThread = null;
-    if (audioTrack != null) {
-      audioTrack.release();
-      audioTrack = null;
-    }
+    releaseAudioResources();
     return true;
   }
 
-  /** Get max possible volume index for a phone call audio stream. */
-  private int GetStreamMaxVolume() {
-    Logd("GetStreamMaxVolume");
+  // Get max possible volume index for a phone call audio stream.
+  private int getStreamMaxVolume() {
+    Log.d(TAG, "getStreamMaxVolume");
     assertTrue(audioManager != null);
     return audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL);
   }
 
-  /** Set current volume level for a phone call audio stream. */
-  private boolean SetStreamVolume(int volume) {
-    Logd("SetStreamVolume(" + volume + ")");
+  // Set current volume level for a phone call audio stream.
+  private boolean setStreamVolume(int volume) {
+    Log.d(TAG, "setStreamVolume(" + volume + ")");
     assertTrue(audioManager != null);
-    if (WebRtcAudioUtils.runningOnLollipopOrHigher()) {
-      if (audioManager.isVolumeFixed()) {
-        Loge("The device implements a fixed volume policy.");
-        return false;
-      }
+    if (isVolumeFixed()) {
+      Log.e(TAG, "The device implements a fixed volume policy.");
+      return false;
     }
     audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, volume, 0);
     return true;
   }
 
+  private boolean isVolumeFixed() {
+    if (!WebRtcAudioUtils.runningOnLollipopOrHigher())
+      return false;
+    return audioManager.isVolumeFixed();
+  }
+
   /** Get current volume level for a phone call audio stream. */
-  private int GetStreamVolume() {
-    Logd("GetStreamVolume");
+  private int getStreamVolume() {
+    Log.d(TAG, "getStreamVolume");
     assertTrue(audioManager != null);
     return audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
   }
 
-  /** Helper method which throws an exception  when an assertion has failed. */
+  private void logMainParameters() {
+    Log.d(TAG, "AudioTrack: "
+            + "session ID: " + audioTrack.getAudioSessionId() + ", "
+            + "channels: " + audioTrack.getChannelCount() + ", "
+            + "sample rate: " + audioTrack.getSampleRate() + ", "
+            // Gain (>=1.0) expressed as linear multiplier on sample values.
+            + "max gain: " + AudioTrack.getMaxVolume());
+  }
+
+  @TargetApi(23)
+  private void logMainParametersExtended() {
+    if (WebRtcAudioUtils.runningOnMarshmallowOrHigher()) {
+      Log.d(TAG, "AudioTrack: "
+              // The effective size of the AudioTrack buffer that the app writes to.
+              + "buffer size in frames: " + audioTrack.getBufferSizeInFrames());
+    }
+/* Mozilla: This requires API Level 24, but we build for 23
+    if (WebRtcAudioUtils.runningOnNougatOrHigher()) {
+      Log.d(TAG, "AudioTrack: "
+              // Maximum size of the AudioTrack buffer in frames.
+              + "buffer capacity in frames: " + audioTrack.getBufferCapacityInFrames());
+    }
+*/
+  }
+  // Prints the number of underrun occurrences in the application-level write
+  // buffer since the AudioTrack was created. An underrun occurs if the app does
+  // not write audio data quickly enough, causing the buffer to underflow and a
+  // potential audio glitch.
+  // TODO(henrika): keep track of this value in the field and possibly add new
+  // UMA stat if needed.
+  private void logUnderrunCount() {
+
+/* Mozilla: This requires API Level 24, but we build for 23
+    if (WebRtcAudioUtils.runningOnNougatOrHigher()) {
+      Log.d(TAG, "underrun count: " + audioTrack.getUnderrunCount());
+    }
+*/
+  }
+
+  // Helper method which throws an exception  when an assertion has failed.
   private static void assertTrue(boolean condition) {
     if (!condition) {
       throw new AssertionError("Expected condition to be true");
     }
   }
 
-  private static void Logd(String msg) {
-    Log.d(TAG, msg);
+  private int channelCountToConfiguration(int channels) {
+    return (channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO);
   }
 
-  private static void Loge(String msg) {
-    Log.e(TAG, msg);
-  }
-
-  private native void nativeCacheDirectBufferAddress(
-      ByteBuffer byteBuffer, long nativeAudioRecord);
+  private native void nativeCacheDirectBufferAddress(ByteBuffer byteBuffer, long nativeAudioRecord);
 
   private native void nativeGetPlayoutData(int bytes, long nativeAudioRecord);
+
+  // Sets all samples to be played out to zero if |mute| is true, i.e.,
+  // ensures that the speaker is muted.
+  public static void setSpeakerMute(boolean mute) {
+    Log.w(TAG, "setSpeakerMute(" + mute + ")");
+    speakerMute = mute;
+  }
+
+  // Releases the native AudioTrack resources.
+  private void releaseAudioResources() {
+    if (audioTrack != null) {
+      audioTrack.release();
+      audioTrack = null;
+    }
+  }
 }

@@ -4,22 +4,30 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 # ***** END LICENSE BLOCK *****
+import copy
+import glob
+import json
 import os
 import sys
-import copy
 
 # load modules from parent dir
 sys.path.insert(1, os.path.dirname(sys.path[0]))
 
+from mozharness.base.errors import BaseErrorList
 from mozharness.base.script import PreScriptAction
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
-from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
+from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, TOOLTOOL_PLATFORM_DIR
+from mozharness.mozilla.testing.codecoverage import (
+    CodeCoverageMixin,
+    code_coverage_config_options
+)
+from mozharness.mozilla.testing.errors import HarnessErrorList
 
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.base.log import INFO
 
-class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
+class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin, CodeCoverageMixin):
     config_options = [
         [['--test-type'], {
             "action": "extend",
@@ -40,9 +48,35 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         [["--this-chunk"], {
             "action": "store",
             "dest": "this_chunk",
-            "help": "Number of this chunk"}]
+            "help": "Number of this chunk"}
+         ],
+        [["--allow-software-gl-layers"], {
+            "action": "store_true",
+            "dest": "allow_software_gl_layers",
+            "default": False,
+            "help": "Permits a software GL implementation (such as LLVMPipe) to use the GL compositor."}
+         ],
+        [["--enable-webrender"], {
+            "action": "store_true",
+            "dest": "enable_webrender",
+            "default": False,
+            "help": "Tries to enable the WebRender compositor."}
+         ],
+        [["--single-stylo-traversal"], {
+            "action": "store_true",
+            "dest": "single_stylo_traversal",
+            "default": False,
+            "help": "Forcibly enable single thread traversal in Stylo with STYLO_THREADS=1"}
+         ],
+        [["--enable-stylo"], {
+            "action": "store_true",
+            "dest": "enable_stylo",
+            "default": False,
+            "help": "Run tests with Stylo enabled"}
+         ],
     ] + copy.deepcopy(testing_config_options) + \
-        copy.deepcopy(blobupload_config_options)
+        copy.deepcopy(blobupload_config_options) + \
+        copy.deepcopy(code_coverage_config_options)
 
     def __init__(self, require_config_file=True):
         super(WebPlatformTest, self).__init__(
@@ -87,6 +121,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
         dirs = {}
         dirs['abs_app_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'application')
         dirs['abs_test_install_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'tests')
+        dirs['abs_test_bin_dir'] = os.path.join(dirs['abs_test_install_dir'], 'bin')
         dirs["abs_wpttest_dir"] = os.path.join(dirs['abs_test_install_dir'], "web-platform")
         dirs['abs_blob_upload_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'blobber_upload_dir')
 
@@ -131,18 +166,38 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
                                                        "wpt_errorsummary.log"),
                 "--binary=%s" % self.binary_path,
                 "--symbols-path=%s" % self.query_symbols_url(),
-                "--stackwalk-binary=%s" % self.query_minidump_stackwalk()]
+                "--stackwalk-binary=%s" % self.query_minidump_stackwalk(),
+                "--stackfix-dir=%s" % os.path.join(dirs["abs_test_install_dir"], "bin"),
+                "--run-by-dir=3"]
 
-        for test_type in c.get("test_type", []):
-            cmd.append("--test-type=%s" % test_type)
+        if not sys.platform.startswith("linux"):
+            cmd += ["--exclude=css"]
+
+        # Let wptrunner determine the test type when --try-test-paths is used
+        wpt_test_paths = self.try_test_paths.get("web-platform-tests")
+        if not wpt_test_paths:
+            for test_type in c.get("test_type", []):
+                cmd.append("--test-type=%s" % test_type)
 
         if not c["e10s"]:
             cmd.append("--disable-e10s")
+
+        if c["single_stylo_traversal"]:
+            cmd.append("--stylo-threads=1")
+        else:
+            cmd.append("--stylo-threads=4")
 
         for opt in ["total_chunks", "this_chunk"]:
             val = c.get(opt)
             if val:
                 cmd.append("--%s=%s" % (opt.replace("_", "-"), val))
+
+        if wpt_test_paths or "wdspec" in c.get("test_type", []):
+            geckodriver_path = os.path.join(dirs["abs_test_bin_dir"], "geckodriver")
+            if not os.path.isfile(geckodriver_path):
+                self.fatal("Unable to find geckodriver binary "
+                           "in common test package: %s" % geckodriver_path)
+            cmd.append("--webdriver-binary=%s" % geckodriver_path)
 
         options = list(c.get("options", []))
 
@@ -166,23 +221,56 @@ class WebPlatformTest(TestingMixin, MercurialScript, BlobUploadMixin):
 
     def download_and_extract(self):
         super(WebPlatformTest, self).download_and_extract(
-            target_unzip_dirs=["bin/*",
-                               "config/*",
-                               "mozbase/*",
-                               "marionette/*",
-                               "tools/wptserve/*",
-                               "web-platform/*"],
+            extract_dirs=["mach",
+                          "bin/*",
+                          "config/*",
+                          "mozbase/*",
+                          "marionette/*",
+                          "tools/*",
+                          "web-platform/*"],
             suite_categories=["web-platform"])
+
+    def _install_fonts(self):
+        # Ensure the Ahem font is available
+        dirs = self.query_abs_dirs()
+
+        if not sys.platform.startswith("darwin"):
+            font_path = os.path.join(os.path.dirname(self.binary_path), "fonts")
+        else:
+            font_path = os.path.join(os.path.dirname(self.binary_path), os.pardir, "Resources", "res", "fonts")
+        if not os.path.exists(font_path):
+            os.makedirs(font_path)
+        ahem_src = os.path.join(dirs["abs_wpttest_dir"], "tests", "fonts", "Ahem.ttf")
+        ahem_dest = os.path.join(font_path, "Ahem.ttf")
+        with open(ahem_src) as src, open(ahem_dest, "w") as dest:
+            dest.write(src.read())
 
     def run_tests(self):
         dirs = self.query_abs_dirs()
         cmd = self._query_cmd()
 
+        self._install_fonts()
+
         parser = StructuredOutputParser(config=self.config,
                                         log_obj=self.log_obj,
-                                        log_compact=True)
+                                        log_compact=True,
+                                        error_list=BaseErrorList + HarnessErrorList)
 
         env = {'MINIDUMP_SAVE_PATH': dirs['abs_blob_upload_dir']}
+        env['RUST_BACKTRACE'] = '1'
+
+        if self.config['allow_software_gl_layers']:
+            env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
+        if self.config['enable_webrender']:
+            env['MOZ_WEBRENDER'] = '1'
+
+        if self.config['single_stylo_traversal']:
+            env['STYLO_THREADS'] = '1'
+        else:
+            env['STYLO_THREADS'] = '4'
+        if self.config['enable_stylo']:
+            env['STYLO_FORCE_ENABLED'] = '1'
+
         env = self.query_env(partial_env=env, log_level=INFO)
 
         return_code = self.run_command(cmd,

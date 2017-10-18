@@ -46,15 +46,17 @@ class SharedArrayRawBuffer
   private:
     mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> refcount_;
     uint32_t length;
+    bool preparedForAsmJS;
 
     // A list of structures representing tasks waiting on some
     // location within this buffer.
     FutexWaiter* waiters_;
 
   protected:
-    SharedArrayRawBuffer(uint8_t* buffer, uint32_t length)
+    SharedArrayRawBuffer(uint8_t* buffer, uint32_t length, bool preparedForAsmJS)
       : refcount_(1),
         length(length),
+        preparedForAsmJS(preparedForAsmJS),
         waiters_(nullptr)
     {
         MOZ_ASSERT(buffer == dataPointerShared());
@@ -84,10 +86,16 @@ class SharedArrayRawBuffer
         return length;
     }
 
+    bool isPreparedForAsmJS() const {
+        return preparedForAsmJS;
+    }
+
     uint32_t refcount() const { return refcount_; }
 
-    void addReference();
+    MOZ_MUST_USE bool addReference();
     void dropReference();
+
+    static int32_t liveBuffers();
 };
 
 /*
@@ -121,8 +129,7 @@ class SharedArrayBufferObject : public ArrayBufferObjectMaybeShared
     static const uint8_t RESERVED_SLOTS = 1;
 
     static const Class class_;
-    static const Class protoClass;
-    static const JSFunctionSpec jsfuncs[];
+    static const Class protoClass_;
 
     static bool byteLengthGetter(JSContext* cx, unsigned argc, Value* vp);
 
@@ -143,6 +150,10 @@ class SharedArrayBufferObject : public ArrayBufferObjectMaybeShared
     static void addSizeOfExcludingThis(JSObject* obj, mozilla::MallocSizeOf mallocSizeOf,
                                        JS::ClassInfo* info);
 
+    static void copyData(Handle<SharedArrayBufferObject*> toBuffer, uint32_t toIndex,
+                         Handle<SharedArrayBufferObject*> fromBuffer, uint32_t fromIndex,
+                         uint32_t count);
+
     SharedArrayRawBuffer* rawBufferObject() const;
 
     // Invariant: This method does not cause GC and can be called
@@ -156,6 +167,9 @@ class SharedArrayBufferObject : public ArrayBufferObjectMaybeShared
 
     uint32_t byteLength() const {
         return rawBufferObject()->byteLength();
+    }
+    bool isPreparedForAsmJS() const {
+        return rawBufferObject()->isPreparedForAsmJS();
     }
 
     SharedMem<uint8_t*> dataPointerShared() const {

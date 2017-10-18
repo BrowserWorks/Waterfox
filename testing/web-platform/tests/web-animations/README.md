@@ -12,17 +12,17 @@ Guidelines for writing tests
     For example, if you want to test setting the start time, you might be
     tempted to put all the tests in:
 
-    > `/web-animations/Animation/startTime.html`
+    > `/web-animations/interfaces/Animation/startTime.html`
 
     However, in the spec most of the logic is in the &ldquo;Set the animation
     start time&ldquo; procedure in the &ldquo;Timing model&rdquo; section.
 
     Instead, try something like:
 
-    > *   `/web-animations/timing-model/animation/set-the-animation-start-time.html`<br>
+    > *   `/web-animations/timing-model/animations/set-the-animation-start-time.html`<br>
     >     Tests all the branches and inputs to the procedure as defined in the
     >     spec (using the `Animation.startTime` API).
-    > *   `/web-animations/Animation/startTime.html`<br>
+    > *   `/web-animations/interfaces/Animation/startTime.html`<br>
     >     Tests API-layer specific issues like mapping unresolved values to
     >      null, etc.
 
@@ -50,29 +50,29 @@ Guidelines for writing tests
 
     e.g.
 
-    ```javascript
-  test(function(t) {
-    var anim = createDiv(t).animate(null);
-    assert_class_string(anim, 'Animation', 'Returned object is an Animation');
-  }, 'Element.animate() creates an Animation object');
-    ```
+      ```javascript
+      test(function(t) {
+        const animation = createDiv(t).animate(null);
+        assert_class_string(animation, 'Animation', 'Returned object is an Animation');
+      }, 'Element.animate() creates an Animation object');
+      ```
 
-    ```javascript
-  test(function(t) {
-    assert_throws({ name: 'TypeError' }, function() {
-      createDiv(t).animate(null, -1);
-    });
-  }, 'Setting a negative duration throws a TypeError');
-    ```
+      ```javascript
+      test(function(t) {
+        assert_throws({ name: 'TypeError' }, function() {
+          createDiv(t).animate(null, -1);
+        });
+      }, 'Setting a negative duration throws a TypeError');
+      ```
 
-    ```javascript
-  promise_test(function(t) {
-    var animation = createDiv(t).animate(null, 100 * MS_PER_SEC);
-    return animation.ready.then(function() {
-      assert_greater_than(animation.startTime, 0, 'startTime when running');
-    });
-  }, 'startTime is resolved when running');
-    ```
+      ```javascript
+      promise_test(function(t) {
+        const animation = createDiv(t).animate(null, 100 * MS_PER_SEC);
+        return animation.ready.then(function() {
+          assert_greater_than(animation.startTime, 0, 'startTime when running');
+        });
+      }, 'startTime is resolved when running');
+      ```
 
     If you're generating complex test loops and factoring out utility functions
     that affect the logic of the test (other than, say, simple assertion utility

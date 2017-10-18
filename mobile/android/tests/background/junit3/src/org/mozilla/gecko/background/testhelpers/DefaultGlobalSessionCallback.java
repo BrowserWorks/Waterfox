@@ -29,11 +29,22 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
+  public void handleIncompleteStage(Stage currentState,
+                                    GlobalSession globalSession) {
+
+  }
+
+  @Override
+  public void handleFullSyncNecessary() {
+
+  }
+
+  @Override
   public void handleAborted(GlobalSession globalSession, String reason) {
   }
 
   @Override
-  public void handleError(GlobalSession globalSession, Exception ex) {
+  public void handleError(GlobalSession globalSession, Exception ex, String reason) {
   }
 
   @Override

@@ -1,0 +1,21 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+loader: taskgraph.loader.single_dep:loader
+
+transforms:
+   - taskgraph.transforms.repackage_l10n:transforms
+   - taskgraph.transforms.repackage:transforms
+   - taskgraph.transforms.job:transforms
+   - taskgraph.transforms.task:transforms
+
+kind-dependencies:
+  - nightly-l10n-signing
+
+only-for-build-platforms:
+  - linux-nightly/opt
+  - linux64-nightly/opt
+  - macosx64-nightly/opt
+  - win32-nightly/opt
+  - win64-nightly/opt

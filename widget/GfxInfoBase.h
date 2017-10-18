@@ -16,6 +16,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/dom/PContentParent.h"
 #include "nsCOMPtr.h"
 #include "nsIGfxInfo.h"
 #include "nsIGfxInfoDebug.h"
@@ -58,6 +59,10 @@ public:
   NS_IMETHOD GetFeatures(JSContext*, JS::MutableHandle<JS::Value>) override;
   NS_IMETHOD GetFeatureLog(JSContext*, JS::MutableHandle<JS::Value>) override;
   NS_IMETHOD GetActiveCrashGuards(JSContext*, JS::MutableHandle<JS::Value>) override;
+  NS_IMETHOD GetContentBackend(nsAString & aContentBackend) override;
+  NS_IMETHOD GetUsingGPUProcess(bool *aOutValue) override;
+  NS_IMETHOD GetWebRenderEnabled(bool* aWebRenderEnabled) override;
+  NS_IMETHOD GetIsHeadless(bool* aIsHeadless) override;
 
   // Initialization function. If you override this, you must call this class's
   // version of Init first.
@@ -75,7 +80,9 @@ public:
   static void RemoveCollector(GfxInfoCollectorBase* collector);
 
   static nsTArray<GfxDriverInfo>* mDriverInfo;
+  static nsTArray<mozilla::dom::GfxInfoFeatureStatus>* mFeatureStatus;
   static bool mDriverInfoObserverInitialized;
+  static bool mShutdownOccurred;
 
   virtual nsString Model() { return EmptyString(); }
   virtual nsString Hardware() { return EmptyString(); }
@@ -89,6 +96,9 @@ public:
   virtual nsresult FindMonitors(JSContext* cx, JS::HandleObject array) {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
+
+  static void SetFeatureStatus(
+      const nsTArray<mozilla::dom::GfxInfoFeatureStatus>& aFS);
 
 protected:
 
@@ -110,8 +120,10 @@ protected:
     JS::Handle<JSObject*> aContainer,
     const char* aName,
     int32_t aFeature,
-    Maybe<mozilla::gfx::FeatureStatus> aKnownStatus,
+    const Maybe<mozilla::gfx::FeatureStatus>& aKnownStatus,
     JS::MutableHandle<JSObject*> aOutObj);
+
+  NS_IMETHOD ControlGPUProcessForXPCShell(bool aEnable, bool *_retval) override;
 
 private:
   virtual int32_t FindBlocklistedDeviceInList(const nsTArray<GfxDriverInfo>& aDriverInfo,

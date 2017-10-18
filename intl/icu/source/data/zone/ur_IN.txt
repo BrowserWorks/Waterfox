@@ -1,41 +1,8 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/ur_IN.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 ur_IN{
-    Version{"2.1.19.14"}
+    Version{"2.1.31.33"}
     zoneStrings{
-        "Africa:Accra"{
-            ec{"اکرا"}
-        }
-        "America:Cambridge_Bay"{
-            ec{"کیمبرج بے"}
-        }
-        "America:Glace_Bay"{
-            ec{"گلیس بے"}
-        }
-        "America:Goose_Bay"{
-            ec{"گوس بے"}
-        }
-        "America:Grand_Turk"{
-            ec{"گرینڈ ترک"}
-        }
-        "America:Scoresbysund"{
-            ec{"اتتوققورتورمیت"}
-        }
-        "America:Thule"{
-            ec{"تھولے"}
-        }
-        "Asia:Dubai"{
-            ec{"دبئی"}
-        }
-        "Europe:Budapest"{
-            ec{"بوڈاپیسٹ"}
-        }
         "meta:Afghanistan"{
             ls{"افغانستان ٹائم"}
         }

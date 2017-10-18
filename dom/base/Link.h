@@ -14,6 +14,7 @@
 #include "mozilla/IHistory.h"
 #include "mozilla/MemoryReporting.h"
 #include "nsIContent.h" // for nsLinkState
+#include "nsIContentPolicyBase.h"
 
 namespace mozilla {
 
@@ -36,6 +37,12 @@ public:
    * aElement is the element pointer corresponding to this link.
    */
   explicit Link(Element* aElement);
+
+  /**
+   * This constructor is only used for testing.
+   */
+  explicit Link();
+
   virtual void SetLinkState(nsLinkState aState);
 
   /**
@@ -84,7 +91,7 @@ public:
    *        changes or false if it should not.
    */
   void ResetLinkState(bool aNotify, bool aHasHref);
-  
+
   // This method nevers returns a null element.
   Element* GetElement() const { return mElement; }
 
@@ -92,7 +99,7 @@ public:
    * DNS prefetch has been deferred until later, e.g. page load complete.
    */
   virtual void OnDNSPrefetchDeferred() { /*do nothing*/ }
-  
+
   /**
    * DNS prefetch has been submitted to Host Resolver.
    */
@@ -100,16 +107,16 @@ public:
 
   /**
    * Checks if DNS Prefetching is ok
-   * 
+   *
    * @returns boolean
    *          Defaults to true; should be overridden for specialised cases
    */
   virtual bool HasDeferredDNSPrefetchRequest() { return true; }
 
   virtual size_t
-    SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+    SizeOfExcludingThis(mozilla::SizeOfState& aState) const;
 
-  bool ElementHasHref() const;
+  virtual bool ElementHasHref() const;
 
   // This is called by HTMLAnchorElement.
   void TryDNSPrefetch();
@@ -117,9 +124,27 @@ public:
                          nsWrapperCache::FlagsType aRequestedFlag);
 
   // This is called by HTMLLinkElement.
-  void TryDNSPrefetchPreconnectOrPrefetch();
-  void CancelPrefetch();
+  void TryDNSPrefetchOrPreconnectOrPrefetchOrPreloadOrPrerender();
+  void UpdatePreload(nsIAtom* aName, const nsAttrValue* aValue,
+                     const nsAttrValue* aOldValue);
+  void CancelPrefetchOrPreload();
 
+  bool HasPendingLinkUpdate() const { return mHasPendingLinkUpdate; }
+  void SetHasPendingLinkUpdate() { mHasPendingLinkUpdate = true; }
+  void ClearHasPendingLinkUpdate() { mHasPendingLinkUpdate = false; }
+
+  // To ensure correct mHasPendingLinkUpdate handling, we have this method
+  // similar to the one in Element. Overriders must call
+  // ClearHasPendingLinkUpdate().
+  // If you change this, change also the method in Element.
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) = 0;
+
+  bool IsInDNSPrefetch() { return mInDNSPrefetch; }
+  void SetIsInDNSPrefetch() { mInDNSPrefetch = true; }
+  void ClearIsInDNSPrefetch() { mInDNSPrefetch = false; }
+
+  static void ParseAsValue(const nsAString& aValue, nsAttrValue& aResult);
+  static nsContentPolicyType AsValueToContentPolicy(const nsAttrValue& aValue);
 protected:
   virtual ~Link();
 
@@ -148,6 +173,11 @@ private:
   already_AddRefed<nsIURI> GetURIToMutate();
   void SetHrefAttribute(nsIURI *aURI);
 
+  void GetContentPolicyMimeTypeMedia(nsAttrValue& aAsAttr,
+                                     nsContentPolicyType& aPolicyType,
+                                     nsString& aMimeType,
+                                     nsAString& aMedia);
+
   mutable nsCOMPtr<nsIURI> mCachedURI;
 
   Element * const mElement;
@@ -158,12 +188,37 @@ private:
 
   uint16_t mLinkState;
 
-  bool mNeedsRegistration;
+  bool mNeedsRegistration : 1;
 
-  bool mRegistered;
+  bool mRegistered : 1;
+
+  bool mHasPendingLinkUpdate : 1;
+
+  bool mInDNSPrefetch : 1;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(Link, MOZILLA_DOM_LINK_IMPLEMENTATION_IID)
+
+enum ASDestination : uint8_t {
+  DESTINATION_INVALID,
+  DESTINATION_AUDIO,
+  DESTINATION_DOCUMENT,
+  DESTINATION_EMBED,
+  DESTINATION_FONT,
+  DESTINATION_IMAGE,
+  DESTINATION_MANIFEST,
+  DESTINATION_OBJECT,
+  DESTINATION_REPORT,
+  DESTINATION_SCRIPT,
+  DESTINATION_SERVICEWORKER,
+  DESTINATION_SHAREDWORKER,
+  DESTINATION_STYLE,
+  DESTINATION_TRACK,
+  DESTINATION_VIDEO,
+  DESTINATION_WORKER,
+  DESTINATION_XSLT,
+  DESTINATION_FETCH
+};
 
 } // namespace dom
 } // namespace mozilla

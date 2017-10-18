@@ -11,6 +11,9 @@
     {
       'target_name': 'video_processing',
       'type': 'static_library',
+      'include_dirs': [
+        '<(libyuv_dir)/include',
+      ],
       'dependencies': [
         'webrtc_utility',
         '<(webrtc_root)/common_audio/common_audio.gyp:common_audio',
@@ -18,31 +21,25 @@
         '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
       ],
       'sources': [
-        'main/interface/video_processing.h',
-        'main/interface/video_processing_defines.h',
-        'main/source/brighten.cc',
-        'main/source/brighten.h',
-        'main/source/brightness_detection.cc',
-        'main/source/brightness_detection.h',
-        'main/source/color_enhancement.cc',
-        'main/source/color_enhancement.h',
-        'main/source/color_enhancement_private.h',
-        'main/source/content_analysis.cc',
-        'main/source/content_analysis.h',
-        'main/source/deflickering.cc',
-        'main/source/deflickering.h',
-        'main/source/frame_preprocessor.cc',
-        'main/source/frame_preprocessor.h',
-        'main/source/spatial_resampler.cc',
-        'main/source/spatial_resampler.h',
-        'main/source/video_decimator.cc',
-        'main/source/video_decimator.h',
-        'main/source/video_processing_impl.cc',
-        'main/source/video_processing_impl.h',
+        'include/video_processing.h',
+        'include/video_processing_defines.h',
+        'video_denoiser.cc',
+        'video_denoiser.h',
+        'util/denoiser_filter.cc',
+        'util/denoiser_filter.h',
+        'util/denoiser_filter_c.cc',
+        'util/denoiser_filter_c.h',
+        'util/noise_estimation.cc',
+        'util/noise_estimation.h',
+        'util/skin_detection.cc',
+        'util/skin_detection.h',
       ],
       'conditions': [
         ['target_arch=="ia32" or target_arch=="x64"', {
           'dependencies': [ 'video_processing_sse2', ],
+        }],
+        ['target_arch=="arm" or target_arch == "arm64"', {
+          'dependencies': [ 'video_processing_neon', ],
         }],
       ],
     },
@@ -54,7 +51,8 @@
           'target_name': 'video_processing_sse2',
           'type': 'static_library',
           'sources': [
-            'main/source/content_analysis_sse2.cc',
+            'util/denoiser_filter_sse2.cc',
+            'util/denoiser_filter_sse2.h',
           ],
           'conditions': [
             ['os_posix==1 and OS!="mac"', {
@@ -66,6 +64,19 @@
                 'OTHER_CFLAGS': [ '-msse2', ],
               },
             }],
+          ],
+        },
+      ],
+    }],
+    ['target_arch=="arm" or target_arch == "arm64"', {
+      'targets': [
+        {
+          'target_name': 'video_processing_neon',
+          'type': 'static_library',
+          'includes': [ '../../build/arm_neon.gypi', ],
+          'sources': [
+            'util/denoiser_filter_neon.cc',
+            'util/denoiser_filter_neon.h',
           ],
         },
       ],

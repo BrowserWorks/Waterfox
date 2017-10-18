@@ -7,6 +7,7 @@
 #ifndef mozilla_EditorUtils_h
 #define mozilla_EditorUtils_h
 
+#include "mozilla/dom/Selection.h"
 #include "mozilla/EditorBase.h"
 #include "mozilla/GuardObjects.h"
 #include "nsCOMPtr.h"
@@ -26,13 +27,124 @@ class nsRange;
 namespace mozilla {
 template <class T> class OwningNonNull;
 
-namespace dom {
-class Selection;
-} // namespace dom
+/***************************************************************************
+ * EditActionResult is useful to return multiple results of an editor
+ * action handler without out params.
+ * Note that when you return an anonymous instance from a method, you should
+ * use EditActionIgnored(), EditActionHandled() or EditActionCanceled() for
+ * easier to read.  In other words, EditActionResult should be used when
+ * declaring return type of a method, being an argument or defined as a local
+ * variable.
+ */
+class MOZ_STACK_CLASS EditActionResult final
+{
+public:
+  bool Succeeded() const { return NS_SUCCEEDED(mRv); }
+  bool Failed() const { return NS_FAILED(mRv); }
+  nsresult Rv() const { return mRv; }
+  bool Canceled() const { return mCanceled; }
+  bool Handled() const { return mHandled; }
+
+  EditActionResult SetResult(nsresult aRv)
+  {
+    mRv = aRv;
+    return *this;
+  }
+  EditActionResult MarkAsCanceled()
+  {
+    mCanceled = true;
+    return *this;
+  }
+  EditActionResult MarkAsHandled()
+  {
+    mHandled = true;
+    return *this;
+  }
+
+  explicit EditActionResult(nsresult aRv)
+    : mRv(aRv)
+    , mCanceled(false)
+    , mHandled(false)
+  {
+  }
+
+  EditActionResult& operator|=(const EditActionResult& aOther)
+  {
+    mCanceled |= aOther.mCanceled;
+    mHandled |= aOther.mHandled;
+    // When both result are same, keep the result.
+    if (mRv == aOther.mRv) {
+      return *this;
+    }
+    // If one of the results is error, use NS_ERROR_FAILURE.
+    if (Failed() || aOther.Failed()) {
+      mRv = NS_ERROR_FAILURE;
+    } else {
+      // Otherwise, use generic success code, NS_OK.
+      mRv = NS_OK;
+    }
+    return *this;
+  }
+
+private:
+  nsresult mRv;
+  bool mCanceled;
+  bool mHandled;
+
+  EditActionResult(nsresult aRv, bool aCanceled, bool aHandled)
+    : mRv(aRv)
+    , mCanceled(aCanceled)
+    , mHandled(aHandled)
+  {
+  }
+
+  EditActionResult()
+    : mRv(NS_ERROR_NOT_INITIALIZED)
+    , mCanceled(false)
+    , mHandled(false)
+  {
+  }
+
+  friend EditActionResult EditActionIgnored(nsresult aRv);
+  friend EditActionResult EditActionHandled(nsresult aRv);
+  friend EditActionResult EditActionCanceled(nsresult aRv);
+};
 
 /***************************************************************************
- * stack based helper class for batching a collection of txns inside a
- * placeholder txn.
+ * When an edit action handler (or its helper) does nothing,
+ * EditActionIgnored should be returned.
+ */
+inline EditActionResult
+EditActionIgnored(nsresult aRv = NS_OK)
+{
+  return EditActionResult(aRv, false, false);
+}
+
+/***************************************************************************
+ * When an edit action handler (or its helper) handled and not canceled,
+ * EditActionHandled should be returned.
+ */
+inline EditActionResult
+EditActionHandled(nsresult aRv = NS_OK)
+{
+  return EditActionResult(aRv, false, true);
+}
+
+/***************************************************************************
+ * When an edit action handler (or its helper) handled and canceled,
+ * EditActionHandled should be returned.
+ */
+inline EditActionResult
+EditActionCanceled(nsresult aRv = NS_OK)
+{
+  return EditActionResult(aRv, true, true);
+}
+
+/***************************************************************************
+ * stack based helper class for batching a collection of transactions inside a
+ * placeholder transaction.
+ * XXX This is used by mozInlineSpellChecker.  Therefore, cannot use concrete
+ *     editor class.
  */
 class MOZ_RAII AutoPlaceHolderBatch
 {
@@ -205,6 +317,23 @@ public:
 protected:
   EditorBase* mEditorBase;
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+class MOZ_STACK_CLASS AutoRangeArray final
+{
+public:
+  explicit AutoRangeArray(dom::Selection* aSelection)
+  {
+    if (!aSelection) {
+      return;
+    }
+    uint32_t rangeCount = aSelection->RangeCount();
+    for (uint32_t i = 0; i < rangeCount; i++) {
+      mRanges.AppendElement(*aSelection->GetRangeAt(i));
+    }
+  }
+
+  AutoTArray<mozilla::OwningNonNull<nsRange>, 8> mRanges;
 };
 
 /******************************************************************************

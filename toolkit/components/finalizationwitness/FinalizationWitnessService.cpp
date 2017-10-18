@@ -37,11 +37,12 @@ class FinalizationEvent final: public Runnable
 public:
   FinalizationEvent(const char* aTopic,
                   const char16_t* aValue)
-    : mTopic(aTopic)
+    : Runnable("FinalizationEvent")
+    , mTopic(aTopic)
     , mValue(aValue)
   { }
 
-  NS_METHOD Run() {
+  NS_IMETHOD Run() override {
     nsCOMPtr<nsIObserverService> observerService =
       mozilla::services::GetObserverService();
     if (!observerService) {
@@ -122,6 +123,7 @@ static const JSClassOps sWitnessClassOps = {
   nullptr /* getProperty */,
   nullptr /* setProperty */,
   nullptr /* enumerate */,
+  nullptr /* newEnumerate */,
   nullptr /* resolve */,
   nullptr /* mayResolve */,
   Finalize /* finalize */
@@ -129,7 +131,8 @@ static const JSClassOps sWitnessClassOps = {
 
 static const JSClass sWitnessClass = {
   "FinalizationWitness",
-  JSCLASS_HAS_RESERVED_SLOTS(WITNESS_INSTANCES_SLOTS),
+  JSCLASS_HAS_RESERVED_SLOTS(WITNESS_INSTANCES_SLOTS) |
+  JSCLASS_FOREGROUND_FINALIZE,
   &sWitnessClassOps
 };
 
@@ -150,7 +153,7 @@ bool IsWitness(JS::Handle<JS::Value> v)
 bool ForgetImpl(JSContext* cx, const JS::CallArgs& args)
 {
   if (args.length() != 0) {
-    JS_ReportError(cx, "forget() takes no arguments");
+    JS_ReportErrorASCII(cx, "forget() takes no arguments");
     return false;
   }
   JS::Rooted<JS::Value> valSelf(cx, args.thisv());
@@ -158,7 +161,7 @@ bool ForgetImpl(JSContext* cx, const JS::CallArgs& args)
 
   RefPtr<FinalizationEvent> event = ExtractFinalizationEvent(objSelf);
   if (event == nullptr) {
-    JS_ReportError(cx, "forget() called twice");
+    JS_ReportErrorASCII(cx, "forget() called twice");
     return false;
   }
 

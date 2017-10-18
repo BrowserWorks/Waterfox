@@ -12,7 +12,6 @@
 #include "2D.h"
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Vector.h"
-#include "u16string.h"
 
 namespace mozilla {
 namespace gfx {
@@ -27,28 +26,24 @@ public:
    *
    * @param aFontData the SFNT data.
    * @param aDataLength length of data.
-   * @param aNeedsCairo whether the ScaledFont created need a cairo scaled font
    * @return Referenced NativeFontResourceGDI or nullptr if invalid.
    */
   static already_AddRefed<NativeFontResourceGDI>
-    Create(uint8_t *aFontData, uint32_t aDataLength, bool aNeedsCairo);
+    Create(uint8_t *aFontData, uint32_t aDataLength);
 
   ~NativeFontResourceGDI();
 
-  already_AddRefed<ScaledFont>
-    CreateScaledFont(uint32_t aIndex, uint32_t aGlyphSize) final;
+  already_AddRefed<UnscaledFont>
+    CreateUnscaledFont(uint32_t aIndex,
+                       const uint8_t* aInstanceData,
+                       uint32_t aInstanceDataLength) final;
 
 private:
-  NativeFontResourceGDI(HANDLE aFontResourceHandle,
-                        Vector<mozilla::u16string>&& aFontNames,
-                        bool aNeedsCairo)
-    : mFontResourceHandle(aFontResourceHandle), mFontNames(Move(aFontNames))
-    , mNeedsCairo(aNeedsCairo)
+  explicit NativeFontResourceGDI(HANDLE aFontResourceHandle)
+    : mFontResourceHandle(aFontResourceHandle)
   {}
 
   HANDLE mFontResourceHandle;
-  Vector<mozilla::u16string> mFontNames;
-  bool mNeedsCairo;
 };
 
 } // gfx

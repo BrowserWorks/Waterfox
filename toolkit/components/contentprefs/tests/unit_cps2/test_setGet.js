@@ -85,7 +85,7 @@ var tests = [
     yield setGlobal("bar", 4);
     yield set("b.com", "foo", 5);
 
-    let context = { usePrivateBrowsing: true };
+    let context = privateLoadContext;
     yield set("a.com", "foo", 6, context);
     yield setGlobal("foo", 7, context);
     yield dbOK([
@@ -143,7 +143,7 @@ var tests = [
 
     // (3) Set the pref to a new value but don't wait for it to finish.
     cps.set("a.com", "foo", 2, null, {
-      handleCompletion: function () {
+      handleCompletion() {
         // (6) The pref should be cached after setting it.
         getCachedOK(["a.com", "foo"], true, 2);
       },
@@ -155,10 +155,10 @@ var tests = [
     // (5) Call getByDomainAndName.
     var fetchedPref;
     cps.getByDomainAndName("a.com", "foo", null, {
-      handleResult: function (pref) {
+      handleResult(pref) {
         fetchedPref = pref;
       },
-      handleCompletion: function () {
+      handleCompletion() {
         // (7) Finally, this callback should be called after set's above.
         do_check_true(!!fetchedPref);
         do_check_eq(fetchedPref.value, 2);
@@ -181,7 +181,7 @@ var tests = [
       {"domain": null, "name": "foo", "value": 4}
     ]);
 
-    let context = { usePrivateBrowsing: true };
+    let context = privateLoadContext;
     yield set("b.com", "foo", 5, context);
 
     yield getOKEx("getByName", ["foo", context], [

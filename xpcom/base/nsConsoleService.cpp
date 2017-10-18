@@ -19,12 +19,15 @@
 #include "nsConsoleMessage.h"
 #include "nsIClassInfoImpl.h"
 #include "nsIConsoleListener.h"
+#include "nsIObserverService.h"
 #include "nsPrintfCString.h"
 #include "nsProxyRelease.h"
 #include "nsIScriptError.h"
 #include "nsISupportsPrimitives.h"
 
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
+#include "mozilla/SystemGroup.h"
 
 #if defined(ANDROID)
 #include <android/log.h>
@@ -124,11 +127,13 @@ nsConsoleService::~nsConsoleService()
 class AddConsolePrefWatchers : public Runnable
 {
 public:
-  explicit AddConsolePrefWatchers(nsConsoleService* aConsole) : mConsole(aConsole)
+  explicit AddConsolePrefWatchers(nsConsoleService* aConsole)
+    : mozilla::Runnable("AddConsolePrefWatchers")
+    , mConsole(aConsole)
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     Preferences::AddBoolVarCache(&sLoggingEnabled, "consoleservice.enabled", true);
     Preferences::AddBoolVarCache(&sLoggingBuffered, "consoleservice.buffered", true);
@@ -165,7 +170,8 @@ class LogMessageRunnable : public Runnable
 {
 public:
   LogMessageRunnable(nsIConsoleMessage* aMessage, nsConsoleService* aService)
-    : mMessage(aMessage)
+    : mozilla::Runnable("LogMessageRunnable")
+    , mMessage(aMessage)
     , mService(aService)
   { }
 
@@ -284,7 +290,7 @@ nsConsoleService::LogMessageWithMode(nsIConsoleMessage* aMessage,
     }
 #endif
 #ifdef MOZ_TASK_TRACER
-    {
+    if (IsStartLogging()) {
       nsCString msg;
       aMessage->ToString(msg);
       int prefixPos = msg.Find(GetJSLabelPrefix());
@@ -317,14 +323,15 @@ nsConsoleService::LogMessageWithMode(nsIConsoleMessage* aMessage,
     // Release |retiredMessage| on the main thread in case it is an instance of
     // a mainthread-only class like nsScriptErrorWithStack and we're off the
     // main thread.
-    NS_ReleaseOnMainThread(retiredMessage.forget());
+    NS_ReleaseOnMainThreadSystemGroup(
+      "nsConsoleService::retiredMessage", retiredMessage.forget());
   }
 
   if (r) {
     // avoid failing in XPCShell tests
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
     if (mainThread) {
-      NS_DispatchToMainThread(r.forget());
+      SystemGroup::Dispatch(TaskCategory::Other, r.forget());
     }
   }
 

@@ -5,6 +5,7 @@
 <panel id="identity-popup"
        type="arrow"
        hidden="true"
+       role="alertdialog"
        onpopupshown="gIdentityHandler.onPopupShown(event);"
        onpopuphidden="gIdentityHandler.onPopupHidden(event);"
        orient="vertical">
@@ -16,25 +17,22 @@
 
   <panelmultiview id="identity-popup-multiView"
                   mainViewId="identity-popup-mainView">
-    <panelview id="identity-popup-mainView" flex="1">
-
+    <panelview id="identity-popup-mainView" flex="1"
+               descriptionheightworkaround="true">
       <!-- Security Section -->
       <hbox id="identity-popup-security" class="identity-popup-section">
         <vbox id="identity-popup-security-content" flex="1">
           <label class="plain">
-            <label class="identity-popup-headline host"></label>
-            <label class="identity-popup-headline hostless" crop="end"/>
+            <label class="identity-popup-headline identity-popup-host"></label>
+            <label class="identity-popup-headline identity-popup-hostless" crop="end"/>
           </label>
           <description class="identity-popup-connection-not-secure"
-                       value="&identity.connectionNotSecure;"
-                       when-connection="not-secure secure-cert-user-overridden"/>
+                       when-connection="not-secure secure-cert-user-overridden">&identity.connectionNotSecure;</description>
           <description class="identity-popup-connection-secure"
-                       value="&identity.connectionSecure;"
-                       when-connection="secure secure-ev"/>
-          <description value="&identity.connectionInternal;"
-                       when-connection="chrome"/>
-          <description value="&identity.connectionFile;"
-                       when-connection="file"/>
+                       when-connection="secure secure-ev">&identity.connectionSecure;</description>
+          <description when-connection="chrome">&identity.connectionInternal;</description>
+          <description when-connection="file">&identity.connectionFile;</description>
+          <description when-connection="extension">&identity.extensionPage;</description>
 
           <vbox id="identity-popup-security-descriptions">
             <description class="identity-popup-warning-gray"
@@ -58,16 +56,16 @@
             class="identity-popup-section"
             when-connection="not-secure secure secure-ev secure-cert-user-overridden file">
         <vbox id="tracking-protection-content" flex="1">
-          <description class="identity-popup-headline"
-                       crop="end"
-                       value="&trackingProtection.title;" />
+          <label class="identity-popup-headline"
+                 crop="end"
+                 value="&trackingProtection.title;" />
 
-          <label id="tracking-blocked"
-                 crop="end">&trackingProtection.detectedBlocked3;</label>
-          <label id="tracking-loaded"
-                 crop="end">&trackingProtection.detectedNotBlocked3;</label>
-          <label id="tracking-not-detected"
-                 crop="end">&trackingProtection.notDetected3;</label>
+          <description id="tracking-blocked"
+                       crop="end">&trackingProtection.detectedBlocked3;</description>
+          <description id="tracking-loaded"
+                       crop="end">&trackingProtection.detectedNotBlocked3;</description>
+          <description id="tracking-not-detected"
+                       crop="end">&trackingProtection.notDetected3;</description>
 
           <button id="tracking-action-unblock"
                   label="&trackingProtection.unblock.label;"
@@ -91,27 +89,27 @@
                  class="identity-popup-headline"
                  value="&identity.permissions;"/>
           <vbox id="identity-popup-permission-list"/>
-          <description>&identity.permissionsEmpty;</description>
+          <description id="identity-popup-permission-reload-hint">&identity.permissionsReloadHint;</description>
+          <description id="identity-popup-permission-empty-hint">&identity.permissionsEmpty;</description>
         </vbox>
       </hbox>
     </panelview>
 
     <!-- Security SubView -->
-    <panelview id="identity-popup-securityView" flex="1">
+    <panelview id="identity-popup-securityView"
+               descriptionheightworkaround="true">
       <vbox id="identity-popup-securityView-header">
         <label class="plain">
-          <label class="identity-popup-headline host"></label>
-          <label class="identity-popup-headline hostless" crop="end"/>
+          <label class="identity-popup-headline identity-popup-host"></label>
+          <label class="identity-popup-headline identity-popup-hostless" crop="end"/>
         </label>
         <description class="identity-popup-connection-not-secure"
-                     value="&identity.connectionNotSecure;"
-                     when-connection="not-secure secure-cert-user-overridden"/>
+                     when-connection="not-secure secure-cert-user-overridden">&identity.connectionNotSecure;</description>
         <description class="identity-popup-connection-secure"
-                     value="&identity.connectionSecure;"
-                     when-connection="secure secure-ev"/>
+                     when-connection="secure secure-ev">&identity.connectionSecure;</description>
       </vbox>
 
-      <vbox id="identity-popup-securityView-body" flex="1">
+      <vbox id="identity-popup-securityView-body" class="panel-view-body-unscrollable">
         <!-- (EV) Certificate Information -->
         <description id="identity-popup-content-verified-by"
                      when-connection="secure-ev">&identity.connectionVerified2;</description>

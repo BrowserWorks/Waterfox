@@ -4,6 +4,7 @@
 import os
 from datetime import datetime, timedelta
 from urlparse import urljoin
+from mozharness.base.log import INFO
 
 from mozharness.base.log import LogMixin
 
@@ -93,7 +94,10 @@ class Taskcluster(LogMixin):
 
     @property
     def expiration(self):
-        return datetime.utcnow() + timedelta(weeks=52)
+        weeks = 52
+        if self.buildbot == 'buildbot-try':
+            weeks = 3
+        return datetime.utcnow() + timedelta(weeks=weeks)
 
     def create_artifact(self, task, filename):
         mime_type = self.get_mime_type(os.path.splitext(filename)[1])
@@ -159,7 +163,6 @@ class Taskcluster(LogMixin):
 class TaskClusterArtifactFinderMixin(object):
     # This class depends that you have extended from the base script
     QUEUE_URL = 'https://queue.taskcluster.net/v1/task/'
-    SCHEDULER_URL = 'https://scheduler.taskcluster.net/v1/task-graph/'
 
     def get_task(self, task_id):
         """ Get Task Definition """
@@ -178,22 +181,12 @@ class TaskClusterArtifactFinderMixin(object):
         """ Return a URL for an artifact. """
         return urljoin(self.QUEUE_URL, '{}/artifacts/{}'.format(task_id, full_path))
 
-    def get_inspect_graph(self, task_group_id):
-        """ Inspect Task Graph """
-        # Signature: inspect(taskGraphId) : result
-        return self.load_json_url(urljoin(self.SCHEDULER_URL, '{}/inspect'.format(task_group_id)))
-
     def find_parent_task_id(self, task_id):
         """ Returns the task_id of the parent task associated to the given task_id."""
         # Find group id to associated to all related tasks
-        task_group_id = self.get_task(task_id)['taskGroupId']
-
-        # Find child task and determine on which task it depends on
-        for task in self.get_inspect_graph(task_group_id)['tasks']:
-            if task['taskId'] == task_id:
-                parent_task_id = task['requires'][0]
-
-        return parent_task_id
+        task = self.load_json_url(urljoin(self.QUEUE_URL, task_id))
+        self.log('Task dependencies: {}'.format(' '.join(task['dependencies'])))
+        return task['dependencies'][0]
 
     def set_bbb_artifacts(self, task_id, properties_file_path):
         """ Find BBB artifacts through properties_file_path and set them. """
@@ -209,9 +202,9 @@ class TaskClusterArtifactFinderMixin(object):
 
     def set_artifacts(self, installer, tests, symbols):
         """ Sets installer, test and symbols URLs from the artifacts of BBB based task."""
-        self.installer_url, self.test_url, self.symbols_url = installer, tests, symbols
+        self.installer_url, self.test_packages_url, self.symbols_url = installer, tests, symbols
         self.info('Set installer_url: %s' % self.installer_url)
-        self.info('Set test_url: %s' % self.test_url)
+        self.info('Set test_packages_url: %s' % self.test_packages_url)
         self.info('Set symbols_url: %s' % self.symbols_url)
 
     def set_parent_artifacts(self, child_task_id):
@@ -234,23 +227,30 @@ class TaskClusterArtifactFinderMixin(object):
         # Task definition
         child_task = self.get_task(child_task_id)
 
+        properties = child_task['payload']['properties']
+
         # Case A: The parent_task_id is defined (mozci scheduling)
-        if child_task['payload']['properties'].get('parent_task_id'):
+        # or installer_path is defined (intree scheduling)
+        if any(k in properties for k in ('parent_task_id', 'installer_path')):
             # parent_task_id is used to point to the task from which to grab artifacts
             # rather than the one we depend on
-            parent_id = child_task['payload']['properties']['parent_task_id']
+            parent_id = properties.get('parent_task_id', self.find_parent_task_id(child_task_id))
 
             # Find out where the parent task uploaded the build
             parent_task = self.get_task(parent_id)
 
-            # Case 1: The parent task is a pure TC task
-            if parent_task['extra'].get('locations'):
-                # Build tasks generated under TC specify where they upload their builds
-                installer_path = parent_task['extra']['locations']['build']
+            # in-tree bbb jobs have the installer_path property
+            # otherwise we look for the build path in task locations
+            installer_path = properties.get(
+                'installer_path',
+                parent_task['extra'].get('locations', {}).get('build')
+            )
 
+            # Case 1: The parent task is a pure TC task
+            if installer_path:
                 self.set_artifacts(
                     self.url_to_artifact(parent_id, installer_path),
-                    self.url_to_artifact(parent_id, 'public/build/test_packages.json'),
+                    self.url_to_artifact(parent_id, 'public/build/target.test_packages.json'),
                     self.url_to_artifact(parent_id, 'public/build/target.crashreporter-symbols.zip')
                 )
             else:
@@ -260,7 +260,6 @@ class TaskClusterArtifactFinderMixin(object):
                     task_id=parent_id,
                     properties_file_path='public/build/buildbot_properties.json'
                 )
-
         else:
             # Case B: We need to query who the parent is since 'parent_task_id'
             # was not defined as a Buildbot property
@@ -269,3 +268,9 @@ class TaskClusterArtifactFinderMixin(object):
                 task_id=parent_id,
                 properties_file_path='public/build/buildbot_properties.json'
             )
+
+        # Use the signed installer if it's set
+        if 'signed_installer_url' in properties:
+            signed_installer_url = properties['signed_installer_url']
+            self.info('Overriding installer_url with signed_installer_url: %s' % signed_installer_url)
+            self.installer_url = signed_installer_url

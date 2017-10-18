@@ -43,13 +43,23 @@ MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext)
 }
 
 /* static */ already_AddRefed<MediaStreamAudioSourceNode>
-MediaStreamAudioSourceNode::Create(AudioContext* aContext,
-                                   DOMMediaStream* aStream, ErrorResult& aRv)
+MediaStreamAudioSourceNode::Create(AudioContext& aAudioContext,
+                                   const MediaStreamAudioSourceOptions& aOptions,
+                                   ErrorResult& aRv)
 {
-  RefPtr<MediaStreamAudioSourceNode> node =
-    new MediaStreamAudioSourceNode(aContext);
+  if (aAudioContext.IsOffline()) {
+    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return nullptr;
+  }
 
-  node->Init(aStream, aRv);
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<MediaStreamAudioSourceNode> node =
+    new MediaStreamAudioSourceNode(&aAudioContext);
+
+  node->Init(aOptions.mMediaStream, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -60,7 +70,11 @@ MediaStreamAudioSourceNode::Create(AudioContext* aContext,
 void
 MediaStreamAudioSourceNode::Init(DOMMediaStream* aMediaStream, ErrorResult& aRv)
 {
-  MOZ_ASSERT(aMediaStream);
+  if (!aMediaStream) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+  }
+
   MediaStream* inputStream = aMediaStream->GetPlaybackStream();
   MediaStreamGraph* graph = Context()->Graph();
   if (NS_WARN_IF(graph != inputStream->Graph())) {

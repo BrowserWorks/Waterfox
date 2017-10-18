@@ -12,8 +12,8 @@
 
 #include <stdint.h>                     // for uint16_t, uint32_t
 #include <sys/types.h>                  // for int32_t
-#include "gfxPlatform.h"                // for GetTileWidth/GetTileHeight
 #include "LayersLogging.h"              // for print_stderr
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/Logging.h"        // for gfxCriticalError
 #include "mozilla/layers/LayersTypes.h" // for TextureDumpMode
 #include "nsDebug.h"                    // for NS_ASSERTION
@@ -21,10 +21,6 @@
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsTArray
-
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-#include <ui/Fence.h>
-#endif
 
 namespace mozilla {
 
@@ -142,8 +138,7 @@ public:
   TiledLayerBuffer()
     : mTiles(0, 0, 0, 0)
     , mResolution(1)
-    , mTileSize(gfxPlatform::GetPlatform()->GetTileWidth(),
-                gfxPlatform::GetPlatform()->GetTileHeight())
+    , mTileSize(mozilla::gfx::gfxVars::TileSize())
   {}
 
   ~TiledLayerBuffer() {}

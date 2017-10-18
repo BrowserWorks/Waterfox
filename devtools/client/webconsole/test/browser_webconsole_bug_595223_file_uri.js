@@ -7,7 +7,6 @@
 
 const PREF = "devtools.webconsole.persistlog";
 const TEST_FILE = "test-network.html";
-const TEST_URI = "data:text/html;charset=utf8,<p>test file URI";
 
 var hud;
 
@@ -22,7 +21,11 @@ add_task(function* () {
   dir.append(TEST_FILE);
   let uri = Services.io.newFileURI(dir);
 
-  let { browser } = yield loadTab(TEST_URI);
+  // Open tab with correct remote type so we don't switch processes when we load
+  // the file:// URI, otherwise we won't get the same web console.
+  let remoteType = E10SUtils.getRemoteTypeForURI(uri.spec,
+                                                 gMultiProcessBrowser);
+  let { browser } = yield loadTab("about:blank", remoteType);
 
   hud = yield openConsole();
   hud.jsterm.clearOutput();

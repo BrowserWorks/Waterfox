@@ -66,8 +66,11 @@ protected:
 
     Updater* mUpdaters;
 
-    bool Matches(const nsString& aList, 
+    bool Matches(const nsString& aList,
                    const nsAString& aElement);
+
+    bool mLocked;
+    nsTArray<nsString> mPendingUpdates;
 };
 
 #endif // nsXULCommandDispatcher_h__

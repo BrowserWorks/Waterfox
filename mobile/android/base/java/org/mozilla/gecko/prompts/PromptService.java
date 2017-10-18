@@ -5,67 +5,46 @@
 
 package org.mozilla.gecko.prompts;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.gecko.EventDispatcher;
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.util.GeckoEventListener;
+import org.mozilla.gecko.util.BundleEventListener;
+import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
 import android.util.Log;
 
-public class PromptService implements GeckoEventListener {
+public class PromptService implements BundleEventListener {
     private static final String LOGTAG = "GeckoPromptService";
 
     private final Context mContext;
+    private final EventDispatcher mDispatcher;
 
-    public PromptService(Context context) {
-        EventDispatcher.getInstance().registerGeckoThreadListener(this,
+    public PromptService(final Context context, final EventDispatcher dispatcher) {
+        mContext = context;
+        mDispatcher = dispatcher;
+        mDispatcher.registerUiThreadListener(this,
             "Prompt:Show",
             "Prompt:ShowTop");
-        mContext = context;
     }
 
     public void destroy() {
-        EventDispatcher.getInstance().unregisterGeckoThreadListener(this,
+        mDispatcher.unregisterUiThreadListener(this,
             "Prompt:Show",
             "Prompt:ShowTop");
     }
 
-    public void show(final String aTitle, final String aText, final PromptListItem[] aMenuList,
-                     final int aChoiceMode, final Prompt.PromptCallback callback) {
-        // The dialog must be created on the UI thread.
-        ThreadUtils.postToUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Prompt p;
-                p = new Prompt(mContext, callback);
-                p.show(aTitle, aText, aMenuList, aChoiceMode);
-            }
-        });
-    }
-
-    // GeckoEventListener implementation
+    // BundleEventListener implementation
     @Override
-    public void handleMessage(String event, final JSONObject message) {
-        // The dialog must be created on the UI thread.
-        ThreadUtils.postToUiThread(new Runnable() {
+    public void handleMessage(final String event, final GeckoBundle message,
+                              final EventCallback callback) {
+        Prompt p;
+        p = new Prompt(mContext, new Prompt.PromptCallback() {
             @Override
-            public void run() {
-                Prompt p;
-                p = new Prompt(mContext, new Prompt.PromptCallback() {
-                    @Override
-                    public void onPromptFinished(String jsonResult) {
-                        try {
-                            EventDispatcher.sendResponse(message, new JSONObject(jsonResult));
-                        } catch (JSONException ex) {
-                            Log.i(LOGTAG, "Error building json response", ex);
-                        }
-                    }
-                });
-                p.show(message);
+            public void onPromptFinished(final GeckoBundle result) {
+                callback.sendSuccess(result);
             }
         });
+        p.show(message);
     }
 }

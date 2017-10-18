@@ -20,10 +20,10 @@
         return s;
       }
 
-      function remove(n)    { n.parentNode.removeChild(n); }
+      function remove(n)    { n.remove(); }
     </script>
   </head>
   <body onload="boom();">
-    <iframe id="iframe" src="data:text/html,S"></iframe>
+    <iframe id="iframe" srcdoc="<html>S</html>"></iframe>
   </body>
 </html>

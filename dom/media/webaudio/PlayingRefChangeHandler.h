@@ -18,12 +18,13 @@ class PlayingRefChangeHandler final : public Runnable
 public:
   enum ChangeType { ADDREF, RELEASE };
   PlayingRefChangeHandler(AudioNodeStream* aStream, ChangeType aChange)
-    : mStream(aStream)
+    : Runnable("dom::PlayingRefChangeHandler")
+    , mStream(aStream)
     , mChange(aChange)
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     RefPtr<AudioNode> node = mStream->Engine()->NodeMainThread();
     if (node) {

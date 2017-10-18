@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=636737
 -->
 <head>
   <title>Test for Bug input.valueAsNumber</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -45,18 +44,13 @@ function checkAvailability()
     ["time", true],
     ["color", false],
     ["month", true],
-  ];
-
-  var todoList =
-  [
-    ["datetime", true],
     ["week", true],
     ["datetime-local", true],
   ];
 
   var element = document.createElement('input');
 
-  for (data of testData) {
+  for (let data of testData) {
     var exceptionCatched = false;
     element.type = data[0];
     try {
@@ -75,27 +69,6 @@ function checkAvailability()
     }
     is(exceptionCatched, !data[1], "valueAsNumber for " + data[0] +
                                    " availability is not correct");
-  }
-
-  for (data of todoList) {
-    var exceptionCatched = false;
-    element.type = data[0];
-    try {
-      element.valueAsNumber;
-    } catch (e) {
-      exceptionCatched = true;
-    }
-    is(exceptionCatched, false,
-       "valueAsNumber shouldn't throw exception on getting");
-
-    exceptionCatched = false;
-    try {
-      element.valueAsNumber = 42;
-    } catch (e) {
-      exceptionCatched = true;
-    }
-    todo_is(exceptionCatched, !data[1],
-            "valueAsNumber for " + data[0] + " availability is not correct");
   }
 }
 
@@ -121,7 +94,7 @@ function checkNumberGet()
 
   var element = document.createElement('input');
   element.type = "number";
-  for (data of testData) {
+  for (let data of testData) {
     element.value = data[0];
 
     // Given that NaN != NaN, we have to use null when the expected value is NaN.
@@ -161,7 +134,7 @@ function checkNumberSet()
 
   var element = document.createElement('input');
   element.type = "number";
-  for (data of testData) {
+  for (let data of testData) {
     var caught = false;
     try {
       element.valueAsNumber = data[0];
@@ -212,7 +185,7 @@ function checkRangeGet()
   element.setAttribute("min", min); // avoids out of range sanitization
   element.setAttribute("max", max);
   element.setAttribute("step", "any"); // avoids step mismatch sanitization
-  for (data of testData) {
+  for (let data of testData) {
     element.value = data[0];
 
     // Given that NaN != NaN, we have to use null when the expected value is NaN.
@@ -252,7 +225,7 @@ function checkRangeSet()
   element.setAttribute("min", min); // avoids out of range sanitization
   element.setAttribute("max", max);
   element.setAttribute("step", "any"); // avoids step mismatch sanitization
-  for (data of testData) {
+  for (let data of testData) {
     var caught = false;
     try {
       element.valueAsNumber = data[0];
@@ -304,13 +277,13 @@ function checkDateGet()
 
   var element = document.createElement('input');
   element.type = "date";
-  for (data of validData) {
+  for (let data of validData) {
     element.value = data[0];
     is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
        "timestamp representing this date");
   }
 
-  for (data of invalidData) {
+  for (let data of invalidData) {
     element.value = data;
     ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
        "when the element value is not a valid date");
@@ -360,7 +333,7 @@ function checkDateSet()
 
   var element = document.createElement('input');
   element.type = "date";
-  for (data of testData) {
+  for (let data of testData) {
     var caught = false;
 
     try {
@@ -371,7 +344,7 @@ function checkDateSet()
     }
 
     if (data[2]) {
-      ok(caught, "valueAsNumber should have trhown"); 
+      ok(caught, "valueAsNumber should have thrown");
       is(element.value, data[1], "the value should not have changed");
     } else {
       ok(!caught, "valueAsNumber should not have thrown");
@@ -421,7 +394,7 @@ function checkTimeGet()
   var element = document.createElement('input');
   element.type = 'time';
 
-  for (test of tests) {
+  for (let test of tests) {
     element.value = test.value;
     if (isNaN(test.result)) {
       ok(isNaN(element.valueAsNumber),
@@ -468,7 +441,7 @@ function checkTimeSet()
   var element = document.createElement('input');
   element.type = 'time';
 
-  for (test of tests) {
+  for (let test of tests) {
     try {
       var caught = false;
       element.valueAsNumber = test.value;
@@ -487,7 +460,6 @@ function checkTimeSet()
 
 function checkMonthGet()
 {
-  dump("checkMonthGet\n");
   var validData =
   [
     [ "2016-07", 558       ],
@@ -510,13 +482,13 @@ function checkMonthGet()
 
   var element = document.createElement('input');
   element.type = "month";
-  for (data of validData) {
+  for (let data of validData) {
     element.value = data[0];
     is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
        "integer value representing this month");
   }
 
-  for (data of invalidData) {
+  for (let data of invalidData) {
     element.value = data;
     ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
        "when the element value is not a valid month");
@@ -563,7 +535,7 @@ function checkMonthSet()
 
   var element = document.createElement('input');
   element.type = "month";
-  for (data of testData) {
+  for (let data of testData) {
     var caught = false;
 
     try {
@@ -574,7 +546,275 @@ function checkMonthSet()
     }
 
     if (data[2]) {
-      ok(caught, "valueAsNumber should have trhown");
+      ok(caught, "valueAsNumber should have thrown");
+      is(element.value, data[1], "the value should not have changed");
+    } else {
+      ok(!caught, "valueAsNumber should not have thrown");
+    }
+  }
+}
+
+function checkWeekGet()
+{
+  var validData =
+  [
+    // Common years starting on different days of week.
+    [ "2007-W01", Date.UTC(2007, 0, 1)   ], // Mon
+    [ "2013-W01", Date.UTC(2012, 11, 31) ], // Tue
+    [ "2014-W01", Date.UTC(2013, 11, 30) ], // Wed
+    [ "2015-W01", Date.UTC(2014, 11, 29) ], // Thu
+    [ "2010-W01", Date.UTC(2010, 0, 4)   ], // Fri
+    [ "2011-W01", Date.UTC(2011, 0, 3)   ], // Sat
+    [ "2017-W01", Date.UTC(2017, 0, 2)   ], // Sun
+    // Common years ending on different days of week.
+    [ "2007-W52", Date.UTC(2007, 11, 24) ], // Mon
+    [ "2013-W52", Date.UTC(2013, 11, 23) ], // Tue
+    [ "2014-W52", Date.UTC(2014, 11, 22) ], // Wed
+    [ "2015-W53", Date.UTC(2015, 11, 28) ], // Thu
+    [ "2010-W52", Date.UTC(2010, 11, 27) ], // Fri
+    [ "2011-W52", Date.UTC(2011, 11, 26) ], // Sat
+    [ "2017-W52", Date.UTC(2017, 11, 25) ], // Sun
+    // Leap years starting on different days of week.
+    [ "1996-W01", Date.UTC(1996, 0, 1)   ], // Mon
+    [ "2008-W01", Date.UTC(2007, 11, 31) ], // Tue
+    [ "2020-W01", Date.UTC(2019, 11, 30) ], // Wed
+    [ "2004-W01", Date.UTC(2003, 11, 29) ], // Thu
+    [ "2016-W01", Date.UTC(2016, 0, 4)   ], // Fri
+    [ "2000-W01", Date.UTC(2000, 0, 3)   ], // Sat
+    [ "2012-W01", Date.UTC(2012, 0, 2)   ], // Sun
+    // Leap years ending on different days of week.
+    [ "2012-W52", Date.UTC(2012, 11, 24) ], // Mon
+    [ "2024-W52", Date.UTC(2024, 11, 23) ], // Tue
+    [ "1980-W52", Date.UTC(1980, 11, 22) ], // Wed
+    [ "1992-W53", Date.UTC(1992, 11, 28) ], // Thu
+    [ "2004-W53", Date.UTC(2004, 11, 27) ], // Fri
+    [ "1988-W52", Date.UTC(1988, 11, 26) ], // Sat
+    [ "2000-W52", Date.UTC(2000, 11, 25) ], // Sun
+    // Other normal cases.
+    [ "2015-W53", Date.UTC(2015, 11, 28)   ],
+    [ "2016-W36", Date.UTC(2016, 8, 5)     ],
+    [ "1970-W01", Date.UTC(1969, 11, 29)   ],
+    [ "275760-W37", Date.UTC(275760, 8, 8) ],
+  ];
+
+  var invalidData =
+  [
+    "invalidweek",
+    "0000-W01",
+    "2016-W00",
+    "2016-W53",
+    // Out of range.
+    "275760-W38",
+  ];
+
+  var element = document.createElement('input');
+  element.type = "week";
+  for (let data of validData) {
+    element.value = data[0];
+    is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
+       "integer value representing this week");
+  }
+
+  for (let data of invalidData) {
+    element.value = data;
+    ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
+       "when the element value is not a valid week");
+  }
+}
+
+function checkWeekSet()
+{
+  var testData =
+  [
+    // Common years starting on different days of week.
+    [ Date.UTC(2007, 0, 1), "2007-W01"   ], // Mon
+    [ Date.UTC(2013, 0, 1), "2013-W01"   ], // Tue
+    [ Date.UTC(2014, 0, 1), "2014-W01"   ], // Wed
+    [ Date.UTC(2015, 0, 1), "2015-W01"   ], // Thu
+    [ Date.UTC(2010, 0, 1), "2009-W53"   ], // Fri
+    [ Date.UTC(2011, 0, 1), "2010-W52"   ], // Sat
+    [ Date.UTC(2017, 0, 1), "2016-W52"   ], // Sun
+    // Common years ending on different days of week.
+    [ Date.UTC(2007, 11, 31), "2008-W01" ], // Mon
+    [ Date.UTC(2013, 11, 31), "2014-W01" ], // Tue
+    [ Date.UTC(2014, 11, 31), "2015-W01" ], // Wed
+    [ Date.UTC(2015, 11, 31), "2015-W53" ], // Thu
+    [ Date.UTC(2010, 11, 31), "2010-W52" ], // Fri
+    [ Date.UTC(2011, 11, 31), "2011-W52" ], // Sat
+    [ Date.UTC(2017, 11, 31), "2017-W52" ], // Sun
+    // Leap years starting on different days of week.
+    [ Date.UTC(1996, 0, 1), "1996-W01"   ], // Mon
+    [ Date.UTC(2008, 0, 1), "2008-W01"   ], // Tue
+    [ Date.UTC(2020, 0, 1), "2020-W01"   ], // Wed
+    [ Date.UTC(2004, 0, 1), "2004-W01"   ], // Thu
+    [ Date.UTC(2016, 0, 1), "2015-W53"   ], // Fri
+    [ Date.UTC(2000, 0, 1), "1999-W52"   ], // Sat
+    [ Date.UTC(2012, 0, 1), "2011-W52"   ], // Sun
+    // Leap years ending on different days of week.
+    [ Date.UTC(2012, 11, 31), "2013-W01" ], // Mon
+    [ Date.UTC(2024, 11, 31), "2025-W01" ], // Tue
+    [ Date.UTC(1980, 11, 31), "1981-W01" ], // Wed
+    [ Date.UTC(1992, 11, 31), "1992-W53" ], // Thu
+    [ Date.UTC(2004, 11, 31), "2004-W53" ], // Fri
+    [ Date.UTC(1988, 11, 31), "1988-W52" ], // Sat
+    [ Date.UTC(2000, 11, 31), "2000-W52" ], // Sun
+    // Other normal cases.
+    [ Date.UTC(2008, 8, 26),  "2008-W39" ],
+    [ Date.UTC(2016, 0, 4),   "2016-W01" ],
+    [ Date.UTC(2016, 0, 10),  "2016-W01" ],
+    [ Date.UTC(2016, 0, 11),  "2016-W02" ],
+    // Maximum valid week (limited by the ecma date object range).
+    [ 8640000000000000,  "275760-W37" ],
+    // Minimum valid week (limited by the input element minimum valid value)
+    [ -62135596800000,   "0001-W01" ],
+    // "Values must be truncated to valid weeks"
+    [ 0.3,               "1970-W01"  ],
+    [ 1e-1,              "1970-W01"  ],
+    [ -1.1,              "1970-W01"  ],
+    [ -345600000,        "1969-W52"  ],
+    // Invalid numbers.
+    // Those are implicitly converted to numbers
+    [ "",                "1970-W01" ],
+    [ true,              "1970-W01" ],
+    [ false,             "1970-W01" ],
+    [ null,              "1970-W01" ],
+    // Those are converted to NaN, the corresponding week string is the empty string
+    [ "invalidweek",     "" ],
+    [ NaN,               "" ],
+    [ undefined,         "" ],
+    // Infinity will keep the current value and throw (so we need to set a current value).
+    [ Date.UTC(2016, 8, 8), "2016-W36" ],
+    [ Infinity,             "2016-W36", true ],
+    [ -Infinity,            "2016-W36", true ],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "week";
+  for (let data of testData) {
+    var caught = false;
+
+    try {
+      element.valueAsNumber = data[0];
+      is(element.value, data[1], "valueAsNumber should set the value to " +
+                                 data[1]);
+    } catch(e) {
+      caught = true;
+    }
+
+    if (data[2]) {
+      ok(caught, "valueAsNumber should have thrown");
+      is(element.value, data[1], "the value should not have changed");
+    } else {
+      ok(!caught, "valueAsNumber should not have thrown");
+    }
+  }
+}
+
+function checkDatetimeLocalGet() {
+  var validData =
+  [
+    // Simple cases.
+    [ "2016-12-20T09:58",          Date.UTC(2016, 11, 20, 9, 58)          ],
+    [ "2016-12-20T09:58:30",       Date.UTC(2016, 11, 20, 9, 58, 30)      ],
+    [ "2016-12-20T09:58:30.123",   Date.UTC(2016, 11, 20, 9, 58, 30, 123) ],
+    [ "2017-01-01T10:00",          Date.UTC(2017, 0, 1, 10, 0, 0)         ],
+    [ "1969-12-31T12:00:00",       Date.UTC(1969, 11, 31, 12, 0, 0)       ],
+    [ "1970-01-01T00:00",          0                                      ],
+    // Leap years.
+    [ "1804-02-29 12:34",          Date.UTC(1804, 1, 29, 12, 34, 0)       ],
+    [ "2016-02-29T12:34",          Date.UTC(2016, 1, 29, 12, 34, 0)       ],
+    [ "2016-12-31T12:34:56",       Date.UTC(2016, 11, 31, 12, 34, 56)     ],
+    [ "2016-01-01T12:34:56.789",   Date.UTC(2016, 0, 1, 12, 34, 56, 789)  ],
+    [ "2017-01-01 12:34:56.789",   Date.UTC(2017, 0, 1, 12, 34, 56, 789)  ],
+    // Maximum valid datetime-local (limited by the ecma date object range).
+    [ "275760-09-13T00:00",        8640000000000000                       ],
+    // Minimum valid datetime-local (limited by the input element minimum valid value).
+    [ "0001-01-01T00:00",          -62135596800000                        ],
+  ];
+
+  var invalidData =
+  [
+    "invaliddatetime-local",
+    "0000-01-01T00:00",
+    "2016-12-25T00:00Z",
+    "2015-02-29T12:34",
+    "1-1-1T12:00",
+    // Out of range.
+    "275760-09-13T12:00",
+  ];
+
+  var element = document.createElement('input');
+  element.type = "datetime-local";
+  for (let data of validData) {
+    element.value = data[0];
+    is(element.valueAsNumber, data[1], "valueAsNumber should return the " +
+       "integer value representing this datetime-local");
+  }
+
+  for (let data of invalidData) {
+    element.value = data;
+    ok(isNaN(element.valueAsNumber), "valueAsNumber should return NaN "  +
+       "when the element value is not a valid datetime-local");
+  }
+}
+
+function checkDatetimeLocalSet()
+{
+  var testData =
+  [
+    // Simple cases.
+    [ Date.UTC(2016, 11, 20, 9, 58, 0),       "2016-12-20T09:58",       ],
+    [ Date.UTC(2016, 11, 20, 9, 58, 30),      "2016-12-20T09:58:30"     ],
+    [ Date.UTC(2016, 11, 20, 9, 58, 30, 123), "2016-12-20T09:58:30.123" ],
+    [ Date.UTC(2017, 0, 1, 10, 0, 0),         "2017-01-01T10:00"        ],
+    [ Date.UTC(1969, 11, 31, 12, 0, 0),       "1969-12-31T12:00"        ],
+    [ 0,                                      "1970-01-01T00:00"        ],
+    // Maximum valid week (limited by the ecma date object range).
+    [ 8640000000000000,  "275760-09-13T00:00"      ],
+    // Minimum valid datetime-local (limited by the input element minimum valid value).
+    [ -62135596800000,   "0001-01-01T00:00"        ],
+    // Leap years.
+    [ Date.UTC(1804, 1, 29, 12, 34, 0),       "1804-02-29T12:34"        ],
+    [ Date.UTC(2016, 1, 29, 12, 34, 0),       "2016-02-29T12:34"        ],
+    [ Date.UTC(2016, 11, 31, 12, 34, 56),     "2016-12-31T12:34:56"     ],
+    [ Date.UTC(2016, 0, 1, 12, 34, 56, 789),  "2016-01-01T12:34:56.789" ],
+    [ Date.UTC(2017, 0, 1, 12, 34, 56, 789),  "2017-01-01T12:34:56.789" ],
+    // "Values must be truncated to valid datetime-local"
+    [ 0.3,               "1970-01-01T00:00"        ],
+    [ 1e-1,              "1970-01-01T00:00"        ],
+    [ -1  ,              "1969-12-31T23:59:59.999" ],
+    [ -345600000,        "1969-12-28T00:00"        ],
+    // Invalid numbers.
+    // Those are implicitly converted to numbers
+    [ "",                "1970-01-01T00:00"        ],
+    [ true,              "1970-01-01T00:00:00.001" ],
+    [ false,             "1970-01-01T00:00"        ],
+    [ null,              "1970-01-01T00:00"        ],
+    // Those are converted to NaN, the corresponding week string is the empty string
+    [ "invaliddatetime-local", "" ],
+    [ NaN,                     "" ],
+    [ undefined,               "" ],
+    // Infinity will keep the current value and throw (so we need to set a current value).
+    [ Date.UTC(2016, 11, 27, 15, 10, 0), "2016-12-27T15:10"       ],
+    [ Infinity,                          "2016-12-27T15:10", true ],
+    [ -Infinity,                         "2016-12-27T15:10", true ],
+  ];
+
+  var element = document.createElement('input');
+  element.type = "datetime-local";
+  for (let data of testData) {
+    var caught = false;
+
+    try {
+      element.valueAsNumber = data[0];
+      is(element.value, data[1], "valueAsNumber should set the value to " +
+                                 data[1]);
+    } catch(e) {
+      caught = true;
+    }
+
+    if (data[2]) {
+      ok(caught, "valueAsNumber should have thrown");
       is(element.value, data[1], "the value should not have changed");
     } else {
       ok(!caught, "valueAsNumber should not have thrown");
@@ -603,6 +843,14 @@ checkTimeSet();
 // <input type='month'> test
 checkMonthGet();
 checkMonthSet();
+
+// <input type='week'> test
+checkWeekGet();
+checkWeekSet();
+
+// <input type='datetime-local'> test
+checkDatetimeLocalGet();
+checkDatetimeLocalSet();
 
 </script>
 </pre>

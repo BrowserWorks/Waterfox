@@ -23,13 +23,14 @@ class Console;
 class Crypto;
 class Function;
 class IDBFactory;
-enum class ImageBitmapFormat : uint32_t;
+enum class ImageBitmapFormat : uint8_t;
 class Performance;
 class Promise;
 class RequestOrUSVString;
 class ServiceWorkerRegistration;
 class WorkerLocation;
 class WorkerNavigator;
+enum class CallerType : uint32_t;
 
 namespace cache {
 
@@ -57,6 +58,7 @@ class WorkerGlobalScope : public DOMEventTargetHelper,
   RefPtr<Performance> mPerformance;
   RefPtr<IDBFactory> mIndexedDB;
   RefPtr<cache::CacheStorage> mCacheStorage;
+  nsCOMPtr<nsISerialEventTarget> mSerialEventTarget;
 
   uint32_t mWindowInteractionsAllowed;
 
@@ -111,9 +113,6 @@ public:
   already_AddRefed<WorkerNavigator>
   GetExistingNavigator() const;
 
-  void
-  Close(JSContext* aCx, ErrorResult& aRv);
-
   OnErrorEventHandlerNonNull*
   GetOnerror();
   void
@@ -142,21 +141,29 @@ public:
   ClearInterval(int32_t aHandle);
 
   void
+  GetOrigin(nsAString& aOrigin) const;
+
+  void
   Atob(const nsAString& aAtob, nsAString& aOutput, ErrorResult& aRv) const;
   void
   Btoa(const nsAString& aBtoa, nsAString& aOutput, ErrorResult& aRv) const;
 
   IMPL_EVENT_HANDLER(online)
   IMPL_EVENT_HANDLER(offline)
-  IMPL_EVENT_HANDLER(close)
 
   void
   Dump(const Optional<nsAString>& aString) const;
 
   Performance* GetPerformance();
 
+  Performance* GetPerformanceIfExists() const
+  {
+    return mPerformance;
+  }
+
   already_AddRefed<Promise>
-  Fetch(const RequestOrUSVString& aInput, const RequestInit& aInit, ErrorResult& aRv);
+  Fetch(const RequestOrUSVString& aInput, const RequestInit& aInit,
+        CallerType aCallerType, ErrorResult& aRv);
 
   already_AddRefed<IDBFactory>
   GetIndexedDB(ErrorResult& aErrorResult);
@@ -164,16 +171,21 @@ public:
   already_AddRefed<cache::CacheStorage>
   GetCaches(ErrorResult& aRv);
 
-  already_AddRefed<Promise>
-  CreateImageBitmap(const ImageBitmapSource& aImage, ErrorResult& aRv);
+  bool IsSecureContext() const;
 
   already_AddRefed<Promise>
-  CreateImageBitmap(const ImageBitmapSource& aImage,
+  CreateImageBitmap(JSContext* aCx,
+                    const ImageBitmapSource& aImage, ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  CreateImageBitmap(JSContext* aCx,
+                    const ImageBitmapSource& aImage,
                     int32_t aSx, int32_t aSy, int32_t aSw, int32_t aSh,
                     ErrorResult& aRv);
 
   already_AddRefed<mozilla::dom::Promise>
-  CreateImageBitmap(const ImageBitmapSource& aImage,
+  CreateImageBitmap(JSContext* aCx,
+                    const ImageBitmapSource& aImage,
                     int32_t aOffset, int32_t aLength,
                     mozilla::dom::ImageBitmapFormat aFormat,
                     const mozilla::dom::Sequence<mozilla::dom::ChannelPixelLayout>& aLayout,
@@ -197,36 +209,29 @@ public:
     MOZ_ASSERT(mWindowInteractionsAllowed > 0);
     mWindowInteractionsAllowed--;
   }
+
+  // Override DispatchTrait API to target the worker thread.  Dispatch may
+  // return failure if the worker thread is not alive.
+  nsresult
+  Dispatch(TaskCategory aCategory,
+           already_AddRefed<nsIRunnable>&& aRunnable) override;
+
+  nsISerialEventTarget*
+  EventTargetFor(TaskCategory aCategory) const override;
+
+  AbstractThread*
+  AbstractMainThreadFor(TaskCategory aCategory) override;
 };
 
 class DedicatedWorkerGlobalScope final : public WorkerGlobalScope
 {
+  const nsString mName;
+
   ~DedicatedWorkerGlobalScope() { }
 
 public:
-  explicit DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate);
-
-  virtual bool
-  WrapGlobalObject(JSContext* aCx,
-                   JS::MutableHandle<JSObject*> aReflector) override;
-
-  void
-  PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-              const Optional<Sequence<JS::Value>>& aTransferable,
-              ErrorResult& aRv);
-
-  IMPL_EVENT_HANDLER(message)
-};
-
-class SharedWorkerGlobalScope final : public WorkerGlobalScope
-{
-  const nsCString mName;
-
-  ~SharedWorkerGlobalScope() { }
-
-public:
-  SharedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
-                          const nsCString& aName);
+  DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
+                             const nsString& aName);
 
   virtual bool
   WrapGlobalObject(JSContext* aCx,
@@ -234,8 +239,41 @@ public:
 
   void GetName(DOMString& aName) const
   {
-    aName.AsAString() = NS_ConvertUTF8toUTF16(mName);
+    aName.AsAString() = mName;
   }
+
+  void
+  PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
+              const Sequence<JSObject*>& aTransferable,
+              ErrorResult& aRv);
+
+  void
+  Close(JSContext* aCx);
+
+  IMPL_EVENT_HANDLER(message)
+};
+
+class SharedWorkerGlobalScope final : public WorkerGlobalScope
+{
+  const nsString mName;
+
+  ~SharedWorkerGlobalScope() { }
+
+public:
+  SharedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
+                          const nsString& aName);
+
+  virtual bool
+  WrapGlobalObject(JSContext* aCx,
+                   JS::MutableHandle<JSObject*> aReflector) override;
+
+  void GetName(DOMString& aName) const
+  {
+    aName.AsAString() = mName;
+  }
+
+  void
+  Close(JSContext* aCx);
 
   IMPL_EVENT_HANDLER(connect)
 };
@@ -280,13 +318,25 @@ public:
   SkipWaiting(ErrorResult& aRv);
 
   IMPL_EVENT_HANDLER(activate)
-  IMPL_EVENT_HANDLER(fetch)
   IMPL_EVENT_HANDLER(install)
   IMPL_EVENT_HANDLER(message)
 
   IMPL_EVENT_HANDLER(push)
   IMPL_EVENT_HANDLER(pushsubscriptionchange)
 
+  EventHandlerNonNull*
+  GetOnfetch();
+
+  void
+  SetOnfetch(mozilla::dom::EventHandlerNonNull* aCallback);
+
+  using DOMEventTargetHelper::AddEventListener;
+  virtual void
+  AddEventListener(const nsAString& aType,
+                   dom::EventListener* aListener,
+                   const dom::AddEventListenerOptionsOrBoolean& aOptions,
+                   const dom::Nullable<bool>& aWantsUntrusted,
+                   ErrorResult& aRv) override;
 };
 
 class WorkerDebuggerGlobalScope final : public DOMEventTargetHelper,
@@ -296,6 +346,7 @@ class WorkerDebuggerGlobalScope final : public DOMEventTargetHelper,
 
   WorkerPrivate* mWorkerPrivate;
   RefPtr<Console> mConsole;
+  nsCOMPtr<nsISerialEventTarget> mSerialEventTarget;
 
 public:
   explicit WorkerDebuggerGlobalScope(WorkerPrivate* aWorkerPrivate);
@@ -371,6 +422,18 @@ public:
 
   void
   Dump(JSContext* aCx, const Optional<nsAString>& aString) const;
+
+  // Override DispatchTrait API to target the worker thread.  Dispatch may
+  // return failure if the worker thread is not alive.
+  nsresult
+  Dispatch(TaskCategory aCategory,
+           already_AddRefed<nsIRunnable>&& aRunnable) override;
+
+  nsISerialEventTarget*
+  EventTargetFor(TaskCategory aCategory) const override;
+
+  AbstractThread*
+  AbstractMainThreadFor(TaskCategory aCategory) override;
 
 private:
   virtual ~WorkerDebuggerGlobalScope();

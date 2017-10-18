@@ -67,41 +67,58 @@ function checkGet(headers, name, expected, msg) {
   is(headers.get(name.toUpperCase()), expected, msg);
 }
 
-function checkGetAll(headers, name, expected, msg) {
-  arrayEquals(headers.getAll(name), expected, msg);
-  arrayEquals(headers.getAll(name.toLowerCase()), expected, msg);
-  arrayEquals(headers.getAll(name.toUpperCase()), expected, msg);
-}
-
 //
 // Test Cases
 //
 
 function TestCoreBehavior(headers, name) {
-  var start = headers.getAll(name);
+  var start = headers.get(name);
 
   headers.append(name, "bar");
 
-  var expectedFirst = (start.length ? start[0] : "bar");
-
   checkHas(headers, name, "Has the header");
-  checkGet(headers, name, expectedFirst, "Retrieve first header for name");
-  checkGetAll(headers, name, start.concat(["bar"]), "Retrieve all headers for name");
+  var expected = (start ? start.concat(", bar") : "bar");
+  checkGet(headers, name, expected, "Retrieve all headers for name");
 
   headers.append(name, "baz");
   checkHas(headers, name, "Has the header");
-  checkGet(headers, name, expectedFirst, "Retrieve first header for name");
-  checkGetAll(headers, name, start.concat(["bar","baz"]), "Retrieve all headers for name");
+  expected = (start ? start.concat(", bar, baz") : "bar, baz");
+  checkGet(headers, name, expected, "Retrieve all headers for name");
 
   headers.set(name, "snafu");
   checkHas(headers, name, "Has the header after set");
-  checkGet(headers, name, "snafu", "Retrieve first header after set");
-  checkGetAll(headers, name, ["snafu"], "Retrieve all headers after set");
+  checkGet(headers, name, "snafu", "Retrieve all headers after set");
+
+  const value_bam = "boom";
+  let testHTTPWhitespace = ["\t", "\n", "\r", " "];
+  while (testHTTPWhitespace.length != 0) {
+    headers.delete(name);
+
+    let char = testHTTPWhitespace.shift();
+    headers.set(name, char);
+    checkGet(headers, name, "",
+             "Header value " + char +
+             " should be normalized before checking and throwing");
+    headers.delete(name);
+
+    let valueFront = char + value_bam;
+    headers.set(name, valueFront);
+    checkGet(headers, name, value_bam,
+             "Header value " + valueFront +
+             " should be normalized before checking and throwing");
+
+    headers.delete(name);
+
+    let valueBack = value_bam + char;
+    headers.set(name, valueBack);
+    checkGet(headers, name, value_bam,
+             "Header value " + valueBack +
+             " should be normalized before checking and throwing");
+  }
 
   headers.delete(name.toUpperCase());
   checkNotHas(headers, name, "Does not have the header after delete");
-  checkGet(headers, name, null, "Retrieve first header after delete");
-  checkGetAll(headers, name, [], "Retrieve all headers after delete");
+  checkGet(headers, name, null, "Retrieve all headers after delete");
 
   // should be ok to delete non-existent name
   headers.delete(name);
@@ -111,11 +128,11 @@ function TestCoreBehavior(headers, name) {
   }, TypeError, "Append invalid header name should throw TypeError.");
 
   shouldThrow(function() {
-    headers.append(name, "bam\n");
+    headers.append(name, "ba\nm");
   }, TypeError, "Append invalid header value should throw TypeError.");
 
   shouldThrow(function() {
-    headers.append(name, "bam\n\r");
+    headers.append(name, "ba\rm");
   }, TypeError, "Append invalid header value should throw TypeError.");
 
   ok(!headers.guard, "guard should be undefined in content");
@@ -140,8 +157,8 @@ function TestFilledHeaders() {
   source.append("def", "789");
 
   filled = new Headers(source);
-  checkGetAll(filled, "abc", source.getAll("abc"), "Single value header list matches");
-  checkGetAll(filled, "def", source.getAll("def"), "Multiple value header list matches");
+  checkGet(filled, "abc", source.get("abc"), "Single value header list matches");
+  checkGet(filled, "def", source.get("def"), "Multiple value header list matches");
   TestCoreBehavior(filled, "def");
 
   filled = new Headers({
@@ -149,9 +166,9 @@ function TestFilledHeaders() {
     "xwv": "654",
     "uts": "321"
   });
-  checkGetAll(filled, "zxy", ["987"], "Has first object filled key");
-  checkGetAll(filled, "xwv", ["654"], "Has second object filled key");
-  checkGetAll(filled, "uts", ["321"], "Has third object filled key");
+  checkGet(filled, "zxy", "987", "Has first object filled key");
+  checkGet(filled, "xwv", "654", "Has second object filled key");
+  checkGet(filled, "uts", "321", "Has third object filled key");
   TestCoreBehavior(filled, "xwv");
 
   filled = new Headers([
@@ -160,9 +177,9 @@ function TestFilledHeaders() {
     ["xwv", "abc"],
     ["uts", "321"]
   ]);
-  checkGetAll(filled, "zxy", ["987"], "Has first sequence filled key");
-  checkGetAll(filled, "xwv", ["654", "abc"], "Has second sequence filled key");
-  checkGetAll(filled, "uts", ["321"], "Has third sequence filled key");
+  checkGet(filled, "zxy", "987", "Has first sequence filled key");
+  checkGet(filled, "xwv", "654, abc", "Has second sequence filled key");
+  checkGet(filled, "uts", "321", "Has third sequence filled key");
   TestCoreBehavior(filled, "xwv");
 
   shouldThrow(function() {

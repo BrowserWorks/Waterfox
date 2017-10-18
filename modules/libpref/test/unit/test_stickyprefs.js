@@ -18,7 +18,7 @@ do_register_cleanup(saveAndReload);
 function resetAndLoad(filenames) {
   ps.resetPrefs();
   for (let filename of filenames) {
-    ps.readUserPrefs(do_get_file(filename));
+    ps.readUserPrefsFromFile(do_get_file(filename));
   }
 }
 
@@ -33,7 +33,12 @@ function saveAndReload() {
 
   // Now reset the pref service and re-read what we saved.
   ps.resetPrefs();
-  ps.readUserPrefs(file);
+
+  // Hack alert: on Windows nsLocalFile caches the size of savePrefFile from
+  // the .create() call above as 0. We call .exists() to reset the cache.
+  file.exists();
+
+  ps.readUserPrefsFromFile(file);
 }
 
 function run_test() {
@@ -163,7 +168,7 @@ add_test(function observerFires() {
     ps.removeObserver("testPref.sticky.bool", observe);
     run_next_test();
   }
-  ps.addObserver("testPref.sticky.bool", observe, false);
+  ps.addObserver("testPref.sticky.bool", observe);
 
   ps.setBoolPref("testPref.sticky.bool", ps.getBoolPref("testPref.sticky.bool"));
   // and the observer will fire triggering the next text.

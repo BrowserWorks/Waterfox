@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Simple MRU list-cache (specification).                               */
 /*                                                                         */
-/*  Copyright 2000-2001, 2003-2006, 2010, 2013 by                          */
+/*  Copyright 2000-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -40,8 +40,8 @@
   /*************************************************************************/
 
 
-#ifndef __FTCMRU_H__
-#define __FTCMRU_H__
+#ifndef FTCMRU_H_
+#define FTCMRU_H_
 
 
 #include <ft2build.h>
@@ -108,12 +108,14 @@ FT_BEGIN_HEADER
   typedef struct  FTC_MruListClassRec_
   {
     FT_Offset                node_size;
+
     FTC_MruNode_CompareFunc  node_compare;
     FTC_MruNode_InitFunc     node_init;
     FTC_MruNode_ResetFunc    node_reset;
     FTC_MruNode_DoneFunc     node_done;
 
   } FTC_MruListClassRec;
+
 
   typedef struct  FTC_MruListRec_
   {
@@ -181,15 +183,15 @@ FT_BEGIN_HEADER
             FTC_MruNode_Up( _pfirst, _node );                               \
                                                                             \
           node = _node;                                                     \
-          goto _MruOk;                                                      \
+          goto MruOk_;                                                      \
         }                                                                   \
         _node = _node->next;                                                \
                                                                             \
-      } while ( _node != _first) ;                                          \
+      } while ( _node != _first);                                           \
     }                                                                       \
                                                                             \
     error = FTC_MruList_New( (list), (key), (FTC_MruNode*)(void*)&(node) ); \
-  _MruOk:                                                                   \
+  MruOk_:                                                                   \
     ;                                                                       \
   FT_END_STMNT
 
@@ -240,7 +242,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* __FTCMRU_H__ */
+#endif /* FTCMRU_H_ */
 
 
 /* END */

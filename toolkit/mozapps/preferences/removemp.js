@@ -5,13 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var gRemovePasswordDialog = {
-  _token    : null,
-  _bundle   : null,
-  _prompt   : null,
-  _okButton : null,
-  _password : null,
-  init: function ()
-  {
+  _token: null,
+  _bundle: null,
+  _prompt: null,
+  _okButton: null,
+  _password: null,
+  init() {
     this._prompt = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
                              .getService(Components.interfaces.nsIPromptService);
     this._bundle = document.getElementById("bundlePreferences");
@@ -30,21 +29,18 @@ var gRemovePasswordDialog = {
     this.validateInput();
   },
 
-  validateInput: function ()
-  {
+  validateInput() {
     this._okButton.disabled = !this._token.checkPassword(this._password.value);
   },
 
-  removePassword: function ()
-  {
+  removePassword() {
     if (this._token.checkPassword(this._password.value)) {
       this._token.changePassword(this._password.value, "");
       this._prompt.alert(window,
                          this._bundle.getString("pw_change_success_title"),
                          this._bundle.getString("pw_erased_ok")
                          + " " + this._bundle.getString("pw_empty_warning"));
-    }
-    else {
+    } else {
       this._password.value = "";
       this._password.focus();
       this._prompt.alert(window,

@@ -1,7 +1,9 @@
+var InlineSpellChecker;
+
 function test() {
   let tempScope = {};
   Components.utils.import("resource://gre/modules/InlineSpellChecker.jsm", tempScope);
-  let InlineSpellChecker = tempScope.InlineSpellChecker;
+  InlineSpellChecker = tempScope.InlineSpellChecker;
 
   ok(InlineSpellChecker, "InlineSpellChecker class exists");
   for (var fname in tests) {
@@ -12,7 +14,7 @@ function test() {
 var tests = {
   // Test various possible dictionary name to ensure they display as expected.
   // XXX: This only works for the 'en-US' locale, as the testing involves localized output.
-  testDictionaryDisplayNames: function() {
+  testDictionaryDisplayNames() {
     let isc = new InlineSpellChecker();
 
     // Check non-well-formed language tag.

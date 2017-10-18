@@ -58,9 +58,9 @@ function testUAIFrame(host, expected, sameQ, message, testNavQ, navSameQ, navMes
     if (testNavQ) {
       ok(navSameQ == (e.data.nav.indexOf(expected) != -1), navMessage);
     }
-    window.removeEventListener("message", recv, false);
+    window.removeEventListener("message", recv);
     callback();
-  }, false);
+  });
 }
 
 function testUAIFrameNoNav(host, expected, sameQ, message, callback) {
@@ -187,7 +187,7 @@ function testBadUpdate(callback) {
       is(navigator.userAgent, prevOverride,
         'Invalid update deleted previous override');
       callback();
-    }, false);
+    });
     document.getElementById('content').appendChild(ifr);
   }, 5000); });
 }
@@ -200,15 +200,13 @@ SpecialPowers.pushPrefEnv({
     [PREF_APP_UPDATE_TIMERMINIMUMDELAY, 0]
   ]
 }, function () {
-  chromeScript.sendSyncMessage("UAO-uninit");
-
   // Sets the OVERRIDES var in the chrome script.
   // We do this to avoid code duplication.
   chromeScript.sendSyncMessage("set-overrides", OVERRIDES);
 
   // testProfileLoad, testDownload, and testProfileSave must run in this order
-  //  because testDownload depends on testProfileLoad to call UAO.init()
-  //  and testProfileSave depends on testDownload to save overrides to the profile
+  // because testDownload depends on testProfileLoad and testProfileSave depends
+  // on testDownload to save overrides to the profile
   chromeScript.sendAsyncMessage("testProfileLoad", location.hostname);
 });
 
@@ -218,17 +216,12 @@ const chromeScript = SpecialPowers.loadChromeScript(_ => {
   Components.classes["@mozilla.org/updates/timer-manager;1"].getService(
     Components.interfaces.nsIObserver).observe(null, "utm-test-init", "");
 
-  Components.utils.import("resource://gre/modules/UserAgentOverrides.jsm");
-
   var _notifyOnUpdate = false;
-
-  var UAO = UserAgentOverrides;
-  UAO.uninit();
 
   Components.utils.import("resource://gre/modules/FileUtils.jsm");
   var FU = FileUtils;
 
-  const { TextDecoder, TextEncoder, OS } = Components.utils.import("resource://gre/modules/osfile.jsm");
+  const { OS } = Components.utils.import("resource://gre/modules/osfile.jsm");
   var OSF = OS.File;
 
   const KEY_PREFDIR = "PrefD";
@@ -242,13 +235,13 @@ const chromeScript = SpecialPowers.loadChromeScript(_ => {
   const PREF_UPDATES_ENABLED = PREF_UPDATES + "enabled";
   const PREF_UPDATES_LASTUPDATED = PREF_UPDATES + "lastupdated";
 
-  Components.utils.import("resource://gre/modules/Services.jsm");
+  let { Services } = Components.utils.import("resource://gre/modules/Services.jsm", {});
   Services.prefs.addObserver(PREF_UPDATES_LASTUPDATED, () => {
     if (_notifyOnUpdate) {
       _notifyOnUpdate = false; // Only notify once, for the first update.
       sendAsyncMessage("useragent-update-complete");
     }
-  } , false);
+  });
 
   var OVERRIDES = null;
 
@@ -284,7 +277,7 @@ const chromeScript = SpecialPowers.loadChromeScript(_ => {
             }
           );
         }
-      ).then(null,
+      ).catch(
         (reason) => {
           throw reason
         }
@@ -318,22 +311,17 @@ const chromeScript = SpecialPowers.loadChromeScript(_ => {
   addMessageListener("testProfileSave", testProfileSave);
   addMessageListener("testProfileLoad", testProfileLoad);
   addMessageListener("set-overrides", function(overrides) { OVERRIDES = overrides});
-  addMessageListener("UAO-init", function() { UAO.init(); });
-  addMessageListener("UAO-uninit", function() { UAO.uninit(); });
   addMessageListener("notify-on-update", () => { _notifyOnUpdate = true });
-});
+}, { wantGlobalProperties: ["TextEncoder", "TextDecoder"]});
 
 chromeScript.addMessageListener("testProfileSaveDone", SimpleTest.finish);
 chromeScript.addMessageListener("testProfileLoadDone", function() {
   SpecialPowers.pushPrefEnv({
     set: [[PREF_UPDATES_ENABLED, true]]
   }, function () {
-    // initialize UserAgentOverrides.jsm and
-    // UserAgentUpdates.jsm and load saved file
-    chromeScript.sendSyncMessage("UAO-init");
     (function waitForLoad() {
       var ifr = document.createElement('IFRAME');
-      ifr.src = "about:blank";
+      ifr.src = location.origin;
 
       ifr.addEventListener('load', function() {
         var nav = ifr.contentWindow.navigator;

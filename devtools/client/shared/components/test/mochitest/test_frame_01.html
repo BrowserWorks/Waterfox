@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -12,8 +15,8 @@ with optional columns, unknown and non-URL sources.
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
     let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
@@ -64,7 +67,7 @@ window.onload = Task.async(function* () {
     });
 
     // Check when there's no parseable URL source;
-    // should not render line/columns
+    // should not link but should render line/columns
     yield checkFrameComponent({
       frame: {
         source: "self-hosted",
@@ -72,23 +75,50 @@ window.onload = Task.async(function* () {
       }
     }, {
       file: "self-hosted",
+      line: "1",
       shouldLink: false,
-      tooltip: "self-hosted",
+      tooltip: "self-hosted:1",
+    });
+    yield checkFrameComponent({
+      frame: {
+        source: "self-hosted",
+        line: 1,
+        column: 10,
+      }
+    }, {
+      file: "self-hosted",
+      line: "1",
+      column: "10",
+      shouldLink: false,
+      tooltip: "self-hosted:1:10",
     });
 
     // Check when there's no source;
-    // should not render line/columns
+    // should not link but should render line/columns
     yield checkFrameComponent({
       frame: {
         line: 1,
       }
     }, {
       file: "(unknown)",
+      line: "1",
       shouldLink: false,
-      tooltip: "(unknown)",
+      tooltip: "(unknown):1",
+    });
+    yield checkFrameComponent({
+      frame: {
+        line: 1,
+        column: 10,
+      }
+    }, {
+      file: "(unknown)",
+      line: "1",
+      column: "10",
+      shouldLink: false,
+      tooltip: "(unknown):1:10",
     });
 
-    // Check when there's a column, but no number;
+    // Check when there's a column, but no line;
     // no line/column info should render
     yield checkFrameComponent({
       frame: {
@@ -257,14 +287,40 @@ window.onload = Task.async(function* () {
       tooltip: "View source in Debugger → http://www.cnn.com/:1",
     });
 
+    const resolvedLocation = {
+      sourceId: "whatever",
+      line: 23,
+      sourceUrl: "https://bugzilla.mozilla.org/original.js",
+    };
+    let mockSourceMapService = {
+      subscribe: function (url, line, column, callback) {
+	// Resolve immediately.
+        callback(true, resolvedLocation.sourceUrl, resolvedLocation.line);
+      },
+      unsubscribe: function (url, line, column, callback) {
+      },
+    };
+    yield checkFrameComponent({
+      frame: {
+	line: 97,
+	source: "https://bugzilla.mozilla.org/bundle.js",
+      },
+      sourceMapService: mockSourceMapService,
+    }, {
+      file: "original.js",
+      line: resolvedLocation.line,
+      shouldLink: true,
+      tooltip: "View source in Debugger → https://bugzilla.mozilla.org/original.js:23",
+      source: "https://bugzilla.mozilla.org/original.js",
+    });
+
     function* checkFrameComponent(input, expected) {
       let props = Object.assign({ onClick: () => {} }, input);
       let frame = ReactDOM.render(Frame(props), window.document.body);
-      yield forceRender(frame);
-
-      let el = frame.getDOMNode();
+      let el = ReactDOM.findDOMNode(frame);
       let { source } = input.frame;
       checkFrameString(Object.assign({ el, source }, expected));
+      ReactDOM.unmountComponentAtNode(window.document.body);
     }
 
   } catch (e) {

@@ -47,10 +47,15 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     // ModuleLoader
     const mozilla::Module* LoadModule(mozilla::FileLocation& aFile) override;
 
-    nsresult FindTargetObject(JSContext* aCx,
-                              JS::MutableHandleObject aTargetObject);
+    void FindTargetObject(JSContext* aCx,
+                          JS::MutableHandleObject aTargetObject);
 
     static mozJSComponentLoader* Get() { return sSelf; }
+
+    nsresult Import(const nsACString& aResourceURI, JS::HandleValue aTargetObj,
+                    JSContext* aCx, uint8_t aArgc, JS::MutableHandleValue aRetval);
+    nsresult Unload(const nsACString& aResourceURI);
+    nsresult IsModuleLoaded(const nsACString& aResourceURI, bool* aRetval);
 
     size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
 
@@ -62,10 +67,14 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     nsresult ReallyInit();
     void UnloadModules();
 
+    void CreateLoaderGlobal(JSContext* aCx,
+                            nsACString& aLocation,
+                            JSAddonId* aAddonID,
+                            JS::MutableHandleObject aGlobal);
+
     JSObject* PrepareObjectForLocation(JSContext* aCx,
                                        nsIFile* aComponentFile,
                                        nsIURI* aComponent,
-                                       bool aReuseLoaderGlobal,
                                        bool* aRealFile);
 
     nsresult ObjectForLocation(ComponentLoaderInfo& aInfo,
@@ -82,14 +91,12 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                         JS::MutableHandleObject vp);
 
     nsCOMPtr<nsIComponentManager> mCompMgr;
-    nsCOMPtr<nsIPrincipal> mSystemPrincipal;
-    nsCOMPtr<nsIXPConnectJSObjectHolder> mLoaderGlobal;
 
     class ModuleEntry : public mozilla::Module
     {
     public:
-        explicit ModuleEntry(JSContext* aCx)
-          : mozilla::Module(), obj(JS_GetRuntime(aCx)), thisObjectKey(JS_GetRuntime(aCx))
+        explicit ModuleEntry(JS::RootingContext* aRootingCx)
+          : mozilla::Module(), obj(aRootingCx), thisObjectKey(aRootingCx)
         {
             mVersion = mozilla::Module::kVersion;
             mCIDs = nullptr;
@@ -113,8 +120,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                 mozilla::AutoJSContext cx;
                 JSAutoCompartment ac(cx, obj);
 
-                if (JS_HasExtensibleLexicalScope(obj)) {
-                    JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalScope(obj));
+                if (JS_HasExtensibleLexicalEnvironment(obj)) {
+                    JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalEnvironment(obj));
                 }
                 JS_SetAllNonReservedSlotsToUndefined(cx, obj);
                 obj = nullptr;
@@ -137,7 +144,8 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
         nsCOMPtr<xpcIJSGetFactory> getfactoryobj;
         JS::PersistentRootedObject obj;
         JS::PersistentRootedScript thisObjectKey;
-        char*               location;
+        char* location;
+        nsCString resolvedURL;
     };
 
     friend class ModuleEntry;
@@ -154,8 +162,12 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     nsClassHashtable<nsCStringHashKey, ModuleEntry> mImports;
     nsDataHashtable<nsCStringHashKey, ModuleEntry*> mInProgressImports;
 
+    // A map of on-disk file locations which are loaded as modules to the
+    // pre-resolved URIs they were loaded from. Used to prevent the same file
+    // from being loaded separately, from multiple URLs.
+    nsClassHashtable<nsCStringHashKey, nsCString> mLocations;
+
     bool mInitialized;
-    bool mReuseLoaderGlobal;
 };
 
 #endif

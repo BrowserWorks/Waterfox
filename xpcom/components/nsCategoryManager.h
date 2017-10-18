@@ -9,15 +9,17 @@
 #define NSCATEGORYMANAGER_H
 
 #include "prio.h"
-#include "plarena.h"
 #include "nsClassHashtable.h"
 #include "nsICategoryManager.h"
 #include "nsIMemoryReporter.h"
+#include "mozilla/ArenaAllocator.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/Attributes.h"
 
 class nsIMemoryReporter;
+
+typedef mozilla::ArenaAllocator<1024*8, 8> CategoryAllocator;
 
 /* 16d222a6-1dd2-11b2-b693-f38b02c021b2 */
 #define NS_CATEGORYMANAGER_CID \
@@ -48,14 +50,14 @@ public:
 class CategoryNode
 {
 public:
-  NS_METHOD GetLeaf(const char* aEntryName,
-                    char** aResult);
+  nsresult GetLeaf(const char* aEntryName,
+                   char** aResult);
 
-  NS_METHOD AddLeaf(const char* aEntryName,
-                    const char* aValue,
-                    bool aReplace,
-                    char** aResult,
-                    PLArenaPool* aArena);
+  nsresult AddLeaf(const char* aEntryName,
+                   const char* aValue,
+                   bool aReplace,
+                   char** aResult,
+                   CategoryAllocator* aArena);
 
   void DeleteLeaf(const char* aEntryName);
 
@@ -72,10 +74,10 @@ public:
     return tCount;
   }
 
-  NS_METHOD Enumerate(nsISimpleEnumerator** aResult);
+  nsresult Enumerate(nsISimpleEnumerator** aResult);
 
   // CategoryNode is arena-allocated, with the strings
-  static CategoryNode* Create(PLArenaPool* aArena);
+  static CategoryNode* Create(CategoryAllocator* aArena);
   ~CategoryNode();
   void operator delete(void*) {}
 
@@ -84,7 +86,7 @@ public:
 private:
   CategoryNode() : mLock("CategoryLeaf") {}
 
-  void* operator new(size_t aSize, PLArenaPool* aArena);
+  void* operator new(size_t aSize, CategoryAllocator* aArena);
 
   nsTHashtable<CategoryLeaf> mTable;
   mozilla::Mutex mLock;
@@ -110,7 +112,7 @@ public:
    * observer service. This is to be used by nsComponentManagerImpl
    * on startup while reading the stored category list.
    */
-  NS_METHOD SuppressNotifications(bool aSuppress);
+  nsresult SuppressNotifications(bool aSuppress);
 
   void AddCategoryEntry(const char* aCategory,
                         const char* aKey,
@@ -137,7 +139,7 @@ private:
                        const char* aCategoryName, // must be a static string
                        const char* aEntryName);
 
-  PLArenaPool mArena;
+  CategoryAllocator mArena;
   nsClassHashtable<nsDepCharHashKey, CategoryNode> mTable;
   mozilla::Mutex mLock;
   bool mSuppressNotifications;

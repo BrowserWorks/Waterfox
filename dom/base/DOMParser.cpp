@@ -18,7 +18,7 @@
 #include "nsDOMJSUtils.h"
 #include "nsError.h"
 #include "nsPIDOMWindow.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "mozilla/LoadInfo.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -28,6 +28,7 @@ using namespace mozilla::dom;
 
 DOMParser::DOMParser()
   : mAttemptedInit(false)
+  , mOriginalPrincipalWasSystem(false)
 {
 }
 
@@ -66,8 +67,8 @@ DOMParser::ParseFromString(const nsAString& aStr, SupportedType aType,
   return document.forget();
 }
 
-NS_IMETHODIMP 
-DOMParser::ParseFromString(const char16_t *str, 
+NS_IMETHODIMP
+DOMParser::ParseFromString(const char16_t *str,
                            const char *contentType,
                            nsIDOMDocument **aResult)
 {
@@ -92,17 +93,11 @@ DOMParser::ParseFromString(const nsAString& str,
     NS_ENSURE_SUCCESS(rv, rv);
     nsCOMPtr<nsIDocument> document = do_QueryInterface(domDocument);
 
-    // Keep the XULXBL state, base URL and principal setting in sync with the
-    // XML case
+    // Keep the XULXBL state in sync with the XML case.
 
-    if (nsContentUtils::IsSystemPrincipal(mOriginalPrincipal)) {
+    if (mOriginalPrincipalWasSystem) {
       document->ForceEnableXULXBL();
     }
-
-    // Make sure to give this document the right base URI
-    document->SetBaseURI(mBaseURI);
-    // And the right principal
-    document->SetPrincipal(mPrincipal);
 
     rv = nsContentUtils::ParseDocumentHTML(str, document, false);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -162,7 +157,7 @@ DOMParser::ParseFromBuffer(const Uint8Array& aBuf, uint32_t aBufLen,
   return document.forget();
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 DOMParser::ParseFromBuffer(const uint8_t *buf,
                            uint32_t bufLen,
                            const char *contentType,
@@ -200,9 +195,9 @@ DOMParser::ParseFromStream(nsIInputStream* aStream,
   return document.forget();
 }
 
-NS_IMETHODIMP 
-DOMParser::ParseFromStream(nsIInputStream *stream, 
-                           const char *charset, 
+NS_IMETHODIMP
+DOMParser::ParseFromStream(nsIInputStream *stream,
+                           const char *charset,
                            int32_t contentLength,
                            const char *contentType,
                            nsIDOMDocument **aResult)
@@ -240,12 +235,12 @@ DOMParser::ParseFromStream(nsIInputStream *stream,
                      getter_AddRefs(domDocument));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Create a fake channel 
+  // Create a fake channel
   nsCOMPtr<nsIChannel> parserChannel;
   NS_NewInputStreamChannel(getter_AddRefs(parserChannel),
                            mDocumentURI,
                            nullptr, // aStream
-                           mOriginalPrincipal,
+                           mPrincipal,
                            nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
                            nsIContentPolicy::TYPE_OTHER,
                            nsDependentCString(contentType));
@@ -260,28 +255,20 @@ DOMParser::ParseFromStream(nsIInputStream *stream,
 
   // Have to pass false for reset here, else the reset will remove
   // our event listener.  Should that listener addition move to later
-  // than this call?  Then we wouldn't need to mess around with
-  // SetPrincipal, etc, probably!
+  // than this call?
   nsCOMPtr<nsIDocument> document(do_QueryInterface(domDocument));
   if (!document) return NS_ERROR_FAILURE;
 
-  // Keep the XULXBL state, base URL and principal setting in sync with the
-  // HTML case
+  // Keep the XULXBL state in sync with the HTML case
 
-  if (nsContentUtils::IsSystemPrincipal(mOriginalPrincipal)) {
+  if (mOriginalPrincipalWasSystem) {
     document->ForceEnableXULXBL();
   }
 
-  rv = document->StartDocumentLoad(kLoadAsData, parserChannel, 
-                                   nullptr, nullptr, 
+  rv = document->StartDocumentLoad(kLoadAsData, parserChannel,
+                                   nullptr, nullptr,
                                    getter_AddRefs(listener),
                                    false);
-
-  // Make sure to give this document the right base URI
-  document->SetBaseURI(mBaseURI);
-
-  // And the right principal
-  document->SetPrincipal(mPrincipal);
 
   if (NS_FAILED(rv) || !listener) {
     return NS_ERROR_FAILURE;
@@ -324,7 +311,7 @@ DOMParser::Init(nsIPrincipal* principal, nsIURI* documentURI,
   mAttemptedInit = true;
   NS_ENSURE_ARG(principal || documentURI);
   mDocumentURI = documentURI;
-  
+
   if (!mDocumentURI) {
     principal->GetURI(getter_AddRefs(mDocumentURI));
     // If we have the system principal, then we'll just use the null principals
@@ -350,16 +337,15 @@ DOMParser::Init(nsIPrincipal* principal, nsIURI* documentURI,
                                     0,
                                     documentURI);
 
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     mPrincipal = BasePrincipal::CreateCodebasePrincipal(mDocumentURI, attrs);
     NS_ENSURE_TRUE(mPrincipal, NS_ERROR_FAILURE);
-    mOriginalPrincipal = mPrincipal;
   } else {
-    mOriginalPrincipal = mPrincipal;
     if (nsContentUtils::IsSystemPrincipal(mPrincipal)) {
       // Don't give DOMParsers the system principal.  Use a null
       // principal instead.
-      mPrincipal = nsNullPrincipal::Create();
+      mOriginalPrincipalWasSystem = true;
+      mPrincipal = NullPrincipal::Create();
 
       if (!mDocumentURI) {
         rv = mPrincipal->GetURI(getter_AddRefs(mDocumentURI));
@@ -367,14 +353,10 @@ DOMParser::Init(nsIPrincipal* principal, nsIURI* documentURI,
       }
     }
   }
-  
+
   mBaseURI = baseURI;
-  // Note: if mBaseURI is null, fine.  Leave it like that; that will use the
-  // documentURI as the base.  Otherwise for null principals we'll get
-  // nsDocument::SetBaseURI giving errors.
 
   NS_POSTCONDITION(mPrincipal, "Must have principal");
-  NS_POSTCONDITION(mOriginalPrincipal, "Must have original principal");
   NS_POSTCONDITION(mDocumentURI, "Must have document URI");
   return NS_OK;
 }
@@ -384,7 +366,7 @@ DOMParser::Constructor(const GlobalObject& aOwner,
                        nsIPrincipal* aPrincipal, nsIURI* aDocumentURI,
                        nsIURI* aBaseURI, ErrorResult& rv)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aOwner.CallerType() != CallerType::System) {
     rv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
   }
@@ -474,7 +456,7 @@ DOMParser::SetUpDocument(DocumentFlavor aFlavor, nsIDOMDocument** aResult)
     NS_ENSURE_TRUE(!mAttemptedInit, NS_ERROR_NOT_INITIALIZED);
     AttemptedInitMarker marker(&mAttemptedInit);
 
-    nsCOMPtr<nsIPrincipal> prin = nsNullPrincipal::Create();
+    nsCOMPtr<nsIPrincipal> prin = NullPrincipal::Create();
     rv = Init(prin, nullptr, nullptr, scriptHandlingObject);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -482,13 +464,9 @@ DOMParser::SetUpDocument(DocumentFlavor aFlavor, nsIDOMDocument** aResult)
   NS_ASSERTION(mPrincipal, "Must have principal by now");
   NS_ASSERTION(mDocumentURI, "Must have document URI by now");
 
-  // Here we have to cheat a little bit...  Setting the base URI won't
-  // work if the document has a null principal, so use
-  // mOriginalPrincipal when creating the document, then reset the
-  // principal.
   return NS_NewDOMDocument(aResult, EmptyString(), EmptyString(), nullptr,
                            mDocumentURI, mBaseURI,
-                           mOriginalPrincipal,
+                           mPrincipal,
                            true,
                            scriptHandlingObject,
                            aFlavor);

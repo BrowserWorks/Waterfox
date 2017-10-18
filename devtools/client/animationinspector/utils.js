@@ -8,10 +8,9 @@
 
 loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
-
-const STRINGS_URI = "chrome://devtools/locale/animationinspector.properties";
-const L10N = new LocalizationHelper(STRINGS_URI);
+const { LocalizationHelper } = require("devtools/shared/l10n");
+const L10N =
+      new LocalizationHelper("devtools/client/locales/animationinspector.properties");
 
 // How many times, maximum, can we loop before we find the optimal time
 // interval in the timeline graph.
@@ -21,6 +20,9 @@ const OPTIMAL_TIME_INTERVAL_MULTIPLES = [1, 2.5, 5];
 
 const MILLIS_TIME_FORMAT_MAX_DURATION = 4000;
 
+// SVG namespace
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 /**
  * DOM node creation helper function.
  * @param {Object} Options to customize the node to be created.
@@ -29,6 +31,7 @@ const MILLIS_TIME_FORMAT_MAX_DURATION = 4000;
  *   {attrName1:value1, attrName2: value2, ...}
  * - parent {DOMNode} Mandatory node to append the newly created node to.
  * - textContent {String} Optional text for the node.
+ * - namespace {String} Optional namespace
  * @return {DOMNode} The newly created node.
  */
 function createNode(options) {
@@ -37,7 +40,10 @@ function createNode(options) {
   }
 
   let type = options.nodeType || "div";
-  let node = options.parent.ownerDocument.createElement(type);
+  let node =
+    options.namespace
+    ? options.parent.ownerDocument.createElementNS(options.namespace, type)
+    : options.parent.ownerDocument.createElement(type);
 
   for (let name in options.attributes || {}) {
     let value = options.attributes[name];
@@ -53,6 +59,22 @@ function createNode(options) {
 }
 
 exports.createNode = createNode;
+
+/**
+ * SVG DOM node creation helper function.
+ * @param {Object} Options to customize the node to be created.
+ * - nodeType {String} Optional, defaults to "div",
+ * - attributes {Object} Optional attributes object like
+ *   {attrName1:value1, attrName2: value2, ...}
+ * - parent {DOMNode} Mandatory node to append the newly created node to.
+ * - textContent {String} Optional text for the node.
+ * @return {DOMNode} The newly created node.
+ */
+function createSVGNode(options) {
+  options.namespace = SVG_NS;
+  return createNode(options);
+}
+exports.createSVGNode = createSVGNode;
 
 /**
  * Find the optimal interval between time graduations in the animation timeline
@@ -266,32 +288,59 @@ var TimeScale = {
 
     return {x, w, iterationW, delayX, delayW, negativeDelayW,
             endDelayX, endDelayW};
-  },
-
-  /**
-   * Given an animation, get the background data for .iterations element.
-   * This background represents iterationCount and iterationStart.
-   * Returns three properties.
-   * 1. size: x of background-size (%)
-   * 2. position: x of background-position (%)
-   * 3. repeat: background-repeat (string)
-   */
-  getIterationsBackgroundData: function ({state}) {
-    let iterationCount = state.iterationCount || 1;
-    let iterationStartW = state.iterationStart % 1 * 100;
-    let background = {};
-    if (iterationCount == 1) {
-      background.size = 100 - iterationStartW;
-      background.position = 0;
-      background.repeat = "no-repeat";
-    } else {
-      background.size = 1 / iterationCount * 100;
-      background.position = -iterationStartW * background.size /
-                              (100 - background.size);
-      background.repeat = "repeat-x";
-    }
-    return background;
   }
 };
 
 exports.TimeScale = TimeScale;
+
+/**
+ * Convert given CSS property name to JavaScript CSS name.
+ * @param {String} CSS property name (e.g. background-color).
+ * @return {String} JavaScript CSS property name (e.g. backgroundColor).
+ */
+function getJsPropertyName(cssPropertyName) {
+  if (cssPropertyName == "float") {
+    return "cssFloat";
+  }
+  // https://drafts.csswg.org/cssom/#css-property-to-idl-attribute
+  return cssPropertyName.replace(/-([a-z])/gi, (str, group) => {
+    return group.toUpperCase();
+  });
+}
+exports.getJsPropertyName = getJsPropertyName;
+
+/**
+ * Turn propertyName into property-name.
+ * @param {String} jsPropertyName A camelcased CSS property name. Typically
+ * something that comes out of computed styles. E.g. borderBottomColor
+ * @return {String} The corresponding CSS property name: border-bottom-color
+ */
+function getCssPropertyName(jsPropertyName) {
+  return jsPropertyName.replace(/[A-Z]/g, "-$&").toLowerCase();
+}
+exports.getCssPropertyName = getCssPropertyName;
+
+/**
+ * Get a formatted title for this animation. This will be either:
+ * "some-name", "some-name : CSS Transition", "some-name : CSS Animation",
+ * "some-name : Script Animation", or "Script Animation", depending
+ * if the server provides the type, what type it is and if the animation
+ * has a name
+ * @param {AnimationPlayerFront} animation
+ */
+function getFormattedAnimationTitle({state}) {
+  // Older servers don't send a type, and only know about
+  // CSSAnimations and CSSTransitions, so it's safe to use
+  // just the name.
+  if (!state.type) {
+    return state.name;
+  }
+
+  // Script-generated animations may not have a name.
+  if (state.type === "scriptanimation" && !state.name) {
+    return L10N.getStr("timeline.scriptanimation.unnamedLabel");
+  }
+
+  return L10N.getFormatStr(`timeline.${state.type}.nameLabel`, state.name);
+}
+exports.getFormattedAnimationTitle = getFormattedAnimationTitle;

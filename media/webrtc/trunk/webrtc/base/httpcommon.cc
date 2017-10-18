@@ -21,7 +21,9 @@
 
 #include <algorithm>
 
+#include "webrtc/base/arraysize.h"
 #include "webrtc/base/base64.h"
+#include "webrtc/base/checks.h"
 #include "webrtc/base/common.h"
 #include "webrtc/base/cryptstring.h"
 #include "webrtc/base/httpcommon-inl.h"
@@ -149,12 +151,12 @@ bool FromString(HttpHeader& header, const std::string& str) {
   return Enum<HttpHeader>::Parse(header, str);
 }
 
-bool HttpCodeHasBody(uint32 code) {
+bool HttpCodeHasBody(uint32_t code) {
   return !HttpCodeIsInformational(code)
          && (code != HC_NO_CONTENT) && (code != HC_NOT_MODIFIED);
 }
 
-bool HttpCodeIsCacheable(uint32 code) {
+bool HttpCodeIsCacheable(uint32_t code) {
   switch (code) {
   case HC_OK:
   case HC_NON_AUTHORITATIVE:
@@ -340,7 +342,7 @@ bool HttpDateToSeconds(const std::string& date, time_t* seconds) {
      1,  2,  3,  4,  5,  6,  7,  8,  9,  10,  11,  12
   };
 
-  ASSERT(NULL != seconds);
+  RTC_DCHECK(NULL != seconds);
   struct tm tval;
   memset(&tval, 0, sizeof(tval));
   char month[4], zone[6];
@@ -377,7 +379,7 @@ bool HttpDateToSeconds(const std::string& date, time_t* seconds) {
     gmt = non_gmt + ((zone[0] == '+') ? offset : -offset);
   } else {
     size_t zindex;
-    if (!find_string(zindex, zone, kTimeZones, ARRAY_SIZE(kTimeZones))) {
+    if (!find_string(zindex, zone, kTimeZones, arraysize(kTimeZones))) {
       return false;
     }
     gmt = non_gmt + kTimeZoneOffsets[zindex] * 60 * 60;
@@ -387,6 +389,10 @@ bool HttpDateToSeconds(const std::string& date, time_t* seconds) {
   tm *tm_for_timezone = localtime(&gmt);
   *seconds = gmt + tm_for_timezone->tm_gmtoff;
 #else
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+  long timezone = 0;
+  _get_timezone(&timezone);
+#endif
   *seconds = gmt - timezone;
 #endif
   return true;
@@ -476,9 +482,9 @@ void HttpData::setContent(const std::string& content_type,
 
 void HttpData::setDocumentAndLength(StreamInterface* document) {
   // TODO: Consider calling Rewind() here?
-  ASSERT(!hasHeader(HH_CONTENT_LENGTH, NULL));
-  ASSERT(!hasHeader(HH_TRANSFER_ENCODING, NULL));
-  ASSERT(document != NULL);
+  RTC_DCHECK(!hasHeader(HH_CONTENT_LENGTH, NULL));
+  RTC_DCHECK(!hasHeader(HH_TRANSFER_ENCODING, NULL));
+  RTC_DCHECK(document != NULL);
   this->document.reset(document);
   size_t content_length = 0;
   if (this->document->GetAvailable(&content_length)) {
@@ -510,7 +516,7 @@ HttpRequestData::copy(const HttpRequestData& src) {
 
 size_t
 HttpRequestData::formatLeader(char* buffer, size_t size) const {
-  ASSERT(path.find(' ') == std::string::npos);
+  RTC_DCHECK(path.find(' ') == std::string::npos);
   return sprintfn(buffer, size, "%s %.*s HTTP/%s", ToString(verb), path.size(),
                   path.data(), ToString(version));
 }
@@ -595,32 +601,29 @@ HttpResponseData::copy(const HttpResponseData& src) {
   HttpData::copy(src);
 }
 
-void
-HttpResponseData::set_success(uint32 scode) {
+void HttpResponseData::set_success(uint32_t scode) {
   this->scode = scode;
   message.clear();
   setHeader(HH_CONTENT_LENGTH, "0", false);
 }
 
-void
-HttpResponseData::set_success(const std::string& content_type,
-                              StreamInterface* document,
-                              uint32 scode) {
+void HttpResponseData::set_success(const std::string& content_type,
+                                   StreamInterface* document,
+                                   uint32_t scode) {
   this->scode = scode;
   message.erase(message.begin(), message.end());
   setContent(content_type, document);
 }
 
-void
-HttpResponseData::set_redirect(const std::string& location, uint32 scode) {
+void HttpResponseData::set_redirect(const std::string& location,
+                                    uint32_t scode) {
   this->scode = scode;
   message.clear();
   setHeader(HH_LOCATION, location);
   setHeader(HH_CONTENT_LENGTH, "0", false);
 }
 
-void
-HttpResponseData::set_error(uint32 scode) {
+void HttpResponseData::set_error(uint32_t scode) {
   this->scode = scode;
   message.clear();
   setHeader(HH_CONTENT_LENGTH, "0", false);
@@ -836,7 +839,7 @@ HttpAuthResult HttpAuthenticate(
     std::string dig_response = MD5(HA1 + ":" + middle + ":" + HA2);
 
 #if TEST_DIGEST
-    ASSERT(strcmp(dig_response.c_str(), DIGEST_RESPONSE) == 0);
+    RTC_DCHECK(strcmp(dig_response.c_str(), DIGEST_RESPONSE) == 0);
 #endif
 
     std::stringstream ss;
@@ -907,7 +910,7 @@ HttpAuthResult HttpAuthenticate(
     bool specify_credentials = !username.empty();
     size_t steps = 0;
 
-    //uint32 now = Time();
+    // uint32_t now = Time();
 
     NegotiateAuthContext * neg = static_cast<NegotiateAuthContext *>(context);
     if (neg) {
@@ -1018,7 +1021,7 @@ HttpAuthResult HttpAuthenticate(
         return HAR_IGNORE;
       }
 
-      ASSERT(!context);
+      RTC_DCHECK(!context);
       context = neg = new NegotiateAuthContext(auth_method, cred, ctx);
       neg->specified_credentials = specify_credentials;
       neg->steps = steps;

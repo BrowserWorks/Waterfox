@@ -6,13 +6,20 @@
 
 package org.mozilla.gecko.telemetry;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import org.mozilla.gecko.BrowserApp;
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
+import org.mozilla.gecko.GeckoThread;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.adjust.AttributionHelperListener;
+import org.mozilla.gecko.telemetry.measurements.CampaignIdMeasurements;
 import org.mozilla.gecko.delegates.BrowserAppDelegateWithReference;
 import org.mozilla.gecko.distribution.DistributionStoreCallback;
 import org.mozilla.gecko.search.SearchEngineManager;
@@ -29,18 +36,17 @@ import java.io.IOException;
  * An activity-lifecycle delegate for uploading the core ping.
  */
 public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
-        implements SearchEngineManager.SearchEngineCallback {
+        implements SearchEngineManager.SearchEngineCallback, AttributionHelperListener {
     private static final String LOGTAG = StringUtils.safeSubstring(
             "Gecko" + TelemetryCorePingDelegate.class.getSimpleName(), 0, 23);
 
-    private static final String PREF_IS_FIRST_RUN = "telemetry-isFirstRun";
-
+    private boolean isOnResumeCalled = false;
     private TelemetryDispatcher telemetryDispatcher; // lazy
     private final SessionMeasurements sessionMeasurements = new SessionMeasurements();
 
     @Override
     public void onStart(final BrowserApp browserApp) {
-        TelemetryPreferences.initPreferenceObserver(browserApp, browserApp.getProfile().getName());
+        TelemetryPreferences.initPreferenceObserver(browserApp, GeckoThread.getActiveProfile().getName());
 
         // We don't upload in onCreate because that's only called when the Activity needs to be instantiated
         // and it's possible the system will never free the Activity from memory.
@@ -67,10 +73,8 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
         // If we are really interested in the user's last session data, we could consider uploading in onStop
         // but it's less robust (see discussion in bug 1277091).
         final SharedPreferences sharedPrefs = getSharedPreferences(browserApp);
-        if (sharedPrefs.getBoolean(PREF_IS_FIRST_RUN, true)) {
-            sharedPrefs.edit()
-                    .putBoolean(PREF_IS_FIRST_RUN, false)
-                    .apply();
+        if (sharedPrefs.getBoolean(GeckoApp.PREFS_IS_FIRST_RUN, true)) {
+            // GeckoApp will set this pref to false afterwards.
             uploadPing(browserApp);
         }
     }
@@ -82,11 +86,17 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
 
     @Override
     public void onResume(BrowserApp browserApp) {
+        isOnResumeCalled = true;
         sessionMeasurements.recordSessionStart();
     }
 
     @Override
     public void onPause(BrowserApp browserApp) {
+        if (!isOnResumeCalled) {
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.SYSTEM, "onPauseCalledBeforeOnResume");
+            return;
+        }
+        isOnResumeCalled = false;
         // onStart/onStop is ideal over onResume/onPause. However, onStop is not guaranteed to be called and
         // dealing with that possibility adds a lot of complexity that we don't want to handle at this point.
         sessionMeasurements.recordSessionEnd(browserApp);
@@ -95,7 +105,7 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
     @WorkerThread // via constructor
     private TelemetryDispatcher getTelemetryDispatcher(final BrowserApp browserApp) {
         if (telemetryDispatcher == null) {
-            final GeckoProfile profile = browserApp.getProfile();
+            final GeckoProfile profile = GeckoThread.getActiveProfile();
             final String profilePath = profile.getDir().getAbsolutePath();
             final String profileName = profile.getName();
             telemetryDispatcher = new TelemetryDispatcher(profilePath, profileName);
@@ -104,7 +114,7 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
     }
 
     private SharedPreferences getSharedPreferences(final BrowserApp activity) {
-        return GeckoSharedPrefs.forProfileName(activity, activity.getProfile().getName());
+        return GeckoSharedPrefs.forProfileName(activity, GeckoThread.getActiveProfile().getName());
     }
 
     // via SearchEngineCallback - may be called from any thread.
@@ -128,7 +138,7 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
                     return;
                 }
 
-                final GeckoProfile profile = activity.getProfile();
+                final GeckoProfile profile = GeckoThread.getActiveProfile();
                 if (!TelemetryUploadService.isUploadEnabledByProfileConfig(activity, profile)) {
                     Log.d(LOGTAG, "Core ping upload disabled by profile config. Returning.");
                     return;
@@ -153,14 +163,15 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
                         .setSequenceNumber(TelemetryCorePingBuilder.getAndIncrementSequenceNumber(sharedPrefs))
                         .setSessionCount(sessionMeasurementsContainer.sessionCount)
                         .setSessionDuration(sessionMeasurementsContainer.elapsedSeconds);
-                maybeSetOptionalMeasurements(sharedPrefs, pingBuilder);
+                maybeSetOptionalMeasurements(activity, sharedPrefs, pingBuilder);
 
                 getTelemetryDispatcher(activity).queuePingForUpload(activity, pingBuilder);
             }
         });
     }
 
-    private void maybeSetOptionalMeasurements(final SharedPreferences sharedPrefs, final TelemetryCorePingBuilder pingBuilder) {
+    private void maybeSetOptionalMeasurements(final Context context, final SharedPreferences sharedPrefs,
+                                              final TelemetryCorePingBuilder pingBuilder) {
         final String distributionId = sharedPrefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
         if (distributionId != null) {
             pingBuilder.setOptDistributionID(distributionId);
@@ -170,5 +181,15 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
         if (searchCounts.size() > 0) {
             pingBuilder.setOptSearchCounts(searchCounts);
         }
+
+        final String campaignId = CampaignIdMeasurements.getCampaignIdFromPrefs(context);
+        if (campaignId != null) {
+            pingBuilder.setOptCampaignId(campaignId);
+        }
+    }
+
+    @Override
+    public void onCampaignIdChanged(String campaignId) {
+        CampaignIdMeasurements.updateCampaignIdPref(getBrowserApp(), campaignId);
     }
 }

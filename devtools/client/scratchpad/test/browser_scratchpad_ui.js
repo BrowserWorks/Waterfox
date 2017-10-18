@@ -6,11 +6,10 @@ function test()
 {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function onLoad() {
-    gBrowser.selectedBrowser.removeEventListener("load", onLoad, true);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
+  gBrowser.selectedBrowser.addEventListener("load", function () {
     openScratchpad(runTests);
-  }, true);
+  }, {capture: true, once: true});
 
   content.location = "data:text/html,<title>foobarBug636725</title>" +
     "<p>test inspect() in Scratchpad";

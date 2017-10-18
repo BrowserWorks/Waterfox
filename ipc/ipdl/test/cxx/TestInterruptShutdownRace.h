@@ -23,9 +23,9 @@ public:
 
     void Main();
 
-    virtual bool RecvStartDeath() override;
+    virtual mozilla::ipc::IPCResult RecvStartDeath() override;
 
-    virtual bool RecvOrphan() override;
+    virtual mozilla::ipc::IPCResult RecvOrphan() override;
 
 protected:
     void StartShuttingDown();
@@ -33,7 +33,7 @@ protected:
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (AbnormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
     }
 };
 
@@ -46,9 +46,9 @@ public:
     virtual ~TestInterruptShutdownRaceChild();
 
 protected:
-    virtual bool RecvStart() override;
+    virtual mozilla::ipc::IPCResult RecvStart() override;
 
-    virtual bool AnswerExit() override;
+    virtual mozilla::ipc::IPCResult AnswerExit() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {

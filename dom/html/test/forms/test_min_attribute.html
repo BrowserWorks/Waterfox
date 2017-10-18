@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=635553
 -->
 <head>
   <title>Test for Bug 635553</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -27,12 +26,11 @@ var data = [
   { type: 'url', apply: false },
   { type: 'email', apply: false },
   { type: 'password', apply: false },
-  { type: 'datetime', apply: true, todo: true },
   { type: 'date', apply: true },
   { type: 'month', apply: true },
-  { type: 'week', apply: true, todo: true },
+  { type: 'week', apply: true },
   { type: 'time', apply: true },
-  { type: 'datetime-local', apply: true, todo: true },
+  { type: 'datetime-local', apply: true },
   { type: 'number', apply: true },
   { type: 'range', apply: true },
   { type: 'color', apply: false },
@@ -71,7 +69,8 @@ function checkValidity(aElement, aValidity, aApply, aRangeApply)
      "element underflow status should be " + !aValidity);
   var underflowMsg =
         (aElement.type == "date" || aElement.type == "time" ||
-         aElement.type == "month") ?
+         aElement.type == "month" || aElement.type == "week" ||
+         aElement.type == "datetime-local") ?
         ("Please select a value that is no earlier than " + aElement.min + ".") :
         ("Please select a value that is no less than " + aElement.min + ".");
   is(aElement.validationMessage,
@@ -144,6 +143,12 @@ for (var test of data) {
       break;
     case 'month':
       input.min = '2016-06';
+      break;
+    case 'week':
+      input.min = '2016-W39';
+      break;
+    case 'datetime-local':
+      input.min = '2017-01-01T00:00';
       break;
     default:
       ok(false, 'please, add a case for this new type (' + input.type + ')');
@@ -368,6 +373,83 @@ for (var test of data) {
       checkValidity(input, true, apply, apply);
 
       input.value = '0001-01';
+      checkValidity(input, false, apply, apply);
+
+      input.min = '';
+      checkValidity(input, true, apply, false);
+
+      input.min = 'foo';
+      checkValidity(input, true, apply, false);
+      break;
+    case 'week':
+      input.value = '2016-W40';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-W39';
+      checkValidity(input, true, apply, apply);
+
+      input.value = 'foo';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-W38';
+      checkValidity(input, false, apply, apply);
+
+      input.min = '2016-W01';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2015-W53';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '1000-W01';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '10000-01';
+      checkValidity(input, true, apply, apply);
+
+      input.min = '0010-W01';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '0001-W01';
+      checkValidity(input, false, apply, apply);
+
+      input.min = '';
+      checkValidity(input, true, apply, false);
+
+      input.min = 'foo';
+      checkValidity(input, true, apply, false);
+      break;
+    case 'datetime-local':
+      input.value = '2017-12-31T23:59';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2017-01-01T00:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2017-01-01T00:00:00.123';
+      checkValidity(input, true, apply, apply);
+
+      input.value = 'foo';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-12-31T23:59';
+      checkValidity(input, false, apply, apply);
+
+      input.min = '2016-01-01T00:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2015-12-31T23:59';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '1000-01-01T00:00';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '10000-01-01T00:00';
+      checkValidity(input, true, apply, apply);
+
+      input.min = '0010-01-01T12:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '0010-01-01T10:00';
       checkValidity(input, false, apply, apply);
 
       input.min = '';

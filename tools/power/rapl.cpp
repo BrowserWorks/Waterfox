@@ -518,8 +518,8 @@ public:
     attr.config = config;
 
     // Measure all processes/threads. The specified CPU doesn't matter.
-    mFd = perf_event_open(&attr, /* pid = */ -1, /* cpu = */ 0,
-                          /* group_fd = */ -1, /* flags = */ 0);
+    mFd = perf_event_open(&attr, /* aPid = */ -1, /* aCpu = */ 0,
+                          /* aGroupFd = */ -1, /* aFlags = */ 0);
     if (mFd < 0) {
       Abort("perf_event_open() failed\n"
             "- Did you run as root (e.g. with |sudo|) or set\n"
@@ -719,8 +719,8 @@ Finish()
   // |n - 1|, and would be appropriate if we were using a random sample of a
   // larger population.
   double sumOfSquaredDeviations = 0;
-  for (auto iter = gTotals_W.begin(); iter != gTotals_W.end(); ++iter) {
-    double deviation = (*iter - mean);
+  for (double & iter : gTotals_W) {
+    double deviation = (iter - mean);
     sumOfSquaredDeviations += deviation * deviation;
   }
   double popStdDev = sqrt(sumOfSquaredDeviations / n);

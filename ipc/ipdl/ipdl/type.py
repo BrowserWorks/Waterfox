@@ -5,31 +5,14 @@
 
 import os, sys
 
-from ipdl.ast import CxxInclude, Decl, Loc, QualifiedId, State, StructDecl, TransitionStmt
+from ipdl.ast import CxxInclude, Decl, Loc, QualifiedId, StructDecl
 from ipdl.ast import TypeSpec, UnionDecl, UsingStmt, Visitor
 from ipdl.ast import ASYNC, SYNC, INTR
-from ipdl.ast import IN, OUT, INOUT, ANSWER, CALL, RECV, SEND
-from ipdl.ast import NORMAL_PRIORITY, HIGH_PRIORITY, URGENT_PRIORITY
+from ipdl.ast import IN, OUT, INOUT
+from ipdl.ast import NOT_NESTED, INSIDE_SYNC_NESTED, INSIDE_CPOW_NESTED
 import ipdl.builtin as builtin
 
 _DELETE_MSG = '__delete__'
-
-
-def _otherside(side):
-    if side == 'parent':  return 'child'
-    elif side == 'child': return 'parent'
-    else:  assert 0 and 'unknown side "%s"'% (side)
-
-def unique_pairs(s):
-    n = len(s)
-    for i, e1 in enumerate(s):
-        for j in xrange(i+1, n):
-            yield (e1, s[j])
-
-def cartesian_product(s1, s2):
-    for e1 in s1:
-        for e2 in s2:
-            yield (e1, e2)
 
 
 class TypeVisitor:
@@ -43,13 +26,7 @@ class TypeVisitor:
     def visitVoidType(self, v, *args):
         pass
 
-    def visitBuiltinCxxType(self, t, *args):
-        pass
-
     def visitImportedCxxType(self, t, *args):
-        pass
-
-    def visitStateType(self, s, *args):
         pass
 
     def visitMessageType(self, m, *args):
@@ -67,7 +44,6 @@ class TypeVisitor:
 
     def visitActorType(self, a, *args):
         a.protocol.accept(self, *args)
-        a.state.accept(self, *args)
 
     def visitStructType(self, s, *args):
         if s in self.visited:
@@ -118,11 +94,6 @@ class Type:
     # Is this type neither compound nor an array?
     def isAtom(self):
         return False
-    # Can this type appear in IPDL programs?
-    def isVisible(self):
-        return False
-    def isVoid(self):
-        return False
     def typename(self):
         return self.__class__.__name__
 
@@ -142,10 +113,6 @@ class VoidType(Type):
         return False
     def isAtom(self):
         return True
-    def isVisible(self):
-        return False
-    def isVoid(self):
-        return True
 
     def name(self): return 'void'
     def fullname(self): return 'void'
@@ -153,38 +120,15 @@ class VoidType(Type):
 VOID = VoidType()
 
 ##--------------------
-class CxxType(Type):
+class ImportedCxxType(Type):
+    def __init__(self, qname):
+        assert isinstance(qname, QualifiedId)
+        self.loc = qname.loc
+        self.qname = qname
     def isCxx(self):
         return True
     def isAtom(self):
         return True
-    def isBuiltin(self):
-        return False
-    def isImported(self):
-        return False
-    def isGenerated(self):
-        return False
-    def isVisible(self):
-        return True
-
-class BuiltinCxxType(CxxType):
-    def __init__(self, qname):
-        assert isinstance(qname, QualifiedId)
-        self.loc = qname.loc
-        self.qname = qname
-    def isBuiltin(self):  return True
-
-    def name(self):
-        return self.qname.baseid
-    def fullname(self):
-        return str(self.qname)
-
-class ImportedCxxType(CxxType):
-    def __init__(self, qname):
-        assert isinstance(qname, QualifiedId)
-        self.loc = qname.loc
-        self.qname = qname
-    def isImported(self): return True
 
     def name(self):
         return self.qname.baseid
@@ -194,8 +138,6 @@ class ImportedCxxType(CxxType):
 ##--------------------
 class IPDLType(Type):
     def isIPDL(self):  return True
-    def isVisible(self): return True
-    def isState(self): return False
     def isMessage(self): return False
     def isProtocol(self): return False
     def isActor(self): return False
@@ -205,7 +147,6 @@ class IPDLType(Type):
     def isAtom(self):  return True
     def isCompound(self): return False
     def isShmem(self): return False
-    def isChmod(self): return False
     def isFD(self): return False
     def isEndpoint(self): return False
 
@@ -217,14 +158,14 @@ class IPDLType(Type):
 
     @classmethod
     def convertsTo(cls, lesser, greater):
-        if (lesser.priorityRange[0] < greater.priorityRange[0] or
-            lesser.priorityRange[1] > greater.priorityRange[1]):
+        if (lesser.nestedRange[0] < greater.nestedRange[0] or
+            lesser.nestedRange[1] > greater.nestedRange[1]):
             return False
 
         # Protocols that use intr semantics are not allowed to use
-        # message priorities.
+        # message nesting.
         if (greater.isInterrupt() and
-            lesser.priorityRange != (NORMAL_PRIORITY, NORMAL_PRIORITY)):
+            lesser.nestedRange != (NOT_NESTED, NOT_NESTED)):
             return False
 
         if lesser.isAsync():
@@ -239,26 +180,16 @@ class IPDLType(Type):
     def needsMoreJuiceThan(self, o):
         return not IPDLType.convertsTo(self, o)
 
-class StateType(IPDLType):
-    def __init__(self, protocol, name, start=False):
-        self.protocol = protocol
-        self.name = name
-        self.start = start
-    def isState(self): return True
-    def name(self):
-        return self.name
-    def fullname(self):
-        return self.name()
-
 class MessageType(IPDLType):
-    def __init__(self, priority, sendSemantics, direction,
+    def __init__(self, nested, prio, sendSemantics, direction,
                  ctor=False, dtor=False, cdtype=None, compress=False,
                  verify=False):
         assert not (ctor and dtor)
-        assert not (ctor or dtor) or type is not None
+        assert not (ctor or dtor) or cdtype is not None
 
-        self.priority = priority
-        self.priorityRange = (priority, priority)
+        self.nested = nested
+        self.prio = prio
+        self.nestedRange = (nested, nested)
         self.sendSemantics = sendSemantics
         self.direction = direction
         self.params = [ ]
@@ -278,32 +209,18 @@ class MessageType(IPDLType):
     def isOut(self): return self.direction is OUT
     def isInout(self): return self.direction is INOUT
 
+    def hasReply(self): return len(self.returns) or IPDLType.hasReply(self)
+
     def hasImplicitActorParam(self):
         return self.isCtor() or self.isDtor()
 
-class Bridge:
-    def __init__(self, parentPtype, childPtype):
-        assert parentPtype.isToplevel() and childPtype.isToplevel()
-        self.parent = parentPtype
-        self.child = childPtype
-
-    def __cmp__(self, o):
-        return cmp(self.parent, o.parent) or cmp(self.child, o.child)
-    def __eq__(self, o):
-        return self.parent == o.parent and self.child == o.child
-    def __hash__(self):
-        return hash(self.parent) + hash(self.child)
-
 class ProtocolType(IPDLType):
-    def __init__(self, qname, priorityRange, sendSemantics, stateless=False):
+    def __init__(self, qname, nested, sendSemantics):
         self.qname = qname
-        self.priorityRange = priorityRange
+        self.nestedRange = (NOT_NESTED, nested)
         self.sendSemantics = sendSemantics
-        self.spawns = set()             # ProtocolType
-        self.opens = set()              # ProtocolType
         self.managers = []           # ProtocolType
         self.manages = [ ]
-        self.stateless = stateless
         self.hasDelete = False
         self.hasReentrantDelete = False
     def isProtocol(self): return True
@@ -316,14 +233,6 @@ class ProtocolType(IPDLType):
     def addManager(self, mgrtype):
         assert mgrtype.isIPDL() and mgrtype.isProtocol()
         self.managers.append(mgrtype)
-
-    def addSpawn(self, ptype):
-        assert self.isToplevel() and  ptype.isToplevel()
-        self.spawns.add(ptype)
-
-    def addOpen(self, ptype):
-        assert self.isToplevel() and  ptype.isToplevel()
-        self.opens.add(ptype)
 
     def managedBy(self, mgr):
         self.managers = list(mgr)
@@ -364,9 +273,8 @@ class ProtocolType(IPDLType):
         for mgr in self.managers: return mgr
 
 class ActorType(IPDLType):
-    def __init__(self, protocol, state=None, nullable=0):
+    def __init__(self, protocol, nullable=0):
         self.protocol = protocol
-        self.state = state
         self.nullable = nullable
     def isActor(self): return True
 
@@ -423,7 +331,7 @@ class StructType(_CompoundType):
     def itercomponents(self):
         for f in self.fields:
             yield f
-    
+
     def name(self): return self.qname.baseid
     def fullname(self): return str(self.qname)
 
@@ -499,11 +407,6 @@ def iteractortypes(t, visited=None):
             for actor in iteractortypes(c, visited):
                 yield actor
 
-def hasactor(type):
-    """Return true iff |type| is an actor or has one buried within."""
-    for _ in iteractortypes(type): return True
-    return False
-
 def hasshmem(type):
     """Return true iff |type| is shmem or has it buried within."""
     class found: pass
@@ -511,17 +414,6 @@ def hasshmem(type):
         def visitShmemType(self, s):  raise found()
     try:
         type.accept(findShmem())
-    except found:
-        return True
-    return False
-
-def hasfd(type):
-    """Return true iff |type| is fd or has it buried within."""
-    class found: pass
-    class findFD(TypeVisitor):
-        def visitFDType(self, s):  raise found()
-    try:
-        type.accept(findFD())
     except found:
         return True
     return False
@@ -550,28 +442,22 @@ class SymbolTable:
     def __init__(self, errors):
         self.errors = errors
         self.scopes = [ { } ]   # stack({})
-        self.globalScope = self.scopes[0]
-        self.currentScope = self.globalScope
-    
-    def enterScope(self, node):
-        assert (isinstance(self.scopes[0], dict)
-                and self.globalScope is self.scopes[0])
-        assert (isinstance(self.currentScope, dict))
+        self.currentScope = self.scopes[0]
 
-        if not hasattr(node, 'symtab'):
-            node.symtab = { }
+    def enterScope(self):
+        assert isinstance(self.scopes[0], dict)
+        assert isinstance(self.currentScope, dict)
 
-        self.scopes.append(node.symtab)
+        self.scopes.append({ })
         self.currentScope = self.scopes[-1]
 
-    def exitScope(self, node):
+    def exitScope(self):
         symtab = self.scopes.pop()
         assert self.currentScope is symtab
 
         self.currentScope = self.scopes[-1]
 
-        assert (isinstance(self.scopes[0], dict)
-                and self.globalScope is self.scopes[0])
+        assert isinstance(self.scopes[0], dict)
         assert isinstance(self.currentScope, dict)
 
     def lookup(self, sym):
@@ -605,13 +491,11 @@ class SymbolTable:
 
 
 class TypeCheck:
-    '''This pass sets the .type attribute of every AST node.  For some
-nodes, the type is meaningless and it is set to "VOID."  This pass
-also sets the .decl attribute of AST nodes for which that is relevant;
+    '''This pass sets the .decl attribute of AST nodes for which that is relevant;
 a decl says where, with what type, and under what name(s) a node was
 declared.
 
-With this information, it finally type checks the AST.'''
+With this information, it type checks the AST.'''
 
     def __init__(self):
         # NB: no IPDL compile will EVER print a warning.  A program has
@@ -635,14 +519,6 @@ With this information, it finally type checks the AST.'''
         if not runpass(CheckTypes(self.errors)):
             return False
 
-        if not (runpass(BuildProcessGraph(self.errors))
-                and runpass(CheckProcessGraph(self.errors))):
-            return False
-
-        if (tu.protocol
-            and len(tu.protocol.startStates)
-            and not runpass(CheckStateMachine(self.errors))):
-            return False
         return True
 
     def reportErrors(self, errout):
@@ -651,12 +527,20 @@ With this information, it finally type checks the AST.'''
 
 
 class TcheckVisitor(Visitor):
-    def __init__(self, symtab, errors):
-        self.symtab = symtab
+    def __init__(self, errors):
         self.errors = errors
 
     def error(self, loc, fmt, *args):
         self.errors.append(errormsg(loc, fmt, *args))
+
+class GatherDecls(TcheckVisitor):
+    def __init__(self, builtinUsing, errors):
+        TcheckVisitor.__init__(self, errors)
+
+        # |self.symtab| is the symbol table for the translation unit
+        # currently being visited
+        self.symtab = None
+        self.builtinUsing = builtinUsing
 
     def declare(self, loc, type, shortname=None, fullname=None, progname=None):
         d = Decl(loc)
@@ -667,20 +551,13 @@ class TcheckVisitor(Visitor):
         self.symtab.declare(d)
         return d
 
-class GatherDecls(TcheckVisitor):
-    def __init__(self, builtinUsing, errors):
-        # |self.symtab| is the symbol table for the translation unit
-        # currently being visited
-        TcheckVisitor.__init__(self, None, errors)
-        self.builtinUsing = builtinUsing
-
     def visitTranslationUnit(self, tu):
         # all TranslationUnits declare symbols in global scope
-        if hasattr(tu, 'symtab'):
+        if hasattr(tu, 'visited'):
             return
-        tu.symtab = SymbolTable(self.errors)
+        tu.visited = True
         savedSymtab = self.symtab
-        self.symtab = tu.symtab
+        self.symtab = SymbolTable(self.errors)
 
         # pretend like the translation unit "using"-ed these for the
         # sake of type checking and C++ code generation
@@ -709,16 +586,12 @@ class GatherDecls(TcheckVisitor):
             # a type-neutral |using| that works for C++ and protocol
             # types?
             qname = p.qname()
-            if 0 == len(qname.quals):
-                fullname = None
-            else:
-                fullname = str(qname)
+            fullname = str(qname)
             p.decl = self.declare(
                 loc=p.loc,
-                type=ProtocolType(qname, p.priorityRange, p.sendSemantics,
-                                  stateless=(0 == len(p.transitionStmts))),
+                type=ProtocolType(qname, p.nested, p.sendSemantics),
                 shortname=p.name,
-                fullname=fullname)
+                fullname=None if 0 == len(qname.quals) else fullname)
 
             p.parentEndpointDecl = self.declare(
                 loc=p.loc,
@@ -751,17 +624,10 @@ class GatherDecls(TcheckVisitor):
         # second pass to check each definition
         for su in tu.structsAndUnions:
             su.accept(self)
-        for inc in tu.includes:
-            if inc.tu.filetype == 'header':
-                for su in inc.tu.structsAndUnions:
-                    su.accept(self)
 
         if tu.protocol:
             # grab symbols in the protocol itself
             p.accept(self)
-
-
-        tu.type = VOID
 
         self.symtab = savedSymtab
 
@@ -814,12 +680,13 @@ class GatherDecls(TcheckVisitor):
 
     def visitStructDecl(self, sd):
         # If we've already processed this struct, don't do it again.
-        if hasattr(sd, 'symtab'):
+        if hasattr(sd, 'visited'):
             return
 
         stype = sd.decl.type
 
-        self.symtab.enterScope(sd)
+        self.symtab.enterScope()
+        sd.visited = True
 
         for f in sd.fields:
             ftypedecl = self.symtab.lookup(str(f.typespec))
@@ -835,7 +702,7 @@ class GatherDecls(TcheckVisitor):
                 fullname=None)
             stype.fields.append(f.decl.type)
 
-        self.symtab.exitScope(sd)
+        self.symtab.exitScope()
 
     def visitUnionDecl(self, ud):
         utype = ud.decl.type
@@ -843,7 +710,7 @@ class GatherDecls(TcheckVisitor):
         # If we've already processed this union, don't do it again.
         if len(utype.components):
             return
-        
+
         for c in ud.components:
             cdecl = self.symtab.lookup(str(c))
             if cdecl is None:
@@ -874,16 +741,7 @@ class GatherDecls(TcheckVisitor):
 
     def visitProtocol(self, p):
         # protocol scope
-        self.symtab.enterScope(p)
-
-        for spawns in p.spawnsStmts:
-            spawns.accept(self)
-
-        for bridges in p.bridgesStmts:
-            bridges.accept(self)
-
-        for opens in p.opensStmts:
-            opens.accept(self)
+        self.symtab.enterScope()
 
         seenmgrs = set()
         for mgr in p.managers:
@@ -929,128 +787,13 @@ class GatherDecls(TcheckVisitor):
                     "constructor declaration required for managed protocol `%s' (managed by protocol `%s')",
                     mgdname, p.name)
 
-        p.states = { }
-        
-        if len(p.transitionStmts):
-            p.startStates = [ ts for ts in p.transitionStmts
-                              if ts.state.start ]
-            if 0 == len(p.startStates):
-                p.startStates = [ p.transitionStmts[0] ]
-
-        # declare implicit "any", "dead", and "dying" states
-        self.declare(loc=State.ANY.loc,
-                     type=StateType(p.decl.type, State.ANY.name, start=False),
-                     progname=State.ANY.name)
-        self.declare(loc=State.DEAD.loc,
-                     type=StateType(p.decl.type, State.DEAD.name, start=False),
-                     progname=State.DEAD.name)
-        if p.decl.type.hasReentrantDelete:
-            self.declare(loc=State.DYING.loc,
-                         type=StateType(p.decl.type, State.DYING.name, start=False),
-                         progname=State.DYING.name)
-
-        # declare each state before decorating their mention
-        for trans in p.transitionStmts:
-            p.states[trans.state] = trans
-            trans.state.decl = self.declare(
-                loc=trans.state.loc,
-                type=StateType(p.decl.type, trans.state, trans.state.start),
-                progname=trans.state.name)
-
-        for trans in p.transitionStmts:
-            self.seentriggers = set()
-            trans.accept(self)
-
-        if not (p.decl.type.stateless
-                or (p.decl.type.isToplevel()
-                    and None is self.symtab.lookup(_DELETE_MSG))):
-            # add a special state |state DEAD: null goto DEAD;|
-            deadtrans = TransitionStmt.makeNullStmt(State.DEAD)
-            p.states[State.DEAD] = deadtrans           
-            if p.decl.type.hasReentrantDelete:
-                dyingtrans = TransitionStmt.makeNullStmt(State.DYING)
-                p.states[State.DYING] = dyingtrans
-
-        # visit the message decls once more and resolve the state names
-        # attached to actor params and returns
-        def resolvestate(loc, actortype):
-            assert actortype.isIPDL() and actortype.isActor()
-
-            # already resolved this guy's state
-            if isinstance(actortype.state, Decl):
-                return
-            
-            if actortype.state is None:
-                # we thought this was a C++ type until type checking,
-                # when we realized it was an IPDL actor type.  But
-                # that means that the actor wasn't specified to be in
-                # any particular state
-                actortype.state = State.ANY
-
-            statename = actortype.state.name
-            # FIXME/cjones: this is just wrong.  we need the symbol table
-            # of the protocol this actor refers to.  low priority bug
-            # since nobody's using this feature yet
-            statedecl = self.symtab.lookup(statename)
-            if statedecl is None:
-                self.error(
-                    loc,
-                    "protocol `%s' does not have the state `%s'",
-                    actortype.protocol.name(),
-                    statename)
-            elif not statedecl.type.isState():
-                self.error(
-                    loc,
-                    "tag `%s' is supposed to be of state type, but is instead of type `%s'",
-                    statename,
-                    statedecl.type.typename())
-            else:
-                actortype.state = statedecl.type
-
-        for msg in p.messageDecls:
-            for iparam in msg.inParams:
-                loc = iparam.loc
-                for actortype in iteractortypes(iparam.type):
-                    resolvestate(loc, actortype)
-            for oparam in msg.outParams:
-                loc = oparam.loc
-                for actortype in iteractortypes(oparam.type):
-                    resolvestate(loc, actortype)
-
         # FIXME/cjones declare all the little C++ thingies that will
         # be generated.  they're not relevant to IPDL itself, but
         # those ("invisible") symbols can clash with others in the
         # IPDL spec, and we'd like to catch those before C++ compilers
         # are allowed to obfuscate the error
 
-        self.symtab.exitScope(p)
-
-
-    def visitSpawnsStmt(self, spawns):
-        pname = spawns.proto
-        spawns.proto = self.symtab.lookup(pname)
-        if spawns.proto is None:
-            self.error(spawns.loc,
-                       "spawned protocol `%s' has not been declared",
-                       pname)
-
-    def visitBridgesStmt(self, bridges):
-        def lookup(p):
-            decl = self.symtab.lookup(p)
-            if decl is None:
-                self.error(bridges.loc,
-                           "bridged protocol `%s' has not been declared", p)
-            return decl
-        bridges.parentSide = lookup(bridges.parentSide)
-        bridges.childSide = lookup(bridges.childSide)
-
-    def visitOpensStmt(self, opens):
-        pname = opens.proto
-        opens.proto = self.symtab.lookup(pname)
-        if opens.proto is None:
-            self.error(opens.loc,
-                       "opened protocol `%s' has not been declared",
-                       pname)
+        self.symtab.exitScope()
 
 
     def visitManager(self, mgr):
@@ -1123,9 +866,9 @@ class GatherDecls(TcheckVisitor):
 
 
         # enter message scope
-        self.symtab.enterScope(md)
+        self.symtab.enterScope()
 
-        msgtype = MessageType(md.priority, md.sendSemantics, md.direction,
+        msgtype = MessageType(md.nested, md.prio, md.sendSemantics, md.direction,
                               ctor=isctor, dtor=isdtor, cdtype=cdtype,
                               compress=md.compress, verify=md.verify)
 
@@ -1142,8 +885,7 @@ class GatherDecls(TcheckVisitor):
                     ptname, msgname)
                 ptype = VOID
             else:
-                ptype = self._canonicalType(ptdecl.type, param.typespec,
-                                            chmodallowed=1)
+                ptype = self._canonicalType(ptdecl.type, param.typespec)
             return self.declare(loc=ploc,
                                 type=ptype,
                                 progname=param.name)
@@ -1157,7 +899,7 @@ class GatherDecls(TcheckVisitor):
             msgtype.returns.append(pdecl.type)
             md.outParams[i] = pdecl
 
-        self.symtab.exitScope(md)
+        self.symtab.exitScope()
 
         md.decl = self.declare(
             loc=loc,
@@ -1167,80 +909,12 @@ class GatherDecls(TcheckVisitor):
         md.decl._md = md
 
 
-    def visitTransitionStmt(self, ts):
-        self.seentriggers = set()
-        TcheckVisitor.visitTransitionStmt(self, ts)
-
-    def visitTransition(self, t):
-        loc = t.loc
-
-        # check the trigger message
-        mname = t.msg
-        if t in self.seentriggers:
-            self.error(loc, "trigger `%s' appears multiple times", t.msg)
-        self.seentriggers.add(t)
-
-        mdecl = self.symtab.lookup(mname)
-        if mdecl is not None and mdecl.type.isIPDL() and mdecl.type.isProtocol():
-            mdecl = self.symtab.lookup(mname +'Constructor')
-        
-        if mdecl is None:
-            self.error(loc, "message `%s' has not been declared", mname)
-        elif not mdecl.type.isMessage():
-            self.error(
-                loc,
-                "`%s' should have message type, but instead has type `%s'",
-                mname, mdecl.type.typename())
-        else:
-            t.msg = mdecl
-
-        # check the to-states
-        seenstates = set()
-        for toState in t.toStates:
-            sname = toState.name
-            sdecl = self.symtab.lookup(sname)
-
-            if sname in seenstates:
-                self.error(loc, "to-state `%s' appears multiple times", sname)
-            seenstates.add(sname)
-
-            if sdecl is None:
-                self.error(loc, "state `%s' has not been declared", sname)
-            elif not sdecl.type.isState():
-                self.error(
-                    loc, "`%s' should have state type, but instead has type `%s'",
-                    sname, sdecl.type.typename())
-            else:
-                toState.decl = sdecl
-                toState.start = sdecl.type.start
-
-        t.toStates = set(t.toStates)
-
-
-    def _canonicalType(self, itype, typespec, chmodallowed=0):
+    def _canonicalType(self, itype, typespec):
         loc = typespec.loc
-        
         if itype.isIPDL():
             if itype.isProtocol():
                 itype = ActorType(itype,
-                                  state=typespec.state,
                                   nullable=typespec.nullable)
-            # FIXME/cjones: ShmemChmod is disabled until bug 524193
-            if 0 and chmodallowed and itype.isShmem():
-                itype = ShmemChmodType(
-                    itype,
-                    myChmod=typespec.myChmod,
-                    otherChmod=typespec.otherChmod)
-
-        if ((typespec.myChmod or typespec.otherChmod)
-            and not (itype.isIPDL() and (itype.isShmem() or itype.isChmod()))):
-            self.error(
-                loc,
-                "fine-grained access controls make no sense for type `%s'",
-                itype.name())
-
-        if not chmodallowed and (typespec.myChmod or typespec.otherChmod):
-            self.error(loc, "fine-grained access controls not allowed here")
 
         if typespec.nullable and not (itype.isIPDL() and itype.isActor()):
             self.error(
@@ -1266,7 +940,7 @@ def checkcycles(p, stack=None):
         # special case for self-managed protocols
         if cp is p:
             continue
-        
+
         if cp in stack:
             return [stack + [p, cp]]
         cycles += checkcycles(cp, stack + [p])
@@ -1321,8 +995,7 @@ def fullyDefined(t, exploring=None):
 
 class CheckTypes(TcheckVisitor):
     def __init__(self, errors):
-        # don't need the symbol table, we just want the error reporting
-        TcheckVisitor.__init__(self, None, errors)
+        TcheckVisitor.__init__(self, errors)
         self.visited = set()
         self.ptype = None
 
@@ -1347,24 +1020,9 @@ class CheckTypes(TcheckVisitor):
 
     def visitProtocol(self, p):
         self.ptype = p.decl.type
-        
+
         # check that we require no more "power" than our manager protocols
         ptype, pname = p.decl.type, p.decl.shortname
-
-        if len(p.spawnsStmts) and not ptype.isToplevel():
-            self.error(p.decl.loc,
-                       "protocol `%s' is not top-level and so cannot declare |spawns|",
-                       pname)
-
-        if len(p.bridgesStmts) and not ptype.isToplevel():
-            self.error(p.decl.loc,
-                       "protocol `%s' is not top-level and so cannot declare |bridges|",
-                       pname)
-
-        if len(p.opensStmts) and not ptype.isToplevel():
-            self.error(p.decl.loc,
-                       "protocol `%s' is not top-level and so cannot declare |opens|",
-                       pname)
 
         for mgrtype in ptype.managers:
             if mgrtype is not None and ptype.needsMoreJuiceThan(mgrtype):
@@ -1373,22 +1031,12 @@ class CheckTypes(TcheckVisitor):
                     "protocol `%s' requires more powerful send semantics than its manager `%s' provides",
                     pname, mgrtype.name())
 
-        # XXX currently we don't require a delete() message of top-level
-        # actors.  need to let experience guide this decision
-        if not ptype.isToplevel():
-            for md in p.messageDecls:
-                if _DELETE_MSG == md.name: break
-            else:
-                self.error(
-                    p.decl.loc,
-                   "managed protocol `%s' requires a `delete()' message to be declared",
-                    p.name)
-        else:
+        if ptype.isToplevel():
             cycles = checkcycles(p.decl.type)
             if cycles:
                 self.error(
                     p.decl.loc,
-                    "cycle(s) detected in manager/manages heirarchy: %s",
+                    "cycle(s) detected in manager/manages hierarchy: %s",
                     formatcycles(cycles))
 
         if 1 == len(ptype.managers) and ptype is ptype.manager():
@@ -1398,57 +1046,6 @@ class CheckTypes(TcheckVisitor):
                 p.name)
 
         return Visitor.visitProtocol(self, p)
-
-
-    def visitSpawnsStmt(self, spawns):
-        if not self.ptype.isToplevel():
-            self.error(spawns.loc,
-                       "only top-level protocols can have |spawns| statements; `%s' cannot",
-                       self.ptype.name())
-            return
-
-        spawnedType = spawns.proto.type
-        if not (spawnedType.isIPDL() and spawnedType.isProtocol()
-                and spawnedType.isToplevel()):
-            self.error(spawns.loc,
-                       "cannot spawn non-top-level-protocol `%s'",
-                       spawnedType.name())
-        else:
-            self.ptype.addSpawn(spawnedType)
-
-
-    def visitBridgesStmt(self, bridges):
-        if not self.ptype.isToplevel():
-            self.error(bridges.loc,
-                       "only top-level protocols can have |bridges| statements; `%s' cannot",
-                       self.ptype.name())
-            return
-
-        parentType = bridges.parentSide.type
-        childType = bridges.childSide.type
-        if not (parentType.isIPDL() and parentType.isProtocol()
-                and childType.isIPDL() and childType.isProtocol()
-                and parentType.isToplevel() and childType.isToplevel()):
-            self.error(bridges.loc,
-                       "cannot bridge non-top-level-protocol(s) `%s' and `%s'",
-                       parentType.name(), childType.name())
-
-
-    def visitOpensStmt(self, opens):
-        if not self.ptype.isToplevel():
-            self.error(opens.loc,
-                       "only top-level protocols can have |opens| statements; `%s' cannot",
-                       self.ptype.name())
-            return
-
-        openedType = opens.proto.type
-        if not (openedType.isIPDL() and openedType.isProtocol()
-                and openedType.isToplevel()):
-            self.error(opens.loc,
-                       "cannot open non-top-level-protocol `%s'",
-                       openedType.name())
-        else:
-            self.ptype.addOpen(openedType)
 
 
     def visitManagesStmt(self, mgs):
@@ -1472,8 +1069,6 @@ class CheckTypes(TcheckVisitor):
 
 
     def visitManager(self, mgr):
-        # FIXME/bug 541126: check that the protocol graph is acyclic
-        
         pdecl = mgr.of.decl
         ptype, pname = pdecl.type, pdecl.shortname
 
@@ -1499,22 +1094,22 @@ class CheckTypes(TcheckVisitor):
 
         loc = md.decl.loc
 
-        if mtype.priority == HIGH_PRIORITY and not mtype.isSync():
+        if mtype.nested == INSIDE_SYNC_NESTED and not mtype.isSync():
             self.error(
                 loc,
-                "high priority messages must be sync (here, message `%s' in protocol `%s')",
+                "inside_sync nested messages must be sync (here, message `%s' in protocol `%s')",
                 mname, pname)
 
-        if mtype.priority == URGENT_PRIORITY and (mtype.isOut() or mtype.isInout()):
+        if mtype.nested == INSIDE_CPOW_NESTED and (mtype.isOut() or mtype.isInout()):
             self.error(
                 loc,
-                "urgent parent-to-child messages are verboten (here, message `%s' in protocol `%s')",
+                "inside_cpow nested parent-to-child messages are verboten (here, message `%s' in protocol `%s')",
                 mname, pname)
 
-        # We allow high priority sync messages to be sent from the
-        # parent. Normal and urgent sync messages can only come from
+        # We allow inside_sync messages that are themselves sync to be sent from the
+        # parent. Normal and inside_cpow nested messages that are sync can only come from
         # the child.
-        if mtype.isSync() and mtype.priority == NORMAL_PRIORITY and (mtype.isOut() or mtype.isInout()):
+        if mtype.isSync() and mtype.nested == NOT_NESTED and (mtype.isOut() or mtype.isInout()):
             self.error(
                 loc,
                 "sync parent-to-child messages are verboten (here, message `%s' in protocol `%s')",
@@ -1526,674 +1121,26 @@ class CheckTypes(TcheckVisitor):
                 "message `%s' requires more powerful send semantics than its protocol `%s' provides",
                 mname, pname)
 
-        if mtype.isAsync() and len(mtype.returns):
-            # XXX/cjones could modify grammar to disallow this ...
+        if (mtype.isCtor() or mtype.isDtor()) and mtype.isAsync() and mtype.returns:
             self.error(loc,
-                       "asynchronous message `%s' declares return values",
-                       mname)
+                       "asynchronous ctor/dtor message `%s' declares return values",
+                       mname);
 
         if (mtype.compress and
             (not mtype.isAsync() or mtype.isCtor() or mtype.isDtor())):
-            self.error(
-                loc,
-                "message `%s' in protocol `%s' requests compression but is not async or is special (ctor or dtor)",
-                mname[:-len('constructor')], pname)
+
+            if mtype.isCtor() or mtype.isDtor():
+                message_type = "constructor" if mtype.isCtor() else "destructor"
+                error_message = ("%s messages can't use compression (here, in protocol `%s')" %
+                                 (message_type, pname))
+            else:
+                error_message = ("message `%s' in protocol `%s' requests compression but is not async" %
+                                 (mname, pname))
+
+            self.error(loc, error_message)
 
         if mtype.isCtor() and not ptype.isManagerOf(mtype.constructedType()):
             self.error(
                 loc,
-                "ctor for protocol `%s', which is not managed by protocol `%s'", 
+                "ctor for protocol `%s', which is not managed by protocol `%s'",
                 mname[:-len('constructor')], pname)
-
-
-    def visitTransition(self, t):
-        _YNC = [ ASYNC, SYNC ]
-
-        loc = t.loc
-        impliedDirection, impliedSems = {
-            SEND: [ OUT, _YNC ], RECV: [ IN, _YNC ],
-            CALL: [ OUT, INTR ],  ANSWER: [ IN, INTR ],
-         } [t.trigger]
-        
-        if (OUT is impliedDirection and t.msg.type.isIn()
-            or IN is impliedDirection and t.msg.type.isOut()
-            or _YNC is impliedSems and t.msg.type.isInterrupt()
-            or INTR is impliedSems and (not t.msg.type.isInterrupt())):
-            mtype = t.msg.type
-
-            self.error(
-                loc, "%s %s message `%s' is not `%s'd",
-                mtype.sendSemantics.pretty, mtype.direction.pretty,
-                t.msg.progname,
-                t.trigger.pretty)
-
-##-----------------------------------------------------------------------------
-
-class Process:
-    def __init__(self):
-        self.actors = set()         # set(Actor)
-        self.edges = { }            # Actor -> [ SpawnsEdge ]
-        self.spawn = set()          # set(Actor)
-
-    def edge(self, spawner, spawn):
-        if spawner not in self.edges:  self.edges[spawner] = [ ]
-        self.edges[spawner].append(SpawnsEdge(spawner, spawn))
-        self.spawn.add(spawn)
-
-    def iteredges(self):
-        for edgelist in self.edges.itervalues():
-            for edge in edgelist:
-                yield edge
-
-    def merge(self, o):
-        'Merge the Process |o| into this Process'
-        if self == o:
-            return
-        for actor in o.actors:
-            ProcessGraph.actorToProcess[actor] = self
-        self.actors.update(o.actors)
-        self.edges.update(o.edges)
-        self.spawn.update(o.spawn)
-        ProcessGraph.processes.remove(o)
-
-    def spawns(self, actor):
-        return actor in self.spawn
-
-    def __cmp__(self, o):  return cmp(self.actors, o.actors)
-    def __eq__(self, o):   return self.actors == o.actors
-    def __hash__(self):    return hash(id(self))
-    def __repr__(self):
-        return reduce(lambda a, x: str(a) + str(x) +'|', self.actors, '|')
-    def __str__(self):     return repr(self)
-
-class Actor:
-    def __init__(self, ptype, side):
-        self.ptype = ptype
-        self.side = side
-
-    def asType(self):
-        return ActorType(self.ptype)
-    def other(self):
-        return Actor(self.ptype, _otherside(self.side))
-
-    def __cmp__(self, o):
-        return cmp(self.ptype, o.ptype) or cmp(self.side, o.side)
-    def __eq__(self, o):
-        return self.ptype == o.ptype and self.side == o.side
-    def __hash__(self):  return hash(repr(self))
-    def __repr__(self):  return '%s%s'% (self.ptype.name(), self.side.title())
-    def __str__(self):   return repr(self)
-
-class SpawnsEdge:
-    def __init__(self, spawner, spawn):
-        self.spawner = spawner      # Actor
-        self.spawn = spawn          # Actor
-    def __repr__(self):
-        return '(%r)--spawns-->(%r)'% (self.spawner, self.spawn)
-    def __str__(self):  return repr(self)
-
-class BridgeEdge:
-    def __init__(self, bridgeProto, parent, child):
-        self.bridgeProto = bridgeProto # ProtocolType
-        self.parent = parent           # Actor
-        self.child = child             # Actor
-    def __repr__(self):
-        return '(%r)--%s bridge-->(%r)'% (
-            self.parent, self.bridgeProto.name(), self.child)
-    def __str__(self):  return repr(self)
-
-class OpensEdge:
-    def __init__(self, opener, openedProto):
-        self.opener = opener            # Actor
-        self.openedProto = openedProto  # ProtocolType
-    def __repr__(self):
-        return '(%r)--opens-->(%s)'% (self.opener, self.openedProto.name())
-    def __str__(self):  return repr(self)
-
-# "singleton" class with state that persists across type checking of
-# all protocols
-class ProcessGraph:
-    processes = set()                   # set(Process)
-    bridges = { }                       # ProtocolType -> [ BridgeEdge ]
-    opens = { }                         # ProtocolType -> [ OpensEdge ]
-    actorToProcess = { }                # Actor -> Process
-    visitedSpawns = set()               # set(ActorType)
-    visitedBridges = set()              # set(ActorType)
-
-    @classmethod
-    def findProcess(cls, actor):
-        return cls.actorToProcess.get(actor, None)
-
-    @classmethod
-    def getProcess(cls, actor):
-        if actor not in cls.actorToProcess:
-            p = Process()
-            p.actors.add(actor)
-            cls.processes.add(p)
-            cls.actorToProcess[actor] = p
-        return cls.actorToProcess[actor]
-
-    @classmethod
-    def bridgesOf(cls, bridgeP):
-        return cls.bridges.get(bridgeP, [])
-
-    @classmethod
-    def bridgeEndpointsOf(cls, ptype, side):
-        actor = Actor(ptype, side)
-        endpoints = []
-        for b in cls.iterbridges():
-            if b.parent == actor:
-                endpoints.append(Actor(b.bridgeProto, 'parent'))
-            if b.child == actor:
-                endpoints.append(Actor(b.bridgeProto, 'child'))
-        return endpoints
-
-    @classmethod
-    def iterbridges(cls):
-        for edges in cls.bridges.itervalues():
-            for bridge in edges:
-                yield bridge
-
-    @classmethod
-    def opensOf(cls, openedP):
-        return cls.opens.get(openedP, [])
-
-    @classmethod
-    def opensEndpointsOf(cls, ptype, side):
-        actor = Actor(ptype, side)
-        endpoints = []
-        for o in cls.iteropens():
-            if actor == o.opener:
-                endpoints.append(Actor(o.openedProto, o.opener.side))
-            elif actor == o.opener.other():
-                endpoints.append(Actor(o.openedProto, o.opener.other().side))
-        return endpoints
-
-    @classmethod
-    def iteropens(cls):
-        for edges in cls.opens.itervalues():
-            for opens in edges:
-                yield opens
-
-    @classmethod
-    def spawn(cls, spawner, remoteSpawn):
-        localSpawn = remoteSpawn.other()
-        spawnerProcess = ProcessGraph.getProcess(spawner)
-        spawnerProcess.merge(ProcessGraph.getProcess(localSpawn))
-        spawnerProcess.edge(spawner, remoteSpawn)
-
-    @classmethod
-    def bridge(cls, parent, child, bridgeP):
-        bridgeParent = Actor(bridgeP, 'parent')
-        parentProcess = ProcessGraph.getProcess(parent)
-        parentProcess.merge(ProcessGraph.getProcess(bridgeParent))
-        bridgeChild = Actor(bridgeP, 'child')
-        childProcess = ProcessGraph.getProcess(child)
-        childProcess.merge(ProcessGraph.getProcess(bridgeChild))
-        if bridgeP not in cls.bridges:
-            cls.bridges[bridgeP] = [ ]
-        cls.bridges[bridgeP].append(BridgeEdge(bridgeP, parent, child))
-
-    @classmethod
-    def open(cls, opener, opened, openedP):
-        remoteOpener, remoteOpened, = opener.other(), opened.other()
-        openerProcess = ProcessGraph.getProcess(opener)
-        openerProcess.merge(ProcessGraph.getProcess(opened))
-        remoteOpenerProcess = ProcessGraph.getProcess(remoteOpener)
-        remoteOpenerProcess.merge(ProcessGraph.getProcess(remoteOpened))
-        if openedP not in cls.opens:
-            cls.opens[openedP] = [ ]
-        cls.opens[openedP].append(OpensEdge(opener, openedP))
-
-
-class BuildProcessGraph(TcheckVisitor):
-    class findSpawns(TcheckVisitor):
-        def __init__(self, errors):
-            TcheckVisitor.__init__(self, None, errors)
-
-        def visitTranslationUnit(self, tu):
-            TcheckVisitor.visitTranslationUnit(self, tu)
-
-        def visitInclude(self, inc):
-            if inc.tu.protocol:
-                inc.tu.protocol.accept(self)
-
-        def visitProtocol(self, p):
-            ptype = p.decl.type
-            # non-top-level protocols don't add any information
-            if not ptype.isToplevel() or ptype in ProcessGraph.visitedSpawns:
-                return
-
-            ProcessGraph.visitedSpawns.add(ptype)
-            self.visiting = ptype
-            ProcessGraph.getProcess(Actor(ptype, 'parent'))
-            ProcessGraph.getProcess(Actor(ptype, 'child'))
-            return TcheckVisitor.visitProtocol(self, p)
-
-        def visitSpawnsStmt(self, spawns):
-            # The picture here is:
-            #  [ spawner | localSpawn | ??? ]  (process 1)
-            #                  |
-            #                  |
-            #            [ remoteSpawn | ???]  (process 2)
-            #
-            # A spawns stmt tells us that |spawner| and |localSpawn|
-            # are in the same process.
-            spawner = Actor(self.visiting, spawns.side)
-            remoteSpawn = Actor(spawns.proto.type, spawns.spawnedAs)
-            ProcessGraph.spawn(spawner, remoteSpawn)
-
-    def __init__(self, errors):
-        TcheckVisitor.__init__(self, None, errors)
-        self.visiting = None            # ActorType
-        self.visited = set()            # set(ActorType)
-
-    def visitTranslationUnit(self, tu):
-        tu.accept(self.findSpawns(self.errors))
-        TcheckVisitor.visitTranslationUnit(self, tu)
-
-    def visitInclude(self, inc):
-        if inc.tu.protocol:
-            inc.tu.protocol.accept(self)
-
-    def visitProtocol(self, p):
-        ptype = p.decl.type
-        # non-top-level protocols don't add any information
-        if not ptype.isToplevel() or ptype in ProcessGraph.visitedBridges:
-            return
-
-        ProcessGraph.visitedBridges.add(ptype)
-        self.visiting = ptype
-        return TcheckVisitor.visitProtocol(self, p)
-
-    def visitBridgesStmt(self, bridges):
-        bridgeProto = self.visiting
-        parentSideProto = bridges.parentSide.type
-        childSideProto = bridges.childSide.type
-
-        # the picture here is:
-        #                                                   (process 1|
-        #  [ parentSide(Parent|Child) | childSide(Parent|Child) | ... ]
-        #         |                                       |
-        #         |                        (process 2|    |
-        #  [ parentSide(Child|Parent) | bridgeParent ]    |
-        #                                   |             |
-        #                                   |             |       (process 3|
-        #                           [ bridgeChild | childSide(Child|Parent) ]
-        #
-        # First we have to figure out which parentSide/childSide
-        # actors live in the same process.  The possibilities are {
-        # parent, child } x { parent, child }.  (Multiple matches
-        # aren't allowed yet.)  Then we make ProcessGraph aware of the
-        # new bridge.
-        parentSideActor, childSideActor = None, None
-        pc = ( 'parent', 'child' )
-        for parentSide, childSide in cartesian_product(pc, pc):
-            pactor = Actor(parentSideProto, parentSide)
-            pproc = ProcessGraph.findProcess(pactor)
-            cactor = Actor(childSideProto, childSide)
-            cproc = ProcessGraph.findProcess(cactor)
-            assert pproc and cproc
-
-            if pproc == cproc:
-                if parentSideActor is not None:
-                    if parentSideProto != childSideProto:
-                        self.error(bridges.loc,
-                                   "ambiguous bridge `%s' between `%s' and `%s'",
-                                   bridgeProto.name(),
-                                   parentSideProto.name(),
-                                   childSideProto.name())
-                else:
-                    parentSideActor, childSideActor = pactor.other(), cactor.other()
-
-        if parentSideActor is None:
-            self.error(bridges.loc,
-                       "`%s' and `%s' cannot be bridged by `%s' ",
-                       parentSideProto.name(), childSideProto.name(),
-                       bridgeProto.name())
-
-        ProcessGraph.bridge(parentSideActor, childSideActor, bridgeProto)
-
-    def visitOpensStmt(self, opens):
-        openedP = opens.proto.type
-        opener = Actor(self.visiting, opens.side)
-        opened = Actor(openedP, opens.side)
-
-        # The picture here is:
-        #  [ opener       | opened ]   (process 1)
-        #      |               |
-        #      |               |
-        #  [ remoteOpener | remoteOpened ]  (process 2)
-        #
-        # An opens stmt tells us that the pairs |opener|/|opened|
-        # and |remoteOpener|/|remoteOpened| are each in the same
-        # process.
-        ProcessGraph.open(opener, opened, openedP)
-
-
-class CheckProcessGraph(TcheckVisitor):
-    def __init__(self, errors):
-        TcheckVisitor.__init__(self, None, errors)
-
-    # TODO: verify spawns-per-process assumption and check that graph
-    # is a dag
-    def visitTranslationUnit(self, tu):
-        if 0:
-            print 'Processes'
-            for process in ProcessGraph.processes:
-                print '  ', process
-                for edge in process.iteredges():
-                    print '    ', edge
-            print 'Bridges'
-            for bridgeList in ProcessGraph.bridges.itervalues():
-                for bridge in bridgeList:
-                    print '  ', bridge
-            print 'Opens'
-            for opensList in ProcessGraph.opens.itervalues():
-                for opens in opensList:
-                    print '  ', opens
-
-##-----------------------------------------------------------------------------
-
-class CheckStateMachine(TcheckVisitor):
-    def __init__(self, errors):
-        # don't need the symbol table, we just want the error reporting
-        TcheckVisitor.__init__(self, None, errors)
-        self.p = None
-
-    def visitProtocol(self, p):
-        self.p = p
-        self.checkReachability(p)
-        for ts in p.transitionStmts:
-            ts.accept(self)
-
-    def visitTransitionStmt(self, ts):
-        # We want to disallow "race conditions" in protocols.  These
-        # can occur when a protocol state machine has a state that
-        # allows triggers of opposite direction.  That declaration
-        # allows the parent to send the child a message at the
-        # exact instance the child sends the parent a message.  One of
-        # those messages would (probably) violate the state machine
-        # and cause the child to be terminated.  It's obviously very
-        # nice if we can forbid this at the level of IPDL state
-        # machines, rather than resorting to static or dynamic
-        # checking of C++ implementation code.
-        #
-        # An easy way to avoid this problem in IPDL is to only allow
-        # "unidirectional" protocol states; that is, from each state,
-        # only send or only recv triggers are allowed.  This approach
-        # is taken by the Singularity project's "contract-based
-        # message channels."  However, this can be something of a
-        # notational burden for stateful protocols.
-        #
-        # If two messages race, the effect is that the parent's and
-        # child's states get temporarily out of sync.  Informally,
-        # IPDL allows this *only if* the state machines get out of
-        # sync for only *one* step (state machine transition), then
-        # sync back up.  This is a design decision: the states could
-        # be allowd to get out of sync for any constant k number of
-        # steps.  (If k is unbounded, there's no point in presenting
-        # the abstraction of parent and child actor states being
-        # "entangled".)  The working hypothesis is that the more steps
-        # the states are allowed to be out of sync, the harder it is
-        # to reason about the protocol.
-        #
-        # Slightly less informally, two messages are allowed to race
-        # only if processing them in either order leaves the protocol
-        # in the same state.  That is, messages A and B are allowed to
-        # race only if processing A then B leaves the protocol in
-        # state S, *and* processing B then A also leaves the protocol
-        # in state S.  Technically, if this holds, then messages A and
-        # B could be called "commutative" wrt to actor state.
-        #
-        # "Formally", state machine definitions must adhere to two
-        # rules.
-        #
-        #   *Rule 1*: from a state S, all sync triggers must be of the same
-        # "direction," i.e. only |send| or only |recv|
-        #
-        # (Pairs of sync messages can't commute, because otherwise
-        # deadlock can occur from simultaneously in-flight sync
-        # requests.)
-        #
-        #   *Rule 2*: the "Diamond Rule".
-        #   from a state S,
-        #     for any pair of triggers t1 and t2,
-        #         where t1 and t2 have opposite direction,
-        #         and t1 transitions to state T1 and t2 to T2,
-        #       then the following must be true:
-        #         (T2 allows the trigger t1, transitioning to state U)
-        #         and
-        #         (T1 allows the trigger t2, transitioning to state U)
-        #         and
-        #         (
-        #           (
-        #             (all of T1's triggers have the same direction as t2)
-        #             and
-        #             (all of T2's triggers have the same direction as t1)
-        #           )
-        #           or
-        #           (T1, T2, and U are the same "terminal state")
-        #         )
-        #
-        # A "terminal state" S is one from which all triggers
-        # transition back to S itself.
-        #
-        # The presence of triggers with multiple out states complicates
-        # this check slightly, but doesn't fundamentally change it.
-        #
-        #   from a state S,
-        #     for any pair of triggers t1 and t2,
-        #         where t1 and t2 have opposite direction,
-        #       for each pair of states (T1, T2) \in t1_out x t2_out,
-        #           where t1_out is the set of outstates from t1
-        #                 t2_out is the set of outstates from t2
-        #                 t1_out x t2_out is their Cartesian product
-        #                 and t1 transitions to state T1 and t2 to T2,
-        #         then the following must be true:
-        #           (T2 allows the trigger t1, with out-state set { U })
-        #           and
-        #           (T1 allows the trigger t2, with out-state set { U })
-        #           and
-        #           (
-        #             (
-        #               (all of T1's triggers have the same direction as t2)
-        #               and
-        #               (all of T2's triggers have the same direction as t1)
-        #             )
-        #             or
-        #             (T1, T2, and U are the same "terminal state")
-        #           )
-
-        # check Rule 1
-        syncdirection = None
-        syncok = True
-        for trans in ts.transitions:
-            if not trans.msg.type.isSync(): continue
-            if syncdirection is None:
-                syncdirection = trans.trigger.direction()
-            elif syncdirection is not trans.trigger.direction():
-                self.error(
-                    trans.loc,
-                    "sync trigger at state `%s' in protocol `%s' has different direction from earlier sync trigger at same state",
-                    ts.state.name, self.p.name)
-                syncok = False
-        # don't check the Diamond Rule if Rule 1 doesn't hold
-        if not syncok:
-            return
-
-        # helper functions
-        def triggerTargets(S, t):
-            '''Return the set of states transitioned to from state |S|
-upon trigger |t|, or { } if |t| is not a trigger in |S|.'''
-            for trans in self.p.states[S].transitions:
-                if t.trigger is trans.trigger and t.msg is trans.msg:
-                    return trans.toStates
-            return set()
-
-        def allTriggersSameDirectionAs(S, t):
-            '''Return true iff all the triggers from state |S| have the same
-direction as trigger |t|'''
-            direction = t.direction()
-            for trans in self.p.states[S].transitions:
-                if direction != trans.trigger.direction():
-                    return False
-            return True
-
-        def terminalState(S):
-            '''Return true iff |S| is a "terminal state".'''
-            for trans in self.p.states[S].transitions:
-                for S_ in trans.toStates:
-                    if S_ != S:  return False
-            return True
-
-        def sameTerminalState(S1, S2, S3):
-            '''Return true iff states |S1|, |S2|, and |S3| are all the same
-"terminal state".'''
-            if isinstance(S3, set):
-                assert len(S3) == 1
-                for S3_ in S3: pass
-                S3 = S3_
-
-            return (S1 == S2 == S3) and terminalState(S1)
-
-        S = ts.state.name
-
-        # check the Diamond Rule
-        for (t1, t2) in unique_pairs(ts.transitions):
-            # if the triggers have the same direction, they can't race,
-            # since only one endpoint can initiate either (and delivery
-            # is in-order)
-            if t1.trigger.direction() == t2.trigger.direction():
-                continue
-
-            loc = t1.loc
-            t1_out = t1.toStates
-            t2_out = t2.toStates
-
-            for (T1, T2) in cartesian_product(t1_out, t2_out):
-                # U1 <- { u | T1 --t2--> u }
-                U1 = triggerTargets(T1, t2)
-                # U2 <- { u | T2 --t1--> u }
-                U2 = triggerTargets(T2, t1)
-
-                # don't report more than one Diamond Rule violation
-                # per state. there may be O(n^4) total, way too many
-                # for a human to parse
-                #
-                # XXX/cjones: could set a limit on #printed and stop
-                # after that limit ...
-                raceError = False
-                errT1 = None
-                errT2 = None
-
-                if 0 == len(U1) or 0 == len(U2):
-                    print "******* case 1"
-                    raceError = True
-                elif 1 < len(U1) or 1 < len(U2):
-                    raceError = True
-                    # there are potentially many unpaired states; just
-                    # pick two
-                    print "******* case 2"
-                    for u1, u2 in cartesian_product(U1, U2):
-                        if u1 != u2:
-                            errT1, errT2 = u1, u2
-                            break
-                elif U1 != U2:
-                    print "******* case 3"
-                    raceError = True
-                    for errT1 in U1: pass
-                    for errT2 in U2: pass
-
-                if raceError:
-                    self.reportRaceError(loc, S,
-                                         [ T1, t1, errT1 ],
-                                         [ T2, t2, errT2 ])
-                    return
-
-                if not ((allTriggersSameDirectionAs(T1, t2.trigger)
-                           and allTriggersSameDirectionAs(T2, t1.trigger))
-                          or sameTerminalState(T1, T2, U1)):
-                    self.reportRunawayError(loc, S, [ T1, t1, None ], [ T2, t2, None ])
-                    return
-
-    def checkReachability(self, p):
-        def explore(ts, visited):
-            if ts.state in visited:
-                return
-            visited.add(ts.state)
-            for outedge in ts.transitions:
-                for toState in outedge.toStates:
-                    explore(p.states[toState], visited)
-
-        checkfordelete = (State.DEAD in p.states)
-
-        allvisited = set()         # set(State)
-        for root in p.startStates:
-            visited = set()
-
-            explore(root, visited)
-            allvisited.update(visited)
-
-            if checkfordelete and State.DEAD not in visited:
-                self.error(
-                    root.loc,
-                    "when starting from state `%s', actors of protocol `%s' cannot be deleted", root.state.name, p.name)
-
-        for ts in p.states.itervalues():
-            if ts.state is not State.DEAD and ts.state not in allvisited:
-                self.error(ts.loc,
-                           "unreachable state `%s' in protocol `%s'",
-                           ts.state.name, p.name)
-
-
-    def _normalizeTransitionSequences(self, t1Seq, t2Seq):
-        T1, M1, U1 = t1Seq
-        T2, M2, U2 = t2Seq
-        assert M1 is not None and M2 is not None
-
-        # make sure that T1/M1/U1 is the parent side of the race
-        if M1.trigger is RECV or M1.trigger is ANSWER:
-            T1, M1, U1, T2, M2, U2 = T2, M2, U2, T1, M1, U1
-
-        def stateName(S):
-            if S: return S.name
-            return '[error]'
-
-        T1 = stateName(T1)
-        T2 = stateName(T2)
-        U1 = stateName(U1)
-        U2 = stateName(U2)
-
-        return T1, M1.msg.progname, U1, T2, M2.msg.progname, U2
-        
-
-    def reportRaceError(self, loc, S, t1Seq, t2Seq):
-        T1, M1, U1, T2, M2, U2 = self._normalizeTransitionSequences(t1Seq, t2Seq)
-        self.error(
-            loc,
-"""in protocol `%(P)s', the sequence of events
-     parent:    +--`send %(M1)s'-->( state `%(T1)s' )--`recv %(M2)s'-->( state %(U1)s )
-               /
- ( state `%(S)s' )
-               \\
-      child:    +--`send %(M2)s'-->( state `%(T2)s' )--`recv %(M1)s'-->( state %(U2)s )
-results in error(s) or leaves parent/child state out of sync for more than one step and is thus a race hazard; i.e., triggers `%(M1)s' and `%(M2)s' fail to commute in state `%(S)s'"""% {
-                'P': self.p.name, 'S': S, 'M1': M1, 'M2': M2,
-                'T1': T1, 'T2': T2, 'U1': U1, 'U2': U2
-        })
-
-
-    def reportRunawayError(self, loc, S, t1Seq, t2Seq):
-        T1, M1, _, T2, M2, __ = self._normalizeTransitionSequences(t1Seq, t2Seq)
-        self.error(
-            loc,
-        """in protocol `%(P)s', the sequence of events
-     parent:    +--`send %(M1)s'-->( state `%(T1)s' )
-               /
- ( state `%(S)s' )
-               \\
-      child:    +--`send %(M2)s'-->( state `%(T2)s' )
-lead to parent/child states in which parent/child state can become more than one step out of sync (though this divergence might not lead to error conditions)"""% {
-                'P': self.p.name, 'S': S, 'M1': M1, 'M2': M2, 'T1': T1, 'T2': T2
-        })

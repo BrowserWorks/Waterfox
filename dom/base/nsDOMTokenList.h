@@ -12,7 +12,9 @@
 #define nsDOMTokenList_h___
 
 #include "nsCOMPtr.h"
+#include "nsContentUtils.h"
 #include "nsDOMString.h"
+#include "nsWhitespaceTokenizer.h"
 #include "nsWrapperCache.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/BindingDeclarations.h"
@@ -33,6 +35,8 @@ class nsDOMTokenList : public nsISupports,
 {
 protected:
   typedef mozilla::dom::Element Element;
+  typedef nsWhitespaceTokenizerTemplate<nsContentUtils::IsHTMLWhitespace>
+    WhitespaceTokenizer;
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -48,6 +52,7 @@ public:
     return mElement;
   }
 
+  void RemoveDuplicates(const nsAttrValue* aAttr);
   uint32_t Length();
   void Item(uint32_t aIndex, nsAString& aResult)
   {
@@ -83,10 +88,15 @@ protected:
 
   nsresult CheckToken(const nsAString& aStr);
   nsresult CheckTokens(const nsTArray<nsString>& aStr);
+  void RemoveDuplicatesInternal(nsTArray<nsCOMPtr<nsIAtom>>* aArray,
+                                uint32_t aStart);
   void AddInternal(const nsAttrValue* aAttr,
                    const nsTArray<nsString>& aTokens);
   void RemoveInternal(const nsAttrValue* aAttr,
                       const nsTArray<nsString>& aTokens);
+  void ReplaceInternal(const nsAttrValue* aAttr,
+                       const nsAString& aToken,
+                       const nsAString& aNewToken);
   inline const nsAttrValue* GetParsedAttr();
 
   nsCOMPtr<Element> mElement;

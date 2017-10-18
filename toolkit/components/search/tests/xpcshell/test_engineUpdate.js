@@ -6,21 +6,20 @@
 "use strict";
 
 function run_test() {
-  updateAppInfo();
   useHttpServer();
 
   run_next_test();
 }
 
-add_task(function* test_engineUpdate() {
+add_task(async function test_engineUpdate() {
   const KEYWORD = "keyword";
   const FILENAME = "engine.xml"
   const TOPIC = "browser-search-engine-modified";
   const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-  yield asyncInit();
+  await asyncInit();
 
-  let [engine] = yield addTestEngines([
+  let [engine] = await addTestEngines([
     { name: "Test search engine", xmlFileName: FILENAME },
   ]);
 
@@ -30,17 +29,17 @@ add_task(function* test_engineUpdate() {
   // server origin, so manually set it
   engine.wrappedJSObject._updateURL = gDataUrl + FILENAME;
 
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     Services.obs.addObserver(function obs(subject, topic, data) {
       if (data == "engine-loaded") {
-        let engine = subject.QueryInterface(Ci.nsISearchEngine);
-        let rawEngine = engine.wrappedJSObject;
-        equal(engine.alias, KEYWORD, "Keyword not cleared by update");
+        let loadedEngine = subject.QueryInterface(Ci.nsISearchEngine);
+        let rawEngine = loadedEngine.wrappedJSObject;
+        equal(loadedEngine.alias, KEYWORD, "Keyword not cleared by update");
         equal(rawEngine.getAttr("order"), 1, "Order not cleared by update");
-        Services.obs.removeObserver(obs, TOPIC, false);
+        Services.obs.removeObserver(obs, TOPIC);
         resolve();
       }
-    }, TOPIC, false);
+    }, TOPIC);
 
     // set last update to 8 days ago, since the default interval is 7, then
     // trigger an update

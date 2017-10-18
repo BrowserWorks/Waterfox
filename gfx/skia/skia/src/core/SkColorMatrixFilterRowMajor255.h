@@ -12,7 +12,7 @@
 
 class SK_API SkColorMatrixFilterRowMajor255 : public SkColorFilter {
 public:
-    SkColorMatrixFilterRowMajor255() {};
+    SkColorMatrixFilterRowMajor255() {}
     explicit SkColorMatrixFilterRowMajor255(const SkScalar array[20]);
 
     /** Creates a color matrix filter that returns the same value in all four channels. */
@@ -25,7 +25,7 @@ public:
     sk_sp<SkColorFilter> makeComposed(sk_sp<SkColorFilter>) const override;
 
 #if SK_SUPPORT_GPU
-    const GrFragmentProcessor* asFragmentProcessor(GrContext*) const override;
+    sk_sp<GrFragmentProcessor> asFragmentProcessor(GrContext*, SkColorSpace*) const override;
 #endif
 
     SK_TO_STRING_OVERRIDE()
@@ -36,6 +36,9 @@ protected:
     void flatten(SkWriteBuffer&) const override;
 
 private:
+    bool onAppendStages(SkRasterPipeline*, SkColorSpace*, SkArenaAlloc*,
+                        bool shaderIsOpaque) const override;
+
     SkScalar        fMatrix[20];
     float           fTranspose[20]; // for Sk4s
     uint32_t        fFlags;

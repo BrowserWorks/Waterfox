@@ -4,9 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'fxAccounts')
+
 DIRS += ['interfaces']
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/mochitest/chrome.ini']
+
+BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell/xpcshell.ini']
 
@@ -20,11 +25,10 @@ EXTRA_JS_MODULES += [
   'FxAccounts.jsm',
   'FxAccountsClient.jsm',
   'FxAccountsCommon.js',
-  'FxAccountsOAuthClient.jsm',
+  'FxAccountsConfig.jsm',
   'FxAccountsOAuthGrantClient.jsm',
   'FxAccountsProfile.jsm',
   'FxAccountsProfileClient.jsm',
-  'FxAccountsPush.js',
   'FxAccountsStorage.jsm',
   'FxAccountsWebChannel.jsm',
 ]

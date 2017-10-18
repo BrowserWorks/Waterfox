@@ -36,8 +36,8 @@ function callbackTestIframe(iframe)
 
   // Remove the iframes if the test was successful
   if (passed) {
-    result.parentNode.removeChild(result);
-    reference.parentNode.removeChild(reference);
+    result.remove();
+    reference.remove();
   }
 
   iframes = [];
@@ -82,7 +82,7 @@ function createIframe(url,next) {
       }
     });
   }
-  iframe.addEventListener("load", iframeLoadCompleted, false);
+  iframe.addEventListener("load", iframeLoadCompleted);
   window.document.body.appendChild(iframe);
   iframe.focus();
 };
@@ -133,6 +133,26 @@ var tests = [
     [ 'bug633044-1.html' , 'bug633044-1-ref.html' ] ,
     [ 'bug634406-1.html' , 'bug634406-1-ref.html' ] ,
     [ 'bug644428-1.html' , 'bug644428-1-ref.html' ] ,
+    [ 'input-maxlength-valid-before-change.html', 'input-valid-ref.html'] ,
+    [ 'input-maxlength-valid-change.html', 'input-valid-ref.html'] ,
+    [ 'input-maxlength-invalid-change.html', 'input-invalid-ref.html'] ,
+    [ 'input-minlength-valid-before-change.html', 'input-valid-ref.html'] ,
+    [ 'input-minlength-valid-change.html', 'input-valid-ref.html'] ,
+    [ 'input-minlength-invalid-change.html', 'input-invalid-ref.html'] ,
+    [ 'input-maxlength-ui-valid-change.html', 'input-valid-ref.html'] ,
+    [ 'input-maxlength-ui-invalid-change.html', 'input-invalid-ref.html'] ,
+    [ 'input-minlength-ui-valid-change.html', 'input-valid-ref.html'] ,
+    [ 'input-minlength-ui-invalid-change.html', 'input-invalid-ref.html'] ,
+    [ 'textarea-maxlength-valid-before-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-maxlength-valid-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-maxlength-invalid-change.html', 'textarea-invalid-ref.html'] ,
+    [ 'textarea-minlength-valid-before-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-minlength-valid-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-minlength-invalid-change.html', 'textarea-invalid-ref.html'] ,
+    [ 'textarea-maxlength-ui-valid-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-maxlength-ui-invalid-change.html', 'textarea-invalid-ref.html'] ,
+    [ 'textarea-minlength-ui-valid-change.html', 'textarea-valid-ref.html'] ,
+    [ 'textarea-minlength-ui-invalid-change.html', 'textarea-invalid-ref.html'] ,
     function() {SpecialPowers.pushPrefEnv({'set': [['bidi.browser.ui', true]]}, nextTest);} ,
     [ 'bug646382-1.html' , 'bug646382-1-ref.html' ] ,
     [ 'bug646382-2.html' , 'bug646382-2-ref.html' ] ,
@@ -161,11 +181,22 @@ var tests = [
     [ 'bug1259949-1.html' , 'bug1259949-1-ref.html'] ,
     [ 'bug1259949-2.html' , 'bug1259949-2-ref.html'] ,
     [ 'bug1263288.html'   , 'bug1263288-ref.html'] ,
+    [ 'bug1263357-1.html' , 'bug1263357-1-ref.html'] ,
+    [ 'bug1263357-2.html' , 'bug1263357-2-ref.html'] ,
+    [ 'bug1263357-3.html' , 'bug1263357-3-ref.html'] ,
+    [ 'bug1263357-4.html' , 'bug1263357-4-ref.html'] ,
+    [ 'bug1263357-5.html' , 'bug1263357-5-ref.html'] ,
+    [ 'bug1354478-1.html' , 'bug1354478-1-ref.html'] ,
+    [ 'bug1354478-2.html' , 'bug1354478-2-ref.html'] ,
+    [ 'bug1354478-3.html' , 'bug1354478-3-ref.html'] ,
+    [ 'bug1354478-4.html' , 'bug1354478-4-ref.html'] ,
+    [ 'bug1354478-5.html' , 'bug1354478-5-ref.html'] ,
+    [ 'bug1354478-6.html' , 'bug1354478-6-ref.html'] ,
+    [ 'bug1359411.html'   , 'bug1359411-ref.html' ] ,
     function() {SpecialPowers.pushPrefEnv({'clear': [['layout.accessiblecaret.enabled']]}, nextTest);} ,
 ];
 
-if (navigator.appVersion.indexOf("Android") == -1 &&
-  SpecialPowers.Services.appinfo.name != "B2G") {
+if (navigator.appVersion.indexOf("Android") == -1) {
   tests.push([ 'bug512295-1.html' , 'bug512295-1-ref.html' ]);
   tests.push([ 'bug512295-2.html' , 'bug512295-2-ref.html' ]);
   tests.push([ 'bug923376.html'   , 'bug923376-ref.html'   ]);
@@ -179,8 +210,7 @@ if (navigator.appVersion.indexOf("Android") == -1 &&
   is(SpecialPowers.getIntPref("layout.spellcheckDefault"), 0, "Spellcheck should be turned off for this platform or this if..else check removed");
 }
 
-if (navigator.platform.indexOf("Linux") >= 0 &&
-    SpecialPowers.Services.appinfo.name != "B2G") {
+if (navigator.platform.indexOf("Linux") >= 0) {
   tests = tests.concat([
     // eDirPrevious, Shift+click
     [ 'multi-range-user-select.html#prev1S_' , 'multi-range-user-select-ref.html#prev1S_'  ] ,

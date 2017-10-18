@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2000-2013, International Business Machines
+*   Copyright (C) 2000-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  genmbcs.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -62,6 +64,7 @@ struct MBCSData {
 };
 
 /* prototypes */
+U_CDECL_BEGIN
 static void
 MBCSClose(NewConverter *cnvData);
 
@@ -99,6 +102,7 @@ MBCSAddTable(NewConverter *cnvData, UCMTable *table, UConverterStaticData *stati
 static uint32_t
 MBCSWrite(NewConverter *cnvData, const UConverterStaticData *staticData,
           UNewDataMemory *pData, int32_t tableType);
+U_CDECL_END
 
 /* helper ------------------------------------------------------------------- */
 
@@ -124,6 +128,7 @@ printBytes(char *buffer, const uint8_t *bytes, int32_t length) {
 /* implementation ----------------------------------------------------------- */
 
 static MBCSData gDummy;
+
 
 U_CFUNC const MBCSData *
 MBCSGetDummy() {
@@ -158,7 +163,7 @@ MBCSInit(MBCSData *mbcsData, UCMFile *ucm) {
     mbcsData->newConverter.write=MBCSWrite;
 }
 
-NewConverter *
+U_CFUNC NewConverter *
 MBCSOpen(UCMFile *ucm) {
     MBCSData *mbcsData=(MBCSData *)uprv_malloc(sizeof(MBCSData));
     if(mbcsData==NULL) {
@@ -176,6 +181,7 @@ MBCSDestruct(MBCSData *mbcsData) {
     uprv_free(mbcsData->fromUBytes);
 }
 
+U_CDECL_BEGIN
 static void
 MBCSClose(NewConverter *cnvData) {
     MBCSData *mbcsData=(MBCSData *)cnvData;
@@ -184,6 +190,7 @@ MBCSClose(NewConverter *cnvData) {
         uprv_free(mbcsData);
     }
 }
+U_CDECL_END
 
 static UBool
 MBCSStartMappings(MBCSData *mbcsData) {
@@ -544,6 +551,7 @@ MBCSAddToUnicode(MBCSData *mbcsData,
     }
 }
 
+U_CDECL_BEGIN
 /* is this byte sequence valid? (this is almost the same as MBCSAddToUnicode()) */
 static UBool
 MBCSIsValid(NewConverter *cnvData,
@@ -552,7 +560,7 @@ MBCSIsValid(NewConverter *cnvData,
 
     return (UBool)(1==ucm_countChars(&mbcsData->ucm->states, bytes, length));
 }
-
+U_CDECL_END
 static UBool
 MBCSSingleAddFromUnicode(MBCSData *mbcsData,
                          const uint8_t *bytes, int32_t /*length*/,
@@ -831,10 +839,13 @@ MBCSAddFromUnicode(MBCSData *mbcsData,
     switch(length) {
     case 4:
         b=*pb++;
+        U_FALLTHROUGH;
     case 3:
         b=(b<<8)|*pb++;
+        U_FALLTHROUGH;
     case 2:
         b=(b<<8)|*pb++;
+        U_FALLTHROUGH;
     case 1:
     default:
         b=(b<<8)|*pb++;
@@ -931,6 +942,7 @@ MBCSOkForBaseFromUnicode(const MBCSData *mbcsData,
     return TRUE;
 }
 
+U_CDECL_BEGIN
 /* we can assume that the table only contains 1:1 mappings with <=4 bytes each */
 static UBool
 MBCSAddTable(NewConverter *cnvData, UCMTable *table, UConverterStaticData *staticData) {
@@ -1011,6 +1023,7 @@ MBCSAddTable(NewConverter *cnvData, UCMTable *table, UConverterStaticData *stati
         case -1:
             /* there was no precision/fallback indicator */
             /* fall through to set the mappings */
+            U_FALLTHROUGH;
         case 0:
             /* set roundtrip mappings */
             isOK&=MBCSAddToUnicode(mbcsData, m->b.bytes, m->bLen, c, f);
@@ -1065,7 +1078,7 @@ MBCSAddTable(NewConverter *cnvData, UCMTable *table, UConverterStaticData *stati
 
     return isOK;
 }
-
+U_CDECL_END
 static UBool
 transformEUC(MBCSData *mbcsData) {
     uint8_t *p8;
@@ -1404,6 +1417,7 @@ MBCSPostprocess(MBCSData *mbcsData, const UConverterStaticData * /*staticData*/)
     }
 }
 
+U_CDECL_BEGIN
 static uint32_t
 MBCSWrite(NewConverter *cnvData, const UConverterStaticData *staticData,
           UNewDataMemory *pData, int32_t tableType) {
@@ -1558,3 +1572,4 @@ MBCSWrite(NewConverter *cnvData, const UConverterStaticData *staticData,
     /* return the number of bytes that should have been written */
     return top;
 }
+U_CDECL_END

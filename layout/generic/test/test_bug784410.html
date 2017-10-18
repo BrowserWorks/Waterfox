@@ -9,14 +9,14 @@
 </head>
 <body>
 <p id="display"></p>
-<div id="outer" style="overflow:auto; height:200px; border:2px dotted black;" onscroll="doneScroll()">
+<div id="outer" style="overflow:auto; height:200px; border:2px dotted black; transform: translateY(1px)" onscroll="doneScroll()">
   <div id="d" style="overflow:auto; height:102px;" onscroll="doneScroll()">
     <div id="inner" style="height:100.1px; border:1px solid black; background:yellow;">Hello</div>
   </div>
   <div style="height:500px;"></div>
 </div>
 <pre id="test">
-<script class="testbody" type="text/javascript;version=1.7">
+<script class="testbody" type="text/javascript">
 var sel = window.getSelection();
 var outer = document.getElementById("outer");
 var d = document.getElementById("d");

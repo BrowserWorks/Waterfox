@@ -129,7 +129,7 @@ CacheObserver::Init()
   obs->AddObserver(sSelf, "profile-before-change", true);
   obs->AddObserver(sSelf, "xpcom-shutdown", true);
   obs->AddObserver(sSelf, "last-pb-context-exited", true);
-  obs->AddObserver(sSelf, "clear-origin-data", true);
+  obs->AddObserver(sSelf, "clear-origin-attributes-data", true);
   obs->AddObserver(sSelf, "memory-pressure", true);
 
   return NS_OK;
@@ -325,7 +325,9 @@ CacheObserver::SetDiskCacheCapacity(uint32_t aCapacity)
     sSelf->StoreDiskCacheCapacity();
   } else {
     nsCOMPtr<nsIRunnable> event =
-      NewRunnableMethod(sSelf, &CacheObserver::StoreDiskCacheCapacity);
+      NewRunnableMethod("net::CacheObserver::StoreDiskCacheCapacity",
+                        sSelf,
+                        &CacheObserver::StoreDiskCacheCapacity);
     NS_DispatchToMainThread(event);
   }
 }
@@ -351,7 +353,9 @@ CacheObserver::SetCacheFSReported()
     sSelf->StoreCacheFSReported();
   } else {
     nsCOMPtr<nsIRunnable> event =
-      NewRunnableMethod(sSelf, &CacheObserver::StoreCacheFSReported);
+      NewRunnableMethod("net::CacheObserver::StoreCacheFSReported",
+                        sSelf,
+                        &CacheObserver::StoreCacheFSReported);
     NS_DispatchToMainThread(event);
   }
 }
@@ -377,7 +381,9 @@ CacheObserver::SetHashStatsReported()
     sSelf->StoreHashStatsReported();
   } else {
     nsCOMPtr<nsIRunnable> event =
-      NewRunnableMethod(sSelf, &CacheObserver::StoreHashStatsReported);
+      NewRunnableMethod("net::CacheObserver::StoreHashStatsReported",
+                        sSelf,
+                        &CacheObserver::StoreHashStatsReported);
     NS_DispatchToMainThread(event);
   }
 }
@@ -410,11 +416,12 @@ namespace CacheStorageEvictHelper {
 
 nsresult ClearStorage(bool const aPrivate,
                       bool const aAnonymous,
-                      NeckoOriginAttributes const &aOa)
+                      OriginAttributes &aOa)
 {
   nsresult rv;
 
-  RefPtr<LoadContextInfo> info = GetLoadContextInfo(aPrivate, aAnonymous, aOa);
+  aOa.SyncAttributesWithPrivateBrowsing(aPrivate);
+  RefPtr<LoadContextInfo> info = GetLoadContextInfo(aAnonymous, aOa);
 
   nsCOMPtr<nsICacheStorage> storage;
   RefPtr<CacheStorageService> service = CacheStorageService::Self();
@@ -435,7 +442,7 @@ nsresult ClearStorage(bool const aPrivate,
   return NS_OK;
 }
 
-nsresult Run(NeckoOriginAttributes const &aOa)
+nsresult Run(OriginAttributes &aOa)
 {
   nsresult rv;
 
@@ -551,10 +558,10 @@ CacheObserver::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  if (!strcmp(aTopic, "clear-origin-data")) {
-    NeckoOriginAttributes oa;
+  if (!strcmp(aTopic, "clear-origin-attributes-data")) {
+    OriginAttributes oa;
     if (!oa.Init(nsDependentString(aData))) {
-      NS_ERROR("Could not parse NeckoOriginAttributes JSON in clear-origin-data notification");
+      NS_ERROR("Could not parse OriginAttributes JSON in clear-origin-attributes-data notification");
       return NS_OK;
     }
 

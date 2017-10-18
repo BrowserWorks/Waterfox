@@ -6,7 +6,7 @@ function promiseTimezoneMessage() {
   return new Promise(resolve => {
     let listener = {
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIConsoleListener]),
-      observe : function (msg) {
+      observe(msg) {
         if (msg.message.startsWith("getIsUS() fell back to a timezone check with the result=")) {
           Services.console.unregisterListener(listener);
           resolve(msg);
@@ -42,7 +42,7 @@ function run_test() {
                      "SEARCH_SERVICE_COUNTRY_FETCH_CAUSED_SYNC_INIT"]) {
       let histogram = Services.telemetry.getHistogramById(hid);
       let snapshot = histogram.snapshot();
-      deepEqual(snapshot.counts, [1,0,0]); // boolean probe so 3 buckets, expect 1 result for |0|.
+      deepEqual(snapshot.counts, [1, 0, 0]); // boolean probe so 3 buckets, expect 1 result for |0|.
     }
 
     // Check we saw the timezone fallback message.

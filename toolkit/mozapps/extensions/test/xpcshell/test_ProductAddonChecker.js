@@ -61,65 +61,45 @@ function compareFiles(file1, file2) {
   return compareBinaryData(getBinaryFileData(file1), getBinaryFileData(file2));
 }
 
-add_task(function* test_404() {
-  try {
-    let addons = yield ProductAddonChecker.getProductAddonList(root + "404.xml");
-    do_throw("Should not have returned anything");
-  }
-  catch (e) {
-    do_check_true(true, "Expected to throw for a missing update file");
-  }
+add_task(async function test_404() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "404.xml");
+  do_check_true(res.usedFallback);
 });
 
-add_task(function* test_not_xml() {
-  try {
-    let addons = yield ProductAddonChecker.getProductAddonList(root + "bad.txt");
-    do_throw("Should not have returned anything");
-  }
-  catch (e) {
-    do_check_true(true, "Expected to throw for a non XML result");
-  }
+add_task(async function test_not_xml() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "bad.txt");
+  do_check_true(res.usedFallback);
 });
 
-add_task(function* test_invalid_xml() {
-  try {
-    let addons = yield ProductAddonChecker.getProductAddonList(root + "bad.xml");
-    do_throw("Should not have returned anything");
-  }
-  catch (e) {
-    do_check_true(true, "Expected to throw for invalid XML");
-  }
+add_task(async function test_invalid_xml() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "bad.xml");
+  do_check_true(res.usedFallback);
 });
 
-add_task(function* test_wrong_xml() {
-  try {
-    let addons = yield ProductAddonChecker.getProductAddonList(root + "bad2.xml");
-    do_throw("Should not have returned anything");
-  }
-  catch (e) {
-    do_check_true(true, "Expected to throw for a missing <updates> tag");
-  }
+add_task(async function test_wrong_xml() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "bad2.xml");
+  do_check_true(res.usedFallback);
 });
 
-add_task(function* test_missing() {
-  let addons = yield ProductAddonChecker.getProductAddonList(root + "missing.xml");
+add_task(async function test_missing() {
+  let addons = await ProductAddonChecker.getProductAddonList(root + "missing.xml");
   do_check_eq(addons, null);
 });
 
-add_task(function* test_empty() {
-  let addons = yield ProductAddonChecker.getProductAddonList(root + "empty.xml");
-  do_check_true(Array.isArray(addons));
-  do_check_eq(addons.length, 0);
+add_task(async function test_empty() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "empty.xml");
+  do_check_true(Array.isArray(res.gmpAddons));
+  do_check_eq(res.gmpAddons.length, 0);
 });
 
-add_task(function* test_good_xml() {
-  let addons = yield ProductAddonChecker.getProductAddonList(root + "good.xml");
-  do_check_true(Array.isArray(addons));
+add_task(async function test_good_xml() {
+  let res = await ProductAddonChecker.getProductAddonList(root + "good.xml");
+  do_check_true(Array.isArray(res.gmpAddons));
 
   // There are three valid entries in the XML
-  do_check_eq(addons.length, 5);
+  do_check_eq(res.gmpAddons.length, 5);
 
-  let addon = addons[0];
+  let addon = res.gmpAddons[0];
   do_check_eq(addon.id, "test1");
   do_check_eq(addon.URL, "http://example.com/test1.xpi");
   do_check_eq(addon.hashFunction, undefined);
@@ -127,7 +107,7 @@ add_task(function* test_good_xml() {
   do_check_eq(addon.version, undefined);
   do_check_eq(addon.size, undefined);
 
-  addon = addons[1];
+  addon = res.gmpAddons[1];
   do_check_eq(addon.id, "test2");
   do_check_eq(addon.URL, "http://example.com/test2.xpi");
   do_check_eq(addon.hashFunction, "md5");
@@ -135,7 +115,7 @@ add_task(function* test_good_xml() {
   do_check_eq(addon.version, undefined);
   do_check_eq(addon.size, undefined);
 
-  addon = addons[2];
+  addon = res.gmpAddons[2];
   do_check_eq(addon.id, "test3");
   do_check_eq(addon.URL, "http://example.com/test3.xpi");
   do_check_eq(addon.hashFunction, undefined);
@@ -143,7 +123,7 @@ add_task(function* test_good_xml() {
   do_check_eq(addon.version, "1.0");
   do_check_eq(addon.size, 45);
 
-  addon = addons[3];
+  addon = res.gmpAddons[3];
   do_check_eq(addon.id, "test4");
   do_check_eq(addon.URL, undefined);
   do_check_eq(addon.hashFunction, undefined);
@@ -151,7 +131,7 @@ add_task(function* test_good_xml() {
   do_check_eq(addon.version, undefined);
   do_check_eq(addon.size, undefined);
 
-  addon = addons[4];
+  addon = res.gmpAddons[4];
   do_check_eq(addon.id, undefined);
   do_check_eq(addon.URL, "http://example.com/test5.xpi");
   do_check_eq(addon.hashFunction, undefined);
@@ -160,105 +140,100 @@ add_task(function* test_good_xml() {
   do_check_eq(addon.size, undefined);
 });
 
-add_task(function* test_download_nourl() {
+add_task(async function test_download_nourl() {
   try {
-    let path = yield ProductAddonChecker.downloadAddon({});
+    let path = await ProductAddonChecker.downloadAddon({});
 
-    yield OS.File.remove(path);
+    await OS.File.remove(path);
     do_throw("Should not have downloaded a file with a missing url");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true(true, "Should have thrown when downloading a file with a missing url.");
   }
 });
 
-add_task(function* test_download_missing() {
+add_task(async function test_download_missing() {
   try {
-    let path = yield ProductAddonChecker.downloadAddon({
+    let path = await ProductAddonChecker.downloadAddon({
       URL: root + "nofile.xpi",
     });
 
-    yield OS.File.remove(path);
+    await OS.File.remove(path);
     do_throw("Should not have downloaded a missing file");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true(true, "Should have thrown when downloading a missing file.");
   }
 });
 
-add_task(function* test_download_noverify() {
-  let path = yield ProductAddonChecker.downloadAddon({
+add_task(async function test_download_noverify() {
+  let path = await ProductAddonChecker.downloadAddon({
     URL: root + "unsigned.xpi",
   });
 
-  let stat = yield OS.File.stat(path);
+  let stat = await OS.File.stat(path);
   do_check_false(stat.isDir);
   do_check_eq(stat.size, 452)
 
   do_check_true(compareFiles(do_get_file("data/productaddons/unsigned.xpi"), new LocalFile(path)));
 
-  yield OS.File.remove(path);
+  await OS.File.remove(path);
 });
 
-add_task(function* test_download_badsize() {
+add_task(async function test_download_badsize() {
   try {
-    let path = yield ProductAddonChecker.downloadAddon({
+    let path = await ProductAddonChecker.downloadAddon({
       URL: root + "unsigned.xpi",
       size: 400,
     });
 
-    yield OS.File.remove(path);
+    await OS.File.remove(path);
     do_throw("Should not have downloaded a file with a bad size");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true(true, "Should have thrown when downloading a file with a bad size.");
   }
 });
 
-add_task(function* test_download_badhashfn() {
+add_task(async function test_download_badhashfn() {
   try {
-    let path = yield ProductAddonChecker.downloadAddon({
+    let path = await ProductAddonChecker.downloadAddon({
       URL: root + "unsigned.xpi",
       hashFunction: "sha2567",
       hashValue: "9b9abf7ddfc1a6d7ffc7e0247481dcc202363e4445ad3494fb22036f1698c7f3",
     });
 
-    yield OS.File.remove(path);
+    await OS.File.remove(path);
     do_throw("Should not have downloaded a file with a bad hash function");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true(true, "Should have thrown when downloading a file with a bad hash function.");
   }
 });
 
-add_task(function* test_download_badhash() {
+add_task(async function test_download_badhash() {
   try {
-    let path = yield ProductAddonChecker.downloadAddon({
+    let path = await ProductAddonChecker.downloadAddon({
       URL: root + "unsigned.xpi",
       hashFunction: "sha256",
       hashValue: "8b9abf7ddfc1a6d7ffc7e0247481dcc202363e4445ad3494fb22036f1698c7f3",
     });
 
-    yield OS.File.remove(path);
+    await OS.File.remove(path);
     do_throw("Should not have downloaded a file with a bad hash");
-  }
-  catch (e) {
+  } catch (e) {
     do_check_true(true, "Should have thrown when downloading a file with a bad hash.");
   }
 });
 
-add_task(function* test_download_works() {
-  let path = yield ProductAddonChecker.downloadAddon({
+add_task(async function test_download_works() {
+  let path = await ProductAddonChecker.downloadAddon({
     URL: root + "unsigned.xpi",
     size: 452,
     hashFunction: "sha256",
     hashValue: "9b9abf7ddfc1a6d7ffc7e0247481dcc202363e4445ad3494fb22036f1698c7f3",
   });
 
-  let stat = yield OS.File.stat(path);
+  let stat = await OS.File.stat(path);
   do_check_false(stat.isDir);
 
   do_check_true(compareFiles(do_get_file("data/productaddons/unsigned.xpi"), new LocalFile(path)));
 
-  yield OS.File.remove(path);
+  await OS.File.remove(path);
 });

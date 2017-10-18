@@ -11,10 +11,14 @@
 #include "nsIObserver.h"
 // Needed for GamepadMappingType
 #include "mozilla/dom/GamepadBinding.h"
+#include "mozilla/dom/GamepadServiceType.h"
 
 class nsGlobalWindow;
 
 namespace mozilla {
+namespace gfx {
+class VRManagerChild;
+} // namespace gfx
 namespace dom {
 
 class EventTarget;
@@ -47,22 +51,11 @@ class GamepadManager final : public nsIObserver,
 
   // Add a gamepad to the list of known gamepads.
   void AddGamepad(uint32_t aIndex, const nsAString& aID, GamepadMappingType aMapping,
-                  uint32_t aNumButtons, uint32_t aNumAxes);
+                  GamepadHand aHand, GamepadServiceType aServiceType, uint32_t aDisplayID,
+                  uint32_t aNumButtons, uint32_t aNumAxes, uint32_t aNumHaptics);
 
   // Remove the gamepad at |aIndex| from the list of known gamepads.
-  void RemoveGamepad(uint32_t aIndex);
-
-  // Update the state of |aButton| for the gamepad at |aIndex| for all
-  // windows that are listening and visible, and fire one of
-  // a gamepadbutton{up,down} event at them as well.
-  // aPressed is used for digital buttons, aValue is for analog buttons.
-  void NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed,
-                      double aValue);
-
-  // Update the state of |aAxis| for the gamepad at |aIndex| for all
-  // windows that are listening and visible, and fire a gamepadaxismove
-  // event at them as well.
-  void NewAxisMoveEvent(uint32_t aIndex, uint32_t aAxis, double aValue);
+  void RemoveGamepad(uint32_t aIndex, GamepadServiceType aServiceType);
 
   // Synchronize the state of |aGamepad| to match the gamepad stored at |aIndex|
   void SyncGamepadState(uint32_t aIndex, Gamepad* aGamepad);
@@ -72,6 +65,13 @@ class GamepadManager final : public nsIObserver,
 
   // Receive GamepadChangeEvent messages from parent process to fire DOM events
   void Update(const GamepadChangeEvent& aGamepadEvent);
+
+  // Trigger vibrate haptic event to gamepad channels.
+  already_AddRefed<Promise> VibrateHaptic(uint32_t aControllerIdx, uint32_t aHapticIndex,
+                                          double aIntensity, double aDuration,
+                                          nsIGlobalObject* aGlobal, ErrorResult& aRv);
+  // Send stop haptic events to gamepad channels.
+  void StopHaptics();
 
  protected:
   GamepadManager();
@@ -111,12 +111,17 @@ class GamepadManager final : public nsIObserver,
   // Gamepad IPDL child
   // This pointer is only used by this singleton instance and
   // will be destroyed during the IPDL shutdown chain, so we
-  // don't need to refcount it here
-  GamepadEventChannelChild MOZ_NON_OWNING_REF *mChild;
+  // don't need to refcount it here.
+  nsTArray<GamepadEventChannelChild *> mChannelChildren;
 
  private:
 
   nsresult Init();
+
+  void MaybeConvertToNonstandardGamepadEvent(const GamepadChangeEvent& aEvent,
+                                             nsGlobalWindow* aWindow);
+
+  bool SetGamepadByEvent(const GamepadChangeEvent& aEvent, nsGlobalWindow* aWindow = nullptr);
 
   bool MaybeWindowHasSeenGamepad(nsGlobalWindow* aWindow, uint32_t aIndex);
   // Returns true if we have already sent data from this gamepad
@@ -124,9 +129,12 @@ class GamepadManager final : public nsIObserver,
   // explicitly interacted with a gamepad while this window
   // was focused, by pressing buttons or similar actions.
   bool WindowHasSeenGamepad(nsGlobalWindow* aWindow, uint32_t aIndex) const;
-  // Indicate that a window has recieved data from a gamepad.
+  // Indicate that a window has received data from a gamepad.
   void SetWindowHasSeenGamepad(nsGlobalWindow* aWindow, uint32_t aIndex,
                                bool aHasSeen = true);
+  // Our gamepad index has VR_GAMEPAD_IDX_OFFSET while GamepadChannelType
+  // is from VRManager.
+  uint32_t GetGamepadIndexWithServiceType(uint32_t aIndex, GamepadServiceType aServiceType);
 
   // Gamepads connected to the system. Copies of these are handed out
   // to each window.
@@ -134,6 +142,7 @@ class GamepadManager final : public nsIObserver,
   // Inner windows that are listening for gamepad events.
   // has been sent to that window.
   nsTArray<RefPtr<nsGlobalWindow>> mListeners;
+  uint32_t mPromiseID;
 };
 
 } // namespace dom

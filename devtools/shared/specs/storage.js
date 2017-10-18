@@ -40,6 +40,7 @@ function createStorageSpec(options) {
 
 // Cookies store object
 types.addDictType("cookieobject", {
+  uniqueKey: "string",
   name: "string",
   value: "longstring",
   path: "nullable:string",
@@ -61,7 +62,7 @@ types.addDictType("cookiestoreobject", {
 
 // Common methods for edit/remove
 const editRemoveMethods = {
-  getEditableFields: {
+  getFields: {
     request: {},
     response: {
       value: RetVal("json")
@@ -89,6 +90,13 @@ createStorageSpec({
   methods: Object.assign({},
     editRemoveMethods,
     {
+      addItem: {
+        request: {
+          guid: Arg(0, "string"),
+        },
+        response: {}
+      }
+    }, {
       removeAll: {
         request: {
           host: Arg(0, "string"),
@@ -109,6 +117,15 @@ types.addDictType("storageobject", {
 // Common methods for local/session storage
 const storageMethods = Object.assign({},
   editRemoveMethods,
+  {
+    addItem: {
+      request: {
+        guid: Arg(0, "string"),
+        host: Arg(1, "nullable:string")
+      },
+      response: {}
+    }
+  },
   {
     removeAll: {
       request: {
@@ -153,18 +170,36 @@ types.addDictType("cachestoreobject", {
 // Cache storage spec
 createStorageSpec({
   typeName: "Cache",
-  storeObjectType: "cachestoreobject"
+  storeObjectType: "cachestoreobject",
+  methods: {
+    removeAll: {
+      request: {
+        host: Arg(0, "string"),
+        name: Arg(1, "string"),
+      },
+      response: {}
+    },
+    removeItem: {
+      request: {
+        host: Arg(0, "string"),
+        name: Arg(1, "string"),
+      },
+      response: {}
+    },
+  }
 });
 
 // Indexed DB store object
 // This is a union on idb object, db metadata object and object store metadata
 // object
 types.addDictType("idbobject", {
+  uniqueKey: "string",
   name: "nullable:string",
   db: "nullable:string",
   objectStore: "nullable:string",
   origin: "nullable:string",
   version: "nullable:number",
+  storage: "nullable:string",
   objectStores: "nullable:number",
   keyPath: "nullable:string",
   autoIncrement: "nullable:boolean",

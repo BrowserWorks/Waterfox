@@ -7,7 +7,6 @@ this.EXPORTED_SYMBOLS = ["FxAccountsClient"];
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/hawkclient.js");
@@ -16,12 +15,12 @@ Cu.import("resource://services-crypto/utils.js");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/Credentials.jsm");
 
-const HOST = Services.prefs.getCharPref("identity.fxaccounts.auth.uri");
+const HOST_PREF = "identity.fxaccounts.auth.uri";
 
 const SIGNIN = "/account/login";
 const SIGNUP = "/account/create";
 
-this.FxAccountsClient = function(host = HOST) {
+this.FxAccountsClient = function(host = Services.prefs.getCharPref(HOST_PREF)) {
   this.host = host;
 
   // The FxA auth server expects requests to certain endpoints to be authorized
@@ -55,7 +54,7 @@ this.FxAccountsClient.prototype = {
    * Not used by this module, but made available to the FxAccounts.jsm
    * that uses this client.
    */
-  now: function() {
+  now() {
     return this.hawk.now();
   },
 
@@ -87,12 +86,12 @@ this.FxAccountsClient.prototype = {
    *                               email
    *        }
    */
-  _createSession: function(path, email, password, getKeys=false,
-                           retryOK=true) {
+  _createSession(path, email, password, getKeys = false,
+                 retryOK = true) {
     return Credentials.setup(email, password).then((creds) => {
       let data = {
         authPW: CommonUtils.bytesAsHex(creds.authPW),
-        email: email,
+        email,
       };
       let keys = getKeys ? "?keys=true" : "";
 
@@ -151,7 +150,7 @@ this.FxAccountsClient.prototype = {
    *                      password (not revealed to the FxA server)
    *        }
    */
-  signUp: function(email, password, getKeys=false) {
+  signUp(email, password, getKeys = false) {
     return this._createSession(SIGNUP, email, password, getKeys,
                                false /* no retry */);
   },
@@ -178,9 +177,30 @@ this.FxAccountsClient.prototype = {
    *          verified: flag indicating verification status of the email
    *        }
    */
-  signIn: function signIn(email, password, getKeys=false) {
+  signIn: function signIn(email, password, getKeys = false) {
     return this._createSession(SIGNIN, email, password, getKeys,
                                true /* retry */);
+  },
+
+  /**
+   * Check the status of a session given a session token
+   *
+   * @param sessionTokenHex
+   *        The session token encoded in hex
+   * @return Promise
+   *        Resolves with a boolean indicating if the session is still valid
+   */
+  sessionStatus(sessionTokenHex) {
+    return this._request("/session/status", "GET",
+      deriveHawkCredentials(sessionTokenHex, "sessionToken")).then(
+        () => Promise.resolve(true),
+        error => {
+          if (isInvalidTokenError(error)) {
+            return Promise.resolve(false);
+          }
+          throw error;
+        }
+      );
   },
 
   /**
@@ -190,7 +210,7 @@ this.FxAccountsClient.prototype = {
    *        The session token encoded in hex
    * @return Promise
    */
-  signOut: function (sessionTokenHex, options = {}) {
+  signOut(sessionTokenHex, options = {}) {
     let path = "/session/destroy";
     if (options.service) {
       path += "?service=" + encodeURIComponent(options.service);
@@ -206,7 +226,7 @@ this.FxAccountsClient.prototype = {
    *        The current session token encoded in hex
    * @return Promise
    */
-  recoveryEmailStatus: function (sessionTokenHex, options = {}) {
+  recoveryEmailStatus(sessionTokenHex, options = {}) {
     let path = "/recovery_email/status";
     if (options.reason) {
       path += "?reason=" + encodeURIComponent(options.reason);
@@ -223,7 +243,7 @@ this.FxAccountsClient.prototype = {
    *        The current token encoded in hex
    * @return Promise
    */
-  resendVerificationEmail: function(sessionTokenHex) {
+  resendVerificationEmail(sessionTokenHex) {
     return this._request("/recovery_email/resend_code", "POST",
       deriveHawkCredentials(sessionTokenHex, "sessionToken"));
   },
@@ -241,7 +261,7 @@ this.FxAccountsClient.prototype = {
    *                  user's password (bytes)
    *        }
    */
-  accountKeys: function (keyFetchTokenHex) {
+  accountKeys(keyFetchTokenHex) {
     let creds = deriveHawkCredentials(keyFetchTokenHex, "keyFetchToken");
     let keyRequestKey = creds.extra.slice(0, 32);
     let morecreds = CryptoUtils.hkdf(keyRequestKey, undefined,
@@ -290,7 +310,7 @@ this.FxAccountsClient.prototype = {
    *         wrapping any of these HTTP code/errno pairs:
    *           https://github.com/mozilla/fxa-auth-server/blob/master/docs/api.md#response-12
    */
-  signCertificate: function (sessionTokenHex, serializedPublicKey, lifetime) {
+  signCertificate(sessionTokenHex, serializedPublicKey, lifetime) {
     let creds = deriveHawkCredentials(sessionTokenHex, "sessionToken");
 
     let body = { publicKey: serializedPublicKey,
@@ -313,7 +333,7 @@ this.FxAccountsClient.prototype = {
    *        The promise resolves to true if the account exists, or false
    *        if it doesn't. The promise is rejected on other errors.
    */
-  accountExists: function (email) {
+  accountExists(email) {
     return this.signIn(email, "").then(
       (cantHappen) => {
         throw new Error("How did I sign in with an empty password?");
@@ -322,14 +342,11 @@ this.FxAccountsClient.prototype = {
         switch (expectedError.errno) {
           case ERRNO_ACCOUNT_DOES_NOT_EXIST:
             return false;
-            break;
           case ERRNO_INCORRECT_PASSWORD:
             return true;
-            break;
           default:
             // not so expected, any more ...
             throw expectedError;
-            break;
         }
       }
     );
@@ -341,8 +358,8 @@ this.FxAccountsClient.prototype = {
    *
    * Used for differentiating between password change and account deletion.
    */
-  accountStatus: function(uid) {
-    return this._request("/account/status?uid="+uid, "GET").then(
+  accountStatus(uid) {
+    return this._request("/account/status?uid=" + uid, "GET").then(
       (result) => {
         return result.exists;
       },
@@ -395,6 +412,39 @@ this.FxAccountsClient.prototype = {
     }
 
     return this._request(path, "POST", creds, body);
+  },
+
+  /**
+   * Sends a message to other devices. Must conform with the push payload schema:
+   * https://github.com/mozilla/fxa-auth-server/blob/master/docs/pushpayloads.schema.json
+   *
+   * @method notifyDevice
+   * @param  sessionTokenHex
+   *         Session token obtained from signIn
+   * @param  deviceIds
+   *         Devices to send the message to. If null, will be sent to all devices.
+   * @param  excludedIds
+   *         Devices to exclude when sending to all devices (deviceIds must be null).
+   * @param  payload
+   *         Data to send with the message
+   * @return Promise
+   *         Resolves to an empty object:
+   *         {}
+   */
+  notifyDevices(sessionTokenHex, deviceIds, excludedIds, payload, TTL = 0) {
+    if (deviceIds && excludedIds) {
+      throw new Error("You cannot specify excluded devices if deviceIds is set.")
+    }
+    const body = {
+      to: deviceIds || "all",
+      payload,
+      TTL
+    };
+    if (excludedIds) {
+      body.excluded = excludedIds;
+    }
+    return this._request("/account/devices/notify", "POST",
+      deriveHawkCredentials(sessionTokenHex, "sessionToken"), body);
   },
 
   /**
@@ -494,7 +544,7 @@ this.FxAccountsClient.prototype = {
     return this._request(path, "GET", creds, {});
   },
 
-  _clearBackoff: function() {
+  _clearBackoff() {
       this.backoffError = null;
   },
 
@@ -521,45 +571,37 @@ this.FxAccountsClient.prototype = {
    *          "info": "https://docs.dev.lcip.og/errors/1234" // link to more info on the error
    *        }
    */
-  _request: function hawkRequest(path, method, credentials, jsonPayload) {
-    let deferred = Promise.defer();
-
+  async _request(path, method, credentials, jsonPayload) {
     // We were asked to back off.
     if (this.backoffError) {
       log.debug("Received new request during backoff, re-rejecting.");
-      deferred.reject(this.backoffError);
-      return deferred.promise;
+      throw this.backoffError;
     }
-
-    this.hawk.request(path, method, credentials, jsonPayload).then(
-      (response) => {
-        try {
-          let responseObj = JSON.parse(response.body);
-          deferred.resolve(responseObj);
-        } catch (err) {
-          log.error("json parse error on response: " + response.body);
-          deferred.reject({error: err});
-        }
-      },
-
-      (error) => {
-        log.error("error " + method + "ing " + path + ": " + JSON.stringify(error));
-        if (error.retryAfter) {
-          log.debug("Received backoff response; caching error as flag.");
-          this.backoffError = error;
-          // Schedule clearing of cached-error-as-flag.
-          CommonUtils.namedTimer(
-            this._clearBackoff,
-            error.retryAfter * 1000,
-            this,
-            "fxaBackoffTimer"
-           );
-        }
-        deferred.reject(error);
+    let response;
+    try {
+      response = await this.hawk.request(path, method, credentials, jsonPayload);
+    } catch (error) {
+      log.error("error " + method + "ing " + path + ": " + JSON.stringify(error));
+      if (error.retryAfter) {
+        log.debug("Received backoff response; caching error as flag.");
+        this.backoffError = error;
+        // Schedule clearing of cached-error-as-flag.
+        CommonUtils.namedTimer(
+          this._clearBackoff,
+          error.retryAfter * 1000,
+          this,
+          "fxaBackoffTimer"
+         );
       }
-    );
-
-    return deferred.promise;
+      throw error;
+    }
+    try {
+      return JSON.parse(response.body);
+    } catch (error) {
+      log.error("json parse error on response: " + response.body);
+      // eslint-disable-next-line no-throw-literal
+      throw {error};
+    }
   },
 };
 

@@ -9,6 +9,9 @@
 
 #if defined(COMPILER_MSVC)
 
+// For _Printf_format_string_.
+#include <sal.h>
+
 // Macros for suppressing and disabling warnings on MSVC.
 //
 // Warning numbers are enumerated at:
@@ -57,6 +60,7 @@
 
 #else  // Not MSVC
 
+#define _Printf_format_string_
 #define MSVC_SUPPRESS_WARNING(n)
 #define MSVC_PUSH_DISABLE_WARNING(n)
 #define MSVC_PUSH_WARNING_LEVEL(n)
@@ -67,28 +71,6 @@
 
 #endif  // COMPILER_MSVC
 
-
-// The C++ standard requires that static const members have an out-of-class
-// definition (in a single compilation unit), but MSVC chokes on this (when
-// language extensions, which are required, are enabled). (You're only likely to
-// notice the need for a definition if you take the address of the member or,
-// more commonly, pass it to a function that takes it as a reference argument --
-// probably an STL function.) This macro makes MSVC do the right thing. See
-// http://msdn.microsoft.com/en-us/library/34h23df8(v=vs.100).aspx for more
-// information. Use like:
-//
-// In .h file:
-//   struct Foo {
-//     static const int kBar = 5;
-//   };
-//
-// In .cc file:
-//   STATIC_CONST_MEMBER_DEFINITION const int Foo::kBar;
-#if defined(COMPILER_MSVC)
-#define STATIC_CONST_MEMBER_DEFINITION __declspec(selectany)
-#else
-#define STATIC_CONST_MEMBER_DEFINITION
-#endif
 
 // Annotate a variable indicating it's ok if the variable is not used.
 // (Typically used to silence a compiler warning when the assignment
@@ -101,7 +83,7 @@
 // Annotate a typedef or function indicating it's ok if it's not used.
 // Use like:
 //   typedef Foo Bar ALLOW_UNUSED_TYPE;
-#if defined(COMPILER_GCC)
+#if defined(COMPILER_GCC) || defined(__clang__)
 #define ALLOW_UNUSED_TYPE __attribute__((unused))
 #else
 #define ALLOW_UNUSED_TYPE
@@ -118,6 +100,14 @@
 #define NOINLINE
 #endif
 
+#if COMPILER_GCC && defined(NDEBUG)
+#define ALWAYS_INLINE inline __attribute__((__always_inline__))
+#elif COMPILER_MSVC && defined(NDEBUG)
+#define ALWAYS_INLINE __forceinline
+#else
+#define ALWAYS_INLINE inline
+#endif
+
 // Specify memory alignment for structs, classes, etc.
 // Use like:
 //   class ALIGNAS(16) MyClass { ... }
@@ -128,13 +118,11 @@
 #define ALIGNAS(byte_alignment) __attribute__((aligned(byte_alignment)))
 #endif
 
-// Return the byte alignment of the given type (available at compile time).  Use
-// sizeof(type) prior to checking __alignof to workaround Visual C++ bug:
-// http://goo.gl/isH0C
+// Return the byte alignment of the given type (available at compile time).
 // Use like:
-//   ALIGNOF(int32)  // this would be 4
+//   ALIGNOF(int32_t)  // this would be 4
 #if defined(COMPILER_MSVC)
-#define ALIGNOF(type) (sizeof(type) - sizeof(type) + __alignof(type))
+#define ALIGNOF(type) __alignof(type)
 #elif defined(COMPILER_GCC)
 #define ALIGNOF(type) __alignof__(type)
 #endif
@@ -142,8 +130,9 @@
 // Annotate a function indicating the caller must examine the return value.
 // Use like:
 //   int foo() WARN_UNUSED_RESULT;
-// To explicitly ignore a result, see |ignore_result()| in <base/basictypes.h>.
-#if defined(COMPILER_GCC)
+// To explicitly ignore a result, see |ignore_result()| in base/macros.h.
+#undef WARN_UNUSED_RESULT
+#if defined(COMPILER_GCC) || defined(__clang__)
 #define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #else
 #define WARN_UNUSED_RESULT
@@ -175,10 +164,27 @@
 // Mark a memory region fully initialized.
 // Use this to annotate code that deliberately reads uninitialized data, for
 // example a GC scavenging root set pointers from the stack.
-#define MSAN_UNPOISON(p, s)  __msan_unpoison(p, s)
+#define MSAN_UNPOISON(p, size)  __msan_unpoison(p, size)
+
+// Check a memory region for initializedness, as if it was being used here.
+// If any bits are uninitialized, crash with an MSan report.
+// Use this to sanitize data which MSan won't be able to track, e.g. before
+// passing data to another process via shared memory.
+#define MSAN_CHECK_MEM_IS_INITIALIZED(p, size) \
+    __msan_check_mem_is_initialized(p, size)
 #else  // MEMORY_SANITIZER
-#define MSAN_UNPOISON(p, s)
+#define MSAN_UNPOISON(p, size)
+#define MSAN_CHECK_MEM_IS_INITIALIZED(p, size)
 #endif  // MEMORY_SANITIZER
+
+// DISABLE_CFI_PERF -- Disable Control Flow Integrity for perf reasons.
+#if !defined(DISABLE_CFI_PERF)
+#if defined(__clang__) && defined(OFFICIAL_BUILD)
+#define DISABLE_CFI_PERF __attribute__((no_sanitize("cfi")))
+#else
+#define DISABLE_CFI_PERF
+#endif
+#endif
 
 // Macro useful for writing cross-platform function pointers.
 #if !defined(CDECL)
@@ -197,5 +203,21 @@
 #define UNLIKELY(x) (x)
 #endif  // defined(COMPILER_GCC)
 #endif  // !defined(UNLIKELY)
+
+#if !defined(LIKELY)
+#if defined(COMPILER_GCC)
+#define LIKELY(x) __builtin_expect((x), 1)
+#else
+#define LIKELY(x) (x)
+#endif  // defined(COMPILER_GCC)
+#endif  // !defined(LIKELY)
+
+// Compiler feature-detection.
+// clang.llvm.org/docs/LanguageExtensions.html#has-feature-and-has-extension
+#if defined(__has_feature)
+#define HAS_FEATURE(FEATURE) __has_feature(FEATURE)
+#else
+#define HAS_FEATURE(FEATURE) 0
+#endif
 
 #endif  // BASE_COMPILER_SPECIFIC_H_

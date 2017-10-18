@@ -153,11 +153,9 @@ TestNonConvertibilityForOneType()
 {
   using mozilla::IsConvertible;
 
-#if defined(MOZ_HAVE_EXPLICIT_CONVERSION)
   static_assert(!IsConvertible<T, bool>::value, "should not be convertible");
   static_assert(!IsConvertible<T, int>::value, "should not be convertible");
   static_assert(!IsConvertible<T, uint64_t>::value, "should not be convertible");
-#endif
 
   static_assert(!IsConvertible<bool, T>::value, "should not be convertible");
   static_assert(!IsConvertible<int, T>::value, "should not be convertible");
@@ -297,6 +295,21 @@ void TestBinOp(const T1& aT1, const T2& aT2, const T3& aT3)
   MOZ_RELEASE_ASSERT((result || true) == true);
   MOZ_RELEASE_ASSERT((false || result) == bool(result));
   MOZ_RELEASE_ASSERT((true || result) == true);
+
+  // Part 4:
+  // Test short-circuit evaluation.
+  auto Explode = [] {
+    // This function should never be called. Return an arbitrary value.
+    MOZ_RELEASE_ASSERT(false);
+    return false;
+  };
+  if (result) {
+    MOZ_RELEASE_ASSERT(result || Explode());
+    MOZ_RELEASE_ASSERT(!(!result && Explode()));
+  } else {
+    MOZ_RELEASE_ASSERT(!(result && Explode()));
+    MOZ_RELEASE_ASSERT(!result || Explode());
+  }
 }
 
 // Similar to TestBinOp but testing the unary ~ operator.
@@ -428,18 +441,12 @@ void TestNoConversionsBetweenUnrelatedTypes()
   static_assert(!IsConvertible<decltype(T1::A), decltype(T2::A | T2::B)>::value,
                 "should not be convertible");
 
-  // The following are #ifdef MOZ_HAVE_EXPLICIT_CONVERSION because without
-  // support for explicit conversion operators, we can't easily have these bad
-  // conversions completely removed. They still do fail to compile in practice,
-  // but not in a way that we can static_assert on.
-#ifdef MOZ_HAVE_EXPLICIT_CONVERSION
   static_assert(!IsConvertible<decltype(T1::A | T1::B), T2>::value,
                 "should not be convertible");
   static_assert(!IsConvertible<decltype(T1::A | T1::B), decltype(T2::A)>::value,
                 "should not be convertible");
   static_assert(!IsConvertible<decltype(T1::A | T1::B), decltype(T2::A | T2::B)>::value,
                 "should not be convertible");
-#endif
 }
 
 enum class Int8EnumWithHighBits : int8_t {

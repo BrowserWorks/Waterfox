@@ -1,52 +1,8 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/en.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 en{
-    Version{"2.1.19.72"}
+    Version{"2.1.32.59"}
     zoneStrings{
-        "Africa:Sao_Tome"{
-            ec{"São Tomé"}
-        }
-        "America:Asuncion"{
-            ec{"Asunción"}
-        }
-        "America:Curacao"{
-            ec{"Curaçao"}
-        }
-        "America:St_Barthelemy"{
-            ec{"St. Barthélemy"}
-        }
-        "Antarctica:DumontDUrville"{
-            ec{"Dumont d’Urville"}
-        }
-        "Asia:Saigon"{
-            ec{"Ho Chi Minh City"}
-        }
-        "Etc:Unknown"{
-            ec{"Unknown City"}
-        }
-        "Europe:Dublin"{
-            ld{"Irish Standard Time"}
-        }
-        "Europe:London"{
-            ld{"British Summer Time"}
-        }
-        "Europe:Uzhgorod"{
-            ec{"Uzhhorod"}
-        }
-        "Indian:Reunion"{
-            ec{"Réunion"}
-        }
-        "Pacific:Honolulu"{
-            sd{"HDT"}
-            sg{"HST"}
-            ss{"HST"}
-        }
         "meta:Acre"{
             ld{"Acre Summer Time"}
             lg{"Acre Time"}
@@ -590,6 +546,9 @@ en{
         }
         "meta:Ponape"{
             ls{"Ponape Time"}
+        }
+        "meta:Pyongyang"{
+            ls{"Pyongyang Time"}
         }
         "meta:Qyzylorda"{
             ld{"Qyzylorda Summer Time"}

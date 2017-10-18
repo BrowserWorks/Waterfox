@@ -11,20 +11,21 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLTableColElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute unsigned long span;
 };
 
 partial interface HTMLTableColElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString align;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString ch;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString chOff;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString vAlign;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString width;
 };

@@ -4,17 +4,18 @@
 // This test checks that changing a tag for a bookmark with multiple tags
 // notifies OnItemChanged("tags") only once, and not once per tag.
 
-function run_test() {
-  do_test_pending();
-
+add_task(async function run_test() {
   let tags = ["a", "b", "c"];
-  let uri = NetUtil.newURI("http://1.moz.org/");
+  let uri = Services.io.newURI("http://1.moz.org/");
 
-  let id = PlacesUtils.bookmarks.insertBookmark(
-    PlacesUtils.unfiledBookmarksFolderId, uri,
-    PlacesUtils.bookmarks.DEFAULT_INDEX, "Bookmark 1"
-  );
+  let bookmark = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: uri,
+    title: "Bookmark 1"
+  });
   PlacesUtils.tagging.tagURI(uri, tags);
+
+  let promise = PromiseUtils.defer();
 
   let bookmarksObserver = {
     QueryInterface: XPCOMUtils.generateQI([
@@ -22,31 +23,34 @@ function run_test() {
     ]),
 
     _changedCount: 0,
-    onItemChanged: function (aItemId, aProperty, aIsAnnotationProperty, aValue,
-                             aLastModified, aItemType) {
+    onItemChanged(aItemId, aProperty, aIsAnnotationProperty, aValue,
+                            aLastModified, aItemType, aParentId, aGuid) {
       if (aProperty == "tags") {
-        do_check_eq(aItemId, id);
+        do_check_eq(aGuid, bookmark.guid);
         this._changedCount++;
       }
     },
 
-    onItemRemoved: function (aItemId, aParentId, aIndex, aItemType) {
-      if (aItemId == id) {
+    onItemRemoved(aItemId, aParentId, aIndex, aItemType, aURI, aGuid) {
+      if (aGuid == bookmark.guid) {
         PlacesUtils.bookmarks.removeObserver(this);
         do_check_eq(this._changedCount, 2);
-        do_test_finished();
+        promise.resolve();
       }
     },
 
-    onItemAdded: function () {},
-    onBeginUpdateBatch: function () {},
-    onEndUpdateBatch: function () {},
-    onItemVisited: function () {},
-    onItemMoved: function () {},
+    onItemAdded() {},
+    onBeginUpdateBatch() {},
+    onEndUpdateBatch() {},
+    onItemVisited() {},
+    onItemMoved() {},
   };
-  PlacesUtils.bookmarks.addObserver(bookmarksObserver, false);
+  PlacesUtils.bookmarks.addObserver(bookmarksObserver);
 
   PlacesUtils.tagging.tagURI(uri, ["d"]);
   PlacesUtils.tagging.tagURI(uri, ["e"]);
-  PlacesUtils.bookmarks.removeItem(id);
-}
+
+  await promise;
+
+  await PlacesUtils.bookmarks.remove(bookmark.guid);
+});

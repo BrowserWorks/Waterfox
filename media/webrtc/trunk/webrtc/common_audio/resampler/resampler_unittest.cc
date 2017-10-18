@@ -10,9 +10,8 @@
 
 #include <math.h>
 
-#include "testing/gtest/include/gtest/gtest.h"
-
 #include "webrtc/common_audio/resampler/include/resampler.h"
+#include "webrtc/test/gtest.h"
 
 // TODO(andrew): this is a work-in-progress. Many more tests are needed.
 
@@ -176,7 +175,6 @@ void ResamplerTest::RunResampleTest(int channels,
 }
 
 TEST_F(ResamplerTest, Mono) {
-  const int kChannels = 1;
   // We don't attempt to be exhaustive here, but just get good coverage. Some
   // combinations of rates will not be resampled, and some give an odd
   // resampling factor which makes it more difficult to evaluate.

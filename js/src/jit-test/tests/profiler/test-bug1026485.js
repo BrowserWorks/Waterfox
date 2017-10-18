@@ -1,7 +1,8 @@
 
-function TestCase(n, d, e, a)
-  TestCase.prototype.dump = function () {}
-enableSPSProfiling();
+function TestCase(n, d, e, a) {
+  return TestCase.prototype.dump = function () {};
+}
+enableGeckoProfiling();
 new TestCase(typeof Number(new Number()));
 new TestCase(typeof Number(new Number(Number.NaN)));
 test();

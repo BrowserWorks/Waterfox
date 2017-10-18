@@ -8,8 +8,7 @@
 include protocol PNecko;
 include URIParams;
 
-
-using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
+using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 
 namespace mozilla {
 namespace net {
@@ -27,7 +26,7 @@ namespace net {
  * @see nsICookiePermission
  */
 
-prio(normal upto urgent) sync protocol PCookieService
+nested(upto inside_cpow) sync protocol PCookieService
 {
   manager PNecko;
 
@@ -50,9 +49,9 @@ parent:
    *        Whether the result is for an HTTP request header. This should be
    *        true for nsICookieService.getCookieStringFromHttp calls, false
    *        otherwise.
-   * @param loadContext
-   *        The loadContext from the HTTP channel or document that the cookie is
-   *        being set on.
+   * @param attrs
+   *        The origin attributes from the HTTP channel or document that the
+   *        cookie is being set on.
    *
    * @see nsICookieService.getCookieString
    * @see nsICookieService.getCookieStringFromHttp
@@ -60,10 +59,9 @@ parent:
    *
    * @return the resulting cookie string.
    */
-  prio(urgent) sync GetCookieString(URIParams host,
-                                    bool isForeign,
-                                    bool fromHttp,
-                                    SerializedLoadContext loadContext)
+  nested(inside_cpow) sync GetCookieString(URIParams host,
+                                           bool isForeign,
+                                           OriginAttributes attrs)
        returns (nsCString result);
 
   /*
@@ -87,20 +85,20 @@ parent:
    *        Whether the result is for an HTTP request header. This should be
    *        true for nsICookieService.setCookieStringFromHttp calls, false
    *        otherwise.
-   * @param loadContext
-   *        The loadContext from the HTTP channel or document that the cookie is
-   *        being set on.
+   * @param attrs
+   *        The origin attributes from the HTTP channel or document that the
+   *        cookie is being set on.
    *
    * @see nsICookieService.setCookieString
    * @see nsICookieService.setCookieStringFromHttp
    * @see mozIThirdPartyUtil.isThirdPartyChannel
    */
-  prio(urgent) async SetCookieString(URIParams host,
-                                     bool isForeign,
-                                     nsCString cookieString,
-                                     nsCString serverTime,
-                                     bool fromHttp,
-                                     SerializedLoadContext loadContext);
+  nested(inside_cpow) async SetCookieString(URIParams host,
+                                            bool isForeign,
+                                            nsCString cookieString,
+                                            nsCString serverTime,
+                                            OriginAttributes attrs,
+                                            bool aFromHttp);
 
   async __delete__();
 };

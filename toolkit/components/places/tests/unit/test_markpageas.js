@@ -11,21 +11,14 @@ var gVisits = [{url: "http://www.mozilla.com/",
                {url: "http://www.espn.com/",
                 transition: TRANSITION_LINK}];
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_execute()
-{
+add_task(async function test_execute() {
   let observer;
   let completionPromise = new Promise(resolveCompletionPromise => {
     observer = {
       __proto__: NavHistoryObserver.prototype,
       _visitCount: 0,
-      onVisit: function (aURI, aVisitID, aTime, aSessionID, aReferringID,
-                         aTransitionType, aAdded)
-      {
+      onVisit(aURI, aVisitID, aTime, aSessionID, aReferringID,
+                        aTransitionType, aAdded) {
         do_check_eq(aURI.spec, gVisits[this._visitCount].url);
         do_check_eq(aTransitionType, gVisits[this._visitCount].transition);
         this._visitCount++;
@@ -37,7 +30,7 @@ add_task(function* test_execute()
     };
   });
 
-  PlacesUtils.history.addObserver(observer, false);
+  PlacesUtils.history.addObserver(observer);
 
   for (var visit of gVisits) {
     if (visit.transition == TRANSITION_TYPED)
@@ -48,14 +41,13 @@ add_task(function* test_execute()
      // because it is a top level visit with no referrer,
      // it will result in TRANSITION_LINK
     }
-    yield PlacesTestUtils.addVisits({
+    await PlacesTestUtils.addVisits({
       uri: uri(visit.url),
       transition: visit.transition
     });
   }
 
-  yield completionPromise;
+  await completionPromise;
 
   PlacesUtils.history.removeObserver(observer);
 });
-

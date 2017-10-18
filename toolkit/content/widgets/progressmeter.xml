@@ -39,8 +39,8 @@
             if (delta > 3 || p == 0 || p == max) {
               this.setAttribute("value", p);
               // Fire DOM event so that accessible value change events occur
-              var event = document.createEvent('Events');
-              event.initEvent('ValueChange', true, true);
+              var event = document.createEvent("Events");
+              event.initEvent("ValueChange", true, true);
               this.dispatchEvent(event);
             }
           }
@@ -73,7 +73,7 @@
           var spacer =
             document.getAnonymousElementByAttribute(this, "anonid", "spacer");
           var isLTR =
-           document.defaultView.getComputedStyle(this, null).direction == "ltr";
+           document.defaultView.getComputedStyle(this).direction == "ltr";
           var startTime = performance.now();
           var self = this;
 

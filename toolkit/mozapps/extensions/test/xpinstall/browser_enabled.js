@@ -3,18 +3,18 @@
 function test() {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
-  ContentTask.spawn(gBrowser.selectedBrowser, TESTROOT + "enabled.html", function (url) {
+  ContentTask.spawn(gBrowser.selectedBrowser, TESTROOT + "enabled.html", function(url) {
     return new Promise(resolve => {
       function page_loaded() {
-        content.removeEventListener("PageLoaded", page_loaded, false);
+        content.removeEventListener("PageLoaded", page_loaded);
         resolve(content.document.getElementById("enabled").textContent);
       }
 
       function load_listener() {
         removeEventListener("load", load_listener, true);
-        content.addEventListener("PageLoaded", page_loaded, false);
+        content.addEventListener("PageLoaded", page_loaded);
       }
 
       addEventListener("load", load_listener, true);

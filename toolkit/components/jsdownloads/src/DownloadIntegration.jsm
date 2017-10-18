@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,19 +13,15 @@ this.EXPORTED_SYMBOLS = [
   "DownloadIntegration",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Integration.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
                                   "resource://gre/modules/AsyncShutdown.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
@@ -44,18 +38,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
-#ifdef MOZ_PLACES
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
-#endif
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "CloudStorage",
+                                  "resource://gre/modules/CloudStorage.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "gDownloadPlatform",
                                    "@mozilla.org/toolkit/download-platform;1",
@@ -69,10 +59,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "gMIMEService",
 XPCOMUtils.defineLazyServiceGetter(this, "gExternalProtocolService",
                                    "@mozilla.org/uriloader/external-protocol-service;1",
                                    "nsIExternalProtocolService");
-#ifdef MOZ_WIDGET_ANDROID
 XPCOMUtils.defineLazyModuleGetter(this, "RuntimePermissions",
                                   "resource://gre/modules/RuntimePermissions.jsm");
-#endif
 
 XPCOMUtils.defineLazyGetter(this, "gParentalControlsService", function() {
   if ("@mozilla.org/parental-controls-service;1" in Cc) {
@@ -110,12 +98,6 @@ const Timer = Components.Constructor("@mozilla.org/timer;1", "nsITimer",
 const kSaveDelayMs = 1500;
 
 /**
- * This pref indicates if we have already imported (or attempted to import)
- * the downloads database from the previous SQLite storage.
- */
-const kPrefImportedFromSqlite = "browser.download.importedFromSqlite";
-
-/**
  * List of observers to listen against
  */
 const kObserverTopics = [
@@ -145,9 +127,6 @@ const kVerdictMap = {
   [Ci.nsIApplicationReputationService.VERDICT_DANGEROUS_HOST]:
                 Downloads.Error.BLOCK_VERDICT_MALWARE,
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadIntegration
 
 /**
  * Provides functions to integrate with the host application, handling for
@@ -194,18 +173,20 @@ this.DownloadIntegration = {
    * @resolves When the list has been initialized.
    * @rejects JavaScript exception.
    */
-  initializePublicDownloadList: Task.async(function* (list) {
+  async initializePublicDownloadList(list) {
     try {
-      yield this.loadPublicDownloadListFromStore(list);
+      await this.loadPublicDownloadListFromStore(list);
     } catch (ex) {
       Cu.reportError(ex);
     }
 
-    // After the list of persistent downloads has been loaded, we can add the
-    // history observers, even if the load operation failed. This object is kept
-    // alive by the history service.
-    new DownloadHistoryObserver(list);
-  }),
+    if (AppConstants.MOZ_PLACES) {
+      // After the list of persistent downloads has been loaded, we can add the
+      // history observers, even if the load operation failed. This object is kept
+      // alive by the history service.
+      new DownloadHistoryObserver(list);
+    }
+  },
 
   /**
    * Called by initializePublicDownloadList to load the list of persistent
@@ -221,7 +202,7 @@ this.DownloadIntegration = {
    * @resolves When the list has been populated.
    * @rejects JavaScript exception.
    */
-  loadPublicDownloadListFromStore: Task.async(function* (list) {
+  async loadPublicDownloadListFromStore(list) {
     if (this._store) {
       throw new Error("Initialization may be performed only once.");
     }
@@ -232,35 +213,7 @@ this.DownloadIntegration = {
     this._store.onsaveitem = this.shouldPersistDownload.bind(this);
 
     try {
-      if (this._importedFromSqlite) {
-        yield this._store.load();
-      } else {
-        let sqliteDBpath = OS.Path.join(OS.Constants.Path.profileDir,
-                                        "downloads.sqlite");
-
-        if (yield OS.File.exists(sqliteDBpath)) {
-          let sqliteImport = new DownloadImport(list, sqliteDBpath);
-          yield sqliteImport.import();
-
-          let importCount = (yield list.getAll()).length;
-          if (importCount > 0) {
-            try {
-              yield this._store.save();
-            } catch (ex) { }
-          }
-
-          // No need to wait for the file removal.
-          OS.File.remove(sqliteDBpath).then(null, Cu.reportError);
-        }
-
-        Services.prefs.setBoolPref(kPrefImportedFromSqlite, true);
-
-        // Don't even report error here because this file is pre Firefox 3
-        // and most likely doesn't exist.
-        OS.File.remove(OS.Path.join(OS.Constants.Path.profileDir,
-                                    "downloads.rdf")).catch(() => {});
-
-      }
+      await this._store.load();
     } catch (ex) {
       Cu.reportError(ex);
     }
@@ -270,45 +223,8 @@ this.DownloadIntegration = {
     // even if the load operation failed. We wait for a complete initialization
     // so other callers cannot modify the list without being detected. The
     // DownloadAutoSaveView is kept alive by the underlying DownloadList.
-    yield new DownloadAutoSaveView(list, this._store).initialize();
-  }),
-
-#ifdef MOZ_WIDGET_GONK
-  /**
-    * Finds the default download directory which can be either in the
-    * internal storage or on the sdcard.
-    *
-    * @return {Promise}
-    * @resolves The downloads directory string path.
-    */
-  _getDefaultDownloadDirectory: Task.async(function* () {
-    let directoryPath;
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
-    let storages = win.navigator.getDeviceStorages("sdcard");
-    let preferredStorageName;
-    // Use the first one or the default storage.
-    storages.forEach((aStorage) => {
-      if (aStorage.default || !preferredStorageName) {
-        preferredStorageName = aStorage.storageName;
-      }
-    });
-
-    // Now get the path for this storage area.
-    if (preferredStorageName) {
-      let volume = volumeService.getVolumeByName(preferredStorageName);
-      if (volume && volume.state === Ci.nsIVolume.STATE_MOUNTED){
-        directoryPath = OS.Path.join(volume.mountPoint, "downloads");
-        yield OS.File.makeDir(directoryPath, { ignoreExisting: true });
-      }
-    }
-    if (directoryPath) {
-      return directoryPath;
-    } else {
-      throw new Components.Exception("No suitable storage for downloads.",
-                                     Cr.NS_ERROR_FILE_UNRECOGNIZED_PATH);
-    }
-  }),
-#endif
+    await new DownloadAutoSaveView(list, this._store).initialize();
+  },
 
   /**
    * Determines if a Download object from the list of persistent downloads
@@ -331,23 +247,11 @@ this.DownloadIntegration = {
     // On all platforms, we save all the downloads currently in progress, as
     // well as stopped downloads for which we retained partially downloaded
     // data or we have blocked data.
-    if (!aDownload.stopped || aDownload.hasPartialData ||
-        aDownload.hasBlockedData) {
-      return true;
-    }
-#ifdef MOZ_B2G
-    // On B2G we keep a few days of history.
-    let maxTime = Date.now() -
-      Services.prefs.getIntPref("dom.downloads.max_retention_days") * 24 * 60 * 60 * 1000;
-    return aDownload.startTime > maxTime;
-#elif defined(MOZ_WIDGET_ANDROID)
-    // On Android we store all history.
-    return true;
-#else
-    // On Desktop, stopped downloads for which we don't need to track the
-    // presence of a ".part" file are only retained in the browser history.
-    return false;
-#endif
+    // On Android we store all history; on Desktop, stopped downloads for which
+    // we don't need to track the presence of a ".part" file are only retained
+    // in the browser history.
+    return !aDownload.stopped || aDownload.hasPartialData ||
+           aDownload.hasBlockedData || AppConstants.platform == "android";
   },
 
   /**
@@ -356,50 +260,29 @@ this.DownloadIntegration = {
    * @return {Promise}
    * @resolves The downloads directory string path.
    */
-  getSystemDownloadsDirectory: Task.async(function* () {
+  async getSystemDownloadsDirectory() {
     if (this._downloadsDirectory) {
       return this._downloadsDirectory;
     }
 
-    let directoryPath = null;
-#ifdef XP_MACOSX
-    directoryPath = this._getDirectory("DfltDwnld");
-#elifdef XP_WIN
-    // For XP/2K, use My Documents/Downloads. Other version uses
-    // the default Downloads directory.
-    let version = parseFloat(Services.sysinfo.getProperty("version"));
-    if (version < 6) {
-      directoryPath = yield this._createDownloadsDirectory("Pers");
+    if (AppConstants.platform == "android") {
+      // Android doesn't have a $HOME directory, and by default we only have
+      // write access to /data/data/org.mozilla.{$APP} and /sdcard
+      this._downloadsDirectory = gEnvironment.get("DOWNLOADS_DIRECTORY");
+      if (!this._downloadsDirectory) {
+        throw new Components.Exception("DOWNLOADS_DIRECTORY is not set.",
+                                       Cr.NS_ERROR_FILE_UNRECOGNIZED_PATH);
+      }
     } else {
-      directoryPath = this._getDirectory("DfltDwnld");
+      try {
+        this._downloadsDirectory = this._getDirectory("DfltDwnld");
+      } catch(e) {
+        this._downloadsDirectory = await this._createDownloadsDirectory("Home");
+      }
     }
-#elifdef XP_UNIX
-#ifdef MOZ_WIDGET_ANDROID
-    // Android doesn't have a $HOME directory, and by default we only have
-    // write access to /data/data/org.mozilla.{$APP} and /sdcard
-    directoryPath = gEnvironment.get("DOWNLOADS_DIRECTORY");
-    if (!directoryPath) {
-      throw new Components.Exception("DOWNLOADS_DIRECTORY is not set.",
-                                     Cr.NS_ERROR_FILE_UNRECOGNIZED_PATH);
-    }
-#elifdef MOZ_WIDGET_GONK
-    directoryPath = this._getDefaultDownloadDirectory();
-#else
-    // For Linux, use XDG download dir, with a fallback to Home/Downloads
-    // if the XDG user dirs are disabled.
-    try {
-      directoryPath = this._getDirectory("DfltDwnld");
-    } catch(e) {
-      directoryPath = yield this._createDownloadsDirectory("Home");
-    }
-#endif
-#else
-    directoryPath = yield this._createDownloadsDirectory("Home");
-#endif
 
-    this._downloadsDirectory = directoryPath;
     return this._downloadsDirectory;
-  }),
+  },
   _downloadsDirectory: null,
 
   /**
@@ -408,41 +291,41 @@ this.DownloadIntegration = {
    * @return {Promise}
    * @resolves The downloads directory string path.
    */
-  getPreferredDownloadsDirectory: Task.async(function* () {
+  async getPreferredDownloadsDirectory() {
     let directoryPath = null;
-#ifdef MOZ_WIDGET_GONK
-    directoryPath = this._getDefaultDownloadDirectory();
-#else
-    let prefValue = 1;
-
-    try {
-      prefValue = Services.prefs.getIntPref("browser.download.folderList");
-    } catch(e) {}
+    let prefValue = Services.prefs.getIntPref("browser.download.folderList", 1);
 
     switch(prefValue) {
       case 0: // Desktop
         directoryPath = this._getDirectory("Desk");
         break;
       case 1: // Downloads
-        directoryPath = yield this.getSystemDownloadsDirectory();
+        directoryPath = await this.getSystemDownloadsDirectory();
         break;
       case 2: // Custom
         try {
           let directory = Services.prefs.getComplexValue("browser.download.dir",
                                                          Ci.nsIFile);
           directoryPath = directory.path;
-          yield OS.File.makeDir(directoryPath, { ignoreExisting: true });
+          await OS.File.makeDir(directoryPath, { ignoreExisting: true });
         } catch(ex) {
           // Either the preference isn't set or the directory cannot be created.
-          directoryPath = yield this.getSystemDownloadsDirectory();
+          directoryPath = await this.getSystemDownloadsDirectory();
+        }
+        break;
+      case 3: // Cloud Storage
+        try {
+          directoryPath = await CloudStorage.getDownloadFolder();
+        } catch(ex) {}
+        if (!directoryPath) {
+          directoryPath = await this.getSystemDownloadsDirectory();
         }
         break;
       default:
-        directoryPath = yield this.getSystemDownloadsDirectory();
+        directoryPath = await this.getSystemDownloadsDirectory();
     }
-#endif
     return directoryPath;
-  }),
+  },
 
   /**
    * Returns the temporary downloads directory asynchronously.
@@ -450,19 +333,17 @@ this.DownloadIntegration = {
    * @return {Promise}
    * @resolves The downloads directory string path.
    */
-  getTemporaryDownloadsDirectory: Task.async(function* () {
+  async getTemporaryDownloadsDirectory() {
     let directoryPath = null;
-#ifdef XP_MACOSX
-    directoryPath = yield this.getPreferredDownloadsDirectory();
-#elifdef MOZ_WIDGET_ANDROID
-    directoryPath = yield this.getSystemDownloadsDirectory();
-#elifdef MOZ_WIDGET_GONK
-    directoryPath = yield this.getSystemDownloadsDirectory();
-#else
-    directoryPath = this._getDirectory("TmpD");
-#endif
+    if (AppConstants.platform == "macosx") {
+      directoryPath = await this.getPreferredDownloadsDirectory();
+    } else if (AppConstants.platform == "android") {
+      directoryPath = await this.getSystemDownloadsDirectory();
+    } else {
+      directoryPath = this._getDirectory("TmpD");
+    }
     return directoryPath;
-  }),
+  },
 
   /**
    * Checks to determine whether to block downloads for parental controls.
@@ -495,13 +376,10 @@ this.DownloadIntegration = {
    * @return {Promise}
    * @resolves The boolean indicates to block downloads or not.
    */
-  shouldBlockForRuntimePermissions() {
-#ifdef MOZ_WIDGET_ANDROID
-    return RuntimePermissions.waitForPermissions(RuntimePermissions.WRITE_EXTERNAL_STORAGE)
-                             .then(permissionGranted => !permissionGranted);
-#else
-    return Promise.resolve(false);
-#endif
+  async shouldBlockForRuntimePermissions() {
+    return AppConstants.platform == "android" &&
+           !(await RuntimePermissions.waitForPermissions(
+                                      RuntimePermissions.WRITE_EXTERNAL_STORAGE));
   },
 
   /**
@@ -521,12 +399,6 @@ this.DownloadIntegration = {
    *           }
    */
   shouldBlockForReputationCheck(aDownload) {
-#ifndef MOZ_URL_CLASSIFIER
-    return Promise.resolve({
-      shouldBlock: false,
-      verdict: "",
-    });
-#else
     let hash;
     let sigInfo;
     let channelRedirects;
@@ -547,30 +419,28 @@ this.DownloadIntegration = {
         verdict: "",
       });
     }
-    let deferred = Promise.defer();
-    let aReferrer = null;
-    if (aDownload.source.referrer) {
-      aReferrer: NetUtil.newURI(aDownload.source.referrer);
-    }
-    gApplicationReputationService.queryReputation({
-      sourceURI: NetUtil.newURI(aDownload.source.url),
-      referrerURI: aReferrer,
-      fileSize: aDownload.currentBytes,
-      sha256Hash: hash,
-      suggestedFileName: OS.Path.basename(aDownload.target.path),
-      signatureInfo: sigInfo,
-      redirects: channelRedirects },
-      function onComplete(aShouldBlock, aRv, aVerdict) {
-        deferred.resolve({
-          shouldBlock: aShouldBlock,
-          verdict: (aShouldBlock && kVerdictMap[aVerdict]) || "",
+    return new Promise(resolve => {
+      let aReferrer = null;
+      if (aDownload.source.referrer) {
+        aReferrer = NetUtil.newURI(aDownload.source.referrer);
+      }
+      gApplicationReputationService.queryReputation({
+        sourceURI: NetUtil.newURI(aDownload.source.url),
+        referrerURI: aReferrer,
+        fileSize: aDownload.currentBytes,
+        sha256Hash: hash,
+        suggestedFileName: OS.Path.basename(aDownload.target.path),
+        signatureInfo: sigInfo,
+        redirects: channelRedirects },
+        function onComplete(aShouldBlock, aRv, aVerdict) {
+          resolve({
+            shouldBlock: aShouldBlock,
+            verdict: (aShouldBlock && kVerdictMap[aVerdict]) || "",
+          });
         });
-      });
-    return deferred.promise;
-#endif
+    });
   },
 
-#ifdef XP_WIN
   /**
    * Checks whether downloaded files should be marked as coming from
    * Internet Zone.
@@ -594,7 +464,6 @@ this.DownloadIntegration = {
       return true;
     }
   },
-#endif
 
   /**
    * Performs platform-specific operations when a download is done.
@@ -606,8 +475,7 @@ this.DownloadIntegration = {
    * @resolves When all the operations completed successfully.
    * @rejects JavaScript exception if any of the operations failed.
    */
-  downloadDone: Task.async(function* (aDownload) {
-#ifdef XP_WIN
+  async downloadDone(aDownload) {
     // On Windows, we mark any file saved to the NTFS file system as coming
     // from the Internet security zone unless Group Policy disables the
     // feature.  We do this by writing to the "Zone.Identifier" Alternate
@@ -616,7 +484,7 @@ this.DownloadIntegration = {
     // the application to hang, or other performance issues.
     // The stream created in this way is forward-compatible with all the
     // current and future versions of Windows.
-    if (this._shouldSaveZoneInformation()) {
+    if (AppConstants.platform == "win" && this._shouldSaveZoneInformation()) {
       let zone;
       try {
         zone = gDownloadPlatform.mapUrlToZone(aDownload.source.url);
@@ -630,11 +498,15 @@ this.DownloadIntegration = {
         // to match Windows behavior.
         if (zone >= Ci.mozIDownloadPlatform.ZONE_INTERNET) {
           let streamPath = aDownload.target.path + ":Zone.Identifier";
-          let stream = yield OS.File.open(streamPath, { create: true });
+          let stream = await OS.File.open(
+            streamPath,
+            { create: true },
+            { winAllowLengthBeyondMaxPathWithCaveats: true }
+          );
           try {
-            yield stream.write(new TextEncoder().encode("[ZoneTransfer]\r\nZoneId=" + zone + "\r\n"));
+            await stream.write(new TextEncoder().encode("[ZoneTransfer]\r\nZoneId=" + zone + "\r\n"));
           } finally {
-            yield stream.close();
+            await stream.close();
           }
         }
       } catch (ex) {
@@ -648,7 +520,6 @@ this.DownloadIntegration = {
         }
       }
     }
-#endif
 
     // The file with the partially downloaded data has restrictive permissions
     // that don't allow other users on the system to access it.  Now that the
@@ -673,7 +544,7 @@ this.DownloadIntegration = {
         options.unixMode = 0o666;
       }
       // On Unix, the umask of the process is respected.
-      yield OS.File.setPermissions(aDownload.target.path, options);
+      await OS.File.setPermissions(aDownload.target.path, options);
     } catch (ex) {
       // We should report errors with making the permissions less restrictive
       // or marking the file as read-only on Unix and Mac, but this should not
@@ -686,11 +557,17 @@ this.DownloadIntegration = {
       }
     }
 
+    let aReferrer = null;
+    if (aDownload.source.referrer) {
+      aReferrer = NetUtil.newURI(aDownload.source.referrer);
+    }
+
     gDownloadPlatform.downloadDone(NetUtil.newURI(aDownload.source.url),
+                                   aReferrer,
                                    new FileUtils.File(aDownload.target.path),
                                    aDownload.contentType,
                                    aDownload.source.isPrivate);
-  }),
+  },
 
   /**
    * Launches a file represented by the target of a download. This can
@@ -712,22 +589,8 @@ this.DownloadIntegration = {
    * @rejects  JavaScript exception if there was an error trying to launch
    *           the file.
    */
-  launchDownload: Task.async(function* (aDownload) {
+  async launchDownload(aDownload) {
     let file = new FileUtils.File(aDownload.target.path);
-
-#ifndef XP_WIN
-    // Ask for confirmation if the file is executable, except on Windows where
-    // the operating system will show the prompt based on the security zone.
-    // We do this here, instead of letting the caller handle the prompt
-    // separately in the user interface layer, for two reasons.  The first is
-    // because of its security nature, so that add-ons cannot forget to do
-    // this check.  The second is that the system-level security prompt would
-    // be displayed at launch time in any case.
-    if (file.isExecutable() &&
-        !(yield this.confirmLaunchExecutable(file.path))) {
-      return;
-    }
-#endif
 
     // In case of a double extension, like ".tar.gz", we only
     // consider the last one, because the MIME service cannot
@@ -736,6 +599,21 @@ this.DownloadIntegration = {
     let match = file.leafName.match(/\.([^.]+)$/);
     if (match) {
       fileExtension = match[1];
+    }
+
+    let isWindowsExe = AppConstants.platform == "win" &&
+      fileExtension.toLowerCase() == "exe";
+
+    // Ask for confirmation if the file is executable, except for .exe on
+    // Windows where the operating system will show the prompt based on the
+    // security zone.  We do this here, instead of letting the caller handle
+    // the prompt separately in the user interface layer, for two reasons.  The
+    // first is because of its security nature, so that add-ons cannot forget
+    // to do this check.  The second is that the system-level security prompt
+    // would be displayed at launch time in any case.
+    if (file.isExecutable() && !isWindowsExe &&
+        !(await this.confirmLaunchExecutable(file.path))) {
+      return;
     }
 
     try {
@@ -788,19 +666,19 @@ this.DownloadIntegration = {
     // If our previous attempts failed, try sending it through
     // the system's external "file:" URL handler.
     gExternalProtocolService.loadUrl(NetUtil.newURI(file));
-  }),
+  },
 
   /**
    * Asks for confirmation for launching the specified executable file. This
    * can be overridden by regression tests to avoid the interactive prompt.
    */
-  confirmLaunchExecutable: Task.async(function* (path) {
+  async confirmLaunchExecutable(path) {
     // We don't anchor the prompt to a specific window intentionally, not
     // only because this is the same behavior as the system-level prompt,
     // but also because the most recently active window is the right choice
     // in basically all cases.
-    return yield DownloadUIHelper.getPrompter().confirmLaunchExecutable(path);
-  }),
+    return await DownloadUIHelper.getPrompter().confirmLaunchExecutable(path);
+  },
 
   /**
    * Launches the specified file, unless overridden by regression tests.
@@ -827,7 +705,7 @@ this.DownloadIntegration = {
    * @rejects  JavaScript exception if there was an error trying to open
    *           the containing folder.
    */
-  showContainingDirectory: Task.async(function* (aFilePath) {
+  async showContainingDirectory(aFilePath) {
     let file = new FileUtils.File(aFilePath);
 
     try {
@@ -853,7 +731,7 @@ this.DownloadIntegration = {
     // If launch also fails (probably because it's not implemented), let
     // the OS handler try to open the parent.
     gExternalProtocolService.loadUrl(NetUtil.newURI(parent));
-  }),
+  },
 
   /**
    * Calls the directory service, create a downloads directory and returns an
@@ -899,7 +777,7 @@ this.DownloadIntegration = {
     if (!DownloadObserver.observersAdded) {
       DownloadObserver.observersAdded = true;
       for (let topic of kObserverTopics) {
-        Services.obs.addObserver(DownloadObserver, topic, false);
+        Services.obs.addObserver(DownloadObserver, topic);
       }
     }
     return Promise.resolve();
@@ -918,24 +796,7 @@ this.DownloadIntegration = {
     }
     return Promise.resolve();
   },
-
-  /**
-   * Checks if we have already imported (or attempted to import)
-   * the downloads database from the previous SQLite storage.
-   *
-   * @return boolean True if we the previous DB was imported.
-   */
-  get _importedFromSqlite() {
-    try {
-      return Services.prefs.getBoolPref(kPrefImportedFromSqlite);
-    } catch (ex) {
-      return false;
-    }
-  },
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadObserver
 
 this.DownloadObserver = {
   /**
@@ -1005,7 +866,7 @@ this.DownloadObserver = {
     };
 
     // We register the view asynchronously.
-    aList.addView(downloadsView).then(null, Cu.reportError);
+    aList.addView(downloadsView).catch(Cu.reportError);
   },
 
   /**
@@ -1049,9 +910,7 @@ this.DownloadObserver = {
     }
   },
 
-  ////////////////////////////////////////////////////////////////////////////
-  //// nsIObserver
-
+  // nsIObserver
   observe: function DO_observe(aSubject, aTopic, aData) {
     let downloadsCount;
     let p = DownloadUIHelper.getPrompter();
@@ -1072,16 +931,16 @@ this.DownloadObserver = {
                                      p.ON_LEAVE_PRIVATE_BROWSING);
         break;
       case "last-pb-context-exited":
-        let promise = Task.spawn(function() {
-          let list = yield Downloads.getList(Downloads.PRIVATE);
-          let downloads = yield list.getAll();
+        let promise = (async function() {
+          let list = await Downloads.getList(Downloads.PRIVATE);
+          let downloads = await list.getAll();
 
           // We can remove the downloads and finalize them in parallel.
           for (let download of downloads) {
-            list.remove(download).then(null, Cu.reportError);
-            download.finalize(true).then(null, Cu.reportError);
+            list.remove(download).catch(Cu.reportError);
+            download.finalize(true).catch(Cu.reportError);
           }
-        });
+        })();
         // Handle test mode
         if (gCombinedDownloadIntegration._testResolveClearPrivateList) {
           gCombinedDownloadIntegration._testResolveClearPrivateList(promise);
@@ -1132,16 +991,9 @@ this.DownloadObserver = {
     }
   },
 
-  ////////////////////////////////////////////////////////////////////////////
-  //// nsISupports
-
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver])
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadHistoryObserver
-
-#ifdef MOZ_PLACES
 /**
  * Registers a Places observer so that operations on download history are
  * reflected on the provided list of downloads.
@@ -1155,7 +1007,7 @@ this.DownloadObserver = {
 this.DownloadHistoryObserver = function (aList)
 {
   this._list = aList;
-  PlacesUtils.history.addObserver(this, false);
+  PlacesUtils.history.addObserver(this);
 }
 
 this.DownloadHistoryObserver.prototype = {
@@ -1164,19 +1016,15 @@ this.DownloadHistoryObserver.prototype = {
    */
   _list: null,
 
-  ////////////////////////////////////////////////////////////////////////////
-  //// nsISupports
-
   QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver]),
 
-  ////////////////////////////////////////////////////////////////////////////
-  //// nsINavHistoryObserver
-
+  // nsINavHistoryObserver
   onDeleteURI: function DL_onDeleteURI(aURI, aGUID) {
     this._list.removeFinished(download => aURI.equals(NetUtil.newURI(
                                                       download.source.url)));
   },
 
+  // nsINavHistoryObserver
   onClearHistory: function DL_onClearHistory() {
     this._list.removeFinished();
   },
@@ -1188,15 +1036,6 @@ this.DownloadHistoryObserver.prototype = {
   onPageChanged: function () {},
   onDeleteVisits: function () {},
 };
-#else
-/**
- * Empty implementation when we have no Places support, for example on B2G.
- */
-this.DownloadHistoryObserver = function (aList) {}
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadAutoSaveView
 
 /**
  * This view can be added to a DownloadList object to trigger a save operation
@@ -1273,9 +1112,7 @@ this.DownloadAutoSaveView.prototype = {
     this._writer.arm();
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// DownloadList view
-
+  // DownloadList callback
   onDownloadAdded: function (aDownload)
   {
     if (gCombinedDownloadIntegration.shouldPersistDownload(aDownload)) {
@@ -1286,6 +1123,7 @@ this.DownloadAutoSaveView.prototype = {
     }
   },
 
+  // DownloadList callback
   onDownloadChanged: function (aDownload)
   {
     if (!gCombinedDownloadIntegration.shouldPersistDownload(aDownload)) {
@@ -1303,6 +1141,7 @@ this.DownloadAutoSaveView.prototype = {
     }
   },
 
+  // DownloadList callback
   onDownloadRemoved: function (aDownload)
   {
     if (this._downloadsMap.has(aDownload)) {

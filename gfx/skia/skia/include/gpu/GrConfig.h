@@ -33,7 +33,7 @@
  */
 
 #if !defined(GR_CACHE_STATS)
-  #if defined(SK_DEVELOPER) || defined(SK_DEBUG) || defined(SK_DUMP_STATS)
+  #if defined(SK_DEBUG) || defined(SK_DUMP_STATS)
       #define GR_CACHE_STATS  1
   #else
       #define GR_CACHE_STATS  0
@@ -41,7 +41,7 @@
 #endif
 
 #if !defined(GR_GPU_STATS)
-  #if defined(SK_DEVELOPER) || defined(SK_DEBUG) || defined(SK_DUMP_STATS)
+  #if defined(SK_DEBUG) || defined(SK_DUMP_STATS)
       #define GR_GPU_STATS    1
   #else
       #define GR_GPU_STATS    0
@@ -172,12 +172,5 @@ typedef unsigned __int64 uint64_t;
  *  be evaluatable at compile time.
  */
 #define GR_STATIC_ASSERT(CONDITION) static_assert(CONDITION, "bug")
-
-/**
- * Set to 1 to enable pixel local storage path rendering on supported devices.
- */
-#if !defined(GR_ENABLE_PLS_PATH_RENDERING)
-    #define GR_ENABLE_PLS_PATH_RENDERING 0
-#endif
 
 #endif

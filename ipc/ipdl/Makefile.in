@@ -15,13 +15,19 @@ include $(topsrcdir)/config/rules.mk
 
 # NB: the IPDL compiler manages .ipdl-->.h/.cpp dependencies itself,
 # which is why we don't have explicit .h/.cpp targets here
-export:: $(ALL_IPDLSRCS)
+ipdl: $(ALL_IPDLSRCS)
 	$(PYTHON) $(topsrcdir)/config/pythonpath.py \
 	  $(PLY_INCLUDE) \
 	  $(srcdir)/ipdl.py \
+	  --sync-msg-list=$(srcdir)/sync-messages.ini \
+	  --msg-metadata=$(srcdir)/message-metadata.ini \
 	  --outheaders-dir=_ipdlheaders \
 	  --outcpp-dir=. \
 	  $(IPDLDIRS:%=-I%) \
 	  $^
+
+.PHONY: ipdl
+
+export:: ipdl
 endif
 

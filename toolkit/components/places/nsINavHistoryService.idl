@@ -253,28 +253,6 @@ interface nsINavHistoryContainerResultNode : nsINavHistoryResultNode
    * container.
    */
   unsigned long getChildIndex(in nsINavHistoryResultNode aNode);
-
-  /**
-   * Look for a node in the container by some of its details.  Does not search
-   * closed containers.
-   *
-   * @param aURI
-   *        the node's uri attribute value
-   * @param aTime
-   *        the node's time attribute value.
-   * @param aItemId
-   *        the node's itemId attribute value.
-   * @param aRecursive
-   *        whether or not to search recursively.
-   *
-   * @throws NS_ERROR_NOT_AVAILABLE if this container is closed.
-   * @return a result node that matches the given details if any, null
-   *         otherwise.
-   */
-  nsINavHistoryResultNode findNodeByDetails(in AUTF8String aURIString,
-                                            in PRTime aTime,
-                                            in long long aItemId,
-                                            in boolean aRecursive);
 };
 
 
@@ -376,10 +354,10 @@ interface nsINavHistoryResultObserver : nsISupports
    * @param aNode
    *        a result node
    * @param aNewURI
-   *        the new uri
+   *        the old uri
    */
   void nodeURIChanged(in nsINavHistoryResultNode aNode,
-                      in AUTF8String aNewURI);
+                      in AUTF8String aOldURI);
 
   /**
    * Called right after aNode's icon property has changed.
@@ -397,14 +375,14 @@ interface nsINavHistoryResultObserver : nsISupports
    *
    * @param aNode
    *        a uri result node
-   * @param aNewVisitDate
-   *        the new visit date
-   * @param aNewAccessCount
-   *        the new access-count
+   * @param aOldVisitDate
+   *        the old visit date
+   * @param aOldAccessCount
+   *        the old access-count
    */
   void nodeHistoryDetailsChanged(in nsINavHistoryResultNode aNode,
-                                 in PRTime aNewVisitDate,
-                                 in unsigned long aNewAccessCount);
+                                 in PRTime aOldVisitDate,
+                                 in unsigned long aOldAccessCount);
 
   /**
    * Called when the tags set on the uri represented by aNode have changed.
@@ -596,7 +574,8 @@ interface nsINavHistoryResult : nsISupports
    *
    * @see nsINavHistoryResultObserver
    */
-  void addObserver(in nsINavHistoryResultObserver aObserver, in boolean aOwnsWeak);
+  void addObserver(in nsINavHistoryResultObserver aObserver,
+                   [optional] in boolean aOwnsWeak);
 
   /**
    * Removes an observer that was added by addObserver.
@@ -671,6 +650,9 @@ interface nsINavHistoryObserver : nsISupports
    *        Whether the URI has been typed or not.
    *        TODO (Bug 1271801): This will become a count, rather than a boolean.
    *        For future compatibility, always compare it with "> 0".
+   * @param aLastKnownTitle
+   *        The last known title of the page. Might not be from the current visit,
+   *        and might be null if it is not known.
    */
   void onVisit(in nsIURI aURI,
                in long long aVisitId,
@@ -681,7 +663,8 @@ interface nsINavHistoryObserver : nsISupports
                in ACString aGuid,
                in boolean aHidden,
                in unsigned long aVisitCount,
-               in unsigned long aTyped);
+               in unsigned long aTyped,
+               in AString aLastKnownTitle);
 
   /**
    * Called whenever either the "real" title or the custom title of the page
@@ -1282,19 +1265,24 @@ interface nsINavHistoryService : nsISupports
   const unsigned short DATABASE_STATUS_OK = 0;
 
   /**
-   * Set when database did not exist and we created a new one
+   * Set when database did not exist and we created a new one.
    */
   const unsigned short DATABASE_STATUS_CREATE = 1;
 
   /**
-   * Set when database was corrupt and we replaced it
+   * Set when database was corrupt and we replaced it with a new one.
    */
   const unsigned short DATABASE_STATUS_CORRUPT = 2;
 
   /**
-   * Set when database schema has been upgraded
+   * Set when database schema has been upgraded.
    */
   const unsigned short DATABASE_STATUS_UPGRADED = 3;
+
+  /**
+   * Set when database couldn't be opened.
+   */
+  const unsigned short DATABASE_STATUS_LOCKED = 4;
 
   /**
    * Returns the current database status
@@ -1311,7 +1299,7 @@ interface nsINavHistoryService : nsISupports
 
   /**
    * Gets the original title of the page.
-   * @deprecated use mozIAsyncHistory.getPlacesInfo instead.
+   * @deprecated use PlacesUtils.history.fetch instead.
    */
   AString getPageTitle(in nsIURI aURI);
 
@@ -1404,7 +1392,8 @@ interface nsINavHistoryService : nsISupports
    * aObserver must implement nsISupportsWeakReference, and the history service
    * will keep a weak reference to the observer.
    */
-  void addObserver(in nsINavHistoryObserver observer, in boolean ownsWeak);
+  void addObserver(in nsINavHistoryObserver observer,
+                   [optional] in boolean ownsWeak);
 
   /**
    * Removes a history observer.
@@ -1440,6 +1429,13 @@ interface nsINavHistoryService : nsISupports
    * Clear all TRANSITION_EMBED visits.
    */
   void clearEmbedVisits();
+
+  /**
+   * Generate a guid.
+   * Guids can be used for any places purposes (history, bookmarks, etc.)
+   * Returns null if the generation of the guid failed.
+   */
+  ACString makeGuid();
 };
 
 /**

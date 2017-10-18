@@ -37,10 +37,12 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SVGAElement, SVGAElementBase)
 
   // nsINode interface methods
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // nsIContent
   virtual nsresult BindToTree(nsIDocument *aDocument, nsIContent *aParent,
@@ -49,7 +51,8 @@ public:
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
-  virtual bool IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) override;
+  virtual int32_t TabIndexDefault() override;
+  virtual bool IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex) override;
   virtual bool IsLink(nsIURI** aURI) const override;
   virtual void GetLinkTarget(nsAString& aTarget) override;
   virtual already_AddRefed<nsIURI> GetHrefURI() const override;
@@ -65,20 +68,29 @@ public:
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
 
+  // Link
+  virtual bool ElementHasHref() const override;
+
   // WebIDL
   already_AddRefed<SVGAnimatedString> Href();
   already_AddRefed<SVGAnimatedString> Target();
   void GetDownload(nsAString & aDownload);
   void SetDownload(const nsAString & aDownload, ErrorResult& rv);
 
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) final override
+  {
+    ClearHasPendingLinkUpdate();
+    SVGAElementBase::NodeInfoChanged(aOldDoc);
+  }
+
 protected:
   virtual ~SVGAElement();
 
   virtual StringAttributesInfo GetStringInfo() override;
 
-  enum { HREF, TARGET };
-  nsSVGString mStringAttributes[2];
-  static StringInfo sStringInfo[2];
+  enum { HREF, XLINK_HREF, TARGET };
+  nsSVGString mStringAttributes[3];
+  static StringInfo sStringInfo[3];
 };
 
 } // namespace dom

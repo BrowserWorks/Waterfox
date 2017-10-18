@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-set -v -e -x
-
-if [ $(id -u) = 0 ]; then
-    # Drop privileges by re-running this script.
-    exec su worker $0
-fi
+source $(dirname "$0")/tools.sh
 
 mkdir -p /home/worker/artifacts
 
-# Build the task graph definition.
-nodejs nss/automation/taskcluster/graph/build.js > /home/worker/artifacts/graph.json
+# Install Node.JS dependencies.
+cd nss/automation/taskcluster/graph/ && npm install
+
+# Extend the task graph.
+node lib/index.js

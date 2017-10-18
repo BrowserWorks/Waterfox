@@ -1,4 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,6 +19,9 @@
 #include "nsHashKeys.h"
 #include "nsCOMArray.h"
 #include "nsDataHashtable.h"
+#include "nsIRunnable.h"
+#include "nsRefPtrHashtable.h"
+#include "mozilla/MozPromise.h"
 
 namespace mozilla {
 class OriginAttributesPattern;
@@ -71,7 +75,11 @@ public:
   class PermissionKey
   {
   public:
-    explicit PermissionKey(nsIPrincipal* aPrincipal);
+    static PermissionKey* CreateFromPrincipal(nsIPrincipal* aPrincipal,
+                                              nsresult& aResult);
+    static PermissionKey* CreateFromURI(nsIURI* aURI,
+                                        nsresult& aResult);
+
     explicit PermissionKey(const nsACString& aOrigin)
       : mOrigin(aOrigin)
     {
@@ -186,7 +194,7 @@ public:
   static const int64_t cIDPermissionIsDefault = -1;
 
   nsresult AddInternal(nsIPrincipal* aPrincipal,
-                       const nsAFlatCString &aType,
+                       const nsCString& aType,
                        uint32_t aPermission,
                        int64_t aID,
                        uint32_t aExpireType,
@@ -197,7 +205,7 @@ public:
                        const bool aIgnoreSessionPermissions = false);
 
   /**
-   * Initialize the "clear-origin-data" observing.
+   * Initialize the "clear-origin-attributes-data" observing.
    * Will create a nsPermissionManager instance if needed.
    * That way, we can prevent have nsPermissionManager created at startup just
    * to be able to clear data when an application is uninstalled.
@@ -206,6 +214,74 @@ public:
 
   nsresult
   RemovePermissionsWithAttributes(mozilla::OriginAttributesPattern& aAttrs);
+
+  /**
+   * See `nsIPermissionManager::GetPermissionsWithKey` for more info on
+   * permission keys.
+   *
+   * Get the permission key corresponding to the given Principal. This method is
+   * intentionally infallible, as we want to provide an permission key to every
+   * principal. Principals which don't have meaningful URIs with http://,
+   * https://, or ftp:// schemes are given the default "" Permission Key.
+   *
+   * @param aPrincipal  The Principal which the key is to be extracted from.
+   * @param aPermissionKey  A string which will be filled with the permission key.
+   */
+  static void GetKeyForPrincipal(nsIPrincipal* aPrincipal, nsACString& aPermissionKey);
+
+  /**
+   * See `nsIPermissionManager::GetPermissionsWithKey` for more info on
+   * permission keys.
+   *
+   * Get the permission key corresponding to the given Origin. This method is
+   * like GetKeyForPrincipal, except that it avoids creating a nsIPrincipal
+   * object when you already have access to an origin string.
+   *
+   * If this method is passed a nonsensical origin string it may produce a
+   * nonsensical permission key result.
+   *
+   * @param aOrigin  The origin which the key is to be extracted from.
+   * @param aPermissionKey  A string which will be filled with the permission key.
+   */
+  static void GetKeyForOrigin(const nsACString& aOrigin, nsACString& aPermissionKey);
+
+  /**
+   * See `nsIPermissionManager::GetPermissionsWithKey` for more info on
+   * permission keys.
+   *
+   * Get the permission key corresponding to the given Principal and type. This
+   * method is intentionally infallible, as we want to provide an permission key
+   * to every principal. Principals which don't have meaningful URIs with
+   * http://, https://, or ftp:// schemes are given the default "" Permission
+   * Key.
+   *
+   * This method is different from GetKeyForPrincipal in that it also takes
+   * permissions which must be sent down before loading a document into account.
+   *
+   * @param aPrincipal  The Principal which the key is to be extracted from.
+   * @param aType  The type of the permission to get the key for.
+   * @param aPermissionKey  A string which will be filled with the permission key.
+   */
+  static void GetKeyForPermission(nsIPrincipal* aPrincipal,
+                                  const char* aType,
+                                  nsACString& aPermissionKey);
+
+  /**
+   * See `nsIPermissionManager::GetPermissionsWithKey` for more info on
+   * permission keys.
+   *
+   * Get all permissions keys which could correspond to the given principal.
+   * This method, like GetKeyForPrincipal, is infallible and should always
+   * produce at least one key.
+   *
+   * Unlike GetKeyForPrincipal, this method also gets the keys for base domains
+   * of the given principal. All keys returned by this method must be avaliable
+   * in the content process for a given URL to successfully have its permissions
+   * checked in the `aExactHostMatch = false` situation.
+   *
+   * @param aPrincipal  The Principal which the key is to be extracted from.
+   */
+  static nsTArray<nsCString> GetAllKeysForPrincipal(nsIPrincipal* aPrincipal);
 
 private:
   virtual ~nsPermissionManager();
@@ -216,12 +292,36 @@ private:
   PermissionHashKey* GetPermissionHashKey(nsIPrincipal* aPrincipal,
                                           uint32_t      aType,
                                           bool          aExactHostMatch);
+  PermissionHashKey* GetPermissionHashKey(nsIURI*       aURI,
+                                          uint32_t      aType,
+                                          bool          aExactHostMatch);
 
   nsresult CommonTestPermission(nsIPrincipal* aPrincipal,
-                                const char *aType,
-                                uint32_t   *aPermission,
+                                const char  * aType,
+                                uint32_t    * aPermission,
+                                bool          aExactHostMatch,
+                                bool          aIncludingSession)
+  {
+    return CommonTestPermissionInternal(aPrincipal, nullptr, aType,
+                                        aPermission, aExactHostMatch,
+                                        aIncludingSession);
+  }
+  nsresult CommonTestPermission(nsIURI    * aURI,
+                                const char* aType,
+                                uint32_t  * aPermission,
                                 bool        aExactHostMatch,
-                                bool        aIncludingSession);
+                                bool        aIncludingSession)
+  {
+    return CommonTestPermissionInternal(nullptr, aURI, aType, aPermission,
+                                        aExactHostMatch, aIncludingSession);
+  }
+  // Only one of aPrincipal or aURI is allowed to be passed in.
+  nsresult CommonTestPermissionInternal(nsIPrincipal* aPrincipal,
+                                        nsIURI      * aURI,
+                                        const char  * aType,
+                                        uint32_t    * aPermission,
+                                        bool          aExactHostMatch,
+                                        bool          aIncludingSession);
 
   nsresult OpenDatabase(nsIFile* permissionsFile);
   nsresult InitDB(bool aRemoveFile);
@@ -254,8 +354,6 @@ private:
                        int64_t aExpireTime,
                        int64_t aModificationTime);
 
-  nsresult RemoveExpiredPermissionsForApp(uint32_t aAppId);
-
   /**
    * This method removes all permissions modified after the specified time.
    */
@@ -263,10 +361,15 @@ private:
   RemoveAllModifiedSince(int64_t aModificationTime);
 
   /**
-   * Retrieve permissions from chrome process.
+   * Returns false if this permission manager wouldn't have the permission
+   * requested avaliable.
+   *
+   * If aType is nullptr, checks that the permission manager would have all
+   * permissions avaliable for the given principal.
    */
-  nsresult
-  FetchPermissions();
+  bool PermissionAvaliable(nsIPrincipal* aPrincipal, const char* aType);
+
+  nsRefPtrHashtable<nsCStringHashKey, mozilla::GenericPromise::Private> mPermissionKeyPromiseMap;
 
   nsCOMPtr<mozIStorageConnection> mDBConn;
   nsCOMPtr<mozIStorageAsyncStatement> mStmtInsert;
@@ -281,13 +384,6 @@ private:
 
   // An array to store the strings identifying the different types.
   nsTArray<nsCString>          mTypeArray;
-
-  // A list of struct for counting applications
-  struct ApplicationCounter {
-    uint32_t mAppId;
-    uint32_t mCounter;
-  };
-  nsTArray<ApplicationCounter> mAppIdRefcounts;
 
   // Initially, |false|. Set to |true| once shutdown has started, to avoid
   // reopening the database.

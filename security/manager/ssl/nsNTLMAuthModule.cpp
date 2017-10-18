@@ -9,13 +9,15 @@
 
 #include "ScopedNSSTypes.h"
 #include "md4.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/Base64.h"
 #include "mozilla/Casting.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
@@ -208,25 +210,27 @@ LogBuf(const char *tag, const uint8_t *buf, uint32_t bufLen)
   }
 }
 
-#include "plbase64.h"
-#include "prmem.h"
 /**
  * Print base64-encoded token to the NSPR Log.
  * @param name Description of the token, will be printed in front
  * @param token The token to print
  * @param tokenLen length of the data in token
  */
-static void LogToken(const char *name, const void *token, uint32_t tokenLen)
+static void
+LogToken(const char* name, const void* token, uint32_t tokenLen)
 {
-  if (!LOG_ENABLED())
+  if (!LOG_ENABLED()) {
     return;
-
-  char *b64data = PL_Base64Encode((const char *) token, tokenLen, nullptr);
-  if (b64data)
-  {
-    PR_LogPrint("%s: %s\n", name, b64data);
-    PR_Free(b64data);
   }
+
+  nsDependentCSubstring tokenString(static_cast<const char*>(token), tokenLen);
+  nsAutoCString base64Token;
+  nsresult rv = mozilla::Base64Encode(tokenString, base64Token);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  PR_LogPrint("%s: %s\n", name, base64Token.get());
 }
 
 //-----------------------------------------------------------------------------
@@ -245,7 +249,7 @@ WriteBytes(void *buf, const void *data, uint32_t dataLen)
 static void *
 WriteDWORD(void *buf, uint32_t dword)
 {
-#ifdef IS_BIG_ENDIAN 
+#ifdef IS_BIG_ENDIAN
   // NTLM uses little endian on the wire
   dword = SWAP32(dword);
 #endif
@@ -336,7 +340,7 @@ NTLM_Hash(const nsString &password, unsigned char *hash)
 {
   uint32_t len = password.Length();
   uint8_t *passbuf;
-  
+
 #ifdef IS_BIG_ENDIAN
   passbuf = (uint8_t *) malloc(len * 2);
   WriteUnicodeLE(passbuf, password.get(), len);
@@ -354,7 +358,7 @@ NTLM_Hash(const nsString &password, unsigned char *hash)
 
 //-----------------------------------------------------------------------------
 
-/** 
+/**
  * LM_Response generates the LM response given a 16-byte password hash and the
  * challenge from the Type-2 message.
  *
@@ -554,7 +558,7 @@ GenerateType3Msg(const nsString &domain,
   nsAutoString ucsDomainBuf, ucsUserBuf;
 #endif
   nsAutoCString hostBuf;
-  nsAutoString ucsHostBuf; 
+  nsAutoString ucsHostBuf;
   // temporary buffers for oem strings
   nsAutoCString oemDomainBuf, oemUserBuf, oemHostBuf;
   // pointers and lengths for the string buffers; encoding is unicode if
@@ -618,7 +622,7 @@ GenerateType3Msg(const nsString &domain,
   // (do not use local machine's hostname after bug 1046421)
   //
   rv = mozilla::Preferences::GetCString("network.generic-ntlm-auth.workstation",
-                                        &hostBuf);
+                                        hostBuf);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -990,14 +994,13 @@ nsNTLMAuthModule::InitTest()
 }
 
 NS_IMETHODIMP
-nsNTLMAuthModule::Init(const char      *serviceName,
-                       uint32_t         serviceFlags,
-                       const char16_t *domain,
-                       const char16_t *username,
-                       const char16_t *password)
+nsNTLMAuthModule::Init(const char* /*serviceName*/, uint32_t serviceFlags,
+                       const char16_t* domain, const char16_t* username,
+                       const char16_t* password)
 {
-  NS_ASSERTION((serviceFlags & ~nsIAuthModule::REQ_PROXY_AUTH) == nsIAuthModule::REQ_DEFAULT,
-      "unexpected service flags");
+  MOZ_ASSERT((serviceFlags & ~nsIAuthModule::REQ_PROXY_AUTH) ==
+               nsIAuthModule::REQ_DEFAULT,
+             "Unexpected service flags");
 
   mDomain = domain;
   mUsername = username;
@@ -1118,7 +1121,8 @@ des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
   CK_MECHANISM_TYPE cipherMech = CKM_DES_ECB;
   PK11SymKey *symkey = nullptr;
   PK11Context *ctxt = nullptr;
-  SECItem keyItem, *param = nullptr;
+  SECItem keyItem;
+  mozilla::UniqueSECItem param;
   SECStatus rv;
   unsigned int n;
 
@@ -1129,7 +1133,7 @@ des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
     goto done;
   }
 
-  keyItem.data = (uint8_t *) key;
+  keyItem.data = const_cast<uint8_t*>(key);
   keyItem.len = 8;
   symkey = PK11_ImportSymKey(slot.get(), cipherMech,
                              PK11_OriginUnwrap, CKA_ENCRYPT,
@@ -1141,7 +1145,7 @@ des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
   }
 
   // no initialization vector required
-  param = PK11_ParamFromIV(cipherMech, nullptr);
+  param = mozilla::UniqueSECItem(PK11_ParamFromIV(cipherMech, nullptr));
   if (!param)
   {
     NS_ERROR("no param");
@@ -1149,7 +1153,7 @@ des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
   }
 
   ctxt = PK11_CreateContextBySymKey(cipherMech, CKA_ENCRYPT,
-                                    symkey, param);
+                                    symkey, param.get());
   if (!ctxt) {
     NS_ERROR("no context");
     goto done;
@@ -1172,6 +1176,4 @@ done:
     PK11_DestroyContext(ctxt, true);
   if (symkey)
     PK11_FreeSymKey(symkey);
-  if (param)
-    SECITEM_FreeItem(param, true);
 }

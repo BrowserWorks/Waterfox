@@ -1,3 +1,5 @@
+gczeal(0);
+
 function testGetParam(key) {
     gcparam(key);
 }
@@ -37,11 +39,9 @@ testChangeParam("lowFrequencyHeapGrowth");
 testChangeParam("dynamicHeapGrowth");
 testChangeParam("dynamicMarkSlice");
 testChangeParam("allocationThreshold");
-testChangeParam("decommitThreshold");
 testChangeParam("minEmptyChunkCount");
 testChangeParam("maxEmptyChunkCount");
 testChangeParam("compactingEnabled");
 
 testLargeParamValue("highFrequencyLowLimit");
 testLargeParamValue("highFrequencyHighLimit");
-testLargeParamValue("decommitThreshold");

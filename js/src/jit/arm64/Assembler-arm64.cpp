@@ -27,7 +27,7 @@ using namespace js::jit;
 using mozilla::CountLeadingZeroes32;
 using mozilla::DebugOnly;
 
-// Note this is used for inter-AsmJS calls and may pass arguments and results
+// Note this is used for inter-wasm calls and may pass arguments and results
 // in floating point registers even if the system ABI does not.
 
 ABIArg
@@ -127,7 +127,7 @@ Assembler::emitExtendedJumpTable()
 }
 
 void
-Assembler::executableCopy(uint8_t* buffer)
+Assembler::executableCopy(uint8_t* buffer, bool flushICache)
 {
     // Copy the code and all constant pools into the output buffer.
     armbuffer_.executableCopy(buffer);
@@ -161,6 +161,9 @@ Assembler::executableCopy(uint8_t* buffer)
             // into a single instruction call + nop in some instances, but this will work.
         }
     }
+
+    if (flushICache)
+        AutoFlushICache::setRange(uintptr_t(buffer), armbuffer_.size());
 }
 
 BufferOffset
@@ -564,14 +567,12 @@ TraceDataRelocations(JSTracer* trc, uint8_t* buffer, CompactBufferReader& reader
         // All pointers on AArch64 will have the top bits cleared.
         // If those bits are not cleared, this must be a Value.
         if (literal >> JSVAL_TAG_SHIFT) {
-            jsval_layout layout;
-            layout.asBits = literal;
-            Value v = IMPL_TO_JSVAL(layout);
+            Value v = Value::fromRawBits(literal);
             TraceManuallyBarrieredEdge(trc, &v, "ion-masm-value");
-            if (*literalAddr != JSVAL_TO_IMPL(v).asBits) {
+            if (*literalAddr != v.asRawBits()) {
                 // Only update the code if the value changed, because the code
                 // is not writable if we're not moving objects.
-                *literalAddr = JSVAL_TO_IMPL(v).asBits;
+                *literalAddr = v.asRawBits();
             }
 
             // TODO: When we can, flush caches here if a pointer was moved.
@@ -627,27 +628,13 @@ Assembler::FixupNurseryObjects(JSContext* cx, JitCode* code, CompactBufferReader
     }
 
     if (hasNurseryPointers)
-        cx->runtime()->gc.storeBuffer.putWholeCell(code);
+        cx->zone()->group()->storeBuffer().putWholeCell(code);
 }
 
 void
 Assembler::PatchInstructionImmediate(uint8_t* code, PatchedImmPtr imm)
 {
     MOZ_CRASH("PatchInstructionImmediate()");
-}
-
-void
-Assembler::UpdateBoundsCheck(uint8_t* patchAt, uint32_t heapLength)
-{
-    Instruction* inst = (Instruction*) patchAt;
-    int32_t mask = ~(heapLength - 1);
-    unsigned n, imm_s, imm_r;
-    if (!IsImmLogical(mask, 32, &n, &imm_s, &imm_r))
-        MOZ_CRASH("Could not encode immediate!?");
-
-    inst->SetImmR(imm_r);
-    inst->SetImmS(imm_s);
-    inst->SetBitN(n);
 }
 
 void

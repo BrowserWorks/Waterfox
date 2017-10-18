@@ -101,6 +101,74 @@
   cursor: pointer;
 }
 
+.annotationLayer .textWidgetAnnotation input,
+.annotationLayer .textWidgetAnnotation textarea,
+.annotationLayer .choiceWidgetAnnotation select,
+.annotationLayer .buttonWidgetAnnotation.checkBox input,
+.annotationLayer .buttonWidgetAnnotation.radioButton input {
+  background-color: rgba(0, 54, 255, 0.13);
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  font-size: 9px;
+  height: 100%;
+  padding: 0 3px;
+  vertical-align: top;
+  width: 100%;
+}
+
+.annotationLayer .textWidgetAnnotation textarea {
+  font: message-box;
+  font-size: 9px;
+  resize: none;
+}
+
+.annotationLayer .textWidgetAnnotation input[disabled],
+.annotationLayer .textWidgetAnnotation textarea[disabled],
+.annotationLayer .choiceWidgetAnnotation select[disabled],
+.annotationLayer .buttonWidgetAnnotation.checkBox input[disabled],
+.annotationLayer .buttonWidgetAnnotation.radioButton input[disabled] {
+  background: none;
+  border: 1px solid transparent;
+  cursor: not-allowed;
+}
+
+.annotationLayer .textWidgetAnnotation input:hover,
+.annotationLayer .textWidgetAnnotation textarea:hover,
+.annotationLayer .choiceWidgetAnnotation select:hover,
+.annotationLayer .buttonWidgetAnnotation.checkBox input:hover,
+.annotationLayer .buttonWidgetAnnotation.radioButton input:hover {
+  border: 1px solid #000;
+}
+
+.annotationLayer .textWidgetAnnotation input:focus,
+.annotationLayer .textWidgetAnnotation textarea:focus,
+.annotationLayer .choiceWidgetAnnotation select:focus {
+  background: none;
+  border: 1px solid transparent;
+}
+
+.annotationLayer .textWidgetAnnotation input.comb {
+  font-family: monospace;
+  padding-left: 2px;
+  padding-right: 0;
+}
+
+.annotationLayer .textWidgetAnnotation input.comb:focus {
+  /*
+   * Letter spacing is placed on the right side of each character. Hence, the
+   * letter spacing of the last character may be placed outside the visible
+   * area, causing horizontal scrolling. We avoid this by extending the width
+   * when the element has focus and revert this when it loses focus.
+   */
+  width: 115%;
+}
+
+.annotationLayer .buttonWidgetAnnotation.checkBox input,
+.annotationLayer .buttonWidgetAnnotation.radioButton input {
+  -moz-appearance: none;
+  appearance: none;
+}
+
 .annotationLayer .popupWrapper {
   position: absolute;
   width: 20em;
@@ -133,6 +201,7 @@
 .annotationLayer .underlineAnnotation,
 .annotationLayer .squigglyAnnotation,
 .annotationLayer .strikeoutAnnotation,
+.annotationLayer .lineAnnotation svg line,
 .annotationLayer .fileAttachmentAnnotation {
   cursor: pointer;
 }
@@ -171,6 +240,10 @@
 .pdfViewer .page canvas {
   margin: 0;
   display: block;
+}
+
+.pdfViewer .page canvas[hidden] {
+  display: none;
 }
 
 .pdfViewer .page .loadingIcon {
@@ -268,32 +341,6 @@ select {
 .pdfPresentationMode.pdfPresentationModeControls > *,
 .pdfPresentationMode.pdfPresentationModeControls .textLayer > div {
   cursor: default;
-}
-
-/* outer/inner center provides horizontal center */
-.outerCenter {
-  pointer-events: none;
-  position: relative;
-}
-html[dir='ltr'] .outerCenter {
-  float: right;
-  right: 50%;
-}
-html[dir='rtl'] .outerCenter {
-  float: left;
-  left: 50%;
-}
-.innerCenter {
-  pointer-events: auto;
-  position: relative;
-}
-html[dir='ltr'] .innerCenter {
-  float: right;
-  right: -50%;
-}
-html[dir='rtl'] .innerCenter {
-  float: left;
-  left: -50%;
 }
 
 #outerContainer {
@@ -490,8 +537,7 @@ html[dir='rtl'] #toolbarContainer, .findbar, .secondaryToolbar {
   top: 32px;
   position: absolute;
   z-index: 10000;
-  height: 32px;
-
+  height: auto;
   min-width: 16px;
   padding: 0px 6px 0px 6px;
   margin: 4px 2px 4px 2px;
@@ -502,10 +548,21 @@ html[dir='rtl'] #toolbarContainer, .findbar, .secondaryToolbar {
   cursor: default;
 }
 
+.findbar {
+  min-width: 300px;
+}
+.findbar > div {
+  height: 32px;
+}
+.findbar.wrapContainers > div {
+  clear: both;
+}
+.findbar.wrapContainers > div#findbarMessageContainer {
+  height: auto;
+}
 html[dir='ltr'] .findbar {
   left: 68px;
 }
-
 html[dir='rtl'] .findbar {
   right: 68px;
 }
@@ -514,6 +571,15 @@ html[dir='rtl'] .findbar {
   -moz-user-select: none;
 }
 
+#findInput {
+  width: 200px;
+}
+#findInput::-moz-placeholder {
+  font-style: italic;
+}
+#findInput::placeholder {
+  font-style: italic;
+}
 #findInput[data-status="pending"] {
   background-image: url(images/loading-small.png);
   background-repeat: no-repeat;
@@ -604,41 +670,39 @@ html[dir='ltr'] .doorHangerRight:before {
   font-style: italic;
   color: #A6B7D0;
 }
+#findMsg:empty {
+  display: none;
+}
 
 #findInput.notFound {
   background-color: rgb(255, 102, 102);
 }
 
-html[dir='ltr'] #toolbarViewerLeft {
-  margin-left: -1px;
-}
-html[dir='rtl'] #toolbarViewerRight {
-  margin-right: -1px;
+#toolbarViewerMiddle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 html[dir='ltr'] #toolbarViewerLeft,
 html[dir='rtl'] #toolbarViewerRight {
-  position: absolute;
-  top: 0;
-  left: 0;
+  float: left;
 }
 html[dir='ltr'] #toolbarViewerRight,
 html[dir='rtl'] #toolbarViewerLeft {
-  position: absolute;
-  top: 0;
-  right: 0;
+  float: right;
 }
 html[dir='ltr'] #toolbarViewerLeft > *,
 html[dir='ltr'] #toolbarViewerMiddle > *,
 html[dir='ltr'] #toolbarViewerRight > *,
-html[dir='ltr'] .findbar > * {
+html[dir='ltr'] .findbar * {
   position: relative;
   float: left;
 }
 html[dir='rtl'] #toolbarViewerLeft > *,
 html[dir='rtl'] #toolbarViewerMiddle > *,
 html[dir='rtl'] #toolbarViewerRight > *,
-html[dir='rtl'] .findbar > * {
+html[dir='rtl'] .findbar * {
   position: relative;
   float: right;
 }
@@ -680,10 +744,6 @@ html[dir='rtl'] .splitToolbarButton > .toolbarButton {
 .secondaryToolbarButton[disabled],
 .overlayButton[disabled] {
   opacity: .5;
-}
-
-.toolbarButton.group {
-  margin-right: 0;
 }
 
 .splitToolbarButton.toggled .toolbarButton {
@@ -906,11 +966,6 @@ html[dir='rtl'] .toolbarButton:first-child {
   height: 1px;
 }
 
-.toolbarButtonFlexibleSpacer {
-  -moz-box-flex: 1;
-  min-width: 30px;
-}
-
 html[dir='ltr'] #findPrevious {
   margin-left: 3px;
 }
@@ -1052,6 +1107,24 @@ html[dir="rtl"] #viewOutline.toolbarButton::before {
   content: url(images/toolbarButton-search.png);
 }
 
+.toolbarButton.pdfSidebarNotification::after {
+  position: absolute;
+  display: inline-block;
+  top: 1px;
+  /* Create a filled circle, with a diameter of 9 pixels, using only CSS: */
+  content: '';
+  background-color: #70DB55;
+  height: 9px;
+  width: 9px;
+  border-radius: 50%;
+}
+html[dir='ltr'] .toolbarButton.pdfSidebarNotification::after {
+  left: 17px;
+}
+html[dir='rtl'] .toolbarButton.pdfSidebarNotification::after {
+  right: 17px;
+}
+
 .secondaryToolbarButton {
   position: relative;
   margin: 0 0 4px 0;
@@ -1098,6 +1171,10 @@ html[dir="rtl"] .secondaryToolbarButton > span {
 
 .secondaryToolbarButton.rotateCw::before {
   content: url(images/secondaryToolbarButton-rotateCw.png);
+}
+
+.secondaryToolbarButton.selectTool::before {
+  content: url(images/secondaryToolbarButton-selectTool.png);
 }
 
 .secondaryToolbarButton.handTool::before {
@@ -1805,6 +1882,10 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     content: url(images/secondaryToolbarButton-rotateCw@2x.png);
   }
 
+  .secondaryToolbarButton.selectTool::before {
+    content: url(images/secondaryToolbarButton-selectTool@2x.png);
+  }
+
   .secondaryToolbarButton.handTool::before {
     content: url(images/secondaryToolbarButton-handTool@2x.png);
   }
@@ -1869,11 +1950,11 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     display: none;
   }
 
-  /* Rules for browsers that support mozPrintCallback */
-  body[data-mozPrintCallback] #outerContainer {
+  /* Rules for browsers that support PDF.js printing */
+  body[data-pdfjsprinting] #outerContainer {
     display: none;
   }
-  body[data-mozPrintCallback] #printContainer {
+  body[data-pdfjsprinting] #printContainer {
     display: block;
   }
   #printContainer {
@@ -1890,7 +1971,8 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     page-break-after: always;
     page-break-inside: avoid;
   }
-  #printContainer canvas {
+  #printContainer canvas,
+  #printContainer img {
     display: block;
   }
 }
@@ -1901,38 +1983,47 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   display: none;
 }
 
-@media all and (max-width: 960px) {
-  html[dir='ltr'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='ltr'] #outerContainer.sidebarOpen .outerCenter {
-    float: left;
-    left: 205px;
-  }
-  html[dir='rtl'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='rtl'] #outerContainer.sidebarOpen .outerCenter {
-    float: right;
-    right: 205px;
+@media all and (max-width: 1040px) {
+  #outerContainer.sidebarMoving #toolbarViewerMiddle,
+  #outerContainer.sidebarOpen #toolbarViewerMiddle {
+    display: table;
+    margin: auto;
+    left: auto;
+    position: inherit;
+    transform: none;
   }
 }
 
-@media all and (max-width: 900px) {
+@media all and (max-width: 980px) {
+  .sidebarMoving .hiddenLargeView,
   .sidebarOpen .hiddenLargeView {
     display: none;
   }
+  .sidebarMoving .visibleLargeView,
   .sidebarOpen .visibleLargeView {
     display: inherit;
   }
 }
 
-@media all and (max-width: 860px) {
+@media all and (max-width: 900px) {
+  #toolbarViewerMiddle {
+    display: table;
+    margin: auto;
+    left: auto;
+    position: inherit;
+    transform: none;
+  }
+  .sidebarMoving .hiddenMediumView,
   .sidebarOpen .hiddenMediumView {
     display: none;
   }
+  .sidebarMoving .visibleMediumView,
   .sidebarOpen .visibleMediumView {
     display: inherit;
   }
 }
 
-@media all and (max-width: 770px) {
+@media all and (max-width: 840px) {
   #sidebarContainer {
     top: 32px;
     z-index: 100;
@@ -1952,15 +2043,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     right: 0px;
   }
 
-  html[dir='ltr'] .outerCenter {
-    float: left;
-    left: 205px;
-  }
-  html[dir='rtl'] .outerCenter {
-    float: right;
-    right: 205px;
-  }
-
   #outerContainer .hiddenLargeView,
   #outerContainer .hiddenMediumView {
     display: inherit;
@@ -1971,7 +2053,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 700px) {
+@media all and (max-width: 770px) {
   #outerContainer .hiddenLargeView {
     display: none;
   }
@@ -1980,7 +2062,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 660px) {
+@media all and (max-width: 700px) {
   #outerContainer .hiddenMediumView {
     display: none;
   }
@@ -1989,30 +2071,26 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   }
 }
 
-@media all and (max-width: 600px) {
-  .hiddenSmallView {
+@media all and (max-width: 640px) {
+  .hiddenSmallView, .hiddenSmallView * {
     display: none;
   }
   .visibleSmallView {
     display: inherit;
   }
-  html[dir='ltr'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='ltr'] #outerContainer.sidebarOpen .outerCenter,
-  html[dir='ltr'] .outerCenter {
-    left: 156px;
-  }
-  html[dir='rtl'] #outerContainer.sidebarMoving .outerCenter,
-  html[dir='rtl'] #outerContainer.sidebarOpen .outerCenter,
-  html[dir='rtl'] .outerCenter {
-    right: 156px;
-  }
   .toolbarButtonSpacer {
     width: 0;
   }
+  html[dir='ltr'] .findbar {
+    left: 38px;
+  }
+  html[dir='rtl'] .findbar {
+    right: 38px;
+  }
 }
 
-@media all and (max-width: 510px) {
-  #scaleSelectContainer, #pageNumberLabel {
+@media all and (max-width: 535px) {
+  #scaleSelectContainer {
     display: none;
   }
 }

@@ -1,4 +1,6 @@
 #!/usr/bin/perl 
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 #*
 #*******************************************************************************
 #*   Copyright (C) 2001-2012, International Business Machines
@@ -6,7 +8,7 @@
 #*******************************************************************************
 #*
 #*   file name:  genren.pl
-#*   encoding:   US-ASCII
+#*   encoding:   UTF-8
 #*   tab size:   8 (not used)
 #*   indentation:4
 #*
@@ -78,7 +80,7 @@ print HEADER <<"EndOfHeaderComment";
 *******************************************************************************
 *
 *   file name:  $headername
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *

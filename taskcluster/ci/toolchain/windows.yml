@@ -1,0 +1,108 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+win32-clang-cl:
+    description: "Clang-cl toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TW32(clang-cl)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
+    run:
+        using: toolchain-script
+        script: build-clang32-windows.sh
+        resources:
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper32.sh'
+        toolchain-artifact: public/build/clang.tar.bz2
+
+win64-clang-cl:
+    description: "Clang-cl toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TW64(clang-cl)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
+    run:
+        using: toolchain-script
+        script: build-clang64-windows.sh
+        resources:
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
+        toolchain-artifact: public/build/clang.tar.bz2
+
+win32-clang-tidy:
+    description: "Clang-tidy toolchain build"
+    index:
+        product: static-analysis
+        job-name: win32-clang-tidy
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TW32(clang-tidy)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
+    run:
+        using: toolchain-script
+        script: build-clang-tidy32-windows.sh
+        resources:
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper32.sh'
+        toolchain-artifact: public/build/clang-tidy.tar.bz2
+
+win64-clang-tidy:
+    description: "Clang-tidy toolchain build"
+    index:
+        product: static-analysis
+        job-name: win64-clang-tidy
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TW64(clang-tidy)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
+    run:
+        using: toolchain-script
+        script: build-clang-tidy64-windows.sh
+        resources:
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
+        toolchain-artifact: public/build/clang-tidy.tar.bz2
+
+win64-sccache:
+    description: "sccache toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TW64(sccache)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-win2012
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/sccache-build.manifest"
+    run:
+        using: toolchain-script
+        script: build-sccache.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/sccache2.tar.bz2

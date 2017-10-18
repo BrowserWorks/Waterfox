@@ -8,13 +8,11 @@
 #include "mozilla/plugins/PluginWidgetParent.h"
 #include "PluginWidgetProxy.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/DebugOnly.h"
 #include "nsDebug.h"
 
-#if defined(XP_WIN)
 #include "mozilla/plugins/PluginInstanceParent.h"
-#endif
 
 #define PWLOG(...)
 //#define PWLOG(...) printf_stderr(__VA_ARGS__)

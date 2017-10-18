@@ -7,16 +7,13 @@
 
 #include "MediaPipeline.h"
 
-#ifndef USE_FAKE_MEDIA_STREAMS
 #include "MediaStreamGraphImpl.h"
-#endif
 
 #include <math.h>
 
 #include "nspr.h"
 #include "srtp.h"
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "VideoSegment.h"
 #include "Layers.h"
 #include "LayersLogging.h"
@@ -25,17 +22,19 @@
 #include "DOMMediaStream.h"
 #include "MediaStreamTrack.h"
 #include "MediaStreamListener.h"
+#include "MediaStreamVideoSink.h"
 #include "VideoUtils.h"
+#include "VideoStreamTrack.h"
 #ifdef WEBRTC_GONK
 #include "GrallocImages.h"
 #include "mozilla/layers/GrallocTextureClient.h"
-#endif
 #endif
 
 #include "nsError.h"
 #include "AudioSegment.h"
 #include "MediaSegment.h"
 #include "MediaPipelineFilter.h"
+#include "RtpLogger.h"
 #include "databuffer.h"
 #include "transportflow.h"
 #include "transportlayer.h"
@@ -43,27 +42,32 @@
 #include "transportlayerice.h"
 #include "runnable_utils.h"
 #include "libyuv/convert.h"
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+#include "mozilla/dom/RTCStatsReportBinding.h"
+#include "mozilla/SharedThreadPool.h"
 #include "mozilla/PeerIdentity.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/TaskQueue.h"
-#endif
 #include "mozilla/gfx/Point.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/Sprintf.h"
 
 #include "webrtc/common_types.h"
-#include "webrtc/common_video/interface/native_handle.h"
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
-#include "webrtc/video_engine/include/vie_errors.h"
+#include "webrtc/common_video/include/video_frame_buffer.h"
+#include "webrtc/base/bind.h"
+
+#include "nsThreadUtils.h"
 
 #include "logging.h"
 
-// Max size given stereo is 480*2*2 = 1920 (48KHz)
-#define AUDIO_SAMPLE_BUFFER_MAX 480*2*2
+// Max size given stereo is 480*2*2 = 1920 (10ms of 16-bits stereo audio at
+// 48KHz)
+#define AUDIO_SAMPLE_BUFFER_MAX_BYTES 480*2*2
 static_assert((WEBRTC_DEFAULT_SAMPLE_RATE/100)*sizeof(uint16_t) * 2
-               <= AUDIO_SAMPLE_BUFFER_MAX,
-               "AUDIO_SAMPLE_BUFFER_MAX is not large enough");
+               <= AUDIO_SAMPLE_BUFFER_MAX_BYTES,
+               "AUDIO_SAMPLE_BUFFER_MAX_BYTES is not large enough");
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -74,8 +78,8 @@ using namespace mozilla::layers;
 MOZ_MTLOG_MODULE("mediapipeline")
 
 namespace mozilla {
+extern mozilla::LogModule* AudioLogModule();
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 class VideoConverterListener
 {
 public:
@@ -88,14 +92,14 @@ public:
                                      VideoType aVideoType,
                                      uint64_t aCaptureTime) = 0;
 
-  virtual void OnVideoFrameConverted(webrtc::I420VideoFrame& aVideoFrame) = 0;
+  virtual void OnVideoFrameConverted(webrtc::VideoFrame& aVideoFrame) = 0;
 
 protected:
   virtual ~VideoConverterListener() {}
 };
 
 // I420 buffer size macros
-#define YSIZE(x,y) ((x)*(y))
+#define YSIZE(x,y) (CheckedInt<int>(x)*(y))
 #define CRSIZE(x,y) ((((x)+1) >> 1) * (((y)+1) >> 1))
 #define I420SIZE(x,y) (YSIZE((x),(y)) + 2 * CRSIZE((x),(y)))
 
@@ -116,7 +120,6 @@ public:
   VideoFrameConverter()
     : mLength(0)
     , last_img_(-1) // -1 is not a guaranteed invalid serial. See bug 1262134.
-    , disabled_frame_sent_(false)
 #ifdef DEBUG
     , mThrottleCount(0)
     , mThrottleRecord(0)
@@ -180,23 +183,29 @@ public:
       // -1 is not a guaranteed invalid serial. See bug 1262134.
       last_img_ = -1;
 
-      if (disabled_frame_sent_) {
-        // After disabling we just pass one black frame to the encoder.
-        // Allocating and setting it to black steals some performance
-        // that can be avoided. We don't handle resolution changes while
-        // disabled for now.
+      // After disabling, we still want *some* frames to flow to the other side.
+      // It could happen that we drop the packet that carried the first disabled
+      // frame, for instance. Note that this still requires the application to
+      // send a frame, or it doesn't trigger at all.
+      const double disabledMinFps = 1.0;
+      TimeStamp t = aChunk.mTimeStamp;
+      MOZ_ASSERT(!t.IsNull());
+      if (!disabled_frame_sent_.IsNull() &&
+          (t - disabled_frame_sent_).ToSeconds() < (1.0 / disabledMinFps)) {
         return;
       }
 
-      disabled_frame_sent_ = true;
+      disabled_frame_sent_ = t;
     } else {
-      disabled_frame_sent_ = false;
+      // This sets it to the Null time.
+      disabled_frame_sent_ = TimeStamp();
     }
 
     ++mLength; // Atomic
 
     nsCOMPtr<nsIRunnable> runnable =
-      NewRunnableMethod<StorensRefPtrPassByPtr<Image>, bool>(
+      NewRunnableMethod<StoreRefPtrPassByPtr<Image>, bool>(
+        "VideoFrameConverter::ProcessVideoFrame",
         this, &VideoFrameConverter::ProcessVideoFrame,
         aChunk.mFrame.GetImage(), forceBlack);
     mTaskQueue->Dispatch(runnable.forget());
@@ -229,22 +238,48 @@ protected:
     MOZ_COUNT_DTOR(VideoFrameConverter);
   }
 
-  void VideoFrameConverted(unsigned char* aVideoFrame,
+  static void DeleteBuffer(uint8 *data)
+  {
+    delete[] data;
+  }
+
+  // This takes ownership of the buffer and attached it to the VideoFrame we send
+  // to the listeners
+  void VideoFrameConverted(UniquePtr<uint8[]> aBuffer,
                            unsigned int aVideoFrameLength,
                            unsigned short aWidth,
                            unsigned short aHeight,
                            VideoType aVideoType,
                            uint64_t aCaptureTime)
   {
-    MutexAutoLock lock(mMutex);
-
-    for (RefPtr<VideoConverterListener>& listener : mListeners) {
-      listener->OnVideoFrameConverted(aVideoFrame, aVideoFrameLength,
-                                      aWidth, aHeight, aVideoType, aCaptureTime);
+    // check for parameter sanity
+    if (!aBuffer || aVideoFrameLength == 0 || aWidth == 0 || aHeight == 0) {
+      MOZ_MTLOG(ML_ERROR, __FUNCTION__ << " Invalid Parameters ");
+      MOZ_ASSERT(false);
+      return;
     }
+    MOZ_ASSERT(aVideoType == VideoType::kVideoI420);
+
+    const int stride_y = aWidth;
+    const int stride_uv = (aWidth + 1) / 2;
+
+    const uint8_t* buffer_y = aBuffer.get();
+    const uint8_t* buffer_u = buffer_y + stride_y * aHeight;
+    const uint8_t* buffer_v = buffer_u + stride_uv * ((aHeight + 1) / 2);
+    rtc::scoped_refptr<webrtc::WrappedI420Buffer> video_frame_buffer(
+      new rtc::RefCountedObject<webrtc::WrappedI420Buffer>(
+        aWidth, aHeight,
+        buffer_y, stride_y,
+        buffer_u, stride_uv,
+        buffer_v, stride_uv,
+        rtc::Bind(&DeleteBuffer, aBuffer.release())));
+
+    webrtc::VideoFrame video_frame(video_frame_buffer, aCaptureTime,
+                                   aCaptureTime, webrtc::kVideoRotation_0); // XXX
+    VideoFrameConverted(video_frame);
   }
 
-  void VideoFrameConverted(webrtc::I420VideoFrame& aVideoFrame)
+  void VideoFrameConverted(webrtc::VideoFrame& aVideoFrame)
   {
     MutexAutoLock lock(mMutex);
 
@@ -260,92 +295,32 @@ protected:
 
     if (aForceBlack) {
       IntSize size = aImage->GetSize();
-      uint32_t yPlaneLen = YSIZE(size.width, size.height);
-      uint32_t cbcrPlaneLen = 2 * CRSIZE(size.width, size.height);
-      uint32_t length = yPlaneLen + cbcrPlaneLen;
+      CheckedInt<int> yPlaneLen = YSIZE(size.width, size.height);
+      // doesn't need to be CheckedInt, any overflow will be caught by YSIZE
+      int cbcrPlaneLen = 2 * CRSIZE(size.width, size.height);
+      CheckedInt<int> length = yPlaneLen + cbcrPlaneLen;
+
+      if (!yPlaneLen.isValid() || !length.isValid()) {
+        return;
+      }
 
       // Send a black image.
-      auto pixelData = MakeUniqueFallible<uint8_t[]>(length);
+      auto pixelData = MakeUniqueFallible<uint8_t[]>(length.value());
       if (pixelData) {
         // YCrCb black = 0x10 0x80 0x80
-        memset(pixelData.get(), 0x10, yPlaneLen);
+        memset(pixelData.get(), 0x10, yPlaneLen.value());
         // Fill Cb/Cr planes
-        memset(pixelData.get() + yPlaneLen, 0x80, cbcrPlaneLen);
+        memset(pixelData.get() + yPlaneLen.value(), 0x80, cbcrPlaneLen);
 
         MOZ_MTLOG(ML_DEBUG, "Sending a black video frame");
-        VideoFrameConverted(pixelData.get(), length, size.width, size.height,
+        VideoFrameConverted(Move(pixelData), length.value(),
+                            size.width, size.height,
                             mozilla::kVideoI420, 0);
       }
       return;
     }
 
     ImageFormat format = aImage->GetFormat();
-#ifdef WEBRTC_GONK
-    GrallocImage* nativeImage = aImage->AsGrallocImage();
-    if (nativeImage) {
-      android::sp<android::GraphicBuffer> graphicBuffer = nativeImage->GetGraphicBuffer();
-      int pixelFormat = graphicBuffer->getPixelFormat(); /* PixelFormat is an enum == int */
-      mozilla::VideoType destFormat;
-      switch (pixelFormat) {
-        case HAL_PIXEL_FORMAT_YV12:
-          // all android must support this
-          destFormat = mozilla::kVideoYV12;
-          break;
-        case GrallocImage::HAL_PIXEL_FORMAT_YCbCr_420_SP:
-          destFormat = mozilla::kVideoNV21;
-          break;
-        case GrallocImage::HAL_PIXEL_FORMAT_YCbCr_420_P:
-          destFormat = mozilla::kVideoI420;
-          break;
-        default:
-          // XXX Bug NNNNNNN
-          // use http://mxr.mozilla.org/mozilla-central/source/content/media/omx/I420ColorConverterHelper.cpp
-          // to convert unknown types (OEM-specific) to I420
-          MOZ_MTLOG(ML_ERROR, "Un-handled GRALLOC buffer type:" << pixelFormat);
-          MOZ_CRASH();
-      }
-      void *basePtr;
-      graphicBuffer->lock(android::GraphicBuffer::USAGE_SW_READ_MASK, &basePtr);
-      uint32_t width = graphicBuffer->getWidth();
-      uint32_t height = graphicBuffer->getHeight();
-      // XXX gralloc buffer's width and stride could be different depends on implementations.
-
-      if (destFormat != mozilla::kVideoI420) {
-        unsigned char *video_frame = static_cast<unsigned char*>(basePtr);
-        webrtc::I420VideoFrame i420_frame;
-        int stride_y = width;
-        int stride_uv = (width + 1) / 2;
-        int target_width = width;
-        int target_height = height;
-        if (i420_frame.CreateEmptyFrame(target_width,
-                                        abs(target_height),
-                                        stride_y,
-                                        stride_uv, stride_uv) < 0) {
-          MOZ_ASSERT(false, "Can't allocate empty i420frame");
-          return;
-        }
-        webrtc::VideoType commonVideoType =
-          webrtc::RawVideoTypeToCommonVideoVideoType(
-            static_cast<webrtc::RawVideoType>((int)destFormat));
-        if (ConvertToI420(commonVideoType, video_frame, 0, 0, width, height,
-                          I420SIZE(width, height), webrtc::kVideoRotation_0,
-                          &i420_frame)) {
-          MOZ_ASSERT(false, "Can't convert video type for sending to I420");
-          return;
-        }
-        i420_frame.set_ntp_time_ms(0);
-        VideoFrameConverted(i420_frame);
-      } else {
-        VideoFrameConverted(static_cast<unsigned char*>(basePtr),
-                            I420SIZE(width, height),
-                            width,
-                            height,
-                            destFormat, 0);
-      }
-      graphicBuffer->unlock();
-      return;
-    } else
-#endif
     if (format == ImageFormat::PLANAR_YCBCR) {
       // Cast away constness b/c some of the accessors are non-const
       PlanarYCbCrImage* yuv = const_cast<PlanarYCbCrImage *>(
@@ -361,15 +336,18 @@ protected:
         uint32_t width = yuv->GetSize().width;
         uint32_t height = yuv->GetSize().height;
 
-        webrtc::I420VideoFrame i420_frame;
-        int rv = i420_frame.CreateFrame(y, cb, cr, width, height,
-                                        yStride, cbCrStride, cbCrStride,
-                                        webrtc::kVideoRotation_0);
-        if (rv != 0) {
-          NS_ERROR("Creating an I420 frame failed");
-          return;
-        }
+        rtc::Callback0<void> callback_unused;
+        rtc::scoped_refptr<webrtc::WrappedI420Buffer> video_frame_buffer(
+          new rtc::RefCountedObject<webrtc::WrappedI420Buffer>(
+            width, height,
+            y, yStride,
+            cb, cbCrStride,
+            cr, cbCrStride,
+            callback_unused));
 
+        webrtc::VideoFrame i420_frame(video_frame_buffer,
+                                      0, 0, // not setting timestamps
+                                      webrtc::kVideoRotation_0);
         MOZ_MTLOG(ML_DEBUG, "Sending an I420 video frame");
         VideoFrameConverted(i420_frame);
         return;
@@ -391,11 +369,17 @@ protected:
     }
 
     IntSize size = aImage->GetSize();
+    // these don't need to be CheckedInt, any overflow will be caught by YSIZE
     int half_width = (size.width + 1) >> 1;
     int half_height = (size.height + 1) >> 1;
     int c_size = half_width * half_height;
-    int buffer_size = YSIZE(size.width, size.height) + 2 * c_size;
-    auto yuv_scoped = MakeUniqueFallible<uint8[]>(buffer_size);
+    CheckedInt<int> buffer_size = YSIZE(size.width, size.height) + 2 * c_size;
+
+    if (!buffer_size.isValid()) {
+      return;
+    }
+
+    auto yuv_scoped = MakeUniqueFallible<uint8[]>(buffer_size.value());
     if (!yuv_scoped) {
       return;
     }
@@ -410,7 +394,7 @@ protected:
     }
 
     int rv;
-    int cb_offset = YSIZE(size.width, size.height);
+    int cb_offset = YSIZE(size.width, size.height).value();
     int cr_offset = cb_offset + c_size;
     switch (surf->GetFormat()) {
       case SurfaceFormat::B8G8R8A8:
@@ -441,7 +425,7 @@ protected:
     }
     MOZ_MTLOG(ML_DEBUG, "Sending an I420 video frame converted from " <<
                         Stringify(surf->GetFormat()));
-    VideoFrameConverted(yuv, buffer_size, size.width, size.height, mozilla::kVideoI420, 0);
+    VideoFrameConverted(Move(yuv_scoped), buffer_size.value(), size.width, size.height, mozilla::kVideoI420, 0);
   }
 
   Atomic<int32_t, Relaxed> mLength;
@@ -449,7 +433,7 @@ protected:
 
   // Written and read from the queueing thread (normally MSG).
   int32_t last_img_; // serial number of last Image
-  bool disabled_frame_sent_; // If a black frame has been sent after disabling.
+  TimeStamp disabled_frame_sent_; // The time we sent the last disabled frame.
 #ifdef DEBUG
   uint32_t mThrottleCount;
   uint32_t mThrottleRecord;
@@ -459,7 +443,120 @@ protected:
   Mutex mMutex;
   nsTArray<RefPtr<VideoConverterListener>> mListeners;
 };
-#endif
+
+// An async inserter for audio data, to avoid running audio codec encoders
+// on the MSG/input audio thread.  Basically just bounces all the audio
+// data to a single audio processing/input queue.  We could if we wanted to
+// use multiple threads and a TaskQueue.
+class AudioProxyThread
+{
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AudioProxyThread)
+
+  explicit AudioProxyThread(AudioSessionConduit *aConduit)
+    : mConduit(aConduit)
+  {
+    MOZ_ASSERT(mConduit);
+    MOZ_COUNT_CTOR(AudioProxyThread);
+
+    // Use only 1 thread; also forces FIFO operation
+    // We could use multiple threads, but that may be dicier with the webrtc.org
+    // code.  If so we'd need to use TaskQueues like the videoframe converter
+    RefPtr<SharedThreadPool> pool =
+      SharedThreadPool::Get(NS_LITERAL_CSTRING("AudioProxy"), 1);
+
+    mThread = pool.get();
+  }
+
+  // called on mThread
+  void InternalProcessAudioChunk(
+    TrackRate rate,
+    AudioChunk& chunk,
+    bool enabled) {
+
+    // Convert to interleaved, 16-bits integer audio, with a maximum of two
+    // channels (since the WebRTC.org code below makes the assumption that the
+    // input audio is either mono or stereo).
+    uint32_t outputChannels = chunk.ChannelCount() == 1 ? 1 : 2;
+    const int16_t* samples = nullptr;
+    UniquePtr<int16_t[]> convertedSamples;
+
+    // We take advantage of the fact that the common case (microphone directly to
+    // PeerConnection, that is, a normal call), the samples are already 16-bits
+    // mono, so the representation in interleaved and planar is the same, and we
+    // can just use that.
+    if (enabled && outputChannels == 1 && chunk.mBufferFormat == AUDIO_FORMAT_S16) {
+      samples = chunk.ChannelData<int16_t>().Elements()[0];
+    } else {
+      convertedSamples = MakeUnique<int16_t[]>(chunk.mDuration * outputChannels);
+
+      if (!enabled || chunk.mBufferFormat == AUDIO_FORMAT_SILENCE) {
+        PodZero(convertedSamples.get(), chunk.mDuration * outputChannels);
+      } else if (chunk.mBufferFormat == AUDIO_FORMAT_FLOAT32) {
+        DownmixAndInterleave(chunk.ChannelData<float>(),
+                             chunk.mDuration, chunk.mVolume, outputChannels,
+                             convertedSamples.get());
+      } else if (chunk.mBufferFormat == AUDIO_FORMAT_S16) {
+        DownmixAndInterleave(chunk.ChannelData<int16_t>(),
+                             chunk.mDuration, chunk.mVolume, outputChannels,
+                             convertedSamples.get());
+      }
+      samples = convertedSamples.get();
+    }
+
+    MOZ_ASSERT(!(rate%100)); // rate should be a multiple of 100
+
+    // Check if the rate or the number of channels has changed since the last time
+    // we came through. I realize it may be overkill to check if the rate has
+    // changed, but I believe it is possible (e.g. if we change sources) and it
+    // costs us very little to handle this case.
+
+    uint32_t audio_10ms = rate / 100;
+
+    if (!packetizer_ ||
+        packetizer_->PacketSize() != audio_10ms ||
+        packetizer_->Channels() != outputChannels) {
+      // It's ok to drop the audio still in the packetizer here.
+      packetizer_ = new AudioPacketizer<int16_t, int16_t>(audio_10ms, outputChannels);
+    }
+
+    packetizer_->Input(samples, chunk.mDuration);
+
+    while (packetizer_->PacketsAvailable()) {
+      uint32_t samplesPerPacket = packetizer_->PacketSize() *
+                                  packetizer_->Channels();
+      packetizer_->Output(packet_);
+      mConduit->SendAudioFrame(packet_, samplesPerPacket, rate, 0);
+    }
+  }
+
+  void QueueAudioChunk(TrackRate rate, AudioChunk& chunk, bool enabled)
+  {
+    RUN_ON_THREAD(mThread,
+                  WrapRunnable(RefPtr<AudioProxyThread>(this),
+                               &AudioProxyThread::InternalProcessAudioChunk,
+                               rate, chunk, enabled),
+                  NS_DISPATCH_NORMAL);
+  }
+
+protected:
+  virtual ~AudioProxyThread()
+  {
+    // Conduits must be released on MainThread, and we might have the last reference
+    // We don't need to worry about runnables still trying to access the conduit, since
+    // the runnables hold a ref to AudioProxyThread.
+    NS_ReleaseOnMainThreadSystemGroup(
+      "AudioProxyThread::mConduit", mConduit.forget());
+    MOZ_COUNT_DTOR(AudioProxyThread);
+  }
+
+  RefPtr<AudioSessionConduit> mConduit;
+  nsCOMPtr<nsIEventTarget> mThread;
+  // Only accessed on mThread
+  nsAutoPtr<AudioPacketizer<int16_t, int16_t>> packetizer_;
+  // A buffer to hold a single packet of audio.
+  int16_t packet_[AUDIO_SAMPLE_BUFFER_MAX_BYTES / sizeof(int16_t)];
+};
 
 static char kDTLSExporterLabel[] = "EXTRACTOR-dtls_srtp";
 
@@ -491,7 +588,7 @@ MediaPipeline::MediaPipeline(const std::string& pc,
     pc_(pc),
     description_(),
     filter_(filter),
-    rtp_parser_(webrtc::RtpHeaderParser::Create()) {
+    rtp_parser_(webrtc::RtpHeaderParser::Create()){
   // To indicate rtcp-mux rtcp_transport should be nullptr.
   // Therefore it's an error to send in the same flow for
   // both rtp and rtcp.
@@ -618,26 +715,52 @@ MediaPipeline::UpdateTransport_s(int level,
 }
 
 void
-MediaPipeline::SelectSsrc_m(size_t ssrc_index)
+MediaPipeline::AddRIDExtension_m(size_t extension_id)
 {
   RUN_ON_THREAD(sts_thread_,
-                WrapRunnable(
-                    this,
-                    &MediaPipeline::SelectSsrc_s,
-                    ssrc_index),
+                WrapRunnable(RefPtr<MediaPipeline>(this),
+                             &MediaPipeline::AddRIDExtension_s,
+                             extension_id),
                 NS_DISPATCH_NORMAL);
 }
 
 void
-MediaPipeline::SelectSsrc_s(size_t ssrc_index)
+MediaPipeline::AddRIDExtension_s(size_t extension_id)
+{
+  rtp_parser_->RegisterRtpHeaderExtension(webrtc::kRtpExtensionRtpStreamId,
+                                          extension_id);
+}
+
+void
+MediaPipeline::AddRIDFilter_m(const std::string& rid)
+{
+  RUN_ON_THREAD(sts_thread_,
+                WrapRunnable(RefPtr<MediaPipeline>(this),
+                             &MediaPipeline::AddRIDFilter_s,
+                             rid),
+                NS_DISPATCH_NORMAL);
+}
+
+void
+MediaPipeline::AddRIDFilter_s(const std::string& rid)
 {
   filter_ = new MediaPipelineFilter;
-  if (ssrc_index < ssrcs_received_.size()) {
-    filter_->AddRemoteSSRC(ssrcs_received_[ssrc_index]);
-  } else {
-    MOZ_MTLOG(ML_WARNING, "SelectSsrc called with " << ssrc_index << " but we "
-                          << "have only seen " << ssrcs_received_.size()
-                          << " ssrcs");
+  filter_->AddRemoteRtpStreamId(rid);
+}
+
+void
+MediaPipeline::GetContributingSourceStats(
+    const nsString& aInboundRtpStreamId,
+    FallibleTArray<dom::RTCRTPContributingSourceStats>& aArr) const
+{
+  // Get the expiry from now
+  DOMHighResTimeStamp expiry = RtpCSRCStats::GetExpiryFromTime(GetNow());
+  for (auto info : csrc_stats_) {
+    if (!info.second.Expired(expiry)) {
+      RTCRTPContributingSourceStats stats;
+      info.second.GetWebidlInstance(stats, aInboundRtpStreamId);
+      aArr.AppendElement(stats, fallible);
+    }
   }
 }
 
@@ -931,13 +1054,46 @@ void MediaPipeline::RtpPacketReceived(TransportLayer *layer,
     return;
   }
 
-  if (std::find(ssrcs_received_.begin(), ssrcs_received_.end(), header.ssrc) ==
-      ssrcs_received_.end()) {
-    ssrcs_received_.push_back(header.ssrc);
-  }
-
   if (filter_ && !filter_->Filter(header)) {
     return;
+  }
+
+  // Make sure to only get the time once, and only if we need it by
+  // using getTimestamp() for access
+  DOMHighResTimeStamp now = 0.0;
+  bool hasTime = false;
+
+  // Remove expired RtpCSRCStats
+  if (!csrc_stats_.empty()) {
+    if (!hasTime) {
+      now = GetNow();
+      hasTime = true;
+    }
+    auto expiry = RtpCSRCStats::GetExpiryFromTime(now);
+    for (auto p = csrc_stats_.begin(); p != csrc_stats_.end();) {
+      if (p->second.Expired(expiry)) {
+        p = csrc_stats_.erase(p);
+        continue;
+      }
+      p++;
+    }
+  }
+
+  // Add new RtpCSRCStats
+  if (header.numCSRCs) {
+    for (auto i = 0; i < header.numCSRCs; i++) {
+      if (!hasTime) {
+        now = GetNow();
+        hasTime = true;
+      }
+      auto csrcInfo = csrc_stats_.find(header.arrOfCSRCs[i]);
+      if (csrcInfo == csrc_stats_.end()) {
+        csrc_stats_.insert(std::make_pair(header.arrOfCSRCs[i],
+            RtpCSRCStats(header.arrOfCSRCs[i],now)));
+      } else {
+        csrcInfo->second.SetTimestamp(now);
+      }
+    }
   }
 
   // Make a copy rather than cast away constness
@@ -949,21 +1105,23 @@ void MediaPipeline::RtpPacketReceived(TransportLayer *layer,
   if (!NS_SUCCEEDED(res)) {
     char tmp[16];
 
-    PR_snprintf(tmp, sizeof(tmp), "%.2x %.2x %.2x %.2x",
-                inner_data[0],
-                inner_data[1],
-                inner_data[2],
-                inner_data[3]);
+    SprintfLiteral(tmp, "%.2x %.2x %.2x %.2x",
+                   inner_data[0],
+                   inner_data[1],
+                   inner_data[2],
+                   inner_data[3]);
 
     MOZ_MTLOG(ML_NOTICE, "Error unprotecting RTP in " << description_
               << "len= " << len << "[" << tmp << "...]");
-
     return;
   }
   MOZ_MTLOG(ML_DEBUG, description_ << " received RTP packet.");
   increment_rtp_packets_received(out_len);
 
-  (void)conduit_->ReceivedRTPPacket(inner_data.get(), out_len);  // Ignore error codes
+  RtpLogger::LogPacket(inner_data.get(), out_len, true, true, header.headerLength,
+                       description_);
+
+  (void)conduit_->ReceivedRTPPacket(inner_data.get(), out_len, header.ssrc);  // Ignore error codes
 }
 
 void MediaPipeline::RtcpPacketReceived(TransportLayer *layer,
@@ -1024,6 +1182,8 @@ void MediaPipeline::RtcpPacketReceived(TransportLayer *layer,
   MOZ_MTLOG(ML_DEBUG, description_ << " received RTCP packet.");
   increment_rtcp_packets_received();
 
+  RtpLogger::LogPacket(inner_data.get(), out_len, true, false, 0, description_);
+
   MOZ_ASSERT(rtcp_.recv_srtp_);  // This should never happen
 
   (void)conduit_->ReceivedRTCPPacket(inner_data.get(), out_len);  // Ignore error codes
@@ -1078,7 +1238,7 @@ void MediaPipeline::PacketReceived(TransportLayer *layer,
 }
 
 class MediaPipelineTransmit::PipelineListener
-  : public DirectMediaStreamTrackListener
+  : public MediaStreamVideoSink
 {
 friend class MediaPipelineTransmit;
 public:
@@ -1089,8 +1249,7 @@ public:
       track_id_external_(TRACK_INVALID),
       active_(false),
       enabled_(false),
-      direct_connect_(false),
-      packetizer_(nullptr)
+      direct_connect_(false)
   {
   }
 
@@ -1107,11 +1266,9 @@ public:
     } else {
       conduit_ = nullptr;
     }
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
     if (converter_) {
       converter_->Shutdown();
     }
-#endif
   }
 
   // Dispatches setting the internal TrackID to TRACK_INVALID to the media
@@ -1123,7 +1280,13 @@ public:
   void SetActive(bool active) { active_ = active; }
   void SetEnabled(bool enabled) { enabled_ = enabled; }
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  // These are needed since nested classes don't have access to any particular
+  // instance of the parent
+  void SetAudioProxy(const RefPtr<AudioProxyThread>& proxy)
+  {
+    audio_processing_ = proxy;
+  }
+
   void SetVideoFrameConverter(const RefPtr<VideoFrameConverter>& converter)
   {
     converter_ = converter;
@@ -1141,12 +1304,11 @@ public:
       aVideoFrame, aVideoFrameLength, aWidth, aHeight, aVideoType, aCaptureTime);
   }
 
-  void OnVideoFrameConverted(webrtc::I420VideoFrame& aVideoFrame)
+  void OnVideoFrameConverted(webrtc::VideoFrame& aVideoFrame)
   {
     MOZ_ASSERT(conduit_->type() == MediaSessionConduit::VIDEO);
     static_cast<VideoSessionConduit*>(conduit_.get())->SendVideoFrame(aVideoFrame);
   }
-#endif
 
   // Implement MediaStreamTrackListener
   void NotifyQueuedChanges(MediaStreamGraph* aGraph,
@@ -1160,23 +1322,21 @@ public:
   void NotifyDirectListenerInstalled(InstallationResult aResult) override;
   void NotifyDirectListenerUninstalled() override;
 
+  // Implement MediaStreamVideoSink
+  void SetCurrentFrames(const VideoSegment& aSegment) override;
+  void ClearFrames() override {}
+
 private:
   void UnsetTrackIdImpl() {
     MutexAutoLock lock(mMutex);
     track_id_ = track_id_external_ = TRACK_INVALID;
   }
 
-  void NewData(MediaStreamGraph* graph,
-               StreamTime offset,
-               const MediaSegment& media);
-
-  virtual void ProcessAudioChunk(AudioSessionConduit *conduit,
-                                 TrackRate rate, AudioChunk& chunk);
+  void NewData(const MediaSegment& media, TrackRate aRate = 0);
 
   RefPtr<MediaSessionConduit> conduit_;
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  RefPtr<AudioProxyThread> audio_processing_;
   RefPtr<VideoFrameConverter> converter_;
-#endif
 
   // May be TRACK_INVALID until we see data from the track
   TrackID track_id_; // this is the current TrackID this listener is attached to
@@ -1193,11 +1353,8 @@ private:
 
   // Written and read on the MediaStreamGraph thread
   bool direct_connect_;
-
-  nsAutoPtr<AudioPacketizer<int16_t, int16_t>> packetizer_;
 };
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 // Implements VideoConverterListener for MediaPipeline.
 //
 // We pass converted frames on to MediaPipelineTransmit::PipelineListener
@@ -1239,7 +1396,7 @@ public:
                                      aWidth, aHeight, aVideoType, aCaptureTime);
   }
 
-  void OnVideoFrameConverted(webrtc::I420VideoFrame& aVideoFrame) override
+  void OnVideoFrameConverted(webrtc::VideoFrame& aVideoFrame) override
   {
     MutexAutoLock lock(mutex_);
 
@@ -1259,7 +1416,6 @@ protected:
   RefPtr<PipelineListener> listener_;
   Mutex mutex_;
 };
-#endif
 
 MediaPipelineTransmit::MediaPipelineTransmit(
     const std::string& pc,
@@ -1277,8 +1433,11 @@ MediaPipelineTransmit::MediaPipelineTransmit(
   listener_(new PipelineListener(conduit)),
   domtrack_(domtrack)
 {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
-  if (IsVideo()) {
+  if (!IsVideo()) {
+    audio_processing_ = MakeAndAddRef<AudioProxyThread>(static_cast<AudioSessionConduit*>(conduit.get()));
+    listener_->SetAudioProxy(audio_processing_);
+  }
+  else { // Video
     // For video we send frames to an async VideoFrameConverter that calls
     // back to a VideoFrameFeeder that feeds I420 frames to VideoConduit.
 
@@ -1289,16 +1448,13 @@ MediaPipelineTransmit::MediaPipelineTransmit(
 
     listener_->SetVideoFrameConverter(converter_);
   }
-#endif
 }
 
 MediaPipelineTransmit::~MediaPipelineTransmit()
 {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   if (feeder_) {
     feeder_->Detach();
   }
-#endif
 }
 
 nsresult MediaPipelineTransmit::Init() {
@@ -1321,17 +1477,29 @@ void MediaPipelineTransmit::AttachToTrack(const std::string& track_id) {
             << static_cast<void *>(domtrack_) << " conduit type=" <<
             (conduit_->type() == MediaSessionConduit::AUDIO ?"audio":"video"));
 
-  // Register the Listener directly with the source if we can.
-  // We also register it as a non-direct listener so we fall back to that
-  // if installing the direct listener fails. As a direct listener we get access
-  // to direct unqueued (and not resampled) data.
-  domtrack_->AddDirectListener(listener_);
-  domtrack_->AddListener(listener_);
-
-#ifndef MOZILLA_INTERNAL_API
-  // this enables the unit tests that can't fiddle with principals and the like
-  listener_->SetEnabled(true);
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  // With full duplex we don't risk having audio come in late to the MSG
+  // so we won't need a direct listener.
+  const bool enableDirectListener =
+    !Preferences::GetBool("media.navigator.audio.full_duplex", false);
+#else
+  const bool enableDirectListener = true;
 #endif
+
+  if (domtrack_->AsAudioStreamTrack()) {
+    if (enableDirectListener) {
+      // Register the Listener directly with the source if we can.
+      // We also register it as a non-direct listener so we fall back to that
+      // if installing the direct listener fails. As a direct listener we get access
+      // to direct unqueued (and not resampled) data.
+      domtrack_->AddDirectListener(listener_);
+    }
+    domtrack_->AddListener(listener_);
+  } else if (VideoStreamTrack* video = domtrack_->AsVideoStreamTrack()) {
+    video->AddVideoOutput(listener_);
+  } else {
+    MOZ_ASSERT(false, "Unknown track type");
+  }
 }
 
 bool
@@ -1340,7 +1508,6 @@ MediaPipelineTransmit::IsVideo() const
   return !!domtrack_->AsVideoStreamTrack();
 }
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 void MediaPipelineTransmit::UpdateSinkIdentity_m(MediaStreamTrack* track,
                                                  nsIPrincipal* principal,
                                                  const PeerIdentity* sinkIdentity) {
@@ -1367,15 +1534,20 @@ void MediaPipelineTransmit::UpdateSinkIdentity_m(MediaStreamTrack* track,
 
   listener_->SetEnabled(enableTrack);
 }
-#endif
 
 void
 MediaPipelineTransmit::DetachMedia()
 {
   ASSERT_ON_THREAD(main_thread_);
   if (domtrack_) {
-    domtrack_->RemoveDirectListener(listener_);
-    domtrack_->RemoveListener(listener_);
+    if (domtrack_->AsAudioStreamTrack()) {
+      domtrack_->RemoveDirectListener(listener_);
+      domtrack_->RemoveListener(listener_);
+    } else if (VideoStreamTrack* video = domtrack_->AsVideoStreamTrack()) {
+      video->RemoveVideoOutput(listener_);
+    } else {
+      MOZ_ASSERT(false, "Unknown track type");
+    }
     domtrack_ = nullptr;
   }
   // Let the listener be destroyed with the pipeline (or later).
@@ -1396,13 +1568,9 @@ nsresult MediaPipelineTransmit::TransportReady_s(TransportInfo &info) {
 
 nsresult MediaPipelineTransmit::ReplaceTrack(MediaStreamTrack& domtrack) {
   // MainThread, checked in calls we make
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   nsString nsTrackId;
   domtrack.GetId(nsTrackId);
   std::string track_id(NS_ConvertUTF16toUTF8(nsTrackId).get());
-#else
-  std::string track_id = domtrack.GetId();
-#endif
   MOZ_MTLOG(ML_DEBUG, "Reattaching pipeline " << description_ << " to track "
             << static_cast<void *>(&domtrack)
             << " track " << track_id << " conduit type=" <<
@@ -1471,19 +1639,18 @@ MediaPipeline::TransportInfo* MediaPipeline::GetTransportInfo_s(
 }
 
 nsresult MediaPipeline::PipelineTransport::SendRtpPacket(
-    const void *data, int len) {
+    const uint8_t* data, size_t len) {
 
-    nsAutoPtr<DataBuffer> buf(new DataBuffer(static_cast<const uint8_t *>(data),
-                                             len, len + SRTP_MAX_EXPANSION));
+  nsAutoPtr<DataBuffer> buf(new DataBuffer(data, len, len + SRTP_MAX_EXPANSION));
 
-    RUN_ON_THREAD(sts_thread_,
-                  WrapRunnable(
-                      RefPtr<MediaPipeline::PipelineTransport>(this),
-                      &MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s,
-                      buf, true),
-                  NS_DISPATCH_NORMAL);
+  RUN_ON_THREAD(sts_thread_,
+                WrapRunnable(
+                             RefPtr<MediaPipeline::PipelineTransport>(this),
+                             &MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s,
+                             buf, true),
+                NS_DISPATCH_NORMAL);
 
-    return NS_OK;
+  return NS_OK;
 }
 
 nsresult MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s(
@@ -1506,6 +1673,17 @@ nsresult MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s(
 
   // libsrtp enciphers in place, so we need a big enough buffer.
   MOZ_ASSERT(data->capacity() >= data->len() + SRTP_MAX_EXPANSION);
+
+  if (RtpLogger::IsPacketLoggingOn()) {
+    int header_len = 12;
+    webrtc::RTPHeader header;
+    if (pipeline_->rtp_parser_ &&
+        pipeline_->rtp_parser_->Parse(data->data(), data->len(), &header)) {
+        header_len = header.headerLength;
+    }
+    RtpLogger::LogPacket(data->data(), data->len(), false, is_rtp, header_len,
+                         pipeline_->description_);
+  }
 
   int out_len;
   nsresult res;
@@ -1538,24 +1716,22 @@ nsresult MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s(
 }
 
 nsresult MediaPipeline::PipelineTransport::SendRtcpPacket(
-    const void *data, int len) {
+    const uint8_t* data, size_t len) {
 
-    nsAutoPtr<DataBuffer> buf(new DataBuffer(static_cast<const uint8_t *>(data),
-                                             len, len + SRTP_MAX_EXPANSION));
+  nsAutoPtr<DataBuffer> buf(new DataBuffer(data, len, len + SRTP_MAX_EXPANSION));
 
-    RUN_ON_THREAD(sts_thread_,
-                  WrapRunnable(
-                      RefPtr<MediaPipeline::PipelineTransport>(this),
-                      &MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s,
-                      buf, false),
-                  NS_DISPATCH_NORMAL);
+  RUN_ON_THREAD(sts_thread_,
+                WrapRunnable(
+                             RefPtr<MediaPipeline::PipelineTransport>(this),
+                             &MediaPipeline::PipelineTransport::SendRtpRtcpPacket_s,
+                             buf, false),
+                NS_DISPATCH_NORMAL);
 
-    return NS_OK;
+  return NS_OK;
 }
 
 void MediaPipelineTransmit::PipelineListener::
 UnsetTrackId(MediaStreamGraphImpl* graph) {
-#ifndef USE_FAKE_MEDIA_STREAMS
   class Message : public ControlMessage {
   public:
     explicit Message(PipelineListener* listener) :
@@ -1567,9 +1743,6 @@ UnsetTrackId(MediaStreamGraphImpl* graph) {
     RefPtr<PipelineListener> listener_;
   };
   graph->AppendMessage(MakeUnique<Message>(this));
-#else
-  UnsetTrackIdImpl();
-#endif
 }
 // Called if we're attached with AddDirectListener()
 void MediaPipelineTransmit::PipelineListener::
@@ -1580,7 +1753,14 @@ NotifyRealtimeTrackData(MediaStreamGraph* graph,
                       this << ", offset=" << offset <<
                       ", duration=" << media.GetDuration());
 
-  NewData(graph, offset, media);
+  if (media.GetType() == MediaSegment::VIDEO) {
+    // We have to call the upstream NotifyRealtimeTrackData and
+    // MediaStreamVideoSink will route them to SetCurrentFrames.
+    MediaStreamVideoSink::NotifyRealtimeTrackData(graph, offset, media);
+    return;
+  }
+
+  NewData(media, graph->GraphRate());
 }
 
 void MediaPipelineTransmit::PipelineListener::
@@ -1589,10 +1769,24 @@ NotifyQueuedChanges(MediaStreamGraph* graph,
                     const MediaSegment& queued_media) {
   MOZ_MTLOG(ML_DEBUG, "MediaPipeline::NotifyQueuedChanges()");
 
-  // ignore non-direct data if we're also getting direct data
-  if (!direct_connect_) {
-    NewData(graph, offset, queued_media);
+  if (queued_media.GetType() == MediaSegment::VIDEO) {
+    // We always get video from SetCurrentFrames().
+    return;
   }
+
+  if (direct_connect_) {
+    // ignore non-direct data if we're also getting direct data
+    return;
+  }
+
+  size_t rate;
+  if (graph) {
+    rate = graph->GraphRate();
+  } else {
+    // When running tests, graph may be null. In that case use a default.
+    rate = 16000;
+  }
+  NewData(queued_media, rate);
 }
 
 void MediaPipelineTransmit::PipelineListener::
@@ -1611,9 +1805,7 @@ NotifyDirectListenerUninstalled() {
 }
 
 void MediaPipelineTransmit::PipelineListener::
-NewData(MediaStreamGraph* graph,
-        StreamTime offset,
-        const MediaSegment& media) {
+NewData(const MediaSegment& media, TrackRate aRate /* = 0 */) {
   if (!active_) {
     MOZ_MTLOG(ML_DEBUG, "Discarding packets because transport not ready");
     return;
@@ -1631,103 +1823,25 @@ NewData(MediaStreamGraph* graph,
   // track type and it's destined for us
   // See bug 784517
   if (media.GetType() == MediaSegment::AUDIO) {
-    AudioSegment* audio = const_cast<AudioSegment *>(
-        static_cast<const AudioSegment *>(&media));
+    MOZ_RELEASE_ASSERT(aRate > 0);
 
-    AudioSegment::ChunkIterator iter(*audio);
-    while(!iter.IsEnded()) {
-      TrackRate rate;
-#ifdef USE_FAKE_MEDIA_STREAMS
-      rate = Fake_MediaStream::GraphRate();
-#else
-      rate = graph->GraphRate();
-#endif
-      ProcessAudioChunk(static_cast<AudioSessionConduit*>(conduit_.get()),
-                        rate, *iter);
-      iter.Next();
+    AudioSegment* audio = const_cast<AudioSegment *>(static_cast<const AudioSegment*>(&media));
+    for(AudioSegment::ChunkIterator iter(*audio); !iter.IsEnded(); iter.Next()) {
+      audio_processing_->QueueAudioChunk(aRate, *iter, enabled_);
     }
-  } else if (media.GetType() == MediaSegment::VIDEO) {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
-    VideoSegment* video = const_cast<VideoSegment *>(
-        static_cast<const VideoSegment *>(&media));
-
-    VideoSegment::ChunkIterator iter(*video);
-    while(!iter.IsEnded()) {
-      converter_->QueueVideoChunk(*iter, !enabled_);
-      iter.Next();
-    }
-#endif
   } else {
-    // Ignore
+    VideoSegment* video = const_cast<VideoSegment *>(static_cast<const VideoSegment*>(&media));
+    VideoSegment::ChunkIterator iter(*video);
+    for(VideoSegment::ChunkIterator iter(*video); !iter.IsEnded(); iter.Next()) {
+      converter_->QueueVideoChunk(*iter, !enabled_);
+    }
   }
 }
 
-void MediaPipelineTransmit::PipelineListener::ProcessAudioChunk(
-    AudioSessionConduit *conduit,
-    TrackRate rate,
-    AudioChunk& chunk) {
-
-  // Convert to interleaved, 16-bits integer audio, with a maximum of two
-  // channels (since the WebRTC.org code below makes the assumption that the
-  // input audio is either mono or stereo).
-  uint32_t outputChannels = chunk.ChannelCount() == 1 ? 1 : 2;
-  const int16_t* samples = nullptr;
-  UniquePtr<int16_t[]> convertedSamples;
-
-  // We take advantage of the fact that the common case (microphone directly to
-  // PeerConnection, that is, a normal call), the samples are already 16-bits
-  // mono, so the representation in interleaved and planar is the same, and we
-  // can just use that.
-  if (enabled_ && outputChannels == 1 && chunk.mBufferFormat == AUDIO_FORMAT_S16) {
-    samples = chunk.ChannelData<int16_t>().Elements()[0];
-  } else {
-    convertedSamples = MakeUnique<int16_t[]>(chunk.mDuration * outputChannels);
-
-    if (!enabled_ || chunk.mBufferFormat == AUDIO_FORMAT_SILENCE) {
-      PodZero(convertedSamples.get(), chunk.mDuration * outputChannels);
-    } else if (chunk.mBufferFormat == AUDIO_FORMAT_FLOAT32) {
-      DownmixAndInterleave(chunk.ChannelData<float>(),
-                           chunk.mDuration, chunk.mVolume, outputChannels,
-                           convertedSamples.get());
-    } else if (chunk.mBufferFormat == AUDIO_FORMAT_S16) {
-      DownmixAndInterleave(chunk.ChannelData<int16_t>(),
-                           chunk.mDuration, chunk.mVolume, outputChannels,
-                           convertedSamples.get());
-    }
-    samples = convertedSamples.get();
-  }
-
-  MOZ_ASSERT(!(rate%100)); // rate should be a multiple of 100
-
-  // Check if the rate or the number of channels has changed since the last time
-  // we came through. I realize it may be overkill to check if the rate has
-  // changed, but I believe it is possible (e.g. if we change sources) and it
-  // costs us very little to handle this case.
-
-  uint32_t audio_10ms = rate / 100;
-
-  if (!packetizer_ ||
-      packetizer_->PacketSize() != audio_10ms ||
-      packetizer_->Channels() != outputChannels) {
-    // It's ok to drop the audio still in the packetizer here.
-    packetizer_ = new AudioPacketizer<int16_t, int16_t>(audio_10ms, outputChannels);
-   }
-
-  packetizer_->Input(samples, chunk.mDuration);
-
-  while (packetizer_->PacketsAvailable()) {
-    uint32_t samplesPerPacket = packetizer_->PacketSize() *
-                                packetizer_->Channels();
-
-    // We know that webrtc.org's code going to copy the samples down the line,
-    // so we can just use a stack buffer here instead of malloc-ing.
-    int16_t packet[AUDIO_SAMPLE_BUFFER_MAX];
-
-    packetizer_->Output(packet);
-    conduit->SendAudioFrame(packet,
-                            samplesPerPacket,
-                            rate, 0);
-  }
+void MediaPipelineTransmit::PipelineListener::
+SetCurrentFrames(const VideoSegment& aSegment)
+{
+  NewData(aSegment);
 }
 
 class TrackAddedCallback {
@@ -1756,7 +1870,6 @@ class GenericReceiveCallback : public TrackAddedCallback
 
 // Add a listener on the MSG thread using the MSG command queue
 static void AddListener(MediaStream* source, MediaStreamListener* listener) {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   class Message : public ControlMessage {
    public:
     Message(MediaStream* stream, MediaStreamListener* listener)
@@ -1772,10 +1885,9 @@ static void AddListener(MediaStream* source, MediaStreamListener* listener) {
 
   MOZ_ASSERT(listener);
 
-  source->GraphImpl()->AppendMessage(MakeUnique<Message>(source, listener));
-#else
-  source->AddListener(listener);
-#endif
+  if (source->GraphImpl()) {
+    source->GraphImpl()->AppendMessage(MakeUnique<Message>(source, listener));
+  }
 }
 
 class GenericReceiveListener : public MediaStreamListener
@@ -1785,6 +1897,7 @@ class GenericReceiveListener : public MediaStreamListener
     : source_(source),
       track_id_(track_id),
       played_ticks_(0),
+      last_log_(0),
       principal_handle_(PRINCIPAL_HANDLE_NONE) {}
 
   virtual ~GenericReceiveListener() {}
@@ -1794,7 +1907,11 @@ class GenericReceiveListener : public MediaStreamListener
     AddListener(source_, this);
   }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
+  void EndTrack()
+  {
+    source_->EndTrack(track_id_);
+  }
+
   // Must be called on the main thread
   void SetPrincipalHandle_m(const PrincipalHandle& principal_handle)
   {
@@ -1825,12 +1942,12 @@ class GenericReceiveListener : public MediaStreamListener
   {
     principal_handle_ = principal_handle;
   }
-#endif // USE_FAKE_MEDIA_STREAMS
 
  protected:
   SourceMediaStream *source_;
-  TrackID track_id_;
+  const TrackID track_id_;
   TrackTicks played_ticks_;
+  TrackTicks last_log_; // played_ticks_ when we last logged
   PrincipalHandle principal_handle_;
 };
 
@@ -1897,7 +2014,7 @@ public:
     // This comparison is done in total time to avoid accumulated roundoff errors.
     while (source_->TicksToTimeRoundDown(WEBRTC_DEFAULT_SAMPLE_RATE,
                                          played_ticks_) < desired_time) {
-      int16_t scratch_buffer[AUDIO_SAMPLE_BUFFER_MAX];
+      int16_t scratch_buffer[AUDIO_SAMPLE_BUFFER_MAX_BYTES / sizeof(int16_t)];
 
       int samples_length;
 
@@ -1920,7 +2037,7 @@ public:
         PodArrayZero(scratch_buffer);
       }
 
-      MOZ_ASSERT(samples_length * sizeof(uint16_t) < AUDIO_SAMPLE_BUFFER_MAX);
+      MOZ_ASSERT(samples_length * sizeof(uint16_t) < AUDIO_SAMPLE_BUFFER_MAX_BYTES);
 
       MOZ_MTLOG(ML_DEBUG, "Audio conduit returned buffer of length "
                 << samples_length);
@@ -1957,6 +2074,14 @@ public:
       // Handle track not actually added yet or removed/finished
       if (source_->AppendToTrack(track_id_, &segment)) {
         played_ticks_ += frames;
+        if (MOZ_LOG_TEST(AudioLogModule(), LogLevel::Debug)) {
+          if (played_ticks_ > last_log_ + WEBRTC_DEFAULT_SAMPLE_RATE) { // ~ 1 second
+            MOZ_LOG(AudioLogModule(), LogLevel::Debug,
+                    ("%p: Inserting %zu samples into track %d, total = %" PRIu64,
+                     (void*) this, frames, track_id_, played_ticks_));
+            last_log_ = played_ticks_;
+          }
+        }
       } else {
         MOZ_MTLOG(ML_ERROR, "AppendToTrack failed");
         // we can't un-read the data, but that's ok since we don't want to
@@ -1991,13 +2116,18 @@ MediaPipelineReceiveAudio::MediaPipelineReceiveAudio(
 void MediaPipelineReceiveAudio::DetachMedia()
 {
   ASSERT_ON_THREAD(main_thread_);
-  if (stream_) {
-    stream_->RemoveListener(listener_);
+  if (stream_ && listener_) {
+    listener_->EndTrack();
+
+    if (stream_->GraphImpl()) {
+      stream_->RemoveListener(listener_);
+    }
     stream_ = nullptr;
   }
 }
 
-nsresult MediaPipelineReceiveAudio::Init() {
+nsresult MediaPipelineReceiveAudio::Init()
+{
   ASSERT_ON_THREAD(main_thread_);
   MOZ_MTLOG(ML_DEBUG, __FUNCTION__);
 
@@ -2010,37 +2140,28 @@ nsresult MediaPipelineReceiveAudio::Init() {
   return MediaPipelineReceive::Init();
 }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
 void MediaPipelineReceiveAudio::SetPrincipalHandle_m(const PrincipalHandle& principal_handle)
 {
   listener_->SetPrincipalHandle_m(principal_handle);
 }
-#endif // USE_FAKE_MEDIA_STREAMS
 
 class MediaPipelineReceiveVideo::PipelineListener
   : public GenericReceiveListener {
 public:
-  PipelineListener(SourceMediaStream * source, TrackID track_id)
-    : GenericReceiveListener(source, track_id),
-      width_(0),
-      height_(0),
-#if defined(MOZILLA_INTERNAL_API)
-      image_container_(),
-      image_(),
-#endif
-      monitor_("Video PipelineListener")
+  PipelineListener(SourceMediaStream* source, TrackID track_id)
+    : GenericReceiveListener(source, track_id)
+    , image_container_()
+    , image_()
+    , mutex_("Video PipelineListener")
   {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
     image_container_ =
       LayerManager::CreateImageContainer(ImageContainer::ASYNCHRONOUS);
-#endif
   }
 
   // Implement MediaStreamListener
   void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) override
   {
-  #if defined(MOZILLA_INTERNAL_API)
-    ReentrantMonitorAutoEnter enter(monitor_);
+    MutexAutoLock lock(mutex_);
 
     RefPtr<Image> image = image_;
     StreamTime delta = desired_time - played_ticks_;
@@ -2050,8 +2171,8 @@ public:
     // delta and thus messes up handling of the graph
     if (delta > 0) {
       VideoSegment segment;
-      segment.AppendFrame(image.forget(), delta, IntSize(width_, height_),
-                          principal_handle_);
+      IntSize size = image ? image->GetSize() : IntSize(width_, height_);
+      segment.AppendFrame(image.forget(), delta, size, principal_handle_);
       // Handle track not actually added yet or removed/finished
       if (source_->AppendToTrack(track_id_, &segment)) {
         played_ticks_ = desired_time;
@@ -2060,95 +2181,72 @@ public:
         return;
       }
     }
-  #endif
   }
 
   // Accessors for external writes from the renderer
   void FrameSizeChange(unsigned int width,
                        unsigned int height,
                        unsigned int number_of_streams) {
-    ReentrantMonitorAutoEnter enter(monitor_);
+    MutexAutoLock enter(mutex_);
 
     width_ = width;
     height_ = height;
   }
 
-  void RenderVideoFrame(const unsigned char* buffer,
-                        size_t buffer_size,
+  void RenderVideoFrame(const webrtc::VideoFrameBuffer& buffer,
                         uint32_t time_stamp,
-                        int64_t render_time,
-                        const RefPtr<layers::Image>& video_image)
+                        int64_t render_time)
   {
-    RenderVideoFrame(buffer, buffer_size, width_, (width_ + 1) >> 1,
-                     time_stamp, render_time, video_image);
-  }
-
-  void RenderVideoFrame(const unsigned char* buffer,
-                        size_t buffer_size,
-                        uint32_t y_stride,
-                        uint32_t cbcr_stride,
-                        uint32_t time_stamp,
-                        int64_t render_time,
-                        const RefPtr<layers::Image>& video_image)
-  {
-#ifdef MOZILLA_INTERNAL_API
-    ReentrantMonitorAutoEnter enter(monitor_);
-#endif // MOZILLA_INTERNAL_API
-
-#if defined(MOZILLA_INTERNAL_API)
-    if (buffer) {
-      // Create a video frame using |buffer|.
-#ifdef MOZ_WIDGET_GONK
-      RefPtr<PlanarYCbCrImage> yuvImage = new GrallocImage();
-#else
-      RefPtr<PlanarYCbCrImage> yuvImage = image_container_->CreatePlanarYCbCrImage();
-#endif
-      uint8_t* frame = const_cast<uint8_t*>(static_cast<const uint8_t*> (buffer));
-
-      PlanarYCbCrData yuvData;
-      yuvData.mYChannel = frame;
-      yuvData.mYSize = IntSize(y_stride, height_);
-      yuvData.mYStride = y_stride;
-      yuvData.mCbCrStride = cbcr_stride;
-      yuvData.mCbChannel = frame + height_ * yuvData.mYStride;
-      yuvData.mCrChannel = yuvData.mCbChannel + ((height_ + 1) >> 1) * yuvData.mCbCrStride;
-      yuvData.mCbCrSize = IntSize(yuvData.mCbCrStride, (height_ + 1) >> 1);
-      yuvData.mPicX = 0;
-      yuvData.mPicY = 0;
-      yuvData.mPicSize = IntSize(width_, height_);
-      yuvData.mStereoMode = StereoMode::MONO;
-
-      if (!yuvImage->CopyData(yuvData)) {
-        MOZ_ASSERT(false);
-        return;
-      }
-
-      image_ = yuvImage;
+    if (buffer.native_handle()) {
+      // We assume that only native handles are used with the
+      // WebrtcMediaDataDecoderCodec decoder.
+      RefPtr<Image> image = static_cast<Image*>(buffer.native_handle());
+      MutexAutoLock lock(mutex_);
+      image_ = image;
+      return;
     }
-#ifdef WEBRTC_GONK
-    else {
-      // Decoder produced video frame that can be appended to the track directly.
-      MOZ_ASSERT(video_image);
-      image_ = video_image;
+
+    MOZ_ASSERT(buffer.DataY());
+    // Create a video frame using |buffer|.
+    RefPtr<PlanarYCbCrImage> yuvImage =
+      image_container_->CreatePlanarYCbCrImage();
+
+    PlanarYCbCrData yuvData;
+    yuvData.mYChannel = const_cast<uint8_t*>(buffer.DataY());
+    yuvData.mYSize = IntSize(buffer.width(), buffer.height());
+    yuvData.mYStride = buffer.StrideY();
+    MOZ_ASSERT(buffer.StrideU() == buffer.StrideV());
+    yuvData.mCbCrStride = buffer.StrideU();
+    yuvData.mCbChannel = const_cast<uint8_t*>(buffer.DataU());
+    yuvData.mCrChannel = const_cast<uint8_t*>(buffer.DataV());
+    yuvData.mCbCrSize =
+      IntSize((buffer.width() + 1) >> 1, (buffer.height() + 1) >> 1);
+    yuvData.mPicX = 0;
+    yuvData.mPicY = 0;
+    yuvData.mPicSize = IntSize(buffer.width(), buffer.height());
+    yuvData.mStereoMode = StereoMode::MONO;
+
+    if (!yuvImage->CopyData(yuvData)) {
+      MOZ_ASSERT(false);
+      return;
     }
-#endif // WEBRTC_GONK
-#endif // MOZILLA_INTERNAL_API
+
+    MutexAutoLock lock(mutex_);
+    image_ = yuvImage;
   }
 
 private:
   int width_;
   int height_;
-#if defined(MOZILLA_INTERNAL_API)
   RefPtr<layers::ImageContainer> image_container_;
   RefPtr<layers::Image> image_;
-#endif
-  mozilla::ReentrantMonitor monitor_; // Monitor for processing WebRTC frames.
-                                      // Protects image_ against:
-                                      // - Writing from the GIPS thread
-                                      // - Reading from the MSG thread
+  Mutex mutex_; // Mutex for processing WebRTC frames.
+                // Protects image_ against:
+                // - Writing from the GIPS thread
+                // - Reading from the MSG thread
 };
 
-class MediaPipelineReceiveVideo::PipelineRenderer : public VideoRenderer
+class MediaPipelineReceiveVideo::PipelineRenderer : public mozilla::VideoRenderer
 {
 public:
   explicit PipelineRenderer(MediaPipelineReceiveVideo *pipeline) :
@@ -2164,29 +2262,11 @@ public:
     pipeline_->listener_->FrameSizeChange(width, height, number_of_streams);
   }
 
-  void RenderVideoFrame(const unsigned char* buffer,
-                        size_t buffer_size,
+  void RenderVideoFrame(const webrtc::VideoFrameBuffer& buffer,
                         uint32_t time_stamp,
-                        int64_t render_time,
-                        const ImageHandle& handle) override
+                        int64_t render_time) override
   {
-    pipeline_->listener_->RenderVideoFrame(buffer, buffer_size,
-                                           time_stamp, render_time,
-                                           handle.GetImage());
-  }
-
-  void RenderVideoFrame(const unsigned char* buffer,
-                        size_t buffer_size,
-                        uint32_t y_stride,
-                        uint32_t cbcr_stride,
-                        uint32_t time_stamp,
-                        int64_t render_time,
-                        const ImageHandle& handle) override
-  {
-    pipeline_->listener_->RenderVideoFrame(buffer, buffer_size,
-                                           y_stride, cbcr_stride,
-                                           time_stamp, render_time,
-                                           handle.GetImage());
+    pipeline_->listener_->RenderVideoFrame(buffer, time_stamp, render_time);
   }
 
 private:
@@ -2222,7 +2302,8 @@ void MediaPipelineReceiveVideo::DetachMedia()
   // avoid cycles, and the render callbacks are invoked from a different
   // thread so simple null-checks would cause TSAN bugs without locks.
   static_cast<VideoSessionConduit*>(conduit_.get())->DetachRenderer();
-  if (stream_) {
+  if (stream_ && listener_) {
+    listener_->EndTrack();
     stream_->RemoveListener(listener_);
     stream_ = nullptr;
   }
@@ -2236,9 +2317,7 @@ nsresult MediaPipelineReceiveVideo::Init() {
   description_ += track_id_;
   description_ += "]";
 
-#if defined(MOZILLA_INTERNAL_API)
   listener_->AddSelf();
-#endif
 
   // Always happens before we can DetachMedia()
   static_cast<VideoSessionConduit *>(conduit_.get())->
@@ -2247,11 +2326,40 @@ nsresult MediaPipelineReceiveVideo::Init() {
   return MediaPipelineReceive::Init();
 }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
 void MediaPipelineReceiveVideo::SetPrincipalHandle_m(const PrincipalHandle& principal_handle)
 {
   listener_->SetPrincipalHandle_m(principal_handle);
 }
-#endif // USE_FAKE_MEDIA_STREAMS
+
+DOMHighResTimeStamp MediaPipeline::GetNow() {
+  return webrtc::Clock::GetRealTimeClock()->TimeInMilliseconds();
+}
+
+DOMHighResTimeStamp
+MediaPipeline::RtpCSRCStats::GetExpiryFromTime(
+    const DOMHighResTimeStamp aTime) {
+  // DOMHighResTimeStamp is a unit measured in ms
+  return aTime - EXPIRY_TIME_MILLISECONDS;
+}
+
+MediaPipeline::RtpCSRCStats::RtpCSRCStats(const uint32_t aCsrc,
+                                          const DOMHighResTimeStamp aTime)
+  : mCsrc(aCsrc)
+  , mTimestamp(aTime) {}
+
+void
+MediaPipeline::RtpCSRCStats::GetWebidlInstance(
+    dom::RTCRTPContributingSourceStats& aWebidlObj,
+    const nsString &aInboundRtpStreamId) const
+{
+  nsString statId = NS_LITERAL_STRING("csrc_") + aInboundRtpStreamId;
+  statId.AppendLiteral("_");
+  statId.AppendInt(mCsrc);
+  aWebidlObj.mId.Construct(statId);
+  aWebidlObj.mType.Construct(RTCStatsType::Csrc);
+  aWebidlObj.mTimestamp.Construct(mTimestamp);
+  aWebidlObj.mContributorSsrc.Construct(mCsrc);
+  aWebidlObj.mInboundRtpStreamId.Construct(aInboundRtpStreamId);
+}
 
 }  // end namespace

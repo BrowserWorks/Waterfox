@@ -6,7 +6,11 @@
 
 "use strict";
 
-dump("###################################### BrowserElementCopyPaste.js loaded\n");
+function debug(msg) {
+  // dump("BrowserElementCopyPaste - " + msg + "\n");
+}
+
+debug("loaded");
 
 var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 
@@ -19,11 +23,31 @@ var CopyPasteAssistent = {
   },
 
   init: function() {
-    addEventListener('mozcaretstatechanged',
-                     this._caretStateChangedHandler.bind(this),
-                     /* useCapture = */ true,
-                     /* wantsUntrusted = */ false);
-    addMessageListener('browser-element-api:call', this._browserAPIHandler.bind(this));
+    addEventListener("mozcaretstatechanged", this,
+                     /* useCapture = */ true, /* wantsUntrusted = */ false);
+    addMessageListener("browser-element-api:call", this);
+  },
+
+  destroy: function() {
+    removeEventListener("mozcaretstatechanged", this,
+                        /* useCapture = */ true, /* wantsUntrusted = */ false);
+    removeMessageListener("browser-element-api:call", this);
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case "mozcaretstatechanged":
+        this._caretStateChangedHandler(event);
+        break;
+    }
+  },
+
+  receiveMessage: function(message) {
+    switch (message.name) {
+      case "browser-element-api:call":
+        this._browserAPIHandler(message);
+        break;
+    }
   },
 
   _browserAPIHandler: function(e) {
@@ -84,12 +108,12 @@ var CopyPasteAssistent = {
       detail.rect.bottom += currentRect.top;
       detail.rect.left += currentRect.left;
       detail.rect.right += currentRect.left;
-      currentWindow = currentWindow.realFrameElement.ownerDocument.defaultView;
+      currentWindow = currentWindow.realFrameElement.ownerGlobal;
 
       let targetDocShell = currentWindow
           .QueryInterface(Ci.nsIInterfaceRequestor)
           .getInterface(Ci.nsIWebNavigation);
-      if(targetDocShell.isMozBrowserOrApp) {
+      if(targetDocShell.isMozBrowser) {
         break;
       }
     }

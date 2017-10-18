@@ -32,7 +32,7 @@ UPLOAD_EXTRA_FILES += robocop.apk
 ifndef MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE
 robocop_apk := $(topobjdir)/mobile/android/tests/browser/robocop/robocop-debug-unsigned-unaligned.apk
 else
-robocop_apk := $(topobjdir)/gradle/build/mobile/android/app/outputs/apk/app-automation-debug-androidTest-unaligned.apk
+robocop_apk := $(topobjdir)/gradle/build/mobile/android/app/outputs/apk/app-official-australis-debug-androidTest-unaligned.apk
 endif
 
 INNER_ROBOCOP_PACKAGE= \
@@ -95,13 +95,12 @@ INNER_FENNEC_PACKAGE = \
     --verbose \
     --inputs \
       $(GECKO_APP_AP_PATH)/gecko-nodeps.ap_ \
-    --omnijar $(STAGEPATH)$(MOZ_PKG_DIR)/$(OMNIJAR_NAME) \
+    --omnijar $(MOZ_PKG_DIR)/$(OMNIJAR_NAME) \
     --classes-dex $(GECKO_APP_AP_PATH)/classes.dex \
-    --lib-dirs $(STAGEPATH)$(MOZ_PKG_DIR)/lib \
-    --assets-dirs $(STAGEPATH)$(MOZ_PKG_DIR)/assets \
-    --features-dirs $(STAGEPATH)$(MOZ_PKG_DIR)/features \
-    $(if $(COMPILE_ENVIRONMENT),$(if $(MOZ_ENABLE_SZIP),--szip-assets-libs-with $(ABS_DIST)/host/bin/szip)) \
-    --root-files $(foreach f,$(ROOT_FILES),$(STAGEPATH)$(MOZ_PKG_DIR)/$(f)) \
+    --lib-dirs $(MOZ_PKG_DIR)/lib \
+    --assets-dirs $(MOZ_PKG_DIR)/assets \
+    --features-dirs $(MOZ_PKG_DIR)/features \
+    --root-files $(foreach f,$(ROOT_FILES),$(MOZ_PKG_DIR)/$(f)) \
     --output $(PACKAGE:.apk=-unsigned-unaligned.apk) && \
   $(call RELEASE_SIGN_ANDROID_APK,$(PACKAGE:.apk=-unsigned-unaligned.apk),$(PACKAGE))
 
@@ -120,7 +119,7 @@ repackage_fennec = \
     --inputs \
       $(UNPACKAGE) \
       $(GECKO_APP_AP_PATH)/gecko-nodeps.ap_ \
-    --omnijar $(STAGEPATH)$(MOZ_PKG_DIR)/$(OMNIJAR_NAME) \
+    --omnijar $(MOZ_PKG_DIR)/$(OMNIJAR_NAME) \
     --output $(PACKAGE:.apk=-unsigned-unaligned.apk) && \
   $(call RELEASE_SIGN_ANDROID_APK,$(PACKAGE:.apk=-unsigned-unaligned.apk),$(PACKAGE))
 

@@ -81,7 +81,7 @@ public:
    */
   const char16_t *Get2b() const
   {
-    NS_ASSERTION(Is2b(), "not 2b text"); 
+    NS_ASSERTION(Is2b(), "not 2b text");
     return m2b;
   }
 
@@ -90,7 +90,7 @@ public:
    */
   const char *Get1b() const
   {
-    NS_ASSERTION(!Is2b(), "not 1b text"); 
+    NS_ASSERTION(!Is2b(), "not 1b text");
     return (const char *)m1b;
   }
 
@@ -200,7 +200,7 @@ public:
    */
   char16_t CharAt(int32_t aIndex) const
   {
-    NS_ASSERTION(uint32_t(aIndex) < mState.mLength, "bad index");
+    MOZ_ASSERT(uint32_t(aIndex) < mState.mLength, "bad index");
     return mState.mIs2b ? m2b[aIndex] : static_cast<unsigned char>(m1b[aIndex]);
   }
 
@@ -226,7 +226,7 @@ private:
    * includes any Bidi characters.
    */
   void UpdateBidiFlag(const char16_t* aBuffer, uint32_t aLength);
- 
+
   union {
     char16_t *m2b;
     const char *m1b; // This is const since it can point to shared data

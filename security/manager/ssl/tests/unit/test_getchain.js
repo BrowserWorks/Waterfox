@@ -10,9 +10,9 @@ const certdb  = Cc["@mozilla.org/security/x509certdb;1"]
                   .getService(Ci.nsIX509CertDB);
 // This is the list of certificates needed for the test.
 var certList = [
-  'ee',
-  'ca-1',
-  'ca-2',
+  "ee",
+  "ca-1",
+  "ca-2",
 ];
 
 // Since all the ca's are identical expect for the serial number
@@ -24,7 +24,7 @@ function get_ca_array() {
   let enumerator = allCerts.getEnumerator();
   while (enumerator.hasMoreElements()) {
     let cert = enumerator.getNext().QueryInterface(Ci.nsIX509Cert);
-    if (cert.commonName == 'ca') {
+    if (cert.commonName == "ca") {
       ret_array[parseInt(cert.serialNumber, 16)] = cert;
     }
   }
@@ -67,12 +67,15 @@ function run_test() {
   clearOCSPCache();
   clearSessionCache();
 
+  let ee_cert = null;
   for (let cert of certList) {
-    addCertFromFile(certdb, `test_getchain/${cert}.pem`, ",,");
+    let result = addCertFromFile(certdb, `test_getchain/${cert}.pem`, ",,");
+    if (cert == "ee") {
+      ee_cert = result;
+    }
   }
 
-  let ee_cert = certdb.findCertByNickname('ee');
-  notEqual(ee_cert, null, "EE cert should be in the cert DB");
+  notEqual(ee_cert, null, "EE cert should have successfully loaded");
 
   let ca = get_ca_array();
 

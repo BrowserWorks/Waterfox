@@ -4,9 +4,13 @@ config = {
     "buildbot_json_path": "buildprops.json",
     "hostutils_manifest_path": "testing/config/tooltool-manifests/linux64/hostutils.manifest",
     "robocop_package_name": "org.mozilla.roboexample.test",
+    "marionette_address": "localhost:2828",
+    "marionette_test_manifest": "unit-tests.ini",
+    "download_tooltool": True,
+    "tooltool_servers": ['http://relengapi/tooltool/'],
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidarm_4_3/releng.manifest",
-    "tooltool_cache": "/builds/tooltool_cache",
-    "avds_dir": "/home/cltbld/.android",
+    "tooltool_cache": "/home/worker/tooltool_cache",
+    "avds_dir": "/home/worker/workspace/build/.android",
     "emulator_manifest": """
         [
         {
@@ -29,12 +33,8 @@ config = {
         ] """,
     "emulator_process_name": "emulator64-arm",
     "emulator_extra_args": "-show-kernel -debug init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket",
-    "device_manager": "adb",
     "exes": {
         'adb': '%(abs_work_dir)s/android-sdk18/platform-tools/adb',
-        'python': '/tools/buildbot/bin/python',
-        'virtualenv': ['/tools/buildbot/bin/python', '/tools/misc-python/virtualenv.py'],
-        'tooltool.py': "/tools/tooltool.py",
     },
     "env": {
         "DISPLAY": ":0.0",
@@ -51,7 +51,6 @@ config = {
         'verify-emulator',
         'install',
         'run-tests',
-        'stop-emulator',
     ],
     "emulator": {
         "name": "test-1",
@@ -65,7 +64,6 @@ config = {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -87,7 +85,6 @@ config = {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -108,7 +105,6 @@ config = {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -123,14 +119,13 @@ config = {
                 "--extra-profile-file=fonts",
                 "--extra-profile-file=hyphenation",
                 "--screenshot-on-fail",
-                "--chrome",
+                "--flavor=chrome",
             ],
         },
         "mochitest-plain-gpu": {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -150,7 +145,6 @@ config = {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -170,7 +164,6 @@ config = {
             "run_filename": "runtestsremote.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -192,7 +185,6 @@ config = {
             "run_filename": "runrobocop.py",
             "testsdir": "mochitest",
             "options": [
-                "--dm_trans=adb",
                 "--app=%(app)s",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
@@ -215,7 +207,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -238,7 +229,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -258,7 +248,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -278,7 +267,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -297,12 +285,11 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s", "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s", "--http-port=%(http_port)s",
                 "--ssl-port=%(ssl_port)s", "--httpd-path", "%(modules_dir)s",
                 "--symbols-path=%(symbols_path)s",
-                "--total-chunks=6",
+                "--total-chunks=10",
                 "--extra-profile-file=jsreftest/tests/user.js",
                 "--suite=jstestbrowser",
             ],
@@ -314,13 +301,12 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--dm_trans=adb",
                 "--remote-webserver=%(remote_webserver)s", "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s", "--http-port=%(http_port)s",
                 "--ssl-port=%(ssl_port)s", "--httpd-path", "%(modules_dir)s",
                 "--symbols-path=%(symbols_path)s",
                 "../jsreftest/tests/jstests.list",
-                "--total-chunks=20",
+                "--total-chunks=35",
                 "--extra-profile-file=jsreftest/tests/user.js",
             ],
         },
@@ -329,7 +315,6 @@ config = {
             "testsdir": "xpcshell",
             "install": False,
             "options": [
-                "--dm_trans=adb",
                 "--xre-path=%(xre_path)s",
                 "--testing-modules-dir=%(modules_dir)s",
                 "--apk=%(installer_path)s",
@@ -349,10 +334,34 @@ config = {
             "options": [
                 "--symbols-path=%(symbols_path)s",
                 "--xre-path=%(xre_path)s",
-                "--dm_trans=adb",
                 "--localBinDir=../bin",
                 "--apk=%(installer_path)s",
                 ".",
+            ],
+        },
+        "marionette": {
+            "run_filename": os.path.join("harness", "marionette_harness", "runtests.py"),
+            "testsdir": "marionette",
+            "options": [
+                "--emulator",
+                "--app=fennec",
+                "--package=%(app)s",
+                "--address=%(address)s",
+                "%(test_manifest)s",
+                "--disable-e10s",
+                "--gecko-log=%(gecko_log)s",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--symbols-path=%(symbols_path)s",
+                "--startup-timeout=300",
+            ],
+        },
+        "geckoview": {
+            "run_filename": "rungeckoview.py",
+            "testsdir": "mochitest",
+            "options": [
+                "--utility-path=%(utility_path)s",
+                "--symbols-path=%(symbols_path)s",
             ],
         },
 

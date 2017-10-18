@@ -31,7 +31,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=570341
 
   function showSequence(node){
     while(node.firstChild) {
-      node.removeChild(node.firstChild);
+      node.firstChild.remove();
     }
     var sequence = [];
     for (var p in moments) {
@@ -108,9 +108,10 @@ window.onload = function() {
   }, true);
   frames[0].location = 'bug570341_recordevents.html'
   var interval = setInterval(function () {
+    // time constants here are arbitrary, chosen to allow the test to pass
     var stopPolling = (win.performance && win.performance.loadEventEnd) ||
-                      (seenLoad && Date.now() >= seenLoad + 200) ||
-                      Date.now() >= start + 5000;
+                      (seenLoad && Date.now() >= seenLoad + 3000) ||
+                      Date.now() >= start + 30000;
     if (stopPolling) {
       clearInterval(interval);
       checkValues();

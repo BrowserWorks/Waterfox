@@ -21,10 +21,14 @@
 #include "nsIDOMNode.h"
 #include "nsIDOMWindow.h"
 #include "nsIContent.h"
+#include "nsIImageLoadingContent.h"
 #include "nsILoadContext.h"
 #include "nsCOMArray.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
+#include "nsIContentSecurityPolicy.h"
+#include "mozilla/dom/TabGroup.h"
+#include "mozilla/TaskCategory.h"
 
 using mozilla::LogLevel;
 
@@ -43,6 +47,8 @@ NS_NewContentPolicy(nsIContentPolicy **aResult)
 nsContentPolicy::nsContentPolicy()
     : mPolicies(NS_CONTENTPOLICY_CATEGORY)
     , mSimplePolicies(NS_SIMPLECONTENTPOLICY_CATEGORY)
+    , mMixedContentBlocker(do_GetService(NS_MIXEDCONTENTBLOCKER_CONTRACTID))
+    , mCSPService(do_GetService(CSPSERVICE_CONTRACTID))
 {
 }
 
@@ -116,25 +122,34 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
     nsContentPolicyType externalType =
         nsContentUtils::InternalContentPolicyTypeToExternal(contentType);
 
-    nsCOMPtr<nsIContentPolicy> mixedContentBlocker =
-        do_GetService(NS_MIXEDCONTENTBLOCKER_CONTRACTID);
-
-    nsCOMPtr<nsIContentPolicy> cspService =
-      do_GetService(CSPSERVICE_CONTRACTID);
-
-    /* 
+    /*
      * Enumerate mPolicies and ask each of them, taking the logical AND of
      * their permissions.
      */
     nsresult rv;
-    nsCOMArray<nsIContentPolicy> entries;
-    mPolicies.GetEntries(entries);
+    const nsCOMArray<nsIContentPolicy>& entries = mPolicies.GetCachedEntries();
+
+    nsCOMPtr<nsPIDOMWindowOuter> window;
+    if (nsCOMPtr<nsINode> node = do_QueryInterface(requestingContext)) {
+        window = node->OwnerDoc()->GetWindow();
+    } else {
+        window = do_QueryInterface(requestingContext);
+    }
+
+    if (requestPrincipal) {
+        nsCOMPtr<nsIContentSecurityPolicy> csp;
+        requestPrincipal->GetCsp(getter_AddRefs(csp));
+        if (csp && window) {
+            csp->EnsureEventTarget(window->EventTargetFor(mozilla::TaskCategory::Other));
+        }
+    }
+
     int32_t count = entries.Count();
     for (int32_t i = 0; i < count; i++) {
         /* check the appropriate policy */
         // Send internal content policy type to CSP and mixed content blocker
         nsContentPolicyType type = externalType;
-        if (mixedContentBlocker == entries[i] || cspService == entries[i]) {
+        if (mMixedContentBlocker == entries[i] || mCSPService == entries[i]) {
           type = contentType;
         }
         rv = (entries[i]->*policyMethod)(type, contentLocation,
@@ -143,6 +158,16 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
                                          decision);
 
         if (NS_SUCCEEDED(rv) && NS_CP_REJECTED(*decision)) {
+            // If we are blocking an image, we have to let the
+            // ImageLoadingContent know that we blocked the load.
+            if (externalType == nsIContentPolicy::TYPE_IMAGE ||
+                externalType == nsIContentPolicy::TYPE_IMAGESET) {
+              nsCOMPtr<nsIImageLoadingContent> img =
+                do_QueryInterface(requestingContext);
+              if (img) {
+                img->SetBlockedRequest(*decision);
+              }
+            }
             /* policy says no, no point continuing to check */
             return NS_OK;
         }
@@ -150,12 +175,6 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
 
     nsCOMPtr<nsIDOMElement> topFrameElement;
     bool isTopLevel = true;
-    nsCOMPtr<nsPIDOMWindowOuter> window;
-    if (nsCOMPtr<nsINode> node = do_QueryInterface(requestingContext)) {
-        window = node->OwnerDoc()->GetWindow();
-    } else {
-        window = do_QueryInterface(requestingContext);
-    }
 
     if (window) {
         nsCOMPtr<nsIDocShell> docShell = window->GetDocShell();
@@ -179,8 +198,8 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
         }
     }
 
-    nsCOMArray<nsISimpleContentPolicy> simpleEntries;
-    mSimplePolicies.GetEntries(simpleEntries);
+    const nsCOMArray<nsISimpleContentPolicy>& simpleEntries =
+        mSimplePolicies.GetCachedEntries();
     count = simpleEntries.Count();
     for (int32_t i = 0; i < count; i++) {
         /* check the appropriate policy */
@@ -191,6 +210,16 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
                                                      decision);
 
         if (NS_SUCCEEDED(rv) && NS_CP_REJECTED(*decision)) {
+            // If we are blocking an image, we have to let the
+            // ImageLoadingContent know that we blocked the load.
+            if (externalType == nsIContentPolicy::TYPE_IMAGE ||
+                externalType == nsIContentPolicy::TYPE_IMAGESET) {
+              nsCOMPtr<nsIImageLoadingContent> img =
+                do_QueryInterface(requestingContext);
+              if (img) {
+                img->SetBlockedRequest(*decision);
+              }
+            }
             /* policy says no, no point continuing to check */
             return NS_OK;
         }
@@ -203,29 +232,25 @@ nsContentPolicy::CheckPolicy(CPMethod          policyMethod,
 
 //uses the parameters from ShouldXYZ to produce and log a message
 //logType must be a literal string constant
-#define LOG_CHECK(logType)                                                    \
-  PR_BEGIN_MACRO                                                              \
-    /* skip all this nonsense if the call failed or logging is disabled */    \
-    if (NS_SUCCEEDED(rv) && MOZ_LOG_TEST(gConPolLog, LogLevel::Debug)) {          \
-      const char *resultName;                                                 \
-      if (decision) {                                                         \
-        resultName = NS_CP_ResponseName(*decision);                           \
-      } else {                                                                \
-        resultName = "(null ptr)";                                            \
-      }                                                                       \
-      nsAutoCString spec("None");                                             \
-      if (contentLocation) {                                                  \
-          contentLocation->GetSpec(spec);                                     \
-      }                                                                       \
-      nsAutoCString refSpec("None");                                          \
-      if (requestingLocation) {                                               \
-          requestingLocation->GetSpec(refSpec);                               \
-      }                                                                       \
-      MOZ_LOG(gConPolLog, LogLevel::Debug,                                        \
-             ("Content Policy: " logType ": <%s> <Ref:%s> result=%s",         \
-              spec.get(), refSpec.get(), resultName)                          \
-             );                                                               \
-    }                                                                         \
+#define LOG_CHECK(logType)                                                     \
+  PR_BEGIN_MACRO                                                               \
+    /* skip all this nonsense if the call failed or logging is disabled */     \
+    if (NS_SUCCEEDED(rv) && MOZ_LOG_TEST(gConPolLog, LogLevel::Debug)) {       \
+      const char *resultName;                                                  \
+      if (decision) {                                                          \
+        resultName = NS_CP_ResponseName(*decision);                            \
+      } else {                                                                 \
+        resultName = "(null ptr)";                                             \
+      }                                                                        \
+      MOZ_LOG(gConPolLog, LogLevel::Debug,                                     \
+             ("Content Policy: " logType ": <%s> <Ref:%s> result=%s",          \
+              contentLocation ? contentLocation->GetSpecOrDefault().get()      \
+                              : "None",                                        \
+              requestingLocation ? requestingLocation->GetSpecOrDefault().get()\
+                                 : "None",                                     \
+              resultName)                                                      \
+             );                                                                \
+    }                                                                          \
   PR_END_MACRO
 
 NS_IMETHODIMP

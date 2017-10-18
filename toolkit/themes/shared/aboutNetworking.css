@@ -18,13 +18,17 @@ body {
   float: left;
 }
 
+#sectionTitle:dir(rtl) {
+  float: right;
+}
+
 #refreshDiv {
-  text-align: end;
+  justify-content: flex-end;
   margin-bottom: 0.5em;
 }
 
 #refreshButton {
-  vertical-align: middle;
+  margin-top: 0;
 }
 
 /** Categories **/
@@ -86,6 +90,11 @@ body {
   background-size: 1.6em;
 }
 
+.title:dir(rtl)::before {
+  left: auto;
+  right: -2.3em;
+}
+
 .warningBackground button {
   margin-top: 1em;
   margin-left: 0;
@@ -103,7 +112,6 @@ body {
 }
 
 .tab table {
-  border: 1;
   width: 100%;
 }
 

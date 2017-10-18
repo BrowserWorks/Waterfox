@@ -7,11 +7,16 @@
 #ifndef mozilla_KeyframeUtils_h
 #define mozilla_KeyframeUtils_h
 
+#include "mozilla/KeyframeEffectParams.h" // For CompositeOperation
+#include "nsCSSPropertyID.h"
 #include "nsTArrayForwardDeclare.h" // For nsTArray
 #include "js/RootingAPI.h" // For JS::Handle
 
 struct JSContext;
 class JSObject;
+class nsIDocument;
+class nsStyleContext;
+struct RawServoDeclarationBlock;
 
 namespace mozilla {
 struct AnimationProperty;
@@ -59,54 +64,14 @@ public:
                          ErrorResult& aRv);
 
   /**
-   * Calculate the StyleAnimationValues of properties of each keyframe.
-   * This involves expanding shorthand properties into longhand properties,
-   * removing the duplicated properties for each keyframe, and creating an
-   * array of |property:computed value| pairs for each keyframe.
+   * Calculate the computed offset of keyframes by evenly distributing keyframes
+   * with a missing offset.
    *
-   * These computed values are used *both* when computing the final set of
-   * per-property animation values (see GetAnimationPropertiesFromKeyframes) as
-   * well when applying paced spacing. By returning these values here, we allow
-   * the result to be re-used in both operations.
-   *
-   * @param aKeyframes The input keyframes.
-   * @param aElement The context element.
-   * @param aStyleContext The style context to use when computing values.
-   * @return The set of ComputedKeyframeValues. The length will be the same as
-   *   aFrames.
-   */
-  static nsTArray<ComputedKeyframeValues>
-  GetComputedKeyframeValues(const nsTArray<Keyframe>& aKeyframes,
-                            dom::Element* aElement,
-                            nsStyleContext* aStyleContext);
-
-  /**
-   * Fills in the mComputedOffset member of each keyframe in the given array
-   * using the specified spacing mode.
-   *
-   * https://w3c.github.io/web-animations/#spacing-keyframes
-   *
-   * @param aKeyframes The set of keyframes to adjust.
-   * @param aSpacingMode The spacing mode to apply.
-   * @param aProperty The paced property. Only used when |aSpacingMode| is
-   *   SpacingMode::paced. In all other cases it is ignored and hence may be
-   *   any value, e.g. eCSSProperty_UNKNOWN.
-   * @param aComputedValues The set of computed keyframe values as returned by
-   *   GetComputedKeyframeValues. Only used when |aSpacingMode| is
-   *   SpacingMode::paced. In all other cases this parameter is unused and may
-   *   be any value including an empty array.
-   */
-  static void ApplySpacing(nsTArray<Keyframe>& aKeyframes,
-                           SpacingMode aSpacingMode,
-                           nsCSSProperty aProperty,
-                           nsTArray<ComputedKeyframeValues>& aComputedValues);
-
-  /**
-   * Wrapper for ApplySpacing to simplify using distribute spacing.
+   * @see https://w3c.github.io/web-animations/#calculating-computed-keyframes
    *
    * @param aKeyframes The set of keyframes to adjust.
    */
-  static void ApplyDistributeSpacing(nsTArray<Keyframe>& aKeyframes);
+  static void DistributeKeyframes(nsTArray<Keyframe>& aKeyframes);
 
   /**
    * Converts an array of Keyframe objects into an array of AnimationProperty
@@ -115,29 +80,49 @@ public:
    * for each value.
    *
    * @param aKeyframes The input keyframes.
-   * @param aComputedValues The computed keyframe values (as returned by
-   *   GetComputedKeyframeValues) used to fill in the individual
-   *   AnimationPropertySegment objects. Although these values could be
-   *   calculated from |aKeyframes|, passing them in as a separate parameter
-   *   allows the result of GetComputedKeyframeValues to be re-used both
-   *   here and in ApplySpacing.
-   * @param aStyleContext The style context to calculate the style difference.
+   * @param aElement The context element.
+   * @param aStyleType The |ServoStyleContext| or |GeckoStyleContext| to use
+   *   when computing values.
+   * @param aEffectComposite The composite operation specified on the effect.
+   *   For any keyframes in |aKeyframes| that do not specify a composite
+   *   operation, this value will be used.
    * @return The set of animation properties. If an error occurs, the returned
    *   array will be empty.
    */
+  template<typename StyleType>
   static nsTArray<AnimationProperty> GetAnimationPropertiesFromKeyframes(
     const nsTArray<Keyframe>& aKeyframes,
-    const nsTArray<ComputedKeyframeValues>& aComputedValues,
-    nsStyleContext* aStyleContext);
+    dom::Element* aElement,
+    StyleType* aStyleType,
+    dom::CompositeOperation aEffectComposite);
 
   /**
    * Check if the property or, for shorthands, one or more of
    * its subproperties, is animatable.
    *
    * @param aProperty The property to check.
+   * @param aBackend  The style backend, Servo or Gecko, that should determine
+   *                  if the property is animatable or not.
    * @return true if |aProperty| is animatable.
    */
-  static bool IsAnimatableProperty(nsCSSProperty aProperty);
+  static bool IsAnimatableProperty(nsCSSPropertyID aProperty,
+                                   StyleBackendType aBackend);
+
+  /**
+   * Parse a string representing a CSS property value into a
+   * RawServoDeclarationBlock.
+   *
+   * @param aProperty The property to be parsed.
+   * @param aValue The specified value.
+   * @param aDocument The current document.
+   * @return The parsed value as a RawServoDeclarationBlock. We put the value
+   *   in a declaration block since that is how we represent specified values
+   *   in Servo.
+   */
+  static already_AddRefed<RawServoDeclarationBlock> ParseProperty(
+    nsCSSPropertyID aProperty,
+    const nsAString& aValue,
+    nsIDocument* aDocument);
 };
 
 } // namespace mozilla

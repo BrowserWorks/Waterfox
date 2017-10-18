@@ -8,8 +8,6 @@
 
 const { classes: Cc, interfaces: Ci } = Components;
 
-const REL_PATH_DATA = "chrome/toolkit/mozapps/update/tests/data/";
-
 function getTestDataFile(aFilename) {
   let file = Cc["@mozilla.org/file/directory_service;1"].
             getService(Ci.nsIProperties).get("CurWorkD", Ci.nsILocalFile);
@@ -23,20 +21,25 @@ function getTestDataFile(aFilename) {
   return file;
 }
 
-function loadHelperScript() {
-  let scriptFile = getTestDataFile("sharedUpdateXML.js");
+function loadHelperScript(aScriptFile) {
   let io = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService2);
-  let scriptSpec = io.newFileURI(scriptFile).spec;
+  let scriptSpec = io.newFileURI(aScriptFile).spec;
   let scriptloader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
                      getService(Ci.mozIJSSubScriptLoader);
   scriptloader.loadSubScript(scriptSpec, this);
 }
-loadHelperScript();
 
-const URL_HOST = "http://example.com";
-const URL_PATH_UPDATE_XML = "/chrome/toolkit/mozapps/update/tests/chrome/update.sjs";
-const URL_HTTP_UPDATE_SJS = URL_HOST + URL_PATH_UPDATE_XML;
+var scriptFile = Cc['@mozilla.org/file/local;1'].createInstance(Ci.nsILocalFile);
+scriptFile.initWithPath(getState("__LOCATION__"));
+scriptFile = scriptFile.parent;
+scriptFile.append("testConstants.js");
+loadHelperScript(scriptFile);
+
+scriptFile = getTestDataFile("sharedUpdateXML.js");
+loadHelperScript(scriptFile);
+
 const SERVICE_URL = URL_HOST + "/" + REL_PATH_DATA + FILE_SIMPLE_MAR;
+const BAD_SERVICE_URL = URL_HOST + "/" + REL_PATH_DATA + "not_here.mar";
 
 const SLOW_MAR_DOWNLOAD_INTERVAL = 100;
 var gTimer;
@@ -51,7 +54,7 @@ function handleRequest(aRequest, aResponse) {
   let statusReason = params.statusReason ? params.statusReason : "OK";
   aResponse.setStatusLine(aRequest.httpVersion, statusCode, statusReason);
   aResponse.setHeader("Cache-Control", "no-cache", false);
-  
+
   // When a mar download is started by the update service it can finish
   // downloading before the ui has loaded. By specifying a serviceURL for the
   // update patch that points to this file and has a slowDownloadMar param the
@@ -108,66 +111,49 @@ function handleRequest(aRequest, aResponse) {
 
   let size;
   let patches = "";
+  let url = params.badURL ? BAD_SERVICE_URL : SERVICE_URL;
   if (!params.partialPatchOnly) {
     size = SIZE_SIMPLE_MAR + (params.invalidCompleteSize ? "1" : "");
-    patches += getRemotePatchString("complete", SERVICE_URL, "SHA512",
-                                    SHA512_HASH_SIMPLE_MAR, size);
+    let patchProps = {type: "complete",
+                      url: url,
+                      size: size};
+    patches += getRemotePatchString(patchProps);
   }
 
   if (!params.completePatchOnly) {
     size = SIZE_SIMPLE_MAR + (params.invalidPartialSize ? "1" : "");
-    patches += getRemotePatchString("partial", SERVICE_URL, "SHA512",
-                                    SHA512_HASH_SIMPLE_MAR, size);
+    let patchProps = {type: "partial",
+                      url: url,
+                      size: size};
+    patches += getRemotePatchString(patchProps);
   }
 
-  let type = params.type ? params.type : "major";
-  let name = params.name ? params.name : "App Update Test";
-  let appVersion = params.appVersion ? params.appVersion : "99.9";
-  let displayVersion = params.displayVersion ? params.displayVersion
-                                             : "version " + appVersion;
-  let platformVersion = params.platformVersion ? params.platformVersion : "99.8";
-  let buildID = params.buildID ? params.buildID : "01234567890123";
-  // XXXrstrong - not specifying a detailsURL will cause a leak due to bug 470244
-//  let detailsURL = params.showDetails ? URL_HTTP_UPDATE_SJS + "?uiURL=DETAILS" : null;
-  let detailsURL = URL_HTTP_UPDATE_SJS + "?uiURL=DETAILS";
-  let billboardURL = params.showBillboard ? URL_HTTP_UPDATE_SJS + "?uiURL=BILLBOARD" : null;
-  if (billboardURL && params.remoteNoTypeAttr) {
-    billboardURL += "&amp;remoteNoTypeAttr=1";
-  }
-  if (params.billboard404) {
-    billboardURL = URL_HOST + "/missing.html";
-  }
-  let showPrompt = params.showPrompt ? "true" : null;
-  let showNever = params.showNever ? "true" : null;
-  let promptWaitTime = params.promptWaitTime ? params.promptWaitTime : null;
-  let showSurvey = params.showSurvey ? "true" : null;
-
-  let extensionVersion;
-  let version;
-  // For testing the deprecated update xml format
-  if (params.oldFormat) {
-    appVersion = null;
-    displayVersion = null;
-    billboardURL = null;
-    showPrompt = null;
-    showNever = null;
-    showSurvey = null;
-    detailsURL = URL_HTTP_UPDATE_SJS + "?uiURL=BILLBOARD";
-    if (params.remoteNoTypeAttr) {
-      detailsURL += "&amp;remoteNoTypeAttr=1";
-    }
-    extensionVersion = params.appVersion ? params.appVersion : "99.9";
-    version = params.displayVersion ? params.displayVersion
-                                    : "version " + extensionVersion;
+  let updateProps = {};
+  if (params.type) {
+    updateProps.type = params.type;
   }
 
-  let updates = getRemoteUpdateString(patches, type, "App Update Test",
-                                      displayVersion, appVersion,
-                                      platformVersion, buildID, detailsURL,
-                                      billboardURL, showPrompt,
-                                      showNever, promptWaitTime, showSurvey,
-                                      version, extensionVersion);
+  if (params.name) {
+    updateProps.name = params.name;
+  }
 
+  if (params.appVersion) {
+    updateProps.appVersion = params.appVersion;
+  }
+
+  if (params.displayVersion) {
+    updateProps.displayVersion = params.displayVersion;
+  }
+
+  if (params.buildID) {
+    updateProps.buildID = params.buildID;
+  }
+
+  if (params.promptWaitTime) {
+    updateProps.promptWaitTime = params.promptWaitTime;
+  }
+
+  let updates = getRemoteUpdateString(updateProps, patches);
   aResponse.write(getRemoteUpdatesXMLString(updates));
 }
 

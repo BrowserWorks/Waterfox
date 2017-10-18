@@ -44,6 +44,10 @@ class MessageManagerReporter;
 
 namespace ipc {
 
+// Note: we round the time we spend to the nearest millisecond. So a min value
+// of 1 ms actually captures from 500us and above.
+static const uint32_t kMinTelemetrySyncMessageManagerLatencyMs = 1;
+
 enum MessageManagerFlags {
   MM_CHILD = 0,
   MM_CHROME = 1,
@@ -83,30 +87,9 @@ public:
     return NS_OK;
   }
 
-  virtual bool CheckPermission(const nsAString& aPermission)
+  virtual nsIMessageSender* GetProcessMessageManager() const
   {
-    return false;
-  }
-
-  virtual bool CheckManifestURL(const nsAString& aManifestURL)
-  {
-    return false;
-  }
-
-  virtual bool CheckAppHasPermission(const nsAString& aPermission)
-  {
-    return false;
-  }
-
-  virtual bool CheckAppHasStatus(unsigned short aStatus)
-  {
-    return false;
-  }
-
-  virtual bool KillChild()
-  {
-    // By default, does nothing.
-    return false;
+    return nullptr;
   }
 
 protected:
@@ -145,8 +128,8 @@ struct nsMessageListenerInfo
 class MOZ_STACK_CLASS SameProcessCpowHolder : public mozilla::jsipc::CpowHolder
 {
 public:
-  SameProcessCpowHolder(JSRuntime *aRuntime, JS::Handle<JSObject*> aObj)
-    : mObj(aRuntime, aObj)
+  SameProcessCpowHolder(JS::RootingContext* aRootingCx, JS::Handle<JSObject*> aObj)
+    : mObj(aRootingCx, aObj)
   {
   }
 
@@ -160,8 +143,7 @@ private:
 class nsFrameMessageManager final : public nsIContentFrameMessageManager,
                                     public nsIMessageBroadcaster,
                                     public nsIFrameScriptLoader,
-                                    public nsIGlobalProcessScriptLoader,
-                                    public nsIProcessChecker
+                                    public nsIGlobalProcessScriptLoader
 {
   friend class mozilla::dom::MessageManagerReporter;
   typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
@@ -186,7 +168,6 @@ public:
   NS_DECL_NSIFRAMESCRIPTLOADER
   NS_DECL_NSIPROCESSSCRIPTLOADER
   NS_DECL_NSIGLOBALPROCESSSCRIPTLOADER
-  NS_DECL_NSIPROCESSCHECKER
 
   static nsFrameMessageManager*
   NewProcessMessageManager(bool aIsRemote);
@@ -207,6 +188,7 @@ public:
 
   void InitWithCallback(mozilla::dom::ipc::MessageManagerCallback* aCallback);
   void SetCallback(mozilla::dom::ipc::MessageManagerCallback* aCallback);
+
   mozilla::dom::ipc::MessageManagerCallback* GetCallback()
   {
     return mCallback;
@@ -320,7 +302,7 @@ private:
 
    class MyAsyncMessage : public nsSameProcessAsyncMessageBase, public Runnable
    {
-     NS_IMETHOD Run() {
+     NS_IMETHOD Run() override {
        ReceiveMessage(..., ...);
        return NS_OK;
      }
@@ -338,9 +320,9 @@ class nsSameProcessAsyncMessageBase
 public:
   typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
 
-  nsSameProcessAsyncMessageBase(JSContext* aCx, JS::Handle<JSObject*> aCpows);
-  nsresult Init(JSContext* aCx,
-                const nsAString& aMessage,
+  nsSameProcessAsyncMessageBase(JS::RootingContext* aRootingCx,
+                                JS::Handle<JSObject*> aCpows);
+  nsresult Init(const nsAString& aMessage,
                 StructuredCloneData& aData,
                 nsIPrincipal* aPrincipal);
 
@@ -349,11 +331,13 @@ public:
 private:
   nsSameProcessAsyncMessageBase(const nsSameProcessAsyncMessageBase&);
 
-  JSRuntime* mRuntime;
   nsString mMessage;
   StructuredCloneData mData;
   JS::PersistentRooted<JSObject*> mCpows;
   nsCOMPtr<nsIPrincipal> mPrincipal;
+#ifdef DEBUG
+  bool mCalledInit;
+#endif
 };
 
 class nsScriptCacheCleaner;
@@ -380,10 +364,9 @@ class nsMessageManagerScriptExecutor
 public:
   static void PurgeCache();
   static void Shutdown();
-  already_AddRefed<nsIXPConnectJSObjectHolder> GetGlobal()
+  JSObject* GetGlobal()
   {
-    nsCOMPtr<nsIXPConnectJSObjectHolder> ref = mGlobal;
-    return ref.forget();
+    return mGlobal;
   }
 
   void MarkScopesForCC();
@@ -402,7 +385,8 @@ protected:
                                     bool aRunInGlobalScope);
   bool InitChildGlobalInternal(nsISupports* aScope, const nsACString& aID);
   void Trace(const TraceCallbacks& aCallbacks, void* aClosure);
-  nsCOMPtr<nsIXPConnectJSObjectHolder> mGlobal;
+  void Unlink();
+  JS::TenuredHeap<JSObject*> mGlobal;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   AutoTArray<JS::Heap<JSObject*>, 2> mAnonymousGlobalScopes;
 
@@ -425,9 +409,9 @@ class nsScriptCacheCleaner final : public nsIObserver
     }
   }
 
-  NS_IMETHODIMP Observe(nsISupports *aSubject,
-                        const char *aTopic,
-                        const char16_t *aData) override
+  NS_IMETHOD Observe(nsISupports *aSubject,
+                     const char *aTopic,
+                     const char16_t *aData) override
   {
     if (strcmp("message-manager-flush-caches", aTopic) == 0) {
       nsMessageManagerScriptExecutor::PurgeCache();

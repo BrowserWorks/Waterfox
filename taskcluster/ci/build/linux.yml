@@ -1,0 +1,612 @@
+linux64/opt:
+    description: "Linux64 Opt"
+    index:
+        product: firefox
+        job-name: linux64-opt
+    treeherder:
+        platform: linux64/opt
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-dmd/opt:
+    description: "Linux64 DMD Opt"
+    index:
+        product: firefox
+        job-name: linux64-dmd-opt
+    treeherder:
+        platform: linux64-dmd/opt
+        symbol: tc(Bdmd)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        custom-build-variant-cfg: dmd
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    run-on-projects: [ ]
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64/pgo:
+    description: "Linux64 PGO"
+    index:
+        product: firefox
+        job-name: linux64-pgo
+    treeherder:
+        platform: linux64/pgo
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    coalesce-name: linux64-pgo
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        options: [enable-pgo]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64/debug:
+    description: "Linux64 Debug"
+    index:
+        product: firefox
+        job-name: linux64-debug
+    treeherder:
+        platform: linux64/debug
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: debug
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-devedition-nightly/opt:
+    description: "Linux64 devedition Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: devedition
+        job-name: linux64-opt
+        type: nightly
+    treeherder:
+        platform: linux64-devedition/opt
+        symbol: tc(N)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - disable_signing.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+        custom-build-variant-cfg: devedition
+    run-on-projects: [ 'mozilla-beta', ]
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-base-toolchains/opt:
+    description: "Linux64 base toolchains Opt"
+    index:
+        product: firefox
+        job-name: linux64-base-toolchains-opt
+    treeherder:
+        platform: linux64/opt
+        symbol: tc(Bb)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            PERFHERDER_EXTRA_OPTIONS: base-toolchains
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/base-toolchains.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-base-toolchains/debug:
+    description: "Linux64 base toolchains Debug"
+    index:
+        product: firefox
+        job-name: linux64-base-toolchains-debug
+    treeherder:
+        platform: linux64/debug
+        symbol: tc(Bb)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            PERFHERDER_EXTRA_OPTIONS: base-toolchains
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/base-toolchains.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: debug
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux/opt:
+    description: "Linux32 Opt"
+    index:
+        product: firefox
+        job-name: linux-opt
+    treeherder:
+        platform: linux32/opt
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: opt_linux32
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_32_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux/debug:
+    description: "Linux32 Debug"
+    index:
+        product: firefox
+        job-name: linux-debug
+    treeherder:
+        platform: linux32/debug
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: dbg_linux32
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_32_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: debug
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux/pgo:
+    description: "Linux32 PGO"
+    index:
+        product: firefox
+        job-name: linux-pgo
+    treeherder:
+        platform: linux32/pgo
+        symbol: tc(B)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    coalesce-name: linux32-pgo
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        options: [enable-pgo]
+        config:
+            - builds/releng_base_linux_32_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux-devedition-nightly/opt:
+    description: "Linux32 devedition Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: devedition
+        job-name: linux-opt
+        type: nightly
+    treeherder:
+        platform: linux32-devedition/opt
+        symbol: tc(N)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_32_builds.py
+            - disable_signing.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+        custom-build-variant-cfg: devedition
+    run-on-projects: [ 'mozilla-beta', ]
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux-nightly/opt:
+    description: "Linux32 Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: firefox
+        job-name: linux-opt
+        type: nightly
+    treeherder:
+        platform: linux32/opt
+        symbol: tc(N)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_32_builds.py
+            - disable_signing.py
+            - taskcluster_nightly.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+
+linux64-asan/opt:
+    description: "Linux64 Opt ASAN"
+    index:
+        product: firefox
+        job-name: linux64-asan-opt
+    treeherder:
+        platform: linux64/asan
+        symbol: tc(Bo)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        env:
+            PERFHERDER_EXTRA_OPTIONS: "opt asan"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
+        max-run-time: 36000
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: asan-tc
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+
+linux64-asan-fuzzing/opt:
+    description: "Linux64 Fuzzing Opt ASAN"
+    index:
+        product: firefox
+        job-name: linux64-fuzzing-asan-opt
+    treeherder:
+        platform: linux64/asan
+        symbol: tc(Bof)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        env:
+            PERFHERDER_EXTRA_OPTIONS: asan-fuzzing
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/fuzzing.manifest"
+        max-run-time: 36000
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: fuzzing-asan-tc
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-asan/debug:
+    description: "Linux64 Debug ASAN"
+    index:
+        product: firefox
+        job-name: linux64-asan-debug
+    treeherder:
+        platform: linux64/asan
+        symbol: tc(Bd)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        env:
+            PERFHERDER_EXTRA_OPTIONS: "debug asan"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
+        max-run-time: 36000
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: asan-tc-and-debug
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-nightly/opt:
+    description: "Linux64 Nightly"
+    attributes:
+        nightly: true
+    index:
+        product: firefox
+        job-name: linux64-opt
+        type: nightly
+    treeherder:
+        platform: linux64/opt
+        symbol: tc(N)
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - disable_signing.py
+            - taskcluster_nightly.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-noopt/debug:
+    description: "Linux64 No-optimize Debug"
+    index:
+        product: firefox
+        job-name: linux64-noopt-debug
+    treeherder:
+        platform: linux64-noopt/debug
+        symbol: tc(B)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 3600
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: noopt-debug
+        tooltool-downloads: public
+        keep-artifacts: false
+        need-xvfb: true
+    run-on-projects: [ 'trunk', 'try' ]
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-jsdcov/opt:
+    description: "Linux64-JSDCov Opt"
+    index:
+        product: firefox
+        job-name: linux64-jsdcov-opt
+    treeherder:
+        platform: linux64-jsdcov/opt
+        symbol: tc(B)
+        tier: 2
+    run-on-projects: [ ]
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-ccov/opt:
+    description: "Linux64-CCov Opt"
+    index:
+        product: firefox
+        job-name: linux64-ccov-opt
+    needs-sccache: false
+    treeherder:
+        platform: linux64-ccov/opt
+        symbol: tc(B)
+        tier: 2
+    run-on-projects: [ ]
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: code-coverage
+        tooltool-downloads: public
+        need-xvfb: true
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+linux64-add-on-devel/opt:
+    description: "Linux64 add-on-devel"
+    index:
+        product: firefox
+        job-name: linux64-add-on-devel
+    treeherder:
+        platform: linux64-add-on-devel/opt
+        symbol: tc(B)
+        tier: 2
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: mozharness
+        actions: [get-secrets build check-test update]
+        config:
+            - builds/releng_base_linux_64_builds.py
+            - balrog/production.py
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        custom-build-variant-cfg: add-on-devel
+        tooltool-downloads: public
+        need-xvfb: true
+    run-on-projects: [ 'mozilla-release', 'mozilla-esr45' ]
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache

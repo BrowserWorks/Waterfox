@@ -31,9 +31,7 @@
 #include "nsIDOMNode.h"
 #include "nsDOMCSSRGBColor.h"
 #include "nsIDOMWindow.h"
-#include "nsIEditor.h"
 #include "nsIEditRules.h"
-#include "nsIHTMLEditor.h"
 #include "nsIHTMLObjectResizer.h"
 #include "nsINode.h"
 #include "nsIPresShell.h"
@@ -71,11 +69,12 @@ HTMLEditor::AbsolutePositionSelection(bool aEnabled)
   bool cancel, handled;
   // Protect the edit rules object from dying
   nsCOMPtr<nsIEditRules> rules(mRules);
-  nsresult res = rules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
-  if (NS_FAILED(res) || cancel)
-    return res;
+  nsresult rv = rules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
+  if (NS_FAILED(rv) || cancel) {
+    return rv;
+  }
 
-  return rules->DidDoAction(selection, &ruleInfo, res);
+  return rules->DidDoAction(selection, &ruleInfo, rv);
 }
 
 NS_IMETHODIMP
@@ -86,10 +85,10 @@ HTMLEditor::GetAbsolutelyPositionedSelectionContainer(nsIDOMElement** _retval)
   nsCOMPtr<nsIDOMNode> resultNode;
 
   while (!resultNode && node && !node->IsHTMLElement(nsGkAtoms::html)) {
-    nsresult res =
+    nsresult rv =
       mCSSEditUtils->GetComputedProperty(*node, *nsGkAtoms::position,
                                          positionStr);
-    NS_ENSURE_SUCCESS(res, res);
+    NS_ENSURE_SUCCESS(rv, rv);
     if (positionStr.EqualsLiteral("absolute"))
       resultNode = GetAsDOMNode(node);
     else {
@@ -135,8 +134,8 @@ HTMLEditor::RelativeChangeElementZIndex(nsIDOMElement* aElement,
     return NS_OK;
 
   int32_t zIndex;
-  nsresult res = GetElementZIndex(aElement, &zIndex);
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv = GetElementZIndex(aElement, &zIndex);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   zIndex = std::max(zIndex + aChange, 0);
   SetElementZIndex(aElement, zIndex);
@@ -177,11 +176,12 @@ HTMLEditor::RelativeChangeZIndex(int32_t aChange)
   bool cancel, handled;
   // Protect the edit rules object from dying
   nsCOMPtr<nsIEditRules> rules(mRules);
-  nsresult res = rules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
-  if (cancel || NS_FAILED(res))
-    return res;
+  nsresult rv = rules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
+  if (cancel || NS_FAILED(rv)) {
+    return rv;
+  }
 
-  return rules->DidDoAction(selection, &ruleInfo, res);
+  return rules->DidDoAction(selection, &ruleInfo, rv);
 }
 
 NS_IMETHODIMP
@@ -193,29 +193,29 @@ HTMLEditor::GetElementZIndex(nsIDOMElement* aElement,
   nsAutoString zIndexStr;
   *aZindex = 0;
 
-  nsresult res = mCSSEditUtils->GetSpecifiedProperty(*element,
-                                                     *nsGkAtoms::z_index,
-                                                     zIndexStr);
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv =
+    mCSSEditUtils->GetSpecifiedProperty(*element, *nsGkAtoms::z_index,
+                                        zIndexStr);
+  NS_ENSURE_SUCCESS(rv, rv);
   if (zIndexStr.EqualsLiteral("auto")) {
     // we have to look at the positioned ancestors
     // cf. CSS 2 spec section 9.9.1
     nsCOMPtr<nsIDOMNode> parentNode;
-    res = aElement->GetParentNode(getter_AddRefs(parentNode));
-    NS_ENSURE_SUCCESS(res, res);
+    rv = aElement->GetParentNode(getter_AddRefs(parentNode));
+    NS_ENSURE_SUCCESS(rv, rv);
     nsCOMPtr<nsINode> node = do_QueryInterface(parentNode);
     nsAutoString positionStr;
     while (node && zIndexStr.EqualsLiteral("auto") &&
            !node->IsHTMLElement(nsGkAtoms::body)) {
-      res = mCSSEditUtils->GetComputedProperty(*node, *nsGkAtoms::position,
-                                               positionStr);
-      NS_ENSURE_SUCCESS(res, res);
+      rv = mCSSEditUtils->GetComputedProperty(*node, *nsGkAtoms::position,
+                                              positionStr);
+      NS_ENSURE_SUCCESS(rv, rv);
       if (positionStr.EqualsLiteral("absolute")) {
         // ah, we found one, what's its z-index ? If its z-index is auto,
         // we have to continue climbing the document's tree
-        res = mCSSEditUtils->GetComputedProperty(*node, *nsGkAtoms::z_index,
-                                                 zIndexStr);
-        NS_ENSURE_SUCCESS(res, res);
+        rv = mCSSEditUtils->GetComputedProperty(*node, *nsGkAtoms::z_index,
+                                                zIndexStr);
+        NS_ENSURE_SUCCESS(rv, rv);
       }
       node = node->GetParentNode();
     }
@@ -229,24 +229,23 @@ HTMLEditor::GetElementZIndex(nsIDOMElement* aElement,
   return NS_OK;
 }
 
-already_AddRefed<Element>
+ManualNACPtr
 HTMLEditor::CreateGrabber(nsINode* aParentNode)
 {
   // let's create a grabber through the element factory
-  nsCOMPtr<nsIDOMElement> retDOM;
-  CreateAnonymousElement(NS_LITERAL_STRING("span"), GetAsDOMNode(aParentNode),
-                         NS_LITERAL_STRING("mozGrabber"), false,
-                         getter_AddRefs(retDOM));
-
-  NS_ENSURE_TRUE(retDOM, nullptr);
+  ManualNACPtr ret =
+    CreateAnonymousElement(nsGkAtoms::span, GetAsDOMNode(aParentNode),
+                           NS_LITERAL_STRING("mozGrabber"), false);
+  if (NS_WARN_IF(!ret)) {
+    return nullptr;
+  }
 
   // add the mouse listener so we can detect a click on a resizer
-  nsCOMPtr<nsIDOMEventTarget> evtTarget(do_QueryInterface(retDOM));
+  nsCOMPtr<nsIDOMEventTarget> evtTarget = do_QueryInterface(ret);
   evtTarget->AddEventListener(NS_LITERAL_STRING("mousedown"),
                               mEventListener, false);
 
-  nsCOMPtr<Element> ret = do_QueryInterface(retDOM);
-  return ret.forget();
+  return ret;
 }
 
 NS_IMETHODIMP
@@ -254,31 +253,32 @@ HTMLEditor::RefreshGrabber()
 {
   NS_ENSURE_TRUE(mAbsolutelyPositionedObject, NS_ERROR_NULL_POINTER);
 
-  nsresult res = GetPositionAndDimensions(static_cast<nsIDOMElement*>(GetAsDOMNode(mAbsolutelyPositionedObject)),
-                                         mPositionedObjectX,
-                                         mPositionedObjectY,
-                                         mPositionedObjectWidth,
-                                         mPositionedObjectHeight,
-                                         mPositionedObjectBorderLeft,
-                                         mPositionedObjectBorderTop,
-                                         mPositionedObjectMarginLeft,
-                                         mPositionedObjectMarginTop);
-
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv =
+    GetPositionAndDimensions(
+      static_cast<nsIDOMElement*>(GetAsDOMNode(mAbsolutelyPositionedObject)),
+      mPositionedObjectX,
+      mPositionedObjectY,
+      mPositionedObjectWidth,
+      mPositionedObjectHeight,
+      mPositionedObjectBorderLeft,
+      mPositionedObjectBorderTop,
+      mPositionedObjectMarginLeft,
+      mPositionedObjectMarginTop);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   SetAnonymousElementPosition(mPositionedObjectX+12,
                               mPositionedObjectY-14,
-                              static_cast<nsIDOMElement*>(GetAsDOMNode(mGrabber)));
+                              mGrabber);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 HTMLEditor::HideGrabber()
 {
-  nsresult res = mAbsolutelyPositionedObject->UnsetAttr(kNameSpaceID_None,
-                                                        nsGkAtoms::_moz_abspos,
-                                                        true);
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv = mAbsolutelyPositionedObject->UnsetAttr(kNameSpaceID_None,
+                                                       nsGkAtoms::_moz_abspos,
+                                                       true);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   mAbsolutelyPositionedObject = nullptr;
   NS_ENSURE_TRUE(mGrabber, NS_ERROR_NULL_POINTER);
@@ -289,13 +289,8 @@ HTMLEditor::HideGrabber()
   // are no document observers to notify, but we still want to
   // UnbindFromTree.
 
-  nsCOMPtr<nsIContent> parentContent = mGrabber->GetParent();
-  NS_ENSURE_TRUE(parentContent, NS_ERROR_NULL_POINTER);
-
-  DeleteRefToAnonymousNode(static_cast<nsIDOMElement*>(GetAsDOMNode(mGrabber)), parentContent, ps);
-  mGrabber = nullptr;
-  DeleteRefToAnonymousNode(static_cast<nsIDOMElement*>(GetAsDOMNode(mPositioningShadow)), parentContent, ps);
-  mPositioningShadow = nullptr;
+  DeleteRefToAnonymousNode(Move(mGrabber), ps);
+  DeleteRefToAnonymousNode(Move(mPositioningShadow), ps);
 
   return NS_OK;
 }
@@ -306,18 +301,22 @@ HTMLEditor::ShowGrabberOnElement(nsIDOMElement* aElement)
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_ARG_POINTER(element);
 
+  if (NS_WARN_IF(!IsDescendantOfEditorRoot(element))) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
   if (mGrabber) {
     NS_ERROR("call HideGrabber first");
     return NS_ERROR_UNEXPECTED;
   }
 
   nsAutoString classValue;
-  nsresult res = CheckPositionedElementBGandFG(aElement, classValue);
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv = CheckPositionedElementBGandFG(aElement, classValue);
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  res = element->SetAttr(kNameSpaceID_None, nsGkAtoms::_moz_abspos,
-                         classValue, true);
-  NS_ENSURE_SUCCESS(res, res);
+  rv = element->SetAttr(kNameSpaceID_None, nsGkAtoms::_moz_abspos,
+                        classValue, true);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // first, let's keep track of that element...
   mAbsolutelyPositionedObject = element;
@@ -338,10 +337,10 @@ HTMLEditor::StartMoving(nsIDOMElement* aHandle)
   mPositioningShadow = CreateShadow(GetAsDOMNode(parentNode),
       static_cast<nsIDOMElement*>(GetAsDOMNode(mAbsolutelyPositionedObject)));
   NS_ENSURE_TRUE(mPositioningShadow, NS_ERROR_FAILURE);
-  nsresult res = SetShadowPosition(mPositioningShadow,
-                                   mAbsolutelyPositionedObject,
-                                   mPositionedObjectX, mPositionedObjectY);
-  NS_ENSURE_SUCCESS(res,res);
+  nsresult rv = SetShadowPosition(mPositioningShadow,
+                                  mAbsolutelyPositionedObject,
+                                  mPositionedObjectX, mPositionedObjectY);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // make the shadow appear
   mPositioningShadow->UnsetAttr(kNameSpaceID_None, nsGkAtoms::_class, true);
@@ -353,7 +352,7 @@ HTMLEditor::StartMoving(nsIDOMElement* aHandle)
                                       mPositionedObjectHeight);
 
   mIsMoving = true;
-  return res;
+  return NS_OK; // XXX Looks like nobody refers this result
 }
 
 void
@@ -369,22 +368,22 @@ nsresult
 HTMLEditor::GrabberClicked()
 {
   // add a mouse move listener to the editor
-  nsresult res = NS_OK;
+  nsresult rv = NS_OK;
   if (!mMouseMotionListenerP) {
-    mMouseMotionListenerP = new ResizerMouseMotionListener(this);
+    mMouseMotionListenerP = new ResizerMouseMotionListener(*this);
     if (!mMouseMotionListenerP) {return NS_ERROR_NULL_POINTER;}
 
     nsCOMPtr<nsIDOMEventTarget> piTarget = GetDOMEventTarget();
     NS_ENSURE_TRUE(piTarget, NS_ERROR_FAILURE);
 
-    res = piTarget->AddEventListener(NS_LITERAL_STRING("mousemove"),
+    rv = piTarget->AddEventListener(NS_LITERAL_STRING("mousemove"),
                                      mMouseMotionListenerP,
                                      false, false);
-    NS_ASSERTION(NS_SUCCEEDED(res),
+    NS_ASSERTION(NS_SUCCEEDED(rv),
                  "failed to register mouse motion listener");
   }
   mGrabberClicked = true;
-  return res;
+  return rv;
 }
 
 nsresult
@@ -394,24 +393,18 @@ HTMLEditor::EndMoving()
     nsCOMPtr<nsIPresShell> ps = GetPresShell();
     NS_ENSURE_TRUE(ps, NS_ERROR_NOT_INITIALIZED);
 
-    nsCOMPtr<nsIContent> parentContent = mGrabber->GetParent();
-    NS_ENSURE_TRUE(parentContent, NS_ERROR_FAILURE);
-
-    DeleteRefToAnonymousNode(static_cast<nsIDOMElement*>(GetAsDOMNode(mPositioningShadow)),
-                             parentContent, ps);
+    DeleteRefToAnonymousNode(Move(mPositioningShadow), ps);
 
     mPositioningShadow = nullptr;
   }
   nsCOMPtr<nsIDOMEventTarget> piTarget = GetDOMEventTarget();
 
   if (piTarget && mMouseMotionListenerP) {
-#ifdef DEBUG
-    nsresult res =
-#endif
-    piTarget->RemoveEventListener(NS_LITERAL_STRING("mousemove"),
-                                  mMouseMotionListenerP,
-                                  false);
-    NS_ASSERTION(NS_SUCCEEDED(res), "failed to remove mouse motion listener");
+    DebugOnly<nsresult> rv =
+      piTarget->RemoveEventListener(NS_LITERAL_STRING("mousemove"),
+                                    mMouseMotionListenerP,
+                                    false);
+    NS_ASSERTION(NS_SUCCEEDED(rv), "failed to remove mouse motion listener");
   }
   mMouseMotionListenerP = nullptr;
 
@@ -427,8 +420,8 @@ nsresult
 HTMLEditor::SetFinalPosition(int32_t aX,
                              int32_t aY)
 {
-  nsresult res = EndMoving();
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv = EndMoving();
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // we have now to set the new width and height of the resized object
   // we don't set the x and y position because we don't control that in
@@ -508,8 +501,8 @@ HTMLEditor::AbsolutelyPositionElement(nsIDOMElement* aElement,
     nsINode* parentNode = element->GetParentNode();
     if (parentNode->GetChildCount() == 1) {
       nsCOMPtr<nsIDOMNode> brNode;
-      nsresult res = CreateBR(parentNode->AsDOMNode(), 0, address_of(brNode));
-      NS_ENSURE_SUCCESS(res, res);
+      nsresult rv = CreateBR(parentNode->AsDOMNode(), 0, address_of(brNode));
+      NS_ENSURE_SUCCESS(rv, rv);
     }
   }
   else {
@@ -535,10 +528,10 @@ HTMLEditor::AbsolutelyPositionElement(nsIDOMElement* aElement,
       RefPtr<HTMLEditRules> htmlRules =
         static_cast<HTMLEditRules*>(mRules.get());
       NS_ENSURE_TRUE(htmlRules, NS_ERROR_FAILURE);
-      nsresult res = htmlRules->MakeSureElemStartsOrEndsOnCR(aElement);
-      NS_ENSURE_SUCCESS(res, res);
-      res = RemoveContainer(element);
-      NS_ENSURE_SUCCESS(res, res);
+      nsresult rv = htmlRules->MakeSureElemStartsOrEndsOnCR(*element);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = RemoveContainer(element);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
   }
   return NS_OK;
@@ -625,16 +618,16 @@ HTMLEditor::CheckPositionedElementBGandFG(nsIDOMElement* aElement,
   aReturn.Truncate();
 
   nsAutoString bgImageStr;
-  nsresult res =
+  nsresult rv =
     mCSSEditUtils->GetComputedProperty(*element, *nsGkAtoms::background_image,
                                        bgImageStr);
-  NS_ENSURE_SUCCESS(res, res);
+  NS_ENSURE_SUCCESS(rv, rv);
   if (bgImageStr.EqualsLiteral("none")) {
     nsAutoString bgColorStr;
-    res =
+    rv =
       mCSSEditUtils->GetComputedProperty(*element, *nsGkAtoms::backgroundColor,
                                          bgColorStr);
-    NS_ENSURE_SUCCESS(res, res);
+    NS_ENSURE_SUCCESS(rv, rv);
     if (bgColorStr.EqualsLiteral("transparent")) {
       RefPtr<nsComputedDOMStyle> cssDecl =
         mCSSEditUtils->GetComputedStyle(element);

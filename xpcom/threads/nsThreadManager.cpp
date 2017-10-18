@@ -10,11 +10,15 @@
 #include "nsIClassInfoImpl.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
+#include "mozilla/AbstractThread.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/ThreadLocal.h"
 #ifdef MOZ_CANARY
 #include <fcntl.h>
 #include <unistd.h>
 #endif
+
+#include "MainThreadIdlePeriod.h"
 
 using namespace mozilla;
 
@@ -36,7 +40,7 @@ NS_SetMainThread()
   MOZ_ASSERT(NS_IsMainThread());
 }
 
-typedef nsTArray<RefPtr<nsThread>> nsThreadArray;
+typedef nsTArray<NotNull<RefPtr<nsThread>>> nsThreadArray;
 
 //-----------------------------------------------------------------------------
 
@@ -99,9 +103,18 @@ nsThreadManager::Init()
     return rv;
   }
 
+  {
+    nsCOMPtr<nsIIdlePeriod> idlePeriod = new MainThreadIdlePeriod();
+    mMainThread->RegisterIdlePeriod(idlePeriod.forget());
+  }
+
   // We need to keep a pointer to the current thread, so we can satisfy
   // GetIsMainThread calls that occur post-Shutdown.
   mMainThread->GetPRThread(&mMainPRThread);
+
+  // Init AbstractThread.
+  AbstractThread::InitTLS();
+  AbstractThread::InitMainThread();
 
   mInitialized = true;
   return NS_OK;
@@ -131,7 +144,7 @@ nsThreadManager::Shutdown()
     OffTheBooksMutexAutoLock lock(mLock);
     for (auto iter = mThreadsByPRThread.Iter(); !iter.Done(); iter.Next()) {
       RefPtr<nsThread>& thread = iter.Data();
-      threads.AppendElement(thread);
+      threads.AppendElement(WrapNotNull(thread));
       iter.Remove();
     }
   }
@@ -147,7 +160,7 @@ nsThreadManager::Shutdown()
 
   // Shutdown all threads that require it (join with threads that we created).
   for (uint32_t i = 0; i < threads.Length(); ++i) {
-    nsThread* thread = threads[i];
+    NotNull<nsThread*> thread = threads[i];
     if (thread->ShutdownRequired()) {
       thread->Shutdown();
     }
@@ -184,9 +197,9 @@ nsThreadManager::Shutdown()
 }
 
 void
-nsThreadManager::RegisterCurrentThread(nsThread* aThread)
+nsThreadManager::RegisterCurrentThread(nsThread& aThread)
 {
-  MOZ_ASSERT(aThread->GetPRThread() == PR_GetCurrentThread(), "bad aThread");
+  MOZ_ASSERT(aThread.GetPRThread() == PR_GetCurrentThread(), "bad aThread");
 
   OffTheBooksMutexAutoLock lock(mLock);
 
@@ -195,21 +208,21 @@ nsThreadManager::RegisterCurrentThread(nsThread* aThread)
     mHighestNumberOfThreads = mCurrentNumberOfThreads;
   }
 
-  mThreadsByPRThread.Put(aThread->GetPRThread(), aThread);  // XXX check OOM?
+  mThreadsByPRThread.Put(aThread.GetPRThread(), &aThread);  // XXX check OOM?
 
-  NS_ADDREF(aThread);  // for TLS entry
-  PR_SetThreadPrivate(mCurThreadIndex, aThread);
+  aThread.AddRef();  // for TLS entry
+  PR_SetThreadPrivate(mCurThreadIndex, &aThread);
 }
 
 void
-nsThreadManager::UnregisterCurrentThread(nsThread* aThread)
+nsThreadManager::UnregisterCurrentThread(nsThread& aThread)
 {
-  MOZ_ASSERT(aThread->GetPRThread() == PR_GetCurrentThread(), "bad aThread");
+  MOZ_ASSERT(aThread.GetPRThread() == PR_GetCurrentThread(), "bad aThread");
 
   OffTheBooksMutexAutoLock lock(mLock);
 
   --mCurrentNumberOfThreads;
-  mThreadsByPRThread.Remove(aThread->GetPRThread());
+  mThreadsByPRThread.Remove(aThread.GetPRThread());
 
   PR_SetThreadPrivate(mCurThreadIndex, nullptr);
   // Ref-count balanced via ReleaseObject
@@ -242,15 +255,23 @@ nsThreadManager::NewThread(uint32_t aCreationFlags,
                            uint32_t aStackSize,
                            nsIThread** aResult)
 {
+  return NewNamedThread(NS_LITERAL_CSTRING(""), aStackSize, aResult);
+}
+
+NS_IMETHODIMP
+nsThreadManager::NewNamedThread(const nsACString& aName,
+                                uint32_t aStackSize,
+                                nsIThread** aResult)
+{
   // Note: can be called from arbitrary threads
-  
+
   // No new threads during Shutdown
   if (NS_WARN_IF(!mInitialized)) {
     return NS_ERROR_NOT_INITIALIZED;
   }
 
   RefPtr<nsThread> thr = new nsThread(nsThread::NOT_MAIN_THREAD, aStackSize);
-  nsresult rv = thr->Init();  // Note: blocks until the new thread has been set up
+  nsresult rv = thr->Init(aName);  // Note: blocks until the new thread has been set up
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -307,7 +328,7 @@ NS_IMETHODIMP
 nsThreadManager::GetCurrentThread(nsIThread** aResult)
 {
   // Keep this functioning during Shutdown
-  if (NS_WARN_IF(!mMainThread)) {
+  if (!mMainThread) {
     return NS_ERROR_NOT_INITIALIZED;
   }
   *aResult = GetCurrentThread();
@@ -319,11 +340,48 @@ nsThreadManager::GetCurrentThread(nsIThread** aResult)
 }
 
 NS_IMETHODIMP
-nsThreadManager::GetIsMainThread(bool* aResult)
+nsThreadManager::SpinEventLoopUntil(nsINestedEventLoopCondition* aCondition)
 {
-  // This method may be called post-Shutdown
+  nsCOMPtr<nsINestedEventLoopCondition> condition(aCondition);
+  nsresult rv = NS_OK;
 
-  *aResult = (PR_GetCurrentThread() == mMainPRThread);
+  if (!mozilla::SpinEventLoopUntil([&]() -> bool {
+        bool isDone = false;
+        rv = condition->IsDone(&isDone);
+        // JS failure should be unusual, but we need to stop and propagate
+        // the error back to the caller.
+        if (NS_FAILED(rv)) {
+          return true;
+        }
+
+        return isDone;
+      })) {
+    // We stopped early for some reason, which is unexpected.
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  // If we exited when the condition told us to, we need to return whether
+  // the condition encountered failure when executing.
+  return rv;
+}
+
+NS_IMETHODIMP
+nsThreadManager::SpinEventLoopUntilEmpty()
+{
+  nsIThread* thread = NS_GetCurrentThread();
+
+  while (NS_HasPendingEvents(thread)) {
+    (void)NS_ProcessNextEvent(thread, false);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsThreadManager::GetSystemGroupEventTarget(nsIEventTarget** aTarget)
+{
+  nsCOMPtr<nsIEventTarget> target = SystemGroup::EventTargetFor(TaskCategory::Other);
+  target.forget(aTarget);
   return NS_OK;
 }
 
@@ -332,4 +390,33 @@ nsThreadManager::GetHighestNumberOfThreads()
 {
   OffTheBooksMutexAutoLock lock(mLock);
   return mHighestNumberOfThreads;
+}
+
+NS_IMETHODIMP
+nsThreadManager::DispatchToMainThread(nsIRunnable *aEvent)
+{
+  // Note: C++ callers should instead use NS_DispatchToMainThread.
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Keep this functioning during Shutdown
+  if (NS_WARN_IF(!mMainThread)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
+  return mMainThread->DispatchFromScript(aEvent, 0);
+}
+
+NS_IMETHODIMP
+nsThreadManager::IdleDispatchToMainThread(nsIRunnable *aEvent, uint32_t aTimeout)
+{
+  // Note: C++ callers should instead use NS_IdleDispatchToThread or
+  // NS_IdleDispatchToCurrentThread.
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIRunnable> event(aEvent);
+  if (aTimeout) {
+    return NS_IdleDispatchToThread(event.forget(), aTimeout, mMainThread);
+  }
+
+  return NS_IdleDispatchToThread(event.forget(), mMainThread);
 }

@@ -7,9 +7,11 @@
 #ifndef vm_RegExpStatics_h
 #define vm_RegExpStatics_h
 
+#include "jscntxt.h"
+
 #include "gc/Marking.h"
 #include "vm/MatchPairs.h"
-#include "vm/RegExpObject.h"
+#include "vm/RegExpShared.h"
 #include "vm/Runtime.h"
 
 namespace js {
@@ -43,7 +45,7 @@ class RegExpStatics
 
   public:
     RegExpStatics() { clear(); }
-    static RegExpStaticsObject* create(ExclusiveContext* cx, Handle<GlobalObject*> parent);
+    static RegExpStaticsObject* create(JSContext* cx, Handle<GlobalObject*> parent);
 
   private:
     bool executeLazy(JSContext* cx);
@@ -87,7 +89,7 @@ class RegExpStatics
 
     JSString* getPendingInput() const { return pendingInput; }
 
-    void mark(JSTracer* trc) {
+    void trace(JSTracer* trc) {
         /*
          * Changes to this function must also be reflected in
          * RegExpStatics::AutoRooter::trace().
@@ -158,7 +160,7 @@ inline bool
 RegExpStatics::createPendingInput(JSContext* cx, MutableHandleValue out)
 {
     /* Lazy evaluation need not be resolved to return the input. */
-    out.setString(pendingInput ? pendingInput.get() : cx->runtime()->emptyString);
+    out.setString(pendingInput ? pendingInput.get() : cx->runtime()->emptyString.ref());
     return true;
 }
 

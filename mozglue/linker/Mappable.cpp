@@ -9,9 +9,11 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <string>
 
 #include "Mappable.h"
 
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/UniquePtr.h"
 
 #ifdef ANDROID
@@ -20,11 +22,86 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "ElfLoader.h"
-#include "SeekableZStream.h"
+#include "XZStream.h"
 #include "Logging.h"
 
 using mozilla::MakeUnique;
 using mozilla::UniquePtr;
+
+class CacheValidator
+{
+public:
+  CacheValidator(const char* aCachedLibPath, Zip* aZip, Zip::Stream* aStream)
+    : mCachedLibPath(aCachedLibPath)
+  {
+    static const char kChecksumSuffix[] = ".crc";
+
+    mCachedChecksumPath =
+      MakeUnique<char[]>(strlen(aCachedLibPath) + sizeof(kChecksumSuffix));
+    sprintf(mCachedChecksumPath.get(), "%s%s", aCachedLibPath, kChecksumSuffix);
+    DEBUG_LOG("mCachedChecksumPath: %s", mCachedChecksumPath.get());
+
+    mChecksum = aStream->GetCRC32();
+    DEBUG_LOG("mChecksum: %x", mChecksum);
+  }
+
+  // Returns whether the cache is valid and up-to-date.
+  bool IsValid() const
+  {
+    // Validate based on checksum.
+    RefPtr<Mappable> checksumMap = MappableFile::Create(mCachedChecksumPath.get());
+    if (!checksumMap) {
+      // Force caching if checksum is missing in cache.
+      return false;
+    }
+
+    DEBUG_LOG("Comparing %x with %s", mChecksum, mCachedChecksumPath.get());
+    MappedPtr checksumBuf = checksumMap->mmap(nullptr, checksumMap->GetLength(),
+                                              PROT_READ, MAP_PRIVATE, 0);
+    if (checksumBuf == MAP_FAILED) {
+      WARN("Couldn't map %s to validate checksum", mCachedChecksumPath.get());
+      return false;
+    }
+    if (memcmp(checksumBuf, &mChecksum, sizeof(mChecksum))) {
+      return false;
+    }
+    return !access(mCachedLibPath.c_str(), R_OK);
+  }
+
+  // Caches the APK-provided checksum used in future cache validations.
+  void CacheChecksum() const
+  {
+    AutoCloseFD fd(open(mCachedChecksumPath.get(),
+                        O_TRUNC | O_RDWR | O_CREAT | O_NOATIME,
+                        S_IRUSR | S_IWUSR));
+    if (fd == -1) {
+      WARN("Couldn't open %s to update checksum", mCachedChecksumPath.get());
+      return;
+    }
+
+    DEBUG_LOG("Updating checksum %s", mCachedChecksumPath.get());
+
+    const size_t size = sizeof(mChecksum);
+    size_t written = 0;
+    while (written < size) {
+      ssize_t ret = write(fd,
+                          reinterpret_cast<const uint8_t*>(&mChecksum) + written,
+                          size - written);
+      if (ret >= 0) {
+        written += ret;
+      } else if (errno != EINTR) {
+        WARN("Writing checksum %s failed with errno %d",
+             mCachedChecksumPath.get(), errno);
+        break;
+      }
+    }
+  }
+
+private:
+  const std::string mCachedLibPath;
+  UniquePtr<char[]> mCachedChecksumPath;
+  uint32_t mChecksum;
+};
 
 Mappable *
 MappableFile::Create(const char *path)
@@ -64,23 +141,26 @@ MappableFile::GetLength() const
 Mappable *
 MappableExtractFile::Create(const char *name, Zip *zip, Zip::Stream *stream)
 {
+  MOZ_ASSERT(zip && stream);
+
   const char *cachePath = getenv("MOZ_LINKER_CACHE");
   if (!cachePath || !*cachePath) {
     WARN("MOZ_LINKER_EXTRACT is set, but not MOZ_LINKER_CACHE; "
         "not extracting");
     return nullptr;
   }
+
+  // Ensure that the cache dir is private.
+  chmod(cachePath, 0770);
+
   UniquePtr<char[]> path =
     MakeUnique<char[]>(strlen(cachePath) + strlen(name) + 2);
   sprintf(path.get(), "%s/%s", cachePath, name);
-  struct stat cacheStat;
-  if (stat(path.get(), &cacheStat) == 0) {
-    struct stat zipStat;
-    stat(zip->GetName(), &zipStat);
-    if (cacheStat.st_mtime > zipStat.st_mtime) {
-      DEBUG_LOG("Reusing %s", static_cast<char *>(path.get()));
-      return MappableFile::Create(path.get());
-    }
+
+  CacheValidator validator(path.get(), zip, stream);
+  if (validator.IsValid()) {
+    DEBUG_LOG("Reusing %s", static_cast<char *>(path.get()));
+    return MappableFile::Create(path.get());
   }
   DEBUG_LOG("Extracting to %s", static_cast<char *>(path.get()));
   AutoCloseFD fd;
@@ -124,42 +204,39 @@ MappableExtractFile::Create(const char *name, Zip *zip, Zip::Stream *stream)
           static_cast<unsigned int>(stream->GetUncompressedSize()));
       return nullptr;
     }
-  } else if (stream->GetType() == Zip::Stream::STORE) {
-    SeekableZStream zStream;
-    if (!zStream.Init(stream->GetBuffer(), stream->GetSize())) {
-      ERROR("Couldn't initialize SeekableZStream for %s", name);
+  } else if (XZStream::IsXZ(stream->GetBuffer(), stream->GetSize())) {
+    XZStream xzStream(stream->GetBuffer(), stream->GetSize());
+
+    if (!xzStream.Init()) {
+      ERROR("Couldn't initialize XZ decoder");
       return nullptr;
     }
-    if (ftruncate(fd, zStream.GetUncompressedSize()) == -1) {
+    DEBUG_LOG("XZStream created, compressed=%" PRIuPTR
+              ", uncompressed=%" PRIuPTR,
+              xzStream.Size(), xzStream.UncompressedSize());
+
+    if (ftruncate(fd, xzStream.UncompressedSize()) == -1) {
       ERROR("Couldn't ftruncate %s to decompress library", file.get());
       return nullptr;
     }
-    MappedPtr buffer(MemoryRange::mmap(nullptr, zStream.GetUncompressedSize(),
+    MappedPtr buffer(MemoryRange::mmap(nullptr, xzStream.UncompressedSize(),
                                        PROT_WRITE, MAP_SHARED, fd, 0));
     if (buffer == MAP_FAILED) {
       ERROR("Couldn't map %s to decompress library", file.get());
       return nullptr;
     }
-
-    if (!zStream.Decompress(buffer, 0, zStream.GetUncompressedSize())) {
-      ERROR("%s: failed to decompress", name);
+    const size_t written = xzStream.Decode(buffer, buffer.GetLength());
+    DEBUG_LOG("XZStream decoded %" PRIuPTR, written);
+    if (written != buffer.GetLength()) {
+      ERROR("Error decoding XZ file %s", file.get());
       return nullptr;
     }
   } else {
     return nullptr;
   }
 
-  return new MappableExtractFile(fd.forget(), Move(file));
-}
-
-MappableExtractFile::~MappableExtractFile()
-{
-  /* When destroying from a forked process, we don't want the file to be
-   * removed, as the main process is still using the file. Although it
-   * doesn't really matter, it helps e.g. valgrind that the file is there.
-   * The string still needs to be delete[]d, though */
-  if (pid != getpid())
-    delete [] path.release();
+  validator.CacheChecksum();
+  return new MappableExtractFile(fd.forget(), file.release());
 }
 
 /**
@@ -196,16 +273,19 @@ public:
      * depending on how mappings grow in the address space.
      */
 #if defined(__arm__)
+    // Address increases on ARM.
     void *buf = ::mmap(nullptr, length + PAGE_SIZE, PROT_READ | PROT_WRITE,
                        MAP_SHARED, fd, 0);
     if (buf != MAP_FAILED) {
       ::mmap(AlignedEndPtr(reinterpret_cast<char *>(buf) + length, PAGE_SIZE),
              PAGE_SIZE, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-      DEBUG_LOG("Decompression buffer of size 0x%x in ashmem \"%s\", mapped @%p",
+      DEBUG_LOG("Decompression buffer of size 0x%" PRIxPTR
+                " in ashmem \"%s\", mapped @%p",
                 length, str, buf);
       return new _MappableBuffer(fd.forget(), buf, length);
     }
-#elif defined(__i386__)
+#elif defined(__i386__) || defined(__aarch64__)
+    // Address decreases on x86 and AArch64.
     size_t anon_mapping_length = length + PAGE_SIZE;
     void *buf = ::mmap(nullptr, anon_mapping_length, PROT_NONE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -221,8 +301,8 @@ public:
         return nullptr;
       }
 
-      DEBUG_LOG("Decompression buffer of size 0x%x in ashmem \"%s\", mapped @%p",
-                length, str, actual_buf);
+      DEBUG_LOG("Decompression buffer of size 0x%" PRIxPTR
+                " in ashmem \"%s\", mapped @%p", length, str, actual_buf);
       return new _MappableBuffer(fd.forget(), actual_buf, length);
     }
 #else
@@ -270,7 +350,7 @@ public:
     /* Free the additional page we allocated. See _MappableBuffer::Create */
 #if defined(__arm__)
     ::munmap(AlignedEndPtr(*this + GetLength(), PAGE_SIZE), PAGE_SIZE);
-#elif defined(__i386__)
+#elif defined(__i386__) || defined(__aarch64__)
     ::munmap(*this - PAGE_SIZE, GetLength() + PAGE_SIZE);
 #else
 #error need to add a case for your CPU
@@ -369,216 +449,6 @@ MappableDeflate::finalize()
 
 size_t
 MappableDeflate::GetLength() const
-{
-  return buffer->GetLength();
-}
-
-Mappable *
-MappableSeekableZStream::Create(const char *name, Zip *zip,
-                                Zip::Stream *stream)
-{
-  MOZ_ASSERT(stream->GetType() == Zip::Stream::STORE);
-  UniquePtr<MappableSeekableZStream> mappable(new MappableSeekableZStream(zip));
-
-  pthread_mutexattr_t recursiveAttr;
-  pthread_mutexattr_init(&recursiveAttr);
-  pthread_mutexattr_settype(&recursiveAttr, PTHREAD_MUTEX_RECURSIVE);
-
-  if (pthread_mutex_init(&mappable->mutex, &recursiveAttr))
-    return nullptr;
-
-  if (!mappable->zStream.Init(stream->GetBuffer(), stream->GetSize()))
-    return nullptr;
-
-  mappable->buffer.reset(_MappableBuffer::Create(name,
-                              mappable->zStream.GetUncompressedSize()));
-  if (!mappable->buffer)
-    return nullptr;
-
-  mappable->chunkAvail = MakeUnique<unsigned char[]>(mappable->zStream.GetChunksNum());
-
-  return mappable.release();
-}
-
-MappableSeekableZStream::MappableSeekableZStream(Zip *zip)
-: zip(zip), chunkAvailNum(0) { }
-
-MappableSeekableZStream::~MappableSeekableZStream()
-{
-  pthread_mutex_destroy(&mutex);
-}
-
-MemoryRange
-MappableSeekableZStream::mmap(const void *addr, size_t length, int prot,
-                              int flags, off_t offset)
-{
-  /* Map with PROT_NONE so that accessing the mapping would segfault, and
-   * bring us to ensure() */
-  void *res = buffer->mmap(addr, length, PROT_NONE, flags, offset);
-  if (res == MAP_FAILED)
-    return MemoryRange(MAP_FAILED, 0);
-
-  /* Store the mapping, ordered by offset and length */
-  std::vector<LazyMap>::reverse_iterator it;
-  for (it = lazyMaps.rbegin(); it < lazyMaps.rend(); ++it) {
-    if ((it->offset < offset) ||
-        ((it->offset == offset) && (it->length < length)))
-      break;
-  }
-  LazyMap map = { res, length, prot, offset };
-  lazyMaps.insert(it.base(), map);
-  return MemoryRange(res, length);
-}
-
-void
-MappableSeekableZStream::munmap(void *addr, size_t length)
-{
-  std::vector<LazyMap>::iterator it;
-  for (it = lazyMaps.begin(); it < lazyMaps.end(); ++it)
-    if ((it->addr = addr) && (it->length == length)) {
-      lazyMaps.erase(it);
-      ::munmap(addr, length);
-      return;
-    }
-  MOZ_CRASH("munmap called with unknown mapping");
-}
-
-void
-MappableSeekableZStream::finalize() { }
-
-bool
-MappableSeekableZStream::ensure(const void *addr)
-{
-  DEBUG_LOG("ensure @%p", addr);
-  const void *addrPage = PageAlignedPtr(addr);
-  /* Find the mapping corresponding to the given page */
-  std::vector<LazyMap>::iterator map;
-  for (map = lazyMaps.begin(); map < lazyMaps.end(); ++map) {
-    if (map->Contains(addrPage))
-      break;
-  }
-  if (map == lazyMaps.end())
-    return false;
-
-  /* Find corresponding chunk */
-  off_t mapOffset = map->offsetOf(addrPage);
-  off_t chunk = mapOffset / zStream.GetChunkSize();
-
-  /* In the typical case, we just need to decompress the chunk entirely. But
-   * when the current mapping ends in the middle of the chunk, we want to
-   * stop at the end of the corresponding page.
-   * However, if another mapping needs the last part of the chunk, we still
-   * need to continue. As mappings are ordered by offset and length, we don't
-   * need to scan the entire list of mappings.
-   * It is safe to run through lazyMaps here because the linker is never
-   * going to call mmap (which adds lazyMaps) while this function is
-   * called. */
-  size_t length = zStream.GetChunkSize(chunk);
-  off_t chunkStart = chunk * zStream.GetChunkSize();
-  off_t chunkEnd = chunkStart + length;
-  std::vector<LazyMap>::iterator it;
-  for (it = map; it < lazyMaps.end(); ++it) {
-    if (chunkEnd <= it->endOffset())
-      break;
-  }
-  if ((it == lazyMaps.end()) || (chunkEnd > it->endOffset())) {
-    /* The mapping "it" points at now is past the interesting one */
-    --it;
-    length = it->endOffset() - chunkStart;
-  }
-
-  length = PageAlignedSize(length);
-
-  /* The following lock can be re-acquired by the thread holding it.
-   * If this happens, it means the following code is interrupted somehow by
-   * some signal, and ends up retriggering a chunk decompression for the
-   * same MappableSeekableZStream.
-   * If the chunk to decompress is different the second time, then everything
-   * is safe as the only common data touched below is chunkAvailNum, and it is
-   * atomically updated (leaving out any chance of an interruption while it is
-   * updated affecting the result). If the chunk to decompress is the same, the
-   * worst thing that can happen is chunkAvailNum being incremented one too
-   * many times, which doesn't affect functionality. The chances of it
-   * happening being pretty slim, and the effect being harmless, we can just
-   * ignore the issue. Other than that, we'd just be wasting time decompressing
-   * the same chunk twice. */
-  AutoLock lock(&mutex);
-
-  /* The very first page is mapped and accessed separately of the rest, and
-   * as such, only the first page of the first chunk is decompressed this way.
-   * When we fault in the remaining pages of that chunk, we want to decompress
-   * the complete chunk again. Short of doing that, we would end up with
-   * no data between PageSize() and chunkSize, which would effectively corrupt
-   * symbol resolution in the underlying library. */
-  if (chunkAvail[chunk] < PageNumber(length)) {
-    if (!zStream.DecompressChunk(*buffer + chunkStart, chunk, length))
-      return false;
-
-#if defined(ANDROID) && defined(__arm__)
-    if (map->prot & PROT_EXEC) {
-      /* We just extracted data that may be executed in the future.
-       * We thus need to ensure Instruction and Data cache coherency. */
-      DEBUG_LOG("cacheflush(%p, %p)", *buffer + chunkStart, *buffer + (chunkStart + length));
-      cacheflush(reinterpret_cast<uintptr_t>(*buffer + chunkStart),
-                 reinterpret_cast<uintptr_t>(*buffer + (chunkStart + length)), 0);
-    }
-#endif
-    /* Only count if we haven't already decompressed parts of the chunk */
-    if (chunkAvail[chunk] == 0)
-      chunkAvailNum++;
-
-    chunkAvail[chunk] = PageNumber(length);
-  }
-
-  /* Flip the chunk mapping protection to the recorded flags. We could
-   * also flip the protection for other mappings of the same chunk,
-   * but it's easier to skip that and let further segfaults call
-   * ensure again. */
-  const void *chunkAddr = reinterpret_cast<const void *>
-                          (reinterpret_cast<uintptr_t>(addrPage)
-                           - mapOffset % zStream.GetChunkSize());
-  const void *chunkEndAddr = reinterpret_cast<const void *>
-                             (reinterpret_cast<uintptr_t>(chunkAddr) + length);
-  
-  const void *start = std::max(map->addr, chunkAddr);
-  const void *end = std::min(map->end(), chunkEndAddr);
-  length = reinterpret_cast<uintptr_t>(end)
-           - reinterpret_cast<uintptr_t>(start);
-
-  if (mprotect(const_cast<void *>(start), length, map->prot) == 0) {
-    DEBUG_LOG("mprotect @%p, 0x%" PRIxSize ", 0x%x", start, length, map->prot);
-    return true;
-  }
-
-  ERROR("mprotect @%p, 0x%" PRIxSize ", 0x%x failed with errno %d",
-      start, length, map->prot, errno);
-  return false;
-}
-
-void
-MappableSeekableZStream::stats(const char *when, const char *name) const
-{
-  size_t nEntries = zStream.GetChunksNum();
-  DEBUG_LOG("%s: %s; %" PRIdSize "/%" PRIdSize " chunks decompressed",
-            name, when, static_cast<size_t>(chunkAvailNum), nEntries);
-
-  size_t len = 64;
-  UniquePtr<char[]> map = MakeUnique<char[]>(len + 3);
-  map[0] = '[';
-
-  for (size_t i = 0, j = 1; i < nEntries; i++, j++) {
-    map[j] = chunkAvail[i] ? '*' : '_';
-    if ((j == len) || (i == nEntries - 1)) {
-      map[j + 1] = ']';
-      map[j + 2] = '\0';
-      DEBUG_LOG("%s", static_cast<char *>(map.get()));
-      j = 0;
-    }
-  }
-}
-
-size_t
-MappableSeekableZStream::GetLength() const
 {
   return buffer->GetLength();
 }

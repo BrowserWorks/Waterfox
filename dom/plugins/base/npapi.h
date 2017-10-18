@@ -46,6 +46,7 @@
 #if defined(MOZ_X11)
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include "X11UndefineNone.h"
 #endif
 #endif
 
@@ -258,6 +259,26 @@ typedef struct
 
 #endif /* XP_UNIX */
 
+#if defined(XP_WIN)
+/*
+ * Windows specific structures and definitions
+ */
+
+/*
+ * Information about the default audio device.  These values share meaning with
+ * the parameters to the Windows API IMMNotificationClient object.
+ * This is the value of the NPNVaudioDeviceChangeDetails variable.
+ */
+typedef struct _NPAudioDeviceChangeDetails
+{
+  int32_t flow;
+  int32_t role;
+  const wchar_t* defaultDevice;  // this pointer is only valid during the call
+                                 // to NPPSetValue.
+} NPAudioDeviceChangeDetails;
+
+#endif /* XP_WIN */
+
 typedef enum {
   NPDrawingModelDUMMY
 #if defined(XP_MACOSX)
@@ -378,6 +399,10 @@ typedef enum {
 #endif
   /* Notification that the plugin just started or stopped playing audio */
   , NPPVpluginIsPlayingAudio = 4000
+#if defined(XP_WIN)
+  /* Notification that the plugin requests notification when the default audio device has changed */
+  , NPPVpluginRequiresAudioDeviceChanges = 4001
+#endif
 
 } NPPVariable;
 
@@ -415,8 +440,10 @@ typedef enum {
   NPNVCSSZoomFactor = 23,
 
   NPNVpluginDrawingModel = 1000 /* Get the current drawing model (NPDrawingModel) */
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) || defined(XP_WIN)
   , NPNVcontentsScaleFactor = 1001
+#endif
+#if defined(XP_MACOSX)
 #ifndef NP_NO_QUICKDRAW
   , NPNVsupportsQuickDrawBool = 2000
 #endif
@@ -439,6 +466,9 @@ typedef enum {
                                                     Cocoa text input specification. */
 #endif
   , NPNVmuteAudioBool = 4000 /* Request that the browser wants to mute or unmute the plugin */
+#if defined(XP_WIN)
+  , NPNVaudioDeviceChangeDetails = 4001 /* Provides information about the new default audio device */
+#endif
 #if defined(XP_MACOSX)
   , NPNVsupportsCompositingCoreAnimationPluginsBool = 74656 /* TRUE if the browser supports
                                                                CA model compositing */

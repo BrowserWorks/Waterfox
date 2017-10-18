@@ -16,63 +16,57 @@ function test() {
   // test is too slow on some platforms due to the number of test cases
   requestLongerTimeout(3);
 
-  Task.spawn(function*() {
-    yield testHosts(["bottom", "side", "window:big"], ["horizontal", "vertical", "horizontal"]);
-    yield testHosts(["side", "bottom", "side"], ["vertical", "horizontal", "vertical"]);
-    yield testHosts(["bottom", "side", "bottom"], ["horizontal", "vertical", "horizontal"]);
-    yield testHosts(["side", "window:big", "side"], ["vertical", "horizontal", "vertical"]);
-    yield testHosts(["window:big", "side", "window:big"], ["horizontal", "vertical", "horizontal"]);
-    yield testHosts(["window:small", "bottom", "side"], ["vertical", "horizontal", "vertical"]);
-    yield testHosts(["window:small", "window:big", "window:small"], ["vertical", "horizontal", "vertical"]);
+  (async function() {
+    await testHosts(["bottom", "side", "window:big"], ["horizontal", "vertical", "horizontal"]);
+    await testHosts(["side", "bottom", "side"], ["vertical", "horizontal", "vertical"]);
+    await testHosts(["bottom", "side", "bottom"], ["horizontal", "vertical", "horizontal"]);
+    await testHosts(["side", "window:big", "side"], ["vertical", "horizontal", "vertical"]);
+    await testHosts(["window:big", "side", "window:big"], ["horizontal", "vertical", "horizontal"]);
+    await testHosts(["window:small", "bottom", "side"], ["vertical", "horizontal", "vertical"]);
+    await testHosts(["window:small", "window:big", "window:small"], ["vertical", "horizontal", "vertical"]);
     finish();
-  });
+  })();
 }
 
-function testHosts(aHostTypes, aLayoutTypes) {
+async function testHosts(aHostTypes, aLayoutTypes) {
   let [firstHost, secondHost, thirdHost] = aHostTypes;
   let [firstLayout, secondLayout, thirdLayout] = aLayoutTypes;
 
   Services.prefs.setCharPref("devtools.toolbox.host", getHost(firstHost));
 
-  return Task.spawn(function*() {
-    let [tab, debuggee, panel] = yield initDebugger();
-    if (getHost(firstHost) === "window") {
-      yield resizeToolboxWindow(panel, firstHost);
-    }
+  let [tab, debuggee, panel] = await initDebugger();
+  if (getHost(firstHost) === "window") {
+    await resizeToolboxWindow(panel, firstHost);
+  }
 
-    yield testHost(panel, getHost(firstHost), firstLayout);
-    yield switchAndTestHost(tab, panel, secondHost, secondLayout);
-    yield switchAndTestHost(tab, panel, thirdHost, thirdLayout);
-    yield teardown(panel);
-  });
+  await testHost(panel, getHost(firstHost), firstLayout);
+  await switchAndTestHost(tab, panel, secondHost, secondLayout);
+  await switchAndTestHost(tab, panel, thirdHost, thirdLayout);
+  await teardown(panel);
 }
 
-function switchAndTestHost(aTab, aPanel, aHostType, aLayoutType) {
+async function switchAndTestHost(aTab, aPanel, aHostType, aLayoutType) {
   let gToolbox = aPanel._toolbox;
   let gDebugger = aPanel.panelWin;
 
-  return Task.spawn(function*() {
-    let layoutChanged = waitEventOnce(gDebugger, gDebugger.EVENTS.LAYOUT_CHANGED);
-    let hostChanged = gToolbox.switchHost(getHost(aHostType));
+  let layoutChanged = waitEventOnce(gDebugger, gDebugger.EVENTS.LAYOUT_CHANGED);
+  let hostChanged = gToolbox.switchHost(getHost(aHostType));
 
-    yield hostChanged;
-    info("The toolbox's host has changed.");
+  await hostChanged;
+  info("The toolbox's host has changed.");
 
-    if (getHost(aHostType) === "window") {
-      yield resizeToolboxWindow(aPanel, aHostType);
-    }
+  if (getHost(aHostType) === "window") {
+    await resizeToolboxWindow(aPanel, aHostType);
+  }
 
-    yield layoutChanged;
-    info("The debugger's layout has changed.");
+  await layoutChanged;
+  info("The debugger's layout has changed.");
 
-    yield testHost(aPanel, getHost(aHostType), aLayoutType);
-  });
+  await testHost(aPanel, getHost(aHostType), aLayoutType);
 }
 
 function waitEventOnce(aTarget, aEvent) {
-  let deferred = promise.defer();
-  aTarget.once(aEvent, deferred.resolve);
-  return deferred.promise;
+  return new Promise(resolve => aTarget.once(aEvent, resolve));
 }
 
 function getHost(host) {
@@ -82,30 +76,30 @@ function getHost(host) {
   return host;
 }
 
-function resizeToolboxWindow(panel, host) {
+async function resizeToolboxWindow(panel, host) {
   let sizeOption = host.split(":")[1];
-  let win = panel._toolbox._host._window;
+  let win = panel._toolbox.win.parent;
 
   // should be the same value as BREAKPOINT_SMALL_WINDOW_WIDTH in debugger-view.js
   let breakpoint = 850;
 
   if (sizeOption == "big" && win.outerWidth <= breakpoint) {
-    yield resizeAndWaitForLayoutChange(panel, breakpoint + 300);
+    await resizeAndWaitForLayoutChange(panel, breakpoint + 300);
   } else if (sizeOption == "small" && win.outerWidth >= breakpoint) {
-    yield resizeAndWaitForLayoutChange(panel, breakpoint - 300);
+    await resizeAndWaitForLayoutChange(panel, breakpoint - 300);
   } else {
     info("Window resize unnecessary for host " + host);
   }
 }
 
-function resizeAndWaitForLayoutChange(panel, width) {
-    info("Updating toolbox window width to " + width);
+async function resizeAndWaitForLayoutChange(panel, width) {
+  info("Updating toolbox window width to " + width);
 
-    let win = panel._toolbox._host._window;
-    let gDebugger = panel.panelWin;
+  let win = panel._toolbox.win.parent;
+  let gDebugger = panel.panelWin;
 
-    win.resizeTo(width, window.screen.availHeight);
-    yield waitEventOnce(gDebugger, gDebugger.EVENTS.LAYOUT_CHANGED);
+  win.resizeTo(width, window.screen.availHeight);
+  await waitEventOnce(gDebugger, gDebugger.EVENTS.LAYOUT_CHANGED);
 }
 
 function testHost(aPanel, aHostType, aLayoutType) {
@@ -125,17 +119,11 @@ function testHost(aPanel, aHostType, aLayoutType) {
       "The workers and sources pane's parent is correct for the horizontal layout.");
     is(gView._instrumentsPane.parentNode.id, "editor-and-instruments-pane",
       "The instruments pane's parent is correct for the horizontal layout.");
-    is(gDebugger.document.getElementById("promise-debugger-pane").parentNode.id,
-      "debugger-content",
-      "The promise pane's parent is correct for the horizontal layout.");
   } else {
     is(gView._workersAndSourcesPane.parentNode.id, "vertical-layout-panes-container",
       "The workers and sources pane's parent is correct for the vertical layout.");
     is(gView._instrumentsPane.parentNode.id, "vertical-layout-panes-container",
       "The instruments pane's parent is correct for the vertical layout.");
-    is(gDebugger.document.getElementById("promise-debugger-pane").parentNode.id,
-      "debugger-content",
-      "The promise pane's parent is correct for the horizontal layout.");
   }
 
   let widgets = gDebugger.document.getElementById("debugger-widgets").childNodes;
@@ -148,7 +136,7 @@ function testHost(aPanel, aHostType, aLayoutType) {
   if (aLayoutType == "horizontal") {
     is(widgets.length, 5, // 1 pane, 1 content box, 2 splitters and a phantom box.
       "Found the correct number of debugger widgets.");
-    is(content.length, 3, // 2 panes, 1 splitter.
+    is(content.length, 1, // 1 pane
       "Found the correct number of debugger content.");
     is(editorPane.length, 3, // 2 panes, 1 splitter
       "Found the correct number of debugger panes.");
@@ -157,7 +145,7 @@ function testHost(aPanel, aHostType, aLayoutType) {
   } else {
     is(widgets.length, 4, // 1 content box, 2 splitters and a phantom box.
       "Found the correct number of debugger widgets.");
-    is(content.length, 3, // 2 panes, 1 splitter.
+    is(content.length, 1, // 1 pane
       "Found the correct number of debugger content.");
     is(editorPane.length, 2, // 1 pane, 1 splitter
       "Found the correct number of debugger panes.");

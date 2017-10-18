@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Widget: Cocoa")
+
 XPIDL_SOURCES += [
     'nsPIWidgetCocoa.idl',
 ]
@@ -46,8 +49,6 @@ UNIFIED_SOURCES += [
     'nsPrintDialogX.mm',
     'nsPrintOptionsX.mm',
     'nsPrintSettingsX.mm',
-    'nsScreenCocoa.mm',
-    'nsScreenManagerCocoa.mm',
     'nsSound.mm',
     'nsStandaloneNativeMenu.mm',
     'nsSystemStatusBarCocoa.mm',
@@ -56,6 +57,7 @@ UNIFIED_SOURCES += [
     'nsWindowMap.mm',
     'OSXNotificationCenter.mm',
     'RectTextureImage.mm',
+    'ScreenHelperCocoa.mm',
     'SwipeTracker.mm',
     'TextInputHandler.mm',
     'VibrancyManager.mm',
@@ -72,15 +74,12 @@ SOURCES += [
     'nsNativeThemeCocoa.mm',
 ]
 
-if not CONFIG['RELEASE_BUILD'] or CONFIG['MOZ_DEBUG']:
+if not CONFIG['RELEASE_OR_BETA'] or CONFIG['MOZ_DEBUG']:
     SOURCES += [
         'nsSandboxViolationSink.mm',
     ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
-
-# XXX: We should fix these warnings.
-ALLOW_COMPILER_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
@@ -89,7 +88,16 @@ LOCAL_INCLUDES += [
     '/layout/style',
     '/layout/xul',
     '/widget',
+    '/widget/headless',
 ]
+
+if CONFIG['MOZ_ENABLE_SKIA_PDF']:
+    LOCAL_INCLUDES += [
+        # Skia includes because widget code includes PrintTargetSkPDF.h, and that
+        # includes skia headers.
+        '/gfx/skia/skia/include/config',
+        '/gfx/skia/skia/include/core',
+    ]
 
 RESOURCE_FILES.cursors += [
     'cursors/arrowN.png',

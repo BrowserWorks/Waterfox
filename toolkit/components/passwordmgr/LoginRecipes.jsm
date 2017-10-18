@@ -8,7 +8,14 @@ this.EXPORTED_SYMBOLS = ["LoginRecipesContent", "LoginRecipesParent"];
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const REQUIRED_KEYS = ["hosts"];
-const OPTIONAL_KEYS = ["description", "notUsernameSelector", "passwordSelector", "pathRegex", "usernameSelector"];
+const OPTIONAL_KEYS = [
+  "description",
+  "notPasswordSelector",
+  "notUsernameSelector",
+  "passwordSelector",
+  "pathRegex",
+  "usernameSelector",
+];
 const SUPPORTED_KEYS = REQUIRED_KEYS.concat(OPTIONAL_KEYS);
 
 Cu.importGlobalProperties(["URL"]);
@@ -97,10 +104,9 @@ LoginRecipesParent.prototype = {
 
       try {
         this.initializationPromise = new Promise(function(resolve) {
-          NetUtil.asyncFetch(channel, function (stream, result) {
+          NetUtil.asyncFetch(channel, function(stream, result) {
             if (!Components.isSuccessCode(result)) {
               throw new Error("Error fetching recipe file:" + result);
-              return;
             }
             let count = stream.available();
             let data = NetUtil.readInputStreamToString(stream, count, { charset: "UTF-8" });
@@ -191,7 +197,6 @@ var LoginRecipesContent = {
    */
   _filterRecipesForForm(aRecipes, aForm) {
     let formDocURL = aForm.ownerDocument.location;
-    let host = formDocURL.host;
     let hostRecipes = aRecipes;
     let recipes = new Set();
     log.debug("_filterRecipesForForm", aRecipes);
@@ -228,7 +233,7 @@ var LoginRecipesContent = {
     // Find the first (most-specific recipe that involves field overrides).
     for (let recipe of recipes) {
       if (!recipe.usernameSelector && !recipe.passwordSelector &&
-          !recipe.notUsernameSelector) {
+          !recipe.notUsernameSelector && !recipe.notPasswordSelector) {
         continue;
       }
 
@@ -253,6 +258,8 @@ var LoginRecipesContent = {
       log.debug("Login field selector wasn't matched:", aSelector);
       return null;
     }
+    // ownerGlobal doesn't exist in content privileged windows.
+    // eslint-disable-next-line mozilla/use-ownerGlobal
     if (!(field instanceof aParent.ownerDocument.defaultView.HTMLInputElement)) {
       log.warn("Login field isn't an <input> so ignoring it:", aSelector);
       return null;

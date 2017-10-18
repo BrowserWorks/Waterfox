@@ -51,13 +51,14 @@ must be one of the following:
 
    <failure-type>* include <relative_path>
 
-   <failure-type> is the same as listed below for a test item.  As for 
-   test items, multiple failure types listed on the same line are 
-   combined by using the last matching failure type listed.  However, 
-   the failure type on a manifest is combined with the failure type on 
-   the test (or on a nested manifest) with the rule that the last in the
-   following list wins:  fails, random, skip.  (In other words, skip 
-   always wins, and random beats fails.)
+   <failure-type> is the same as listed below for a test item.  As for
+   test items, multiple failure types listed on the same line are
+   combined by using the last matching failure type listed on the line.
+   However, the failure type on a manifest is combined with the failure
+   type on the test (or on a nested manifest) with the rule that the
+   last in the following list wins:  fails, random, skip.  (In other
+   words, when combining <failure-type> from the manifest include and
+   the test line, skip always wins, and random beats fails.)
 
 2. A test item
 
@@ -115,13 +116,19 @@ must be one of the following:
                          fast on a 32-bit system but inordinately slow on a
                          64-bit system).
 
-      fuzzy(maxDiff, diffCount)
-          This allows a test to pass if the pixel value differences are <=
-          maxDiff and the total number of different pixels is <= diffCount.
+      fuzzy(maxDiff,maxPixelCount)
+      fuzzy(minDiff-maxDiff,minPixelCount-maxPixelCount)
+          This allows a test to pass if the pixel value differences are between
+          minDiff and maxDiff, inclusive, and the total number of different
+          pixels is between minPixelCount and maxPixelCount, inclusive.
+          If the minDiff and/or minPixelCount values are not specified, they
+          are assumed to be zero.
           It can also be used with '!=' to ensure that the difference is
-          greater than maxDiff.
+          outside the specified interval. Note that with '!=' tests the
+          minimum bounds of the ranges must be zero.
 
-      fuzzy-if(condition, maxDiff, diffCount)
+      fuzzy-if(condition,maxDiff,diffCount)
+      fuzzy-if(condition,minDiff-maxDiff,minPixelCount-maxPixelCount)
           If the condition is met, the test is treated as if 'fuzzy' had been
           specified. This is useful if there are differences on particular
           platforms.
@@ -555,9 +562,9 @@ the end of the test take the snapshot with the given async zoom on top of any
 existing zoom. Content is not re-rendered at the new zoom level. This
 corresponds to the mobile style "pinch zoom" style of zoom. This is unsupported
 in many configurations, and any tests using this will probably want to have
-skip-if(!asyncPanZoom) on them.
+pref(apz.allow_zooming,true) on them.
 
-Printing Tests: class="reftest-print"
+Pagination Tests: class="reftest-paged"
 =====================================
 
 Now that the patch for bug 374050 has landed
@@ -568,15 +575,15 @@ The page size used is 5in wide and 3in tall (with the default half-inch
 margins).  This is to allow tests to have less text and to make the
 entire test fit on the screen.
 
-There is a layout/reftests/printing directory for printing reftests; however,
-there is nothing special about this directory.  You can put printing reftests
+There is a layout/reftests/printing directory for pagination reftests; however,
+there is nothing special about this directory.  You can put pagination reftests
 anywhere that is appropriate.
 
-The suggested first lines for any printing test is
-<!DOCTYPE html><html class="reftest-print">
+The suggested first lines for any pagination test is
+<!DOCTYPE html><html class="reftest-paged">
 <style>html{font-size:12pt}</style>
 
-The reftest-print class on the root element triggers the reftest to
+The reftest-paged class on the root element triggers the reftest to
 switch into page mode. Fixing the font size is suggested, although not
 required, because the pages are a fixed size in inches. The switch to page mode
 happens on load if the reftest-wait class is not present; otherwise it happens

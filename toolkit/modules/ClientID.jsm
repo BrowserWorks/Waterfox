@@ -8,10 +8,8 @@ this.EXPORTED_SYMBOLS = ["ClientID"];
 
 const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
-Cu.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 
 const LOGGER_NAME = "Toolkit.Telemetry";
@@ -19,6 +17,8 @@ const LOGGER_PREFIX = "ClientID::";
 
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "gDatareportingPath", () => {
   return OS.Path.join(OS.Constants.Path.profileDir, "datareporting");
@@ -55,7 +55,7 @@ this.ClientID = Object.freeze({
    *
    * @return {Promise<string>} The stable client ID.
    */
-  getClientID: function() {
+  getClientID() {
     return ClientIDImpl.getClientID();
   },
 
@@ -66,7 +66,7 @@ this.ClientID = Object.freeze({
    *  - the client id that we cached into preferences (if any)
    *  - null otherwise
    */
-  getCachedClientID: function() {
+  getCachedClientID() {
     return ClientIDImpl.getCachedClientID();
   },
 
@@ -74,7 +74,7 @@ this.ClientID = Object.freeze({
    * Only used for testing. Invalidates the client ID so that it gets read
    * again from file.
    */
-  _reset: function() {
+  _reset() {
     return ClientIDImpl._reset();
   },
 });
@@ -85,7 +85,7 @@ var ClientIDImpl = {
   _saveClientIdTask: null,
   _logger: null,
 
-  _loadClientID: function () {
+  _loadClientID() {
     if (this._loadClientIdTask) {
       return this._loadClientIdTask;
     }
@@ -96,7 +96,7 @@ var ClientIDImpl = {
     return this._loadClientIdTask;
   },
 
-  _doLoadClientID: Task.async(function* () {
+  async _doLoadClientID() {
     // As we want to correlate FHR and telemetry data (and move towards unifying the two),
     // we first moved the ID management from the FHR implementation to the datareporting
     // service, then to a common shared module.
@@ -104,7 +104,7 @@ var ClientIDImpl = {
 
     // Try to load the client id from the DRS state file first.
     try {
-      let state = yield CommonUtils.readJSON(gStateFilePath);
+      let state = await CommonUtils.readJSON(gStateFilePath);
       if (state && this.updateClientID(state.clientID)) {
         return this._clientID;
       }
@@ -115,7 +115,7 @@ var ClientIDImpl = {
     // If we dont have DRS state yet, try to import from the FHR state.
     try {
       let fhrStatePath = OS.Path.join(OS.Constants.Path.profileDir, "healthreport", "state.json");
-      let state = yield CommonUtils.readJSON(fhrStatePath);
+      let state = await CommonUtils.readJSON(fhrStatePath);
       if (state && this.updateClientID(state.clientID)) {
         this._saveClientID();
         return this._clientID;
@@ -132,22 +132,22 @@ var ClientIDImpl = {
     // the client creating and subsequently sending multiple IDs to the server.
     // This would appear as multiple clients submitting similar data, which would
     // result in orphaning.
-    yield this._saveClientIdTask;
+    await this._saveClientIdTask;
 
     return this._clientID;
-  }),
+  },
 
   /**
    * Save the client ID to the client ID file.
    *
    * @return {Promise} A promise resolved when the client ID is saved to disk.
    */
-  _saveClientID: Task.async(function* () {
+  async _saveClientID() {
     let obj = { clientID: this._clientID };
-    yield OS.File.makeDir(gDatareportingPath);
-    yield CommonUtils.writeJSON(obj, gStateFilePath);
+    await OS.File.makeDir(gDatareportingPath);
+    await CommonUtils.writeJSON(obj, gStateFilePath);
     this._saveClientIdTask = null;
-  }),
+  },
 
   /**
    * This returns a promise resolving to the the stable client ID we use for
@@ -156,7 +156,7 @@ var ClientIDImpl = {
    *
    * @return {Promise<string>} The stable client ID.
    */
-  getClientID: function() {
+  getClientID() {
     if (!this._clientID) {
       return this._loadClientID();
     }
@@ -171,20 +171,25 @@ var ClientIDImpl = {
    *  - the client id that we cached into preferences (if any)
    *  - null otherwise
    */
-  getCachedClientID: function() {
+  getCachedClientID() {
     if (this._clientID) {
       // Already loaded the client id from disk.
       return this._clientID;
     }
 
     // Not yet loaded, return the cached client id if we have one.
-    let id = Preferences.get(PREF_CACHED_CLIENTID, null);
+    if (Services.prefs.getPrefType(PREF_CACHED_CLIENTID) != Ci.nsIPrefBranch.PREF_STRING) {
+      this._log.error("getCachedClientID - invalid client id type in preferences, resetting");
+      Services.prefs.clearUserPref(PREF_CACHED_CLIENTID);
+    }
+
+    let id = Services.prefs.getStringPref(PREF_CACHED_CLIENTID, null);
     if (id === null) {
       return null;
     }
     if (!isValidClientID(id)) {
       this._log.error("getCachedClientID - invalid client id in preferences, resetting", id);
-      Preferences.reset(PREF_CACHED_CLIENTID);
+      Services.prefs.clearUserPref(PREF_CACHED_CLIENTID);
       return null;
     }
     return id;
@@ -193,11 +198,11 @@ var ClientIDImpl = {
   /*
    * Resets the provider. This is for testing only.
    */
-  _reset: Task.async(function* () {
-    yield this._loadClientIdTask;
-    yield this._saveClientIdTask;
+  async _reset() {
+    await this._loadClientIdTask;
+    await this._saveClientIdTask;
     this._clientID = null;
-  }),
+  },
 
   /**
    * Sets the client id to the given value and updates the value cached in
@@ -207,14 +212,14 @@ var ClientIDImpl = {
    * @return {Boolean} True when the client ID has valid format, or False
    * otherwise.
    */
-  updateClientID: function (id){
+  updateClientID(id) {
     if (!isValidClientID(id)) {
       this._log.error("updateClientID - invalid client ID", id);
       return false;
     }
 
     this._clientID = id;
-    Preferences.set(PREF_CACHED_CLIENTID, this._clientID);
+    Services.prefs.setStringPref(PREF_CACHED_CLIENTID, this._clientID);
     return true;
   },
 

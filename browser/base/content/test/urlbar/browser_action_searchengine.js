@@ -1,26 +1,24 @@
-add_task(function* () {
+add_task(async function() {
   Services.search.addEngineWithDetails("MozSearch", "", "", "", "GET",
                                        "http://example.com/?q={searchTerms}");
   let engine = Services.search.getEngineByName("MozSearch");
   let originalEngine = Services.search.currentEngine;
   Services.search.currentEngine = engine;
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab("about:mozilla", {animate: false});
-  yield promiseTabLoaded(gBrowser.selectedTab);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:mozilla");
 
   registerCleanupFunction(() => {
     Services.search.currentEngine = originalEngine;
-    let engine = Services.search.getEngineByName("MozSearch");
     Services.search.removeEngine(engine);
 
     try {
       gBrowser.removeTab(tab);
-    } catch(ex) { /* tab may have already been closed in case of failure */ }
+    } catch (ex) { /* tab may have already been closed in case of failure */ }
 
     return PlacesTestUtils.clearHistory();
   });
 
-  yield promiseAutocompleteResultPopup("open a search");
+  await promiseAutocompleteResultPopup("open a search");
   let result = gURLBar.popup.richlistbox.firstChild;
 
   isnot(result, null, "Should have a result");
@@ -29,9 +27,9 @@ add_task(function* () {
      "Result should be a moz-action: for the correct search engine");
   is(result.hasAttribute("image"), false, "Result shouldn't have an image attribute");
 
-  let tabPromise = promiseTabLoaded(gBrowser.selectedTab);
+  let tabPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
   result.click();
-  yield tabPromise;
+  await tabPromise;
 
   is(gBrowser.selectedBrowser.currentURI.spec, "http://example.com/?q=open+a+search", "Correct URL should be loaded");
 });

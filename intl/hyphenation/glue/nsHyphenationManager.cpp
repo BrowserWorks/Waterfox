@@ -127,9 +127,8 @@ nsHyphenationManager::GetHyphenator(nsIAtom *aLocale)
     return hyph.forget();
   }
 #ifdef DEBUG
-  nsCString msg;
-  uri->GetSpec(msg);
-  msg.Insert("failed to load patterns from ", 0);
+  nsCString msg("failed to load patterns from ");
+  msg += uri->GetSpecOrDefault();
   NS_WARNING(msg.get());
 #endif
   mPatternFiles.Remove(aLocale);
@@ -306,8 +305,9 @@ nsHyphenationManager::LoadAliases()
                                              &prefCount, &prefNames);
   if (NS_SUCCEEDED(rv) && prefCount > 0) {
     for (uint32_t i = 0; i < prefCount; ++i) {
-      nsAdoptingCString value = Preferences::GetCString(prefNames[i]);
-      if (value) {
+      nsAutoCString value;
+      rv = Preferences::GetCString(prefNames[i], value);
+      if (NS_SUCCEEDED(rv)) {
         nsAutoCString alias(prefNames[i]);
         alias.Cut(0, sizeof(kIntlHyphenationAliasPrefix) - 1);
         ToLowerCase(alias);

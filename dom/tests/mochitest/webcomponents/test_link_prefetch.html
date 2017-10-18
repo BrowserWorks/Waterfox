@@ -59,8 +59,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=580313
   // "https://example.com/1" does not exist, the cancel will throw.
   var cancelError = 0;
   try {
-    var uri = ios.newURI("https://example.com/1", null, null);
-    prefetch.cancelPrefetchURI(uri, linkElem);
+    var uri = ios.newURI("https://example.com/1");
+    prefetch.cancelPrefetchPreloadURI(uri, linkElem);
   } catch(e) {
     cancelError = 1;
   }
@@ -69,8 +69,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=580313
   // Now cancel the right uri.
   cancelError = 0;
   try {
-    var uri = ios.newURI("https://example.com/2", null, null);
-    prefetch.cancelPrefetchURI(uri, linkElem);
+    var uri = ios.newURI("https://example.com/2");
+    prefetch.cancelPrefetchPreloadURI(uri, linkElem);
   } catch(e) {
     cancelError = 1;
   }

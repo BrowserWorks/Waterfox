@@ -6,8 +6,12 @@
 
 #include "nsITelemetry.h"
 #include "nsVersionComparator.h"
+#include "mozilla/TimeStamp.h"
+#include "nsIConsoleService.h"
+#include "nsThreadUtils.h"
 
 #include "TelemetryCommon.h"
+#include "TelemetryProcessData.h"
 
 #include <cstring>
 
@@ -18,10 +22,11 @@ namespace Common {
 bool
 IsExpiredVersion(const char* aExpiration)
 {
-  static mozilla::Version current_version = mozilla::Version(MOZ_APP_VERSION);
   MOZ_ASSERT(aExpiration);
+  // Note: We intentionally don't construct a static Version object here as we
+  // saw odd crashes around this (see bug 1334105).
   return strcmp(aExpiration, "never") && strcmp(aExpiration, "default") &&
-    (mozilla::Version(aExpiration) <= current_version);
+    (mozilla::Version(aExpiration) <= MOZ_APP_VERSION);
 }
 
 bool
@@ -60,6 +65,73 @@ CanRecordDataset(uint32_t aDataset, bool aCanRecordBase, bool aCanRecordExtended
   // We're not recording extended telemetry or this is not the base
   // dataset. Bail out.
   return false;
+}
+
+bool
+CanRecordInProcess(RecordedProcessType processes, GeckoProcessType processType)
+{
+  bool recordAllChild = !!(processes & RecordedProcessType::AllChilds);
+  // We can use (1 << ProcessType) due to the way RecordedProcessType is defined.
+  bool canRecordProcess =
+    !!(processes & static_cast<RecordedProcessType>(1 << processType));
+
+  return canRecordProcess ||
+         ((processType != GeckoProcessType_Default) && recordAllChild);
+}
+
+bool
+CanRecordInProcess(RecordedProcessType processes, ProcessID processId)
+{
+  return CanRecordInProcess(processes, GetGeckoProcessType(processId));
+}
+
+nsresult
+MsSinceProcessStart(double* aResult)
+{
+  bool error;
+  *aResult = (TimeStamp::NowLoRes() -
+              TimeStamp::ProcessCreation(&error)).ToMilliseconds();
+  if (error) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  return NS_OK;
+}
+
+void
+LogToBrowserConsole(uint32_t aLogLevel, const nsAString& aMsg)
+{
+  if (!NS_IsMainThread()) {
+    nsString msg(aMsg);
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction(
+      "Telemetry::Common::LogToBrowserConsole",
+      [aLogLevel, msg]() { LogToBrowserConsole(aLogLevel, msg); });
+    NS_DispatchToMainThread(task.forget(), NS_DISPATCH_NORMAL);
+    return;
+  }
+
+  nsCOMPtr<nsIConsoleService> console(do_GetService("@mozilla.org/consoleservice;1"));
+  if (!console) {
+    NS_WARNING("Failed to log message to console.");
+    return;
+  }
+
+  nsCOMPtr<nsIScriptError> error(do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
+  error->Init(aMsg, EmptyString(), EmptyString(), 0, 0, aLogLevel, "chrome javascript");
+  console->LogMessage(error);
+}
+
+const char*
+GetNameForProcessID(ProcessID process)
+{
+  MOZ_ASSERT(process < ProcessID::Count);
+  return ProcessIDToString[static_cast<uint32_t>(process)];
+}
+
+GeckoProcessType
+GetGeckoProcessType(ProcessID process)
+{
+  MOZ_ASSERT(process < ProcessID::Count);
+  return ProcessIDToGeckoProcessType[static_cast<uint32_t>(process)];
 }
 
 } // namespace Common

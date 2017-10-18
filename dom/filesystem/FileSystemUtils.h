@@ -8,6 +8,7 @@
 #define mozilla_dom_FileSystemUtils_h
 
 class nsIFile;
+class nsIRunnable;
 
 namespace mozilla {
 namespace dom {
@@ -26,7 +27,8 @@ public:
    * Return true if aDescendantPath is a descendant of aPath.
    */
   static bool
-  IsDescendantPath(nsIFile* aPath, nsIFile* aDescendantPath);
+  IsDescendantPath(const nsAString& aPath,
+                   const nsAString& aDescendantPath);
 
   /**
    * Return true if this is valid DOMPath. It also splits the path in
@@ -35,6 +37,14 @@ public:
   static bool
   IsValidRelativeDOMPath(const nsAString& aPath,
                          nsTArray<nsString>& aParts);
+
+  /**
+   * Helper method. If aGlobal is null, the SystemGroup EventTarget will be
+   * used.
+   */
+  static nsresult
+  DispatchRunnable(nsIGlobalObject* aGlobal,
+                   already_AddRefed<nsIRunnable>&& aRunnable);
 };
 
 } // namespace dom

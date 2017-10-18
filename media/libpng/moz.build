@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "ImageLib")
+
 EXPORTS += [
     'png.h',
     'pngconf.h',
@@ -27,8 +30,8 @@ UNIFIED_SOURCES += [
     'pngwutil.c'
 ]
 
-if CONFIG['MOZ_PNG_ARM_NEON']:
-    DEFINES['MOZ_PNG_HAVE_ARM_NEON'] = True
+if CONFIG['CPU_ARCH'] == 'arm':
+    DEFINES['MOZ_PNG_USE_ARM_NEON'] = True
     UNIFIED_SOURCES += [
         'arm/arm_init.c',
         'arm/filter_neon_intrinsics.c'
@@ -38,9 +41,29 @@ if CONFIG['MOZ_PNG_ARM_NEON']:
         'arm/filter_neon.S'
     ]
 
+if CONFIG['INTEL_ARCHITECTURE']:
+    DEFINES['MOZ_PNG_USE_INTEL_SSE'] = True
+    UNIFIED_SOURCES += [
+        'intel/filter_sse2_intrinsics.c',
+        'intel/intel_init.c'
+    ]
+
+if CONFIG['HAVE_ALTIVEC']:
+    DEFINES['MOZ_PNG_USE_POWERPC'] = True
+    UNIFIED_SOURCES += [
+        'powerpc/filter_vsx_intrinsics.c',
+        'powerpc/powerpc_init.c'
+    ]
+
+if CONFIG['MOZ_TREE_FREETYPE']:
+    DEFINES['FT_CONFIG_OPTION_USE_PNG'] = True
+
 Library('mozpng')
 
 FINAL_LIBRARY = 'gkmedias'
 
 # We allow warnings for third-party code that can be updated from upstream.
 ALLOW_COMPILER_WARNINGS = True
+
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-std=c89']

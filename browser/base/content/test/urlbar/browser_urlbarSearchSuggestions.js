@@ -2,18 +2,19 @@ const SUGGEST_URLBAR_PREF = "browser.urlbar.suggest.searches";
 const TEST_ENGINE_BASENAME = "searchSuggestionEngine.xml";
 
 // Must run first.
-add_task(function* prepare() {
+add_task(async function prepare() {
+  let suggestionsEnabled = Services.prefs.getBoolPref(SUGGEST_URLBAR_PREF);
   Services.prefs.setBoolPref(SUGGEST_URLBAR_PREF, true);
-  let engine = yield promiseNewSearchEngine(TEST_ENGINE_BASENAME);
+  let engine = await promiseNewSearchEngine(TEST_ENGINE_BASENAME);
   let oldCurrentEngine = Services.search.currentEngine;
   Services.search.currentEngine = engine;
-  registerCleanupFunction(function () {
-    Services.prefs.clearUserPref(SUGGEST_URLBAR_PREF);
+  registerCleanupFunction(async function() {
+    Services.prefs.setBoolPref(SUGGEST_URLBAR_PREF, suggestionsEnabled);
     Services.search.currentEngine = oldCurrentEngine;
 
     // Clicking suggestions causes visits to search results pages, so clear that
     // history now.
-    yield PlacesTestUtils.clearHistory();
+    await PlacesTestUtils.clearHistory();
 
     // Make sure the popup is closed for the next test.
     gURLBar.blur();
@@ -21,25 +22,62 @@ add_task(function* prepare() {
   });
 });
 
-add_task(function* clickSuggestion() {
-  gBrowser.selectedTab = gBrowser.addTab();
+add_task(async function clickSuggestion() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
   gURLBar.focus();
-  yield promiseAutocompleteResultPopup("foo");
-  let [idx, suggestion] = yield promiseFirstSuggestion();
+  await promiseAutocompleteResultPopup("foo");
+  let [idx, suggestion, engineName] = await promiseFirstSuggestion();
+  Assert.equal(engineName,
+               "browser_searchSuggestionEngine%20searchSuggestionEngine.xml",
+               "Expected suggestion engine");
   let item = gURLBar.popup.richlistbox.getItemAtIndex(idx);
-  let loadPromise = promiseTabLoaded(gBrowser.selectedTab);
-  item.click();
-  yield loadPromise;
+
   let uri = Services.search.currentEngine.getSubmission(suggestion).uri;
-  Assert.ok(uri.equals(gBrowser.currentURI),
-            "The search results page should have loaded");
-  gBrowser.removeTab(gBrowser.selectedTab);
+  let loadPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser,
+                                                   false, uri.spec);
+  item.click();
+  await loadPromise;
+  await BrowserTestUtils.removeTab(tab);
+});
+
+async function testPressEnterOnSuggestion(expectedUrl = null, keyModifiers = {}) {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+  gURLBar.focus();
+  await promiseAutocompleteResultPopup("foo");
+  let [idx, suggestion, engineName] = await promiseFirstSuggestion();
+  Assert.equal(engineName,
+               "browser_searchSuggestionEngine%20searchSuggestionEngine.xml",
+               "Expected suggestion engine");
+
+  if (!expectedUrl) {
+    expectedUrl = Services.search.currentEngine.getSubmission(suggestion).uri.spec;
+  }
+
+  let promiseLoad = waitForDocLoadAndStopIt(expectedUrl);
+
+  for (let i = 0; i < idx; ++i) {
+    EventUtils.synthesizeKey("VK_DOWN", {});
+  }
+  EventUtils.synthesizeKey("VK_RETURN", keyModifiers);
+
+  await promiseLoad;
+  await BrowserTestUtils.removeTab(tab);
+}
+
+add_task(async function plainEnterOnSuggestion() {
+  await testPressEnterOnSuggestion();
+});
+
+add_task(async function ctrlEnterOnSuggestion() {
+  await testPressEnterOnSuggestion("http://www.foofoo.com/",
+                                   AppConstants.platform === "macosx" ?
+                                     { metaKey: true } :
+                                     { ctrlKey: true });
 });
 
 function getFirstSuggestion() {
   let controller = gURLBar.popup.input.controller;
   let matchCount = controller.matchCount;
-  let present = false;
   for (let i = 0; i < matchCount; i++) {
     let url = controller.getValueAt(i);
     let mozActionMatch = url.match(/^moz-action:([^,]+),(.*)$/);
@@ -47,19 +85,18 @@ function getFirstSuggestion() {
       let [, type, paramStr] = mozActionMatch;
       let params = JSON.parse(paramStr);
       if (type == "searchengine" && "searchSuggestion" in params) {
-        return [i, params.searchSuggestion];
+        return [i, params.searchSuggestion, params.engineName];
       }
     }
   }
-  return [-1, null];
+  return [-1, null, null];
 }
 
-function promiseFirstSuggestion() {
-  return new Promise(resolve => {
-    let pair;
-    waitForCondition(() => {
-      pair = getFirstSuggestion();
-      return pair[0] >= 0;
-    }, () => resolve(pair));
+async function promiseFirstSuggestion() {
+  let tuple = [-1, null, null];
+  await BrowserTestUtils.waitForCondition(() => {
+    tuple = getFirstSuggestion();
+    return tuple[0] >= 0;
   });
+  return tuple;
 }

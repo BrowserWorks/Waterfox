@@ -19,7 +19,7 @@
 #include "mozilla/SheetType.h"
 #include "mozilla/UniquePtr.h"
 #include "nsExpirationTracker.h"
-#include "nsIMediaList.h"
+#include "nsMediaList.h"
 #include "nsIStyleRuleProcessor.h"
 #include "nsRuleWalker.h"
 #include "nsTArray.h"
@@ -39,6 +39,7 @@ class nsCSSCounterStyleRule;
 namespace mozilla {
 class CSSStyleSheet;
 enum class CSSPseudoElementType : uint8_t;
+enum class CSSPseudoClassType : uint8_t;
 namespace css {
 class DocumentRule;
 } // namespace css
@@ -80,7 +81,9 @@ public:
 public:
   nsresult ClearRuleCascades();
 
+  static bool VisitedLinksEnabled();
   static void Startup();
+  static void InitSystemMetrics();
   static void Shutdown();
   static void FreeSystemMetrics();
   static bool HasSystemMetric(nsIAtom* aMetric);
@@ -101,22 +104,26 @@ public:
    * slightly adjusted from IntrinsicState().
    */
   static mozilla::EventStates GetContentState(
-                                mozilla::dom::Element* aElement,
+                                const mozilla::dom::Element* aElement,
+                                bool aUsingPrivateBrowsing);
+  static mozilla::EventStates GetContentState(
+                                const mozilla::dom::Element* aElement,
                                 const TreeMatchContext& aTreeMatchContext);
+  static mozilla::EventStates GetContentState(
+                                const mozilla::dom::Element* aElement);
 
   /*
    * Helper to get the content state for :visited handling for an element
    */
   static mozilla::EventStates GetContentStateForVisitedHandling(
-             mozilla::dom::Element* aElement,
-             const TreeMatchContext& aTreeMatchContext,
+             const mozilla::dom::Element* aElement,
              nsRuleWalker::VisitedHandlingType aVisitedHandling,
              bool aIsRelevantLink);
 
   /*
    * Helper to test whether a node is a link
    */
-  static bool IsLink(mozilla::dom::Element* aElement);
+  static bool IsLink(const mozilla::dom::Element* aElement);
 
   /**
    * Returns true if the given aElement matches aSelector.
@@ -132,6 +139,44 @@ public:
   static bool RestrictedSelectorMatches(mozilla::dom::Element* aElement,
                                         nsCSSSelector* aSelector,
                                         TreeMatchContext& aTreeMatchContext);
+  /**
+   * Checks if a function-like ident-containing pseudo (:pseudo(ident))
+   * matches a given element.
+   *
+   * Returns true if it parses and matches, Some(false) if it
+   * parses but does not match. Asserts if it fails to parse; only
+   * call this when you're sure it's a string-like pseudo.
+   *
+   * In Servo mode, please ensure that UpdatePossiblyStaleDocumentState()
+   * has been called first.
+   *
+   * @param aElement The element we are trying to match
+   * @param aPseudo The name of the pseudoselector
+   * @param aString The identifier inside the pseudoselector (cannot be null)
+   * @param aDocument The document
+   * @param aForStyling Is this matching operation for the creation of a style context?
+   *                    (For setting the slow selector flag)
+   * @param aStateMask Mask containing states which we should exclude.
+   *                   Ignored if aDependence is null
+   * @param aSetSlowSelectorFlag Outparam, set if the caller is
+   *                             supposed to set the slow selector flag.
+   * @param aDependence Pointer to be set to true if we ignored a state due to
+   *                    aStateMask. Can be null.
+   */
+  static bool StringPseudoMatches(const mozilla::dom::Element* aElement,
+                                  mozilla::CSSPseudoClassType aPseudo,
+                                  const char16_t* aString,
+                                  const nsIDocument* aDocument,
+                                  bool aForStyling,
+                                  mozilla::EventStates aStateMask,
+                                  bool* aSetSlowSelectorFlag,
+                                  bool* const aDependence = nullptr);
+
+  static bool LangPseudoMatches(const mozilla::dom::Element* aElement,
+                                const nsIAtom* aOverrideLang,
+                                bool aHasOverrideLang,
+                                const char16_t* aString,
+                                const nsIDocument* aDocument);
 
   // nsIStyleRuleProcessor
   virtual void RulesMatching(ElementRuleProcessorData* aData) override;
@@ -176,7 +221,7 @@ public:
                                            const nsString& aName);
 
   nsCSSCounterStyleRule* CounterStyleRuleForName(nsPresContext* aPresContext,
-                                                 const nsAString& aName);
+                                                 nsIAtom* aName);
 
   bool AppendPageRules(nsPresContext* aPresContext,
                        nsTArray<nsCSSPageRule*>& aArray);
@@ -211,7 +256,7 @@ public:
 #ifdef XP_WIN
   // Cached theme identifier for the moz-windows-theme media query.
   static uint8_t GetWindowsThemeIdentifier();
-  static void SetWindowsThemeIdentifier(uint8_t aId) { 
+  static void SetWindowsThemeIdentifier(uint8_t aId) {
     sWinThemeId = aId;
   }
 #endif

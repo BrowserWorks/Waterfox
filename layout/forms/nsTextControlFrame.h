@@ -17,8 +17,8 @@
 class nsISelectionController;
 class EditorInitializerEntryTracker;
 class nsTextEditorState;
-class nsIEditor;
 namespace mozilla {
+class TextEditor;
 enum class CSSPseudoElementType : uint8_t;
 namespace dom {
 class Element;
@@ -31,7 +31,7 @@ class nsTextControlFrame final : public nsContainerFrame,
                                  public nsIStatefulFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTextControlFrame)
 
   NS_DECLARE_FRAME_PROPERTY_DELETABLE(ContentScrollPos, nsPoint)
 
@@ -44,29 +44,50 @@ public:
     return do_QueryFrame(PrincipalChildList().FirstChild());
   }
 
-  virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext* aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext* aRenderingContext) override;
 
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       ReflowOutput&     aDesiredSize,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
 
+  bool GetVerticalAlignBaseline(mozilla::WritingMode aWM,
+                                nscoord* aBaseline) const override
+  {
+    return GetNaturalBaselineBOffset(aWM, BaselineSharingGroup::eFirst, aBaseline);
+  }
+
+  bool GetNaturalBaselineBOffset(mozilla::WritingMode aWM,
+                                 BaselineSharingGroup aBaselineGroup,
+                                 nscoord* aBaseline) const override
+  {
+    if (!IsSingleLineTextControl()) {
+      return false;
+    }
+    NS_ASSERTION(mFirstBaseline != NS_INTRINSIC_WIDTH_UNKNOWN,
+                 "please call Reflow before asking for the baseline");
+    if (aBaselineGroup == BaselineSharingGroup::eFirst) {
+      *aBaseline = mFirstBaseline;
+    } else {
+      *aBaseline = BSize(aWM) - mFirstBaseline;
+    }
+    return true;
+  }
+
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual bool IsXULCollapsed() override;
 
-  virtual bool IsLeaf() const override;
-  
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
@@ -86,6 +107,14 @@ public:
     return nsContainerFrame::IsFrameOfType(aFlags &
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedContainsBlock));
   }
+
+#ifdef DEBUG
+  void MarkIntrinsicISizesDirty() override
+  {
+    // Need another Reflow to have a correct baseline value again.
+    mFirstBaseline = NS_INTRINSIC_WIDTH_UNKNOWN;
+  }
+#endif
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
@@ -110,19 +139,12 @@ public:
 
 //==== NSITEXTCONTROLFRAME
 
-  NS_IMETHOD    GetEditor(nsIEditor **aEditor) override;
-  NS_IMETHOD    SetSelectionStart(int32_t aSelectionStart) override;
-  NS_IMETHOD    SetSelectionEnd(int32_t aSelectionEnd) override;
-  NS_IMETHOD    SetSelectionRange(int32_t aSelectionStart,
-                                  int32_t aSelectionEnd,
+  NS_IMETHOD_(already_AddRefed<mozilla::TextEditor>) GetTextEditor() override;
+  NS_IMETHOD    SetSelectionRange(uint32_t aSelectionStart,
+                                  uint32_t aSelectionEnd,
                                   SelectionDirection aDirection = eNone) override;
-  NS_IMETHOD    GetSelectionRange(int32_t* aSelectionStart,
-                                  int32_t* aSelectionEnd,
-                                  SelectionDirection* aDirection = nullptr) override;
   NS_IMETHOD    GetOwnedSelectionController(nsISelectionController** aSelCon) override;
   virtual nsFrameSelection* GetOwnedFrameSelection() override;
-
-  nsresult GetPhonetic(nsAString& aPhonetic) override;
 
   /**
    * Ensure mEditor is initialized with the proper flags and the default value.
@@ -141,7 +163,6 @@ public:
 //=== END NSISTATEFULFRAME
 
 //==== OVERLOAD of nsIFrame
-  virtual nsIAtom* GetType() const override;
 
   /** handler for attribute changes to mContent */
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
@@ -166,7 +187,7 @@ protected:
 
 public: //for methods who access nsTextControlFrame directly
   void SetValueChanged(bool aValueChanged);
-  
+
   // called by the focus listener
   nsresult MaybeBeginSecureKeyboardInput();
   void MaybeEndSecureKeyboardInput();
@@ -188,9 +209,9 @@ public: //for methods who access nsTextControlFrame directly
   DEFINE_TEXTCTRL_CONST_FORWARDER(bool, IsTextArea)
   DEFINE_TEXTCTRL_CONST_FORWARDER(bool, IsPlainTextControl)
   DEFINE_TEXTCTRL_CONST_FORWARDER(bool, IsPasswordTextControl)
-  DEFINE_TEXTCTRL_FORWARDER(int32_t, GetCols)
-  DEFINE_TEXTCTRL_FORWARDER(int32_t, GetWrapCols)
-  DEFINE_TEXTCTRL_FORWARDER(int32_t, GetRows)
+  DEFINE_TEXTCTRL_CONST_FORWARDER(int32_t, GetCols)
+  DEFINE_TEXTCTRL_CONST_FORWARDER(int32_t, GetWrapCols)
+  DEFINE_TEXTCTRL_CONST_FORWARDER(int32_t, GetRows)
 
 #undef DEFINE_TEXTCTRL_CONST_FORWARDER
 #undef DEFINE_TEXTCTRL_FORWARDER
@@ -201,18 +222,26 @@ protected:
   friend class nsTextEditorState; // needs access to UpdateValueDisplay
 
   // Temp reference to scriptrunner
-  // We could make these auto-Revoking via the "delete" entry for safety
-  NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(TextControlInitializer,
-                                         EditorInitializer)
+  NS_DECLARE_FRAME_PROPERTY_WITH_DTOR(TextControlInitializer,
+                                      EditorInitializer,
+                                      nsTextControlFrame::RevokeInitializer)
+
+  static void
+  RevokeInitializer(EditorInitializer* aInitializer) {
+    aInitializer->Revoke();
+  };
 
   class EditorInitializer : public mozilla::Runnable {
   public:
-    explicit EditorInitializer(nsTextControlFrame* aFrame) :
-      mFrame(aFrame) {}
+    explicit EditorInitializer(nsTextControlFrame* aFrame)
+      : mozilla::Runnable("nsTextControlFrame::EditorInitializer")
+      , mFrame(aFrame)
+    {
+    }
 
     NS_IMETHOD Run() override;
 
-    // avoids use of nsWeakFrame
+    // avoids use of AutoWeakFrame
     void Revoke() {
       mFrame = nullptr;
     }
@@ -226,8 +255,11 @@ protected:
 
   class ScrollOnFocusEvent : public mozilla::Runnable {
   public:
-    explicit ScrollOnFocusEvent(nsTextControlFrame* aFrame) :
-      mFrame(aFrame) {}
+    explicit ScrollOnFocusEvent(nsTextControlFrame* aFrame)
+      : mozilla::Runnable("nsTextControlFrame::ScrollOnFocusEvent")
+      , mFrame(aFrame)
+    {
+    }
 
     NS_DECL_NSIRUNNABLE
 
@@ -239,7 +271,7 @@ protected:
     nsTextControlFrame* mFrame;
   };
 
-  nsresult OffsetToDOMPoint(int32_t aOffset, nsIDOMNode** aResult, int32_t* aPosition);
+  nsresult OffsetToDOMPoint(uint32_t aOffset, nsIDOMNode** aResult, uint32_t* aPosition);
 
   /**
    * Update the textnode under our anonymous div to show the new
@@ -274,38 +306,47 @@ protected:
   // Compute our intrinsic size.  This does not include any borders, paddings,
   // etc.  Just the size of our actual area for the text (and the scrollbars,
   // for <textarea>).
-  nsresult CalcIntrinsicSize(nsRenderingContext* aRenderingContext,
-                             mozilla::WritingMode aWM,
-                             mozilla::LogicalSize& aIntrinsicSize,
-                             float aFontSizeInflation);
+  mozilla::LogicalSize CalcIntrinsicSize(gfxContext* aRenderingContext,
+                                         mozilla::WritingMode aWM,
+                                         float aFontSizeInflation) const;
 
   nsresult ScrollSelectionIntoView() override;
 
 private:
   //helper methods
-  nsresult SetSelectionInternal(nsIDOMNode *aStartNode, int32_t aStartOffset,
-                                nsIDOMNode *aEndNode, int32_t aEndOffset,
+  nsresult SetSelectionInternal(nsIDOMNode *aStartNode, uint32_t aStartOffset,
+                                nsIDOMNode *aEndNode, uint32_t aEndOffset,
                                 SelectionDirection aDirection = eNone);
   nsresult SelectAllOrCollapseToEndOfText(bool aSelect);
-  nsresult SetSelectionEndPoints(int32_t aSelStart, int32_t aSelEnd,
+  nsresult SetSelectionEndPoints(uint32_t aSelStart, uint32_t aSelEnd,
                                  SelectionDirection aDirection = eNone);
 
   /**
-   * Return the root DOM element, and implicitly initialize the editor if needed.
+   * Return the root DOM element, and implicitly initialize the editor if
+   * needed.
+   *
+   * XXXbz This function is slow.  Very slow.  Consider using
+   * EnsureEditorInitialized() if you need that, and
+   * nsITextControlElement::GetRootEditorNode on our content if you need that.
    */
-  mozilla::dom::Element* GetRootNodeAndInitializeEditor();
   nsresult GetRootNodeAndInitializeEditor(nsIDOMElement **aRootElement);
 
   void FinishedInitializer() {
-    Properties().Delete(TextControlInitializer());
+    DeleteProperty(TextControlInitializer());
   }
 
 private:
-  // these packed bools could instead use the high order bits on mState, saving 4 bytes 
+  // Our first baseline, or NS_INTRINSIC_WIDTH_UNKNOWN if we have a pending
+  // Reflow.
+  nscoord mFirstBaseline;
+
+  // these packed bools could instead use the high order bits on mState, saving 4 bytes
   bool mEditorHasBeenInitialized;
   bool mIsProcessing;
   // Keep track if we have asked a placeholder node creation.
   bool mUsePlaceholder;
+  // Similarly for preview node creation.
+  bool mUsePreview;
 
 #ifdef DEBUG
   bool mInEditorInitialization;

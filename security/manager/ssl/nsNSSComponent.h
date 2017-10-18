@@ -9,6 +9,7 @@
 
 #include "ScopedNSSTypes.h"
 #include "SharedCertVerifier.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
@@ -46,27 +47,12 @@ MOZ_MUST_USE
   { 0xa0a8f52b, 0xea18, 0x4abc, \
     { 0xa3, 0xca, 0xec, 0xcf, 0x70, 0x4f, 0xfe, 0x63 } }
 
-enum EnsureNSSOperator
-{
-  nssLoadingComponent = 0,
-  nssInitSucceeded = 1,
-  nssInitFailed = 2,
-  nssShutdown = 3,
-  nssEnsure = 100,
-  nssEnsureOnChromeOnly = 101,
-  nssEnsureChromeOrContent = 102,
-};
-
 extern bool EnsureNSSInitializedChromeOrContent();
-
-extern bool EnsureNSSInitialized(EnsureNSSOperator op);
 
 class NS_NO_VTABLE nsINSSComponent : public nsISupports
 {
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_INSSCOMPONENT_IID)
-
-  NS_IMETHOD ShowAlertFromStringBundle(const char* messageID) = 0;
 
   NS_IMETHOD GetPIPNSSBundleString(const char* name,
                                    nsAString& outString) = 0;
@@ -85,8 +71,6 @@ public:
 
   NS_IMETHOD ShutdownSmartCardThread(SECMODModule* module) = 0;
 #endif
-
-  NS_IMETHOD IsNSSInitialized(bool* initialized) = 0;
 
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) = 0;
@@ -121,8 +105,6 @@ public:
   nsresult Init();
 
   static nsresult GetNewPrompter(nsIPrompt** result);
-  static nsresult ShowAlertWithConstructedString(const nsString& message);
-  NS_IMETHOD ShowAlertFromStringBundle(const char* messageID) override;
 
   NS_IMETHOD GetPIPNSSBundleString(const char* name,
                                    nsAString& outString) override;
@@ -136,14 +118,12 @@ public:
 #ifndef MOZ_NO_SMART_CARDS
   NS_IMETHOD LaunchSmartCardThread(SECMODModule* module) override;
   NS_IMETHOD ShutdownSmartCardThread(SECMODModule* module) override;
-  void LaunchSmartCardThreads();
+  nsresult LaunchSmartCardThreads();
   void ShutdownSmartCardThreads();
   nsresult DispatchEventToWindow(nsIDOMWindow* domWin,
                                  const nsAString& eventType,
                                  const nsAString& token);
 #endif
-
-  NS_IMETHOD IsNSSInitialized(bool* initialized) override;
 
 #ifdef DEBUG
   NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) override;
@@ -176,48 +156,50 @@ private:
 
   void LoadLoadableRoots();
   void UnloadLoadableRoots();
-  void setValidationOptions(bool isInitialSetting,
-                            const mozilla::MutexAutoLock& lock);
+  void setValidationOptions(bool isInitialSetting);
   nsresult setEnabledTLSVersions();
   nsresult InitializePIPNSSBundle();
   nsresult ConfigureInternalPKCS11Token();
   nsresult RegisterObservers();
 
-  void DoProfileBeforeChange();
-
   void MaybeEnableFamilySafetyCompatibility();
   void MaybeImportEnterpriseRoots();
 #ifdef XP_WIN
+  void ImportEnterpriseRootsForLocation(
+    DWORD locationFlag, const mozilla::MutexAutoLock& proofOfLock);
   nsresult MaybeImportFamilySafetyRoot(PCCERT_CONTEXT certificate,
                                        bool& wasFamilySafetyRoot);
   nsresult LoadFamilySafetyRoot();
   void UnloadFamilySafetyRoot();
 
-  void UnloadEnterpriseRoots();
+  void UnloadEnterpriseRoots(const mozilla::MutexAutoLock& proofOfLock);
+#endif // XP_WIN
 
+  // mMutex protects all members that are accessed from more than one thread.
+  // While this lock is held, the same thread must not attempt to acquire a
+  // nsNSSShutDownPreventionLock (acquiring a nsNSSShutDownPreventionLock and
+  // then acquiring this lock is fine).
+  mozilla::Mutex mMutex;
+
+  // The following members are accessed from more than one thread:
+  nsCOMPtr<nsIStringBundle> mPIPNSSBundle;
+  nsCOMPtr<nsIStringBundle> mNSSErrorsBundle;
+  bool mNSSInitialized;
+#ifdef DEBUG
+  nsString mTestBuiltInRootHash;
+#endif
+  nsString mContentSigningRootHash;
+  RefPtr<mozilla::psm::SharedCertVerifier> mDefaultCertVerifier;
+#ifdef XP_WIN
   mozilla::UniqueCERTCertificate mFamilySafetyRoot;
   mozilla::UniqueCERTCertList mEnterpriseRoots;
 #endif // XP_WIN
 
-  mozilla::Mutex mutex;
-
-  nsCOMPtr<nsIStringBundle> mPIPNSSBundle;
-  nsCOMPtr<nsIStringBundle> mNSSErrorsBundle;
-  bool mNSSInitialized;
-  static int mInstanceCount;
+  // The following members are accessed only on the main thread:
 #ifndef MOZ_NO_SMART_CARDS
   SmartCardThreadList* mThreadList;
 #endif
-
-#ifdef DEBUG
-  nsAutoString mTestBuiltInRootHash;
-#endif
-  nsString mContentSigningRootHash;
-
-  nsNSSHttpInterface mHttpForNSS;
-  RefPtr<mozilla::psm::SharedCertVerifier> mDefaultCertVerifier;
-
-  static PRStatus IdentityInfoInit(void);
+  static int mInstanceCount;
 };
 
 class nsNSSErrors

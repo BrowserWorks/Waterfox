@@ -5,6 +5,7 @@
 #ifndef __FFmpegLibWrapper_h__
 #define __FFmpegLibWrapper_h__
 
+#include "mozilla/Attributes.h"
 #include "mozilla/Types.h"
 
 struct AVCodec;
@@ -18,10 +19,15 @@ struct PRLibrary;
 namespace mozilla
 {
 
-struct FFmpegLibWrapper
+struct MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FFmpegLibWrapper
 {
-  FFmpegLibWrapper();
-  ~FFmpegLibWrapper();
+  // The class is used only in static storage and so is zero initialized.
+  FFmpegLibWrapper() = default;
+  // The libraries are not unloaded in the destructor, because doing so would
+  // require a static constructor to register the static destructor.  As the
+  // class is in static storage, the destructor would only run on shutdown
+  // anyway.
+  ~FFmpegLibWrapper() = default;
 
   enum class LinkResult
   {
@@ -79,6 +85,9 @@ struct FFmpegLibWrapper
   AVFrame* (*av_frame_alloc)();
   void (*av_frame_free)(AVFrame** frame);
   void (*av_frame_unref)(AVFrame* frame);
+
+  // libavutil optional
+  int (*av_frame_get_colorspace)(const AVFrame *frame);
 
   PRLibrary* mAVCodecLib;
   PRLibrary* mAVUtilLib;

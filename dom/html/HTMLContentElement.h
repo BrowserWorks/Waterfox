@@ -23,15 +23,25 @@ class HTMLContentElement final : public nsGenericHTMLElement
 public:
   explicit HTMLContentElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
-  NS_IMPL_FROMCONTENT_HTML_WITH_TAG(HTMLContentElement, content)
-
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLContentElement,
                                            nsGenericHTMLElement)
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  static HTMLContentElement* FromContent(nsIContent* aContent)
+  {
+    if (aContent->IsHTMLContentElement()) {
+      return static_cast<HTMLContentElement*>(aContent);
+    }
+
+    return nullptr;
+  }
+
+  virtual bool IsHTMLContentElement() const override { return true; }
+
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }
 
@@ -53,13 +63,6 @@ public:
   void RemoveMatchedNode(nsIContent* aContent);
   void InsertMatchedNode(uint32_t aIndex, nsIContent* aContent);
   void ClearMatchedNodes();
-
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
 
   // WebIDL methods.
   already_AddRefed<DistributedContentList> GetDistributedNodes();
@@ -85,6 +88,11 @@ protected:
    * is a destination insertion point.
    */
   void UpdateFallbackDistribution();
+
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   /**
    * An array of nodes from the ShadowRoot host that match the

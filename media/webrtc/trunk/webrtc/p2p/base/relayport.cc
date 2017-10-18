@@ -11,12 +11,13 @@
 
 #include "webrtc/p2p/base/relayport.h"
 #include "webrtc/base/asyncpacketsocket.h"
+#include "webrtc/base/checks.h"
 #include "webrtc/base/helpers.h"
 #include "webrtc/base/logging.h"
 
 namespace cricket {
 
-static const uint32 kMessageConnectTimeout = 1;
+static const int kMessageConnectTimeout = 1;
 static const int kKeepAliveDelay           = 10 * 60 * 1000;
 static const int kRetryTimeout             = 50 * 1000;  // ICE says 50 secs
 // How long to wait for a socket to connect to remote host in milliseconds
@@ -144,6 +145,10 @@ class RelayEntry : public rtc::MessageHandler,
     const char* data, size_t size,
     const rtc::SocketAddress& remote_addr,
     const rtc::PacketTime& packet_time);
+
+  void OnSentPacket(rtc::AsyncPacketSocket* socket,
+                    const rtc::SentPacket& sent_packet);
+
   // Called when the socket is currently able to send.
   void OnReadyToSend(rtc::AsyncPacketSocket* socket);
 
@@ -159,30 +164,38 @@ class AllocateRequest : public StunRequest {
   AllocateRequest(RelayEntry* entry, RelayConnection* connection);
   virtual ~AllocateRequest() {}
 
-  virtual void Prepare(StunMessage* request);
+  void Prepare(StunMessage* request) override;
 
-  virtual int GetNextDelay();
+  void OnSent() override;
+  int resend_delay() override;
 
-  virtual void OnResponse(StunMessage* response);
-  virtual void OnErrorResponse(StunMessage* response);
-  virtual void OnTimeout();
+  void OnResponse(StunMessage* response) override;
+  void OnErrorResponse(StunMessage* response) override;
+  void OnTimeout() override;
 
  private:
   RelayEntry* entry_;
   RelayConnection* connection_;
-  uint32 start_time_;
+  int64_t start_time_;
 };
 
 RelayPort::RelayPort(rtc::Thread* thread,
                      rtc::PacketSocketFactory* factory,
                      rtc::Network* network,
                      const rtc::IPAddress& ip,
-                     uint16 min_port,
-                     uint16 max_port,
+                     uint16_t min_port,
+                     uint16_t max_port,
                      const std::string& username,
                      const std::string& password)
-    : Port(thread, RELAY_PORT_TYPE, factory, network, ip, min_port, max_port,
-           username, password),
+    : Port(thread,
+           RELAY_PORT_TYPE,
+           factory,
+           network,
+           ip,
+           min_port,
+           max_port,
+           username,
+           password),
       ready_(false),
       error_(0) {
   entries_.push_back(
@@ -230,9 +243,9 @@ void RelayPort::SetReady() {
       // In case of Gturn, related address is set to null socket address.
       // This is due to as mapped address stun attribute is used for allocated
       // address.
-      AddAddress(iter->address, iter->address, rtc::SocketAddress(),
-                 proto_name, "", RELAY_PORT_TYPE,
-                 ICE_TYPE_PREFERENCE_RELAY, 0, false);
+      AddAddress(iter->address, iter->address, rtc::SocketAddress(), proto_name,
+                 proto_name, "", RELAY_PORT_TYPE, ICE_TYPE_PREFERENCE_RELAY_UDP,
+                 0, false);
     }
     ready_ = true;
     SignalPortComplete(this);
@@ -258,7 +271,7 @@ bool RelayPort::HasMagicCookie(const char* data, size_t size) {
 void RelayPort::PrepareAddress() {
   // We initiate a connect on the first entry.  If this completes, it will fill
   // in the server address as the address of this port.
-  ASSERT(entries_.size() == 1);
+  RTC_DCHECK(entries_.size() == 1);
   entries_[0]->Connect();
   ready_ = false;
 }
@@ -290,7 +303,7 @@ Connection* RelayPort::CreateConnection(const Candidate& address,
   }
 
   Connection * conn = new ProxyConnection(this, index, address);
-  AddConnection(conn);
+  AddOrReplaceConnection(conn);
   return conn;
 }
 
@@ -329,10 +342,10 @@ int RelayPort::SendTo(const void* data, size_t size,
   // still be necessary).  Otherwise, we can't yet use this connection, so we
   // default to the first one.
   if (!entry || !entry->connected()) {
-    ASSERT(!entries_.empty());
+    RTC_DCHECK(!entries_.empty());
     entry = entries_[0];
     if (!entry->connected()) {
-      error_ = EWOULDBLOCK;
+      error_ = ENOTCONN;
       return SOCKET_ERROR;
     }
   }
@@ -340,7 +353,7 @@ int RelayPort::SendTo(const void* data, size_t size,
   // Send the actual contents to the server using the usual mechanism.
   int sent = entry->SendTo(data, size, addr, options);
   if (sent <= 0) {
-    ASSERT(sent < 0);
+    RTC_DCHECK(sent < 0);
     error_ = entry->GetError();
     return SOCKET_ERROR;
   }
@@ -423,7 +436,7 @@ void RelayConnection::OnSendPacket(const void* data, size_t size,
   if (sent <= 0) {
     LOG(LS_VERBOSE) << "OnSendPacket: failed sending to " << GetAddress() <<
         strerror(socket_->GetError());
-    ASSERT(sent < 0);
+    RTC_DCHECK(sent < 0);
   }
 }
 
@@ -479,8 +492,9 @@ void RelayEntry::Connect() {
         rtc::SocketAddress(port_->ip(), 0),
         port_->min_port(), port_->max_port());
   } else if (ra->proto == PROTO_TCP || ra->proto == PROTO_SSLTCP) {
-    int opts = (ra->proto == PROTO_SSLTCP) ?
-     rtc::PacketSocketFactory::OPT_SSLTCP : 0;
+    int opts = (ra->proto == PROTO_SSLTCP)
+                   ? rtc::PacketSocketFactory::OPT_TLS_FAKE
+                   : 0;
     socket = port_->socket_factory()->CreateClientTcpSocket(
         rtc::SocketAddress(port_->ip(), 0), ra->address,
         port_->proxy(), port_->user_agent(), opts);
@@ -494,12 +508,13 @@ void RelayEntry::Connect() {
 
   // If we failed to get a socket, move on to the next protocol.
   if (!socket) {
-    port()->thread()->Post(this, kMessageConnectTimeout);
+    port()->thread()->Post(RTC_FROM_HERE, this, kMessageConnectTimeout);
     return;
   }
 
   // Otherwise, create the new connection and configure any socket options.
   socket->SignalReadPacket.connect(this, &RelayEntry::OnReadPacket);
+  socket->SignalSentPacket.connect(this, &RelayEntry::OnSentPacket);
   socket->SignalReadyToSend.connect(this, &RelayEntry::OnReadyToSend);
   current_connection_ = new RelayConnection(ra, socket, port()->thread());
   for (size_t i = 0; i < port_->options().size(); ++i) {
@@ -512,7 +527,7 @@ void RelayEntry::Connect() {
   if ((ra->proto == PROTO_TCP) || (ra->proto == PROTO_SSLTCP)) {
     socket->SignalClose.connect(this, &RelayEntry::OnSocketClose);
     socket->SignalConnect.connect(this, &RelayEntry::OnSocketConnect);
-    port()->thread()->PostDelayed(kSoftConnectTimeoutMs, this,
+    port()->thread()->PostDelayed(RTC_FROM_HERE, kSoftConnectTimeoutMs, this,
                                   kMessageConnectTimeout);
   } else {
     current_connection_->SendAllocateRequest(this, 0);
@@ -594,7 +609,7 @@ int RelayEntry::SendTo(const void* data, size_t size,
 
   // TODO: compute the HMAC.
 
-  rtc::ByteBuffer buf;
+  rtc::ByteBufferWriter buf;
   request.Write(&buf);
 
   return SendPacket(buf.Data(), buf.Length(), options);
@@ -631,7 +646,7 @@ void RelayEntry::HandleConnectFailure(
 }
 
 void RelayEntry::OnMessage(rtc::Message *pmsg) {
-  ASSERT(pmsg->message_id == kMessageConnectTimeout);
+  RTC_DCHECK(pmsg->message_id == kMessageConnectTimeout);
   if (current_connection_) {
     const ProtocolAddress* ra = current_connection_->protocol_address();
     LOG(LS_WARNING) << "Relay " << ra->proto << " connection to " <<
@@ -670,7 +685,7 @@ void RelayEntry::OnReadPacket(
     const char* data, size_t size,
     const rtc::SocketAddress& remote_addr,
     const rtc::PacketTime& packet_time) {
-  // ASSERT(remote_addr == port_->server_addr());
+  // RTC_DCHECK(remote_addr == port_->server_addr());
   // TODO: are we worried about this?
 
   if (current_connection_ == NULL || socket != current_connection_->socket()) {
@@ -690,7 +705,7 @@ void RelayEntry::OnReadPacket(
     return;
   }
 
-  rtc::ByteBuffer buf(data, size);
+  rtc::ByteBufferReader buf(data, size);
   RelayMessage msg;
   if (!msg.Read(&buf)) {
     LOG(INFO) << "Incoming packet was not STUN";
@@ -739,6 +754,11 @@ void RelayEntry::OnReadPacket(
                       PROTO_UDP, packet_time);
 }
 
+void RelayEntry::OnSentPacket(rtc::AsyncPacketSocket* socket,
+                              const rtc::SentPacket& sent_packet) {
+  port_->OnSentPacket(socket, sent_packet);
+}
+
 void RelayEntry::OnReadyToSend(rtc::AsyncPacketSocket* socket) {
   if (connected()) {
     port_->OnReadyToSend();
@@ -761,7 +781,7 @@ AllocateRequest::AllocateRequest(RelayEntry* entry,
     : StunRequest(new RelayMessage()),
       entry_(entry),
       connection_(connection) {
-  start_time_ = rtc::Time();
+  start_time_ = rtc::TimeMillis();
 }
 
 void AllocateRequest::Prepare(StunMessage* request) {
@@ -775,13 +795,19 @@ void AllocateRequest::Prepare(StunMessage* request) {
   VERIFY(request->AddAttribute(username_attr));
 }
 
-int AllocateRequest::GetNextDelay() {
-  int delay = 100 * std::max(1 << count_, 2);
+void AllocateRequest::OnSent() {
   count_ += 1;
   if (count_ == 5)
     timeout_ = true;
-  return delay;
 }
+
+int AllocateRequest::resend_delay() {
+  if (count_ == 0) {
+    return 0;
+  }
+  return 100 * std::max(1 << (count_-1), 2);
+}
+
 
 void AllocateRequest::OnResponse(StunMessage* response) {
   const StunAddressAttribute* addr_attr =
@@ -810,7 +836,7 @@ void AllocateRequest::OnErrorResponse(StunMessage* response) {
               << " reason='" << attr->reason() << "'";
   }
 
-  if (rtc::TimeSince(start_time_) <= kRetryTimeout)
+  if (rtc::TimeMillis() - start_time_ <= kRetryTimeout)
     entry_->ScheduleKeepAlive();
 }
 

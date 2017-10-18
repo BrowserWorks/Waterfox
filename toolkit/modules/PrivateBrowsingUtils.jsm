@@ -33,16 +33,16 @@ this.PrivateBrowsingUtils = {
     return this.privacyContextFromWindow(aWindow).usePrivateBrowsing;
   },
 
-  isBrowserPrivate: function(aBrowser) {
-    let chromeWin = aBrowser.ownerDocument.defaultView;
-    if (chromeWin.gMultiProcessBrowser) {
+  isBrowserPrivate(aBrowser) {
+    let chromeWin = aBrowser.ownerGlobal;
+    if (chromeWin.gMultiProcessBrowser || !aBrowser.isConnected) {
       // In e10s we have to look at the chrome window's private
       // browsing status since the only alternative is to check the
-      // content window, which is in another process.
+      // content window, which is in another process.  If the browser
+      // is lazy then the content window doesn't exist.
       return this.isWindowPrivate(chromeWin);
-    } else {
-      return this.privacyContextFromWindow(aBrowser.contentWindow).usePrivateBrowsing;
     }
+    return this.privacyContextFromWindow(aBrowser.contentWindow).usePrivateBrowsing;
   },
 
   privacyContextFromWindow: function pbu_privacyContextFromWindow(aWindow) {
@@ -80,25 +80,5 @@ this.PrivateBrowsingUtils = {
   get isInTemporaryAutoStartMode() {
     return gTemporaryAutoStartMode;
   },
-
-  whenHiddenPrivateWindowReady: function pbu_whenHiddenPrivateWindowReady(cb) {
-    Components.utils.import("resource://gre/modules/Timer.jsm");
-
-    let win = Services.appShell.hiddenPrivateDOMWindow;
-    function isNotLoaded() {
-      return ["complete", "interactive"].indexOf(win.document.readyState) == -1;
-    }
-    if (isNotLoaded()) {
-      setTimeout(function poll() {
-        if (isNotLoaded()) {
-          setTimeout(poll, 100);
-          return;
-        }
-        cb(Services.appShell.hiddenPrivateDOMWindow);
-      }, 4);
-    } else {
-      cb(Services.appShell.hiddenPrivateDOMWindow);
-    }
-  }
 };
 

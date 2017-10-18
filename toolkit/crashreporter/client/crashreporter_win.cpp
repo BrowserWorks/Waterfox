@@ -20,7 +20,7 @@
 #include <set>
 #include <algorithm>
 #include "resource.h"
-#include "client/windows/sender/crash_report_sender.h"
+#include "windows/sender/crash_report_sender.h"
 #include "common/windows/string_utils-inl.h"
 
 #define CRASH_REPORTER_VALUE L"Enabled"
@@ -139,13 +139,13 @@ static void RemoveUnusedValues(const wchar_t* key, LPCTSTR valueName)
 {
   HKEY hRegKey;
 
-  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_SET_VALUE, &hRegKey) 
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_SET_VALUE, &hRegKey)
       == ERROR_SUCCESS) {
     RegDeleteValue(hRegKey, valueName);
     RegCloseKey(hRegKey);
   }
 
-  if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_SET_VALUE, &hRegKey) 
+  if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_SET_VALUE, &hRegKey)
       == ERROR_SUCCESS) {
     RegDeleteValue(hRegKey, valueName);
     RegCloseKey(hRegKey);
@@ -206,8 +206,8 @@ static void SetBoolKey(const wchar_t* key, const wchar_t* value, bool enabled)
 static bool GetStringValue(HKEY hRegKey, LPCTSTR valueName, wstring& value)
 {
   DWORD type, dataSize;
-  wchar_t buf[2048];
-  dataSize = sizeof(buf);
+  wchar_t buf[2048] = {};
+  dataSize = sizeof(buf) - 1;
   if (RegQueryValueEx(hRegKey, valueName, nullptr,
                      &type, (LPBYTE)buf, &dataSize) == ERROR_SUCCESS &&
       type == REG_SZ) {
@@ -309,11 +309,11 @@ static void GetThemeSizes(HWND hwnd)
   if (!themeDLL)
     return;
 
-  OpenThemeDataPtr openTheme = 
+  OpenThemeDataPtr openTheme =
     (OpenThemeDataPtr)GetProcAddress(themeDLL, "OpenThemeData");
   CloseThemeDataPtr closeTheme =
     (CloseThemeDataPtr)GetProcAddress(themeDLL, "CloseThemeData");
-  GetThemePartSizePtr getThemePartSize = 
+  GetThemePartSizePtr getThemePartSize =
     (GetThemePartSizePtr)GetProcAddress(themeDLL, "GetThemePartSize");
 
   if (!openTheme || !closeTheme || !getThemePartSize) {
@@ -598,7 +598,7 @@ static BOOL CALLBACK ViewReportDialogProc(HWND hwndDlg, UINT message,
 {
   switch (message) {
   case WM_INITDIALOG: {
-    SetWindowText(hwndDlg, Str(ST_VIEWREPORTTITLE).c_str());    
+    SetWindowText(hwndDlg, Str(ST_VIEWREPORTTITLE).c_str());
     SetDlgItemText(hwndDlg, IDOK, Str(ST_OK).c_str());
     SendDlgItemMessage(hwndDlg, IDC_VIEWREPORTTEXT,
                        EM_SETTARGETDEVICE, (WPARAM)nullptr, 0);
@@ -673,7 +673,7 @@ static LRESULT CALLBACK EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     // if the control contains text or is focused, draw it normally
     if (GetFocus() == hwnd || windowText[0] != '\0')
       return CallWindowProc(super, hwnd, uMsg, wParam, lParam);
-    
+
     GetClientRect(hwnd, &r);
     hdc = BeginPaint(hwnd, &ps);
     FillRect(hdc, &r, GetSysColorBrush(IsWindowEnabled(hwnd)
@@ -700,7 +700,7 @@ static LRESULT CALLBACK EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     if (wParam & (1<<24) || wParam & (1<<29) ||
         (wParam < ' ' && wParam != '\n'))
       break;
-  
+
     wchar_t ch[2] = { (wchar_t)wParam, 0 };
     if (NewTextLength(hwnd, ch) > MAX_COMMENT_LENGTH)
       return 0;
@@ -711,7 +711,7 @@ static LRESULT CALLBACK EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case WM_PASTE: {
     if (IsClipboardFormatAvailable(CF_UNICODETEXT) &&
         OpenClipboard(hwnd)) {
-      HGLOBAL hg = GetClipboardData(CF_UNICODETEXT); 
+      HGLOBAL hg = GetClipboardData(CF_UNICODETEXT);
       wchar_t* pastedText = (wchar_t*)GlobalLock(hg);
       int newSize = 0;
 
@@ -775,9 +775,9 @@ static int ResizeControl(HWND hwndButton, RECT& rect, wstring text,
     if (textIncrease < 0)
       return 0;
     int existingTextPadding;
-    if (userDefinedPadding == 0) 
+    if (userDefinedPadding == 0)
       existingTextPadding = (rect.right - rect.left) - oldSize.cx;
-    else 
+    else
       existingTextPadding = userDefinedPadding;
     sizeDiff = textIncrease + existingTextPadding;
 
@@ -912,7 +912,7 @@ static BOOL CALLBACK CrashReporterDialogProc(HWND hwndDlg, UINT message,
 
     if (!CheckBoolKey(gCrashReporterKey.c_str(),
                       SUBMIT_REPORT_VALUE, &enabled))
-      enabled = ShouldEnableSending();
+      enabled = true;
 
     CheckDlgButton(hwndDlg, IDC_SUBMITREPORTCHECK, enabled ? BST_CHECKED
                                                            : BST_UNCHECKED);
@@ -1039,7 +1039,7 @@ static BOOL CALLBACK CrashReporterDialogProc(HWND hwndDlg, UINT message,
     SendDlgItemMessage(hwndDlg, IDC_DESCRIPTIONTEXT,
                        EM_SETEVENTMASK, (WPARAM)nullptr,
                        ENM_REQUESTRESIZE);
-    
+
     wstring description = Str(ST_CRASHREPORTERHEADER);
     description += L"\n\n";
     description += Str(ST_CRASHREPORTERDESCRIPTION);
@@ -1391,7 +1391,7 @@ bool UIGetSettingsPath(const string& vendor,
                        const string& product,
                        string& settings_path)
 {
-  wchar_t path[MAX_PATH];
+  wchar_t path[MAX_PATH] = {};
   HRESULT hRes = SHGetFolderPath(nullptr,
                                  CSIDL_APPDATA,
                                  nullptr,
@@ -1402,7 +1402,8 @@ bool UIGetSettingsPath(const string& vendor,
     // registry when the call to SHGetFolderPath is unable to provide this path
     // (Bug 513958).
     HKEY key;
-    DWORD type, size, dwRes;
+    DWORD type, dwRes;
+    DWORD size = sizeof(path) - 1;
     dwRes = ::RegOpenKeyExW(HKEY_CURRENT_USER,
                             L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",
                             0,
@@ -1463,16 +1464,21 @@ bool UIDeleteFile(const string& oldfile)
   return DeleteFile(UTF8ToWide(oldfile).c_str()) == TRUE;
 }
 
-ifstream* UIOpenRead(const string& filename)
+ifstream* UIOpenRead(const string& filename, bool binary)
 {
   // adapted from breakpad's src/common/windows/http_upload.cc
+  std::ios_base::openmode mode = ios::in;
+
+  if (binary) {
+    mode = mode | ios::binary;
+  }
 
 #if defined(_MSC_VER)
   ifstream* file = new ifstream();
-  file->open(UTF8ToWide(filename).c_str(), ios::in);
+  file->open(UTF8ToWide(filename).c_str(), mode);
 #else   // GCC
   ifstream* file = new ifstream(WideToMBCP(UTF8ToWide(filename), CP_ACP).c_str(),
-                                ios::in);
+                                mode);
 #endif  // _MSC_VER
 
   return file;
@@ -1543,4 +1549,50 @@ void UIPruneSavedDumps(const std::string& directory)
 
     dumpfiles.pop_back();
   }
+}
+
+bool UIRunProgram(const string& exename,
+                  const std::vector<std::string>& args,
+                  bool wait)
+{
+  wstring cmdLine = L"\"" + UTF8ToWide(exename) + L"\" ";
+
+  for (auto arg : args) {
+    cmdLine += L"\"" + UTF8ToWide(arg) + L"\" ";
+  }
+
+  STARTUPINFO si = {};
+  si.cb = sizeof(si);
+  PROCESS_INFORMATION pi = {};
+
+  if (!CreateProcess(/* lpApplicationName */ nullptr,
+                     (LPWSTR)cmdLine.c_str(),
+                     /* lpProcessAttributes */ nullptr,
+                     /* lpThreadAttributes */ nullptr,
+                     /* bInheritHandles */ false,
+                     NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW,
+                     /* lpEnvironment */ nullptr,
+                     /* lpCurrentDirectory */ nullptr,
+                     &si, &pi)) {
+    return false;
+  }
+
+  if (wait) {
+    WaitForSingleObject(pi.hProcess, INFINITE);
+  }
+
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  return true;
+}
+
+string
+UIGetEnv(const string name)
+{
+  const wchar_t *var = _wgetenv(UTF8ToWide(name).c_str());
+  if (var && *var) {
+    return WideToUTF8(var);
+  }
+
+  return "";
 }

@@ -6,19 +6,20 @@
 const { frames } = require("../remote/child");
 const { Class } = require("../core/heritage");
 const { Disposable } = require('../core/disposable');
-const { data } = require("../self");
-const { once } = require("../dom/events");
-const { getAttachEventType } = require("./utils");
-const { Rules } = require('../util/rules');
-const { uuid } = require('../util/uuid');
-const { WorkerChild } = require("./worker-child");
+lazyRequire(this, "../self", "data");
+lazyRequire(this, "../dom/events", "once");
+lazyRequire(this, "./utils", "getAttachEventType");
+lazyRequire(this, '../util/rules', "Rules");
+lazyRequire(this, '../util/uuid', "uuid");
+lazyRequire(this, "./worker-child", "WorkerChild");
 const { Cc, Ci, Cu } = require("chrome");
-const { observe } = require("../event/chrome");
-const { on } = require("../event/core");
-
-const appShell = Cc["@mozilla.org/appshell/appShellService;1"].getService(Ci.nsIAppShellService);
+const { on: onSystemEvent } = require("../system/events");
 
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyServiceGetter(this, 'appShell',
+                                   "@mozilla.org/appshell/appShellService;1",
+                                   "nsIAppShellService");
 
 const pages = new Map();
 
@@ -96,6 +97,7 @@ const ChildPage = Class({
     this.options.contentURL = url;
 
     url = this.options.contentURL ? data.url(this.options.contentURL) : "about:blank";
+
     this.webNav.loadURI(url, Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null, null);
   },
 
@@ -121,14 +123,15 @@ const ChildPage = Class({
   QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener", "nsISupportsWeakReference"])
 });
 
-on(observe(DOC_INSERTED), "data", ({ target }) => {
-  let page = Array.from(pages.values()).find(p => p.contentWindow.document === target);
+onSystemEvent(DOC_INSERTED, ({type, subject, data}) => {
+  let page = Array.from(pages.values()).find(p => p.contentWindow.document === subject);
+
   if (!page)
     return;
 
   if (getAttachEventType(page.options) == DOC_INSERTED)
     page.attachWorker();
-});
+}, true);
 
 frames.port.on("sdk/frame/create", (frame, id, options) => {
   new ChildPage(frame, id, options);

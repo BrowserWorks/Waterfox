@@ -50,19 +50,34 @@ exports.viewSourceInStyleEditor = Task.async(function* (toolbox, sourceURL,
  *
  * @return {Promise<boolean>}
  */
-exports.viewSourceInDebugger = Task.async(function* (toolbox, sourceURL,
-                                                     sourceLine) {
+exports.viewSourceInDebugger = Task.async(function* (toolbox, sourceURL, sourceLine) {
   // If the Debugger was already open, switch to it and try to show the
   // source immediately. Otherwise, initialize it and wait for the sources
   // to be added first.
   let debuggerAlreadyOpen = toolbox.getPanel("jsdebugger");
-  let { panelWin: dbg } = yield toolbox.loadTool("jsdebugger");
+  let dbg = yield toolbox.loadTool("jsdebugger");
 
-  if (!debuggerAlreadyOpen) {
-    yield dbg.DebuggerController.waitForSourcesLoaded();
+  // New debugger frontend
+  if (Services.prefs.getBoolPref("devtools.debugger.new-debugger-frontend")) {
+    const source = dbg.getSource(sourceURL);
+    if (source) {
+      yield toolbox.selectTool("jsdebugger");
+      dbg.selectSource(sourceURL, sourceLine);
+      return true;
+    }
+
+    exports.viewSource(toolbox, sourceURL, sourceLine);
+    return false;
   }
 
-  let { DebuggerView } = dbg;
+  const win = dbg.panelWin;
+
+  // Old debugger frontend
+  if (!debuggerAlreadyOpen) {
+    yield win.DebuggerController.waitForSourcesLoaded();
+  }
+
+  let { DebuggerView } = win;
   let { Sources } = DebuggerView;
 
   let item = Sources.getItemForAttachment(a => a.source.url === sourceURL);
@@ -75,7 +90,7 @@ exports.viewSourceInDebugger = Task.async(function* (toolbox, sourceURL,
     //    selected and loaded
     // 2) The requested source is selected BUT the source text is still loading.
     const { actor } = item.attachment.source;
-    const state = dbg.DebuggerController.getState();
+    const state = win.DebuggerController.getState();
 
     // (1) Is the source selected?
     const selected = state.sources.selectedSource;
@@ -97,7 +112,7 @@ exports.viewSourceInDebugger = Task.async(function* (toolbox, sourceURL,
 
     // Wait for it to load
     if (!isSelected || isLoading) {
-      yield dbg.DebuggerController.waitForSourceShown(sourceURL);
+      yield win.DebuggerController.waitForSourceShown(sourceURL);
     }
     return true;
   }

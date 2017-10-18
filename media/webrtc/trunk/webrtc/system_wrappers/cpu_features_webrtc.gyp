@@ -10,8 +10,9 @@
   'variables': {
     'include_ndk_cpu_features%': 0,
   },
+  'includes': [ '../build/common.gypi', ],
   'conditions': [
-    ['OS=="android" or moz_widget_toolkit_gonk==1', {
+    ['OS=="android"', {
       'targets': [
         {
           'target_name': 'cpu_features_android',
@@ -21,8 +22,8 @@
           ],
           'conditions': [
             ['include_ndk_cpu_features==1', {
-               'includes': [
-                  '../../build/android/cpufeatures.gypi',
+              'includes': [
+                 '../../build/android/cpufeatures.gypi',
                ],
             }, {
               'sources': [
@@ -30,6 +31,23 @@
                 'source/droid-cpu-features.h',
               ],
             }],
+          'dependencies': [
+            # Not supported, please refer to the GN build.
+            #'../../build/android/ndk.gyp:cpu_features',
+          ],
+        },
+      ],
+    }],
+    ['OS=="linux"', {
+      'targets': [
+        {
+          'target_name': 'cpu_features_linux',
+          'type': 'static_library',
+          'sources': [
+            'source/cpu_features_linux.c',
+          ],
+          'dependencies': [
+            '<(webrtc_root)/common.gyp:webrtc_common',
           ],
         },
       ],

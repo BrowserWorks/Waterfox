@@ -6,8 +6,8 @@
 
 #include "mozilla/AnimationCollection.h"
 
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsAnimationManager.h" // For dom::CSSAnimation
 #include "nsPresContext.h"
 #include "nsTransitionManager.h" // For dom::CSSTransition
@@ -40,7 +40,7 @@ AnimationCollection<AnimationType>::PropertyDtor(void* aObject,
 template <class AnimationType>
 /* static */ AnimationCollection<AnimationType>*
 AnimationCollection<AnimationType>::GetAnimationCollection(
-  dom::Element *aElement,
+  const dom::Element *aElement,
   CSSPseudoElementType aPseudoType)
 {
   if (!aElement->MayHaveAnimations()) {
@@ -138,12 +138,7 @@ void
 AnimationCollection<AnimationType>::UpdateCheckGeneration(
   nsPresContext* aPresContext)
 {
-  if (aPresContext->RestyleManager()->IsServo()) {
-    // stylo: ServoRestyleManager does not support animations yet.
-    return;
-  }
-  mCheckGeneration =
-    aPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration();
+  mCheckGeneration = aPresContext->RestyleManager()->GetAnimationGeneration();
 }
 
 template<class AnimationType>

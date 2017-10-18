@@ -93,10 +93,6 @@
  */
 //#define SK_DEFAULT_IMAGE_CACHE_LIMIT (1024 * 1024)
 
-/*  Define this to provide font subsetter in PDF generation.
- */
-//#define SK_SFNTLY_SUBSETTER "sfntly/subsetter/font_subsetter.h"
-
 /*  Define this to set the upper limit for text to support LCD. Values that
     are very large increase the cost in the font cache and draw slower, without
     improving readability. If this is undefined, Skia will use its default
@@ -152,9 +148,14 @@
 
 #define SK_IGNORE_ETC1_SUPPORT
 
+// Don't use __stdcall with SkiaGLGlue - bug 1320644
+#define GR_GL_FUNCTION_TYPE
+
 #define SK_RASTERIZE_EVEN_ROUNDING
 
-#define MOZ_SKIA 1
+#define SK_DISABLE_SCREENSPACE_TESS_AA_PATH_RENDERER
+
+#define SK_DISABLE_SLOW_DEBUG_VALIDATION 1
 
 #ifndef MOZ_IMPLICIT
 #  ifdef MOZ_CLANG_PLUGIN
@@ -164,15 +165,6 @@
 #  endif
 #endif
 
-/* Check if building with either MSVC, libc++, or a sufficiently recent version of libstdc++.
-+ * On platforms like OS X 10.6 or older Android SDKs, we need to work around a lack of certain
-+ * C++11 features.
-+ */
-#include "mozilla/Compiler.h"
-#if MOZ_IS_MSVC || MOZ_USING_LIBCXX || MOZ_LIBSTDCXX_VERSION_AT_LEAST(4, 8, 0)
-#  define MOZ_SKIA_AVOID_CXX11 0
-#else
-#  define MOZ_SKIA_AVOID_CXX11 1
-#endif
+#define MOZ_SKIA
 
 #endif

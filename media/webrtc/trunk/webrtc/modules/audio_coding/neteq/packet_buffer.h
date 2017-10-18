@@ -12,13 +12,15 @@
 #define WEBRTC_MODULES_AUDIO_CODING_NETEQ_PACKET_BUFFER_H_
 
 #include "webrtc/base/constructormagic.h"
+#include "webrtc/base/optional.h"
 #include "webrtc/modules/audio_coding/neteq/packet.h"
+#include "webrtc/modules/include/module_common_types.h"
 #include "webrtc/typedefs.h"
 
 namespace webrtc {
 
-// Forward declaration.
 class DecoderDatabase;
+class TickTimer;
 
 // This is the actual buffer holding the packets before decoding.
 class PacketBuffer {
@@ -34,7 +36,7 @@ class PacketBuffer {
 
   // Constructor creates a buffer which can hold a maximum of
   // |max_number_of_packets| packets.
-  PacketBuffer(size_t max_number_of_packets);
+  PacketBuffer(size_t max_number_of_packets, const TickTimer* tick_timer);
 
   // Deletes all packets in the buffer before destroying the buffer.
   virtual ~PacketBuffer();
@@ -43,13 +45,13 @@ class PacketBuffer {
   virtual void Flush();
 
   // Returns true for an empty buffer.
-  virtual bool Empty() const { return buffer_.empty(); }
+  virtual bool Empty() const;
 
   // Inserts |packet| into the buffer. The buffer will take over ownership of
   // the packet object.
   // Returns PacketBuffer::kOK on success, PacketBuffer::kFlushed if the buffer
   // was flushed due to overfilling.
-  virtual int InsertPacket(Packet* packet);
+  virtual int InsertPacket(Packet&& packet);
 
   // Inserts a list of packets into the buffer. The buffer will take over
   // ownership of the packet objects.
@@ -59,10 +61,11 @@ class PacketBuffer {
   // The last three parameters are included for legacy compatibility.
   // TODO(hlundin): Redesign to not use current_*_payload_type and
   // decoder_database.
-  virtual int InsertPacketList(PacketList* packet_list,
-                               const DecoderDatabase& decoder_database,
-                               uint8_t* current_rtp_payload_type,
-                               uint8_t* current_cng_rtp_payload_type);
+  virtual int InsertPacketList(
+      PacketList* packet_list,
+      const DecoderDatabase& decoder_database,
+      rtc::Optional<uint8_t>* current_rtp_payload_type,
+      rtc::Optional<uint8_t>* current_cng_rtp_payload_type);
 
   // Gets the timestamp for the first packet in the buffer and writes it to the
   // output variable |next_timestamp|.
@@ -78,17 +81,13 @@ class PacketBuffer {
   virtual int NextHigherTimestamp(uint32_t timestamp,
                                   uint32_t* next_timestamp) const;
 
-  // Returns a (constant) pointer the RTP header of the first packet in the
-  // buffer. Returns NULL if the buffer is empty.
-  virtual const RTPHeader* NextRtpHeader() const;
+  // Returns a (constant) pointer to the first packet in the buffer. Returns
+  // NULL if the buffer is empty.
+  virtual const Packet* PeekNextPacket() const;
 
-  // Extracts the first packet in the buffer and returns a pointer to it.
-  // Returns NULL if the buffer is empty. The caller is responsible for deleting
-  // the packet.
-  // Subsequent packets with the same timestamp as the one extracted will be
-  // discarded and properly deleted. The number of discarded packets will be
-  // written to the output variable |discard_count|.
-  virtual Packet* GetNextPacket(int* discard_count);
+  // Extracts the first packet in the buffer and returns it.
+  // Returns an empty optional if the buffer is empty.
+  virtual rtc::Optional<Packet> GetNextPacket();
 
   // Discards the first packet in the buffer. The packet is deleted.
   // Returns PacketBuffer::kBufferEmpty if the buffer is empty,
@@ -105,35 +104,20 @@ class PacketBuffer {
                                 uint32_t horizon_samples);
 
   // Discards all packets that are (strictly) older than timestamp_limit.
-  virtual int DiscardAllOldPackets(uint32_t timestamp_limit) {
-    return DiscardOldPackets(timestamp_limit, 0);
-  }
+  virtual int DiscardAllOldPackets(uint32_t timestamp_limit);
+
+  // Removes all packets with a specific payload type from the buffer.
+  virtual void DiscardPacketsWithPayloadType(uint8_t payload_type);
 
   // Returns the number of packets in the buffer, including duplicates and
   // redundant packets.
-  virtual int NumPacketsInBuffer() const {
-    return static_cast<int>(buffer_.size());
-  }
+  virtual size_t NumPacketsInBuffer() const;
 
   // Returns the number of samples in the buffer, including samples carried in
   // duplicate and redundant packets.
-  virtual int NumSamplesInBuffer(DecoderDatabase* decoder_database,
-                                 int last_decoded_length) const;
-
-  // Increase the waiting time counter for every packet in the buffer by |inc|.
-  // The default value for |inc| is 1.
-  virtual void IncrementWaitingTimes(int inc = 1);
+  virtual size_t NumSamplesInBuffer(size_t last_decoded_length) const;
 
   virtual void BufferStat(int* num_packets, int* max_num_packets) const;
-
-  // Static method that properly deletes the first packet, and its payload
-  // array, in |packet_list|. Returns false if |packet_list| already was empty,
-  // otherwise true.
-  static bool DeleteFirstPacket(PacketList* packet_list);
-
-  // Static method that properly deletes all packets, and their payload arrays,
-  // in |packet_list|.
-  static void DeleteAllPackets(PacketList* packet_list);
 
   // Static method returning true if |timestamp| is older than |timestamp_limit|
   // but less than |horizon_samples| behind |timestamp_limit|. For instance,
@@ -152,7 +136,8 @@ class PacketBuffer {
  private:
   size_t max_number_of_packets_;
   PacketList buffer_;
-  DISALLOW_COPY_AND_ASSIGN(PacketBuffer);
+  const TickTimer* tick_timer_;
+  RTC_DISALLOW_COPY_AND_ASSIGN(PacketBuffer);
 };
 
 }  // namespace webrtc

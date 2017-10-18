@@ -20,7 +20,7 @@
 #include "DocumentType.h"
 #include "nsHTMLParts.h"
 #include "nsCRT.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Loader.h"
 #include "nsGkAtoms.h"
 #include "nsContentUtils.h"
@@ -31,11 +31,9 @@
 #include "nsIContentViewer.h"
 #include "prtime.h"
 #include "mozilla/Logging.h"
-#include "prmem.h"
 #include "nsRect.h"
 #include "nsIWebNavigation.h"
 #include "nsIScriptElement.h"
-#include "nsScriptLoader.h"
 #include "nsStyleLinkElement.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
@@ -62,6 +60,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLTemplateElement.h"
 #include "mozilla/dom/ProcessingInstruction.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -96,8 +95,15 @@ NS_NewXMLContentSink(nsIXMLContentSink** aResult,
 }
 
 nsXMLContentSink::nsXMLContentSink()
-  : mPrettyPrintXML(true)
+  : mTextLength(0)
+  , mNotifyLevel(0)
+  , mPrettyPrintXML(true)
+  , mPrettyPrintHasSpecialRoot(0)
+  , mPrettyPrintHasFactoredElements(0)
+  , mPrettyPrinting(0)
+  , mPreventScriptExecution(0)
 {
+  PodArrayZero(mText);
 }
 
 nsXMLContentSink::~nsXMLContentSink()
@@ -411,7 +417,7 @@ nsXMLContentSink::OnTransformDone(nsresult aResult,
 }
 
 NS_IMETHODIMP
-nsXMLContentSink::StyleSheetLoaded(StyleSheetHandle aSheet,
+nsXMLContentSink::StyleSheetLoaded(StyleSheet* aSheet,
                                    bool aWasAlternate,
                                    nsresult aStatus)
 {
@@ -469,8 +475,12 @@ nsXMLContentSink::CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
       || aNodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_SVG)
     ) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(content);
-    sele->SetScriptLineNumber(aLineNumber);
-    sele->SetCreatorParser(GetParser());
+    if (sele) {
+      sele->SetScriptLineNumber(aLineNumber);
+      sele->SetCreatorParser(GetParser());
+    } else {
+      MOZ_ASSERT(nsNameSpaceManager::GetInstance()->mSVGDisabled, "Node didn't QI to script, but SVG wasn't disabled.");
+    }
   }
 
   // XHTML needs some special attention
@@ -528,8 +538,7 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
         nodeInfo->NameAtom() == nsGkAtoms::textarea ||
         nodeInfo->NameAtom() == nsGkAtoms::video ||
         nodeInfo->NameAtom() == nsGkAtoms::audio ||
-        nodeInfo->NameAtom() == nsGkAtoms::object ||
-        nodeInfo->NameAtom() == nsGkAtoms::applet))
+        nodeInfo->NameAtom() == nsGkAtoms::object))
       || nodeInfo->NameAtom() == nsGkAtoms::title
       ) {
     aContent->DoneAddingChildren(HaveNotifiedForCurrentContent());
@@ -548,6 +557,10 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
       || nodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_SVG)
     ) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aContent);
+    if (!sele) {
+      MOZ_ASSERT(nsNameSpaceManager::GetInstance()->mSVGDisabled, "Node didn't QI to script, but SVG wasn't disabled.");
+      return NS_OK;
+    }
 
     if (mPreventScriptExecution) {
       sele->PreventExecution();
@@ -564,8 +577,6 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
     // If the parser got blocked, make sure to return the appropriate rv.
     // I'm not sure if this is actually needed or not.
     if (mParser && !mParser->IsParserEnabled()) {
-      // XXX The HTML sink doesn't call BlockParser here, why do we?
-      GetParser()->BlockParser();
       block = true;
     }
 
@@ -647,11 +658,11 @@ nsXMLContentSink::LoadXSLStyleSheet(nsIURI* aUrl)
 
 nsresult
 nsXMLContentSink::ProcessStyleLink(nsIContent* aElement,
-                                   const nsSubstring& aHref,
+                                   const nsAString& aHref,
                                    bool aAlternate,
-                                   const nsSubstring& aTitle,
-                                   const nsSubstring& aType,
-                                   const nsSubstring& aMedia)
+                                   const nsAString& aTitle,
+                                   const nsAString& aType,
+                                   const nsAString& aMedia)
 {
   nsresult rv = NS_OK;
   mPrettyPrintXML = false;
@@ -696,8 +707,7 @@ nsXMLContentSink::ProcessStyleLink(nsIContent* aElement,
                                    type,
                                    nullptr,
                                    &decision,
-                                   nsContentUtils::GetContentPolicy(),
-                                   nsContentUtils::GetSecurityManager());
+                                   nsContentUtils::GetContentPolicy());
 
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -718,14 +728,12 @@ nsXMLContentSink::ProcessStyleLink(nsIContent* aElement,
   return rv;
 }
 
-NS_IMETHODIMP
-nsXMLContentSink::SetDocumentCharset(nsACString& aCharset)
+void
+nsXMLContentSink::SetDocumentCharset(NotNull<const Encoding*> aEncoding)
 {
   if (mDocument) {
-    mDocument->SetDocumentCharacterSet(aCharset);
+    mDocument->SetDocumentCharacterSet(aEncoding);
   }
-
-  return NS_OK;
 }
 
 nsISupports *
@@ -1000,6 +1008,10 @@ nsXMLContentSink::HandleStartElement(const char16_t *aName,
 
   if (content == mDocElement) {
     NotifyDocElementCreated(mDocument);
+
+    if (aInterruptable && NS_SUCCEEDED(result) && mParser && !mParser->IsParserEnabled()) {
+      return NS_ERROR_HTMLPARSER_BLOCK;
+    }
   }
 
   return aInterruptable && NS_SUCCEEDED(result) ? DidProcessATokenImpl() :
@@ -1049,6 +1061,12 @@ nsXMLContentSink::HandleEndElement(const char16_t *aName,
   bool isTemplateElement = debugTagAtom == nsGkAtoms::_template &&
                            debugNameSpaceID == kNameSpaceID_XHTML;
   NS_ASSERTION(content->NodeInfo()->Equals(debugTagAtom, debugNameSpaceID) ||
+               (debugNameSpaceID == kNameSpaceID_MathML &&
+                content->NodeInfo()->NamespaceID() == kNameSpaceID_disabled_MathML &&
+                content->NodeInfo()->Equals(debugTagAtom)) ||
+               (debugNameSpaceID == kNameSpaceID_SVG &&
+                content->NodeInfo()->NamespaceID() == kNameSpaceID_disabled_SVG &&
+                content->NodeInfo()->Equals(debugTagAtom)) ||
                isTemplateElement, "Wrong element being closed");
 #endif
 
@@ -1079,7 +1097,8 @@ nsXMLContentSink::HandleEndElement(const char16_t *aName,
   if (content->IsSVGElement(nsGkAtoms::svg)) {
     FlushTags();
     nsCOMPtr<nsIRunnable> event = new nsHtml5SVGLoadDispatcher(content);
-    if (NS_FAILED(NS_DispatchToMainThread(event))) {
+    if (NS_FAILED(content->OwnerDoc()->Dispatch(TaskCategory::Other,
+                                                event.forget()))) {
       NS_WARNING("failed to dispatch svg load dispatcher");
     }
   }
@@ -1300,8 +1319,7 @@ nsXMLContentSink::ReportError(const char16_t* aErrorText,
   mDocument->RemoveObserver(this);
   mIsDocumentObserver = false;
 
-  // Clear the current content and
-  // prepare to set <parsererror> as the document root
+  // Clear the current content
   nsCOMPtr<nsIDOMNode> node(do_QueryInterface(mDocument));
   if (node) {
     for (;;) {
@@ -1329,6 +1347,12 @@ nsXMLContentSink::ReportError(const char16_t* aErrorText,
   mContentStack.Clear();
   mNotifyLevel = 0;
 
+  // return leaving the document empty if we're asked to not add a <parsererror> root node
+  if (mDocument->SuppressParserErrorElement()) {
+    return NS_OK;
+  }
+
+  // prepare to set <parsererror> as the document root
   rv = HandleProcessingInstruction(u"xml-stylesheet",
                                    u"href=\"chrome://global/locale/intl.css\" type=\"text/css\"");
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1423,7 +1447,7 @@ nsXMLContentSink::AddText(const char16_t* aText,
 }
 
 void
-nsXMLContentSink::FlushPendingNotifications(mozFlushType aType)
+nsXMLContentSink::FlushPendingNotifications(FlushType aType)
 {
   // Only flush tags if we're not doing the notification ourselves
   // (since we aren't reentrant)
@@ -1431,14 +1455,14 @@ nsXMLContentSink::FlushPendingNotifications(mozFlushType aType)
     if (mIsDocumentObserver) {
       // Only flush if we're still a document observer (so that our child
       // counts should be correct).
-      if (aType >= Flush_ContentAndNotify) {
+      if (aType >= FlushType::ContentAndNotify) {
         FlushTags();
       }
       else {
         FlushText(false);
       }
     }
-    if (aType >= Flush_InterruptibleLayout) {
+    if (aType >= FlushType::EnsurePresShellInitAndFrames) {
       // Make sure that layout has started so that the reflow flush
       // will actually happen.
       MaybeStartLayout(true);
@@ -1535,8 +1559,7 @@ nsXMLContentSink::IsMonolithicContainer(mozilla::dom::NodeInfo* aNodeInfo)
   return ((aNodeInfo->NamespaceID() == kNameSpaceID_XHTML &&
           (aNodeInfo->NameAtom() == nsGkAtoms::tr ||
            aNodeInfo->NameAtom() == nsGkAtoms::select ||
-           aNodeInfo->NameAtom() == nsGkAtoms::object ||
-           aNodeInfo->NameAtom() == nsGkAtoms::applet)) ||
+           aNodeInfo->NameAtom() == nsGkAtoms::object)) ||
           (aNodeInfo->NamespaceID() == kNameSpaceID_MathML &&
           (aNodeInfo->NameAtom() == nsGkAtoms::math))
           );
@@ -1553,8 +1576,10 @@ nsXMLContentSink::ContinueInterruptedParsingIfEnabled()
 void
 nsXMLContentSink::ContinueInterruptedParsingAsync()
 {
-  nsCOMPtr<nsIRunnable> ev = NewRunnableMethod(this,
-    &nsXMLContentSink::ContinueInterruptedParsingIfEnabled);
+  nsCOMPtr<nsIRunnable> ev =
+    NewRunnableMethod("nsXMLContentSink::ContinueInterruptedParsingIfEnabled",
+                      this,
+                      &nsXMLContentSink::ContinueInterruptedParsingIfEnabled);
 
   NS_DispatchToCurrentThread(ev);
 }

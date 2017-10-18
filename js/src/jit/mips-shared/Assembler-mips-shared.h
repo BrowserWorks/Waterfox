@@ -22,42 +22,42 @@
 namespace js {
 namespace jit {
 
-static constexpr Register zero = { Registers::zero };
-static constexpr Register at = { Registers::at };
-static constexpr Register v0 = { Registers::v0 };
-static constexpr Register v1 = { Registers::v1 };
-static constexpr Register a0 = { Registers::a0 };
-static constexpr Register a1 = { Registers::a1 };
-static constexpr Register a2 = { Registers::a2 };
-static constexpr Register a3 = { Registers::a3 };
-static constexpr Register a4 = { Registers::ta0 };
-static constexpr Register a5 = { Registers::ta1 };
-static constexpr Register a6 = { Registers::ta2 };
-static constexpr Register a7 = { Registers::ta3 };
-static constexpr Register t0 = { Registers::t0 };
-static constexpr Register t1 = { Registers::t1 };
-static constexpr Register t2 = { Registers::t2 };
-static constexpr Register t3 = { Registers::t3 };
-static constexpr Register t4 = { Registers::ta0 };
-static constexpr Register t5 = { Registers::ta1 };
-static constexpr Register t6 = { Registers::ta2 };
-static constexpr Register t7 = { Registers::ta3 };
-static constexpr Register s0 = { Registers::s0 };
-static constexpr Register s1 = { Registers::s1 };
-static constexpr Register s2 = { Registers::s2 };
-static constexpr Register s3 = { Registers::s3 };
-static constexpr Register s4 = { Registers::s4 };
-static constexpr Register s5 = { Registers::s5 };
-static constexpr Register s6 = { Registers::s6 };
-static constexpr Register s7 = { Registers::s7 };
-static constexpr Register t8 = { Registers::t8 };
-static constexpr Register t9 = { Registers::t9 };
-static constexpr Register k0 = { Registers::k0 };
-static constexpr Register k1 = { Registers::k1 };
-static constexpr Register gp = { Registers::gp };
-static constexpr Register sp = { Registers::sp };
-static constexpr Register fp = { Registers::fp };
-static constexpr Register ra = { Registers::ra };
+static constexpr Register zero { Registers::zero };
+static constexpr Register at { Registers::at };
+static constexpr Register v0 { Registers::v0 };
+static constexpr Register v1 { Registers::v1 };
+static constexpr Register a0 { Registers::a0 };
+static constexpr Register a1 { Registers::a1 };
+static constexpr Register a2 { Registers::a2 };
+static constexpr Register a3 { Registers::a3 };
+static constexpr Register a4 { Registers::ta0 };
+static constexpr Register a5 { Registers::ta1 };
+static constexpr Register a6 { Registers::ta2 };
+static constexpr Register a7 { Registers::ta3 };
+static constexpr Register t0 { Registers::t0 };
+static constexpr Register t1 { Registers::t1 };
+static constexpr Register t2 { Registers::t2 };
+static constexpr Register t3 { Registers::t3 };
+static constexpr Register t4 { Registers::ta0 };
+static constexpr Register t5 { Registers::ta1 };
+static constexpr Register t6 { Registers::ta2 };
+static constexpr Register t7 { Registers::ta3 };
+static constexpr Register s0 { Registers::s0 };
+static constexpr Register s1 { Registers::s1 };
+static constexpr Register s2 { Registers::s2 };
+static constexpr Register s3 { Registers::s3 };
+static constexpr Register s4 { Registers::s4 };
+static constexpr Register s5 { Registers::s5 };
+static constexpr Register s6 { Registers::s6 };
+static constexpr Register s7 { Registers::s7 };
+static constexpr Register t8 { Registers::t8 };
+static constexpr Register t9 { Registers::t9 };
+static constexpr Register k0 { Registers::k0 };
+static constexpr Register k1 { Registers::k1 };
+static constexpr Register gp { Registers::gp };
+static constexpr Register sp { Registers::sp };
+static constexpr Register fp { Registers::fp };
+static constexpr Register ra { Registers::ra };
 
 static constexpr Register ScratchRegister = at;
 static constexpr Register SecondScratchReg = t8;
@@ -98,7 +98,7 @@ static constexpr Register HeapReg = s7; // used by Odin
 
 static constexpr Register PreBarrierReg = a1;
 
-static constexpr Register InvalidReg = { Registers::invalid_reg };
+static constexpr Register InvalidReg { Registers::invalid_reg };
 static constexpr FloatRegister InvalidFloatReg;
 
 static constexpr Register StackPointer = sp;
@@ -107,27 +107,21 @@ static constexpr Register ReturnReg = v0;
 static constexpr FloatRegister ReturnSimd128Reg = InvalidFloatReg;
 static constexpr FloatRegister ScratchSimd128Reg = InvalidFloatReg;
 
-// TLS pointer argument register for WebAssembly functions. This must not alias
-// any other register used for passing function arguments or return values.
-// Preserved by WebAssembly functions.
-static constexpr Register WasmTlsReg = s5;
-
 // A bias applied to the GlobalReg to allow the use of instructions with small
 // negative immediate offsets which doubles the range of global data that can be
 // accessed with a single instruction.
-static const int32_t AsmJSGlobalRegBias = 32768;
+static const int32_t WasmGlobalRegBias = 32768;
 
 // Registers used in the GenerateFFIIonExit Enable Activation block.
-static constexpr Register AsmJSIonExitRegCallee = t0;
-static constexpr Register AsmJSIonExitRegE0 = a0;
-static constexpr Register AsmJSIonExitRegE1 = a1;
-static constexpr Register AsmJSIonExitRegE2 = a2;
+static constexpr Register WasmIonExitRegCallee = t0;
+static constexpr Register WasmIonExitRegE0 = a0;
+static constexpr Register WasmIonExitRegE1 = a1;
 
 // Registers used in the GenerateFFIIonExit Disable Activation block.
 // None of these may be the second scratch register (t8).
-static constexpr Register AsmJSIonExitRegD0 = a0;
-static constexpr Register AsmJSIonExitRegD1 = a1;
-static constexpr Register AsmJSIonExitRegD2 = t0;
+static constexpr Register WasmIonExitRegD0 = a0;
+static constexpr Register WasmIonExitRegD1 = a1;
+static constexpr Register WasmIonExitRegD2 = t0;
 
 // Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
 static constexpr Register RegExpMatcherRegExpReg = CallTempReg0;
@@ -500,7 +494,7 @@ class BOffImm16
         MOZ_ASSERT(IsInRange(offset));
     }
     static bool IsInRange(int offset) {
-        if ((offset - 4) < (INT16_MIN << 2))
+        if ((offset - 4) < int(unsigned(INT16_MIN) << 2))
             return false;
         if ((offset - 4) > (INT16_MAX << 2))
             return false;
@@ -642,7 +636,7 @@ class GSImm13
         return value;
     }
     static bool IsInRange(int32_t imm) {
-        return imm >= (-256 << 4) && imm <= (255 << 4);
+        return imm >= int32_t(uint32_t(-256) << 4) && imm <= (255 << 4);
     }
 };
 
@@ -736,7 +730,7 @@ PatchJump(CodeLocationJump& jump_, CodeLocationLabel label,
           ReprotectCode reprotect = DontReprotect);
 
 void
-PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target);
+PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitZoneGroup::BackedgeTarget target);
 
 typedef js::jit::AssemblerBuffer<1024, Instruction> MIPSBuffer;
 
@@ -782,6 +776,8 @@ class AssemblerMIPSShared : public AssemblerShared
         LessThan,
         LessThanOrEqual,
         Overflow,
+        CarrySet,
+        CarryClear,
         Signed,
         NotSigned,
         Zero,
@@ -881,7 +877,6 @@ class AssemblerMIPSShared : public AssemblerShared
 
     CompactBufferWriter jumpRelocations_;
     CompactBufferWriter dataRelocations_;
-    CompactBufferWriter preBarriers_;
 
     MIPSBufferWithExecutableCopy m_buffer;
 
@@ -907,9 +902,6 @@ class AssemblerMIPSShared : public AssemblerShared
             dataRelocations_.writeUnsigned(nextOffset().getOffset());
         }
     }
-    void writePrebarrierOffset(CodeOffset label) {
-        preBarriers_.writeUnsigned(label.offset());
-    }
 
   public:
     bool oom() const;
@@ -926,17 +918,15 @@ class AssemblerMIPSShared : public AssemblerShared
   public:
     void finish();
     bool asmMergeWith(const AssemblerMIPSShared& other);
-    void executableCopy(void* buffer);
+    void executableCopy(void* buffer, bool flushICache = true);
     void copyJumpRelocationTable(uint8_t* dest);
     void copyDataRelocationTable(uint8_t* dest);
-    void copyPreBarrierTable(uint8_t* dest);
 
     // Size of the instruction stream, in bytes.
     size_t size() const;
     // Size of the jump relocation table, in bytes.
     size_t jumpRelocationTableBytes() const;
     size_t dataRelocationTableBytes() const;
-    size_t preBarrierTableBytes() const;
 
     // Size of the data table, in bytes.
     size_t bytesNeeded() const;
@@ -1200,7 +1190,7 @@ class AssemblerMIPSShared : public AssemblerShared
 
     // label operations
     void bind(Label* label, BufferOffset boff = BufferOffset());
-    void bindLater(Label* label, wasm::JumpTarget target);
+    void bindLater(Label* label, wasm::TrapDesc target);
     virtual void bind(InstImm* inst, uintptr_t branch, uintptr_t target) = 0;
     virtual void Bind(uint8_t* rawCode, CodeOffset* label, const void* address) = 0;
     void bind(CodeOffset* label) {
@@ -1230,10 +1220,14 @@ class AssemblerMIPSShared : public AssemblerShared
 #endif
     }
     static bool SupportsUnalignedAccesses() {
-        return false;
+        return true;
     }
     static bool SupportsSimd() {
         return js::jit::SupportsSimd;
+    }
+
+    static bool HasRoundInstruction(RoundingMode mode) {
+        return false;
     }
 
   protected:
@@ -1259,6 +1253,11 @@ class AssemblerMIPSShared : public AssemblerShared
     void flushBuffer() {
     }
 
+    void comment(const char* msg) {
+        // This is not implemented because setPrinter() is not implemented.
+        // TODO spew("; %s", msg);
+    }
+
     static uint32_t NopSize() { return 4; }
 
     static void PatchWrite_Imm32(CodeLocationLabel label, Imm32 imm);
@@ -1271,6 +1270,8 @@ class AssemblerMIPSShared : public AssemblerShared
 
     static void ToggleToJmp(CodeLocationLabel inst_);
     static void ToggleToCmp(CodeLocationLabel inst_);
+
+    static void UpdateLuiOriValue(Instruction* inst0, Instruction* inst1, uint32_t value);
 
     void processCodeLabels(uint8_t* rawCode);
 
@@ -1514,6 +1515,12 @@ class InstGS : public Instruction
       : Instruction(op | RS(rs) | RT(rt) | off.encode(6) | ff)
     { }
 };
+
+inline bool
+IsUnaligned(const wasm::MemoryAccessDesc& access)
+{
+    return access.align() && access.align() < access.byteSize();
+}
 
 } // namespace jit
 } // namespace js

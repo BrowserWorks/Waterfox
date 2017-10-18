@@ -10,10 +10,12 @@
 #include "gfxContext.h"
 #include "gfxFont.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/UnscaledFontFreeType.h"
 
 class gfxFT2FontBase : public gfxFont {
 public:
-    gfxFT2FontBase(cairo_scaled_font_t *aScaledFont,
+    gfxFT2FontBase(const RefPtr<mozilla::gfx::UnscaledFontFreeType>& aUnscaledFont,
+                   cairo_scaled_font_t *aScaledFont,
                    gfxFontEntry *aFontEntry,
                    const gfxFontStyle *aFontStyle);
     virtual ~gfxFT2FontBase();
@@ -34,11 +36,14 @@ public:
 
     virtual FontType GetType() const override { return FONT_TYPE_FT2; }
 
+private:
+    uint32_t GetCharExtents(char aChar, cairo_text_extents_t* aExtents);
+    void InitMetrics();
+
 protected:
     virtual const Metrics& GetHorizontalMetrics() override;
 
     uint32_t mSpaceGlyph;
-    bool mHasMetrics;
     Metrics mMetrics;
 };
 

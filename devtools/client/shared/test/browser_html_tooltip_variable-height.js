@@ -9,24 +9,13 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
-  <?xml-stylesheet href="chrome://global/skin/global.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/tooltips.css"?>
-  <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-   title="Tooltip test">
-    <vbox flex="1">
-      <hbox id="box1" flex="1">test1</hbox>
-      <hbox id="box2" flex="1">test2</hbox>
-      <hbox id="box3" flex="1">test3</hbox>
-      <hbox id="box4" flex="1">test4</hbox>
-    </vbox>
-  </window>`;
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
 
 const CONTAINER_HEIGHT = 300;
 const CONTAINER_WIDTH = 200;
 const TOOLTIP_HEIGHT = 50;
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
 add_task(function* () {
@@ -36,7 +25,7 @@ add_task(function* () {
   yield addTab("about:blank");
   let [,, doc] = yield createHost("bottom", TEST_URI);
 
-  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
+  let tooltip = new HTMLTooltip(doc, {useXulWrapper: false});
   info("Set tooltip content 50px tall, but request a container 200px tall");
   let tooltipContent = doc.createElementNS(HTML_NS, "div");
   tooltipContent.style.cssText = "height: " + TOOLTIP_HEIGHT + "px; background: red;";

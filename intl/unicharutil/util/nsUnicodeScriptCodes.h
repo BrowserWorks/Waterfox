@@ -11,13 +11,12 @@
  */
 
 /*
- * Created on Tue Apr 26 07:40:35 2016 from UCD data files with version info:
+ * Created on Wed Jun 28 17:08:23 2017 from UCD data files with version info:
  *
 
-# Date: 2015-06-16, 20:24:00 GMT [KW]
-#
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
+# Date: 2017-06-18, 23:32:00 GMT [KW]
+# © 2017 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # For documentation, see the following:
@@ -25,38 +24,41 @@
 # UAX #38, "Unicode Han Database (Unihan)"
 # UAX #44, "Unicode Character Database."
 #
-# The UAXes can be accessed at http://www.unicode.org/versions/Unicode8.0.0/
+# The UAXes can be accessed at http://www.unicode.org/versions/Unicode10.0.0/
 
 This directory contains the final data files
-for the Unicode Character Database, for Version 8.0.0 of the Unicode
-Standard.
+for the Unicode Character Database, for Version 10.0.0 of the Unicode Standard.
 
+# Scripts-10.0.0.txt
+# Date: 2017-03-11, 06:40:37 GMT
 
-# Scripts-8.0.0.txt
-# Date: 2015-03-11, 22:29:42 GMT [MD]
+# BidiMirroring-10.0.0.txt
+# Date: 2017-04-12, 17:30:00 GMT [KW, LI]
 
-# BidiMirroring-8.0.0.txt
-# Date: 2015-01-20, 18:30:00 GMT [KW, LI]
+# BidiBrackets-10.0.0.txt
+# Date: 2017-04-12, 17:30:00 GMT [AG, LI, KW]
 
-# BidiBrackets-8.0.0.txt
-# Date: 2015-01-20, 19:00:00 GMT [AG, LI, KW]
+# HangulSyllableType-10.0.0.txt
+# Date: 2017-02-14, 04:26:11 GMT
 
-# HangulSyllableType-8.0.0.txt
-# Date: 2014-12-16, 23:07:45 GMT [MD]
+# LineBreak-10.0.0.txt
+# Date: 2017-03-08, 02:00:00 GMT [KW, LI]
 
-# LineBreak-8.0.0.txt
-# Date: 2015-02-13, 09:15:00 GMT [KW, LI]
+# EastAsianWidth-10.0.0.txt
+# Date: 2017-03-08, 02:00:00 GMT [KW, LI]
 
-# File: xidmodifications.txt
-# Version: 8.0.0
-# Generated: 2015-05-17, 03:09:04 GMT
+# DerivedCoreProperties-10.0.0.txt
+# Date: 2017-03-19, 00:05:15 GMT
+
+# IdentifierStatus.txt
+# Date: 2017-04-08, 16:13:41 GMT
 
 #
 # Unihan_Variants.txt
-# Date: 2015-04-30 18:38:20 GMT [JHJ]
+# Date: 2017-05-14 07:01:48 GMT [JHJ]
 
-# VerticalOrientation-13.txt
-# Date: 2014-09-03, 17:30:00 GMT [EM, KI, LI]
+# VerticalOrientation-17.txt
+# Date: 2016-10-20, 07:00:00 GMT [EM, KI, LI]
 
  *
  * * * * * This file contains MACHINE-GENERATED DATA, do not edit! * * * * *
@@ -80,24 +82,34 @@ struct nsCharProps1 {
 #if ENABLE_INTL_API
 
 struct nsCharProps2 {
-  unsigned char mPairedBracketType:2;
+  // Currently only 4 bits are defined here, so 4 more could be added without
+  // affecting the storage requirements for this struct. Or we could pack two
+  // records per byte, at the cost of a slightly more complex accessor.
   unsigned char mVertOrient:2;
-  unsigned char mXidmod:4;
+  unsigned char mIdType:2;
 };
 
 #endif
 
 #if !ENABLE_INTL_API
 
+// This struct currently requires 5 bytes. We try to ensure that whole-byte
+// fields will not straddle byte boundaries, to optimize access to them.
 struct nsCharProps2 {
   unsigned char mScriptCode:8;
-  unsigned char mPairedBracketType:3; // only 2 bits actually needed
+  // -- byte boundary --
+  unsigned char mPairedBracketType:2;
+  unsigned char mEastAsianWidthFWH:1;
   unsigned char mCategory:5;
+  // -- byte boundary --
+  unsigned char mIdType:2;
+  unsigned char mDefaultIgnorable:1;
   unsigned char mBidiCategory:5;
-  unsigned char mXidmod:4;
-  signed char   mNumericValue:5;
+  // -- byte boundary --
   unsigned char mVertOrient:2;
-  unsigned char mLineBreak; // only 6 bits actually needed
+  unsigned char mLineBreak:6;
+  // -- byte boundary --
+  signed char   mNumericValue; // only 5 bits are actually needed here
 };
 
 #endif
@@ -106,7 +118,7 @@ struct nsCharProps2 {
 
 namespace mozilla {
 namespace unicode {
-enum class Script {
+enum class Script : int16_t {
   COMMON = 0,
   INHERITED = 1,
   ARABIC = 2,
@@ -274,8 +286,16 @@ enum class Script {
   MULTANI = 164,
   PAU_CIN_HAU = 165,
   SIDDHAM = 166,
+  ADLAM = 167,
+  BHAIKSUKI = 168,
+  MARCHEN = 169,
+  NEWA = 170,
+  OSAGE = 171,
+  HAN_WITH_BOPOMOFO = 172,
+  JAMO = 173,
+  SYMBOLS_EMOJI = 174,
 
-  NUM_SCRIPT_CODES = 167,
+  NUM_SCRIPT_CODES = 175,
 
   INVALID = -1
 };

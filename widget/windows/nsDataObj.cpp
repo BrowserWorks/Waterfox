@@ -9,6 +9,7 @@
 #include <shlobj.h>
 
 #include "nsDataObj.h"
+#include "nsArrayUtils.h"
 #include "nsClipboard.h"
 #include "nsReadableUtils.h"
 #include "nsITransferable.h"
@@ -25,7 +26,6 @@
 #include "nsNetUtil.h"
 #include "mozilla/Services.h"
 #include "nsIOutputStream.h"
-#include "nsXPCOMStrings.h"
 #include "nscore.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsITimer.h"
@@ -33,11 +33,10 @@
 #include "mozilla/Preferences.h"
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
-#include "nsINode.h"
+#include "nsIPrincipal.h"
 
 #include "WinUtils.h"
 #include "mozilla/LazyIdleThread.h"
-#include "mozilla/WindowsVersion.h"
 #include <algorithm>
 
 
@@ -65,16 +64,16 @@ nsDataObj::CStream::~CStream()
 // helper - initializes the stream
 nsresult nsDataObj::CStream::Init(nsIURI *pSourceURI,
                                   uint32_t aContentPolicyType,
-                                  nsINode* aRequestingNode)
+                                  nsIPrincipal* aRequestingPrincipal)
 {
-  // we can not create a channel without a requestingNode
-  if (!aRequestingNode) {
+  // we can not create a channel without a requestingPrincipal
+  if (!aRequestingPrincipal) {
     return NS_ERROR_FAILURE;
   }
   nsresult rv;
   rv = NS_NewChannel(getter_AddRefs(mChannel),
                      pSourceURI,
-                     aRequestingNode,
+                     aRequestingPrincipal,
                      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
                      aContentPolicyType,
                      nullptr,   // loadGroup
@@ -118,9 +117,10 @@ nsDataObj::CStream::OnDataAvailable(nsIRequest *aRequest,
                                     uint32_t aCount) // bytes available on this call
 {
     // Extend the write buffer for the incoming data.
-    uint8_t* buffer = mChannelData.AppendElements(aCount);
-    if (buffer == nullptr)
+    uint8_t* buffer = mChannelData.AppendElements(aCount, fallible);
+    if (!buffer) {
       return NS_ERROR_OUT_OF_MEMORY;
+    }
     NS_ASSERTION((mChannelData.Length() == (aOffset + aCount)),
       "stream length mismatch w/write buffer");
 
@@ -159,10 +159,7 @@ NS_IMETHODIMP nsDataObj::CStream::OnStopRequest(nsIRequest *aRequest,
 nsresult nsDataObj::CStream::WaitForCompletion()
 {
   // We are guaranteed OnStopRequest will get called, so this should be ok.
-  while (!mChannelRead) {
-    // Pump messages
-    NS_ProcessNextEvent(nullptr, true);
-  }
+  SpinEventLoopUntil([&]() { return mChannelRead; });
 
   if (!mChannelData.Length())
     mChannelResult = NS_ERROR_FAILURE;
@@ -341,15 +338,14 @@ HRESULT nsDataObj::CreateStream(IStream **outStream)
 
   pStream->AddRef();
 
-  // query the requestingNode from the transferable and add it to the new channel
-  nsCOMPtr<nsIDOMNode> requestingDomNode;
-  mTransferable->GetRequestingNode(getter_AddRefs(requestingDomNode));
-  nsCOMPtr<nsINode> requestingNode = do_QueryInterface(requestingDomNode);
-  MOZ_ASSERT(requestingNode, "can not create channel without a node");
+  // query the requestingPrincipal from the transferable and add it to the new channel
+  nsCOMPtr<nsIPrincipal> requestingPrincipal;
+  mTransferable->GetRequestingPrincipal(getter_AddRefs(requestingPrincipal));
+  MOZ_ASSERT(requestingPrincipal, "can not create channel without a principal");
   // default transferable content policy is nsIContentPolicy::TYPE_OTHER
   uint32_t contentPolicyType = nsIContentPolicy::TYPE_OTHER;
   mTransferable->GetContentPolicyType(&contentPolicyType);
-  rv = pStream->Init(sourceURI, contentPolicyType, requestingNode);
+  rv = pStream->Init(sourceURI, contentPolicyType, requestingPrincipal);
   if (NS_FAILED(rv))
   {
     pStream->Release();
@@ -442,6 +438,82 @@ STDMETHODIMP_(ULONG) nsDataObj::AddRef()
 	return m_cRef;
 }
 
+namespace {
+class RemoveTempFileHelper : public nsIObserver
+{
+public:
+  explicit RemoveTempFileHelper(nsIFile* aTempFile)
+    : mTempFile(aTempFile)
+  {
+    MOZ_ASSERT(mTempFile);
+  }
+
+  // The attach method is seperate from the constructor as we may be addref-ing
+  // ourself, and we want to be sure someone has a strong reference to us.
+  void Attach()
+  {
+    // We need to listen to both the xpcom shutdown message and our timer, and
+    // fire when the first of either of these two messages is received.
+    nsresult rv;
+    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+    mTimer->Init(this, 500, nsITimer::TYPE_ONE_SHOT);
+
+    nsCOMPtr<nsIObserverService> observerService =
+      do_GetService("@mozilla.org/observer-service;1");
+    if (NS_WARN_IF(!observerService)) {
+      mTimer->Cancel();
+      mTimer = nullptr;
+      return;
+    }
+    observerService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
+  }
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
+
+private:
+  ~RemoveTempFileHelper()
+  {
+    if (mTempFile) {
+      mTempFile->Remove(false);
+    }
+  }
+
+  nsCOMPtr<nsIFile> mTempFile;
+  nsCOMPtr<nsITimer> mTimer;
+};
+
+NS_IMPL_ISUPPORTS(RemoveTempFileHelper, nsIObserver);
+
+NS_IMETHODIMP
+RemoveTempFileHelper::Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData)
+{
+  // Let's be careful and make sure that we don't die immediately
+  RefPtr<RemoveTempFileHelper> grip = this;
+
+  // Make sure that we aren't called again by destroying references to ourself.
+  nsCOMPtr<nsIObserverService> observerService =
+    do_GetService("@mozilla.org/observer-service;1");
+  if (observerService) {
+    observerService->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID);
+  }
+
+  if (mTimer) {
+    mTimer->Cancel();
+    mTimer = nullptr;
+  }
+
+  // Remove the tempfile
+  if (mTempFile) {
+    mTempFile->Remove(false);
+    mTempFile = nullptr;
+  }
+  return NS_OK;
+}
+} // namespace
 
 //-----------------------------------------------------
 STDMETHODIMP_(ULONG) nsDataObj::Release()
@@ -455,17 +527,12 @@ STDMETHODIMP_(ULONG) nsDataObj::Release()
   // We have released our last ref on this object and need to delete the
   // temp file. External app acting as drop target may still need to open the
   // temp file. Addref a timer so it can delay deleting file and destroying
-  // this object. Delete file anyway and destroy this obj if there's a problem.
+  // this object.
   if (mCachedTempFile) {
-    nsresult rv;
-    mTimer = do_CreateInstance(NS_TIMER_CONTRACTID, &rv);
-    if (NS_SUCCEEDED(rv)) {
-      mTimer->InitWithFuncCallback(nsDataObj::RemoveTempFile, this,
-                                   500, nsITimer::TYPE_ONE_SHOT);
-      return AddRef();
-    }
-    mCachedTempFile->Remove(false);
+    RefPtr<RemoveTempFileHelper> helper =
+      new RemoveTempFileHelper(mCachedTempFile);
     mCachedTempFile = nullptr;
+    helper->Attach();
   }
 
 	delete this;
@@ -1012,7 +1079,7 @@ CreateFilenameFromTextW(nsString & aText, const wchar_t * aExtension,
 #define PAGEINFO_PROPERTIES "chrome://navigator/locale/pageInfo.properties"
 
 static bool
-GetLocalizedString(const char16_t * aName, nsXPIDLString & aString)
+GetLocalizedString(const char* aName, nsXPIDLString & aString)
 {
   nsCOMPtr<nsIStringBundleService> stringService =
     mozilla::services::GetStringBundleService();
@@ -1058,7 +1125,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutA ( FORMATETC& aFE, STGMEDIUM& aST
   if (!CreateFilenameFromTextA(title, ".URL", 
                                fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
     nsXPIDLString untitled;
-    if (!GetLocalizedString(u"noPageTitle", untitled) ||
+    if (!GetLocalizedString("noPageTitle", untitled) ||
         !CreateFilenameFromTextA(untitled, ".URL", 
                                  fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
       strcpy(fileGroupDescA->fgd[0].cFileName, "Untitled.URL");
@@ -1099,7 +1166,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutW ( FORMATETC& aFE, STGMEDIUM& aST
   if (!CreateFilenameFromTextW(title, L".URL",
                                fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
     nsXPIDLString untitled;
-    if (!GetLocalizedString(u"noPageTitle", untitled) ||
+    if (!GetLocalizedString("noPageTitle", untitled) ||
         !CreateFilenameFromTextW(untitled, L".URL",
                                  fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
       wcscpy(fileGroupDescW->fgd[0].cFileName, L"Untitled.URL");
@@ -1147,8 +1214,7 @@ nsDataObj :: GetFileContentsInternetShortcut ( FORMATETC& aFE, STGMEDIUM& aSTG )
   const char *shortcutFormatStr;
   int totalLen;
   nsCString path;
-  if (!Preferences::GetBool(kShellIconPref, true) ||
-      !IsVistaOrLater()) {
+  if (!Preferences::GetBool(kShellIconPref, true)) {
     shortcutFormatStr = "[InternetShortcut]\r\nURL=%s\r\n";
     const int formatLen = strlen(shortcutFormatStr) - 2;  // don't include %s
     totalLen = formatLen + asciiUrl.Length();  // don't include null character
@@ -1208,17 +1274,15 @@ bool nsDataObj :: IsFlavourPresent(const char *inFlavour)
   NS_ENSURE_TRUE(mTransferable, false);
   
   // get the list of flavors available in the transferable
-  nsCOMPtr<nsISupportsArray> flavorList;
+  nsCOMPtr<nsIArray> flavorList;
   mTransferable->FlavorsTransferableCanExport(getter_AddRefs(flavorList));
   NS_ENSURE_TRUE(flavorList, false);
 
   // try to find requested flavour
   uint32_t cnt;
-  flavorList->Count(&cnt);
+  flavorList->GetLength(&cnt);
   for (uint32_t i = 0; i < cnt; ++i) {
-    nsCOMPtr<nsISupports> genericFlavor;
-    flavorList->GetElementAt (i, getter_AddRefs(genericFlavor));
-    nsCOMPtr<nsISupportsCString> currentFlavor (do_QueryInterface(genericFlavor));
+    nsCOMPtr<nsISupportsCString> currentFlavor = do_QueryElementAt(flavorList, i);
     if (currentFlavor) {
       nsAutoCString flavorStr;
       currentFlavor->GetData(flavorStr);
@@ -1603,7 +1667,7 @@ HRESULT nsDataObj::DropTempFile(FORMATETC& aFE, STGMEDIUM& aSTG)
       wideFileName);
     if (FAILED(res))
       return res;
-    NS_UTF16ToCString(wideFileName, NS_CSTRING_ENCODING_NATIVE_FILESYSTEM, filename);
+    NS_CopyUnicodeToNative(wideFileName, filename);
 
     dropFile->AppendNative(filename);
     rv = dropFile->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0660);
@@ -2091,7 +2155,7 @@ HRESULT nsDataObj::GetFileDescriptor_IStreamA(FORMATETC& aFE, STGMEDIUM& aSTG)
   }
 
   nsAutoCString nativeFileName;
-  NS_UTF16ToCString(wideFileName, NS_CSTRING_ENCODING_NATIVE_FILESYSTEM, nativeFileName);
+  NS_CopyUnicodeToNative(wideFileName, nativeFileName);
   
   strncpy(fileGroupDescA->fgd[0].cFileName, nativeFileName.get(), NS_MAX_FILEDESCRIPTOR - 1);
   fileGroupDescA->fgd[0].cFileName[NS_MAX_FILEDESCRIPTOR - 1] = '\0';
@@ -2154,14 +2218,4 @@ HRESULT nsDataObj::GetFileContents_IStream(FORMATETC& aFE, STGMEDIUM& aSTG)
   aSTG.pUnkForRelease = nullptr;
 
   return S_OK;
-}
-
-void nsDataObj::RemoveTempFile(nsITimer* aTimer, void* aClosure)
-{
-  nsDataObj *timedDataObj = static_cast<nsDataObj *>(aClosure);
-  if (timedDataObj->mCachedTempFile) {
-    timedDataObj->mCachedTempFile->Remove(false);
-    timedDataObj->mCachedTempFile = nullptr;
-  }
-  timedDataObj->Release();
 }

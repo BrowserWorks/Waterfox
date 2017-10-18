@@ -5,10 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "NativeFontResourceDWrite.h"
+#include "UnscaledFontDWrite.h"
 
 #include <unordered_map>
 
-#include "DrawTargetD2D1.h"
 #include "Logging.h"
 #include "mozilla/RefPtr.h"
 
@@ -69,7 +69,7 @@ public:
   {
     if (!mInstance) {
       mInstance = new DWriteFontFileLoader();
-      DrawTargetD2D1::GetDWriteFactory()->
+      Factory::GetDWriteFactory()->
           RegisterFontFileLoader(mInstance);
     }
     return mInstance;
@@ -221,7 +221,7 @@ already_AddRefed<NativeFontResourceDWrite>
 NativeFontResourceDWrite::Create(uint8_t *aFontData, uint32_t aDataLength,
                                  bool aNeedsCairo)
 {
-  IDWriteFactory *factory = DrawTargetD2D1::GetDWriteFactory();
+  RefPtr<IDWriteFactory> factory = Factory::GetDWriteFactory();
   if (!factory) {
     gfxWarning() << "Failed to get DWrite Factory.";
     return nullptr;
@@ -258,8 +258,10 @@ NativeFontResourceDWrite::Create(uint8_t *aFontData, uint32_t aDataLength,
   return fontResource.forget();
 }
 
-already_AddRefed<ScaledFont>
-NativeFontResourceDWrite::CreateScaledFont(uint32_t aIndex, uint32_t aGlyphSize)
+already_AddRefed<UnscaledFont>
+NativeFontResourceDWrite::CreateUnscaledFont(uint32_t aIndex,
+                                             const uint8_t* aInstanceData,
+                                             uint32_t aInstanceDataLength)
 {
   if (aIndex >= mNumberOfFaces) {
     gfxWarning() << "Font face index is too high for font resource.";
@@ -274,13 +276,12 @@ NativeFontResourceDWrite::CreateScaledFont(uint32_t aIndex, uint32_t aGlyphSize)
     return nullptr;
   }
 
-  RefPtr<ScaledFontBase> scaledFont = new ScaledFontDWrite(fontFace, aGlyphSize);
-  if (mNeedsCairo && !scaledFont->PopulateCairoScaledFont()) {
-    gfxWarning() << "Unable to create cairo scaled font DWrite font.";
-    return nullptr;
-  }
+  RefPtr<UnscaledFont> unscaledFont =
+    new UnscaledFontDWrite(fontFace,
+                           DWRITE_FONT_SIMULATIONS_NONE,
+                           mNeedsCairo);
 
-  return scaledFont.forget();
+  return unscaledFont.forget();
 }
 
 } // gfx

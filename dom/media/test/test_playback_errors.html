@@ -21,7 +21,7 @@ function startTest(test, token) {
     if (v._ignore)
       return;
     v._ignore = true;
-    v.parentNode.removeChild(v);
+    v.remove();
     manager.finished(token);
   }
   var checkError = function(test, v) { return function(evt) {
@@ -33,8 +33,8 @@ function startTest(test, token) {
     ok(false, test.name + " successfully played");
     endedTest(v);
   }}(test, v);
-  v.addEventListener("error", checkError, false);
-  v.addEventListener("ended", checkEnded, false);
+  v.addEventListener("error", checkError);
+  v.addEventListener("ended", checkEnded);
   v.src = test.name;
   document.body.appendChild(v);
   v.play();

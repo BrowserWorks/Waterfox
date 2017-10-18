@@ -55,7 +55,9 @@ PrintTargetWindows::CreateOrNull(HDC aDC)
 
 nsresult
 PrintTargetWindows::BeginPrinting(const nsAString& aTitle,
-                                  const nsAString& aPrintToFileName)
+                                  const nsAString& aPrintToFileName,
+                                  int32_t aStartPage,
+                                  int32_t aEndPage)
 {
   const uint32_t DOC_TITLE_LENGTH = MAX_PATH - 1;
 
@@ -89,6 +91,7 @@ PrintTargetWindows::EndPrinting()
 nsresult
 PrintTargetWindows::AbortPrinting()
 {
+  PrintTarget::AbortPrinting();
   int result = ::AbortDoc(mDC);
   return (result <= 0) ? NS_ERROR_FAILURE : NS_OK;
 }
@@ -96,6 +99,7 @@ PrintTargetWindows::AbortPrinting()
 nsresult
 PrintTargetWindows::BeginPage()
 {
+  PrintTarget::BeginPage();
   int result = ::StartPage(mDC);
   return (result <= 0) ? NS_ERROR_FAILURE : NS_OK;
 }
@@ -104,6 +108,7 @@ nsresult
 PrintTargetWindows::EndPage()
 {
   cairo_surface_show_page(mCairoSurface);
+  PrintTarget::EndPage();
   int result = ::EndPage(mDC);
   return (result <= 0) ? NS_ERROR_FAILURE : NS_OK;
 }

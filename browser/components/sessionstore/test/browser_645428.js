@@ -13,8 +13,8 @@ function test() {
     }
   }
 
-  Services.obs.addObserver(observe, NOTIFICATION, false);
-  registerCleanupFunction(function () {
+  Services.obs.addObserver(observe, NOTIFICATION);
+  registerCleanupFunction(function() {
     Services.obs.removeObserver(observe, NOTIFICATION);
   });
 

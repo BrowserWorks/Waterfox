@@ -8,7 +8,7 @@
 
 #include "nsIChannel.h"
 #include "nsIUnicharStreamLoader.h"
-#include "nsIUnicodeDecoder.h"
+#include "mozilla/Encoding.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 
@@ -34,11 +34,11 @@ protected:
   /**
    * callback method used for ReadSegments
    */
-  static NS_METHOD WriteSegmentFun(nsIInputStream *, void *, const char *,
-                                   uint32_t, uint32_t, uint32_t *);
+  static nsresult WriteSegmentFun(nsIInputStream *, void *, const char *,
+                                  uint32_t, uint32_t, uint32_t *);
 
   nsCOMPtr<nsIUnicharStreamLoaderObserver> mObserver;
-  nsCOMPtr<nsIUnicodeDecoder>              mDecoder;
+  mozilla::UniquePtr<mozilla::Decoder> mDecoder;
   nsCOMPtr<nsISupports>                    mContext;
   nsCOMPtr<nsIChannel>                     mChannel;
   nsCString                                mCharset;
@@ -46,6 +46,10 @@ protected:
   // This holds the first up-to-512 bytes of the raw stream.
   // It will be passed to the OnDetermineCharset callback.
   nsCString                                mRawData;
+
+  // Holds complete raw bytes as received so that SRI checks can be
+  // calculated on the raw data prior to character conversion.
+  nsCString                                mRawBuffer;
 
   // This holds the complete contents of the stream so far, after
   // decoding to UTF-16.  It will be passed to the OnStreamComplete

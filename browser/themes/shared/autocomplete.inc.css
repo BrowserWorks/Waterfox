@@ -1,0 +1,69 @@
+%if 0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+%endif
+
+#PopupAutoComplete > richlistbox > richlistitem {
+  height: 20px;
+  min-height: 20px;
+  border: 0;
+  border-radius: 0;
+  padding: 0px 1px 0px 1px;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem > .ac-site-icon {
+  margin-inline-start: 4px;
+  margin-inline-end: 0;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem > .ac-title {
+  font: icon;
+  margin-inline-start: 4px;
+}
+
+#PopupAutoComplete > richlistbox {
+  padding: 0;
+}
+
+
+/* Login form autocompletion */
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="login"] > .ac-site-icon {
+  display: initial;
+  list-style-image: url(chrome://browser/skin/notification-icons.svg#login);
+  -moz-context-properties: fill;
+  fill: GrayText;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="login"] > .ac-site-icon[selected] {
+  fill: HighlightText;
+}
+
+
+/* Insecure field warning */
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] {
+  background-color: var(--arrowpanel-dimmed);
+  border-bottom: 1px solid var(--panel-separator-color);
+  padding-bottom: 4px;
+  padding-top: 4px;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"][selected] {
+  background-color: var(--arrowpanel-dimmed-further);
+  color: -moz-DialogText;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] > .ac-title {
+  color: GrayText;
+  font-size: 1em;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"][selected] > .ac-title {
+  color: inherit;
+}
+
+#PopupAutoComplete > richlistbox > richlistitem[originaltype="insecureWarning"] > .ac-site-icon {
+  list-style-image: url(chrome://browser/skin/connection-mixed-active-loaded.svg);
+  -moz-context-properties: fill;
+  fill: GrayText;
+}

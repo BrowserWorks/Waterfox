@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "mozilla/WindowsDllBlocklist.h"
+#include "mozilla/Bootstrap.h"
 
 #include "nsXULAppAPI.h"
 #ifdef XP_MACOSX
@@ -47,7 +48,7 @@ main(int argc, char** argv, char** envp)
 
     // unbuffer stdout so that output is in the correct order; note that stderr
     // is unbuffered by default
-    setbuf(stdout, 0);
+    setbuf(stdout, nullptr);
 
 #ifdef HAS_DLL_BLOCKLIST
     DllBlocklist_Initialize();
@@ -59,7 +60,12 @@ main(int argc, char** argv, char** envp)
       mozilla::sandboxing::GetInitializedBrokerServices();
 #endif
 
-    int result = XRE_XPCShellMain(argc, argv, envp, &shellData);
+    mozilla::Bootstrap::UniquePtr bootstrap = mozilla::GetBootstrap();
+    if (!bootstrap) {
+        return 2;
+    }
+
+    int result = bootstrap->XRE_XPCShellMain(argc, argv, envp, &shellData);
 
 #ifdef XP_MACOSX
     FinishAutoreleasePool();

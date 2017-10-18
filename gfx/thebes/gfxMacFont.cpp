@@ -6,6 +6,7 @@
 #include "gfxMacFont.h"
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Sprintf.h"
 
 #include "gfxCoreTextShaper.h"
 #include <algorithm>
@@ -15,25 +16,47 @@
 #include "gfxMacPlatformFontList.h"
 #include "gfxFontConstants.h"
 #include "gfxTextRun.h"
+#include "nsCocoaFeatures.h"
 
 #include "cairo-quartz.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
 
-gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyle,
+gfxMacFont::gfxMacFont(const RefPtr<UnscaledFontMac>& aUnscaledFont,
+                       MacOSFontEntry *aFontEntry,
+                       const gfxFontStyle *aFontStyle,
                        bool aNeedsBold)
-    : gfxFont(aFontEntry, aFontStyle),
+    : gfxFont(aUnscaledFont, aFontEntry, aFontStyle),
       mCGFont(nullptr),
       mCTFont(nullptr),
-      mFontFace(nullptr)
+      mFontFace(nullptr),
+      mVariationFont(aFontEntry->HasVariations())
 {
     mApplySyntheticBold = aNeedsBold;
 
-    mCGFont = aFontEntry->GetFontRef();
-    if (!mCGFont) {
-        mIsValid = false;
-        return;
+    if (mVariationFont && aFontStyle->variationSettings.Length() > 0) {
+        CGFontRef baseFont = aUnscaledFont->GetFont();
+        if (!baseFont) {
+            mIsValid = false;
+            return;
+        }
+        mCGFont =
+            UnscaledFontMac::CreateCGFontWithVariations(
+                baseFont,
+                aFontStyle->variationSettings.Length(),
+                aFontStyle->variationSettings.Elements());
+        if (!mCGFont) {
+          ::CFRetain(baseFont);
+          mCGFont = baseFont;
+        }
+    } else {
+        mCGFont = aUnscaledFont->GetFont();
+        if (!mCGFont) {
+            mIsValid = false;
+            return;
+        }
+        ::CFRetain(mCGFont);
     }
 
     // InitMetrics will handle the sizeAdjust factor and set mAdjustedSize
@@ -49,8 +72,9 @@ gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyl
         mIsValid = false;
 #ifdef DEBUG
         char warnBuf[1024];
-        sprintf(warnBuf, "Failed to create Cairo font face: %s status: %d",
-                NS_ConvertUTF16toUTF8(GetName()).get(), cairoerr);
+        SprintfLiteral(warnBuf,
+                       "Failed to create Cairo font face: %s status: %d",
+                       NS_ConvertUTF16toUTF8(GetName()).get(), cairoerr);
         NS_WARNING(warnBuf);
 #endif
         return;
@@ -99,8 +123,8 @@ gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyl
         mIsValid = false;
 #ifdef DEBUG
         char warnBuf[1024];
-        sprintf(warnBuf, "Failed to create scaled font: %s status: %d",
-                NS_ConvertUTF16toUTF8(GetName()).get(), cairoerr);
+        SprintfLiteral(warnBuf, "Failed to create scaled font: %s status: %d",
+                       NS_ConvertUTF16toUTF8(GetName()).get(), cairoerr);
         NS_WARNING(warnBuf);
 #endif
     }
@@ -108,6 +132,9 @@ gfxMacFont::gfxMacFont(MacOSFontEntry *aFontEntry, const gfxFontStyle *aFontStyl
 
 gfxMacFont::~gfxMacFont()
 {
+    if (mCGFont) {
+        ::CFRelease(mCGFont);
+    }
     if (mCTFont) {
         ::CFRelease(mCTFont);
     }
@@ -126,6 +153,7 @@ gfxMacFont::ShapeText(DrawTarget     *aDrawTarget,
                       uint32_t        aLength,
                       Script          aScript,
                       bool            aVertical,
+                      RoundingFlags   aRounding,
                       gfxShapedText  *aShapedText)
 {
     if (!mIsValid) {
@@ -141,7 +169,8 @@ gfxMacFont::ShapeText(DrawTarget     *aDrawTarget,
             mCoreTextShaper = MakeUnique<gfxCoreTextShaper>(this);
         }
         if (mCoreTextShaper->ShapeText(aDrawTarget, aText, aOffset, aLength,
-                                       aScript, aVertical, aShapedText)) {
+                                       aScript, aVertical, aRounding,
+                                       aShapedText)) {
             PostShapingFixup(aDrawTarget, aText, aOffset,
                              aLength, aVertical, aShapedText);
             return true;
@@ -149,7 +178,7 @@ gfxMacFont::ShapeText(DrawTarget     *aDrawTarget,
     }
 
     return gfxFont::ShapeText(aDrawTarget, aText, aOffset, aLength, aScript,
-                              aVertical, aShapedText);
+                              aVertical, aRounding, aShapedText);
 }
 
 bool
@@ -170,7 +199,7 @@ gfxMacFont::Measure(const gfxTextRun *aTextRun,
                     BoundingBoxType aBoundingBoxType,
                     DrawTarget *aRefDrawTarget,
                     Spacing *aSpacing,
-                    uint16_t aOrientation)
+                    gfx::ShapedTextFlags aOrientation)
 {
     gfxFont::RunMetrics metrics =
         gfxFont::Measure(aTextRun, aStart, aEnd,
@@ -219,8 +248,9 @@ gfxMacFont::InitMetrics()
         // See http://www.microsoft.com/typography/otspec/head.htm
 #ifdef DEBUG
         char warnBuf[1024];
-        sprintf(warnBuf, "Bad font metrics for: %s (invalid unitsPerEm value)",
-                NS_ConvertUTF16toUTF8(mFontEntry->Name()).get());
+        SprintfLiteral(warnBuf,
+                       "Bad font metrics for: %s (invalid unitsPerEm value)",
+                       NS_ConvertUTF16toUTF8(mFontEntry->Name()).get());
         NS_WARNING(warnBuf);
 #endif
         return;
@@ -251,6 +281,10 @@ gfxMacFont::InitMetrics()
 
     if (mMetrics.xHeight == 0.0) {
         mMetrics.xHeight = ::CGFontGetXHeight(mCGFont) * cgConvFactor;
+    }
+
+    if (mMetrics.capHeight == 0.0) {
+        mMetrics.capHeight = ::CGFontGetCapHeight(mCGFont) * cgConvFactor;
     }
 
     if (mStyle.sizeAdjust > 0.0 && mStyle.size > 0.0 &&
@@ -333,7 +367,7 @@ gfxMacFont::InitMetrics()
     fprintf (stderr, "    emHeight: %f emAscent: %f emDescent: %f\n", mMetrics.emHeight, mMetrics.emAscent, mMetrics.emDescent);
     fprintf (stderr, "    maxAscent: %f maxDescent: %f maxAdvance: %f\n", mMetrics.maxAscent, mMetrics.maxDescent, mMetrics.maxAdvance);
     fprintf (stderr, "    internalLeading: %f externalLeading: %f\n", mMetrics.internalLeading, mMetrics.externalLeading);
-    fprintf (stderr, "    spaceWidth: %f aveCharWidth: %f xHeight: %f\n", mMetrics.spaceWidth, mMetrics.aveCharWidth, mMetrics.xHeight);
+    fprintf (stderr, "    spaceWidth: %f aveCharWidth: %f xHeight: %f capHeight: %f\n", mMetrics.spaceWidth, mMetrics.aveCharWidth, mMetrics.xHeight, mMetrics.capHeight);
     fprintf (stderr, "    uOff: %f uSize: %f stOff: %f stSize: %f\n", mMetrics.underlineOffset, mMetrics.underlineSize, mMetrics.strikeoutOffset, mMetrics.strikeoutSize);
 #endif
 }
@@ -364,12 +398,48 @@ gfxMacFont::GetCharWidth(CFDataRef aCmap, char16_t aUniChar,
     return 0;
 }
 
+/* static */
+CTFontRef
+gfxMacFont::CreateCTFontFromCGFontWithVariations(CGFontRef aCGFont,
+                                                 CGFloat aSize,
+                                                 CTFontDescriptorRef aFontDesc)
+{
+    // Avoid calling potentially buggy variation APIs on pre-Sierra macOS
+    // versions (see bug 1331683)
+    if (!nsCocoaFeatures::OnSierraOrLater()) {
+        return CTFontCreateWithGraphicsFont(aCGFont, aSize, nullptr, aFontDesc);
+    }
+
+    CFDictionaryRef variations = ::CGFontCopyVariations(aCGFont);
+    CTFontRef ctFont;
+    if (variations) {
+        CFDictionaryRef varAttr =
+            ::CFDictionaryCreate(nullptr,
+                                 (const void**)&kCTFontVariationAttribute,
+                                 (const void**)&variations, 1,
+                                 &kCFTypeDictionaryKeyCallBacks,
+                                 &kCFTypeDictionaryValueCallBacks);
+        ::CFRelease(variations);
+
+        CTFontDescriptorRef varDesc = aFontDesc
+            ? ::CTFontDescriptorCreateCopyWithAttributes(aFontDesc, varAttr)
+            : ::CTFontDescriptorCreateWithAttributes(varAttr);
+        ::CFRelease(varAttr);
+
+        ctFont = ::CTFontCreateWithGraphicsFont(aCGFont, aSize, nullptr, varDesc);
+        ::CFRelease(varDesc);
+    } else {
+        ctFont = ::CTFontCreateWithGraphicsFont(aCGFont, aSize, nullptr,
+                                                aFontDesc);
+    }
+    return ctFont;
+}
+
 int32_t
 gfxMacFont::GetGlyphWidth(DrawTarget& aDrawTarget, uint16_t aGID)
 {
     if (!mCTFont) {
-        mCTFont = ::CTFontCreateWithGraphicsFont(mCGFont, mAdjustedSize,
-                                                 nullptr, nullptr);
+        mCTFont = CreateCTFontFromCGFontWithVariations(mCGFont, mAdjustedSize);
         if (!mCTFont) { // shouldn't happen, but let's be safe
             NS_WARNING("failed to create CTFontRef to measure glyph width");
             return 0;
@@ -420,6 +490,7 @@ gfxMacFont::InitMetricsFromPlatform()
     mMetrics.aveCharWidth = 0;
 
     mMetrics.xHeight = ::CTFontGetXHeight(ctFont);
+    mMetrics.capHeight = ::CTFontGetCapHeight(ctFont);
 
     ::CFRelease(ctFont);
 
@@ -433,18 +504,22 @@ gfxMacFont::GetScaledFont(DrawTarget *aTarget)
     NativeFont nativeFont;
     nativeFont.mType = NativeFontType::MAC_FONT_FACE;
     nativeFont.mFont = GetCGFontRef();
-    mAzureScaledFont = mozilla::gfx::Factory::CreateScaledFontWithCairo(nativeFont, GetAdjustedSize(), mScaledFont);
+    mAzureScaledFont =
+      Factory::CreateScaledFontWithCairo(nativeFont,
+                                         GetUnscaledFont(),
+                                         GetAdjustedSize(),
+                                         mScaledFont);
   }
 
   RefPtr<ScaledFont> scaledFont(mAzureScaledFont);
   return scaledFont.forget();
 }
 
-already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
+already_AddRefed<GlyphRenderingOptions>
 gfxMacFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
 {
     if (aRunParams) {
-        return mozilla::gfx::Factory::CreateCGGlyphRenderingOptions(aRunParams->fontSmoothingBGColor);
+        return Factory::CreateCGGlyphRenderingOptions(aRunParams->fontSmoothingBGColor);
     }
     return nullptr;
 }

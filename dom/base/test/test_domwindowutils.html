@@ -17,8 +17,7 @@ function test_sendMouseEventDefaults() {
   var x = 1, y = 2, button = 1, clickCount = 2,
       modifiers = SpecialPowers.Ci.nsIDOMNSEvent.SHIFT_MASK;
 
-  window.addEventListener("mousedown", function listener(evt) {
-    window.removeEventListener("mousedown", listener);
+  window.addEventListener("mousedown", function(evt) {
     // Mandatory args
     // coordinates may change slightly due to rounding
     ok((evt.clientX <= x+2) && (evt.clientX >= x-2), "check x");
@@ -33,7 +32,7 @@ function test_sendMouseEventDefaults() {
     is(evt.isSynthesized, undefined, "check isSynthesized is undefined in content");
     is(SpecialPowers.wrap(evt).isSynthesized, true, "check isSynthesized is true from chrome");
     SimpleTest.executeSoon(next);
-  });
+  }, {once: true});
 
   // Only pass mandatory arguments and check default values
   utils.sendMouseEvent("mousedown", x, y, button, clickCount, modifiers);
@@ -45,21 +44,127 @@ function test_sendMouseEventOptionals() {
       pressure = 0.5,
       source = SpecialPowers.Ci.nsIDOMMouseEvent.MOZ_SOURCE_KEYBOARD;
 
-  window.addEventListener("mouseup", function listener(evt) {
-    window.removeEventListener("mouseup", listener);
+  window.addEventListener("mouseup", function(evt) {
     is(evt.mozInputSource, source, "explicit input source is valid");
     is(SpecialPowers.wrap(evt).isSynthesized, false, "we can dispatch event that don't look synthesized");
     SimpleTest.executeSoon(next);
-  });
+  }, {once: true});
 
   // Check explicit value for optional args
   utils.sendMouseEvent("mouseup", x, y, button, clickCount, modifiers,
                        false, pressure, source, false);
 }
 
+function test_getAnimationType() {
+  [
+    {
+      propertyName: "align-content",
+      expectedType: "discrete"
+    },
+    {
+      propertyName: "animation-delay",
+      expectedType: "none"
+    },
+    {
+      propertyName: "background-color",
+      expectedType: "color"
+    },
+    {
+      propertyName: "background-size",
+      expectedType: "custom"
+    },
+    {
+      propertyName: "border-bottom-left-radius",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "border-bottom-right-radius",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "border-top-left-radius",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "border-top-right-radius",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "font-size",
+      expectedType: "length"
+    },
+    {
+      propertyName: "margin-top",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "margin-right",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "margin-bottom",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "margin-left",
+      expectedType: "coord"
+    },
+    {
+      propertyName: "opacity",
+      expectedType: "float"
+    },
+    {
+      propertyName: "stroke",
+      expectedType: "paintServer"
+    },
+    {
+      propertyName: "text-shadow",
+      expectedType: "shadow"
+    },
+    {
+      propertyName: "transform",
+      expectedType: "custom"
+    },
+    {
+      propertyName: "visibility",
+      expectedType: "discrete"
+    },
+    {
+      propertyName: "width",
+      expectedType: "coord"
+    }
+  ].forEach(({ propertyName, expectedType }) => {
+    is(utils.getAnimationTypeForLonghand(propertyName), expectedType,
+       `Animation type should be ${ expectedType }`);
+  });
+
+  SimpleTest.doesThrow(
+    () => utils.getAnimationTypeForLonghand("background"),
+    "NS_ERROR_ILLEGAL_VALUE",
+    "background property should throw");
+
+  SimpleTest.doesThrow(
+    () => utils.getAnimationTypeForLonghand("invalid"),
+    "NS_ERROR_ILLEGAL_VALUE",
+    "Invalid property should throw");
+
+  next();
+}
+
+function test_getUnanimatedComputedStyle() {
+  SpecialPowers.pushPrefEnv(
+    { set: [["dom.animations-api.core.enabled", true]] },
+    () => {
+      window.open("file_domwindowutils_animation.html");
+    }
+  );
+}
+
 var tests = [
   test_sendMouseEventDefaults,
-  test_sendMouseEventOptionals
+  test_sendMouseEventOptionals,
+  test_getAnimationType,
+  test_getUnanimatedComputedStyle
 ];
 
 function next() {

@@ -168,7 +168,7 @@ union PRNetAddr {
         PRIPv6Addr ip;                  /* the actual 128 bits of address */
         PRUint32 scope_id;              /* set of interfaces for a scope */
     } ipv6;
-#if defined(XP_UNIX) || defined(XP_OS2)
+#if defined(XP_UNIX) || defined(XP_OS2) || defined(XP_WIN)
     struct {                            /* Unix domain socket address */
         PRUint16 family;                /* address family (AF_UNIX) */
 #ifdef XP_OS2
@@ -196,8 +196,8 @@ typedef enum PRSockOption
     PR_SockOpt_Linger,          /* linger on close if data present */
     PR_SockOpt_Reuseaddr,       /* allow local address reuse */
     PR_SockOpt_Keepalive,       /* keep connections alive */
-    PR_SockOpt_RecvBufferSize,  /* send buffer size */
-    PR_SockOpt_SendBufferSize,  /* receive buffer size */
+    PR_SockOpt_RecvBufferSize,  /* receive buffer size */
+    PR_SockOpt_SendBufferSize,  /* send buffer size */
 
     PR_SockOpt_IpTimeToLive,    /* time to live */
     PR_SockOpt_IpTypeOfService, /* type of service and precedence */

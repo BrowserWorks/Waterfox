@@ -38,7 +38,7 @@ NS_NewProgressFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsProgressFrame)
 
 nsProgressFrame::nsProgressFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mBarDiv(nullptr)
 {
 }
@@ -58,12 +58,6 @@ nsProgressFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
-nsIAtom*
-nsProgressFrame::GetType() const
-{
-  return nsGkAtoms::progressFrame;
-}
-
 nsresult
 nsProgressFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
@@ -72,12 +66,9 @@ nsProgressFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   mBarDiv = doc->CreateHTMLElement(nsGkAtoms::div);
 
   // Associate ::-moz-progress-bar pseudo-element to the anonymous child.
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::mozProgressBar;
-  RefPtr<nsStyleContext> newStyleContext = PresContext()->StyleSet()->
-    ResolvePseudoElementStyle(mContent->AsElement(), pseudoType,
-                              StyleContext(), mBarDiv->AsElement());
+  mBarDiv->SetPseudoElementType(CSSPseudoElementType::mozProgressBar);
 
-  if (!aElements.AppendElement(ContentInfo(mBarDiv, newStyleContext))) {
+  if (!aElements.AppendElement(mBarDiv)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -118,6 +109,9 @@ nsProgressFrame::Reflow(nsPresContext*           aPresContext,
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
 
   NS_ASSERTION(mBarDiv, "Progress bar div must exist!");
+  NS_ASSERTION(PrincipalChildList().GetLength() == 1 &&
+               PrincipalChildList().FirstChild() == mBarDiv->GetPrimaryFrame(),
+               "unexpected child frames");
   NS_ASSERTION(!GetPrevContinuation(),
                "nsProgressFrame should not have continuations; if it does we "
                "need to call RegUnregAccessKey only for the first.");
@@ -126,34 +120,33 @@ nsProgressFrame::Reflow(nsPresContext*           aPresContext,
     nsFormControlFrame::RegUnRegAccessKey(this, true);
   }
 
-  nsIFrame* barFrame = mBarDiv->GetPrimaryFrame();
-  NS_ASSERTION(barFrame, "The progress frame should have a child with a frame!");
-
-  ReflowBarFrame(barFrame, aPresContext, aReflowInput, aStatus);
-
   aDesiredSize.SetSize(aReflowInput.GetWritingMode(),
                        aReflowInput.ComputedSizeWithBorderPadding());
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  ConsiderChildOverflow(aDesiredSize.mOverflowAreas, barFrame);
+
+  for (auto childFrame : PrincipalChildList()) {
+    ReflowChildFrame(childFrame, aPresContext, aReflowInput, aStatus);
+    ConsiderChildOverflow(aDesiredSize.mOverflowAreas, childFrame);
+  }
+
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
 void
-nsProgressFrame::ReflowBarFrame(nsIFrame*                aBarFrame,
-                                nsPresContext*           aPresContext,
-                                const ReflowInput& aReflowInput,
-                                nsReflowStatus&          aStatus)
+nsProgressFrame::ReflowChildFrame(nsIFrame*          aChild,
+                                  nsPresContext*     aPresContext,
+                                  const ReflowInput& aReflowInput,
+                                  nsReflowStatus&    aStatus)
 {
   bool vertical = ResolvedOrientationIsVertical();
-  WritingMode wm = aBarFrame->GetWritingMode();
+  WritingMode wm = aChild->GetWritingMode();
   LogicalSize availSize = aReflowInput.ComputedSize(wm);
   availSize.BSize(wm) = NS_UNCONSTRAINEDSIZE;
-  ReflowInput reflowInput(aPresContext, aReflowInput,
-                                aBarFrame, availSize);
+  ReflowInput reflowInput(aPresContext, aReflowInput, aChild, availSize);
   nscoord size = vertical ? aReflowInput.ComputedHeight()
                           : aReflowInput.ComputedWidth();
   nscoord xoffset = aReflowInput.ComputedPhysicalBorderPadding().left;
@@ -204,9 +197,9 @@ nsProgressFrame::ReflowBarFrame(nsIFrame*                aBarFrame,
   yoffset += reflowInput.ComputedPhysicalMargin().top;
 
   ReflowOutput barDesiredSize(aReflowInput);
-  ReflowChild(aBarFrame, aPresContext, barDesiredSize, reflowInput, xoffset,
+  ReflowChild(aChild, aPresContext, barDesiredSize, reflowInput, xoffset,
               yoffset, 0, aStatus);
-  FinishReflowChild(aBarFrame, aPresContext, barDesiredSize, &reflowInput,
+  FinishReflowChild(aChild, aPresContext, barDesiredSize, &reflowInput,
                     xoffset, yoffset, 0);
 }
 
@@ -219,10 +212,11 @@ nsProgressFrame::AttributeChanged(int32_t  aNameSpaceID,
 
   if (aNameSpaceID == kNameSpaceID_None &&
       (aAttribute == nsGkAtoms::value || aAttribute == nsGkAtoms::max)) {
-    nsIFrame* barFrame = mBarDiv->GetPrimaryFrame();
-    NS_ASSERTION(barFrame, "The progress frame should have a child with a frame!");
-    PresContext()->PresShell()->FrameNeedsReflow(barFrame, nsIPresShell::eResize,
-                                                 NS_FRAME_IS_DIRTY);
+    auto shell = PresContext()->PresShell();
+    for (auto childFrame : PrincipalChildList()) {
+      shell->FrameNeedsReflow(childFrame, nsIPresShell::eResize,
+                              NS_FRAME_IS_DIRTY);
+    }
     InvalidateFrame();
   }
 
@@ -230,14 +224,14 @@ nsProgressFrame::AttributeChanged(int32_t  aNameSpaceID,
 }
 
 LogicalSize
-nsProgressFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                                 WritingMode aWM,
-                                 const LogicalSize& aCBSize,
-                                 nscoord aAvailableISize,
-                                 const LogicalSize& aMargin,
-                                 const LogicalSize& aBorder,
-                                 const LogicalSize& aPadding,
-                                 bool aShrinkWrap)
+nsProgressFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                                 WritingMode         aWM,
+                                 const LogicalSize&  aCBSize,
+                                 nscoord             aAvailableISize,
+                                 const LogicalSize&  aMargin,
+                                 const LogicalSize&  aBorder,
+                                 const LogicalSize&  aPadding,
+                                 ComputeSizeFlags    aFlags)
 {
   const WritingMode wm = GetWritingMode();
   LogicalSize autoSize(wm);
@@ -255,7 +249,7 @@ nsProgressFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
 }
 
 nscoord
-nsProgressFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsProgressFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   RefPtr<nsFontMetrics> fontMet =
     nsLayoutUtils::GetFontMetricsForFrame(this, 1.0f);
@@ -271,7 +265,7 @@ nsProgressFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsProgressFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsProgressFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   return GetMinISize(aRenderingContext);
 }
@@ -279,7 +273,7 @@ nsProgressFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 bool
 nsProgressFrame::ShouldUseNativeStyle() const
 {
-  nsIFrame* barFrame = mBarDiv->GetPrimaryFrame();
+  nsIFrame* barFrame = PrincipalChildList().FirstChild();
 
   // Use the native style if these conditions are satisfied:
   // - both frames use the native appearance;

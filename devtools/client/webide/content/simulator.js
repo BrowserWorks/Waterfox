@@ -6,7 +6,7 @@ var Cu = Components.utils;
 var Ci = Components.interfaces;
 
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const { GetDevices, GetDeviceString } = require("devtools/client/shared/devices");
+const { getDevices, getDeviceString } = require("devtools/client/shared/devices");
 const { Simulators, Simulator } = require("devtools/client/webide/modules/simulators");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
@@ -80,14 +80,14 @@ var SimulatorEditor = {
     form.device.innerHTML = "";
     form.device.classList.remove("custom");
     opt(form.device, "custom", Strings.GetStringFromName("simulator_custom_device"));
-    promises.push(GetDevices().then(devices => {
+    promises.push(getDevices().then(devices => {
       devices.TYPES.forEach(type => {
         let b2gDevices = devices[type].filter(d => d.firefoxOS);
         if (b2gDevices.length < 1) {
           return;
         }
         let optgroup = document.createElement("optgroup");
-        optgroup.label = GetDeviceString(type);
+        optgroup.label = getDeviceString(type);
         b2gDevices.forEach(device => {
           this._devices[device.name] = device;
           opt(optgroup, device.name, device.name);
@@ -289,12 +289,13 @@ var SimulatorEditor = {
       case "version":
         switch (input.value) {
           case "pick":
-            let file = utils.getCustomBinary(window);
-            if (file) {
-              this.version = file.path;
-            }
-            // Whatever happens, don't stay on the "pick" option.
-            this.updateVersionSelector();
+            utils.getCustomBinary(window).then(file => {
+              if (file) {
+                this.version = file.path;
+              }
+              // Whatever happens, don't stay on the "pick" option.
+              this.updateVersionSelector();
+            });
             break;
           case "custom":
             this.version = input[input.selectedIndex].textContent;
@@ -306,12 +307,13 @@ var SimulatorEditor = {
       case "profile":
         switch (input.value) {
           case "pick":
-            let directory = utils.getCustomProfile(window);
-            if (directory) {
-              this.profile = directory.path;
-            }
-            // Whatever happens, don't stay on the "pick" option.
-            this.updateProfileSelector();
+            utils.getCustomProfile(window).then(directory => {
+              if (directory) {
+                this.profile = directory.path;
+              }
+              // Whatever happens, don't stay on the "pick" option.
+              this.updateProfileSelector();
+            });
             break;
           case "custom":
             this.profile = input[input.selectedIndex].textContent;

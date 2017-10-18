@@ -66,41 +66,39 @@ var aboutNewTabService = Cc["@mozilla.org/browser/aboutnewtab-service;1"]
                            .getService(Ci.nsIAboutNewTabService);
 
 function pushPrefs(...aPrefs) {
-  return new Promise((resolve) => {
-    SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve);
-  });
+  return SpecialPowers.pushPrefEnv({"set": aPrefs});
 }
 
 /*
  * run tests with input from TESTS
  */
-function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
+async function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
   // set about:newtab location for this test if it's a newtab test
   if (aNewTabPref) {
     aboutNewTabService.newTabURL = aNewTabPref;
   }
 
   // set prefs
-  yield pushPrefs(
+  await pushPrefs(
       ["browser.newtabpage.remote.content-signing-test", true],
       ["browser.newtabpage.remote", true],
       ["security.content.signature.root_hash",
-       "65:AE:D8:1E:B5:12:AE:B0:6B:38:58:BC:7C:47:35:3D:D4:EA:25:F1:63:DA:08:BB:86:3A:2E:97:39:66:8F:55"]);
+       "CC:BE:04:87:74:B2:98:24:4A:C6:7A:71:BC:6F:DB:D6:C0:48:17:29:57:51:96:47:38:CC:24:C8:E4:F9:DD:CB"]);
 
   if (aNewTabPref === URI_BAD_CSP) {
     // Use stricter CSP to test CSP violation.
-    yield pushPrefs(["security.signed_content.CSP.default", "script-src 'self'; style-src 'self'"]);
+    await pushPrefs(["security.signed_content.CSP.default", "script-src 'self'; style-src 'self'"]);
   } else {
     // Use weaker CSP to test normal content.
-    yield pushPrefs(["security.signed_content.CSP.default", "script-src 'self' 'unsafe-inline'; style-src 'self'"]);
+    await pushPrefs(["security.signed_content.CSP.default", "script-src 'self' 'unsafe-inline'; style-src 'self'"]);
   }
 
   // start the test
-  yield BrowserTestUtils.withNewTab({
+  await BrowserTestUtils.withNewTab({
       gBrowser,
       url: aUrl,
     },
-    function * (browser) {
+    async function(browser) {
       // check if everything's set correct for testing
       ok(Services.prefs.getBoolPref(
           "browser.newtabpage.remote.content-signing-test"),
@@ -124,8 +122,8 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
            "Valid remote newtab page must have built-in CSP.");
       }
 
-      yield ContentTask.spawn(
-          browser, aExpectedStrings, function * (aExpectedStrings) {
+      await ContentTask.spawn(
+          browser, aExpectedStrings, async function(aExpectedStrings) {
             for (let expectedString of aExpectedStrings) {
               ok(content.document.documentElement.innerHTML.includes(expectedString),
                  "Expect the following value in the result\n" + expectedString +
@@ -136,12 +134,12 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
       // for good test cases we check if a reload fails if the remote page
       // changed from valid to invalid in the meantime
       if (reload) {
-        yield BrowserTestUtils.withNewTab({
+        await BrowserTestUtils.withNewTab({
             gBrowser,
             url: INVALIDATE_FILE,
           },
-          function * (browser2) {
-            yield ContentTask.spawn(browser2, null, function * () {
+          async function(browser2) {
+            await ContentTask.spawn(browser2, null, async function() {
               ok(content.document.documentElement.innerHTML.includes("Done"),
                  "Expect the following value in the result\n" + "Done" +
                  "\nand got " + content.document.documentElement.innerHTML);
@@ -150,7 +148,7 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
         );
 
         browser.reload();
-        yield BrowserTestUtils.browserLoaded(browser);
+        await BrowserTestUtils.browserLoaded(browser);
 
         let expectedStrings = [ABOUT_BLANK];
         if (aNewTabPref == URI_SRI) {
@@ -161,8 +159,8 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
             SCRIPT_WITH_SRI_BLOCKED
           ];
         }
-        yield ContentTask.spawn(browser, expectedStrings,
-          function * (expectedStrings) {
+        await ContentTask.spawn(browser, expectedStrings,
+          async function(expectedStrings) {
             for (let expectedString of expectedStrings) {
               ok(content.document.documentElement.innerHTML.includes(expectedString),
                  "Expect the following value in the result\n" + expectedString +
@@ -171,12 +169,12 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
           }
         );
 
-        yield BrowserTestUtils.withNewTab({
+        await BrowserTestUtils.withNewTab({
             gBrowser,
             url: VALIDATE_FILE,
           },
-          function * (browser2) {
-            yield ContentTask.spawn(browser2, null, function * () {
+          async function(browser2) {
+            await ContentTask.spawn(browser2, null, async function() {
               ok(content.document.documentElement.innerHTML.includes("Done"),
                  "Expect the following value in the result\n" + "Done" +
                  "\nand got " + content.document.documentElement.innerHTML);
@@ -188,7 +186,7 @@ function doTest(aExpectedStrings, reload, aUrl, aNewTabPref) {
   );
 }
 
-function runTests() {
+async function runTests() {
   // run tests from TESTS
   for (let i = 0; i < TESTS.length; i++) {
     let testCase = TESTS[i];
@@ -205,6 +203,6 @@ function runTests() {
       url = testCase.url;
     }
 
-    yield doTest(aExpectedStrings, reload, url, aNewTabPref);
+    await doTest(aExpectedStrings, reload, url, aNewTabPref);
   }
 }

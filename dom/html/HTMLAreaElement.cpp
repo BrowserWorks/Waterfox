@@ -81,9 +81,9 @@ HTMLAreaElement::SetTarget(const nsAString& aValue)
 }
 
 nsresult
-HTMLAreaElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+HTMLAreaElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
-  return PreHandleEventForAnchors(aVisitor);
+  return GetEventTargetParentForAnchors(aVisitor);
 }
 
 nsresult
@@ -107,7 +107,7 @@ HTMLAreaElement::GetLinkTarget(nsAString& aTarget)
   }
 }
 
-nsDOMTokenList* 
+nsDOMTokenList*
 HTMLAreaElement::RelList()
 {
   if (!mRelList) {
@@ -142,53 +142,26 @@ HTMLAreaElement::UnbindFromTree(bool aDeep, bool aNullParent)
   // be under a different xml:base, so forget the cached state now.
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  // Note, we need to use OwnerDoc() here, since GetComposedDoc() might
-  // return null.
-  nsIDocument* doc = OwnerDoc();
-  if (doc) {
-    doc->UnregisterPendingLinkUpdate(this);
-  }
-
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }
 
 nsresult
-HTMLAreaElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                         nsIAtom* aPrefix, const nsAString& aValue,
-                         bool aNotify)
+HTMLAreaElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                              const nsAttrValue* aValue,
+                              const nsAttrValue* aOldValue, bool aNotify)
 {
-  nsresult rv =
-    nsGenericHTMLElement::SetAttr(aNameSpaceID, aName, aPrefix, aValue, aNotify);
-
-  // The ordering of the parent class's SetAttr call and Link::ResetLinkState
-  // is important here!  The attribute is not set until SetAttr returns, and
-  // we will need the updated attribute value because notifying the document
-  // that content states have changed will call IntrinsicState, which will try
-  // to get updated information about the visitedness from Link.
-  if (aName == nsGkAtoms::href && aNameSpaceID == kNameSpaceID_None) {
-    Link::ResetLinkState(!!aNotify, true);
+  if (aNamespaceID == kNameSpaceID_None) {
+    // This must happen after the attribute is set. We will need the updated
+    // attribute value because notifying the document that content states have
+    // changed will call IntrinsicState, which will try to get updated
+    // information about the visitedness from Link.
+    if (aName == nsGkAtoms::href) {
+      Link::ResetLinkState(aNotify, !!aValue);
+    }
   }
 
-  return rv;
-}
-
-nsresult
-HTMLAreaElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                           bool aNotify)
-{
-  nsresult rv = nsGenericHTMLElement::UnsetAttr(aNameSpaceID, aAttribute,
-                                                aNotify);
-
-  // The ordering of the parent class's UnsetAttr call and Link::ResetLinkState
-  // is important here!  The attribute is not unset until UnsetAttr returns, and
-  // we will need the updated attribute value because notifying the document
-  // that content states have changed will call IntrinsicState, which will try
-  // to get updated information about the visitedness from Link.
-  if (aAttribute == nsGkAtoms::href && kNameSpaceID_None == aNameSpaceID) {
-    Link::ResetLinkState(!!aNotify, false);
-  }
-
-  return rv;
+  return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName, aValue,
+                                            aOldValue, aNotify);
 }
 
 #define IMPL_URI_PART(_part)                                 \
@@ -221,10 +194,11 @@ HTMLAreaElement::ToString(nsAString& aSource)
   return GetHref(aSource);
 }
 
-NS_IMETHODIMP    
+NS_IMETHODIMP
 HTMLAreaElement::GetPing(nsAString& aValue)
 {
-  return GetURIListAttr(nsGkAtoms::ping, aValue);
+  GetAttr(kNameSpaceID_None, nsGkAtoms::ping, aValue);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -246,10 +220,10 @@ HTMLAreaElement::IntrinsicState() const
 }
 
 size_t
-HTMLAreaElement::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+HTMLAreaElement::SizeOfExcludingThis(mozilla::SizeOfState& aState) const
 {
-  return nsGenericHTMLElement::SizeOfExcludingThis(aMallocSizeOf) +
-         Link::SizeOfExcludingThis(aMallocSizeOf);
+  return nsGenericHTMLElement::SizeOfExcludingThis(aState) +
+         Link::SizeOfExcludingThis(aState);
 }
 
 JSObject*

@@ -16,9 +16,10 @@
 #include <set>
 #include <string>
 
+#include "webrtc/base/asyncinvoker.h"
+#include "webrtc/base/asyncpacketsocket.h"
 #include "webrtc/p2p/base/port.h"
 #include "webrtc/p2p/client/basicportallocator.h"
-#include "webrtc/base/asyncpacketsocket.h"
 
 namespace rtc {
 class AsyncResolver;
@@ -33,6 +34,14 @@ class TurnEntry;
 
 class TurnPort : public Port {
  public:
+  enum PortState {
+    STATE_CONNECTING,    // Initial state, cannot send any packets.
+    STATE_CONNECTED,     // Socket connected, ready to send stun requests.
+    STATE_READY,         // Received allocate success, can send any packets.
+    STATE_RECEIVEONLY,   // Had REFRESH_REQUEST error, cannot send any packets.
+    STATE_DISCONNECTED,  // TCP connection died, cannot send/receive any
+                         // packets.
+  };
   static TurnPort* Create(rtc::Thread* thread,
                           rtc::PacketSocketFactory* factory,
                           rtc::Network* network,
@@ -51,8 +60,8 @@ class TurnPort : public Port {
                           rtc::PacketSocketFactory* factory,
                           rtc::Network* network,
                           const rtc::IPAddress& ip,
-                          uint16 min_port,
-                          uint16 max_port,
+                          uint16_t min_port,
+                          uint16_t max_port,
                           const std::string& username,  // ice username.
                           const std::string& password,  // ice password.
                           const ProtocolAddress& server_address,
@@ -70,8 +79,19 @@ class TurnPort : public Port {
   // Returns an empty address if the local address has not been assigned.
   rtc::SocketAddress GetLocalAddress() const;
 
-  bool connected() const { return connected_; }
+  bool ready() const { return state_ == STATE_READY; }
+  bool connected() const {
+    return state_ == STATE_READY || state_ == STATE_CONNECTED;
+  }
   const RelayCredentials& credentials() const { return credentials_; }
+
+  virtual ProtocolType GetProtocol() const { return server_address_.proto; }
+
+  virtual TlsCertPolicy GetTlsCertPolicy() const { return tls_cert_policy_; }
+
+  virtual void SetTlsCertPolicy(TlsCertPolicy tls_cert_policy) {
+    tls_cert_policy_ = tls_cert_policy;
+  }
 
   virtual void PrepareAddress();
   virtual Connection* CreateConnection(
@@ -84,19 +104,22 @@ class TurnPort : public Port {
   virtual int GetOption(rtc::Socket::Option opt, int* value);
   virtual int GetError();
 
-  virtual bool HandleIncomingPacket(
-      rtc::AsyncPacketSocket* socket, const char* data, size_t size,
-      const rtc::SocketAddress& remote_addr,
-      const rtc::PacketTime& packet_time) {
-    OnReadPacket(socket, data, size, remote_addr, packet_time);
-    return true;
-  }
+  virtual bool HandleIncomingPacket(rtc::AsyncPacketSocket* socket,
+                                    const char* data, size_t size,
+                                    const rtc::SocketAddress& remote_addr,
+                                    const rtc::PacketTime& packet_time);
   virtual void OnReadPacket(rtc::AsyncPacketSocket* socket,
                             const char* data, size_t size,
                             const rtc::SocketAddress& remote_addr,
                             const rtc::PacketTime& packet_time);
 
+  virtual void OnSentPacket(rtc::AsyncPacketSocket* socket,
+                            const rtc::SentPacket& sent_packet);
   virtual void OnReadyToSend(rtc::AsyncPacketSocket* socket);
+  virtual bool SupportsProtocol(const std::string& protocol) const {
+    // Turn port only connects to UDP candidates.
+    return protocol == UDP_PROTOCOL_NAME;
+  }
 
   void OnSocketConnect(rtc::AsyncPacketSocket* socket);
   void OnSocketClose(rtc::AsyncPacketSocket* socket, int error);
@@ -113,6 +136,9 @@ class TurnPort : public Port {
     return socket_;
   }
 
+  // For testing only.
+  rtc::AsyncInvoker* invoker() { return &invoker_; }
+
   // Signal with resolved server address.
   // Parameters are port, server address and resolved server address.
   // This signal will be sent only if server address is resolved successfully.
@@ -120,9 +146,21 @@ class TurnPort : public Port {
                    const rtc::SocketAddress&,
                    const rtc::SocketAddress&> SignalResolvedServerAddress;
 
-  // This signal is only for testing purpose.
+  // All public methods/signals below are for testing only.
+  sigslot::signal2<TurnPort*, int> SignalTurnRefreshResult;
   sigslot::signal3<TurnPort*, const rtc::SocketAddress&, int>
       SignalCreatePermissionResult;
+  void FlushRequests(int msg_type) { request_manager_.Flush(msg_type); }
+  bool HasRequests() { return !request_manager_.empty(); }
+  void set_credentials(RelayCredentials& credentials) {
+    credentials_ = credentials;
+  }
+  // Finds the turn entry with |address| and sets its channel id.
+  // Returns true if the entry is found.
+  bool SetEntryChannelId(const rtc::SocketAddress& address, int channel_id);
+  // Visible for testing.
+  // Shuts down the turn port, usually because of some fatal errors.
+  void Close();
 
  protected:
   TurnPort(rtc::Thread* thread,
@@ -140,8 +178,8 @@ class TurnPort : public Port {
            rtc::PacketSocketFactory* factory,
            rtc::Network* network,
            const rtc::IPAddress& ip,
-           uint16 min_port,
-           uint16 max_port,
+           uint16_t min_port,
+           uint16_t max_port,
            const std::string& username,
            const std::string& password,
            const ProtocolAddress& server_address,
@@ -151,9 +189,10 @@ class TurnPort : public Port {
 
  private:
   enum {
-    MSG_ERROR = MSG_FIRST_AVAILABLE,
+    MSG_ALLOCATE_ERROR = MSG_FIRST_AVAILABLE,
     MSG_ALLOCATE_MISMATCH,
-    MSG_TRY_ALTERNATE_SERVER
+    MSG_TRY_ALTERNATE_SERVER,
+    MSG_REFRESH_ERROR
   };
 
   typedef std::list<TurnEntry*> EntryList;
@@ -161,6 +200,7 @@ class TurnPort : public Port {
   typedef std::set<rtc::SocketAddress> AttemptedServerSet;
 
   virtual void OnMessage(rtc::Message* pmsg);
+  virtual void HandleConnectionDestroyed(Connection* conn);
 
   bool CreateTurnClientSocket();
 
@@ -172,6 +212,8 @@ class TurnPort : public Port {
     }
   }
 
+  void OnRefreshError();
+  void HandleRefreshError();
   bool SetAlternateServer(const rtc::SocketAddress& address);
   void ResolveTurnAddress(const rtc::SocketAddress& address);
   void OnResolveResult(rtc::AsyncResolverInterface* resolver);
@@ -200,15 +242,26 @@ class TurnPort : public Port {
            const rtc::PacketOptions& options);
   void UpdateHash();
   bool UpdateNonce(StunMessage* response);
+  void ResetNonce();
 
   bool HasPermission(const rtc::IPAddress& ipaddr) const;
   TurnEntry* FindEntry(const rtc::SocketAddress& address) const;
   TurnEntry* FindEntry(int channel_id) const;
-  TurnEntry* CreateEntry(const rtc::SocketAddress& address);
-  void DestroyEntry(const rtc::SocketAddress& address);
-  void OnConnectionDestroyed(Connection* conn);
+  bool EntryExists(TurnEntry* e);
+  void CreateOrRefreshEntry(const rtc::SocketAddress& address);
+  void DestroyEntry(TurnEntry* entry);
+  // Destroys the entry only if |timestamp| matches the destruction timestamp
+  // in |entry|.
+  void DestroyEntryIfNotCancelled(TurnEntry* entry, int64_t timestamp);
+  void ScheduleEntryDestruction(TurnEntry* entry);
+  void CancelEntryDestruction(TurnEntry* entry);
+
+  // Marks the connection with remote address |address| failed and
+  // pruned (a.k.a. write-timed-out). Returns true if a connection is found.
+  bool FailAndPruneConnection(const rtc::SocketAddress& address);
 
   ProtocolAddress server_address_;
+  TlsCertPolicy tls_cert_policy_ = TlsCertPolicy::TLS_CERT_POLICY_SECURE;
   RelayCredentials credentials_;
   AttemptedServerSet attempted_server_addresses_;
 
@@ -225,13 +278,15 @@ class TurnPort : public Port {
   int next_channel_number_;
   EntryList entries_;
 
-  bool connected_;
+  PortState state_;
   // By default the value will be set to 0. This value will be used in
   // calculating the candidate priority.
   int server_priority_;
 
   // The number of retries made due to allocate mismatch error.
   size_t allocate_mismatch_retries_;
+
+  rtc::AsyncInvoker invoker_;
 
   friend class TurnEntry;
   friend class TurnAllocateRequest;

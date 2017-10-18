@@ -17,22 +17,30 @@ treechildren::-moz-tree-image(noicon) {
 }
 
 treechildren::-moz-tree-image(noicon) {
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
 }
 treechildren::-moz-tree-image(container, noicon) {
   list-style-image: url("chrome://browser/skin/aboutSessionRestore-window-icon.png");
 }
 
 treechildren::-moz-tree-image(checked) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
+  list-style-image: url("chrome://global/skin/in-content/check.svg");
+  -moz-context-properties: fill, stroke;
+  fill: #2292d0;
+  stroke: none;
 }
 treechildren::-moz-tree-image(checked, selected) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check-inverted");
+  fill: white;
+  stroke: #0095dd;
 }
 
 treechildren::-moz-tree-image(partial) {
-  list-style-image: url("chrome://global/skin/in-content/check-partial.svg#check-partial");
+  list-style-image: url("chrome://global/skin/in-content/check-partial.svg");
+  -moz-context-properties: fill, stroke;
+  fill: #2292d0;
+  stroke: none;
 }
 treechildren::-moz-tree-image(partial, selected) {
-  list-style-image: url("chrome://global/skin/in-content/check-partial.svg#check-partial-inverted");
+  fill: white;
+  stroke: #0095dd;
 }

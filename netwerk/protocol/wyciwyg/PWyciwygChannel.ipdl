@@ -26,6 +26,7 @@ parent:
   async Init(URIParams     uri,
              PrincipalInfo requestingPrincipalInfo,
              PrincipalInfo triggeringPrincipalInfo,
+             PrincipalInfo principalToInheritInfo,
              uint32_t      securityFlags,
              uint32_t      contentPolicyType);
   async AsyncOpen(URIParams             originalURI,
@@ -35,7 +36,7 @@ parent:
   async AppData(SerializedLoadContext loadContext, PBrowserOrId browser);
 
   // methods corresponding to those of nsIWyciwygChannel
-  async WriteToCacheEntry(nsString data);
+  async WriteToCacheEntry(nsDependentSubstring data);
   async CloseCacheEntry(nsresult reason);
   async SetCharsetAndSource(int32_t source, nsCString charset);
   async SetSecurityInfo(nsCString securityInfo);

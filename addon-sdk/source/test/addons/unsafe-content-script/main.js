@@ -29,7 +29,7 @@ exports.testMembranelessMode = function(assert, done) {
     uri: url
   });
 
-  element.addEventListener("DOMContentLoaded", onDOMReady, false);
+  element.addEventListener("DOMContentLoaded", onDOMReady);
 
   function onDOMReady() {
     let worker = Worker({
@@ -51,7 +51,7 @@ exports.testMembranelessMode = function(assert, done) {
 
     worker.port.on("done", () => {
       // cleanup
-      element.parentNode.removeChild(element);
+      element.remove();
       worker.destroy();
       loader.unload();
 

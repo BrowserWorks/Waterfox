@@ -9,7 +9,6 @@ this.EXPORTED_SYMBOLS = ["Screenshot"];
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
@@ -27,7 +26,7 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
   return new ConsoleAPI(consoleOptions);
 });
 
-let Screenshot = {
+this.Screenshot = {
   _extensionPath: null,
   _path: null,
   _imagePrefix: "",
@@ -57,7 +56,6 @@ let Screenshot = {
         break;
       default:
         throw new Error("Unsupported operating system");
-        break;
     }
   },
 
@@ -73,7 +71,7 @@ let Screenshot = {
     });
   },
 
-  ///// helpers /////
+  // helpers
 
   _screenshotWindows(filename) {
     return new Promise((resolve, reject) => {
@@ -92,7 +90,7 @@ let Screenshot = {
     });
   },
 
-  _screenshotOSX: Task.async(function*(filename) {
+  async _screenshotOSX(filename) {
     let screencapture = (windowID = null) => {
       return new Promise((resolve, reject) => {
         // Get the screencapture executable
@@ -136,10 +134,10 @@ let Screenshot = {
       });
     };
 
-    yield promiseWindowID();
-    let windowID = yield readWindowID();
-    yield screencapture(windowID);
-  }),
+    await promiseWindowID();
+    let windowID = await readWindowID();
+    await screencapture(windowID);
+  },
 
   _screenshotLinux(filename) {
     return new Promise((resolve, reject) => {

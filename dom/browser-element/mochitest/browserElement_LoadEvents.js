@@ -38,7 +38,7 @@ function runTest() {
     seenLocationChange = true;
     ok(seenLoadStart, 'Location change after load start.');
     ok(!seenLoadEnd, 'Location change before load end.');
-    ok(e.detail, browserElementTestHelpers.emptyPage1, "event's reported location");
+    ok(e.detail.url, browserElementTestHelpers.emptyPage1, "event's reported location");
   }
 
   function loadend(e) {
@@ -91,7 +91,7 @@ function runTest2() {
     seenLocationChange = true;
     ok(seenLoadStart, 'Location change after load start.');
     ok(!seenLoadEnd, 'Location change before load end.');
-    ok(e.detail, browserElementTestHelpers.emptyPage2, "event's reported location");
+    ok(e.detail.url, browserElementTestHelpers.emptyPage2, "event's reported location");
   });
 
   iframe.addEventListener('mozbrowserloadend', function(e) {
@@ -100,7 +100,7 @@ function runTest2() {
     seenLoadEnd = true;
     ok(seenLoadStart, 'Load end after load start.');
     ok(seenLocationChange, 'Load end after location change.');
-    is(e.detail.backgroundColor, 'transparent', 'Expected background color reported')
+    is(e.detail.backgroundColor, 'rgba(0, 0, 0, 0)', 'Expected background color reported')
   });
 
   iframe.src = browserElementTestHelpers.emptyPage2;

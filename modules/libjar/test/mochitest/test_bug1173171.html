@@ -14,7 +14,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1173171
 <iframe id="testFrame"></iframe>
 
 <pre id="test">
-<script class="testbody" type="application/javascript;version=1.7">
+<script class="testbody" type="application/javascript">
 
 /** Test for Bug 1173171 **/
 
@@ -48,10 +48,10 @@ let xhr = function (method, url, responseType) {
 let jarURL = "jar:http://mochi.test:8888/tests/modules/libjar/test/mochitest/bug403331.zip!/test.html";
 
 // Test behavior when blocking is deactivated and activated.
-add_task(function* () {
+add_task(async function() {
   for (let shouldBlock of [false, true]) {
-    yield pushPref("network.jar.block-remote-files", shouldBlock);
-    let response = yield xhr("GET", jarURL, "document");
+    await pushPref("network.jar.block-remote-files", shouldBlock);
+    let response = await xhr("GET", jarURL, "document");
     ok(shouldBlock === (response === null),
        "Remote jars should be blocked if and only if the 'network.jar.block-remote-files' pref is active.");
   }

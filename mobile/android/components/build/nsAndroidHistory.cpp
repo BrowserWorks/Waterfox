@@ -7,7 +7,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIURI.h"
 #include "nsIObserverService.h"
-#include "GeneratedJNIWrappers.h"
+#include "FennecJNIWrappers.h"
 #include "Link.h"
 
 #include "mozilla/Services.h"
@@ -25,7 +25,7 @@
 using namespace mozilla;
 using mozilla::dom::Link;
 
-NS_IMPL_ISUPPORTS(nsAndroidHistory, IHistory, nsIRunnable, nsITimerCallback)
+NS_IMPL_ISUPPORTS(nsAndroidHistory, IHistory, nsIRunnable, nsITimerCallback, nsINamed)
 
 nsAndroidHistory* nsAndroidHistory::sHistory = nullptr;
 
@@ -76,8 +76,8 @@ nsAndroidHistory::RegisterVisitedCallback(nsIURI *aURI, Link *aContent)
   }
   list->AppendElement(aContent);
 
-  if (jni::IsAvailable()) {
-    java::GeckoAppShell::CheckURIVisited(uriString);
+  if (jni::IsFennec()) {
+    java::GlobalHistory::CheckURIVisited(uriString);
   }
 
   return NS_OK;
@@ -194,16 +194,23 @@ nsAndroidHistory::Notify(nsITimer *timer)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsAndroidHistory::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("nsAndroidHistory");
+  return NS_OK;
+}
+
 void
 nsAndroidHistory::SaveVisitURI(nsIURI* aURI) {
   // Add the URI to our cache so we can take a fast path later
   AppendToRecentlyVisitedURIs(aURI);
 
-  if (jni::IsAvailable()) {
+  if (jni::IsFennec()) {
     // Save this URI in our history
     nsAutoCString spec;
     (void)aURI->GetSpec(spec);
-    java::GeckoAppShell::MarkURIVisited(NS_ConvertUTF8toUTF16(spec));
+    java::GlobalHistory::MarkURIVisited(NS_ConvertUTF8toUTF16(spec));
   }
 
   // Finally, notify that we've been visited.
@@ -283,7 +290,7 @@ nsAndroidHistory::SetURITitle(nsIURI *aURI, const nsAString& aTitle)
     return NS_OK;
   }
 
-  if (jni::IsAvailable()) {
+  if (jni::IsFennec()) {
     nsAutoCString uri;
     nsresult rv = aURI->GetSpec(uri);
     if (NS_FAILED(rv)) return rv;
@@ -292,7 +299,7 @@ nsAndroidHistory::SetURITitle(nsIURI *aURI, const nsAString& aTitle)
       SaveVisitURI(aURI);
     }
     NS_ConvertUTF8toUTF16 uriString(uri);
-    java::GeckoAppShell::SetURITitle(uriString, aTitle);
+    java::GlobalHistory::SetURITitle(uriString, aTitle);
   }
   return NS_OK;
 }

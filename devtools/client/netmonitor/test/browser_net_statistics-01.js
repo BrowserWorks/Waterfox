@@ -4,72 +4,49 @@
 "use strict";
 
 /**
- * Tests if the statistics view is populated correctly.
+ * Tests if the statistics panel displays correctly.
  */
 
 add_task(function* () {
-  let [,, monitor] = yield initNetMonitor(STATISTICS_URL);
+  let { monitor } = yield initNetMonitor(STATISTICS_URL);
   info("Starting test... ");
 
   let panel = monitor.panelWin;
-  let { $, $all, EVENTS, NetMonitorView } = panel;
-  is(NetMonitorView.currentFrontendMode, "network-inspector-view",
-    "The initial frontend mode is correct.");
+  let { document, store, windowRequire } = panel;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
-  is($("#primed-cache-chart").childNodes.length, 0,
-    "There should be no primed cache chart created yet.");
-  is($("#empty-cache-chart").childNodes.length, 0,
-    "There should be no empty cache chart created yet.");
+  ok(document.querySelector(".monitor-panel"),
+    "The current main panel is correct.");
 
-  let onChartDisplayed = Promise.all([
-    waitFor(panel, EVENTS.PRIMED_CACHE_CHART_DISPLAYED),
-    waitFor(panel, EVENTS.EMPTY_CACHE_CHART_DISPLAYED)
-  ]);
-  let onPlaceholderDisplayed = waitFor(panel, EVENTS.PLACEHOLDER_CHARTS_DISPLAYED);
+  info("Displaying statistics panel");
+  store.dispatch(Actions.openStatistics(true));
 
-  info("Displaying statistics view");
-  NetMonitorView.toggleFrontendMode();
-  is(NetMonitorView.currentFrontendMode, "network-statistics-view",
-    "The current frontend mode is correct.");
+  ok(document.querySelector(".statistics-panel"),
+    "The current main panel is correct.");
 
   info("Waiting for placeholder to display");
-  yield onPlaceholderDisplayed;
-  is($("#primed-cache-chart").childNodes.length, 1,
-    "There should be a placeholder primed cache chart created now.");
-  is($("#empty-cache-chart").childNodes.length, 1,
-    "There should be a placeholder empty cache chart created now.");
 
-  is($all(".pie-chart-container[placeholder=true]").length, 2,
-    "Two placeholder pie chart appear to be rendered correctly.");
-  is($all(".table-chart-container[placeholder=true]").length, 2,
-    "Two placeholder table chart appear to be rendered correctly.");
+  yield waitUntil(
+    () => document.querySelectorAll(".pie-chart-container[placeholder=true]")
+                  .length == 2);
+  ok(true, "Two placeholder pie charts appear to be rendered correctly.");
+
+  yield waitUntil(
+    () => document.querySelectorAll(".table-chart-container[placeholder=true]")
+                  .length == 2);
+  ok(true, "Two placeholde table charts appear to be rendered correctly.");
 
   info("Waiting for chart to display");
-  yield onChartDisplayed;
-  is($("#primed-cache-chart").childNodes.length, 1,
-    "There should be a real primed cache chart created now.");
-  is($("#empty-cache-chart").childNodes.length, 1,
-    "There should be a real empty cache chart created now.");
 
-  yield until(() => $all(".pie-chart-container:not([placeholder=true])").length == 2);
+  yield waitUntil(
+    () => document.querySelectorAll(".pie-chart-container:not([placeholder=true])")
+                  .length == 2);
   ok(true, "Two real pie charts appear to be rendered correctly.");
 
-  yield until(() => $all(".table-chart-container:not([placeholder=true])").length == 2);
+  yield waitUntil(
+    () => document.querySelectorAll(".table-chart-container:not([placeholder=true])")
+                  .length == 2);
   ok(true, "Two real table charts appear to be rendered correctly.");
 
   yield teardown(monitor);
 });
-
-function waitForTick() {
-  let deferred = promise.defer();
-  executeSoon(deferred.resolve);
-  return deferred.promise;
-}
-
-function until(predicate) {
-  return Task.spawn(function* () {
-    while (!predicate()) {
-      yield waitForTick();
-    }
-  });
-}

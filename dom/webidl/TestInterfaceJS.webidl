@@ -24,7 +24,7 @@ interface TestInterfaceJS : EventTarget {
   any pingPongObjectOrString((object or DOMString) objOrString);
   TestInterfaceJSDictionary pingPongDictionary(optional TestInterfaceJSDictionary dict);
   long pingPongDictionaryOrLong(optional (TestInterfaceJSUnionableDictionary or long) dictOrLong);
-  DOMString pingPongMap(MozMap<any> map);
+  DOMString pingPongMap(record<DOMString, any> map);
   long objectSequenceLength(sequence<object> seq);
   long anySequenceLength(sequence<any> seq);
 
@@ -70,7 +70,7 @@ interface TestInterfaceJS : EventTarget {
 
   // Tests for promise-rejection behavior
   Promise<void> testPromiseWithThrowingChromePromiseInit();
-  Promise<void> testPromiseWithThrowingContentPromiseInit(PromiseInit func);
+  Promise<void> testPromiseWithThrowingContentPromiseInit(Function func);
   Promise<void> testPromiseWithDOMExceptionThrowingPromiseInit();
   Promise<void> testPromiseWithThrowingChromeThenFunction();
   Promise<void> testPromiseWithThrowingContentThenFunction(AnyCallback func);

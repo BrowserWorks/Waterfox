@@ -5,10 +5,10 @@
 #ifndef mozilla_dom_DocumentRendererParent
 #define mozilla_dom_DocumentRendererParent
 
+#include "gfxContext.h"
 #include "mozilla/ipc/PDocumentRendererParent.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
-#include "gfxContext.h"
 
 class nsICanvasRenderingContextInternal;
 
@@ -28,8 +28,8 @@ public:
 
     virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-    virtual bool Recv__delete__(const nsIntSize& renderedSize,
-                                const nsCString& data) override;
+    virtual mozilla::ipc::IPCResult Recv__delete__(const nsIntSize& renderedSize,
+                                                   const nsCString& data) override;
 
 private:
     nsCOMPtr<nsICanvasRenderingContextInternal> mCanvas;

@@ -17,7 +17,7 @@ NS_NewSelectsAreaFrame(nsIPresShell* aShell, nsStyleContext* aContext, nsFrameSt
 
   // We need NS_BLOCK_FLOAT_MGR to ensure that the options inside the select
   // aren't expanded by right floats outside the select.
-  it->SetFlags(aFlags | NS_BLOCK_FLOAT_MGR);
+  it->AddStateBits(aFlags | NS_BLOCK_FLOAT_MGR);
 
   return it;
 }
@@ -86,7 +86,7 @@ static nsListControlFrame* GetEnclosingListFrame(nsIFrame* aSelectsAreaFrame)
 {
   nsIFrame* frame = aSelectsAreaFrame->GetParent();
   while (frame) {
-    if (frame->GetType() == nsGkAtoms::listControlFrame)
+    if (frame->IsListControlFrame())
       return static_cast<nsListControlFrame*>(frame);
     frame = frame->GetParent();
   }
@@ -115,7 +115,7 @@ public:
            listFrame->GetOffsetToCrossDoc(ReferenceFrame());
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override {
+                     gfxContext* aCtx) override {
     nsListControlFrame* listFrame = GetEnclosingListFrame(Frame());
     // listFrame must be non-null or we wouldn't get called.
     listFrame->PaintFocus(aCtx->GetDrawTarget(),
@@ -136,7 +136,7 @@ nsSelectsAreaFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   nsDisplayListCollection set;
   BuildDisplayListInternal(aBuilder, aDirtyRect, set);
-  
+
   nsOptionEventGrabberWrapper wrapper;
   wrapper.WrapLists(aBuilder, this, set, aLists);
 }
@@ -159,9 +159,9 @@ nsSelectsAreaFrame::BuildDisplayListInternal(nsDisplayListBuilder*   aBuilder,
 }
 
 void
-nsSelectsAreaFrame::Reflow(nsPresContext*           aPresContext, 
+nsSelectsAreaFrame::Reflow(nsPresContext*           aPresContext,
                            ReflowOutput&     aDesiredSize,
-                           const ReflowInput& aReflowInput, 
+                           const ReflowInput& aReflowInput,
                            nsReflowStatus&          aStatus)
 {
   nsListControlFrame* list = GetEnclosingListFrame(this);

@@ -8,8 +8,38 @@
 #define CUBEB_INTERNAL_0eb56756_4e20_4404_a76d_42bf88cd15a5
 
 #include "cubeb/cubeb.h"
+#include "cubeb_log.h"
+#include "cubeb_assert.h"
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __clang__
+#ifndef CLANG_ANALYZER_NORETURN
+#if __has_feature(attribute_analyzer_noreturn)
+#define CLANG_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
+#else
+#define CLANG_ANALYZER_NORETURN
+#endif // ifndef CLANG_ANALYZER_NORETURN
+#endif // __has_feature(attribute_analyzer_noreturn)
+#else // __clang__
+#define CLANG_ANALYZER_NORETURN
+#endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#if defined(__cplusplus)
+}
+#endif
+
+typedef struct {
+  char const * name;
+  unsigned int const channels;
+  cubeb_channel_layout const layout;
+} cubeb_layout_map;
+
+extern cubeb_layout_map const CUBEB_CHANNEL_LAYOUT_MAPS[CUBEB_LAYOUT_MAX];
 
 struct cubeb_ops {
   int (* init)(cubeb ** context, char const * context_name);
@@ -19,8 +49,11 @@ struct cubeb_ops {
                           cubeb_stream_params params,
                           uint32_t * latency_ms);
   int (* get_preferred_sample_rate)(cubeb * context, uint32_t * rate);
+  int (* get_preferred_channel_layout)(cubeb * context, cubeb_channel_layout * layout);
   int (* enumerate_devices)(cubeb * context, cubeb_device_type type,
-                            cubeb_device_collection ** collection);
+                            cubeb_device_collection * collection);
+  int (* device_collection_destroy)(cubeb * context,
+                                    cubeb_device_collection * collection);
   void (* destroy)(cubeb * context);
   int (* stream_init)(cubeb * context,
                       cubeb_stream ** stream,
@@ -36,6 +69,7 @@ struct cubeb_ops {
   void (* stream_destroy)(cubeb_stream * stream);
   int (* stream_start)(cubeb_stream * stream);
   int (* stream_stop)(cubeb_stream * stream);
+  int (* stream_reset_default_device)(cubeb_stream * stream);
   int (* stream_get_position)(cubeb_stream * stream, uint64_t * position);
   int (* stream_get_latency)(cubeb_stream * stream, uint32_t * latency);
   int (* stream_set_volume)(cubeb_stream * stream, float volumes);
@@ -51,13 +85,5 @@ struct cubeb_ops {
                                              cubeb_device_collection_changed_callback callback,
                                              void * user_ptr);
 };
-
-#define XASSERT(expr) do {                                              \
-    if (!(expr)) {                                                      \
-      fprintf(stderr, "%s:%d - fatal error: %s\n", __FILE__, __LINE__, #expr); \
-      *((volatile int *) NULL) = 0;                                     \
-      abort();                                                          \
-    }                                                                   \
-  } while (0)
 
 #endif /* CUBEB_INTERNAL_0eb56756_4e20_4404_a76d_42bf88cd15a5 */

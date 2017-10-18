@@ -17,26 +17,26 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'xpcom_components'
 
 EXPORTS += [
+    'nsCategoryCache.h',
     'nsCategoryManagerUtils.h',
+    'nsComponentManagerUtils.h',
+    'nsServiceManagerUtils.h',
 ]
 
 EXPORTS.mozilla += [
+    'GenericFactory.h',
     'Module.h',
     'ModuleLoader.h',
     'ModuleUtils.h',
 ]
 
-# nsCategoryManager.cpp and nsComponentManager.cpp cannot be built in
-# unified mode because they use thea PL_ARENA_CONST_ALIGN_MASK macro
-# with plarena.h.
-SOURCES += [
+UNIFIED_SOURCES += [
+    'GenericFactory.cpp',
+    'ManifestParser.cpp',
+    'nsCategoryCache.cpp',
     'nsCategoryManager.cpp',
     'nsComponentManager.cpp',
-]
-
-UNIFIED_SOURCES += [
-    'ManifestParser.cpp',
-    'nsNativeModuleLoader.cpp',
+    'nsComponentManagerUtils.cpp',
 ]
 
 FINAL_LIBRARY = 'xul'

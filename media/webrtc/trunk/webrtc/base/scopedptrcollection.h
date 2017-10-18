@@ -14,10 +14,11 @@
 #ifndef WEBRTC_BASE_SCOPEDPTRCOLLECTION_H_
 #define WEBRTC_BASE_SCOPEDPTRCOLLECTION_H_
 
+#include <stddef.h>
+
 #include <algorithm>
 #include <vector>
 
-#include "webrtc/base/basictypes.h"
 #include "webrtc/base/constructormagic.h"
 
 namespace rtc {
@@ -52,7 +53,7 @@ class ScopedPtrCollection {
  private:
   VectorT collection_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScopedPtrCollection);
+  RTC_DISALLOW_COPY_AND_ASSIGN(ScopedPtrCollection);
 };
 
 }  // namespace rtc

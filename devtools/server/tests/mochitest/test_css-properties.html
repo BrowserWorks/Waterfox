@@ -8,25 +8,31 @@ Bug 1265798 - Replace inIDOMUtils.cssPropertyIsShorthand
   <title>Test CSS Properties Actor</title>
   <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
-  <script type="application/javascript;version=1.8" src="inspector-helpers.js"></script>
-  <script type="application/javascript;version=1.8">
-window.onload = function() {
+  <script type="application/javascript" src="inspector-helpers.js"></script>
+  <script type="application/javascript">
+"use strict";
+
+window.onload = function () {
   const { initCssProperties, getCssProperties } =
     require("devtools/shared/fronts/css-properties");
 
-  function promiseAttachUrl (url) {
+  function promiseAttachUrl(url) {
     return new Promise((resolve, reject) => {
-      attachURL(url, function(err, client, tab, doc) {
+      attachURL(url, function (err, client, tab, doc) {
         if (err) {
           return reject(err);
         }
-        resolve({client, tab, doc});
+        return resolve({client, tab, doc});
       });
-    })
+    });
+  }
+
+  function toSortedString(array) {
+    return JSON.stringify(array.sort());
   }
 
   const runCssPropertiesTests = Task.async(function* (url, useActor) {
-    info("Opening two tabs.");
+    info(`Opening two tabs ${useActor ? "with" : "without"} CssPropertiesActor support.`);
 
     let attachmentA = yield promiseAttachUrl(url);
     let attachmentB = yield promiseAttachUrl(url);
@@ -36,14 +42,17 @@ window.onload = function() {
         hasActor: () => useActor,
         client: attachmentA.client,
         form: attachmentA.tab
-      }
+      },
+      // Fake the window for css-properties.js's getClientBrowserVersion to work
+      win: window
     };
     const toolboxMockB = {
       target: {
         hasActor: () => useActor,
         client: attachmentB.client,
         form: attachmentB.tab
-      }
+      },
+      win: window
     };
 
     yield initCssProperties(toolboxMockA);
@@ -56,7 +65,7 @@ window.onload = function() {
     is(cssProperties, cssPropertiesA,
        "Multiple calls with the same toolbox returns the same object.");
     isnot(cssProperties, cssPropertiesB,
-       "Multiple calls with the different toolboxes return different "+
+       "Multiple calls with the different toolboxes return different " +
        " objects.");
 
     ok(cssProperties.isKnown("border"),
@@ -73,6 +82,25 @@ window.onload = function() {
       "A CSS variable unicode properly evaluates.");
     ok(!cssProperties.isKnown("--foo bar"),
       "A CSS variable with spaces fails");
+
+    is(toSortedString(cssProperties.getValues("margin")),
+       toSortedString(["auto", "calc", "inherit", "initial", "unset"]),
+       "Can get values for the CSS margin.");
+    is(cssProperties.getValues("foobar").length, 0,
+      "Unknown values return an empty array.");
+
+    const bgColorValues = cssProperties.getValues("background-color");
+    ok(bgColorValues.includes("blanchedalmond"),
+      "A property with color values includes blanchedalmond.");
+    ok(bgColorValues.includes("papayawhip"),
+      "A property with color values includes papayawhip.");
+    ok(bgColorValues.includes("rgb"),
+      "A property with color values includes non-colors.");
+
+    ok(cssProperties.isValidOnClient("margin", "0px", window.document),
+      "Margin and 0px are valid CSS values");
+    ok(!cssProperties.isValidOnClient("margin", "foo", window.document),
+      "Margin and foo are not valid CSS values");
   });
 
   addAsyncTest(function* setup() {
@@ -85,7 +113,7 @@ window.onload = function() {
 
   SimpleTest.waitForExplicitFinish();
   runNextTest();
-}
+};
   </script>
 </head>
 <body>

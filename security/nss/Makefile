@@ -27,7 +27,8 @@ include $(CORE_DEPTH)/coreconf/config.mk
 #######################################################################
 
 ifdef NSS_DISABLE_GTESTS
-DIRS := $(filter-out external_tests,$(DIRS))
+DIRS := $(filter-out gtests,$(DIRS))
+DIRS := $(filter-out cpputil,$(DIRS))
 endif
 
 #######################################################################
@@ -46,7 +47,7 @@ include $(CORE_DEPTH)/coreconf/rules.mk
 # (7) Execute "local" rules. (OPTIONAL).                              #
 #######################################################################
 
-nss_build_all: build_nspr all
+nss_build_all: build_nspr all latest
 
 nss_clean_all: clobber_nspr clobber
 
@@ -85,15 +86,16 @@ endif
 ifdef NS_USE_GCC
 NSPR_CONFIGURE_ENV = CC=gcc CXX=g++
 endif
-
-ifdef SANITIZER_CFLAGS
-ifdef BUILD_OPT
-NSPR_CONFIGURE_OPTS += --enable-debug-symbols
+ifdef CC
+NSPR_CONFIGURE_ENV = CC=$(CC)
 endif
-NSPR_CONFIGURE_ENV += CFLAGS='$(SANITIZER_CFLAGS)' \
-                      CXXFLAGS='$(SANITIZER_CFLAGS)' \
-                      LDFLAGS='$(SANITIZER_LDFLAGS)'
+ifdef CCC
+NSPR_CONFIGURE_ENV += CXX=$(CCC)
 endif
+# Remove -arch definitions. NSPR can't handle that.
+NSPR_CONFIGURE_ENV := $(filter-out -arch x86_64,$(NSPR_CONFIGURE_ENV))
+NSPR_CONFIGURE_ENV := $(filter-out -arch i386,$(NSPR_CONFIGURE_ENV))
+NSPR_CONFIGURE_ENV := $(filter-out -arch ppc,$(NSPR_CONFIGURE_ENV))
 
 #
 # Some pwd commands on Windows (for example, the pwd
@@ -116,6 +118,7 @@ else
 NSPR_PREFIX = $$(topsrcdir)/../dist/$(OBJDIR_NAME)
 endif
 
+ifndef NSS_GYP_PREFIX
 $(NSPR_CONFIG_STATUS): $(NSPR_CONFIGURE)
 	mkdir -p $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)
 	cd $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME) ; \
@@ -123,9 +126,20 @@ $(NSPR_CONFIG_STATUS): $(NSPR_CONFIGURE)
 	$(NSPR_CONFIGURE_OPTS) \
 	--with-dist-prefix='$(NSPR_PREFIX)' \
 	--with-dist-includedir='$(NSPR_PREFIX)/include'
+else
+$(NSPR_CONFIG_STATUS): $(NSPR_CONFIGURE)
+	mkdir -p $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)
+	cd $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME) ; \
+	$(NSPR_CONFIGURE_ENV) sh ../configure \
+	$(NSPR_CONFIGURE_OPTS) \
+	--prefix='$(NSS_GYP_PREFIX)'
+endif
 
 build_nspr: $(NSPR_CONFIG_STATUS)
 	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)
+
+install_nspr: build_nspr
+	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME) install
 
 clobber_nspr: $(NSPR_CONFIG_STATUS)
 	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME) clobber
@@ -140,4 +154,7 @@ nss_RelEng_bld: import all
 
 package:
 	$(MAKE) -C pkg publish
+
+latest:
+	echo $(OBJDIR_NAME) > $(CORE_DEPTH)/../dist/latest
 

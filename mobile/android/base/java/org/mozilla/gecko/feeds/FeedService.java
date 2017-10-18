@@ -14,10 +14,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.net.ConnectivityManagerCompat;
 import android.util.Log;
 
-import com.keepsafe.switchboard.SwitchBoard;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.feeds.action.FeedAction;
@@ -27,7 +26,7 @@ import org.mozilla.gecko.feeds.action.SetupAlarmsAction;
 import org.mozilla.gecko.feeds.action.SubscribeToFeedAction;
 import org.mozilla.gecko.feeds.action.WithdrawSubscriptionsAction;
 import org.mozilla.gecko.preferences.GeckoPreferences;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 
 /**
  * Background service for subscribing to and checking website feeds to notify the user about updates.
@@ -64,7 +63,7 @@ public class FeedService extends IntentService {
     public void onCreate() {
         super.onCreate();
 
-        browserDB = GeckoProfile.get(this).getDB();
+        browserDB = BrowserDB.from(this);
     }
 
     @Override

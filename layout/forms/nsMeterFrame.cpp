@@ -39,7 +39,7 @@ NS_NewMeterFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsMeterFrame)
 
 nsMeterFrame::nsMeterFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mBarDiv(nullptr)
 {
 }
@@ -59,12 +59,6 @@ nsMeterFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
-nsIAtom*
-nsMeterFrame::GetType() const
-{
-  return nsGkAtoms::meterFrame;
-}
-
 nsresult
 nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
@@ -75,14 +69,9 @@ nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   mBarDiv = doc->CreateHTMLElement(nsGkAtoms::div);
 
   // Associate ::-moz-meter-bar pseudo-element to the anonymous child.
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::mozMeterBar;
-  RefPtr<nsStyleContext> newStyleContext = PresContext()->StyleSet()->
-    ResolvePseudoElementStyle(mContent->AsElement(), pseudoType,
-                              StyleContext(), mBarDiv->AsElement());
+  mBarDiv->SetPseudoElementType(CSSPseudoElementType::mozMeterBar);
 
-  if (!aElements.AppendElement(ContentInfo(mBarDiv, newStyleContext))) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  aElements.AppendElement(mBarDiv);
 
   return NS_OK;
 }
@@ -133,7 +122,7 @@ nsMeterFrame::Reflow(nsPresContext*           aPresContext,
   ConsiderChildOverflow(aDesiredSize.mOverflowAreas, barFrame);
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -221,14 +210,14 @@ nsMeterFrame::AttributeChanged(int32_t  aNameSpaceID,
 }
 
 LogicalSize
-nsMeterFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                              WritingMode aWM,
-                              const LogicalSize& aCBSize,
-                              nscoord aAvailableISize,
-                              const LogicalSize& aMargin,
-                              const LogicalSize& aBorder,
-                              const LogicalSize& aPadding,
-                              bool aShrinkWrap)
+nsMeterFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                              WritingMode         aWM,
+                              const LogicalSize&  aCBSize,
+                              nscoord             aAvailableISize,
+                              const LogicalSize&  aMargin,
+                              const LogicalSize&  aBorder,
+                              const LogicalSize&  aPadding,
+                              ComputeSizeFlags    aFlags)
 {
   RefPtr<nsFontMetrics> fontMet =
     nsLayoutUtils::GetFontMetricsForFrame(this, 1.0f);
@@ -247,7 +236,7 @@ nsMeterFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
 }
 
 nscoord
-nsMeterFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsMeterFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   RefPtr<nsFontMetrics> fontMet =
     nsLayoutUtils::GetFontMetricsForFrame(this, 1.0f);
@@ -263,7 +252,7 @@ nsMeterFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsMeterFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsMeterFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   return GetMinISize(aRenderingContext);
 }

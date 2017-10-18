@@ -339,6 +339,8 @@ js::jit::AtomicOperations::storeSafeWhenRacy(T* addr, T val)
 inline void
 js::jit::AtomicOperations::memcpySafeWhenRacy(void* dest, const void* src, size_t nbytes)
 {
+    MOZ_ASSERT(!((char*)dest <= (char*)src && (char*)src < (char*)dest+nbytes));
+    MOZ_ASSERT(!((char*)src <= (char*)dest && (char*)dest < (char*)src+nbytes));
     ::memcpy(dest, src, nbytes); // FIXME (1208663): not yet safe
 }
 
@@ -360,7 +362,6 @@ js::jit::RegionLock::acquire(void* addr)
     uint32_t one = 1;
     while (!__atomic_compare_exchange(&spinlock, &zero, &one, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
         zero = 0;
-        continue;
     }
 # endif
 }
@@ -566,6 +567,8 @@ js::jit::AtomicOperations::storeSafeWhenRacy(T* addr, T val)
 inline void
 js::jit::AtomicOperations::memcpySafeWhenRacy(void* dest, const void* src, size_t nbytes)
 {
+    MOZ_ASSERT(!((char*)dest <= (char*)src && (char*)src < (char*)dest+nbytes));
+    MOZ_ASSERT(!((char*)src <= (char*)dest && (char*)dest < (char*)src+nbytes));
     ::memcpy(dest, src, nbytes); // FIXME (1208663): not yet safe
 }
 

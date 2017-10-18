@@ -13,7 +13,7 @@ Migrated from Robocop: https://bugzilla.mozilla.org/show_bug.cgi?id=1184186
   <link rel="stylesheet" type="text/css" href="chrome://global/skin"/>
   <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
   <script type="application/javascript" src="head.js"></script>
-  <script type="application/javascript;version=1.7">
+  <script type="application/javascript">
 
 "use strict";
 
@@ -57,7 +57,7 @@ function queryElement(contentWindow, data) {
 
 function dispatchUIEvent(input, type) {
   let event = input.ownerDocument.createEvent("UIEvents");
-  event.initUIEvent(type, true, true, input.ownerDocument.defaultView, 0);
+  event.initUIEvent(type, true, true, input.ownerGlobal, 0);
   input.dispatchEvent(event);
 }
 
@@ -92,7 +92,7 @@ add_task(function* test_formdata() {
   // Creates a tab, loads a page with some form fields,
   // modifies their values and closes the tab.
   function createAndRemoveTab() {
-    return Task.spawn(function () {
+    return Task.spawn(function* () {
       // Create a new tab.
       let tab = gBrowserApp.addTab(URL);
       let browser = tab.browser;
@@ -147,7 +147,7 @@ add_task(function* test_formdata2() {
   // Creates a tab, loads a page with some form fields,
   // modifies their values and closes the tab.
   function createAndRemoveTab() {
-    return Task.spawn(function () {
+    return Task.spawn(function* () {
       // Create a new tab.
       let tab = gBrowserApp.addTab(URL);
       let browser = tab.browser;
@@ -207,7 +207,7 @@ add_task(function* test_formdata_navigation() {
   // Creates a tab, loads a page with some form fields, modifies their values,
   // navigates to a different page and back again and closes the tab.
   function createNavigateAndRemoveTab() {
-    return Task.spawn(function () {
+    return Task.spawn(function* () {
       // Create a new tab.
       let tab = gBrowserApp.addTab(URL);
       let browser = tab.browser;
@@ -225,7 +225,11 @@ add_task(function* test_formdata_navigation() {
       // Go back.
       is(browser.canGoBack, true, "can go back");
       browser.goBack();
-      yield promiseTabEvent(browser, "SSTabDataUpdated");
+
+      let titleChange = promiseTabEvent(browser, "DOMTitleChanged");
+      let tabDataUpdate = promiseTabEvent(browser, "SSTabDataUpdated");
+      yield titleChange;
+      yield tabDataUpdate;
       is(browser.currentURI.spec, URL, "navigated back to form data page");
 
       // Make sure form data is still present.

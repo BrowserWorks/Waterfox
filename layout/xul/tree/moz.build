@@ -45,8 +45,10 @@ LOCAL_INCLUDES += [
     '../../base',
     '../../forms',
     '../../generic',
+    '../../painting',
     '../../style',
     '/dom/base',
+    '/dom/xul',
 ]
 
 if CONFIG['GNU_CXX']:

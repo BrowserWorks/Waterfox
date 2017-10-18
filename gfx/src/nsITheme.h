@@ -15,9 +15,9 @@
 #include "Units.h"
 
 struct nsRect;
+class gfxContext;
 class nsAttrValue;
 class nsPresContext;
-class nsRenderingContext;
 class nsDeviceContext;
 class nsIFrame;
 class nsIAtom;
@@ -55,7 +55,7 @@ public:
    * @param aRect the rectangle defining the area occupied by the widget
    * @param aDirtyRect the rectangle that needs to be drawn
    */
-  NS_IMETHOD DrawWidgetBackground(nsRenderingContext* aContext,
+  NS_IMETHOD DrawWidgetBackground(gfxContext* aContext,
                                   nsIFrame* aFrame,
                                   uint8_t aWidgetType,
                                   const nsRect& aRect,
@@ -128,6 +128,11 @@ public:
   virtual Transparency GetWidgetTransparency(nsIFrame* aFrame, uint8_t aWidgetType)
   { return eUnknownTransparency; }
 
+  /**
+   * Sets |*aShouldRepaint| to indicate whether an attribute or content state
+   * change should trigger a repaint.  Call with null |aAttribute| (and
+   * null |aOldValue|) for content state changes.
+   */
   NS_IMETHOD WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
                                 nsIAtom* aAttribute, bool* aShouldRepaint,
                                 const nsAttrValue* aOldValue)=0;

@@ -11,6 +11,7 @@
 #include "gfxASurface.h"                // for gfxASurface, etc
 #include "gfxPlatform.h"                // for gfxPlatform, gfxImageFormat
 #include "gfxUtils.h"                   // for gfxUtils
+#include "mozilla/CheckedInt.h"
 #include "mozilla/mozalloc.h"           // for operator delete[], etc
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
@@ -20,6 +21,7 @@
 #include "nsISupportsImpl.h"            // for Image::Release, etc
 #include "nsThreadUtils.h"              // for NS_IsMainThread
 #include "mozilla/gfx/Point.h"          // for IntSize
+#include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "gfx2DGlue.h"
 #include "YCbCrUtils.h"                 // for YCbCr conversions
 
@@ -109,16 +111,21 @@ BasicPlanarYCbCrImage::CopyData(const Data& aData)
     return false;
   }
 
-  gfxImageFormat iFormat = gfx::SurfaceFormatToImageFormat(format);
-  mStride = gfxASurface::FormatStrideForWidth(iFormat, size.width);
-  mDecodedBuffer = AllocateBuffer(size.height * mStride);
+  mStride = gfx::StrideForFormatAndWidth(format, size.width);
+  mozilla::CheckedInt32 requiredBytes =
+    mozilla::CheckedInt32(size.height) * mozilla::CheckedInt32(mStride);
+  if (!requiredBytes.isValid()) {
+    // invalid size
+    return false;
+  }
+  mDecodedBuffer = AllocateBuffer(requiredBytes.value());
   if (!mDecodedBuffer) {
     // out of memory
     return false;
   }
 
   gfx::ConvertYCbCrToRGB(aData, format, size, mDecodedBuffer.get(), mStride);
-  SetOffscreenFormat(iFormat);
+  SetOffscreenFormat(gfx::SurfaceFormatToImageFormat(format));
   mSize = size;
 
   return true;
@@ -146,10 +153,10 @@ BasicPlanarYCbCrImage::GetAsSourceSurface()
     // We create the target out of mDecodedBuffer, and get a snapshot from it.
     // The draw target is destroyed on scope exit and the surface owns the data.
     RefPtr<gfx::DrawTarget> drawTarget
-      = gfxPlatform::GetPlatform()->CreateDrawTargetForData(mDecodedBuffer.get(),
-                                                            mSize,
-                                                            mStride,
-                                                            gfx::ImageFormatToSurfaceFormat(format));
+      = gfxPlatform::CreateDrawTargetForData(mDecodedBuffer.get(),
+                                             mSize,
+                                             mStride,
+                                             gfx::ImageFormatToSurfaceFormat(format));
     if (!drawTarget) {
       return nullptr;
     }

@@ -25,8 +25,8 @@ window.tests = {
 }
 
 function examiner() {
-  SpecialPowers.addObserver(this, "csp-on-violate-policy", false);
-  SpecialPowers.addObserver(this, "specialpowers-http-notify-request", false);
+  SpecialPowers.addObserver(this, "csp-on-violate-policy");
+  SpecialPowers.addObserver(this, "specialpowers-http-notify-request");
 }
 examiner.prototype  = {
   observe: function(subject, topic, data) {
@@ -121,9 +121,9 @@ function checkInlineWithNone() {
 }
 
 document.getElementById('testframe1').src = 'file_bug909029_star.html';
-document.getElementById('testframe1').addEventListener('load', checkInlineWithStar, false);
+document.getElementById('testframe1').addEventListener('load', checkInlineWithStar);
 document.getElementById('testframe2').src = 'file_bug909029_none.html';
-document.getElementById('testframe2').addEventListener('load', checkInlineWithNone, false);
+document.getElementById('testframe2').addEventListener('load', checkInlineWithNone);
     </script>
   </body>
 </html>

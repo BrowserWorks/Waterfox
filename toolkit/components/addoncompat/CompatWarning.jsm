@@ -15,8 +15,7 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/Console.jsm");
 
-function section(number, url)
-{
+function section(number, url) {
   const baseURL = "https://developer.mozilla.org/en-US/Firefox/Multiprocess_Firefox/Limitations_of_chrome_scripts";
   return { number, url: baseURL + url };
 }
@@ -27,7 +26,7 @@ var CompatWarning = {
   // might only want to warn about it if the listener actually
   // fires. However, we want the warning to show a stack for the
   // registration site.
-  delayedWarning: function(msg, addon, warning) {
+  delayedWarning(msg, addon, warning) {
     function isShimLayer(filename) {
       return filename.indexOf("CompatWarning.jsm") != -1 ||
         filename.indexOf("RemoteAddonsParent.jsm") != -1 ||
@@ -55,7 +54,7 @@ var CompatWarning = {
       if (!Preferences.get("dom.ipc.shims.enabledWarnings", false))
         return;
 
-      let error = Cc['@mozilla.org/scripterror;1'].createInstance(Ci.nsIScriptError);
+      let error = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError);
       if (!error || !Services.console) {
         // Too late during shutdown to use the nsIConsole
         return;
@@ -66,13 +65,13 @@ var CompatWarning = {
         message += `\nMore info at: ${warning.url}`;
 
       error.init(
-                 /*message*/ message,
-                 /*sourceName*/ stack ? stack.filename : "",
-                 /*sourceLine*/ stack ? stack.sourceLine : "",
-                 /*lineNumber*/ stack ? stack.lineNumber : 0,
-                 /*columnNumber*/ 0,
-                 /*flags*/ Ci.nsIScriptError.warningFlag,
-                 /*category*/ "chrome javascript");
+                 /* message*/ message,
+                 /* sourceName*/ stack ? stack.filename : "",
+                 /* sourceLine*/ stack ? stack.sourceLine : "",
+                 /* lineNumber*/ stack ? stack.lineNumber : 0,
+                 /* columnNumber*/ 0,
+                 /* flags*/ Ci.nsIScriptError.warningFlag,
+                 /* category*/ "chrome javascript");
       Services.console.logMessage(error);
 
       if (Preferences.get("dom.ipc.shims.dumpWarnings", false)) {
@@ -86,7 +85,7 @@ var CompatWarning = {
     };
   },
 
-  warn: function(msg, addon, warning) {
+  warn(msg, addon, warning) {
     let delayed = this.delayedWarning(msg, addon, warning);
     delayed();
   },

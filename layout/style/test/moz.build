@@ -19,6 +19,8 @@
 #CPP_UNIT_TESTS = TestCSSPropertyLookup.cpp
 #LIBS += ../nsCSSKeywords.$(OBJ_SUFFIX) ../nsCSSProps.$(OBJ_SUFFIX) $(XPCOM_LIBS)
 
+DIRS += ['gtest']
+
 HAS_MISC_RULE = True
 
 HostSimplePrograms([
@@ -44,6 +46,8 @@ TEST_HARNESS_FILES.testing.mochitest.tests.layout.style.test['css-visited'] += [
     '/layout/reftests/css-visited/border-2b.html',
     '/layout/reftests/css-visited/border-collapse-1-ref.html',
     '/layout/reftests/css-visited/border-collapse-1.html',
+    '/layout/reftests/css-visited/caret-color-on-visited-1-ref.html',
+    '/layout/reftests/css-visited/caret-color-on-visited-1.html',
     '/layout/reftests/css-visited/color-choice-1-ref.html',
     '/layout/reftests/css-visited/color-choice-1.html',
     '/layout/reftests/css-visited/color-on-bullets-1-ref.html',
@@ -76,6 +80,8 @@ TEST_HARNESS_FILES.testing.mochitest.tests.layout.style.test['css-visited'] += [
     '/layout/reftests/css-visited/mathml-links.html',
     '/layout/reftests/css-visited/outline-1-ref.html',
     '/layout/reftests/css-visited/outline-1.html',
+    '/layout/reftests/css-visited/placeholder-1-ref.html',
+    '/layout/reftests/css-visited/placeholder-1.html',
     '/layout/reftests/css-visited/selector-adj-sibling-1-ref.html',
     '/layout/reftests/css-visited/selector-adj-sibling-1.html',
     '/layout/reftests/css-visited/selector-adj-sibling-2-ref.html',
@@ -99,18 +105,34 @@ TEST_HARNESS_FILES.testing.mochitest.tests.layout.style.test['css-visited'] += [
     '/layout/reftests/css-visited/subject-of-selector-descendant-1.html',
     '/layout/reftests/css-visited/subject-of-selector-descendant-2-ref.xhtml',
     '/layout/reftests/css-visited/subject-of-selector-descendant-2.xhtml',
+    '/layout/reftests/css-visited/transition-on-visited-ref.html',
+    '/layout/reftests/css-visited/transition-on-visited.html',
+    '/layout/reftests/css-visited/visited-inherit-1-ref.html',
+    '/layout/reftests/css-visited/visited-inherit-1.html',
     '/layout/reftests/css-visited/visited-page.html',
     '/layout/reftests/css-visited/white-to-transparent-1-ref.html',
     '/layout/reftests/css-visited/white-to-transparent-1.html',
     '/layout/reftests/css-visited/width-1-ref.html',
     '/layout/reftests/css-visited/width-on-link-1.html',
     '/layout/reftests/css-visited/width-on-visited-1.html',
+    '/layout/reftests/fonts/Ahem.ttf',
     '/layout/reftests/svg/as-image/lime100x100.svg',
     '/layout/reftests/svg/as-image/svg-image-visited-1-helper.svg',
     '/layout/reftests/svg/as-image/svg-image-visited-2-helper.svg',
     '/layout/reftests/svg/pseudo-classes-02-ref.svg',
     '/layout/reftests/svg/pseudo-classes-02.svg',
 ]
+
+if CONFIG['MOZ_STYLO']:
+    TEST_HARNESS_FILES.testing.mochitest.tests.layout.style.test += [
+        'stylo-failures.md',
+    ]
+    TEST_HARNESS_FILES.testing.mochitest.chrome.layout.style.test += [
+        'stylo-failures.md',
+    ]
+    # TEST_HARNESS_FILES.testing.mochitest.browser.layout.style.test += [
+    #     'stylo-failures.md',
+    # ]
 
 DEFINES['MOZILLA_INTERNAL_API'] = True
 if CONFIG['MOZ_ENABLE_MASK_AS_SHORTHAND']:

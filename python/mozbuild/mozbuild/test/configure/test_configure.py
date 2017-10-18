@@ -41,8 +41,9 @@ class TestConfigure(unittest.TestCase):
 
         sandbox.run(mozpath.join(test_data_path, configure))
 
-        if '--help' not in options:
-            self.assertEquals('', out.getvalue())
+        if '--help' in options:
+            return out.getvalue(), config
+        self.assertEquals('', out.getvalue())
         return config
 
     def moz_configure(self, source):
@@ -68,11 +69,7 @@ class TestConfigure(unittest.TestCase):
         }, config)
 
     def test_help(self):
-        config = {}
-        out = StringIO()
-        sandbox = ConfigureSandbox(config, {}, ['configure', '--help'],
-                                   out, out)
-        sandbox.run(mozpath.join(test_data_path, 'moz.configure'))
+        help, config = self.get_config(['--help'], prog='configure')
 
         self.assertEquals({}, config)
         self.maxDiff = None
@@ -96,7 +93,7 @@ class TestConfigure(unittest.TestCase):
             '\n'
             'Environment variables:\n'
             '  CC                        C Compiler\n',
-            out.getvalue()
+            help
         )
 
     def test_unknown(self):
@@ -242,7 +239,7 @@ class TestConfigure(unittest.TestCase):
     def test_imports(self):
         config = {}
         out = StringIO()
-        sandbox = ConfigureSandbox(config, {}, [], out, out)
+        sandbox = ConfigureSandbox(config, {}, ['configure'], out, out)
 
         with self.assertRaises(ImportError):
             exec_(textwrap.dedent('''
@@ -342,6 +339,24 @@ class TestConfigure(unittest.TestCase):
         self.assertEquals(sandbox.keys(), ['__builtins__', 'foo'])
         self.assertEquals(sandbox['__builtins__'], ConfigureSandbox.BUILTINS)
 
+        exec_(textwrap.dedent('''
+            @template
+            @imports('sys')
+            def foo():
+                @depends(when=True)
+                def bar():
+                    return sys
+                return bar
+            bar = foo()'''),
+            sandbox
+        )
+
+        with self.assertRaises(NameError) as e:
+            sandbox._depends[sandbox['bar']].result()
+
+        self.assertEquals(e.exception.message,
+                          "global name 'sys' is not defined")
+
     def test_apply_imports(self):
         imports = []
 
@@ -353,7 +368,7 @@ class TestConfigure(unittest.TestCase):
 
         config = {}
         out = StringIO()
-        sandbox = CountApplyImportsSandbox(config, {}, [], out, out)
+        sandbox = CountApplyImportsSandbox(config, {}, ['configure'], out, out)
 
         exec_(textwrap.dedent('''
             @template
@@ -369,13 +384,8 @@ class TestConfigure(unittest.TestCase):
 
     def test_os_path(self):
         config = self.get_config(['--with-imports=%s' % __file__])
-        self.assertIn('IS_FILE', config)
-        self.assertEquals(config['IS_FILE'], True)
-
-        config = self.get_config(['--with-imports=%s.no-exist' % __file__])
-        self.assertIn('IS_FILE', config)
-        self.assertEquals(config['IS_FILE'], False)
-
+        self.assertIn('HAS_ABSPATH', config)
+        self.assertEquals(config['HAS_ABSPATH'], True)
         self.assertIn('HAS_GETATIME', config)
         self.assertEquals(config['HAS_GETATIME'], True)
         self.assertIn('HAS_GETATIME2', config)
@@ -396,7 +406,7 @@ class TestConfigure(unittest.TestCase):
     def test_decorators(self):
         config = {}
         out = StringIO()
-        sandbox = ConfigureSandbox(config, {}, [], out, out)
+        sandbox = ConfigureSandbox(config, {}, ['configure'], out, out)
 
         sandbox.include_file(mozpath.join(test_data_path, 'decorators.configure'))
 
@@ -408,7 +418,7 @@ class TestConfigure(unittest.TestCase):
         def get_config(*args):
             return self.get_config(*args, configure='set_config.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config(['--set-foo'])
@@ -436,11 +446,28 @@ class TestConfigure(unittest.TestCase):
             # set_config('FOO'...)
             get_config(['--set-foo', '--set-name=FOO'])
 
+    def test_set_config_when(self):
+        with self.moz_configure('''
+            option('--with-qux', help='qux')
+            set_config('FOO', 'foo', when=True)
+            set_config('BAR', 'bar', when=False)
+            set_config('QUX', 'qux', when='--with-qux')
+        '''):
+            config = self.get_config()
+            self.assertEquals(config, {
+                'FOO': 'foo',
+            })
+            config = self.get_config(['--with-qux'])
+            self.assertEquals(config, {
+                'FOO': 'foo',
+                'QUX': 'qux',
+            })
+
     def test_set_define(self):
         def get_config(*args):
             return self.get_config(*args, configure='set_define.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {'DEFINES': {}})
 
         config = get_config(['--set-foo'])
@@ -468,12 +495,29 @@ class TestConfigure(unittest.TestCase):
             # set_define('FOO'...)
             get_config(['--set-foo', '--set-name=FOO'])
 
+    def test_set_define_when(self):
+        with self.moz_configure('''
+            option('--with-qux', help='qux')
+            set_define('FOO', 'foo', when=True)
+            set_define('BAR', 'bar', when=False)
+            set_define('QUX', 'qux', when='--with-qux')
+        '''):
+            config = self.get_config()
+            self.assertEquals(config['DEFINES'], {
+                'FOO': 'foo',
+            })
+            config = self.get_config(['--with-qux'])
+            self.assertEquals(config['DEFINES'], {
+                'FOO': 'foo',
+                'QUX': 'qux',
+            })
+
     def test_imply_option_simple(self):
         def get_config(*args):
             return self.get_config(
                 *args, configure='imply_option/simple.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config([])
@@ -496,7 +540,7 @@ class TestConfigure(unittest.TestCase):
             return self.get_config(
                 *args, configure='imply_option/negative.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config([])
@@ -531,7 +575,7 @@ class TestConfigure(unittest.TestCase):
             return self.get_config(
                 *args, configure='imply_option/values.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config([])
@@ -558,7 +602,7 @@ class TestConfigure(unittest.TestCase):
             return self.get_config(
                 *args, configure='imply_option/infer.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config([])
@@ -585,7 +629,7 @@ class TestConfigure(unittest.TestCase):
             return self.get_config(
                 *args, configure='imply_option/imm.configure')
 
-        config = get_config(['--help'])
+        help, config = get_config(['--help'])
         self.assertEquals(config, {})
 
         config = get_config([])
@@ -633,6 +677,23 @@ class TestConfigure(unittest.TestCase):
 
         self.assertEquals(e.exception.message,
                           "Unexpected type: 'int'")
+
+    def test_imply_option_when(self):
+        with self.moz_configure('''
+            option('--with-foo', help='foo')
+            imply_option('--with-qux', True, when='--with-foo')
+            option('--with-qux', help='qux')
+            set_config('QUX', depends('--with-qux')(lambda x: x))
+        '''):
+            config = self.get_config()
+            self.assertEquals(config, {
+                'QUX': NegativeOptionValue(),
+            })
+
+            config = self.get_config(['--with-foo'])
+            self.assertEquals(config, {
+                'QUX': PositiveOptionValue(),
+            })
 
     def test_option_failures(self):
         with self.assertRaises(ConfigureError) as e:
@@ -704,6 +765,132 @@ class TestConfigure(unittest.TestCase):
             'Option `--with-foo` already defined'
         )
 
+    def test_option_when(self):
+        with self.moz_configure('''
+            option('--with-foo', help='foo', when=True)
+            option('--with-bar', help='bar', when=False)
+            option('--with-qux', env="QUX", help='qux', when='--with-foo')
+
+            set_config('FOO', depends('--with-foo', when=True)(lambda x: x))
+            set_config('BAR', depends('--with-bar', when=False)(lambda x: x))
+            set_config('QUX', depends('--with-qux', when='--with-foo')(lambda x: x))
+        '''):
+            config = self.get_config()
+            self.assertEquals(config, {
+                'FOO': NegativeOptionValue(),
+            })
+
+            config = self.get_config(['--with-foo'])
+            self.assertEquals(config, {
+                'FOO': PositiveOptionValue(),
+                'QUX': NegativeOptionValue(),
+            })
+
+            config = self.get_config(['--with-foo', '--with-qux'])
+            self.assertEquals(config, {
+                'FOO': PositiveOptionValue(),
+                'QUX': PositiveOptionValue(),
+            })
+
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config(['--with-bar'])
+
+            self.assertEquals(
+                e.exception.message,
+                '--with-bar is not available in this configuration'
+            )
+
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config(['--with-qux'])
+
+            self.assertEquals(
+                e.exception.message,
+                '--with-qux is not available in this configuration'
+            )
+
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config(['QUX=1'])
+
+            self.assertEquals(
+                e.exception.message,
+                'QUX is not available in this configuration'
+            )
+
+            config = self.get_config(env={'QUX': '1'})
+            self.assertEquals(config, {
+                'FOO': NegativeOptionValue(),
+            })
+
+            help, config = self.get_config(['--help'])
+            self.assertEquals(help, textwrap.dedent('''\
+                Usage: configure [options]
+
+                Options: [defaults in brackets after descriptions]
+                  --help                    print this message
+                  --with-foo                foo
+
+                Environment variables:
+            '''))
+
+            help, config = self.get_config(['--help', '--with-foo'])
+            self.assertEquals(help, textwrap.dedent('''\
+                Usage: configure [options]
+
+                Options: [defaults in brackets after descriptions]
+                  --help                    print this message
+                  --with-foo                foo
+                  --with-qux                qux
+
+                Environment variables:
+            '''))
+
+        with self.moz_configure('''
+            option('--with-foo', help='foo', when=True)
+            set_config('FOO', depends('--with-foo')(lambda x: x))
+        '''):
+            with self.assertRaises(ConfigureError) as e:
+                self.get_config()
+
+            self.assertEquals(e.exception.message,
+                              '@depends function needs the same `when` as '
+                              'options it depends on')
+
+        with self.moz_configure('''
+            @depends(when=True)
+            def always():
+                return True
+            @depends(when=True)
+            def always2():
+                return True
+            option('--with-foo', help='foo', when=always)
+            set_config('FOO', depends('--with-foo', when=always2)(lambda x: x))
+        '''):
+            with self.assertRaises(ConfigureError) as e:
+                self.get_config()
+
+            self.assertEquals(e.exception.message,
+                              '@depends function needs the same `when` as '
+                              'options it depends on')
+
+        with self.moz_configure('''
+            @depends(when=True)
+            def always():
+                return True
+            @depends(when=True)
+            def always2():
+                return True
+            with only_when(always2):
+                option('--with-foo', help='foo', when=always)
+                # include() triggers resolution of its dependencies, and their
+                # side effects.
+                include(depends('--with-foo', when=always)(lambda x: x))
+                # The sandbox should figure that the `when` here is
+                # appropriate. Bad behavior in CombinedDependsFunction.__eq__
+                # made this fail in the past.
+                set_config('FOO', depends('--with-foo', when=always)(lambda x: x))
+        '''):
+            self.get_config()
+
     def test_include_failures(self):
         with self.assertRaises(ConfigureError) as e:
             with self.moz_configure('include("../foo.configure")'):
@@ -738,6 +925,71 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(e.exception.message, "Unexpected type: 'int'")
+
+    def test_include_when(self):
+        with MockedOpen({
+            os.path.join(test_data_path, 'moz.configure'): textwrap.dedent('''
+                option('--with-foo', help='foo')
+
+                include('always.configure', when=True)
+                include('never.configure', when=False)
+                include('foo.configure', when='--with-foo')
+
+                set_config('FOO', foo)
+                set_config('BAR', bar)
+                set_config('QUX', qux)
+            '''),
+            os.path.join(test_data_path, 'always.configure'): textwrap.dedent('''
+                option('--with-bar', help='bar')
+                @depends('--with-bar')
+                def bar(x):
+                    if x:
+                        return 'bar'
+            '''),
+            os.path.join(test_data_path, 'never.configure'): textwrap.dedent('''
+                option('--with-qux', help='qux')
+                @depends('--with-qux')
+                def qux(x):
+                    if x:
+                        return 'qux'
+            '''),
+            os.path.join(test_data_path, 'foo.configure'): textwrap.dedent('''
+                option('--with-foo-really', help='really foo')
+                @depends('--with-foo-really')
+                def foo(x):
+                    if x:
+                        return 'foo'
+
+                include('foo2.configure', when='--with-foo-really')
+            '''),
+            os.path.join(test_data_path, 'foo2.configure'): textwrap.dedent('''
+                set_config('FOO2', True)
+            '''),
+        }):
+            config = self.get_config()
+            self.assertEquals(config, {})
+
+            config = self.get_config(['--with-foo'])
+            self.assertEquals(config, {})
+
+            config = self.get_config(['--with-bar'])
+            self.assertEquals(config, {
+                'BAR': 'bar',
+            })
+
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config(['--with-qux'])
+
+            self.assertEquals(
+                e.exception.message,
+                '--with-qux is not available in this configuration'
+            )
+
+            config = self.get_config(['--with-foo', '--with-foo-really'])
+            self.assertEquals(config, {
+                'FOO': 'foo',
+                'FOO2': True,
+            })
 
     def test_sandbox_failures(self):
         with self.assertRaises(KeyError) as e:
@@ -816,23 +1068,6 @@ class TestConfigure(unittest.TestCase):
         self.assertEquals(e.exception.message,
                           "Cannot decorate generator functions with @depends")
 
-        with self.assertRaises(ConfigureError) as e:
-            with self.moz_configure('''
-                option('--foo', help='foo')
-                @depends('--foo')
-                def foo(value):
-                    return value
-
-                @depends('--help', foo)
-                def bar(help, foo):
-                    return
-            '''):
-                self.get_config()
-
-        self.assertEquals(e.exception.message,
-                          "`bar` depends on '--help' and `foo`. "
-                          "`foo` must depend on '--help'")
-
         with self.assertRaises(TypeError) as e:
             with self.moz_configure('''
                 depends('--help')(42)
@@ -849,26 +1084,55 @@ class TestConfigure(unittest.TestCase):
                 def foo(value):
                     return value
 
-                include(foo)
-            '''):
-                self.get_config()
-
-        self.assertEquals(e.exception.message,
-                          "Missing @depends for `foo`: '--help'")
-
-        with self.assertRaises(ConfigureError) as e:
-            with self.moz_configure('''
-                option('--foo', help='foo')
-                @depends('--foo')
-                def foo(value):
-                    return value
-
                 foo()
             '''):
                 self.get_config()
 
         self.assertEquals(e.exception.message,
                           "The `foo` function may not be called")
+
+        with self.assertRaises(TypeError) as e:
+            with self.moz_configure('''
+                @depends('--help', foo=42)
+                def foo(_):
+                    return
+            '''):
+                self.get_config()
+
+        self.assertEquals(e.exception.message,
+                          "depends_impl() got an unexpected keyword argument 'foo'")
+
+    def test_depends_when(self):
+        with self.moz_configure('''
+            @depends(when=True)
+            def foo():
+                return 'foo'
+
+            set_config('FOO', foo)
+
+            @depends(when=False)
+            def bar():
+                return 'bar'
+
+            set_config('BAR', bar)
+
+            option('--with-qux', help='qux')
+            @depends(when='--with-qux')
+            def qux():
+                return 'qux'
+
+            set_config('QUX', qux)
+        '''):
+            config = self.get_config()
+            self.assertEquals(config, {
+                'FOO': 'foo',
+            })
+
+            config = self.get_config(['--with-qux'])
+            self.assertEquals(config, {
+                'FOO': 'foo',
+                'QUX': 'qux',
+            })
 
     def test_imports_failures(self):
         with self.assertRaises(ConfigureError) as e:
@@ -933,6 +1197,184 @@ class TestConfigure(unittest.TestCase):
 
         self.assertEquals(e.exception.message,
                           "Invalid argument to @imports: 'os*'")
+
+    def test_only_when(self):
+        moz_configure = '''
+            option('--enable-when', help='when')
+            @depends('--enable-when', '--help')
+            def when(value, _):
+                return bool(value)
+
+            with only_when(when):
+                option('--foo', nargs='*', help='foo')
+                @depends('--foo')
+                def foo(value):
+                    return value
+
+                set_config('FOO', foo)
+                set_define('FOO', foo)
+
+            # It is possible to depend on a function defined in a only_when
+            # block. It then resolves to `None`.
+            set_config('BAR', depends(foo)(lambda x: x))
+            set_define('BAR', depends(foo)(lambda x: x))
+        '''
+
+        with self.moz_configure(moz_configure):
+            config = self.get_config()
+            self.assertEqual(config, {
+                'DEFINES': {},
+            })
+
+            config = self.get_config(['--enable-when'])
+            self.assertEqual(config, {
+                'BAR': NegativeOptionValue(),
+                'FOO': NegativeOptionValue(),
+                'DEFINES': {
+                    'BAR': NegativeOptionValue(),
+                    'FOO': NegativeOptionValue(),
+                },
+            })
+
+            config = self.get_config(['--enable-when', '--foo=bar'])
+            self.assertEqual(config, {
+                'BAR': PositiveOptionValue(['bar']),
+                'FOO': PositiveOptionValue(['bar']),
+                'DEFINES': {
+                    'BAR': PositiveOptionValue(['bar']),
+                    'FOO': PositiveOptionValue(['bar']),
+                },
+            })
+
+            # The --foo option doesn't exist when --enable-when is not given.
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config(['--foo'])
+
+            self.assertEquals(e.exception.message,
+                              '--foo is not available in this configuration')
+
+        # Cannot depend on an option defined in a only_when block, because we
+        # don't know what OptionValue would make sense.
+        with self.moz_configure(moz_configure + '''
+            set_config('QUX', depends('--foo')(lambda x: x))
+        '''):
+            with self.assertRaises(ConfigureError) as e:
+                self.get_config()
+
+            self.assertEquals(e.exception.message,
+                              '@depends function needs the same `when` as '
+                              'options it depends on')
+
+        with self.moz_configure(moz_configure + '''
+            set_config('QUX', depends('--foo', when=when)(lambda x: x))
+        '''):
+            self.get_config(['--enable-when'])
+
+        # Using imply_option for an option defined in a only_when block fails
+        # similarly if the imply_option happens outside the block.
+        with self.moz_configure('''
+            imply_option('--foo', True)
+        ''' + moz_configure):
+            with self.assertRaises(InvalidOptionError) as e:
+                self.get_config()
+
+            self.assertEquals(e.exception.message,
+                              '--foo is not available in this configuration')
+
+        # And similarly doesn't fail when the condition is true.
+        with self.moz_configure('''
+            imply_option('--foo', True)
+        ''' + moz_configure):
+            self.get_config(['--enable-when'])
+
+    def test_depends_binary_ops(self):
+        with self.moz_configure('''
+            option('--foo', nargs=1, help='foo')
+            @depends('--foo')
+            def foo(value):
+                return value or 0
+
+            option('--bar', nargs=1, help='bar')
+            @depends('--bar')
+            def bar(value):
+                return value or ''
+
+            option('--baz', nargs=1, help='baz')
+            @depends('--baz')
+            def baz(value):
+                return value
+
+            set_config('FOOorBAR', foo | bar)
+            set_config('FOOorBARorBAZ', foo | bar | baz)
+            set_config('FOOandBAR', foo & bar)
+            set_config('FOOandBARandBAZ', foo & bar & baz)
+        '''):
+            for foo_opt, foo_value in (
+                ('',  0),
+                ('--foo=foo', PositiveOptionValue(('foo',)))
+            ):
+                for bar_opt, bar_value in (
+                    ('', ''),
+                    ('--bar=bar', PositiveOptionValue(('bar',)))
+                ):
+                    for baz_opt, baz_value in (
+                        ('', NegativeOptionValue()),
+                        ('--baz=baz', PositiveOptionValue(('baz',)))
+                    ):
+                        config = self.get_config(
+                            [x for x in (foo_opt, bar_opt, baz_opt) if x])
+                        self.assertEqual(config, {
+                            'FOOorBAR': foo_value or bar_value,
+                            'FOOorBARorBAZ': foo_value or bar_value or baz_value,
+                            'FOOandBAR': foo_value and bar_value,
+                            'FOOandBARandBAZ': foo_value and bar_value and baz_value,
+                        })
+
+    def test_depends_getattr(self):
+        with self.moz_configure('''
+            @imports(_from='mozbuild.util', _import='ReadOnlyNamespace')
+            def namespace(**kwargs):
+                return ReadOnlyNamespace(**kwargs)
+
+            option('--foo', nargs=1, help='foo')
+            @depends('--foo')
+            def foo(value):
+                return value
+
+            option('--bar', nargs=1, help='bar')
+            @depends('--bar')
+            def bar(value):
+                return value or None
+
+            @depends(foo, bar)
+            def foobar(foo, bar):
+                return namespace(foo=foo, bar=bar)
+
+            set_config('FOO', foobar.foo)
+            set_config('BAR', foobar.bar)
+            set_config('BAZ', foobar.baz)
+        '''):
+            config = self.get_config()
+            self.assertEqual(config, {
+                'FOO': NegativeOptionValue(),
+            })
+
+            config = self.get_config(['--foo=foo'])
+            self.assertEqual(config, {
+                'FOO': PositiveOptionValue(('foo',)),
+            })
+
+            config = self.get_config(['--bar=bar'])
+            self.assertEqual(config, {
+                'FOO': NegativeOptionValue(),
+                'BAR': PositiveOptionValue(('bar',)),
+            })
+
+            config = self.get_config(['--foo=foo', '--bar=bar'])
+            self.assertEqual(config, {
+                'FOO': PositiveOptionValue(('foo',)),
+                'BAR': PositiveOptionValue(('bar',)),
+            })
 
 
 if __name__ == '__main__':

@@ -184,12 +184,9 @@ nsWindowDataSource::OnCloseWindow(nsIXULWindow *window)
 {
     nsresult rv;
     nsCOMPtr<nsIRDFResource> resource;
-    mWindowResources.Get(window, getter_AddRefs(resource));
-    if (!resource) {
+    if (!mWindowResources.Remove(window, getter_AddRefs(resource))) {
         return NS_ERROR_UNEXPECTED;
     }
-
-    mWindowResources.Remove(window);
 
     // make sure we're not shutting down
     if (!mContainer) return NS_OK;
@@ -443,18 +440,14 @@ NS_IMETHODIMP nsWindowDataSource::GetAllResources(nsISimpleEnumerator **_retval)
     return NS_OK;
 }
 
-NS_IMETHODIMP nsWindowDataSource::IsCommandEnabled(nsISupportsArray *aSources, nsIRDFResource *aCommand, nsISupportsArray *aArguments, bool *_retval)
+NS_IMETHODIMP nsWindowDataSource::IsCommandEnabled(nsISupports *aSources, nsIRDFResource *aCommand, nsISupports *aArguments, bool *_retval)
 {
-    if (mInner)
-        return mInner->IsCommandEnabled(aSources, aCommand, aArguments, _retval);
-    return NS_OK;
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-NS_IMETHODIMP nsWindowDataSource::DoCommand(nsISupportsArray *aSources, nsIRDFResource *aCommand, nsISupportsArray *aArguments)
+NS_IMETHODIMP nsWindowDataSource::DoCommand(nsISupports *aSources, nsIRDFResource *aCommand, nsISupports *aArguments)
 {
-    if (mInner)
-        return mInner->DoCommand(aSources, aCommand, aArguments);
-    return NS_OK;
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP nsWindowDataSource::GetAllCmds(nsIRDFResource *aSource, nsISimpleEnumerator **_retval)

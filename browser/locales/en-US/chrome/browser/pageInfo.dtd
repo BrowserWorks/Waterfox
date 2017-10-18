@@ -15,6 +15,7 @@
 
 <!ENTITY  generalTab            "General">
 <!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Title:">
 <!ENTITY  generalURL            "Address:">
 <!ENTITY  generalType           "Type:">
 <!ENTITY  generalMode           "Render Mode:">
@@ -72,6 +73,7 @@
 <!ENTITY  securityView.identity.owner    "Owner:">
 <!ENTITY  securityView.identity.domain   "Website:">
 <!ENTITY  securityView.identity.verifier "Verified by:">
+<!ENTITY  securityView.identity.validity "Expires on:">
 
 <!ENTITY  securityView.privacy.header                   "Privacy &amp; History">
 <!ENTITY  securityView.privacy.history                  "Have I visited this website prior to today?">

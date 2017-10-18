@@ -1,6 +1,8 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
+ * Copyright (C) 2002-2017 Németh László
+ *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +13,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Hunspell, based on MySpell.
- *
- * The Initial Developers of the Original Code are
- * Kevin Hendricks (MySpell) and Németh László (Hunspell).
- * Portions created by the Initial Developers are Copyright (C) 2002-2005
- * the Initial Developers. All Rights Reserved.
+ * Hunspell is based on MySpell which is Copyright (C) 2002 Kevin Hendricks.
  *
  * Contributor(s): David Einstein, Davide Prina, Giuseppe Modugno,
  * Gianluca Turconi, Simon Brouwer, Noll János, Bíró Árpád,
@@ -72,17 +69,15 @@
  */
 
 /* string replacement list class */
-#ifndef _REPLIST_HXX_
-#define _REPLIST_HXX_
-
-#include "hunvisapi.h"
+#ifndef REPLIST_HXX_
+#define REPLIST_HXX_
 
 #include "w_char.hxx"
 
 #include <string>
 #include <vector>
 
-class LIBHUNSPELL_DLL_EXPORTED RepList {
+class RepList {
  private:
   RepList(const RepList&);
   RepList& operator=(const RepList&);
@@ -93,15 +88,13 @@ class LIBHUNSPELL_DLL_EXPORTED RepList {
   int pos;
 
  public:
-  RepList(int n);
+  explicit RepList(int n);
   ~RepList();
 
-  int get_pos();
-  int add(char* pat1, char* pat2);
+  int add(const std::string& pat1, const std::string& pat2);
   replentry* item(int n);
-  int near(const char* word);
-  int match(const char* word, int n);
-  int conv(const char* word, char* dest, size_t destsize);
-  bool conv(const char* word, std::string& dest);
+  int find(const char* word);
+  std::string replace(const char* word, int n, bool atstart);
+  bool conv(const std::string& word, std::string& dest);
 };
 #endif

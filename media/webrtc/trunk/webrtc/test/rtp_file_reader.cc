@@ -17,8 +17,9 @@
 #include <vector>
 
 #include "webrtc/base/checks.h"
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/base/format_macros.h"
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/base/logging.h"
 #include "webrtc/modules/rtp_rtcp/source/rtp_utility.h"
 
 namespace webrtc {
@@ -27,18 +28,10 @@ namespace test {
 static const size_t kFirstLineLength = 40;
 static uint16_t kPacketHeaderSize = 8;
 
-#if 1
-# define DEBUG_LOG(text)
-# define DEBUG_LOG1(text, arg)
-#else
-# define DEBUG_LOG(text) (printf(text "\n"))
-# define DEBUG_LOG1(text, arg) (printf(text "\n", arg))
-#endif
-
 #define TRY(expr)                                      \
   do {                                                 \
     if (!(expr)) {                                     \
-      DEBUG_LOG1("FAIL at " __FILE__ ":%d", __LINE__); \
+      LOG(LS_INFO) << "Failed to read";                \
       return false;                                    \
     }                                                  \
   } while (0)
@@ -69,7 +62,8 @@ bool ReadUint16(uint16_t* out, FILE* file) {
 
 class RtpFileReaderImpl : public RtpFileReader {
  public:
-  virtual bool Init(const std::string& filename) = 0;
+  virtual bool Init(const std::string& filename,
+                    const std::set<uint32_t>& ssrc_filter) = 0;
 };
 
 class InterleavedRtpFileReader : public RtpFileReaderImpl {
@@ -81,7 +75,8 @@ class InterleavedRtpFileReader : public RtpFileReaderImpl {
     }
   }
 
-  virtual bool Init(const std::string& filename) {
+  virtual bool Init(const std::string& filename,
+                    const std::set<uint32_t>& ssrc_filter) {
     file_ = fopen(filename.c_str(), "rb");
     if (file_ == NULL) {
       printf("ERROR: Can't open file: %s\n", filename.c_str());
@@ -127,7 +122,8 @@ class RtpDumpReader : public RtpFileReaderImpl {
     }
   }
 
-  bool Init(const std::string& filename) {
+  bool Init(const std::string& filename,
+            const std::set<uint32_t>& ssrc_filter) override {
     file_ = fopen(filename.c_str(), "rb");
     if (file_ == NULL) {
       printf("ERROR: Can't open file: %s\n", filename.c_str());
@@ -136,21 +132,21 @@ class RtpDumpReader : public RtpFileReaderImpl {
 
     char firstline[kFirstLineLength + 1] = {0};
     if (fgets(firstline, kFirstLineLength, file_) == NULL) {
-      DEBUG_LOG("ERROR: Can't read from file\n");
+      LOG(LS_INFO) << "Can't read from file";
       return false;
     }
     if (strncmp(firstline, "#!rtpplay", 9) == 0) {
       if (strncmp(firstline, "#!rtpplay1.0", 12) != 0) {
-        DEBUG_LOG("ERROR: wrong rtpplay version, must be 1.0\n");
+        LOG(LS_INFO) <<  "Wrong rtpplay version, must be 1.0";
         return false;
       }
     } else if (strncmp(firstline, "#!RTPencode", 11) == 0) {
       if (strncmp(firstline, "#!RTPencode1.0", 14) != 0) {
-        DEBUG_LOG("ERROR: wrong RTPencode version, must be 1.0\n");
+        LOG(LS_INFO) << "Wrong RTPencode version, must be 1.0";
         return false;
       }
     } else {
-      DEBUG_LOG("ERROR: wrong file format of input file\n");
+      LOG(LS_INFO) << "Wrong file format of input file";
       return false;
     }
 
@@ -200,7 +196,7 @@ class RtpDumpReader : public RtpFileReaderImpl {
  private:
   FILE* file_;
 
-  DISALLOW_COPY_AND_ASSIGN(RtpDumpReader);
+  RTC_DISALLOW_COPY_AND_ASSIGN(RtpDumpReader);
 };
 
 enum {
@@ -233,7 +229,7 @@ const uint32_t kPcapBOMNoSwapOrder = 0xa1b2c3d4UL;
   do {                                                 \
     int r = (expr);                                    \
     if (r == kResultFail) {                            \
-      DEBUG_LOG1("FAIL at " __FILE__ ":%d", __LINE__); \
+      LOG(LS_INFO) << "FAIL at " << __FILE__  << ":" << __LINE__; \
       return kResultFail;                              \
     } else if (r == kResultSkip) {                     \
       return kResultSkip;                              \
@@ -265,11 +261,13 @@ class PcapReader : public RtpFileReaderImpl {
     }
   }
 
-  bool Init(const std::string& filename) override {
-    return Initialize(filename) == kResultSuccess;
+  bool Init(const std::string& filename,
+            const std::set<uint32_t>& ssrc_filter) override {
+    return Initialize(filename, ssrc_filter) == kResultSuccess;
   }
 
-  int Initialize(const std::string& filename) {
+  int Initialize(const std::string& filename,
+                 const std::set<uint32_t>& ssrc_filter) {
     file_ = fopen(filename.c_str(), "rb");
     if (file_ == NULL) {
       printf("ERROR: Can't open file: %s\n", filename.c_str());
@@ -286,7 +284,7 @@ class PcapReader : public RtpFileReaderImpl {
     for (;;) {
       TRY_PCAP(fseek(file_, next_packet_pos, SEEK_SET));
       int result = ReadPacket(&next_packet_pos, stream_start_ms,
-                              ++total_packet_count);
+                              ++total_packet_count, ssrc_filter);
       if (result == kResultFail) {
         break;
       } else if (result == kResultSuccess && packets_.size() == 1) {
@@ -308,10 +306,10 @@ class PcapReader : public RtpFileReaderImpl {
     for (SsrcMapIterator mit = packets_by_ssrc_.begin();
         mit != packets_by_ssrc_.end(); ++mit) {
       uint32_t ssrc = mit->first;
-      const std::vector<uint32_t>& packet_numbers = mit->second;
-      uint8_t pt = packets_[packet_numbers[0]].rtp_header.payloadType;
+      const std::vector<uint32_t>& packet_indices = mit->second;
+      uint8_t pt = packets_[packet_indices[0]].rtp_header.payloadType;
       printf("SSRC: %08x, %" PRIuS " packets, pt=%d\n", ssrc,
-             packet_numbers.size(), pt);
+             packet_indices.size(), pt);
     }
 
     // TODO(solenberg): Better validation of identified SSRC streams.
@@ -419,8 +417,10 @@ class PcapReader : public RtpFileReaderImpl {
     return kResultSuccess;
   }
 
-  int ReadPacket(int32_t* next_packet_pos, uint32_t stream_start_ms,
-                 uint32_t number) {
+  int ReadPacket(int32_t* next_packet_pos,
+                 uint32_t stream_start_ms,
+                 uint32_t number,
+                 const std::set<uint32_t>& ssrc_filter) {
     assert(next_packet_pos);
 
     uint32_t ts_sec;    // Timestamp seconds.
@@ -451,14 +451,19 @@ class PcapReader : public RtpFileReaderImpl {
       rtp_parser.ParseRtcp(&marker.rtp_header);
       packets_.push_back(marker);
     } else {
-      if (!rtp_parser.Parse(marker.rtp_header, NULL)) {
-        DEBUG_LOG("Not recognized as RTP/RTCP");
+      if (!rtp_parser.Parse(&marker.rtp_header, nullptr)) {
+        LOG(LS_INFO) << "Not recognized as RTP/RTCP";
         return kResultSkip;
       }
 
       uint32_t ssrc = marker.rtp_header.ssrc;
-      packets_by_ssrc_[ssrc].push_back(marker.packet_number);
-      packets_.push_back(marker);
+      if (ssrc_filter.empty() || ssrc_filter.find(ssrc) != ssrc_filter.end()) {
+        packets_by_ssrc_[ssrc].push_back(
+            static_cast<uint32_t>(packets_.size()));
+        packets_.push_back(marker);
+      } else {
+        return kResultSkip;
+      }
     }
 
     return kResultSuccess;
@@ -475,7 +480,7 @@ class PcapReader : public RtpFileReaderImpl {
     TRY_PCAP(Read(&protocol, true));
     if (protocol == kBsdNullLoopback1 || protocol == kBsdNullLoopback2) {
       int result = ReadXxpIpHeader(marker);
-      DEBUG_LOG("Recognized loopback frame");
+      LOG(LS_INFO) << "Recognized loopback frame";
       if (result != kResultSkip) {
         return result;
       }
@@ -489,7 +494,7 @@ class PcapReader : public RtpFileReaderImpl {
     TRY_PCAP(Read(&type, true));
     if (type == kEthertypeIp) {
       int result = ReadXxpIpHeader(marker);
-      DEBUG_LOG("Recognized ethernet 2 frame");
+      LOG(LS_INFO) << "Recognized ethernet 2 frame";
       if (result != kResultSkip) {
         return result;
       }
@@ -529,13 +534,13 @@ class PcapReader : public RtpFileReaderImpl {
     TRY_PCAP(Read(&marker->dest_ip, true));
 
     if (((version >> 12) & 0x000f) != kIpVersion4) {
-      DEBUG_LOG("IP header is not IPv4");
+      LOG(LS_INFO) << "IP header is not IPv4";
       return kResultSkip;
     }
 
     if (fragment != kFragmentOffsetClear &&
         fragment != kFragmentOffsetDoNotFragment) {
-      DEBUG_LOG("IP fragments cannot be handled");
+      LOG(LS_INFO) << "IP fragments cannot be handled";
       return kResultSkip;
     }
 
@@ -546,7 +551,7 @@ class PcapReader : public RtpFileReaderImpl {
 
     protocol = protocol & 0x00ff;
     if (protocol == kProtocolTcp) {
-      DEBUG_LOG("TCP packets are not handled");
+      LOG(LS_INFO) << "TCP packets are not handled";
       return kResultSkip;
     } else if (protocol == kProtocolUdp) {
       uint16_t length;
@@ -557,7 +562,7 @@ class PcapReader : public RtpFileReaderImpl {
       TRY_PCAP(Read(&checksum, true));
       marker->payload_length = length - kUdpHeaderLength;
     } else {
-      DEBUG_LOG("Unknown transport (expected UDP or TCP)");
+      LOG(LS_INFO) << "Unknown transport (expected UDP or TCP)";
       return kResultSkip;
     }
 
@@ -628,11 +633,12 @@ class PcapReader : public RtpFileReaderImpl {
   std::vector<RtpPacketMarker> packets_;
   PacketIterator next_packet_it_;
 
-  DISALLOW_COPY_AND_ASSIGN(PcapReader);
+  RTC_DISALLOW_COPY_AND_ASSIGN(PcapReader);
 };
 
 RtpFileReader* RtpFileReader::Create(FileFormat format,
-                                     const std::string& filename) {
+                                     const std::string& filename,
+                                     const std::set<uint32_t>& ssrc_filter) {
   RtpFileReaderImpl* reader = NULL;
   switch (format) {
     case kPcap:
@@ -645,11 +651,16 @@ RtpFileReader* RtpFileReader::Create(FileFormat format,
       reader = new InterleavedRtpFileReader();
       break;
   }
-  if (!reader->Init(filename)) {
+  if (!reader->Init(filename, ssrc_filter)) {
     delete reader;
     return NULL;
   }
   return reader;
+}
+
+RtpFileReader* RtpFileReader::Create(FileFormat format,
+                                     const std::string& filename) {
+  return RtpFileReader::Create(format, filename, std::set<uint32_t>());
 }
 
 }  // namespace test

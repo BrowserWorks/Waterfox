@@ -79,7 +79,8 @@ function loadRecordingFromFile(file) {
       let recordingData;
 
       try {
-        let string = NetUtil.readInputStreamToString(inputStream, inputStream.available());
+        let string = NetUtil.readInputStreamToString(inputStream,
+                                                     inputStream.available());
         recordingData = JSON.parse(string);
       } catch (e) {
         reject(new Error("Could not read recording data file."));
@@ -107,7 +108,7 @@ function loadRecordingFromFile(file) {
       // If the recording has no label, set it to be the
       // filename without its extension.
       if (!recordingData.label) {
-        recordingData.label = file.leafName.replace(/\..+$/, "");
+        recordingData.label = file.leafName.replace(/\.[^.]+$/, "");
       }
 
       resolve(recordingData);

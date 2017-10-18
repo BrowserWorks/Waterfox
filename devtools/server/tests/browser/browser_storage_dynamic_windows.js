@@ -9,8 +9,8 @@ Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtool
 
 const beforeReload = {
   cookies: {
-    "test1.example.org": ["c1", "cs2", "c3", "uc1"],
-    "sectest1.example.org": ["uc1", "cs2"]
+    "http://test1.example.org": ["c1", "cs2", "c3", "uc1"],
+    "http://sectest1.example.org": ["uc1", "cs2"]
   },
   localStorage: {
     "http://test1.example.org": ["ls1", "ls2"],
@@ -66,6 +66,7 @@ function markOutMatched(toBeEmptied, data, deleted) {
     info("Testing for " + storageType);
     for (let host in data[storageType]) {
       ok(toBeEmptied[storageType][host], "Host " + host + " found");
+
       if (!deleted) {
         for (let item of data[storageType][host]) {
           let index = toBeEmptied[storageType][host].indexOf(item);
@@ -87,50 +88,6 @@ function markOutMatched(toBeEmptied, data, deleted) {
   }
 }
 
-// function testReload(front) {
-//   info("Testing if reload works properly");
-
-//   let shouldBeEmptyFirst = Cu.cloneInto(beforeReload,  {});
-//   let shouldBeEmptyLast = Cu.cloneInto(beforeReload,  {});
-//   return new Promise(resolve => {
-
-//     let onStoresUpdate = data => {
-//       info("in stores update of testReload");
-//       // This might be second time stores update is happening, in which case,
-//       // data.deleted will be null.
-//       // OR.. This might be the first time on a super slow machine where both
-//       // data.deleted and data.added is missing in the first update.
-//       if (data.deleted) {
-//         markOutMatched(shouldBeEmptyFirst, data.deleted, true);
-//       }
-
-//       if (!Object.keys(shouldBeEmptyFirst).length) {
-//         info("shouldBeEmptyFirst is empty now");
-//       }
-
-//       // stores-update call might not have data.added for the first time on
-//       // slow machines, in which case, data.added will be null
-//       if (data.added) {
-//         markOutMatched(shouldBeEmptyLast, data.added);
-//       }
-
-//       if (!Object.keys(shouldBeEmptyLast).length) {
-//         info("Everything to be received is received.");
-//         endTestReloaded();
-//       }
-//     };
-
-//     let endTestReloaded = () => {
-//       front.off("stores-update", onStoresUpdate);
-//       resolve();
-//     };
-
-//     front.on("stores-update", onStoresUpdate);
-
-//     content.location.reload();
-//   });
-// }
-
 function testAddIframe(front) {
   info("Testing if new iframe addition works properly");
   return new Promise(resolve => {
@@ -142,7 +99,15 @@ function testAddIframe(front) {
         "https://sectest1.example.org": ["iframe-s-ss1"]
       },
       cookies: {
-        "sectest1.example.org": ["sc1"]
+        "https://sectest1.example.org": [
+          getCookieId("cs2", ".example.org", "/"),
+          getCookieId("sc1", "sectest1.example.org",
+                      "/browser/devtools/server/tests/browser/")
+        ],
+        "http://sectest1.example.org": [
+          getCookieId("sc1", "sectest1.example.org",
+                      "/browser/devtools/server/tests/browser/")
+        ]
       },
       indexedDB: {
         // empty because indexed db creation happens after the page load, so at
@@ -150,7 +115,7 @@ function testAddIframe(front) {
         "https://sectest1.example.org": []
       },
       Cache: {
-        "https://sectest1.example.org":[]
+        "https://sectest1.example.org": []
       }
     };
 
@@ -198,8 +163,10 @@ function testAddIframe(front) {
 
     front.on("stores-update", onStoresUpdate);
 
+    // eslint-disable-next-line mozilla/no-cpows-in-tests
     let iframe = content.document.createElement("iframe");
     iframe.src = ALT_DOMAIN_SECURED + "storage-secured-iframe.html";
+    // eslint-disable-next-line mozilla/no-cpows-in-tests
     content.document.querySelector("body").appendChild(iframe);
   });
 }
@@ -264,12 +231,14 @@ function testRemoveIframe(front) {
 
     front.on("stores-update", onStoresUpdate);
 
-    for (let iframe of content.document.querySelectorAll("iframe")) {
-      if (iframe.src.startsWith("http:")) {
-        iframe.remove();
-        break;
+    ContentTask.spawn(gBrowser.selectedBrowser, {}, () => {
+      for (let iframe of content.document.querySelectorAll("iframe")) {
+        if (iframe.src.startsWith("http:")) {
+          iframe.remove();
+          break;
+        }
       }
-    }
+    });
   });
 }
 

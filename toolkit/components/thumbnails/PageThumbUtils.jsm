@@ -13,8 +13,10 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/AppConstants.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm");
 
 this.PageThumbUtils = {
   // The default background color for page thumbnails.
@@ -32,11 +34,11 @@ this.PageThumbUtils = {
    * @param aHeight (optional) height of the canvas to create
    * @return The newly created canvas.
    */
-  createCanvas: function (aWindow, aWidth = 0, aHeight = 0) {
+  createCanvas(aWindow, aWidth = 0, aHeight = 0) {
     let doc = (aWindow || Services.appShell.hiddenDOMWindow).document;
     let canvas = doc.createElementNS(this.HTML_NAMESPACE, "canvas");
     canvas.mozOpaque = true;
-    canvas.mozImageSmoothingEnabled = true;
+    canvas.imageSmoothingEnabled = true;
     let [thumbnailWidth, thumbnailHeight] = this.getThumbnailSize(aWindow);
     canvas.width = aWidth ? aWidth : thumbnailWidth;
     canvas.height = aHeight ? aHeight : thumbnailHeight;
@@ -51,35 +53,23 @@ this.PageThumbUtils = {
    * @param aWindow (optional) aWindow that is used to calculate the scaling size.
    * @return The calculated thumbnail size or a default if unable to calculate.
    */
-  getThumbnailSize: function (aWindow = null) {
+  getThumbnailSize(aWindow = null) {
     if (!this._thumbnailWidth || !this._thumbnailHeight) {
       let screenManager = Cc["@mozilla.org/gfx/screenmanager;1"]
                             .getService(Ci.nsIScreenManager);
       let left = {}, top = {}, screenWidth = {}, screenHeight = {};
       screenManager.primaryScreen.GetRectDisplayPix(left, top, screenWidth, screenHeight);
 
-      /***
-       * The system default scale might be different than
-       * what is reported by the window. For example,
-       * retina displays have 1:1 system scales, but 2:1 window
-       * scale as 1 pixel system wide == 2 device pixels.
+      /**
+       * The primary monitor default scale might be different than
+       * what is reported by the window on mixed-DPI systems.
        * To get the best image quality, query both and take the highest one.
        */
-      let systemScale = screenManager.systemDefaultScale;
-      let windowScale = aWindow ? aWindow.devicePixelRatio : systemScale;
-      let scale = Math.max(systemScale, windowScale);
+      let primaryScale = screenManager.primaryScreen.defaultCSSScaleFactor;
+      let windowScale = aWindow ? aWindow.devicePixelRatio : primaryScale;
+      let scale = Math.max(primaryScale, windowScale);
 
-      /***
-       * On retina displays, we can sometimes go down this path
-       * without a window object. In those cases, force 2x scaling
-       * as the system scale doesn't represent the 2x scaling
-       * on OS X.
-       */
-      if (AppConstants.platform == "macosx" && !aWindow) {
-        scale = 2;
-      }
-
-      /***
+      /** *
        * THESE VALUES ARE DEFINED IN newtab.css and hard coded.
        * If you change these values from the prefs,
        * ALSO CHANGE THEM IN newtab.css
@@ -98,11 +88,11 @@ this.PageThumbUtils = {
     return [this._thumbnailWidth, this._thumbnailHeight];
   },
 
-  /***
+  /** *
    * Given a browser window, return the size of the content
    * minus the scroll bars.
    */
-  getContentSize: function(aWindow) {
+  getContentSize(aWindow) {
     let utils = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                        .getInterface(Ci.nsIDOMWindowUtils);
     // aWindow may be a cpow, add exposed props security values.
@@ -124,7 +114,7 @@ this.PageThumbUtils = {
     return [width, height];
   },
 
-  /***
+  /** *
    * Given a browser window, this creates a snapshot of the content
    * and returns a canvas with the resulting snapshot of the content
    * at the thumbnail size. It has to do this through a two step process:
@@ -145,9 +135,9 @@ this.PageThumbUtils = {
    *   fullScale - request that a non-downscaled image be returned.
    * @return Canvas with a scaled thumbnail of the window.
    */
-  createSnapshotThumbnail: function(aWindow, aDestCanvas, aArgs) {
+  createSnapshotThumbnail(aWindow, aDestCanvas, aArgs) {
     if (Cu.isCrossProcessWrapper(aWindow)) {
-      throw new Error('Do not pass cpows here.');
+      throw new Error("Do not pass cpows here.");
     }
     let fullScale = aArgs ? aArgs.fullScale : false;
     let [contentWidth, contentHeight] = this.getContentSize(aWindow);
@@ -226,9 +216,9 @@ this.PageThumbUtils = {
    * @param aCanvas The target canvas.
    * @return An array containing width, height and scale.
    */
-  determineCropSize: function (aWindow, aCanvas) {
+  determineCropSize(aWindow, aCanvas) {
     if (Cu.isCrossProcessWrapper(aWindow)) {
-      throw new Error('Do not pass cpows here.');
+      throw new Error("Do not pass cpows here.");
     }
     let utils = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                        .getInterface(Ci.nsIDOMWindowUtils);
@@ -262,7 +252,11 @@ this.PageThumbUtils = {
     return [width, height, scale];
   },
 
-  shouldStoreContentThumbnail: function (aDocument, aDocShell) {
+  shouldStoreContentThumbnail(aDocument, aDocShell) {
+    if (BrowserUtils.isToolbarVisible(aDocShell, "findbar")) {
+      return false;
+    }
+
     // FIXME Bug 720575 - Don't capture thumbnails for SVG or XML documents as
     //       that currently regresses Talos SVG tests.
     if (aDocument instanceof Ci.nsIDOMXMLDocument) {
@@ -324,5 +318,24 @@ this.PageThumbUtils = {
       }
     } // httpChannel
     return true;
-  }
+  },
+
+  /**
+   * Given a channel, returns true if it should be considered an "error
+   * response", false otherwise.
+   */
+  isChannelErrorResponse(channel) {
+    // No valid document channel sounds like an error to me!
+    if (!channel)
+      return true;
+    if (!(channel instanceof Ci.nsIHttpChannel))
+      // it might be FTP etc, so assume it's ok.
+      return false;
+    try {
+      return !channel.requestSucceeded;
+    } catch (_) {
+      // not being able to determine success is surely failure!
+      return true;
+    }
+  },
 };

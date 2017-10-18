@@ -30,12 +30,13 @@ public:
 
   // DesktopCapturer interface.
   virtual void Start(Callback* callback) override;
+  virtual void Stop() override;
   virtual void Capture(const DesktopRegion& region) override;
 
 private:
   Callback* callback_;
 
-  DISALLOW_COPY_AND_ASSIGN(AppCapturerNull);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AppCapturerNull);
 };
 
 AppCapturerNull::AppCapturerNull()
@@ -66,6 +67,10 @@ void AppCapturerNull::Start(Callback* callback) {
   assert(callback);
 
   callback_ = callback;
+}
+
+void AppCapturerNull::Stop() {
+  callback_ = NULL;
 }
 
 void AppCapturerNull::Capture(const DesktopRegion& region) {

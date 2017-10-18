@@ -70,9 +70,6 @@ public:
 
   GMPErr Close(const nsCString& aRecordName);
 
-  GMPErr EnumerateRecords(RecvGMPRecordIteratorPtr aRecvIteratorFunc,
-                          void* aUserArg);
-
 private:
   bool HasRecord(const nsCString& aRecordName);
   already_AddRefed<GMPRecordImpl> GetRecord(const nsCString& aRecordName);
@@ -81,34 +78,19 @@ protected:
   ~GMPStorageChild() {}
 
   // PGMPStorageChild
-  bool RecvOpenComplete(const nsCString& aRecordName,
-                        const GMPErr& aStatus) override;
-  bool RecvReadComplete(const nsCString& aRecordName,
-                        const GMPErr& aStatus,
-                        InfallibleTArray<uint8_t>&& aBytes) override;
-  bool RecvWriteComplete(const nsCString& aRecordName,
-                         const GMPErr& aStatus) override;
-  bool RecvRecordNames(InfallibleTArray<nsCString>&& aRecordNames,
-                       const GMPErr& aStatus) override;
-  bool RecvShutdown() override;
+  mozilla::ipc::IPCResult RecvOpenComplete(const nsCString& aRecordName,
+                                           const GMPErr& aStatus) override;
+  mozilla::ipc::IPCResult RecvReadComplete(const nsCString& aRecordName,
+                                           const GMPErr& aStatus,
+                                           InfallibleTArray<uint8_t>&& aBytes) override;
+  mozilla::ipc::IPCResult RecvWriteComplete(const nsCString& aRecordName,
+                                            const GMPErr& aStatus) override;
+  mozilla::ipc::IPCResult RecvShutdown() override;
 
 private:
   Monitor mMonitor;
   nsRefPtrHashtable<nsCStringHashKey, GMPRecordImpl> mRecords;
   GMPChild* mPlugin;
-
-  struct RecordIteratorContext {
-    explicit RecordIteratorContext(RecvGMPRecordIteratorPtr aFunc,
-                                   void* aUserArg)
-      : mFunc(aFunc)
-      , mUserArg(aUserArg)
-    {}
-    RecordIteratorContext() {}
-    RecvGMPRecordIteratorPtr mFunc;
-    void* mUserArg;
-  };
-
-  std::queue<RecordIteratorContext> mPendingRecordIterators;
   bool mShutdown;
 };
 

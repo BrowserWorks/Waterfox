@@ -286,7 +286,7 @@ MOZ_BEGIN_EXTERN_C
 
 /* mozjemalloc relies on DllMain to initialize, but DllMain is not invoked
  * for executables, so manually invoke mozjemalloc initialization. */
-#if defined(_WIN32) && !defined(MOZ_JEMALLOC4)
+#if defined(_WIN32)
 void malloc_init_hard(void);
 #endif
 
@@ -304,18 +304,6 @@ pthread_atfork(void (*aPrepare)(void), void (*aParent)(void),
                void (*aChild)(void))
 {
   return 0;
-}
-#endif
-
-#ifdef MOZ_NUWA_PROCESS
-#include <pthread.h>
-
-/* NUWA builds have jemalloc built with
- * -Dpthread_mutex_lock=__real_pthread_mutex_lock */
-int
-__real_pthread_mutex_lock(pthread_mutex_t* aMutex)
-{
-  return pthread_mutex_lock(aMutex);
 }
 #endif
 
@@ -487,7 +475,7 @@ main()
   FdReader reader(0);
   Replay replay;
 
-#if defined(_WIN32) && !defined(MOZ_JEMALLOC4)
+#if defined(_WIN32)
   malloc_init_hard();
 #endif
 
@@ -521,6 +509,10 @@ main()
       continue;
     }
 
+    /* The log contains thread ids for manual analysis, but we just ignore them
+     * for now. */
+    parseNumber(line.SplitChar(' '));
+
     Buffer func = line.SplitChar('(');
     Buffer args = line.SplitChar(')');
 
@@ -528,7 +520,8 @@ main()
     if (func == Buffer("jemalloc_stats")) {
       replay.jemalloc_stats(args);
       continue;
-    } else if (func == Buffer("free")) {
+    }
+    if (func == Buffer("free")) {
       replay.free(args);
       continue;
     }

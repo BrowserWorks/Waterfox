@@ -5,8 +5,8 @@
 
 "use strict";
 
+const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
 const { InplaceEditor } = require("devtools/client/shared/inplace-editor");
-const { AutocompletePopup } = require("devtools/client/shared/autocomplete-popup");
 loadHelperScript("helper_inplace_editor.js");
 
 // Test the inplace-editor autocomplete popup for CSS values suggestions.
@@ -49,7 +49,7 @@ add_task(function* () {
   let [host, win, doc] = yield createHost();
 
   let xulDocument = win.top.document;
-  let popup = new AutocompletePopup({ doc: xulDocument }, { autoSelect: true });
+  let popup = new AutocompletePopup(xulDocument, { autoSelect: true });
 
   yield new Promise(resolve => {
     createInplaceEditorAndClick({

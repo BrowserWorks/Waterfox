@@ -24,7 +24,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 this.TestUtils = {
   executeSoon(callbackFn) {
-    Services.tm.mainThread.dispatch(callbackFn, Ci.nsIThread.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(callbackFn);
   },
 
   /**
@@ -58,7 +58,30 @@ this.TestUtils = {
           Services.obs.removeObserver(observer, topic);
           reject(ex);
         }
-      }, topic, false);
+      }, topic);
     });
   },
+
+  /**
+   * Takes a screenshot of an area and returns it as a data URL.
+   *
+   * @param eltOrRect
+   *        The DOM node or rect ({left, top, width, height}) to screenshot.
+   * @param win
+   *        The current window.
+   */
+  screenshotArea(eltOrRect, win) {
+    if (eltOrRect instanceof Ci.nsIDOMElement) {
+      eltOrRect = eltOrRect.getBoundingClientRect();
+    }
+    let { left, top, width, height } = eltOrRect;
+    let canvas = win.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+    let ctx = canvas.getContext("2d");
+    let ratio = win.devicePixelRatio;
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.drawWindow(win, left, top, width, height, "#fff");
+    return canvas.toDataURL();
+  }
 };

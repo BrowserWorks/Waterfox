@@ -32,20 +32,31 @@ class ContentDescription {
 // name = name of <content name="...">
 // type = xmlns of <content>
 struct ContentInfo {
-  ContentInfo() : description(NULL) {}
+  ContentInfo() {}
   ContentInfo(const std::string& name,
               const std::string& type,
-              ContentDescription* description) :
-      name(name), type(type), rejected(false), description(description) {}
+              ContentDescription* description)
+      : name(name), type(type), description(description) {}
   ContentInfo(const std::string& name,
               const std::string& type,
               bool rejected,
               ContentDescription* description) :
       name(name), type(type), rejected(rejected), description(description) {}
+  ContentInfo(const std::string& name,
+              const std::string& type,
+              bool rejected,
+              bool bundle_only,
+              ContentDescription* description)
+      : name(name),
+        type(type),
+        rejected(rejected),
+        bundle_only(bundle_only),
+        description(description) {}
   std::string name;
   std::string type;
-  bool rejected;
-  ContentDescription* description;
+  bool rejected = false;
+  bool bundle_only = false;
+  ContentDescription* description = nullptr;
 };
 
 typedef std::vector<std::string> ContentNames;
@@ -127,6 +138,11 @@ class SessionDescription {
                   const std::string& type,
                   bool rejected,
                   ContentDescription* description);
+  void AddContent(const std::string& name,
+                  const std::string& type,
+                  bool rejected,
+                  bool bundle_only,
+                  ContentDescription* description);
   bool RemoveContentByName(const std::string& name);
 
   // Transport accessors.
@@ -160,10 +176,15 @@ class SessionDescription {
   // Remove the first group with the same semantics specified by |name|.
   void RemoveGroupByName(const std::string& name);
 
+  // Global attributes.
+  void set_msid_supported(bool supported) { msid_supported_ = supported; }
+  bool msid_supported() const { return msid_supported_; }
+
  private:
   ContentInfos contents_;
   TransportInfos transport_infos_;
   ContentGroups content_groups_;
+  bool msid_supported_ = true;
 };
 
 // Indicates whether a ContentDescription was an offer or an answer, as

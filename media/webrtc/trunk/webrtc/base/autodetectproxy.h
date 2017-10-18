@@ -70,6 +70,7 @@ class AutoDetectProxy : public SignalThread {
   void OnConnectEvent(AsyncSocket * socket);
   void OnReadEvent(AsyncSocket * socket);
   void OnCloseEvent(AsyncSocket * socket, int error);
+  void OnTimeout();
   void OnResolveResult(AsyncResolverInterface* resolver);
   bool DoConnect();
 
@@ -81,7 +82,7 @@ class AutoDetectProxy : public SignalThread {
   AsyncSocket* socket_;
   int next_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(AutoDetectProxy);
+  RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(AutoDetectProxy);
 };
 
 }  // namespace rtc

@@ -4,9 +4,9 @@ function waitForSecurityChange(numChanges = 1) {
   return new Promise(resolve => {
     let n = 0;
     let listener = {
-      onSecurityChange: function() {
+      onSecurityChange() {
         n = n + 1;
-        info ("Received onSecurityChange event " + n + " of " + numChanges);
+        info("Received onSecurityChange event " + n + " of " + numChanges);
         if (n >= numChanges) {
           gBrowser.removeProgressListener(listener);
           resolve();
@@ -17,20 +17,17 @@ function waitForSecurityChange(numChanges = 1) {
   });
 }
 
-add_task(function* test_fetch() {
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({ set: [['privacy.trackingprotection.enabled', true]] },
-                              resolve);
-  });
+add_task(async function test_fetch() {
+  await SpecialPowers.pushPrefEnv({ set: [["privacy.trackingprotection.enabled", true]] });
 
-  yield BrowserTestUtils.withNewTab({ gBrowser, url: URL }, function* (newTabBrowser) {
+  await BrowserTestUtils.withNewTab({ gBrowser, url: URL }, async function(newTabBrowser) {
     let securityChange = waitForSecurityChange();
-    yield ContentTask.spawn(newTabBrowser, null, function* () {
-      yield content.wrappedJSObject.test_fetch()
+    await ContentTask.spawn(newTabBrowser, null, async function() {
+      await content.wrappedJSObject.test_fetch()
                    .then(response => Assert.ok(false, "should have denied the request"))
                    .catch(e => Assert.ok(true, `Caught exception: ${e}`));
     });
-    yield securityChange;
+    await securityChange;
 
     var TrackingProtection = newTabBrowser.ownerGlobal.TrackingProtection;
     ok(TrackingProtection, "got TP object");

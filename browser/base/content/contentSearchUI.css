@@ -14,7 +14,7 @@
   cursor: default;
 }
 
-.contentSearchSuggestionTable:-moz-dir(rtl) {
+.contentSearchSuggestionTable:dir(rtl) {
   left: auto;
   right: 0;
 }
@@ -51,11 +51,13 @@
   width: 16px;
   height: 16px;
   display: inline-block;
-  background-image: url("chrome://browser/skin/search-history-icon.svg#search-history-icon");
+  background-image: url("chrome://browser/skin/history.svg");
+  -moz-context-properties: fill;
+  fill: graytext;
 }
 
 .contentSearchSuggestionRow.selected > td > .historyIcon {
-  background-image: url("chrome://browser/skin/search-history-icon.svg#search-history-icon-active");
+  fill: HighlightText;
 }
 
 .contentSearchHeader > img {
@@ -115,7 +117,7 @@
   background-position: right center;
 }
 
-.contentSearchOneOffItem:-moz-dir(rtl) {
+.contentSearchOneOffItem:dir(rtl) {
   background-position: left center;
 }
 

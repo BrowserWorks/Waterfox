@@ -13,7 +13,11 @@ import tempfile
 import unittest
 import mozinfo
 
+import mozunit
+
+
 class TestMozinfo(unittest.TestCase):
+
     def setUp(self):
         reload(mozinfo)
         self.tempdir = os.path.abspath(tempfile.mkdtemp())
@@ -48,10 +52,10 @@ class TestMozinfo(unittest.TestCase):
 
     def test_update_file_invalid_json(self):
         """Test that mozinfo.update handles invalid JSON correctly"""
-        j = os.path.join(self.tempdir,'test.json')
+        j = os.path.join(self.tempdir, 'test.json')
         with open(j, 'w') as f:
             f.write('invalid{"json":')
-        self.assertRaises(ValueError,mozinfo.update,[j])
+        self.assertRaises(ValueError, mozinfo.update, [j])
 
     def test_find_and_update_file(self):
         """Test that mozinfo.find_and_update_from_json can
@@ -70,7 +74,6 @@ class TestMozinfo(unittest.TestCase):
             f.write('invalid{"json":')
         self.assertRaises(ValueError, mozinfo.find_and_update_from_json, self.tempdir)
 
-
     def test_find_and_update_file_mozbuild(self):
         """Test that mozinfo.find_and_update_from_json can
         find mozinfo.json using the mozbuild module."""
@@ -80,7 +83,13 @@ class TestMozinfo(unittest.TestCase):
         m = mock.MagicMock()
         # Mock the value of MozbuildObject.from_environment().topobjdir.
         m.MozbuildObject.from_environment.return_value.topobjdir = self.tempdir
-        with mock.patch.dict(sys.modules, {"mozbuild": m, "mozbuild.base": m}):
+
+        mocked_modules = {
+            "mozbuild": m,
+            "mozbuild.base": m,
+            "mozbuild.mozconfig": m,
+        }
+        with mock.patch.dict(sys.modules, mocked_modules):
             self.assertEqual(mozinfo.find_and_update_from_json(), j)
         self.assertEqual(mozinfo.info["foo"], "123456")
 
@@ -92,6 +101,7 @@ class TestMozinfo(unittest.TestCase):
 
 
 class TestStringVersion(unittest.TestCase):
+
     def test_os_version_is_a_StringVersion(self):
         self.assertIsInstance(mozinfo.os_version, mozinfo.StringVersion)
 
@@ -116,4 +126,4 @@ class TestStringVersion(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

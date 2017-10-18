@@ -5,10 +5,9 @@
 // found in the LICENSE file.
 
 #include "base/logging.h"
-#include "prmem.h"
-#include "prprf.h"
 #include "base/string_util.h"
 #include "nsXPCOM.h"
+#include "mozilla/Move.h"
 
 namespace mozilla {
 
@@ -44,11 +43,9 @@ Logger::~Logger()
     break;
   }
 
-  MOZ_LOG(gChromiumPRLog, prlevel, ("%s:%i: %s", mFile, mLine, mMsg ? mMsg : "<no message>"));
+  MOZ_LOG(gChromiumPRLog, prlevel, ("%s:%i: %s", mFile, mLine, mMsg ? mMsg.get() : "<no message>"));
   if (xpcomlevel != -1)
-    NS_DebugBreak(xpcomlevel, mMsg, NULL, mFile, mLine);
-
-  PR_Free(mMsg);
+    NS_DebugBreak(xpcomlevel, mMsg.get(), NULL, mFile, mLine);
 }
 
 void
@@ -56,12 +53,11 @@ Logger::printf(const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  mMsg = PR_vsprintf_append(mMsg, fmt, args);
+  mMsg = mozilla::VsmprintfAppend(mozilla::Move(mMsg), fmt, args);
   va_end(args);
 }
 
 LazyLogModule Logger::gChromiumPRLog("chromium");
-} // namespace mozilla 
 
 mozilla::Logger&
 operator<<(mozilla::Logger& log, const char* s)
@@ -97,3 +93,5 @@ operator<<(mozilla::Logger& log, void* p)
   log.printf("%p", p);
   return log;
 }
+
+} // namespace mozilla

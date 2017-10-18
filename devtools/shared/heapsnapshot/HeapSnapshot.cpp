@@ -16,7 +16,7 @@
 #include "js/UbiNodeDominatorTree.h"
 #include "js/UbiNodeShortestPaths.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/devtools/AutoMemMap.h"
 #include "mozilla/devtools/CoreDump.pb.h"
 #include "mozilla/devtools/DeserializedNode.h"
@@ -29,6 +29,7 @@
 #include "mozilla/dom/HeapSnapshotBinding.h"
 #include "mozilla/RangedPtr.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/Unused.h"
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
@@ -61,9 +62,9 @@ using JS::ubi::ShortestPaths;
 MallocSizeOf
 GetCurrentThreadDebuggerMallocSizeOf()
 {
-  auto ccrt = CycleCollectedJSRuntime::Get();
-  MOZ_ASSERT(ccrt);
-  auto cx = ccrt->Context();
+  auto ccjscx = CycleCollectedJSContext::Get();
+  MOZ_ASSERT(ccjscx);
+  auto cx = ccjscx->Context();
   MOZ_ASSERT(cx);
   auto mallocSizeOf = JS::dbg::GetDebuggerMallocSizeOf(cx);
   MOZ_ASSERT(mallocSizeOf);
@@ -554,9 +555,9 @@ HeapSnapshot::ComputeDominatorTree(ErrorResult& rv)
 {
   Maybe<JS::ubi::DominatorTree> maybeTree;
   {
-    auto ccrt = CycleCollectedJSRuntime::Get();
-    MOZ_ASSERT(ccrt);
-    auto cx = ccrt->Context();
+    auto ccjscx = CycleCollectedJSContext::Get();
+    MOZ_ASSERT(ccjscx);
+    auto cx = ccjscx->Context();
     MOZ_ASSERT(cx);
     JS::AutoCheckCannotGC nogc(cx);
     maybeTree = JS::ubi::DominatorTree::Create(cx, nogc, getRoot());
@@ -1035,6 +1036,52 @@ struct TwoByteString::HashPolicy {
   }
 };
 
+// Returns whether `edge` should be included in a heap snapshot of
+// `compartments`. The optional `policy` out-param is set to INCLUDE_EDGES
+// if we want to include the referent's edges, or EXCLUDE_EDGES if we don't
+// want to include them.
+static bool
+ShouldIncludeEdge(JS::CompartmentSet* compartments,
+                  const ubi::Node& origin, const ubi::Edge& edge,
+                  CoreDumpWriter::EdgePolicy* policy = nullptr)
+{
+  if (policy) {
+    *policy = CoreDumpWriter::INCLUDE_EDGES;
+  }
+
+  if (!compartments) {
+    // We aren't targeting a particular set of compartments, so serialize all the
+    // things!
+    return true;
+  }
+
+  // We are targeting a particular set of compartments. If this node is in our target
+  // set, serialize it and all of its edges. If this node is _not_ in our
+  // target set, we also serialize under the assumption that it is a shared
+  // resource being used by something in our target compartments since we reached it
+  // by traversing the heap graph. However, we do not serialize its outgoing
+  // edges and we abandon further traversal from this node.
+  //
+  // If the node does not belong to any compartment, we also serialize its outgoing
+  // edges. This case is relevant for Shapes: they don't belong to a specific
+  // compartment and contain edges to parent/kids Shapes we want to include. Note
+  // that these Shapes may contain pointers into our target compartment (the
+  // Shape's getter/setter JSObjects). However, we do not serialize nodes in other
+  // compartments that are reachable from these non-compartment nodes.
+
+  JSCompartment* compartment = edge.referent.compartment();
+
+  if (!compartment || compartments->has(compartment)) {
+    return true;
+  }
+
+  if (policy) {
+    *policy = CoreDumpWriter::EXCLUDE_EDGES;
+  }
+
+  return !!origin.compartment();
+}
+
 // A `CoreDumpWriter` that serializes nodes to protobufs and writes them to the
 // given `ZeroCopyOutputStream`.
 class MOZ_STACK_CLASS StreamWriter : public CoreDumpWriter
@@ -1056,6 +1103,8 @@ class MOZ_STACK_CLASS StreamWriter : public CoreDumpWriter
   OneByteStringMap oneByteStringsAlreadySerialized;
 
   ::google::protobuf::io::ZeroCopyOutputStream& stream;
+
+  JS::CompartmentSet* compartments;
 
   bool writeMessage(const ::google::protobuf::MessageLite& message) {
     // We have to create a new CodedOutputStream when writing each message so
@@ -1187,13 +1236,15 @@ class MOZ_STACK_CLASS StreamWriter : public CoreDumpWriter
 public:
   StreamWriter(JSContext* cx,
                ::google::protobuf::io::ZeroCopyOutputStream& stream,
-               bool wantNames)
+               bool wantNames,
+               JS::CompartmentSet* compartments)
     : cx(cx)
     , wantNames(wantNames)
     , framesAlreadySerialized(cx)
     , twoByteStringsAlreadySerialized(cx)
     , oneByteStringsAlreadySerialized(cx)
     , stream(stream)
+    , compartments(compartments)
   { }
 
   bool init() {
@@ -1240,6 +1291,9 @@ public:
 
       for ( ; !edges->empty(); edges->popFront()) {
         ubi::Edge& ubiEdge = edges->front();
+        if (!ShouldIncludeEdge(compartments, ubiNode, ubiEdge)) {
+          continue;
+        }
 
         protobuf::Edge* protobufEdge = protobufNode.add_edges();
         if (NS_WARN_IF(!protobufEdge)) {
@@ -1329,29 +1383,16 @@ public:
     if (!first)
       return true;
 
+    CoreDumpWriter::EdgePolicy policy;
+    if (!ShouldIncludeEdge(compartments, origin, edge, &policy))
+      return true;
+
     nodeCount++;
 
-    const JS::ubi::Node& referent = edge.referent;
+    if (policy == CoreDumpWriter::EXCLUDE_EDGES)
+      traversal.abandonReferent();
 
-    if (!compartments)
-      // We aren't targeting a particular set of compartments, so serialize all the
-      // things!
-      return writer.writeNode(referent, CoreDumpWriter::INCLUDE_EDGES);
-
-    // We are targeting a particular set of compartments. If this node is in our target
-    // set, serialize it and all of its edges. If this node is _not_ in our
-    // target set, we also serialize under the assumption that it is a shared
-    // resource being used by something in our target compartments since we reached it
-    // by traversing the heap graph. However, we do not serialize its outgoing
-    // edges and we abandon further traversal from this node.
-
-    JSCompartment* compartment = referent.compartment();
-
-    if (compartments->has(compartment))
-      return writer.writeNode(referent, CoreDumpWriter::INCLUDE_EDGES);
-
-    traversal.abandonReferent();
-    return writer.writeNode(referent, CoreDumpWriter::EXCLUDE_EDGES);
+    return writer.writeNode(edge.referent, policy);
   }
 };
 
@@ -1395,18 +1436,23 @@ WriteHeapGraph(JSContext* cx,
 static unsigned long
 msSinceProcessCreation(const TimeStamp& now)
 {
-  bool ignored;
-  auto duration = now - TimeStamp::ProcessCreation(ignored);
+  auto duration = now - TimeStamp::ProcessCreation();
   return (unsigned long) duration.ToMilliseconds();
 }
 
 /* static */ already_AddRefed<nsIFile>
 HeapSnapshot::CreateUniqueCoreDumpFile(ErrorResult& rv,
                                        const TimeStamp& now,
-                                       nsAString& outFilePath)
+                                       nsAString& outFilePath,
+                                       nsAString& outSnapshotId)
 {
   nsCOMPtr<nsIFile> file;
   rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(file));
+  if (NS_WARN_IF(rv.Failed()))
+    return nullptr;
+
+  nsAutoString tempPath;
+  rv = file->GetPath(tempPath);
   if (NS_WARN_IF(rv.Failed()))
     return nullptr;
 
@@ -1421,7 +1467,12 @@ HeapSnapshot::CreateUniqueCoreDumpFile(ErrorResult& rv,
 
   rv = file->GetPath(outFilePath);
   if (NS_WARN_IF(rv.Failed()))
-    return nullptr;
+      return nullptr;
+
+  // The snapshot ID must be computed in the process that created the
+  // temp file, because TmpD may not be the same in all processes.
+  outSnapshotId.Assign(Substring(outFilePath, tempPath.Length() + 1,
+                                 outFilePath.Length() - tempPath.Length() - sizeof(".fxsnapshot")));
 
   return file.forget();
 }
@@ -1433,7 +1484,7 @@ public:
   constexpr DeleteHeapSnapshotTempFileHelperChild() { }
 
   void operator()(PHeapSnapshotTempFileHelperChild* ptr) const {
-    NS_WARN_IF(!HeapSnapshotTempFileHelperChild::Send__delete__(ptr));
+    Unused << NS_WARN_IF(!HeapSnapshotTempFileHelperChild::Send__delete__(ptr));
   }
 };
 
@@ -1448,14 +1499,18 @@ using UniqueHeapSnapshotTempFileHelperChild = UniquePtr<PHeapSnapshotTempFileHel
 // the filesystem. Use IPDL to request a file descriptor from the parent
 // process.
 static already_AddRefed<nsIOutputStream>
-getCoreDumpOutputStream(ErrorResult& rv, TimeStamp& start, nsAString& outFilePath)
+getCoreDumpOutputStream(ErrorResult& rv,
+                        TimeStamp& start,
+                        nsAString& outFilePath,
+                        nsAString& outSnapshotId)
 {
   if (XRE_IsParentProcess()) {
     // Create the file and open the output stream directly.
 
     nsCOMPtr<nsIFile> file = HeapSnapshot::CreateUniqueCoreDumpFile(rv,
                                                                     start,
-                                                                    outFilePath);
+                                                                    outFilePath,
+                                                                    outSnapshotId);
     if (NS_WARN_IF(rv.Failed()))
       return nullptr;
 
@@ -1466,43 +1521,43 @@ getCoreDumpOutputStream(ErrorResult& rv, TimeStamp& start, nsAString& outFilePat
       return nullptr;
 
     return outputStream.forget();
-  } else {
-    // Request a file descriptor from the parent process over IPDL.
-
-    auto cc = ContentChild::GetSingleton();
-    if (!cc) {
-      rv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    UniqueHeapSnapshotTempFileHelperChild helper(
-      cc->SendPHeapSnapshotTempFileHelperConstructor());
-    if (NS_WARN_IF(!helper)) {
-      rv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    OpenHeapSnapshotTempFileResponse response;
-    if (!helper->SendOpenHeapSnapshotTempFile(&response)) {
-      rv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-    if (response.type() == OpenHeapSnapshotTempFileResponse::Tnsresult) {
-      rv.Throw(response.get_nsresult());
-      return nullptr;
-    }
-
-    auto opened = response.get_OpenedFile();
-    outFilePath = opened.path();
-    nsCOMPtr<nsIOutputStream> outputStream =
-      FileDescriptorOutputStream::Create(opened.descriptor());
-    if (NS_WARN_IF(!outputStream)) {
-      rv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    return outputStream.forget();
   }
+  // Request a file descriptor from the parent process over IPDL.
+
+  auto cc = ContentChild::GetSingleton();
+  if (!cc) {
+    rv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  UniqueHeapSnapshotTempFileHelperChild helper(
+    cc->SendPHeapSnapshotTempFileHelperConstructor());
+  if (NS_WARN_IF(!helper)) {
+    rv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  OpenHeapSnapshotTempFileResponse response;
+  if (!helper->SendOpenHeapSnapshotTempFile(&response)) {
+    rv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+  if (response.type() == OpenHeapSnapshotTempFileResponse::Tnsresult) {
+    rv.Throw(response.get_nsresult());
+    return nullptr;
+  }
+
+  auto opened = response.get_OpenedFile();
+  outFilePath = opened.path();
+  outSnapshotId = opened.snapshotId();
+  nsCOMPtr<nsIOutputStream> outputStream =
+    FileDescriptorOutputStream::Create(opened.descriptor());
+  if (NS_WARN_IF(!outputStream)) {
+    rv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  return outputStream.forget();
 }
 
 } // namespace devtools
@@ -1513,10 +1568,11 @@ using namespace JS;
 using namespace devtools;
 
 /* static */ void
-ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
-                                        const HeapSnapshotBoundaries& boundaries,
-                                        nsAString& outFilePath,
-                                        ErrorResult& rv)
+ThreadSafeChromeUtils::SaveHeapSnapshotShared(GlobalObject& global,
+                                              const HeapSnapshotBoundaries& boundaries,
+                                              nsAString& outFilePath,
+                                              nsAString& outSnapshotId,
+                                              ErrorResult& rv)
 {
   auto start = TimeStamp::Now();
 
@@ -1525,7 +1581,9 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
   uint32_t nodeCount = 0;
   uint32_t edgeCount = 0;
 
-  nsCOMPtr<nsIOutputStream> outputStream = getCoreDumpOutputStream(rv, start, outFilePath);
+  nsCOMPtr<nsIOutputStream> outputStream = getCoreDumpOutputStream(rv, start,
+                                                                   outFilePath,
+                                                                   outSnapshotId);
   if (NS_WARN_IF(rv.Failed()))
     return;
 
@@ -1533,17 +1591,19 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
   ::google::protobuf::io::GzipOutputStream gzipStream(&zeroCopyStream);
 
   JSContext* cx = global.Context();
-  StreamWriter writer(cx, gzipStream, wantNames);
-  if (NS_WARN_IF(!writer.init())) {
-    rv.Throw(NS_ERROR_OUT_OF_MEMORY);
-    return;
-  }
 
   {
     Maybe<AutoCheckCannotGC> maybeNoGC;
     ubi::RootList rootList(cx, maybeNoGC, wantNames);
     if (!EstablishBoundaries(cx, rv, boundaries, rootList, compartments))
       return;
+
+    StreamWriter writer(cx, gzipStream, wantNames,
+                        compartments.initialized() ? &compartments : nullptr);
+    if (NS_WARN_IF(!writer.init())) {
+      rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+      return;
+    }
 
     MOZ_ASSERT(maybeNoGC.isSome());
     ubi::Node roots(&rootList);
@@ -1574,6 +1634,26 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
                         nodeCount);
   Telemetry::Accumulate(Telemetry::DEVTOOLS_HEAP_SNAPSHOT_EDGE_COUNT,
                         edgeCount);
+}
+
+/* static */ void
+ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
+                                        const HeapSnapshotBoundaries& boundaries,
+                                        nsAString& outFilePath,
+                                        ErrorResult& rv)
+{
+  nsAutoString snapshotId;
+  SaveHeapSnapshotShared(global, boundaries, outFilePath, snapshotId, rv);
+}
+
+/* static */ void
+ThreadSafeChromeUtils::SaveHeapSnapshotGetId(GlobalObject& global,
+                                             const HeapSnapshotBoundaries& boundaries,
+                                             nsAString& outSnapshotId,
+                                             ErrorResult& rv)
+{
+  nsAutoString filePath;
+  SaveHeapSnapshotShared(global, boundaries, filePath, outSnapshotId, rv);
 }
 
 /* static */ already_AddRefed<HeapSnapshot>

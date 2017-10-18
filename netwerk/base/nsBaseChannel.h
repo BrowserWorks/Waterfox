@@ -6,6 +6,7 @@
 #ifndef nsBaseChannel_h__
 #define nsBaseChannel_h__
 
+#include "mozilla/net/NeckoTargetHolder.h"
 #include "nsString.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
@@ -47,6 +48,7 @@ class nsBaseChannel : public nsHashPropertyBag
                     , public nsITransportEventSink
                     , public nsIAsyncVerifyRedirectCallback
                     , public mozilla::net::PrivateBrowsingChannel<nsBaseChannel>
+                    , public mozilla::net::NeckoTargetHolder
                     , protected nsIStreamListener
                     , protected nsIThreadRetargetableStreamListener
 {
@@ -60,7 +62,7 @@ public:
   NS_DECL_NSITHREADRETARGETABLEREQUEST
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
-  nsBaseChannel(); 
+  nsBaseChannel();
 
   // This method must be called to initialize the basechannel instance.
   nsresult Init() {
@@ -91,6 +93,19 @@ private:
   // return one an just not touch it.
   virtual nsresult OpenContentStream(bool async, nsIInputStream **stream,
                                      nsIChannel** channel) = 0;
+
+  // Implemented by subclass to begin pumping data for an async channel, in
+  // lieu of returning a stream. If implemented, OpenContentStream will never
+  // be called for async channels. If not implemented, AsyncOpen2 will fall
+  // back to OpenContentStream.
+  //
+  // On success, the callee must begin pumping data to the stream listener,
+  // and at some point call OnStartRequest followed by OnStopRequest.
+  // Additionally, it may provide a request object which may be used to
+  // suspend, resume, and cancel the underlying request.
+  virtual nsresult BeginAsyncRead(nsIStreamListener* listener, nsIRequest** request) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
 
   // The basechannel calls this method from its OnTransportStatus method to
   // determine whether to call nsIProgressEventSink::OnStatus in addition to
@@ -151,7 +166,7 @@ public:
   // The security info is a property of the transport-layer, which should be
   // assigned by the subclass.
   nsISupports *SecurityInfo() {
-    return mSecurityInfo; 
+    return mSecurityInfo;
   }
   void SetSecurityInfo(nsISupports *info) {
     mSecurityInfo = info;
@@ -164,7 +179,7 @@ public:
 
   // This is a short-cut to calling nsIRequest::IsPending()
   virtual bool Pending() const {
-    return mPump || mWaitingOnAsyncRedirect;
+    return mPumpingData || mWaitingOnAsyncRedirect;
  }
 
   // Helper function for querying the channel's notification callbacks.
@@ -214,6 +229,8 @@ protected:
     mAllowThreadRetargeting = false;
   }
 
+  virtual void SetupNeckoTarget();
+
 private:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
@@ -248,12 +265,14 @@ private:
   {
   public:
     RedirectRunnable(nsBaseChannel* chan, nsIChannel* newChannel)
-      : mChannel(chan), mNewChannel(newChannel)
+      : mozilla::Runnable("nsBaseChannel::RedirectRunnable")
+      , mChannel(chan)
+      , mNewChannel(newChannel)
     {
       NS_PRECONDITION(newChannel, "Must have channel to redirect to");
     }
-    
-    NS_IMETHOD Run()
+
+    NS_IMETHOD Run() override
     {
       mChannel->HandleAsyncRedirect(mNewChannel);
       return NS_OK;
@@ -266,6 +285,8 @@ private:
   friend class RedirectRunnable;
 
   RefPtr<nsInputStreamPump>         mPump;
+  RefPtr<nsIRequest>                  mRequest;
+  bool                                mPumpingData;
   nsCOMPtr<nsIProgressEventSink>      mProgressSink;
   nsCOMPtr<nsIURI>                    mOriginalURI;
   nsCOMPtr<nsISupports>               mOwner;

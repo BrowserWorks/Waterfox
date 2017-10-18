@@ -5,7 +5,7 @@
 <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
 <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
 
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
   var SimpleTest = window.opener.SimpleTest;
   var Ci = Components.interfaces;
 
@@ -217,12 +217,12 @@
   }
 
   function onPaint() {
-    window.removeEventListener("MozAfterPaint", onPaint, false);
+    window.removeEventListener("MozAfterPaint", onPaint);
     painted = true;
     testReady();
   }
 
-  window.addEventListener("MozAfterPaint", onPaint, false);
+  window.addEventListener("MozAfterPaint", onPaint);
 </script>
 
 <style type="text/css">
@@ -267,7 +267,7 @@ body {
 
 <br />
 
-<iframe id="frame1" src="data:text/html,<html><body style='margin: 0; padding: 0; font-family: monospace;' onload='window.parent.onFrameLoad();'><div id='sel2'>ttestselection2 Lorem ipsum dolor sit amet, at duo debet graeci, vivendum vulputate per ut.</div><br/><br/></body></html>"></iframe>
+<iframe id="frame1" src="selectAtPoint-innerframe.html"></iframe>
 
 <br/>
 

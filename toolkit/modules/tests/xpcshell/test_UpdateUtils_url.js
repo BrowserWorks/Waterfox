@@ -42,7 +42,7 @@ function getServicePack() {
   // This structure is described at:
   // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
   const SZCSDVERSIONLENGTH = 128;
-  const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
+  const OSVERSIONINFOEXW = new ctypes.StructType("OSVERSIONINFOEXW",
       [
       {dwOSVersionInfoSize: DWORD},
       {dwMajorVersion: DWORD},
@@ -60,7 +60,7 @@ function getServicePack() {
   let kernel32 = ctypes.open("kernel32");
   try {
     let GetVersionEx = kernel32.declare("GetVersionExW",
-                                        ctypes.default_abi,
+                                        ctypes.winapi_abi,
                                         BOOL,
                                         OSVERSIONINFOEXW.ptr);
     let winVer = OSVERSIONINFOEXW();
@@ -68,7 +68,7 @@ function getServicePack() {
 
     if (0 === GetVersionEx(winVer.address())) {
       // Using "throw" instead of "do_throw" (see NOTE above)
-      throw("Failure in GetVersionEx (returned 0)");
+      throw ("Failure in GetVersionEx (returned 0)");
     }
 
     return winVer.wServicePackMajor + "." + winVer.wServicePackMinor;
@@ -87,7 +87,7 @@ function getProcArchitecture() {
 
   // This structure is described at:
   // http://msdn.microsoft.com/en-us/library/ms724958%28v=vs.85%29.aspx
-  const SYSTEM_INFO = new ctypes.StructType('SYSTEM_INFO',
+  const SYSTEM_INFO = new ctypes.StructType("SYSTEM_INFO",
       [
       {wProcessorArchitecture: WORD},
       {wReserved: WORD},
@@ -105,7 +105,7 @@ function getProcArchitecture() {
   let kernel32 = ctypes.open("kernel32");
   try {
     let GetNativeSystemInfo = kernel32.declare("GetNativeSystemInfo",
-                                               ctypes.default_abi,
+                                               ctypes.winapi_abi,
                                                ctypes.void_t,
                                                SYSTEM_INFO.ptr);
     let sysInfo = SYSTEM_INFO();
@@ -113,7 +113,7 @@ function getProcArchitecture() {
     sysInfo.wProcessorArchitecture = 0xffff;
 
     GetNativeSystemInfo(sysInfo.address());
-    switch(sysInfo.wProcessorArchitecture) {
+    switch (sysInfo.wProcessorArchitecture) {
       case 9:
         return "x64";
       case 6:
@@ -122,44 +122,95 @@ function getProcArchitecture() {
         return "x86";
       default:
         // Using "throw" instead of "do_throw" (see NOTE above)
-        throw("Unknown architecture returned from GetNativeSystemInfo: " + sysInfo.wProcessorArchitecture);
+        throw ("Unknown architecture returned from GetNativeSystemInfo: " + sysInfo.wProcessorArchitecture);
     }
   } finally {
     kernel32.close();
   }
 }
 
+// Gets the supported CPU instruction set.
+function getInstructionSet() {
+  if (AppConstants.platform == "win") {
+    const PF_MMX_INSTRUCTIONS_AVAILABLE = 3; // MMX
+    const PF_XMMI_INSTRUCTIONS_AVAILABLE = 6; // SSE
+    const PF_XMMI64_INSTRUCTIONS_AVAILABLE = 10; // SSE2
+    const PF_SSE3_INSTRUCTIONS_AVAILABLE = 13; // SSE3
+
+    let lib = ctypes.open("kernel32.dll");
+    let IsProcessorFeaturePresent = lib.declare("IsProcessorFeaturePresent",
+                                                ctypes.winapi_abi,
+                                                ctypes.int32_t, /* success */
+                                                ctypes.uint32_t); /* DWORD */
+    let instructionSet = "unknown";
+    try {
+      if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE3";
+      } else if (IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE2";
+      } else if (IsProcessorFeaturePresent(PF_XMMI_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "SSE";
+      } else if (IsProcessorFeaturePresent(PF_MMX_INSTRUCTIONS_AVAILABLE)) {
+        instructionSet = "MMX";
+      }
+    } catch (e) {
+      Cu.reportError("Error getting processor instruction set. " +
+                     "Exception: " + e);
+    }
+
+    lib.close();
+    return instructionSet;
+  }
+
+  return "NA";
+}
+
+// Gets the RAM size in megabytes. This will round the value because sysinfo
+// doesn't always provide RAM in multiples of 1024.
+function getMemoryMB() {
+  let memoryMB = "unknown";
+  try {
+    memoryMB = Services.sysinfo.getProperty("memsize");
+    if (memoryMB) {
+      memoryMB = Math.round(memoryMB / 1024 / 1024);
+    }
+  } catch (e) {
+    do_throw("Error getting system info memsize property. Exception: " + e);
+  }
+  return memoryMB;
+}
+
 // Helper function for formatting a url and getting the result we're
 // interested in
-function getResult(url) {
-  url = UpdateUtils.formatUpdateURL(url);
+async function getResult(url) {
+  url = await UpdateUtils.formatUpdateURL(url);
   return url.substr(URL_PREFIX.length).split("/")[0];
 }
 
 // url constructed with %PRODUCT%
-add_task(function* test_product() {
+add_task(async function test_product() {
   let url = URL_PREFIX + "%PRODUCT%/";
-  Assert.equal(getResult(url), gAppInfo.name,
+  Assert.equal(await getResult(url), gAppInfo.name,
                "the url param for %PRODUCT%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %VERSION%
-add_task(function* test_version() {
+add_task(async function test_version() {
   let url = URL_PREFIX + "%VERSION%/";
-  Assert.equal(getResult(url), gAppInfo.version,
+  Assert.equal(await getResult(url), gAppInfo.version,
                "the url param for %VERSION%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %BUILD_ID%
-add_task(function* test_build_id() {
+add_task(async function test_build_id() {
   let url = URL_PREFIX + "%BUILD_ID%/";
-  Assert.equal(getResult(url), gAppInfo.appBuildID,
+  Assert.equal(await getResult(url), gAppInfo.appBuildID,
                "the url param for %BUILD_ID%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %BUILD_TARGET%
 // XXX TODO - it might be nice if we tested the actual ABI
-add_task(function* test_build_target() {
+add_task(async function test_build_target() {
   let url = URL_PREFIX + "%BUILD_TARGET%/";
 
   let abi;
@@ -184,52 +235,52 @@ add_task(function* test_build_target() {
     abi += "-" + getProcArchitecture();
   }
 
-  Assert.equal(getResult(url), gAppInfo.OS + "_" + abi,
+  Assert.equal(await getResult(url), gAppInfo.OS + "_" + abi,
                "the url param for %BUILD_TARGET%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %LOCALE%
 // Bug 488936 added the update.locale file that stores the update locale
-add_task(function* test_locale() {
+add_task(async function test_locale() {
   // The code that gets the locale accesses the profile which is only available
   // after calling do_get_profile in xpcshell tests. This prevents an error from
   // being logged.
   do_get_profile();
 
   let url = URL_PREFIX + "%LOCALE%/";
-  Assert.equal(getResult(url), AppConstants.INSTALL_LOCALE,
+  Assert.equal(await getResult(url), AppConstants.INSTALL_LOCALE,
                "the url param for %LOCALE%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %CHANNEL%
-add_task(function* test_channel() {
+add_task(async function test_channel() {
   let url = URL_PREFIX + "%CHANNEL%/";
   setUpdateChannel("test_channel");
-  Assert.equal(getResult(url), "test_channel",
+  Assert.equal(await getResult(url), "test_channel",
                "the url param for %CHANNEL%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %CHANNEL% with distribution partners
-add_task(function* test_channel_distribution() {
+add_task(async function test_channel_distribution() {
   let url = URL_PREFIX + "%CHANNEL%/";
   gDefaultPrefBranch.setCharPref(PREF_APP_PARTNER_BRANCH + "test_partner1",
                                  "test_partner1");
   gDefaultPrefBranch.setCharPref(PREF_APP_PARTNER_BRANCH + "test_partner2",
                                  "test_partner2");
-  Assert.equal(getResult(url),
+  Assert.equal(await getResult(url),
                "test_channel-cck-test_partner1-test_partner2",
                "the url param for %CHANNEL%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %PLATFORM_VERSION%
-add_task(function* test_platform_version() {
+add_task(async function test_platform_version() {
   let url = URL_PREFIX + "%PLATFORM_VERSION%/";
-  Assert.equal(getResult(url), gAppInfo.platformVersion,
+  Assert.equal(await getResult(url), gAppInfo.platformVersion,
                "the url param for %PLATFORM_VERSION%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %OS_VERSION%
-add_task(function* test_os_version() {
+add_task(async function test_os_version() {
   let url = URL_PREFIX + "%OS_VERSION%/";
   let osVersion;
   let sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
@@ -264,29 +315,42 @@ add_task(function* test_os_version() {
     osVersion = encodeURIComponent(osVersion);
   }
 
-  Assert.equal(getResult(url), osVersion,
+  Assert.equal(await getResult(url), osVersion,
                "the url param for %OS_VERSION%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %DISTRIBUTION%
-add_task(function* test_distribution() {
+add_task(async function test_distribution() {
   let url = URL_PREFIX + "%DISTRIBUTION%/";
   gDefaultPrefBranch.setCharPref(PREF_DISTRIBUTION_ID, "test_distro");
-  Assert.equal(getResult(url), "test_distro",
+  Assert.equal(await getResult(url), "test_distro",
                "the url param for %DISTRIBUTION%" + MSG_SHOULD_EQUAL);
 });
 
 // url constructed with %DISTRIBUTION_VERSION%
-add_task(function* test_distribution_version() {
+add_task(async function test_distribution_version() {
   let url = URL_PREFIX + "%DISTRIBUTION_VERSION%/";
   gDefaultPrefBranch.setCharPref(PREF_DISTRIBUTION_VERSION, "test_distro_version");
-  Assert.equal(getResult(url), "test_distro_version",
+  Assert.equal(await getResult(url), "test_distro_version",
                "the url param for %DISTRIBUTION_VERSION%" + MSG_SHOULD_EQUAL);
 });
 
-add_task(function* test_custom() {
+add_task(async function test_custom() {
   Services.prefs.setCharPref("app.update.custom", "custom");
   let url = URL_PREFIX + "%CUSTOM%/";
-  Assert.equal(getResult(url), "custom",
+  Assert.equal(await getResult(url), "custom",
                "the url query string for %CUSTOM%" + MSG_SHOULD_EQUAL);
+});
+
+// url constructed with %SYSTEM_CAPABILITIES%
+add_task(async function test_systemCapabilities() {
+  let url = URL_PREFIX + "%SYSTEM_CAPABILITIES%/";
+  let systemCapabilities = "ISET:" + getInstructionSet() + ",MEM:" + getMemoryMB();
+  if (AppConstants.platform == "win") {
+    // The default value for shouldBlockIncompatJaws in the mock
+    // Services.appinfo is false so the value should be JAWS:0
+    systemCapabilities += ",JAWS:0";
+  }
+  Assert.equal(await getResult(url), systemCapabilities,
+               "the url param for %SYSTEM_CAPABILITIES%" + MSG_SHOULD_EQUAL);
 });

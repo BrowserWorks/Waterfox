@@ -62,7 +62,7 @@ nsLineBreaker::FlushCurrentWord()
   AutoTArray<uint8_t,4000> breakState;
   if (!breakState.AppendElements(length))
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   nsTArray<bool> capitalizationState;
 
   if (!mCurrentWordContainsComplexChar) {
@@ -134,7 +134,7 @@ nsLineBreaker::FlushCurrentWord()
                                      capitalizationState.Elements() + offset);
       }
     }
-    
+
     offset += ti->mLength;
   }
 
@@ -243,7 +243,7 @@ nsLineBreaker::AppendText(nsIAtom* aHyphenationLanguage, const char16_t* aText, 
     mBreakHere = false;
     mAfterBreakableSpace = isBreakableSpace;
 
-    if (isSpace) {
+    if (isSpace || ch == '\n') {
       if (offset > wordStart && aSink) {
         if (!(aFlags & BREAK_SUPPRESS_INSIDE)) {
           if (wordHasComplexChar) {

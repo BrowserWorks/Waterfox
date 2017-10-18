@@ -4,10 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ScaledFontWin.h"
+#include "UnscaledFontGDI.h"
 
 #include "AutoHelpersWin.h"
 #include "Logging.h"
-#include "SFNTData.h"
+#include "nsString.h"
 
 #ifdef USE_SKIA
 #include "skia/include/ports/SkTypeface_win.h"
@@ -17,17 +18,21 @@
 #include "cairo-win32.h"
 #endif
 
+#include "HelpersWinFonts.h"
+
 namespace mozilla {
 namespace gfx {
 
-ScaledFontWin::ScaledFontWin(LOGFONT* aFont, Float aSize)
-  : ScaledFontBase(aSize)
+ScaledFontWin::ScaledFontWin(const LOGFONT* aFont,
+                             const RefPtr<UnscaledFont>& aUnscaledFont,
+                             Float aSize)
+  : ScaledFontBase(aUnscaledFont, aSize)
   , mLogFont(*aFont)
 {
 }
 
 bool
-ScaledFontWin::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
+UnscaledFontGDI::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
 {
   AutoDC dc;
   AutoSelectFont font(dc.GetDC(), &mLogFont);
@@ -52,36 +57,72 @@ ScaledFontWin::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
     return false;
   }
 
-  // If it's a font collection then attempt to get the index.
-  uint32_t index = 0;
-  if (table != 0) {
-    UniquePtr<SFNTData> sfntData = SFNTData::Create(fontData.get(),
-                                                    tableSize);
-    if (!sfntData) {
-      gfxWarning() << "Failed to create SFNTData for GetFontFileData.";
-      return false;
-    }
-
-    // We cast here because for VS2015 char16_t != wchar_t, even though they are
-    // both 16 bit.
-    if (!sfntData->GetIndexForU16Name(
-          reinterpret_cast<char16_t*>(mLogFont.lfFaceName), &index, LF_FACESIZE - 1)) {
-      gfxWarning() << "Failed to get index for face name.";
-      gfxDevCrash(LogReason::GetFontFileDataFailed) <<
-        "Failed to get index for face name |" << mLogFont.lfFaceName << "|.";
-      return false;
-    }
-  }
-
-  aDataCallback(fontData.get(), tableSize, index, mSize, aBaton);
+  aDataCallback(fontData.get(), tableSize, 0, aBaton);
   return true;
 }
 
 bool
-ScaledFontWin::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
+ScaledFontWin::GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton)
 {
-  aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), mSize, aBaton);
+  aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), aBaton);
   return true;
+}
+
+bool
+UnscaledFontGDI::GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton)
+{
+  aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), aBaton);
+  return true;
+}
+
+bool
+UnscaledFontGDI::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
+{
+  aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), aBaton);
+  return true;
+}
+
+already_AddRefed<UnscaledFont>
+UnscaledFontGDI::CreateFromFontDescriptor(const uint8_t* aData, uint32_t aDataLength)
+{
+  if (aDataLength < sizeof(LOGFONT)) {
+    gfxWarning() << "GDI font descriptor is truncated.";
+    return nullptr;
+  }
+
+  const LOGFONT* logFont = reinterpret_cast<const LOGFONT*>(aData);
+  RefPtr<UnscaledFont> unscaledFont = new UnscaledFontGDI(*logFont);
+  return unscaledFont.forget();
+}
+
+already_AddRefed<ScaledFont>
+UnscaledFontGDI::CreateScaledFont(Float aGlyphSize,
+                                  const uint8_t* aInstanceData,
+                                  uint32_t aInstanceDataLength)
+{
+  if (aInstanceDataLength < sizeof(LOGFONT)) {
+    gfxWarning() << "GDI unscaled font instance data is truncated.";
+    return nullptr;
+  }
+
+  NativeFont nativeFont;
+  nativeFont.mType = NativeFontType::GDI_FONT_FACE;
+  nativeFont.mFont = (void*)aInstanceData;
+
+  RefPtr<ScaledFont> font =
+    Factory::CreateScaledFontForNativeFont(nativeFont, this, aGlyphSize);
+
+#ifdef USE_CAIRO_SCALED_FONT
+  static_cast<ScaledFontBase*>(font.get())->PopulateCairoScaledFont();
+#endif
+
+  return font.forget();
+}
+
+AntialiasMode
+ScaledFontWin::GetDefaultAAMode()
+{
+  return GetSystemDefaultAAMode();
 }
 
 #ifdef USE_SKIA

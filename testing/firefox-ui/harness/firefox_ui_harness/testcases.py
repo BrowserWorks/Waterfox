@@ -8,26 +8,19 @@ from datetime import datetime
 
 import mozfile
 
-from marionette import MarionetteTestCase
+from firefox_puppeteer import PuppeteerMixin
+from firefox_puppeteer.api.software_update import SoftwareUpdate
+from firefox_puppeteer.ui.update_wizard import UpdateWizardDialog
 from marionette_driver import Wait
 from marionette_driver.errors import NoSuchWindowException
-
-from firefox_puppeteer.api.prefs import Preferences
-from firefox_puppeteer.api.software_update import SoftwareUpdate
-from firefox_puppeteer.testcases import BaseFirefoxTestCase
-from firefox_puppeteer.ui.update_wizard import UpdateWizardDialog
+from marionette_harness import MarionetteTestCase
 
 
-class FirefoxTestCase(BaseFirefoxTestCase, MarionetteTestCase):
-    """ Integrate MarionetteTestCase with BaseFirefoxTestCase by reordering MRO """
-    pass
-
-
-class UpdateTestCase(FirefoxTestCase):
+class UpdateTestCase(PuppeteerMixin, MarionetteTestCase):
 
     TIMEOUT_UPDATE_APPLY = 300
     TIMEOUT_UPDATE_CHECK = 30
-    TIMEOUT_UPDATE_DOWNLOAD = 360
+    TIMEOUT_UPDATE_DOWNLOAD = 720
 
     # For the old update wizard, the errors are displayed inside the dialog. For the
     # handling of updates in the about window the errors are displayed in new dialogs.
@@ -41,72 +34,52 @@ class UpdateTestCase(FirefoxTestCase):
     def __init__(self, *args, **kwargs):
         super(UpdateTestCase, self).__init__(*args, **kwargs)
 
+        self.update_channel = kwargs.pop('update_channel')
+        self.update_mar_channels = set(kwargs.pop('update_mar_channels'))
+        self.update_url = kwargs.pop('update_url')
+
         self.target_buildid = kwargs.pop('update_target_buildid')
         self.target_version = kwargs.pop('update_target_version')
-
-        self.update_channel = kwargs.pop('update_channel')
-        self.default_update_channel = None
-
-        self.update_mar_channels = set(kwargs.pop('update_mar_channels'))
-        self.default_mar_channels = None
-
-        self.updates = []
 
     def setUp(self, is_fallback=False):
         super(UpdateTestCase, self).setUp()
 
-        self.software_update = SoftwareUpdate(lambda: self.marionette)
+        self.software_update = SoftwareUpdate(self.marionette)
         self.download_duration = None
 
-        # Bug 604364 - Preparation to test multiple update steps
-        self.current_update_index = 0
+        # If a custom update channel has to be set, force a restart of
+        # Firefox to actually get it applied as a default pref. Use the clean
+        # option to force a non in_app restart, which would allow Firefox to
+        # dump the logs to the console.
+        if self.update_channel:
+            self.software_update.update_channel = self.update_channel
+            self.restart(clean=True)
+
+            self.assertEqual(self.software_update.update_channel, self.update_channel)
+
+        # If requested modify the list of allowed MAR channels
+        if self.update_mar_channels:
+            self.software_update.mar_channels.add_channels(self.update_mar_channels)
+
+            self.assertTrue(self.update_mar_channels.issubset(
+                            self.software_update.mar_channels.channels),
+                            'Allowed MAR channels have been set: expected "{}" in "{}"'.format(
+                                ', '.join(self.update_mar_channels),
+                                ', '.join(self.software_update.mar_channels.channels)))
 
         # Ensure that there exists no already partially downloaded update
         self.remove_downloaded_update()
 
-        # If requested modify the default update channel. It will be active
-        # after the next restart of the application
-        # Bug 1142805 - Modify file via Python directly
-        if self.update_channel:
-            # Backup the original content and the path of the channel-prefs.js file
-            self.default_update_channel = {
-                'content': self.software_update.update_channel.file_contents,
-                'path': self.software_update.update_channel.file_path,
-            }
-            self.software_update.update_channel.default_channel = self.update_channel
-
-        # If requested modify the list of allowed MAR channels
-        # Bug 1142805 - Modify file via Python directly
-        if self.update_mar_channels:
-            # Backup the original content and the path of the update-settings.ini file
-            self.default_mar_channels = {
-                'content': self.software_update.mar_channels.config_file_contents,
-                'path': self.software_update.mar_channels.config_file_path,
-            }
-            self.software_update.mar_channels.add_channels(self.update_mar_channels)
-
-        # Bug 1142805 - Until we don't modify the channel-prefs.js and update-settings.ini
-        # files before Firefox gets started, a restart of Firefox is necessary to
-        # accept the new update channel.
-        self.restart()
+        self.set_preferences_defaults()
 
         # Dictionary which holds the information for each update
-        self.updates = [{
+        self.update_status = {
             'build_pre': self.software_update.build_info,
             'build_post': None,
             'fallback': is_fallback,
             'patch': {},
             'success': False,
-        }]
-
-        self.assertEqual(self.software_update.update_channel.default_channel,
-                         self.software_update.update_channel.channel)
-
-        self.assertTrue(self.update_mar_channels.issubset(
-                        self.software_update.mar_channels.channels),
-                        'Allowed MAR channels have been set: expected "{}" in "{}"'.format(
-                            ', '.join(self.update_mar_channels),
-                            ', '.join(self.software_update.mar_channels.channels)))
+        }
 
         # Check if the user has permissions to run the update
         self.assertTrue(self.software_update.allowed,
@@ -117,18 +90,16 @@ class UpdateTestCase(FirefoxTestCase):
             self.browser.tabbar.close_all_tabs([self.browser.tabbar.selected_tab])
 
             # Add content of the update log file for detailed failures when applying an update
-            self.updates[self.current_update_index]['update_log'] = self.read_update_log()
+            self.update_status['update_log'] = self.read_update_log()
 
             # Print results for now until we have treeherder integration
-            output = pprint.pformat(self.updates)
+            output = pprint.pformat(self.update_status)
             self.logger.info('Update test results: \n{}'.format(output))
         finally:
             super(UpdateTestCase, self).tearDown()
 
             # Ensure that no trace of an partially downloaded update remain
             self.remove_downloaded_update()
-
-            self.restore_config_files()
 
     @property
     def patch_info(self):
@@ -163,50 +134,82 @@ class UpdateTestCase(FirefoxTestCase):
 
     def check_update_applied(self):
         """Check that the update has been applied correctly"""
-        update = self.updates[self.current_update_index]
-        update['build_post'] = self.software_update.build_info
+        self.update_status['build_post'] = self.software_update.build_info
 
-        about_window = self.browser.open_about_window()
-        try:
-            # Bug 604364 - We do not support watershed releases yet.
-            update_available = self.check_for_updates(about_window)
-            self.assertFalse(update_available,
-                             'Additional update found due to watershed release {}'.format(
-                                 update['build_post']['version']))
+        # Ensure that the target version is the same or higher. No downgrade
+        # should have happened.
+        version_check = self.marionette.execute_script("""
+          Components.utils.import("resource://gre/modules/Services.jsm");
 
-            # The upgraded version should be identical with the version given by
-            # the update and we shouldn't have run a downgrade
-            check = self.marionette.execute_script("""
-              Components.utils.import("resource://gre/modules/Services.jsm");
+          return Services.vc.compare(arguments[0], arguments[1]);
+        """, script_args=(self.update_status['build_post']['version'],
+                          self.update_status['build_pre']['version']))
 
-              return  Services.vc.compare(arguments[0], arguments[1]);
-            """, script_args=[update['build_post']['version'], update['build_pre']['version']])
+        self.assertGreaterEqual(version_check, 0,
+                                'A downgrade from version {} to {} is not allowed'.format(
+                                    self.update_status['build_pre']['version'],
+                                    self.update_status['build_post']['version']))
 
-            self.assertGreaterEqual(check, 0,
-                                    'The version of the upgraded build is higher or equal')
+        self.assertNotEqual(self.update_status['build_post']['buildid'],
+                            self.update_status['build_pre']['buildid'],
+                            'The staged update to buildid {} has not been applied'.format(
+                                self.update_status['patch']['buildid']))
 
-            # If a target version has been specified, check if it matches the updated build
-            if self.target_version:
-                self.assertEqual(update['build_post']['version'], self.target_version)
+        self.assertEqual(self.update_status['build_post']['buildid'],
+                         self.update_status['patch']['buildid'],
+                         'Unexpected target buildid after applying the patch, {} != {}'.format(
+                             self.update_status['build_post']['buildid'],
+                             self.update_status['patch']['buildid']))
 
-            # The post buildid should be identical with the buildid contained in the patch
-            self.assertEqual(update['build_post']['buildid'], update['patch']['buildid'])
+        self.assertEqual(self.update_status['build_post']['locale'],
+                         self.update_status['build_pre']['locale'],
+                         'Unexpected change of the locale from {} to {}'.format(
+                             self.update_status['build_pre']['locale'],
+                             self.update_status['build_post']['locale']))
 
-            # If a target buildid has been specified, check if it matches the updated build
-            if self.target_buildid:
-                self.assertEqual(update['build_post']['buildid'], self.target_buildid)
+        self.assertEqual(self.update_status['build_post']['disabled_addons'],
+                         self.update_status['build_pre']['disabled_addons'],
+                         'Application-wide addons have been unexpectedly disabled: {}'.format(
+                             ', '.join(set(self.update_status['build_pre']['locale']) -
+                                       set(self.update_status['build_post']['locale']))
+        ))
 
-            # An upgrade should not change the builds locale
-            self.assertEqual(update['build_post']['locale'], update['build_pre']['locale'])
+        if self.target_version:
+            self.assertEqual(self.update_status['build_post']['version'],
+                             self.target_version,
+                             'Current target version {} does not match expected version {}'.format(
+                                 self.update_status['build_post']['version'], self.target_version))
 
-            # Check that no application-wide add-ons have been disabled
-            self.assertEqual(update['build_post']['disabled_addons'],
-                             update['build_pre']['disabled_addons'])
+        if self.target_buildid:
+            self.assertEqual(self.update_status['build_post']['buildid'],
+                             self.target_buildid,
+                             'Current target buildid {} does not match expected buildid {}'.format(
+                                 self.update_status['build_post']['buildid'], self.target_buildid))
 
-            update['success'] = True
+        self.update_status['success'] = True
 
-        finally:
-            about_window.close()
+    def check_update_not_applied(self):
+        """Check that the update has not been applied due to a forced invalidation of the patch"""
+        build_info = self.software_update.build_info
+
+        # Ensure that the version has not been changed
+        version_check = self.marionette.execute_script("""
+          Components.utils.import("resource://gre/modules/Services.jsm");
+
+          return Services.vc.compare(arguments[0], arguments[1]);
+        """, script_args=(build_info['version'],
+                          self.update_status['build_pre']['version']))
+
+        self.assertEqual(version_check, 0,
+                         'An update from version {} to {} has been unexpectedly applied'.format(
+                             self.update_status['build_pre']['version'],
+                             build_info['version']))
+
+        # Check that the build id of the source build and the current build are identical
+        self.assertEqual(build_info['buildid'],
+                         self.update_status['build_pre']['buildid'],
+                         'The build id has been unexpectedly changed from {} to {}'.format(
+                             self.update_status['build_pre']['buildid'], build_info['buildid']))
 
     def download_update(self, window, wait_for_finish=True, timeout=TIMEOUT_UPDATE_DOWNLOAD):
         """ Download the update patch.
@@ -222,20 +225,19 @@ class UpdateTestCase(FirefoxTestCase):
 
             :param dialog: Instance of :class:`UpdateWizardDialog`.
             """
-            prefs = Preferences(lambda: self.marionette)
-            prefs.set_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE, dialog.window_type)
+            self.marionette.set_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE, dialog.window_type)
 
             try:
                 # If updates have already been found, proceed to download
                 if dialog.wizard.selected_panel in [dialog.wizard.updates_found_basic,
-                                                    dialog.wizard.updates_found_billboard,
                                                     dialog.wizard.error_patching,
                                                     ]:
                     dialog.select_next_page()
 
                 # If incompatible add-on are installed, skip over the wizard page
                 # TODO: Remove once we no longer support version Firefox 45.0ESR
-                if self.utils.compare_version(self.appinfo.version, '49.0a1') == -1:
+                if self.puppeteer.utils.compare_version(self.puppeteer.appinfo.version,
+                                                        '49.0a1') == -1:
                     if dialog.wizard.selected_panel == dialog.wizard.incompatible_list:
                         dialog.select_next_page()
 
@@ -263,7 +265,7 @@ class UpdateTestCase(FirefoxTestCase):
                                     dialog.wizard.selected_panel))
 
             finally:
-                prefs.restore_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE)
+                self.marionette.clear_pref(self.PREF_APP_UPDATE_ALTWINDOWTYPE)
 
         # The old update wizard dialog has to be handled differently. It's necessary
         # for fallback updates and invalid add-on versions.
@@ -278,22 +280,6 @@ class UpdateTestCase(FirefoxTestCase):
             Wait(self.marionette).until(lambda _: (
                 window.deck.selected_panel != window.deck.download_and_install),
                 message='Download of the update has been started.')
-
-        # In case of update failures, clicking the update button will open the
-        # old update wizard dialog.
-        if window.deck.selected_panel == window.deck.apply_billboard:
-            dialog = self.browser.open_window(
-                callback=lambda _: window.deck.update_button.click(),
-                expected_window_class=UpdateWizardDialog
-            )
-            Wait(self.marionette).until(
-                lambda _: dialog.wizard.selected_panel == dialog.wizard.updates_found_basic,
-                message='An update has been found.')
-
-            download_via_update_wizard(dialog)
-            dialog.close()
-
-            return
 
         if wait_for_finish:
             start_time = datetime.now()
@@ -319,23 +305,25 @@ class UpdateTestCase(FirefoxTestCase):
             self.wait_for_update_applied(about_window)
 
         finally:
-            self.updates[self.current_update_index]['patch'] = self.patch_info
+            self.update_status['patch'] = self.patch_info
 
         if force_fallback:
             # Set the downloaded update into failed state
             self.software_update.force_fallback()
 
         # Restart Firefox to apply the downloaded update
-        self.restart()
+        self.restart(callback=lambda: about_window.deck.apply.button.click())
 
     def download_and_apply_forced_update(self):
+        self.check_update_not_applied()
+
         # The update wizard dialog opens automatically after the restart but with a short delay
         dialog = Wait(self.marionette, ignored_exceptions=[NoSuchWindowException]).until(
-            lambda _: self.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
+            lambda _: self.puppeteer.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
         )
 
         # In case of a broken complete update the about window has to be used
-        if self.updates[self.current_update_index]['patch']['is_complete']:
+        if self.update_status['patch']['is_complete']:
             about_window = None
             try:
                 self.assertEqual(dialog.wizard.selected_panel,
@@ -353,9 +341,13 @@ class UpdateTestCase(FirefoxTestCase):
                 self.wait_for_update_applied(about_window)
 
             finally:
-                if about_window:
-                    self.updates[self.current_update_index]['patch'] = self.patch_info
+                self.update_status['patch'] = self.patch_info
 
+            # Restart Firefox to apply the downloaded fallback update
+            self.assertIsNotNone(about_window)
+            self.restart(callback=lambda: about_window.deck.apply.button.click())
+
+        # For a broken partial update, the software update window is used
         else:
             try:
                 self.assertEqual(dialog.wizard.selected_panel,
@@ -363,13 +355,12 @@ class UpdateTestCase(FirefoxTestCase):
 
                 # Start downloading the fallback update
                 self.download_update(dialog)
-                dialog.close()
 
             finally:
-                self.updates[self.current_update_index]['patch'] = self.patch_info
+                self.update_status['patch'] = self.patch_info
 
-        # Restart Firefox to apply the update
-        self.restart()
+            # Restart Firefox to apply the downloaded fallback update
+            self.restart(callback=lambda: dialog.wizard.finish_button.click())
 
     def read_update_log(self):
         """Read the content of the update log file for the last update attempt."""
@@ -391,28 +382,17 @@ class UpdateTestCase(FirefoxTestCase):
         self.logger.info('Clean-up update staging directory: {}'.format(path))
         mozfile.remove(path)
 
-    def restore_config_files(self):
-        # Reset channel-prefs.js file if modified
-        try:
-            if self.default_update_channel:
-                path = self.default_update_channel['path']
-                self.logger.info('Restoring channel defaults for: {}'.format(path))
-                with open(path, 'w') as f:
-                    f.write(self.default_update_channel['content'])
-        except IOError:
-            self.logger.error('Failed to reset the default update channel.',
-                              exc_info=True)
+    def restart(self, *args, **kwargs):
+        super(UpdateTestCase, self).restart(*args, **kwargs)
 
-        # Reset update-settings.ini file if modified
-        try:
-            if self.default_mar_channels:
-                path = self.default_mar_channels['path']
-                self.logger.info('Restoring mar channel defaults for: {}'.format(path))
-                with open(path, 'w') as f:
-                    f.write(self.default_mar_channels['content'])
-        except IOError:
-            self.logger.error('Failed to reset the default mar channels.',
-                              exc_info=True)
+        # After a restart default preference values as set in the former session are lost.
+        # Make sure that any of those are getting restored.
+        self.set_preferences_defaults()
+
+    def set_preferences_defaults(self):
+        """Set the default value for specific preferences to force its usage."""
+        if self.update_url:
+            self.software_update.update_url = self.update_url
 
     def wait_for_download_finished(self, window, timeout=TIMEOUT_UPDATE_DOWNLOAD):
         """ Waits until download is completed.

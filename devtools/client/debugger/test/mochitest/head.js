@@ -1,4 +1,4 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+  /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
@@ -29,9 +29,13 @@ promise = Cu.import("resource://devtools/shared/deprecated-sync-thenables.js", {
 const EXAMPLE_URL = "http://example.com/browser/devtools/client/debugger/test/mochitest/";
 const FRAME_SCRIPT_URL = getRootDirectory(gTestPath) + "code_frame-script.js";
 const CHROME_URL = "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/";
-const CHROME_URI = Services.io.newURI(CHROME_URL, null, null);
+const CHROME_URI = Services.io.newURI(CHROME_URL);
+
+Services.prefs.setBoolPref("devtools.debugger.new-debugger-frontend", false);
 
 registerCleanupFunction(function* () {
+  Services.prefs.clearUserPref("devtools.debugger.new-debugger-frontend");
+
   info("finish() was called, cleaning up...");
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
 
@@ -48,8 +52,12 @@ registerCleanupFunction(function* () {
   DebuggerServer.destroy();
 
   // Debugger tests use a lot of memory, so force a GC to help fragmentation.
-  info("Forcing GC after debugger test.");
-  Cu.forceGC();
+  info("Forcing GC/CC after debugger test.");
+  yield new Promise(resolve => {
+    Cu.forceGC();
+    Cu.forceCC();
+    Cu.schedulePreciseGC(resolve);
+  });
 });
 
 // Import the GCLI test helper
@@ -104,12 +112,10 @@ this.removeTab = function removeTab(aTab, aWindow) {
   let targetBrowser = targetWindow.gBrowser;
   let tabContainer = targetBrowser.tabContainer;
 
-  tabContainer.addEventListener("TabClose", function onClose(aEvent) {
-    tabContainer.removeEventListener("TabClose", onClose, false);
-
+  tabContainer.addEventListener("TabClose", function (aEvent) {
     info("Tab removed and finished closing.");
     deferred.resolve();
-  }, false);
+  }, {once: true});
 
   targetBrowser.removeTab(aTab);
   return deferred.promise;
@@ -442,12 +448,6 @@ function waitForClientEvents(aPanel, aEventName, aEventRepeat = 1) {
   return deferred.promise;
 }
 
-function waitForClipboardPromise(setup, expected) {
-  return new Promise((resolve, reject) => {
-    SimpleTest.waitForClipboard(expected, setup, resolve, reject);
-  });
-}
-
 function ensureThreadClientState(aPanel, aState) {
   let thread = aPanel.panelWin.gThreadClient;
   let state = thread.state;
@@ -668,9 +668,7 @@ AddonDebugger.prototype = {
   }),
 
   destroy: Task.async(function* () {
-    let deferred = promise.defer();
-    this.client.close(deferred.resolve);
-    yield deferred.promise;
+    yield this.client.close();
     yield this.debuggerPanel._toolbox.destroy();
     this.frame.remove();
     window.removeEventListener("message", this._onMessage);
@@ -755,6 +753,9 @@ AddonDebugger.prototype = {
   }),
 
   _onMessage: function (event) {
+    if (typeof(event.data) !== "string") {
+      return;
+    }
     let json = JSON.parse(event.data);
     switch (json.name) {
       case "toolbox-title":
@@ -1084,11 +1085,7 @@ function connect(client) {
 
 function close(client) {
   info("Waiting for client to close.\n");
-  return new Promise(function (resolve) {
-    client.close(() => {
-      resolve();
-    });
-  });
+  return client.close();
 }
 
 function listTabs(client) {
@@ -1353,4 +1350,3 @@ function* initWorkerDebugger(TAB_URL, WORKER_URL) {
 
   return {client, tab, tabClient, workerClient, toolbox, gDebugger};
 }
-

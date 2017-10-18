@@ -11,8 +11,6 @@ if CONFIG['OS_TARGET'] in ('WINNT', 'Darwin', 'Android'):
 else:
     Library('mozglue')
 
-SDK_LIBRARY = True
-
 if CONFIG['OS_TARGET'] == 'Android':
     SOURCES += [
         'BionicGlue.cpp',
@@ -32,7 +30,7 @@ if CONFIG['OS_TARGET'] == 'WINNT':
 
 if not CONFIG['JS_STANDALONE']:
 
-    if CONFIG['MOZ_MEMORY'] and (CONFIG['MOZ_SYSTEM_JEMALLOC'] or FORCE_SHARED_LIB):
+    if CONFIG['MOZ_MEMORY'] and FORCE_SHARED_LIB:
         pass
         # TODO: SHARED_LIBRARY_LIBS go here
     else:
@@ -52,14 +50,6 @@ if not CONFIG['JS_STANDALONE']:
         DISABLE_STL_WRAPPING = True
         OS_LIBS += [
             'version',
-        ]
-
-    if CONFIG['MOZ_NUWA_PROCESS']:
-        EXPORTS.ipc += [
-            'Nuwa.h',
-        ]
-        SOURCES += [
-            'Nuwa.cpp',
         ]
 
     EXPORTS.mozilla += [
@@ -89,16 +79,12 @@ if not CONFIG['JS_STANDALONE']:
             'zlib',
         ]
 
-    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-        SOURCES += [
-            'cpuacct.c',
-        ]
-
 USE_LIBS += [
     'mfbt',
 ]
 
 DEFINES['IMPL_MFBT'] = True
+LIBRARY_DEFINES['MOZ_HAS_MOZGLUE'] = True
 
 LDFLAGS += CONFIG['MOZ_GLUE_WRAP_LDFLAGS']
 

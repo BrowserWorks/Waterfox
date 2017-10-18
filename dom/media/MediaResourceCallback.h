@@ -34,29 +34,11 @@ public:
   // Notify is duration is known to this MediaResource.
   virtual void SetInfinite(bool aInfinite) {}
 
-  // Notify if seeking is supported by this MediaResource.
-  virtual void SetMediaSeekable(bool aMediaSeekable) {}
-
-  // Notify that server connection is closed.
-  virtual void ResetConnectionState() {}
-
-  // Used by RtspMediaResource which has an unusual sequence
-  // to setup the decoder.
-  virtual nsresult FinishDecoderSetup(MediaResource* aResource) {
-    return NS_OK;
-  }
-
   // Notify that a network error is encountered.
   virtual void NotifyNetworkError() {}
 
-  // Notify that decoding has failed.
-  virtual void NotifyDecodeError() {}
-
   // Notify that data arrives on the stream and is read into the cache.
   virtual void NotifyDataArrived() {}
-
-  // Notify that MediaResource has received some data.
-  virtual void NotifyBytesDownloaded() {}
 
   // Notify download is ended.
   // NOTE: this can be called with the media cache lock held, so don't

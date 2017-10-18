@@ -2,14 +2,14 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://services-sync/record.js");
-Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
+initTestLogging("Trace");
 
-function test_toJSON() {
+add_test(function test_toJSON() {
   _("Create a record, for now without a TTL.");
   let wbo = new WBORecord("coll", "a_record");
   wbo.modified = 12345;
@@ -24,13 +24,14 @@ function test_toJSON() {
   do_check_false("ttl" in json);
 
   _("Set a TTL, make sure it's present in the JSON representation.");
-  wbo.ttl = 30*60;
+  wbo.ttl = 30 * 60;
   json = JSON.parse(JSON.stringify(wbo));
-  do_check_eq(json.ttl, 30*60);
-}
+  do_check_eq(json.ttl, 30 * 60);
+  run_next_test();
+});
 
 
-function test_fetch() {
+add_task(async function test_fetch() {
   let record = {id: "asdf-1234-asdf-1234",
                 modified: 2454725.98283,
                 payload: JSON.stringify({cheese: "roquefort"})};
@@ -47,12 +48,11 @@ function test_fetch() {
     "/record2": httpd_handler(200, "OK", JSON.stringify(record2)),
     "/coll":    httpd_handler(200, "OK", JSON.stringify(coll))
   });
-  do_test_pending();
 
   try {
     _("Fetching a WBO record");
     let rec = new WBORecord("coll", "record");
-    rec.fetch(Service.resource(server.baseURI + "/record"));
+    await rec.fetch(Service.resource(server.baseURI + "/record"));
     do_check_eq(rec.id, "asdf-1234-asdf-1234"); // NOT "record"!
 
     do_check_eq(rec.modified, 2454725.98283);
@@ -60,7 +60,7 @@ function test_fetch() {
     do_check_eq(rec.payload.cheese, "roquefort");
 
     _("Fetching a WBO record using the record manager");
-    let rec2 = Service.recordManager.get(server.baseURI + "/record2");
+    let rec2 = await Service.recordManager.get(server.baseURI + "/record2");
     do_check_eq(rec2.id, "record2");
     do_check_eq(rec2.modified, 2454725.98284);
     do_check_eq(typeof(rec2.payload), "object");
@@ -73,14 +73,6 @@ function test_fetch() {
     do_check_eq(rec3.collection, "tabs");
 
   } finally {
-    server.stop(do_test_finished);
+    await promiseStopServer(server);
   }
-}
-
-function run_test() {
-  initTestLogging("Trace");
-  ensureLegacyIdentityManager();
-
-  test_toJSON();
-  test_fetch();
-}
+});

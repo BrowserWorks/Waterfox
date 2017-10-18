@@ -49,7 +49,7 @@ this.DownloadsViewUI = {
  * HistoryDownloadElementShell and the DownloadsViewItem for the panel. The
  * history view may use a HistoryDownload object in place of a Download object.
  */
-this.DownloadsViewUI.DownloadElementShell = function () {}
+this.DownloadsViewUI.DownloadElementShell = function() {}
 
 this.DownloadsViewUI.DownloadElementShell.prototype = {
   /**
@@ -114,7 +114,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     this.element.setAttribute("state",
                               DownloadsCommon.stateOfDownload(this.download));
 
-    if (this.download.error &&
+    if (!this.download.succeeded && this.download.error &&
         this.download.error.becauseBlockedByReputationCheck) {
       this.element.setAttribute("verdict",
                                 this.download.error.reputationCheckVerdict);
@@ -155,6 +155,13 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       this.element.setAttribute("progressmode", "undetermined");
     }
 
+    if (this.download.stopped && this.download.canceled &&
+        this.download.hasPartialData) {
+      this.element.setAttribute("progresspaused", "true");
+    } else {
+      this.element.removeAttribute("progresspaused");
+    }
+
     // Dispatch the ValueChange event for accessibility, if possible.
     if (this._progressElement) {
       let event = this.element.ownerDocument.createEvent("Events");
@@ -162,49 +169,36 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       this._progressElement.dispatchEvent(event);
     }
 
-    let status = this.statusTextAndTip;
-    this.element.setAttribute("status", status.text);
-    this.element.setAttribute("statusTip", status.tip);
+    let labels = this.statusLabels;
+    this.element.setAttribute("status", labels.status);
+    this.element.setAttribute("hoverStatus", labels.hoverStatus);
+    this.element.setAttribute("fullStatus", labels.fullStatus);
   },
 
   lastEstimatedSecondsLeft: Infinity,
 
   /**
-   * Returns the text for the status line and the associated tooltip. These are
-   * returned by a single property because they are computed together. The
-   * result may be overridden by derived objects.
+   * Returns the labels for the status of normal, full, and hovering cases. These
+   * are returned by a single property because they are computed together.
    */
-  get statusTextAndTip() {
-    return this.rawStatusTextAndTip;
-  },
-
-  /**
-   * Derived objects may call this to get the status text.
-   */
-  get rawStatusTextAndTip() {
+  get statusLabels() {
     let s = DownloadsCommon.strings;
 
-    let text = "";
-    let tip = "";
+    let status = "";
+    let hoverStatus = "";
+    let fullStatus = "";
 
     if (!this.download.stopped) {
       let totalBytes = this.download.hasProgress ? this.download.totalBytes
                                                  : -1;
-      // By default, extended status information including the individual
-      // download rate is displayed in the tooltip. The history view overrides
-      // the getter and displays the datails in the main area instead.
-      [text] = DownloadUtils.getDownloadStatusNoRate(
-                                          this.download.currentBytes,
-                                          totalBytes,
-                                          this.download.speed,
-                                          this.lastEstimatedSecondsLeft);
       let newEstimatedSecondsLeft;
-      [tip, newEstimatedSecondsLeft] = DownloadUtils.getDownloadStatus(
+      [status, newEstimatedSecondsLeft] = DownloadUtils.getDownloadStatus(
                                           this.download.currentBytes,
                                           totalBytes,
                                           this.download.speed,
                                           this.lastEstimatedSecondsLeft);
       this.lastEstimatedSecondsLeft = newEstimatedSecondsLeft;
+      hoverStatus = status;
     } else if (this.download.canceled && this.download.hasPartialData) {
       let totalBytes = this.download.hasProgress ? this.download.totalBytes
                                                  : -1;
@@ -213,23 +207,31 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
 
       // We use the same XUL label to display both the state and the amount
       // transferred, for example "Paused -  1.1 MB".
-      text = s.statusSeparatorBeforeNumber(s.statePaused, transfer);
+      status = s.statusSeparatorBeforeNumber(s.statePaused, transfer);
+      hoverStatus = status;
     } else if (!this.download.succeeded && !this.download.canceled &&
                !this.download.error) {
-      text = s.stateStarting;
+      status = s.stateStarting;
+      hoverStatus = status;
     } else {
       let stateLabel;
 
-      if (this.download.succeeded) {
+      if (this.download.succeeded && !this.download.target.exists) {
+        stateLabel = s.fileMovedOrMissing;
+        hoverStatus = stateLabel;
+      } else if (this.download.succeeded) {
         // For completed downloads, show the file size (e.g. "1.5 MB").
         if (this.download.target.size !== undefined) {
           let [size, unit] =
             DownloadUtils.convertByteUnits(this.download.target.size);
           stateLabel = s.sizeWithUnits(size, unit);
+          status = s.statusSeparator(s.stateCompleted, stateLabel);
         } else {
           // History downloads may not have a size defined.
           stateLabel = s.sizeUnknown;
+          status = s.stateCompleted;
         }
+        hoverStatus = status;
       } else if (this.download.canceled) {
         stateLabel = s.stateCanceled;
       } else if (this.download.error.becauseBlockedByParentalControls) {
@@ -241,17 +243,21 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       }
 
       let referrer = this.download.source.referrer || this.download.source.url;
-      let [displayHost, fullHost] = DownloadUtils.getURIHost(referrer);
+      let [displayHost /* ,fullHost */] = DownloadUtils.getURIHost(referrer);
 
       let date = new Date(this.download.endTime);
-      let [displayDate, fullDate] = DownloadUtils.getReadableDates(date);
+      let [displayDate /* ,fullDate */] = DownloadUtils.getReadableDates(date);
 
       let firstPart = s.statusSeparator(stateLabel, displayHost);
-      text = s.statusSeparator(firstPart, displayDate);
-      tip = s.statusSeparator(fullHost, fullDate);
+      fullStatus = s.statusSeparator(firstPart, displayDate);
+      status = status || stateLabel;
     }
 
-    return { text, tip: tip || text };
+    return {
+      status,
+      hoverStatus: hoverStatus || fullStatus,
+      fullStatus: fullStatus || status,
+    };
   },
 
   /**
@@ -274,8 +280,6 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     }
     throw new Error("Unexpected reputationCheckVerdict: " +
                     this.download.error.reputationCheckVerdict);
-    // return anyway to avoid a JS strict warning.
-    return [null, null];
   },
 
   /**
@@ -301,6 +305,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       } else if (action == "confirmBlock") {
         return this.download.confirmBlock();
       }
+      return Promise.resolve();
     }).catch(Cu.reportError);
   },
 
@@ -321,18 +326,18 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
    */
   get currentDefaultCommandName() {
     switch (DownloadsCommon.stateOfDownload(this.download)) {
-      case Ci.nsIDownloadManager.DOWNLOAD_NOTSTARTED:
+      case DownloadsCommon.DOWNLOAD_NOTSTARTED:
         return "downloadsCmd_cancel";
-      case Ci.nsIDownloadManager.DOWNLOAD_FAILED:
-      case Ci.nsIDownloadManager.DOWNLOAD_CANCELED:
+      case DownloadsCommon.DOWNLOAD_FAILED:
+      case DownloadsCommon.DOWNLOAD_CANCELED:
         return "downloadsCmd_retry";
-      case Ci.nsIDownloadManager.DOWNLOAD_PAUSED:
+      case DownloadsCommon.DOWNLOAD_PAUSED:
         return "downloadsCmd_pauseResume";
-      case Ci.nsIDownloadManager.DOWNLOAD_FINISHED:
+      case DownloadsCommon.DOWNLOAD_FINISHED:
         return "downloadsCmd_open";
-      case Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL:
+      case DownloadsCommon.DOWNLOAD_BLOCKED_PARENTAL:
         return "downloadsCmd_openReferrer";
-      case Ci.nsIDownloadManager.DOWNLOAD_DIRTY:
+      case DownloadsCommon.DOWNLOAD_DIRTY:
         return "downloadsCmd_showBlockedInfo";
     }
     return "";

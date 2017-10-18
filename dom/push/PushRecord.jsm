@@ -10,24 +10,21 @@ const Cu = Components.utils;
 const Cr = Components.results;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging",
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
                                   "resource://gre/modules/Messaging.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 
 this.EXPORTED_SYMBOLS = ["PushRecord"];
 
-const prefs = new Preferences("dom.push.");
+const prefs = Services.prefs.getBranch("dom.push.");
 
 /**
  * The push subscription record, stored in IndexedDB.
@@ -52,7 +49,7 @@ PushRecord.prototype = {
   setQuota(suggestedQuota) {
     if (this.quotaApplies()) {
       let quota = +suggestedQuota;
-      this.quota = quota >= 0 ? quota : prefs.get("maxQuotaPerSubscription");
+      this.quota = quota >= 0 ? quota : prefs.getIntPref("maxQuotaPerSubscription");
     } else {
       this.quota = Infinity;
     }
@@ -60,7 +57,7 @@ PushRecord.prototype = {
 
   resetQuota() {
     this.quota = this.quotaApplies() ?
-                 prefs.get("maxQuotaPerSubscription") : Infinity;
+                 prefs.getIntPref("maxQuotaPerSubscription") : Infinity;
   },
 
   updateQuota(lastVisit) {
@@ -83,9 +80,8 @@ PushRecord.prototype = {
         Math.max(0, (Date.now() - lastVisit) / 24 / 60 / 60 / 1000);
       this.quota = Math.min(
         Math.round(8 * Math.pow(daysElapsed, -0.8)),
-        prefs.get("maxQuotaPerSubscription")
+        prefs.getIntPref("maxQuotaPerSubscription")
       );
-      Services.telemetry.getHistogramById("PUSH_API_QUOTA_RESET_TO").add(this.quota);
     }
   },
 
@@ -109,7 +105,7 @@ PushRecord.prototype = {
     // Drop older message IDs from the end of the list.
     let maxRecentMessageIDs = Math.min(
       this.recentMessageIDs.length,
-      Math.max(prefs.get("maxRecentMessageIDsPerSubscription"), 0)
+      Math.max(prefs.getIntPref("maxRecentMessageIDsPerSubscription"), 0)
     );
     this.recentMessageIDs.length = maxRecentMessageIDs || 0;
   },
@@ -123,11 +119,6 @@ PushRecord.prototype = {
       return;
     }
     this.quota = Math.max(this.quota - 1, 0);
-    // We check for ctime > 0 to skip older records that did not have ctime.
-    if (this.isExpired() && this.ctime > 0) {
-      let duration = Date.now() - this.ctime;
-      Services.telemetry.getHistogramById("PUSH_API_QUOTA_EXPIRATION_TIME").add(duration / 1000);
-    }
   },
 
   /**
@@ -138,7 +129,7 @@ PushRecord.prototype = {
    *  visited the site, or `-Infinity` if the site is not in the user's history.
    *  The time is expressed in milliseconds since Epoch.
    */
-  getLastVisit: Task.async(function* () {
+  async getLastVisit() {
     if (!this.quotaApplies() || this.isTabOpen()) {
       // If the registration isn't subject to quota, or the user already
       // has the site open, skip expensive database queries.
@@ -146,7 +137,7 @@ PushRecord.prototype = {
     }
 
     if (AppConstants.MOZ_ANDROID_HISTORY) {
-      let result = yield Messaging.sendRequestForResult({
+      let result = await EventDispatcher.instance.sendRequestForResult({
         type: "History:GetPrePathLastVisitedTimeMilliseconds",
         prePath: this.uri.prePath,
       });
@@ -165,13 +156,13 @@ PushRecord.prototype = {
       Ci.nsINavHistoryService.TRANSITION_REDIRECT_TEMPORARY
     ].join(",");
 
-    let db =  yield PlacesUtils.promiseDBConnection();
+    let db =  await PlacesUtils.promiseDBConnection();
     // We're using a custom query instead of `nsINavHistoryQueryOptions`
     // because the latter doesn't expose a way to filter by transition type:
     // `setTransitions` performs a logical "and," but we want an "or." We
-    // also avoid an unneeded left join on `moz_favicons`, and an `ORDER BY`
+    // also avoid an unneeded left join with favicons, and an `ORDER BY`
     // clause that emits a suboptimal index warning.
-    let rows = yield db.executeCached(
+    let rows = await db.executeCached(
       `SELECT MAX(visit_date) AS lastVisit
        FROM moz_places p
        JOIN moz_historyvisits ON p.id = place_id
@@ -193,7 +184,7 @@ PushRecord.prototype = {
     let lastVisit = rows[0].getResultByName("lastVisit");
 
     return lastVisit / 1000;
-  }),
+  },
 
   isTabOpen() {
     let windows = Services.wm.getEnumerator("navigator:browser");
@@ -222,7 +213,7 @@ PushRecord.prototype = {
    * permission check.
    */
   hasPermission() {
-    if (this.systemRecord || prefs.get("testing.ignorePermission")) {
+    if (this.systemRecord || prefs.getBoolPref("testing.ignorePermission", false)) {
       return true;
     }
     let permission = Services.perms.testExactPermissionFromPrincipal(
@@ -276,6 +267,7 @@ PushRecord.prototype = {
       lastPush: this.lastPush,
       pushCount: this.pushCount,
       p256dhKey: this.p256dhPublicKey,
+      p256dhPrivateKey: this.p256dhPrivateKey,
       authenticationSecret: this.authenticationSecret,
       appServerKey: this.appServerKey,
       quota: this.quotaApplies() ? this.quota : -1,
@@ -295,12 +287,12 @@ Object.defineProperties(PushRecord.prototype, {
       }
       let principal = principals.get(this);
       if (!principal) {
-        let url = this.scope;
-        if (this.originAttributes) {
-          // Allow tests to omit origin attributes.
-          url += this.originAttributes;
-        }
-        principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(url);
+        let uri = Services.io.newURI(this.scope);
+        // Allow tests to omit origin attributes.
+        let originSuffix = this.originAttributes || "";
+        let originAttributes =
+        principal = Services.scriptSecurityManager.createCodebasePrincipal(uri,
+          ChromeUtils.createOriginAttributesFromOrigin(originSuffix));
         principals.set(this, principal);
       }
       return principal;

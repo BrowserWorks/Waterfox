@@ -25,9 +25,11 @@
 
 #include <algorithm>
 #include <ctype.h>
+#include <limits>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <type_traits>
 
 #include <media/stagefright/foundation/ABitReader.h>
 #include <media/stagefright/foundation/ABuffer.h>
@@ -42,6 +44,34 @@ static const uint32_t kMAX_ALLOCATION =
     (SIZE_MAX < INT32_MAX ? SIZE_MAX : INT32_MAX) - 128;
 
 namespace stagefright {
+
+static const int64_t OVERFLOW_ERROR = -INT64_MAX;
+
+// Calculate units*1,000,000/hz, trying to avoid overflow.
+// Return OVERFLOW_ERROR in case of unavoidable overflow, or div by hz==0.
+int64_t unitsToUs(int64_t units, int64_t hz) {
+    if (hz == 0) {
+        return OVERFLOW_ERROR;
+    }
+    const int64_t MAX_S = INT64_MAX / 1000000;
+    if (std::abs(units) <= MAX_S) {
+        return units * 1000000 / hz;
+    }
+    // Hard case, avoid overflow-inducing 'units*1M' by calculating:
+    // (units / hz) * 1M + ((units % hz) * 1M) / hz.
+    //              ^--  ^--             ^-- overflows still possible
+    int64_t units_div_hz = units / hz;
+    int64_t units_rem_hz = units % hz;
+    if (std::abs(units_div_hz) > MAX_S || std::abs(units_rem_hz) > MAX_S) {
+        return OVERFLOW_ERROR;
+    }
+    int64_t quot_us = units_div_hz * 1000000;
+    int64_t rem_us = (units_rem_hz * 1000000) / hz;
+    if (std::abs(quot_us) > INT64_MAX - std::abs(rem_us)) {
+        return OVERFLOW_ERROR;
+    }
+    return quot_us + rem_us;
+}
 
 class MPEG4Source : public MediaSource {
 public:
@@ -175,7 +205,7 @@ static void hexdump(const void *_data, size_t size) {
     const uint8_t *data = (const uint8_t *)_data;
     size_t offset = 0;
     while (offset < size) {
-        printf("0x%04x  ", offset);
+        printf("0x%04x  ", static_cast<unsigned int>(offset));
 
         size_t n = size - offset;
         if (n > 16) {
@@ -238,6 +268,9 @@ static const char *FourCC2MIME(uint32_t fourcc) {
 
         case FOURCC('V', 'P', '6', 'F'):
             return MEDIA_MIMETYPE_VIDEO_VP6;
+
+        case FOURCC('v', 'p', '0', '9'):
+            return MEDIA_MIMETYPE_VIDEO_VP9;
 
         default:
             ALOGE("Unknown MIME type %08x", fourcc);
@@ -378,7 +411,7 @@ status_t MPEG4Extractor::readMetaData() {
         // The parseChunk function returns UNKNOWN_ERROR to skip
         // some boxes we don't want to handle. Filter that error
         // code but return others so e.g. I/O errors propagate.
-        if (err != OK && err != (status_t) UNKNOWN_ERROR) {
+        if (err != OK && err != static_cast<status_t>(UNKNOWN_ERROR)) {
           ALOGW("Error %d parsing chunck at offset %lld looking for first track",
               err, (long long)offset);
           break;
@@ -594,7 +627,7 @@ status_t MPEG4Extractor::parseDrmSINF(off64_t *offset, off64_t data_offset) {
         return ERROR_MALFORMED;
     }
 
-    return UNKNOWN_ERROR;  // Return a dummy error.
+    return static_cast<status_t>(UNKNOWN_ERROR);  // Return a dummy error.
 }
 
 struct PathAdder {
@@ -723,7 +756,6 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('m', 'o', 'o', 'f'):
         case FOURCC('t', 'r', 'a', 'f'):
         case FOURCC('m', 'f', 'r', 'a'):
-        case FOURCC('u', 'd', 't', 'a'):
         case FOURCC('i', 'l', 's', 't'):
         case FOURCC('s', 'i', 'n', 'f'):
         case FOURCC('s', 'c', 'h', 'i'):
@@ -813,7 +845,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 mInitCheck = OK;
 
                 if (!mIsDrm) {
-                    return UNKNOWN_ERROR;  // Return a dummy error.
+                    return static_cast<status_t>(UNKNOWN_ERROR);  // Return a dummy error.
                 } else {
                     return OK;
                 }
@@ -868,7 +900,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 }
                 entriesoffset += 4; // ignore media_rate_integer and media_rate_fraction.
                 if (media_time == -1 && i) {
-                    ALOGW("ignoring invalid empty edit", i);
+                    ALOGW("ignoring invalid empty edit");
                     break;
                 } else if (media_time == -1) {
                     // Starting offsets for tracks (streams) are represented by an initial empty edit.
@@ -1063,6 +1095,9 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
               return ERROR_MALFORMED;
             }
             mLastTrack->timescale = ntohl(timescale);
+            if (!mLastTrack->timescale) {
+                return ERROR_MALFORMED;
+            }
 
             // Now that we've parsed the media timescale, we can interpret
             // the edit list data.
@@ -1075,7 +1110,12 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                         < (ssize_t)sizeof(duration)) {
                     return ERROR_IO;
                 }
-                duration = ntoh64(duration);
+                // Avoid duration sets to -1, which is incorrect.
+                if (duration != -1) {
+                    duration = ntoh64(duration);
+                } else {
+                    duration = 0;
+                }
             } else {
                 uint32_t duration32;
                 if (mDataSource->readAt(
@@ -1086,13 +1126,18 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 // ffmpeg sets duration to -1, which is incorrect.
                 if (duration32 != 0xffffffff) {
                     duration = ntohl(duration32);
+                } else {
+                  duration = 0;
                 }
             }
-            if (!mLastTrack->timescale) {
+            if (duration < 0) {
                 return ERROR_MALFORMED;
             }
-            mLastTrack->meta->setInt64(
-                    kKeyDuration, (duration * 1000000) / mLastTrack->timescale);
+            int64_t duration_us = unitsToUs(duration, mLastTrack->timescale);
+            if (duration_us == OVERFLOW_ERROR) {
+                return ERROR_MALFORMED;
+            }
+            mLastTrack->meta->setInt64(kKeyDuration, duration_us);
 
             uint8_t lang[2];
             off64_t lang_offset;
@@ -1608,7 +1653,8 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
 
             if (mPath.Length() >= 2
                     && (mPath[mPath.Length() - 2] == FOURCC('m', 'p', '4', 'a') ||
-                       (mPath[mPath.Length() - 2] == FOURCC('e', 'n', 'c', 'a')))) {
+                       (mPath[mPath.Length() - 2] == FOURCC('e', 'n', 'c', 'a')) ||
+                       (mPath[mPath.Length() - 2] == FOURCC('w', 'a', 'v', 'e')))) {
                 // Information from the ESDS must be relied on for proper
                 // setup of sample rate and channel count for MPEG4 Audio.
                 // The generic header appears to only contain generic
@@ -1629,7 +1675,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('a', 'v', 'c', 'C'):
         {
             if (chunk_data_size < 7) {
-              ALOGE("short avcC chunk (%d bytes)", chunk_data_size);
+              ALOGE("short avcC chunk (%" PRId64 " bytes)", int64_t(chunk_data_size));
               return ERROR_MALFORMED;
             }
 
@@ -1669,7 +1715,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             char buffer[23];
             if (chunk_data_size != 7 &&
                 chunk_data_size != 23) {
-                ALOGE("Incorrect D263 box size %lld", chunk_data_size);
+                ALOGE("Incorrect D263 box size %" PRId64, chunk_data_size);
                 return ERROR_MALFORMED;
             }
 
@@ -1798,9 +1844,15 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 }
                 duration = ntohl(duration32);
             }
+            if (duration < 0) {
+                return ERROR_MALFORMED;
+            }
+            int64_t duration_us = unitsToUs(duration, mHeaderTimescale);
+            if (duration_us == OVERFLOW_ERROR) {
+                return ERROR_MALFORMED;
+            }
             if (duration && mHeaderTimescale) {
-                mFileMetaData->setInt64(
-                        kKeyMovieDuration, (duration * 1000000) / mHeaderTimescale);
+                mFileMetaData->setInt64(kKeyMovieDuration, duration_us);
             }
 
             *offset += chunk_size;
@@ -1927,7 +1979,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         {
             parseSegmentIndex(data_offset, chunk_data_size);
             *offset += chunk_size;
-            return UNKNOWN_ERROR; // stop parsing after sidx
+            return static_cast<status_t>(UNKNOWN_ERROR); // stop parsing after sidx
         }
 
         case FOURCC('w', 'a', 'v', 'e'):
@@ -1965,11 +2017,21 @@ void MPEG4Extractor::storeEditList()
     return;
   }
 
-  uint64_t segment_duration = (mLastTrack->segment_duration * 1000000) / mHeaderTimescale;
+  if (mLastTrack->segment_duration > uint64_t(INT64_MAX) ||
+      mLastTrack->empty_duration > uint64_t(INT64_MAX)) {
+    return;
+  }
+  uint64_t segment_duration =
+    uint64_t(unitsToUs(mLastTrack->segment_duration, mHeaderTimescale));
   // media_time is measured in media time scale units.
-  int64_t media_time = (mLastTrack->media_time * 1000000) / mLastTrack->timescale;
+  int64_t media_time = unitsToUs(mLastTrack->media_time, mLastTrack->timescale);
   // empty_duration is in the Movie Header Box's timescale.
-  int64_t empty_duration = (mLastTrack->empty_duration * 1000000) / mHeaderTimescale;
+  int64_t empty_duration = unitsToUs(mLastTrack->empty_duration, mHeaderTimescale);
+  if (segment_duration == OVERFLOW_ERROR ||
+      media_time == OVERFLOW_ERROR ||
+      empty_duration == OVERFLOW_ERROR) {
+    return;
+  }
   media_time -= empty_duration;
   mLastTrack->meta->setInt64(kKeyMediaTime, media_time);
 
@@ -2070,7 +2132,7 @@ status_t MPEG4Extractor::parseSegmentIndex(off64_t offset, size_t size) {
         return -EINVAL;
     }
 
-    uint64_t total_duration = 0;
+    int64_t total_duration = 0;
     for (unsigned int i = 0; i < referenceCount; i++) {
         uint32_t d1, d2, d3;
 
@@ -2093,11 +2155,18 @@ status_t MPEG4Extractor::parseSegmentIndex(off64_t offset, size_t size) {
         ALOGV(" item %d, %08x %08x %08x", i, d1, d2, d3);
         SidxEntry se;
         se.mSize = d1 & 0x7fffffff;
-        se.mDurationUs = 1000000LL * d2 / timeScale;
+        int64_t durationUs = unitsToUs(d2, timeScale);
+        if (durationUs == OVERFLOW_ERROR || durationUs > int64_t(UINT32_MAX)) {
+          return ERROR_MALFORMED;
+        }
+        se.mDurationUs = uint32_t(durationUs);
         mSidxEntries.AppendElement(se);
     }
 
-    mSidxDuration = total_duration * 1000000 / timeScale;
+    mSidxDuration = unitsToUs(total_duration, timeScale);
+    if (mSidxDuration == OVERFLOW_ERROR) {
+      return ERROR_MALFORMED;
+    }
     ALOGV("duration: %lld", mSidxDuration);
 
     if (!mLastTrack) {

@@ -1,4 +1,4 @@
-add_task(function* () {
+add_task(async function() {
   requestLongerTimeout(2);
 
   let testingList = [
@@ -30,35 +30,22 @@ add_task(function* () {
       tagName: "INPUT", methodName: "click event on the label element" },
   ];
 
-  if (navigator.platform.indexOf("Mac") == -1) {
-    // clicking buttons doesn't focus on mac, so skip this test
-    testingList.push(
-      { uri: "data:text/html,<body onload=\"setTimeout(function () {" +
-        "  var element = document.getElementById('target');" +
-        "  var event = document.createEvent('MouseEvent');" +
-        "  event.initMouseEvent('mousedown', true, true, window," +
-        "    0, 0, 0, 0, 0, false, false, false, false, 0, element);" +
-        "  element.dispatchEvent(event); }, 10);\">" +
-        "<button id='target'>button</button></body>",
-        tagName: "BUTTON", methodName: "mousedown event on the button element" });
-  }
-
-  yield BrowserTestUtils.withNewTab("about:blank", function*(bg) {
-    yield BrowserTestUtils.withNewTab("about:blank", function*(fg) {
+  await BrowserTestUtils.withNewTab("about:blank", async function(bg) {
+    await BrowserTestUtils.withNewTab("about:blank", async function(fg) {
       for (let test of testingList) {
         // Focus the foreground tab's content
         fg.focus();
 
         // Load the URIs.
-        yield BrowserTestUtils.loadURI(bg, test.uri);
-        yield BrowserTestUtils.browserLoaded(bg);
-        yield BrowserTestUtils.loadURI(fg, test.uri);
-        yield BrowserTestUtils.browserLoaded(fg);
+        await BrowserTestUtils.loadURI(bg, test.uri);
+        await BrowserTestUtils.browserLoaded(bg);
+        await BrowserTestUtils.loadURI(fg, test.uri);
+        await BrowserTestUtils.browserLoaded(fg);
 
         ok(true, "Test1: Both of the tabs are loaded");
 
         // Confirm that the contents should be able to steal focus from content.
-        yield ContentTask.spawn(fg, test, test => {
+        await ContentTask.spawn(fg, test, test => {
           return new Promise(res => {
             function f() {
               let e = content.document.activeElement;
@@ -76,7 +63,7 @@ add_task(function* () {
           });
         });
 
-        yield ContentTask.spawn(bg, test, test => {
+        await ContentTask.spawn(bg, test, test => {
           return new Promise(res => {
             function f() {
               let e = content.document.activeElement;
@@ -104,21 +91,21 @@ add_task(function* () {
         let originalFocus = Services.focus.focusedElement;
 
         // Load about:blank just to make sure that everything works nicely
-        yield BrowserTestUtils.loadURI(bg, "about:blank");
-        yield BrowserTestUtils.browserLoaded(bg);
-        yield BrowserTestUtils.loadURI(fg, "about:blank");
-        yield BrowserTestUtils.browserLoaded(fg);
+        await BrowserTestUtils.loadURI(bg, "about:blank");
+        await BrowserTestUtils.browserLoaded(bg);
+        await BrowserTestUtils.loadURI(fg, "about:blank");
+        await BrowserTestUtils.browserLoaded(fg);
 
         // Load the URIs.
-        yield BrowserTestUtils.loadURI(bg, test.uri);
-        yield BrowserTestUtils.browserLoaded(bg);
-        yield BrowserTestUtils.loadURI(fg, test.uri);
-        yield BrowserTestUtils.browserLoaded(fg);
+        await BrowserTestUtils.loadURI(bg, test.uri);
+        await BrowserTestUtils.browserLoaded(bg);
+        await BrowserTestUtils.loadURI(fg, test.uri);
+        await BrowserTestUtils.browserLoaded(fg);
 
         ok(true, "Test2: Both of the tabs are loaded");
 
         // Confirm that the contents should be able to steal focus from content.
-        yield ContentTask.spawn(fg, test, test => {
+        await ContentTask.spawn(fg, test, test => {
           return new Promise(res => {
             function f() {
               let e = content.document.activeElement;
@@ -136,7 +123,7 @@ add_task(function* () {
           });
         });
 
-        yield ContentTask.spawn(bg, test, test => {
+        await ContentTask.spawn(bg, test, test => {
           return new Promise(res => {
             function f() {
               let e = content.document.activeElement;

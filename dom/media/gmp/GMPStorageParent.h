@@ -24,12 +24,11 @@ public:
   void Shutdown();
 
 protected:
-  bool RecvOpen(const nsCString& aRecordName) override;
-  bool RecvRead(const nsCString& aRecordName) override;
-  bool RecvWrite(const nsCString& aRecordName,
-                 InfallibleTArray<uint8_t>&& aBytes) override;
-  bool RecvGetRecordNames() override;
-  bool RecvClose(const nsCString& aRecordName) override;
+  mozilla::ipc::IPCResult RecvOpen(const nsCString& aRecordName) override;
+  mozilla::ipc::IPCResult RecvRead(const nsCString& aRecordName) override;
+  mozilla::ipc::IPCResult RecvWrite(const nsCString& aRecordName,
+                                    InfallibleTArray<uint8_t>&& aBytes) override;
+  mozilla::ipc::IPCResult RecvClose(const nsCString& aRecordName) override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
 private:

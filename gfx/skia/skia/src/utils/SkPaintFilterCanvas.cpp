@@ -29,15 +29,11 @@ private:
     bool                         fShouldDraw;
 };
 
-SkPaintFilterCanvas::SkPaintFilterCanvas(int width, int height) : INHERITED(width, height) { }
-
 SkPaintFilterCanvas::SkPaintFilterCanvas(SkCanvas *canvas)
     : INHERITED(canvas->imageInfo().width(), canvas->imageInfo().height()) {
 
     // Transfer matrix & clip state before adding the target canvas.
-    SkIRect devClip;
-    canvas->getClipDeviceBounds(&devClip);
-    this->clipRect(SkRect::Make(devClip));
+    this->clipRect(SkRect::Make(canvas->getDeviceClipBounds()));
     this->setMatrix(canvas->getTotalMatrix());
 
     this->addCanvas(canvas);
@@ -84,6 +80,14 @@ void SkPaintFilterCanvas::onDrawOval(const SkRect& rect, const SkPaint& paint) {
     AutoPaintFilter apf(this, kOval_Type, paint);
     if (apf.shouldDraw()) {
         this->INHERITED::onDrawOval(rect, *apf.paint());
+    }
+}
+
+void SkPaintFilterCanvas::onDrawArc(const SkRect& rect, SkScalar startAngle, SkScalar sweepAngle,
+                                    bool useCenter, const SkPaint& paint) {
+    AutoPaintFilter apf(this, kArc_Type, paint);
+    if (apf.shouldDraw()) {
+        this->INHERITED::onDrawArc(rect, startAngle, sweepAngle, useCenter, *apf.paint());
     }
 }
 
@@ -143,24 +147,20 @@ void SkPaintFilterCanvas::onDrawImageNine(const SkImage* image, const SkIRect& c
     }
 }
 
-void SkPaintFilterCanvas::onDrawVertices(VertexMode vmode, int vertexCount,
-                                         const SkPoint vertices[], const SkPoint texs[],
-                                         const SkColor colors[], SkXfermode* xmode,
-                                         const uint16_t indices[], int indexCount,
-                                         const SkPaint& paint) {
+void SkPaintFilterCanvas::onDrawVerticesObject(const SkVertices* vertices, SkBlendMode bmode,
+                                               const SkPaint& paint) {
     AutoPaintFilter apf(this, kVertices_Type, paint);
     if (apf.shouldDraw()) {
-        this->INHERITED::onDrawVertices(vmode, vertexCount, vertices, texs, colors, xmode, indices,
-                                        indexCount, *apf.paint());
+        this->INHERITED::onDrawVerticesObject(vertices, bmode, *apf.paint());
     }
 }
 
 void SkPaintFilterCanvas::onDrawPatch(const SkPoint cubics[], const SkColor colors[],
-                                      const SkPoint texCoords[], SkXfermode* xmode,
+                                      const SkPoint texCoords[], SkBlendMode bmode,
                                       const SkPaint& paint) {
     AutoPaintFilter apf(this, kPatch_Type, paint);
     if (apf.shouldDraw()) {
-        this->INHERITED::onDrawPatch(cubics, colors, texCoords, xmode, *apf.paint());
+        this->INHERITED::onDrawPatch(cubics, colors, texCoords, bmode, *apf.paint());
     }
 }
 
@@ -201,6 +201,15 @@ void SkPaintFilterCanvas::onDrawTextOnPath(const void* text, size_t byteLength, 
     AutoPaintFilter apf(this, kText_Type, paint);
     if (apf.shouldDraw()) {
         this->INHERITED::onDrawTextOnPath(text, byteLength, path, matrix, *apf.paint());
+    }
+}
+
+void SkPaintFilterCanvas::onDrawTextRSXform(const void* text, size_t byteLength,
+                                            const SkRSXform xform[], const SkRect* cull,
+                                            const SkPaint& paint) {
+    AutoPaintFilter apf(this, kText_Type, paint);
+    if (apf.shouldDraw()) {
+        this->INHERITED::onDrawTextRSXform(text, byteLength, xform, cull, *apf.paint());
     }
 }
 

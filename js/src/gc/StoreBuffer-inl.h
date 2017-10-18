@@ -11,33 +11,36 @@
 
 #include "gc/Heap.h"
 
+#include "gc/Heap-inl.h"
+
 namespace js {
 namespace gc {
 
 inline /* static */ size_t
 ArenaCellSet::getCellIndex(const TenuredCell* cell)
 {
-    MOZ_ASSERT((uintptr_t(cell) & ~ArenaMask) % CellSize == 0);
-    return (uintptr_t(cell) & ArenaMask) / CellSize;
+    uintptr_t cellOffset = uintptr_t(cell) & ArenaMask;
+    MOZ_ASSERT(cellOffset % ArenaCellIndexBytes == 0);
+    return cellOffset / ArenaCellIndexBytes;
 }
 
 inline /* static */ void
 ArenaCellSet::getWordIndexAndMask(size_t cellIndex, size_t* wordp, uint32_t* maskp)
 {
-    BitArray<ArenaCellCount>::getIndexAndMask(cellIndex, wordp, maskp);
+    BitArray<MaxArenaCellIndex>::getIndexAndMask(cellIndex, wordp, maskp);
 }
 
 inline bool
 ArenaCellSet::hasCell(size_t cellIndex) const
 {
-    MOZ_ASSERT(cellIndex < ArenaCellCount);
+    MOZ_ASSERT(cellIndex < MaxArenaCellIndex);
     return bits.get(cellIndex);
 }
 
 inline void
 ArenaCellSet::putCell(size_t cellIndex)
 {
-    MOZ_ASSERT(cellIndex < ArenaCellCount);
+    MOZ_ASSERT(cellIndex < MaxArenaCellIndex);
     bits.set(cellIndex);
 }
 
@@ -48,7 +51,7 @@ ArenaCellSet::check() const
     bool bitsZero = bits.isAllClear();
     MOZ_ASSERT(isEmpty() == bitsZero);
     MOZ_ASSERT(isEmpty() == !arena);
-    MOZ_ASSERT_IF(!isEmpty(), arena->bufferedCells == this);
+    MOZ_ASSERT_IF(!isEmpty(), arena->bufferedCells() == this);
 #endif
 }
 
@@ -58,7 +61,7 @@ StoreBuffer::putWholeCell(Cell* cell)
     MOZ_ASSERT(cell->isTenured());
 
     Arena* arena = cell->asTenured().arena();
-    ArenaCellSet* cells = arena->bufferedCells;
+    ArenaCellSet* cells = arena->bufferedCells();
     if (cells->isEmpty()) {
         cells = AllocateWholeCellSet(arena);
         if (!cells)

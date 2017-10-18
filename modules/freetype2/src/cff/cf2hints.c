@@ -401,10 +401,10 @@
         /* calculate all four possibilities; moves down are negative */
         CF2_Fixed  downMoveDown = 0 - fracDown;
         CF2_Fixed  upMoveDown   = 0 - fracUp;
-        CF2_Fixed  downMoveUp   = fracDown == 0
+        CF2_Fixed  downMoveUp   = ( fracDown == 0 )
                                     ? 0
                                     : cf2_intToFixed( 1 ) - fracDown;
-        CF2_Fixed  upMoveUp     = fracUp == 0
+        CF2_Fixed  upMoveUp     = ( fracUp == 0 )
                                     ? 0
                                     : cf2_intToFixed( 1 ) - fracUp;
 
@@ -587,8 +587,9 @@
     }
 
     /* paired edges must be in proper order */
-    FT_ASSERT( !isPair                                         ||
-               topHintEdge->csCoord >= bottomHintEdge->csCoord );
+    if ( isPair                                         &&
+         topHintEdge->csCoord < bottomHintEdge->csCoord )
+      return;
 
     /* linear search to find index value of insertion point */
     indexInsert = 0;
@@ -697,10 +698,10 @@
 
     /* make room to insert */
     {
-      CF2_Int  iSrc = hintmap->count - 1;
-      CF2_Int  iDst = isPair ? hintmap->count + 1 : hintmap->count;
+      CF2_UInt  iSrc = hintmap->count - 1;
+      CF2_UInt  iDst = isPair ? hintmap->count + 1 : hintmap->count;
 
-      CF2_Int  count = hintmap->count - indexInsert;
+      CF2_UInt  count = hintmap->count - indexInsert;
 
 
       if ( iDst >= CF2_MAX_HINT_EDGES )

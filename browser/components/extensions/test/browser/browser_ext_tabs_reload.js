@@ -2,7 +2,7 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "permissions": ["tabs"],
@@ -19,36 +19,36 @@ add_task(function* () {
         </head>`,
     },
 
-    background: function() {
+    async background() {
       let tabLoadedCount = 0;
 
-      browser.tabs.create({url: "tab.html", active: true}).then(tab => {
-        browser.runtime.onMessage.addListener(msg => {
-          if (msg == "tab-loaded") {
-            tabLoadedCount++;
+      let tab = await browser.tabs.create({url: "tab.html", active: true});
 
-            if (tabLoadedCount == 1) {
-              // Reload the tab once passing no arguments.
-              return browser.tabs.reload();
-            }
+      browser.runtime.onMessage.addListener(msg => {
+        if (msg == "tab-loaded") {
+          tabLoadedCount++;
 
-            if (tabLoadedCount == 2) {
-              // Reload the tab again with explicit arguments.
-              return browser.tabs.reload(tab.id, {
-                bypassCache: false,
-              });
-            }
-
-            if (tabLoadedCount == 3) {
-              browser.test.notifyPass("tabs.reload");
-            }
+          if (tabLoadedCount == 1) {
+            // Reload the tab once passing no arguments.
+            return browser.tabs.reload();
           }
-        });
+
+          if (tabLoadedCount == 2) {
+            // Reload the tab again with explicit arguments.
+            return browser.tabs.reload(tab.id, {
+              bypassCache: false,
+            });
+          }
+
+          if (tabLoadedCount == 3) {
+            browser.test.notifyPass("tabs.reload");
+          }
+        }
       });
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("tabs.reload");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("tabs.reload");
+  await extension.unload();
 });

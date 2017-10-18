@@ -3,15 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { MultiLocalizationHelper } = require("devtools/client/shared/l10n");
+const { MultiLocalizationHelper } = require("devtools/shared/l10n");
 const { PrefsHelper } = require("devtools/client/shared/prefs");
 
 /**
  * Localization convenience methods.
  */
 exports.L10N = new MultiLocalizationHelper(
-  "chrome://devtools/locale/markers.properties",
-  "chrome://devtools/locale/performance.properties"
+  "devtools/client/locales/markers.properties",
+  "devtools/client/locales/performance.properties"
 );
 
 /**

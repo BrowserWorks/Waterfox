@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Media test: fragment tests</title>
-  <script type="text/javascript" src="/MochiKit/packed.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <script type="text/javascript" src="manifest.js"></script>
@@ -11,11 +10,6 @@
 <body>
 <pre id="test">
 <script class="testbody" type="text/javascript">
-
-//longer timeout for slow platforms
-if (isSlowPlatform()) {
-  SimpleTest.requestLongerTimeout(1.5);
-}
 
 var manager = new MediaTestManager;
 
@@ -119,9 +113,7 @@ function startTest(test, token) {
     ok(a, name + ": " + msg);
   }}(name);
   var localFinish = function(v, manager) { return function() {
-    if (v.parentNode) {
-      v.parentNode.removeChild(v);
-    }
+    removeNodeAndSource(v);
     manager.finished(v.token);
   }}(v, manager);
   window['test_fragment_noplay'](v, test.start, test.end, localIs, localOk, localFinish);

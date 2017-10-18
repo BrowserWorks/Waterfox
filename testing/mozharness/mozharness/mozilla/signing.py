@@ -10,6 +10,7 @@
 import os
 import re
 import json
+import sys
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import ERROR, FATAL
@@ -45,7 +46,11 @@ class SigningMixin(BaseSigningMixin):
         token = os.path.join(dirs['base_work_dir'], 'token')
         nonce = os.path.join(dirs['base_work_dir'], 'nonce')
         host_cert = os.path.join(signing_dir, 'host.cert')
-        python = self.query_exe('python')
+        python = sys.executable
+        # A mock environment is a special case, the system python isn't
+        # available there
+        if 'mock_target' in self.config:
+            python = 'python2.7'
         cmd = [
             python,
             os.path.join(signing_dir, 'signtool.py'),

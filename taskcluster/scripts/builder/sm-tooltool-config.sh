@@ -3,8 +3,6 @@
 set -xe
 
 : ${TOOLTOOL_SERVER:=https://api.pub.build.mozilla.org/tooltool/}
-: ${TOOLTOOL_REPO:=https://github.com/mozilla/build-tooltool}
-: ${TOOLTOOL_REV:=master}
 : ${SPIDERMONKEY_VARIANT:=plain}
 : ${UPLOAD_DIR:=$HOME/artifacts/}
 : ${WORK:=$HOME/workspace}
@@ -44,10 +42,8 @@ esac
 # necessary for the JS shell, but it's less duplication to share tooltool
 # manifests.
 BROWSER_PLATFORM=$PLATFORM_OS$BITS
-: ${TOOLTOOL_MANIFEST:=browser/config/tooltool-manifests/$BROWSER_PLATFORM/releng.manifest}
 
 : ${TOOLTOOL_CHECKOUT:=$WORK}
 export TOOLTOOL_CHECKOUT
 
-tc-vcs checkout $TOOLTOOL_CHECKOUT/tooltool $TOOLTOOL_REPO $TOOLTOOL_REPO $TOOLTOOL_REV
-(cd $TOOLTOOL_CHECKOUT && python tooltool/tooltool.py --url $TOOLTOOL_SERVER -m $SRCDIR/$TOOLTOOL_MANIFEST fetch ${TOOLTOOL_CACHE:+ -c $TOOLTOOL_CACHE})
+(cd $TOOLTOOL_CHECKOUT && ${SRCDIR}/mach artifact toolchain -v --tooltool-url $TOOLTOOL_SERVER --tooltool-manifest $SRCDIR/$TOOLTOOL_MANIFEST ${TOOLTOOL_CACHE:+ --cache-dir $TOOLTOOL_CACHE}${MOZ_TOOLCHAINS:+ ${MOZ_TOOLCHAINS}})

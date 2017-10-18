@@ -36,6 +36,7 @@ class nsChromeRegistryChrome : public nsChromeRegistry
   NS_IMETHOD IsLocaleRTL(const nsACString& package,
                          bool *aResult) override;
   NS_IMETHOD GetSelectedLocale(const nsACString& aPackage,
+                               bool aAsBCP47,
                                nsACString& aLocale) override;
   NS_IMETHOD Observe(nsISupports *aSubject, const char *aTopic,
                      const char16_t *someData) override;
@@ -57,13 +58,10 @@ class nsChromeRegistryChrome : public nsChromeRegistry
   static void ChromePackageFromPackageEntry(const nsACString& aPackageName,
                                             PackageEntry* aPackage,
                                             ChromePackage* aChromePackage,
-                                            const nsCString& aSelectedLocale,
                                             const nsCString& aSelectedSkin);
 
   nsresult OverrideLocalePackage(const nsACString& aPackage,
                                  nsACString& aOverride);
-  nsresult SelectLocaleFromPref(nsIPrefBranch* prefs);
-  nsresult UpdateSelectedLocale() override;
   nsIURI* GetBaseURIFromPackage(const nsCString& aPackage,
                                  const nsCString& aProvider,
                                  const nsCString& aPath) override;
@@ -156,7 +154,6 @@ class nsChromeRegistryChrome : public nsChromeRegistry
   bool mProfileLoaded;
   bool mDynamicRegistration;
 
-  nsCString mSelectedLocale;
   nsCString mSelectedSkin;
 
   // Hash of package names ("global") to PackageEntry objects

@@ -7,15 +7,17 @@
 const kButton = "test_button_for_addon";
 var initialLocation = gBrowser.currentURI.spec;
 
-add_task(function*() {
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
+
   info("Check addon button functionality");
 
   // create mocked addon button on the navigation bar
   let widgetSpec = {
     id: kButton,
-    type: 'button',
-    onClick: function() {
-      gBrowser.selectedTab = gBrowser.addTab("about:addons");
+    type: "button",
+    onClick() {
+      gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "about:addons");
     }
   };
   CustomizableUI.createWidget(widgetSpec);
@@ -26,28 +28,27 @@ add_task(function*() {
   let navBar = document.getElementById("nav-bar");
   ok(addonButton, "Addon button exists");
   ok(navBar.contains(addonButton), "Addon button is in the navbar");
-  yield checkButtonFunctionality(addonButton);
+  await checkButtonFunctionality(addonButton);
 
   resetTabs();
 
-  //move the add-on button in the Panel Menu
+  // move the add-on button in the Panel Menu
   CustomizableUI.addWidgetToArea(kButton, CustomizableUI.AREA_PANEL);
-  let addonButtonInNavbar = navBar.getElementsByAttribute("id", kButton);
   ok(!navBar.contains(addonButton), "Addon button was removed from the browser bar");
 
   // check the addon button's functionality in the Panel Menu
-  yield PanelUI.show();
+  await PanelUI.show();
   var panelMenu = document.getElementById("PanelUI-mainView");
   let addonButtonInPanel = panelMenu.getElementsByAttribute("id", kButton);
   ok(panelMenu.contains(addonButton), "Addon button was added to the Panel Menu");
-  yield checkButtonFunctionality(addonButtonInPanel[0]);
+  await checkButtonFunctionality(addonButtonInPanel[0]);
 });
 
-add_task(function* asyncCleanup() {
+add_task(async function asyncCleanup() {
   resetTabs();
 
   // reset the UI to the default state
-  yield resetCustomization();
+  await resetCustomization();
   ok(CustomizableUI.inDefaultState, "The UI is in default state again.");
 
   // destroy the widget
@@ -55,18 +56,18 @@ add_task(function* asyncCleanup() {
 });
 
 function resetTabs() {
-  //close all opened tabs
-  while(gBrowser.tabs.length > 1) {
+  // close all opened tabs
+  while (gBrowser.tabs.length > 1) {
     gBrowser.removeTab(gBrowser.selectedTab);
   }
 
-  //restore the initial tab
-  gBrowser.addTab(initialLocation);
+  // restore the initial tab
+  BrowserTestUtils.addTab(gBrowser, initialLocation);
   gBrowser.removeTab(gBrowser.selectedTab);
 }
 
-function* checkButtonFunctionality(aButton) {
+async function checkButtonFunctionality(aButton) {
   aButton.click();
-  yield waitForCondition(() => gBrowser.currentURI &&
+  await waitForCondition(() => gBrowser.currentURI &&
                                gBrowser.currentURI.spec == "about:addons");
 }

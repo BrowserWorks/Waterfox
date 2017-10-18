@@ -11,8 +11,7 @@
  *        The id of the folder we want to generate a query for.
  * @returns the string representation of the query for the given folder.
  */
-function query_string(aFolderID)
-{
+function query_string(aFolderID) {
   var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
            getService(Ci.nsINavHistoryService);
 
@@ -22,28 +21,21 @@ function query_string(aFolderID)
   return hs.queriesToQueryString([query], 1, options);
 }
 
-function run_test()
-{
-  var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
-           getService(Ci.nsINavHistoryService);
-  var bs = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
-           getService(Ci.nsINavBookmarksService);
-
+function run_test() {
   const QUERIES = [
-      "folder=PLACES_ROOT"
-    , "folder=BOOKMARKS_MENU"
-    , "folder=TAGS"
-    , "folder=UNFILED_BOOKMARKS"
-    , "folder=TOOLBAR"
+      "folder=PLACES_ROOT",
+      "folder=BOOKMARKS_MENU",
+      "folder=TAGS",
+      "folder=UNFILED_BOOKMARKS",
+      "folder=TOOLBAR"
   ];
   const FOLDER_IDS = [
-      bs.placesRoot
-    , bs.bookmarksMenuFolder
-    , bs.tagsFolder
-    , bs.unfiledBookmarksFolder
-    , bs.toolbarFolder
+    PlacesUtils.placesRootId,
+    PlacesUtils.bookmarksMenuFolderId,
+    PlacesUtils.tagsFolderId,
+    PlacesUtils.unfiledBookmarksFolderId,
+    PlacesUtils.toolbarFolderId,
   ];
-
 
   for (var i = 0; i < QUERIES.length; i++) {
     var result = query_string(FOLDER_IDS[i]);

@@ -14,8 +14,9 @@ dictionary MediaTrackSettings {
     DOMString facingMode;
     DOMString deviceId;
     boolean echoCancellation;
-    boolean mozNoiseSuppression;
-    boolean mozAutoGainControl;
+    boolean noiseSuppression;
+    boolean autoGainControl;
+    long      channelCount;
 
     // Mozilla-specific extensions:
 

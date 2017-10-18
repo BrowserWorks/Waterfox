@@ -11,8 +11,8 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4, Matrix
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "nsDebug.h"                    // for NS_ERROR
-#include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for mozilla::gfx::IntRect
+#include "nsPoint.h"                    // for nsPoint
+#include "nsRect.h"                     // for nsRect
 #include "base/basictypes.h"
 
 using namespace mozilla::gfx;
@@ -70,22 +70,35 @@ AppendToString(std::stringstream& aStream, const nsRect& r,
 }
 
 void
-AppendToString(std::stringstream& aStream, const nsIntPoint& p,
-               const char* pfx, const char* sfx)
-{
-  aStream << pfx;
-  aStream << nsPrintfCString("(x=%d, y=%d)", p.x, p.y).get();
-  aStream << sfx;
-}
-
-void
-AppendToString(std::stringstream& aStream, const IntRect& r,
+AppendToString(std::stringstream& aStream, const wr::ColorF& c,
                const char* pfx, const char* sfx)
 {
   aStream << pfx;
   aStream << nsPrintfCString(
-    "(x=%d, y=%d, w=%d, h=%d)",
-    r.x, r.y, r.width, r.height).get();
+    "rgba(%d, %d, %d, %f)",
+    uint8_t(c.r*255.f), uint8_t(c.g*255.f), uint8_t(c.b*255.f), c.a).get();
+  aStream << sfx;
+}
+
+void
+AppendToString(std::stringstream& aStream, const wr::LayoutRect& r,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  aStream << nsPrintfCString(
+    "(x=%f, y=%f, w=%f, h=%f)",
+    r.origin.x, r.origin.y, r.size.width, r.size.height).get();
+  aStream << sfx;
+}
+
+void
+AppendToString(std::stringstream& aStream, const wr::LayoutSize& s,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  aStream << nsPrintfCString(
+    "(w=%f, h=%f)",
+    s.width, s.height).get();
   aStream << sfx;
 }
 
@@ -157,6 +170,9 @@ AppendToString(std::stringstream& aStream, const ScrollMetadata& m,
   if (m.HasScrollClip()) {
     AppendToString(aStream, m.ScrollClip().GetClipRect(), "] [clip=");
   }
+  if (m.HasMaskLayer()) {
+    AppendToString(aStream, m.ScrollClip().GetMaskLayerIndex().value(), "] [mask=");
+  }
   aStream << "] }" << sfx;
 }
 
@@ -190,10 +206,10 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     AppendToString(aStream, m.GetCumulativeResolution(), " cr=");
     AppendToString(aStream, m.GetZoom(), " z=");
     AppendToString(aStream, m.GetExtraResolution(), " er=");
-    aStream << nsPrintfCString(")] [u=(%d %d %lu)",
+    aStream << nsPrintfCString(")] [u=(%d %d %" PRIu32 ")",
             m.GetScrollUpdateType(), m.GetDoSmoothScroll(),
             m.GetScrollGeneration()).get();
-    aStream << nsPrintfCString("] [i=(%ld %lld %d)] }",
+    aStream << nsPrintfCString("] [i=(%" PRIu32 " %" PRIu64 " %d)] }",
             m.GetPresShellId(), m.GetScrollId(), m.IsRootContent()).get();
   }
   aStream << sfx;
@@ -348,6 +364,8 @@ AppendToString(std::stringstream& aStream, gfx::SurfaceType aType,
     aStream << "SurfaceType::RECORDING"; break;
   case SurfaceType::TILED:
     aStream << "SurfaceType::TILED"; break;
+  case SurfaceType::DATA_SHARED:
+    aStream << "SurfaceType::DATA_SHARED"; break;
   default:
     NS_ERROR("unknown surface type");
     aStream << "???";
@@ -364,10 +382,6 @@ AppendToString(std::stringstream& aStream, ImageFormat format,
   switch (format) {
   case ImageFormat::PLANAR_YCBCR:
     aStream << "ImageFormat::PLANAR_YCBCR"; break;
-  case ImageFormat::GRALLOC_PLANAR_YCBCR:
-    aStream << "ImageFormat::GRALLOC_PLANAR_YCBCR"; break;
-  case ImageFormat::GONK_CAMERA_IMAGE:
-    aStream << "ImageFormat::GONK_CAMERA_IMAGE"; break;
   case ImageFormat::SHARED_RGB:
     aStream << "ImageFormat::SHARED_RGB"; break;
   case ImageFormat::CAIRO_SURFACE:

@@ -22,15 +22,15 @@ public:
 
     void Main();
 
-protected:    
-    virtual bool RecvNonce() override;
+protected:
+    virtual mozilla::ipc::IPCResult RecvNonce() override;
 
     void BreakNestedLoop();
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
         passed("ok");
         QuitParent();
     }
@@ -47,9 +47,9 @@ public:
     virtual ~TestNestedLoopsChild();
 
 protected:
-    virtual bool RecvStart() override;
+    virtual mozilla::ipc::IPCResult RecvStart() override;
 
-    virtual bool AnswerR() override;
+    virtual mozilla::ipc::IPCResult AnswerR() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {

@@ -14,8 +14,14 @@ elif toolkit == 'cocoa':
     DIRS += ['mac']
 else:
     DIRS += ['unix']
+    if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+        DIRS += ['gtk']
+    elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+        DIRS += ['android']
 
 XPIDL_SOURCES += [
+    'mozILocaleService.idl',
+    'mozIOSPreferences.idl',
     'nsICollation.idl',
     'nsILocale.idl',
     'nsILocaleService.idl',
@@ -25,25 +31,49 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'locale'
 
 EXPORTS += [
-    'nsCollation.h',
+    'DateTimeFormat.h',
     'nsCollationCID.h',
-    'nsDateTimeFormatCID.h',
-    'nsIDateTimeFormat.h',
-    'nsILanguageAtomService.h',
     'nsIPlatformCharset.h',
+    'nsLanguageAtomService.h',
     'nsPosixLocale.h',
+    'nsUConvPropertySearch.h',
     'nsWin32Locale.h',
 ]
 
+EXPORTS.mozilla.intl += [
+    'LocaleService.h',
+    'OSPreferences.h',
+]
+
 UNIFIED_SOURCES += [
-    'nsCollation.cpp',
-    'nsIDateTimeFormat.cpp',
+    'LocaleService.cpp',
+    'nsCollationFactory.cpp',
     'nsLanguageAtomService.cpp',
     'nsLocale.cpp',
-    'nsLocaleService.cpp',
     'nsScriptableDateFormat.cpp',
     'nsUConvPropertySearch.cpp',
+    'OSPreferences.cpp',
 ]
+
+# This file includes Carbon.h, which pulls
+# in CoreServices on OSX. This requires
+# a TextRange struct, which clashes with mozilla::TextRange,
+# because of a `using namespace mozilla;` somewhere
+# in the unified build
+SOURCES += [
+    'nsLocaleService.cpp',
+]
+
+if CONFIG['ENABLE_INTL_API']:
+    UNIFIED_SOURCES += [
+        'DateTimeFormat.cpp',
+        'nsCollation.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'DateTimeFormatAndroid.cpp',
+        'nsCollationAndroid.cpp',
+    ]
 
 EXTRA_JS_MODULES += [
     'PluralForm.jsm',
@@ -56,13 +86,21 @@ LOCAL_INCLUDES += [
 ]
 
 RESOURCE_FILES += [
-    'langGroups.properties',
     'language.properties',
 ]
 
-GENERATED_FILES += [
-    'langGroups.properties.h',
-]
-langgroups = GENERATED_FILES['langGroups.properties.h']
-langgroups.script = 'props2arrays.py'
-langgroups.inputs = ['langGroups.properties']
+prefixes = (
+    'encodingsgroups',
+    'langGroups',
+)
+
+for prefix in prefixes:
+    input_file = prefix + '.properties'
+    header = prefix + '.properties.h'
+    GENERATED_FILES += [header]
+    props = GENERATED_FILES[header]
+    props.script = 'props2arrays.py'
+    props.inputs = [input_file]
+
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['tests/gtest']

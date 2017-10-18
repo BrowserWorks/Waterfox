@@ -3,12 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {Ci} = require("chrome");
 const EventEmitter = require("devtools/shared/event-emitter");
 loader.lazyRequireGetter(this, "setNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
 loader.lazyRequireGetter(this, "clearNamedTimeout",
   "devtools/client/shared/widgets/view-helpers", true);
+loader.lazyRequireGetter(this, "naturalSortCaseInsensitive",
+  "devtools/client/shared/natural-sort", true);
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
@@ -36,10 +38,6 @@ Object.defineProperty(this, "EVENTS", {
   enumerable: true,
   writable: false
 });
-
-// Maximum number of character visible in any cell in the table. This is to
-// avoid making the cell take up all the space in a row.
-const MAX_VISIBLE_STRING_SIZE = 100;
 
 /**
  * A table widget with various features like resizble/toggleable columns,
@@ -120,13 +118,15 @@ function TableWidget(node, options = {}) {
   this.onMousedown = this.onMousedown.bind(this);
   this.onRowRemoved = this.onRowRemoved.bind(this);
 
-  this.document.addEventListener("keydown", this.onKeydown, false);
-  this.document.addEventListener("mousedown", this.onMousedown, false);
+  this.document.addEventListener("keydown", this.onKeydown);
+  this.document.addEventListener("mousedown", this.onMousedown);
 }
 
 TableWidget.prototype = {
 
   items: null,
+  editBookmark: null,
+  scrollIntoViewOnUpdate: null,
 
   /**
    * Getter for the headers context menu popup id.
@@ -143,8 +143,24 @@ TableWidget.prototype = {
    */
   set selectedRow(id) {
     for (let column of this.columns.values()) {
-      column.selectRow(id[this.uniqueId] || id);
+      if (id) {
+        column.selectRow(id[this.uniqueId] || id);
+      } else {
+        column.selectedRow = null;
+        column.selectRow(null);
+      }
     }
+  },
+
+/**
+ * Is a row currently selected?
+ *
+ * @return {Boolean}
+ *         true or false.
+ */
+  get hasSelectedRow() {
+    return this.columns.get(this.uniqueId) &&
+           this.columns.get(this.uniqueId).selectedRow;
   },
 
   /**
@@ -174,7 +190,8 @@ TableWidget.prototype = {
    * Returns the index of the selected row disregarding hidden rows.
    */
   get visibleSelectedIndex() {
-    let cells = this.columns.get(this.uniqueId).visibleCellNodes;
+    let column = this.firstVisibleColumn;
+    let cells = column.visibleCellNodes;
 
     for (let i = 0; i < cells.length; i++) {
       if (cells[i].classList.contains("theme-selected")) {
@@ -183,6 +200,23 @@ TableWidget.prototype = {
     }
 
     return -1;
+  },
+
+  /**
+   * Returns the first visible column.
+   */
+  get firstVisibleColumn() {
+    for (let column of this.columns.values()) {
+      if (column._private) {
+        continue;
+      }
+
+      if (column.column.clientHeight > 0) {
+        return column;
+      }
+    }
+
+    return null;
   },
 
   /**
@@ -470,7 +504,7 @@ TableWidget.prototype = {
     let cell;
 
     switch (event.keyCode) {
-      case event.DOM_VK_UP:
+      case KeyCodes.DOM_VK_UP:
         event.preventDefault();
 
         colName = selectedCell.parentNode.id;
@@ -488,7 +522,7 @@ TableWidget.prototype = {
 
         this.emit(EVENTS.ROW_SELECTED, cell.getAttribute("data-id"));
         break;
-      case event.DOM_VK_DOWN:
+      case KeyCodes.DOM_VK_DOWN:
         event.preventDefault();
 
         colName = selectedCell.parentNode.id;
@@ -573,8 +607,8 @@ TableWidget.prototype = {
     this.off(EVENTS.ROW_SELECTED, this.bindSelectedRow);
     this.off(EVENTS.ROW_REMOVED, this.onRowRemoved);
 
-    this.document.removeEventListener("keydown", this.onKeydown, false);
-    this.document.removeEventListener("mousedown", this.onMousedown, false);
+    this.document.removeEventListener("keydown", this.onKeydown);
+    this.document.removeEventListener("mousedown", this.onMousedown);
 
     if (this._editableFieldsEngine) {
       this.off(EVENTS.TABLE_CLEARED, this._editableFieldsEngine.cancelEdit);
@@ -619,8 +653,13 @@ TableWidget.prototype = {
   /**
    * Populates the header context menu with the names of the columns along with
    * displaying which columns are hidden or visible.
+   *
+   * @param {Array} privateColumns=[]
+   *        An array of column names that should never appear in the table. This
+   *        allows us to e.g. have an invisible compound primary key for a
+   *        table's rows.
    */
-  populateMenuPopup: function () {
+  populateMenuPopup: function (privateColumns = []) {
     if (!this.menupopup) {
       return;
     }
@@ -630,6 +669,10 @@ TableWidget.prototype = {
     }
 
     for (let column of this.columns.values()) {
+      if (privateColumns.includes(column.id)) {
+        continue;
+      }
+
       let menuitem = this.document.createElementNS(XUL_NS, "menuitem");
       menuitem.setAttribute("label", column.header.getAttribute("value"));
       menuitem.setAttribute("data-id", column.id);
@@ -667,16 +710,21 @@ TableWidget.prototype = {
    * Creates the columns in the table. Without calling this method, data cannot
    * be inserted into the table unless `initialColumns` was supplied.
    *
-   * @param {object} columns
+   * @param {Object} columns
    *        A key value pair representing the columns of the table. Where the
    *        key represents the id of the column and the value is the displayed
    *        label in the header of the column.
-   * @param {string} sortOn
+   * @param {String} sortOn
    *        The id of the column on which the table will be initially sorted on.
-   * @param {array} hiddenColumns
+   * @param {Array} hiddenColumns
    *        Ids of all the columns that are hidden by default.
+   * @param {Array} privateColumns=[]
+   *        An array of column names that should never appear in the table. This
+   *        allows us to e.g. have an invisible compound primary key for a
+   *        table's rows.
    */
-  setColumns: function (columns, sortOn = this.sortedOn, hiddenColumns = []) {
+  setColumns: function (columns, sortOn = this.sortedOn, hiddenColumns = [],
+                        privateColumns = []) {
     for (let column of this.columns.values()) {
       column.destroy();
     }
@@ -706,13 +754,18 @@ TableWidget.prototype = {
       }
 
       this.columns.set(id, new Column(this, id, columns[id]));
-      if (hiddenColumns.indexOf(id) > -1) {
+      if (hiddenColumns.includes(id) || privateColumns.includes(id)) {
+        // Hide the column.
         this.columns.get(id).toggleColumn();
+
+        if (privateColumns.includes(id)) {
+          this.columns.get(id).private = true;
+        }
       }
     }
     this.sortedOn = sortOn;
     this.sortBy(this.sortedOn);
-    this.populateMenuPopup();
+    this.populateMenuPopup(privateColumns);
   },
 
   /**
@@ -782,6 +835,11 @@ TableWidget.prototype = {
       return;
     }
 
+    if (this.editBookmark && !this.items.has(this.editBookmark)) {
+      // Key has been updated... update bookmark.
+      this.editBookmark = item[this.uniqueId];
+    }
+
     let index = this.columns.get(this.sortedOn).push(item);
     for (let [key, column] of this.columns) {
       if (key != this.sortedOn) {
@@ -818,7 +876,8 @@ TableWidget.prototype = {
       column.remove(item);
       column.updateZebra();
     }
-    if (this.items.size == 0) {
+    if (this.items.size === 0) {
+      this.selectedRow = null;
       this.tbody.setAttribute("empty", "empty");
     }
 
@@ -860,6 +919,8 @@ TableWidget.prototype = {
     }
     this.tbody.setAttribute("empty", "empty");
     this.setPlaceholderText(this.emptyText);
+
+    this.selectedRow = null;
 
     this.emit(EVENTS.TABLE_CLEARED, this);
   },
@@ -912,9 +973,11 @@ TableWidget.prototype = {
     // Loop through all items and hide unmatched items
     for (let [id, val] of this.items) {
       for (let prop in val) {
-        if (ignoreProps.includes(prop)) {
+        let column = this.columns.get(prop);
+        if (ignoreProps.includes(prop) || column.hidden) {
           continue;
         }
+
         let propValue = val[prop].toString().toLowerCase();
         if (propValue.includes(value)) {
           itemsToHide.splice(itemsToHide.indexOf(id), 1);
@@ -962,6 +1025,9 @@ module.exports.TableWidget = TableWidget;
  *        The displayed string on the column's header.
  */
 function Column(table, id, header) {
+  // By default cells are visible in the UI.
+  this._private = false;
+
   this.tbody = table.tbody;
   this.document = table.document;
   this.window = table.window;
@@ -1045,6 +1111,30 @@ Column.prototype = {
   },
 
   /**
+   * Returns a boolean indicating whether the column is hidden.
+   */
+  get hidden() {
+    return this.wrapper.hasAttribute("hidden");
+  },
+
+  /**
+   * Get the private state of the column (visibility in the UI).
+   */
+  get private() {
+    return this._private;
+  },
+
+  /**
+   * Set the private state of the column (visibility in the UI).
+   *
+   * @param  {Boolean} state
+   *         Private (true or false)
+   */
+  set private(state) {
+    this._private = state;
+  },
+
+  /**
    * Sets the sorted value
    */
   set sorted(value) {
@@ -1119,7 +1209,9 @@ Column.prototype = {
   },
 
   /**
-   * Called when a row is updated.
+   * Called when a row is updated e.g. a cell is changed. This means that
+   * for a new row this method will be called once for each column. If a single
+   * cell is changed this method will be called just once.
    *
    * @param {string} event
    *        The event name of the event. i.e. EVENTS.ROW_UPDATED
@@ -1128,7 +1220,23 @@ Column.prototype = {
    */
   onRowUpdated: function (event, id) {
     this._updateItems();
+
     if (this.highlightUpdated && this.items[id] != null) {
+      if (this.table.scrollIntoViewOnUpdate) {
+        let cell = this.cells[this.items[id]];
+
+        // When a new row is created this method is called once for each column
+        // as each cell is updated. We can only scroll to cells if they are
+        // visible. We check for visibility and once we find the first visible
+        // cell in a row we scroll it into view and reset the
+        // scrollIntoViewOnUpdate flag.
+        if (cell.label.clientHeight > 0) {
+          cell.scrollIntoView();
+
+          this.table.scrollIntoViewOnUpdate = null;
+        }
+      }
+
       if (this.table.editBookmark) {
         // A rows position in the table can change as the result of an edit. In
         // order to ensure that the correct row is highlighted after an edit we
@@ -1140,6 +1248,7 @@ Column.prototype = {
 
       this.cells[this.items[id]].flash();
     }
+
     this.updateZebra();
   },
 
@@ -1164,15 +1273,16 @@ Column.prototype = {
    */
   selectRowAt: function (index) {
     if (this.selectedRow != null) {
-      this.cells[this.items[this.selectedRow]].toggleClass("theme-selected");
+      this.cells[this.items[this.selectedRow]].classList.remove("theme-selected");
     }
-    if (index < 0) {
-      this.selectedRow = null;
-      return;
-    }
+
     let cell = this.cells[index];
-    cell.toggleClass("theme-selected");
-    this.selectedRow = cell.id;
+    if (cell) {
+      cell.classList.add("theme-selected");
+      this.selectedRow = cell.id;
+    } else {
+      this.selectedRow = null;
+    }
   },
 
   /**
@@ -1222,11 +1332,11 @@ Column.prototype = {
       let index;
       if (this.sorted == 1) {
         index = this.cells.findIndex(element => {
-          return value < element.value;
+          return naturalSortCaseInsensitive(value, element.value) === -1;
         });
       } else {
         index = this.cells.findIndex(element => {
-          return value > element.value;
+          return naturalSortCaseInsensitive(value, element.value) === 1;
         });
       }
       index = index >= 0 ? index : this.cells.length;
@@ -1336,7 +1446,6 @@ Column.prototype = {
     this.cells = [];
     this.items = {};
     this._itemsDirty = false;
-    this.selectedRow = null;
     while (this.header.nextSibling) {
       this.header.nextSibling.remove();
     }
@@ -1350,24 +1459,24 @@ Column.prototype = {
     // Only sort the array if we are sorting based on this column
     if (this.sorted == 1) {
       items.sort((a, b) => {
-        let val1 = (a[this.id] instanceof Ci.nsIDOMNode) ?
+        let val1 = (a[this.id] instanceof Node) ?
             a[this.id].textContent : a[this.id];
-        let val2 = (b[this.id] instanceof Ci.nsIDOMNode) ?
+        let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
-        return val1 > val2;
+        return naturalSortCaseInsensitive(val1, val2);
       });
     } else if (this.sorted > 1) {
       items.sort((a, b) => {
-        let val1 = (a[this.id] instanceof Ci.nsIDOMNode) ?
+        let val1 = (a[this.id] instanceof Node) ?
             a[this.id].textContent : a[this.id];
-        let val2 = (b[this.id] instanceof Ci.nsIDOMNode) ?
+        let val2 = (b[this.id] instanceof Node) ?
             b[this.id].textContent : b[this.id];
-        return val2 > val1;
+        return naturalSortCaseInsensitive(val2, val1);
       });
     }
 
     if (this.selectedRow) {
-      this.cells[this.items[this.selectedRow]].toggleClass("theme-selected");
+      this.cells[this.items[this.selectedRow]].classList.remove("theme-selected");
     }
     this.items = {};
     // Otherwise, just use the sorted array passed to update the cells value.
@@ -1377,7 +1486,7 @@ Column.prototype = {
       this.cells[i].id = item[this.uniqueId];
     });
     if (this.selectedRow) {
-      this.cells[this.items[this.selectedRow]].toggleClass("theme-selected");
+      this.cells[this.items[this.selectedRow]].classList.add("theme-selected");
     }
     this._itemsDirty = false;
     this.updateZebra();
@@ -1391,7 +1500,9 @@ Column.prototype = {
       if (!cell.hidden) {
         i++;
       }
-      cell.toggleClass("even", !(i % 2));
+
+      let even = !(i % 2);
+      cell.classList.toggle("even", even);
     }
   },
 
@@ -1428,7 +1539,7 @@ Column.prototype = {
         return;
       }
 
-      let dataid = target.getAttribute("data-id");
+      let dataid = closest.getAttribute("data-id");
       this.table.emit(EVENTS.ROW_SELECTED, dataid);
     }
   },
@@ -1467,7 +1578,7 @@ function Cell(column, item, nextCell) {
       // Make the ID of the clicked cell available as a property on the table.
       // It's then available for the popupshowing or command handler.
       column.table.contextMenuRowId = this.id;
-    }, false);
+    });
   }
 
   this.value = item[column.id];
@@ -1504,22 +1615,17 @@ Cell.prototype = {
       return;
     }
 
-    if (this.wrapTextInElements && !(value instanceof Ci.nsIDOMNode)) {
+    if (this.wrapTextInElements && !(value instanceof Node)) {
       let span = this.label.ownerDocument.createElementNS(HTML_NS, "span");
       span.textContent = value;
       value = span;
     }
 
-    if (!(value instanceof Ci.nsIDOMNode) &&
-        value.length > MAX_VISIBLE_STRING_SIZE) {
-      value = value .substr(0, MAX_VISIBLE_STRING_SIZE) + "\u2026";
-    }
-
-    if (value instanceof Ci.nsIDOMNode) {
+    if (value instanceof Node) {
       this.label.removeAttribute("value");
 
       while (this.label.firstChild) {
-        this.label.removeChild(this.label.firstChild);
+        this.label.firstChild.remove();
       }
 
       this.label.appendChild(value);
@@ -1532,8 +1638,8 @@ Cell.prototype = {
     return this._value;
   },
 
-  toggleClass: function (className, condition) {
-    this.label.classList.toggle(className, condition);
+  get classList() {
+    return this.label.classList;
   },
 
   /**
@@ -1557,6 +1663,10 @@ Cell.prototype = {
 
   focus: function () {
     this.label.focus();
+  },
+
+  scrollIntoView: function () {
+    this.label.scrollIntoView(false);
   },
 
   destroy: function () {
@@ -1665,14 +1775,14 @@ EditableFieldsEngine.prototype = {
     }
 
     switch (event.keyCode) {
-      case event.DOM_VK_ESCAPE:
+      case KeyCodes.DOM_VK_ESCAPE:
         this.cancelEdit();
         event.preventDefault();
         break;
-      case event.DOM_VK_RETURN:
+      case KeyCodes.DOM_VK_RETURN:
         this.completeEdit();
         break;
-      case event.DOM_VK_TAB:
+      case KeyCodes.DOM_VK_TAB:
         if (this.onTab) {
           this.onTab(event);
         }

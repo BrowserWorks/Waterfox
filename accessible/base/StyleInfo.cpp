@@ -18,9 +18,7 @@ StyleInfo::StyleInfo(dom::Element* aElement, nsIPresShell* aPresShell) :
   mElement(aElement)
 {
   mStyleContext =
-    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement,
-                                                         nullptr,
-                                                         aPresShell);
+    nsComputedDOMStyle::GetStyleContextNoFlush(aElement, nullptr, aPresShell);
 }
 
 void
@@ -53,18 +51,14 @@ StyleInfo::TextIndent(nsAString& aValue)
   switch (styleCoord.GetUnit()) {
     case eStyleUnit_Coord:
       coordVal = styleCoord.GetCoordValue();
+      aValue.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(coordVal));
+      aValue.AppendLiteral("px");
       break;
 
     case eStyleUnit_Percent:
-    {
-      nsIFrame* frame = mElement->GetPrimaryFrame();
-      MOZ_ASSERT(frame, "frame must be a valid pointer.");
-      nsIFrame* containerFrame = frame->GetContainingBlock();
-      nscoord percentageBase = containerFrame->GetContentRect().width;
-      coordVal = NSCoordSaturatingMultiply(percentageBase,
-                                           styleCoord.GetPercentValue());
+      aValue.AppendFloat(styleCoord.GetPercentValue() * 100);
+      aValue.AppendLiteral("%");
       break;
-    }
 
     case eStyleUnit_Null:
     case eStyleUnit_Normal:
@@ -79,15 +73,13 @@ StyleInfo::TextIndent(nsAString& aValue)
     case eStyleUnit_Integer:
     case eStyleUnit_Enumerated:
     case eStyleUnit_Calc:
+      aValue.AppendLiteral("0px");
       break;
   }
-
-  aValue.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(coordVal));
-  aValue.AppendLiteral("px");
 }
 
 void
-StyleInfo::Margin(css::Side aSide, nsAString& aValue)
+StyleInfo::Margin(Side aSide, nsAString& aValue)
 {
   MOZ_ASSERT(mElement->GetPrimaryFrame(), " mElement->GetPrimaryFrame() needs to be valid pointer");
   aValue.Truncate();

@@ -56,15 +56,18 @@ class AsyncSocketAdapter : public AsyncSocket, public sigslot::has_slots<> {
   int Connect(const SocketAddress& addr) override;
   int Send(const void* pv, size_t cb) override;
   int SendTo(const void* pv, size_t cb, const SocketAddress& addr) override;
-  int Recv(void* pv, size_t cb) override;
-  int RecvFrom(void* pv, size_t cb, SocketAddress* paddr) override;
+  int Recv(void* pv, size_t cb, int64_t* timestamp) override;
+  int RecvFrom(void* pv,
+               size_t cb,
+               SocketAddress* paddr,
+               int64_t* timestamp) override;
   int Listen(int backlog) override;
   AsyncSocket* Accept(SocketAddress* paddr) override;
   int Close() override;
   int GetError() const override;
   void SetError(int error) override;
   ConnState GetState() const override;
-  int EstimateMTU(uint16* mtu) override;
+  int EstimateMTU(uint16_t* mtu) override;
   int GetOption(Option opt, int* value) override;
   int SetOption(Option opt, int value) override;
 

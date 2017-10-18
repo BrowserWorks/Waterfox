@@ -17,7 +17,7 @@ public class SyncStorageResponse extends SyncResponse {
   // Responses that are actionable get constant status codes.
   public static final String RESPONSE_CLIENT_UPGRADE_REQUIRED = "16";
 
-  public static HashMap<String, String> SERVER_ERROR_MESSAGES;
+  public static final HashMap<String, String> SERVER_ERROR_MESSAGES;
   static {
     HashMap<String, String> errors = new HashMap<String, String>();
 
@@ -65,6 +65,19 @@ public class SyncStorageResponse extends SyncResponse {
 
   public String getErrorMessage() throws IllegalStateException, IOException {
     return SyncStorageResponse.getServerErrorMessage(this.body().trim());
+  }
+
+  /**
+   * This header gives the last-modified time of the target resource as seen during processing of
+   * the request, and will be included in all success responses (200, 201, 204).
+   * When given in response to a write request, this will be equal to the server’s current time and
+   * to the new last-modified time of any BSOs created or changed by the request.
+   */
+  public String getLastModified() {
+    if (!response.containsHeader(X_LAST_MODIFIED)) {
+      return null;
+    }
+    return response.getFirstHeader(X_LAST_MODIFIED).getValue();
   }
 
   // TODO: Content-Type and Content-Length validation.

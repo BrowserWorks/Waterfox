@@ -8,20 +8,22 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "webrtc/modules/pacing/include/paced_sender.h"
+#include "webrtc/modules/pacing/paced_sender.h"
 
-#include <assert.h>
-
+#include <algorithm>
 #include <map>
 #include <queue>
 #include <set>
+#include <vector>
 
-#include "webrtc/modules/interface/module_common_types.h"
+#include "webrtc/base/checks.h"
+#include "webrtc/base/logging.h"
+#include "webrtc/modules/include/module_common_types.h"
+#include "webrtc/modules/pacing/alr_detector.h"
 #include "webrtc/modules/pacing/bitrate_prober.h"
-#include "webrtc/system_wrappers/interface/clock.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
-#include "webrtc/system_wrappers/interface/field_trial.h"
-#include "webrtc/system_wrappers/interface/logging.h"
+#include "webrtc/system_wrappers/include/clock.h"
+#include "webrtc/system_wrappers/include/critical_section_wrapper.h"
+#include "webrtc/system_wrappers/include/field_trial.h"
 
 namespace {
 // Time limit in milliseconds between packet bursts.
@@ -33,10 +35,13 @@ const int64_t kMaxIntervalTimeMs = 30;
 
 }  // namespace
 
+// TODO(sprang): Move at least PacketQueue and MediaBudget out to separate
+// files, so that we can more easily test them.
+
 namespace webrtc {
 namespace paced_sender {
 struct Packet {
-  Packet(PacedSender::Priority priority,
+  Packet(RtpPacketSender::Priority priority,
          uint32_t ssrc,
          uint16_t seq_number,
          int64_t capture_time_ms,
@@ -53,7 +58,7 @@ struct Packet {
         retransmission(retransmission),
         enqueue_order(enqueue_order) {}
 
-  PacedSender::Priority priority;
+  RtpPacketSender::Priority priority;
   uint32_t ssrc;
   uint16_t sequence_number;
   int64_t capture_time_ms;
@@ -72,8 +77,8 @@ struct Comparator {
       return first->priority > second->priority;
 
     // Retransmissions go first.
-    if (second->retransmission && !first->retransmission)
-      return true;
+    if (second->retransmission != first->retransmission)
+      return second->retransmission;
 
     // Older frames have higher prio.
     if (first->capture_time_ms != second->capture_time_ms)
@@ -86,13 +91,19 @@ struct Comparator {
 // Class encapsulating a priority queue with some extensions.
 class PacketQueue {
  public:
-  PacketQueue() : bytes_(0) {}
+  explicit PacketQueue(Clock* clock)
+      : bytes_(0),
+        clock_(clock),
+        queue_time_sum_(0),
+        time_last_updated_(clock_->TimeInMilliseconds()) {}
   virtual ~PacketQueue() {}
 
   void Push(const Packet& packet) {
-    if (!AddToDupeSet(packet)) {
+    if (!AddToDupeSet(packet))
       return;
-    }
+
+    UpdateQueueTime(packet.enqueue_time_ms);
+
     // Store packet in list, use pointers in priority queue for cheaper moves.
     // Packets have a handle to its own iterator in the list, for easy removal
     // when popping from queue.
@@ -114,7 +125,11 @@ class PacketQueue {
   void FinalizePop(const Packet& packet) {
     RemoveFromDupeSet(packet);
     bytes_ -= packet.bytes;
+    queue_time_sum_ -= (time_last_updated_ - packet.enqueue_time_ms);
     packet_list_.erase(packet.this_it);
+    RTC_DCHECK_EQ(packet_list_.size(), prio_queue_.size());
+    if (packet_list_.empty())
+      RTC_DCHECK_EQ(0, queue_time_sum_);
   }
 
   bool Empty() const { return prio_queue_.empty(); }
@@ -123,11 +138,27 @@ class PacketQueue {
 
   uint64_t SizeInBytes() const { return bytes_; }
 
-  int64_t OldestEnqueueTime() const {
-    std::list<Packet>::const_reverse_iterator it = packet_list_.rbegin();
+  int64_t OldestEnqueueTimeMs() const {
+    auto it = packet_list_.rbegin();
     if (it == packet_list_.rend())
       return 0;
     return it->enqueue_time_ms;
+  }
+
+  void UpdateQueueTime(int64_t timestamp_ms) {
+    RTC_DCHECK_GE(timestamp_ms, time_last_updated_);
+    int64_t delta = timestamp_ms - time_last_updated_;
+    // Use packet packet_list_.size() not prio_queue_.size() here, as there
+    // might be an outstanding element popped from prio_queue_ currently in the
+    // SendPacket() call, while packet_list_ will always be correct.
+    queue_time_sum_ += delta * packet_list_.size();
+    time_last_updated_ = timestamp_ms;
+  }
+
+  int64_t AverageQueueTimeMs() const {
+    if (prio_queue_.empty())
+      return 0;
+    return queue_time_sum_ / packet_list_.size();
   }
 
  private:
@@ -147,7 +178,7 @@ class PacketQueue {
 
   void RemoveFromDupeSet(const Packet& packet) {
     SsrcSeqNoMap::iterator it = dupe_map_.find(packet.ssrc);
-    assert(it != dupe_map_.end());
+    RTC_DCHECK(it != dupe_map_.end());
     it->second.erase(packet.sequence_number);
     if (it->second.empty()) {
       dupe_map_.erase(it);
@@ -165,6 +196,9 @@ class PacketQueue {
   // Map<ssrc, set<seq_no> >, for checking duplicates.
   typedef std::map<uint32_t, std::set<uint16_t> > SsrcSeqNoMap;
   SsrcSeqNoMap dupe_map_;
+  Clock* const clock_;
+  int64_t queue_time_sum_;
+  int64_t time_last_updated_;
 };
 
 class IntervalBudget {
@@ -175,6 +209,8 @@ class IntervalBudget {
 
   void set_target_rate_kbps(int target_rate_kbps) {
     target_rate_kbps_ = target_rate_kbps;
+    bytes_remaining_ =
+        std::max(-kWindowMs * target_rate_kbps_ / 8, bytes_remaining_);
   }
 
   void IncreaseBudget(int64_t delta_time_ms) {
@@ -190,106 +226,127 @@ class IntervalBudget {
 
   void UseBudget(size_t bytes) {
     bytes_remaining_ = std::max(bytes_remaining_ - static_cast<int>(bytes),
-                                -500 * target_rate_kbps_ / 8);
+                                -kWindowMs * target_rate_kbps_ / 8);
   }
 
-  int bytes_remaining() const { return bytes_remaining_; }
+  size_t bytes_remaining() const {
+    return static_cast<size_t>(std::max(0, bytes_remaining_));
+  }
 
   int target_rate_kbps() const { return target_rate_kbps_; }
 
  private:
+  static const int kWindowMs = 500;
+
   int target_rate_kbps_;
   int bytes_remaining_;
 };
 }  // namespace paced_sender
 
+const int64_t PacedSender::kMaxQueueLengthMs = 2000;
 const float PacedSender::kDefaultPaceMultiplier = 2.5f;
 
-PacedSender::PacedSender(Clock* clock,
-                         Callback* callback,
-                         int bitrate_kbps,
-                         int max_bitrate_kbps,
-                         int min_bitrate_kbps)
+PacedSender::PacedSender(Clock* clock, PacketSender* packet_sender)
     : clock_(clock),
-      callback_(callback),
+      packet_sender_(packet_sender),
+      alr_detector_(new AlrDetector()),
       critsect_(CriticalSectionWrapper::CreateCriticalSection()),
-      enabled_(true),
       paused_(false),
-      probing_enabled_(true),
-      media_budget_(new paced_sender::IntervalBudget(max_bitrate_kbps)),
-      padding_budget_(new paced_sender::IntervalBudget(min_bitrate_kbps)),
+      media_budget_(new paced_sender::IntervalBudget(0)),
+      padding_budget_(new paced_sender::IntervalBudget(0)),
       prober_(new BitrateProber()),
-      bitrate_bps_(1000 * bitrate_kbps),
+      estimated_bitrate_bps_(0),
+      min_send_bitrate_kbps_(0u),
+      max_padding_bitrate_kbps_(0u),
+      pacing_bitrate_kbps_(0),
       time_last_update_us_(clock->TimeInMicroseconds()),
-      packets_(new paced_sender::PacketQueue()),
+      packets_(new paced_sender::PacketQueue(clock)),
       packet_counter_(0) {
-  UpdateBytesPerInterval(kMinPacketLimitMs);
+  UpdateBudgetWithElapsedTime(kMinPacketLimitMs);
 }
 
 PacedSender::~PacedSender() {}
 
+void PacedSender::CreateProbeCluster(int bitrate_bps) {
+  CriticalSectionScoped cs(critsect_.get());
+  prober_->CreateProbeCluster(bitrate_bps);
+}
+
 void PacedSender::Pause() {
+  LOG(LS_INFO) << "PacedSender paused.";
   CriticalSectionScoped cs(critsect_.get());
   paused_ = true;
 }
 
 void PacedSender::Resume() {
+  LOG(LS_INFO) << "PacedSender resumed.";
   CriticalSectionScoped cs(critsect_.get());
   paused_ = false;
 }
 
 void PacedSender::SetProbingEnabled(bool enabled) {
-  assert(packet_counter_ == 0);
-  probing_enabled_ = enabled;
+  RTC_CHECK_EQ(0, packet_counter_);
+  CriticalSectionScoped cs(critsect_.get());
+  prober_->SetEnabled(enabled);
 }
 
-void PacedSender::SetStatus(bool enable) {
+void PacedSender::SetEstimatedBitrate(uint32_t bitrate_bps) {
+  if (bitrate_bps == 0)
+    LOG(LS_ERROR) << "PacedSender is not designed to handle 0 bitrate.";
   CriticalSectionScoped cs(critsect_.get());
-  enabled_ = enable;
+  estimated_bitrate_bps_ = bitrate_bps;
+  padding_budget_->set_target_rate_kbps(
+      std::min(estimated_bitrate_bps_ / 1000, max_padding_bitrate_kbps_));
+  pacing_bitrate_kbps_ =
+      std::max(min_send_bitrate_kbps_, estimated_bitrate_bps_ / 1000) *
+      kDefaultPaceMultiplier;
+  alr_detector_->SetEstimatedBitrate(bitrate_bps);
 }
 
-bool PacedSender::Enabled() const {
+void PacedSender::SetSendBitrateLimits(int min_send_bitrate_bps,
+                                       int padding_bitrate) {
   CriticalSectionScoped cs(critsect_.get());
-  return enabled_;
+  min_send_bitrate_kbps_ = min_send_bitrate_bps / 1000;
+  pacing_bitrate_kbps_ =
+      std::max(min_send_bitrate_kbps_, estimated_bitrate_bps_ / 1000) *
+      kDefaultPaceMultiplier;
+  max_padding_bitrate_kbps_ = padding_bitrate / 1000;
+  padding_budget_->set_target_rate_kbps(
+      std::min(estimated_bitrate_bps_ / 1000, max_padding_bitrate_kbps_));
 }
 
-void PacedSender::UpdateBitrate(int bitrate_kbps,
-                                int max_bitrate_kbps,
-                                int min_bitrate_kbps) {
+void PacedSender::InsertPacket(RtpPacketSender::Priority priority,
+                               uint32_t ssrc,
+                               uint16_t sequence_number,
+                               int64_t capture_time_ms,
+                               size_t bytes,
+                               bool retransmission) {
   CriticalSectionScoped cs(critsect_.get());
-  media_budget_->set_target_rate_kbps(max_bitrate_kbps);
-  padding_budget_->set_target_rate_kbps(min_bitrate_kbps);
-  bitrate_bps_ = 1000 * bitrate_kbps;
-}
+  RTC_DCHECK(estimated_bitrate_bps_ > 0)
+        << "SetEstimatedBitrate must be called before InsertPacket.";
 
-bool PacedSender::SendPacket(Priority priority, uint32_t ssrc,
-    uint16_t sequence_number, int64_t capture_time_ms, size_t bytes,
-    bool retransmission) {
-  CriticalSectionScoped cs(critsect_.get());
+  int64_t now_ms = clock_->TimeInMilliseconds();
+  prober_->OnIncomingPacket(bytes);
 
-  if (!enabled_) {
-    return true;  // We can send now.
-  }
-  if (probing_enabled_ && !prober_->IsProbing()) {
-    prober_->SetEnabled(true);
-  }
-  prober_->MaybeInitializeProbe(bitrate_bps_);
+  if (capture_time_ms < 0)
+    capture_time_ms = now_ms;
 
-  if (capture_time_ms < 0) {
-    capture_time_ms = clock_->TimeInMilliseconds();
-  }
-
-  packets_->Push(paced_sender::Packet(
-      priority, ssrc, sequence_number, capture_time_ms,
-      clock_->TimeInMilliseconds(), bytes, retransmission, packet_counter_++));
-  return false;
+  packets_->Push(paced_sender::Packet(priority, ssrc, sequence_number,
+                                      capture_time_ms, now_ms, bytes,
+                                      retransmission, packet_counter_++));
 }
 
 int64_t PacedSender::ExpectedQueueTimeMs() const {
   CriticalSectionScoped cs(critsect_.get());
-  int target_rate = media_budget_->target_rate_kbps();
-  assert(target_rate > 0);
-  return static_cast<int64_t>(packets_->SizeInBytes() * 8 / target_rate);
+  RTC_DCHECK_GT(pacing_bitrate_kbps_, 0);
+  return static_cast<int64_t>(packets_->SizeInBytes() * 8 /
+                              pacing_bitrate_kbps_);
+}
+
+rtc::Optional<int64_t> PacedSender::GetApplicationLimitedRegionStartTime()
+    const {
+  CriticalSectionScoped cs(critsect_.get());
+  return alr_detector_->GetApplicationLimitedRegionStartTime();
 }
 
 size_t PacedSender::QueueSizePackets() const {
@@ -300,99 +357,154 @@ size_t PacedSender::QueueSizePackets() const {
 int64_t PacedSender::QueueInMs() const {
   CriticalSectionScoped cs(critsect_.get());
 
-  int64_t oldest_packet = packets_->OldestEnqueueTime();
+  int64_t oldest_packet = packets_->OldestEnqueueTimeMs();
   if (oldest_packet == 0)
     return 0;
 
   return clock_->TimeInMilliseconds() - oldest_packet;
 }
 
+int64_t PacedSender::AverageQueueTimeMs() {
+  CriticalSectionScoped cs(critsect_.get());
+  packets_->UpdateQueueTime(clock_->TimeInMilliseconds());
+  return packets_->AverageQueueTimeMs();
+}
+
 int64_t PacedSender::TimeUntilNextProcess() {
   CriticalSectionScoped cs(critsect_.get());
   if (prober_->IsProbing()) {
     int64_t ret = prober_->TimeUntilNextProbe(clock_->TimeInMilliseconds());
-    if (ret >= 0) {
+    if (ret >= 0)
       return ret;
-    }
   }
   int64_t elapsed_time_us = clock_->TimeInMicroseconds() - time_last_update_us_;
   int64_t elapsed_time_ms = (elapsed_time_us + 500) / 1000;
   return std::max<int64_t>(kMinPacketLimitMs - elapsed_time_ms, 0);
 }
 
-int32_t PacedSender::Process() {
+void PacedSender::Process() {
   int64_t now_us = clock_->TimeInMicroseconds();
   CriticalSectionScoped cs(critsect_.get());
   int64_t elapsed_time_ms = (now_us - time_last_update_us_ + 500) / 1000;
   time_last_update_us_ = now_us;
-  if (!enabled_) {
-    return 0;
-  }
-  if (!paused_) {
-    if (elapsed_time_ms > 0) {
-      int64_t delta_time_ms = std::min(kMaxIntervalTimeMs, elapsed_time_ms);
-      UpdateBytesPerInterval(delta_time_ms);
-    }
-    while (!packets_->Empty()) {
-      if (media_budget_->bytes_remaining() <= 0 && !prober_->IsProbing()) {
-        return 0;
-      }
-
-      // Since we need to release the lock in order to send, we first pop the
-      // element from the priority queue but keep it in storage, so that we can
-      // reinsert it if send fails.
-      const paced_sender::Packet& packet = packets_->BeginPop();
-      if (SendPacket(packet)) {
-        // Send succeeded, remove it from the queue.
-        packets_->FinalizePop(packet);
-        if (prober_->IsProbing()) {
-          return 0;
-        }
-      } else {
-        // Send failed, put it back into the queue.
-        packets_->CancelPop(packet);
-        return 0;
-      }
+  int target_bitrate_kbps = pacing_bitrate_kbps_;
+  // TODO(holmer): Remove the !paused_ check when issue 5307 has been fixed.
+  if (!paused_ && elapsed_time_ms > 0) {
+    size_t queue_size_bytes = packets_->SizeInBytes();
+    if (queue_size_bytes > 0) {
+      // Assuming equal size packets and input/output rate, the average packet
+      // has avg_time_left_ms left to get queue_size_bytes out of the queue, if
+      // time constraint shall be met. Determine bitrate needed for that.
+      packets_->UpdateQueueTime(clock_->TimeInMilliseconds());
+      int64_t avg_time_left_ms = std::max<int64_t>(
+          1, kMaxQueueLengthMs - packets_->AverageQueueTimeMs());
+      int min_bitrate_needed_kbps =
+          static_cast<int>(queue_size_bytes * 8 / avg_time_left_ms);
+      if (min_bitrate_needed_kbps > target_bitrate_kbps)
+        target_bitrate_kbps = min_bitrate_needed_kbps;
     }
 
-    int padding_needed = padding_budget_->bytes_remaining();
-    if (padding_needed > 0) {
-      SendPadding(static_cast<size_t>(padding_needed));
+    media_budget_->set_target_rate_kbps(target_bitrate_kbps);
+
+    elapsed_time_ms = std::min(kMaxIntervalTimeMs, elapsed_time_ms);
+    UpdateBudgetWithElapsedTime(elapsed_time_ms);
+  }
+
+  bool is_probing = prober_->IsProbing();
+  int probe_cluster_id = PacketInfo::kNotAProbe;
+  size_t bytes_sent = 0;
+  size_t recommended_probe_size = 0;
+  if (is_probing) {
+    probe_cluster_id = prober_->CurrentClusterId();
+    recommended_probe_size = prober_->RecommendedMinProbeSize();
+  }
+  while (!packets_->Empty()) {
+    // Since we need to release the lock in order to send, we first pop the
+    // element from the priority queue but keep it in storage, so that we can
+    // reinsert it if send fails.
+    const paced_sender::Packet& packet = packets_->BeginPop();
+
+    if (SendPacket(packet, probe_cluster_id)) {
+      // Send succeeded, remove it from the queue.
+      bytes_sent += packet.bytes;
+      packets_->FinalizePop(packet);
+      if (is_probing && bytes_sent > recommended_probe_size)
+        break;
+    } else {
+      // Send failed, put it back into the queue.
+      packets_->CancelPop(packet);
+      break;
     }
   }
-  return 0;
+
+  // TODO(holmer): Remove the paused_ check when issue 5307 has been fixed.
+  if (packets_->Empty() && !paused_) {
+    // We can not send padding unless a normal packet has first been sent. If we
+    // do, timestamps get messed up.
+    if (packet_counter_ > 0) {
+      int padding_needed =
+          static_cast<int>(is_probing ? (recommended_probe_size - bytes_sent)
+                                      : padding_budget_->bytes_remaining());
+
+      if (padding_needed > 0)
+        bytes_sent += SendPadding(padding_needed, probe_cluster_id);
+    }
+  }
+  if (is_probing && bytes_sent > 0)
+    prober_->ProbeSent(clock_->TimeInMilliseconds(), bytes_sent);
+  alr_detector_->OnBytesSent(bytes_sent, now_us / 1000);
 }
 
-bool PacedSender::SendPacket(const paced_sender::Packet& packet) {
+bool PacedSender::SendPacket(const paced_sender::Packet& packet,
+                             int probe_cluster_id) {
+  // TODO(holmer): Because of this bug issue 5307 we have to send audio
+  // packets even when the pacer is paused. Here we assume audio packets are
+  // always high priority and that they are the only high priority packets.
+  if (packet.priority != kHighPriority) {
+    if (paused_)
+      return false;
+    if (media_budget_->bytes_remaining() == 0 &&
+        probe_cluster_id == PacketInfo::kNotAProbe) {
+      return false;
+    }
+  }
   critsect_->Leave();
-  const bool success = callback_->TimeToSendPacket(packet.ssrc,
-                                                   packet.sequence_number,
-                                                   packet.capture_time_ms,
-                                                   packet.retransmission);
+  const bool success = packet_sender_->TimeToSendPacket(
+      packet.ssrc, packet.sequence_number, packet.capture_time_ms,
+      packet.retransmission, probe_cluster_id);
   critsect_->Enter();
 
   if (success) {
-    // Update media bytes sent.
-    prober_->PacketSent(clock_->TimeInMilliseconds(), packet.bytes);
-    media_budget_->UseBudget(packet.bytes);
-    padding_budget_->UseBudget(packet.bytes);
+    // TODO(holmer): High priority packets should only be accounted for if we
+    // are allocating bandwidth for audio.
+    if (packet.priority != kHighPriority) {
+      // Update media bytes sent.
+      UpdateBudgetWithBytesSent(packet.bytes);
+    }
   }
 
   return success;
 }
 
-void PacedSender::SendPadding(size_t padding_needed) {
+size_t PacedSender::SendPadding(size_t padding_needed, int probe_cluster_id) {
   critsect_->Leave();
-  size_t bytes_sent = callback_->TimeToSendPadding(padding_needed);
+  size_t bytes_sent =
+      packet_sender_->TimeToSendPadding(padding_needed, probe_cluster_id);
   critsect_->Enter();
 
-  // Update padding bytes sent.
-  media_budget_->UseBudget(bytes_sent);
-  padding_budget_->UseBudget(bytes_sent);
+  if (bytes_sent > 0) {
+    UpdateBudgetWithBytesSent(bytes_sent);
+  }
+  return bytes_sent;
 }
 
-void PacedSender::UpdateBytesPerInterval(int64_t delta_time_ms) {
+void PacedSender::UpdateBudgetWithElapsedTime(int64_t delta_time_ms) {
   media_budget_->IncreaseBudget(delta_time_ms);
   padding_budget_->IncreaseBudget(delta_time_ms);
+}
+
+void PacedSender::UpdateBudgetWithBytesSent(size_t bytes_sent) {
+  media_budget_->UseBudget(bytes_sent);
+  padding_budget_->UseBudget(bytes_sent);
 }
 }  // namespace webrtc

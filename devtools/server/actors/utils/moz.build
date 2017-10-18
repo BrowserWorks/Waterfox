@@ -8,9 +8,14 @@ DevToolsModules(
     'actor-registry-utils.js',
     'audionodes.json',
     'automation-timeline.js',
+    'css-grid-utils.js',
     'make-debugger.js',
     'map-uri-to-addon-id.js',
+    'shapes-geometry-utils.js',
     'stack.js',
     'TabSources.js',
-    'walker-search.js'
+    'walker-search.js',
+    'webconsole-listeners.js',
+    'webconsole-utils.js',
+    'webconsole-worker-listeners.js',
 )

@@ -37,7 +37,6 @@ var expected_values = [
 // These media queries return value 0 or 1 when the pref is off.
 // When the pref is on, they should not match.
 var suppressed_toggles = [
-  "-moz-images-in-menus",
   "-moz-mac-graphite-theme",
   // Not available on most OSs.
 //  "-moz-maemo-classic",
@@ -54,8 +53,6 @@ var suppressed_toggles = [
 
 // Possible values for '-moz-os-version'
 var windows_versions = [
-  "windows-xp",
-  "windows-vista",
   "windows-win7",
   "windows-win8",
   "windows-win10",
@@ -261,7 +258,7 @@ var sleep = function (timeoutMs) {
 // Test to see if media queries are properly spoofed in picture elements
 // when we are resisting fingerprinting. A generator function
 // to be used with SpawnTask.js.
-var testMediaQueriesInPictureElements = function* (resisting) {
+var testMediaQueriesInPictureElements = async function(resisting) {
   let lines = "";
   for (let [key, offVal, onVal] of expected_values) {
     let expected = resisting ? onVal : offVal;
@@ -275,7 +272,7 @@ var testMediaQueriesInPictureElements = function* (resisting) {
   }
   document.getElementById("pictures").innerHTML = lines;
   var testImages = document.getElementsByClassName("testImage");
-  yield sleep(0);
+  await sleep(0);
   for (let testImage of testImages) {
     ok(testImage.currentSrc.endsWith("/match.png"), "Media query '" + testImage.title + "' in picture should match.");
   }
@@ -293,9 +290,9 @@ var pushPref = function (key, value) {
 // __test(isContent)__.
 // Run all tests. A generator function to be used
 // with SpawnTask.js.
-var test = function* (isContent) {
+var test = async function(isContent) {
   for (prefValue of [false, true]) {
-    yield pushPref("privacy.resistFingerprinting", prefValue);
+    await pushPref("privacy.resistFingerprinting", prefValue);
     let resisting = prefValue && isContent;
     expected_values.forEach(
       function ([key, offVal, onVal]) {
@@ -310,6 +307,6 @@ var test = function* (isContent) {
     if (OS === "Darwin") {
       testOSXFontSmoothing(resisting);
     }
-    yield testMediaQueriesInPictureElements(resisting);
+    await testMediaQueriesInPictureElements(resisting);
   }
 };

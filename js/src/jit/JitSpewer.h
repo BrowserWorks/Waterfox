@@ -44,6 +44,10 @@ namespace jit {
     _(Unrolling)                            \
     /* Information during LICM */           \
     _(LICM)                                 \
+    /* Info about fold linear constants */  \
+    _(FLAC)                                 \
+    /* Effective address analysis info */   \
+    _(EAA)                                  \
     /* Information during regalloc */       \
     _(RegAlloc)                             \
     /* Information during inlining */       \
@@ -58,8 +62,13 @@ namespace jit {
     _(Profiling)                            \
     /* Information of tracked opt strats */ \
     _(OptimizationTracking)                 \
+    _(OptimizationTrackingExtended)         \
     /* Debug info about the I$ */           \
     _(CacheFlush)                           \
+    /* Output a list of MIR expressions */  \
+    _(MIRExpressions)                       \
+    /* Print control flow graph */          \
+    _(CFG)                                  \
                                             \
     /* BASELINE COMPILER SPEW */            \
                                             \
@@ -118,7 +127,7 @@ static const int NULL_ID = -1;
 
 #ifdef JS_JITSPEW
 
-// Class made to hold the MIR and LIR graphs of an AsmJS / Ion compilation.
+// Class made to hold the MIR and LIR graphs of an Wasm / Ion compilation.
 class GraphSpewer
 {
   private:
@@ -168,15 +177,15 @@ class JitSpewIndent
     ~JitSpewIndent();
 };
 
-void JitSpew(JitSpewChannel channel, const char* fmt, ...);
-void JitSpewStart(JitSpewChannel channel, const char* fmt, ...);
-void JitSpewCont(JitSpewChannel channel, const char* fmt, ...);
+void JitSpew(JitSpewChannel channel, const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
+void JitSpewStart(JitSpewChannel channel, const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
+void JitSpewCont(JitSpewChannel channel, const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
 void JitSpewFin(JitSpewChannel channel);
 void JitSpewHeader(JitSpewChannel channel);
 bool JitSpewEnabled(JitSpewChannel channel);
-void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap);
-void JitSpewStartVA(JitSpewChannel channel, const char* fmt, va_list ap);
-void JitSpewContVA(JitSpewChannel channel, const char* fmt, va_list ap);
+void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap) MOZ_FORMAT_PRINTF(2, 0);
+void JitSpewStartVA(JitSpewChannel channel, const char* fmt, va_list ap) MOZ_FORMAT_PRINTF(2, 0);
+void JitSpewContVA(JitSpewChannel channel, const char* fmt, va_list ap) MOZ_FORMAT_PRINTF(2, 0);
 void JitSpewDef(JitSpewChannel channel, const char* str, MDefinition* def);
 
 void EnableChannel(JitSpewChannel channel);
@@ -244,7 +253,8 @@ static inline void JitSpewHeader(JitSpewChannel channel)
 { }
 static inline bool JitSpewEnabled(JitSpewChannel channel)
 { return false; }
-static inline void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap)
+static inline MOZ_FORMAT_PRINTF(2, 0)
+void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap)
 { }
 static inline void JitSpewDef(JitSpewChannel channel, const char* str, MDefinition* def)
 { }

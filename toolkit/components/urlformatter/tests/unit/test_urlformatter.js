@@ -4,10 +4,10 @@
 function run_test() {
   var formatter = Cc["@mozilla.org/toolkit/URLFormatterService;1"].
                   getService(Ci.nsIURLFormatter);
-  var locale = Cc["@mozilla.org/chrome/chrome-registry;1"].
-               getService(Ci.nsIXULChromeRegistry).
-               getSelectedLocale('global');
-  var prefs = Cc['@mozilla.org/preferences-service;1'].
+  var locale = Cc["@mozilla.org/intl/localeservice;1"].
+               getService(Ci.mozILocaleService).
+               getAppLocaleAsLangTag();
+  var prefs = Cc["@mozilla.org/preferences-service;1"].
               getService(Ci.nsIPrefBranch);
   var sysInfo = Cc["@mozilla.org/system-info;1"].
                 getService(Ci.nsIPropertyBag2);
@@ -27,18 +27,16 @@ function run_test() {
                 QueryInterface(Ci.nsIXULRuntime);
   var abi = macutils && macutils.isUniversalBinary ? "Universal-gcc3" : appInfo.XPCOMABI;
 
-  let channel = "default";
   let defaults = prefs.QueryInterface(Ci.nsIPrefService).getDefaultBranch(null);
-  try {
-    channel = defaults.getCharPref("app.update.channel");
-  } catch (e) {}
+  let channel = defaults.getCharPref("app.update.channel", "default");
+
   // Set distribution values.
   defaults.setCharPref("distribution.id", "bacon");
   defaults.setCharPref("distribution.version", "1.0");
 
   var upperUrlRaw = "http://%LOCALE%.%VENDOR%.foo/?name=%NAME%&id=%ID%&version=%VERSION%&platversion=%PLATFORMVERSION%&abid=%APPBUILDID%&pbid=%PLATFORMBUILDID%&app=%APP%&os=%OS%&abi=%XPCOMABI%";
   var lowerUrlRaw = "http://%locale%.%vendor%.foo/?name=%name%&id=%id%&version=%version%&platversion=%platformversion%&abid=%appbuildid%&pbid=%platformbuildid%&app=%app%&os=%os%&abi=%xpcomabi%";
-  //XXX %APP%'s RegExp is not global, so it only replaces the first space
+  // XXX %APP%'s RegExp is not global, so it only replaces the first space
   var ulUrlRef = "http://" + locale + ".Mozilla.foo/?name=Url Formatter Test&id=urlformattertest@test.mozilla.org&version=1&platversion=2.0&abid=" + gAppInfo.appBuildID + "&pbid=" + gAppInfo.platformBuildID + "&app=urlformatter test&os=XPCShell&abi=" + abi;
   var multiUrl = "http://%VENDOR%.%VENDOR%.%NAME%.%VENDOR%.%NAME%";
   var multiUrlRef = "http://Mozilla.Mozilla.Url Formatter Test.Mozilla.Url Formatter Test";
@@ -48,10 +46,7 @@ function run_test() {
   var advancedUrlRef = "http://test.mozilla.com/Url Formatter Test/1/" + gAppInfo.appBuildID + "/XPCShell_" + abi + "/" + locale + "/" + channel + "/" + OSVersion + "/bacon/1.0/";
 
   var pref = "xpcshell.urlformatter.test";
-  var str = Cc["@mozilla.org/supports-string;1"].
-            createInstance(Ci.nsISupportsString);
-  str.data = upperUrlRaw;
-  prefs.setComplexValue(pref, Ci.nsISupportsString, str);
+  prefs.setStringPref(pref, upperUrlRaw);
 
   do_check_eq(formatter.formatURL(upperUrlRaw), ulUrlRef);
   do_check_eq(formatter.formatURLPref(pref), ulUrlRef);
@@ -62,4 +57,12 @@ function run_test() {
   do_check_eq(formatter.formatURL(encodedUrl), encodedUrlRef);
 
   do_check_eq(formatter.formatURL(advancedUrl), advancedUrlRef);
+
+  for (let val of ["MOZILLA_API_KEY", "GOOGLE_API_KEY", "BING_API_CLIENTID", "BING_API_KEY"]) {
+    let url = "http://test.mozilla.com/?val=%" + val + "%";
+    do_check_neq(formatter.formatURL(url), url);
+  }
+
+  let url = "http://test.mozilla.com/%GOOGLE_API_KEY%/?val=%GOOGLE_API_KEY%";
+  do_check_eq(formatter.trimSensitiveURLs(formatter.formatURL(url)), "http://test.mozilla.com/[trimmed-google-api-key]/?val=[trimmed-google-api-key]");
 }

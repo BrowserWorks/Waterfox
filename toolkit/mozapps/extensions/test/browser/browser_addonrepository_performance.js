@@ -9,7 +9,6 @@ Components.utils.import("resource://gre/modules/addons/AddonRepository.jsm", tmp
 var AddonRepository = tmp.AddonRepository;
 
 var gTelemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
-var gManagerWindow;
 var gProvider;
 
 function parseParams(aQuery) {
@@ -81,7 +80,7 @@ function test() {
   const PREF = "extensions.getAddons.getWithPerformance.url";
 
   // Watch HTTP requests
-  Services.obs.addObserver(observe, "http-on-modify-request", false);
+  Services.obs.addObserver(observe, "http-on-modify-request");
   Services.prefs.setCharPref(PREF,
     "http://127.0.0.1:8888/extensions-dummy/metadata?appOS=%OS%&appVersion=%VERSION%&tMain=%TIME_MAIN%&tFirstPaint=%TIME_FIRST_PAINT%&tSessionRestored=%TIME_SESSION_RESTORED%");
 
@@ -90,7 +89,7 @@ function test() {
   });
 
   AddonRepository._beginGetAddons(["test1@tests.mozilla.org"], {
-    searchFailed: function() {
+    searchFailed() {
       ok(gSeenRequest, "Should have seen metadata request");
       finish();
     }

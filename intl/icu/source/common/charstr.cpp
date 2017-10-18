@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *   Copyright (C) 2010-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *   file name:  charstr.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -13,6 +15,7 @@
 */
 
 #include "unicode/utypes.h"
+#include "unicode/putil.h"
 #include "charstr.h"
 #include "cmemory.h"
 #include "cstring.h"
@@ -144,7 +147,7 @@ UBool CharString::ensureCapacity(int32_t capacity,
     return TRUE;
 }
 
-CharString &CharString::appendPathPart(const StringPiece &s, UErrorCode &errorCode) {
+CharString &CharString::appendPathPart(StringPiece s, UErrorCode &errorCode) {
     if(U_FAILURE(errorCode)) {
         return *this;
     }

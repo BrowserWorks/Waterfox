@@ -13,6 +13,9 @@
 #include "compiler/translator/InfoSink.h"
 #include "compiler/translator/IntermNode.h"
 
+namespace sh
+{
+
 namespace
 {
 
@@ -55,19 +58,15 @@ bool RemovePowTraverser::visitAggregate(Visit visit, TIntermAggregate *node)
         TIntermTyped *x = node->getSequence()->at(0)->getAsTyped();
         TIntermTyped *y = node->getSequence()->at(1)->getAsTyped();
 
-        TIntermUnary *log = new TIntermUnary(EOpLog2);
-        log->setOperand(x);
+        TIntermUnary *log = new TIntermUnary(EOpLog2, x);
         log->setLine(node->getLine());
-        log->setType(x->getType());
 
         TOperator op       = TIntermBinary::GetMulOpBasedOnOperands(y->getType(), log->getType());
         TIntermBinary *mul = new TIntermBinary(op, y, log);
         mul->setLine(node->getLine());
 
-        TIntermUnary *exp = new TIntermUnary(EOpExp2);
-        exp->setOperand(mul);
+        TIntermUnary *exp = new TIntermUnary(EOpExp2, mul);
         exp->setLine(node->getLine());
-        exp->setType(node->getType());
 
         queueReplacement(node, exp, OriginalNode::IS_DROPPED);
 
@@ -96,3 +95,5 @@ void RemovePow(TIntermNode *root)
     }
     while (traverser.needAnotherIteration());
 }
+
+}  // namespace sh

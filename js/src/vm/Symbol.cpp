@@ -20,7 +20,7 @@ using JS::Symbol;
 using namespace js;
 
 Symbol*
-Symbol::newInternal(ExclusiveContext* cx, JS::SymbolCode code, JSAtom* description,
+Symbol::newInternal(JSContext* cx, JS::SymbolCode code, uint32_t hash, JSAtom* description,
                     AutoLockForExclusiveAccess& lock)
 {
     MOZ_ASSERT(cx->compartment() == cx->atomsCompartment(lock));
@@ -31,11 +31,11 @@ Symbol::newInternal(ExclusiveContext* cx, JS::SymbolCode code, JSAtom* descripti
         ReportOutOfMemory(cx);
         return nullptr;
     }
-    return new (p) Symbol(code, description);
+    return new (p) Symbol(code, hash, description);
 }
 
 Symbol*
-Symbol::new_(ExclusiveContext* cx, JS::SymbolCode code, JSString* description)
+Symbol::new_(JSContext* cx, JS::SymbolCode code, JSString* description)
 {
     JSAtom* atom = nullptr;
     if (description) {
@@ -45,14 +45,20 @@ Symbol::new_(ExclusiveContext* cx, JS::SymbolCode code, JSString* description)
     }
 
     // Lock to allocate. If symbol allocation becomes a bottleneck, this can
-    // probably be replaced with an assertion that we're on the main thread.
+    // probably be replaced with an assertion that we're on the active thread.
     AutoLockForExclusiveAccess lock(cx);
-    AutoCompartment ac(cx, cx->atomsCompartment(lock));
-    return newInternal(cx, code, atom, lock);
+    Symbol* sym;
+    {
+        AutoAtomsCompartment ac(cx, lock);
+        sym = newInternal(cx, code, cx->compartment()->randomHashCode(), atom, lock);
+    }
+    if (sym)
+        cx->markAtom(sym);
+    return sym;
 }
 
 Symbol*
-Symbol::for_(js::ExclusiveContext* cx, HandleString description)
+Symbol::for_(JSContext* cx, HandleString description)
 {
     JSAtom* atom = AtomizeString(cx, description);
     if (!atom)
@@ -62,21 +68,30 @@ Symbol::for_(js::ExclusiveContext* cx, HandleString description)
 
     SymbolRegistry& registry = cx->symbolRegistry(lock);
     SymbolRegistry::AddPtr p = registry.lookupForAdd(atom);
-    if (p)
+    if (p) {
+        cx->markAtom(*p);
         return *p;
-
-    AutoCompartment ac(cx, cx->atomsCompartment(lock));
-    Symbol* sym = newInternal(cx, SymbolCode::InSymbolRegistry, atom, lock);
-    if (!sym)
-        return nullptr;
-
-    // p is still valid here because we have held the lock since the
-    // lookupForAdd call, and newInternal can't GC.
-    if (!registry.add(p, sym)) {
-        // SystemAllocPolicy does not report OOM.
-        ReportOutOfMemory(cx);
-        return nullptr;
     }
+
+    Symbol* sym;
+    {
+        AutoAtomsCompartment ac(cx, lock);
+        // Rehash the hash of the atom to give the corresponding symbol a hash
+        // that is different than the hash of the corresponding atom.
+        HashNumber hash = mozilla::HashGeneric(atom->hash());
+        sym = newInternal(cx, SymbolCode::InSymbolRegistry, hash, atom, lock);
+        if (!sym)
+            return nullptr;
+
+        // p is still valid here because we have held the lock since the
+        // lookupForAdd call, and newInternal can't GC.
+        if (!registry.add(p, sym)) {
+            // SystemAllocPolicy does not report OOM.
+            ReportOutOfMemory(cx);
+            return nullptr;
+        }
+    }
+    cx->markAtom(sym);
     return sym;
 }
 
@@ -129,13 +144,13 @@ js::SymbolDescriptiveString(JSContext* cx, Symbol* sym, MutableHandleValue resul
 }
 
 bool
-js::IsSymbolOrSymbolWrapper(Value v)
+js::IsSymbolOrSymbolWrapper(const Value& v)
 {
     return v.isSymbol() || (v.isObject() && v.toObject().is<SymbolObject>());
 }
 
 JS::Symbol*
-js::ToSymbolPrimitive(Value v)
+js::ToSymbolPrimitive(const Value& v)
 {
     MOZ_ASSERT(IsSymbolOrSymbolWrapper(v));
     return v.isSymbol() ? v.toSymbol() : v.toObject().as<SymbolObject>().unbox();

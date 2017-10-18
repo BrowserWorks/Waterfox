@@ -61,8 +61,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "RemoteAddonsParent",
  * being set to.
  */
 
-function AddonInterpositionService()
-{
+function AddonInterpositionService() {
   Prefetcher.init();
   RemoteAddonsParent.init();
 
@@ -102,18 +101,17 @@ AddonInterpositionService.prototype = {
   classID: Components.ID("{1363d5f0-d95e-11e3-9c1a-0800200c9a66}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAddonInterposition, Ci.nsISupportsWeakReference]),
 
-  getWhitelist: function() {
+  getWhitelist() {
     return this._whitelist;
   },
 
   // When the interface is not known for a method call, this code
   // determines the type of the target object.
-  getObjectTag: function(target) {
+  getObjectTag(target) {
     if (Cu.isCrossProcessWrapper(target)) {
       return Cu.getCrossProcessWrapperTag(target);
     }
 
-    const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     if (target instanceof Ci.nsIDOMXULElement) {
       if (target.localName == "browser" && target.isRemoteBrowser) {
         return "RemoteBrowserElement";
@@ -135,15 +133,14 @@ AddonInterpositionService.prototype = {
     return "generic";
   },
 
-  interposeProperty: function(addon, target, iid, prop) {
+  interposeProperty(addon, target, iid, prop) {
     let interp;
     if (iid) {
       interp = this._interfaceInterpositions[iid];
     } else {
       try {
         interp = this._taggedInterpositions[this.getObjectTag(target)];
-      }
-      catch (e) {
+      } catch (e) {
         Cu.reportError(new Components.Exception("Failed to interpose object", e.result, Components.stack.caller));
       }
     }
@@ -174,7 +171,7 @@ AddonInterpositionService.prototype = {
     return Prefetcher.lookupInCache(addon, target, prop);
   },
 
-  interposeCall: function(addonId, originalFunc, originalThis, args) {
+  interposeCall(addonId, originalFunc, originalThis, args) {
     args.splice(0, 0, addonId);
     return originalFunc.apply(originalThis, args);
   },

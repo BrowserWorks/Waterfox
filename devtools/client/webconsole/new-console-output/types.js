@@ -5,26 +5,60 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const Immutable = require("devtools/client/shared/vendor/immutable");
+const {
+  MESSAGE_SOURCE,
+  MESSAGE_TYPE,
+  MESSAGE_LEVEL
+} = require("devtools/client/webconsole/new-console-output/constants");
 
-exports.ConsoleCommand = Immutable.Record({
-  allowRepeating: false,
-  messageText: null,
-  source: null,
-  type: null,
-  category: null,
-  severity: null,
-});
+exports.ConsoleCommand = function (props) {
+  return Object.assign({
+    id: null,
+    allowRepeating: false,
+    messageText: null,
+    source: MESSAGE_SOURCE.JAVASCRIPT,
+    type: MESSAGE_TYPE.COMMAND,
+    level: MESSAGE_LEVEL.LOG,
+    groupId: null,
+    indent: 0,
+  }, props);
+};
 
-exports.ConsoleMessage = Immutable.Record({
-  allowRepeating: true,
-  source: null,
-  type: null,
-  level: null,
-  messageText: null,
-  parameters: null,
-  repeat: 1,
-  repeatId: null,
-  category: "output",
-  severity: "log",
-});
+exports.ConsoleMessage = function (props) {
+  return Object.assign({
+    id: null,
+    allowRepeating: true,
+    source: null,
+    timeStamp: null,
+    type: null,
+    helperType: null,
+    level: null,
+    messageText: null,
+    parameters: null,
+    repeatId: null,
+    stacktrace: null,
+    frame: null,
+    groupId: null,
+    exceptionDocURL: null,
+    userProvidedStyles: null,
+    notes: null,
+    indent: 0,
+  }, props);
+};
+
+exports.NetworkEventMessage = function (props) {
+  return Object.assign({
+    id: null,
+    actor: null,
+    level: MESSAGE_LEVEL.LOG,
+    isXHR: false,
+    request: null,
+    response: null,
+    source: MESSAGE_SOURCE.NETWORK,
+    type: MESSAGE_TYPE.LOG,
+    groupId: null,
+    timeStamp: null,
+    totalTime: null,
+    indent: 0,
+  }, props);
+};

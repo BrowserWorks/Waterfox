@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,13 +12,7 @@ this.EXPORTED_SYMBOLS = [
   "Downloads",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/Integration.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -34,16 +26,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "DownloadSummary",
                                   "resource://gre/modules/DownloadList.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadUIHelper",
                                   "resource://gre/modules/DownloadUIHelper.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
+/* global DownloadIntegration */
 Integration.downloads.defineModuleGetter(this, "DownloadIntegration",
             "resource://gre/modules/DownloadIntegration.jsm");
-
-////////////////////////////////////////////////////////////////////////////////
-//// Downloads
 
 /**
  * This object is exposed directly to the consumers of this JavaScript module,
@@ -103,8 +89,7 @@ this.Downloads = {
    * @resolves The newly created Download object.
    * @rejects JavaScript exception.
    */
-  createDownload: function D_createDownload(aProperties)
-  {
+  createDownload: function D_createDownload(aProperties) {
     try {
       return Promise.resolve(Download.fromSerializable(aProperties));
     } catch (ex) {
@@ -140,7 +125,7 @@ this.Downloads = {
    * @resolves When the download has finished successfully.
    * @rejects JavaScript exception if the download failed.
    */
-  fetch: function (aSource, aTarget, aOptions) {
+  fetch(aSource, aTarget, aOptions) {
     return this.createDownload({
       source: aSource,
       target: aTarget,
@@ -171,34 +156,33 @@ this.Downloads = {
    * @resolves The requested DownloadList or DownloadCombinedList object.
    * @rejects JavaScript exception.
    */
-  getList: function (aType)
-  {
+  getList(aType) {
     if (!this._promiseListsInitialized) {
-      this._promiseListsInitialized = Task.spawn(function* () {
+      this._promiseListsInitialized = (async () => {
         let publicList = new DownloadList();
         let privateList = new DownloadList();
         let combinedList = new DownloadCombinedList(publicList, privateList);
 
         try {
-          yield DownloadIntegration.addListObservers(publicList, false);
-          yield DownloadIntegration.addListObservers(privateList, true);
-          yield DownloadIntegration.initializePublicDownloadList(publicList);
+          await DownloadIntegration.addListObservers(publicList, false);
+          await DownloadIntegration.addListObservers(privateList, true);
+          await DownloadIntegration.initializePublicDownloadList(publicList);
         } catch (ex) {
           Cu.reportError(ex);
         }
 
-        let publicSummary = yield this.getSummary(Downloads.PUBLIC);
-        let privateSummary = yield this.getSummary(Downloads.PRIVATE);
-        let combinedSummary = yield this.getSummary(Downloads.ALL);
+        let publicSummary = await this.getSummary(Downloads.PUBLIC);
+        let privateSummary = await this.getSummary(Downloads.PRIVATE);
+        let combinedSummary = await this.getSummary(Downloads.ALL);
 
-        yield publicSummary.bindToList(publicList);
-        yield privateSummary.bindToList(privateList);
-        yield combinedSummary.bindToList(combinedList);
+        await publicSummary.bindToList(publicList);
+        await privateSummary.bindToList(privateList);
+        await combinedSummary.bindToList(combinedList);
 
         this._lists[Downloads.PUBLIC] = publicList;
         this._lists[Downloads.PRIVATE] = privateList;
         this._lists[Downloads.ALL] = combinedList;
-      }.bind(this));
+      })();
     }
 
     return this._promiseListsInitialized.then(() => this._lists[aType]);
@@ -233,8 +217,7 @@ this.Downloads = {
    * @resolves The requested DownloadList or DownloadCombinedList object.
    * @rejects JavaScript exception.
    */
-  getSummary: function (aType)
-  {
+  getSummary(aType) {
     if (aType != Downloads.PUBLIC && aType != Downloads.PRIVATE &&
         aType != Downloads.ALL) {
       throw new Error("Invalid aType argument.");

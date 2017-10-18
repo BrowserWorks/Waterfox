@@ -51,7 +51,7 @@ Once Visual Studio 2015 Community has been installed, from a checkout
 of mozilla-central, run something like the following to produce a ZIP
 archive::
 
-   $ ./mach python build/windows_toolchain.py create-zip vs2015u2
+   $ ./mach python build/windows_toolchain.py create-zip vs2015u3
 
 The produced archive will be the argument to ``create-zip`` + ``.zip``.
 
@@ -74,7 +74,7 @@ Docker image and job exist for producing the required archives.  The
 Docker image definition is rooted in
 ``taskcluster/docker/android-gradle-build``.  The Task Cluster job
 definition is in
-``testing/taskcluster/tasks/builds/android_api_15_gradle_dependencies.yml``.
+``testing/taskcluster/tasks/builds/android_api_16_gradle_dependencies.yml``.
 The job runs in a container based on the custom Docker image and
 spawns a Sonatype Nexus proxying Maven repository process in the
 background.  The job builds Firefox for Android using Gradle and the
@@ -102,7 +102,7 @@ To update the versions of Gradle dependencies used, update
 at ``build.gradle``.  Once you are confident your changes build
 locally, push a fresh try build with an invocation like::
 
-   $ hg push-to-try -m "try: -b o -p android-api-15-gradle-dependencies"
+   $ hg push-to-try -m "try: -b o -p android-api-16-gradle-dependencies"
 
 Then `upload your archives to tooltool
 <https://wiki.mozilla.org/ReleaseEngineering/Applications/Tooltool#How_To_Upload_To_Tooltool>`_,

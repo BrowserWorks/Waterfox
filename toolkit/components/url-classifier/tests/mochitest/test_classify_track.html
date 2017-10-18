@@ -20,6 +20,9 @@
   const validtrack_url = "http://mochi.test:8888/" + track_path;
 
   var video = document.createElement("video");
+  video.src = "seek.webm";
+  video.crossOrigin = "anonymous";
+
   document.body.appendChild(video);
 
   function testValidTrack() {
@@ -116,7 +119,7 @@
     SpecialPowers.clearUserPref(PREF);
   }
 
-  function addMalewareUrlToDB() {
+  function setup() {
     var testData = [
       { url: "malware.example.com/",
         db: "test-malware-simple"
@@ -133,7 +136,8 @@
 
   function runTest() {
     Promise.resolve()
-      .then(addMalewareUrlToDB)
+      .then(classifierHelper.waitForInit)
+      .then(setup)
       .then(testValidTrack)
       .then(testBlacklistTrackSafebrowsingOff)
       .then(testBlacklistTrackSafebrowsingOn)

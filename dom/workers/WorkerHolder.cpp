@@ -9,8 +9,9 @@
 
 BEGIN_WORKERS_NAMESPACE
 
-WorkerHolder::WorkerHolder()
+WorkerHolder::WorkerHolder(Behavior aBehavior)
   : mWorkerPrivate(nullptr)
+  , mBehavior(aBehavior)
 {
 }
 
@@ -22,13 +23,13 @@ WorkerHolder::~WorkerHolder()
 }
 
 bool
-WorkerHolder::HoldWorker(WorkerPrivate* aWorkerPrivate)
+WorkerHolder::HoldWorker(WorkerPrivate* aWorkerPrivate, Status aFailStatus)
 {
   NS_ASSERT_OWNINGTHREAD(WorkerHolder);
   MOZ_ASSERT(aWorkerPrivate);
   aWorkerPrivate->AssertIsOnWorkerThread();
 
-  if (!aWorkerPrivate->AddHolder(this)) {
+  if (!aWorkerPrivate->AddHolder(this, aFailStatus)) {
     return false;
   }
 
@@ -43,6 +44,12 @@ WorkerHolder::ReleaseWorker()
   MOZ_ASSERT(mWorkerPrivate);
 
   ReleaseWorkerInternal();
+}
+
+WorkerHolder::Behavior
+WorkerHolder::GetBehavior() const
+{
+  return mBehavior;
 }
 
 void

@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
   const objectStores = [ "foo", "bar" ];
@@ -47,7 +47,7 @@ function testSteps()
     request.onsuccess = function(event) {
       is(stepNumber, 2, "This callback came second");
       stepNumber++;
-      event.target.transaction.oncomplete = grabEventAndContinueHandler;      
+      event.target.transaction.oncomplete = grabEventAndContinueHandler;
     }
 
     request = db.transaction(["foo", "bar"], "readwrite")
@@ -57,7 +57,7 @@ function testSteps()
     request.onsuccess = function(event) {
       is(stepNumber, 3, "This callback came third");
       stepNumber++;
-      event.target.transaction.oncomplete = grabEventAndContinueHandler;      
+      event.target.transaction.oncomplete = grabEventAndContinueHandler;
     }
 
     request = db.transaction(["foo", "bar"], "readwrite")
@@ -87,6 +87,5 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }
 

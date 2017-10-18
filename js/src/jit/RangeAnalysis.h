@@ -13,10 +13,6 @@
 #include "jit/IonAnalysis.h"
 #include "jit/MIR.h"
 
-// windows.h defines those, which messes with the definitions below.
-#undef min
-#undef max
-
 namespace js {
 namespace jit {
 
@@ -47,7 +43,8 @@ struct LoopIterationBound : public TempObject
     // of the loop header. This will use loop invariant terms and header phis.
     LinearSum currentSum;
 
-    LoopIterationBound(MBasicBlock* header, MTest* test, LinearSum boundSum, LinearSum currentSum)
+    LoopIterationBound(MBasicBlock* header, MTest* test,
+                       const LinearSum& boundSum, const LinearSum& currentSum)
       : header(header), test(test),
         boundSum(boundSum), currentSum(currentSum)
     {
@@ -60,7 +57,7 @@ typedef Vector<LoopIterationBound*, 0, SystemAllocPolicy> LoopIterationBoundVect
 struct SymbolicBound : public TempObject
 {
   private:
-    SymbolicBound(LoopIterationBound* loop, LinearSum sum)
+    SymbolicBound(LoopIterationBound* loop, const LinearSum& sum)
       : loop(loop), sum(sum)
     {
     }
@@ -74,7 +71,8 @@ struct SymbolicBound : public TempObject
     // If nullptr, then 'sum' is always valid.
     LoopIterationBound* loop;
 
-    static SymbolicBound* New(TempAllocator& alloc, LoopIterationBound* loop, LinearSum sum) {
+    static SymbolicBound*
+    New(TempAllocator& alloc, LoopIterationBound* loop, const LinearSum& sum) {
         return new(alloc) SymbolicBound(loop, sum);
     }
 
@@ -482,6 +480,7 @@ class Range : public TempObject {
     static Range* floor(TempAllocator& alloc, const Range* op);
     static Range* ceil(TempAllocator& alloc, const Range* op);
     static Range* sign(TempAllocator& alloc, const Range* op);
+    static Range* NaNToZero(TempAllocator& alloc, const Range* op);
 
     static MOZ_MUST_USE bool negativeZeroMul(const Range* lhs, const Range* rhs);
 

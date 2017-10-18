@@ -56,6 +56,7 @@ public class FennecTabsRepository extends Repository {
     private final ContentProviderClient clientsProvider;
 
     protected final RepoUtils.QueryHelper tabsHelper;
+    protected final RepoUtils.QueryHelper clientsHelper;
 
     protected final ClientsDatabaseAccessor clientsDatabase;
 
@@ -92,6 +93,7 @@ public class FennecTabsRepository extends Repository {
       }
 
       tabsHelper = new RepoUtils.QueryHelper(context, BrowserContractHelpers.TABS_CONTENT_URI, LOG_TAG);
+      clientsHelper = new RepoUtils.QueryHelper(context, BrowserContractHelpers.CLIENTS_CONTENT_URI, LOG_TAG);
       clientsDatabase = new ClientsDatabaseAccessor(context);
     }
 
@@ -158,7 +160,10 @@ public class FennecTabsRepository extends Repository {
             try {
               final String localClientGuid = clientsDataDelegate.getAccountGUID();
               final String localClientName = clientsDataDelegate.getClientName();
-              final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, localClientGuid, localClientName);
+              final long localClientLastModified = getLocalClientLastModified();
+              // tabsRecord.lastModified is set to our local client last modified time, which is
+              // bumped every time the tab list is modified.
+              final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, localClientGuid, localClientName, localClientLastModified);
 
               if (tabsRecord.lastModified >= timestamp ||
                   clientsDataDelegate.getLastModifiedTimestamp() >= timestamp) {
@@ -168,7 +173,7 @@ public class FennecTabsRepository extends Repository {
               cursor.close();
             }
           } catch (Exception e) {
-            delegate.onFetchFailed(e, null);
+            delegate.onFetchFailed(e);
             return;
           }
           delegate.onFetchCompleted(now());
@@ -176,6 +181,24 @@ public class FennecTabsRepository extends Repository {
       };
 
       delegateQueue.execute(command);
+    }
+
+    private long getLocalClientLastModified() {
+      final String localClientSelection = Clients.GUID + " IS NULL";
+      final String[] localClientSelectionArgs = null;
+      Cursor cursor = null;
+      try {
+        cursor = clientsHelper.safeQuery(tabsProvider, ".fetchLocalClient()", null,
+                localClientSelection, localClientSelectionArgs, null);
+        cursor.moveToFirst();
+        return RepoUtils.getLongFromCursor(cursor, Clients.LAST_MODIFIED);
+      } catch (Exception e) {
+        return 0;
+      } finally {
+        if (cursor != null) {
+          cursor.close();
+        }
+      }
     }
 
     @Override
@@ -202,7 +225,7 @@ public class FennecTabsRepository extends Repository {
 
     @Override
     public void store(final Record record) throws NoStoreDelegateException {
-      if (delegate == null) {
+      if (storeDelegate == null) {
         Logger.warn(LOG_TAG, "No store delegate.");
         throw new NoStoreDelegateException();
       }
@@ -221,11 +244,11 @@ public class FennecTabsRepository extends Repository {
         public void run() {
           Logger.debug(LOG_TAG, "Storing tabs for client " + tabsRecord.guid);
           if (!isActive()) {
-            delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
+            storeDelegate.onRecordStoreFailed(new InactiveSessionException(), record.guid);
             return;
           }
           if (tabsRecord.guid == null) {
-            delegate.onRecordStoreFailed(new RuntimeException("Can't store record with null GUID."), record.guid);
+            storeDelegate.onRecordStoreFailed(new RuntimeException("Can't store record with null GUID."), record.guid);
             return;
           }
 
@@ -238,9 +261,9 @@ public class FennecTabsRepository extends Repository {
                 clientsProvider.delete(BrowserContractHelpers.CLIENTS_CONTENT_URI,
                                        CLIENT_GUID_IS,
                                        selectionArgs);
-                delegate.onRecordStoreSucceeded(record.guid);
+                storeDelegate.onRecordStoreSucceeded(record.guid);
               } catch (Exception e) {
-                delegate.onRecordStoreFailed(e, record.guid);
+                storeDelegate.onRecordStoreFailed(e, record.guid);
               }
               return;
             }
@@ -271,10 +294,10 @@ public class FennecTabsRepository extends Repository {
             final int inserted = tabsProvider.bulkInsert(BrowserContractHelpers.TABS_CONTENT_URI, tabsArray);
             Logger.trace(LOG_TAG, "Inserted: " + inserted);
 
-            delegate.onRecordStoreSucceeded(record.guid);
+            storeDelegate.onRecordStoreSucceeded(record.guid);
           } catch (Exception e) {
             Logger.warn(LOG_TAG, "Error storing tabs.", e);
-            delegate.onRecordStoreFailed(e, record.guid);
+            storeDelegate.onRecordStoreFailed(e, record.guid);
           }
         }
       };
@@ -313,7 +336,7 @@ public class FennecTabsRepository extends Repository {
    * Caller is responsible for creating and closing cursor. Each row of the
    * cursor should be an individual tab record.
    * <p>
-   * The extracted tabs record has the given client GUID and client name.
+   * The extracted tabs record has the given client GUID, client name and lastModified field.
    *
    * @param cursor
    *          to inspect.
@@ -321,9 +344,11 @@ public class FennecTabsRepository extends Repository {
    *          returned tabs record will have this client GUID.
    * @param clientName
    *          returned tabs record will have this client name.
+   * @param lastModified
+   *          returned tabs record will have this lastModified field.
    * @return <code>TabsRecord</code> instance.
    */
-  public static TabsRecord tabsRecordFromCursor(final Cursor cursor, final String clientGuid, final String clientName) {
+  public static TabsRecord tabsRecordFromCursor(final Cursor cursor, final String clientGuid, final String clientName, long lastModified) {
     final String collection = "tabs";
     final TabsRecord record = new TabsRecord(clientGuid, collection, 0, false);
     record.tabs = new ArrayList<Tab>();
@@ -332,8 +357,6 @@ public class FennecTabsRepository extends Repository {
     record.androidID = -1;
     record.deleted = false;
 
-    record.lastModified = 0;
-
     int position = cursor.getPosition();
     try {
       cursor.moveToFirst();
@@ -341,15 +364,13 @@ public class FennecTabsRepository extends Repository {
         final Tab tab = Tab.fromCursor(cursor);
         record.tabs.add(tab);
 
-        if (tab.lastUsed > record.lastModified) {
-          record.lastModified = tab.lastUsed;
-        }
-
         cursor.moveToNext();
       }
     } finally {
       cursor.moveToPosition(position);
     }
+
+    record.lastModified = lastModified;
 
     return record;
   }

@@ -1,5 +1,7 @@
 /* Check presence of the "Ignore this warning" button */
 
+/* eslint-env mozilla/frame-script */
+
 function onDOMContentLoaded(callback) {
   function complete({ data }) {
     mm.removeMessageListener("Test:DOMContentLoaded", complete);
@@ -10,7 +12,7 @@ function onDOMContentLoaded(callback) {
   mm.addMessageListener("Test:DOMContentLoaded", complete);
 
   function contentScript() {
-    let listener = function () {
+    let listener = function() {
       removeEventListener("DOMContentLoaded", listener);
 
       let button = content.document.getElementById("ignoreWarningButton");
@@ -25,8 +27,10 @@ function onDOMContentLoaded(callback) {
 function test() {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab("http://www.itisatrap.org/firefox/its-an-attack.html");
-  onDOMContentLoaded(testMalware);
+  waitForDBInit(() => {
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "http://www.itisatrap.org/firefox/its-an-attack.html");
+    onDOMContentLoaded(testMalware);
+  });
 }
 
 function testMalware(data) {

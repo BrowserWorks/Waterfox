@@ -134,6 +134,14 @@ NewDateObject(JSContext* cx, ClippedTime time);
 JS_PUBLIC_API(double)
 MakeDate(double year, unsigned month, unsigned day);
 
+// Year is a year, month is 0-11, day is 1-based, and time is in milliseconds.
+// The return value is a number of milliseconds since the epoch.
+//
+// Consistent with the MakeDate algorithm defined in ECMAScript, this value is
+// *not* clipped!  Use JS::TimeClip if you need a clipped date.
+JS_PUBLIC_API(double)
+MakeDate(double year, unsigned month, unsigned day, double time);
+
 // Takes an integer number of milliseconds since the epoch and returns the
 // year.  Can return NaN, and will do so if NaN is passed in.
 JS_PUBLIC_API(double)
@@ -148,6 +156,27 @@ MonthFromTime(double time);
 // day (1-based).  Can return NaN, and will do so if NaN is passed in.
 JS_PUBLIC_API(double)
 DayFromTime(double time);
+
+// Takes an integer year and returns the number of days from epoch to the given
+// year.
+// NOTE: The calculation performed by this function is literally that given in
+// the ECMAScript specification.  Nonfinite years, years containing fractional
+// components, and years outside ECMAScript's date range are not handled with
+// any particular intelligence.  Garbage in, garbage out.
+JS_PUBLIC_API(double)
+DayFromYear(double year);
+
+// Takes an integer number of milliseconds since the epoch and an integer year,
+// returns the number of days in that year. If |time| is nonfinite, returns NaN.
+// Otherwise |time| *must* correspond to a time within the valid year |year|.
+// This should usually be ensured by computing |year| as |JS::DayFromYear(time)|.
+JS_PUBLIC_API(double)
+DayWithinYear(double time, double year);
+
+// Sets the time resolution for fingerprinting protection.
+// If it's set to zero, then no rounding will happen.
+JS_PUBLIC_API(void)
+SetTimeResolutionUsec(uint32_t resolution);
 
 } // namespace JS
 

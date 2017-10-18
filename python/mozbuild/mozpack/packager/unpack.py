@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import mozpack.path as mozpath
 from mozpack.files import (
+    BaseFinder,
     FileFinder,
     DeflatedFile,
     ManifestFile,
@@ -22,24 +23,29 @@ from mozpack.copier import (
     FileCopier,
 )
 from mozpack.packager import SimplePackager
-from mozpack.packager.formats import (
-    FlatFormatter,
-    STARTUP_CACHE_PATHS,
-)
+from mozpack.packager.formats import FlatFormatter
 from urlparse import urlparse
 
 
-class UnpackFinder(FileFinder):
+class UnpackFinder(BaseFinder):
     '''
-    Special FileFinder that treats the source package directory as if it were
-    in the flat chrome format, whatever chrome format it actually is in.
+    Special Finder object that treats the source package directory as if it
+    were in the flat chrome format, whatever chrome format it actually is in.
 
     This means that for example, paths like chrome/browser/content/... match
     files under jar:chrome/browser.jar!/content/... in case of jar chrome
     format.
+
+    The only argument to the constructor is a Finder instance or a path.
+    The UnpackFinder is populated with files from this Finder instance,
+    or with files from a FileFinder using the given path as its root.
     '''
-    def __init__(self, *args, **kargs):
-        FileFinder.__init__(self, *args, **kargs)
+    def __init__(self, source):
+        if isinstance(source, BaseFinder):
+            self._finder = source
+        else:
+            self._finder = FileFinder(source)
+        self.base = self._finder.base
         self.files = FileRegistry()
         self.kind = 'flat'
         self.omnijar = None
@@ -49,7 +55,7 @@ class UnpackFinder(FileFinder):
 
         jars = set()
 
-        for p, f in FileFinder.find(self, '*'):
+        for p, f in self._finder.find('*'):
             # Skip the precomplete file, which is generated at packaging time.
             if p == 'precomplete':
                 continue
@@ -116,7 +122,7 @@ class UnpackFinder(FileFinder):
                 jar = self.files[jarpath]
                 self.files.remove(jarpath)
             else:
-                jar = [f for p, f in FileFinder.find(self, jarpath)]
+                jar = [f for p, f in self._finder.find(jarpath)]
                 assert len(jar) == 1
                 jar = jar[0]
             if not jarpath in jars:
@@ -179,8 +185,7 @@ def unpack_to_registry(source, registry):
     finder = UnpackFinder(source)
     packager = SimplePackager(FlatFormatter(registry))
     for p, f in finder.find('*'):
-        if mozpath.split(p)[0] not in STARTUP_CACHE_PATHS:
-            packager.add(p, f)
+        packager.add(p, f)
     packager.close()
 
 

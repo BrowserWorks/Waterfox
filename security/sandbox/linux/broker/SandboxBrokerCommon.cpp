@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
 
 #ifndef MSG_CMSG_CLOEXEC
 #ifdef XP_LINUX
@@ -28,6 +29,20 @@
 #endif // MSG_CMSG_CLOEXEC
 
 namespace mozilla {
+
+const char* SandboxBrokerCommon::OperationDescription[] = {
+  "open",
+  "access",
+  "stat",
+  "chmod",
+  "link",
+  "symlink",
+  "mkdir",
+  "rename",
+  "rmdir",
+  "unlink",
+  "readlink"
+};
 
 /* static */ ssize_t
 SandboxBrokerCommon::RecvWithFd(int aFd, const iovec* aIO, size_t aNumIO,
@@ -99,6 +114,7 @@ SandboxBrokerCommon::SendWithFd(int aFd, const iovec* aIO, size_t aNumIO,
   msg.msg_iovlen = aNumIO;
 
   char cmsg_buf[CMSG_SPACE(sizeof(int))];
+  memset(cmsg_buf, 0, sizeof(cmsg_buf));
   if (aPassedFd != -1) {
     msg.msg_control = cmsg_buf;
     msg.msg_controllen = sizeof(cmsg_buf);

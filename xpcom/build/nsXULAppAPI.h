@@ -12,7 +12,7 @@
 #include "nsXPCOM.h"
 #include "nsISupports.h"
 #include "mozilla/Logging.h"
-#include "nsXREAppData.h"
+#include "mozilla/XREAppData.h"
 #include "js/TypeDecls.h"
 
 #include "mozilla/ArrayUtils.h"
@@ -21,6 +21,10 @@
 #include "mozilla/TimeStamp.h"
 #include "XREChildData.h"
 #include "XREShellData.h"
+
+#if defined(MOZ_WIDGET_ANDROID)
+#include <jni.h>
+#endif
 
 /**
  * A directory service key which provides the platform-correct "application
@@ -194,18 +198,18 @@
  *                  Windows, these should be in UTF8. On unix-like platforms
  *                  these are in the "native" character set.
  *
- * @param aAppData  Information about the application to be run.
- *
- * @param aFlags    Platform specific flags.
+ * @param aConfig  Information about the application to be run.
  *
  * @return         A native result code suitable for returning from main().
  *
  * @note           If the binary is linked against the standalone XPCOM glue,
  *                 XPCOMGlueStartup() should be called before this method.
  */
+namespace mozilla {
+struct BootstrapConfig;
+}
 XRE_API(int,
-        XRE_main, (int argc, char* argv[], const nsXREAppData* aAppData,
-                   uint32_t aFlags))
+        XRE_main, (int argc, char* argv[], const mozilla::BootstrapConfig& aConfig))
 
 /**
  * Given a path relative to the current working directory (or an absolute
@@ -362,18 +366,6 @@ XRE_API(void,
         XRE_TermEmbedding, ())
 
 /**
- * Create a new nsXREAppData structure from an application.ini file.
- *
- * @param aINIFile The application.ini file to parse.
- * @param aAppData A newly-allocated nsXREAppData structure. The caller is
- *                 responsible for freeing this structure using
- *                 XRE_FreeAppData.
- */
-XRE_API(nsresult,
-        XRE_CreateAppData, (nsIFile* aINIFile,
-                            nsXREAppData** aAppData))
-
-/**
  * Parse an INI file (application.ini or override.ini) into an existing
  * nsXREAppData structure.
  *
@@ -382,13 +374,7 @@ XRE_API(nsresult,
  */
 XRE_API(nsresult,
         XRE_ParseAppData, (nsIFile* aINIFile,
-                           nsXREAppData* aAppData))
-
-/**
- * Free a nsXREAppData structure that was allocated with XRE_CreateAppData.
- */
-XRE_API(void,
-        XRE_FreeAppData, (nsXREAppData* aAppData))
+                           mozilla::XREAppData& aAppData))
 
 enum GeckoProcessType
 {
@@ -423,6 +409,11 @@ static_assert(MOZ_ARRAY_LENGTH(kGeckoProcessTypeString) ==
 XRE_API(const char*,
         XRE_ChildProcessTypeToString, (GeckoProcessType aProcessType))
 
+#if defined(MOZ_WIDGET_ANDROID)
+XRE_API(void,
+        XRE_SetAndroidChildFds, (JNIEnv* env, int crashFd, int ipcFd))
+#endif // defined(MOZ_WIDGET_ANDROID)
+
 XRE_API(void,
         XRE_SetProcessType, (const char* aProcessTypeString))
 
@@ -451,11 +442,25 @@ XRE_API(nsresult,
 XRE_API(GeckoProcessType,
         XRE_GetProcessType, ())
 
+/**
+ * Returns true when called in the e10s parent process.  Does *NOT* return true
+ * when called in the main process if e10s is disabled.
+ */
+XRE_API(bool,
+        XRE_IsE10sParentProcess, ())
+
+/**
+ * Returns true when called in the e10s parent process or called in the main
+ * process when e10s is disabled.
+ */
 XRE_API(bool,
         XRE_IsParentProcess, ())
 
 XRE_API(bool,
         XRE_IsContentProcess, ())
+
+XRE_API(bool,
+        XRE_IsGPUProcess, ())
 
 typedef void (*MainFunction)(void* aData);
 
@@ -508,18 +513,6 @@ XRE_API(void,
 XRE_API(void,
         XRE_StopLateWriteChecks, (void))
 
-#ifdef MOZ_B2G_LOADER
-XRE_API(int,
-        XRE_ProcLoaderServiceRun, (pid_t, int, int argc, const char* argv[],
-                                   mozilla::Vector<int>& aReservedFds));
-XRE_API(void,
-        XRE_ProcLoaderClientInit, (pid_t, int,
-                                   mozilla::Vector<int>& aReservedFds));
-XRE_API(void,
-        XRE_ProcLoaderPreload, (const char* aProgramDir,
-                                const nsXREAppData* aAppData));
-#endif // MOZ_B2G_LOADER
-
 XRE_API(void,
         XRE_EnableSameExecutableForContentProc, ())
 
@@ -531,5 +524,14 @@ XRE_API(int,
 XRE_API(void,
         XRE_GlibInit, ())
 #endif
+
+
+#ifdef LIBFUZZER
+#include "LibFuzzerRegistry.h"
+
+XRE_API(void,
+        XRE_LibFuzzerSetDriver, (LibFuzzerDriver))
+
+#endif // LIBFUZZER
 
 #endif // _nsXULAppAPI_h__

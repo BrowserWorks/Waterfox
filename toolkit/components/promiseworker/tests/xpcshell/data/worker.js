@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* eslint-env mozilla/chrome-worker */
+
 "use strict";
 
 // Trivial worker definition
@@ -24,7 +26,11 @@ worker.log = function(...args) {
 self.addEventListener("message", msg => worker.handleMessage(msg));
 
 var Agent = {
-  bounce: function(...args) {
+  bounce(...args) {
     return args;
-  }
+  },
+
+  throwError(msg, ...args) {
+     throw new Error(msg);
+  },
 };

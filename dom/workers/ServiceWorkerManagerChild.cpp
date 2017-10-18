@@ -6,7 +6,8 @@
 
 #include "ServiceWorkerManagerChild.h"
 #include "ServiceWorkerManager.h"
-#include "mozilla/unused.h"
+#include "ServiceWorkerUpdaterChild.h"
+#include "mozilla/Unused.h"
 
 namespace mozilla {
 
@@ -15,83 +16,104 @@ using namespace ipc;
 namespace dom {
 namespace workers {
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRegister(
                                      const ServiceWorkerRegistrationData& aData)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (swm) {
+    swm->LoadRegistration(aData);
+  }
 
-  swm->LoadRegistration(aData);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifySoftUpdate(
-                                      const PrincipalOriginAttributes& aOriginAttributes,
+                                      const OriginAttributes& aOriginAttributes,
                                       const nsString& aScope)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (swm) {
+    swm->SoftUpdate(aOriginAttributes, NS_ConvertUTF16toUTF8(aScope));
+  }
 
-  swm->SoftUpdate(aOriginAttributes, NS_ConvertUTF16toUTF8(aScope));
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyUnregister(const PrincipalInfo& aPrincipalInfo,
                                                 const nsString& aScope)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (!swm) {
+    // browser shutdown
+    return IPC_OK();
+  }
 
   nsCOMPtr<nsIPrincipal> principal = PrincipalInfoToPrincipal(aPrincipalInfo);
   if (NS_WARN_IF(!principal)) {
-    return true;
+    return IPC_OK();
   }
 
   nsresult rv = swm->NotifyUnregister(principal, aScope);
   Unused << NS_WARN_IF(NS_FAILED(rv));
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRemove(const nsCString& aHost)
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (swm) {
+    swm->Remove(aHost);
+  }
 
-  swm->Remove(aHost);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 ServiceWorkerManagerChild::RecvNotifyRemoveAll()
 {
   if (mShuttingDown) {
-    return true;
+    return IPC_OK();
   }
 
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  MOZ_ASSERT(swm);
+  if (swm) {
+    swm->RemoveAll();
+  }
 
-  swm->RemoveAll();
+  return IPC_OK();
+}
+
+PServiceWorkerUpdaterChild*
+ServiceWorkerManagerChild::AllocPServiceWorkerUpdaterChild(const OriginAttributes& aOriginAttributes,
+                                                           const nsCString& aScope)
+{
+  MOZ_CRASH("Do no use ServiceWorkerUpdaterChild IPC CTOR.");
+}
+
+bool
+ServiceWorkerManagerChild::DeallocPServiceWorkerUpdaterChild(PServiceWorkerUpdaterChild* aActor)
+{
+  delete aActor;
   return true;
 }
 

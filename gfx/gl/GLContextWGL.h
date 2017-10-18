@@ -20,7 +20,6 @@ public:
     // From Window: (possibly for offscreen!)
     GLContextWGL(CreateContextFlags flags,
                  const SurfaceCaps& caps,
-                 GLContext* sharedContext,
                  bool isOffscreen,
                  HDC aDC,
                  HGLRC aContext,
@@ -29,7 +28,6 @@ public:
     // From PBuffer
     GLContextWGL(CreateContextFlags flags,
                  const SurfaceCaps& caps,
-                 GLContext* sharedContext,
                  bool isOffscreen,
                  HANDLE aPbuffer,
                  HDC aDC,
@@ -55,11 +53,11 @@ public:
 
     virtual bool IsDoubleBuffered() const override;
 
-    virtual bool SupportsRobustness() const override;
-
     virtual bool SwapBuffers() override;
 
     virtual bool SetupLookupFunction() override;
+
+    virtual void GetWSIInfo(nsCString* const out) const override;
 
     HGLRC Context() { return mContext; }
 

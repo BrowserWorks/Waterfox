@@ -71,8 +71,7 @@ def make_hg_url(hg_host, repo_path, protocol='http', revision=None,
 
 
 class MercurialVCS(ScriptMixin, LogMixin, TransferMixin):
-    # For the most part, scripts import mercurial, update,
-    # hgtool uses mercurial, share, out
+    # For the most part, scripts import mercurial, update
     # tag-release.py imports
     #  apply_and_push, update, get_revision, out, BRANCH, REVISION,
     #  get_branches, cleanOutgoingRevs
@@ -354,7 +353,7 @@ class MercurialVCS(ScriptMixin, LogMixin, TransferMixin):
             self.warning('did not specify revision or branch; assuming "default"')
             branch = 'default'
 
-        share_base = c.get('vcs_share_base', os.environ.get('HG_SHARE_BASE_DIR', None))
+        share_base = c.get('vcs_share_base') or os.environ.get('HG_SHARE_BASE_DIR')
         if share_base and c.get('use_vcs_unique_share'):
             # Bug 1277041 - update migration scripts to support robustcheckout
             # fake a share but don't really share
@@ -371,7 +370,7 @@ class MercurialVCS(ScriptMixin, LogMixin, TransferMixin):
 
         # Log HG version and install info to aid debugging.
         self.run_command(self.hg + ['--version'])
-        self.run_command(self.hg + ['debuginstall'])
+        self.run_command(self.hg + ['debuginstall', '--config=ui.username=worker'])
 
         args = self.hg + [
             '--config', 'extensions.robustcheckout=%s' % self.robustcheckout_path,
@@ -396,57 +395,6 @@ class MercurialVCS(ScriptMixin, LogMixin, TransferMixin):
             raise VCSException('could not identify revision updated to')
 
         return parser.revision
-
-    def apply_and_push(self, localrepo, remote, changer, max_attempts=10,
-                       ssh_username=None, ssh_key=None):
-        """This function calls `changer' to make changes to the repo, and
-        tries its hardest to get them to the origin repo. `changer' must be
-        a callable object that receives two arguments: the directory of the
-        local repository, and the attempt number. This function will push
-        ALL changesets missing from remote.
-        """
-        self.info("Applying and pushing local changes from %s to %s." % (localrepo, remote))
-        assert callable(changer)
-        branch = self.get_branch_from_path(localrepo)
-        changer(localrepo, 1)
-        for n in range(1, max_attempts + 1):
-            try:
-                new_revs = self.out(src=localrepo, remote=remote,
-                                    ssh_username=ssh_username,
-                                    ssh_key=ssh_key)
-                if len(new_revs) < 1:
-                    raise VCSException("No revs to push")
-                self.push(src=localrepo, remote=remote,
-                          ssh_username=ssh_username,
-                          ssh_key=ssh_key)
-                return
-            except VCSException, e:
-                self.debug("Hit error when trying to push: %s" % str(e))
-                if n == max_attempts:
-                    self.debug("Tried %d times, giving up" % max_attempts)
-                    for r in reversed(new_revs):
-                        self.run_command(self.hg + ['strip', '-n', r[REVISION]],
-                                         cwd=localrepo, error_list=HgErrorList)
-                    raise VCSException("Failed to push")
-                self.pull(remote, localrepo, update_dest=False,
-                          ssh_username=ssh_username, ssh_key=ssh_key)
-                # After we successfully rebase or strip away heads the push
-                # is is attempted again at the start of the loop
-                try:
-                    self.run_command(self.hg + ['rebase'], cwd=localrepo,
-                                     error_list=HgErrorList,
-                                     throw_exception=True)
-                except subprocess.CalledProcessError, e:
-                    self.debug("Failed to rebase: %s" % str(e))
-                    # clean up any hanging rebase. ignore errors if we aren't
-                    # in the middle of a rebase.
-                    self.run_command(self.hg + ['rebase', '--abort'],
-                                     cwd=localrepo, success_codes=[0, 255])
-                    self.update(localrepo, branch=branch)
-                    for r in reversed(new_revs):
-                        self.run_command(self.hg + ['strip', '-n', r[REVISION]],
-                                         cwd=localrepo, error_list=HgErrorList)
-                    changer(localrepo, n + 1)
 
     def cleanOutgoingRevs(self, reponame, remote, username, sshKey):
         # TODO retry

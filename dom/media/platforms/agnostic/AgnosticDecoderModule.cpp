@@ -5,25 +5,33 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AgnosticDecoderModule.h"
-#include "mozilla/Logging.h"
 #include "OpusDecoder.h"
-#include "VorbisDecoder.h"
-#include "VPXDecoder.h"
-#include "WAVDecoder.h"
 #include "TheoraDecoder.h"
+#include "VPXDecoder.h"
+#include "VorbisDecoder.h"
+#include "WAVDecoder.h"
+#include "mozilla/Logging.h"
+
+#ifdef MOZ_AV1
+#include "AOMDecoder.h"
+#endif
 
 namespace mozilla {
 
 bool
-AgnosticDecoderModule::SupportsMimeType(const nsACString& aMimeType,
-                                        DecoderDoctorDiagnostics* aDiagnostics) const
+AgnosticDecoderModule::SupportsMimeType(
+  const nsACString& aMimeType,
+  DecoderDoctorDiagnostics* aDiagnostics) const
 {
   bool supports =
-    VPXDecoder::IsVPX(aMimeType) ||
-    OpusDataDecoder::IsOpus(aMimeType) ||
-    VorbisDataDecoder::IsVorbis(aMimeType) ||
-    WaveDataDecoder::IsWave(aMimeType) ||
-    TheoraDecoder::IsTheora(aMimeType);
+    VPXDecoder::IsVPX(aMimeType)
+#ifdef MOZ_AV1
+    || AOMDecoder::IsAV1(aMimeType)
+#endif
+    || OpusDataDecoder::IsOpus(aMimeType)
+    || VorbisDataDecoder::IsVorbis(aMimeType)
+    || WaveDataDecoder::IsWave(aMimeType)
+    || TheoraDecoder::IsTheora(aMimeType);
   MOZ_LOG(sPDMLog, LogLevel::Debug, ("Agnostic decoder %s requested type",
         supports ? "supports" : "rejects"));
   return supports;
@@ -36,7 +44,13 @@ AgnosticDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 
   if (VPXDecoder::IsVPX(aParams.mConfig.mMimeType)) {
     m = new VPXDecoder(aParams);
-  } else if (TheoraDecoder::IsTheora(aParams.mConfig.mMimeType)) {
+  }
+#ifdef MOZ_AV1
+  else if (AOMDecoder::IsAV1(aParams.mConfig.mMimeType)) {
+    m = new AOMDecoder(aParams);
+  }
+#endif
+  else if (TheoraDecoder::IsTheora(aParams.mConfig.mMimeType)) {
     m = new TheoraDecoder(aParams);
   }
 

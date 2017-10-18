@@ -7,9 +7,13 @@
 #define GMPUtils_h_
 
 #include "mozilla/UniquePtr.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/AbstractThread.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
+
+#define CHROMIUM_CDM_API "chromium-cdm8-host4"
 
 class nsIFile;
 class nsCString;
@@ -28,17 +32,16 @@ struct DestroyPolicy
 template<typename T>
 using GMPUniquePtr = mozilla::UniquePtr<T, DestroyPolicy<T>>;
 
-bool GetEMEVoucherPath(nsIFile** aPath);
-
-bool EMEVoucherFileExists();
-
 void
 SplitAt(const char* aDelims,
         const nsACString& aInput,
         nsTArray<nsCString>& aOutTokens);
 
 nsCString
-ToBase64(const nsTArray<uint8_t>& aBytes);
+ToHexString(const nsTArray<uint8_t>& aBytes);
+
+nsCString
+ToHexString(const uint8_t* aBytes, uint32_t aLength);
 
 bool
 FileExists(nsIFile* aFile);
@@ -71,14 +74,24 @@ private:
 };
 
 bool
-ReadIntoArray(nsIFile* aFile,
-              nsTArray<uint8_t>& aOutDst,
-              size_t aMaxLength);
-
-bool
 ReadIntoString(nsIFile* aFile,
                nsCString& aOutDst,
                size_t aMaxLength);
+
+bool
+HaveGMPFor(const nsCString& aAPI,
+           nsTArray<nsCString>&& aTags);
+
+void
+LogToConsole(const nsAString& aMsg);
+
+RefPtr<AbstractThread>
+GetGMPAbstractThread();
+
+// Returns the number of bytes required to store an aWidth x aHeight image in
+// I420 format, padded so that the width and height are multiples of 16.
+size_t
+I420FrameBufferSizePadded(int32_t aWidth, int32_t aHeight);
 
 } // namespace mozilla
 

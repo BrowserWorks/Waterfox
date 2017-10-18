@@ -28,7 +28,7 @@ function test() {
       .then(testNewTabMenuItem)
       .then(testNewTabURI)
       .then(() => closeDebuggerAndFinish(gPanel))
-      .then(null, aError => {
+      .catch(aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
   });
@@ -40,16 +40,14 @@ function test() {
 
   function waitForTabOpen() {
     return new Promise(resolve => {
-      gBrowser.tabContainer.addEventListener("TabOpen", function onOpen(e) {
-        gBrowser.tabContainer.removeEventListener("TabOpen", onOpen, false);
+      gBrowser.tabContainer.addEventListener("TabOpen", function (e) {
         ok(true, "A new tab loaded");
 
-        gBrowser.addEventListener("DOMContentLoaded", function onTabLoad(e) {
-          gBrowser.removeEventListener("DOMContentLoaded", onTabLoad, false);
+        gBrowser.addEventListener("DOMContentLoaded", function (e) {
           // Pass along the new tab's URI.
           resolve(gBrowser.currentURI.spec);
-        }, false);
-      }, false);
+        }, {once: true});
+      }, {once: true});
     });
   }
 

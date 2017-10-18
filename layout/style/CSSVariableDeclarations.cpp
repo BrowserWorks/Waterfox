@@ -79,7 +79,7 @@ CSSVariableDeclarations::Get(const nsAString& aName,
     aType = eInitial;
     aTokenStream.Truncate();
   } else if (value.EqualsLiteral(INHERIT_VALUE)) {
-    aType = eInitial;
+    aType = eInherit;
     aTokenStream.Truncate();
   } else if (value.EqualsLiteral(UNSET_VALUE)) {
     aType = eUnset;
@@ -139,9 +139,8 @@ CSSVariableDeclarations::MapRuleInfoInto(nsRuleData* aRuleData)
       nsDataHashtable<nsStringHashKey, nsString>& variables =
         aRuleData->mVariables->mVariables;
       const nsAString& aName = iter.Key();
-      if (!variables.Contains(aName)) {
-        variables.Put(aName, iter.UserData());
-      }
+      variables.LookupForAdd(aName).OrInsert(
+        [&iter] () { return iter.UserData(); });
     }
   }
 }

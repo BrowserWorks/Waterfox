@@ -10,27 +10,27 @@
 #ifndef WEBRTC_VIDEO_TRANSPORT_ADAPTER_H_
 #define WEBRTC_VIDEO_TRANSPORT_ADAPTER_H_
 
+#include "webrtc/api/call/transport.h"
 #include "webrtc/common_types.h"
-#include "webrtc/system_wrappers/interface/atomic32.h"
-#include "webrtc/transport.h"
+#include "webrtc/system_wrappers/include/atomic32.h"
 
 namespace webrtc {
 namespace internal {
 
-class TransportAdapter : public webrtc::Transport {
+class TransportAdapter : public Transport {
  public:
-  explicit TransportAdapter(newapi::Transport* transport);
+  explicit TransportAdapter(Transport* transport);
 
-  int SendPacket(int /*channel*/, const void* packet, size_t length) override;
-  int SendRTCPPacket(int /*channel*/,
-                     const void* packet,
-                     size_t length) override;
+  bool SendRtp(const uint8_t* packet,
+               size_t length,
+               const PacketOptions& options) override;
+  bool SendRtcp(const uint8_t* packet, size_t length) override;
 
   void Enable();
   void Disable();
 
  private:
-  newapi::Transport *transport_;
+  Transport *transport_;
   Atomic32 enabled_;
 };
 }  // namespace internal

@@ -27,6 +27,7 @@
 
 #include "mozilla/ArrayUtils.h"
 
+#include "DateTimeFormat.h"
 #include "nsCOMPtr.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
@@ -48,12 +49,9 @@
 #include "prtime.h"
 #include "rdf.h"
 #include "nsContentUtils.h"
-#include "nsIDateTimeFormat.h"
 #include "nsIScriptableDateFormat.h"
 #include "nsICollation.h"
 #include "nsCollationCID.h"
-#include "nsILocale.h"
-#include "nsILocaleService.h"
 #include "nsIConsoleService.h"
 #include "nsEscape.h"
 
@@ -62,7 +60,6 @@ using namespace mozilla;
 //------------------------------------------------------------------------
 
 nsIRDFService* nsXULContentUtils::gRDF;
-nsIDateTimeFormat* nsXULContentUtils::gFormat;
 nsICollation *nsXULContentUtils::gCollation;
 
 extern LazyLogModule gXULTemplateLog;
@@ -102,11 +99,6 @@ nsXULContentUtils::Init()
 #undef XUL_RESOURCE
 #undef XUL_LITERAL
 
-    gFormat = nsIDateTimeFormat::Create().take();
-    if (!gFormat) {
-        return NS_ERROR_FAILURE;
-    }
-
     return NS_OK;
 }
 
@@ -122,7 +114,6 @@ nsXULContentUtils::Finish()
 #undef XUL_RESOURCE
 #undef XUL_LITERAL
 
-    NS_IF_RELEASE(gFormat);
     NS_IF_RELEASE(gCollation);
 
     return NS_OK;
@@ -132,27 +123,14 @@ nsICollation*
 nsXULContentUtils::GetCollation()
 {
     if (!gCollation) {
-        nsresult rv;
-
-        // get a locale service 
-        nsCOMPtr<nsILocaleService> localeService =
-            do_GetService(NS_LOCALESERVICE_CONTRACTID, &rv);
-        if (NS_SUCCEEDED(rv)) {
-            nsCOMPtr<nsILocale> locale;
-            rv = localeService->GetApplicationLocale(getter_AddRefs(locale));
-            if (NS_SUCCEEDED(rv) && locale) {
-                nsCOMPtr<nsICollationFactory> colFactory =
-                    do_CreateInstance(NS_COLLATIONFACTORY_CONTRACTID);
-                if (colFactory) {
-                    rv = colFactory->CreateCollation(locale, &gCollation);
-                    NS_ASSERTION(NS_SUCCEEDED(rv),
-                                 "couldn't create collation instance");
-                } else
-                    NS_ERROR("couldn't create instance of collation factory");
-            } else
-                NS_ERROR("unable to get application locale");
+        nsCOMPtr<nsICollationFactory> colFactory =
+            do_CreateInstance(NS_COLLATIONFACTORY_CONTRACTID);
+        if (colFactory) {
+            DebugOnly<nsresult> rv = colFactory->CreateCollation(&gCollation);
+            NS_ASSERTION(NS_SUCCEEDED(rv),
+                         "couldn't create collation instance");
         } else
-            NS_ERROR("couldn't get locale factory");
+            NS_ERROR("couldn't create instance of collation factory");
     }
 
     return gCollation;
@@ -214,11 +192,11 @@ nsXULContentUtils::GetTextForNode(nsIRDFNode* aNode, nsAString& aResult)
         if (NS_FAILED(rv)) return rv;
 
         nsAutoString str;
-        rv = gFormat->FormatPRTime(nullptr /* nsILocale* locale */,
-                                  kDateFormatShort,
-                                  kTimeFormatSeconds,
-                                  value,
-                                  str);
+        rv = DateTimeFormat::FormatPRTime(kDateFormatShort,
+                                          kTimeFormatSeconds,
+                                          value,
+                                          str);
+
         aResult.Assign(str);
 
         if (NS_FAILED(rv)) return rv;

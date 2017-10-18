@@ -63,7 +63,7 @@ class DebugModeOSRVolatileStub
     { }
 
     bool invalid() const {
-        if (engine_ == ICStubCompiler::Engine::IonMonkey)
+        if (engine_ == ICStubCompiler::Engine::IonSharedIC)
             return stub_->invalid();
         MOZ_ASSERT(!frame_->isHandlingException());
         ICEntry& entry = frame_->script()->baselineScript()->icEntryFromPCOffset(pcOffset_);
@@ -94,7 +94,7 @@ class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
     explicit DebugModeOSRVolatileJitFrameIterator(JSContext* cx)
       : JitFrameIterator(cx)
     {
-        stack = &cx->liveVolatileJitFrameIterators_;
+        stack = &cx->liveVolatileJitFrameIterators_.ref();
         prev = *stack;
         *stack = this;
     }
@@ -104,7 +104,8 @@ class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
         *stack = prev;
     }
 
-    static void forwardLiveIterators(JSContext* cx, uint8_t* oldAddr, uint8_t* newAddr);
+    static void forwardLiveIterators(const CooperatingContext& target,
+                                     uint8_t* oldAddr, uint8_t* newAddr);
 };
 
 //

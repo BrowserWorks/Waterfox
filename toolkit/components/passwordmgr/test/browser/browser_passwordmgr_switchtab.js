@@ -5,14 +5,14 @@
 const PROMPT_URL = "chrome://global/content/commonDialog.xul";
 var { interfaces: Ci } = Components;
 
-function test() {
-  waitForExplicitFinish();
+add_task(async function test() {
+  await new Promise(resolve => {
 
-  let tab = gBrowser.addTab();
+  let tab = BrowserTestUtils.addTab(gBrowser);
   isnot(tab, gBrowser.selectedTab, "New tab shouldn't be selected");
 
   let listener = {
-    onOpenWindow: function(window) {
+    onOpenWindow(window) {
       var domwindow = window.QueryInterface(Ci.nsIInterfaceRequestor)
                             .getInterface(Ci.nsIDOMWindow);
       waitForFocus(() => {
@@ -21,22 +21,24 @@ function test() {
 
         is(gBrowser.selectedTab, tab, "Should have selected the new tab");
 
-        domwindow.document.documentElement.cancelDialog()
+        domwindow.document.documentElement.cancelDialog();
       }, domwindow);
     },
 
-    onCloseWindow: function() {
+    onCloseWindow() {
     }
-  }
+  };
 
   Services.wm.addListener(listener);
   registerCleanupFunction(() => {
     Services.wm.removeListener(listener);
     gBrowser.removeTab(tab);
-  })
+  });
 
   tab.linkedBrowser.addEventListener("load", () => {
     finish();
   }, true);
   tab.linkedBrowser.loadURI("http://example.com/browser/toolkit/components/passwordmgr/test/browser/authenticate.sjs");
-}
+
+  });
+});

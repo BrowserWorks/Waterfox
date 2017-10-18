@@ -7,7 +7,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 function executeSoon(f)
 {
-  Services.tm.mainThread.dispatch(f, Ci.nsIThread.DISPATCH_NORMAL);
+  Services.tm.dispatchToMainThread(f);
 }
 
 var urlSuffix = "/this/is/the/test/url";
@@ -39,7 +39,6 @@ var policy = {
   {
     // Remember last content type seen for the test url
     if (contentLocation.spec.endsWith(urlSuffix)) {
-      assert.ok(frame === browserElement, "correct <browser> element");
       sendAsyncMessage("shouldLoad", {contentType: contentType, isTopLevel: isTopLevel});
       return Ci.nsIContentPolicy.REJECT_REQUEST;
     }

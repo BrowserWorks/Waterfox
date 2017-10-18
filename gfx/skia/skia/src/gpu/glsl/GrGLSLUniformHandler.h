@@ -9,7 +9,8 @@
 #define GrGLSLUniformHandler_DEFINED
 
 #include "GrGLSLProgramDataManager.h"
-#include "GrGLSLShaderVar.h"
+#include "GrShaderVar.h"
+#include "GrSwizzle.h"
 
 class GrGLSLProgramBuilder;
 
@@ -17,7 +18,9 @@ class GrGLSLUniformHandler {
 public:
     virtual ~GrGLSLUniformHandler() {}
 
-    typedef GrGLSLProgramDataManager::UniformHandle UniformHandle;
+    using UniformHandle = GrGLSLProgramDataManager::UniformHandle;
+    GR_DEFINE_RESOURCE_HANDLE_CLASS(SamplerHandle);
+    GR_DEFINE_RESOURCE_HANDLE_CLASS(ImageStorageHandle);
 
     /** Add a uniform variable to the current program, that has visibility in one or more shaders.
         visibility is a bitfield of GrShaderFlag values indicating from which shaders the uniform
@@ -30,6 +33,7 @@ public:
                              GrSLPrecision precision,
                              const char* name,
                              const char** outName = nullptr) {
+        SkASSERT(!GrSLTypeIsCombinedSamplerType(type));
         return this->addUniformArray(visibility, type, precision, name, 0, outName);
     }
 
@@ -39,16 +43,18 @@ public:
                                   const char* name,
                                   int arrayCount,
                                   const char** outName = nullptr) {
+        SkASSERT(!GrSLTypeIsCombinedSamplerType(type));
         return this->internalAddUniformArray(visibility, type, precision, name, true, arrayCount,
                                              outName);
     }
 
-    virtual const GrGLSLShaderVar& getUniformVariable(UniformHandle u) const = 0;
+    virtual const GrShaderVar& getUniformVariable(UniformHandle u) const = 0;
 
     /**
      * Shortcut for getUniformVariable(u).c_str()
      */
     virtual const char* getUniformCStr(UniformHandle u) const = 0;
+
 protected:
     explicit GrGLSLUniformHandler(GrGLSLProgramBuilder* program) : fProgramBuilder(program) {}
 
@@ -56,6 +62,17 @@ protected:
     GrGLSLProgramBuilder* fProgramBuilder;
 
 private:
+    virtual const GrShaderVar& samplerVariable(SamplerHandle) const = 0;
+    virtual GrSwizzle samplerSwizzle(SamplerHandle) const = 0;
+
+    virtual SamplerHandle addSampler(uint32_t visibility, GrSwizzle, GrSLType, GrSLPrecision,
+                                     const char* name) = 0;
+
+    virtual const GrShaderVar& imageStorageVariable(ImageStorageHandle) const = 0;
+    virtual ImageStorageHandle addImageStorage(uint32_t visibility, GrSLType type,
+                                               GrImageStorageFormat, GrSLMemoryModel, GrSLRestrict,
+                                               GrIOType, const char* name) = 0;
+
     virtual UniformHandle internalAddUniformArray(uint32_t visibility,
                                                   GrSLType type,
                                                   GrSLPrecision precision,

@@ -7,9 +7,10 @@
 #include "BroadcastChannelParent.h"
 #include "BroadcastChannelService.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/IPCBlobUtils.h"
 #include "mozilla/ipc/BackgroundParent.h"
-#include "mozilla/unused.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
+#include "mozilla/Unused.h"
 #include "nsIScriptSecurityManager.h"
 
 namespace mozilla {
@@ -31,26 +32,26 @@ BroadcastChannelParent::~BroadcastChannelParent()
   AssertIsOnBackgroundThread();
 }
 
-bool
+mozilla::ipc::IPCResult
 BroadcastChannelParent::RecvPostMessage(const ClonedMessageData& aData)
 {
   AssertIsOnBackgroundThread();
 
   if (NS_WARN_IF(!mService)) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   mService->PostMessage(this, aData, mOriginChannelKey);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 BroadcastChannelParent::RecvClose()
 {
   AssertIsOnBackgroundThread();
 
   if (NS_WARN_IF(!mService)) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   mService->UnregisterActor(this, mOriginChannelKey);
@@ -58,7 +59,7 @@ BroadcastChannelParent::RecvClose()
 
   Unused << Send__delete__(this);
 
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -71,31 +72,6 @@ BroadcastChannelParent::ActorDestroy(ActorDestroyReason aWhy)
     // released too.
     mService->UnregisterActor(this, mOriginChannelKey);
   }
-}
-
-void
-BroadcastChannelParent::Deliver(const ClonedMessageData& aData)
-{
-  AssertIsOnBackgroundThread();
-
-  // Duplicate the data for this parent.
-  ClonedMessageData newData(aData);
-
-  // Create new BlobParent objects for this message.
-  for (uint32_t i = 0, len = newData.blobsParent().Length(); i < len; ++i) {
-    RefPtr<BlobImpl> impl =
-      static_cast<BlobParent*>(newData.blobsParent()[i])->GetBlobImpl();
-
-    PBlobParent* blobParent =
-      BackgroundParent::GetOrCreateActorForBlobImpl(Manager(), impl);
-    if (!blobParent) {
-      return;
-    }
-
-    newData.blobsParent()[i] = blobParent;
-  }
-
-  Unused << SendNotify(newData);
 }
 
 } // namespace dom

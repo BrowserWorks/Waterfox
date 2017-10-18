@@ -15,30 +15,18 @@ class SK_API SkOffsetImageFilter : public SkImageFilter {
 public:
     static sk_sp<SkImageFilter> Make(SkScalar dx, SkScalar dy,
                                      sk_sp<SkImageFilter> input,
-                                     const CropRect* cropRect = nullptr) {
-        if (!SkScalarIsFinite(dx) || !SkScalarIsFinite(dy)) {
-            return nullptr;
-        }
-
-        return sk_sp<SkImageFilter>(new SkOffsetImageFilter(dx, dy, std::move(input), cropRect));
-    }
+                                     const CropRect* cropRect = nullptr);
 
     SkRect computeFastBounds(const SkRect& src) const override;
 
     SK_TO_STRING_OVERRIDE()
     SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(SkOffsetImageFilter)
 
-#ifdef SK_SUPPORT_LEGACY_IMAGEFILTER_PTR
-    static SkImageFilter* Create(SkScalar dx, SkScalar dy, SkImageFilter* input = nullptr,
-                                 const CropRect* cropRect = nullptr) {
-        return Make(dx, dy, sk_ref_sp(input), cropRect).release();
-    }
-#endif
-
 protected:
     void flatten(SkWriteBuffer&) const override;
     sk_sp<SkSpecialImage> onFilterImage(SkSpecialImage* source, const Context&,
                                         SkIPoint* offset) const override;
+    sk_sp<SkImageFilter> onMakeColorSpace(SkColorSpaceXformer*) const override;
     SkIRect onFilterNodeBounds(const SkIRect&, const SkMatrix&, MapDirection) const override;
 
 private:

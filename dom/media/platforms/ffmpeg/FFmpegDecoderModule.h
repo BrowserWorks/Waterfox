@@ -11,9 +11,9 @@
 #include "FFmpegLibWrapper.h"
 #include "FFmpegAudioDecoder.h"
 #include "FFmpegVideoDecoder.h"
+#include "MediaPrefs.h"
 
-namespace mozilla
-{
+namespace mozilla {
 
 template <int V>
 class FFmpegDecoderModule : public PlatformDecoderModule
@@ -27,65 +27,54 @@ public:
     return pdm.forget();
   }
 
-  explicit FFmpegDecoderModule(FFmpegLibWrapper* aLib) : mLib(aLib) {}
-  virtual ~FFmpegDecoderModule() {}
+  explicit FFmpegDecoderModule(FFmpegLibWrapper* aLib) : mLib(aLib) { }
+  virtual ~FFmpegDecoderModule() { }
 
   already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const CreateDecoderParams& aParams) override
   {
-    RefPtr<MediaDataDecoder> decoder =
-      new FFmpegVideoDecoder<V>(mLib,
-                                aParams.mTaskQueue,
-                                aParams.mCallback,
-                                aParams.VideoConfig(),
-                                aParams.mImageContainer);
+    // Temporary - forces use of VPXDecoder when alpha is present.
+    // Bug 1263836 will handle alpha scenario once implemented. It will shift
+    // the check for alpha to PDMFactory but not itself remove the need for a
+    // check.
+    if (aParams.VideoConfig().HasAlpha()) {
+      return nullptr;
+    }
+    if (aParams.mOptions.contains(
+          CreateDecoderParams::Option::LowLatency) &&
+        !MediaPrefs::PDMFFmpegLowLatencyEnabled()) {
+      return nullptr;
+    }
+    RefPtr<MediaDataDecoder> decoder = new FFmpegVideoDecoder<V>(
+      mLib,
+      aParams.mTaskQueue,
+      aParams.VideoConfig(),
+      aParams.mKnowsCompositor,
+      aParams.mImageContainer,
+      aParams.mOptions.contains(CreateDecoderParams::Option::LowLatency));
     return decoder.forget();
   }
 
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const CreateDecoderParams& aParams) override
   {
-#ifdef USING_MOZFFVPX
-    return nullptr;
-#else
     RefPtr<MediaDataDecoder> decoder =
       new FFmpegAudioDecoder<V>(mLib,
                                 aParams.mTaskQueue,
-                                aParams.mCallback,
                                 aParams.AudioConfig());
     return decoder.forget();
-#endif
   }
 
   bool SupportsMimeType(const nsACString& aMimeType,
                         DecoderDoctorDiagnostics* aDiagnostics) const override
   {
     AVCodecID videoCodec = FFmpegVideoDecoder<V>::GetCodecId(aMimeType);
-#ifdef USING_MOZFFVPX
-    if (videoCodec == AV_CODEC_ID_NONE) {
-        return false;
-    }
-    return !!FFmpegDataDecoder<V>::FindAVCodec(mLib, videoCodec);
-#else
     AVCodecID audioCodec = FFmpegAudioDecoder<V>::GetCodecId(aMimeType);
     if (audioCodec == AV_CODEC_ID_NONE && videoCodec == AV_CODEC_ID_NONE) {
       return false;
     }
     AVCodecID codec = audioCodec != AV_CODEC_ID_NONE ? audioCodec : videoCodec;
     return !!FFmpegDataDecoder<V>::FindAVCodec(mLib, codec);
-#endif
-  }
-
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override
-  {
-    if (aConfig.IsVideo() &&
-        (aConfig.mMimeType.EqualsLiteral("video/avc") ||
-         aConfig.mMimeType.EqualsLiteral("video/mp4"))) {
-      return PlatformDecoderModule::kNeedAVCC;
-    } else {
-      return kNeedNone;
-    }
   }
 
 private:

@@ -20,6 +20,7 @@ class TaggedProto
     static JSObject * const LazyProto;
 
     TaggedProto() : proto(nullptr) {}
+    TaggedProto(const TaggedProto& other) : proto(other.proto) {}
     explicit TaggedProto(JSObject* proto) : proto(proto) {}
 
     uintptr_t toWord() const { return uintptr_t(proto); }
@@ -46,10 +47,6 @@ class TaggedProto
 
     HashNumber hashCode() const;
 
-    bool hasUniqueId() const;
-    bool ensureUniqueId() const;
-    uint64_t uniqueId() const;
-
     void trace(JSTracer* trc) {
         if (isObject())
             TraceManuallyBarrieredEdge(trc, &proto, "TaggedProto");
@@ -57,6 +54,33 @@ class TaggedProto
 
   private:
     JSObject* proto;
+};
+
+template <>
+struct MovableCellHasher<TaggedProto>
+{
+    using Key = TaggedProto;
+    using Lookup = TaggedProto;
+
+    static bool hasHash(const Lookup& l) {
+        return !l.isObject() || MovableCellHasher<JSObject*>::hasHash(l.toObject());
+    }
+    static bool ensureHash(const Lookup& l) {
+        return !l.isObject() || MovableCellHasher<JSObject*>::ensureHash(l.toObject());
+    }
+    static HashNumber hash(const Lookup& l) {
+        if (l.isDynamic())
+            return uint64_t(1);
+        if (!l.isObject())
+            return uint64_t(0);
+        return MovableCellHasher<JSObject*>::hash(l.toObject());
+    }
+    static bool match(const Key& k, const Lookup& l) {
+        return k.isDynamic() == l.isDynamic() &&
+               k.isObject() == l.isObject() &&
+               (!k.isObject() ||
+                MovableCellHasher<JSObject*>::match(k.toObject(), l.toObject()));
+    }
 };
 
 template <>
@@ -68,25 +92,16 @@ struct InternalBarrierMethods<TaggedProto>
 
     static void readBarrier(const TaggedProto& proto);
 
-    static bool isMarkableTaggedPointer(TaggedProto proto) {
+    static bool isMarkable(const TaggedProto& proto) {
         return proto.isObject();
-    }
-
-    static bool isMarkable(TaggedProto proto) {
-        return proto.isObject();
-    }
-
-    static bool isInsideNursery(TaggedProto proto) {
-        return proto.isObject() &&
-            gc::IsInsideNursery(reinterpret_cast<gc::Cell*>(proto.toObject()));
     }
 };
 
-template<class Outer>
-class TaggedProtoOperations
+template <class Wrapper>
+class WrappedPtrOperations<TaggedProto, Wrapper>
 {
     const TaggedProto& value() const {
-        return static_cast<const Outer*>(this)->get();
+        return static_cast<const Wrapper*>(this)->get();
     }
 
   public:
@@ -100,23 +115,11 @@ class TaggedProtoOperations
     uint64_t uniqueId() const { return value().uniqueId(); }
 };
 
-template <>
-class HandleBase<TaggedProto> : public TaggedProtoOperations<Handle<TaggedProto>>
-{};
-
-template <>
-class RootedBase<TaggedProto> : public TaggedProtoOperations<Rooted<TaggedProto>>
-{};
-
-template <>
-class BarrieredBaseMixins<TaggedProto> : public TaggedProtoOperations<GCPtr<TaggedProto>>
-{};
-
 // If the TaggedProto is a JSObject pointer, convert to that type and call |f|
 // with the pointer. If the TaggedProto is lazy, calls F::defaultValue.
 template <typename F, typename... Args>
 auto
-DispatchTyped(F f, TaggedProto& proto, Args&&... args)
+DispatchTyped(F f, const TaggedProto& proto, Args&&... args)
   -> decltype(f(static_cast<JSObject*>(nullptr), mozilla::Forward<Args>(args)...))
 {
     if (proto.isObject())

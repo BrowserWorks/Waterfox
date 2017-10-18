@@ -141,7 +141,7 @@ CreateShader(gl::GLContext* gl, GLenum type)
 }
 
 WebGLShader::WebGLShader(WebGLContext* webgl, GLenum type)
-    : WebGLContextBoundObject(webgl)
+    : WebGLRefCountedObject(webgl)
     , mGLName(CreateShader(webgl->GL(), type))
     , mType(type)
     , mTranslationSuccessful(false)
@@ -158,25 +158,20 @@ WebGLShader::~WebGLShader()
 void
 WebGLShader::ShaderSource(const nsAString& source)
 {
-    StripComments stripComments(source);
-    const nsAString& cleanSource = Substring(stripComments.result().Elements(),
-                                             stripComments.length());
-    if (!ValidateGLSLString(cleanSource, mContext, "shaderSource"))
+    const char funcName[] = "shaderSource";
+    nsString sourceWithoutComments;
+    if (!TruncateComments(source, &sourceWithoutComments)) {
+        mContext->ErrorOutOfMemory("%s: Failed to alloc for empting comment contents.",
+                                   funcName);
+        return;
+    }
+
+    if (!ValidateGLSLPreprocString(mContext, funcName, sourceWithoutComments))
         return;
 
     // We checked that the source stripped of comments is in the
     // 7-bit ASCII range, so we can skip the NS_IsAscii() check.
-    const NS_LossyConvertUTF16toASCII sourceCString(cleanSource);
-
-    if (mContext->gl->WorkAroundDriverBugs()) {
-        const size_t maxSourceLength = 0x3ffff;
-        if (sourceCString.Length() > maxSourceLength) {
-            mContext->ErrorInvalidValue("shaderSource: Source has more than %d"
-                                        " characters. (Driver workaround)",
-                                        maxSourceLength);
-            return;
-        }
-    }
+    const NS_LossyConvertUTF16toASCII cleanSource(sourceWithoutComments);
 
     if (PR_GetEnv("MOZ_WEBGL_DUMP_SHADERS")) {
         printf_stderr("////////////////////////////////////////\n");
@@ -185,20 +180,28 @@ WebGLShader::ShaderSource(const nsAString& source)
         // Wow - Roll Your Own Foreach-Lines because printf_stderr has a hard-coded
         // internal size, so long strings are truncated.
 
-        int32_t start = 0;
-        int32_t end = sourceCString.Find("\n", false, start, -1);
-        while (end > -1) {
-            const nsCString line(sourceCString.BeginReading() + start, end - start);
-            printf_stderr("%s\n", line.BeginReading());
-            start = end + 1;
-            end = sourceCString.Find("\n", false, start, -1);
+        const size_t maxChunkSize = 1024-1; // -1 for null-term.
+        const UniqueBuffer buf(moz_xmalloc(maxChunkSize+1)); // +1 for null-term
+        const auto bufBegin = (char*)buf.get();
+
+        size_t chunkStart = 0;
+        while (chunkStart != cleanSource.Length()) {
+            const auto chunkEnd = std::min(chunkStart + maxChunkSize,
+                                           size_t(cleanSource.Length()));
+            const auto chunkSize = chunkEnd - chunkStart;
+
+            memcpy(bufBegin, cleanSource.BeginReading() + chunkStart, chunkSize);
+            bufBegin[chunkSize + 1] = '\0';
+
+            printf_stderr("%s", bufBegin);
+            chunkStart += chunkSize;
         }
 
         printf_stderr("////////////////////////////////////////\n");
     }
 
     mSource = source;
-    mCleanSource = sourceCString;
+    mCleanSource = cleanSource;
 }
 
 void
@@ -275,12 +278,6 @@ WebGLShader::GetShaderSource(nsAString* out) const
 void
 WebGLShader::GetShaderTranslatedSource(nsAString* out) const
 {
-    if (!mCompilationSuccessful) {
-        mContext->ErrorInvalidOperation("getShaderTranslatedSource: Shader has"
-                                        " not been successfully compiled.");
-        return;
-    }
-
     out->SetIsVoid(false);
     CopyASCIItoUTF16(mTranslatedSource, *out);
 }
@@ -331,7 +328,7 @@ WebGLShader::BindAttribLocation(GLuint prog, const nsCString& userName,
 
 bool
 WebGLShader::FindAttribUserNameByMappedName(const nsACString& mappedName,
-                                            nsDependentCString* const out_userName) const
+                                            nsCString* const out_userName) const
 {
     if (!mValidator)
         return false;
@@ -341,7 +338,7 @@ WebGLShader::FindAttribUserNameByMappedName(const nsACString& mappedName,
     if (!mValidator->FindAttribUserNameByMappedName(mappedNameStr, &userNameStr))
         return false;
 
-    out_userName->Rebind(userNameStr->c_str());
+    *out_userName = userNameStr->c_str();
     return true;
 }
 
@@ -380,20 +377,15 @@ WebGLShader::FindUniformByMappedName(const nsACString& mappedName,
 }
 
 bool
-WebGLShader::FindUniformBlockByMappedName(const nsACString& mappedName,
-                                          nsCString* const out_userName,
-                                          bool* const out_isArray) const
+WebGLShader::UnmapUniformBlockName(const nsACString& baseMappedName,
+                                   nsCString* const out_baseUserName) const
 {
-    if (!mValidator)
-        return false;
+    if (!mValidator) {
+        *out_baseUserName = baseMappedName;
+        return true;
+    }
 
-    const std::string mappedNameStr(mappedName.BeginReading(), mappedName.Length());
-    std::string userNameStr;
-    if (!mValidator->FindUniformBlockByMappedName(mappedNameStr, &userNameStr))
-        return false;
-
-    *out_userName = userNameStr.c_str();
-    return true;
+    return mValidator->UnmapUniformBlockName(baseMappedName, out_baseUserName);
 }
 
 void

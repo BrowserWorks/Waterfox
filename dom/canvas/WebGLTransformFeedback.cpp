@@ -8,11 +8,12 @@
 #include "GLContext.h"
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 #include "WebGL2Context.h"
+#include "WebGLProgram.h"
 
 namespace mozilla {
 
 WebGLTransformFeedback::WebGLTransformFeedback(WebGLContext* webgl, GLuint tf)
-    : WebGLContextBoundObject(webgl)
+    : WebGLRefCountedObject(webgl)
     , mGLName(tf)
     , mIndexedBindings(webgl->mGLMaxTransformFeedbackSeparateAttribs)
     , mIsPaused(false)
@@ -107,13 +108,6 @@ WebGLTransformFeedback::BeginTransformFeedback(GLenum primMode)
 
     ////
 
-    for (const auto& cur : mIndexedBindings) {
-        const auto& buffer = cur.mBufferBinding;
-        if (buffer) {
-            buffer->mNumActiveTFOs++;
-        }
-    }
-
     mActive_Program->mNumActiveTFOs++;
 }
 
@@ -138,13 +132,6 @@ WebGLTransformFeedback::EndTransformFeedback()
     mIsPaused = false;
 
     ////
-
-    for (const auto& cur : mIndexedBindings) {
-        const auto& buffer = cur.mBufferBinding;
-        if (buffer) {
-            buffer->mNumActiveTFOs--;
-        }
-    }
 
     mActive_Program->mNumActiveTFOs--;
 }
@@ -196,6 +183,18 @@ WebGLTransformFeedback::ResumeTransformFeedback()
 
     MOZ_ASSERT(mIsActive);
     mIsPaused = false;
+}
+
+////////////////////////////////////////
+
+void
+WebGLTransformFeedback::AddBufferBindCounts(int8_t addVal) const
+{
+    const GLenum target = LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER;
+    WebGLBuffer::AddBindCount(target, mGenericBufferBinding.get(), addVal);
+    for (const auto& binding : mIndexedBindings) {
+        WebGLBuffer::AddBindCount(target, binding.mBufferBinding.get(), addVal);
+    }
 }
 
 ////////////////////////////////////////

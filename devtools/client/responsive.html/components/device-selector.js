@@ -17,9 +17,10 @@ module.exports = createClass({
   propTypes: {
     devices: PropTypes.shape(Types.devices).isRequired,
     selectedDevice: PropTypes.string.isRequired,
-    onChangeViewportDevice: PropTypes.func.isRequired,
+    viewportId: PropTypes.number.isRequired,
+    onChangeDevice: PropTypes.func.isRequired,
     onResizeViewport: PropTypes.func.isRequired,
-    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
+    onUpdateDeviceModal: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
@@ -27,26 +28,25 @@ module.exports = createClass({
   onSelectChange({ target }) {
     let {
       devices,
-      onChangeViewportDevice,
+      viewportId,
+      onChangeDevice,
       onResizeViewport,
-      onUpdateDeviceModalOpen,
+      onUpdateDeviceModal,
     } = this.props;
 
     if (target.value === OPEN_DEVICE_MODAL_VALUE) {
-      onUpdateDeviceModalOpen(true);
+      onUpdateDeviceModal(true, viewportId);
       return;
     }
-
     for (let type of devices.types) {
       for (let device of devices[type]) {
         if (device.name === target.value) {
           onResizeViewport(device.width, device.height);
-          break;
+          onChangeDevice(device, type);
+          return;
         }
       }
     }
-
-    onChangeViewportDevice(target.value);
   },
 
   render() {
@@ -77,12 +77,14 @@ module.exports = createClass({
     let listContent;
 
     if (state == Types.deviceListState.LOADED) {
-      listContent = [dom.option({
-        value: "",
-        title: "",
-        disabled: true,
-        hidden: true,
-      }, getStr("responsive.noDeviceSelected")),
+      listContent = [
+        dom.option({
+          value: "",
+          title: "",
+          disabled: true,
+          hidden: true,
+        },
+        getStr("responsive.noDeviceSelected")),
         options.map(device => {
           return dom.option({
             key: device.name,

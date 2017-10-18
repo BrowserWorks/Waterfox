@@ -9,7 +9,10 @@ import shutil
 import tempfile
 import unittest
 
+import mozunit
+
 from manifestparser import convert, ManifestParser
+
 
 class TestSymlinkConversion(unittest.TestCase):
     """
@@ -125,6 +128,7 @@ class TestSymlinkConversion(unittest.TestCase):
         open(os.path.join(workspace, 'dir1', 'ldir2', 'f2.txt'), 'a').close()
 
         data = []
+
         def callback(rootdirectory, directory, subdirs, files):
             for f in files:
                 data.append(f)
@@ -134,4 +138,4 @@ class TestSymlinkConversion(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

@@ -12,28 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* jshint esnext:true */
-/* globals Components, Services, XPCOMUtils */
 
-'use strict';
+"use strict";
 
-var EXPORTED_SYMBOLS = ['PdfjsChromeUtils'];
+var EXPORTED_SYMBOLS = ["PdfjsChromeUtils"];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-const PREF_PREFIX = 'pdfjs';
-const PDF_CONTENT_TYPE = 'application/pdf';
+const PREF_PREFIX = "pdfjs";
+const PDF_CONTENT_TYPE = "application/pdf";
 
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
-Cu.import('resource://gre/modules/Services.jsm');
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 var Svc = {};
-XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
-                                   '@mozilla.org/mime;1',
-                                   'nsIMIMEService');
+XPCOMUtils.defineLazyServiceGetter(Svc, "mime",
+                                   "@mozilla.org/mime;1",
+                                   "nsIMIMEService");
 
 var DEFAULT_PREFERENCES =
 {
@@ -41,6 +39,7 @@ var DEFAULT_PREFERENCES =
   "defaultZoomValue": "",
   "sidebarViewOnLoad": 0,
   "enableHandToolOnLoad": false,
+  "cursorToolOnLoad": 0,
   "enableWebGL": false,
   "pdfBugEnabled": false,
   "disableRange": false,
@@ -49,8 +48,15 @@ var DEFAULT_PREFERENCES =
   "disableFontFace": false,
   "disableTextLayer": false,
   "useOnlyCssZoom": false,
-  "externalLinkTarget": 0
+  "externalLinkTarget": 0,
+  "enhanceTextSelection": false,
+  "renderer": "canvas",
+  "renderInteractiveForms": false,
+  "enablePrintAutoRotate": false,
+  "disablePageMode": false,
+  "disablePageLabels": false
 }
+
 
 var PdfjsChromeUtils = {
   // For security purposes when running remote, we restrict preferences
@@ -63,50 +69,50 @@ var PdfjsChromeUtils = {
    * Public API
    */
 
-  init: function () {
-    this._browsers = new Set();
+  init() {
+    this._browsers = new WeakSet();
     if (!this._ppmm) {
       // global parent process message manager (PPMM)
-      this._ppmm = Cc['@mozilla.org/parentprocessmessagemanager;1'].
+      this._ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"].
         getService(Ci.nsIMessageBroadcaster);
-      this._ppmm.addMessageListener('PDFJS:Parent:clearUserPref', this);
-      this._ppmm.addMessageListener('PDFJS:Parent:setIntPref', this);
-      this._ppmm.addMessageListener('PDFJS:Parent:setBoolPref', this);
-      this._ppmm.addMessageListener('PDFJS:Parent:setCharPref', this);
-      this._ppmm.addMessageListener('PDFJS:Parent:setStringPref', this);
-      this._ppmm.addMessageListener('PDFJS:Parent:isDefaultHandlerApp', this);
+      this._ppmm.addMessageListener("PDFJS:Parent:clearUserPref", this);
+      this._ppmm.addMessageListener("PDFJS:Parent:setIntPref", this);
+      this._ppmm.addMessageListener("PDFJS:Parent:setBoolPref", this);
+      this._ppmm.addMessageListener("PDFJS:Parent:setCharPref", this);
+      this._ppmm.addMessageListener("PDFJS:Parent:setStringPref", this);
+      this._ppmm.addMessageListener("PDFJS:Parent:isDefaultHandlerApp", this);
 
       // global dom message manager (MMg)
-      this._mmg = Cc['@mozilla.org/globalmessagemanager;1'].
+      this._mmg = Cc["@mozilla.org/globalmessagemanager;1"].
         getService(Ci.nsIMessageListenerManager);
-      this._mmg.addMessageListener('PDFJS:Parent:displayWarning', this);
+      this._mmg.addMessageListener("PDFJS:Parent:displayWarning", this);
 
-      this._mmg.addMessageListener('PDFJS:Parent:addEventListener', this);
-      this._mmg.addMessageListener('PDFJS:Parent:removeEventListener', this);
-      this._mmg.addMessageListener('PDFJS:Parent:updateControlState', this);
+      this._mmg.addMessageListener("PDFJS:Parent:addEventListener", this);
+      this._mmg.addMessageListener("PDFJS:Parent:removeEventListener", this);
+      this._mmg.addMessageListener("PDFJS:Parent:updateControlState", this);
 
-      // observer to handle shutdown
-      Services.obs.addObserver(this, 'quit-application', false);
+      // Observer to handle shutdown.
+      Services.obs.addObserver(this, "quit-application");
     }
   },
 
-  uninit: function () {
+  uninit() {
     if (this._ppmm) {
-      this._ppmm.removeMessageListener('PDFJS:Parent:clearUserPref', this);
-      this._ppmm.removeMessageListener('PDFJS:Parent:setIntPref', this);
-      this._ppmm.removeMessageListener('PDFJS:Parent:setBoolPref', this);
-      this._ppmm.removeMessageListener('PDFJS:Parent:setCharPref', this);
-      this._ppmm.removeMessageListener('PDFJS:Parent:setStringPref', this);
-      this._ppmm.removeMessageListener('PDFJS:Parent:isDefaultHandlerApp',
+      this._ppmm.removeMessageListener("PDFJS:Parent:clearUserPref", this);
+      this._ppmm.removeMessageListener("PDFJS:Parent:setIntPref", this);
+      this._ppmm.removeMessageListener("PDFJS:Parent:setBoolPref", this);
+      this._ppmm.removeMessageListener("PDFJS:Parent:setCharPref", this);
+      this._ppmm.removeMessageListener("PDFJS:Parent:setStringPref", this);
+      this._ppmm.removeMessageListener("PDFJS:Parent:isDefaultHandlerApp",
                                        this);
 
-      this._mmg.removeMessageListener('PDFJS:Parent:displayWarning', this);
+      this._mmg.removeMessageListener("PDFJS:Parent:displayWarning", this);
 
-      this._mmg.removeMessageListener('PDFJS:Parent:addEventListener', this);
-      this._mmg.removeMessageListener('PDFJS:Parent:removeEventListener', this);
-      this._mmg.removeMessageListener('PDFJS:Parent:updateControlState', this);
+      this._mmg.removeMessageListener("PDFJS:Parent:addEventListener", this);
+      this._mmg.removeMessageListener("PDFJS:Parent:removeEventListener", this);
+      this._mmg.removeMessageListener("PDFJS:Parent:updateControlState", this);
 
-      Services.obs.removeObserver(this, 'quit-application', false);
+      Services.obs.removeObserver(this, "quit-application");
 
       this._mmg = null;
       this._ppmm = null;
@@ -119,7 +125,7 @@ var PdfjsChromeUtils = {
    * instruct the child to refresh its configuration and (possibly)
    * the module's registration.
    */
-  notifyChildOfSettingsChange: function () {
+  notifyChildOfSettingsChange(enabled) {
     if (Services.appinfo.processType ===
         Services.appinfo.PROCESS_TYPE_DEFAULT && this._ppmm) {
       // XXX kinda bad, we want to get the parent process mm associated
@@ -127,7 +133,8 @@ var PdfjsChromeUtils = {
       // manager, which means this is going to fire to every child process
       // we have open. Unfortunately I can't find a way to get at that
       // process specific mm from js.
-      this._ppmm.broadcastAsyncMessage('PDFJS:Child:refreshSettings', {});
+      this._ppmm.broadcastAsyncMessage("PDFJS:Child:updateSettings",
+                                       { enabled, });
     }
   },
 
@@ -135,63 +142,63 @@ var PdfjsChromeUtils = {
    * Events
    */
 
-  observe: function(aSubject, aTopic, aData) {
-    if (aTopic === 'quit-application') {
+  observe(aSubject, aTopic, aData) {
+    if (aTopic === "quit-application") {
       this.uninit();
     }
   },
 
-  receiveMessage: function (aMsg) {
+  receiveMessage(aMsg) {
     switch (aMsg.name) {
-      case 'PDFJS:Parent:clearUserPref':
+      case "PDFJS:Parent:clearUserPref":
         this._clearUserPref(aMsg.data.name);
         break;
-      case 'PDFJS:Parent:setIntPref':
+      case "PDFJS:Parent:setIntPref":
         this._setIntPref(aMsg.data.name, aMsg.data.value);
         break;
-      case 'PDFJS:Parent:setBoolPref':
+      case "PDFJS:Parent:setBoolPref":
         this._setBoolPref(aMsg.data.name, aMsg.data.value);
         break;
-      case 'PDFJS:Parent:setCharPref':
+      case "PDFJS:Parent:setCharPref":
         this._setCharPref(aMsg.data.name, aMsg.data.value);
         break;
-      case 'PDFJS:Parent:setStringPref':
+      case "PDFJS:Parent:setStringPref":
         this._setStringPref(aMsg.data.name, aMsg.data.value);
         break;
-      case 'PDFJS:Parent:isDefaultHandlerApp':
+      case "PDFJS:Parent:isDefaultHandlerApp":
         return this.isDefaultHandlerApp();
-      case 'PDFJS:Parent:displayWarning':
+      case "PDFJS:Parent:displayWarning":
         this._displayWarning(aMsg);
         break;
 
-
-      case 'PDFJS:Parent:updateControlState':
+      case "PDFJS:Parent:updateControlState":
         return this._updateControlState(aMsg);
-      case 'PDFJS:Parent:addEventListener':
+      case "PDFJS:Parent:addEventListener":
         return this._addEventListener(aMsg);
-      case 'PDFJS:Parent:removeEventListener':
+      case "PDFJS:Parent:removeEventListener":
         return this._removeEventListener(aMsg);
     }
+    return undefined;
   },
 
   /*
    * Internal
    */
 
-  _findbarFromMessage: function(aMsg) {
+  _findbarFromMessage(aMsg) {
     let browser = aMsg.target;
     let tabbrowser = browser.getTabBrowser();
     let tab = tabbrowser.getTabForBrowser(browser);
     return tabbrowser.getFindBar(tab);
   },
 
-  _updateControlState: function (aMsg) {
+  _updateControlState(aMsg) {
     let data = aMsg.data;
     this._findbarFromMessage(aMsg)
         .updateControlState(data.result, data.findPrevious);
   },
 
-  handleEvent: function(aEvent) {
+  handleEvent(aEvent) {
     // To avoid forwarding the message as a CPOW, create a structured cloneable
     // version of the event for both performance, and ease of usage, reasons.
     let type = aEvent.type;
@@ -199,31 +206,30 @@ var PdfjsChromeUtils = {
       query: aEvent.detail.query,
       caseSensitive: aEvent.detail.caseSensitive,
       highlightAll: aEvent.detail.highlightAll,
-      findPrevious: aEvent.detail.findPrevious
+      findPrevious: aEvent.detail.findPrevious,
     };
 
     let browser = aEvent.currentTarget.browser;
     if (!this._browsers.has(browser)) {
-      throw new Error('FindEventManager was not bound ' +
-                      'for the current browser.');
+      throw new Error("FindEventManager was not bound " +
+                      "for the current browser.");
     }
     // Only forward the events if the current browser is a registered browser.
     let mm = browser.messageManager;
-    mm.sendAsyncMessage('PDFJS:Child:handleEvent',
-                        { type: type, detail: detail });
+    mm.sendAsyncMessage("PDFJS:Child:handleEvent", { type, detail, });
     aEvent.preventDefault();
   },
 
-  _types: ['find',
-           'findagain',
-           'findhighlightallchange',
-           'findcasesensitivitychange'],
+  _types: ["find",
+           "findagain",
+           "findhighlightallchange",
+           "findcasesensitivitychange"],
 
-  _addEventListener: function (aMsg) {
+  _addEventListener(aMsg) {
     let browser = aMsg.target;
     if (this._browsers.has(browser)) {
-      throw new Error('FindEventManager was bound 2nd time ' +
-                      'without unbinding it first.');
+      throw new Error("FindEventManager was bound 2nd time " +
+                      "without unbinding it first.");
     }
 
     // Since this jsm is global, we need to store all the browsers
@@ -238,10 +244,10 @@ var PdfjsChromeUtils = {
     }
   },
 
-  _removeEventListener: function (aMsg) {
+  _removeEventListener(aMsg) {
     let browser = aMsg.target;
     if (!this._browsers.has(browser)) {
-      throw new Error('FindEventManager was unbound without binding it first.');
+      throw new Error("FindEventManager was unbound without binding it first.");
     }
 
     this._browsers.delete(browser);
@@ -254,42 +260,39 @@ var PdfjsChromeUtils = {
     }
   },
 
-  _ensurePreferenceAllowed: function (aPrefName) {
-    let unPrefixedName = aPrefName.split(PREF_PREFIX + '.');
-    if (unPrefixedName[0] !== '' ||
+  _ensurePreferenceAllowed(aPrefName) {
+    let unPrefixedName = aPrefName.split(PREF_PREFIX + ".");
+    if (unPrefixedName[0] !== "" ||
         this._allowedPrefNames.indexOf(unPrefixedName[1]) === -1) {
-      let msg = '"' + aPrefName + '" ' +
-                'can\'t be accessed from content. See PdfjsChromeUtils.';
+      let msg = "\"" + aPrefName + "\" " +
+                "can't be accessed from content. See PdfjsChromeUtils.";
       throw new Error(msg);
     }
   },
 
-  _clearUserPref: function (aPrefName) {
+  _clearUserPref(aPrefName) {
     this._ensurePreferenceAllowed(aPrefName);
     Services.prefs.clearUserPref(aPrefName);
   },
 
-  _setIntPref: function (aPrefName, aPrefValue) {
+  _setIntPref(aPrefName, aPrefValue) {
     this._ensurePreferenceAllowed(aPrefName);
     Services.prefs.setIntPref(aPrefName, aPrefValue);
   },
 
-  _setBoolPref: function (aPrefName, aPrefValue) {
+  _setBoolPref(aPrefName, aPrefValue) {
     this._ensurePreferenceAllowed(aPrefName);
     Services.prefs.setBoolPref(aPrefName, aPrefValue);
   },
 
-  _setCharPref: function (aPrefName, aPrefValue) {
+  _setCharPref(aPrefName, aPrefValue) {
     this._ensurePreferenceAllowed(aPrefName);
     Services.prefs.setCharPref(aPrefName, aPrefValue);
   },
 
-  _setStringPref: function (aPrefName, aPrefValue) {
+  _setStringPref(aPrefName, aPrefValue) {
     this._ensurePreferenceAllowed(aPrefName);
-    let str = Cc['@mozilla.org/supports-string;1']
-                .createInstance(Ci.nsISupportsString);
-    str.data = aPrefValue;
-    Services.prefs.setComplexValue(aPrefName, Ci.nsISupportsString, str);
+    Services.prefs.setStringPref(aPrefName, aPrefValue);
   },
 
   /*
@@ -297,8 +300,8 @@ var PdfjsChromeUtils = {
    * we bounce this pdfjs enabled configuration check over to the
    * parent.
    */
-  isDefaultHandlerApp: function () {
-    var handlerInfo = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, 'pdf');
+  isDefaultHandlerApp() {
+    var handlerInfo = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, "pdf");
     return (!handlerInfo.alwaysAskBeforeHandling &&
             handlerInfo.preferredAction === Ci.nsIHandlerInfo.handleInternally);
   },
@@ -307,7 +310,7 @@ var PdfjsChromeUtils = {
    * Display a notification warning when the renderer isn't sure
    * a pdf displayed correctly.
    */
-  _displayWarning: function (aMsg) {
+  _displayWarning(aMsg) {
     let data = aMsg.data;
     let browser = aMsg.target;
 
@@ -320,24 +323,23 @@ var PdfjsChromeUtils = {
     let messageSent = false;
     function sendMessage(download) {
       let mm = browser.messageManager;
-      mm.sendAsyncMessage('PDFJS:Child:fallbackDownload',
-                          { download: download });
+      mm.sendAsyncMessage("PDFJS:Child:fallbackDownload", { download, });
     }
     let buttons = [{
       label: data.label,
       accessKey: data.accessKey,
-      callback: function() {
+      callback() {
         messageSent = true;
         sendMessage(true);
-      }
+      },
     }];
-    notificationBox.appendNotification(data.message, 'pdfjs-fallback', null,
+    notificationBox.appendNotification(data.message, "pdfjs-fallback", null,
                                        notificationBox.PRIORITY_INFO_LOW,
                                        buttons,
                                        function eventsCallback(eventType) {
       // Currently there is only one event "removed" but if there are any other
       // added in the future we still only care about removed at the moment.
-      if (eventType !== 'removed') {
+      if (eventType !== "removed") {
         return;
       }
       // Don't send a response again if we already responded when the button was
@@ -347,7 +349,6 @@ var PdfjsChromeUtils = {
       }
       sendMessage(false);
     });
-  }
+  },
 };
-
 

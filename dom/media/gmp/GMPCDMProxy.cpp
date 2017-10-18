@@ -10,18 +10,16 @@
 
 #include "mozilla/dom/MediaKeys.h"
 #include "mozilla/dom/MediaKeySession.h"
-
 #include "mozIGeckoMediaPluginService.h"
-#include "nsContentCID.h"
-#include "nsIConsoleService.h"
 #include "nsPrintfCString.h"
-#include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "prenv.h"
 #include "GMPCDMCallbackProxy.h"
 #include "GMPService.h"
 #include "MainThreadUtils.h"
 #include "MediaData.h"
+#include "DecryptJob.h"
+#include "GMPUtils.h"
 
 namespace mozilla {
 
@@ -29,15 +27,18 @@ GMPCDMProxy::GMPCDMProxy(dom::MediaKeys* aKeys,
                          const nsAString& aKeySystem,
                          GMPCrashHelper* aCrashHelper,
                          bool aDistinctiveIdentifierRequired,
-                         bool aPersistentStateRequired)
+                         bool aPersistentStateRequired,
+                         nsIEventTarget* aMainThread)
   : CDMProxy(aKeys,
              aKeySystem,
              aDistinctiveIdentifierRequired,
-             aPersistentStateRequired)
+             aPersistentStateRequired,
+             aMainThread)
   , mCrashHelper(aCrashHelper)
   , mCDM(nullptr)
-  , mDecryptionJobCount(0)
   , mShutdownCalled(false)
+  , mDecryptorId(0)
+  , mCreatePromiseId(0)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(GMPCDMProxy);
@@ -52,16 +53,14 @@ void
 GMPCDMProxy::Init(PromiseId aPromiseId,
                   const nsAString& aOrigin,
                   const nsAString& aTopLevelOrigin,
-                  const nsAString& aGMPName,
-                  bool aInPrivateBrowsing)
+                  const nsAString& aGMPName)
 {
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  EME_LOG("GMPCDMProxy::Init (%s, %s) %s",
+  EME_LOG("GMPCDMProxy::Init (%s, %s)",
           NS_ConvertUTF16toUTF8(aOrigin).get(),
-          NS_ConvertUTF16toUTF8(aTopLevelOrigin).get(),
-          (aInPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
+          NS_ConvertUTF16toUTF8(aTopLevelOrigin).get());
 
   nsCString pluginVersion;
   if (!mOwnerThread) {
@@ -86,30 +85,30 @@ GMPCDMProxy::Init(PromiseId aPromiseId,
     return;
   }
 
-  nsAutoPtr<InitData> data(new InitData());
+  UniquePtr<InitData> data(new InitData());
   data->mPromiseId = aPromiseId;
   data->mOrigin = aOrigin;
   data->mTopLevelOrigin = aTopLevelOrigin;
   data->mGMPName = aGMPName;
-  data->mInPrivateBrowsing = aInPrivateBrowsing;
   data->mCrashHelper = mCrashHelper;
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<InitData>>(this,
-                                           &GMPCDMProxy::gmp_Init,
-                                           Move(data)));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<InitData>&&>("GMPCDMProxy::gmp_Init",
+                                             this,
+                                             &GMPCDMProxy::gmp_Init,
+                                             Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 #ifdef DEBUG
 bool
 GMPCDMProxy::IsOnOwnerThread()
 {
-  return NS_GetCurrentThread() == mOwnerThread;
+  return mOwnerThread->IsOnCurrentThread();
 }
 #endif
 
 void
-GMPCDMProxy::gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData)
+GMPCDMProxy::gmp_InitDone(GMPDecryptorProxy* aCDM, UniquePtr<InitData>&& aData)
 {
   EME_LOG("GMPCDMProxy::gmp_InitDone");
   if (mShutdownCalled) {
@@ -127,22 +126,32 @@ GMPCDMProxy::gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData)
   }
 
   mCDM = aCDM;
-  mCallback = new GMPCDMCallbackProxy(this);
-  mCDM->Init(mCallback,
+  mCallback.reset(new GMPCDMCallbackProxy(this, mMainThread));
+  mCDM->Init(mCallback.get(),
              mDistinctiveIdentifierRequired,
              mPersistentStateRequired);
+
+  // Await the OnSetDecryptorId callback.
+  mCreatePromiseId = aData->mPromiseId;
+}
+
+void GMPCDMProxy::OnSetDecryptorId(uint32_t aId)
+{
+  MOZ_ASSERT(mCreatePromiseId);
+  mDecryptorId = aId;
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<uint32_t>(this,
+    NewRunnableMethod<uint32_t>("GMPCDMProxy::OnCDMCreated",
+                                this,
                                 &GMPCDMProxy::OnCDMCreated,
-                                aData->mPromiseId));
-  NS_DispatchToMainThread(task);
+                                mCreatePromiseId));
+  mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 class gmp_InitDoneCallback : public GetGMPDecryptorCallback
 {
 public:
   gmp_InitDoneCallback(GMPCDMProxy* aGMPCDMProxy,
-                       nsAutoPtr<GMPCDMProxy::InitData>&& aData)
+                       UniquePtr<GMPCDMProxy::InitData>&& aData)
     : mGMPCDMProxy(aGMPCDMProxy),
       mData(Move(aData))
   {
@@ -155,16 +164,16 @@ public:
 
 private:
   RefPtr<GMPCDMProxy> mGMPCDMProxy;
-  nsAutoPtr<GMPCDMProxy::InitData> mData;
+  UniquePtr<GMPCDMProxy::InitData> mData;
 };
 
 class gmp_InitGetGMPDecryptorCallback : public GetNodeIdCallback
 {
 public:
   gmp_InitGetGMPDecryptorCallback(GMPCDMProxy* aGMPCDMProxy,
-                                  nsAutoPtr<GMPCDMProxy::InitData>&& aData)
+                                  UniquePtr<GMPCDMProxy::InitData>&& aData)
     : mGMPCDMProxy(aGMPCDMProxy),
-      mData(aData)
+      mData(Move(aData))
   {
   }
 
@@ -175,11 +184,11 @@ public:
 
 private:
   RefPtr<GMPCDMProxy> mGMPCDMProxy;
-  nsAutoPtr<GMPCDMProxy::InitData> mData;
+  UniquePtr<GMPCDMProxy::InitData> mData;
 };
 
 void
-GMPCDMProxy::gmp_Init(nsAutoPtr<InitData>&& aData)
+GMPCDMProxy::gmp_Init(UniquePtr<InitData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
 
@@ -199,7 +208,6 @@ GMPCDMProxy::gmp_Init(nsAutoPtr<InitData>&& aData)
   nsresult rv = mps->GetNodeId(data.mOrigin,
                                data.mTopLevelOrigin,
                                data.mGMPName,
-                               data.mInPrivateBrowsing,
                                Move(callback));
   if (NS_FAILED(rv)) {
     RejectPromise(data.mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
@@ -210,7 +218,7 @@ GMPCDMProxy::gmp_Init(nsAutoPtr<InitData>&& aData)
 void
 GMPCDMProxy::gmp_InitGetGMPDecryptor(nsresult aResult,
                                      const nsACString& aNodeId,
-                                     nsAutoPtr<InitData>&& aData)
+                                     UniquePtr<InitData>&& aData)
 {
   uint32_t promiseID = aData->mPromiseId;
   if (NS_FAILED(aResult)) {
@@ -230,10 +238,9 @@ GMPCDMProxy::gmp_InitGetGMPDecryptor(nsresult aResult,
     return;
   }
 
-  EME_LOG("GMPCDMProxy::gmp_Init (%s, %s) %s NodeId=%s",
+  EME_LOG("GMPCDMProxy::gmp_Init (%s, %s) NodeId=%s",
           NS_ConvertUTF16toUTF8(aData->mOrigin).get(),
           NS_ConvertUTF16toUTF8(aData->mTopLevelOrigin).get(),
-          (aData->mInPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"),
           GetNodeId().get());
 
   nsTArray<nsCString> tags;
@@ -263,7 +270,7 @@ GMPCDMProxy::OnCDMCreated(uint32_t aPromiseId)
   }
   MOZ_ASSERT(!GetNodeId().IsEmpty());
   if (mCDM) {
-    mKeys->OnCDMCreated(aPromiseId, GetNodeId(), mCDM->GetPluginId());
+    mKeys->OnCDMCreated(aPromiseId, mCDM->GetPluginId());
   } else {
     // No CDM? Just reject the promise.
     mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
@@ -281,7 +288,7 @@ GMPCDMProxy::CreateSession(uint32_t aCreateSessionToken,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mOwnerThread);
 
-  nsAutoPtr<CreateSessionData> data(new CreateSessionData());
+  UniquePtr<CreateSessionData> data(new CreateSessionData());
   data->mSessionType = aSessionType;
   data->mCreateSessionToken = aCreateSessionToken;
   data->mPromiseId = aPromiseId;
@@ -289,8 +296,11 @@ GMPCDMProxy::CreateSession(uint32_t aCreateSessionToken,
   data->mInitData = Move(aInitData);
 
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<CreateSessionData>>(this, &GMPCDMProxy::gmp_CreateSession, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<CreateSessionData>&&>("GMPCDMProxy::gmp_CreateSession",
+                                                      this,
+                                                      &GMPCDMProxy::gmp_CreateSession,
+                                                      Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 GMPSessionType
@@ -303,7 +313,7 @@ ToGMPSessionType(dom::MediaKeySessionType aSessionType) {
 };
 
 void
-GMPCDMProxy::gmp_CreateSession(nsAutoPtr<CreateSessionData> aData)
+GMPCDMProxy::gmp_CreateSession(UniquePtr<CreateSessionData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
   if (!mCDM) {
@@ -320,21 +330,25 @@ GMPCDMProxy::gmp_CreateSession(nsAutoPtr<CreateSessionData> aData)
 
 void
 GMPCDMProxy::LoadSession(PromiseId aPromiseId,
+                         dom::MediaKeySessionType aSessionType,
                          const nsAString& aSessionId)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mOwnerThread);
 
-  nsAutoPtr<SessionOpData> data(new SessionOpData());
+  UniquePtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, &GMPCDMProxy::gmp_LoadSession, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<SessionOpData>&&>("GMPCDMProxy::gmp_LoadSession",
+                                                  this,
+                                                  &GMPCDMProxy::gmp_LoadSession,
+                                                  Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
-GMPCDMProxy::gmp_LoadSession(nsAutoPtr<SessionOpData> aData)
+GMPCDMProxy::gmp_LoadSession(UniquePtr<SessionOpData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
 
@@ -353,16 +367,19 @@ GMPCDMProxy::SetServerCertificate(PromiseId aPromiseId,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mOwnerThread);
 
-  nsAutoPtr<SetServerCertificateData> data(new SetServerCertificateData());
+  UniquePtr<SetServerCertificateData> data(new SetServerCertificateData());
   data->mPromiseId = aPromiseId;
   data->mCert = Move(aCert);
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<SetServerCertificateData>>(this, &GMPCDMProxy::gmp_SetServerCertificate, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<SetServerCertificateData>&&>("GMPCDMProxy::gmp_SetServerCertificate",
+                                                             this,
+                                                             &GMPCDMProxy::gmp_SetServerCertificate,
+                                                             Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
-GMPCDMProxy::gmp_SetServerCertificate(nsAutoPtr<SetServerCertificateData> aData)
+GMPCDMProxy::gmp_SetServerCertificate(UniquePtr<SetServerCertificateData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
   if (!mCDM) {
@@ -382,17 +399,20 @@ GMPCDMProxy::UpdateSession(const nsAString& aSessionId,
   MOZ_ASSERT(mOwnerThread);
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  nsAutoPtr<UpdateSessionData> data(new UpdateSessionData());
+  UniquePtr<UpdateSessionData> data(new UpdateSessionData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
   data->mResponse = Move(aResponse);
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<UpdateSessionData>>(this, &GMPCDMProxy::gmp_UpdateSession, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<UpdateSessionData>&&>("GMPCDMProxy::gmp_UpdateSession",
+                                                      this,
+                                                      &GMPCDMProxy::gmp_UpdateSession,
+                                                      Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
-GMPCDMProxy::gmp_UpdateSession(nsAutoPtr<UpdateSessionData> aData)
+GMPCDMProxy::gmp_UpdateSession(UniquePtr<UpdateSessionData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
   if (!mCDM) {
@@ -412,16 +432,19 @@ GMPCDMProxy::CloseSession(const nsAString& aSessionId,
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  nsAutoPtr<SessionOpData> data(new SessionOpData());
+  UniquePtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, &GMPCDMProxy::gmp_CloseSession, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<SessionOpData>&&>("GMPCDMProxy::gmp_CloseSession",
+                                                  this,
+                                                  &GMPCDMProxy::gmp_CloseSession,
+                                                  Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
-GMPCDMProxy::gmp_CloseSession(nsAutoPtr<SessionOpData> aData)
+GMPCDMProxy::gmp_CloseSession(UniquePtr<SessionOpData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
   if (!mCDM) {
@@ -439,16 +462,19 @@ GMPCDMProxy::RemoveSession(const nsAString& aSessionId,
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  nsAutoPtr<SessionOpData> data(new SessionOpData());
+  UniquePtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<nsAutoPtr<SessionOpData>>(this, &GMPCDMProxy::gmp_RemoveSession, data));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<UniquePtr<SessionOpData>&&>("GMPCDMProxy::gmp_RemoveSession",
+                                                  this,
+                                                  &GMPCDMProxy::gmp_RemoveSession,
+                                                  Move(data)));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
-GMPCDMProxy::gmp_RemoveSession(nsAutoPtr<SessionOpData> aData)
+GMPCDMProxy::gmp_RemoveSession(UniquePtr<SessionOpData>&& aData)
 {
   MOZ_ASSERT(IsOnOwnerThread());
   if (!mCDM) {
@@ -465,9 +491,10 @@ GMPCDMProxy::Shutdown()
   MOZ_ASSERT(NS_IsMainThread());
   mKeys.Clear();
   // Note: This may end up being the last owning reference to the GMPCDMProxy.
-  nsCOMPtr<nsIRunnable> task(NewRunnableMethod(this, &GMPCDMProxy::gmp_Shutdown));
+  nsCOMPtr<nsIRunnable> task(NewRunnableMethod(
+    "GMPCDMProxy::gmp_Shutdown", this, &GMPCDMProxy::gmp_Shutdown));
   if (mOwnerThread) {
-    mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   }
 }
 
@@ -481,7 +508,7 @@ GMPCDMProxy::gmp_Shutdown()
   // Abort any pending decrypt jobs, to awaken any clients waiting on a job.
   for (size_t i = 0; i < mDecryptionJobs.Length(); i++) {
     DecryptJob* job = mDecryptionJobs[i];
-    job->PostResult(AbortedErr);
+    job->PostResult(eme::AbortedErr);
   }
   mDecryptionJobs.Clear();
 
@@ -502,7 +529,7 @@ GMPCDMProxy::RejectPromise(PromiseId aId, nsresult aCode,
   } else {
     nsCOMPtr<nsIRunnable> task(new RejectPromiseTask(this, aId, aCode,
                                                      aReason));
-    NS_DispatchToMainThread(task);
+    mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   }
 }
 
@@ -517,10 +544,9 @@ GMPCDMProxy::ResolvePromise(PromiseId aId)
     }
   } else {
     nsCOMPtr<nsIRunnable> task;
-    task = NewRunnableMethod<PromiseId>(this,
-                                        &GMPCDMProxy::ResolvePromise,
-                                        aId);
-    NS_DispatchToMainThread(task);
+    task = NewRunnableMethod<PromiseId>(
+      "GMPCDMProxy::ResolvePromise", this, &GMPCDMProxy::ResolvePromise, aId);
+    mMainThread->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   }
 }
 
@@ -593,7 +619,10 @@ GMPCDMProxy::OnExpirationChange(const nsAString& aSessionId,
   }
   RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
-    session->SetExpiration(static_cast<double>(aExpiryTime));
+    // Expiry of 0 is interpreted as "never expire". See bug 1345341.
+    double t = (aExpiryTime == 0) ? std::numeric_limits<double>::quiet_NaN()
+                                  : static_cast<double>(aExpiryTime);
+    session->SetExpiration(t);
   }
 }
 
@@ -617,19 +646,6 @@ GMPCDMProxy::OnDecrypted(uint32_t aId,
 {
   MOZ_ASSERT(IsOnOwnerThread());
   gmp_Decrypted(aId, aResult, aDecryptedData);
-}
-
-static void
-LogToConsole(const nsAString& aMsg)
-{
-  nsCOMPtr<nsIConsoleService> console(
-    do_GetService("@mozilla.org/consoleservice;1"));
-  if (!console) {
-    NS_WARNING("Failed to log message to console.");
-    return;
-  }
-  nsAutoString msg(aMsg);
-  console->LogStringMessage(msg.get());
 }
 
 void
@@ -669,15 +685,16 @@ GMPCDMProxy::Capabilites() {
   return mCapabilites;
 }
 
-RefPtr<GMPCDMProxy::DecryptPromise>
+RefPtr<DecryptPromise>
 GMPCDMProxy::Decrypt(MediaRawData* aSample)
 {
   RefPtr<DecryptJob> job(new DecryptJob(aSample));
   RefPtr<DecryptPromise> promise(job->Ensure());
 
   nsCOMPtr<nsIRunnable> task(
-    NewRunnableMethod<RefPtr<DecryptJob>>(this, &GMPCDMProxy::gmp_Decrypt, job));
-  mOwnerThread->Dispatch(task, NS_DISPATCH_NORMAL);
+    NewRunnableMethod<RefPtr<DecryptJob>>("GMPCDMProxy::gmp_Decrypt",
+                                          this, &GMPCDMProxy::gmp_Decrypt, job));
+  mOwnerThread->EventTarget()->Dispatch(task.forget(), NS_DISPATCH_NORMAL);
   return promise;
 }
 
@@ -687,11 +704,10 @@ GMPCDMProxy::gmp_Decrypt(RefPtr<DecryptJob> aJob)
   MOZ_ASSERT(IsOnOwnerThread());
 
   if (!mCDM) {
-    aJob->PostResult(AbortedErr);
+    aJob->PostResult(eme::AbortedErr);
     return;
   }
 
-  aJob->mId = ++mDecryptionJobCount;
   nsTArray<uint8_t> data;
   data.AppendElements(aJob->mSample->Data(), aJob->mSample->Size());
   mCDM->Decrypt(aJob->mId, aJob->mSample->mCrypto, data);
@@ -725,37 +741,6 @@ GMPCDMProxy::gmp_Decrypted(uint32_t aId,
 }
 
 void
-GMPCDMProxy::DecryptJob::PostResult(DecryptStatus aResult)
-{
-  nsTArray<uint8_t> empty;
-  PostResult(aResult, empty);
-}
-
-void
-GMPCDMProxy::DecryptJob::PostResult(DecryptStatus aResult,
-                                    const nsTArray<uint8_t>& aDecryptedData)
-{
-  if (aDecryptedData.Length() != mSample->Size()) {
-    NS_WARNING("CDM returned incorrect number of decrypted bytes");
-  }
-  if (aResult == Ok) {
-    nsAutoPtr<MediaRawDataWriter> writer(mSample->CreateWriter());
-    PodCopy(writer->Data(),
-            aDecryptedData.Elements(),
-            std::min<size_t>(aDecryptedData.Length(), mSample->Size()));
-  } else if (aResult == NoKeyErr) {
-    NS_WARNING("CDM returned NoKeyErr");
-    // We still have the encrypted sample, so we can re-enqueue it to be
-    // decrypted again once the key is usable again.
-  } else {
-    nsAutoCString str("CDM returned decode failure DecryptStatus=");
-    str.AppendInt(aResult);
-    NS_WARNING(str.get());
-  }
-  mPromise.Resolve(DecryptResult(aResult, mSample), __func__);
-}
-
-void
 GMPCDMProxy::GetSessionIdsForKeyId(const nsTArray<uint8_t>& aKeyId,
                                    nsTArray<nsCString>& aSessionIds)
 {
@@ -768,9 +753,21 @@ GMPCDMProxy::Terminated()
 {
   MOZ_ASSERT(NS_IsMainThread());
   NS_WARNING("CDM terminated");
+  if (mCreatePromiseId) {
+    RejectPromise(mCreatePromiseId,
+                  NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                  NS_LITERAL_CSTRING("Crashed waiting for CDM to initialize"));
+    mCreatePromiseId = 0;
+  }
   if (!mKeys.IsNull()) {
     mKeys->Terminated();
   }
+}
+
+uint32_t
+GMPCDMProxy::GetDecryptorId()
+{
+  return mDecryptorId;
 }
 
 } // namespace mozilla

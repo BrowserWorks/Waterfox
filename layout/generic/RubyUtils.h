@@ -7,9 +7,10 @@
 #ifndef mozilla_RubyUtils_h_
 #define mozilla_RubyUtils_h_
 
-#include "nsTArray.h"
-#include "nsGkAtoms.h"
 #include "nsCSSAnonBoxes.h"
+#include "nsGkAtoms.h"
+#include "nsIFrame.h"
+#include "nsTArray.h"
 
 #define RTC_ARRAY_SIZE 1
 
@@ -54,27 +55,27 @@ namespace mozilla {
 class RubyUtils
 {
 public:
-  static inline bool IsRubyContentBox(nsIAtom* aFrameType)
+  static inline bool IsRubyContentBox(LayoutFrameType aFrameType)
   {
-    return aFrameType == nsGkAtoms::rubyBaseFrame ||
-           aFrameType == nsGkAtoms::rubyTextFrame;
+    return aFrameType == mozilla::LayoutFrameType::RubyBase ||
+           aFrameType == mozilla::LayoutFrameType::RubyText;
   }
 
-  static inline bool IsRubyContainerBox(nsIAtom* aFrameType)
+  static inline bool IsRubyContainerBox(LayoutFrameType aFrameType)
   {
-    return aFrameType == nsGkAtoms::rubyBaseContainerFrame ||
-           aFrameType == nsGkAtoms::rubyTextContainerFrame;
+    return aFrameType == mozilla::LayoutFrameType::RubyBaseContainer ||
+           aFrameType == mozilla::LayoutFrameType::RubyTextContainer;
   }
 
-  static inline bool IsRubyBox(nsIAtom* aFrameType)
+  static inline bool IsRubyBox(LayoutFrameType aFrameType)
   {
-    return aFrameType == nsGkAtoms::rubyFrame ||
-      IsRubyContentBox(aFrameType) || IsRubyContainerBox(aFrameType);
+    return aFrameType == mozilla::LayoutFrameType::Ruby ||
+           IsRubyContentBox(aFrameType) || IsRubyContainerBox(aFrameType);
   }
 
   static inline bool IsExpandableRubyBox(nsIFrame* aFrame)
   {
-    nsIAtom* type = aFrame->GetType();
+    mozilla::LayoutFrameType type = aFrame->Type();
     return IsRubyContentBox(type) || IsRubyContainerBox(type);
   }
 
@@ -207,6 +208,26 @@ private:
   AutoTArray<nsRubyContentFrame*, RTC_ARRAY_SIZE + 1> mFrames;
   // Whether we are on a column for intra-level whitespaces
   bool mAtIntraLevelWhitespace;
+};
+
+/**
+ * Stores block-axis leadings produced from ruby annotations.
+ */
+struct RubyBlockLeadings
+{
+  nscoord mStart = 0;
+  nscoord mEnd = 0;
+
+  void Reset() {
+    mStart = mEnd = 0;
+  }
+  void Update(nscoord aStart, nscoord aEnd) {
+    mStart = std::max(mStart, aStart);
+    mEnd = std::max(mEnd, aEnd);
+  }
+  void Update(const RubyBlockLeadings& aOther) {
+    Update(aOther.mStart, aOther.mEnd);
+  }
 };
 
 } // namespace mozilla

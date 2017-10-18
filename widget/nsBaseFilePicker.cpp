@@ -67,14 +67,15 @@ LocalFileToDirectoryOrBlob(nsPIDOMWindowInner* aWindow,
 class AsyncShowFilePicker : public mozilla::Runnable
 {
 public:
-  AsyncShowFilePicker(nsIFilePicker *aFilePicker,
-                      nsIFilePickerShownCallback *aCallback) :
-    mFilePicker(aFilePicker),
-    mCallback(aCallback)
+  AsyncShowFilePicker(nsIFilePicker* aFilePicker,
+                      nsIFilePickerShownCallback* aCallback)
+    : mozilla::Runnable("AsyncShowFilePicker")
+    , mFilePicker(aFilePicker)
+    , mCallback(aCallback)
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     NS_ASSERTION(NS_IsMainThread(),
                  "AsyncShowFilePicker should be on the main thread!");
@@ -214,47 +215,47 @@ nsBaseFilePicker::AppendFilters(int32_t aFilterMask)
   nsXPIDLString filter;
 
   if (aFilterMask & filterAll) {
-    titleBundle->GetStringFromName(u"allTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"allFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("allTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("allFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterHTML) {
-    titleBundle->GetStringFromName(u"htmlTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"htmlFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("htmlTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("htmlFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterText) {
-    titleBundle->GetStringFromName(u"textTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"textFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("textTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("textFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterImages) {
-    titleBundle->GetStringFromName(u"imageTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"imageFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("imageTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("imageFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterAudio) {
-    titleBundle->GetStringFromName(u"audioTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"audioFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("audioTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("audioFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterVideo) {
-    titleBundle->GetStringFromName(u"videoTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"videoFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("videoTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("videoFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterXML) {
-    titleBundle->GetStringFromName(u"xmlTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"xmlFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("xmlTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("xmlFilter", getter_Copies(filter));
     AppendFilter(title,filter);
   }
   if (aFilterMask & filterXUL) {
-    titleBundle->GetStringFromName(u"xulTitle", getter_Copies(title));
-    filterBundle->GetStringFromName(u"xulFilter", getter_Copies(filter));
+    titleBundle->GetStringFromName("xulTitle", getter_Copies(title));
+    filterBundle->GetStringFromName("xulFilter", getter_Copies(filter));
     AppendFilter(title, filter);
   }
   if (aFilterMask & filterApps) {
-    titleBundle->GetStringFromName(u"appsTitle", getter_Copies(title));
+    titleBundle->GetStringFromName("appsTitle", getter_Copies(title));
     // Pass the magic string "..apps" to the platform filepicker, which it
     // should recognize and do the correct platform behavior for.
     AppendFilter(title, NS_LITERAL_STRING("..apps"));
@@ -295,6 +296,12 @@ NS_IMETHODIMP nsBaseFilePicker::GetFiles(nsISimpleEnumerator **aFiles)
 // Set the display directory
 NS_IMETHODIMP nsBaseFilePicker::SetDisplayDirectory(nsIFile *aDirectory)
 {
+  // if displaySpecialDirectory has been previously called, let's abort this
+  // operation.
+  if (!mDisplaySpecialDirectory.IsEmpty()) {
+    return NS_OK;
+  }
+
   if (!aDirectory) {
     mDisplayDirectory = nullptr;
     return NS_OK;
@@ -311,6 +318,13 @@ NS_IMETHODIMP nsBaseFilePicker::SetDisplayDirectory(nsIFile *aDirectory)
 NS_IMETHODIMP nsBaseFilePicker::GetDisplayDirectory(nsIFile **aDirectory)
 {
   *aDirectory = nullptr;
+
+  // if displaySpecialDirectory has been previously called, let's abort this
+  // operation.
+  if (!mDisplaySpecialDirectory.IsEmpty()) {
+    return NS_OK;
+  }
+
   if (!mDisplayDirectory)
     return NS_OK;
   nsCOMPtr<nsIFile> directory;
@@ -319,6 +333,31 @@ NS_IMETHODIMP nsBaseFilePicker::GetDisplayDirectory(nsIFile **aDirectory)
     return rv;
   }
   directory.forget(aDirectory);
+  return NS_OK;
+}
+
+// Set the display special directory
+NS_IMETHODIMP nsBaseFilePicker::SetDisplaySpecialDirectory(const nsAString& aDirectory)
+{
+  // if displayDirectory has been previously called, let's abort this operation.
+  if (mDisplayDirectory && mDisplaySpecialDirectory.IsEmpty()) {
+    return NS_OK;
+  }
+
+  mDisplaySpecialDirectory = aDirectory;
+  if (mDisplaySpecialDirectory.IsEmpty()) {
+    mDisplayDirectory = nullptr;
+    return NS_OK;
+  }
+
+  return NS_GetSpecialDirectory(NS_ConvertUTF16toUTF8(mDisplaySpecialDirectory).get(),
+                                getter_AddRefs(mDisplayDirectory));
+}
+
+// Get the display special directory
+NS_IMETHODIMP nsBaseFilePicker::GetDisplaySpecialDirectory(nsAString& aDirectory)
+{
+  aDirectory = mDisplaySpecialDirectory;
   return NS_OK;
 }
 

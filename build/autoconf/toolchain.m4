@@ -2,10 +2,19 @@ dnl This Source Code Form is subject to the terms of the Mozilla Public
 dnl License, v. 2.0. If a copy of the MPL was not distributed with this
 dnl file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+dnl Several autoconf functions AC_REQUIRE AC_PROG_CPP/AC_PROG_CXXCPP
+dnl or AC_HEADER_STDC, meaning they are called even when we don't call
+dnl them explicitly.
+dnl However, theses checks are not necessary and python configure sets
+dnl the corresponding variables already, so just skip those tests
+dnl entirely.
+define([AC_PROG_CPP],[])
+define([AC_PROG_CXXCPP],[])
+define([AC_HEADER_STDC], [])
+
 AC_DEFUN([MOZ_TOOL_VARIABLES],
 [
 GNU_AS=
-GNU_LD=
 
 GNU_CC=
 GNU_CXX=
@@ -18,9 +27,6 @@ if test "`echo | $AS -o conftest.out -v 2>&1 | grep -c GNU`" != "0"; then
     GNU_AS=1
 fi
 rm -f conftest.out
-if test "`echo | $LD -v 2>&1 | grep -c GNU`" != "0"; then
-    GNU_LD=1
-fi
 
 CLANG_CC=
 CLANG_CXX=
@@ -49,34 +55,11 @@ AC_DEFUN([MOZ_CROSS_COMPILER],
 [
 echo "cross compiling from $host to $target"
 
-_SAVE_CC="$CC"
-_SAVE_CFLAGS="$CFLAGS"
-_SAVE_LDFLAGS="$LDFLAGS"
-
 if test -z "$HOST_AR_FLAGS"; then
     HOST_AR_FLAGS="$AR_FLAGS"
 fi
 AC_CHECK_PROGS(HOST_RANLIB, $HOST_RANLIB ranlib, ranlib, :)
 AC_CHECK_PROGS(HOST_AR, $HOST_AR ar, ar, :)
-CC="$HOST_CC"
-CFLAGS="$HOST_CFLAGS"
-LDFLAGS="$HOST_LDFLAGS"
-
-AC_MSG_CHECKING([whether the host c compiler ($HOST_CC $HOST_CFLAGS $HOST_LDFLAGS) works])
-AC_TRY_COMPILE([], [return(0);],
-    [ac_cv_prog_hostcc_works=1 AC_MSG_RESULT([yes])],
-    AC_MSG_ERROR([installation or configuration problem: host compiler $HOST_CC cannot create executables.]) )
-
-CC="$HOST_CXX"
-CFLAGS="$HOST_CXXFLAGS"
-AC_MSG_CHECKING([whether the host c++ compiler ($HOST_CXX $HOST_CXXFLAGS $HOST_LDFLAGS) works])
-AC_TRY_COMPILE([], [return(0);],
-    [ac_cv_prog_hostcxx_works=1 AC_MSG_RESULT([yes])],
-    AC_MSG_ERROR([installation or configuration problem: host compiler $HOST_CXX cannot create executables.]) )
-
-CC=$_SAVE_CC
-CFLAGS=$_SAVE_CFLAGS
-LDFLAGS=$_SAVE_LDFLAGS
 
 dnl AC_CHECK_PROGS manually goes through $PATH, and as such fails to handle
 dnl absolute or relative paths. Relative paths wouldn't work anyways, but
@@ -95,10 +78,11 @@ AC_PROG_CXX
 AC_CHECK_PROGS(RANLIB, "${TOOLCHAIN_PREFIX}ranlib", :)
 AC_CHECK_PROGS(AR, "${TOOLCHAIN_PREFIX}ar", :)
 AC_CHECK_PROGS(AS, "${TOOLCHAIN_PREFIX}as", :)
-AC_CHECK_PROGS(LD, "${TOOLCHAIN_PREFIX}ld", :)
+AC_CHECK_PROGS(LIPO, "${TOOLCHAIN_PREFIX}lipo", :)
 AC_CHECK_PROGS(STRIP, "${TOOLCHAIN_PREFIX}strip", :)
 AC_CHECK_PROGS(WINDRES, "${TOOLCHAIN_PREFIX}windres", :)
 AC_CHECK_PROGS(OTOOL, "${TOOLCHAIN_PREFIX}otool", :)
+AC_CHECK_PROGS(INSTALL_NAME_TOOL, "${TOOLCHAIN_PREFIX}install_name_tool", :)
 AC_CHECK_PROGS(OBJCOPY, "${TOOLCHAIN_PREFIX}objcopy", :)
 PATH=$_SAVE_PATH
 ])

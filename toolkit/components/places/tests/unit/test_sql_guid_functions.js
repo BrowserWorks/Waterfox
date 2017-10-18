@@ -12,18 +12,15 @@
  * @param aGuid
  *        The guid to check.
  */
-function check_invariants(aGuid)
-{
+function check_invariants(aGuid) {
   do_print("Checking guid '" + aGuid + "'");
 
   do_check_valid_places_guid(aGuid);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Test Functions
+// Test Functions
 
-function test_guid_invariants()
-{
+function test_guid_invariants() {
   const kExpectedChars = 64;
   const kAllowedChars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
@@ -68,24 +65,22 @@ function test_guid_invariants()
   run_next_test();
 }
 
-function test_guid_on_background()
-{
+function test_guid_on_background() {
   // We should not assert if we execute this asynchronously.
   let stmt = DBConn().createAsyncStatement("SELECT GENERATE_GUID()");
   let checked = false;
   stmt.executeAsync({
-    handleResult: function(aResult) {
+    handleResult(aResult) {
       try {
         let row = aResult.getNextRow();
         check_invariants(row.getResultByIndex(0));
         do_check_eq(aResult.getNextRow(), null);
         checked = true;
-      }
-      catch (e) {
+      } catch (e) {
         do_throw(e);
       }
     },
-    handleCompletion: function(aReason) {
+    handleCompletion(aReason) {
       do_check_eq(aReason, Ci.mozIStorageStatementCallback.REASON_FINISHED);
       do_check_true(checked);
       run_next_test();
@@ -94,15 +89,13 @@ function test_guid_on_background()
   stmt.finalize();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Test Runner
+// Test Runner
 
 [
   test_guid_invariants,
   test_guid_on_background,
 ].forEach(add_test);
 
-function run_test()
-{
+function run_test() {
   run_next_test();
 }

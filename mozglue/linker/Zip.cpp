@@ -65,6 +65,7 @@ Zip::Zip(const char *filename, void *mapped, size_t size)
 , nextDir(nullptr)
 , entries(nullptr)
 {
+  pthread_mutex_init(&mutex, nullptr);
   // If the first local file entry couldn't be found (which can happen
   // with optimized jars), check the first central directory entry.
   if (!nextFile)
@@ -73,17 +74,19 @@ Zip::Zip(const char *filename, void *mapped, size_t size)
 
 Zip::~Zip()
 {
-  ZipCollection::Forget(this);
   if (name) {
     munmap(mapped, size);
     DEBUG_LOG("Unmapped %s @%p", name, mapped);
     free(name);
   }
+  pthread_mutex_destroy(&mutex);
 }
 
 bool
 Zip::GetStream(const char *path, Zip::Stream *out) const
 {
+  AutoLock lock(&mutex);
+
   DEBUG_LOG("%s - GetFile %s", name, path);
   /* Fast path: if the Local File header on store matches, we can return the
    * corresponding stream right away.
@@ -103,6 +106,7 @@ Zip::GetStream(const char *path, Zip::Stream *out) const
     out->compressedBuf = data;
     out->compressedSize = nextFile->compressedSize;
     out->uncompressedSize = nextFile->uncompressedSize;
+    out->CRC32 = nextFile->CRC32;
     out->type = static_cast<Stream::Type>(uint16_t(nextFile->compression));
 
     /* Find the next Local File header. It is usually simply following the
@@ -145,6 +149,7 @@ Zip::GetStream(const char *path, Zip::Stream *out) const
   out->compressedBuf = data;
   out->compressedSize = nextDir->compressedSize;
   out->uncompressedSize = nextDir->uncompressedSize;
+  out->CRC32 = nextDir->CRC32;
   out->type = static_cast<Stream::Type>(uint16_t(nextDir->compression));
 
   /* Store the next directory entry */
@@ -189,11 +194,9 @@ ZipCollection::GetZip(const char *path)
   {
     AutoLock lock(&sZipCollectionMutex);
     /* Search the list of Zips we already have for a match */
-    for (std::vector<Zip *>::iterator it = Singleton.zips.begin();
-         it < Singleton.zips.end(); ++it) {
-      if ((*it)->GetName() && (strcmp((*it)->GetName(), path) == 0)) {
-        RefPtr<Zip> zip = *it;
-        return zip.forget();
+    for (const auto& zip: Singleton.zips) {
+      if (zip->GetName() && (strcmp(zip->GetName(), path) == 0)) {
+        return RefPtr<Zip>(zip).forget();
       }
     }
   }
@@ -209,12 +212,16 @@ ZipCollection::Register(Zip *zip)
 }
 
 void
-ZipCollection::Forget(Zip *zip)
+ZipCollection::Forget(const Zip *zip)
 {
   AutoLock lock(&sZipCollectionMutex);
+  if (zip->refCount() > 1) {
+    // Someone has acquired a reference before we had acquired the lock,
+    // ignore this request.
+    return;
+  }
   DEBUG_LOG("ZipCollection::Forget(\"%s\")", zip->GetName());
-  std::vector<Zip *>::iterator it = std::find(Singleton.zips.begin(),
-                                              Singleton.zips.end(), zip);
+  const auto it = std::find(Singleton.zips.begin(), Singleton.zips.end(), zip);
   if (*it == zip) {
     Singleton.zips.erase(it);
   } else {

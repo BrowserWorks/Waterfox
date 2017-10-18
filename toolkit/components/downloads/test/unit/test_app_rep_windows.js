@@ -8,8 +8,7 @@
  * downloaded files.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -17,10 +16,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
 const BackgroundFileSaverOutputStream = Components.Constructor(
       "@mozilla.org/network/background-file-saver;1?mode=outputstream",
@@ -78,24 +73,22 @@ function readFileToString(aFilename) {
  * @rejects With an exception, if onSaveComplete is called with a failure code.
  */
 function promiseSaverComplete(aSaver, aOnTargetChangeFn) {
-  let deferred = Promise.defer();
-  aSaver.observer = {
-    onTargetChange: function BFSO_onSaveComplete(aSaver, aTarget)
-    {
-      if (aOnTargetChangeFn) {
-        aOnTargetChangeFn(aTarget);
-      }
-    },
-    onSaveComplete: function BFSO_onSaveComplete(aSaver, aStatus)
-    {
-      if (Components.isSuccessCode(aStatus)) {
-        deferred.resolve();
-      } else {
-        deferred.reject(new Components.Exception("Saver failed.", aStatus));
-      }
-    },
-  };
-  return deferred.promise;
+  return new Promise((resolve, reject) => {
+    aSaver.observer = {
+      onTargetChange: function BFSO_onSaveComplete(unused, aTarget) {
+        if (aOnTargetChangeFn) {
+          aOnTargetChangeFn(aTarget);
+        }
+      },
+      onSaveComplete: function BFSO_onSaveComplete(unused, aStatus) {
+        if (Components.isSuccessCode(aStatus)) {
+          resolve();
+        } else {
+          reject(new Components.Exception("Saver failed.", aStatus));
+        }
+      },
+    };
+  });
 }
 
 /**
@@ -113,24 +106,23 @@ function promiseSaverComplete(aSaver, aOnTargetChangeFn) {
  * @rejects With an exception, if the copy fails.
  */
 function promiseCopyToSaver(aSourceString, aSaverOutputStream, aCloseWhenDone) {
-  let deferred = Promise.defer();
-  let inputStream = new StringInputStream(aSourceString, aSourceString.length);
-  let copier = Cc["@mozilla.org/network/async-stream-copier;1"]
-               .createInstance(Ci.nsIAsyncStreamCopier);
-  copier.init(inputStream, aSaverOutputStream, null, false, true, 0x8000, true,
-              aCloseWhenDone);
-  copier.asyncCopy({
-    onStartRequest: function () { },
-    onStopRequest: function (aRequest, aContext, aStatusCode)
-    {
-      if (Components.isSuccessCode(aStatusCode)) {
-        deferred.resolve();
-      } else {
-        deferred.reject(new Components.Exception(aResult));
-      }
-    },
-  }, null);
-  return deferred.promise;
+  return new Promise((resolve, reject) => {
+    let inputStream = new StringInputStream(aSourceString, aSourceString.length);
+    let copier = Cc["@mozilla.org/network/async-stream-copier;1"]
+                 .createInstance(Ci.nsIAsyncStreamCopier);
+    copier.init(inputStream, aSaverOutputStream, null, false, true, 0x8000, true,
+                aCloseWhenDone);
+    copier.asyncCopy({
+      onStartRequest() { },
+      onStopRequest(aRequest, aContext, aStatusCode) {
+        if (Components.isSuccessCode(aStatusCode)) {
+          resolve();
+        } else {
+          reject(new Components.Exception(aStatusCode));
+        }
+      },
+    }, null);
+  });
 }
 
 // Registers a table for which to serve update chunks.
@@ -160,16 +152,13 @@ function registerTableUpdate(aTable, aFilename) {
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
-function run_test()
-{
+function run_test() {
   run_next_test();
 }
 
-add_task(function* test_setup()
-{
+add_task(async function test_setup() {
   // Wait 10 minutes, that is half of the external xpcshell timeout.
   do_timeout(10 * 60 * 1000, function() {
     if (gStillRunning) {
@@ -245,6 +234,14 @@ add_task(function* test_setup()
   });
 
   gHttpServer.start(4444);
+
+  do_register_cleanup(function() {
+    return (async function() {
+      await new Promise(resolve => {
+        gHttpServer.stop(resolve);
+      });
+    })();
+  });
 });
 
 // Construct a response with redirect urls.
@@ -262,65 +259,62 @@ function processUpdateRequest() {
 
 // Set up the local whitelist.
 function waitForUpdates() {
-  let deferred = Promise.defer();
-  gHttpServer.registerPathHandler("/downloads", function(request, response) {
-    let buf = NetUtil.readInputStreamToString(request.bodyInputStream,
-      request.bodyInputStream.available());
-    let blob = processUpdateRequest();
-    response.setHeader("Content-Type",
-                       "application/vnd.google.safebrowsing-update", false);
-    response.setStatusLine(request.httpVersion, 200, "OK");
-    response.bodyOutputStream.write(blob, blob.length);
+  return new Promise((resolve, reject) => {
+    gHttpServer.registerPathHandler("/downloads", function(request, response) {
+      let blob = processUpdateRequest();
+      response.setHeader("Content-Type",
+                         "application/vnd.google.safebrowsing-update", false);
+      response.setStatusLine(request.httpVersion, 200, "OK");
+      response.bodyOutputStream.write(blob, blob.length);
+    });
+
+    let streamUpdater = Cc["@mozilla.org/url-classifier/streamupdater;1"]
+      .getService(Ci.nsIUrlClassifierStreamUpdater);
+
+    // Load up some update chunks for the safebrowsing server to serve. This
+    // particular chunk contains the hash of whitelisted.com/ and
+    // sb-ssl.google.com/safebrowsing/csd/certificate/.
+    registerTableUpdate("goog-downloadwhite-digest256", "data/digest.chunk");
+
+    // Resolve the promise once processing the updates is complete.
+    function updateSuccess(aEvent) {
+      // Timeout of n:1000 is constructed in processUpdateRequest above and
+      // passed back in the callback in nsIUrlClassifierStreamUpdater on success.
+      do_check_eq("1000", aEvent);
+      do_print("All data processed");
+      resolve(true);
+    }
+    // Just throw if we ever get an update or download error.
+    function handleError(aEvent) {
+      do_throw("We didn't download or update correctly: " + aEvent);
+      reject();
+    }
+    streamUpdater.downloadUpdates(
+      "goog-downloadwhite-digest256",
+      "goog-downloadwhite-digest256;\n",
+      true,
+      "http://localhost:4444/downloads",
+      updateSuccess, handleError, handleError);
   });
-
-  let streamUpdater = Cc["@mozilla.org/url-classifier/streamupdater;1"]
-    .getService(Ci.nsIUrlClassifierStreamUpdater);
-
-  // Load up some update chunks for the safebrowsing server to serve. This
-  // particular chunk contains the hash of whitelisted.com/ and
-  // sb-ssl.google.com/safebrowsing/csd/certificate/.
-  registerTableUpdate("goog-downloadwhite-digest256", "data/digest.chunk");
-
-  // Resolve the promise once processing the updates is complete.
-  function updateSuccess(aEvent) {
-    // Timeout of n:1000 is constructed in processUpdateRequest above and
-    // passed back in the callback in nsIUrlClassifierStreamUpdater on success.
-    do_check_eq("1000", aEvent);
-    do_print("All data processed");
-    deferred.resolve(true);
-  }
-  // Just throw if we ever get an update or download error.
-  function handleError(aEvent) {
-    do_throw("We didn't download or update correctly: " + aEvent);
-    deferred.reject();
-  }
-  streamUpdater.downloadUpdates(
-    "goog-downloadwhite-digest256",
-    "goog-downloadwhite-digest256;\n",
-    "http://localhost:4444/downloads",
-    updateSuccess, handleError, handleError);
-  return deferred.promise;
 }
 
 function promiseQueryReputation(query, expectedShouldBlock) {
-  let deferred = Promise.defer();
-  function onComplete(aShouldBlock, aStatus) {
-    do_check_eq(Cr.NS_OK, aStatus);
-    do_check_eq(aShouldBlock, expectedShouldBlock);
-    deferred.resolve(true);
-  }
-  gAppRep.queryReputation(query, onComplete);
-  return deferred.promise;
+  return new Promise(resolve => {
+    function onComplete(aShouldBlock, aStatus) {
+      do_check_eq(Cr.NS_OK, aStatus);
+      do_check_eq(aShouldBlock, expectedShouldBlock);
+      resolve(true);
+    }
+    gAppRep.queryReputation(query, onComplete);
+  });
 }
 
-add_task(function* ()
-{
+add_task(async function() {
   // Wait for Safebrowsing local list updates to complete.
-  yield waitForUpdates();
+  await waitForUpdates();
 });
 
-add_task(function* test_signature_whitelists()
-{
+add_task(async function test_signature_whitelists() {
   // We should never get to the remote server.
   Services.prefs.setBoolPref(remoteEnabledPref,
                              true);
@@ -335,61 +329,57 @@ add_task(function* test_signature_whitelists()
   let completionPromise = promiseSaverComplete(saver);
   saver.enableSignatureInfo();
   saver.setTarget(destFile, false);
-  yield promiseCopyToSaver(data, saver, true);
+  await promiseCopyToSaver(data, saver, true);
 
   saver.finish(Cr.NS_OK);
-  yield completionPromise;
+  await completionPromise;
 
   // Clean up.
   destFile.remove(false);
 
   // evil.com is not on the allowlist, but this binary is signed by an entity
   // whose certificate information is on the allowlist.
-  yield promiseQueryReputation({sourceURI: createURI("http://evil.com"),
+  await promiseQueryReputation({sourceURI: createURI("http://evil.com"),
                                 signatureInfo: saver.signatureInfo,
                                 fileSize: 12}, false);
 });
 
-add_task(function* test_blocked_binary()
-{
+add_task(async function test_blocked_binary() {
   // We should reach the remote server for a verdict.
   Services.prefs.setBoolPref(remoteEnabledPref,
                              true);
   Services.prefs.setCharPref(appRepURLPref,
                              "http://localhost:4444/download");
   // evil.com should return a malware verdict from the remote server.
-  yield promiseQueryReputation({sourceURI: createURI("http://evil.com"),
+  await promiseQueryReputation({sourceURI: createURI("http://evil.com"),
                                 suggestedFileName: "noop.bat",
                                 fileSize: 12}, true);
 });
 
-add_task(function* test_non_binary()
-{
+add_task(async function test_non_binary() {
   // We should not reach the remote server for a verdict for non-binary files.
   Services.prefs.setBoolPref(remoteEnabledPref,
                              true);
   Services.prefs.setCharPref(appRepURLPref,
                              "http://localhost:4444/throw");
-  yield promiseQueryReputation({sourceURI: createURI("http://evil.com"),
+  await promiseQueryReputation({sourceURI: createURI("http://evil.com"),
                                 suggestedFileName: "noop.txt",
                                 fileSize: 12}, false);
 });
 
-add_task(function* test_good_binary()
-{
+add_task(async function test_good_binary() {
   // We should reach the remote server for a verdict.
   Services.prefs.setBoolPref(remoteEnabledPref,
                              true);
   Services.prefs.setCharPref(appRepURLPref,
                              "http://localhost:4444/download");
   // mozilla.com should return a not-guilty verdict from the remote server.
-  yield promiseQueryReputation({sourceURI: createURI("http://mozilla.com"),
+  await promiseQueryReputation({sourceURI: createURI("http://mozilla.com"),
                                 suggestedFileName: "noop.bat",
                                 fileSize: 12}, false);
 });
 
-add_task(function* test_disabled()
-{
+add_task(async function test_disabled() {
   // Explicitly disable remote checks
   Services.prefs.setBoolPref(remoteEnabledPref,
                              false);
@@ -398,20 +388,19 @@ add_task(function* test_disabled()
   let query = {sourceURI: createURI("http://example.com"),
                suggestedFileName: "noop.bat",
                fileSize: 12};
-  let deferred = Promise.defer();
-  gAppRep.queryReputation(query,
-    function onComplete(aShouldBlock, aStatus) {
-      // We should be getting NS_ERROR_NOT_AVAILABLE if the service is disabled
-      do_check_eq(Cr.NS_ERROR_NOT_AVAILABLE, aStatus);
-      do_check_false(aShouldBlock);
-      deferred.resolve(true);
-    }
-  );
-  yield deferred.promise;
+  await new Promise(resolve => {
+    gAppRep.queryReputation(query,
+      function onComplete(aShouldBlock, aStatus) {
+        // We should be getting NS_ERROR_NOT_AVAILABLE if the service is disabled
+        do_check_eq(Cr.NS_ERROR_NOT_AVAILABLE, aStatus);
+        do_check_false(aShouldBlock);
+        resolve(true);
+      }
+    );
+  });
 });
 
-add_task(function* test_disabled_through_lists()
-{
+add_task(async function test_disabled_through_lists() {
   Services.prefs.setBoolPref(remoteEnabledPref,
                              false);
   Services.prefs.setCharPref(appRepURLPref,
@@ -420,18 +409,17 @@ add_task(function* test_disabled_through_lists()
   let query = {sourceURI: createURI("http://example.com"),
                suggestedFileName: "noop.bat",
                fileSize: 12};
-  let deferred = Promise.defer();
-  gAppRep.queryReputation(query,
-    function onComplete(aShouldBlock, aStatus) {
-      // We should be getting NS_ERROR_NOT_AVAILABLE if the service is disabled
-      do_check_eq(Cr.NS_ERROR_NOT_AVAILABLE, aStatus);
-      do_check_false(aShouldBlock);
-      deferred.resolve(true);
-    }
-  );
-  yield deferred.promise;
+  await new Promise(resolve => {
+    gAppRep.queryReputation(query,
+      function onComplete(aShouldBlock, aStatus) {
+        // We should be getting NS_ERROR_NOT_AVAILABLE if the service is disabled
+        do_check_eq(Cr.NS_ERROR_NOT_AVAILABLE, aStatus);
+        do_check_false(aShouldBlock);
+        resolve(true);
+      }
+    );
+  });
 });
-add_task(function* test_teardown()
-{
+add_task(async function test_teardown() {
   gStillRunning = false;
 });

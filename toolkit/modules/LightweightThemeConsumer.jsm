@@ -13,25 +13,16 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeImageOptimizer",
   "resource://gre/modules/addons/LightweightThemeImageOptimizer.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
-  "resource://gre/modules/PrivateBrowsingUtils.jsm");
-
 this.LightweightThemeConsumer =
  function LightweightThemeConsumer(aDocument) {
   this._doc = aDocument;
   this._win = aDocument.defaultView;
-  this._footerId = aDocument.documentElement.getAttribute("lightweightthemesfooter");
-
-  if (PrivateBrowsingUtils.isWindowPrivate(this._win) &&
-      !PrivateBrowsingUtils.permanentPrivateBrowsing) {
-    return;
-  }
 
   let screen = this._win.screen;
   this._lastScreenWidth = screen.width;
   this._lastScreenHeight = screen.height;
 
-  Services.obs.addObserver(this, "lightweight-theme-styling-update", false);
+  Services.obs.addObserver(this, "lightweight-theme-styling-update");
 
   var temp = {};
   Cu.import("resource://gre/modules/LightweightThemeManager.jsm", temp);
@@ -48,12 +39,12 @@ LightweightThemeConsumer.prototype = {
   // Whether a lightweight theme is enabled.
   _active: false,
 
-  enable: function() {
+  enable() {
     this._enabled = true;
     this._update(this._lastData);
   },
 
-  disable: function() {
+  disable() {
     // Dance to keep the data, but reset the applied styles:
     let lastData = this._lastData
     this._update(null);
@@ -61,18 +52,18 @@ LightweightThemeConsumer.prototype = {
     this._lastData = lastData;
   },
 
-  getData: function() {
+  getData() {
     return this._enabled ? Cu.cloneInto(this._lastData, this._win) : null;
   },
 
-  observe: function (aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "lightweight-theme-styling-update")
       return;
 
     this._update(JSON.parse(aData));
   },
 
-  handleEvent: function (aEvent) {
+  handleEvent(aEvent) {
     let {width, height} = this._win.screen;
 
     if (this._lastScreenWidth != width || this._lastScreenHeight != height) {
@@ -86,18 +77,15 @@ LightweightThemeConsumer.prototype = {
     }
   },
 
-  destroy: function () {
-    if (!PrivateBrowsingUtils.isWindowPrivate(this._win) ||
-        PrivateBrowsingUtils.permanentPrivateBrowsing) {
-      Services.obs.removeObserver(this, "lightweight-theme-styling-update");
+  destroy() {
+    Services.obs.removeObserver(this, "lightweight-theme-styling-update");
 
-      this._win.removeEventListener("resize", this);
-    }
+    this._win.removeEventListener("resize", this);
 
     this._win = this._doc = null;
   },
 
-  _update: function (aData) {
+  _update(aData) {
     if (!aData) {
       aData = { headerURL: "", footerURL: "", textcolor: "", accentcolor: "" };
       this._lastData = aData;
@@ -115,12 +103,15 @@ LightweightThemeConsumer.prototype = {
     // We need to clear these either way: either because the theme is being removed,
     // or because we are applying a new theme and the data might be bogus CSS,
     // so if we don't reset first, it'll keep the old value.
-    root.style.removeProperty("color");
-    root.style.removeProperty("background-color");
+    root.style.removeProperty("--lwt-text-color");
+    root.style.removeProperty("--lwt-accent-color");
+    let textcolor = aData.textcolor || "black";
+    _setProperty(root, active, "--lwt-text-color", textcolor);
+    _setProperty(root, active, "--lwt-accent-color", aData.accentcolor || "white");
     if (active) {
-      root.style.color = aData.textcolor || "black";
-      root.style.backgroundColor = aData.accentcolor || "white";
-      let [r, g, b] = _parseRGB(this._doc.defaultView.getComputedStyle(root, "").color);
+      let dummy = this._doc.createElement("dummy");
+      dummy.style.color = textcolor;
+      let [r, g, b] = _parseRGB(this._doc.defaultView.getComputedStyle(dummy).color);
       let luminance = 0.2125 * r + 0.7154 * g + 0.0721 * b;
       root.setAttribute("lwthemetextcolor", luminance <= 110 ? "dark" : "bright");
       root.setAttribute("lwtheme", "true");
@@ -131,16 +122,26 @@ LightweightThemeConsumer.prototype = {
 
     this._active = active;
 
-    _setImage(root, active, aData.headerURL);
-    if (this._footerId) {
-      let footer = this._doc.getElementById(this._footerId);
-      footer.style.backgroundColor = active ? aData.accentcolor || "white" : "";
-      _setImage(footer, active, aData.footerURL);
-      if (active && aData.footerURL)
-        footer.setAttribute("lwthemefooter", "true");
-      else
-        footer.removeAttribute("lwthemefooter");
+    if (aData.icons) {
+      let activeIcons = active ? Object.keys(aData.icons).join(" ") : "";
+      root.setAttribute("lwthemeicons", activeIcons);
+      for (let [name, value] of Object.entries(aData.icons)) {
+        _setImage(root, active, name, value);
+      }
+    } else {
+      root.removeAttribute("lwthemeicons");
     }
+
+    _setImage(root, active, "--lwt-header-image", aData.headerURL);
+    _setImage(root, active, "--lwt-footer-image", aData.footerURL);
+    _setImage(root, active, "--lwt-additional-images", aData.additionalBackgrounds);
+    _setProperty(root, active, "--lwt-background-alignment", aData.backgroundsAlignment);
+    _setProperty(root, active, "--lwt-background-tiling", aData.backgroundsTiling);
+
+    if (active && aData.footerURL)
+      root.setAttribute("lwthemefooter", "true");
+    else
+      root.removeAttribute("lwthemefooter");
 
     // On OS X, we extend the lightweight theme into the titlebar, which means setting
     // the chromemargin attribute. Some XUL applications already draw in the titlebar,
@@ -168,9 +169,19 @@ LightweightThemeConsumer.prototype = {
   }
 }
 
-function _setImage(aElement, aActive, aURL) {
-  aElement.style.backgroundImage =
-    (aActive && aURL) ? 'url("' + aURL.replace(/"/g, '\\"') + '")' : "";
+function _setImage(aRoot, aActive, aVariableName, aURLs) {
+  if (aURLs && !Array.isArray(aURLs)) {
+    aURLs = [aURLs];
+  }
+  _setProperty(aRoot, aActive, aVariableName, aURLs && aURLs.map(v => `url("${v.replace(/"/g, '\\"')}")`).join(","));
+}
+
+function _setProperty(root, active, variableName, value) {
+  if (active && value) {
+    root.style.setProperty(variableName, value);
+  } else {
+    root.style.removeProperty(variableName);
+  }
 }
 
 function _parseRGB(aColorString) {

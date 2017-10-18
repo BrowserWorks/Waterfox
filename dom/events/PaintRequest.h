@@ -25,7 +25,6 @@ public:
   explicit PaintRequest(nsIDOMEvent* aParent)
     : mParent(aParent)
   {
-    mRequest.mFlags = 0;
   }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -45,14 +44,14 @@ public:
     aResult.AssignLiteral("repaint");
   }
 
-  void SetRequest(const nsInvalidateRequestList::Request& aRequest)
+  void SetRequest(const nsRect& aRequest)
   { mRequest = aRequest; }
 
 private:
   ~PaintRequest() {}
 
   nsCOMPtr<nsIDOMEvent> mParent;
-  nsInvalidateRequestList::Request mRequest;
+  nsRect mRequest;
 };
 
 class PaintRequestList final : public nsISupports,
@@ -65,7 +64,7 @@ public:
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(PaintRequestList)
-  
+
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
   nsISupports* GetParentObject()
   {

@@ -1,0 +1,19 @@
+[package]
+name = "servo_url"
+version = "0.0.1"
+authors = ["The Servo Project Developers"]
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "servo_url"
+path = "lib.rs"
+
+[dependencies]
+heapsize = {version = "0.4"}
+heapsize_derive = {version = "0.1"}
+serde = {version = "1.0"}
+servo_rand = {path = "../rand"}
+url = {version = "1.2", features = ["heap_size"]}
+url_serde = {version = "0.2"}
+uuid = {version = "0.5.0", features = ["v4", "serde"]}

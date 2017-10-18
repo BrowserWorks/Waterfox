@@ -25,19 +25,19 @@ HTMLInputElement*
 GetAsRadio(nsIContent* node)
 {
   HTMLInputElement* el = HTMLInputElement::FromContent(node);
-  if (el && el->GetType() == NS_FORM_INPUT_RADIO) {
+  if (el && el->ControlType() == NS_FORM_INPUT_RADIO) {
     return el;
   }
   return nullptr;
 }
 
 void
-RadioNodeList::GetValue(nsString& retval)
+RadioNodeList::GetValue(nsString& retval, CallerType aCallerType)
 {
   for (uint32_t i = 0; i < Length(); i++) {
     HTMLInputElement* maybeRadio = GetAsRadio(Item(i));
     if (maybeRadio && maybeRadio->Checked()) {
-      maybeRadio->GetValue(retval);
+      maybeRadio->GetValue(retval, aCallerType);
       return;
     }
   }
@@ -45,7 +45,7 @@ RadioNodeList::GetValue(nsString& retval)
 }
 
 void
-RadioNodeList::SetValue(const nsAString& value)
+RadioNodeList::SetValue(const nsAString& value, CallerType aCallerType)
 {
   for (uint32_t i = 0; i < Length(); i++) {
 
@@ -55,7 +55,7 @@ RadioNodeList::SetValue(const nsAString& value)
     }
 
     nsString curval = nsString();
-    maybeRadio->GetValue(curval);
+    maybeRadio->GetValue(curval, aCallerType);
     if (curval.Equals(value)) {
       maybeRadio->SetChecked(true);
       return;

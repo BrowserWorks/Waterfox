@@ -30,9 +30,9 @@ ImageWrapper::GetProgressTracker()
 }
 
 size_t
-ImageWrapper::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
+ImageWrapper::SizeOfSourceWithComputedFallback(SizeOfState& aState) const
 {
-  return mInnerImage->SizeOfSourceWithComputedFallback(aMallocSizeOf);
+  return mInnerImage->SizeOfSourceWithComputedFallback(aState);
 }
 
 void
@@ -88,9 +88,9 @@ ImageWrapper::OnImageDataComplete(nsIRequest* aRequest,
 }
 
 void
-ImageWrapper::OnSurfaceDiscarded()
+ImageWrapper::OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey)
 {
-  return mInnerImage->OnSurfaceDiscarded();
+  return mInnerImage->OnSurfaceDiscarded(aSurfaceKey);
 }
 
 void
@@ -137,6 +137,12 @@ NS_IMETHODIMP
 ImageWrapper::GetHeight(int32_t* aHeight)
 {
   return mInnerImage->GetHeight(aHeight);
+}
+
+nsresult
+ImageWrapper::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
+{
+  return mInnerImage->GetNativeSizes(aNativeSizes);
 }
 
 NS_IMETHODIMP
@@ -209,16 +215,23 @@ ImageWrapper::Draw(gfxContext* aContext,
                    uint32_t aWhichFrame,
                    SamplingFilter aSamplingFilter,
                    const Maybe<SVGImageContext>& aSVGContext,
-                   uint32_t aFlags)
+                   uint32_t aFlags,
+                   float aOpacity)
 {
   return mInnerImage->Draw(aContext, aSize, aRegion, aWhichFrame,
-                           aSamplingFilter, aSVGContext, aFlags);
+                           aSamplingFilter, aSVGContext, aFlags, aOpacity);
 }
 
 NS_IMETHODIMP
-ImageWrapper::StartDecoding()
+ImageWrapper::StartDecoding(uint32_t aFlags)
 {
-  return mInnerImage->StartDecoding();
+  return mInnerImage->StartDecoding(aFlags);
+}
+
+bool
+ImageWrapper::StartDecodingWithResult(uint32_t aFlags)
+{
+  return mInnerImage->StartDecodingWithResult(aFlags);
 }
 
 NS_IMETHODIMP

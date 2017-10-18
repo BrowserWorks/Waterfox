@@ -30,7 +30,7 @@ interface XSLTProcessor {
      * @param output This document is used to generate the output
      * @return DocumentFragment The result of the transformation
      */
-    [Throws]
+    [CEReactions, Throws]
     DocumentFragment transformToFragment(Node source,
                                          Document output);
 
@@ -41,7 +41,7 @@ interface XSLTProcessor {
      * @param source The node to be transformed
      * @return Document The result of the transformation
      */
-    [Throws]
+    [CEReactions, Throws]
     Document transformToDocument(Node source);
 
     /**
@@ -104,6 +104,6 @@ interface XSLTProcessor {
     * Flags for this processor. Defaults to 0. See individual flags above
     * for documentation for effect of reset()
     */
-    [ChromeOnly]
+    [ChromeOnly, NeedsCallerType]
     attribute unsigned long flags;
 };

@@ -9,7 +9,7 @@
 #include <map>
 #include <stack>
 #include "mozilla/gfx/Types.h"
-#include "mozilla/layers/CompositableForwarder.h"
+#include "mozilla/layers/TextureForwarder.h"
 #include "mozilla/RefPtr.h"
 #include "TextureClient.h"
 #include "mozilla/Mutex.h"
@@ -48,7 +48,7 @@ public:
     , mAllocationFlags(aAllocationFlags)
   {}
 
-  virtual already_AddRefed<TextureClient> Allocate(CompositableForwarder* aAllocator) = 0;
+  virtual already_AddRefed<TextureClient> Allocate(KnowsCompositor* aAllocator) = 0;
   virtual bool IsCompatible(TextureClient* aTextureClient) = 0;
 
   const gfx::SurfaceFormat mFormat;
@@ -66,7 +66,7 @@ public:
 
   bool IsCompatible(TextureClient* aTextureClient) override;
 
-  already_AddRefed<TextureClient> Allocate(CompositableForwarder* aAllocator) override;
+  already_AddRefed<TextureClient> Allocate(KnowsCompositor* aAllocator) override;
 
 protected:
   const PlanarYCbCrData& mData;
@@ -88,7 +88,7 @@ protected:
   virtual ~TextureClientRecycleAllocator();
 
 public:
-  explicit TextureClientRecycleAllocator(CompositableForwarder* aAllocator);
+  explicit TextureClientRecycleAllocator(KnowsCompositor* aAllocator);
 
   void SetMaxPoolSize(uint32_t aMax);
 
@@ -115,7 +115,7 @@ protected:
            TextureFlags aTextureFlags,
            TextureAllocationFlags aAllocFlags);
 
-  RefPtr<CompositableForwarder> mSurfaceAllocator;
+  RefPtr<KnowsCompositor> mSurfaceAllocator;
 
   friend class DefaultTextureClientAllocationHelper;
   void RecycleTextureClient(TextureClient* aClient) override;
@@ -125,9 +125,6 @@ protected:
 
   std::map<TextureClient*, RefPtr<TextureClientHolder> > mInUseClients;
 
-  // On b2g gonk, std::queue might be a better choice.
-  // On ICS, fence wait happens implicitly before drawing.
-  // Since JB, fence wait happens explicitly when fetching a client from the pool.
   // stack is good from Graphics cache usage point of view.
   std::stack<RefPtr<TextureClientHolder> > mPooledClients;
   Mutex mLock;

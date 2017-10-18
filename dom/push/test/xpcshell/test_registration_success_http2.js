@@ -4,15 +4,6 @@
 'use strict';
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://testing-common/PromiseTestUtils.jsm");
-
-///////////////////
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed.
-//
-// Instances of the rejection "record is undefined" may or may not appear.
-PromiseTestUtils.thisTestLeaksUncaughtRejectionsAndShouldBeFixed();
 
 const {PushDB, PushService, PushServiceHttp2} = serviceExports;
 
@@ -21,9 +12,7 @@ var prefs;
 var serverPort = -1;
 
 function run_test() {
-  var env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
-  serverPort = env.get("MOZHTTP2_PORT");
-  do_check_neq(serverPort, null);
+  serverPort = getTestServerPort();
 
   do_get_profile();
   prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
@@ -31,7 +20,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_pushNotifications() {
+add_task(async function test_pushNotifications() {
 
   let db = PushServiceHttp2.newPushDB();
   do_register_cleanup(() => {
@@ -67,7 +56,7 @@ add_task(function* test_pushNotifications() {
   }];
 
   for (let record of records) {
-    yield db.put(record);
+    await db.put(record);
   }
 
   PushService.init({
@@ -75,7 +64,7 @@ add_task(function* test_pushNotifications() {
     db
   });
 
-  let registration = yield PushService.registration({
+  let registration = await PushService.registration({
     scope: 'https://example.net/a',
     originAttributes: ChromeUtils.originAttributesToSuffix(
       { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),

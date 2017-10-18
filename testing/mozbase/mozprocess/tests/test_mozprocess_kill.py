@@ -5,9 +5,13 @@ import time
 import unittest
 import proctest
 import signal
+
+import mozunit
+
 from mozprocess import processhandler
 
 here = os.path.dirname(os.path.abspath(__file__))
+
 
 class ProcTestKill(proctest.ProcTest):
     """ Class to test various process tree killing scenatios """
@@ -21,7 +25,8 @@ class ProcTestKill(proctest.ProcTest):
     def test_process_kill(self):
         """Process is started, we kill it"""
 
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_normal_finish_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_normal_finish_python.ini"],
                                           cwd=here)
         p.run()
         p.kill()
@@ -31,7 +36,8 @@ class ProcTestKill(proctest.ProcTest):
     def test_process_kill_deep(self):
         """Process is started, we kill it, we use a deep process tree"""
 
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_normal_deep_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_normal_deep_python.ini"],
                                           cwd=here)
         p.run()
         p.kill()
@@ -42,7 +48,8 @@ class ProcTestKill(proctest.ProcTest):
         """Process is started, we use a deep process tree, we let it spawn
            for a bit, we kill it"""
 
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_normal_deep_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_normal_deep_python.ini"],
                                           cwd=here)
         p.run()
         # Let the tree spawn a bit, before attempting to kill
@@ -54,7 +61,8 @@ class ProcTestKill(proctest.ProcTest):
     def test_process_kill_broad(self):
         """Process is started, we kill it, we use a broad process tree"""
 
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_normal_broad_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_normal_broad_python.ini"],
                                           cwd=here)
         p.run()
         p.kill()
@@ -82,5 +90,6 @@ class ProcTestKill(proctest.ProcTest):
 
         self.assertEquals(p.proc.returncode, -signal.SIGKILL)
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

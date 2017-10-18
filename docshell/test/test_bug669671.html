@@ -15,7 +15,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=669671
 
 </div>
 <pre id="test">
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 /**
  * Test for Bug 669671.
@@ -65,7 +65,7 @@ function checkPopupLoadCount()
   return origCount;
 }
 
-function test()
+function* test()
 {
   // Step 0 - Make sure the count is reset to 0 in case of reload
   popup.location = 'file_bug669671.sjs?countreset';
@@ -132,14 +132,16 @@ function test()
   popup.close();
 
   SimpleTest.finish();
-  yield undefined;
 }
 
-// This will call into onChildLoad once it loads.
-var popup = window.open('file_bug669671.sjs?pushed');
-
 var gGen = test();
+var popup;
 
+// Disable RCWN to make cache behavior deterministic.
+SpecialPowers.pushPrefEnv({set: [["network.http.rcwn.enabled", false]]}, () => {
+  // This will call into onChildLoad once it loads.
+  popup = window.open('file_bug669671.sjs?pushed');
+});
 </script>
 </pre>
 </body>

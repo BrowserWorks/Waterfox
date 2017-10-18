@@ -127,17 +127,11 @@ GetPrefsFor(EventClassID aEventClassID)
     nsPrintfCString repositionPref("ui.%s.radius.reposition", prefBranch);
     Preferences::AddBoolVarCache(&prefs->mRepositionEventCoords, repositionPref.get(), false);
 
-    nsPrintfCString touchClusterPref("ui.zoomedview.enabled", prefBranch);
-    Preferences::AddBoolVarCache(&prefs->mTouchClusterDetectionEnabled, touchClusterPref.get(), false);
-
-    nsPrintfCString simplifiedClusterDetectionPref("ui.zoomedview.simplified", prefBranch);
-    Preferences::AddBoolVarCache(&prefs->mSimplifiedClusterDetection, simplifiedClusterDetectionPref.get(), false);
-
-    nsPrintfCString limitReadableSizePref("ui.zoomedview.limitReadableSize", prefBranch);
-    Preferences::AddUintVarCache(&prefs->mLimitReadableSize, limitReadableSizePref.get(), 8);
-
-    nsPrintfCString keepLimitSize("ui.zoomedview.keepLimitSize", prefBranch);
-    Preferences::AddUintVarCache(&prefs->mKeepLimitSizeForCluster, keepLimitSize.get(), 16);
+    // These values were formerly set by ui.zoomedview preferences.
+    prefs->mTouchClusterDetectionEnabled = false;
+    prefs->mSimplifiedClusterDetection = false;
+    prefs->mLimitReadableSize = 8;
+    prefs->mKeepLimitSizeForCluster = 16;
   }
 
   return prefs;

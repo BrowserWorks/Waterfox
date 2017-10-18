@@ -10,6 +10,7 @@
 #ifndef mozilla_image_src_ImageCacheKey_h
 #define mozilla_image_src_ImageCacheKey_h
 
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 
@@ -32,14 +33,16 @@ class ImageURL;
 class ImageCacheKey final
 {
 public:
-  ImageCacheKey(nsIURI* aURI, nsIDocument* aDocument);
-  ImageCacheKey(ImageURL* aURI, nsIDocument* aDocument);
+  ImageCacheKey(nsIURI* aURI, const OriginAttributes& aAttrs,
+                nsIDocument* aDocument, nsresult& aRv);
+  ImageCacheKey(ImageURL* aURI, const OriginAttributes& aAttrs,
+                nsIDocument* aDocument);
 
   ImageCacheKey(const ImageCacheKey& aOther);
   ImageCacheKey(ImageCacheKey&& aOther);
 
   bool operator==(const ImageCacheKey& aOther) const;
-  uint32_t Hash() const { return mHash; }
+  PLDHashNumber Hash() const { return mHash; }
 
   /// A weak pointer to the URI spec for this cache entry. For logging only.
   const char* Spec() const;
@@ -52,15 +55,17 @@ public:
   void* ControlledDocument() const { return mControlledDocument; }
 
 private:
-  static uint32_t ComputeHash(ImageURL* aURI,
-                              const Maybe<uint64_t>& aBlobSerial,
-                              void* aControlledDocument);
+  static PLDHashNumber ComputeHash(ImageURL* aURI,
+                                   const Maybe<uint64_t>& aBlobSerial,
+                                   const OriginAttributes& aAttrs,
+                                   void* aControlledDocument);
   static void* GetControlledDocumentToken(nsIDocument* aDocument);
 
   RefPtr<ImageURL> mURI;
   Maybe<uint64_t> mBlobSerial;
+  OriginAttributes mOriginAttributes;
   void* mControlledDocument;
-  uint32_t mHash;
+  PLDHashNumber mHash;
   bool mIsChrome;
 };
 

@@ -11,46 +11,37 @@
 #include "mozilla/net/ReferrerPolicy.h"
 #include "mozilla/CORSMode.h"
 
+#include "nsIURI.h"
+
 namespace mozilla {
-class CSSStyleSheet;
+class StyleSheet;
 } // namespace mozilla
 class nsCSSRuleProcessor;
 class nsIPrincipal;
-class nsIURI;
 
 namespace mozilla {
 
 /**
- * Superclass for data common to CSSStyleSheetInner and ServoStyleSheet.
+ * Struct for data common to CSSStyleSheetInner and ServoStyleSheet.
  */
-class StyleSheetInfo
+struct StyleSheetInfo
 {
-public:
-  friend class mozilla::CSSStyleSheet;
-  friend class ::nsCSSRuleProcessor;
   typedef net::ReferrerPolicy ReferrerPolicy;
 
   StyleSheetInfo(CORSMode aCORSMode,
                  ReferrerPolicy aReferrerPolicy,
                  const dom::SRIMetadata& aIntegrity);
-  StyleSheetInfo(const StyleSheetInfo& aCopy);
 
-  nsIURI* GetSheetURI() const { return mSheetURI; }
-  nsIURI* GetOriginalURI() const { return mOriginalSheetURI; }
-  nsIURI* GetBaseURI() const { return mBaseURI; }
-  void SetURIs(nsIURI* aSheetURI, nsIURI* aOriginalSheetURI, nsIURI* aBaseURI);
+  StyleSheetInfo(StyleSheetInfo& aCopy,
+                 StyleSheet* aPrimarySheet);
 
-  // Whether the sheet is for an inline <style> element.
-  bool IsInline() const { return !mOriginalSheetURI; }
+  virtual ~StyleSheetInfo();
 
-  nsIPrincipal* Principal() const { return mPrincipal; }
-  void SetPrincipal(nsIPrincipal* aPrincipal);
+  virtual StyleSheetInfo* CloneFor(StyleSheet* aPrimarySheet) = 0;
 
-  CORSMode GetCORSMode() const { return mCORSMode; }
-  net::ReferrerPolicy GetReferrerPolicy() const { return mReferrerPolicy; }
-  void GetIntegrity(dom::SRIMetadata& aResult) const { aResult = mIntegrity; }
+  virtual void AddSheet(StyleSheet* aSheet);
+  virtual void RemoveSheet(StyleSheet* aSheet);
 
-protected:
   nsCOMPtr<nsIURI>       mSheetURI; // for error reports, etc.
   nsCOMPtr<nsIURI>       mOriginalSheetURI;  // for GetHref.  Can be null.
   nsCOMPtr<nsIURI>       mBaseURI; // for resolving relative URIs
@@ -61,11 +52,23 @@ protected:
   ReferrerPolicy         mReferrerPolicy;
   dom::SRIMetadata       mIntegrity;
   bool                   mComplete;
+
+  // Pointer to start of linked list of child sheets. This is all fundamentally
+  // broken, because each of the child sheets has a unique parent... We can
+  // only hope (and currently this is the case) that any time page JS can get
+  // its hands on a child sheet that means we've already ensured unique infos
+  // throughout its parent chain and things are good.
+  RefPtr<StyleSheet>     mFirstChild;
+  AutoTArray<StyleSheet*, 8> mSheets;
+
+  // If a SourceMap or X-SourceMap response header is seen, this is
+  // the value.  If both are seen, SourceMap is preferred.  If neither
+  // is seen, this will be an empty string.
+  nsString mSourceMapURL;
+
 #ifdef DEBUG
   bool                   mPrincipalSet;
 #endif
-
-  friend class StyleSheet;
 };
 
 } // namespace mozilla

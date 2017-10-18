@@ -125,7 +125,7 @@
             atEnd: false })],
           [ContentMessages.simpleMoveNext,
            new ExpectedCursorChange(
-            [{ string : 'entry' }],
+            [{ string: 'entry' }],
             { focused: 'html'})],
           [ContentMessages.activateCurrent(0),
            new ExpectedClickAction(),
@@ -147,10 +147,11 @@
             multiline: false,
             atStart: true,
             atEnd: false
-           }, { focused: 'html' })],
+           },{ focused: 'html' })
+         ],
           [ContentMessages.simpleMoveNext,
            new ExpectedCursorChange(
-            [{ string : 'entry' }],
+            [{ string: 'entry' }],
             { focused: 'html'})],
           [ContentMessages.activateCurrent(0),
            new ExpectedClickAction(),

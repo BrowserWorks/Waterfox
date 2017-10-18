@@ -10,14 +10,18 @@ XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell.ini']
 
 BROWSER_CHROME_MANIFESTS += ['mochitest/browser.ini']
 
-# The encoding test is already implemented in the Downloads API by a set of
-# test cases with the string "content_encoding" in their names.
-if not CONFIG['MOZ_JSDOWNLOADS']:
-    XPCSHELL_TESTS_MANIFESTS += ['unit_ipc/xpcshell.ini']
+TESTING_JS_MODULES += [
+    'HandlerServiceTestUtils.jsm',
+]
 
 GeckoSimplePrograms([
     'WriteArgument',
 ], linkage=None)
+
+if CONFIG['COMPILE_ENVIRONMENT']:
+    TEST_HARNESS_FILES.xpcshell.uriloader.exthandler.tests.unit += [
+        '!WriteArgument%s' % CONFIG['BIN_SUFFIX']
+    ]
 
 USE_LIBS += [
     'nspr',

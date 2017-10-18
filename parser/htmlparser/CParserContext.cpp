@@ -7,7 +7,6 @@
 
 #include "nsIAtom.h"
 #include "CParserContext.h"
-#include "nsToken.h"
 #include "prenv.h"  
 #include "nsIHTMLContentSink.h"
 #include "nsHTMLTokenizer.h"
@@ -58,6 +57,7 @@ CParserContext::SetMimeType(const nsACString& aMimeType)
            mMimeType.EqualsLiteral(IMAGE_SVG_XML)         ||
            mMimeType.EqualsLiteral(APPLICATION_MATHML_XML) ||
            mMimeType.EqualsLiteral(APPLICATION_RDF_XML)   ||
+           mMimeType.EqualsLiteral(APPLICATION_WAPXHTML_XML) ||
            mMimeType.EqualsLiteral(TEXT_RDF))
     mDocType = eXML;
 }

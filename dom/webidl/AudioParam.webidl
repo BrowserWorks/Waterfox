@@ -10,10 +10,13 @@
  * liability, trademark and document use rules apply.
  */
 
+[Pref="dom.webaudio.enabled"]
 interface AudioParam {
 
-    attribute float value;
-    readonly attribute float defaultValue;
+                    attribute float value;
+    readonly        attribute float defaultValue;
+    readonly        attribute float minValue;
+    readonly        attribute float maxValue;
 
     // Parameter automation. 
     [Throws]

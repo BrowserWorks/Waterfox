@@ -25,13 +25,15 @@ from __future__ import print_function
 import difflib
 import os
 import re
-import subprocess
 import sys
-from check_utils import get_all_toplevel_filenames
+
+from mozversioncontrol import get_repository_from_env
+
 
 architecture_independent = set([ 'generic' ])
-all_architecture_names = set([ 'x86', 'x64', 'arm', 'arm64', 'mips32', 'mips64' ])
-all_shared_architecture_names = set([ 'x86_shared', 'mips_shared', 'arm', 'arm64' ])
+all_unsupported_architectures_names = set([ 'mips32', 'mips64', 'mips_shared' ])
+all_architecture_names = set([ 'x86', 'x64', 'arm', 'arm64' ])
+all_shared_architecture_names = set([ 'x86_shared', 'arm', 'arm64' ])
 
 reBeforeArg = "(?<=[(,\s])"
 reArgType = "(?P<type>[\w\s:*&]+)"
@@ -96,6 +98,7 @@ def get_normalized_signatures(signature, fileAnnot = None):
 file_suffixes = set([
     a.replace('_', '-') for a in
     all_architecture_names.union(all_shared_architecture_names)
+                          .union(all_unsupported_architectures_names)
 ])
 def get_file_annotation(filename):
     origFilename = filename
@@ -131,7 +134,7 @@ def get_macroassembler_definitions(filename):
     code_section = False
     lines = ''
     signatures = []
-    with open(os.path.join('../..', filename)) as f:
+    with open(filename) as f:
         for line in f:
             if '//{{{ check_macroassembler_style' in line:
                 style_section = True
@@ -171,7 +174,7 @@ def get_macroassembler_declaration(filename):
     style_section = False
     lines = ''
     signatures = []
-    with open(os.path.join('../..', filename)) as f:
+    with open(filename) as f:
         for line in f:
             if '//{{{ check_macroassembler_style' in line:
                 style_section = True
@@ -209,6 +212,7 @@ def generate_file_content(signatures):
     output = []
     for s in sorted(signatures.keys()):
         archs = set(sorted(signatures[s]))
+        archs -= all_unsupported_architectures_names
         if len(archs.symmetric_difference(architecture_independent)) == 0:
             output.append(s + ';\n')
             if s.startswith('inline'):
@@ -221,8 +225,8 @@ def generate_file_content(signatures):
             elif len(archs.symmetric_difference(all_shared_architecture_names)) == 0:
                 output.append(s + ' PER_SHARED_ARCH;\n')
             else:
-                output.append(s + ' DEFINED_ON(' + ', '.join(archs) + ');\n')
-            for a in archs:
+                output.append(s + ' DEFINED_ON(' + ', '.join(sorted(archs)) + ');\n')
+            for a in sorted(archs):
                 a = a.replace('_', '-')
                 masm = '%s/MacroAssembler-%s' % (a, a)
                 if s.startswith('inline'):
@@ -238,12 +242,16 @@ def check_style():
     # We infer from each file the signature of each MacroAssembler function.
     defs = dict()       # type: dict(signature => ['x86', 'x64'])
 
+    repo = get_repository_from_env()
+
     # Select the appropriate files.
-    for filename in get_all_toplevel_filenames():
+    for filename in repo.get_files_in_working_directory():
         if not filename.startswith('js/src/jit/'):
             continue
         if 'MacroAssembler' not in filename:
             continue
+
+        filename = os.path.join(repo.path, filename)
 
         if filename.endswith('MacroAssembler.h'):
             decls = append_signatures(decls, get_macroassembler_declaration(filename))

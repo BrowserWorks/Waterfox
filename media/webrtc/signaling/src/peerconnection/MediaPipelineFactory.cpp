@@ -19,31 +19,15 @@
 #include "signaling/src/jsep/JsepTransport.h"
 #include "signaling/src/common/PtrVector.h"
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "MediaStreamTrack.h"
 #include "nsIPrincipal.h"
 #include "nsIDocument.h"
 #include "mozilla/Preferences.h"
 #include "MediaEngine.h"
-#endif
 
-#include "GmpVideoCodec.h"
-#ifdef MOZ_WEBRTC_OMX
-#include "OMXVideoCodec.h"
-#include "OMXCodecWrapper.h"
-#endif
-
-#ifdef MOZ_WEBRTC_MEDIACODEC
-#include "MediaCodecVideoCodec.h"
-#endif
-
-#ifdef MOZILLA_INTERNAL_API
 #include "mozilla/Preferences.h"
-#endif
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "WebrtcGmpVideoCodec.h"
-#endif
 
 #include <stdlib.h>
 
@@ -77,6 +61,7 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
                                   desc.mBitrate,
                                   desc.mFECEnabled);
   (*aConfig)->mMaxPlaybackRate = desc.mMaxPlaybackRate;
+  (*aConfig)->mDtmfEnabled = desc.mDtmfEnabled;
 
   return NS_OK;
 }
@@ -150,6 +135,10 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
   configRaw->mCcmFbTypes = desc.mCcmFbTypes;
   configRaw->mRembFbSet = desc.RtcpFbRembIsSet();
   configRaw->mFECFbSet = desc.mFECEnabled;
+  if (desc.mFECEnabled) {
+    configRaw->mREDPayloadType = desc.mREDPayloadType;
+    configRaw->mULPFECPayloadType = desc.mULPFECPayloadType;
+  }
 
   *aConfig = configRaw;
   return NS_OK;
@@ -166,6 +155,8 @@ NegotiatedDetailsToVideoCodecConfigs(const JsepTrackNegotiatedDetails& aDetails,
       return NS_ERROR_INVALID_ARG;
     }
 
+    config->mTias = aDetails.GetTias();
+
     for (size_t i = 0; i < aDetails.GetEncodingCount(); ++i) {
       const JsepTrackEncoding& jsepEncoding(aDetails.GetEncoding(i));
       if (jsepEncoding.HasFormat(codec->mDefaultPt)) {
@@ -175,6 +166,7 @@ NegotiatedDetailsToVideoCodecConfigs(const JsepTrackNegotiatedDetails& aDetails,
         config->mSimulcastEncodings.push_back(encoding);
       }
     }
+
     aConfigs->values.push_back(config);
   }
 
@@ -197,9 +189,8 @@ FinalizeTransportFlow_s(RefPtr<PeerConnectionMedia> aPCMedia,
                      aIsRtcp ? 2 : 1);
   nsAutoPtr<std::queue<TransportLayer*> > layerQueue(
       new std::queue<TransportLayer*>);
-  for (auto i = aLayerList->values.begin(); i != aLayerList->values.end();
-       ++i) {
-    layerQueue->push(*i);
+  for (auto& value : aLayerList->values) {
+    layerQueue->push(value);
   }
   aLayerList->values.clear();
   (void)aFlow->PushLayers(layerQueue); // TODO(bug 854518): Process errors.
@@ -271,13 +262,11 @@ MediaPipelineFactory::CreateOrGetTransportFlow(
 
   const SdpFingerprintAttributeList& fingerprints =
       aTransport.mDtls->GetFingerprints();
-  for (auto fp = fingerprints.mFingerprints.begin();
-       fp != fingerprints.mFingerprints.end();
-       ++fp) {
+  for (const auto& fingerprint : fingerprints.mFingerprints) {
     std::ostringstream ss;
-    ss << fp->hashFunc;
-    rv = dtls->SetVerificationDigest(ss.str(), &fp->fingerprint[0],
-                                     fp->fingerprint.size());
+    ss << fingerprint.hashFunc;
+    rv = dtls->SetVerificationDigest(ss.str(), &fingerprint.fingerprint[0],
+                                     fingerprint.fingerprint.size());
     if (NS_FAILED(rv)) {
       MOZ_MTLOG(ML_ERROR, "Could not set fingerprint");
       return rv;
@@ -341,8 +330,8 @@ MediaPipelineFactory::GetTransportParameters(
 {
   *aLevelOut = aTrackPair.mLevel;
 
-  size_t transportLevel = aTrackPair.mBundleLevel.isSome() ?
-                          *aTrackPair.mBundleLevel :
+  size_t transportLevel = aTrackPair.HasBundleLevel() ?
+                          aTrackPair.BundleLevel() :
                           aTrackPair.mLevel;
 
   nsresult rv = CreateOrGetTransportFlow(
@@ -361,7 +350,7 @@ MediaPipelineFactory::GetTransportParameters(
     MOZ_ASSERT(aRtcpOut);
   }
 
-  if (aTrackPair.mBundleLevel.isSome()) {
+  if (aTrackPair.HasBundleLevel()) {
     bool receiving = aTrack.GetDirection() == sdp::kRecv;
 
     *aFilterOut = new MediaPipelineFilter;
@@ -369,17 +358,16 @@ MediaPipelineFactory::GetTransportParameters(
     if (receiving) {
       // Add remote SSRCs so we can distinguish which RTP packets actually
       // belong to this pipeline (also RTCP sender reports).
-      for (auto i = aTrack.GetSsrcs().begin();
-          i != aTrack.GetSsrcs().end(); ++i) {
-        (*aFilterOut)->AddRemoteSSRC(*i);
+      for (unsigned int ssrc : aTrack.GetSsrcs()) {
+        (*aFilterOut)->AddRemoteSSRC(ssrc);
       }
 
       // TODO(bug 1105005): Tell the filter about the mid for this track
 
       // Add unique payload types as a last-ditch fallback
       auto uniquePts = aTrack.GetNegotiatedDetails()->GetUniquePayloadTypes();
-      for (auto i = uniquePts.begin(); i != uniquePts.end(); ++i) {
-        (*aFilterOut)->AddUniquePT(*i);
+      for (unsigned char& uniquePt : uniquePts) {
+        (*aFilterOut)->AddUniquePT(uniquePt);
       }
     }
   }
@@ -392,13 +380,11 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
     const JsepTrackPair& aTrackPair,
     const JsepTrack& aTrack)
 {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // The GMP code is all the way on the other side of webrtc.org, and it is not
   // feasible to plumb this information all the way through. So, we set it (for
   // the duration of this call) in a global variable. This allows the GMP code
   // to report errors to the PC.
   WebrtcGmpPCHandleSetter setter(mPC->GetHandle());
-#endif
 
   MOZ_ASSERT(aTrackPair.mRtpTransport);
 
@@ -452,12 +438,15 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
   RefPtr<MediaSessionConduit> conduit;
   if (aTrack.GetMediaType() == SdpMediaSection::kAudio) {
     rv = GetOrCreateAudioConduit(aTrackPair, aTrack, &conduit);
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
       return rv;
+    }
   } else if (aTrack.GetMediaType() == SdpMediaSection::kVideo) {
     rv = GetOrCreateVideoConduit(aTrackPair, aTrack, &conduit);
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
       return rv;
+    }
+    conduit->SetPCHandle(mPC->GetHandle());
   } else {
     // We've created the TransportFlow, nothing else to do here.
     return NS_OK;
@@ -474,6 +463,20 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
       auto error = conduit->StartTransmitting();
       if (error) {
         MOZ_MTLOG(ML_ERROR, "StartTransmitting failed: " << error);
+        return NS_ERROR_FAILURE;
+      }
+    }
+  } else {
+    if (receiving) {
+      auto error = conduit->StopReceiving();
+      if (error) {
+        MOZ_MTLOG(ML_ERROR, "StopReceiving failed: " << error);
+        return NS_ERROR_FAILURE;
+      }
+    } else {
+      auto error = conduit->StopTransmitting();
+      if (error) {
+        MOZ_MTLOG(ML_ERROR, "StopTransmitting failed: " << error);
         return NS_ERROR_FAILURE;
       }
     }
@@ -632,7 +635,6 @@ MediaPipelineFactory::CreateMediaPipelineSending(
       aRtcpFlow,
       aFilter);
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // implement checking for peerIdentity (where failure == black/silence)
   nsIDocument* doc = mPC->GetWindow()->GetExtantDoc();
   if (doc) {
@@ -643,7 +645,6 @@ MediaPipelineFactory::CreateMediaPipelineSending(
     MOZ_MTLOG(ML_ERROR, "Cannot initialize pipeline without attached doc");
     return NS_ERROR_FAILURE; // Don't remove this till we know it's safe.
   }
-#endif
 
   rv = pipeline->Init();
   if (NS_FAILED(rv)) {
@@ -715,22 +716,29 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     if (!aTrackPair.mSending) {
       // No send track, but we still need to configure an SSRC for receiver
       // reports.
-      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
+      if (!conduit->SetLocalSSRCs(std::vector<unsigned int>(1,aTrackPair.mRecvonlySsrc))) {
         MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
         return NS_ERROR_FAILURE;
       }
     }
   } else {
-    // For now we only expect to have one ssrc per local track.
     auto ssrcs = aTrack.GetSsrcs();
     if (!ssrcs.empty()) {
-      if (!conduit->SetLocalSSRC(ssrcs.front())) {
-        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+      if (!conduit->SetLocalSSRCs(ssrcs)) {
+        MOZ_MTLOG(ML_ERROR, "SetLocalSSRCs failed");
         return NS_ERROR_FAILURE;
       }
     }
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
+
+    if (configs.values.size() > 1
+        && configs.values.back()->mName == "telephone-event") {
+      // we have a telephone event codec, so we need to make sure
+      // the dynamic pt is set properly
+      conduit->SetDtmfPayloadType(configs.values.back()->mType,
+                                  configs.values.back()->mFreq);
+    }
 
     auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
     if (error) {
@@ -764,7 +772,6 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     const JsepTrack& aTrack,
     RefPtr<MediaSessionConduit>* aConduitp)
 {
-
   if (!aTrack.GetNegotiatedDetails()) {
     MOZ_ASSERT(false, "Track is missing negotiated details");
     return NS_ERROR_INVALID_ARG;
@@ -776,7 +783,7 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     mPCMedia->GetVideoConduit(aTrackPair.mLevel);
 
   if (!conduit) {
-    conduit = VideoSessionConduit::Create();
+    conduit = VideoSessionConduit::Create(mPCMedia->mCall);
     if (!conduit) {
       MOZ_MTLOG(ML_ERROR, "Could not create video conduit");
       return NS_ERROR_FAILURE;
@@ -800,71 +807,76 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     return NS_ERROR_FAILURE;
   }
 
+  const std::vector<uint32_t>* ssrcs;
+
+  const JsepTrackNegotiatedDetails* details = aTrack.GetNegotiatedDetails();
+  std::vector<webrtc::RtpExtension> extmaps;
+  if (details) {
+    // @@NG read extmap from track
+    details->ForEachRTPHeaderExtension(
+      [&extmaps](const SdpExtmapAttributeList::Extmap& extmap)
+    {
+      extmaps.emplace_back(extmap.extensionname,extmap.entry);
+    });
+  }
+
   if (receiving) {
-    if (!aTrackPair.mSending) {
+    // NOTE(pkerr) - the Call API requires the both local_ssrc and remote_ssrc be
+    // set to a non-zero value or the CreateVideo...Stream call will fail.
+    if (aTrackPair.mSending) {
+      ssrcs = &aTrackPair.mSending->GetSsrcs();
+      if (!ssrcs->empty()) {
+        conduit->SetLocalSSRCs(*ssrcs);
+      }
+    } else {
       // No send track, but we still need to configure an SSRC for receiver
       // reports.
-      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
-        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+      if (!conduit->SetLocalSSRCs(std::vector<unsigned int>(1,aTrackPair.mRecvonlySsrc))) {
+        MOZ_MTLOG(ML_ERROR, "SetLocalSSRCs failed");
         return NS_ERROR_FAILURE;
       }
     }
 
-    // Prune out stuff we cannot actually do. We should work to eliminate the
-    // need for this.
-    bool configuredH264 = false;
-    for (size_t i = 0; i < configs.values.size();) {
-      // TODO(bug 1200768): We can only handle configuring one recv H264 codec
-      if (configuredH264 && (configs.values[i]->mName == "H264")) {
-        delete configs.values[i];
-        configs.values.erase(configs.values.begin() + i);
-        continue;
-      }
-
-      // TODO(bug 1018791): This really should be checked sooner
-      if (EnsureExternalCodec(*conduit, configs.values[i], false)) {
-        delete configs.values[i];
-        configs.values.erase(configs.values.begin() + i);
-        continue;
-      }
-
-      if (configs.values[i]->mName == "H264") {
-        configuredH264 = true;
-      }
-      ++i;
+    ssrcs = &aTrack.GetSsrcs();
+    // NOTE(pkerr) - this is new behavior. Needed because the CreateVideoReceiveStream
+    // method of the Call API will assert (in debug) and fail if a value is not provided
+    // for the remote_ssrc that will be used by the far-end sender.
+    if (!ssrcs->empty()) {
+      conduit->SetRemoteSSRC(ssrcs->front());
     }
 
+    if (!extmaps.empty()) {
+      conduit->SetLocalRTPExtensions(false, extmaps);
+    }
     auto error = conduit->ConfigureRecvMediaCodecs(configs.values);
-
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureRecvMediaCodecs failed: " << error);
       return NS_ERROR_FAILURE;
     }
-  } else {
+  } else { //Create a send side
     // For now we only expect to have one ssrc per local track.
-    auto ssrcs = aTrack.GetSsrcs();
-    if (!ssrcs.empty()) {
-      if (!conduit->SetLocalSSRC(ssrcs.front())) {
-        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
-        return NS_ERROR_FAILURE;
-      }
+    ssrcs = &aTrack.GetSsrcs();
+    if (ssrcs->empty()) {
+      MOZ_MTLOG(ML_ERROR, "No SSRC set for send track");
+      return NS_ERROR_FAILURE;
+    }
+
+    if (!conduit->SetLocalSSRCs(*ssrcs)) {
+      MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+      return NS_ERROR_FAILURE;
     }
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
 
-    rv = ConfigureVideoCodecMode(aTrack,*conduit);
+    rv = ConfigureVideoCodecMode(aTrack, *conduit);
     if (NS_FAILED(rv)) {
       return rv;
     }
 
-    // TODO(bug 1018791): This really should be checked sooner
-    if (EnsureExternalCodec(*conduit, configs.values[0], true)) {
-      MOZ_MTLOG(ML_ERROR, "External codec not available");
-      return NS_ERROR_FAILURE;
+    if (!extmaps.empty()) {
+      conduit->SetLocalRTPExtensions(true, extmaps);
     }
-
     auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
-
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureSendMediaCodec failed: " << error);
       return NS_ERROR_FAILURE;
@@ -880,7 +892,6 @@ nsresult
 MediaPipelineFactory::ConfigureVideoCodecMode(const JsepTrack& aTrack,
                                               VideoSessionConduit& aConduit)
 {
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   RefPtr<LocalSourceStreamInfo> stream =
     mPCMedia->GetLocalStreamByTrackId(aTrack.GetTrackId());
 
@@ -918,111 +929,8 @@ MediaPipelineFactory::ConfigureVideoCodecMode(const JsepTrack& aTrack,
     return NS_ERROR_FAILURE;
   }
 
-#endif
   return NS_OK;
 }
 
-/*
- * Add external H.264 video codec.
- */
-MediaConduitErrorCode
-MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
-                                          VideoCodecConfig* aConfig,
-                                          bool aIsSend)
-{
-  if (aConfig->mName == "VP8") {
-#ifdef MOZ_WEBRTC_MEDIACODEC
-     if (aIsSend) {
-#ifdef MOZILLA_INTERNAL_API
-       bool enabled = mozilla::Preferences::GetBool("media.navigator.hardware.vp8_encode.acceleration_enabled", false);
-#else
-       bool enabled = false;
-#endif
-       if (enabled) {
-         nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
-         if (gfxInfo) {
-           int32_t status;
-           nsCString discardFailureId;
-           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_ENCODE, discardFailureId, &status))) {
-             if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
-               NS_WARNING("VP8 encoder hardware is not whitelisted: disabling.\n");
-             } else {
-               VideoEncoder* encoder = nullptr;
-               encoder = MediaCodecVideoCodec::CreateEncoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
-               if (encoder) {
-                 return aConduit.SetExternalSendCodec(aConfig, encoder);
-               }
-               return kMediaConduitNoError;
-             }
-           }
-         }
-       }
-     } else {
-#ifdef MOZILLA_INTERNAL_API
-       bool enabled = mozilla::Preferences::GetBool("media.navigator.hardware.vp8_decode.acceleration_enabled", false);
-#else
-       bool enabled = false;
-#endif
-       if (enabled) {
-         nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
-         if (gfxInfo) {
-           int32_t status;
-           nsCString discardFailureId;
-           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_DECODE, discardFailureId, &status))) {
-             if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
-               NS_WARNING("VP8 decoder hardware is not whitelisted: disabling.\n");
-             } else {
-               VideoDecoder* decoder;
-               decoder = MediaCodecVideoCodec::CreateDecoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
-               if (decoder) {
-                 return aConduit.SetExternalRecvCodec(aConfig, decoder);
-               }
-               return kMediaConduitNoError;
-             }
-           }
-         }
-       }
-     }
-#endif
-     return kMediaConduitNoError;
-  }
-  if (aConfig->mName == "VP9") {
-    return kMediaConduitNoError;
-  }
-  if (aConfig->mName == "H264") {
-    if (aConduit.CodecPluginID() != 0) {
-      return kMediaConduitNoError;
-    }
-    // Register H.264 codec.
-    if (aIsSend) {
-      VideoEncoder* encoder = nullptr;
-#ifdef MOZ_WEBRTC_OMX
-      encoder =
-          OMXVideoCodec::CreateEncoder(OMXVideoCodec::CodecType::CODEC_H264);
-#else
-      encoder = GmpVideoCodec::CreateEncoder();
-#endif
-      if (encoder) {
-        return aConduit.SetExternalSendCodec(aConfig, encoder);
-      }
-      return kMediaConduitInvalidSendCodec;
-    }
-    VideoDecoder* decoder = nullptr;
-#ifdef MOZ_WEBRTC_OMX
-    decoder =
-      OMXVideoCodec::CreateDecoder(OMXVideoCodec::CodecType::CODEC_H264);
-#else
-    decoder = GmpVideoCodec::CreateDecoder();
-#endif
-    if (decoder) {
-      return aConduit.SetExternalRecvCodec(aConfig, decoder);
-    }
-    return kMediaConduitInvalidReceiveCodec;
-  }
-  MOZ_MTLOG(ML_ERROR,
-            "Invalid video codec configured: " << aConfig->mName.c_str());
-  return aIsSend ? kMediaConduitInvalidSendCodec
-                 : kMediaConduitInvalidReceiveCodec;
-}
 
 } // namespace mozilla

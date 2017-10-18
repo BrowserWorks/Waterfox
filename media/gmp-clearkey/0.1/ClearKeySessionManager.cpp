@@ -14,30 +14,33 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "ClearKeyDecryptionManager.h"
 #include "ClearKeySessionManager.h"
 #include "ClearKeyUtils.h"
 #include "ClearKeyStorage.h"
 #include "ClearKeyPersistence.h"
-#include "gmp-task-utils.h"
+// This include is required in order for content_decryption_module to work
+// on Unix systems.
+#include "stddef.h"
+#include "content_decryption_module.h"
+#include "psshparser/PsshParser.h"
+
 #include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 using namespace std;
+using namespace cdm;
 
-ClearKeySessionManager::ClearKeySessionManager()
+ClearKeySessionManager::ClearKeySessionManager(Host_8* aHost)
   : mDecryptionManager(ClearKeyDecryptionManager::Get())
 {
   CK_LOGD("ClearKeySessionManager ctor %p", this);
   AddRef();
 
-  if (GetPlatform()->createthread(&mThread) != GMPNoErr) {
-    CK_LOGD("failed to create thread in clearkey cdm");
-    mThread = nullptr;
-  }
+  mHost = aHost;
+  mPersistence = new ClearKeyPersistence(mHost);
 }
 
 ClearKeySessionManager::~ClearKeySessionManager()
@@ -46,56 +49,108 @@ ClearKeySessionManager::~ClearKeySessionManager()
 }
 
 void
-ClearKeySessionManager::Init(GMPDecryptorCallback* aCallback,
-                             bool aDistinctiveIdentifierAllowed,
+ClearKeySessionManager::Init(bool aDistinctiveIdentifierAllowed,
                              bool aPersistentStateAllowed)
 {
   CK_LOGD("ClearKeySessionManager::Init");
-  mCallback = aCallback;
-  ClearKeyPersistence::EnsureInitialized();
+
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> onPersistentStateLoaded =
+    [self] ()
+  {
+    while (!self->mDeferredInitialize.empty()) {
+      function<void()> func = self->mDeferredInitialize.front();
+      self->mDeferredInitialize.pop();
+
+      func();
+    }
+  };
+
+  mPersistence->EnsureInitialized(aPersistentStateAllowed,
+                                  move(onPersistentStateLoaded));
 }
 
 void
-ClearKeySessionManager::CreateSession(uint32_t aCreateSessionToken,
-                                      uint32_t aPromiseId,
-                                      const char* aInitDataType,
-                                      uint32_t aInitDataTypeSize,
+ClearKeySessionManager::CreateSession(uint32_t aPromiseId,
+                                      InitDataType aInitDataType,
                                       const uint8_t* aInitData,
                                       uint32_t aInitDataSize,
-                                      GMPSessionType aSessionType)
+                                      SessionType aSessionType)
 {
-  CK_LOGD("ClearKeySessionManager::CreateSession type:%s", aInitDataType);
+  CK_LOGD("ClearKeySessionManager::CreateSession type:%u", aInitDataType);
 
-  string initDataType(aInitDataType, aInitDataType + aInitDataTypeSize);
+  // Copy the init data so it is correctly captured by the lambda
+  vector<uint8_t> initData(aInitData, aInitData + aInitDataSize);
+
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> deferrer =
+    [self, aPromiseId, aInitDataType, initData, aSessionType] ()
+  {
+    self->CreateSession(aPromiseId,
+                        aInitDataType,
+                        initData.data(),
+                        initData.size(),
+                        aSessionType);
+  };
+
+  // If we haven't loaded, don't do this yet
+  if (MaybeDeferTillInitialized(move(deferrer))) {
+    CK_LOGD("Deferring CreateSession");
+    return;
+  }
+
+  CK_LOGARRAY("ClearKeySessionManager::CreateSession initdata: ",
+              aInitData,
+              aInitDataSize);
+
+  // If 'DecryptingComplete' has been called mHost will be null so we can't
+  // won't be able to resolve our promise
+  if (!mHost) {
+    CK_LOGD("ClearKeySessionManager::CreateSession: mHost is nullptr");
+    return;
+  }
+
   // initDataType must be "cenc", "keyids", or "webm".
-  if (initDataType != "cenc" &&
-      initDataType != "keyids" &&
-      initDataType != "webm") {
-    string message = "'" + initDataType + "' is an initDataType unsupported by ClearKey";
-    mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-                             message.c_str(), message.size());
+  if (aInitDataType != InitDataType::kCenc &&
+      aInitDataType != InitDataType::kKeyIds &&
+      aInitDataType != InitDataType::kWebM) {
+
+    string message = "initDataType is not supported by ClearKey";
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kNotSupportedError,
+                           0,
+                           message.c_str(),
+                           message.size());
+
     return;
   }
 
-  if (ClearKeyPersistence::DeferCreateSessionIfNotReady(this,
-                                                        aCreateSessionToken,
-                                                        aPromiseId,
-                                                        initDataType,
-                                                        aInitData,
-                                                        aInitDataSize,
-                                                        aSessionType)) {
-    return;
-  }
-
-  string sessionId = ClearKeyPersistence::GetNewSessionId(aSessionType);
+  string sessionId = mPersistence->GetNewSessionId(aSessionType);
   assert(mSessions.find(sessionId) == mSessions.end());
 
-  ClearKeySession* session = new ClearKeySession(sessionId, mCallback, aSessionType);
-  session->Init(aCreateSessionToken, aPromiseId, initDataType, aInitData, aInitDataSize);
+  ClearKeySession* session = new ClearKeySession(sessionId,
+                                                 aSessionType);
+
+  if (!session->Init(aInitDataType, aInitData, aInitDataSize)) {
+
+    CK_LOGD("Failed to initialize session: %s", sessionId.c_str());
+
+    const static char* message = "Failed to initialize session";
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kUnknownError,
+                           0,
+                           message,
+                           strlen(message));
+    delete session;
+
+    return;
+  }
+
   mSessions[sessionId] = session;
 
   const vector<KeyId>& sessionKeys = session->GetKeyIds();
   vector<KeyId> neededKeys;
+
   for (auto it = sessionKeys.begin(); it != sessionKeys.end(); it++) {
     // Need to request this key ID from the client. We always send a key
     // request, whether or not another session has sent a request with the same
@@ -113,9 +168,19 @@ ClearKeySessionManager::CreateSession(uint32_t aCreateSessionToken,
   // Send a request for needed key data.
   string request;
   ClearKeyUtils::MakeKeyRequest(neededKeys, request, aSessionType);
-  mCallback->SessionMessage(&sessionId[0], sessionId.length(),
-                            kGMPLicenseRequest,
-                            (uint8_t*)&request[0], request.length());
+
+  // Resolve the promise with the new session information.
+  mHost->OnResolveNewSessionPromise(aPromiseId,
+                                    sessionId.c_str(),
+                                    sessionId.size());
+
+  mHost->OnSessionMessage(sessionId.c_str(),
+                          sessionId.size(),
+                          MessageType::kLicenseRequest,
+                          request.c_str(),
+                          request.size(),
+                          nullptr,
+                          0);
 }
 
 void
@@ -125,69 +190,125 @@ ClearKeySessionManager::LoadSession(uint32_t aPromiseId,
 {
   CK_LOGD("ClearKeySessionManager::LoadSession");
 
+  // Copy the sessionId into a string so the lambda captures it properly.
+  string sessionId(aSessionId, aSessionId + aSessionIdLength);
+
+  // Hold a reference to the SessionManager so that it isn't released before
+  // we try to use it.
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> deferrer =
+    [self, aPromiseId, sessionId] ()
+  {
+    self->LoadSession(aPromiseId, sessionId.data(), sessionId.size());
+  };
+
+  if (MaybeDeferTillInitialized(move(deferrer))) {
+    CK_LOGD("Deferring LoadSession");
+    return;
+  }
+
+  // If the SessionManager has been shutdown mHost will be null and we won't
+  // be able to resolve the promise.
+  if (!mHost) {
+    return;
+  }
+
   if (!ClearKeyUtils::IsValidSessionId(aSessionId, aSessionIdLength)) {
-    mCallback->ResolveLoadSessionPromise(aPromiseId, false);
+    mHost->OnResolveNewSessionPromise(aPromiseId, nullptr, 0);
     return;
   }
 
-  if (ClearKeyPersistence::DeferLoadSessionIfNotReady(this,
-                                                      aPromiseId,
-                                                      aSessionId,
-                                                      aSessionIdLength)) {
+  if (!mPersistence->IsPersistentSessionId(sessionId)) {
+    mHost->OnResolveNewSessionPromise(aPromiseId, nullptr, 0);
     return;
   }
 
-  string sid(aSessionId, aSessionId + aSessionIdLength);
-  if (!ClearKeyPersistence::IsPersistentSessionId(sid)) {
-    mCallback->ResolveLoadSessionPromise(aPromiseId, false);
-    return;
-  }
+  function<void(const uint8_t*, uint32_t)> success =
+    [self, sessionId, aPromiseId] (const uint8_t* data, uint32_t size)
+  {
+    self->PersistentSessionDataLoaded(aPromiseId,
+                                      sessionId,
+                                      data,
+                                      size);
+  };
 
-  // Callsback PersistentSessionDataLoaded with results...
-  ClearKeyPersistence::LoadSessionData(this, sid, aPromiseId);
+  function<void()> failure = [self, aPromiseId] {
+    if (!self->mHost) {
+      return;
+    }
+    // As per the API described in ContentDecryptionModule_8
+    self->mHost->OnResolveNewSessionPromise(aPromiseId, nullptr, 0);
+  };
+
+  ReadData(mHost, sessionId, move(success), move(failure));
 }
 
 void
-ClearKeySessionManager::PersistentSessionDataLoaded(GMPErr aStatus,
-                                                    uint32_t aPromiseId,
+ClearKeySessionManager::PersistentSessionDataLoaded(uint32_t aPromiseId,
                                                     const string& aSessionId,
                                                     const uint8_t* aKeyData,
                                                     uint32_t aKeyDataSize)
 {
   CK_LOGD("ClearKeySessionManager::PersistentSessionDataLoaded");
-  if (GMP_FAILED(aStatus) ||
-      Contains(mSessions, aSessionId) ||
-      (aKeyDataSize % (2 * CLEARKEY_KEY_LEN)) != 0) {
-    mCallback->ResolveLoadSessionPromise(aPromiseId, false);
+
+  // Check that the SessionManager has not been shut down before we try and
+  // resolve any promises.
+  if (!mHost) {
+    return;
+  }
+
+  if (Contains(mSessions, aSessionId) ||
+      (aKeyDataSize % (2 * CENC_KEY_LEN)) != 0) {
+
+    // As per the instructions in ContentDecryptionModule_8
+    mHost->OnResolveNewSessionPromise(aPromiseId, nullptr, 0);
     return;
   }
 
   ClearKeySession* session = new ClearKeySession(aSessionId,
-                                                 mCallback,
-                                                 kGMPPersistentSession);
+                                                 SessionType::kPersistentLicense);
+
   mSessions[aSessionId] = session;
 
-  uint32_t numKeys = aKeyDataSize / (2 * CLEARKEY_KEY_LEN);
+  uint32_t numKeys = aKeyDataSize / (2 * CENC_KEY_LEN);
+
+  vector<KeyInformation> keyInfos;
+  vector<KeyIdPair> keyPairs;
   for (uint32_t i = 0; i < numKeys; i ++) {
-    const uint8_t* base = aKeyData + 2 * CLEARKEY_KEY_LEN * i;
+    const uint8_t* base = aKeyData + 2 * CENC_KEY_LEN * i;
 
-    KeyId keyId(base, base + CLEARKEY_KEY_LEN);
-    assert(keyId.size() == CLEARKEY_KEY_LEN);
+    KeyIdPair keyPair;
 
-    Key key(base + CLEARKEY_KEY_LEN, base + 2 * CLEARKEY_KEY_LEN);
-    assert(key.size() == CLEARKEY_KEY_LEN);
+    keyPair.mKeyId = KeyId(base, base + CENC_KEY_LEN);
+    assert(keyPair.mKeyId.size() == CENC_KEY_LEN);
 
-    session->AddKeyId(keyId);
+    keyPair.mKey = Key(base + CENC_KEY_LEN, base + 2 * CENC_KEY_LEN);
+    assert(keyPair.mKey.size() == CENC_KEY_LEN);
 
-    mDecryptionManager->ExpectKeyId(keyId);
-    mDecryptionManager->InitKey(keyId, key);
-    mKeyIds.insert(key);
-    mCallback->KeyStatusChanged(&aSessionId[0], aSessionId.size(),
-                                &keyId[0], keyId.size(),
-                                kGMPUsable);
+    session->AddKeyId(keyPair.mKeyId);
+
+    mDecryptionManager->ExpectKeyId(keyPair.mKeyId);
+    mDecryptionManager->InitKey(keyPair.mKeyId, keyPair.mKey);
+    mKeyIds.insert(keyPair.mKey);
+    keyPairs.push_back(keyPair);
+
+    KeyInformation keyInfo = KeyInformation();
+    keyInfo.key_id = &keyPairs.back().mKeyId[0];
+    keyInfo.key_id_size = keyPair.mKeyId.size();
+    keyInfo.status = KeyStatus::kUsable;
+
+    keyInfos.push_back(keyInfo);
   }
 
-  mCallback->ResolveLoadSessionPromise(aPromiseId, true);
+  mHost->OnSessionKeysChange(&aSessionId[0],
+                             aSessionId.size(),
+                             true,
+                             keyInfos.data(),
+                             keyInfos.size());
+
+  mHost->OnResolveNewSessionPromise(aPromiseId,
+                                    aSessionId.c_str(),
+                                    aSessionId.size());
 }
 
 void
@@ -198,34 +319,105 @@ ClearKeySessionManager::UpdateSession(uint32_t aPromiseId,
                                       uint32_t aResponseSize)
 {
   CK_LOGD("ClearKeySessionManager::UpdateSession");
+
+  // Copy the method arguments so we can capture them in the lambda
   string sessionId(aSessionId, aSessionId + aSessionIdLength);
+  vector<uint8_t> response(aResponse, aResponse + aResponseSize);
+
+  // Hold  a reference to the SessionManager so it isn't released before we
+  // callback.
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> deferrer =
+    [self, aPromiseId, sessionId, response] ()
+  {
+    self->UpdateSession(aPromiseId,
+                        sessionId.data(),
+                        sessionId.size(),
+                        response.data(),
+                        response.size());
+  };
+
+  // If we haven't fully loaded, defer calling this method
+  if (MaybeDeferTillInitialized(move(deferrer))) {
+    CK_LOGD("Deferring LoadSession");
+    return;
+  }
+
+  // Make sure the SessionManager has not been shutdown before we try and
+  // resolve any promises.
+  if (!mHost) {
+    return;
+  }
+
+  CK_LOGD("Updating session: %s", sessionId.c_str());
 
   auto itr = mSessions.find(sessionId);
   if (itr == mSessions.end() || !(itr->second)) {
     CK_LOGW("ClearKey CDM couldn't resolve session ID in UpdateSession.");
-    mCallback->RejectPromise(aPromiseId, kGMPNotFoundError, nullptr, 0);
+    CK_LOGD("Unable to find session: %s", sessionId.c_str());
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kInvalidAccessError,
+                           0,
+                           nullptr,
+                           0);
+
     return;
   }
   ClearKeySession* session = itr->second;
 
-  // Parse the response for any (key ID, key) pairs.
-  vector<KeyIdPair> keyPairs;
-  if (!ClearKeyUtils::ParseJWK(aResponse, aResponseSize, keyPairs, session->Type())) {
-    CK_LOGW("ClearKey CDM failed to parse JSON Web Key.");
-    mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, nullptr, 0);
+  // Verify the size of session response.
+  if (aResponseSize >= kMaxSessionResponseLength) {
+    CK_LOGW("Session response size is not within a reasonable size.");
+    CK_LOGD("Failed to parse response for session %s", sessionId.c_str());
+
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kInvalidAccessError,
+                           0,
+                           nullptr,
+                           0);
+
     return;
   }
 
-  for (auto it = keyPairs.begin(); it != keyPairs.end(); it++) {
-    mDecryptionManager->InitKey(it->mKeyId, it->mKey);
-    mKeyIds.insert(it->mKeyId);
-    mCallback->KeyStatusChanged(aSessionId, aSessionIdLength,
-                                &it->mKeyId[0], it->mKeyId.size(),
-                                kGMPUsable);
+  // Parse the response for any (key ID, key) pairs.
+  vector<KeyIdPair> keyPairs;
+  if (!ClearKeyUtils::ParseJWK(aResponse,
+                               aResponseSize,
+                               keyPairs,
+                               session->Type())) {
+    CK_LOGW("ClearKey CDM failed to parse JSON Web Key.");
+
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kInvalidAccessError,
+                           0,
+                           nullptr,
+                           0);
+
+    return;
   }
 
-  if (session->Type() != kGMPPersistentSession) {
-    mCallback->ResolvePromise(aPromiseId);
+  vector<KeyInformation> keyInfos;
+  for (size_t i = 0; i < keyPairs.size(); i++) {
+    KeyIdPair& keyPair = keyPairs[i];
+    mDecryptionManager->InitKey(keyPair.mKeyId, keyPair.mKey);
+    mKeyIds.insert(keyPair.mKeyId);
+
+    KeyInformation keyInfo = KeyInformation();
+    keyInfo.key_id = &keyPair.mKeyId[0];
+    keyInfo.key_id_size = keyPair.mKeyId.size();
+    keyInfo.status = KeyStatus::kUsable;
+
+    keyInfos.push_back(keyInfo);
+  }
+
+  mHost->OnSessionKeysChange(aSessionId,
+                             aSessionIdLength,
+                             true,
+                             keyInfos.data(),
+                             keyInfos.size());
+
+  if (session->Type() != SessionType::kPersistentLicense) {
+    mHost->OnResolvePromise(aPromiseId);
     return;
   }
 
@@ -233,15 +425,30 @@ ClearKeySessionManager::UpdateSession(uint32_t aPromiseId,
   // and simply append each keyId followed by its key.
   vector<uint8_t> keydata;
   Serialize(session, keydata);
-  GMPTask* resolve = WrapTask(mCallback, &GMPDecryptorCallback::ResolvePromise, aPromiseId);
-  static const char* message = "Couldn't store cenc key init data";
-  GMPTask* reject = WrapTask(mCallback,
-                             &GMPDecryptorCallback::RejectPromise,
-                             aPromiseId,
-                             kGMPInvalidStateError,
-                             message,
-                             strlen(message));
-  StoreData(sessionId, keydata, resolve, reject);
+
+  function<void()> resolve = [self, aPromiseId] ()
+  {
+    if (!self->mHost) {
+      return;
+    }
+    self->mHost->OnResolvePromise(aPromiseId);
+  };
+
+  function<void()> reject = [self, aPromiseId] ()
+  {
+    if (!self->mHost) {
+      return;
+    }
+
+    static const char* message = "Couldn't store cenc key init data";
+    self->mHost->OnRejectPromise(aPromiseId,
+                                 Error::kInvalidStateError,
+                                 0,
+                                 message,
+                                 strlen(message));
+  };
+
+  WriteData(mHost, sessionId, keydata, move(resolve), move(reject));
 }
 
 void
@@ -254,10 +461,10 @@ ClearKeySessionManager::Serialize(const ClearKeySession* aSession,
     if (!mDecryptionManager->HasKeyForKeyId(keyId)) {
       continue;
     }
-    assert(keyId.size() == CLEARKEY_KEY_LEN);
+    assert(keyId.size() == CENC_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), keyId.begin(), keyId.end());
     const Key& key = mDecryptionManager->GetDecryptionKey(keyId);
-    assert(key.size() == CLEARKEY_KEY_LEN);
+    assert(key.size() == CENC_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), key.begin(), key.end());
   }
 }
@@ -269,11 +476,38 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
 {
   CK_LOGD("ClearKeySessionManager::CloseSession");
 
+  // Copy the sessionId into a string so we capture it properly.
   string sessionId(aSessionId, aSessionId + aSessionIdLength);
+  // Hold a reference to the session manager, so it doesn't get deleted
+  // before we need to use it.
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> deferrer =
+    [self, aPromiseId, sessionId] ()
+  {
+    self->CloseSession(aPromiseId, sessionId.data(), sessionId.size());
+  };
+
+  // If we haven't loaded, call this method later.
+  if (MaybeDeferTillInitialized(move(deferrer))) {
+    CK_LOGD("Deferring CloseSession");
+    return;
+  }
+
+  // If DecryptingComplete has been called mHost will be null and we won't
+  // be able to resolve our promise.
+  if (!mHost) {
+    return;
+  }
+
   auto itr = mSessions.find(sessionId);
   if (itr == mSessions.end()) {
     CK_LOGW("ClearKey CDM couldn't close non-existent session.");
-    mCallback->RejectPromise(aPromiseId, kGMPNotFoundError, nullptr, 0);
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kInvalidAccessError,
+                           0,
+                           nullptr,
+                           0);
+
     return;
   }
 
@@ -281,8 +515,9 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
   assert(session);
 
   ClearInMemorySessionData(session);
-  mCallback->ResolvePromise(aPromiseId);
-  mCallback->SessionClosed(aSessionId, aSessionIdLength);
+
+  mHost->OnSessionClosed(aSessionId, aSessionIdLength);
+  mHost->OnResolvePromise(aPromiseId);
 }
 
 void
@@ -298,39 +533,81 @@ ClearKeySessionManager::RemoveSession(uint32_t aPromiseId,
                                       uint32_t aSessionIdLength)
 {
   CK_LOGD("ClearKeySessionManager::RemoveSession");
+
+  // Copy the sessionId into a string so it can be captured for the lambda.
   string sessionId(aSessionId, aSessionId + aSessionIdLength);
+
+  // Hold a reference to the SessionManager, so it isn't released before we
+  // try and use it.
+  RefPtr<ClearKeySessionManager> self(this);
+  function<void()> deferrer =
+    [self, aPromiseId, sessionId] ()
+  {
+    self->RemoveSession(aPromiseId, sessionId.data(), sessionId.size());
+  };
+
+  // If we haven't fully loaded, defer calling this method.
+  if (MaybeDeferTillInitialized(move(deferrer))) {
+    CK_LOGD("Deferring RemoveSession");
+    return;
+  }
+
+  // Check that the SessionManager has not been shutdown before we try and
+  // resolve any promises.
+  if (!mHost) {
+    return;
+  }
+
   auto itr = mSessions.find(sessionId);
   if (itr == mSessions.end()) {
     CK_LOGW("ClearKey CDM couldn't remove non-existent session.");
-    mCallback->RejectPromise(aPromiseId, kGMPNotFoundError, nullptr, 0);
+
+    mHost->OnRejectPromise(aPromiseId,
+                           Error::kInvalidAccessError,
+                           0,
+                           nullptr,
+                           0);
+
     return;
   }
 
   ClearKeySession* session = itr->second;
   assert(session);
   string sid = session->Id();
-  bool isPersistent = session->Type() == kGMPPersistentSession;
+  bool isPersistent = session->Type() == SessionType::kPersistentLicense;
   ClearInMemorySessionData(session);
 
   if (!isPersistent) {
-    mCallback->ResolvePromise(aPromiseId);
+    mHost->OnResolvePromise(aPromiseId);
     return;
   }
 
-  ClearKeyPersistence::PersistentSessionRemoved(sid);
+  mPersistence->PersistentSessionRemoved(sid);
 
-  // Overwrite the record storing the sessionId's key data with a zero
-  // length record to delete it.
   vector<uint8_t> emptyKeydata;
-  GMPTask* resolve = WrapTask(mCallback, &GMPDecryptorCallback::ResolvePromise, aPromiseId);
-  static const char* message = "Could not remove session";
-  GMPTask* reject = WrapTask(mCallback,
-                             &GMPDecryptorCallback::RejectPromise,
-                             aPromiseId,
-                             kGMPInvalidAccessError,
-                             message,
-                             strlen(message));
-  StoreData(sessionId, emptyKeydata, resolve, reject);
+
+  function<void()> resolve = [self, aPromiseId] ()
+  {
+    if (!self->mHost) {
+      return;
+    }
+    self->mHost->OnResolvePromise(aPromiseId);
+  };
+
+  function<void()> reject = [self, aPromiseId] ()
+  {
+    if (!self->mHost) {
+      return;
+    }
+    static const char* message = "Could not remove session";
+    self->mHost->OnRejectPromise(aPromiseId,
+                                 Error::kInvalidAccessError,
+                                 0,
+                                 message,
+                                 strlen(message));
+  };
+
+  WriteData(mHost, sessionId, emptyKeydata, move(resolve), move(reject));
 }
 
 void
@@ -340,48 +617,36 @@ ClearKeySessionManager::SetServerCertificate(uint32_t aPromiseId,
 {
   // ClearKey CDM doesn't support this method by spec.
   CK_LOGD("ClearKeySessionManager::SetServerCertificate");
-  mCallback->RejectPromise(aPromiseId, kGMPNotSupportedError,
-                           nullptr /* message */, 0 /* messageLen */);
+  mHost->OnRejectPromise(aPromiseId,
+                         Error::kNotSupportedError,
+                         0,
+                         nullptr /* message */,
+                         0 /* messageLen */);
 }
 
-void
-ClearKeySessionManager::Decrypt(GMPBuffer* aBuffer,
-                                GMPEncryptedBufferMetadata* aMetadata)
+Status
+ClearKeySessionManager::Decrypt(const InputBuffer& aBuffer,
+                                DecryptedBlock* aDecryptedBlock)
 {
   CK_LOGD("ClearKeySessionManager::Decrypt");
 
-  if (!mThread) {
-    CK_LOGW("No decrypt thread");
-    mCallback->Decrypted(aBuffer, GMPGenericErr);
-    return;
-  }
+  CK_LOGARRAY("Key: ", aBuffer.key_id, aBuffer.key_id_size);
 
-  mThread->Post(WrapTaskRefCounted(this,
-                                   &ClearKeySessionManager::DoDecrypt,
-                                   aBuffer, aMetadata));
-}
+  Buffer* buffer = mHost->Allocate(aBuffer.data_size);
+  assert(buffer != nullptr);
+  assert(buffer->Data() != nullptr);
+  assert(buffer->Capacity() >= aBuffer.data_size);
 
-void
-ClearKeySessionManager::DoDecrypt(GMPBuffer* aBuffer,
-                                  GMPEncryptedBufferMetadata* aMetadata)
-{
-  CK_LOGD("ClearKeySessionManager::DoDecrypt");
+  memcpy(buffer->Data(), aBuffer.data, aBuffer.data_size);
 
-  GMPErr rv = mDecryptionManager->Decrypt(aBuffer->Data(), aBuffer->Size(),
-                                          CryptoMetaData(aMetadata));
-  CK_LOGD("DeDecrypt finished with code %x\n", rv);
-  mCallback->Decrypted(aBuffer, rv);
-}
+  Status status = mDecryptionManager->Decrypt(buffer->Data(),
+                                              buffer->Size(),
+                                              CryptoMetaData(&aBuffer));
 
-void
-ClearKeySessionManager::Shutdown()
-{
-  CK_LOGD("ClearKeySessionManager::Shutdown %p", this);
+  aDecryptedBlock->SetDecryptedBuffer(buffer);
+  aDecryptedBlock->SetTimestamp(aBuffer.timestamp);
 
-  for (auto it = mSessions.begin(); it != mSessions.end(); it++) {
-    delete it->second;
-  }
-  mSessions.clear();
+  return status;
 }
 
 void
@@ -389,10 +654,23 @@ ClearKeySessionManager::DecryptingComplete()
 {
   CK_LOGD("ClearKeySessionManager::DecryptingComplete %p", this);
 
-  GMPThread* thread = mThread;
-  thread->Join();
+  for (auto it = mSessions.begin(); it != mSessions.end(); it++) {
+    delete it->second;
+  }
+  mSessions.clear();
 
-  Shutdown();
   mDecryptionManager = nullptr;
+  mHost = nullptr;
+
   Release();
+}
+
+bool ClearKeySessionManager::MaybeDeferTillInitialized(function<void()>&& aMaybeDefer)
+{
+  if (mPersistence->IsLoaded()) {
+    return false;
+  }
+
+  mDeferredInitialize.emplace(move(aMaybeDefer));
+  return true;
 }

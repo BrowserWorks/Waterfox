@@ -225,7 +225,8 @@ public:
   BooleanRange mScrollWithPage;
   StringRange mDeviceId;
   LongRange mViewportOffsetX, mViewportOffsetY, mViewportWidth, mViewportHeight;
-  BooleanRange mEchoCancellation, mMozNoiseSuppression, mMozAutoGainControl;
+  BooleanRange mEchoCancellation, mNoiseSuppression, mAutoGainControl;
+  LongRange mChannelCount;
 private:
   typedef NormalizedConstraintSet T;
 public:
@@ -254,11 +255,13 @@ public:
                     aOther.mViewportHeight, advanced, aList)
   , mEchoCancellation(&T::mEchoCancellation, "echoCancellation",
                       aOther.mEchoCancellation, advanced, aList)
-  , mMozNoiseSuppression(&T::mMozNoiseSuppression, "mozNoiseSuppression",
-                         aOther.mMozNoiseSuppression,
-                         advanced, aList)
-  , mMozAutoGainControl(&T::mMozAutoGainControl, "mozAutoGainControl",
-                        aOther.mMozAutoGainControl, advanced, aList) {}
+  , mNoiseSuppression(&T::mNoiseSuppression, "noiseSuppression",
+                      aOther.mNoiseSuppression,
+                      advanced, aList)
+  , mAutoGainControl(&T::mAutoGainControl, "autoGainControl",
+                     aOther.mAutoGainControl, advanced, aList)
+  , mChannelCount(&T::mChannelCount, "channelCount",
+                  aOther.mChannelCount, advanced, aList) {}
 };
 
 template<> bool NormalizedConstraintSet::Range<bool>::Merge(const Range& aOther);
@@ -311,7 +314,7 @@ protected:
 
     MOZ_ASSERT(aDevices.Length());
     for (auto& device : aDevices) {
-      if (device->GetBestFitnessDistance(sets) != UINT32_MAX) {
+      if (device->GetBestFitnessDistance(sets, false) != UINT32_MAX) {
         return true;
       }
     }
@@ -324,7 +327,8 @@ public:
   template<class DeviceType>
   static const char*
   SelectSettings(const NormalizedConstraints &aConstraints,
-                 nsTArray<RefPtr<DeviceType>>& aDevices)
+                 nsTArray<RefPtr<DeviceType>>& aDevices,
+                 bool aIsChrome)
   {
     auto& c = aConstraints;
 
@@ -340,7 +344,8 @@ public:
     std::multimap<uint32_t, RefPtr<DeviceType>> ordered;
 
     for (uint32_t i = 0; i < aDevices.Length();) {
-      uint32_t distance = aDevices[i]->GetBestFitnessDistance(aggregateConstraints);
+      uint32_t distance = aDevices[i]->GetBestFitnessDistance(aggregateConstraints,
+                                                              aIsChrome);
       if (distance == UINT32_MAX) {
         unsatisfactory.AppendElement(aDevices[i]);
         aDevices.RemoveElementAt(i);
@@ -366,7 +371,8 @@ public:
       aggregateConstraints.AppendElement(&c.mAdvanced[i]);
       nsTArray<RefPtr<DeviceType>> rejects;
       for (uint32_t j = 0; j < aDevices.Length();) {
-        if (aDevices[j]->GetBestFitnessDistance(aggregateConstraints) == UINT32_MAX) {
+        if (aDevices[j]->GetBestFitnessDistance(aggregateConstraints,
+                                                aIsChrome) == UINT32_MAX) {
           rejects.AppendElement(aDevices[j]);
           aDevices.RemoveElementAt(j);
         } else {
@@ -439,6 +445,15 @@ public:
   FindBadConstraint(const NormalizedConstraints& aConstraints,
                     const MediaEngineSourceType& aMediaEngineSource,
                     const nsString& aDeviceId);
+
+  // Warn on and convert use of deprecated constraints to new ones
+
+  static void
+  ConvertOldWithWarning(
+      const dom::OwningBooleanOrConstrainBooleanParameters& old,
+      dom::OwningBooleanOrConstrainBooleanParameters& to,
+      const char* aMessageName,
+      nsPIDOMWindowInner* aWindow);
 };
 
 } // namespace mozilla

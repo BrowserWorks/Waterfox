@@ -10,6 +10,7 @@
 #include "gfxWindowsPlatform.h"
 #include "gfxPlatformFontList.h"
 #include "nsGkAtoms.h"
+#include "mozilla/gfx/UnscaledFontGDI.h"
 
 #include <windows.h>
 
@@ -112,8 +113,7 @@ public:
 
     virtual bool IsSymbolFont();
 
-    void FillLogFont(LOGFONTW *aLogFont, uint16_t aWeight, gfxFloat aSize,
-                     bool aUseCleartype);
+    void FillLogFont(LOGFONTW *aLogFont, uint16_t aWeight, gfxFloat aSize);
 
     static gfxWindowsFontType DetermineFontType(const NEWTEXTMETRICW& metrics, 
                                                 DWORD fontType)
@@ -263,7 +263,7 @@ public:
     gfxSparseBitSet mUnicodeRanges;
 
 protected:
-    friend class gfxWindowsFont;
+    friend class gfxGDIFont;
 
     GDIFontEntry(const nsAString& aFaceName, gfxWindowsFontType aFontType,
                  uint8_t aStyle, uint16_t aWeight, int16_t aStretch,
@@ -276,14 +276,18 @@ protected:
     virtual nsresult CopyFontTable(uint32_t aTableTag,
                                    nsTArray<uint8_t>& aBuffer) override;
 
+    already_AddRefed<mozilla::gfx::UnscaledFontGDI> LookupUnscaledFont(HFONT aFont);
+
     LOGFONTW mLogFont;
+
+    mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFont;
 };
 
 // a single font family, referencing one or more faces
 class GDIFontFamily : public gfxFontFamily
 {
 public:
-    GDIFontFamily(nsAString &aName) :
+    explicit GDIFontFamily(nsAString &aName) :
         gfxFontFamily(aName) {}
 
     virtual void FindStyleVariations(FontInfoData *aFontInfoData = nullptr);
@@ -301,9 +305,7 @@ public:
     }
 
     // initialize font lists
-    virtual nsresult InitFontList();
-
-    virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
+    virtual nsresult InitFontListForPlatform() override;
 
     bool FindAndAddFamilies(const nsAString& aFamily,
                             nsTArray<gfxFontFamily*>* aOutput,
@@ -326,6 +328,10 @@ public:
                                         FontListSizes* aSizes) const;
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontListSizes* aSizes) const;
+
+protected:
+    virtual gfxFontFamily*
+    GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
 private:
     friend class gfxWindowsPlatform;

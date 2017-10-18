@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-mozilla",
-  "version": "0.2.0",
+  "version": "0.4.2",
   "description": "A collection of rules that help enforce JavaScript coding standard in the Mozilla project.",
   "keywords": [
     "eslint",
@@ -10,19 +10,39 @@
     "firefox"
   ],
   "bugs": {
-    "url": "https://bugzilla.mozilla.org/enter_bug.cgi?product=Firefox&component=Developer%20Tools"
+    "url": "https://bugzilla.mozilla.org/enter_bug.cgi?product=Testing&component=Lint"
   },
-  "homepage": "https://bugzilla.mozilla.org/show_bug.cgi?id=1203520",
+  "homepage": "http://gecko.readthedocs.io/en/latest/tools/lint/linters/eslint-plugin-mozilla.html",
+  "repository": {
+    "type": "hg",
+    "url": "https://hg.mozilla.org/mozilla-central/"
+  },
   "author": "Mike Ratcliffe",
   "main": "lib/index.js",
   "dependencies": {
-    "escope": "^3.2.0",
-    "espree": "^2.2.4",
-    "estraverse": "^4.1.1",
-    "sax": "^1.1.4"
+    "escope": "3.6.0",
+    "espree": "3.4.3",
+    "estraverse": "4.2.0",
+    "globals": "9.18.0",
+    "ini-parser": "0.0.2",
+    "sax": "1.2.4"
+  },
+  "devDependencies": {
+    "eslint": "4.2.0",
+    "mocha": "3.4.2"
+  },
+  "peerDependencies": {
+    "eslint": "^3.0.0 || ^4.0.0",
+    "eslint-plugin-no-unsanitized": "^2.0.1"
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=6.9.1"
+  },
+  "scripts": {
+    "prepack": "node scripts/createExports.js",
+    "test": "mocha -R dot --reporter 'reporters/mozilla-format.js' tests",
+    "postpublish": "rm -f lib/modules.json lib/environments/saved-globals.json",
+    "update-tooltool": "./update.sh"
   },
   "license": "MPL-2.0"
 }

@@ -11,6 +11,8 @@
  * JS bytecode definitions.
  */
 
+#include "mozilla/Attributes.h"
+
 #include "jsbytecode.h"
 #include "jstypes.h"
 #include "NamespaceImports.h"
@@ -49,19 +51,20 @@ enum {
                                        atom index */
     JOF_INT32           = 14,       /* int32_t immediate operand */
     JOF_UINT32          = 15,       /* uint32_t immediate operand */
-    JOF_OBJECT          = 16,       /* unsigned 16-bit object index */
+    JOF_OBJECT          = 16,       /* unsigned 32-bit object index */
     JOF_REGEXP          = 17,       /* unsigned 32-bit regexp index */
     JOF_INT8            = 18,       /* int8_t immediate operand */
     JOF_ATOMOBJECT      = 19,       /* uint16_t constant index + object index */
-    /* 20 is unused */
-    JOF_SCOPECOORD      = 21,       /* embedded ScopeCoordinate immediate */
+    JOF_SCOPE           = 20,       /* unsigned 32-bit scope index */
+    JOF_ENVCOORD        = 21,       /* embedded ScopeCoordinate immediate */
     JOF_TYPEMASK        = 0x001f,   /* mask for above immediate types */
 
     JOF_NAME            = 1 << 5,   /* name operation */
     JOF_PROP            = 2 << 5,   /* obj.prop operation */
     JOF_ELEM            = 3 << 5,   /* obj[index] operation */
-    JOF_MODEMASK        = 7 << 5,   /* mask for above addressing modes */
-    JOF_SET             = 1 << 8,   /* set (i.e., assignment) operation */
+    JOF_MODEMASK        = 3 << 5,   /* mask for above addressing modes */
+    JOF_PROPSET         = 1 << 7,   /* property/element/name set operation */
+    JOF_PROPINIT        = 1 << 8,   /* property/element/name init operation */
     /* 1 << 9 is unused */
     /* 1 << 10 is unused */
     /* 1 << 11 is unused */
@@ -328,7 +331,7 @@ PackLoopEntryDepthHintAndFlags(unsigned loopDepth, bool canIonOsr)
 }
 
 /*
- * Describes the 'hops' component of a JOF_SCOPECOORD opcode.
+ * Describes the 'hops' component of a JOF_ENVCOORD opcode.
  *
  * Note: this component is only 8 bits wide, limiting the maximum number of
  * scopes between a use and def to roughly 255. This is a pretty small limit but
@@ -338,37 +341,37 @@ PackLoopEntryDepthHintAndFlags(unsigned loopDepth, bool canIonOsr)
  */
 
 static inline uint8_t
-GET_SCOPECOORD_HOPS(jsbytecode* pc)
+GET_ENVCOORD_HOPS(jsbytecode* pc)
 {
     return GET_UINT8(pc);
 }
 
 static inline void
-SET_SCOPECOORD_HOPS(jsbytecode* pc, uint8_t hops)
+SET_ENVCOORD_HOPS(jsbytecode* pc, uint8_t hops)
 {
     SET_UINT8(pc, hops);
 }
 
-static const unsigned SCOPECOORD_HOPS_LEN   = 1;
-static const unsigned SCOPECOORD_HOPS_BITS  = 8;
-static const unsigned SCOPECOORD_HOPS_LIMIT = 1 << SCOPECOORD_HOPS_BITS;
+static const unsigned ENVCOORD_HOPS_LEN   = 1;
+static const unsigned ENVCOORD_HOPS_BITS  = 8;
+static const unsigned ENVCOORD_HOPS_LIMIT = 1 << ENVCOORD_HOPS_BITS;
 
-/* Describes the 'slot' component of a JOF_SCOPECOORD opcode. */
+/* Describes the 'slot' component of a JOF_ENVCOORD opcode. */
 static inline uint32_t
-GET_SCOPECOORD_SLOT(const jsbytecode* pc)
+GET_ENVCOORD_SLOT(const jsbytecode* pc)
 {
     return GET_UINT24(pc);
 }
 
 static inline void
-SET_SCOPECOORD_SLOT(jsbytecode* pc, uint32_t slot)
+SET_ENVCOORD_SLOT(jsbytecode* pc, uint32_t slot)
 {
     SET_UINT24(pc, slot);
 }
 
-static const unsigned SCOPECOORD_SLOT_LEN   = 3;
-static const unsigned SCOPECOORD_SLOT_BITS  = 24;
-static const uint32_t SCOPECOORD_SLOT_LIMIT = 1 << SCOPECOORD_SLOT_BITS;
+static const unsigned ENVCOORD_SLOT_LEN   = 3;
+static const unsigned ENVCOORD_SLOT_BITS  = 24;
+static const uint32_t ENVCOORD_SLOT_LIMIT = 1 << ENVCOORD_SLOT_BITS;
 
 struct JSCodeSpec {
     int8_t              length;         /* length including opcode byte */
@@ -421,6 +424,7 @@ BytecodeFallsThrough(JSOp op)
       case JSOP_RETRVAL:
       case JSOP_FINALYIELDRVAL:
       case JSOP_THROW:
+      case JSOP_THROWMSG:
       case JSOP_TABLESWITCH:
         return false;
       case JSOP_GOSUB:
@@ -500,7 +504,7 @@ class SrcNoteLineScanner
         ptrdiff_t nextOffset;
         while ((nextOffset = offset + SN_DELTA(sn)) <= relpc && !SN_IS_TERMINATOR(sn)) {
             offset = nextOffset;
-            SrcNoteType type = (SrcNoteType) SN_TYPE(sn);
+            SrcNoteType type = SN_TYPE(sn);
             if (type == SRC_SETLINE || type == SRC_NEWLINE) {
                 if (type == SRC_SETLINE)
                     lineno = GetSrcNoteOffset(sn, 0);
@@ -652,7 +656,8 @@ IsValidBytecodeOffset(JSContext* cx, JSScript* script, size_t offset);
 inline bool
 FlowsIntoNext(JSOp op)
 {
-    /* JSOP_YIELD is considered to flow into the next instruction, like JSOP_CALL. */
+    // JSOP_YIELD/JSOP_AWAIT is considered to flow into the next instruction,
+    // like JSOP_CALL.
     switch (op) {
       case JSOP_RETRVAL:
       case JSOP_RETURN:
@@ -681,13 +686,25 @@ IsLocalOp(JSOp op)
 inline bool
 IsAliasedVarOp(JSOp op)
 {
-    return JOF_OPTYPE(op) == JOF_SCOPECOORD;
+    return JOF_OPTYPE(op) == JOF_ENVCOORD;
 }
 
 inline bool
 IsGlobalOp(JSOp op)
 {
     return CodeSpec[op].format & JOF_GNAME;
+}
+
+inline bool
+IsPropertySetOp(JSOp op)
+{
+    return CodeSpec[op].format & JOF_PROPSET;
+}
+
+inline bool
+IsPropertyInitOp(JSOp op)
+{
+    return CodeSpec[op].format & JOF_PROPINIT;
 }
 
 inline bool
@@ -766,6 +783,12 @@ IsSetElemPC(jsbytecode* pc)
 }
 
 inline bool
+IsElemPC(jsbytecode* pc)
+{
+    return CodeSpec[*pc].format & JOF_ELEM;
+}
+
+inline bool
 IsCallPC(jsbytecode* pc)
 {
     return CodeSpec[*pc].format & JOF_INVOKE;
@@ -776,6 +799,27 @@ IsStrictEvalPC(jsbytecode* pc)
 {
     JSOp op = JSOp(*pc);
     return op == JSOP_STRICTEVAL || op == JSOP_STRICTSPREADEVAL;
+}
+
+inline bool
+IsConstructorCallPC(jsbytecode* pc)
+{
+    JSOp op = JSOp(*pc);
+    return op == JSOP_NEW ||
+           op == JSOP_SUPERCALL ||
+           op == JSOP_SPREADNEW ||
+           op == JSOP_SPREADSUPERCALL;
+}
+
+inline bool
+IsSpreadCallPC(jsbytecode* pc)
+{
+    JSOp op = JSOp(*pc);
+    return op == JSOP_SPREADCALL ||
+           op == JSOP_SPREADNEW ||
+           op == JSOP_SPREADSUPERCALL ||
+           op == JSOP_SPREADEVAL ||
+           op == JSOP_STRICTSPREADEVAL;
 }
 
 static inline int32_t
@@ -847,7 +891,7 @@ GetNextPc(jsbytecode* pc)
 /*
  * Disassemblers, for debugging only.
  */
-bool
+extern MOZ_MUST_USE bool
 Disassemble(JSContext* cx, JS::Handle<JSScript*> script, bool lines, Sprinter* sp);
 
 unsigned
@@ -856,16 +900,9 @@ Disassemble1(JSContext* cx, JS::Handle<JSScript*> script, jsbytecode* pc, unsign
 
 #endif
 
-void
-DumpPCCounts(JSContext* cx, JS::Handle<JSScript*> script, Sprinter* sp);
-
-namespace jit { struct IonScriptCounts; }
-void
-DumpIonScriptCounts(js::Sprinter* sp, HandleScript script,
-                    jit::IonScriptCounts* ionCounts);
-
-void
+extern MOZ_MUST_USE bool
 DumpCompartmentPCCounts(JSContext* cx);
+
 } // namespace js
 
 #endif /* jsopcode_h */

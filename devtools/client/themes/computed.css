@@ -5,7 +5,7 @@
 
 #sidebar-panel-computedview {
   margin: 0;
-  display : flex;
+  display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
@@ -28,6 +28,8 @@
 
 #computedview-toolbar {
   display: flex;
+  align-items: center;
+  -moz-user-select: none;
 }
 
 #browser-style-checkbox {
@@ -35,16 +37,12 @@
      they aren't squished together in a small window. Put also
      an extra space after. */
   margin-inline-start: 5px;
-  margin-inline-end: 5px;
+  margin-inline-end: 0;
 }
 
 #browser-style-checkbox-label {
-  margin-right: 5px;
-
-  /* Vertically center the 'Browser styles' checkbox in the
-     Computed panel with its label. */
-  display: flex;
-  align-items: center;
+  padding-inline-start: 5px;
+  margin-inline-end: 5px;
 }
 
 #propertyContainer {
@@ -64,7 +62,8 @@
 }
 
 .property-view {
-  padding: 2px 0 2px 17px;
+  padding: 2px 0px;
+  padding-inline-start: 5px;
   display: flex;
   flex-wrap: wrap;
 }
@@ -108,17 +107,21 @@
   overflow-x: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-left: 10px;
+  padding-inline-start: 14px;
   outline: 0 !important;
 }
 
 .other-property-value {
   background-position: left center;
-  padding-left: 8px;
+  padding-inline-start: 8px;
+}
+
+.other-property-value:dir(rtl) {
+  background-position-x: right;
 }
 
 .property-content {
-  padding-left: 17px;
+  padding-inline-start: 17px;
 }
 
 .theme-firebug .property-view,
@@ -130,10 +133,23 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+/* Bug 1360238 - getSelection displays an extra "\n" on multiple sibling block elements.
+   We rely on this behavior to add an extra "\n" between matched selectors (Bug 1222737).
+   Therefore we use <div> elements around matched selectors and need this class
+   to keep them inline. We do that to avoid doing any formatting logic in JS.
+   Once Bug 1360238 will be fixed, we'll probably have to change the behavior
+   and remove this class. */
+.fix-get-selection {
+  display: inline;
+}
+
+.visually-hidden {
+  opacity: 0;
+}
+
 /* From skin */
 .expander {
   visibility: hidden;
-  margin-left: -12px !important;
 }
 
 .expandable {
@@ -146,7 +162,8 @@
 
 .matchedselectors > p {
   clear: both;
-  margin: 0 2px 0 0;
+  margin: 0;
+  margin-inline-end: 2px;
   padding: 2px;
   overflow-x: hidden;
   border-style: dotted;
@@ -182,6 +199,11 @@
   padding: 0 3px;
   cursor: pointer;
   float: right;
+}
+
+/* Workaround until float: inline-end; is enabled by default */
+.link:dir(rtl) {
+  float: left;
 }
 
 /* Take away these two :visited rules to get a core dumper     */

@@ -20,6 +20,7 @@
 #include "nsIAsyncOutputStream.h"
 #include "nsIDNSListener.h"
 #include "nsIClassInfo.h"
+#include "TCPFastOpen.h"
 #include "mozilla/net/DNS.h"
 #include "nsASocketHandler.h"
 #include "mozilla/Telemetry.h"
@@ -91,12 +92,12 @@ public:
     uint64_t ByteCount()    { return mByteCount; }
 
     // called by the socket transport on the socket thread...
-    void OnSocketReady(nsresult condition); 
+    void OnSocketReady(nsresult condition);
 
 private:
-    static NS_METHOD WriteFromSegments(nsIInputStream *, void *,
-                                       const char *, uint32_t offset,
-                                       uint32_t count, uint32_t *countRead);
+    static nsresult WriteFromSegments(nsIInputStream *, void *,
+                                      const char *, uint32_t offset,
+                                      uint32_t count, uint32_t *countRead);
 
     nsSocketTransport                *mTransport;
     ThreadSafeAutoRefCnt              mWriterRefCnt;
@@ -171,11 +172,11 @@ public:
     uint64_t ByteCountSent() override { return mOutput.ByteCount(); }
     static void CloseSocket(PRFileDesc *aFd, bool aTelemetryEnabled);
     static void SendPRBlockingTelemetry(PRIntervalTime aStart,
-        Telemetry::ID aIDNormal,
-        Telemetry::ID aIDShutdown,
-        Telemetry::ID aIDConnectivityChange,
-        Telemetry::ID aIDLinkChange,
-        Telemetry::ID aIDOffline);
+        Telemetry::HistogramID aIDNormal,
+        Telemetry::HistogramID aIDShutdown,
+        Telemetry::HistogramID aIDConnectivityChange,
+        Telemetry::HistogramID aIDLinkChange,
+        Telemetry::HistogramID aIDOffline);
 protected:
 
     virtual ~nsSocketTransport();
@@ -209,6 +210,7 @@ private:
     {
     public:
       explicit PRFileDescAutoLock(nsSocketTransport *aSocketTransport,
+                                  bool aAlsoDuringFastOpen,
                                   nsresult *aConditionWhileLocked = nullptr)
         : mSocketTransport(aSocketTransport)
         , mFd(nullptr)
@@ -221,7 +223,11 @@ private:
             return;
           }
         }
-        mFd = mSocketTransport->GetFD_Locked();
+        if (!aAlsoDuringFastOpen) {
+          mFd = mSocketTransport->GetFD_Locked();
+        } else {
+          mFd = mSocketTransport->GetFD_LockedAlsoDuringFastOpen();
+        }
       }
       ~PRFileDescAutoLock() {
         MutexAutoLock lock(mSocketTransport->mLock);
@@ -302,7 +308,15 @@ private:
     bool mProxyTransparentResolvesHost;
     bool mHttpsProxy;
     uint32_t     mConnectionFlags;
-    
+    bool mReuseAddrPort;
+
+    // The origin attributes are used to create sockets.  The first party domain
+    // will eventually be used to isolate OCSP cache and is only non-empty when
+    // "privacy.firstparty.isolate" is enabled.  Setting this is the only way to
+    // carry origin attributes down to NSPR layers which are final consumers.
+    // It must be set before the socket transport is built.
+    OriginAttributes mOriginAttributes;
+
     uint16_t         SocketPort() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyPort : mPort; }
     const nsCString &SocketHost() { return (!mProxyHost.IsEmpty() && !mProxyTransparent) ? mProxyHost : mHost; }
 
@@ -343,7 +357,7 @@ private:
 
     void     SendStatus(nsresult status);
     nsresult ResolveHost();
-    nsresult BuildSocket(PRFileDesc *&, bool &, bool &); 
+    nsresult BuildSocket(PRFileDesc *&, bool &, bool &);
     nsresult InitiateSocket();
     bool     RecoverFromError();
 
@@ -371,6 +385,9 @@ private:
     LockedPRFileDesc mFD;
     nsrefcnt         mFDref;       // mFD is closed when mFDref goes to zero.
     bool             mFDconnected; // mFD is available to consumer when TRUE.
+    bool             mFDFastOpenInProgress; // Fast Open is in progress, so
+                                            // socket available for some
+                                            // operations.
 
     // A delete protector reference to gSocketTransportService held for lifetime
     // of 'this'. Sometimes used interchangably with gSocketTransportService due
@@ -397,7 +414,9 @@ private:
     // mFD access methods: called with mLock held.
     //
     PRFileDesc *GetFD_Locked();
+    PRFileDesc *GetFD_LockedAlsoDuringFastOpen();
     void        ReleaseFD_Locked(PRFileDesc *fd);
+    bool FastOpenInProgress();
 
     //
     // stream state changes (called outside mLock):
@@ -405,7 +424,7 @@ private:
     void OnInputClosed(nsresult reason)
     {
         // no need to post an event if called on the socket thread
-        if (PR_GetCurrentThread() == gSocketThread)
+        if (OnSocketThread())
             OnMsgInputClosed(reason);
         else
             PostEvent(MSG_INPUT_CLOSED, reason);
@@ -413,7 +432,7 @@ private:
     void OnInputPending()
     {
         // no need to post an event if called on the socket thread
-        if (PR_GetCurrentThread() == gSocketThread)
+        if (OnSocketThread())
             OnMsgInputPending();
         else
             PostEvent(MSG_INPUT_PENDING);
@@ -421,7 +440,7 @@ private:
     void OnOutputClosed(nsresult reason)
     {
         // no need to post an event if called on the socket thread
-        if (PR_GetCurrentThread() == gSocketThread)
+        if (OnSocketThread())
             OnMsgOutputClosed(reason); // XXX need to not be inside lock!
         else
             PostEvent(MSG_OUTPUT_CLOSED, reason);
@@ -429,7 +448,7 @@ private:
     void OnOutputPending()
     {
         // no need to post an event if called on the socket thread
-        if (PR_GetCurrentThread() == gSocketThread)
+        if (OnSocketThread())
             OnMsgOutputPending();
         else
             PostEvent(MSG_OUTPUT_PENDING);
@@ -454,6 +473,12 @@ private:
     int32_t mKeepaliveIdleTimeS;
     int32_t mKeepaliveRetryIntervalS;
     int32_t mKeepaliveProbeCount;
+
+    // A Fast Open callback.
+    TCPFastOpen *mFastOpenCallback;
+    bool mFastOpenLayerHasBufferedData;
+
+    bool mDoNotRetryToConnect;
 };
 
 } // namespace net

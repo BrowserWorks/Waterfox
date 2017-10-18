@@ -16,6 +16,8 @@
 
 ******************************************************************/
 
+#include "get_cd_vec.h"
+
 #include "defines.h"
 #include "constants.h"
 #include "create_augmented_vec.h"
@@ -24,15 +26,15 @@
  *  Construct codebook vector for given index.
  *---------------------------------------------------------------*/
 
-void WebRtcIlbcfix_GetCbVec(
+bool WebRtcIlbcfix_GetCbVec(
     int16_t *cbvec,   /* (o) Constructed codebook vector */
     int16_t *mem,   /* (i) Codebook buffer */
-    int16_t index,   /* (i) Codebook index */
-    int16_t lMem,   /* (i) Length of codebook buffer */
-    int16_t cbveclen   /* (i) Codebook vector length */
+    size_t index,   /* (i) Codebook index */
+    size_t lMem,   /* (i) Length of codebook buffer */
+    size_t cbveclen   /* (i) Codebook vector length */
                             ){
-  int16_t k, base_size;
-  int16_t lag;
+  size_t k, base_size;
+  size_t lag;
   /* Stack based */
   int16_t tempbuff2[SUBL+5];
 
@@ -58,7 +60,7 @@ void WebRtcIlbcfix_GetCbVec(
 
     /* Calculate lag */
 
-    k = (int16_t)(2 * (index - (lMem - cbveclen + 1))) + cbveclen;
+    k = (2 * (index - (lMem - cbveclen + 1))) + cbveclen;
 
     lag = k / 2;
 
@@ -70,7 +72,7 @@ void WebRtcIlbcfix_GetCbVec(
 
   else {
 
-    int16_t memIndTest;
+    size_t memIndTest;
 
     /* first non-interpolated vectors */
 
@@ -93,6 +95,17 @@ void WebRtcIlbcfix_GetCbVec(
     /* interpolated vectors */
 
     else {
+      if (cbveclen < SUBL) {
+        // We're going to fill in cbveclen + 5 elements of tempbuff2 in
+        // WebRtcSpl_FilterMAFastQ12, less than the SUBL + 5 elements we'll be
+        // using in WebRtcIlbcfix_CreateAugmentedVec. This error is caused by
+        // bad values in |index| (which come from the encoded stream). Tell the
+        // caller that things went south, and that the decoder state is now
+        // corrupt (because it's half-way through an update that we can't
+        // complete).
+        return false;
+      }
+
       /* Stuff zeros outside memory buffer  */
       memIndTest = lMem-cbveclen-CB_FILTERLEN;
       WebRtcSpl_MemSetW16(mem+lMem, 0, CB_HALFFILTERLEN);
@@ -100,7 +113,7 @@ void WebRtcIlbcfix_GetCbVec(
       /* do filtering */
       WebRtcSpl_FilterMAFastQ12(
           &mem[memIndTest+7], tempbuff2, (int16_t*)WebRtcIlbcfix_kCbFiltersRev,
-          CB_FILTERLEN, (int16_t)(cbveclen+5));
+          CB_FILTERLEN, cbveclen+5);
 
       /* Calculate lag index */
       lag = (cbveclen<<1)-20+index-base_size-lMem-1;
@@ -108,4 +121,6 @@ void WebRtcIlbcfix_GetCbVec(
       WebRtcIlbcfix_CreateAugmentedVec(lag, tempbuff2+SUBL+5, cbvec);
     }
   }
+
+  return true;  // Success.
 }

@@ -9,10 +9,6 @@
 # installed to previously defined locations.
 
 EXTRA_JS_MODULES.devtools += [
-    'gDevTools.jsm',
-]
-
-# Extra compatibility layer for transitional URLs used for part of 44 cycle
-EXTRA_JS_MODULES.devtools.client.framework += [
+    'devtools.js',
     'gDevTools.jsm',
 ]

@@ -4,10 +4,10 @@
 
 requestLongerTimeout(2);
 
-add_task(function* () {
-  let win1 = yield BrowserTestUtils.openNewBrowserWindow();
+add_task(async function() {
+  let win1 = await BrowserTestUtils.openNewBrowserWindow();
 
-  yield focusWindow(win1);
+  await focusWindow(win1);
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -77,41 +77,39 @@ add_task(function* () {
     },
   });
 
-  yield Promise.all([
+  await Promise.all([
     extension.startup(),
     extension.awaitFinish("tabs.onUpdated"),
   ]);
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield BrowserTestUtils.closeWindow(win1);
+  await BrowserTestUtils.closeWindow(win1);
 });
 
-function* do_test_update(background) {
-  let win1 = yield BrowserTestUtils.openNewBrowserWindow();
+async function do_test_update(background, withPermissions = true) {
+  let win1 = await BrowserTestUtils.openNewBrowserWindow();
 
-  yield focusWindow(win1);
+  await focusWindow(win1);
 
-  let extension = ExtensionTestUtils.loadExtension({
-    manifest: {
-      "permissions": ["tabs"],
-    },
+  let manifest = {};
+  if (withPermissions) {
+    manifest.permissions = ["tabs", "http://mochi.test/"];
+  }
+  let extension = ExtensionTestUtils.loadExtension({manifest, background});
 
-    background: background,
-  });
-
-  yield Promise.all([
-    yield extension.startup(),
-    yield extension.awaitFinish("finish"),
+  await Promise.all([
+    await extension.startup(),
+    await extension.awaitFinish("finish"),
   ]);
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield BrowserTestUtils.closeWindow(win1);
+  await BrowserTestUtils.closeWindow(win1);
 }
 
-add_task(function* test_pinned() {
-  yield do_test_update(function background() {
+add_task(async function test_pinned() {
+  await do_test_update(function background() {
     // Create a new tab for testing update.
     browser.tabs.create({}, function(tab) {
       browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
@@ -124,7 +122,6 @@ add_task(function* test_pinned() {
           // Remove created tab.
           browser.tabs.remove(tabId);
           browser.test.notifyPass("finish");
-          return;
         }
       });
       browser.tabs.update(tab.id, {pinned: true});
@@ -132,8 +129,8 @@ add_task(function* test_pinned() {
   });
 });
 
-add_task(function* test_unpinned() {
-  yield do_test_update(function background() {
+add_task(async function test_unpinned() {
+  await do_test_update(function background() {
     // Create a new tab for testing update.
     browser.tabs.create({pinned: true}, function(tab) {
       browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
@@ -146,7 +143,6 @@ add_task(function* test_unpinned() {
           // Remove created tab.
           browser.tabs.remove(tabId);
           browser.test.notifyPass("finish");
-          return;
         }
       });
       browser.tabs.update(tab.id, {pinned: false});
@@ -154,27 +150,81 @@ add_task(function* test_unpinned() {
   });
 });
 
-add_task(function* test_url() {
-  yield do_test_update(function background() {
+add_task(async function test_url() {
+  await do_test_update(function background() {
     // Create a new tab for testing update.
     browser.tabs.create({}, function(tab) {
       browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
-        // Check callback
-        browser.test.assertEq(tabId, tab.id, "Check tab id");
-        browser.test.log("onUpdate: " + JSON.stringify(changeInfo));
         if ("url" in changeInfo) {
+          // When activity stream is enabled, about:newtab runs in the content process
+          // which causes some timing issues for onUpdated. So if we encounter
+          // about:newtab, return early and continue waiting for about:blank.
+          if (changeInfo.url === "about:newtab") {
+            return;
+          }
           browser.test.assertEq("about:blank", changeInfo.url,
                                 "Check changeInfo.url");
           browser.tabs.onUpdated.removeListener(onUpdated);
           // Remove created tab.
           browser.tabs.remove(tabId);
           browser.test.notifyPass("finish");
-          return;
         }
+        // Check callback
+        browser.test.assertEq(tabId, tab.id, "Check tab id");
+        browser.test.log("onUpdate: " + JSON.stringify(changeInfo));
       });
       browser.tabs.update(tab.id, {url: "about:blank"});
     });
   });
+});
+
+add_task(async function test_title() {
+  await do_test_update(async function background() {
+    const url = "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context_tabs_onUpdated_page.html";
+    const tab = await browser.tabs.create({url});
+
+    browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
+      browser.test.assertEq(tabId, tab.id, "Check tab id");
+      browser.test.log(`onUpdated: ${JSON.stringify(changeInfo)}`);
+      if ("title" in changeInfo && changeInfo.title === "New Message (1)") {
+        browser.test.log("changeInfo.title is correct");
+        browser.tabs.onUpdated.removeListener(onUpdated);
+        browser.tabs.remove(tabId);
+        browser.test.notifyPass("finish");
+      }
+    });
+
+    browser.tabs.executeScript(tab.id, {code: "document.title = 'New Message (1)'"});
+  });
+});
+
+add_task(async function test_without_tabs_permission() {
+  await do_test_update(async function background() {
+    const url = "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context_tabs_onUpdated_page.html";
+    const tab = await browser.tabs.create({url});
+    let count = 0;
+
+    browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
+      browser.test.assertEq(tabId, tab.id, "Check tab id");
+      browser.test.log(`onUpdated: ${JSON.stringify(changeInfo)}`);
+
+      browser.test.assertFalse("url" in changeInfo, "url should not be included without tabs permission");
+      browser.test.assertFalse("favIconUrl" in changeInfo, "favIconUrl should not be included without tabs permission");
+      browser.test.assertFalse("title" in changeInfo, "title should not be included without tabs permission");
+
+      if (changeInfo.status == "complete") {
+        count++;
+        if (count === 2) {
+          browser.test.log("Reload complete");
+          browser.tabs.onUpdated.removeListener(onUpdated);
+          browser.tabs.remove(tabId);
+          browser.test.notifyPass("finish");
+        }
+      }
+    });
+
+    browser.tabs.reload(tab.id);
+  }, false /* withPermissions */);
 });
 
 add_task(forceGC);

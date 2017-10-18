@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 * Copyright (C) 1997-2015, International Business Machines Corporation and others.
@@ -23,6 +25,7 @@
 #include "unicode/parseerr.h"
 #include "unicode/uformattable.h"
 #include "unicode/udisplaycontext.h"
+#include "unicode/ufieldpositer.h"
 
 /**
  * \file
@@ -219,35 +222,35 @@ typedef enum UNumberFormatStyle {
      * @stable ICU 54
      */
     UNUM_CASH_CURRENCY=13,
-#ifndef U_HIDE_DRAFT_API
     /**
      * Decimal format expressed using compact notation
      * (short form, corresponds to UNumberCompactStyle=UNUM_SHORT)
      * e.g. "23K", "45B"
-     * @draft ICU 56
+     * @stable ICU 56
      */
     UNUM_DECIMAL_COMPACT_SHORT=14,
     /**
      * Decimal format expressed using compact notation
      * (long form, corresponds to UNumberCompactStyle=UNUM_LONG)
      * e.g. "23 thousand", "45 billion"
-     * @draft ICU 56
+     * @stable ICU 56
      */
     UNUM_DECIMAL_COMPACT_LONG=15,
     /**
      * Currency format with a currency symbol, e.g., "$1.00",
      * using non-accounting style for negative values (e.g. minus sign).
      * Overrides any style specified using -cf- key in locale.
-     * @draft ICU 56
+     * @stable ICU 56
      */
     UNUM_CURRENCY_STANDARD=16,
-#endif /* U_HIDE_DRAFT_API */
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
-     * One more than the highest number format style constant.
-     * @stable ICU 4.8
+     * One more than the highest normal UNumberFormatStyle value.
+     * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
      */
     UNUM_FORMAT_STYLE_COUNT=17,
+#endif  /* U_HIDE_DEPRECATED_API */
 
     /**
      * Default format
@@ -323,7 +326,13 @@ enum UCurrencySpacing {
     UNUM_CURRENCY_SURROUNDING_MATCH,
     /** @stable ICU 4.8 */
     UNUM_CURRENCY_INSERT,
-    /** @stable ICU 4.8 */
+
+    /* Do not conditionalize the following with #ifndef U_HIDE_DEPRECATED_API,
+     * it is needed for layout of DecimalFormatSymbols object. */
+    /**
+     * One more than the highest normal UCurrencySpacing value.
+     * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
+     */
     UNUM_CURRENCY_SPACING_COUNT
 };
 typedef enum UCurrencySpacing UCurrencySpacing; /**< @stable ICU 4.8 */
@@ -357,8 +366,13 @@ typedef enum UNumberFormatFields {
     UNUM_PERMILL_FIELD,
     /** @stable ICU 49 */
     UNUM_SIGN_FIELD,
-    /** @stable ICU 49 */
+#ifndef U_HIDE_DEPRECATED_API
+    /**
+     * One more than the highest normal UNumberFormatFields value.
+     * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
+     */
     UNUM_FIELD_COUNT
+#endif  /* U_HIDE_DEPRECATED_API */
 } UNumberFormatFields;
 
 
@@ -539,6 +553,59 @@ unum_formatDouble(    const    UNumberFormat*  fmt,
             int32_t         resultLength,
             UFieldPosition  *pos, /* 0 if ignore */
             UErrorCode*     status);
+
+#ifndef U_HIDE_DRAFT_API
+/**
+* Format a double using a UNumberFormat according to the UNumberFormat's locale,
+* and initialize a UFieldPositionIterator that enumerates the subcomponents of
+* the resulting string.
+*
+* @param format
+*          The formatter to use.
+* @param number
+*          The number to format.
+* @param result
+*          A pointer to a buffer to receive the NULL-terminated formatted
+*          number. If the formatted number fits into dest but cannot be
+*          NULL-terminated (length == resultLength) then the error code is set
+*          to U_STRING_NOT_TERMINATED_WARNING. If the formatted number doesn't
+*          fit into result then the error code is set to
+*          U_BUFFER_OVERFLOW_ERROR.
+* @param resultLength
+*          The maximum size of result.
+* @param fpositer
+*          A pointer to a UFieldPositionIterator created by {@link #ufieldpositer_open}
+*          (may be NULL if field position information is not needed, but in this
+*          case it's preferable to use {@link #unum_formatDouble}). Iteration
+*          information already present in the UFieldPositionIterator is deleted,
+*          and the iterator is reset to apply to the fields in the formatted
+*          string created by this function call. The field values and indexes
+*          returned by {@link #ufieldpositer_next} represent fields denoted by
+*          the UNumberFormatFields enum. Fields are not returned in a guaranteed
+*          order. Fields cannot overlap, but they may nest. For example, 1234
+*          could format as "1,234" which might consist of a grouping separator
+*          field for ',' and an integer field encompassing the entire string.
+* @param status
+*          A pointer to an UErrorCode to receive any errors
+* @return
+*          The total buffer size needed; if greater than resultLength, the
+*          output was truncated.
+* @see unum_formatDouble
+* @see unum_parse
+* @see unum_parseDouble
+* @see UFieldPositionIterator
+* @see UNumberFormatFields
+* @draft ICU 59
+*/
+U_DRAFT int32_t U_EXPORT2
+unum_formatDoubleForFields(const UNumberFormat* format,
+                           double number,
+                           UChar* result,
+                           int32_t resultLength,
+                           UFieldPositionIterator* fpositer,
+                           UErrorCode* status);
+
+#endif  /* U_HIDE_DRAFT_API */
 
 /**
 * Format a decimal number using a UNumberFormat.
@@ -1272,8 +1339,13 @@ typedef enum UNumberFormatSymbol {
    */
   UNUM_EXPONENT_MULTIPLICATION_SYMBOL = 27,
 
-  /** count symbol constants */
+#ifndef U_HIDE_DEPRECATED_API
+    /**
+     * One more than the highest normal UNumberFormatSymbol value.
+     * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
+     */
   UNUM_FORMAT_SYMBOL_COUNT = 28
+#endif  /* U_HIDE_DEPRECATED_API */
 } UNumberFormatSymbol;
 
 /**

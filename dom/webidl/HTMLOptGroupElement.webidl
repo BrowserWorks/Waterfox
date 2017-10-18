@@ -11,9 +11,10 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLOptGroupElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute boolean disabled;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString label;
 };

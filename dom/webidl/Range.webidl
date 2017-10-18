@@ -26,22 +26,23 @@ interface Range {
   [Throws]
   readonly attribute Node commonAncestorContainer;
 
-  [Throws]
+  [Throws, BinaryName="setStartJS"]
   void setStart(Node refNode, unsigned long offset);
-  [Throws]
+  [Throws, BinaryName="setEndJS"]
   void setEnd(Node refNode, unsigned long offset);
-  [Throws]
+  [Throws, BinaryName="setStartBeforeJS"]
   void setStartBefore(Node refNode);
-  [Throws]
+  [Throws, BinaryName="setStartAfterJS"]
   void setStartAfter(Node refNode);
-  [Throws]
+  [Throws, BinaryName="setEndBeforeJS"]
   void setEndBefore(Node refNode);
-  [Throws]
+  [Throws, BinaryName="setEndAfterJS"]
   void setEndAfter(Node refNode);
+  [BinaryName="collapseJS"]
   void collapse(optional boolean toStart = false);
-  [Throws]
+  [Throws, BinaryName="selectNodeJS"]
   void selectNode(Node refNode);
-  [Throws]
+  [Throws, BinaryName="selectNodeContentsJS"]
   void selectNodeContents(Node refNode);
 
   const unsigned short START_TO_START = 0;
@@ -50,15 +51,15 @@ interface Range {
   const unsigned short END_TO_START = 3;
   [Throws]
   short compareBoundaryPoints(unsigned short how, Range sourceRange);
-  [Throws]
+  [CEReactions, Throws]
   void deleteContents();
-  [Throws]
+  [CEReactions, Throws]
   DocumentFragment extractContents();
-  [Throws]
+  [CEReactions, Throws]
   DocumentFragment cloneContents();
-  [Throws]
+  [CEReactions, Throws]
   void insertNode(Node node);
-  [Throws]
+  [CEReactions, Throws]
   void surroundContents(Node newParent);
 
   Range cloneRange();
@@ -77,7 +78,7 @@ interface Range {
 
 // http://domparsing.spec.whatwg.org/#dom-range-createcontextualfragment
 partial interface Range {
-  [Throws]
+  [CEReactions, Throws]
   DocumentFragment createContextualFragment(DOMString fragment);
 };
 
@@ -85,4 +86,14 @@ partial interface Range {
 partial interface Range {
   DOMRectList? getClientRects();
   DOMRect getBoundingClientRect();
+};
+
+dictionary ClientRectsAndTexts {
+  required DOMRectList rectList;
+  required sequence<DOMString> textList;
+};
+
+partial interface Range {
+  [ChromeOnly, Throws]
+  ClientRectsAndTexts getClientRectsAndTexts();
 };

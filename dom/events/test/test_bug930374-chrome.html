@@ -7,7 +7,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=930374
   <meta charset="utf-8">
   <title>Test for Bug 930374</title>
   <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js"></script>
   <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
   <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
 </head>
@@ -32,12 +31,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=930374
 
     function runTests()
     {
-      document.addEventListener("keypress", onKeyPress, false);
+      document.addEventListener("keypress", onKeyPress);
       var input = document.getElementById("input-text");
       input.focus();
 
       input.addEventListener("input", function (aEvent) {
-          input.removeEventListener("input", arguments.callee, false);
           ok(gKeyPress,
              "Test1: keypress event must be fired before an input event");
           ok(gKeyPress.defaultPrevented,
@@ -47,7 +45,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=930374
                "Test2: keypress event's defaultPrevented should be true after event dispatching finished");
             SimpleTest.finish();
           }, 0);
-        }, false);
+        }, {once: true});
 
       sendChar("a");
     }

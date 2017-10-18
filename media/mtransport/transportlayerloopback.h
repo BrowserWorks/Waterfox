@@ -19,6 +19,7 @@
 
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
+#include "nsINamed.h"
 #include "nsITimer.h"
 
 
@@ -71,7 +72,7 @@ class TransportLayerLoopback : public TransportLayer {
   void CombinePackets(bool combine) { combinePackets_ = combine; }
 
   // Overrides for TransportLayer
-  virtual TransportResult SendPacket(const unsigned char *data, size_t len);
+  TransportResult SendPacket(const unsigned char *data, size_t len) override;
 
   // Deliver queued packets
   void DeliverPackets();
@@ -118,7 +119,8 @@ class TransportLayerLoopback : public TransportLayer {
 
   // A timer to deliver packets if some are available
   // Fires every 100 ms
-  class Deliverer : public nsITimerCallback {
+  class Deliverer : public nsITimerCallback
+                  , public nsINamed {
    public:
     explicit Deliverer(TransportLayerLoopback *layer) :
         layer_(layer) {}
@@ -128,6 +130,7 @@ class TransportLayerLoopback : public TransportLayer {
 
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSITIMERCALLBACK
+    NS_DECL_NSINAMED
 
  private:
     virtual ~Deliverer() {

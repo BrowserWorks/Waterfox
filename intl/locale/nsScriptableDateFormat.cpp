@@ -3,54 +3,52 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/Snprintf.h"
-#include "nsILocaleService.h"
-#include "nsDateTimeFormatCID.h"
-#include "nsIDateTimeFormat.h"
+#include "DateTimeFormat.h"
+#include "mozilla/Sprintf.h"
 #include "nsIScriptableDateFormat.h"
 #include "nsCOMPtr.h"
 #include "nsServiceManagerUtils.h"
+#include "nsILocaleService.h"
 
 static NS_DEFINE_CID(kLocaleServiceCID, NS_LOCALESERVICE_CID);
-static NS_DEFINE_CID(kDateTimeFormatCID, NS_DATETIMEFORMAT_CID);
 
-class nsScriptableDateFormat : public nsIScriptableDateFormat {
- public: 
-  NS_DECL_ISUPPORTS 
+class nsScriptableDateFormat final : public nsIScriptableDateFormat {
+ public:
+  NS_DECL_ISUPPORTS
 
-  NS_IMETHOD FormatDateTime(const char16_t *locale, 
-                            nsDateFormatSelector dateFormatSelector, 
-                            nsTimeFormatSelector timeFormatSelector, 
-                            int32_t year, 
-                            int32_t month, 
-                            int32_t day, 
-                            int32_t hour, 
-                            int32_t minute, 
-                            int32_t second, 
+  NS_IMETHOD FormatDateTime(const char16_t *locale,
+                            nsDateFormatSelector dateFormatSelector,
+                            nsTimeFormatSelector timeFormatSelector,
+                            int32_t year,
+                            int32_t month,
+                            int32_t day,
+                            int32_t hour,
+                            int32_t minute,
+                            int32_t second,
                             char16_t **dateTimeString) override;
 
-  NS_IMETHOD FormatDate(const char16_t *locale, 
-                        nsDateFormatSelector dateFormatSelector, 
-                        int32_t year, 
-                        int32_t month, 
-                        int32_t day, 
+  NS_IMETHOD FormatDate(const char16_t *locale,
+                        nsDateFormatSelector dateFormatSelector,
+                        int32_t year,
+                        int32_t month,
+                        int32_t day,
                         char16_t **dateString) override
-                        {return FormatDateTime(locale, dateFormatSelector, kTimeFormatNone, 
+                        {return FormatDateTime(locale, dateFormatSelector, kTimeFormatNone,
                                                year, month, day, 0, 0, 0, dateString);}
 
-  NS_IMETHOD FormatTime(const char16_t *locale, 
-                        nsTimeFormatSelector timeFormatSelector, 
-                        int32_t hour, 
-                        int32_t minute, 
-                        int32_t second, 
+  NS_IMETHOD FormatTime(const char16_t *locale,
+                        nsTimeFormatSelector timeFormatSelector,
+                        int32_t hour,
+                        int32_t minute,
+                        int32_t second,
                         char16_t **timeString) override
-                        {return FormatDateTime(locale, kDateFormatNone, timeFormatSelector, 
+                        {return FormatDateTime(locale, kDateFormatNone, timeFormatSelector,
                                                1999, 1, 1, hour, minute, second, timeString);}
 
   nsScriptableDateFormat() {}
 
 private:
-  nsString mStringOut;   
+  nsString mStringOut;
 
   virtual ~nsScriptableDateFormat() {}
 };
@@ -58,15 +56,15 @@ private:
 NS_IMPL_ISUPPORTS(nsScriptableDateFormat, nsIScriptableDateFormat)
 
 NS_IMETHODIMP nsScriptableDateFormat::FormatDateTime(
-                            const char16_t *aLocale, 
-                            nsDateFormatSelector dateFormatSelector, 
-                            nsTimeFormatSelector timeFormatSelector, 
-                            int32_t year, 
-                            int32_t month, 
-                            int32_t day, 
-                            int32_t hour, 
-                            int32_t minute, 
-                            int32_t second, 
+                            const char16_t *aLocale,
+                            nsDateFormatSelector dateFormatSelector,
+                            nsTimeFormatSelector timeFormatSelector,
+                            int32_t year,
+                            int32_t month,
+                            int32_t day,
+                            int32_t hour,
+                            int32_t minute,
+                            int32_t second,
                             char16_t **dateTimeString)
 {
   // We can't have a valid date with the year, month or day
@@ -75,22 +73,7 @@ NS_IMETHODIMP nsScriptableDateFormat::FormatDateTime(
     return NS_ERROR_INVALID_ARG;
 
   nsresult rv;
-  nsAutoString localeName(aLocale);
   *dateTimeString = nullptr;
-
-  nsCOMPtr<nsILocale> locale;
-  // re-initialise locale pointer only if the locale was given explicitly
-  if (!localeName.IsEmpty()) {
-    // get locale service
-    nsCOMPtr<nsILocaleService> localeService(do_GetService(kLocaleServiceCID, &rv));
-    NS_ENSURE_SUCCESS(rv, rv);
-    // get locale
-    rv = localeService->NewLocale(localeName, getter_AddRefs(locale));
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  nsCOMPtr<nsIDateTimeFormat> dateTimeFormat(do_CreateInstance(kDateTimeFormatCID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
 
   tm tmTime;
   time_t timetTime;
@@ -107,19 +90,19 @@ NS_IMETHODIMP nsScriptableDateFormat::FormatDateTime(
   timetTime = mktime(&tmTime);
 
   if ((time_t)-1 != timetTime) {
-    rv = dateTimeFormat->FormatTime(locale, dateFormatSelector, timeFormatSelector, 
-                                     timetTime, mStringOut);
+    rv = mozilla::DateTimeFormat::FormatTime(dateFormatSelector, timeFormatSelector,
+                                             timetTime, mStringOut);
   }
   else {
     // if mktime fails (e.g. year <= 1970), then try NSPR.
     PRTime prtime;
     char string[32];
-    snprintf_literal(string, "%.2d/%.2d/%d %.2d:%.2d:%.2d", month, day, year, hour, minute, second);
+    SprintfLiteral(string, "%.2d/%.2d/%d %.2d:%.2d:%.2d", month, day, year, hour, minute, second);
     if (PR_SUCCESS != PR_ParseTimeString(string, false, &prtime))
       return NS_ERROR_INVALID_ARG;
 
-    rv = dateTimeFormat->FormatPRTime(locale, dateFormatSelector, timeFormatSelector, 
-                                      prtime, mStringOut);
+    rv = mozilla::DateTimeFormat::FormatPRTime(dateFormatSelector, timeFormatSelector,
+                                               prtime, mStringOut);
   }
   if (NS_SUCCEEDED(rv))
     *dateTimeString = ToNewUnicode(mStringOut);

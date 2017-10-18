@@ -50,6 +50,7 @@ struct hb_ot_map_t
     hb_mask_t mask;
     hb_mask_t _1_mask; /* mask for value=1, for quick access */
     unsigned int needs_fallback : 1;
+    unsigned int auto_zwnj : 1;
     unsigned int auto_zwj : 1;
 
     static int cmp (const feature_map_t *a, const feature_map_t *b)
@@ -58,6 +59,7 @@ struct hb_ot_map_t
 
   struct lookup_map_t {
     unsigned short index;
+    unsigned short auto_zwnj : 1;
     unsigned short auto_zwj : 1;
     hb_mask_t mask;
 
@@ -113,7 +115,7 @@ struct hb_ot_map_t
     assert (stage <= stages[table_index].len);
     unsigned int start = stage ? stages[table_index][stage - 1].last_lookup : 0;
     unsigned int end   = stage < stages[table_index].len ? stages[table_index][stage].last_lookup : lookups[table_index].len;
-    *plookups = &lookups[table_index][start];
+    *plookups = end == start ? NULL : &lookups[table_index][start];
     *lookup_count = end - start;
   }
 
@@ -139,12 +141,6 @@ struct hb_ot_map_t
 
   private:
 
-  HB_INTERNAL void add_lookups (hb_face_t    *face,
-				unsigned int  table_index,
-				unsigned int  feature_index,
-				hb_mask_t     mask,
-				bool          auto_zwj);
-
   hb_mask_t global_mask;
 
   hb_prealloced_array_t<feature_map_t, 8> features;
@@ -156,8 +152,9 @@ enum hb_ot_map_feature_flags_t {
   F_NONE		= 0x0000u,
   F_GLOBAL		= 0x0001u, /* Feature applies to all characters; results in no mask allocated for it. */
   F_HAS_FALLBACK	= 0x0002u, /* Has fallback implementation, so include mask bit even if feature not found. */
-  F_MANUAL_ZWJ		= 0x0004u, /* Don't skip over ZWJ when matching. */
-  F_GLOBAL_SEARCH	= 0x0008u  /* If feature not found in LangSys, look for it in global feature list and pick one. */
+  F_MANUAL_ZWNJ		= 0x0004u, /* Don't skip over ZWNJ when matching **context**. */
+  F_MANUAL_ZWJ		= 0x0008u, /* Don't skip over ZWJ when matching **input**. */
+  F_GLOBAL_SEARCH	= 0x0010u  /* If feature not found in LangSys, look for it in global feature list and pick one. */
 };
 HB_MARK_AS_FLAG_T (hb_ot_map_feature_flags_t);
 /* Macro version for where const is desired. */
@@ -182,7 +179,9 @@ struct hb_ot_map_builder_t
   inline void add_gpos_pause (hb_ot_map_t::pause_func_t pause_func)
   { add_pause (1, pause_func); }
 
-  HB_INTERNAL void compile (struct hb_ot_map_t &m);
+  HB_INTERNAL void compile (hb_ot_map_t  &m,
+			    const int    *coords,
+			    unsigned int  num_coords);
 
   inline void finish (void) {
     feature_infos.finish ();
@@ -193,6 +192,15 @@ struct hb_ot_map_builder_t
   }
 
   private:
+
+  HB_INTERNAL void add_lookups (hb_ot_map_t  &m,
+				hb_face_t    *face,
+				unsigned int  table_index,
+				unsigned int  feature_index,
+				unsigned int  variations_index,
+				hb_mask_t     mask,
+				bool          auto_zwnj = true,
+				bool          auto_zwj = true);
 
   struct feature_info_t {
     hb_tag_t tag;

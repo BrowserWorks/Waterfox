@@ -44,7 +44,7 @@ namespace layers {
  * being leaf nodes. Layer C is in the middle and has n+1 FrameMetrics, labelled
  * FM0...FMn. FM0 is the FrameMetrics you get by calling c->GetFrameMetrics(0)
  * and FMn is the FrameMetrics you can obtain by calling
- * c->GetFrameMetrics(c->GetFrameMetricsCount() - 1). This layer tree is
+ * c->GetFrameMetrics(c->GetScrollMetadataCount() - 1). This layer tree is
  * conceptually equivalent to this one below:
  *
  *                    +---+
@@ -113,8 +113,8 @@ namespace layers {
  * the wrapped layer as a void* for printf purposes.
  *
  * The implementation may look like it special-cases mIndex == 0 and/or
- * GetFrameMetricsCount() == 0. This is an artifact of the fact that both
- * mIndex and GetFrameMetricsCount() are uint32_t and GetFrameMetricsCount()
+ * GetScrollMetadataCount() == 0. This is an artifact of the fact that both
+ * mIndex and GetScrollMetadataCount() are uint32_t and GetScrollMetadataCount()
  * can return 0 but mIndex cannot store -1. This seems better than the
  * alternative of making mIndex a int32_t that can store -1, but then having
  * to cast to uint32_t all over the place.
@@ -169,22 +169,9 @@ public:
     return mLayer != nullptr;
   }
 
-  MOZ_EXPLICIT_CONVERSION operator bool() const
+  explicit operator bool() const
   {
     return IsValid();
-  }
-
-  bool IsScrollInfoLayer() const
-  {
-    MOZ_ASSERT(IsValid());
-
-    // If we are not at the bottommost layer then it's
-    // a stack of container layers all the way down to
-    // mLayer, which we can ignore. We only care about
-    // non-container descendants.
-    return Metrics().IsScrollable()
-        && mLayer->AsContainerLayer()
-        && !mLayer->GetFirstChild();
   }
 
   LayerMetricsWrapper GetParent() const
@@ -334,6 +321,19 @@ public:
     return EventRegions();
   }
 
+  LayerIntRegion GetVisibleRegion() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    if (AtBottomLayer()) {
+      return mLayer->GetVisibleRegion();
+    }
+
+    return ViewAs<LayerPixel>(
+        TransformBy(mLayer->GetTransformTyped(), mLayer->GetVisibleRegion()),
+        PixelCastJustification::MovingDownToChildren);
+  }
+
   bool HasTransformAnimation() const
   {
     MOZ_ASSERT(IsValid());
@@ -354,16 +354,16 @@ public:
     return nullptr;
   }
 
-  LayerIntRegion GetVisibleRegion() const
+  Maybe<uint64_t> GetReferentId() const
   {
     MOZ_ASSERT(IsValid());
 
     if (AtBottomLayer()) {
-      return mLayer->GetVisibleRegion();
+      return mLayer->AsRefLayer()
+           ? Some(mLayer->AsRefLayer()->GetReferentId())
+           : Nothing();
     }
-    LayerIntRegion region = mLayer->GetVisibleRegion();
-    region.Transform(mLayer->GetTransform());
-    return region;
+    return Nothing();
   }
 
   Maybe<ParentLayerIntRect> GetClipRect() const
@@ -409,11 +409,20 @@ public:
     return EventRegionsOverride::NoOverride;
   }
 
-  Layer::ScrollDirection GetScrollbarDirection() const
+  const ScrollThumbData& GetScrollThumbData() const
   {
     MOZ_ASSERT(IsValid());
 
-    return mLayer->GetScrollbarDirection();
+    return mLayer->GetScrollThumbData();
+  }
+
+  uint64_t GetScrollbarAnimationId() const
+  {
+    MOZ_ASSERT(IsValid());
+    // This function is only really needed for template-compatibility with
+    // WebRenderScrollDataWrapper. Although it will be called, the return
+    // value is not used.
+    return 0;
   }
 
   FrameMetrics::ViewID GetScrollbarTargetContainerId() const
@@ -421,15 +430,6 @@ public:
     MOZ_ASSERT(IsValid());
 
     return mLayer->GetScrollbarTargetContainerId();
-  }
-
-  int32_t GetScrollbarSize() const
-  {
-    if (GetScrollbarDirection() == Layer::VERTICAL) {
-      return mLayer->GetVisibleRegion().GetBounds().height;
-    } else {
-      return mLayer->GetVisibleRegion().GetBounds().width;
-    }
   }
 
   bool IsScrollbarContainer() const
@@ -464,34 +464,6 @@ public:
   bool operator!=(const LayerMetricsWrapper& aOther) const
   {
     return !(*this == aOther);
-  }
-
-  static const FrameMetrics& TopmostScrollableMetrics(Layer* aLayer)
-  {
-    for (uint32_t i = aLayer->GetScrollMetadataCount(); i > 0; i--) {
-      if (aLayer->GetFrameMetrics(i - 1).IsScrollable()) {
-        return aLayer->GetFrameMetrics(i - 1);
-      }
-    }
-    return ScrollMetadata::sNullMetadata->GetMetrics();
-  }
-
-  static const FrameMetrics& BottommostScrollableMetrics(Layer* aLayer)
-  {
-    for (uint32_t i = 0; i < aLayer->GetScrollMetadataCount(); i++) {
-      if (aLayer->GetFrameMetrics(i).IsScrollable()) {
-        return aLayer->GetFrameMetrics(i);
-      }
-    }
-    return ScrollMetadata::sNullMetadata->GetMetrics();
-  }
-
-  static const FrameMetrics& BottommostMetrics(Layer* aLayer)
-  {
-    if (aLayer->GetScrollMetadataCount() > 0) {
-      return aLayer->GetFrameMetrics(0);
-    }
-    return ScrollMetadata::sNullMetadata->GetMetrics();
   }
 
 private:

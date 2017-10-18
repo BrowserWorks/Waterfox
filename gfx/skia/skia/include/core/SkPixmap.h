@@ -44,6 +44,9 @@ public:
         this->reset(info, NULL, 0, NULL);
     }
 
+    // overrides the colorspace in the SkImageInfo of the pixmap
+    void setColorSpace(sk_sp<SkColorSpace>);
+
     /**
      *  If supported, set this pixmap to point to the pixels in the specified mask and return true.
      *  On failure, return false and set this pixmap to empty.
@@ -67,6 +70,7 @@ public:
     int height() const { return fInfo.height(); }
     SkColorType colorType() const { return fInfo.colorType(); }
     SkAlphaType alphaType() const { return fInfo.alphaType(); }
+    SkColorSpace* colorSpace() const { return fInfo.colorSpace(); }
     bool isOpaque() const { return fInfo.isOpaque(); }
 
     SkIRect bounds() const { return SkIRect::MakeWH(this->width(), this->height()); }
@@ -80,11 +84,27 @@ public:
      *  Return the shift amount per pixel (i.e. 0 for 1-byte per pixel, 1 for 2-bytes per pixel
      *  colortypes, 2 for 4-bytes per pixel colortypes). Return 0 for kUnknown_SkColorType.
      */
-    int shiftPerPixel() const { return fInfo.bytesPerPixel() >> 1; }
+    int shiftPerPixel() const { return fInfo.shiftPerPixel(); }
 
     uint64_t getSize64() const { return sk_64_mul(fInfo.height(), fRowBytes); }
     uint64_t getSafeSize64() const { return fInfo.getSafeSize64(fRowBytes); }
     size_t getSafeSize() const { return fInfo.getSafeSize(fRowBytes); }
+
+    /**
+     *  This will brute-force return true if all of the pixels in the pixmap
+     *  are opaque. If there are no pixels, or encounters an error, returns false.
+     */
+    bool computeIsOpaque() const;
+
+    /**
+     *  Converts the pixel at the specified coordinate to an unpremultiplied
+     *  SkColor. Note: this ignores any SkColorSpace information, and may return
+     *  lower precision data than is actually in the pixel. Alpha only
+     *  colortypes (e.g. kAlpha_8_SkColorType) return black with the appropriate
+     *  alpha set.  The value is undefined for kUnknown_SkColorType or if x or y
+     *  are out of bounds, or if the pixtap does not have any pixels.
+     */
+    SkColor getColor(int x, int y) const;
 
     const void* addr(int x, int y) const {
         return (const char*)fPixels + fInfo.computeOffset(x, y, fRowBytes);
@@ -141,6 +161,9 @@ public:
     // Writable versions
 
     void* writable_addr() const { return const_cast<void*>(fPixels); }
+    void* writable_addr(int x, int y) const {
+        return const_cast<void*>(this->addr(x, y));
+    }
     uint8_t* writable_addr8(int x, int y) const {
         return const_cast<uint8_t*>(this->addr8(x, y));
     }

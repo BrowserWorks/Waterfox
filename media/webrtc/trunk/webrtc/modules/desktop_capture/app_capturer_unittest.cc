@@ -13,8 +13,7 @@
 #include "webrtc/modules/desktop_capture/desktop_capture_options.h"
 #include "webrtc/modules/desktop_capture/desktop_frame.h"
 #include "webrtc/modules/desktop_capture/desktop_region.h"
-#include "webrtc/system_wrappers/interface/logging.h"
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/system_wrappers/include/logging.h"
 
 namespace webrtc {
 
@@ -40,8 +39,8 @@ public:
   }
 
 protected:
-  rtc::scoped_ptr<AppCapturer> capturer_;
-  rtc::scoped_ptr<DesktopFrame> frame_;
+  rtc::scoped_refptr<AppCapturer> capturer_;
+  rtc::scoped_refptr<DesktopFrame> frame_;
 };
 
 // Verify that we can enumerate applications.

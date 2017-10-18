@@ -18,6 +18,10 @@
 #include "nsString.h"
 #include "Units.h"
 
+#ifdef DEBUG
+#include "nsXULAppAPI.h"
+#endif // #ifdef DEBUG
+
 namespace IPC {
 template<typename T>
 struct ParamTraits;
@@ -93,9 +97,6 @@ public:
   // If mRetargetToNonNativeAnonymous is true and the target is in a non-native
   // native anonymous subtree, the event target is set to mOriginalTarget.
   bool    mRetargetToNonNativeAnonymous : 1;
-  // If mNoCrossProcessBoundaryForwarding is true, the event is not allowed to
-  // cross process boundary.
-  bool    mNoCrossProcessBoundaryForwarding : 1;
   // If mNoContentDispatch is true, the event is never dispatched to the
   // event handlers which are added to the contents, onfoo attributes and
   // properties.  Note that this flag is ignored when
@@ -108,17 +109,15 @@ public:
   bool    mNoContentDispatch : 1;
   // If mOnlyChromeDispatch is true, the event is dispatched to only chrome.
   bool    mOnlyChromeDispatch : 1;
+  // Indicates if the key combination is reserved by chrome.  This is set by
+  // MarkAsReservedByChrome().
+  bool mIsReservedByChrome : 1;
   // If mOnlySystemGroupDispatchInContent is true, event listeners added to
   // the default group for non-chrome EventTarget won't be called.
   // Be aware, if this is true, EventDispatcher needs to check if each event
   // listener is added to chrome node, so, don't set this to true for the
   // events which are fired a lot of times like eMouseMove.
   bool    mOnlySystemGroupDispatchInContent : 1;
-  // If mWantReplyFromContentProcess is true, the event will be redispatched
-  // in the parent process after the content process has handled it. Useful
-  // for when the parent process need the know first how the event was used
-  // by content before handling it itself.
-  bool mWantReplyFromContentProcess : 1;
   // The event's action will be handled by APZ. The main thread should not
   // perform its associated action. This is currently only relevant for
   // wheel and touch events.
@@ -126,6 +125,39 @@ public:
   // True if the event is currently being handled by an event listener that
   // was registered as a passive listener.
   bool mInPassiveListener: 1;
+  // If mComposed is true, the event fired by nodes in shadow DOM can cross the
+  // boundary of shadow DOM and light DOM.
+  bool mComposed : 1;
+  // Similar to mComposed. Set it to true to allow events cross the boundary
+  // between native non-anonymous content and native anonymouse content
+  bool mComposedInNativeAnonymousContent : 1;
+  // Set to true for events which are suppressed or delayed so that later a
+  // DelayedEvent of it is dispatched. This is used when parent side process
+  // the key event after content side, and may drop the event if the event
+  // was suppressed or delayed in contents side.
+  // It is also set to true for the events (in a DelayedInputEvent), which will
+  // be dispatched afterwards.
+  bool mIsSuppressedOrDelayed : 1;
+  // Certain mouse events can be marked as positionless to return 0 from
+  // coordinate related getters.
+  bool mIsPositionless : 1;
+
+  // Flags managing state of propagation between processes.
+  // Note the the following flags shouldn't be referred directly.  Use utility
+  // methods instead.
+
+  // If mNoRemoteProcessDispatch is true, the event is not allowed to be sent
+  // to remote process.
+  bool mNoRemoteProcessDispatch : 1;
+  // If mWantReplyFromContentProcess is true, the event will be redispatched
+  // in the parent process after the content process has handled it. Useful
+  // for when the parent process need the know first how the event was used
+  // by content before handling it itself.
+  bool mWantReplyFromContentProcess : 1;
+  // If mPostedToRemoteProcess is true, the event has been posted to the
+  // remote process (but it's not handled yet if it's not a duplicated event
+  // instance).
+  bool mPostedToRemoteProcess : 1;
 
   // If the event is being handled in target phase, returns true.
   inline bool InTargetPhase() const
@@ -145,12 +177,11 @@ public:
     StopPropagation();
     mImmediatePropagationStopped = true;
   }
-  inline void StopCrossProcessForwarding()
-  {
-    mNoCrossProcessBoundaryForwarding = true;
-  }
   inline void PreventDefault(bool aCalledByDefaultHandler = true)
   {
+    if (!mCancelable) {
+      return;
+    }
     mDefaultPrevented = true;
     // Note that even if preventDefault() has already been called by chrome,
     // a call of preventDefault() by content needs to overwrite
@@ -165,6 +196,9 @@ public:
   // This should be used only before dispatching events into the DOM tree.
   inline void PreventDefaultBeforeDispatch()
   {
+    if (!mCancelable) {
+      return;
+    }
     mDefaultPrevented = true;
   }
   inline bool DefaultPrevented() const
@@ -183,6 +217,152 @@ public:
   inline bool PropagationStopped() const
   {
     return mPropagationStopped;
+  }
+
+  // Helper methods to access flags managing state of propagation between
+  // processes.
+
+  /**
+   * Prevent to be dispatched to remote process.
+   */
+  inline void StopCrossProcessForwarding()
+  {
+    MOZ_ASSERT(!mPostedToRemoteProcess);
+    mNoRemoteProcessDispatch = true;
+    mWantReplyFromContentProcess = false;
+  }
+  /**
+   * Return true if the event shouldn't be dispatched to remote process.
+   */
+  inline bool IsCrossProcessForwardingStopped() const
+  {
+    return mNoRemoteProcessDispatch;
+  }
+  /**
+   * Mark the event as waiting reply from remote process.
+   * If the caller needs to win other keyboard event handlers in chrome,
+   * the caller should call StopPropagation() too.
+   * Otherwise, if the caller just needs to know if the event is consumed by
+   * either content or chrome, it should just call this because the event
+   * may be reserved by chrome and it needs to be dispatched into the DOM
+   * tree in chrome for checking if it's reserved before being sent to any
+   * remote processes.
+   */
+  inline void MarkAsWaitingReplyFromRemoteProcess()
+  {
+    MOZ_ASSERT(!mPostedToRemoteProcess);
+    mNoRemoteProcessDispatch = false;
+    mWantReplyFromContentProcess = true;
+  }
+  /**
+   * Reset "waiting reply from remote process" state.  This is useful when
+   * you dispatch a copy of an event coming from different process.
+   */
+  inline void ResetWaitingReplyFromRemoteProcessState()
+  {
+    if (IsWaitingReplyFromRemoteProcess()) {
+      // FYI: mWantReplyFromContentProcess is also used for indicating
+      //      "handled in remote process" state.  Therefore, only when
+      //      IsWaitingReplyFromRemoteProcess() returns true, this should
+      //      reset the flag.
+      mWantReplyFromContentProcess = false;
+    }
+  }
+  /**
+   * Return true if the event handler should wait reply event.  I.e., if this
+   * returns true, any event handler should do nothing with the event.
+   */
+  inline bool IsWaitingReplyFromRemoteProcess() const
+  {
+    return !mNoRemoteProcessDispatch && mWantReplyFromContentProcess;
+  }
+  /**
+   * Mark the event as already handled in the remote process.  This should be
+   * called when initializing reply events.
+   */
+  inline void MarkAsHandledInRemoteProcess()
+  {
+    mNoRemoteProcessDispatch = true;
+    mWantReplyFromContentProcess = true;
+    mPostedToRemoteProcess = false;
+  }
+  /**
+   * Return true if the event has already been handled in the remote process.
+   */
+  inline bool IsHandledInRemoteProcess() const
+  {
+    return mNoRemoteProcessDispatch && mWantReplyFromContentProcess;
+  }
+  /**
+   * Return true if the event should be sent back to its parent process.
+   */
+  inline bool WantReplyFromContentProcess() const
+  {
+    MOZ_ASSERT(!XRE_IsParentProcess());
+    return IsWaitingReplyFromRemoteProcess();
+  }
+  /**
+   * Mark the event has already posted to a remote process.
+   */
+  inline void MarkAsPostedToRemoteProcess()
+  {
+    MOZ_ASSERT(!IsCrossProcessForwardingStopped());
+    mPostedToRemoteProcess = true;
+  }
+  /**
+   * Reset the cross process dispatching state.  This should be used when a
+   * process receives the event because the state is in the sender.
+   */
+  inline void ResetCrossProcessDispatchingState()
+  {
+    MOZ_ASSERT(!IsCrossProcessForwardingStopped());
+    mPostedToRemoteProcess = false;
+    // Ignore propagation state in the different process if it's marked as
+    // "waiting reply from remote process" because the process needs to
+    // stop propagation in the process until receiving a reply event.
+    if (IsWaitingReplyFromRemoteProcess()) {
+      mPropagationStopped = mImmediatePropagationStopped = false;
+    }
+  }
+  /**
+   * Return true if the event has been posted to a remote process.
+   * Note that MarkAsPostedToRemoteProcess() is called by
+   * ParamTraits<mozilla::WidgetEvent>.  Therefore, it *might* be possible
+   * that posting the event failed even if this returns true.  But that must
+   * really rare.  If that'd be problem for you, you should unmark this in
+   * TabParent or somewhere.
+   */
+  inline bool HasBeenPostedToRemoteProcess() const
+  {
+    return mPostedToRemoteProcess;
+  }
+  /**
+   * Mark the event is reserved by chrome.  I.e., shouldn't be dispatched to
+   * content because it shouldn't be cancelable.
+   */
+  inline void MarkAsReservedByChrome()
+  {
+    MOZ_ASSERT(!mPostedToRemoteProcess);
+    mIsReservedByChrome = true;
+    // For reserved commands (such as Open New Tab), we don't need to wait for
+    // the content to answer, neither to give a chance for content to override
+    // its behavior.
+    StopCrossProcessForwarding();
+    // If the event is reserved by chrome, we shouldn't expose the event to
+    // web contents because such events shouldn't be cancelable.  So, it's not
+    // good behavior to fire such events but to ignore the defaultPrevented
+    // attribute value in chrome.
+    mOnlySystemGroupDispatchInContent = true;
+  }
+  /**
+   * Return true if the event is reserved by chrome.
+   */
+  inline bool IsReservedByChrome() const
+  {
+    MOZ_ASSERT(!mIsReservedByChrome ||
+               (IsCrossProcessForwardingStopped() &&
+                mOnlySystemGroupDispatchInContent));
+    return mIsReservedByChrome;
   }
 
   inline void Clear()
@@ -302,7 +482,6 @@ private:
         break;
       case eTransitionEventClass:
       case eAnimationEventClass:
-      case eSVGZoomEventClass:
         mFlags.mCancelable = false;
         mFlags.mBubbles = true;
         break;
@@ -333,12 +512,15 @@ protected:
     , mMessage(aMessage)
     , mRefPoint(0, 0)
     , mLastRefPoint(0, 0)
+    , mFocusSequenceNumber(0)
     , mSpecifiedEventType(nullptr)
   {
     MOZ_COUNT_CTOR(WidgetEvent);
     mFlags.Clear();
     mFlags.mIsTrusted = aIsTrusted;
     SetDefaultCancelableAndBubbles();
+    SetDefaultComposed();
+    SetDefaultComposedInNativeAnonymousContent();
   }
 
   WidgetEvent()
@@ -359,6 +541,7 @@ public:
   }
 
   WidgetEvent(const WidgetEvent& aOther)
+    : WidgetEventTime()
   {
     MOZ_COUNT_CTOR(WidgetEvent);
     *this = aOther;
@@ -381,6 +564,10 @@ public:
   LayoutDeviceIntPoint mRefPoint;
   // The previous mRefPoint, if known, used to calculate mouse movement deltas.
   LayoutDeviceIntPoint mLastRefPoint;
+  // The sequence number of the last potentially focus changing event handled
+  // by APZ. This is used to track when that event has been processed by content,
+  // and focus can be reconfirmed for async keyboard scrolling.
+  uint64_t mFocusSequenceNumber;
   // See BaseEventFlags definition for the detail.
   BaseEventFlags mFlags;
 
@@ -395,9 +582,15 @@ public:
   nsString mSpecifiedEventTypeString;
 
   // Event targets, needed by DOM Events
+  // Note that when you need event target for DOM event, you should use
+  // Get*DOMEventTarget() instead of accessing these members directly.
   nsCOMPtr<dom::EventTarget> mTarget;
   nsCOMPtr<dom::EventTarget> mCurrentTarget;
   nsCOMPtr<dom::EventTarget> mOriginalTarget;
+
+  dom::EventTarget* GetDOMEventTarget() const;
+  dom::EventTarget* GetCurrentDOMEventTarget() const;
+  dom::EventTarget* GetOriginalDOMEventTarget() const;
 
   void AssignEventData(const WidgetEvent& aEvent, bool aCopyTargets)
   {
@@ -405,6 +598,7 @@ public:
     // mMessage should be initialized with the constructor.
     mRefPoint = aEvent.mRefPoint;
     // mLastRefPoint doesn't need to be copied.
+    mFocusSequenceNumber = aEvent.mFocusSequenceNumber;
     AssignEventTime(aEvent);
     // mFlags should be copied manually if it's necessary.
     mSpecifiedEventType = aEvent.mSpecifiedEventType;
@@ -419,9 +613,11 @@ public:
    */
   void StopPropagation() { mFlags.StopPropagation(); }
   void StopImmediatePropagation() { mFlags.StopImmediatePropagation(); }
-  void StopCrossProcessForwarding() { mFlags.StopCrossProcessForwarding(); }
   void PreventDefault(bool aCalledByDefaultHandler = true)
   {
+    // Legacy mouse events shouldn't be prevented on ePointerDown by default
+    // handlers.
+    MOZ_RELEASE_ASSERT(!aCalledByDefaultHandler || mMessage != ePointerDown);
     mFlags.PreventDefault(aCalledByDefaultHandler);
   }
   void PreventDefaultBeforeDispatch() { mFlags.PreventDefaultBeforeDispatch(); }
@@ -432,6 +628,106 @@ public:
   }
   bool IsTrusted() const { return mFlags.IsTrusted(); }
   bool PropagationStopped() const { return mFlags.PropagationStopped(); }
+
+  /**
+   * Prevent to be dispatched to remote process.
+   */
+  inline void StopCrossProcessForwarding()
+  {
+    mFlags.StopCrossProcessForwarding();
+  }
+  /**
+   * Return true if the event shouldn't be dispatched to remote process.
+   */
+  inline bool IsCrossProcessForwardingStopped() const
+  {
+    return mFlags.IsCrossProcessForwardingStopped();
+  }
+  /**
+   * Mark the event as waiting reply from remote process.
+   * Note that this also stops immediate propagation in current process.
+   */
+  inline void MarkAsWaitingReplyFromRemoteProcess()
+  {
+    mFlags.MarkAsWaitingReplyFromRemoteProcess();
+  }
+  /**
+   * Reset "waiting reply from remote process" state.  This is useful when
+   * you dispatch a copy of an event coming from different process.
+   */
+  inline void ResetWaitingReplyFromRemoteProcessState()
+  {
+    mFlags.ResetWaitingReplyFromRemoteProcessState();
+  }
+  /**
+   * Return true if the event handler should wait reply event.  I.e., if this
+   * returns true, any event handler should do nothing with the event.
+   */
+  inline bool IsWaitingReplyFromRemoteProcess() const
+  {
+    return mFlags.IsWaitingReplyFromRemoteProcess();
+  }
+  /**
+   * Mark the event as already handled in the remote process.  This should be
+   * called when initializing reply events.
+   */
+  inline void MarkAsHandledInRemoteProcess()
+  {
+    mFlags.MarkAsHandledInRemoteProcess();
+  }
+  /**
+   * Return true if the event has already been handled in the remote process.
+   * I.e., if this returns true, the event is a reply event.
+   */
+  inline bool IsHandledInRemoteProcess() const
+  {
+    return mFlags.IsHandledInRemoteProcess();
+  }
+  /**
+   * Return true if the event should be sent back to its parent process.
+   * So, usual event handlers shouldn't call this.
+   */
+  inline bool WantReplyFromContentProcess() const
+  {
+    return mFlags.WantReplyFromContentProcess();
+  }
+  /**
+   * Mark the event has already posted to a remote process.
+   */
+  inline void MarkAsPostedToRemoteProcess()
+  {
+    mFlags.MarkAsPostedToRemoteProcess();
+  }
+  /**
+   * Reset the cross process dispatching state.  This should be used when a
+   * process receives the event because the state is in the sender.
+   */
+  inline void ResetCrossProcessDispatchingState()
+  {
+    mFlags.ResetCrossProcessDispatchingState();
+  }
+  /**
+   * Return true if the event has been posted to a remote process.
+   */
+  inline bool HasBeenPostedToRemoteProcess() const
+  {
+    return mFlags.HasBeenPostedToRemoteProcess();
+  }
+  /**
+   * Mark the event is reserved by chrome.  I.e., shouldn't be dispatched to
+   * content because it shouldn't be cancelable.
+   */
+  inline void MarkAsReservedByChrome()
+  {
+    mFlags.MarkAsReservedByChrome();
+  }
+  /**
+   * Return true if the event is reserved by chrome.
+   */
+  inline bool IsReservedByChrome() const
+  {
+    return mFlags.IsReservedByChrome();
+  }
 
   /**
    * Utils for checking event types
@@ -491,6 +787,15 @@ public:
   bool HasPluginActivationEventMessage() const;
 
   /**
+   * Returns true if the event can be sent to remote process.
+   */
+  bool CanBeSentToRemoteProcess() const;
+  /**
+   * Returns true if the original target is a remote process and the event
+   * will be posted to the remote process later.
+   */
+  bool WillBeSentToRemoteProcess() const;
+  /**
    * Returns true if the event is native event deliverer event for plugin and
    * it should be retarted to focused document.
    */
@@ -542,6 +847,159 @@ public:
    * Whether the event should cause a DOM event.
    */
   bool IsAllowedToDispatchDOMEvent() const;
+  /**
+   * Whether the event should be dispatched in system group.
+   */
+  bool IsAllowedToDispatchInSystemGroup() const;
+  /**
+   * Initialize mComposed
+   */
+  void SetDefaultComposed()
+  {
+    switch (mClass) {
+      case eCompositionEventClass:
+        mFlags.mComposed = mMessage == eCompositionStart ||
+                           mMessage == eCompositionUpdate ||
+                           mMessage == eCompositionEnd;
+        break;
+      case eDragEventClass:
+        // All drag & drop events are composed
+        mFlags.mComposed = mMessage == eDrag || mMessage == eDragEnd ||
+                           mMessage == eDragEnter || mMessage == eDragExit ||
+                           mMessage == eDragLeave || mMessage == eDragOver ||
+                           mMessage == eDragStart || mMessage == eDrop;
+        break;
+      case eEditorInputEventClass:
+        mFlags.mComposed = mMessage == eEditorInput;
+        break;
+      case eFocusEventClass:
+        mFlags.mComposed = mMessage == eBlur || mMessage == eFocus;
+        break;
+      case eKeyboardEventClass:
+        mFlags.mComposed = mMessage == eKeyDown || mMessage == eKeyUp ||
+                           mMessage == eKeyPress;
+        break;
+      case eMouseEventClass:
+        mFlags.mComposed = mMessage == eMouseClick ||
+                           mMessage == eMouseDoubleClick ||
+                           mMessage == eMouseAuxClick ||
+                           mMessage == eMouseDown || mMessage == eMouseUp ||
+                           mMessage == eMouseEnter || mMessage == eMouseLeave ||
+                           mMessage == eMouseOver || mMessage == eMouseOut ||
+                           mMessage == eMouseMove || mMessage == eContextMenu;
+        break;
+      case ePointerEventClass:
+        // All pointer events are composed
+        mFlags.mComposed = mMessage == ePointerDown ||
+                           mMessage == ePointerMove || mMessage == ePointerUp ||
+                           mMessage == ePointerCancel ||
+                           mMessage == ePointerOver ||
+                           mMessage == ePointerOut ||
+                           mMessage == ePointerEnter ||
+                           mMessage == ePointerLeave ||
+                           mMessage == ePointerGotCapture ||
+                           mMessage == ePointerLostCapture;
+        break;
+      case eTouchEventClass:
+        // All touch events are composed
+        mFlags.mComposed = mMessage == eTouchStart || mMessage == eTouchEnd ||
+                           mMessage == eTouchMove || mMessage == eTouchCancel;
+        break;
+      case eUIEventClass:
+        mFlags.mComposed = mMessage == eLegacyDOMFocusIn ||
+                           mMessage == eLegacyDOMFocusOut ||
+                           mMessage == eLegacyDOMActivate;
+        break;
+      case eWheelEventClass:
+        // All wheel events are composed
+        mFlags.mComposed = mMessage == eWheel;
+        break;
+      default:
+        mFlags.mComposed = false;
+        break;
+    }
+  }
+
+  void SetComposed(const nsAString& aEventTypeArg)
+  {
+    mFlags.mComposed = // composition events
+                       aEventTypeArg.EqualsLiteral("compositionstart") ||
+                       aEventTypeArg.EqualsLiteral("compositionupdate") ||
+                       aEventTypeArg.EqualsLiteral("compositionend") ||
+                       // drag and drop events
+                       aEventTypeArg.EqualsLiteral("dragstart") ||
+                       aEventTypeArg.EqualsLiteral("drag") ||
+                       aEventTypeArg.EqualsLiteral("dragenter") ||
+                       aEventTypeArg.EqualsLiteral("dragexit") ||
+                       aEventTypeArg.EqualsLiteral("dragleave") ||
+                       aEventTypeArg.EqualsLiteral("dragover") ||
+                       aEventTypeArg.EqualsLiteral("drop") ||
+                       aEventTypeArg.EqualsLiteral("dropend") ||
+                       // editor input events
+                       aEventTypeArg.EqualsLiteral("input") ||
+                       aEventTypeArg.EqualsLiteral("beforeinput") ||
+                       // focus events
+                       aEventTypeArg.EqualsLiteral("blur") ||
+                       aEventTypeArg.EqualsLiteral("focus") ||
+                       aEventTypeArg.EqualsLiteral("focusin") ||
+                       aEventTypeArg.EqualsLiteral("focusout") ||
+                       // keyboard events
+                       aEventTypeArg.EqualsLiteral("keydown") ||
+                       aEventTypeArg.EqualsLiteral("keyup") ||
+                       aEventTypeArg.EqualsLiteral("keypress") ||
+                       // mouse events
+                       aEventTypeArg.EqualsLiteral("click") ||
+                       aEventTypeArg.EqualsLiteral("dblclick") ||
+                       aEventTypeArg.EqualsLiteral("mousedown") ||
+                       aEventTypeArg.EqualsLiteral("mouseup") ||
+                       aEventTypeArg.EqualsLiteral("mouseenter") ||
+                       aEventTypeArg.EqualsLiteral("mouseleave") ||
+                       aEventTypeArg.EqualsLiteral("mouseover") ||
+                       aEventTypeArg.EqualsLiteral("mouseout") ||
+                       aEventTypeArg.EqualsLiteral("mousemove") ||
+                       aEventTypeArg.EqualsLiteral("contextmenu") ||
+                       // pointer events
+                       aEventTypeArg.EqualsLiteral("pointerdown") ||
+                       aEventTypeArg.EqualsLiteral("pointermove") ||
+                       aEventTypeArg.EqualsLiteral("pointerup") ||
+                       aEventTypeArg.EqualsLiteral("pointercancel") ||
+                       aEventTypeArg.EqualsLiteral("pointerover") ||
+                       aEventTypeArg.EqualsLiteral("pointerout") ||
+                       aEventTypeArg.EqualsLiteral("pointerenter") ||
+                       aEventTypeArg.EqualsLiteral("pointerleave") ||
+                       aEventTypeArg.EqualsLiteral("gotpointercapture") ||
+                       aEventTypeArg.EqualsLiteral("lostpointercapture") ||
+                       // touch events
+                       aEventTypeArg.EqualsLiteral("touchstart") ||
+                       aEventTypeArg.EqualsLiteral("touchend") ||
+                       aEventTypeArg.EqualsLiteral("touchmove") ||
+                       aEventTypeArg.EqualsLiteral("touchcancel") ||
+                       // UI legacy events
+                       aEventTypeArg.EqualsLiteral("DOMFocusIn") ||
+                       aEventTypeArg.EqualsLiteral("DOMFocusOut") ||
+                       aEventTypeArg.EqualsLiteral("DOMActivate") ||
+                       // wheel events
+                       aEventTypeArg.EqualsLiteral("wheel");
+  }
+
+  void SetComposed(bool aComposed)
+  {
+    mFlags.mComposed = aComposed;
+  }
+
+  void SetDefaultComposedInNativeAnonymousContent()
+  {
+    // For compatibility concerns, we set mComposedInNativeAnonymousContent to
+    // false for those events we want to stop propagation.
+    //
+    // nsVideoFrame may create anonymous image element which fires eLoad,
+    // eLoadStart, eLoadEnd, eLoadError. We don't want these events cross
+    // the boundary of NAC
+    mFlags.mComposedInNativeAnonymousContent = mMessage != eLoad &&
+                                               mMessage != eLoadStart &&
+                                               mMessage != eLoadEnd &&
+                                               mMessage != eLoadError;
+  }
 };
 
 /******************************************************************************
@@ -572,13 +1030,13 @@ class NativeEventData final
 
 public:
 
-  MOZ_EXPLICIT_CONVERSION operator bool() const
+  explicit operator bool() const
   {
     return !mBuffer.IsEmpty();
   }
 
   template<typename T>
-  MOZ_EXPLICIT_CONVERSION operator const T*() const
+  explicit operator const T*() const
   {
     return mBuffer.IsEmpty()
            ? nullptr
@@ -711,6 +1169,76 @@ enum Modifier
  ******************************************************************************/
 
 typedef uint16_t Modifiers;
+
+class MOZ_STACK_CLASS GetModifiersName final : public nsAutoCString
+{
+public:
+  explicit GetModifiersName(Modifiers aModifiers)
+  {
+    if (aModifiers & MODIFIER_ALT) {
+      AssignLiteral(NS_DOM_KEYNAME_ALT);
+    }
+    if (aModifiers & MODIFIER_ALTGRAPH) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_ALTGRAPH);
+    }
+    if (aModifiers & MODIFIER_CAPSLOCK) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_CAPSLOCK);
+    }
+    if (aModifiers & MODIFIER_CONTROL) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_CONTROL);
+    }
+    if (aModifiers & MODIFIER_FN) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_FN);
+    }
+    if (aModifiers & MODIFIER_FNLOCK) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_FNLOCK);
+    }
+    if (aModifiers & MODIFIER_META) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_META);
+    }
+    if (aModifiers & MODIFIER_NUMLOCK) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_NUMLOCK);
+    }
+    if (aModifiers & MODIFIER_SCROLLLOCK) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_SCROLLLOCK);
+    }
+    if (aModifiers & MODIFIER_SHIFT) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_SHIFT);
+    }
+    if (aModifiers & MODIFIER_SYMBOL) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_SYMBOL);
+    }
+    if (aModifiers & MODIFIER_SYMBOLLOCK) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_SYMBOLLOCK);
+    }
+    if (aModifiers & MODIFIER_OS) {
+      MaybeAppendSeparator();
+      AppendLiteral(NS_DOM_KEYNAME_OS);
+    }
+    if (IsEmpty()) {
+      AssignLiteral("none");
+    }
+  }
+
+private:
+  void MaybeAppendSeparator()
+  {
+    if (!IsEmpty()) {
+      AppendLiteral(" | ");
+    }
+  }
+};
 
 /******************************************************************************
  * mozilla::WidgetInputEvent

@@ -10,12 +10,6 @@
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
-// longer timeout for slow platforms
-if (isSlowPlatform()) {
-  SimpleTest.requestLongerTimeout(3);
-  SimpleTest.requestCompleteLog();
-}
-
 var manager = new MediaTestManager;
 
 function startTest(test, token) {
@@ -47,7 +41,7 @@ function startTest(test, token) {
 
   var finish = function() {
     v.finished = true;
-    v.removeEventListener("timeupdate", timeUpdate, false);
+    v.removeEventListener("timeupdate", timeUpdate);
     removeNodeAndSource(v);
     manager.finished(v.token);
   }
@@ -63,7 +57,6 @@ function startTest(test, token) {
     is(test.name, v.name, test.name + ": Name should match #2");
     checkMetadata(test.name, v, test);
     is(v.readyState, v.HAVE_CURRENT_DATA, test.name + " checking readyState");
-    ok(v.readyState != v.NETWORK_LOADED, test.name + " shouldn't report NETWORK_LOADED");
     ok(v.ended, test.name + " checking playback has ended");
     ok(!v.finished, test.name + " shouldn't be finished");
     ok(!v.seenEnded, test.name + " shouldn't be ended");
@@ -90,13 +83,13 @@ function startTest(test, token) {
     v.prevTime = v.currentTime;
   }}(test, v);
 
-  v.addEventListener("load", noLoad, false);
-  v.addEventListener("loadedmetadata", check, false);
-  v.addEventListener("timeupdate", timeUpdate, false);
+  v.addEventListener("load", noLoad);
+  v.addEventListener("loadedmetadata", check);
+  v.addEventListener("timeupdate", timeUpdate);
 
   // We should get "ended" and "suspend" events for every resource
-  v.addEventListener("ended", checkEnded, false);
-  v.addEventListener("suspend", checkSuspended, false);
+  v.addEventListener("ended", checkEnded);
+  v.addEventListener("suspend", checkSuspended);
 
   document.body.appendChild(v);
   v.play();
@@ -111,7 +104,7 @@ function startTest(test, token) {
       Log(e.target.token, "got " + e.type);
     }
     events.forEach(function(e) {
-      v.addEventListener(e, logEvent, false);
+      v.addEventListener(e, logEvent);
     });
   }
 }

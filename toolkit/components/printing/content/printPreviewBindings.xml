@@ -15,7 +15,7 @@
    xmlns="http://www.mozilla.org/xbl"
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <binding id="printpreviewtoolbar" 
+  <binding id="printpreviewtoolbar"
            extends="chrome://global/content/bindings/toolbar.xml#toolbar">
     <resources>
       <stylesheet src="chrome://global/skin/printPreview.css"/>
@@ -25,15 +25,15 @@
       <xul:button label="&print.label;" accesskey="&print.accesskey;"
         oncommand="this.parentNode.print();" icon="print"/>
 
-      <xul:button label="&pageSetup.label;" accesskey="&pageSetup.accesskey;"
+      <xul:button anonid="pageSetup" label="&pageSetup.label;" accesskey="&pageSetup.accesskey;"
         oncommand="this.parentNode.doPageSetup();"/>
 
       <xul:vbox align="center" pack="center">
         <xul:label value="&page.label;" accesskey="&page.accesskey;" control="pageNumber"/>
       </xul:vbox>
-      <xul:toolbarbutton class="home-arrow tabbable"
+      <xul:toolbarbutton anonid="navigateHome" class="navigate-button tabbable"
         oncommand="parentNode.navigate(0, 0, 'home');" tooltiptext="&homearrow.tooltip;"/>
-      <xul:toolbarbutton class="previous-arrow tabbable"
+      <xul:toolbarbutton anonid="navigatePrevious" class="navigate-button tabbable"
         oncommand="parentNode.navigate(-1, 0, 0);" tooltiptext="&previousarrow.tooltip;"/>
       <xul:hbox align="center" pack="center">
         <xul:textbox id="pageNumber" size="3" value="1" min="1" type="number"
@@ -41,9 +41,9 @@
         <xul:label value="&of.label;"/>
         <xul:label value="1"/>
       </xul:hbox>
-      <xul:toolbarbutton class="next-arrow tabbable"
+      <xul:toolbarbutton anonid="navigateNext" class="navigate-button tabbable"
         oncommand="parentNode.navigate(1, 0, 0);" tooltiptext="&nextarrow.tooltip;"/>
-      <xul:toolbarbutton class="end-arrow tabbable"
+      <xul:toolbarbutton anonid="navigateEnd" class="navigate-button tabbable"
         oncommand="parentNode.navigate(0, 0, 'end');" tooltiptext="&endarrow.tooltip;"/>
 
       <xul:toolbarseparator class="toolbarseparator-primary"/>
@@ -52,7 +52,7 @@
       </xul:vbox>
 
       <xul:hbox align="center" pack="center">
-        <xul:menulist id="scale" crop="none" 
+        <xul:menulist id="scale" crop="none"
           oncommand="parentNode.parentNode.scale(this.selectedItem.value);">
           <xul:menupopup>
             <xul:menuitem value="0.3" label="&p30.label;"/>
@@ -68,7 +68,7 @@
             <xul:menuitem value="1.75" label="&p175.label;"/>
             <xul:menuitem value="2" label="&p200.label;"/>
             <xul:menuseparator/>
-            <xul:menuitem flex="1" value="ShrinkToFit" 
+            <xul:menuitem flex="1" value="ShrinkToFit"
               label="&ShrinkToFit.label;"/>
             <xul:menuitem value="Custom" label="&Custom.label;"/>
           </xul:menupopup>
@@ -81,7 +81,7 @@
           accesskey="&portrait.accesskey;"
           type="radio" group="orient" class="toolbar-portrait-page tabbable"
           oncommand="parentNode.parentNode.orient('portrait');"/>
-        <xul:toolbarbutton label="&landscape.label;" 
+        <xul:toolbarbutton label="&landscape.label;"
           accesskey="&landscape.accesskey;"
           type="radio" group="orient" class="toolbar-landscape-page tabbable"
           oncommand="parentNode.parentNode.orient('landscape');"/>
@@ -89,6 +89,7 @@
 
       <xul:toolbarseparator class="toolbarseparator-primary"/>
       <xul:checkbox label="&simplifyPage.label;" checked="false" disabled="true"
+        accesskey="&simplifyPage.accesskey;"
         tooltiptext-disabled="&simplifyPage.disabled.tooltip;"
         tooltiptext-enabled="&simplifyPage.enabled.tooltip;"
         oncommand="this.parentNode.simplify();"/>
@@ -103,8 +104,23 @@
       <field name="mPrintButton">
         document.getAnonymousNodes(this)[0]
       </field>
+      <field name="mPageSetupButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "pageSetup");
+      </field>
+      <field name="mNavigateHomeButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "navigateHome");
+      </field>
+      <field name="mNavigatePreviousButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "navigatePrevious");
+      </field>
       <field name="mPageTextBox">
         document.getAnonymousNodes(this)[5].childNodes[0]
+      </field>
+      <field name="mNavigateNextButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "navigateNext");
+      </field>
+      <field name="mNavigateEndButton">
+        document.getAnonymousElementByAttribute(this, "anonid", "navigateEnd");
       </field>
       <field name="mTotalPages">
         document.getAnonymousNodes(this)[5].childNodes[2]
@@ -126,6 +142,9 @@
       </field>
       <field name="mSimplifyPageCheckbox">
         document.getAnonymousNodes(this)[14]
+      </field>
+      <field name="mSimplifyPageNotAllowed">
+        this.mSimplifyPageCheckbox.disabled
       </field>
       <field name="mSimplifyPageToolbarSeparator">
         document.getAnonymousNodes(this)[15]
@@ -157,6 +176,48 @@
           this.mMessageManager = aPPBrowser.messageManager;
           this.mMessageManager.addMessageListener("Printing:Preview:UpdatePageCount", this);
           this.updateToolbar();
+
+          let $ = id => document.getAnonymousElementByAttribute(this, "anonid", id);
+          let ltr = document.documentElement.matches(":root:-moz-locale-dir(ltr)");
+          // Windows 7 doesn't support ⏮ and ⏭ by default, and fallback doesn't
+          // always work (bug 1343330).
+          let {AppConstants} = Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
+          let useCompatCharacters = AppConstants.isPlatformAndVersionAtMost("win", "6.1");
+          let leftEnd = useCompatCharacters ? "⏪" : "⏮";
+          let rightEnd = useCompatCharacters ? "⏩" : "⏭";
+          $("navigateHome").label = ltr ? leftEnd : rightEnd;
+          $("navigatePrevious").label = ltr ? "◂" : "▸";
+          $("navigateNext").label = ltr ? "▸" : "◂";
+          $("navigateEnd").label = ltr ? rightEnd : leftEnd;
+        ]]>
+        </body>
+      </method>
+
+      <method name="destroy">
+        <body>
+        <![CDATA[
+          this.mMessageManager.removeMessageListener("Printing:Preview:UpdatePageCount", this);
+          delete this.mMessageManager;
+          delete this.mPPBrowser;
+        ]]>
+        </body>
+      </method>
+
+      <method name="disableUpdateTriggers">
+        <parameter name="aDisabled"/>
+        <body>
+        <![CDATA[
+          this.mPrintButton.disabled = aDisabled;
+          this.mPageSetupButton.disabled = aDisabled;
+          this.mNavigateHomeButton.disabled = aDisabled;
+          this.mNavigatePreviousButton.disabled = aDisabled;
+          this.mPageTextBox.disabled = aDisabled;
+          this.mNavigateNextButton.disabled = aDisabled;
+          this.mNavigateEndButton.disabled = aDisabled;
+          this.mScaleCombobox.disabled = aDisabled;
+          this.mPortaitButton.disabled = aDisabled;
+          this.mLandscapeButton.disabled = aDisabled;
+          this.mSimplifyPageCheckbox.disabled = this.mSimplifyPageNotAllowed || aDisabled;
         ]]>
         </body>
       </method>
@@ -164,6 +225,7 @@
       <method name="doPageSetup">
         <body>
         <![CDATA[
+          /* import-globals-from printUtils.js */
           var didOK = PrintUtils.showPageSetup();
           if (didOK) {
             // the changes that effect the UI
@@ -210,8 +272,8 @@
           }
 
           this.mMessageManager.sendAsyncMessage("Printing:Preview:Navigate", {
-            navType: navType,
-            pageNum: pageNum,
+            navType,
+            pageNum,
           });
         ]]>
         </body>
@@ -233,10 +295,10 @@
           var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].getService(Components.interfaces.nsIPromptService);
           var promptStr = this.mScaleLabel.value;
           var renameTitle = this.mCustomTitle;
-          var result = {value:value};
-          var confirmed = promptService.prompt(window, renameTitle, promptStr, result, null, {value:value});
+          var result = {value};
+          var confirmed = promptService.prompt(window, renameTitle, promptStr, result, null, {value});
           if (!confirmed || (!result.value) || (result.value == "") || result.value == value) {
-            return(-1);
+            return -1;
           }
           return result.value;
         ]]>
@@ -281,18 +343,17 @@
             if (aValue >= 10) {
               aValue /= 100.0;
             } else {
-              if (this.mScaleCombobox.hasAttribute('lastValidInx')) {
-                this.mScaleCombobox.selectedIndex = this.mScaleCombobox.getAttribute('lastValidInx');
+              if (this.mScaleCombobox.hasAttribute("lastValidInx")) {
+                this.mScaleCombobox.selectedIndex = this.mScaleCombobox.getAttribute("lastValidInx");
               }
               return;
             }
           }
 
           this.setScaleCombobox(aValue);
-          this.mScaleCombobox.setAttribute('lastValidInx', this.mScaleCombobox.selectedIndex);
+          this.mScaleCombobox.setAttribute("lastValidInx", this.mScaleCombobox.selectedIndex);
 
-          if (settings.scaling != aValue || settings.shrinkToFit)
-          {
+          if (settings.scaling != aValue || settings.shrinkToFit) {
             settings.shrinkToFit = false;
             settings.scaling = aValue;
             this.savePrintSettings(settings, settings.kInitSaveShrinkToFit | settings.kInitSaveScaling);
@@ -310,8 +371,7 @@
           var orientValue = (aOrientation == "portrait") ? kIPrintSettings.kPortraitOrientation :
                                                            kIPrintSettings.kLandscapeOrientation;
           var settings = PrintUtils.getPrintSettings();
-          if (settings.orientation != orientValue)
-          {
+          if (settings.orientation != orientValue) {
             settings.orientation = orientValue;
             this.savePrintSettings(settings, settings.kInitSaveOrientation);
             PrintUtils.printPreview();
@@ -332,6 +392,7 @@
       <method name="enableSimplifyPage">
         <body>
         <![CDATA[
+          this.mSimplifyPageNotAllowed = false;
           this.mSimplifyPageCheckbox.disabled = false;
           this.mSimplifyPageCheckbox.setAttribute("tooltiptext",
                this.mSimplifyPageCheckbox.getAttribute("tooltiptext-enabled"));
@@ -342,6 +403,7 @@
       <method name="disableSimplifyPage">
         <body>
         <![CDATA[
+          this.mSimplifyPageNotAllowed = true;
           this.mSimplifyPageCheckbox.disabled = true;
           this.mSimplifyPageCheckbox.setAttribute("tooltiptext",
                this.mSimplifyPageCheckbox.getAttribute("tooltiptext-disabled"));
@@ -366,8 +428,6 @@
           }
 
           this.mPageTextBox.value = 1;
-
-          this.mMessageManager.sendAsyncMessage("Printing:Preview:UpdatePageCount");
         ]]>
         </body>
       </method>

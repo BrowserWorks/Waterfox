@@ -1,4 +1,3 @@
-// |reftest| skip-if(!xulRuntime.shell) -- needs detachArrayBuffer()
 /*
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/licenses/publicdomain/
@@ -17,7 +16,7 @@ print(BUGNUMBER + ": " + summary);
  * BEGIN TEST *
  **************/
 
-function testIndex(dataType)
+function testIndex()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -27,7 +26,7 @@ function testIndex(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         gc();
         return 0xFFF;
       }
@@ -45,10 +44,9 @@ function testIndex(dataType)
   assertEq(ok, true, "should have thrown");
   assertEq(ab.byteLength, 0, "should have been detached correctly");
 }
-testIndex("change-data");
-testIndex("same-data");
+testIndex();
 
-function testValue(dataType)
+function testValue()
 {
   var ab = new ArrayBuffer(0x100000);
 
@@ -58,7 +56,7 @@ function testValue(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         gc();
         return 0x42;
       }
@@ -76,8 +74,7 @@ function testValue(dataType)
   assertEq(ok, true, "should have thrown");
   assertEq(ab.byteLength, 0, "should have been detached correctly");
 }
-testValue("change-data");
-testValue("same-data");
+testValue();
 
 /******************************************************************************/
 

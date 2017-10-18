@@ -5,15 +5,22 @@
 from __future__ import print_function, unicode_literals
 
 import codecs
-import json
+import itertools
 import os
 import subprocess
 import sys
+import textwrap
 
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(base_dir, 'python', 'mozbuild'))
 from mozbuild.configure import ConfigureSandbox
+from mozbuild.makeutil import Makefile
+from mozbuild.pythonutil import iter_modules_in_path
+from mozbuild.util import (
+    indented_repr,
+    encode,
+)
 
 
 def main(argv):
@@ -42,7 +49,8 @@ def config_status(config):
     sanitized_config = {}
     sanitized_config['substs'] = {
         k: sanitized_bools(v) for k, v in config.iteritems()
-        if k not in ('DEFINES', 'non_global_defines', 'TOPSRCDIR', 'TOPOBJDIR')
+        if k not in ('DEFINES', 'non_global_defines', 'TOPSRCDIR', 'TOPOBJDIR',
+                     'ALL_CONFIGURE_PATHS')
     }
     sanitized_config['defines'] = {
         k: sanitized_bools(v) for k, v in config['DEFINES'].iteritems()
@@ -58,35 +66,57 @@ def config_status(config):
     print("Creating config.status", file=sys.stderr)
     encoding = 'mbcs' if sys.platform == 'win32' else 'utf-8'
     with codecs.open('config.status', 'w', encoding) as fh:
-        fh.write('#!%s\n' % config['PYTHON'])
-        fh.write('# coding=%s\n' % encoding)
-        # Because we're serializing as JSON but reading as python, the values
-        # for True, False and None are true, false and null, which don't exist.
-        # Define them.
-        fh.write('true, false, null = True, False, None\n')
+        fh.write(textwrap.dedent('''\
+            #!%(python)s
+            # coding=%(encoding)s
+            from __future__ import unicode_literals
+            from mozbuild.util import encode
+            encoding = '%(encoding)s'
+        ''') % {'python': config['PYTHON'], 'encoding': encoding})
+        # A lot of the build backend code is currently expecting byte
+        # strings and breaks in subtle ways with unicode strings. (bug 1296508)
         for k, v in sanitized_config.iteritems():
-            fh.write('%s = ' % k)
-            json.dump(v, fh, sort_keys=True, indent=4, ensure_ascii=False)
-            fh.write('\n')
+            fh.write('%s = encode(%s, encoding)\n' % (k, indented_repr(v)))
         fh.write("__all__ = ['topobjdir', 'topsrcdir', 'defines', "
                  "'non_global_defines', 'substs', 'mozconfig']")
 
         if config.get('MOZ_BUILD_APP') != 'js' or config.get('JS_STANDALONE'):
-            fh.write('''
-if __name__ == '__main__':
-    args = dict([(name, globals()[name]) for name in __all__])
-    from mozbuild.config_status import config_status
-    config_status(**args)
-''')
+            fh.write(textwrap.dedent('''
+                if __name__ == '__main__':
+                    from mozbuild.util import patch_main
+                    patch_main()
+                    from mozbuild.config_status import config_status
+                    args = dict([(name, globals()[name]) for name in __all__])
+                    config_status(**args)
+            '''))
+
+    # Write out a depfile so Make knows to re-run configure when relevant Python
+    # changes.
+    mk = Makefile()
+    rule = mk.create_rule()
+    rule.add_targets(["$(OBJDIR)/config.status"])
+    rule.add_dependencies(itertools.chain(config['ALL_CONFIGURE_PATHS'],
+                                          iter_modules_in_path(config['TOPOBJDIR'],
+                                                               config['TOPSRCDIR'])))
+    with open('configure.d', 'w') as fh:
+        mk.dump(fh)
 
     # Other things than us are going to run this file, so we need to give it
     # executable permissions.
-    os.chmod('config.status', 0755)
+    os.chmod('config.status', 0o755)
     if config.get('MOZ_BUILD_APP') != 'js' or config.get('JS_STANDALONE'):
-        os.environ['WRITE_MOZINFO'] = '1'
-        # Until we have access to the virtualenv from this script, execute
-        # config.status externally, with the virtualenv python.
-        return subprocess.call([config['PYTHON'], 'config.status'])
+        os.environ[b'WRITE_MOZINFO'] = b'1'
+        from mozbuild.config_status import config_status
+
+        # Some values in sanitized_config also have more complex types, such as
+        # EnumString, which using when calling config_status would currently
+        # break the build, as well as making it inconsistent with re-running
+        # config.status. Fortunately, EnumString derives from unicode, so it's
+        # covered by converting unicode strings.
+
+        # A lot of the build backend code is currently expecting byte strings
+        # and breaks in subtle ways with unicode strings.
+        return config_status(args=[], **encode(sanitized_config, encoding))
     return 0
 
 

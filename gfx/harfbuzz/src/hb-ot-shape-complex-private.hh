@@ -146,6 +146,14 @@ struct hb_ot_complex_shaper_t
 		       hb_buffer_t              *buffer,
 		       hb_font_t                *font);
 
+  /* disable_otl()
+   * Called during shape().
+   * If set and returns true, GDEF/GSUB/GPOS of the font are ignored
+   * and fallback operations used.
+   * May be NULL.
+   */
+  bool (*disable_otl) (const hb_ot_shape_plan_t *plan);
+
   hb_ot_shape_zero_width_marks_type_t zero_width_marks;
 
   bool fallback_position;
@@ -182,6 +190,9 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     /* Unicode-7.0 additions */
     case HB_SCRIPT_MANICHAEAN:
     case HB_SCRIPT_PSALTER_PAHLAVI:
+
+    /* Unicode-9.0 additions */
+    case HB_SCRIPT_ADLAM:
 
       /* For Arabic script, use the Arabic shaper even if no OT script tag was found.
        * This is because we do fallback shaping for Arabic script (and not others).
@@ -240,9 +251,6 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
     /* Unicode-3.0 additions */
     case HB_SCRIPT_SINHALA:
-
-    /* Unicode-5.2 additions */
-    case HB_SCRIPT_JAVANESE:
 
       /* If the designer designed the font for the 'DFLT' script,
        * use the default shaper.  Otherwise, use the specific shaper.
@@ -316,7 +324,7 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
 
     /* Unicode-5.2 additions */
     case HB_SCRIPT_EGYPTIAN_HIEROGLYPHS:
-    //case HB_SCRIPT_JAVANESE:
+    case HB_SCRIPT_JAVANESE:
     case HB_SCRIPT_KAITHI:
     case HB_SCRIPT_MEETEI_MAYEK:
     case HB_SCRIPT_TAI_THAM:
@@ -344,6 +352,15 @@ hb_ot_shape_complex_categorize (const hb_ot_shape_planner_t *planner)
     //case HB_SCRIPT_PSALTER_PAHLAVI:
     case HB_SCRIPT_SIDDHAM:
     case HB_SCRIPT_TIRHUTA:
+
+    /* Unicode-8.0 additions */
+    case HB_SCRIPT_AHOM:
+    //case HB_SCRIPT_MULTANI:
+
+    /* Unicode-9.0 additions */
+    case HB_SCRIPT_BHAIKSUKI:
+    case HB_SCRIPT_MARCHEN:
+    case HB_SCRIPT_NEWA:
 
       /* If the designer designed the font for the 'DFLT' script,
        * use the default shaper.  Otherwise, use the specific shaper.

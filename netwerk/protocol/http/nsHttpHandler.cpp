@@ -7,6 +7,8 @@
 // HttpLog.h should generally be included first
 #include "HttpLog.h"
 
+#include "prsystem.h"
+
 #include "nsHttp.h"
 #include "nsHttpHandler.h"
 #include "nsHttpChannel.h"
@@ -28,13 +30,12 @@
 #include "nsPrintfCString.h"
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
-#include "prprf.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Printf.h"
+#include "mozilla/Sprintf.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsSocketTransportService2.h"
 #include "nsAlgorithm.h"
 #include "ASpdySession.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "EventTokenBucket.h"
 #include "Tickler.h"
 #include "nsIXULAppInfo.h"
@@ -42,9 +43,7 @@
 #include "nsIObserverService.h"
 #include "nsISiteSecurityService.h"
 #include "nsIStreamConverterService.h"
-#include "nsITimer.h"
 #include "nsCRT.h"
-#include "SpdyZlibReporter.h"
 #include "nsIMemoryReporter.h"
 #include "nsIParentalControlsService.h"
 #include "nsPIDOMWindow.h"
@@ -54,13 +53,19 @@
 #include "nsComponentManagerUtils.h"
 #include "nsSocketTransportService2.h"
 #include "nsIOService.h"
-#include "nsIUUIDGenerator.h"
+#include "nsISupportsPrimitives.h"
+#include "nsIXULRuntime.h"
+#include "nsCharSeparatedTokenizer.h"
+#include "nsRFPService.h"
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/net/NeckoParent.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Telemetry.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "mozilla/BasePrincipal.h"
+
+#include "mozilla/dom/ContentParent.h"
 
 #if defined(XP_UNIX)
 #include <sys/utsname.h>
@@ -73,6 +78,10 @@
 #if defined(XP_MACOSX)
 #include <CoreServices/CoreServices.h>
 #include "nsCocoaFeatures.h"
+#endif
+
+#ifdef MOZ_TASK_TRACER
+#include "GeckoTaskTracer.h"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -93,7 +102,9 @@
 #define ALLOW_EXPERIMENTS        "network.allow-experiments"
 #define SAFE_HINT_HEADER_VALUE   "safeHint.enabled"
 #define SECURITY_PREFIX          "security."
-#define NEW_TAB_REMOTE_MODE           "browser.newtabpage.remote.mode"
+
+#define TCP_FAST_OPEN_ENABLE        "network.tcp.tcp_fastopen_enable"
+#define TCP_FAST_OPEN_FAILURE_LIMIT "network.tcp.tcp_fastopen_consecutive_failure_limit"
 
 #define UA_PREF(_pref) UA_PREF_PREFIX _pref
 #define HTTP_PREF(_pref) HTTP_PREF_PREFIX _pref
@@ -141,7 +152,7 @@ GetDeviceModelId() {
         deviceModelId = NS_LossyConvertUTF16toASCII(androidDevice);
     }
     nsAutoCString deviceString;
-    rv = Preferences::GetCString(UA_PREF("device_string"), &deviceString);
+    rv = Preferences::GetCString(UA_PREF("device_string"), deviceString);
     if (NS_SUCCEEDED(rv)) {
         deviceString.Trim(" ", true, true);
         deviceString.ReplaceSubstring(NS_LITERAL_CSTRING("%DEVICEID%"), deviceModelId);
@@ -163,10 +174,11 @@ nsHttpHandler::nsHttpHandler()
     , mCapabilities(NS_HTTP_ALLOW_KEEPALIVE)
     , mReferrerLevel(0xff) // by default we always send a referrer
     , mSpoofReferrerSource(false)
+    , mHideOnionReferrerSource(false)
     , mReferrerTrimmingPolicy(0)
+    , mReferrerXOriginTrimmingPolicy(0)
     , mReferrerXOriginPolicy(0)
     , mFastFallbackToIPv4(false)
-    , mProxyPipelining(true)
     , mIdleTimeout(PR_SecondsToInterval(10))
     , mSpdyTimeout(PR_SecondsToInterval(180))
     , mResponseTimeout(PR_SecondsToInterval(300))
@@ -176,21 +188,19 @@ nsHttpHandler::nsHttpHandler()
     , mMaxRequestDelay(10)
     , mIdleSynTimeout(250)
     , mH2MandatorySuiteEnabled(false)
-    , mPipeliningEnabled(false)
+    , mMaxUrgentExcessiveConns(3)
     , mMaxConnections(24)
     , mMaxPersistentConnectionsPerServer(2)
     , mMaxPersistentConnectionsPerProxy(4)
-    , mMaxPipelinedRequests(32)
-    , mMaxOptimisticPipelinedRequests(4)
-    , mPipelineAggressive(false)
-    , mMaxPipelineObjectSize(300000)
-    , mPipelineRescheduleOnTimeout(true)
-    , mPipelineRescheduleTimeout(PR_MillisecondsToInterval(1500))
-    , mPipelineReadTimeout(PR_MillisecondsToInterval(30000))
+    , mThrottleEnabled(true)
+    , mThrottleSuspendFor(3000)
+    , mThrottleResumeFor(200)
+    , mThrottleResumeIn(400)
+    , mThrottleTimeWindow(3000)
+    , mUrgentStartEnabled(true)
     , mRedirectionLimit(10)
     , mPhishyUserPassLength(1)
     , mQoSBits(0x00)
-    , mPipeliningOverSSL(false)
     , mEnforceAssocReq(false)
     , mLastUniqueID(NowInSeconds())
     , mSessionStartTime(0)
@@ -199,8 +209,8 @@ nsHttpHandler::nsHttpHandler()
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
     , mUserAgentIsDirty(true)
+    , mAcceptLanguagesIsDirty(true)
     , mPromptTempRedirect(true)
-    , mSendSecureXSiteReferrer(true)
     , mEnablePersistentHttpsCaching(false)
     , mDoNotTrackEnabled(false)
     , mSafeHintEnabled(false)
@@ -210,7 +220,6 @@ nsHttpHandler::nsHttpHandler()
     , mAllowExperiments(true)
     , mDebugObservations(false)
     , mEnableSpdy(false)
-    , mSpdyV31(true)
     , mHttp2Enabled(true)
     , mUseH2Deps(true)
     , mEnforceHttp2TlsProfile(true)
@@ -219,6 +228,7 @@ nsHttpHandler::nsHttpHandler()
     , mAllowPush(true)
     , mEnableAltSvc(false)
     , mEnableAltSvcOE(false)
+    , mEnableOriginExtension(false)
     , mSpdySendingChunkSize(ASpdySession::kSendingChunkSize)
     , mSpdySendBufferSize(ASpdySession::kTCPSendBufferSize)
     , mSpdyPushAllowance(32768)
@@ -240,13 +250,116 @@ nsHttpHandler::nsHttpHandler()
     , mTCPKeepaliveLongLivedIdleTimeS(600)
     , mEnforceH1Framing(FRAMECHECK_BARELY)
     , mKeepEmptyResponseHeadersAsEmtpyString(false)
+    , mDefaultHpackBuffer(4096)
+    , mMaxHttpResponseHeaderSize(393216)
+    , mFocusedWindowTransactionRatio(0.9f)
+    , mUseFastOpen(true)
+    , mFastOpenConsecutiveFailureLimit(5)
+    , mFastOpenConsecutiveFailureCounter(0)
+    , mActiveTabPriority(true)
+    , mProcessId(0)
+    , mNextChannelId(1)
 {
     LOG(("Creating nsHttpHandler [this=%p].\n", this));
 
-    RegisterStrongMemoryReporter(new SpdyZlibReporter());
-
     MOZ_ASSERT(!gHttpHandler, "HTTP handler already created!");
     gHttpHandler = this;
+    nsCOMPtr<nsIXULRuntime> runtime = do_GetService("@mozilla.org/xre/runtime;1");
+    if (runtime) {
+        runtime->GetProcessID(&mProcessId);
+    }
+    SetFastOpenOSSupport();
+}
+
+void
+nsHttpHandler::SetFastOpenOSSupport()
+{
+    mFastOpenSupported = false;
+#if !defined(XP_WIN) && !defined(XP_LINUX) && !defined(ANDROID) && !defined(HAS_CONNECTX)
+    return;
+#else
+
+    nsAutoCString version;
+    nsresult rv;
+#ifdef ANDROID
+    nsCOMPtr<nsIPropertyBag2> infoService =
+        do_GetService("@mozilla.org/system-info;1");
+    MOZ_ASSERT(infoService, "Could not find a system info service");
+    rv = infoService->GetPropertyAsACString(
+        NS_LITERAL_STRING("sdk_version"), version);
+#else
+    char buf[SYS_INFO_BUFFER_LENGTH];
+    if (PR_GetSystemInfo(PR_SI_RELEASE, buf, sizeof(buf)) == PR_SUCCESS) {
+        version = buf;
+        rv = NS_OK;
+    } else {
+        rv = NS_ERROR_FAILURE;
+    }
+#endif
+
+    LOG(("nsHttpHandler::SetFastOpenOSSupport version %s", version.get()));
+
+    if (NS_SUCCEEDED(rv)) {
+        // set min version minus 1.
+#ifdef XP_WIN
+        int min_version[] = {10, 0};
+#elif XP_MACOSX
+        int min_version[] = {15, 0};
+#elif ANDROID
+        int min_version[] = {4, 4};
+#elif XP_LINUX
+        int min_version[] = {3, 6};
+#endif
+        int inx = 0;
+        nsCCharSeparatedTokenizer tokenizer(version, '.');
+        while ((inx < 2) && tokenizer.hasMoreTokens()) {
+            nsAutoCString token(tokenizer.nextToken());
+            const char* nondigit = NS_strspnp("0123456789", token.get());
+            if (nondigit && *nondigit) {
+                break;
+            }
+            nsresult rv;
+            int32_t ver = token.ToInteger(&rv);
+            if (NS_FAILED(rv)) {
+                break;
+            }
+            if (ver > min_version[inx]) {
+                mFastOpenSupported = true;
+                break;
+            } else if (ver == min_version[inx] && inx == 1) {
+                mFastOpenSupported = true;
+            } else if (ver < min_version[inx]) {
+                break;
+            }
+            inx++;
+        }
+    }
+#endif
+
+#ifdef XP_WIN
+  if (mFastOpenSupported) {
+    // We have some problems with lavasoft software and tcp fast open.
+    if (GetModuleHandleW(L"pmls64.dll") || GetModuleHandleW(L"rlls64.dll")) {
+      mFastOpenSupported = false;
+    }
+  }
+#endif
+
+    LOG(("nsHttpHandler::SetFastOpenOSSupport %s supported.\n",
+         mFastOpenSupported ? "" : "not"));
+}
+
+void
+nsHttpHandler::EnsureUAOverridesInit()
+{
+    MOZ_ASSERT(XRE_IsParentProcess());
+    MOZ_ASSERT(NS_IsMainThread());
+
+    nsresult rv;
+    nsCOMPtr<nsISupports> bootstrapper
+        = do_GetService("@mozilla.org/network/ua-overrides-bootstrapper;1", &rv);
+    MOZ_ASSERT(bootstrapper);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
 nsHttpHandler::~nsHttpHandler()
@@ -255,7 +368,12 @@ nsHttpHandler::~nsHttpHandler()
 
     // make sure the connection manager is shutdown
     if (mConnMgr) {
-        mConnMgr->Shutdown();
+        nsresult rv = mConnMgr->Shutdown();
+        if (NS_FAILED(rv)) {
+            LOG(("nsHttpHandler [this=%p] "
+                 "failed to shutdown connection manager (%08x)\n",
+                 this, static_cast<uint32_t>(rv)));
+        }
         mConnMgr = nullptr;
     }
 
@@ -263,11 +381,6 @@ nsHttpHandler::~nsHttpHandler()
     // and it'll segfault.  NeckoChild will get cleaned up by process exit.
 
     nsHttp::DestroyAtomTable();
-    if (mPipelineTestTimer) {
-        mPipelineTestTimer->Cancel();
-        mPipelineTestTimer = nullptr;
-    }
-
     gHttpHandler = nullptr;
 }
 
@@ -288,12 +401,19 @@ nsHttpHandler::Init()
         NS_WARNING("unable to continue without io service");
         return rv;
     }
-    mIOService = new nsMainThreadPtrHolder<nsIIOService>(service);
+    mIOService = new nsMainThreadPtrHolder<nsIIOService>(
+      "nsHttpHandler::mIOService", service);
 
     if (IsNeckoChild())
         NeckoChild::InitNeckoChild();
 
     InitUserAgentComponents();
+
+    // This perference is only used in parent process.
+    if (!IsNeckoChild()) {
+        mActiveTabPriority =
+            Preferences::GetBool(HTTP_PREF("active_tab_priority"), true);
+    }
 
     // monitor some preference changes
     nsCOMPtr<nsIPrefBranch> prefBranch = do_GetService(NS_PREFSERVICE_CONTRACTID);
@@ -309,14 +429,9 @@ nsHttpHandler::Init()
         prefBranch->AddObserver(HTTP_PREF("tcp_keepalive.long_lived_connections"), this, true);
         prefBranch->AddObserver(SAFE_HINT_HEADER_VALUE, this, true);
         prefBranch->AddObserver(SECURITY_PREFIX, this, true);
-        prefBranch->AddObserver(NEW_TAB_REMOTE_MODE, this, true);
+        prefBranch->AddObserver(TCP_FAST_OPEN_ENABLE, this, true);
+        prefBranch->AddObserver(TCP_FAST_OPEN_FAILURE_LIMIT, this, true);
         PrefsChanged(prefBranch, nullptr);
-    }
-
-    rv = Preferences::AddBoolVarCache(&mPackagedAppsEnabled,
-        "network.http.enable-packaged-apps", false);
-    if (NS_FAILED(rv)) {
-        mPackagedAppsEnabled = false;
     }
 
     nsHttpChannelAuthProvider::InitializePrefs();
@@ -336,9 +451,21 @@ nsHttpHandler::Init()
           appInfo->GetName(mAppName);
         }
         appInfo->GetVersion(mAppVersion);
-        mAppName.StripChars(" ()<>@,;:\\\"/[]?={}");
+        mAppName.StripChars(R"( ()<>@,;:\"/[]?={})");
     } else {
         mAppVersion.AssignLiteral(MOZ_APP_UA_VERSION);
+    }
+
+    // Generating the spoofed userAgent for fingerprinting resistance.
+    // The browser version will be rounded down to a multiple of 10.
+    // By doing so, the anonymity group will cover more versions instead of one
+    // version.
+    uint32_t spoofedVersion = mAppVersion.ToInteger(&rv);
+    if (NS_SUCCEEDED(rv)) {
+        spoofedVersion = spoofedVersion - (spoofedVersion % 10);
+        mSpoofedUserAgent.Assign(nsPrintfCString(
+            "Mozilla/5.0 (%s; rv:%d.0) Gecko/%s Firefox/%d.0",
+            SPOOFED_OSCPU, spoofedVersion, LEGACY_BUILD_ID, spoofedVersion));
     }
 
     mSessionStartTime = NowInSeconds();
@@ -359,7 +486,7 @@ nsHttpHandler::Init()
 #if defined(ANDROID) || defined(MOZ_MULET)
     mProductSub.AssignLiteral(MOZILLA_UAVERSION);
 #else
-    mProductSub.AssignLiteral("20100101");
+    mProductSub.AssignLiteral(LEGACY_BUILD_ID);
 #endif
 
 #if DEBUG
@@ -394,12 +521,24 @@ nsHttpHandler::Init()
         obsService->AddObserver(this, "net:prune-dead-connections", true);
         // Sent by the TorButton add-on in the Tor Browser
         obsService->AddObserver(this, "net:prune-all-connections", true);
-        obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
         obsService->AddObserver(this, "last-pb-context-exited", true);
-        obsService->AddObserver(this, "webapps-clear-data", true);
         obsService->AddObserver(this, "browser:purge-session-history", true);
         obsService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
         obsService->AddObserver(this, "application-background", true);
+
+        if (!IsNeckoChild()) {
+            obsService->AddObserver(this,
+                                    "net:current-toplevel-outer-content-windowid",
+                                    true);
+        }
+
+        if (mFastOpenSupported) {
+            obsService->AddObserver(this, "captive-portal-login", true);
+            obsService->AddObserver(this, "captive-portal-login-success", true);
+        }
+
+        // disabled as its a nop right now
+        // obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
     }
 
     MakeNewRequestTokenBucket();
@@ -424,7 +563,11 @@ nsHttpHandler::MakeNewRequestTokenBucket()
     }
     RefPtr<EventTokenBucket> tokenBucket =
         new EventTokenBucket(RequestTokenBucketHz(), RequestTokenBucketBurst());
-    mConnMgr->UpdateRequestTokenBucket(tokenBucket);
+    // NOTE The thread or socket may be gone already.
+    nsresult rv = mConnMgr->UpdateRequestTokenBucket(tokenBucket);
+    if (NS_FAILED(rv)) {
+        LOG(("    failed to update request token bucket\n"));
+    }
 }
 
 nsresult
@@ -441,12 +584,16 @@ nsHttpHandler::InitConnectionMgr()
         mConnMgr = new nsHttpConnectionMgr();
     }
 
-    rv = mConnMgr->Init(mMaxConnections,
+    rv = mConnMgr->Init(mMaxUrgentExcessiveConns,
+                        mMaxConnections,
                         mMaxPersistentConnectionsPerServer,
                         mMaxPersistentConnectionsPerProxy,
                         mMaxRequestDelay,
-                        mMaxPipelinedRequests,
-                        mMaxOptimisticPipelinedRequests);
+                        mThrottleEnabled,
+                        mThrottleSuspendFor,
+                        mThrottleResumeFor,
+                        mThrottleResumeIn,
+                        mThrottleTimeWindow);
     return rv;
 }
 
@@ -470,8 +617,13 @@ nsHttpHandler::AddStandardRequestHeaders(nsHttpRequestHead *request, bool isSecu
 
     // Add the "Accept-Language" header.  This header is also exposed to the
     // service worker.
+    if (mAcceptLanguagesIsDirty) {
+        rv = SetAcceptLanguages();
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
+    }
+
+    // Add the "Accept-Language" header
     if (!mAcceptLanguages.IsEmpty()) {
-        // Add the "Accept-Language" header
         rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages,
                                 false,
                                 nsHttpHeaderArray::eVarietyRequestOverride);
@@ -512,7 +664,7 @@ nsHttpHandler::AddConnectionHeader(nsHttpRequestHead *request,
     NS_NAMED_LITERAL_CSTRING(close, "close");
     NS_NAMED_LITERAL_CSTRING(keepAlive, "keep-alive");
 
-    const nsACString *connectionType = &close;
+    const nsLiteralCString *connectionType = &close;
     if (caps & NS_HTTP_ALLOW_KEEPALIVE) {
         connectionType = &keepAlive;
     }
@@ -546,6 +698,21 @@ nsHttpHandler::IsAcceptableEncoding(const char *enc, bool isSecure)
     return rv;
 }
 
+void
+nsHttpHandler::IncrementFastOpenConsecutiveFailureCounter()
+{
+    LOG(("nsHttpHandler::IncrementFastOpenConsecutiveFailureCounter - "
+         "failed=%d failure_limit=%d", mFastOpenConsecutiveFailureCounter,
+         mFastOpenConsecutiveFailureLimit));
+    if (mFastOpenConsecutiveFailureCounter < mFastOpenConsecutiveFailureLimit) {
+        mFastOpenConsecutiveFailureCounter++;
+        if (mFastOpenConsecutiveFailureCounter == mFastOpenConsecutiveFailureLimit) {
+            LOG(("nsHttpHandler::IncrementFastOpenConsecutiveFailureCounter - "
+                 "Fast open failed too many times"));
+        }
+    }
+}
+
 nsresult
 nsHttpHandler::GetStreamConverterService(nsIStreamConverterService **result)
 {
@@ -555,7 +722,8 @@ nsHttpHandler::GetStreamConverterService(nsIStreamConverterService **result)
             do_GetService(NS_STREAMCONVERTERSERVICE_CONTRACTID, &rv);
         if (NS_FAILED(rv))
             return rv;
-        mStreamConvSvc = new nsMainThreadPtrHolder<nsIStreamConverterService>(service);
+        mStreamConvSvc = new nsMainThreadPtrHolder<nsIStreamConverterService>(
+          "nsHttpHandler::mStreamConvSvc", service);
     }
     *result = mStreamConvSvc;
     NS_ADDREF(*result);
@@ -567,7 +735,8 @@ nsHttpHandler::GetSSService()
 {
     if (!mSSService) {
         nsCOMPtr<nsISiteSecurityService> service = do_GetService(NS_SSSERVICE_CONTRACTID);
-        mSSService = new nsMainThreadPtrHolder<nsISiteSecurityService>(service);
+        mSSService = new nsMainThreadPtrHolder<nsISiteSecurityService>(
+          "nsHttpHandler::mSSService", service);
     }
     return mSSService;
 }
@@ -577,7 +746,8 @@ nsHttpHandler::GetCookieService()
 {
     if (!mCookieService) {
         nsCOMPtr<nsICookieService> service = do_GetService(NS_COOKIESERVICE_CONTRACTID);
-        mCookieService = new nsMainThreadPtrHolder<nsICookieService>(service);
+        mCookieService = new nsMainThreadPtrHolder<nsICookieService>(
+          "nsHttpHandler::mCookieService", service);
     }
     return mCookieService;
 }
@@ -595,12 +765,12 @@ uint32_t
 nsHttpHandler::Get32BitsOfPseudoRandom()
 {
     // only confirm rand seeding on socket thread
-    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+    MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
     // rand() provides different amounts of PRNG on different platforms.
     // 15 or 31 bits are common amounts.
 
-    PR_STATIC_ASSERT(RAND_MAX >= 0xfff);
+    static_assert(RAND_MAX >= 0xfff, "RAND_MAX should be >= 12 bits");
 
 #if RAND_MAX < 0xffffU
     return ((uint16_t) rand() << 20) |
@@ -616,21 +786,26 @@ nsHttpHandler::Get32BitsOfPseudoRandom()
 void
 nsHttpHandler::NotifyObservers(nsIHttpChannel *chan, const char *event)
 {
-    LOG(("nsHttpHandler::NotifyObservers [chan=%x event=\"%s\"]\n", chan, event));
+    LOG(("nsHttpHandler::NotifyObservers [chan=%p event=\"%s\"]\n", chan, event));
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
     if (obsService)
         obsService->NotifyObservers(chan, event, nullptr);
 }
 
 nsresult
-nsHttpHandler::AsyncOnChannelRedirect(nsIChannel* oldChan, nsIChannel* newChan,
-                                 uint32_t flags)
+nsHttpHandler::AsyncOnChannelRedirect(nsIChannel* oldChan,
+                                      nsIChannel* newChan,
+                                      uint32_t flags,
+                                      nsIEventTarget* mainThreadEventTarget)
 {
     // TODO E10S This helper has to be initialized on the other process
     RefPtr<nsAsyncRedirectVerifyHelper> redirectCallbackHelper =
         new nsAsyncRedirectVerifyHelper();
 
-    return redirectCallbackHelper->Init(oldChan, newChan, flags);
+    return redirectCallbackHelper->Init(oldChan,
+                                        newChan,
+                                        flags,
+                                        mainThreadEventTarget);
 }
 
 /* static */ nsresult
@@ -644,9 +819,15 @@ nsHttpHandler::GenerateHostPort(const nsCString& host, int32_t port,
 // nsHttpHandler <private>
 //-----------------------------------------------------------------------------
 
-const nsAFlatCString &
+const nsCString&
 nsHttpHandler::UserAgent()
 {
+    if (nsContentUtils::ShouldResistFingerprinting() &&
+        !mSpoofedUserAgent.IsEmpty()) {
+        LOG(("using spoofed userAgent : %s\n", mSpoofedUserAgent.get()));
+        return mSpoofedUserAgent;
+    }
+
     if (mUserAgentOverride) {
         LOG(("using general.useragent.override : %s\n", mUserAgentOverride.get()));
         return mUserAgentOverride;
@@ -812,8 +993,8 @@ nsHttpHandler::InitUserAgentComponents()
     {
         // Add the `Mobile` or `Tablet` or `TV` token when running in the b2g
         // desktop simulator via preference.
-        nsCString deviceType;
-        nsresult rv = Preferences::GetCString("devtools.useragent.device_type", &deviceType);
+        nsAutoCString deviceType;
+        nsresult rv = Preferences::GetCString("devtools.useragent.device_type", deviceType);
         if (NS_SUCCEEDED(rv)) {
             mCompatDevice.Assign(deviceType);
         } else {
@@ -821,31 +1002,6 @@ nsHttpHandler::InitUserAgentComponents()
         }
     }
 #endif // MOZ_MULET
-
-#if defined(MOZ_WIDGET_GONK)
-    // Device model identifier should be a simple token, which can be composed
-    // of letters, numbers, hyphen ("-") and dot (".").
-    // Any other characters means the identifier is invalid and ignored.
-    nsCString deviceId;
-    rv = Preferences::GetCString("general.useragent.device_id", &deviceId);
-    if (NS_SUCCEEDED(rv)) {
-        bool valid = true;
-        deviceId.Trim(" ", true, true);
-        for (size_t i = 0; i < deviceId.Length(); i++) {
-            char c = deviceId.CharAt(i);
-            if (!(isalnum(c) || c == '-' || c == '.')) {
-                valid = false;
-                break;
-            }
-        }
-        if (valid) {
-            mDeviceModelId = deviceId;
-        } else {
-            LOG(("nsHttpHandler: Ignore invalid device ID: [%s]\n",
-                  deviceId.get()));
-        }
-    }
-#endif
 
 #ifndef MOZ_UA_OS_AGNOSTIC
     // Gather OS/CPU.
@@ -869,12 +1025,11 @@ nsHttpHandler::InitUserAgentComponents()
           ? WNT_BASE "; WOW64"
           : WNT_BASE;
 #endif
-        char *buf = PR_smprintf(format,
-                                info.dwMajorVersion,
-                                info.dwMinorVersion);
+        SmprintfPointer buf = mozilla::Smprintf(format,
+                                                info.dwMajorVersion,
+                                                info.dwMinorVersion);
         if (buf) {
-            mOscpu = buf;
-            PR_smprintf_free(buf);
+            mOscpu = buf.get();
         }
     }
 #elif defined (XP_MACOSX)
@@ -885,7 +1040,8 @@ nsHttpHandler::InitUserAgentComponents()
 #endif
     SInt32 majorVersion = nsCocoaFeatures::OSXVersionMajor();
     SInt32 minorVersion = nsCocoaFeatures::OSXVersionMinor();
-    mOscpu += nsPrintfCString(" %d.%d", majorVersion, minorVersion);
+    mOscpu += nsPrintfCString(" %d.%d", static_cast<int>(majorVersion),
+                              static_cast<int>(minorVersion));
 #elif defined (XP_UNIX)
     struct utsname name;
 
@@ -960,8 +1116,16 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
     if (MULTI_PREF_CHANGED(SECURITY_PREFIX)) {
         LOG(("nsHttpHandler::PrefsChanged Security Pref Changed %s\n", pref));
         if (mConnMgr) {
-            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
-            mConnMgr->PruneDeadConnections();
+            rv = mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+            if (NS_FAILED(rv)) {
+                LOG(("nsHttpHandler::PrefsChanged "
+                     "DoShiftReloadConnectionCleanup failed (%08x)\n", static_cast<uint32_t>(rv)));
+            }
+            rv = mConnMgr->PruneDeadConnections();
+            if (NS_FAILED(rv)) {
+                LOG(("nsHttpHandler::PrefsChanged "
+                     "PruneDeadConnections failed (%08x)\n", static_cast<uint32_t>(rv)));
+            }
         }
     }
 
@@ -1016,9 +1180,14 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetIntPref(HTTP_PREF("request.max-start-delay"), &val);
         if (NS_SUCCEEDED(rv)) {
             mMaxRequestDelay = (uint16_t) clamped(val, 0, 0xffff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_REQUEST_DELAY,
-                                      mMaxRequestDelay);
+            if (mConnMgr) {
+                rv = mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_REQUEST_DELAY,
+                                           mMaxRequestDelay);
+                if (NS_FAILED(rv)) {
+                    LOG(("nsHttpHandler::PrefsChanged (request.max-start-delay)"
+                         "UpdateParam failed (%08x)\n", static_cast<uint32_t>(rv)));
+                }
+            }
         }
     }
 
@@ -1041,19 +1210,44 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mMaxConnections = (uint16_t) clamped((uint32_t)val,
                                                  (uint32_t)1, MaxSocketCount());
 
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_CONNECTIONS,
-                                      mMaxConnections);
+            if (mConnMgr) {
+                rv = mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_CONNECTIONS,
+                                           mMaxConnections);
+                if (NS_FAILED(rv)) {
+                    LOG(("nsHttpHandler::PrefsChanged (max-connections)"
+                         "UpdateParam failed (%08x)\n", static_cast<uint32_t>(rv)));
+                }
+            }
         }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("max-urgent-start-excessive-connections-per-host"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("max-urgent-start-excessive-connections-per-host"), &val);
+        if (NS_SUCCEEDED(rv)) {
+            mMaxUrgentExcessiveConns = (uint8_t) clamped(val, 1, 0xff);
+            if (mConnMgr) {
+                rv = mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_URGENT_START_Q,
+                                           mMaxUrgentExcessiveConns);
+                if (NS_FAILED(rv)) {
+                    LOG(("nsHttpHandler::PrefsChanged (max-urgent-start-excessive-connections-per-host)"
+                         "UpdateParam failed (%08x)\n", static_cast<uint32_t>(rv)));
+                }
+             }
+          }
     }
 
     if (PREF_CHANGED(HTTP_PREF("max-persistent-connections-per-server"))) {
         rv = prefs->GetIntPref(HTTP_PREF("max-persistent-connections-per-server"), &val);
         if (NS_SUCCEEDED(rv)) {
             mMaxPersistentConnectionsPerServer = (uint8_t) clamped(val, 1, 0xff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PERSISTENT_CONNECTIONS_PER_HOST,
-                                      mMaxPersistentConnectionsPerServer);
+            if (mConnMgr) {
+                rv = mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PERSISTENT_CONNECTIONS_PER_HOST,
+                                           mMaxPersistentConnectionsPerServer);
+                if (NS_FAILED(rv)) {
+                    LOG(("nsHttpHandler::PrefsChanged (max-persistent-connections-per-server)"
+                         "UpdateParam failed (%08x)\n", static_cast<uint32_t>(rv)));
+                }
+            }
         }
     }
 
@@ -1061,9 +1255,14 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetIntPref(HTTP_PREF("max-persistent-connections-per-proxy"), &val);
         if (NS_SUCCEEDED(rv)) {
             mMaxPersistentConnectionsPerProxy = (uint8_t) clamped(val, 1, 0xff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PERSISTENT_CONNECTIONS_PER_PROXY,
-                                      mMaxPersistentConnectionsPerProxy);
+            if (mConnMgr) {
+                rv = mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PERSISTENT_CONNECTIONS_PER_PROXY,
+                                           mMaxPersistentConnectionsPerProxy);
+                if (NS_FAILED(rv)) {
+                    LOG(("nsHttpHandler::PrefsChanged (max-persistent-connections-per-proxy)"
+                         "UpdateParam failed (%08x)\n", static_cast<uint32_t>(rv)));
+                }
+            }
         }
     }
 
@@ -1079,10 +1278,22 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mSpoofReferrerSource = cVar;
     }
 
+    if (PREF_CHANGED(HTTP_PREF("referer.hideOnionSource"))) {
+        rv = prefs->GetBoolPref(HTTP_PREF("referer.hideOnionSource"), &cVar);
+        if (NS_SUCCEEDED(rv))
+            mHideOnionReferrerSource = cVar;
+    }
+
     if (PREF_CHANGED(HTTP_PREF("referer.trimmingPolicy"))) {
         rv = prefs->GetIntPref(HTTP_PREF("referer.trimmingPolicy"), &val);
         if (NS_SUCCEEDED(rv))
             mReferrerTrimmingPolicy = (uint8_t) clamped(val, 0, 2);
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("referer.XOriginTrimmingPolicy"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("referer.XOriginTrimmingPolicy"), &val);
+        if (NS_SUCCEEDED(rv))
+            mReferrerXOriginTrimmingPolicy = (uint8_t) clamped(val, 0, 2);
     }
 
     if (PREF_CHANGED(HTTP_PREF("referer.XOriginPolicy"))) {
@@ -1134,114 +1345,20 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
-    if (PREF_CHANGED(HTTP_PREF("pipelining"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining"), &cVar);
-        if (NS_SUCCEEDED(rv)) {
-            if (cVar)
-                mCapabilities |=  NS_HTTP_ALLOW_PIPELINING;
-            else
-                mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-            mPipeliningEnabled = cVar;
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.maxrequests"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.maxrequests"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxPipelinedRequests = clamped(val, 1, 0xffff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam(nsHttpConnectionMgr::MAX_PIPELINED_REQUESTS,
-                                      mMaxPipelinedRequests);
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.max-optimistic-requests"))) {
-        rv = prefs->
-            GetIntPref(HTTP_PREF("pipelining.max-optimistic-requests"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxOptimisticPipelinedRequests = clamped(val, 1, 0xffff);
-            if (mConnMgr)
-                mConnMgr->UpdateParam
-                    (nsHttpConnectionMgr::MAX_OPTIMISTIC_PIPELINED_REQUESTS,
-                     mMaxOptimisticPipelinedRequests);
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.aggressive"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.aggressive"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipelineAggressive = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.maxsize"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.maxsize"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mMaxPipelineObjectSize =
-                static_cast<int64_t>(clamped(val, 1000, 100000000));
-        }
-    }
-
-    // Determines whether or not to actually reschedule after the
-    // reschedule-timeout has expired
-    if (PREF_CHANGED(HTTP_PREF("pipelining.reschedule-on-timeout"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.reschedule-on-timeout"),
-                                &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipelineRescheduleOnTimeout = cVar;
-    }
-
-    // The amount of time head of line blocking is allowed (in ms)
-    // before the blocked transactions are moved to another pipeline
-    if (PREF_CHANGED(HTTP_PREF("pipelining.reschedule-timeout"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.reschedule-timeout"),
-                               &val);
-        if (NS_SUCCEEDED(rv)) {
-            mPipelineRescheduleTimeout =
-                PR_MillisecondsToInterval((uint16_t) clamped(val, 500, 0xffff));
-        }
-    }
-
-    // The amount of time a pipelined transaction is allowed to wait before
-    // being canceled and retried in a non-pipeline connection
-    if (PREF_CHANGED(HTTP_PREF("pipelining.read-timeout"))) {
-        rv = prefs->GetIntPref(HTTP_PREF("pipelining.read-timeout"), &val);
-        if (NS_SUCCEEDED(rv)) {
-            mPipelineReadTimeout =
-                PR_MillisecondsToInterval((uint16_t) clamped(val, 5000,
-                                                             0xffff));
-        }
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("pipelining.ssl"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.ssl"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mPipeliningOverSSL = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("proxy.pipelining"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("proxy.pipelining"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mProxyPipelining = cVar;
-    }
-
     if (PREF_CHANGED(HTTP_PREF("qos"))) {
         rv = prefs->GetIntPref(HTTP_PREF("qos"), &val);
         if (NS_SUCCEEDED(rv))
             mQoSBits = (uint8_t) clamped(val, 0, 0xff);
     }
 
-    if (PREF_CHANGED(HTTP_PREF("sendSecureXSiteReferrer"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("sendSecureXSiteReferrer"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mSendSecureXSiteReferrer = cVar;
-    }
-
     if (PREF_CHANGED(HTTP_PREF("accept.default"))) {
         nsXPIDLCString accept;
         rv = prefs->GetCharPref(HTTP_PREF("accept.default"),
                                   getter_Copies(accept));
-        if (NS_SUCCEEDED(rv))
-            SetAccept(accept);
+        if (NS_SUCCEEDED(rv)) {
+            rv = SetAccept(accept);
+            MOZ_ASSERT(NS_SUCCEEDED(rv));
+        }
     }
 
     if (PREF_CHANGED(HTTP_PREF("accept-encoding"))) {
@@ -1249,7 +1366,8 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetCharPref(HTTP_PREF("accept-encoding"),
                                   getter_Copies(acceptEncodings));
         if (NS_SUCCEEDED(rv)) {
-            SetAcceptEncodings(acceptEncodings, false);
+            rv = SetAcceptEncodings(acceptEncodings, false);
+            MOZ_ASSERT(NS_SUCCEEDED(rv));
         }
     }
 
@@ -1258,7 +1376,8 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetCharPref(HTTP_PREF("accept-encoding.secure"),
                                   getter_Copies(acceptEncodings));
         if (NS_SUCCEEDED(rv)) {
-            SetAcceptEncodings(acceptEncodings, true);
+            rv = SetAcceptEncodings(acceptEncodings, true);
+            MOZ_ASSERT(NS_SUCCEEDED(rv));
         }
     }
 
@@ -1268,7 +1387,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
                                 getter_Copies(sval));
         if (NS_SUCCEEDED(rv)) {
             if (sval.IsEmpty())
-                mDefaultSocketType.Adopt(0);
+                mDefaultSocketType.Adopt(nullptr);
             else {
                 // verify that this socket type is actually valid
                 nsCOMPtr<nsISocketProviderService> sps(
@@ -1317,12 +1436,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled"), &cVar);
         if (NS_SUCCEEDED(rv))
             mEnableSpdy = cVar;
-    }
-
-    if (PREF_CHANGED(HTTP_PREF("spdy.enabled.v3-1"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("spdy.enabled.v3-1"), &cVar);
-        if (NS_SUCCEEDED(rv))
-            mSpdyV31 = cVar;
     }
 
     if (PREF_CHANGED(HTTP_PREF("spdy.enabled.http2"))) {
@@ -1409,6 +1522,13 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mEnableAltSvcOE = cVar;
     }
 
+    if (PREF_CHANGED(HTTP_PREF("originextension"))) {
+        rv = prefs->GetBoolPref(HTTP_PREF("originextension"),
+                                &cVar);
+        if (NS_SUCCEEDED(rv))
+            mEnableOriginExtension = cVar;
+    }
+
     if (PREF_CHANGED(HTTP_PREF("spdy.push-allowance"))) {
         rv = prefs->GetIntPref(HTTP_PREF("spdy.push-allowance"), &val);
         if (NS_SUCCEEDED(rv)) {
@@ -1476,21 +1596,83 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
                 mConnMgr->PrintDiagnostics();
         }
     }
+
+    if (PREF_CHANGED(HTTP_PREF("max_response_header_size"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("max_response_header_size"), &val);
+        if (NS_SUCCEEDED(rv)) {
+            mMaxHttpResponseHeaderSize = val;
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("throttle.enable"))) {
+        rv = prefs->GetBoolPref(HTTP_PREF("throttle.enable"), &mThrottleEnabled);
+        if (NS_SUCCEEDED(rv) && mConnMgr) {
+            Unused << mConnMgr->UpdateParam(nsHttpConnectionMgr::THROTTLING_ENABLED,
+                                            static_cast<int32_t>(mThrottleEnabled));
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("throttle.suspend-for"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("throttle.suspend-for"), &val);
+        mThrottleSuspendFor = (uint32_t)clamped(val, 0, 120000);
+        if (NS_SUCCEEDED(rv) && mConnMgr) {
+            Unused << mConnMgr->UpdateParam(nsHttpConnectionMgr::THROTTLING_SUSPEND_FOR,
+                                            mThrottleSuspendFor);
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("throttle.resume-for"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("throttle.resume-for"), &val);
+        mThrottleResumeFor = (uint32_t)clamped(val, 0, 120000);
+        if (NS_SUCCEEDED(rv) && mConnMgr) {
+            Unused << mConnMgr->UpdateParam(nsHttpConnectionMgr::THROTTLING_RESUME_FOR,
+                                            mThrottleResumeFor);
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("throttle.resume-background-in"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("throttle.resume-background-in"), &val);
+        mThrottleResumeIn = (uint32_t)clamped(val, 0, 120000);
+        if (NS_SUCCEEDED(rv) && mConnMgr) {
+            Unused << mConnMgr->UpdateParam(nsHttpConnectionMgr::THROTTLING_RESUME_IN,
+                                            mThrottleResumeIn);
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("throttle.time-window"))) {
+      rv = prefs->GetIntPref(HTTP_PREF("throttle.time-window"), &val);
+      mThrottleTimeWindow = (uint32_t)clamped(val, 0, 120000);
+      if (NS_SUCCEEDED(rv) && mConnMgr) {
+        Unused << mConnMgr->UpdateParam(nsHttpConnectionMgr::THROTTLING_TIME_WINDOW,
+                                        mThrottleTimeWindow);
+      }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("on_click_priority"))) {
+        Unused << prefs->GetBoolPref(HTTP_PREF("on_click_priority"), &mUrgentStartEnabled);
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("focused_window_transaction_ratio"))) {
+        float ratio = 0;
+        rv = prefs->GetFloatPref(HTTP_PREF("focused_window_transaction_ratio"), &ratio);
+        if (NS_SUCCEEDED(rv)) {
+            if (ratio > 0 && ratio < 1) {
+                mFocusedWindowTransactionRatio = ratio;
+            } else {
+                NS_WARNING("Wrong value for focused_window_transaction_ratio");
+            }
+        }
+    }
+
     //
     // INTL options
     //
 
     if (PREF_CHANGED(INTL_ACCEPT_LANGUAGES)) {
-        nsCOMPtr<nsIPrefLocalizedString> pls;
-        prefs->GetComplexValue(INTL_ACCEPT_LANGUAGES,
-                                NS_GET_IID(nsIPrefLocalizedString),
-                                getter_AddRefs(pls));
-        if (pls) {
-            nsXPIDLString uval;
-            pls->ToString(getter_Copies(uval));
-            if (uval)
-                SetAcceptLanguages(NS_ConvertUTF16toUTF8(uval).get());
-        }
+        // We don't want to set the new accept languages here since
+        // this pref is a complex type and it may be racy with flushing
+        // string resources.
+        mAcceptLanguagesIsDirty = true;
     }
 
     //
@@ -1559,37 +1741,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         rv = prefs->GetBoolPref("network.http.debug-observations", &cVar);
         if (NS_SUCCEEDED(rv)) {
             mDebugObservations = cVar;
-        }
-    }
-
-    //
-    // Test HTTP Pipelining (bug796192)
-    // If experiments are allowed and pipelining is Off,
-    // turn it On for just 10 minutes
-    //
-    if (mAllowExperiments && !mPipeliningEnabled &&
-        PREF_CHANGED(HTTP_PREF("pipelining.abtest"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pipelining.abtest"), &cVar);
-        if (NS_SUCCEEDED(rv)) {
-            // If option is enabled, only test for ~1% of sessions
-            if (cVar && !(rand() % 128)) {
-                mCapabilities |=  NS_HTTP_ALLOW_PIPELINING;
-                if (mPipelineTestTimer)
-                    mPipelineTestTimer->Cancel();
-                mPipelineTestTimer =
-                    do_CreateInstance("@mozilla.org/timer;1", &rv);
-                if (NS_SUCCEEDED(rv)) {
-                    rv = mPipelineTestTimer->InitWithFuncCallback(
-                        TimerCallback, this, 10*60*1000, // 10 minutes
-                        nsITimer::TYPE_ONE_SHOT);
-                }
-            } else {
-                mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-                if (mPipelineTestTimer) {
-                    mPipelineTestTimer->Cancel();
-                    mPipelineTestTimer = nullptr;
-                }
-            }
         }
     }
 
@@ -1681,16 +1832,20 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
-    // remote content-signature testing option
-    if (PREF_CHANGED(NEW_TAB_REMOTE_MODE)) {
-        nsAutoCString channel;
-        prefs->GetCharPref(NEW_TAB_REMOTE_MODE, getter_Copies(channel));
-        if (channel.EqualsLiteral("test") ||
-            channel.EqualsLiteral("test2") ||
-            channel.EqualsLiteral("dev")) {
-            mNewTabContentSignaturesDisabled = true;
-        } else {
-            mNewTabContentSignaturesDisabled = false;
+    if (PREF_CHANGED(TCP_FAST_OPEN_ENABLE)) {
+        rv = prefs->GetBoolPref(TCP_FAST_OPEN_ENABLE, &cVar);
+        if (NS_SUCCEEDED(rv)) {
+            mUseFastOpen = cVar;
+        }
+    }
+
+    if (PREF_CHANGED(TCP_FAST_OPEN_FAILURE_LIMIT)) {
+        rv = prefs->GetIntPref(TCP_FAST_OPEN_FAILURE_LIMIT, &val);
+        if (NS_SUCCEEDED(rv)) {
+            if (val < 0) {
+                val = 0;
+            }
+            mFastOpenConsecutiveFailureLimit = val;
         }
     }
 
@@ -1702,6 +1857,13 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
+    if (PREF_CHANGED(HTTP_PREF("spdy.hpack-default-buffer"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("spdy.default-hpack-buffer"), &val);
+        if (NS_SUCCEEDED(rv)) {
+            mDefaultHpackBuffer = val;
+        }
+    }
+
     // Enable HTTP response timeout if TCP Keepalives are disabled.
     mResponseTimeoutEnabled = !mTCPKeepaliveShortLivedEnabled &&
                               !mTCPKeepaliveLongLivedEnabled;
@@ -1710,17 +1872,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 #undef MULTI_PREF_CHANGED
 }
 
-
-/**
- * Static method called by mPipelineTestTimer when it expires.
- */
-void
-nsHttpHandler::TimerCallback(nsITimer * aTimer, void * aClosure)
-{
-    RefPtr<nsHttpHandler> thisObject = static_cast<nsHttpHandler*>(aClosure);
-    if (!thisObject->mPipeliningEnabled)
-        thisObject->mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
-}
 
 /**
  * Currently, only regularizes the case of subtags.
@@ -1811,13 +1962,13 @@ PrepareAcceptLanguages(const char *i_AcceptLanguages, nsACString &o_AcceptLangua
     count_n = 0;
     p2 = q_Accept;
     for (token = nsCRT::strtok(o_Accept, ",", &p);
-         token != (char *) 0;
+         token != nullptr;
          token = nsCRT::strtok(p, ",", &p))
     {
         token = net_FindCharNotInSet(token, HTTP_LWS);
         char* trim;
         trim = net_FindCharInSet(token, ";" HTTP_LWS);
-        if (trim != (char*)0)  // remove "; q=..." if present
+        if (trim != nullptr)  // remove "; q=..." if present
             *trim = '\0';
 
         if (*token != '\0') {
@@ -1860,12 +2011,18 @@ PrepareAcceptLanguages(const char *i_AcceptLanguages, nsACString &o_AcceptLangua
 }
 
 nsresult
-nsHttpHandler::SetAcceptLanguages(const char *aAcceptLanguages)
+nsHttpHandler::SetAcceptLanguages()
 {
+    mAcceptLanguagesIsDirty = false;
+
+    nsAutoCString acceptLanguages;
+    Preferences::GetLocalizedCString(INTL_ACCEPT_LANGUAGES, acceptLanguages);
+
     nsAutoCString buf;
-    nsresult rv = PrepareAcceptLanguages(aAcceptLanguages, buf);
-    if (NS_SUCCEEDED(rv))
+    nsresult rv = PrepareAcceptLanguages(acceptLanguages.get(), buf);
+    if (NS_SUCCEEDED(rv)) {
         mAcceptLanguages.Assign(buf);
+    }
     return rv;
 }
 
@@ -1996,6 +2153,14 @@ nsHttpHandler::NewProxiedChannel2(nsIURI *uri,
     LOG(("nsHttpHandler::NewProxiedChannel [proxyInfo=%p]\n",
         givenProxyInfo));
 
+#ifdef MOZ_TASK_TRACER
+    if (tasktracer::IsStartLogging()) {
+        nsAutoCString urispec;
+        uri->GetSpec(urispec);
+        tasktracer::AddLabel("nsHttpHandler::NewProxiedChannel2 %s", urispec.get());
+    }
+#endif
+
     nsCOMPtr<nsProxyInfo> proxyInfo;
     if (givenProxyInfo) {
         proxyInfo = do_QueryInterface(givenProxyInfo);
@@ -2015,19 +2180,18 @@ nsHttpHandler::NewProxiedChannel2(nsIURI *uri,
 
     uint32_t caps = mCapabilities;
 
-    if (https) {
-        // enable pipelining over SSL if requested
-        if (mPipeliningOverSSL)
-            caps |= NS_HTTP_ALLOW_PIPELINING;
-    }
-
     if (!IsNeckoChild()) {
         // HACK: make sure PSM gets initialized on the main thread.
         net_EnsurePSMInit();
     }
 
-    nsID channelId;
-    rv = NewChannelId(&channelId);
+    if (XRE_IsParentProcess()) {
+        // Load UserAgentOverrides.jsm before any HTTP request is issued.
+        EnsureUAOverridesInit();
+    }
+
+    uint64_t channelId;
+    rv = NewChannelId(channelId);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = httpChannel->Init(uri, caps, proxyInfo, proxyResolveFlags, proxyURI, channelId);
@@ -2114,6 +2278,7 @@ nsHttpHandler::Observe(nsISupports *subject,
     MOZ_ASSERT(NS_IsMainThread());
     LOG(("nsHttpHandler::Observe [topic=\"%s\"]\n", topic));
 
+    nsresult rv;
     if (!strcmp(topic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) {
         nsCOMPtr<nsIPrefBranch> prefBranch = do_QueryInterface(subject);
         if (prefBranch)
@@ -2124,8 +2289,8 @@ nsHttpHandler::Observe(nsISupports *subject,
         mHandlerActive = false;
 
         // clear cache of all authentication credentials.
-        mAuthCache.ClearAll();
-        mPrivateAuthCache.ClearAll();
+        Unused << mAuthCache.ClearAll();
+        Unused << mPrivateAuthCache.ClearAll();
         if (mWifiTickler)
             mWifiTickler->Cancel();
 
@@ -2145,40 +2310,51 @@ nsHttpHandler::Observe(nsISupports *subject,
         }
     } else if (!strcmp(topic, "profile-change-net-restore")) {
         // initialize connection manager
-        InitConnectionMgr();
+        rv = InitConnectionMgr();
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
     } else if (!strcmp(topic, "net:clear-active-logins")) {
-        mAuthCache.ClearAll();
-        mPrivateAuthCache.ClearAll();
+        Unused << mAuthCache.ClearAll();
+        Unused << mPrivateAuthCache.ClearAll();
     } else if (!strcmp(topic, "net:prune-dead-connections")) {
         if (mConnMgr) {
-            mConnMgr->PruneDeadConnections();
+            rv = mConnMgr->PruneDeadConnections();
+            if (NS_FAILED(rv)) {
+                LOG(("    PruneDeadConnections failed (%08x)\n",
+                     static_cast<uint32_t>(rv)));
+            }
         }
     } else if (!strcmp(topic, "net:prune-all-connections")) {
         if (mConnMgr) {
-            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
-            mConnMgr->PruneDeadConnections();
+            rv = mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+            if (NS_FAILED(rv)) {
+                LOG(("    DoShiftReloadConnectionCleanup failed (%08x)\n",
+                     static_cast<uint32_t>(rv)));
+            }
+            rv = mConnMgr->PruneDeadConnections();
+            if (NS_FAILED(rv)) {
+                LOG(("    PruneDeadConnections failed (%08x)\n",
+                     static_cast<uint32_t>(rv)));
+            }
         }
+#if 0
     } else if (!strcmp(topic, "net:failed-to-process-uri-content")) {
-        nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
-        if (uri && mConnMgr) {
-            mConnMgr->ReportFailedToProcess(uri);
-        }
+         // nop right now - we used to cancel h1 pipelines based on this,
+         // but those are no longer implemented
+         nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
+#endif
     } else if (!strcmp(topic, "last-pb-context-exited")) {
-        mPrivateAuthCache.ClearAll();
-        if (mConnMgr) {
-            mConnMgr->ClearAltServiceMappings();
-        }
-    } else if (!strcmp(topic, "webapps-clear-data")) {
+        Unused << mPrivateAuthCache.ClearAll();
         if (mConnMgr) {
             mConnMgr->ClearAltServiceMappings();
         }
     } else if (!strcmp(topic, "browser:purge-session-history")) {
         if (mConnMgr) {
             if (gSocketTransportService) {
-                nsCOMPtr<nsIRunnable> event =
-                    NewRunnableMethod(mConnMgr,
-                                      &nsHttpConnectionMgr::ClearConnectionHistory);
-                gSocketTransportService->Dispatch(event, NS_DISPATCH_NORMAL);
+              nsCOMPtr<nsIRunnable> event = NewRunnableMethod(
+                "net::nsHttpConnectionMgr::ClearConnectionHistory",
+                mConnMgr,
+                &nsHttpConnectionMgr::ClearConnectionHistory);
+              gSocketTransportService->Dispatch(event, NS_DISPATCH_NORMAL);
             }
             mConnMgr->ClearAltServiceMappings();
         }
@@ -2186,16 +2362,49 @@ nsHttpHandler::Observe(nsISupports *subject,
         nsAutoCString converted = NS_ConvertUTF16toUTF8(data);
         if (!strcmp(converted.get(), NS_NETWORK_LINK_DATA_CHANGED)) {
             if (mConnMgr) {
-                mConnMgr->PruneDeadConnections();
-                mConnMgr->VerifyTraffic();
+                rv = mConnMgr->PruneDeadConnections();
+                if (NS_FAILED(rv)) {
+                    LOG(("    PruneDeadConnections failed (%08x)\n",
+                         static_cast<uint32_t>(rv)));
+                }
+                rv = mConnMgr->VerifyTraffic();
+                if (NS_FAILED(rv)) {
+                    LOG(("    VerifyTraffic failed (%08x)\n",
+                         static_cast<uint32_t>(rv)));
+                }
             }
         }
     } else if (!strcmp(topic, "application-background")) {
         // going to the background on android means we should close
         // down idle connections for power conservation
         if (mConnMgr) {
-            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+            rv = mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+            if (NS_FAILED(rv)) {
+                LOG(("    DoShiftReloadConnectionCleanup failed (%08x)\n",
+                     static_cast<uint32_t>(rv)));
+            }
         }
+    } else if (!strcmp(topic, "net:current-toplevel-outer-content-windowid")) {
+        nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(subject);
+        MOZ_RELEASE_ASSERT(wrapper);
+
+        uint64_t windowId = 0;
+        wrapper->GetData(&windowId);
+        MOZ_ASSERT(windowId);
+
+        static uint64_t sCurrentTopLevelOuterContentWindowId = 0;
+        if (sCurrentTopLevelOuterContentWindowId != windowId) {
+            sCurrentTopLevelOuterContentWindowId = windowId;
+            if (mConnMgr) {
+                mConnMgr->UpdateCurrentTopLevelOuterContentWindowId(
+                    sCurrentTopLevelOuterContentWindowId);
+            }
+        }
+    } else if (!strcmp(topic, "captive-portal-login") ||
+               !strcmp(topic, "captive-portal-login-success")) {
+         // We have detected a captive portal and we will reset the Fast Open
+         // failure counter.
+         ResetFastOpenConsecutiveFailureCounter();
     }
 
     return NS_OK;
@@ -2205,13 +2414,16 @@ nsHttpHandler::Observe(nsISupports *subject,
 
 nsresult
 nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
+                                          nsIPrincipal *aPrincipal,
                                           nsIInterfaceRequestor *aCallbacks,
                                           bool anonymous)
 {
     if (IsNeckoChild()) {
         ipc::URIParams params;
         SerializeURI(aURI, params);
-        gNeckoChild->SendSpeculativeConnect(params, anonymous);
+        gNeckoChild->SendSpeculativeConnect(params,
+                                            IPC::Principal(aPrincipal),
+                                            anonymous);
         return NS_OK;
     }
 
@@ -2221,15 +2433,16 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     MOZ_ASSERT(NS_IsMainThread());
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
     if (mDebugObservations && obsService) {
-        // this is basically used for test coverage of an otherwise 'hintable' feature
-        nsAutoCString spec;
-        aURI->GetSpec(spec);
-        spec.Append(anonymous ? NS_LITERAL_CSTRING("[A]") : NS_LITERAL_CSTRING("[.]"));
-        obsService->NotifyObservers(nullptr,
-                                    "speculative-connect-request",
-                                    NS_ConvertUTF8toUTF16(spec).get());
-        if (!IsNeckoChild() && gNeckoParent) {
-            Unused << gNeckoParent->SendSpeculativeConnectRequest(spec);
+        // this is basically used for test coverage of an otherwise 'hintable'
+        // feature
+        obsService->NotifyObservers(nullptr, "speculative-connect-request",
+                                    nullptr);
+        for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
+            PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
+            if (!neckoParent) {
+                continue;
+            }
+            Unused << neckoParent->SendSpeculativeConnectRequest();
         }
     }
 
@@ -2242,9 +2455,22 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     uint32_t flags = 0;
     if (loadContext && loadContext->UsePrivateBrowsing())
         flags |= nsISocketProvider::NO_PERMANENT_STORAGE;
+
+    OriginAttributes originAttributes;
+    // If the principal is given, we use the originAttributes from this
+    // principal. Otherwise, we use the originAttributes from the
+    // loadContext.
+    if (aPrincipal) {
+        originAttributes = aPrincipal->OriginAttributesRef();
+    } else if (loadContext) {
+        loadContext->GetOriginAttributes(originAttributes);
+    }
+
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
-                                      aURI, flags, &isStsHost)) && isStsHost) {
+                                      aURI, flags, originAttributes,
+                                      nullptr, nullptr, &isStsHost)) &&
+                                      isStsHost) {
         if (NS_SUCCEEDED(NS_GetSecureUpgradedURI(aURI,
                                                  getter_AddRefs(clone)))) {
             aURI = clone.get();
@@ -2289,8 +2515,9 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
-    nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+    auto *ci =
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr,
+                                 originAttributes, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
@@ -2300,14 +2527,30 @@ NS_IMETHODIMP
 nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
                                   nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, nullptr, aCallbacks, false);
+}
+
+NS_IMETHODIMP
+nsHttpHandler::SpeculativeConnect2(nsIURI *aURI,
+                                   nsIPrincipal *aPrincipal,
+                                   nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aPrincipal, aCallbacks, false);
 }
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeAnonymousConnect(nsIURI *aURI,
                                            nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, nullptr, aCallbacks, true);
+}
+
+NS_IMETHODIMP
+nsHttpHandler::SpeculativeAnonymousConnect2(nsIURI *aURI,
+                                            nsIPrincipal *aPrincipal,
+                                            nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aPrincipal, aCallbacks, true);
 }
 
 void
@@ -2432,21 +2675,20 @@ nsHttpHandler::ShutdownConnectionManager()
 {
     // ensure connection manager is shutdown
     if (mConnMgr) {
-        mConnMgr->Shutdown();
+        nsresult rv = mConnMgr->Shutdown();
+        if (NS_FAILED(rv)) {
+            LOG(("nsHttpHandler::ShutdownConnectionManager\n"
+                 "    failed to shutdown connection manager\n"));
+        }
     }
 }
 
 nsresult
-nsHttpHandler::NewChannelId(nsID *channelId)
+nsHttpHandler::NewChannelId(uint64_t& channelId)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  if (!mUUIDGen) {
-    nsresult rv;
-    mUUIDGen = do_GetService("@mozilla.org/uuid-generator;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  return mUUIDGen->GenerateUUIDInPlace(channelId);
+  channelId = ((static_cast<uint64_t>(mProcessId) << 32) & 0xFFFFFFFF00000000LL) | mNextChannelId++;
+  return NS_OK;
 }
 
 } // namespace net

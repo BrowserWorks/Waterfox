@@ -25,11 +25,11 @@ function TestProvider(result) {
   this.result = result;
 }
 TestProvider.prototype = {
-  uri: Services.io.newURI("hellow://world", null, null),
+  uri: Services.io.newURI("hellow://world"),
   id: "valid@id",
-  startup: function() {},
-  shutdown: function() {},
-  mapURIToAddonID: function(aURI) {
+  startup() {},
+  shutdown() {},
+  mapURIToAddonID(aURI) {
     if (aURI.spec === this.uri.spec) {
       return this.id;
     }
@@ -39,8 +39,8 @@ TestProvider.prototype = {
 
 function TestProviderNoMap() {}
 TestProviderNoMap.prototype = {
-  startup: function() {},
-  shutdown: function() {}
+  startup() {},
+  shutdown() {}
 };
 
 function check_mapping(uri, id) {
@@ -50,10 +50,6 @@ function check_mapping(uri, id) {
   let val = {};
   do_check_true(svc.mapURIToAddonID(uri, val));
   do_check_eq(val.value, id);
-}
-
-function getActiveVersion() {
-  return Services.prefs.getIntPref("bootstraptest.active_version");
 }
 
 function run_test() {
@@ -107,8 +103,7 @@ function run_test_nomapping() {
               getService(Components.interfaces.amIAddonManager);
     let val = {};
     do_check_false(svc.mapURIToAddonID(TestProvider.prototype.uri, val));
-  }
-  catch (ex) {
+  } catch (ex) {
     do_throw(ex);
   }
 
@@ -298,8 +293,7 @@ function run_test_invalidarg() {
     try {
       AddonManager.mapURIToAddonID(test);
       throw new Error("Shouldn't be able to map the URI in question");
-    }
-    catch (ex) {
+    } catch (ex) {
       if (ex.result) {
         do_check_eq(ex.result, Components.results.NS_ERROR_INVALID_ARG);
       } else {

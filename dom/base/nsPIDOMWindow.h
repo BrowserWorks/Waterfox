@@ -13,6 +13,7 @@
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
 #include "mozilla/dom/EventTarget.h"
+#include "mozilla/TaskCategory.h"
 #include "js/TypeDecls.h"
 #include "nsRefPtrHashtable.h"
 
@@ -26,29 +27,34 @@ class nsIArray;
 class nsIContent;
 class nsICSSDeclaration;
 class nsIDocShell;
+class nsIDocShellLoadInfo;
 class nsIDocument;
 class nsIIdleObserver;
+class nsIPrincipal;
 class nsIScriptTimeoutHandler;
+class nsISerialEventTarget;
 class nsIURI;
 class nsPIDOMWindowInner;
 class nsPIDOMWindowOuter;
 class nsPIWindowRoot;
 class nsXBLPrototypeHandler;
-struct nsTimeout;
 
 typedef uint32_t SuspendTypes;
 
 namespace mozilla {
+class ThrottledEventQueue;
 namespace dom {
 class AudioContext;
+class DocGroup;
+class TabGroup;
 class Element;
 class Performance;
 class ServiceWorkerRegistration;
-class CustomElementsRegistry;
+class Timeout;
+class TimeoutManager;
+class CustomElementRegistry;
+enum class CallerType : uint32_t;
 } // namespace dom
-namespace gfx {
-class VRDeviceProxy;
-} // namespace gfx
 } // namespace mozilla
 
 // Popup control state enum. The values in this enum must go from most
@@ -83,6 +89,33 @@ enum class FullscreenReason
   ForForceExitFullscreen
 };
 
+namespace mozilla {
+namespace dom {
+
+class Location;
+
+// The states in this enum represent the different possible outcomes which the
+// window could be experiencing of loading a document with the
+// Large-Allocation header. The NONE case represents the case where no
+// Large-Allocation header was set.
+enum class LargeAllocStatus : uint8_t
+{
+  // These are the OK states, NONE means that no large allocation status message
+  // should be printed, while SUCCESS means that the success message should be
+  // printed.
+  NONE,
+  SUCCESS,
+
+  // These are the ERROR states. If a window is in one of these states, then the
+  // next document loaded in that window should have an error message reported
+  // to it.
+  NON_GET,
+  NON_E10S,
+  NOT_ONLY_TOPLEVEL_IN_TABGROUP,
+  NON_WIN32
+};
+} // namespace dom
+} // namespace mozilla
 
 // nsPIDOMWindowInner and nsPIDOMWindowOuter are identical in all respects
 // except for the type name. They *must* remain identical so that we can
@@ -97,7 +130,7 @@ public:
   const nsPIDOMWindowOuter* AsOuter() const;
 
   virtual nsPIDOMWindowOuter* GetPrivateRoot() = 0;
-  virtual mozilla::dom::CustomElementsRegistry* CustomElements() = 0;
+  virtual mozilla::dom::CustomElementRegistry* CustomElements() = 0;
   // Outer windows only.
   virtual void ActivateOrDeactivate(bool aActivate) = 0;
 
@@ -121,6 +154,12 @@ public:
   virtual nsPIDOMWindowOuter* GetScriptableParent() = 0;
   virtual already_AddRefed<nsPIWindowRoot> GetTopWindowRoot() = 0;
 
+  bool IsRootOuterWindow()
+  {
+    MOZ_ASSERT(IsOuterWindow());
+    return mIsRootOuterWindow;
+  }
+
   /**
    * Behavies identically to GetScriptableParent extept that it returns null
    * if GetScriptableParent would return this window.
@@ -140,11 +179,7 @@ public:
     mIsActive = aActive;
   }
 
-  virtual void SetIsBackground(bool aIsBackground)
-  {
-    MOZ_ASSERT(IsOuterWindow());
-    mIsBackground = aIsBackground;
-  }
+  virtual void SetIsBackground(bool aIsBackground) = 0;
 
   mozilla::dom::EventTarget* GetChromeEventHandler() const
   {
@@ -179,16 +214,12 @@ public:
     return mDoc;
   }
 
-  virtual bool IsRunningTimeout() = 0;
-
 protected:
   // Lazily instantiate an about:blank document if necessary, and if
   // we have what it takes to do so.
   void MaybeCreateDoc();
 
 public:
-  inline bool IsLoadingOrRunningTimeout() const;
-
   // Check whether a document is currently loading
   inline bool IsLoading() const;
   inline bool IsHandlingResizeEvent() const;
@@ -210,22 +241,16 @@ public:
   // Restore the window state from aState.
   virtual nsresult RestoreWindowState(nsISupports *aState) = 0;
 
-  // Suspend timeouts in this window and in child windows.
-  virtual void SuspendTimeouts(uint32_t aIncrease = 1,
-                               bool aFreezeChildren = true,
-                               bool aFreezeWorkers = true) = 0;
-
-  // Resume suspended timeouts in this window and in child windows.
-  virtual nsresult ResumeTimeouts(bool aThawChildren = true,
-                                  bool aThawWorkers = true) = 0;
-
-  virtual uint32_t TimeoutSuspendCount() = 0;
+  // Determine if the window is suspended or frozen.  Outer windows
+  // will forward this call to the inner window for convenience.  If
+  // there is no inner window then the outer window is considered
+  // suspended and frozen by default.
+  virtual bool IsSuspended() const = 0;
+  virtual bool IsFrozen() const = 0;
 
   // Fire any DOM notification events related to things that happened while
   // the window was frozen.
   virtual nsresult FireDelayedDOMEvents() = 0;
-
-  virtual bool IsFrozen() const = 0;
 
   nsPIDOMWindowOuter* GetOuterWindow()
   {
@@ -287,7 +312,12 @@ public:
   virtual void SetOpenerWindow(nsPIDOMWindowOuter* aOpener,
                                bool aOriginalOpener) = 0;
 
-  virtual void EnsureSizeUpToDate() = 0;
+  /**
+   * Ensure the size and position of this window are up-to-date by doing
+   * a layout flush in the parent (which will in turn, do a layout flush
+   * in its parent, etc.).
+   */
+  virtual void EnsureSizeAndPositionUpToDate() = 0;
 
   /**
    * Callback for notifying a window about a modal dialog being
@@ -336,17 +366,31 @@ public:
   }
 
   /**
+   * Call this to indicate that some node (this window, its document,
+   * or content in that document) has a selectionchange event listener.
+   */
+  void SetHasSelectionChangeEventListeners()
+  {
+    mMayHaveSelectionChangeEventListener = true;
+  }
+
+  /**
+   * Call this to check whether some node (this window, its document,
+   * or content in that document) has a selectionchange event listener.
+   */
+  bool HasSelectionChangeEventListeners()
+  {
+    return mMayHaveSelectionChangeEventListener;
+  }
+
+  /**
    * Moves the top-level window into fullscreen mode if aIsFullScreen is true,
    * otherwise exits fullscreen.
-   *
-   * If aHMD is not null, the window is made full screen on the given VR HMD
-   * device instead of its currrent display.
    *
    * Outer windows only.
    */
   virtual nsresult SetFullscreenInternal(
-    FullscreenReason aReason, bool aIsFullscreen,
-    mozilla::gfx::VRDeviceProxy *aHMD = nullptr) = 0;
+    FullscreenReason aReason, bool aIsFullscreen) = 0;
 
   /**
    * This function should be called when the fullscreen state is flipped.
@@ -445,7 +489,7 @@ public:
    */
   virtual void DisableDeviceSensor(uint32_t aType) = 0;
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_WIDGET_ANDROID)
   virtual void EnableOrientationChangeListener() = 0;
   virtual void DisableOrientationChangeListener() = 0;
 #endif
@@ -543,21 +587,25 @@ public:
 
   virtual nsIDOMScreen* GetScreen() = 0;
   virtual nsIDOMNavigator* GetNavigator() = 0;
-  virtual nsIDOMLocation* GetLocation() = 0;
+  virtual mozilla::dom::Location* GetLocation() = 0;
   virtual nsresult GetPrompter(nsIPrompt** aPrompt) = 0;
   virtual nsresult GetControllers(nsIControllers** aControllers) = 0;
   virtual already_AddRefed<nsISelection> GetSelection() = 0;
   virtual already_AddRefed<nsPIDOMWindowOuter> GetOpener() = 0;
   virtual already_AddRefed<nsIDOMWindowCollection> GetFrames() = 0;
+  // aLoadInfo will be passed on through to the windowwatcher.
+  // aForceNoOpener will act just like a "noopener" feature in aOptions except
+  //                will not affect any other window features.
   virtual nsresult Open(const nsAString& aUrl, const nsAString& aName,
                         const nsAString& aOptions,
+                        nsIDocShellLoadInfo* aLoadInfo,
+                        bool aForceNoOpener,
                         nsPIDOMWindowOuter **_retval) = 0;
   virtual nsresult OpenDialog(const nsAString& aUrl, const nsAString& aName,
                               const nsAString& aOptions,
                               nsISupports* aExtraArgument,
                               nsPIDOMWindowOuter** _retval) = 0;
 
-  virtual nsresult GetDevicePixelRatio(float* aRatio) = 0;
   virtual nsresult GetInnerWidth(int32_t* aWidth) = 0;
   virtual nsresult GetInnerHeight(int32_t* aHeight) = 0;
   virtual already_AddRefed<nsICSSDeclaration>
@@ -574,6 +622,13 @@ public:
 
   virtual nsresult MoveBy(int32_t aXDif, int32_t aYDif) = 0;
   virtual nsresult UpdateCommands(const nsAString& anAction, nsISelection* aSel, int16_t aReason) = 0;
+
+  mozilla::dom::TabGroup* TabGroup();
+
+  mozilla::dom::DocGroup* GetDocGroup() const;
+
+  virtual nsISerialEventTarget*
+  EventTargetFor(mozilla::TaskCategory aCategory) const = 0;
 
 protected:
   // The nsPIDOMWindow constructor. The aOuterWindow argument should
@@ -612,6 +667,8 @@ protected:
 
   // mPerformance is only used on inner windows.
   RefPtr<mozilla::dom::Performance> mPerformance;
+  // mTimeoutManager is only useed on inner windows.
+  mozilla::UniquePtr<mozilla::dom::TimeoutManager> mTimeoutManager;
 
   typedef nsRefPtrHashtable<nsStringHashKey,
                             mozilla::dom::ServiceWorkerRegistration>
@@ -621,8 +678,6 @@ protected:
   uint32_t               mModalStateDepth;
 
   // These variables are only used on inner windows.
-  nsTimeout             *mRunningTimeout;
-
   uint32_t               mMutationBits;
 
   bool                   mIsDocumentLoaded;
@@ -630,6 +685,7 @@ protected:
   bool                   mIsInnerWindow;
   bool                   mMayHavePaintEventListener;
   bool                   mMayHaveTouchEventListener;
+  bool                   mMayHaveSelectionChangeEventListener;
   bool                   mMayHaveMouseEnterLeaveEventListener;
   bool                   mMayHavePointerEnterLeaveEventListener;
 
@@ -673,6 +729,8 @@ protected:
   // current desktop mode flag.
   bool                   mDesktopModeViewport;
 
+  bool                   mIsRootOuterWindow;
+
   // And these are the references between inner and outer windows.
   nsPIDOMWindowInner* MOZ_NON_OWNING_REF mInnerWindow;
   nsCOMPtr<nsPIDOMWindowOuter> mOuterWindow;
@@ -683,6 +741,9 @@ protected:
 
   // The AudioContexts created for the current document, if any.
   nsTArray<mozilla::dom::AudioContext*> mAudioContexts; // Weak
+
+  // This is present both on outer and inner windows.
+  RefPtr<mozilla::dom::TabGroup> mTabGroup;
 
   // A unique (as long as our 64-bit counter doesn't roll over) id for
   // this window.
@@ -697,6 +758,20 @@ protected:
   // Let the service workers plumbing know that some feature are enabled while
   // testing.
   bool mServiceWorkersTestingEnabled;
+
+  mozilla::dom::LargeAllocStatus mLargeAllocStatus; // Outer window only
+
+  // mTopInnerWindow is only used on inner windows for tab-wise check by timeout
+  // throttling. It could be null.
+  nsCOMPtr<nsPIDOMWindowInner> mTopInnerWindow;
+
+  // The evidence that we have tried to cache mTopInnerWindow only once from
+  // SetNewDocument(). Note: We need this extra flag because mTopInnerWindow
+  // could be null and we don't want it to be set multiple times.
+  bool mHasTriedToCacheTopInnerWindow;
+
+  // The number of active IndexedDB databases. Inner window only.
+  uint32_t mNumOfIndexedDBDatabases;
 };
 
 #define NS_PIDOMWINDOWINNER_IID \
@@ -809,6 +884,57 @@ public:
     return mInnerObjectsFreed;
   }
 
+  /**
+   * Check whether this window is a secure context.
+   */
+  bool IsSecureContext() const;
+  bool IsSecureContextIfOpenerIgnored() const;
+
+  // Calling suspend should prevent any asynchronous tasks from
+  // executing javascript for this window.  This means setTimeout,
+  // requestAnimationFrame, and events should not be fired. Suspending
+  // a window also suspends its children and workers.  Workers may
+  // continue to perform computations in the background.  A window
+  // can have Suspend() called multiple times and will only resume after
+  // a matching number of Resume() calls.
+  void Suspend();
+  void Resume();
+
+  // Calling Freeze() on a window will automatically Suspend() it.  In
+  // addition, the window and its children are further treated as no longer
+  // suitable for interaction with the user.  For example, it may be marked
+  // non-visible, cannot be focused, etc.  All worker threads are also frozen
+  // bringing them to a complete stop.  A window can have Freeze() called
+  // multiple times and will only thaw after a matching number of Thaw()
+  // calls.
+  void Freeze();
+  void Thaw();
+
+  // Apply the parent window's suspend, freeze, and modal state to the current
+  // window.
+  void SyncStateFromParentWindow();
+
+  bool IsPlayingAudio();
+
+  bool IsDocumentLoaded() const;
+
+  mozilla::dom::TimeoutManager& TimeoutManager();
+
+  bool IsRunningTimeout();
+
+  // To cache top inner-window if available after constructed for tab-wised
+  // indexedDB counters.
+  void TryToCacheTopInnerWindow();
+
+  // Increase/Decrease the number of active IndexedDB transactions/databases for
+  // the decision making of TabGroup scheduling and timeout-throttling.
+  void UpdateActiveIndexedDBTransactionCount(int32_t aDelta);
+  void UpdateActiveIndexedDBDatabaseCount(int32_t aDelta);
+
+  // Return true if there is any active IndexedDB databases which could block
+  // timeout-throttling.
+  bool HasActiveIndexedDBDatabases();
+
 protected:
   void CreatePerformanceObjectIfNeeded();
 };
@@ -823,6 +949,7 @@ protected:
   void RefreshMediaElementsVolume();
   void RefreshMediaElementsSuspend(SuspendTypes aSuspend);
   bool IsDisposableSuspend(SuspendTypes aSuspend) const;
+  void MaybeNotifyMediaResumedFromBlock(SuspendTypes aSuspend);
 
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_PIDOMWINDOWOUTER_IID)
@@ -847,6 +974,12 @@ public:
     GetDoc();
     return GetCurrentInnerWindow();
   }
+
+  /**
+   * Set initial keyboard indicator state for accelerators and focus rings.
+   */
+  void SetInitialKeyboardIndicators(UIStateChangeType aShowAccelerators,
+                                    UIStateChangeType aShowFocusRings);
 
   // Internal getter/setter for the frame element, this version of the
   // getter crosses chrome boundaries whereas the public scriptable
@@ -882,8 +1015,17 @@ public:
   float GetAudioVolume() const;
   nsresult SetAudioVolume(float aVolume);
 
+  void MaybeActiveMediaComponents();
+
   void SetServiceWorkersTestingEnabled(bool aEnabled);
   bool GetServiceWorkersTestingEnabled();
+
+  float GetDevicePixelRatio(mozilla::dom::CallerType aCallerType);
+
+  void SetLargeAllocStatus(mozilla::dom::LargeAllocStatus aStatus);
+
+  bool IsTopLevelWindow();
+  bool HadOriginalOpener() const;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPIDOMWindowOuter, NS_PIDOMWINDOWOUTER_IID)

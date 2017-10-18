@@ -27,8 +27,9 @@ public:
   bool IsIntraLevelWhitespace() const;
 
 protected:
-  explicit nsRubyContentFrame(nsStyleContext* aContext)
-    : nsInlineFrame(aContext) {}
+  nsRubyContentFrame(nsStyleContext* aContext, ClassID aID)
+    : nsInlineFrame(aContext, aID)
+  {}
 };
 
 #endif /* nsRubyContentFrame_h___ */

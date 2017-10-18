@@ -235,9 +235,9 @@ GlobalSearchView.prototype = Heritage.extend(WidgetMethods, {
         // Dispatch subsequent document manipulation operations, to avoid
         // blocking the main thread when a large number of search results
         // is found, thus giving the impression of faster searching.
-        Services.tm.currentThread.dispatch({ run:
+        Services.tm.dispatchToMainThread({ run:
           this._createSourceResultsUI.bind(this, sourceResults)
-        }, 0);
+        });
       }
     }
   },
@@ -332,13 +332,12 @@ GlobalSearchView.prototype = Heritage.extend(WidgetMethods, {
    *        The match to start a bounce animation for.
    */
   _bounceMatch: function (aMatch) {
-    Services.tm.currentThread.dispatch({ run: () => {
-      aMatch.addEventListener("transitionend", function onEvent() {
-        aMatch.removeEventListener("transitionend", onEvent);
+    Services.tm.dispatchToMainThread({ run: () => {
+      aMatch.addEventListener("transitionend", function () {
         aMatch.removeAttribute("focused");
-      });
+      }, {once: true});
       aMatch.setAttribute("focused", "");
-    }}, 0);
+    }});
     aMatch.setAttribute("focusing", "");
   },
 
@@ -491,7 +490,7 @@ SourceResults.prototype = {
     resultsHeader.appendChild(arrow);
     resultsHeader.appendChild(locationNode);
     resultsHeader.appendChild(matchCountNode);
-    resultsHeader.addEventListener("click", aCallbacks.onHeaderClick, false);
+    resultsHeader.addEventListener("click", aCallbacks.onHeaderClick);
 
     let resultsContainer = this._resultsContainer = document.createElement("vbox");
     resultsContainer.className = "dbg-results-container";
@@ -615,7 +614,7 @@ LineResults.prototype = {
 
       if (match) {
         this._entangleMatch(lineChunkNode, lineChunk);
-        lineChunkNode.addEventListener("click", aCallbacks.onMatchClick, false);
+        lineChunkNode.addEventListener("click", aCallbacks.onMatchClick);
         firstMatch = firstMatch || lineChunkNode;
       }
       if (lineLength >= GLOBAL_SEARCH_LINE_MAX_LENGTH) {
@@ -625,7 +624,7 @@ LineResults.prototype = {
     }
 
     this._entangleLine(lineContentsNode, firstMatch);
-    lineContentsNode.addEventListener("click", aCallbacks.onLineClick, false);
+    lineContentsNode.addEventListener("click", aCallbacks.onLineClick);
 
     let searchResult = document.createElement("hbox");
     searchResult.className = "dbg-search-result";
@@ -666,7 +665,7 @@ LineResults.prototype = {
   _ellipsis: (function () {
     let label = document.createElement("label");
     label.className = "plain dbg-results-line-contents-string";
-    label.setAttribute("value", L10N.ellipsis);
+    label.setAttribute("value", ELLIPSIS);
     return label;
   })(),
 

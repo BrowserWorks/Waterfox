@@ -6,7 +6,7 @@
 
 #include "mozilla/chrome/RegistryMessageUtils.h"
 #include "mozilla/dom/ContentParent.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "SubstitutingProtocolHandler.h"
 #include "nsIChannel.h"
@@ -113,45 +113,51 @@ SubstitutingProtocolHandler::ConstructInternal()
 // IPC marshalling.
 //
 
-void
+nsresult
 SubstitutingProtocolHandler::CollectSubstitutions(InfallibleTArray<SubstitutionMapping>& aMappings)
 {
   for (auto iter = mSubstitutions.ConstIter(); !iter.Done(); iter.Next()) {
     nsCOMPtr<nsIURI> uri = iter.Data();
     SerializedURI serialized;
     if (uri) {
-      uri->GetSpec(serialized.spec);
+      nsresult rv = uri->GetSpec(serialized.spec);
+      NS_ENSURE_SUCCESS(rv, rv);
       uri->GetOriginCharset(serialized.charset);
     }
     SubstitutionMapping substitution = { mScheme, nsCString(iter.Key()), serialized };
     aMappings.AppendElement(substitution);
   }
+
+  return NS_OK;
 }
 
-void
+nsresult
 SubstitutingProtocolHandler::SendSubstitution(const nsACString& aRoot, nsIURI* aBaseURI)
 {
   if (GeckoProcessType_Content == XRE_GetProcessType()) {
-    return;
+    return NS_OK;
   }
 
   nsTArray<ContentParent*> parents;
   ContentParent::GetAll(parents);
   if (!parents.Length()) {
-    return;
+    return NS_OK;
   }
 
   SubstitutionMapping mapping;
   mapping.scheme = mScheme;
   mapping.path = aRoot;
   if (aBaseURI) {
-    aBaseURI->GetSpec(mapping.resolvedURI.spec);
+    nsresult rv = aBaseURI->GetSpec(mapping.resolvedURI.spec);
+    NS_ENSURE_SUCCESS(rv, rv);
     aBaseURI->GetOriginCharset(mapping.resolvedURI.charset);
   }
 
   for (uint32_t i = 0; i < parents.Length(); i++) {
     Unused << parents[i]->SendRegisterChromeItem(mapping);
   }
+
+  return NS_OK;
 }
 
 //----------------------------------------------------------------------------
@@ -240,6 +246,8 @@ SubstitutingProtocolHandler::NewChannel2(nsIURI* uri,
                                          nsIChannel** result)
 {
   NS_ENSURE_ARG_POINTER(uri);
+  NS_ENSURE_ARG_POINTER(aLoadInfo);
+
   nsAutoCString spec;
   nsresult rv = ResolveURI(uri, spec);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -248,12 +256,18 @@ SubstitutingProtocolHandler::NewChannel2(nsIURI* uri,
   rv = NS_NewURI(getter_AddRefs(newURI), spec);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // We don't want to allow the inner protocol handler to modify the result
+  // principal URI since we want either |uri| or anything pre-set by upper
+  // layers to prevail.
+  nsCOMPtr<nsIURI> savedResultPrincipalURI;
+  rv = aLoadInfo->GetResultPrincipalURI(getter_AddRefs(savedResultPrincipalURI));
+  NS_ENSURE_SUCCESS(rv, rv);
+
   rv = NS_NewChannelInternal(result, newURI, aLoadInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsLoadFlags loadFlags = 0;
-  (*result)->GetLoadFlags(&loadFlags);
-  (*result)->SetLoadFlags(loadFlags & ~nsIChannel::LOAD_REPLACE);
+  rv = aLoadInfo->SetResultPrincipalURI(savedResultPrincipalURI);
+  NS_ENSURE_SUCCESS(rv, rv);
   rv = (*result)->SetOriginalURI(uri);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -283,8 +297,8 @@ SubstitutingProtocolHandler::SetSubstitution(const nsACString& root, nsIURI *bas
 {
   if (!baseURI) {
     mSubstitutions.Remove(root);
-    SendSubstitution(root, baseURI);
-    return NS_OK;
+    NotifyObservers(root, baseURI);
+    return SendSubstitution(root, baseURI);
   }
 
   // If baseURI isn't a same-scheme URI, we can set the substitution immediately.
@@ -299,8 +313,8 @@ SubstitutingProtocolHandler::SetSubstitution(const nsACString& root, nsIURI *bas
     }
 
     mSubstitutions.Put(root, baseURI);
-    SendSubstitution(root, baseURI);
-    return NS_OK;
+    NotifyObservers(root, baseURI);
+    return SendSubstitution(root, baseURI);
   }
 
   // baseURI is a same-type substituting URI, let's resolve it first.
@@ -313,8 +327,8 @@ SubstitutingProtocolHandler::SetSubstitution(const nsACString& root, nsIURI *bas
   NS_ENSURE_SUCCESS(rv, rv);
 
   mSubstitutions.Put(root, newBaseURI);
-  SendSubstitution(root, newBaseURI);
-  return NS_OK;
+  NotifyObservers(root, baseURI);
+  return SendSubstitution(root, newBaseURI);
 }
 
 nsresult
@@ -395,6 +409,39 @@ SubstitutingProtocolHandler::ResolveURI(nsIURI *uri, nsACString &result)
     MOZ_LOG(gResLog, LogLevel::Debug, ("%s\n -> %s\n", spec.get(), PromiseFlatCString(result).get()));
   }
   return rv;
+}
+
+nsresult
+SubstitutingProtocolHandler::AddObserver(nsISubstitutionObserver* aObserver)
+{
+  NS_ENSURE_ARG(aObserver);
+  if (mObservers.Contains(aObserver)) {
+    return NS_ERROR_DUPLICATE_HANDLE;
+  }
+
+  mObservers.AppendElement(aObserver);
+  return NS_OK;
+}
+
+nsresult
+SubstitutingProtocolHandler::RemoveObserver(nsISubstitutionObserver* aObserver)
+{
+  NS_ENSURE_ARG(aObserver);
+  if (!mObservers.Contains(aObserver)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  mObservers.RemoveElement(aObserver);
+  return NS_OK;
+}
+
+void
+SubstitutingProtocolHandler::NotifyObservers(const nsACString& aRoot,
+                                             nsIURI* aBaseURI)
+{
+  for (size_t i = 0; i < mObservers.Length(); ++i) {
+    mObservers[i]->OnSetSubstitution(aRoot, aBaseURI);
+  }
 }
 
 } // namespace net

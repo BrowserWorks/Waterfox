@@ -31,13 +31,11 @@ function check() {
 
   // Debug info for Bug 608634
   ok(true, "iframe src=" + document.body.getElementsByTagName("iframe")[0].src);
-  is(v.readyState, 0, "Ready state");
+  is(v.readyState, v.HAVE_NOTHING, "Ready state");
 
-  is(v.networkState, 0, "Network state");
   isnot(v.error, null, "Error object");
-  if (v.error)
-    is(v.error.code, MediaError.MEDIA_ERR_DECODE, "Error code");
-
+  is(v.networkState, v.NETWORK_NO_SOURCE, "Network state");
+  is(v.error.code, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, "Expected media not supported error");
   SimpleTest.finish();
 }
 
@@ -51,15 +49,7 @@ if (!t) {
 
   var f = document.createElement("iframe");
   f.src = t.name;
-  f.addEventListener("load", function() {
-    if (documentVideo().error) {
-      info("Error occured by the time we got |load| - checking directly.");
-      check();
-    } else {
-      todo(false, "Error hasn't occurred yet - adding |error| event listener. This shouldn't happen, see bug 608634.");
-      documentVideo().addEventListener("error", check);
-    }
-  }, false);
+  f.addEventListener("load", check);
   document.body.appendChild(f);
 }
 

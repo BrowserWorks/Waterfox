@@ -29,7 +29,6 @@ AsyncCanvasRenderer::AsyncCanvasRenderer()
   , mIsAlphaPremultiplied(true)
   , mWidth(0)
   , mHeight(0)
-  , mCanvasClientAsyncID(0)
   , mCanvasClient(nullptr)
   , mMutex("AsyncCanvasRenderer::mMutex")
 {
@@ -48,21 +47,17 @@ AsyncCanvasRenderer::NotifyElementAboutAttributesChanged()
   {
   public:
     explicit Runnable(AsyncCanvasRenderer* aRenderer)
-      : mRenderer(aRenderer)
+      : mozilla::Runnable("Runnable")
+      , mRenderer(aRenderer)
     {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       if (mRenderer) {
         dom::HTMLCanvasElement::SetAttrFromAsyncCanvasRenderer(mRenderer);
       }
 
       return NS_OK;
-    }
-
-    void Revoke()
-    {
-      mRenderer = nullptr;
     }
 
   private:
@@ -83,21 +78,17 @@ AsyncCanvasRenderer::NotifyElementAboutInvalidation()
   {
   public:
     explicit Runnable(AsyncCanvasRenderer* aRenderer)
-      : mRenderer(aRenderer)
+      : mozilla::Runnable("Runnable")
+      , mRenderer(aRenderer)
     {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       if (mRenderer) {
         dom::HTMLCanvasElement::InvalidateFromAsyncCanvasRenderer(mRenderer);
       }
 
       return NS_OK;
-    }
-
-    void Revoke()
-    {
-      mRenderer = nullptr;
     }
 
   private:
@@ -116,31 +107,31 @@ AsyncCanvasRenderer::SetCanvasClient(CanvasClient* aClient)
 {
   mCanvasClient = aClient;
   if (aClient) {
-    mCanvasClientAsyncID = aClient->GetAsyncID();
+    mCanvasClientAsyncHandle = aClient->GetAsyncHandle();
   } else {
-    mCanvasClientAsyncID = 0;
+    mCanvasClientAsyncHandle = CompositableHandle();
   }
 }
 
 void
-AsyncCanvasRenderer::SetActiveThread()
+AsyncCanvasRenderer::SetActiveEventTarget()
 {
   MutexAutoLock lock(mMutex);
-  mActiveThread = NS_GetCurrentThread();
+  mActiveEventTarget = GetCurrentThreadSerialEventTarget();
 }
 
 void
-AsyncCanvasRenderer::ResetActiveThread()
+AsyncCanvasRenderer::ResetActiveEventTarget()
 {
   MutexAutoLock lock(mMutex);
-  mActiveThread = nullptr;
+  mActiveEventTarget = nullptr;
 }
 
-already_AddRefed<nsIThread>
-AsyncCanvasRenderer::GetActiveThread()
+already_AddRefed<nsISerialEventTarget>
+AsyncCanvasRenderer::GetActiveEventTarget()
 {
   MutexAutoLock lock(mMutex);
-  nsCOMPtr<nsIThread> result = mActiveThread;
+  nsCOMPtr<nsISerialEventTarget> result = mActiveEventTarget;
   return result.forget();
 }
 
@@ -168,7 +159,7 @@ AsyncCanvasRenderer::CopyFromTextureClient(TextureClient* aTextureClient)
       size != mSurfaceForBasic->GetSize() ||
       format != mSurfaceForBasic->GetFormat())
   {
-    uint32_t stride = gfx::GetAlignedStride<8>(size.width * BytesPerPixel(format));
+    uint32_t stride = gfx::GetAlignedStride<8>(size.width, BytesPerPixel(format));
     mSurfaceForBasic = gfx::Factory::CreateDataSourceSurfaceWithStride(size, format, stride);
   }
 
@@ -219,7 +210,7 @@ AsyncCanvasRenderer::UpdateTarget()
   // This buffer would be used later for content rendering. So we choose
   // B8G8R8A8 format here.
   const gfx::SurfaceFormat format = gfx::SurfaceFormat::B8G8R8A8;
-  uint32_t stride = gfx::GetAlignedStride<8>(size.width * BytesPerPixel(format));
+  uint32_t stride = gfx::GetAlignedStride<8>(size.width, BytesPerPixel(format));
   RefPtr<gfx::DataSourceSurface> surface =
     gfx::Factory::CreateDataSourceSurfaceWithStride(size, format, stride);
 

@@ -18,15 +18,12 @@ namespace gmp {
 class GMPContentChild;
 
 class GMPDecryptorChild : public GMPDecryptorCallback
-                        , public GMPDecryptorHost
                         , public PGMPDecryptorChild
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPDecryptorChild);
 
-  explicit GMPDecryptorChild(GMPContentChild* aPlugin,
-                             const nsTArray<uint8_t>& aPluginVoucher,
-                             const nsTArray<uint8_t>& aSandboxVoucher);
+  explicit GMPDecryptorChild(GMPContentChild* aPlugin);
 
   void Init(GMPDecryptor* aSession);
 
@@ -73,47 +70,47 @@ public:
 
   void Decrypted(GMPBuffer* aBuffer, GMPErr aResult) override;
 
-  // GMPDecryptorHost
-  void GetSandboxVoucher(const uint8_t** aVoucher,
-                         uint32_t* aVoucherLength) override;
+  void BatchedKeyStatusChanged(const char* aSessionId,
+                               uint32_t aSessionIdLength,
+                               const GMPMediaKeyInfo* aKeyInfos,
+                               uint32_t aKeyInfosLength) override;
 
-  void GetPluginVoucher(const uint8_t** aVoucher,
-                        uint32_t* aVoucherLength) override;
+  uint32_t DecryptorId() const { return mDecryptorId; }
 private:
   ~GMPDecryptorChild();
 
   // GMPDecryptorChild
-  bool RecvInit(const bool& aDistinctiveIdentifierRequired,
-                const bool& aPersistentStateRequired) override;
+  mozilla::ipc::IPCResult RecvInit(const bool& aDistinctiveIdentifierRequired,
+                                   const bool& aPersistentStateRequired) override;
 
-  bool RecvCreateSession(const uint32_t& aCreateSessionToken,
-                         const uint32_t& aPromiseId,
-                         const nsCString& aInitDataType,
-                         InfallibleTArray<uint8_t>&& aInitData,
-                         const GMPSessionType& aSessionType) override;
+  mozilla::ipc::IPCResult RecvCreateSession(const uint32_t& aCreateSessionToken,
+                                            const uint32_t& aPromiseId,
+                                            const nsCString& aInitDataType,
+                                            InfallibleTArray<uint8_t>&& aInitData,
+                                            const GMPSessionType& aSessionType) override;
 
-  bool RecvLoadSession(const uint32_t& aPromiseId,
-                       const nsCString& aSessionId) override;
+  mozilla::ipc::IPCResult RecvLoadSession(const uint32_t& aPromiseId,
+                                          const nsCString& aSessionId) override;
 
-  bool RecvUpdateSession(const uint32_t& aPromiseId,
-                         const nsCString& aSessionId,
-                         InfallibleTArray<uint8_t>&& aResponse) override;
+  mozilla::ipc::IPCResult RecvUpdateSession(const uint32_t& aPromiseId,
+                                            const nsCString& aSessionId,
+                                            InfallibleTArray<uint8_t>&& aResponse) override;
 
-  bool RecvCloseSession(const uint32_t& aPromiseId,
-                        const nsCString& aSessionId) override;
+  mozilla::ipc::IPCResult RecvCloseSession(const uint32_t& aPromiseId,
+                                           const nsCString& aSessionId) override;
 
-  bool RecvRemoveSession(const uint32_t& aPromiseId,
-                         const nsCString& aSessionId) override;
+  mozilla::ipc::IPCResult RecvRemoveSession(const uint32_t& aPromiseId,
+                                            const nsCString& aSessionId) override;
 
-  bool RecvDecrypt(const uint32_t& aId,
-                   InfallibleTArray<uint8_t>&& aBuffer,
-                   const GMPDecryptionData& aMetadata) override;
+  mozilla::ipc::IPCResult RecvDecrypt(const uint32_t& aId,
+                                      InfallibleTArray<uint8_t>&& aBuffer,
+                                      const GMPDecryptionData& aMetadata) override;
 
   // Resolve/reject promise on completion.
-  bool RecvSetServerCertificate(const uint32_t& aPromiseId,
-                                InfallibleTArray<uint8_t>&& aServerCert) override;
+  mozilla::ipc::IPCResult RecvSetServerCertificate(const uint32_t& aPromiseId,
+                                                   InfallibleTArray<uint8_t>&& aServerCert) override;
 
-  bool RecvDecryptingComplete() override;
+  mozilla::ipc::IPCResult RecvDecryptingComplete() override;
 
   template <typename MethodType, typename... ParamType>
   void CallMethod(MethodType, ParamType&&...);
@@ -126,9 +123,7 @@ private:
   GMPDecryptor* mSession;
   GMPContentChild* mPlugin;
 
-  // Reference to the vouchers owned by the GMPChild.
-  const nsTArray<uint8_t>& mPluginVoucher;
-  const nsTArray<uint8_t>& mSandboxVoucher;
+  const uint32_t mDecryptorId;
 };
 
 } // namespace gmp

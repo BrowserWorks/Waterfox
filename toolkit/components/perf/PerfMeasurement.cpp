@@ -10,6 +10,7 @@
 #include "mozilla/Preferences.h"
 #include "mozJSComponentLoader.h"
 #include "nsZipArchive.h"
+#include "xpc_make_class.h"
 
 #define JSPERF_CONTRACTID \
   "@mozilla.org/jsperf;1"
@@ -25,18 +26,13 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(Module)
 
 NS_IMPL_ISUPPORTS(Module, nsIXPCScriptable)
 
-Module::Module()
-{
-}
+Module::Module() = default;
 
-Module::~Module()
-{
-}
+Module::~Module() = default;
 
 #define XPC_MAP_CLASSNAME Module
 #define XPC_MAP_QUOTED_CLASSNAME "Module"
-#define XPC_MAP_WANT_CALL
-#define XPC_MAP_FLAGS nsIXPCScriptable::WANT_CALL
+#define XPC_MAP_FLAGS XPC_SCRIPTABLE_WANT_CALL
 #include "xpc_map_end.h"
 
 static bool
@@ -88,8 +84,7 @@ Module::Call(nsIXPConnectWrappedNative* wrapper,
 
   mozJSComponentLoader* loader = mozJSComponentLoader::Get();
   JS::Rooted<JSObject*> targetObj(cx);
-  nsresult rv = loader->FindTargetObject(cx, &targetObj);
-  NS_ENSURE_SUCCESS(rv, rv);
+  loader->FindTargetObject(cx, &targetObj);
 
   *_retval = InitAndSealPerfMeasurementClass(cx, targetObj);
   return NS_OK;

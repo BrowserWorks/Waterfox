@@ -20,7 +20,7 @@
 #include "nsXBLPrototypeHandler.h"
 #include "nsXBLPrototypeResources.h"
 #include "mozilla/WeakPtr.h"
-#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheet.h"
 
 class nsIAtom;
 class nsIContent;
@@ -58,7 +58,9 @@ public:
   nsresult BindingAttached(nsIContent* aBoundElement);
   nsresult BindingDetached(nsIContent* aBoundElement);
 
-  bool LoadResources();
+  // aBoundElement is passed in here because we need to get owner document
+  // and PresContext in nsXBLResourceLoader::LoadResources().
+  bool LoadResources(nsIContent* aBoundElement);
   nsresult AddResource(nsIAtom* aResourceType, const nsAString& aSrc);
 
   bool InheritsStyle() const { return mInheritStyle; }
@@ -120,15 +122,16 @@ public:
 
   void SetInitialAttributes(nsIContent* aBoundElement, nsIContent* aAnonymousContent);
 
-  void AppendStyleSheet(mozilla::StyleSheetHandle aSheet);
-  void RemoveStyleSheet(mozilla::StyleSheetHandle aSheet);
-  void InsertStyleSheetAt(size_t aIndex, mozilla::StyleSheetHandle aSheet);
-  mozilla::StyleSheetHandle StyleSheetAt(size_t aIndex) const;
+  void AppendStyleSheet(mozilla::StyleSheet* aSheet);
+  void RemoveStyleSheet(mozilla::StyleSheet* aSheet);
+  void InsertStyleSheetAt(size_t aIndex, mozilla::StyleSheet* aSheet);
+  mozilla::StyleSheet* StyleSheetAt(size_t aIndex) const;
   size_t SheetCount() const;
   bool HasStyleSheets() const;
-  void AppendStyleSheetsTo(nsTArray<mozilla::StyleSheetHandle>& aResult) const;
+  void AppendStyleSheetsTo(nsTArray<mozilla::StyleSheet*>& aResult) const;
 
   nsIStyleRuleProcessor* GetRuleProcessor();
+  const mozilla::ServoStyleSet* GetServoStyleSet() const;
 
   nsresult FlushSkinSheets();
 

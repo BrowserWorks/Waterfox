@@ -10,24 +10,27 @@
 
 #include "webrtc/modules/desktop_capture/x11/shared_x_display.h"
 
+#include <X11/Xlib.h>
+
 #include <algorithm>
 
-#include "webrtc/system_wrappers/interface/logging.h"
+#include "webrtc/base/checks.h"
+#include "webrtc/system_wrappers/include/logging.h"
 
 namespace webrtc {
 
 SharedXDisplay::SharedXDisplay(Display* display)
   : display_(display) {
-  assert(display_);
+  RTC_DCHECK(display_);
 }
 
 SharedXDisplay::~SharedXDisplay() {
-  assert(event_handlers_.empty());
+  RTC_DCHECK(event_handlers_.empty());
   XCloseDisplay(display_);
 }
 
 // static
-scoped_refptr<SharedXDisplay> SharedXDisplay::Create(
+rtc::scoped_refptr<SharedXDisplay> SharedXDisplay::Create(
     const std::string& display_name) {
   Display* display =
       XOpenDisplay(display_name.empty() ? NULL : display_name.c_str());
@@ -39,7 +42,7 @@ scoped_refptr<SharedXDisplay> SharedXDisplay::Create(
 }
 
 // static
-scoped_refptr<SharedXDisplay> SharedXDisplay::CreateDefault() {
+rtc::scoped_refptr<SharedXDisplay> SharedXDisplay::CreateDefault() {
   return Create(std::string());
 }
 
@@ -64,7 +67,7 @@ void SharedXDisplay::RemoveEventHandler(int type, XEventHandler* handler) {
 void SharedXDisplay::ProcessPendingXEvents() {
   // Hold reference to |this| to prevent it from being destroyed while
   // processing events.
-  scoped_refptr<SharedXDisplay> self(this);
+  rtc::scoped_refptr<SharedXDisplay> self(this);
 
   // Find the number of events that are outstanding "now."  We don't just loop
   // on XPending because we want to guarantee this terminates.

@@ -1,4 +1,7 @@
 ## Makefile.in for ICU - test/perf/howExpensiveIs
+## Copyright (C) 2016 and later: Unicode, Inc. and others.
+## License & terms of use: http://www.unicode.org/copyright.html#License
+##
 ## Copyright (c) 2001-2012, International Business Machines Corporation and
 ## others. All Rights Reserved.
 
@@ -56,7 +59,7 @@ distclean-local: clean-local
 	$(RMV) Makefile
 
 invoke check-local: all-local
-	ICU_DATA=$${ICU_DATA:-$(top_builddir)/data/} TZ=PST8PDT $(INVOKE) ./$(TARGET) ./howexpensive.xml
+	ICU_DATA=$${ICU_DATA:-$(top_builddir)/data/} TZ=PST8PDT $(INVOKE) ./$(TARGET) -f ./howexpensive.xml
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \

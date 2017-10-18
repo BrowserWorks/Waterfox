@@ -23,7 +23,7 @@ nsStreamListenerTee::OnStartRequest(nsIRequest *request,
     nsresult rv2 = NS_OK;
     if (mObserver)
         rv2 = mObserver->OnStartRequest(request, context);
-  
+
     // Preserve NS_SUCCESS_XXX in rv1 in case mObserver didn't throw
     return (NS_FAILED(rv2) && NS_SUCCEEDED(rv1)) ? rv2 : rv1;
 }
@@ -37,21 +37,22 @@ nsStreamListenerTee::OnStopRequest(nsIRequest *request,
     // it is critical that we close out the input stream tee
     if (mInputTee) {
         mInputTee->SetSink(nullptr);
-        mInputTee = 0;
+        mInputTee = nullptr;
     }
 
     // release sink on the same thread where the data was written (bug 716293)
     if (mEventTarget) {
-      NS_ProxyRelease(mEventTarget, mSink.forget());
+      NS_ProxyRelease(
+        "nsStreamListenerTee::mSink", mEventTarget, mSink.forget());
     }
     else {
-        mSink = 0;
+        mSink = nullptr;
     }
 
     nsresult rv = mListener->OnStopRequest(request, context, status);
     if (mObserver)
         mObserver->OnStopRequest(request, context, status);
-    mObserver = 0;
+    mObserver = nullptr;
     return rv;
 }
 

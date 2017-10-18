@@ -14,15 +14,7 @@ PACKAGE_BASE_DIR	= $(DIST)
 STAGE_DIR      = $(ABS_DIST)/$(PKG_UPDATE_PATH)
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-ifdef UNIVERSAL_BINARY
-ifneq (,$(filter %/l10n-stage,$(PACKAGE_BASE_DIR)))
 PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
-else
-PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/universal/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
-endif
-else
-PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)/$(MOZ_MACBUNDLE_NAME)
-endif
 else
 PACKAGE_DIR	= $(PACKAGE_BASE_DIR)/$(MOZ_PKG_DIR)
 endif
@@ -60,20 +52,22 @@ ifeq ($(OS_TARGET), WINNT)
 	cd $(PACKAGE_BASE_DIR) && $(INNER_UNMAKE_PACKAGE)
 endif
 	MAR=$(MAR_BIN) \
+	MOZ_PRODUCT_VERSION=$(MOZ_APP_VERSION) \
 	  $(srcdir)/make_full_update.sh \
 	  '$(DIST)/$(COMPLETE_MAR)' \
 	  '$(PACKAGE_DIR)'
 ifdef MOZ_SIGN_CMD
-	$(MOZ_SIGN_CMD) -f mar '$(DIST)/$(COMPLETE_MAR)'
+	$(MOZ_SIGN_CMD) -f mar_sha384 '$(DIST)/$(COMPLETE_MAR)'
 endif
 
 partial-patch:: $(dir-stage)
 	MAR=$(MAR_BIN) \
 	MBSDIFF=$(MBSDIFF_BIN) \
+	MOZ_PRODUCT_VERSION=$(MOZ_APP_VERSION) \
 	  $(srcdir)/make_incremental_update.sh \
 	  '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).partial.$(SRC_BUILD_ID)-$(DST_BUILD_ID).mar' \
 	  '$(SRC_BUILD)' \
 	  '$(DST_BUILD)'
 ifdef MOZ_SIGN_CMD
-	$(MOZ_SIGN_CMD) -f mar '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).partial.$(SRC_BUILD_ID)-$(DST_BUILD_ID).mar'
+	$(MOZ_SIGN_CMD) -f mar_sha384 '$(STAGE_DIR)/$(PKG_UPDATE_BASENAME).partial.$(SRC_BUILD_ID)-$(DST_BUILD_ID).mar'
 endif

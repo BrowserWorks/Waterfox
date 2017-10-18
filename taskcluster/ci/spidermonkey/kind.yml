@@ -1,0 +1,206 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+loader: taskgraph.loader.transform:loader
+
+kind-dependencies:
+   - toolchain
+
+transforms:
+   - taskgraph.transforms.build_attrs:transforms
+   - taskgraph.transforms.toolchain:transforms
+   - taskgraph.transforms.job:transforms
+   - taskgraph.transforms.task:transforms
+
+job-defaults:
+    treeherder:
+        platform: linux64/opt
+        kind: build
+        tier: 1
+    index:
+        product: firefox
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        docker-image: {in-tree: desktop-build}
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/releng.manifest"
+    run:
+        using: spidermonkey
+    when:
+        files-changed:
+            # any when.files-changed specified below in a job will be
+            # appended to this list
+            - build/**
+            - config/**
+            - configure.py
+            - dom/bindings/**
+            - intl/icu/**
+            - js/moz.configure
+            - js/public/**
+            - js/src/**
+            - layout/tools/reftest/reftest/**
+            - Makefile.in
+            - media/webrtc/trunk/tools/gyp/**
+            - memory/**
+            - mfbt/**
+            - modules/fdlibm/**
+            - modules/zlib/src/**
+            - mozglue/**
+            - moz.build
+            - moz.configure
+            - nsprpub/**
+            - python/**
+            - taskcluster/moz.build
+            - taskcluster/ci/spidermonkey/kind.yml
+            - testing/mozbase/**
+            - test.mozbuild
+            - toolkit/mozapps/installer/package-name.mk
+            - toolkit/mozapps/installer/upload-files.mk
+    toolchains:
+        - linux64-clang
+        - linux64-gcc
+        - linux64-sccache
+
+jobs:
+    sm-package/opt:
+        description: "Spidermonkey source package and test"
+        index:
+            job-name: sm-package-opt
+        treeherder:
+            symbol: SM-tc(pkg)
+        run:
+            using: spidermonkey-package
+            spidermonkey-variant: plain
+
+    sm-mozjs-sys/debug:
+        description: "Build js/src as the mozjs_sys Rust crate"
+        index:
+            job-name: sm-mozjs-sys-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(mozjs-crate)
+        run:
+            using: spidermonkey-mozjs-crate
+            spidermonkey-variant: plain
+        run-on-projects: ['integration', 'release', 'try']
+
+    sm-plain/debug:
+        description: "Spidermonkey Plain"
+        index:
+            job-name: sm-plaindebug-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(p)
+        run:
+            spidermonkey-variant: plaindebug
+
+    sm-plain/opt:
+        description: "Spidermonkey Plain"
+        index:
+            job-name: sm-plain-opt
+        treeherder:
+            symbol: SM-tc(p)
+        run:
+            spidermonkey-variant: plain
+
+    sm-arm-sim/debug:
+        description: "Spidermonkey ARM sim"
+        index:
+            job-name: sm-arm-sim-debug
+        treeherder:
+            platform: linux32/debug
+            symbol: SM-tc(arm)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux32/releng.manifest"
+        run:
+            spidermonkey-variant: arm-sim
+
+    sm-arm64-sim/debug:
+        description: "Spidermonkey ARM64 sim"
+        index:
+            job-name: sm-arm64-sim-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(arm64)
+        run:
+            spidermonkey-variant: arm64-sim
+
+    sm-asan/opt:
+        description: "Spidermonkey Address Sanitizer"
+        index:
+            job-name: sm-asan-opt
+        treeherder:
+            symbol: SM-tc(asan)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/asan.manifest"
+        run:
+            spidermonkey-variant: asan
+
+    sm-compacting/debug:
+        description: "Spidermonkey Compacting"
+        index:
+            job-name: sm-compacting-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(cgc)
+        run:
+            spidermonkey-variant: compacting
+
+    sm-msan/opt:
+        description: "Spidermonkey Memory Sanitizer"
+        index:
+            job-name: sm-msan-opt
+        treeherder:
+            symbol: SM-tc(msan)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/msan.manifest"
+        run:
+            spidermonkey-variant: msan
+
+    sm-tsan/opt:
+        description: "Spidermonkey Thread Sanitizer"
+        index:
+            job-name: sm-tsan-opt
+        treeherder:
+            symbol: SM-tc(tsan)
+            tier: 3
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/tsan.manifest"
+        run:
+            spidermonkey-variant: tsan
+
+    sm-rootanalysis/debug:
+        description: "Spidermonkey Root Analysis"
+        index:
+            job-name: sm-rootanalysis-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(r)
+        run:
+            spidermonkey-variant: rootanalysis
+
+    sm-nonunified/debug:
+        description: "Spidermonkey Non-Unified Debug"
+        index:
+            job-name: sm-nonunified-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(nu)
+        run:
+            spidermonkey-variant: nonunified
+
+    sm-fuzzing/opt:
+        description: "Spidermonkey Fuzzing"
+        index:
+            job-name: sm-fuzzing
+        treeherder:
+            platform: linux64/opt
+            symbol: SM-tc(f)
+        run:
+            spidermonkey-variant: fuzzing

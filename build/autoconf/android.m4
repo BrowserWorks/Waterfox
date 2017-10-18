@@ -7,7 +7,7 @@ AC_DEFUN([MOZ_ANDROID_NDK],
 
 MOZ_ARG_WITH_STRING(android-cxx-stl,
 [  --with-android-cxx-stl=VALUE
-                          use the specified C++ STL (stlport, libstdc++, libc++)],
+                          use the specified C++ STL (libstdc++, libc++)],
     android_cxx_stl=$withval,
     android_cxx_stl=libc++)
 
@@ -23,8 +23,6 @@ case "$target" in
     dnl undefined symbol (present on the hardware, just not in the
     dnl NDK.)
     LDFLAGS="-L$android_platform/usr/lib -Wl,-rpath-link=$android_platform/usr/lib --sysroot=$android_platform -Wl,--allow-shlib-undefined $LDFLAGS"
-    dnl Add -llog by default, since we use it all over the place.
-    LIBS="-llog $LIBS"
     ANDROID_PLATFORM="${android_platform}"
 
     AC_DEFINE(ANDROID)
@@ -51,6 +49,9 @@ if test "$OS_TARGET" = "Android"; then
         ;;
     mips32-*) # When target_cpu is mipsel, CPU_ARCH is mips32
         ANDROID_CPU_ARCH=mips
+        ;;
+    aarch64-*)
+        ANDROID_CPU_ARCH=arm64-v8a
         ;;
     esac
 
@@ -98,6 +99,22 @@ if test "$OS_TARGET" = "Android"; then
                 AC_MSG_ERROR([Couldn't find path to llvm-libc++ in the android ndk])
             fi
 
+            if ! test -e "$cxx_include"; then
+                # NDK r13 removes the inner "libcxx" directory.
+                cxx_include="$cxx_base/include"
+                if ! test -e "$cxx_include"; then
+                    AC_MSG_ERROR([Couldn't find path to libc++ includes in the android ndk])
+                fi
+            fi
+
+            if ! test -e "$cxxabi_include"; then
+                # NDK r13 removes the inner "libcxxabi" directory.
+                cxxabi_include="$cxxabi_base/include"
+                if ! test -e "$cxxabi_include"; then
+                    AC_MSG_ERROR([Couldn't find path to libc++abi includes in the android ndk])
+                fi
+            fi
+
             STLPORT_LIBS="-L$cxx_libs -lc++_static"
             # NDK r12 split the libc++ runtime libraries into pieces.
             for lib in c++abi unwind android_support; do
@@ -108,12 +125,7 @@ if test "$OS_TARGET" = "Android"; then
             # Add android/support/include/ for prototyping long double math
             # functions, locale-specific C library functions, multibyte support,
             # etc.
-            STLPORT_CPPFLAGS="-I$android_ndk/sources/android/support/include -I$cxx_include -I$cxxabi_include"
-            ;;
-        mozstlport)
-            # We don't need to set STLPORT_LIBS, because the build system will
-            # take care of linking in our home-built stlport where it is needed.
-            STLPORT_CPPFLAGS="-isystem $_topsrcdir/build/stlport/stlport -isystem $_topsrcdir/build/stlport/overrides -isystem $android_ndk/sources/cxx-stl/system/include"
+            STLPORT_CPPFLAGS="-I$cxx_include -I$android_ndk/sources/android/support/include -I$cxxabi_include"
             ;;
         *)
             AC_MSG_ERROR([Bad value for --enable-android-cxx-stl])
@@ -187,8 +199,6 @@ AC_DEFUN([MOZ_ANDROID_GOOGLE_PLAY_SERVICES],
 [
 
 if test -n "$MOZ_NATIVE_DEVICES" ; then
-    AC_SUBST(MOZ_NATIVE_DEVICES)
-
     MOZ_ANDROID_AAR(play-services-base, $ANDROID_GOOGLE_PLAY_SERVICES_VERSION, google, com/google/android/gms)
     MOZ_ANDROID_AAR(play-services-basement, $ANDROID_GOOGLE_PLAY_SERVICES_VERSION, google, com/google/android/gms)
     MOZ_ANDROID_AAR(play-services-cast, $ANDROID_GOOGLE_PLAY_SERVICES_VERSION, google, com/google/android/gms)
@@ -213,7 +223,6 @@ AC_DEFUN([MOZ_ANDROID_INSTALL_TRACKING],
 [
 
 if test -n "$MOZ_INSTALL_TRACKING"; then
-    AC_SUBST(MOZ_INSTALL_TRACKING)
     MOZ_ANDROID_AAR(play-services-ads, $ANDROID_GOOGLE_PLAY_SERVICES_VERSION, google, com/google/android/gms)
     MOZ_ANDROID_AAR(play-services-basement, $ANDROID_GOOGLE_PLAY_SERVICES_VERSION, google, com/google/android/gms)
 fi
@@ -221,8 +230,11 @@ fi
 ])
 
 dnl Configure an Android SDK.
-dnl Arg 1: target SDK version, like 22.
-dnl Arg 2: build tools version, like 22.0.1.
+dnl Arg 1: compile SDK version, like 23.
+dnl Arg 2: target SDK version, like 23.
+dnl Arg 3: list of build-tools versions, like "23.0.3 23.0.1".
+dnl Arg 4: list of target lint versions, like "25.3.2 25.3.1" (note: we fall back to
+dnl        unversioned lint if this version is not found).
 AC_DEFUN([MOZ_ANDROID_SDK],
 [
 
@@ -246,7 +258,7 @@ case "$target" in
         AC_MSG_ERROR([Including platforms/android-* in --with-android-sdk arguments is deprecated.  Use --with-android-sdk=$android_sdk_root.])
     fi
 
-    android_target_sdk=$1
+    android_target_sdk=$2
     AC_MSG_CHECKING([for Android SDK platform version $android_target_sdk])
     android_sdk=$android_sdk_root/platforms/android-$android_target_sdk
     if ! test -e "$android_sdk/source.properties" ; then
@@ -254,12 +266,20 @@ case "$target" in
     fi
     AC_MSG_RESULT([$android_sdk])
 
-    android_build_tools="$android_sdk_root"/build-tools/$2
-    AC_MSG_CHECKING([for Android build-tools version $2])
-    if test -d "$android_build_tools" -a -f "$android_build_tools/aapt"; then
-        AC_MSG_RESULT([$android_build_tools])
-    else
-        AC_MSG_ERROR([You must install the Android build-tools version $2.  Try |mach bootstrap|.  (Looked for $android_build_tools)])
+    AC_MSG_CHECKING([for Android build-tools])
+    android_build_tools_base="$android_sdk_root"/build-tools
+    android_build_tools_version=""
+    for version in $3; do
+        android_build_tools="$android_build_tools_base"/$version
+        if test -d "$android_build_tools" -a -f "$android_build_tools/aapt"; then
+            android_build_tools_version=$version
+            AC_MSG_RESULT([$android_build_tools])
+            break
+        fi
+    done
+    if test "$android_build_tools_version" = ""; then
+        version=$(echo $3 | cut -d" " -f1)
+        AC_MSG_ERROR([You must install the Android build-tools version $version.  Try |mach bootstrap|.  (Looked for "$android_build_tools_base"/$version)])
     fi
 
     MOZ_PATH_PROG(ZIPALIGN, zipalign, :, [$android_build_tools])
@@ -305,12 +325,15 @@ case "$target" in
       AC_MSG_ERROR([The program emulator was not found.  Try |mach bootstrap|.])
     fi
 
+    # `compileSdkVersion ANDROID_COMPILE_SDK_VERSION` is Gradle-only,
+    # so there's no associated configure check.
+    ANDROID_COMPILE_SDK_VERSION=$1
     ANDROID_TARGET_SDK="${android_target_sdk}"
     ANDROID_SDK="${android_sdk}"
     ANDROID_SDK_ROOT="${android_sdk_root}"
     ANDROID_TOOLS="${android_tools}"
-    ANDROID_BUILD_TOOLS_VERSION="$2"
-    AC_DEFINE_UNQUOTED(ANDROID_TARGET_SDK,$ANDROID_TARGET_SDK)
+    ANDROID_BUILD_TOOLS_VERSION="$android_build_tools_version"
+    AC_SUBST(ANDROID_COMPILE_SDK_VERSION)
     AC_SUBST(ANDROID_TARGET_SDK)
     AC_SUBST(ANDROID_SDK_ROOT)
     AC_SUBST(ANDROID_SDK)
@@ -319,10 +342,13 @@ case "$target" in
 
     MOZ_ANDROID_AAR(customtabs, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
     MOZ_ANDROID_AAR(appcompat-v7, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
+    MOZ_ANDROID_AAR(support-vector-drawable, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
+    MOZ_ANDROID_AAR(animated-vector-drawable, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
     MOZ_ANDROID_AAR(cardview-v7, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
     MOZ_ANDROID_AAR(design, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
     MOZ_ANDROID_AAR(recyclerview-v7, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
     MOZ_ANDROID_AAR(support-v4, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support, REQUIRED_INTERNAL_IMPL)
+    MOZ_ANDROID_AAR(palette-v7, $ANDROID_SUPPORT_LIBRARY_VERSION, android, com/android/support)
 
     ANDROID_SUPPORT_ANNOTATIONS_JAR="$ANDROID_SDK_ROOT/extras/android/m2repository/com/android/support/support-annotations/$ANDROID_SUPPORT_LIBRARY_VERSION/support-annotations-$ANDROID_SUPPORT_LIBRARY_VERSION.jar"
     AC_MSG_CHECKING([for support-annotations JAR])
@@ -335,6 +361,32 @@ case "$target" in
     AC_SUBST(ANDROID_SUPPORT_ANNOTATIONS_JAR_LIB)
     ;;
 esac
+
+AC_MSG_CHECKING([for Android lint classpath])
+ANDROID_LINT_CLASSPATH=""
+for version in $4; do
+    android_lint_versioned_jar="$ANDROID_SDK_ROOT/tools/lib/lint-$version.jar"
+    if test -e "$android_lint_versioned_jar" ; then
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $android_lint_versioned_jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/lint-checks-$version.jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/sdklib-$version.jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/repository-$version.jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/common-$version.jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/lint-api-$version.jar"
+        break
+    fi
+done
+if test -z "$ANDROID_LINT_CLASSPATH" ; then
+    android_lint_unversioned_jar="$ANDROID_SDK_ROOT/tools/lib/lint.jar"
+    if test -e "$android_lint_unversioned_jar" ; then
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $android_lint_unversioned_jar"
+        ANDROID_LINT_CLASSPATH="$ANDROID_LINT_CLASSPATH $ANDROID_SDK_ROOT/tools/lib/lint-checks.jar"
+    else
+        AC_MSG_ERROR([Unable to find android sdk's lint jar. This probably means that you need to update android.m4 to find the latest version of lint-*.jar and all its dependencies. (looked for $android_lint_versioned_jar and $android_lint_unversioned_jar)])
+    fi
+fi
+AC_MSG_RESULT([$ANDROID_LINT_CLASSPATH])
+AC_SUBST(ANDROID_LINT_CLASSPATH)
 
 MOZ_ARG_WITH_STRING(android-min-sdk,
 [  --with-android-min-sdk=[VER]     Impose a minimum Firefox for Android SDK version],
@@ -355,13 +407,9 @@ if test -n "$MOZ_ANDROID_MIN_SDK_VERSION"; then
         AC_MSG_ERROR([--with-android-min-sdk is expected to be less than $ANDROID_TARGET_SDK])
     fi
 
-    AC_DEFINE_UNQUOTED(MOZ_ANDROID_MIN_SDK_VERSION, $MOZ_ANDROID_MIN_SDK_VERSION)
     AC_SUBST(MOZ_ANDROID_MIN_SDK_VERSION)
 fi
 
-if test -n "$MOZ_ANDROID_MAX_SDK_VERSION"; then
-    AC_DEFINE_UNQUOTED(MOZ_ANDROID_MAX_SDK_VERSION, $MOZ_ANDROID_MAX_SDK_VERSION)
-    AC_SUBST(MOZ_ANDROID_MAX_SDK_VERSION)
-fi
+AC_SUBST(MOZ_ANDROID_MAX_SDK_VERSION)
 
 ])

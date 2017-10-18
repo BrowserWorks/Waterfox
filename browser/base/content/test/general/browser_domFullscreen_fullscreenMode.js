@@ -1,3 +1,5 @@
+/* eslint-env mozilla/frame-script */
+
 "use strict";
 
 var gMessageManager;
@@ -14,6 +16,9 @@ function frameScript() {
       inDOMFullscreen: !!content.document.fullscreenElement,
       inFullscreen: content.fullScreen
     });
+  });
+  addMessageListener("Test:WaitActivated", () => {
+    waitUntilActive();
   });
   content.document.addEventListener("fullscreenchange", () => {
     sendAsyncMessage("Test:FullscreenChanged", {
@@ -63,6 +68,13 @@ const FS_CHANGE_DOM = 1 << 0;
 const FS_CHANGE_SIZE = 1 << 1;
 const FS_CHANGE_BOTH = FS_CHANGE_DOM | FS_CHANGE_SIZE;
 
+function waitForDocActivated() {
+  return new Promise(resolve => {
+    listenOneMessage("Test:Activated", resolve);
+    gMessageManager.sendAsyncMessage("Test:WaitActivated");
+  });
+}
+
 function waitForFullscreenChanges(aFlags) {
   return new Promise(resolve => {
     let fullscreenData = null;
@@ -70,11 +82,18 @@ function waitForFullscreenChanges(aFlags) {
     function tryResolve() {
       if ((!(aFlags & FS_CHANGE_DOM) || fullscreenData) &&
           (!(aFlags & FS_CHANGE_SIZE) || sizemodeChanged)) {
-        if (!fullscreenData) {
-          queryFullscreenState().then(resolve);
-        } else {
-          resolve(fullscreenData);
-        }
+        // In the platforms that support reporting occlusion state (e.g. Mac),
+        // enter/exit fullscreen mode will trigger docshell being set to
+        // non-activate and then set to activate back again.
+        // For those platform, we should wait until the docshell has been
+        // activated again, otherwise, the fullscreen request might be denied.
+        waitForDocActivated().then(() => {
+          if (!fullscreenData) {
+            queryFullscreenState().then(resolve);
+          } else {
+            resolve(fullscreenData);
+          }
+        });
       }
     }
     if (aFlags & FS_CHANGE_SIZE) {
@@ -114,7 +133,7 @@ var gTests = [
   {
     desc: "F11 key",
     affectsFullscreenMode: true,
-    exitFunc: function () {
+    exitFunc() {
       executeSoon(() => EventUtils.synthesizeKey("VK_F11", {}));
     }
   }
@@ -139,22 +158,20 @@ function checkState(expectedStates, contentStates) {
 const kPage = "http://example.org/browser/browser/" +
               "base/content/test/general/dummy_page.html";
 
-add_task(function* () {
-  yield pushPrefs(
+add_task(async function() {
+  await pushPrefs(
     ["full-screen-api.transition-duration.enter", "0 0"],
     ["full-screen-api.transition-duration.leave", "0 0"]);
 
-  let tab = gBrowser.addTab(kPage);
-  let browser = tab.linkedBrowser;
-  gBrowser.selectedTab = tab;
-  yield waitForDocLoadComplete();
-
-  registerCleanupFunction(() => {
-    if (browser.contentWindow.fullScreen) {
-      BrowserFullScreen();
+  registerCleanupFunction(async function() {
+    if (window.fullScreen) {
+      executeSoon(() => BrowserFullScreen());
+      await waitForFullscreenChanges(FS_CHANGE_SIZE);
     }
-    gBrowser.removeTab(tab);
   });
+
+  let tab = await BrowserTestUtils.openNewForegroundTab({ gBrowser, url: kPage });
+  let browser = tab.linkedBrowser;
 
   gMessageManager = browser.messageManager;
   gMessageManager.loadFrameScript(
@@ -164,25 +181,25 @@ add_task(function* () {
 
   // Wait for the document being activated, so that
   // fullscreen request won't be denied.
-  yield new Promise(resolve => listenOneMessage("Test:Activated", resolve));
+  await new Promise(resolve => listenOneMessage("Test:Activated", resolve));
 
   for (let test of gTests) {
     let contentStates;
     info("Testing exit DOM fullscreen via " + test.desc);
 
-    contentStates = yield queryFullscreenState();
+    contentStates = await queryFullscreenState();
     checkState({inDOMFullscreen: false, inFullscreen: false}, contentStates);
 
     /* DOM fullscreen without fullscreen mode */
 
     info("> Enter DOM fullscreen");
     gMessageManager.sendAsyncMessage("Test:RequestFullscreen");
-    contentStates = yield waitForFullscreenChanges(FS_CHANGE_BOTH);
+    contentStates = await waitForFullscreenChanges(FS_CHANGE_BOTH);
     checkState({inDOMFullscreen: true, inFullscreen: true}, contentStates);
 
     info("> Exit DOM fullscreen");
     test.exitFunc();
-    contentStates = yield waitForFullscreenChanges(FS_CHANGE_BOTH);
+    contentStates = await waitForFullscreenChanges(FS_CHANGE_BOTH);
     checkState({inDOMFullscreen: false, inFullscreen: false}, contentStates);
 
     /* DOM fullscreen with fullscreen mode */
@@ -192,17 +209,17 @@ add_task(function* () {
     // dispatched synchronously, which would cause the event listener
     // miss that event and wait infinitely.
     executeSoon(() => BrowserFullScreen());
-    contentStates = yield waitForFullscreenChanges(FS_CHANGE_SIZE);
+    contentStates = await waitForFullscreenChanges(FS_CHANGE_SIZE);
     checkState({inDOMFullscreen: false, inFullscreen: true}, contentStates);
 
     info("> Enter DOM fullscreen in fullscreen mode");
     gMessageManager.sendAsyncMessage("Test:RequestFullscreen");
-    contentStates = yield waitForFullscreenChanges(FS_CHANGE_DOM);
+    contentStates = await waitForFullscreenChanges(FS_CHANGE_DOM);
     checkState({inDOMFullscreen: true, inFullscreen: true}, contentStates);
 
     info("> Exit DOM fullscreen in fullscreen mode");
     test.exitFunc();
-    contentStates = yield waitForFullscreenChanges(
+    contentStates = await waitForFullscreenChanges(
       test.affectsFullscreenMode ? FS_CHANGE_BOTH : FS_CHANGE_DOM);
     checkState({
       inDOMFullscreen: false,
@@ -215,7 +232,9 @@ add_task(function* () {
     if (window.fullScreen) {
       info("> Cleanup");
       executeSoon(() => BrowserFullScreen());
-      yield waitForFullscreenChanges(FS_CHANGE_SIZE);
+      await waitForFullscreenChanges(FS_CHANGE_SIZE);
     }
   }
+
+  await BrowserTestUtils.removeTab(tab);
 });

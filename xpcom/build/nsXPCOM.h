@@ -76,6 +76,13 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
               nsIDirectoryServiceProvider* aAppFileLocationProvider);
 
 /**
+ * Initialize only minimal components of XPCOM. This ensures nsThreadManager,
+ * logging, and timers will work.
+ */
+XPCOM_API(nsresult)
+NS_InitMinimalXPCOM();
+
+/**
  * Shutdown XPCOM. You must call this method after you are finished
  * using xpcom.
  *
@@ -159,6 +166,14 @@ XPCOM_API(nsresult) NS_NewLocalFile(const nsAString& aPath,
 XPCOM_API(nsresult) NS_NewNativeLocalFile(const nsACString& aPath,
                                           bool aFollowLinks,
                                           nsIFile** aResult);
+
+// Use NS_NewLocalFile if you already have a UTF-16 string.
+// Otherwise non-ASCII paths will break on some platforms
+// including Windows.
+class NS_ConvertUTF16toUTF8;
+nsresult NS_NewNativeLocalFile(const NS_ConvertUTF16toUTF8& aPath,
+                               bool aFollowLinks,
+                               nsIFile** aResult) = delete;
 
 #endif
 
@@ -260,6 +275,27 @@ XPCOM_API(void) NS_DebugBreak(uint32_t aSeverity,
 XPCOM_API(void) NS_LogInit();
 
 XPCOM_API(void) NS_LogTerm();
+
+#ifdef __cplusplus
+/**
+ * A helper class that calls NS_LogInit in its constructor and
+ * NS_LogTerm in its destructor.
+ */
+
+class ScopedLogging
+{
+public:
+    ScopedLogging()
+    {
+        NS_LogInit();
+    }
+
+    ~ScopedLogging()
+    {
+        NS_LogTerm();
+    }
+};
+#endif
 
 /**
  * Log construction and destruction of objects. Processing tools can use the

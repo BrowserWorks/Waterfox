@@ -10,7 +10,7 @@
 #include "js/Class.h"
 
 #include "nsJSPrincipals.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsThreadUtils.h"
 #include "nsContentUtils.h"
 
@@ -29,8 +29,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(SimpleGlobalObject)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(SimpleGlobalObject)
-
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   tmp->TraverseHostObjectURIs(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -48,6 +46,7 @@ SimpleGlobal_finalize(js::FreeOp *fop, JSObject *obj)
 {
   SimpleGlobalObject* globalObject =
     static_cast<SimpleGlobalObject*>(JS_GetPrivate(obj));
+  globalObject->ClearWrapper(obj);
   NS_RELEASE(globalObject);
 }
 
@@ -64,7 +63,8 @@ static const js::ClassOps SimpleGlobalClassOps = {
     nullptr,
     nullptr,
     nullptr,
-    JS_EnumerateStandardClasses,
+    nullptr,
+    JS_NewEnumerateStandardClasses,
     JS_ResolveStandardClass,
     JS_MayResolveStandardClass,
     SimpleGlobal_finalize,
@@ -81,7 +81,10 @@ static const js::ClassExtension SimpleGlobalClassExtension = {
 
 const js::Class SimpleGlobalClass = {
     "",
-    JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_PRIVATE | JSCLASS_PRIVATE_IS_NSISUPPORTS,
+    JSCLASS_GLOBAL_FLAGS |
+    JSCLASS_HAS_PRIVATE |
+    JSCLASS_PRIVATE_IS_NSISUPPORTS |
+    JSCLASS_FOREGROUND_FINALIZE,
     &SimpleGlobalClassOps,
     JS_NULL_CLASS_SPEC,
     &SimpleGlobalClassExtension,
@@ -95,7 +98,7 @@ SimpleGlobalObject::Create(GlobalType globalType, JS::Handle<JS::Value> proto)
   // We can't root our return value with our AutoJSAPI because the rooting
   // analysis thinks ~AutoJSAPI can GC.  So we need to root in a scope outside
   // the lifetime of the AutoJSAPI.
-  JS::Rooted<JSObject*> global(nsContentUtils::RootingCx());
+  JS::Rooted<JSObject*> global(RootingCx());
 
   { // Scope to ensure the AutoJSAPI destructor runs before we end up returning
     AutoJSAPI jsapi;
@@ -103,10 +106,16 @@ SimpleGlobalObject::Create(GlobalType globalType, JS::Handle<JS::Value> proto)
     JSContext* cx = jsapi.cx();
 
     JS::CompartmentOptions options;
-    options.creationOptions().setInvisibleToDebugger(true);
+    options.creationOptions()
+           .setInvisibleToDebugger(true)
+           // Put our SimpleGlobalObjects in the system zone, so we won't create
+           // lots of zones for what are probably very short-lived
+           // compartments.  This should help them be GCed quicker and take up
+           // less memory before they're GCed.
+           .setSystemZone();
 
     if (NS_IsMainThread()) {
-      nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+      nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
       options.creationOptions().setTrace(xpc::TraceXPCGlobal);
       global = xpc::CreateGlobalObject(cx, js::Jsvalify(&SimpleGlobalClass),
                                        nsJSPrincipals::get(principal),

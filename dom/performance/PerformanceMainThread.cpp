@@ -6,6 +6,7 @@
 
 #include "PerformanceMainThread.h"
 #include "PerformanceNavigation.h"
+#include "nsICacheInfoChannel.h"
 
 namespace mozilla {
 namespace dom {
@@ -15,8 +16,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(PerformanceMainThread)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(PerformanceMainThread,
                                                 Performance)
 NS_IMPL_CYCLE_COLLECTION_UNLINK(mTiming,
-                                mNavigation,
-                                mParentPerformance)
+                                mNavigation)
   tmp->mMozMemory = nullptr;
   mozilla::DropJSObjects(this);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -24,9 +24,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(PerformanceMainThread,
                                                   Performance)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTiming,
-                                    mNavigation,
-                                    mParentPerformance)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
+                                    mNavigation)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(PerformanceMainThread,
@@ -45,12 +43,10 @@ NS_INTERFACE_MAP_END_INHERITING(Performance)
 
 PerformanceMainThread::PerformanceMainThread(nsPIDOMWindowInner* aWindow,
                                              nsDOMNavigationTiming* aDOMTiming,
-                                             nsITimedChannel* aChannel,
-                                             Performance* aParentPerformance)
+                                             nsITimedChannel* aChannel)
   : Performance(aWindow)
   , mDOMTiming(aDOMTiming)
   , mChannel(aChannel)
-  , mParentPerformance(aParentPerformance)
 {
   MOZ_ASSERT(aWindow, "Parent window object should be provided");
 }
@@ -78,7 +74,7 @@ PerformanceTiming*
 PerformanceMainThread::Timing()
 {
   if (!mTiming) {
-    // For navigation timing, the third argument (an nsIHtttpChannel) is null
+    // For navigation timing, the third argument (an nsIHttpChannel) is null
     // since the cross-domain redirect were already checked.  The last argument
     // (zero time) for performance.timing is the navigation start value.
     mTiming = new PerformanceTiming(this, mChannel, nullptr,
@@ -106,12 +102,6 @@ PerformanceMainThread::Navigation()
   }
 
   return mNavigation;
-}
-
-DOMHighResTimeStamp
-PerformanceMainThread::Now() const
-{
-  return RoundTime(GetDOMTiming()->TimeStampToDOMHighRes(TimeStamp::Now()));
 }
 
 /**
@@ -164,19 +154,31 @@ PerformanceMainThread::AddEntry(nsIHttpChannel* channel,
       new PerformanceResourceTiming(performanceTiming, this, entryName);
 
     nsAutoCString protocol;
-    channel->GetProtocolVersion(protocol);
+    // Can be an empty string.
+    Unused << channel->GetProtocolVersion(protocol);
+
+    // If this is a local fetch, nextHopProtocol should be set to empty string.
+    nsCOMPtr<nsICacheInfoChannel> cachedChannel = do_QueryInterface(channel);
+    if (cachedChannel) {
+      bool isFromCache;
+      if (NS_SUCCEEDED(cachedChannel->IsFromCache(&isFromCache))
+          && isFromCache) {
+        protocol.Truncate();
+      }
+    }
+
     performanceEntry->SetNextHopProtocol(NS_ConvertUTF8toUTF16(protocol));
 
     uint64_t encodedBodySize = 0;
-    channel->GetEncodedBodySize(&encodedBodySize);
+    Unused << channel->GetEncodedBodySize(&encodedBodySize);
     performanceEntry->SetEncodedBodySize(encodedBodySize);
 
     uint64_t transferSize = 0;
-    channel->GetTransferSize(&transferSize);
+    Unused << channel->GetTransferSize(&transferSize);
     performanceEntry->SetTransferSize(transferSize);
 
     uint64_t decodedBodySize = 0;
-    channel->GetDecodedBodySize(&decodedBodySize);
+    Unused << channel->GetDecodedBodySize(&decodedBodySize);
     if (decodedBodySize == 0) {
       decodedBodySize = encodedBodySize;
     }
@@ -200,7 +202,7 @@ PerformanceMainThread::IsPerformanceTimingAttribute(const nsAString& aName)
   static const char* attributes[] =
     {"navigationStart", "unloadEventStart", "unloadEventEnd", "redirectStart",
      "redirectEnd", "fetchStart", "domainLookupStart", "domainLookupEnd",
-     "connectStart", "connectEnd", "requestStart", "responseStart",
+     "connectStart", "secureConnectionStart", "connectEnd", "requestStart", "responseStart",
      "responseEnd", "domLoading", "domInteractive",
      "domContentLoadedEventStart", "domContentLoadedEventEnd", "domComplete",
      "loadEventStart", "loadEventEnd", nullptr};
@@ -248,6 +250,9 @@ PerformanceMainThread::GetPerformanceTimingFromString(const nsAString& aProperty
   }
   if (aProperty.EqualsLiteral("connectStart")) {
     return Timing()->ConnectStart();
+  }
+  if (aProperty.EqualsLiteral("secureConnectionStart")) {
+    return Timing()->SecureConnectionStart();
   }
   if (aProperty.EqualsLiteral("connectEnd")) {
     return Timing()->ConnectEnd();

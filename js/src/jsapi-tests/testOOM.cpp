@@ -36,7 +36,7 @@ const uint32_t maxAllocsPerTest = 100;
     testName = name;                                                          \
     printf("Test %s: started\n", testName);                                   \
     for (oomAfter = 1; oomAfter < maxAllocsPerTest; ++oomAfter) {             \
-    js::oom::SimulateOOMAfter(oomAfter, js::oom::THREAD_TYPE_MAIN, true)
+    js::oom::SimulateOOMAfter(oomAfter, js::oom::THREAD_TYPE_COOPERATING, true)
 
 #define OOM_TEST_FINISHED                                                     \
     {                                                                         \
@@ -59,6 +59,7 @@ BEGIN_TEST(testNewContext)
     cx = JS_NewContext(8L * 1024 * 1024);
     if (cx)
         OOM_TEST_FINISHED;
+    CHECK(!JSRuntime::hasLiveRuntimes());
     END_OOM_TEST;
     JS_DestroyContext(cx);
     return true;

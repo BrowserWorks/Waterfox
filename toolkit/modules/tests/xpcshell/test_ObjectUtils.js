@@ -4,13 +4,21 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_deepEqual() {
+add_task(async function test_deepEqual() {
   let deepEqual = ObjectUtils.deepEqual.bind(ObjectUtils);
   // CommonJS 7.2
   Assert.ok(deepEqual(new Date(2000, 3, 14), new Date(2000, 3, 14)), "deepEqual date");
   Assert.ok(deepEqual(new Date(NaN), new Date(NaN)), "deepEqual invalid dates");
 
   Assert.ok(!deepEqual(new Date(), new Date(2000, 3, 14)), "deepEqual date");
+
+  let now = Date.now();
+  Assert.ok(!deepEqual(new Date(now), now), "Dates and times should not be equal");
+  Assert.ok(!deepEqual(now, new Date(now)), "Times and dates should not be equal");
+
+  Assert.ok(!deepEqual("", {}), "Objects and primitives should not be equal");
+  Assert.ok(!deepEqual(/a/, "a"), "RegExps and strings should not be equal");
+  Assert.ok(!deepEqual("a", /a/), "Strings and RegExps should not be equal");
 
   // 7.3
   Assert.ok(deepEqual(/a/, /a/));
@@ -51,7 +59,7 @@ add_task(function* test_deepEqual() {
   Assert.ok(deepEqual(a1, a2));
 
   let nbRoot = {
-    toString: function() { return this.first + " " + this.last; }
+    toString() { return this.first + " " + this.last; }
   };
 
   function nameBuilder(first, last) {
@@ -93,4 +101,13 @@ add_task(function* test_deepEqual() {
   } catch (e) {
     Assert.ok(true, "Didn't recurse infinitely.");
   }
+
+  let e = {a: 3, b: 4};
+  let f = {b: 4, a: 3};
+
+  function checkEquiv() {
+    return arguments;
+  }
+
+  Assert.ok(deepEqual(checkEquiv(e, f), checkEquiv(f, e)));
 });

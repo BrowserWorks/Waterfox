@@ -10,10 +10,6 @@
 #  error Should not compile this file when replace-malloc is disabled
 #endif
 
-#ifdef MOZ_SYSTEM_JEMALLOC
-#  error Should not compile this file when we want to use native jemalloc
-#endif
-
 #include "mozmemory_wrap.h"
 
 /* Declare all je_* functions */
@@ -22,6 +18,11 @@
 #include "malloc_decls.h"
 
 #include "mozilla/Likely.h"
+#include "mozilla/MacroArgs.h"
+#include <errno.h>
+#ifndef XP_WIN
+#include <unistd.h>
+#endif
 
 /*
  * Windows doesn't come with weak imports as they are possible with
@@ -50,87 +51,133 @@ static const malloc_table_t malloc_table = {
 #include "malloc_decls.h"
 };
 
+static malloc_table_t replace_malloc_table;
+
 #ifdef MOZ_NO_REPLACE_FUNC_DECL
 #  define MALLOC_DECL(name, return_type, ...) \
-    typedef return_type (replace_ ## name ## _impl_t)(__VA_ARGS__); \
-    replace_ ## name ## _impl_t *replace_ ## name = NULL;
-#  define MALLOC_FUNCS MALLOC_FUNCS_ALL
+    typedef return_type (name ## _impl_t)(__VA_ARGS__); \
+    name ## _impl_t* replace_ ## name = NULL;
+#  define MALLOC_FUNCS (MALLOC_FUNCS_INIT | MALLOC_FUNCS_BRIDGE)
 #  include "malloc_decls.h"
+#endif
 
-#  ifdef XP_WIN
-#    include <windows.h>
-static void
-replace_malloc_init_funcs()
+#ifdef XP_WIN
+#  include <windows.h>
+
+typedef HMODULE replace_malloc_handle_t;
+
+static replace_malloc_handle_t
+replace_malloc_handle()
 {
   char replace_malloc_lib[1024];
   if (GetEnvironmentVariableA("MOZ_REPLACE_MALLOC_LIB", (LPSTR)&replace_malloc_lib,
                               sizeof(replace_malloc_lib)) > 0) {
-    HMODULE handle = LoadLibraryA(replace_malloc_lib);
-    if (handle) {
-#define MALLOC_DECL(name, ...) \
-  replace_ ## name = (replace_ ## name ## _impl_t *) GetProcAddress(handle, "replace_" # name);
-
-#  define MALLOC_FUNCS MALLOC_FUNCS_ALL
-#include "malloc_decls.h"
-    }
+    return LoadLibraryA(replace_malloc_lib);
   }
+  return NULL;
 }
-#  elif defined(MOZ_WIDGET_ANDROID)
-#    include <dlfcn.h>
-#    include <stdlib.h>
-static void
-replace_malloc_init_funcs()
+
+#    define REPLACE_MALLOC_GET_FUNC(handle, name) \
+      (name ## _impl_t*) GetProcAddress(handle, "replace_" # name)
+
+#elif defined(MOZ_WIDGET_ANDROID)
+#  include <dlfcn.h>
+#  include <stdlib.h>
+
+typedef void* replace_malloc_handle_t;
+
+static replace_malloc_handle_t
+replace_malloc_handle()
 {
   const char *replace_malloc_lib = getenv("MOZ_REPLACE_MALLOC_LIB");
   if (replace_malloc_lib && *replace_malloc_lib) {
-    void *handle = dlopen(replace_malloc_lib, RTLD_LAZY);
-    if (handle) {
-#define MALLOC_DECL(name, ...) \
-  replace_ ## name = (replace_ ## name ## _impl_t *) dlsym(handle, "replace_" # name);
-
-#  define MALLOC_FUNCS MALLOC_FUNCS_ALL
-#include "malloc_decls.h"
-    }
+    return dlopen(replace_malloc_lib, RTLD_LAZY);
   }
+  return NULL;
 }
-#  else
-#    error No implementation for replace_malloc_init_funcs()
-#  endif
 
-#endif /* MOZ_NO_REPLACE_FUNC_DECL */
+#  define REPLACE_MALLOC_GET_FUNC(handle, name) \
+    (name ## _impl_t*) dlsym(handle, "replace_" # name)
+
+#else
+
+#  include <stdbool.h>
+
+typedef bool replace_malloc_handle_t;
+
+static replace_malloc_handle_t
+replace_malloc_handle()
+{
+  return true;
+}
+
+#  define REPLACE_MALLOC_GET_FUNC(handle, name) \
+    replace_ ## name
+
+#endif
+
+static void replace_malloc_init_funcs();
 
 /*
  * Below is the malloc implementation overriding jemalloc and calling the
  * replacement functions if they exist.
  */
 
-/*
- * Malloc implementation functions are MOZ_MEMORY_API, and jemalloc
- * specific functions MOZ_JEMALLOC_API; see mozmemory_wrap.h
- */
-#define MALLOC_DECL(name, return_type, ...) \
-  MOZ_MEMORY_API return_type name ## _impl(__VA_ARGS__);
-#define MALLOC_FUNCS MALLOC_FUNCS_MALLOC
-#include "malloc_decls.h"
-
-#define MALLOC_DECL(name, return_type, ...) \
-  MOZ_JEMALLOC_API return_type name ## _impl(__VA_ARGS__);
-#define MALLOC_FUNCS MALLOC_FUNCS_JEMALLOC
-#include "malloc_decls.h"
-
 static int replace_malloc_initialized = 0;
 static void
 init()
 {
-#ifdef MOZ_NO_REPLACE_FUNC_DECL
   replace_malloc_init_funcs();
-#endif
   // Set this *before* calling replace_init, otherwise if replace_init calls
   // malloc() we'll get an infinite loop.
   replace_malloc_initialized = 1;
   if (replace_init)
     replace_init(&malloc_table);
 }
+
+/*
+ * Malloc implementation functions are MOZ_MEMORY_API, and jemalloc
+ * specific functions MOZ_JEMALLOC_API; see mozmemory_wrap.h
+ */
+#define MACRO_CALL(a, b) a b
+/* Can't use macros recursively, so we need another one doing the same as above. */
+#define MACRO_CALL2(a, b) a b
+
+#define ARGS_HELPER(name, ...) MACRO_CALL2( \
+  MOZ_PASTE_PREFIX_AND_ARG_COUNT(name, ##__VA_ARGS__), \
+  (__VA_ARGS__))
+#define TYPED_ARGS0()
+#define TYPED_ARGS1(t1) t1 arg1
+#define TYPED_ARGS2(t1, t2) TYPED_ARGS1(t1), t2 arg2
+#define TYPED_ARGS3(t1, t2, t3) TYPED_ARGS2(t1, t2), t3 arg3
+
+#define ARGS0()
+#define ARGS1(t1) arg1
+#define ARGS2(t1, t2) ARGS1(t1), arg2
+#define ARGS3(t1, t2, t3) ARGS2(t1, t2), arg3
+
+#define GENERIC_MALLOC_DECL_HELPER(name, return, return_type, ...) \
+  return_type name ## _impl(ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__)) \
+  { \
+    if (MOZ_UNLIKELY(!replace_malloc_initialized)) \
+      init(); \
+    return replace_malloc_table.name(ARGS_HELPER(ARGS, ##__VA_ARGS__)); \
+  }
+
+#define GENERIC_MALLOC_DECL(name, return_type, ...) \
+  GENERIC_MALLOC_DECL_HELPER(name, return, return_type, ##__VA_ARGS__)
+#define GENERIC_MALLOC_DECL_VOID(name, ...) \
+  GENERIC_MALLOC_DECL_HELPER(name, , void, ##__VA_ARGS__)
+
+#define MALLOC_DECL(...) MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL, (__VA_ARGS__))
+#define MALLOC_DECL_VOID(...) MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL_VOID, (__VA_ARGS__))
+#define MALLOC_FUNCS MALLOC_FUNCS_MALLOC
+#include "malloc_decls.h"
+
+#define MALLOC_DECL(...) MOZ_JEMALLOC_API MACRO_CALL(GENERIC_MALLOC_DECL, (__VA_ARGS__))
+#define MALLOC_DECL_VOID(...) MOZ_JEMALLOC_API MACRO_CALL(GENERIC_MALLOC_DECL_VOID, (__VA_ARGS__))
+#define MALLOC_FUNCS MALLOC_FUNCS_JEMALLOC
+#include "malloc_decls.h"
 
 MFBT_API struct ReplaceMallocBridge*
 get_bridge(void)
@@ -140,140 +187,6 @@ get_bridge(void)
   if (MOZ_LIKELY(!replace_get_bridge))
     return NULL;
   return replace_get_bridge();
-}
-
-void*
-malloc_impl(size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_malloc))
-    return je_malloc(size);
-  return replace_malloc(size);
-}
-
-int
-posix_memalign_impl(void **memptr, size_t alignment, size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_posix_memalign))
-    return je_posix_memalign(memptr, alignment, size);
-  return replace_posix_memalign(memptr, alignment, size);
-}
-
-void*
-aligned_alloc_impl(size_t alignment, size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_aligned_alloc))
-    return je_aligned_alloc(alignment, size);
-  return replace_aligned_alloc(alignment, size);
-}
-
-void*
-calloc_impl(size_t num, size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_calloc))
-    return je_calloc(num, size);
-  return replace_calloc(num, size);
-}
-
-void*
-realloc_impl(void *ptr, size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_realloc))
-    return je_realloc(ptr, size);
-  return replace_realloc(ptr, size);
-}
-
-void
-free_impl(void *ptr)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_free))
-    je_free(ptr);
-  else
-    replace_free(ptr);
-}
-
-void*
-memalign_impl(size_t alignment, size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_memalign))
-    return je_memalign(alignment, size);
-  return replace_memalign(alignment, size);
-}
-
-void*
-valloc_impl(size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_valloc))
-    return je_valloc(size);
-  return replace_valloc(size);
-}
-
-size_t
-malloc_usable_size_impl(usable_ptr_t ptr)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_malloc_usable_size))
-    return je_malloc_usable_size(ptr);
-  return replace_malloc_usable_size(ptr);
-}
-
-size_t
-malloc_good_size_impl(size_t size)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_malloc_good_size))
-    return je_malloc_good_size(size);
-  return replace_malloc_good_size(size);
-}
-
-void
-jemalloc_stats_impl(jemalloc_stats_t *stats)
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_jemalloc_stats))
-    je_jemalloc_stats(stats);
-  else
-    replace_jemalloc_stats(stats);
-}
-
-void
-jemalloc_purge_freed_pages_impl()
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_jemalloc_purge_freed_pages))
-    je_jemalloc_purge_freed_pages();
-  else
-    replace_jemalloc_purge_freed_pages();
-}
-
-void
-jemalloc_free_dirty_pages_impl()
-{
-  if (MOZ_UNLIKELY(!replace_malloc_initialized))
-    init();
-  if (MOZ_LIKELY(!replace_jemalloc_free_dirty_pages))
-    je_jemalloc_free_dirty_pages();
-  else
-    replace_jemalloc_free_dirty_pages();
 }
 
 /* The following comment and definitions are from jemalloc.c: */
@@ -302,245 +215,79 @@ MOZ_MEMORY_API __memalign_hook_type __memalign_hook = memalign_impl;
 #endif
 
 /*
- * The following is a OSX zone allocator implementation.
- * /!\ WARNING. It assumes the underlying malloc implementation's
- * malloc_usable_size returns 0 when the given pointer is not owned by
- * the allocator. Sadly, OSX does call zone_size with pointers not
- * owned by the allocator.
+ * posix_memalign, aligned_alloc, memalign and valloc all implement some kind
+ * of aligned memory allocation. For convenience, a replace-malloc library can
+ * skip defining replace_posix_memalign, replace_aligned_alloc and
+ * replace_valloc, and default implementations will be automatically derived
+ * from replace_memalign.
  */
-
-#ifdef XP_DARWIN
-#include <stdlib.h>
-#include <malloc/malloc.h>
-#include "mozilla/Assertions.h"
-
-static size_t
-zone_size(malloc_zone_t *zone, void *ptr)
+static int
+default_posix_memalign(void** ptr, size_t alignment, size_t size)
 {
-  return malloc_usable_size_impl(ptr);
-}
-
-static void *
-zone_malloc(malloc_zone_t *zone, size_t size)
-{
-  return malloc_impl(size);
-}
-
-static void *
-zone_calloc(malloc_zone_t *zone, size_t num, size_t size)
-{
-  return calloc_impl(num, size);
-}
-
-static void *
-zone_realloc(malloc_zone_t *zone, void *ptr, size_t size)
-{
-  if (malloc_usable_size_impl(ptr))
-    return realloc_impl(ptr, size);
-  return realloc(ptr, size);
-}
-
-static void
-zone_free(malloc_zone_t *zone, void *ptr)
-{
-  if (malloc_usable_size_impl(ptr)) {
-    free_impl(ptr);
-    return;
+  if (size == 0) {
+    *ptr = NULL;
+    return 0;
   }
-  free(ptr);
+  /* alignment must be a power of two and a multiple of sizeof(void *) */
+  if (((alignment - 1) & alignment) != 0 || (alignment % sizeof(void *)))
+    return EINVAL;
+  *ptr = replace_malloc_table.memalign(alignment, size);
+  return *ptr ? 0 : ENOMEM;
 }
 
-static void
-zone_free_definite_size(malloc_zone_t *zone, void *ptr, size_t size)
+static void*
+default_aligned_alloc(size_t alignment, size_t size)
 {
-  size_t current_size = malloc_usable_size_impl(ptr);
-  if (current_size) {
-    MOZ_ASSERT(current_size == size);
-    free_impl(ptr);
-    return;
-  }
-  free(ptr);
+  /* size should be a multiple of alignment */
+  if (size % alignment)
+    return NULL;
+  return replace_malloc_table.memalign(alignment, size);
 }
 
-static void *
-zone_memalign(malloc_zone_t *zone, size_t alignment, size_t size)
+// Nb: sysconf() is expensive, but valloc is obsolete and rarely used.
+static void*
+default_valloc(size_t size)
 {
-  void *ptr;
-  if (posix_memalign_impl(&ptr, alignment, size) == 0)
-    return ptr;
-  return NULL;
-}
-
-static void *
-zone_valloc(malloc_zone_t *zone, size_t size)
-{
-  return valloc_impl(size);
-}
-
-static void *
-zone_destroy(malloc_zone_t *zone)
-{
-  /* This function should never be called. */
-  MOZ_CRASH();
-}
-
-static size_t
-zone_good_size(malloc_zone_t *zone, size_t size)
-{
-  return malloc_good_size_impl(size);
-}
-
-#ifdef MOZ_JEMALLOC
-
-#include "jemalloc/internal/jemalloc_internal.h"
-
-static void
-zone_force_lock(malloc_zone_t *zone)
-{
-  /* /!\ This calls into jemalloc. It works because we're linked in the
-   * same library. Stolen from jemalloc's zone.c. */
-  if (isthreaded)
-    jemalloc_prefork();
-}
-
-static void
-zone_force_unlock(malloc_zone_t *zone)
-{
-  /* /!\ This calls into jemalloc. It works because we're linked in the
-   * same library. Stolen from jemalloc's zone.c. */
-  if (isthreaded)
-    jemalloc_postfork_parent();
-}
-
+#ifdef XP_WIN
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  size_t page_size = si.dwPageSize;
 #else
-
-#define JEMALLOC_ZONE_VERSION 6
-
-/* Empty implementations are needed, because fork() calls zone->force_(un)lock
- * unconditionally. */
-static void
-zone_force_lock(malloc_zone_t *zone)
-{
+  size_t page_size = sysconf(_SC_PAGE_SIZE);
+#endif
+  return replace_malloc_table.memalign(page_size, size);
 }
 
 static void
-zone_force_unlock(malloc_zone_t *zone)
+replace_malloc_init_funcs()
 {
-}
+  replace_malloc_handle_t handle = replace_malloc_handle();
+  if (handle) {
+#ifdef MOZ_NO_REPLACE_FUNC_DECL
+#  define MALLOC_DECL(name, ...) \
+    replace_ ## name = REPLACE_MALLOC_GET_FUNC(handle, name);
 
+#  define MALLOC_FUNCS (MALLOC_FUNCS_INIT | MALLOC_FUNCS_BRIDGE)
+#  include "malloc_decls.h"
 #endif
 
-static malloc_zone_t zone;
-static struct malloc_introspection_t zone_introspect;
-
-static malloc_zone_t *get_default_zone()
-{
-  malloc_zone_t **zones = NULL;
-  unsigned int num_zones = 0;
-
-  /*
-   * On OSX 10.12, malloc_default_zone returns a special zone that is not
-   * present in the list of registered zones. That zone uses a "lite zone"
-   * if one is present (apparently enabled when malloc stack logging is
-   * enabled), or the first registered zone otherwise. In practice this
-   * means unless malloc stack logging is enabled, the first registered
-   * zone is the default.
-   * So get the list of zones to get the first one, instead of relying on
-   * malloc_default_zone.
-   */
-  if (KERN_SUCCESS != malloc_get_all_zones(0, NULL, (vm_address_t**) &zones,
-                                           &num_zones)) {
-    /* Reset the value in case the failure happened after it was set. */
-    num_zones = 0;
+#define MALLOC_DECL(name, ...) \
+  replace_malloc_table.name = REPLACE_MALLOC_GET_FUNC(handle, name);
+#include "malloc_decls.h"
   }
-  if (num_zones) {
-    return zones[0];
+
+  if (!replace_malloc_table.posix_memalign && replace_malloc_table.memalign)
+    replace_malloc_table.posix_memalign = default_posix_memalign;
+
+  if (!replace_malloc_table.aligned_alloc && replace_malloc_table.memalign)
+    replace_malloc_table.aligned_alloc = default_aligned_alloc;
+
+  if (!replace_malloc_table.valloc && replace_malloc_table.memalign)
+    replace_malloc_table.valloc = default_valloc;
+
+#define MALLOC_DECL(name, ...) \
+  if (!replace_malloc_table.name) { \
+    replace_malloc_table.name = je_ ## name; \
   }
-  return malloc_default_zone();
+#include "malloc_decls.h"
 }
-
-
-__attribute__((constructor)) void
-register_zone(void)
-{
-  malloc_zone_t *default_zone = get_default_zone();
-
-  zone.size = (void *)zone_size;
-  zone.malloc = (void *)zone_malloc;
-  zone.calloc = (void *)zone_calloc;
-  zone.valloc = (void *)zone_valloc;
-  zone.free = (void *)zone_free;
-  zone.realloc = (void *)zone_realloc;
-  zone.destroy = (void *)zone_destroy;
-  zone.zone_name = "replace_malloc_zone";
-  zone.batch_malloc = NULL;
-  zone.batch_free = NULL;
-  zone.introspect = &zone_introspect;
-  zone.version = JEMALLOC_ZONE_VERSION;
-  zone.memalign = zone_memalign;
-  zone.free_definite_size = zone_free_definite_size;
-#if (JEMALLOC_ZONE_VERSION >= 8)
-  zone.pressure_relief = NULL;
-#endif
-  zone_introspect.enumerator = NULL;
-  zone_introspect.good_size = (void *)zone_good_size;
-  zone_introspect.check = NULL;
-  zone_introspect.print = NULL;
-  zone_introspect.log = NULL;
-  zone_introspect.force_lock = (void *)zone_force_lock;
-  zone_introspect.force_unlock = (void *)zone_force_unlock;
-  zone_introspect.statistics = NULL;
-  zone_introspect.zone_locked = NULL;
-#if (JEMALLOC_ZONE_VERSION >= 7)
-  zone_introspect.enable_discharge_checking = NULL;
-  zone_introspect.disable_discharge_checking = NULL;
-  zone_introspect.discharge = NULL;
-#ifdef __BLOCKS__
-  zone_introspect.enumerate_discharged_pointers = NULL;
-#else
-  zone_introspect.enumerate_unavailable_without_blocks = NULL;
-#endif
-#endif
-
-  /*
-   * The default purgeable zone is created lazily by OSX's libc.  It uses
-   * the default zone when it is created for "small" allocations
-   * (< 15 KiB), but assumes the default zone is a scalable_zone.  This
-   * obviously fails when the default zone is the jemalloc zone, so
-   * malloc_default_purgeable_zone is called beforehand so that the
-   * default purgeable zone is created when the default zone is still
-   * a scalable_zone.
-   */
-  malloc_zone_t *purgeable_zone = malloc_default_purgeable_zone();
-
-  /* Register the custom zone.  At this point it won't be the default. */
-  malloc_zone_register(&zone);
-
-  do {
-    /*
-     * Unregister and reregister the default zone.  On OSX >= 10.6,
-     * unregistering takes the last registered zone and places it at the
-     * location of the specified zone.  Unregistering the default zone thus
-     * makes the last registered one the default.  On OSX < 10.6,
-     * unregistering shifts all registered zones.  The first registered zone
-     * then becomes the default.
-     */
-    malloc_zone_unregister(default_zone);
-    malloc_zone_register(default_zone);
-    /*
-     * On OSX 10.6, having the default purgeable zone appear before the default
-     * zone makes some things crash because it thinks it owns the default
-     * zone allocated pointers. We thus unregister/re-register it in order to
-     * ensure it's always after the default zone. On OSX < 10.6, as
-     * unregistering shifts registered zones, this simply removes the purgeable
-     * zone from the list and adds it back at the end, after the default zone.
-     * On OSX >= 10.6, unregistering replaces the purgeable zone with the last
-     * registered zone above, i.e the default zone. Registering it again then
-     * puts it at the end, obviously after the default zone.
-     */
-    malloc_zone_unregister(purgeable_zone);
-    malloc_zone_register(purgeable_zone);
-    default_zone = get_default_zone();
-  } while (default_zone != &zone);
-}
-#endif

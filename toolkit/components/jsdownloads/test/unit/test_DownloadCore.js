@@ -12,22 +12,19 @@
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadError",
                                   "resource://gre/modules/DownloadCore.jsm");
 
-////////////////////////////////////////////////////////////////////////////////
-//// Execution of common tests
+// Execution of common tests
 
 var gUseLegacySaver = false;
 
 var scriptFile = do_get_file("common_test_Download.js");
 Services.scriptloader.loadSubScript(NetUtil.newURI(scriptFile).spec);
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 /**
  * Tests the DownloadError object.
  */
-add_task(function test_DownloadError()
-{
+add_task(function test_DownloadError() {
   let error = new DownloadError({ result: Cr.NS_ERROR_NOT_RESUMABLE,
                                   message: "Not resumable."});
   do_check_eq(error.result, Cr.NS_ERROR_NOT_RESUMABLE);

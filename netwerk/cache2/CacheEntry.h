@@ -104,14 +104,14 @@ public:
   nsresult HashingKeyWithStorage(nsACString &aResult) const;
   nsresult HashingKey(nsACString &aResult) const;
 
-  static nsresult HashingKey(nsCSubstring const& aStorageID,
-                             nsCSubstring const& aEnhanceID,
+  static nsresult HashingKey(const nsACString& aStorageID,
+                             const nsACString& aEnhanceID,
                              nsIURI* aURI,
                              nsACString &aResult);
 
-  static nsresult HashingKey(nsCSubstring const& aStorageID,
-                             nsCSubstring const& aEnhanceID,
-                             nsCSubstring const& aURISpec,
+  static nsresult HashingKey(const nsACString& aStorageID,
+                             const nsACString& aEnhanceID,
+                             const nsACString& aURISpec,
                              nsACString &aResult);
 
   // Accessed only on the service management thread
@@ -160,7 +160,7 @@ private:
     // it's pointer).
     RefPtr<CacheEntry> mEntry;
     nsCOMPtr<nsICacheEntryOpenCallback> mCallback;
-    nsCOMPtr<nsIThread> mTargetThread;
+    nsCOMPtr<nsIEventTarget> mTarget;
     bool mReadOnly : 1;
     bool mRevalidating : 1;
     bool mCheckOnAnyThread : 1;
@@ -186,12 +186,13 @@ private:
   public:
     AvailableCallbackRunnable(CacheEntry* aEntry,
                               Callback const &aCallback)
-      : mEntry(aEntry)
+      : Runnable("CacheEntry::AvailableCallbackRunnable")
+      , mEntry(aEntry)
       , mCallback(aCallback)
     {}
 
   private:
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       mEntry->InvokeAvailableCallback(mCallback);
       return NS_OK;
@@ -207,10 +208,14 @@ private:
   {
   public:
     DoomCallbackRunnable(CacheEntry* aEntry, nsresult aRv)
-      : mEntry(aEntry), mRv(aRv) {}
+      : Runnable("net::CacheEntry::DoomCallbackRunnable")
+      , mEntry(aEntry)
+      , mRv(aRv)
+    {
+    }
 
   private:
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       nsCOMPtr<nsICacheEntryDoomCallback> callback;
       {
@@ -232,7 +237,6 @@ private:
   bool Open(Callback & aCallback, bool aTruncate, bool aPriority, bool aBypassIfBusy);
   // Loads from disk asynchronously
   bool Load(bool aTruncate, bool aPriority);
-  void OnLoaded();
 
   void RememberCallback(Callback & aCallback);
   void InvokeCallbacksLock();
@@ -240,8 +244,10 @@ private:
   bool InvokeCallbacks(bool aReadOnly);
   bool InvokeCallback(Callback & aCallback);
   void InvokeAvailableCallback(Callback const & aCallback);
+  void OnFetched(Callback const & aCallback);
 
   nsresult OpenOutputStreamInternal(int64_t offset, nsIOutputStream * *_retval);
+  nsresult OpenInputStreamInternal(int64_t offset, const char *aAltDataType, nsIInputStream * *_retval);
 
   void OnHandleClosed(CacheEntryHandle const* aHandle);
 

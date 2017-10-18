@@ -4,7 +4,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIndexedToHTML.h"
-#include "mozilla/dom/EncodingUtils.h"
+
+#include "DateTimeFormat.h"
+#include "mozilla/Encoding.h"
+#include "mozilla/intl/LocaleService.h"
 #include "nsNetUtil.h"
 #include "netCore.h"
 #include "nsStringStream.h"
@@ -17,13 +20,13 @@
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsIPrefLocalizedString.h"
-#include "nsIChromeRegistry.h"
-#include "nsIDateTimeFormat.h"
 #include "nsIStringBundle.h"
 #include "nsITextToSubURI.h"
 #include "nsXPIDLString.h"
 #include <algorithm>
 #include "nsIChannel.h"
+
+using mozilla::intl::LocaleService;
 
 NS_IMPL_ISUPPORTS(nsIndexedToHTML,
                   nsIDirIndexListener,
@@ -54,11 +57,11 @@ nsIndexedToHTML::Create(nsISupports *aOuter, REFNSIID aIID, void **aResult) {
     nsresult rv;
     if (aOuter)
         return NS_ERROR_NO_AGGREGATION;
-    
+
     nsIndexedToHTML* _s = new nsIndexedToHTML();
     if (_s == nullptr)
         return NS_ERROR_OUT_OF_MEMORY;
-    
+
     rv = _s->QueryInterface(aIID, aResult);
     return rv;
 }
@@ -68,10 +71,6 @@ nsIndexedToHTML::Init(nsIStreamListener* aListener) {
     nsresult rv = NS_OK;
 
     mListener = aListener;
-
-    mDateTime = nsIDateTimeFormat::Create();
-    if (!mDateTime)
-      return NS_ERROR_FAILURE;
 
     nsCOMPtr<nsIStringBundleService> sbs =
         do_GetService(NS_STRINGBUNDLE_CONTRACTID, &rv);
@@ -107,7 +106,7 @@ nsIndexedToHTML::OnStartRequest(nsIRequest* request, nsISupports *aContext) {
     if (NS_FAILED(rv)) {
         request->Cancel(rv);
     }
-    
+
     rv = mListener->OnStartRequest(request, aContext);
     if (NS_FAILED(rv)) return rv;
 
@@ -129,8 +128,19 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
 
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
     nsCOMPtr<nsIURI> uri;
-    rv = channel->GetURI(getter_AddRefs(uri));
+    rv = channel->GetOriginalURI(getter_AddRefs(uri));
     if (NS_FAILED(rv)) return rv;
+
+    bool isResource = false;
+    rv = uri->SchemeIs("resource", &isResource);
+    if (NS_FAILED(rv)) return rv;
+
+    // We use the original URI for the title and parent link when it's a
+    // resource:// url, instead of the jar:file:// url it resolves to.
+    if (!isResource) {
+        rv = channel->GetURI(getter_AddRefs(uri));
+        if (NS_FAILED(rv)) return rv;
+    }
 
     channel->SetContentType(NS_LITERAL_CSTRING("text/html"));
 
@@ -139,7 +149,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
 
     rv = mParser->SetListener(this);
     if (NS_FAILED(rv)) return rv;
-    
+
     rv = mParser->OnStartRequest(request, aContext);
     if (NS_FAILED(rv)) return rv;
 
@@ -168,7 +178,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         // strip out the password here, so it doesn't show in the page title
         // This is done by the 300: line generation in ftp, but we don't use
         // that - see above
-        
+
         nsAutoCString pw;
         rv = uri->GetPassword(pw);
         if (NS_FAILED(rv)) return rv;
@@ -196,15 +206,15 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         rv = fileUrl->GetFile(getter_AddRefs(file));
         if (NS_FAILED(rv)) return rv;
         file->SetFollowLinks(true);
-        
+
         nsAutoCString url;
         rv = net_GetURLSpecFromFile(file, url);
         if (NS_FAILED(rv)) return rv;
         baseUri.Assign(url);
-        
+
         nsCOMPtr<nsIFile> parent;
         rv = file->GetParent(getter_AddRefs(parent));
-        
+
         if (parent && NS_SUCCEEDED(rv)) {
             net_GetURLSpecFromDir(parent, url);
             if (NS_FAILED(rv)) return rv;
@@ -434,7 +444,6 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     nsCOMPtr<nsIFileURL> fileURL(do_QueryInterface(innerUri));
     //XXX bug 388553: can't use skinnable icons here due to security restrictions
     if (fileURL) {
-        //buffer.AppendLiteral("chrome://global/skin/dirListing/local.png");
         buffer.AppendLiteral("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB"
                              "AAAAAQCAYAAAAf8%2F9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9i"
                              "ZSBJbWFnZVJlYWR5ccllPAAAAjFJREFUeNqsU8uOElEQPffR"
@@ -456,7 +465,6 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                              "4pQ1%2FlPF0RGM9Ns91Wmptk0GfB4EJkt77vXYj%2F8m%2B8"
                              "y%2FkrwABHbz2H9V68DQAAAABJRU5ErkJggg%3D%3D");
     } else {
-        //buffer.AppendLiteral("chrome://global/skin/dirListing/remote.png");
         buffer.AppendLiteral("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB"
                              "AAAAAQCAYAAAAf8%2F9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9i"
                              "ZSBJbWFnZVJlYWR5ccllPAAAAeBJREFUeNqcU81O20AQ%2Ft"
@@ -493,9 +501,8 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
       encoding.AssignLiteral("UTF-8");
     }
 
-    nsXPIDLString unEscapeSpec;
-    rv = mTextToSubURI->UnEscapeAndConvert(encoding, titleUri.get(),
-                                           getter_Copies(unEscapeSpec));
+    nsAutoString unEscapeSpec;
+    rv = mTextToSubURI->UnEscapeAndConvert(encoding, titleUri, unEscapeSpec);
     // unescape may fail because
     // 1. file URL may be encoded in platform charset for backward compatibility
     // 2. query part may not be encoded in UTF-8 (see bug 261929)
@@ -507,8 +514,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         rv = platformCharset->GetCharset(kPlatformCharsetSel_FileName, charset);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        rv = mTextToSubURI->UnEscapeAndConvert(charset.get(), titleUri.get(),
-                                               getter_Copies(unEscapeSpec));
+        rv = mTextToSubURI->UnEscapeAndConvert(charset, titleUri, unEscapeSpec);
     }
     if (NS_FAILED(rv)) return rv;
 
@@ -521,7 +527,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         htmlEscSpec.get()
     };
 
-    rv = mBundle->FormatStringFromName(u"DirTitle",
+    rv = mBundle->FormatStringFromName("DirTitle",
                                        formatTitle,
                                        sizeof(formatTitle)/sizeof(char16_t*),
                                        getter_Copies(title));
@@ -531,7 +537,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     // to ensure they're shown in any charsets
     AppendNonAsciiToNCR(title, buffer);
 
-    buffer.AppendLiteral("</title>\n");    
+    buffer.AppendLiteral("</title>\n");
 
     // If there is a quote character in the baseUri, then
     // lets not add a base URL.  The reason for this is that
@@ -548,14 +554,10 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
         // will prematurely close the string.  Go ahead an
         // add a base href, but only do so if we're not
         // dealing with a resource URI.
-        nsCOMPtr<nsIURI> originalUri;
-        rv = channel->GetOriginalURI(getter_AddRefs(originalUri));
-        bool wasResource = false;
-        if (NS_FAILED(rv) ||
-            NS_FAILED(originalUri->SchemeIs("resource", &wasResource)) ||
-            !wasResource) {
+        if (!isResource) {
             buffer.AppendLiteral("<base href=\"");
-            nsAdoptingCString htmlEscapedUri(nsEscapeHTML(baseUri.get()));
+            nsCString htmlEscapedUri;
+            htmlEscapedUri.Adopt(nsEscapeHTML(baseUri.get()));
             buffer.Append(htmlEscapedUri);
             buffer.AppendLiteral("\" />\n");
         }
@@ -566,42 +568,37 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     }
 
     nsCString direction(NS_LITERAL_CSTRING("ltr"));
-    nsCOMPtr<nsIXULChromeRegistry> reg =
-      mozilla::services::GetXULChromeRegistryService();
-    if (reg) {
-      bool isRTL = false;
-      reg->IsLocaleRTL(NS_LITERAL_CSTRING("global"), &isRTL);
-      if (isRTL) {
-        direction.AssignLiteral("rtl");
-      }
+    if (LocaleService::GetInstance()->IsAppLocaleRTL()) {
+      direction.AssignLiteral("rtl");
     }
 
     buffer.AppendLiteral("</head>\n<body dir=\"");
     buffer.Append(direction);
     buffer.AppendLiteral("\">\n<h1>");
-    
+
     const char16_t* formatHeading[] = {
         htmlEscSpec.get()
     };
 
-    rv = mBundle->FormatStringFromName(u"DirTitle",
+    rv = mBundle->FormatStringFromName("DirTitle",
                                        formatHeading,
                                        sizeof(formatHeading)/sizeof(char16_t*),
                                        getter_Copies(title));
     if (NS_FAILED(rv)) return rv;
-    
+
     AppendNonAsciiToNCR(title, buffer);
     buffer.AppendLiteral("</h1>\n");
 
     if (!parentStr.IsEmpty()) {
         nsXPIDLString parentText;
-        rv = mBundle->GetStringFromName(u"DirGoUp",
+        rv = mBundle->GetStringFromName("DirGoUp",
                                         getter_Copies(parentText));
         if (NS_FAILED(rv)) return rv;
 
         buffer.AppendLiteral("<p id=\"UI_goUp\"><a class=\"up\" href=\"");
 
-        nsAdoptingCString htmlParentStr(nsEscapeHTML(parentStr.get()));
+        nsCString htmlParentStr;
+        htmlParentStr.Adopt(nsEscapeHTML(parentStr.get()));
         buffer.Append(htmlParentStr);
         buffer.AppendLiteral("\">");
         AppendNonAsciiToNCR(parentText, buffer);
@@ -610,7 +607,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
 
     if (isSchemeFile) {
         nsXPIDLString showHiddenText;
-        rv = mBundle->GetStringFromName(u"ShowHidden",
+        rv = mBundle->GetStringFromName("ShowHidden",
                                         getter_Copies(showHiddenText));
         if (NS_FAILED(rv)) return rv;
 
@@ -627,21 +624,21 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                          "  <tr>\n"
                          "   <th>");
 
-    rv = mBundle->GetStringFromName(u"DirColName",
+    rv = mBundle->GetStringFromName("DirColName",
                                     getter_Copies(columnText));
     if (NS_FAILED(rv)) return rv;
     AppendNonAsciiToNCR(columnText, buffer);
     buffer.AppendLiteral("</th>\n"
                          "   <th>");
 
-    rv = mBundle->GetStringFromName(u"DirColSize",
+    rv = mBundle->GetStringFromName("DirColSize",
                                     getter_Copies(columnText));
     if (NS_FAILED(rv)) return rv;
     AppendNonAsciiToNCR(columnText, buffer);
     buffer.AppendLiteral("</th>\n"
                          "   <th colspan=\"2\">");
 
-    rv = mBundle->GetStringFromName(u"DirColMTime",
+    rv = mBundle->GetStringFromName("DirColMTime",
                                     getter_Copies(columnText));
     if (NS_FAILED(rv)) return rv;
     AppendNonAsciiToNCR(columnText, buffer);
@@ -665,8 +662,8 @@ nsIndexedToHTML::OnStopRequest(nsIRequest* request, nsISupports *aContext,
     }
 
     mParser->OnStopRequest(request, aContext, aStatus);
-    mParser = 0;
-    
+    mParser = nullptr;
+
     return mListener->OnStopRequest(request, aContext, aStatus);
 }
 
@@ -707,6 +704,10 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
 
     // Adjust the length in case unescaping shortened the string.
     loc.Truncate(nsUnescapeCount(loc.BeginWriting()));
+
+    if (loc.IsEmpty()) {
+        return NS_ERROR_ILLEGAL_VALUE;
+    }
     if (loc.First() == char16_t('.'))
         pushBuffer.AppendLiteral(" class=\"hidden-object\"");
 
@@ -727,7 +728,8 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
             pushBuffer.Append('2');
             break;
     }
-    nsAdoptingCString escaped(nsEscapeHTML(loc));
+    nsCString escaped;
+    escaped.Adopt(nsEscapeHTML(loc));
     pushBuffer.Append(escaped);
 
     pushBuffer.AppendLiteral("\"><table class=\"ellipsis\"><tbody><tr><td><a class=\"");
@@ -763,7 +765,7 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
     nsAutoCString scheme;
     if (mExpectAbsLoc &&
         NS_SUCCEEDED(net_ExtractURLScheme(loc, scheme))) {
-        // escape as absolute 
+        // escape as absolute
         escFlags = esc_Forced | esc_AlwaysCopy | esc_Minimal;
     }
     else {
@@ -778,7 +780,8 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
     // contains semicolons we need to manually escape them.
     // This replacement should be removed in bug #473280
     locEscaped.ReplaceSubstring(";", "%3b");
-    nsAdoptingCString htmlEscapedURL(nsEscapeHTML(locEscaped.get()));
+    nsCString htmlEscapedURL;
+    htmlEscapedURL.Adopt(nsEscapeHTML(locEscaped.get()));
     pushBuffer.Append(htmlEscapedURL);
 
     pushBuffer.AppendLiteral("\">");
@@ -788,7 +791,8 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
         int32_t lastDot = locEscaped.RFindChar('.');
         if (lastDot != kNotFound) {
             locEscaped.Cut(0, lastDot);
-            nsAdoptingCString htmlFileExt(nsEscapeHTML(locEscaped.get()));
+            nsCString htmlFileExt;
+            htmlFileExt.Adopt(nsEscapeHTML(locEscaped.get()));
             pushBuffer.Append(htmlFileExt);
         } else {
             pushBuffer.AppendLiteral("unknown");
@@ -796,7 +800,7 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
         pushBuffer.AppendLiteral("?size=16\" alt=\"");
 
         nsXPIDLString altText;
-        rv = mBundle->GetStringFromName(u"DirFileLabel",
+        rv = mBundle->GetStringFromName("DirFileLabel",
                                         getter_Copies(altText));
         if (NS_FAILED(rv)) return rv;
         AppendNonAsciiToNCR(altText, pushBuffer);
@@ -835,18 +839,16 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
         pushBuffer.AppendInt(static_cast<int64_t>(t));
         pushBuffer.AppendLiteral("\">");
         nsAutoString formatted;
-        mDateTime->FormatPRTime(nullptr,
-                                kDateFormatShort,
-                                kTimeFormatNone,
-                                t,
-                                formatted);
+        mozilla::DateTimeFormat::FormatPRTime(kDateFormatShort,
+                                              kTimeFormatNone,
+                                              t,
+                                              formatted);
         AppendNonAsciiToNCR(formatted, pushBuffer);
         pushBuffer.AppendLiteral("</td>\n <td>");
-        mDateTime->FormatPRTime(nullptr,
-                                kDateFormatNone,
-                                kTimeFormatSeconds,
-                                t,
-                                formatted);
+        mozilla::DateTimeFormat::FormatPRTime(kDateFormatNone,
+                                              kTimeFormatSeconds,
+                                              t,
+                                              formatted);
         // use NCR to show date in any doc charset
         AppendNonAsciiToNCR(formatted, pushBuffer);
     }
@@ -861,15 +863,17 @@ nsIndexedToHTML::OnInformationAvailable(nsIRequest *aRequest,
                                         nsISupports *aCtxt,
                                         const nsAString& aInfo) {
     nsAutoCString pushBuffer;
-    nsAdoptingString escaped(nsEscapeHTML2(PromiseFlatString(aInfo).get()));
-    if (!escaped)
+    char16_t* str = nsEscapeHTML2(PromiseFlatString(aInfo).get());
+    if (!str)
         return NS_ERROR_OUT_OF_MEMORY;
+    nsString escaped;
+    escaped.Adopt(str);
     pushBuffer.AppendLiteral("<tr>\n <td>");
     // escaped is provided in Unicode, so write hex NCRs as necessary
     // to prevent the HTML parser from applying a character set.
     AppendNonAsciiToNCR(escaped, pushBuffer);
     pushBuffer.AppendLiteral("</td>\n <td></td>\n <td></td>\n <td></td>\n</tr>\n");
-    
+
     return SendToListener(aRequest, aCtxt, pushBuffer);
 }
 

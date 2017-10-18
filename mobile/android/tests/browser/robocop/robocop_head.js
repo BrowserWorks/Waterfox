@@ -199,7 +199,7 @@ function do_execute_soon(callback) {
   var tm = Components.classes["@mozilla.org/thread-manager;1"]
                      .getService(Components.interfaces.nsIThreadManager);
 
-  tm.mainThread.dispatch({
+  tm.dispatchToMainThread({
     run: function() {
       try {
         callback();
@@ -225,7 +225,7 @@ function do_execute_soon(callback) {
         do_test_finished();
       }
     }
-  }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+  });
 }
 
 function do_throw(text, stack) {
@@ -625,43 +625,6 @@ function do_load_manifest(path) {
 }
 
 /**
- * Parse a DOM document.
- *
- * @param aPath File path to the document.
- * @param aType Content type to use in DOMParser.
- *
- * @return nsIDOMDocument from the file.
- */
-function do_parse_document(aPath, aType) {
-  switch (aType) {
-    case "application/xhtml+xml":
-    case "application/xml":
-    case "text/xml":
-      break;
-
-    default:
-      do_throw("type: expected application/xhtml+xml, application/xml or text/xml," +
-                 " got '" + aType + "'",
-               Components.stack.caller);
-  }
-
-  var lf = do_get_file(aPath);
-  const C_i = Components.interfaces;
-  const parserClass = "@mozilla.org/xmlextras/domparser;1";
-  const streamClass = "@mozilla.org/network/file-input-stream;1";
-  var stream = Components.classes[streamClass]
-                         .createInstance(C_i.nsIFileInputStream);
-  stream.init(lf, -1, -1, C_i.nsIFileInputStream.CLOSE_ON_EOF);
-  var parser = Components.classes[parserClass]
-                         .createInstance(C_i.nsIDOMParser);
-  var doc = parser.parseFromStream(stream, null, lf.fileSize, aType);
-  parser = null;
-  stream = null;
-  lf = null;
-  return doc;
-}
-
-/**
  * Registers a function that will run when the test harness is done running all
  * tests.
  *
@@ -722,7 +685,7 @@ var _Task;
  *
  * Example usage:
  *
- * add_task(function test() {
+ * add_task(function* test() {
  *   let result = yield Promise.resolve(true);
  *
  *   do_check_true(result);
@@ -731,7 +694,7 @@ var _Task;
  *   do_check_eq(secondary, "expected value");
  * });
  *
- * add_task(function test_early_return() {
+ * add_task(function* test_early_return() {
  *   let result = yield somethingThatReturnsAPromise();
  *
  *   if (!result) {
@@ -805,10 +768,11 @@ function run_next_test()
 function JavaBridge(obj) {
 
   this._EVENT_TYPE = "Robocop:JS";
+  this._JAVA_EVENT_TYPE = "Robocop:Java";
   this._target = obj;
   // The number of replies needed to answer all outstanding sync calls.
   this._repliesNeeded = 0;
-  this._Services.obs.addObserver(this, this._EVENT_TYPE, false);
+  this._EventDispatcher.registerListener(this, this._EVENT_TYPE);
 
   this._sendMessage("notify-loaded", []);
 };
@@ -818,20 +782,31 @@ JavaBridge.prototype = {
   _Services: Components.utils.import(
     "resource://gre/modules/Services.jsm", {}).Services,
 
-  _sendMessageToJava: Components.utils.import(
-    "resource://gre/modules/Messaging.jsm", {}).Messaging.sendRequest,
+  _EventDispatcher: Components.utils.import(
+    "resource://gre/modules/Messaging.jsm", {}).EventDispatcher.instance,
+
+  _getArgs: function (args) {
+    let out = {
+      length: Math.max(0, args.length - 1),
+    };
+    for (let i = 1; i < args.length; i++) {
+      out[i - 1] = args[i];
+    }
+    return out;
+  },
 
   _sendMessage: function (innerType, args) {
-    this._sendMessageToJava({
-      type: this._EVENT_TYPE,
+    this._EventDispatcher.dispatch(this._JAVA_EVENT_TYPE, {
       innerType: innerType,
       method: args[0],
-      args: Array.prototype.slice.call(args, 1),
+      args: this._getArgs(args),
     });
   },
 
-  observe: function(subject, topic, data) {
-    let message = JSON.parse(data);
+  onEvent: function(event, message, callback) {
+    if (typeof SpecialPowers === 'object') {
+      message = SpecialPowers.wrap(message);
+    }
     if (message.innerType === "sync-reply") {
       // Reply to our Javascript-to-Java sync call
       this._repliesNeeded--;
@@ -863,9 +838,7 @@ JavaBridge.prototype = {
     // spin the event loop, but here we're in a test and our API
     // specifies a synchronous call, so we spin the loop to wait for
     // the call to finish.
-    while (this._repliesNeeded > initialReplies) {
-      thread.processNextEvent(true);
-    }
+    this._Services.tm.spinEventLoopUntil(() => this._repliesNeeded <= initialReplies);
   },
 
   /**
@@ -880,6 +853,6 @@ JavaBridge.prototype = {
    * Disconnect with Java.
    */
   disconnect: function () {
-    this._Services.obs.removeObserver(this, this._EVENT_TYPE);
+    this._EventDispatcher.unregisterListener(this, this._EVENT_TYPE);
   },
 };

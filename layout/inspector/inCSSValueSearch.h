@@ -33,7 +33,7 @@ protected:
   nsCOMPtr<inISearchObserver> mObserver;
   nsCOMPtr<nsIDOMDocument> mDocument;
   nsTArray<nsAutoString *>* mResults;
-  nsCSSProperty* mProperties;
+  nsCSSPropertyID* mProperties;
   nsString mLastResult;
   nsString mBaseURL;
   nsString mTextCriteria;
@@ -49,7 +49,7 @@ protected:
   nsresult SearchStyleSheet(nsIDOMCSSStyleSheet* aStyleSheet, nsIURI* aBaseURI);
   nsresult SearchRuleList(nsIDOMCSSRuleList* aRuleList, nsIURI* aBaseURI);
   nsresult SearchStyleRule(nsIDOMCSSStyleRule* aStyleRule, nsIURI* aBaseURI);
-  nsresult SearchStyleValue(const nsAFlatString& aValue, nsIURI* aBaseURI);
+  nsresult SearchStyleValue(const nsString& aValue, nsIURI* aBaseURI);
   nsresult EqualizeURL(nsAutoString* aURL);
 };
 

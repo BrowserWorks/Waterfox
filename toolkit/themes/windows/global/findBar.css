@@ -96,11 +96,23 @@ findbar[noanim] {
 }
 
 .findbar-find-previous {
-  list-style-image: url(chrome://global/skin/icons/find-arrows.svg#glyph-find-previous);
+  list-style-image: url(chrome://global/skin/icons/find-previous-arrow.svg);
+  -moz-context-properties: fill;
+  fill: -moz-dialogtext;
 }
 
 .findbar-find-next {
-  list-style-image: url(chrome://global/skin/icons/find-arrows.svg#glyph-find-next);
+  list-style-image: url(chrome://global/skin/icons/find-next-arrow.svg);
+  -moz-context-properties: fill;
+  fill: -moz-dialogtext;
+}
+
+.findbar-find-previous[disabled] {
+  fill: GrayText;
+}
+
+.findbar-find-next[disabled] {
+  fill: GrayText;
 }
 
 .findbar-find-previous,

@@ -21,9 +21,7 @@ EXPORTS.mozilla.plugins += [
     'NPEventOSX.h',
     'NPEventUnix.h',
     'NPEventWindows.h',
-    'PluginAsyncSurrogate.h',
     'PluginBridge.h',
-    'PluginDataResolver.h',
     'PluginInstanceChild.h',
     'PluginInstanceParent.h',
     'PluginMessageUtils.h',
@@ -36,11 +34,7 @@ EXPORTS.mozilla.plugins += [
     'PluginScriptableObjectParent.h',
     'PluginScriptableObjectUtils-inl.h',
     'PluginScriptableObjectUtils.h',
-    'PluginStreamChild.h',
-    'PluginStreamParent.h',
     'PluginUtilsOSX.h',
-    'PluginWidgetChild.h',
-    'PluginWidgetParent.h',
     'StreamNotifyChild.h',
     'StreamNotifyParent.h',
 ]
@@ -72,7 +66,6 @@ UNIFIED_SOURCES += [
     'BrowserStreamParent.cpp',
     'ChildAsyncCall.cpp',
     'ChildTimer.cpp',
-    'PluginAsyncSurrogate.cpp',
     'PluginBackgroundDestroyer.cpp',
     'PluginInstanceParent.cpp',
     'PluginMessageUtils.cpp',
@@ -82,15 +75,11 @@ UNIFIED_SOURCES += [
     'PluginQuirks.cpp',
     'PluginScriptableObjectChild.cpp',
     'PluginScriptableObjectParent.cpp',
-    'PluginStreamChild.cpp',
-    'PluginStreamParent.cpp',
 ]
 
 SOURCES += [
     'PluginInstanceChild.cpp', # 'PluginThreadCallback' : ambiguous symbol
     'PluginModuleChild.cpp',   # Redefinition of mozilla::WindowsDllInterceptor sUser32Intercept
-    'PluginWidgetChild.cpp',
-    'PluginWidgetParent.cpp',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
@@ -100,8 +89,17 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    EXPORTS.mozilla.plugins += [
+        'PluginWidgetChild.h',
+        'PluginWidgetParent.h',
+    ]
     UNIFIED_SOURCES += [
         'D3D11SurfaceHolder.cpp',
+        'PluginUtilsWin.cpp'
+    ]
+    SOURCES += [
+        'PluginWidgetChild.cpp',
+        'PluginWidgetParent.cpp',
     ]
 
 IPDL_SOURCES += [
@@ -111,7 +109,6 @@ IPDL_SOURCES += [
     'PPluginInstance.ipdl',
     'PPluginModule.ipdl',
     'PPluginScriptableObject.ipdl',
-    'PPluginStream.ipdl',
     'PPluginSurface.ipdl',
     'PStreamNotify.ipdl',
 ]
@@ -128,6 +125,7 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [
         '/security/sandbox/chromium',
         '/security/sandbox/chromium-shim',
+        '/security/sandbox/win/src/sandboxpermissions',
     ]
 
 DEFINES['FORCE_PR_LOG'] = True

@@ -12,10 +12,11 @@
 
 #include <string.h>
 #include <string>
+#include <memory>
+#include <vector>
 
-#include "testing/gtest/include/gtest/gtest.h"
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/system_wrappers/interface/file_wrapper.h"
+#include "webrtc/system_wrappers/include/file_wrapper.h"
+#include "webrtc/test/gtest.h"
 #include "webrtc/test/testsupport/fileutils.h"
 #include "webrtc/typedefs.h"
 
@@ -45,6 +46,25 @@ class TransientFileUtilsTest: public ::testing::Test {
         kTestFileNamef(
             test::ResourcePath("audio_processing/transient/float-utils",
                                "dat")) {}
+
+  ~TransientFileUtilsTest() override {
+    CleanupTempFiles();
+  }
+
+  std::string CreateTempFilename(const std::string& dir,
+      const std::string& prefix) {
+    std::string filename = test::TempFilename(dir, prefix);
+    temp_filenames_.push_back(filename);
+    return filename;
+  }
+
+  void CleanupTempFiles() {
+    for (const std::string& filename : temp_filenames_) {
+      remove(filename.c_str());
+    }
+    temp_filenames_.clear();
+  }
+
   // This file (used in some tests) contains binary data. The data correspond to
   // the double representation of the constants: Pi, E, and the Avogadro's
   // Number;
@@ -56,9 +76,17 @@ class TransientFileUtilsTest: public ::testing::Test {
   // Number;
   // appended in that order.
   const std::string kTestFileNamef;
+
+  // List of temporary filenames created by CreateTempFilename.
+  std::vector<std::string> temp_filenames_;
 };
 
-TEST_F(TransientFileUtilsTest, ConvertByteArrayToFloat) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ConvertByteArrayToFloat DISABLED_ConvertByteArrayToFloat
+#else
+#define MAYBE_ConvertByteArrayToFloat ConvertByteArrayToFloat
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ConvertByteArrayToFloat) {
   float value = 0.0;
 
   EXPECT_EQ(0, ConvertByteArrayToFloat(kPiBytesf, &value));
@@ -71,7 +99,12 @@ TEST_F(TransientFileUtilsTest, ConvertByteArrayToFloat) {
   EXPECT_FLOAT_EQ(kAvogadro, value);
 }
 
-TEST_F(TransientFileUtilsTest, ConvertByteArrayToDouble) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ConvertByteArrayToDouble DISABLED_ConvertByteArrayToDouble
+#else
+#define MAYBE_ConvertByteArrayToDouble ConvertByteArrayToDouble
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ConvertByteArrayToDouble) {
   double value = 0.0;
 
   EXPECT_EQ(0, ConvertByteArrayToDouble(kPiBytes, &value));
@@ -84,8 +117,13 @@ TEST_F(TransientFileUtilsTest, ConvertByteArrayToDouble) {
   EXPECT_DOUBLE_EQ(kAvogadro, value);
 }
 
-TEST_F(TransientFileUtilsTest, ConvertFloatToByteArray) {
-  rtc::scoped_ptr<uint8_t[]> bytes(new uint8_t[4]);
+#if defined(WEBRTC_IOS)
+#define MAYBE_ConvertFloatToByteArray DISABLED_ConvertFloatToByteArray
+#else
+#define MAYBE_ConvertFloatToByteArray ConvertFloatToByteArray
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ConvertFloatToByteArray) {
+  std::unique_ptr<uint8_t[]> bytes(new uint8_t[4]);
 
   EXPECT_EQ(0, ConvertFloatToByteArray(kPi, bytes.get()));
   EXPECT_EQ(0, memcmp(bytes.get(), kPiBytesf, 4));
@@ -97,8 +135,13 @@ TEST_F(TransientFileUtilsTest, ConvertFloatToByteArray) {
   EXPECT_EQ(0, memcmp(bytes.get(), kAvogadroBytesf, 4));
 }
 
-TEST_F(TransientFileUtilsTest, ConvertDoubleToByteArray) {
-  rtc::scoped_ptr<uint8_t[]> bytes(new uint8_t[8]);
+#if defined(WEBRTC_IOS)
+#define MAYBE_ConvertDoubleToByteArray DISABLED_ConvertDoubleToByteArray
+#else
+#define MAYBE_ConvertDoubleToByteArray ConvertDoubleToByteArray
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ConvertDoubleToByteArray) {
+  std::unique_ptr<uint8_t[]> bytes(new uint8_t[8]);
 
   EXPECT_EQ(0, ConvertDoubleToByteArray(kPi, bytes.get()));
   EXPECT_EQ(0, memcmp(bytes.get(), kPiBytes, 8));
@@ -110,20 +153,22 @@ TEST_F(TransientFileUtilsTest, ConvertDoubleToByteArray) {
   EXPECT_EQ(0, memcmp(bytes.get(), kAvogadroBytes, 8));
 }
 
-TEST_F(TransientFileUtilsTest, ReadInt16BufferFromFile) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ReadInt16BufferFromFile DISABLED_ReadInt16BufferFromFile
+#else
+#define MAYBE_ReadInt16BufferFromFile ReadInt16BufferFromFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ReadInt16BufferFromFile) {
   std::string test_filename = kTestFileName;
 
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileName.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileName.c_str();
 
   const size_t kBufferLength = 12;
-  rtc::scoped_ptr<int16_t[]> buffer(new int16_t[kBufferLength]);
+  std::unique_ptr<int16_t[]> buffer(new int16_t[kBufferLength]);
 
   EXPECT_EQ(kBufferLength, ReadInt16BufferFromFile(file.get(),
                                                    kBufferLength,
@@ -148,20 +193,23 @@ TEST_F(TransientFileUtilsTest, ReadInt16BufferFromFile) {
   EXPECT_EQ(17631, buffer[kBufferLength - 1]);
 }
 
-TEST_F(TransientFileUtilsTest, ReadInt16FromFileToFloatBuffer) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ReadInt16FromFileToFloatBuffer \
+  DISABLED_ReadInt16FromFileToFloatBuffer
+#else
+#define MAYBE_ReadInt16FromFileToFloatBuffer ReadInt16FromFileToFloatBuffer
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ReadInt16FromFileToFloatBuffer) {
   std::string test_filename = kTestFileName;
 
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileName.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileName.c_str();
 
   const size_t kBufferLength = 12;
-  rtc::scoped_ptr<float[]> buffer(new float[kBufferLength]);
+  std::unique_ptr<float[]> buffer(new float[kBufferLength]);
 
   EXPECT_EQ(kBufferLength, ReadInt16FromFileToFloatBuffer(file.get(),
                                                           kBufferLength,
@@ -189,20 +237,23 @@ TEST_F(TransientFileUtilsTest, ReadInt16FromFileToFloatBuffer) {
   EXPECT_DOUBLE_EQ(17631, buffer[kBufferLength - 1]);
 }
 
-TEST_F(TransientFileUtilsTest, ReadInt16FromFileToDoubleBuffer) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ReadInt16FromFileToDoubleBuffer \
+  DISABLED_ReadInt16FromFileToDoubleBuffer
+#else
+#define MAYBE_ReadInt16FromFileToDoubleBuffer ReadInt16FromFileToDoubleBuffer
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ReadInt16FromFileToDoubleBuffer) {
   std::string test_filename = kTestFileName;
 
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileName.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileName.c_str();
 
   const size_t kBufferLength = 12;
-  rtc::scoped_ptr<double[]> buffer(new double[kBufferLength]);
+  std::unique_ptr<double[]> buffer(new double[kBufferLength]);
 
   EXPECT_EQ(kBufferLength, ReadInt16FromFileToDoubleBuffer(file.get(),
                                                            kBufferLength,
@@ -229,20 +280,22 @@ TEST_F(TransientFileUtilsTest, ReadInt16FromFileToDoubleBuffer) {
   EXPECT_DOUBLE_EQ(17631, buffer[kBufferLength - 1]);
 }
 
-TEST_F(TransientFileUtilsTest, ReadFloatBufferFromFile) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ReadFloatBufferFromFile DISABLED_ReadFloatBufferFromFile
+#else
+#define MAYBE_ReadFloatBufferFromFile ReadFloatBufferFromFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ReadFloatBufferFromFile) {
   std::string test_filename = kTestFileNamef;
 
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileNamef.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileNamef.c_str();
 
   const size_t kBufferLength = 3;
-  rtc::scoped_ptr<float[]> buffer(new float[kBufferLength]);
+  std::unique_ptr<float[]> buffer(new float[kBufferLength]);
 
   EXPECT_EQ(kBufferLength, ReadFloatBufferFromFile(file.get(),
                                                    kBufferLength,
@@ -266,20 +319,22 @@ TEST_F(TransientFileUtilsTest, ReadFloatBufferFromFile) {
   EXPECT_FLOAT_EQ(kAvogadro, buffer[2]);
 }
 
-TEST_F(TransientFileUtilsTest, ReadDoubleBufferFromFile) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ReadDoubleBufferFromFile DISABLED_ReadDoubleBufferFromFile
+#else
+#define MAYBE_ReadDoubleBufferFromFile ReadDoubleBufferFromFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ReadDoubleBufferFromFile) {
   std::string test_filename = kTestFileName;
 
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileName.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileName.c_str();
 
   const size_t kBufferLength = 3;
-  rtc::scoped_ptr<double[]> buffer(new double[kBufferLength]);
+  std::unique_ptr<double[]> buffer(new double[kBufferLength]);
 
   EXPECT_EQ(kBufferLength, ReadDoubleBufferFromFile(file.get(),
                                                     kBufferLength,
@@ -303,22 +358,24 @@ TEST_F(TransientFileUtilsTest, ReadDoubleBufferFromFile) {
   EXPECT_DOUBLE_EQ(kAvogadro, buffer[2]);
 }
 
-TEST_F(TransientFileUtilsTest, WriteInt16BufferToFile) {
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+#if defined(WEBRTC_IOS)
+#define MAYBE_WriteInt16BufferToFile DISABLED_WriteInt16BufferToFile
+#else
+#define MAYBE_WriteInt16BufferToFile WriteInt16BufferToFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_WriteInt16BufferToFile) {
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  std::string kOutFileName = test::TempFilename(test::OutputPath(),
+  std::string kOutFileName = CreateTempFilename(test::OutputPath(),
                                                 "utils_test");
 
-  file->OpenFile(kOutFileName.c_str(),
-                 false,   // Write mode.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), false);  // Write mode.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   const size_t kBufferLength = 3;
-  rtc::scoped_ptr<int16_t[]> written_buffer(new int16_t[kBufferLength]);
-  rtc::scoped_ptr<int16_t[]> read_buffer(new int16_t[kBufferLength]);
+  std::unique_ptr<int16_t[]> written_buffer(new int16_t[kBufferLength]);
+  std::unique_ptr<int16_t[]> read_buffer(new int16_t[kBufferLength]);
 
   written_buffer[0] = 1;
   written_buffer[1] = 2;
@@ -330,12 +387,9 @@ TEST_F(TransientFileUtilsTest, WriteInt16BufferToFile) {
 
   file->CloseFile();
 
-  file->OpenFile(kOutFileName.c_str(),
-                 true,    // Read only.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   EXPECT_EQ(kBufferLength, ReadInt16BufferFromFile(file.get(),
                                                    kBufferLength,
@@ -345,26 +399,28 @@ TEST_F(TransientFileUtilsTest, WriteInt16BufferToFile) {
                       kBufferLength * sizeof(written_buffer[0])));
 }
 
-TEST_F(TransientFileUtilsTest, WriteFloatBufferToFile) {
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+#if defined(WEBRTC_IOS)
+#define MAYBE_WriteFloatBufferToFile DISABLED_WriteFloatBufferToFile
+#else
+#define MAYBE_WriteFloatBufferToFile WriteFloatBufferToFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_WriteFloatBufferToFile) {
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  std::string kOutFileName = test::TempFilename(test::OutputPath(),
+  std::string kOutFileName = CreateTempFilename(test::OutputPath(),
                                                 "utils_test");
 
-  file->OpenFile(kOutFileName.c_str(),
-                 false,   // Write mode.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), false);  // Write mode.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   const size_t kBufferLength = 3;
-  rtc::scoped_ptr<float[]> written_buffer(new float[kBufferLength]);
-  rtc::scoped_ptr<float[]> read_buffer(new float[kBufferLength]);
+  std::unique_ptr<float[]> written_buffer(new float[kBufferLength]);
+  std::unique_ptr<float[]> read_buffer(new float[kBufferLength]);
 
-  written_buffer[0] = kPi;
-  written_buffer[1] = kE;
-  written_buffer[2] = kAvogadro;
+  written_buffer[0] = static_cast<float>(kPi);
+  written_buffer[1] = static_cast<float>(kE);
+  written_buffer[2] = static_cast<float>(kAvogadro);
 
   EXPECT_EQ(kBufferLength, WriteFloatBufferToFile(file.get(),
                                                   kBufferLength,
@@ -372,12 +428,9 @@ TEST_F(TransientFileUtilsTest, WriteFloatBufferToFile) {
 
   file->CloseFile();
 
-  file->OpenFile(kOutFileName.c_str(),
-                 true,    // Read only.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   EXPECT_EQ(kBufferLength, ReadFloatBufferFromFile(file.get(),
                                                    kBufferLength,
@@ -387,22 +440,24 @@ TEST_F(TransientFileUtilsTest, WriteFloatBufferToFile) {
                       kBufferLength * sizeof(written_buffer[0])));
 }
 
-TEST_F(TransientFileUtilsTest, WriteDoubleBufferToFile) {
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+#if defined(WEBRTC_IOS)
+#define MAYBE_WriteDoubleBufferToFile DISABLED_WriteDoubleBufferToFile
+#else
+#define MAYBE_WriteDoubleBufferToFile WriteDoubleBufferToFile
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_WriteDoubleBufferToFile) {
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
-  std::string kOutFileName = test::TempFilename(test::OutputPath(),
+  std::string kOutFileName = CreateTempFilename(test::OutputPath(),
                                                 "utils_test");
 
-  file->OpenFile(kOutFileName.c_str(),
-                 false,   // Write mode.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), false);  // Write mode.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   const size_t kBufferLength = 3;
-  rtc::scoped_ptr<double[]> written_buffer(new double[kBufferLength]);
-  rtc::scoped_ptr<double[]> read_buffer(new double[kBufferLength]);
+  std::unique_ptr<double[]> written_buffer(new double[kBufferLength]);
+  std::unique_ptr<double[]> read_buffer(new double[kBufferLength]);
 
   written_buffer[0] = kPi;
   written_buffer[1] = kE;
@@ -414,12 +469,9 @@ TEST_F(TransientFileUtilsTest, WriteDoubleBufferToFile) {
 
   file->CloseFile();
 
-  file->OpenFile(kOutFileName.c_str(),
-                 true,    // Read only.
-                 false,   // No loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kOutFileName.c_str();
+  file->OpenFile(kOutFileName.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kOutFileName.c_str();
 
   EXPECT_EQ(kBufferLength, ReadDoubleBufferFromFile(file.get(),
                                                     kBufferLength,
@@ -429,13 +481,18 @@ TEST_F(TransientFileUtilsTest, WriteDoubleBufferToFile) {
                       kBufferLength * sizeof(written_buffer[0])));
 }
 
-TEST_F(TransientFileUtilsTest, ExpectedErrorReturnValues) {
+#if defined(WEBRTC_IOS)
+#define MAYBE_ExpectedErrorReturnValues DISABLED_ExpectedErrorReturnValues
+#else
+#define MAYBE_ExpectedErrorReturnValues ExpectedErrorReturnValues
+#endif
+TEST_F(TransientFileUtilsTest, MAYBE_ExpectedErrorReturnValues) {
   std::string test_filename = kTestFileName;
 
   double value;
-  rtc::scoped_ptr<int16_t[]> int16_buffer(new int16_t[1]);
-  rtc::scoped_ptr<double[]> double_buffer(new double[1]);
-  rtc::scoped_ptr<FileWrapper> file(FileWrapper::Create());
+  std::unique_ptr<int16_t[]> int16_buffer(new int16_t[1]);
+  std::unique_ptr<double[]> double_buffer(new double[1]);
+  std::unique_ptr<FileWrapper> file(FileWrapper::Create());
 
   EXPECT_EQ(-1, ConvertByteArrayToDouble(NULL, &value));
   EXPECT_EQ(-1, ConvertByteArrayToDouble(kPiBytes, NULL));
@@ -451,12 +508,9 @@ TEST_F(TransientFileUtilsTest, ExpectedErrorReturnValues) {
   EXPECT_EQ(0u, WriteInt16BufferToFile(file.get(), 1, int16_buffer.get()));
   EXPECT_EQ(0u, WriteDoubleBufferToFile(file.get(), 1, double_buffer.get()));
 
-  file->OpenFile(test_filename.c_str(),
-                 true,    // Read only.
-                 true,    // Loop.
-                 false);  // No text.
-  ASSERT_TRUE(file->Open()) << "File could not be opened:\n"
-      << kTestFileName.c_str();
+  file->OpenFile(test_filename.c_str(), true);  // Read only.
+  ASSERT_TRUE(file->is_open()) << "File could not be opened:\n"
+                               << kTestFileName.c_str();
 
   EXPECT_EQ(0u, ReadInt16BufferFromFile(NULL, 1, int16_buffer.get()));
   EXPECT_EQ(0u, ReadInt16BufferFromFile(file.get(), 1, NULL));

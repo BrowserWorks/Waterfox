@@ -13,7 +13,7 @@
 #include "nsContentUtils.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsIFrame.h"
-#include "nsISVGChildFrame.h"
+#include "nsSVGDisplayableFrame.h"
 #include "mozilla/dom/SVGRect.h"
 #include "nsSVGUtils.h"
 #include "SVGContentUtils.h"
@@ -92,7 +92,7 @@ SVGTransformableElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
 }
 
 bool
-SVGTransformableElement::IsEventAttributeName(nsIAtom* aName)
+SVGTransformableElement::IsEventAttributeNameInternal(nsIAtom* aName)
 {
   return nsContentUtils::IsEventAttributeName(aName, EventNameType_SVGGraphic);
 }
@@ -101,12 +101,15 @@ SVGTransformableElement::IsEventAttributeName(nsIAtom* aName)
 // nsSVGElement overrides
 
 gfxMatrix
-SVGTransformableElement::PrependLocalTransformsTo(
-  const gfxMatrix &aMatrix,
-  SVGTransformTypes aWhich) const
+SVGTransformableElement::PrependLocalTransformsTo(const gfxMatrix& aMatrix,
+                                                  SVGTransformTypes aWhich) const
 {
-  return SVGContentUtils::PrependLocalTransformsTo(
-    aMatrix, aWhich, mAnimateMotionTransform, mTransforms);
+  if (aWhich == eChildToUserSpace) {
+    // We don't have any eUserSpaceToParent transforms. (Sub-classes that do
+    // must override this function and handle that themselves.)
+    return aMatrix;
+  }
+  return GetUserToParentTransform(mAnimateMotionTransform, mTransforms) * aMatrix;
 }
 
 const gfx::Matrix*
@@ -169,16 +172,16 @@ SVGTransformableElement::GetFarthestViewportElement()
 }
 
 already_AddRefed<SVGIRect>
-SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions, 
+SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions,
                                  ErrorResult& rv)
 {
-  nsIFrame* frame = GetPrimaryFrame(Flush_Layout);
+  nsIFrame* frame = GetPrimaryFrame(FlushType::Layout);
 
   if (!frame || (frame->GetStateBits() & NS_FRAME_IS_NONDISPLAY)) {
     rv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
-  nsISVGChildFrame* svgframe = do_QueryFrame(frame);
+  nsSVGDisplayableFrame* svgframe = do_QueryFrame(frame);
   if (!svgframe) {
     rv.Throw(NS_ERROR_NOT_IMPLEMENTED); // XXX: outer svg
     return nullptr;
@@ -217,7 +220,7 @@ SVGTransformableElement::GetCTM()
   nsIDocument* currentDoc = GetComposedDoc();
   if (currentDoc) {
     // Flush all pending notifications so that our frames are up to date
-    currentDoc->FlushPendingNotifications(Flush_Layout);
+    currentDoc->FlushPendingNotifications(FlushType::Layout);
   }
   gfx::Matrix m = SVGContentUtils::GetCTM(this, false);
   RefPtr<SVGMatrix> mat = m.IsSingular() ? nullptr : new SVGMatrix(ThebesMatrix(m));
@@ -230,7 +233,7 @@ SVGTransformableElement::GetScreenCTM()
   nsIDocument* currentDoc = GetComposedDoc();
   if (currentDoc) {
     // Flush all pending notifications so that our frames are up to date
-    currentDoc->FlushPendingNotifications(Flush_Layout);
+    currentDoc->FlushPendingNotifications(FlushType::Layout);
   }
   gfx::Matrix m = SVGContentUtils::GetCTM(this, true);
   RefPtr<SVGMatrix> mat = m.IsSingular() ? nullptr : new SVGMatrix(ThebesMatrix(m));
@@ -253,6 +256,24 @@ SVGTransformableElement::GetTransformToElement(SVGGraphicsElement& aElement,
 
   RefPtr<SVGMatrix> mat = tmp->Multiply(*ourScreenCTM);
   return mat.forget();
+}
+
+/* static */ gfxMatrix
+SVGTransformableElement::GetUserToParentTransform(
+                           const gfx::Matrix* aAnimateMotionTransform,
+                           const nsSVGAnimatedTransformList* aTransforms)
+{
+  gfxMatrix result;
+
+  if (aAnimateMotionTransform) {
+    result.PreMultiply(ThebesMatrix(*aAnimateMotionTransform));
+  }
+
+  if (aTransforms) {
+    result.PreMultiply(aTransforms->GetAnimValue().GetConsolidationMatrix());
+  }
+
+  return result;
 }
 
 } // namespace dom

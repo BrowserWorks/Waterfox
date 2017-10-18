@@ -63,7 +63,7 @@ files by running:
 
 def config_status(topobjdir='.', topsrcdir='.', defines=None,
                   non_global_defines=None, substs=None, source=None,
-                  mozconfig=None):
+                  mozconfig=None, args=sys.argv[1:]):
     '''Main function, providing config.status functionality.
 
     Contrary to config.status, it doesn't use CONFIG_FILES or CONFIG_HEADERS
@@ -107,7 +107,7 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
                         ' '.join(default_backends))
     parser.add_argument('--dry-run', action='store_true',
                         help='do everything except writing files out.')
-    options = parser.parse_args()
+    options = parser.parse_args(args)
 
     # Without -n, the current directory is meant to be the top object directory
     if not options.not_topobjdir:
@@ -154,6 +154,9 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
         summary = obj.summary()
         print(summary, file=sys.stderr)
         execution_time += summary.execution_time
+        if hasattr(obj, 'gyp_summary'):
+            summary = obj.gyp_summary()
+            print(summary, file=sys.stderr)
 
     cpu_time = time.clock() - cpu_start
     wall_time = time.time() - time_start
@@ -176,7 +179,6 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
     if os.name == 'nt' and 'VisualStudio' not in options.backend:
         print(VISUAL_STUDIO_ADVERTISEMENT)
 
-    # Advertise Eclipse if it is appropriate.
+    # Advertise Android Studio if it is appropriate.
     if MachCommandConditions.is_android(env):
-        if 'AndroidEclipse' not in options.backend:
-            print(ANDROID_IDE_ADVERTISEMENT)
+        print(ANDROID_IDE_ADVERTISEMENT)

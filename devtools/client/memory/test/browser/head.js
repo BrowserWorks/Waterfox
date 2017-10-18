@@ -56,6 +56,10 @@ function makeMemoryTest(url, generator) {
   return Task.async(function* () {
     waitForExplicitFinish();
 
+    // It can take a long time to save a snapshot to disk, read the snapshots
+    // back from disk, and finally perform analyses on them.
+    requestLongerTimeout(2);
+
     const tab = yield addTab(url);
     const results = yield openMemoryPanel(tab);
 
@@ -105,7 +109,8 @@ function takeSnapshot(window) {
   let snapshotCount = gStore.getState().snapshots.length;
   info("Taking snapshot...");
   document.querySelector(".devtools-toolbar .take-snapshot").click();
-  return waitUntilState(gStore, () => gStore.getState().snapshots.length === snapshotCount + 1);
+  return waitUntilState(gStore,
+                        () => gStore.getState().snapshots.length === snapshotCount + 1);
 }
 
 function clearSnapshots(window) {
@@ -172,7 +177,6 @@ function waitUntilSnapshotSelected(store, snapshotIndex) {
     state.snapshots[snapshotIndex].selected === true);
 }
 
-
 /**
  * Wait until the state has censuses in a certain state.
  *
@@ -215,7 +219,7 @@ function createRAFMock() {
   mock.nextFrame = function () {
     let thisQueue = queuedFns;
     queuedFns = [];
-    for (var i = 0; i < thisQueue.length; i++) {
+    for (let i = 0; i < thisQueue.length; i++) {
       thisQueue[i]();
     }
   };

@@ -12,7 +12,7 @@
 
 namespace mp4_demuxer {
 
-class ByteReader
+class MOZ_RAII ByteReader
 {
 public:
   ByteReader() : mPtr(nullptr), mRemaining(0) {}
@@ -48,22 +48,16 @@ public:
 
   ~ByteReader()
   {
-    NS_ASSERTION(!mRemaining, "Not all bytes have been processed");
   }
 
-  size_t Offset()
+  size_t Offset() const
   {
     return mLength - mRemaining;
   }
 
-  // Make it explicit if we're not using the extra bytes.
-  void DiscardRemaining() {
-    mRemaining = 0;
-  }
-
   size_t Remaining() const { return mRemaining; }
 
-  bool CanRead8() { return mRemaining >= 1; }
+  bool CanRead8() const { return mRemaining >= 1; }
 
   uint8_t ReadU8()
   {
@@ -194,7 +188,7 @@ public:
     return mPtr;
   }
 
-  uint8_t PeekU8()
+  uint8_t PeekU8() const
   {
     auto ptr = Peek(1);
     if (!ptr) {
@@ -204,7 +198,7 @@ public:
     return *ptr;
   }
 
-  uint16_t PeekU16()
+  uint16_t PeekU16() const
   {
     auto ptr = Peek(2);
     if (!ptr) {
@@ -214,7 +208,7 @@ public:
     return mozilla::BigEndian::readUint16(ptr);
   }
 
-  uint32_t PeekU24()
+  uint32_t PeekU24() const
   {
     auto ptr = Peek(3);
     if (!ptr) {
@@ -224,12 +218,12 @@ public:
     return ptr[0] << 16 | ptr[1] << 8 | ptr[2];
   }
 
-  uint32_t Peek24()
+  uint32_t Peek24() const
   {
     return (uint32_t)PeekU24();
   }
 
-  uint32_t PeekU32()
+  uint32_t PeekU32() const
   {
     auto ptr = Peek(4);
     if (!ptr) {
@@ -239,7 +233,7 @@ public:
     return mozilla::BigEndian::readUint32(ptr);
   }
 
-  int32_t Peek32()
+  int32_t Peek32() const
   {
     auto ptr = Peek(4);
     if (!ptr) {
@@ -249,7 +243,7 @@ public:
     return mozilla::BigEndian::readInt32(ptr);
   }
 
-  uint64_t PeekU64()
+  uint64_t PeekU64() const
   {
     auto ptr = Peek(8);
     if (!ptr) {
@@ -259,7 +253,7 @@ public:
     return mozilla::BigEndian::readUint64(ptr);
   }
 
-  int64_t Peek64()
+  int64_t Peek64() const
   {
     auto ptr = Peek(8);
     if (!ptr) {
@@ -269,10 +263,9 @@ public:
     return mozilla::BigEndian::readInt64(ptr);
   }
 
-  const uint8_t* Peek(size_t aCount)
+  const uint8_t* Peek(size_t aCount) const
   {
     if (aCount > mRemaining) {
-      MOZ_ASSERT(false);
       return nullptr;
     }
     return mPtr;
@@ -297,12 +290,12 @@ public:
     return mPtr;
   }
 
-  uint32_t Align()
+  uint32_t Align() const
   {
     return 4 - ((intptr_t)mPtr & 3);
   }
 
-  template <typename T> bool CanReadType() { return mRemaining >= sizeof(T); }
+  template <typename T> bool CanReadType() const { return mRemaining >= sizeof(T); }
 
   template <typename T> T ReadType()
   {
@@ -315,7 +308,7 @@ public:
   }
 
   template <typename T>
-  bool ReadArray(nsTArray<T>& aDest, size_t aLength)
+  MOZ_MUST_USE bool ReadArray(nsTArray<T>& aDest, size_t aLength)
   {
     auto ptr = Read(aLength * sizeof(T));
     if (!ptr) {
@@ -327,11 +320,30 @@ public:
     return true;
   }
 
+  template <typename T>
+  MOZ_MUST_USE bool ReadArray(FallibleTArray<T>& aDest, size_t aLength)
+  {
+    auto ptr = Read(aLength * sizeof(T));
+    if (!ptr) {
+      return false;
+    }
+
+    aDest.Clear();
+    if (!aDest.SetCapacity(aLength, mozilla::fallible)) {
+      return false;
+    }
+    MOZ_ALWAYS_TRUE(aDest.AppendElements(reinterpret_cast<const T*>(ptr),
+                                         aLength,
+                                         mozilla::fallible));
+    return true;
+  }
+
 private:
   const uint8_t* mPtr;
   size_t mRemaining;
   size_t mLength;
 };
-}
+
+} // namespace mp4_demuxer
 
 #endif

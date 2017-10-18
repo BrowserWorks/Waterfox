@@ -8,7 +8,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIDocument.h"
 #include "nsIDOMWindow.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/TabParent.h"
 
@@ -64,18 +64,18 @@ ColorPickerParent::CreateColorPicker()
   return NS_SUCCEEDED(mPicker->Init(window, mTitle, mInitialColor));
 }
 
-bool
+mozilla::ipc::IPCResult
 ColorPickerParent::RecvOpen()
 {
   if (!CreateColorPicker()) {
     Unused << Send__delete__(this, mInitialColor);
-    return true;
+    return IPC_OK();
   }
 
   mCallback = new ColorPickerShownCallback(this);
 
   mPicker->Open(mCallback);
-  return true;
+  return IPC_OK();
 };
 
 void

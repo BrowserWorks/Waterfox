@@ -11,10 +11,8 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/RemoteWebProgress.jsm");
-Cu.import('resource://gre/modules/Services.jsm');
+Cu.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
-                                  "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prefetcher",
@@ -26,8 +24,7 @@ Cu.permitCPOWsInScope(this);
 
 // Similar to Python. Returns dict[key] if it exists. Otherwise,
 // sets dict[key] to default_ and returns default_.
-function setDefault(dict, key, default_)
-{
+function setDefault(dict, key, default_) {
   if (key in dict) {
     return dict[key];
   }
@@ -50,13 +47,13 @@ var NotificationTracker = {
   // given path are present in _paths.
   _paths: {},
 
-  init: function() {
+  init() {
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
-    ppmm.addMessageListener("Addons:GetNotifications", this);
+    ppmm.initialProcessData.remoteAddonsNotificationPaths = this._paths;
   },
 
-  add: function(path) {
+  add(path) {
     let tracked = this._paths;
     for (let component of path) {
       tracked = setDefault(tracked, component, {});
@@ -67,10 +64,10 @@ var NotificationTracker = {
 
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
-    ppmm.broadcastAsyncMessage("Addons:ChangeNotification", {path: path, count: count});
+    ppmm.broadcastAsyncMessage("Addons:ChangeNotification", {path, count});
   },
 
-  remove: function(path) {
+  remove(path) {
     let tracked = this._paths;
     for (let component of path) {
       tracked = setDefault(tracked, component, {});
@@ -79,15 +76,8 @@ var NotificationTracker = {
 
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
-    ppmm.broadcastAsyncMessage("Addons:ChangeNotification", {path: path, count: tracked._count});
+    ppmm.broadcastAsyncMessage("Addons:ChangeNotification", {path, count: tracked._count});
   },
-
-  receiveMessage: function(msg) {
-    if (msg.name == "Addons:GetNotifications") {
-      return this._paths;
-    }
-    return undefined;
-  }
 };
 NotificationTracker.init();
 
@@ -95,8 +85,7 @@ NotificationTracker.init();
 // getters, and setters. See multiprocessShims.js for an explanation
 // of how these are used. The constructor here just allows one
 // interposition to inherit members from another.
-function Interposition(name, base)
-{
+function Interposition(name, base) {
   this.name = name;
   if (base) {
     this.methods = Object.create(base.methods);
@@ -113,7 +102,7 @@ function Interposition(name, base)
 // content policy is added or removed. It also runs all the registered
 // add-on content policies when the child asks it to do so.
 var ContentPolicyParent = {
-  init: function() {
+  init() {
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
     ppmm.addMessageListener("Addons:ContentPolicy:Run", this);
@@ -121,26 +110,25 @@ var ContentPolicyParent = {
     this._policies = new Map();
   },
 
-  addContentPolicy: function(addon, name, cid) {
+  addContentPolicy(addon, name, cid) {
     this._policies.set(name, cid);
     NotificationTracker.add(["content-policy", addon]);
   },
 
-  removeContentPolicy: function(addon, name) {
+  removeContentPolicy(addon, name) {
     this._policies.delete(name);
     NotificationTracker.remove(["content-policy", addon]);
   },
 
-  receiveMessage: function (aMessage) {
+  receiveMessage(aMessage) {
     switch (aMessage.name) {
       case "Addons:ContentPolicy:Run":
         return this.shouldLoad(aMessage.data, aMessage.objects);
-        break;
     }
     return undefined;
   },
 
-  shouldLoad: function(aData, aObjects) {
+  shouldLoad(aData, aObjects) {
     for (let policyCID of this._policies.values()) {
       let policy;
       try {
@@ -150,8 +138,8 @@ var ContentPolicyParent = {
         continue;
       }
       try {
-        let contentLocation = BrowserUtils.makeURI(aData.contentLocation);
-        let requestOrigin = aData.requestOrigin ? BrowserUtils.makeURI(aData.requestOrigin) : null;
+        let contentLocation = Services.io.newURI(aData.contentLocation);
+        let requestOrigin = aData.requestOrigin ? Services.io.newURI(aData.requestOrigin) : null;
 
         let result = Prefetcher.withPrefetching(aData.prefetched, aObjects, () => {
           return policy.shouldLoad(aData.contentType,
@@ -204,7 +192,7 @@ CategoryManagerInterposition.methods.deleteCategoryEntry =
 // protocol handler in the parent and we want the child to be able to
 // use it. This code is pretty specific to Adblock's usage.
 var AboutProtocolParent = {
-  init: function() {
+  init() {
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
     ppmm.addMessageListener("Addons:AboutProtocol:GetURIFlags", this);
@@ -212,12 +200,12 @@ var AboutProtocolParent = {
     this._protocols = [];
   },
 
-  registerFactory: function(addon, class_, className, contractID, factory) {
-    this._protocols.push({contractID: contractID, factory: factory});
+  registerFactory(addon, class_, className, contractID, factory) {
+    this._protocols.push({contractID, factory});
     NotificationTracker.add(["about-protocol", contractID, addon]);
   },
 
-  unregisterFactory: function(addon, class_, factory) {
+  unregisterFactory(addon, class_, factory) {
     for (let i = 0; i < this._protocols.length; i++) {
       if (this._protocols[i].factory == factory) {
         NotificationTracker.remove(["about-protocol", this._protocols[i].contractID, addon]);
@@ -227,19 +215,18 @@ var AboutProtocolParent = {
     }
   },
 
-  receiveMessage: function (msg) {
+  receiveMessage(msg) {
     switch (msg.name) {
       case "Addons:AboutProtocol:GetURIFlags":
         return this.getURIFlags(msg);
       case "Addons:AboutProtocol:OpenChannel":
         return this.openChannel(msg);
-        break;
     }
     return undefined;
   },
 
-  getURIFlags: function(msg) {
-    let uri = BrowserUtils.makeURI(msg.data.uri);
+  getURIFlags(msg) {
+    let uri = Services.io.newURI(msg.data.uri);
     let contractID = msg.data.contractID;
     let module = Cc[contractID].getService(Ci.nsIAboutModule);
     try {
@@ -252,14 +239,14 @@ var AboutProtocolParent = {
 
   // We immediately read all the data out of the channel here and
   // return it to the child.
-  openChannel: function(msg) {
+  openChannel(msg) {
     function wrapGetInterface(cpow) {
       return {
-        getInterface: function(intf) { return cpow.getInterface(intf); }
+        getInterface(intf) { return cpow.getInterface(intf); }
       };
     }
 
-    let uri = BrowserUtils.makeURI(msg.data.uri);
+    let uri = Services.io.newURI(msg.data.uri);
     let channelParams;
     if (msg.data.contentPolicyType === Ci.nsIContentPolicy.TYPE_DOCUMENT) {
       // For TYPE_DOCUMENT loads, we cannot recreate the loadinfo here in the
@@ -301,7 +288,7 @@ var AboutProtocolParent = {
       let stream = channel.open2();
       let data = NetUtil.readInputStreamToString(stream, stream.available(), {});
       return {
-        data: data,
+        data,
         contentType: channel.contentType
       };
     } catch (e) {
@@ -343,23 +330,23 @@ ComponentRegistrarInterposition.methods.unregisterFactory =
 // in the parent because there might be non-add-on T observers that
 // won't expect to get notified in this case.
 var ObserverParent = {
-  init: function() {
+  init() {
     let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
                .getService(Ci.nsIMessageBroadcaster);
     ppmm.addMessageListener("Addons:Observer:Run", this);
   },
 
-  addObserver: function(addon, observer, topic, ownsWeak) {
+  addObserver(addon, observer, topic, ownsWeak) {
     Services.obs.addObserver(observer, "e10s-" + topic, ownsWeak);
     NotificationTracker.add(["observer", topic, addon]);
   },
 
-  removeObserver: function(addon, observer, topic) {
+  removeObserver(addon, observer, topic) {
     Services.obs.removeObserver(observer, "e10s-" + topic);
     NotificationTracker.remove(["observer", topic, addon]);
   },
 
-  receiveMessage: function(msg) {
+  receiveMessage(msg) {
     switch (msg.name) {
       case "Addons:Observer:Run":
         this.notify(msg.objects.subject, msg.objects.topic, msg.objects.data);
@@ -367,7 +354,7 @@ var ObserverParent = {
     }
   },
 
-  notify: function(subject, topic, data) {
+  notify(subject, topic, data) {
     let e = Services.obs.enumerateObservers("e10s-" + topic);
     while (e.hasMoreElements()) {
       let obs = e.getNext().QueryInterface(Ci.nsIObserver);
@@ -419,7 +406,7 @@ ObserverInterposition.methods.removeObserver =
 // This object is responsible for forwarding events from the child to
 // the parent.
 var EventTargetParent = {
-  init: function() {
+  init() {
     // The _listeners map goes from targets (either <browser> elements
     // or windows) to a dictionary from event types to listeners.
     this._listeners = new WeakMap();
@@ -435,7 +422,7 @@ var EventTargetParent = {
   // (the <browser> or <tab> elements), then we return the
   // <browser>. If it's some generic element, then we return the
   // window itself.
-  redirectEventTarget: function(target) {
+  redirectEventTarget(target) {
     if (Cu.isCrossProcessWrapper(target)) {
       return null;
     }
@@ -453,7 +440,7 @@ var EventTargetParent = {
 
       // Check if |target| is somewhere on the patch from the
       // <tabbrowser> up to the root element.
-      let window = target.ownerDocument.defaultView;
+      let window = target.ownerGlobal;
       if (window && target.contains(window.gBrowser)) {
         return window;
       }
@@ -465,12 +452,12 @@ var EventTargetParent = {
   // When a given event fires in the child, we fire it on the
   // <browser> element and the window since those are the two possible
   // results of redirectEventTarget.
-  getTargets: function(browser) {
-    let window = browser.ownerDocument.defaultView;
+  getTargets(browser) {
+    let window = browser.ownerGlobal;
     return [browser, window];
   },
 
-  addEventListener: function(addon, target, type, listener, useCapture, wantsUntrusted, delayedWarning) {
+  addEventListener(addon, target, type, listener, useCapture, wantsUntrusted, delayedWarning) {
     let newTarget = this.redirectEventTarget(target);
     if (!newTarget) {
       return;
@@ -498,14 +485,14 @@ var EventTargetParent = {
       }
     }
 
-    forType.push({listener: listener,
-                  target: target,
-                  wantsUntrusted: wantsUntrusted,
-                  useCapture: useCapture,
-                  delayedWarning: delayedWarning});
+    forType.push({listener,
+                  target,
+                  wantsUntrusted,
+                  useCapture,
+                  delayedWarning});
   },
 
-  removeEventListener: function(addon, target, type, listener, useCapture) {
+  removeEventListener(addon, target, type, listener, useCapture) {
     let newTarget = this.redirectEventTarget(target);
     if (!newTarget) {
       return;
@@ -530,7 +517,7 @@ var EventTargetParent = {
     }
   },
 
-  receiveMessage: function(msg) {
+  receiveMessage(msg) {
     switch (msg.name) {
       case "Addons:Event:Run":
         this.dispatch(msg.target, msg.data.type, msg.data.capturing,
@@ -539,7 +526,7 @@ var EventTargetParent = {
     }
   },
 
-  dispatch: function(browser, type, capturing, isTrusted, prefetched, cpows) {
+  dispatch(browser, type, capturing, isTrusted, prefetched, cpows) {
     let event = cpows.event;
     let eventTarget = cpows.eventTarget;
     let targets = this.getTargets(browser);
@@ -563,7 +550,7 @@ var EventTargetParent = {
 
       for (let [handler, target] of handlers) {
         let EventProxy = {
-          get: function(knownProps, name) {
+          get(knownProps, name) {
             if (knownProps.hasOwnProperty(name))
               return knownProps[name];
             return event[name];
@@ -572,8 +559,8 @@ var EventTargetParent = {
         let proxyEvent = new Proxy({
           currentTarget: target,
           target: eventTarget,
-          type: type,
-          QueryInterface: function(iid) {
+          type,
+          QueryInterface(iid) {
             if (iid.equals(Ci.nsISupports) ||
                 iid.equals(Ci.nsIDOMEventTarget))
               return proxyEvent;
@@ -601,17 +588,39 @@ var EventTargetParent = {
 };
 EventTargetParent.init();
 
+// This function returns a listener that will remove itself the first time
+// it is fired.
+var selfRemovingListeners = new WeakMap();
+function makeSelfRemovingListener(addon, target, type, listener, useCapture) {
+  if (selfRemovingListeners.has(listener)) {
+    return selfRemovingListeners.get(listener);
+  }
+
+  function selfRemovingListener(event) {
+    EventTargetInterposition.methods.removeEventListener(addon, target, type,
+                                                         listener, useCapture);
+    if ("handleEvent" in listener) {
+      listener.handleEvent(event);
+    } else {
+      listener.call(event.target, event);
+    }
+  }
+  selfRemovingListeners.set(listener, selfRemovingListener);
+
+  return selfRemovingListener;
+}
+
 // This function returns a listener that will not fire on events where
 // the target is a remote xul:browser element itself. We'd rather let
 // the child process handle the event and pass it up via
 // EventTargetParent.
 var filteringListeners = new WeakMap();
-function makeFilteringListener(eventType, listener)
-{
+function makeFilteringListener(eventType, listener) {
   // Some events are actually targeted at the <browser> element
   // itself, so we only handle the ones where know that won't happen.
   let eventTypes = ["mousedown", "mouseup", "click"];
-  if (eventTypes.indexOf(eventType) == -1) {
+  if (!eventTypes.includes(eventType) || !listener ||
+      (typeof listener != "object" && typeof listener != "function")) {
     return listener;
   }
 
@@ -642,18 +651,33 @@ function makeFilteringListener(eventType, listener)
 var EventTargetInterposition = new Interposition("EventTargetInterposition");
 
 EventTargetInterposition.methods.addEventListener =
-  function(addon, target, type, listener, useCapture, wantsUntrusted) {
+  function(addon, target, type, listener, options, wantsUntrusted) {
     let delayed = CompatWarning.delayedWarning(
       `Registering a ${type} event listener on content DOM nodes` +
         " needs to happen in the content process.",
       addon, CompatWarning.warnings.DOM_events);
 
-    EventTargetParent.addEventListener(addon, target, type, listener, useCapture, wantsUntrusted, delayed);
-    target.addEventListener(type, makeFilteringListener(type, listener), useCapture, wantsUntrusted);
+    let useCapture =
+      options === true || (typeof options == "object" && options.capture) || false;
+    if (typeof options == "object" && options.once) {
+      listener = makeSelfRemovingListener(addon, target, type, listener, useCapture);
+    }
+
+    EventTargetParent.addEventListener(addon, target, type, listener,
+                                       useCapture, wantsUntrusted, delayed);
+    target.addEventListener(type, makeFilteringListener(type, listener),
+                            useCapture, wantsUntrusted);
   };
 
 EventTargetInterposition.methods.removeEventListener =
-  function(addon, target, type, listener, useCapture) {
+  function(addon, target, type, listener, options) {
+    let useCapture =
+      options === true || (typeof options == "object" && options.capture) || false;
+
+    if (selfRemovingListeners.has(listener)) {
+      listener = selfRemovingListeners.get(listener);
+    }
+
     EventTargetParent.removeEventListener(addon, target, type, listener, useCapture);
     target.removeEventListener(type, makeFilteringListener(type, listener), useCapture);
   };
@@ -680,7 +704,7 @@ ContentDocShellTreeItemInterposition.getters.rootTreeItem =
       return null;
     }
 
-    let chromeWin = browser.ownerDocument.defaultView;
+    let chromeWin = browser.ownerGlobal;
 
     // Return that window's docshell.
     return chromeWin.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -688,8 +712,7 @@ ContentDocShellTreeItemInterposition.getters.rootTreeItem =
       .QueryInterface(Ci.nsIDocShellTreeItem);
   };
 
-function chromeGlobalForContentWindow(window)
-{
+function chromeGlobalForContentWindow(window) {
     return window
       .QueryInterface(Ci.nsIInterfaceRequestor)
       .getInterface(Ci.nsIWebNavigation)
@@ -706,7 +729,7 @@ function chromeGlobalForContentWindow(window)
 var SandboxParent = {
   componentsMap: new WeakMap(),
 
-  makeContentSandbox: function(addon, chromeGlobal, principals, ...rest) {
+  makeContentSandbox(addon, chromeGlobal, principals, ...rest) {
     CompatWarning.warn("This sandbox should be created from the child process.",
                        addon, CompatWarning.warnings.sandboxes);
     if (rest.length) {
@@ -741,7 +764,7 @@ var SandboxParent = {
     return sandbox;
   },
 
-  evalInSandbox: function(code, sandbox, ...rest) {
+  evalInSandbox(code, sandbox, ...rest) {
     let cu = this.componentsMap.get(sandbox);
     return cu.evalInSandbox(code, sandbox, ...rest);
   }
@@ -776,18 +799,16 @@ ComponentsUtilsInterposition.methods.Sandbox =
         array[i] = principals[i];
       }
       return SandboxParent.makeContentSandbox(addon, chromeGlobal, array, ...rest);
-    } else {
-      return Components.utils.Sandbox(principals, ...rest);
     }
+    return Components.utils.Sandbox(principals, ...rest);
   };
 
 ComponentsUtilsInterposition.methods.evalInSandbox =
   function(addon, target, code, sandbox, ...rest) {
     if (sandbox && Cu.isCrossProcessWrapper(sandbox)) {
       return SandboxParent.evalInSandbox(code, sandbox, ...rest);
-    } else {
-      return Components.utils.evalInSandbox(code, sandbox, ...rest);
     }
+    return Components.utils.evalInSandbox(code, sandbox, ...rest);
   };
 
 // This interposition handles cases where an add-on tries to import a
@@ -811,7 +832,7 @@ ContentDocumentInterposition.methods.importNode =
   };
 
 // This interposition ensures that calling browser.docShell from an
-// add-on returns a CPOW around the dochell.
+// add-on returns a CPOW around the docshell.
 var RemoteBrowserElementInterposition = new Interposition("RemoteBrowserElementInterposition",
                                                           EventTargetInterposition);
 
@@ -868,8 +889,7 @@ RemoteBrowserElementInterposition.getters.contentWindow = function(addon, target
   return target.contentWindowAsCPOW;
 };
 
-function getContentDocument(addon, browser)
-{
+function getContentDocument(addon, browser) {
   if (!browser.contentWindowAsCPOW) {
     return makeDummyContentWindow(browser).document;
   }
@@ -936,14 +956,13 @@ TabBrowserElementInterposition.getters.sessionHistory = function(addon, target) 
 // real listener but passes CPOWs for the nsIWebProgress and
 // nsIRequest arguments.
 var progressListeners = {global: new WeakMap(), tabs: new WeakMap()};
-function wrapProgressListener(kind, listener)
-{
+function wrapProgressListener(kind, listener) {
   if (progressListeners[kind].has(listener)) {
     return progressListeners[kind].get(listener);
   }
 
   let ListenerHandler = {
-    get: function(target, name) {
+    get(target, name) {
       if (name.startsWith("on")) {
         return function(...args) {
           listener[name].apply(listener, RemoteWebProgressManager.argumentsForAddonListener(kind, args));
@@ -960,7 +979,7 @@ function wrapProgressListener(kind, listener)
 }
 
 TabBrowserElementInterposition.methods.addProgressListener = function(addon, target, listener) {
-  if (!target.ownerDocument.defaultView.gMultiProcessBrowser) {
+  if (!target.ownerGlobal.gMultiProcessBrowser) {
     return target.addProgressListener(listener);
   }
 
@@ -969,7 +988,7 @@ TabBrowserElementInterposition.methods.addProgressListener = function(addon, tar
 };
 
 TabBrowserElementInterposition.methods.removeProgressListener = function(addon, target, listener) {
-  if (!target.ownerDocument.defaultView.gMultiProcessBrowser) {
+  if (!target.ownerGlobal.gMultiProcessBrowser) {
     return target.removeProgressListener(listener);
   }
 
@@ -978,7 +997,7 @@ TabBrowserElementInterposition.methods.removeProgressListener = function(addon, 
 };
 
 TabBrowserElementInterposition.methods.addTabsProgressListener = function(addon, target, listener) {
-  if (!target.ownerDocument.defaultView.gMultiProcessBrowser) {
+  if (!target.ownerGlobal.gMultiProcessBrowser) {
     return target.addTabsProgressListener(listener);
   }
 
@@ -987,7 +1006,7 @@ TabBrowserElementInterposition.methods.addTabsProgressListener = function(addon,
 };
 
 TabBrowserElementInterposition.methods.removeTabsProgressListener = function(addon, target, listener) {
-  if (!target.ownerDocument.defaultView.gMultiProcessBrowser) {
+  if (!target.ownerGlobal.gMultiProcessBrowser) {
     return target.removeTabsProgressListener(listener);
   }
 
@@ -1036,17 +1055,21 @@ RemoteWebNavigationInterposition.getters.sessionHistory = function(addon, target
 }
 
 var RemoteAddonsParent = {
-  init: function() {
+  init() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("Addons:RegisterGlobal", this);
 
     Services.ppmm.initialProcessData.remoteAddonsParentInitted = true;
 
+    Services.ppmm.loadProcessScript("data:,new " + function() {
+      Components.utils.import("resource://gre/modules/RemoteAddonsChild.jsm");
+    }, true);
+
     this.globalToBrowser = new WeakMap();
     this.browserToGlobal = new WeakMap();
   },
 
-  getInterfaceInterpositions: function() {
+  getInterfaceInterpositions() {
     let result = {};
 
     function register(intf, interp) {
@@ -1062,7 +1085,7 @@ var RemoteAddonsParent = {
     return result;
   },
 
-  getTaggedInterpositions: function() {
+  getTaggedInterpositions() {
     let result = {};
 
     function register(tag, interp) {
@@ -1079,7 +1102,7 @@ var RemoteAddonsParent = {
     return result;
   },
 
-  receiveMessage: function(msg) {
+  receiveMessage(msg) {
     switch (msg.name) {
     case "Addons:RegisterGlobal":
       this.browserToGlobal.set(msg.target, msg.objects.global);

@@ -10,6 +10,10 @@
 #include "mozilla/gfx/PVsyncBridgeParent.h"
 
 namespace mozilla {
+namespace layers {
+class CompositorThreadHolder;
+} // namespace layers
+
 namespace gfx {
 
 class VsyncBridgeParent final : public PVsyncBridgeParent
@@ -19,7 +23,7 @@ public:
 
   static RefPtr<VsyncBridgeParent> Start(Endpoint<PVsyncBridgeParent>&& aEndpoint);
 
-  bool RecvNotifyVsync(const TimeStamp& vsyncTimeStamp, const uint64_t& aLayersId) override;
+  mozilla::ipc::IPCResult RecvNotifyVsync(const TimeStamp& vsyncTimeStamp, const uint64_t& aLayersId) override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeallocPVsyncBridgeParent() override;
 
@@ -30,9 +34,11 @@ private:
   ~VsyncBridgeParent();
 
   void Open(Endpoint<PVsyncBridgeParent>&& aEndpoint);
+  void ShutdownImpl();
 
 private:
   bool mOpen;
+  RefPtr<layers::CompositorThreadHolder> mCompositorThreadRef;
 };
 
 } // namespace gfx

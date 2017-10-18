@@ -6,8 +6,8 @@
 #define SANDBOX_SRC_WIN_PROCESS_MITIGATIONS_H_
 
 #include <windows.h>
+#include <stddef.h>
 
-#include "base/basictypes.h"
 #include "sandbox/win/src/security_level.h"
 
 namespace sandbox {
@@ -25,7 +25,8 @@ MitigationFlags FilterPostStartupProcessMitigations(MitigationFlags flags);
 // between a 32-bit and a 64-bit type based on the exact build and version of
 // Windows, so the returned size must be passed to UpdateProcThreadAttribute().
 void ConvertProcessMitigationsToPolicy(MitigationFlags flags,
-                                       DWORD64* policy_flags, size_t* size);
+                                       DWORD64* policy_flags,
+                                       size_t* size);
 
 // Adds mitigations that need to be performed on the suspended target process
 // before execution begins.

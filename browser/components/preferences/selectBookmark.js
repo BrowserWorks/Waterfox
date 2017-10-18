@@ -3,17 +3,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/places-overlay */
+
 /**
  * SelectBookmarkDialog controls the user interface for the "Use Bookmark for
- * Home Page" dialog. 
- * 
+ * Home Page" dialog.
+ *
  * The caller (gMainPane.setHomePageToBookmark in main.js) invokes this dialog
  * with a single argument - a reference to an object with a .urls property and
  * a .names property.  This dialog is responsible for updating the contents of
  * the .urls property with an array of URLs to use as home pages and for
  * updating the .names property with an array of names for those URLs before it
  * closes.
- */ 
+ */
 var SelectBookmarkDialog = {
   init: function SBD_init() {
     document.getElementById("bookmarks").place =
@@ -23,9 +25,9 @@ var SelectBookmarkDialog = {
     this.selectionChanged();
   },
 
-  /** 
-   * Update the disabled state of the OK button as the user changes the 
-   * selection within the view. 
+  /**
+   * Update the disabled state of the OK button as the user changes the
+   * selection within the view.
    */
   selectionChanged: function SBD_selectionChanged() {
     var accept = document.documentElement.getButton("accept");
@@ -72,8 +74,7 @@ var SelectBookmarkDialog = {
         }
       }
       contents.containerOpen = false;
-    }
-    else {
+    } else {
       urls.push(selectedNode.uri);
       names.push(selectedNode.title);
     }

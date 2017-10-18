@@ -9,7 +9,6 @@
 /* globals document, window */
 "use strict";
 
-
 /**
  * Functions handling the filtering UI.
  */
@@ -58,11 +57,11 @@ FilterView.prototype = {
     this._lineSearchKey = ShortcutUtils.prettifyShortcut(document.getElementById("lineSearchKey"));
     this._variableSearchKey = ShortcutUtils.prettifyShortcut(document.getElementById("variableSearchKey"));
 
-    this._searchbox.addEventListener("click", this._onClick, false);
-    this._searchbox.addEventListener("select", this._onInput, false);
-    this._searchbox.addEventListener("input", this._onInput, false);
-    this._searchbox.addEventListener("keypress", this._onKeyPress, false);
-    this._searchbox.addEventListener("blur", this._onBlur, false);
+    this._searchbox.addEventListener("click", this._onClick);
+    this._searchbox.addEventListener("select", this._onInput);
+    this._searchbox.addEventListener("input", this._onInput);
+    this._searchbox.addEventListener("keypress", this._onKeyPress);
+    this._searchbox.addEventListener("blur", this._onBlur);
 
     let placeholder = L10N.getFormatStr("emptySearchText", this._fileSearchKey);
     this._searchbox.setAttribute("placeholder", placeholder);
@@ -98,11 +97,11 @@ FilterView.prototype = {
   destroy: function () {
     dumpn("Destroying the FilterView");
 
-    this._searchbox.removeEventListener("click", this._onClick, false);
-    this._searchbox.removeEventListener("select", this._onInput, false);
-    this._searchbox.removeEventListener("input", this._onInput, false);
-    this._searchbox.removeEventListener("keypress", this._onKeyPress, false);
-    this._searchbox.removeEventListener("blur", this._onBlur, false);
+    this._searchbox.removeEventListener("click", this._onClick);
+    this._searchbox.removeEventListener("select", this._onInput);
+    this._searchbox.removeEventListener("input", this._onInput);
+    this._searchbox.removeEventListener("keypress", this._onKeyPress);
+    this._searchbox.removeEventListener("blur", this._onBlur);
 
     this.FilteredSources.destroy();
     this.FilteredFunctions.destroy();
@@ -321,15 +320,15 @@ FilterView.prototype = {
     // Return, enter, down and up keys focus next or previous matches, while
     // the escape key switches focus from the search container.
     else switch (e.keyCode) {
-      case e.DOM_VK_RETURN:
+      case KeyCodes.DOM_VK_RETURN:
         var isReturnKey = true;
         // If the shift key is pressed, focus on the previous result
         actionToPerform = e.shiftKey ? "selectPrev" : "selectNext";
         break;
-      case e.DOM_VK_DOWN:
+      case KeyCodes.DOM_VK_DOWN:
         actionToPerform = "selectNext";
         break;
-      case e.DOM_VK_UP:
+      case KeyCodes.DOM_VK_UP:
         actionToPerform = "selectPrev";
         break;
     }
@@ -560,8 +559,8 @@ FilteredSourcesView.prototype = Heritage.extend(ResultsPanelContainer.prototype,
     dumpn("Initializing the FilteredSourcesView");
 
     this.anchor = document.getElementById("searchbox");
-    this.widget.addEventListener("select", this._onSelect, false);
-    this.widget.addEventListener("click", this._onClick, false);
+    this.widget.addEventListener("select", this._onSelect);
+    this.widget.addEventListener("click", this._onClick);
   },
 
   /**
@@ -570,8 +569,8 @@ FilteredSourcesView.prototype = Heritage.extend(ResultsPanelContainer.prototype,
   destroy: function () {
     dumpn("Destroying the FilteredSourcesView");
 
-    this.widget.removeEventListener("select", this._onSelect, false);
-    this.widget.removeEventListener("click", this._onClick, false);
+    this.widget.removeEventListener("select", this._onSelect);
+    this.widget.removeEventListener("click", this._onClick);
     this.anchor = null;
   },
 
@@ -723,8 +722,8 @@ FilteredFunctionsView.prototype = Heritage.extend(ResultsPanelContainer.prototyp
     dumpn("Initializing the FilteredFunctionsView");
 
     this.anchor = document.getElementById("searchbox");
-    this.widget.addEventListener("select", this._onSelect, false);
-    this.widget.addEventListener("click", this._onClick, false);
+    this.widget.addEventListener("select", this._onSelect);
+    this.widget.addEventListener("click", this._onClick);
   },
 
   /**
@@ -733,8 +732,8 @@ FilteredFunctionsView.prototype = Heritage.extend(ResultsPanelContainer.prototyp
   destroy: function () {
     dumpn("Destroying the FilteredFunctionsView");
 
-    this.widget.removeEventListener("select", this._onSelect, false);
-    this.widget.removeEventListener("click", this._onClick, false);
+    this.widget.removeEventListener("select", this._onSelect);
+    this.widget.removeEventListener("click", this._onClick);
     this.anchor = null;
   },
 

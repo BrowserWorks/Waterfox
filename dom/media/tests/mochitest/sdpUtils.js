@@ -15,6 +15,11 @@ checkSdpAfterEndOfTrickle: function(sdp, testOptions, label) {
   } else {
     ok(sdp.sdp.includes("a=rtcp:"), label + ": SDP contains rtcp port");
   }
+  if (testOptions.ssrc) {
+    ok(sdp.sdp.includes("a=ssrc"), label + ": SDP contains a=ssrc");
+  } else {
+    ok(!sdp.sdp.includes("a=ssrc"), label + ": SDP does not contain a=ssrc");
+  }
 },
 
 // takes sdp in string form (or possibly a fragment, say an m-section), and
@@ -24,21 +29,23 @@ checkSdpCLineNotDefault: function(sdpStr, label) {
   ok(!sdpStr.includes("c=IN IP4 0.0.0.0"), label + ": SDP contains non-zero IP c line");
 },
 
-// Also remove mode 0 if it's offered
 // Note, we don't bother removing the fmtp lines, which makes a good test
-// for some SDP parsing issues.
-removeVP8: function(sdp) {
-  var updated_sdp = sdp.replace("a=rtpmap:120 VP8/90000\r\n","");
-  updated_sdp = updated_sdp.replace("RTP/SAVPF 120 126 97\r\n","RTP/SAVPF 126 97\r\n");
-  updated_sdp = updated_sdp.replace("RTP/SAVPF 120 126\r\n","RTP/SAVPF 126\r\n");
-  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack\r\n","");
-  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 nack pli\r\n","");
-  updated_sdp = updated_sdp.replace("a=rtcp-fb:120 ccm fir\r\n","");
+// for some SDP parsing issues.  It would be good to have a "removeAllButCodec(sdp, codec)" too.
+removeCodec: function(sdp, codec) {
+    var updated_sdp = sdp.replace(new RegExp("a=rtpmap:" + codec + ".*\\/90000\\r\\n",""),"");
+    updated_sdp = updated_sdp.replace(new RegExp("(RTP\\/SAVPF.*)( " + codec + ")(.*\\r\\n)",""),"$1$3");
+    updated_sdp = updated_sdp.replace(new RegExp("a=rtcp-fb:" + codec + " nack\\r\\n",""),"");
+    updated_sdp = updated_sdp.replace(new RegExp("a=rtcp-fb:" + codec + " nack pli\\r\\n",""),"");
+    updated_sdp = updated_sdp.replace(new RegExp("a=rtcp-fb:" + codec + " ccm fir\\r\\n",""),"");
   return updated_sdp;
 },
 
 removeRtcpMux: function(sdp) {
   return sdp.replace(/a=rtcp-mux\r\n/g,"");
+},
+
+removeSSRCs: function(sdp) {
+  return sdp.replace(/a=ssrc.*\r\n/g,"");
 },
 
 removeBundle: function(sdp) {
@@ -63,16 +70,31 @@ reduceAudioMLineToDynamicPtAndOpus: function(sdp) {
   return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 101 109\r\n");
 },
 
+addTiasBps: function(sdp, bps) {
+  return sdp.replace(/c=IN (.*)\r\n/g, "c=IN $1\r\nb=TIAS:" + bps + "\r\n");
+},
+
+removeSimulcastProperties: function(sdp) {
+  return sdp.replace(/a=simulcast:.*\r\n/g, "")
+            .replace(/a=rid:.*\r\n/g, "")
+            .replace(/a=extmap:[^\s]* urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id.*\r\n/g, "");
+},
+
 transferSimulcastProperties: function(offer_sdp, answer_sdp) {
   if (!offer_sdp.includes("a=simulcast:")) {
     return answer_sdp;
   }
+  ok(offer_sdp.includes("a=simulcast: send rid"), "Offer contains simulcast attribute");
   var o_simul = offer_sdp.match(/simulcast: send rid=(.*)([\n$])*/i);
-  var o_rids = offer_sdp.match(/a=rid:(.*)/ig);
   var new_answer_sdp = answer_sdp + "a=simulcast: recv rid=" + o_simul[1] + "\r\n";
+  ok(offer_sdp.includes("a=rid:"), "Offer contains RID attribute");
+  var o_rids = offer_sdp.match(/a=rid:(.*)/ig);
   o_rids.forEach((o_rid) => {
     new_answer_sdp = new_answer_sdp + o_rid.replace(/send/, "recv") + "\r\n";
   });
+  var extmap_id = offer_sdp.match("a=extmap:([0-9+])/sendonly urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id");
+  ok(extmap_id != null, "Offer contains RID RTP header extension");
+  new_answer_sdp = new_answer_sdp + "a=extmap:" + extmap_id[1] + "/recvonly urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id\r\n";
   return new_answer_sdp;
 },
 
@@ -91,9 +113,9 @@ verifySdp: function(desc, expectedType, offerConstraintsList, offerOptions,
   ok(!desc.sdp.includes(LOOPBACK_ADDR), "loopback interface is absent from SDP");
   var requiresTrickleIce = !desc.sdp.includes("a=candidate");
   if (requiresTrickleIce) {
-    info("at least one ICE candidate is present in SDP");
-  } else {
     info("No ICE candidate in SDP -> requiring trickle ICE");
+  } else {
+    info("at least one ICE candidate is present in SDP");
   }
 
   //TODO: how can we check for absence/presence of m=application?
@@ -125,9 +147,11 @@ verifySdp: function(desc, expectedType, offerConstraintsList, offerOptions,
     if (testOptions.h264) {
       ok(desc.sdp.includes("a=rtpmap:126 H264/90000"), "H.264 codec is present in SDP");
     } else {
-      ok(desc.sdp.includes("a=rtpmap:120 VP8/90000"), "VP8 codec is present in SDP");
+	ok(desc.sdp.includes("a=rtpmap:120 VP8/90000") ||
+	   desc.sdp.includes("a=rtpmap:121 VP9/90000"), "VP8 or VP9 codec is present in SDP");
     }
     is(testOptions.rtcpmux, desc.sdp.includes("a=rtcp-mux"), "RTCP Mux is offered in SDP");
+    is(testOptions.ssrc, desc.sdp.includes("a=ssrc"), "a=ssrc signaled in SDP");
   }
 
   return requiresTrickleIce;

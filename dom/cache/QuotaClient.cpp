@@ -6,7 +6,6 @@
 
 #include "mozilla/dom/cache/QuotaClient.h"
 
-#include "mozilla/DebugOnly.h"
 #include "mozilla/dom/cache/Manager.h"
 #include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/dom/quota/UsageInfo.h"
@@ -17,7 +16,7 @@
 
 namespace {
 
-using mozilla::DebugOnly;
+using mozilla::Atomic;
 using mozilla::dom::ContentParentId;
 using mozilla::dom::cache::Manager;
 using mozilla::dom::quota::Client;
@@ -27,7 +26,8 @@ using mozilla::dom::quota::UsageInfo;
 using mozilla::ipc::AssertIsOnBackgroundThread;
 
 static nsresult
-GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
+GetBodyUsage(nsIFile* aDir, const Atomic<bool>& aCanceled,
+             UsageInfo* aUsageInfo)
 {
   nsCOMPtr<nsISimpleEnumerator> entries;
   nsresult rv = aDir->GetDirectoryEntries(getter_AddRefs(entries));
@@ -35,7 +35,7 @@ GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
 
   bool hasMore;
   while (NS_SUCCEEDED(rv = entries->HasMoreElements(&hasMore)) && hasMore &&
-         !aUsageInfo->Canceled()) {
+         !aCanceled) {
     nsCOMPtr<nsISupports> entry;
     rv = entries->GetNext(getter_AddRefs(entry));
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -47,7 +47,7 @@ GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
     if (isDir) {
-      rv = GetBodyUsage(file, aUsageInfo);
+      rv = GetBodyUsage(file, aCanceled, aUsageInfo);
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
       continue;
     }
@@ -55,7 +55,7 @@ GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
     int64_t fileSize;
     rv = file->GetFileSize(&fileSize);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-    MOZ_ASSERT(fileSize >= 0);
+    MOZ_DIAGNOSTIC_ASSERT(fileSize >= 0);
 
     aUsageInfo->AppendToFileUsage(fileSize);
   }
@@ -74,7 +74,8 @@ public:
 
   virtual nsresult
   InitOrigin(PersistenceType aPersistenceType, const nsACString& aGroup,
-             const nsACString& aOrigin, UsageInfo* aUsageInfo) override
+             const nsACString& aOrigin, const AtomicBool& aCanceled,
+             UsageInfo* aUsageInfo) override
   {
     // The QuotaManager passes a nullptr UsageInfo if there is no quota being
     // enforced against the origin.
@@ -82,18 +83,19 @@ public:
       return NS_OK;
     }
 
-    return GetUsageForOrigin(aPersistenceType, aGroup, aOrigin, aUsageInfo);
+    return GetUsageForOrigin(aPersistenceType, aGroup, aOrigin, aCanceled,
+                             aUsageInfo);
   }
 
   virtual nsresult
   GetUsageForOrigin(PersistenceType aPersistenceType, const nsACString& aGroup,
-                    const nsACString& aOrigin,
+                    const nsACString& aOrigin, const AtomicBool& aCanceled,
                     UsageInfo* aUsageInfo) override
   {
-    MOZ_ASSERT(aUsageInfo);
+    MOZ_DIAGNOSTIC_ASSERT(aUsageInfo);
 
     QuotaManager* qm = QuotaManager::Get();
-    MOZ_ASSERT(qm);
+    MOZ_DIAGNOSTIC_ASSERT(qm);
 
     nsCOMPtr<nsIFile> dir;
     nsresult rv = qm->GetDirectoryForOrigin(aPersistenceType, aOrigin,
@@ -109,7 +111,7 @@ public:
 
     bool hasMore;
     while (NS_SUCCEEDED(rv = entries->HasMoreElements(&hasMore)) && hasMore &&
-           !aUsageInfo->Canceled()) {
+           !aCanceled) {
       nsCOMPtr<nsISupports> entry;
       rv = entries->GetNext(getter_AddRefs(entry));
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -126,7 +128,7 @@ public:
 
       if (isDir) {
         if (leafName.EqualsLiteral("morgue")) {
-          rv = GetBodyUsage(file, aUsageInfo);
+          rv = GetBodyUsage(file, aCanceled, aUsageInfo);
           if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
         } else {
           NS_WARNING("Unknown Cache directory found!");
@@ -148,7 +150,7 @@ public:
         int64_t fileSize;
         rv = file->GetFileSize(&fileSize);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-        MOZ_ASSERT(fileSize >= 0);
+        MOZ_DIAGNOSTIC_ASSERT(fileSize >= 0);
 
         aUsageInfo->AppendToDatabaseUsage(fileSize);
         continue;

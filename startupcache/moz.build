@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "XPCOM")
+
 if not CONFIG['MOZ_B2G']:
     TEST_DIRS += ['test']
 
@@ -18,8 +21,7 @@ EXPORTS.mozilla.scache += [
     'StartupCacheUtils.h',
 ]
 
-# These files cannot be built in unified mode because they rely on plarena.h.
-SOURCES += [
+UNIFIED_SOURCES += [
     'StartupCache.cpp',
     'StartupCacheModule.cpp',
     'StartupCacheUtils.cpp',

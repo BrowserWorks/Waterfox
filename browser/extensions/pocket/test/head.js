@@ -36,7 +36,7 @@ function promisePocketDisabled() {
   }
   return new Promise((resolve, reject) => {
     let listener = {
-      onWidgetDestroyed: function(widgetid) {
+      onWidgetDestroyed(widgetid) {
         if (widgetid == "pocket-button") {
           CustomizableUI.removeListener(listener);
           info( "pocket-button destroyed");
@@ -61,8 +61,7 @@ function promisePocketReset() {
   if (enabledOnStartup) {
     info("reset is enabling pocket addon");
     return promisePocketEnabled();
-  } else {
-    info("reset is disabling pocket addon");
-    return promisePocketDisabled();
   }
+  info("reset is disabling pocket addon");
+  return promisePocketDisabled();
 }

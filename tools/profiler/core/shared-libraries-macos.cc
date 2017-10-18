@@ -4,40 +4,27 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <AvailabilityMacros.h>
+#include <mach-o/arch.h>
 #include <mach-o/loader.h>
 #include <mach-o/dyld_images.h>
+#include <mach-o/dyld.h>
 #include <mach/task_info.h>
 #include <mach/task.h>
 #include <mach/mach_init.h>
 #include <mach/mach_traps.h>
+#include <dlfcn.h>
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
 #include <sstream>
+#include "mozilla/Unused.h"
+#include "nsNativeCharsetUtils.h"
+#include "ClearOnShutdown.h"
 
 #include "shared-libraries.h"
 
-#ifndef MAC_OS_X_VERSION_10_6
-#define MAC_OS_X_VERSION_10_6 1060
-#endif
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_6
-// borrowed from Breakpad
-// Fallback declarations for TASK_DYLD_INFO and friends, introduced in
-// <mach/task_info.h> in the Mac OS X 10.6 SDK.
-#define TASK_DYLD_INFO 17
-struct task_dyld_info {
-    mach_vm_address_t all_image_info_addr;
-    mach_vm_size_t all_image_info_size;
-  };
-typedef struct task_dyld_info task_dyld_info_data_t;
-typedef struct task_dyld_info *task_dyld_info_t;
-#define TASK_DYLD_INFO_COUNT (sizeof(task_dyld_info_data_t) / sizeof(natural_t))
-
-#endif
-
 // Architecture specific abstraction.
-#ifdef __i386__
+#if defined(GP_ARCH_x86)
 typedef mach_header platform_mach_header;
 typedef segment_command mach_segment_command_type;
 #define MACHO_MAGIC_NUMBER MH_MAGIC
@@ -51,8 +38,71 @@ typedef segment_command_64 mach_segment_command_type;
 #define seg_size uint64_t
 #endif
 
+struct NativeSharedLibrary
+{
+  const platform_mach_header* header;
+  std::string path;
+};
+static std::vector<NativeSharedLibrary>* sSharedLibrariesList = nullptr;
+static StaticMutex sSharedLibrariesMutex;
+
+static void
+SharedLibraryAddImage(const struct mach_header* mh, intptr_t vmaddr_slide)
+{
+  // NOTE: Presumably for backwards-compatibility reasons, this function accepts
+  // a mach_header even on 64-bit where it ought to be a mach_header_64. We cast
+  // it to the right type here.
+  auto header = reinterpret_cast<const platform_mach_header*>(mh);
+
+  Dl_info info;
+  if (!dladdr(header, &info)) {
+    return;
+  }
+
+  StaticMutexAutoLock lock(sSharedLibrariesMutex);
+  if (!sSharedLibrariesList) {
+    return;
+  }
+
+  NativeSharedLibrary lib = { header, info.dli_fname };
+  sSharedLibrariesList->push_back(lib);
+}
+
+static void
+SharedLibraryRemoveImage(const struct mach_header* mh, intptr_t vmaddr_slide)
+{
+  // NOTE: Presumably for backwards-compatibility reasons, this function accepts
+  // a mach_header even on 64-bit where it ought to be a mach_header_64. We cast
+  // it to the right type here.
+  auto header = reinterpret_cast<const platform_mach_header*>(mh);
+
+  StaticMutexAutoLock lock(sSharedLibrariesMutex);
+  if (!sSharedLibrariesList) {
+    return;
+  }
+
+  uint32_t count = sSharedLibrariesList->size();
+  for (uint32_t i = 0; i < count; ++i) {
+    if ((*sSharedLibrariesList)[i].header == header) {
+      sSharedLibrariesList->erase(sSharedLibrariesList->begin() + i);
+      return;
+    }
+  }
+}
+
+void
+SharedLibraryInfo::Initialize()
+{
+  // NOTE: We intentionally leak this memory here. We're allocating dynamically
+  // in order to avoid static initializers.
+  sSharedLibrariesList = new std::vector<NativeSharedLibrary>();
+
+  _dyld_register_func_for_add_image(SharedLibraryAddImage);
+  _dyld_register_func_for_remove_image(SharedLibraryRemoveImage);
+}
+
 static
-void addSharedLibrary(const platform_mach_header* header, char *name, SharedLibraryInfo &info) {
+void addSharedLibrary(const platform_mach_header* header, const char *path, SharedLibraryInfo &info) {
   const struct load_command *cmd =
     reinterpret_cast<const struct load_command *>(header + 1);
 
@@ -89,44 +139,35 @@ void addSharedLibrary(const platform_mach_header* header, char *name, SharedLibr
     uuid << '0';
   }
 
+  nsAutoString pathStr;
+  mozilla::Unused << NS_WARN_IF(NS_FAILED(NS_CopyNativeToUnicode(nsDependentCString(path), pathStr)));
+
+  nsAutoString nameStr = pathStr;
+  int32_t pos = nameStr.RFindChar('/');
+  if (pos != kNotFound) {
+    nameStr.Cut(0, pos + 1);
+  }
+
+  const NXArchInfo* archInfo =
+    NXGetArchInfoFromCpuType(header->cputype, header->cpusubtype);
+
   info.AddSharedLibrary(SharedLibrary(start, start + size, 0, uuid.str(),
-                                      name));
+                                      nameStr, pathStr, nameStr, pathStr,
+                                      "",
+                                      archInfo ? archInfo->name : ""));
 }
 
-// Use dyld to inspect the macho image information. We can build the SharedLibraryEntry structure
-// giving us roughtly the same info as /proc/PID/maps in Linux.
-SharedLibraryInfo SharedLibraryInfo::GetInfoForSelf()
+// Translate the statically stored sSharedLibrariesList information into a
+// SharedLibraryInfo object.
+SharedLibraryInfo
+SharedLibraryInfo::GetInfoForSelf()
 {
+  StaticMutexAutoLock lock(sSharedLibrariesMutex);
   SharedLibraryInfo sharedLibraryInfo;
 
-  task_dyld_info_data_t task_dyld_info;
-  mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
-  if (task_info(mach_task_self (), TASK_DYLD_INFO, (task_info_t)&task_dyld_info,
-                &count) != KERN_SUCCESS) {
-    return sharedLibraryInfo;
+  for (auto& info : *sSharedLibrariesList) {
+    addSharedLibrary(info.header, info.path.c_str(), sharedLibraryInfo);
   }
 
-  struct dyld_all_image_infos* aii = (struct dyld_all_image_infos*)task_dyld_info.all_image_info_addr;
-  size_t infoCount = aii->infoArrayCount;
-
-  // Iterate through all dyld images (loaded libraries) to get their names
-  // and offests.
-  for (size_t i = 0; i < infoCount; ++i) {
-    const dyld_image_info *info = &aii->infoArray[i];
-
-    // If the magic number doesn't match then go no further
-    // since we're not pointing to where we think we are.
-    if (info->imageLoadAddress->magic != MACHO_MAGIC_NUMBER) {
-      continue;
-    }
-
-    const platform_mach_header* header =
-      reinterpret_cast<const platform_mach_header*>(info->imageLoadAddress);
-
-    // Add the entry for this image.
-    addSharedLibrary(header, (char*)info->imageFilePath, sharedLibraryInfo);
-
-  }
   return sharedLibraryInfo;
 }
-

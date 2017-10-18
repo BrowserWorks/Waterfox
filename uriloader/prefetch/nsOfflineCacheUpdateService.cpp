@@ -38,7 +38,7 @@
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIDiskSpaceWatcher.h"
 #include "nsIDocShell.h"
 #include "nsIDocShellTreeItem.h"
@@ -46,7 +46,7 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "nsContentUtils.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -396,7 +396,7 @@ nsOfflineCacheUpdateService::UpdateFinished(nsOfflineCacheUpdate *aUpdate)
 nsresult
 nsOfflineCacheUpdateService::ProcessNextUpdate()
 {
-    LOG(("nsOfflineCacheUpdateService::ProcessNextUpdate [%p, num=%d]",
+    LOG(("nsOfflineCacheUpdateService::ProcessNextUpdate [%p, num=%zu]",
          this, mUpdates.Length()));
 
     if (mDisabled)
@@ -681,7 +681,7 @@ nsOfflineCacheUpdateService::OfflineAppAllowedForURI(nsIURI *aURI,
                                                      nsIPrefBranch *aPrefBranch,
                                                      bool *aAllowed)
 {
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> principal =
         BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
     return OfflineAppPermForPrincipal(principal, aPrefBranch, false, aAllowed);
@@ -692,7 +692,7 @@ nsOfflineCacheUpdateService::OfflineAppPinnedForURI(nsIURI *aDocumentURI,
                                                     nsIPrefBranch *aPrefBranch,
                                                     bool *aPinned)
 {
-    PrincipalOriginAttributes attrs;
+    OriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> principal =
         BasePrincipal::CreateCodebasePrincipal(aDocumentURI, attrs);
     return OfflineAppPermForPrincipal(principal, aPrefBranch, true, aPinned);

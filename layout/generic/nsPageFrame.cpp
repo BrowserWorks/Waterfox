@@ -6,11 +6,11 @@
 #include "nsPageFrame.h"
 
 #include "mozilla/gfx/2D.h"
+#include "gfxContext.h"
 #include "nsDeviceContext.h"
 #include "nsFontMetrics.h"
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsGkAtoms.h"
 #include "nsIPresShell.h"
 #include "nsPageContentFrame.h"
@@ -41,7 +41,7 @@ NS_QUERYFRAME_HEAD(nsPageFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 nsPageFrame::nsPageFrame(nsStyleContext* aContext)
-: nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
 }
 
@@ -58,10 +58,10 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
   MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsPageFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
-  aStatus = NS_FRAME_COMPLETE;  // initialize out parameter
+  aStatus.Reset();  // initialize out parameter
 
   NS_ASSERTION(mFrames.FirstChild() &&
-               nsGkAtoms::pageContentFrame == mFrames.FirstChild()->GetType(),
+               mFrames.FirstChild()->IsPageContentFrame(),
                "pageFrame must have a pageContentFrame child");
 
   // Resize our frame allowing it only to be as big as we are
@@ -146,7 +146,7 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
     // Place and size the child
     FinishReflowChild(frame, aPresContext, aDesiredSize, &kidReflowInput, xc, yc, 0);
 
-    NS_ASSERTION(!NS_FRAME_IS_FULLY_COMPLETE(aStatus) ||
+    NS_ASSERTION(!aStatus.IsFullyComplete() ||
                  !frame->GetNextInFlow(), "bad child flow list");
   }
   PR_PL(("PageFrame::Reflow %p ", this));
@@ -169,12 +169,6 @@ nsPageFrame::Reflow(nsPresContext*           aPresContext,
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
-nsIAtom*
-nsPageFrame::GetType() const
-{
-  return nsGkAtoms::pageFrame; 
-}
-
 #ifdef DEBUG_FRAME_DUMP
 nsresult
 nsPageFrame::GetFrameName(nsAString& aResult) const
@@ -183,17 +177,17 @@ nsPageFrame::GetFrameName(nsAString& aResult) const
 }
 #endif
 
-void 
+void
 nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
 {
 
   aNewStr = aStr;
 
-  // Search to see if the &D code is in the string 
+  // Search to see if the &D code is in the string
   // then subst in the current date/time
   NS_NAMED_LITERAL_STRING(kDate, "&D");
   if (aStr.Find(kDate) != kNotFound) {
-    aNewStr.ReplaceSubstring(kDate.get(), mPD->mDateTimeStr.get());
+    aNewStr.ReplaceSubstring(kDate, mPD->mDateTimeStr);
   }
 
   // NOTE: Must search for &PT before searching for &P
@@ -204,7 +198,7 @@ nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
   NS_NAMED_LITERAL_STRING(kPageAndTotal, "&PT");
   if (aStr.Find(kPageAndTotal) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumAndTotalsFormat.get(), mPageNum, mTotNumPages);
-    aNewStr.ReplaceSubstring(kPageAndTotal.get(), uStr);
+    aNewStr.ReplaceSubstring(kPageAndTotal, nsDependentString(uStr));
     free(uStr);
   }
 
@@ -213,33 +207,33 @@ nsPageFrame::ProcessSpecialCodes(const nsString& aStr, nsString& aNewStr)
   NS_NAMED_LITERAL_STRING(kPage, "&P");
   if (aStr.Find(kPage) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumFormat.get(), mPageNum);
-    aNewStr.ReplaceSubstring(kPage.get(), uStr);
+    aNewStr.ReplaceSubstring(kPage, nsDependentString(uStr));
     free(uStr);
   }
 
   NS_NAMED_LITERAL_STRING(kTitle, "&T");
   if (aStr.Find(kTitle) != kNotFound) {
-    aNewStr.ReplaceSubstring(kTitle.get(), mPD->mDocTitle.get());
+    aNewStr.ReplaceSubstring(kTitle, mPD->mDocTitle);
   }
 
   NS_NAMED_LITERAL_STRING(kDocURL, "&U");
   if (aStr.Find(kDocURL) != kNotFound) {
-    aNewStr.ReplaceSubstring(kDocURL.get(), mPD->mDocURL.get());
+    aNewStr.ReplaceSubstring(kDocURL, mPD->mDocURL);
   }
 
   NS_NAMED_LITERAL_STRING(kPageTotal, "&L");
   if (aStr.Find(kPageTotal) != kNotFound) {
     char16_t * uStr = nsTextFormatter::smprintf(mPD->mPageNumFormat.get(), mTotNumPages);
-    aNewStr.ReplaceSubstring(kPageTotal.get(), uStr);
+    aNewStr.ReplaceSubstring(kPageTotal, nsDependentString(uStr));
     free(uStr);
   }
 }
 
 
 //------------------------------------------------------------------------------
-nscoord nsPageFrame::GetXPosition(nsRenderingContext& aRenderingContext,
+nscoord nsPageFrame::GetXPosition(gfxContext&          aRenderingContext,
                                   nsFontMetrics&       aFontMetrics,
-                                  const nsRect&        aRect, 
+                                  const nsRect&        aRect,
                                   int32_t              aJust,
                                   const nsString&      aStr)
 {
@@ -274,7 +268,7 @@ nscoord nsPageFrame::GetXPosition(nsRenderingContext& aRenderingContext,
 // @param aAscent - the ascent of the font
 // @param aHeight - the height of the font
 void
-nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
+nsPageFrame::DrawHeaderFooter(gfxContext&          aRenderingContext,
                               nsFontMetrics&       aFontMetrics,
                               nsHeaderFooterEnum   aHeaderFooter,
                               const nsString&      aStrLeft,
@@ -319,7 +313,7 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
 // @param aAscent - the ascent of the font
 // @param aWidth - available width for the string
 void
-nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
+nsPageFrame::DrawHeaderFooter(gfxContext&          aRenderingContext,
                               nsFontMetrics&       aFontMetrics,
                               nsHeaderFooterEnum   aHeaderFooter,
                               int32_t              aJust,
@@ -332,7 +326,6 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
 
   nscoord contentWidth = aWidth - (mPD->mEdgePaperMargin.left + mPD->mEdgePaperMargin.right);
 
-  gfxContext* gfx = aRenderingContext.ThebesContext();
   DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
 
   if ((aHeaderFooter == eHeader && aHeight < mPageContentMargin.top) ||
@@ -369,10 +362,10 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
           str.Truncate();
         }
       }
-    } else { 
+    } else {
       return; // bail if couldn't find the correct length
     }
-    
+
     if (HasRTLChars(str)) {
       PresContext()->SetBidiEnabled();
     }
@@ -387,14 +380,16 @@ nsPageFrame::DrawHeaderFooter(nsRenderingContext& aRenderingContext,
     }
 
     // set up new clip and draw the text
-    gfx->Save();
-    gfx->Clip(NSRectToSnappedRect(aRect, PresContext()->AppUnitsPerDevPixel(),
-                                  *drawTarget));
-    gfx->SetColor(Color(0.f, 0.f, 0.f));
+    aRenderingContext.Save();
+    aRenderingContext.Clip(
+      NSRectToSnappedRect(aRect, PresContext()->AppUnitsPerDevPixel(), *drawTarget));
+    aRenderingContext.SetColor(Color(0.f, 0.f, 0.f));
     nsLayoutUtils::DrawString(this, aFontMetrics, &aRenderingContext,
                               str.get(), str.Length(),
-                              nsPoint(x, y + aAscent));
-    gfx->Restore();
+                              nsPoint(x, y + aAscent),
+                              nullptr,
+                              DrawStringFlags::eForceHorizontal);
+    aRenderingContext.Restore();
   }
 }
 
@@ -457,16 +452,16 @@ GetNextPage(nsIFrame* aPageContentFrame)
 {
   // XXX ugh
   nsIFrame* pageFrame = aPageContentFrame->GetParent();
-  NS_ASSERTION(pageFrame->GetType() == nsGkAtoms::pageFrame,
+  NS_ASSERTION(pageFrame->IsPageFrame(),
                "pageContentFrame has unexpected parent");
   nsIFrame* nextPageFrame = pageFrame->GetNextSibling();
   if (!nextPageFrame)
     return nullptr;
-  NS_ASSERTION(nextPageFrame->GetType() == nsGkAtoms::pageFrame,
+  NS_ASSERTION(nextPageFrame->IsPageFrame(),
                "pageFrame's sibling is not a page frame...");
   nsIFrame* f = nextPageFrame->PrincipalChildList().FirstChild();
   NS_ASSERTION(f, "pageFrame has no page content frame!");
-  NS_ASSERTION(f->GetType() == nsGkAtoms::pageContentFrame,
+  NS_ASSERTION(f->IsPageContentFrame(),
                "pageFrame's child is not page content!");
   return f;
 }
@@ -492,7 +487,7 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override {
+                     gfxContext* aCtx) override {
 #ifdef DEBUG
     nsPageFrame* pageFrame = do_QueryFrame(mFrame);
     MOZ_ASSERT(pageFrame, "We should have an nsPageFrame");
@@ -603,15 +598,15 @@ nsPageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
 //------------------------------------------------------------------------------
 void
-nsPageFrame::SetPageNumInfo(int32_t aPageNumber, int32_t aTotalPages) 
-{ 
-  mPageNum     = aPageNumber; 
+nsPageFrame::SetPageNumInfo(int32_t aPageNumber, int32_t aTotalPages)
+{
+  mPageNum     = aPageNumber;
   mTotNumPages = aTotalPages;
 }
 
 
 void
-nsPageFrame::PaintHeaderFooter(nsRenderingContext& aRenderingContext,
+nsPageFrame::PaintHeaderFooter(gfxContext& aRenderingContext,
                                nsPoint aPt, bool aDisableSubpixelAA)
 {
   nsPresContext* pc = PresContext();
@@ -624,7 +619,7 @@ nsPageFrame::PaintHeaderFooter(nsRenderingContext& aRenderingContext,
   }
 
   nsRect rect(aPt, mRect.Size());
-  aRenderingContext.ThebesContext()->SetColor(Color(0.f, 0.f, 0.f));
+  aRenderingContext.SetColor(Color(0.f, 0.f, 0.f));
 
   DrawTargetAutoDisableSubpixelAntialiasing
     disable(aRenderingContext.GetDrawTarget(), aDisableSubpixelAA);
@@ -662,8 +657,8 @@ nsPageFrame::PaintHeaderFooter(nsRenderingContext& aRenderingContext,
 }
 
 void
-nsPageFrame::SetSharedPageData(nsSharedPageData* aPD) 
-{ 
+nsPageFrame::SetSharedPageData(nsSharedPageData* aPD)
+{
   mPD = aPD;
   // Set the shared data into the page frame before reflow
   nsPageContentFrame * pcf = static_cast<nsPageContentFrame*>(mFrames.FirstChild());
@@ -671,6 +666,15 @@ nsPageFrame::SetSharedPageData(nsSharedPageData* aPD)
     pcf->SetSharedPageData(mPD);
   }
 
+}
+
+void
+nsPageFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
+{
+  MOZ_ASSERT(mFrames.FirstChild() &&
+             mFrames.FirstChild()->IsPageContentFrame(),
+             "pageFrame must have a pageContentFrame child");
+  aResult.AppendElement(mFrames.FirstChild());
 }
 
 nsIFrame*
@@ -685,8 +689,9 @@ NS_NewPageBreakFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsPageBreakFrame)
 
-nsPageBreakFrame::nsPageBreakFrame(nsStyleContext* aContext) :
-  nsLeafFrame(aContext), mHaveReflowed(false)
+nsPageBreakFrame::nsPageBreakFrame(nsStyleContext* aContext)
+  : nsLeafFrame(aContext, kClassID)
+  , mHaveReflowed(false)
 {
 }
 
@@ -729,13 +734,7 @@ nsPageBreakFrame::Reflow(nsPresContext*           aPresContext,
   // Note: not using NS_FRAME_FIRST_REFLOW here, since it's not clear whether
   // DidReflow will always get called before the next Reflow() call.
   mHaveReflowed = true;
-  aStatus = NS_FRAME_COMPLETE; 
-}
-
-nsIAtom*
-nsPageBreakFrame::GetType() const
-{
-  return nsGkAtoms::pageBreakFrame; 
+  aStatus.Reset();
 }
 
 #ifdef DEBUG_FRAME_DUMP

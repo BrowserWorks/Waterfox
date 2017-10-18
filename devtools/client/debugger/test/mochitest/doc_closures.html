@@ -6,10 +6,9 @@
     <!-- Any copyright is dedicated to the Public Domain.
          http://creativecommons.org/publicdomain/zero/1.0/ -->
     <script type="text/javascript">
-      window.addEventListener("load", function onload() {
-        window.removeEventListener("load", onload);
+      window.addEventListener("load", function () {
         function clickHandler(event) {
-          button.removeEventListener("click", clickHandler, false);
+          button.removeEventListener("click", clickHandler);
           var PersonFactory = function _pfactory(name) {
               var foo = 10;
               return {
@@ -21,8 +20,8 @@
           debugger;
         }
         var button = document.querySelector("button");
-        button.addEventListener("click", clickHandler, false);
-      });
+        button.addEventListener("click", clickHandler);
+      }, {once: true});
     </script>
 
   </head>

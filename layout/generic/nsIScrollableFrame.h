@@ -22,12 +22,12 @@
 #define NS_DEFAULT_VERTICAL_SCROLL_DISTANCE   3
 #define NS_DEFAULT_HORIZONTAL_SCROLL_DISTANCE 5
 
+class gfxContext;
 class nsBoxLayoutState;
 class nsIScrollPositionListener;
 class nsIFrame;
 class nsPresContext;
 class nsIContent;
-class nsRenderingContext;
 class nsIAtom;
 class nsDisplayListBuilder;
 
@@ -97,13 +97,13 @@ public:
    * of the scrolled contents.
    */
   virtual nsMargin GetDesiredScrollbarSizes(nsPresContext* aPresContext,
-                                            nsRenderingContext* aRC) = 0;
+                                            gfxContext* aRC) = 0;
   /**
    * Return the width for non-disappearing scrollbars.
    */
   virtual nscoord
   GetNondisappearingScrollbarWidth(nsPresContext* aPresContext,
-                                   nsRenderingContext* aRC,
+                                   gfxContext* aRC,
                                    mozilla::WritingMode aWM) = 0;
   /**
    * GetScrolledRect is designed to encapsulate deciding which
@@ -133,7 +133,7 @@ public:
    */
   virtual nsPoint GetScrollPosition() const = 0;
   /**
-   * As GetScrollPosition(), but uses the top-right as origin for RTL frames. 
+   * As GetScrollPosition(), but uses the top-right as origin for RTL frames.
    */
   virtual nsPoint GetLogicalScrollPosition() const = 0;
   /**
@@ -166,7 +166,7 @@ public:
    * smooth msd, or normal scrolling.
    *
    * SMOOTH scrolls have a symmetrical acceleration and deceleration curve
-   * modeled with a set of splines that guarantee that the destination will be 
+   * modeled with a set of splines that guarantee that the destination will be
    * reached over a fixed time interval.  SMOOTH will only be smooth if smooth
    * scrolling is actually enabled.  This behavior is utilized by keyboard and
    * mouse wheel scrolling events.
@@ -352,6 +352,15 @@ public:
    */
   virtual nsIAtom* LastScrollOrigin() = 0;
   /**
+   * Sets a flag on the scrollframe that indicates the current scroll origin
+   * has been sent over in a layers transaction, and subsequent changes to
+   * the scroll position by "weaker" origins are permitted to overwrite the
+   * the scroll origin. Scroll origins that nsLayoutUtils::CanScrollOriginClobberApz
+   * returns false for are considered "weaker" than scroll origins for which
+   * that function returns true.
+   */
+  virtual void AllowScrollOriginDowngrade() = 0;
+  /**
    * Returns the origin that triggered the last smooth scroll.
    * Will equal nsGkAtoms::apz when the compositor's replica frame
    * metrics includes the latest smooth scroll.  The compositor will always
@@ -393,7 +402,7 @@ public:
    */
   virtual mozilla::Maybe<mozilla::layers::ScrollMetadata> ComputeScrollMetadata(
     mozilla::layers::Layer* aLayer,
-    nsIFrame* aContainerReferenceFrame,
+    const nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
     const mozilla::DisplayItemClip* aClip) const = 0;
 
@@ -443,8 +452,10 @@ public:
 
   /**
    * Notification that this scroll frame is getting its frame visibility updated.
+   * aIgnoreDisplayPort indicates that the display port was ignored (because
+   * there was no suitable base rect)
    */
-  virtual void NotifyApproximateFrameVisibilityUpdate() = 0;
+  virtual void NotifyApproximateFrameVisibilityUpdate(bool aIgnoreDisplayPort) = 0;
 
   /**
    * Returns true if this scroll frame had a display port at the last frame
@@ -465,7 +476,22 @@ public:
    */
   virtual ScrollSnapInfo GetScrollSnapInfo() const = 0;
 
-  virtual void SetScrollsClipOnUnscrolledOutOfFlow() = 0;
+  /**
+   * Given the drag event aEvent, determine whether the mouse is near the edge
+   * of the scrollable area, and scroll the view in the direction of that edge
+   * if so. If scrolling occurred, true is returned. When false is returned, the
+   * caller should look for an ancestor to scroll.
+   */
+  virtual bool DragScroll(mozilla::WidgetEvent* aEvent) = 0;
+
+  virtual void AsyncScrollbarDragRejected() = 0;
+
+  /**
+   * Returns whether this scroll frame is the root scroll frame of the document
+   * that it is in. Note that some documents don't have root scroll frames at
+   * all (ie XUL documents) even though they may contain other scroll frames.
+   */
+  virtual bool IsRootScrollFrameOfDocument() const = 0;
 };
 
 #endif

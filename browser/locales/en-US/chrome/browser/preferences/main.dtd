@@ -4,14 +4,14 @@
 
 <!ENTITY startup.label             "Startup">
 
-<!ENTITY startupPage.label         "When &brandShortName; starts:">
-<!ENTITY startupPage.accesskey     "s">
-<!ENTITY startupHomePage.label     "Show my home page">
+<!ENTITY startupPage2.label        "When &brandShortName; starts">
+<!ENTITY startupPage2.accesskey    "s">
+<!ENTITY startupUserHomePage.label "Show your home page">
 <!ENTITY startupBlankPage.label    "Show a blank page">
-<!ENTITY startupLastSession.label  "Show my windows and tabs from last time">
+<!ENTITY startupPrevSession.label  "Show your windows and tabs from last time">
 
-<!ENTITY homepage.label            "Home Page:">
-<!ENTITY homepage.accesskey        "P">
+<!ENTITY homepage2.label           "Home page">
+<!ENTITY homepage2.accesskey       "P">
 <!ENTITY useCurrentPage.label      "Use Current Page">
 <!ENTITY useCurrentPage.accesskey  "C">
 <!ENTITY useMultiple.label         "Use Current Pages">
@@ -28,18 +28,19 @@
 <!ENTITY chooseFolderWin.accesskey    "o">
 <!ENTITY chooseFolderMac.label        "Choose…">
 <!ENTITY chooseFolderMac.accesskey    "e">
-<!ENTITY alwaysAsk.label "Always ask me where to save files">
-<!ENTITY alwaysAsk.accesskey "A">
+<!ENTITY alwaysAskWhere.label         "Always ask you where to save files">
+<!ENTITY alwaysAskWhere.accesskey     "A">
 
 <!ENTITY alwaysCheckDefault2.label        "Always check if &brandShortName; is your default browser">
 <!ENTITY alwaysCheckDefault2.accesskey    "y">
-<!ENTITY setAsMyDefaultBrowser2.label     "Make Default">
-<!ENTITY setAsMyDefaultBrowser2.accesskey "D">
+<!ENTITY setAsMyDefaultBrowser3.label     "Make Default…">
+<!ENTITY setAsMyDefaultBrowser3.accesskey "D">
 <!ENTITY isDefault.label                  "&brandShortName; is currently your default browser">
 <!ENTITY isNotDefault.label               "&brandShortName; is not your default browser">
 
 <!ENTITY separateProfileMode.label        "Allow &brandShortName; and Firefox to run at the same time">
 <!ENTITY useFirefoxSync.label             "Tip: This uses separate profiles. Use Sync to share data between them.">
-<!ENTITY getStarted.label                 "Start using Sync…">
+<!ENTITY getStarted.notloggedin.label     "Sign in to &syncBrand.shortName.label;…">
+<!ENTITY getStarted.configured.label      "Open &syncBrand.shortName.label; preferences">
 
 <!ENTITY e10sEnabled.label                "Enable multi-process &brandShortName;">

@@ -47,6 +47,26 @@ SdpMediaSection::SetFmtp(const SdpFmtpAttributeList::Fmtp& fmtpToSet)
   GetAttributeList().SetAttribute(fmtps.release());
 }
 
+void
+SdpMediaSection::RemoveFmtp(const std::string& pt)
+{
+  UniquePtr<SdpFmtpAttributeList> fmtps(new SdpFmtpAttributeList);
+
+  SdpAttributeList& attrList = GetAttributeList();
+  if (attrList.HasAttribute(SdpAttribute::kFmtpAttribute)) {
+    *fmtps = attrList.GetFmtp();
+  }
+
+  for (size_t i = 0; i < fmtps->mFmtps.size(); ++i) {
+    if (pt == fmtps->mFmtps[i].format) {
+      fmtps->mFmtps.erase(fmtps->mFmtps.begin() + i);
+      break;
+    }
+  }
+
+  attrList.SetAttribute(fmtps.release());
+}
+
 const SdpRtpmapAttributeList::Rtpmap*
 SdpMediaSection::FindRtpmap(const std::string& pt) const
 {
@@ -64,7 +84,7 @@ SdpMediaSection::FindRtpmap(const std::string& pt) const
 }
 
 const SdpSctpmapAttributeList::Sctpmap*
-SdpMediaSection::FindSctpmap(const std::string& pt) const
+SdpMediaSection::GetSctpmap() const
 {
   auto& attrs = GetAttributeList();
   if (!attrs.HasAttribute(SdpAttribute::kSctpmapAttribute)) {
@@ -72,11 +92,36 @@ SdpMediaSection::FindSctpmap(const std::string& pt) const
   }
 
   const SdpSctpmapAttributeList& sctpmap = attrs.GetSctpmap();
-  if (!sctpmap.HasEntry(pt)) {
+  if (!sctpmap.mSctpmaps.size()) {
     return nullptr;
   }
 
-  return &sctpmap.GetEntry(pt);
+  return &sctpmap.GetFirstEntry();
+}
+
+uint32_t
+SdpMediaSection::GetSctpPort() const
+{
+  auto& attrs = GetAttributeList();
+  if (!attrs.HasAttribute(SdpAttribute::kSctpPortAttribute)) {
+    return 0;
+  }
+
+  return attrs.GetSctpPort();
+}
+
+bool
+SdpMediaSection::GetMaxMessageSize(uint32_t* size) const
+{
+  *size = 0;
+
+  auto& attrs = GetAttributeList();
+  if (!attrs.HasAttribute(SdpAttribute::kMaxMessageSizeAttribute)) {
+    return false;
+  }
+
+  *size = attrs.GetMaxMessageSize();
+  return true;
 }
 
 bool

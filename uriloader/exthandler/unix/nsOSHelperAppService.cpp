@@ -187,7 +187,7 @@ nsOSHelperAppService::GetFileLocation(const char* aPrefName,
     pref.  If we do not, we don't care.
   */
   if (Preferences::HasUserValue(aPrefName) &&
-      NS_SUCCEEDED(Preferences::GetString(aPrefName, &aFileLocation))) {
+      NS_SUCCEEDED(Preferences::GetString(aPrefName, aFileLocation))) {
     return NS_OK;
   }
 
@@ -212,7 +212,7 @@ nsOSHelperAppService::GetFileLocation(const char* aPrefName,
     }
   }
 
-  return Preferences::GetString(aPrefName, &aFileLocation);
+  return Preferences::GetString(aPrefName, aFileLocation);
 }
 
 
@@ -573,7 +573,8 @@ nsOSHelperAppService::GetExtensionsAndDescriptionFromMimetypesFile(const nsAStri
           aDescription.Assign(Substring(descriptionStart, descriptionEnd));
           mimeFile->Close();
           return NS_OK;
-        } else if (NS_FAILED(rv)) {
+        }
+        if (NS_FAILED(rv)) {
           LOG(("Failed to parse entry: %s\n", NS_LossyConvertUTF16toASCII(entry).get()));
         }
 
@@ -730,10 +731,6 @@ nsOSHelperAppService::ParseNetscapeMIMETypesEntry(const nsAString& aEntry,
         --aDescriptionEnd;
       } while (aDescriptionEnd != aDescriptionStart &&
                nsCRT::IsAsciiSpace(*aDescriptionEnd));
-
-      if (aDescriptionStart != aDescriptionStart && *aDescriptionEnd == '"') {
-        --aDescriptionEnd;
-      }
     } else {
       // desc= after exts=, so use end_iter for the description end
       aDescriptionEnd = end_iter;
@@ -1113,11 +1110,11 @@ nsOSHelperAppService::GetHandlerAndDescriptionFromMailcapFile(const nsAString& a
               // get out of here
               mailcapFile->Close();
               return NS_OK;
-            } else { // pretend that this match never happened
-              aDescription.Truncate();
-              aMozillaFlags.Truncate();
-              aHandler.Truncate();
             }
+            // pretend that this match never happened
+            aDescription.Truncate();
+            aMozillaFlags.Truncate();
+            aHandler.Truncate();
           }
         }
         // zero out the entry for the next cycle

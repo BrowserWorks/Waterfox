@@ -23,7 +23,7 @@ namespace js {
 // Allocate a thin inline string if possible, and a fat inline string if not.
 template <AllowGC allowGC, typename CharT>
 static MOZ_ALWAYS_INLINE JSInlineString*
-AllocateInlineString(ExclusiveContext* cx, size_t len, CharT** chars)
+AllocateInlineString(JSContext* cx, size_t len, CharT** chars)
 {
     MOZ_ASSERT(JSInlineString::lengthFits<CharT>(len));
 
@@ -45,7 +45,7 @@ AllocateInlineString(ExclusiveContext* cx, size_t len, CharT** chars)
 // Create a thin inline string if possible, and a fat inline string if not.
 template <AllowGC allowGC, typename CharT>
 static MOZ_ALWAYS_INLINE JSInlineString*
-NewInlineString(ExclusiveContext* cx, mozilla::Range<const CharT> chars)
+NewInlineString(JSContext* cx, mozilla::Range<const CharT> chars)
 {
     /*
      * Don't bother trying to find a static atom; measurement shows that not
@@ -58,7 +58,7 @@ NewInlineString(ExclusiveContext* cx, mozilla::Range<const CharT> chars)
     if (!str)
         return nullptr;
 
-    mozilla::PodCopy(storage, chars.start().get(), len);
+    mozilla::PodCopy(storage, chars.begin().get(), len);
     storage[len] = 0;
     return str;
 }
@@ -66,7 +66,7 @@ NewInlineString(ExclusiveContext* cx, mozilla::Range<const CharT> chars)
 // Create a thin inline string if possible, and a fat inline string if not.
 template <typename CharT>
 static MOZ_ALWAYS_INLINE JSInlineString*
-NewInlineString(ExclusiveContext* cx, HandleLinearString base, size_t start, size_t length)
+NewInlineString(JSContext* cx, HandleLinearString base, size_t start, size_t length)
 {
     MOZ_ASSERT(JSInlineString::lengthFits<CharT>(length));
 
@@ -82,19 +82,19 @@ NewInlineString(ExclusiveContext* cx, HandleLinearString base, size_t start, siz
 }
 
 static inline void
-StringWriteBarrierPost(js::ExclusiveContext* maybecx, JSString** strp)
+StringWriteBarrierPost(JSContext* maybecx, JSString** strp)
 {
 }
 
 static inline void
-StringWriteBarrierPostRemove(js::ExclusiveContext* maybecx, JSString** strp)
+StringWriteBarrierPostRemove(JSContext* maybecx, JSString** strp)
 {
 }
 
 } /* namespace js */
 
 MOZ_ALWAYS_INLINE bool
-JSString::validateLength(js::ExclusiveContext* maybecx, size_t length)
+JSString::validateLength(JSContext* maybecx, size_t length)
 {
     if (MOZ_UNLIKELY(length > JSString::MAX_LENGTH)) {
         js::ReportAllocationOverflow(maybecx);
@@ -105,7 +105,7 @@ JSString::validateLength(js::ExclusiveContext* maybecx, size_t length)
 }
 
 MOZ_ALWAYS_INLINE void
-JSRope::init(js::ExclusiveContext* cx, JSString* left, JSString* right, size_t length)
+JSRope::init(JSContext* cx, JSString* left, JSString* right, size_t length)
 {
     d.u1.length = length;
     d.u1.flags = ROPE_FLAGS;
@@ -119,7 +119,7 @@ JSRope::init(js::ExclusiveContext* cx, JSString* left, JSString* right, size_t l
 
 template <js::AllowGC allowGC>
 MOZ_ALWAYS_INLINE JSRope*
-JSRope::new_(js::ExclusiveContext* cx,
+JSRope::new_(JSContext* cx,
              typename js::MaybeRooted<JSString*, allowGC>::HandleType left,
              typename js::MaybeRooted<JSString*, allowGC>::HandleType right,
              size_t length)
@@ -134,7 +134,7 @@ JSRope::new_(js::ExclusiveContext* cx,
 }
 
 MOZ_ALWAYS_INLINE void
-JSDependentString::init(js::ExclusiveContext* cx, JSLinearString* base, size_t start,
+JSDependentString::init(JSContext* cx, JSLinearString* base, size_t start,
                         size_t length)
 {
     MOZ_ASSERT(start + length <= base->length());
@@ -152,7 +152,7 @@ JSDependentString::init(js::ExclusiveContext* cx, JSLinearString* base, size_t s
 }
 
 MOZ_ALWAYS_INLINE JSLinearString*
-JSDependentString::new_(js::ExclusiveContext* cx, JSLinearString* baseArg, size_t start,
+JSDependentString::new_(JSContext* cx, JSLinearString* baseArg, size_t start,
                         size_t length)
 {
     /*
@@ -160,8 +160,10 @@ JSDependentString::new_(js::ExclusiveContext* cx, JSLinearString* baseArg, size_
      * entirely, however, due to how ropes are flattened.
      */
     if (baseArg->isDependent()) {
-        start += baseArg->asDependent().baseOffset();
-        baseArg = baseArg->asDependent().base();
+        if (mozilla::Maybe<size_t> offset = baseArg->asDependent().baseOffset()) {
+            start += *offset;
+            baseArg = baseArg->asDependent().base();
+        }
     }
 
     MOZ_ASSERT(start + length <= baseArg->length());
@@ -180,6 +182,9 @@ JSDependentString::new_(js::ExclusiveContext* cx, JSLinearString* baseArg, size_
                ? js::NewInlineString<JS::Latin1Char>(cx, base, start, length)
                : js::NewInlineString<char16_t>(cx, base, start, length);
     }
+
+    if (baseArg->isExternal() && !baseArg->ensureFlat(cx))
+        return nullptr;
 
     JSDependentString* str = static_cast<JSDependentString*>(js::Allocate<JSString, js::NoGC>(cx));
     if (str) {
@@ -214,7 +219,7 @@ JSFlatString::init(const JS::Latin1Char* chars, size_t length)
 
 template <js::AllowGC allowGC, typename CharT>
 MOZ_ALWAYS_INLINE JSFlatString*
-JSFlatString::new_(js::ExclusiveContext* cx, const CharT* chars, size_t length)
+JSFlatString::new_(JSContext* cx, const CharT* chars, size_t length)
 {
     MOZ_ASSERT(chars[length] == CharT(0));
 
@@ -250,7 +255,7 @@ JSFlatString::toPropertyName(JSContext* cx)
 
 template <js::AllowGC allowGC>
 MOZ_ALWAYS_INLINE JSThinInlineString*
-JSThinInlineString::new_(js::ExclusiveContext* cx)
+JSThinInlineString::new_(JSContext* cx)
 {
     if (cx->compartment()->isAtomsCompartment())
         return (JSThinInlineString*)(js::Allocate<js::NormalAtom, allowGC>(cx));
@@ -260,7 +265,7 @@ JSThinInlineString::new_(js::ExclusiveContext* cx)
 
 template <js::AllowGC allowGC>
 MOZ_ALWAYS_INLINE JSFatInlineString*
-JSFatInlineString::new_(js::ExclusiveContext* cx)
+JSFatInlineString::new_(JSContext* cx)
 {
     if (cx->compartment()->isAtomsCompartment())
         return (JSFatInlineString*)(js::Allocate<js::FatInlineAtom, allowGC>(cx));
@@ -323,8 +328,6 @@ MOZ_ALWAYS_INLINE JSExternalString*
 JSExternalString::new_(JSContext* cx, const char16_t* chars, size_t length,
                        const JSStringFinalizer* fin)
 {
-    MOZ_ASSERT(chars[length] == 0);
-
     if (!validateLength(cx, length))
         return nullptr;
     JSExternalString* str = js::Allocate<JSExternalString>(cx);
@@ -346,15 +349,6 @@ js::StaticStrings::getUnitStringForElement(JSContext* cx, JSString* str, size_t 
     if (c < UNIT_STATIC_LIMIT)
         return getUnit(c);
     return NewDependentString(cx, str, index, 1);
-}
-
-inline JSAtom*
-js::StaticStrings::getLength2(char16_t c1, char16_t c2)
-{
-    MOZ_ASSERT(fitsInSmallChar(c1));
-    MOZ_ASSERT(fitsInSmallChar(c2));
-    size_t index = (((size_t)toSmallChar[c1]) << 6) + toSmallChar[c2];
-    return length2StaticTable[index];
 }
 
 MOZ_ALWAYS_INLINE void
@@ -404,6 +398,14 @@ JSAtom::finalize(js::FreeOp* fop)
 inline void
 JSExternalString::finalize(js::FreeOp* fop)
 {
+    if (!JSString::isExternal()) {
+        // This started out as an external string, but was turned into a
+        // non-external string by JSExternalString::ensureFlat.
+        MOZ_ASSERT(isFlat());
+        fop->free_(nonInlineCharsRaw());
+        return;
+    }
+
     const JSStringFinalizer* fin = externalFinalizer();
     fin->finalize(fin, const_cast<char16_t*>(rawTwoByteChars()));
 }

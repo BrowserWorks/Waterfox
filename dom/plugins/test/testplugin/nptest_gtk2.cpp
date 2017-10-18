@@ -1,12 +1,12 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* ***** BEGIN LICENSE BLOCK *****
- * 
+ *
  * Copyright (c) 2008, Mozilla Corporation
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright notice, this
  *   list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright notice,
@@ -15,7 +15,7 @@
  * * Neither the name of the Mozilla Corporation nor the names of its
  *   contributors may be used to endorse or promote products derived from this
  *   software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,11 +26,11 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Contributor(s):
  *   Josh Aas <josh@mozilla.com>
  *   Michael Ventnor <mventnor@mozilla.com>
- * 
+ *
  * ***** END LICENSE BLOCK ***** */
 
 #include "nptest_platform.h"
@@ -61,7 +61,7 @@ struct _PlatformData {
 bool
 pluginSupportsWindowMode()
 {
-  return true;
+  return false;
 }
 
 bool
@@ -81,7 +81,7 @@ pluginInstanceInit(InstanceData* instanceData)
 
   instanceData->platformData->display = nullptr;
   instanceData->platformData->visual = nullptr;
-  instanceData->platformData->colormap = None;  
+  instanceData->platformData->colormap = X11None;
   instanceData->platformData->plug = nullptr;
 
   return NPERR_NO_ERROR;
@@ -97,7 +97,7 @@ pluginInstanceShutdown(InstanceData* instanceData)
   if (instanceData->hasWidget) {
     Window window = reinterpret_cast<XID>(instanceData->window.window);
 
-    if (window != None) {
+    if (window != X11None) {
       // This window XID should still be valid.
       // See bug 429604 and bug 454756.
       XWindowAttributes attributes;
@@ -124,7 +124,7 @@ pluginInstanceShutdown(InstanceData* instanceData)
   instanceData->platformData = 0;
 }
 
-static void 
+static void
 SetCairoRGBA(cairo_t* cairoWindow, uint32_t rgba)
 {
   float b = (rgba & 0xFF) / 255.0;
@@ -141,12 +141,12 @@ pluginDrawSolid(InstanceData* instanceData, GdkDrawable* gdkWindow,
 {
   cairo_t* cairoWindow = gdk_cairo_create(gdkWindow);
 
-  if (!instanceData->hasWidget) {
-    NPRect* clip = &instanceData->window.clipRect;
-    cairo_rectangle(cairoWindow, clip->left, clip->top,
-                    clip->right - clip->left, clip->bottom - clip->top);
-    cairo_clip(cairoWindow);
-  }
+  MOZ_RELEASE_ASSERT(!instanceData->hasWidget);
+
+  NPRect* clip = &instanceData->window.clipRect;
+  cairo_rectangle(cairoWindow, clip->left, clip->top,
+                  clip->right - clip->left, clip->bottom - clip->top);
+  cairo_clip(cairoWindow);
 
   GdkRectangle windowRect = { x, y, width, height };
   gdk_cairo_rectangle(cairoWindow, &windowRect);
@@ -161,13 +161,13 @@ pluginDrawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow,
                  const GdkRectangle& invalidRect)
 {
   NPWindow& window = instanceData->window;
-  // When we have a widget, window.x/y are meaningless since our
-  // widget is always positioned correctly and we just draw into it at 0,0
-  int x = instanceData->hasWidget ? 0 : window.x;
-  int y = instanceData->hasWidget ? 0 : window.y;
+  MOZ_RELEASE_ASSERT(!instanceData->hasWidget);
+
+  int x = window.x;
+  int y = window.y;
   int width = window.width;
   int height = window.height;
-  
+
   notifyDidPaint(instanceData);
 
   if (instanceData->scriptableObject->drawMode == DM_SOLID_COLOR) {
@@ -190,12 +190,10 @@ pluginDrawWindow(InstanceData* instanceData, GdkDrawable* gdkWindow,
   if (!gdkContext)
     return;
 
-  if (!instanceData->hasWidget) {
-    NPRect* clip = &window.clipRect;
-    GdkRectangle gdkClip = { clip->left, clip->top, clip->right - clip->left,
-                             clip->bottom - clip->top };
-    gdk_gc_set_clip_rectangle(gdkContext, &gdkClip);
-  }
+  NPRect* clip = &window.clipRect;
+  GdkRectangle gdkClip = { clip->left, clip->top, clip->right - clip->left,
+                           clip->bottom - clip->top };
+  gdk_gc_set_clip_rectangle(gdkContext, &gdkClip);
 
   // draw a grey background for the plugin frame
   GdkColor grey;
@@ -396,7 +394,7 @@ pluginHandleEvent(InstanceData* instanceData, void* event)
                 expose.x, expose.y, expose.width, expose.height,
                 window.x, window.y, window.width, window.height);
       return 0;
-    }      
+    }
 
     GdkRectangle invalidRect =
       { expose.x, expose.y, expose.width, expose.height };
@@ -430,8 +428,10 @@ pluginHandleEvent(InstanceData* instanceData, void* event)
 
 int32_t pluginGetEdge(InstanceData* instanceData, RectEdge edge)
 {
+  MOZ_RELEASE_ASSERT(!instanceData->hasWidget);
   if (!instanceData->hasWidget)
     return NPTEST_INT32_ERROR;
+
   GtkWidget* plug = instanceData->platformData->plug;
   if (!plug)
     return NPTEST_INT32_ERROR;
@@ -508,6 +508,7 @@ static void intersectWithShapeRects(Display* display, Window window,
 
 static GdkRegion* computeClipRegion(InstanceData* instanceData)
 {
+  MOZ_RELEASE_ASSERT(!instanceData->hasWidget);
   if (!instanceData->hasWidget)
     return 0;
 
@@ -611,7 +612,7 @@ int32_t pluginGetClipRegionRectCount(InstanceData* instanceData)
   return nrects;
 }
 
-int32_t pluginGetClipRegionRectEdge(InstanceData* instanceData, 
+int32_t pluginGetClipRegionRectEdge(InstanceData* instanceData,
     int32_t rectIndex, RectEdge edge)
 {
   GdkRegion* region = computeClipRegion(instanceData);
@@ -732,6 +733,19 @@ pluginCrashInNestedLoop(InstanceData* instanceData)
   } else {
     g_warning("ProcessBrowserEvents did not fire");
   }
+
+  // if we get here without crashing, then we'll trigger a test failure
+  return true;
+}
+
+bool
+pluginTriggerXError(InstanceData* instanceData)
+{
+  mozilla::NoteIntentionalCrash("plugin");
+  int num_prop_return;
+  // Window parameter is None to generate a fatal error, and this function
+  // should not return.
+  XListProperties(GDK_DISPLAY(), X11None, &num_prop_return);
 
   // if we get here without crashing, then we'll trigger a test failure
   return true;

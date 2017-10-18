@@ -6,7 +6,7 @@
 #ifndef mozilla_layers_APZCTreeManager_h
 #define mozilla_layers_APZCTreeManager_h
 
-#include <map>                          // for std::map
+#include <unordered_map>                          // for std::unordered_map
 
 #include "gfxPoint.h"                   // for gfxPoint
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
@@ -14,14 +14,24 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/layers/TouchCounter.h"// for TouchCounter
 #include "mozilla/layers/IAPZCTreeManager.h" // for IAPZCTreeManager
+#include "mozilla/layers/KeyboardMap.h" // for KeyboardMap
+#include "mozilla/layers/FocusState.h"  // for FocusState
 #include "mozilla/Mutex.h"              // for Mutex
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/TimeStamp.h"          // for mozilla::TimeStamp
 #include "nsCOMPtr.h"                   // for already_AddRefed
 
+#if defined(MOZ_WIDGET_ANDROID)
+#include "mozilla/layers/AndroidDynamicToolbarAnimator.h"
+#endif // defined(MOZ_WIDGET_ANDROID)
 
 namespace mozilla {
 class MultiTouchInput;
+
+namespace wr {
+class WebRenderAPI;
+struct WrTransformProperty;
+}
 
 namespace layers {
 
@@ -31,11 +41,14 @@ class APZCTreeManagerParent;
 class CompositorBridgeParent;
 class OverscrollHandoffChain;
 struct OverscrollHandoffState;
+class FocusTarget;
 struct FlingHandoffState;
+struct ScrollableLayerGuidHash;
 class LayerMetricsWrapper;
 class InputQueue;
 class GeckoContentController;
 class HitTestingTreeNode;
+class WebRenderScrollData;
 
 /**
  * ****************** NOTE ON LOCK ORDERING IN APZ **************************
@@ -93,14 +106,35 @@ public:
   APZCTreeManager();
 
   /**
+   * Initializes the global state used in AsyncPanZoomController.
+   * This is normally called when it is first needed in the constructor
+   * of APZCTreeManager, but can be called manually to force it to be
+   * initialized earlier.
+   */
+  static void InitializeGlobalState();
+
+  /**
+   * Rebuild the focus state based on the focus target from the layer tree update
+   * that just occurred.
+   *
+   * @param aRootLayerTreeId The layer tree ID of the root layer corresponding
+   *                         to this APZCTreeManager
+   * @param aOriginatingLayersId The layer tree ID of the layer corresponding to
+   *                             this layer tree update.
+   */
+  void UpdateFocusState(uint64_t aRootLayerTreeId,
+                        uint64_t aOriginatingLayersId,
+                        const FocusTarget& aFocusTarget);
+
+  /**
    * Rebuild the hit-testing tree based on the layer update that just came up.
    * Preserve nodes and APZC instances where possible, but retire those whose
    * layers are no longer in the layer tree.
    *
    * This must be called on the compositor thread as it walks the layer tree.
    *
-   * @param aCompositor A pointer to the compositor parent instance that owns
-   *                    this APZCTreeManager
+   * @param aRootLayerTreeId The layer tree ID of the root layer corresponding
+   *                         to this APZCTreeManager
    * @param aRoot The root of the (full) layer tree
    * @param aFirstPaintLayersId The layers id of the subtree to which aIsFirstPaint
    *                            applies.
@@ -113,11 +147,38 @@ public:
    *                             process' layer subtree has its own sequence
    *                             numbers.
    */
-  void UpdateHitTestingTree(CompositorBridgeParent* aCompositor,
+  void UpdateHitTestingTree(uint64_t aRootLayerTreeId,
                             Layer* aRoot,
                             bool aIsFirstPaint,
                             uint64_t aOriginatingLayersId,
                             uint32_t aPaintSequenceNumber);
+
+  /**
+   * Same as the above UpdateHitTestingTree, except slightly modified to take
+   * the scrolling data passed over PWebRenderBridge instead of the raw layer
+   * tree. This version is used when WebRender is enabled because we don't have
+   * shadow layers in that scenario.
+   */
+  void UpdateHitTestingTree(uint64_t aRootLayerTreeId,
+                            const WebRenderScrollData& aScrollData,
+                            bool aIsFirstPaint,
+                            uint64_t aOriginatingLayersId,
+                            uint32_t aPaintSequenceNumber);
+
+  /**
+   * Called when webrender is enabled, from the compositor thread. This function
+   * walks through the tree of APZC instances and tells webrender about the
+   * async scroll position. It also advances APZ animations to the specified
+   * sample time. In effect it is the webrender equivalent of (part of) the
+   * code in AsyncCompositionManager. If scrollbar transforms need updating
+   * to reflect the async scroll position, the updated transforms are appended
+   * to the provided aTransformArray.
+   * Returns true if any APZ animations are in progress and we need to keep
+   * compositing.
+   */
+  bool PushStateToWR(wr::WebRenderAPI* aWrApi,
+                     const TimeStamp& aSampleTime,
+                     nsTArray<wr::WrTransformProperty>& aTransformArray);
 
   /**
    * Walk the tree of APZCs and flushes the repaint requests for all the APZCS
@@ -164,6 +225,11 @@ public:
       InputData& aEvent,
       ScrollableLayerGuid* aOutTargetGuid,
       uint64_t* aOutInputBlockId) override;
+
+  /**
+   * Set the keyboard shortcuts to use for translating keyboard events.
+   */
+  void SetKeyboardMap(const KeyboardMap& aKeyboardMap) override;
 
   /**
    * Kicks an animation to zoom to a rect. This may be either a zoom out or zoom
@@ -230,14 +296,14 @@ public:
    * some more details. This is only currently needed due to surface shifts
    * caused by the dynamic toolbar on Android.
    */
-  void AdjustScrollForSurfaceShift(const ScreenPoint& aShift) override;
+  void AdjustScrollForSurfaceShift(const ScreenPoint& aShift);
 
   /**
    * Calls Destroy() on all APZC instances attached to the tree, and resets the
-   * tree back to empty. This function may be called multiple times during the
-   * lifetime of this APZCTreeManager, but it must always be called at least once
-   * when this APZCTreeManager is no longer needed. Failing to call this function
-   * may prevent objects from being freed properly.
+   * tree back to empty. This function must be called exactly once during the
+   * lifetime of this APZCTreeManager, when this APZCTreeManager is no longer
+   * needed. Failing to call this function may prevent objects from being freed
+   * properly.
    */
   void ClearTree();
 
@@ -270,7 +336,7 @@ public:
    * Find the hit testing node for the scrollbar thumb that matches these
    * drag metrics.
    */
-  RefPtr<HitTestingTreeNode> FindScrollNode(const AsyncDragMetrics& aDragMetrics);
+  RefPtr<HitTestingTreeNode> FindScrollThumbNode(const AsyncDragMetrics& aDragMetrics);
 
   /**
    * Sets allowed touch behavior values for current touch-session for specific
@@ -369,6 +435,11 @@ public:
       const ScrollableLayerGuid& aGuid,
       const AsyncDragMetrics& aDragMetrics) override;
 
+  void StartAutoscroll(const ScrollableLayerGuid& aGuid,
+                       const ScreenPoint& aAnchorLocation) override;
+
+  void StopAutoscroll(const ScrollableLayerGuid& aGuid) override;
+
   /*
    * Build the chain of APZCs that will handle overscroll for a pan starting at |aInitialTarget|.
    */
@@ -384,9 +455,10 @@ public:
 
   // Methods to help process WidgetInputEvents (or manage conversion to/from InputData)
 
-  void TransformEventRefPoint(
+  void ProcessUnhandledEvent(
       LayoutDeviceIntPoint* aRefPoint,
-      ScrollableLayerGuid* aOutTargetGuid) override;
+      ScrollableLayerGuid*  aOutTargetGuid,
+      uint64_t*             aOutFocusSequenceNumber) override;
 
   void UpdateWheelTransaction(
       LayoutDeviceIntPoint aRefPoint,
@@ -413,9 +485,12 @@ public:
   RefPtr<HitTestingTreeNode> GetRootNode() const;
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint,
                                                          HitTestResult* aOutHitResult,
-                                                         bool* aOutHitScrollbar = nullptr);
+                                                         RefPtr<HitTestingTreeNode>* aOutScrollbarNode = nullptr);
+  already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const uint64_t& aLayersId,
+                                                         const FrameMetrics::ViewID& aScrollId);
   ScreenToParentLayerMatrix4x4 GetScreenToApzcTransform(const AsyncPanZoomController *aApzc) const;
   ParentLayerToScreenMatrix4x4 GetApzcToGeckoTransform(const AsyncPanZoomController *aApzc) const;
+  ScreenPoint GetCurrentMousePosition() const;
 
   /**
    * Process touch velocity.
@@ -428,12 +503,19 @@ private:
   typedef bool (*GuidComparator)(const ScrollableLayerGuid&, const ScrollableLayerGuid&);
 
   /* Helpers */
+  template<class ScrollNode>
+  void UpdateHitTestingTreeImpl(uint64_t aRootLayerTreeId,
+                                const ScrollNode& aRoot,
+                                bool aIsFirstPaint,
+                                uint64_t aOriginatingLayersId,
+                                uint32_t aPaintSequenceNumber);
+
   void AttachNodeToTree(HitTestingTreeNode* aNode,
                         HitTestingTreeNode* aParent,
                         HitTestingTreeNode* aNextSibling);
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScrollableLayerGuid& aGuid);
   already_AddRefed<HitTestingTreeNode> GetTargetNode(const ScrollableLayerGuid& aGuid,
-                                                     GuidComparator aComparator);
+                                                     GuidComparator aComparator) const;
   HitTestingTreeNode* FindTargetNode(HitTestingTreeNode* aNode,
                                      const ScrollableLayerGuid& aGuid,
                                      GuidComparator aComparator);
@@ -441,7 +523,7 @@ private:
   AsyncPanZoomController* GetAPZCAtPoint(HitTestingTreeNode* aNode,
                                          const ParentLayerPoint& aHitTestPoint,
                                          HitTestResult* aOutHitResult,
-                                         bool* aOutHitScrollbar);
+                                         HitTestingTreeNode** aOutScrollbarNode);
   AsyncPanZoomController* FindRootApzcForLayersId(uint64_t aLayersId) const;
   AsyncPanZoomController* FindRootContentApzcForLayersId(uint64_t aLayersId) const;
   AsyncPanZoomController* FindRootContentOrRootApzc() const;
@@ -458,7 +540,8 @@ private:
   already_AddRefed<HitTestingTreeNode> RecycleOrCreateNode(TreeBuildingState& aState,
                                                            AsyncPanZoomController* aApzc,
                                                            uint64_t aLayersId);
-  HitTestingTreeNode* PrepareNodeForLayer(const LayerMetricsWrapper& aLayer,
+  template<class ScrollNode>
+  HitTestingTreeNode* PrepareNodeForLayer(const ScrollNode& aLayer,
                                           const FrameMetrics& aMetrics,
                                           uint64_t aLayersId,
                                           const gfx::Matrix4x4& aAncestorTransform,
@@ -466,36 +549,14 @@ private:
                                           HitTestingTreeNode* aNextSibling,
                                           TreeBuildingState& aState);
 
-  /**
-   * Recursive helper function to build the hit-testing tree. See documentation
-   * in HitTestingTreeNode.h for more details on the shape of the tree.
-   * This function walks the layer tree backwards through siblings and
-   * constructs the hit-testing tree also as a last-child-prev-sibling tree
-   * because that simplifies the hit detection code.
-   *
-   * @param aState The current tree building state.
-   * @param aLayer The (layer, metrics) pair which is the current position in
-   *               the recursive walk of the layer tree. This call builds a
-   *               hit-testing subtree corresponding to the layer subtree rooted
-   *               at aLayer.
-   * @param aLayersId The layers id of the layer in aLayer.
-   * @param aAncestorTransform The accumulated CSS transforms of all the
-   *                           layers from aLayer up (via the parent chain)
-   *                           to the next APZC-bearing layer.
-   * @param aParent The parent of any node built at this level.
-   * @param aNextSibling The next sibling of any node built at this level.
-   * @return The HitTestingTreeNode created at this level. This will always
-   *         be non-null.
-   */
-  HitTestingTreeNode* UpdateHitTestingTree(TreeBuildingState& aState,
-                                           const LayerMetricsWrapper& aLayer,
-                                           uint64_t aLayersId,
-                                           const gfx::Matrix4x4& aAncestorTransform,
-                                           HitTestingTreeNode* aParent,
-                                           HitTestingTreeNode* aNextSibling);
-
-  void PrintAPZCInfo(const LayerMetricsWrapper& aLayer,
+  template<class ScrollNode>
+  void PrintAPZCInfo(const ScrollNode& aLayer,
                      const AsyncPanZoomController* apzc);
+
+  void NotifyScrollbarDragRejected(const ScrollableLayerGuid& aGuid) const;
+
+  // Requires the caller to hold mTreeLock.
+  LayerToParentLayerMatrix4x4 ComputeTransformForNode(const HitTestingTreeNode* aNode) const;
 
 protected:
   /* The input queue where input events are held until we know enough to
@@ -515,7 +576,15 @@ private:
   RefPtr<HitTestingTreeNode> mRootNode;
   /* Holds the zoom constraints for scrollable layers, as determined by the
    * the main-thread gecko code. */
-  std::map<ScrollableLayerGuid, ZoomConstraints> mZoomConstraints;
+  std::unordered_map<ScrollableLayerGuid, ZoomConstraints, ScrollableLayerGuidHash> mZoomConstraints;
+  /* A list of keyboard shortcuts to use for translating keyboard inputs into
+   * keyboard actions. This is gathered on the main thread from XBL bindings.
+   */
+  KeyboardMap mKeyboardMap;
+  /* This tracks the focus targets of chrome and content and whether we have
+   * a current focus target or whether we are waiting for a new confirmation.
+   */
+  FocusState mFocusState;
   /* This tracks the APZC that should receive all inputs for the current input event block.
    * This allows touch points to move outside the thing they started on, but still have the
    * touch events delivered to the same initial APZC. This will only ever be touched on the
@@ -534,11 +603,27 @@ private:
   /* Tracks the number of touch points we are tracking that are currently on
    * the screen. */
   TouchCounter mTouchCounter;
+  /* Stores the current mouse position in screen coordinates.
+   */
+  ScreenPoint mCurrentMousePosition;
   /* For logging the APZC tree for debugging (enabled by the apz.printtree
    * pref). */
   gfx::TreeLog mApzcTreeLog;
 
+  class CheckerboardFlushObserver;
+  friend class CheckerboardFlushObserver;
+  RefPtr<CheckerboardFlushObserver> mFlushObserver;
+
   static float sDPI;
+
+#if defined(MOZ_WIDGET_ANDROID)
+public:
+  void InitializeDynamicToolbarAnimator(const int64_t& aRootLayerTreeId);
+  AndroidDynamicToolbarAnimator* GetAndroidDynamicToolbarAnimator();
+
+private:
+  RefPtr<AndroidDynamicToolbarAnimator> mToolbarAnimator;
+#endif // defined(MOZ_WIDGET_ANDROID)
 };
 
 } // namespace layers

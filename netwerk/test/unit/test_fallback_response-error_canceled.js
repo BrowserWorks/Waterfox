@@ -21,7 +21,7 @@ function make_channel(url, callback, ctx) {
 function make_uri(url) {
   var ios = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService);
-  return ios.newURI(url, null, null);
+  return ios.newURI(url);
 }
 
 var responseBody = "Content body";
@@ -101,7 +101,7 @@ function run_test()
 
   var os = Cc["@mozilla.org/observer-service;1"].
            getService(Ci.nsIObserverService);
-  os.addObserver(cacheUpdateObserver, "offline-cache-update-completed", false);
+  os.addObserver(cacheUpdateObserver, "offline-cache-update-completed");
 
   var us = Cc["@mozilla.org/offlinecacheupdate-service;1"].
            getService(Ci.nsIOfflineCacheUpdateService);

@@ -8,6 +8,9 @@ HAS_MISC_RULE = True
 
 FINAL_TARGET = '_tests/xpcshell/toolkit/mozapps/update/tests/data'
 
+if not CONFIG['MOZ_SUITE']:
+  BROWSER_CHROME_MANIFESTS += ['browser/browser.ini']
+
 MOCHITEST_CHROME_MANIFESTS += ['chrome/chrome.ini']
 
 XPCSHELL_TESTS_MANIFESTS += [
@@ -60,6 +63,13 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     if CONFIG['GNU_CC']:
         WIN32_EXE_LDFLAGS += ['-municode']
 
+TEST_HARNESS_FILES.testing.mochitest.browser.toolkit.mozapps.update.tests.browser += [
+    'chrome/update.sjs',
+    'data/shared.js',
+    'data/sharedUpdateXML.js',
+    'data/simple.mar',
+]
+
 TEST_HARNESS_FILES.testing.mochitest.chrome.toolkit.mozapps.update.tests.data += [
     'data/shared.js',
     'data/sharedUpdateXML.js',
@@ -70,8 +80,6 @@ FINAL_TARGET_FILES += [
     'data/complete.exe',
     'data/complete.mar',
     'data/complete.png',
-    'data/complete_log_success_gonk',
-    'data/complete_log_success_gonk_stage',
     'data/complete_log_success_mac',
     'data/complete_log_success_win',
     'data/complete_mac.mar',
@@ -84,11 +92,8 @@ FINAL_TARGET_FILES += [
     'data/partial.exe',
     'data/partial.mar',
     'data/partial.png',
-    'data/partial_log_failure_gonk',
     'data/partial_log_failure_mac',
     'data/partial_log_failure_win',
-    'data/partial_log_success_gonk',
-    'data/partial_log_success_gonk_stage',
     'data/partial_log_success_mac',
     'data/partial_log_success_win',
     'data/partial_mac.mar',
@@ -103,4 +108,10 @@ FINAL_TARGET_FILES += [
     'data/simple.mar',
     'data/wrong_product_channel.mar',
     'data/xpcshellUtilsAUS.js',
+    'TestAUSReadStrings1.ini',
+    'TestAUSReadStrings2.ini',
+    'TestAUSReadStrings3.ini',
 ]
+
+with Files("browser/browser_TelemetryUpdatePing.js"):
+    BUG_COMPONENT = ("Toolkit", "Telemetry")

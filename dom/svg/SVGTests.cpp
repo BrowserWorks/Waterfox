@@ -57,7 +57,7 @@ SVGTests::SystemLanguage()
 bool
 SVGTests::HasExtension(const nsAString& aExtension)
 {
-  return nsSVGFeatures::HasExtension(aExtension);
+  return nsSVGFeatures::HasExtension(aExtension, IsInChromeDoc());
 }
 
 bool
@@ -72,7 +72,7 @@ SVGTests::IsConditionalProcessingAttribute(const nsIAtom* aAttribute) const
 }
 
 int32_t
-SVGTests::GetBestLanguagePreferenceRank(const nsSubstring& aAcceptLangs) const
+SVGTests::GetBestLanguagePreferenceRank(const nsAString& aAcceptLangs) const
 {
   const nsDefaultStringComparator defaultComparator;
 
@@ -86,7 +86,7 @@ SVGTests::GetBestLanguagePreferenceRank(const nsSubstring& aAcceptLangs) const
     nsCharSeparatedTokenizer languageTokenizer(aAcceptLangs, ',');
     int32_t index = 0;
     while (languageTokenizer.hasMoreTokens()) {
-      const nsSubstring &languageToken = languageTokenizer.nextToken();
+      const nsAString& languageToken = languageTokenizer.nextToken();
       bool exactMatch = (languageToken == mStringListAttributes[LANGUAGE][i]);
       bool prefixOnlyMatch =
         !exactMatch &&
@@ -112,21 +112,6 @@ const nsString * const SVGTests::kIgnoreSystemLanguage = (nsString *) 0x01;
 bool
 SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
 {
-  // Required Features
-  if (mStringListAttributes[FEATURES].IsExplicitlySet()) {
-    if (mStringListAttributes[FEATURES].IsEmpty()) {
-      return false;
-    }
-    nsCOMPtr<nsIContent> content(
-      do_QueryInterface(const_cast<SVGTests*>(this)));
-
-    for (uint32_t i = 0; i < mStringListAttributes[FEATURES].Length(); i++) {
-      if (!nsSVGFeatures::HasFeature(content, mStringListAttributes[FEATURES][i])) {
-        return false;
-      }
-    }
-  }
-
   // Required Extensions
   //
   // The requiredExtensions  attribute defines a list of required language
@@ -139,7 +124,7 @@ SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
       return false;
     }
     for (uint32_t i = 0; i < mStringListAttributes[EXTENSIONS].Length(); i++) {
-      if (!nsSVGFeatures::HasExtension(mStringListAttributes[EXTENSIONS][i])) {
+      if (!nsSVGFeatures::HasExtension(mStringListAttributes[EXTENSIONS][i], IsInChromeDoc())) {
         return false;
       }
     }
@@ -162,8 +147,12 @@ SVGTests::PassesConditionalProcessingTests(const nsString *aAcceptLangs) const
     }
 
     // Get our language preferences
-    const nsAutoString acceptLangs(aAcceptLangs ? *aAcceptLangs :
-      Preferences::GetLocalizedString("intl.accept_languages"));
+    nsAutoString acceptLangs;
+    if (aAcceptLangs) {
+      acceptLangs.Assign(*aAcceptLangs);
+    } else {
+      Preferences::GetLocalizedString("intl.accept_languages", acceptLangs);
+    }
 
     if (acceptLangs.IsEmpty()) {
       NS_WARNING("no default language specified for systemLanguage conditional test");

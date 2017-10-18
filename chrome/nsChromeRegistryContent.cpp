@@ -142,7 +142,7 @@ nsChromeRegistryContent::RegisterOverride(const OverrideMapping& aOverride)
                  aOverride.overrideURI.charset.get(), nullptr, io);
   if (NS_FAILED(rv))
     return;
-  
+
   mOverrideTable.Put(chromeURI, overrideURI);
 }
 
@@ -222,6 +222,7 @@ nsChromeRegistryContent::IsLocaleRTL(const nsACString& aPackage,
 
 NS_IMETHODIMP
 nsChromeRegistryContent::GetSelectedLocale(const nsACString& aPackage,
+                                           bool aAsBCP47,
                                            nsACString& aLocale)
 {
   if (aPackage != nsDependentCString("global")) {
@@ -229,9 +230,12 @@ nsChromeRegistryContent::GetSelectedLocale(const nsACString& aPackage,
     return NS_ERROR_NOT_AVAILABLE;
   }
   aLocale = mLocale;
+  if (aAsBCP47) {
+    SanitizeForBCP47(aLocale);
+  }
   return NS_OK;
 }
-  
+
 NS_IMETHODIMP
 nsChromeRegistryContent::Observe(nsISupports* aSubject, const char* aTopic,
                                  const char16_t* aData)
@@ -249,11 +253,6 @@ nsChromeRegistryContent::GetStyleOverlays(nsIURI *aChromeURL,
 NS_IMETHODIMP
 nsChromeRegistryContent::GetXULOverlays(nsIURI *aChromeURL,
                                         nsISimpleEnumerator **aResult)
-{
-  CONTENT_NOT_IMPLEMENTED();
-}
-
-nsresult nsChromeRegistryContent::UpdateSelectedLocale()
 {
   CONTENT_NOT_IMPLEMENTED();
 }

@@ -114,11 +114,6 @@
 #define ARCH_CPU_LITTLE_ENDIAN 1
 #elif defined(__pnacl__)
 #define ARCH_CPU_32_BITS 1
-#elif defined(__MIPSEL__)
-#define ARCH_CPU_MIPS_FAMILY 1
-#define ARCH_CPU_MIPSEL 1
-#define ARCH_CPU_32_BITS 1
-#define ARCH_CPU_LITTLE_ENDIAN 1
 #elif defined(__powerpc64__)
 #define ARCH_CPU_PPC_FAMILY 1
 #define ARCH_CPU_PPC64 1
@@ -129,7 +124,7 @@
 #define ARCH_CPU_PPC 1
 #define ARCH_CPU_32_BITS 1
 #define ARCH_CPU_BIG_ENDIAN 1
-#elif defined(__sparc64__)
+#elif defined(__sparc__) && defined(__arch64__)
 #define ARCH_CPU_SPARC_FAMILY 1
 #define ARCH_CPU_SPARC 1
 #define ARCH_CPU_64_BITS 1
@@ -141,6 +136,11 @@
 #define ARCH_CPU_MIPS_FAMILY 1
 #define ARCH_CPU_MIPS 1
 #define ARCH_CPU_32_BITS 1
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define ARCH_CPU_LITTLE_ENDIAN 1
+#else
+#define ARCH_CPU_BIG_ENDIAN 1
+#endif
 #elif defined(__hppa__)
 #define ARCH_CPU_HPPA 1
 #define ARCH_CPU_32_BITS 1
@@ -152,6 +152,9 @@
 #define ARCH_CPU_64_BITS 1
 #elif defined(__s390__)
 #define ARCH_CPU_S390 1
+#define ARCH_CPU_32_BITS 1
+#elif defined(__sh__)
+#define ARCH_CPU_SH 1
 #define ARCH_CPU_32_BITS 1
 #elif defined(__alpha__)
 #define ARCH_CPU_ALPHA 1

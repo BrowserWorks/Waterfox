@@ -10,7 +10,6 @@ Services.prefs.setCharPref("identity.fxaccounts.auth.uri", "http://localhost");
 // See verbose logging from FxAccounts.jsm
 Services.prefs.setCharPref("identity.fxaccounts.loglevel", "Trace");
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FxAccounts.jsm");
 Cu.import("resource://gre/modules/FxAccountsClient.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
@@ -61,7 +60,7 @@ function createFxAccounts() {
   });
 }
 
-add_task(function* test_simple() {
+add_task(async function test_simple() {
   let fxa = createFxAccounts();
 
   let creds = {
@@ -72,12 +71,12 @@ add_task(function* test_simple() {
     kB: "the kB value",
     verified: true
   };
-  yield fxa.setSignedInUser(creds);
+  await fxa.setSignedInUser(creds);
 
   // This should have stored stuff in both the .json file in the profile
   // dir, and the login dir.
   let path = OS.Path.join(OS.Constants.Path.profileDir, "signedInUser.json");
-  let data = yield CommonUtils.readJSON(path);
+  let data = await CommonUtils.readJSON(path);
 
   Assert.strictEqual(data.accountData.email, creds.email, "correct email in the clear text");
   Assert.strictEqual(data.accountData.sessionToken, creds.sessionToken, "correct sessionToken in the clear text");
@@ -87,7 +86,7 @@ add_task(function* test_simple() {
   Assert.ok(!("kB" in data.accountData), "kB not stored in clear text");
 
   let login = getLoginMgrData();
-  Assert.strictEqual(login.username, creds.email, "email used for username");
+  Assert.strictEqual(login.username, creds.uid, "uid used for username");
   let loginData = JSON.parse(login.password);
   Assert.strictEqual(loginData.version, data.version, "same version flag in both places");
   Assert.strictEqual(loginData.accountData.kA, creds.kA, "correct kA in the login mgr");
@@ -97,11 +96,11 @@ add_task(function* test_simple() {
   Assert.ok(!("sessionToken" in loginData), "sessionToken not stored in the login mgr json");
   Assert.ok(!("verified" in loginData), "verified not stored in the login mgr json");
 
-  yield fxa.signOut(/* localOnly = */ true);
+  await fxa.signOut(/* localOnly = */ true);
   Assert.strictEqual(getLoginMgrData(), null, "login mgr data deleted on logout");
 });
 
-add_task(function* test_MPLocked() {
+add_task(async function test_MPLocked() {
   let fxa = createFxAccounts();
 
   let creds = {
@@ -116,12 +115,12 @@ add_task(function* test_MPLocked() {
   Assert.strictEqual(getLoginMgrData(), null, "no login mgr at the start");
   // tell the storage that the MP is locked.
   setLoginMgrLoggedInState(false);
-  yield fxa.setSignedInUser(creds);
+  await fxa.setSignedInUser(creds);
 
   // This should have stored stuff in the .json, and the login manager stuff
   // will not exist.
   let path = OS.Path.join(OS.Constants.Path.profileDir, "signedInUser.json");
-  let data = yield CommonUtils.readJSON(path);
+  let data = await CommonUtils.readJSON(path);
 
   Assert.strictEqual(data.accountData.email, creds.email, "correct email in the clear text");
   Assert.strictEqual(data.accountData.sessionToken, creds.sessionToken, "correct sessionToken in the clear text");
@@ -131,11 +130,11 @@ add_task(function* test_MPLocked() {
   Assert.ok(!("kB" in data.accountData), "kB not stored in clear text");
 
   Assert.strictEqual(getLoginMgrData(), null, "login mgr data doesn't exist");
-  yield fxa.signOut(/* localOnly = */ true)
+  await fxa.signOut(/* localOnly = */ true)
 });
 
 
-add_task(function* test_consistentWithMPEdgeCases() {
+add_task(async function test_consistentWithMPEdgeCases() {
   setLoginMgrLoggedInState(true);
 
   let fxa = createFxAccounts();
@@ -159,18 +158,18 @@ add_task(function* test_consistentWithMPEdgeCases() {
   };
 
   // Log a user in while MP is unlocked.
-  yield fxa.setSignedInUser(creds1);
+  await fxa.setSignedInUser(creds1);
 
   // tell the storage that the MP is locked - this will prevent logout from
   // being able to clear the data.
   setLoginMgrLoggedInState(false);
 
   // now set the second credentials.
-  yield fxa.setSignedInUser(creds2);
+  await fxa.setSignedInUser(creds2);
 
   // We should still have creds1 data in the login manager.
   let login = getLoginMgrData();
-  Assert.strictEqual(login.username, creds1.email);
+  Assert.strictEqual(login.username, creds1.uid);
   // and that we do have the first kA in the login manager.
   Assert.strictEqual(JSON.parse(login.password).accountData.kA, creds1.kA,
                      "stale data still in login mgr");
@@ -180,20 +179,20 @@ add_task(function* test_consistentWithMPEdgeCases() {
   setLoginMgrLoggedInState(true);
   fxa = createFxAccounts();
 
-  let accountData = yield fxa.getSignedInUser();
+  let accountData = await fxa.getSignedInUser();
   Assert.strictEqual(accountData.email, creds2.email);
   // we should have no kA at all.
   Assert.strictEqual(accountData.kA, undefined, "stale kA wasn't used");
-  yield fxa.signOut(/* localOnly = */ true)
+  await fxa.signOut(/* localOnly = */ true)
 });
 
 // A test for the fact we will accept either a UID or email when looking in
 // the login manager.
-add_task(function* test_uidMigration() {
+add_task(async function test_uidMigration() {
   setLoginMgrLoggedInState(true);
   Assert.strictEqual(getLoginMgrData(), null, "expect no logins at the start");
 
-  // create the login entry using uid as a key.
+  // create the login entry using email as a key.
   let contents = {kA: "kA"};
 
   let loginInfo = new Components.Constructor(
@@ -201,7 +200,7 @@ add_task(function* test_uidMigration() {
   let login = new loginInfo(FXA_PWDMGR_HOST,
                             null, // aFormSubmitURL,
                             FXA_PWDMGR_REALM, // aHttpRealm,
-                            "uid", // aUsername
+                            "foo@bar.com", // aUsername
                             JSON.stringify(contents), // aPassword
                             "", // aUsernameField
                             "");// aPasswordField
@@ -209,6 +208,6 @@ add_task(function* test_uidMigration() {
 
   // ensure we read it.
   let storage = new LoginManagerStorage();
-  let got = yield storage.get("uid", "foo@bar.com");
+  let got = await storage.get("uid", "foo@bar.com");
   Assert.deepEqual(got, contents);
 });

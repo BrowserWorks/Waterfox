@@ -4,12 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 XPIDL_SOURCES += [
     'domstubs.idl',
+    'nsIBrowser.idl',
     'nsIBrowserDOMWindow.idl',
     'nsIContentPermissionPrompt.idl',
     'nsIContentPrefService.idl',
     'nsIContentPrefService2.idl',
+    'nsIContentProcess.idl',
     'nsIContentURIGrouper.idl',
     'nsIDOMChromeWindow.idl',
     'nsIDOMClientRect.idl',
@@ -18,7 +23,6 @@ XPIDL_SOURCES += [
     'nsIDOMCrypto.idl',
     'nsIDOMGlobalPropertyInitializer.idl',
     'nsIDOMHistory.idl',
-    'nsIDOMLocation.idl',
     'nsIDOMModalContentWindow.idl',
     'nsIDOMNavigator.idl',
     'nsIDOMScreen.idl',

@@ -29,5 +29,11 @@
 	<string>1</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+        <key>MozillaDeveloperRepoPath</key>
+        <string>%MOZ_DEVELOPER_REPO_PATH%</string>
+        <key>MozillaDeveloperObjPath</key>
+        <string>%MOZ_DEVELOPER_OBJ_PATH%</string>
 </dict>
 </plist>

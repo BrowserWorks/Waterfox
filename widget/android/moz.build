@@ -4,8 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Widget: Android")
+
+with Files("*CompositorWidget*"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
 DIRS += [
     'bindings',
+    'fennec',
     'jni',
 ]
 
@@ -23,16 +30,25 @@ EXPORTS += [
     'GeneratedJNIWrappers.h',
 ]
 
+EXPORTS.mozilla.widget += [
+    'AndroidCompositorWidget.h',
+    'AndroidUiThread.h',
+]
+
 UNIFIED_SOURCES += [
+    'AndroidAlerts.cpp',
     'AndroidBridge.cpp',
+    'AndroidCompositorWidget.cpp',
     'AndroidContentController.cpp',
     'AndroidJavaWrappers.cpp',
     'AndroidJNI.cpp',
     'AndroidJNIWrapper.cpp',
+    'AndroidUiThread.cpp',
     'ANRReporter.cpp',
+    'EventDispatcher.cpp',
+    'GeckoEditableSupport.cpp',
     'GeneratedJNIWrappers.cpp',
     'GfxInfo.cpp',
-    'NativeJSContainer.cpp',
     'nsAndroidProtocolHandler.cpp',
     'nsAppShell.cpp',
     'nsClipboard.cpp',
@@ -56,6 +72,7 @@ LOCAL_INCLUDES += [
     '/netwerk/base',
     '/netwerk/cache',
     '/widget',
+    '/xpcom/threads',
 ]
 
 CXXFLAGS += ['-Wno-error=shadow']

@@ -3,66 +3,60 @@ const kBlue = "rgb(0, 0, 255)";
 
 const prefix = "http://example.com/tests/toolkit/components/places/tests/browser/461710_";
 
-add_task(function* () {
+add_task(async function() {
+  registerCleanupFunction(PlacesTestUtils.clearHistory);
   let contentPage = prefix + "iframe.html";
-  let normalWindow = yield BrowserTestUtils.openNewBrowserWindow();
 
-  let browser = normalWindow.gBrowser.selectedBrowser;
-  BrowserTestUtils.loadURI(browser, contentPage);
-  yield BrowserTestUtils.browserLoaded(browser, contentPage);
+  let normalWindow = await BrowserTestUtils.openNewBrowserWindow();
+  let normalBrowser = normalWindow.gBrowser.selectedBrowser;
+  await BrowserTestUtils.loadURI(normalBrowser, contentPage);
+  await BrowserTestUtils.browserLoaded(normalBrowser, false, contentPage);
 
-  let privateWindow = yield BrowserTestUtils.openNewBrowserWindow({private: true});
-
-  browser = privateWindow.gBrowser.selectedBrowser;
-  BrowserTestUtils.loadURI(browser, contentPage);
-  yield BrowserTestUtils.browserLoaded(browser, contentPage);
+  let privateWindow = await BrowserTestUtils.openNewBrowserWindow({private: true});
+  let privateBrowser = privateWindow.gBrowser.selectedBrowser;
+  BrowserTestUtils.loadURI(privateBrowser, contentPage);
+  await BrowserTestUtils.browserLoaded(privateBrowser, false, contentPage);
 
   let tests = [{
-    win: normalWindow,
+    private: false,
     topic: "uri-visit-saved",
     subtest: "visited_page.html"
   }, {
-    win: normalWindow,
+    private: false,
     topic: "visited-status-resolution",
     subtest: "link_page.html",
     color: kRed,
     message: "Visited link coloring should work outside of private mode"
   }, {
-    win: privateWindow,
+    private: true,
     topic: "visited-status-resolution",
     subtest: "link_page-2.html",
     color: kBlue,
     message: "Visited link coloring should not work inside of private mode"
   }, {
-    win: normalWindow,
+    private: false,
     topic: "visited-status-resolution",
     subtest: "link_page-3.html",
     color: kRed,
     message: "Visited link coloring should work outside of private mode"
   }];
 
-  let visited_page_url = prefix + tests[0].subtest;
+  let uri = Services.io.newURI(prefix + tests[0].subtest);
   for (let test of tests) {
-    let promise = new Promise(resolve => {
-      let uri = NetUtil.newURI(visited_page_url);
-      Services.obs.addObserver(function observe(aSubject) {
-        if (uri.equals(aSubject.QueryInterface(Ci.nsIURI))) {
-          Services.obs.removeObserver(observe, test.topic);
-          resolve();
-        }
-      }, test.topic, false);
-    });
-    ContentTask.spawn(test.win.gBrowser.selectedBrowser, prefix + test.subtest, function* (aSrc) {
+    let promise = TestUtils.topicObserved(test.topic,
+      subject => uri.equals(subject.QueryInterface(Ci.nsIURI)));
+    let browser = test.private ? privateBrowser : normalBrowser;
+    await ContentTask.spawn(browser, prefix + test.subtest, async function(aSrc) {
       content.document.getElementById("iframe").src = aSrc;
     });
-    yield promise;
+    await promise;
 
     if (test.color) {
       // In e10s waiting for visited-status-resolution is not enough to ensure links
       // have been updated, because it only tells us that messages to update links
       // have been dispatched. We must still wait for the actual links to update.
-      yield BrowserTestUtils.waitForCondition(function* () {
-        let color = yield ContentTask.spawn(test.win.gBrowser.selectedBrowser, null, function* () {
+      await BrowserTestUtils.waitForCondition(async function() {
+        let color = await ContentTask.spawn(browser, null, async function() {
           let iframe = content.document.getElementById("iframe");
           let elem = iframe.contentDocument.getElementById("link");
           return content.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -77,6 +71,8 @@ add_task(function* () {
     }
   }
 
-  yield BrowserTestUtils.closeWindow(normalWindow);
-  yield BrowserTestUtils.closeWindow(privateWindow);
+  let promisePBExit = TestUtils.topicObserved("last-pb-context-exited");
+  await BrowserTestUtils.closeWindow(privateWindow);
+  await promisePBExit;
+  await BrowserTestUtils.closeWindow(normalWindow);
 });

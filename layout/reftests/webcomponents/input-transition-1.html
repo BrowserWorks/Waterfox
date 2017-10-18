@@ -5,19 +5,28 @@
   <body>
     <div id="host"></div>
     <script>
-      var host = document.getElementById("host");
-      var root = host.createShadowRoot();
-      root.innerHTML = '<style>input ~ div { background: red; transition: background 100ms; } input:checked ~ div { background: green; }</style><input id="one" type="checkbox"><div style="height: 50px; width: 50px;"></div>';
+      var host, root;
+
+      function run() {
+        host = document.getElementById("host");
+        root = host.createShadowRoot();
+        root.innerHTML = '<style>input ~ div { background: red; transition: background 100ms; } input:checked ~ div { background: green; }</style><input id="one" type="checkbox"><div style="height: 50px; width: 50px;"></div>';
+      }
 
       function tweak() {
           var el = root.getElementById("one");
           el.checked = true;
           el.nextSibling.addEventListener("transitionend", function() {
-            document.documentElement.removeAttribute("class");
-          }, false);
+            setTimeout(()=>{document.documentElement.removeAttribute("class")}, 1000); // wait for the checkbox SVG image to load on Android
+          });
       }
 
-      window.addEventListener("MozReftestInvalidate", tweak, false);
+      if (document.body.createShadowRoot) {
+        run();
+        window.addEventListener("MozReftestInvalidate", tweak);
+      } else {
+        document.documentElement.className = "";
+      }
     </script>
   </body>
 </html>

@@ -10,6 +10,10 @@
 #include "base/shared_memory.h"
 #include "SharedMemory.h"
 
+#ifdef FUZZING
+#include "SharedMemoryFuzzer.h"
+#endif
+
 #include "nsDebug.h"
 
 //
@@ -27,8 +31,8 @@ public:
   {
   }
 
-  virtual bool SetHandle(const Handle& aHandle) override {
-    return mSharedMemory.SetHandle(aHandle, false);
+  virtual bool SetHandle(const Handle& aHandle, OpenRights aRights) override {
+    return mSharedMemory.SetHandle(aHandle, aRights == RightsReadOnly);
   }
 
   virtual bool Create(size_t aNbytes) override
@@ -56,7 +60,12 @@ public:
 
   virtual void* memory() const override
   {
+#ifdef FUZZING
+    return SharedMemoryFuzzer::MutateSharedMemory(mSharedMemory.memory(),
+                                                  mAllocSize);
+#else
     return mSharedMemory.memory();
+#endif
   }
 
   virtual SharedMemoryType Type() const override

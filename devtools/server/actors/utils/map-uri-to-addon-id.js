@@ -35,8 +35,7 @@ if (!Services.appinfo
   module.exports = function mapURIToAddonId(uri) {
     try {
       return AddonPathService.mapURIToAddonId(uri);
-    }
-    catch (e) {
+    } catch (e) {
       DevToolsUtils.reportException("mapURIToAddonId", e);
       return false;
     }

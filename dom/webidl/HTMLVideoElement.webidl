@@ -11,14 +11,15 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLVideoElement : HTMLMediaElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute unsigned long width;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute unsigned long height;
   readonly attribute unsigned long videoWidth;
   readonly attribute unsigned long videoHeight;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
            attribute DOMString poster;
 };
 

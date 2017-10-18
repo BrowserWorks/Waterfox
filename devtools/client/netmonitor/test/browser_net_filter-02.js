@@ -1,9 +1,12 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
  * Test if filtering items in the network table works correctly with new requests.
  */
+
 const BASIC_REQUESTS = [
   { url: "sjs_content-type-test-server.sjs?fmt=html&res=undefined" },
   { url: "sjs_content-type-test-server.sjs?fmt=css" },
@@ -26,179 +29,220 @@ const REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS = REQUESTS_WITH_MEDIA_AND_FLASH.conca
   { url: "sjs_content-type-test-server.sjs?fmt=ws" },
 ]);
 
-function test() {
-  initNetMonitor(FILTERING_URL).then(([aTab, aDebuggee, aMonitor]) => {
-    info("Starting test... ");
+const EXPECTED_REQUESTS = [
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=html",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "html",
+      fullMimeType: "text/html; charset=utf-8"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=css",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "css",
+      fullMimeType: "text/css; charset=utf-8"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=js",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "js",
+      fullMimeType: "application/javascript; charset=utf-8"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=font",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "woff",
+      fullMimeType: "font/woff"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=image",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "png",
+      fullMimeType: "image/png"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=audio",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "ogg",
+      fullMimeType: "audio/ogg"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=video",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "webm",
+      fullMimeType: "video/webm"
+    },
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=flash",
+    data: {
+      fuzzyUrl: true,
+      status: 200,
+      statusText: "OK",
+      type: "x-shockwave-flash",
+      fullMimeType: "application/x-shockwave-flash"
+    }
+  },
+  {
+    method: "GET",
+    url: CONTENT_TYPE_SJS + "?fmt=ws",
+    data: {
+      fuzzyUrl: true,
+      status: 101,
+      statusText: "Switching Protocols",
+    }
+  }
+];
 
-    // It seems that this test may be slow on Ubuntu builds running on ec2.
-    requestLongerTimeout(2);
+add_task(function* () {
+  let { monitor } = yield initNetMonitor(FILTERING_URL);
+  info("Starting test... ");
 
-    let { $, NetMonitorView } = aMonitor.panelWin;
-    let { RequestsMenu } = NetMonitorView;
+  // It seems that this test may be slow on Ubuntu builds running on ec2.
+  requestLongerTimeout(2);
 
-    RequestsMenu.lazyUpdate = false;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getDisplayedRequests,
+    getSelectedRequest,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-    waitForNetworkEvents(aMonitor, 9).then(() => {
-      EventUtils.sendMouseEvent({ type: "mousedown" }, $("#details-pane-toggle"));
+  store.dispatch(Actions.batchEnable(false));
 
-      isnot(RequestsMenu.selectedItem, null,
-        "There should be a selected item in the requests menu.");
-      is(RequestsMenu.selectedIndex, 0,
-        "The first item should be selected in the requests menu.");
-      is(NetMonitorView.detailsPaneHidden, false,
-        "The details pane should not be hidden after toggle button was pressed.");
+  let wait = waitForNetworkEvents(monitor, 9);
+  loadCommonFrameScript();
+  yield performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
+  yield wait;
 
-      testFilterButtons(aMonitor, "all");
-      testContents([1, 1, 1, 1, 1, 1, 1, 1, 1])
-        .then(() => {
-          info("Testing html filtering.");
-          EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
-          testFilterButtons(aMonitor, "html");
-          return testContents([1, 0, 0, 0, 0, 0, 0, 0, 0]);
-        })
-        .then(() => {
-          info("Performing more requests.");
-          performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
-          return waitForNetworkEvents(aMonitor, 9);
-        })
-        .then(() => {
-          info("Testing html filtering again.");
-          testFilterButtons(aMonitor, "html");
-          return testContents([1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
-        })
-        .then(() => {
-          info("Performing more requests.");
-          performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
-          return waitForNetworkEvents(aMonitor, 9);
-        })
-        .then(() => {
-          info("Testing html filtering again.");
-          testFilterButtons(aMonitor, "html");
-          return testContents([1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
-        })
-        .then(() => {
-          info("Resetting filters.");
-          EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-all-button"));
-          testFilterButtons(aMonitor, "all");
-          return testContents([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
-        })
-        .then(() => {
-          return teardown(aMonitor);
-        })
-        .then(finish);
-    });
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
 
-    function testContents(aVisibility) {
-      isnot(RequestsMenu.selectedItem, null,
-        "There should still be a selected item after filtering.");
-      is(RequestsMenu.selectedIndex, 0,
-        "The first item should be still selected after filtering.");
-      is(NetMonitorView.detailsPaneHidden, false,
-        "The details pane should still be visible after filtering.");
+  isnot(getSelectedRequest(store.getState()), null,
+    "There should be a selected item in the requests menu.");
+  is(getSelectedIndex(store.getState()), 0,
+    "The first item should be selected in the requests menu.");
+  is(!!document.querySelector(".network-details-panel"), true,
+    "The network details panel should be visible after toggle button was pressed.");
 
-      is(RequestsMenu.items.length, aVisibility.length,
-        "There should be a specific amount of items in the requests menu.");
-      is(RequestsMenu.visibleItems.length, aVisibility.filter(e => e).length,
-        "There should be a specific amount of visbile items in the requests menu.");
+  testFilterButtons(monitor, "all");
+  testContents([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
-      for (let i = 0; i < aVisibility.length; i++) {
-        is(RequestsMenu.getItemAtIndex(i).target.hidden, !aVisibility[i],
-          "The item at index " + i + " doesn't have the correct hidden state.");
-      }
+  info("Testing html filtering.");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
+  testFilterButtons(monitor, "html");
+  testContents([1, 0, 0, 0, 0, 0, 0, 0, 0]);
 
-      for (let i = 0; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=html", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "html",
-            fullMimeType: "text/html; charset=utf-8"
-          });
-      }
-      for (let i = 1; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=css", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "css",
-            fullMimeType: "text/css; charset=utf-8"
-          });
-      }
-      for (let i = 2; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=js", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "js",
-            fullMimeType: "application/javascript; charset=utf-8"
-          });
-      }
-      for (let i = 3; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=font", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "woff",
-            fullMimeType: "font/woff"
-          });
-      }
-      for (let i = 4; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=image", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "png",
-            fullMimeType: "image/png"
-          });
-      }
-      for (let i = 5; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=audio", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "ogg",
-            fullMimeType: "audio/ogg"
-          });
-      }
-      for (let i = 6; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=video", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "webm",
-            fullMimeType: "video/webm"
-          });
-      }
-      for (let i = 7; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=flash", {
-            fuzzyUrl: true,
-            status: 200,
-            statusText: "OK",
-            type: "x-shockwave-flash",
-            fullMimeType: "application/x-shockwave-flash"
-          });
-      }
-      for (let i = 8; i < aVisibility.length; i += 9) {
-        verifyRequestItemTarget(RequestsMenu.getItemAtIndex(i),
-          "GET", CONTENT_TYPE_SJS + "?fmt=ws", {
-            fuzzyUrl: true,
-            status: 101,
-            statusText: "Switching Protocols"
-          });
-      }
+  info("Performing more requests.");
+  wait = waitForNetworkEvents(monitor, 9);
+  yield performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
+  yield wait;
 
-      return promise.resolve(null);
+  info("Testing html filtering again.");
+  testFilterButtons(monitor, "html");
+  testContents([1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+  info("Performing more requests.");
+  wait = waitForNetworkEvents(monitor, 9);
+  yield performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
+  yield wait;
+
+  info("Testing html filtering again.");
+  testFilterButtons(monitor, "html");
+  testContents([1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+
+  info("Resetting filters.");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-all-button"));
+  testFilterButtons(monitor, "all");
+  testContents([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+
+  yield teardown(monitor);
+
+  function getSelectedIndex(state) {
+    if (!state.requests.selectedId) {
+      return -1;
+    }
+    return getSortedRequests(state).findIndex(r => r.id === state.requests.selectedId);
+  }
+
+  function testContents(visibility) {
+    isnot(getSelectedRequest(store.getState()), null,
+      "There should still be a selected item after filtering.");
+    is(getSelectedIndex(store.getState()), 0,
+      "The first item should be still selected after filtering.");
+    is(!!document.querySelector(".network-details-panel"), true,
+      "The network details panel should still be visible after filtering.");
+
+    const items = getSortedRequests(store.getState());
+    const visibleItems = getDisplayedRequests(store.getState());
+
+    is(items.size, visibility.length,
+      "There should be a specific amount of items in the requests menu.");
+    is(visibleItems.size, visibility.filter(e => e).length,
+      "There should be a specific amount of visible items in the requests menu.");
+
+    for (let i = 0; i < visibility.length; i++) {
+      let itemId = items.get(i).id;
+      let shouldBeVisible = !!visibility[i];
+      let isThere = visibleItems.some(r => r.id == itemId);
+      is(isThere, shouldBeVisible,
+        `The item at index ${i} has visibility=${shouldBeVisible}`);
     }
 
-    loadCommonFrameScript();
-    performRequestsInContent(REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS);
-  });
-}
+    for (let i = 0; i < EXPECTED_REQUESTS.length; i++) {
+      let { method, url, data } = EXPECTED_REQUESTS[i];
+      for (let j = i; j < visibility.length; j += EXPECTED_REQUESTS.length) {
+        if (visibility[j]) {
+          verifyRequestItemTarget(
+            document,
+            getDisplayedRequests(store.getState()),
+            getSortedRequests(store.getState()).get(i),
+            method,
+            url,
+            data
+          );
+        }
+      }
+    }
+  }
+});

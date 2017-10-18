@@ -27,14 +27,11 @@ EXTRA_JS_MODULES.sessionstore = [
     'DocShellCapabilities.jsm',
     'FrameTree.jsm',
     'GlobalState.jsm',
-    'PageStyle.jsm',
     'PrivacyFilter.jsm',
-    'PrivacyLevel.jsm',
     'RecentlyClosedTabsAndWindowsMenuUtils.jsm',
     'RunState.jsm',
     'SessionCookies.jsm',
     'SessionFile.jsm',
-    'SessionHistory.jsm',
     'SessionMigration.jsm',
     'SessionSaver.jsm',
     'SessionStorage.jsm',
@@ -46,7 +43,6 @@ EXTRA_JS_MODULES.sessionstore = [
     'TabState.jsm',
     'TabStateCache.jsm',
     'TabStateFlusher.jsm',
-    'Utils.jsm',
 ]
 
 with Files('**'):

@@ -2,15 +2,31 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using mozilla::PrincipalOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
+using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace ipc {
 
+union ContentPrincipalInfoOriginNoSuffix
+{
+  nsCString;
+  void_t;
+};
+
 struct ContentPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
+
+  // Origin is not simply a part of the spec. Based on the scheme of the URI
+  // spec, we generate different kind of origins: for instance any file: URL
+  // shares the same origin, about: URLs have the full spec as origin and so
+  // on.
+  // Another important reason why we have this attribute is that
+  // ContentPrincipalInfo is used out of the main-thread. Having this value
+  // here allows us to retrive the origin without creating a full nsIPrincipal.
+  ContentPrincipalInfoOriginNoSuffix originNoSuffix;
+
   nsCString spec;
 };
 
@@ -19,12 +35,13 @@ struct SystemPrincipalInfo
 
 struct NullPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
+  nsCString spec;
 };
 
 struct ExpandedPrincipalInfo
 {
-  PrincipalOriginAttributes attrs;
+  OriginAttributes attrs;
   PrincipalInfo[] whitelist;
 };
 

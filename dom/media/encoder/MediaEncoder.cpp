@@ -6,6 +6,7 @@
 #include "MediaDecoder.h"
 #include "nsIPrincipal.h"
 #include "nsMimeTypes.h"
+#include "TimeUnits.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
@@ -19,10 +20,6 @@
 #include "VP8TrackEncoder.h"
 #include "WebMWriter.h"
 #endif
-#ifdef MOZ_OMX_ENCODER
-#include "OmxTrackEncoder.h"
-#include "ISOMediaWriter.h"
-#endif
 
 #ifdef LOG
 #undef LOG
@@ -32,6 +29,42 @@ mozilla::LazyLogModule gMediaEncoderLog("MediaEncoder");
 #define LOG(type, msg) MOZ_LOG(gMediaEncoderLog, type, msg)
 
 namespace mozilla {
+
+void
+MediaStreamVideoRecorderSink::SetCurrentFrames(const VideoSegment& aSegment)
+{
+  MOZ_ASSERT(mVideoEncoder);
+  // If we're suspended (paused) we don't forward frames
+  if (!mSuspended) {
+    mVideoEncoder->SetCurrentFrames(aSegment);
+  }
+}
+
+void
+MediaEncoder::Suspend()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mLastPauseStartTime = TimeStamp::Now();
+  mSuspended = true;
+  mVideoSink->Suspend();
+}
+
+void
+MediaEncoder::Resume()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (!mSuspended) {
+    return;
+  }
+  media::TimeUnit timeSpentPaused =
+    media::TimeUnit::FromTimeDuration(
+      TimeStamp::Now() - mLastPauseStartTime);
+  MOZ_ASSERT(timeSpentPaused.ToMicroseconds() >= 0);
+  MOZ_RELEASE_ASSERT(timeSpentPaused.IsValid());
+  mMicrosecondsSpentPaused += timeSpentPaused.ToMicroseconds();;
+  mSuspended = false;
+  mVideoSink->Resume();
+}
 
 void
 MediaEncoder::SetDirectConnect(bool aConnected)
@@ -46,19 +79,21 @@ MediaEncoder::NotifyRealtimeData(MediaStreamGraph* aGraph,
                                  uint32_t aTrackEvents,
                                  const MediaSegment& aRealtimeMedia)
 {
-  if (mSuspended == RECORD_NOT_SUSPENDED) {
-    // Process the incoming raw track data from MediaStreamGraph, called on the
-    // thread of MediaStreamGraph.
-    if (mAudioEncoder && aRealtimeMedia.GetType() == MediaSegment::AUDIO) {
-      mAudioEncoder->NotifyQueuedTrackChanges(aGraph, aID,
-                                              aTrackOffset, aTrackEvents,
-                                              aRealtimeMedia);
-
-    } else if (mVideoEncoder && aRealtimeMedia.GetType() == MediaSegment::VIDEO) {
-      mVideoEncoder->NotifyQueuedTrackChanges(aGraph, aID,
-                                              aTrackOffset, aTrackEvents,
-                                              aRealtimeMedia);
-    }
+  if (mSuspended) {
+    return;
+  }
+  // Process the incoming raw track data from MediaStreamGraph, called on the
+  // thread of MediaStreamGraph.
+  if (mAudioEncoder && aRealtimeMedia.GetType() == MediaSegment::AUDIO) {
+    mAudioEncoder->NotifyQueuedTrackChanges(aGraph, aID,
+                                            aTrackOffset, aTrackEvents,
+                                            aRealtimeMedia);
+  } else if (mVideoEncoder &&
+              aRealtimeMedia.GetType() == MediaSegment::VIDEO &&
+              aTrackEvents != TrackEventCommand::TRACK_EVENT_NONE) {
+    mVideoEncoder->NotifyQueuedTrackChanges(aGraph, aID,
+                                            aTrackOffset, aTrackEvents,
+                                            aRealtimeMedia);
   }
 }
 
@@ -84,24 +119,6 @@ MediaEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
         NotifyRealtimeData(aGraph, aID, aTrackOffset, aTrackEvents, segment);
       }
     }
-    if (mSuspended == RECORD_RESUMED) {
-      if (mVideoEncoder) {
-        if (aQueuedMedia.GetType() == MediaSegment::VIDEO) {
-          // insert a null frame of duration equal to the first segment passed
-          // after Resume(), so it'll get added to one of the DirectListener frames
-          VideoSegment segment;
-          gfx::IntSize size(0,0);
-          segment.AppendFrame(nullptr, aQueuedMedia.GetDuration(), size,
-                              PRINCIPAL_HANDLE_NONE);
-          mVideoEncoder->NotifyQueuedTrackChanges(aGraph, aID,
-                                                  aTrackOffset, aTrackEvents,
-                                                  segment);
-          mSuspended = RECORD_NOT_SUSPENDED;
-        }
-      } else {
-        mSuspended = RECORD_NOT_SUSPENDED; // no video
-      }
-    }
   }
 }
 
@@ -114,12 +131,6 @@ MediaEncoder::NotifyQueuedAudioData(MediaStreamGraph* aGraph, TrackID aID,
 {
   if (!mDirectConnected) {
     NotifyRealtimeData(aGraph, aID, aTrackOffset, 0, aQueuedMedia);
-  } else {
-    if (mSuspended == RECORD_RESUMED) {
-      if (!mVideoEncoder) {
-        mSuspended = RECORD_NOT_SUSPENDED; // no video
-      }
-    }
   }
 }
 
@@ -141,10 +152,10 @@ MediaEncoder::NotifyEvent(MediaStreamGraph* aGraph,
 already_AddRefed<MediaEncoder>
 MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
                             uint32_t aVideoBitrate, uint32_t aBitrate,
-                            uint8_t aTrackTypes)
+                            uint8_t aTrackTypes,
+                            TrackRate aTrackRate)
 {
-  PROFILER_LABEL("MediaEncoder", "CreateEncoder",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("MediaEncoder::CreateEncoder", OTHER);
 
   nsAutoPtr<ContainerWriter> writer;
   nsAutoPtr<AudioTrackEncoder> audioEncoder;
@@ -164,44 +175,13 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
       audioEncoder = new OpusTrackEncoder();
       NS_ENSURE_TRUE(audioEncoder, nullptr);
     }
-    videoEncoder = new VP8TrackEncoder();
+    videoEncoder = new VP8TrackEncoder(aTrackRate);
     writer = new WebMWriter(aTrackTypes);
     NS_ENSURE_TRUE(writer, nullptr);
     NS_ENSURE_TRUE(videoEncoder, nullptr);
     mimeType = NS_LITERAL_STRING(VIDEO_WEBM);
   }
 #endif //MOZ_WEBM_ENCODER
-#ifdef MOZ_OMX_ENCODER
-  else if (MediaEncoder::IsOMXEncoderEnabled() &&
-          (aMIMEType.EqualsLiteral(VIDEO_MP4) ||
-          (aTrackTypes & ContainerWriter::CREATE_VIDEO_TRACK))) {
-    if (aTrackTypes & ContainerWriter::CREATE_AUDIO_TRACK) {
-      audioEncoder = new OmxAACAudioTrackEncoder();
-      NS_ENSURE_TRUE(audioEncoder, nullptr);
-    }
-    videoEncoder = new OmxVideoTrackEncoder();
-    writer = new ISOMediaWriter(aTrackTypes);
-    NS_ENSURE_TRUE(writer, nullptr);
-    NS_ENSURE_TRUE(videoEncoder, nullptr);
-    mimeType = NS_LITERAL_STRING(VIDEO_MP4);
-  } else if (MediaEncoder::IsOMXEncoderEnabled() &&
-            (aMIMEType.EqualsLiteral(AUDIO_3GPP))) {
-    audioEncoder = new OmxAMRAudioTrackEncoder();
-    NS_ENSURE_TRUE(audioEncoder, nullptr);
-
-    writer = new ISOMediaWriter(aTrackTypes, ISOMediaWriter::TYPE_FRAG_3GP);
-    NS_ENSURE_TRUE(writer, nullptr);
-    mimeType = NS_LITERAL_STRING(AUDIO_3GPP);
-  } else if (MediaEncoder::IsOMXEncoderEnabled() &&
-            (aMIMEType.EqualsLiteral(AUDIO_3GPP2))) {
-    audioEncoder = new OmxEVRCAudioTrackEncoder();
-    NS_ENSURE_TRUE(audioEncoder, nullptr);
-
-    writer = new ISOMediaWriter(aTrackTypes, ISOMediaWriter::TYPE_FRAG_3G2);
-    NS_ENSURE_TRUE(writer, nullptr);
-    mimeType = NS_LITERAL_STRING(AUDIO_3GPP2) ;
-  }
-#endif // MOZ_OMX_ENCODER
   else if (MediaDecoder::IsOggEnabled() && MediaDecoder::IsOpusEnabled() &&
            (aMIMEType.EqualsLiteral(AUDIO_OGG) ||
            (aTrackTypes & ContainerWriter::CREATE_AUDIO_TRACK))) {
@@ -217,7 +197,7 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
   }
   LOG(LogLevel::Debug, ("Create encoder result:a[%d] v[%d] w[%d] mimeType = %s.",
                       audioEncoder != nullptr, videoEncoder != nullptr,
-                      writer != nullptr, mimeType.get()));
+                      writer != nullptr, NS_ConvertUTF16toUTF8(mimeType).get()));
   if (videoEncoder && aVideoBitrate != 0) {
     videoEncoder->SetBitrate(aVideoBitrate);
   }
@@ -261,8 +241,7 @@ MediaEncoder::GetEncodedData(nsTArray<nsTArray<uint8_t> >* aOutputBufs,
   MOZ_ASSERT(!NS_IsMainThread());
 
   aMIMEType = mMIMEType;
-  PROFILER_LABEL("MediaEncoder", "GetEncodedData",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("MediaEncoder::GetEncodedData", OTHER);
 
   bool reloop = true;
   while (reloop) {
@@ -356,8 +335,7 @@ MediaEncoder::WriteEncodedDataToMuxer(TrackEncoder *aTrackEncoder)
     return NS_OK;
   }
 
-  PROFILER_LABEL("MediaEncoder", "WriteEncodedDataToMuxer",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("MediaEncoder::WriteEncodedDataToMuxer", OTHER);
 
   EncodedFrameContainer encodedVideoData;
   nsresult rv = aTrackEncoder->GetEncodedTrack(encodedVideoData);
@@ -367,6 +345,29 @@ MediaEncoder::WriteEncodedDataToMuxer(TrackEncoder *aTrackEncoder)
     mState = ENCODE_ERROR;
     return rv;
   }
+
+  // Update timestamps to accommodate pauses
+  const nsTArray<RefPtr<EncodedFrame> >& encodedFrames =
+    encodedVideoData.GetEncodedFrames();
+  // Take a copy of the atomic so we don't continually access it
+  uint64_t microsecondsSpentPaused = mMicrosecondsSpentPaused;
+  for (size_t i = 0; i < encodedFrames.Length(); ++i) {
+    RefPtr<EncodedFrame> frame = encodedFrames[i];
+    if (frame->GetTimeStamp() > microsecondsSpentPaused &&
+        frame->GetTimeStamp() - microsecondsSpentPaused > mLastMuxedTimestamp) {
+      // Use the adjusted timestamp if it's after the last timestamp
+      frame->SetTimeStamp(frame->GetTimeStamp() - microsecondsSpentPaused);
+    } else {
+      // If not, we force the last time stamp. We do this so the frames are
+      // still around and in order in case the codec needs to reference them.
+      // Dropping them here may result in artifacts in playback.
+      frame->SetTimeStamp(mLastMuxedTimestamp);
+    }
+    MOZ_ASSERT(mLastMuxedTimestamp <= frame->GetTimeStamp(),
+      "Our frames should be ordered by this point!");
+    mLastMuxedTimestamp = frame->GetTimeStamp();
+  }
+
   rv = mWriter->WriteEncodedTrack(encodedVideoData,
                                   aTrackEncoder->IsEncodingComplete() ?
                                   ContainerWriter::END_OF_STREAM : 0);
@@ -384,8 +385,7 @@ MediaEncoder::CopyMetadataToMuxer(TrackEncoder *aTrackEncoder)
     return NS_OK;
   }
 
-  PROFILER_LABEL("MediaEncoder", "CopyMetadataToMuxer",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("MediaEncoder::CopyMetadataToMuxer", OTHER);
 
   RefPtr<TrackMetadataBase> meta = aTrackEncoder->GetMetadata();
   if (meta == nullptr) {
@@ -407,14 +407,6 @@ bool
 MediaEncoder::IsWebMEncoderEnabled()
 {
   return Preferences::GetBool("media.encoder.webm.enabled");
-}
-#endif
-
-#ifdef MOZ_OMX_ENCODER
-bool
-MediaEncoder::IsOMXEncoderEnabled()
-{
-  return Preferences::GetBool("media.encoder.omx.enabled");
 }
 #endif
 

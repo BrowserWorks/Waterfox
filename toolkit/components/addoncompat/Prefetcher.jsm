@@ -10,9 +10,6 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
-                                  "resource://gre/modules/Preferences.jsm");
-
 // Rules are defined at the bottom of this file.
 var PrefetcherRules = {};
 
@@ -91,8 +88,7 @@ function isPrimitive(v) {
   return type !== "object" && type !== "function";
 }
 
-function objAddr(obj)
-{
+function objAddr(obj) {
 /*
   if (!isPrimitive(obj)) {
     return String(obj) + "[" + Cu.getJSTestingFunctions().objectAddress(obj) + "]";
@@ -101,8 +97,7 @@ function objAddr(obj)
 */
 }
 
-function log(/*...args*/)
-{
+function log(/* ...args*/) {
 /*
   for (let arg of args) {
     dump(arg);
@@ -112,8 +107,7 @@ function log(/*...args*/)
 */
 }
 
-function logPrefetch(/*kind, value1, component, value2*/)
-{
+function logPrefetch(/* kind, value1, component, value2*/) {
 /*
   log("prefetching", kind, objAddr(value1) + "." + component, "=", objAddr(value2));
 */
@@ -134,15 +128,13 @@ function logPrefetch(/*kind, value1, component, value2*/)
  *     generated.
  */
 
-function PropertyOp(outputTable, inputTable, prop)
-{
+function PropertyOp(outputTable, inputTable, prop) {
   this.outputTable = outputTable;
   this.inputTable = inputTable;
   this.prop = prop;
 }
 
-PropertyOp.prototype.addObject = function(database, obj)
-{
+PropertyOp.prototype.addObject = function(database, obj) {
   let has = false, propValue;
   try {
     if (this.prop in obj) {
@@ -161,9 +153,8 @@ PropertyOp.prototype.addObject = function(database, obj)
   }
 }
 
-PropertyOp.prototype.makeCacheEntry = function(item, cache)
-{
-  let [index, obj, has, propValue] = item;
+PropertyOp.prototype.makeCacheEntry = function(item, cache) {
+  let [, obj, , propValue] = item;
 
   let desc = { configurable: false, enumerable: true, writable: false, value: propValue };
 
@@ -174,16 +165,14 @@ PropertyOp.prototype.makeCacheEntry = function(item, cache)
   propMap.set(this.prop, desc);
 }
 
-function MethodOp(outputTable, inputTable, method, ...args)
-{
+function MethodOp(outputTable, inputTable, method, ...args) {
   this.outputTable = outputTable;
   this.inputTable = inputTable;
   this.method = method;
   this.args = args;
 }
 
-MethodOp.prototype.addObject = function(database, obj)
-{
+MethodOp.prototype.addObject = function(database, obj) {
   let result;
   try {
     result = obj[this.method].apply(obj, this.args);
@@ -199,9 +188,8 @@ MethodOp.prototype.addObject = function(database, obj)
   }
 }
 
-MethodOp.prototype.makeCacheEntry = function(item, cache)
-{
-  let [index, obj, result] = item;
+MethodOp.prototype.makeCacheEntry = function(item, cache) {
+  let [, obj, result] = item;
 
   if (!cache.has(obj)) {
     cache.set(obj, new Map());
@@ -218,23 +206,20 @@ MethodOp.prototype.makeCacheEntry = function(item, cache)
 
     if (fallback) {
       return fallback.value(...args);
-    } else {
-      return obj[method](...args);
     }
+    return obj[method](...args);
   };
 
   let desc = { configurable: false, enumerable: true, writable: false, value: methodImpl };
   propMap.set(this.method, desc);
 }
 
-function CollectionOp(outputTable, inputTable)
-{
+function CollectionOp(outputTable, inputTable) {
   this.outputTable = outputTable;
   this.inputTable = inputTable;
 }
 
-CollectionOp.prototype.addObject = function(database, obj)
-{
+CollectionOp.prototype.addObject = function(database, obj) {
   let elements = [];
   try {
     let len = obj.length;
@@ -255,9 +240,8 @@ CollectionOp.prototype.addObject = function(database, obj)
   }
 }
 
-CollectionOp.prototype.makeCacheEntry = function(item, cache)
-{
-  let [index, obj, ...elements] = item;
+CollectionOp.prototype.makeCacheEntry = function(item, cache) {
+  let [, obj, ...elements] = item;
 
   if (!cache.has(obj)) {
     cache.set(obj, new Map());
@@ -273,19 +257,16 @@ CollectionOp.prototype.makeCacheEntry = function(item, cache)
   }
 }
 
-function CopyOp(outputTable, inputTable)
-{
+function CopyOp(outputTable, inputTable) {
   this.outputTable = outputTable;
   this.inputTable = inputTable;
 }
 
-CopyOp.prototype.addObject = function(database, obj)
-{
+CopyOp.prototype.addObject = function(database, obj) {
   database.add(this.outputTable, obj);
 }
 
-function Database(trigger, addons)
-{
+function Database(trigger, addons) {
   // Create a map of rules that apply to this specific trigger and set
   // of add-ons. The rules are indexed based on their inputTable.
   this.rules = new Map();
@@ -315,7 +296,7 @@ function Database(trigger, addons)
 
 Database.prototype = {
   // Add an object to a table.
-  add: function(table, obj) {
+  add(table, obj) {
     if (!this.tables.has(table)) {
       this.tables.set(table, new Set());
     }
@@ -328,13 +309,13 @@ Database.prototype = {
     this.todo.push([table, obj]);
   },
 
-  cache: function(...args) {
+  cache(...args) {
     this.cached.push(args);
   },
 
   // Run a fixed-point iteration that adds objects to table based on
   // this.rules until there are no more objects to add.
-  process: function() {
+  process() {
     while (this.todo.length) {
       let [table, obj] = this.todo.pop();
       let rules = this.rules.get(table);
@@ -349,7 +330,7 @@ Database.prototype = {
 };
 
 var Prefetcher = {
-  init: function() {
+  init() {
     // Give an index to each rule and store it in this.ruleMap based
     // on the index. The index is used to serialize and deserialize
     // data from content to chrome.
@@ -364,17 +345,17 @@ var Prefetcher = {
       }
     }
 
-    this.prefetchingEnabled = Preferences.get(PREF_PREFETCHING_ENABLED, false);
-    Services.prefs.addObserver(PREF_PREFETCHING_ENABLED, this, false);
-    Services.obs.addObserver(this, "xpcom-shutdown", false);
+    this.prefetchingEnabled = Services.prefs.getBoolPref(PREF_PREFETCHING_ENABLED, false);
+    Services.prefs.addObserver(PREF_PREFETCHING_ENABLED, this);
+    Services.obs.addObserver(this, "xpcom-shutdown");
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (topic == "xpcom-shutdown") {
       Services.prefs.removeObserver(PREF_PREFETCHING_ENABLED, this);
       Services.obs.removeObserver(this, "xpcom-shutdown");
     } else if (topic == PREF_PREFETCHING_ENABLED) {
-      this.prefetchingEnabled = Preferences.get(PREF_PREFETCHING_ENABLED, false);
+      this.prefetchingEnabled = Services.prefs.getBoolPref(PREF_PREFETCHING_ENABLED, false);
     }
   },
 
@@ -382,7 +363,7 @@ var Prefetcher = {
   // described by the trigger string. |addons| is a list of addons
   // that have listeners installed for the event. |args| is
   // event-specific data (such as the event object).
-  prefetch: function(trigger, addons, args) {
+  prefetch(trigger, addons, args) {
     if (!this.prefetchingEnabled) {
       return [[], []];
     }
@@ -412,9 +393,8 @@ var Prefetcher = {
             cpowIndexes.set(elt, index);
           }
           return {cpow: cpowIndexes.get(elt)};
-        } else {
-          return elt;
         }
+        return elt;
       });
 
       prefetched.push(item);
@@ -427,7 +407,7 @@ var Prefetcher = {
 
   // Generate a two-level mapping based on cached data received from
   // the content process.
-  generateCache: function(prefetched, cpows) {
+  generateCache(prefetched, cpows) {
     let cache = new Map();
     for (let item of prefetched) {
       // Replace anything of the form {cpow: <index>} with the actual
@@ -448,7 +428,7 @@ var Prefetcher = {
 
   // Run |func|, using the prefetched data in |prefetched| and |cpows|
   // as a cache.
-  withPrefetching: function(prefetched, cpows, func) {
+  withPrefetching(prefetched, cpows, func) {
     if (!this.prefetchingEnabled) {
       return func();
     }
@@ -468,7 +448,7 @@ var Prefetcher = {
 
   // Called by shim code in the chrome process to check if target.prop
   // is cached.
-  lookupInCache: function(addon, target, prop) {
+  lookupInCache(addon, target, prop) {
     if (!this.cache || !Cu.isCrossProcessWrapper(target)) {
       return null;
     }

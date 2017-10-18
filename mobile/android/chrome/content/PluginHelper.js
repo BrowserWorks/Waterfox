@@ -3,6 +3,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+XPCOMUtils.defineLazyGetter(this, "GlobalEventDispatcher", () => EventDispatcher.instance);
+
 var PluginHelper = {
   showDoorHanger: function(aTab) {
     if (!aTab.browser)
@@ -83,6 +85,10 @@ var PluginHelper = {
 
   playPlugin: function(plugin) {
     let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
+    let mimeType = objLoadingContent.actualType;
+    if (mimeType) {
+      GlobalEventDispatcher.sendRequest({ type: "PluginHelper:playFlash" });
+    }
     if (!objLoadingContent.activated)
       objLoadingContent.playPlugin();
   },
@@ -177,7 +183,7 @@ var PluginHelper = {
           if (!e.isTrusted)
             return;
           e.preventDefault();
-          let win = e.target.ownerDocument.defaultView.top;
+          let win = e.target.ownerGlobal.top;
           let tab = BrowserApp.getTabForWindow(win);
           tab.clickToPlayPluginsActivated = true;
           PluginHelper.playAllPlugins(win);
@@ -198,17 +204,6 @@ var PluginHelper = {
           }
         });
 
-        break;
-      }
-
-      case "PluginNotFound": {
-        // On devices where we don't support Flash, there will be a
-        // "Learn More..." link in the missing plugin error message.
-        let learnMoreLink = doc.getAnonymousElementByAttribute(plugin, "class", "unsupportedLearnMoreLink");
-        let learnMoreUrl = Services.urlFormatter.formatURLPref("app.support.baseURL");
-        learnMoreUrl += "mobile-flash-unsupported";
-        learnMoreLink.href = learnMoreUrl;
-        overlay.classList.add("visible");
         break;
       }
     }

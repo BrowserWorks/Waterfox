@@ -3,19 +3,17 @@
 set -v -e -x
 
 # Set up the toolchain.
-source $(dirname $0)/setup.sh
+if [ "$USE_64" = 1 ]; then
+  source $(dirname $0)/setup64.sh
+else
+  source $(dirname $0)/setup32.sh
+fi
 
 # Clone NSPR.
-hg clone https://hg.mozilla.org/projects/nspr
+hg_clone https://hg.mozilla.org/projects/nspr nspr default
 
 # Build.
-cd nss && make nss_build_all
-
-# Generate certificates.
-cd tests && NSS_TESTS=cert NSS_CYCLES="standard pkix sharedb" ./all.sh
-
-# Reset test counter so that test runs pick up our certificates.
-cd ../../ && echo 1 > tests_results/security/localhost
+make -C nss nss_build_all
 
 # Package.
-7z a public/build/dist.7z dist tests_results
+7z a public/build/dist.7z dist

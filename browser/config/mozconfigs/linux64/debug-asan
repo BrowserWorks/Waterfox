@@ -1,9 +1,9 @@
-ac_add_options --with-google-oauth-api-keyfile=/builds/google-oauth-api.key
-
 # Use at least -O1 for optimization to avoid stack space
 # exhaustions caused by Clang function inlining.
 ac_add_options --enable-debug
 ac_add_options --enable-optimize="-O1"
+
+. $topsrcdir/build/mozconfig.stylo
 
 # ASan specific options on Linux
 ac_add_options --enable-valgrind

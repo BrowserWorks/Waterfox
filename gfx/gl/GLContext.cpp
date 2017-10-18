@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <regex>
+#include <string>
 #include <vector>
 #ifdef MOZ_WIDGET_ANDROID
 #include <sys/mman.h>
@@ -31,7 +33,6 @@
 #include "ScopedGLHelpers.h"
 #include "SharedSurfaceGL.h"
 #include "GfxTexturesReporter.h"
-#include "TextureGarbageBin.h"
 #include "gfx2DGlue.h"
 #include "gfxPrefs.h"
 #include "mozilla/IntegerPrintfMacros.h"
@@ -63,6 +64,8 @@ using namespace mozilla::layers;
 unsigned GLContext::sCurrentGLContextTLS = -1;
 #endif
 
+MOZ_THREAD_LOCAL(GLContext*) GLContext::sCurrentContext;
+
 // If adding defines, don't forget to undefine symbols. See #undef block below.
 #define CORE_SYMBOL(x) { (PRFuncPtr*) &mSymbols.f##x, { #x, nullptr } }
 #define CORE_EXT_SYMBOL2(x,y,z) { (PRFuncPtr*) &mSymbols.f##x, { #x, #x #y, #x #z, nullptr } }
@@ -89,6 +92,7 @@ static const char* const sExtensionNames[] = {
     "GL_ARB_ES2_compatibility",
     "GL_ARB_ES3_compatibility",
     "GL_ARB_color_buffer_float",
+    "GL_ARB_compatibility",
     "GL_ARB_copy_buffer",
     "GL_ARB_depth_texture",
     "GL_ARB_draw_buffers",
@@ -103,6 +107,7 @@ static const char* const sExtensionNames[] = {
     "GL_ARB_map_buffer_range",
     "GL_ARB_occlusion_query2",
     "GL_ARB_pixel_buffer_object",
+    "GL_ARB_robust_buffer_access_behavior",
     "GL_ARB_robustness",
     "GL_ARB_sampler_objects",
     "GL_ARB_seamless_cube_map",
@@ -157,6 +162,10 @@ static const char* const sExtensionNames[] = {
     "GL_IMG_texture_compression_pvrtc",
     "GL_IMG_texture_npot",
     "GL_KHR_debug",
+    "GL_KHR_robust_buffer_access_behavior",
+    "GL_KHR_robustness",
+    "GL_KHR_texture_compression_astc_hdr",
+    "GL_KHR_texture_compression_astc_ldr",
     "GL_NV_draw_instanced",
     "GL_NV_fence",
     "GL_NV_framebuffer_blit",
@@ -190,220 +199,27 @@ static const char* const sExtensionNames[] = {
 };
 
 static bool
-ParseGLSLVersion(GLContext* gl, uint32_t* out_version)
+ShouldUseTLSIsCurrent(bool useTLSIsCurrent)
 {
-    if (gl->fGetError() != LOCAL_GL_NO_ERROR) {
-        MOZ_ASSERT(false, "An OpenGL error has been triggered before.");
-        return false;
-    }
+    if (gfxPrefs::UseTLSIsCurrent() == 0)
+        return useTLSIsCurrent;
 
-    /**
-     * OpenGL 2.x, 3.x, 4.x specifications:
-     *  The VERSION and SHADING_LANGUAGE_VERSION strings are laid out as follows:
-     *
-     *    <version number><space><vendor-specific information>
-     *
-     *  The version number is either of the form major_number.minor_number or
-     *  major_number.minor_number.release_number, where the numbers all have
-     *  one or more digits.
-     *
-     * SHADING_LANGUAGE_VERSION is *almost* identical to VERSION. The
-     * difference is that the minor version always has two digits and the
-     * prefix has an additional 'GLSL ES'
-     *
-     *
-     * OpenGL ES 2.0, 3.0 specifications:
-     *  The VERSION string is laid out as follows:
-     *
-     *     "OpenGL ES N.M vendor-specific information"
-     *
-     *  The version number is either of the form major_number.minor_number or
-     *  major_number.minor_number.release_number, where the numbers all have
-     *  one or more digits.
-     *
-     *
-     * Note:
-     *  We don't care about release_number.
-     */
-    const char* versionString = (const char*) gl->fGetString(LOCAL_GL_SHADING_LANGUAGE_VERSION);
-
-    if (gl->fGetError() != LOCAL_GL_NO_ERROR) {
-        MOZ_ASSERT(false, "glGetString(GL_SHADING_LANGUAGE_VERSION) has generated an error");
-        return false;
-    }
-
-    if (!versionString) {
-        // This happens on the Android emulators. We'll just return 100
-        *out_version = 100;
-        return true;
-    }
-
-    const auto fnSkipPrefix = [&versionString](const char* prefix) {
-        const auto len = strlen(prefix);
-        if (strncmp(versionString, prefix, len) == 0)
-            versionString += len;
-    };
-
-    const char kGLESVersionPrefix[] = "OpenGL ES GLSL ES";
-    fnSkipPrefix(kGLESVersionPrefix);
-
-    if (gl->WorkAroundDriverBugs()) {
-        // Nexus 7 2013 (bug 1234441)
-        const char kBadGLESVersionPrefix[] = "OpenGL ES GLSL";
-        fnSkipPrefix(kBadGLESVersionPrefix);
-    }
-
-    const char* itr = versionString;
-    char* end = nullptr;
-    auto majorVersion = strtol(itr, &end, 10);
-
-    if (!end) {
-        MOZ_ASSERT(false, "Failed to parse the GL major version number.");
-        return false;
-    }
-
-    if (*end != '.') {
-        MOZ_ASSERT(false, "Failed to parse GL's major-minor version number separator.");
-        return false;
-    }
-
-    // we skip the '.' between the major and the minor version
-    itr = end + 1;
-    end = nullptr;
-
-    auto minorVersion = strtol(itr, &end, 10);
-    if (!end) {
-        MOZ_ASSERT(false, "Failed to parse GL's minor version number.");
-        return false;
-    }
-
-    if (majorVersion <= 0 || majorVersion >= 100) {
-        MOZ_ASSERT(false, "Invalid major version.");
-        return false;
-    }
-
-    if (minorVersion < 0 || minorVersion >= 100) {
-        MOZ_ASSERT(false, "Invalid minor version.");
-        return false;
-    }
-
-    *out_version = (uint32_t) majorVersion * 100 + (uint32_t) minorVersion;
-    return true;
+    return gfxPrefs::UseTLSIsCurrent() > 0;
 }
 
 static bool
-ParseGLVersion(GLContext* gl, uint32_t* out_version)
+ParseVersion(const std::string& versionStr, uint32_t* const out_major,
+             uint32_t* const out_minor)
 {
-    if (gl->fGetError() != LOCAL_GL_NO_ERROR) {
-        MOZ_ASSERT(false, "An OpenGL error has been triggered before.");
+    static const std::regex kVersionRegex("([0-9]+)\\.([0-9]+)");
+    std::smatch match;
+    if (!std::regex_search(versionStr, match, kVersionRegex))
         return false;
-    }
 
-    /**
-     * B2G emulator bug work around: The emulator implements OpenGL ES 2.0 on
-     * OpenGL 3.2. The bug is that GetIntegerv(LOCAL_GL_{MAJOR,MINOR}_VERSION)
-     * returns OpenGL 3.2 instead of generating an error.
-     */
-    if (!gl->IsGLES()) {
-        /**
-         * OpenGL 3.1 and OpenGL ES 3.0 both introduce GL_{MAJOR,MINOR}_VERSION
-         * with GetIntegerv. So we first try those constants even though we
-         * might not have an OpenGL context supporting them, as this is a
-         * better way than parsing GL_VERSION.
-         */
-        GLint majorVersion = 0;
-        GLint minorVersion = 0;
-
-        const bool ok = (gl->GetPotentialInteger(LOCAL_GL_MAJOR_VERSION,
-                                                 &majorVersion) &&
-                         gl->GetPotentialInteger(LOCAL_GL_MINOR_VERSION,
-                                                 &minorVersion));
-
-        // If it's not an OpenGL (ES) 3.0 context, we will have an error
-        if (ok &&
-            majorVersion > 0 &&
-            minorVersion >= 0)
-        {
-            *out_version = majorVersion * 100 + minorVersion * 10;
-            return true;
-        }
-    }
-
-    /**
-     * We were not able to use GL_{MAJOR,MINOR}_VERSION, so we parse
-     * GL_VERSION.
-     *
-     *
-     * OpenGL 2.x, 3.x, 4.x specifications:
-     *  The VERSION and SHADING_LANGUAGE_VERSION strings are laid out as follows:
-     *
-     *    <version number><space><vendor-specific information>
-     *
-     *  The version number is either of the form major_number.minor_number or
-     *  major_number.minor_number.release_number, where the numbers all have
-     *  one or more digits.
-     *
-     *
-     * OpenGL ES 2.0, 3.0 specifications:
-     *  The VERSION string is laid out as follows:
-     *
-     *     "OpenGL ES N.M vendor-specific information"
-     *
-     *  The version number is either of the form major_number.minor_number or
-     *  major_number.minor_number.release_number, where the numbers all have
-     *  one or more digits.
-     *
-     *
-     * Note:
-     *  We don't care about release_number.
-     */
-    const char* versionString = (const char*)gl->fGetString(LOCAL_GL_VERSION);
-
-    if (gl->fGetError() != LOCAL_GL_NO_ERROR) {
-        MOZ_ASSERT(false, "glGetString(GL_VERSION) has generated an error");
-        return false;
-    } else if (!versionString) {
-        MOZ_ASSERT(false, "glGetString(GL_VERSION) has returned 0");
-        return false;
-    }
-
-    const char kGLESVersionPrefix[] = "OpenGL ES ";
-    if (strncmp(versionString, kGLESVersionPrefix, strlen(kGLESVersionPrefix)) == 0) {
-        versionString += strlen(kGLESVersionPrefix);
-    }
-
-    const char* itr = versionString;
-    char* end = nullptr;
-    auto majorVersion = strtol(itr, &end, 10);
-
-    if (!end) {
-        MOZ_ASSERT(false, "Failed to parse the GL major version number.");
-        return false;
-    } else if (*end != '.') {
-        MOZ_ASSERT(false, "Failed to parse GL's major-minor version number separator.");
-        return false;
-    }
-
-    // we skip the '.' between the major and the minor version
-    itr = end + 1;
-
-    end = nullptr;
-
-    auto minorVersion = strtol(itr, &end, 10);
-    if (!end) {
-        MOZ_ASSERT(false, "Failed to parse GL's minor version number.");
-        return false;
-    }
-
-    if (majorVersion <= 0 || majorVersion >= 100) {
-        MOZ_ASSERT(false, "Invalid major version.");
-        return false;
-    } else if (minorVersion < 0 || minorVersion >= 10) {
-        MOZ_ASSERT(false, "Invalid minor version.");
-        return false;
-    }
-
-    *out_version = (uint32_t)majorVersion * 100 + (uint32_t)minorVersion * 10;
+    const auto& majorStr = match.str(1);
+    const auto& minorStr = match.str(2);
+    *out_major = atoi(majorStr.c_str());
+    *out_minor = atoi(minorStr.c_str());
     return true;
 }
 
@@ -449,9 +265,10 @@ ChooseDebugFlags(CreateContextFlags createFlags)
 }
 
 GLContext::GLContext(CreateContextFlags flags, const SurfaceCaps& caps,
-                     GLContext* sharedContext, bool isOffscreen)
+                     GLContext* sharedContext, bool isOffscreen, bool useTLSIsCurrent)
   : mIsOffscreen(isOffscreen),
     mContextLost(false),
+    mUseTLSIsCurrent(ShouldUseTLSIsCurrent(useTLSIsCurrent)),
     mVersion(0),
     mProfile(ContextProfile::Unknown),
     mShadingLanguageVersion(0),
@@ -473,11 +290,14 @@ GLContext::GLContext(CreateContextFlags flags, const SurfaceCaps& caps,
     mTextureAllocCrashesOnMapFailure(false),
     mNeedsCheckAfterAttachTextureToFb(false),
     mWorkAroundDriverBugs(true),
+    mSyncGLCallCount(0),
     mHeavyGLCallsSinceLastFlush(false)
 {
     mMaxViewportDims[0] = 0;
     mMaxViewportDims[1] = 0;
     mOwningThreadId = PlatformThread::CurrentId();
+    MOZ_ALWAYS_TRUE( sCurrentContext.init() );
+    sCurrentContext.set(nullptr);
 }
 
 GLContext::~GLContext() {
@@ -715,33 +535,55 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 
     ////////////////
 
-    MakeCurrent();
-    MOZ_ASSERT(mProfile != ContextProfile::Unknown);
+    if (!MakeCurrent()) {
+        return false;
+    }
 
-    uint32_t version = 0;
-    ParseGLVersion(this, &version);
+    const std::string versionStr = (const char*)fGetString(LOCAL_GL_VERSION);
+    if (versionStr.find("OpenGL ES") == 0) {
+        mProfile = ContextProfile::OpenGLES;
+    }
 
-    mShadingLanguageVersion = 100;
-    ParseGLSLVersion(this, &mShadingLanguageVersion);
+    uint32_t majorVer, minorVer;
+    if (!ParseVersion(versionStr, &majorVer, &minorVer)) {
+        MOZ_ASSERT(false, "Failed to parse GL_VERSION");
+        return false;
+    }
+    MOZ_ASSERT(majorVer < 10);
+    MOZ_ASSERT(minorVer < 10);
+    mVersion = majorVer*100 + minorVer*10;
+    if (mVersion < 200) {
+        // Mac OSX 10.6/10.7 machines with Intel GPUs claim only OpenGL 1.4 but
+        // have all the GL2+ extensions that we need.
+        mVersion = 200;
+    }
+
+    ////
+
+    const auto glslVersionStr = (const char*)fGetString(LOCAL_GL_SHADING_LANGUAGE_VERSION);
+    if (!glslVersionStr) {
+        // This happens on the Android emulators. We'll just return 100
+        mShadingLanguageVersion = 100;
+    } else if (ParseVersion(glslVersionStr, &majorVer, &minorVer)) {
+        MOZ_ASSERT(majorVer < 10);
+        MOZ_ASSERT(minorVer < 100);
+        mShadingLanguageVersion = majorVer*100 + minorVer;
+    } else {
+        MOZ_ASSERT(false, "Failed to parse GL_SHADING_LANGUAGE_VERSION");
+        return false;
+    }
 
     if (ShouldSpew()) {
-        printf_stderr("OpenGL version detected: %u\n", version);
-        printf_stderr("OpenGL shading language version detected: %u\n", mShadingLanguageVersion);
+        printf_stderr("GL version detected: %u\n", mVersion);
+        printf_stderr("GLSL version detected: %u\n", mShadingLanguageVersion);
         printf_stderr("OpenGL vendor: %s\n", fGetString(LOCAL_GL_VENDOR));
         printf_stderr("OpenGL renderer: %s\n", fGetString(LOCAL_GL_RENDERER));
     }
 
-    if (version >= mVersion) {
-        mVersion = version;
-    }
-    // Don't fail if version < mVersion, see bug 999445,
-    // Mac OSX 10.6/10.7 machines with Intel GPUs claim only OpenGL 1.4 but
-    // have all the GL2+ extensions that we need.
-
     ////////////////
 
     // Load OpenGL ES 2.0 symbols, or desktop if we aren't using ES 2.
-    if (IsGLES()) {
+    if (mProfile == ContextProfile::OpenGLES) {
         const SymLoadStruct symbols[] = {
             { (PRFuncPtr*) &mSymbols.fGetShaderPrecisionFormat, { "GetShaderPrecisionFormat", nullptr } },
             { (PRFuncPtr*) &mSymbols.fClearDepthf, { "ClearDepthf", nullptr } },
@@ -769,6 +611,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
             { (PRFuncPtr*) &mSymbols.fLoadIdentity, { "LoadIdentity", nullptr } },
             { (PRFuncPtr*) &mSymbols.fLoadMatrixf, { "LoadMatrixf", nullptr } },
             { (PRFuncPtr*) &mSymbols.fMatrixMode, { "MatrixMode", nullptr } },
+            { (PRFuncPtr*) &mSymbols.fPolygonMode, { "PolygonMode", nullptr } },
             { (PRFuncPtr*) &mSymbols.fTexGeni, { "TexGeni", nullptr } },
             { (PRFuncPtr*) &mSymbols.fTexGenf, { "TexGenf", nullptr } },
             { (PRFuncPtr*) &mSymbols.fTexGenfv, { "TexGenfv", nullptr } },
@@ -789,7 +632,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 
     // The order of these strings must match up with the order of the enum
     // defined in GLContext.h for vendor IDs.
-    const char* vendorMatchStrings[size_t(GLVendor::Other)] = {
+    const char* vendorMatchStrings[size_t(GLVendor::Other) + 1] = {
         "Intel",
         "NVIDIA",
         "ATI",
@@ -798,7 +641,8 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         "nouveau",
         "Vivante",
         "VMware, Inc.",
-        "ARM"
+        "ARM",
+        "Unknown"
     };
 
     mVendor = GLVendor::Other;
@@ -811,7 +655,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 
     // The order of these strings must match up with the order of the enum
     // defined in GLContext.h for renderer IDs.
-    const char* rendererMatchStrings[size_t(GLRenderer::Other)] = {
+    const char* rendererMatchStrings[size_t(GLRenderer::Other) + 1] = {
         "Adreno 200",
         "Adreno 205",
         "Adreno (TM) 200",
@@ -829,7 +673,8 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         "Android Emulator",
         "Gallium 0.4 on llvmpipe",
         "Intel HD Graphics 3000 OpenGL Engine",
-        "Microsoft Basic Render Driver"
+        "Microsoft Basic Render Driver",
+        "Unknown"
     };
 
     mRenderer = GLRenderer::Other;
@@ -841,39 +686,49 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
     }
 
     if (ShouldSpew()) {
-        const char* vendors[size_t(GLVendor::Other)] = {
-            "Intel",
-            "NVIDIA",
-            "ATI",
-            "Qualcomm"
-        };
-
-        MOZ_ASSERT(glVendorString);
-        if (mVendor < GLVendor::Other) {
-            printf_stderr("OpenGL vendor ('%s') recognized as: %s\n",
-                          glVendorString, vendors[size_t(mVendor)]);
-        } else {
-            printf_stderr("OpenGL vendor ('%s') not recognized.\n", glVendorString);
-        }
+        printf_stderr("GL_VENDOR: %s\n", glVendorString);
+        printf_stderr("mVendor: %s\n", vendorMatchStrings[size_t(mVendor)]);
+        printf_stderr("GL_RENDERER: %s\n", glRendererString);
+        printf_stderr("mRenderer: %s\n", rendererMatchStrings[size_t(mRenderer)]);
     }
 
     ////////////////
 
-    // We need this for retrieving the list of extensions on Core profiles.
-    if (IsFeatureProvidedByCoreSymbols(GLFeature::get_string_indexed)) {
+    if (mVersion >= 300) { // Both GL3 and ES3.
         const SymLoadStruct symbols[] = {
             { (PRFuncPtr*) &mSymbols.fGetStringi, { "GetStringi", nullptr } },
             END_SYMBOLS
         };
 
-        if (!LoadGLSymbols(this, prefix, trygl, symbols, "get_string_indexed")) {
-            MOZ_RELEASE_ASSERT(false, "GFX: get_string_indexed is required!");
+        if (!LoadGLSymbols(this, prefix, trygl, symbols, "GetStringi")) {
+            MOZ_RELEASE_ASSERT(false, "GFX: GetStringi is required!");
             return false;
         }
     }
 
     InitExtensions();
+    if (mProfile != ContextProfile::OpenGLES) {
+        if (mVersion >= 310 && !IsExtensionSupported(ARB_compatibility)) {
+            mProfile = ContextProfile::OpenGLCore;
+        } else {
+            mProfile = ContextProfile::OpenGLCompatibility;
+        }
+    }
+    MOZ_ASSERT(mProfile != ContextProfile::Unknown);
+
+    if (ShouldSpew()) {
+        const char* profileStr = "";
+        if (mProfile == ContextProfile::OpenGLES) {
+            profileStr = " es";
+        } else if (mProfile == ContextProfile::OpenGLCore) {
+            profileStr = " core";
+        }
+        printf_stderr("Detected profile: %u%s\n", mVersion, profileStr);
+    }
+
     InitFeatures();
+
+    ////
 
     // Disable extensions with partial or incorrect support.
     if (WorkAroundDriverBugs()) {
@@ -1012,6 +867,11 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 
     ////////////////
 
+    const auto err = mSymbols.fGetError();
+    MOZ_RELEASE_ASSERT(!err);
+    if (err)
+        return false;
+
     LoadMoreSymbols(prefix, trygl);
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1024,7 +884,10 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
     raw_fGetIntegerv(LOCAL_GL_MAX_VIEWPORT_DIMS, mMaxViewportDims);
 
 #ifdef XP_MACOSX
-    if (mWorkAroundDriverBugs) {
+    if (mWorkAroundDriverBugs &&
+        nsCocoaFeatures::OSXVersionMajor() == 10 &&
+        nsCocoaFeatures::OSXVersionMinor() < 12)
+    {
         if (mVendor == GLVendor::Intel) {
             // see bug 737182 for 2D textures, bug 684882 for cube map textures.
             mMaxTextureSize        = std::min(mMaxTextureSize,        4096);
@@ -1054,6 +917,13 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
             mMaxTextureSize /= 2;
             mMaxRenderbufferSize /= 2;
             mNeedsTextureSizeChecks = true;
+        }
+        // Bug 1367570. Explicitly set vertex attributes [1,3] to opaque
+        // black because Nvidia doesn't do it for us.
+        if (mVendor == GLVendor::NVIDIA) {
+            for (size_t i = 1; i <= 3; ++i) {
+                mSymbols.fVertexAttrib4f(i, 0, 0, 0, 1);
+            }
         }
     }
 #endif
@@ -1104,8 +974,6 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         mCaps.alpha = false;
     }
 
-    mTexGarbageBin = new TextureGarbageBin(this);
-
     MOZ_ASSERT(IsCurrent());
 
     if (ShouldSpew() && IsExtensionSupported(KHR_debug)) {
@@ -1119,8 +987,6 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
                              true);
     }
 
-    mVersionString = nsPrintfCString("%u.%u.%u", mVersion / 100, (mVersion / 10) % 10,
-                                     mVersion % 10);
     return true;
 }
 
@@ -1149,30 +1015,33 @@ GLContext::LoadMoreSymbols(const char* prefix, bool trygl)
     };
 
     if (IsSupported(GLFeature::robustness)) {
-        bool hasRobustness = false;
-
-        if (!hasRobustness && IsExtensionSupported(ARB_robustness)) {
-            const SymLoadStruct symbols[] = {
-                { (PRFuncPtr*) &mSymbols.fGetGraphicsResetStatus, { "GetGraphicsResetStatusARB", nullptr } },
-                END_SYMBOLS
-            };
-            if (fnLoadForExt(symbols, ARB_robustness)) {
-                hasRobustness = true;
+        const auto resetStrategy = GetIntAs<GLuint>(LOCAL_GL_RESET_NOTIFICATION_STRATEGY);
+        if (resetStrategy != LOCAL_GL_LOSE_CONTEXT_ON_RESET) {
+            NS_WARNING("Robustness supported, strategy is not LOSE_CONTEXT_ON_RESET!");
+            if (ShouldSpew()) {
+                const bool isDisabled = (resetStrategy == LOCAL_GL_NO_RESET_NOTIFICATION);
+                printf_stderr("Strategy: %s (0x%04x)",
+                              (isDisabled ? "disabled" : "unrecognized"),
+                              resetStrategy);
             }
-        }
-
-        if (!hasRobustness && IsExtensionSupported(EXT_robustness)) {
-            const SymLoadStruct symbols[] = {
-                { (PRFuncPtr*) &mSymbols.fGetGraphicsResetStatus, { "GetGraphicsResetStatusEXT", nullptr } },
-                END_SYMBOLS
-            };
-            if (fnLoadForExt(symbols, EXT_robustness)) {
-                hasRobustness = true;
-            }
-        }
-
-        if (!hasRobustness) {
             MarkUnsupported(GLFeature::robustness);
+        }
+    }
+    if (IsSupported(GLFeature::robustness)) {
+        const SymLoadStruct symbols[] = {
+            { (PRFuncPtr*) &mSymbols.fGetGraphicsResetStatus, { "GetGraphicsResetStatus",
+                                                                "GetGraphicsResetStatusARB",
+                                                                "GetGraphicsResetStatusKHR",
+                                                                "GetGraphicsResetStatusEXT",
+                                                                nullptr } },
+            END_SYMBOLS
+        };
+        if (fnLoadForFeature(symbols, GLFeature::robustness)) {
+            const auto status = mSymbols.fGetGraphicsResetStatus();
+            MOZ_ALWAYS_TRUE(!status);
+
+            const auto err = mSymbols.fGetError();
+            MOZ_ALWAYS_TRUE(!err);
         }
     }
 
@@ -1765,7 +1634,7 @@ GLContext::InitExtensions()
 
     std::vector<nsCString> driverExtensionList;
 
-    if (IsFeatureProvidedByCoreSymbols(GLFeature::get_string_indexed)) {
+    if (mSymbols.fGetStringi) {
         GLuint count = 0;
         GetUIntegerv(LOCAL_GL_NUM_EXTENSIONS, &count);
         for (GLuint i = 0; i < count; i++) {
@@ -1801,6 +1670,13 @@ GLContext::InitExtensions()
         if (Vendor() == GLVendor::Qualcomm) {
             // Some Adreno drivers do not report GL_OES_EGL_sync, but they really do support it.
             MarkExtensionSupported(OES_EGL_sync);
+        }
+
+        if (Vendor() == GLVendor::ATI) {
+            // ATI drivers say this extension exists, but we can't
+            // actually find the EGLImageTargetRenderbufferStorageOES
+            // extension function pointer in the drivers.
+            MarkExtensionUnsupported(OES_EGL_image);
         }
 
         if (Vendor() == GLVendor::Imagination &&
@@ -2151,13 +2027,13 @@ GLContext::AssembleOffscreenFBs(const GLuint colorMSRB,
     if (drawFB_out) {
         *drawFB_out = drawFB;
     } else if (drawFB) {
-        NS_RUNTIMEABORT("drawFB created when not requested!");
+        MOZ_CRASH("drawFB created when not requested!");
     }
 
     if (readFB_out) {
         *readFB_out = readFB;
     } else if (readFB) {
-        NS_RUNTIMEABORT("readFB created when not requested!");
+        MOZ_CRASH("readFB created when not requested!");
     }
 
     return isComplete;
@@ -2255,9 +2131,7 @@ GLContext::MarkDestroyed()
     mBlitHelper = nullptr;
     mReadTexImageHelper = nullptr;
 
-    if (MakeCurrent()) {
-        mTexGarbageBin->GLContextTeardown();
-    } else {
+    if (!MakeCurrent()) {
         NS_WARNING("MakeCurrent() failed during MarkDestroyed! Skipping GL object teardown.");
     }
 
@@ -2537,12 +2411,6 @@ GLContext::CleanDirtyScreen()
     AfterGLReadCall();
 }
 
-void
-GLContext::EmptyTexGarbageBin()
-{
-    TexGarbageBin()->EmptyGarbage();
-}
-
 bool
 GLContext::IsOffscreenSizeAllowed(const IntSize& aSize) const
 {
@@ -2583,8 +2451,9 @@ GLContext::FlushIfHeavyGLCallsSinceLastFlush()
     if (!mHeavyGLCallsSinceLastFlush) {
         return;
     }
-    MakeCurrent();
-    fFlush();
+    if (MakeCurrent()) {
+        fFlush();
+    }
 }
 
 /*static*/ bool
@@ -2637,14 +2506,13 @@ SplitByChar(const nsACString& str, const char delim, std::vector<nsCString>* con
         out->push_back(nsCString(substr));
 
         start = end + 1;
-        continue;
     }
 
     nsDependentCSubstring substr(str, start);
     out->push_back(nsCString(substr));
 }
 
-void
+bool
 GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
 {
     MOZ_ASSERT(src && dest);
@@ -2652,7 +2520,9 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
     MOZ_ASSERT(dest->GetFormat() == (src->mHasAlpha ? SurfaceFormat::B8G8R8A8
                                                     : SurfaceFormat::B8G8R8X8));
 
-    MakeCurrent();
+    if (!MakeCurrent()) {
+        return false;
+    }
 
     SharedSurface* prev = GetLockedSurface();
 
@@ -2731,6 +2601,8 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
         if (prev)
             prev->LockProd();
     }
+
+    return true;
 }
 
 // Do whatever tear-down is necessary after drawing to our offscreen FBO,
@@ -2881,6 +2753,35 @@ GLContext::fReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum f
     }
 
     AfterGLReadCall();
+
+    // Check if GL is giving back 1.0 alpha for
+    // RGBA reads to RGBA images from no-alpha buffers.
+#ifdef XP_MACOSX
+    if (WorkAroundDriverBugs() &&
+        Vendor() == gl::GLVendor::NVIDIA &&
+        format == LOCAL_GL_RGBA &&
+        type == LOCAL_GL_UNSIGNED_BYTE &&
+        !IsCoreProfile() &&
+        width && height)
+    {
+        GLint alphaBits = 0;
+        fGetIntegerv(LOCAL_GL_ALPHA_BITS, &alphaBits);
+        if (!alphaBits) {
+            const uint32_t alphaMask = 0xff000000;
+
+            uint32_t* itr = (uint32_t*)pixels;
+            uint32_t testPixel = *itr;
+            if ((testPixel & alphaMask) != alphaMask) {
+                // We need to set the alpha channel to 1.0 manually.
+                uint32_t* itrEnd = itr + width*height;  // Stride is guaranteed to be width*4.
+
+                for (; itr != itrEnd; itr++) {
+                    *itr |= alphaMask;
+                }
+            }
+        }
+    }
+#endif
 }
 
 void
@@ -3003,7 +2904,9 @@ GLContext::InitOffscreen(const gfx::IntSize& size, const SurfaceCaps& caps)
     if (!CreateScreenBuffer(size, caps))
         return false;
 
-    MakeCurrent();
+    if (!MakeCurrent()) {
+        return false;
+    }
     fBindFramebuffer(LOCAL_GL_FRAMEBUFFER, 0);
     fScissor(0, 0, size.width, size.height);
     fViewport(0, 0, size.width, size.height);
@@ -3116,6 +3019,51 @@ GetBytesPerTexel(GLenum format, GLenum type)
 
     gfxCriticalError() << "Unknown texture type " << type << " or format " << format;
     return 0;
+}
+
+bool GLContext::MakeCurrent(bool aForce)
+{
+    if (IsDestroyed())
+        return false;
+
+#ifdef MOZ_GL_DEBUG
+    PR_SetThreadPrivate(sCurrentGLContextTLS, this);
+
+    // XXX this assertion is disabled because it's triggering on Mac;
+    // we need to figure out why and reenable it.
+#if 0
+    // IsOwningThreadCurrent is a bit of a misnomer;
+    // the "owning thread" is the creation thread,
+    // and the only thread that can own this.  We don't
+    // support contexts used on multiple threads.
+    NS_ASSERTION(IsOwningThreadCurrent(),
+                 "MakeCurrent() called on different thread than this context was created on!");
+#endif
+#endif
+    if (mUseTLSIsCurrent && !aForce && sCurrentContext.get() == this) {
+        MOZ_ASSERT(IsCurrent());
+        return true;
+    }
+
+    if (!MakeCurrentImpl(aForce))
+        return false;
+
+    if (mUseTLSIsCurrent) {
+        sCurrentContext.set(this);
+    }
+
+    return true;
+}
+
+void
+GLContext::ResetSyncCallCount(const char* resetReason) const
+{
+    if (ShouldSpew()) {
+        printf_stderr("On %s, mSyncGLCallCount = %" PRIu64 "\n",
+                       resetReason, mSyncGLCallCount);
+    }
+
+    mSyncGLCallCount = 0;
 }
 
 } /* namespace gl */

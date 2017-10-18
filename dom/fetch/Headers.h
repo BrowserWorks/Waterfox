@@ -20,9 +20,9 @@ class ErrorResult;
 
 namespace dom {
 
-template<typename T> class MozMap;
-class HeadersOrByteStringSequenceSequenceOrByteStringMozMap;
-class OwningHeadersOrByteStringSequenceSequenceOrByteStringMozMap;
+template<typename K, typename V> class Record;
+class HeadersOrByteStringSequenceSequenceOrByteStringByteStringRecord;
+class OwningHeadersOrByteStringSequenceSequenceOrByteStringByteStringRecord;
 
 /**
  * This Headers class is only used to represent the content facing Headers
@@ -57,17 +57,17 @@ public:
 
   static already_AddRefed<Headers>
   Constructor(const GlobalObject& aGlobal,
-              const Optional<HeadersOrByteStringSequenceSequenceOrByteStringMozMap>& aInit,
+              const Optional<HeadersOrByteStringSequenceSequenceOrByteStringByteStringRecord>& aInit,
               ErrorResult& aRv);
 
   static already_AddRefed<Headers>
   Constructor(const GlobalObject& aGlobal,
-              const OwningHeadersOrByteStringSequenceSequenceOrByteStringMozMap& aInit,
+              const OwningHeadersOrByteStringSequenceSequenceOrByteStringByteStringRecord& aInit,
               ErrorResult& aRv);
 
   static already_AddRefed<Headers>
   Create(nsIGlobalObject* aGlobalObject,
-         const OwningHeadersOrByteStringSequenceSequenceOrByteStringMozMap& aInit,
+         const OwningHeadersOrByteStringSequenceSequenceOrByteStringByteStringRecord& aInit,
          ErrorResult& aRv);
 
   void Append(const nsACString& aName, const nsACString& aValue,
@@ -81,15 +81,14 @@ public:
     mInternalHeaders->Delete(aName, aRv);
   }
 
-  void Get(const nsACString& aName, nsCString& aValue, ErrorResult& aRv) const
+  void Get(const nsACString& aName, nsACString& aValue, ErrorResult& aRv) const
   {
     mInternalHeaders->Get(aName, aValue, aRv);
   }
 
-  void GetAll(const nsACString& aName, nsTArray<nsCString>& aResults,
-              ErrorResult& aRv) const
+  void GetFirst(const nsACString& aName, nsACString& aValue, ErrorResult& aRv) const
   {
-    mInternalHeaders->GetAll(aName, aResults, aRv);
+    mInternalHeaders->GetFirst(aName, aValue, aRv);
   }
 
   bool Has(const nsACString& aName, ErrorResult& aRv) const

@@ -36,6 +36,7 @@
 # include "jit/PerfSpewer.h"
 #endif
 #include "vm/MatchPairs.h"
+#include "vtune/VTuneWrapper.h"
 
 #include "jit/MacroAssembler-inl.h"
 
@@ -64,10 +65,11 @@ using namespace js::jit;
  * The tempN registers are free to use for computations.
  */
 
-NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc* alloc, RegExpShared* shared,
-                                                       JSRuntime* rt, Mode mode, int registers_to_save)
-  : RegExpMacroAssembler(*alloc, shared, registers_to_save),
-    runtime(rt), mode_(mode)
+NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(JSContext* cx, LifoAlloc* alloc,
+                                                       Mode mode, int registers_to_save,
+                                                       RegExpShared::JitCodeTables& tables)
+  : RegExpMacroAssembler(cx, *alloc, registers_to_save),
+    tables(tables), cx(cx), mode_(mode)
 {
     // Find physical registers for each compiler register.
     AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
@@ -157,8 +159,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     // avoid failing repeatedly when the regex code is called from Ion JIT code,
     // see bug 1208819.
     Label stack_ok;
-    void* stack_limit = runtime->addressOfJitStackLimitNoInterrupt();
-    masm.branchStackPtrRhs(Assembler::Below, AbsoluteAddress(stack_limit), &stack_ok);
+    void* context_addr = cx->zone()->group()->addressOfOwnerContext();
+    masm.loadPtr(AbsoluteAddress(context_addr), temp0);
+    Address limit_addr(temp0, offsetof(JSContext, jitStackLimitNoInterrupt));
+    masm.branchStackPtrRhs(Assembler::Below, limit_addr, &stack_ok);
 
     // Exit with an exception. There is not enough space on the stack
     // for our working registers.
@@ -272,7 +276,9 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     }
 
     // Initialize backtrack stack pointer.
-    masm.loadPtr(AbsoluteAddress(runtime->regexpStack.addressOfBase()), backtrack_stack_pointer);
+    size_t baseOffset = offsetof(JSContext, regexpStack) + RegExpStack::offsetOfBase();
+    masm.loadPtr(AbsoluteAddress(context_addr), backtrack_stack_pointer);
+    masm.loadPtr(Address(backtrack_stack_pointer, baseOffset), backtrack_stack_pointer);
     masm.storePtr(backtrack_stack_pointer,
                   Address(masm.getStackPointer(), offsetof(FrameData, backtrackStackBase)));
 
@@ -431,7 +437,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 
         Label grow_failed;
 
-        masm.movePtr(ImmPtr(runtime), temp1);
+        masm.movePtr(ImmPtr(cx->runtime()), temp1);
 
         // Save registers before calling C function
         LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
@@ -447,7 +453,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         masm.setupUnalignedABICall(temp0);
         masm.passABIArg(temp1);
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, GrowBacktrackStack));
-        masm.storeCallResult(temp0);
+        masm.storeCallWordResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
 
@@ -462,7 +468,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         Address backtrackStackBaseAddress(temp2, offsetof(FrameData, backtrackStackBase));
         masm.subPtr(backtrackStackBaseAddress, backtrack_stack_pointer);
 
-        masm.loadPtr(AbsoluteAddress(runtime->regexpStack.addressOfBase()), temp1);
+        void* context_addr = cx->zone()->group()->addressOfOwnerContext();
+        size_t baseOffset = offsetof(JSContext, regexpStack) + RegExpStack::offsetOfBase();
+        masm.loadPtr(AbsoluteAddress(context_addr), temp1);
+        masm.loadPtr(Address(temp1, baseOffset), temp1);
         masm.storePtr(temp1, backtrackStackBaseAddress);
         masm.addPtr(temp1, backtrack_stack_pointer);
 
@@ -490,6 +499,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "RegExp");
+#endif
+
+#ifdef MOZ_VTUNE
+    vtune::MarkRegExp(code, match_only);
 #endif
 
     for (size_t i = 0; i < labelPatches.length(); i++) {
@@ -541,8 +554,9 @@ NativeRegExpMacroAssembler::Backtrack()
 
     // Check for an interrupt.
     Label noInterrupt;
-    masm.branch32(Assembler::Equal,
-                  AbsoluteAddress(runtime->addressOfInterruptUint32()), Imm32(0),
+    void* contextAddr = cx->zone()->group()->addressOfOwnerContext();
+    masm.loadPtr(AbsoluteAddress(contextAddr), temp0);
+    masm.branch32(Assembler::Equal, Address(temp0, offsetof(JSContext, interrupt_)), Imm32(0),
                   &noInterrupt);
     masm.movePtr(ImmWord(RegExpRunStatus_Error), temp0);
     masm.jump(&exit_label_);
@@ -707,7 +721,7 @@ NativeRegExpMacroAssembler::CheckNotBackReference(int start_reg, Label* on_no_ma
 
     Label loop;
     masm.bind(&loop);
-    if (mode_ == ASCII) {
+    if (mode_ == LATIN1) {
         masm.load8ZeroExtend(Address(current_character, 0), temp0);
         masm.load8ZeroExtend(Address(temp1, 0), temp2);
     } else {
@@ -769,7 +783,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
     masm.addPtr(temp1, temp0);
     masm.branchPtr(Assembler::GreaterThan, temp0, ImmWord(0), BranchOrBacktrack(on_no_match));
 
-    if (mode_ == ASCII) {
+    if (mode_ == LATIN1) {
         Label success, fail;
 
         // Save register contents to make the registers available below. After
@@ -866,7 +880,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
             int (*fun)(const char16_t*, const char16_t*, size_t) = CaseInsensitiveCompareUCStrings;
             masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
         }
-        masm.storeCallResult(temp0);
+        masm.storeCallWordResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
 
@@ -918,11 +932,11 @@ NativeRegExpMacroAssembler::CheckCharacterNotInRange(char16_t from, char16_t to,
 }
 
 void
-NativeRegExpMacroAssembler::CheckBitInTable(uint8_t* table, Label* on_bit_set)
+NativeRegExpMacroAssembler::CheckBitInTable(RegExpShared::JitCodeTable table, Label* on_bit_set)
 {
     JitSpew(SPEW_PREFIX "CheckBitInTable");
 
-    masm.movePtr(ImmPtr(table), temp0);
+    masm.movePtr(ImmPtr(table.get()), temp0);
 
     // kTableMask is currently 127, so we need to mask even if the input is
     // Latin1. V8 has the same issue.
@@ -933,6 +947,13 @@ NativeRegExpMacroAssembler::CheckBitInTable(uint8_t* table, Label* on_bit_set)
 
     masm.load8ZeroExtend(BaseIndex(temp0, temp1, TimesOne), temp0);
     masm.branchTest32(Assembler::NonZero, temp0, temp0, BranchOrBacktrack(on_bit_set));
+
+    // Transfer ownership of |table| to the |tables| Vector.
+    {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!tables.append(Move(table)))
+            oomUnsafe.crash("RegExp table append");
+    }
 }
 
 void
@@ -987,7 +1008,7 @@ NativeRegExpMacroAssembler::LoadCurrentCharacterUnchecked(int cp_offset, int cha
 {
     JitSpew(SPEW_PREFIX "LoadCurrentCharacterUnchecked(%d, %d)", cp_offset, characters);
 
-    if (mode_ == ASCII) {
+    if (mode_ == LATIN1) {
         BaseIndex address(input_end_pointer, current_position, TimesOne, cp_offset);
         if (characters == 4) {
             masm.load32(address, current_character);
@@ -1100,10 +1121,11 @@ NativeRegExpMacroAssembler::CheckBacktrackStackLimit()
 {
     JitSpew(SPEW_PREFIX "CheckBacktrackStackLimit");
 
-    const void* limitAddr = runtime->regexpStack.addressOfLimit();
-
     Label no_stack_overflow;
-    masm.branchPtr(Assembler::AboveOrEqual, AbsoluteAddress(limitAddr),
+    void* context_addr = cx->zone()->group()->addressOfOwnerContext();
+    size_t limitOffset = offsetof(JSContext, regexpStack) + RegExpStack::offsetOfLimit();
+    masm.loadPtr(AbsoluteAddress(context_addr), temp1);
+    masm.branchPtr(Assembler::AboveOrEqual, Address(temp1, limitOffset),
                    backtrack_stack_pointer, &no_stack_overflow);
 
     // Copy the stack pointer before the call() instruction modifies it.
@@ -1262,7 +1284,7 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
     switch (type) {
       case 's':
         // Match space-characters.
-        if (mode_ == ASCII) {
+        if (mode_ == LATIN1) {
             // One byte space characters are '\t'..'\r', ' ' and \u00a0.
             Label success;
             masm.branch32(Assembler::Equal, current_character, Imm32(' '), &success);
@@ -1282,12 +1304,12 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
         // The emitted code for generic character classes is good enough.
         return false;
       case 'd':
-        // Match ASCII digits ('0'..'9')
+        // Match LATIN1 digits ('0'..'9')
         masm.computeEffectiveAddress(Address(current_character, -'0'), temp0);
         masm.branch32(Assembler::Above, temp0, Imm32('9' - '0'), branch);
         return true;
       case 'D':
-        // Match non ASCII-digits
+        // Match non LATIN1-digits
         masm.computeEffectiveAddress(Address(current_character, -'0'), temp0);
         masm.branch32(Assembler::BelowOrEqual, temp0, Imm32('9' - '0'), branch);
         return true;
@@ -1309,8 +1331,8 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
         return true;
       }
       case 'w': {
-        if (mode_ != ASCII) {
-            // Table is 128 entries, so all ASCII characters can be tested.
+        if (mode_ != LATIN1) {
+            // Table is 256 entries, so all LATIN1 characters can be tested.
             masm.branch32(Assembler::Above, current_character, Imm32('z'), branch);
         }
         MOZ_ASSERT(0 == word_character_map[0]);  // Character '\0' is not a word char.
@@ -1321,15 +1343,15 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
       }
       case 'W': {
         Label done;
-        if (mode_ != ASCII) {
-            // Table is 128 entries, so all ASCII characters can be tested.
+        if (mode_ != LATIN1) {
+            // Table is 256 entries, so all LATIN1 characters can be tested.
             masm.branch32(Assembler::Above, current_character, Imm32('z'), &done);
         }
         MOZ_ASSERT(0 == word_character_map[0]);  // Character '\0' is not a word char.
         masm.movePtr(ImmPtr(word_character_map), temp0);
         masm.load8ZeroExtend(BaseIndex(temp0, current_character, TimesOne), temp0);
         masm.branchTest32(Assembler::NonZero, temp0, temp0, branch);
-        if (mode_ != ASCII)
+        if (mode_ != LATIN1)
             masm.bind(&done);
         return true;
       }
@@ -1346,7 +1368,7 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
         // See if current character is '\n'^1 or '\r'^1, i.e., 0x0b or 0x0c
         masm.sub32(Imm32(0x0b), temp0);
 
-        if (mode_ == ASCII) {
+        if (mode_ == LATIN1) {
             masm.branch32(Assembler::Above, temp0, Imm32(0x0c - 0x0b), branch);
         } else {
             Label done;

@@ -38,17 +38,17 @@ TestUrgencyParent::Main()
     fail("sending Start");
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyParent::RecvTest1(uint32_t *value)
 {
   if (!SendReply1(value))
     fail("sending Reply1");
   if (*value != 99)
     fail("bad value");
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyParent::RecvTest2()
 {
   uint32_t value;
@@ -58,22 +58,22 @@ TestUrgencyParent::RecvTest2()
   inreply_ = false;
   if (value != 500)
     fail("bad value");
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyParent::RecvTest3(uint32_t *value)
 {
   if (inreply_)
     fail("nested non-urgent on top of urgent rpc");
   *value = 1000;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyParent::RecvFinalTest_Begin()
 {
-  return true;
+  return IPC_OK();
 }
 
 //-----------------------------------------------------------------------------
@@ -86,11 +86,11 @@ enum {
   kSecondTestGotReply,
 };
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyChild::RecvStart()
 {
   uint32_t result;
-  
+
   // Send a synchronous message, expect to get an urgent message while
   // blocked.
   test_ = kFirstTestBegin;
@@ -103,7 +103,7 @@ TestUrgencyChild::RecvStart()
 
   // Initiate the next test by sending an asynchronous message, then becoming
   // blocked. This tests that the urgent message is still delivered properly,
-  // and that the parent does not try to service the sync 
+  // and that the parent does not try to service the sync
   test_ = kSecondTestBegin;
   if (!SendTest2())
     fail("calling SendTest2");
@@ -119,10 +119,10 @@ TestUrgencyChild::RecvStart()
 
   Close();
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyChild::RecvReply1(uint32_t *reply)
 {
   if (test_ != kFirstTestBegin)
@@ -130,10 +130,10 @@ TestUrgencyChild::RecvReply1(uint32_t *reply)
 
   *reply = 99;
   test_ = kFirstTestGotReply;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgencyChild::RecvReply2(uint32_t *reply)
 {
   if (test_ != kSecondTestBegin)
@@ -144,7 +144,7 @@ TestUrgencyChild::RecvReply2(uint32_t *reply)
 
   *reply = 500;
   test_ = kSecondTestGotReply;
-  return true;
+  return IPC_OK();
 }
 
 TestUrgencyChild::TestUrgencyChild()

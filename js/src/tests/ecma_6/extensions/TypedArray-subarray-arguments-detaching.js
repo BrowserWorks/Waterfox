@@ -1,4 +1,3 @@
-// |reftest| skip-if(!xulRuntime.shell) -- needs detachArrayBuffer()
 /*
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/licenses/publicdomain/
@@ -17,7 +16,7 @@ print(BUGNUMBER + ": " + summary);
  * BEGIN TEST *
  **************/
 
-function testBegin(dataType)
+function testBegin()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -25,7 +24,7 @@ function testBegin(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         return 0x800;
       }
     };
@@ -44,10 +43,9 @@ function testBegin(dataType)
   assertEq(ok, true, "start weirdness should have thrown");
   assertEq(ab.byteLength, 0, "detaching should work for start weirdness");
 }
-testBegin("change-data");
-testBegin("same-data");
+testBegin();
 
-function testBeginWithEnd(dataType)
+function testBeginWithEnd()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -55,7 +53,7 @@ function testBeginWithEnd(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         return 0x800;
       }
     };
@@ -74,10 +72,9 @@ function testBeginWithEnd(dataType)
   assertEq(ok, true, "start weirdness should have thrown");
   assertEq(ab.byteLength, 0, "detaching should work for start weirdness");
 }
-testBeginWithEnd("change-data");
-testBeginWithEnd("same-data");
+testBeginWithEnd();
 
-function testEnd(dataType)
+function testEnd()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -85,7 +82,7 @@ function testEnd(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         return 0x1000;
       }
     };
@@ -104,8 +101,7 @@ function testEnd(dataType)
   assertEq(ok, true, "start weirdness should have thrown");
   assertEq(ab.byteLength, 0, "detaching should work for start weirdness");
 }
-testEnd("change-data");
-testEnd("same-data");
+testEnd();
 
 /******************************************************************************/
 

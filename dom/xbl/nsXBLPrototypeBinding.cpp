@@ -44,8 +44,8 @@
 #include "mozilla/dom/CDATASection.h"
 #include "mozilla/dom/Comment.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 #ifdef MOZ_XUL
 #include "nsXULElement.h"
@@ -230,12 +230,10 @@ nsXBLPrototypeBinding::GetAllowScripts() const
 }
 
 bool
-nsXBLPrototypeBinding::LoadResources()
+nsXBLPrototypeBinding::LoadResources(nsIContent* aBoundElement)
 {
   if (mResources) {
-    bool result;
-    mResources->LoadResources(&result);
-    return result;
+    return mResources->LoadResources(aBoundElement);
   }
 
   return true;
@@ -571,6 +569,12 @@ nsXBLPrototypeBinding::GetRuleProcessor()
   return nullptr;
 }
 
+const ServoStyleSet*
+nsXBLPrototypeBinding::GetServoStyleSet() const
+{
+  return mResources ? mResources->GetServoStyleSet() : nullptr;
+}
+
 void
 nsXBLPrototypeBinding::EnsureAttributeTable()
 {
@@ -631,7 +635,7 @@ nsXBLPrototypeBinding::ConstructAttributeTable(nsIContent* aElement)
         int32_t attributeNsID = kNameSpaceID_None;
 
         // Figure out if this token contains a :.
-        nsAutoString attrTok; attrTok.AssignWithConversion(token);
+        NS_ConvertASCIItoUTF16 attrTok(token);
         int32_t index = attrTok.Find("=", true);
         nsresult rv;
         if (index != -1) {
@@ -651,8 +655,7 @@ nsXBLPrototypeBinding::ConstructAttributeTable(nsIContent* aElement)
             return;
         }
         else {
-          nsAutoString tok;
-          tok.AssignWithConversion(token);
+          NS_ConvertASCIItoUTF16 tok(token);
           rv = nsContentUtils::SplitQName(aElement, tok, &atomNsID,
                                           getter_AddRefs(atom));
           if (NS_FAILED(rv))
@@ -1060,8 +1063,10 @@ nsXBLPrototypeBinding::Write(nsIObjectOutputStream* aStream)
   // write out the extends and display attribute values
   nsAutoCString extends;
   ResolveBaseBinding();
-  if (mBaseBindingURI)
-    mBaseBindingURI->GetSpec(extends);
+  if (mBaseBindingURI) {
+    rv = mBaseBindingURI->GetSpec(extends);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
 
   rv = aStream->WriteStringZ(extends.get());
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1599,7 +1604,8 @@ nsXBLPrototypeBinding::ResolveBaseBinding()
     mBinding->LookupNamespaceURI(prefix, nameSpace);
     if (!nameSpace.IsEmpty()) {
       int32_t nameSpaceID =
-        nsContentUtils::NameSpaceManager()->GetNameSpaceID(nameSpace);
+        nsContentUtils::NameSpaceManager()->GetNameSpaceID(nameSpace,
+                                                           nsContentUtils::IsChromeDoc(doc));
 
       nsCOMPtr<nsIAtom> tagName = NS_Atomize(display);
       // Check the white list
@@ -1625,7 +1631,7 @@ nsXBLPrototypeBinding::ResolveBaseBinding()
     mBinding->UnsetAttr(kNameSpaceID_None, nsGkAtoms::display, false);
 
     return NS_NewURI(getter_AddRefs(mBaseBindingURI), value,
-                     doc->GetDocumentCharacterSet().get(),
+                     doc->GetDocumentCharacterSet(),
                      doc->GetDocBaseURI());
   }
 
@@ -1641,14 +1647,14 @@ nsXBLPrototypeBinding::EnsureResources()
 }
 
 void
-nsXBLPrototypeBinding::AppendStyleSheet(StyleSheetHandle aSheet)
+nsXBLPrototypeBinding::AppendStyleSheet(StyleSheet* aSheet)
 {
   EnsureResources();
   mResources->AppendStyleSheet(aSheet);
 }
 
 void
-nsXBLPrototypeBinding::RemoveStyleSheet(StyleSheetHandle aSheet)
+nsXBLPrototypeBinding::RemoveStyleSheet(StyleSheet* aSheet)
 {
   if (!mResources) {
     MOZ_ASSERT(false, "Trying to remove a sheet that does not exist.");
@@ -1658,13 +1664,13 @@ nsXBLPrototypeBinding::RemoveStyleSheet(StyleSheetHandle aSheet)
   mResources->RemoveStyleSheet(aSheet);
 }
 void
-nsXBLPrototypeBinding::InsertStyleSheetAt(size_t aIndex, StyleSheetHandle aSheet)
+nsXBLPrototypeBinding::InsertStyleSheetAt(size_t aIndex, StyleSheet* aSheet)
 {
   EnsureResources();
   mResources->InsertStyleSheetAt(aIndex, aSheet);
 }
 
-StyleSheetHandle
+StyleSheet*
 nsXBLPrototypeBinding::StyleSheetAt(size_t aIndex) const
 {
   MOZ_ASSERT(mResources);
@@ -1685,7 +1691,7 @@ nsXBLPrototypeBinding::HasStyleSheets() const
 
 void
 nsXBLPrototypeBinding::AppendStyleSheetsTo(
-                                      nsTArray<StyleSheetHandle>& aResult) const
+                                      nsTArray<StyleSheet*>& aResult) const
 {
   if (mResources) {
     mResources->AppendStyleSheetsTo(aResult);

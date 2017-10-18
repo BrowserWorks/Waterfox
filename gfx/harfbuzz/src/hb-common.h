@@ -304,12 +304,22 @@ typedef enum
   /*7.0*/ HB_SCRIPT_TIRHUTA			= HB_TAG ('T','i','r','h'),
   /*7.0*/ HB_SCRIPT_WARANG_CITI			= HB_TAG ('W','a','r','a'),
 
-  /*8.0*/ HB_SCRIPT_AHOM                        = HB_TAG ('A','h','o','m'),
-  /*8.0*/ HB_SCRIPT_ANATOLIAN_HIEROGLYPHS       = HB_TAG ('H','l','u','w'),
-  /*8.0*/ HB_SCRIPT_HATRAN                      = HB_TAG ('H','a','t','r'),
-  /*8.0*/ HB_SCRIPT_MULTANI                     = HB_TAG ('M','u','l','t'),
-  /*8.0*/ HB_SCRIPT_OLD_HUNGARIAN               = HB_TAG ('H','u','n','g'),
-  /*8.0*/ HB_SCRIPT_SIGNWRITING                 = HB_TAG ('S','g','n','w'),
+  /*8.0*/ HB_SCRIPT_AHOM			= HB_TAG ('A','h','o','m'),
+  /*8.0*/ HB_SCRIPT_ANATOLIAN_HIEROGLYPHS	= HB_TAG ('H','l','u','w'),
+  /*8.0*/ HB_SCRIPT_HATRAN			= HB_TAG ('H','a','t','r'),
+  /*8.0*/ HB_SCRIPT_MULTANI			= HB_TAG ('M','u','l','t'),
+  /*8.0*/ HB_SCRIPT_OLD_HUNGARIAN		= HB_TAG ('H','u','n','g'),
+  /*8.0*/ HB_SCRIPT_SIGNWRITING			= HB_TAG ('S','g','n','w'),
+
+  /*
+   * Since 1.3.0
+   */
+  /*9.0*/ HB_SCRIPT_ADLAM			= HB_TAG ('A','d','l','m'),
+  /*9.0*/ HB_SCRIPT_BHAIKSUKI			= HB_TAG ('B','h','k','s'),
+  /*9.0*/ HB_SCRIPT_MARCHEN			= HB_TAG ('M','a','r','c'),
+  /*9.0*/ HB_SCRIPT_OSAGE			= HB_TAG ('O','s','g','e'),
+  /*9.0*/ HB_SCRIPT_TANGUT			= HB_TAG ('T','a','n','g'),
+  /*9.0*/ HB_SCRIPT_NEWA			= HB_TAG ('N','e','w','a'),
 
   /* No script set. */
   HB_SCRIPT_INVALID				= HB_TAG_NONE,
@@ -350,6 +360,42 @@ typedef struct hb_user_data_key_t {
 } hb_user_data_key_t;
 
 typedef void (*hb_destroy_func_t) (void *user_data);
+
+
+/* Font features and variations. */
+
+typedef struct hb_feature_t {
+  hb_tag_t      tag;
+  uint32_t      value;
+  unsigned int  start;
+  unsigned int  end;
+} hb_feature_t;
+
+HB_EXTERN hb_bool_t
+hb_feature_from_string (const char *str, int len,
+			hb_feature_t *feature);
+
+HB_EXTERN void
+hb_feature_to_string (hb_feature_t *feature,
+		      char *buf, unsigned int size);
+
+/**
+ * hb_variation_t:
+ *
+ * Since: 1.4.2
+ */
+typedef struct hb_variation_t {
+  hb_tag_t tag;
+  float    value;
+} hb_variation_t;
+
+HB_EXTERN hb_bool_t
+hb_variation_from_string (const char *str, int len,
+			  hb_variation_t *variation);
+
+HB_EXTERN void
+hb_variation_to_string (hb_variation_t *variation,
+			char *buf, unsigned int size);
 
 
 HB_END_DECLS

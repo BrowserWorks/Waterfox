@@ -10,8 +10,7 @@
 const {TimelineFront} = require("devtools/shared/fronts/timeline");
 
 add_task(function* () {
-  let browser = yield addTab("data:text/html;charset=utf-8,mop");
-  let doc = browser.contentDocument;
+  yield addTab("data:text/html;charset=utf-8,mop");
 
   initDebuggerServer();
   let client = new DebuggerClient(DebuggerServer.connectPipe());
@@ -46,7 +45,7 @@ add_task(function* () {
 
   info("Stop timeline marker recording");
   yield front.stop();
-  yield closeDebuggerClient(client);
+  yield client.close();
   gBrowser.removeCurrentTab();
 });
 

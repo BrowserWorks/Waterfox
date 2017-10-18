@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /********************************************************************
  * COPYRIGHT: 
  * Copyright (c) 2002-2006, International Business Machines Corporation and
@@ -8,6 +10,7 @@
 
 #include "unicode/datamap.h"
 #include "unicode/resbund.h"
+#include "unicode/unistr.h"
 #include "hash.h"
 #include <stdlib.h>
 
@@ -18,7 +21,7 @@ int32_t
 DataMap::utoi(const UnicodeString &s) const
 {
   char ch[256];
-  const UChar *u = s.getBuffer();
+  const UChar *u = toUCharPtr(s.getBuffer());
   int32_t len = s.length();
   u_UCharsToChars(u, ch, len);
   ch[len] = 0; /* include terminating \0 */

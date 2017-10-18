@@ -1,81 +1,116 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 // This test ensures that autoFilled values are not trimmed, unless the user
 // selects from the autocomplete popup.
 
-function test() {
-  waitForExplicitFinish();
-
+add_task(async function setup() {
   const PREF_TRIMURL = "browser.urlbar.trimURLs";
   const PREF_AUTOFILL = "browser.urlbar.autoFill";
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(async function() {
     Services.prefs.clearUserPref(PREF_TRIMURL);
     Services.prefs.clearUserPref(PREF_AUTOFILL);
+    await PlacesTestUtils.clearHistory();
     gURLBar.handleRevert();
   });
   Services.prefs.setBoolPref(PREF_TRIMURL, true);
   Services.prefs.setBoolPref(PREF_AUTOFILL, true);
 
   // Adding a tab would hit switch-to-tab, so it's safer to just add a visit.
-  let callback = {
-    handleError:  function () {},
-    handleResult: function () {},
-    handleCompletion: continue_test
-  };
-  let history = Cc["@mozilla.org/browser/history;1"]
-                  .getService(Ci.mozIAsyncHistory);
-  history.updatePlaces({ uri: NetUtil.newURI("http://www.autofilltrimurl.com/whatever")
-                       , visits: [ { transitionType: Ci.nsINavHistoryService.TRANSITION_TYPED
-                                   , visitDate:      Date.now() * 1000
-                                   } ]
-                       }, callback);
+  await PlacesTestUtils.addVisits([{
+    uri: "http://www.autofilltrimurl.com/whatever",
+    transition: Ci.nsINavHistoryService.TRANSITION_TYPED,
+  }, {
+    uri: "https://www.secureautofillurl.com/whatever",
+    transition: Ci.nsINavHistoryService.TRANSITION_TYPED,
+  }]);
+});
+
+async function promiseSearch(searchtext) {
+  gURLBar.focus();
+  gURLBar.inputField.value = searchtext.substr(0, searchtext.length - 1);
+  EventUtils.synthesizeKey(searchtext.substr(-1, 1), {});
+  await promiseSearchComplete();
 }
 
-function continue_test() {
-  function test_autoFill(aTyped, aExpected, aCallback) {
-    info(`Testing with input: ${aTyped}`);
-    gURLBar.inputField.value = aTyped.substr(0, aTyped.length - 1);
-    gURLBar.focus();
-    gURLBar.selectionStart = aTyped.length - 1;
-    gURLBar.selectionEnd = aTyped.length - 1;
+async function promiseTestResult(test) {
+  info("Searching for '${test.search}'");
 
-    EventUtils.synthesizeKey(aTyped.substr(-1), {});
-    waitForSearchComplete(function () {
-      info(`Got value: ${gURLBar.value}`);
-      is(gURLBar.value, aExpected, "Autofilled value is as expected");
-      aCallback();
-    });
-  }
+  await promiseSearch(test.search);
 
-  test_autoFill("http://", "http://", function () {
-    test_autoFill("http://au", "http://autofilltrimurl.com/", function () {
-      test_autoFill("http://www.autofilltrimurl.com", "http://www.autofilltrimurl.com/", function () {
-        // Now ensure selecting from the popup correctly trims.
-        is(gURLBar.controller.matchCount, 2, "Found the expected number of matches");
-        EventUtils.synthesizeKey("VK_DOWN", {});
-        is(gURLBar.textValue, "www.autofilltrimurl.com/whatever", "trim was applied correctly");
-        gURLBar.closePopup();
-        PlacesTestUtils.clearHistory().then(finish);
-      });
-    });
-  });
+  is(gURLBar.inputField.value, test.autofilledValue,
+     `Autofilled value is as expected for search '${test.search}'`);
+
+  let result = gURLBar.popup.richlistbox.getItemAtIndex(0);
+
+  is(result._titleText.textContent, test.resultListDisplayTitle,
+     `Autocomplete result should have displayed title as expected for search '${test.search}'`);
+
+  is(result._actionText.textContent, test.resultListActionText,
+     `Autocomplete action text should be as expected for search '${test.search}'`);
+
+  is(result.getAttribute("type"), test.resultListType,
+     `Autocomplete result should have searchengine for the type for search '${test.search}'`);
+
+  is(gURLBar.mController.getFinalCompleteValueAt(0), test.finalCompleteValue,
+     `Autocomplete item should go to the expected final value for search '${test.search}'`);
 }
 
-var gOnSearchComplete = null;
-function waitForSearchComplete(aCallback) {
-  info("Waiting for onSearchComplete");
-  if (!gOnSearchComplete) {
-    gOnSearchComplete = gURLBar.onSearchComplete;
-    registerCleanupFunction(() => {
-      gURLBar.onSearchComplete = gOnSearchComplete;
-    });
+const tests = [{
+    search: "http://",
+    autofilledValue: "http://",
+    resultListDisplayTitle: "http://",
+    resultListActionText: "Search with Google",
+    resultListType: "searchengine",
+    finalCompleteValue: 'moz-action:searchengine,{"engineName":"Google","input":"http%3A%2F%2F","searchQuery":"http%3A%2F%2F"}'
+  }, {
+    search: "https://",
+    autofilledValue: "https://",
+    resultListDisplayTitle: "https://",
+    resultListActionText: "Search with Google",
+    resultListType: "searchengine",
+    finalCompleteValue: 'moz-action:searchengine,{"engineName":"Google","input":"https%3A%2F%2F","searchQuery":"https%3A%2F%2F"}'
+  }, {
+    search: "au",
+    autofilledValue: "autofilltrimurl.com/",
+    resultListDisplayTitle: "www.autofilltrimurl.com",
+    resultListActionText: "Visit",
+    resultListType: "",
+    finalCompleteValue: "www.autofilltrimurl.com/"
+  }, {
+    search: "http://au",
+    autofilledValue: "http://autofilltrimurl.com/",
+    resultListDisplayTitle: "autofilltrimurl.com",
+    resultListActionText: "Visit",
+    resultListType: "",
+    finalCompleteValue: "http://autofilltrimurl.com/"
+  }, {
+    search: "sec",
+    autofilledValue: "secureautofillurl.com/",
+    resultListDisplayTitle: "https://www.secureautofillurl.com",
+    resultListActionText: "Visit",
+    resultListType: "",
+    finalCompleteValue: "https://www.secureautofillurl.com/"
+  }, {
+    search: "https://sec",
+    autofilledValue: "https://secureautofillurl.com/",
+    resultListDisplayTitle: "https://secureautofillurl.com",
+    resultListActionText: "Visit",
+    resultListType: "",
+    finalCompleteValue: "https://secureautofillurl.com/"
+  },
+];
+
+add_task(async function autofill_tests() {
+  for (let test of tests) {
+    await promiseTestResult(test);
   }
-  gURLBar.onSearchComplete = function () {
-    ok(gURLBar.popupOpen, "The autocomplete popup is correctly open");
-    gOnSearchComplete.apply(gURLBar);
-    aCallback();
-  }
-}
+});
+
+add_task(async function autofill_complete_domain() {
+  await promiseSearch("http://www.autofilltrimurl.com");
+  is(gURLBar.inputField.value, "http://www.autofilltrimurl.com/", "Autofilled value is as expected");
+
+  // Now ensure selecting from the popup correctly trims.
+  is(gURLBar.controller.matchCount, 2, "Found the expected number of matches");
+  EventUtils.synthesizeKey("VK_DOWN", {});
+  is(gURLBar.inputField.value, "www.autofilltrimurl.com/whatever", "trim was applied correctly");
+});

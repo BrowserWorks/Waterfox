@@ -13,61 +13,52 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/EnumeratedArray.h"
 
-#include "gfxVR.h"
+#include "VRDisplayHost.h"
 
 #include <osvr/ClientKit/ClientKitC.h>
 #include <osvr/ClientKit/DisplayC.h>
 
+#if defined(XP_MACOSX)
+class MacIOSurface;
+#endif
 namespace mozilla {
 namespace gfx {
 namespace impl {
 
-class HMDInfoOSVR : public VRHMDInfo, public VRHMDRenderingSupport
+class VRDisplayOSVR : public VRDisplayHost
 {
 public:
-  explicit HMDInfoOSVR(OSVR_ClientContext* context, OSVR_ClientInterface* iface,
-                       OSVR_DisplayConfig* display);
-
-  bool SetFOV(const VRFieldOfView& aFOVLeft, const VRFieldOfView& aFOVRight,
-              double zNear, double zFar) override;
-
-  VRHMDSensorState GetSensorState() override;
-  VRHMDSensorState GetImmediateSensorState() override;
-  bool KeepSensorTracking() override;
   void ZeroSensor() override;
-  void NotifyVsync(const TimeStamp& aVsyncTimestamp) override;
-
-  void FillDistortionConstants(uint32_t whichEye, const IntSize& textureSize,
-                               const IntRect& eyeViewport,
-                               const Size& destViewport, const Rect& destRect,
-                               VRDistortionConstants& values) override;
-
-  VRHMDRenderingSupport* GetRenderingSupport() override { return this; }
-
-  void Destroy();
-
-  /* VRHMDRenderingSupport */
-  already_AddRefed<RenderTargetSet> CreateRenderTargetSet(
-    layers::Compositor* aCompositor, const IntSize& aSize) override;
-  void DestroyRenderTargetSet(RenderTargetSet* aRTSet) override;
-  void SubmitFrame(RenderTargetSet* aRTSet, int32_t aInputFrameID) override;
 
 protected:
-  virtual ~HMDInfoOSVR()
+  VRHMDSensorState GetSensorState() override;
+  virtual void StartPresentation() override;
+  virtual void StopPresentation() override;
+
+#if defined(XP_WIN)
+  virtual bool SubmitFrame(mozilla::layers::TextureSourceD3D11* aSource,
+                           const IntSize& aSize,
+                           const gfx::Rect& aLeftEyeRect,
+                           const gfx::Rect& aRightEyeRect) override;
+#elif defined(XP_MACOSX)
+  virtual bool SubmitFrame(MacIOSurface* aMacIOSurface,
+                           const IntSize& aSize,
+                           const gfx::Rect& aLeftEyeRect,
+                           const gfx::Rect& aRightEyeRect) override;
+#endif
+
+public:
+  explicit VRDisplayOSVR(OSVR_ClientContext* context,
+                         OSVR_ClientInterface* iface,
+                         OSVR_DisplayConfig* display);
+
+protected:
+  virtual ~VRDisplayOSVR()
   {
     Destroy();
-    MOZ_COUNT_DTOR_INHERITED(HMDInfoOSVR, VRHMDInfo);
+    MOZ_COUNT_DTOR_INHERITED(VRDisplayOSVR, VRDisplayHost);
   }
-
-  // must match the size of VRDistortionVertex
-  struct DistortionVertex
-  {
-    float pos[2];
-    float texR[2];
-    float texG[2];
-    float texB[2];
-    float genericAttribs[4];
-  };
+  void Destroy();
 
   OSVR_ClientContext* m_ctx;
   OSVR_ClientInterface* m_iface;
@@ -76,16 +67,25 @@ protected:
 
 } // namespace impl
 
-class VRHMDManagerOSVR : public VRHMDManager
+class VRSystemManagerOSVR : public VRSystemManager
 {
 public:
-  static already_AddRefed<VRHMDManagerOSVR> Create();
-  virtual bool Init() override;
+  static already_AddRefed<VRSystemManagerOSVR> Create();
   virtual void Destroy() override;
-  virtual void GetHMDs(nsTArray<RefPtr<VRHMDInfo>>& aHMDResult) override;
+  virtual void Shutdown() override;
+  virtual bool GetHMDs(nsTArray<RefPtr<VRDisplayHost>>& aHMDResult) override;
+  virtual bool GetIsPresenting() override;
+  virtual void HandleInput() override;
+  virtual void GetControllers(nsTArray<RefPtr<VRControllerHost>>&
+                              aControllerResult) override;
+  virtual void ScanForControllers() override;
+  virtual void RemoveControllers() override;
+  virtual void VibrateHaptic(uint32_t aControllerIdx, uint32_t aHapticIndex,
+                             double aIntensity, double aDuration, uint32_t aPromiseID) override;
+  virtual void StopVibrateHaptic(uint32_t aControllerIdx) override;
 
 protected:
-  VRHMDManagerOSVR()
+  VRSystemManagerOSVR()
     : mOSVRInitialized(false)
     , mClientContextInitialized(false)
     , mDisplayConfigInitialized(false)
@@ -96,7 +96,9 @@ protected:
   {
   }
 
-  RefPtr<impl::HMDInfoOSVR> mHMDInfo;
+  bool Init();
+
+  RefPtr<impl::VRDisplayOSVR> mHMDInfo;
   bool mOSVRInitialized;
   bool mClientContextInitialized;
   bool mDisplayConfigInitialized;

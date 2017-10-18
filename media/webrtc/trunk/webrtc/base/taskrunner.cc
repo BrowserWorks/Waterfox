@@ -12,23 +12,15 @@
 
 #include "webrtc/base/taskrunner.h"
 
+#include "webrtc/base/checks.h"
 #include "webrtc/base/common.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/base/task.h"
 #include "webrtc/base/logging.h"
 
 namespace rtc {
 
 TaskRunner::TaskRunner()
-  : TaskParent(this),
-    next_timeout_task_(NULL),
-    tasks_running_(false)
-#ifdef _DEBUG
-    , abort_count_(0),
-    deleting_task_(NULL)
-#endif
-{
-}
+    : TaskParent(this) {}
 
 TaskRunner::~TaskRunner() {
   // this kills and deletes children silently!
@@ -55,8 +47,10 @@ void TaskRunner::InternalRunTasks(bool in_destructor) {
   // If that occurs, then tasks may be deleted in this method,
   // but pointers to them will still be in the
   // "ChildSet copy" in TaskParent::AbortAllChildren.
-  // Subsequent use of those task may cause data corruption or crashes.  
-  ASSERT(!abort_count_);
+  // Subsequent use of those task may cause data corruption or crashes.
+#if RTC_DCHECK_IS_ON
+  RTC_DCHECK(!abort_count_);
+#endif
   // Running continues until all tasks are Blocked (ok for a small # of tasks)
   if (tasks_running_) {
     return;  // don't reenter
@@ -64,7 +58,7 @@ void TaskRunner::InternalRunTasks(bool in_destructor) {
 
   tasks_running_ = true;
 
-  int64 previous_timeout_time = next_task_timeout();
+  int64_t previous_timeout_time = next_task_timeout();
 
   int did_run = true;
   while (did_run) {
@@ -88,11 +82,11 @@ void TaskRunner::InternalRunTasks(bool in_destructor) {
         need_timeout_recalc = true;
       }
 
-#ifdef _DEBUG
+#if RTC_DCHECK_IS_ON
       deleting_task_ = task;
 #endif
       delete task;
-#ifdef _DEBUG
+#if RTC_DCHECK_IS_ON
       deleting_task_ = NULL;
 #endif
       tasks_[i] = NULL;
@@ -135,7 +129,7 @@ void TaskRunner::PollTasks() {
   }
 }
 
-int64 TaskRunner::next_task_timeout() const {
+int64_t TaskRunner::next_task_timeout() const {
   if (next_timeout_task_) {
     return next_timeout_task_->timeout_time();
   }
@@ -150,9 +144,9 @@ int64 TaskRunner::next_task_timeout() const {
 // effectively making the task scheduler O-1 instead of O-N
 
 void TaskRunner::UpdateTaskTimeout(Task* task,
-                                   int64 previous_task_timeout_time) {
-  ASSERT(task != NULL);
-  int64 previous_timeout_time = next_task_timeout();
+                                   int64_t previous_task_timeout_time) {
+  RTC_DCHECK(task != NULL);
+  int64_t previous_timeout_time = next_task_timeout();
   bool task_is_timeout_task = next_timeout_task_ != NULL &&
       task->unique_id() == next_timeout_task_->unique_id();
   if (task_is_timeout_task) {
@@ -190,7 +184,7 @@ void TaskRunner::RecalcNextTimeout(Task *exclude_task) {
   //   we're not excluding it
   //   it has the closest timeout time
 
-  int64 next_timeout_time = 0;
+  int64_t next_timeout_time = 0;
   next_timeout_task_ = NULL;
 
   for (size_t i = 0; i < tasks_.size(); ++i) {
@@ -210,8 +204,8 @@ void TaskRunner::RecalcNextTimeout(Task *exclude_task) {
   }
 }
 
-void TaskRunner::CheckForTimeoutChange(int64 previous_timeout_time) {
-  int64 next_timeout = next_task_timeout();
+void TaskRunner::CheckForTimeoutChange(int64_t previous_timeout_time) {
+  int64_t next_timeout = next_task_timeout();
   bool timeout_change = (previous_timeout_time == 0 && next_timeout != 0) ||
       next_timeout < previous_timeout_time ||
       (previous_timeout_time <= CurrentTime() &&

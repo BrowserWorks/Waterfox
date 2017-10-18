@@ -20,7 +20,8 @@
 namespace mozilla {
 
 class DecodedStreamData;
-class MediaData;
+class AudioData;
+class VideoData;
 class MediaStream;
 class OutputStreamManager;
 struct PlaybackInfoInit;
@@ -34,8 +35,9 @@ class DecodedStream : public media::MediaSink {
 
 public:
   DecodedStream(AbstractThread* aOwnerThread,
-                MediaQueue<MediaData>& aAudioQueue,
-                MediaQueue<MediaData>& aVideoQueue,
+                AbstractThread* aMainThread,
+                MediaQueue<AudioData>& aAudioQueue,
+                MediaQueue<VideoData>& aVideoQueue,
                 OutputStreamManager* aOutputStreamManager,
                 const bool& aSameOrigin,
                 const PrincipalHandle& aPrincipalHandle);
@@ -45,8 +47,8 @@ public:
   void SetPlaybackParams(const PlaybackParams& aParams) override;
 
   RefPtr<GenericPromise> OnEnded(TrackType aType) override;
-  int64_t GetEndTime(TrackType aType) const override;
-  int64_t GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
+  media::TimeUnit GetEndTime(TrackType aType) const override;
+  media::TimeUnit GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
   bool HasUnplayedFrames(TrackType aType) const override
   {
     // TODO: implement this.
@@ -58,20 +60,27 @@ public:
   void SetPreservesPitch(bool aPreservesPitch) override;
   void SetPlaying(bool aPlaying) override;
 
-  void Start(int64_t aStartTime, const MediaInfo& aInfo) override;
+  void Start(const media::TimeUnit& aStartTime, const MediaInfo& aInfo) override;
   void Stop() override;
   bool IsStarted() const override;
   bool IsPlaying() const override;
+
+  nsCString GetDebugInfo() override;
 
 protected:
   virtual ~DecodedStream();
 
 private:
+  media::TimeUnit FromMicroseconds(int64_t aTime)
+  {
+    return media::TimeUnit::FromMicroseconds(aTime);
+  }
   void DestroyData(UniquePtr<DecodedStreamData> aData);
   void AdvanceTracks();
   void SendAudio(double aVolume, bool aIsSameOrigin, const PrincipalHandle& aPrincipalHandle);
   void SendVideo(bool aIsSameOrigin, const PrincipalHandle& aPrincipalHandle);
   void SendData();
+  void NotifyOutput(int64_t aTime);
 
   void AssertOwnerThread() const {
     MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
@@ -81,6 +90,8 @@ private:
   void DisconnectListener();
 
   const RefPtr<AbstractThread> mOwnerThread;
+
+  const RefPtr<AbstractThread> mAbstractMainThread;
 
   /*
    * Main thread only members.
@@ -100,16 +111,18 @@ private:
 
   PlaybackParams mParams;
 
-  Maybe<int64_t> mStartTime;
+  media::NullableTimeUnit mStartTime;
+  media::TimeUnit mLastOutputTime;
   MediaInfo mInfo;
 
-  MediaQueue<MediaData>& mAudioQueue;
-  MediaQueue<MediaData>& mVideoQueue;
+  MediaQueue<AudioData>& mAudioQueue;
+  MediaQueue<VideoData>& mVideoQueue;
 
   MediaEventListener mAudioPushListener;
   MediaEventListener mVideoPushListener;
   MediaEventListener mAudioFinishListener;
   MediaEventListener mVideoFinishListener;
+  MediaEventListener mOutputListener;
 };
 
 } // namespace mozilla

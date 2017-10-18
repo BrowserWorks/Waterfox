@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #if defined(JS_SIMULATOR_ARM)
+
 #include "jit/arm/Assembler-arm.h"
 #include "jit/arm/MoveEmitter-arm.h"
 #include "jit/arm/Simulator-arm.h"
@@ -71,7 +72,7 @@ BEGIN_TEST(testJitMoveEmitterCycles_simple)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     JitContext jc(cx, &alloc);
-    cx->getJitRuntime(cx);
+    cx->runtime()->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
     MoveResolver mr;
@@ -96,12 +97,20 @@ BEGIN_TEST(testJitMoveEmitterCycles_simple)
     masm.abiret();
     JitCode* code = linkAndAllocate(cx, &masm);
     sim->call(code->raw(), 1, 1);
-    CHECK(sim->get_double_from_d_register(2) == 2);
-    CHECK(int(sim->get_double_from_d_register(1)) == 1);
-    CHECK(int(sim->get_float_from_s_register(0)) == 0);
-    CHECK(int(sim->get_float_from_s_register(6)) == 6);
-    CHECK(int(sim->get_float_from_s_register(1)) == 1);
-    CHECK(int(sim->get_float_from_s_register(7)) == 7);
+    float f;
+    double d;
+    sim->get_double_from_d_register(2, &d);
+    CHECK(d == 2);
+    sim->get_double_from_d_register(1, &d);
+    CHECK(int(d) == 1);
+    sim->get_float_from_s_register(0, &f);
+    CHECK(int(f) == 0);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 6);
+    sim->get_float_from_s_register(1, &f);
+    CHECK(int(f) == 1);
+    sim->get_float_from_s_register(7, &f);
+    CHECK(int(f) == 7);
     return true;
 }
 END_TEST(testJitMoveEmitterCycles_simple)
@@ -112,7 +121,7 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     JitContext jc(cx, &alloc);
-    cx->getJitRuntime(cx);
+    cx->runtime()->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
     MoveResolver mr;
@@ -176,31 +185,58 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen)
     JitCode* code = linkAndAllocate(cx, &masm);
     sim->skipCalleeSavedRegsCheck = true;
     sim->call(code->raw(), 1, 1);
-    CHECK(int(sim->get_double_from_d_register(14)) == 9);
-    CHECK(int(sim->get_float_from_s_register(25)) == 24);
-    CHECK(int(sim->get_double_from_d_register(0)) == 3);
-    CHECK(int(sim->get_float_from_s_register(31)) == 10);
-    CHECK(int(sim->get_double_from_d_register(10)) == 1);
-    CHECK(int(sim->get_float_from_s_register(10)) == 8);
-    CHECK(int(sim->get_double_from_d_register(7)) == 2);
-    CHECK(int(sim->get_float_from_s_register(18)) == 20);
-    CHECK(int(sim->get_float_from_s_register(3)) == 1);
-    CHECK(int(sim->get_float_from_s_register(11)) == 17);
-    CHECK(int(sim->get_float_from_s_register(30)) == 22);
-    CHECK(int(sim->get_float_from_s_register(7)) == 31);
-    CHECK(int(sim->get_double_from_d_register(13)) == 3);
-    CHECK(int(sim->get_double_from_d_register(8)) == 9);
-    CHECK(int(sim->get_float_from_s_register(23)) == 31);
-    CHECK(int(sim->get_float_from_s_register(8)) == 13);
-    CHECK(int(sim->get_float_from_s_register(5)) == 28);
-    CHECK(int(sim->get_float_from_s_register(19)) == 31);
-    CHECK(int(sim->get_float_from_s_register(6)) == 20);
-    CHECK(int(sim->get_float_from_s_register(2)) == 0);
-    CHECK(int(sim->get_double_from_d_register(6)) == 7);
-    CHECK(int(sim->get_float_from_s_register(9)) == 13);
-    CHECK(int(sim->get_float_from_s_register(4)) == 1);
-    CHECK(int(sim->get_float_from_s_register(22)) == 29);
-    CHECK(int(sim->get_float_from_s_register(24)) == 25);
+    double d;
+    float f;
+    sim->get_double_from_d_register(14, &d);
+    CHECK(int(d) == 9);
+    sim->get_float_from_s_register(25, &f);
+    CHECK(int(f) == 24);
+    sim->get_double_from_d_register(0, &d);
+    CHECK(int(d) == 3);
+    sim->get_float_from_s_register(31, &f);
+    CHECK(int(f) == 10);
+    sim->get_double_from_d_register(10, &d);
+    CHECK(int(d) == 1);
+    sim->get_float_from_s_register(10, &f);
+    CHECK(int(f) == 8);
+    sim->get_double_from_d_register(7, &d);
+    CHECK(int(d) == 2);
+    sim->get_float_from_s_register(18, &f);
+    CHECK(int(f) == 20);
+    sim->get_float_from_s_register(3, &f);
+    CHECK(int(f) == 1);
+    sim->get_float_from_s_register(11, &f);
+    CHECK(int(f) == 17);
+    sim->get_float_from_s_register(30, &f);
+    CHECK(int(f) == 22);
+    sim->get_float_from_s_register(7, &f);
+    CHECK(int(f) == 31);
+    sim->get_double_from_d_register(13, &d);
+    CHECK(int(d) == 3);
+    sim->get_double_from_d_register(8, &d);
+    CHECK(int(d) == 9);
+    sim->get_float_from_s_register(23, &f);
+    CHECK(int(f) == 31);
+    sim->get_float_from_s_register(8, &f);
+    CHECK(int(f) == 13);
+    sim->get_float_from_s_register(5, &f);
+    CHECK(int(f) == 28);
+    sim->get_float_from_s_register(19, &f);
+    CHECK(int(f) == 31);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 20);
+    sim->get_float_from_s_register(2, &f);
+    CHECK(int(f) == 0);
+    sim->get_double_from_d_register(6, &d);
+    CHECK(int(d) == 7);
+    sim->get_float_from_s_register(9, &f);
+    CHECK(int(f) == 13);
+    sim->get_float_from_s_register(4, &f);
+    CHECK(int(f) == 1);
+    sim->get_float_from_s_register(22, &f);
+    CHECK(int(f) == 29);
+    sim->get_float_from_s_register(24, &f);
+    CHECK(int(f) == 25);
     return true;
 }
 END_TEST(testJitMoveEmitterCycles_autogen)
@@ -212,7 +248,7 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen2)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     JitContext jc(cx, &alloc);
-    cx->getJitRuntime(cx);
+    cx->runtime()->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
     MoveResolver mr;
@@ -284,35 +320,67 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen2)
     JitCode* code = linkAndAllocate(cx, &masm);
     sim->skipCalleeSavedRegsCheck = true;
     sim->call(code->raw(), 1, 1);
-    CHECK(int(sim->get_double_from_d_register(0)) == 10);
-    CHECK(int(sim->get_float_from_s_register(3)) == 15);
-    CHECK(int(sim->get_float_from_s_register(28)) == 2);
-    CHECK(int(sim->get_float_from_s_register(25)) == 30);
-    CHECK(int(sim->get_float_from_s_register(2)) == 16);
-    CHECK(int(sim->get_float_from_s_register(29)) == 2);
-    CHECK(int(sim->get_float_from_s_register(10)) == 17);
-    CHECK(int(sim->get_float_from_s_register(19)) == 2);
-    CHECK(int(sim->get_float_from_s_register(26)) == 9);
-    CHECK(int(sim->get_float_from_s_register(23)) == 1);
-    CHECK(int(sim->get_float_from_s_register(6)) == 8);
-    CHECK(int(sim->get_float_from_s_register(16)) == 24);
-    CHECK(int(sim->get_float_from_s_register(4)) == 19);
-    CHECK(int(sim->get_double_from_d_register(6)) == 5);
-    CHECK(int(sim->get_float_from_s_register(15)) == 18);
-    CHECK(int(sim->get_float_from_s_register(30)) == 23);
-    CHECK(int(sim->get_float_from_s_register(17)) == 27);
-    CHECK(int(sim->get_double_from_d_register(4)) == 3);
-    CHECK(int(sim->get_float_from_s_register(27)) == 14);
-    CHECK(int(sim->get_float_from_s_register(31)) == 2);
-    CHECK(int(sim->get_float_from_s_register(24)) == 2);
-    CHECK(int(sim->get_float_from_s_register(11)) == 31);
-    CHECK(int(sim->get_float_from_s_register(18)) == 0);
-    CHECK(int(sim->get_float_from_s_register(7)) == 24);
-    CHECK(int(sim->get_float_from_s_register(21)) == 0);
-    CHECK(int(sim->get_float_from_s_register(20)) == 27);
-    CHECK(int(sim->get_float_from_s_register(5)) == 14);
-    CHECK(int(sim->get_float_from_s_register(14)) == 2);
-    CHECK(int(sim->get_float_from_s_register(22)) == 12);
+
+    double d;
+    float f;
+    sim->get_double_from_d_register(0, &d);
+    CHECK(int(d) == 10);
+    sim->get_float_from_s_register(3, &f);
+    CHECK(int(f) == 15);
+    sim->get_float_from_s_register(28, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(25, &f);
+    CHECK(int(f) == 30);
+    sim->get_float_from_s_register(2, &f);
+    CHECK(int(f) == 16);
+    sim->get_float_from_s_register(29, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(10, &f);
+    CHECK(int(f) == 17);
+    sim->get_float_from_s_register(19, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(26, &f);
+    CHECK(int(f) == 9);
+    sim->get_float_from_s_register(23, &f);
+    CHECK(int(f) == 1);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 8);
+    sim->get_float_from_s_register(16, &f);
+    CHECK(int(f) == 24);
+    sim->get_float_from_s_register(4, &f);
+    CHECK(int(f) == 19);
+    sim->get_double_from_d_register(6, &d);
+    CHECK(int(d) == 5);
+    sim->get_float_from_s_register(15, &f);
+    CHECK(int(f) == 18);
+    sim->get_float_from_s_register(30, &f);
+    CHECK(int(f) == 23);
+    sim->get_float_from_s_register(17, &f);
+    CHECK(int(f) == 27);
+    sim->get_double_from_d_register(4, &d);
+    CHECK(int(d) == 3);
+    sim->get_float_from_s_register(27, &f);
+    CHECK(int(f) == 14);
+    sim->get_float_from_s_register(31, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(24, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(11, &f);
+    CHECK(int(f) == 31);
+    sim->get_float_from_s_register(18, &f);
+    CHECK(int(f) == 0);
+    sim->get_float_from_s_register(7, &f);
+    CHECK(int(f) == 24);
+    sim->get_float_from_s_register(21, &f);
+    CHECK(int(f) == 0);
+    sim->get_float_from_s_register(20, &f);
+    CHECK(int(f) == 27);
+    sim->get_float_from_s_register(5, &f);
+    CHECK(int(f) == 14);
+    sim->get_float_from_s_register(14, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(22, &f);
+    CHECK(int(f) == 12);
     return true;
 }
 END_TEST(testJitMoveEmitterCycles_autogen2)
@@ -325,7 +393,7 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen3)
     LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
     TempAllocator alloc(&lifo);
     JitContext jc(cx, &alloc);
-    cx->getJitRuntime(cx);
+    cx->runtime()->getJitRuntime(cx);
     MacroAssembler masm;
     MoveEmitter mover(masm);
     MoveResolver mr;
@@ -397,37 +465,160 @@ BEGIN_TEST(testJitMoveEmitterCycles_autogen3)
     JitCode* code = linkAndAllocate(cx, &masm);
     sim->skipCalleeSavedRegsCheck = true;
     sim->call(code->raw(), 1, 1);
-    CHECK(int(sim->get_float_from_s_register(21)) == 0);
-    CHECK(int(sim->get_float_from_s_register(26)) == 2);
-    CHECK(int(sim->get_float_from_s_register(20)) == 19);
-    CHECK(int(sim->get_float_from_s_register(24)) == 4);
-    CHECK(int(sim->get_float_from_s_register(9)) == 22);
-    CHECK(int(sim->get_float_from_s_register(28)) == 5);
-    CHECK(int(sim->get_float_from_s_register(7)) == 15);
-    CHECK(int(sim->get_float_from_s_register(14)) == 26);
-    CHECK(int(sim->get_float_from_s_register(30)) == 13);
-    CHECK(int(sim->get_float_from_s_register(22)) == 26);
-    CHECK(int(sim->get_float_from_s_register(6)) == 21);
-    CHECK(int(sim->get_float_from_s_register(31)) == 23);
-    CHECK(int(sim->get_float_from_s_register(12)) == 7);
-    CHECK(int(sim->get_float_from_s_register(10)) == 14);
-    CHECK(int(sim->get_double_from_d_register(8)) == 12);
-    CHECK(int(sim->get_float_from_s_register(1)) == 5);
-    CHECK(int(sim->get_double_from_d_register(2)) == 12);
-    CHECK(int(sim->get_float_from_s_register(8)) == 3);
-    CHECK(int(sim->get_float_from_s_register(0)) == 14);
-    CHECK(int(sim->get_float_from_s_register(29)) == 28);
-    CHECK(int(sim->get_double_from_d_register(9)) == 12);
-    CHECK(int(sim->get_float_from_s_register(2)) == 29);
-    CHECK(int(sim->get_float_from_s_register(27)) == 22);
-    CHECK(int(sim->get_float_from_s_register(3)) == 19);
-    CHECK(int(sim->get_float_from_s_register(11)) == 21);
-    CHECK(int(sim->get_float_from_s_register(13)) == 22);
-    CHECK(int(sim->get_float_from_s_register(25)) == 29);
-    CHECK(int(sim->get_float_from_s_register(15)) == 29);
-    CHECK(int(sim->get_float_from_s_register(23)) == 16);
+
+    float f;
+    double d;
+    sim->get_float_from_s_register(21, &f);
+    CHECK(int(f) == 0);
+    sim->get_float_from_s_register(26, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(20, &f);
+    CHECK(int(f) == 19);
+    sim->get_float_from_s_register(24, &f);
+    CHECK(int(f) == 4);
+    sim->get_float_from_s_register(9, &f);
+    CHECK(int(f) == 22);
+    sim->get_float_from_s_register(28, &f);
+    CHECK(int(f) == 5);
+    sim->get_float_from_s_register(7, &f);
+    CHECK(int(f) == 15);
+    sim->get_float_from_s_register(14, &f);
+    CHECK(int(f) == 26);
+    sim->get_float_from_s_register(30, &f);
+    CHECK(int(f) == 13);
+    sim->get_float_from_s_register(22, &f);
+    CHECK(int(f) == 26);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 21);
+    sim->get_float_from_s_register(31, &f);
+    CHECK(int(f) == 23);
+    sim->get_float_from_s_register(12, &f);
+    CHECK(int(f) == 7);
+    sim->get_float_from_s_register(10, &f);
+    CHECK(int(f) == 14);
+    sim->get_double_from_d_register(8, &d);
+    CHECK(int(d) == 12);
+    sim->get_float_from_s_register(1, &f);
+    CHECK(int(f) == 5);
+    sim->get_double_from_d_register(2, &d);
+    CHECK(int(d) == 12);
+    sim->get_float_from_s_register(8, &f);
+    CHECK(int(f) == 3);
+    sim->get_float_from_s_register(0, &f);
+    CHECK(int(f) == 14);
+    sim->get_float_from_s_register(29, &f);
+    CHECK(int(f) == 28);
+    sim->get_double_from_d_register(9, &d);
+    CHECK(int(d) == 12);
+    sim->get_float_from_s_register(2, &f);
+    CHECK(int(f) == 29);
+    sim->get_float_from_s_register(27, &f);
+    CHECK(int(f) == 22);
+    sim->get_float_from_s_register(3, &f);
+    CHECK(int(f) == 19);
+    sim->get_float_from_s_register(11, &f);
+    CHECK(int(f) == 21);
+    sim->get_float_from_s_register(13, &f);
+    CHECK(int(f) == 22);
+    sim->get_float_from_s_register(25, &f);
+    CHECK(int(f) == 29);
+    sim->get_float_from_s_register(15, &f);
+    CHECK(int(f) == 29);
+    sim->get_float_from_s_register(23, &f);
+    CHECK(int(f) == 16);
     return true;
 }
 END_TEST(testJitMoveEmitterCycles_autogen3)
+BEGIN_TEST(testJitMoveEmitterCycles_bug1299147_1)
+{
+    using namespace js;
+    using namespace js::jit;
+    LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    TempAllocator alloc(&lifo);
+    JitContext jc(cx, &alloc);
+    cx->runtime()->getJitRuntime(cx);
+    MacroAssembler masm;
+    MoveEmitter mover(masm);
+    MoveResolver mr;
+    mr.setAllocator(alloc);
+    Simulator* sim = Simulator::Current();
+    // S2 -> S0
+    // S2 -> S6
+    // S3 -> S1
+    // S3 -> S7
+    // D0 -> D1
+    // D0 -> D2
+    TRY(mr.addMove(MoveOperand(s2), MoveOperand(s0), MoveOp::FLOAT32));
+    TRY(mr.addMove(MoveOperand(s2), MoveOperand(s6), MoveOp::FLOAT32));
+    sim->set_s_register_from_float(2, 2);
+    TRY(mr.addMove(MoveOperand(s3), MoveOperand(s1), MoveOp::FLOAT32));
+    TRY(mr.addMove(MoveOperand(s3), MoveOperand(s7), MoveOp::FLOAT32));
+    sim->set_s_register_from_float(3, 4);
+    TRY(mr.addMove(MoveOperand(d0), MoveOperand(d1), MoveOp::FLOAT32));
+    TRY(mr.addMove(MoveOperand(d0), MoveOperand(d2), MoveOp::FLOAT32));
+    sim->set_d_register_from_double(0, 1);
+    // don't explode!
+    TRY(mr.resolve());
+    mover.emit(mr);
+    mover.finish();
+    masm.abiret();
+    JitCode* code = linkAndAllocate(cx, &masm);
+    sim->call(code->raw(), 1, 1);
+    float f;
+    double d;
+    sim->get_double_from_d_register(1, &d);
+    CHECK(d == 1);
+    sim->get_double_from_d_register(2, &d);
+    CHECK(d == 1);
+    sim->get_float_from_s_register(0, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(1, &f);
+    CHECK(int(f) == 4);
+    sim->get_float_from_s_register(7, &f);
+    CHECK(int(f) == 4);
+    return true;
+}
+END_TEST(testJitMoveEmitterCycles_bug1299147_1)
+BEGIN_TEST(testJitMoveEmitterCycles_bug1299147)
+{
+    using namespace js;
+    using namespace js::jit;
+    LifoAlloc lifo(LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
+    TempAllocator alloc(&lifo);
+    JitContext jc(cx, &alloc);
+    cx->runtime()->getJitRuntime(cx);
+    MacroAssembler masm;
+    MoveEmitter mover(masm);
+    MoveResolver mr;
+    mr.setAllocator(alloc);
+    Simulator* sim = Simulator::Current();
+    // S2 -> S5
+    // S2 -> S6
+    // D0 -> D1
+    TRY(mr.addMove(MoveOperand(s2), MoveOperand(s5), MoveOp::FLOAT32));
+    TRY(mr.addMove(MoveOperand(s2), MoveOperand(s6), MoveOp::FLOAT32));
+    sim->set_s_register_from_float(2, 2);
+    TRY(mr.addMove(MoveOperand(d0), MoveOperand(d1), MoveOp::FLOAT32));
+    sim->set_d_register_from_double(0, 1);
+    // don't explode!
+    TRY(mr.resolve());
+    mover.emit(mr);
+    mover.finish();
+    masm.abiret();
+    JitCode* code = linkAndAllocate(cx, &masm);
+    sim->call(code->raw(), 1, 1);
+    float f;
+    double d;
+    sim->get_double_from_d_register(1, &d);
+    CHECK(d == 1);
+    sim->get_float_from_s_register(5, &f);
+    CHECK(int(f) == 2);
+    sim->get_float_from_s_register(6, &f);
+    CHECK(int(f) == 2);
+    return true;
+}
+END_TEST(testJitMoveEmitterCycles_bug1299147)
 
-#endif
+#endif // JS_SIMULATOR_ARM

@@ -15,7 +15,7 @@
 js::Debugger::onLeaveFrame(JSContext* cx, AbstractFramePtr frame, jsbytecode* pc, bool ok)
 {
     MOZ_ASSERT_IF(frame.isInterpreterFrame(), frame.asInterpreterFrame() == cx->interpreterFrame());
-    MOZ_ASSERT_IF(frame.script()->isDebuggee(), frame.isDebuggee());
+    MOZ_ASSERT_IF(frame.hasScript() && frame.script()->isDebuggee(), frame.isDebuggee());
     /* Traps must be cleared from eval frames, see slowPathOnLeaveFrame. */
     mozilla::DebugOnly<bool> evalTraps = frame.isEvalFrame() &&
                                          frame.script()->hasAnyBreakpointsOrStepMode();
@@ -36,7 +36,7 @@ js::Debugger::fromJSObject(const JSObject* obj)
 /* static */ inline bool
 js::Debugger::checkNoExecute(JSContext* cx, HandleScript script)
 {
-    if (!cx->compartment()->isDebuggee() || !cx->runtime()->noExecuteDebuggerTop)
+    if (!cx->compartment()->isDebuggee() || !cx->noExecuteDebuggerTop)
         return true;
     return slowPathCheckNoExecute(cx, script);
 }
@@ -44,7 +44,7 @@ js::Debugger::checkNoExecute(JSContext* cx, HandleScript script)
 /* static */ JSTrapStatus
 js::Debugger::onEnterFrame(JSContext* cx, AbstractFramePtr frame)
 {
-    MOZ_ASSERT_IF(frame.script()->isDebuggee(), frame.isDebuggee());
+    MOZ_ASSERT_IF(frame.hasScript() && frame.script()->isDebuggee(), frame.isDebuggee());
     if (!frame.isDebuggee())
         return JSTRAP_CONTINUE;
     return slowPathOnEnterFrame(cx, frame);
@@ -69,18 +69,12 @@ js::Debugger::onExceptionUnwind(JSContext* cx, AbstractFramePtr frame)
 /* static */ void
 js::Debugger::onNewWasmInstance(JSContext* cx, Handle<WasmInstanceObject*> wasmInstance)
 {
-    auto& wasmInstances = cx->compartment()->wasmInstances;
-    if (!wasmInstances.initialized() && !wasmInstances.init())
-        return;
-    if (!wasmInstances.putNew(wasmInstance))
-        return;
-
     if (cx->compartment()->isDebuggee())
         slowPathOnNewWasmInstance(cx, wasmInstance);
 }
 
 inline bool
-js::Debugger::getScriptFrame(JSContext* cx, const ScriptFrameIter& iter,
+js::Debugger::getScriptFrame(JSContext* cx, const FrameIter& iter,
                              MutableHandle<DebuggerFrame*> result)
 {
     return getScriptFrameWithIter(cx, iter.abstractFramePtr(), &iter, result);
@@ -105,6 +99,20 @@ js::DebuggerObject::owner() const
 {
     JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
     return Debugger::fromJSObject(dbgobj);
+}
+
+inline js::PromiseObject*
+js::DebuggerObject::promise() const
+{
+    MOZ_ASSERT(isPromise());
+
+    JSObject* referent = this->referent();
+    if (IsCrossCompartmentWrapper(referent)) {
+        referent = CheckedUnwrap(referent);
+        MOZ_ASSERT(referent);
+    }
+
+    return &referent->as<PromiseObject>();
 }
 
 #endif /* vm_Debugger_inl_h */

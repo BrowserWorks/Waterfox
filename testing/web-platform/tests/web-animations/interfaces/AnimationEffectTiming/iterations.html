@@ -5,11 +5,15 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="../../testcommon.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
 <body>
 <div id="log"></div>
 <script>
 'use strict';
+
+test(function(t) {
+  var anim = createDiv(t).animate(null);
+  assert_equals(anim.effect.timing.iterations, 1);
+}, 'Test default value');
 
 test(function(t) {
   var div = createDiv(t);

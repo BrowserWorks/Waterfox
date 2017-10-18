@@ -15,22 +15,17 @@
 #include "mozilla/ipc/CrossProcessMutex.h"  // for CrossProcessMutex, etc
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/ImageBridgeChild.h"  // for ImageBridgeChild
-#include "mozilla/layers/PImageContainerChild.h"
 #include "mozilla/layers/ImageClient.h"  // for ImageClient
 #include "mozilla/layers/LayersMessages.h"
 #include "mozilla/layers/SharedPlanarYCbCrImage.h"
 #include "mozilla/layers/SharedRGBImage.h"
 #include "mozilla/layers/TextureClientRecycleAllocator.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "nsISupportsUtils.h"           // for NS_IF_ADDREF
 #include "YCbCrUtils.h"                 // for YCbCr conversions
-#ifdef MOZ_WIDGET_GONK
-#include "GrallocImages.h"
-#endif
-#if defined(MOZ_WIDGET_GONK) && defined(MOZ_B2G_CAMERA) && defined(MOZ_WEBRTC)
-#include "GonkCameraImage.h"
-#endif
 #include "gfx2DGlue.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/CheckedInt.h"
 
 #ifdef XP_MACOSX
 #include "mozilla/gfx/QuartzSupport.h"
@@ -39,6 +34,8 @@
 #ifdef XP_WIN
 #include "gfxWindowsPlatform.h"
 #include <d3d10_1.h>
+#include "mozilla/gfx/DeviceManagerDx.h"
+#include "mozilla/layers/D3D11YCbCrImage.h"
 #endif
 
 namespace mozilla {
@@ -103,142 +100,114 @@ BufferRecycleBin::ClearRecycledBuffers()
   mRecycledBufferSize = 0;
 }
 
-/**
- * The child side of PImageContainer. It's best to avoid ImageContainer filling
- * this role since IPDL objects should be associated with a single thread and
- * ImageContainer definitely isn't. This object belongs to (and is always
- * destroyed on) the ImageBridge thread, except when we need to destroy it
- * during shutdown.
- * An ImageContainer owns one of these; we have a weak reference to our
- * ImageContainer.
- */
-class ImageContainerChild : public PImageContainerChild {
-public:
-  explicit ImageContainerChild(ImageContainer* aImageContainer)
-    : mLock("ImageContainerChild")
-    , mImageContainer(aImageContainer)
-    , mImageContainerReleased(false)
-    , mIPCOpen(true)
-  {}
-
-  void ForgetImageContainer()
-  {
-    MutexAutoLock lock(mLock);
-    mImageContainer = nullptr;
-  }
-
-  // This protects mImageContainer. This is always taken before the
-  // mImageContainer's monitor (when both need to be held).
-  Mutex mLock;
-  ImageContainer* mImageContainer;
-  // If mImageContainerReleased is false when we try to deallocate this actor,
-  // it means the ImageContainer is still holding a pointer to this.
-  // mImageContainerReleased must not be accessed off the ImageBridgeChild thread.
-  bool mImageContainerReleased;
-  // If mIPCOpen is false, it means the IPDL code tried to deallocate the actor
-  // before the ImageContainer released it. When this happens we don't actually
-  // delete the actor right away because the ImageContainer has a reference to
-  // it. In this case the actor will be deleted when the ImageContainer lets go
-  // of it.
-  // mIPCOpen must not be accessed off the ImageBridgeChild thread.
-  bool mIPCOpen;
-};
-
-// static
-void
-ImageContainer::DeallocActor(PImageContainerChild* aActor)
+ImageContainerListener::ImageContainerListener(ImageContainer* aImageContainer)
+  : mLock("mozilla.layers.ImageContainerListener.mLock")
+  , mImageContainer(aImageContainer)
 {
-  MOZ_ASSERT(aActor);
-  MOZ_ASSERT(InImageBridgeChildThread());
+}
 
-  auto actor = static_cast<ImageContainerChild*>(aActor);
-  if (actor->mImageContainerReleased) {
-    delete actor;
-  } else {
-    actor->mIPCOpen = false;
+ImageContainerListener::~ImageContainerListener()
+{
+}
+
+void
+ImageContainerListener::NotifyComposite(const ImageCompositeNotification& aNotification)
+{
+  MutexAutoLock lock(mLock);
+  if (mImageContainer) {
+    mImageContainer->NotifyComposite(aNotification);
   }
 }
 
-// static
 void
-ImageContainer::AsyncDestroyActor(PImageContainerChild* aActor)
+ImageContainerListener::ClearImageContainer()
 {
-  MOZ_ASSERT(aActor);
-  MOZ_ASSERT(InImageBridgeChildThread());
+  MutexAutoLock lock(mLock);
+  mImageContainer = nullptr;
+}
 
-  auto actor = static_cast<ImageContainerChild*>(aActor);
+already_AddRefed<ImageClient>
+ImageContainer::GetImageClient()
+{
+  RecursiveMutexAutoLock mon(mRecursiveMutex);
+  EnsureImageClient();
+  RefPtr<ImageClient> imageClient = mImageClient;
+  return imageClient.forget();
+}
 
-  // Setting mImageContainerReleased to true means next time DeallocActor is
-  // called, the actor will be deleted.
-  actor->mImageContainerReleased = true;
+void
+ImageContainer::EnsureImageClient()
+{
+  // If we're not forcing a new ImageClient, then we can skip this if we don't have an existing
+  // ImageClient, or if the existing one belongs to an IPC actor that is still open.
+  if (!mIsAsync) {
+    return;
+  }
+  if (mImageClient && mImageClient->GetForwarder()->GetLayersIPCActor()->IPCOpen()) {
+    return;
+  }
 
-  if (actor->mIPCOpen && ImageBridgeChild::IsCreated() && !ImageBridgeChild::IsShutDown()) {
-    actor->SendAsyncDelete();
-  } else {
-    // The actor is already dead as far as IPDL is concerned, probably because
-    // of a channel error. We can deallocate it now.
-    DeallocActor(actor);
+  RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton();
+  if (imageBridge) {
+    mImageClient = imageBridge->CreateImageClient(CompositableType::IMAGE, this);
+    if (mImageClient) {
+      mAsyncContainerHandle = mImageClient->GetAsyncHandle();
+      mNotifyCompositeListener = new ImageContainerListener(this);
+    } else {
+      // It's okay to drop the async container handle since the ImageBridgeChild
+      // is going to die anyway.
+      mAsyncContainerHandle = CompositableHandle();
+      mNotifyCompositeListener = nullptr;
+    }
   }
 }
 
 ImageContainer::ImageContainer(Mode flag)
-: mReentrantMonitor("ImageContainer.mReentrantMonitor"),
+: mRecursiveMutex("ImageContainer.mRecursiveMutex"),
   mGenerationCounter(++sGenerationCounter),
   mPaintCount(0),
   mDroppedImageCount(0),
   mImageFactory(new ImageFactory()),
   mRecycleBin(new BufferRecycleBin()),
-  mImageClient(nullptr),
-  mCurrentProducerID(-1),
-  mIPDLChild(nullptr)
+  mIsAsync(flag == ASYNCHRONOUS),
+  mCurrentProducerID(-1)
 {
-  if (ImageBridgeChild::IsCreated()) {
-    // the refcount of this ImageClient is 1. we don't use a RefPtr here because the refcount
-    // of this class must be done on the ImageBridge thread.
-    switch (flag) {
-      case SYNCHRONOUS:
-        break;
-      case ASYNCHRONOUS:
-        mIPDLChild = new ImageContainerChild(this);
-        mImageClient = ImageBridgeChild::GetSingleton()->CreateImageClient(CompositableType::IMAGE, this).take();
-        MOZ_ASSERT(mImageClient);
-        break;
-      default:
-        MOZ_ASSERT(false, "This flag is invalid.");
-        break;
-    }
+  if (flag == ASYNCHRONOUS) {
+    EnsureImageClient();
   }
-  mAsyncContainerID = mImageClient ? mImageClient->GetAsyncID()
-                                   : sInvalidAsyncContainerId;
 }
 
-ImageContainer::ImageContainer(uint64_t aAsyncContainerID)
-  : mReentrantMonitor("ImageContainer.mReentrantMonitor"),
+ImageContainer::ImageContainer(const CompositableHandle& aHandle)
+  : mRecursiveMutex("ImageContainer.mRecursiveMutex"),
   mGenerationCounter(++sGenerationCounter),
   mPaintCount(0),
   mDroppedImageCount(0),
   mImageFactory(nullptr),
   mRecycleBin(nullptr),
-  mImageClient(nullptr),
-  mAsyncContainerID(aAsyncContainerID),
-  mCurrentProducerID(-1),
-  mIPDLChild(nullptr)
+  mIsAsync(true),
+  mAsyncContainerHandle(aHandle),
+  mCurrentProducerID(-1)
 {
-  MOZ_ASSERT(mAsyncContainerID != sInvalidAsyncContainerId);
+  MOZ_ASSERT(mAsyncContainerHandle);
 }
 
 ImageContainer::~ImageContainer()
 {
-  if (mIPDLChild) {
-    mIPDLChild->ForgetImageContainer();
-    ImageBridgeChild::DispatchReleaseImageClient(mImageClient, mIPDLChild);
+  if (mNotifyCompositeListener) {
+    mNotifyCompositeListener->ClearImageContainer();
+  }
+  if (mAsyncContainerHandle) {
+    if (RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton()) {
+      imageBridge->ForgetImageContainer(mAsyncContainerHandle);
+    }
   }
 }
 
 RefPtr<PlanarYCbCrImage>
 ImageContainer::CreatePlanarYCbCrImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  EnsureImageClient();
   if (mImageClient && mImageClient->AsImageClientSingle()) {
     return new SharedPlanarYCbCrImage(mImageClient);
   }
@@ -248,29 +217,18 @@ ImageContainer::CreatePlanarYCbCrImage()
 RefPtr<SharedRGBImage>
 ImageContainer::CreateSharedRGBImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  EnsureImageClient();
   if (!mImageClient || !mImageClient->AsImageClientSingle()) {
     return nullptr;
   }
   return new SharedRGBImage(mImageClient);
 }
 
-#ifdef MOZ_WIDGET_GONK
-RefPtr<OverlayImage>
-ImageContainer::CreateOverlayImage()
-{
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-  if (!mImageClient || !mImageClient->AsImageClientSingle()) {
-    return nullptr;
-  }
-  return new OverlayImage();
-}
-#endif
-
 void
 ImageContainer::SetCurrentImageInternal(const nsTArray<NonOwningImage>& aImages)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   mGenerationCounter = ++sGenerationCounter;
 
@@ -340,7 +298,7 @@ ImageContainer::SetCurrentImageInternal(const nsTArray<NonOwningImage>& aImages)
 void
 ImageContainer::ClearImagesFromImageBridge()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   SetCurrentImageInternal(nsTArray<NonOwningImage>());
 }
 
@@ -348,9 +306,11 @@ void
 ImageContainer::SetCurrentImages(const nsTArray<NonOwningImage>& aImages)
 {
   MOZ_ASSERT(!aImages.IsEmpty());
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-  if (mImageClient) {
-    ImageBridgeChild::DispatchImageClientUpdate(mImageClient, this);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
+  if (mIsAsync) {
+    if (RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton()) {
+      imageBridge->UpdateImageClient(this);
+    }
   }
   SetCurrentImageInternal(aImages);
 }
@@ -361,18 +321,20 @@ ImageContainer::ClearAllImages()
   if (mImageClient) {
     // Let ImageClient release all TextureClients. This doesn't return
     // until ImageBridge has called ClearCurrentImageFromImageBridge.
-    ImageBridgeChild::FlushAllImages(mImageClient, this);
+    if (RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton()) {
+      imageBridge->FlushAllImages(mImageClient, this);
+    }
     return;
   }
 
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   SetCurrentImageInternal(nsTArray<NonOwningImage>());
 }
 
 void
 ImageContainer::ClearCachedResources()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
   if (mImageClient && mImageClient->AsImageClientSingle()) {
     if (!mImageClient->HasTextureClientRecycler()) {
       return;
@@ -402,19 +364,21 @@ ImageContainer::SetCurrentImagesInTransaction(const nsTArray<NonOwningImage>& aI
 
 bool ImageContainer::IsAsync() const
 {
-  return mAsyncContainerID != sInvalidAsyncContainerId;
+  return mIsAsync;
 }
 
-uint64_t ImageContainer::GetAsyncContainerID() const
+CompositableHandle ImageContainer::GetAsyncContainerHandle()
 {
-  NS_ASSERTION(IsAsync(),"Shared image ID is only relevant to async ImageContainers");
-  return mAsyncContainerID;
+  NS_ASSERTION(IsAsync(), "Shared image ID is only relevant to async ImageContainers");
+  NS_ASSERTION(mAsyncContainerHandle, "Should have a shared image ID");
+  EnsureImageClient();
+  return mAsyncContainerHandle;
 }
 
 bool
 ImageContainer::HasCurrentImage()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   return !mCurrentImages.IsEmpty();
 }
@@ -423,7 +387,7 @@ void
 ImageContainer::GetCurrentImages(nsTArray<OwningImage>* aImages,
                                  uint32_t* aGenerationCounter)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   *aImages = mCurrentImages;
   if (aGenerationCounter) {
@@ -434,7 +398,7 @@ ImageContainer::GetCurrentImages(nsTArray<OwningImage>* aImages,
 gfx::IntSize
 ImageContainer::GetCurrentSize()
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   if (mCurrentImages.IsEmpty()) {
     return gfx::IntSize(0, 0);
@@ -444,9 +408,9 @@ ImageContainer::GetCurrentSize()
 }
 
 void
-ImageContainer::NotifyCompositeInternal(const ImageCompositeNotification& aNotification)
+ImageContainer::NotifyComposite(const ImageCompositeNotification& aNotification)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  RecursiveMutexAutoLock lock(mRecursiveMutex);
 
   // An image composition notification is sent the first time a particular
   // image is composited by an ImageHost. Thus, every time we receive such
@@ -477,6 +441,40 @@ ImageContainer::NotifyCompositeInternal(const ImageCompositeNotification& aNotif
         aNotification.imageTimeStamp();
   }
 }
+
+#ifdef XP_WIN
+D3D11YCbCrRecycleAllocator*
+ImageContainer::GetD3D11YCbCrRecycleAllocator(KnowsCompositor* aAllocator)
+{
+  if (mD3D11YCbCrRecycleAllocator &&
+      aAllocator == mD3D11YCbCrRecycleAllocator->GetAllocator()) {
+    return mD3D11YCbCrRecycleAllocator;
+  }
+
+  RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetContentDevice();
+  if (!device) {
+    device = gfx::DeviceManagerDx::Get()->GetCompositorDevice();
+  }
+
+  LayersBackend backend = aAllocator->GetCompositorBackendType();
+  if (!device || backend != LayersBackend::LAYERS_D3D11) {
+    return nullptr;
+  }
+
+  RefPtr<ID3D10Multithread> multi;
+  HRESULT hr =
+    device->QueryInterface((ID3D10Multithread**)getter_AddRefs(multi));
+  if (FAILED(hr) || !multi) {
+    gfxWarning() << "Multithread safety interface not supported. " << hr;
+    return nullptr;
+  }
+  multi->SetMultithreadProtected(TRUE);
+
+  mD3D11YCbCrRecycleAllocator =
+    new D3D11YCbCrRecycleAllocator(aAllocator, device);
+  return mD3D11YCbCrRecycleAllocator;
+}
+#endif
 
 PlanarYCbCrImage::PlanarYCbCrImage()
   : Image(nullptr, ImageFormat::PLANAR_YCBCR)
@@ -547,8 +545,15 @@ RecyclingPlanarYCbCrImage::CopyData(const Data& aData)
   mData = aData;
 
   // update buffer size
-  size_t size = mData.mCbCrStride * mData.mCbCrSize.height * 2 +
-                mData.mYStride * mData.mYSize.height;
+  // Use uint32_t throughout to match AllocateBuffer's param and mBufferSize
+  const auto checkedSize =
+    CheckedInt<uint32_t>(mData.mCbCrStride) * mData.mCbCrSize.height * 2 +
+    CheckedInt<uint32_t>(mData.mYStride) * mData.mYSize.height;
+
+  if (!checkedSize.isValid())
+    return false;
+
+  const auto size = checkedSize.value();
 
   // get new buffer
   mBuffer = AllocateBuffer(size);
@@ -578,7 +583,7 @@ gfxImageFormat
 PlanarYCbCrImage::GetOffscreenFormat()
 {
   return mOffscreenFormat == SurfaceFormat::UNKNOWN ?
-    gfxPlatform::GetPlatform()->GetOffscreenFormat() :
+    gfxVars::OffscreenFormat() :
     mOffscreenFormat;
 }
 
@@ -643,9 +648,7 @@ NVImage::NVImage()
 {
 }
 
-NVImage::~NVImage()
-{
-}
+NVImage::~NVImage() = default;
 
 IntSize
 NVImage::GetSize()
@@ -671,7 +674,7 @@ NVImage::GetAsSourceSurface()
   // logics in PlanarYCbCrImage::GetAsSourceSurface().
   const int bufferLength = mData.mYSize.height * mData.mYStride +
                            mData.mCbCrSize.height * mData.mCbCrSize.width * 2;
-  uint8_t* buffer = new uint8_t[bufferLength];
+  auto *buffer = new uint8_t[bufferLength];
 
   Data aData = mData;
   aData.mCbCrStride = aData.mCbCrSize.width;
@@ -753,8 +756,15 @@ NVImage::SetData(const Data& aData)
   MOZ_ASSERT((int)std::abs(aData.mCbChannel - aData.mCrChannel) == 1);
 
   // Calculate buffer size
-  const uint32_t size = aData.mYSize.height * aData.mYStride +
-                        aData.mCbCrSize.height * aData.mCbCrStride;
+  // Use uint32_t throughout to match AllocateBuffer's param and mBufferSize
+  const auto checkedSize =
+    CheckedInt<uint32_t>(aData.mYSize.height) * aData.mYStride +
+    CheckedInt<uint32_t>(aData.mCbCrSize.height) * aData.mCbCrStride;
+
+  if (!checkedSize.isValid())
+    return false;
+
+  const auto size = checkedSize.value();
 
   // Allocate a new buffer.
   mBuffer = AllocateBuffer(size);
@@ -797,90 +807,52 @@ NVImage::AllocateBuffer(uint32_t aSize)
 SourceSurfaceImage::SourceSurfaceImage(const gfx::IntSize& aSize, gfx::SourceSurface* aSourceSurface)
   : Image(nullptr, ImageFormat::CAIRO_SURFACE),
     mSize(aSize),
-    mSourceSurface(aSourceSurface)
+    mSourceSurface(aSourceSurface),
+    mTextureFlags(TextureFlags::DEFAULT)
 {}
 
 SourceSurfaceImage::SourceSurfaceImage(gfx::SourceSurface* aSourceSurface)
   : Image(nullptr, ImageFormat::CAIRO_SURFACE),
     mSize(aSourceSurface->GetSize()),
-    mSourceSurface(aSourceSurface)
+    mSourceSurface(aSourceSurface),
+    mTextureFlags(TextureFlags::DEFAULT)
 {}
 
-SourceSurfaceImage::~SourceSurfaceImage()
-{
-}
+SourceSurfaceImage::~SourceSurfaceImage() = default;
 
 TextureClient*
-SourceSurfaceImage::GetTextureClient(CompositableClient *aClient)
+SourceSurfaceImage::GetTextureClient(KnowsCompositor* aForwarder)
 {
-  if (!aClient) {
+  if (!aForwarder) {
     return nullptr;
   }
 
-  CompositableForwarder* forwarder = aClient->GetForwarder();
-  RefPtr<TextureClient> textureClient = mTextureClients.Get(forwarder->GetSerial());
+  auto entry = mTextureClients.LookupForAdd(aForwarder->GetSerial());
+  if (entry) {
+    return entry.Data();
+  }
+
+  RefPtr<TextureClient> textureClient;
+  RefPtr<SourceSurface> surface = GetAsSourceSurface();
+  MOZ_ASSERT(surface);
+  if (surface) {
+    // gfx::BackendType::NONE means default to content backend
+    textureClient =
+      TextureClient::CreateFromSurface(aForwarder,
+                                       surface,
+                                       BackendSelector::Content,
+                                       mTextureFlags,
+                                       ALLOC_DEFAULT);
+  }
   if (textureClient) {
+    textureClient->SyncWithObject(aForwarder->GetSyncObject());
+    entry.OrInsert([&textureClient](){ return textureClient; });
     return textureClient;
   }
 
-  RefPtr<SourceSurface> surface = GetAsSourceSurface();
-  MOZ_ASSERT(surface);
-  if (!surface) {
-    return nullptr;
-  }
-
-#ifdef MOZ_WIDGET_GONK
-  RefPtr<TextureClientRecycleAllocator> recycler =
-    aClient->GetTextureClientRecycler();
-  if (recycler) {
-    textureClient =
-      recycler->CreateOrRecycle(surface->GetFormat(),
-                                surface->GetSize(),
-                                BackendSelector::Content,
-                                aClient->GetTextureFlags());
-  }
-#endif
-  if (!textureClient) {
-    // gfx::BackendType::NONE means default to content backend
-    textureClient = aClient->CreateTextureClientForDrawing(surface->GetFormat(),
-                                                           surface->GetSize(),
-                                                           BackendSelector::Content,
-                                                           TextureFlags::DEFAULT);
-  }
-  if (!textureClient) {
-    return nullptr;
-  }
-
-  TextureClientAutoLock autoLock(textureClient, OpenMode::OPEN_WRITE_ONLY);
-  if (!autoLock.Succeeded()) {
-    return nullptr;
-  }
-
-  textureClient->UpdateFromSurface(surface);
-
-  textureClient->SyncWithObject(forwarder->GetSyncObject());
-
-  mTextureClients.Put(forwarder->GetSerial(), textureClient);
-  return textureClient;
-}
-
-PImageContainerChild*
-ImageContainer::GetPImageContainerChild()
-{
-  return mIPDLChild;
-}
-
-/* static */ void
-ImageContainer::NotifyComposite(const ImageCompositeNotification& aNotification)
-{
-  ImageContainerChild* child =
-      static_cast<ImageContainerChild*>(aNotification.imageContainerChild());
-  if (child) {
-    MutexAutoLock lock(child->mLock);
-    if (child->mImageContainer) {
-      child->mImageContainer->NotifyCompositeInternal(aNotification);
-    }
-  }
+  // Remove the speculatively added entry.
+  mTextureClients.Remove(aForwarder->GetSerial());
+  return nullptr;
 }
 
 ImageContainer::ProducerID

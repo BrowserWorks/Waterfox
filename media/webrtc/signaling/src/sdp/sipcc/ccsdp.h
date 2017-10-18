@@ -33,7 +33,7 @@ typedef enum rtp_ptype_
     RTP_H261         = 31,
     RTP_H264_P0      = 97,
     RTP_H264_P1      = 126,
-    RTP_AVT          = 101,
+    RTP_TELEPHONE_EVENT = 101,
     RTP_L16          = 102,
     RTP_H263         = 103,
     RTP_ILBC         = 116, /* used only to make an offer */
@@ -189,6 +189,9 @@ typedef enum {
     SDP_ATTR_IMAGEATTR,
     SDP_ATTR_SIMULCAST,
     SDP_ATTR_RID,
+    SDP_ATTR_DTLS_MESSAGE,
+    SDP_ATTR_SCTPPORT,
+    SDP_ATTR_MAXMESSAGESIZE,
     SDP_MAX_ATTR_TYPES,
     SDP_ATTR_INVALID
 } sdp_attr_e;

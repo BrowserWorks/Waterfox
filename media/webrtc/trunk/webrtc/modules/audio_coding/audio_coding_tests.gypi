@@ -18,7 +18,7 @@
       'type': '<(gtest_target_type)',
       'dependencies': [
         'audio_processing',
-        'iSACFix',
+        'isac_fix',
         'webrtc_opus',
         '<(DEPTH)/testing/gtest.gyp:gtest',
         '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
@@ -38,35 +38,5 @@
         }],
       ],
     },
-  ],
-  'conditions': [
-    ['OS=="android"', {
-      'targets': [
-        {
-          'target_name': 'audio_codec_speed_tests_apk_target',
-          'type': 'none',
-          'dependencies': [
-            '<(apk_tests_path):audio_codec_speed_tests_apk',
-          ],
-        },
-      ],
-    }],
-    ['test_isolation_mode != "noop"', {
-      'targets': [
-        {
-          'target_name': 'audio_codec_speed_tests_run',
-          'type': 'none',
-          'dependencies': [
-            'audio_codec_speed_tests',
-          ],
-          'includes': [
-            '../../build/isolate.gypi',
-          ],
-          'sources': [
-            'audio_codec_speed_tests.isolate',
-          ],
-        },
-      ],
-    }],
   ],
 }

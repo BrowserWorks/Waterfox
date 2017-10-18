@@ -1,31 +1,37 @@
 "use strict";
 
 /**
- * Cleans up the .dmp and .extra file from a crash.
+ * Returns the id of the crash minidump.
  *
  * @param subject (nsISupports)
  *        The subject passed through the ipc:content-shutdown
  *        observer notification when a content process crash has
  *        occurred.
+ * @returns {String} The crash dump id.
  */
-function cleanUpMinidump(subject) {
+function getCrashDumpId(subject) {
   Assert.ok(subject instanceof Ci.nsIPropertyBag2,
             "Subject needs to be a nsIPropertyBag2 to clean up properly");
-  let dumpID = subject.getPropertyAsAString("dumpID");
 
-  Assert.ok(dumpID, "There should be a dumpID");
-  if (dumpID) {
-    let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
-    dir.append("minidumps");
+  return subject.getPropertyAsAString("dumpID");
+}
 
-    let file = dir.clone();
-    file.append(dumpID + ".dmp");
-    file.remove(true);
+/**
+ * Cleans up the .dmp and .extra file from a crash.
+ *
+ * @param id {String} The crash dump id.
+ */
+function cleanUpMinidump(id) {
+  let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+  dir.append("minidumps");
 
-    file = dir.clone();
-    file.append(dumpID + ".extra");
-    file.remove(true);
-  }
+  let file = dir.clone();
+  file.append(id + ".dmp");
+  file.remove(true);
+
+  file = dir.clone();
+  file.append(id + ".extra");
+  file.remove(true);
 }
 
 /**
@@ -34,7 +40,7 @@ function cleanUpMinidump(subject) {
  * that a oop-browser-crashed event is not sent to the new
  * frameloader's browser element.
  */
-add_task(function* test_crash_in_previous_frameloader() {
+add_task(async function test_crash_in_previous_frameloader() {
   // On debug builds, crashing tabs results in much thinking, which
   // slows down the test and results in intermittent test timeouts,
   // so we'll pump up the expected timeout for this test.
@@ -45,10 +51,10 @@ add_task(function* test_crash_in_previous_frameloader() {
     return;
   }
 
-  yield BrowserTestUtils.withNewTab({
+  await BrowserTestUtils.withNewTab({
     gBrowser,
     url: "http://example.com",
-  }, function*(browser) {
+  }, async function(browser) {
     // First, sanity check...
     Assert.ok(browser.isRemoteBrowser,
               "This browser needs to be remote if this test is going to " +
@@ -71,7 +77,7 @@ add_task(function* test_crash_in_previous_frameloader() {
 
     // The name of the game is to cause a crash in a remote browser,
     // and then immediately swap out the browser for a non-remote one.
-    yield ContentTask.spawn(browser, null, function() {
+    await ContentTask.spawn(browser, null, function() {
       const Cu = Components.utils;
       Cu.import("resource://gre/modules/ctypes.jsm");
       Cu.import("resource://gre/modules/Timer.jsm");
@@ -83,28 +89,28 @@ add_task(function* test_crash_in_previous_frameloader() {
         badptr.contents
       };
 
-      // Use a timeout to give the parent a little extra time
-      // to flip the remoteness of the browser. This has the
-      // potential to be a bit race-y, since in theory, the
-      // setTimeout could complete before the parent finishes
-      // the remoteness flip, which would mean we'd get the
-      // oop-browser-crashed event, and we'll fail here.
-      // Unfortunately, I can't find a way around that right
-      // now, since you cannot send a frameloader a message
-      // once its been replaced.
-      setTimeout(() => {
+      // When the parent flips the remoteness of the browser, the
+      // page should receive the pagehide event, which we'll then
+      // use to crash the frameloader.
+      addEventListener("pagehide", function() {
         dump("\nEt tu, Brute?\n");
         dies();
-      }, 0);
+      });
     });
 
     gBrowser.updateBrowserRemoteness(browser, false);
     info("Waiting for content process to go away.");
-    let [subject, data] = yield contentProcessGone;
+    let [subject /* , data */] = await contentProcessGone;
 
     // If we don't clean up the minidump, the harness will
     // complain.
-    cleanUpMinidump(subject);
+    let dumpID = getCrashDumpId(subject);
+
+    Assert.ok(dumpID, "There should be a dumpID");
+    if (dumpID) {
+      await Services.crashmanager.ensureCrashIsPresent(dumpID);
+      cleanUpMinidump(dumpID);
+    }
 
     info("Content process is gone!");
     Assert.ok(!sawTabCrashed,

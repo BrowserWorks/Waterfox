@@ -21,7 +21,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(AnimationTimeline)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow, mAnimations)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(AnimationTimeline)
@@ -37,16 +36,12 @@ NS_INTERFACE_MAP_END
 void
 AnimationTimeline::NotifyAnimationUpdated(Animation& aAnimation)
 {
-  if (mAnimations.Contains(&aAnimation)) {
-    return;
+  if (mAnimations.EnsureInserted(&aAnimation)) {
+    if (aAnimation.GetTimeline() && aAnimation.GetTimeline() != this) {
+      aAnimation.GetTimeline()->RemoveAnimation(&aAnimation);
+    }
+    mAnimationOrder.insertBack(&aAnimation);
   }
-
-  if (aAnimation.GetTimeline() && aAnimation.GetTimeline() != this) {
-    aAnimation.GetTimeline()->RemoveAnimation(&aAnimation);
-  }
-
-  mAnimations.PutEntry(&aAnimation);
-  mAnimationOrder.insertBack(&aAnimation);
 }
 
 void

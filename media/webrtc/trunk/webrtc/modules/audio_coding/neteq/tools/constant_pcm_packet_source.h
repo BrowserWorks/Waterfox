@@ -31,9 +31,7 @@ class ConstantPcmPacketSource : public PacketSource {
                           int sample_rate_hz,
                           int payload_type);
 
-  // Returns a pointer to the next packet. Will never return NULL. That is,
-  // the source is infinite.
-  Packet* NextPacket() override;
+  std::unique_ptr<Packet> NextPacket() override;
 
  private:
   void WriteHeader(uint8_t* packet_memory);
@@ -49,7 +47,7 @@ class ConstantPcmPacketSource : public PacketSource {
   uint32_t timestamp_;
   const uint32_t payload_ssrc_;
 
-  DISALLOW_COPY_AND_ASSIGN(ConstantPcmPacketSource);
+  RTC_DISALLOW_COPY_AND_ASSIGN(ConstantPcmPacketSource);
 };
 
 }  // namespace test

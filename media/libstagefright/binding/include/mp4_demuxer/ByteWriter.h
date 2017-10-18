@@ -6,7 +6,6 @@
 #define BYTE_WRITER_H_
 
 #include "mozilla/EndianUtils.h"
-#include "mozilla/Vector.h"
 #include "nsTArray.h"
 
 namespace mp4_demuxer {
@@ -14,7 +13,7 @@ namespace mp4_demuxer {
 class ByteWriter
 {
 public:
-  explicit ByteWriter(mozilla::Vector<uint8_t>& aData)
+  explicit ByteWriter(nsTArray<uint8_t>& aData)
     : mPtr(aData)
   {
   }
@@ -22,54 +21,55 @@ public:
   {
   }
 
-  void WriteU8(uint8_t aByte)
+  MOZ_MUST_USE bool WriteU8(uint8_t aByte)
   {
-    mPtr.append(aByte);
+    return Write(&aByte, 1);
   }
 
-  void WriteU16(uint16_t aShort)
+  MOZ_MUST_USE bool WriteU16(uint16_t aShort)
   {
     uint8_t c[2];
     mozilla::BigEndian::writeUint16(&c[0], aShort);
-    mPtr.append(&c[0], 2);
+    return Write(&c[0], 2);
   }
 
-  void WriteU32(uint32_t aLong)
+  MOZ_MUST_USE bool WriteU32(uint32_t aLong)
   {
     uint8_t c[4];
     mozilla::BigEndian::writeUint32(&c[0], aLong);
-    mPtr.append(&c[0], 4);
+    return Write(&c[0], 4);
   }
 
-  void Write32(int32_t aLong)
+  MOZ_MUST_USE bool Write32(int32_t aLong)
   {
     uint8_t c[4];
     mozilla::BigEndian::writeInt32(&c[0], aLong);
-    mPtr.append(&c[0], 4);
+    return Write(&c[0], 4);
   }
 
-  void WriteU64(uint64_t aLongLong)
+  MOZ_MUST_USE bool WriteU64(uint64_t aLongLong)
   {
     uint8_t c[8];
     mozilla::BigEndian::writeUint64(&c[0], aLongLong);
-    mPtr.append(&c[0], 8);
+    return Write(&c[0], 8);
   }
 
-  void Write64(int64_t aLongLong)
+  MOZ_MUST_USE bool Write64(int64_t aLongLong)
   {
     uint8_t c[8];
     mozilla::BigEndian::writeInt64(&c[0], aLongLong);
-    mPtr.append(&c[0], 8);
+    return Write(&c[0], 8);
   }
 
-  void Write(const uint8_t* aSrc, size_t aCount)
+  MOZ_MUST_USE bool Write(const uint8_t* aSrc, size_t aCount)
   {
-    mPtr.append(aSrc, aCount);
+    return mPtr.AppendElements(aSrc, aCount, mozilla::fallible);
   }
 
 private:
-  mozilla::Vector<uint8_t>& mPtr;
+  nsTArray<uint8_t>& mPtr;
 };
-}
+
+} // namespace mp4_demuxer
 
 #endif

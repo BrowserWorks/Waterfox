@@ -25,10 +25,12 @@
 #  include "nsPosixLocale.h"
 #endif
 
+using namespace mozilla;
+
 //
 // implementation constants
 const int LocaleListLength = 6;
-const char* LocaleList[LocaleListLength] = 
+const char* LocaleList[LocaleListLength] =
 {
 	NSILOCALE_COLLATE,
 	NSILOCALE_CTYPE,
@@ -63,7 +65,7 @@ static int posix_locale_category[LocaleListLength] =
 class nsLocaleService: public nsILocaleService {
 
 public:
-	
+
 	//
 	// nsISupports
 	//
@@ -91,7 +93,7 @@ protected:
 //
 // nsLocaleService methods
 //
-nsLocaleService::nsLocaleService(void) 
+nsLocaleService::nsLocaleService(void)
 {
 #ifdef XP_WIN
     nsAutoString        xpLocale;
@@ -159,7 +161,7 @@ nsLocaleService::nsLocaleService(void)
     }
     mSystemLocale = do_QueryInterface(resultLocale);
     mApplicationLocale = do_QueryInterface(resultLocale);
-       
+
 #endif // XP_UNIX
 
 #ifdef XP_MACOSX
@@ -334,7 +336,7 @@ nsLocaleService::GetLocaleFromAcceptLanguage(const char *acceptLanguage, nsILoca
   }
 
   //
-  // now create the locale 
+  // now create the locale
   //
   result = NS_ERROR_FAILURE;
   if (countLang>0) {

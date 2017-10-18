@@ -12,11 +12,11 @@
 #include "ImageTypes.h"                 // for ImageFormat, etc
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
 #include "mozilla/Mutex.h"              // for Mutex
-#include "mozilla/ReentrantMonitor.h"   // for ReentrantMonitorAutoEnter, etc
+#include "mozilla/RecursiveMutex.h"     // for RecursiveMutex, etc
 #include "mozilla/TimeStamp.h"          // for TimeStamp
 #include "mozilla/gfx/Point.h"          // For IntSize
-#include "mozilla/layers/GonkNativeHandle.h"
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend, etc
+#include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "nsAutoPtr.h"                  // for nsRefPtr, nsAutoArrayPtr, etc
 #include "nsAutoRef.h"                  // for nsCountedRef
@@ -58,8 +58,13 @@ public:
    */
   class SurfaceReleaser : public mozilla::Runnable {
   public:
-    explicit SurfaceReleaser(RawRef aRef) : mRef(aRef) {}
-    NS_IMETHOD Run() {
+    explicit SurfaceReleaser(RawRef aRef)
+      : mozilla::Runnable(
+          "nsAutoRefTraits<nsMainThreadSourceSurfaceRef>::SurfaceReleaser")
+      , mRef(aRef)
+    {
+    }
+    NS_IMETHOD Run() override {
       mRef->Release();
       return NS_OK;
     }
@@ -96,8 +101,13 @@ public:
    */
   class SurfaceReleaser : public mozilla::Runnable {
   public:
-    explicit SurfaceReleaser(RawRef aRef) : mRef(aRef) {}
-    NS_IMETHOD Run() {
+    explicit SurfaceReleaser(RawRef aRef)
+      : mozilla::Runnable(
+          "nsAutoRefTraits<nsOwningThreadSourceSurfaceRef>::SurfaceReleaser")
+      , mRef(aRef)
+    {
+    }
+    NS_IMETHOD Run() override {
       mRef->Release();
       return NS_OK;
     }
@@ -107,25 +117,23 @@ public:
   static RawRef Void() { return nullptr; }
   void Release(RawRef aRawRef)
   {
-    MOZ_ASSERT(mOwningThread);
-    bool current;
-    mOwningThread->IsOnCurrentThread(&current);
-    if (current) {
+    MOZ_ASSERT(mOwningEventTarget);
+    if (mOwningEventTarget->IsOnCurrentThread()) {
       aRawRef->Release();
       return;
     }
     nsCOMPtr<nsIRunnable> runnable = new SurfaceReleaser(aRawRef);
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
+    mOwningEventTarget->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
   }
   void AddRef(RawRef aRawRef)
   {
-    MOZ_ASSERT(!mOwningThread);
-    NS_GetCurrentThread(getter_AddRefs(mOwningThread));
+    MOZ_ASSERT(!mOwningEventTarget);
+    mOwningEventTarget = mozilla::GetCurrentThreadSerialEventTarget();
     aRawRef->AddRef();
   }
 
 private:
-  nsCOMPtr<nsIThread> mOwningThread;
+  nsCOMPtr<nsISerialEventTarget> mOwningEventTarget;
 };
 
 #endif
@@ -145,14 +153,16 @@ namespace layers {
 
 class ImageClient;
 class ImageCompositeNotification;
+class ImageContainer;
 class ImageContainerChild;
-class PImageContainerChild;
 class SharedPlanarYCbCrImage;
 class PlanarYCbCrImage;
 class TextureClient;
-class CompositableClient;
-class GrallocImage;
+class KnowsCompositor;
 class NVImage;
+#ifdef XP_WIN
+class D3D11YCbCrRecycleAllocator;
+#endif
 
 struct ImageBackendData
 {
@@ -163,27 +173,26 @@ protected:
 };
 
 /* Forward declarations for Image derivatives. */
+class GLImage;
 class EGLImageImage;
 class SharedRGBImage;
 #ifdef MOZ_WIDGET_ANDROID
 class SurfaceTextureImage;
 #elif defined(XP_MACOSX)
 class MacIOSurfaceImage;
-#elif defined(MOZ_WIDGET_GONK)
-class OverlayImage;
 #endif
 
 /**
  * A class representing a buffer of pixel data. The data can be in one
  * of various formats including YCbCr.
- * 
+ *
  * Create an image using an ImageContainer. Fill the image with data, and
  * then call ImageContainer::SetImage to display it. An image must not be
  * modified after calling SetImage. Image implementations do not need to
  * perform locking; when filling an Image, the Image client is responsible
  * for ensuring only one thread accesses the Image at a time, and after
  * SetImage the image is immutable.
- * 
+ *
  * When resampling an Image, only pixels within the buffer should be
  * sampled. For example, cairo images should be sampled in EXTEND_PAD mode.
  */
@@ -213,23 +222,19 @@ public:
 
   virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() = 0;
 
-  virtual GrallocImage* AsGrallocImage()
-  {
-    return nullptr;
-  }
-
   virtual bool IsValid() { return true; }
 
   virtual uint8_t* GetBuffer() { return nullptr; }
 
   /**
-   * For use with the CompositableClient only (so that the later can
+   * For use with the TextureForwarder only (so that the later can
    * synchronize the TextureClient with the TextureHost).
    */
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) { return nullptr; }
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) { return nullptr; }
 
   /* Access to derived classes. */
   virtual EGLImageImage* AsEGLImageImage() { return nullptr; }
+  virtual GLImage* AsGLImage() { return nullptr; }
 #ifdef MOZ_WIDGET_ANDROID
   virtual SurfaceTextureImage* AsSurfaceTextureImage() { return nullptr; }
 #endif
@@ -264,7 +269,7 @@ protected:
 
 /**
  * A RecycleBin is owned by an ImageContainer. We store buffers in it that we
- * want to recycle from one image to the next.It's a separate object from 
+ * want to recycle from one image to the next.It's a separate object from
  * ImageContainer because images need to store a strong ref to their RecycleBin
  * and we must avoid creating a reference loop between an ImageContainer and
  * its active image.
@@ -329,7 +334,25 @@ protected:
     const gfx::IntSize& aScaleHint,
     BufferRecycleBin *aRecycleBin);
 };
- 
+
+// Used to notify ImageContainer::NotifyComposite()
+class ImageContainerListener final {
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageContainerListener)
+
+public:
+  explicit ImageContainerListener(ImageContainer* aImageContainer);
+
+  void NotifyComposite(const ImageCompositeNotification& aNotification);
+  void ClearImageContainer();
+private:
+  typedef mozilla::Mutex Mutex;
+
+  ~ImageContainerListener();
+
+  Mutex mLock;
+  ImageContainer* mImageContainer;
+};
+
 /**
  * A class that manages Images for an ImageLayer. The only reason
  * we need a separate class here is that ImageLayers aren't threadsafe
@@ -352,8 +375,12 @@ protected:
  * updates the shared state to point to the new image and the old image
  * is immediately released (not true in Normal or Asynchronous modes).
  */
-class ImageContainer final : public SupportsWeakPtr<ImageContainer> {
+class ImageContainer final : public SupportsWeakPtr<ImageContainer>
+{
+  friend class ImageContainerChild;
+
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageContainer)
+
 public:
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(ImageContainer)
 
@@ -368,7 +395,7 @@ public:
    * async container ID.
    * @param aAsyncContainerID async container ID for which we are a proxy
    */
-  explicit ImageContainer(uint64_t aAsyncContainerID);
+  explicit ImageContainer(const CompositableHandle& aHandle);
 
   typedef uint32_t FrameID;
   typedef uint32_t ProducerID;
@@ -377,10 +404,6 @@ public:
 
   // Factory methods for shared image types.
   RefPtr<SharedRGBImage> CreateSharedRGBImage();
-
-#ifdef MOZ_WIDGET_GONK
-  RefPtr<OverlayImage> CreateOverlayImage();
-#endif
 
   struct NonOwningImage {
     explicit NonOwningImage(Image* aImage = nullptr,
@@ -397,7 +420,7 @@ public:
   /**
    * Set aImages as the list of timestamped to display. The Images must have
    * been created by this ImageContainer.
-   * Can be called on any thread. This method takes mReentrantMonitor
+   * Can be called on any thread. This method takes mRecursiveMutex
    * when accessing thread-shared state.
    * aImages must be non-empty. The first timestamp in the list may be
    * null but the others must not be, and the timestamps must increase.
@@ -409,12 +432,12 @@ public:
    * mProducerID is a unique ID for the stream of images. A change in the
    * mProducerID means changing to a new mFrameID namespace. All frames in
    * aImages must have the same mProducerID.
-   * 
+   *
    * The Image data must not be modified after this method is called!
    * Note that this must not be called if ENABLE_ASYNC has not been set.
    *
    * The implementation calls CurrentImageChanged() while holding
-   * mReentrantMonitor.
+   * mRecursiveMutex.
    *
    * If this ImageContainer has an ImageClient for async video:
    * Schedule a task to send the image to the compositor using the
@@ -445,11 +468,11 @@ public:
    * Set an Image as the current image to display. The Image must have
    * been created by this ImageContainer.
    * Must be called on the main thread, within a layers transaction.
-   * 
-   * This method takes mReentrantMonitor
+   *
+   * This method takes mRecursiveMutex
    * when accessing thread-shared state.
    * aImage can be null. While it's null, nothing will be painted.
-   * 
+   *
    * The Image data must not be modified after this method is called!
    * Note that this must not be called if ENABLE_ASYNC been set.
    *
@@ -473,11 +496,11 @@ public:
    *
    * Can be called from any thread.
    */
-  uint64_t GetAsyncContainerID() const;
+  CompositableHandle GetAsyncContainerHandle();
 
   /**
    * Returns if the container currently has an image.
-   * Can be called on any thread. This method takes mReentrantMonitor
+   * Can be called on any thread. This method takes mRecursiveMutex
    * when accessing thread-shared state.
    */
   bool HasCurrentImage();
@@ -505,7 +528,7 @@ public:
 
   /**
    * Returns the size of the image in pixels.
-   * Can be called on any thread. This method takes mReentrantMonitor when accessing
+   * Can be called on any thread. This method takes mRecursiveMutex when accessing
    * thread-shared state.
    */
   gfx::IntSize GetCurrentSize();
@@ -514,7 +537,7 @@ public:
    * Sets a size that the image is expected to be rendered at.
    * This is a hint for image backends to optimize scaling.
    * Default implementation in this class is to ignore the hint.
-   * Can be called on any thread. This method takes mReentrantMonitor
+   * Can be called on any thread. This method takes mRecursiveMutex
    * when accessing thread-shared state.
    */
   void SetScaleHint(const gfx::IntSize& aScaleHint)
@@ -522,7 +545,7 @@ public:
 
   void SetImageFactory(ImageFactory *aFactory)
   {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
     mImageFactory = aFactory ? aFactory : new ImageFactory();
   }
 
@@ -530,6 +553,11 @@ public:
   {
     return mImageFactory;
   }
+
+#ifdef XP_WIN
+  D3D11YCbCrRecycleAllocator* GetD3D11YCbCrRecycleAllocator(
+    KnowsCompositor* aAllocator);
+#endif
 
   /**
    * Returns the delay between the last composited image's presentation
@@ -541,7 +569,7 @@ public:
    */
   TimeDuration GetPaintDelay()
   {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
     return mPaintDelay;
   }
 
@@ -550,7 +578,7 @@ public:
    * and painted at least once.  Can be called from any thread.
    */
   uint32_t GetPaintCount() {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
     return mPaintCount;
   }
 
@@ -564,26 +592,31 @@ public:
    */
   uint32_t GetDroppedImageCount()
   {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
     return mDroppedImageCount;
   }
 
-  PImageContainerChild* GetPImageContainerChild();
-  static void NotifyComposite(const ImageCompositeNotification& aNotification);
+  void NotifyComposite(const ImageCompositeNotification& aNotification);
+
+  ImageContainerListener* GetImageContainerListener()
+  {
+    return mNotifyCompositeListener;
+  }
+
+  /**
+   * Get the ImageClient associated with this container. Returns only after
+   * validating, and it will recreate the image client if that fails.
+   * Returns nullptr if not applicable.
+   */
+  already_AddRefed<ImageClient> GetImageClient();
 
   /**
    * Main thread only.
    */
   static ProducerID AllocateProducerID();
 
-  /// ImageBridgeChild thread only.
-  static void AsyncDestroyActor(PImageContainerChild* aActor);
-
-  /// ImageBridgeChild thread only.
-  static void DeallocActor(PImageContainerChild* aActor);
-
 private:
-  typedef mozilla::ReentrantMonitor ReentrantMonitor;
+  typedef mozilla::RecursiveMutex RecursiveMutex;
 
   // Private destructor, to discourage deletion outside of Release():
   ~ImageContainer();
@@ -596,11 +629,15 @@ private:
   // calling this function!
   void EnsureActiveImage();
 
-  void NotifyCompositeInternal(const ImageCompositeNotification& aNotification);
+  void EnsureImageClient();
 
-  // ReentrantMonitor to protect thread safe access to the "current
+  // RecursiveMutex to protect thread safe access to the "current
   // image", and any other state which is shared between threads.
-  ReentrantMonitor mReentrantMonitor;
+  RecursiveMutex mRecursiveMutex;
+
+#ifdef XP_WIN
+  RefPtr<D3D11YCbCrRecycleAllocator> mD3D11YCbCrRecycleAllocator;
+#endif
 
   nsTArray<OwningImage> mCurrentImages;
 
@@ -612,10 +649,10 @@ private:
   // threadsafe.
   uint32_t mPaintCount;
 
-  // See GetPaintDelay. Accessed only with mReentrantMonitor held.
+  // See GetPaintDelay. Accessed only with mRecursiveMutex held.
   TimeDuration mPaintDelay;
 
-  // See GetDroppedImageCount. Accessed only with mReentrantMonitor held.
+  // See GetDroppedImageCount. Accessed only with mRecursiveMutex held.
   uint32_t mDroppedImageCount;
 
   // This is the image factory used by this container, layer managers using
@@ -634,18 +671,17 @@ private:
   // In this case the ImageContainer is perfectly usable, but it will forward
   // frames to the compositor through transactions in the main thread rather than
   // asynchronusly using the ImageBridge IPDL protocol.
-  ImageClient* mImageClient;
+  RefPtr<ImageClient> mImageClient;
 
-  uint64_t mAsyncContainerID;
+  bool mIsAsync;
+  CompositableHandle mAsyncContainerHandle;
 
   nsTArray<FrameID> mFrameIDsNotYetComposited;
   // ProducerID for last current image(s), including the frames in
   // mFrameIDsNotYetComposited
   ProducerID mCurrentProducerID;
 
-  // Object must be released on the ImageBridge thread. Field is immutable
-  // after creation of the ImageContainer.
-  ImageContainerChild* mIPDLChild;
+  RefPtr<ImageContainerListener> mNotifyCompositeListener;
 
   static mozilla::Atomic<uint32_t> sGenerationCounter;
 };
@@ -662,6 +698,23 @@ public:
   Image* GetImage() const
   {
     return mImages.IsEmpty() ? nullptr : mImages[0].mImage.get();
+  }
+
+  Image* GetImage(TimeStamp aTimeStamp) const
+  {
+    if (mImages.IsEmpty()) {
+      return nullptr;
+    }
+
+    MOZ_ASSERT(!aTimeStamp.IsNull());
+    uint32_t chosenIndex = 0;
+
+    while (chosenIndex + 1 < mImages.Length() &&
+           mImages[chosenIndex + 1].mTimeStamp <= aTimeStamp) {
+      ++chosenIndex;
+    }
+
+    return mImages[chosenIndex].mImage.get();
   }
 
 private:
@@ -686,6 +739,7 @@ struct PlanarYCbCrData {
   uint32_t mPicY;
   gfx::IntSize mPicSize;
   StereoMode mStereoMode;
+  YUVColorSpace mYUVColorSpace;
 
   gfx::IntRect GetPictureRect() const {
     return gfx::IntRect(mPicX, mPicY,
@@ -698,6 +752,7 @@ struct PlanarYCbCrData {
     , mCbChannel(nullptr), mCrChannel(nullptr)
     , mCbCrStride(0), mCbCrSize(0, 0) , mCbSkip(0), mCrSkip(0)
     , mPicX(0), mPicY(0), mPicSize(0, 0), mStereoMode(StereoMode::MONO)
+    , mYUVColorSpace(YUVColorSpace::BT601)
   {}
 };
 
@@ -715,7 +770,7 @@ struct PlanarYCbCrData {
  *
  * The color format is detected based on the height/width ratios
  * defined above.
- * 
+ *
  * The Image that is rendered is the picture region defined by
  * mPicX, mPicY and mPicSize. The size of the rendered image is
  * mPicSize, not mYSize or mCbCrSize.
@@ -889,7 +944,8 @@ public:
     return surface.forget();
   }
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
+  void SetTextureFlags(TextureFlags aTextureFlags) { mTextureFlags = aTextureFlags; }
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
 
   virtual gfx::IntSize GetSize() override { return mSize; }
 
@@ -901,55 +957,8 @@ private:
   gfx::IntSize mSize;
   nsCountedRef<nsOwningThreadSourceSurfaceRef> mSourceSurface;
   nsDataHashtable<nsUint32HashKey, RefPtr<TextureClient> >  mTextureClients;
+  TextureFlags mTextureFlags;
 };
-
-#ifdef MOZ_WIDGET_GONK
-class OverlayImage : public Image {
-  /**
-   * OverlayImage is a special Image type that does not hold any buffer.
-   * It only hold an Id as identifier to the real content of the Image.
-   * Therefore, OverlayImage must be handled by some specialized hardware(e.g. HWC) 
-   * to show its content.
-   */
-public:
-  struct Data {
-    int32_t mOverlayId;
-    gfx::IntSize mSize;
-  };
-
-  struct SidebandStreamData {
-    GonkNativeHandle mStream;
-    gfx::IntSize mSize;
-  };
-
-  OverlayImage() : Image(nullptr, ImageFormat::OVERLAY_IMAGE) { mOverlayId = INVALID_OVERLAY; }
-
-  void SetData(const Data& aData)
-  {
-    mOverlayId = aData.mOverlayId;
-    mSize = aData.mSize;
-    mSidebandStream = GonkNativeHandle();
-  }
-
-  void SetData(const SidebandStreamData& aData)
-  {
-    mSidebandStream = aData.mStream;
-    mSize = aData.mSize;
-    mOverlayId = INVALID_OVERLAY;
-  }
-
-  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() { return nullptr; } ;
-  int32_t GetOverlayId() { return mOverlayId; }
-  GonkNativeHandle& GetSidebandStream() { return mSidebandStream; }
-
-  gfx::IntSize GetSize() { return mSize; }
-
-private:
-  int32_t mOverlayId;
-  GonkNativeHandle mSidebandStream;
-  gfx::IntSize mSize;
-};
-#endif
 
 } // namespace layers
 } // namespace mozilla

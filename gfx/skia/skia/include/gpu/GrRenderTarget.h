@@ -11,9 +11,10 @@
 #include "GrSurface.h"
 #include "SkRect.h"
 
-class GrDrawTarget;
-class GrStencilAttachment;
+class GrCaps;
+class GrRenderTargetOpList;
 class GrRenderTargetPriv;
+class GrStencilAttachment;
 
 /**
  * GrRenderTarget represents a 2D buffer of pixels that can be rendered to.
@@ -29,66 +30,28 @@ public:
     const GrRenderTarget* asRenderTarget() const  override { return this; }
 
     // GrRenderTarget
-    /**
-     * On some hardware it is possible for a render target to have multisampling
-     * only in certain buffers.
-     * Enforce only two legal sample configs.
-     * kUnified_SampleConfig signifies multisampling in both color and stencil
-     * buffers and is available across all hardware.
-     * kStencil_SampleConfig means multisampling is present in stencil buffer
-     * only; this config requires hardware support of
-     * NV_framebuffer_mixed_samples.
-    */
-    enum SampleConfig {
-        kUnified_SampleConfig = 0,
-        kStencil_SampleConfig = 1
-    };
+    bool isStencilBufferMultisampled() const { return fDesc.fSampleCnt > 0; }
 
     /**
-     * @return true if the surface is multisampled in all buffers,
-     *         false otherwise
+     * For our purposes, "Mixed Sampled" means the stencil buffer is multisampled but the color
+     * buffer is not.
      */
-    bool isUnifiedMultisampled() const {
-        if (fSampleConfig != kUnified_SampleConfig) {
-            return false;
-        }
-        return 0 != fDesc.fSampleCnt;
-    }
+    bool isMixedSampled() const { return fFlags & Flags::kMixedSampled; }
 
     /**
-     * @return true if the surface is multisampled in the stencil buffer,
-     *         false otherwise
+     * "Unified Sampled" means the stencil and color buffers are both multisampled.
      */
-    bool isStencilBufferMultisampled() const {
-        return 0 != fDesc.fSampleCnt;
-    }
+    bool isUnifiedMultisampled() const { return fDesc.fSampleCnt > 0 && !this->isMixedSampled(); }
 
     /**
-     * @return the number of color samples-per-pixel, or zero if non-MSAA or
-     *         multisampled in the stencil buffer only.
+     * Returns the number of samples/pixel in the stencil buffer (Zero if non-MSAA).
      */
-    int numColorSamples() const {
-        if (fSampleConfig == kUnified_SampleConfig) {
-            return fDesc.fSampleCnt;
-        }
-        return 0;
-    }
+    int numStencilSamples() const { return fDesc.fSampleCnt; }
 
     /**
-     * @return the number of stencil samples-per-pixel, or zero if non-MSAA.
+     * Returns the number of samples/pixel in the color buffer (Zero if non-MSAA or mixed sampled).
      */
-    int numStencilSamples() const {
-        return fDesc.fSampleCnt;
-    }
-
-    /**
-     * @return true if the surface is mixed sampled, false otherwise.
-     */
-    bool hasMixedSamples() const {
-        SkASSERT(kStencil_SampleConfig != fSampleConfig ||
-                 this->isStencilBufferMultisampled());
-        return kStencil_SampleConfig == fSampleConfig;
-    }
+    int numColorSamples() const { return this->isMixedSampled() ? 0 : fDesc.fSampleCnt; }
 
     /**
      * Call to indicate the multisample contents were modified such that the
@@ -123,12 +86,6 @@ public:
      */
     const SkIRect& getResolveRect() const { return fResolveRect; }
 
-    /**
-     * Provide a performance hint that the render target's contents are allowed
-     * to become undefined.
-     */
-    void discard();
-
     // a MSAA RT may require explicit resolving , it may auto-resolve (e.g. FBO
     // 0 in GL), or be unresolvable because the client didn't give us the
     // resolve destination.
@@ -152,20 +109,17 @@ public:
     GrRenderTargetPriv renderTargetPriv();
     const GrRenderTargetPriv renderTargetPriv() const;
 
-    void setLastDrawTarget(GrDrawTarget* dt);
-    GrDrawTarget* getLastDrawTarget() { return fLastDrawTarget; }
-
 protected:
-    GrRenderTarget(GrGpu* gpu, LifeCycle lifeCycle, const GrSurfaceDesc& desc,
-                   SampleConfig sampleConfig, GrStencilAttachment* stencil = nullptr)
-        : INHERITED(gpu, lifeCycle, desc)
-        , fStencilAttachment(stencil)
-        , fSampleConfig(sampleConfig)
-        , fLastDrawTarget(nullptr) {
-        fResolveRect.setLargestInverted();
-    }
+    enum class Flags {
+        kNone                = 0,
+        kMixedSampled        = 1 << 0,
+        kWindowRectsSupport  = 1 << 1
+    };
 
-    ~GrRenderTarget() override;
+    GR_DECL_BITFIELD_CLASS_OPS_FRIENDS(Flags);
+
+    GrRenderTarget(GrGpu*, const GrSurfaceDesc&, Flags = Flags::kNone,
+                   GrStencilAttachment* = nullptr);
 
     // override of GrResource
     void onAbandon() override;
@@ -179,22 +133,17 @@ private:
     virtual bool completeStencilAttachment() = 0;
 
     friend class GrRenderTargetPriv;
+    friend class GrRenderTargetProxy; // for Flags
 
     GrStencilAttachment*  fStencilAttachment;
-    SampleConfig          fSampleConfig;
+    uint8_t               fMultisampleSpecsID;
+    Flags                 fFlags;
 
     SkIRect               fResolveRect;
-
-    // The last drawTarget that wrote to or is currently going to write to this renderTarget
-    // The drawTarget can be closed (e.g., no draw context is currently bound
-    // to this renderTarget).
-    // This back-pointer is required so that we can add a dependancy between
-    // the drawTarget used to create the current contents of this renderTarget
-    // and the drawTarget of a destination renderTarget to which this one is being drawn.
-    GrDrawTarget* fLastDrawTarget;
 
     typedef GrSurface INHERITED;
 };
 
+GR_MAKE_BITFIELD_CLASS_OPS(GrRenderTarget::Flags);
 
 #endif

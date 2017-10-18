@@ -6,7 +6,7 @@
 
 #include "mozilla/dom/cache/ReadStream.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/CacheStreamControlChild.h"
 #include "mozilla/dom/cache/CacheStreamControlParent.h"
 #include "mozilla/dom/cache/CacheTypes.h"
@@ -58,20 +58,20 @@ public:
   HasEverBeenRead() const override;
 
   // Simulate nsIInputStream methods, but we don't actually inherit from it
-  NS_METHOD
+  nsresult
   Close();
 
-  NS_METHOD
+  nsresult
   Available(uint64_t *aNumAvailableOut);
 
-  NS_METHOD
+  nsresult
   Read(char *aBuf, uint32_t aCount, uint32_t *aNumReadOut);
 
-  NS_METHOD
+  nsresult
   ReadSegments(nsWriteSegmentFun aWriter, void *aClosure, uint32_t aCount,
                uint32_t *aNumReadOut);
 
-  NS_METHOD
+  nsresult
   IsNonBlocking(bool *aNonBlockingOut);
 
 private:
@@ -99,9 +99,7 @@ private:
   StreamControl* mControl;
 
   const nsID mId;
-  nsCOMPtr<nsIInputStream> mStream;
-  nsCOMPtr<nsIInputStream> mSnappyStream;
-  nsCOMPtr<nsIThread> mOwningThread;
+  nsCOMPtr<nsISerialEventTarget> mOwningEventTarget;
 
   enum State
   {
@@ -111,6 +109,15 @@ private:
   };
   Atomic<State> mState;
   Atomic<bool> mHasEverBeenRead;
+
+
+  // The wrapped stream objects may not be threadsafe.  We need to be able
+  // to close a stream on our owning thread while an IO thread is simultaneously
+  // reading the same stream.  Therefore, protect all access to these stream
+  // objects with a mutex.
+  Mutex mMutex;
+  nsCOMPtr<nsIInputStream> mStream;
+  nsCOMPtr<nsIInputStream> mSnappyStream;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(cache::ReadStream::Inner, override)
 };
@@ -125,10 +132,11 @@ class ReadStream::Inner::NoteClosedRunnable final : public CancelableRunnable
 {
 public:
   explicit NoteClosedRunnable(ReadStream::Inner* aStream)
-    : mStream(aStream)
+    : CancelableRunnable("dom::cache::ReadStream::Inner::NoteClosedRunnable")
+    , mStream(aStream)
   { }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mStream->NoteClosedOnOwningThread();
     mStream = nullptr;
@@ -137,7 +145,7 @@ public:
 
   // Note, we must proceed with the Run() method since our actor will not
   // clean itself up until we note that the stream is closed.
-  nsresult Cancel()
+  nsresult Cancel() override
   {
     Run();
     return NS_OK;
@@ -160,10 +168,11 @@ class ReadStream::Inner::ForgetRunnable final : public CancelableRunnable
 {
 public:
   explicit ForgetRunnable(ReadStream::Inner* aStream)
-    : mStream(aStream)
+    : CancelableRunnable("dom::cache::ReadStream::Inner::ForgetRunnable")
+    , mStream(aStream)
   { }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mStream->ForgetOnOwningThread();
     mStream = nullptr;
@@ -172,7 +181,7 @@ public:
 
   // Note, we must proceed with the Run() method so that we properly
   // call RemoveListener on the actor.
-  nsresult Cancel()
+  nsresult Cancel() override
   {
     Run();
     return NS_OK;
@@ -190,13 +199,15 @@ ReadStream::Inner::Inner(StreamControl* aControl, const nsID& aId,
                          nsIInputStream* aStream)
   : mControl(aControl)
   , mId(aId)
+  , mOwningEventTarget(GetCurrentThreadSerialEventTarget())
+  , mState(Open)
+  , mHasEverBeenRead(false)
+  , mMutex("dom::cache::ReadStream")
   , mStream(aStream)
   , mSnappyStream(new SnappyUncompressInputStream(aStream))
-  , mOwningThread(NS_GetCurrentThread())
-  , mState(Open)
 {
-  MOZ_ASSERT(mStream);
-  MOZ_ASSERT(mControl);
+  MOZ_DIAGNOSTIC_ASSERT(mStream);
+  MOZ_DIAGNOSTIC_ASSERT(mControl);
   mControl->AddReadStream(this);
 }
 
@@ -205,8 +216,8 @@ ReadStream::Inner::Serialize(CacheReadStreamOrVoid* aReadStreamOut,
                              nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
                              ErrorResult& aRv)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
-  MOZ_ASSERT(aReadStreamOut);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
   *aReadStreamOut = CacheReadStream();
   Serialize(&aReadStreamOut->get_CacheReadStream(), aStreamCleanupList, aRv);
 }
@@ -216,22 +227,26 @@ ReadStream::Inner::Serialize(CacheReadStream* aReadStreamOut,
                              nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
                              ErrorResult& aRv)
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
-  MOZ_ASSERT(aReadStreamOut);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
 
   if (mState != Open) {
     aRv.ThrowTypeError<MSG_CACHE_STREAM_CLOSED>();
     return;
   }
 
-  MOZ_ASSERT(mControl);
+  MOZ_DIAGNOSTIC_ASSERT(mControl);
 
   aReadStreamOut->id() = mId;
   mControl->SerializeControl(aReadStreamOut);
-  mControl->SerializeStream(aReadStreamOut, mStream, aStreamCleanupList);
 
-  MOZ_ASSERT(aReadStreamOut->stream().type() ==
-             IPCStream::TInputStreamParamsWithFds);
+  {
+    MutexAutoLock lock(mMutex);
+    mControl->SerializeStream(aReadStreamOut, mStream, aStreamCleanupList);
+  }
+
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut->stream().type() ==
+                        IPCStream::TInputStreamParamsWithFds);
 
   // We're passing ownership across the IPC barrier with the control, so
   // do not signal that the stream is closed here.
@@ -241,45 +256,53 @@ ReadStream::Inner::Serialize(CacheReadStream* aReadStreamOut,
 void
 ReadStream::Inner::CloseStream()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
   Close();
 }
 
 void
 ReadStream::Inner::CloseStreamWithoutReporting()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
   Forget();
 }
 
 bool
 ReadStream::Inner::MatchId(const nsID& aId) const
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
   return mId.Equals(aId);
 }
 
 bool
 ReadStream::Inner::HasEverBeenRead() const
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
   return mHasEverBeenRead;
 }
 
-NS_IMETHODIMP
+nsresult
 ReadStream::Inner::Close()
 {
   // stream ops can happen on any thread
-  nsresult rv = mStream->Close();
+  nsresult rv = NS_OK;
+  {
+    MutexAutoLock lock(mMutex);
+    rv = mSnappyStream->Close();
+  }
   NoteClosed();
   return rv;
 }
 
-NS_IMETHODIMP
+nsresult
 ReadStream::Inner::Available(uint64_t* aNumAvailableOut)
 {
   // stream ops can happen on any thread
-  nsresult rv = mSnappyStream->Available(aNumAvailableOut);
+  nsresult rv = NS_OK;
+  {
+    MutexAutoLock lock(mMutex);
+    rv = mSnappyStream->Available(aNumAvailableOut);
+  }
 
   if (NS_FAILED(rv)) {
     Close();
@@ -288,13 +311,17 @@ ReadStream::Inner::Available(uint64_t* aNumAvailableOut)
   return rv;
 }
 
-NS_IMETHODIMP
+nsresult
 ReadStream::Inner::Read(char* aBuf, uint32_t aCount, uint32_t* aNumReadOut)
 {
   // stream ops can happen on any thread
-  MOZ_ASSERT(aNumReadOut);
+  MOZ_DIAGNOSTIC_ASSERT(aNumReadOut);
 
-  nsresult rv = mSnappyStream->Read(aBuf, aCount, aNumReadOut);
+  nsresult rv = NS_OK;
+  {
+    MutexAutoLock lock(mMutex);
+    rv = mSnappyStream->Read(aBuf, aCount, aNumReadOut);
+  }
 
   if ((NS_FAILED(rv) && rv != NS_BASE_STREAM_WOULD_BLOCK) ||
       *aNumReadOut == 0) {
@@ -306,19 +333,23 @@ ReadStream::Inner::Read(char* aBuf, uint32_t aCount, uint32_t* aNumReadOut)
   return rv;
 }
 
-NS_IMETHODIMP
+nsresult
 ReadStream::Inner::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
                                 uint32_t aCount, uint32_t* aNumReadOut)
 {
   // stream ops can happen on any thread
-  MOZ_ASSERT(aNumReadOut);
+  MOZ_DIAGNOSTIC_ASSERT(aNumReadOut);
 
   if (aCount) {
     mHasEverBeenRead = true;
   }
 
-  nsresult rv = mSnappyStream->ReadSegments(aWriter, aClosure, aCount,
-                                            aNumReadOut);
+
+  nsresult rv = NS_OK;
+  {
+    MutexAutoLock lock(mMutex);
+    rv = mSnappyStream->ReadSegments(aWriter, aClosure, aCount, aNumReadOut);
+  }
 
   if ((NS_FAILED(rv) && rv != NS_BASE_STREAM_WOULD_BLOCK &&
                         rv != NS_ERROR_NOT_IMPLEMENTED) || *aNumReadOut == 0) {
@@ -336,18 +367,19 @@ ReadStream::Inner::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
   return rv;
 }
 
-NS_IMETHODIMP
+nsresult
 ReadStream::Inner::IsNonBlocking(bool* aNonBlockingOut)
 {
   // stream ops can happen on any thread
+  MutexAutoLock lock(mMutex);
   return mSnappyStream->IsNonBlocking(aNonBlockingOut);
 }
 
 ReadStream::Inner::~Inner()
 {
   // Any thread
-  MOZ_ASSERT(mState == Closed);
-  MOZ_ASSERT(!mControl);
+  MOZ_DIAGNOSTIC_ASSERT(mState == Closed);
+  MOZ_DIAGNOSTIC_ASSERT(!mControl);
 }
 
 void
@@ -358,14 +390,14 @@ ReadStream::Inner::NoteClosed()
     return;
   }
 
-  if (NS_GetCurrentThread() == mOwningThread) {
+  if (mOwningEventTarget->IsOnCurrentThread()) {
     NoteClosedOnOwningThread();
     return;
   }
 
   nsCOMPtr<nsIRunnable> runnable = new NoteClosedRunnable(this);
   MOZ_ALWAYS_SUCCEEDS(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
+    mOwningEventTarget->Dispatch(runnable.forget(), nsIThread::DISPATCH_NORMAL));
 }
 
 void
@@ -376,27 +408,27 @@ ReadStream::Inner::Forget()
     return;
   }
 
-  if (NS_GetCurrentThread() == mOwningThread) {
+  if (mOwningEventTarget->IsOnCurrentThread()) {
     ForgetOnOwningThread();
     return;
   }
 
   nsCOMPtr<nsIRunnable> runnable = new ForgetRunnable(this);
   MOZ_ALWAYS_SUCCEEDS(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
+    mOwningEventTarget->Dispatch(runnable.forget(), nsIThread::DISPATCH_NORMAL));
 }
 
 void
 ReadStream::Inner::NoteClosedOnOwningThread()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
 
   // Mark closed and do nothing if we were already closed
   if (!mState.compareExchange(Open, Closed)) {
     return;
   }
 
-  MOZ_ASSERT(mControl);
+  MOZ_DIAGNOSTIC_ASSERT(mControl);
   mControl->NoteClosed(this, mId);
   mControl = nullptr;
 }
@@ -404,14 +436,14 @@ ReadStream::Inner::NoteClosedOnOwningThread()
 void
 ReadStream::Inner::ForgetOnOwningThread()
 {
-  MOZ_ASSERT(NS_GetCurrentThread() == mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget->IsOnCurrentThread());
 
   // Mark closed and do nothing if we were already closed
   if (!mState.compareExchange(Open, Closed)) {
     return;
   }
 
-  MOZ_ASSERT(mControl);
+  MOZ_DIAGNOSTIC_ASSERT(mControl);
   mControl->ForgetReadStream(this);
   mControl = nullptr;
 }
@@ -442,8 +474,8 @@ ReadStream::Create(const CacheReadStream& aReadStream)
     return nullptr;
   }
 
-  MOZ_ASSERT(aReadStream.stream().type() ==
-             IPCStream::TInputStreamParamsWithFds);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStream.stream().type() ==
+                        IPCStream::TInputStreamParamsWithFds);
 
   // Control is guaranteed to survive this method as ActorDestroy() cannot
   // run on this thread until we complete.
@@ -455,15 +487,15 @@ ReadStream::Create(const CacheReadStream& aReadStream)
     auto actor = static_cast<CacheStreamControlParent*>(aReadStream.controlParent());
     control = actor;
   }
-  MOZ_ASSERT(control);
+  MOZ_DIAGNOSTIC_ASSERT(control);
 
   nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aReadStream.stream());
-  MOZ_ASSERT(stream);
+  MOZ_DIAGNOSTIC_ASSERT(stream);
 
   // Currently we expect all cache read streams to be blocking file streams.
-#ifdef DEBUG
+#if !defined(RELEASE_OR_BETA)
   nsCOMPtr<nsIAsyncInputStream> asyncStream = do_QueryInterface(stream);
-  MOZ_ASSERT(!asyncStream);
+  MOZ_DIAGNOSTIC_ASSERT(!asyncStream);
 #endif
 
   RefPtr<Inner> inner = new Inner(control, aReadStream.id(), stream);
@@ -476,7 +508,7 @@ already_AddRefed<ReadStream>
 ReadStream::Create(PCacheStreamControlParent* aControl, const nsID& aId,
                    nsIInputStream* aStream)
 {
-  MOZ_ASSERT(aControl);
+  MOZ_DIAGNOSTIC_ASSERT(aControl);
   auto actor = static_cast<CacheStreamControlParent*>(aControl);
   RefPtr<Inner> inner = new Inner(actor, aId, aStream);
   RefPtr<ReadStream> ref = new ReadStream(inner);
@@ -502,7 +534,7 @@ ReadStream::Serialize(CacheReadStream* aReadStreamOut,
 ReadStream::ReadStream(ReadStream::Inner* aInner)
   : mInner(aInner)
 {
-  MOZ_ASSERT(mInner);
+  MOZ_DIAGNOSTIC_ASSERT(mInner);
 }
 
 ReadStream::~ReadStream()

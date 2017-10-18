@@ -9,27 +9,17 @@
  */
 
 #include <stdio.h>
+
+#include <memory>
 #include <sstream>
 
 #include "webrtc/base/format_macros.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/modules/remote_bitrate_estimator/tools/bwe_rtp.h"
-#include "webrtc/modules/rtp_rtcp/interface/rtp_header_parser.h"
-#include "webrtc/modules/rtp_rtcp/interface/rtp_payload_registry.h"
+#include "webrtc/modules/rtp_rtcp/include/rtp_header_parser.h"
+#include "webrtc/modules/rtp_rtcp/include/rtp_payload_registry.h"
 #include "webrtc/test/rtp_file_reader.h"
 
 int main(int argc, char** argv) {
-  if (argc < 4) {
-    fprintf(stderr, "Usage: rtp_to_text <extension type> <extension id>"
-           " <input_file.rtp> [-t]\n");
-    fprintf(stderr, "<extension type> can either be:\n"
-           "  abs for absolute send time or\n"
-           "  tsoffset for timestamp offset.\n"
-           "<extension id> is the id associated with the extension.\n"
-           "  -t is an optional flag, if set only packet arrival time will be"
-           " output.\n");
-    return -1;
-  }
   webrtc::test::RtpFileReader* reader;
   webrtc::RtpHeaderParser* parser;
   if (!ParseArgsAndSetupEstimator(argc, argv, NULL, NULL, &reader, &parser,
@@ -37,8 +27,8 @@ int main(int argc, char** argv) {
     return -1;
   }
   bool arrival_time_only = (argc >= 5 && strncmp(argv[4], "-t", 2) == 0);
-  rtc::scoped_ptr<webrtc::test::RtpFileReader> rtp_reader(reader);
-  rtc::scoped_ptr<webrtc::RtpHeaderParser> rtp_parser(parser);
+  std::unique_ptr<webrtc::test::RtpFileReader> rtp_reader(reader);
+  std::unique_ptr<webrtc::RtpHeaderParser> rtp_parser(parser);
   fprintf(stdout, "seqnum timestamp ts_offset abs_sendtime recvtime "
           "markerbit ssrc size original_size\n");
   int packet_counter = 0;

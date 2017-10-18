@@ -1,0 +1,74 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "IdleRequest.h"
+
+#include "mozilla/TimeStamp.h"
+#include "mozilla/dom/IdleDeadline.h"
+#include "mozilla/dom/PerformanceTiming.h"
+#include "mozilla/dom/TimeoutManager.h"
+#include "mozilla/dom/WindowBinding.h"
+#include "nsComponentManagerUtils.h"
+#include "nsGlobalWindow.h"
+#include "nsISupportsPrimitives.h"
+#include "nsPIDOMWindow.h"
+
+namespace mozilla {
+namespace dom {
+
+IdleRequest::IdleRequest(IdleRequestCallback* aCallback, uint32_t aHandle)
+  : mCallback(aCallback)
+  , mHandle(aHandle)
+  , mTimeoutHandle(Nothing())
+{
+  MOZ_DIAGNOSTIC_ASSERT(mCallback);
+}
+
+IdleRequest::~IdleRequest()
+{
+}
+
+NS_IMPL_CYCLE_COLLECTION(IdleRequest, mCallback)
+
+NS_IMPL_CYCLE_COLLECTING_ADDREF(IdleRequest)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(IdleRequest)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IdleRequest)
+NS_INTERFACE_MAP_END
+
+void
+IdleRequest::SetTimeoutHandle(int32_t aHandle)
+{
+  mTimeoutHandle = Some(aHandle);
+}
+
+uint32_t
+IdleRequest::GetTimeoutHandle() const
+{
+  MOZ_DIAGNOSTIC_ASSERT(mTimeoutHandle.isSome());
+  return mTimeoutHandle.value();
+}
+
+nsresult
+IdleRequest::IdleRun(nsPIDOMWindowInner* aWindow,
+                     DOMHighResTimeStamp aDeadline,
+                     bool aDidTimeout)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_DIAGNOSTIC_ASSERT(mCallback);
+
+  ErrorResult error;
+  RefPtr<IdleDeadline> deadline =
+    new IdleDeadline(aWindow, aDidTimeout, aDeadline);
+  mCallback->Call(*deadline, error, "requestIdleCallback handler");
+
+  mCallback = nullptr;
+  error.SuppressException();
+  return error.StealNSResult();
+}
+
+} // namespace dom
+} // namespace mozilla

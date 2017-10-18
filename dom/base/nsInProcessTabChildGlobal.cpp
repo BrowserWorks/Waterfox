@@ -11,13 +11,13 @@
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
 #include "nsComponentManagerUtils.h"
-#include "nsScriptLoader.h"
 #include "nsFrameLoader.h"
 #include "xpcpublic.h"
 #include "nsIMozBrowserFrame.h"
 #include "nsDOMClassInfoID.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/SameProcessMessageQueue.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -36,7 +36,7 @@ nsInProcessTabChildGlobal::DoSendBlockingMessage(JSContext* aCx,
   queue->Flush();
 
   if (mChromeMessageManager) {
-    SameProcessCpowHolder cpows(js::GetRuntime(aCx), aCpows);
+    SameProcessCpowHolder cpows(JS::RootingContext::get(aCx), aCpows);
     RefPtr<nsFrameMessageManager> mm = mChromeMessageManager;
     nsCOMPtr<nsIFrameLoader> fl = GetFrameLoader();
     mm->ReceiveMessage(mOwner, fl, aMessage, true, &aData, &cpows, aPrincipal,
@@ -49,8 +49,10 @@ class nsAsyncMessageToParent : public nsSameProcessAsyncMessageBase,
                                public SameProcessMessageQueue::Runnable
 {
 public:
-  nsAsyncMessageToParent(JSContext* aCx, JS::Handle<JSObject*> aCpows, nsInProcessTabChildGlobal* aTabChild)
-    : nsSameProcessAsyncMessageBase(aCx, aCpows)
+  nsAsyncMessageToParent(JS::RootingContext* aRootingCx,
+                         JS::Handle<JSObject*> aCpows,
+                         nsInProcessTabChildGlobal* aTabChild)
+    : nsSameProcessAsyncMessageBase(aRootingCx, aCpows)
     , mTabChild(aTabChild)
   { }
 
@@ -71,10 +73,11 @@ nsInProcessTabChildGlobal::DoSendAsyncMessage(JSContext* aCx,
                                               nsIPrincipal* aPrincipal)
 {
   SameProcessMessageQueue* queue = SameProcessMessageQueue::Get();
+  JS::RootingContext* rcx = JS::RootingContext::get(aCx);
   RefPtr<nsAsyncMessageToParent> ev =
-    new nsAsyncMessageToParent(aCx, aCpows, this);
+    new nsAsyncMessageToParent(rcx, aCpows, this);
 
-  nsresult rv = ev->Init(aCx, aMessage, aData, aPrincipal);
+  nsresult rv = ev->Init(aMessage, aData, aPrincipal);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -93,14 +96,14 @@ nsInProcessTabChildGlobal::nsInProcessTabChildGlobal(nsIDocShell* aShell,
   SetIsNotDOMBinding();
   mozilla::HoldJSObjects(this);
 
-  // If owner corresponds to an <iframe mozbrowser> or <iframe mozapp>, we'll
-  // have to tweak our PreHandleEvent implementation.
+  // If owner corresponds to an <iframe mozbrowser>, we'll have to tweak our
+  // GetEventTargetParent implementation.
   nsCOMPtr<nsIMozBrowserFrame> browserFrame = do_QueryInterface(mOwner);
   if (browserFrame) {
-    mIsBrowserOrAppFrame = browserFrame->GetReallyIsBrowserOrApp();
+    mIsBrowserFrame = browserFrame->GetReallyIsBrowser();
   }
   else {
-    mIsBrowserOrAppFrame = false;
+    mIsBrowserFrame = false;
   }
 }
 
@@ -126,8 +129,8 @@ nsInProcessTabChildGlobal::Init()
   nsresult rv =
 #endif
   InitTabChildGlobal();
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
-                   "Couldn't initialize nsInProcessTabChildGlobal");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv),
+                       "Couldn't initialize nsInProcessTabChildGlobal");
   mMessageManager = new nsFrameMessageManager(this,
                                               nullptr,
                                               dom::ipc::MM_CHILD);
@@ -140,7 +143,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(nsInProcessTabChildGlobal)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(nsInProcessTabChildGlobal,
                                                   DOMEventTargetHelper)
    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMessageManager)
-   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
    tmp->TraverseHostObjectURIs(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -152,9 +154,8 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(nsInProcessTabChildGlobal,
                                                 DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mMessageManager)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mGlobal)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mAnonymousGlobalScopes)
-   tmp->UnlinkHostObjectURIs();
+  tmp->nsMessageManagerScriptExecutor::Unlink();
+  tmp->UnlinkHostObjectURIs();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsInProcessTabChildGlobal)
@@ -195,6 +196,14 @@ NS_IMETHODIMP
 nsInProcessTabChildGlobal::GetDocShell(nsIDocShell** aDocShell)
 {
   NS_IF_ADDREF(*aDocShell = mDocShell);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsInProcessTabChildGlobal::GetTabEventTarget(nsIEventTarget** aTarget)
+{
+  nsCOMPtr<nsIEventTarget> target = GetMainThreadEventTarget();
+  target.forget(aTarget);
   return NS_OK;
 }
 
@@ -248,7 +257,7 @@ nsInProcessTabChildGlobal::GetOwnerContent()
 }
 
 nsresult
-nsInProcessTabChildGlobal::PreHandleEvent(EventChainPreVisitor& aVisitor)
+nsInProcessTabChildGlobal::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mForceContentDispatch = true;
   aVisitor.mCanHandle = true;
@@ -271,7 +280,7 @@ nsInProcessTabChildGlobal::PreHandleEvent(EventChainPreVisitor& aVisitor)
     return NS_OK;
   }
 
-  if (mIsBrowserOrAppFrame &&
+  if (mIsBrowserFrame &&
       (!mOwner || !nsContentUtils::IsInChromeDocshell(mOwner->OwnerDoc()))) {
     if (mOwner) {
       if (nsPIDOMWindowInner* innerWindow = mOwner->OwnerDoc()->GetInnerWindow()) {
@@ -288,14 +297,15 @@ nsInProcessTabChildGlobal::PreHandleEvent(EventChainPreVisitor& aVisitor)
 nsresult
 nsInProcessTabChildGlobal::InitTabChildGlobal()
 {
-  // If you change this, please change GetCompartmentName() in XPCJSRuntime.cpp
+  // If you change this, please change GetCompartmentName() in XPCJSContext.cpp
   // accordingly.
   nsAutoCString id;
   id.AssignLiteral("inProcessTabChildGlobal");
   nsIURI* uri = mOwner->OwnerDoc()->GetDocumentURI();
   if (uri) {
     nsAutoCString u;
-    uri->GetSpec(u);
+    nsresult rv = uri->GetSpec(u);
+    NS_ENSURE_SUCCESS(rv, rv);
     id.AppendLiteral("?ownedBy=");
     id.Append(u);
   }
@@ -307,11 +317,17 @@ nsInProcessTabChildGlobal::InitTabChildGlobal()
 class nsAsyncScriptLoad : public Runnable
 {
 public:
-    nsAsyncScriptLoad(nsInProcessTabChildGlobal* aTabChild, const nsAString& aURL,
-                      bool aRunInGlobalScope)
-      : mTabChild(aTabChild), mURL(aURL), mRunInGlobalScope(aRunInGlobalScope) {}
+  nsAsyncScriptLoad(nsInProcessTabChildGlobal* aTabChild,
+                    const nsAString& aURL,
+                    bool aRunInGlobalScope)
+    : mozilla::Runnable("nsAsyncScriptLoad")
+    , mTabChild(aTabChild)
+    , mURL(aURL)
+    , mRunInGlobalScope(aRunInGlobalScope)
+  {
+  }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     mTabChild->LoadFrameScript(mURL, mRunInGlobalScope);
     return NS_OK;

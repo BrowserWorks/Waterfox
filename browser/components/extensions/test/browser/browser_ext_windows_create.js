@@ -2,9 +2,9 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* testWindowCreate() {
+add_task(async function testWindowCreate() {
   let extension = ExtensionTestUtils.loadExtension({
-    background() {
+    async background() {
       let _checkWindowPromise;
       browser.test.onMessage.addListener(msg => {
         if (msg == "checked-window") {
@@ -22,58 +22,69 @@ add_task(function* testWindowCreate() {
         });
       }
 
-      function createWindow(params, expected, keep = false) {
-        return browser.windows.create(params).then(window => {
-          for (let key of Object.keys(params)) {
-            if (key == "state" && os == "mac" && params.state == "normal") {
-              // OS-X doesn't have a hard distinction between "normal" and
-              // "maximized" states.
-              browser.test.assertTrue(window.state == "normal" || window.state == "maximized",
-                                      `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`);
-            } else {
-              browser.test.assertEq(params[key], window[key], `Got expected value for window.${key}`);
-            }
-          }
+      async function createWindow(params, expected, keep = false) {
+        let window = await browser.windows.create(...params);
+        // params is null when testing create without createData
+        params = params[0] || {};
 
-          return checkWindow(expected).then(() => {
-            if (keep) {
-              return window;
-            }
-            if (params.state == "fullscreen" && os == "win") {
-              // FIXME: Closing a fullscreen window causes a window leak in
-              // Windows tests.
-              return browser.windows.update(window.id, {state: "normal"}).then(() => {
-                return browser.windows.remove(window.id);
-              });
-            }
-            return browser.windows.remove(window.id);
-          });
-        });
+        for (let key of Object.keys(params)) {
+          if (key == "state" && os == "mac" && params.state == "normal") {
+            // OS-X doesn't have a hard distinction between "normal" and
+            // "maximized" states.
+            browser.test.assertTrue(window.state == "normal" || window.state == "maximized",
+                                    `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`);
+          } else {
+            browser.test.assertEq(params[key], window[key], `Got expected value for window.${key}`);
+          }
+        }
+
+        browser.test.assertEq(1, window.tabs.length, "tabs property got populated");
+
+        await checkWindow(expected);
+        if (keep) {
+          return window;
+        }
+
+        if (params.state == "fullscreen" && os == "win") {
+          // FIXME: Closing a fullscreen window causes a window leak in
+          // Windows tests.
+          await browser.windows.update(window.id, {state: "normal"});
+        }
+        await browser.windows.remove(window.id);
       }
 
-      browser.runtime.getPlatformInfo().then(info => { os = info.os; })
-      .then(() => createWindow({state: "maximized"}, {state: "STATE_MAXIMIZED"}))
-      .then(() => createWindow({state: "minimized"}, {state: "STATE_MINIMIZED"}))
-      .then(() => createWindow({state: "normal"}, {state: "STATE_NORMAL", hiddenChrome: []}))
-      .then(() => createWindow({state: "fullscreen"}, {state: "STATE_FULLSCREEN"}))
-      .then(() => {
-        return createWindow({type: "popup"},
-                            {hiddenChrome: ["menubar", "toolbar", "location", "directories", "status", "extrachrome"],
-                             chromeFlags: ["CHROME_OPENAS_DIALOG"]},
-                            true);
-      }).then(window => {
-        return browser.tabs.query({windowType: "popup", active: true}).then(tabs => {
-          browser.test.assertEq(1, tabs.length, "Expected only one popup");
-          browser.test.assertEq(window.id, tabs[0].windowId, "Expected new window to be returned in query");
+      try {
+        ({os} = await browser.runtime.getPlatformInfo());
 
-          return browser.windows.remove(window.id);
-        });
-      }).then(() => {
+        // Set the current window to state: "normal" because the test is failing on Windows
+        // where the current window is maximized.
+        let currentWindow = await browser.windows.getCurrent();
+        await browser.windows.update(currentWindow.id, {state: "normal"});
+
+        await createWindow([], {state: "STATE_NORMAL"});
+        await createWindow([{state: "maximized"}], {state: "STATE_MAXIMIZED"});
+        await createWindow([{state: "minimized"}], {state: "STATE_MINIMIZED"});
+        await createWindow([{state: "normal"}], {state: "STATE_NORMAL", hiddenChrome: []});
+        await createWindow([{state: "fullscreen"}], {state: "STATE_FULLSCREEN"});
+
+        let window = await createWindow(
+          [{type: "popup"}],
+          {hiddenChrome: ["menubar", "toolbar", "location", "directories", "status", "extrachrome"],
+           chromeFlags: ["CHROME_OPENAS_DIALOG"]},
+          true);
+
+        let tabs = await browser.tabs.query({windowType: "popup", active: true});
+
+        browser.test.assertEq(1, tabs.length, "Expected only one popup");
+        browser.test.assertEq(window.id, tabs[0].windowId, "Expected new window to be returned in query");
+
+        await browser.windows.remove(window.id);
+
         browser.test.notifyPass("window-create");
-      }).catch(e => {
+      } catch (e) {
         browser.test.fail(`${e} :: ${e.stack}`);
         browser.test.notifyFail("window-create");
-      });
+      }
     },
   });
 
@@ -120,48 +131,10 @@ add_task(function* testWindowCreate() {
     extension.sendMessage("checked-window");
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("window-create");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("window-create");
+  await extension.unload();
 
   Services.ww.unregisterNotification(windowListener);
   latestWindow = null;
 });
-
-
-// Tests that incompatible parameters can't be used together.
-add_task(function* testWindowCreateParams() {
-  let extension = ExtensionTestUtils.loadExtension({
-    background() {
-      function* getCalls() {
-        for (let state of ["minimized", "maximized", "fullscreen"]) {
-          for (let param of ["left", "top", "width", "height"]) {
-            let expected = `"state": "${state}" may not be combined with "left", "top", "width", or "height"`;
-
-            yield browser.windows.create({state, [param]: 100}).then(
-              val => {
-                browser.test.fail(`Expected error but got "${val}" instead`);
-              },
-              error => {
-                browser.test.assertTrue(
-                  error.message.includes(expected),
-                  `Got expected error (got: '${error.message}', expected: '${expected}'`);
-              });
-          }
-        }
-      }
-
-      Promise.all(getCalls()).then(() => {
-        browser.test.notifyPass("window-create-params");
-      }).catch(e => {
-        browser.test.fail(`${e} :: ${e.stack}`);
-        browser.test.notifyFail("window-create-params");
-      });
-    },
-  });
-
-  yield extension.startup();
-  yield extension.awaitFinish("window-create-params");
-  yield extension.unload();
-});
-

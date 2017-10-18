@@ -27,7 +27,7 @@
 #include "mozilla/dom/TabParent.h"
 
 #ifdef MOZ_XUL
-#include "nsIDOMXULElement.h"
+#include "nsXULElement.h"
 #endif
 
 using namespace mozilla;
@@ -180,7 +180,7 @@ nsWindowRoot::GetContextForEventHandlers(nsresult* aRv)
 }
 
 nsresult
-nsWindowRoot::PreHandleEvent(EventChainPreVisitor& aVisitor)
+nsWindowRoot::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
   aVisitor.mForceContentDispatch = true; //FIXME! Bug 329119
@@ -231,9 +231,13 @@ nsWindowRoot::GetControllers(nsIControllers** aResult)
     nsFocusManager::GetFocusedDescendant(mWindow, true, getter_AddRefs(focusedWindow));
   if (focusedContent) {
 #ifdef MOZ_XUL
-    nsCOMPtr<nsIDOMXULElement> xulElement(do_QueryInterface(focusedContent));
-    if (xulElement)
-      return xulElement->GetControllers(aResult);
+    RefPtr<nsXULElement> xulElement = nsXULElement::FromContent(focusedContent);
+    if (xulElement) {
+      ErrorResult rv;
+      *aResult = xulElement->GetControllers(rv);
+      NS_IF_ADDREF(*aResult);
+      return rv.StealNSResult();
+    }
 #endif
 
     nsCOMPtr<nsIDOMHTMLTextAreaElement> htmlTextArea =
@@ -320,9 +324,8 @@ nsWindowRoot::GetEnabledDisabledCommandsForControllers(nsIControllers* aControll
           // Use a hash to determine which commands have already been handled by
           // earlier controllers, as the earlier controller's result should get
           // priority.
-          if (!aCommandsHandled.Contains(commands[e])) {
-            aCommandsHandled.PutEntry(commands[e]);
-
+          if (aCommandsHandled.EnsureInserted(commands[e])) {
+            // We inserted a new entry into aCommandsHandled.
             bool enabled = false;
             controller->IsCommandEnabled(commands[e], &enabled);
 

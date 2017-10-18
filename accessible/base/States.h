@@ -73,7 +73,7 @@ namespace states {
 
   /**
    * The expandable object's children are not displayed, the opposite of
-   * expanded, applied to tree lists and other controls, 
+   * expanded, applied to tree lists and other controls,
    * @see EXPANDED state.
    */
   const uint64_t COLLAPSED = ((uint64_t) 0x1) << 10;
@@ -277,9 +277,15 @@ namespace states {
    * The object is pinned, usually indicating it is fixed in place and has permanence.
    */
   const uint64_t PINNED = ((uint64_t) 0x1) << 47;
+
+  /**
+   * The object is the current item within a container or set of related elements.
+   */
+  const uint64_t CURRENT = ((uint64_t) 0x1) << 48;
+
 } // namespace states
 } // namespace a11y
 } // namespace mozilla
 
 #endif
-	
+

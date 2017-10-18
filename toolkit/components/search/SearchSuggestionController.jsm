@@ -10,14 +10,15 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NS_ASSERT", "resource://gre/modules/debug.js");
 
 const SEARCH_RESPONSE_SUGGESTION_JSON = "application/x-suggestions+json";
 const DEFAULT_FORM_HISTORY_PARAM      = "searchbar-history";
 const HTTP_OK            = 200;
-const REMOTE_TIMEOUT     = 500; // maximum time (ms) to wait before giving up on a remote suggestions
 const BROWSER_SUGGEST_PREF = "browser.search.suggest.enabled";
+const REMOTE_TIMEOUT_PREF = "browser.search.suggest.timeout";
+const REMOTE_TIMEOUT_DEFAULT = 500; // maximum time (ms) to wait before giving up on a remote suggestions
 
 /**
  * Remote search suggestions will be shown if gRemoteSuggestionsEnabled
@@ -26,7 +27,7 @@ const BROWSER_SUGGEST_PREF = "browser.search.suggest.enabled";
 var gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
 Services.prefs.addObserver(BROWSER_SUGGEST_PREF, function(aSubject, aTopic, aData) {
   gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
-}, false);
+});
 
 /**
  * SearchSuggestionController.jsm exists as a helper module to allow multiple consumers to request and display
@@ -58,11 +59,6 @@ this.SearchSuggestionController.prototype = {
    * maxRemoteResults - <displayed local results count> remote results.
    */
   maxRemoteResults: 10,
-
-  /**
-   * The maximum time (ms) to wait before giving up on a remote suggestions.
-   */
-  remoteTimeout: REMOTE_TIMEOUT,
 
   /**
    * The additional parameter used when searching form history.
@@ -106,10 +102,11 @@ this.SearchSuggestionController.prototype = {
    * @param {string} searchTerm - the term to provide suggestions for
    * @param {bool} privateMode - whether the request is being made in the context of private browsing
    * @param {nsISearchEngine} engine - search engine for the suggestions.
+   * @param {int} userContextId - the userContextId of the selected tab.
    *
    * @return {Promise} resolving to an object containing results or null.
    */
-  fetch: function(searchTerm, privateMode, engine) {
+  fetch(searchTerm, privateMode, engine, userContextId) {
     // There is no smart filtering from previous results here (as there is when looking through
     // history/form data) because the result set returned by the server is different for every typed
     // value - e.g. "ocean breathes" does not return a subset of the results returned for "ocean".
@@ -139,14 +136,13 @@ this.SearchSuggestionController.prototype = {
     // Remote results
     if (searchTerm && gRemoteSuggestionsEnabled && this.maxRemoteResults &&
         engine.supportsResponseType(SEARCH_RESPONSE_SUGGESTION_JSON)) {
-      this._deferredRemoteResult = this._fetchRemote(searchTerm, engine, privateMode);
+      this._deferredRemoteResult = this._fetchRemote(searchTerm, engine, privateMode, userContextId);
       promises.push(this._deferredRemoteResult.promise);
     }
 
     // Local results from form history
     if (this.maxLocalResults) {
-      let deferredHistoryResult = this._fetchFormHistory(searchTerm);
-      promises.push(deferredHistoryResult.promise);
+      promises.push(this._fetchFormHistory(searchTerm));
     }
 
     function handleRejection(reason) {
@@ -167,11 +163,11 @@ this.SearchSuggestionController.prototype = {
    * will still be returned because stopping relies on aborting the XMLHTTPRequest to reject the
    * promise for Promise.all.
    */
-  stop: function() {
+  stop() {
     if (this._request) {
       this._request.abort();
     } else if (!this.maxRemoteResults) {
-      Cu.reportError("SearchSuggestionController: Cannot stop fetching if remote results were not "+
+      Cu.reportError("SearchSuggestionController: Cannot stop fetching if remote results were not " +
                      "requested");
     }
     this._reset();
@@ -179,68 +175,67 @@ this.SearchSuggestionController.prototype = {
 
   // Private methods
 
-  _fetchFormHistory: function(searchTerm) {
-    let deferredFormHistory = Promise.defer();
+  _fetchFormHistory(searchTerm) {
+    return new Promise(resolve => {
+      let acSearchObserver = {
+        // Implements nsIAutoCompleteSearch
+        onSearchResult: (search, result) => {
+          this._formHistoryResult = result;
 
-    let acSearchObserver = {
-      // Implements nsIAutoCompleteSearch
-      onSearchResult: (search, result) => {
-        this._formHistoryResult = result;
+          if (this._request) {
+            this._remoteResultTimer = Cc["@mozilla.org/timer;1"].
+                                      createInstance(Ci.nsITimer);
+            this._remoteResultTimer.initWithCallback(this._onRemoteTimeout.bind(this),
+                                                     this.remoteTimeout, Ci.nsITimer.TYPE_ONE_SHOT);
+          }
 
-        if (this._request) {
-          this._remoteResultTimer = Cc["@mozilla.org/timer;1"].
-                                    createInstance(Ci.nsITimer);
-          this._remoteResultTimer.initWithCallback(this._onRemoteTimeout.bind(this),
-                                                   this.remoteTimeout || REMOTE_TIMEOUT,
-                                                   Ci.nsITimer.TYPE_ONE_SHOT);
-        }
+          switch (result.searchResult) {
+            case Ci.nsIAutoCompleteResult.RESULT_SUCCESS:
+            case Ci.nsIAutoCompleteResult.RESULT_NOMATCH:
+              if (result.searchString !== this._searchString) {
+                resolve("Unexpected response, this._searchString does not match form history response");
+                return;
+              }
+              let fhEntries = [];
+              for (let i = 0; i < result.matchCount; ++i) {
+                fhEntries.push(result.getValueAt(i));
+              }
+              resolve({
+                result: fhEntries,
+                formHistoryResult: result,
+              });
+              break;
+            case Ci.nsIAutoCompleteResult.RESULT_FAILURE:
+            case Ci.nsIAutoCompleteResult.RESULT_IGNORED:
+              resolve("Form History returned RESULT_FAILURE or RESULT_IGNORED");
+              break;
+          }
+        },
+      };
 
-        switch (result.searchResult) {
-          case Ci.nsIAutoCompleteResult.RESULT_SUCCESS:
-          case Ci.nsIAutoCompleteResult.RESULT_NOMATCH:
-            if (result.searchString !== this._searchString) {
-              deferredFormHistory.resolve("Unexpected response, this._searchString does not match form history response");
-              return;
-            }
-            let fhEntries = [];
-            for (let i = 0; i < result.matchCount; ++i) {
-              fhEntries.push(result.getValueAt(i));
-            }
-            deferredFormHistory.resolve({
-              result: fhEntries,
-              formHistoryResult: result,
-            });
-            break;
-          case Ci.nsIAutoCompleteResult.RESULT_FAILURE:
-          case Ci.nsIAutoCompleteResult.RESULT_IGNORED:
-            deferredFormHistory.resolve("Form History returned RESULT_FAILURE or RESULT_IGNORED");
-            break;
-        }
-      },
-    };
-
-    let formHistory = Cc["@mozilla.org/autocomplete/search;1?name=form-history"].
-                      createInstance(Ci.nsIAutoCompleteSearch);
-    formHistory.startSearch(searchTerm, this.formHistoryParam || DEFAULT_FORM_HISTORY_PARAM,
-                            this._formHistoryResult,
-                            acSearchObserver);
-    return deferredFormHistory;
+      let formHistory = Cc["@mozilla.org/autocomplete/search;1?name=form-history"].
+                        createInstance(Ci.nsIAutoCompleteSearch);
+      formHistory.startSearch(searchTerm, this.formHistoryParam || DEFAULT_FORM_HISTORY_PARAM,
+                              this._formHistoryResult,
+                              acSearchObserver);
+    });
   },
 
   /**
    * Fetch suggestions from the search engine over the network.
    */
-  _fetchRemote: function(searchTerm, engine, privateMode) {
-    let deferredResponse = Promise.defer();
+  _fetchRemote(searchTerm, engine, privateMode, userContextId) {
+    let deferredResponse = PromiseUtils.defer();
     this._request = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
                     createInstance(Ci.nsIXMLHttpRequest);
     let submission = engine.getSubmission(searchTerm,
                                           SEARCH_RESPONSE_SUGGESTION_JSON);
     let method = (submission.postData ? "POST" : "GET");
     this._request.open(method, submission.uri.spec, true);
-    if (this._request.channel instanceof Ci.nsIPrivateBrowsingChannel) {
-      this._request.channel.setPrivate(privateMode);
-    }
+
+    this._request.setOriginAttributes({userContextId,
+                                       privateBrowsingId: privateMode ? 1 : 0});
+
     this._request.mozBackgroundRequest = true; // suppress dialogs and fail silently
 
     this._request.addEventListener("load", this._onRemoteLoaded.bind(this, deferredResponse));
@@ -259,7 +254,7 @@ this.SearchSuggestionController.prototype = {
    * so we can handle the response data.
    * @private
    */
-  _onRemoteLoaded: function(deferredResponse) {
+  _onRemoteLoaded(deferredResponse) {
     if (!this._request) {
       deferredResponse.resolve("Got HTTP response after the request was cancelled");
       return;
@@ -281,7 +276,7 @@ this.SearchSuggestionController.prototype = {
 
     try {
       serverResults = JSON.parse(this._request.responseText);
-    } catch(ex) {
+    } catch (ex) {
       deferredResponse.resolve("Failed to parse suggestion JSON: " + ex);
       return;
     }
@@ -300,7 +295,7 @@ this.SearchSuggestionController.prototype = {
   /**
    * Called when this._remoteResultTimer fires indicating the remote request took too long.
    */
-  _onRemoteTimeout: function () {
+  _onRemoteTimeout() {
     this._request = null;
 
     // FIXME: bug 387341
@@ -319,7 +314,7 @@ this.SearchSuggestionController.prototype = {
    * @param {Array} suggestResults - an array of result objects from different sources (local or remote)
    * @return {Object}
    */
-  _dedupeAndReturnResults: function(suggestResults) {
+  _dedupeAndReturnResults(suggestResults) {
     if (this._searchString === null) {
       // _searchString can be null if stop() was called and remote suggestions
       // were disabled (stopping if we are fetching remote suggestions will
@@ -374,7 +369,7 @@ this.SearchSuggestionController.prototype = {
     return results;
   },
 
-  _reset: function() {
+  _reset() {
     this._request = null;
     if (this._remoteResultTimer) {
       this._remoteResultTimer.cancel();
@@ -394,3 +389,9 @@ this.SearchSuggestionController.prototype = {
 this.SearchSuggestionController.engineOffersSuggestions = function(engine) {
  return engine.supportsResponseType(SEARCH_RESPONSE_SUGGESTION_JSON);
 };
+
+/**
+ * The maximum time (ms) to wait before giving up on a remote suggestions.
+ */
+XPCOMUtils.defineLazyPreferenceGetter(this.SearchSuggestionController.prototype, "remoteTimeout",
+                                      REMOTE_TIMEOUT_PREF, REMOTE_TIMEOUT_DEFAULT);

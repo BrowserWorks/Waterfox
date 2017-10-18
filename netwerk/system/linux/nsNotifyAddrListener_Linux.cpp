@@ -8,10 +8,8 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <errno.h>
-#ifndef MOZ_WIDGET_GONK
 #include <ifaddrs.h>
 #include <net/if.h>
-#endif
 
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
@@ -20,20 +18,13 @@
 #include "nsString.h"
 #include "mozilla/Logging.h"
 
-#include "mozilla/Services.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/FileUtils.h"
-#include "mozilla/SHA1.h"
 #include "mozilla/Base64.h"
+#include "mozilla/FileUtils.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
+#include "mozilla/SHA1.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/Telemetry.h"
-
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-#include <cutils/properties.h>
-#endif
 
 /* a shorter name that better explains what it does */
 #define EINTR_RETRY(x) MOZ_TEMP_FAILURE_RETRY(x)
@@ -143,11 +134,11 @@ void nsNotifyAddrListener::calculateNetworkId(void)
         if (gw) {
             /* create a string to search for in the arp table */
             char searchfor[16];
-            snprintf(searchfor, sizeof(searchfor), "%d.%d.%d.%d",
-                     gw & 0xff,
-                     (gw >> 8) & 0xff,
-                     (gw >> 16) & 0xff,
-                     gw >> 24);
+            SprintfLiteral(searchfor, "%d.%d.%d.%d",
+                           gw & 0xff,
+                           (gw >> 8) & 0xff,
+                           (gw >> 16) & 0xff,
+                           gw >> 24);
 
             FILE *farp = fopen(kProcArp, "r");
             if (farp) {
@@ -213,9 +204,6 @@ void nsNotifyAddrListener::calculateNetworkId(void)
 //
 void nsNotifyAddrListener::checkLink(void)
 {
-#ifdef MOZ_WIDGET_GONK
-    // b2g instead has NetworkManager.js which handles UP/DOWN
-#else
     struct ifaddrs *list;
     struct ifaddrs *ifa;
     bool link = false;
@@ -227,9 +215,9 @@ void nsNotifyAddrListener::checkLink(void)
     // Walk through the linked list, maintaining head pointer so we can free
     // list later
 
-    for (ifa = list; ifa != NULL; ifa = ifa->ifa_next) {
+    for (ifa = list; ifa != nullptr; ifa = ifa->ifa_next) {
         int family;
-        if (ifa->ifa_addr == NULL)
+        if (ifa->ifa_addr == nullptr)
             continue;
 
         family = ifa->ifa_addr->sa_family;
@@ -250,7 +238,6 @@ void nsNotifyAddrListener::checkLink(void)
         SendEvent(mLinkUp ?
                   NS_NETWORK_LINK_DATA_UP : NS_NETWORK_LINK_DATA_DOWN);
     }
-#endif
 }
 
 void nsNotifyAddrListener::OnNetlinkMessage(int aNetlinkSocket)
@@ -330,7 +317,8 @@ void nsNotifyAddrListener::OnNetlinkMessage(int aNetlinkSocket)
             struct ifaddrmsg* ifam;
             nsCString addrStr;
             addrStr.Assign(addr);
-            if (mAddressInfo.Get(addrStr, &ifam)) {
+            if (auto entry = mAddressInfo.LookupForAdd(addrStr)) {
+                ifam = entry.Data();
                 LOG(("nsNotifyAddrListener::OnNetlinkMessage: the address "
                      "already known."));
                 if (memcmp(ifam, newifam, sizeof(struct ifaddrmsg))) {
@@ -343,7 +331,7 @@ void nsNotifyAddrListener::OnNetlinkMessage(int aNetlinkSocket)
                 networkChange = true;
                 ifam = (struct ifaddrmsg*)malloc(sizeof(struct ifaddrmsg));
                 memcpy(ifam, newifam, sizeof(struct ifaddrmsg));
-                mAddressInfo.Put(addrStr,ifam);
+                entry.OrInsert([ifam] () { return ifam; });
             }
         } else {
             LOG(("nsNotifyAddrListener::OnNetlinkMessage: an address "
@@ -451,19 +439,6 @@ nsNotifyAddrListener::Observe(nsISupports *subject,
     return NS_OK;
 }
 
-#ifdef MOZ_NUWA_PROCESS
-class NuwaMarkLinkMonitorThreadRunner : public Runnable
-{
-    NS_IMETHODIMP Run() override
-    {
-        if (IsNuwaProcess()) {
-            NuwaMarkCurrentThread(nullptr, nullptr);
-        }
-        return NS_OK;
-    }
-};
-#endif
-
 nsresult
 nsNotifyAddrListener::Init(void)
 {
@@ -485,11 +460,6 @@ nsNotifyAddrListener::Init(void)
 
     rv = NS_NewNamedThread("Link Monitor", getter_AddRefs(mThread), this);
     NS_ENSURE_SUCCESS(rv, rv);
-
-#ifdef MOZ_NUWA_PROCESS
-    nsCOMPtr<nsIRunnable> runner = new NuwaMarkLinkMonitorThreadRunner();
-    mThread->Dispatch(runner, NS_DISPATCH_NORMAL);
-#endif
 
     return NS_OK;
 }

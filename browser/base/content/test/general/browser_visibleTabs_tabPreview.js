@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-add_task(function* test() {
+add_task(async function test() {
   gPrefService.setBoolPref("browser.ctrlTab.previews", true);
 
   let [origTab] = gBrowser.visibleTabs;
-  let tabOne = gBrowser.addTab();
-  let tabTwo = gBrowser.addTab();
+  let tabOne = BrowserTestUtils.addTab(gBrowser);
+  let tabTwo = BrowserTestUtils.addTab(gBrowser);
 
   // test the ctrlTab.tabList
   pressCtrlTab();

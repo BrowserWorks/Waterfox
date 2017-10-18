@@ -1,17 +1,20 @@
 Components.utils.import("resource://devtools/client/framework/gDevTools.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-const {devtools} =
+const { devtools } =
   Components.utils.import("resource://devtools/shared/Loader.jsm", {});
 const { getActiveTab } = devtools.require("sdk/tabs/utils");
 const { getMostRecentBrowserWindow } = devtools.require("sdk/window/utils");
 const ThreadSafeChromeUtils = devtools.require("ThreadSafeChromeUtils");
-const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+const { EVENTS } = devtools.require("devtools/client/netmonitor/src/constants");
+const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 
 const webserver = Services.prefs.getCharPref("addon.test.damp.webserver");
 
-const SIMPLE_URL = "chrome://damp/content/pages/simple.html";
+const SIMPLE_URL = webserver + "/tests/devtools/addon/content/pages/simple.html";
 const COMPLICATED_URL = webserver + "/tests/tp5n/bild.de/www.bild.de/index.html";
+
+/* globals res:true */
 
 function Damp() {
   // Path to the temp file where the heap snapshot file is saved. Set by
@@ -19,43 +22,42 @@ function Damp() {
   this._heapSnapshotFilePath = null;
   // HeapSnapshot instance. Set by readHeapSnapshot, used by takeCensus.
   this._snapshot = null;
+
+  Services.prefs.setBoolPref("devtools.webconsole.new-frontend-enabled", true);
 }
 
 Damp.prototype = {
 
-  addTab: function(url) {
+  addTab(url) {
     return new Promise((resolve, reject) => {
       let tab = this._win.gBrowser.selectedTab = this._win.gBrowser.addTab(url);
       let browser = tab.linkedBrowser;
       browser.addEventListener("load", function onload() {
-        browser.removeEventListener("load", onload, true);
         resolve(tab);
-      }, true);
+      }, {capture: true, once: true});
     });
   },
 
-  closeCurrentTab: function() {
+  closeCurrentTab() {
     this._win.BrowserCloseTabOrWindow();
     return this._win.gBrowser.selectedTab;
   },
 
-  reloadPage: function() {
+  reloadPage() {
     let startReloadTimestamp = performance.now();
     return new Promise((resolve, reject) => {
       let browser = gBrowser.selectedBrowser;
-      let self = this;
       browser.addEventListener("load", function onload() {
-        browser.removeEventListener("load", onload, true);
         let stopReloadTimestamp = performance.now();
         resolve({
           time: stopReloadTimestamp - startReloadTimestamp
         });
-      }, true);
+      }, {capture: true, once: true});
       browser.reload();
     });
   },
 
-  openToolbox: function (tool = "webconsole") {
+  openToolbox(tool = "webconsole") {
     let tab = getActiveTab(getMostRecentBrowserWindow());
     let target = devtools.TargetFactory.forTab(tab);
     let startRecordTimestamp = performance.now();
@@ -70,20 +72,19 @@ Damp.prototype = {
     });
   },
 
-  closeToolbox: function() {
+  closeToolbox: Task.async(function*() {
     let tab = getActiveTab(getMostRecentBrowserWindow());
     let target = devtools.TargetFactory.forTab(tab);
+    yield target.client.waitForRequestsToSettle();
     let startRecordTimestamp = performance.now();
-    let closePromise = gDevTools.closeToolbox(target);
-    return closePromise.then(() => {
-      let stopRecordTimestamp = performance.now();
-      return {
-        time: stopRecordTimestamp - startRecordTimestamp
-      };
-    });
-  },
+    yield gDevTools.closeToolbox(target);
+    let stopRecordTimestamp = performance.now();
+    return {
+      time: stopRecordTimestamp - startRecordTimestamp
+    };
+  }),
 
-  saveHeapSnapshot: function(label) {
+  saveHeapSnapshot(label) {
     let tab = getActiveTab(getMostRecentBrowserWindow());
     let target = devtools.TargetFactory.forTab(tab);
     let toolbox = gDevTools.getToolbox(target);
@@ -101,7 +102,7 @@ Damp.prototype = {
     });
   },
 
-  readHeapSnapshot: function(label) {
+  readHeapSnapshot(label) {
     let start = performance.now();
     this._snapshot = ThreadSafeChromeUtils.readHeapSnapshot(this._heapSnapshotFilePath);
     let end = performance.now();
@@ -111,6 +112,16 @@ Damp.prototype = {
     });
     return Promise.resolve();
   },
+
+  waitForNetworkRequests: Task.async(function*(label, toolbox) {
+    const start = performance.now();
+    yield this.waitForAllRequestsFinished();
+    const end = performance.now();
+    this._results.push({
+      name: label + ".requestsFinished.DAMP",
+      value: end - start
+    });
+  }),
 
   _consoleBulkLoggingTest: Task.async(function*() {
     let TOTAL_MESSAGES = 10;
@@ -168,8 +179,7 @@ Damp.prototype = {
     let TOTAL_MESSAGES = 100;
     let tab = yield this.testSetup(SIMPLE_URL);
     let messageManager = tab.linkedBrowser.messageManager;
-    let {toolbox} = yield this.openToolbox("webconsole");
-    let webconsole = toolbox.getPanel("webconsole");
+    yield this.openToolbox("webconsole");
 
     // Load a frame script using a data URI so we can do logs
     // from the page.  So this is running in content.
@@ -211,7 +221,7 @@ Damp.prototype = {
     yield this.testTeardown();
   }),
 
-  takeCensus: function(label) {
+  takeCensus(label) {
     let start = performance.now();
 
     this._snapshot.takeCensus({
@@ -247,7 +257,7 @@ Damp.prototype = {
     return Promise.resolve();
   },
 
-  _getToolLoadingTests: function(url, label) {
+  _getToolLoadingTests(url, label) {
 
     let openToolboxAndLog = Task.async(function*(name, tool) {
       let {time, toolbox} = yield this.openToolbox(tool);
@@ -308,8 +318,10 @@ Damp.prototype = {
 
       netmonitorOpen: Task.async(function*() {
         yield this.testSetup(url);
-        yield openToolboxAndLog(label + ".netmonitor", "netmonitor");
+        const toolbox = yield openToolboxAndLog(label + ".netmonitor", "netmonitor");
+        const requestsDone = this.waitForNetworkRequests(label + ".netmonitor", toolbox);
         yield reloadPageAndLog(label + ".netmonitor");
+        yield requestsDone;
         yield closeToolboxAndLog(label + ".netmonitor");
         yield this.testTeardown();
       }),
@@ -365,7 +377,7 @@ Damp.prototype = {
   _nextCommandIx: 0,
   _commands: [],
   _onSequenceComplete: 0,
-  _nextCommand: function() {
+  _nextCommand() {
     if (this._nextCommandIx >= this._commands.length) {
       this._onSequenceComplete();
       return;
@@ -373,7 +385,7 @@ Damp.prototype = {
     this._commands[this._nextCommandIx++].call(this);
   },
   // Each command at the array a function which must call nextCommand once it's done
-  _doSequence: function(commands, onComplete) {
+  _doSequence(commands, onComplete) {
     this._commands = commands;
     this._onSequenceComplete = onComplete;
     this._results = [];
@@ -382,25 +394,25 @@ Damp.prototype = {
     this._nextCommand();
   },
 
-  _log: function(str) {
+  _log(str) {
     if (window.MozillaFileLogger && window.MozillaFileLogger.log)
       window.MozillaFileLogger.log(str);
 
     window.dump(str);
   },
 
-  _logLine: function(str) {
+  _logLine(str) {
     return this._log(str + "\n");
   },
 
-  _reportAllResults: function() {
+  _reportAllResults() {
     var testNames = [];
     var testResults = [];
 
     var out = "";
     for (var i in this._results) {
       res = this._results[i];
-      var disp = [].concat(res.value).map(function(a){return (isNaN(a) ? -1 : a.toFixed(1));}).join(" ");
+      var disp = [].concat(res.value).map(function(a) { return (isNaN(a) ? -1 : a.toFixed(1)); }).join(" ");
       out += res.name + ": " + disp + "\n";
 
       if (!Array.isArray(res.value)) { // Waw intervals array is not reported to talos
@@ -411,15 +423,15 @@ Damp.prototype = {
     this._log("\n" + out);
 
     if (content && content.tpRecordTime) {
-      content.tpRecordTime(testResults.join(','), 0, testNames.join(','));
+      content.tpRecordTime(testResults.join(","), 0, testNames.join(","));
     } else {
-      //alert(out);
+      // alert(out);
     }
   },
 
   _onTestComplete: null,
 
-  _doneInternal: function() {
+  _doneInternal() {
     this._logLine("DAMP_RESULTS_JSON=" + JSON.stringify(this._results));
     this._reportAllResults();
     this._win.gBrowser.selectedTab = this._dampTab;
@@ -429,9 +441,61 @@ Damp.prototype = {
     }
   },
 
-  startTest: function(doneCallback, config) {
-    this._onTestComplete = function (results) {
-      Profiler.mark("DAMP - end", true);
+  /**
+   * Start monitoring all incoming update events about network requests and wait until
+   * a complete info about all requests is received. (We wait for the timings info
+   * explicitly, because that's always the last piece of information that is received.)
+   *
+   * This method is designed to wait for network requests that are issued during a page
+   * load, when retrieving page resources (scripts, styles, images). It has certain
+   * assumptions that can make it unsuitable for other types of network communication:
+   * - it waits for at least one network request to start and finish before returning
+   * - it waits only for request that were issued after it was called. Requests that are
+   *   already in mid-flight will be ignored.
+   * - the request start and end times are overlapping. If a new request starts a moment
+   *   after the previous one was finished, the wait will be ended in the "interim"
+   *   period.
+   * @returns a promise that resolves when the wait is done.
+   */
+  waitForAllRequestsFinished() {
+    let tab = getActiveTab(getMostRecentBrowserWindow());
+    let target = devtools.TargetFactory.forTab(tab);
+    let toolbox = gDevTools.getToolbox(target);
+    let window = toolbox.getCurrentPanel().panelWin;
+
+    return new Promise(resolve => {
+      // Key is the request id, value is a boolean - is request finished or not?
+      let requests = new Map();
+
+      function onRequest(_, id) {
+        requests.set(id, false);
+      }
+
+      function onTimings(_, id) {
+        requests.set(id, true);
+        maybeResolve();
+      }
+
+      function maybeResolve() {
+        // Have all the requests in the map finished yet?
+        if (![...requests.values()].every(finished => finished)) {
+          return;
+        }
+
+        // All requests are done - unsubscribe from events and resolve!
+        window.off(EVENTS.NETWORK_EVENT, onRequest);
+        window.off(EVENTS.RECEIVED_EVENT_TIMINGS, onTimings);
+        resolve();
+      }
+
+      window.on(EVENTS.NETWORK_EVENT, onRequest);
+      window.on(EVENTS.RECEIVED_EVENT_TIMINGS, onTimings);
+    });
+  },
+
+  startTest(doneCallback, config) {
+    this._onTestComplete = function(results) {
+      TalosParentProfiler.pause("DAMP - end");
       doneCallback(results);
     };
     this._config = config;
@@ -442,7 +506,7 @@ Damp.prototype = {
     this._dampTab = this._win.gBrowser.selectedTab;
     this._win.gBrowser.selectedBrowser.focus(); // Unfocus the URL bar to avoid caret blink
 
-    Profiler.mark("DAMP - start", true);
+    TalosParentProfiler.resume("DAMP - start");
 
     let tests = [];
     tests = tests.concat(this._getToolLoadingTests(SIMPLE_URL, "simple"));

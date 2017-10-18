@@ -266,7 +266,7 @@ function attachEventListeners(aWindow) {
   if (aWindow.document.readyState === 'complete') {
     onWindowLoaded();
   } else {
-    aWindow.addEventListener("load", onWindowLoaded, false);
+    aWindow.addEventListener("load", onWindowLoaded);
   }
 }
 
@@ -284,9 +284,9 @@ function init() {
   // Activate observer for new top level windows
   var observerService = Cc["@mozilla.org/observer-service;1"].
                         getService(Ci.nsIObserverService);
-  observerService.addObserver(windowReadyObserver, "toplevel-window-ready", false);
-  observerService.addObserver(windowCloseObserver, "outer-window-destroyed", false);
-  observerService.addObserver(enterLeavePrivateBrowsingObserver, "private-browsing", false);
+  observerService.addObserver(windowReadyObserver, "toplevel-window-ready");
+  observerService.addObserver(windowCloseObserver, "outer-window-destroyed");
+  observerService.addObserver(enterLeavePrivateBrowsingObserver, "private-browsing");
 
   handleAttachEventListeners();
 }

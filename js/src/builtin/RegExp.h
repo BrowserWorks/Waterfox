@@ -31,7 +31,7 @@ enum RegExpStaticsUpdate { UpdateRegExpStatics, DontUpdateRegExpStatics };
  * |chars| and |length|.
  */
 MOZ_MUST_USE bool
-ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, RegExpObject& reobj,
+ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, Handle<RegExpObject*> reobj,
                     HandleLinearString input, size_t* lastIndex, bool test,
                     MutableHandleValue rval);
 
@@ -88,14 +88,16 @@ extern MOZ_MUST_USE bool
 regexp_test_no_statics(JSContext* cx, unsigned argc, Value* vp);
 
 /*
- * Behaves like RegExp(pattern, string).
- * pattern should be a RegExp object, and flags should be a string,
- * and should be called without |new|.
- * Dedicated function for RegExp.prototype.split optimized path.
- * sticky flag is ignored.
+ * Behaves like RegExp(source, flags).
+ * |source| must be a valid regular expression pattern, |flags| is a raw
+ * integer value representing the regular expression flags.
+ * Must be called without |new|.
+ *
+ * Dedicated function for RegExp.prototype[@@replace] and
+ * RegExp.prototype[@@split] optimized paths.
  */
 extern MOZ_MUST_USE bool
-regexp_construct_no_sticky(JSContext* cx, unsigned argc, Value* vp);
+regexp_construct_raw_flags(JSContext* cx, unsigned argc, Value* vp);
 
 extern MOZ_MUST_USE bool
 IsRegExp(JSContext* cx, HandleValue value, bool* result);
@@ -107,13 +109,13 @@ extern MOZ_MUST_USE bool
 RegExpPrototypeOptimizable(JSContext* cx, unsigned argc, Value* vp);
 
 extern MOZ_MUST_USE bool
-RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto, uint8_t* result);
+RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto);
 
 extern MOZ_MUST_USE bool
 RegExpInstanceOptimizable(JSContext* cx, unsigned argc, Value* vp);
 
 extern MOZ_MUST_USE bool
-RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto, uint8_t* result);
+RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto);
 
 extern MOZ_MUST_USE bool
 RegExpGetSubstitution(JSContext* cx, HandleLinearString matched, HandleLinearString string,

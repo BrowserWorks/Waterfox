@@ -12,7 +12,7 @@
 class nsLeafBoxFrame : public nsLeafFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsLeafBoxFrame)
 
   friend nsIFrame* NS_NewLeafBoxFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
@@ -22,7 +22,6 @@ public:
   virtual nscoord GetXULFlex() override;
   virtual nscoord GetXULBoxAscent(nsBoxLayoutState& aState) override;
 
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     // This is bogus, but it's what we've always done.
@@ -38,19 +37,19 @@ public:
   // nsIHTMLReflow overrides
 
   virtual void MarkIntrinsicISizesDirty() override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   // Our auto size is that provided by nsFrame, not nsLeafFrame
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       ReflowOutput&     aDesiredSize,
@@ -83,7 +82,9 @@ protected:
 
   virtual nscoord GetIntrinsicISize() override;
 
- explicit nsLeafBoxFrame(nsStyleContext* aContext);
+  explicit nsLeafBoxFrame(nsStyleContext* aContext, ClassID aID = kClassID)
+    : nsLeafFrame(aContext, aID)
+  {}
 
 private:
 

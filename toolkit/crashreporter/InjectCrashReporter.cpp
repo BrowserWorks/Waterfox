@@ -6,7 +6,7 @@
 #include "InjectCrashReporter.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
-#include "client/windows/crash_generation/crash_generation_client.h"
+#include "windows/crash_generation/crash_generation_client.h"
 #include "nsExceptionHandler.h"
 #include "LoadLibraryRemote.h"
 #include "nsWindowsHelpers.h"
@@ -17,7 +17,8 @@ using CrashReporter::GetChildNotificationPipe;
 namespace mozilla {
 
 InjectCrashRunnable::InjectCrashRunnable(DWORD pid)
-  : mPID(pid)
+  : Runnable("InjectCrashRunnable")
+  , mPID(pid)
 {
   nsCOMPtr<nsIFile> dll;
   nsresult rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(dll));

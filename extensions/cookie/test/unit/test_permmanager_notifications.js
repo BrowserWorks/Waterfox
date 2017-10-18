@@ -16,7 +16,7 @@ function continue_test()
   do_run_generator(test_generator);
 }
 
-function do_run_test() {
+function* do_run_test() {
   // Set up a profile.
   let profile = do_get_profile();
 
@@ -29,7 +29,7 @@ function do_run_test() {
   let principal = ssm.createCodebasePrincipal(uri, {});
 
   let observer = new permission_observer(test_generator, now, permType);
-  Services.obs.addObserver(observer, "perm-changed", false);
+  Services.obs.addObserver(observer, "perm-changed");
 
   // Add a permission, to test the 'add' notification. Note that we use
   // do_execute_soon() so that we can use our generator to continue the test

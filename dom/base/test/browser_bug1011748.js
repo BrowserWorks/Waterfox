@@ -1,6 +1,6 @@
 const gHttpTestRoot = "http://example.com/browser/dom/base/test/";
 
-add_task(function* () {
+add_task(async function() {
   var statusTexts = [];
   var xhr = new XMLHttpRequest();
   var observer = {
@@ -15,8 +15,8 @@ add_task(function* () {
     }
   };
   
-  Services.obs.addObserver(observer, "http-on-examine-response", false);
-  yield new Promise((resolve) => {
+  Services.obs.addObserver(observer, "http-on-examine-response");
+  await new Promise((resolve) => {
     xhr.addEventListener("load", function() {
       statusTexts.push(this.statusText);
       is(statusTexts[0], "", "Empty statusText value for HTTP 302");

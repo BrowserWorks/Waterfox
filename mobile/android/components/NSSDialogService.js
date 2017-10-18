@@ -71,9 +71,7 @@ NSSDialogs.prototype = {
     });
 
     // Spin this thread while we wait for a result
-    let thread = Services.tm.currentThread;
-    while (response === null)
-      thread.processNextEvent(true);
+    Services.tm.spinEventLoopUntil(() => response != null);
 
     return response;
   },
@@ -229,7 +227,7 @@ NSSDialogs.prototype = {
     for (let i = 0; i < certList.length; i++) {
       let cert = certList.queryElementAt(i, Ci.nsIX509Cert);
       certNickList.push(this.formatString("clientAuthAsk.nickAndSerial",
-                                          [cert.nickname, cert.serialNumber]));
+                                          [cert.displayName, cert.serialNumber]));
       certDetailsList.push(this.getCertDetails(cert));
     }
 

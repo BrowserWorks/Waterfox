@@ -14,6 +14,7 @@
 
 #include "APZTestCommon.h"
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
 
 class APZCTreeManagerTester : public APZCTesterBase {
 protected:
@@ -29,6 +30,7 @@ protected:
   virtual void TearDown() {
     while (mcc->RunThroughDelayedTasks());
     manager->ClearTree();
+    manager->ClearContentController();
   }
 
   /**
@@ -94,8 +96,9 @@ protected:
 
   static void SetScrollableFrameMetrics(Layer* aLayer, FrameMetrics::ViewID aScrollId,
                                         CSSRect aScrollableRect = CSSRect(-1, -1, -1, -1)) {
-    ParentLayerIntRect compositionBounds = ViewAs<ParentLayerPixel>(
-        aLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
+    ParentLayerIntRect compositionBounds =
+        RoundedToInt(aLayer->GetLocalTransformTyped().
+            TransformBounds(LayerRect(aLayer->GetVisibleRegion().GetBounds())));
     ScrollMetadata metadata = BuildScrollMetadata(aScrollId, aScrollableRect,
         ParentLayerRect(compositionBounds));
     aLayer->SetScrollMetadata(metadata);

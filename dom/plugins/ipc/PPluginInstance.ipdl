@@ -7,11 +7,11 @@ include protocol PPluginBackgroundDestroyer;
 include protocol PPluginModule;
 include protocol PPluginScriptableObject;
 include protocol PBrowserStream;
-include protocol PPluginStream;
 include protocol PStreamNotify;
 include protocol PPluginSurface;
 
 include "mozilla/GfxMessageUtils.h";
+include "mozilla/layers/LayersMessageUtils.h";
 
 using NPError from "npapi.h";
 using struct mozilla::plugins::NPRemoteWindow from "mozilla/plugins/PluginMessageUtils.h";
@@ -67,7 +67,6 @@ intr protocol PPluginInstance
   manages PPluginBackgroundDestroyer;
   manages PPluginScriptableObject;
   manages PBrowserStream;
-  manages PPluginStream;
   manages PStreamNotify;
   manages PPluginSurface;
 
@@ -85,10 +84,6 @@ child:
   intr NPP_SetWindow(NPRemoteWindow window);
 
   intr NPP_GetValue_NPPVpluginWantsAllNetworkStreams()
-    returns (bool value, NPError result);
-
-  // this message is not used on non-X platforms
-  intr NPP_GetValue_NPPVpluginNeedsXEmbed()
     returns (bool value, NPError result);
 
   intr NPP_GetValue_NPPVpluginScriptableNPObject()
@@ -251,24 +246,11 @@ parent:
                          nsCString value)
     returns (NPError result);
 
-  intr NPN_GetAuthenticationInfo(nsCString protocol_, nsCString host,
-                                int32_t port, nsCString scheme,
-                                nsCString realm)
-    returns (nsCString username, nsCString password, NPError result);
-
   intr NPN_ConvertPoint(double sourceX, bool ignoreDestX, double sourceY, bool ignoreDestY, NPCoordinateSpace sourceSpace,
                        NPCoordinateSpace destSpace)
     returns (double destX, double destY, bool result);
 
   async RedrawPlugin();
-
-  // Send notification that a plugin tried to negotiate Carbon NPAPI so that
-  // users can be notified that restarting the browser in i386 mode may allow
-  // them to use the plugin.
-  sync NegotiatedCarbon();
-
-  // Notifies the parent of its NPP_New result code.
-  async AsyncNPP_NewResult(NPError aResult);
 
   // Sends a native window to be adopted by the native window that would be
   // returned by NPN_GetValue_NPNVnetscapeWindow. Only used on Windows.
@@ -305,15 +287,6 @@ child:
   intr NPP_NewStream(PBrowserStream actor, nsCString mimeType, bool seekable)
     returns (NPError rv,
              uint16_t stype);
-
-  // Implements the async plugin init version of NPP_NewStream.
-  async AsyncNPP_NewStream(PBrowserStream actor, nsCString mimeType, bool seekable);
-
-parent:
-  /* NPN_NewStream */
-  intr PPluginStream(nsCString mimeType,
-                    nsCString target)
-    returns (NPError result);
 
 parent:
   intr PluginFocusChange(bool gotFocus);

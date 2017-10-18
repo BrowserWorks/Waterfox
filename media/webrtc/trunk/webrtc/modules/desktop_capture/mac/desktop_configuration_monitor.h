@@ -13,11 +13,12 @@
 
 #include <ApplicationServices/ApplicationServices.h>
 
+#include <memory>
 #include <set>
 
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/modules/desktop_capture/mac/desktop_configuration.h"
-#include "webrtc/system_wrappers/interface/atomic32.h"
+#include "webrtc/system_wrappers/include/atomic32.h"
 
 namespace webrtc {
 
@@ -56,9 +57,9 @@ class DesktopConfigurationMonitor {
   Atomic32 ref_count_;
   std::set<CGDirectDisplayID> reconfiguring_displays_;
   MacDesktopConfiguration desktop_configuration_;
-  rtc::scoped_ptr<EventWrapper> display_configuration_capture_event_;
+  std::unique_ptr<EventWrapper> display_configuration_capture_event_;
 
-  DISALLOW_COPY_AND_ASSIGN(DesktopConfigurationMonitor);
+  RTC_DISALLOW_COPY_AND_ASSIGN(DesktopConfigurationMonitor);
 };
 
 }  // namespace webrtc

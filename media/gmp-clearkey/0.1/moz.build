@@ -4,16 +4,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Audio/Video: GMP")
+
 SharedLibrary('clearkey')
 
 FINAL_TARGET = 'dist/bin/gmp-clearkey/0.1'
 
-FINAL_TARGET_PP_FILES += ['clearkey.info.in']
+FINAL_TARGET_PP_FILES += ['manifest.json.in']
 
 UNIFIED_SOURCES += [
-    'ClearKeyAsyncShutdown.cpp',
     'ClearKeyBase64.cpp',
-    'ClearKeyCencParser.cpp',
+    'ClearKeyCDM.cpp',
     'ClearKeyDecryptionManager.cpp',
     'ClearKeyPersistence.cpp',
     'ClearKeySession.cpp',
@@ -29,10 +31,7 @@ SOURCES += [
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     UNIFIED_SOURCES += [
-        'AnnexB.cpp',
-        'AudioDecoder.cpp',
         'VideoDecoder.cpp',
-        'WMFAACDecoder.cpp',
         'WMFH264Decoder.cpp',
     ]
 
@@ -46,19 +45,17 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
     DEFINES['ENABLE_WMF'] = True
 
+
+DEFINES['CDM_IMPLEMENTATION'] = True
+
 TEST_DIRS += [
     'gtest',
 ]
 
-
-LOCAL_INCLUDES += [
-    '/dom/media/gmp',
-]
-
-USE_STATIC_LIBS = True
-
 DISABLE_STL_WRAPPING = True
 DEFINES['MOZ_NO_MOZALLOC'] = True
+
+USE_LIBS += ['psshparser']
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CXX']:

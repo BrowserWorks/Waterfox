@@ -10,9 +10,8 @@ ReflectionTests.start = new Date().getTime();
  * algorithm here, because we're not concerned with its correctness -- we're
  * only testing HTML reflection, not Web Addresses.
  *
- * Return "" if the URL couldn't be resolved, since this is really for
- * reflected URL attributes, and those are supposed to return "" if the URL
- * couldn't be resolved.
+ * Return the input if the URL couldn't be resolved, per the spec for
+ * reflected URL attributes.
  *
  * It seems like IE9 doesn't implement URL decomposition attributes correctly
  * for <a>, which causes all these tests to fail.  Ideally I'd do this in some
@@ -25,39 +24,15 @@ ReflectionTests.start = new Date().getTime();
  * special cases for all the values we test.
  */
 ReflectionTests.resolveUrl = function(url) {
+    url = String(url);
     var el = document.createElement("a");
-    el.href = String(url);
+    el.href = url;
     var ret = el.protocol + "//" + el.host + el.pathname + el.search + el.hash;
     if (ret == "//") {
-        return "";
+        return url;
     } else {
         return ret;
     }
-};
-
-/**
- * Given some input, convert to a multi-URL value for IDL get per the spec.
- */
-ReflectionTests.urlsExpected = function(urls) {
-    var expected = "";
-    // TODO: Test other whitespace?
-    urls = urls + "";
-    var split = urls.split(" ");
-    for (var j = 0; j < split.length; j++) {
-        if (split[j] == "") {
-            continue;
-        }
-        var append = ReflectionTests.resolveUrl(split[j]);
-        if (append == "") {
-            continue;
-        }
-        if (expected == "") {
-            expected = append;
-        } else {
-            expected += " " + append;
-        }
-    }
-    return expected;
 };
 
 /**
@@ -177,14 +152,17 @@ ReflectionTests.typeMap = {
                 ]
     },
     /**
-     * "If a reflecting IDL attribute is a DOMString attribute whose content
-     * attribute is defined to contain a URL, then on getting, the IDL
-     * attribute must resolve the value of the content attribute relative to
-     * the element and return the resulting absolute URL if that was
-     * successful, or the empty string otherwise; and on setting, must set the
-     * content attribute to the specified literal value. If the content
-     * attribute is absent, the IDL attribute must return the default value, if
-     * the content attribute has one, or else the empty string."
+     * "If a reflecting IDL attribute is a USVString attribute whose content
+     * attribute is defined to contain a URL, then on getting, if the content
+     * attribute is absent, the IDL attribute must return the empty string.
+     * Otherwise, the IDL attribute must parse the value of the content
+     * attribute relative to the element's node document and if that is
+     * successful, return the resulting URL string. If parsing fails, then the
+     * value of the content attribute must be returned instead, converted to a
+     * USVString. On setting, the content attribute must be set to the specified
+     * new value."
+     *
+     * Also HTMLHyperLinkElementUtils href, used by a.href and area.href
      */
     "url": {
         "jsType": "string",
@@ -196,31 +174,6 @@ ReflectionTests.typeMap = {
                      {"valueOf":function(){return "test-valueOf";}, toString:null}],
         "domExpected": ReflectionTests.resolveUrl,
         "idlIdlExpected": ReflectionTests.resolveUrl
-    },
-    /**
-     * "If a reflecting IDL attribute is a DOMString attribute whose content
-     * attribute is defined to contain one or more URLs, then on getting, the
-     * IDL attribute must split the content attribute on spaces and return the
-     * concatenation of resolving each token URL to an absolute URL relative to
-     * the element, with a single U+0020 SPACE character between each URL,
-     * ignoring any tokens that did not resolve successfully. If the content
-     * attribute is absent, the IDL attribute must return the default value, if
-     * the content attribute has one, or else the empty string. On setting, the
-     * IDL attribute must set the content attribute to the specified literal
-     * value."
-     *
-     * Seems to only be used for ping.
-     */
-    "urls": {
-        "jsType": "string",
-        "defaultVal": "",
-        "domTests": ["", " foo   ", "http://site.example/ foo  bar   baz",
-                     "//site.example/path???@#l", binaryString, undefined, 7, 1.5, true,
-                     false, {"test": 6}, NaN, +Infinity, -Infinity, "\0", null,
-                     {"toString":function(){return "test-toString";}},
-                     {"valueOf":function(){return "test-valueOf";}, toString:null}],
-        "domExpected": ReflectionTests.urlsExpected,
-        "idlIdlExpected": ReflectionTests.urlsExpected
     },
     /**
      * "If a reflecting IDL attribute is a DOMString whose content attribute is
@@ -462,6 +415,77 @@ ReflectionTests.typeMap = {
         "idlDomExpected": [null/*exception*/, 1, maxInt, null, null]
     },
     /**
+     * "If a reflecting IDL attribute has an unsigned integer type (unsigned
+     * long) that is limited to only non-negative numbers greater than zero
+     * with fallback, then the behaviour is similar to the previous case, but
+     * disallowed values are converted to the default value.  On getting, the
+     * content attribute must first be parsed according to the rules for
+     * parsing non-negative integers, and if that is successful, and the value
+     * is in the range 1 to 2147483647 inclusive, the resulting value must be
+     * returned.  If, on the other hand, it fails or returns an out of range
+     * value, or if the attribute is absent, the default value must be returned
+     * instead.  On setting, first, if the new value is in the range 1 to
+     * 2147483647, then let n be the new value, otherwise let n be the default
+     * value; then, n must be converted to the shortest possible string
+     * representing the number as a valid non-negative integer and that string
+     * must be used as the new content attribute value."
+     */
+    "limited unsigned long with fallback": {
+        "jsType": "number",
+            "domTests": [minInt - 1, minInt, -36,  -1,   0,    1, maxInt,
+                         maxInt + 1, maxUnsigned, maxUnsigned + 1, "", "-1", "-0", "0", "1",
+                         "\u00097", "\u000B7", "\u000C7", "\u00207", "\u00A07", "\uFEFF7",
+                         "\u000A7", "\u000D7", "\u20287", "\u20297", "\u16807", "\u180E7",
+                         "\u20007", "\u20017", "\u20027", "\u20037", "\u20047", "\u20057",
+                         "\u20067", "\u20077", "\u20087", "\u20097", "\u200A7", "\u202F7",
+                         "\u30007",
+                         " " + binaryString + " foo ", undefined, 1.5, true, false,
+                         {"test": 6}, NaN, +Infinity, -Infinity, "\0",
+                         {toString:function() {return 2;}, valueOf: null},
+                         {valueOf:function() {return 3;}}],
+            "domExpected": function(val) {
+                var parsed = ReflectionTests.parseNonneg(String(val));
+                // Note maxInt, not maxUnsigned.
+                if (parsed === false || parsed < 1 || parsed > maxInt) {
+                    return null;
+                }
+                return parsed;
+            },
+            "idlTests":       [0, 1, maxInt, maxInt + 1, maxUnsigned],
+            "idlDomExpected": [null, 1, maxInt, null, null]
+    },
+    /**
+     * "If a reflecting IDL attribute has an unsigned integer type (unsigned
+     * long) that is clamped to the range [min, max], then on getting, the
+     * content attribute must first be parsed according to the rules for
+     * parsing non-negative integers, and if that is successful, and the value
+     * is between min and max inclusive, the resulting value must be returned.
+     * If it fails, the default value must be returned. If it succeeds but the
+     * value is less than min, min must be returned. If it succeeds but the
+     * value is greater than max, max must be returned. On setting, it behaves
+     * the same as a regular reflected unsigned integer."
+     *
+     * The data object passed to reflects must contain the keys defaultVal,
+     * min, and max.  As with enum, domExpected is generated later once we have
+     * access to the min and max.
+     */
+    "clamped unsigned long": {
+        "jsType": "number",
+        "domTests": [minInt - 1, minInt, -36,  -1,   0,    1, maxInt,
+                     maxInt + 1, maxUnsigned, maxUnsigned + 1, "", "-1", "-0", "0", "1",
+                     "\u00097", "\u000B7", "\u000C7", "\u00207", "\u00A07", "\uFEFF7",
+                     "\u000A7", "\u000D7", "\u20287", "\u20297", "\u16807", "\u180E7",
+                     "\u20007", "\u20017", "\u20027", "\u20037", "\u20047", "\u20057",
+                     "\u20067", "\u20077", "\u20087", "\u20097", "\u200A7", "\u202F7",
+                     "\u30007",
+                     " " + binaryString + " foo ", undefined, 1.5, true, false,
+                     {"test": 6}, NaN, +Infinity, -Infinity, "\0",
+                     {toString:function() {return 2;}, valueOf: null},
+                     {valueOf:function() {return 3;}}],
+        "idlTests": [0, 1, 257, maxInt, "-0", maxInt + 1, maxUnsigned],
+        "idlDomExpected": [0, 1, 257, maxInt, 0, null, null],
+    },
+    /**
      * "If a reflecting IDL attribute is a floating point number type (double),
      * then, on getting, the content attribute must be parsed according to the
      * rules for parsing floating point number values, and if that is
@@ -574,15 +598,6 @@ ReflectionTests.reflects = function(data, idlName, idlObj, domName, domObj) {
     // probably safe enough.  Just don't read stuff that will change.
     ReflectionHarness.currentTestInfo = {data: data, idlName: idlName, idlObj: idlObj, domName: domName, domObj: domObj};
 
-    ReflectionHarness.testWrapper(function() {
-        ReflectionTests.doReflects(data, idlName, idlObj, domName, domObj);
-    });
-};
-
-/**
- * Actual implementation of the above.
- */
-ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
     // If we don't recognize the type, testing is impossible.
     if (this.typeMap[data.type] === undefined) {
         if (unimplemented.indexOf(data.type) == -1) {
@@ -598,9 +613,15 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
     }
 
     // Test that typeof idlObj[idlName] is correct.  If not, further tests are
-    // probably pointless, so bail out.
-    var isDefaultValueNull = data.isNullable && data.defaultVal === null;
-    if (!ReflectionHarness.test(typeof idlObj[idlName], isDefaultValueNull ? "object" : typeInfo.jsType, "typeof IDL attribute")) {
+    // probably pointless, so bail out if we're not running conformance tests.
+    var expectedType = data.isNullable && data.defaultVal === null ? "object"
+                                                                   : typeInfo.jsType;
+    ReflectionHarness.test(function() {
+        ReflectionHarness.assertEquals(typeof idlObj[idlName], expectedType);
+    }, "typeof IDL attribute");
+
+    if (!ReflectionHarness.conformanceTesting &&
+        typeof idlObj[idlName] !== expectedType) {
         return;
     }
 
@@ -610,7 +631,9 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
         defaultVal = typeInfo.defaultVal;
     }
     if (defaultVal !== null || data.isNullable) {
-        ReflectionHarness.test(idlObj[idlName], defaultVal, "IDL get with DOM attribute unset");
+        ReflectionHarness.test(function() {
+            ReflectionHarness.assertEquals(idlObj[idlName], defaultVal);
+        }, "IDL get with DOM attribute unset");
     }
 
     var domTests = typeInfo.domTests.slice(0);
@@ -652,6 +675,10 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
                 domTests.push(data.keywords[i].toUpperCase());
                 idlTests.push(data.keywords[i].toUpperCase());
             }
+            if (data.keywords[i] != data.keywords[i].replace(/k/g, "\u212A")) {
+                domTests.push(data.keywords[i].replace(/k/g, "\u212A"));
+                idlTests.push(data.keywords[i].replace(/k/g, "\u212A"));
+            }
         }
 
         // Per spec, the expected DOM values are the same as the value we set
@@ -689,6 +716,54 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
             }
         }
         break;
+
+        case "clamped unsigned long":
+        [data.min - 1, data.min, data.max, data.max + 1].forEach(function(val) {
+          if (domTests.indexOf(val) == -1) {
+            domTests.push(val);
+          }
+          if (idlTests.indexOf(val) == -1 && 0 <= val && val <= maxUnsigned) {
+            idlTests.push(val);
+            if (typeof val != "number") {
+              val = ReflectionTests.parseNonneg(val);
+            }
+            idlDomExpected.push(val > maxInt ? null : val);
+          }
+        });
+
+        // Rewrite expected values
+        domExpected = domTests.map(function(val) {
+            var parsed = ReflectionTests.parseNonneg(String(val));
+            if (parsed === false) {
+                return defaultVal;
+            }
+            if (parsed < data.min) {
+              return data.min;
+            }
+            if (parsed > data.max) {
+              return data.max;
+            }
+            return parsed;
+        });
+        idlIdlExpected = idlTests.map(function(val) {
+            if (typeof val != "number") {
+              val = ReflectionTests.parseNonneg(val);
+            }
+            if (val < 0 || val > maxUnsigned) {
+              throw "Test bug: val should be an unsigned long";
+            }
+            if (val > maxInt) {
+              return defaultVal;
+            }
+            if (val < data.min) {
+              return data.min;
+            }
+            if (val > data.max) {
+              return data.max;
+            }
+            return val;
+        });
+        break;
     }
     if (domObj.tagName.toLowerCase() == "canvas" && (domName == "width" || domName == "height")) {
         // Opera tries to allocate a canvas with the given width and height, so
@@ -711,52 +786,48 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
                 // the test.
                 continue;
             }
-            try {
+            ReflectionHarness.test(function() {
                 domObj.setAttribute(domName, domTests[i]);
-                ReflectionHarness.test(domObj.getAttribute(domName), String(domTests[i]), "setAttribute() to " + ReflectionHarness.stringRep(domTests[i]) + " followed by getAttribute()");
-                ReflectionHarness.test(idlObj[idlName], domExpected[i], "setAttribute() to " + ReflectionHarness.stringRep(domTests[i]) + " followed by IDL get");
-                if (ReflectionHarness.catchUnexpectedExceptions) {
-                    ReflectionHarness.success();
-                }
-            } catch (err) {
-                if (ReflectionHarness.catchUnexpectedExceptions) {
-                    ReflectionHarness.failure("Exception thrown during tests with setAttribute() to " + ReflectionHarness.stringRep(domTests[i]));
-                } else {
-                    throw err;
-                }
-            }
+                ReflectionHarness.assertEquals(domObj.getAttribute(domName),
+                    String(domTests[i]), "getAttribute()");
+                ReflectionHarness.assertEquals(idlObj[idlName], domExpected[i],
+                    "IDL get");
+            }, "setAttribute() to " + ReflectionHarness.stringRep(domTests[i]));
         }
     }
 
     for (var i = 0; i < idlTests.length; i++) {
-        if ((data.type == "limited long" && idlTests[i] < 0) ||
-            (data.type == "limited unsigned long" && idlTests[i] == 0)) {
-            ReflectionHarness.testException("INDEX_SIZE_ERR", function() {
-                idlObj[idlName] = idlTests[i];
-            }, "IDL set to " + ReflectionHarness.stringRep(idlTests[i]) + " must throw INDEX_SIZE_ERR");
-        } else {
-            ReflectionHarness.run(function() {
+        ReflectionHarness.test(function() {
+            if ((data.type == "limited long" && idlTests[i] < 0) ||
+                (data.type == "limited unsigned long" && idlTests[i] == 0)) {
+                ReflectionHarness.assertThrows("IndexSizeError", function() {
+                    idlObj[idlName] = idlTests[i];
+                });
+            } else {
                 idlObj[idlName] = idlTests[i];
                 if (data.type == "boolean") {
                     // Special case yay
-                    ReflectionHarness.test(domObj.hasAttribute(domName), Boolean(idlTests[i]), "IDL set to " + ReflectionHarness.stringRep(idlTests[i]) + " followed by hasAttribute()");
+                    ReflectionHarness.assertEquals(domObj.hasAttribute(domName),
+                                                   Boolean(idlTests[i]), "hasAttribute()");
                 } else if (idlDomExpected[i] !== null || data.isNullable) {
                     var expected = idlDomExpected[i] + "";
                     if (data.isNullable && idlDomExpected[i] === null) {
                         expected = null;
                     }
-                    ReflectionHarness.test(domObj.getAttribute(domName), expected, "IDL set to " + ReflectionHarness.stringRep(idlTests[i]) + " followed by getAttribute()");
+                    ReflectionHarness.assertEquals(domObj.getAttribute(domName), expected,
+                                                   "getAttribute()");
                 }
                 if (idlIdlExpected[i] !== null || data.isNullable) {
-                    ReflectionHarness.test(idlObj[idlName], idlIdlExpected[i], "IDL set to " + ReflectionHarness.stringRep(idlTests[i]) + " followed by IDL get");
+                    ReflectionHarness.assertEquals(idlObj[idlName], idlIdlExpected[i], "IDL get");
                 }
-                if (ReflectionHarness.catchUnexpectedExceptions) {
-                    ReflectionHarness.success();
-                }
-            }, "IDL set to " + ReflectionHarness.stringRep(idlTests[i]) + " should not throw");
-        }
+            }
+        }, "IDL set to " + ReflectionHarness.stringRep(idlTests[i]));
     }
 };
+
+function toASCIILowerCase(str) {
+    return str.replace(/[A-Z]/g, function(m) { return m.toLowerCase(); });
+}
 
 /**
  * If we have an enumerated attribute limited to the array of values in
@@ -768,7 +839,7 @@ ReflectionTests.doReflects = function(data, idlName, idlObj, domName, domObj) {
 ReflectionTests.enumExpected = function(keywords, nonCanon, invalidVal, contentVal) {
     var ret = invalidVal;
     for (var i = 0; i < keywords.length; i++) {
-        if (String(contentVal).toLowerCase() == keywords[i].toLowerCase()) {
+        if (toASCIILowerCase(String(contentVal)) === toASCIILowerCase(keywords[i])) {
             ret = keywords[i];
             break;
         }
@@ -805,8 +876,7 @@ for (var element in elements) {
     // Don't try to test the defaultVal -- it should be either 0 or -1, but the
     // rules are complicated, and a lot of them are SHOULDs.
     ReflectionTests.reflects({type: "long", defaultVal: null}, "tabIndex", element);
-    // TODO: classList, contextMenu, itemProp, itemRef, dropzone (require
-    // tokenlist support)
+    // TODO: classList, contextMenu, itemProp, itemRef
 
     for (var idlAttrName in elements[element]) {
         var type = elements[element][idlAttrName];

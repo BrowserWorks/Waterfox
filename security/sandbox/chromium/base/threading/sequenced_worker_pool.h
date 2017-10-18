@@ -5,15 +5,19 @@
 #ifndef BASE_THREADING_SEQUENCED_WORKER_POOL_H_
 #define BASE_THREADING_SEQUENCED_WORKER_POOL_H_
 
+#include <stddef.h>
+
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/base_export.h"
-#include "base/basictypes.h"
 #include "base/callback_forward.h"
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/task_runner.h"
+#include "base/task_scheduler/task_traits.h"
 
 namespace tracked_objects {
 class Location;
@@ -21,11 +25,9 @@ class Location;
 
 namespace base {
 
-class MessageLoopProxy;
+class SequencedTaskRunner;
 
 template <class T> class DeleteHelper;
-
-class SequencedTaskRunner;
 
 // A worker thread pool that enforces ordering between sets of tasks. It also
 // allows you to specify what should happen to your tasks on shutdown.
@@ -120,7 +122,7 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
 
   // Opaque identifier that defines sequencing of tasks posted to the worker
   // pool.
-  class SequenceToken {
+  class BASE_EXPORT SequenceToken {
    public:
     SequenceToken() : id_(0) {}
     ~SequenceToken() {}
@@ -133,6 +135,10 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
     bool IsValid() const {
       return id_ != 0;
     }
+
+    // Returns a string representation of this token. This method should only be
+    // used for debugging.
+    std::string ToString() const;
 
    private:
     friend class SequencedWorkerPool;
@@ -156,24 +162,62 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
   // an unsequenced task, returns an invalid SequenceToken.
   static SequenceToken GetSequenceTokenForCurrentThread();
 
-  // When constructing a SequencedWorkerPool, there must be a
-  // MessageLoop on the current thread unless you plan to deliberately
-  // leak it.
-
-  // Pass the maximum number of threads (they will be lazily created as needed)
-  // and a prefix for the thread name to aid in debugging.
-  SequencedWorkerPool(size_t max_threads,
-                      const std::string& thread_name_prefix);
-
-  // Like above, but with |observer| for testing.  Does not take
-  // ownership of |observer|.
-  SequencedWorkerPool(size_t max_threads,
-                      const std::string& thread_name_prefix,
-                      TestingObserver* observer);
+  // Returns the SequencedWorkerPool that owns this thread, or null if the
+  // current thread is not a SequencedWorkerPool worker thread.
+  //
+  // Always returns nullptr when SequencedWorkerPool is redirected to
+  // TaskScheduler.
+  //
+  // DEPRECATED. Use SequencedTaskRunnerHandle::Get() instead. Consequentially
+  // the only remaining use case is in sequenced_task_runner_handle.cc to
+  // implement that and will soon be removed along with SequencedWorkerPool:
+  // http://crbug.com/622400.
+  static scoped_refptr<SequencedWorkerPool> GetWorkerPoolForCurrentThread();
 
   // Returns a unique token that can be used to sequence tasks posted to
   // PostSequencedWorkerTask(). Valid tokens are always nonzero.
-  SequenceToken GetSequenceToken();
+  static SequenceToken GetSequenceToken();
+
+  // Starts redirecting tasks posted to this process' SequencedWorkerPools to
+  // the registered TaskScheduler. This cannot be called after a task has been
+  // posted to a SequencedWorkerPool. This is not thread-safe; proper
+  // synchronization is required to use any SequencedWorkerPool method after
+  // calling this. There must be a registered TaskScheduler when this is called.
+  // Ideally, call this on the main thread of a process, before any other
+  // threads are created and before any tasks are posted to that process'
+  // SequencedWorkerPools.
+  // TODO(gab): Remove this if http://crbug.com/622400 fails
+  // (SequencedWorkerPool will be phased out completely otherwise).
+  static void RedirectToTaskSchedulerForProcess();
+
+  // Stops redirecting tasks posted to this process' SequencedWorkerPools to the
+  // registered TaskScheduler and allows RedirectToTaskSchedulerForProcess() to
+  // be called even if tasks have already posted to a SequencedWorkerPool in
+  // this process. Calling this while there are active SequencedWorkerPools is
+  // not supported. This is not thread-safe; proper synchronization is required
+  // to use any SequencedWorkerPool method after calling this.
+  static void ResetRedirectToTaskSchedulerForProcessForTesting();
+
+  // When constructing a SequencedWorkerPool, there must be a
+  // ThreadTaskRunnerHandle on the current thread unless you plan to
+  // deliberately leak it.
+
+  // Constructs a SequencedWorkerPool which will lazily create up to
+  // |max_threads| and a prefix for the thread name to aid in debugging.
+  // |max_threads| must be greater than 1. |task_priority| will be used to hint
+  // base::TaskScheduler for an experiment in which all SequencedWorkerPool
+  // tasks will be redirected to it in processes where a base::TaskScheduler was
+  // instantiated.
+  SequencedWorkerPool(size_t max_threads,
+                      const std::string& thread_name_prefix,
+                      base::TaskPriority task_priority);
+
+  // Like above, but with |observer| for testing.  Does not take ownership of
+  // |observer|.
+  SequencedWorkerPool(size_t max_threads,
+                      const std::string& thread_name_prefix,
+                      base::TaskPriority task_priority,
+                      TestingObserver* observer);
 
   // Returns the sequence token associated with the given name. Calling this
   // function multiple times with the same string will always produce the
@@ -186,7 +230,7 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
   // delay are posted with SKIP_ON_SHUTDOWN behavior and tasks with zero delay
   // are posted with BLOCK_SHUTDOWN behavior.
   scoped_refptr<SequencedTaskRunner> GetSequencedTaskRunner(
-      SequenceToken token);
+      SequenceToken token) WARN_UNUSED_RESULT;
 
   // Returns a SequencedTaskRunner wrapper which posts to this
   // SequencedWorkerPool using the given sequence token. Tasks with nonzero
@@ -194,14 +238,14 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
   // are posted with the given shutdown behavior.
   scoped_refptr<SequencedTaskRunner> GetSequencedTaskRunnerWithShutdownBehavior(
       SequenceToken token,
-      WorkerShutdown shutdown_behavior);
+      WorkerShutdown shutdown_behavior) WARN_UNUSED_RESULT;
 
   // Returns a TaskRunner wrapper which posts to this SequencedWorkerPool using
   // the given shutdown behavior. Tasks with nonzero delay are posted with
   // SKIP_ON_SHUTDOWN behavior and tasks with zero delay are posted with the
   // given shutdown behavior.
   scoped_refptr<TaskRunner> GetTaskRunnerWithShutdownBehavior(
-      WorkerShutdown shutdown_behavior);
+      WorkerShutdown shutdown_behavior) WARN_UNUSED_RESULT;
 
   // Posts the given task for execution in the worker pool. Tasks posted with
   // this function will execute in an unspecified order on a background thread.
@@ -295,19 +339,21 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
                        TimeDelta delay) override;
   bool RunsTasksOnCurrentThread() const override;
 
-  // Returns true if the current thread is processing a task with the given
-  // sequence_token.
-  bool IsRunningSequenceOnCurrentThread(SequenceToken sequence_token) const;
-
   // Blocks until all pending tasks are complete. This should only be called in
   // unit tests when you want to validate something that should have happened.
-  // This will not flush delayed tasks; delayed tasks get deleted.
+  // Does not wait for delayed tasks. If redirection to TaskScheduler is
+  // disabled, delayed tasks are deleted. If redirection to TaskScheduler is
+  // enabled, this will wait for all tasks posted to TaskScheduler (not just
+  // tasks posted to this SequencedWorkerPool).
   //
   // Note that calling this will not prevent other threads from posting work to
   // the queue while the calling thread is waiting on Flush(). In this case,
   // Flush will return only when there's no more work in the queue. Normally,
   // this doesn't come up since in a test, all the work is being posted from
   // the main thread.
+  //
+  // TODO(gab): Remove mentions of TaskScheduler in this comment if
+  // http://crbug.com/622400 fails.
   void FlushForTesting();
 
   // Spuriously signal that there is work to be done.
@@ -320,12 +366,10 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
   // Must be called from the same thread this object was constructed on.
   void Shutdown() { Shutdown(0); }
 
-  // A variant that allows an arbitrary number of new blocking tasks to
-  // be posted during shutdown from within tasks that execute during shutdown.
-  // Only tasks designated as BLOCKING_SHUTDOWN will be allowed, and only if
-  // posted by tasks that are not designated as CONTINUE_ON_SHUTDOWN. Once
+  // A variant that allows an arbitrary number of new blocking tasks to be
+  // posted during shutdown. The tasks cannot be posted within the execution
+  // context of tasks whose shutdown behavior is not BLOCKING_SHUTDOWN. Once
   // the limit is reached, subsequent calls to post task fail in all cases.
-  //
   // Must be called from the same thread this object was constructed on.
   void Shutdown(int max_new_blocking_tasks_after_shutdown);
 
@@ -345,13 +389,18 @@ class BASE_EXPORT SequencedWorkerPool : public TaskRunner {
   friend class DeleteHelper<SequencedWorkerPool>;
 
   class Inner;
+  class PoolSequencedTaskRunner;
   class Worker;
 
-  const scoped_refptr<MessageLoopProxy> constructor_message_loop_;
+  // Returns true if the current thread is processing a task with the given
+  // sequence_token.
+  bool IsRunningSequenceOnCurrentThread(SequenceToken sequence_token) const;
+
+  const scoped_refptr<SequencedTaskRunner> constructor_task_runner_;
 
   // Avoid pulling in too many headers by putting (almost) everything
   // into |inner_|.
-  const scoped_ptr<Inner> inner_;
+  const std::unique_ptr<Inner> inner_;
 
   DISALLOW_COPY_AND_ASSIGN(SequencedWorkerPool);
 };

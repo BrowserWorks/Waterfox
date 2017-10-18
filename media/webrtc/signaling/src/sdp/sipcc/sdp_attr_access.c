@@ -356,6 +356,9 @@ sdp_result_e sdp_attr_num_instances (sdp_t *sdp_p, uint16_t level, uint8_t cap_n
     return (rc);
 }
 
+/* Forward declaration for use in sdp_free_attr */
+static boolean sdp_attr_is_long_string(sdp_attr_e attr_type);
+
 
 /* Internal routine to free the memory associated with an attribute.
  * Certain attributes allocate additional memory.  Free this and then
@@ -388,7 +391,7 @@ void sdp_free_attr (sdp_attr_t *attr_p)
     } else if ((attr_p->type == SDP_ATTR_SDESCRIPTIONS) ||
               (attr_p->type == SDP_ATTR_SRTP_CONTEXT)) {
         SDP_FREE(attr_p->attr.srtp_context.session_parameters);
-    } else if (attr_p->type == SDP_ATTR_IDENTITY) {
+    } else if (sdp_attr_is_long_string(attr_p->type)) {
         SDP_FREE(attr_p->attr.stringp);
     }
 
@@ -737,7 +740,7 @@ const char *sdp_attr_get_simple_string (sdp_t *sdp_p, sdp_attr_e attr_type,
 }
 
 static boolean sdp_attr_is_long_string(sdp_attr_e attr_type) {
-  return attr_type == SDP_ATTR_IDENTITY;
+  return (attr_type == SDP_ATTR_IDENTITY || attr_type == SDP_ATTR_DTLS_MESSAGE);
 }
 
 /* Identical in usage to sdp_attr_get_simple_string() */
@@ -773,6 +776,8 @@ static boolean sdp_attr_is_simple_u32(sdp_attr_e attr_type) {
     if ((attr_type != SDP_ATTR_EECID) &&
         (attr_type != SDP_ATTR_PTIME) &&
         (attr_type != SDP_ATTR_MAXPTIME) &&
+        (attr_type != SDP_ATTR_SCTPPORT) &&
+        (attr_type != SDP_ATTR_MAXMESSAGESIZE) &&
         (attr_type != SDP_ATTR_T38_VERSION) &&
         (attr_type != SDP_ATTR_T38_MAXBITRATE) &&
         (attr_type != SDP_ATTR_T38_MAXBUFFER) &&
@@ -2406,7 +2411,7 @@ sdp_result_e sdp_attr_copy_fmtp_ranges (sdp_t *src_sdp_p, sdp_t *dst_sdp_p,
  *              cap_num     The capability number associated with the
  *                          attribute if any.  If none, should be zero.
  *              payload_type payload type.
- * Returns:     mode value
+ * Returns:     mode value or zero if mode attribute not found
  */
 uint32_t sdp_attr_get_fmtp_mode_for_payload_type (sdp_t *sdp_p, uint16_t level,
                                              uint8_t cap_num, uint32_t payload_type)

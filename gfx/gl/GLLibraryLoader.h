@@ -36,6 +36,10 @@ public:
                      const char* prefix = nullptr,
                      bool warnOnFailure = true);
 
+    static void ClearSymbols(const SymLoadStruct* firstStruct);
+
+    PRFuncPtr LookupSymbol(const char* symname);
+
     /*
      * Static version of the functions in this class
      */

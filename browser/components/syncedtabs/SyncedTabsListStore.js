@@ -118,7 +118,7 @@ Object.assign(SyncedTabsListStore.prototype, EventEmitter.prototype, {
       this.selectRow(0, -1);
     } else if ((!branch.tabs.length || childRow >= branch.tabs.length - 1 || !this._isOpen(branch)) && branchRow < this.data.length) {
       this.selectRow(branchRow + 1, -1);
-    } else if(childRow < branch.tabs.length) {
+    } else if (childRow < branch.tabs.length) {
       this.selectRow(branchRow, childRow + 1);
     }
   },
@@ -126,7 +126,6 @@ Object.assign(SyncedTabsListStore.prototype, EventEmitter.prototype, {
   moveSelectionUp() {
     let branchRow = this._selectedRow[0];
     let childRow = this._selectedRow[1];
-    let branch = this.data[branchRow];
 
     if (this.filter) {
       this.selectRow(branchRow - 1);
@@ -234,4 +233,3 @@ Object.assign(SyncedTabsListStore.prototype, EventEmitter.prototype, {
       .catch(Cu.reportError);
   }
 });
-

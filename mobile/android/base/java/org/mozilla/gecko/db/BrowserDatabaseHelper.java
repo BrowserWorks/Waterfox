@@ -20,11 +20,14 @@ import org.json.simple.JSONObject;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.db.BrowserContract.ActivityStreamBlocklist;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserContract.Combined;
 import org.mozilla.gecko.db.BrowserContract.Favicons;
+import org.mozilla.gecko.db.BrowserContract.RemoteDevices;
 import org.mozilla.gecko.db.BrowserContract.History;
 import org.mozilla.gecko.db.BrowserContract.Visits;
+import org.mozilla.gecko.db.BrowserContract.PageMetadata;
 import org.mozilla.gecko.db.BrowserContract.Numbers;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.db.BrowserContract.SearchHistory;
@@ -58,7 +61,7 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
     // Replace the Bug number below with your Bug that is conducting a DB upgrade, as to force a merge conflict with any
     // other patches that require a DB upgrade.
-    public static final int DATABASE_VERSION = 34; // Bug 1274029
+    public static final int DATABASE_VERSION = 37; // Bug 1351805
     public static final String DATABASE_NAME = "browser.db";
 
     final protected Context mContext;
@@ -66,6 +69,8 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
     static final String TABLE_BOOKMARKS = Bookmarks.TABLE_NAME;
     static final String TABLE_HISTORY = History.TABLE_NAME;
     static final String TABLE_VISITS = Visits.TABLE_NAME;
+    static final String TABLE_PAGE_METADATA = PageMetadata.TABLE_NAME;
+    static final String TABLE_REMOTE_DEVICES = RemoteDevices.TABLE_NAME;
     static final String TABLE_FAVICONS = Favicons.TABLE_NAME;
     static final String TABLE_THUMBNAILS = Thumbnails.TABLE_NAME;
     static final String TABLE_READING_LIST = ReadingListItems.TABLE_NAME;
@@ -210,6 +215,42 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 Thumbnails.URL + " TEXT UNIQUE," +
                 Thumbnails.DATA + " BLOB" +
                 ");");
+    }
+
+    private void createPageMetadataTable(SQLiteDatabase db) {
+        debug("Creating " + TABLE_PAGE_METADATA + " table");
+        db.execSQL("CREATE TABLE " + TABLE_PAGE_METADATA + "(" +
+                PageMetadata._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                PageMetadata.HISTORY_GUID + " TEXT NOT NULL," +
+                PageMetadata.DATE_CREATED + " INTEGER NOT NULL, " +
+                PageMetadata.HAS_IMAGE + " TINYINT NOT NULL DEFAULT 0, " +
+                PageMetadata.JSON + " TEXT NOT NULL, " +
+
+                "FOREIGN KEY (" + Visits.HISTORY_GUID + ") REFERENCES " +
+                TABLE_HISTORY + "(" + History.GUID + ") ON DELETE CASCADE ON UPDATE CASCADE" +
+                ");");
+
+        // Establish a 1-to-1 relationship with History table.
+        db.execSQL("CREATE UNIQUE INDEX page_metadata_history_guid ON " + TABLE_PAGE_METADATA + "("
+                + PageMetadata.HISTORY_GUID + ")");
+        // Improve performance of commonly occurring selections.
+        db.execSQL("CREATE INDEX page_metadata_history_guid_and_has_image ON " + TABLE_PAGE_METADATA + "("
+                + PageMetadata.HISTORY_GUID + ", " + PageMetadata.HAS_IMAGE + ")");
+    }
+
+    private void createRemoteDevicesTable(SQLiteDatabase db) {
+        debug("Creating " + TABLE_REMOTE_DEVICES + " table");
+        db.execSQL("CREATE TABLE " + TABLE_REMOTE_DEVICES + "(" +
+                RemoteDevices._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                RemoteDevices.GUID + " TEXT UNIQUE NOT NULL," +
+                RemoteDevices.NAME + " TEXT NOT NULL," +
+                RemoteDevices.TYPE + " TEXT NOT NULL," +
+                RemoteDevices.IS_CURRENT_DEVICE + " INTEGER NOT NULL," +
+                RemoteDevices.DATE_CREATED + " INTEGER NOT NULL," + // Timestamp - in milliseconds.
+                RemoteDevices.DATE_MODIFIED + " INTEGER NOT NULL," +
+                RemoteDevices.LAST_ACCESS_TIME + " INTEGER NOT NULL" + // Timestamp - in milliseconds.
+                ");");
+        // Creating an index is not worth it, because most users have less than 3 devices.
     }
 
     private void createBookmarksWithFaviconsView(SQLiteDatabase db) {
@@ -723,6 +764,12 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
         createVisitsTable(db);
         createCombinedViewOn34(db);
+
+        createActivityStreamBlocklistTable(db);
+
+        createPageMetadataTable(db);
+
+        createRemoteDevicesTable(db);
     }
 
     /**
@@ -897,6 +944,15 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
         db.execSQL("CREATE INDEX idx_search_history_last_visited ON " +
                 SearchHistory.TABLE_NAME + "(" + SearchHistory.DATE_LAST_VISITED + ")");
+    }
+
+    private void createActivityStreamBlocklistTable(final SQLiteDatabase db) {
+        debug("Creating " + ActivityStreamBlocklist.TABLE_NAME + " table");
+
+        db.execSQL("CREATE TABLE " + ActivityStreamBlocklist.TABLE_NAME + "(" +
+                   ActivityStreamBlocklist._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                   ActivityStreamBlocklist.URL + " TEXT UNIQUE NOT NULL, " +
+                   ActivityStreamBlocklist.CREATED + " INTEGER NOT NULL)");
     }
 
     private void createReadingListTable(final SQLiteDatabase db, final String tableName) {
@@ -1935,6 +1991,18 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
         createV34CombinedView(db);
     }
 
+    private void upgradeDatabaseFrom34to35(final SQLiteDatabase db) {
+        createActivityStreamBlocklistTable(db);
+    }
+
+    private void upgradeDatabaseFrom35to36(final SQLiteDatabase db) {
+        createPageMetadataTable(db);
+    }
+
+    private void upgradeDatabaseFrom36to37(final SQLiteDatabase db) {
+        createRemoteDevicesTable(db);
+    }
+
     private void createV33CombinedView(final SQLiteDatabase db) {
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED);
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED_WITH_FAVICONS);
@@ -2033,7 +2101,7 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                     upgradeDatabaseFrom25to26(db);
                     break;
 
-                // case 27 occurs in UrlMetadataTable.onUpgrade
+                // case 27 occurs in URLImageDataTable.onUpgrade
 
                 case 28:
                     upgradeDatabaseFrom27to28(db);
@@ -2061,6 +2129,18 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
                 case 34:
                     upgradeDatabaseFrom33to34(db);
+                    break;
+
+                case 35:
+                    upgradeDatabaseFrom34to35(db);
+                    break;
+
+                case 36:
+                    upgradeDatabaseFrom35to36(db);
+                    break;
+
+                case 37:
+                    upgradeDatabaseFrom36to37(db);
                     break;
             }
         }
@@ -2107,23 +2187,12 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
         // From Honeycomb on, it's possible to run several db
         // commands in parallel using multiple connections.
-        if (Build.VERSION.SDK_INT >= 11) {
-            // Modern Android allows WAL to be enabled through a mode flag.
-            if (Build.VERSION.SDK_INT < 16) {
-                db.enableWriteAheadLogging();
+        // Modern Android allows WAL to be enabled through a mode flag.
+        if (Build.VERSION.SDK_INT < 16) {
+            db.enableWriteAheadLogging();
 
-                // This does nothing on 16+.
-                db.setLockingEnabled(false);
-            }
-        } else {
-            // Pre-Honeycomb, we can do some lesser optimizations.
-            cursor = null;
-            try {
-                cursor = db.rawQuery("PRAGMA journal_mode=PERSIST", null);
-            } finally {
-                if (cursor != null)
-                    cursor.close();
-            }
+            // This does nothing on 16+.
+            db.setLockingEnabled(false);
         }
     }
 

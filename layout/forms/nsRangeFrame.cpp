@@ -8,6 +8,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/TouchEvents.h"
 
+#include "gfxContext.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentList.h"
 #include "nsContentUtils.h"
@@ -22,7 +23,6 @@
 #include "mozilla/dom/HTMLInputElement.h"
 #include "nsPresContext.h"
 #include "nsNodeInfoManager.h"
-#include "nsRenderingContext.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
@@ -47,7 +47,7 @@ NS_NewRangeFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 }
 
 nsRangeFrame::nsRangeFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
 }
 
@@ -119,13 +119,9 @@ nsRangeFrame::MakeAnonymousDiv(Element** aResult,
   RefPtr<Element> resultElement = doc->CreateHTMLElement(nsGkAtoms::div);
 
   // Associate the pseudo-element with the anonymous child.
-  RefPtr<nsStyleContext> newStyleContext =
-    PresContext()->StyleSet()->ResolvePseudoElementStyle(mContent->AsElement(),
-                                                         aPseudoType,
-                                                         StyleContext(),
-                                                         resultElement);
+  resultElement->SetPseudoElementType(aPseudoType);
 
-  if (!aElements.AppendElement(ContentInfo(resultElement, newStyleContext))) {
+  if (!aElements.AppendElement(resultElement)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -192,7 +188,7 @@ public:
                                  const nsDisplayItemGeometry* aGeometry,
                                  nsRegion *aInvalidRegion) override;
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override;
-  virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override;
+  virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("RangeFocusRing", TYPE_RANGE_FOCUS_RING)
 };
 
@@ -238,7 +234,7 @@ nsDisplayRangeFocusRing::GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap)
 
 void
 nsDisplayRangeFocusRing::Paint(nsDisplayListBuilder* aBuilder,
-                               nsRenderingContext* aCtx)
+                               gfxContext* aCtx)
 {
   bool unused;
   nsStyleContext* styleContext =
@@ -262,7 +258,8 @@ nsRangeFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                const nsRect&           aDirtyRect,
                                const nsDisplayListSet& aLists)
 {
-  if (IsThemed()) {
+  const nsStyleDisplay* disp = StyleDisplay();
+  if (IsThemed(disp)) {
     DisplayBorderBackgroundOutline(aBuilder, aLists);
     // Only create items for the thumb. Specifically, we do not want
     // the track to paint, since *our* background is used to paint
@@ -302,7 +299,6 @@ nsRangeFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     return;
   }
 
-  const nsStyleDisplay *disp = StyleDisplay();
   if (IsThemed(disp) &&
       PresContext()->GetTheme()->ThemeDrawsFocusForWidget(disp->mAppearance)) {
     return; // the native theme displays its own visual indication of focus
@@ -367,7 +363,7 @@ nsRangeFrame::Reflow(nsPresContext*           aPresContext,
 
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -422,7 +418,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowOutput trackDesiredSize(aReflowInput);
     ReflowChild(trackFrame, aPresContext, trackDesiredSize,
                 trackReflowInput, trackX, trackY, 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(trackFrame, aPresContext, trackDesiredSize,
                       &trackReflowInput, trackX, trackY, 0);
@@ -444,7 +440,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowOutput thumbDesiredSize(aReflowInput);
     ReflowChild(thumbFrame, aPresContext, thumbDesiredSize,
                 thumbReflowInput, 0, 0, 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(thumbFrame, aPresContext, thumbDesiredSize,
                       &thumbReflowInput, 0, 0, 0);
@@ -470,7 +466,7 @@ nsRangeFrame::ReflowAnonymousContent(nsPresContext*           aPresContext,
     ReflowChild(rangeProgressFrame, aPresContext,
                 progressDesiredSize, progressReflowInput, 0, 0,
                 0, frameStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(frameStatus),
+    MOZ_ASSERT(frameStatus.IsFullyComplete(),
                "We gave our child unconstrained height, so it should be complete");
     FinishReflowChild(rangeProgressFrame, aPresContext,
                       progressDesiredSize, &progressReflowInput, 0, 0, 0);
@@ -493,7 +489,7 @@ nsRangeFrame::GetValueAsFractionOfRange()
   MOZ_ASSERT(mContent->IsHTMLElement(nsGkAtoms::input), "bad cast");
   dom::HTMLInputElement* input = static_cast<dom::HTMLInputElement*>(mContent);
 
-  MOZ_ASSERT(input->GetType() == NS_FORM_INPUT_RANGE);
+  MOZ_ASSERT(input->ControlType() == NS_FORM_INPUT_RANGE);
 
   Decimal value = input->GetValueAsDecimal();
   Decimal minimum = input->GetMinimum();
@@ -501,14 +497,14 @@ nsRangeFrame::GetValueAsFractionOfRange()
 
   MOZ_ASSERT(value.isFinite() && minimum.isFinite() && maximum.isFinite(),
              "type=range should have a default maximum/minimum");
-  
+
   if (maximum <= minimum) {
     MOZ_ASSERT(value == minimum, "Unsanitized value");
     return 0.0;
   }
-  
+
   MOZ_ASSERT(value >= minimum && value <= maximum, "Unsanitized value");
-  
+
   return ((value - minimum) / (maximum - minimum)).toDouble();
 }
 
@@ -522,7 +518,7 @@ nsRangeFrame::GetValueAtEventPoint(WidgetGUIEvent* aEvent)
   MOZ_ASSERT(mContent->IsHTMLElement(nsGkAtoms::input), "bad cast");
   dom::HTMLInputElement* input = static_cast<dom::HTMLInputElement*>(mContent);
 
-  MOZ_ASSERT(input->GetType() == NS_FORM_INPUT_RANGE);
+  MOZ_ASSERT(input->ControlType() == NS_FORM_INPUT_RANGE);
 
   Decimal minimum = input->GetMinimum();
   Decimal maximum = input->GetMaximum();
@@ -562,7 +558,14 @@ nsRangeFrame::GetValueAtEventPoint(WidgetGUIEvent* aEvent)
                            &notUsedCanOverride);
     thumbSize.width = presContext->DevPixelsToAppUnits(size.width);
     thumbSize.height = presContext->DevPixelsToAppUnits(size.height);
-    MOZ_ASSERT(thumbSize.width > 0 && thumbSize.height > 0);
+    // For GTK, GetMinimumWidgetSize returns zero for the thumb dimension
+    // perpendicular to the orientation of the slider.  That's okay since we
+    // only care about the dimension in the direction of the slider when using
+    // |thumbSize| below, but it means this assertion need to check
+    // IsHorizontal().
+    MOZ_ASSERT((IsHorizontal() && thumbSize.width > 0) ||
+               (!IsHorizontal() && thumbSize.height > 0),
+               "The thumb is expected to take up some slider space");
   } else {
     nsIFrame* thumbFrame = mThumbDiv->GetPrimaryFrame();
     if (thumbFrame) { // diplay:none?
@@ -747,7 +750,8 @@ nsRangeFrame::AttributeChanged(int32_t  aNameSpaceID,
       // and this frame will shortly be destroyed, there's no point in calling
       // UpdateForValueChange() anyway.
       MOZ_ASSERT(mContent->IsHTMLElement(nsGkAtoms::input), "bad cast");
-      bool typeIsRange = static_cast<dom::HTMLInputElement*>(mContent)->GetType() ==
+      bool typeIsRange =
+        static_cast<dom::HTMLInputElement*>(mContent)->ControlType() ==
                            NS_FORM_INPUT_RANGE;
       // If script changed the <input>'s type before setting these attributes
       // then we don't need to do anything since we are going to be reframed.
@@ -764,14 +768,14 @@ nsRangeFrame::AttributeChanged(int32_t  aNameSpaceID,
 }
 
 LogicalSize
-nsRangeFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                              WritingMode aWM,
-                              const LogicalSize& aCBSize,
-                              nscoord aAvailableISize,
-                              const LogicalSize& aMargin,
-                              const LogicalSize& aBorder,
-                              const LogicalSize& aPadding,
-                              bool aShrinkWrap)
+nsRangeFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                              WritingMode         aWM,
+                              const LogicalSize&  aCBSize,
+                              nscoord             aAvailableISize,
+                              const LogicalSize&  aMargin,
+                              const LogicalSize&  aBorder,
+                              const LogicalSize&  aPadding,
+                              ComputeSizeFlags    aFlags)
 {
   nscoord oneEm = NSToCoordRound(StyleFont()->mFont.size *
                                  nsLayoutUtils::FontSizeInflationFor(this)); // 1em
@@ -799,7 +803,7 @@ nsRangeFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
 }
 
 nscoord
-nsRangeFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsRangeFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   // nsFrame::ComputeSize calls GetMinimumWidgetSize to prevent us from being
   // given too small a size when we're natively themed. If we aren't native
@@ -808,7 +812,7 @@ nsRangeFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 nscoord
-nsRangeFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsRangeFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   bool isInline = IsInlineOriented();
 
@@ -860,12 +864,6 @@ double
 nsRangeFrame::GetValue() const
 {
   return static_cast<dom::HTMLInputElement*>(mContent)->GetValueAsDecimal().toDouble();
-}
-
-nsIAtom*
-nsRangeFrame::GetType() const
-{
-  return nsGkAtoms::rangeFrame;
 }
 
 #define STYLES_DISABLING_NATIVE_THEMING \

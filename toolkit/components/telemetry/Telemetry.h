@@ -11,6 +11,7 @@
 #include "mozilla/StartupTimeline.h"
 #include "nsTArray.h"
 #include "nsStringGlue.h"
+#include "nsXULAppAPI.h"
 
 #include "mozilla/TelemetryHistogramEnums.h"
 #include "mozilla/TelemetryScalarEnums.h"
@@ -33,17 +34,16 @@ namespace HangMonitor {
 } // namespace HangMonitor
 namespace Telemetry {
 
+struct Accumulation;
+struct KeyedAccumulation;
+struct ScalarAction;
+struct KeyedScalarAction;
+struct ChildEventData;
+
 enum TimerResolution {
   Millisecond,
   Microsecond
 };
-
-/**
- * Create and destroy the underlying base::StatisticsRecorder singleton.
- * Creation has to be done very early in the startup sequence.
- */
-void CreateStatisticsRecorder();
-void DestroyStatisticsRecorder();
 
 /**
  * Initialize the Telemetry service on the main thread at startup.
@@ -56,7 +56,7 @@ void Init();
  * @param id - histogram id
  * @param sample - value to record.
  */
-void Accumulate(ID id, uint32_t sample);
+void Accumulate(HistogramID id, uint32_t sample);
 
 /**
  * Adds sample to a keyed histogram defined in TelemetryHistogramEnums.h
@@ -65,7 +65,7 @@ void Accumulate(ID id, uint32_t sample);
  * @param key - the string key
  * @param sample - (optional) value to record, defaults to 1.
  */
-void Accumulate(ID id, const nsCString& key, uint32_t sample = 1);
+void Accumulate(HistogramID id, const nsCString& key, uint32_t sample = 1);
 
 /**
  * Adds a sample to a histogram defined in TelemetryHistogramEnums.h.
@@ -101,7 +101,24 @@ template<class E>
 void AccumulateCategorical(E enumValue) {
   static_assert(IsCategoricalLabelEnum<E>::value,
                 "Only categorical label enum types are supported.");
-  Accumulate(static_cast<ID>(CategoricalLabelId<E>::value),
+  Accumulate(static_cast<HistogramID>(CategoricalLabelId<E>::value),
+             static_cast<uint32_t>(enumValue));
+};
+
+/**
+ * Adds sample to a keyed categorical histogram defined in TelemetryHistogramEnums.h
+ * This is the typesafe - and preferred - way to use the keyed categorical histograms
+ * by passing values from the corresponding Telemetry::LABELS_* enum.
+ *
+ * @param key - the string key
+ * @param enumValue - Label value from one of the Telemetry::LABELS_* enums.
+ */
+template<class E>
+void AccumulateCategoricalKeyed(const nsCString& key, E enumValue) {
+  static_assert(IsCategoricalLabelEnum<E>::value,
+                "Only categorical label enum types are supported.");
+  Accumulate(static_cast<HistogramID>(CategoricalLabelId<E>::value),
+             key,
              static_cast<uint32_t>(enumValue));
 };
 
@@ -114,7 +131,7 @@ void AccumulateCategorical(E enumValue) {
  * @param id - The histogram id.
  * @param label - A string label value that is defined in Histograms.json for this histogram.
  */
-void AccumulateCategorical(ID id, const nsCString& label);
+void AccumulateCategorical(HistogramID id, const nsCString& label);
 
 /**
  * Adds time delta in milliseconds to a histogram defined in TelemetryHistogramEnums.h
@@ -123,26 +140,19 @@ void AccumulateCategorical(ID id, const nsCString& label);
  * @param start - start time
  * @param end - end time
  */
-void AccumulateTimeDelta(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
+void AccumulateTimeDelta(HistogramID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
 
 /**
- * This clears the data for a histogram in TelemetryHistogramEnums.h.
- *
- * @param id - histogram id
- */
-void ClearHistogram(ID id);
-
-/**
- * Enable/disable recording for this histogram at runtime.
+ * Enable/disable recording for this histogram in this process at runtime.
  * Recording is enabled by default, unless listed at kRecordingInitiallyDisabledIDs[].
  * id must be a valid telemetry enum, otherwise an assertion is triggered.
  *
  * @param id - histogram id
  * @param enabled - whether or not to enable recording from now on.
  */
-void SetHistogramRecordingEnabled(ID id, bool enabled);
+void SetHistogramRecordingEnabled(HistogramID id, bool enabled);
 
-const char* GetHistogramName(ID id);
+const char* GetHistogramName(HistogramID id);
 
 /**
  * Those wrappers are needed because the VS versions we use do not support free
@@ -151,17 +161,17 @@ const char* GetHistogramName(ID id);
 template<TimerResolution res>
 struct AccumulateDelta_impl
 {
-  static void compute(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
-  static void compute(ID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now());
+  static void compute(HistogramID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
+  static void compute(HistogramID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now());
 };
 
 template<>
 struct AccumulateDelta_impl<Millisecond>
 {
-  static void compute(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
+  static void compute(HistogramID id, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
     Accumulate(id, static_cast<uint32_t>((end - start).ToMilliseconds()));
   }
-  static void compute(ID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
+  static void compute(HistogramID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
     Accumulate(id, key, static_cast<uint32_t>((end - start).ToMilliseconds()));
   }
 };
@@ -169,16 +179,16 @@ struct AccumulateDelta_impl<Millisecond>
 template<>
 struct AccumulateDelta_impl<Microsecond>
 {
-  static void compute(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
+  static void compute(HistogramID id, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
     Accumulate(id, static_cast<uint32_t>((end - start).ToMicroseconds()));
   }
-  static void compute(ID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
+  static void compute(HistogramID id, const nsCString& key, TimeStamp start, TimeStamp end = TimeStamp::Now()) {
     Accumulate(id, key, static_cast<uint32_t>((end - start).ToMicroseconds()));
   }
 };
 
 
-template<ID id, TimerResolution res = Millisecond>
+template<HistogramID id, TimerResolution res = Millisecond>
 class MOZ_RAII AutoTimer {
 public:
   explicit AutoTimer(TimeStamp aStart = TimeStamp::Now() MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -191,6 +201,7 @@ public:
     : start(aStart)
     , key(aKey)
   {
+    MOZ_ASSERT(!aKey.IsEmpty(), "The key must not be empty.");
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
   }
 
@@ -208,7 +219,7 @@ private:
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
-template<ID id>
+template<HistogramID id>
 class MOZ_RAII AutoCounter {
 public:
   explicit AutoCounter(uint32_t counterStart = 0 MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -264,12 +275,10 @@ void RecordSlowSQLStatement(const nsACString &statement,
  * @param iceCandidateBitmask - the bitmask representing local and remote ICE
  *                              candidate types present for the connection
  * @param success - did the peer connection connected
- * @param loop - was this a Firefox Hello AKA Loop call
  */
 void
 RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
-                          const bool success,
-                          const bool loop);
+                          const bool success);
 /**
  * Initialize I/O Reporting
  * Initially this only records I/O for files in the binary directory.
@@ -312,13 +321,24 @@ class ProcessedStack;
  * @param aFirefoxUptime - Firefox uptime at the time of the hang, in minutes
  * @param aAnnotations - Any annotations to be added to the report
  */
-#if defined(MOZ_ENABLE_PROFILER_SPS)
+#if defined(MOZ_GECKO_PROFILER)
 void RecordChromeHang(uint32_t aDuration,
                       ProcessedStack &aStack,
                       int32_t aSystemUptime,
                       int32_t aFirefoxUptime,
                       mozilla::UniquePtr<mozilla::HangMonitor::HangAnnotations>
                               aAnnotations);
+
+/**
+ * Record the current thread's call stack on demand. Note that, the stack is
+ * only captured once. Subsequent calls result in incrementing the capture
+ * counter.
+ *
+ * @param aKey - A user defined key associated with the captured stack.
+ *
+ * NOTE: Unwinding call stacks is an expensive operation performance-wise.
+ */
+void CaptureStack(const nsCString& aKey);
 #endif
 
 class ThreadHangStats;
@@ -333,7 +353,7 @@ class ThreadHangStats;
  *               will be moved and aStats should be treated as
  *               invalid after this function returns
  */
-void RecordThreadHangStats(ThreadHangStats& aStats);
+void RecordThreadHangStats(ThreadHangStats&& aStats);
 
 /**
  * Record a failed attempt at locking the user's profile.
@@ -346,7 +366,7 @@ void WriteFailedProfileLock(nsIFile* aProfileDir);
  * Adds the value to the given scalar.
  *
  * @param aId The scalar enum id.
- * @param aValue The unsigned value to add to the scalar.
+ * @param aValue The value to add to the scalar.
  */
 void ScalarAdd(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
 
@@ -354,7 +374,7 @@ void ScalarAdd(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
  * Sets the scalar to the given value.
  *
  * @param aId The scalar enum id.
- * @param aValue The numeric, unsigned value to set the scalar to.
+ * @param aValue The value to set the scalar to.
  */
 void ScalarSet(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
 
@@ -362,7 +382,15 @@ void ScalarSet(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
  * Sets the scalar to the given value.
  *
  * @param aId The scalar enum id.
- * @param aValue The string value to set the scalar to, truncated to
+ * @param aValue The value to set the scalar to.
+ */
+void ScalarSet(mozilla::Telemetry::ScalarID aId, bool aValue);
+
+/**
+ * Sets the scalar to the given value.
+ *
+ * @param aId The scalar enum id.
+ * @param aValue The value to set the scalar to, truncated to
  *        50 characters if exceeding that length.
  */
 void ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aValue);
@@ -371,10 +399,47 @@ void ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aValue);
  * Sets the scalar to the maximum of the current and the passed value.
  *
  * @param aId The scalar enum id.
- * @param aValue The unsigned value the scalar is set to if its greater
+ * @param aValue The value the scalar is set to if its greater
  *        than the current value.
  */
 void ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
+
+/**
+ * Adds the value to the given scalar.
+ *
+ * @param aId The scalar enum id.
+ * @param aKey The scalar key.
+ * @param aValue The value to add to the scalar.
+ */
+void ScalarAdd(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, uint32_t aValue);
+
+/**
+ * Sets the scalar to the given value.
+ *
+ * @param aId The scalar enum id.
+ * @param aKey The scalar key.
+ * @param aValue The value to set the scalar to.
+ */
+void ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, uint32_t aValue);
+
+/**
+ * Sets the scalar to the given value.
+ *
+ * @param aId The scalar enum id.
+ * @param aKey The scalar key.
+ * @param aValue The value to set the scalar to.
+ */
+void ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, bool aValue);
+
+/**
+ * Sets the scalar to the maximum of the current and the passed value.
+ *
+ * @param aId The scalar enum id.
+ * @param aKey The scalar key.
+ * @param aValue The value the scalar is set to if its greater
+ *        than the current value.
+ */
+void ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, const nsAString& aKey, uint32_t aValue);
 
 } // namespace Telemetry
 } // namespace mozilla

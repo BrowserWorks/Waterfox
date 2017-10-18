@@ -17,6 +17,7 @@ function testScript(script) {
         "set": [["dom.requestcontext.enabled", true],
                 ["dom.serviceWorkers.enabled", true],
                 ["dom.serviceWorkers.testing.enabled", true],
+                ["dom.serviceWorkers.idle_timeout", 0],
                 ["dom.serviceWorkers.exemptFromPerDomainMax", true]]
       }, resolve);
     });
@@ -89,7 +90,7 @@ function testScript(script) {
           } else if (event.data.type == 'status') {
             ok(event.data.status, event.data.context + ": " + event.data.msg);
           }
-        }, false);
+        });
 
         worker.onerror = reject;
 
@@ -102,19 +103,8 @@ function testScript(script) {
       }
 
       navigator.serviceWorker.register("worker_wrapper.js", {scope: "."})
-        .then(function(registration) {
-          if (registration.installing) {
-            var done = false;
-            registration.installing.onstatechange = function() {
-              if (!done) {
-                done = true;
-                setupSW(registration);
-              }
-            };
-          } else {
-            setupSW(registration);
-          }
-        });
+        .then(swr => waitForState(swr.installing, 'activated', swr))
+        .then(setupSW);
     });
   }
 

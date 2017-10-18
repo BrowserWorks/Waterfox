@@ -6,12 +6,12 @@
 
 #include "TransportSecurityInfo.h"
 
+#include "DateTimeFormat.h"
 #include "PSMRunnable.h"
 #include "mozilla/Casting.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIArray.h"
 #include "nsICertOverrideService.h"
-#include "nsIDateTimeFormat.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIWebProgressListener.h"
@@ -25,7 +25,7 @@
 #include "pkix/pkixtypes.h"
 #include "secerr.h"
 
-//#define DEBUG_SSL_VERBOSE //Enable this define to get minimal 
+//#define DEBUG_SSL_VERBOSE //Enable this define to get minimal
                             //reports when doing SSL read/write
 
 //#define DUMP_BUFFER  //Enable this define along with
@@ -38,13 +38,13 @@
 namespace mozilla { namespace psm {
 
 TransportSecurityInfo::TransportSecurityInfo()
-  : mMutex("TransportSecurityInfo::mMutex"),
-    mSecurityState(nsIWebProgressListener::STATE_IS_INSECURE),
-    mSubRequestsBrokenSecurity(0),
-    mSubRequestsNoSecurity(0),
-    mErrorCode(0),
-    mErrorMessageType(PlainErrorMessage),
-    mPort(0)
+  : mMutex("TransportSecurityInfo::mMutex")
+  , mSecurityState(nsIWebProgressListener::STATE_IS_INSECURE)
+  , mSubRequestsBrokenSecurity(0)
+  , mSubRequestsNoSecurity(0)
+  , mErrorCode(0)
+  , mErrorMessageType(SSLErrorMessageType::Plain)
+  , mPort(0)
 {
 }
 
@@ -54,7 +54,7 @@ TransportSecurityInfo::~TransportSecurityInfo()
   if (isAlreadyShutDown())
     return;
 
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 void
@@ -70,32 +70,23 @@ NS_IMPL_ISUPPORTS(TransportSecurityInfo,
                   nsISerializable,
                   nsIClassInfo)
 
-nsresult
+void
 TransportSecurityInfo::SetHostName(const char* host)
 {
-  mHostName.Adopt(host ? NS_strdup(host) : 0);
-  return NS_OK;
+  mHostName.Assign(host);
 }
 
-nsresult
-TransportSecurityInfo::GetHostName(char **host)
-{
-  *host = (mHostName) ? NS_strdup(mHostName) : nullptr;
-  return NS_OK;
-}
-
-nsresult
+void
 TransportSecurityInfo::SetPort(int32_t aPort)
 {
   mPort = aPort;
-  return NS_OK;
 }
 
-nsresult
-TransportSecurityInfo::GetPort(int32_t *aPort)
+void
+TransportSecurityInfo::SetOriginAttributes(
+  const OriginAttributes& aOriginAttributes)
 {
-  *aPort = mPort;
-  return NS_OK;
+  mOriginAttributes = aOriginAttributes;
 }
 
 PRErrorCode
@@ -124,11 +115,10 @@ TransportSecurityInfo::GetSecurityState(uint32_t* state)
   return NS_OK;
 }
 
-nsresult
+void
 TransportSecurityInfo::SetSecurityState(uint32_t aState)
 {
   mSecurityState = aState;
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -183,7 +173,7 @@ TransportSecurityInfo::GetErrorMessage(char16_t** aText)
   MutexAutoLock lock(mMutex);
 
   if (mErrorMessageCached.IsEmpty()) {
-    nsresult rv = formatErrorMessage(lock, 
+    nsresult rv = formatErrorMessage(lock,
                                      mErrorCode, mErrorMessageType,
                                      true, true, mErrorMessageCached);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -209,27 +199,27 @@ TransportSecurityInfo::GetErrorLogMessage(PRErrorCode errorCode,
 }
 
 static nsresult
-formatPlainErrorMessage(nsXPIDLCString const & host, int32_t port,
-                        PRErrorCode err, 
+formatPlainErrorMessage(const nsCString& host, int32_t port,
+                        PRErrorCode err,
                         bool suppressPort443,
-                        nsString &returnedMessage);
+                /*out*/ nsString& returnedMessage);
 
 static nsresult
-formatOverridableCertErrorMessage(nsISSLStatus & sslStatus,
-                                  PRErrorCode errorCodeToReport, 
-                                  const nsXPIDLCString & host, int32_t port,
+formatOverridableCertErrorMessage(nsISSLStatus& sslStatus,
+                                  PRErrorCode errorCodeToReport,
+                                  const nsCString& host, int32_t port,
                                   bool suppressPort443,
                                   bool wantsHtml,
-                                  nsString & returnedMessage);
+                          /*out*/ nsString& returnedMessage);
 
 // XXX: uses nsNSSComponent string bundles off the main thread when called by
 //      nsNSSSocketInfo::Write().
 nsresult
-TransportSecurityInfo::formatErrorMessage(MutexAutoLock const & proofOfLock, 
+TransportSecurityInfo::formatErrorMessage(const MutexAutoLock& /*proofOfLock*/,
                                           PRErrorCode errorCode,
                                           SSLErrorMessageType errorMessageType,
-                                          bool wantsHtml, bool suppressPort443, 
-                                          nsString &result)
+                                          bool wantsHtml, bool suppressPort443,
+                                  /*out*/ nsString& result)
 {
   result.Truncate();
   if (errorCode == 0) {
@@ -241,12 +231,11 @@ TransportSecurityInfo::formatErrorMessage(MutexAutoLock const & proofOfLock,
   }
 
   nsresult rv;
-  NS_ConvertASCIItoUTF16 hostNameU(mHostName);
-  NS_ASSERTION(errorMessageType != OverridableCertErrorMessage || 
-                (mSSLStatus && mSSLStatus->HasServerCert() &&
-                 mSSLStatus->mHaveCertErrorBits),
-                "GetErrorLogMessage called for cert error without cert");
-  if (errorMessageType == OverridableCertErrorMessage && 
+  MOZ_ASSERT(errorMessageType != SSLErrorMessageType::OverridableCert ||
+               (mSSLStatus && mSSLStatus->HasServerCert() &&
+                mSSLStatus->mHaveCertErrorBits),
+             "formatErrorMessage() called for cert error without cert");
+  if (errorMessageType == SSLErrorMessageType::OverridableCert &&
       mSSLStatus && mSSLStatus->HasServerCert()) {
     rv = formatOverridableCertErrorMessage(*mSSLStatus, errorCode,
                                            mHostName, mPort,
@@ -254,7 +243,7 @@ TransportSecurityInfo::formatErrorMessage(MutexAutoLock const & proofOfLock,
                                            wantsHtml,
                                            result);
   } else {
-    rv = formatPlainErrorMessage(mHostName, mPort, 
+    rv = formatPlainErrorMessage(mHostName, mPort,
                                  errorCode,
                                  suppressPort443,
                                  result);
@@ -498,12 +487,10 @@ TransportSecurityInfo::GetSSLStatus(nsISSLStatus** _result)
   return NS_OK;
 }
 
-nsresult
+void
 TransportSecurityInfo::SetSSLStatus(nsSSLStatus *aSSLStatus)
 {
   mSSLStatus = aSSLStatus;
-
-  return NS_OK;
 }
 
 /* Formats an error message for non-certificate-related SSL errors
@@ -512,10 +499,10 @@ TransportSecurityInfo::SetSSLStatus(nsSSLStatus *aSSLStatus)
  * for overridable cert errors.
  */
 static nsresult
-formatPlainErrorMessage(const nsXPIDLCString &host, int32_t port,
-                        PRErrorCode err, 
+formatPlainErrorMessage(const nsCString& host, int32_t port,
+                        PRErrorCode err,
                         bool suppressPort443,
-                        nsString &returnedMessage)
+                /*out*/ nsString& returnedMessage)
 {
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
@@ -527,8 +514,6 @@ formatPlainErrorMessage(const nsXPIDLCString &host, int32_t port,
 
   if (host.Length())
   {
-    nsString hostWithPort;
-
     // For now, hide port when it's 443 and we're reporting the error.
     // In the future a better mechanism should be used
     // to make a decision about showing the port number, possibly by requiring
@@ -536,7 +521,7 @@ formatPlainErrorMessage(const nsXPIDLCString &host, int32_t port,
     // The motivation is that Mozilla browser would like to hide the port number
     // in error pages in the common case.
 
-    hostWithPort.AssignASCII(host);
+    NS_ConvertASCIItoUTF16 hostWithPort(host);
     if (!suppressPort443 || port != 443) {
       hostWithPort.Append(':');
       hostWithPort.AppendInt(port);
@@ -544,9 +529,8 @@ formatPlainErrorMessage(const nsXPIDLCString &host, int32_t port,
     params[0] = hostWithPort.get();
 
     nsString formattedString;
-    rv = component->PIPBundleFormatStringFromName("SSLConnectionErrorPrefix", 
-                                                  params, 1, 
-                                                  formattedString);
+    rv = component->PIPBundleFormatStringFromName("SSLConnectionErrorPrefix",
+                                                  params, 1, formattedString);
     if (NS_SUCCEEDED(rv))
     {
       returnedMessage.Append(formattedString);
@@ -790,14 +774,9 @@ GetDateBoundary(nsIX509Cert* ix509,
     trueExpired_falseNotYetValid = false;
   }
 
-  nsCOMPtr<nsIDateTimeFormat> dateTimeFormat = nsIDateTimeFormat::Create();
-  if (!dateTimeFormat) {
-    return;
-  }
-
-  dateTimeFormat->FormatPRTime(nullptr, kDateFormatLong, kTimeFormatNoSeconds,
+  DateTimeFormat::FormatPRTime(kDateFormatLong, kTimeFormatNoSeconds,
                                timeToUse, formattedDate);
-  dateTimeFormat->FormatPRTime(nullptr, kDateFormatLong, kTimeFormatNoSeconds,
+  DateTimeFormat::FormatPRTime(kDateFormatLong, kTimeFormatNoSeconds,
                                now, nowDate);
 }
 
@@ -811,16 +790,16 @@ AppendErrorTextTime(nsIX509Cert* ix509,
   GetDateBoundary(ix509, formattedDate, nowDate, trueExpired_falseNotYetValid);
 
   const char16_t *params[2];
-  params[0] = formattedDate.get(); // might be empty, if helper function had a problem 
+  params[0] = formattedDate.get(); // might be empty, if helper function had a problem
   params[1] = nowDate.get();
 
-  const char *key = trueExpired_falseNotYetValid ? 
+  const char *key = trueExpired_falseNotYetValid ?
                     "certErrorExpiredNow" : "certErrorNotYetValidNow";
   nsresult rv;
   nsString formattedString;
   rv = component->PIPBundleFormatStringFromName(
            key,
-           params, 
+           params,
            ArrayLength(params),
            formattedString);
   if (NS_SUCCEEDED(rv))
@@ -847,7 +826,7 @@ AppendErrorTextCode(PRErrorCode errorCodeToReport,
     nsString formattedString;
     nsresult rv;
     rv = component->PIPBundleFormatStringFromName("certErrorCodePrefix2",
-                                                  params, 1, 
+                                                  params, 1,
                                                   formattedString);
     if (NS_SUCCEEDED(rv)) {
       returnedMessage.Append('\n');
@@ -867,19 +846,19 @@ AppendErrorTextCode(PRErrorCode errorCodeToReport,
  * non-overridable cert errors and non-cert-related errors.
  */
 static nsresult
-formatOverridableCertErrorMessage(nsISSLStatus & sslStatus,
-                                  PRErrorCode errorCodeToReport, 
-                                  const nsXPIDLCString & host, int32_t port,
+formatOverridableCertErrorMessage(nsISSLStatus& sslStatus,
+                                  PRErrorCode errorCodeToReport,
+                                  const nsCString& host, int32_t port,
                                   bool suppressPort443,
                                   bool wantsHtml,
-                                  nsString & returnedMessage)
+                          /*out*/ nsString& returnedMessage)
 {
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
   const char16_t *params[1];
   nsresult rv;
-  nsAutoString hostWithPort;
-  nsAutoString hostWithoutPort;
+  NS_ConvertASCIItoUTF16 hostWithPort(host);
+  NS_ConvertASCIItoUTF16 hostWithoutPort(host);
 
   // For now, hide port when it's 443 and we're reporting the error.
   // In the future a better mechanism should be used
@@ -887,12 +866,9 @@ formatOverridableCertErrorMessage(nsISSLStatus & sslStatus,
   // the context object to implement a specific interface.
   // The motivation is that Mozilla browser would like to hide the port number
   // in error pages in the common case.
-  
-  hostWithoutPort.AppendASCII(host);
   if (suppressPort443 && port == 443) {
     params[0] = hostWithoutPort.get();
   } else {
-    hostWithPort.AppendASCII(host);
     hostWithPort.Append(':');
     hostWithPort.AppendInt(port);
     params[0] = hostWithPort.get();
@@ -916,7 +892,7 @@ formatOverridableCertErrorMessage(nsISSLStatus & sslStatus,
   rv = sslStatus.GetIsUntrusted(&isUntrusted);
   NS_ENSURE_SUCCESS(rv, rv);
   if (isUntrusted) {
-    AppendErrorTextUntrusted(errorCodeToReport, hostWithoutPort, ix509, 
+    AppendErrorTextUntrusted(errorCodeToReport, hostWithoutPort, ix509,
                              component, returnedMessage);
   }
 
@@ -953,23 +929,16 @@ RememberCertErrorsTable::RememberCertErrorsTable()
 }
 
 static nsresult
-GetHostPortKey(TransportSecurityInfo* infoObject, nsAutoCString &result)
+GetHostPortKey(TransportSecurityInfo* infoObject, /*out*/ nsCString& result)
 {
-  nsresult rv;
+  MOZ_ASSERT(infoObject);
+  NS_ENSURE_ARG(infoObject);
 
   result.Truncate();
 
-  nsXPIDLCString hostName;
-  rv = infoObject->GetHostName(getter_Copies(hostName));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  int32_t port;
-  rv = infoObject->GetPort(&port);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  result.Assign(hostName);
+  result.Assign(infoObject->GetHostName());
   result.Append(':');
-  result.AppendInt(port);
+  result.AppendInt(infoObject->GetPort());
 
   return NS_OK;
 }
@@ -987,8 +956,7 @@ RememberCertErrorsTable::RememberCertHasError(TransportSecurityInfo* infoObject,
     return;
 
   if (certVerificationResult != SECSuccess) {
-    NS_ASSERTION(status,
-        "Must have nsSSLStatus object when remembering flags");
+    MOZ_ASSERT(status, "Must have nsSSLStatus object when remembering flags");
 
     if (!status)
       return;
@@ -1049,14 +1017,14 @@ TransportSecurityInfo::SetStatusErrorBits(nsNSSCertificate* cert,
     mSSLStatus = new nsSSLStatus();
   }
 
-  mSSLStatus->SetServerCert(cert, nsNSSCertificate::ev_status_invalid);
+  mSSLStatus->SetServerCert(cert, EVStatus::NotEV);
 
   mSSLStatus->mHaveCertErrorBits = true;
-  mSSLStatus->mIsDomainMismatch = 
+  mSSLStatus->mIsDomainMismatch =
     collected_errors & nsICertOverrideService::ERROR_MISMATCH;
-  mSSLStatus->mIsNotValidAtThisTime = 
+  mSSLStatus->mIsNotValidAtThisTime =
     collected_errors & nsICertOverrideService::ERROR_TIME;
-  mSSLStatus->mIsUntrusted = 
+  mSSLStatus->mIsUntrusted =
     collected_errors & nsICertOverrideService::ERROR_UNTRUSTED;
 
   RememberCertErrorsTable::GetInstance().RememberCertHasError(this,
@@ -1067,7 +1035,7 @@ TransportSecurityInfo::SetStatusErrorBits(nsNSSCertificate* cert,
 NS_IMETHODIMP
 TransportSecurityInfo::GetFailedCertChain(nsIX509CertList** _result)
 {
-  NS_ASSERTION(_result, "non-NULL destination required");
+  MOZ_ASSERT(_result);
 
   *_result = mFailedCertChain;
   NS_IF_ADDREF(*_result);

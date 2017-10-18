@@ -712,6 +712,7 @@ class Attribute(object):
     readonly = False
     implicit_jscontext = False
     nostdcall = False
+    must_use = False
     binaryname = None
     null = None
     undefined = None
@@ -767,6 +768,8 @@ class Attribute(object):
                     self.deprecated = True
                 elif name == 'nostdcall':
                     self.nostdcall = True
+                elif name == 'must_use':
+                    self.must_use = True
                 elif name == 'infallible':
                     self.infallible = True
                 else:
@@ -817,6 +820,7 @@ class Method(object):
     binaryname = None
     implicit_jscontext = False
     nostdcall = False
+    must_use = False
     optional_argc = False
     deprecated = False
 
@@ -853,6 +857,8 @@ class Method(object):
                 self.deprecated = True
             elif name == 'nostdcall':
                 self.nostdcall = True
+            elif name == 'must_use':
+                self.must_use = True
             else:
                 raise IDLError("Unexpected attribute '%s'" % name, aloc)
 
@@ -924,6 +930,7 @@ class Param(object):
     optional = False
     null = None
     undefined = None
+    default_value = None
 
     def __init__(self, paramtype, type, name, attlist, location, realtype=None):
         self.paramtype = paramtype
@@ -957,6 +964,10 @@ class Param(object):
                     raise IDLError("'Undefined' parameter value must be 'Empty' or 'Null'",
                                    aloc)
                 self.undefined = value
+            elif name == 'default':
+                if value is None:
+                    raise IDLError("'default' must specify a default value", aloc)
+                self.default_value = value
             else:
                 if value is not None:
                     raise IDLError("Unexpected value for attribute '%s'" % name,

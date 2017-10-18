@@ -17,23 +17,23 @@
 const LONG_WORD = "a".repeat(1000);
 
 const testCases = [
-  ["cs2", [
+  [getCookieId("cs2", ".example.org", "/"), [
     {name: "cs2", value: "sessionCookie"},
-    {name: "cs2.path", value: "/"},
-    {name: "cs2.isDomain", value: "true"},
-    {name: "cs2.isHttpOnly", value: "false"},
-    {name: "cs2.host", value: ".example.org"},
-    {name: "cs2.expires", value: "Session"},
-    {name: "cs2.isSecure", value: "false"},
+    {name: "cs2.Path", value: "/"},
+    {name: "cs2.HostOnly", value: "false"},
+    {name: "cs2.HttpOnly", value: "false"},
+    {name: "cs2.Domain", value: ".example.org"},
+    {name: "cs2.Expires", value: "Session"},
+    {name: "cs2.Secure", value: "false"},
   ]],
-  ["c1", [
+  [getCookieId("c1", "test1.example.org", "/browser"), [
     {name: "c1", value: JSON.stringify(["foo", "Bar", {foo: "Bar"}])},
-    {name: "c1.path", value: "/browser"},
-    {name: "c1.isDomain", value: "false"},
-    {name: "c1.isHttpOnly", value: "false"},
-    {name: "c1.host", value: "test1.example.org"},
-    {name: "c1.expires", value: new Date(2000000000000).toUTCString()},
-    {name: "c1.isSecure", value: "false"},
+    {name: "c1.Path", value: "/browser"},
+    {name: "c1.HostOnly", value: "true"},
+    {name: "c1.HttpOnly", value: "false"},
+    {name: "c1.Domain", value: "test1.example.org"},
+    {name: "c1.Expires", value: new Date(2000000000000).toUTCString()},
+    {name: "c1.Secure", value: "false"},
   ]],
   [null, [
     {name: "c1", value: "Array"},
@@ -41,6 +41,18 @@ const testCases = [
     {name: "c1.1", value: "Bar"},
     {name: "c1.2", value: "Object"},
     {name: "c1.2.foo", value: "Bar"},
+  ], true],
+  [
+    getCookieId("c_encoded", "test1.example.org",
+                "/browser/devtools/client/storage/test/"),
+    [
+      {name: "c_encoded", value: encodeURIComponent(JSON.stringify({foo: {foo1: "bar"}}))}
+    ]
+  ],
+  [null, [
+    {name: "c_encoded", value: "Object"},
+    {name: "c_encoded.foo", value: "Object"},
+    {name: "c_encoded.foo.foo1", value: "bar"}
   ], true],
   [["localStorage", "http://test1.example.org"]],
   ["ls2", [
@@ -112,7 +124,7 @@ const testCases = [
     {name: "ss5.3", value: `${LONG_WORD}&${LONG_WORD}`},
     {name: "ss5.4", value: `${LONG_WORD}&${LONG_WORD}`},
   ], true],
-  [["indexedDB", "http://test1.example.org", "idb1", "obj1"]],
+  [["indexedDB", "http://test1.example.org", "idb1 (default)", "obj1"]],
   [1, [
     {name: 1, value: JSON.stringify({id: 1, name: "foo", email: "foo@bar.com"})}
   ]],
@@ -121,7 +133,7 @@ const testCases = [
     {name: "1.name", value: "foo"},
     {name: "1.email", value: "foo@bar.com"},
   ], true],
-  [["indexedDB", "http://test1.example.org", "idb1", "obj2"]],
+  [["indexedDB", "http://test1.example.org", "idb1 (default)", "obj2"]],
   [1, [
     {name: 1, value: JSON.stringify({
       id2: 1, name: "foo", email: "foo@bar.com", extra: "baz"

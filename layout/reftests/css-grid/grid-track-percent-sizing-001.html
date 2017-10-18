@@ -10,7 +10,7 @@
   <link rel="help" href="https://drafts.csswg.org/css-grid/#valdef-grid-template-columns-percentage">
   <link rel="match" href="grid-track-percent-sizing-001-ref.html">
   <style type="text/css">
-body,html { color:black; background:white; font-family:monospace; font-size:32px; padding:0; margin:0; }
+body,html { color:black; background:white; font-family:monospace; font:1px/1 monospace; padding:0; margin:0; }
 
 .grid {
   display: grid;
@@ -20,6 +20,8 @@ body,html { color:black; background:white; font-family:monospace; font-size:32px
   grid-template-rows: 40%;
   margin-right: 20px;
   grid-auto-rows: 10px;
+  align-content: start;
+  justify-content: start;
 }
 .sz {
   width: 100px;
@@ -63,12 +65,20 @@ body,html { color:black; background:white; font-family:monospace; font-size:32px
   grid-template-rows: minmax(0, 40%);
 }
 .tA {
-  grid-template-columns: 160%;
-  grid-template-rows: 140%;
+  grid-template-columns: calc(10px - 200%);
+  grid-template-rows: calc(10px - 99%);
 }
 .tB {
   grid-template-columns: minmax(60%, 0);
   grid-template-rows: minmax(40%, 0);
+}
+.tC {
+  grid-template-columns: calc(10px - 5%);
+  grid-template-rows: calc(10px - 5%);
+}
+.tD {
+  grid-template-columns: calc(10px - 40%);
+  grid-template-rows: calc(10px - 40%);
 }
 
 span {
@@ -82,7 +92,7 @@ span {
 t {
   display: inline-block;
   width: 30px;
-  height: 10px;
+  height: 5px;
 }
 x {
   background: lime;
@@ -121,6 +131,9 @@ x {
 <div class="grid sz t9"><span><t></t></span><x></x></div>
 <div class="grid sz tA"><span><t></t></span><x></x></div>
 <div class="grid sz tB"><span><t></t></span><x></x></div>
+<div class="grid sz tC"><span><t></t></span><x></x></div>
+<div class="grid sz tD"><span><t></t></span><x style="grid-area:1/2;height:10px"></x></div>
+<div class="grid sz tD"><span><t></t></span><x style="grid-area:2/2;height:10px"></x></div>
 
 
 </body>

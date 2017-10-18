@@ -8,6 +8,8 @@
 #include "AccessCheck.h"
 #include "ChromeObjectWrapper.h"
 #include "XrayWrapper.h"
+#include "nsJSUtils.h"
+#include "mozilla/ErrorResult.h"
 
 #include "jsapi.h"
 
@@ -15,6 +17,29 @@ using namespace JS;
 using namespace js;
 
 namespace xpc {
+
+static JS::SymbolCode sCrossOriginWhitelistedSymbolCodes[] = {
+    JS::SymbolCode::toStringTag,
+    JS::SymbolCode::hasInstance,
+    JS::SymbolCode::isConcatSpreadable
+};
+
+bool
+IsCrossOriginWhitelistedSymbol(JSContext* cx, JS::HandleId id)
+{
+    if (!JSID_IS_SYMBOL(id)) {
+        return false;
+    }
+
+    JS::Symbol* symbol = JSID_TO_SYMBOL(id);
+    for (auto code : sCrossOriginWhitelistedSymbolCodes) {
+        if (symbol == JS::GetWellKnownSymbol(cx, code)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 template <typename Policy>
 static bool
@@ -114,16 +139,15 @@ FilteringWrapper<Base, Policy>::getOwnEnumerablePropertyKeys(JSContext* cx,
 }
 
 template <typename Base, typename Policy>
-bool
-FilteringWrapper<Base, Policy>::enumerate(JSContext* cx, HandleObject wrapper,
-                                          MutableHandleObject objp) const
+JSObject*
+FilteringWrapper<Base, Policy>::enumerate(JSContext* cx, HandleObject wrapper) const
 {
     assertEnteredPolicy(cx, wrapper, JSID_VOID, BaseProxyHandler::ENUMERATE);
     // We refuse to trigger the enumerate hook across chrome wrappers because
     // we don't know how to censor custom iterator objects. Instead we trigger
     // the default proxy enumerate trap, which will use js::GetPropertyKeys
     // for the list of (censored) ids.
-    return js::BaseProxyHandler::enumerate(cx, wrapper, objp);
+    return js::BaseProxyHandler::enumerate(cx, wrapper);
 }
 
 template <typename Base, typename Policy>
@@ -169,10 +193,12 @@ FilteringWrapper<Base, Policy>::getPrototype(JSContext* cx, JS::HandleObject wra
 template <typename Base, typename Policy>
 bool
 FilteringWrapper<Base, Policy>::enter(JSContext* cx, HandleObject wrapper,
-                                      HandleId id, Wrapper::Action act, bool* bp) const
+                                      HandleId id, Wrapper::Action act,
+                                      bool mayThrow, bool* bp) const
 {
     if (!Policy::check(cx, wrapper, id, act)) {
-        *bp = JS_IsExceptionPending(cx) ? false : Policy::deny(act, id);
+        *bp = JS_IsExceptionPending(cx) ?
+            false : Policy::deny(cx, act, id, mayThrow);
         return false;
     }
     *bp = true;
@@ -188,16 +214,30 @@ CrossOriginXrayWrapper::getPropertyDescriptor(JSContext* cx,
     if (!SecurityXrayDOM::getPropertyDescriptor(cx, wrapper, id, desc))
         return false;
     if (desc.object()) {
+        // Cross-origin DOM objects do not have symbol-named properties apart
+        // from the ones we add ourselves here.
+        MOZ_ASSERT(!JSID_IS_SYMBOL(id),
+                   "What's this symbol-named property that appeared on a "
+                   "Window or Location instance?");
+
         // All properties on cross-origin DOM objects are |own|.
         desc.object().set(wrapper);
 
-        // All properties on cross-origin DOM objects are non-enumerable and
-        // "configurable". Any value attributes are read-only.
-        desc.attributesRef() &= ~JSPROP_ENUMERATE;
+        // All properties on cross-origin DOM objects are "configurable". Any
+        // value attributes are read-only.
         desc.attributesRef() &= ~JSPROP_PERMANENT;
         if (!desc.getter() && !desc.setter())
             desc.attributesRef() |= JSPROP_READONLY;
+    } else if (IsCrossOriginWhitelistedSymbol(cx, id)) {
+        // Spec says to return PropertyDescriptor {
+        //   [[Value]]: undefined, [[Writable]]: false, [[Enumerable]]: false,
+        //   [[Configurable]]: true
+        // }.
+        //
+        desc.setDataDescriptor(JS::UndefinedHandleValue, JSPROP_READONLY);
+        desc.object().set(wrapper);
     }
+
     return true;
 }
 
@@ -218,7 +258,27 @@ CrossOriginXrayWrapper::ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wra
     // All properties on cross-origin objects are supposed |own|, despite what
     // the underlying native object may report. Override the inherited trap to
     // avoid passing JSITER_OWNONLY as a flag.
-    return SecurityXrayDOM::getPropertyKeys(cx, wrapper, JSITER_HIDDEN, props);
+    if (!SecurityXrayDOM::getPropertyKeys(cx, wrapper, JSITER_HIDDEN, props)) {
+        return false;
+    }
+
+    // Now add the three symbol-named props cross-origin objects have.
+#ifdef DEBUG
+    for (size_t n = 0; n < props.length(); ++n) {
+        MOZ_ASSERT(!JSID_IS_SYMBOL(props[n]),
+                   "Unexpected existing symbol-name prop");
+    }
+#endif
+    if (!props.reserve(props.length() +
+                       ArrayLength(sCrossOriginWhitelistedSymbolCodes))) {
+        return false;
+    }
+
+    for (auto code : sCrossOriginWhitelistedSymbolCodes) {
+        props.infallibleAppend(SYMBOL_TO_JSID(JS::GetWellKnownSymbol(cx, code)));
+    }
+
+    return true;
 }
 
 bool
@@ -227,7 +287,7 @@ CrossOriginXrayWrapper::defineProperty(JSContext* cx, JS::Handle<JSObject*> wrap
                                        JS::Handle<PropertyDescriptor> desc,
                                        JS::ObjectOpResult& result) const
 {
-    JS_ReportError(cx, "Permission denied to define property on cross-origin object");
+    AccessCheck::reportCrossOriginDenial(cx, id, NS_LITERAL_CSTRING("define"));
     return false;
 }
 
@@ -235,8 +295,30 @@ bool
 CrossOriginXrayWrapper::delete_(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                 JS::Handle<jsid> id, JS::ObjectOpResult& result) const
 {
-    JS_ReportError(cx, "Permission denied to delete property on cross-origin object");
+    AccessCheck::reportCrossOriginDenial(cx, id, NS_LITERAL_CSTRING("delete"));
     return false;
+}
+
+bool
+CrossOriginXrayWrapper::setPrototype(JSContext* cx, JS::HandleObject wrapper,
+                                     JS::HandleObject proto,
+                                     JS::ObjectOpResult& result) const
+{
+    // https://html.spec.whatwg.org/multipage/browsers.html#windowproxy-setprototypeof
+    // and
+    // https://html.spec.whatwg.org/multipage/browsers.html#location-setprototypeof
+    // both say to call SetImmutablePrototype, which does nothing and just
+    // returns whether the passed-in value equals the current prototype.  Our
+    // current prototype is always null, so this just comes down to returning
+    // whether null was passed in.
+    //
+    // In terms of ObjectOpResult that means calling one of the fail*() things
+    // on it if non-null was passed, and it's got one that does just what we
+    // want.
+    if (!proto) {
+        return result.succeed();
+    }
+    return result.failCantSetProto();
 }
 
 #define XOW FilteringWrapper<CrossOriginXrayWrapper, CrossOriginAccessiblePropertiesOnly>

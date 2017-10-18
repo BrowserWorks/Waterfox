@@ -53,12 +53,13 @@ void SkOSWindow::onAddMenu(const SkOSMenu* menu) {
     [(SkUIView*)fHWND onAddMenu:menu];
 }
 
-void SkOSWindow::onUpdateMenu(SkOSMenu* menu) {
+void SkOSWindow::onUpdateMenu(const SkOSMenu* menu) {
     [(SkUIView*)fHWND onUpdateMenu:menu];
 }
 
 bool SkOSWindow::attach(SkBackEndTypes /* attachType */,
                         int /* msaaSampleCount */,
+                        bool /* deepColor */,
                         AttachmentInfo* info) {
     [(SkUIView*)fHWND getAttachmentInfo:info];
     bool success = true;

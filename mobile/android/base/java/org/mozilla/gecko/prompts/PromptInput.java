@@ -9,8 +9,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.widget.AllCapsTextView;
 import org.mozilla.gecko.widget.DateTimePicker;
 
@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.widget.AppCompatCheckBox;
+import android.widget.CheckBox;
 import android.text.Html;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -59,10 +60,10 @@ public abstract class PromptInput {
         protected final boolean mAutofocus;
         public static final String INPUT_TYPE = "textbox";
 
-        public EditInput(JSONObject object) {
+        public EditInput(GeckoBundle object) {
             super(object);
-            mHint = object.optString("hint");
-            mAutofocus = object.optBoolean("autofocus");
+            mHint = object.getString("hint", "");
+            mAutofocus = object.getBoolean("autofocus");
         }
 
         @Override
@@ -103,7 +104,7 @@ public abstract class PromptInput {
 
     public static class NumberInput extends EditInput {
         public static final String INPUT_TYPE = "number";
-        public NumberInput(JSONObject obj) {
+        public NumberInput(GeckoBundle obj) {
             super(obj);
         }
 
@@ -120,7 +121,7 @@ public abstract class PromptInput {
 
     public static class PasswordInput extends EditInput {
         public static final String INPUT_TYPE = "password";
-        public PasswordInput(JSONObject obj) {
+        public PasswordInput(GeckoBundle obj) {
             super(obj);
         }
 
@@ -138,14 +139,14 @@ public abstract class PromptInput {
         public static final String INPUT_TYPE = "checkbox";
         private final boolean mChecked;
 
-        public CheckboxInput(JSONObject obj) {
+        public CheckboxInput(GeckoBundle obj) {
             super(obj);
-            mChecked = obj.optBoolean("checked");
+            mChecked = obj.getBoolean("checked");
         }
 
         @Override
         public View getView(Context context) throws UnsupportedOperationException {
-            final CheckBox checkbox = new AppCompatCheckBox(context);
+            final CheckBox checkbox = new CheckBox(context);
             checkbox.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
             checkbox.setText(mLabel);
             checkbox.setChecked(mChecked);
@@ -170,7 +171,7 @@ public abstract class PromptInput {
             "month"
         };
 
-        public DateTimeInput(JSONObject obj) {
+        public DateTimeInput(GeckoBundle obj) {
             super(obj);
         }
 
@@ -265,16 +266,17 @@ public abstract class PromptInput {
 
     public static class MenulistInput extends PromptInput {
         public static final String INPUT_TYPE = "menulist";
-        private static String[] mListitems;
-        private static int mSelected;
+        private final String[] mListitems;
+        private final int mSelected;
 
         public Spinner spinner;
         public AllCapsTextView textView;
 
-        public MenulistInput(JSONObject obj) {
+        public MenulistInput(GeckoBundle obj) {
             super(obj);
-            mListitems = Prompt.getStringArray(obj, "values");
-            mSelected = obj.optInt("selected");
+            final String[] listitems = obj.getStringArray("values");
+            mListitems = listitems != null ? listitems : new String[0];
+            mSelected = obj.getInt("selected");
         }
 
         @Override
@@ -314,7 +316,7 @@ public abstract class PromptInput {
 
     public static class LabelInput extends PromptInput {
         public static final String INPUT_TYPE = "label";
-        public LabelInput(JSONObject obj) {
+        public LabelInput(GeckoBundle obj) {
             super(obj);
         }
 
@@ -328,18 +330,39 @@ public abstract class PromptInput {
         }
     }
 
-    public PromptInput(JSONObject obj) {
-        mLabel = obj.optString("label");
-        mType = obj.optString("type");
-        String id = obj.optString("id");
+    public PromptInput(GeckoBundle obj) {
+        mLabel = obj.getString("label", "");
+        mType = obj.getString("type", "");
+        String id = obj.getString("id", "");
         mId = TextUtils.isEmpty(id) ? mType : id;
-        mValue = obj.optString("value");
-        mMaxValue = obj.optString("max");
-        mMinValue = obj.optString("min");
+        mValue = obj.getString("value", "");
+        mMaxValue = obj.getString("max", "");
+        mMinValue = obj.getString("min", "");
     }
 
-    public static PromptInput getInput(JSONObject obj) {
-        String type = obj.optString("type");
+    public void putInBundle(final GeckoBundle bundle) {
+        final String id = getId();
+        final Object value = getValue();
+
+        if (value == null) {
+            bundle.putBundle(id, null);
+        } else if (value instanceof Boolean) {
+            bundle.putBoolean(id, (Boolean) value);
+        } else if (value instanceof Double) {
+            bundle.putDouble(id, (Double) value);
+        } else if (value instanceof Integer) {
+            bundle.putInt(id, (Integer) value);
+        } else if (value instanceof CharSequence) {
+            bundle.putString(id, value.toString());
+        } else if (value instanceof GeckoBundle) {
+            bundle.putBundle(id, (GeckoBundle) value);
+        } else {
+            throw new UnsupportedOperationException(value.getClass().toString());
+        }
+    }
+
+    public static PromptInput getInput(GeckoBundle obj) {
+        String type = obj.getString("type", "");
         switch (type) {
             case EditInput.INPUT_TYPE:
                 return new EditInput(obj);

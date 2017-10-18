@@ -1,0 +1,16 @@
+[package]
+name = "gfx_traits"
+version = "0.0.1"
+authors = ["The Servo Project Developers"]
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "gfx_traits"
+path = "lib.rs"
+
+[dependencies]
+heapsize = "0.4"
+heapsize_derive = "0.1"
+range = {path = "../range"}
+serde = "1.0"

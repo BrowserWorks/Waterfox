@@ -7,13 +7,6 @@ function test() {
   const Cu = Components.utils;
   let {ToolSidebar} = require("devtools/client/framework/sidebar");
 
-  const toolURL = "data:text/xml;charset=utf8,<?xml version='1.0'?>" +
-                  "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'>" +
-                  "<hbox flex='1'><description flex='1'>foo</description><splitter class='devtools-side-splitter'/>" +
-                  "<tabbox flex='1' id='sidebar' class='devtools-sidebar-tabs'><tabs/><tabpanels flex='1'/></tabbox>" +
-                  "</hbox>" +
-                  "</window>";
-
   const tab1URL = "data:text/html;charset=utf8,<title>1</title><p>1</p>";
   const tab2URL = "data:text/html;charset=utf8,<title>2</title><p>2</p>";
   const tab3URL = "data:text/html;charset=utf8,<title>3</title><p>3</p>";
@@ -26,7 +19,7 @@ function test() {
   let toolDefinition = {
     id: "fakeTool4242",
     visibilityswitch: "devtools.fakeTool4242.enabled",
-    url: toolURL,
+    url: CHROME_URL_ROOT + "browser_toolbox_sidebar_toolURL.xul",
     label: "FAKE TOOL!!!",
     isTargetSupported: () => true,
     build: function (iframeWindow, toolbox) {
@@ -50,6 +43,7 @@ function test() {
     let target = TargetFactory.forTab(aTab);
     gDevTools.showToolbox(target, toolDefinition.id).then(function (toolbox) {
       let panel = toolbox.getPanel(toolDefinition.id);
+      panel.toolbox = toolbox;
       ok(true, "Tool open");
 
       let tabbox = panel.panelDoc.getElementById("sidebar");
@@ -88,7 +82,7 @@ function test() {
       panel.sidebar.addTab("tab3", tab3URL);
 
       panel.sidebar.show();
-    }).then(null, console.error);
+    }).catch(console.error);
   });
 
   function allTabsReady(panel) {
@@ -167,12 +161,14 @@ function test() {
 
   function finishUp(panel) {
     panel.sidebar.destroy();
-    gDevTools.unregisterTool(toolDefinition.id);
+    panel.toolbox.destroy().then(function () {
+      gDevTools.unregisterTool(toolDefinition.id);
 
-    gBrowser.removeCurrentTab();
+      gBrowser.removeCurrentTab();
 
-    executeSoon(function () {
-      finish();
+      executeSoon(function () {
+        finish();
+      });
     });
   }
 }

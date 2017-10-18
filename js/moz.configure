@@ -37,19 +37,6 @@ def js_disable_shell(value):
 set_config('JS_DISABLE_SHELL', js_disable_shell)
 
 
-# Use SpiderMonkey Promise implementation if it's enabled
-# =======================================================
-js_option('--enable-sm-promise', default=True,
-          help='Enable SpiderMonkey promises')
-
-@depends('--enable-sm-promise')
-def sm_promise(value):
-    if value:
-        return True
-
-set_config('SPIDERMONKEY_PROMISE', sm_promise)
-set_define('SPIDERMONKEY_PROMISE', sm_promise)
-
 # SpiderMonkey as a shared library, and how its symbols are exported
 # ==================================================================
 js_option('--disable-shared-js', default=building_js,
@@ -141,7 +128,11 @@ def callgrind(value):
 set_define('MOZ_CALLGRIND', callgrind)
 imply_option('--enable-profiling', callgrind)
 
-js_option('--enable-profiling', env='MOZ_PROFILING',
+@depends(milestone, '--help')
+def enable_profiling(milestone, help):
+    return milestone.is_nightly
+
+js_option('--enable-profiling', env='MOZ_PROFILING', default=enable_profiling,
           help='Set compile flags necessary for using sampling profilers '
                '(e.g. shark, perf)')
 
@@ -154,8 +145,11 @@ add_old_configure_assignment('MOZ_PROFILING', profiling)
 
 @depends(profiling, target)
 def imply_vtune(value, target):
-    if value and (target.kernel == 'WINNT' or (target.kernel == 'Linux' and
-                                               target.os == 'GNU')):
+    ok_cpu    = target.cpu in ['x86', 'x86_64']
+    ok_kernel = target.kernel == 'WINNT' or \
+                (target.kernel == 'Linux' and target.os == 'GNU')
+
+    if value and ok_cpu and ok_kernel:
         return True
 
 set_config('MOZ_PROFILING', profiling)
@@ -163,7 +157,7 @@ set_define('MOZ_PROFILING', profiling)
 imply_option('--enable-vtune', imply_vtune, reason='--enable-profiling')
 
 
-js_option('--enable-vtune', env='MOZ_VTUNE', help='Enable vtune profiling')
+js_option('--enable-vtune', env='MOZ_VTUNE', help='Enable VTune profiling')
 
 @depends('--enable-vtune')
 def vtune(value):
@@ -172,3 +166,92 @@ def vtune(value):
 
 set_config('MOZ_VTUNE', vtune)
 set_define('MOZ_VTUNE', vtune)
+
+
+js_option('--enable-gc-trace', env='JS_GC_TRACE',
+          help='Enable tracing of allocation and finalization')
+
+@depends('--enable-gc-trace')
+def gc_trace(value):
+    if value:
+        return True
+
+set_define('JS_GC_TRACE', gc_trace)
+
+
+js_option('--enable-perf', env='JS_ION_PERF',
+          help='Enable Linux perf integration')
+
+@depends('--enable-perf')
+def ion_perf(value):
+    if value:
+        return True
+
+set_define('JS_ION_PERF', ion_perf)
+
+
+js_option('--enable-more-deterministic', env='JS_MORE_DETERMINISTIC',
+          help='Enable changes that make the shell more deterministic')
+
+@depends('--enable-more-deterministic')
+def more_deterministic(value):
+    if value:
+        return True
+
+set_define('JS_MORE_DETERMINISTIC', more_deterministic)
+
+
+# CTypes
+# =======================================================
+@depends(building_js, '--help')
+def ctypes_default(building_js, _):
+    return not building_js
+
+js_option('--enable-ctypes', help='Enable js-ctypes',
+          default=ctypes_default)
+
+build_ctypes = depends_if('--enable-ctypes')(lambda _: True)
+
+set_config('BUILD_CTYPES', build_ctypes)
+set_define('BUILD_CTYPES', build_ctypes)
+add_old_configure_assignment('BUILD_CTYPES', build_ctypes)
+
+@depends(build_ctypes, building_js)
+def js_has_ctypes(ctypes, js):
+    if ctypes and js:
+        return True
+
+set_config('JS_HAS_CTYPES', js_has_ctypes)
+set_define('JS_HAS_CTYPES', js_has_ctypes)
+add_old_configure_assignment('JS_HAS_CTYPES', js_has_ctypes)
+
+@depends('--enable-ctypes', '--enable-compile-environment', '--help')
+def ctypes_and_compile_environment(ctypes, compile_environment, _):
+    return ctypes and compile_environment
+
+include('ffi.configure', when=ctypes_and_compile_environment)
+
+
+# Support various fuzzing options
+# ==============================================================
+with only_when('--enable-compile-environment'):
+    js_option('--enable-fuzzing', help='Enable fuzzing support')
+
+    @depends('--enable-fuzzing')
+    def enable_fuzzing(value):
+        if value:
+            return True
+
+    @depends(enable_fuzzing,
+             try_compile(body='__AFL_COMPILER;',
+                         check_msg='for AFL compiler',
+                         when='--enable-fuzzing'))
+    def enable_libfuzzer(fuzzing, afl):
+        if fuzzing and not afl:
+            return True
+
+    set_config('FUZZING', enable_fuzzing)
+    set_define('FUZZING', enable_fuzzing)
+
+    set_config('LIBFUZZER', enable_libfuzzer)
+    set_define('LIBFUZZER', enable_libfuzzer)

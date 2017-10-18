@@ -39,7 +39,7 @@ add_task(function test_setup() {
   Services.prefs.setCharPref("experiments.logging.level", "Trace");
 });
 
-add_task(function* test_provider_basic() {
+add_task(async function test_provider_basic() {
   let e = Experiments.instance();
 
   let provider = new Experiments.PreviousExperimentProvider(e);
@@ -49,9 +49,9 @@ add_task(function* test_provider_basic() {
   provider.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  let addons = yield deferred.promise;
-  Assert.ok(Array.isArray(addons), "getAddonsByTypes returns an Array.");
-  Assert.equal(addons.length, 0, "No previous add-ons returned.");
+  let experimentAddons = await deferred.promise;
+  Assert.ok(Array.isArray(experimentAddons), "getAddonsByTypes returns an Array.");
+  Assert.equal(experimentAddons.length, 0, "No previous add-ons returned.");
 
   gManifestObject = {
     version: 1,
@@ -69,24 +69,24 @@ add_task(function* test_provider_basic() {
     ],
   };
 
-  yield e.updateManifest();
+  await e.updateManifest();
 
   deferred = Promise.defer();
   provider.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  addons = yield deferred.promise;
-  Assert.equal(addons.length, 0, "Still no previous experiment.");
+  experimentAddons = await deferred.promise;
+  Assert.equal(experimentAddons.length, 0, "Still no previous experiment.");
 
-  let experiments = yield e.getExperiments();
+  let experiments = await e.getExperiments();
   Assert.equal(experiments.length, 1, "1 experiment present.");
   Assert.ok(experiments[0].active, "It is active.");
 
   // Deactivate it.
   defineNow(e._policy, new Date(gManifestObject.experiments[0].endTime * 1000 + 1000));
-  yield e.updateManifest();
+  await e.updateManifest();
 
-  experiments = yield e.getExperiments();
+  experiments = await e.getExperiments();
   Assert.equal(experiments.length, 1, "1 experiment present.");
   Assert.equal(experiments[0].active, false, "It isn't active.");
 
@@ -94,15 +94,15 @@ add_task(function* test_provider_basic() {
   provider.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  addons = yield deferred.promise;
-  Assert.equal(addons.length, 1, "1 previous add-on known.");
-  Assert.equal(addons[0].id, EXPERIMENT1_ID, "ID matches expected.");
+  experimentAddons = await deferred.promise;
+  Assert.equal(experimentAddons.length, 1, "1 previous add-on known.");
+  Assert.equal(experimentAddons[0].id, EXPERIMENT1_ID, "ID matches expected.");
 
   deferred = Promise.defer();
   provider.getAddonByID(EXPERIMENT1_ID, (addon) => {
     deferred.resolve(addon);
   });
-  let addon = yield deferred.promise;
+  let addon = await deferred.promise;
   Assert.ok(addon, "We got an add-on from its ID.");
   Assert.equal(addon.id, EXPERIMENT1_ID, "ID matches expected.");
   Assert.ok(addon.appDisabled, "Add-on is a previous experiment.");
@@ -115,13 +115,13 @@ add_task(function* test_provider_basic() {
   AddonManager.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  addons = yield deferred.promise;
-  Assert.equal(addons.length, 1, "Got 1 experiment from add-on manager.");
-  Assert.equal(addons[0].id, EXPERIMENT1_ID, "ID matches expected.");
-  Assert.ok(addons[0].appDisabled, "It is a previous experiment add-on.");
+  experimentAddons = await deferred.promise;
+  Assert.equal(experimentAddons.length, 1, "Got 1 experiment from add-on manager.");
+  Assert.equal(experimentAddons[0].id, EXPERIMENT1_ID, "ID matches expected.");
+  Assert.ok(experimentAddons[0].appDisabled, "It is a previous experiment add-on.");
 });
 
-add_task(function* test_active_and_previous() {
+add_task(async function test_active_and_previous() {
   // Building on the previous test, activate experiment 2.
   let e = Experiments.instance();
   let provider = new Experiments.PreviousExperimentProvider(e);
@@ -144,35 +144,33 @@ add_task(function* test_active_and_previous() {
   };
 
   defineNow(e._policy, new Date());
-  yield e.updateManifest();
+  await e.updateManifest();
 
-  let experiments = yield e.getExperiments();
+  let experiments = await e.getExperiments();
   Assert.equal(experiments.length, 2, "2 experiments known.");
 
   let deferred = Promise.defer();
   provider.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  let addons = yield deferred.promise;
-  Assert.equal(addons.length, 1, "1 previous experiment.");
+  let experimentAddons = await deferred.promise;
+  Assert.equal(experimentAddons.length, 1, "1 previous experiment.");
 
   deferred = Promise.defer();
   AddonManager.getAddonsByTypes(["experiment"], (addons) => {
     deferred.resolve(addons);
   });
-  addons = yield deferred.promise;
-  Assert.equal(addons.length, 2, "2 experiment add-ons known.");
+  experimentAddons = await deferred.promise;
+  Assert.equal(experimentAddons.length, 2, "2 experiment add-ons known.");
 
-  for (let addon of addons) {
+  for (let addon of experimentAddons) {
     if (addon.id == EXPERIMENT1_ID) {
       Assert.equal(addon.isActive, false, "Add-on is not active.");
       Assert.ok(addon.appDisabled, "Should be a previous experiment.");
-    }
-    else if (addon.id == EXPERIMENT2_ID) {
+    } else if (addon.id == EXPERIMENT2_ID) {
       Assert.ok(addon.isActive, "Add-on is active.");
       Assert.ok(!addon.appDisabled, "Should not be a previous experiment.");
-    }
-    else {
+    } else {
       throw new Error("Unexpected add-on ID: " + addon.id);
     }
   }

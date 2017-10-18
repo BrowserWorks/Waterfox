@@ -10,13 +10,13 @@ var anno = PlacesUtils.annotations;
 
 
 var bookmarksObserver = {
-  onBeginUpdateBatch: function() {
+  onBeginUpdateBatch() {
     this._beginUpdateBatch = true;
   },
-  onEndUpdateBatch: function() {
+  onEndUpdateBatch() {
     this._endUpdateBatch = true;
   },
-  onItemAdded: function(id, folder, index, itemType, uri, title, dateAdded,
+  onItemAdded(id, folder, index, itemType, uri, title, dateAdded,
                         guid) {
     this._itemAddedId = id;
     this._itemAddedParent = folder;
@@ -37,12 +37,12 @@ var bookmarksObserver = {
     do_check_eq(stmt.row.guid, guid);
     stmt.finalize();
   },
-  onItemRemoved: function(id, folder, index, itemType) {
+  onItemRemoved(id, folder, index, itemType) {
     this._itemRemovedId = id;
     this._itemRemovedFolder = folder;
     this._itemRemovedIndex = index;
   },
-  onItemChanged: function(id, property, isAnnotationProperty, value,
+  onItemChanged(id, property, isAnnotationProperty, value,
                           lastModified, itemType, parentId, guid, parentGuid,
                           oldValue) {
     this._itemChangedId = id;
@@ -51,12 +51,12 @@ var bookmarksObserver = {
     this._itemChangedValue = value;
     this._itemChangedOldValue = oldValue;
   },
-  onItemVisited: function(id, visitID, time) {
+  onItemVisited(id, visitID, time) {
     this._itemVisitedId = id;
     this._itemVisitedVistId = visitID;
     this._itemVisitedTime = time;
   },
-  onItemMoved: function(id, oldParent, oldIndex, newParent, newIndex,
+  onItemMoved(id, oldParent, oldIndex, newParent, newIndex,
                         itemType) {
     this._itemMovedId = id
     this._itemMovedOldParent = oldParent;
@@ -75,13 +75,8 @@ var root = bs.bookmarksMenuFolder;
 // Index at which items should begin.
 var bmStartIndex = 0;
 
-
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* test_bookmarks() {
-  bs.addObserver(bookmarksObserver, false);
+add_task(async function test_bookmarks() {
+  bs.addObserver(bookmarksObserver);
 
   // test special folders
   do_check_true(bs.placesRoot > 0);
@@ -92,15 +87,15 @@ add_task(function* test_bookmarks() {
 
   // test getFolderIdForItem() with bogus item id will throw
   try {
-    let id = bs.getFolderIdForItem(0);
+    bs.getFolderIdForItem(0);
     do_throw("getFolderIdForItem accepted bad input");
-  } catch(ex) {}
+  } catch (ex) {}
 
   // test getFolderIdForItem() with bogus item id will throw
   try {
-    let id = bs.getFolderIdForItem(-1);
+    bs.getFolderIdForItem(-1);
     do_throw("getFolderIdForItem accepted bad input");
-  } catch(ex) {}
+  } catch (ex) {}
 
   // test root parentage
   do_check_eq(bs.getFolderIdForItem(bs.bookmarksMenuFolder), bs.placesRoot);
@@ -185,9 +180,9 @@ add_task(function* test_bookmarks() {
 
   // get item title bad input
   try {
-    let title = bs.getItemTitle(-3);
+    bs.getItemTitle(-3);
     do_throw("getItemTitle accepted bad input");
-  } catch(ex) {}
+  } catch (ex) {}
 
   // get the folder that the bookmark is in
   let folderId = bs.getFolderIdForItem(newId);
@@ -264,7 +259,7 @@ add_task(function* test_bookmarks() {
   do_check_eq(bookmarksObserver._itemChangedProperty, "title");
 
   // insert query item
-  let uri6 = uri("place:domain=google.com&type="+
+  let uri6 = uri("place:domain=google.com&type=" +
                  Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY);
   let newId6 = bs.insertBookmark(testRoot, uri6, bs.DEFAULT_INDEX, "");
   do_check_eq(bookmarksObserver._itemAddedParent, testRoot);
@@ -306,7 +301,7 @@ add_task(function* test_bookmarks() {
   // try to get index of the last item within the new parent folder
   do_check_eq(bs.getIdForItemAt(homeFolder, -1), workFolder);
   // XXX expose FolderCount, and check that the old parent has one less child?
-  do_check_eq(getChildCount(testRoot), oldParentCC-1);
+  do_check_eq(getChildCount(testRoot), oldParentCC - 1);
 
   // move item, appending, to different folder
   bs.moveItem(newId5, testRoot, bs.DEFAULT_INDEX);
@@ -329,10 +324,9 @@ add_task(function* test_bookmarks() {
   let k = bs.getKeywordForBookmark(kwTestItemId);
   do_check_eq("bar", k);
 
-  // test getURIForKeyword
-  let u = bs.getURIForKeyword("bar");
-  do_check_eq("http://keywordtest.com/", u.spec);
-
+  // test PlacesUtils.keywords.fetch()
+  let u = await PlacesUtils.keywords.fetch("bar");
+  do_check_eq("http://keywordtest.com/", u.url);
   // test removeFolderChildren
   // 1) add/remove each child type (bookmark, separator, folder)
   tmpFolder = bs.createFolder(testRoot, "removeFolderChildren",
@@ -350,19 +344,19 @@ add_task(function* test_bookmarks() {
     rootNode.containerOpen = true;
     do_check_eq(rootNode.childCount, 3);
     rootNode.containerOpen = false;
-  } catch(ex) {
+  } catch (ex) {
     do_throw("test removeFolderChildren() - querying for children failed: " + ex);
   }
   // 3) remove all children
   bs.removeFolderChildren(tmpFolder);
   // 4) confirm that folder has 0 children
   try {
-    result = hs.executeQuery(query, options);
+    let result = hs.executeQuery(query, options);
     let rootNode = result.root;
     rootNode.containerOpen = true;
     do_check_eq(rootNode.childCount, 0);
     rootNode.containerOpen = false;
-  } catch(ex) {
+  } catch (ex) {
     do_throw("removeFolderChildren(): " + ex);
   }
 
@@ -370,8 +364,8 @@ add_task(function* test_bookmarks() {
 
   // test bookmark id in query output
   try {
-    let options = hs.getNewQueryOptions();
-    let query = hs.getNewQuery();
+    options = hs.getNewQueryOptions();
+    query = hs.getNewQuery();
     query.setFolders([testRoot], 1);
     let result = hs.executeQuery(query, options);
     let rootNode = result.root;
@@ -379,21 +373,19 @@ add_task(function* test_bookmarks() {
     let cc = rootNode.childCount;
     do_print("bookmark itemId test: CC = " + cc);
     do_check_true(cc > 0);
-    for (let i=0; i < cc; ++i) {
+    for (let i = 0; i < cc; ++i) {
       let node = rootNode.getChild(i);
       if (node.type == node.RESULT_TYPE_FOLDER ||
           node.type == node.RESULT_TYPE_URI ||
           node.type == node.RESULT_TYPE_SEPARATOR ||
           node.type == node.RESULT_TYPE_QUERY) {
         do_check_true(node.itemId > 0);
-      }
-      else {
+      } else {
         do_check_eq(node.itemId, -1);
       }
     }
     rootNode.containerOpen = false;
-  }
-  catch(ex) {
+  } catch (ex) {
     do_throw("bookmarks query: " + ex);
   }
 
@@ -409,8 +401,8 @@ add_task(function* test_bookmarks() {
     bs.insertBookmark(testFolder, mURI, bs.DEFAULT_INDEX, "title 2");
 
     // query
-    let options = hs.getNewQueryOptions();
-    let query = hs.getNewQuery();
+    options = hs.getNewQueryOptions();
+    query = hs.getNewQuery();
     query.setFolders([testFolder], 1);
     let result = hs.executeQuery(query, options);
     let rootNode = result.root;
@@ -420,8 +412,7 @@ add_task(function* test_bookmarks() {
     do_check_eq(rootNode.getChild(0).title, "title 1");
     do_check_eq(rootNode.getChild(1).title, "title 2");
     rootNode.containerOpen = false;
-  }
-  catch(ex) {
+  } catch (ex) {
     do_throw("bookmarks query: " + ex);
   }
 
@@ -466,7 +457,7 @@ add_task(function* test_bookmarks() {
   try {
     bs.getBookmarkURI(testRoot);
     do_throw("getBookmarkURI() should throw for non-bookmark items!");
-  } catch(ex) {}
+  } catch (ex) {}
 
   // test getItemIndex
   let newId12 = bs.insertBookmark(testRoot, uri("http://foo11.com/"), 1, "");
@@ -499,10 +490,10 @@ add_task(function* test_bookmarks() {
 
   // test search on bookmark title ZZZXXXYYY
   try {
-    let options = hs.getNewQueryOptions();
+    options = hs.getNewQueryOptions();
     options.excludeQueries = 1;
     options.queryType = Ci.nsINavHistoryQueryOptions.QUERY_TYPE_BOOKMARKS;
-    let query = hs.getNewQuery();
+    query = hs.getNewQuery();
     query.searchTerms = "ZZZXXXYYY";
     let result = hs.executeQuery(query, options);
     let rootNode = result.root;
@@ -513,18 +504,17 @@ add_task(function* test_bookmarks() {
     do_check_eq(node.title, "ZZZXXXYYY");
     do_check_true(node.itemId > 0);
     rootNode.containerOpen = false;
-  }
-  catch(ex) {
+  } catch (ex) {
     do_throw("bookmarks query: " + ex);
   }
 
   // test dateAdded and lastModified properties
   // for a search query
   try {
-    let options = hs.getNewQueryOptions();
+    options = hs.getNewQueryOptions();
     options.excludeQueries = 1;
     options.queryType = Ci.nsINavHistoryQueryOptions.QUERY_TYPE_BOOKMARKS;
-    let query = hs.getNewQuery();
+    query = hs.getNewQuery();
     query.searchTerms = "ZZZXXXYYY";
     let result = hs.executeQuery(query, options);
     let rootNode = result.root;
@@ -540,16 +530,15 @@ add_task(function* test_bookmarks() {
     do_check_true(node.lastModified > 0);
 
     rootNode.containerOpen = false;
-  }
-  catch(ex) {
+  } catch (ex) {
     do_throw("bookmarks query: " + ex);
   }
 
   // test dateAdded and lastModified properties
   // for a folder query
   try {
-    let options = hs.getNewQueryOptions();
-    let query = hs.getNewQuery();
+    options = hs.getNewQueryOptions();
+    query = hs.getNewQuery();
     query.setFolders([testRoot], 1);
     let result = hs.executeQuery(query, options);
     let rootNode = result.root;
@@ -569,8 +558,7 @@ add_task(function* test_bookmarks() {
       }
     }
     rootNode.containerOpen = false;
-  }
-  catch(ex) {
+  } catch (ex) {
     do_throw("bookmarks query: " + ex);
   }
 
@@ -595,7 +583,7 @@ add_task(function* test_bookmarks() {
   // bug 378820
   let uri1 = uri("http://foo.tld/a");
   bs.insertBookmark(testRoot, uri1, bs.DEFAULT_INDEX, "");
-  yield PlacesTestUtils.addVisits(uri1);
+  await PlacesTestUtils.addVisits(uri1);
 
   // bug 646993 - test bookmark titles longer than the maximum allowed length
   let title15 = Array(TITLE_LENGTH_MAX + 5).join("X");
@@ -711,7 +699,7 @@ function getChildCount(aFolderId) {
     rootNode.containerOpen = true;
     cc = rootNode.childCount;
     rootNode.containerOpen = false;
-  } catch(ex) {
+  } catch (ex) {
     do_throw("getChildCount failed: " + ex);
   }
   return cc;

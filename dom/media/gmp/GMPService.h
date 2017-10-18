@@ -16,46 +16,49 @@
 #include "nsCOMPtr.h"
 #include "nsIThread.h"
 #include "nsThreadUtils.h"
-#include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
 #include "nsIWeakReference.h"
 #include "mozilla/AbstractThread.h"
 #include "nsClassHashtable.h"
 #include "nsISupportsImpl.h"
+#include "mozilla/MozPromise.h"
+#include "GMPContentParent.h"
+#include "GMPCrashHelper.h"
+#include "ChromiumCDMParent.h"
 
 template <class> struct already_AddRefed;
 
-// For every GMP actor requested, the caller can specify a crash helper,
-// which is an object which supplies the nsPIDOMWindowInner to which we'll
-// dispatch the PluginCrashed event if the GMP crashes.
-// GMPCrashHelper has threadsafe refcounting. Its release method ensures
-// that instances are destroyed on the main thread.
-class GMPCrashHelper
-{
-public:
-  NS_METHOD_(MozExternalRefCountType) AddRef(void);
-  NS_METHOD_(MozExternalRefCountType) Release(void);
-
-  // Called on the main thread.
-  virtual already_AddRefed<nsPIDOMWindowInner> GetPluginCrashedEventTarget() = 0;
-
-protected:
-  virtual ~GMPCrashHelper()
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-  }
-  void Destroy();
-  mozilla::ThreadSafeAutoRefCnt mRefCnt;
-  NS_DECL_OWNINGTHREAD
-};
-
 namespace mozilla {
+
+class GMPCrashHelper;
 
 extern LogModule* GetGMPLog();
 
 namespace gmp {
 
-class GetGMPContentParentCallback;
+struct NodeId
+{
+  NodeId(const nsAString& aOrigin,
+         const nsAString& aTopLevelOrigin,
+         const nsAString& aGMPName)
+    : mOrigin(aOrigin)
+    , mTopLevelOrigin(aTopLevelOrigin)
+    , mGMPName(aGMPName)
+  {
+  }
+  nsString mOrigin;
+  nsString mTopLevelOrigin;
+  nsString mGMPName;
+};
+
+typedef MozPromise<RefPtr<GMPContentParent::CloseBlocker>,
+                   nsresult,
+                   /* IsExclusive = */ true>
+  GetGMPContentParentPromise;
+typedef MozPromise<RefPtr<ChromiumCDMParent>,
+                   nsresult,
+                   /* IsExclusive = */ true>
+  GetCDMParentPromise;
 
 class GeckoMediaPluginService : public mozIGeckoMediaPluginService
                               , public nsIObserver
@@ -67,24 +70,22 @@ public:
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
+  RefPtr<GetCDMParentPromise> GetCDM(const NodeId& aNodeId,
+                                     nsTArray<nsCString> aTags,
+                                     GMPCrashHelper* aHelper);
+
   // mozIGeckoMediaPluginService
   NS_IMETHOD GetThread(nsIThread** aThread) override;
-  NS_IMETHOD HasPluginForAPI(const nsACString& aAPI, nsTArray<nsCString>* aTags,
-                             bool *aRetVal) override;
-  NS_IMETHOD GetGMPVideoDecoder(GMPCrashHelper* aHelper,
-                                nsTArray<nsCString>* aTags,
-                                const nsACString& aNodeId,
-                                UniquePtr<GetGMPVideoDecoderCallback>&& aCallback)
+  NS_IMETHOD GetDecryptingGMPVideoDecoder(GMPCrashHelper* aHelper,
+                                          nsTArray<nsCString>* aTags,
+                                          const nsACString& aNodeId,
+                                          UniquePtr<GetGMPVideoDecoderCallback>&& aCallback,
+                                          uint32_t aDecryptorId)
     override;
   NS_IMETHOD GetGMPVideoEncoder(GMPCrashHelper* aHelper,
                                 nsTArray<nsCString>* aTags,
                                 const nsACString& aNodeId,
                                 UniquePtr<GetGMPVideoEncoderCallback>&& aCallback)
-    override;
-  NS_IMETHOD GetGMPAudioDecoder(GMPCrashHelper* aHelper,
-                                nsTArray<nsCString>* aTags,
-                                const nsACString& aNodeId,
-                                UniquePtr<GetGMPAudioDecoderCallback>&& aCallback)
     override;
   NS_IMETHOD GetGMPDecryptor(GMPCrashHelper* aHelper,
                              nsTArray<nsCString>* aTags,
@@ -92,7 +93,15 @@ public:
                              UniquePtr<GetGMPDecryptorCallback>&& aCallback)
     override;
 
-  int32_t AsyncShutdownTimeoutMs();
+  // Helper for backwards compatibility with WebRTC/tests.
+  NS_IMETHOD
+  GetGMPVideoDecoder(GMPCrashHelper* aHelper,
+                     nsTArray<nsCString>* aTags,
+                     const nsACString& aNodeId,
+                     UniquePtr<GetGMPVideoDecoderCallback>&& aCallback) override
+  {
+    return GetDecryptingGMPVideoDecoder(aHelper, aTags, aNodeId, Move(aCallback), 0);
+  }
 
   NS_IMETHOD RunPluginCrashCallbacks(uint32_t aPluginId,
                                      const nsACString& aPluginName) override;
@@ -107,11 +116,18 @@ protected:
   virtual ~GeckoMediaPluginService();
 
   virtual void InitializePlugins(AbstractThread* aAbstractGMPThread) = 0;
-  virtual bool GetContentParentFrom(GMPCrashHelper* aHelper,
-                                    const nsACString& aNodeId,
-                                    const nsCString& aAPI,
-                                    const nsTArray<nsCString>& aTags,
-                                    UniquePtr<GetGMPContentParentCallback>&& aCallback) = 0;
+
+  virtual RefPtr<GetGMPContentParentPromise> GetContentParent(
+    GMPCrashHelper* aHelper,
+    const nsACString& aNodeIdString,
+    const nsCString& aAPI,
+    const nsTArray<nsCString>& aTags) = 0;
+
+  virtual RefPtr<GetGMPContentParentPromise> GetContentParent(
+    GMPCrashHelper* aHelper,
+    const NodeId& aNodeId,
+    const nsCString& aAPI,
+    const nsTArray<nsCString>& aTags) = 0;
 
   nsresult GMPDispatch(nsIRunnable* event, uint32_t flags = NS_DISPATCH_NORMAL);
   nsresult GMPDispatch(already_AddRefed<nsIRunnable> event, uint32_t flags = NS_DISPATCH_NORMAL);

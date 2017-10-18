@@ -117,6 +117,7 @@ class subsuite(InstanceFilter):
 
     :param name: The name of the subsuite to run (default None)
     """
+
     def __init__(self, name=None):
         InstanceFilter.__init__(self, name=name)
         self.name = name
@@ -142,7 +143,7 @@ class subsuite(InstanceFilter):
                 if not test.get('subsuite'):
                     yield test
             else:
-                if test.get('subsuite') == self.name:
+                if test.get('subsuite', '') == self.name:
                     yield test
 
 
@@ -227,7 +228,7 @@ class chunk_by_dir(InstanceFilter):
                 path = path[1:]
 
             dirs = path.split(os.sep)
-            dirs = dirs[:min(self.depth, len(dirs)-1)]
+            dirs = dirs[:min(self.depth, len(dirs) - 1)]
             path = os.sep.join(dirs)
 
             # don't count directories that only have disabled tests in them,
@@ -303,7 +304,7 @@ class chunk_by_runtime(InstanceFilter):
             tests_by_chunk[0][0] += runtime
             tests_by_chunk[0][1].extend(batch)
 
-        return (t for t in tests_by_chunk[self.this_chunk-1][1])
+        return (t for t in tests_by_chunk[self.this_chunk - 1][1])
 
 
 class tags(InstanceFilter):
@@ -356,7 +357,12 @@ class pathprefix(InstanceFilter):
         for test in tests:
             for tp in self.paths:
                 tp = os.path.normpath(tp)
-                if not os.path.normpath(test['relpath']).startswith(tp):
+
+                path = test['relpath']
+                if os.path.isabs(tp):
+                    path = test['path']
+
+                if not os.path.normpath(path).startswith(tp):
                     continue
 
                 # any test path that points to a single file will be run no

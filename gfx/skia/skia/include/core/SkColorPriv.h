@@ -200,6 +200,14 @@ static inline unsigned Sk255To256(U8CPU value) {
  */
 #define SkAlphaMul(value, alpha256)     (((value) * (alpha256)) >> 8)
 
+/** Calculates 256 - (value * alpha256) / 255 in range [0,256],
+ *  for [0,255] value and [0,256] alpha256.
+ */
+static inline U16CPU SkAlphaMulInv256(U16CPU value, U16CPU alpha256) {
+    unsigned prod = 0xFFFF - value * alpha256;
+    return (prod + (prod >> 8)) >> 8;
+}
+
 //  The caller may want negative values, so keep all params signed (int)
 //  so we don't accidentally slip into unsigned math and lose the sign
 //  extension when we shift (in SkAlphaMul)
@@ -568,13 +576,28 @@ static inline SkPMColor SkPMSrcOver(SkPMColor src, SkPMColor dst) {
     return src + SkAlphaMulQ(dst, SkAlpha255To256(255 - SkGetPackedA32(src)));
 }
 
+/**
+ * Interpolates between colors src and dst using [0,256] scale.
+ */
+static inline SkPMColor SkPMLerp(SkPMColor src, SkPMColor dst, unsigned scale) {
+    return SkFastFourByteInterp256(src, dst, scale);
+}
+
 static inline SkPMColor SkBlendARGB32(SkPMColor src, SkPMColor dst, U8CPU aa) {
     SkASSERT((unsigned)aa <= 255);
 
     unsigned src_scale = SkAlpha255To256(aa);
-    unsigned dst_scale = SkAlpha255To256(255 - SkAlphaMul(SkGetPackedA32(src), src_scale));
+    unsigned dst_scale = SkAlphaMulInv256(SkGetPackedA32(src), src_scale);
 
-    return SkAlphaMulQ(src, src_scale) + SkAlphaMulQ(dst, dst_scale);
+    const uint32_t mask = 0xFF00FF;
+
+    uint32_t src_rb = (src & mask) * src_scale;
+    uint32_t src_ag = ((src >> 8) & mask) * src_scale;
+
+    uint32_t dst_rb = (dst & mask) * dst_scale;
+    uint32_t dst_ag = ((dst >> 8) & mask) * dst_scale;
+
+    return (((src_rb + dst_rb) >> 8) & mask) | ((src_ag + dst_ag) & ~mask);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

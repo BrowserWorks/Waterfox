@@ -10,7 +10,7 @@
 #include "XPCWrapper.h"
 #include "nsContentUtils.h"
 #include "nsCycleCollectionNoteRootCallback.h"
-#include "nsPrincipal.h"
+#include "ExpandedPrincipal.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Preferences.h"
 #include "nsIAddonInterposition.h"
@@ -237,7 +237,7 @@ XPCWrappedNativeScope::AttachComponentsObject(JSContext* aCx)
     if (c)
         attrs |= JSPROP_PERMANENT;
 
-    RootedId id(aCx, XPCJSRuntime::Get()->GetStringID(XPCJSRuntime::IDX_COMPONENTS));
+    RootedId id(aCx, XPCJSContext::Get()->GetStringID(XPCJSContext::IDX_COMPONENTS));
     return JS_DefinePropertyById(aCx, global, id, components, attrs);
 }
 
@@ -290,18 +290,20 @@ XPCWrappedNativeScope::EnsureContentXBLScope(JSContext* cx)
     options.proto = global;
     options.sameZoneAs = global;
 
-    // Use an nsExpandedPrincipal to create asymmetric security.
+    // Use an ExpandedPrincipal to create asymmetric security.
     nsIPrincipal* principal = GetPrincipal();
     MOZ_ASSERT(!nsContentUtils::IsExpandedPrincipal(principal));
     nsTArray<nsCOMPtr<nsIPrincipal>> principalAsArray(1);
     principalAsArray.AppendElement(principal);
-    nsCOMPtr<nsIExpandedPrincipal> ep =
-        new nsExpandedPrincipal(principalAsArray,
-                                BasePrincipal::Cast(principal)->OriginAttributesRef());
+    RefPtr<ExpandedPrincipal> ep =
+        ExpandedPrincipal::Create(principalAsArray,
+                                  principal->OriginAttributesRef());
 
     // Create the sandbox.
     RootedValue v(cx);
-    nsresult rv = CreateSandboxObject(cx, &v, ep, options);
+    nsresult rv = CreateSandboxObject(cx, &v,
+                                      static_cast<nsIExpandedPrincipal*>(ep),
+                                      options);
     NS_ENSURE_SUCCESS(rv, nullptr);
     mContentXBLScope = &v.toObject();
 
@@ -476,16 +478,13 @@ XPCWrappedNativeScope::~XPCWrappedNativeScope()
     if (mXrayExpandos.initialized())
         mXrayExpandos.destroy();
 
-    JSRuntime* rt = XPCJSRuntime::Get()->Runtime();
-    mContentXBLScope.finalize(rt);
-    for (size_t i = 0; i < mAddonScopes.Length(); i++)
-        mAddonScopes[i].finalize(rt);
-    mGlobalJSObject.finalize(rt);
+    JSContext* cx = dom::danger::GetJSContext();
+    mGlobalJSObject.finalize(cx);
 }
 
 // static
 void
-XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSRuntime* rt)
+XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc)
 {
     // Do JS::TraceEdge for all wrapped natives with external references, as
     // well as any DOM expando objects.
@@ -496,42 +495,23 @@ XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSRuntim
             if (wrapper->HasExternalReference() && !wrapper->IsWrapperExpired())
                 wrapper->TraceSelf(trc);
         }
-
-        if (cur->mDOMExpandoSet) {
-            for (DOMExpandoSet::Enum e(*cur->mDOMExpandoSet); !e.empty(); e.popFront())
-                JS::TraceEdge(trc, &e.mutableFront(), "DOM expando object");
-        }
     }
-}
-
-static void
-SuspectDOMExpandos(JSObject* obj, nsCycleCollectionNoteRootCallback& cb)
-{
-    MOZ_ASSERT(dom::GetDOMClass(obj) && dom::GetDOMClass(obj)->mDOMObjectIsISupports);
-    nsISupports* native = dom::UnwrapDOMObject<nsISupports>(obj);
-    cb.NoteXPCOMRoot(native);
 }
 
 // static
 void
-XPCWrappedNativeScope::SuspectAllWrappers(XPCJSRuntime* rt,
-                                          nsCycleCollectionNoteRootCallback& cb)
+XPCWrappedNativeScope::SuspectAllWrappers(nsCycleCollectionNoteRootCallback& cb)
 {
     for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
         for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
             static_cast<Native2WrappedNativeMap::Entry*>(i.Get())->value->Suspect(cb);
         }
-
-        if (cur->mDOMExpandoSet) {
-            for (DOMExpandoSet::Range r = cur->mDOMExpandoSet->all(); !r.empty(); r.popFront())
-                SuspectDOMExpandos(r.front(), cb);
-        }
     }
 }
 
 // static
 void
-XPCWrappedNativeScope::UpdateWeakPointersAfterGC(XPCJSRuntime* rt)
+XPCWrappedNativeScope::UpdateWeakPointersInAllScopesAfterGC()
 {
     // If this is called from the finalization callback in JSGC_MARK_END then
     // JSGC_FINALIZE_END must always follow it calling
@@ -539,78 +519,102 @@ XPCWrappedNativeScope::UpdateWeakPointersAfterGC(XPCJSRuntime* rt)
     // KillDyingScopes.
     MOZ_ASSERT(!gDyingScopes, "JSGC_MARK_END without JSGC_FINALIZE_END");
 
-    XPCWrappedNativeScope* prev = nullptr;
-    XPCWrappedNativeScope* cur = gScopes;
-
-    while (cur) {
-        // Sweep waivers.
-        if (cur->mWaiverWrapperMap)
-            cur->mWaiverWrapperMap->Sweep();
-
-        XPCWrappedNativeScope* next = cur->mNext;
-
-        if (cur->mContentXBLScope)
-            cur->mContentXBLScope.updateWeakPointerAfterGC();
-        for (size_t i = 0; i < cur->mAddonScopes.Length(); i++)
-            cur->mAddonScopes[i].updateWeakPointerAfterGC();
-
-        // Check for finalization of the global object or update our pointer if
-        // it was moved.
+    XPCWrappedNativeScope** scopep = &gScopes;
+    while (*scopep) {
+        XPCWrappedNativeScope* cur = *scopep;
+        cur->UpdateWeakPointersAfterGC();
         if (cur->mGlobalJSObject) {
-            cur->mGlobalJSObject.updateWeakPointerAfterGC();
-            if (!cur->mGlobalJSObject) {
-                // Move this scope from the live list to the dying list.
-                if (prev)
-                    prev->mNext = next;
-                else
-                    gScopes = next;
-                cur->mNext = gDyingScopes;
-                gDyingScopes = cur;
-                cur = nullptr;
-            }
+            scopep = &cur->mNext;
+        } else {
+            // The scope's global is dead so move it to the dying scopes list.
+            *scopep = cur->mNext;
+            cur->mNext = gDyingScopes;
+            gDyingScopes = cur;
         }
-
-        if (cur)
-            prev = cur;
-        cur = next;
     }
 }
 
-// static
-void
-XPCWrappedNativeScope::MarkAllWrappedNativesAndProtos()
+static inline void
+AssertSameCompartment(DebugOnly<JSCompartment*>& comp, JSObject* obj)
 {
-    for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
-        for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<Native2WrappedNativeMap::Entry*>(i.Get());
-            entry->value->Mark();
-        }
-        // We need to explicitly mark all the protos too because some protos may be
-        // alive in the hashtable but not currently in use by any wrapper
-        for (auto i = cur->mWrappedNativeProtoMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<ClassInfo2WrappedNativeProtoMap::Entry*>(i.Get());
-            entry->value->Mark();
-        }
-    }
+    MOZ_ASSERT_IF(obj, js::GetObjectCompartment(obj) == comp);
 }
+
+static inline void
+AssertSameCompartment(DebugOnly<JSCompartment*>& comp, const JS::ObjectPtr& obj)
+{
+#ifdef DEBUG
+    AssertSameCompartment(comp, obj.unbarrieredGet());
+#endif
+}
+
+void
+XPCWrappedNativeScope::UpdateWeakPointersAfterGC()
+{
+    // Sweep waivers.
+    if (mWaiverWrapperMap)
+        mWaiverWrapperMap->Sweep();
+
+    if (!js::IsObjectZoneSweepingOrCompacting(mGlobalJSObject.unbarrieredGet()))
+        return;
+
+    // Update our pointer to the global object in case it was moved or
+    // finalized.
+    mGlobalJSObject.updateWeakPointerAfterGC();
+    if (!mGlobalJSObject) {
+        JSContext* cx = dom::danger::GetJSContext();
+        mContentXBLScope.finalize(cx);
+        for (size_t i = 0; i < mAddonScopes.Length(); i++)
+            mAddonScopes[i].finalize(cx);
+        GetWrappedNativeMap()->Clear();
+        mWrappedNativeProtoMap->Clear();
+        return;
+    }
+
+    DebugOnly<JSCompartment*> comp =
+        js::GetObjectCompartment(mGlobalJSObject.unbarrieredGet());
 
 #ifdef DEBUG
-// static
-void
-XPCWrappedNativeScope::ASSERT_NoInterfaceSetsAreMarked()
-{
-    for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
-        for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<Native2WrappedNativeMap::Entry*>(i.Get());
-            entry->value->ASSERT_SetsNotMarked();
-        }
-        for (auto i = cur->mWrappedNativeProtoMap->Iter(); !i.Done(); i.Next()) {
-            auto entry = static_cast<ClassInfo2WrappedNativeProtoMap::Entry*>(i.Get());
-            entry->value->ASSERT_SetNotMarked();
-        }
+    // These are traced, so no updates are necessary.
+    if (mContentXBLScope) {
+        JSObject* prev = mContentXBLScope.unbarrieredGet();
+        mContentXBLScope.updateWeakPointerAfterGC();
+        MOZ_ASSERT(prev == mContentXBLScope.unbarrieredGet());
+        AssertSameCompartment(comp, mContentXBLScope);
+    }
+    for (size_t i = 0; i < mAddonScopes.Length(); i++) {
+        JSObject* prev = mAddonScopes[i].unbarrieredGet();
+        mAddonScopes[i].updateWeakPointerAfterGC();
+        MOZ_ASSERT(prev == mAddonScopes[i].unbarrieredGet());
+        AssertSameCompartment(comp, mAddonScopes[i]);
+    }
+#endif
+
+    // Sweep mWrappedNativeMap for dying flat JS objects. Moving has already
+    // been handled by XPCWrappedNative::FlatJSObjectMoved.
+    for (auto iter = GetWrappedNativeMap()->Iter(); !iter.Done(); iter.Next()) {
+        auto entry = static_cast<Native2WrappedNativeMap::Entry*>(iter.Get());
+        XPCWrappedNative* wrapper = entry->value;
+        JSObject* obj = wrapper->GetFlatJSObjectPreserveColor();
+        JS_UpdateWeakPointerAfterGCUnbarriered(&obj);
+        MOZ_ASSERT(!obj || obj == wrapper->GetFlatJSObjectPreserveColor());
+        AssertSameCompartment(comp, obj);
+        if (!obj)
+            iter.Remove();
+    }
+
+    // Sweep mWrappedNativeProtoMap for dying prototype JSObjects. Moving has
+    // already been handled by XPCWrappedNativeProto::JSProtoObjectMoved.
+    for (auto i = mWrappedNativeProtoMap->Iter(); !i.Done(); i.Next()) {
+        auto entry = static_cast<ClassInfo2WrappedNativeProtoMap::Entry*>(i.Get());
+        JSObject* obj = entry->value->GetJSProtoObjectPreserveColor();
+        JS_UpdateWeakPointerAfterGCUnbarriered(&obj);
+        AssertSameCompartment(comp, obj);
+        MOZ_ASSERT(!obj || obj == entry->value->GetJSProtoObjectPreserveColor());
+        if (!obj)
+            i.Remove();
     }
 }
-#endif
 
 // static
 void
@@ -812,12 +816,12 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
     RootedValue whitelistVal(cx);
     nsresult rv = interposition->GetWhitelist(&whitelistVal);
     if (NS_FAILED(rv)) {
-        JS_ReportError(cx, "Could not get the whitelist from the interposition.");
+        JS_ReportErrorASCII(cx, "Could not get the whitelist from the interposition.");
         return false;
     }
 
     if (!whitelistVal.isObject()) {
-        JS_ReportError(cx, "Whitelist must be an array.");
+        JS_ReportErrorASCII(cx, "Whitelist must be an array.");
         return false;
     }
 
@@ -828,7 +832,7 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
     RootedObject whitelistObj(cx, &whitelistVal.toObject());
     whitelistObj = js::UncheckedUnwrap(whitelistObj);
     if (!AccessCheck::isChrome(whitelistObj)) {
-        JS_ReportError(cx, "Whitelist must be from system scope.");
+        JS_ReportErrorASCII(cx, "Whitelist must be from system scope.");
         return false;
     }
 
@@ -840,7 +844,7 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
             return false;
 
         if (!isArray) {
-            JS_ReportError(cx, "Whitelist must be an array.");
+            JS_ReportErrorASCII(cx, "Whitelist must be an array.");
             return false;
         }
 
@@ -854,14 +858,14 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
                 return false;
 
             if (!idval.isString()) {
-                JS_ReportError(cx, "Whitelist must contain strings only.");
+                JS_ReportErrorASCII(cx, "Whitelist must contain strings only.");
                 return false;
             }
 
             RootedString str(cx, idval.toString());
             str = JS_AtomizeAndPinJSString(cx, str);
             if (!str) {
-                JS_ReportError(cx, "String internization failed.");
+                JS_ReportErrorASCII(cx, "String internization failed.");
                 return false;
             }
 
@@ -895,7 +899,7 @@ XPCWrappedNativeScope::DebugDumpAllScopes(int16_t depth)
 
     XPC_LOG_ALWAYS(("chain of %d XPCWrappedNativeScope(s)", count));
     XPC_LOG_INDENT();
-        XPC_LOG_ALWAYS(("gDyingScopes @ %x", gDyingScopes));
+        XPC_LOG_ALWAYS(("gDyingScopes @ %p", gDyingScopes));
         if (depth)
             for (cur = gScopes; cur; cur = cur->mNext)
                 cur->DebugDump(depth);
@@ -908,13 +912,13 @@ XPCWrappedNativeScope::DebugDump(int16_t depth)
 {
 #ifdef DEBUG
     depth-- ;
-    XPC_LOG_ALWAYS(("XPCWrappedNativeScope @ %x", this));
+    XPC_LOG_ALWAYS(("XPCWrappedNativeScope @ %p", this));
     XPC_LOG_INDENT();
-        XPC_LOG_ALWAYS(("mNext @ %x", mNext));
-        XPC_LOG_ALWAYS(("mComponents @ %x", mComponents.get()));
-        XPC_LOG_ALWAYS(("mGlobalJSObject @ %x", mGlobalJSObject.get()));
+        XPC_LOG_ALWAYS(("mNext @ %p", mNext));
+        XPC_LOG_ALWAYS(("mComponents @ %p", mComponents.get()));
+        XPC_LOG_ALWAYS(("mGlobalJSObject @ %p", mGlobalJSObject.get()));
 
-        XPC_LOG_ALWAYS(("mWrappedNativeMap @ %x with %d wrappers(s)",
+        XPC_LOG_ALWAYS(("mWrappedNativeMap @ %p with %d wrappers(s)",
                         mWrappedNativeMap, mWrappedNativeMap->Count()));
         // iterate contexts...
         if (depth && mWrappedNativeMap->Count()) {
@@ -926,7 +930,7 @@ XPCWrappedNativeScope::DebugDump(int16_t depth)
             XPC_LOG_OUTDENT();
         }
 
-        XPC_LOG_ALWAYS(("mWrappedNativeProtoMap @ %x with %d protos(s)",
+        XPC_LOG_ALWAYS(("mWrappedNativeProtoMap @ %p with %d protos(s)",
                         mWrappedNativeProtoMap,
                         mWrappedNativeProtoMap->Count()));
         // iterate contexts...

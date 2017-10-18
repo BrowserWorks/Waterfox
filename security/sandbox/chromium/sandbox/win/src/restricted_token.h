@@ -8,8 +8,9 @@
 #include <windows.h>
 #include <vector>
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/strings/string16.h"
+#include "base/win/scoped_handle.h"
 #include "sandbox/win/src/restricted_token_utils.h"
 #include "sandbox/win/src/security_level.h"
 #include "sandbox/win/src/sid.h"
@@ -28,55 +29,46 @@ namespace sandbox {
 // any token handle.
 // Sample usage:
 //    RestrictedToken restricted_token;
-//    unsigned err_code = restricted_token.Init(NULL);  // Use the current
-//                                                      // effective token
+//    DWORD err_code = restricted_token.Init(NULL);  // Use the current
+//                                                   // effective token
 //    if (ERROR_SUCCESS != err_code) {
 //      // handle error.
 //    }
 //
 //    restricted_token.AddRestrictingSid(ATL::Sids::Users().GetPSID());
-//    HANDLE token_handle;
-//    err_code = restricted_token.GetRestrictedTokenHandle(&token_handle);
+//    base::win::ScopedHandle token_handle;
+//    err_code = restricted_token.GetRestrictedToken(&token_handle);
 //    if (ERROR_SUCCESS != err_code) {
 //      // handle error.
 //    }
 //    [...]
-//    CloseHandle(token_handle);
 class RestrictedToken {
  public:
   // Init() has to be called before calling any other method in the class.
-  RestrictedToken()
-      : init_(false), effective_token_(NULL),
-        integrity_level_(INTEGRITY_LEVEL_LAST) { }
-
-  ~RestrictedToken() {
-    if (effective_token_)
-      CloseHandle(effective_token_);
-  }
+  RestrictedToken();
+  ~RestrictedToken();
 
   // Initializes the RestrictedToken object with effective_token.
   // If effective_token is NULL, it initializes the RestrictedToken object with
   // the effective token of the current process.
-  unsigned Init(HANDLE effective_token);
+  DWORD Init(HANDLE effective_token);
 
-  // Creates a restricted token and returns its handle using the token_handle
-  // output parameter. This handle has to be closed by the caller.
+  // Creates a restricted token.
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
-  unsigned GetRestrictedTokenHandle(HANDLE *token_handle) const;
+  DWORD GetRestrictedToken(base::win::ScopedHandle* token) const;
 
   // Creates a restricted token and uses this new token to create a new token
-  // for impersonation. Returns the handle of this impersonation token using
-  // the token_handle output parameter. This handle has to be closed by
-  // the caller.
+  // for impersonation. Returns this impersonation token.
   //
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
   //
-  // The sample usage is the same as the GetRestrictedTokenHandle function.
-  unsigned GetRestrictedTokenHandleForImpersonation(HANDLE *token_handle) const;
+  // The sample usage is the same as the GetRestrictedToken function.
+  DWORD GetRestrictedTokenForImpersonation(
+      base::win::ScopedHandle* token) const;
 
   // Lists all sids in the token and mark them as Deny Only except for those
   // present in the exceptions parameter. If there is no exception needed,
@@ -94,7 +86,18 @@ class RestrictedToken {
   //    restricted_token.AddAllSidsForDenyOnly(&sid_exceptions);
   // Note: A Sid marked for Deny Only in a token cannot be used to grant
   // access to any resource. It can only be used to deny access.
-  unsigned AddAllSidsForDenyOnly(std::vector<Sid> *exceptions);
+  DWORD AddAllSidsForDenyOnly(std::vector<Sid> *exceptions);
+
+  // Lists all sids in the token and mark them as Deny Only if present in the
+  // deny_only_sids parameter.
+  //
+  // If the function succeeds, the return value is ERROR_SUCCESS. If the
+  // function fails, the return value is the win32 error code corresponding to
+  // the error.
+  //
+  // Note: A Sid marked for Deny Only in a token cannot be used to grant
+  // access to any resource. It can only be used to deny access.
+  DWORD AddDenyOnlySids(const std::vector<Sid>& deny_only_sids);
 
   // Adds a user or group SID for Deny Only in the restricted token.
   // Parameter: sid is the SID to add in the Deny Only list.
@@ -102,13 +105,13 @@ class RestrictedToken {
   //
   // Sample Usage:
   //    restricted_token.AddSidForDenyOnly(ATL::Sids::Admins().GetPSID());
-  unsigned AddSidForDenyOnly(const Sid &sid);
+  DWORD AddSidForDenyOnly(const Sid &sid);
 
   // Adds the user sid of the token for Deny Only in the restricted token.
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
-  unsigned AddUserSidForDenyOnly();
+  DWORD AddUserSidForDenyOnly();
 
   // Lists all privileges in the token and add them to the list of privileges
   // to remove except for those present in the exceptions parameter. If
@@ -123,8 +126,7 @@ class RestrictedToken {
   //    std::vector<base::string16> privilege_exceptions;
   //    privilege_exceptions.push_back(SE_CHANGE_NOTIFY_NAME);
   //    restricted_token.DeleteAllPrivileges(&privilege_exceptions);
-  unsigned DeleteAllPrivileges(
-      const std::vector<base::string16> *exceptions);
+  DWORD DeleteAllPrivileges(const std::vector<base::string16> *exceptions);
 
   // Adds a privilege to the list of privileges to remove in the restricted
   // token.
@@ -136,7 +138,7 @@ class RestrictedToken {
   //
   // Sample usage:
   //    restricted_token.DeletePrivilege(SE_LOAD_DRIVER_NAME);
-  unsigned DeletePrivilege(const wchar_t *privilege);
+  DWORD DeletePrivilege(const wchar_t *privilege);
 
   // Adds a SID to the list of restricting sids in the restricted token.
   // Parameter: sid is the sid to add to the list restricting sids.
@@ -148,7 +150,7 @@ class RestrictedToken {
   // access checks twice. The first time using your user SID and your groups,
   // and the second time using your list of restricting sids. The access has
   // to be granted in both places to get access to the resource requested.
-  unsigned AddRestrictingSid(const Sid &sid);
+  DWORD AddRestrictingSid(const Sid &sid);
 
   // Adds the logon sid of the token in the list of restricting sids for the
   // restricted token.
@@ -156,7 +158,7 @@ class RestrictedToken {
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
-  unsigned AddRestrictingSidLogonSession();
+  DWORD AddRestrictingSidLogonSession();
 
   // Adds the owner sid of the token in the list of restricting sids for the
   // restricted token.
@@ -164,18 +166,22 @@ class RestrictedToken {
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
-  unsigned AddRestrictingSidCurrentUser();
+  DWORD AddRestrictingSidCurrentUser();
 
   // Adds all group sids and the user sid to the restricting sids list.
   //
   // If the function succeeds, the return value is ERROR_SUCCESS. If the
   // function fails, the return value is the win32 error code corresponding to
   // the error.
-  unsigned AddRestrictingSidAllSids();
+  DWORD AddRestrictingSidAllSids();
 
   // Sets the token integrity level. This is only valid on Vista. The integrity
   // level cannot be higher than your current integrity level.
-  unsigned SetIntegrityLevel(IntegrityLevel integrity_level);
+  DWORD SetIntegrityLevel(IntegrityLevel integrity_level);
+
+  // Set a flag which indicates the created token should have a locked down
+  // default DACL when created.
+  void SetLockdownDefaultDacl();
 
  private:
   // The list of restricting sids in the restricted token.
@@ -185,11 +191,13 @@ class RestrictedToken {
   // The list of sids to mark as Deny Only in the restricted token.
   std::vector<Sid> sids_for_deny_only_;
   // The token to restrict. Can only be set in a constructor.
-  HANDLE effective_token_;
+  base::win::ScopedHandle effective_token_;
   // The token integrity level. Only valid on Vista.
   IntegrityLevel integrity_level_;
   // Tells if the object is initialized or not (if Init() has been called)
   bool init_;
+  // Lockdown the default DACL when creating new tokens.
+  bool lockdown_default_dacl_;
 
   DISALLOW_COPY_AND_ASSIGN(RestrictedToken);
 };

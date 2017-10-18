@@ -14,6 +14,11 @@ XPCOMUtils.defineLazyServiceGetter(this, "cpmm",
                                    "@mozilla.org/childprocessmessagemanager;1",
                                    "nsIMessageSender");
 
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+                                  "resource://gre/modules/TelemetryController.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
+                                  "resource:///modules/E10SUtils.jsm");
+
 /*
  * The message manager has an upper limit on message sizes that it can
  * reliably forward to the parent so we limit the size of console log event
@@ -41,12 +46,12 @@ ContentProcessSingleton.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     switch (topic) {
     case "app-startup": {
-      Services.obs.addObserver(this, "console-api-log-event", false);
-      Services.obs.addObserver(this, "xpcom-shutdown", false);
-      cpmm.addMessageListener("DevTools:InitDebuggerServer", this);
+      Services.obs.addObserver(this, "console-api-log-event");
+      Services.obs.addObserver(this, "xpcom-shutdown");
+      TelemetryController.observe(null, topic, null);
       break;
     }
     case "console-api-log-event": {
@@ -56,9 +61,10 @@ ContentProcessSingleton.prototype = {
         level: consoleMsg.level,
         filename: consoleMsg.filename.substring(0, MSG_MGR_CONSOLE_INFO_MAX),
         lineNumber: consoleMsg.lineNumber,
-        functionName: consoleMsg.functionName.substring(0,
-          MSG_MGR_CONSOLE_INFO_MAX),
+        functionName: consoleMsg.functionName &&
+          consoleMsg.functionName.substring(0, MSG_MGR_CONSOLE_INFO_MAX),
         timeStamp: consoleMsg.timeStamp,
+        addonId: consoleMsg.addonId,
         arguments: [],
       };
 
@@ -75,7 +81,20 @@ ContentProcessSingleton.prototype = {
       for (let arg of consoleMsg.arguments) {
         if ((typeof arg == "object" || typeof arg == "function") &&
             arg !== null) {
-          arg = unavailString;
+          if (Services.appinfo.remoteType === E10SUtils.EXTENSION_REMOTE_TYPE) {
+            // For OOP extensions: we want the developer to be able to see the
+            // logs in the Browser Console. When the Addon Toolbox will be more
+            // prominent we can revisit.
+            try {
+              // If the argument is clonable, then send it as-is. If
+              // cloning fails, fall back to the unavailable string.
+              arg = Cu.cloneInto(arg, {});
+            } catch (e) {
+              arg = unavailString;
+            }
+          } else {
+            arg = unavailString;
+          }
           totalArgLength += unavailStringLength;
         } else if (typeof arg == "string") {
           totalArgLength += arg.length * 2; // 2-bytes per char
@@ -99,17 +118,7 @@ ContentProcessSingleton.prototype = {
     case "xpcom-shutdown":
       Services.obs.removeObserver(this, "console-api-log-event");
       Services.obs.removeObserver(this, "xpcom-shutdown");
-      cpmm.removeMessageListener("DevTools:InitDebuggerServer", this);
       break;
-    }
-  },
-
-  receiveMessage: function (message) {
-    // load devtools component on-demand
-    // Only reply if we are in a real content process
-    if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
-      let {init} = Cu.import("resource://devtools/server/content-server.jsm", {});
-      init(message);
     }
   },
 };

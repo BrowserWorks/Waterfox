@@ -2,13 +2,26 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-__all__ = ['read_ini']
-
 import os
+import sys
+
+__all__ = ['read_ini', 'combine_fields']
+
+
+class IniParseError(Exception):
+    def __init__(self, fp, linenum, msg):
+        if isinstance(fp, basestring):
+            path = fp
+        elif hasattr(fp, 'name'):
+            path = fp.name
+        else:
+            path = getattr(fp, 'path', 'unknown')
+        msg = "Error parsing manifest file '{}', line {}: {}".format(path, linenum, msg)
+        super(IniParseError, self).__init__(msg)
+
 
 def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
-             comments=';#', separators=('=', ':'),
-             strict=True):
+             comments=None, separators=None, strict=True, handle_defaults=True):
     """
     read an .ini file and return a list of [(section, values)]
     - fp : file pointer or path to read
@@ -18,10 +31,13 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
     - comments : characters that if they start a line denote a comment
     - separators : strings that denote key, value separation in order
     - strict : whether to be strict about parsing
+    - handle_defaults : whether to incorporate defaults into each section
     """
 
     # variables
     variables = variables or {}
+    comments = comments or ('#',)
+    separators = separators or ('=', ':')
     sections = []
     key = value = None
     section_names = set()
@@ -40,8 +56,25 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
             continue
 
         # ignore comment lines
-        if stripped[0] in comments:
+        if any(stripped.startswith(c) for c in comments):
             continue
+
+        # strip inline comments (borrowed from configparser)
+        comment_start = sys.maxsize
+        inline_prefixes = {p: -1 for p in comments}
+        while comment_start == sys.maxsize and inline_prefixes:
+            next_prefixes = {}
+            for prefix, index in inline_prefixes.items():
+                index = line.find(prefix, index+1)
+                if index == -1:
+                    continue
+                next_prefixes[prefix] = index
+                if index == 0 or (index > 0 and line[index-1].isspace()):
+                    comment_start = min(comment_start, index)
+            inline_prefixes = next_prefixes
+
+        if comment_start != sys.maxsize:
+            stripped = stripped[:comment_start].rstrip()
 
         # check for a new section
         if len(stripped) > 2 and stripped[0] == '[' and stripped[-1] == ']':
@@ -58,7 +91,8 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
 
             if strict:
                 # make sure this section doesn't already exist
-                assert section not in section_names, "Section '%s' already found in '%s'" % (section, section_names)
+                assert section not in section_names, "Section '%s' already found in '%s'" % (
+                    section, section_names)
 
             section_names.add(section)
             current_section = {}
@@ -67,7 +101,8 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
 
         # if there aren't any sections yet, something bad happen
         if not section_names:
-            raise Exception('No sections found')
+            raise IniParseError(fp, linenum, "Expected a comment or section, "
+                                             "instead found '{}'".format(stripped))
 
         # (key, value) pair
         for separator in separators:
@@ -91,12 +126,7 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
                 current_section[key] = value
             else:
                 # something bad happened!
-                if hasattr(fp, 'name'):
-                    filename = fp.name
-                else:
-                    filename = 'unknown'
-                raise Exception("Error parsing manifest file '%s', line %s" %
-                                (filename, linenum))
+                raise IniParseError(fp, linenum, "Unexpected line '{}'".format(stripped))
 
     # server-root is a special os path declared relative to the manifest file.
     # inheritance demands we expand it as absolute
@@ -109,20 +139,30 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
     if defaults_only:
         return [(default, variables)]
 
-    # interpret the variables
-    def interpret_variables(global_dict, local_dict):
-        variables = global_dict.copy()
-
-        # These variables are combinable when they appear both in default
-        # and per-entry.
-        for field_name, pattern in (('skip-if', '(%s) || (%s)'),
-                                    ('support-files', '%s %s')):
-            local_value, global_value = local_dict.get(field_name), variables.get(field_name)
-            if local_value and global_value:
-                local_dict[field_name] = pattern % (global_value.split('#')[0], local_value.split('#')[0])
-        variables.update(local_dict)
-
-        return variables
-
-    sections = [(i, interpret_variables(variables, j)) for i, j in sections]
+    global_vars = variables if handle_defaults else {}
+    sections = [(i, combine_fields(global_vars, j)) for i, j in sections]
     return sections
+
+
+def combine_fields(global_vars, local_vars):
+    """
+    Combine the given manifest entries according to the semantics of specific fields.
+    This is used to combine manifest level defaults with a per-test definition.
+    """
+    if not global_vars:
+        return local_vars
+    if not local_vars:
+        return global_vars
+    field_patterns = {
+        'skip-if': '(%s) || (%s)',
+        'support-files': '%s %s',
+    }
+    final_mapping = global_vars.copy()
+    for field_name, value in local_vars.items():
+        if field_name not in field_patterns or field_name not in global_vars:
+            final_mapping[field_name] = value
+            continue
+        global_value = global_vars[field_name]
+        pattern = field_patterns[field_name]
+        final_mapping[field_name] = pattern % (global_value, value)
+    return final_mapping

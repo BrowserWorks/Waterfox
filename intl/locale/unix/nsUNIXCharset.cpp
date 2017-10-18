@@ -11,7 +11,6 @@
 #include "nsUConvPropertySearch.h"
 #include "nsCOMPtr.h"
 #include "nsReadableUtils.h"
-#include "nsEncoderDecoderUtils.h"
 #if HAVE_GNU_LIBC_VERSION_H
 #include <gnu/libc-version.h>
 #endif
@@ -24,12 +23,11 @@
 #include "nsPlatformCharset.h"
 #include "prinit.h"
 #include "nsUnicharUtils.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 
-using mozilla::dom::EncodingUtils;
 using namespace mozilla;
 
-static const nsUConvProp kUnixCharsets[] = {
+static constexpr nsUConvProp kUnixCharsets[] = {
 #include "unixcharset.properties.h"
 };
 
@@ -58,69 +56,21 @@ nsPlatformCharset::~nsPlatformCharset()
 {
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPlatformCharset::GetCharset(nsPlatformCharsetSel selector, nsACString& oResult)
 {
-  oResult = mCharset; 
-  return NS_OK;
-}
-
-NS_IMETHODIMP 
-nsPlatformCharset::GetDefaultCharsetForLocale(const nsAString& localeName, nsACString &oResult)
-{
-  // 
-  // if this locale is the user's locale then use the charset 
-  // we already determined at initialization
-  // 
-  if (mLocale.Equals(localeName) ||
-    // support the 4.x behavior
-    (mLocale.LowerCaseEqualsLiteral("en_us") && 
-     localeName.LowerCaseEqualsLiteral("c"))) {
-    oResult = mCharset;
-    return NS_OK;
-  }
-
-#if HAVE_LANGINFO_CODESET
-  //
-  // This locale appears to be a different locale from the user's locale. 
-  // To do this we would need to lock the global resource we are currently 
-  // using or use a library that provides multi locale support. 
-  // ICU is a possible example of a multi locale library.
-  //     http://oss.software.ibm.com/icu/
-  //
-  // A more common cause of hitting this warning than the above is that 
-  // Mozilla is launched under an ll_CC.UTF-8 locale. In xpLocale, 
-  // we only store the language and the region (ll-CC) losing 'UTF-8', which
-  // leads |mLocale| to be different from |localeName|. Although we lose
-  // 'UTF-8', we init'd |mCharset| with the value obtained via 
-  // |nl_langinfo(CODESET)| so that we're all right here.
-  // 
-  NS_WARNING("GetDefaultCharsetForLocale: need to add multi locale support");
-#ifdef DEBUG_jungshik
-  printf("localeName=%s mCharset=%s\n", NS_ConvertUTF16toUTF8(localeName).get(),
-         mCharset.get());
-#endif
-  // until we add multi locale support: use the the charset of the user's locale
   oResult = mCharset;
-  return NS_SUCCESS_USING_FALLBACK_LOCALE;
-#else
-  //
-  // convert from locale to charset
-  // using the deprecated locale to charset mapping 
-  //
-  NS_LossyConvertUTF16toASCII localeStr(localeName);
-  return ConvertLocaleToCharsetUsingDeprecatedConfig(localeStr, oResult);
-#endif
+  return NS_OK;
 }
 
 nsresult
 nsPlatformCharset::InitGetCharset(nsACString &oString)
 {
+#if HAVE_LANGINFO_CODESET
   char* nl_langinfo_codeset = nullptr;
   nsCString aCharset;
   nsresult res;
 
-#if HAVE_LANGINFO_CODESET
   nl_langinfo_codeset = nl_langinfo(CODESET);
   NS_ASSERTION(nl_langinfo_codeset, "cannot get nl_langinfo(CODESET)");
 
@@ -148,7 +98,7 @@ nsPlatformCharset::InitGetCharset(nsACString &oString)
   return ConvertLocaleToCharsetUsingDeprecatedConfig(localeStr, oString);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPlatformCharset::Init()
 {
   //
@@ -158,7 +108,7 @@ nsPlatformCharset::Init()
   char* locale = setlocale(LC_CTYPE, nullptr);
   NS_ASSERTION(locale, "cannot setlocale");
   if (locale) {
-    CopyASCIItoUTF16(locale, mLocale); 
+    CopyASCIItoUTF16(locale, mLocale);
   } else {
     mLocale.AssignLiteral("en_US");
   }
@@ -175,11 +125,11 @@ nsPlatformCharset::VerifyCharset(nsCString &aCharset)
     return NS_OK;
   }
 
-  nsAutoCString encoding;
-  if (!EncodingUtils::FindEncodingForLabelNoReplacement(aCharset, encoding)) {
+  const Encoding* encoding = Encoding::ForLabelNoReplacement(aCharset);
+  if (!encoding) {
     return NS_ERROR_UCONV_NOCONV;
   }
 
-  aCharset.Assign(encoding);
+  encoding->Name(aCharset);
   return NS_OK;
 }

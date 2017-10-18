@@ -7,8 +7,7 @@
  * Provides infrastructure for automated download components tests.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
@@ -16,140 +15,65 @@ XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
                                   "resource:///modules/DownloadsCommon.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
-const nsIDM = Ci.nsIDownloadManager;
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+                                  "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "HttpServer",
+    "resource://testing-common/httpd.js");
 
 var gTestTargetFile = FileUtils.getFile("TmpD", ["dm-ui-test.file"]);
 gTestTargetFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
-registerCleanupFunction(function () {
+
+registerCleanupFunction(function() {
   gTestTargetFile.remove(false);
 });
 
-////////////////////////////////////////////////////////////////////////////////
-//// Asynchronous support subroutines
+// Asynchronous support subroutines
 
-function promiseOpenAndLoadWindow(aOptions)
-{
-  return new Promise((resolve, reject) => {
-    let win = OpenBrowserWindow(aOptions);
-    win.addEventListener("load", function onLoad() {
-      win.removeEventListener("load", onLoad);
-      resolve(win);
-    });
+function promiseFocus() {
+  return new Promise(resolve => {
+    waitForFocus(resolve);
   });
 }
 
-/**
- * Waits for a load (or custom) event to finish in a given tab. If provided
- * load an uri into the tab.
- *
- * @param tab
- *        The tab to load into.
- * @param [optional] url
- *        The url to load, or the current url.
- * @param [optional] event
- *        The load event type to wait for.  Defaults to "load".
- * @return {Promise} resolved when the event is handled.
- * @resolves to the received event
- * @rejects if a valid load event is not received within a meaningful interval
- */
-function promiseTabLoadEvent(tab, url, eventType="load")
-{
-  let deferred = Promise.defer();
-  info("Wait tab event: " + eventType);
-
-  function handle(event) {
-    if (event.originalTarget != tab.linkedBrowser.contentDocument ||
-        event.target.location.href == "about:blank" ||
-        (url && event.target.location.href != url)) {
-      info("Skipping spurious '" + eventType + "'' event" +
-           " for " + event.target.location.href);
-      return;
-    }
-    // Remove reference to tab from the cleanup function:
-    realCleanup = () => {};
-    tab.linkedBrowser.removeEventListener(eventType, handle, true);
-    info("Tab event received: " + eventType);
-    deferred.resolve(event);
-  }
-
-  // Juggle a bit to avoid leaks:
-  let realCleanup = () => tab.linkedBrowser.removeEventListener(eventType, handle, true);
-  registerCleanupFunction(() => realCleanup());
-
-  tab.linkedBrowser.addEventListener(eventType, handle, true, true);
-  if (url)
-    tab.linkedBrowser.loadURI(url);
-  return deferred.promise;
-}
-
-function promiseWindowClosed(win)
-{
-  let promise = new Promise((resolve, reject) => {
-    Services.obs.addObserver(function obs(subject, topic) {
-      if (subject == win) {
-        Services.obs.removeObserver(obs, topic);
-        resolve();
-      }
-    }, "domwindowclosed", false);
-  });
-  win.close();
-  return promise;
-}
-
-
-function promiseFocus()
-{
-  let deferred = Promise.defer();
-  waitForFocus(deferred.resolve);
-  return deferred.promise;
-}
-
-function promisePanelOpened()
-{
-  let deferred = Promise.defer();
-
+function promisePanelOpened() {
   if (DownloadsPanel.panel && DownloadsPanel.panel.state == "open") {
-    return deferred.resolve();
+    return Promise.resolve();
   }
 
-  // Hook to wait until the panel is shown.
-  let originalOnPopupShown = DownloadsPanel.onPopupShown;
-  DownloadsPanel.onPopupShown = function () {
-    DownloadsPanel.onPopupShown = originalOnPopupShown;
-    originalOnPopupShown.apply(this, arguments);
+  return new Promise(resolve => {
 
-    // Defer to the next tick of the event loop so that we don't continue
-    // processing during the DOM event handler itself.
-    setTimeout(deferred.resolve, 0);
-  };
+    // Hook to wait until the panel is shown.
+    let originalOnPopupShown = DownloadsPanel.onPopupShown;
+    DownloadsPanel.onPopupShown = function() {
+      DownloadsPanel.onPopupShown = originalOnPopupShown;
+      originalOnPopupShown.apply(this, arguments);
 
-  return deferred.promise;
+      // Defer to the next tick of the event loop so that we don't continue
+      // processing during the DOM event handler itself.
+      setTimeout(resolve, 0);
+    };
+
+  });
 }
 
-function task_resetState()
-{
+async function task_resetState() {
   // Remove all downloads.
-  let publicList = yield Downloads.getList(Downloads.PUBLIC);
-  let downloads = yield publicList.getAll();
+  let publicList = await Downloads.getList(Downloads.PUBLIC);
+  let downloads = await publicList.getAll();
   for (let download of downloads) {
     publicList.remove(download);
-    yield download.finalize(true);
+    await download.finalize(true);
   }
 
   DownloadsPanel.hidePanel();
 
-  yield promiseFocus();
+  await promiseFocus();
 }
 
-function* task_addDownloads(aItems)
-{
+async function task_addDownloads(aItems) {
   let startTimeMs = Date.now();
 
-  let publicList = yield Downloads.getList(Downloads.PUBLIC);
+  let publicList = await Downloads.getList(Downloads.PUBLIC);
   for (let item of aItems) {
     let download = {
       source: {
@@ -158,11 +82,12 @@ function* task_addDownloads(aItems)
       target: {
         path: gTestTargetFile.path,
       },
-      succeeded: item.state == nsIDM.DOWNLOAD_FINISHED,
-      canceled: item.state == nsIDM.DOWNLOAD_CANCELED ||
-                item.state == nsIDM.DOWNLOAD_PAUSED,
-      error: item.state == nsIDM.DOWNLOAD_FAILED ? new Error("Failed.") : null,
-      hasPartialData: item.state == nsIDM.DOWNLOAD_PAUSED,
+      succeeded: item.state == DownloadsCommon.DOWNLOAD_FINISHED,
+      canceled: item.state == DownloadsCommon.DOWNLOAD_CANCELED ||
+                item.state == DownloadsCommon.DOWNLOAD_PAUSED,
+      error: item.state == DownloadsCommon.DOWNLOAD_FAILED ?
+             new Error("Failed.") : null,
+      hasPartialData: item.state == DownloadsCommon.DOWNLOAD_PAUSED,
       hasBlockedData: item.hasBlockedData || false,
       startTime: new Date(startTimeMs++),
     };
@@ -170,17 +95,82 @@ function* task_addDownloads(aItems)
     if (item.errorObj) {
       download.errorObj = item.errorObj;
     }
-    yield publicList.add(yield Downloads.createDownload(download));
+    await publicList.add(await Downloads.createDownload(download));
   }
 }
 
-function task_openPanel()
-{
-  yield promiseFocus();
+async function task_openPanel() {
+  await promiseFocus();
 
   let promise = promisePanelOpened();
   DownloadsPanel.showPanel();
-  yield promise;
+  await promise;
+}
+
+async function setDownloadDir() {
+  let tmpDir = Services.dirsvc.get("TmpD", Ci.nsIFile);
+  tmpDir.append("testsavedir");
+  if (!tmpDir.exists()) {
+    tmpDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
+    registerCleanupFunction(function() {
+      try {
+        tmpDir.remove(true);
+      } catch (e) {
+        // On Windows debug build this may fail.
+      }
+    });
+  }
+
+  await SpecialPowers.pushPrefEnv({"set": [
+    ["browser.download.folderList", 2],
+    ["browser.download.dir", tmpDir, Ci.nsIFile],
+  ]});
+}
+
+
+let gHttpServer = null;
+function startServer() {
+  gHttpServer = new HttpServer();
+  gHttpServer.start(-1);
+  registerCleanupFunction(async function() {
+     await new Promise(function(resolve) {
+      gHttpServer.stop(resolve);
+    });
+  });
+
+  gHttpServer.registerPathHandler("/file1.txt", (request, response) => {
+    response.setStatusLine(null, 200, "OK");
+    response.write("file1");
+    response.processAsync();
+    response.finish();
+  });
+  gHttpServer.registerPathHandler("/file2.txt", (request, response) => {
+    response.setStatusLine(null, 200, "OK");
+    response.write("file2");
+    response.processAsync();
+    response.finish();
+  });
+  gHttpServer.registerPathHandler("/file3.txt", (request, response) => {
+    response.setStatusLine(null, 200, "OK");
+    response.write("file3");
+    response.processAsync();
+    response.finish();
+  });
+}
+
+function httpUrl(aFileName) {
+  return "http://localhost:" + gHttpServer.identity.primaryPort + "/" +
+    aFileName;
+}
+
+function openLibrary(aLeftPaneRoot) {
+  let library = window.openDialog("chrome://browser/content/places/places.xul",
+                                  "", "chrome,toolbar=yes,dialog=no,resizable",
+                                  aLeftPaneRoot);
+
+  return new Promise(resolve => {
+    waitForFocus(resolve, library);
+  });
 }
 
 function promiseAlertDialogOpen(buttonAction) {
@@ -190,8 +180,7 @@ function promiseAlertDialogOpen(buttonAction) {
         // The test listens for the "load" event which guarantees that the alert
         // class has already been added (it is added when "DOMContentLoaded" is
         // fired).
-        subj.addEventListener("load", function onLoad() {
-          subj.removeEventListener("load", onLoad);
+        subj.addEventListener("load", function() {
           if (subj.document.documentURI ==
               "chrome://global/content/commonDialog.xul") {
             Services.ww.unregisterNotification(onOpen);
@@ -204,7 +193,7 @@ function promiseAlertDialogOpen(buttonAction) {
             doc.getButton(buttonAction).click();
             resolve();
           }
-        });
+        }, {once: true});
       }
     });
   });

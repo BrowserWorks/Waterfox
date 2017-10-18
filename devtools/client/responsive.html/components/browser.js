@@ -7,12 +7,11 @@
 "use strict";
 
 const { Task } = require("devtools/shared/task");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { getToplevelWindow } = require("sdk/window/utils");
+const flags = require("devtools/shared/flags");
+const { getToplevelWindow } = require("../utils/window");
 const { DOM: dom, createClass, addons, PropTypes } =
   require("devtools/client/shared/vendor/react");
 
-const Types = require("../types");
 const e10s = require("../utils/e10s");
 const message = require("../utils/message");
 
@@ -27,7 +26,6 @@ module.exports = createClass({
   displayName: "Browser",
 
   propTypes: {
-    location: Types.location.isRequired,
     swapAfterMount: PropTypes.bool.isRequired,
     onBrowserMounted: PropTypes.func.isRequired,
     onContentResize: PropTypes.func.isRequired,
@@ -96,12 +94,13 @@ module.exports = createClass({
     yield e10s.request(mm, "Start", {
       requiresFloatingScrollbars,
       // Tests expect events on resize to yield on various size changes
-      notifyOnResize: DevToolsUtils.testing,
+      notifyOnResize: flags.testing,
     });
   }),
 
   stopFrameScript: Task.async(function* () {
     let { onContentResize } = this;
+
     let browser = this.refs.browserContainer.querySelector("iframe.browser");
     let mm = browser.frameLoader.messageManager;
     e10s.off(mm, "OnContentResize", onContentResize);
@@ -110,13 +109,6 @@ module.exports = createClass({
   }),
 
   render() {
-    let {
-      location,
-    } = this.props;
-
-    // innerHTML expects & to be an HTML entity
-    location = location.replace(/&/g, "&amp;");
-
     return dom.div(
       {
         ref: "browserContainer",
@@ -126,9 +118,9 @@ module.exports = createClass({
          * React uses a whitelist for attributes, so we need some way to set
          * attributes it does not know about, such as @mozbrowser.  If this were
          * the only issue, we could use componentDidMount or ref: node => {} to
-         * set the atttibutes. In the case of @remote, the attribute must be set
-         * before the element is added to the DOM to have any effect, which we
-         * are able to do with this approach.
+         * set the atttibutes. In the case of @remote and @remoteType, the
+         * attribute must be set before the element is added to the DOM to have
+         * any effect, which we are able to do with this approach.
          *
          * @noisolation and @allowfullscreen are needed so that these frames
          * have the same access to browser features as regular browser tabs.
@@ -136,9 +128,10 @@ module.exports = createClass({
          * before allowing the swap to proceed.
          */
         dangerouslySetInnerHTML: {
-          __html: `<iframe class="browser" mozbrowser="true" remote="true"
+          __html: `<iframe class="browser" mozbrowser="true"
+                           remote="true" remoteType="web"
                            noisolation="true" allowfullscreen="true"
-                           src="${location}" width="100%" height="100%">
+                           src="about:blank" width="100%" height="100%">
                    </iframe>`
         }
       }

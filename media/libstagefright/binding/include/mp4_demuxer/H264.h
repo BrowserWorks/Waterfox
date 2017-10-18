@@ -7,13 +7,42 @@
 
 #include "mp4_demuxer/DecoderData.h"
 
-namespace mp4_demuxer
-{
+namespace mp4_demuxer {
+
+// Spec 7.4.2.1
+#define MAX_SPS_COUNT 32
+#define MAX_PPS_COUNT 256
+
+// NAL unit types
+enum NAL_TYPES {
+    H264_NAL_SLICE           = 1,
+    H264_NAL_DPA             = 2,
+    H264_NAL_DPB             = 3,
+    H264_NAL_DPC             = 4,
+    H264_NAL_IDR_SLICE       = 5,
+    H264_NAL_SEI             = 6,
+    H264_NAL_SPS             = 7,
+    H264_NAL_PPS             = 8,
+    H264_NAL_AUD             = 9,
+    H264_NAL_END_SEQUENCE    = 10,
+    H264_NAL_END_STREAM      = 11,
+    H264_NAL_FILLER_DATA     = 12,
+    H264_NAL_SPS_EXT         = 13,
+    H264_NAL_PREFIX          = 14,
+    H264_NAL_AUXILIARY_SLICE = 19,
+    H264_NAL_SLICE_EXT       = 20,
+    H264_NAL_SLICE_EXT_DVC   = 21,
+};
 
 class BitReader;
 
 struct SPSData
 {
+  bool operator==(const SPSData& aOther) const;
+  bool operator!=(const SPSData& aOther) const;
+
+  bool valid;
+
   /* Decoded Members */
   /*
     pic_width is the decoded width according to:
@@ -83,6 +112,28 @@ struct SPSData
   uint8_t chroma_format_idc;
 
   /*
+    bit_depth_luma_minus8 specifies the bit depth of the samples of the luma
+    array and the value of the luma quantisation parameter range offset
+    QpBdOffset Y , as specified by
+      BitDepth Y = 8 + bit_depth_luma_minus8 (7-3)
+      QpBdOffset Y = 6 * bit_depth_luma_minus8 (7-4)
+    When bit_depth_luma_minus8 is not present, it shall be inferred to be equal
+    to 0. bit_depth_luma_minus8 shall be in the range of 0 to 6, inclusive.
+  */
+  uint8_t bit_depth_luma_minus8;
+
+  /*
+    bit_depth_chroma_minus8 specifies the bit depth of the samples of the chroma
+    arrays and the value of the chroma quantisation parameter range offset
+    QpBdOffset C , as specified by
+      BitDepth C = 8 + bit_depth_chroma_minus8 (7-5)
+      QpBdOffset C = 6 * bit_depth_chroma_minus8 (7-6)
+    When bit_depth_chroma_minus8 is not present, it shall be inferred to be
+    equal to 0. bit_depth_chroma_minus8 shall be in the range of 0 to 6, inclusive.
+  */
+  uint8_t bit_depth_chroma_minus8;
+
+  /*
     separate_colour_plane_flag equal to 1 specifies that the three colour
     components of the 4:4:4 chroma format are coded separately.
     separate_colour_plane_flag equal to 0 specifies that the colour components
@@ -94,6 +145,18 @@ struct SPSData
     is associated with a specific colour_plane_id value.
    */
   bool separate_colour_plane_flag;
+
+/*
+   seq_scaling_matrix_present_flag equal to 1 specifies that the flags
+   seq_scaling_list_present_flag[ i ] for i = 0..7 or
+   i = 0..11 are present. seq_scaling_matrix_present_flag equal to 0 specifies
+   that these flags are not present and the sequence-level scaling list
+   specified by Flat_4x4_16 shall be inferred for i = 0..5 and the
+   sequence-level scaling list specified by Flat_8x8_16 shall be inferred for
+   i = 6..11. When seq_scaling_matrix_present_flag is not present, it shall be
+   inferred to be equal to 0.
+   */
+  bool seq_scaling_matrix_present_flag;
 
   /*
     log2_max_frame_num_minus4 specifies the value of the variable
@@ -156,7 +219,7 @@ struct SPSData
     process for inter prediction of any picture in the
     sequence. max_num_ref_frames also determines the size of the sliding
     window operation as specified in subclause 8.2.5.3. The value of
-    max_num_ref_frames shall be in the range of 0 to MaxDpbSize (as
+    max_num_ref_frames shall be in the range of 0 to MaxDpbFrames (as
     specified in subclause A.3.1 or A.3.2), inclusive.
    */
   uint32_t max_num_ref_frames;
@@ -202,13 +265,21 @@ struct SPSData
   bool mb_adaptive_frame_field_flag;
 
   /*
+    direct_8x8_inference_flag specifies the method used in the derivation
+    process for luma motion vectors for B_Skip, B_Direct_16x16 and B_Direct_8x8
+    as specified in clause 8.4.1.2. When frame_mbs_only_flag is equal to 0,
+    direct_8x8_inference_flag shall be equal to 1.
+  */
+  bool direct_8x8_inference_flag;
+
+  /*
     frame_cropping_flag equal to 1 specifies that the frame cropping
     offset parameters follow next in the sequence parameter
     set. frame_cropping_flag equal to 0 specifies that the frame
     cropping offset parameters are not present.
    */
   bool frame_cropping_flag;
-  uint32_t frame_crop_left_offset;;
+  uint32_t frame_crop_left_offset;
   uint32_t frame_crop_right_offset;
   uint32_t frame_crop_top_offset;
   uint32_t frame_crop_bottom_offset;
@@ -318,35 +389,110 @@ struct SPSData
 
   uint8_t matrix_coefficients;
   bool chroma_loc_info_present_flag;
-  uint32_t chroma_sample_loc_type_top_field;
-  uint32_t chroma_sample_loc_type_bottom_field;
-  bool timing_info_present_flag;
-  uint32_t num_units_in_tick;
-  uint32_t time_scale;
-  bool fixed_frame_rate_flag;
+  /*
+    The value of chroma_sample_loc_type_top_field and
+    chroma_sample_loc_type_bottom_field shall be in the range of 0 to 5,
+    inclusive
+  */
+  uint8_t chroma_sample_loc_type_top_field;
+  uint8_t chroma_sample_loc_type_bottom_field;
+
+  bool scaling_matrix_present;
+  uint8_t scaling_matrix4x4[6][16];
+  uint8_t scaling_matrix8x8[6][64];
 
   SPSData();
+};
+
+struct SEIRecoveryData
+{
+  /*
+    recovery_frame_cnt specifies the recovery point of output pictures in output
+    order. All decoded pictures in output order are indicated to be correct or
+    approximately correct in content starting at the output order position of
+    the reference picture having the frame_num equal to the frame_num of the VCL
+    NAL units for the current access unit incremented by recovery_frame_cnt in
+    modulo MaxFrameNum arithmetic. recovery_frame_cnt shall be in the range of 0
+    to MaxFrameNum − 1, inclusive.
+  */
+  uint32_t recovery_frame_cnt = 0;
+  /*
+    exact_match_flag indicates whether decoded pictures at and subsequent to the
+    specified recovery point in output order derived by starting the decoding
+    process at the access unit associated with the recovery point SEI message
+    shall be an exact match to the pictures that would be produced by starting
+    the decoding process at the location of a previous IDR access unit in the
+    NAL unit stream. The value 0 indicates that the match need not be exact and
+    the value 1 indicates that the match shall be exact.
+  */
+  bool exact_match_flag = false;
+  /*
+    broken_link_flag indicates the presence or absence of a broken link in the
+    NAL unit stream at the location of the recovery point SEI message */
+  bool broken_link_flag = false;
+  /*
+    changing_slice_group_idc equal to 0 indicates that decoded pictures are
+    correct or approximately correct in content at and subsequent to the
+    recovery point in output order when all macroblocks of the primary coded
+    pictures are decoded within the changing slice group period
+  */
+  uint8_t changing_slice_group_idc = 0;
 };
 
 class H264
 {
 public:
-  static bool DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData, SPSData& aDest);
-  /* Extract RAW BYTE SEQUENCE PAYLOAD from NAL content.
-     Returns nullptr if invalid content.
-     This is compliant to ITU H.264 7.3.1 Syntax in tabular form NAL unit syntax
-   */
-  static already_AddRefed<mozilla::MediaByteBuffer> DecodeNALUnit(const mozilla::MediaByteBuffer* aNAL);
-  /* Decode SPS NAL RBSP and fill SPSData structure */
-  static bool DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest);
+  /* Check if out of band extradata contains a SPS NAL */
+  static bool HasSPS(const mozilla::MediaByteBuffer* aExtraData);
+  // Extract SPS and PPS NALs from aSample by looking into each NALs.
+  // aSample must be in AVCC format.
+  static already_AddRefed<mozilla::MediaByteBuffer> ExtractExtraData(
+    const mozilla::MediaRawData* aSample);
+  // Return true if both extradata are equal.
+  static bool CompareExtraData(const mozilla::MediaByteBuffer* aExtraData1,
+                               const mozilla::MediaByteBuffer* aExtraData2);
+
   // Ensure that SPS data makes sense, Return true if SPS data was, and false
   // otherwise. If false, then content will be adjusted accordingly.
   static bool EnsureSPSIsSane(SPSData& aSPS);
 
+  static bool DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData,
+                                     SPSData& aDest);
+
+  // If the given aExtraData is valid, return the aExtraData.max_num_ref_frames
+  // clamped to be in the range of [4, 16]; otherwise return 4.
+  static uint32_t ComputeMaxRefFrames(
+    const mozilla::MediaByteBuffer* aExtraData);
+
+  enum class FrameType
+  {
+    I_FRAME,
+    OTHER,
+    INVALID,
+  };
+
+  // Returns the frame type. Returns I_FRAME if the sample is an IDR
+  // (Instantaneous Decoding Refresh) Picture.
+  static FrameType GetFrameType(const mozilla::MediaRawData* aSample);
+
 private:
-  static void vui_parameters(BitReader& aBr, SPSData& aDest);
+  friend class SPSNAL;
+  /* Extract RAW BYTE SEQUENCE PAYLOAD from NAL content.
+     Returns nullptr if invalid content.
+     This is compliant to ITU H.264 7.3.1 Syntax in tabular form NAL unit syntax
+   */
+  static already_AddRefed<mozilla::MediaByteBuffer> DecodeNALUnit(
+    const uint8_t* aNAL, size_t aLength);
+  /* Decode SPS NAL RBSP and fill SPSData structure */
+  static bool DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest);
+  static bool vui_parameters(BitReader& aBr, SPSData& aDest);
   // Read HRD parameters, all data is ignored.
   static void hrd_parameters(BitReader& aBr);
+  static uint8_t NumSPS(const mozilla::MediaByteBuffer* aExtraData);
+  // Decode SEI payload and return true if the SEI NAL indicates a recovery
+  // point.
+  static bool DecodeRecoverySEI(const mozilla::MediaByteBuffer* aSEI,
+                                SEIRecoveryData& aDest);
 };
 
 } // namespace mp4_demuxer

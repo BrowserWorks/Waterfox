@@ -1,23 +1,22 @@
 const PAGE_URI = "http://example.com/tests/toolkit/components/places/tests/browser/history_post.html";
 const SJS_URI = NetUtil.newURI("http://example.com/tests/toolkit/components/places/tests/browser/history_post.sjs");
 
-add_task(function* () {
-  yield BrowserTestUtils.withNewTab({gBrowser, url: PAGE_URI}, Task.async(function* (aBrowser) {
-    yield ContentTask.spawn(aBrowser, null, function* () {
+add_task(async function() {
+  await BrowserTestUtils.withNewTab({gBrowser, url: PAGE_URI}, async function(aBrowser) {
+    await ContentTask.spawn(aBrowser, null, async function() {
       let doc = content.document;
       let submit = doc.getElementById("submit");
       let iframe = doc.getElementById("post_iframe");
       let p = new Promise((resolve, reject) => {
-        iframe.addEventListener("load", function onLoad() {
-          iframe.removeEventListener("load", onLoad);
+        iframe.addEventListener("load", function() {
           resolve();
-        });
+        }, {once: true});
       });
       submit.click();
-      yield p;
+      await p;
     });
-    let visited = yield promiseIsURIVisited(SJS_URI);
+    let visited = await promiseIsURIVisited(SJS_URI);
     ok(!visited, "The POST page should not be added to history");
-    ok(!(yield PlacesTestUtils.isPageInDB(SJS_URI.spec)), "The page should not be in the database");
-  }));
+    ok(!(await PlacesTestUtils.isPageInDB(SJS_URI.spec)), "The page should not be in the database");
+  });
 });

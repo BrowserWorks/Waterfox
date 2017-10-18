@@ -159,7 +159,7 @@ class SavedFrame : public NativeObject {
   private:
     static SavedFrame* create(JSContext* cx);
     static MOZ_MUST_USE bool finishSavedFrameInit(JSContext* cx, HandleObject ctor, HandleObject proto);
-    void initFromLookup(HandleLookup lookup);
+    void initFromLookup(JSContext* cx, HandleLookup lookup);
     void initSource(JSAtom* source);
     void initLine(uint32_t line);
     void initColumn(uint32_t column);
@@ -182,16 +182,13 @@ class SavedFrame : public NativeObject {
         // The total number of reserved slots in the SavedFrame class.
         JSSLOT_COUNT
     };
-
-    static MOZ_MUST_USE bool checkThis(JSContext* cx, CallArgs& args, const char* fnName,
-                                       MutableHandleObject frame);
 };
 
 struct SavedFrame::HashPolicy
 {
     typedef SavedFrame::Lookup              Lookup;
     typedef MovableCellHasher<SavedFrame*>  SavedFramePtrHasher;
-    typedef PointerHasher<JSPrincipals*, 3> JSPrincipalsPtrHasher;
+    typedef PointerHasher<JSPrincipals*> JSPrincipalsPtrHasher;
 
     static bool       hasHash(const Lookup& l);
     static bool       ensureHash(const Lookup& l);

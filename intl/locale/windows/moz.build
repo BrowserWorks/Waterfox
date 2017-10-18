@@ -5,11 +5,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 SOURCES += [
-    'nsCollationWin.cpp',
-    'nsDateTimeFormatWin.cpp',
     'nsWin32Locale.cpp',
     'nsWinCharset.cpp',
 ]
+
+if CONFIG['ENABLE_INTL_API']:
+    SOURCES += ['OSPreferences_win.cpp']
 
 FINAL_LIBRARY = 'xul'
 

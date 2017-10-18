@@ -133,7 +133,7 @@ struct nsXPTCVariant : public nsXPTCMiniVariant
               case nsXPTType::T_PSTRING_SIZE_IS:   /* fall through */
               case nsXPTType::T_PWSTRING_SIZE_IS:  /* fall through */
               case nsXPTType::T_UTF8STRING:        /* fall through */
-              case nsXPTType::T_CSTRING:           /* fall through */              
+              case nsXPTType::T_CSTRING:           /* fall through */
               default:                             val.p   = mv.val.p;   break;
             }
         }
@@ -186,7 +186,8 @@ NS_DestroyXPTCallStub(nsISomeInterface* aStub);
 XPCOM_API(size_t)
 NS_SizeOfIncludingThisXPTCallStub(const nsISomeInterface* aStub, mozilla::MallocSizeOf aMallocSizeOf);
 
-XPCOM_API(nsresult)
+// this is extern "C" because on some platforms it is implemented in assembly
+extern "C" nsresult
 NS_InvokeByIndex(nsISupports* that, uint32_t methodIndex,
                  uint32_t paramCount, nsXPTCVariant* params);
 

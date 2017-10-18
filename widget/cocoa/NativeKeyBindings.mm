@@ -13,7 +13,7 @@
 namespace mozilla {
 namespace widget {
 
-PRLogModuleInfo* gNativeKeyBindingsLog = nullptr;
+static LazyLogModule gNativeKeyBindingsLog("NativeKeyBindings");
 
 NativeKeyBindings* NativeKeyBindings::sInstanceForSingleLineEditor = nullptr;
 NativeKeyBindings* NativeKeyBindings::sInstanceForMultiLineEditor = nullptr;
@@ -63,10 +63,6 @@ NativeKeyBindings::NativeKeyBindings()
 void
 NativeKeyBindings::Init(NativeKeyBindingsType aType)
 {
-  if (!gNativeKeyBindingsLog) {
-    gNativeKeyBindingsLog = PR_NewLogModule("NativeKeyBindings");
-  }
-
   MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
     ("%p NativeKeyBindings::Init", this));
 
@@ -198,13 +194,14 @@ NativeKeyBindings::Init(NativeKeyBindingsType aType)
 
 #undef SEL_TO_COMMAND
 
-bool
-NativeKeyBindings::Execute(const WidgetKeyboardEvent& aEvent,
-                           DoCommandCallback aCallback,
-                           void* aCallbackData)
+void
+NativeKeyBindings::GetEditCommands(const WidgetKeyboardEvent& aEvent,
+                                   nsTArray<CommandInt>& aCommands)
 {
+  MOZ_ASSERT(aCommands.IsEmpty());
+
   MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-    ("%p NativeKeyBindings::KeyPress", this));
+    ("%p NativeKeyBindings::GetEditCommands", this));
 
   // Recover the current event, which should always be the key down we are
   // responding to.
@@ -213,22 +210,20 @@ NativeKeyBindings::Execute(const WidgetKeyboardEvent& aEvent,
 
   if (!cocoaEvent || [cocoaEvent type] != NSKeyDown) {
     MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-      ("%p NativeKeyBindings::KeyPress, no Cocoa key down event", this));
+      ("%p NativeKeyBindings::GetEditCommands, no Cocoa key down event", this));
 
-    return false;
+    return;
   }
 
   MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-    ("%p NativeKeyBindings::KeyPress, interpreting", this));
+    ("%p NativeKeyBindings::GetEditCommands, interpreting", this));
 
   AutoTArray<KeyBindingsCommand, 2> bindingCommands;
   nsCocoaUtils::GetCommandsFromKeyEvent(cocoaEvent, bindingCommands);
 
   MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-    ("%p NativeKeyBindings::KeyPress, bindingCommands=%u",
+    ("%p NativeKeyBindings::GetEditCommands, bindingCommands=%zu",
      this, bindingCommands.Length()));
-
-  AutoTArray<Command, 4> geckoCommands;
 
   for (uint32_t i = 0; i < bindingCommands.Length(); i++) {
     SEL selector = bindingCommands[i].selector;
@@ -239,53 +234,47 @@ NativeKeyBindings::Execute(const WidgetKeyboardEvent& aEvent,
       nsCocoaUtils::GetStringForNSString(selectorString, nsSelectorString);
 
       MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-        ("%p NativeKeyBindings::KeyPress, selector=%s",
+        ("%p NativeKeyBindings::GetEditCommands, selector=%s",
          this, NS_LossyConvertUTF16toASCII(nsSelectorString).get()));
     }
 
     // Try to find a simple mapping in the hashtable
-    Command geckoCommand = static_cast<Command>(mSelectorToCommand.Get(
-      reinterpret_cast<struct objc_selector*>(selector)));
+    CommandInt geckoCommand =
+      mSelectorToCommand.Get(reinterpret_cast<struct objc_selector*>(selector));
 
     if (geckoCommand) {
-      geckoCommands.AppendElement(geckoCommand);
+      aCommands.AppendElement(geckoCommand);
     } else if (selector == @selector(selectLine:)) {
       // This is functional, but Cocoa's version is direction-less in that
       // selection direction is not determined until some future directed action
       // is taken. See bug 282097, comment 79 for more details.
-      geckoCommands.AppendElement(CommandBeginLine);
-      geckoCommands.AppendElement(CommandSelectEndLine);
+      aCommands.AppendElement(CommandBeginLine);
+      aCommands.AppendElement(CommandSelectEndLine);
     } else if (selector == @selector(selectWord:)) {
       // This is functional, but Cocoa's version is direction-less in that
       // selection direction is not determined until some future directed action
       // is taken. See bug 282097, comment 79 for more details.
-      geckoCommands.AppendElement(CommandWordPrevious);
-      geckoCommands.AppendElement(CommandSelectWordNext);
+      aCommands.AppendElement(CommandWordPrevious);
+      aCommands.AppendElement(CommandSelectWordNext);
     }
   }
 
-  if (geckoCommands.IsEmpty()) {
-    MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-      ("%p NativeKeyBindings::KeyPress, handled=false", this));
-
-    return false;
+  if (!MOZ_LOG_TEST(gNativeKeyBindingsLog, LogLevel::Info)) {
+    return;
   }
 
-  for (uint32_t i = 0; i < geckoCommands.Length(); i++) {
-    Command geckoCommand = geckoCommands[i];
-
+  if (aCommands.IsEmpty()) {
     MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-      ("%p NativeKeyBindings::KeyPress, command=%s",
+      ("%p NativeKeyBindings::GetEditCommands, handled=false", this));
+    return;
+  }
+
+  for (CommandInt commandInt : aCommands) {
+    Command geckoCommand = static_cast<Command>(commandInt);
+    MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
+      ("%p NativeKeyBindings::GetEditCommands, command=%s",
        this, WidgetKeyboardEvent::GetCommandStr(geckoCommand)));
-
-    // Execute the Gecko command
-    aCallback(geckoCommand, aCallbackData);
   }
-
-  MOZ_LOG(gNativeKeyBindingsLog, LogLevel::Info,
-    ("%p NativeKeyBindings::KeyPress, handled=true", this));
-
-  return true;
 }
 
 } // namespace widget

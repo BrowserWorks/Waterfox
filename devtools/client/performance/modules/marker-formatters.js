@@ -18,19 +18,19 @@ const GECKO_SYMBOL = "(Gecko)";
  * markers that are considered "from content" should be labeled here.
  */
 const JS_MARKER_MAP = {
-  "<script> element":          L10N.getStr("marker.label.javascript.scriptElement"),
-  "promise callback":          L10N.getStr("marker.label.javascript.promiseCallback"),
-  "promise initializer":       L10N.getStr("marker.label.javascript.promiseInit"),
-  "Worker runnable":           L10N.getStr("marker.label.javascript.workerRunnable"),
-  "javascript: URI":           L10N.getStr("marker.label.javascript.jsURI"),
+  "<script> element": L10N.getStr("marker.label.javascript.scriptElement"),
+  "promise callback": L10N.getStr("marker.label.javascript.promiseCallback"),
+  "promise initializer": L10N.getStr("marker.label.javascript.promiseInit"),
+  "Worker runnable": L10N.getStr("marker.label.javascript.workerRunnable"),
+  "javascript: URI": L10N.getStr("marker.label.javascript.jsURI"),
   // The difference between these two event handler markers are differences
   // in their WebIDL implementation, so distinguishing them is not necessary.
-  "EventHandlerNonNull":       L10N.getStr("marker.label.javascript.eventHandler"),
+  "EventHandlerNonNull": L10N.getStr("marker.label.javascript.eventHandler"),
   "EventListener.handleEvent": L10N.getStr("marker.label.javascript.eventHandler"),
   // These markers do not get L10N'd because they're JS names.
-  "setInterval handler":       "setInterval",
-  "setTimeout handler":        "setTimeout",
-  "FrameRequestCallback":      "requestAnimationFrame",
+  "setInterval handler": "setInterval",
+  "setTimeout handler": "setTimeout",
+  "FrameRequestCallback": "requestAnimationFrame",
 };
 
 /**
@@ -48,12 +48,12 @@ exports.Formatters = {
   /* Group 0 - Reflow and Rendering pipeline */
 
   StylesFields: function (marker) {
-    if ("restyleHint" in marker) {
-      let label = marker.restyleHint.replace(/eRestyle_/g, "");
+    if ("isAnimationOnly" in marker) {
       return {
-        [L10N.getStr("marker.field.restyleHint")]: label
+        [L10N.getStr("marker.field.isAnimationOnly")]: marker.isAnimationOnly
       };
     }
+    return null;
   },
 
   /* Group 1 - JS */
@@ -99,6 +99,7 @@ exports.Formatters = {
         [L10N.getStr("marker.field.causeName")]: label
       };
     }
+    return null;
   },
 
   GCLabel: function (marker) {
@@ -109,9 +110,8 @@ exports.Formatters = {
     // this as a non incremental GC event.
     if ("nonincrementalReason" in marker) {
       return L10N.getStr("marker.label.garbageCollection.nonIncremental");
-    } else {
-      return L10N.getStr("marker.label.garbageCollection.incremental");
     }
+    return L10N.getStr("marker.label.garbageCollection.incremental");
   },
 
   GCFields: function (marker) {
@@ -159,6 +159,7 @@ exports.Formatters = {
         [L10N.getStr("marker.field.type")]: label
       };
     }
+    return null;
   },
 
   MessagePortFields: function (marker) {
@@ -168,6 +169,7 @@ exports.Formatters = {
         [L10N.getStr("marker.field.type")]: label
       };
     }
+    return null;
   },
 
   /* Group 2 - User Controlled */
@@ -190,5 +192,7 @@ exports.Formatters = {
  * @param string propName
  */
 exports.Formatters.labelForProperty = function (mainLabel, propName) {
-  return (marker = {}) => marker[propName] ? `${mainLabel} (${marker[propName]})` : mainLabel;
+  return (marker = {}) => marker[propName]
+    ? `${mainLabel} (${marker[propName]})`
+    : mainLabel;
 };

@@ -25,6 +25,12 @@ class GitTree(wptupdate.tree.GitTree):
         wptupdate.tree.GitTree.__init__(self, *args, **kwargs)
         self.commit_cls = commit_cls
 
+    def rev_from_hg(self, rev):
+        return self.git("cinnabar", "hg2git", rev).strip()
+
+    def rev_to_hg(self, rev):
+        return self.git("cinnabar", "git2hg", rev).strip()
+
     def create_branch(self, name, ref=None):
         """Create a named branch,
 
@@ -173,12 +179,12 @@ class GeckoCommit(Commit):
     def export_patch(self, path=None):
         """Convert a commit in the tree to a Patch with the bug number and
         reviewer stripped from the message"""
-        args = ["%s^..%s" % (self.sha1, self.sha1)]
+        args = ["--binary", "--patch", "--format=format:", "%s" % (self.sha1,)]
         if path is not None:
             args.append("--")
             args.append(path)
 
-        diff = self.git("diff", *args)
+        diff = self.git("show", *args)
 
         return Patch(self.author, self.email, self.message, diff)
 

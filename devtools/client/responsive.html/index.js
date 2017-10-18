@@ -11,11 +11,11 @@ const { BrowserLoader } =
   Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 const { require } = BrowserLoader({
   baseURI: "resource://devtools/client/responsive.html/",
-  window: this
+  window
 });
 const { Task } = require("devtools/shared/task");
 const Telemetry = require("devtools/client/shared/telemetry");
-const { loadSheet } = require("sdk/stylesheet/utils");
+const { loadAgentSheet } = require("./utils/css");
 
 const { createFactory, createElement } =
   require("devtools/client/shared/vendor/react");
@@ -26,8 +26,12 @@ const message = require("./utils/message");
 const App = createFactory(require("./app"));
 const Store = require("./store");
 const { changeLocation } = require("./actions/location");
+const { changeDisplayPixelRatio } = require("./actions/display-pixel-ratio");
 const { addViewport, resizeViewport } = require("./actions/viewports");
 const { loadDevices } = require("./actions/devices");
+
+// Exposed for use by tests
+window.require = require;
 
 let bootstrap = {
 
@@ -38,12 +42,12 @@ let bootstrap = {
   init: Task.async(function* () {
     // Load a special UA stylesheet to reset certain styles such as dropdown
     // lists.
-    loadSheet(window,
-              "resource://devtools/client/responsive.html/responsive-ua.css",
-              "agent");
+    loadAgentSheet(
+      window,
+      "resource://devtools/client/responsive.html/responsive-ua.css"
+    );
     this.telemetry.toolOpened("responsive");
     let store = this.store = Store();
-    this.dispatch(loadDevices());
     let provider = createElement(Provider, { store }, App());
     ReactDOM.render(provider, document.querySelector("#root"));
     message.post(window, "init:done");
@@ -75,10 +79,13 @@ let bootstrap = {
 // manager.js sends a message to signal init
 message.wait(window, "init").then(() => bootstrap.init());
 
-window.addEventListener("unload", function onUnload() {
-  window.removeEventListener("unload", onUnload);
+// manager.js sends a message to signal init is done, which can be used for delayed
+// startup work that shouldn't block initial load
+message.wait(window, "post-init").then(() => bootstrap.dispatch(loadDevices()));
+
+window.addEventListener("unload", function () {
   bootstrap.destroy();
-});
+}, {once: true});
 
 // Allows quick testing of actions from the console
 window.dispatch = action => bootstrap.dispatch(action);
@@ -89,12 +96,33 @@ Object.defineProperty(window, "store", {
   enumerable: true,
 });
 
+// Dispatch a `changeDisplayPixelRatio` action when the browser's pixel ratio is changing.
+// This is usually triggered when the user changes the monitor resolution, or when the
+// browser's window is dragged to a different display with a different pixel ratio.
+// TODO: It would be better to move this watching into the actor, so that it can be
+// better synchronized with any overrides that might be applied.  Also, reading a single
+// value like this makes less sense with multiple viewports.
+function onDPRChange() {
+  let dpr = window.devicePixelRatio;
+  let mql = window.matchMedia(`(resolution: ${dpr}dppx)`);
+
+  function listener() {
+    bootstrap.dispatch(changeDisplayPixelRatio(window.devicePixelRatio));
+    mql.removeListener(listener);
+    onDPRChange();
+  }
+
+  mql.addListener(listener);
+}
+
 /**
  * Called by manager.js to add the initial viewport based on the original page.
  */
 window.addInitialViewport = contentURI => {
   try {
+    onDPRChange();
     bootstrap.dispatch(changeLocation(contentURI));
+    bootstrap.dispatch(changeDisplayPixelRatio(window.devicePixelRatio));
     bootstrap.dispatch(addViewport());
   } catch (e) {
     console.error(e);
@@ -110,9 +138,9 @@ window.getViewportSize = () => {
 };
 
 /**
- * Called by manager.js to set viewport size from GCLI.
+ * Called by manager.js to set viewport size from tests, GCLI, etc.
  */
-window.setViewportSize = (width, height) => {
+window.setViewportSize = ({ width, height }) => {
   try {
     bootstrap.dispatch(resizeViewport(0, width, height));
   } catch (e) {

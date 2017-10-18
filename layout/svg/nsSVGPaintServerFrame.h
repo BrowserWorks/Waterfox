@@ -6,6 +6,7 @@
 #ifndef __NS_SVGPAINTSERVERFRAME_H__
 #define __NS_SVGPAINTSERVERFRAME_H__
 
+#include "gfxRect.h"
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
 #include "nsFrame.h"
@@ -24,20 +25,46 @@ class gfxContext;
 class gfxPattern;
 class nsStyleContext;
 
-struct gfxRect;
+/**
+ * RAII class used to temporarily set and remove the
+ * NS_FRAME_DRAWING_AS_PAINTSERVER frame state bit while a frame is being
+ * drawn as a paint server.
+ */
+class MOZ_RAII AutoSetRestorePaintServerState
+{
+public:
+  explicit AutoSetRestorePaintServerState(
+             nsIFrame* aFrame
+             MOZ_GUARD_OBJECT_NOTIFIER_PARAM) :
+    mFrame(aFrame)
+  {
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    mFrame->AddStateBits(NS_FRAME_DRAWING_AS_PAINTSERVER);
+  }
+  ~AutoSetRestorePaintServerState()
+  {
+    mFrame->RemoveStateBits(NS_FRAME_DRAWING_AS_PAINTSERVER);
+  }
+
+private:
+  nsIFrame* mFrame;
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
 
 class nsSVGPaintServerFrame : public nsSVGContainerFrame
 {
 protected:
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
-  explicit nsSVGPaintServerFrame(nsStyleContext* aContext)
-    : nsSVGContainerFrame(aContext)
+  nsSVGPaintServerFrame(nsStyleContext* aContext, ClassID aID)
+    : nsSVGContainerFrame(aContext, aID)
   {
     AddStateBits(NS_FRAME_IS_NONDISPLAY);
   }
 
 public:
+  typedef mozilla::image::imgDrawingParams imgDrawingParams;
+
   NS_DECL_ABSTRACT_FRAME(nsSVGPaintServerFrame)
 
   /**
@@ -54,7 +81,8 @@ public:
                           const gfxMatrix& aContextMatrix,
                           nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
                           float aOpacity,
-                          const gfxRect *aOverrideBounds = nullptr) = 0;
+                          imgDrawingParams& aImgParams,
+                          const gfxRect* aOverrideBounds = nullptr) = 0;
 
   // nsIFrame methods:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,

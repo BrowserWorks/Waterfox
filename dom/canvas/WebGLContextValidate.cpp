@@ -64,41 +64,6 @@ WebGLContext::ValidateBlendEquationEnum(GLenum mode, const char* info)
 }
 
 bool
-WebGLContext::ValidateBlendFuncDstEnum(GLenum factor, const char* info)
-{
-    switch (factor) {
-    case LOCAL_GL_ZERO:
-    case LOCAL_GL_ONE:
-    case LOCAL_GL_SRC_COLOR:
-    case LOCAL_GL_ONE_MINUS_SRC_COLOR:
-    case LOCAL_GL_DST_COLOR:
-    case LOCAL_GL_ONE_MINUS_DST_COLOR:
-    case LOCAL_GL_SRC_ALPHA:
-    case LOCAL_GL_ONE_MINUS_SRC_ALPHA:
-    case LOCAL_GL_DST_ALPHA:
-    case LOCAL_GL_ONE_MINUS_DST_ALPHA:
-    case LOCAL_GL_CONSTANT_COLOR:
-    case LOCAL_GL_ONE_MINUS_CONSTANT_COLOR:
-    case LOCAL_GL_CONSTANT_ALPHA:
-    case LOCAL_GL_ONE_MINUS_CONSTANT_ALPHA:
-        return true;
-
-    default:
-        ErrorInvalidEnumInfo(info, factor);
-        return false;
-    }
-}
-
-bool
-WebGLContext::ValidateBlendFuncSrcEnum(GLenum factor, const char* info)
-{
-    if (factor == LOCAL_GL_SRC_ALPHA_SATURATE)
-        return true;
-
-    return ValidateBlendFuncDstEnum(factor, info);
-}
-
-bool
 WebGLContext::ValidateBlendFuncEnumsCompatibility(GLenum sfactor,
                                                   GLenum dfactor,
                                                   const char* info)
@@ -120,49 +85,6 @@ WebGLContext::ValidateBlendFuncEnumsCompatibility(GLenum sfactor,
     }
 
     return true;
-}
-
-/**
- * Check data ranges [readOffset, readOffset + size] and [writeOffset,
- * writeOffset + size] for overlap.
- *
- * It is assumed that offset and size have already been validated.
- */
-bool
-WebGLContext::ValidateDataRanges(WebGLintptr readOffset, WebGLintptr writeOffset, WebGLsizeiptr size, const char* info)
-{
-    MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(readOffset) + size).isValid());
-    MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(writeOffset) + size).isValid());
-
-    bool separate = (readOffset + size < writeOffset || writeOffset + size < readOffset);
-    if (!separate) {
-        ErrorInvalidValue("%s: ranges [readOffset, readOffset + size) and [writeOffset, "
-                          "writeOffset + size) overlap", info);
-    }
-
-    return separate;
-}
-
-bool
-WebGLContext::ValidateTextureTargetEnum(GLenum target, const char* info)
-{
-    switch (target) {
-    case LOCAL_GL_TEXTURE_2D:
-    case LOCAL_GL_TEXTURE_CUBE_MAP:
-        return true;
-
-    case LOCAL_GL_TEXTURE_3D:
-        if (IsWebGL2())
-            return true;
-
-        break;
-
-    default:
-        break;
-    }
-
-    ErrorInvalidEnumInfo(info, target);
-    return false;
 }
 
 bool
@@ -240,161 +162,6 @@ WebGLContext::ValidateDrawModeEnum(GLenum mode, const char* info)
 }
 
 bool
-WebGLContext::ValidateFramebufferAttachment(const WebGLFramebuffer* fb, GLenum attachment,
-                                            const char* funcName,
-                                            bool badColorAttachmentIsInvalidOp)
-{
-    if (!fb) {
-        switch (attachment) {
-        case LOCAL_GL_COLOR:
-        case LOCAL_GL_DEPTH:
-        case LOCAL_GL_STENCIL:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: attachment: invalid enum value 0x%x.",
-                             funcName, attachment);
-            return false;
-        }
-    }
-
-    if (attachment == LOCAL_GL_DEPTH_ATTACHMENT ||
-        attachment == LOCAL_GL_STENCIL_ATTACHMENT ||
-        attachment == LOCAL_GL_DEPTH_STENCIL_ATTACHMENT)
-    {
-        return true;
-    }
-
-    if (attachment >= LOCAL_GL_COLOR_ATTACHMENT0 &&
-        attachment <= LastColorAttachmentEnum())
-    {
-        return true;
-    }
-
-    if (badColorAttachmentIsInvalidOp &&
-        attachment >= LOCAL_GL_COLOR_ATTACHMENT0)
-    {
-        const uint32_t offset = attachment - LOCAL_GL_COLOR_ATTACHMENT0;
-        ErrorInvalidOperation("%s: Bad color attachment: COLOR_ATTACHMENT%u. (0x%04x)",
-                              funcName, offset, attachment);
-    } else {
-        ErrorInvalidEnum("%s: attachment: Bad attachment 0x%x.", funcName, attachment);
-    }
-    return false;
-}
-
-/**
- * Return true if pname is valid for GetSamplerParameter calls.
- */
-bool
-WebGLContext::ValidateSamplerParameterName(GLenum pname, const char* info)
-{
-    switch (pname) {
-    case LOCAL_GL_TEXTURE_MIN_FILTER:
-    case LOCAL_GL_TEXTURE_MAG_FILTER:
-    case LOCAL_GL_TEXTURE_WRAP_S:
-    case LOCAL_GL_TEXTURE_WRAP_T:
-    case LOCAL_GL_TEXTURE_WRAP_R:
-    case LOCAL_GL_TEXTURE_MIN_LOD:
-    case LOCAL_GL_TEXTURE_MAX_LOD:
-    case LOCAL_GL_TEXTURE_COMPARE_MODE:
-    case LOCAL_GL_TEXTURE_COMPARE_FUNC:
-        return true;
-
-    default:
-        ErrorInvalidEnum("%s: invalid pname: %s", info, EnumName(pname));
-        return false;
-    }
-}
-
-/**
- * Return true if pname and param are valid combination for SamplerParameter calls.
- */
-bool
-WebGLContext::ValidateSamplerParameterParams(GLenum pname, const WebGLIntOrFloat& param, const char* info)
-{
-    const GLenum p = param.AsInt();
-
-    switch (pname) {
-    case LOCAL_GL_TEXTURE_MIN_FILTER:
-        switch (p) {
-        case LOCAL_GL_NEAREST:
-        case LOCAL_GL_LINEAR:
-        case LOCAL_GL_NEAREST_MIPMAP_NEAREST:
-        case LOCAL_GL_NEAREST_MIPMAP_LINEAR:
-        case LOCAL_GL_LINEAR_MIPMAP_NEAREST:
-        case LOCAL_GL_LINEAR_MIPMAP_LINEAR:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: invalid param: %s", info, EnumName(p));
-            return false;
-        }
-
-    case LOCAL_GL_TEXTURE_MAG_FILTER:
-        switch (p) {
-        case LOCAL_GL_NEAREST:
-        case LOCAL_GL_LINEAR:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: invalid param: %s", info, EnumName(p));
-            return false;
-        }
-
-    case LOCAL_GL_TEXTURE_WRAP_S:
-    case LOCAL_GL_TEXTURE_WRAP_T:
-    case LOCAL_GL_TEXTURE_WRAP_R:
-        switch (p) {
-        case LOCAL_GL_CLAMP_TO_EDGE:
-        case LOCAL_GL_REPEAT:
-        case LOCAL_GL_MIRRORED_REPEAT:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: invalid param: %s", info, EnumName(p));
-            return false;
-        }
-
-    case LOCAL_GL_TEXTURE_MIN_LOD:
-    case LOCAL_GL_TEXTURE_MAX_LOD:
-        return true;
-
-    case LOCAL_GL_TEXTURE_COMPARE_MODE:
-        switch (param.AsInt()) {
-        case LOCAL_GL_NONE:
-        case LOCAL_GL_COMPARE_REF_TO_TEXTURE:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: invalid param: %s", info, EnumName(p));
-            return false;
-        }
-
-    case LOCAL_GL_TEXTURE_COMPARE_FUNC:
-        switch (p) {
-        case LOCAL_GL_LEQUAL:
-        case LOCAL_GL_GEQUAL:
-        case LOCAL_GL_LESS:
-        case LOCAL_GL_GREATER:
-        case LOCAL_GL_EQUAL:
-        case LOCAL_GL_NOTEQUAL:
-        case LOCAL_GL_ALWAYS:
-        case LOCAL_GL_NEVER:
-            return true;
-
-        default:
-            ErrorInvalidEnum("%s: invalid param: %s", info, EnumName(p));
-            return false;
-        }
-
-    default:
-        ErrorInvalidEnum("%s: invalid pname: %s", info, EnumName(pname));
-        return false;
-    }
-}
-
-bool
 WebGLContext::ValidateUniformLocation(WebGLUniformLocation* loc, const char* funcName)
 {
     /* GLES 2.0.25, p38:
@@ -405,7 +172,7 @@ WebGLContext::ValidateUniformLocation(WebGLUniformLocation* loc, const char* fun
     if (!loc)
         return false;
 
-    if (!ValidateObject(funcName, loc))
+    if (!ValidateObjectAllowDeleted(funcName, *loc))
         return false;
 
     if (!mCurrentProgram) {
@@ -502,8 +269,10 @@ WebGLContext::ValidateUniformMatrixArraySetter(WebGLUniformLocation* loc,
     if (!loc->ValidateArrayLength(setterElemSize, setterArraySize, funcName))
         return false;
 
-    if (!ValidateUniformMatrixTranspose(setterTranspose, funcName))
+    if (setterTranspose && !IsWebGL2()) {
+        ErrorInvalidValue("%s: `transpose` must be false.", funcName);
         return false;
+    }
 
     const auto& elemCount = loc->mInfo->mActiveInfo->mElemCount;
     MOZ_ASSERT(elemCount > loc->mArrayIndex);
@@ -534,56 +303,6 @@ WebGLContext::ValidateAttribIndex(GLuint index, const char* info)
     }
 
     return valid;
-}
-
-bool
-WebGLContext::ValidateAttribPointer(bool integerMode, GLuint index, GLint size, GLenum type,
-                                    WebGLboolean normalized, GLsizei stride,
-                                    WebGLintptr byteOffset, const char* info)
-{
-    WebGLBuffer* buffer = mBoundArrayBuffer;
-    if (!buffer) {
-        ErrorInvalidOperation("%s: must have valid GL_ARRAY_BUFFER binding", info);
-        return false;
-    }
-
-    uint32_t requiredAlignment = 0;
-    if (!ValidateAttribPointerType(integerMode, type, &requiredAlignment, info))
-        return false;
-
-    // requiredAlignment should always be a power of two
-    MOZ_ASSERT(IsPowerOfTwo(requiredAlignment));
-    GLsizei requiredAlignmentMask = requiredAlignment - 1;
-
-    if (size < 1 || size > 4) {
-        ErrorInvalidValue("%s: invalid element size", info);
-        return false;
-    }
-
-    // see WebGL spec section 6.6 "Vertex Attribute Data Stride"
-    if (stride < 0 || stride > 255) {
-        ErrorInvalidValue("%s: negative or too large stride", info);
-        return false;
-    }
-
-    if (byteOffset < 0) {
-        ErrorInvalidValue("%s: negative offset", info);
-        return false;
-    }
-
-    if (stride & requiredAlignmentMask) {
-        ErrorInvalidOperation("%s: stride doesn't satisfy the alignment "
-                              "requirement of given type", info);
-        return false;
-    }
-
-    if (byteOffset & requiredAlignmentMask) {
-        ErrorInvalidOperation("%s: byteOffset doesn't satisfy the alignment "
-                              "requirement of given type", info);
-        return false;
-    }
-
-    return true;
 }
 
 bool
@@ -672,6 +391,8 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mStencilRefFront = 0;
     mStencilRefBack = 0;
 
+    mLineWidth = 1.0;
+
     /*
     // Technically, we should be setting mStencil[...] values to
     // `allOnes`, but either ANGLE breaks or the SGX540s on Try break.
@@ -697,6 +418,9 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mDitherEnabled = true;
     mRasterizerDiscardEnabled = false;
     mScissorTestEnabled = false;
+    mDepthTestEnabled = 0;
+    mStencilTestEnabled = 0;
+    mGenerateMipmapHint = LOCAL_GL_DONT_CARE;
 
     // Bindings, etc.
     mActiveTexture = 0;
@@ -721,14 +445,10 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
 
     MakeContextCurrent();
 
-    // For OpenGL compat. profiles, we always keep vertex attrib 0 array enabled.
-    if (gl->IsCompatibilityProfile())
-        gl->fEnableVertexAttribArray(0);
-
     if (MinCapabilityMode())
         mGLMaxVertexAttribs = MINVALUE_GL_MAX_VERTEX_ATTRIBS;
     else
-        gl->fGetIntegerv(LOCAL_GL_MAX_VERTEX_ATTRIBS, &mGLMaxVertexAttribs);
+        gl->GetUIntegerv(LOCAL_GL_MAX_VERTEX_ATTRIBS, &mGLMaxVertexAttribs);
 
     if (mGLMaxVertexAttribs < 8) {
         const nsPrintfCString reason("GL_MAX_VERTEX_ATTRIBS: %d is < 8!",
@@ -758,6 +478,8 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mBound2DArrayTextures.SetLength(mGLMaxTextureUnits);
     mBoundSamplers.SetLength(mGLMaxTextureUnits);
 
+    gl->fGetIntegerv(LOCAL_GL_MAX_VIEWPORT_DIMS, (GLint*)mImplMaxViewportDims);
+
     ////////////////
 
     if (MinCapabilityMode()) {
@@ -783,21 +505,6 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
         gl->fGetIntegerv(LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS, &mGLMaxTextureImageUnits);
         gl->fGetIntegerv(LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &mGLMaxVertexTextureImageUnits);
     }
-
-    // If we don't support a target, its max size is 0. We should only floor-to-POT if the
-    // value if it's non-zero. (NB log2(0) is -Inf, so zero isn't an integer power-of-two)
-    const auto fnFloorPOTIfSupported = [](uint32_t& val) {
-        if (val) {
-            val = FloorPOT(val);
-        }
-    };
-
-    fnFloorPOTIfSupported(mImplMaxTextureSize);
-    fnFloorPOTIfSupported(mImplMaxCubeMapTextureSize);
-    fnFloorPOTIfSupported(mImplMaxRenderbufferSize);
-
-    fnFloorPOTIfSupported(mImplMax3DTextureSize);
-    fnFloorPOTIfSupported(mImplMaxArrayTextureLayers);
 
     ////////////////
 
@@ -868,19 +575,11 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     }
 
     if (gl->IsCompatibilityProfile()) {
-        // gl_PointSize is always available in ES2 GLSL, but has to be
-        // specifically enabled on desktop GLSL.
-        gl->fEnable(LOCAL_GL_VERTEX_PROGRAM_POINT_SIZE);
-
-        /* gl_PointCoord is always available in ES2 GLSL and in newer desktop
-         * GLSL versions, but apparently not in OpenGL 2 and apparently not (due
-         * to a driver bug) on certain NVIDIA setups. See:
-         *   http://www.opengl.org/discussion_boards/ubbthreads.php?ubb=showflat&Number=261472
-         *
-         * Note that this used to cause crashes on old ATI drivers... Hopefully
-         * not a significant anymore. See bug 602183.
-         */
         gl->fEnable(LOCAL_GL_POINT_SPRITE);
+    }
+
+    if (!gl->IsGLES()) {
+        gl->fEnable(LOCAL_GL_PROGRAM_POINT_SIZE);
     }
 
 #ifdef XP_MACOSX
@@ -933,13 +632,6 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
         return false;
     }
 
-    // Default value for all disabled vertex attributes is [0, 0, 0, 1]
-    mVertexAttribType = MakeUnique<GLenum[]>(mGLMaxVertexAttribs);
-    for (int32_t index = 0; index < mGLMaxVertexAttribs; ++index) {
-        mVertexAttribType[index] = LOCAL_GL_FLOAT;
-        VertexAttrib4f(index, 0, 0, 0, 1);
-    }
-
     mDefaultVertexArray = WebGLVertexArray::Create(this);
     mDefaultVertexArray->mAttribs.SetLength(mGLMaxVertexAttribs);
     mBoundVertexArray = mDefaultVertexArray;
@@ -961,6 +653,7 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mPixelStore_FlipY = false;
     mPixelStore_PremultiplyAlpha = false;
     mPixelStore_ColorspaceConversion = BROWSER_DEFAULT_WEBGL;
+    mPixelStore_RequireFastPath = false;
 
     // GLES 3.0.4, p259:
     mPixelStore_UnpackImageHeight = 0;
@@ -975,6 +668,20 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mPixelStore_PackAlignment = 4;
 
     mPrimRestartTypeBytes = 0;
+
+    mGenericVertexAttribTypes.reset(new GLenum[mGLMaxVertexAttribs]);
+    std::fill_n(mGenericVertexAttribTypes.get(), mGLMaxVertexAttribs, LOCAL_GL_FLOAT);
+
+    static const float kDefaultGenericVertexAttribData[4] = { 0, 0, 0, 1 };
+    memcpy(mGenericVertexAttrib0Data, kDefaultGenericVertexAttribData,
+           sizeof(mGenericVertexAttrib0Data));
+
+    mFakeVertexAttrib0BufferObject = 0;
+
+    mNeedsIndexValidation = !gl->IsSupported(gl::GLFeature::robust_buffer_access_behavior);
+    if (gfxPrefs::WebGLForceIndexValidation()) {
+        mNeedsIndexValidation = true;
+    }
 
     return true;
 }
@@ -1002,8 +709,7 @@ WebGLContext::ValidateFramebufferTarget(GLenum target,
         return true;
     }
 
-    ErrorInvalidEnum("%s: Invalid target: %s (0x%04x).", info, EnumName(target),
-                     target);
+    ErrorInvalidEnumArg(info, "target", target);
     return false;
 }
 

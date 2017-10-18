@@ -3,28 +3,31 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* global _strings */
 
 "use strict";
 
-const {PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
 const Services = require("Services");
 const {Task} = require("devtools/shared/task");
 
 const Menu = require("devtools/client/framework/menu");
 const MenuItem = require("devtools/client/framework/menu-item");
 
-loader.lazyRequireGetter(this, "overlays",
-  "devtools/client/inspector/shared/style-inspector-overlays");
-loader.lazyServiceGetter(this, "clipboardHelper",
-  "@mozilla.org/widget/clipboardhelper;1", "nsIClipboardHelper");
-loader.lazyGetter(this, "_strings", () => {
-  return Services.strings
-  .createBundle("chrome://devtools-shared/locale/styleinspector.properties");
-});
+const {
+  VIEW_NODE_SELECTOR_TYPE,
+  VIEW_NODE_PROPERTY_TYPE,
+  VIEW_NODE_VALUE_TYPE,
+  VIEW_NODE_IMAGE_URL_TYPE,
+  VIEW_NODE_LOCATION_TYPE,
+} = require("devtools/client/inspector/shared/node-types");
+const clipboardHelper = require("devtools/shared/platform/clipboard");
+
+const STYLE_INSPECTOR_PROPERTIES = "devtools/shared/locales/styleinspector.properties";
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
 
 const PREF_ENABLE_MDN_DOCS_TOOLTIP =
   "devtools.inspector.mdnDocsTooltip.enabled";
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 /**
  * Style inspector context menu
@@ -85,22 +88,22 @@ StyleInspectorMenu.prototype = {
     let menu = new Menu();
 
     let menuitemCopy = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copy"),
-      accesskey: _strings.GetStringFromName("styleinspector.contextmenu.copy.accessKey"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copy"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copy.accessKey"),
       click: () => {
         this._onCopy();
       },
       disabled: !this._hasTextSelected(),
     });
     let menuitemCopyLocation = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyLocation"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyLocation"),
       click: () => {
         this._onCopyLocation();
       },
       visible: false,
     });
     let menuitemCopyRule = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyRule"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyRule"),
       click: () => {
         this._onCopyRule();
       },
@@ -108,8 +111,8 @@ StyleInspectorMenu.prototype = {
     });
     let copyColorAccessKey = "styleinspector.contextmenu.copyColor.accessKey";
     let menuitemCopyColor = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyColor"),
-      accesskey: _strings.GetStringFromName(copyColorAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyColor"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(copyColorAccessKey),
       click: () => {
         this._onCopyColor();
       },
@@ -117,8 +120,8 @@ StyleInspectorMenu.prototype = {
     });
     let copyUrlAccessKey = "styleinspector.contextmenu.copyUrl.accessKey";
     let menuitemCopyUrl = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyUrl"),
-      accesskey: _strings.GetStringFromName(copyUrlAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyUrl"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(copyUrlAccessKey),
       click: () => {
         this._onCopyUrl();
       },
@@ -126,8 +129,8 @@ StyleInspectorMenu.prototype = {
     });
     let copyImageAccessKey = "styleinspector.contextmenu.copyImageDataUrl.accessKey";
     let menuitemCopyImageDataUrl = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyImageDataUrl"),
-      accesskey: _strings.GetStringFromName(copyImageAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyImageDataUrl"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(copyImageAccessKey),
       click: () => {
         this._onCopyImageDataUrl();
       },
@@ -135,28 +138,28 @@ StyleInspectorMenu.prototype = {
     });
     let copyPropDeclarationLabel = "styleinspector.contextmenu.copyPropertyDeclaration";
     let menuitemCopyPropertyDeclaration = new MenuItem({
-      label: _strings.GetStringFromName(copyPropDeclarationLabel),
+      label: STYLE_INSPECTOR_L10N.getStr(copyPropDeclarationLabel),
       click: () => {
         this._onCopyPropertyDeclaration();
       },
       visible: false,
     });
     let menuitemCopyPropertyName = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyPropertyName"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyPropertyName"),
       click: () => {
         this._onCopyPropertyName();
       },
       visible: false,
     });
     let menuitemCopyPropertyValue = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copyPropertyValue"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copyPropertyValue"),
       click: () => {
         this._onCopyPropertyValue();
       },
       visible: false,
     });
     let menuitemCopySelector = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.copySelector"),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.copySelector"),
       click: () => {
         this._onCopySelector();
       },
@@ -166,18 +169,18 @@ StyleInspectorMenu.prototype = {
     this._clickedNodeInfo = this._getClickedNodeInfo();
     if (this.isRuleView && this._clickedNodeInfo) {
       switch (this._clickedNodeInfo.type) {
-        case overlays.VIEW_NODE_PROPERTY_TYPE :
+        case VIEW_NODE_PROPERTY_TYPE :
           menuitemCopyPropertyDeclaration.visible = true;
           menuitemCopyPropertyName.visible = true;
           break;
-        case overlays.VIEW_NODE_VALUE_TYPE :
+        case VIEW_NODE_VALUE_TYPE :
           menuitemCopyPropertyDeclaration.visible = true;
           menuitemCopyPropertyValue.visible = true;
           break;
-        case overlays.VIEW_NODE_SELECTOR_TYPE :
+        case VIEW_NODE_SELECTOR_TYPE :
           menuitemCopySelector.visible = true;
           break;
-        case overlays.VIEW_NODE_LOCATION_TYPE :
+        case VIEW_NODE_LOCATION_TYPE :
           menuitemCopyLocation.visible = true;
           break;
       }
@@ -201,8 +204,8 @@ StyleInspectorMenu.prototype = {
     // Select All
     let selectAllAccessKey = "styleinspector.contextmenu.selectAll.accessKey";
     let menuitemSelectAll = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.selectAll"),
-      accesskey: _strings.GetStringFromName(selectAllAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.selectAll"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(selectAllAccessKey),
       click: () => {
         this._onSelectAll();
       },
@@ -216,8 +219,8 @@ StyleInspectorMenu.prototype = {
     // Add new rule
     let addRuleAccessKey = "styleinspector.contextmenu.addNewRule.accessKey";
     let menuitemAddRule = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.addNewRule"),
-      accesskey: _strings.GetStringFromName(addRuleAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.addNewRule"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(addRuleAccessKey),
       click: () => {
         this._onAddNewRule();
       },
@@ -230,8 +233,8 @@ StyleInspectorMenu.prototype = {
     // Show MDN Docs
     let mdnDocsAccessKey = "styleinspector.contextmenu.showMdnDocs.accessKey";
     let menuitemShowMdnDocs = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.showMdnDocs"),
-      accesskey: _strings.GetStringFromName(mdnDocsAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.showMdnDocs"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(mdnDocsAccessKey),
       click: () => {
         this._onShowMdnDocs();
       },
@@ -243,8 +246,8 @@ StyleInspectorMenu.prototype = {
     // Show Original Sources
     let sourcesAccessKey = "styleinspector.contextmenu.toggleOrigSources.accessKey";
     let menuitemSources = new MenuItem({
-      label: _strings.GetStringFromName("styleinspector.contextmenu.toggleOrigSources"),
-      accesskey: _strings.GetStringFromName(sourcesAccessKey),
+      label: STYLE_INSPECTOR_L10N.getStr("styleinspector.contextmenu.toggleOrigSources"),
+      accesskey: STYLE_INSPECTOR_L10N.getStr(sourcesAccessKey),
       click: () => {
         this._onToggleOrigSources();
       },
@@ -314,7 +317,7 @@ StyleInspectorMenu.prototype = {
     if (!nodeInfo) {
       return false;
     }
-    return nodeInfo.type == overlays.VIEW_NODE_PROPERTY_TYPE;
+    return nodeInfo.type == VIEW_NODE_PROPERTY_TYPE;
   },
 
   /**
@@ -327,7 +330,7 @@ StyleInspectorMenu.prototype = {
     if (!nodeInfo) {
       return false;
     }
-    return nodeInfo.type == overlays.VIEW_NODE_IMAGE_URL_TYPE;
+    return nodeInfo.type == VIEW_NODE_IMAGE_URL_TYPE;
   },
 
   /**
@@ -399,7 +402,7 @@ StyleInspectorMenu.prototype = {
       message = yield data.data.string();
     } catch (e) {
       message =
-        _strings.GetStringFromName("styleinspector.copyImageDataUrlError");
+        STYLE_INSPECTOR_L10N.getStr("styleinspector.copyImageDataUrlError");
     }
 
     clipboardHelper.copyString(message);
@@ -411,7 +414,7 @@ StyleInspectorMenu.prototype = {
   _onShowMdnDocs: function () {
     let cssPropertyName = this.styleDocument.popupNode.textContent;
     let anchor = this.styleDocument.popupNode.parentNode;
-    let cssDocsTooltip = this.view.tooltips.cssDocs;
+    let cssDocsTooltip = this.view.tooltips.getTooltip("cssDocs");
     cssDocsTooltip.show(anchor, cssPropertyName);
   },
 

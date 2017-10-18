@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Graphics: Layers')
+
 EXPORTS.mozilla += [
     'D3DMessageUtils.h',
     'GfxMessageUtils.h'
@@ -14,6 +17,7 @@ EXPORTS.mozilla.gfx += [
     'GPUParent.h',
     'GPUProcessHost.h',
     'GPUProcessImpl.h',
+    'GPUProcessListener.h',
     'GPUProcessManager.h',
     'SharedDIB.h',
     'VsyncBridgeChild.h',
@@ -22,6 +26,7 @@ EXPORTS.mozilla.gfx += [
 ]
 
 EXPORTS.mozilla.layers += [
+    'CompositorOptions.h',
     'CompositorSession.h',
     'InProcessCompositorSession.h',
     'RemoteCompositorSession.h',
@@ -46,7 +51,6 @@ UNIFIED_SOURCES += [
     'CompositorWidgetVsyncObserver.cpp',
     'D3DMessageUtils.cpp',
     'GPUChild.cpp',
-    'GPUParent.cpp',
     'GPUProcessHost.cpp',
     'GPUProcessImpl.cpp',
     'GPUProcessManager.cpp',
@@ -58,10 +62,20 @@ UNIFIED_SOURCES += [
     'VsyncIOThreadHolder.cpp',
 ]
 
+SOURCES += [
+    'GPUParent.cpp',
+]
+
 IPDL_SOURCES = [
     'GraphicsMessages.ipdlh',
     'PGPU.ipdl',
     'PVsyncBridge.ipdl',
+]
+
+LOCAL_INCLUDES += [
+    '/dom/ipc',
+    '/toolkit/crashreporter',
+    '/xpcom/threads',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

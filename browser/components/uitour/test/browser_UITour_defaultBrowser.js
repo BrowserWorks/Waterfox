@@ -12,23 +12,23 @@ Cc["@mozilla.org/moz/jssubscript-loader;1"]
 function MockShellService() {}
 MockShellService.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIShellService]),
-  isDefaultBrowser: function(aStartupCheck, aForAllTypes) { return false; },
-  setDefaultBrowser: function(aClaimAllTypes, aForAllUsers) {
+  isDefaultBrowser(aStartupCheck, aForAllTypes) { return false; },
+  setDefaultBrowser(aClaimAllTypes, aForAllUsers) {
     setDefaultBrowserCalled = true;
   },
   shouldCheckDefaultBrowser: false,
   canSetDesktopBackground: false,
-  BACKGROUND_TILE      : 1,
-  BACKGROUND_STRETCH   : 2,
-  BACKGROUND_CENTER    : 3,
-  BACKGROUND_FILL      : 4,
-  BACKGROUND_FIT       : 5,
-  setDesktopBackground: function(aElement, aPosition) {},
-  APPLICATION_MAIL : 0,
-  APPLICATION_NEWS : 1,
-  openApplication: function(aApplication) {},
+  BACKGROUND_TILE: 1,
+  BACKGROUND_STRETCH: 2,
+  BACKGROUND_CENTER: 3,
+  BACKGROUND_FILL: 4,
+  BACKGROUND_FIT: 5,
+  setDesktopBackground(aElement, aPosition) {},
+  APPLICATION_MAIL: 0,
+  APPLICATION_NEWS: 1,
+  openApplication(aApplication) {},
   desktopBackgroundColor: 0,
-  openApplicationWithURI: function(aApplication, aURI) {},
+  openApplicationWithURI(aApplication, aURI) {},
   defaultFeedReader: 0,
 };
 
@@ -52,10 +52,10 @@ add_UITour_task(function* test_setDefaultBrowser() {
 });
 */
 
-add_UITour_task(function* test_isDefaultBrowser() {
+add_UITour_task(async function test_isDefaultBrowser() {
   let shell = Components.classes["@mozilla.org/browser/shell-service;1"]
         .getService(Components.interfaces.nsIShellService);
   let isDefault = shell.isDefaultBrowser(false);
-  let data = yield getConfigurationPromise("appinfo");
+  let data = await getConfigurationPromise("appinfo");
   is(isDefault, data.defaultBrowser, "gContentAPI result should match shellService.isDefaultBrowser");
 });

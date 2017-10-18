@@ -45,11 +45,11 @@
           return Cu.import("resource://gre/modules/Promise.jsm", {}).Promise.defer;
         case "Services":
           return Cu.import("resource://gre/modules/Services.jsm", {}).Services;
-        case "chrome":
-          return {
-            Cu,
-            components: Components
-          };
+        case "devtools/shared/platform/stack": {
+          let obj = {};
+          Cu.import("resource://devtools/shared/platform/chrome/stack.js", obj);
+          return obj;
+        }
       }
       return null;
     };
@@ -64,9 +64,9 @@
   module.exports = EventEmitter;
 
   // See comment in JSM module boilerplate when adding a new dependency.
-  const { components } = require("chrome");
   const Services = require("Services");
   const defer = require("devtools/shared/defer");
+  const { describeNthCaller } = require("devtools/shared/platform/stack");
   let loggingEnabled = true;
 
   if (!isWorker) {
@@ -75,7 +75,7 @@
       observe: () => {
         loggingEnabled = Services.prefs.getBoolPref("devtools.dump.emit");
       }
-    }, false);
+    });
   }
 
   /**
@@ -84,6 +84,7 @@
    * @param Object objectToDecorate
    *        Bind all public methods of EventEmitter to
    *        the objectToDecorate object.
+   * @return Object the object given.
    */
   EventEmitter.decorate = function (objectToDecorate) {
     let emitter = new EventEmitter();
@@ -91,6 +92,8 @@
     objectToDecorate.off = emitter.off.bind(emitter);
     objectToDecorate.once = emitter.once.bind(emitter);
     objectToDecorate.emit = emitter.emit.bind(emitter);
+
+    return objectToDecorate;
   };
 
   EventEmitter.prototype = {
@@ -132,7 +135,7 @@
       let handler = (_, first, ...rest) => {
         this.off(event, handler);
         if (listener) {
-          listener.apply(null, [event, first, ...rest]);
+          listener(event, first, ...rest);
         }
         deferred.resolve(first);
       };
@@ -204,16 +207,7 @@
         return;
       }
 
-      let caller, func, path;
-      if (!isWorker) {
-        caller = components.stack.caller.caller;
-        func = caller.name;
-        let file = caller.filename;
-        if (file.includes(" -> ")) {
-          file = caller.filename.split(/ -> /)[1];
-        }
-        path = file + ":" + caller.lineNumber;
-      }
+      let description = describeNthCaller(2);
 
       let argOut = "(";
       if (args.length === 1) {
@@ -251,7 +245,7 @@
       }
 
       argOut += ")";
-      out += "emit" + argOut + " from " + func + "() -> " + path + "\n";
+      out += "emit" + argOut + " from " + description + "\n";
 
       dump(out);
     },

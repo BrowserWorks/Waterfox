@@ -5,7 +5,6 @@ import sys
 import tempfile
 import urlparse
 
-from wptrunner.update.sync import LoadManifest
 from wptrunner.update.tree import get_unique_name
 from wptrunner.update.base import Step, StepRunner, exit_clean, exit_unclean
 
@@ -27,11 +26,12 @@ def rewrite_patch(patch, strip_dir):
         strip_dir = "/%s"% strip_dir
 
     new_diff = []
-    line_starts = ["diff ", "+++ ", "--- "]
+    line_starts = [("diff ", True), ("+++ ", True), ("--- ", True), ("rename from ", False), ("rename to ", False)]
     for line in patch.diff.split("\n"):
-        for start in line_starts:
+        for start, leading_slash in line_starts:
+            strip = strip_dir if leading_slash else strip_dir[1:]
             if line.startswith(start):
-                new_diff.append(line.replace(strip_dir, "").encode("utf8"))
+                new_diff.append(line.replace(strip, "").encode("utf8"))
                 break
         else:
             new_diff.append(line)
@@ -43,16 +43,14 @@ def rewrite_patch(patch, strip_dir):
     return Patch(patch.author, patch.email, rewrite_message(patch), new_diff)
 
 def rewrite_message(patch):
-    rest = patch.message.body
-
     if patch.message.bug is not None:
         return "\n".join([patch.message.summary,
                           patch.message.body,
                           "",
-                          "Upstreamed from https://bugzilla.mozilla.org/show_bug.cgi?id=%s" %
+                          "Upstreamed from https://bugzilla.mozilla.org/show_bug.cgi?id=%s [ci skip]" %
                           patch.message.bug])
 
-    return "\n".join([patch.message.full_summary, rest])
+    return "\n".join([patch.message.full_summary, "%s\n[ci skip]\n" % patch.message.body])
 
 
 class SyncToUpstream(Step):
@@ -83,6 +81,31 @@ class SyncToUpstream(Step):
             runner = SyncToUpstreamRunner(self.logger, state)
             runner.run()
 
+class GetLastSyncData(Step):
+    """Find the gecko commit at which we last performed a sync with upstream and the upstream
+    commit that was synced."""
+
+    provides = ["sync_data_path", "last_sync_commit", "old_upstream_rev"]
+
+    def create(self, state):
+        self.logger.info("Looking for last sync commit")
+        state.sync_data_path = os.path.join(state.metadata_path, "mozilla-sync")
+        items = {}
+        with open(state.sync_data_path) as f:
+            for line in f.readlines():
+                key, value = [item.strip() for item in line.split(":", 1)]
+                items[key] = value
+
+        state.last_sync_commit = Commit(state.local_tree,
+                                        state.local_tree.rev_from_hg(items["local"]))
+        state.old_upstream_rev = items["upstream"]
+
+        if not state.local_tree.contains_commit(state.last_sync_commit):
+            self.logger.error("Could not find last sync commit %s" % last_sync_sha1)
+            return exit_clean
+
+        self.logger.info("Last sync to web-platform-tests happened in %s" % state.last_sync_commit.sha1)
+
 
 class CheckoutBranch(Step):
     """Create a branch in the sync tree pointing at the last upstream sync commit
@@ -93,31 +116,11 @@ class CheckoutBranch(Step):
     def create(self, state):
         self.logger.info("Updating sync tree from %s" % state.sync["remote_url"])
         state.branch = state.sync_tree.unique_branch_name(
-            "outbound_update_%s" % state.old_manifest.rev)
+            "outbound_update_%s" % state.old_upstream_rev)
         state.sync_tree.update(state.sync["remote_url"],
                                state.sync["branch"],
                                state.branch)
-        state.sync_tree.checkout(state.old_manifest.rev, state.branch, force=True)
-
-
-class GetLastSyncCommit(Step):
-    """Find the gecko commit at which we last performed a sync with upstream."""
-
-    provides = ["last_sync_path", "last_sync_commit"]
-
-    def create(self, state):
-        self.logger.info("Looking for last sync commit")
-        state.last_sync_path = os.path.join(state.metadata_path, "mozilla-sync")
-        with open(state.last_sync_path) as f:
-            last_sync_sha1 = f.read().strip()
-
-        state.last_sync_commit = Commit(state.local_tree, last_sync_sha1)
-
-        if not state.local_tree.contains_commit(state.last_sync_commit):
-            self.logger.error("Could not find last sync commit %s" % last_sync_sha1)
-            return exit_clean
-
-        self.logger.info("Last sync to web-platform-tests happened in %s" % state.last_sync_commit.sha1)
+        state.sync_tree.checkout(state.old_upstream_rev, state.branch, force=True)
 
 
 class GetBaseCommit(Step):
@@ -211,26 +214,34 @@ class MovePatches(Step):
         for commit in state.source_commits[state.commits_loaded:]:
             i = state.commits_loaded + 1
             self.logger.info("Moving commit %i: %s" % (i, commit.message.full_summary))
-            if not state.patch:
+            stripped_patch = None
+            if state.patch:
+                filename, stripped_patch = state.patch
+                if not os.path.exists(filename):
+                    stripped_patch = None
+                else:
+                    with open(filename) as f:
+                        stripped_patch.diff = f.read()
+            state.patch = None
+            if not stripped_patch:
                 patch = commit.export_patch(state.tests_path)
                 stripped_patch = rewrite_patch(patch, strip_path)
-            else:
-                filename, stripped_patch = state.patch
-                with open(filename) as f:
-                    stripped_patch.diff = f.read()
-                state.patch = None
             if not stripped_patch.diff:
+                self.logger.info("Skipping empty patch")
+                state.commits_loaded = i
                 continue
             try:
                 state.sync_tree.import_patch(stripped_patch)
             except:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".diff") as f:
                     f.write(stripped_patch.diff)
-                    print """Patch failed to apply. Diff saved in %s.
+                    print """Patch failed to apply. Diff saved in %s
 Fix this file so it applies and run with --continue""" % f.name
                     state.patch = (f.name, stripped_patch)
-                raise
+                    print state.patch
+                sys.exit(1)
             state.commits_loaded = i
+        raw_input("Check for differences with upstream")
 
 
 class RebaseCommits(Step):
@@ -292,15 +303,18 @@ class MergeUpstream(Step):
                     return rv
             state.merge_index += 1
 
-class UpdateLastSyncCommit(Step):
+class UpdateLastSyncData(Step):
     """Update the gecko commit at which we last performed a sync with upstream."""
 
     provides = []
 
     def create(self, state):
         self.logger.info("Updating last sync commit")
-        with open(state.last_sync_path, "w") as f:
-            f.write(state.local_tree.rev)
+        data = {"local": state.local_tree.rev_to_hg(state.local_tree.rev),
+                "upstream": state.sync_tree.rev}
+        with open(state.sync_data_path, "w") as f:
+            for key, value in data.iteritems():
+                f.write("%s: %s\n" % (key, value))
         # This gets added to the patch later on
 
 class MergeLocalBranch(Step):
@@ -373,9 +387,8 @@ class PRDeleteBranch(Step):
 
 class SyncToUpstreamRunner(StepRunner):
     """Runner for syncing local changes to upstream"""
-    steps = [LoadManifest,
+    steps = [GetLastSyncData,
              CheckoutBranch,
-             GetLastSyncCommit,
              GetBaseCommit,
              LoadCommits,
              SelectCommits,
@@ -383,7 +396,7 @@ class SyncToUpstreamRunner(StepRunner):
              RebaseCommits,
              CheckRebase,
              MergeUpstream,
-             UpdateLastSyncCommit]
+             UpdateLastSyncData]
 
 
 class PRMergeRunner(StepRunner):

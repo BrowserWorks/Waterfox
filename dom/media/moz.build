@@ -4,8 +4,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+FILES_PER_UNIFIED_FILE = 6
+
 with Files('*'):
-    BUG_COMPONENT = ('Core', 'Video/Audio')
+    BUG_COMPONENT = ('Core', 'Audio/Video')
+
+with Files('test/**'):
+    BUG_COMPONENT = ('Core', 'Audio/Video: Playback')
+
+with Files('gtest/TestGMP*'):
+    BUG_COMPONENT = ('Core', 'Audio/Video: GMP')
+
+with Files('tests/**'):
+    BUG_COMPONENT = ('Core', 'WebRTC')
 
 component_signaling = ('Core', 'WebRTC: Signaling')
 with Files('IdpSandbox.jsm'):
@@ -20,13 +31,17 @@ with Files('GetUserMedia*'):
     BUG_COMPONENT = component_av
 
 DIRS += [
+    'eme',
     'encoder',
+    'flac',
     'gmp',
     'gmp-plugin',
     'gmp-plugin-openh264',
     'imagecapture',
+    'ipc',
     'mediasink',
     'mediasource',
+    'mp3',
     'ogg',
     'platforms',
     'systemservices',
@@ -36,17 +51,10 @@ DIRS += [
     'webrtc',
     'webspeech',
     'webvtt',
-    'standalone',
 ]
 
-if CONFIG['MOZ_RAW']:
-    DIRS += ['raw']
-
-if CONFIG['MOZ_DIRECTSHOW']:
-    DIRS += ['directshow']
-
-if CONFIG['MOZ_ANDROID_OMX']:
-    DIRS += ['android']
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DIRS += ['hls']
 
 if CONFIG['MOZ_FMP4']:
     DIRS += ['fmp4']
@@ -54,14 +62,7 @@ if CONFIG['MOZ_FMP4']:
 if CONFIG['MOZ_WEBRTC']:
     DIRS += ['bridge']
 
-if CONFIG['MOZ_OMX_DECODER']:
-    DIRS += ['omx']
-
-if CONFIG['MOZ_EME']:
-    DIRS += ['eme']
-
 TEST_DIRS += [
-    'compiledtest',
     'gtest',
 ]
 
@@ -76,6 +77,7 @@ if CONFIG['MOZ_WEBRTC']:
     WEBRTC_SIGNALLING_TEST_MANIFESTS += ['tests/mochitest/steeplechase_long/steeplechase_long.ini']
 
 XPIDL_SOURCES += [
+    'nsIAudioDeviceInfo.idl',
     'nsIDOMNavigatorUserMedia.idl',
     'nsIMediaManager.idl',
 ]
@@ -83,8 +85,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'dom_media'
 
 EXPORTS += [
-    'AbstractMediaDecoder.h',
-    'AccurateSeekTask.h',
     'ADTSDecoder.h',
     'ADTSDemuxer.h',
     'AudioBufferUtils.h',
@@ -98,6 +98,7 @@ EXPORTS += [
     'AudioStream.h',
     'Benchmark.h',
     'BufferMediaResource.h',
+    'ChannelMediaDecoder.h',
     'CubebUtils.h',
     'DecoderDoctorDiagnostics.h',
     'DecoderTraits.h',
@@ -108,39 +109,39 @@ EXPORTS += [
     'Intervals.h',
     'Latency.h',
     'MediaCache.h',
+    'MediaContainerType.h',
     'MediaData.h',
     'MediaDataDemuxer.h',
     'MediaDecoder.h',
     'MediaDecoderOwner.h',
-    'MediaDecoderReader.h',
     'MediaDecoderStateMachine.h',
     'MediaEventSource.h',
     'MediaFormatReader.h',
     'MediaInfo.h',
     'MediaMetadataManager.h',
+    'MediaMIMETypes.h',
     'MediaPrefs.h',
     'MediaQueue.h',
     'MediaRecorder.h',
     'MediaResource.h',
     'MediaResourceCallback.h',
+    'MediaResult.h',
     'MediaSegment.h',
+    'MediaShutdownManager.h',
     'MediaStatistics.h',
     'MediaStreamGraph.h',
     'MediaStreamListener.h',
+    'MediaStreamTypes.h',
+    'MediaStreamVideoSink.h',
     'MediaTimer.h',
     'MediaTrack.h',
     'MediaTrackList.h',
-    'MP3Decoder.h',
-    'MP3Demuxer.h',
-    'MP3FrameParser.h',
-    'NextFrameSeekTask.h',
+    'MemoryBlockCache.h',
     'nsIDocumentActivity.h',
     'PrincipalChangeObserver.h',
     'QueueObject.h',
-    'RtspMediaResource.h',
     'SeekJob.h',
     'SeekTarget.h',
-    'SeekTask.h',
     'SelfRef.h',
     'SharedBuffer.h',
     'StreamTracks.h',
@@ -148,6 +149,7 @@ EXPORTS += [
     'TimeUnits.h',
     'TrackUnionStream.h',
     'VideoFrameContainer.h',
+    'VideoLimits.h',
     'VideoSegment.h',
     'VideoUtils.h',
     'VorbisUtils.h',
@@ -171,12 +173,8 @@ IPDL_SOURCES += [
     'webrtc/PWebrtcGlobal.ipdl'
 ]
 
-if CONFIG['MOZ_B2G']:
-    EXPORTS.mozilla += [
-        'MediaPermissionGonk.h',
-    ]
-
 EXPORTS.mozilla.dom += [
+    'AudioDeviceInfo.h',
     'AudioStreamTrack.h',
     'AudioTrack.h',
     'AudioTrackList.h',
@@ -198,13 +196,13 @@ EXPORTS.mozilla.dom += [
 ]
 
 UNIFIED_SOURCES += [
-    'AccurateSeekTask.cpp',
     'ADTSDecoder.cpp',
     'ADTSDemuxer.cpp',
     'AudioCaptureStream.cpp',
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
     'AudioConverter.cpp',
+    'AudioDeviceInfo.cpp',
     'AudioSegment.cpp',
     'AudioStream.cpp',
     'AudioStreamTrack.cpp',
@@ -212,6 +210,7 @@ UNIFIED_SOURCES += [
     'AudioTrackList.cpp',
     'Benchmark.cpp',
     'CanvasCaptureMediaStream.cpp',
+    'ChannelMediaDecoder.cpp',
     'CubebUtils.cpp',
     'DecoderDoctorDiagnostics.cpp',
     'DOMMediaStream.cpp',
@@ -221,16 +220,16 @@ UNIFIED_SOURCES += [
     'GraphDriver.cpp',
     'Latency.cpp',
     'MediaCache.cpp',
+    'MediaContainerType.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
-    'MediaDecoderReader.cpp',
-    'MediaDecoderReaderWrapper.cpp',
     'MediaDecoderStateMachine.cpp',
     'MediaDeviceInfo.cpp',
     'MediaDevices.cpp',
     'MediaFormatReader.cpp',
     'MediaInfo.cpp',
     'MediaManager.cpp',
+    'MediaMIMETypes.cpp',
     'MediaPrefs.cpp',
     'MediaRecorder.cpp',
     'MediaResource.cpp',
@@ -239,17 +238,14 @@ UNIFIED_SOURCES += [
     'MediaStreamGraph.cpp',
     'MediaStreamListener.cpp',
     'MediaStreamTrack.cpp',
+    'MediaStreamVideoSink.cpp',
     'MediaTimer.cpp',
     'MediaTrack.cpp',
     'MediaTrackList.cpp',
-    'MP3Decoder.cpp',
-    'MP3Demuxer.cpp',
-    'MP3FrameParser.cpp',
-    'NextFrameSeekTask.cpp',
+    'MemoryBlockCache.cpp',
     'QueueObject.cpp',
-    'RtspMediaResource.cpp',
+    'ReaderProxy.cpp',
     'SeekJob.cpp',
-    'SeekTask.cpp',
     'StreamTracks.cpp',
     'TextTrack.cpp',
     'TextTrackCue.cpp',
@@ -269,12 +265,15 @@ UNIFIED_SOURCES += [
 ]
 
 if CONFIG['OS_TARGET'] == 'WINNT':
-  SOURCES += [ 'ThreadPoolCOMListener.cpp' ]
-
-if CONFIG['MOZ_B2G']:
-    SOURCES += [
-        'MediaPermissionGonk.cpp',
-    ]
+  EXPORTS.mozilla.audio += [
+      'AudioNotificationReceiver.h',
+      'AudioNotificationSender.h',
+  ]
+  SOURCES += [
+      'AudioNotificationReceiver.cpp',
+      'AudioNotificationSender.cpp',
+      'ThreadPoolCOMListener.cpp',
+  ]
 
 # DecoderTraits.cpp needs to be built separately because of Mac OS X headers.
 SOURCES += [
@@ -300,16 +299,10 @@ EXTRA_JS_MODULES.media += [
 LOCAL_INCLUDES += [
     '/caps',
     '/dom/base',
-    '/dom/camera',
     '/layout/generic',
     '/layout/xul',
     '/netwerk/base',
 ]
-
-if CONFIG['MOZ_DIRECTSHOW']:
-    LOCAL_INCLUDES += [
-        '/media/webrtc/trunk/webrtc/modules/video_capture/windows',
-    ]
 
 if CONFIG['MOZ_WEBRTC']:
     LOCAL_INCLUDES += [
@@ -324,14 +317,14 @@ if CONFIG['OS_TARGET'] == 'WINNT':
 else:
     DEFINES['WEBRTC_POSIX'] = True
 
-if CONFIG['MOZ_OMX_DECODER']:
-    DEFINES['MOZ_OMX_DECODER'] = True
-
 if CONFIG['ANDROID_VERSION'] > '15':
     DEFINES['MOZ_OMX_WEBM_DECODER'] = True
 
 if CONFIG['MOZ_GONK_MEDIACODEC']:
     DEFINES['MOZ_GONK_MEDIACODEC'] = True
+
+if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
+    DEFINES['MOZ_ANDROID_HLS_SUPPORT'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

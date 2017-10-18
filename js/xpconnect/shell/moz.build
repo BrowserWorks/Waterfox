@@ -6,11 +6,6 @@
 
 GeckoProgram('xpcshell', linkage='dependent')
 
-if CONFIG['COMPILE_ENVIRONMENT']:
-    SDK_FILES.bin += [
-        '!xpcshell%s' % CONFIG['BIN_SUFFIX'],
-    ]
-
 SOURCES += [
     'xpcshell.cpp',
 ]
@@ -54,6 +49,9 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DELAYLOAD_DLLS += [
         'xul.dll',
     ]
+
+if CONFIG['OS_TARGET'] == 'Android':
+    LDFLAGS += ['-pie']
 
 CFLAGS += CONFIG['TK_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']

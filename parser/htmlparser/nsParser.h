@@ -129,12 +129,13 @@ class nsParser final : public nsIParser,
      *  @param   aCharsetSource- the source of the charset
      *  @return	 nada
      */
-    NS_IMETHOD_(void) SetDocumentCharset(const nsACString& aCharset, int32_t aSource) override;
+    virtual void SetDocumentCharset(NotNull<const Encoding*> aCharset,
+                                    int32_t aSource) override;
 
-    NS_IMETHOD_(void) GetDocumentCharset(nsACString& aCharset, int32_t& aSource) override
+    NotNull<const Encoding*> GetDocumentCharset(int32_t& aSource)
     {
-         aCharset = mCharset;
          aSource = mCharsetSource;
+         return mCharset;
     }
 
     /**
@@ -241,14 +242,14 @@ class nsParser final : public nsIParser,
      */
     virtual nsIStreamListener* GetStreamListener() override;
 
-    void SetSinkCharset(nsACString& aCharset);
+    void SetSinkCharset(NotNull<const Encoding*> aCharset);
 
     /**
      *  Removes continue parsing events
      *  @update  kmcclusk 5/18/98
      */
 
-    NS_IMETHODIMP CancelParsingEvents() override;
+    NS_IMETHOD CancelParsingEvents() override;
 
     /**
      * Return true.
@@ -258,12 +259,12 @@ class nsParser final : public nsIParser,
     /**
      * No-op.
      */
-    virtual void BeginEvaluatingParserInsertedScript() override;
+    virtual void PushDefinedInsertionPoint() override;
 
     /**
      * No-op.
      */
-    virtual void EndEvaluatingParserInsertedScript() override;
+    virtual void PopDefinedInsertionPoint() override;
 
     /**
      * No-op.
@@ -385,9 +386,10 @@ protected:
     int32_t             mCharsetSource;
     
     uint16_t            mFlags;
+    uint32_t            mBlocked;
 
     nsString            mUnusedInput;
-    nsCString           mCharset;
+    NotNull<const Encoding*> mCharset;
     nsCString           mCommandStr;
 
     bool                mProcessingNetworkData;

@@ -15,14 +15,16 @@ const DEBUG_CONTRACTID = "@mozilla.org/xpcom/debug;1";
 const PRINTSETTINGS_CONTRACTID = "@mozilla.org/gfx/printsettings-service;1";
 const ENVIRONMENT_CONTRACTID = "@mozilla.org/process/environment;1";
 const NS_OBSERVER_SERVICE_CONTRACTID = "@mozilla.org/observer-service;1";
+const NS_GFXINFO_CONTRACTID = "@mozilla.org/gfx/info;1";
 
 // "<!--CLEAR-->"
 const BLANK_URL_FOR_CLEARING = "data:text/html;charset=UTF-8,%3C%21%2D%2DCLEAR%2D%2D%3E";
 
 CU.import("resource://gre/modules/Timer.jsm");
-CU.import("resource://gre/modules/AsyncSpellCheckTestHelper.jsm");
+CU.import("chrome://reftest/content/AsyncSpellCheckTestHelper.jsm");
 
 var gBrowserIsRemote;
+var gIsWebRenderEnabled;
 var gHaveCanvasSnapshot = false;
 // Plugin layers can be updated asynchronously, so to make sure that all
 // layer surfaces have the right content, we need to listen for explicit
@@ -98,9 +100,7 @@ function PaintWaitFinishedListener(event)
 
 function OnInitialLoad()
 {
-#ifndef REFTEST_B2G
     removeEventListener("load", OnInitialLoad, true);
-#endif
 
     gDebug = CC[DEBUG_CONTRACTID].getService(CI.nsIDebug2);
     var env = CC[ENVIRONMENT_CONTRACTID].getService(CI.nsIEnvironment);
@@ -139,6 +139,11 @@ function SetFailureTimeout(cb, timeout)
 
 function StartTestURI(type, uri, timeout)
 {
+    // The GC is only able to clean up compartments after the CC runs. Since
+    // the JS ref tests disable the normal browser chrome and do not otherwise
+    // create substatial DOM garbage, the CC tends not to run enough normally.
+    windowUtils().runNextCollectorTimer();
+
     // Reset gExplicitPendingPaintCount in case there was a timeout or
     // the count is out of sync for some other reason
     if (gExplicitPendingPaintCount != 0) {
@@ -171,16 +176,16 @@ function resetZoom() {
 }
 
 function doPrintMode(contentRootElement) {
-#if REFTEST_B2G
-    // nsIPrintSettings not available in B2G
-    return false;
-#else
     // use getAttribute because className works differently in HTML and SVG
-    return contentRootElement &&
-           contentRootElement.hasAttribute('class') &&
-           contentRootElement.getAttribute('class').split(/\s+/)
-                             .indexOf("reftest-print") != -1;
-#endif
+    if (contentRootElement &&
+        contentRootElement.hasAttribute('class')) {
+        var classList = contentRootElement.getAttribute('class').split(/\s+/);
+        if (classList.indexOf("reftest-print") != -1) {
+            SendException("reftest-print is obsolete, use reftest-paged instead");
+            return;
+        }
+        return classList.indexOf("reftest-paged") != -1;
+    }
 }
 
 function setupPrintMode() {
@@ -481,7 +486,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
         // OK, we can end the test now.
         removeEventListener("MozAfterPaint", AfterPaintListener, false);
         if (contentRootElement) {
-            contentRootElement.removeEventListener("DOMAttrModified", AttrModifiedListener, false);
+            contentRootElement.removeEventListener("DOMAttrModified", AttrModifiedListener);
         }
         gExplicitPendingPaintsCompleteHook = null;
         gTimeoutHook = null;
@@ -581,7 +586,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
                 state = STATE_WAITING_TO_FINISH;
                 MakeProgress();
             };
-            os.addObserver(flushWaiter, "apz-repaints-flushed", false);
+            os.addObserver(flushWaiter, "apz-repaints-flushed");
 
             var willSnapshot = (gCurrentTestType != TYPE_SCRIPT) &&
                                (gCurrentTestType != TYPE_LOAD);
@@ -641,7 +646,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
     // If contentRootElement is null then shouldWaitForReftestWaitRemoval will
     // always return false so we don't need a listener anyway
     if (contentRootElement) {
-      contentRootElement.addEventListener("DOMAttrModified", AttrModifiedListener, false);
+      contentRootElement.addEventListener("DOMAttrModified", AttrModifiedListener);
     }
     gExplicitPendingPaintsCompleteHook = ExplicitPaintsCompleteListener;
     gTimeoutHook = RemoveListeners;
@@ -675,9 +680,17 @@ function OnDocumentLoad(event)
         // Ignore load events for subframes.
         return;
 
-    if (gClearingForAssertionCheck &&
-        currentDoc.location.href == BLANK_URL_FOR_CLEARING) {
-        DoAssertionCheck();
+    if (gClearingForAssertionCheck) {
+        if (currentDoc.location.href == BLANK_URL_FOR_CLEARING) {
+            DoAssertionCheck();
+            return;
+        }
+
+        // It's likely the previous test document reloads itself and causes the
+        // attempt of loading blank page fails. In this case we should retry
+        // loading the blank page.
+        LogInfo("Retry loading a blank page");
+        LoadURI(BLANK_URL_FOR_CLEARING);
         return;
     }
 
@@ -833,6 +846,7 @@ function RecordResult()
     clearTimeout(gFailureTimeout);
     gFailureReason = null;
     gFailureTimeout = null;
+    gCurrentURL = null;
 
     if (gCurrentTestType == TYPE_SCRIPT) {
         var error = '';
@@ -1018,7 +1032,26 @@ function SendAssertionCount(numAssertions)
 
 function SendContentReady()
 {
-    return sendSyncMessage("reftest:ContentReady")[0];
+    let gfxInfo = (NS_GFXINFO_CONTRACTID in CC) && CC[NS_GFXINFO_CONTRACTID].getService(CI.nsIGfxInfo);
+    let info = gfxInfo.getInfo();
+
+    // The webrender check has to be separate from the d2d checks
+    // since the d2d checks will throw an exception on non-windows platforms.
+    try {
+        gIsWebRenderEnabled = gfxInfo.WebRenderEnabled;
+    } catch (e) {
+        gIsWebRenderEnabled = false;
+    }
+
+    try {
+        info.D2DEnabled = gfxInfo.D2DEnabled;
+        info.DWriteEnabled = gfxInfo.DWriteEnabled;
+    } catch (e) {
+        info.D2DEnabled = false;
+        info.DWriteEnabled = false;
+    }
+
+    return sendSyncMessage("reftest:ContentReady", { 'gfx': info })[0];
 }
 
 function SendException(what)
@@ -1117,37 +1150,45 @@ function SendUpdateCanvasForEvent(event, contentRootElement)
       }
       return;
     }
-    
-    var rectList = event.clientRects;
-    LogInfo("SendUpdateCanvasForEvent with " + rectList.length + " rects");
-    for (var i = 0; i < rectList.length; ++i) {
-        var r = rectList[i];
-        // Set left/top/right/bottom to "device pixel" boundaries
-        var left = Math.floor(roundTo(r.left*scale, 0.001));
-        var top = Math.floor(roundTo(r.top*scale, 0.001));
-        var right = Math.ceil(roundTo(r.right*scale, 0.001));
-        var bottom = Math.ceil(roundTo(r.bottom*scale, 0.001));
-        LogInfo("Rect: " + left + " " + top + " " + right + " " + bottom);
 
-        rects.push({ left: left, top: top, right: right, bottom: bottom });
+    var message;
+    if (gIsWebRenderEnabled && !windowUtils().isMozAfterPaintPending) {
+        // Webrender doesn't have invalidation, so we just invalidate the whole
+        // screen once we don't have anymore paints pending. This will force
+        // the snapshot.
+
+        LogInfo("Webrender enabled, sending update whole canvas for invalidation");
+        message = "reftest:UpdateWholeCanvasForInvalidation";
+    } else {
+        var rectList = event.clientRects;
+        LogInfo("SendUpdateCanvasForEvent with " + rectList.length + " rects");
+        for (var i = 0; i < rectList.length; ++i) {
+            var r = rectList[i];
+            // Set left/top/right/bottom to "device pixel" boundaries
+            var left = Math.floor(roundTo(r.left * scale, 0.001));
+            var top = Math.floor(roundTo(r.top * scale, 0.001));
+            var right = Math.ceil(roundTo(r.right * scale, 0.001));
+            var bottom = Math.ceil(roundTo(r.bottom * scale, 0.001));
+            LogInfo("Rect: " + left + " " + top + " " + right + " " + bottom);
+
+            rects.push({ left: left, top: top, right: right, bottom: bottom });
+        }
+
+        message = "reftest:UpdateCanvasForInvalidation";
     }
 
     // See comments in SendInitCanvasWithSnapshot() re: the split
     // logic here.
     if (!gBrowserIsRemote) {
-        sendSyncMessage("reftest:UpdateCanvasForInvalidation", { rects: rects });
+        sendSyncMessage(message, { rects: rects });
     } else {
         SynchronizeForSnapshot(SYNC_ALLOW_DISABLE);
-        sendAsyncMessage("reftest:UpdateCanvasForInvalidation", { rects: rects });
+        sendAsyncMessage(message, { rects: rects });
     }
 }
-#if REFTEST_B2G
-OnInitialLoad();
-#else
 if (content.document.readyState == "complete") {
   // load event has already fired for content, get started
   OnInitialLoad();
 } else {
   addEventListener("load", OnInitialLoad, true);
 }
-#endif

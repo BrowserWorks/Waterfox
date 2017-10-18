@@ -8,7 +8,7 @@ package org.mozilla.gecko.promotion;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-import com.keepsafe.switchboard.SwitchBoard;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoSharedPrefs;
@@ -17,7 +17,7 @@ import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.delegates.BrowserAppDelegateWithReference;
 import org.mozilla.gecko.reader.ReaderModeUtils;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 
 public class ReaderViewBookmarkPromotion extends BrowserAppDelegateWithReference implements Tabs.OnTabsChangedListener {
     private static final String PREF_FIRST_RV_HINT_SHOWN = "first_reader_view_hint_shown";

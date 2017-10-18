@@ -1,5 +1,4 @@
-add_task(function * ()
-{
+add_task(async function() {
   const kPrefName_AutoScroll = "general.autoScroll";
   Services.prefs.setBoolPref(kPrefName_AutoScroll, true);
 
@@ -12,13 +11,11 @@ add_task(function * ()
   var expectedKeyEvents;
   var dispatchedKeyEvents;
   var key;
-  var root;
 
   /**
    * Encapsulates EventUtils.sendChar().
    */
-  function sendChar(aChar)
-  {
+  function sendChar(aChar) {
     key = aChar;
     dispatchedKeyEvents = kNoKeyEvents;
     EventUtils.sendChar(key);
@@ -29,8 +26,7 @@ add_task(function * ()
   /**
    * Encapsulates EventUtils.sendKey().
    */
-  function sendKey(aKey)
-  {
+  function sendKey(aKey) {
     key = aKey;
     dispatchedKeyEvents = kNoKeyEvents;
     EventUtils.sendKey(key);
@@ -38,8 +34,7 @@ add_task(function * ()
        "unexpected key events were dispatched or not dispatched: " + key);
   }
 
-  function onKey(aEvent)
-  {
+  function onKey(aEvent) {
 //    if (aEvent.target != root && aEvent.target != root.ownerDocument.body) {
 //      ok(false, "unknown target: " + aEvent.target.tagName);
 //      return;
@@ -68,13 +63,13 @@ add_task(function * ()
 
   let loadedPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
   gBrowser.loadURI(dataUri);
-  yield loadedPromise;
+  await loadedPromise;
 
-  yield SimpleTest.promiseFocus(gBrowser.selectedBrowser);
+  await SimpleTest.promiseFocus(gBrowser.selectedBrowser);
 
-  window.addEventListener("keydown", onKey, false);
-  window.addEventListener("keypress", onKey, false);
-  window.addEventListener("keyup", onKey, false);
+  window.addEventListener("keydown", onKey);
+  window.addEventListener("keypress", onKey);
+  window.addEventListener("keyup", onKey);
 
   // Test whether the key events are handled correctly under normal condition
   expectedKeyEvents = kAllKeyEvents;
@@ -83,9 +78,9 @@ add_task(function * ()
   // Start autoscrolling by middle button click on the page
   let shownPromise = BrowserTestUtils.waitForEvent(window, "popupshown", false,
                        event => event.originalTarget.className == "autoscroller");
-  yield BrowserTestUtils.synthesizeMouseAtPoint(10, 10, { button: 1 },
+  await BrowserTestUtils.synthesizeMouseAtPoint(10, 10, { button: 1 },
                                                 gBrowser.selectedBrowser);
-  yield shownPromise;
+  await shownPromise;
 
   // Most key events should be eaten by the browser.
   expectedKeyEvents = kNoKeyEvents;
@@ -108,9 +103,9 @@ add_task(function * ()
   expectedKeyEvents = kAllKeyEvents;
   sendChar("A");
 
-  window.removeEventListener("keydown", onKey, false);
-  window.removeEventListener("keypress", onKey, false);
-  window.removeEventListener("keyup", onKey, false);
+  window.removeEventListener("keydown", onKey);
+  window.removeEventListener("keypress", onKey);
+  window.removeEventListener("keyup", onKey);
 
   // restore the changed prefs
   if (Services.prefs.prefHasUserValue(kPrefName_AutoScroll))

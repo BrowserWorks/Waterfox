@@ -12,7 +12,6 @@
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
 #include "nsXPCOM.h"
-#include "nsXPCOMGlue.h"
 
 #include "nsIComponentManager.h"
 #include "nsIComponentRegistrar.h"
@@ -79,9 +78,9 @@ class SocketTransportServiceTest : public MtransportTest {
 class EventReceived : public Runnable {
 public:
   explicit EventReceived(SocketTransportServiceTest *test) :
-      test_(test) {}
+      Runnable("EventReceived"), test_(test) {}
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     test_->ReceiveEvent();
     return NS_OK;
   }
@@ -94,9 +93,9 @@ public:
 class RegisterEvent : public Runnable {
 public:
   explicit RegisterEvent(SocketTransportServiceTest *test) :
-      test_(test) {}
+      Runnable("RegisterEvent"), test_(test) {}
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     test_->RegisterHandler();
     return NS_OK;
   }

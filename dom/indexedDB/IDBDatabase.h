@@ -19,6 +19,7 @@
 #include "nsTHashtable.h"
 
 class nsIDocument;
+class nsIEventTarget;
 class nsPIDOMWindowInner;
 
 namespace mozilla {
@@ -76,8 +77,6 @@ class IDBDatabase final
   nsDataHashtable<nsISupportsHashKey, indexedDB::PBackgroundIDBDatabaseFileChild*>
     mFileActors;
 
-  nsTHashtable<nsISupportsHashKey> mReceivedBlobs;
-
   RefPtr<Observer> mObserver;
 
   // Weak refs, IDBMutableFile strongly owns this IDBDatabase object.
@@ -87,6 +86,7 @@ class IDBDatabase final
   bool mClosed;
   bool mInvalidated;
   bool mQuotaExceeded;
+  bool mIncreasedActiveDatabaseCount;
 
 public:
   static already_AddRefed<IDBDatabase>
@@ -95,17 +95,16 @@ public:
          indexedDB::BackgroundDatabaseChild* aActor,
          DatabaseSpec* aSpec);
 
-#ifdef DEBUG
-  void
-  AssertIsOnOwningThread() const;
-
-  PRThread*
-  OwningThread() const;
-#else
   void
   AssertIsOnOwningThread() const
+#ifdef DEBUG
+  ;
+#else
   { }
 #endif
+
+  nsIEventTarget*
+  EventTarget() const;
 
   const nsString&
   Name() const;
@@ -194,10 +193,10 @@ public:
   NoteFinishedFileActor(indexedDB::PBackgroundIDBDatabaseFileChild* aFileActor);
 
   void
-  NoteReceivedBlob(Blob* aBlob);
+  NoteActiveTransaction();
 
   void
-  DelayedMaybeExpireFileActors();
+  NoteInactiveTransaction();
 
   // XXX This doesn't really belong here... It's only needed for IDBMutableFile
   //     serialization and should be removed or fixed someday.
@@ -272,6 +271,10 @@ public:
   {
     AssertIsOnOwningThread();
 
+    // Decrease the number of active databases if it was not done in
+    // CloseInternal().
+    MaybeDecreaseActiveDatabaseCount();
+
     mBackgroundActor = nullptr;
   }
 
@@ -327,6 +330,9 @@ private:
   InvalidateMutableFiles();
 
   void
+  NoteInactiveTransactionDelayed();
+
+  void
   LogWarning(const char* aMessageName,
              const nsAString& aFilename,
              uint32_t aLineNumber,
@@ -339,6 +345,12 @@ private:
   // Only accessed by IDBIndex.
   nsresult
   RenameIndex(int64_t aObjectStoreId, int64_t aIndexId, const nsAString& aName);
+
+  void
+  IncreaseActiveDatabaseCount();
+
+  void
+  MaybeDecreaseActiveDatabaseCount();
 };
 
 } // namespace dom

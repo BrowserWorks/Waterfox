@@ -4,7 +4,6 @@
 "use strict";
 
 Cu.import("resource://gre/modules/FxAccountsClient.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/hawkrequest.js");
 Cu.import("resource://services-crypto/utils.js");
@@ -17,30 +16,30 @@ function run_test() {
 
 // https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#.2Faccount.2Fkeys
 var ACCOUNT_KEYS = {
-  keyFetch:     h("8081828384858687 88898a8b8c8d8e8f"+
+  keyFetch:     h("8081828384858687 88898a8b8c8d8e8f" +
                   "9091929394959697 98999a9b9c9d9e9f"),
 
-  response:     h("ee5c58845c7c9412 b11bbd20920c2fdd"+
-                  "d83c33c9cd2c2de2 d66b222613364636"+
-                  "c2c0f8cfbb7c6304 72c0bd88451342c6"+
-                  "c05b14ce342c5ad4 6ad89e84464c993c"+
-                  "3927d30230157d08 17a077eef4b20d97"+
+  response:     h("ee5c58845c7c9412 b11bbd20920c2fdd" +
+                  "d83c33c9cd2c2de2 d66b222613364636" +
+                  "c2c0f8cfbb7c6304 72c0bd88451342c6" +
+                  "c05b14ce342c5ad4 6ad89e84464c993c" +
+                  "3927d30230157d08 17a077eef4b20d97" +
                   "6f7a97363faf3f06 4c003ada7d01aa70"),
 
-  kA:           h("2021222324252627 28292a2b2c2d2e2f"+
+  kA:           h("2021222324252627 28292a2b2c2d2e2f" +
                   "3031323334353637 38393a3b3c3d3e3f"),
 
-  wrapKB:       h("4041424344454647 48494a4b4c4d4e4f"+
+  wrapKB:       h("4041424344454647 48494a4b4c4d4e4f" +
                   "5051525354555657 58595a5b5c5d5e5f"),
 };
 
 function deferredStop(server) {
-  let deferred = Promise.defer();
-  server.stop(deferred.resolve);
-  return deferred.promise;
+  return new Promise(resolve => {
+    server.stop(resolve);
+  });
 }
 
-add_task(function* test_authenticated_get_request() {
+add_task(async function test_authenticated_get_request() {
   let message = "{\"msg\": \"Great Success!\"}";
   let credentials = {
     id: "eyJleHBpcmVzIjogMTM2NTAxMDg5OC4x",
@@ -59,13 +58,13 @@ add_task(function* test_authenticated_get_request() {
 
   let client = new FxAccountsClient(server.baseURI);
 
-  let result = yield client._request("/foo", method, credentials);
+  let result = await client._request("/foo", method, credentials);
   do_check_eq("Great Success!", result.msg);
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_authenticated_post_request() {
+add_task(async function test_authenticated_post_request() {
   let credentials = {
     id: "eyJleHBpcmVzIjogMTM2NTAxMDg5OC4x",
     key: "qTZf4ZFpAMpMoeSsX3zVRjiqmNs=",
@@ -84,13 +83,13 @@ add_task(function* test_authenticated_post_request() {
 
   let client = new FxAccountsClient(server.baseURI);
 
-  let result = yield client._request("/foo", method, credentials, {foo: "bar"});
+  let result = await client._request("/foo", method, credentials, {foo: "bar"});
   do_check_eq("bar", result.foo);
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_500_error() {
+add_task(async function test_500_error() {
   let message = "<h1>Ooops!</h1>";
   let method = "GET";
 
@@ -103,17 +102,17 @@ add_task(function* test_500_error() {
   let client = new FxAccountsClient(server.baseURI);
 
   try {
-    yield client._request("/foo", method);
+    await client._request("/foo", method);
     do_throw("Expected to catch an exception");
   } catch (e) {
     do_check_eq(500, e.code);
     do_check_eq("Internal Server Error", e.message);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_backoffError() {
+add_task(async function test_backoffError() {
   let method = "GET";
   let server = httpd_setup({
     "/retryDelay": function(request, response) {
@@ -134,7 +133,7 @@ add_task(function* test_backoffError() {
   // Retry-After header sets client.backoffError
   do_check_eq(client.backoffError, null);
   try {
-    yield client._request("/retryDelay", method);
+    await client._request("/retryDelay", method);
   } catch (e) {
     do_check_eq(429, e.code);
     do_check_eq(30, e.retryAfter);
@@ -144,7 +143,7 @@ add_task(function* test_backoffError() {
   // While delay is in effect, client short-circuits any requests
   // and re-rejects with previous error.
   try {
-    yield client._request("/duringDelayIShouldNotBeCalled", method);
+    await client._request("/duringDelayIShouldNotBeCalled", method);
     throw new Error("I should not be reached");
   } catch (e) {
     do_check_eq(e.retryAfter, 30);
@@ -153,14 +152,14 @@ add_task(function* test_backoffError() {
   }
   // Once timer fires, client nulls error out and HTTP calls work again.
   client._clearBackoff();
-  let result = yield client._request("/duringDelayIShouldNotBeCalled", method);
+  let result = await client._request("/duringDelayIShouldNotBeCalled", method);
   do_check_eq(client.backoffError, null);
   do_check_eq(result.working, "yes");
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_signUp() {
+add_task(async function test_signUp() {
   let creationMessage_noKey = JSON.stringify({
     uid: "uid",
     sessionToken: "sessionToken"
@@ -219,7 +218,7 @@ add_task(function* test_signUp() {
 
   // Try to create an account without retrieving optional keys.
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signUp(unicodeUsername, unicodePassword);
+  let result = await client.signUp(unicodeUsername, unicodePassword);
   do_check_eq("uid", result.uid);
   do_check_eq("sessionToken", result.sessionToken);
   do_check_eq(undefined, result.keyFetchToken);
@@ -227,7 +226,7 @@ add_task(function* test_signUp() {
               "de6a2648b78284fcb9ffa81ba95803309cfba7af583c01a8a1a63e567234dd28");
 
   // Try to create an account retrieving optional keys.
-  result = yield client.signUp('you@example.org', 'pässwörd', true);
+  result = await client.signUp("you@example.org", "pässwörd", true);
   do_check_eq("uid", result.uid);
   do_check_eq("sessionToken", result.sessionToken);
   do_check_eq("keyFetchToken", result.keyFetchToken);
@@ -236,16 +235,16 @@ add_task(function* test_signUp() {
 
   // Try to create an existing account.  Triggers error path.
   try {
-    result = yield client.signUp(unicodeUsername, unicodePassword);
+    result = await client.signUp(unicodeUsername, unicodePassword);
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(101, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_signIn() {
+add_task(async function test_signIn() {
   let sessionMessage_noKey = JSON.stringify({
     sessionToken: FAKE_SESSION_TOKEN
   });
@@ -279,50 +278,43 @@ add_task(function* test_signIn() {
         response.setStatusLine(request.httpVersion, 200, "OK");
         response.bodyOutputStream.write(sessionMessage_noKey,
                                         sessionMessage_noKey.length);
-        return;
-      }
-      else if (jsonBody.email == "you@example.com") {
+      } else if (jsonBody.email == "you@example.com") {
         do_check_eq("keys=true", request._queryString);
         do_check_eq(jsonBody.authPW, "93d20ec50304d496d0707ec20d7e8c89459b6396ec5dd5b9e92809c5e42856c7");
         response.setStatusLine(request.httpVersion, 200, "OK");
         response.bodyOutputStream.write(sessionMessage_withKey,
                                         sessionMessage_withKey.length);
-        return;
-      }
-      else if (jsonBody.email == "You@example.com") {
+      } else if (jsonBody.email == "You@example.com") {
         // Error trying to sign in with a wrong capitalization
         response.setStatusLine(request.httpVersion, 400, "Bad request");
         response.bodyOutputStream.write(errorMessage_wrongCap,
                                         errorMessage_wrongCap.length);
-        return;
-      }
-      else {
+      } else {
         // Error trying to sign in to nonexistent account
         response.setStatusLine(request.httpVersion, 400, "Bad request");
         response.bodyOutputStream.write(errorMessage_notExistent,
                                         errorMessage_notExistent.length);
-        return;
       }
     },
   });
 
   // Login without retrieving optional keys
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signIn(unicodeUsername, 'bigsecret');
+  let result = await client.signIn(unicodeUsername, "bigsecret");
   do_check_eq(FAKE_SESSION_TOKEN, result.sessionToken);
   do_check_eq(result.unwrapBKey,
               "c076ec3f4af123a615157154c6e1d0d6293e514fd7b0221e32d50517ecf002b8");
   do_check_eq(undefined, result.keyFetchToken);
 
   // Login with retrieving optional keys
-  result = yield client.signIn('you@example.com', 'bigsecret', true);
+  result = await client.signIn("you@example.com", "bigsecret", true);
   do_check_eq(FAKE_SESSION_TOKEN, result.sessionToken);
   do_check_eq(result.unwrapBKey,
               "65970516211062112e955d6420bebe020269d6b6a91ebd288319fc8d0cb49624");
   do_check_eq("keyFetchToken", result.keyFetchToken);
 
   // Retry due to wrong email capitalization
-  result = yield client.signIn('You@example.com', 'bigsecret', true);
+  result = await client.signIn("You@example.com", "bigsecret", true);
   do_check_eq(FAKE_SESSION_TOKEN, result.sessionToken);
   do_check_eq(result.unwrapBKey,
               "65970516211062112e955d6420bebe020269d6b6a91ebd288319fc8d0cb49624");
@@ -330,16 +322,16 @@ add_task(function* test_signIn() {
 
   // Trigger error path
   try {
-    result = yield client.signIn("yøü@bad.example.org", "nofear");
+    result = await client.signIn("yøü@bad.example.org", "nofear");
     do_throw("Expected to catch an exception");
   } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_signOut() {
+add_task(async function test_signOut() {
   let signoutMessage = JSON.stringify({});
   let errorMessage = JSON.stringify({code: 400, errno: 102, error: "doesn't exist"});
   let signedOut = false;
@@ -357,26 +349,25 @@ add_task(function* test_signOut() {
       // Error trying to sign out of nonexistent account
       response.setStatusLine(request.httpVersion, 400, "Bad request");
       response.bodyOutputStream.write(errorMessage, errorMessage.length);
-      return;
     },
   });
 
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signOut("FakeSession");
+  let result = await client.signOut("FakeSession");
   do_check_eq(typeof result, "object");
 
   // Trigger error path
   try {
-    result = yield client.signOut("FakeSession");
+    result = await client.signOut("FakeSession");
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_recoveryEmailStatus() {
+add_task(async function test_recoveryEmailStatus() {
   let emailStatus = JSON.stringify({verified: true});
   let errorMessage = JSON.stringify({code: 400, errno: 102, error: "doesn't exist"});
   let tries = 0;
@@ -396,26 +387,25 @@ add_task(function* test_recoveryEmailStatus() {
       // Second call gets an error trying to query a nonexistent account
       response.setStatusLine(request.httpVersion, 400, "Bad request");
       response.bodyOutputStream.write(errorMessage, errorMessage.length);
-      return;
     },
   });
 
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.recoveryEmailStatus(FAKE_SESSION_TOKEN);
+  let result = await client.recoveryEmailStatus(FAKE_SESSION_TOKEN);
   do_check_eq(result.verified, true);
 
   // Trigger error path
   try {
-    result = yield client.recoveryEmailStatus("some bogus session");
+    result = await client.recoveryEmailStatus("some bogus session");
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_recoveryEmailStatusWithReason() {
+add_task(async function test_recoveryEmailStatusWithReason() {
   let emailStatus = JSON.stringify({verified: true});
   let server = httpd_setup({
     "/recovery_email/status": function(request, response) {
@@ -425,19 +415,18 @@ add_task(function* test_recoveryEmailStatusWithReason() {
 
       response.setStatusLine(request.httpVersion, 200, "OK");
       response.bodyOutputStream.write(emailStatus, emailStatus.length);
-      return;
     },
   });
 
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.recoveryEmailStatus(FAKE_SESSION_TOKEN, {
+  let result = await client.recoveryEmailStatus(FAKE_SESSION_TOKEN, {
     reason: "push",
   });
   do_check_eq(result.verified, true);
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_resendVerificationEmail() {
+add_task(async function test_resendVerificationEmail() {
   let emptyMessage = "{}";
   let errorMessage = JSON.stringify({code: 400, errno: 102, error: "doesn't exist"});
   let tries = 0;
@@ -455,26 +444,25 @@ add_task(function* test_resendVerificationEmail() {
       // Second call gets an error trying to query a nonexistent account
       response.setStatusLine(request.httpVersion, 400, "Bad request");
       response.bodyOutputStream.write(errorMessage, errorMessage.length);
-      return;
     },
   });
 
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.resendVerificationEmail(FAKE_SESSION_TOKEN);
+  let result = await client.resendVerificationEmail(FAKE_SESSION_TOKEN);
   do_check_eq(JSON.stringify(result), emptyMessage);
 
   // Trigger error path
   try {
-    result = yield client.resendVerificationEmail("some bogus session");
+    result = await client.resendVerificationEmail("some bogus session");
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_accountKeys() {
+add_task(async function test_accountKeys() {
   // Four calls to accountKeys().  The first one should work correctly, and we
   // should get a valid bundle back, in exchange for our keyFetch token, from
   // which we correctly derive kA and wrapKB.  The subsequent three calls
@@ -489,7 +477,7 @@ add_task(function* test_accountKeys() {
       do_check_true(request.hasHeader("Authorization"));
       attempt += 1;
 
-      switch(attempt) {
+      switch (attempt) {
         case 1:
           // First time succeeds
           response.setStatusLine(request.httpVersion, 200, "OK");
@@ -524,38 +512,38 @@ add_task(function* test_accountKeys() {
   let client = new FxAccountsClient(server.baseURI);
 
   // First try, all should be good
-  let result = yield client.accountKeys(ACCOUNT_KEYS.keyFetch);
+  let result = await client.accountKeys(ACCOUNT_KEYS.keyFetch);
   do_check_eq(CommonUtils.hexToBytes(ACCOUNT_KEYS.kA), result.kA);
   do_check_eq(CommonUtils.hexToBytes(ACCOUNT_KEYS.wrapKB), result.wrapKB);
 
   // Second try, empty bundle should trigger error
   try {
-    result = yield client.accountKeys(ACCOUNT_KEYS.keyFetch);
+    result = await client.accountKeys(ACCOUNT_KEYS.keyFetch);
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(expectedError.message, "failed to retrieve keys");
   }
 
   // Third try, bad bundle results in MAC error
   try {
-    result = yield client.accountKeys(ACCOUNT_KEYS.keyFetch);
+    result = await client.accountKeys(ACCOUNT_KEYS.keyFetch);
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(expectedError.message, "error unbundling encryption keys");
   }
 
   // Fourth try, pretend account doesn't exist
   try {
-    result = yield client.accountKeys(ACCOUNT_KEYS.keyFetch);
+    result = await client.accountKeys(ACCOUNT_KEYS.keyFetch);
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_signCertificate() {
+add_task(async function test_signCertificate() {
   let certSignMessage = JSON.stringify({cert: {bar: "baz"}});
   let errorMessage = JSON.stringify({code: 400, errno: 102, error: "doesn't exist"});
   let tries = 0;
@@ -578,27 +566,25 @@ add_task(function* test_signCertificate() {
       // Second attempt, trigger error
       response.setStatusLine(request.httpVersion, 400, "Bad request");
       response.bodyOutputStream.write(errorMessage, errorMessage.length);
-      return;
     },
   });
 
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signCertificate(FAKE_SESSION_TOKEN, JSON.stringify({foo: "bar"}), 600);
+  let result = await client.signCertificate(FAKE_SESSION_TOKEN, JSON.stringify({foo: "bar"}), 600);
   do_check_eq("baz", result.bar);
 
   // Account doesn't exist
   try {
-    result = yield client.signCertificate("bogus", JSON.stringify({foo: "bar"}), 600);
+    result = await client.signCertificate("bogus", JSON.stringify({foo: "bar"}), 600);
     do_throw("Expected to catch an exception");
-  } catch(expectedError) {
+  } catch (expectedError) {
     do_check_eq(102, expectedError.errno);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_accountExists() {
-  let sessionMessage = JSON.stringify({sessionToken: FAKE_SESSION_TOKEN});
+add_task(async function test_accountExists() {
   let existsMessage = JSON.stringify({error: "wrong password", code: 400, errno: 103});
   let doesntExistMessage = JSON.stringify({error: "no such account", code: 400, errno: 102});
   let emptyMessage = "{}";
@@ -631,7 +617,6 @@ add_task(function* test_accountExists() {
 
         default:
           throw new Error("Unexpected login from " + jsonBody.email);
-          break;
       }
     },
   });
@@ -639,26 +624,26 @@ add_task(function* test_accountExists() {
   let client = new FxAccountsClient(server.baseURI);
   let result;
 
-  result = yield client.accountExists("i.exist@example.com");
+  result = await client.accountExists("i.exist@example.com");
   do_check_true(result);
 
-  result = yield client.accountExists("i.also.exist@example.com");
+  result = await client.accountExists("i.also.exist@example.com");
   do_check_true(result);
 
-  result = yield client.accountExists("i.dont.exist@example.com");
+  result = await client.accountExists("i.dont.exist@example.com");
   do_check_false(result);
 
   try {
-    result = yield client.accountExists("i.break.things@example.com");
+    result = await client.accountExists("i.break.things@example.com");
     do_throw("Expected to catch an exception");
-  } catch(unexpectedError) {
+  } catch (unexpectedError) {
     do_check_eq(unexpectedError.code, 500);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_registerDevice() {
+add_task(async function test_registerDevice() {
   const DEVICE_ID = "device id";
   const DEVICE_NAME = "device name";
   const DEVICE_TYPE = "device type";
@@ -670,12 +655,14 @@ add_task(function* test_registerDevice() {
 
       if (body.id || !body.name || !body.type || Object.keys(body).length !== 2) {
         response.setStatusLine(request.httpVersion, 400, "Invalid request");
-        return response.bodyOutputStream.write("{}", 2);
+        response.bodyOutputStream.write("{}", 2);
+        return;
       }
 
       if (body.name === ERROR_NAME) {
         response.setStatusLine(request.httpVersion, 500, "Alas");
-        return response.bodyOutputStream.write("{}", 2);
+        response.bodyOutputStream.write("{}", 2);
+        return;
       }
 
       body.id = DEVICE_ID;
@@ -689,27 +676,27 @@ add_task(function* test_registerDevice() {
   });
 
   const client = new FxAccountsClient(server.baseURI);
-  const result = yield client.registerDevice(FAKE_SESSION_TOKEN, DEVICE_NAME, DEVICE_TYPE);
+  const result = await client.registerDevice(FAKE_SESSION_TOKEN, DEVICE_NAME, DEVICE_TYPE);
 
   do_check_true(result);
   do_check_eq(Object.keys(result).length, 4);
   do_check_eq(result.id, DEVICE_ID);
-  do_check_eq(typeof result.createdAt, 'number');
+  do_check_eq(typeof result.createdAt, "number");
   do_check_true(result.createdAt > 0);
   do_check_eq(result.name, DEVICE_NAME);
   do_check_eq(result.type, DEVICE_TYPE);
 
   try {
-    yield client.registerDevice(FAKE_SESSION_TOKEN, ERROR_NAME, DEVICE_TYPE);
+    await client.registerDevice(FAKE_SESSION_TOKEN, ERROR_NAME, DEVICE_TYPE);
     do_throw("Expected to catch an exception");
-  } catch(unexpectedError) {
+  } catch (unexpectedError) {
     do_check_eq(unexpectedError.code, 500);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_updateDevice() {
+add_task(async function test_updateDevice() {
   const DEVICE_ID = "some other id";
   const DEVICE_NAME = "some other name";
   const ERROR_ID = "test that the client promise rejects";
@@ -720,12 +707,14 @@ add_task(function* test_updateDevice() {
 
       if (!body.id || !body.name || body.type || Object.keys(body).length !== 2) {
         response.setStatusLine(request.httpVersion, 400, "Invalid request");
-        return response.bodyOutputStream.write("{}", 2);
+        response.bodyOutputStream.write("{}", 2);
+        return;
       }
 
       if (body.id === ERROR_ID) {
         response.setStatusLine(request.httpVersion, 500, "Alas");
-        return response.bodyOutputStream.write("{}", 2);
+        response.bodyOutputStream.write("{}", 2);
+        return;
       }
 
       const responseMessage = JSON.stringify(body);
@@ -736,7 +725,7 @@ add_task(function* test_updateDevice() {
   });
 
   const client = new FxAccountsClient(server.baseURI);
-  const result = yield client.updateDevice(FAKE_SESSION_TOKEN, DEVICE_ID, DEVICE_NAME);
+  const result = await client.updateDevice(FAKE_SESSION_TOKEN, DEVICE_ID, DEVICE_NAME);
 
   do_check_true(result);
   do_check_eq(Object.keys(result).length, 2);
@@ -744,18 +733,19 @@ add_task(function* test_updateDevice() {
   do_check_eq(result.name, DEVICE_NAME);
 
   try {
-    yield client.updateDevice(FAKE_SESSION_TOKEN, ERROR_ID, DEVICE_NAME);
+    await client.updateDevice(FAKE_SESSION_TOKEN, ERROR_ID, DEVICE_NAME);
     do_throw("Expected to catch an exception");
-  } catch(unexpectedError) {
+  } catch (unexpectedError) {
     do_check_eq(unexpectedError.code, 500);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_signOutAndDestroyDevice() {
+add_task(async function test_signOutAndDestroyDevice() {
   const DEVICE_ID = "device id";
   const ERROR_ID = "test that the client promise rejects";
+  let emptyMessage = "{}";
 
   const server = httpd_setup({
     "/account/device/destroy": function(request, response) {
@@ -763,12 +753,14 @@ add_task(function* test_signOutAndDestroyDevice() {
 
       if (!body.id) {
         response.setStatusLine(request.httpVersion, 400, "Invalid request");
-        return response.bodyOutputStream.write(emptyMessage, emptyMessage.length);
+        response.bodyOutputStream.write(emptyMessage, emptyMessage.length);
+        return;
       }
 
       if (body.id === ERROR_ID) {
         response.setStatusLine(request.httpVersion, 500, "Alas");
-        return response.bodyOutputStream.write("{}", 2);
+        response.bodyOutputStream.write("{}", 2);
+        return;
       }
 
       response.setStatusLine(request.httpVersion, 200, "OK");
@@ -777,22 +769,22 @@ add_task(function* test_signOutAndDestroyDevice() {
   });
 
   const client = new FxAccountsClient(server.baseURI);
-  const result = yield client.signOutAndDestroyDevice(FAKE_SESSION_TOKEN, DEVICE_ID);
+  const result = await client.signOutAndDestroyDevice(FAKE_SESSION_TOKEN, DEVICE_ID);
 
   do_check_true(result);
   do_check_eq(Object.keys(result).length, 0);
 
   try {
-    yield client.signOutAndDestroyDevice(FAKE_SESSION_TOKEN, ERROR_ID);
+    await client.signOutAndDestroyDevice(FAKE_SESSION_TOKEN, ERROR_ID);
     do_throw("Expected to catch an exception");
-  } catch(unexpectedError) {
+  } catch (unexpectedError) {
     do_check_eq(unexpectedError.code, 500);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_getDeviceList() {
+add_task(async function test_getDeviceList() {
   let canReturnDevices;
 
   const server = httpd_setup({
@@ -810,22 +802,22 @@ add_task(function* test_getDeviceList() {
   const client = new FxAccountsClient(server.baseURI);
 
   canReturnDevices = true;
-  const result = yield client.getDeviceList(FAKE_SESSION_TOKEN);
+  const result = await client.getDeviceList(FAKE_SESSION_TOKEN);
   do_check_true(Array.isArray(result));
   do_check_eq(result.length, 0);
 
   try {
     canReturnDevices = false;
-    yield client.getDeviceList(FAKE_SESSION_TOKEN);
+    await client.getDeviceList(FAKE_SESSION_TOKEN);
     do_throw("Expected to catch an exception");
-  } catch(unexpectedError) {
+  } catch (unexpectedError) {
     do_check_eq(unexpectedError.code, 500);
   }
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_client_metrics() {
+add_task(async function test_client_metrics() {
   function writeResp(response, msg) {
     if (typeof msg === "object") {
       msg = JSON.stringify(msg);
@@ -849,16 +841,16 @@ add_task(function* test_client_metrics() {
 
   let client = new FxAccountsClient(server.baseURI);
 
-  yield rejects(client.signOut(FAKE_SESSION_TOKEN, {
+  await Assert.rejects(client.signOut(FAKE_SESSION_TOKEN, {
     service: "sync",
   }), function(err) {
     return err.errno == 111;
   });
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
-add_task(function* test_email_case() {
+add_task(async function test_email_case() {
   let canonicalEmail = "greta.garbo@gmail.com";
   let clientEmail = "Greta.Garbo@gmail.COM";
   let attempts = 0;
@@ -904,11 +896,11 @@ add_task(function* test_email_case() {
 
   let client = new FxAccountsClient(server.baseURI);
 
-  let result = yield client.signIn(clientEmail, "123456");
+  let result = await client.signIn(clientEmail, "123456");
   do_check_eq(result.areWeHappy, "yes");
   do_check_eq(attempts, 2);
 
-  yield deferredStop(server);
+  await deferredStop(server);
 });
 
 // turn formatted test vectors into normal hex strings

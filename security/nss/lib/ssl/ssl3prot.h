@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* Private header file of libSSL.
  * Various and sundry protocol constants. DON'T CHANGE THESE. These
  * values are defined by the SSL 3.0 protocol specification.
@@ -9,15 +10,13 @@
 #ifndef __ssl3proto_h_
 #define __ssl3proto_h_
 
-typedef PRUint8 SSL3Opaque;
-
 typedef PRUint16 SSL3ProtocolVersion;
 /* version numbers are defined in sslproto.h */
 
 /* The TLS 1.3 draft version. Used to avoid negotiating
  * between incompatible pre-standard TLS 1.3 drafts.
  * TODO(ekr@rtfm.com): Remove when TLS 1.3 is published. */
-#define TLS_1_3_DRAFT_VERSION 13
+#define TLS_1_3_DRAFT_VERSION 18
 
 typedef PRUint16 ssl3CipherSuite;
 /* The cipher suites are defined in sslproto.h */
@@ -31,6 +30,7 @@ typedef PRUint16 ssl3CipherSuite;
 #define SSL3_RANDOM_LENGTH 32
 
 #define SSL3_RECORD_HEADER_LENGTH 5
+#define TLS13_RECORD_HEADER_LENGTH_SHORT 2
 
 /* SSL3_RECORD_HEADER_LENGTH + epoch/sequence_number */
 #define DTLS_RECORD_HEADER_LENGTH 13
@@ -60,12 +60,12 @@ typedef struct {
 
 typedef struct {
     SECItem content;
-    SSL3Opaque MAC[MAX_MAC_LENGTH];
+    PRUint8 MAC[MAX_MAC_LENGTH];
 } SSL3GenericStreamCipher;
 
 typedef struct {
     SECItem content;
-    SSL3Opaque MAC[MAX_MAC_LENGTH];
+    PRUint8 MAC[MAX_MAC_LENGTH];
     PRUint8 padding[MAX_PADDING_LENGTH];
     PRUint8 padding_length;
 } SSL3GenericBlockCipher;
@@ -116,8 +116,10 @@ typedef enum {
     unrecognized_name = 112,
     bad_certificate_status_response = 113,
     bad_certificate_hash_value = 114,
-    no_application_protocol = 120
+    no_application_protocol = 120,
 
+    /* invalid alert */
+    no_alert = 256
 } SSL3AlertDescription;
 
 typedef struct {
@@ -149,11 +151,11 @@ typedef struct {
 } SSL3HelloRequest;
 
 typedef struct {
-    SSL3Opaque rand[SSL3_RANDOM_LENGTH];
+    PRUint8 rand[SSL3_RANDOM_LENGTH];
 } SSL3Random;
 
 typedef struct {
-    SSL3Opaque id[32];
+    PRUint8 id[32];
     PRUint8 length;
 } SSL3SessionID;
 
@@ -184,19 +186,11 @@ typedef struct {
 typedef enum {
     kea_null,
     kea_rsa,
-    kea_rsa_export,
-    kea_rsa_export_1024,
     kea_dh_dss,
-    kea_dh_dss_export,
     kea_dh_rsa,
-    kea_dh_rsa_export,
     kea_dhe_dss,
-    kea_dhe_dss_export,
     kea_dhe_rsa,
-    kea_dhe_rsa_export,
     kea_dh_anon,
-    kea_dh_anon_export,
-    kea_rsa_fips,
     kea_ecdh_ecdsa,
     kea_ecdhe_ecdsa,
     kea_ecdh_rsa,
@@ -204,6 +198,7 @@ typedef enum {
     kea_ecdh_anon,
     kea_ecdhe_psk,
     kea_dhe_psk,
+    kea_tls13_any,
 } SSL3KeyExchangeAlgorithm;
 
 typedef struct {
@@ -240,13 +235,13 @@ typedef struct {
     union {
         PRUint8 raw[64];
         SSL3HashesIndividually s;
-        SECItem pointer_to_hash_input;
+        unsigned int transcriptLen;
     } u;
 } SSL3Hashes;
 
 typedef struct {
     union {
-        SSL3Opaque anonymous;
+        PRUint8 anonymous;
         SSL3Hashes certified;
     } u;
 } SSL3ServerKeyExchange;
@@ -265,11 +260,11 @@ typedef enum {
 } SSL3ClientCertificateType;
 
 typedef struct {
-    SSL3Opaque client_version[2];
-    SSL3Opaque random[46];
+    PRUint8 client_version[2];
+    PRUint8 random[46];
 } SSL3RSAPreMasterSecret;
 
-typedef SSL3Opaque SSL3MasterSecret[48];
+typedef PRUint8 SSL3MasterSecret[48];
 
 typedef enum {
     sender_client = 0x434c4e54,
@@ -279,7 +274,7 @@ typedef enum {
 typedef SSL3HashesIndividually SSL3Finished;
 
 typedef struct {
-    SSL3Opaque verify_data[12];
+    PRUint8 verify_data[12];
 } TLSFinished;
 
 /*
@@ -290,44 +285,27 @@ typedef struct {
 
 /* NewSessionTicket handshake message. */
 typedef struct {
-    PRUint32 received_timestamp;
+    PRTime received_timestamp;
     PRUint32 ticket_lifetime_hint;
     PRUint32 flags;
+    PRUint32 ticket_age_add;
+    PRUint32 max_early_data_size;
     SECItem ticket;
 } NewSessionTicket;
 
 typedef enum {
-    ticket_allow_early_data = 1,
-    ticket_allow_dhe_resumption = 2,
-    ticket_allow_psk_resumption = 4
-} TLS13SessionTicketFlags;
+    tls13_psk_ke = 0,
+    tls13_psk_dh_ke = 1
+} TLS13PskKEModes;
 
 typedef enum {
     CLIENT_AUTH_ANONYMOUS = 0,
     CLIENT_AUTH_CERTIFICATE = 1
 } ClientAuthenticationType;
 
-typedef struct {
-    ClientAuthenticationType client_auth_type;
-    union {
-        SSL3Opaque *certificate_list;
-    } identity;
-} ClientIdentity;
-
-#define SESS_TICKET_KEY_NAME_LEN 16
-#define SESS_TICKET_KEY_NAME_PREFIX "NSS!"
-#define SESS_TICKET_KEY_NAME_PREFIX_LEN 4
-#define SESS_TICKET_KEY_VAR_NAME_LEN 12
-
-typedef struct {
-    unsigned char *key_name;
-    unsigned char *iv;
-    SECItem encrypted_state;
-    unsigned char *mac;
-} EncryptedSessionTicket;
-
-#define TLS_EX_SESS_TICKET_MAC_LENGTH 32
-
-#define TLS_STE_NO_SERVER_NAME -1
+#define SELF_ENCRYPT_KEY_NAME_LEN 16
+#define SELF_ENCRYPT_KEY_NAME_PREFIX "NSS!"
+#define SELF_ENCRYPT_KEY_NAME_PREFIX_LEN 4
+#define SELF_ENCRYPT_KEY_VAR_NAME_LEN 12
 
 #endif /* __ssl3proto_h_ */

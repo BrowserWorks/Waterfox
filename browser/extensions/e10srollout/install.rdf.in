@@ -10,9 +10,10 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>e10srollout@mozilla.org</em:id>
-    <em:version>1.5</em:version>
+    <em:version>3.00</em:version>
     <em:type>2</em:type>
     <em:bootstrap>true</em:bootstrap>
+    <em:multiprocessCompatible>true</em:multiprocessCompatible>
 
     <!-- Target Application this theme can install into,
         with minimum and maximum supported versions. -->

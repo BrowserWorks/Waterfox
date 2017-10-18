@@ -16,22 +16,22 @@
 namespace js {
 namespace jit {
 
-static constexpr Register rax = { X86Encoding::rax };
-static constexpr Register rbx = { X86Encoding::rbx };
-static constexpr Register rcx = { X86Encoding::rcx };
-static constexpr Register rdx = { X86Encoding::rdx };
-static constexpr Register rsi = { X86Encoding::rsi };
-static constexpr Register rdi = { X86Encoding::rdi };
-static constexpr Register rbp = { X86Encoding::rbp };
-static constexpr Register r8  = { X86Encoding::r8  };
-static constexpr Register r9  = { X86Encoding::r9  };
-static constexpr Register r10 = { X86Encoding::r10 };
-static constexpr Register r11 = { X86Encoding::r11 };
-static constexpr Register r12 = { X86Encoding::r12 };
-static constexpr Register r13 = { X86Encoding::r13 };
-static constexpr Register r14 = { X86Encoding::r14 };
-static constexpr Register r15 = { X86Encoding::r15 };
-static constexpr Register rsp = { X86Encoding::rsp };
+static constexpr Register rax { X86Encoding::rax };
+static constexpr Register rbx { X86Encoding::rbx };
+static constexpr Register rcx { X86Encoding::rcx };
+static constexpr Register rdx { X86Encoding::rdx };
+static constexpr Register rsi { X86Encoding::rsi };
+static constexpr Register rdi { X86Encoding::rdi };
+static constexpr Register rbp { X86Encoding::rbp };
+static constexpr Register r8  { X86Encoding::r8  };
+static constexpr Register r9  { X86Encoding::r9  };
+static constexpr Register r10 { X86Encoding::r10 };
+static constexpr Register r11 { X86Encoding::r11 };
+static constexpr Register r12 { X86Encoding::r12 };
+static constexpr Register r13 { X86Encoding::r13 };
+static constexpr Register r14 { X86Encoding::r14 };
+static constexpr Register r15 { X86Encoding::r15 };
+static constexpr Register rsp { X86Encoding::rsp };
 
 static constexpr FloatRegister xmm0 = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
 static constexpr FloatRegister xmm1 = FloatRegister(X86Encoding::xmm1, FloatRegisters::Double);
@@ -60,7 +60,7 @@ static constexpr Register edi = rdi;
 static constexpr Register ebp = rbp;
 static constexpr Register esp = rsp;
 
-static constexpr Register InvalidReg = { X86Encoding::invalid_reg };
+static constexpr Register InvalidReg { X86Encoding::invalid_reg };
 static constexpr FloatRegister InvalidFloatReg = FloatRegister();
 
 static constexpr Register StackPointer = rsp;
@@ -149,23 +149,18 @@ static constexpr uint32_t NumFloatArgRegs = 8;
 static constexpr FloatRegister FloatArgRegs[NumFloatArgRegs] = { xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7 };
 #endif
 
-// TLS pointer argument register for WebAssembly functions. This must not alias
-// any other register used for passing function arguments or return values.
-// Preserved by WebAssembly functions.
-static constexpr Register WasmTlsReg = r14;
-
 // Registers used in the GenerateFFIIonExit Enable Activation block.
-static constexpr Register AsmJSIonExitRegCallee = r10;
-static constexpr Register AsmJSIonExitRegE0 = rax;
-static constexpr Register AsmJSIonExitRegE1 = rdi;
-static constexpr Register AsmJSIonExitRegE2 = rbx;
+static constexpr Register WasmIonExitRegCallee = r10;
+static constexpr Register WasmIonExitRegE0 = rax;
+static constexpr Register WasmIonExitRegE1 = rdi;
 
 // Registers used in the GenerateFFIIonExit Disable Activation block.
-static constexpr Register AsmJSIonExitRegReturnData = ecx;
-static constexpr Register AsmJSIonExitRegReturnType = ecx;
-static constexpr Register AsmJSIonExitRegD0 = rax;
-static constexpr Register AsmJSIonExitRegD1 = rdi;
-static constexpr Register AsmJSIonExitRegD2 = rbx;
+static constexpr Register WasmIonExitRegReturnData = ecx;
+static constexpr Register WasmIonExitRegReturnType = ecx;
+static constexpr Register WasmIonExitTlsReg = r14;
+static constexpr Register WasmIonExitRegD0 = rax;
+static constexpr Register WasmIonExitRegD1 = rdi;
+static constexpr Register WasmIonExitRegD2 = rbx;
 
 // Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
 static constexpr Register RegExpMatcherRegExpReg = CallTempReg0;
@@ -198,16 +193,23 @@ class ABIArgGenerator
 // Avoid r11, which is the MacroAssembler's ScratchReg.
 static constexpr Register ABINonArgReg0 = rax;
 static constexpr Register ABINonArgReg1 = rbx;
+static constexpr Register ABINonArgReg2 = r10;
 
 // Note: these three registers are all guaranteed to be different
 static constexpr Register ABINonArgReturnReg0 = r10;
 static constexpr Register ABINonArgReturnReg1 = r12;
 static constexpr Register ABINonVolatileReg = r13;
 
+// TLS pointer argument register for WebAssembly functions. This must not alias
+// any other register used for passing function arguments or return values.
+// Preserved by WebAssembly functions.
+static constexpr Register WasmTlsReg = r14;
+
 // Registers used for asm.js/wasm table calls. These registers must be disjoint
-// from the ABI argument registers and from each other.
-static constexpr Register WasmTableCallPtrReg = ABINonArgReg0;
+// from the ABI argument registers, WasmTlsReg and each other.
+static constexpr Register WasmTableCallScratchReg = ABINonArgReg0;
 static constexpr Register WasmTableCallSigReg = ABINonArgReg1;
+static constexpr Register WasmTableCallIndexReg = ABINonArgReg2;
 
 static constexpr Register OsrFrameReg = IntArgReg3;
 
@@ -237,7 +239,7 @@ static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
   "Stack alignment should be larger than any of the alignments which are used for "
   "spilled values.  Thus it should be larger than the alignment for SIMD accesses.");
 
-static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
+static const uint32_t WasmStackAlignment = SimdMemoryAlignment;
 
 static const Scale ScalePointer = TimesEight;
 
@@ -315,7 +317,7 @@ class Assembler : public AssemblerX86Shared
 
     // Copy the assembly code to the given buffer, and perform any pending
     // relocations relying on the target address.
-    void executableCopy(uint8_t* buffer);
+    void executableCopy(uint8_t* buffer, bool flushICache = true);
 
     // Actual assembly emitting functions.
 
@@ -357,6 +359,12 @@ class Assembler : public AssemblerX86Shared
     }
     CodeOffset movWithPatch(ImmPtr imm, Register dest) {
         return movWithPatch(ImmWord(uintptr_t(imm.value)), dest);
+    }
+
+    // This is for patching during code generation, not after.
+    void patchAddq(CodeOffset offset, int32_t n) {
+        unsigned char* code = masm.data();
+        X86Encoding::SetInt32(code + offset.offset(), n);
     }
 
     // Load an ImmWord value into a register. Note that this instruction will
@@ -552,6 +560,10 @@ class Assembler : public AssemblerX86Shared
 
     void addq(Imm32 imm, Register dest) {
         masm.addq_ir(imm.value, dest.encoding());
+    }
+    CodeOffset addqWithPatch(Imm32 imm, Register dest) {
+        masm.addq_i32r(imm.value, dest.encoding());
+        return CodeOffset(masm.currentOffset());
     }
     void addq(Imm32 imm, const Operand& dest) {
         switch (dest.kind()) {
@@ -756,7 +768,7 @@ class Assembler : public AssemblerX86Shared
     }
     void mov(wasm::SymbolicAddress imm, Register dest) {
         masm.movq_i64r(-1, dest.encoding());
-        append(AsmJSAbsoluteAddress(CodeOffset(masm.currentOffset()), imm));
+        append(wasm::SymbolicAccess(CodeOffset(masm.currentOffset()), imm));
     }
     void mov(const Operand& src, Register dest) {
         movq(src, dest);
@@ -830,14 +842,6 @@ class Assembler : public AssemblerX86Shared
         return CodeOffset(masm.leaq_rip(dest.encoding()).offset());
     }
 
-    void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        CodeOffset label = loadRipRelativeInt64(dest);
-        append(wasm::GlobalAccess(label, globalDataOffset));
-    }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
-    }
-
     void cmpq(Register rhs, Register lhs) {
         masm.cmpq_rr(rhs.encoding(), lhs.encoding());
     }
@@ -866,6 +870,9 @@ class Assembler : public AssemblerX86Shared
             break;
           case Operand::MEM_REG_DISP:
             masm.cmpq_im(rhs.value, lhs.disp(), lhs.base());
+            break;
+          case Operand::MEM_SCALE:
+            masm.cmpq_im(rhs.value, lhs.disp(), lhs.base(), lhs.index(), lhs.scale());
             break;
           case Operand::MEM_ADDRESS32:
             masm.cmpq_im(rhs.value, lhs.address());
@@ -983,7 +990,7 @@ PatchJump(CodeLocationJump jump, CodeLocationLabel label, ReprotectCode reprotec
 }
 
 static inline void
-PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
+PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitZoneGroup::BackedgeTarget target)
 {
     PatchJump(jump_, label);
 }

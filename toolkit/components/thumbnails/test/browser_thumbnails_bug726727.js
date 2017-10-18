@@ -7,13 +7,12 @@
  */
 function* runTests() {
   // Create a tab that shows an error page.
-  let tab = gBrowser.addTab("http://127.0.0.1:1/");
+  let tab = BrowserTestUtils.addTab(gBrowser, "http://127.0.0.1:1/");
   let browser = tab.linkedBrowser;
-  yield browser.addEventListener("DOMContentLoaded", function onLoad() {
-    browser.removeEventListener("DOMContentLoaded", onLoad, false);
+  yield browser.addEventListener("DOMContentLoaded", function() {
     PageThumbs.shouldStoreThumbnail(browser, (aResult) => {
       ok(!aResult, "we're not going to capture an error page");
       executeSoon(next);
     });
-  }, false);
+  }, {once: true});
 }

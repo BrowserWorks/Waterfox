@@ -1,0 +1,164 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+linux64-clang:
+    description: "Clang toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(clang)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-clang-linux.sh
+        resources:
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/clang.tar.xz
+    toolchains:
+        - linux64-gcc
+
+linux64-clang-tidy:
+    description: "Clang-tidy build"
+    index:
+        product: static-analysis
+        job-name: linux64-clang-tidy
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(clang-tidy)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-clang-tidy-linux.sh
+        resources:
+            - 'build/clang-plugin/**'
+            - 'build/build-clang/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/clang-tidy.tar.xz
+    toolchains:
+        - linux64-gcc
+
+linux64-gcc:
+    description: "GCC toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(gcc)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-gcc-linux.sh
+        resources:
+            - 'build/unix/build-gcc/**'
+        toolchain-artifact: public/build/gcc.tar.xz
+
+linux64-binutils:
+    description: "Binutils toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(binutil)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-binutils-linux.sh
+        resources:
+            - 'build/unix/build-binutils/**'
+        toolchain-artifact: public/build/binutils.tar.xz
+
+linux64-cctools-port:
+    description: "cctools-port toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(cctools)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-cctools-port.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/cctools.tar.xz
+    toolchains:
+        - linux64-clang
+
+linux64-hfsplus:
+    description: "hfsplus toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(hfs+)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-hfsplus-linux.sh
+        resources:
+            - 'build/unix/build-hfsplus/**'
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/hfsplus-tools.tar.xz
+    toolchains:
+        - linux64-clang
+
+linux64-libdmg:
+    description: "libdmg-hfsplus toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(libdmg-hfs+)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+    run:
+        using: toolchain-script
+        script: build-libdmg-hfsplus.sh
+        toolchain-artifact: public/build/dmg.tar.xz
+
+linux64-sccache:
+    description: "sccache toolchain build"
+    treeherder:
+        kind: build
+        platform: toolchains/opt
+        symbol: TL(sccache)
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        docker-image: {in-tree: desktop-build}
+        max-run-time: 36000
+        env:
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/clang.manifest"
+    run:
+        using: toolchain-script
+        script: build-sccache.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
+        toolchain-artifact: public/build/sccache2.tar.xz
+    toolchains:
+        - linux64-clang

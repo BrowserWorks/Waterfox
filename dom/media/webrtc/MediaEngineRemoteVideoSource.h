@@ -20,6 +20,8 @@
 #include "nsDirectoryServiceDefs.h"
 #include "nsComponentManagerUtils.h"
 
+// Avoid warnings about redefinition of WARN_UNUSED_RESULT
+#include "ipc/IPCMessageUtils.h"
 #include "VideoUtils.h"
 #include "MediaEngineCameraVideoSource.h"
 #include "VideoSegment.h"
@@ -30,17 +32,10 @@
 #include "MediaEngineWrapper.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
 
-// WebRTC library includes follow
-#include "webrtc/common.h"
-#include "webrtc/video_engine/include/vie_capture.h"
-#include "webrtc/video_engine/include/vie_render.h"
+// Camera Access via IPC
 #include "CamerasChild.h"
 
 #include "NullTransport.h"
-
-namespace webrtc {
-class I420VideoFrame;
-}
 
 namespace mozilla {
 
@@ -48,34 +43,28 @@ namespace mozilla {
  * The WebRTC implementation of the MediaEngine interface.
  */
 class MediaEngineRemoteVideoSource : public MediaEngineCameraVideoSource,
-                                     public webrtc::ExternalRenderer
+                                     public camera::FrameRelay
 {
   typedef MediaEngineCameraVideoSource Super;
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
+  // Old ExternalRenderer
+  void FrameSizeChange(unsigned int w, unsigned int h) override;
   // ExternalRenderer
-  int FrameSizeChange(unsigned int w, unsigned int h,
-                      unsigned int streams) override;
-  int DeliverFrame(unsigned char* buffer,
-                   size_t size,
-                   uint32_t time_stamp,
-                   int64_t ntp_time,
-                   int64_t render_time,
-                   void *handle) override;
-  // XXX!!!! FIX THIS
-  int DeliverI420Frame(const webrtc::I420VideoFrame& webrtc_frame) override { return 0; };
-  bool IsTextureSupported() override { return false; };
+  int DeliverFrame(uint8_t* buffer,
+                   const camera::VideoFrameProperties& properties) override;
 
   // MediaEngineCameraVideoSource
   MediaEngineRemoteVideoSource(int aIndex, mozilla::camera::CaptureEngine aCapEngine,
                                dom::MediaSourceEnum aMediaSource,
+                               bool aScary = false,
                                const char* aMonitorName = "RemoteVideo.Monitor");
 
   nsresult Allocate(const dom::MediaTrackConstraints& aConstraints,
                     const MediaEnginePrefs& aPrefs,
                     const nsString& aDeviceId,
-                    const nsACString& aOrigin,
+                    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
                     AllocationHandle** aOutHandle,
                     const char** aOutBadConstraint) override;
   nsresult Deallocate(AllocationHandle* aHandle) override;
@@ -103,6 +92,8 @@ public:
 
   void Shutdown() override;
 
+  bool GetScary() const override { return mScary; }
+
 protected:
   ~MediaEngineRemoteVideoSource() { }
 
@@ -125,6 +116,7 @@ private:
 
   // To only restart camera when needed, we keep track previous settings.
   webrtc::CaptureCapability mLastCapability;
+  bool mScary;
 };
 
 }

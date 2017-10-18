@@ -3,13 +3,15 @@
 Unit-Tests for moznetwork
 """
 
-import os
 import mock
 import mozinfo
 import moznetwork
 import re
 import subprocess
 import unittest
+from distutils.spawn import find_executable
+
+import mozunit
 
 
 def verify_ip_in_list(ip):
@@ -27,21 +29,28 @@ def verify_ip_in_list(ip):
     # Regex to match IPv4 addresses.
     # 0-255.0-255.0-255.0-255, note order is important here.
     regexip = re.compile("((25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.){3}"
-                              "(25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)")
+                         "(25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)")
 
-    if mozinfo.isLinux or mozinfo.isMac or mozinfo.isBsd:
-        # if "/sbin/ifconfig" exist, use it because it may not be in the
-        # PATH (at least on some linux platforms)
-        if os.path.isfile('/sbin/ifconfig') and os.access('/sbin/ifconfig',
-                                                           os.X_OK):
-            args = ['/sbin/ifconfig']
-        else:
-            args = ["ifconfig"]
+    commands = (
+        ['ip', 'addr', 'show'],
+        ['ifconfig'],
+        ['ipconfig'],
+        # Explicitly search '/sbin' because it doesn't always appear
+        # to be on the $PATH of all systems
+        ['/sbin/ip', 'addr', 'show'],
+        ['/sbin/ifconfig'],
+    )
 
-    if mozinfo.isWin:
-        args = ["ipconfig"]
+    cmd = None
+    for command in commands:
+        if find_executable(command[0]):
+            cmd = command
+            break
+    else:
+        raise OSError("No program for detecting ip address found! Ensure one of 'ip', "
+                      "'ifconfig' or 'ipconfig' exists on your $PATH.")
 
-    ps = subprocess.Popen(args, stdout=subprocess.PIPE)
+    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     standardoutput, standarderror = ps.communicate()
 
     # Generate a list of IPs by parsing the output of ip/ifconfig
@@ -82,4 +91,4 @@ class TestGetIP(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

@@ -2,6 +2,11 @@
 
 Components.utils.import("resource://gre/modules/Schemas.jsm");
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
+Components.utils.import("resource://gre/modules/ExtensionCommon.jsm");
+
+let {LocalAPIImplementation, SchemaAPIInterface} = ExtensionCommon;
+
+const global = this;
 
 let json = [
   {namespace: "testing",
@@ -71,6 +76,7 @@ let json = [
            name: "sub_foo",
            type: "function",
            parameters: [],
+           returns: {type: "integer"},
          },
        ],
      },
@@ -81,7 +87,7 @@ let json = [
        name: "foo",
        type: "function",
        parameters: [
-         {name: "arg1", type: "integer", optional: true},
+         {name: "arg1", type: "integer", optional: true, default: 99},
          {name: "arg2", type: "boolean", optional: true},
        ],
      },
@@ -207,6 +213,7 @@ let json = [
            name: "arg",
            type: "object",
            properties: {
+             hostname: {type: "string", "format": "hostname", "optional": true},
              url: {type: "string", "format": "url", "optional": true},
              relativeUrl: {type: "string", "format": "relativeUrl", "optional": true},
              strictRelativeUrl: {type: "string", "format": "strictRelativeUrl", "optional": true},
@@ -337,9 +344,17 @@ let json = [
        extraParameters: [{
          name: "filter",
          type: "integer",
+         optional: true,
+         default: 1,
        }],
      },
    ],
+  },
+  {
+    namespace: "foreign",
+    properties: {
+      foreignRef: {$ref: "testing.submodule"},
+    },
   },
   {
     namespace: "inject",
@@ -371,7 +386,7 @@ let talliedErrors = [];
 function checkErrors(errors) {
   do_check_eq(talliedErrors.length, errors.length, "Got expected number of errors");
   for (let [i, error] of errors.entries()) {
-    do_check_true(i in talliedErrors && talliedErrors[i].includes(error),
+    do_check_true(i in talliedErrors && String(talliedErrors[i]).includes(error),
                   `${JSON.stringify(error)} is a substring of error ${JSON.stringify(talliedErrors[i])}`);
   }
 
@@ -380,8 +395,49 @@ function checkErrors(errors) {
 
 let permissions = new Set();
 
+class TallyingAPIImplementation extends SchemaAPIInterface {
+  constructor(namespace, name) {
+    super();
+    this.namespace = namespace;
+    this.name = name;
+  }
+
+  callFunction(args) {
+    tally("call", this.namespace, this.name, args);
+    if (this.name === "sub_foo") {
+      return 13;
+    }
+  }
+
+  callFunctionNoReturn(args) {
+    tally("call", this.namespace, this.name, args);
+  }
+
+  getProperty() {
+    tally("get", this.namespace, this.name);
+  }
+
+  setProperty(value) {
+    tally("set", this.namespace, this.name, value);
+  }
+
+  addListener(listener, args) {
+    tally("addListener", this.namespace, this.name, [listener, args]);
+  }
+
+  removeListener(listener) {
+    tally("removeListener", this.namespace, this.name, [listener]);
+  }
+
+  hasListener(listener) {
+    tally("hasListener", this.namespace, this.name, [listener]);
+  }
+}
+
 let wrapper = {
   url: "moz-extension://b66e3509-cdb3-44f6-8eb8-c8b39b3a1d27/",
+
+  cloneScope: global,
 
   checkLoadURL(url) {
     return !url.startsWith("chrome:");
@@ -401,69 +457,42 @@ let wrapper = {
     return permissions.has(permission);
   },
 
-  callFunction(path, name, args) {
-    let ns = path.join(".");
-    tally("call", ns, name, args);
+  shouldInject(ns, name) {
+    return name != "do-not-inject";
   },
 
-  callFunctionNoReturn(path, name, args) {
-    let ns = path.join(".");
-    tally("call", ns, name, args);
-  },
-
-  shouldInject(ns) {
-    return ns != "do-not-inject";
-  },
-
-  getProperty(path, name) {
-    let ns = path.join(".");
-    tally("get", ns, name);
-  },
-
-  setProperty(path, name, value) {
-    let ns = path.join(".");
-    tally("set", ns, name, value);
-  },
-
-  addListener(path, name, listener, args) {
-    let ns = path.join(".");
-    tally("addListener", ns, name, [listener, args]);
-  },
-  removeListener(path, name, listener) {
-    let ns = path.join(".");
-    tally("removeListener", ns, name, [listener]);
-  },
-  hasListener(path, name, listener) {
-    let ns = path.join(".");
-    tally("hasListener", ns, name, [listener]);
+  getImplementation(namespace, name) {
+    return new TallyingAPIImplementation(namespace, name);
   },
 };
 
-add_task(function* () {
+add_task(async function() {
   let url = "data:," + JSON.stringify(json);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
+  tallied = null;
   Schemas.inject(root, wrapper);
+  do_check_eq(tallied, null);
 
   do_check_eq(root.testing.PROP1, 20, "simple value property");
   do_check_eq(root.testing.type1.VALUE1, "value1", "enum type");
   do_check_eq(root.testing.type1.VALUE2, "value2", "enum type");
 
   do_check_eq("inject" in root, true, "namespace 'inject' should be injected");
-  do_check_eq("do-not-inject" in root, false, "namespace 'do-not-inject' should not be injected");
+  do_check_eq(root["do-not-inject"], undefined, "namespace 'do-not-inject' should not be injected");
 
   root.testing.foo(11, true);
   verify("call", "testing", "foo", [11, true]);
 
   root.testing.foo(true);
-  verify("call", "testing", "foo", [null, true]);
+  verify("call", "testing", "foo", [99, true]);
 
   root.testing.foo(null, true);
-  verify("call", "testing", "foo", [null, true]);
+  verify("call", "testing", "foo", [99, true]);
 
   root.testing.foo(undefined, true);
-  verify("call", "testing", "foo", [null, true]);
+  verify("call", "testing", "foo", [99, true]);
 
   root.testing.foo(11);
   verify("call", "testing", "foo", [11, null]);
@@ -597,17 +626,32 @@ add_task(function* () {
                 /String "DEADcow" must match \/\^\[0-9a-f\]\+\$\/i/,
                 "should throw for non-match");
 
+  root.testing.format({hostname: "foo"});
+  verify("call", "testing", "format", [{hostname: "foo",
+                                        relativeUrl: null,
+                                        strictRelativeUrl: null,
+                                        url: null}]);
+  tallied = null;
+
+  for (let invalid of ["", " ", "http://foo", "foo/bar", "foo.com/", "foo?"]) {
+    Assert.throws(() => root.testing.format({hostname: invalid}),
+                  /Invalid hostname/,
+                  "should throw for invalid hostname");
+  }
+
   root.testing.format({url: "http://foo/bar",
                        relativeUrl: "http://foo/bar"});
-  verify("call", "testing", "format", [{url: "http://foo/bar",
+  verify("call", "testing", "format", [{hostname: null,
                                         relativeUrl: "http://foo/bar",
-                                        strictRelativeUrl: null}]);
+                                        strictRelativeUrl: null,
+                                        url: "http://foo/bar"}]);
   tallied = null;
 
   root.testing.format({relativeUrl: "foo.html", strictRelativeUrl: "foo.html"});
-  verify("call", "testing", "format", [{url: null,
+  verify("call", "testing", "format", [{hostname: null,
                                         relativeUrl: `${wrapper.url}foo.html`,
-                                        strictRelativeUrl: `${wrapper.url}foo.html`}]);
+                                        strictRelativeUrl: `${wrapper.url}foo.html`,
+                                        url: null}]);
   tallied = null;
 
   for (let format of ["url", "relativeUrl"]) {
@@ -616,8 +660,8 @@ add_task(function* () {
                   "should throw for access denied");
   }
 
-  for (let url of ["//foo.html", "http://foo/bar.html"]) {
-    Assert.throws(() => root.testing.format({strictRelativeUrl: url}),
+  for (let urlString of ["//foo.html", "http://foo/bar.html"]) {
+    Assert.throws(() => root.testing.format({strictRelativeUrl: urlString}),
                   /must be a relative URL/,
                   "should throw for non-relative URL");
   }
@@ -660,30 +704,30 @@ add_task(function* () {
   });
 
   root.testing.deep({foo: {bar: [{baz: {required: 12, optional: "42"}}]}});
-  verify("call", "testing", "deep", [{foo: {bar: [{baz: {required: 12, optional: "42"}}]}}]);
+  verify("call", "testing", "deep", [{foo: {bar: [{baz: {optional: "42", required: 12}}]}}]);
   tallied = null;
 
   Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {optional: "42"}}]}}),
                 /Type error for parameter arg \(Error processing foo\.bar\.0\.baz: Property "required" is required\) for testing\.deep/,
                 "should throw with the correct object path");
 
-  Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {required: 12, optional: 42}}]}}),
+  Assert.throws(() => root.testing.deep({foo: {bar: [{baz: {optional: 42, required: 12}}]}}),
                 /Type error for parameter arg \(Error processing foo\.bar\.0\.baz\.optional: Expected string instead of 42\) for testing\.deep/,
                 "should throw with the correct object path");
 
 
   talliedErrors.length = 0;
 
-  root.testing.errors({warn: "0123", ignore: "0123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: "0123", ignore: "0123", default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "0123", warn: "0123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: "0123", warn: "0123"}]);
   checkErrors([]);
 
-  root.testing.errors({warn: "0123", ignore: "x123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: "0123", ignore: null, default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "x123", warn: "0123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: null,  warn: "0123"}]);
   checkErrors([]);
 
-  root.testing.errors({warn: "x123", ignore: "0123", default: "0123"});
-  verify("call", "testing", "errors", [{warn: null, ignore: "0123", default: "0123"}]);
+  root.testing.errors({default: "0123", ignore: "0123", warn: "x123"});
+  verify("call", "testing", "errors", [{default: "0123", ignore: "0123", warn: null}]);
   checkErrors([
     'String "x123" must match /^\\d+$/',
   ]);
@@ -715,6 +759,12 @@ add_task(function* () {
   do_check_eq(JSON.stringify(tallied[3][1]), JSON.stringify([10]));
   tallied = null;
 
+  root.testing.onBar.addListener(f);
+  do_check_eq(JSON.stringify(tallied.slice(0, -1)), JSON.stringify(["addListener", "testing", "onBar"]));
+  do_check_eq(tallied[3][0], f);
+  do_check_eq(JSON.stringify(tallied[3][1]), JSON.stringify([1]));
+  tallied = null;
+
   Assert.throws(() => root.testing.onBar.addListener(f, "hi"),
                 /Incorrect argument types/,
                 "addListener with wrong extra parameter should throw");
@@ -726,17 +776,17 @@ add_task(function* () {
                 "should throw when passing a Proxy");
 
   if (Symbol.toStringTag) {
-    let target = {prop1: 12, prop2: ["value1", "value3"]};
-    target[Symbol.toStringTag] = () => "[object Object]";
-    let proxy = new Proxy(target, {});
-    Assert.throws(() => root.testing.quack(proxy),
+    let stringTarget = {prop1: 12, prop2: ["value1", "value3"]};
+    stringTarget[Symbol.toStringTag] = () => "[object Object]";
+    let stringProxy = new Proxy(stringTarget, {});
+    Assert.throws(() => root.testing.quack(stringProxy),
                   /Expected a plain JavaScript object, got a Proxy/,
                   "should throw when passing a Proxy");
   }
 
 
   root.testing.localize({foo: "__MSG_foo__", bar: "__MSG_foo__", url: "__MSG_http://example.com/__"});
-  verify("call", "testing", "localize", [{foo: "FOO", bar: "__MSG_foo__", url: "http://example.com/"}]);
+  verify("call", "testing", "localize", [{bar: "__MSG_foo__", foo: "FOO", url: "http://example.com/"}]);
   tallied = null;
 
 
@@ -781,6 +831,10 @@ add_task(function* () {
   Assert.throws(() => root.testing.prop4.sub_foo(),
                 /root.testing.prop4 is undefined/,
                 "should throw for unsupported submodule");
+
+  root.foreign.foreignRef.sub_foo();
+  verify("call", "foreign.foreignRef", "sub_foo", []);
+  tallied = null;
 });
 
 let deprecatedJson = [
@@ -892,9 +946,9 @@ let deprecatedJson = [
   },
 ];
 
-add_task(function* testDeprecation() {
+add_task(async function testDeprecation() {
   let url = "data:," + JSON.stringify(deprecatedJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1046,9 +1100,9 @@ let choicesJson = [
    ]},
 ];
 
-add_task(function* testChoices() {
+add_task(async function testChoices() {
   let url = "data:," + JSON.stringify(choicesJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1056,7 +1110,7 @@ add_task(function* testChoices() {
   talliedErrors.length = 0;
 
   Assert.throws(() => root.choices.meh("frog"),
-                /Value must either: be one of \["foo", "bar", "baz"\], match the pattern \/florg\.\*meh\/, or be an integer value/);
+                /Value "frog" must either: be one of \["foo", "bar", "baz"\], match the pattern \/florg\.\*meh\/, or be an integer value/);
 
   Assert.throws(() => root.choices.meh(4),
                 /be a string value, or be at least 12/);
@@ -1131,9 +1185,9 @@ let permissionsJson = [
    ]},
 ];
 
-add_task(function* testPermissions() {
+add_task(async function testPermissions() {
   let url = "data:," + JSON.stringify(permissionsJson);
-  yield Schemas.load(url);
+  await Schemas.load(url);
 
   let root = {};
   Schemas.inject(root, wrapper);
@@ -1141,9 +1195,9 @@ add_task(function* testPermissions() {
   equal(typeof root.noPerms, "object", "noPerms namespace should exist");
   equal(typeof root.noPerms.noPerms, "function", "noPerms.noPerms method should exist");
 
-  ok(!("fooPerm" in root.noPerms), "noPerms.fooPerm should not method exist");
+  equal(root.noPerms.fooPerm, undefined, "noPerms.fooPerm should not method exist");
 
-  ok(!("fooPerm" in root), "fooPerm namespace should not exist");
+  equal(root.fooPerm, undefined, "fooPerm namespace should not exist");
 
 
   do_print('Add "foo" permission');
@@ -1159,7 +1213,7 @@ add_task(function* testPermissions() {
   equal(typeof root.fooPerm, "object", "fooPerm namespace should exist");
   equal(typeof root.fooPerm.noPerms, "function", "noPerms.noPerms method should exist");
 
-  ok(!("fooBarPerm" in root.fooPerm), "fooPerm.fooBarPerm method should not exist");
+  equal(root.fooPerm.fooBarPerm, undefined, "fooPerm.fooBarPerm method should not exist");
 
 
   do_print('Add "foo.bar" permission');
@@ -1175,4 +1229,391 @@ add_task(function* testPermissions() {
   equal(typeof root.fooPerm, "object", "fooPerm namespace should exist");
   equal(typeof root.fooPerm.noPerms, "function", "noPerms.noPerms method should exist");
   equal(typeof root.fooPerm.fooBarPerm, "function", "noPerms.fooBarPerm method should exist");
+});
+
+let nestedNamespaceJson = [
+  {
+    "namespace": "nested.namespace",
+    "types": [
+      {
+        "id": "CustomType",
+        "type": "object",
+        "events": [
+          {
+            "name": "onEvent",
+            "type": "function",
+          },
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+          },
+        },
+        "functions": [
+          {
+            "name": "functionOnCustomType",
+            "type": "function",
+            "parameters": [
+              {
+                "name": "title",
+                "type": "string",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    "properties": {
+      "instanceOfCustomType": {
+        "$ref": "CustomType",
+      },
+    },
+    "functions": [
+      {
+        "name": "create",
+        "type": "function",
+        "parameters": [
+          {
+            "name": "title",
+            "type": "string",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+add_task(async function testNestedNamespace() {
+  let url = "data:," + JSON.stringify(nestedNamespaceJson);
+
+  await Schemas.load(url);
+
+  let root = {};
+  Schemas.inject(root, wrapper);
+
+  talliedErrors.length = 0;
+
+  ok(root.nested, "The root object contains the first namespace level");
+  ok(root.nested.namespace, "The first level object contains the second namespace level");
+
+  ok(root.nested.namespace.create, "Got the expected function in the nested namespace");
+  do_check_eq(typeof root.nested.namespace.create, "function",
+     "The property is a function as expected");
+
+  let {instanceOfCustomType} = root.nested.namespace;
+
+  ok(instanceOfCustomType,
+     "Got the expected instance of the CustomType defined in the schema");
+  ok(instanceOfCustomType.functionOnCustomType,
+     "Got the expected method in the CustomType instance");
+  ok(instanceOfCustomType.onEvent &&
+     instanceOfCustomType.onEvent.addListener &&
+     typeof instanceOfCustomType.onEvent.addListener == "function",
+     "Got the expected event defined in the CustomType instance");
+
+  instanceOfCustomType.functionOnCustomType("param_value");
+  verify("call", "nested.namespace.instanceOfCustomType",
+         "functionOnCustomType", ["param_value"]);
+
+  let fakeListener = () => {};
+  instanceOfCustomType.onEvent.addListener(fakeListener);
+  verify("addListener", "nested.namespace.instanceOfCustomType",
+         "onEvent", [fakeListener, []]);
+  instanceOfCustomType.onEvent.removeListener(fakeListener);
+  verify("removeListener", "nested.namespace.instanceOfCustomType",
+         "onEvent", [fakeListener]);
+
+  // TODO: test support properties in a SubModuleType defined in the schema,
+  // once implemented, e.g.:
+  // ok("url" in instanceOfCustomType,
+  //   "Got the expected property defined in the CustomType instance");
+});
+
+let $importJson = [
+  {
+    namespace: "from_the",
+    $import: "future",
+  },
+  {
+    namespace: "future",
+    properties: {
+      PROP1: {value: "original value"},
+      PROP2: {value: "second original"},
+    },
+    types: [
+      {
+        id: "Colour",
+        type: "string",
+        enum: ["red", "white", "blue"],
+      },
+    ],
+    functions: [
+      {
+        name: "dye",
+        type: "function",
+        parameters: [
+          {name: "arg", $ref: "Colour"},
+        ],
+      },
+    ],
+  },
+  {
+    namespace: "embrace",
+    $import: "future",
+    properties: {
+      PROP2: {value: "overridden value"},
+    },
+    types: [
+      {
+        id: "Colour",
+        type: "string",
+        enum: ["blue", "orange"],
+      },
+    ],
+  },
+];
+
+add_task(async function test_$import() {
+  let url = "data:," + JSON.stringify($importJson);
+  await Schemas.load(url);
+
+  let root = {};
+  tallied = null;
+  Schemas.inject(root, wrapper);
+  equal(tallied, null);
+
+  equal(root.from_the.PROP1, "original value", "imported property");
+  equal(root.from_the.PROP2, "second original", "second imported property");
+  equal(root.from_the.Colour.RED, "red", "imported enum type");
+  equal(typeof root.from_the.dye, "function", "imported function");
+
+  root.from_the.dye("white");
+  verify("call", "from_the", "dye", ["white"]);
+
+  Assert.throws(() => root.from_the.dye("orange"),
+                /Invalid enumeration value/,
+                "original imported argument type Colour doesn't include 'orange'");
+
+  equal(root.embrace.PROP1, "original value", "imported property");
+  equal(root.embrace.PROP2, "overridden value", "overridden property");
+  equal(root.embrace.Colour.ORANGE, "orange", "overridden enum type");
+  equal(typeof root.embrace.dye, "function", "imported function");
+
+  root.embrace.dye("orange");
+  verify("call", "embrace", "dye", ["orange"]);
+
+  Assert.throws(() => root.embrace.dye("white"),
+                /Invalid enumeration value/,
+                "overridden argument type Colour doesn't include 'white'");
+});
+
+add_task(async function testLocalAPIImplementation() {
+  let countGet2 = 0;
+  let countProp3 = 0;
+  let countProp3SubFoo = 0;
+
+  let testingApiObj = {
+    get PROP1() {
+      // PROP1 is a schema-defined constant.
+      throw new Error("Unexpected get PROP1");
+    },
+    get prop2() {
+      ++countGet2;
+      return "prop2 val";
+    },
+    get prop3() {
+      throw new Error("Unexpected get prop3");
+    },
+    set prop3(v) {
+      // prop3 is a submodule, defined as a function, so the API should not pass
+      // through assignment to prop3.
+      throw new Error("Unexpected set prop3");
+    },
+  };
+  let submoduleApiObj = {
+    get sub_foo() {
+      ++countProp3;
+      return () => {
+        return ++countProp3SubFoo;
+      };
+    },
+  };
+
+  let localWrapper = {
+    cloneScope: global,
+    shouldInject(ns, name) {
+      return name == "testing" || ns == "testing" || ns == "testing.prop3";
+    },
+    getImplementation(ns, name) {
+      do_check_true(ns == "testing" || ns == "testing.prop3");
+      if (ns == "testing.prop3" && name == "sub_foo") {
+        // It is fine to use `null` here because we don't call async functions.
+        return new LocalAPIImplementation(submoduleApiObj, name, null);
+      }
+      // It is fine to use `null` here because we don't call async functions.
+      return new LocalAPIImplementation(testingApiObj, name, null);
+    },
+  };
+
+  let root = {};
+  Schemas.inject(root, localWrapper);
+  do_check_eq(countGet2, 0);
+  do_check_eq(countProp3, 0);
+  do_check_eq(countProp3SubFoo, 0);
+
+  do_check_eq(root.testing.PROP1, 20);
+
+  do_check_eq(root.testing.prop2, "prop2 val");
+  do_check_eq(countGet2, 1);
+
+  do_check_eq(root.testing.prop2, "prop2 val");
+  do_check_eq(countGet2, 2);
+
+  do_print(JSON.stringify(root.testing));
+  do_check_eq(root.testing.prop3.sub_foo(), 1);
+  do_check_eq(countProp3, 1);
+  do_check_eq(countProp3SubFoo, 1);
+
+  do_check_eq(root.testing.prop3.sub_foo(), 2);
+  do_check_eq(countProp3, 2);
+  do_check_eq(countProp3SubFoo, 2);
+
+  root.testing.prop3.sub_foo = () => { return "overwritten"; };
+  do_check_eq(root.testing.prop3.sub_foo(), "overwritten");
+
+  root.testing.prop3 = {sub_foo() { return "overwritten again"; }};
+  do_check_eq(root.testing.prop3.sub_foo(), "overwritten again");
+  do_check_eq(countProp3SubFoo, 2);
+});
+
+
+let defaultsJson = [
+  {namespace: "defaultsJson",
+
+   types: [],
+
+   functions: [
+     {
+       name: "defaultFoo",
+       type: "function",
+       parameters: [
+         {name: "arg", type: "object", optional: true, properties: {
+           prop1: {type: "integer", optional: true},
+         }, default: {prop1: 1}},
+       ],
+       returns: {
+         type: "object",
+         additionalProperties: true,
+       },
+     },
+   ]},
+];
+
+add_task(async function testDefaults() {
+  let url = "data:," + JSON.stringify(defaultsJson);
+  await Schemas.load(url);
+
+  let testingApiObj = {
+    defaultFoo: function(arg) {
+      if (Object.keys(arg) != "prop1") {
+        throw new Error(`Received the expected default object, default: ${JSON.stringify(arg)}`);
+      }
+      arg.newProp = 1;
+      return arg;
+    },
+  };
+
+  let localWrapper = {
+    cloneScope: global,
+    shouldInject(ns) {
+      return true;
+    },
+    getImplementation(ns, name) {
+      return new LocalAPIImplementation(testingApiObj, name, null);
+    },
+  };
+
+  let root = {};
+  Schemas.inject(root, localWrapper);
+
+  deepEqual(root.defaultsJson.defaultFoo(), {prop1: 1, newProp: 1});
+  deepEqual(root.defaultsJson.defaultFoo({prop1: 2}), {prop1: 2, newProp: 1});
+  deepEqual(root.defaultsJson.defaultFoo(), {prop1: 1, newProp: 1});
+});
+
+let returnsJson = [{
+  namespace: "returns",
+  types: [
+    {
+      id: "Widget",
+      type: "object",
+      properties: {
+        size: {type: "integer"},
+        colour: {type: "string", optional: true},
+      },
+    },
+  ],
+  functions: [
+    {
+      name: "complete",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+    {
+      name: "optional",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+    {
+      name: "invalid",
+      type: "function",
+      returns: {$ref: "Widget"},
+      parameters: [],
+    },
+  ],
+}];
+
+add_task(async function testReturns() {
+  const url = "data:," + JSON.stringify(returnsJson);
+  await Schemas.load(url);
+
+  const apiObject = {
+    complete() {
+      return {size: 3, colour: "orange"};
+    },
+    optional() {
+      return {size: 4};
+    },
+    invalid() {
+      return {};
+    },
+  };
+
+  const localWrapper = {
+    cloneScope: global,
+    shouldInject(ns) {
+      return true;
+    },
+    getImplementation(ns, name) {
+      return new LocalAPIImplementation(apiObject, name, null);
+    },
+  };
+
+  const root = {};
+  Schemas.inject(root, localWrapper);
+
+  deepEqual(root.returns.complete(), {size: 3, colour: "orange"});
+  deepEqual(root.returns.optional(), {size: 4},
+            "Missing optional properties is allowed");
+
+  if (AppConstants.DEBUG) {
+    Assert.throws(() => root.returns.invalid(),
+                  `Type error for result value (Property "size" is required)`,
+                  "Should throw for invalid result in DEBUG builds");
+  } else {
+    deepEqual(root.returns.invalid(), {},
+              "Doesn't throw for invalid result value in release builds");
+  }
 });

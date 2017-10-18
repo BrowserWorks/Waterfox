@@ -22,7 +22,6 @@
 using mozilla::gl::GLContext;
 using mozilla::gl::GLFeature;
 using mozilla::gl::SkiaGLGlue;
-using mozilla::gfx::DrawTarget;
 
 template<typename R, typename... A>
 static inline GrGLFunction<R (*)(A...)>
@@ -58,9 +57,8 @@ glGetString_mozilla(GLContext* aContext, GrGLenum aName)
     if (aName == LOCAL_GL_VERSION) {
         if (aContext->IsGLES()) {
             return reinterpret_cast<const GLubyte*>("OpenGL ES 2.0");
-        } else {
-            return reinterpret_cast<const GLubyte*>("2.0");
         }
+        return reinterpret_cast<const GLubyte*>("2.0");
     } else if (aName == LOCAL_GL_EXTENSIONS) {
         // Only expose the bare minimum extensions we want to support to ensure a functional Ganesh
         // as GLContext only exposes certain extensions
@@ -130,9 +128,8 @@ glGetString_mozilla(GLContext* aContext, GrGLenum aName)
     } else if (aName == LOCAL_GL_SHADING_LANGUAGE_VERSION) {
         if (aContext->IsGLES()) {
             return reinterpret_cast<const GLubyte*>("OpenGL ES GLSL ES 1.0");
-        } else {
-            return reinterpret_cast<const GLubyte*>("1.10");
         }
+        return reinterpret_cast<const GLubyte*>("1.10");
     }
 
     return aContext->fGetString(aName);
@@ -140,7 +137,7 @@ glGetString_mozilla(GLContext* aContext, GrGLenum aName)
 
 static GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
 {
-    GrGLInterface* i = new GrGLInterface();
+    auto *i = new GrGLInterface();
 
     context->MakeCurrent();
 
@@ -196,6 +193,7 @@ static GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
     i->fFunctions.fDisableVertexAttribArray = WrapGL(context, &GLContext::fDisableVertexAttribArray);
     i->fFunctions.fDrawArrays = WrapGL(context, &GLContext::fDrawArrays);
     i->fFunctions.fDrawElements = WrapGL(context, &GLContext::fDrawElements);
+    i->fFunctions.fDrawRangeElements = WrapGL(context, &GLContext::fDrawRangeElements);
     i->fFunctions.fEnable = WrapGL(context, &GLContext::fEnable);
     i->fFunctions.fEnableVertexAttribArray = WrapGL(context, &GLContext::fEnableVertexAttribArray);
     i->fFunctions.fFinish = WrapGL(context, &GLContext::fFinish);
@@ -223,6 +221,7 @@ static GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
     i->fFunctions.fLineWidth = WrapGL(context, &GLContext::fLineWidth);
     i->fFunctions.fLinkProgram = WrapGL(context, &GLContext::fLinkProgram);
     i->fFunctions.fPixelStorei = WrapGL(context, &GLContext::fPixelStorei);
+    i->fFunctions.fPolygonMode = WrapGL(context, &GLContext::fPolygonMode);
     i->fFunctions.fReadPixels = WrapGL(context, &GLContext::fReadPixels);
     i->fFunctions.fRenderbufferStorage = WrapGL(context, &GLContext::fRenderbufferStorage);
     i->fFunctions.fScissor = WrapGL(context, &GLContext::fScissor);
@@ -305,8 +304,8 @@ static GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
 SkiaGLGlue::SkiaGLGlue(GLContext* context)
     : mGLContext(context)
 {
-    mGrGLInterface.adopt(CreateGrGLInterfaceFromGLContext(mGLContext));
-    mGrContext.adopt(GrContext::Create(kOpenGL_GrBackend, (GrBackendContext)mGrGLInterface.get()));
+    mGrGLInterface.reset(CreateGrGLInterfaceFromGLContext(mGLContext));
+    mGrContext.reset(GrContext::Create(kOpenGL_GrBackend, (GrBackendContext)mGrGLInterface.get()));
 }
 
 SkiaGLGlue::~SkiaGLGlue()

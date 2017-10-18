@@ -1097,3 +1097,21 @@ PK11_VerifyWithMechanism;
 ;+    local:
 ;+       *;
 ;+};
+;+NSS_3.30 { 	# NSS 3.30 release
+;+    global:
+CERT_CompareAVA;
+PK11_HasAttributeSet;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.31 { 	# NSS 3.31 release
+;+    global:
+CERT_GetCertIsPerm;
+CERT_GetCertIsTemp;
+PK11_FindCertFromURI;
+PK11_FindCertsFromURI;
+PK11_GetModuleURI;
+PK11_GetTokenURI;
+;+    local:
+;+       *;
+;+};

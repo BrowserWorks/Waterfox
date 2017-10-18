@@ -10,26 +10,32 @@
 #include "webrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_unittest_helper.h"
 
 #include <algorithm>
+#include <limits>
 #include <utility>
+
+#include "webrtc/base/checks.h"
 
 namespace webrtc {
 
 const size_t kMtu = 1200;
-const unsigned int kAcceptedBitrateErrorBps = 50000;
+const uint32_t kAcceptedBitrateErrorBps = 50000;
+
+// Number of packets needed before we have a valid estimate.
+const int kNumInitialPackets = 2;
 
 namespace testing {
 
 void TestBitrateObserver::OnReceiveBitrateChanged(
-    const std::vector<unsigned int>& ssrcs,
-    unsigned int bitrate) {
+    const std::vector<uint32_t>& ssrcs,
+    uint32_t bitrate) {
   latest_bitrate_ = bitrate;
   updated_ = true;
 }
 
 RtpStream::RtpStream(int fps,
                      int bitrate_bps,
-                     unsigned int ssrc,
-                     unsigned int frequency,
+                     uint32_t ssrc,
+                     uint32_t frequency,
                      uint32_t timestamp_offset,
                      int64_t rtcp_receive_time)
     : fps_(fps),
@@ -73,7 +79,7 @@ int64_t RtpStream::GenerateFrame(int64_t time_now_us, PacketList* packets) {
 }
 
 // The send-side time when the next frame can be generated.
-double RtpStream::next_rtp_time() const {
+int64_t RtpStream::next_rtp_time() const {
   return next_rtp_time_;
 }
 
@@ -103,16 +109,16 @@ int RtpStream::bitrate_bps() const {
   return bitrate_bps_;
 }
 
-unsigned int RtpStream::ssrc() const {
+uint32_t RtpStream::ssrc() const {
   return ssrc_;
 }
 
-bool RtpStream::Compare(const std::pair<unsigned int, RtpStream*>& left,
-                        const std::pair<unsigned int, RtpStream*>& right) {
+bool RtpStream::Compare(const std::pair<uint32_t, RtpStream*>& left,
+                        const std::pair<uint32_t, RtpStream*>& right) {
   return left.second->next_rtp_time_ < right.second->next_rtp_time_;
 }
 
-StreamGenerator::StreamGenerator(int capacity, double time_now)
+StreamGenerator::StreamGenerator(int capacity, int64_t time_now)
     : capacity_(capacity),
       prev_arrival_time_us_(time_now) {}
 
@@ -157,8 +163,7 @@ void StreamGenerator::SetBitrateBps(int bitrate_bps) {
 }
 
 // Set the RTP timestamp offset for the stream identified by |ssrc|.
-void StreamGenerator::set_rtp_timestamp_offset(unsigned int ssrc,
-                                               uint32_t offset) {
+void StreamGenerator::set_rtp_timestamp_offset(uint32_t ssrc, uint32_t offset) {
   streams_[ssrc]->set_rtp_timestamp_offset(offset);
 }
 
@@ -184,16 +189,17 @@ int64_t StreamGenerator::GenerateFrame(RtpStream::PacketList* packets,
     ++i;
   }
   it = std::min_element(streams_.begin(), streams_.end(), RtpStream::Compare);
-  return (*it).second->next_rtp_time();
+  return std::max((*it).second->next_rtp_time(), time_now_us);
 }
 }  // namespace testing
 
 RemoteBitrateEstimatorTest::RemoteBitrateEstimatorTest()
-    : clock_(0),
+    : clock_(100000000),
       bitrate_observer_(new testing::TestBitrateObserver),
       stream_generator_(new testing::StreamGenerator(
           1e6,  // Capacity.
-          clock_.TimeInMicroseconds())) {}
+          clock_.TimeInMicroseconds())),
+      arrival_time_offset_ms_(0) {}
 
 RemoteBitrateEstimatorTest::~RemoteBitrateEstimatorTest() {}
 
@@ -215,7 +221,7 @@ uint32_t RemoteBitrateEstimatorTest::AddAbsSendTime(uint32_t t1, uint32_t t2) {
   return (t1 + t2) & 0x00fffffful;
 }
 
-const unsigned int RemoteBitrateEstimatorTest::kDefaultSsrc = 1;
+const uint32_t RemoteBitrateEstimatorTest::kDefaultSsrc = 1;
 
 void RemoteBitrateEstimatorTest::IncomingPacket(uint32_t ssrc,
                                                 size_t payload_size,
@@ -228,8 +234,9 @@ void RemoteBitrateEstimatorTest::IncomingPacket(uint32_t ssrc,
   header.timestamp = rtp_timestamp;
   header.extension.hasAbsoluteSendTime = true;
   header.extension.absoluteSendTime = absolute_send_time;
-  bitrate_estimator_->IncomingPacket(arrival_time + kArrivalTimeClockOffsetMs,
-      payload_size, header);
+  RTC_CHECK_GE(arrival_time + arrival_time_offset_ms_, 0);
+  bitrate_estimator_->IncomingPacket(arrival_time + arrival_time_offset_ms_,
+                                     payload_size, header);
 }
 
 // Generates a frame of packets belonging to a stream at a given bitrate and
@@ -238,8 +245,9 @@ void RemoteBitrateEstimatorTest::IncomingPacket(uint32_t ssrc,
 // Returns true if an over-use was seen, false otherwise.
 // The StreamGenerator::updated() should be used to check for any changes in
 // target bitrate after the call to this function.
-bool RemoteBitrateEstimatorTest::GenerateAndProcessFrame(unsigned int ssrc,
-    unsigned int bitrate_bps) {
+bool RemoteBitrateEstimatorTest::GenerateAndProcessFrame(uint32_t ssrc,
+                                                         uint32_t bitrate_bps) {
+  RTC_DCHECK_GT(bitrate_bps, 0);
   stream_generator_->SetBitrateBps(bitrate_bps);
   testing::RtpStream::PacketList packets;
   int64_t next_time_us = stream_generator_->GenerateFrame(
@@ -252,16 +260,12 @@ bool RemoteBitrateEstimatorTest::GenerateAndProcessFrame(unsigned int ssrc,
     // since both are used in IncomingPacket().
     clock_.AdvanceTimeMicroseconds(packet->arrival_time -
                                    clock_.TimeInMicroseconds());
-    IncomingPacket(packet->ssrc,
-                   packet->size,
-                   (packet->arrival_time + 500) / 1000,
-                   packet->rtp_timestamp,
+    IncomingPacket(packet->ssrc, packet->size,
+                   (packet->arrival_time + 500) / 1000, packet->rtp_timestamp,
                    AbsSendTime(packet->send_time, 1000000));
     if (bitrate_observer_->updated()) {
-      // Verify that new estimates only are triggered by an overuse and a
-      // rate decrease.
-      overuse = true;
-      EXPECT_LE(bitrate_observer_->latest_bitrate(), bitrate_bps);
+      if (bitrate_observer_->latest_bitrate() < bitrate_bps)
+        overuse = true;
     }
     delete packet;
     packets.pop_front();
@@ -275,14 +279,13 @@ bool RemoteBitrateEstimatorTest::GenerateAndProcessFrame(unsigned int ssrc,
 // until it reaches |target_bitrate|.
 // Can for instance be used to run the estimator for some time to get it
 // into a steady state.
-unsigned int RemoteBitrateEstimatorTest::SteadyStateRun(
-    unsigned int ssrc,
-    int max_number_of_frames,
-    unsigned int start_bitrate,
-    unsigned int min_bitrate,
-    unsigned int max_bitrate,
-    unsigned int target_bitrate) {
-  unsigned int bitrate_bps = start_bitrate;
+uint32_t RemoteBitrateEstimatorTest::SteadyStateRun(uint32_t ssrc,
+                                                    int max_number_of_frames,
+                                                    uint32_t start_bitrate,
+                                                    uint32_t min_bitrate,
+                                                    uint32_t max_bitrate,
+                                                    uint32_t target_bitrate) {
+  uint32_t bitrate_bps = start_bitrate;
   bool bitrate_update_seen = false;
   // Produce |number_of_frames| frames and give them to the estimator.
   for (int i = 0; i < max_number_of_frames; ++i) {
@@ -305,14 +308,14 @@ unsigned int RemoteBitrateEstimatorTest::SteadyStateRun(
 }
 
 void RemoteBitrateEstimatorTest::InitialBehaviorTestHelper(
-    unsigned int expected_converge_bitrate) {
+    uint32_t expected_converge_bitrate) {
   const int kFramerate = 50;  // 50 fps to avoid rounding errors.
   const int kFrameIntervalMs = 1000 / kFramerate;
   const uint32_t kFrameIntervalAbsSendTime = AbsSendTime(1, kFramerate);
-  unsigned int bitrate_bps = 0;
+  uint32_t bitrate_bps = 0;
   uint32_t timestamp = 0;
   uint32_t absolute_send_time = 0;
-  std::vector<unsigned int> ssrcs;
+  std::vector<uint32_t> ssrcs;
   EXPECT_FALSE(bitrate_estimator_->LatestEstimate(&ssrcs, &bitrate_bps));
   EXPECT_EQ(0u, ssrcs.size());
   clock_.AdvanceTimeMilliseconds(1000);
@@ -321,16 +324,16 @@ void RemoteBitrateEstimatorTest::InitialBehaviorTestHelper(
   EXPECT_FALSE(bitrate_observer_->updated());
   bitrate_observer_->Reset();
   clock_.AdvanceTimeMilliseconds(1000);
-  // Inserting a packet. Still no valid estimate. We need to wait 1 second.
-  IncomingPacket(kDefaultSsrc, kMtu, clock_.TimeInMilliseconds(), timestamp,
-                 absolute_send_time);
-  bitrate_estimator_->Process();
-  EXPECT_FALSE(bitrate_estimator_->LatestEstimate(&ssrcs, &bitrate_bps));
-  EXPECT_EQ(0u, ssrcs.size());
-  EXPECT_FALSE(bitrate_observer_->updated());
-  bitrate_observer_->Reset();
-  // Inserting packets for one second to get a valid estimate.
-  for (int i = 0; i < kFramerate; ++i) {
+  // Inserting packets for 5 seconds to get a valid estimate.
+  for (int i = 0; i < 5 * kFramerate + 1 + kNumInitialPackets; ++i) {
+    if (i == kNumInitialPackets) {
+      bitrate_estimator_->Process();
+      EXPECT_FALSE(bitrate_estimator_->LatestEstimate(&ssrcs, &bitrate_bps));
+      EXPECT_EQ(0u, ssrcs.size());
+      EXPECT_FALSE(bitrate_observer_->updated());
+      bitrate_observer_->Reset();
+    }
+
     IncomingPacket(kDefaultSsrc, kMtu, clock_.TimeInMilliseconds(), timestamp,
                    absolute_send_time);
     clock_.AdvanceTimeMilliseconds(1000 / kFramerate);
@@ -359,12 +362,16 @@ void RemoteBitrateEstimatorTest::RateIncreaseReorderingTestHelper(
   const uint32_t kFrameIntervalAbsSendTime = AbsSendTime(1, kFramerate);
   uint32_t timestamp = 0;
   uint32_t absolute_send_time = 0;
-  IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
-                 absolute_send_time);
-  bitrate_estimator_->Process();
-  EXPECT_FALSE(bitrate_observer_->updated());  // No valid estimate.
-  // Inserting packets for one second to get a valid estimate.
-  for (int i = 0; i < kFramerate; ++i) {
+  // Inserting packets for five seconds to get a valid estimate.
+  for (int i = 0; i < 5 * kFramerate + 1 + kNumInitialPackets; ++i) {
+    // TODO(sprang): Remove this hack once the single stream estimator is gone,
+    // as it doesn't do anything in Process().
+    if (i == kNumInitialPackets) {
+      // Process after we have enough frames to get a valid input rate estimate.
+      bitrate_estimator_->Process();
+      EXPECT_FALSE(bitrate_observer_->updated());  // No valid estimate.
+    }
+
     IncomingPacket(kDefaultSsrc, kMtu, clock_.TimeInMilliseconds(), timestamp,
                    absolute_send_time);
     clock_.AdvanceTimeMilliseconds(kFrameIntervalMs);
@@ -384,10 +391,11 @@ void RemoteBitrateEstimatorTest::RateIncreaseReorderingTestHelper(
                                         2 * kFrameIntervalAbsSendTime);
     IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
                    absolute_send_time);
-    IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(),
-                   timestamp - 90 * kFrameIntervalMs,
-                   AddAbsSendTime(absolute_send_time,
-                                  -int(kFrameIntervalAbsSendTime)));
+    IncomingPacket(
+        kDefaultSsrc, 1000, clock_.TimeInMilliseconds(),
+        timestamp - 90 * kFrameIntervalMs,
+        AddAbsSendTime(absolute_send_time,
+                       -static_cast<int>(kFrameIntervalAbsSendTime)));
   }
   bitrate_estimator_->Process();
   EXPECT_TRUE(bitrate_observer_->updated());
@@ -402,7 +410,7 @@ void RemoteBitrateEstimatorTest::RateIncreaseRtpTimestampsTestHelper(
   // This threshold corresponds approximately to increasing linearly with
   // bitrate(i) = 1.04 * bitrate(i-1) + 1000
   // until bitrate(i) > 500000, with bitrate(1) ~= 30000.
-  unsigned int bitrate_bps = 30000;
+  uint32_t bitrate_bps = 30000;
   int iterations = 0;
   AddDefaultStream();
   // Feed the estimator with a stream of packets and verify that it reaches
@@ -426,20 +434,21 @@ void RemoteBitrateEstimatorTest::RateIncreaseRtpTimestampsTestHelper(
 void RemoteBitrateEstimatorTest::CapacityDropTestHelper(
     int number_of_streams,
     bool wrap_time_stamp,
-    unsigned int expected_bitrate_drop_delta) {
+    uint32_t expected_bitrate_drop_delta,
+    int64_t receiver_clock_offset_change_ms) {
   const int kFramerate = 30;
   const int kStartBitrate = 900e3;
   const int kMinExpectedBitrate = 800e3;
   const int kMaxExpectedBitrate = 1100e3;
-  const unsigned int kInitialCapacityBps = 1000e3;
-  const unsigned int kReducedCapacityBps = 500e3;
+  const uint32_t kInitialCapacityBps = 1000e3;
+  const uint32_t kReducedCapacityBps = 500e3;
 
   int steady_state_time = 0;
   if (number_of_streams <= 1) {
     steady_state_time = 10;
     AddDefaultStream();
   } else {
-    steady_state_time = 8 * number_of_streams;
+    steady_state_time = 10 * number_of_streams;
     int bitrate_sum = 0;
     int kBitrateDenom = number_of_streams * (number_of_streams - 1);
     for (int i = 0; i < number_of_streams; i++) {
@@ -449,13 +458,14 @@ void RemoteBitrateEstimatorTest::CapacityDropTestHelper(
       if (i > 0) {
         bitrate = (kStartBitrate * i + kBitrateDenom / 2) / kBitrateDenom;
       }
-      stream_generator_->AddStream(new testing::RtpStream(
-          kFramerate,                     // Frames per second.
-          bitrate,                        // Bitrate.
-          kDefaultSsrc + i,               // SSRC.
-          90000,                          // RTP frequency.
-          0xFFFFF000 ^ (~0 << (32 - i)),  // Timestamp offset.
-          0));                            // RTCP receive time.
+      uint32_t mask = ~0ull << (32 - i);
+      stream_generator_->AddStream(
+          new testing::RtpStream(kFramerate,          // Frames per second.
+                                 bitrate,             // Bitrate.
+                                 kDefaultSsrc + i,    // SSRC.
+                                 90000,               // RTP frequency.
+                                 0xFFFFF000u ^ mask,  // Timestamp offset.
+                                 0));                 // RTCP receive time.
       bitrate_sum += bitrate;
     }
     ASSERT_EQ(bitrate_sum, kStartBitrate);
@@ -467,14 +477,14 @@ void RemoteBitrateEstimatorTest::CapacityDropTestHelper(
 
   // Run in steady state to make the estimator converge.
   stream_generator_->set_capacity_bps(kInitialCapacityBps);
-  unsigned int bitrate_bps = SteadyStateRun(kDefaultSsrc,
-                                            steady_state_time * kFramerate,
-                                            kStartBitrate,
-                                            kMinExpectedBitrate,
-                                            kMaxExpectedBitrate,
-                                            kInitialCapacityBps);
-  EXPECT_NEAR(kInitialCapacityBps, bitrate_bps, 100000u);
+  uint32_t bitrate_bps = SteadyStateRun(
+      kDefaultSsrc, steady_state_time * kFramerate, kStartBitrate,
+      kMinExpectedBitrate, kMaxExpectedBitrate, kInitialCapacityBps);
+  EXPECT_NEAR(kInitialCapacityBps, bitrate_bps, 130000u);
   bitrate_observer_->Reset();
+
+  // Add an offset to make sure the BWE can handle it.
+  arrival_time_offset_ms_ += receiver_clock_offset_change_ms;
 
   // Reduce the capacity and verify the decrease time.
   stream_generator_->set_capacity_bps(kReducedCapacityBps);
@@ -482,23 +492,20 @@ void RemoteBitrateEstimatorTest::CapacityDropTestHelper(
   int64_t bitrate_drop_time = -1;
   for (int i = 0; i < 100 * number_of_streams; ++i) {
     GenerateAndProcessFrame(kDefaultSsrc, bitrate_bps);
-    // Check for either increase or decrease.
-    if (bitrate_observer_->updated()) {
-      if (bitrate_drop_time == -1 &&
-          bitrate_observer_->latest_bitrate() <= kReducedCapacityBps) {
-        bitrate_drop_time = clock_.TimeInMilliseconds();
-      }
-      bitrate_bps = bitrate_observer_->latest_bitrate();
-      bitrate_observer_->Reset();
+    if (bitrate_drop_time == -1 &&
+        bitrate_observer_->latest_bitrate() <= kReducedCapacityBps) {
+      bitrate_drop_time = clock_.TimeInMilliseconds();
     }
+    if (bitrate_observer_->updated())
+      bitrate_bps = bitrate_observer_->latest_bitrate();
   }
 
-  EXPECT_EQ(expected_bitrate_drop_delta,
-            bitrate_drop_time - overuse_start_time);
+  EXPECT_NEAR(expected_bitrate_drop_delta,
+              bitrate_drop_time - overuse_start_time, 33);
 
   // Remove stream one by one.
-  unsigned int latest_bps = 0;
-  std::vector<unsigned int> ssrcs;
+  uint32_t latest_bps = 0;
+  std::vector<uint32_t> ssrcs;
   for (int i = 0; i < number_of_streams; i++) {
     EXPECT_TRUE(bitrate_estimator_->LatestEstimate(&ssrcs, &latest_bps));
     EXPECT_EQ(number_of_streams - i, static_cast<int>(ssrcs.size()));
@@ -520,10 +527,11 @@ void RemoteBitrateEstimatorTest::TestTimestampGroupingTestHelper() {
   uint32_t timestamp = 0;
   // Initialize absolute_send_time (24 bits) so that it will definitely wrap
   // during the test.
-  uint32_t absolute_send_time =
-      AddAbsSendTime((1 << 24), -int(50 * kFrameIntervalAbsSendTime));
-  // Initial set of frames to increase the bitrate.
-  for (int i = 0; i <= 100; ++i) {
+  uint32_t absolute_send_time = AddAbsSendTime(
+      (1 << 24), -static_cast<int>(50 * kFrameIntervalAbsSendTime));
+  // Initial set of frames to increase the bitrate. 6 seconds to have enough
+  // time for the first estimate to be generated and for Process() to be called.
+  for (int i = 0; i <= 6 * kFramerate; ++i) {
     IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
                    absolute_send_time);
     bitrate_estimator_->Process();
@@ -533,7 +541,7 @@ void RemoteBitrateEstimatorTest::TestTimestampGroupingTestHelper() {
                                         kFrameIntervalAbsSendTime);
   }
   EXPECT_TRUE(bitrate_observer_->updated());
-  EXPECT_NEAR(450000u, bitrate_observer_->latest_bitrate(), 20000u);
+  EXPECT_GE(bitrate_observer_->latest_bitrate(), 400000u);
 
   // Insert batches of frames which were sent very close in time. Also simulate
   // capacity over-use to see that we back off correctly.
@@ -555,74 +563,15 @@ void RemoteBitrateEstimatorTest::TestTimestampGroupingTestHelper() {
     // Increase time until next batch to simulate over-use.
     clock_.AdvanceTimeMilliseconds(10);
     timestamp += 90 * kFrameIntervalMs - kTimestampGroupLength;
-    absolute_send_time = AddAbsSendTime(absolute_send_time, AddAbsSendTime(
-        kFrameIntervalAbsSendTime, -int(kTimestampGroupLengthAbsSendTime)));
+    absolute_send_time = AddAbsSendTime(
+        absolute_send_time,
+        AddAbsSendTime(kFrameIntervalAbsSendTime,
+                       -static_cast<int>(kTimestampGroupLengthAbsSendTime)));
     bitrate_estimator_->Process();
   }
   EXPECT_TRUE(bitrate_observer_->updated());
   // Should have reduced the estimate.
-  EXPECT_EQ(378720u, bitrate_observer_->latest_bitrate());
-}
-
-void RemoteBitrateEstimatorTest::TestGetStatsHelper() {
-  const int kFramerate = 100;
-  const int kFrameIntervalMs = 1000 / kFramerate;
-  const int kBurstThresholdMs = 5;
-  const uint32_t kFrameIntervalAbsSendTime = AbsSendTime(1, kFramerate);
-  uint32_t timestamp = 0;
-  // Initialize absolute_send_time (24 bits) so that it will definitely wrap
-  // during the test.
-  uint32_t absolute_send_time =
-      AddAbsSendTime((1 << 24),
-      -(50 * static_cast<int>(kFrameIntervalAbsSendTime)));
-
-  // Inject propagation_time_delta of kFrameIntervalMs.
-  for (size_t i = 0; i < 3; ++i) {
-    IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
-                   absolute_send_time);
-    timestamp += kFrameIntervalMs;
-    // Insert a kFrameIntervalMs propagation_time_delta.
-    clock_.AdvanceTimeMilliseconds(kFrameIntervalMs * 2);
-    absolute_send_time = AddAbsSendTime(absolute_send_time,
-                                        kFrameIntervalAbsSendTime);
-  }
-  ReceiveBandwidthEstimatorStats stats;
-  EXPECT_TRUE(bitrate_estimator_->GetStats(&stats));
-  EXPECT_EQ(1U, stats.recent_propagation_time_delta_ms.size());
-  EXPECT_EQ(kFrameIntervalMs, stats.recent_propagation_time_delta_ms[0]);
-  EXPECT_EQ(1U, stats.recent_arrival_time_ms.size());
-  EXPECT_EQ(kFrameIntervalMs, stats.total_propagation_time_delta_ms);
-
-  // Inject negative propagation_time_deltas. The total propagation_time_delta
-  // should be adjusted to 0.
-  for (size_t i = 0; i < 3; ++i) {
-    IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
-                   absolute_send_time);
-    timestamp += 10 * kFrameIntervalMs;
-    clock_.AdvanceTimeMilliseconds(kBurstThresholdMs + 1);
-    absolute_send_time = AddAbsSendTime(absolute_send_time,
-                                        10 * kFrameIntervalAbsSendTime);
-  }
-  EXPECT_TRUE(bitrate_estimator_->GetStats(&stats));
-  EXPECT_EQ(0, stats.total_propagation_time_delta_ms);
-
-  // Send more than 1000 frames and make sure the stats queues stays within
-  // limits.
-  for (size_t i = 0; i < 1001; ++i) {
-    IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
-                   absolute_send_time);
-    timestamp += kFrameIntervalMs;
-    absolute_send_time = AddAbsSendTime(absolute_send_time,
-                                        kFrameIntervalAbsSendTime);
-  }
-  EXPECT_TRUE(bitrate_estimator_->GetStats(&stats));
-  EXPECT_LE(stats.recent_propagation_time_delta_ms.size(), 1000U);
-  EXPECT_LE(stats.recent_arrival_time_ms.size(), 1000U);
-
-  // Move the clock over the 1000ms limit.
-  clock_.AdvanceTimeMilliseconds(2000);
-  EXPECT_TRUE(bitrate_estimator_->GetStats(&stats));
-  EXPECT_EQ(0U, stats.recent_propagation_time_delta_ms.size());
+  EXPECT_LT(bitrate_observer_->latest_bitrate(), 400000u);
 }
 
 void RemoteBitrateEstimatorTest::TestWrappingHelper(
@@ -642,15 +591,15 @@ void RemoteBitrateEstimatorTest::TestWrappingHelper(
                                         kFrameIntervalAbsSendTime);
     bitrate_estimator_->Process();
   }
-  unsigned int bitrate_before = 0;
-  std::vector<unsigned int> ssrcs;
+  uint32_t bitrate_before = 0;
+  std::vector<uint32_t> ssrcs;
   bitrate_estimator_->LatestEstimate(&ssrcs, &bitrate_before);
 
   clock_.AdvanceTimeMilliseconds(silence_time_s * 1000);
   absolute_send_time = AddAbsSendTime(absolute_send_time,
                                       AbsSendTime(silence_time_s, 1));
   bitrate_estimator_->Process();
-  for (size_t i = 0; i < 100; ++i) {
+  for (size_t i = 0; i < 21; ++i) {
     IncomingPacket(kDefaultSsrc, 1000, clock_.TimeInMilliseconds(), timestamp,
                    absolute_send_time);
     timestamp += kFrameIntervalMs;
@@ -659,7 +608,7 @@ void RemoteBitrateEstimatorTest::TestWrappingHelper(
                                         kFrameIntervalAbsSendTime);
     bitrate_estimator_->Process();
   }
-  unsigned int bitrate_after = 0;
+  uint32_t bitrate_after = 0;
   bitrate_estimator_->LatestEstimate(&ssrcs, &bitrate_after);
   EXPECT_LT(bitrate_after, bitrate_before);
 }

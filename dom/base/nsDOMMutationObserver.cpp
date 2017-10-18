@@ -11,7 +11,7 @@
 #include "mozilla/OwningNonNull.h"
 
 #include "mozilla/dom/Animation.h"
-#include "mozilla/dom/KeyframeEffect.h"
+#include "mozilla/dom/KeyframeEffectReadOnly.h"
 
 #include "nsContentUtils.h"
 #include "nsCSSPseudoElements.h"
@@ -214,7 +214,7 @@ nsMutationReceiver::CharacterDataWillChange(nsIDocument *aDocument,
   if (!m->mTarget) {
     m->mTarget = aContent;
   }
-  if (CharacterDataOldValue() && m->mPrevValue.IsVoid()) { 
+  if (CharacterDataOldValue() && m->mPrevValue.IsVoid()) {
     aContent->GetText()->AppendTo(m->mPrevValue);
   }
 }
@@ -286,7 +286,7 @@ nsMutationReceiver::ContentInserted(nsIDocument* aDocument,
     Observer()->CurrentRecord(nsGkAtoms::childList);
   if (m->mTarget) {
     // Already handled case.
-    return;  
+    return;
   }
   m->mTarget = parent;
   m->mAddedNodes = new nsSimpleContentList(parent);
@@ -335,12 +335,14 @@ nsMutationReceiver::ContentRemoved(nsIDocument* aDocument,
     nsMutationReceiver* orig = GetParent() ? GetParent() : this;
     if (Observer()->GetReceiverFor(aChild, false, false) != orig) {
       bool transientExists = false;
-      nsCOMArray<nsMutationReceiver>* transientReceivers = nullptr;
-      Observer()->mTransientReceivers.Get(aChild, &transientReceivers);
-      if (!transientReceivers) {
-        transientReceivers = new nsCOMArray<nsMutationReceiver>();
-        Observer()->mTransientReceivers.Put(aChild, transientReceivers);
-      } else {
+      bool isNewEntry = false;
+      nsCOMArray<nsMutationReceiver>* transientReceivers =
+        Observer()->mTransientReceivers.LookupForAdd(aChild).OrInsert(
+          [&isNewEntry] () {
+            isNewEntry = true;
+            return new nsCOMArray<nsMutationReceiver>();
+          });
+      if (!isNewEntry) {
         for (int32_t i = 0; i < transientReceivers->Count(); ++i) {
           nsMutationReceiver* r = transientReceivers->ObjectAt(i);
           if (r->GetParent() == orig) {
@@ -390,12 +392,18 @@ void
 nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
                                              AnimationMutation aMutationType)
 {
-  mozilla::dom::KeyframeEffectReadOnly* effect = aAnimation->GetEffect();
+  mozilla::dom::AnimationEffectReadOnly* effect = aAnimation->GetEffect();
   if (!effect) {
     return;
   }
 
-  Maybe<NonOwningAnimationTarget> animationTarget = effect->GetTarget();
+  mozilla::dom::KeyframeEffectReadOnly* keyframeEffect =
+    effect->AsKeyframeEffect();
+  if (!keyframeEffect) {
+    return;
+  }
+
+  Maybe<NonOwningAnimationTarget> animationTarget = keyframeEffect->GetTarget();
   if (!animationTarget) {
     return;
   }
@@ -500,7 +508,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDOMMutationObserver)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsDOMMutationObserver)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOwner)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mReceivers)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFirstPendingMutation)
@@ -561,7 +568,7 @@ nsDOMMutationObserver::GetAllSubtreeObserversFor(nsINode* aNode,
         if (mReceivers.Count() == int32_t(aReceivers.Length())) {
           return;
         }
-      }                                            
+      }
       nsCOMArray<nsMutationReceiver>* transientReceivers = nullptr;
       if (mTransientReceivers.Get(n, &transientReceivers) && transientReceivers) {
         for (int32_t i = 0; i < transientReceivers->Count(); ++i) {
@@ -705,8 +712,8 @@ nsDOMMutationObserver::Observe(nsINode& aTarget,
 
 #ifdef DEBUG
   for (int32_t i = 0; i < mReceivers.Count(); ++i) {
-    NS_WARN_IF_FALSE(mReceivers[i]->Target(),
-                     "All the receivers should have a target!");
+    NS_WARNING_ASSERTION(mReceivers[i]->Target(),
+                         "All the receivers should have a target!");
   }
 #endif
 }
@@ -860,7 +867,8 @@ nsDOMMutationObserver::HandleMutation()
 class AsyncMutationHandler : public mozilla::Runnable
 {
 public:
-  NS_IMETHOD Run()
+  AsyncMutationHandler() : mozilla::Runnable("AsyncMutationHandler") {}
+  NS_IMETHOD Run() override
   {
     nsDOMMutationObserver::HandleMutations();
     return NS_OK;
@@ -885,6 +893,8 @@ nsDOMMutationObserver::HandleMutationsInternal()
     return;
   }
 
+  mozilla::AutoSlowOperation aso;
+
   nsTArray<RefPtr<nsDOMMutationObserver> >* suppressedObservers = nullptr;
 
   while (sScheduledMutationObservers) {
@@ -905,6 +915,7 @@ nsDOMMutationObserver::HandleMutationsInternal()
       }
     }
     delete observers;
+    aso.CheckForInterrupt();
   }
 
   if (suppressedObservers) {
@@ -1063,12 +1074,9 @@ nsAutoMutationBatch::Done()
       }
 
       if (allObservers.Length()) {
-        nsCOMArray<nsMutationReceiver>* transientReceivers = nullptr;
-        ob->mTransientReceivers.Get(removed, &transientReceivers);
-        if (!transientReceivers) {
-          transientReceivers = new nsCOMArray<nsMutationReceiver>();
-          ob->mTransientReceivers.Put(removed, transientReceivers);
-        }
+        nsCOMArray<nsMutationReceiver>* transientReceivers =
+          ob->mTransientReceivers.LookupForAdd(removed).OrInsert(
+            [] () { return new nsCOMArray<nsMutationReceiver>(); });
         for (uint32_t k = 0; k < allObservers.Length(); ++k) {
           nsMutationReceiver* r = allObservers[k];
           nsMutationReceiver* orig = r->GetParent() ? r->GetParent() : r;

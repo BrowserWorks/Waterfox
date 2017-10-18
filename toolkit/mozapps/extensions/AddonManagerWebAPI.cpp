@@ -18,6 +18,46 @@
 namespace mozilla {
 using namespace mozilla::dom;
 
+static bool
+IsValidHost(const nsACString& host) {
+  // This is ugly, but Preferences.h doesn't have support
+  // for default prefs or locked prefs
+  nsCOMPtr<nsIPrefService> prefService (do_GetService(NS_PREFSERVICE_CONTRACTID));
+  nsCOMPtr<nsIPrefBranch> prefs;
+  if (prefService) {
+    prefService->GetDefaultBranch(nullptr, getter_AddRefs(prefs));
+    bool isEnabled;
+    if (NS_SUCCEEDED(prefs->GetBoolPref("xpinstall.enabled", &isEnabled)) && !isEnabled) {
+      bool isLocked;
+      prefs->PrefIsLocked("xpinstall.enabled", &isLocked);
+      if (isLocked) {
+        return false;
+      }
+    }
+  }
+
+  if (host.Equals("addons.mozilla.org") ||
+      host.Equals("discovery.addons.mozilla.org") ||
+      host.Equals("testpilot.firefox.com")) {
+    return true;
+  }
+
+  // When testing allow access to the developer sites.
+  if (Preferences::GetBool("extensions.webapi.testing", false)) {
+    if (host.LowerCaseEqualsLiteral("addons.allizom.org") ||
+        host.LowerCaseEqualsLiteral("discovery.addons.allizom.org") ||
+        host.LowerCaseEqualsLiteral("addons-dev.allizom.org") ||
+        host.LowerCaseEqualsLiteral("discovery.addons-dev.allizom.org") ||
+        host.LowerCaseEqualsLiteral("testpilot.stage.mozaws.net") ||
+        host.LowerCaseEqualsLiteral("testpilot.dev.mozaws.net") ||
+        host.LowerCaseEqualsLiteral("example.com")) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Checks if the given uri is secure and matches one of the hosts allowed to
 // access the API.
 bool
@@ -33,32 +73,13 @@ AddonManagerWebAPI::IsValidSite(nsIURI* uri)
     return false;
   }
 
-  nsCString host;
+  nsAutoCString host;
   rv = uri->GetHost(host);
   if (NS_FAILED(rv)) {
     return false;
   }
 
-  if (host.Equals("addons.mozilla.org") ||
-      host.Equals("discovery.addons.mozilla.org") ||
-      host.Equals("testpilot.firefox.com")) {
-    return true;
-  }
-
-  // When testing allow access to the developer sites.
-  if (Preferences::GetBool("extensions.webapi.testing", false)) {
-    if (host.Equals("addons.allizom.org") ||
-        host.Equals("discovery.addons.allizom.org") ||
-        host.Equals("addons-dev.allizom.org") ||
-        host.Equals("discovery.addons-dev.allizom.org") ||
-        host.Equals("testpilot.stage.mozaws.net") ||
-        host.Equals("testpilot.dev.mozaws.net") ||
-        host.Equals("example.com")) {
-      return true;
-    }
-  }
-
-  return false;
+  return IsValidHost(host);
 }
 
 bool
@@ -135,5 +156,16 @@ AddonManagerWebAPI::IsAPIEnabled(JSContext* cx, JSObject* obj)
   // Found a document with no inner window, don't grant access to the API.
   return false;
 }
+
+namespace dom {
+
+bool
+AddonManagerPermissions::IsHostPermitted(const GlobalObject& /*unused*/, const nsAString& host)
+{
+  return IsValidHost(NS_ConvertUTF16toUTF8(host));
+}
+
+} // namespace mozilla::dom
+
 
 } // namespace mozilla

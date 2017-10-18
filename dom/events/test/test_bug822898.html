@@ -15,7 +15,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=822898
   <iframe id="subFrame"></iframe>
 </div>
 <pre id="test">
-<script class="testbody" type="application/javascript;version=1.8">
+<script class="testbody" type="application/javascript">
 
 /** Test for Bug 822898 - Pointer* Events **/
 
@@ -68,12 +68,12 @@ function createTestEventValue(name) {
     }
 
     for (let target of [document, window, testTarget, parent])
-      target.addEventListener(name, check, false);
+      target.addEventListener(name, check);
 
     testTarget.dispatchEvent(event);
 
     for (let target of [document, window, testTarget, parent])
-      target.removeEventListener(name, check, false);
+      target.removeEventListener(name, check);
 
 
     nextTest();
@@ -93,9 +93,8 @@ function testDefaultArg() {
   let event = getDefaultArgEvent("pointerdown");
 
   testTarget.addEventListener("pointerdown", function(ev) {
-    testTarget.removeEventListener("pointerdown", arguments.callee, false);
     is(ev.pointerId, 0, "Correct default pointerId");
-  }, false);
+  }, {once: true});
   testTarget.dispatchEvent(event);
 
   nextTest();
@@ -111,22 +110,20 @@ function testStopPropagation() {
   // Capturing phase
   let captured = false;
   parent.addEventListener("pointerdown", function() {
-    parent.removeEventListener("pointerdown", arguments.callee, true);
     captured = true;
-  }, true); // Capturing phase
+  }, {capture: true, once: true}); // Capturing phase
 
   // Bubbling phase
-  parent.addEventListener("pointerdown", unreachableListener, false);
+  parent.addEventListener("pointerdown", unreachableListener);
 
   testTarget.addEventListener("pointerdown", function(ev) {
-    testTarget.removeEventListener("pointerdown", arguments.callee, false);
     is(captured, true, "Event should have been captured");
     ev.stopPropagation();
-  }, false);
+  }, {once: true});
 
   testTarget.dispatchEvent(event);
 
-  parent.removeEventListener("pointerdown", unreachableListener, false);
+  parent.removeEventListener("pointerdown", unreachableListener);
 
   nextTest();
 }
@@ -135,15 +132,13 @@ function testPreventDefault() {
   let event = getDefaultArgEvent("pointerdown");
 
   parent.addEventListener("pointerdown", function(ev) {
-    parent.removeEventListener("pointerdown", arguments.callee, false);
     is(ev.defaultPrevented, true, "preventDefault can be called");
     nextTest();
-  }, false);
+  }, {once: true});
 
   testTarget.addEventListener("pointerdown", function(ev) {
-    testTarget.removeEventListener("pointerdown", arguments.callee, false);
     ev.preventDefault();
-  }, false);
+  }, {once: true});
 
   testTarget.dispatchEvent(event);
 }
@@ -157,15 +152,13 @@ function testBlockPreventDefault() {
   });
 
   parent.addEventListener("pointerdown", function(ev) {
-    parent.removeEventListener("pointerdown", arguments.callee, false);
     is(ev.defaultPrevented, false, "aCancelableArg works");
     nextTest();
-  }, false);
+  }, {once: true});
 
   testTarget.addEventListener("pointerdown", function(ev) {
-    testTarget.removeEventListener("pointerdown", arguments.callee, false);
     ev.preventDefault();
-  }, false);
+  }, {once: true});
 
   testTarget.dispatchEvent(event);
 }
@@ -182,9 +175,9 @@ function testBlockBubbling() {
     button: 0, relatedTarget: null, pointerId: 0
   });
 
-  parent.addEventListener("pointerdown", unreachableListener, false);
+  parent.addEventListener("pointerdown", unreachableListener);
   testTarget.dispatchEvent(event);
-  parent.removeEventListener("pointerdown", unreachableListener, false);
+  parent.removeEventListener("pointerdown", unreachableListener);
 
   nextTest();
 }

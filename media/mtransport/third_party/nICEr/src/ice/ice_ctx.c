@@ -514,6 +514,16 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
     RFREE(ctx);
   }
 
+void nr_ice_ctx_add_flags(nr_ice_ctx *ctx, UINT4 flags)
+  {
+    ctx->flags |= flags;
+  }
+
+void nr_ice_ctx_remove_flags(nr_ice_ctx *ctx, UINT4 flags)
+  {
+    ctx->flags &= ~flags;
+  }
+
 int nr_ice_ctx_destroy(nr_ice_ctx **ctxp)
   {
     if(!ctxp || !*ctxp)
@@ -662,7 +672,10 @@ static int nr_ice_get_default_local_address(nr_ice_ctx *ctx, int ip_version, nr_
     if ((r=nr_ice_get_default_address(ctx, ip_version, &default_addr)))
         ABORT(r);
 
-    for(i=0; i<addr_ct; ++i) {
+    for (i=0; i < addr_ct; ++i) {
+      // if default addr is found in local addrs, copy the more fully
+      // complete local addr to the output arg.  Don't need to worry
+      // about comparing ports here.
       if (!nr_transport_addr_cmp(&default_addr, &addrs[i].addr,
                                  NR_TRANSPORT_ADDR_CMP_MODE_ADDR)) {
         if ((r=nr_local_addr_copy(addrp, &addrs[i])))
@@ -670,15 +683,22 @@ static int nr_ice_get_default_local_address(nr_ice_ctx *ctx, int ip_version, nr_
         break;
       }
     }
-    if (i==addr_ct)
-      ABORT(R_NOT_FOUND);
+
+    // if default addr is not in local addrs, just copy the transport addr
+    // to output arg.
+    if (i == addr_ct) {
+      if ((r=nr_transport_addr_copy(&addrp->addr, &default_addr)))
+        ABORT(r);
+      strlcpy(addrp->addr.ifname, "default route", sizeof(addrp->addr.ifname));
+    }
 
     _status=0;
   abort:
     return(_status);
   }
 
-static int nr_ice_get_local_addresses(nr_ice_ctx *ctx)
+int nr_ice_set_local_addresses(nr_ice_ctx *ctx,
+                               nr_local_addr* stun_addrs, int stun_addr_ct)
   {
     int r,_status;
     nr_local_addr local_addrs[MAXADDRS];
@@ -687,64 +707,86 @@ static int nr_ice_get_local_addresses(nr_ice_ctx *ctx)
     nr_local_addr default_addrs[2];
     int default_addr_ct = 0;
 
-    if (!ctx->local_addrs) {
-      /* First, gather all the local addresses we have */
-      if((r=nr_stun_find_local_addresses(local_addrs,MAXADDRS,&addr_ct))) {
-        r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to find local addresses",ctx->label);
+    if (ctx->local_addrs) {
+      r_log(LOG_ICE,LOG_WARNING,"ICE(%s): local addresses already set, no work to do",ctx->label);
+      ABORT(R_ALREADY);
+    }
+    if (!stun_addrs || !stun_addr_ct) {
+      r_log(LOG_ICE,LOG_ERR,"ICE(%s): no stun addrs provided",ctx->label);
+      ABORT(R_BAD_ARGS);
+    }
+
+    addr_ct = MIN(stun_addr_ct, MAXADDRS);
+    r_log(LOG_ICE, LOG_DEBUG, "ICE(%s): copy %d pre-fetched stun addrs", ctx->label, addr_ct);
+    for (i=0; i<addr_ct; ++i) {
+      if (r=nr_local_addr_copy(&local_addrs[i], &stun_addrs[i])) {
         ABORT(r);
       }
+    }
 
-      if (ctx->force_net_interface[0]) {
-        /* Limit us to only addresses on a single interface */
-        int force_addr_ct = 0;
-        for(i=0;i<addr_ct;i++){
-          if (!strcmp(local_addrs[i].addr.ifname, ctx->force_net_interface)) {
-            // copy it down in the array, if needed
-            if (i != force_addr_ct) {
-              if (r=nr_local_addr_copy(&local_addrs[force_addr_ct], &local_addrs[i])) {
-                ABORT(r);
-              }
+    // removes duplicates and, based on prefs, loopback and link_local addrs
+    if (r=nr_stun_filter_local_addresses(local_addrs, &addr_ct)) {
+      ABORT(r);
+    }
+
+    if (ctx->force_net_interface[0] && addr_ct) {
+      /* Limit us to only addresses on a single interface */
+      int force_addr_ct = 0;
+      for(i=0;i<addr_ct;i++){
+        if (!strcmp(local_addrs[i].addr.ifname, ctx->force_net_interface)) {
+          // copy it down in the array, if needed
+          if (i != force_addr_ct) {
+            if (r=nr_local_addr_copy(&local_addrs[force_addr_ct], &local_addrs[i])) {
+              ABORT(r);
             }
-            force_addr_ct++;
           }
+          force_addr_ct++;
         }
-        addr_ct = force_addr_ct;
       }
+      addr_ct = force_addr_ct;
+    }
 
-      if (ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS) {
-        /* Get just the default IPv4 and IPv6 addrs */
-        if(!nr_ice_get_default_local_address(ctx, NR_IPV4, local_addrs, addr_ct,
-                                             &default_addrs[default_addr_ct])) {
-          ++default_addr_ct;
-        }
-        if(!nr_ice_get_default_local_address(ctx, NR_IPV6, local_addrs, addr_ct,
-                                             &default_addrs[default_addr_ct])) {
-          ++default_addr_ct;
-        }
-        addrs = default_addrs;
-        addr_ct = default_addr_ct;
+    r_log(LOG_ICE, LOG_DEBUG,
+          "ICE(%s): use only default local addresses: %s\n",
+          ctx->label,
+          (char*)(ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS?"yes":"no"));
+    if ((!addr_ct) || (ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS)) {
+      /* Get just the default IPv4 and IPv6 addrs */
+      if(!nr_ice_get_default_local_address(ctx, NR_IPV4, local_addrs, addr_ct,
+                                           &default_addrs[default_addr_ct])) {
+        ++default_addr_ct;
       }
-      else {
-        addrs = local_addrs;
+      if(!nr_ice_get_default_local_address(ctx, NR_IPV6, local_addrs, addr_ct,
+                                           &default_addrs[default_addr_ct])) {
+        ++default_addr_ct;
       }
+      if (!default_addr_ct) {
+        r_log(LOG_ICE,LOG_ERR,"ICE(%s): failed to find default addresses",ctx->label);
+        ABORT(R_FAILED);
+      }
+      addrs = default_addrs;
+      addr_ct = default_addr_ct;
+    }
+    else {
+      addrs = local_addrs;
+    }
 
-      /* Sort interfaces by preference */
-      if(ctx->interface_prioritizer) {
-        for(i=0;i<addr_ct;i++){
-          if(r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) {
-            r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to add interface ",ctx->label);
-            ABORT(r);
-          }
-        }
-        if(r=nr_interface_prioritizer_sort_preference(ctx->interface_prioritizer)) {
-          r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to sort interface by preference",ctx->label);
+    /* Sort interfaces by preference */
+    if(ctx->interface_prioritizer) {
+      for(i=0;i<addr_ct;i++){
+        if(r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) {
+          r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to add interface ",ctx->label);
           ABORT(r);
         }
       }
-
-      if (r=nr_ice_ctx_set_local_addrs(ctx,addrs,addr_ct)) {
+      if(r=nr_interface_prioritizer_sort_preference(ctx->interface_prioritizer)) {
+        r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to sort interface by preference",ctx->label);
         ABORT(r);
       }
+    }
+
+    if (r=nr_ice_ctx_set_local_addrs(ctx,addrs,addr_ct)) {
+      ABORT(r);
     }
 
     _status=0;
@@ -756,9 +798,17 @@ int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg)
   {
     int r,_status;
     nr_ice_media_stream *stream;
+    nr_local_addr stun_addrs[MAXADDRS];
+    int stun_addr_ct;
 
-    if ((r=nr_ice_get_local_addresses(ctx)))
-      ABORT(r);
+    if (!ctx->local_addrs) {
+      if((r=nr_stun_find_local_addresses(stun_addrs,MAXADDRS,&stun_addr_ct))) {
+        ABORT(r);
+      }
+      if((r=nr_ice_set_local_addresses(ctx,stun_addrs,stun_addr_ct))) {
+        ABORT(r);
+      }
+    }
 
     if(STAILQ_EMPTY(&ctx->streams)) {
       r_log(LOG_ICE,LOG_ERR,"ICE(%s): Missing streams to initialize",ctx->label);
@@ -992,7 +1042,7 @@ int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand)
       return 1;
     }
 
-    if (ctx->flags & NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS) {
+    if (ctx->flags & NR_ICE_CTX_FLAGS_HIDE_HOST_CANDIDATES) {
       if (cand->type == HOST)
         return 1;
     }
@@ -1038,3 +1088,16 @@ int nr_ice_get_new_ice_pwd(char** pwd)
     return(_status);
   }
 
+#ifndef UINT2_MAX
+#define UINT2_MAX ((UINT2)(65535U))
+#endif
+
+void nr_ice_accumulate_count(UINT2* orig_count, UINT2 new_count)
+  {
+    if (UINT2_MAX - new_count < *orig_count) {
+      // don't rollover, just stop accumulating at MAX value
+      *orig_count = UINT2_MAX;
+    } else {
+      *orig_count += new_count;
+    }
+  }

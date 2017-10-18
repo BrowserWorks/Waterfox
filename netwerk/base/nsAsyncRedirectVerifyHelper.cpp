@@ -23,20 +23,22 @@ static LazyLogModule gRedirectLog("nsRedirect");
 
 NS_IMPL_ISUPPORTS(nsAsyncRedirectVerifyHelper,
                   nsIAsyncVerifyRedirectCallback,
-                  nsIRunnable)
+                  nsIRunnable,
+                  nsINamed)
 
 class nsAsyncVerifyRedirectCallbackEvent : public Runnable {
 public:
     nsAsyncVerifyRedirectCallbackEvent(nsIAsyncVerifyRedirectCallback *cb,
                                        nsresult result)
-        : mCallback(cb), mResult(result) {
-    }
+        : Runnable("nsAsyncVerifyRedirectCallbackEvent")
+        , mCallback(cb)
+        , mResult(result) {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
         LOG(("nsAsyncVerifyRedirectCallbackEvent::Run() "
-             "callback to %p with result %x",
-             mCallback.get(), mResult));
+             "callback to %p with result %" PRIx32,
+             mCallback.get(), static_cast<uint32_t>(mResult)));
        (void) mCallback->OnRedirectVerifyCallback(mResult);
        return NS_OK;
     }
@@ -61,15 +63,20 @@ nsAsyncRedirectVerifyHelper::~nsAsyncRedirectVerifyHelper()
 }
 
 nsresult
-nsAsyncRedirectVerifyHelper::Init(nsIChannel* oldChan, nsIChannel* newChan,
-                                  uint32_t flags, bool synchronize)
+nsAsyncRedirectVerifyHelper::Init(nsIChannel* oldChan,
+                                  nsIChannel* newChan,
+                                  uint32_t flags,
+                                  nsIEventTarget* mainThreadEventTarget,
+                                  bool synchronize)
 {
     LOG(("nsAsyncRedirectVerifyHelper::Init() "
          "oldChan=%p newChan=%p", oldChan, newChan));
     mOldChan           = oldChan;
     mNewChan           = newChan;
     mFlags             = flags;
-    mCallbackThread    = do_GetCurrentThread();
+    mCallbackEventTarget = NS_IsMainThread() && mainThreadEventTarget
+      ? mainThreadEventTarget
+      : GetCurrentThreadEventTarget();
 
     if (!(flags & (nsIChannelEventSink::REDIRECT_INTERNAL |
                    nsIChannelEventSink::REDIRECT_STS_UPGRADE))) {
@@ -83,16 +90,16 @@ nsAsyncRedirectVerifyHelper::Init(nsIChannel* oldChan, nsIChannel* newChan,
     if (synchronize)
       mWaitingForRedirectCallback = true;
 
+    nsCOMPtr<nsIRunnable> runnable = this;
     nsresult rv;
-    rv = NS_DispatchToMainThread(this);
+    rv = mainThreadEventTarget
+      ? mainThreadEventTarget->Dispatch(runnable.forget())
+      : GetMainThreadEventTarget()->Dispatch(runnable.forget());
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (synchronize) {
-      nsIThread *thread = NS_GetCurrentThread();
-      while (mWaitingForRedirectCallback) {
-        if (!NS_ProcessNextEvent(thread)) {
-          return NS_ERROR_UNEXPECTED;
-        }
+      if (!SpinEventLoopUntil([&]() { return !mWaitingForRedirectCallback; })) {
+        return NS_ERROR_UNEXPECTED;
       }
     }
 
@@ -103,8 +110,15 @@ NS_IMETHODIMP
 nsAsyncRedirectVerifyHelper::OnRedirectVerifyCallback(nsresult result)
 {
     LOG(("nsAsyncRedirectVerifyHelper::OnRedirectVerifyCallback() "
-         "result=%x expectedCBs=%u mResult=%x",
-         result, mExpectedCallbacks, mResult));
+         "result=%" PRIx32 " expectedCBs=%u mResult=%" PRIx32,
+         static_cast<uint32_t>(result), mExpectedCallbacks,
+         static_cast<uint32_t>(mResult)));
+
+    MOZ_DIAGNOSTIC_ASSERT(mExpectedCallbacks > 0,
+                          "OnRedirectVerifyCallback called more times than expected");
+    if (mExpectedCallbacks <= 0) {
+      return NS_ERROR_UNEXPECTED;
+    }
 
     --mExpectedCallbacks;
 
@@ -138,8 +152,8 @@ nsAsyncRedirectVerifyHelper::DelegateOnChannelRedirect(nsIChannelEventSink *sink
                                                        uint32_t flags)
 {
     LOG(("nsAsyncRedirectVerifyHelper::DelegateOnChannelRedirect() "
-         "sink=%p expectedCBs=%u mResult=%x",
-         sink, mExpectedCallbacks, mResult));
+         "sink=%p expectedCBs=%u mResult=%" PRIx32,
+         sink, mExpectedCallbacks, static_cast<uint32_t>(mResult)));
 
     ++mExpectedCallbacks;
 
@@ -153,7 +167,7 @@ nsAsyncRedirectVerifyHelper::DelegateOnChannelRedirect(nsIChannelEventSink *sink
     nsresult rv =
         sink->AsyncOnChannelRedirect(oldChannel, newChannel, flags, this);
 
-    LOG(("  result=%x expectedCBs=%u", rv, mExpectedCallbacks));
+    LOG(("  result=%" PRIx32 " expectedCBs=%u", static_cast<uint32_t>(rv), mExpectedCallbacks));
 
     // If the sink returns failure from this call the redirect is vetoed. We
     // emulate a callback from the sink in this case in order to perform all
@@ -170,15 +184,16 @@ void
 nsAsyncRedirectVerifyHelper::ExplicitCallback(nsresult result)
 {
     LOG(("nsAsyncRedirectVerifyHelper::ExplicitCallback() "
-         "result=%x expectedCBs=%u mCallbackInitiated=%u mResult=%x",
-         result, mExpectedCallbacks, mCallbackInitiated, mResult));
+         "result=%" PRIx32 " expectedCBs=%u mCallbackInitiated=%u mResult=%"  PRIx32,
+         static_cast<uint32_t>(result), mExpectedCallbacks, mCallbackInitiated,
+         static_cast<uint32_t>(mResult)));
 
     nsCOMPtr<nsIAsyncVerifyRedirectCallback>
         callback(do_QueryInterface(mOldChan));
 
-    if (!callback || !mCallbackThread) {
+    if (!callback || !mCallbackEventTarget) {
         LOG(("nsAsyncRedirectVerifyHelper::ExplicitCallback() "
-             "callback=%p mCallbackThread=%p", callback.get(), mCallbackThread.get()));
+             "callback=%p mCallbackEventTarget=%p", callback.get(), mCallbackEventTarget.get()));
         return;
     }
 
@@ -193,7 +208,7 @@ nsAsyncRedirectVerifyHelper::ExplicitCallback(nsresult result)
                    "failed creating callback event!");
         return;
     }
-    nsresult rv = mCallbackThread->Dispatch(event, NS_DISPATCH_NORMAL);
+    nsresult rv = mCallbackEventTarget->Dispatch(event, NS_DISPATCH_NORMAL);
     if (NS_FAILED(rv)) {
         NS_WARNING("nsAsyncRedirectVerifyHelper::ExplicitCallback() "
                    "failed dispatching callback event!");
@@ -201,20 +216,28 @@ nsAsyncRedirectVerifyHelper::ExplicitCallback(nsresult result)
         LOG(("nsAsyncRedirectVerifyHelper::ExplicitCallback() "
              "dispatched callback event=%p", event.get()));
     }
-   
+
 }
 
 void
 nsAsyncRedirectVerifyHelper::InitCallback()
 {
     LOG(("nsAsyncRedirectVerifyHelper::InitCallback() "
-         "expectedCBs=%d mResult=%x", mExpectedCallbacks, mResult));
+         "expectedCBs=%d mResult=%" PRIx32, mExpectedCallbacks,
+         static_cast<uint32_t>(mResult)));
 
     mCallbackInitiated = true;
 
     // Invoke the callback if we are done
     if (mExpectedCallbacks == 0)
         ExplicitCallback(mResult);
+}
+
+NS_IMETHODIMP
+nsAsyncRedirectVerifyHelper::GetName(nsACString& aName)
+{
+    aName.AssignASCII("nsAsyncRedirectVerifyHelper");
+    return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -261,8 +284,8 @@ nsAsyncRedirectVerifyHelper::IsOldChannelCanceled()
     nsCOMPtr<nsIHttpChannelInternal> oldChannelInternal =
         do_QueryInterface(mOldChan);
     if (oldChannelInternal) {
-        oldChannelInternal->GetCanceled(&canceled);
-        if (canceled) {
+        nsresult rv = oldChannelInternal->GetCanceled(&canceled);
+        if (NS_SUCCEEDED(rv) && canceled) {
             return true;
         }
     } else if (mOldChan) {

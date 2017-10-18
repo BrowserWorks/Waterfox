@@ -1,5 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 "use strict";
 
@@ -8,7 +9,6 @@ var Cu = Components.utils;
 const { require } =
   Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Services = require("Services");
-const promise = require("promise");
 const defer = require("devtools/shared/defer");
 const EventEmitter = require("devtools/shared/event-emitter");
 const discovery = require("devtools/shared/discovery/discovery");

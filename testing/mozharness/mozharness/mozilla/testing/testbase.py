@@ -13,6 +13,7 @@ import re
 import urllib2
 import json
 import socket
+from urlparse import urlparse, ParseResult
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL, WARNING
@@ -117,6 +118,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
     symbols_path = None
     jsshell_url = None
     minidump_stackwalk_path = None
+    nodejs_path = None
     default_tools_repo = 'https://hg.mozilla.org/build/tools'
     proxxy = None
 
@@ -160,10 +162,15 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
             self.fatal("Can't figure out build directory urls without an installer_url "
                        "or test_packages_url!")
 
-        last_slash = reference_url.rfind('/')
-        base_url = reference_url[:last_slash]
+        reference_url = urllib2.unquote(reference_url)
+        parts = list(urlparse(reference_url))
 
-        return '%s/%s' % (base_url, file_name)
+        last_slash = parts[2].rfind('/')
+        parts[2] = '/'.join([parts[2][:last_slash], file_name])
+
+        url = ParseResult(*parts).geturl()
+
+        return url
 
     def query_prefixed_build_dir_url(self, suffix):
         """Resolve a file name prefixed with platform and build details to a potential url
@@ -187,7 +194,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
 
         return url
 
-    def query_symbols_url(self):
+    def query_symbols_url(self, raise_on_failure=False):
         if self.symbols_url:
             return self.symbols_url
 
@@ -199,8 +206,11 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
                 if symbols_url:
                     self._urlopen(symbols_url, timeout=120)
                     self.symbols_url = symbols_url
-            except (urllib2.URLError, socket.error, socket.timeout):
-                self.exception("Can't figure out symbols_url from installer_url: %s!" % self.installer_url, level=WARNING)
+            except Exception as ex:
+                self.warning("Cannot open symbols url %s (installer url: %s): %s" %
+                    (symbols_url, self.installer_url, ex))
+                if raise_on_failure:
+                    raise
 
         # If no symbols URL can be determined let minidump_stackwalk query the symbols.
         # As of now this only works for Nightly and release builds.
@@ -305,8 +315,6 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
             expected_length = [1, 2, 3]
             if c.get("require_test_zip") and not self.test_url:
                 expected_length = [2, 3]
-            if buildbot_prop_branch.startswith('gaia-try'):
-                expected_length = range(1, 1000)
             actual_length = len(files)
             if actual_length not in expected_length:
                 self.fatal("Unexpected number of files in buildbot config %s.\nExpected these number(s) of files: %s, but got: %d" %
@@ -323,7 +331,7 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
                 elif f['name'].endswith('test_packages.json'):
                     self.test_packages_url = str(f['name'])
                     self.info("Found a test packages url %s." % self.test_packages_url)
-                elif not any(f['name'].endswith(s) for s in ('code-coverage-gcno.zip',)):
+                elif not any(f['name'].endswith(s) for s in ('code-coverage-gcno.zip', 'stylo-bindings.zip')):
                     if not self.installer_url:
                         self.installer_url = str(f['name'])
                         self.info("Found installer url %s." % self.installer_url)
@@ -401,17 +409,6 @@ You can set this by:
         if message:
             self.fatal(message + "Can't run download-and-extract... exiting")
 
-        if self.config.get("developer_mode") and self._is_darwin():
-            # Bug 1066700 only affects Mac users that try to run mozharness locally
-            version = self._query_binary_version(
-                    regex=re.compile("UnZip\ (\d+\.\d+)\ .*", re.MULTILINE),
-                    cmd=[self.query_exe('unzip'), '-v']
-            )
-            if not version >= 6:
-                self.fatal("We require a more recent version of unzip to unpack our tests.zip files.\n"
-                        "You are currently using version %s. Please update to at least 6.0.\n"
-                        "You can visit http://www.info-zip.org/UnZip.html" % version)
-
     def _read_packages_manifest(self):
         dirs = self.query_abs_dirs()
         source = self.download_file(self.test_packages_url,
@@ -429,7 +426,7 @@ You can set this by:
                   pprint.pformat(package_requirements))
         return package_requirements
 
-    def _download_test_packages(self, suite_categories, target_unzip_dirs):
+    def _download_test_packages(self, suite_categories, extract_dirs):
         # Some platforms define more suite categories/names than others.
         # This is a difference in the convention of the configs more than
         # to how these tests are run, so we pave over these differences here.
@@ -440,6 +437,7 @@ You can set this by:
             'mochitest-plain-clipboard': 'mochitest',
             'mochitest-plain-gpu': 'mochitest',
             'mochitest-gl': 'mochitest',
+            'geckoview': 'mochitest',
             'jsreftest': 'reftest',
             'crashtest': 'reftest',
             'reftest-debug': 'reftest',
@@ -453,33 +451,49 @@ You can set this by:
                                     os.path.join(dirs['abs_work_dir'], 'tests'))
         self.mkdir_p(test_install_dir)
         package_requirements = self._read_packages_manifest()
+        target_packages = []
         for category in suite_categories:
             if category in package_requirements:
-                target_packages = package_requirements[category]
+                target_packages.extend(package_requirements[category])
             else:
                 # If we don't harness specific requirements, assume the common zip
                 # has everything we need to run tests for this suite.
-                target_packages = package_requirements['common']
+                target_packages.extend(package_requirements['common'])
 
-            self.info("Downloading packages: %s for test suite category: %s" %
-                      (target_packages, category))
-            for file_name in target_packages:
-                target_dir = test_install_dir
-                unzip_dirs = target_unzip_dirs
-                if "jsshell-" in file_name or file_name == "target.jsshell.zip":
-                    self.info("Special-casing the jsshell zip file")
-                    unzip_dirs = None
-                    target_dir = dirs['abs_test_bin_dir']
-                url = self.query_build_dir_url(file_name)
-                self.download_unzip(url, target_dir,
-                                     target_unzip_dirs=unzip_dirs)
+        # eliminate duplicates -- no need to download anything twice
+        target_packages = list(set(target_packages))
+        self.info("Downloading packages: %s for test suite categories: %s" %
+                  (target_packages, suite_categories))
+        for file_name in target_packages:
+            target_dir = test_install_dir
+            unpack_dirs = extract_dirs
 
-    def _download_test_zip(self, target_unzip_dirs=None):
+            if "common.tests" in file_name and isinstance(unpack_dirs, list):
+                # Ensure that the following files are always getting extracted
+                required_files = ["mach",
+                                  "mozinfo.json",
+                                  ]
+                for req_file in required_files:
+                    if req_file not in unpack_dirs:
+                        self.info("Adding '{}' for extraction from common.tests zip file"
+                                  .format(req_file))
+                        unpack_dirs.append(req_file)
+
+            if "jsshell-" in file_name or file_name == "target.jsshell.zip":
+                self.info("Special-casing the jsshell zip file")
+                unpack_dirs = None
+                target_dir = dirs['abs_test_bin_dir']
+
+            url = self.query_build_dir_url(file_name)
+            self.download_unpack(url, target_dir,
+                                 extract_dirs=unpack_dirs)
+
+    def _download_test_zip(self, extract_dirs=None):
         dirs = self.query_abs_dirs()
         test_install_dir = dirs.get('abs_test_install_dir',
                                     os.path.join(dirs['abs_work_dir'], 'tests'))
-        self.download_unzip(self.test_url, test_install_dir,
-                             target_unzip_dirs=target_unzip_dirs)
+        self.download_unpack(self.test_url, test_install_dir,
+                             extract_dirs=extract_dirs)
 
     def structured_output(self, suite_category):
         """Defines whether structured logging is in use in this configuration. This
@@ -517,18 +531,31 @@ You can set this by:
 
     def _download_and_extract_symbols(self):
         dirs = self.query_abs_dirs()
-        self.symbols_url = self.query_symbols_url()
         if self.config.get('download_symbols') == 'ondemand':
+            self.symbols_url = self.query_symbols_url()
             self.symbols_path = self.symbols_url
             return
-        if not self.symbols_path:
-            self.symbols_path = os.path.join(dirs['abs_work_dir'], 'symbols')
 
-        self.set_buildbot_property("symbols_url", self.symbols_url,
-                                   write_to_file=True)
-        self.download_unzip(self.symbols_url, self.symbols_path)
+        else:
+            # In the case for 'ondemand', we're OK to proceed without getting a hold of the
+            # symbols right this moment, however, in other cases we need to at least retry
+            # before being unable to proceed (e.g. debug tests need symbols)
+            self.symbols_url = self.retry(
+                action=self.query_symbols_url,
+                kwargs={'raise_on_failure': True},
+                sleeptime=20,
+                error_level=FATAL,
+                error_message="We can't proceed without downloading symbols.",
+            )
+            if not self.symbols_path:
+                self.symbols_path = os.path.join(dirs['abs_work_dir'], 'symbols')
 
-    def download_and_extract(self, target_unzip_dirs=None, suite_categories=None):
+            self.set_buildbot_property("symbols_url", self.symbols_url,
+                                       write_to_file=True)
+            if self.symbols_url:
+                self.download_unpack(self.symbols_url, self.symbols_path)
+
+    def download_and_extract(self, extract_dirs=None, suite_categories=None):
         """
         download and extract test zip / download installer
         """
@@ -551,7 +578,7 @@ You can set this by:
                            ' package data at "%s" will be ignored.' %
                            (self.config.get('test_url'), self.test_packages_url))
 
-            self._download_test_zip(target_unzip_dirs)
+            self._download_test_zip(extract_dirs)
         else:
             if not self.test_packages_url:
                 # The caller intends to download harness specific packages, but doesn't know
@@ -561,7 +588,7 @@ You can set this by:
                 self.test_packages_url = self.query_prefixed_build_dir_url('.test_packages.json')
 
             suite_categories = suite_categories or ['common']
-            self._download_test_packages(suite_categories, target_unzip_dirs)
+            self._download_test_packages(suite_categories, extract_dirs)
 
         self._download_installer()
         if self.config.get('download_symbols'):
@@ -662,6 +689,67 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
             return minidump_filename
         else:
             self.fatal('We could not determine the minidump\'s filename.')
+
+    def query_nodejs_tooltool_manifest(self):
+        if self.config.get('nodejs_tooltool_manifest_path'):
+            return self.config['nodejs_tooltool_manifest_path']
+
+        self.info('NodeJS tooltool manifest unknown. Determining based upon '
+                  'platform and architecture.')
+        platform_name = self.platform_name()
+
+        if platform_name:
+            tooltool_path = "config/tooltool-manifests/%s/nodejs.manifest" % \
+                TOOLTOOL_PLATFORM_DIR[platform_name]
+            return tooltool_path
+        else:
+            self.fatal('Could not determine nodejs manifest filename')
+
+    def query_nodejs_filename(self):
+        if self.config.get('nodejs_path'):
+            return self.config['nodejs_path']
+
+        self.fatal('Could not determine nodejs filename')
+
+    def query_nodejs(self, manifest=None):
+        if self.nodejs_path:
+            return self.nodejs_path
+
+        c = self.config
+        dirs = self.query_abs_dirs();
+
+        nodejs_path = self.query_nodejs_filename()
+        if not self.config.get('download_nodejs'):
+            self.nodejs_path = nodejs_path
+            return self.nodejs_path
+
+        if not manifest:
+            tooltool_manifest_path = self.query_nodejs_tooltool_manifest()
+            manifest = os.path.join(dirs.get('abs_test_install_dir',
+                                             os.path.join(dirs['abs_work_dir'], 'tests')),
+                                    tooltool_manifest_path)
+
+        self.info('grabbing nodejs binary from tooltool')
+        try:
+            self.tooltool_fetch(
+                manifest=manifest,
+                output_dir=dirs['abs_work_dir'],
+                cache=c.get('tooltool_cache')
+            )
+        except KeyError:
+            self.error('missing a required key')
+
+        abs_nodejs_path = os.path.join(dirs['abs_work_dir'], nodejs_path)
+
+        if os.path.exists(abs_nodejs_path):
+            if self.platform_name() not in ('win32', 'win64'):
+                self.chmod(abs_nodejs_path, 0755)
+            self.nodejs_path = abs_nodejs_path
+        else:
+            self.warning("nodejs path was given but couldn't be found. Tried looking in '%s'" % abs_nodejs_path)
+            self.buildbot_status(TBPL_WARNING, WARNING)
+
+        return self.nodejs_path
 
     def query_minidump_stackwalk(self, manifest=None):
         if self.minidump_stackwalk_path:

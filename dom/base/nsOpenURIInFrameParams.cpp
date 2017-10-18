@@ -10,9 +10,8 @@
 
 NS_IMPL_ISUPPORTS(nsOpenURIInFrameParams, nsIOpenURIInFrameParams)
 
-nsOpenURIInFrameParams::nsOpenURIInFrameParams(const mozilla::DocShellOriginAttributes& aOriginAttributes)
+nsOpenURIInFrameParams::nsOpenURIInFrameParams(const mozilla::OriginAttributes& aOriginAttributes)
   : mOpenerOriginAttributes(aOriginAttributes)
-  , mIsPrivate(false)
 {
 }
 
@@ -37,14 +36,22 @@ NS_IMETHODIMP
 nsOpenURIInFrameParams::GetIsPrivate(bool* aIsPrivate)
 {
   NS_ENSURE_ARG_POINTER(aIsPrivate);
-  *aIsPrivate = mIsPrivate;
+  *aIsPrivate = mOpenerOriginAttributes.mPrivateBrowsingId > 0;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsOpenURIInFrameParams::SetIsPrivate(bool aIsPrivate)
+nsOpenURIInFrameParams::GetTriggeringPrincipal(nsIPrincipal** aTriggeringPrincipal)
 {
-  mIsPrivate = aIsPrivate;
+  NS_ADDREF(*aTriggeringPrincipal = mTriggeringPrincipal);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsOpenURIInFrameParams::SetTriggeringPrincipal(nsIPrincipal* aTriggeringPrincipal)
+{
+  NS_ENSURE_TRUE(aTriggeringPrincipal, NS_ERROR_INVALID_ARG);
+  mTriggeringPrincipal = aTriggeringPrincipal;
   return NS_OK;
 }
 

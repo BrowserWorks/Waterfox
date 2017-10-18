@@ -7,6 +7,7 @@
 #define GFX_UTILS_H
 
 #include "gfxTypes.h"
+#include "ImageTypes.h"
 #include "imgIContainer.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
@@ -16,20 +17,28 @@
 #include "nsRegionFwd.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/CheckedInt.h"
+#include "mozilla/webrender/WebRenderTypes.h"
 
 class gfxASurface;
 class gfxDrawable;
+struct gfxQuad;
 class nsIInputStream;
 class nsIGfxInfo;
 class nsIPresShell;
 
 namespace mozilla {
 namespace layers {
+class WebRenderBridgeChild;
+class GlyphArray;
 struct PlanarYCbCrData;
+class WebRenderCommand;
 } // namespace layers
 namespace image {
 class ImageRegion;
 } // namespace image
+namespace wr {
+class DisplayListBuilder;
+} // namespace wr
 } // namespace mozilla
 
 class gfxUtils {
@@ -123,16 +132,32 @@ public:
     */
     static bool GfxRectToIntRect(const gfxRect& aIn, mozilla::gfx::IntRect* aOut);
 
+    /* Conditions this border to Cairo's max coordinate space.
+     * The caller can check IsEmpty() after Condition() -- if it's TRUE,
+     * the caller can possibly avoid doing any extra rendering.
+     */
+    static void ConditionRect(gfxRect& aRect);
+
+    /*
+     * Transform this rectangle with aMatrix, resulting in a gfxQuad.
+     */
+    static gfxQuad TransformToQuad(const gfxRect& aRect,
+                                   const mozilla::gfx::Matrix4x4& aMatrix);
+
     /**
      * Return the smallest power of kScaleResolution (2) greater than or equal to
-     * aVal.
+     * aVal. If aRoundDown is specified, the power of 2 will rather be less than
+     * or equal to aVal.
      */
-    static gfxFloat ClampToScaleFactor(gfxFloat aVal);
+    static gfxFloat ClampToScaleFactor(gfxFloat aVal, bool aRoundDown = false);
 
     /**
      * Clears surface to aColor (which defaults to transparent black).
      */
     static void ClearThebesSurface(gfxASurface* aSurface);
+
+    static const float* YuvToRgbMatrix4x3RowMajor(mozilla::YUVColorSpace aYUVColorSpace);
+    static const float* YuvToRgbMatrix3x3ColumnMajor(mozilla::YUVColorSpace aYUVColorSpace);
 
     /**
      * Creates a copy of aSurface, but having the SurfaceFormat aFormat.
@@ -178,9 +203,6 @@ public:
     static already_AddRefed<DataSourceSurface>
     CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
                                              SurfaceFormat aFormat);
-
-    static const uint8_t sUnpremultiplyTable[256*256];
-    static const uint8_t sPremultiplyTable[256*256];
 
     /**
      * Return a color that can be used to identify a frame with a given frame number.

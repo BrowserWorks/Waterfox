@@ -53,7 +53,7 @@ function test() {
     var destDir = createTemporarySaveDirectory();
     var file = destDir.clone();
     file.append("no_default_file_name");
-    MockFilePicker.returnFiles = [file];
+    MockFilePicker.setFiles([file]);
     MockFilePicker.showCallback = function(fp) {
       MockFilePicker.filterIndex = 1; // kSaveAsType_URL
     };
@@ -61,7 +61,7 @@ function test() {
     mockTransferCallback = onTransferComplete;
     mockTransferRegisterer.register();
 
-    registerCleanupFunction(function () {
+    registerCleanupFunction(function() {
       mockTransferRegisterer.unregister();
       MockFilePicker.cleanup();
       destDir.remove(true);
@@ -80,7 +80,7 @@ function test() {
     ok(downloadSuccess, "The inner frame should have been downloaded successfully");
 
     // Read the entire saved file.
-    var file = MockFilePicker.returnFiles[0];
+    var file = MockFilePicker.getNsIFile();
     var fileContents = readShortFile(file);
 
     // Check if outer POST data is found (bug 471962).
@@ -95,6 +95,7 @@ function test() {
   }
 }
 
+/* import-globals-from common/mockTransfer.js */
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://mochitests/content/browser/toolkit/content/tests/browser/common/mockTransfer.js",
@@ -130,14 +131,12 @@ function readShortFile(aFile) {
     try {
       // Assume that the file is much shorter than 1 MiB.
       return scrInputStream.read(1048576);
-    }
-    finally {
+    } finally {
       // Close the scriptable stream after reading, even if the operation
       // failed.
       scrInputStream.close();
     }
-  }
-  finally {
+  } finally {
     // Close the stream after reading, if it is still open, even if the read
     // operation failed.
     inputStream.close();

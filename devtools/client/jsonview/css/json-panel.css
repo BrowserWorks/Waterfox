@@ -6,11 +6,14 @@
 /******************************************************************************/
 /* JSON Panel */
 
+.jsonPrimitiveValue,
 .jsonParseError {
   font-size: 12px;
   font-family: Lucida Grande, Tahoma, sans-serif;
   line-height: 15px;
-  width: 100%;
   padding: 10px;
+}
+
+.jsonParseError {
   color: red;
 }

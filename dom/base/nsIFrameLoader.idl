@@ -5,7 +5,6 @@
 
 #include "nsISupports.idl"
 
-interface mozIApplication;
 interface nsFrameLoader;
 interface nsIDocShell;
 interface nsIURI;
@@ -18,6 +17,8 @@ interface nsITabParent;
 interface nsILoadContext;
 interface nsIPrintSettings;
 interface nsIWebProgressListener;
+interface nsIGroupedSHistory;
+interface nsIPartialSHistory;
 
 [scriptable, builtinclass, uuid(1645af04-1bc7-4363-8f2c-eb9679220ab1)]
 interface nsIFrameLoader : nsISupports
@@ -53,15 +54,6 @@ interface nsIFrameLoader : nsISupports
   void loadURI(in nsIURI aURI);
 
   /**
-   * Loads the specified URI in this frame but using a different process.
-   * Behaves identically to loadURI, except that this method only works
-   * with remote frame. For a signed package, we need to specifiy the
-   * package identifier.
-   * Throws an exception with non-remote frames.
-   */
-  void switchProcessAndLoadURI(in nsIURI aURI, in ACString aPackageId);
-
-  /**
    * Puts the frameloader in prerendering mode.
    */
   void setIsPrerendered();
@@ -70,6 +62,29 @@ interface nsIFrameLoader : nsISupports
    * Make the prerendered frameloader being active (and clear isPrerendered flag).
    */
   void makePrerenderedLoaderActive();
+
+  /**
+   * Append partial session history from another frame loader.
+   *
+   * @return A promise which will be resolved when the navigation is complete.
+   */
+  nsISupports appendPartialSHistoryAndSwap(in nsIFrameLoader aOther);
+
+  /**
+   * If grouped session history is applied, use this function to navigate to
+   * an entry of session history object of another frameloader.
+   *
+   * @return A promise which will be resolved when the navigation is complete.
+   */
+  nsISupports requestGroupedHistoryNavigation(in unsigned long aGlobalIndex);
+
+  /**
+   * Adds a blocking promise for the current cross process navigation.
+   * This method can only be called while the "BrowserWillChangeProcess" event
+   * is being fired.
+   */
+  [implicit_jscontext]
+  void addProcessChangeBlockingPromise(in jsval aPromise);
 
   /**
    * Destroy the frame loader and everything inside it. This will
@@ -139,12 +154,9 @@ interface nsIFrameLoader : nsISupports
   void requestNotifyAfterRemotePaint();
 
   /**
-   * Request an event when the layer tree from the remote tab becomes
-   * available or unavailable. When this happens, a mozLayerTreeReady
-   * or mozLayerTreeCleared event is fired.
+   * Close the window through the ownerElement.
    */
-  void requestNotifyLayerTreeReady();
-  void requestNotifyLayerTreeCleared();
+  void requestFrameLoaderClose();
 
   /**
    * Print the current document.
@@ -157,6 +169,11 @@ interface nsIFrameLoader : nsISupports
   void print(in unsigned long long aOuterWindowID,
              in nsIPrintSettings aPrintSettings,
              in nsIWebProgressListener aProgressListener);
+
+  /**
+   * Ensure that the current nsIFrameLoader has a GroupedSHistory.
+   */
+  nsIGroupedSHistory ensureGroupedSHistory();
 
   /**
    * The default event mode automatically forwards the events
@@ -206,26 +223,10 @@ interface nsIFrameLoader : nsISupports
   readonly attribute unsigned long long childID;
 
   /**
-   * Get or set this frame loader's visibility.
-   *
-   * The notion of "visibility" here is separate from the notion of a
-   * window/docshell's visibility.  This field is mostly here so that we can
-   * have a notion of visibility in the parent process when frames are OOP.
+   * Find out whether the owner content really is a mozbrowser. <xul:browser>
+   * is not considered to be a mozbrowser frame.
    */
-  [infallible] attribute boolean visible;
-
-  /**
-   * Find out whether the owner content really is a mozbrowser or app frame
-   * Especially, a widget frame is regarded as an app frame.  <xul:browser> is
-   * not considered to be a mozbrowser frame.
-   */
-  readonly attribute boolean ownerIsMozBrowserOrAppFrame;
-
-  /**
-   * Find out whether the owner content really is a widget. If this attribute
-   * returns true, |ownerIsMozBrowserOrAppFrame| must return true.
-   */
-  readonly attribute boolean ownerIsWidget;
+  readonly attribute boolean ownerIsMozBrowserFrame;
 
   /**
    * The last known width of the frame. Reading this property will not trigger
@@ -242,6 +243,22 @@ interface nsIFrameLoader : nsISupports
    * to be up-to-date when received.
    */
   readonly attribute unsigned long lazyHeight;
+
+  /**
+   * The partial session history.
+   */
+  readonly attribute nsIPartialSHistory partialSHistory;
+
+  /**
+   * The grouped session history composed of multiple session history objects
+   * across root docshells.
+   */
+  readonly attribute nsIGroupedSHistory groupedSHistory;
+
+  /**
+   * Is `true` if the frameloader is dead (destroy has been called on it)
+   */
+  [infallible] readonly attribute boolean isDead;
 };
 
 %{C++
@@ -256,17 +273,21 @@ interface nsIFrameLoaderOwner : nsISupports
   /**
    * The frame loader owned by this nsIFrameLoaderOwner
    */
-  readonly attribute nsIFrameLoader frameLoader;
+  [binaryname(FrameLoaderXPCOM)] readonly attribute nsIFrameLoader frameLoader;
   [noscript, notxpcom] alreadyAddRefed_nsFrameLoader GetFrameLoader();
-
-  /**
-   * The principal of parent mozIApplication in case of nested mozbrowser
-   * iframes.
-   */
-  readonly attribute mozIApplication parentApplication;
 
   /**
    * Puts the FrameLoaderOwner in prerendering mode.
    */
   void setIsPrerendered();
+
+  /**
+   * This method is used internally by SwapFrameLoaders to set the frame loader
+   * on the target nsFrameLoader.
+   *
+   * Avoid using this method outside of that context, and instead prefer using
+   * SwapFrameLoaders.
+   */
+  [noscript, notxpcom] void
+  internalSetFrameLoader(in nsIFrameLoader aNewFrameLoader);
 };

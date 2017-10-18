@@ -1,25 +1,25 @@
-add_task(function* test() {
-  var tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser);
+add_task(async function test() {
+  var tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
 
   var gotTabAttrModified = false;
   var gotTabClose = false;
 
   function onTabClose() {
     gotTabClose = true;
-    tab.addEventListener("TabAttrModified", onTabAttrModified, false);
+    tab.addEventListener("TabAttrModified", onTabAttrModified);
   }
 
   function onTabAttrModified() {
     gotTabAttrModified = true;
   }
 
-  tab.addEventListener("TabClose", onTabClose, false);
+  tab.addEventListener("TabClose", onTabClose);
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 
   ok(gotTabClose, "should have got the TabClose event");
   ok(!gotTabAttrModified, "shouldn't have got the TabAttrModified event after TabClose");
 
-  tab.removeEventListener("TabClose", onTabClose, false);
-  tab.removeEventListener("TabAttrModified", onTabAttrModified, false);
+  tab.removeEventListener("TabClose", onTabClose);
+  tab.removeEventListener("TabAttrModified", onTabAttrModified);
 });

@@ -13,10 +13,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "ConsoleAPI",
 var EmbedRT = {
   _scopes: {},
 
-  observe: function(subject, topic, data) {
-    switch(topic) {
+  onEvent: function (event, data, callback) {
+    switch (event) {
       case "GeckoView:ImportScript":
-        this.importScript(data);
+        this.importScript(data.scriptURL);
         break;
     }
   },
@@ -39,24 +39,6 @@ var EmbedRT = {
     );
 
     sandbox["console"] = new ConsoleAPI({ consoleID: "script/" + scriptURL });
-    sandbox["GeckoView"] = {
-      sendRequest: function(data) {
-        if (!data) {
-          throw new Error("Invalid parameter: 'data' can't be null.");
-        }
-
-        let message = { type: "GeckoView:Message", data: data };
-        Messaging.sendRequest(message);
-      },
-      sendRequestForResult: function(data) {
-        if (!data) {
-          throw new Error("Invalid parameter: 'data' can't be null.");
-        }
-
-        let message = { type: "GeckoView:Message", data: data };
-        return Messaging.sendRequestForResult(message);
-      }
-    };
 
     // As we don't want our caller to control the JS version used for the
     // script file, we run loadSubScript within the context of the

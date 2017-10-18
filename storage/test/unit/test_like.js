@@ -4,8 +4,7 @@
 
 // This file tests our LIKE implementation since we override it for unicode
 
-function setup()
-{
+function setup() {
   getOpenedDatabase().createTable("t1", "x TEXT");
 
   var stmt = createStatement("INSERT INTO t1 (x) VALUES ('a')");
@@ -57,8 +56,7 @@ function setup()
   stmt.finalize();
 }
 
-function test_count()
-{
+function test_count() {
   var stmt = createStatement("SELECT count(*) FROM t1;");
   do_check_true(stmt.executeStep());
   do_check_eq(stmt.getInt32(0), 12);
@@ -66,10 +64,9 @@ function test_count()
   stmt.finalize();
 }
 
-function test_like_1()
-{
+function test_like_1() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'abc');
+  stmt.bindByIndex(0, "abc");
   var solutions = ["abc", "ABC"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -80,10 +77,9 @@ function test_like_1()
   stmt.finalize();
 }
 
-function test_like_2()
-{
+function test_like_2() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'ABC');
+  stmt.bindByIndex(0, "ABC");
   var solutions = ["abc", "ABC"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -94,10 +90,9 @@ function test_like_2()
   stmt.finalize();
 }
 
-function test_like_3()
-{
+function test_like_3() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'aBc');
+  stmt.bindByIndex(0, "aBc");
   var solutions = ["abc", "ABC"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -108,10 +103,9 @@ function test_like_3()
   stmt.finalize();
 }
 
-function test_like_4()
-{
+function test_like_4() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'abc%');
+  stmt.bindByIndex(0, "abc%");
   var solutions = ["abc", "abcd", "ABC", "ABC abc xyz"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -126,10 +120,9 @@ function test_like_4()
   stmt.finalize();
 }
 
-function test_like_5()
-{
+function test_like_5() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'a_c');
+  stmt.bindByIndex(0, "a_c");
   var solutions = ["abc", "ABC"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -140,10 +133,9 @@ function test_like_5()
   stmt.finalize();
 }
 
-function test_like_6()
-{
+function test_like_6() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'ab%d');
+  stmt.bindByIndex(0, "ab%d");
   var solutions = ["abcd", "abd"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -154,10 +146,9 @@ function test_like_6()
   stmt.finalize();
 }
 
-function test_like_7()
-{
+function test_like_7() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, 'a_c%');
+  stmt.bindByIndex(0, "a_c%");
   var solutions = ["abc", "abcd", "ABC", "ABC abc xyz"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -172,10 +163,9 @@ function test_like_7()
   stmt.finalize();
 }
 
-function test_like_8()
-{
+function test_like_8() {
   var stmt = createStatement("SELECT x FROM t1 WHERE x LIKE ?;");
-  stmt.bindByIndex(0, '%bcd');
+  stmt.bindByIndex(0, "%bcd");
   var solutions = ["abcd", "bcd"];
   do_check_true(stmt.executeStep());
   do_check_true(solutions.indexOf(stmt.getString(0)) != -1);
@@ -189,8 +179,7 @@ function test_like_8()
 var tests = [test_count, test_like_1, test_like_2, test_like_3, test_like_4,
              test_like_5, test_like_6, test_like_7, test_like_8];
 
-function run_test()
-{
+function run_test() {
   setup();
 
   for (var i = 0; i < tests.length; i++) {

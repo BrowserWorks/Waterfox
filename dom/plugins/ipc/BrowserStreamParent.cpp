@@ -5,12 +5,11 @@
 
 
 #include "BrowserStreamParent.h"
-#include "PluginAsyncSurrogate.h"
 #include "PluginInstanceParent.h"
 #include "nsNPAPIPlugin.h"
 
 #include "mozilla/UniquePtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 // How much data are we willing to send across the wire
 // in one chunk?
@@ -23,7 +22,6 @@ BrowserStreamParent::BrowserStreamParent(PluginInstanceParent* npp,
                                          NPStream* stream)
   : mNPP(npp)
   , mStream(stream)
-  , mDeferredDestroyReason(NPRES_DONE)
   , mState(INITIALIZING)
 {
   mStream->pdata = static_cast<AStream*>(this);
@@ -45,42 +43,7 @@ BrowserStreamParent::ActorDestroy(ActorDestroyReason aWhy)
   // Implement me! Bug 1005159
 }
 
-bool
-BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
-                                                  const uint16_t& stype)
-{
-  PLUGIN_LOG_DEBUG_FUNCTION;
-  PluginAsyncSurrogate* surrogate = mNPP->GetAsyncSurrogate();
-  MOZ_ASSERT(surrogate);
-  surrogate->AsyncCallArriving();
-  if (mState == DEFERRING_DESTROY) {
-    // We've been asked to destroy ourselves before init was complete.
-    mState = DYING;
-    Unused << SendNPP_DestroyStream(mDeferredDestroyReason);
-    return true;
-  }
-
-  NPError error = rv;
-  if (error == NPERR_NO_ERROR) {
-    if (!mStreamListener) {
-      return false;
-    }
-    if (mStreamListener->SetStreamType(stype)) {
-      mState = ALIVE;
-    } else {
-      error = NPERR_GENERIC_ERROR;
-    }
-  }
-
-  if (error != NPERR_NO_ERROR) {
-    surrogate->DestroyAsyncStream(mStream);
-    Unused << PBrowserStreamParent::Send__delete__(this);
-  }
-
-  return true;
-}
-
-bool
+mozilla::ipc::IPCResult
 BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
                                            NPError* result)
 {
@@ -90,25 +53,25 @@ BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
   case INITIALIZING:
     NS_ERROR("Requesting a read before initialization has completed");
     *result = NPERR_GENERIC_ERROR;
-    return false;
+    return IPC_FAIL_NO_REASON(this);
 
   case ALIVE:
     break;
 
   case DYING:
     *result = NPERR_GENERIC_ERROR;
-    return true;
+    return IPC_OK();
 
   default:
     NS_ERROR("Unexpected state");
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   if (!mStream)
-    return false;
+    return IPC_FAIL_NO_REASON(this);
 
   if (ranges.Length() > INT32_MAX)
-    return false;
+    return IPC_FAIL_NO_REASON(this);
 
   UniquePtr<NPByteRange[]> rp(new NPByteRange[ranges.Length()]);
   for (uint32_t i = 0; i < ranges.Length(); ++i) {
@@ -119,26 +82,7 @@ BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
   rp[ranges.Length() - 1].next = nullptr;
 
   *result = mNPP->mNPNIface->requestread(mStream, rp.get());
-  return true;
-}
-
-bool
-BrowserStreamParent::RecvNPN_DestroyStream(const NPReason& reason)
-{
-  switch (mState) {
-  case ALIVE:
-    break;
-
-  case DYING:
-    return true;
-
-  default:
-    NS_ERROR("Unexpected state");
-    return false;
-  }
-
-  mNPP->mNPNIface->destroystream(mNPP->mNPP, mStream, reason);
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -149,25 +93,28 @@ BrowserStreamParent::NPP_DestroyStream(NPReason reason)
   bool stillInitializing = INITIALIZING == mState;
   if (stillInitializing) {
     mState = DEFERRING_DESTROY;
-    mDeferredDestroyReason = reason;
   } else {
     mState = DYING;
     Unused << SendNPP_DestroyStream(reason);
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 BrowserStreamParent::RecvStreamDestroyed()
 {
   if (DYING != mState) {
     NS_ERROR("Unexpected state");
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   mStreamPeer = nullptr;
 
   mState = DELETING;
-  return Send__delete__(this);
+  IProtocol* mgr = Manager();
+  if (!Send__delete__(this)) {
+    return IPC_FAIL_NO_REASON(mgr);
+  }
+  return IPC_OK();
 }
 
 int32_t
@@ -215,7 +162,6 @@ BrowserStreamParent::StreamAsFile(const char* fname)
   }
 
   Unused << SendNPP_StreamAsFile(nsCString(fname));
-  return;
 }
 
 } // namespace plugins

@@ -3,11 +3,10 @@
 const {PlacesTestUtils} =
   Cu.import("resource://testing-common/PlacesTestUtils.jsm", {});
 
-let tab;
 let notificationURL = "http://example.org/browser/browser/base/content/test/alerts/file_dom_notifications.html";
 let oldShowFavicons;
 
-add_task(function* test_notificationClose() {
+add_task(async function test_notificationClose() {
   let pm = Services.perms;
   let notificationURI = makeURI(notificationURL);
   pm.add(notificationURI, "desktop-notification", pm.ALLOW_ACTION);
@@ -15,27 +14,28 @@ add_task(function* test_notificationClose() {
   oldShowFavicons = Services.prefs.getBoolPref("alerts.showFavicons");
   Services.prefs.setBoolPref("alerts.showFavicons", true);
 
-  yield PlacesTestUtils.addVisits(notificationURI);
-  let faviconURI = yield new Promise(resolve => {
-    let faviconURI = makeURI("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC");
-    PlacesUtils.favicons.setAndFetchFaviconForPage(notificationURI, faviconURI,
+  await PlacesTestUtils.addVisits(notificationURI);
+  let faviconURI = await new Promise(resolve => {
+    let uri =
+      makeURI("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC");
+    PlacesUtils.favicons.setAndFetchFaviconForPage(notificationURI, uri,
       true, PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
-      (faviconURI, iconSize, iconData, mimeType) => resolve(faviconURI),
+      (uriResult) => resolve(uriResult),
       Services.scriptSecurityManager.getSystemPrincipal());
   });
 
-  yield BrowserTestUtils.withNewTab({
+  await BrowserTestUtils.withNewTab({
     gBrowser,
     url: notificationURL
-  }, function* dummyTabTask(aBrowser) {
-    yield openNotification(aBrowser, "showNotification2");
+  }, async function dummyTabTask(aBrowser) {
+    await openNotification(aBrowser, "showNotification2");
 
     info("Notification alert showing");
 
     let alertWindow = Services.wm.getMostRecentWindow("alert:alert");
     if (!alertWindow) {
       ok(true, "Notifications don't use XUL windows on all platforms.");
-      yield closeNotification(aBrowser);
+      await closeNotification(aBrowser);
       return;
     }
 
@@ -53,7 +53,7 @@ add_task(function* test_notificationClose() {
     let closedTime = alertWindow.Date.now();
     alertCloseButton.click();
     info("Clicked on close button");
-    let beforeUnloadEvent = yield promiseBeforeUnloadEvent;
+    await promiseBeforeUnloadEvent;
 
     ok(true, "Alert should close when the close button is clicked");
     let currentTime = alertWindow.Date.now();
@@ -64,7 +64,7 @@ add_task(function* test_notificationClose() {
   });
 });
 
-add_task(function* cleanup() {
+add_task(async function cleanup() {
   Services.perms.remove(makeURI(notificationURL), "desktop-notification");
   if (typeof oldShowFavicons == "boolean") {
     Services.prefs.setBoolPref("alerts.showFavicons", oldShowFavicons);

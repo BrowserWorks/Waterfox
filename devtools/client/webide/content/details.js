@@ -6,19 +6,16 @@ var Cu = Components.utils;
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Services = require("Services");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
-const {ProjectBuilding} = require("devtools/client/webide/modules/build");
 
-window.addEventListener("load", function onLoad() {
-  window.removeEventListener("load", onLoad);
+window.addEventListener("load", function () {
   document.addEventListener("visibilitychange", updateUI, true);
   AppManager.on("app-manager-update", onAppManagerUpdate);
   updateUI();
-}, true);
+}, {capture: true, once: true});
 
-window.addEventListener("unload", function onUnload() {
-  window.removeEventListener("unload", onUnload);
+window.addEventListener("unload", function () {
   AppManager.off("app-manager-update", onAppManagerUpdate);
-}, true);
+}, {capture: true, once: true});
 
 function onAppManagerUpdate(event, what, details) {
   if (what == "project" ||
@@ -41,8 +38,6 @@ function resetUI() {
   document.querySelector("#type").textContent = "";
   document.querySelector("#manifestURL").textContent = "";
   document.querySelector("#location").textContent = "";
-
-  document.querySelector("#prePackageLog").hidden = true;
 
   document.querySelector("#errorslist").innerHTML = "";
   document.querySelector("#warningslist").innerHTML = "";
@@ -102,12 +97,6 @@ function updateUI() {
     }
   }
 
-  if (project.type != "runtimeApp" && project.type != "mainProcess") {
-    ProjectBuilding.hasPrepackage(project).then(hasPrepackage => {
-      document.querySelector("#prePackageLog").hidden = !hasPrepackage;
-    });
-  }
-
   let errorsNode = document.querySelector("#errorslist");
   let warningsNode = document.querySelector("#warningslist");
 
@@ -128,10 +117,6 @@ function updateUI() {
   }
 
   AppManager.update("details");
-}
-
-function showPrepackageLog() {
-  window.top.UI.selectDeckPanel("logs");
 }
 
 function removeProject() {

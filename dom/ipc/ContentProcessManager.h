@@ -20,6 +20,7 @@ class ContentParent;
 
 struct RemoteFrameInfo
 {
+  ContentParentId mOpenerCpId;
   TabId mOpenerTabId;
   TabContext mContext;
 };
@@ -72,21 +73,24 @@ public:
   GetAllChildProcessById(const ContentParentId& aParentCpId);
 
   /**
-   * Allocate a tab id for the given content process's id.
+   * Register RemoteFrameInfo with given tab id.
    * Used when a content process wants to create a new tab. aOpenerTabId and
    * aContext are saved in RemoteFrameInfo, which is a part of
    * ContentProcessInfo.  We can use the tab id and process id to locate the
    * TabContext for future use.
    */
-  TabId AllocateTabId(const TabId& aOpenerTabId,
-                      const IPCTabContext& aContext,
-                      const ContentParentId& aChildCpId);
+  bool RegisterRemoteFrame(const TabId& aTabId,
+                           const ContentParentId& aOpenerCpId,
+                           const TabId& aOpenerTabId,
+                           const IPCTabContext& aContext,
+                           const ContentParentId& aChildCpId);
+
 
   /**
    * Remove the RemoteFrameInfo by the given process and tab id.
    */
-  void DeallocateTabId(const ContentParentId& aChildCpId,
-                       const TabId& aChildTabId);
+  void UnregisterRemoteFrame(const ContentParentId& aChildCpId,
+                             const TabId& aChildTabId);
 
   /**
    * Get the TabContext by the given content process and tab id.
@@ -98,7 +102,6 @@ public:
 
   /**
    * Get all TabContext which are inside the given content process.
-   * Used for AppProcessChecker to cehck app status.
    */
   nsTArray<TabContext>
   GetTabContextByContentProcess(const ContentParentId& aChildCpId);
@@ -109,6 +112,7 @@ public:
    */
   bool GetRemoteFrameOpenerTabId(const ContentParentId& aChildCpId,
                                  const TabId& aChildTabId,
+                                 /*out*/ContentParentId* aOpenerCpId,
                                  /*out*/ TabId* aOpenerTabId);
 
   /**
@@ -117,6 +121,13 @@ public:
    */
   nsTArray<TabId>
   GetTabParentsByProcessId(const ContentParentId& aChildCpId);
+
+  /**
+   * Get the number of TabParents managed by the givent content process.
+   * Return 0 when TabParent couldn't be found via aChildCpId.
+   */
+  uint32_t
+  GetTabParentCountByProcessId(const ContentParentId& aChildCpId);
 
   /**
    * Get the TabParent by the given content process and tab id.
@@ -143,18 +154,8 @@ public:
   GetTopLevelTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
                                         const TabId& aChildTabId);
 
-  /**
-   * Return appId by given TabId and ContentParentId.
-   * It will return nsIScriptSecurityManager::NO_APP_ID
-   * if the given tab is not an app.
-   */
-  uint32_t
-  GetAppIdByProcessAndTabId(const ContentParentId& aChildCpId,
-                            const TabId& aChildTabId);
-
 private:
   static StaticAutoPtr<ContentProcessManager> sSingleton;
-  TabId mUniqueId;
   std::map<ContentParentId, ContentProcessInfo> mContentParentMap;
 
   ContentProcessManager() {MOZ_COUNT_CTOR(ContentProcessManager);};

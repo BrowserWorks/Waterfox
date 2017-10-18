@@ -113,7 +113,7 @@ public:
  * mozilla::InternalFormEvent
  *
  * We hold the originating form control for form submit and reset events.
- * originator is a weak pointer (does not hold a strong reference).
+ * mOriginator is a weak pointer (does not hold a strong reference).
  ******************************************************************************/
 
 class InternalFormEvent : public WidgetEvent
@@ -123,7 +123,7 @@ public:
 
   InternalFormEvent(bool aIsTrusted, EventMessage aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eFormEventClass)
-    , originator(nullptr)
+    , mOriginator(nullptr)
   {
   }
 
@@ -137,13 +137,13 @@ public:
     return result;
   }
 
-  nsIContent *originator;
+  nsIContent* mOriginator;
 
   void AssignFormEventData(const InternalFormEvent& aEvent, bool aCopyTargets)
   {
     AssignEventData(aEvent, aCopyTargets);
 
-    // Don't copy originator due to a weak pointer.
+    // Don't copy mOriginator due to a weak pointer.
   }
 };
 
@@ -313,38 +313,6 @@ public:
     mAnimationName = aEvent.mAnimationName;
     mElapsedTime = aEvent.mElapsedTime;
     mPseudoElement = aEvent.mPseudoElement;
-  }
-};
-
-/******************************************************************************
- * mozilla::InternalSVGZoomEvent
- ******************************************************************************/
-
-class InternalSVGZoomEvent : public WidgetGUIEvent
-{
-public:
-  virtual InternalSVGZoomEvent* AsSVGZoomEvent() override { return this; }
-
-  InternalSVGZoomEvent(bool aIsTrusted, EventMessage aMessage)
-    : WidgetGUIEvent(aIsTrusted, aMessage, nullptr, eSVGZoomEventClass)
-  {
-  }
-
-  virtual WidgetEvent* Duplicate() const override
-  {
-    MOZ_ASSERT(mClass == eSVGZoomEventClass,
-               "Duplicate() must be overridden by sub class");
-    // Not copying widget, it is a weak reference.
-    InternalSVGZoomEvent* result = new InternalSVGZoomEvent(false, mMessage);
-    result->AssignSVGZoomEventData(*this, true);
-    result->mFlags = mFlags;
-    return result;
-  }
-
-  void AssignSVGZoomEventData(const InternalSVGZoomEvent& aEvent,
-                              bool aCopyTargets)
-  {
-    AssignGUIEventData(aEvent, aCopyTargets);
   }
 };
 

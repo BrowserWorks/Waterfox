@@ -88,7 +88,6 @@
   <deck id="mainDeck" flex="1">
     <!-- General page information -->
     <vbox id="generalPanel">
-      <textbox class="header" readonly="true" id="titletext"/>
       <grid id="generalGrid">
         <columns>
           <column/>
@@ -96,6 +95,11 @@
           <column flex="1"/>
         </columns>
         <rows id="generalRows">
+          <row id="generalTitle">
+            <label control="titletext" value="&generalTitle;"/>
+            <separator/>
+            <textbox readonly="true" id="titletext"/>
+          </row>
           <row id="generalURLRow">
             <label control="urltext" value="&generalURL;"/>
             <separator/>
@@ -342,6 +346,15 @@
               <textbox id="security-identity-verifier-value"
                        class="fieldValue" readonly="true" />
             </row>
+            <!-- Certificate Validity -->
+            <row id="security-identity-validity-row">
+              <label id="security-identity-validity-label"
+                     class="fieldLabel"
+                     value="&securityView.identity.validity;"
+                     control="security-identity-validity-value"/>
+              <textbox id="security-identity-validity-value"
+                       class="fieldValue" readonly="true" />
+            </row>
           </rows>
         </grid>
         <spacer flex="1"/>
@@ -417,6 +430,7 @@
           <label id="security-technical-shortform" class="fieldValue"/>
           <description id="security-technical-longform1" class="fieldLabel"/>
           <description id="security-technical-longform2" class="fieldLabel"/>
+          <description id="security-technical-certificate-transparency" class="fieldLabel"/>
         </vbox>
       </groupbox>
       <hbox pack="end">

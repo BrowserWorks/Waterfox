@@ -12,13 +12,13 @@ const { Cc, Ci } = require("chrome");
 const { Class } = require("../core/heritage");
 const { List, addListItem, removeListItem } = require("../util/list");
 const { EventTarget } = require("../event/target");
-const { emit } = require("../event/core");
-const { create: makeFrame } = require("./utils");
-const { defer } = require("../core/promise");
+lazyRequire(this, "../event/core", "emit");
+lazyRequire(this, "./utils", { "create": "makeFrame" });
+lazyRequire(this, "../core/promise", "defer");
 const { when: unload } = require("../system/unload");
-const { validateOptions, getTypeOf } = require("../deprecated/api-utils");
-const { window } = require("../addon/window");
-const { fromIterator } = require("../util/array");
+lazyRequire(this, "../deprecated/api-utils", "validateOptions", "getTypeOf");
+lazyRequire(this, "../addon/window", "window");
+lazyRequire(this, "../util/array", "fromIterator");
 
 // This cache is used to access friend properties between functions
 // without exposing them on the public API.
@@ -31,10 +31,10 @@ function contentLoaded(target) {
     // "DOMContentLoaded" events from nested frames propagate up to target,
     // ignore events unless it's DOMContentLoaded for the given target.
     if (event.target === target || event.target === target.contentDocument) {
-      target.removeEventListener("DOMContentLoaded", DOMContentLoaded, false);
+      target.removeEventListener("DOMContentLoaded", DOMContentLoaded);
       deferred.resolve(target);
     }
-  }, false);
+  });
   return deferred.promise;
 }
 
@@ -108,7 +108,7 @@ function removeHiddenFrame(frame) {
   cache.delete(frame);
   emit(frame, "unload")
   let element = frame.element
-  if (element) element.parentNode.removeChild(element)
+  if (element) element.remove()
 }
 exports.remove = removeHiddenFrame;
 

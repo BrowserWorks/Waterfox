@@ -15,8 +15,8 @@ const { assert, dumpn } = DevToolsUtils;
 loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
 
 const TYPED_ARRAY_CLASSES = ["Uint8Array", "Uint8ClampedArray", "Uint16Array",
-      "Uint32Array", "Int8Array", "Int16Array", "Int32Array", "Float32Array",
-      "Float64Array"];
+                             "Uint32Array", "Int8Array", "Int16Array", "Int32Array",
+                             "Float32Array", "Float64Array"];
 
 // Number of items to preview in objects, arrays, maps, sets, lists,
 // collections, etc.
@@ -47,7 +47,7 @@ const OBJECT_PREVIEW_MAX_ITEMS = 10;
  *              The Debuggee Global Object as given by the ThreadActor
  */
 function ObjectActor(obj, {
-  createValueGrip,
+  createValueGrip: createValueGripHook,
   sources,
   createEnvironmentActor,
   getGripDepth,
@@ -59,7 +59,7 @@ function ObjectActor(obj, {
          "Should not create object actors for optimized out values!");
   this.obj = obj;
   this.hooks = {
-    createValueGrip,
+    createValueGrip: createValueGripHook,
     sources,
     createEnvironmentActor,
     getGripDepth,
@@ -86,18 +86,30 @@ ObjectActor.prototype = {
 
     // If it's a proxy, lie and tell that it belongs to an invented
     // "Proxy" class, and avoid calling the [[IsExtensible]] trap
-    if(this.obj.isProxy) {
+    if (this.obj.isProxy) {
       g.class = "Proxy";
       g.proxyTarget = this.hooks.createValueGrip(this.obj.proxyTarget);
       g.proxyHandler = this.hooks.createValueGrip(this.obj.proxyHandler);
     } else {
-      g.class = this.obj.class;
-      g.extensible = this.obj.isExtensible();
-      g.frozen = this.obj.isFrozen();
-      g.sealed = this.obj.isSealed();
+      try {
+        g.class = this.obj.class;
+        g.extensible = this.obj.isExtensible();
+        g.frozen = this.obj.isFrozen();
+        g.sealed = this.obj.isSealed();
+      } catch (e) {
+        // Handle cases where the underlying object's calls to isExtensible, etc throw.
+        // This is possible with ProxyObjects like CPOWs. Note these are different from
+        // scripted Proxies created via `new Proxy`, which match this.obj.isProxy above.
+      }
     }
 
-    if (g.class != "DeadObject") {
+    // Changing the class so that CPOWs will be visible in the UI
+    let isCPOW = DevToolsUtils.isCPOW(this.obj);
+    if (isCPOW) {
+      g.class = "CPOW: " + g.class;
+    }
+
+    if (g.class != "DeadObject" && !isCPOW) {
       if (g.class == "Promise") {
         g.promiseState = this._createPromiseState();
       }
@@ -106,11 +118,17 @@ ObjectActor.prototype = {
       // to lazily display them when there is a bunch.
       // Throws on some MouseEvent object in tests.
       try {
-        // Bug 1163520: Assert on internal functions
-        if (!["Function", "Proxy"].includes(g.class)) {
+        if (TYPED_ARRAY_CLASSES.indexOf(g.class) != -1) {
+          // Bug 1348761: getOwnPropertyNames is unecessary slow on TypedArrays
+          let length = DevToolsUtils.getProperty(this.obj, "length");
+          g.ownPropertyLength = length;
+        } else if (!["Function", "Proxy"].includes(g.class)) {
+          // Bug 1163520: Assert on internal functions
           g.ownPropertyLength = this.obj.getOwnPropertyNames().length;
         }
-      } catch (e) {}
+      } catch (e) {
+        // ignored
+      }
 
       let raw = this.obj.unsafeDereference();
 
@@ -250,23 +268,36 @@ ObjectActor.prototype = {
    */
   onPrototypeAndProperties: function () {
     let ownProperties = Object.create(null);
+    let ownSymbols = [];
     let names;
+    let symbols;
     try {
       names = this.obj.getOwnPropertyNames();
+      symbols = this.obj.getOwnPropertySymbols();
     } catch (ex) {
       // The above can throw if this.obj points to a dead object.
       // TODO: we should use Cu.isDeadWrapper() - see bug 885800.
       return { from: this.actorID,
                prototype: this.hooks.createValueGrip(null),
-               ownProperties: ownProperties,
+               ownProperties,
+               ownSymbols,
                safeGetterValues: Object.create(null) };
     }
     for (let name of names) {
       ownProperties[name] = this._propertyDescriptor(name);
     }
+
+    for (let sym of symbols) {
+      ownSymbols.push({
+        name: sym.toString(),
+        descriptor: this._propertyDescriptor(sym)
+      });
+    }
+
     return { from: this.actorID,
              prototype: this.hooks.createValueGrip(this.obj.proto),
-             ownProperties: ownProperties,
+             ownProperties,
+             ownSymbols,
              safeGetterValues: this._findSafeGetterValues(names) };
   },
 
@@ -566,7 +597,8 @@ ObjectActor.prototype = {
                         "object grips with a 'Promise' class." };
     }
 
-    let promises = this.obj.promiseDependentPromises.map(p => this.hooks.createValueGrip(p));
+    let promises = this.obj.promiseDependentPromises
+                           .map(p => this.hooks.createValueGrip(p));
 
     return { promises };
   },
@@ -673,7 +705,9 @@ ObjectActor.prototype = {
     // Catch any errors if the source actor cannot be found
     try {
       source = this.hooks.sources().getSourceActorByURL(stack.source);
-    } catch (e) {}
+    } catch (e) {
+      // ignored
+    }
 
     if (!source) {
       return null;
@@ -1090,7 +1124,7 @@ function enumWeakSetEntries(objectActor) {
  * having customized output. This object holds arrays mapped by
  * Debugger.Object.prototype.class.
  *
- * In each array you can add functions that take two
+ * In each array you can add functions that take three
  * arguments:
  *   - the ObjectActor instance and its hooks to make a preview for,
  *   - the grip object being prepared for the client,
@@ -1102,16 +1136,16 @@ function enumWeakSetEntries(objectActor) {
  * information for the debugger object, or true otherwise.
  */
 DebuggerServer.ObjectActorPreviewers = {
-  String: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("String", String, objectActor, grip);
+  String: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("String", String, objectActor, grip, rawObj);
   }],
 
-  Boolean: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip);
+  Boolean: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip, rawObj);
   }],
 
-  Number: [function (objectActor, grip) {
-    return wrappedPrimitivePreviewer("Number", Number, objectActor, grip);
+  Number: [function (objectActor, grip, rawObj) {
+    return wrappedPrimitivePreviewer("Number", Number, objectActor, grip, rawObj);
   }],
 
   Function: [function ({obj, hooks}, grip) {
@@ -1158,18 +1192,20 @@ DebuggerServer.ObjectActorPreviewers = {
   }],
 
   RegExp: [function ({obj, hooks}, grip) {
-    // Avoid having any special preview for the RegExp.prototype itself.
-    if (!obj.proto || obj.proto.class != "RegExp") {
+    let str = DevToolsUtils.callPropertyOnObject(obj, "toString");
+    if (typeof str != "string") {
       return false;
     }
 
-    let str = RegExp.prototype.toString.call(obj.unsafeDereference());
     grip.displayString = hooks.createValueGrip(str);
     return true;
   }],
 
   Date: [function ({obj, hooks}, grip) {
-    let time = Date.prototype.getTime.call(obj.unsafeDereference());
+    let time = DevToolsUtils.callPropertyOnObject(obj, "getTime");
+    if (typeof time != "number") {
+      return false;
+    }
 
     grip.preview = {
       timestamp: hooks.createValueGrip(time),
@@ -1357,8 +1393,8 @@ DebuggerServer.ObjectActorPreviewers = {
       return true;
     }
 
-    grip.preview.ownProperties['<target>'] = {value: grip.proxyTarget};
-    grip.preview.ownProperties['<handler>'] = {value: grip.proxyHandler};
+    grip.preview.ownProperties["<target>"] = {value: grip.proxyTarget};
+    grip.preview.ownProperties["<handler>"] = {value: grip.proxyHandler};
 
     return true;
   }],
@@ -1379,17 +1415,16 @@ DebuggerServer.ObjectActorPreviewers = {
  *        The result grip to fill in
  * @return Booolean true if the object was handled, false otherwise
  */
-function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
+function wrappedPrimitivePreviewer(className, classObj, objectActor, grip, rawObj) {
   let {obj, hooks} = objectActor;
 
   if (!obj.proto || obj.proto.class != className) {
     return false;
   }
 
-  let raw = obj.unsafeDereference();
   let v = null;
   try {
-    v = classObj.prototype.valueOf.call(raw);
+    v = classObj.prototype.valueOf.call(rawObj);
   } catch (ex) {
     // valueOf() can throw if the raw JS object is "misbehaved".
     return false;
@@ -1399,7 +1434,7 @@ function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
     return false;
   }
 
-  let canHandle = GenericObject(objectActor, grip, className === "String");
+  let canHandle = GenericObject(objectActor, grip, rawObj, className === "String");
   if (!canHandle) {
     return false;
   }
@@ -1409,26 +1444,28 @@ function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
   return true;
 }
 
-function GenericObject(objectActor, grip, specialStringBehavior = false) {
+function GenericObject(objectActor, grip, rawObj, specialStringBehavior = false) {
   let {obj, hooks} = objectActor;
   if (grip.preview || grip.displayString || hooks.getGripDepth() > 1) {
     return false;
   }
 
-  let i = 0, names = [];
+  let i = 0, names = [], symbols = [];
   let preview = grip.preview = {
     kind: "Object",
     ownProperties: Object.create(null),
+    ownSymbols: [],
   };
 
   try {
     names = obj.getOwnPropertyNames();
+    symbols = obj.getOwnPropertySymbols();
   } catch (ex) {
     // Calling getOwnPropertyNames() on some wrapped native prototypes is not
     // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
   }
-
   preview.ownPropertiesLength = names.length;
+  preview.ownSymbolsLength = symbols.length;
 
   let length;
   if (specialStringBehavior) {
@@ -1452,6 +1489,21 @@ function GenericObject(objectActor, grip, specialStringBehavior = false) {
     }
 
     preview.ownProperties[name] = desc;
+    if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
+      break;
+    }
+  }
+
+  for (let symbol of symbols) {
+    let descriptor = objectActor._propertyDescriptor(symbol, true);
+    if (!descriptor) {
+      continue;
+    }
+
+    preview.ownSymbols.push(Object.assign({
+      descriptor
+    }, hooks.createValueGrip(symbol)));
+
     if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
       break;
     }
@@ -1557,7 +1609,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   function ObjectWithURL({obj, hooks}, grip, rawObj) {
     if (isWorker || !rawObj || !(rawObj instanceof Ci.nsIDOMCSSImportRule ||
                                  rawObj instanceof Ci.nsIDOMCSSStyleSheet ||
-                                 rawObj instanceof Ci.nsIDOMLocation ||
+                                 obj.class == "Location" ||
                                  rawObj instanceof Ci.nsIDOMWindow)) {
       return false;
     }
@@ -1651,6 +1703,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
       kind: "DOMNode",
       nodeType: rawObj.nodeType,
       nodeName: rawObj.nodeName,
+      isConnected: rawObj.isConnected === true,
     };
 
     if (rawObj instanceof Ci.nsIDOMDocument && rawObj.location) {
@@ -1674,7 +1727,6 @@ DebuggerServer.ObjectActorPreviewers.Object = [
         preview.nodeName = preview.nodeName.toLowerCase();
       }
 
-      let i = 0;
       preview.attributes = {};
       preview.attributesLength = rawObj.attributes.length;
       for (let attr of rawObj.attributes) {
@@ -1793,17 +1845,45 @@ DebuggerServer.ObjectActorPreviewers.Object = [
   },
 
   function PseudoArray({obj, hooks}, grip, rawObj) {
-    let length = 0;
+    let length;
 
-    // Making sure all keys are numbers from 0 to length-1
     let keys = obj.getOwnPropertyNames();
     if (keys.length == 0) {
       return false;
     }
-    for (let key of keys) {
-      if (isNaN(key) || key != length++) {
+
+    // If no item is going to be displayed in preview, better display as sparse object.
+    // The first key should contain the smallest integer index (if any).
+    if (keys[0] >= OBJECT_PREVIEW_MAX_ITEMS) {
+      return false;
+    }
+
+    // Pseudo-arrays should only have array indices and, optionally, a "length" property.
+    // Since integer indices are sorted first, check if the last property is "length".
+    if (keys[keys.length - 1] === "length") {
+      keys.pop();
+      length = DevToolsUtils.getProperty(obj, "length");
+    } else {
+      // Otherwise, let length be the (presumably) greatest array index plus 1.
+      length = +keys[keys.length - 1] + 1;
+    }
+    // Check if length is a valid array length, i.e. is a Uint32 number.
+    if (typeof length !== "number" || length >>> 0 !== length) {
+      return false;
+    }
+
+    // Ensure all keys are increasing array indices smaller than length. The order is not
+    // guaranteed for exotic objects but, in most cases, big array indices and properties
+    // which are not integer indices should be at the end. Then, iterating backwards
+    // allows us to return earlier when the object is not completely a pseudo-array.
+    let prev = length;
+    for (let i = keys.length - 1; i >= 0; --i) {
+      let key = keys[i];
+      let numKey = key >>> 0; // ToUint32(key)
+      if (numKey + "" !== key || numKey >= prev) {
         return false;
       }
+      prev = numKey;
     }
 
     grip.preview = {
@@ -1817,19 +1897,23 @@ DebuggerServer.ObjectActorPreviewers.Object = [
     }
 
     let items = grip.preview.items = [];
+    let numItems = Math.min(OBJECT_PREVIEW_MAX_ITEMS, length);
 
-    let i = 0;
-    for (let key of keys) {
-      if (rawObj.hasOwnProperty(key) && i++ < OBJECT_PREVIEW_MAX_ITEMS) {
-        let value = makeDebuggeeValueIfNeeded(obj, rawObj[key]);
-        items.push(hooks.createValueGrip(value));
+    for (let i = 0; i < numItems; ++i) {
+      let desc = obj.getOwnPropertyDescriptor(i);
+      if (desc && "value" in desc) {
+        items.push(hooks.createValueGrip(desc.value));
+      } else {
+        items.push(null);
       }
     }
 
     return true;
   },
 
-  GenericObject,
+  function Object(objectActor, grip, rawObj) {
+    return GenericObject(objectActor, grip, rawObj, /* specialStringBehavior = */ false);
+  },
 ];
 
 /**
@@ -1847,7 +1931,14 @@ function getPromiseState(obj) {
       "Can't call `getPromiseState` on `Debugger.Object`s that don't " +
       "refer to Promise objects.");
   }
-  return obj.promiseState;
+
+  let state = { state: obj.promiseState };
+  if (state.state === "fulfilled") {
+    state.value = obj.promiseValue;
+  } else if (state.state === "rejected") {
+    state.reason = obj.promiseReason;
+  }
+  return state;
 }
 
 /**
@@ -2043,9 +2134,9 @@ function LongStringActor(string) {
 LongStringActor.prototype = {
   actorPrefix: "longString",
 
-  disconnect: function () {
+  destroy: function () {
     // Because longStringActors is not a weak map, we won't automatically leave
-    // it so we need to manually leave on disconnect so that we don't leak
+    // it so we need to manually leave on destroy so that we don't leak
     // memory.
     this._releaseActor();
   },
@@ -2101,6 +2192,52 @@ LongStringActor.prototype.requestTypes = {
 };
 
 /**
+ * Creates an actor for the specied ArrayBuffer.
+ *
+ * @param buffer ArrayBuffer
+ *        The buffer.
+ */
+function ArrayBufferActor(buffer) {
+  this.buffer = buffer;
+  this.bufferLength = buffer.byteLength;
+}
+
+ArrayBufferActor.prototype = {
+  actorPrefix: "arrayBuffer",
+
+  destroy: function () {
+  },
+
+  grip() {
+    return {
+      "type": "arrayBuffer",
+      "length": this.bufferLength,
+      "actor": this.actorID
+    };
+  },
+
+  onSlice({start, count}) {
+    let slice = new Uint8Array(this.buffer, start, count);
+    let parts = [], offset = 0;
+    const PortionSize = 0x6000; // keep it divisible by 3 for btoa() and join()
+    while (offset + PortionSize < count) {
+      parts.push(btoa(
+        String.fromCharCode.apply(null, slice.subarray(offset, offset + PortionSize))));
+      offset += PortionSize;
+    }
+    parts.push(btoa(String.fromCharCode.apply(null, slice.subarray(offset, count))));
+    return {
+      "from": this.actorID,
+      "encoded": parts.join(""),
+    };
+  }
+};
+
+ArrayBufferActor.prototype.requestTypes = {
+  "slice": ArrayBufferActor.prototype.onSlice,
+};
+
+/**
  * Create a grip for the given debuggee value.  If the value is an
  * object, will create an actor with the given lifetime.
  */
@@ -2133,8 +2270,7 @@ function createValueGrip(value, pool, makeObjectGrip) {
     case "object":
       if (value === null) {
         return { type: "null" };
-      }
-      else if (value.optimizedOut ||
+      } else if (value.optimizedOut ||
              value.uninitialized ||
              value.missingArguments) {
         // The slot is optimized out, an uninitialized binding, or
@@ -2205,9 +2341,33 @@ function longStringGrip(str, pool) {
   return actor.grip();
 }
 
+/**
+ * Create a grip for the given ArrayBuffer.
+ *
+ * @param buffer ArrayBuffer
+ *        The ArrayBuffer we are creating a grip for.
+ * @param pool ActorPool
+ *        The actor pool where the new actor will be added.
+ */
+function arrayBufferGrip(buffer, pool) {
+  if (!pool.arrayBufferActors) {
+    pool.arrayBufferActors = new WeakMap();
+  }
+
+  if (pool.arrayBufferActors.has(buffer)) {
+    return pool.arrayBufferActors.get(buffer).grip();
+  }
+
+  let actor = new ArrayBufferActor(buffer);
+  pool.addActor(actor);
+  pool.arrayBufferActors.set(buffer, actor);
+  return actor.grip();
+}
+
 exports.ObjectActor = ObjectActor;
 exports.PropertyIteratorActor = PropertyIteratorActor;
 exports.LongStringActor = LongStringActor;
 exports.createValueGrip = createValueGrip;
 exports.stringIsLong = stringIsLong;
 exports.longStringGrip = longStringGrip;
+exports.arrayBufferGrip = arrayBufferGrip;

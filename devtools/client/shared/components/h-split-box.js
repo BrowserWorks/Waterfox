@@ -72,17 +72,13 @@ module.exports = createClass({
   },
 
   componentDidMount() {
-    document.defaultView.top.addEventListener("mouseup", this._onMouseUp,
-                                              false);
-    document.defaultView.top.addEventListener("mousemove", this._onMouseMove,
-                                              false);
+    document.defaultView.top.addEventListener("mouseup", this._onMouseUp);
+    document.defaultView.top.addEventListener("mousemove", this._onMouseMove);
   },
 
   componentWillUnmount() {
-    document.defaultView.top.removeEventListener("mouseup", this._onMouseUp,
-                                                 false);
-    document.defaultView.top.removeEventListener("mousemove", this._onMouseMove,
-                                                 false);
+    document.defaultView.top.removeEventListener("mouseup", this._onMouseUp);
+    document.defaultView.top.removeEventListener("mousemove", this._onMouseMove);
   },
 
   _onMouseDown(event) {
@@ -111,7 +107,9 @@ module.exports = createClass({
     const rect = this.refs.box.getBoundingClientRect();
     const { left, right } = rect;
     const width = right - left;
-    const relative = event.clientX - left;
+    const direction = this.refs.box.ownerDocument.dir;
+    const relative = direction == "rtl" ? right - event.clientX
+                                        : event.clientX - left;
     this.props.onResize(relative / width);
 
     event.preventDefault();

@@ -13,11 +13,11 @@ var {VariablesView} = require("resource://devtools/client/shared/widgets/Variabl
 var Services = require("Services");
 var promise = require("promise");
 var defer = require("devtools/shared/defer");
-var {LocalizationHelper} = require("devtools/client/shared/l10n");
+var {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
 
 Object.defineProperty(this, "WebConsoleUtils", {
   get: function () {
-    return require("devtools/shared/webconsole/utils").Utils;
+    return require("devtools/client/webconsole/utils").Utils;
   },
   configurable: true,
   enumerable: true
@@ -32,7 +32,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
 
 const MAX_LONG_STRING_LENGTH = 200000;
 const MAX_PROPERTY_ITEMS = 2000;
-const DBG_STRINGS_URI = "chrome://devtools/locale/debugger.properties";
+const DBG_STRINGS_URI = "devtools/client/locales/debugger.properties";
 
 this.EXPORTED_SYMBOLS = ["VariablesViewController", "StackFrameUtils"];
 
@@ -196,7 +196,7 @@ VariablesViewController.prototype = {
       // Query the name of the first and last items for this slice
       let deferred = defer();
       iterator.names([start, start + count - 1], ({ names }) => {
-        let label = "[" + names[0] + L10N.ellipsis + names[1] + "]";
+          let label = "[" + names[0] + ELLIPSIS + names[1] + "]";
         let item = aTarget.addItem(label, {}, { internalItem: true });
         item.showArrow();
         this.addExpander(item, sliceGrip);
@@ -343,7 +343,7 @@ VariablesViewController.prototype = {
       deferred.resolve();
       return deferred.promise;
     }
-    
+
     if (aGrip.class === "Promise" && aGrip.promiseState) {
       const { state, value, reason } = aGrip.promiseState;
       aTarget.addItem("<state>", { value: state }, { internalItem: true });
@@ -576,7 +576,7 @@ VariablesViewController.prototype = {
     // Some variables are likely to contain a very large number of properties.
     // It's a good idea to be prepared in case of an expansion.
     if (aTarget.shouldPrefetch) {
-      aTarget.addEventListener("mouseover", aTarget.onexpand, false);
+      aTarget.addEventListener("mouseover", aTarget.onexpand);
     }
 
     // Register all the actors that this controller now depends on.
@@ -762,7 +762,7 @@ VariablesViewController.prototype = {
     scope.expanded = true; // Expand the scope by default.
     scope.locked = true; // Prevent collapsing the scope.
 
-    let variable = scope.addItem("", { enumerable: true });
+    let variable = scope.addItem(undefined, { enumerable: true });
     let populated;
 
     if (options.objectActor) {

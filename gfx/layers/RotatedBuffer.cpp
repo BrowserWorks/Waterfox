@@ -9,7 +9,7 @@
 #include "BasicImplData.h"              // for BasicImplData
 #include "BasicLayersImpl.h"            // for ToData
 #include "BufferUnrotate.h"             // for BufferUnrotate
-#include "GeckoProfiler.h"              // for PROFILER_LABEL
+#include "GeckoProfiler.h"              // for AUTO_PROFILER_LABEL
 #include "Layers.h"                     // for PaintedLayer, Layer, etc
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPrefs.h"                   // for gfxPrefs
@@ -170,8 +170,7 @@ RotatedBuffer::DrawBufferWithRotation(gfx::DrawTarget *aTarget, ContextSource aS
                                       gfx::SourceSurface* aMask,
                                       const gfx::Matrix* aMaskTransform) const
 {
-  PROFILER_LABEL("RotatedBuffer", "DrawBufferWithRotation",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("RotatedBuffer::DrawBufferWithRotation", GRAPHICS);
 
   // See above, in Azure Repeat should always be a safe, even faster choice
   // though! Particularly on D2D Repeat should be a lot faster, need to look
@@ -355,7 +354,7 @@ RotatedContentBuffer::EnsureBuffer()
     }
   }
 
-  NS_WARN_IF_FALSE(mDTBuffer && mDTBuffer->IsValid(), "no buffer");
+  NS_WARNING_ASSERTION(mDTBuffer && mDTBuffer->IsValid(), "no buffer");
   return !!mDTBuffer;
 }
 
@@ -370,7 +369,7 @@ RotatedContentBuffer::EnsureBufferOnWhite()
     }
   }
 
-  NS_WARN_IF_FALSE(mDTBufferOnWhite, "no buffer");
+  NS_WARNING_ASSERTION(mDTBufferOnWhite, "no buffer");
   return !!mDTBufferOnWhite;
 }
 
@@ -402,24 +401,10 @@ ComputeBufferRect(const IntRect& aRequestedRect)
   IntRect rect(aRequestedRect);
   // Set a minimum width to guarantee a minimum size of buffers we
   // allocate (and work around problems on some platforms with smaller
-  // dimensions).  64 is the magic number needed to work around the
-  // rendering glitch, and guarantees image rows can be SIMD'd for
-  // even r5g6b5 surfaces pretty much everywhere.
-  rect.width = std::max(aRequestedRect.width, 64);
-#ifdef MOZ_WIDGET_GONK
-  // Set a minumum height to guarantee a minumum height of buffers we
-  // allocate. Some GL implementations fail to render gralloc textures
-  // with a height 9px-16px. It happens on Adreno 200. Adreno 320 does not
-  // have this problem. 32 is choosed as alignment of gralloc buffers.
-  // See Bug 873937.
-  // Increase the height only when the requested height is more than 0.
-  // See Bug 895976.
-  // XXX it might be better to disable it on the gpu that does not have
-  // the height problem.
-  if (rect.height > 0) {
-    rect.height = std::max(aRequestedRect.height, 32);
-  }
-#endif
+  // dimensions). 64 used to be the magic number needed to work around
+  // a rendering glitch on b2g (see bug 788411). Now that we don't support
+  // this device anymore we should be fine with 8 pixels as the minimum.
+  rect.width = std::max(aRequestedRect.width, 8);
   return rect;
 }
 
@@ -441,8 +426,10 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
   PaintState result;
   // We need to disable rotation if we're going to be resampled when
   // drawing, because we might sample across the rotation boundary.
+  // Also disable buffer rotation when using webrender.
   bool canHaveRotation = gfxPlatform::BufferRotationEnabled() &&
-                         !(aFlags & (PAINT_WILL_RESAMPLE | PAINT_NO_ROTATION));
+                         !(aFlags & (PAINT_WILL_RESAMPLE | PAINT_NO_ROTATION)) &&
+                         !(aLayer->Manager()->AsWebRenderLayerManager());
 
   nsIntRegion validRegion = aLayer->GetValidRegion();
 
@@ -480,7 +467,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
     }
 
     if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
-#if defined(MOZ_GFX_OPTIMIZE_MOBILE) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_GFX_OPTIMIZE_MOBILE)
       mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
 #else
       if (!aLayer->GetParent() ||
@@ -555,10 +542,20 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
     return result;
 
   if (HaveBuffer()) {
-    // Do not modify result.mRegionToDraw or result.mContentType after this call.
-    // Do not modify mBufferRect, mBufferRotation, or mDidSelfCopy,
-    // or call CreateBuffer before this call.
-    FinalizeFrame(result.mRegionToDraw);
+    if (LockBuffers()) {
+      // Do not modify result.mRegionToDraw or result.mContentType after this call.
+      // Do not modify mBufferRect, mBufferRotation, or mDidSelfCopy,
+      // or call CreateBuffer before this call.
+      FinalizeFrame(result.mRegionToDraw);
+    } else {
+      // Abandon everything and redraw it all. Ideally we'd reallocate and copy
+      // the old to the new and then call FinalizeFrame on the new buffer so that
+      // we only need to draw the latest bits, but we need a big refactor to support
+      // that ordering.
+      result.mRegionToDraw = neededRegion;
+      canReuseBuffer = false;
+      Clear();
+    }
   }
 
   IntRect drawBounds = result.mRegionToDraw.GetBounds();
@@ -654,7 +651,9 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
                          &destDTBuffer, &destDTBufferOnWhite);
             if (!destDTBuffer ||
                 (!destDTBufferOnWhite && (bufferFlags & BUFFER_COMPONENT_ALPHA))) {
-              gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(IntSize(destBufferRect.width, destBufferRect.height)))) << "Failed 1 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
+              if (Factory::ReasonableSurfaceSize(IntSize(destBufferRect.width, destBufferRect.height))) {
+                gfxCriticalNote << "Failed 1 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
+              }
               return result;
             }
           }
@@ -676,7 +675,9 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
                  &destDTBuffer, &destDTBufferOnWhite);
     if (!destDTBuffer ||
         (!destDTBufferOnWhite && (bufferFlags & BUFFER_COMPONENT_ALPHA))) {
-      gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(IntSize(destBufferRect.width, destBufferRect.height)))) << "Failed 2 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
+      if (Factory::ReasonableSurfaceSize(IntSize(destBufferRect.width, destBufferRect.height))) {
+        gfxCriticalNote << "Failed 2 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
+      }
       return result;
     }
   }

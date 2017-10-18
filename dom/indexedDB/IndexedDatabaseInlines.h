@@ -23,7 +23,7 @@ namespace indexedDB {
 
 inline
 StructuredCloneFile::StructuredCloneFile()
-  : mMutable(false)
+  : mType(eBlob)
 {
   MOZ_COUNT_CTOR(StructuredCloneFile);
 }
@@ -41,25 +41,39 @@ StructuredCloneFile::operator==(const StructuredCloneFile& aOther) const
   return this->mBlob == aOther.mBlob &&
          this->mMutableFile == aOther.mMutableFile &&
          this->mFileInfo == aOther.mFileInfo &&
-         this->mMutable == aOther.mMutable;
+         this->mType == aOther.mType;
 }
 
 inline
 StructuredCloneReadInfo::StructuredCloneReadInfo()
   : mDatabase(nullptr)
-  , mCloneBuffer(JS::StructuredCloneScope::SameProcessSameThread, nullptr,
-                 nullptr)
+  , mHasPreprocessInfo(false)
 {
   MOZ_COUNT_CTOR(StructuredCloneReadInfo);
 }
 
 inline
 StructuredCloneReadInfo::StructuredCloneReadInfo(
+                             StructuredCloneReadInfo&& aCloneReadInfo)
+  : mData(Move(aCloneReadInfo.mData))
+{
+  MOZ_ASSERT(&aCloneReadInfo != this);
+  MOZ_COUNT_CTOR(StructuredCloneReadInfo);
+
+  mFiles.Clear();
+  mFiles.SwapElements(aCloneReadInfo.mFiles);
+  mDatabase = aCloneReadInfo.mDatabase;
+  aCloneReadInfo.mDatabase = nullptr;
+  mHasPreprocessInfo = aCloneReadInfo.mHasPreprocessInfo;
+  aCloneReadInfo.mHasPreprocessInfo = false;
+}
+
+inline
+StructuredCloneReadInfo::StructuredCloneReadInfo(
                              SerializedStructuredCloneReadInfo&& aCloneReadInfo)
-  : mData(Move(aCloneReadInfo.data()))
+  : mData(Move(aCloneReadInfo.data().data))
   , mDatabase(nullptr)
-  , mCloneBuffer(JS::StructuredCloneScope::SameProcessSameThread, nullptr,
-                 nullptr)
+  , mHasPreprocessInfo(aCloneReadInfo.hasPreprocessInfo())
 {
   MOZ_COUNT_CTOR(StructuredCloneReadInfo);
 }
@@ -76,11 +90,12 @@ StructuredCloneReadInfo::operator=(StructuredCloneReadInfo&& aCloneReadInfo)
   MOZ_ASSERT(&aCloneReadInfo != this);
 
   mData = Move(aCloneReadInfo.mData);
-  mCloneBuffer = Move(aCloneReadInfo.mCloneBuffer);
   mFiles.Clear();
   mFiles.SwapElements(aCloneReadInfo.mFiles);
   mDatabase = aCloneReadInfo.mDatabase;
   aCloneReadInfo.mDatabase = nullptr;
+  mHasPreprocessInfo = aCloneReadInfo.mHasPreprocessInfo;
+  aCloneReadInfo.mHasPreprocessInfo = false;
   return *this;
 }
 

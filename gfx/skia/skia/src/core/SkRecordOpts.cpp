@@ -86,7 +86,7 @@ struct SaveOnlyDrawsRestoreNooper {
     }
 };
 
-static bool fold_opacity_layer_color_to_paint(const SkPaint& layerPaint,
+static bool fold_opacity_layer_color_to_paint(const SkPaint* layerPaint,
                                               bool isSaveLayer,
                                               SkPaint* paint) {
     // We assume layerPaint is always from a saveLayer.  If isSaveLayer is
@@ -97,7 +97,7 @@ static bool fold_opacity_layer_color_to_paint(const SkPaint& layerPaint,
     // looper drawing unmodulated filter layer twice and then modulating the result produces
     // different image to drawing modulated filter layer twice.
     // TODO: most likely the looper and only some xfer modes are the hard constraints
-    if (paint->getXfermode() || paint->getLooper()) {
+    if (!paint->isSrcOver() || paint->getLooper()) {
         return false;
     }
 
@@ -120,25 +120,26 @@ static bool fold_opacity_layer_color_to_paint(const SkPaint& layerPaint,
         return false;
     }
 
-    const uint32_t layerColor = layerPaint.getColor();
-    // The layer paint color must have only alpha component.
-    if (SK_ColorTRANSPARENT != SkColorSetA(layerColor, SK_AlphaTRANSPARENT)) {
-        return false;
-    }
+    if (layerPaint) {
+        const uint32_t layerColor = layerPaint->getColor();
+        // The layer paint color must have only alpha component.
+        if (SK_ColorTRANSPARENT != SkColorSetA(layerColor, SK_AlphaTRANSPARENT)) {
+            return false;
+        }
 
-    // The layer paint can not have any effects.
-    if (layerPaint.getPathEffect() ||
-        layerPaint.getShader()      ||
-        layerPaint.getXfermode()    ||
-        layerPaint.getMaskFilter()  ||
-        layerPaint.getColorFilter() ||
-        layerPaint.getRasterizer()  ||
-        layerPaint.getLooper()      ||
-        layerPaint.getImageFilter()) {
-        return false;
+        // The layer paint can not have any effects.
+        if (layerPaint->getPathEffect()  ||
+            layerPaint->getShader()      ||
+            !layerPaint->isSrcOver()     ||
+            layerPaint->getMaskFilter()  ||
+            layerPaint->getColorFilter() ||
+            layerPaint->getRasterizer()  ||
+            layerPaint->getLooper()      ||
+            layerPaint->getImageFilter()) {
+            return false;
+        }
+        paint->setAlpha(SkMulDiv255Round(paint->getAlpha(), SkColorGetA(layerColor)));
     }
-
-    paint->setAlpha(SkMulDiv255Round(paint->getAlpha(), SkColorGetA(layerColor)));
 
     return true;
 }
@@ -171,6 +172,16 @@ void SkRecordNoopSaveRestores(SkRecord* record) {
     while (apply(&onlyDraws, record) || apply(&noDraws, record));
 }
 
+#ifndef SK_BUILD_FOR_ANDROID_FRAMEWORK
+static bool effectively_srcover(const SkPaint* paint) {
+    if (!paint || paint->isSrcOver()) {
+        return true;
+    }
+    // src-mode with opaque and no effects (which might change opaqueness) is ok too.
+    return !paint->getShader() && !paint->getColorFilter() && !paint->getImageFilter() &&
+           0xFF == paint->getAlpha() && paint->getBlendMode() == SkBlendMode::kSrc;
+}
+
 // For some SaveLayer-[drawing command]-Restore patterns, merge the SaveLayer's alpha into the
 // draw, and no-op the SaveLayer and Restore.
 struct SaveLayerDrawRestoreNooper {
@@ -182,21 +193,27 @@ struct SaveLayerDrawRestoreNooper {
             return false;
         }
 
+        if (match->first<SaveLayer>()->saveLayerFlags & (1U << 31)) {
+            // can't throw away the layer if the kDontClipToLayer_PrivateSaveLayerFlag is set
+            return false;
+        }
+
         // A SaveLayer's bounds field is just a hint, so we should be free to ignore it.
         SkPaint* layerPaint = match->first<SaveLayer>()->paint;
-        if (nullptr == layerPaint) {
+        SkPaint* drawPaint = match->second<SkPaint>();
+
+        if (nullptr == layerPaint && effectively_srcover(drawPaint)) {
             // There wasn't really any point to this SaveLayer at all.
             return KillSaveLayerAndRestore(record, begin);
         }
 
-        SkPaint* drawPaint = match->second<SkPaint>();
         if (drawPaint == nullptr) {
             // We can just give the draw the SaveLayer's paint.
             // TODO(mtklein): figure out how to do this clearly
             return false;
         }
 
-        if (!fold_opacity_layer_color_to_paint(*layerPaint, false /*isSaveLayer*/, drawPaint)) {
+        if (!fold_opacity_layer_color_to_paint(layerPaint, false /*isSaveLayer*/, drawPaint)) {
             return false;
         }
 
@@ -213,7 +230,7 @@ void SkRecordNoopSaveLayerDrawRestores(SkRecord* record) {
     SaveLayerDrawRestoreNooper pass;
     apply(&pass, record);
 }
-
+#endif
 
 /* For SVG generated:
   SaveLayer (non-opaque, typically for CSS opacity)
@@ -249,7 +266,7 @@ struct SvgOpacityAndFilterLayerMergePass {
             return false;
         }
 
-        if (!fold_opacity_layer_color_to_paint(*opacityPaint, true /*isSaveLayer*/,
+        if (!fold_opacity_layer_color_to_paint(opacityPaint, true /*isSaveLayer*/,
                                                filterLayerPaint)) {
             return false;
         }
@@ -276,9 +293,17 @@ void SkRecordOptimize(SkRecord* record) {
     // out junk for other optimization passes.  Right now, nothing needs it,
     // and the bounding box hierarchy will do the work of skipping no-op
     // Save-NoDraw-Restore sequences better than we can here.
-    //SkRecordNoopSaveRestores(record);
+    // As there is a known problem with this peephole and drawAnnotation, disable this.
+    // If we want to enable this we must first fix this bug:
+    //     https://bugs.chromium.org/p/skia/issues/detail?id=5548
+//    SkRecordNoopSaveRestores(record);
 
+    // Turn off this optimization completely for Android framework
+    // because it makes the following Android CTS test fail:
+    // android.uirendering.cts.testclasses.LayerTests#testSaveLayerClippedWithAlpha
+#ifndef SK_BUILD_FOR_ANDROID_FRAMEWORK
     SkRecordNoopSaveLayerDrawRestores(record);
+#endif
     SkRecordMergeSvgOpacityAndFilterLayers(record);
 
     record->defrag();
@@ -287,7 +312,10 @@ void SkRecordOptimize(SkRecord* record) {
 void SkRecordOptimize2(SkRecord* record) {
     multiple_set_matrices(record);
     SkRecordNoopSaveRestores(record);
+    // See why we turn this off in SkRecordOptimize above.
+#ifndef SK_BUILD_FOR_ANDROID_FRAMEWORK
     SkRecordNoopSaveLayerDrawRestores(record);
+#endif
     SkRecordMergeSvgOpacityAndFilterLayers(record);
 
     record->defrag();

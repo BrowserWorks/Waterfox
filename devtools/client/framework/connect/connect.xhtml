@@ -6,15 +6,17 @@
 <!DOCTYPE html [
 <!ENTITY % connectionDTD SYSTEM "chrome://devtools/locale/connection-screen.dtd" >
  %connectionDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+ %globalDTD;
 ]>
 
-<html xmlns="http://www.w3.org/1999/xhtml"
+<html xmlns="http://www.w3.org/1999/xhtml" dir="&locale.dir;"
       xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <head>
     <title>&title;</title>
     <link rel="stylesheet" href="chrome://devtools/skin/dark-theme.css" type="text/css"/>
     <link rel="stylesheet" href="chrome://devtools/content/framework/connect/connect.css" type="text/css"/>
-    <script type="application/javascript;version=1.8" src="connect.js"></script>
+    <script type="application/javascript" src="connect.js"></script>
   </head>
   <body>
     <h1>&header;</h1>

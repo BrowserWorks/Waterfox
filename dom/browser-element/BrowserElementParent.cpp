@@ -15,7 +15,6 @@
 #endif
 
 #include "BrowserElementParent.h"
-#include "BrowserElementAudioChannel.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/HTMLIFrameElement.h"
 #include "mozilla/dom/ToJSValue.h"
@@ -54,23 +53,6 @@ CreateIframe(Element* aOpenerFrameElement, const nsAString& aName, bool aRemote)
       NS_NewHTMLIFrameElement(nodeInfo.forget(), mozilla::dom::NOT_FROM_PARSER));
 
   popupFrameElement->SetMozbrowser(true);
-
-  // Copy the opener frame's mozapp attribute to the popup frame.
-  if (aOpenerFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::mozapp)) {
-    nsAutoString mozapp;
-    aOpenerFrameElement->GetAttr(kNameSpaceID_None, nsGkAtoms::mozapp, mozapp);
-    popupFrameElement->SetAttr(kNameSpaceID_None, nsGkAtoms::mozapp,
-                               mozapp, /* aNotify = */ false);
-  }
-
-  // Copy the opener frame's parentApp attribute to the popup frame.
-  if (aOpenerFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::parentapp)) {
-    nsAutoString parentApp;
-    aOpenerFrameElement->GetAttr(kNameSpaceID_None, nsGkAtoms::parentapp,
-                                 parentApp);
-    popupFrameElement->SetAttr(kNameSpaceID_None, nsGkAtoms::parentapp,
-                               parentApp, /* aNotify = */ false);
-  }
 
   // Copy the window name onto the iframe.
   popupFrameElement->SetAttr(kNameSpaceID_None, nsGkAtoms::name,
@@ -111,8 +93,8 @@ DispatchCustomDOMEvent(Element* aFrameElement, const nsAString& aEventName,
   ErrorResult res;
   event->InitCustomEvent(cx,
                          aEventName,
-                         /* bubbles = */ true,
-                         /* cancelable = */ true,
+                         /* aCanBubble = */ true,
+                         /* aCancelable = */ true,
                          aDetailValue,
                          res);
   if (res.Failed()) {
@@ -177,13 +159,6 @@ BrowserElementParent::DispatchOpenWindowEvent(Element* aOpenerFrameElement,
     return BrowserElementParent::OPEN_WINDOW_IGNORED;
   }
 
-  // Do not dispatch a mozbrowseropenwindow event of a widget to its embedder
-  nsCOMPtr<nsIMozBrowserFrame> browserFrame =
-    do_QueryInterface(aOpenerFrameElement);
-  if (browserFrame && browserFrame->GetReallyIsWidget()) {
-    return BrowserElementParent::OPEN_WINDOW_CANCELLED;
-  }
-
   nsEventStatus status = nsEventStatus_eIgnore;
   bool dispatchSucceeded =
     DispatchCustomDOMEvent(aOpenerFrameElement,
@@ -194,7 +169,8 @@ BrowserElementParent::DispatchOpenWindowEvent(Element* aOpenerFrameElement,
   if (dispatchSucceeded) {
     if (aPopupFrameElement->IsInUncomposedDoc()) {
       return BrowserElementParent::OPEN_WINDOW_ADDED;
-    } else if (status == nsEventStatus_eConsumeNoDefault) {
+    }
+    if (status == nsEventStatus_eConsumeNoDefault) {
       // If the frame was not added to a document, report to callers whether
       // preventDefault was called on or not
       return BrowserElementParent::OPEN_WINDOW_CANCELLED;
@@ -263,6 +239,7 @@ BrowserElementParent::OpenWindowInProcess(nsPIDOMWindowOuter* aOpenerWindow,
                                           nsIURI* aURI,
                                           const nsAString& aName,
                                           const nsACString& aFeatures,
+                                          bool aForceNoOpener,
                                           mozIDOMWindowProxy** aReturnWindow)
 {
   *aReturnWindow = nullptr;
@@ -290,6 +267,12 @@ BrowserElementParent::OpenWindowInProcess(nsPIDOMWindowOuter* aOpenerWindow,
     aURI->GetSpec(spec);
   }
 
+  if (!aForceNoOpener) {
+    ErrorResult res;
+    popupFrameElement->PresetOpenerWindow(aOpenerWindow, res);
+    MOZ_ASSERT(!res.Failed());
+  }
+
   OpenWindowResult opened =
     DispatchOpenWindowEvent(openerFrameElement, popupFrameElement,
                             NS_ConvertUTF8toUTF16(spec),
@@ -301,8 +284,7 @@ BrowserElementParent::OpenWindowInProcess(nsPIDOMWindowOuter* aOpenerWindow,
   }
 
   // Return popupFrameElement's window.
-  nsCOMPtr<nsIFrameLoader> frameLoader;
-  popupFrameElement->GetFrameLoader(getter_AddRefs(frameLoader));
+  RefPtr<nsFrameLoader> frameLoader = popupFrameElement->GetFrameLoader();
   NS_ENSURE_TRUE(frameLoader, BrowserElementParent::OPEN_WINDOW_IGNORED);
 
   nsCOMPtr<nsIDocShell> docshell;

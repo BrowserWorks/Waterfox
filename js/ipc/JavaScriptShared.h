@@ -8,6 +8,7 @@
 #ifndef mozilla_jsipc_JavaScriptShared_h__
 #define mozilla_jsipc_JavaScriptShared_h__
 
+#include "mozilla/HashFunctions.h"
 #include "mozilla/dom/DOMTypes.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/jsipc/PJavaScript.h"
@@ -72,7 +73,7 @@ struct ObjectIdHasher
 {
     typedef ObjectId Lookup;
     static js::HashNumber hash(const Lookup& l) {
-        return l.serialize();
+        return mozilla::HashGeneric(l.serialize());
     }
     static bool match(const ObjectId& k, const ObjectId& l) {
         return k == l;
@@ -91,15 +92,20 @@ class IdToObjectMap
     IdToObjectMap();
 
     bool init();
-    void trace(JSTracer* trc);
+    void trace(JSTracer* trc, uint64_t minimumId = 0);
     void sweep();
 
     bool add(ObjectId id, JSObject* obj);
     JSObject* find(ObjectId id);
+    JSObject* findPreserveColor(ObjectId id);
     void remove(ObjectId id);
 
     void clear();
     bool empty() const;
+
+#ifdef DEBUG
+    bool has(const ObjectId& id, const JSObject* obj) const;
+#endif
 
   private:
     Table table_;
@@ -130,7 +136,7 @@ class Logging;
 class JavaScriptShared : public CPOWManager
 {
   public:
-    explicit JavaScriptShared(JSRuntime* rt);
+    JavaScriptShared();
     virtual ~JavaScriptShared();
 
     bool init();
@@ -149,7 +155,7 @@ class JavaScriptShared : public CPOWManager
     bool fromJSIDVariant(JSContext* cx, const JSIDVariant& from, JS::MutableHandleId to);
 
     bool toSymbolVariant(JSContext* cx, JS::Symbol* sym, SymbolVariant* symVarp);
-    JS::Symbol* fromSymbolVariant(JSContext* cx, SymbolVariant symVar);
+    JS::Symbol* fromSymbolVariant(JSContext* cx, const SymbolVariant& symVar);
 
     bool fromDescriptor(JSContext* cx, JS::Handle<JS::PropertyDescriptor> desc,
                         PPropertyDescriptor* out);
@@ -157,21 +163,27 @@ class JavaScriptShared : public CPOWManager
                       JS::MutableHandle<JS::PropertyDescriptor> out);
 
     bool toObjectOrNullVariant(JSContext* cx, JSObject* obj, ObjectOrNullVariant* objVarp);
-    JSObject* fromObjectOrNullVariant(JSContext* cx, ObjectOrNullVariant objVar);
+    JSObject* fromObjectOrNullVariant(JSContext* cx, const ObjectOrNullVariant& objVar);
 
     bool convertIdToGeckoString(JSContext* cx, JS::HandleId id, nsString* to);
     bool convertGeckoStringToId(JSContext* cx, const nsString& from, JS::MutableHandleId id);
 
     virtual bool toObjectVariant(JSContext* cx, JSObject* obj, ObjectVariant* objVarp) = 0;
-    virtual JSObject* fromObjectVariant(JSContext* cx, ObjectVariant objVar) = 0;
+    virtual JSObject* fromObjectVariant(JSContext* cx, const ObjectVariant& objVar) = 0;
 
     static void ConvertID(const nsID& from, JSIID* to);
     static void ConvertID(const JSIID& from, nsID* to);
 
-    JSObject* findCPOWById(const ObjectId& objId) {
-        return cpows_.find(objId);
-    }
+    JSObject* findCPOWById(const ObjectId& objId);
+    JSObject* findCPOWByIdPreserveColor(const ObjectId& objId);
     JSObject* findObjectById(JSContext* cx, const ObjectId& objId);
+
+#ifdef DEBUG
+    bool hasCPOW(const ObjectId& objId, const JSObject* obj) {
+        MOZ_ASSERT(obj);
+        return findCPOWByIdPreserveColor(objId) == obj;
+    }
+#endif
 
     static bool LoggingEnabled() { return sLoggingEnabled; }
     static bool StackLoggingEnabled() { return sStackLoggingEnabled; }
@@ -183,13 +195,16 @@ class JavaScriptShared : public CPOWManager
     virtual JSObject* scopeForTargetObjects() = 0;
 
   protected:
-    JSRuntime* rt_;
     uintptr_t refcount_;
 
     IdToObjectMap objects_;
     IdToObjectMap cpows_;
 
     uint64_t nextSerialNumber_;
+
+    // nextCPOWNumber_ should be the value of nextSerialNumber_ in the other
+    // process. The next new CPOW we get should have this serial number.
+    uint64_t nextCPOWNumber_;
 
     // CPOW references can be weak, and any object we store in a map may be
     // GCed (at which point the CPOW will report itself "dead" to the owner).

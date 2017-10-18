@@ -7,16 +7,14 @@
 var gProvider;
 
 function loadPage(aURL, aCallback, aBackground = false) {
-  let tab = gBrowser.addTab();
+  let tab = BrowserTestUtils.addTab(gBrowser);
   if (!aBackground)
     gBrowser.selectedTab = tab;
   let browser = tab.linkedBrowser;
   browser.loadURI(aURL);
   browser.addEventListener("AddonDisplayed", function(event) {
-    browser.removeEventListener("AddonDisplayed", arguments.callee, false);
-
     aCallback(tab);
-  });
+  }, {once: true});
 }
 
 function test() {

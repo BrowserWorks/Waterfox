@@ -33,7 +33,7 @@ function expectThrow({url, filters, exceptionMessageContains}) {
   );
 }
 
-add_task(function* test_match_url_filters() {
+add_task(async function test_match_url_filters() {
   const shouldPass = true;
   const shouldFail = true;
   const shouldThrow = true;
@@ -41,7 +41,7 @@ add_task(function* test_match_url_filters() {
   var testCases = [
     // Empty, undefined and null filters.
     {shouldThrow, exceptionMessageContains: "filters array should not be empty",
-     filters: [], url: "http://mozilla.org",},
+     filters: [], url: "http://mozilla.org", },
     {shouldThrow, exceptionMessageContains: "filters should be an array",
      filters: undefined, url: "http://mozilla.org"},
     {shouldThrow, exceptionMessageContains: "filters should be an array",
@@ -381,13 +381,13 @@ add_task(function* test_match_url_filters() {
   // Run all the the testCases defined above.
   for (let currentTest of testCases) {
     let {
-      shouldThrow, exceptionMessageContains,
-      shouldFail, url, filters,
+      exceptionMessageContains,
+      url, filters,
     } = currentTest;
 
-    if (shouldThrow) {
+    if (currentTest.shouldThrow) {
       expectThrow({url, filters, exceptionMessageContains})
-    } else if (shouldFail) {
+    } else if (currentTest.shouldFail) {
       expectFail({url, filters});
     } else {
       expectPass({url, filters});

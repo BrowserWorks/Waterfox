@@ -1,29 +1,28 @@
-add_task(function* test_switchtab_decodeuri() {
+add_task(async function test_switchtab_decodeuri() {
   info("Opening first tab");
-  let tab = gBrowser.addTab("http://example.org/browser/browser/base/content/test/urlbar/dummy_page.html#test%7C1");
-  yield promiseTabLoadEvent(tab);
+  const TEST_URL = "http://example.org/browser/browser/base/content/test/urlbar/dummy_page.html#test%7C1";
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, TEST_URL);
 
   info("Opening and selecting second tab");
-  let newTab = gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   info("Wait for autocomplete")
-  yield promiseAutocompleteResultPopup("dummy_page");
+  await promiseAutocompleteResultPopup("dummy_page");
 
   info("Select autocomplete popup entry");
-  EventUtils.synthesizeKey("VK_DOWN" , {});
+  EventUtils.synthesizeKey("VK_DOWN", {});
   ok(gURLBar.value.startsWith("moz-action:switchtab"), "switch to tab entry found");
 
   info("switch-to-tab");
-  yield new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     // In case of success it should switch tab.
-    gBrowser.tabContainer.addEventListener("TabSelect", function select() {
-      gBrowser.tabContainer.removeEventListener("TabSelect", select, false);
+    gBrowser.tabContainer.addEventListener("TabSelect", function() {
       is(gBrowser.selectedTab, tab, "Should have switched to the right tab");
       resolve();
-    }, false);
-    EventUtils.synthesizeKey("VK_RETURN" , { });
+    }, {once: true});
+    EventUtils.synthesizeKey("VK_RETURN", { });
   });
 
   gBrowser.removeCurrentTab();
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });

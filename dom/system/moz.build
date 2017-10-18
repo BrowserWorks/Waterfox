@@ -4,6 +4,40 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# This picks up *hapticfeedback* which is graveyard
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("*OSFile*"):
+    BUG_COMPONENT = ("Toolkit", "OS.File")
+
+with Files("*ocationProvider*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("windows/*LocationProvider*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("mac/*LocationProvider*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("linux/*LocationProvider*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("android/*LocationProvider*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("tests/chrome.ini"):
+    BUG_COMPONENT = ("Toolkit", "OS.File")
+
+with Files("tests/*constants*"):
+    BUG_COMPONENT = ("Toolkit", "OS.File")
+
+with Files("tests/mochitest.ini"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("tests/*1197901*"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
 if toolkit == 'windows':
@@ -12,14 +46,11 @@ elif toolkit == 'cocoa':
     DIRS += ['mac']
 elif toolkit == 'android':
     DIRS += ['android']
-elif toolkit == 'gonk':
-    DIRS += ['gonk']
 elif toolkit in ('gtk2', 'gtk3'):
     DIRS += ['linux']
 
 XPIDL_SOURCES += [
     'nsIOSFileConstantsService.idl',
-    'nsISystemUpdateProvider.idl',
 ]
 
 XPIDL_MODULE = 'dom_system'
@@ -40,12 +71,6 @@ UNIFIED_SOURCES += [
 EXTRA_COMPONENTS += [
     'NetworkGeolocationProvider.js',
     'NetworkGeolocationProvider.manifest',
-    'SystemUpdate.manifest',
-    'SystemUpdateManager.js',
-]
-
-EXTRA_JS_MODULES += [
-    'SystemUpdateService.jsm',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -56,6 +81,7 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/bindings',
     '/js/xpconnect/loader',
+    '/xpcom/base',
 ]
 
 DEFINES['DLL_PREFIX'] = '"%s"' % CONFIG['DLL_PREFIX']

@@ -13,7 +13,9 @@
 
 #include <string>
 
-#include "webrtc/base/buffer.h"
+#include "webrtc/base/basictypes.h"
+#include "webrtc/base/copyonwritebuffer.h"
+#include "webrtc/base/rtccertificate.h"
 #include "webrtc/base/sslidentity.h"
 
 namespace rtc {
@@ -30,7 +32,12 @@ struct SSLFingerprint {
   static SSLFingerprint* CreateFromRfc4572(const std::string& algorithm,
                                            const std::string& fingerprint);
 
-  SSLFingerprint(const std::string& algorithm, const uint8* digest_in,
+  // Creates a fingerprint from a certificate, using the same digest algorithm
+  // as the certificate's signature.
+  static SSLFingerprint* CreateFromCertificate(const RTCCertificate* cert);
+
+  SSLFingerprint(const std::string& algorithm,
+                 const uint8_t* digest_in,
                  size_t digest_len);
 
   SSLFingerprint(const SSLFingerprint& from);
@@ -39,10 +46,10 @@ struct SSLFingerprint {
 
   std::string GetRfc4572Fingerprint() const;
 
-  std::string ToString();
+  std::string ToString() const;
 
   std::string algorithm;
-  rtc::Buffer digest;
+  rtc::CopyOnWriteBuffer digest;
 };
 
 }  // namespace rtc

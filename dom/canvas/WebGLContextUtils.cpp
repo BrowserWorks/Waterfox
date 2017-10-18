@@ -10,13 +10,12 @@
 #include "jsapi.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
-#include "nsIDOMDataContainerEvent.h"
+#include "mozilla/Sprintf.h"
 #include "nsIDOMEvent.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIVariant.h"
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
-#include "prprf.h"
 #include <stdarg.h>
 #include "WebGLBuffer.h"
 #include "WebGLExtensions.h"
@@ -76,7 +75,7 @@ WebGLContext::GenerateWarning(const char* fmt, va_list ap)
     mAlreadyGeneratedWarnings++;
 
     char buf[1024];
-    PR_vsnprintf(buf, 1024, fmt, ap);
+    VsprintfLiteral(buf, fmt, ap);
 
     // no need to print to stderr, as JS_ReportWarning takes care of this for us.
 
@@ -90,12 +89,13 @@ WebGLContext::GenerateWarning(const char* fmt, va_list ap)
     }
 
     JSContext* cx = api.cx();
-    JS_ReportWarning(cx, "WebGL: %s", buf);
+    JS_ReportWarningASCII(cx, "WebGL warning: %s", buf);
     if (!ShouldGenerateWarnings()) {
-        JS_ReportWarning(cx,
-                         "WebGL: No further warnings will be reported for this"
-                         " WebGL context. (already reported %d warnings)",
-                         mAlreadyGeneratedWarnings);
+        JS_ReportWarningASCII(cx,
+                              "WebGL: No further warnings will be reported for"
+                              " this WebGL context."
+                              " (already reported %d warnings)",
+                              mAlreadyGeneratedWarnings);
     }
 }
 
@@ -106,6 +106,43 @@ WebGLContext::ShouldGenerateWarnings() const
         return true;
 
     return mAlreadyGeneratedWarnings < mMaxWarnings;
+}
+
+void
+WebGLContext::GeneratePerfWarning(const char* fmt, ...) const
+{
+    if (!ShouldGeneratePerfWarnings())
+        return;
+
+    if (!mCanvasElement)
+        return;
+
+    dom::AutoJSAPI api;
+    if (!api.Init(mCanvasElement->OwnerDoc()->GetScopeObject()))
+        return;
+    JSContext* cx = api.cx();
+
+    ////
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    char buf[1024];
+    VsprintfLiteral(buf, fmt, ap);
+
+    va_end(ap);
+
+    ////
+
+    JS_ReportWarningASCII(cx, "WebGL perf warning: %s", buf);
+    mNumPerfWarnings++;
+
+    if (!ShouldGeneratePerfWarnings()) {
+        JS_ReportWarningASCII(cx,
+                              "WebGL: After reporting %u, no further perf warnings will"
+                              " be reported for this WebGL context.",
+                              uint32_t(mNumPerfWarnings));
+    }
 }
 
 void
@@ -245,12 +282,13 @@ WebGLContext::ErrorName(GLenum error)
     }
 }
 
-// This version is 'fallible' and will return NULL if glenum is not recognized.
-const char*
-WebGLContext::EnumName(GLenum glenum)
+// This version is fallible and will return nullptr if unrecognized.
+static const char*
+GetEnumName(GLenum val)
 {
-    switch (glenum) {
+    switch (val) {
 #define XX(x) case LOCAL_GL_##x: return #x
+        XX(NONE);
         XX(ALPHA);
         XX(ATC_RGB);
         XX(ATC_RGBA_EXPLICIT_ALPHA);
@@ -272,6 +310,7 @@ WebGLContext::EnumName(GLenum glenum)
         XX(DRAW_FRAMEBUFFER);
         XX(ETC1_RGB8_OES);
         XX(FLOAT);
+        XX(INT);
         XX(FRAMEBUFFER);
         XX(HALF_FLOAT);
         XX(LUMINANCE);
@@ -573,16 +612,24 @@ WebGLContext::EnumName(GLenum glenum)
     return nullptr;
 }
 
-void
-WebGLContext::EnumName(GLenum glenum, nsACString* out_name)
+/*static*/ void
+WebGLContext::EnumName(GLenum val, nsCString* out_name)
 {
-    const char* name = EnumName(glenum);
+    const char* name = GetEnumName(val);
     if (name) {
-        *out_name = nsDependentCString(name);
-    } else {
-        nsPrintfCString enumAsHex("<enum 0x%04x>", glenum);
-        *out_name = enumAsHex;
+        *out_name = name;
+        return;
     }
+
+    *out_name = nsPrintfCString("<enum 0x%04x>", val);
+}
+
+void
+WebGLContext::ErrorInvalidEnumArg(const char* funcName, const char* argName, GLenum val)
+{
+    nsCString enumName;
+    EnumName(val, &enumName);
+    ErrorInvalidEnum("%s: Bad `%s`: %s", funcName, argName, enumName.BeginReading());
 }
 
 bool
@@ -593,6 +640,10 @@ IsCompressedTextureFormat(GLenum format)
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
     case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+    case LOCAL_GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
     case LOCAL_GL_ATC_RGB:
     case LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA:
     case LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA:
@@ -794,14 +845,14 @@ WebGLContext::AssertCachedGlobalState()
     gl->fGetFloatv(LOCAL_GL_DEPTH_CLEAR_VALUE, &depthClearValue);
     MOZ_ASSERT(IsCacheCorrect(mDepthClearValue, depthClearValue));
 
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_CLEAR_VALUE, mStencilClearValue);
+    const int maxStencilBits = 8;
+    const GLuint maxStencilBitsMask = (1 << maxStencilBits) - 1;
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_CLEAR_VALUE, maxStencilBitsMask, mStencilClearValue);
 
     // GLES 3.0.4, $4.1.4, p177:
     //   [...] the front and back stencil mask are both set to the value `2^s - 1`, where
     //   `s` is greater than or equal to the number of bits in the deepest stencil buffer
     //   supported by the GL implementation.
-    const int maxStencilBits = 8;
-    const GLuint maxStencilBitsMask = (1 << maxStencilBits) - 1;
     AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_VALUE_MASK,      maxStencilBitsMask, mStencilValueMaskFront);
     AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_VALUE_MASK, maxStencilBitsMask, mStencilValueMaskBack);
 
@@ -861,6 +912,20 @@ InfoFrom(WebGLTexImageFunc func, WebGLTexDimensions dims)
     default:
         MOZ_CRASH("GFX: invalid TexDimensions");
     }
+}
+
+////
+
+JS::Value
+StringValue(JSContext* cx, const nsAString& str, ErrorResult& er)
+{
+    JSString* jsStr = JS_NewUCStringCopyN(cx, str.BeginReading(), str.Length());
+    if (!jsStr) {
+        er.Throw(NS_ERROR_OUT_OF_MEMORY);
+        return JS::NullValue();
+    }
+
+    return JS::StringValue(jsStr);
 }
 
 } // namespace mozilla

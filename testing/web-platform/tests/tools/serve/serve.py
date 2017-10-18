@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+import abc
 import argparse
 import json
 import os
-import signal
+import re
 import socket
 import sys
 import threading
@@ -13,34 +17,177 @@ import uuid
 from collections import defaultdict, OrderedDict
 from multiprocessing import Process, Event
 
-from .. import localpaths
+from ..localpaths import repo_root
 
 import sslutils
+from manifest.sourcefile import read_script_metadata, js_meta_re
 from wptserve import server as wptserve, handlers
 from wptserve import stash
 from wptserve.logger import set_logger
+from wptserve.handlers import filesystem_path, wrap_pipeline
 from mod_pywebsocket import standalone as pywebsocket
 
-repo_root = localpaths.repo_root
+def replace_end(s, old, new):
+    """
+    Given a string `s` that ends with `old`, replace that occurrence of `old`
+    with `new`.
+    """
+    assert s.endswith(old)
+    return s[:-len(old)] + new
 
-class WorkersHandler(object):
-    def __init__(self):
+
+class WrapperHandler(object):
+
+    __meta__ = abc.ABCMeta
+
+    def __init__(self, base_path=None, url_base="/"):
+        self.base_path = base_path
+        self.url_base = url_base
         self.handler = handlers.handler(self.handle_request)
 
     def __call__(self, request, response):
-        return self.handler(request, response)
+        self.handler(request, response)
 
     def handle_request(self, request, response):
-        worker_path = request.url_parts.path.replace(".worker", ".worker.js")
-        return """<!doctype html>
+        path = self._get_path(request.url_parts.path, True)
+        meta = "\n".join(self._get_meta(request))
+        response.content = self.wrapper % {"meta": meta, "path": path}
+        wrap_pipeline(path, request, response)
+
+    def _get_path(self, path, resource_path):
+        """Convert the path from an incoming request into a path corresponding to an "unwrapped"
+        resource e.g. the file on disk that will be loaded in the wrapper.
+
+        :param path: Path from the HTTP request
+        :param resource_path: Boolean used to control whether to get the path for the resource that
+                              this wrapper will load or the associated file on disk.
+                              Typically these are the same but may differ when there are multiple
+                              layers of wrapping e.g. for a .any.worker.html input the underlying disk file is
+                              .any.js but the top level html file loads a resource with a
+                              .any.worker.js extension, which itself loads the .any.js file.
+                              If True return the path to the resource that the wrapper will load,
+                              otherwise return the path to the underlying file on disk."""
+        for item in self.path_replace:
+            if len(item) == 2:
+                src, dest = item
+            else:
+                assert len(item) == 3
+                src = item[0]
+                dest = item[2 if resource_path else 1]
+            if path.endswith(src):
+                path = replace_end(path, src, dest)
+        return path
+
+    def _get_meta(self, request):
+        """Get an iterator over strings to inject into the wrapper document
+        based on //META comments in the associated js file.
+
+        :param request: The Request being processed.
+        """
+        path = self._get_path(filesystem_path(self.base_path, request, self.url_base), False)
+        with open(path, "rb") as f:
+            for key, value in read_script_metadata(f, js_meta_re):
+                replacement = self._meta_replacement(key, value)
+                if replacement:
+                    yield replacement
+
+    @abc.abstractproperty
+    def path_replace(self):
+        # A list containing a mix of 2 item tuples with (input suffix, output suffix)
+        # and 3-item tuples with (input suffix, filesystem suffix, resource suffix)
+        # for the case where we want a different path in the generated resource to
+        # the actual path on the filesystem (e.g. when there is another handler
+        # that will wrap the file).
+        return None
+
+    @abc.abstractproperty
+    def wrapper(self):
+        # String template with variables path and meta for wrapper document
+        return None
+
+    @abc.abstractmethod
+    def _meta_replacement(self, key, value):
+        # Get the string to insert into the wrapper document, given
+        # a specific metadata key: value pair.
+        pass
+
+
+class HtmlWrapperHandler(WrapperHandler):
+    def _meta_replacement(self, key, value):
+        if key == b"timeout":
+            if value == b"long":
+                return '<meta name="timeout" content="long">'
+        if key == b"script":
+            attribute = value.decode('utf-8').replace('"', "&quot;").replace(">", "&gt;")
+            return '<script src="%s"></script>' % attribute
+        return None
+
+
+class WorkersHandler(HtmlWrapperHandler):
+    path_replace = [(".any.worker.html", ".any.js", ".any.worker.js"),
+                    (".worker.html", ".worker.js")]
+    wrapper = """<!doctype html>
 <meta charset=utf-8>
+%(meta)s
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <div id=log></div>
 <script>
-fetch_tests_from_worker(new Worker("%s"));
+fetch_tests_from_worker(new Worker("%(path)s"));
 </script>
-""" % (worker_path,)
+"""
+
+
+class WindowHandler(HtmlWrapperHandler):
+    path_replace = [(".window.html", ".window.js")]
+    wrapper = """<!doctype html>
+<meta charset=utf-8>
+%(meta)s
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<div id=log></div>
+<script src="%(path)s"></script>
+"""
+
+
+class AnyHtmlHandler(HtmlWrapperHandler):
+    path_replace = [(".any.html", ".any.js")]
+    wrapper = """<!doctype html>
+<meta charset=utf-8>
+%(meta)s
+<script>
+self.GLOBAL = {
+  isWindow: function() { return true; },
+  isWorker: function() { return false; },
+};
+</script>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<div id=log></div>
+<script src="%(path)s"></script>
+"""
+
+
+class AnyWorkerHandler(WrapperHandler):
+    path_replace = [(".any.worker.js", ".any.js")]
+    wrapper = """%(meta)s
+self.GLOBAL = {
+  isWindow: function() { return false; },
+  isWorker: function() { return true; },
+};
+importScripts("/resources/testharness.js");
+importScripts("%(path)s");
+done();
+"""
+
+    def _meta_replacement(self, key, value):
+        if key == b"timeout":
+            return None
+        if key == b"script":
+            attribute = value.decode('utf-8').replace("\\", "\\\\").replace('"', '\\"')
+            return 'importScripts("%s")' % attribute
+        return None
+
 
 rewrites = [("GET", "/resources/WebIDLParser.js", "/resources/webidl2/lib/webidl2.js")]
 
@@ -61,7 +208,7 @@ class RoutesBuilder(object):
                           ("*", "{spec}/tools/*", handlers.ErrorHandler(404)),
                           ("*", "/serve.py", handlers.ErrorHandler(404))]
 
-        self.static = [("GET", "*.worker", WorkersHandler())]
+        self.static = []
 
         self.mountpoint_routes = OrderedDict()
 
@@ -85,9 +232,15 @@ class RoutesBuilder(object):
 
         self.mountpoint_routes[url_base] = []
 
-        routes = [("GET", "*.asis", handlers.AsIsHandler),
-                  ("*", "*.py", handlers.PythonScriptHandler),
-                  ("GET", "*", handlers.FileHandler)]
+        routes = [
+            ("GET", "*.worker.html", WorkersHandler),
+            ("GET", "*.window.html", WindowHandler),
+            ("GET", "*.any.html", AnyHtmlHandler),
+            ("GET", "*.any.worker.js", AnyWorkerHandler),
+            ("GET", "*.asis", handlers.AsIsHandler),
+            ("*", "*.py", handlers.PythonScriptHandler),
+            ("GET", "*", handlers.FileHandler)
+        ]
 
         for (method, suffix, handler_cls) in routes:
             self.mountpoint_routes[url_base].append(
@@ -95,9 +248,25 @@ class RoutesBuilder(object):
                  b"%s%s" % (str(url_base) if url_base != "/" else "", str(suffix)),
                  handler_cls(base_path=path, url_base=url_base)))
 
+    def add_file_mount_point(self, file_url, base_path):
+        assert file_url.startswith("/")
+        url_base = file_url[0:file_url.rfind("/") + 1]
+        self.mountpoint_routes[file_url] = [("GET", file_url, handlers.FileHandler(base_path=base_path, url_base=url_base))]
 
-def default_routes():
-    return RoutesBuilder().get_routes()
+
+def build_routes(aliases):
+    builder = RoutesBuilder()
+    for alias in aliases:
+        url = alias["url-path"]
+        directory = alias["local-dir"]
+        if not url.startswith("/") or len(directory) == 0:
+            logger.error("\"url-path\" value must start with '/'.")
+            continue
+        if url.endswith("/"):
+            builder.add_mount_point(url, directory)
+        else:
+            builder.add_file_mount_point(url, directory)
+    return builder.get_routes()
 
 
 def setup_logger(level):
@@ -116,12 +285,86 @@ def open_socket(port):
     sock.listen(5)
     return sock
 
+def bad_port(port):
+    """
+    Bad port as per https://fetch.spec.whatwg.org/#port-blocking
+    """
+    return port in [
+        1,     # tcpmux
+        7,     # echo
+        9,     # discard
+        11,    # systat
+        13,    # daytime
+        15,    # netstat
+        17,    # qotd
+        19,    # chargen
+        20,    # ftp-data
+        21,    # ftp
+        22,    # ssh
+        23,    # telnet
+        25,    # smtp
+        37,    # time
+        42,    # name
+        43,    # nicname
+        53,    # domain
+        77,    # priv-rjs
+        79,    # finger
+        87,    # ttylink
+        95,    # supdup
+        101,   # hostriame
+        102,   # iso-tsap
+        103,   # gppitnp
+        104,   # acr-nema
+        109,   # pop2
+        110,   # pop3
+        111,   # sunrpc
+        113,   # auth
+        115,   # sftp
+        117,   # uucp-path
+        119,   # nntp
+        123,   # ntp
+        135,   # loc-srv / epmap
+        139,   # netbios
+        143,   # imap2
+        179,   # bgp
+        389,   # ldap
+        465,   # smtp+ssl
+        512,   # print / exec
+        513,   # login
+        514,   # shell
+        515,   # printer
+        526,   # tempo
+        530,   # courier
+        531,   # chat
+        532,   # netnews
+        540,   # uucp
+        556,   # remotefs
+        563,   # nntp+ssl
+        587,   # smtp
+        601,   # syslog-conn
+        636,   # ldap+ssl
+        993,   # imap+ssl
+        995,   # pop3+ssl
+        2049,  # nfs
+        3659,  # apple-sasl
+        4045,  # lockd
+        6000,  # x11
+        6665,  # irc (alternate)
+        6666,  # irc (alternate)
+        6667,  # irc (default)
+        6668,  # irc (alternate)
+        6669,  # irc (alternate)
+    ]
 
 def get_port():
-    free_socket = open_socket(0)
-    port = free_socket.getsockname()[1]
+    port = 0
+    while True:
+        free_socket = open_socket(0)
+        port = free_socket.getsockname()[1]
+        free_socket.close()
+        if not bad_port(port):
+            break
     logger.debug("Going to use port %s" % port)
-    free_socket.close()
     return port
 
 
@@ -135,7 +378,8 @@ class ServerProc(object):
               ssl_config, **kwargs):
         self.proc = Process(target=self.create_daemon,
                             args=(init_func, host, port, paths, routes, bind_hostname,
-                                  external_config, ssl_config))
+                                  external_config, ssl_config),
+                            kwargs=kwargs)
         self.proc.daemon = True
         self.proc.start()
 
@@ -145,10 +389,10 @@ class ServerProc(object):
             self.daemon = init_func(host, port, paths, routes, bind_hostname, external_config,
                                     ssl_config, **kwargs)
         except socket.error:
-            print >> sys.stderr, "Socket error on port %s" % port
+            print("Socket error on port %s" % port, file=sys.stderr)
             raise
         except:
-            print >> sys.stderr, traceback.format_exc()
+            print(traceback.format_exc(), file=sys.stderr)
             raise
 
         if self.daemon:
@@ -159,7 +403,7 @@ class ServerProc(object):
                 except KeyboardInterrupt:
                     pass
             except:
-                print >> sys.stderr, traceback.format_exc()
+                print(traceback.format_exc(), file=sys.stderr)
                 raise
 
     def wait(self):
@@ -175,12 +419,12 @@ class ServerProc(object):
         return self.proc.is_alive()
 
 
-def check_subdomains(host, paths, bind_hostname, ssl_config):
+def check_subdomains(host, paths, bind_hostname, ssl_config, aliases):
     port = get_port()
     subdomains = get_subdomains(host)
 
     wrapper = ServerProc()
-    wrapper.start(start_http_server, host, port, paths, default_routes(), bind_hostname,
+    wrapper.start(start_http_server, host, port, paths, build_routes(aliases), bind_hostname,
                   None, ssl_config)
 
     connected = False
@@ -284,7 +528,7 @@ class WebSocketDaemon(object):
             elif pywebsocket._import_pyopenssl():
                 tls_module = pywebsocket._TLS_BY_PYOPENSSL
             else:
-                print "No SSL module available"
+                print("No SSL module available")
                 sys.exit(1)
 
             cmd_args += ["--tls",
@@ -409,7 +653,7 @@ def start(config, ssl_environment, routes, **kwargs):
     ssl_config = get_ssl_config(config, external_config["domains"].values(), ssl_environment)
 
     if config["check_subdomains"]:
-        check_subdomains(host, paths, bind_hostname, ssl_config)
+        check_subdomains(host, paths, bind_hostname, ssl_config, config["aliases"])
 
     servers = start_servers(host, ports, paths, routes, bind_hostname, external_config,
                             ssl_config, **kwargs)
@@ -438,6 +682,9 @@ def set_computed_defaults(config):
     if not value_set(config, "ws_doc_root"):
         root = get_value_or_default(config, "doc_root", default=repo_root)
         config["ws_doc_root"] = os.path.join(root, "websockets", "handlers")
+
+    if not value_set(config, "aliases"):
+        config["aliases"] = []
 
 
 def merge_json(base_obj, override_obj):
@@ -523,9 +770,13 @@ def main():
 
     setup_logger(config["log_level"])
 
-    with stash.StashServer((config["host"], get_port()), authkey=str(uuid.uuid4())):
+    stash_address = None
+    if config["bind_hostname"]:
+        stash_address = (config["host"], get_port())
+
+    with stash.StashServer(stash_address, authkey=str(uuid.uuid4())):
         with get_ssl_environment(config) as ssl_env:
-            config_, servers = start(config, ssl_env, default_routes(), **kwargs)
+            config_, servers = start(config, ssl_env, build_routes(config["aliases"]), **kwargs)
 
             try:
                 while any(item.is_alive() for item in iter_procs(servers)):

@@ -5,9 +5,8 @@
 #ifndef PROFILERIOINTERPOSEOBSERVER_H
 #define PROFILERIOINTERPOSEOBSERVER_H
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
-
 #include "mozilla/IOInterposer.h"
+#include "nsISupportsImpl.h"
 
 namespace mozilla {
 
@@ -17,12 +16,15 @@ namespace mozilla {
  */
 class ProfilerIOInterposeObserver final : public IOInterposeObserver
 {
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ProfilerIOInterposeObserver)
+
 public:
   virtual void Observe(Observation& aObservation);
+
+protected:
+  virtual ~ProfilerIOInterposeObserver() {}
 };
 
 } // namespace mozilla
-
-#endif // MOZ_ENABLE_PROFILER_SPS
 
 #endif // PROFILERIOINTERPOSEOBSERVER_H

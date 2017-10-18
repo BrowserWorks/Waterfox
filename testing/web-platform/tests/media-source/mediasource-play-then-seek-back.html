@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Copyright © 2016 Chromium authors and World Wide Web Consortium, (Massachusetts Institute of Technology, ERCIM, Keio University, Beihang). -->
 <html>
     <head>
         <title>Simple MediaSource playback &amp; seek test case.</title>
@@ -30,7 +31,6 @@
 
                 function finishSeekThenPlay()
                 {
-                    assert_equals(mediaElement.currentTime, 0.0, 'Current time is 0.0');
                     test.expectEvent(mediaElement, 'seeked', 'mediaElement finished seek');
 
                     test.waitForExpectedEvents(confirmPlayThenEnd);

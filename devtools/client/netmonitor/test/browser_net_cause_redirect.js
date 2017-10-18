@@ -8,7 +8,7 @@
  * redirected without hitting the network (HSTS is one of such cases)
  */
 
-var test = Task.async(function* () {
+add_task(function* () {
   const EXPECTED_REQUESTS = [
     // Request to HTTP URL, redirects to HTTPS, has callstack
     { status: 302, hasStack: true },
@@ -18,19 +18,25 @@ var test = Task.async(function* () {
     { status: 200, hasStack: true },
   ];
 
-  let [, debuggee, monitor] = yield initNetMonitor(CUSTOM_GET_URL);
-  let { RequestsMenu } = monitor.panelWin.NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
+  let { store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  debuggee.performRequests(2, HSTS_SJS);
-  yield waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
+  store.dispatch(Actions.batchEnable(false));
+
+  let wait = waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
+  yield performRequests(2, HSTS_SJS);
+  yield wait;
 
   EXPECTED_REQUESTS.forEach(({status, hasStack}, i) => {
-    let { attachment } = RequestsMenu.getItemAtIndex(i);
+    let item = getSortedRequests(store.getState()).get(i);
 
-    is(attachment.status, status, `Request #${i} has the expected status`);
+    is(item.status, status, `Request #${i} has the expected status`);
 
-    let { stacktrace } = attachment.cause;
+    let { stacktrace } = item.cause;
     let stackLen = stacktrace ? stacktrace.length : 0;
 
     if (hasStack) {
@@ -42,9 +48,15 @@ var test = Task.async(function* () {
   });
 
   // Send a request to reset the HSTS policy to state before the test
-  debuggee.performRequests(1, HSTS_SJS + "?reset");
-  yield waitForNetworkEvents(monitor, 1);
+  wait = waitForNetworkEvents(monitor, 1);
+  yield performRequests(1, HSTS_SJS + "?reset");
+  yield wait;
 
   yield teardown(monitor);
-  finish();
+
+  function performRequests(count, url) {
+    return ContentTask.spawn(tab.linkedBrowser, { count, url }, function* (args) {
+      content.wrappedJSObject.performRequests(args.count, args.url);
+    });
+  }
 });

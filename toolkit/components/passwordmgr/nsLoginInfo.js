@@ -14,24 +14,24 @@ function nsLoginInfo() {}
 
 nsLoginInfo.prototype = {
 
-  classID : Components.ID("{0f2f347c-1e4f-40cc-8efd-792dea70a85e}"),
+  classID: Components.ID("{0f2f347c-1e4f-40cc-8efd-792dea70a85e}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsILoginInfo, Ci.nsILoginMetaInfo]),
 
   //
   // nsILoginInfo interfaces...
   //
 
-  hostname      : null,
-  formSubmitURL : null,
-  httpRealm     : null,
-  username      : null,
-  password      : null,
-  usernameField : null,
-  passwordField : null,
+  hostname: null,
+  formSubmitURL: null,
+  httpRealm: null,
+  username: null,
+  password: null,
+  usernameField: null,
+  passwordField: null,
 
-  init : function (aHostname, aFormSubmitURL, aHttpRealm,
-                   aUsername,      aPassword,
-                   aUsernameField, aPasswordField) {
+  init(aHostname, aFormSubmitURL, aHttpRealm,
+                  aUsername, aPassword,
+                  aUsernameField, aPasswordField) {
     this.hostname      = aHostname;
     this.formSubmitURL = aFormSubmitURL;
     this.httpRealm     = aHttpRealm;
@@ -47,12 +47,12 @@ nsLoginInfo.prototype = {
     });
   },
 
-  equals : function (aLogin) {
-    if (this.hostname      != aLogin.hostname      ||
+  equals(aLogin) {
+    if (this.hostname != aLogin.hostname ||
         this.formSubmitURL != aLogin.formSubmitURL ||
-        this.httpRealm     != aLogin.httpRealm     ||
-        this.username      != aLogin.username      ||
-        this.password      != aLogin.password      ||
+        this.httpRealm != aLogin.httpRealm ||
+        this.username != aLogin.username ||
+        this.password != aLogin.password ||
         this.usernameField != aLogin.usernameField ||
         this.passwordField != aLogin.passwordField)
       return false;
@@ -60,7 +60,7 @@ nsLoginInfo.prototype = {
     return true;
   },
 
-  clone : function() {
+  clone() {
     let clone = Cc["@mozilla.org/login-manager/loginInfo;1"].
                 createInstance(Ci.nsILoginInfo);
     clone.init(this.hostname, this.formSubmitURL, this.httpRealm,
@@ -82,11 +82,11 @@ nsLoginInfo.prototype = {
   // nsILoginMetaInfo interfaces...
   //
 
-  guid : null,
-  timeCreated : null,
-  timeLastUsed : null,
-  timePasswordChanged : null,
-  timesUsed : null
+  guid: null,
+  timeCreated: null,
+  timeLastUsed: null,
+  timePasswordChanged: null,
+  timesUsed: null
 
 }; // end of nsLoginInfo implementation
 

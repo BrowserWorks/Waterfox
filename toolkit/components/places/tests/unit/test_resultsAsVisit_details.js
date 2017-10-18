@@ -1,11 +1,11 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
 
-const {bookmarks, history} = PlacesUtils
+const {history} = PlacesUtils;
 
-add_task(function* test_addVisitCheckFields() {
+add_task(async function test_addVisitCheckFields() {
   let uri = NetUtil.newURI("http://test4.com/");
-  yield PlacesTestUtils.addVisits([
+  await PlacesTestUtils.addVisits([
     { uri },
     { uri, referrer: uri },
     { uri, transition: history.TRANSITION_TYPED },
@@ -59,15 +59,25 @@ add_task(function* test_addVisitCheckFields() {
 
   root.containerOpen = false;
 
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* test_bookmarkFields() {
-  let folder = bookmarks.createFolder(bookmarks.placesRoot, "test folder", bookmarks.DEFAULT_INDEX);
-  let bm = bookmarks.insertBookmark(folder, uri("http://test4.com/"),
-                                    bookmarks.DEFAULT_INDEX, "test4 title");
+add_task(async function test_bookmarkFields() {
+  let bookmarks = await PlacesUtils.bookmarks.insertTree({
+    guid: PlacesUtils.bookmarks.unfiledGuid,
+    children: [{
+      title: "test folder",
+      type: PlacesUtils.bookmarks.TYPE_FOLDER,
+      children: [{
+        title: "test title",
+        url: "http://test4.com",
+      }]
+    }],
+  });
 
-  let root = PlacesUtils.getFolderContents(folder).root;
+  let folderId = await PlacesUtils.promiseItemId(bookmarks[0].guid);
+
+  let root = PlacesUtils.getFolderContents(folderId).root;
   equal(root.childCount, 1);
 
   equal(root.visitType, 0, "Visit type should be 0");
@@ -81,5 +91,5 @@ add_task(function* test_bookmarkFields() {
 
   root.containerOpen = false;
 
-  yield bookmarks.eraseEverything();
+  await PlacesUtils.bookmarks.eraseEverything();
 });

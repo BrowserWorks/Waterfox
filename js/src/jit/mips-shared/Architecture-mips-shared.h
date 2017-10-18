@@ -12,6 +12,8 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "jit/shared/Architecture-shared.h"
+
 #include "js/Utility.h"
 
 // gcc appears to use _mips_hard_float to denote
@@ -331,12 +333,6 @@ inline bool
 hasMultiAlias() {
     return true;
 }
-
-// See MIRGenerator::foldableOffsetRange for more info.
-// TODO: Implement this for MIPS. Note that it requires Codegen to respect the
-// offset field of AsmJSHeapAccess.
-static const size_t WasmCheckedImmediateRange = 0;
-static const size_t WasmImmediateRange = 0;
 
 } // namespace jit
 } // namespace js

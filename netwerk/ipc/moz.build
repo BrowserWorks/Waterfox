@@ -4,20 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-XPIDL_SOURCES += [
-    'nsIRemoteOpenFileListener.idl',
-]
-
-XPIDL_MODULE = 'necko_ipc'
-
 EXPORTS.mozilla.net += [
     'ChannelEventQueue.h',
     'NeckoChild.h',
     'NeckoCommon.h',
     'NeckoMessageUtils.h',
     'NeckoParent.h',
-    'RemoteOpenFileChild.h',
-    'RemoteOpenFileParent.h',
+    'NeckoTargetHolder.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -25,19 +18,29 @@ UNIFIED_SOURCES += [
     'NeckoChild.cpp',
     'NeckoCommon.cpp',
     'NeckoParent.cpp',
-    'RemoteOpenFileChild.cpp',
-    'RemoteOpenFileParent.cpp',
+    'NeckoTargetHolder.cpp',
 ]
 
 IPDL_SOURCES = [
     'NeckoChannelParams.ipdlh',
     'PChannelDiverter.ipdl',
     'PDataChannel.ipdl',
+    'PFileChannel.ipdl',
     'PNecko.ipdl',
-    'PRemoteOpenFile.ipdl',
     'PRtspChannel.ipdl',
     'PRtspController.ipdl',
+    'PSimpleChannel.ipdl',
 ]
+
+# needed so --disable-webrtc builds work (yes, a bit messy)
+if not CONFIG['MOZ_WEBRTC']:
+  IPDL_SOURCES += [
+      '../../media/mtransport/ipc/PStunAddrsRequest.ipdl',
+  ]
+  EXPORTS.mozilla.net += [
+      '../../media/mtransport/ipc/NrIceStunAddrMessageUtils.h',
+      '../../media/mtransport/ipc/PStunAddrsParams.h',
+  ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -45,6 +48,7 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/caps',
+    '/dom/base',
     '/modules/libjar',
     '/netwerk/base',
     '/netwerk/protocol/http',

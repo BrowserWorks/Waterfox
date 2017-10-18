@@ -86,10 +86,28 @@ var gPropertyShorthands = {};
 
 var gElement = document.getElementById("testnode");
 var gDeclaration = gElement.style;
-var gComputedStyle = window.getComputedStyle(gElement, "");
+var gComputedStyle = window.getComputedStyle(gElement);
 
 var gPrereqDeclaration =
   document.getElementById("prereqsheet").sheet.cssRules[0].style;
+
+// On Android, avoid most 'TEST-PASS' logging by overriding
+// SimpleTest.is/isnot, to improve performance
+if (navigator.appVersion.indexOf("Android") >= 0) {
+  is = function is(a, b, name)
+  {
+    var pass = Object.is(a, b);
+    if (!pass)
+      SimpleTest.is(a, b, name);
+  }
+
+  isnot = function isnot(a, b, name)
+  {
+    var pass = !Object.is(a, b);
+    if (!pass)
+      SimpleTest.isnot(a, b, name);
+  }
+}
 
 // Returns true if propA and propB are equivalent, considering aliasing.
 // (i.e. if one is an alias of the other, or if they're both aliases of
@@ -137,6 +155,7 @@ function test_property(property)
   function test_value(value, resolved_value) {
     var value_has_variable_reference = resolved_value != null;
 
+    var colon = value == "var(--a)" ? ":" : ": ";
     gDeclaration.setProperty(property, value, "");
 
     var idx;
@@ -155,7 +174,7 @@ function test_property(property)
       for (idx in info.subproperties)
         step1comps.push(gComputedStyle.getPropertyValue(info.subproperties[idx]));
 
-    isnot(step1val, "", "setting '" + value + "' on '" + property + "'");
+    SimpleTest.isnot(step1val, "", "setting '" + value + "' on '" + property + "'");
     if ("subproperties" in info)
       for (idx in info.subproperties) {
         var subprop = info.subproperties[idx];
@@ -175,9 +194,9 @@ function test_property(property)
     var expected_serialization = "";
     if (step1val != "") {
       if ("alias_for" in info) {
-        expected_serialization = info.alias_for + ": " + step1val + ";";
+        expected_serialization = info.alias_for + colon + step1val + ";";
       } else {
-        expected_serialization = property + ": " + step1val + ";";
+        expected_serialization = property + colon + step1val + ";";
       }
     }
     is(step1ser, expected_serialization,
@@ -188,7 +207,7 @@ function test_property(property)
 
     is(gDeclaration.getPropertyValue(property), step1val,
        "parse+serialize should be idempotent for '" +
-         property + ": " + value + "'");
+         property + colon + value + "'");
     if (info.type != CSS_TYPE_TRUE_SHORTHAND) {
       is(gComputedStyle.getPropertyValue(property), step1comp,
          "serialize+parse should be identity transform for '" +
@@ -219,7 +238,7 @@ function test_property(property)
       }
       is(gDeclaration.getPropertyValue(property), step1val,
          "parse+split+serialize should be idempotent for '" +
-         property + ": " + value + "'");
+         property + colon + value + "'");
     }
 
     if (info.type != CSS_TYPE_TRUE_SHORTHAND &&
@@ -296,7 +315,6 @@ function test_property(property)
 function runTest() {
   // To avoid triggering the slow script dialog, we have to test one
   // property at a time.
-  ok(SpecialPowers.getBoolPref("layout.css.variables.enabled"), "pref not set #1");
   var props = [];
   for (var prop in gCSSProperties) {
     var info = gCSSProperties[prop];
@@ -324,10 +342,8 @@ function runTest() {
 }
 
 SimpleTest.waitForExplicitFinish();
-SimpleTest.requestLongerTimeout(6);
-
-SpecialPowers.pushPrefEnv({ set: [["layout.css.variables.enabled", true]] },
-                          runTest);
+SimpleTest.requestLongerTimeout(7);
+runTest();
 </script>
 </pre>
 </body>

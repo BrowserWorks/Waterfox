@@ -7,28 +7,27 @@ Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/bookmarks.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://services-sync/service.js");
-Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource://testing-common/services/common/utils.js");
 
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
 
-var engine = Service.engineManager.get("bookmarks");
-var store = engine._store;
+let engine;
+let store;
 
 // Record borrowed from Bug 631361.
-var record631361 = {
+const record631361 = {
   id: "M5bwUKK8hPyF",
   index: 150,
   modified: 1296768176.49,
   payload:
-  {"id":"M5bwUKK8hPyF",
-   "type":"livemark",
-   "siteUri":"http://www.bbc.co.uk/go/rss/int/news/-/news/",
-   "feedUri":"http://fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
-   "parentName":"Bookmarks Toolbar",
-   "parentid":"toolbar",
-   "title":"Latest Headlines",
-   "description":"",
+  {"id": "M5bwUKK8hPyF",
+   "type": "livemark",
+   "siteUri": "http://www.bbc.co.uk/go/rss/int/news/-/news/",
+   "feedUri": "http://fxfeeds.mozilla.com/en-US/firefox/headlines.xml",
+   "parentName": "Bookmarks Toolbar",
+   "parentid": "toolbar",
+   "title": "Latest Headlines",
+   "description": "",
    "children":
      ["7oBdEZB-8BMO", "SUd1wktMNCTB", "eZe4QWzo1BcY", "YNBhGwhVnQsN",
       "92Aw2SMEkFg0", "uw0uKqrVFwd-", "x7mx2P3--8FJ", "d-jVF8UuC9Ye",
@@ -53,9 +52,6 @@ var record631361 = {
   collection: "bookmarks"
 };
 
-// Clean up after other tests. Only necessary in XULRunner.
-store.wipe();
-
 function makeLivemark(p, mintGUID) {
   let b = new Livemark("bookmarks", p.id);
   // Copy here, because tests mutate the contents.
@@ -67,59 +63,48 @@ function makeLivemark(p, mintGUID) {
   return b;
 }
 
-
-function run_test() {
+add_task(async function setup() {
   initTestLogging("Trace");
   Log.repository.getLogger("Sync.Engine.Bookmarks").level = Log.Level.Trace;
   Log.repository.getLogger("Sync.Store.Bookmarks").level  = Log.Level.Trace;
 
-  run_next_test();
-}
+  engine = Service.engineManager.get("bookmarks");
+  store = engine._store;
+});
 
-add_test(function test_livemark_descriptions() {
+add_task(async function test_livemark_descriptions() {
   let record = record631361.payload;
 
-  function doRecord(r) {
+  async function doRecord(r) {
     store._childrenToOrder = {};
-    store.applyIncoming(r);
-    store._orderChildren();
+    await store.applyIncoming(r);
+    await store._orderChildren();
     delete store._childrenToOrder;
   }
 
   // Attempt to provoke an error by messing around with the description.
   record.description = null;
-  doRecord(makeLivemark(record));
+  await doRecord(makeLivemark(record));
   record.description = "";
-  doRecord(makeLivemark(record));
+  await doRecord(makeLivemark(record));
 
   // Attempt to provoke an error by adding a bad description anno.
-  let id = store.idForGUID(record.id);
+  let id = await store.idForGUID(record.id);
   PlacesUtils.annotations.setItemAnnotation(id, DESCRIPTION_ANNO, "", 0,
                                             PlacesUtils.annotations.EXPIRE_NEVER);
-
-  run_next_test();
 });
 
-add_test(function test_livemark_invalid() {
+add_task(async function test_livemark_invalid() {
   _("Livemarks considered invalid by nsLivemarkService are skipped.");
-
-  _("Parent is 0, which is invalid. Will be set to unfiled.");
-  let noParentRec = makeLivemark(record631361.payload, true);
-  noParentRec._parent = 0;
-  store.create(noParentRec);
-  let recID = store.idForGUID(noParentRec.id, true);
-  do_check_true(recID > 0);
-  do_check_eq(PlacesUtils.bookmarks.getFolderIdForItem(recID), PlacesUtils.bookmarks.unfiledBookmarksFolder);
 
   _("Parent is unknown. Will be set to unfiled.");
   let lateParentRec = makeLivemark(record631361.payload, true);
   let parentGUID = Utils.makeGUID();
   lateParentRec.parentid = parentGUID;
-  lateParentRec._parent = store.idForGUID(parentGUID);   // Usually done by applyIncoming.
-  do_check_eq(-1, lateParentRec._parent);
+  do_check_eq(-1, (await store.idForGUID(parentGUID)));
 
-  store.create(lateParentRec);
-  recID = store.idForGUID(lateParentRec.id, true);
+  await store.create(lateParentRec);
+  let recID = await store.idForGUID(lateParentRec.id, true);
   do_check_true(recID > 0);
   do_check_eq(PlacesUtils.bookmarks.getFolderIdForItem(recID),
               PlacesUtils.bookmarks.unfiledBookmarksFolder);
@@ -127,17 +112,14 @@ add_test(function test_livemark_invalid() {
   _("No feed URI, which is invalid. Will be skipped.");
   let noFeedURIRec = makeLivemark(record631361.payload, true);
   delete noFeedURIRec.cleartext.feedUri;
-  store.create(noFeedURIRec);
+  await store.create(noFeedURIRec);
   // No exception, but no creation occurs.
-  do_check_eq(-1, store.idForGUID(noFeedURIRec.id, true));
+  do_check_eq(-1, (await store.idForGUID(noFeedURIRec.id, true)));
 
   _("Parent is a Livemark. Will be skipped.");
   let lmParentRec = makeLivemark(record631361.payload, true);
-  lmParentRec._parent = recID;
-  store.create(lmParentRec);
+  lmParentRec.parentid = await store.GUIDForId(recID);
+  await store.create(lmParentRec);
   // No exception, but no creation occurs.
-  do_check_eq(-1, store.idForGUID(lmParentRec.id, true));
-
-  // Clear event loop.
-  Utils.nextTick(run_next_test);
+  do_check_eq(-1, (await store.idForGUID(lmParentRec.id, true)));
 });

@@ -6,7 +6,7 @@
 
 #include "nsArrayEnumerator.h"
 #include "nsCOMArray.h"
-#include "nsIFile.h"
+#include "nsLocalFile.h"
 #include "nsMIMEInfoWin.h"
 #include "nsNetUtil.h"
 #include <windows.h>
@@ -18,7 +18,6 @@
 #include "windows.h"
 #include "nsIWindowsRegKey.h"
 #include "nsIProcess.h"
-#include "nsOSHelperAppService.h"
 #include "nsUnicharUtils.h"
 #include "nsITextToSubURI.h"
 #include "nsVariant.h"
@@ -236,8 +235,9 @@ nsMIMEInfoWin::LoadUriInternal(nsIURI * aURL)
     nsCOMPtr<nsITextToSubURI> textToSubURI = do_GetService(NS_ITEXTTOSUBURI_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = textToSubURI->UnEscapeNonAsciiURI(urlCharset, urlSpec, utf16Spec);
-    NS_ENSURE_SUCCESS(rv, rv);
+    if (NS_FAILED(textToSubURI->UnEscapeNonAsciiURI(urlCharset, urlSpec, utf16Spec))) {
+      CopyASCIItoUTF16(urlSpec, utf16Spec);
+    }
 
     static const wchar_t cmdVerb[] = L"open";
     SHELLEXECUTEINFOW sinfo;
@@ -348,7 +348,7 @@ bool nsMIMEInfoWin::GetAppsVerbCommandHandler(const nsAString& appExeName,
                                            appFilesystemCommand))) {
     
     // Expand environment vars, clean up any misc.
-    if (!nsOSHelperAppService::CleanupCmdHandlerPath(appFilesystemCommand))
+    if (!nsLocalFile::CleanupCmdHandlerPath(appFilesystemCommand))
       return false;
     
     applicationPath = appFilesystemCommand;
@@ -493,7 +493,7 @@ bool nsMIMEInfoWin::GetProgIDVerbCommandHandler(const nsAString& appProgIDName,
   if (NS_SUCCEEDED(appKey->ReadStringValue(EmptyString(), appFilesystemCommand))) {
     
     // Expand environment vars, clean up any misc.
-    if (!nsOSHelperAppService::CleanupCmdHandlerPath(appFilesystemCommand))
+    if (!nsLocalFile::CleanupCmdHandlerPath(appFilesystemCommand))
       return false;
     
     applicationPath = appFilesystemCommand;
@@ -612,8 +612,9 @@ nsMIMEInfoWin::GetPossibleLocalHandlers(nsIArray **_retval)
   }
 
   nsAutoString fileExtToUse;
-  if (fileExt.First() != '.')
+  if (!fileExt.IsEmpty() && fileExt.First() != '.') {
     fileExtToUse = char16_t('.');
+  }
   fileExtToUse.Append(NS_ConvertUTF8toUTF16(fileExt));
 
   // Note, the order in which these occur has an effect on the 

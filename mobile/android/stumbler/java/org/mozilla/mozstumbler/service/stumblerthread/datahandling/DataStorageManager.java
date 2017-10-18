@@ -6,13 +6,16 @@ package org.mozilla.mozstumbler.service.stumblerthread.datahandling;
 
 import android.content.Context;
 import android.util.Log;
+
 import org.mozilla.mozstumbler.service.AppGlobals;
+import org.mozilla.mozstumbler.service.utils.StringUtils;
 import org.mozilla.mozstumbler.service.utils.Zipper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
@@ -61,7 +64,7 @@ public class DataStorageManager {
     private final ReportBatchBuilder mCurrentReports = new ReportBatchBuilder();
     private final File mReportsDir;
     private final File mStatsFile;
-    private final StorageIsEmptyTracker mTracker;
+    private final WeakReference<StorageIsEmptyTracker> mTrackerWeakReference;
 
     private static DataStorageManager sInstance;
 
@@ -101,7 +104,7 @@ public class DataStorageManager {
 
         if (mCurrentReports.reports.size() > 0) {
             try {
-                bytes = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes()).length;
+                bytes = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes(StringUtils.UTF_8)).length;
             } catch (IOException ex) {
                 Log.e(LOG_TAG, "Zip error in getQueuedCounts()", ex);
             }
@@ -213,6 +216,10 @@ public class DataStorageManager {
         return dir.getPath();
     }
 
+    /*
+     *  Setup a new global instance. A WeakReference will be kept to the supplied tracker, the caller
+     *  is reponsible for the tracker lifetime.
+     */
     public static synchronized void createGlobalInstance(Context context, StorageIsEmptyTracker tracker) {
         DataStorageManager.createGlobalInstance(context, tracker,
                 DEFAULT_MAX_BYTES_STORED_ON_DISK, DEFAULT_MAX_WEEKS_DATA_ON_DISK);
@@ -220,7 +227,9 @@ public class DataStorageManager {
 
     public static synchronized void createGlobalInstance(Context context, StorageIsEmptyTracker tracker,
                                                          long maxBytesStoredOnDisk, int maxWeeksDataStored) {
-        if (sInstance != null) {
+        // Only create if no instance already exists. If there's an instance but the tracker it was associated
+        // with has died, then treat the old instance as dead.
+        if (sInstance != null && sInstance.mTrackerWeakReference.get() != null) {
             return;
         }
         sInstance = new DataStorageManager(context, tracker, maxBytesStoredOnDisk, maxWeeksDataStored);
@@ -234,8 +243,8 @@ public class DataStorageManager {
                                long maxBytesStoredOnDisk, int maxWeeksDataStored) {
         mMaxBytesDiskStorage = maxBytesStoredOnDisk;
         mMaxWeeksStored = maxWeeksDataStored;
-        mTracker = tracker;
-        final String baseDir = getStorageDir(c);
+        mTrackerWeakReference = new WeakReference<>(tracker);
+        final String baseDir = getStorageDir(c.getApplicationContext());
         mStatsFile = new File(baseDir, "upload_stats.ini");
         mReportsDir = new File(baseDir + "/reports");
         if (!mReportsDir.exists()) {
@@ -267,7 +276,7 @@ public class DataStorageManager {
 
     /* Pass filename returned from dataToSend() */
     public synchronized boolean delete(String filename) {
-        if (filename == MEMORY_BUFFER_NAME) {
+        if (filename.equals(MEMORY_BUFFER_NAME)) {
             mCurrentReportsSendBuffer = null;
             return true;
         }
@@ -301,7 +310,7 @@ public class DataStorageManager {
 
         if (currentReportsCount > 0) {
             final String filename = MEMORY_BUFFER_NAME;
-            final byte[] data = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes());
+            final byte[] data = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes(StringUtils.UTF_8));
             final int wifiCount = mCurrentReports.wifiCount;
             final int cellCount = mCurrentReports.cellCount;
             clearCurrentReports();
@@ -412,7 +421,7 @@ public class DataStorageManager {
         if (mCurrentReports.reports.size() < 1) {
             return;
         }
-        final byte[] bytes = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes());
+        final byte[] bytes = Zipper.zipData(finalizeReports(mCurrentReports.reports).getBytes(StringUtils.UTF_8));
         saveToDisk(bytes, mCurrentReports.reports.size(), mCurrentReports.wifiCount, mCurrentReports.cellCount);
         clearCurrentReports();
     }
@@ -462,8 +471,9 @@ public class DataStorageManager {
     }
 
     private void notifyStorageIsEmpty(boolean isEmpty) {
-        if (mTracker != null) {
-            mTracker.notifyStorageStateEmpty(isEmpty);
+        final StorageIsEmptyTracker tracker = mTrackerWeakReference.get();
+        if (tracker != null) {
+            tracker.notifyStorageStateEmpty(isEmpty);
         }
     }
 

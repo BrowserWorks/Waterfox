@@ -99,7 +99,7 @@ function loadCallgraph(file)
             var name = match[2];
             if (!indirectCallCannotGC(functionNames[match[1]], name) && !suppressed)
                 addGCFunction(mangledCaller, "IndirectCall: " + name);
-        } else if (match = tag == 'F' && /^F (\d+) CLASS (.*?) FIELD (.*)/.exec(line)) {
+        } else if (match = (tag == 'F' || tag == 'V') && /^[FV] (\d+) CLASS (.*?) FIELD (.*)/.exec(line)) {
             var caller = idToMangled[match[1]];
             var csu = match[2];
             var fullfield = csu + "." + match[3];
@@ -124,6 +124,17 @@ function loadCallgraph(file)
                 numGCCalls++;
             }
         }
+    }
+
+    // Add in any extra functions at the end. (If we did this early, it would
+    // mess up the id <-> name correspondence.)
+    for (var func of extraGCFunctions())
+        addGCFunction(func, "annotation");
+
+    // mess up the id <-> name correspondence. Also, we need to know if the
+    // functions even exist in the first place.)
+    for (var func of extraGCFunctions()) {
+        addGCFunction(func, "annotation");
     }
 
     // Initialize suppressedFunctions to the set of all functions, and the

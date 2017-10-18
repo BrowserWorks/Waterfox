@@ -14,6 +14,7 @@
 #include "BasePoint3D.h"
 #include "BasePoint4D.h"
 #include "BaseSize.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/TypeTraits.h"
 
 #include <cmath>
@@ -130,6 +131,10 @@ struct PointTyped :
   constexpr PointTyped(Coord aX, Coord aY) : Super(aX.value, aY.value) {}
   constexpr MOZ_IMPLICIT PointTyped(const IntPointTyped<units>& point) : Super(F(point.x), F(point.y)) {}
 
+  bool WithinEpsilonOf(const PointTyped<units, F>& aPoint, F aEpsilon) {
+    return fabs(aPoint.x - this->x) < aEpsilon && fabs(aPoint.y - this->y) < aEpsilon;
+  }
+
   // XXX When all of the code is ported, the following functions to convert to and from
   // unknown types should be removed.
 
@@ -148,7 +153,7 @@ template<class units>
 IntPointTyped<units> RoundedToInt(const PointTyped<units>& aPoint) {
   return IntPointTyped<units>::Round(aPoint.x, aPoint.y);
 }
-  
+
 template<class units>
 IntPointTyped<units> TruncatedToInt(const PointTyped<units>& aPoint) {
   return IntPointTyped<units>::Truncate(aPoint.x, aPoint.y);
@@ -218,6 +223,9 @@ struct Point4DTyped :
   Point4DTyped() : Super() {}
   Point4DTyped(F aX, F aY, F aZ, F aW) : Super(aX, aY, aZ, aW) {}
 
+  explicit Point4DTyped(const Point3DTyped<units, F>& aPoint)
+    : Super(aPoint.x, aPoint.y, aPoint.z, 1) {}
+
   // XXX When all of the code is ported, the following functions to convert to and from
   // unknown types should be removed.
 
@@ -229,8 +237,15 @@ struct Point4DTyped :
     return Point4DTyped<UnknownUnits, F>(this->x, this->y, this->z, this->w);
   }
 
-  PointTyped<units, F> As2DPoint() {
-    return PointTyped<units, F>(this->x / this->w, this->y / this->w);
+  PointTyped<units, F> As2DPoint() const {
+    return PointTyped<units, F>(this->x / this->w,
+                                this->y / this->w);
+  }
+
+  Point3DTyped<units, F> As3DPoint() const {
+    return Point3DTyped<units, F>(this->x / this->w,
+                                  this->y / this->w,
+                                  this->z / this->w);
   }
 };
 typedef Point4DTyped<UnknownUnits> Point4D;
@@ -282,10 +297,11 @@ struct IntSizeTyped :
   }
 };
 typedef IntSizeTyped<UnknownUnits> IntSize;
+typedef Maybe<IntSize> MaybeIntSize;
 
 template<class units, class F = Float>
 struct SizeTyped :
-  public BaseSize< F, SizeTyped<units> >,
+  public BaseSize< F, SizeTyped<units, F> >,
   public units {
   static_assert(IsPixel<units>::value,
                 "'units' must be a coordinate system tag");

@@ -19,7 +19,7 @@
 #include "nsDOMJSUtils.h"
 #include "WorkerPrivate.h"
 #include "mozilla/ContentEvents.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "mozilla/JSEventHandler.h"
 #include "mozilla/Likely.h"
@@ -63,7 +63,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(JSEventHandler)
     NS_IMPL_CYCLE_COLLECTION_DESCRIBE(JSEventHandler, tmp->mRefCnt.get())
   }
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_RAWPTR(mTypedHandler.Ptr())
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(JSEventHandler)
@@ -154,7 +153,7 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
       columnNumber.Construct();
       columnNumber.Value() = scriptEvent->Colno();
 
-      error.Construct(GetJSRuntime());
+      error.Construct(RootingCx());
       scriptEvent->GetError(&error.Value());
     } else {
       msgOrEvent.SetAsEvent() = aEvent->InternalDOMEvent();
@@ -163,13 +162,15 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
     RefPtr<OnErrorEventHandlerNonNull> handler =
       mTypedHandler.OnErrorEventHandler();
     ErrorResult rv;
-    bool handled = handler->Call(mTarget, msgOrEvent, fileName, lineNumber,
-                                 columnNumber, error, rv);
+    JS::Rooted<JS::Value> retval(RootingCx());
+    handler->Call(mTarget, msgOrEvent, fileName, lineNumber,
+                  columnNumber, error, &retval, rv);
     if (rv.Failed()) {
       return rv.StealNSResult();
     }
 
-    if (handled) {
+    if (retval.isBoolean() &&
+        retval.toBoolean() == bool(scriptEvent)) {
       event->PreventDefaultInternal(isChromeHandler);
     }
     return NS_OK;
@@ -210,18 +211,14 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
   MOZ_ASSERT(mTypedHandler.Type() == TypedEventHandler::eNormal);
   ErrorResult rv;
   RefPtr<EventHandlerNonNull> handler = mTypedHandler.NormalEventHandler();
-  JS::Rooted<JS::Value> retval(CycleCollectedJSRuntime::Get()->Runtime());
+  JS::Rooted<JS::Value> retval(RootingCx());
   handler->Call(mTarget, *(aEvent->InternalDOMEvent()), &retval, rv);
   if (rv.Failed()) {
     return rv.StealNSResult();
   }
 
-  // If the handler returned false and its sense is not reversed,
-  // or the handler returned true and its sense is reversed from
-  // the usual (false means cancel), then prevent default.
-  if (retval.isBoolean() &&
-      retval.toBoolean() == (mEventName == nsGkAtoms::onerror ||
-                             mEventName == nsGkAtoms::onmouseover)) {
+  // If the handler returned false, then prevent default.
+  if (retval.isBoolean() && !retval.toBoolean()) {
     event->PreventDefaultInternal(isChromeHandler);
   }
 

@@ -198,7 +198,7 @@ UDPSocket::CloseWithReason(nsresult aReason)
 
   if (mClosed) {
     if (NS_SUCCEEDED(aReason)) {
-      mClosed->MaybeResolve(JS::UndefinedHandleValue);
+      mClosed->MaybeResolveWithUndefined();
     } else {
       mClosed->MaybeReject(aReason);
     }
@@ -230,7 +230,7 @@ UDPSocket::JoinMulticastGroup(const nsAString& aMulticastGroupAddress,
     MOZ_ASSERT(!mSocketChild);
 
     aRv = mSocket->JoinMulticast(address, EmptyCString());
-    NS_WARN_IF(aRv.Failed());
+    NS_WARNING_ASSERTION(!aRv.Failed(), "JoinMulticast failed");
 
     return;
   }
@@ -238,7 +238,7 @@ UDPSocket::JoinMulticastGroup(const nsAString& aMulticastGroupAddress,
   MOZ_ASSERT(mSocketChild);
 
   aRv = mSocketChild->JoinMulticast(address, EmptyCString());
-  NS_WARN_IF(aRv.Failed());
+  NS_WARNING_ASSERTION(!aRv.Failed(), "JoinMulticast failed");
 }
 
 void
@@ -263,14 +263,14 @@ UDPSocket::LeaveMulticastGroup(const nsAString& aMulticastGroupAddress,
     MOZ_ASSERT(!mSocketChild);
 
     aRv = mSocket->LeaveMulticast(address, EmptyCString());
-    NS_WARN_IF(aRv.Failed());
+    NS_WARNING_ASSERTION(!aRv.Failed(), "mSocket->LeaveMulticast failed");
     return;
   }
 
   MOZ_ASSERT(mSocketChild);
 
   aRv = mSocketChild->LeaveMulticast(address, EmptyCString());
-  NS_WARN_IF(aRv.Failed());
+  NS_WARNING_ASSERTION(!aRv.Failed(), "mSocketChild->LeaveMulticast failed");
 }
 
 nsresult
@@ -469,7 +469,7 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
     return rv;
   }
 
-  mOpened->MaybeResolve(JS::UndefinedHandleValue);
+  mOpened->MaybeResolveWithUndefined();
 
   return NS_OK;
 }
@@ -498,6 +498,11 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
     return NS_ERROR_FAILURE;
   }
 
+  nsCOMPtr<nsIEventTarget> target;
+  if (nsCOMPtr<nsIGlobalObject> global = GetOwnerGlobal()) {
+    target = global->EventTargetFor(TaskCategory::Other);
+  }
+
   rv = sock->Bind(mListenerProxy,
                   principal,
                   NS_ConvertUTF16toUTF8(aLocalAddress),
@@ -505,7 +510,8 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
                   mAddressReuse,
                   mLoopback,
                   0,
-                  0);
+                  0,
+                  target);
 
   if (NS_FAILED(rv)) {
     return rv;
@@ -545,7 +551,9 @@ UDPSocket::Init(const nsString& aLocalAddress,
   class OpenSocketRunnable final : public Runnable
   {
   public:
-    explicit OpenSocketRunnable(UDPSocket* aSocket) : mSocket(aSocket)
+    explicit OpenSocketRunnable(UDPSocket* aSocket)
+      : mozilla::Runnable("OpenSocketRunnable")
+      , mSocket(aSocket)
     { }
 
     NS_IMETHOD Run() override
@@ -736,7 +744,7 @@ UDPSocket::CallListenerOpened()
     return NS_OK;
   }
 
-  mOpened->MaybeResolve(JS::UndefinedHandleValue);
+  mOpened->MaybeResolveWithUndefined();
 
   return NS_OK;
 }

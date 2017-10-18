@@ -64,9 +64,10 @@ Summariser::Entry(uintptr_t aAddress, uintptr_t aLength)
   aAddress += mTextBias;
   if (DEBUG_SUMMARISER) {
     char buf[100];
-    snprintf_literal(buf, "LUL Entry(%llx, %llu)\n",
-                     (unsigned long long int)aAddress,
-                     (unsigned long long int)aLength);
+    SprintfLiteral(buf,
+                   "LUL Entry(%llx, %llu)\n",
+                   (unsigned long long int)aAddress,
+                   (unsigned long long int)aLength);
     mLog(buf);
   }
   // This throws away any previous summary, that is, assumes
@@ -86,20 +87,20 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
     char buf[100];
     if (how == NODEREF || how == DEREF) {
       bool deref = how == DEREF;
-      snprintf_literal(buf,
-                       "LUL  0x%llx  old-r%d = %sr%d + %lld%s\n",
-                       (unsigned long long int)aAddress, aNewReg,
-                       deref ? "*(" : "", (int)oldReg, (long long int)offset,
-                       deref ? ")" : "");
+      SprintfLiteral(buf,
+                     "LUL  0x%llx  old-r%d = %sr%d + %lld%s\n",
+                     (unsigned long long int)aAddress, aNewReg,
+                     deref ? "*(" : "", (int)oldReg, (long long int)offset,
+                     deref ? ")" : "");
     } else if (how == PFXEXPR) {
-      snprintf_literal(buf,
-                       "LUL  0x%llx  old-r%d = pfx-expr-at %lld\n",
-                       (unsigned long long int)aAddress, aNewReg,
-                       (long long int)offset);
+      SprintfLiteral(buf,
+                     "LUL  0x%llx  old-r%d = pfx-expr-at %lld\n",
+                     (unsigned long long int)aAddress, aNewReg,
+                     (long long int)offset);
     } else {
-      snprintf_literal(buf,
-                       "LUL  0x%llx  old-r%d = (invalid LExpr!)\n",
-                       (unsigned long long int)aAddress, aNewReg);
+      SprintfLiteral(buf,
+                     "LUL  0x%llx  old-r%d = (invalid LExpr!)\n",
+                     (unsigned long long int)aAddress, aNewReg);
     }
     mLog(buf);
   }
@@ -122,7 +123,7 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
   // having to concatenate two strings to produce a complete error message.
   const char* reason1 = nullptr;
   const char* reason2 = nullptr;
-  
+
   // |offset| needs to be a 32 bit value that sign extends to 64 bits
   // on a 64 bit target.  We will need to incorporate |offset| into
   // any LExpr made here.  So we may as well check it right now.
@@ -133,7 +134,7 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
 
   // FIXME: factor out common parts of the arch-dependent summarisers.
 
-#if defined(LUL_ARCH_arm)
+#if defined(GP_ARCH_arm)
 
   // ----------------- arm ----------------- //
 
@@ -236,7 +237,7 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
     mCurrRules.mR15expr = LExpr(NODEREF, DW_REG_ARM_R14, 0);
   }
 
-#elif defined(LUL_ARCH_x64) || defined(LUL_ARCH_x86)
+#elif defined(GP_ARCH_amd64) || defined(GP_ARCH_x86)
 
   // ---------------- x64/x86 ---------------- //
 
@@ -245,19 +246,35 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
   // is the heart of the summarisation process.
   switch (aNewReg) {
 
-    case DW_REG_CFA:
-      // This is a rule that defines the CFA.  The only forms we can
-      // represent are: = SP+offset or = FP+offset.
-      if (how != NODEREF) {
-        reason1 = "rule for DW_REG_CFA: invalid |how|";
-        goto cant_summarise;
-      }
-      if (oldReg != DW_REG_INTEL_XSP && oldReg != DW_REG_INTEL_XBP) {
-        reason1 = "rule for DW_REG_CFA: invalid |oldReg|";
-        goto cant_summarise;
+    case DW_REG_CFA: {
+      // This is a rule that defines the CFA.  The only forms we choose to
+      // represent are: = SP+offset, = FP+offset, or =prefix-expr.
+      switch (how) {
+        case NODEREF:
+          if (oldReg != DW_REG_INTEL_XSP && oldReg != DW_REG_INTEL_XBP) {
+            reason1 = "rule for DW_REG_CFA: invalid |oldReg|";
+            goto cant_summarise;
+          }
+          break;
+        case DEREF:
+          reason1 = "rule for DW_REG_CFA: invalid |how|";
+          goto cant_summarise;
+        case PFXEXPR: {
+          // Check that the prefix expression only mentions tracked registers.
+          const vector<PfxInstr>* pfxInstrs = mSecMap->GetPfxInstrs();
+          reason2 = checkPfxExpr(pfxInstrs, offset);
+          if (reason2) {
+            reason1 = "rule for CFA: ";
+            goto cant_summarise;
+          }
+          break;
+        }
+        default:
+          goto cant_summarise;
       }
       mCurrRules.mCfaExpr = LExpr(how, oldReg, offset);
       break;
+    }
 
     case DW_REG_INTEL_XSP: case DW_REG_INTEL_XBP: case DW_REG_INTEL_XIP: {
       // This is a new rule for XSP, XBP or XIP (the return address).
@@ -322,12 +339,12 @@ Summariser::Rule(uintptr_t aAddress, int aNewReg,
  cant_summarise:
   if (reason1 || reason2) {
     char buf[200];
-    snprintf_literal(buf, "LUL  can't summarise: "
-                     "SVMA=0x%llx: %s%s, expr=LExpr(%s,%u,%lld)\n",
-                     (unsigned long long int)(aAddress - mTextBias),
-                     reason1 ? reason1 : "", reason2 ? reason2 : "",
-                     NameOf_LExprHow(how),
-                     (unsigned int)oldReg, (long long int)offset);
+    SprintfLiteral(buf, "LUL  can't summarise: "
+                        "SVMA=0x%llx: %s%s, expr=LExpr(%s,%u,%lld)\n",
+                   (unsigned long long int)(aAddress - mTextBias),
+                   reason1 ? reason1 : "", reason2 ? reason2 : "",
+                   NameOf_LExprHow(how),
+                   (unsigned int)oldReg, (long long int)offset);
     mLog(buf);
   }
 }

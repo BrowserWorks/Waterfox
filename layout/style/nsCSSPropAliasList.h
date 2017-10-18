@@ -183,9 +183,41 @@ CSS_PROP_ALIAS(-moz-hyphens,
                hyphens,
                MozHyphens,
                "")
-CSS_PROP_ALIAS(-moz-text-align-last,
-               text_align_last,
-               MozTextAlignLast,
+CSS_PROP_ALIAS(-moz-column-count,
+               column_count,
+               MozColumnCount,
+               "")
+CSS_PROP_ALIAS(-moz-column-fill,
+               column_fill,
+               MozColumnFill,
+               "")
+CSS_PROP_ALIAS(-moz-column-gap,
+               column_gap,
+               MozColumnGap,
+               "")
+CSS_PROP_ALIAS(-moz-column-rule,
+               column_rule,
+               MozColumnRule,
+               "")
+CSS_PROP_ALIAS(-moz-column-rule-color,
+               column_rule_color,
+               MozColumnRuleColor,
+               "")
+CSS_PROP_ALIAS(-moz-column-rule-style,
+               column_rule_style,
+               MozColumnRuleStyle,
+               "")
+CSS_PROP_ALIAS(-moz-column-rule-width,
+               column_rule_width,
+               MozColumnRuleWidth,
+               "")
+CSS_PROP_ALIAS(-moz-column-width,
+               column_width,
+               MozColumnWidth,
+               "")
+CSS_PROP_ALIAS(-moz-columns,
+               columns,
+               MozColumns,
                "")
 
 #define WEBKIT_PREFIX_PREF "layout.css.prefixes.webkit"
@@ -233,7 +265,7 @@ CSS_PROP_ALIAS(-webkit-filter,
                WebkitFilter,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-text-size-adjust,
-               text_size_adjust,
+               _moz_text_size_adjust,
                WebkitTextSizeAdjust,
                WEBKIT_PREFIX_PREF)
 
@@ -337,27 +369,27 @@ CSS_PROP_ALIAS(-webkit-box-sizing,
 // accompanied by "display:-webkit-box", because we generate a different frame
 // for those two display values.)
 CSS_PROP_ALIAS(-webkit-box-flex,
-               box_flex,
+               _moz_box_flex,
                WebkitBoxFlex,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-ordinal-group,
-               box_ordinal_group,
+               _moz_box_ordinal_group,
                WebkitBoxOrdinalGroup,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-orient,
-               box_orient,
+               _moz_box_orient,
                WebkitBoxOrient,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-direction,
-               box_direction,
+               _moz_box_direction,
                WebkitBoxDirection,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-align,
-               box_align,
+               _moz_box_align,
                WebkitBoxAlign,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-pack,
-               box_pack,
+               _moz_box_pack,
                WebkitBoxPack,
                WEBKIT_PREFIX_PREF)
 
@@ -413,7 +445,7 @@ CSS_PROP_ALIAS(-webkit-align-content,
                WEBKIT_PREFIX_PREF)
 
 CSS_PROP_ALIAS(-webkit-user-select,
-               user_select,
+               _moz_user_select,
                WebkitUserSelect,
                WEBKIT_PREFIX_PREF)
 

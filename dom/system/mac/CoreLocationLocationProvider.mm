@@ -100,7 +100,7 @@ static const CLLocationAccuracy kDEFAULT_ACCURACY = kCLLocationAccuracyNearestTe
                       location.verticalAccuracy,
                       location.course,
                       location.speed,
-                      PR_Now());
+                      PR_Now() / PR_USEC_PER_MSEC);
 
   mProvider->Update(geoPosition);
   Telemetry::Accumulate(Telemetry::GEOLOCATION_OSX_SOURCE_IS_MLS, false);
@@ -111,10 +111,6 @@ NS_IMPL_ISUPPORTS(CoreLocationLocationProvider::MLSUpdate, nsIGeolocationUpdate)
 
 CoreLocationLocationProvider::MLSUpdate::MLSUpdate(CoreLocationLocationProvider& parentProvider)
   : mParentLocationProvider(parentProvider)
-{
-}
-
-CoreLocationLocationProvider::MLSUpdate::~MLSUpdate()
 {
 }
 
@@ -138,7 +134,7 @@ CoreLocationLocationProvider::MLSUpdate::NotifyError(uint16_t error)
 }
 class CoreLocationObjects {
 public:
-  NS_METHOD Init(CoreLocationLocationProvider* aProvider) {
+  nsresult Init(CoreLocationLocationProvider* aProvider) {
     mLocationManager = [[CLLocationManager alloc] init];
     NS_ENSURE_TRUE(mLocationManager, NS_ERROR_NOT_AVAILABLE);
 
@@ -169,10 +165,6 @@ NS_IMPL_ISUPPORTS(CoreLocationLocationProvider, nsIGeolocationProvider)
 
 CoreLocationLocationProvider::CoreLocationLocationProvider()
   : mCLObjects(nullptr), mMLSFallbackProvider(nullptr)
-{
-}
-
-CoreLocationLocationProvider::~CoreLocationLocationProvider()
 {
 }
 

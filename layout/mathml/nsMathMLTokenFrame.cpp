@@ -7,7 +7,7 @@
 #include "nsPresContext.h"
 #include "nsContentUtils.h"
 #include "nsTextFrame.h"
-#include "mozilla/RestyleManager.h"
+#include "mozilla/GeckoRestyleManager.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -68,7 +68,7 @@ nsMathMLTokenFrame::MarkTextFramesAsTokenMathML()
        childFrame = childFrame->GetNextSibling()) {
     for (nsIFrame* childFrame2 = childFrame->PrincipalChildList().FirstChild();
          childFrame2; childFrame2 = childFrame2->GetNextSibling()) {
-      if (childFrame2->GetType() == nsGkAtoms::textFrame) {
+      if (childFrame2->IsTextFrame()) {
         childFrame2->AddStateBits(TEXT_IS_IN_TOKEN_MATHML);
         child = childFrame2;
         childCount++;
@@ -144,7 +144,7 @@ nsMathMLTokenFrame::Reflow(nsPresContext*          aPresContext,
                                        childFrame, availSize);
     ReflowChild(childFrame, aPresContext, childDesiredSize,
                 childReflowInput, aStatus);
-    //NS_ASSERTION(NS_FRAME_IS_COMPLETE(aStatus), "bad status");
+    //NS_ASSERTION(aStatus.IsComplete(), "bad status");
     SaveReflowAndBoundingMetricsFor(childFrame, childDesiredSize,
                                     childDesiredSize.mBoundingMetrics);
   }
@@ -152,7 +152,7 @@ nsMathMLTokenFrame::Reflow(nsPresContext*          aPresContext,
   // place and size children
   FinalizeReflow(aReflowInput.mRenderingContext->GetDrawTarget(), aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 

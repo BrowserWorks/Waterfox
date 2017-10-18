@@ -12,10 +12,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=640387
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=640387">Mozilla Bug 640387</a>
 
-<script type='application/javascript;version=1.7'>
+<script type='application/javascript'>
 SimpleTest.waitForExplicitFinish();
 
-function test() {
+function* test() {
   /* Spin the event loop so we get out of the onload handler. */
   SimpleTest.executeSoon(function() { gGen.next() });
   yield undefined;
@@ -71,7 +71,6 @@ function test() {
 
   popup.close();
   SimpleTest.finish();
-  yield undefined;
 }
 
 gGen = null;

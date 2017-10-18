@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 var gEMEHandler = {
   get uiEnabled() {
     let emeUIEnabled = Services.prefs.getBoolPref("browser.eme.ui.enabled");
@@ -12,28 +14,19 @@ var gEMEHandler = {
     }
     return emeUIEnabled;
   },
-  ensureEMEEnabled: function(browser, keySystem) {
+  ensureEMEEnabled(browser, keySystem) {
     Services.prefs.setBoolPref("media.eme.enabled", true);
-    if (keySystem) {
-      if (keySystem.startsWith("com.adobe") &&
-          Services.prefs.getPrefType("media.gmp-eme-adobe.enabled") &&
-          !Services.prefs.getBoolPref("media.gmp-eme-adobe.enabled")) {
-        Services.prefs.setBoolPref("media.gmp-eme-adobe.enabled", true);
-      } else if (keySystem == "com.widevine.alpha" &&
-                 Services.prefs.getPrefType("media.gmp-widevinecdm.enabled") &&
-                 !Services.prefs.getBoolPref("media.gmp-widevinecdm.enabled")) {
-        Services.prefs.setBoolPref("media.gmp-widevinecdm.enabled", true);
-      }
+    if (keySystem &&
+        keySystem == "com.widevine.alpha" &&
+        Services.prefs.getPrefType("media.gmp-widevinecdm.enabled") &&
+        !Services.prefs.getBoolPref("media.gmp-widevinecdm.enabled")) {
+      Services.prefs.setBoolPref("media.gmp-widevinecdm.enabled", true);
     }
     browser.reload();
   },
-  isKeySystemVisible: function(keySystem) {
+  isKeySystemVisible(keySystem) {
     if (!keySystem) {
       return false;
-    }
-    if (keySystem.startsWith("com.adobe") &&
-        Services.prefs.getPrefType("media.gmp-eme-adobe.visible")) {
-      return Services.prefs.getBoolPref("media.gmp-eme-adobe.visible");
     }
     if (keySystem == "com.widevine.alpha" &&
         Services.prefs.getPrefType("media.gmp-widevinecdm.visible")) {
@@ -41,13 +34,13 @@ var gEMEHandler = {
     }
     return true;
   },
-  getLearnMoreLink: function(msgId) {
+  getLearnMoreLink(msgId) {
     let text = gNavigatorBundle.getString("emeNotifications." + msgId + ".learnMoreLabel");
     let baseURL = Services.urlFormatter.formatURLPref("app.support.baseURL");
     return "<label class='text-link' href='" + baseURL + "drm-content'>" +
            text + "</label>";
   },
-  receiveMessage: function({target: browser, data: data}) {
+  receiveMessage({target: browser, data: data}) {
     let parsedData;
     try {
       parsedData = JSON.parse(data);
@@ -94,17 +87,15 @@ var gEMEHandler = {
       case "cdm-not-supported":
         // Not to pop up user-level notification because they cannot do anything
         // about it.
-      case "error":
-        // Fall through and do the same for unknown messages:
+        return;
       default:
-        let typeOfIssue = status == "error" ? "error" : "message ('" + status + "')";
-        Cu.reportError("Unknown " + typeOfIssue + " dealing with EME key request: " + data);
+        Cu.reportError(new Error("Unknown message ('" + status + "') dealing with EME key request: " + data));
         return;
     }
 
     this.showNotificationBar(browser, notificationId, keySystem, params, buttonCallback);
   },
-  showNotificationBar: function(browser, notificationId, keySystem, labelParams, callback) {
+  showNotificationBar(browser, notificationId, keySystem, labelParams, callback) {
     let box = gBrowser.getNotificationBox(browser);
     if (box.getNotificationWithValue(notificationId)) {
       return;
@@ -124,7 +115,7 @@ var gEMEHandler = {
       buttons.push({
         label: gNavigatorBundle.getString(btnLabelId),
         accessKey: gNavigatorBundle.getString(btnAccessKeyId),
-        callback: callback
+        callback
       });
     }
 
@@ -133,6 +124,7 @@ var gEMEHandler = {
     // Do a little dance to get rich content into the notification:
     let fragment = document.createDocumentFragment();
     let descriptionContainer = document.createElement("description");
+    // eslint-disable-next-line no-unsanitized/property
     descriptionContainer.innerHTML = message;
     while (descriptionContainer.childNodes.length) {
       fragment.appendChild(descriptionContainer.childNodes[0]);
@@ -141,13 +133,12 @@ var gEMEHandler = {
     box.appendNotification(fragment, notificationId, iconURL, box.PRIORITY_WARNING_MEDIUM,
                            buttons);
   },
-  showPopupNotificationForSuccess: function(browser, keySystem) {
+  showPopupNotificationForSuccess(browser, keySystem) {
     // We're playing EME content! Remove any "we can't play because..." messages.
     var box = gBrowser.getNotificationBox(browser);
     ["drmContentDisabled",
-     "drmContentCDMInsufficientVersion",
      "drmContentCDMInstalling"
-     ].forEach(function (value) {
+     ].forEach(function(value) {
         var notification = box.getNotificationWithValue(value);
         if (notification)
           box.removeNotification(notification);
@@ -177,7 +168,13 @@ var gEMEHandler = {
     let mainAction = {
       label: gNavigatorBundle.getString(btnLabelId),
       accessKey: gNavigatorBundle.getString(btnAccessKeyId),
-      callback: function() { openPreferences("paneContent"); },
+      callback() {
+        if (Services.prefs.getBoolPref("browser.preferences.useOldOrganization")) {
+          openPreferences("paneContent", {origin: "browserMedia"});
+        } else {
+          openPreferences("general-drm", {origin: "browserMedia"});
+        }
+      },
       dismiss: true
     };
     let options = {
@@ -201,39 +198,45 @@ const TELEMETRY_DDSTAT_CLICKED_FIRST = 3;
 const TELEMETRY_DDSTAT_SOLVED = 4;
 
 let gDecoderDoctorHandler = {
-  shouldShowLearnMoreButton() {
-    return AppConstants.platform == "win";
-  },
-
   getLabelForNotificationBox(type) {
-    if (type == "adobe-cdm-not-found" &&
-        AppConstants.platform == "win") {
-      if (AppConstants.isPlatformAndVersionAtMost("win", "5.9")) {
-        // We supply our own Learn More button so we don't need to populate the message here.
-        return gNavigatorBundle.getFormattedString("emeNotifications.drmContentDisabled.message", [""]);
-      }
-      return gNavigatorBundle.getString("decoder.noCodecs.message");
-    }
-    if (type == "adobe-cdm-not-activated" &&
-        AppConstants.platform == "win") {
-      if (AppConstants.isPlatformAndVersionAtMost("win", "5.9")) {
-        return gNavigatorBundle.getString("decoder.noCodecsXP.message");
-      }
-      return gNavigatorBundle.getString("decoder.noCodecs.message");
-    }
     if (type == "platform-decoder-not-found") {
-      if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
+      if (AppConstants.platform == "win") {
         return gNavigatorBundle.getString("decoder.noHWAcceleration.message");
       }
       if (AppConstants.platform == "linux") {
         return gNavigatorBundle.getString("decoder.noCodecsLinux.message");
       }
     }
+    if (type == "cannot-initialize-pulseaudio") {
+      return gNavigatorBundle.getString("decoder.noPulseAudio.message");
+    }
     if (type == "unsupported-libavcodec" &&
         AppConstants.platform == "linux") {
-      // Note: Hard-coded string in aurora and beta because translation cannot
-      // be achieved in time.
-      return "libavcodec may be vulnerable or is not supported, and should be updated to play video.";
+      return gNavigatorBundle.getString("decoder.unsupportedLibavcodec.message");
+    }
+    if (type == "decode-error") {
+      return gNavigatorBundle.getString("decoder.decodeError.message");
+    }
+    if (type == "decode-warning") {
+      return gNavigatorBundle.getString("decoder.decodeWarning.message");
+    }
+    return "";
+  },
+
+  getSumoForLearnHowButton(type) {
+    if (type == "platform-decoder-not-found" &&
+        AppConstants.platform == "win") {
+      return "fix-video-audio-problems-firefox-windows";
+    }
+    if (type == "cannot-initialize-pulseaudio") {
+      return "fix-common-audio-and-video-issues";
+    }
+    return "";
+  },
+
+  getEndpointForReportIssueButton(type) {
+    if (type == "decode-error" || type == "decode-warning") {
+      return Services.prefs.getStringPref("media.decoder-doctor.new-issue-endpoint", "");
     }
     return "";
   },
@@ -256,6 +259,8 @@ let gDecoderDoctorHandler = {
     // contains analysis information from Decoder Doctor:
     // - 'type' is the type of issue, it determines which text to show in the
     //   infobar.
+    // - 'isSolved' is true when the notification actually indicates the
+    //   resolution of that issue, to be reported as telemetry.
     // - 'decoderDoctorReportId' is the Decoder Doctor issue identifier, to be
     //   used here as key for the telemetry (counting infobar displays,
     //   "Learn how" buttons clicks, and resolutions) and for the prefs used
@@ -263,10 +268,15 @@ let gDecoderDoctorHandler = {
     // - 'formats' contains a comma-separated list of formats (or key systems)
     //   that suffer the issue. These are kept in a pref, which the backend
     //   uses to later find when an issue is resolved.
-    // - 'isSolved' is true when the notification actually indicates the
-    //   resolution of that issue, to be reported as telemetry.
-    let {type, isSolved, decoderDoctorReportId, formats} = parsedData;
+    // - 'decodeIssue' is a description of the decode error/warning.
+    // - 'resourceURL' is the resource with the issue.
+    let {type, isSolved, decoderDoctorReportId,
+         formats, decodeIssue, docURL, resourceURL} = parsedData;
     type = type.toLowerCase();
+    // Error out early on invalid ReportId
+    if (!(/^\w+$/mi).test(decoderDoctorReportId)) {
+      return
+    }
     let title = gDecoderDoctorHandler.getLabelForNotificationBox(type);
     if (!title) {
       return;
@@ -274,45 +284,48 @@ let gDecoderDoctorHandler = {
 
     // We keep the list of formats in prefs for the sake of the decoder itself,
     // which reads it to determine when issues get solved for these formats.
-    // (Writing prefs from e10s content is now allowed.)
-    let formatsPref = "media.decoder-doctor." + decoderDoctorReportId + ".formats";
+    // (Writing prefs from e10s content is not allowed.)
+    let formatsPref = formats &&
+                      "media.decoder-doctor." + decoderDoctorReportId + ".formats";
     let buttonClickedPref = "media.decoder-doctor." + decoderDoctorReportId + ".button-clicked";
     let histogram =
       Services.telemetry.getKeyedHistogramById("DECODER_DOCTOR_INFOBAR_STATS");
 
-    let formatsInPref = Services.prefs.getPrefType(formatsPref) &&
-                        Services.prefs.getCharPref(formatsPref);
+    let formatsInPref = formats &&
+                        Services.prefs.getCharPref(formatsPref, "");
 
     if (!isSolved) {
-      if (!formats) {
-        Cu.reportError("Malformed Decoder Doctor unsolved message with no formats");
-        return;
-      }
-      if (!formatsInPref) {
-        Services.prefs.setCharPref(formatsPref, formats);
-        histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN_FIRST);
-      } else {
-        // Split existing formats into an array of strings.
-        let existing = formatsInPref.split(",").map(String.trim);
-        // Keep given formats that were not already recorded.
-        let newbies = formats.split(",").map(String.trim)
-                      .filter(x => existing.includes(x));
-        // And rewrite pref with the added new formats (if any).
-        if (newbies.length) {
-          Services.prefs.setCharPref(formatsPref,
-                                     existing.concat(newbies).join(", "));
+      if (formats) {
+        if (!formatsInPref) {
+          Services.prefs.setCharPref(formatsPref, formats);
+          histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN_FIRST);
+        } else {
+          // Split existing formats into an array of strings.
+          let existing = formatsInPref.split(",").map(x => x.trim());
+          // Keep given formats that were not already recorded.
+          let newbies = formats.split(",").map(x => x.trim())
+                        .filter(x => !existing.includes(x));
+          // And rewrite pref with the added new formats (if any).
+          if (newbies.length) {
+            Services.prefs.setCharPref(formatsPref,
+                                      existing.concat(newbies).join(", "));
+          }
         }
+      } else if (!decodeIssue) {
+        Cu.reportError("Malformed Decoder Doctor unsolved message with no formats nor decode issue");
+        return;
       }
       histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_SHOWN);
 
       let buttons = [];
-      if (gDecoderDoctorHandler.shouldShowLearnMoreButton()) {
+      let sumo = gDecoderDoctorHandler.getSumoForLearnHowButton(type);
+      if (sumo) {
         buttons.push({
           label: gNavigatorBundle.getString("decoder.noCodecs.button"),
           accessKey: gNavigatorBundle.getString("decoder.noCodecs.accesskey"),
           callback() {
-            let clickedInPref = Services.prefs.getPrefType(buttonClickedPref) &&
-                                Services.prefs.getBoolPref(buttonClickedPref);
+            let clickedInPref =
+              Services.prefs.getBoolPref(buttonClickedPref, false);
             if (!clickedInPref) {
               Services.prefs.setBoolPref(buttonClickedPref, true);
               histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED_FIRST);
@@ -320,7 +333,33 @@ let gDecoderDoctorHandler = {
             histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED);
 
             let baseURL = Services.urlFormatter.formatURLPref("app.support.baseURL");
-            openUILinkIn(baseURL + "fix-video-audio-problems-firefox-windows", "tab");
+            openUILinkIn(baseURL + sumo, "tab");
+          }
+        });
+      }
+      let endpoint = gDecoderDoctorHandler.getEndpointForReportIssueButton(type);
+      if (endpoint) {
+        buttons.push({
+          label: gNavigatorBundle.getString("decoder.decodeError.button"),
+          accessKey: gNavigatorBundle.getString("decoder.decodeError.accesskey"),
+          callback() {
+            let clickedInPref =
+              Services.prefs.getBoolPref(buttonClickedPref, false);
+            if (!clickedInPref) {
+              Services.prefs.setBoolPref(buttonClickedPref, true);
+              histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED_FIRST);
+            }
+            histogram.add(decoderDoctorReportId, TELEMETRY_DDSTAT_CLICKED);
+
+            let params = new URLSearchParams;
+            params.append("url", docURL);
+            params.append("label", "type-media");
+            params.append("problem_type", "video_bug");
+            params.append("src", "media-decode-error");
+            params.append("details",
+                          "Technical Information:\n" + decodeIssue +
+                          (resourceURL ? ("\nResource: " + resourceURL) : ""));
+            openUILinkIn(endpoint + "?" + params.toString(), "tab");
           }
         });
       }
@@ -342,9 +381,9 @@ let gDecoderDoctorHandler = {
   },
 }
 
-window.messageManager.addMessageListener("DecoderDoctor:Notification", gDecoderDoctorHandler);
-window.messageManager.addMessageListener("EMEVideo:ContentMediaKeysRequest", gEMEHandler);
+window.getGroupMessageManager("browsers").addMessageListener("DecoderDoctor:Notification", gDecoderDoctorHandler);
+window.getGroupMessageManager("browsers").addMessageListener("EMEVideo:ContentMediaKeysRequest", gEMEHandler);
 window.addEventListener("unload", function() {
-  window.messageManager.removeMessageListener("EMEVideo:ContentMediaKeysRequest", gEMEHandler);
-  window.messageManager.removeMessageListener("DecoderDoctor:Notification", gDecoderDoctorHandler);
-}, false);
+  window.getGroupMessageManager("browsers").removeMessageListener("EMEVideo:ContentMediaKeysRequest", gEMEHandler);
+  window.getGroupMessageManager("browsers").removeMessageListener("DecoderDoctor:Notification", gDecoderDoctorHandler);
+});

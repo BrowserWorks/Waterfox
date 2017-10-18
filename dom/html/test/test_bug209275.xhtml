@@ -62,7 +62,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=209275
 
 </div>
 <pre id="test">
-<script type="text/javascript;version=1.7">
+<script type="text/javascript">
 <![CDATA[
 
 /** Test for Bug 209275 **/
@@ -100,7 +100,7 @@ function continueTest() {
 var iframe = document.getElementById("iframe");
 var iframeCw = iframe.contentWindow;
 
-function run() {
+function* run() {
   var iframe = document.getElementById("iframe");
   var iframeCw = iframe.contentWindow;
 
@@ -137,7 +137,7 @@ function run() {
   // Remove link5 from the document.  We're going to test that its href changes
   // properly when we change our base.
   var link5 = $('link5');
-  link5.parentNode.removeChild(link5);
+  link5.remove();
 
   $('base1').href = "http://example.com";
 
@@ -183,7 +183,7 @@ function run() {
 
   // If we remove base1, base2 should become the first base tag, and the hrefs
   // of all the links should change accordingly.
-  $('base1').parentNode.removeChild($('base1'));
+  $('base1').remove();
   link123HrefIs("http://example.org/", 6);
   is($('link4').href, "http://example.org/bar/#", "link 4 test 6");
 
@@ -204,9 +204,9 @@ function run() {
 
   // Now if we remove all the base tags, the base should become the page's URI
   // again.
-  $('base2').parentNode.removeChild($('base2'));
-  base3.parentNode.removeChild(base3);
-  base4.parentNode.removeChild(base4);
+  $('base2').remove();
+  base3.remove();
+  base4.remove();
 
   link123HrefIs("http://mochi.test:8888/", 9);
   is($('link4').href, loc + "#", "link 4 test 9");
@@ -245,13 +245,12 @@ function run() {
      "Wrong href after document.open().");
 
   SimpleTest.finish();
-  yield undefined;
 }
 
 window.addEventListener("load", function() {
   gGen = run();
   gGen.next();
-}, false);
+});
 
 ]]>
 </script>

@@ -6,12 +6,14 @@
 
 #include "RemotePrintJobParent.h"
 
-#include <istream>
+#include <fstream>
 
 #include "gfxContext.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "nsAppDirectoryServiceDefs.h"
 #include "nsComponentManagerUtils.h"
+#include "nsDirectoryServiceUtils.h"
 #include "nsDeviceContext.h"
 #include "nsIDeviceContextSpec.h"
 #include "nsIPrintSettings.h"
@@ -27,7 +29,7 @@ RemotePrintJobParent::RemotePrintJobParent(nsIPrintSettings* aPrintSettings)
   MOZ_COUNT_CTOR(RemotePrintJobParent);
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvInitializePrint(const nsString& aDocumentTitle,
                                           const nsString& aPrintToFile,
                                           const int32_t& aStartPage,
@@ -38,13 +40,13 @@ RemotePrintJobParent::RecvInitializePrint(const nsString& aDocumentTitle,
   if (NS_FAILED(rv)) {
     Unused << SendPrintInitializationResult(rv);
     Unused << Send__delete__(this);
-    return true;
+    return IPC_OK();
   }
 
   mPrintTranslator.reset(new PrintTranslator(mPrintDeviceContext));
   Unused << SendPrintInitializationResult(NS_OK);
 
-  return true;
+  return IPC_OK();
 }
 
 nsresult
@@ -80,16 +82,10 @@ RemotePrintJobParent::InitializePrintDevice(const nsString& aDocumentTitle,
   return NS_OK;
 }
 
-bool
-RemotePrintJobParent::RecvProcessPage(Shmem&& aStoredPage)
+mozilla::ipc::IPCResult
+RemotePrintJobParent::RecvProcessPage(const nsCString& aPageFileName)
 {
-  nsresult rv = PrintPage(aStoredPage);
-
-  // Always deallocate the shared memory no matter what the result.
-  if (!DeallocShmem(aStoredPage)) {
-    NS_WARNING("Failed to deallocated shared memory, remote print will abort.");
-    rv = NS_ERROR_FAILURE;
-  }
+  nsresult rv = PrintPage(aPageFileName);
 
   if (NS_FAILED(rv)) {
     Unused << SendAbortPrint(rv);
@@ -97,11 +93,11 @@ RemotePrintJobParent::RecvProcessPage(Shmem&& aStoredPage)
     Unused << SendPageProcessed();
   }
 
-  return true;
+  return IPC_OK();
 }
 
 nsresult
-RemotePrintJobParent::PrintPage(const Shmem& aStoredPage)
+RemotePrintJobParent::PrintPage(const nsCString& aPageFileName)
 {
   MOZ_ASSERT(mPrintDeviceContext);
 
@@ -110,8 +106,25 @@ RemotePrintJobParent::PrintPage(const Shmem& aStoredPage)
     return rv;
   }
 
-  std::istringstream recording(std::string(aStoredPage.get<char>(),
-                                           aStoredPage.Size<char>()));
+  nsCOMPtr<nsIFile> recordingFile;
+  rv = NS_GetSpecialDirectory(NS_APP_CONTENT_PROCESS_TEMP_DIR,
+                              getter_AddRefs(recordingFile));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = recordingFile->AppendNative(aPageFileName);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoCString recordingPath;
+  rv = recordingFile->GetNativePath(recordingPath);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  std::ifstream recording(recordingPath.get(), std::ifstream::binary);
   if (!mPrintTranslator->TranslateRecording(recording)) {
     return NS_ERROR_FAILURE;
   }
@@ -121,27 +134,33 @@ RemotePrintJobParent::PrintPage(const Shmem& aStoredPage)
     return rv;
   }
 
+  recording.close();
+  rv = recordingFile->Remove(/* recursive= */ false);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvFinalizePrint()
 {
   // EndDocument is sometimes called in the child even when BeginDocument has
   // not been called. See bug 1223332.
   if (mPrintDeviceContext) {
-    nsresult rv = mPrintDeviceContext->EndDocument();
+    DebugOnly<nsresult> rv = mPrintDeviceContext->EndDocument();
 
     // Too late to abort the child just log.
-    NS_WARN_IF(NS_FAILED(rv));
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "EndDocument failed");
   }
 
 
   Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvAbortPrint(const nsresult& aRv)
 {
   if (mPrintDeviceContext) {
@@ -149,10 +168,10 @@ RemotePrintJobParent::RecvAbortPrint(const nsresult& aRv)
   }
 
   Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvStateChange(const long& aStateFlags,
                                       const nsresult& aStatus)
 {
@@ -162,10 +181,10 @@ RemotePrintJobParent::RecvStateChange(const long& aStateFlags,
     listener->OnStateChange(nullptr, nullptr, aStateFlags, aStatus);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvProgressChange(const long& aCurSelfProgress,
                                          const long& aMaxSelfProgress,
                                          const long& aCurTotalProgress,
@@ -179,10 +198,10 @@ RemotePrintJobParent::RecvProgressChange(const long& aCurSelfProgress,
                                aCurTotalProgress, aMaxTotalProgress);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobParent::RecvStatusChange(const nsresult& aStatus)
 {
   uint32_t numberOfListeners = mPrintProgressListeners.Length();
@@ -191,7 +210,7 @@ RemotePrintJobParent::RecvStatusChange(const nsresult& aStatus)
     listener->OnStatusChange(nullptr, nullptr, aStatus, nullptr);
   }
 
-  return true;
+  return IPC_OK();
 }
 
 void

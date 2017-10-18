@@ -65,6 +65,7 @@ class MacroAssemblerMIPSShared : public Assembler
     void ma_li(Register dest, ImmGCPtr ptr);
 
     void ma_li(Register dest, Imm32 imm);
+    void ma_liPatchable(Register dest, Imm32 imm);
 
     // Shift operations
     void ma_sll(Register rd, Register rt, Imm32 shift);
@@ -104,18 +105,26 @@ class MacroAssemblerMIPSShared : public Assembler
     // load
     void ma_load(Register dest, const BaseIndex& src, LoadStoreSize size = SizeWord,
                  LoadStoreExtension extension = SignExtend);
+    void ma_load_unaligned(Register dest, const BaseIndex& src, Register temp,
+                           LoadStoreSize size, LoadStoreExtension extension);
 
     // store
     void ma_store(Register data, const BaseIndex& dest, LoadStoreSize size = SizeWord,
                   LoadStoreExtension extension = SignExtend);
     void ma_store(Imm32 imm, const BaseIndex& dest, LoadStoreSize size = SizeWord,
                   LoadStoreExtension extension = SignExtend);
+    void ma_store_unaligned(Register data, const BaseIndex& dest, Register temp,
+                            LoadStoreSize size, LoadStoreExtension extension);
 
     // arithmetic based ops
     // add
     void ma_addu(Register rd, Register rs, Imm32 imm);
     void ma_addu(Register rd, Register rs);
     void ma_addu(Register rd, Imm32 imm);
+    template <typename L>
+    void ma_addTestCarry(Register rd, Register rs, Register rt, L overflow);
+    template <typename L>
+    void ma_addTestCarry(Register rd, Register rs, Imm32 imm, L overflow);
 
     // subtract
     void ma_subu(Register rd, Register rs, Imm32 imm);
@@ -125,7 +134,6 @@ class MacroAssemblerMIPSShared : public Assembler
 
     // multiplies.  For now, there are only few that we care about.
     void ma_mul(Register rd, Register rs, Imm32 imm);
-    void ma_mult(Register rs, Imm32 imm);
     void ma_mul_branch_overflow(Register rd, Register rs, Register rt, Label* overflow);
     void ma_mul_branch_overflow(Register rd, Register rs, Imm32 imm, Label* overflow);
 
@@ -148,11 +156,11 @@ class MacroAssemblerMIPSShared : public Assembler
         ma_b(lhs, ScratchRegister, l, c, jumpKind);
     }
     template <typename T>
-    void ma_b(Register lhs, T rhs, wasm::JumpTarget target, Condition c,
+    void ma_b(Register lhs, T rhs, wasm::TrapDesc target, Condition c,
               JumpKind jumpKind = LongJump);
 
     void ma_b(Label* l, JumpKind jumpKind = LongJump);
-    void ma_b(wasm::JumpTarget target, JumpKind jumpKind = LongJump);
+    void ma_b(wasm::TrapDesc target, JumpKind jumpKind = LongJump);
 
     // fp instructions
     void ma_lis(FloatRegister dest, float value);
@@ -175,6 +183,12 @@ class MacroAssemblerMIPSShared : public Assembler
     void ma_cmp_set(Register dst, Register lhs, Imm32 imm, Condition c);
     void ma_cmp_set_double(Register dst, FloatRegister lhs, FloatRegister rhs, DoubleCondition c);
     void ma_cmp_set_float32(Register dst, FloatRegister lhs, FloatRegister rhs, DoubleCondition c);
+
+    BufferOffset ma_BoundsCheck(Register bounded) {
+        BufferOffset bo = m_buffer.nextOffset();
+        ma_liPatchable(bounded, Imm32(0));
+        return bo;
+    }
 
     void moveToDoubleLo(Register src, FloatRegister dest) {
         as_mtc1(src, dest);

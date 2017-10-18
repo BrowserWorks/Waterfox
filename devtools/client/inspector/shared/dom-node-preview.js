@@ -6,9 +6,9 @@
 const {Task} = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
 const {createNode} = require("devtools/client/animationinspector/utils");
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
+const { LocalizationHelper } = require("devtools/shared/l10n");
 
-const STRINGS_URI = "chrome://devtools/locale/inspector.properties";
+const STRINGS_URI = "devtools/client/locales/inspector.properties";
 const L10N = new LocalizationHelper(STRINGS_URI);
 
 /**

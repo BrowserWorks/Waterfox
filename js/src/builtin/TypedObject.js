@@ -28,11 +28,6 @@
 #define DESCR_STRUCT_FIELD_OFFSETS(obj) \
     UnsafeGetObjectFromReservedSlot(obj, JS_DESCR_SLOT_STRUCT_FIELD_OFFSETS)
 
-// Other
-
-#define HAS_PROPERTY(obj, prop) \
-    callFunction(std_Object_hasOwnProperty, obj, prop)
-
 ///////////////////////////////////////////////////////////////////////////
 // Getting values
 //
@@ -866,7 +861,7 @@ function SimdFormatString(descr, typedObj) {
       }
   }
   assert(false, "unexpected SIMD kind");
-  return '?';
+  return "?";
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -930,7 +925,7 @@ function StorageOfTypedObject(obj) {
       var byteLength = DESCR_SIZE(descr);
 
       return { buffer: TypedObjectBuffer(obj),
-               byteLength: byteLength,
+               byteLength,
                byteOffset: TypedObjectByteOffset(obj) };
     }
   }
@@ -967,7 +962,7 @@ function TypeOfTypedObject(obj) {
 // TypedObject surface API methods (sequential implementations).
 
 // Warning: user exposed!
-function TypedObjectArrayTypeBuild(a,b,c) {
+function TypedObjectArrayTypeBuild(a, b, c) {
   // Arguments : [depth], func
 
   if (!IsObject(this) || !ObjectIsTypeDescr(this))
@@ -1150,9 +1145,7 @@ function ComputeIterationSpace(arrayType, depth, len) {
       ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
     }
   }
-  return { iterationSpace: iterationSpace,
-           grainType: grainType,
-           totalLength: totalLength };
+  return { iterationSpace, grainType, totalLength };
 }
 
 function IncrementIterationSpace(indices, iterationSpace) {
@@ -1244,11 +1237,11 @@ function MapTypedSeqImpl(inArray, depth, outputType, func) {
 
   // Compute iteration space for input and output and check for compatibility.
   var inputType = TypeOfTypedObject(inArray);
-  var {iterationSpace:inIterationSpace, grainType:inGrainType} =
+  var {iterationSpace: inIterationSpace, grainType: inGrainType} =
     ComputeIterationSpace(inputType, depth, inArray.length);
   if (!IsObject(inGrainType) || !ObjectIsTypeDescr(inGrainType))
     ThrowTypeError(JSMSG_TYPEDOBJECT_BAD_ARGS);
-  var {iterationSpace, grainType:outGrainType, totalLength} =
+  var {iterationSpace, grainType: outGrainType, totalLength} =
     ComputeIterationSpace(outputType, depth, outputType.length);
   for (var i = 0; i < depth; i++)
     if (inIterationSpace[i] !== iterationSpace[i])

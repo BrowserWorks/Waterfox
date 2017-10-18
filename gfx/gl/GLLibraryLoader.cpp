@@ -41,6 +41,12 @@ GLLibraryLoader::LoadSymbols(const SymLoadStruct* firstStruct,
 }
 
 PRFuncPtr
+GLLibraryLoader::LookupSymbol(const char* sym)
+{
+    return LookupSymbol(mLibrary, sym, mLookupFunc);
+}
+
+PRFuncPtr
 GLLibraryLoader::LookupSymbol(PRLibrary* lib,
                               const char* sym,
                               PlatformLookupFunction lookupFunction)
@@ -110,6 +116,14 @@ GLLibraryLoader::LoadSymbols(PRLibrary* lib,
     }
 
     return failCount == 0 ? true : false;
+}
+
+/*static*/ void
+GLLibraryLoader::ClearSymbols(const SymLoadStruct* const firstStruct)
+{
+    for (auto cur = firstStruct; cur->symPointer; ++cur) {
+        *cur->symPointer = nullptr;
+    }
 }
 
 } /* namespace gl */

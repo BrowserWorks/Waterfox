@@ -11,51 +11,31 @@
 #include <string.h>
 
 #include "jsapi.h"
+#include "jscntxt.h"
 #include "jsscript.h"
 
 #include "vm/Debugger.h"
-#include "vm/ScopeObject.h"
+#include "vm/EnvironmentObject.h"
+#include "vm/TraceLogging.h"
 
 using namespace js;
 using mozilla::PodEqual;
 
-void
-XDRBuffer::freeBuffer()
-{
-    js_free(base);
-#ifdef DEBUG
-    memset(this, 0xe2, sizeof *this);
-#endif
+template<XDRMode mode>
+LifoAlloc&
+XDRState<mode>::lifoAlloc() const {
+    return buf.cx()->tempLifoAlloc();
 }
 
-bool
-XDRBuffer::grow(size_t n)
+template<XDRMode mode>
+void
+XDRState<mode>::postProcessContextErrors(JSContext* cx)
 {
-    MOZ_ASSERT(n > size_t(limit - cursor));
-
-    const size_t MIN_CAPACITY = 8192;
-    const size_t MAX_CAPACITY = size_t(INT32_MAX) + 1;
-    size_t offset = cursor - base;
-    MOZ_ASSERT(offset <= MAX_CAPACITY);
-    if (n > MAX_CAPACITY - offset) {
-        js::gc::AutoSuppressGC suppressGC(cx());
-        JS_ReportErrorNumber(cx(), GetErrorMessage, nullptr, JSMSG_TOO_BIG_TO_ENCODE);
-        return false;
+    if (!cx->helperThread() && cx->isExceptionPending()) {
+        MOZ_ASSERT(resultCode_ == JS::TranscodeResult_Ok ||
+                   resultCode_ == JS::TranscodeResult_Throw);
+        resultCode_ = JS::TranscodeResult_Throw;
     }
-    size_t newCapacity = mozilla::RoundUpPow2(offset + n);
-    if (newCapacity < MIN_CAPACITY)
-        newCapacity = MIN_CAPACITY;
-
-    MOZ_ASSERT(newCapacity <= MAX_CAPACITY);
-    void* data = js_realloc(base, newCapacity);
-    if (!data) {
-        ReportOutOfMemory(cx());
-        return false;
-    }
-    base = static_cast<uint8_t*>(data);
-    cursor = base + offset;
-    limit = base + newCapacity;
-    return true;
 }
 
 template<XDRMode mode>
@@ -66,9 +46,11 @@ XDRState<mode>::codeChars(const Latin1Char* chars, size_t nchars)
 
     MOZ_ASSERT(mode == XDR_ENCODE);
 
+    if (nchars == 0)
+        return true;
     uint8_t* ptr = buf.write(nchars);
     if (!ptr)
-        return false;
+        return fail(JS::TranscodeResult_Throw);
 
     mozilla::PodCopy(ptr, chars, nchars);
     return true;
@@ -78,11 +60,13 @@ template<XDRMode mode>
 bool
 XDRState<mode>::codeChars(char16_t* chars, size_t nchars)
 {
+    if (nchars == 0)
+        return true;
     size_t nbytes = nchars * sizeof(char16_t);
     if (mode == XDR_ENCODE) {
         uint8_t* ptr = buf.write(nbytes);
         if (!ptr)
-            return false;
+            return fail(JS::TranscodeResult_Throw);
         mozilla::NativeEndian::copyAndSwapToLittleEndian(ptr, chars, nchars);
     } else {
         const uint8_t* ptr = buf.read(nbytes);
@@ -96,10 +80,8 @@ static bool
 VersionCheck(XDRState<mode>* xdr)
 {
     JS::BuildIdCharVector buildId;
-    if (!xdr->cx()->buildIdOp() || !xdr->cx()->buildIdOp()(&buildId)) {
-        JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BUILD_ID_NOT_AVAILABLE);
-        return false;
-    }
+    if (!xdr->cx()->buildIdOp() || !xdr->cx()->buildIdOp()(&buildId))
+        return xdr->fail(JS::TranscodeResult_Failure_BadBuildId);
     MOZ_ASSERT(!buildId.empty());
 
     uint32_t buildIdLength;
@@ -109,10 +91,8 @@ VersionCheck(XDRState<mode>* xdr)
     if (!xdr->codeUint32(&buildIdLength))
         return false;
 
-    if (mode == XDR_DECODE && buildIdLength != buildId.length()) {
-        JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BAD_BUILD_ID);
-        return false;
-    }
+    if (mode == XDR_DECODE && buildIdLength != buildId.length())
+        return xdr->fail(JS::TranscodeResult_Failure_BadBuildId);
 
     if (mode == XDR_ENCODE) {
         if (!xdr->codeBytes(buildId.begin(), buildIdLength))
@@ -124,17 +104,15 @@ VersionCheck(XDRState<mode>* xdr)
         // buildId.
         if (!decodedBuildId.resize(buildIdLength)) {
             ReportOutOfMemory(xdr->cx());
-            return false;
+            return xdr->fail(JS::TranscodeResult_Throw);
         }
 
         if (!xdr->codeBytes(decodedBuildId.begin(), buildIdLength))
             return false;
 
-        if (!PodEqual(decodedBuildId.begin(), buildId.begin(), buildIdLength)) {
-            // We do not provide binary compatibility with older scripts.
-            JS_ReportErrorNumber(xdr->cx(), GetErrorMessage, nullptr, JSMSG_BAD_BUILD_ID);
-            return false;
-        }
+        // We do not provide binary compatibility with older scripts.
+        if (!PodEqual(decodedBuildId.begin(), buildId.begin(), buildIdLength))
+            return xdr->fail(JS::TranscodeResult_Failure_BadBuildId);
     }
 
     return true;
@@ -142,31 +120,65 @@ VersionCheck(XDRState<mode>* xdr)
 
 template<XDRMode mode>
 bool
-XDRState<mode>::codeFunction(MutableHandleFunction objp)
+XDRState<mode>::codeFunction(MutableHandleFunction funp, HandleScriptSource sourceObject)
 {
-    if (mode == XDR_DECODE)
-        objp.set(nullptr);
+    TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx());
+    TraceLoggerTextId event =
+        mode == XDR_DECODE ? TraceLogger_DecodeFunction : TraceLogger_EncodeFunction;
+    AutoTraceLog tl(logger, event);
 
-    if (!VersionCheck(this))
+    RootedScope scope(cx(), &cx()->global()->emptyGlobalScope());
+    if (mode == XDR_DECODE) {
+        MOZ_ASSERT(!sourceObject);
+        funp.set(nullptr);
+    } else if (getTreeKey(funp) != AutoXDRTree::noKey) {
+        MOZ_ASSERT(sourceObject);
+        scope = funp->nonLazyScript()->enclosingScope();
+    } else {
+        MOZ_ASSERT(!sourceObject);
+        MOZ_ASSERT(funp->nonLazyScript()->enclosingScope()->is<GlobalScope>());
+    }
+
+    if (!VersionCheck(this)) {
+        postProcessContextErrors(cx());
         return false;
+    }
 
-    RootedObject staticLexical(cx(), &cx()->global()->lexicalScope().staticBlock());
-    return XDRInterpretedFunction(this, staticLexical, nullptr, objp);
+    if (!XDRInterpretedFunction(this, scope, sourceObject, funp)) {
+        postProcessContextErrors(cx());
+        funp.set(nullptr);
+        return false;
+    }
+
+    return true;
 }
 
 template<XDRMode mode>
 bool
 XDRState<mode>::codeScript(MutableHandleScript scriptp)
 {
+    TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx());
+    TraceLoggerTextId event =
+        mode == XDR_DECODE ? TraceLogger_DecodeScript : TraceLogger_EncodeScript;
+    AutoTraceLog tl(logger, event);
+
+    AutoXDRTree scriptTree(this, getTopLevelTreeKey());
+
     if (mode == XDR_DECODE)
         scriptp.set(nullptr);
+    else
+        MOZ_ASSERT(!scriptp->enclosingScope());
 
-    if (!VersionCheck(this))
+    if (!VersionCheck(this)) {
+        postProcessContextErrors(cx());
         return false;
+    }
 
-    RootedObject staticLexical(cx(), &cx()->global()->lexicalScope().staticBlock());
-    if (!XDRScript(this, staticLexical, nullptr, nullptr, scriptp))
+    if (!XDRScript(this, nullptr, nullptr, nullptr, scriptp)) {
+        postProcessContextErrors(cx());
+        scriptp.set(nullptr);
         return false;
+    }
 
     return true;
 }
@@ -178,11 +190,191 @@ XDRState<mode>::codeConstValue(MutableHandleValue vp)
     return XDRScriptConst(this, vp);
 }
 
-XDRDecoder::XDRDecoder(JSContext* cx, const void* data, uint32_t length)
-  : XDRState<XDR_DECODE>(cx)
-{
-    buf.setData(data, length);
-}
-
 template class js::XDRState<XDR_ENCODE>;
 template class js::XDRState<XDR_DECODE>;
+
+AutoXDRTree::AutoXDRTree(XDRCoderBase* xdr, AutoXDRTree::Key key)
+  : key_(key),
+    parent_(this),
+    xdr_(xdr)
+{
+    if (key_ != AutoXDRTree::noKey)
+        xdr->createOrReplaceSubTree(this);
+}
+
+AutoXDRTree::~AutoXDRTree()
+{
+    if (key_ != AutoXDRTree::noKey)
+        xdr_->endSubTree();
+}
+
+constexpr AutoXDRTree::Key AutoXDRTree::noKey;
+constexpr AutoXDRTree::Key AutoXDRTree::noSubTree;
+constexpr AutoXDRTree::Key AutoXDRTree::topLevel;
+
+AutoXDRTree::Key
+XDRIncrementalEncoder::getTopLevelTreeKey() const
+{
+    return AutoXDRTree::topLevel;
+}
+
+AutoXDRTree::Key
+XDRIncrementalEncoder::getTreeKey(JSFunction* fun) const
+{
+    if (fun->isInterpretedLazy()) {
+        static_assert(sizeof(fun->lazyScript()->begin()) == 4 ||
+                      sizeof(fun->lazyScript()->end()) == 4,
+                      "AutoXDRTree key requires LazyScripts positions to be uint32");
+        return uint64_t(fun->lazyScript()->begin()) << 32 | fun->lazyScript()->end();
+    }
+
+    if (fun->isInterpreted()) {
+        static_assert(sizeof(fun->nonLazyScript()->sourceStart()) == 4 ||
+                      sizeof(fun->nonLazyScript()->sourceEnd()) == 4,
+                      "AutoXDRTree key requires JSScripts positions to be uint32");
+        return uint64_t(fun->nonLazyScript()->sourceStart()) << 32 | fun->nonLazyScript()->sourceEnd();
+    }
+
+    return AutoXDRTree::noKey;
+}
+
+bool
+XDRIncrementalEncoder::init()
+{
+    if (!tree_.init())
+        return false;
+    return true;
+}
+
+void
+XDRIncrementalEncoder::createOrReplaceSubTree(AutoXDRTree* child)
+{
+    AutoXDRTree* parent = scope_;
+    child->parent_ = parent;
+    scope_ = child;
+    if (oom_)
+        return;
+
+    size_t cursor = buf.cursor();
+
+    // End the parent slice here, set the key to the child.
+    if (parent) {
+        Slice& last = node_->back();
+        last.sliceLength = cursor - last.sliceBegin;
+        last.child = child->key_;
+        MOZ_ASSERT_IF(uint32_t(parent->key_) != 0,
+                      uint32_t(parent->key_ >> 32) <= uint32_t(child->key_ >> 32) &&
+                      uint32_t(child->key_) <= uint32_t(parent->key_));
+    }
+
+    // Create or replace the part with what is going to be encoded next.
+    SlicesTree::AddPtr p = tree_.lookupForAdd(child->key_);
+    SlicesNode tmp;
+    if (!p) {
+        // Create a new sub-tree node.
+        if (!tree_.add(p, child->key_, mozilla::Move(tmp))) {
+            oom_ = true;
+            return;
+        }
+    } else {
+        // Replace an exisiting sub-tree.
+        p->value() = mozilla::Move(tmp);
+    }
+    node_ = &p->value();
+
+    // Add content to the root of the new sub-tree,
+    // i-e an empty slice with no children.
+    if (!node_->append(Slice { cursor, 0, AutoXDRTree::noSubTree }))
+        MOZ_CRASH("SlicesNode have a reserved space of 1.");
+}
+
+void
+XDRIncrementalEncoder::endSubTree()
+{
+    AutoXDRTree* child = scope_;
+    AutoXDRTree* parent = child->parent_;
+    scope_ = parent;
+    if (oom_)
+        return;
+
+    size_t cursor = buf.cursor();
+
+    // End the child sub-tree.
+    Slice& last = node_->back();
+    last.sliceLength = cursor - last.sliceBegin;
+    MOZ_ASSERT(last.child == AutoXDRTree::noSubTree);
+
+    // Stop at the top-level.
+    if (!parent) {
+        node_ = nullptr;
+        return;
+    }
+
+    // Restore the parent node.
+    SlicesTree::Ptr p = tree_.lookup(parent->key_);
+    node_ = &p->value();
+
+    // Append the new slice in the parent node.
+    if (!node_->append(Slice { cursor, 0, AutoXDRTree::noSubTree })) {
+        oom_ = true;
+        return;
+    }
+}
+
+bool
+XDRIncrementalEncoder::linearize(JS::TranscodeBuffer& buffer)
+{
+    if (oom_) {
+        ReportOutOfMemory(cx());
+        return fail(JS::TranscodeResult_Throw);
+    }
+
+    // Do not linearize while we are currently adding bytes.
+    MOZ_ASSERT(scope_ == nullptr);
+
+    // Visit the tree parts in a depth first order, to linearize the bits.
+    Vector<SlicesNode::ConstRange> depthFirst(cx());
+
+    SlicesTree::Ptr p = tree_.lookup(AutoXDRTree::topLevel);
+    MOZ_ASSERT(p);
+
+    if (!depthFirst.append(((const SlicesNode&) p->value()).all())) {
+        ReportOutOfMemory(cx());
+        return fail(JS::TranscodeResult_Throw);
+    }
+
+    while (!depthFirst.empty()) {
+        SlicesNode::ConstRange& iter = depthFirst.back();
+        Slice slice = iter.popCopyFront();
+        // These fields have different meaning, but they should be correlated if
+        // the tree is well formatted.
+        MOZ_ASSERT_IF(slice.child == AutoXDRTree::noSubTree, iter.empty());
+        if (iter.empty())
+            depthFirst.popBack();
+
+        // Copy the bytes associated with the current slice to the transcode
+        // buffer which would be serialized.
+        MOZ_ASSERT(slice.sliceBegin <= slices_.length());
+        MOZ_ASSERT(slice.sliceBegin + slice.sliceLength <= slices_.length());
+        if (!buffer.append(slices_.begin() + slice.sliceBegin, slice.sliceLength)) {
+            ReportOutOfMemory(cx());
+            return fail(JS::TranscodeResult_Throw);
+        }
+
+        // If we are at the end, go to back to the parent script.
+        if (slice.child == AutoXDRTree::noSubTree)
+            continue;
+
+        // Visit the sub-parts before visiting the rest of the current slice.
+        SlicesTree::Ptr p = tree_.lookup(slice.child);
+        MOZ_ASSERT(p);
+        if (!depthFirst.append(((const SlicesNode&) p->value()).all())) {
+            ReportOutOfMemory(cx());
+            return fail(JS::TranscodeResult_Throw);
+        }
+    }
+
+    tree_.finish();
+    slices_.clearAndFree();
+    return true;
+}

@@ -12,7 +12,7 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Types.h"
 #include "mozilla/WritingModes.h"
-#include "nsCSSRules.h"
+#include "nsCSSCounterStyleRule.h"
 #include "nsString.h"
 #include "nsStyleSet.h"
 #include "nsTArray.h"
@@ -52,7 +52,7 @@ struct PadType
 
 static bool
 GetCyclicCounterText(CounterValue aOrdinal,
-                     nsSubstring& aResult,
+                     nsAString& aResult,
                      const nsTArray<nsString>& aSymbols)
 {
   MOZ_ASSERT(aSymbols.Length() >= 1,
@@ -65,7 +65,7 @@ GetCyclicCounterText(CounterValue aOrdinal,
 
 static bool
 GetFixedCounterText(CounterValue aOrdinal,
-                    nsSubstring& aResult,
+                    nsAString& aResult,
                     CounterValue aStart,
                     const nsTArray<nsString>& aSymbols)
 {
@@ -80,7 +80,7 @@ GetFixedCounterText(CounterValue aOrdinal,
 
 static bool
 GetSymbolicCounterText(CounterValue aOrdinal,
-                       nsSubstring& aResult,
+                       nsAString& aResult,
                        const nsTArray<nsString>& aSymbols)
 {
   MOZ_ASSERT(aSymbols.Length() >= 1,
@@ -109,7 +109,7 @@ GetSymbolicCounterText(CounterValue aOrdinal,
 
 static bool
 GetAlphabeticCounterText(CounterValue aOrdinal,
-                         nsSubstring& aResult,
+                         nsAString& aResult,
                          const nsTArray<nsString>& aSymbols)
 {
   MOZ_ASSERT(aSymbols.Length() >= 2,
@@ -139,7 +139,7 @@ GetAlphabeticCounterText(CounterValue aOrdinal,
 
 static bool
 GetNumericCounterText(CounterValue aOrdinal,
-                      nsSubstring& aResult,
+                      nsAString& aResult,
                       const nsTArray<nsString>& aSymbols)
 {
   MOZ_ASSERT(aSymbols.Length() >= 2,
@@ -167,7 +167,7 @@ GetNumericCounterText(CounterValue aOrdinal,
 
 static bool
 GetAdditiveCounterText(CounterValue aOrdinal,
-                       nsSubstring& aResult,
+                       nsAString& aResult,
                        const nsTArray<AdditiveSymbol>& aSymbols)
 {
   MOZ_ASSERT(aOrdinal >= 0, "Invalid ordinal.");
@@ -209,7 +209,7 @@ GetAdditiveCounterText(CounterValue aOrdinal,
 }
 
 static bool
-DecimalToText(CounterValue aOrdinal, nsSubstring& aResult)
+DecimalToText(CounterValue aOrdinal, nsAString& aResult)
 {
   aResult.AppendInt(aOrdinal);
   return true;
@@ -220,7 +220,7 @@ DecimalToText(CounterValue aOrdinal, nsSubstring& aResult)
 // armenian needs 12 at most
 // hebrew may need more...
 
-#define NUM_BUF_SIZE 34 
+#define NUM_BUF_SIZE 34
 
 enum CJKIdeographicLang {
   CHINESE, KOREAN, JAPANESE
@@ -324,7 +324,7 @@ static const CJKIdeographicData gDataTradChineseFormal = {
 };
 
 static bool
-CJKIdeographicToText(CounterValue aOrdinal, nsSubstring& aResult,
+CJKIdeographicToText(CounterValue aOrdinal, nsAString& aResult,
                      const CJKIdeographicData& data)
 {
   NS_ASSERTION(aOrdinal >= 0, "Only accept non-negative ordinal");
@@ -396,7 +396,7 @@ CJKIdeographicToText(CounterValue aOrdinal, nsSubstring& aResult,
 }
 
 #define HEBREW_GERESH       0x05F3
-static const char16_t gHebrewDigit[22] = 
+static const char16_t gHebrewDigit[22] =
 {
   //   1       2       3       4       5       6       7       8       9
   0x05D0, 0x05D1, 0x05D2, 0x05D3, 0x05D4, 0x05D5, 0x05D6, 0x05D7, 0x05D8,
@@ -407,7 +407,7 @@ static const char16_t gHebrewDigit[22] =
 };
 
 static bool
-HebrewToText(CounterValue aOrdinal, nsSubstring& aResult)
+HebrewToText(CounterValue aOrdinal, nsAString& aResult)
 {
   if (aOrdinal < 1 || aOrdinal > 999999) {
     return false;
@@ -447,11 +447,11 @@ HebrewToText(CounterValue aOrdinal, nsSubstring& aResult)
       } // if
       n3 -= n2;
     } // if
-  
-    // Process digit for 1 - 9 
+
+    // Process digit for 1 - 9
     if ( n3 > 0)
       thousandsGroup.Append(gHebrewDigit[n3-1]);
-    if (outputSep) 
+    if (outputSep)
       thousandsGroup.Append((char16_t)HEBREW_GERESH);
     if (allText.IsEmpty())
       allText = thousandsGroup;
@@ -476,7 +476,7 @@ HebrewToText(CounterValue aOrdinal, nsSubstring& aResult)
 #define ETHIOPIC_TEN_THOUSAND    0x137C
 
 static bool
-EthiopicToText(CounterValue aOrdinal, nsSubstring& aResult)
+EthiopicToText(CounterValue aOrdinal, nsAString& aResult)
 {
   if (aOrdinal < 1) {
     return false;
@@ -590,12 +590,12 @@ protected:
   }
 
 public:
-  virtual void GetStyleName(nsSubstring& aResult) override;
-  virtual void GetPrefix(nsSubstring& aResult) override;
-  virtual void GetSuffix(nsSubstring& aResult) override;
+  virtual void GetStyleName(nsAString& aResult) override;
+  virtual void GetPrefix(nsAString& aResult) override;
+  virtual void GetSuffix(nsAString& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
                                     WritingMode aWritingMode,
-                                    nsSubstring& aResult,
+                                    nsAString& aResult,
                                     bool& aIsBullet) override;
   virtual bool IsBullet() override;
 
@@ -609,38 +609,34 @@ public:
 
   virtual bool GetInitialCounterText(CounterValue aOrdinal,
                                      WritingMode aWritingMode,
-                                     nsSubstring& aResult,
+                                     nsAString& aResult,
                                      bool& aIsRTL) override;
-
-  // Builtin counter style does not need refcount at all
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() override { return 2; }
-  NS_IMETHOD_(MozExternalRefCountType) Release() override { return 2; }
 };
 
 /* virtual */ void
-BuiltinCounterStyle::GetStyleName(nsSubstring& aResult)
+BuiltinCounterStyle::GetStyleName(nsAString& aResult)
 {
   MOZ_ASSERT(mStyle != NS_STYLE_LIST_STYLE_CUSTOM);
-  const nsAFlatCString& str =
+  const nsCString& str =
     nsCSSProps::ValueToKeyword(mStyle, nsCSSProps::kListStyleKTable);
   MOZ_ASSERT(!str.IsEmpty());
   aResult.Assign(NS_ConvertUTF8toUTF16(str));
 }
 
 /* virtual */ void
-BuiltinCounterStyle::GetPrefix(nsSubstring& aResult)
+BuiltinCounterStyle::GetPrefix(nsAString& aResult)
 {
   aResult.Truncate();
 }
 
 /* virtual */ void
-BuiltinCounterStyle::GetSuffix(nsSubstring& aResult)
+BuiltinCounterStyle::GetSuffix(nsAString& aResult)
 {
   switch (mStyle) {
     case NS_STYLE_LIST_STYLE_NONE:
       aResult.Truncate();
       break;
- 
+
     case NS_STYLE_LIST_STYLE_DISC:
     case NS_STYLE_LIST_STYLE_CIRCLE:
     case NS_STYLE_LIST_STYLE_SQUARE:
@@ -681,7 +677,7 @@ static const char16_t kDownPointingCharacter = 0x25be;
 /* virtual */ void
 BuiltinCounterStyle::GetSpokenCounterText(CounterValue aOrdinal,
                                           WritingMode aWritingMode,
-                                          nsSubstring& aResult,
+                                          nsAString& aResult,
                                           bool& aIsBullet)
 {
   switch (mStyle) {
@@ -887,7 +883,7 @@ BuiltinCounterStyle::UseNegativeSign()
 /* virtual */ bool
 BuiltinCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
                                            WritingMode aWritingMode,
-                                           nsSubstring& aResult,
+                                           nsAString& aResult,
                                            bool& aIsRTL)
 {
   aIsRTL = false;
@@ -947,10 +943,10 @@ BuiltinCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
     case NS_STYLE_LIST_STYLE_KOREAN_HANJA_FORMAL:
       return CJKIdeographicToText(aOrdinal, aResult, gDataKoreanHanjaFormal);
 
-    case NS_STYLE_LIST_STYLE_HEBREW: 
+    case NS_STYLE_LIST_STYLE_HEBREW:
       aIsRTL = true;
       return HebrewToText(aOrdinal, aResult);
- 
+
     case NS_STYLE_LIST_STYLE_ETHIOPIC_NUMERIC:
       return EthiopicToText(aOrdinal, aResult);
 
@@ -962,11 +958,9 @@ BuiltinCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
 
 class DependentBuiltinCounterStyle final : public BuiltinCounterStyle
 {
-private:
-  ~DependentBuiltinCounterStyle() {}
 public:
   DependentBuiltinCounterStyle(int32_t aStyle, CounterStyleManager* aManager)
-    : BuiltinCounterStyle(aStyle), 
+    : BuiltinCounterStyle(aStyle),
       mManager(aManager)
   {
     NS_ASSERTION(IsDependentStyle(), "Not a dependent builtin style");
@@ -975,18 +969,12 @@ public:
 
   virtual CounterStyle* GetFallback() override;
 
-  // DependentBuiltinCounterStyle is managed in the same way as
-  // CustomCounterStyle.
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() override;
-  NS_IMETHOD_(MozExternalRefCountType) Release() override;
-
-  void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
+  void* operator new(size_t sz, nsPresContext* aPresContext)
   {
     return aPresContext->PresShell()->AllocateByObjectID(
         eArenaObjectID_DependentBuiltinCounterStyle, sz);
   }
 
-private:
   void Destroy()
   {
     nsIPresShell* shell = mManager->PresContext()->PresShell();
@@ -994,14 +982,11 @@ private:
     shell->FreeByObjectID(eArenaObjectID_DependentBuiltinCounterStyle, this);
   }
 
+private:
+  ~DependentBuiltinCounterStyle() {}
+
   CounterStyleManager* mManager;
-
-  nsAutoRefCnt mRefCnt;
-  NS_DECL_OWNINGTHREAD
 };
-
-NS_IMPL_ADDREF(DependentBuiltinCounterStyle)
-NS_IMPL_RELEASE_WITH_DESTROY(DependentBuiltinCounterStyle, Destroy())
 
 /* virtual */ CounterStyle*
 DependentBuiltinCounterStyle::GetFallback()
@@ -1020,7 +1005,7 @@ DependentBuiltinCounterStyle::GetFallback()
       // only case fallback is accessed is that they are extended.
       // Since extending styles will cache the data themselves, we need
       // not cache it here.
-      return mManager->BuildCounterStyle(NS_LITERAL_STRING("cjk-decimal"));
+      return mManager->BuildCounterStyle(nsGkAtoms::cjkDecimal);
     default:
       NS_NOTREACHED("Not a valid dependent builtin style");
       return BuiltinCounterStyle::GetFallback();
@@ -1029,10 +1014,8 @@ DependentBuiltinCounterStyle::GetFallback()
 
 class CustomCounterStyle final : public CounterStyle
 {
-private:
-  ~CustomCounterStyle() {}
 public:
-  CustomCounterStyle(const nsAString& aName,
+  CustomCounterStyle(nsIAtom* aName,
                      CounterStyleManager* aManager,
                      nsCSSCounterStyleRule* aRule)
     : CounterStyle(NS_STYLE_LIST_STYLE_CUSTOM),
@@ -1064,12 +1047,12 @@ public:
   nsCSSCounterStyleRule* GetRule() const { return mRule; }
   uint32_t GetRuleGeneration() const { return mRuleGeneration; }
 
-  virtual void GetStyleName(nsSubstring& aResult) override;
-  virtual void GetPrefix(nsSubstring& aResult) override;
-  virtual void GetSuffix(nsSubstring& aResult) override;
+  virtual void GetStyleName(nsAString& aResult) override;
+  virtual void GetPrefix(nsAString& aResult) override;
+  virtual void GetSuffix(nsAString& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
                                     WritingMode aWritingMode,
-                                    nsSubstring& aResult,
+                                    nsAString& aResult,
                                     bool& aIsBullet) override;
   virtual bool IsBullet() override;
 
@@ -1083,11 +1066,11 @@ public:
 
   virtual void CallFallbackStyle(CounterValue aOrdinal,
                                  WritingMode aWritingMode,
-                                 nsSubstring& aResult,
+                                 nsAString& aResult,
                                  bool& aIsRTL) override;
   virtual bool GetInitialCounterText(CounterValue aOrdinal,
                                      WritingMode aWritingMode,
-                                     nsSubstring& aResult,
+                                     nsAString& aResult,
                                      bool& aIsRTL) override;
 
   bool IsExtendsSystem()
@@ -1095,25 +1078,21 @@ public:
     return mSystem == NS_STYLE_COUNTER_SYSTEM_EXTENDS;
   }
 
-  // CustomCounterStyle should be reference-counted because it may be
-  // dereferenced from the manager but still referenced by nodes and
-  // frames before the style change is propagated.
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() override;
-  NS_IMETHOD_(MozExternalRefCountType) Release() override;
-
-  void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
+  void* operator new(size_t sz, nsPresContext* aPresContext)
   {
     return aPresContext->PresShell()->AllocateByObjectID(
         eArenaObjectID_CustomCounterStyle, sz);
   }
 
-private:
   void Destroy()
   {
     nsIPresShell* shell = mManager->PresContext()->PresShell();
     this->~CustomCounterStyle();
     shell->FreeByObjectID(eArenaObjectID_CustomCounterStyle, this);
   }
+
+private:
+  ~CustomCounterStyle() {}
 
   const nsTArray<nsString>& GetSymbols();
   const nsTArray<AdditiveSymbol>& GetAdditiveSymbols();
@@ -1134,7 +1113,7 @@ private:
   CounterStyle* GetExtends();
   CounterStyle* GetExtendsRoot();
 
-  nsString mName;
+  nsCOMPtr<nsIAtom> mName;
 
   // CounterStyleManager should always overlive any CounterStyle as it
   // is owned by nsPresContext, and will be released after all nodes and
@@ -1145,7 +1124,8 @@ private:
   uint32_t mRuleGeneration;
 
   uint8_t mSystem;
-  uint8_t mSpeakAs;
+  // GetSpeakAs will ensure that private member mSpeakAs is initialized before used
+  MOZ_INIT_OUTSIDE_CTOR uint8_t mSpeakAs;
 
   enum {
     // loop detection
@@ -1189,13 +1169,7 @@ private:
   // counter must be either a builtin style or a style whose system is
   // not 'extends'.
   CounterStyle* mExtendsRoot;
-
-  nsAutoRefCnt mRefCnt;
-  NS_DECL_OWNINGTHREAD
 };
-
-NS_IMPL_ADDREF(CustomCounterStyle)
-NS_IMPL_RELEASE_WITH_DESTROY(CustomCounterStyle, Destroy())
 
 void
 CustomCounterStyle::ResetCachedData()
@@ -1231,13 +1205,14 @@ CustomCounterStyle::ResetDependentData()
 }
 
 /* virtual */ void
-CustomCounterStyle::GetStyleName(nsSubstring& aResult)
+CustomCounterStyle::GetStyleName(nsAString& aResult)
 {
-  aResult.Assign(mName);
+  nsDependentAtomString name(mName);
+  aResult.Assign(name);
 }
 
 /* virtual */ void
-CustomCounterStyle::GetPrefix(nsSubstring& aResult)
+CustomCounterStyle::GetPrefix(nsAString& aResult)
 {
   if (!(mFlags & FLAG_PREFIX_INITED)) {
     mFlags |= FLAG_PREFIX_INITED;
@@ -1255,7 +1230,7 @@ CustomCounterStyle::GetPrefix(nsSubstring& aResult)
 }
 
 /* virtual */ void
-CustomCounterStyle::GetSuffix(nsSubstring& aResult)
+CustomCounterStyle::GetSuffix(nsAString& aResult)
 {
   if (!(mFlags & FLAG_SUFFIX_INITED)) {
     mFlags |= FLAG_SUFFIX_INITED;
@@ -1275,7 +1250,7 @@ CustomCounterStyle::GetSuffix(nsSubstring& aResult)
 /* virtual */ void
 CustomCounterStyle::GetSpokenCounterText(CounterValue aOrdinal,
                                          WritingMode aWritingMode,
-                                         nsSubstring& aResult,
+                                         nsAString& aResult,
                                          bool& aIsBullet)
 {
   if (GetSpeakAs() != NS_STYLE_COUNTER_SPEAKAS_OTHER) {
@@ -1411,13 +1386,15 @@ CustomCounterStyle::GetFallback()
 {
   if (!mFallback) {
     const nsCSSValue& value = mRule->GetDesc(eCSSCounterDesc_Fallback);
-    if (value.UnitHasStringValue()) {
-      mFallback = mManager->BuildCounterStyle(
-          nsDependentString(value.GetStringBufferValue()));
+    mFallback = CounterStyleManager::GetDecimalStyle();
+    if (value.GetUnit() != eCSSUnit_Null) {
+      if (value.GetUnit() == eCSSUnit_AtomIdent) {
+        mFallback = mManager->BuildCounterStyle(value.GetAtomValue());
+      } else {
+        MOZ_ASSERT_UNREACHABLE("Unknown unit!");
+      }
     } else if (IsExtendsSystem()) {
       mFallback = GetExtends()->GetFallback();
-    } else {
-      mFallback = CounterStyleManager::GetDecimalStyle();
     }
   }
   return mFallback;
@@ -1444,7 +1421,7 @@ CustomCounterStyle::UseNegativeSign()
 /* virtual */ void
 CustomCounterStyle::CallFallbackStyle(CounterValue aOrdinal,
                                       WritingMode aWritingMode,
-                                      nsSubstring& aResult,
+                                      nsAString& aResult,
                                       bool& aIsRTL)
 {
   CounterStyle* fallback = GetFallback();
@@ -1458,7 +1435,7 @@ CustomCounterStyle::CallFallbackStyle(CounterValue aOrdinal,
 /* virtual */ bool
 CustomCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
                                           WritingMode aWritingMode,
-                                          nsSubstring& aResult,
+                                          nsAString& aResult,
                                           bool& aIsRTL)
 {
   switch (mSystem) {
@@ -1553,10 +1530,9 @@ CustomCounterStyle::ComputeRawSpeakAs(uint8_t& aSpeakAs,
     case eCSSUnit_Enumerated:
       aSpeakAs = value.GetIntValue();
       break;
-    case eCSSUnit_Ident:
+    case eCSSUnit_AtomIdent:
       aSpeakAs = NS_STYLE_COUNTER_SPEAKAS_OTHER;
-      aSpeakAsCounter = mManager->BuildCounterStyle(
-          nsDependentString(value.GetStringBufferValue()));
+      aSpeakAsCounter = mManager->BuildCounterStyle(value.GetAtomValue());
       break;
     case eCSSUnit_Null: {
       if (!IsExtendsSystem()) {
@@ -1663,8 +1639,7 @@ CustomCounterStyle::ComputeExtends()
   }
 
   const nsCSSValue& value = mRule->GetSystemArgument();
-  CounterStyle* nextCounter = mManager->BuildCounterStyle(
-      nsDependentString(value.GetStringBufferValue()));
+  CounterStyle* nextCounter = mManager->BuildCounterStyle(value.GetAtomValue());
   CounterStyle* target = nextCounter;
   if (nextCounter->IsCustomStyle()) {
     mFlags |= FLAG_EXTENDS_VISITED;
@@ -1717,7 +1692,7 @@ CustomCounterStyle::GetExtendsRoot()
   return mExtendsRoot;
 }
 
-AnonymousCounterStyle::AnonymousCounterStyle(const nsSubstring& aContent)
+AnonymousCounterStyle::AnonymousCounterStyle(const nsAString& aContent)
   : CounterStyle(NS_STYLE_LIST_STYLE_CUSTOM)
   , mSingleString(true)
   , mSystem(NS_STYLE_COUNTER_SYSTEM_CYCLIC)
@@ -1726,16 +1701,31 @@ AnonymousCounterStyle::AnonymousCounterStyle(const nsSubstring& aContent)
   mSymbols.AppendElement(aContent);
 }
 
+static nsTArray<nsString>
+CollectSymbolsFromCSSValueList(const nsCSSValueList* aList)
+{
+  nsTArray<nsString> symbols;
+  for (const nsCSSValueList* item = aList; item; item = item->mNext) {
+    item->mValue.GetStringValue(*symbols.AppendElement());
+  }
+  symbols.Compact();
+  return symbols;
+}
+
 AnonymousCounterStyle::AnonymousCounterStyle(const nsCSSValue::Array* aParams)
+  : AnonymousCounterStyle(
+      aParams->Item(0).GetIntValue(),
+      CollectSymbolsFromCSSValueList(aParams->Item(1).GetListValue()))
+{
+}
+
+AnonymousCounterStyle::AnonymousCounterStyle(uint8_t aSystem,
+                                             nsTArray<nsString> aSymbols)
   : CounterStyle(NS_STYLE_LIST_STYLE_CUSTOM)
   , mSingleString(false)
-  , mSystem(aParams->Item(0).GetIntValue())
+  , mSystem(aSystem)
+  , mSymbols(Move(aSymbols))
 {
-  for (const nsCSSValueList* item = aParams->Item(1).GetListValue();
-       item; item = item->mNext) {
-    item->mValue.GetStringValue(*mSymbols.AppendElement());
-  }
-  mSymbols.Compact();
 }
 
 /* virtual */ void
@@ -1877,7 +1867,7 @@ CounterStyle::IsDependentStyle() const
 void
 CounterStyle::GetCounterText(CounterValue aOrdinal,
                              WritingMode aWritingMode,
-                             nsSubstring& aResult,
+                             nsAString& aResult,
                              bool& aIsRTL)
 {
   bool success = IsOrdinalInRange(aOrdinal);
@@ -1941,7 +1931,7 @@ CounterStyle::GetCounterText(CounterValue aOrdinal,
 /* virtual */ void
 CounterStyle::GetSpokenCounterText(CounterValue aOrdinal,
                                    WritingMode aWritingMode,
-                                   nsSubstring& aResult,
+                                   nsAString& aResult,
                                    bool& aIsBullet)
 {
   bool isRTL; // we don't care about direction for spoken text
@@ -1985,8 +1975,9 @@ CounterStyleManager::CounterStyleManager(nsPresContext* aPresContext)
   : mPresContext(aPresContext)
 {
   // Insert the static styles into cache table
-  mCacheTable.Put(NS_LITERAL_STRING("none"), GetNoneStyle());
-  mCacheTable.Put(NS_LITERAL_STRING("decimal"), GetDecimalStyle());
+  mStyles.Put(nsGkAtoms::none, GetNoneStyle());
+  mStyles.Put(nsGkAtoms::decimal, GetDecimalStyle());
+  mStyles.Put(nsGkAtoms::disc, GetDiscStyle());
 }
 
 CounterStyleManager::~CounterStyleManager()
@@ -2003,43 +1994,53 @@ CounterStyleManager::InitializeBuiltinCounterStyles()
 }
 
 void
+CounterStyleManager::DestroyCounterStyle(CounterStyle* aCounterStyle)
+{
+  if (aCounterStyle->IsCustomStyle()) {
+    MOZ_ASSERT(!aCounterStyle->AsAnonymous(), "Anonymous counter styles "
+               "are not managed by CounterStyleManager");
+    static_cast<CustomCounterStyle*>(aCounterStyle)->Destroy();
+  } else if (aCounterStyle->IsDependentStyle()) {
+    static_cast<DependentBuiltinCounterStyle*>(aCounterStyle)->Destroy();
+  } else {
+    MOZ_ASSERT_UNREACHABLE("Builtin counter styles should not be destroyed");
+  }
+}
+
+void
 CounterStyleManager::Disconnect()
 {
-#ifdef DEBUG
-  for (auto iter = mCacheTable.Iter(); !iter.Done(); iter.Next()) {
-    CounterStyle* style = iter.UserData();
-    style->AddRef();
-    auto refcnt = style->Release();
-    NS_ASSERTION(!style->IsDependentStyle() || refcnt == 1,
-                 "Counter style is still referenced by other objects.");
+  CleanRetiredStyles();
+  for (auto iter = mStyles.Iter(); !iter.Done(); iter.Next()) {
+    CounterStyle* style = iter.Data();
+    if (style->IsDependentStyle()) {
+      DestroyCounterStyle(style);
+    }
   }
-#endif
-  mCacheTable.Clear();
+  mStyles.Clear();
   mPresContext = nullptr;
 }
 
 CounterStyle*
-CounterStyleManager::BuildCounterStyle(const nsSubstring& aName)
+CounterStyleManager::BuildCounterStyle(nsIAtom* aName)
 {
-  CounterStyle* data = mCacheTable.GetWeak(aName);
+  MOZ_ASSERT(NS_IsMainThread());
+  CounterStyle* data = GetCounterStyle(aName);
   if (data) {
     return data;
   }
 
   // It is intentional that the predefined names are case-insensitive
   // but the user-defined names case-sensitive.
-  // XXXheycam ServoStyleSets do not support custom counter styles yet.
   StyleSetHandle styleSet = mPresContext->StyleSet();
-  NS_ASSERTION(styleSet->IsGecko(),
-               "stylo: ServoStyleSets do not support custom counter "
-               "styles yet");
-  nsCSSCounterStyleRule* rule = styleSet->IsGecko() ?
-    styleSet->AsGecko()->CounterStyleRuleForName(aName) : nullptr;
+  nsCSSCounterStyleRule* rule = styleSet->CounterStyleRuleForName(aName);
   if (rule) {
+    MOZ_ASSERT(rule->Name() == aName);
     data = new (mPresContext) CustomCounterStyle(aName, this, rule);
   } else {
     int32_t type;
-    nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(aName);
+    nsDependentAtomString name(aName);
+    nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(name);
     if (nsCSSProps::FindKeyword(keyword, nsCSSProps::kListStyleKTable, type)) {
       if (gBuiltinStyleTable[type].IsDependentStyle()) {
         data = new (mPresContext) DependentBuiltinCounterStyle(type, this);
@@ -2051,7 +2052,7 @@ CounterStyleManager::BuildCounterStyle(const nsSubstring& aName)
   if (!data) {
     data = GetDecimalStyle();
   }
-  mCacheTable.Put(aName, data);
+  mStyles.Put(aName, data);
   return data;
 }
 
@@ -2069,18 +2070,12 @@ bool
 CounterStyleManager::NotifyRuleChanged()
 {
   bool changed = false;
-  nsTArray<RefPtr<CounterStyle>> kungFuDeathGrip;
-  for (auto iter = mCacheTable.Iter(); !iter.Done(); iter.Next()) {
-    RefPtr<CounterStyle>& style = iter.Data();
+  for (auto iter = mStyles.Iter(); !iter.Done(); iter.Next()) {
+    CounterStyle* style = iter.Data();
     bool toBeUpdated = false;
     bool toBeRemoved = false;
-    // XXXheycam ServoStyleSets do not support custom counter styles yet.
     StyleSetHandle styleSet = mPresContext->StyleSet();
-    NS_ASSERTION(styleSet->IsGecko(),
-                 "stylo: ServoStyleSets do not support custom counter "
-                 "styles yet");
-    nsCSSCounterStyleRule* newRule = styleSet->IsGecko() ?
-        styleSet->AsGecko()->CounterStyleRuleForName(iter.Key()) : nullptr;
+    nsCSSCounterStyleRule* newRule = styleSet->CounterStyleRuleForName(iter.Key());
     if (!newRule) {
       if (style->IsCustomStyle()) {
         toBeRemoved = true;
@@ -2089,7 +2084,7 @@ CounterStyleManager::NotifyRuleChanged()
       if (!style->IsCustomStyle()) {
         toBeRemoved = true;
       } else {
-        auto custom = static_cast<CustomCounterStyle*>(style.get());
+        auto custom = static_cast<CustomCounterStyle*>(style);
         if (custom->GetRule() != newRule) {
           toBeRemoved = true;
         } else if (custom->GetRuleGeneration() != newRule->GetGeneration()) {
@@ -2101,25 +2096,16 @@ CounterStyleManager::NotifyRuleChanged()
     changed = changed || toBeUpdated || toBeRemoved;
     if (toBeRemoved) {
       if (style->IsDependentStyle()) {
-        if (style->IsCustomStyle()) {
-          // Since |style| is being removed from mCacheTable, it won't be
-          // visited by our post-removal iteration. So, we have to give it a
-          // manual ResetDependentData() call. (This only really matters if
-          // something else is holding a reference and keeping it alive.)
-          static_cast<CustomCounterStyle*>(style.get())->ResetDependentData();
-        }
-        // The object has to be held here so that it will not be released
-        // before all pointers that refer to it are reset. It will be released
-        // when kungFuDeathGrip goes out of scope at the end of this function.
-        kungFuDeathGrip.AppendElement(style);
+        // Add object to retired list so we can clean them up later.
+        mRetiredStyles.AppendElement(style);
       }
       iter.Remove();
     }
   }
 
   if (changed) {
-    for (auto iter = mCacheTable.Iter(); !iter.Done(); iter.Next()) {
-      CounterStyle* style = iter.UserData();
+    for (auto iter = mStyles.Iter(); !iter.Done(); iter.Next()) {
+      CounterStyle* style = iter.Data();
       if (style->IsCustomStyle()) {
         CustomCounterStyle* custom = static_cast<CustomCounterStyle*>(style);
         custom->ResetDependentData();
@@ -2129,6 +2115,15 @@ CounterStyleManager::NotifyRuleChanged()
     }
   }
   return changed;
+}
+
+void
+CounterStyleManager::CleanRetiredStyles()
+{
+  nsTArray<CounterStyle*> list(Move(mRetiredStyles));
+  for (CounterStyle* style : list) {
+    DestroyCounterStyle(style);
+  }
 }
 
 } // namespace mozilla

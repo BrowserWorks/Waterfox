@@ -5,10 +5,8 @@
 from __future__ import print_function, unicode_literals
 
 import os
-import subprocess
 import sys
-from argparse import ArgumentParser
-
+from argparse import REMAINDER, ArgumentParser
 
 SEARCH_PATHS = []
 
@@ -42,16 +40,26 @@ class MozlintParser(ArgumentParser):
                   "testing a directory that otherwise wouldn't be run, "
                   "without needing to modify the config file.",
           }],
-        [['-r', '--rev'],
-         {'default': None,
-          'help': "Lint files touched by the given revision(s). Works with "
+        [['-o', '--outgoing'],
+         {'const': 'default',
+          'nargs': '?',
+          'help': "Lint files touched by commits that are not on the remote repository. "
+                  "Without arguments, finds the default remote that would be pushed to. "
+                  "The remote branch can also be specified manually. Works with "
                   "mercurial or git."
           }],
         [['-w', '--workdir'],
-         {'default': False,
-          'action': 'store_true',
+         {'const': 'all',
+          'nargs': '?',
+          'choices': ['staged', 'all'],
           'help': "Lint files touched by changes in the working directory "
-                  "(i.e haven't been committed yet). Works with mercurial or git.",
+                  "(i.e haven't been committed yet). On git, --workdir=staged "
+                  "can be used to only consider staged files. Works with "
+                  "mercurial or git.",
+          }],
+        [['extra_args'],
+         {'nargs': REMAINDER,
+          'help': "Extra arguments that will be forwarded to the underlying linter.",
           }],
     ]
 
@@ -61,49 +69,19 @@ class MozlintParser(ArgumentParser):
         for cli, args in self.arguments:
             self.add_argument(*cli, **args)
 
+    def parse_known_args(self, *args, **kwargs):
+        # Allow '-wo' or '-ow' as shorthand for both --workdir and --outgoing.
+        for token in ('-wo', '-ow'):
+            if token in args[0]:
+                i = args[0].index(token)
+                args[0].pop(i)
+                args[0][i:i] = [token[:2], '-' + token[2]]
 
-class VCFiles(object):
-    def __init__(self):
-        self._vcs = None
-
-    @property
-    def vcs(self):
-        if self._vcs:
-            return self._vcs
-
-        self._vcs = 'none'
-        with open(os.devnull, 'wb') as DEVNULL:
-            if not subprocess.call(['hg', 'root'], stdout=DEVNULL):
-                self._vcs = 'hg'
-            elif not subprocess.call(['git', 'rev-parse'], stdout=DEVNULL):
-                self._vcs = 'git'
-        return self._vcs
-
-    @property
-    def is_hg(self):
-        return self.vcs == 'hg'
-
-    @property
-    def is_git(self):
-        return self.vcs == 'git'
-
-    def by_rev(self, rev):
-        if self.is_hg:
-            cmd = ['hg', 'log', '-T', '{files % "\\n{file}"}', '-r', rev]
-        elif self.is_git(self):
-            cmd = ['git', 'diff', '--name-only', rev]
-        else:
-            return []
-        return subprocess.check_output(cmd).split()
-
-    def by_workdir(self):
-        if self.is_hg:
-            cmd = ['hg', 'status', '-amn']
-        elif self.is_git(self):
-            cmd = ['git', 'diff', '--name-only']
-        else:
-            return []
-        return subprocess.check_output(cmd).split()
+        # This is here so the eslint mach command doesn't lose 'extra_args'
+        # when using mach's dispatch functionality.
+        args, extra = ArgumentParser.parse_known_args(self, *args, **kwargs)
+        args.extra_args = extra
+        return args, extra
 
 
 def find_linters(linters=None):
@@ -112,11 +90,15 @@ def find_linters(linters=None):
         if not os.path.isdir(search_path):
             continue
 
+        sys.path.insert(0, search_path)
         files = os.listdir(search_path)
         for f in files:
-            name, ext = os.path.splitext(f)
-            if ext != '.lint':
+            name = os.path.basename(f)
+
+            if not name.endswith('.yml'):
                 continue
+
+            name = name.rsplit('.', 1)[0]
 
             if linters and name not in linters:
                 continue
@@ -125,26 +107,21 @@ def find_linters(linters=None):
     return lints
 
 
-def run(paths, linters, fmt, rev, workdir, **lintargs):
+def run(paths, linters, fmt, outgoing, workdir, **lintargs):
     from mozlint import LintRoller, formatters
-
-    # Calculate files from VCS
-    vcfiles = VCFiles()
-    if rev:
-        paths.extend(vcfiles.by_rev(rev))
-    if workdir:
-        paths.extend(vcfiles.by_workdir())
-    paths = paths or ['.']
 
     lint = LintRoller(**lintargs)
     lint.read(find_linters(linters))
 
     # run all linters
-    results = lint.roll(paths)
-
+    results = lint.roll(paths, outgoing=outgoing, workdir=workdir)
     formatter = formatters.get(fmt)
-    print(formatter(results))
-    return 1 if results else 0
+
+    # Encode output with 'replace' to avoid UnicodeEncodeErrors on
+    # environments that aren't using utf-8.
+    print(formatter(results, failed=lint.failed).encode(
+        sys.stdout.encoding or 'ascii', 'replace'))
+    return 1 if results or lint.failed else 0
 
 
 if __name__ == '__main__':

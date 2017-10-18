@@ -20,10 +20,13 @@ function test() {
     let options = {customIframe: iframe};
     gDevTools.showToolbox(target, null, Toolbox.HostType.CUSTOM, options)
              .then(testCustomHost, console.error)
-             .then(null, console.error);
+             .catch(console.error);
   });
 
   function onMessage(event) {
+    if (typeof(event.data) !== "string") {
+      return;
+    }
     info("onMessage: " + event.data);
     let json = JSON.parse(event.data);
     if (json.name == "toolbox-close") {

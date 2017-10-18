@@ -8,10 +8,9 @@
 #ifndef GrGLSLFragmentShaderBuilder_DEFINED
 #define GrGLSLFragmentShaderBuilder_DEFINED
 
+#include "GrBlend.h"
 #include "GrGLSLShaderBuilder.h"
-
 #include "GrProcessor.h"
-#include "glsl/GrGLSLProcessorTypes.h"
 
 class GrRenderTarget;
 class GrGLSLVarying;
@@ -30,8 +29,6 @@ public:
      * if code is added that uses one of these features without calling enableFeature()
      */
     enum GLSLFeature {
-        kStandardDerivatives_GLSLFeature = kLastGLSLPrivateFeature + 1,
-        kPixelLocalStorage_GLSLFeature,
         kMultisampleInterpolation_GLSLFeature
     };
 
@@ -43,15 +40,11 @@ public:
 
     /**
      * This returns a variable name to access the 2D, perspective correct version of the coords in
-     * the fragment shader. If the coordinates at index are 3-dimensional, it immediately emits a
-     * perspective divide into the fragment shader (xy / z) to convert them to 2D.
+     * the fragment shader. The passed in coordinates must either be of type kVec2f or kVec3f. If
+     * the coordinates are 3-dimensional, it a perspective divide into is emitted into the
+     * fragment shader (xy / z) to convert them to 2D.
      */
-    virtual SkString ensureFSCoords2D(const GrGLSLTransformedCoordsArray& coords, int index) = 0;
-
-
-    /** Returns a variable name that represents the position of the fragment in the FS. The position
-        is in device space (e.g. 0,0 is the top left and pixel centers are at half-integers). */
-    virtual const char* fragmentPosition() = 0;
+    virtual SkString ensureCoords2D(const GrShaderVar&) = 0;
 
     // TODO: remove this method.
     void declAppendf(const char* fmt, ...);
@@ -95,6 +88,17 @@ public:
      * Requires GLSL support for sample variables.
      */
     virtual void maskSampleCoverage(const char* mask, bool invert = false) = 0;
+
+    /** Returns a variable name that represents a vector to the nearest edge of the shape, in source
+        space coordinates. */
+    virtual const char* distanceVectorName() const = 0;
+
+    /**
+     * Overrides the default precision for the entire fragment program. Processors that require
+     * high precision input (eg from incoming texture samples) may use this. For calculations that
+     * are limited to a single processor's code, it is better to annotate individual declarations.
+     */
+    virtual void elevateDefaultPrecision(GrSLPrecision) = 0;
 
     /**
      * Fragment procs with child procs should call these functions before/after calling emitCode
@@ -163,14 +167,14 @@ public:
 
     // Shared GrGLSLFragmentBuilder interface.
     bool enableFeature(GLSLFeature) override;
-    virtual SkString ensureFSCoords2D(const GrGLSLTransformedCoordsArray& coords,
-                                      int index) override;
-    const char* fragmentPosition() override;
+    virtual SkString ensureCoords2D(const GrShaderVar&) override;
+    const char* distanceVectorName() const override;
 
     // GrGLSLFPFragmentBuilder interface.
     void appendOffsetToSample(const char* sampleIdx, Coordinates) override;
     void maskSampleCoverage(const char* mask, bool invert = false) override;
     void overrideSampleCoverage(const char* mask) override;
+    void elevateDefaultPrecision(GrSLPrecision) override;
     const SkString& getMangleString() const override { return fMangleString; }
     void onBeforeChildProcEmitCode() override;
     void onAfterChildProcEmitCode() override;
@@ -199,7 +203,7 @@ private:
     }
 #endif
 
-    static const char* DeclaredColorOutputName() { return "fsColorOut"; }
+    static const char* DeclaredColorOutputName() { return "sk_FragColor"; }
     static const char* DeclaredSecondaryColorOutputName() { return "fsSecondaryColorOut"; }
 
     GrSurfaceOrigin getSurfaceOrigin() const;
@@ -207,7 +211,7 @@ private:
     void onFinalize() override;
     void defineSampleOffsetArray(const char* name, const SkMatrix&);
 
-    static const char* kDstTextureColorName;
+    static const char* kDstColorName;
 
     /*
      * State that tracks which child proc in the proc tree is currently emitting code.  This is
@@ -229,12 +233,14 @@ private:
      */
     SkString fMangleString;
 
-    bool       fSetupFragPosition;
-    bool       fHasCustomColorOutput;
-    int        fCustomColorOutputIndex;
-    bool       fHasSecondaryOutput;
-    uint8_t    fUsedSampleOffsetArrays;
-    bool       fHasInitializedSampleMask;
+    bool          fSetupFragPosition;
+    bool          fHasCustomColorOutput;
+    int           fCustomColorOutputIndex;
+    bool          fHasSecondaryOutput;
+    uint8_t       fUsedSampleOffsetArrays;
+    bool          fHasInitializedSampleMask;
+    SkString      fDistanceVectorOutput;
+    GrSLPrecision fDefaultPrecision;
 
 #ifdef SK_DEBUG
     // some state to verify shaders and effects are consistent, this is reset between effects by

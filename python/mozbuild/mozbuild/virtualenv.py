@@ -66,8 +66,8 @@ class VirtualenvManager(object):
     @property
     def virtualenv_script_path(self):
         """Path to virtualenv's own populator script."""
-        return os.path.join(self.topsrcdir, 'python', 'virtualenv',
-            'virtualenv.py')
+        return os.path.join(self.topsrcdir, 'third_party', 'python',
+            'virtualenv', 'virtualenv.py')
 
     @property
     def bin_path(self):
@@ -476,7 +476,8 @@ class VirtualenvManager(object):
         from pip.req import InstallRequirement
 
         req = InstallRequirement.from_line(package)
-        if req.check_if_exists():
+        req.check_if_exists()
+        if req.satisfied_by is not None:
             return
 
         args = [
@@ -484,6 +485,31 @@ class VirtualenvManager(object):
             '--use-wheel',
             package,
         ]
+
+        return self._run_pip(args)
+
+    def install_pip_requirements(self, path, require_hashes=True):
+        """Install a pip requirements.txt file.
+
+        The supplied path is a text file containing pip requirement
+        specifiers.
+
+        If require_hashes is True, each specifier must contain the
+        expected hash of the downloaded package. See:
+        https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode
+        """
+
+        if not os.path.isabs(path):
+            path = os.path.join(self.topsrcdir, path)
+
+        args = [
+            'install',
+            '--requirement',
+            path,
+        ]
+
+        if require_hashes:
+            args.append('--require-hashes')
 
         return self._run_pip(args)
 

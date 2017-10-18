@@ -8,7 +8,7 @@
 
 const {StyleSheetsFront} = require("devtools/shared/fronts/stylesheets");
 
-const CONTENT = "<style>body { background-color: #f0c; }</style>";
+const CONTENT = "<style>body { background-color: #f06; }</style>";
 const TEST_URI = "data:text/html;charset=utf-8," + encodeURIComponent(CONTENT);
 
 add_task(function* () {
@@ -36,5 +36,5 @@ add_task(function* () {
   let source = yield longStr.string();
   is(source, "", "text is empty");
 
-  yield closeDebuggerClient(client);
+  yield client.close();
 });

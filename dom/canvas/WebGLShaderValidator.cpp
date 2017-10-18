@@ -28,38 +28,14 @@ IdentifierHashFunc(const char* name, size_t len)
     return hash[0];
 }
 
-static int
+static ShCompileOptions
 ChooseValidatorCompileOptions(const ShBuiltInResources& resources,
                               const mozilla::gl::GLContext* gl)
 {
-    int options = SH_VARIABLES |
-                  SH_ENFORCE_PACKING_RESTRICTIONS |
-                  SH_INIT_VARYINGS_WITHOUT_STATIC_USE |
-                  SH_OBJECT_CODE |
-                  SH_LIMIT_CALL_STACK_DEPTH |
-                  SH_INIT_GL_POSITION;
-
-    if (resources.MaxExpressionComplexity > 0) {
-        options |= SH_LIMIT_EXPRESSION_COMPLEXITY;
-    }
-
-    // Sampler arrays indexed with non-constant expressions are forbidden in
-    // GLSL 1.30 and later.
-    // ESSL 3 requires constant-integral-expressions for this as well.
-    // Just do it universally.
-    options |= SH_UNROLL_FOR_LOOP_WITH_SAMPLER_ARRAY_INDEX;
-
-    if (gfxPrefs::WebGLAllANGLEOptions()) {
-        return options |
-               SH_VALIDATE_LOOP_INDEXING |
-               SH_UNROLL_FOR_LOOP_WITH_INTEGER_INDEX |
-               SH_UNROLL_FOR_LOOP_WITH_SAMPLER_ARRAY_INDEX |
-               SH_EMULATE_BUILT_IN_FUNCTIONS |
-               SH_CLAMP_INDIRECT_ARRAY_BOUNDS |
-               SH_UNFOLD_SHORT_CIRCUIT |
-               SH_SCALARIZE_VEC_AND_MAT_CONSTRUCTOR_ARGS |
-               SH_REGENERATE_STRUCT_NAMES;
-    }
+    ShCompileOptions options = SH_VARIABLES |
+                               SH_ENFORCE_PACKING_RESTRICTIONS |
+                               SH_OBJECT_CODE |
+                               SH_INIT_GL_POSITION;
 
 #ifndef XP_MACOSX
     // We want to do this everywhere, but to do this on Mac, we need
@@ -68,26 +44,52 @@ ChooseValidatorCompileOptions(const ShBuiltInResources& resources,
     options |= SH_CLAMP_INDIRECT_ARRAY_BOUNDS;
 #endif
 
-#ifdef XP_MACOSX
     if (gl->WorkAroundDriverBugs()) {
+#ifdef XP_MACOSX
         // Work around https://bugs.webkit.org/show_bug.cgi?id=124684,
         // https://chromium.googlesource.com/angle/angle/+/5e70cf9d0b1bb
         options |= SH_UNFOLD_SHORT_CIRCUIT;
 
-        // Work around bug 665578 and bug 769810
-        if (gl->Vendor() == gl::GLVendor::ATI) {
-            options |= SH_EMULATE_BUILT_IN_FUNCTIONS;
-        }
-
-        // Work around bug 735560
-        if (gl->Vendor() == gl::GLVendor::Intel) {
-            options |= SH_EMULATE_BUILT_IN_FUNCTIONS;
-        }
-
         // Work around that Mac drivers handle struct scopes incorrectly.
         options |= SH_REGENERATE_STRUCT_NAMES;
-    }
+        options |= SH_INIT_OUTPUT_VARIABLES;
+
+        // Work around that Intel drivers on Mac OSX handle for-loop incorrectly.
+        if (gl->Vendor() == gl::GLVendor::Intel) {
+            options |= SH_ADD_AND_TRUE_TO_LOOP_CONDITION;
+        }
 #endif
+
+        if (!gl->IsANGLE() && gl->Vendor() == gl::GLVendor::Intel) {
+            // Failures on at least Windows+Intel+OGL on:
+            // conformance/glsl/constructors/glsl-construct-mat2.html
+            options |= SH_SCALARIZE_VEC_AND_MAT_CONSTRUCTOR_ARGS;
+        }
+    }
+
+    if (gfxPrefs::WebGLAllANGLEOptions()) {
+        options = -1;
+
+        options ^= SH_INTERMEDIATE_TREE;
+        options ^= SH_LINE_DIRECTIVES;
+        options ^= SH_SOURCE_PATH;
+
+        options ^= SH_LIMIT_EXPRESSION_COMPLEXITY;
+        options ^= SH_LIMIT_CALL_STACK_DEPTH;
+
+        options ^= SH_EXPAND_SELECT_HLSL_INTEGER_POW_EXPRESSIONS;
+        options ^= SH_HLSL_GET_DIMENSIONS_IGNORES_BASE_LEVEL;
+
+        options ^= SH_DONT_REMOVE_INVARIANT_FOR_FRAGMENT_INPUT;
+        options ^= SH_REMOVE_INVARIANT_AND_CENTROID_FOR_ESSL3;
+    }
+
+    if (resources.MaxExpressionComplexity > 0) {
+        options |= SH_LIMIT_EXPRESSION_COMPLEXITY;
+    }
+    if (resources.MaxCallStackDepth > 0) {
+        options |= SH_LIMIT_CALL_STACK_DEPTH;
+    }
 
     return options;
 }
@@ -117,7 +119,7 @@ ShaderOutput(gl::GLContext* gl)
         case 440: return SH_GLSL_440_CORE_OUTPUT;
         case 450: return SH_GLSL_450_CORE_OUTPUT;
         default:
-            MOZ_CRASH("GFX: Unexpected GLSL version.");
+            MOZ_ASSERT(false, "GFX: Unexpected GLSL version.");
         }
     }
 
@@ -176,8 +178,7 @@ WebGLContext::CreateShaderValidator(GLenum shaderType) const
 #endif
     }
 
-    int compileOptions = webgl::ChooseValidatorCompileOptions(resources, gl);
-
+    const auto compileOptions = webgl::ChooseValidatorCompileOptions(resources, gl);
     return webgl::ShaderValidator::Create(shaderType, spec, outputLanguage, resources,
                                           compileOptions);
 }
@@ -189,7 +190,8 @@ namespace webgl {
 /*static*/ ShaderValidator*
 ShaderValidator::Create(GLenum shaderType, ShShaderSpec spec,
                         ShShaderOutput outputLanguage,
-                        const ShBuiltInResources& resources, int compileOptions)
+                        const ShBuiltInResources& resources,
+                        ShCompileOptions compileOptions)
 {
     ShHandle handle = ShConstructCompiler(shaderType, spec, outputLanguage, &resources);
     if (!handle)
@@ -274,9 +276,35 @@ ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log
                     continue;
 
                 if (!itrVert->isSameUniformAtLinkTime(*itrFrag)) {
-                    nsPrintfCString error("Uniform `%s`is not linkable between"
+                    nsPrintfCString error("Uniform `%s` is not linkable between"
                                           " attached shaders.",
                                           itrFrag->name.c_str());
+                    *out_log = error;
+                    return false;
+                }
+
+                break;
+            }
+        }
+    }
+    {
+        const auto vertVars = sh::GetInterfaceBlocks(prev->mHandle);
+        const auto fragVars = sh::GetInterfaceBlocks(mHandle);
+        if (!vertVars || !fragVars) {
+            nsPrintfCString error("Could not create uniform block list.");
+            *out_log = error;
+            return false;
+        }
+
+        for (const auto& fragVar : *fragVars) {
+            for (const auto& vertVar : *vertVars) {
+                if (vertVar.name != fragVar.name)
+                    continue;
+
+                if (!vertVar.isSameInterfaceBlockAtLinkTime(fragVar)) {
+                    nsPrintfCString error("Interface block `%s` is not linkable between"
+                                          " attached shaders.",
+                                          fragVar.name.c_str());
                     *out_log = error;
                     return false;
                 }
@@ -548,13 +576,15 @@ ShaderValidator::FindUniformByMappedName(const std::string& mappedName,
 }
 
 bool
-ShaderValidator::FindUniformBlockByMappedName(const std::string& mappedName,
-                                              std::string* const out_userName) const
+ShaderValidator::UnmapUniformBlockName(const nsACString& baseMappedName,
+                                       nsCString* const out_baseUserName) const
 {
     const std::vector<sh::InterfaceBlock>& interfaces = *ShGetInterfaceBlocks(mHandle);
     for (const auto& interface : interfaces) {
-        if (mappedName == interface.mappedName) {
-            *out_userName = interface.name;
+        const nsDependentCString interfaceMappedName(interface.mappedName.data(),
+                                                     interface.mappedName.size());
+        if (baseMappedName == interfaceMappedName) {
+            *out_baseUserName = interface.name.data();
             return true;
         }
     }

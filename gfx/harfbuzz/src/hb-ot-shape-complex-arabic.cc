@@ -199,6 +199,9 @@ collect_features_arabic (hb_ot_shape_planner_t *plan)
    * work.  However, testing shows that rlig and calt are applied
    * together for Mongolian in Uniscribe.  As such, we only add a
    * pause for Arabic, not other scripts.
+   *
+   * A pause after calt is required to make KFGQPC Uthmanic Script HAFS
+   * work correctly.  See https://github.com/behdad/harfbuzz/issues/505
    */
 
   map->add_gsub_pause (nuke_joiners);
@@ -222,7 +225,10 @@ collect_features_arabic (hb_ot_shape_planner_t *plan)
   if (plan->props.script == HB_SCRIPT_ARABIC)
     map->add_gsub_pause (arabic_fallback_shape);
 
+  /* No pause after rclt.  See 98460779bae19e4d64d29461ff154b3527bf8420. */
+  map->add_global_bool_feature (HB_TAG('r','c','l','t'));
   map->add_global_bool_feature (HB_TAG('c','a','l','t'));
+  map->add_gsub_pause (NULL);
 
   /* The spec includes 'cswh'.  Earlier versions of Windows
    * used to enable this by default, but testing suggests
@@ -232,7 +238,6 @@ collect_features_arabic (hb_ot_shape_planner_t *plan)
    * Note that IranNastaliq uses this feature extensively
    * to fixup broken glyph sequences.  Oh well...
    * Test case: U+0643,U+0640,U+0631. */
-  //map->add_gsub_pause (NULL);
   //map->add_global_bool_feature (HB_TAG('c','s','w','h'));
   map->add_global_bool_feature (HB_TAG('m','s','e','t'));
 }
@@ -345,7 +350,7 @@ mongolian_variation_selectors (hb_buffer_t *buffer)
   unsigned int count = buffer->len;
   hb_glyph_info_t *info = buffer->info;
   for (unsigned int i = 1; i < count; i++)
-    if (unlikely (hb_in_range (info[i].codepoint, 0x180Bu, 0x180Du)))
+    if (unlikely (hb_in_range<hb_codepoint_t> (info[i].codepoint, 0x180Bu, 0x180Du)))
       info[i].arabic_shaping_action() = info[i - 1].arabic_shaping_action();
 }
 
@@ -540,7 +545,7 @@ apply_stch (const hb_ot_shape_plan_t *plan,
       /* See if we can improve the fit by adding an extra repeat and squeezing them together a bit. */
       hb_position_t extra_repeat_overlap = 0;
       hb_position_t shortfall = sign * w_remaining - sign * w_repeating * (n_copies + 1);
-      if (shortfall > 0)
+      if (shortfall > 0 && n_repeating > 0)
       {
         ++n_copies;
         hb_position_t excess = (n_copies + 1) * sign * w_repeating - sign * w_remaining;
@@ -618,6 +623,7 @@ const hb_ot_complex_shaper_t _hb_ot_complex_shaper_arabic =
   NULL, /* decompose */
   NULL, /* compose */
   setup_masks_arabic,
+  NULL, /* disable_otl */
   HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_GDEF_LATE,
   true, /* fallback_position */
 };

@@ -184,7 +184,7 @@
         <![CDATA[
           if (this._hasEntry && event.charCode &&
               this._currentField != this._fieldAMPM &&
-	      ! (event.altKey || event.ctrlKey || event.metaKey) &&
+	            !(event.altKey || event.ctrlKey || event.metaKey) &&
               (event.charCode < 48 || event.charCode > 57))
             event.preventDefault();
         ]]>
@@ -297,8 +297,7 @@
             if (val) {
               if (this.hour < 12)
                 this.hour += 12;
-            }
-            else if (this.hour >= 12)
+            } else if (this.hour >= 12)
               this.hour -= 12;
             return val;
           ]]>
@@ -367,18 +366,15 @@
             if (field == this._fieldAMPM) {
               this.isPM = !this.isPM;
               this._fireEvent("change", this);
-            }
-            else {
+            } else {
               var oldval;
               var change = aDir;
               if (field == this.hourField) {
                 oldval = this.hour;
-              }
-              else if (field == this.minuteField) {
+              } else if (field == this.minuteField) {
                 oldval = this.minute;
                 change *= this.increment;
-              }
-              else if (field == this.secondField) {
+              } else if (field == this.secondField) {
                 oldval = this.second;
               }
 
@@ -433,18 +429,15 @@
                   if (aValue > 12)
                     aValue -= 12;
                   this._fieldAMPM.value = this.pmIndicator;
-                }
-                else {
+                } else {
                   if (aValue == 0)
                     aValue = 12;
                   this._fieldAMPM.value = this.amIndicator;
                 }
               }
-            }
-            else if (aField == this.minuteField) {
+            } else if (aField == this.minuteField) {
               prependZero = this.minuteLeadingZero;
-            }
-            else if (aField == this.secondField) {
+            } else if (aField == this.secondField) {
               prependZero = this.secondLeadingZero;
             }
 
@@ -482,7 +475,9 @@
 
             var numberOrder = /^(\D*)\s*(\d+)(\D*)(\d+)(\D*)(\d+)\s*(\D*)$/;
 
-            var pmTime = new Date(2000,0,1,16,7,9).toLocaleFormat("%X");
+            var locale = Intl.DateTimeFormat().resolvedOptions().locale + "-u-ca-gregory-nu-latn";
+
+            var pmTime = new Date(2000, 0, 1, 16, 7, 9).toLocaleTimeString(locale);
             var numberFields = pmTime.match(numberOrder);
             if (numberFields) {
               this._separatorFirst.value = numberFields[3];
@@ -493,7 +488,7 @@
                 this.pmIndicator = numberFields[1] || numberFields[7];
             }
 
-            var amTime = new Date(2000,0,1,1,7,9).toLocaleFormat("%X");
+            var amTime = new Date(2000, 0, 1, 1, 7, 9).toLocaleTimeString(locale);
             numberFields = amTime.match(numberOrder);
             if (numberFields) {
               this.hourLeadingZero = (numberFields[2].length > 1);
@@ -512,8 +507,7 @@
                   size = this.pmIndicator.length;
                 this._fieldAMPM.size = size;
                 this._fieldAMPM.maxLength = size;
-              }
-              else {
+              } else {
                 this._fieldAMPM.parentNode.collapsed = true;
               }
             }
@@ -679,16 +673,14 @@
                 this._dateValue.setDate(0);
                 this._updateUI(this.dateField, this.date);
               }
-            }
-            else if (aField == this.monthField) {
+            } else if (aField == this.monthField) {
               let oldDate = this.date;
               this._dateValue.setMonth(aValue);
               if (oldDate != this.date) {
                 this._dateValue.setDate(0);
                 this._updateUI(this.dateField, this.date);
               }
-            }
-            else if (aField == this.dateField) {
+            } else if (aField == this.dateField) {
               this._dateValue.setDate(aValue);
             }
 
@@ -713,12 +705,10 @@
                 aField.value = ("000" + aValue).slice(-4);
                 return;
               }
-            }
-            else if (aField == this.monthField) {
+            } else if (aField == this.monthField) {
               aValue++;
               prependZero = this.monthLeadingZero;
-            }
-            else if (aField == this.dateField) {
+            } else if (aField == this.dateField) {
               prependZero = this.dateLeadingZero;
             }
             if (prependZero && aValue < 10)
@@ -770,7 +760,9 @@
 
             var numberOrder = /^(\D*)\s*(\d+)(\D*)(\d+)(\D*)(\d+)\s*(\D*)$/;
 
-            var dt = new Date(2002,9,4).toLocaleFormat("%x");
+            var locale = Intl.DateTimeFormat().resolvedOptions().locale + "-u-ca-gregory-nu-latn";
+
+            var dt = new Date(2002, 9, 4).toLocaleDateString(locale);
             var numberFields = dt.match(numberOrder);
             if (numberFields) {
               this._separatorFirst.value = numberFields[3];
@@ -994,11 +986,15 @@
       <method name="_init">
         <body>
           <![CDATA[
+            var locale = Intl.DateTimeFormat().resolvedOptions().locale + "-u-ca-gregory";
+            var dtfMonth = Intl.DateTimeFormat(locale, {month: "long", timeZone: "UTC"});
+            var dtfWeekday = Intl.DateTimeFormat(locale, {weekday: "narrow"});
+
             var monthLabel = this.monthField.firstChild;
-            var tempDate = new Date(2005, 0, 1);
+            var tempDate = new Date(Date.UTC(2005, 0, 1));
             for (var month = 0; month < 12; month++) {
-              tempDate.setMonth(month);
-              monthLabel.setAttribute("value", tempDate.toLocaleFormat("%B"));
+              tempDate.setUTCMonth(month);
+              monthLabel.setAttribute("value", dtfMonth.format(tempDate));
               monthLabel = monthLabel.nextSibling;
             }
 
@@ -1010,7 +1006,7 @@
             var date = new Date();
             date.setDate(date.getDate() - (date.getDay() - this._weekStart));
             for (var i = 0; i < weekbox.length; i++) {
-              weekbox[i].value = date.toLocaleFormat("%a").charAt(0);
+              weekbox[i].value = dtfWeekday.format(date);
               date.setDate(date.getDate() + 1);
             }
           ]]>
@@ -1044,8 +1040,7 @@
               var expectedMonth = aValue;
               if (aField == this.monthField) {
                 this._displayedDate.setMonth(aValue);
-              }
-              else {
+              } else {
                 expectedMonth = this._displayedDate.getMonth();
                 this._displayedDate.setFullYear(aValue);
               }
@@ -1059,8 +1054,7 @@
 
               date = new Date(this._displayedDate);
               currentMonth = this._displayedDate.getMonth();
-            }
-            else {
+            } else {
               var samemonth = (this._displayedDate &&
                                this._displayedDate.getMonth() == this.month &&
                                this._displayedDate.getFullYear() == this.year);
@@ -1115,8 +1109,7 @@
                     this._selectedItem = item;
                     item.setAttribute("selected", "true");
                   }
-                }
-                else {
+                } else {
                   item.value = "";
                 }
 
@@ -1125,10 +1118,6 @@
             }
 
             this._fireEvent("monthchange", this);
-            if (this.hasAttribute("monthchange")) {
-              var fn = new Function("event", aTarget.getAttribute("onmonthchange"));
-              fn.call(aTarget, event);
-            }
           ]]>
         </body>
       </method>

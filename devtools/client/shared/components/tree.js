@@ -4,7 +4,8 @@
 /* eslint-env browser */
 "use strict";
 
-const { DOM: dom, createClass, createFactory, PropTypes } = require("devtools/client/shared/vendor/react");
+const React = require("devtools/client/shared/vendor/react");
+const { DOM: dom, createClass, createFactory, PropTypes } = React;
 
 const AUTO_EXPAND_DEPTH = 0;
 const NUMBER_OF_OFFSCREEN_ITEMS = 1;
@@ -196,6 +197,14 @@ module.exports = createClass({
 
     // The depth to which we should automatically expand new items.
     autoExpandDepth: PropTypes.number,
+
+    // Note: the two properties below are mutually exclusive. Only one of the
+    // label properties is necessary.
+    // ID of an element whose textual content serves as an accessible label for
+    // a tree.
+    labelledby: PropTypes.string,
+    // Accessibility label for a tree widget.
+    label: PropTypes.string,
 
     // Optional event handlers for when items are expanded or collapsed. Useful
     // for dispatching redux events and updating application state, maybe lazily
@@ -444,11 +453,11 @@ module.exports = createClass({
     switch (e.key) {
       case "ArrowUp":
         this._focusPrevNode();
-        return;
+        break;
 
       case "ArrowDown":
         this._focusNextNode();
-        return;
+        break;
 
       case "ArrowLeft":
         if (this.props.isExpanded(this.props.focused)
@@ -457,7 +466,7 @@ module.exports = createClass({
         } else {
           this._focusParentNode();
         }
-        return;
+        break;
 
       case "ArrowRight":
         if (!this.props.isExpanded(this.props.focused)) {
@@ -465,7 +474,7 @@ module.exports = createClass({
         } else {
           this._focusNextNode();
         }
-        return;
+        break;
     }
   },
 
@@ -548,51 +557,63 @@ module.exports = createClass({
   render() {
     const traversal = this._dfsFromRoots();
 
-    // Remove `NUMBER_OF_OFFSCREEN_ITEMS` from `begin` and add `2 *
-    // NUMBER_OF_OFFSCREEN_ITEMS` to `end` so that the top and bottom of the
-    // page are filled with the `NUMBER_OF_OFFSCREEN_ITEMS` previous and next
-    // items respectively, rather than whitespace if the item is not in full
-    // view.
-    const begin = Math.max(((this.state.scroll / this.props.itemHeight) | 0)
-                           - NUMBER_OF_OFFSCREEN_ITEMS, 0);
-    const end = begin + (2 * NUMBER_OF_OFFSCREEN_ITEMS)
-                      + ((this.state.height / this.props.itemHeight) | 0);
+    // 'begin' and 'end' are the index of the first (at least partially) visible item
+    // and the index after the last (at least partially) visible item, respectively.
+    // `NUMBER_OF_OFFSCREEN_ITEMS` is removed from `begin` and added to `end` so that
+    // the top and bottom of the page are filled with the `NUMBER_OF_OFFSCREEN_ITEMS`
+    // previous and next items respectively, which helps the user to see fewer empty
+    // gaps when scrolling quickly.
+    const { itemHeight, focused } = this.props;
+    const { scroll, height } = this.state;
+    const begin = Math.max(((scroll / itemHeight) | 0) - NUMBER_OF_OFFSCREEN_ITEMS, 0);
+    const end = Math.ceil((scroll + height) / itemHeight) + NUMBER_OF_OFFSCREEN_ITEMS;
     const toRender = traversal.slice(begin, end);
+    const topSpacerHeight = begin * itemHeight;
+    const bottomSpacerHeight = Math.max(traversal.length - end, 0) * itemHeight;
 
     const nodes = [
       dom.div({
         key: "top-spacer",
+        role: "presentation",
         style: {
           padding: 0,
           margin: 0,
-          height: begin * this.props.itemHeight + "px"
+          height: topSpacerHeight + "px"
         }
       })
     ];
 
     for (let i = 0; i < toRender.length; i++) {
-      let { item, depth } = toRender[i];
+      const index = begin + i;
+      const first = index == 0;
+      const last = index == traversal.length - 1;
+      const { item, depth } = toRender[i];
+      const key = this.props.getKey(item);
       nodes.push(TreeNode({
-        key: this.props.getKey(item),
-        index: begin + i,
-        item: item,
-        depth: depth,
+        key,
+        index,
+        first,
+        last,
+        item,
+        depth,
+        id: key,
         renderItem: this.props.renderItem,
-        focused: this.props.focused === item,
+        focused: focused === item,
         expanded: this.props.isExpanded(item),
         hasChildren: !!this.props.getChildren(item).length,
         onExpand: this._onExpand,
         onCollapse: this._onCollapse,
-        onFocus: () => this._focus(begin + i, item),
+        onClick: () => this._focus(begin + i, item),
       }));
     }
 
     nodes.push(dom.div({
       key: "bottom-spacer",
+      role: "presentation",
       style: {
         padding: 0,
         margin: 0,
-        height: (traversal.length - 1 - end) * this.props.itemHeight + "px"
+        height: bottomSpacerHeight + "px"
       }
     }));
 
@@ -600,10 +621,33 @@ module.exports = createClass({
       {
         className: "tree",
         ref: "tree",
+        role: "tree",
+        tabIndex: "0",
         onKeyDown: this._onKeyDown,
         onKeyPress: this._preventArrowKeyScrolling,
         onKeyUp: this._preventArrowKeyScrolling,
         onScroll: this._onScroll,
+        onFocus: ({nativeEvent}) => {
+          if (focused || !nativeEvent || !this.refs.tree) {
+            return;
+          }
+
+          let { explicitOriginalTarget } = nativeEvent;
+          // Only set default focus to the first tree node if the focus came
+          // from outside the tree (e.g. by tabbing to the tree from other
+          // external elements).
+          if (explicitOriginalTarget !== this.refs.tree &&
+              !this.refs.tree.contains(explicitOriginalTarget)) {
+            this._focus(begin, toRender[0].item);
+          }
+        },
+        onClick: () => {
+          // Focus should always remain on the tree container itself.
+          this.refs.tree.focus();
+        },
+        "aria-label": this.props.label,
+        "aria-labelledby": this.props.labelledby,
+        "aria-activedescendant": focused && this.props.getKey(focused),
         style: {
           padding: 0,
           margin: 0
@@ -620,6 +664,14 @@ module.exports = createClass({
  */
 const ArrowExpander = createFactory(createClass({
   displayName: "ArrowExpander",
+
+  propTypes: {
+    item: PropTypes.any.isRequired,
+    visible: PropTypes.bool.isRequired,
+    expanded: PropTypes.bool.isRequired,
+    onCollapse: PropTypes.func.isRequired,
+    onExpand: PropTypes.func.isRequired,
+  },
 
   shouldComponentUpdate(nextProps, nextState) {
     return this.props.item !== nextProps.item
@@ -650,32 +702,20 @@ const ArrowExpander = createFactory(createClass({
 }));
 
 const TreeNode = createFactory(createClass({
-  componentDidMount() {
-    if (this.props.focused) {
-      this.refs.button.focus();
-    }
-  },
-
-  componentDidUpdate() {
-    if (this.props.focused) {
-      this.refs.button.focus();
-    }
-  },
-
-  _buttonAttrs: {
-    ref: "button",
-    style: {
-      opacity: 0,
-      width: "0 !important",
-      height: "0 !important",
-      padding: "0 !important",
-      outline: "none",
-      MozAppearance: "none",
-      // XXX: Despite resetting all of the above properties (and margin), the
-      // button still ends up with ~79px width, so we set a large negative
-      // margin to completely hide it.
-      MozMarginStart: "-1000px !important",
-    }
+  propTypes: {
+    id: PropTypes.any.isRequired,
+    focused: PropTypes.bool.isRequired,
+    item: PropTypes.any.isRequired,
+    expanded: PropTypes.bool.isRequired,
+    hasChildren: PropTypes.bool.isRequired,
+    onExpand: PropTypes.func.isRequired,
+    index: PropTypes.number.isRequired,
+    first: PropTypes.bool,
+    last: PropTypes.bool,
+    onClick: PropTypes.func,
+    onCollapse: PropTypes.func.isRequired,
+    depth: PropTypes.number.isRequired,
+    renderItem: PropTypes.func.isRequired,
   },
 
   render() {
@@ -687,13 +727,35 @@ const TreeNode = createFactory(createClass({
       onCollapse: this.props.onCollapse,
     });
 
-    let isOddRow = this.props.index % 2;
+    let classList = [ "tree-node", "div" ];
+    if (this.props.index % 2) {
+      classList.push("tree-node-odd");
+    }
+    if (this.props.first) {
+      classList.push("tree-node-first");
+    }
+    if (this.props.last) {
+      classList.push("tree-node-last");
+    }
+
+    let ariaExpanded;
+    if (this.props.hasChildren) {
+      ariaExpanded = false;
+    }
+    if (this.props.expanded) {
+      ariaExpanded = true;
+    }
+
     return dom.div(
       {
-        className: `tree-node div ${isOddRow ? "tree-node-odd" : ""}`,
-        onFocus: this.props.onFocus,
-        onClick: this.props.onFocus,
-        onBlur: this.props.onBlur,
+        id: this.props.id,
+        className: classList.join(" "),
+        role: "treeitem",
+        "aria-level": this.props.depth,
+        onClick: this.props.onClick,
+        "aria-expanded": ariaExpanded,
+        "data-expanded": this.props.expanded ? "" : undefined,
+        "data-depth": this.props.depth,
         style: {
           padding: 0,
           margin: 0
@@ -705,10 +767,6 @@ const TreeNode = createFactory(createClass({
                             this.props.focused,
                             arrow,
                             this.props.expanded),
-
-      // XXX: OSX won't focus/blur regular elements even if you set tabindex
-      // unless there is an input/button child.
-      dom.button(this._buttonAttrs)
     );
   }
 }));

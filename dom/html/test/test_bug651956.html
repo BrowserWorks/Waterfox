@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=651956
 -->
 <head>
   <title>Test for Bug 651956</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
@@ -26,19 +25,17 @@ var input = document.getElementsByTagName('input')[0];
 var gotInputEvent = false;
 
 input.addEventListener("input", function() {
-  input.removeEventListener("input", arguments.callee, false);
   gotInputEvent = true;
-}, false);
+}, {once: true});
 
 input.addEventListener("focus", function() {
-  input.removeEventListener("focus", arguments.callee, false);
   synthesizeKey("VK_ESCAPE", {});
 
   setTimeout(function() {
     ok(!gotInputEvent, "No input event should have been sent.");
     SimpleTest.finish();
   });
-}, false);
+}, {once: true});
 
 SimpleTest.waitForExplicitFinish();
 SimpleTest.waitForFocus(function() {

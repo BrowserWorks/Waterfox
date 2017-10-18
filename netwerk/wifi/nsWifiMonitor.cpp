@@ -16,6 +16,7 @@
 
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Services.h"
 
 using namespace mozilla;
@@ -84,13 +85,15 @@ NS_IMETHODIMP nsWifiMonitor::StartWatching(nsIWifiListener *aListener)
   }
 
   if (!mThread) {
-    rv = NS_NewThread(getter_AddRefs(mThread), this);
+    rv = NS_NewNamedThread("Wifi Monitor", getter_AddRefs(mThread), this);
     if (NS_FAILED(rv))
       return rv;
   }
 
 
-  mListeners.AppendElement(nsWifiListener(new nsMainThreadPtrHolder<nsIWifiListener>(aListener)));
+  mListeners.AppendElement(
+    nsWifiListener(new nsMainThreadPtrHolder<nsIWifiListener>(
+      "nsIWifiListener", aListener)));
 
   // tell ourselves that we have a new watcher.
   mon.Notify();
@@ -155,10 +158,8 @@ NS_IMETHODIMP nsWifiMonitor::Run()
 {
   LOG(("@@@@@ wifi monitor run called\n"));
 
-  PR_SetCurrentThreadName("Wifi Monitor");
-
   nsresult rv = DoScan();
-  LOG(("@@@@@ wifi monitor run::doscan complete %x\n", rv));
+  LOG(("@@@@@ wifi monitor run::doscan complete %" PRIx32 "\n", static_cast<uint32_t>(rv)));
 
   nsAutoPtr<WifiListenerArray> currentListeners;
   bool doError = false;
@@ -175,15 +176,15 @@ NS_IMETHODIMP nsWifiMonitor::Run()
   }
 
   if (doError) {
-    nsCOMPtr<nsIThread> thread = do_GetMainThread();
-    if (!thread)
+    nsCOMPtr<nsIEventTarget> target = GetMainThreadEventTarget();
+    if (!target)
       return NS_ERROR_UNEXPECTED;
 
     nsCOMPtr<nsIRunnable> runnable(new nsPassErrorToWifiListeners(currentListeners, rv));
     if (!runnable)
       return NS_ERROR_OUT_OF_MEMORY;
 
-    thread->Dispatch(runnable, NS_DISPATCH_SYNC);
+    target->Dispatch(runnable, NS_DISPATCH_SYNC);
   }
 
   LOG(("@@@@@ wifi monitor run complete\n"));

@@ -94,6 +94,8 @@ TouchEvent::InitTouchEvent(const nsAString& aType,
                            TouchList* aTargetTouches,
                            TouchList* aChangedTouches)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, aDetail);
   mEvent->AsInputEvent()->InitBasicModifiers(aCtrlKey, aAltKey,
                                              aShiftKey, aMetaKey);
@@ -211,8 +213,22 @@ TouchEvent::PrefEnabled(nsIDocShell* aDocShell)
       if (!sDidCheckTouchDeviceSupport) {
         sDidCheckTouchDeviceSupport = true;
         sIsTouchDeviceSupportPresent = WidgetUtils::IsTouchDeviceSupportPresent();
+        // But touch events are only actually supported if APZ is enabled. If
+        // APZ is disabled globally, we can check that once and incorporate that
+        // into the cached state. If APZ is enabled, we need to further check
+        // based on the widget, which we do below (and don't cache that result).
+        sIsTouchDeviceSupportPresent &= gfxPlatform::AsyncPanZoomEnabled();
       }
       enabled = sIsTouchDeviceSupportPresent;
+      if (enabled && aDocShell) {
+        // APZ might be disabled on this particular widget, in which case
+        // TouchEvent support will also be disabled. Try to detect that.
+        RefPtr<nsPresContext> pc;
+        aDocShell->GetPresContext(getter_AddRefs(pc));
+        if (pc && pc->GetRootWidget()) {
+          enabled &= pc->GetRootWidget()->AsyncPanZoomEnabled();
+        }
+      }
 #else
       enabled = false;
 #endif
@@ -245,6 +261,7 @@ TouchEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mShiftKey, aParam.mMetaKey, touches, targetTouches,
                     changedTouches);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

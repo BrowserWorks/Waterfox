@@ -11,7 +11,7 @@ var gUpdateHistory = {
   /**
    * Initialize the User Interface
    */
-  onLoad: function() {
+  onLoad() {
     this._view = document.getElementById("historyItems");
 
     var um =
@@ -20,7 +20,7 @@ var gUpdateHistory = {
     var uc = um.updateCount;
     if (uc) {
       while (this._view.hasChildNodes())
-        this._view.removeChild(this._view.firstChild);
+        this._view.firstChild.remove();
 
       var bundle = document.getElementById("updateBundle");
 
@@ -57,19 +57,11 @@ var gUpdateHistory = {
    *          A date in seconds since 1970 epoch
    * @returns A human readable date string
    */
-  _formatDate: function(seconds) {
-    var sdf =
-        Components.classes["@mozilla.org/intl/scriptabledateformat;1"].
-        getService(Components.interfaces.nsIScriptableDateFormat);
+  _formatDate(seconds) {
     var date = new Date(seconds);
-    return sdf.FormatDateTime("", sdf.dateFormatLong,
-                              sdf.timeFormatSeconds,
-                              date.getFullYear(),
-                              date.getMonth() + 1,
-                              date.getDate(),
-                              date.getHours(),
-                              date.getMinutes(),
-                              date.getSeconds());
+    const dtOptions = { year: "numeric", month: "long", day: "numeric",
+                        hour: "numeric", minute: "numeric", second: "numeric" };
+    return date.toLocaleString(undefined, dtOptions);
   }
 };
 

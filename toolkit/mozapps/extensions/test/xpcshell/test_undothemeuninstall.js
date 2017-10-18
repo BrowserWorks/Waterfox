@@ -34,17 +34,6 @@ var theme1 = {
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
-function dummyLWTheme(id) {
-  return {
-    id: id || Math.random().toString(),
-    name: Math.random().toString(),
-    headerURL: "http://lwttest.invalid/a.png",
-    footerURL: "http://lwttest.invalid/b.png",
-    textcolor: Math.random().toString(),
-    accentcolor: Math.random().toString()
-  };
-}
-
 // Sets up the profile by installing an add-on.
 function run_test() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
@@ -55,11 +44,11 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* checkDefault() {
+add_task(async function checkDefault() {
   writeInstallRDFForExtension(defaultTheme, profileDir);
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let d = yield promiseAddonByID("default@tests.mozilla.org");
+  let d = await promiseAddonByID("default@tests.mozilla.org");
 
   do_check_neq(d, null);
   do_check_true(d.isActive);
@@ -68,22 +57,22 @@ add_task(function* checkDefault() {
 });
 
 // Tests that uninstalling an enabled theme offers the option to undo
-add_task(function* uninstallEnabledOffersUndo() {
+add_task(async function uninstallEnabledOffersUndo() {
   writeInstallRDFForExtension(theme1, profileDir);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let t1 = yield promiseAddonByID("theme1@tests.mozilla.org");
+  let t1 = await promiseAddonByID("theme1@tests.mozilla.org");
 
   do_check_neq(t1, null);
   do_check_true(t1.userDisabled);
 
   t1.userDisabled = false;
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
   let d = null;
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
   do_check_neq(d, null);
   do_check_false(d.isActive);
@@ -119,9 +108,9 @@ add_task(function* uninstallEnabledOffersUndo() {
 
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "theme1");
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
   do_check_neq(d, null);
   do_check_true(d.isActive);
@@ -133,23 +122,23 @@ add_task(function* uninstallEnabledOffersUndo() {
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
 });
 
-//Tests that uninstalling an enabled theme can be undone
-add_task(function* canUndoUninstallEnabled() {
+// Tests that uninstalling an enabled theme can be undone
+add_task(async function canUndoUninstallEnabled() {
   writeInstallRDFForExtension(theme1, profileDir);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let t1 = yield promiseAddonByID("theme1@tests.mozilla.org");
+  let t1 = await promiseAddonByID("theme1@tests.mozilla.org");
 
   do_check_neq(t1, null);
   do_check_true(t1.userDisabled);
 
   t1.userDisabled = false;
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
   let d = null;
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -207,9 +196,9 @@ add_task(function* canUndoUninstallEnabled() {
   do_check_false(t1.userDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -225,16 +214,16 @@ add_task(function* canUndoUninstallEnabled() {
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "theme1");
 
   t1.uninstall();
-  yield promiseRestartManager();
+  await promiseRestartManager();
 });
 
-//Tests that uninstalling a disabled theme offers the option to undo
-add_task(function* uninstallDisabledOffersUndo() {
+// Tests that uninstalling a disabled theme offers the option to undo
+add_task(async function uninstallDisabledOffersUndo() {
   writeInstallRDFForExtension(theme1, profileDir);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  let [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                             "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -268,9 +257,9 @@ add_task(function* uninstallDisabledOffersUndo() {
 
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -283,13 +272,13 @@ add_task(function* uninstallDisabledOffersUndo() {
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
 });
 
-//Tests that uninstalling a disabled theme can be undone
-add_task(function* canUndoUninstallDisabled() {
+// Tests that uninstalling a disabled theme can be undone
+add_task(async function canUndoUninstallDisabled() {
   writeInstallRDFForExtension(theme1, profileDir);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  let [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  let [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                             "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -341,9 +330,9 @@ add_task(function* canUndoUninstallDisabled() {
   do_check_true(t1.userDisabled);
   do_check_eq(t1.pendingOperations, AddonManager.PENDING_NONE);
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 
-  [ t1, d ] = yield promiseAddonsByIDs(["theme1@tests.mozilla.org",
+  [ t1, d ] = await promiseAddonsByIDs(["theme1@tests.mozilla.org",
                                         "default@tests.mozilla.org"]);
 
   do_check_neq(d, null);
@@ -359,13 +348,81 @@ add_task(function* canUndoUninstallDisabled() {
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
 
   t1.uninstall();
-  yield promiseRestartManager();
+  await promiseRestartManager();
 });
 
-//Tests that uninstalling an enabled lightweight theme offers the option to undo
-add_task(function* uninstallLWTOffersUndo() {
+add_task(async function uninstallWebExtensionOffersUndo() {
+  let { id: addonId } = await promiseInstallWebExtension({
+    manifest: {
+      "author": "Some author",
+      manifest_version: 2,
+      name: "Web Extension Name",
+      version: "1.0",
+      theme: { images: { headerURL: "example.png" } },
+    }
+  });
+
+  let [ t1, d ] = await promiseAddonsByIDs([addonId, "default@tests.mozilla.org"]);
+
+  Assert.ok(t1, "Addon should be there");
+  Assert.ok(!t1.isActive);
+  Assert.ok(t1.userDisabled);
+  Assert.equal(t1.pendingOperations, AddonManager.PENDING_NONE);
+
+  Assert.ok(d, "Addon should be there");
+  Assert.ok(d.isActive);
+  Assert.ok(!d.userDisabled);
+  Assert.equal(d.pendingOperations, AddonManager.PENDING_NONE);
+
+  Assert.equal(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
+
+  prepare_test({ [addonId]: [ "onUninstalling" ] });
+  t1.uninstall(true);
+  ensure_test_completed();
+
+  Assert.ok(!t1.isActive);
+  Assert.ok(t1.userDisabled);
+  Assert.ok(hasFlag(t1.pendingOperations, AddonManager.PENDING_UNINSTALL));
+
+  Assert.equal(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
+
+  prepare_test({
+    [addonId]: [
+      "onOperationCancelled"
+    ]
+  });
+  t1.cancelUninstall();
+  ensure_test_completed();
+
+  Assert.ok(!t1.isActive);
+  Assert.ok(t1.userDisabled);
+  Assert.equal(t1.pendingOperations, AddonManager.PENDING_NONE);
+
+  await promiseRestartManager();
+
+  [ t1, d ] = await promiseAddonsByIDs([addonId, "default@tests.mozilla.org"]);
+
+  Assert.ok(d);
+  Assert.ok(d.isActive);
+  Assert.ok(!d.userDisabled);
+  Assert.equal(d.pendingOperations, AddonManager.PENDING_NONE);
+
+  Assert.ok(t1);
+  Assert.ok(!t1.isActive);
+  Assert.ok(t1.userDisabled);
+  Assert.equal(t1.pendingOperations, AddonManager.PENDING_NONE);
+
+  Assert.equal(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
+
+  t1.uninstall();
+  await promiseRestartManager();
+});
+
+// Tests that uninstalling an enabled lightweight theme offers the option to undo
+add_task(async function uninstallLWTOffersUndo() {
   // skipped since lightweight themes don't support undoable uninstall yet
-  return;
+
+  /*
   LightweightThemeManager.currentTheme = dummyLWTheme("theme1");
 
   let [ t1, d ] = yield promiseAddonsByIDs(["theme1@personas.mozilla.org",
@@ -418,4 +475,5 @@ add_task(function* uninstallLWTOffersUndo() {
   do_check_eq(t1, null);
 
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
+  */
 });

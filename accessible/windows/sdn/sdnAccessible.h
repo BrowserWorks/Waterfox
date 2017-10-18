@@ -7,11 +7,13 @@
 #ifndef mozilla_a11y_sdnAccessible_h_
 #define mozilla_a11y_sdnAccessible_h_
 
-#include "ISimpleDOMNode.h"
+#include "ISimpleDOM.h"
 #include "AccessibleWrap.h"
 #include "IUnknownImpl.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/NotNull.h"
 
 namespace mozilla {
 namespace a11y {
@@ -19,16 +21,23 @@ namespace a11y {
 class sdnAccessible final : public ISimpleDOMNode
 {
 public:
-  sdnAccessible(nsINode* aNode) :
+  explicit sdnAccessible(nsINode* aNode) :
     mNode(aNode)
   {
     if (!mNode)
       MOZ_CRASH();
   }
-  ~sdnAccessible() { }
+
+  explicit sdnAccessible(NotNull<AccessibleWrap*> aAccWrap)
+    : mNode(aAccWrap->GetNode())
+    , mWrap(aAccWrap)
+  {
+  }
+
+  ~sdnAccessible();
 
   /**
-   * Retrun if the object is defunct.
+   * Return if the object is defunct.
    */
   bool IsDefunct() const { return !GetDocument(); }
 
@@ -40,7 +49,19 @@ public:
   /*
    * Return associated accessible if any.
    */
-  Accessible* GetAccessible() const;
+  AccessibleWrap* GetAccessible();
+
+  void SetUniqueID(uint32_t aNewUniqueId)
+  {
+    mUniqueId = Some(aNewUniqueId);
+  }
+
+  Maybe<uint32_t> ReleaseUniqueID()
+  {
+    Maybe<uint32_t> result = mUniqueId;
+    mUniqueId = Nothing();
+    return result;
+  }
 
   //IUnknown
   DECL_IUNKNOWN
@@ -111,6 +132,8 @@ public:
 
 private:
   nsCOMPtr<nsINode> mNode;
+  RefPtr<AccessibleWrap> mWrap;
+  Maybe<uint32_t> mUniqueId;
 };
 
 } // namespace a11y

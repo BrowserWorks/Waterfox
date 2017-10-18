@@ -29,6 +29,8 @@
 
 using mozilla::ipc::InputStreamParams;
 using mozilla::ipc::StringInputStreamParams;
+using mozilla::Maybe;
+using mozilla::Some;
 
 //
 // Log module for StorageStream logging...
@@ -136,7 +138,7 @@ nsStorageStream::Close()
   mWriteCursor = 0;
   mSegmentEnd = 0;
 
-  LOG(("nsStorageStream [%p] Close mWriteCursor=%x mSegmentEnd=%x\n",
+  LOG(("nsStorageStream [%p] Close mWriteCursor=%p mSegmentEnd=%p\n",
        this, mWriteCursor, mSegmentEnd));
 
   return NS_OK;
@@ -163,7 +165,7 @@ nsStorageStream::Write(const char* aBuffer, uint32_t aCount,
   uint32_t count, availableInSegment, remaining;
   nsresult rv = NS_OK;
 
-  LOG(("nsStorageStream [%p] Write mWriteCursor=%x mSegmentEnd=%x aCount=%d\n",
+  LOG(("nsStorageStream [%p] Write mWriteCursor=%p mSegmentEnd=%p aCount=%d\n",
        this, mWriteCursor, mSegmentEnd, aCount));
 
   remaining = aCount;
@@ -188,7 +190,7 @@ nsStorageStream::Write(const char* aBuffer, uint32_t aCount,
       mLastSegmentNum++;
       mSegmentEnd = mWriteCursor + mSegmentSize;
       availableInSegment = mSegmentEnd - mWriteCursor;
-      LOG(("nsStorageStream [%p] Write (new seg) mWriteCursor=%x mSegmentEnd=%x\n",
+      LOG(("nsStorageStream [%p] Write (new seg) mWriteCursor=%p mSegmentEnd=%p\n",
            this, mWriteCursor, mSegmentEnd));
     }
 
@@ -197,7 +199,7 @@ nsStorageStream::Write(const char* aBuffer, uint32_t aCount,
     remaining -= count;
     readCursor += count;
     mWriteCursor += count;
-    LOG(("nsStorageStream [%p] Writing mWriteCursor=%x mSegmentEnd=%x count=%d\n",
+    LOG(("nsStorageStream [%p] Writing mWriteCursor=%p mSegmentEnd=%p count=%d\n",
          this, mWriteCursor, mSegmentEnd, count));
   }
 
@@ -205,7 +207,7 @@ out:
   *aNumWritten = aCount - remaining;
   mLogicalLength += *aNumWritten;
 
-  LOG(("nsStorageStream [%p] Wrote mWriteCursor=%x mSegmentEnd=%x numWritten=%d\n",
+  LOG(("nsStorageStream [%p] Wrote mWriteCursor=%p mSegmentEnd=%p numWritten=%d\n",
        this, mWriteCursor, mSegmentEnd, *aNumWritten));
   return rv;
 }
@@ -276,7 +278,7 @@ nsStorageStream::GetWriteInProgress(bool* aWriteInProgress)
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 nsStorageStream::Seek(int32_t aPosition)
 {
   if (NS_WARN_IF(!mSegmentedBuffer)) {
@@ -300,7 +302,7 @@ nsStorageStream::Seek(int32_t aPosition)
   if (aPosition == 0) {
     mWriteCursor = 0;
     mSegmentEnd = 0;
-    LOG(("nsStorageStream [%p] Seek mWriteCursor=%x mSegmentEnd=%x\n",
+    LOG(("nsStorageStream [%p] Seek mWriteCursor=%p mSegmentEnd=%p\n",
          this, mWriteCursor, mSegmentEnd));
     return NS_OK;
   }
@@ -320,7 +322,7 @@ nsStorageStream::Seek(int32_t aPosition)
     mWriteCursor += segmentOffset;
   }
 
-  LOG(("nsStorageStream [%p] Seek mWriteCursor=%x mSegmentEnd=%x\n",
+  LOG(("nsStorageStream [%p] Seek mWriteCursor=%p mSegmentEnd=%p\n",
        this, mWriteCursor, mSegmentEnd));
   return NS_OK;
 }
@@ -355,7 +357,7 @@ private:
   }
 
 protected:
-  NS_METHOD Seek(uint32_t aPosition);
+  nsresult Seek(uint32_t aPosition);
 
   friend class nsStorageStream;
 
@@ -550,7 +552,7 @@ nsStorageInputStream::SetEOF()
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-NS_METHOD
+nsresult
 nsStorageInputStream::Seek(uint32_t aPosition)
 {
   uint32_t length = mStorageStream->mLogicalLength;
@@ -596,6 +598,15 @@ nsStorageInputStream::Serialize(InputStreamParams& aParams, FileDescriptorArray&
   StringInputStreamParams params;
   params.data() = combined;
   aParams = params;
+}
+
+Maybe<uint64_t>
+nsStorageInputStream::ExpectedSerializedLength()
+{
+  uint64_t remaining = 0;
+  DebugOnly<nsresult> rv = Available(&remaining);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  return Some(remaining);
 }
 
 bool

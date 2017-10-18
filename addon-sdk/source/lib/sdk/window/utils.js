@@ -8,7 +8,7 @@ module.metadata = {
 };
 
 const { Cc, Ci } = require('chrome');
-const array = require('../util/array');
+lazyRequireModule(this, "../util/array", "array");
 const { defer } = require('sdk/core/promise');
 const { dispatcher } = require("../util/dispatcher");
 
@@ -192,7 +192,7 @@ function open(uri, options) {
   if (!uri)
     throw new Error('browser.chromeURL is undefined, please provide an explicit uri');
 
-  if (['chrome', 'resource', 'data'].indexOf(io.newURI(uri, null, null).scheme) < 0)
+  if (['chrome', 'resource', 'data'].indexOf(io.newURI(uri).scheme) < 0)
     throw new Error('only chrome, resource and data uris are allowed');
 
   let newWindow = windowWatcher.
@@ -213,10 +213,9 @@ function onFocus(window) {
     resolve(window);
   }
   else {
-    window.addEventListener("focus", function focusListener() {
-      window.removeEventListener("focus", focusListener, true);
+    window.addEventListener("focus", function() {
       resolve(window);
-    }, true);
+    }, {capture: true, once: true});
   }
 
   return promise;
@@ -416,7 +415,7 @@ function getOwnerBrowserWindow(node) {
   /**
   Takes DOM node and returns browser window that contains it.
   **/
-  let window = getToplevelWindow(node.ownerDocument.defaultView);
+  let window = getToplevelWindow(node.ownerGlobal);
   // If anchored window is browser then it's target browser window.
   return isBrowser(window) ? window : null;
 }

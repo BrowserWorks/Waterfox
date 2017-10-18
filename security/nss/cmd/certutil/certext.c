@@ -980,8 +980,6 @@ AddNameConstraints(void *extHandle)
             GEN_BREAK(SECFailure);
         }
 
-        (void)SEC_ASN1EncodeInteger(arena, &current->min, 0);
-
         if (!GetGeneralName(arena, &current->name, PR_TRUE)) {
             GEN_BREAK(SECFailure);
         }
@@ -1240,10 +1238,15 @@ AddCrlDistPoint(void *extHandle)
             }
         }
 
-        crlDistPoints->distPoints =
-            PORT_ArenaGrow(arena, crlDistPoints->distPoints,
-                           sizeof(*crlDistPoints->distPoints) * count,
-                           sizeof(*crlDistPoints->distPoints) * (count + 1));
+        if (crlDistPoints->distPoints) {
+            crlDistPoints->distPoints =
+                PORT_ArenaGrow(arena, crlDistPoints->distPoints,
+                               sizeof(*crlDistPoints->distPoints) * count,
+                               sizeof(*crlDistPoints->distPoints) * (count + 1));
+        } else {
+            crlDistPoints->distPoints =
+                PORT_ArenaZAlloc(arena, sizeof(*crlDistPoints->distPoints) * (count + 1));
+        }
         if (crlDistPoints->distPoints == NULL) {
             GEN_BREAK(SECFailure);
         }

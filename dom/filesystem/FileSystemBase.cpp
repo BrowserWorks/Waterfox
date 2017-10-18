@@ -6,51 +6,14 @@
 
 #include "mozilla/dom/FileSystemBase.h"
 
-#include "DeviceStorageFileSystem.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "OSFileSystem.h"
 
 namespace mozilla {
 namespace dom {
 
-// static
-already_AddRefed<FileSystemBase>
-FileSystemBase::DeserializeDOMPath(const nsAString& aString)
-{
-  MOZ_ASSERT(XRE_IsParentProcess(), "Only call from parent process!");
-  AssertIsOnBackgroundThread();
-
-  if (StringBeginsWith(aString, NS_LITERAL_STRING("devicestorage-"))) {
-    // The string representation of devicestorage file system is of the format:
-    // devicestorage-StorageType-StorageName
-
-    nsCharSeparatedTokenizer tokenizer(aString, char16_t('-'));
-    tokenizer.nextToken();
-
-    nsString storageType;
-    if (tokenizer.hasMoreTokens()) {
-      storageType = tokenizer.nextToken();
-    }
-
-    nsString storageName;
-    if (tokenizer.hasMoreTokens()) {
-      storageName = tokenizer.nextToken();
-    }
-
-    RefPtr<DeviceStorageFileSystem> f =
-      new DeviceStorageFileSystem(storageType, storageName);
-    return f.forget();
-  }
-
-  return RefPtr<OSFileSystemParent>(new OSFileSystemParent(aString)).forget();
-}
-
 FileSystemBase::FileSystemBase()
   : mShutdown(false)
-  , mPermissionCheckType(eNotSet)
-#ifdef DEBUG
-  , mOwningThread(PR_GetCurrentThread())
-#endif
 {
 }
 
@@ -88,8 +51,7 @@ FileSystemBase::GetRealPath(BlobImpl* aFile, nsIFile** aPath) const
     return false;
   }
 
-  rv = NS_NewNativeLocalFile(NS_ConvertUTF16toUTF8(filePath),
-                             true, aPath);
+  rv = NS_NewLocalFile(filePath, true, aPath);
   if (NS_WARN_IF(rv.Failed())) {
     rv.SuppressException();
     return false;
@@ -120,7 +82,7 @@ FileSystemBase::GetDirectoryName(nsIFile* aFile, nsAString& aRetval,
   MOZ_ASSERT(aFile);
 
   aRv = aFile->GetLeafName(aRetval);
-  NS_WARN_IF(aRv.Failed());
+  NS_WARNING_ASSERTION(!aRv.Failed(), "GetLeafName failed");
 }
 
 void
@@ -134,8 +96,7 @@ FileSystemBase::GetDOMPath(nsIFile* aFile,
   aRetval.Truncate();
 
   nsCOMPtr<nsIFile> fileSystemPath;
-  aRv = NS_NewNativeLocalFile(NS_ConvertUTF16toUTF8(LocalOrDeviceStorageRootPath()),
-                              true, getter_AddRefs(fileSystemPath));
+  aRv = NS_NewLocalFile(LocalRootPath(), true, getter_AddRefs(fileSystemPath));
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -197,8 +158,7 @@ FileSystemBase::GetDOMPath(nsIFile* aFile,
 void
 FileSystemBase::AssertIsOnOwningThread() const
 {
-  MOZ_ASSERT(mOwningThread);
-  MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+  NS_ASSERT_OWNINGTHREAD(FileSystemBase);
 }
 
 } // namespace dom

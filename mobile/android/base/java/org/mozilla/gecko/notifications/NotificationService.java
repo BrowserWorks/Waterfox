@@ -8,44 +8,30 @@ package org.mozilla.gecko.notifications;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 
-public class NotificationService extends Service {
-    private final IBinder mBinder = new NotificationBinder();
-    private NotificationHandler mHandler;
+import org.mozilla.gecko.R;
 
-    @Override
-    public void onCreate() {
-        // This has to be initialized in onCreate in order to ensure that the NotificationHandler can
-        // access the NotificationManager service.
-        mHandler = new NotificationHandler(this) {
-            @Override
-            protected void setForegroundNotification(int id, Notification notification) {
-                super.setForegroundNotification(id, notification);
+public final class NotificationService extends Service {
+    public static final String EXTRA_NOTIFICATION = "notification";
 
-                if (notification == null) {
-                    stopForeground(true);
-                } else {
-                    startForeground(id, notification);
-                }
-            }
-        };
-    }
-
-    public class NotificationBinder extends Binder {
-        NotificationService getService() {
-            // Return this instance of NotificationService so clients can call public methods
-            return NotificationService.this;
+    @Override // Service
+    public int onStartCommand(final Intent intent, final int flags, final int startId) {
+        final Notification notification = intent.getParcelableExtra(EXTRA_NOTIFICATION);
+        if (notification != null) {
+            // Start foreground notification.
+            startForeground(R.id.foregroundNotification, notification);
+            return START_NOT_STICKY;
         }
+
+        // Stop foreground notification
+        stopForeground(true);
+        stopSelfResult(startId);
+        return START_NOT_STICKY;
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
-    }
-
-    public NotificationHandler getNotificationHandler() {
-        return mHandler;
+    @Override // Service
+    public IBinder onBind(final Intent intent) {
+        return null;
     }
 }

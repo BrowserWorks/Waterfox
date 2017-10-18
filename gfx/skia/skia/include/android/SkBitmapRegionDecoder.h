@@ -10,7 +10,7 @@
 
 #include "SkBitmap.h"
 #include "SkBRDAllocator.h"
-#include "SkEncodedFormat.h"
+#include "SkEncodedImageFormat.h"
 #include "SkStream.h"
 
 /*
@@ -21,7 +21,6 @@ class SkBitmapRegionDecoder {
 public:
 
     enum Strategy {
-        kCanvas_Strategy,       // Draw to the canvas, uses SkCodec
         kAndroidCodec_Strategy, // Uses SkAndroidCodec for scaling and subsetting
     };
 
@@ -30,8 +29,7 @@ public:
      * @param strategy Strategy used for scaling and subsetting
      * @return         Tries to create an SkBitmapRegionDecoder, returns NULL on failure
      */
-    static SkBitmapRegionDecoder* Create(
-            SkData* data, Strategy strategy);
+    static SkBitmapRegionDecoder* Create(sk_sp<SkData>, Strategy strategy);
 
     /*
      * @param stream   Takes ownership of the stream
@@ -57,18 +55,21 @@ public:
      *                        if this color type is unsupported.
      * @param requireUnpremul If the image is not opaque, we will use this to determine the
      *                        alpha type to use.
+     * @param prefColorSpace  If non-null and supported, this is the color space that we will
+     *                        decode into.  Otherwise, we will choose a default.
      *
      */
     virtual bool decodeRegion(SkBitmap* bitmap, SkBRDAllocator* allocator,
                               const SkIRect& desiredSubset, int sampleSize,
-                              SkColorType colorType, bool requireUnpremul) = 0;
+                              SkColorType colorType, bool requireUnpremul,
+                              sk_sp<SkColorSpace> prefColorSpace = nullptr) = 0;
     /*
      * @param  Requested destination color type
      * @return true if we support the requested color type and false otherwise
      */
     virtual bool conversionSupported(SkColorType colorType) = 0;
 
-    virtual SkEncodedFormat getEncodedFormat() = 0;
+    virtual SkEncodedImageFormat getEncodedFormat() = 0;
 
     int width() const { return fWidth; }
     int height() const { return fHeight; }

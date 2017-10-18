@@ -18,7 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository",
 XPCOMUtils.defineLazyModuleGetter(this, "GMPInstallManager",
                                   "resource://gre/modules/GMPInstallManager.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging",
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
                                   "resource://gre/modules/Messaging.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
@@ -59,10 +59,10 @@ AddonUpdateService.prototype = {
     AddonManagerPrivate.backgroundUpdateCheck();
 
     let gmp = new GMPInstallManager();
-    gmp.simpleCheckAndInstall().then(null, () => {});
+    gmp.simpleCheckAndInstall().catch(() => {});
 
     let interval = 1000 * getPref("getIntPref", PREF_ADDON_UPDATE_INTERVAL, 86400);
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       type: "Gecko:ScheduleRun",
       action: "update-addons",
       trigger: interval,

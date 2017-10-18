@@ -12,7 +12,7 @@ function test() {
   var triggers = encodeURIComponent(JSON.stringify({
     "Unsigned XPI": TESTROOT + "amosigned.xpi"
   }));
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
 }
 
@@ -35,10 +35,10 @@ function install_ended(install, addon) {
   install.cancel();
 }
 
-const finish_test = Task.async(function*(count) {
+const finish_test = async function(count) {
   is(count, 1, "1 Add-on should have been successfully installed");
 
-  const results = yield ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
+  const results = await ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
     return {
       return: content.document.getElementById("return").textContent,
       status: content.document.getElementById("status").textContent,
@@ -49,5 +49,5 @@ const finish_test = Task.async(function*(count) {
 
   gBrowser.removeCurrentTab();
   Harness.finish();
-});
+};
 // ----------------------------------------------------------------------------

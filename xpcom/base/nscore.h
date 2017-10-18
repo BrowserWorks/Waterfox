@@ -87,6 +87,15 @@
 #define NS_CONSTRUCTOR_FASTCALL
 #endif
 
+/**
+ * Various API modifiers.
+ *
+ * - NS_IMETHOD/NS_IMETHOD_: use for in-class declarations and definitions.
+ * - NS_IMETHODIMP/NS_IMETHODIMP_: use for out-of-class definitions.
+ * - NS_METHOD_: usually used in conjunction with NS_CALLBACK_. Best avoided.
+ * - NS_CALLBACK_: used in some legacy situations. Best avoided.
+ */
+
 #ifdef XP_WIN
 
 #define NS_IMPORT __declspec(dllimport)
@@ -121,32 +130,8 @@
 
 #endif
 
-/**
- * Macro for creating typedefs for pointer-to-member types which are
- * declared with stdcall.  It is important to use this for any type which is
- * declared as stdcall (i.e. NS_IMETHOD).  For example, instead of writing:
- *
- *  typedef nsresult (nsIFoo::*someType)(nsISupports* arg);
- *
- *  you should write:
- *
- *  typedef
- *  NS_STDCALL_FUNCPROTO(nsresult, someType, nsIFoo, typeFunc, (nsISupports*));
- *
- *  where nsIFoo::typeFunc is any method declared as
- *  NS_IMETHOD typeFunc(nsISupports*);
- *
- *  XXX this can be simplified to always use the non-typeof implementation
- *  when http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11893 is fixed.
- */
-
-#ifdef __GNUC__
-#define NS_STDCALL_FUNCPROTO(ret, name, class, func, args) \
-  typeof(&class::func) name
-#else
-#define NS_STDCALL_FUNCPROTO(ret, name, class, func, args) \
-  ret (NS_STDCALL class::*name) args
-#endif
+#define NS_IMETHOD          NS_IMETHOD_(nsresult)
+#define NS_IMETHODIMP       NS_IMETHODIMP_(nsresult)
 
 /**
  * Deprecated declarations.
@@ -160,26 +145,12 @@
 #endif
 
 /**
- * Printf style formats
- */
-#ifdef __GNUC__
-#define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck)  \
-    __attribute__ ((format (printf, stringIndex, firstToCheck)))
-#else
-#define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck)
-#endif
-
-/**
- * Generic API modifiers which return the standard XPCOM nsresult type
- */
-#define NS_IMETHOD          NS_IMETHOD_(nsresult)
-#define NS_IMETHODIMP       NS_IMETHODIMP_(nsresult)
-#define NS_METHOD           NS_METHOD_(nsresult)
-#define NS_CALLBACK(_name)  NS_CALLBACK_(nsresult, _name)
-
-/**
  * Import/Export macros for XPCOM APIs
  */
+
+#define EXPORT_XPCOM_API(type) type
+#define IMPORT_XPCOM_API(type) type
+#define GLUE_XPCOM_API(type) type
 
 #ifdef __cplusplus
 #define NS_EXTERN_C extern "C"
@@ -187,29 +158,7 @@
 #define NS_EXTERN_C
 #endif
 
-#define EXPORT_XPCOM_API(type) NS_EXTERN_C NS_EXPORT type NS_FROZENCALL
-#define IMPORT_XPCOM_API(type) NS_EXTERN_C NS_IMPORT type NS_FROZENCALL
-#define GLUE_XPCOM_API(type) NS_EXTERN_C NS_HIDDEN_(type) NS_FROZENCALL
-
-#ifdef IMPL_LIBXUL
-#define XPCOM_API(type) EXPORT_XPCOM_API(type)
-#elif defined(XPCOM_GLUE)
-#define XPCOM_API(type) GLUE_XPCOM_API(type)
-#else
-#define XPCOM_API(type) IMPORT_XPCOM_API(type)
-#endif
-
-#ifdef MOZILLA_INTERNAL_API
-   /*
-     The frozen string API has different definitions of nsAC?String
-     classes than the internal API. On systems that explicitly declare
-     dllexport symbols this is not a problem, but on ELF systems
-     internal symbols can accidentally "shine through"; we rename the
-     internal classes to avoid symbol conflicts.
-   */
-#  define nsAString nsAString_internal
-#  define nsACString nsACString_internal
-#endif
+#define XPCOM_API(type) NS_EXTERN_C type
 
 #if (defined(DEBUG) || defined(FORCE_BUILD_REFCNT_LOGGING))
 /* Make refcnt logging part of the build. This doesn't mean that

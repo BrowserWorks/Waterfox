@@ -2,6 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint
+  "no-unused-vars": ["error", {
+    vars: "local",
+    args: "none",
+    varsIgnorePattern: "^(Cc|Ci|Cr|Cu|EXPORTED_SYMBOLS)$",
+  }],
+*/
+
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/SimpleTest.js */
+
 var gPopupShownExpected = false;
 var gPopupShownListener;
 var gLastAutoCompleteResults;
@@ -11,13 +21,13 @@ var gChromeScript;
  * Returns the element with the specified |name| attribute.
  */
 function $_(formNum, name) {
-  var form = document.getElementById("form" + formNum);
+  let form = document.getElementById("form" + formNum);
   if (!form) {
     ok(false, "$_ couldn't find requested form " + formNum);
     return null;
   }
 
-  var element = form.elements.namedItem(name);
+  let element = form.elements.namedItem(name);
   if (!element) {
     ok(false, "$_ couldn't find requested element " + name);
     return null;
@@ -38,20 +48,21 @@ function $_(formNum, name) {
 // Mochitest gives us a sendKey(), but it's targeted to a specific element.
 // This basically sends an untargeted key event, to whatever's focused.
 function doKey(aKey, modifier) {
-    var keyName = "DOM_VK_" + aKey.toUpperCase();
-    var key = SpecialPowers.Ci.nsIDOMKeyEvent[keyName];
+  let keyName = "DOM_VK_" + aKey.toUpperCase();
+  let key = SpecialPowers.Ci.nsIDOMKeyEvent[keyName];
 
-    // undefined --> null
-    if (!modifier)
-        modifier = null;
+  // undefined --> null
+  if (!modifier) {
+    modifier = null;
+  }
 
-    // Window utils for sending fake key events.
-    var wutils = SpecialPowers.getDOMWindowUtils(window);
+  // Window utils for sending fake key events.
+  let wutils = SpecialPowers.getDOMWindowUtils(window);
 
-    if (wutils.sendKeyEvent("keydown",  key, 0, modifier)) {
-      wutils.sendKeyEvent("keypress", key, 0, modifier);
-    }
-    wutils.sendKeyEvent("keyup",    key, 0, modifier);
+  if (wutils.sendKeyEvent("keydown", key, 0, modifier)) {
+    wutils.sendKeyEvent("keypress", key, 0, modifier);
+  }
+  wutils.sendKeyEvent("keyup", key, 0, modifier);
 }
 
 function registerPopupShownListener(listener) {
@@ -67,15 +78,16 @@ function getMenuEntries() {
     throw new Error("no autocomplete results");
   }
 
-  var results = gLastAutoCompleteResults;
+  let results = gLastAutoCompleteResults;
   gLastAutoCompleteResults = null;
   return results;
 }
 
 function checkArrayValues(actualValues, expectedValues, msg) {
   is(actualValues.length, expectedValues.length, "Checking array values: " + msg);
-  for (var i = 0; i < expectedValues.length; i++)
+  for (let i = 0; i < expectedValues.length; i++) {
     is(actualValues[i], expectedValues[i], msg + " Checking array entry #" + i);
+  }
 }
 
 var checkObserver = {
@@ -91,16 +103,18 @@ var checkObserver = {
     gChromeScript.sendAsyncMessage("removeObserver");
   },
 
-  waitForChecks: function(callback) {
-    if (this.verifyStack.length == 0)
+  waitForChecks(callback) {
+    if (this.verifyStack.length == 0) {
       callback();
-    else
+    } else {
       this.callback = callback;
+    }
   },
 
-  observe: function({ subject, topic, data }) {
-    if (data != "formhistory-add" && data != "formhistory-update")
+  observe({ subject, topic, data }) {
+    if (data != "formhistory-add" && data != "formhistory-update") {
       return;
+    }
     ok(this.verifyStack.length > 0, "checking if saved form data was expected");
 
     // Make sure that every piece of data we expect to be saved is saved, and no
@@ -112,31 +126,31 @@ var checkObserver = {
     // - if there are too few messages, test will time out
     // - if there are too many messages, test will error out here
     //
-    var expected = this.verifyStack.shift();
+    let expected = this.verifyStack.shift();
 
     countEntries(expected.name, expected.value,
-      function(num) {
-        ok(num > 0, expected.message);
-        if (checkObserver.verifyStack.length == 0) {
-          var callback = checkObserver.callback;
-          checkObserver.callback = null;
-          callback();
-        }
-      });
-  }
+                 function(num) {
+                   ok(num > 0, expected.message);
+                   if (checkObserver.verifyStack.length == 0) {
+                     let callback = checkObserver.callback;
+                     checkObserver.callback = null;
+                     callback();
+                   }
+                 });
+  },
 };
 
 function checkForSave(name, value, message) {
-  checkObserver.verifyStack.push({ name : name, value: value, message: message });
+  checkObserver.verifyStack.push({ name, value, message });
 }
 
 function getFormSubmitButton(formNum) {
-  var form = $("form" + formNum); // by id, not name
+  let form = $("form" + formNum); // by id, not name
   ok(form != null, "getting form " + formNum);
 
   // we can't just call form.submit(), because that doesn't seem to
   // invoke the form onsubmit handler.
-  var button = form.firstChild;
+  let button = form.firstChild;
   while (button && button.type != "submit") { button = button.nextSibling; }
   ok(button != null, "getting form submit button");
 
@@ -187,8 +201,8 @@ function updateFormHistory(changes, then = null) {
 function notifyMenuChanged(expectedCount, expectedFirstValue, then = null) {
   return new Promise(resolve => {
     gChromeScript.sendAsyncMessage("waitForMenuChange",
-                            { expectedCount,
-                              expectedFirstValue });
+                                   { expectedCount,
+                                     expectedFirstValue });
     gChromeScript.addMessageListener("gotMenuChange", function changed({ results }) {
       gChromeScript.removeMessageListener("gotMenuChange", changed);
       gLastAutoCompleteResults = results;
@@ -227,34 +241,42 @@ function getPopupState(then = null) {
 }
 
 function listenForUnexpectedPopupShown() {
-  gChromeScript.addMessageListener("onpopupshown", function onPopupShown() {
+  gPopupShownListener = function onPopupShown() {
     if (!gPopupShownExpected) {
       ok(false, "Unexpected autocomplete popupshown event");
     }
-  });
+  };
+}
+
+async function promiseNoUnexpectedPopupShown() {
+  gPopupShownExpected = false;
+  listenForUnexpectedPopupShown();
+  SimpleTest.requestFlakyTimeout("Giving a chance for an unexpected popupshown to occur");
+  await new Promise(resolve => setTimeout(resolve, 1000));
 }
 
 /**
  * Resolve at the next popupshown event for the autocomplete popup
- * @return {Promise} with the results
+ * @returns {Promise} with the results
  */
 function promiseACShown() {
   gPopupShownExpected = true;
   return new Promise(resolve => {
-    gChromeScript.addMessageListener("onpopupshown", ({ results }) => {
+    gPopupShownListener = ({ results }) => {
       gPopupShownExpected = false;
       resolve(results);
-    });
+    };
   });
 }
 
 function satchelCommonSetup() {
-  var chromeURL = SimpleTest.getTestFileURL("parent_utils.js");
+  let chromeURL = SimpleTest.getTestFileURL("parent_utils.js");
   gChromeScript = SpecialPowers.loadChromeScript(chromeURL);
   gChromeScript.addMessageListener("onpopupshown", ({ results }) => {
     gLastAutoCompleteResults = results;
-    if (gPopupShownListener)
-      gPopupShownListener();
+    if (gPopupShownListener) {
+      gPopupShownListener({results});
+    }
   });
 
   SimpleTest.registerCleanupFunction(() => {

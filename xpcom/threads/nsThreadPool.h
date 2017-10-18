@@ -25,10 +25,9 @@ class nsThreadPool final
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIEVENTTARGET
+  NS_DECL_NSIEVENTTARGET_FULL
   NS_DECL_NSITHREADPOOL
   NS_DECL_NSIRUNNABLE
-  using nsIEventTarget::Dispatch;
 
   nsThreadPool();
 
@@ -41,6 +40,7 @@ private:
 
   nsCOMArray<nsIThread> mThreads;
   mozilla::Mutex        mMutex;
+  mozilla::CondVar      mEventsAvailable;
   nsEventQueue          mEvents;
   uint32_t              mThreadLimit;
   uint32_t              mIdleThreadLimit;

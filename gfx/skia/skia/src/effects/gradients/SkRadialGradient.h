@@ -26,10 +26,7 @@ public:
 
     GradientType asAGradient(GradientInfo* info) const override;
 #if SK_SUPPORT_GPU
-    const GrFragmentProcessor* asFragmentProcessor(GrContext*,
-                                                   const SkMatrix& viewM,
-                                                   const SkMatrix*,
-                                                   SkFilterQuality) const override;
+    sk_sp<GrFragmentProcessor> asFragmentProcessor(const AsFPArgs&) const override;
 #endif
 
     SK_TO_STRING_OVERRIDE()
@@ -38,8 +35,7 @@ public:
 protected:
     SkRadialGradient(SkReadBuffer& buffer);
     void flatten(SkWriteBuffer& buffer) const override;
-    size_t onContextSize(const ContextRec&) const override;
-    Context* onCreateContext(const ContextRec&, void* storage) const override;
+    Context* onMakeContext(const ContextRec&, SkArenaAlloc*) const override;
 
 private:
     const SkPoint fCenter;

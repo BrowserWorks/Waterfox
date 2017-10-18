@@ -10,8 +10,8 @@
 
 #include <stdlib.h>  // NULL
 
-#include "testing/gtest/include/gtest/gtest.h"
 #include "webrtc/modules/rtp_rtcp/source/vp8_partition_aggregator.h"
+#include "webrtc/test/gtest.h"
 
 namespace webrtc {
 
@@ -209,4 +209,4 @@ TEST(Vp8PartitionAggregator, TestCalcNumberOfFragments) {
                 1600, kMTU, 1, 900, 1000));
 }
 
-}  // namespace
+}  // namespace webrtc

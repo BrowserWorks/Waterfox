@@ -7,14 +7,16 @@
 #ifndef nsSHEntryShared_h__
 #define nsSHEntryShared_h__
 
-#include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
 #include "nsCOMArray.h"
+#include "nsCOMPtr.h"
+#include "nsExpirationTracker.h"
 #include "nsIBFCacheEntry.h"
 #include "nsIMutationObserver.h"
-#include "nsExpirationTracker.h"
 #include "nsRect.h"
 #include "nsString.h"
+#include "nsWeakPtr.h"
+
 #include "mozilla/Attributes.h"
 
 class nsSHEntry;
@@ -24,7 +26,7 @@ class nsIContentViewer;
 class nsIDocShellTreeItem;
 class nsILayoutHistoryState;
 class nsDocShellEditorData;
-class nsISupportsArray;
+class nsIMutableArray;
 
 // A document may have multiple SHEntries, either due to hash navigations or
 // calls to history.pushState.  SHEntries corresponding to the same document
@@ -46,19 +48,16 @@ public:
   NS_DECL_NSIMUTATIONOBSERVER
   NS_DECL_NSIBFCACHEENTRY
 
+  nsExpirationState *GetExpirationState() { return &mExpirationState; }
+
 private:
   ~nsSHEntryShared();
 
   friend class nsSHEntry;
 
-  friend class HistoryTracker;
-  friend class nsExpirationTracker<nsSHEntryShared, 3>;
-  nsExpirationState *GetExpirationState() { return &mExpirationState; }
-
   static already_AddRefed<nsSHEntryShared> Duplicate(nsSHEntryShared* aEntry);
 
   void RemoveFromExpirationTracker();
-  void Expire();
   nsresult SyncPresentationState();
   void DropPresentationState();
 
@@ -68,14 +67,12 @@ private:
 
   // These members are copied by nsSHEntryShared::Duplicate().  If you add a
   // member here, be sure to update the Duplicate() implementation.
-  uint64_t mDocShellID;
+  nsID mDocShellID;
   nsCOMArray<nsIDocShellTreeItem> mChildShells;
   nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
+  nsCOMPtr<nsIPrincipal> mPrincipalToInherit;
   nsCString mContentType;
-  bool mIsFrameNavigation;
-  bool mSaveLayoutState;
-  bool mSticky;
-  bool mDynamicallyCreated;
+
   nsCOMPtr<nsISupports> mCacheKey;
   uint32_t mLastTouched;
 
@@ -85,12 +82,20 @@ private:
   nsCOMPtr<nsIContentViewer> mContentViewer;
   nsCOMPtr<nsIDocument> mDocument;
   nsCOMPtr<nsILayoutHistoryState> mLayoutHistoryState;
-  bool mExpired;
   nsCOMPtr<nsISupports> mWindowState;
   nsIntRect mViewerBounds;
-  nsCOMPtr<nsISupportsArray> mRefreshURIList;
+  nsCOMPtr<nsIMutableArray> mRefreshURIList;
   nsExpirationState mExpirationState;
   nsAutoPtr<nsDocShellEditorData> mEditorData;
+  nsWeakPtr mSHistory;
+
+  bool mIsFrameNavigation;
+  bool mSaveLayoutState;
+  bool mSticky;
+  bool mDynamicallyCreated;
+
+  // This flag is about necko cache, not bfcache.
+  bool mExpired;
 };
 
 #endif

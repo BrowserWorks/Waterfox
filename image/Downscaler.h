@@ -16,10 +16,9 @@
 #include "mozilla/UniquePtr.h"
 #include "gfxPoint.h"
 #include "nsRect.h"
-
-namespace skia {
-  class ConvolutionFilter1D;
-} // namespace skia
+#ifdef MOZ_ENABLE_SKIA
+#include "mozilla/gfx/ConvolutionFilter.h"
+#endif
 
 namespace mozilla {
 namespace image {
@@ -130,8 +129,8 @@ private:
   UniquePtr<uint8_t[]> mRowBuffer;
   UniquePtr<uint8_t*[]> mWindow;
 
-  UniquePtr<skia::ConvolutionFilter1D> mXFilter;
-  UniquePtr<skia::ConvolutionFilter1D> mYFilter;
+  gfx::ConvolutionFilter mXFilter;
+  gfx::ConvolutionFilter mYFilter;
 
   int32_t mWindowCapacity;
 
@@ -154,14 +153,14 @@ private:
 class Downscaler
 {
 public:
-  explicit Downscaler(const nsIntSize&)
+  explicit Downscaler(const nsIntSize&) : mScale(1.0, 1.0)
   {
     MOZ_RELEASE_ASSERT(false, "Skia is not enabled");
   }
 
-  const nsIntSize& OriginalSize() const { return nsIntSize(); }
-  const nsIntSize& TargetSize() const { return nsIntSize(); }
-  const gfxSize& Scale() const { return gfxSize(1.0, 1.0); }
+  const nsIntSize& OriginalSize() const { return mSize; }
+  const nsIntSize& TargetSize() const { return mSize; }
+  const gfxSize& Scale() const { return mScale; }
 
   nsresult BeginFrame(const nsIntSize&, const Maybe<nsIntRect>&, uint8_t*, bool, bool = false)
   {
@@ -177,6 +176,9 @@ public:
   DownscalerInvalidRect TakeInvalidRect() { return DownscalerInvalidRect(); }
   void ResetForNextProgressivePass() { }
   const nsIntSize FrameSize() const { return nsIntSize(0, 0); }
+private:
+  nsIntSize mSize;
+  gfxSize mScale;
 };
 
 #endif // MOZ_ENABLE_SKIA

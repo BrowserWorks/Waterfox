@@ -70,6 +70,10 @@ END_TEST(testWeakMap_basicOperations)
 
 BEGIN_TEST(testWeakMap_keyDelegates)
 {
+#ifdef JS_GC_ZEAL
+    AutoLeaveZeal nozeal(cx);
+#endif /* JS_GC_ZEAL */
+
     JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
     JS_GC(cx);
     JS::RootedObject map(cx, JS::NewWeakMapObject(cx));
@@ -98,11 +102,11 @@ BEGIN_TEST(testWeakMap_keyDelegates)
      */
     CHECK(newCCW(map, delegateRoot));
     js::SliceBudget budget(js::WorkBudget(1000000));
-    cx->gc.startDebugGC(GC_NORMAL, budget);
+    cx->runtime()->gc.startDebugGC(GC_NORMAL, budget);
     while (JS::IsIncrementalGCInProgress(cx))
-        cx->gc.debugGCSlice(budget);
+        cx->runtime()->gc.debugGCSlice(budget);
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() < delegateRoot->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastSweepGroupIndex() < delegateRoot->zone()->lastSweepGroupIndex());
 #endif
 
     /* Add our entry to the weakmap. */
@@ -114,9 +118,9 @@ BEGIN_TEST(testWeakMap_keyDelegates)
     key = nullptr;
     CHECK(newCCW(map, delegateRoot));
     budget = js::SliceBudget(js::WorkBudget(100000));
-    cx->gc.startDebugGC(GC_NORMAL, budget);
+    cx->runtime()->gc.startDebugGC(GC_NORMAL, budget);
     while (JS::IsIncrementalGCInProgress(cx))
-        cx->gc.debugGCSlice(budget);
+        cx->runtime()->gc.debugGCSlice(budget);
     CHECK(checkSize(map, 1));
 
     /*
@@ -124,7 +128,7 @@ BEGIN_TEST(testWeakMap_keyDelegates)
      * necessary because of the presence of the delegate and the CCW.
      */
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() == delegateRoot->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastSweepGroupIndex() == delegateRoot->zone()->lastSweepGroupIndex());
 #endif
 
     /* Check that when the delegate becomes unreachable the entry is removed. */
@@ -191,6 +195,11 @@ JSObject* newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
         if (!JS_WrapObject(cx, &object))
             return nullptr;
     }
+
+    // In order to test the SCC algorithm, we need the wrapper/wrappee to be
+    // tenured.
+    cx->runtime()->gc.evictNursery();
+
     return object;
 }
 
@@ -202,6 +211,7 @@ JSObject* newDelegate()
         nullptr, /* getProperty */
         nullptr, /* setProperty */
         nullptr, /* enumerate */
+        nullptr, /* newEnumerate */
         nullptr, /* resolve */
         nullptr, /* mayResolve */
         nullptr, /* finalize */

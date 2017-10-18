@@ -15,7 +15,7 @@
  * 1. Notifies to the offline cache update service about a fake
  *    low device storage situation.
  * 2. Schedules an update and observes for its notifications.
- * 3. We are supposed to recieve an error event notifying about the cancelation
+ * 3. We are supposed to receive an error event notifying about the cancelation
  *    of the update because of the low storage situation.
  * 4. Notifies to the offline cache update service that we've recovered from
  *    the low storage situation.
@@ -40,7 +40,7 @@ function finish() {
 if (OfflineTest.setup()) {
   obs.notifyObservers(updateService, "disk-space-watcher", "full");
 
-  var updateObserver = {
+  var updateObserver = SpecialPowers.wrapCallbackObject({
     updateStateChanged: function (aUpdate, aState) {
       switch(aState) {
         case Ci.nsIOfflineCacheUpdateObserver.STATE_ERROR:
@@ -68,13 +68,13 @@ if (OfflineTest.setup()) {
       }
     },
     applicationCacheAvailable: function() {}
-  };
+  });
 
   var manifest = "http://mochi.test:8888/tests/dom/tests/mochitest/ajax/offline/simpleManifest.cacheManifest";
   var ioService = Cc["@mozilla.org/network/io-service;1"]
                   .getService(Ci.nsIIOService);
-  var manifestURI = ioService.newURI(manifest, null, null);
-  var documentURI = ioService.newURI(document.documentURI, null, null);
+  var manifestURI = ioService.newURI(manifest);
+  var documentURI = ioService.newURI(document.documentURI);
   var update = updateService.scheduleUpdate(manifestURI, documentURI, systemPrincipal, window);
   update.addObserver(updateObserver, false);
 }

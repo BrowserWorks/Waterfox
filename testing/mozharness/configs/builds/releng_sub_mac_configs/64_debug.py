@@ -12,17 +12,16 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'stage_platform': 'macosx64-debug',
     'debug_build': True,
     'objdir': 'obj-firefox',
     'enable_talos_sendchange': False,
+    'enable_unittest_sendchange': False,
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
         'TINDERBOX_OUTPUT': '1',

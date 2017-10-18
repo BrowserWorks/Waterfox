@@ -28,18 +28,16 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsImageControlFrame)
 
-  virtual void Reflow(nsPresContext*           aPresContext,
-                          ReflowOutput&     aDesiredSize,
-                          const ReflowInput& aReflowInput,
-                          nsReflowStatus&          aStatus) override;
+  virtual void Reflow(nsPresContext* aPresContext,
+                      ReflowOutput& aDesiredSize,
+                      const ReflowInput& aReflowInput,
+                      nsReflowStatus& aStatus) override;
 
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
-
-  virtual nsIAtom* GetType() const override;
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
@@ -59,9 +57,8 @@ public:
                                    const nsAString& aValue) override;
 };
 
-
 nsImageControlFrame::nsImageControlFrame(nsStyleContext* aContext)
-  : nsImageFrame(aContext)
+  : nsImageFrame(aContext, kClassID)
 {
 }
 
@@ -118,12 +115,6 @@ nsImageControlFrame::AccessibleType()
 }
 #endif
 
-nsIAtom*
-nsImageControlFrame::GetType() const
-{
-  return nsGkAtoms::imageControlFrame;
-}
-
 void
 nsImageControlFrame::Reflow(nsPresContext*           aPresContext,
                             ReflowOutput&     aDesiredSize,
@@ -152,9 +143,10 @@ nsImageControlFrame::HandleEvent(nsPresContext* aPresContext,
 
   // do we have user-input style?
   const nsStyleUserInterface* uiStyle = StyleUserInterface();
-  if (uiStyle->mUserInput == NS_STYLE_USER_INPUT_NONE || uiStyle->mUserInput == NS_STYLE_USER_INPUT_DISABLED)
+  if (uiStyle->mUserInput == StyleUserInput::None ||
+      uiStyle->mUserInput == StyleUserInput::Disabled) {
     return nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
-
+  }
   if (mContent->HasAttr(kNameSpaceID_None, nsGkAtoms::disabled)) { // XXX cache disabled
     return NS_OK;
   }

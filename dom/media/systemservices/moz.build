@@ -1,4 +1,4 @@
-# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,17 +8,15 @@ if CONFIG['MOZ_WEBRTC']:
     EXPORTS += [
         'CamerasChild.h',
         'CamerasParent.h',
-        'LoadManager.h',
-        'LoadManagerFactory.h',
-        'LoadMonitor.h',
+        'VideoEngine.h',
+        'VideoFrameUtils.h'
     ]
     UNIFIED_SOURCES += [
         'CamerasChild.cpp',
         'CamerasParent.cpp',
-        'LoadManager.cpp',
-        'LoadManagerFactory.cpp',
-        'LoadMonitor.cpp',
         'ShmemPool.cpp',
+        'VideoEngine.cpp',
+        'VideoFrameUtils.cpp'
     ]
     LOCAL_INCLUDES += [
         '/media/webrtc/signaling',
@@ -28,6 +26,11 @@ if CONFIG['OS_TARGET'] == 'WINNT':
     DEFINES['WEBRTC_WIN'] = True
 else:
     DEFINES['WEBRTC_POSIX'] = True
+    # Must match build/gyp.mozbuild: enable_libevent
+    DEFINES['WEBRTC_BUILD_LIBEVENT'] = True
+
+if CONFIG['OS_TARGET'] == 'Android':
+    DEFINES['WEBRTC_ANDROID'] = True
 
 
 if CONFIG['OS_TARGET'] == 'Android':
@@ -42,16 +45,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
   UNIFIED_SOURCES += ['OSXRunLoopSingleton.cpp']
   EXPORTS += ['OSXRunLoopSingleton.h']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    if CONFIG['ANDROID_VERSION'] >= '17':
-        LOCAL_INCLUDES += [
-            '%' + '%s/frameworks/wilhelm/include' % CONFIG['ANDROID_SOURCE'],
-        ]
-    else:
-        LOCAL_INCLUDES += [
-            '%' + '%s/system/media/wilhelm/include' % CONFIG['ANDROID_SOURCE'],
-        ]
-
 if CONFIG['_MSC_VER']:
     DEFINES['__PRETTY_FUNCTION__'] = '__FUNCSIG__'
 
@@ -62,7 +55,9 @@ if CONFIG['_MSC_VER']:
 
 EXPORTS.mozilla += ['ShmemPool.h',]
 
-EXPORTS.mozilla.media += ['MediaChild.h',
+EXPORTS.mozilla.media += ['CamerasTypes.h',
+                          'DeviceChangeCallback.h',
+                          'MediaChild.h',
                           'MediaParent.h',
                           'MediaSystemResourceClient.h',
                           'MediaSystemResourceManager.h',

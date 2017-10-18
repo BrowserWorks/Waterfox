@@ -15,8 +15,8 @@
 #include "nsDisplayList.h"
 #include "FrameLayerBuilder.h"
 #include "nsPrintfCString.h"
-#include "DisplayItemScrollClip.h"
 
+#include <iostream>
 #include <stdio.h>
 
 using namespace mozilla;
@@ -125,8 +125,10 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
       contentData.AppendLiteral(" id:");
       contentData.Append(tmp);
     }
-    if (content->GetClasses()) {
-      content->GetClasses()->ToString(tmp);
+    const nsAttrValue* classes = content->IsElement() ?
+      content->AsElement()->GetClasses() : nullptr;
+    if (classes) {
+      classes->ToString(tmp);
       contentData.AppendLiteral(" class:");
       contentData.Append(tmp);
     }
@@ -149,7 +151,7 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   }
 #endif
 
-  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) layerBounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) scrollClip(%s)%s ref=0x%p agr=0x%p",
+  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) layerBounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) asr(%s) clipChain(%s)%s ref=0x%p agr=0x%p",
           aItem->Name(), aItem, (void*)f, NS_ConvertUTF16toUTF8(contentData).get(),
           (aItem->ZIndex() ? nsPrintfCString("z=%d ", aItem->ZIndex()).get() : ""),
           rect.x, rect.y, rect.width, rect.height,
@@ -157,7 +159,8 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
           vis.x, vis.y, vis.width, vis.height,
           component.x, component.y, component.width, component.height,
           clip.ToString().get(),
-          DisplayItemScrollClip::ToString(aItem->ScrollClip()).get(),
+          ActiveScrolledRoot::ToString(aItem->GetActiveScrolledRoot()).get(),
+          DisplayItemClipChain::ToString(aItem->GetClipChain()).get(),
           aItem->IsUniform(aBuilder) ? " uniform" : "",
           aItem->ReferenceFrame(), aItem->GetAnimatedGeometryRoot()->mFrame);
 
@@ -166,13 +169,15 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
     aStream << nsPrintfCString(" (opaque %d,%d,%d,%d)", r.x, r.y, r.width, r.height);
   }
 
-  if (aItem->Frame()->StyleDisplay()->mWillChange.Length() > 0) {
+  const auto& willChange = aItem->Frame()->StyleDisplay()->mWillChange;
+  if (!willChange.IsEmpty()) {
     aStream << " (will-change=";
-    for (size_t i = 0; i < aItem->Frame()->StyleDisplay()->mWillChange.Length(); i++) {
+    for (size_t i = 0; i < willChange.Length(); i++) {
       if (i > 0) {
         aStream << ",";
       }
-      aStream << NS_LossyConvertUTF16toASCII(aItem->Frame()->StyleDisplay()->mWillChange[i]).get();
+      nsDependentAtomString buffer(willChange[i]);
+      aStream << NS_LossyConvertUTF16toASCII(buffer).get();
     }
     aStream << ")";
   }
@@ -195,9 +200,15 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
     }
   }
 #ifdef MOZ_DUMP_PAINTING
-  if (aItem->GetType() == nsDisplayItem::TYPE_SVG_EFFECTS) {
+  if (aItem->GetType() == nsDisplayItem::TYPE_MASK) {
     nsCString str;
-    (static_cast<nsDisplaySVGEffects*>(aItem))->PrintEffects(str);
+    (static_cast<nsDisplayMask*>(aItem))->PrintEffects(str);
+    aStream << str.get();
+  }
+
+  if (aItem->GetType() == nsDisplayItem::TYPE_FILTER) {
+    nsCString str;
+    (static_cast<nsDisplayFilter*>(aItem))->PrintEffects(str);
     aStream << str.get();
   }
 #endif
@@ -246,6 +257,25 @@ nsFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
                           bool aDumpHtml)
 {
   PrintDisplayListTo(aBuilder, aList, aStream, 0, aDumpHtml);
+}
+
+/**
+ * The two functions below are intended to be called from a debugger.
+ */
+void
+PrintDisplayItemToStdout(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem)
+{
+  std::stringstream stream;
+  PrintDisplayItemTo(aBuilder, aItem, stream, 0, true, false);
+  std::cout << stream.str() << std::endl;
+}
+
+void
+PrintDisplayListToStdout(nsDisplayListBuilder* aBuilder, const nsDisplayList& aList)
+{
+  std::stringstream stream;
+  PrintDisplayListTo(aBuilder, aList, stream, 0, false);
+  std::cout << stream.str() << std::endl;
 }
 
 #ifdef MOZ_DUMP_PAINTING

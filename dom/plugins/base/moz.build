@@ -4,9 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    DIRS += ['android']
-
 XPIDL_SOURCES += [
     'nsIHTTPHeaderListener.idl',
     'nsIPluginDocument.idl',
@@ -31,7 +28,6 @@ EXPORTS += [
     'nsPluginInstanceOwner.h',
     'nsPluginLogging.h',
     'nsPluginNativeWindow.h',
-    'nsPluginNativeWindowGtk.h',
     'nsPluginsCID.h',
     'nsPluginsDir.h',
     'nsPluginTags.h',
@@ -70,17 +66,9 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     ]
 else:
     UNIFIED_SOURCES += [
+        'nsPluginNativeWindow.cpp',
         'nsPluginsDirUnix.cpp',
     ]
-    if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
-        # This file cannot be built in unified mode because of name clashes in X11 headers.
-        SOURCES += [
-            'nsPluginNativeWindowGtk.cpp',
-        ]
-    else:
-        UNIFIED_SOURCES += [
-            'nsPluginNativeWindow.cpp',
-        ]
 
 LOCAL_INCLUDES += [
     '/dom/base',
@@ -89,15 +77,9 @@ LOCAL_INCLUDES += [
     '/layout/xul',
     '/netwerk/base',
     '/widget',
-    '/widget/android',
     '/widget/cocoa',
     '/xpcom/base',
 ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    LOCAL_INCLUDES += [
-        '/dom/plugins/base/android',
-    ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [
@@ -105,8 +87,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
-
-DEFINES['SK_BUILD_FOR_ANDROID_NDK'] = True
 
 FINAL_LIBRARY = 'xul'
 

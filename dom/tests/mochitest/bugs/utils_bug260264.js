@@ -8,9 +8,9 @@ const PROMPT_ACTION = SpecialPowers.Ci.nsIPermissionManager.PROMPT_ACTION;
  */
 function send(element, event, handler) {
   function unique_handler() { return handler.apply(this, arguments) }
-  element.addEventListener(event, unique_handler, false);
+  element.addEventListener(event, unique_handler);
   try { sendMouseEvent({ type: event }, element.id) }
-  finally { element.removeEventListener(event, unique_handler, false) }
+  finally { element.removeEventListener(event, unique_handler) }
 }
 
 /**
@@ -46,7 +46,7 @@ function send(element, event, handler) {
               }
             };
 
-            SpecialPowers.addObserver(observer, "outer-window-destroyed", false);
+            SpecialPowers.addObserver(observer, "outer-window-destroyed");
           });
         })(win));
         win.close();

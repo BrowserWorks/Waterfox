@@ -13,7 +13,6 @@
 //   { name: "ExperimentalThing", release: false },
 //   { name: "ReallyExperimentalThing", nightly: true },
 //   { name: "DesktopOnlyThing", desktop: true },
-//   { name: "NonB2gOnlyThing", b2g: false },
 //   { name: "FancyControl", xbl: true },
 //   { name: "DisabledEverywhere", disabled: true },
 // ];
@@ -26,7 +25,10 @@ var ecmaGlobals =
   [
     "Array",
     "ArrayBuffer",
+    "Atomics",
     "Boolean",
+    {name: "ByteLengthQueuingStrategy", optional: true},
+    {name: "CountQueuingStrategy", optional: true},
     "DataView",
     "Date",
     "Error",
@@ -39,7 +41,7 @@ var ecmaGlobals =
     "Int32Array",
     "Int8Array",
     "InternalError",
-    {name: "Intl", android: false},
+    "Intl",
     "Iterator",
     "JSON",
     "Map",
@@ -50,13 +52,13 @@ var ecmaGlobals =
     "Promise",
     "Proxy",
     "RangeError",
+    {name: "ReadableStream", optional: true},
     "ReferenceError",
     "Reflect",
     "RegExp",
     "Set",
-    {name: "SharedArrayBuffer", nightly: true},
+    "SharedArrayBuffer",
     {name: "SIMD", nightly: true},
-    {name: "Atomics", nightly: true},
     "StopIteration",
     "String",
     "Symbol",
@@ -70,6 +72,7 @@ var ecmaGlobals =
     "URIError",
     "WeakMap",
     "WeakSet",
+    {name: "WebAssembly", optional: true}
   ];
 // IMPORTANT: Do not change the list above without review from
 //            a JavaScript Engine peer!
@@ -85,6 +88,8 @@ var interfaceNamesInGlobalScope =
     "Cache",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CacheStorage",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "CloseEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Crypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -104,11 +109,17 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "DOMStringList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "ErrorEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Event",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "EventSource",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "EventTarget",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "File",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FileList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FileReader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -152,6 +163,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MessagePort",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    { name: "NetworkInformation", android: true },
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Notification",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "OffscreenCanvas", disabled: true },
@@ -168,17 +181,21 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "PerformanceObserverEntryList", nightly: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "PushManager", b2g: false },
+    "ProgressEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "PushSubscription", b2g: false },
+    "PushManager",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "PushSubscriptionOptions", b2g: false },
+    "PushSubscription",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "PushSubscriptionOptions",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Request",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Response",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "ServiceWorkerRegistration", b2g: false },
+    "ServiceWorkerRegistration",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "StorageManager", nightly: true, isSecureContext: true, android: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SubtleCrypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -231,7 +248,7 @@ var interfaceNamesInGlobalScope =
   ];
 // IMPORTANT: Do not change the list above without review from a DOM peer!
 
-function createInterfaceMap(permissionMap, version, userAgent, isB2G) {
+function createInterfaceMap(version, userAgent) {
   var isNightly = version.endsWith("a1");
   var isRelease = !version.includes("a");
   var isDesktop = !/Mobile|Tablet/.test(userAgent);
@@ -250,11 +267,12 @@ function createInterfaceMap(permissionMap, version, userAgent, isB2G) {
             (entry.nightlyAndroid === !(isAndroid && isNightly) && isAndroid) ||
             (entry.desktop === !isDesktop) ||
             (entry.android === !isAndroid && !entry.nightlyAndroid) ||
-            (entry.b2g === !isB2G) ||
             (entry.release === !isRelease) ||
-            (entry.permission && !permissionMap[entry.permission]) ||
+            (entry.isSecureContext === !isSecureContext) ||
             entry.disabled) {
           interfaceMap[entry.name] = false;
+        } else if (entry.optional) {
+          interfaceMap[entry.name] = "optional";
         } else {
           interfaceMap[entry.name] = true;
         }
@@ -268,50 +286,37 @@ function createInterfaceMap(permissionMap, version, userAgent, isB2G) {
   return interfaceMap;
 }
 
-function runTest(permissionMap, version, userAgent, isB2G) {
-  var interfaceMap = createInterfaceMap(permissionMap, version, userAgent, isB2G);
+function runTest(version, userAgent) {
+  var interfaceMap = createInterfaceMap(version, userAgent);
   for (var name of Object.getOwnPropertyNames(self)) {
     // An interface name should start with an upper case character.
     if (!/^[A-Z]/.test(name)) {
       continue;
     }
-    ok(interfaceMap[name],
+    ok(interfaceMap[name] === "optional" || interfaceMap[name],
        "If this is failing: DANGER, are you sure you want to expose the new interface " + name +
        " to all webpages as a property on the worker? Do not make a change to this file without a " +
        " review from a DOM peer for that specific change!!! (or a JS peer for changes to ecmaGlobals)");
     delete interfaceMap[name];
   }
   for (var name of Object.keys(interfaceMap)) {
-    ok(name in self === interfaceMap[name],
-       name + " should " + (interfaceMap[name] ? "" : " NOT") + " be defined on the global scope");
-    if (!interfaceMap[name]) {
+    if (interfaceMap[name] === "optional") {
       delete interfaceMap[name];
+    } else {
+      ok(name in self === interfaceMap[name],
+         name + " should " + (interfaceMap[name] ? "" : " NOT") + " be defined on the global scope");
+      if (!interfaceMap[name]) {
+        delete interfaceMap[name];
+      }
     }
   }
   is(Object.keys(interfaceMap).length, 0,
      "The following interface(s) are not enumerated: " + Object.keys(interfaceMap).join(", "));
 }
 
-function appendPermissions(permissions, interfaces) {
-  for (var entry of interfaces) {
-    if (entry.permission !== undefined &&
-        permissions.indexOf(entry.permission) === -1) {
-      permissions.push(entry.permission);
-    }
-  }
-}
-
-var permissions = [];
-appendPermissions(permissions, ecmaGlobals);
-appendPermissions(permissions, interfaceNamesInGlobalScope);
-
-workerTestGetPermissions(permissions, function(permissionMap) {
-  workerTestGetVersion(function(version) {
-    workerTestGetUserAgent(function(userAgent) {
-      workerTestGetIsB2G(function(isB2G) {
-        runTest(permissionMap, version, userAgent, isB2G);
-        workerTestDone();
-      });
-    });
+workerTestGetVersion(function(version) {
+  workerTestGetUserAgent(function(userAgent) {
+    runTest(version, userAgent);
+    workerTestDone();
   });
 });

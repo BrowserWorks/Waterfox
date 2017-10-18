@@ -8,8 +8,8 @@
 #include <stack>
 
 #include "base/base_export.h"
-#include "base/basictypes.h"
 #include "base/callback.h"
+#include "base/macros.h"
 #include "base/synchronization/lock.h"
 
 namespace base {
@@ -59,6 +59,7 @@ class BASE_EXPORT AtExitManager {
  private:
   base::Lock lock_;
   std::stack<base::Closure> stack_;
+  bool processing_callbacks_;
   AtExitManager* next_manager_;  // Stack of managers to allow shadowing.
 
   DISALLOW_COPY_AND_ASSIGN(AtExitManager);

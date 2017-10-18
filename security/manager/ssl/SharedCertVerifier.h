@@ -7,6 +7,7 @@
 
 #include "CertVerifier.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/TimeStamp.h"
 
 namespace mozilla { namespace psm {
 
@@ -19,13 +20,18 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SharedCertVerifier)
 
   SharedCertVerifier(OcspDownloadConfig odc, OcspStrictConfig osc,
-                     OcspGetConfig ogc, uint32_t certShortLifetimeInDays,
+                     OcspGetConfig ogc,
+                     mozilla::TimeDuration ocspSoftTimeout,
+                     mozilla::TimeDuration ocspHardTimeout,
+                     uint32_t certShortLifetimeInDays,
                      PinningMode pinningMode, SHA1Mode sha1Mode,
                      BRNameMatchingPolicy::Mode nameMatchingMode,
-                     NetscapeStepUpPolicy netscapeStepUpPolicy)
-    : mozilla::psm::CertVerifier(odc, osc, ogc, certShortLifetimeInDays,
+                     NetscapeStepUpPolicy netscapeStepUpPolicy,
+                     CertificateTransparencyMode ctMode)
+    : mozilla::psm::CertVerifier(odc, osc, ogc, ocspSoftTimeout,
+                                 ocspHardTimeout, certShortLifetimeInDays,
                                  pinningMode, sha1Mode, nameMatchingMode,
-                                 netscapeStepUpPolicy)
+                                 netscapeStepUpPolicy, ctMode)
   {
   }
 };

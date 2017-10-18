@@ -11,7 +11,7 @@
  */
 
 [Constructor(DOMString type, optional EventInit eventInitDict),
- Exposed=(Window,Worker,System), ProbablyShortLivingObject]
+ Exposed=(Window,Worker,System), ProbablyShortLivingWrapper]
 interface Event {
   [Pure]
   readonly attribute DOMString type;
@@ -34,20 +34,26 @@ interface Event {
   readonly attribute boolean bubbles;
   [Pure]
   readonly attribute boolean cancelable;
+  [NeedsCallerType]
   void preventDefault();
-  [Pure]
+  [Pure, NeedsCallerType]
   readonly attribute boolean defaultPrevented;
   [ChromeOnly, Pure]
   readonly attribute boolean defaultPreventedByChrome;
   [ChromeOnly, Pure]
   readonly attribute boolean defaultPreventedByContent;
+  [Pure]
+  readonly attribute boolean composed;
 
   [Unforgeable, Pure]
   readonly attribute boolean isTrusted;
   [Pure]
   readonly attribute DOMHighResTimeStamp timeStamp;
 
-  void initEvent(DOMString type, boolean bubbles, boolean cancelable);
+  void initEvent(DOMString type,
+                 optional boolean bubbles = false,
+                 optional boolean cancelable = false);
+  attribute boolean cancelBubble;
 };
 
 // Mozilla specific legacy stuff.
@@ -62,11 +68,11 @@ partial interface Event {
   [ChromeOnly] readonly attribute EventTarget? composedTarget;
   [ChromeOnly] readonly attribute boolean multipleActionsPrevented;
   [ChromeOnly] readonly attribute boolean isSynthesized;
-
   boolean getPreventDefault();
 };
 
 dictionary EventInit {
   boolean bubbles = false;
   boolean cancelable = false;
+  boolean composed = false;
 };

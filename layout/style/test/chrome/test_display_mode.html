@@ -19,20 +19,19 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 
 function waitOneEvent(element, name) {
   return new Promise(function(resolve, reject) {
-    element.addEventListener(name, function listener() {
-      element.removeEventListener(name, listener);
+    element.addEventListener(name, function() {
       resolve();
-    });
+    }, {once: true});
   });
 }
 
-add_task(function* () {
-  yield waitOneEvent(window, "load");
+add_task(async function() {
+  await waitOneEvent(window, "load");
 
   var iframe = document.getElementById("subdoc");
   var subdoc = iframe.contentDocument;
   var style = subdoc.getElementById("style");
-  var bodyComputedStyled = subdoc.defaultView.getComputedStyle(subdoc.body, "");
+  var bodyComputedStyled = subdoc.defaultView.getComputedStyle(subdoc.body);
   var win = Services.wm.getMostRecentWindow("navigator:browser");
 
   function queryApplies(q) {
@@ -56,25 +55,25 @@ add_task(function* () {
   // Test entering the OS's fullscreen mode.
   var fullScreenEntered = waitOneEvent(win, "sizemodechange");
   synthesizeKey("VK_F11", {});
-  yield fullScreenEntered;
+  await fullScreenEntered;
   shouldApply("all and (display-mode: fullscreen)");
   shouldNotApply("all and (display-mode: browser)");
   var fullScreenExited = waitOneEvent(win, "sizemodechange");
   synthesizeKey("VK_F11", {});
-  yield fullScreenExited;
+  await fullScreenExited;
   shouldNotApply("all and (display-mode: fullscreen)");
   shouldApply("all and (display-mode: browser)");
 
   // Test entering fullscreen through document requestFullScreen.
   fullScreenEntered = waitOneEvent(document, "mozfullscreenchange");
   document.body.mozRequestFullScreen();
-  yield fullScreenEntered
+  await fullScreenEntered
   ok(document.mozFullScreenElement, "window entered fullscreen");
   shouldApply("all and (display-mode: fullscreen)");
   shouldNotApply("all and (display-mode: browser)");
   fullScreenExited = waitOneEvent(document, "mozfullscreenchange");
   document.mozCancelFullScreen();
-  yield fullScreenExited;
+  await fullScreenExited;
   ok(!document.mozFullScreenElement, "window exited fullscreen");
   shouldNotApply("all and (display-mode: fullscreen)");
   shouldApply("all and (display-mode: browser)");

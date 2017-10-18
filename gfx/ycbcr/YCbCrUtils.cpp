@@ -118,7 +118,7 @@ ConvertYCbCrToRGB(const layers::PlanarYCbCrData& aData,
                         aData.mCbCrStride,
                         aStride,
                         yuvtype,
-                        ROTATE_0,
+                        aData.mYUVColorSpace,
                         FILTER_BILINEAR);
   } else { // no prescale
 #if defined(HAVE_YCBCR_TO_RGB565)
@@ -148,8 +148,30 @@ ConvertYCbCrToRGB(const layers::PlanarYCbCrData& aData,
                           aData.mYStride,
                           aData.mCbCrStride,
                           aStride,
-                          yuvtype);
+                          yuvtype,
+                          aData.mYUVColorSpace);
   }
+}
+
+void
+ConvertYCbCrAToARGB(const uint8_t* aSrcY,
+                    const uint8_t* aSrcU,
+                    const uint8_t* aSrcV,
+                    const uint8_t* aSrcA,
+                    int aSrcStrideYA, int aSrcStrideUV,
+                    uint8_t* aDstARGB, int aDstStrideARGB,
+                    int aWidth, int aHeight) {
+
+  ConvertYCbCrAToARGB32(aSrcY,
+                        aSrcU,
+                        aSrcV,
+                        aSrcA,
+                        aDstARGB,
+                        aWidth,
+                        aHeight,
+                        aSrcStrideYA,
+                        aSrcStrideUV,
+                        aDstStrideARGB);
 }
 
 } // namespace gfx

@@ -14,7 +14,7 @@
   skin/classic/mozapps/extensions/alerticon-error.svg        (../../shared/extensions/alerticon-error.svg)
   skin/classic/mozapps/extensions/alerticon-info-positive.svg (../../shared/extensions/alerticon-info-positive.svg)
   skin/classic/mozapps/extensions/alerticon-info-negative.svg (../../shared/extensions/alerticon-info-negative.svg)
-  skin/classic/mozapps/formautofill/requestAutocomplete.css  (../../shared/formautofill/requestAutocomplete.css)
+  skin/classic/mozapps/extensions/category-legacy.svg        (../../shared/extensions/category-legacy.svg)
   skin/classic/mozapps/plugins/pluginProblem.css             (../../shared/plugins/pluginProblem.css)
   skin/classic/mozapps/aboutNetworking.css                   (../../shared/aboutNetworking.css)
 #ifndef ANDROID
@@ -25,7 +25,4 @@
   skin/classic/mozapps/plugins/contentPluginBlocked.png      (../../shared/plugins/contentPluginBlocked.png)
   skin/classic/mozapps/plugins/contentPluginClose.png        (../../shared/plugins/contentPluginClose.png)
   skin/classic/mozapps/plugins/contentPluginCrashed.png      (../../shared/plugins/contentPluginCrashed.png)
-  skin/classic/mozapps/plugins/contentPluginDisabled.png     (../../shared/plugins/contentPluginDisabled.png)
-  skin/classic/mozapps/plugins/contentPluginDownload.png     (../../shared/plugins/contentPluginDownload.png)
-  skin/classic/mozapps/plugins/contentPluginMissing.png      (../../shared/plugins/contentPluginMissing.png)
   skin/classic/mozapps/plugins/contentPluginStripe.png       (../../shared/plugins/contentPluginStripe.png)

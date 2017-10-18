@@ -22,8 +22,9 @@
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsIParser.h"
-#include "nsIUnicodeDecoder.h"
+#include "mozilla/Encoding.h"
 #include "nsScannerString.h"
+#include "mozilla/CheckedInt.h"
 
 class nsReadEndCondition {
 public:
@@ -35,7 +36,9 @@ private:
   void operator=(const nsReadEndCondition& aOther); // No assigning
 };
 
-class nsScanner {
+class nsScanner final {
+      using Encoding = mozilla::Encoding;
+      template <typename T> using NotNull = mozilla::NotNull<T>;
   public:
 
       /**
@@ -59,18 +62,6 @@ class nsScanner {
        *  @return  error code reflecting read status
        */
       nsresult GetChar(char16_t& ch);
-
-      /**
-       *  peek ahead to consume next char from scanner's internal
-       *  input buffer
-       *  
-       *  @update  gess 3/25/98
-       *  @param   ch is the char to accept new value
-       *  @return  error code reflecting read status
-       */
-      nsresult Peek(char16_t& ch, uint32_t aOffset=0);
-
-      nsresult Peek(nsAString& aStr, int32_t aNumChars, int32_t aOffset = 0);
 
       /**
        *  Records current offset position in input stream. This allows us
@@ -121,8 +112,7 @@ class nsScanner {
        *  @param   
        *  @return  
        */
-      nsresult Append(const char* aBuffer, uint32_t aLen,
-                      nsIRequest *aRequest);
+      nsresult Append(const char* aBuffer, uint32_t aLen);
 
       /**
        *  Call this to copy bytes out of the scanner that have not yet been consumed
@@ -154,16 +144,14 @@ class nsScanner {
        *  @param   aCharsetSource- where the charset info came from
        *  @return  
        */
-      nsresult SetDocumentCharset(const nsACString& aCharset, int32_t aSource);
+      nsresult SetDocumentCharset(NotNull<const Encoding*> aEncoding,
+                                  int32_t aSource);
 
       void BindSubstring(nsScannerSubstring& aSubstring, const nsScannerIterator& aStart, const nsScannerIterator& aEnd);
       void CurrentPosition(nsScannerIterator& aPosition);
       void EndReading(nsScannerIterator& aPosition);
       void SetPosition(nsScannerIterator& aPosition,
-                       bool aTruncate = false,
-                       bool aReverse = false);
-      void ReplaceCharacter(nsScannerIterator& aPosition,
-                            char16_t aChar);
+                       bool aTruncate = false);
 
       /**
        * Internal method used to cause the internal buffer to
@@ -174,34 +162,15 @@ class nsScanner {
       bool      IsIncremental(void) {return mIncremental;}
       void      SetIncremental(bool anIncrValue) {mIncremental=anIncrValue;}
 
-      /**
-       * Return the position of the first non-whitespace
-       * character. This is only reliable before consumers start
-       * reading from this scanner.
-       */
-      int32_t FirstNonWhitespacePosition()
-      {
-        return mFirstNonWhitespacePosition;
-      }
-
-      /**
-       * Override replacement character used by nsIUnicodeDecoder.
-       * Default behavior is that it uses nsIUnicodeDecoder's mapping.
-       *
-       * @param aReplacementCharacter the replacement character
-       *        XML (expat) parser uses 0xffff
-       */
-      void OverrideReplacementCharacter(char16_t aReplacementCharacter);
-
   protected:
 
-      bool AppendToBuffer(nsScannerString::Buffer *, nsIRequest *aRequest, int32_t aErrorPos = -1);
+      bool AppendToBuffer(nsScannerString::Buffer* aBuffer);
       bool AppendToBuffer(const nsAString& aStr)
       {
         nsScannerString::Buffer* buf = nsScannerString::AllocBufferFromString(aStr);
         if (!buf)
           return false;
-        AppendToBuffer(buf, nullptr);
+        AppendToBuffer(buf);
         return true;
       }
 
@@ -209,19 +178,13 @@ class nsScanner {
       nsScannerIterator            mCurrentPosition; // The position we will next read from in the scanner buffer
       nsScannerIterator            mMarkPosition;    // The position last marked (we may rewind to here)
       nsScannerIterator            mEndPosition;     // The current end of the scanner buffer
-      nsScannerIterator            mFirstInvalidPosition; // The position of the first invalid character that was detected
       nsString        mFilename;
-      uint32_t        mCountRemaining; // The number of bytes still to be read
-                                       // from the scanner buffer
       bool            mIncremental;
-      bool            mHasInvalidCharacter;
-      char16_t       mReplacementCharacter;
-      int32_t         mFirstNonWhitespacePosition;
       int32_t         mCharsetSource;
       nsCString       mCharset;
-      nsCOMPtr<nsIUnicodeDecoder> mUnicodeDecoder;
+      mozilla::UniquePtr<mozilla::Decoder> mUnicodeDecoder;
 
-  private:
+    private:
       nsScanner &operator =(const nsScanner &); // Not implemented.
 };
 

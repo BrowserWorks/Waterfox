@@ -9,7 +9,7 @@
 #include "nsParserCIID.h"
 #include "nsCharsetSource.h"
 #include "nsIXMLContentSink.h"
-#include "nsPresContext.h" 
+#include "nsPresContext.h"
 #include "nsIContent.h"
 #include "nsIContentViewerContainer.h"
 #include "nsIContentViewer.h"
@@ -61,8 +61,8 @@ using namespace mozilla::dom;
 
 nsresult
 NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
-                  const nsAString& aNamespaceURI, 
-                  const nsAString& aQualifiedName, 
+                  const nsAString& aNamespaceURI,
+                  const nsAString& aQualifiedName,
                   nsIDOMDocumentType* aDoctype,
                   nsIURI* aDocumentURI,
                   nsIURI* aBaseURI,
@@ -74,7 +74,7 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
   // Note: can't require that aDocumentURI/aBaseURI/aPrincipal be non-null,
   // since at least one caller (XMLHttpRequest) doesn't have decent args to
   // pass in.
-  
+
   nsresult rv;
 
   *aInstancePtrResult = nullptr;
@@ -128,12 +128,6 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     return rv;
   }
 
-  if (nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(aEventObject)) {
-    d->SetScriptHandlingObject(sgo);
-  } else if (aEventObject){
-    d->SetScopeObject(aEventObject);
-  }
-
   if (isHTML) {
     nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(d);
     NS_ASSERTION(htmlDoc, "HTML Document doesn't implement nsIHTMLDocument?");
@@ -147,26 +141,42 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
   doc->SetPrincipal(aPrincipal);
   doc->SetBaseURI(aBaseURI);
 
+  // We need to set the script handling object after we set the principal such
+  // that the doc group is assigned correctly.
+  if (nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(aEventObject)) {
+    d->SetScriptHandlingObject(sgo);
+  } else if (aEventObject){
+    d->SetScopeObject(aEventObject);
+  }
+
   // XMLDocuments and documents "created in memory" get to be UTF-8 by default,
   // unlike the legacy HTML mess
-  doc->SetDocumentCharacterSet(NS_LITERAL_CSTRING("UTF-8"));
-  
+  doc->SetDocumentCharacterSet(UTF_8_ENCODING);
+
   if (aDoctype) {
-    nsCOMPtr<nsIDOMNode> tmpNode;
-    rv = doc->AppendChild(aDoctype, getter_AddRefs(tmpNode));
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<nsINode> doctypeAsNode = do_QueryInterface(aDoctype);
+    ErrorResult result;
+    d->AppendChild(*doctypeAsNode, result);
+    if (NS_WARN_IF(result.Failed())) {
+      return result.StealNSResult();
+    }
   }
-  
+
   if (!aQualifiedName.IsEmpty()) {
-    nsCOMPtr<nsIDOMElement> root;
-    rv = doc->CreateElementNS(aNamespaceURI, aQualifiedName,
-                              getter_AddRefs(root));
-    NS_ENSURE_SUCCESS(rv, rv);
+    ErrorResult result;
+    ElementCreationOptionsOrString options;
+    options.SetAsString();
 
-    nsCOMPtr<nsIDOMNode> tmpNode;
+    nsCOMPtr<Element> root =
+      doc->CreateElementNS(aNamespaceURI, aQualifiedName, options, result);
+    if (NS_WARN_IF(result.Failed())) {
+      return result.StealNSResult();
+    }
 
-    rv = doc->AppendChild(root, getter_AddRefs(tmpNode));
-    NS_ENSURE_SUCCESS(rv, rv);
+    d->AppendChild(*root, result);
+    if (NS_WARN_IF(result.Failed())) {
+      return result.StealNSResult();
+    }
   }
 
   *aInstancePtrResult = doc;
@@ -221,11 +231,13 @@ namespace dom {
 
 XMLDocument::XMLDocument(const char* aContentType)
   : nsDocument(aContentType),
-    mAsync(true)
+    mChannelIsPending(false),
+    mAsync(true),
+    mLoopingForSyncLoad(false),
+    mIsPlainDocument(false),
+    mSuppressParserErrorElement(false),
+    mSuppressParserErrorConsoleMessages(false)
 {
-  // NOTE! nsDocument::operator new() zeroes out all members, so don't
-  // bother initializing members to 0.
-
   mType = eGenericXML;
 }
 
@@ -266,31 +278,9 @@ XMLDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   nsDocument::ResetToURI(aURI, aLoadGroup, aPrincipal);
 }
 
-NS_IMETHODIMP
-XMLDocument::GetAsync(bool *aAsync)
-{
-  NS_ENSURE_ARG_POINTER(aAsync);
-  *aAsync = mAsync;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-XMLDocument::SetAsync(bool aAsync)
-{
-  mAsync = aAsync;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-XMLDocument::Load(const nsAString& aUrl, bool *aReturn)
-{
-  ErrorResult rv;
-  *aReturn = Load(aUrl, rv);
-  return rv.StealNSResult();
-}
-
 bool
-XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
+XMLDocument::Load(const nsAString& aUrl, CallerType aCallerType,
+                  ErrorResult& aRv)
 {
   bool hasHadScriptObject = true;
   nsIScriptGlobalObject* scriptObject =
@@ -299,8 +289,6 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return false;
   }
-
-  WarnOnceAbout(nsIDocument::eUseOfDOM3LoadMethod);
 
   nsCOMPtr<nsIDocument> callingDoc = GetEntryDocument();
   nsCOMPtr<nsIPrincipal> principal = NodePrincipal();
@@ -316,12 +304,25 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
     return false;
   }
 
+  // Reporting a warning on ourselves is rather pointless, because we probably
+  // have no window id (and hence the warning won't show up in any web console)
+  // and probably aren't considered a "content document" because we're not
+  // loaded in a docshell, so won't accumulate telemetry for use counters.  Try
+  // warning on our entry document, if any, since that should have things like
+  // window ids and associated docshells.
+  nsIDocument* docForWarning = callingDoc ? callingDoc.get() : this;
+  if (aCallerType == CallerType::System) {
+    docForWarning->WarnOnceAbout(nsIDocument::eChromeUseOfDOM3LoadMethod);
+  } else {
+    docForWarning->WarnOnceAbout(nsIDocument::eUseOfDOM3LoadMethod);
+  }
+
   nsIURI *baseURI = mDocumentURI;
   nsAutoCString charset;
 
   if (callingDoc) {
     baseURI = callingDoc->GetDocBaseURI();
-    charset = callingDoc->GetDocumentCharacterSet();
+    callingDoc->GetDocumentCharacterSet()->Name(charset);
   }
 
   // Create a new URI
@@ -405,7 +406,7 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
 
   nsCOMPtr<nsIChannel> channel;
   // nsIRequest::LOAD_BACKGROUND prevents throbber from becoming active,
-  // which in turn keeps STOP button from becoming active  
+  // which in turn keeps STOP button from becoming active
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      callingDoc ? callingDoc.get() :
@@ -426,7 +427,8 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   // when Request.mode set correctly.
   nsCOMPtr<nsIHttpChannelInternal> httpChannel = do_QueryInterface(channel);
   if (httpChannel) {
-    httpChannel->SetCorsMode(nsIHttpChannelInternal::CORS_MODE_SAME_ORIGIN);
+    rv = httpChannel->SetCorsMode(nsIHttpChannelInternal::CORS_MODE_SAME_ORIGIN);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
 
   // StartDocumentLoad asserts that readyState is uninitialized, so
@@ -439,8 +441,8 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
 
   // Prepare for loading the XML document "into oneself"
   nsCOMPtr<nsIStreamListener> listener;
-  if (NS_FAILED(rv = StartDocumentLoad(kLoadAsData, channel, 
-                                       loadGroup, nullptr, 
+  if (NS_FAILED(rv = StartDocumentLoad(kLoadAsData, channel,
+                                       loadGroup, nullptr,
                                        getter_AddRefs(listener),
                                        false))) {
     NS_ERROR("XMLDocument::Load: Failed to start the document load.");
@@ -460,14 +462,9 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   }
 
   if (!mAsync) {
-    nsCOMPtr<nsIThread> thread = do_GetCurrentThread();
-
     nsAutoSyncOperation sync(this);
     mLoopingForSyncLoad = true;
-    while (mLoopingForSyncLoad) {
-      if (!NS_ProcessNextEvent(thread))
-        break;
-    }
+    SpinEventLoopUntil([&]() { return !mLoopingForSyncLoad; });
 
     // We set return to true unless there was a parsing error
     Element* rootElement = GetRootElement();
@@ -487,6 +484,30 @@ XMLDocument::Load(const nsAString& aUrl, ErrorResult& aRv)
   return true;
 }
 
+void
+XMLDocument::SetSuppressParserErrorElement(bool aSuppress)
+{
+  mSuppressParserErrorElement = aSuppress;
+}
+
+bool
+XMLDocument::SuppressParserErrorElement()
+{
+  return mSuppressParserErrorElement;
+}
+
+void
+XMLDocument::SetSuppressParserErrorConsoleMessages(bool aSuppress)
+{
+  mSuppressParserErrorConsoleMessages = aSuppress;
+}
+
+bool
+XMLDocument::SuppressParserErrorConsoleMessages()
+{
+  return mSuppressParserErrorConsoleMessages;
+}
+
 nsresult
 XMLDocument::StartDocumentLoad(const char* aCommand,
                                nsIChannel* aChannel,
@@ -498,7 +519,7 @@ XMLDocument::StartDocumentLoad(const char* aCommand,
 {
   nsresult rv = nsDocument::StartDocumentLoad(aCommand,
                                               aChannel, aLoadGroup,
-                                              aContainer, 
+                                              aContainer,
                                               aDocListener, aReset, aSink);
   if (NS_FAILED(rv)) return rv;
 
@@ -509,8 +530,8 @@ XMLDocument::StartDocumentLoad(const char* aCommand,
 
 
   int32_t charsetSource = kCharsetFromDocTypeDefault;
-  nsAutoCString charset(NS_LITERAL_CSTRING("UTF-8"));
-  TryChannelCharset(aChannel, charsetSource, charset, nullptr);
+  NotNull<const Encoding*> encoding = UTF_8_ENCODING;
+  TryChannelCharset(aChannel, charsetSource, encoding, nullptr);
 
   nsCOMPtr<nsIURI> aUrl;
   rv = aChannel->GetURI(getter_AddRefs(aUrl));
@@ -522,7 +543,7 @@ XMLDocument::StartDocumentLoad(const char* aCommand,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIXMLContentSink> sink;
-    
+
   if (aSink) {
     sink = do_QueryInterface(aSink);
   }
@@ -543,9 +564,9 @@ XMLDocument::StartDocumentLoad(const char* aCommand,
 
   NS_ASSERTION(mChannel, "How can we not have a channel here?");
   mChannelIsPending = true;
-  
-  SetDocumentCharacterSet(charset);
-  mParser->SetDocumentCharset(charset, charsetSource);
+
+  SetDocumentCharacterSet(encoding);
+  mParser->SetDocumentCharset(encoding, charsetSource);
   mParser->SetCommand(aCommand);
   mParser->SetContentSink(sink);
   mParser->Parse(aUrl, nullptr, (void *)this);
@@ -581,13 +602,14 @@ XMLDocument::DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const
 // nsIDOMDocument interface
 
 nsresult
-XMLDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+XMLDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                   bool aPreallocateChildren) const
 {
   NS_ASSERTION(aNodeInfo->NodeInfoManager() == mNodeInfoManager,
                "Can't import this document into another document!");
 
   RefPtr<XMLDocument> clone = new XMLDocument();
-  nsresult rv = CloneDocHelper(clone);
+  nsresult rv = CloneDocHelper(clone, aPreallocateChildren);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // State from XMLDocument

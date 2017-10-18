@@ -1,5 +1,7 @@
 <!--
 /*
+* Copyright (C) 2016 and later: Unicode, Inc. and others.
+* License & terms of use: http://www.unicode.org/copyright.html
 *******************************************************************************
 * Copyright (C) 2015, International Business Machines Corporation and         *
 * others. All Rights Reserved.                                                *
@@ -7,6 +9,7 @@
 */
 -->
 <deprecates>
+	<alias from="ars" to="ar"/>
 	<alias from="de__PHONEBOOK" to="de"  rbpath="/collations/default" value="phonebook"/>
 	<alias from="es__TRADITIONAL" to="es" rbpath="/collations/default" value="traditional"/>
 	<alias from="in" to="id" />

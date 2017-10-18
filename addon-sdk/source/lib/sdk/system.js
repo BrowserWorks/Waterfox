@@ -12,12 +12,17 @@ const options = require('@loader/options');
 const runtime = require("./system/runtime");
 const { when: unload } = require("./system/unload");
 
-const appStartup = Cc['@mozilla.org/toolkit/app-startup;1'].
-                   getService(Ci.nsIAppStartup);
+const { XPCOMUtils } = require('resource://gre/modules/XPCOMUtils.jsm');
+
+XPCOMUtils.defineLazyServiceGetter(this, 'appStartup',
+                                   '@mozilla.org/toolkit/app-startup;1',
+                                   'nsIAppStartup');
+XPCOMUtils.defineLazyServiceGetter(this, 'directoryService',
+                                   '@mozilla.org/file/directory_service;1',
+                                   'nsIProperties');
+
 const appInfo = Cc["@mozilla.org/xre/app-info;1"].
                 getService(Ci.nsIXULAppInfo);
-const directoryService = Cc['@mozilla.org/file/directory_service;1'].
-                         getService(Ci.nsIProperties);
 
 const PR_WRONLY = parseInt("0x02");
 const PR_CREATE_FILE = parseInt("0x08");
@@ -33,8 +38,6 @@ function openFile(path, mode) {
   stream.init(file, mode, -1, 0);
   return stream
 }
-
-const { eAttemptQuit: E_ATTEMPT, eForceQuit: E_FORCE } = appStartup;
 
 /**
  * Parsed JSON object that was passed via `cfx --static-args "{ foo: 'bar' }"`
@@ -86,7 +89,7 @@ exports.exit = function exit(code) {
   }
 
   unloader();
-  appStartup.quit(code ? E_ATTEMPT : E_FORCE);
+  appStartup.quit(code ? appStartup.eAttemptQuit : appStartup.eForceQuit);
 };
 
 // Adapter for nodejs's stdout & stderr:
@@ -99,7 +102,7 @@ exports.stderr = stdout;
  * Returns a path of the system's or application's special directory / file
  * associated with a given `id`. For list of possible `id`s please see:
  * https://developer.mozilla.org/en-US/docs/Code_snippets/File_I_O#Getting_files_in_special_directories
- * http://mxr.mozilla.org/mozilla-central/source/xpcom/io/nsAppDirectoryServiceDefs.h
+ * http://dxr.mozilla.org/mozilla-central/source/xpcom/io/nsAppDirectoryServiceDefs.h
  * @example
  *
  *    // get firefox profile path

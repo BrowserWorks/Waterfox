@@ -37,32 +37,26 @@
     uri: "https://foo.com/", lastVisit: today},
 
    // Begin the invalid queries: wrong search term
-   {isInQuery: false, isVisit:true, isDetails: true, title: "m o z",
+   {isInQuery: false, isVisit: true, isDetails: true, title: "m o z",
     uri: "http://foo.com/tooearly.php", lastVisit: today},
 
    // Test bad URI
-   {isInQuery: false, isVisit:true, isDetails: true, title: "moz",
-    uri: "http://sffoo.com/justwrong.htm", lastVisit: tomorrow},
+   {isInQuery: false, isVisit: true, isDetails: true, title: "moz",
+    uri: "http://sffoo.com/justwrong.htm", lastVisit: yesterday},
 
    // Test what we do with escaping in titles
-   {isInQuery: false, isVisit:true, isDetails: true, title: "m%0o%0z",
+   {isInQuery: false, isVisit: true, isDetails: true, title: "m%0o%0z",
     uri: "http://foo.com/changeme1.htm", lastVisit: yesterday},
 
    // Test another invalid title - for updating later
-   {isInQuery: false, isVisit:true, isDetails: true, title: "m,oz",
-    uri: "http://foo.com/changeme2.htm", lastVisit: tomorrow}];
+   {isInQuery: false, isVisit: true, isDetails: true, title: "m,oz",
+    uri: "http://foo.com/changeme2.htm", lastVisit: yesterday}];
 
 /**
  * This test will test Queries that use relative search terms and domain options
  */
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_searchterms_domain()
-{
-  yield task_populateDB(testData);
+add_task(async function test_searchterms_domain() {
+  await task_populateDB(testData);
   var query = PlacesUtils.history.getNewQuery();
   query.searchTerms = "moz";
   query.domain = "foo.com";
@@ -79,7 +73,7 @@ add_task(function* test_searchterms_domain()
   root.containerOpen = true;
 
   do_print("Number of items in result set: " + root.childCount);
-  for(var i=0; i < root.childCount; ++i) {
+  for (var i = 0; i < root.childCount; ++i) {
     do_print("result: " + root.getChild(i).uri + " Title: " + root.getChild(i).title);
   }
 
@@ -91,25 +85,25 @@ add_task(function* test_searchterms_domain()
   do_print("Adding item to query");
   var change1 = [{isVisit: true, isDetails: true, uri: "http://foo.com/added.htm",
                   title: "moz", transType: PlacesUtils.history.TRANSITION_LINK}];
-  yield task_populateDB(change1);
+  await task_populateDB(change1);
   do_check_true(isInResult(change1, root));
 
   // Update an existing URI
   do_print("Updating Item");
   var change2 = [{isDetails: true, uri: "http://foo.com/changeme1.htm",
                   title: "moz" }];
-  yield task_populateDB(change2);
+  await task_populateDB(change2);
   do_check_true(isInResult(change2, root));
 
   // Add one and take one out of query set, and simply change one so that it
   // still applies to the query.
   do_print("Updating More Items");
-  var change3 = [{isDetails: true, uri:"http://foo.com/changeme2.htm",
+  var change3 = [{isDetails: true, uri: "http://foo.com/changeme2.htm",
                   title: "moz"},
                  {isDetails: true, uri: "http://mail.foo.com/yiihah",
                   title: "moz now updated"},
                  {isDetails: true, uri: "ftp://foo.com/ftp", title: "gone"}];
-  yield task_populateDB(change3);
+  await task_populateDB(change3);
   do_check_true(isInResult({uri: "http://foo.com/changeme2.htm"}, root));
   do_check_true(isInResult({uri: "http://mail.foo.com/yiihah"}, root));
   do_check_false(isInResult({uri: "ftp://foo.com/ftp"}, root));
@@ -118,7 +112,7 @@ add_task(function* test_searchterms_domain()
   do_print("Deleting items");
   var change4 = [{isDetails: true, uri: "https://foo.com/",
                   title: "mo,z"}];
-  yield task_populateDB(change4);
+  await task_populateDB(change4);
   do_check_false(isInResult(change4, root));
 
   root.containerOpen = false;

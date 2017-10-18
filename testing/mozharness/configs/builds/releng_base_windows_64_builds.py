@@ -18,27 +18,13 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
     'exes': {
-        'python2.7': sys.executable,
-        'hgtool.py': [
-            sys.executable,
-            os.path.join(
-                os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
-            )
-        ],
         "buildbot": [
             sys.executable,
             'c:\\mozilla-build\\buildbotve\\scripts\\buildbot'
-        ],
-        "make": [
-            sys.executable,
-            os.path.join(
-                os.getcwd(), 'build', 'src', 'build', 'pymake', 'make.py'
-            )
         ],
         'virtualenv': [
             sys.executable,
@@ -48,15 +34,14 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'enable_ccache': False,
     'vcs_share_base': 'C:/builds/hg-shared',
     'objdir': 'obj-firefox',
     'tooltool_script': [sys.executable,
                         'C:/mozilla-build/tooltool.py'],
     'tooltool_bootstrap': "setup.sh",
     'enable_count_ctors': False,
-    'enable_talos_sendchange': True,
-    'enable_unittest_sendchange': True,
+    'enable_talos_sendchange': False,
+    'enable_unittest_sendchange': False,
     'max_build_output_timeout': 60 * 80,
     #########################################################################
 
@@ -68,17 +53,16 @@ config = {
     'stage_platform': 'win64',
     'publish_nightly_en_US_routes': True,
     'env': {
-        'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': 'C:/builds/hg-shared',
         'MOZ_CRASHREPORTER_NO_REPORT': '1',
         'MOZ_OBJDIR': 'obj-firefox',
-        'PATH': 'C:/mozilla-build/nsis-3.0b1;C:/mozilla-build/python27;'
+        'PATH': 'C:/mozilla-build/nsis-3.01;C:/mozilla-build/python27;'
                 'C:/mozilla-build/buildbotve/scripts;'
                 '%s' % (os.environ.get('path')),
-        'PDBSTR_PATH': '/c/Program Files (x86)/Windows Kits/8.0/Debuggers/x64/srcsrv/pdbstr.exe',
+        'PDBSTR_PATH': 'C:/Program Files (x86)/Windows Kits/8.0/Debuggers/x64/srcsrv/pdbstr.exe',
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',
-        'TOOLTOOL_CACHE': '/c/builds/tooltool_cache',
+        'TOOLTOOL_CACHE': 'c:/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/c/builds',
     },
     'upload_env': {
@@ -92,7 +76,6 @@ config = {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/win64/minidump_stackwalk.exe',
         'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
-    'enable_pymake': True,
     'src_mozconfig': 'browser/config/mozconfigs/win64/nightly',
     'tooltool_manifest_src': "browser/config/tooltool-manifests/win64/releng.manifest",
     #########################################################################

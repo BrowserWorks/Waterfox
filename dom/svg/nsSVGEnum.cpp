@@ -129,10 +129,10 @@ nsSVGEnum::DOMAnimatedEnum::~DOMAnimatedEnum()
   sSVGAnimatedEnumTearoffTable.RemoveTearoff(mVal);
 }
 
-nsISMILAttr*
+UniquePtr<nsISMILAttr>
 nsSVGEnum::ToSMILAttr(nsSVGElement *aSVGElement)
 {
-  return new SMILEnum(this, aSVGElement);
+  return MakeUnique<SMILEnum>(this, aSVGElement);
 }
 
 nsresult
@@ -156,7 +156,7 @@ nsSVGEnum::SMILEnum::ValueFromString(const nsAString& aStr,
       mapping++;
     }
   }
-  
+
   // only a warning since authors may mistype attribute values
   NS_WARNING("unknown enumeration key");
   return NS_ERROR_FAILURE;

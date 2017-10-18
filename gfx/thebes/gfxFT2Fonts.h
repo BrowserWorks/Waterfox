@@ -19,7 +19,8 @@ class FT2FontEntry;
 
 class gfxFT2Font : public gfxFT2FontBase {
 public: // new functions
-    gfxFT2Font(cairo_scaled_font_t *aCairoFont,
+    gfxFT2Font(const RefPtr<mozilla::gfx::UnscaledFontFreeType>& aUnscaledFont,
+               cairo_scaled_font_t *aCairoFont,
                FT2FontEntry *aFontEntry,
                const gfxFontStyle *aFontStyle,
                bool aNeedsBold);
@@ -27,6 +28,12 @@ public: // new functions
 
     FT2FontEntry *GetFontEntry();
 
+    virtual void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
+                                        FontCacheSizes* aSizes) const override;
+    virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
+                                        FontCacheSizes* aSizes) const override;
+
+protected:
     struct CachedGlyphData {
         CachedGlyphData()
             : glyphIndex(0xffffffffU) { }
@@ -40,7 +47,7 @@ public: // new functions
         int32_t xAdvance;
     };
 
-    const CachedGlyphData* GetGlyphDataForChar(uint32_t ch) {
+    const CachedGlyphData* GetGlyphDataForChar(FT_Face aFace, uint32_t ch) {
         CharGlyphMapEntryType *entry = mCharGlyphCache.PutEntry(ch);
 
         if (!entry)
@@ -48,27 +55,22 @@ public: // new functions
 
         if (entry->mData.glyphIndex == 0xffffffffU) {
             // this is a new entry, fill it
-            FillGlyphDataForChar(ch, &entry->mData);
+            FillGlyphDataForChar(aFace, ch, &entry->mData);
         }
 
         return &entry->mData;
     }
 
-    virtual void AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
-                                        FontCacheSizes* aSizes) const override;
-    virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
-                                        FontCacheSizes* aSizes) const override;
+    bool ShapeText(DrawTarget      *aDrawTarget,
+                   const char16_t  *aText,
+                   uint32_t         aOffset,
+                   uint32_t         aLength,
+                   Script           aScript,
+                   bool             aVertical,
+                   RoundingFlags    aRounding,
+                   gfxShapedText   *aShapedText) override;
 
-protected:
-    virtual bool ShapeText(DrawTarget      *aDrawTarget,
-                           const char16_t *aText,
-                           uint32_t         aOffset,
-                           uint32_t         aLength,
-                           Script           aScript,
-                           bool             aVertical,
-                           gfxShapedText   *aShapedText) override;
-
-    void FillGlyphDataForChar(uint32_t ch, CachedGlyphData *gd);
+    void FillGlyphDataForChar(FT_Face face, uint32_t ch, CachedGlyphData *gd);
 
     void AddRange(const char16_t *aText,
                   uint32_t         aOffset,

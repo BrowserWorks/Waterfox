@@ -36,7 +36,9 @@
 #define TABLET_INK_SIGNATURE 0xFFFFFF00
 #define TABLET_INK_CHECK     0xFF515700
 #define TABLET_INK_TOUCH     0x00000080
+#define TABLET_INK_ID_MASK   0x0000007F
 #define MOUSE_INPUT_SOURCE() WinUtils::GetMouseInputSource()
+#define MOUSE_POINTERID()    WinUtils::GetMousePointerID()
 
 /**************************************************************
  *
@@ -82,11 +84,17 @@ const wchar_t kClassNameTransition[] = L"MozillaTransitionWindowClass";
  **************************************************************/
 
 // Used for synthesizing events
-struct KeyPair {
+struct KeyPair
+{
   uint8_t mGeneral;
   uint8_t mSpecific;
+  uint16_t mScanCode;
   KeyPair(uint32_t aGeneral, uint32_t aSpecific)
-    : mGeneral(uint8_t(aGeneral)), mSpecific(uint8_t(aSpecific)) {}
+    : mGeneral(aGeneral & 0xFF)
+    , mSpecific(aSpecific & 0xFF)
+    , mScanCode((aGeneral & 0xFFFF0000) >> 16)
+  {
+  }
 };
 
 #if (WINVER < 0x0600)
@@ -109,7 +117,7 @@ struct MSGResult
   // If mConsumed is true, the caller shouldn't call next wndproc.
   bool mConsumed;
 
-  MSGResult(LRESULT* aResult = nullptr) :
+  explicit MSGResult(LRESULT* aResult = nullptr) :
     mResult(aResult ? *aResult : mDefaultResult), mConsumed(false)
   {
   }

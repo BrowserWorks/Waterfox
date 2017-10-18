@@ -1,9 +1,10 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict";
 
-add_task(function* test_cleared_alarm_does_not_fire() {
-  function backgroundScript() {
+add_task(async function test_cleared_alarm_does_not_fire() {
+  async function backgroundScript() {
     let ALARM_NAME = "test_ext_alarms";
 
     browser.alarms.onAlarm.addListener(alarm => {
@@ -12,12 +13,12 @@ add_task(function* test_cleared_alarm_does_not_fire() {
     });
     browser.alarms.create(ALARM_NAME, {when: Date.now() + 1000});
 
-    browser.alarms.clear(ALARM_NAME).then(wasCleared => {
-      browser.test.assertTrue(wasCleared, "alarm was cleared");
-      setTimeout(() => {
-        browser.test.notifyPass("alarm-cleared");
-      }, 2000);
-    });
+    let wasCleared = await browser.alarms.clear(ALARM_NAME);
+    browser.test.assertTrue(wasCleared, "alarm was cleared");
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    browser.test.notifyPass("alarm-cleared");
   }
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -27,7 +28,7 @@ add_task(function* test_cleared_alarm_does_not_fire() {
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("alarm-cleared");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("alarm-cleared");
+  await extension.unload();
 });

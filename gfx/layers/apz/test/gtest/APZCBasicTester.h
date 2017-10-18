@@ -12,6 +12,7 @@
  */
 
 #include "APZTestCommon.h"
+#include "gfxPrefs.h"
 
 class APZCBasicTester : public APZCTesterBase {
 public:
@@ -48,6 +49,8 @@ protected:
   {
     while (mcc->RunThroughDelayedTasks());
     apzc->Destroy();
+    tm->ClearTree();
+    tm->ClearContentController();
   }
 
   void MakeApzcWaitForMainThread()
@@ -96,7 +99,7 @@ protected:
 
       // Trigger computation of the overscroll tranform, to make sure
       // no assetions fire during the calculation.
-      apzc->GetOverscrollTransform(AsyncPanZoomController::NORMAL);
+      apzc->GetOverscrollTransform(AsyncPanZoomController::eForHitTesting);
 
       if (!apzc->IsOverscrolled()) {
         recoveredFromOverscroll = true;

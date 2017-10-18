@@ -3,7 +3,7 @@
      Any copyright is dedicated to the Public Domain.
      http://creativecommons.org/publicdomain/zero/1.0/
 -->
-<html lang="en-US" class="reftest-print"><head>
+<html lang="en-US" class="reftest-paged"><head>
   <meta charset="utf-8">
   <title>Reference: Fragmentation in print context of height:auto grid, item break-inside:avoid</title>
   <link rel="author" title="Mats Palmgren" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1144096">
@@ -36,7 +36,7 @@ br { page-break-after:always; break-after:always; display:block; height:1px; }
     <span class="t" style="align-self:stretch"><x style="height:auto"></x></span>
   </div>
   <div class="grid b" style="border-color:transparent; grid-auto-rows: 0;">
-    <span class="b"><x style="height:0.04in"></x></span>
+    <span class="b" style="min-height:0"><x style="height:0.04in"></x></span>
   </div>
 </div>
 
@@ -46,7 +46,7 @@ br { page-break-after:always; break-after:always; display:block; height:1px; }
   </div>
 </div>
   <div class="grid b" style="border-color:transparent; grid-auto-rows: 0;">
-    <span class="b"><x style="height:0.04in"></x></span>
+    <span class="b" style="min-height:0"><x style="height:0.04in"></x></span>
   </div>
 
 </body>

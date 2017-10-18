@@ -1,0 +1,10 @@
+[
+  {
+    "size": 30823112,
+    "visibility": "internal",
+    "digest": "0c58e06a3ea8f4641c991a7406fc8733c574f0b4aa773bce0feaa5468d2b8440fa33cea056e16fad2b8a7ef4409ca7228113eb12adc87c3e115129d8a3b3b565",
+    "algorithm": "sha512",
+    "unpack": true,
+    "filename": "MacOSX10.10.sdk.tar.xz"
+  }
+]

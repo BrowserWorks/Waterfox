@@ -53,13 +53,18 @@ protected:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "SkMipMap.h"
+
 class SkDefaultBitmapController : public SkBitmapController {
 public:
-    SkDefaultBitmapController() {}
+    enum class CanShadeHQ { kNo, kYes };
+    SkDefaultBitmapController(CanShadeHQ canShadeHQ)
+        : fCanShadeHQ(canShadeHQ == CanShadeHQ::kYes) {}
 
 protected:
     State* onRequestBitmap(const SkBitmapProvider&, const SkMatrix& inverse, SkFilterQuality,
                            void* storage, size_t storageSize) override;
+    bool fCanShadeHQ;
 };
 
 #endif

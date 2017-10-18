@@ -2,13 +2,12 @@
 <html>
 <head>
   <title>Test for XMLHttpRequest Progress Events</title>
-  <script type="text/javascript" src="/MochiKit/packed.js"></script>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>        
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 <body onload="gen.next();">
 <pre id=l></pre>
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 SimpleTest.waitForExplicitFinish();
 
 var gen = runTests();
@@ -23,7 +22,7 @@ function log(s) {
 
 function getEvent(e) {
   log("got event: " + e.type + " (" + e.target.readyState + ")");
-  gen.send(e);
+  gen.next(e);
 }
 
 function startsWith(a, b) {
@@ -33,7 +32,7 @@ function startsWith(a, b) {
 function updateProgress(e, data, testName) {
   var test = " while running " + testName;
   is(e.type, "progress", "event type" + test);
-  
+
   let response;
   if (data.nodata) {
     is(e.target.response, null, "response should be null" + test);
@@ -74,7 +73,7 @@ function updateProgress(e, data, testName) {
     ok(startsWith(response, data.receivedResult),
        "response strictly grew" + test);
     newData = response.substr(data.receivedResult.length);
-  
+
     if (!data.encoded) {
       ok(newData.length > 0, "sanity check for progress" + test);
     }
@@ -126,7 +125,7 @@ function bufferToString(buffer) {
   return String.fromCharCode.apply(String, new Uint8Array(buffer));
 }
 
-function runTests() {
+function* runTests() {
   var xhr = new XMLHttpRequest();
   xhr.onprogress = xhr.onload = xhr.onerror = xhr.onreadystatechange = xhr.onloadend = getEvent;
 
@@ -199,7 +198,7 @@ function runTests() {
                       text: responseType.text,
                       blob: responseType.blob,
                       file: test.file };
-  
+
         xhr.onreadystatechange = null;
         if (testState.file)
           xhr.open("GET", test.file);
@@ -212,7 +211,7 @@ function runTests() {
         let e = yield undefined;
         is(e.type, "readystatechange", "should readystate to headers-received starting " + testState.name);
         is(xhr.readyState, xhr.HEADERS_RECEIVED, "should be in state HEADERS_RECEIVED starting " + testState.name);
-  
+
         e = yield undefined;
         is(e.type, "readystatechange", "should readystate to loading starting " + testState.name);
         is(xhr.readyState, xhr.LOADING, "should be in state LOADING starting " + testState.name);
@@ -238,19 +237,19 @@ function runTests() {
           xhr.responseType;
           is(xhr.response, null, "chunked data has null response for " + testState.name);
         }
-      
+
         e = yield undefined;
         is(e.type, "load", "should fire load closing " + testState.name);
-        is(e.lengthComputable, true, "length should be computable during load closing " + testState.name);
+        is(e.lengthComputable, e.total != 0, "length should " + (e.total == 0 ? "not " : "") + "be computable during load closing " + testState.name);
         log("got load");
 
         if (responseType.chunked) {
           is(xhr.response, null, "chunked data has null response for " + testState.name);
         }
-      
+
         e = yield undefined;
         is(e.type, "loadend", "should fire loadend closing " + testState.name);
-        is(e.lengthComputable, true, "length should be computable during loadend closing " + testState.name);
+        is(e.lengthComputable, e.total != 0, "length should " + (e.total == 0 ? "not " : "") + "be computable during loadend closing " + testState.name);
         log("got loadend");
 
         // if we closed the connection using an explicit request, make sure that goes through before
@@ -298,14 +297,14 @@ function runTests() {
         testState.pendingBytes = test.data.length;
         sendData(test.data);
       }
-  
+
       while(testState.pendingBytes) {
         log("waiting for more bytes: " + testState.pendingBytes);
         e = yield undefined;
         // Readystate can fire several times between each progress event.
         if (e.type === "readystatechange")
           continue;
-  
+
         updateProgress(e, testState, "data for " + testState.name + "[" + testState.index + "]");
         if (responseType.chunked) {
           testState.receivedResult = "";
@@ -319,12 +318,11 @@ function runTests() {
 
       log("done with this test");
     }
-  
+
     is(testState.name, "", "forgot to close last test");
   }
 
   SimpleTest.finish();
-  yield undefined;
 }
 
 </script>

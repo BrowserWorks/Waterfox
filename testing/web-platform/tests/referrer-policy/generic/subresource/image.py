@@ -1,4 +1,4 @@
-import os, sys, array, json, math, cStringIO
+import os, sys, array, json, math, StringIO
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import subresource
 
@@ -82,19 +82,33 @@ def encode_string_as_bmp_image(string_data):
     img.putdata(color_data)
 
     # Flush image to string.
-    f = cStringIO.StringIO()
+    f = StringIO.StringIO()
     img.save(f, "BMP")
     f.seek(0)
 
     return f.read()
 
-def generate_payload(server_data):
+def generate_payload(request, server_data):
     data = ('{"headers": %(headers)s}') % server_data
-    return encode_string_as_bmp_image(data)
+    if "id" in request.GET:
+        request.server.stash.put(request.GET["id"], data)
+    data = encode_string_as_bmp_image(data)
+    return data
+
+def generate_report_headers_payload(request, server_data):
+    stashed_data = request.server.stash.take(request.GET["id"])
+    return stashed_data
 
 def main(request, response):
+    handler = lambda data: generate_payload(request, data)
+    content_type = 'image/bmp'
+
+    if "report-headers" in request.GET:
+        handler = lambda data: generate_report_headers_payload(request, data)
+        content_type = 'application/json'
+
     subresource.respond(request,
                         response,
-                        payload_generator = generate_payload,
-                        content_type = "image/bmp",
+                        payload_generator = handler,
+                        content_type = content_type,
                         access_control_allow_origin = "*")

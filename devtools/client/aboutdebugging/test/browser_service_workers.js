@@ -9,13 +9,7 @@ const SERVICE_WORKER = URL_ROOT + "service-workers/empty-sw.js";
 const TAB_URL = URL_ROOT + "service-workers/empty-sw.html";
 
 add_task(function* () {
-  yield new Promise(done => {
-    let options = {"set": [
-      ["dom.serviceWorkers.enabled", true],
-      ["dom.serviceWorkers.testing.enabled", true],
-    ]};
-    SpecialPowers.pushPrefEnv(options, done);
-  });
+  yield enableServiceWorkerDebugging();
 
   let { tab, document } = yield openAboutDebugging("workers");
 
@@ -31,18 +25,12 @@ add_task(function* () {
   ok(names.includes(SERVICE_WORKER),
     "The service worker url appears in the list: " + names);
 
-  // Finally, unregister the service worker itself
-  let aboutDebuggingUpdate = waitForMutation(serviceWorkersElement,
-    { childList: true });
-
   try {
-    yield unregisterServiceWorker(swTab);
+    yield unregisterServiceWorker(swTab, serviceWorkersElement);
     ok(true, "Service worker registration unregistered");
   } catch (e) {
     ok(false, "SW not unregistered; " + e);
   }
-
-  yield aboutDebuggingUpdate;
 
   // Check that the service worker disappeared from the UI
   names = [...document.querySelectorAll("#service-workers .target-name")];

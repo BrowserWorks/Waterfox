@@ -19,7 +19,7 @@ TooltipTextProvider.prototype = {
       return false;
     }
 
-    var defView = tipElement.ownerDocument.defaultView;
+    var defView = tipElement.ownerGlobal;
     // XXX Work around bug 350679:
     // "Tooltips can be fired in documents with no view".
     if (!defView)
@@ -41,7 +41,7 @@ TooltipTextProvider.prototype = {
          tipElement instanceof defView.HTMLTextAreaElement ||
          tipElement instanceof defView.HTMLSelectElement ||
          tipElement instanceof defView.HTMLButtonElement) &&
-        !tipElement.hasAttribute('title') &&
+        !tipElement.hasAttribute("title") &&
         (!tipElement.form || !tipElement.form.noValidate)) {
       // If the element is barred from constraint validation or valid,
       // the validation message will be the empty string.
@@ -52,8 +52,8 @@ TooltipTextProvider.prototype = {
     // the current file selection.
     if (!titleText &&
         tipElement instanceof defView.HTMLInputElement &&
-        tipElement.type == 'file' &&
-        !tipElement.hasAttribute('title')) {
+        tipElement.type == "file" &&
+        !tipElement.hasAttribute("title")) {
       let files = tipElement.files;
 
       try {
@@ -86,11 +86,12 @@ TooltipTextProvider.prototype = {
             titleText += "\n" + andXMoreStr;
           }
         }
-      } catch(e) {}
+      } catch (e) {}
     }
 
     // Check texts against null so that title="" can be used to undefine a
     // title on a child element.
+    let usedTipElement = null;
     while (tipElement &&
            (titleText == null) && (XLinkTitleText == null) &&
            (SVGTitleText == null) && (XULtooltiptextText == null)) {
@@ -121,17 +122,22 @@ TooltipTextProvider.prototype = {
           }
         }
 
-        direction = defView.getComputedStyle(tipElement, "")
-                           .getPropertyValue("direction");
+        usedTipElement = tipElement;
       }
 
       tipElement = tipElement.parentNode;
     }
 
-    return [titleText, XLinkTitleText, SVGTitleText, XULtooltiptextText].some(function (t) {
+    return [titleText, XLinkTitleText, SVGTitleText, XULtooltiptextText].some(function(t) {
       if (t && /\S/.test(t)) {
         // Make CRLF and CR render one line break each.
-        textOut.value = t.replace(/\r\n?/g, '\n');
+        textOut.value = t.replace(/\r\n?/g, "\n");
+
+        if (usedTipElement) {
+          direction = defView.getComputedStyle(usedTipElement)
+                             .getPropertyValue("direction");
+        }
+
         directionOut.value = direction;
         return true;
       }
@@ -140,7 +146,7 @@ TooltipTextProvider.prototype = {
     });
   },
 
-  classID : Components.ID("{f376627f-0bbc-47b8-887e-fc92574cc91f}"),
+  classID: Components.ID("{f376627f-0bbc-47b8-887e-fc92574cc91f}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITooltipTextProvider]),
 };
 

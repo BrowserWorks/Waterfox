@@ -1,3 +1,5 @@
+"use strict";
+
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -6,9 +8,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "WindowsRegistry",
 XPCOMUtils.defineLazyModuleGetter(this, "OSCrypto",
                                   "resource://gre/modules/OSCrypto.jsm");
 
-const CRYPT_PROTECT_UI_FORBIDDEN = 1;
 const IE7_FORM_PASSWORDS_MIGRATOR_NAME = "IE7FormPasswords";
-const LOGINS_KEY =  "Software\\Microsoft\\Internet Explorer\\IntelliForms\\Storage2";
+const LOGINS_KEY = "Software\\Microsoft\\Internet Explorer\\IntelliForms\\Storage2";
 const EXTENSION = "-backup";
 const TESTED_WEBSITES = {
   twitter: {
@@ -48,8 +49,8 @@ const TESTED_WEBSITES = {
         timeLastUsed: 1439326966000,
         timePasswordChanged: 1439326966000,
         timesUsed: 1,
-     },
-     {
+      },
+      {
         username: "username1",
         password: "password1",
         hostname: "https://www.facebook.com",
@@ -107,7 +108,7 @@ const TESTED_WEBSITES = {
         timeLastUsed: 1439338767000,
         timePasswordChanged: 1439338767000,
         timesUsed: 1,
-       },
+      },
     ],
   },
   reddit: {
@@ -153,7 +154,7 @@ const TESTED_WEBSITES = {
         timeLastUsed: 1439341166000,
         timePasswordChanged: 1439341166000,
         timesUsed: 1,
-     },
+      },
     ],
   },
 };
@@ -255,7 +256,7 @@ function createRegistryPath(path) {
   let loginPath = path.split("\\");
   let parentKey = Cc["@mozilla.org/windows-registry-key;1"].
                   createInstance(nsIWindowsRegKey);
-  let currentPath =[];
+  let currentPath = [];
   for (let currentKey of loginPath) {
     parentKey.open(nsIWindowsRegKey.ROOT_KEY_CURRENT_USER, currentPath.join("\\"),
                    nsIWindowsRegKey.ACCESS_ALL);
@@ -282,10 +283,10 @@ function getFirstResourceOfType(type) {
 }
 
 function makeURI(aURL) {
-  return Services.io.newURI(aURL, null, null);
+  return Services.io.newURI(aURL);
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
     Assert.throws(() => getFirstResourceOfType(MigrationUtils.resourceTypes.PASSWORDS),
                   "The migrator doesn't exist for win8+");
@@ -304,7 +305,7 @@ add_task(function* setup() {
   }
 });
 
-add_task(function* test_passwordsNotAvailable() {
+add_task(async function test_passwordsNotAvailable() {
   if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
     return;
   }
@@ -326,7 +327,7 @@ add_task(function* test_passwordsNotAvailable() {
   }
 });
 
-add_task(function* test_passwordsAvailable() {
+add_task(async function test_passwordsAvailable() {
   if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
     return;
   }
@@ -338,7 +339,7 @@ add_task(function* test_passwordsAvailable() {
     Services.logins.removeAllLogins();
     logins = Services.logins.getAllLogins({});
     Assert.equal(logins.length, 0, "There are no logins after the cleanup");
-    //remove all the values created in this test from the registry
+    // remove all the values created in this test from the registry
     removeAllValues(Storage2Key, hashes);
     // restore all backed up values
     restore(Storage2Key);
@@ -377,6 +378,15 @@ add_task(function* test_passwordsAvailable() {
     loginCount += website.logins.length;
     Assert.equal(logins.length, loginCount,
                  "The number of logins has increased after the migration");
+    // NB: because telemetry records any login data passed to the login manager, it
+    // also gets told about logins that are duplicates or invalid (for one reason
+    // or another) and so its counts might exceed those of the login manager itself.
+    Assert.greaterOrEqual(MigrationUtils._importQuantities.logins, loginCount,
+                          "Telemetry quantities equal or exceed the actual import.");
+    // Reset - this normally happens at the start of a new migration, but we're calling
+    // the migrator directly so can't rely on that:
+    MigrationUtils._importQuantities.logins = 0;
+
     let startIndex = loginCount - website.logins.length;
     // compares the imported password manager logins with their expected logins
     for (let i = 0; i < website.logins.length; i++) {

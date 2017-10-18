@@ -8,7 +8,7 @@
 #include "nsUnicharStreamLoader.h"
 #include "nsIInputStream.h"
 #include <algorithm>
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/Encoding.h"
 
 // 1024 bytes is specified in
 // http://www.whatwg.org/specs/web-apps/current-work/#charset for HTML; for
@@ -17,7 +17,6 @@
 #define SNIFFING_BUFFER_SIZE 1024
 
 using namespace mozilla;
-using mozilla::dom::EncodingUtils;
 
 NS_IMETHODIMP
 nsUnicharStreamLoader::Init(nsIUnicharStreamLoaderObserver *aObserver)
@@ -102,8 +101,17 @@ nsUnicharStreamLoader::OnStopRequest(nsIRequest *aRequest,
   mContext = nullptr;
   mChannel = nullptr;
   mCharset.Truncate();
+  mRawData.Truncate();
+  mRawBuffer.Truncate();
   mBuffer.Truncate();
   return rv;
+}
+
+NS_IMETHODIMP
+nsUnicharStreamLoader::GetRawBuffer(nsACString& aRawBuffer)
+{
+  aRawBuffer = mRawBuffer;
+  return NS_OK;
 }
 
 /* nsIStreamListener implementation */
@@ -175,15 +183,15 @@ nsUnicharStreamLoader::DetermineCharset()
   // replacement, since it's not invariant under a second label resolution
   // operation.
   if (mCharset.EqualsLiteral("replacement")) {
-    mDecoder = EncodingUtils::DecoderForEncoding(mCharset);
+    mDecoder = REPLACEMENT_ENCODING->NewDecoderWithBOMRemoval();
   } else {
-    nsAutoCString charset;
-    if (!EncodingUtils::FindEncodingForLabelNoReplacement(mCharset, charset)) {
+    const Encoding* encoding = Encoding::ForLabelNoReplacement(mCharset);
+    if (!encoding) {
       // If we got replacement here, the caller was not mozilla::css::Loader
       // but an extension.
       return NS_ERROR_UCONV_NOCONV;
     }
-    mDecoder = EncodingUtils::DecoderForEncoding(charset);
+    mDecoder = encoding->NewDecoderWithBOMRemoval();
   }
 
   // Process the data into mBuffer
@@ -196,7 +204,7 @@ nsUnicharStreamLoader::DetermineCharset()
   return rv;
 }
 
-NS_METHOD
+nsresult
 nsUnicharStreamLoader::WriteSegmentFun(nsIInputStream *,
                                        void *aClosure,
                                        const char *aSegment,
@@ -206,32 +214,47 @@ nsUnicharStreamLoader::WriteSegmentFun(nsIInputStream *,
 {
   nsUnicharStreamLoader* self = static_cast<nsUnicharStreamLoader*>(aClosure);
 
-  uint32_t haveRead = self->mBuffer.Length();
-  int32_t srcLen = aCount;
-  int32_t dstLen;
+  nsAString::size_type haveRead(self->mBuffer.Length());
 
-  nsresult rv = self->mDecoder->GetMaxLength(aSegment, srcLen, &dstLen);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  uint32_t capacity = haveRead + dstLen;
-  if (!self->mBuffer.SetCapacity(capacity, fallible)) {
+  CheckedInt<size_t> needed = self->mDecoder->MaxUTF16BufferLength(aCount);
+  if (!needed.isValid()) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  rv = self->mDecoder->Convert(aSegment,
-                               &srcLen,
-                               self->mBuffer.BeginWriting() + haveRead,
-                               &dstLen);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+  CheckedInt<nsAString::size_type> capacity(needed.value());
+  capacity += haveRead;
+  if (!capacity.isValid()) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  MOZ_ASSERT(srcLen == static_cast<int32_t>(aCount));
-  haveRead += dstLen;
+  if (!self->mBuffer.SetCapacity(capacity.value(), fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
-  self->mBuffer.SetLength(haveRead);
+  if (!self->mRawBuffer.Append(aSegment, aCount, fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  uint32_t result;
+  size_t read;
+  size_t written;
+  bool hadErrors;
+
+  Tie(result, read, written, hadErrors) = self->mDecoder->DecodeToUTF16(
+    AsBytes(MakeSpan(aSegment, aCount)),
+    MakeSpan(self->mBuffer.BeginWriting() + haveRead, needed.value()),
+    false);
+  MOZ_ASSERT(result == kInputEmpty);
+  MOZ_ASSERT(read == aCount);
+  Unused << hadErrors;
+
+  CheckedInt<nsAString::size_type> newLen(written);
+  newLen += haveRead;
+  if (!newLen.isValid()) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  self->mBuffer.SetLength(newLen.value());
   *aWriteCount = aCount;
   return NS_OK;
 }

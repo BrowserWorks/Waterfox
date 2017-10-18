@@ -22,6 +22,7 @@ def configure_error(message):
 # by running the given command if it exits normally, and streams that
 # output to log.debug and calls die or the given error callback if it
 # does not.
+@imports(_from='__builtin__', _import='unicode')
 @imports('subprocess')
 @imports('sys')
 @imports(_from='mozbuild.configure.util', _import='LineIO')
@@ -29,10 +30,26 @@ def configure_error(message):
 def check_cmd_output(*args, **kwargs):
     onerror = kwargs.pop('onerror', None)
 
+    # subprocess on older Pythons can't handle unicode keys or values in
+    # environment dicts. Normalize automagically so callers don't have to
+    # deal with this.
+    if 'env' in kwargs:
+        normalized_env = {}
+        for k, v in kwargs['env'].items():
+            if isinstance(k, unicode):
+                k = k.encode('utf-8', 'strict')
+
+            if isinstance(v, unicode):
+                v = v.encode('utf-8', 'strict')
+
+            normalized_env[k] = v
+
+        kwargs['env'] = normalized_env
+
     with log.queue_debug():
         log.debug('Executing: `%s`', quote(*args))
         proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE, **kwargs)
         stdout, stderr = proc.communicate()
         retcode = proc.wait()
         if retcode == 0:
@@ -61,6 +78,78 @@ def is_absolute_or_relative(path):
 def normsep(path):
     return mozpath.normsep(path)
 
+
+@imports('ctypes')
+@imports(_from='ctypes', _import='wintypes')
+@imports(_from='mozbuild.configure.constants', _import='WindowsBinaryType')
+def windows_binary_type(path):
+    """Obtain the type of a binary on Windows.
+
+    Returns WindowsBinaryType constant.
+    """
+    GetBinaryTypeW = ctypes.windll.kernel32.GetBinaryTypeW
+    GetBinaryTypeW.argtypes = [wintypes.LPWSTR, wintypes.POINTER(wintypes.DWORD)]
+    GetBinaryTypeW.restype = wintypes.BOOL
+
+    bin_type = wintypes.DWORD()
+    res = GetBinaryTypeW(path, ctypes.byref(bin_type))
+    if not res:
+        die('could not obtain binary type of %s' % path)
+
+    if bin_type.value == 0:
+        return WindowsBinaryType('win32')
+    elif bin_type.value == 6:
+        return WindowsBinaryType('win64')
+    # If we see another binary type, something is likely horribly wrong.
+    else:
+        die('unsupported binary type on %s: %s' % (path, bin_type))
+
+
+@imports('ctypes')
+@imports(_from='ctypes', _import='wintypes')
+def get_GetShortPathNameW():
+    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
+    GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR,
+                                  wintypes.DWORD]
+    GetShortPathNameW.restype = wintypes.DWORD
+    return GetShortPathNameW
+
+
+@template
+@imports('ctypes')
+@imports('platform')
+@imports(_from='mozbuild.shellutil', _import='quote')
+def normalize_path():
+    # Until the build system can properly handle programs that need quoting,
+    # transform those paths into their short version on Windows (e.g.
+    # c:\PROGRA~1...).
+    if platform.system() == 'Windows':
+        GetShortPathNameW = get_GetShortPathNameW()
+
+        def normalize_path(path):
+            path = normsep(path)
+            if quote(path) == path:
+                return path
+            size = 0
+            while True:
+                out = ctypes.create_unicode_buffer(size)
+                needed = GetShortPathNameW(path, out, size)
+                if size >= needed:
+                    if ' ' in out.value:
+                        die("GetShortPathName returned a long path name. "
+                            "Are 8dot3 filenames disabled?")
+                    return normsep(out.value)
+                size = needed
+
+    else:
+        def normalize_path(path):
+            return normsep(path)
+
+    return normalize_path
+
+normalize_path = normalize_path()
+
+
 # Locates the given program using which, or returns the given path if it
 # exists.
 # The `paths` parameter may be passed to search the given paths instead of
@@ -68,19 +157,36 @@ def normsep(path):
 @imports(_from='which', _import='which')
 @imports(_from='which', _import='WhichError')
 @imports('itertools')
+@imports('sys')
 @imports(_from='os', _import='pathsep')
+@imports(_from='os', _import='environ')
 def find_program(file, paths=None):
+    # The following snippet comes from `which` itself, with a slight
+    # modification to use lowercase extensions, because it's confusing rustup
+    # (on top of making results not really appealing to the eye).
+
+    # Windows has the concept of a list of extensions (PATHEXT env var).
+    if sys.platform.startswith("win"):
+        exts = [e.lower()
+                for e in environ.get("PATHEXT", "").split(pathsep)]
+        # If '.exe' is not in exts then obviously this is Win9x and
+        # or a bogus PATHEXT, then use a reasonable default.
+        if '.exe' not in exts:
+            exts = ['.com', '.exe', '.bat']
+    else:
+        exts = None
+
     try:
         if is_absolute_or_relative(file):
-            return normsep(which(os.path.basename(file),
-                                 [os.path.dirname(file)]))
+            return normalize_path(which(os.path.basename(file),
+                                        [os.path.dirname(file)], exts=exts))
         if paths:
             if not isinstance(paths, (list, tuple)):
                 die("Paths provided to find_program must be a list of strings, "
                     "not %r", paths)
             paths = list(itertools.chain(
                 *(p.split(pathsep) for p in paths if p)))
-        return normsep(which(file, path=paths))
+        return normalize_path(which(file, path=paths, exts=exts))
     except WhichError:
         return None
 
@@ -135,6 +241,10 @@ def unique_list(l):
 # match. Each of these tuples contains the key name matching wildcards
 # followed by the value.
 #
+# The `get_32_and_64_bit` argument is a boolean, if True then it will return the
+# values from the 32-bit and 64-bit registry views. This defaults to False,
+# which will return the view depending on the bitness of python.
+#
 # Examples:
 #   get_registry_values(r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\'
 #                       r'Windows Kits\Installed Roots\KitsRoot*')
@@ -146,6 +256,13 @@ def unique_list(l):
 #                       r'Windows Kits\Installed Roots\KitsRoot8.1')
 #   yields e.g.:
 #     (r'C:\Program Files (x86)\Windows Kits\8.1\',)
+#
+#   get_registry_values(r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\'
+#                       r'Windows Kits\Installed Roots\KitsRoot8.1',
+#                       get_32_and_64_bit=True)
+#   yields e.g.:
+#     (r'C:\Program Files (x86)\Windows Kits\8.1\',)
+#     (r'C:\Program Files\Windows Kits\8.1\',)
 #
 #   get_registry_values(r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\'
 #                       r'Windows Kits\*\KitsRoot*')
@@ -164,7 +281,7 @@ def unique_list(l):
 @imports(_import='_winreg', _as='winreg')
 @imports(_from='__builtin__', _import='WindowsError')
 @imports(_from='fnmatch', _import='fnmatch')
-def get_registry_values(pattern):
+def get_registry_values(pattern, get_32_and_64_bit=False):
     def enum_helper(func, key):
         i = 0
         while True:
@@ -174,21 +291,21 @@ def get_registry_values(pattern):
                 break
             i += 1
 
-    def get_keys(key, pattern):
+    def get_keys(key, pattern, access_mask):
         try:
-            s = winreg.OpenKey(key, '\\'.join(pattern[:-1]))
+            s = winreg.OpenKey(key, '\\'.join(pattern[:-1]), 0, access_mask)
         except WindowsError:
             return
         for k in enum_helper(winreg.EnumKey, s):
             if fnmatch(k, pattern[-1]):
                 try:
-                    yield k, winreg.OpenKey(s, k)
+                    yield k, winreg.OpenKey(s, k, 0, access_mask)
                 except WindowsError:
                     pass
 
-    def get_values(key, pattern):
+    def get_values(key, pattern, access_mask):
         try:
-            s = winreg.OpenKey(key, '\\'.join(pattern[:-1]))
+            s = winreg.OpenKey(key, '\\'.join(pattern[:-1]), 0, access_mask)
         except WindowsError:
             return
         for k, v, t in enum_helper(winreg.EnumValue, s):
@@ -205,23 +322,33 @@ def get_registry_values(pattern):
         if subpattern:
             yield subpattern
 
+    def get_all_values(keys, pattern, access_mask):
+        for i, p in enumerate(pattern):
+            next_keys = []
+            for base_key in keys:
+                matches = base_key[:-1]
+                base_key = base_key[-1]
+                if i == len(pattern) - 1:
+                    want_name = '*' in p[-1]
+                    for name, value in get_values(base_key, p, access_mask):
+                        yield matches + ((name, value) if want_name else (value,))
+                else:
+                    for name, k in get_keys(base_key, p, access_mask):
+                        next_keys.append(matches + (name, k))
+            keys = next_keys
+
     pattern = pattern.split('\\')
     assert pattern[0].startswith('HKEY_')
     keys = [(getattr(winreg, pattern[0]),)]
     pattern = list(split_pattern(pattern[1:]))
-    for i, p in enumerate(pattern):
-        next_keys = []
-        for base_key in keys:
-            matches = base_key[:-1]
-            base_key = base_key[-1]
-            if i == len(pattern) - 1:
-                want_name = '*' in p[-1]
-                for name, value in get_values(base_key, p):
-                    yield matches + ((name, value) if want_name else (value,))
-            else:
-                for name, k in get_keys(base_key, p):
-                    next_keys.append(matches + (name, k))
-        keys = next_keys
+    if get_32_and_64_bit:
+        for match in get_all_values(keys, pattern, winreg.KEY_READ | winreg.KEY_WOW64_32KEY):
+            yield match
+        for match in get_all_values(keys, pattern, winreg.KEY_READ | winreg.KEY_WOW64_64KEY):
+            yield match
+    else:
+        for match in get_all_values(keys, pattern, winreg.KEY_READ):
+            yield match
 
 
 @imports(_from='mozbuild.configure.util', _import='Version', _as='_Version')
@@ -259,67 +386,90 @@ def namespace(**kwargs):
     return ReadOnlyNamespace(**kwargs)
 
 
-# Some @depends function return namespaces, and one could want to use one
-# specific attribute from such a namespace as a "value" given to functions
-# such as `set_config`. But those functions do not take immediate values.
-# The `delayed_getattr` function allows access to attributes from the result
-# of a @depends function in a non-immediate manner.
-#   @depends('--option')
-#   def option(value)
-#       return namespace(foo=value)
-#   set_config('FOO', delayed_getattr(option, 'foo')
+# Turn an object into an object that can be used as an argument to @depends.
+# The given object can be a literal value, a function that takes no argument,
+# or, for convenience, a @depends function.
 @template
-@imports('__sandbox__')
-def delayed_getattr(func, key):
-    _, deps = __sandbox__._depends.get(func, (None, ()))
+@imports(_from='inspect', _import='isfunction')
+@imports(_from='mozbuild.configure', _import='SandboxDependsFunction')
+def dependable(obj):
+    if isinstance(obj, SandboxDependsFunction):
+        return obj
+    if isfunction(obj):
+        return depends(when=True)(obj)
+    return depends(when=True)(lambda: obj)
 
-    def result(value, _=None):
-        # The @depends function we're being passed may have returned
-        # None, or an object that simply doesn't have the wanted key.
-        # In that case, just return None.
-        return getattr(value, key, None)
 
-    # Automatically add a dependency on --help when the given @depends
-    # function itself depends on --help.
-    if __sandbox__._help_option in deps:
-        return depends(func, '--help')(result)
-    return depends(func)(result)
+always = dependable(True)
+never = dependable(False)
+
+
+# Create a decorator that will only execute the body of a function
+# if the passed function returns True when passed all positional
+# arguments.
+@template
+def depends_tmpl(eval_args_fn, *args, **kwargs):
+    if kwargs:
+        assert len(kwargs) == 1
+        when = kwargs['when']
+    else:
+        when = None
+    def decorator(func):
+        @depends(*args, when=when)
+        def wrapper(*args):
+            if eval_args_fn(args):
+                return func(*args)
+        return wrapper
+    return decorator
 
 
 # Like @depends, but the decorated function is only called if one of the
 # arguments it would be called with has a positive value (bool(value) is True)
 @template
-def depends_if(*args):
-    def decorator(func):
-        @depends(*args)
-        def wrapper(*args):
-            if any(arg for arg in args):
-                return func(*args)
-        return wrapper
-    return decorator
+def depends_if(*args, **kwargs):
+    return depends_tmpl(any, *args, **kwargs)
 
-# Like @depends_if, but a distinguished value passed as a keyword argument
-# "when" is truth tested instead of every argument. This value is not passed
-# to the function if it is called.
-@template
-def depends_when(*args, **kwargs):
-    if not len(kwargs) == 1 and kwargs.get('when'):
-        die('depends_when requires a single keyword argument, "when"')
-    when = kwargs['when']
-    def decorator(fn):
-        @depends(when, *args)
-        def wrapper(val, *args):
-            if val:
-                return fn(*args)
-        return wrapper
-    return decorator
 
-# Includes a file when the given condition evaluates to a truthy value.
+# Like @depends, but the decorated function is only called if all of the
+# arguments it would be called with have a positive value.
 @template
-def include_when(filename, when):
-    # Assume, for now, our condition already depends on --help.
-    @depends(when, '--help')
-    def conditional_include(value, _):
-        if value:
-            return filename
-    include(conditional_include)
+def depends_all(*args, **kwargs):
+    return depends_tmpl(all, *args, **kwargs)
+
+
+# Hacks related to old-configure
+# ==============================
+
+@dependable
+def old_configure_assignments():
+    return []
+
+@dependable
+def extra_old_configure_args():
+    return []
+
+@template
+def add_old_configure_assignment(var, value):
+    var = dependable(var)
+    value = dependable(value)
+
+    @depends(old_configure_assignments, var, value)
+    @imports(_from='mozbuild.shellutil', _import='quote')
+    def add_assignment(assignments, var, value):
+        if var is None or value is None:
+            return
+        if value is True:
+            assignments.append('%s=1' % var)
+        elif value is False:
+            assignments.append('%s=' % var)
+        else:
+            if isinstance(value, (list, tuple)):
+                value = quote(*value)
+            assignments.append('%s=%s' % (var, quote(str(value))))
+
+@template
+def add_old_configure_arg(arg):
+    @depends(extra_old_configure_args, arg)
+    def add_arg(args, arg):
+        if arg:
+            args.append(arg)

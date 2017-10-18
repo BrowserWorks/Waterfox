@@ -1,27 +1,34 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
  * Tests if beacons are handled correctly.
  */
 
-var test = Task.async(function* () {
-  let [, debuggee, monitor] = yield initNetMonitor(SEND_BEACON_URL);
-  let { RequestsMenu } = monitor.panelWin.NetMonitorView;
+add_task(function* () {
+  let { tab, monitor } = yield initNetMonitor(SEND_BEACON_URL);
+  let { store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { getSortedRequests } =
+    windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  store.dispatch(Actions.batchEnable(false));
 
-  is(RequestsMenu.itemCount, 0, "The requests menu should be empty.");
+  is(store.getState().requests.requests.size, 0, "The requests menu should be empty.");
 
-  debuggee.performRequest();
+  let wait = waitForNetworkEvents(monitor, 1);
+  yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+    content.wrappedJSObject.performRequest();
+  });
+  yield wait;
 
-  yield waitForNetworkEvents(monitor, 1);
-  is(RequestsMenu.itemCount, 1, "The beacon should be recorded.");
-  let request = RequestsMenu.getItemAtIndex(0);
-  is(request.attachment.method, "POST", "The method is correct.");
-  ok(request.attachment.url.endsWith("beacon_request"), "The URL is correct.");
-  is(request.attachment.status, "404", "The status is correct.");
+  is(store.getState().requests.requests.size, 1, "The beacon should be recorded.");
+  let request = getSortedRequests(store.getState()).get(0);
+  is(request.method, "POST", "The method is correct.");
+  ok(request.url.endsWith("beacon_request"), "The URL is correct.");
+  is(request.status, "404", "The status is correct.");
 
-  yield teardown(monitor);
-  finish();
+  return teardown(monitor);
 });

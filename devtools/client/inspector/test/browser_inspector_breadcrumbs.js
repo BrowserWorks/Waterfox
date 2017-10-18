@@ -8,21 +8,21 @@
 const TEST_URI = URL_ROOT + "doc_inspector_breadcrumbs.html";
 const NODES = [
   {selector: "#i1111", ids: "i1 i11 i111 i1111", nodeName: "div",
-    title: "div#i1111"},
+   title: "div#i1111"},
   {selector: "#i22", ids: "i2 i22", nodeName: "div",
-    title: "div#i22"},
+   title: "div#i22"},
   {selector: "#i2111", ids: "i2 i21 i211 i2111", nodeName: "div",
-    title: "div#i2111"},
+   title: "div#i2111"},
   {selector: "#i21", ids: "i2 i21 i211 i2111", nodeName: "div",
-    title: "div#i21"},
+   title: "div#i21"},
   {selector: "#i22211", ids: "i2 i22 i222 i2221 i22211", nodeName: "div",
-    title: "div#i22211"},
+   title: "div#i22211"},
   {selector: "#i22", ids: "i2 i22 i222 i2221 i22211", nodeName: "div",
-    title: "div#i22"},
+   title: "div#i22"},
   {selector: "#i3", ids: "i3", nodeName: "article",
-    title: "article#i3"},
+   title: "article#i3"},
   {selector: "clipPath", ids: "vector clip", nodeName: "clipPath",
-    title: "clipPath#clip"},
+   title: "clipPath#clip"},
 ];
 
 add_task(function* () {
@@ -68,6 +68,7 @@ add_task(function* () {
   }
 
   yield testPseudoElements(inspector, container);
+  yield testComments(inspector, container);
 });
 
 function* testPseudoElements(inspector, container) {
@@ -90,4 +91,42 @@ function* testPseudoElements(inspector, container) {
   yield breadcrumbsUpdated;
   is(container.childNodes[3].textContent, "::after",
      "::before shows up in breadcrumb");
+}
+
+function* testComments(inspector, container) {
+  info("Checking for comment elements");
+
+  let breadcrumbs = inspector.breadcrumbs;
+  let checkedButtonIndex = 2;
+  let button = container.childNodes[checkedButtonIndex];
+
+  let onBreadcrumbsUpdated = inspector.once("breadcrumbs-updated");
+  button.click();
+  yield onBreadcrumbsUpdated;
+
+  is(breadcrumbs.currentIndex, checkedButtonIndex, "New button is selected");
+  ok(breadcrumbs.outer.hasAttribute("aria-activedescendant"),
+    "Active descendant must be set");
+
+  let comment = [...inspector.markup._containers].find(([node]) =>
+    node.nodeType === Ci.nsIDOMNode.COMMENT_NODE)[0];
+
+  let onInspectorUpdated = inspector.once("inspector-updated");
+  inspector.selection.setNodeFront(comment);
+  yield onInspectorUpdated;
+
+  is(breadcrumbs.currentIndex, -1,
+    "When comment is selected no breadcrumb should be checked");
+  ok(!breadcrumbs.outer.hasAttribute("aria-activedescendant"),
+    "Active descendant must not be set");
+
+  onInspectorUpdated = inspector.once("inspector-updated");
+  onBreadcrumbsUpdated = inspector.once("breadcrumbs-updated");
+  button.click();
+  yield Promise.all([onInspectorUpdated, onBreadcrumbsUpdated]);
+
+  is(breadcrumbs.currentIndex, checkedButtonIndex,
+    "Same button is selected again");
+  ok(breadcrumbs.outer.hasAttribute("aria-activedescendant"),
+    "Active descendant must be set again");
 }

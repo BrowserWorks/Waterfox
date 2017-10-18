@@ -136,7 +136,6 @@ PYTHON_PATH = $(PYTHON) $(topsrcdir)/config/pythonpath.py
 _DEBUG_ASFLAGS :=
 _DEBUG_CFLAGS :=
 _DEBUG_LDFLAGS :=
-_DEBUG_RUSTFLAGS :=
 
 ifneq (,$(MOZ_DEBUG)$(MOZ_DEBUG_SYMBOLS))
   ifeq ($(AS),$(YASM))
@@ -152,14 +151,12 @@ ifneq (,$(MOZ_DEBUG)$(MOZ_DEBUG_SYMBOLS))
   endif
   _DEBUG_CFLAGS += $(MOZ_DEBUG_FLAGS)
   _DEBUG_LDFLAGS += $(MOZ_DEBUG_LDFLAGS)
-  _DEBUG_RUSTFLAGS += -g
 endif
 
 ASFLAGS += $(_DEBUG_ASFLAGS)
 OS_CFLAGS += $(_DEBUG_CFLAGS)
 OS_CXXFLAGS += $(_DEBUG_CFLAGS)
 OS_LDFLAGS += $(_DEBUG_LDFLAGS)
-RUSTFLAGS += $(_DEBUG_RUSTFLAGS)
 
 # XXX: What does this? Bug 482434 filed for better explanation.
 ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
@@ -228,6 +225,9 @@ endif
 endif # MOZ_PROFILE_USE
 endif # NO_PROFILE_GUIDED_OPTIMIZE
 
+# linker
+OS_LDFLAGS += $(LINKER_LDFLAGS)
+
 MAKE_JARS_FLAGS = \
 	-t $(topsrcdir) \
 	-f $(MOZ_JAR_MAKER_FILE_FORMAT) \
@@ -289,20 +289,17 @@ CFLAGS		+= $(MOZ_OPTIMIZE_FLAGS)
 CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # MOZ_OPTIMIZE == 1
 LDFLAGS		+= $(MOZ_OPTIMIZE_LDFLAGS)
-RUSTFLAGS	+= $(MOZ_OPTIMIZE_RUSTFLAGS)
 endif # MOZ_OPTIMIZE
 
 HOST_CFLAGS	+= $(_DEPEND_CFLAGS)
 HOST_CXXFLAGS	+= $(_DEPEND_CFLAGS)
 ifdef CROSS_COMPILE
 HOST_CFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
+HOST_CXXFLAGS	+= $(HOST_OPTIMIZE_FLAGS)
 else
 ifdef MOZ_OPTIMIZE
-ifeq (1,$(MOZ_OPTIMIZE))
 HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-else
-HOST_CFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
-endif # MOZ_OPTIMIZE == 1
+HOST_CXXFLAGS	+= $(MOZ_OPTIMIZE_FLAGS)
 endif # MOZ_OPTIMIZE
 endif # CROSS_COMPILE
 
@@ -344,19 +341,56 @@ endif
 HOST_CFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CFLAGS)
 HOST_CXXFLAGS += $(HOST_DEFINES) $(MOZBUILD_HOST_CXXFLAGS)
 
+# We only add color flags if neither the flag to disable color
+# (e.g. "-fno-color-diagnostics" nor a flag to control color
+# (e.g. "-fcolor-diagnostics=never") is present.
+define colorize_flags
+ifeq (,$(filter $(COLOR_CFLAGS:-f%=-fno-%),$$(1))$(findstring $(COLOR_CFLAGS),$$(1)))
+$(1) += $(COLOR_CFLAGS)
+endif
+endef
+
+color_flags_vars := \
+  COMPILE_CFLAGS \
+  COMPILE_CXXFLAGS \
+  COMPILE_CMFLAGS \
+  COMPILE_CMMFLAGS \
+  LDFLAGS \
+  $(NULL)
+
+ifdef MACH_STDOUT_ISATTY
+ifdef COLOR_CFLAGS
+# TODO Bug 1319166 - iTerm2 interprets some bytes  sequences as a
+# request to show a print dialog. Don't enable color on iTerm2 until
+# a workaround is in place.
+ifneq ($(TERM_PROGRAM),iTerm.app)
+$(foreach var,$(color_flags_vars),$(eval $(call colorize_flags,$(var))))
+endif
+endif
+endif
+
 #
 # Name of the binary code directories
 #
 # Override defaults
-
-SDK_LIB_DIR = $(DIST)/sdk/lib
-SDK_BIN_DIR = $(DIST)/sdk/bin
 
 DEPENDENCIES	= .md
 
 ifdef MACOSX_DEPLOYMENT_TARGET
 export MACOSX_DEPLOYMENT_TARGET
 endif # MACOSX_DEPLOYMENT_TARGET
+
+# Export to propagate to cl and submake for third-party code.
+# Eventually, we'll want to just use -I.
+ifdef INCLUDE
+export INCLUDE
+endif
+
+# Export to propagate to link.exe and submake for third-party code.
+# Eventually, we'll want to just use -LIBPATH.
+ifdef LIB
+export LIB
+endif
 
 ifdef MOZ_USING_CCACHE
 ifdef CLANG_CXX
@@ -380,8 +414,13 @@ endif # WINNT
 
 ifdef _MSC_VER
 ifeq ($(CPU_ARCH),x86_64)
+ifdef MOZ_ASAN
+# ASan could have 3x stack memory usage of normal builds.
+WIN32_EXE_LDFLAGS	+= -STACK:6291456
+else
 # set stack to 2MB on x64 build.  See bug 582910
 WIN32_EXE_LDFLAGS	+= -STACK:2097152
+endif
 endif
 endif
 
@@ -403,21 +442,11 @@ PWD := $(CURDIR)
 endif
 
 NSINSTALL_PY := $(PYTHON) $(abspath $(MOZILLA_DIR)/config/nsinstall.py)
-# For Pymake, wherever we use nsinstall.py we're also going to try to make it
-# a native command where possible. Since native commands can't be used outside
-# of single-line commands, we continue to provide INSTALL for general use.
-# Single-line commands should be switched over to install_cmd.
-NSINSTALL_NATIVECMD := %nsinstall nsinstall
-
-ifdef NSINSTALL_BIN
-NSINSTALL = $(NSINSTALL_BIN)
-else
-ifeq ($(HOST_OS_ARCH),WINNT)
+ifneq (,$(or $(filter WINNT,$(HOST_OS_ARCH)),$(if $(COMPILE_ENVIRONMENT),,1)))
 NSINSTALL = $(NSINSTALL_PY)
 else
 NSINSTALL = $(DEPTH)/config/nsinstall$(HOST_BIN_SUFFIX)
 endif # WINNT
-endif # NSINSTALL_BIN
 
 
 ifeq (,$(CROSS_COMPILE)$(filter-out WINNT, $(OS_ARCH)))
@@ -520,7 +549,7 @@ EXPAND_LIBS_GEN = $(PYTHON) $(MOZILLA_DIR)/config/expandlibs_gen.py
 EXPAND_AR = $(EXPAND_LIBS_EXEC) --extract -- $(AR)
 EXPAND_CC = $(EXPAND_LIBS_EXEC) --uselist -- $(CC)
 EXPAND_CCC = $(EXPAND_LIBS_EXEC) --uselist -- $(CCC)
-EXPAND_LD = $(EXPAND_LIBS_EXEC) --uselist -- $(LD)
+EXPAND_LINK = $(EXPAND_LIBS_EXEC) --uselist -- $(LINK)
 EXPAND_MKSHLIB_ARGS = --uselist
 ifdef SYMBOL_ORDER
 EXPAND_MKSHLIB_ARGS += --symbol-order $(SYMBOL_ORDER)

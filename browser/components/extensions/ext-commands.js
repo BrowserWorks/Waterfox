@@ -2,41 +2,42 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-Cu.import("resource://devtools/shared/event-emitter.js");
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-browserAction.js */
+/* import-globals-from ext-utils.js */
 
-var {
-  EventManager,
-  PlatformInfo,
-} = ExtensionUtils;
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
+                                  "resource://gre/modules/ExtensionParent.jsm");
 
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+var XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-// WeakMap[Extension -> CommandList]
-var commandsMap = new WeakMap();
+this.commands = class extends ExtensionAPI {
+  onManifestEntry(entryName) {
+    let {extension} = this;
 
-function CommandList(manifest, extension) {
-  this.extension = extension;
-  this.id = makeWidgetId(extension.id);
-  this.windowOpenListener = null;
+    this.id = makeWidgetId(extension.id);
+    this.windowOpenListener = null;
 
-  // Map[{String} commandName -> {Object} commandProperties]
-  this.commands = this.loadCommandsFromManifest(manifest);
+    // Map[{String} commandName -> {Object} commandProperties]
+    this.commands = this.loadCommandsFromManifest(this.extension.manifest);
 
-  // WeakMap[Window -> <xul:keyset>]
-  this.keysetsMap = new WeakMap();
+    // WeakMap[Window -> <xul:keyset>]
+    this.keysetsMap = new WeakMap();
 
-  this.register();
-  EventEmitter.decorate(this);
-}
+    this.register();
+    EventEmitter.decorate(this);
+  }
 
-CommandList.prototype = {
+  onShutdown(reason) {
+    this.unregister();
+  }
+
   /**
    * Registers the commands to all open windows and to any which
    * are later created.
    */
   register() {
-    for (let window of WindowListManager.browserWindows()) {
+    for (let window of windowTracker.browserWindows()) {
       this.registerKeysToDocument(window);
     }
 
@@ -46,22 +47,22 @@ CommandList.prototype = {
       }
     };
 
-    WindowListManager.addOpenListener(this.windowOpenListener);
-  },
+    windowTracker.addOpenListener(this.windowOpenListener);
+  }
 
   /**
    * Unregisters the commands from all open windows and stops commands
    * from being registered to windows which are later created.
    */
   unregister() {
-    for (let window of WindowListManager.browserWindows()) {
+    for (let window of windowTracker.browserWindows()) {
       if (this.keysetsMap.has(window)) {
         this.keysetsMap.get(window).remove();
       }
     }
 
-    WindowListManager.removeOpenListener(this.windowOpenListener);
-  },
+    windowTracker.removeOpenListener(this.windowOpenListener);
+  }
 
   /**
    * Creates a Map from commands for each command in the manifest.commands object.
@@ -73,19 +74,19 @@ CommandList.prototype = {
     let commands = new Map();
     // For Windows, chrome.runtime expects 'win' while chrome.commands
     // expects 'windows'.  We can special case this for now.
+    let {PlatformInfo} = ExtensionParent;
     let os = PlatformInfo.os == "win" ? "windows" : PlatformInfo.os;
-    for (let name of Object.keys(manifest.commands)) {
-      let command = manifest.commands[name];
-      let shortcut = command.suggested_key[os] || command.suggested_key.default;
-      if (shortcut) {
-        commands.set(name, {
-          description: command.description,
-          shortcut: shortcut.replace(/\s+/g, ""),
-        });
-      }
+    for (let [name, command] of Object.entries(manifest.commands)) {
+      let suggested_key = command.suggested_key || {};
+      let shortcut = suggested_key[os] || suggested_key.default;
+      shortcut = shortcut ? shortcut.replace(/\s+/g, "") : null;
+      commands.set(name, {
+        description: command.description,
+        shortcut,
+      });
     }
     return commands;
-  },
+  }
 
   /**
    * Registers the commands to a document.
@@ -96,12 +97,14 @@ CommandList.prototype = {
     let keyset = doc.createElementNS(XUL_NS, "keyset");
     keyset.id = `ext-keyset-id-${this.id}`;
     this.commands.forEach((command, name) => {
-      let keyElement = this.buildKey(doc, name, command.shortcut);
-      keyset.appendChild(keyElement);
+      if (command.shortcut) {
+        let keyElement = this.buildKey(doc, name, command.shortcut);
+        keyset.appendChild(keyElement);
+      }
     });
     doc.documentElement.appendChild(keyset);
     this.keysetsMap.set(window, keyset);
-  },
+  }
 
   /**
    * Builds a XUL Key element and attaches an onCommand listener which
@@ -125,17 +128,28 @@ CommandList.prototype = {
     // We remove all references to the key elements when the extension is shutdown,
     // therefore the listeners for these elements will be garbage collected.
     keyElement.addEventListener("command", (event) => {
+      let action;
       if (name == "_execute_page_action") {
-        let win = event.target.ownerDocument.defaultView;
-        pageActionFor(this.extension).triggerAction(win);
+        action = pageActionFor(this.extension);
+      } else if (name == "_execute_browser_action") {
+        action = browserActionFor(this.extension);
+      } else if (name == "_execute_sidebar_action") {
+        action = sidebarActionFor(this.extension);
       } else {
+        this.extension.tabManager
+            .addActiveTabPermission();
         this.emit("command", name);
+        return;
+      }
+      if (action) {
+        let win = event.target.ownerGlobal;
+        action.triggerAction(win);
       }
     });
     /* eslint-enable mozilla/balanced-listeners */
 
     return keyElement;
-  },
+  }
 
   /**
    * Builds a XUL Key element from the provided shortcut.
@@ -157,15 +171,16 @@ CommandList.prototype = {
     // The modifiers are the remaining elements.
     keyElement.setAttribute("modifiers", this.getModifiersAttribute(parts));
 
-    if (/^[A-Z0-9]$/.test(chromeKey)) {
+    if (/^[A-Z]$/.test(chromeKey)) {
       // We use the key attribute for all single digits and characters.
       keyElement.setAttribute("key", chromeKey);
     } else {
       keyElement.setAttribute("keycode", this.getKeycodeAttribute(chromeKey));
+      keyElement.setAttribute("event", "keydown");
     }
 
     return keyElement;
-  },
+  }
 
   /**
    * Determines the corresponding XUL keycode from the given chrome key.
@@ -181,8 +196,11 @@ CommandList.prototype = {
    * @returns {string} The constructed value for the Key's 'keycode' attribute.
    */
   getKeycodeAttribute(chromeKey) {
+    if (/[0-9]/.test(chromeKey)) {
+      return `VK_${chromeKey}`;
+    }
     return `VK${chromeKey.replace(/([A-Z])/g, "_$&").toUpperCase()}`;
-  },
+  }
 
   /**
    * Determines the corresponding XUL modifiers from the chrome modifiers.
@@ -208,46 +226,31 @@ CommandList.prototype = {
     return Array.from(chromeModifiers, modifier => {
       return modifiersMap[modifier];
     }).join(" ");
-  },
-};
-
-
-/* eslint-disable mozilla/balanced-listeners */
-extensions.on("manifest_commands", (type, directive, extension, manifest) => {
-  commandsMap.set(extension, new CommandList(manifest, extension));
-});
-
-extensions.on("shutdown", (type, extension) => {
-  let commandsList = commandsMap.get(extension);
-  if (commandsList) {
-    commandsList.unregister();
-    commandsMap.delete(extension);
   }
-});
-/* eslint-enable mozilla/balanced-listeners */
 
-extensions.registerSchemaAPI("commands", (extension, context) => {
-  return {
-    commands: {
-      getAll() {
-        let commands = commandsMap.get(extension).commands;
-        return Promise.resolve(Array.from(commands, ([name, command]) => {
-          return ({
-            name,
-            description: command.description,
-            shortcut: command.shortcut,
-          });
-        }));
+  getAPI(context) {
+    return {
+      commands: {
+        getAll: () => {
+          let commands = this.commands;
+          return Promise.resolve(Array.from(commands, ([name, command]) => {
+            return ({
+              name,
+              description: command.description,
+              shortcut: command.shortcut,
+            });
+          }));
+        },
+        onCommand: new EventManager(context, "commands.onCommand", fire => {
+          let listener = (eventName, commandName) => {
+            fire.async(commandName);
+          };
+          this.on("command", listener);
+          return () => {
+            this.off("command", listener);
+          };
+        }).api(),
       },
-      onCommand: new EventManager(context, "commands.onCommand", fire => {
-        let listener = (event, name) => {
-          fire(name);
-        };
-        commandsMap.get(extension).on("command", listener);
-        return () => {
-          commandsMap.get(extension).off("command", listener);
-        };
-      }).api(),
-    },
-  };
-});
+    };
+  }
+};

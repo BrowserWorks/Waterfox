@@ -8,6 +8,7 @@ from collections import deque
 from .base import BaseFormatter
 from .process import strstatus
 
+
 def output_subtests(func):
     @functools.wraps(func)
     def inner(self, data):
@@ -71,7 +72,10 @@ class TbplFormatter(BaseFormatter):
 
     @output_subtests
     def process_output(self, data):
-        return "PROCESS | %(process)s | %(data)s\n" % data
+        pid = data['process']
+        if pid.isdigit():
+            pid = 'PID %s' % pid
+        return "%s | %s\n" % (pid, data['data'])
 
     @output_subtests
     def process_start(self, data):
@@ -87,7 +91,7 @@ class TbplFormatter(BaseFormatter):
 
     @output_subtests
     def crash(self, data):
-        id = self.id_str(data["test"]) if "test" in data else "pid: %s" % data["process"]
+        id = data["test"] if "test" in data else "pid: %s" % data["process"]
 
         signature = data["signature"] if data["signature"] else "unknown top frame"
         rv = ["PROCESS-CRASH | %s | application crashed [%s]" % (id, signature)]
@@ -116,12 +120,13 @@ class TbplFormatter(BaseFormatter):
 
     def suite_start(self, data):
         self.suite_start_time = data["time"]
-        return "SUITE-START | Running %i tests\n" % len(data["tests"])
+        num_tests = reduce(lambda x, y: x + len(y), data['tests'].itervalues(), 0)
+        return "SUITE-START | Running %i tests\n" % num_tests
 
     def test_start(self, data):
         self.test_start_times[self.test_id(data["test"])] = data["time"]
 
-        return "TEST-START | %s\n" % self.id_str(data["test"])
+        return "TEST-START | %s\n" % data["test"]
 
     def test_status(self, data):
         if self.compact:
@@ -138,6 +143,25 @@ class TbplFormatter(BaseFormatter):
         else:
             return self._format_status(data)
 
+    def assertion_count(self, data):
+        if data["min_expected"] != data["max_expected"]:
+            expected = "%i to %i" % (data["min_expected"],
+                                     data["max_expected"])
+        else:
+            expected = "%i" % data["min_expected"]
+
+        if data["count"] < data["min_expected"]:
+            status, comparison = "TEST-UNEXPECTED-PASS", "is less than"
+        elif data["count"] > data["max_expected"]:
+            status, comparison = "TEST-UNEXPECTED-FAIL", "is more than"
+        elif data["count"] > 0:
+            status, comparison = "TEST-KNOWN-FAIL", "matches"
+        else:
+            return
+
+        return ("%s | %s | assertion count %i %s expected %s assertions\n" %
+                (status, data["test"], data["count"], comparison, expected))
+
     def _format_status(self, data):
         message = "- " + data["message"] if "message" in data else ""
         if "stack" in data:
@@ -149,7 +173,7 @@ class TbplFormatter(BaseFormatter):
             if not message:
                 message = "- expected %s" % data["expected"]
             failure_line = "TEST-UNEXPECTED-%s | %s | %s %s\n" % (
-                data["status"], self.id_str(data["test"]), data["subtest"],
+                data["status"], data["test"], data["subtest"],
                 message)
             if data["expected"] != "PASS":
                 info_line = "TEST-INFO | expected %s\n" % data["expected"]
@@ -157,7 +181,7 @@ class TbplFormatter(BaseFormatter):
             return failure_line
 
         return "TEST-%s | %s | %s %s\n" % (
-            data["status"], self.id_str(data["test"]), data["subtest"],
+            data["status"], data["test"], data["subtest"],
             message)
 
     def test_end(self, data):
@@ -187,8 +211,20 @@ class TbplFormatter(BaseFormatter):
             if message and message[-1] == "\n":
                 message = message[:-1]
 
+            extra = data.get("extra", {})
+            if "reftest_screenshots" in extra:
+                screenshots = extra["reftest_screenshots"]
+                if len(screenshots) == 3:
+                    message += ("\nREFTEST   IMAGE 1 (TEST): data:image/png;base64,%s\n"
+                                "REFTEST   IMAGE 2 (REFERENCE): data:image/png;base64,%s") % (
+                                    screenshots[0]["screenshot"],
+                                    screenshots[2]["screenshot"])
+                elif len(screenshots) == 1:
+                    message += "\nREFTEST   IMAGE: data:image/png;base64,%(image1)s" \
+                               % screenshots[0]["screenshot"]
+
             failure_line = "TEST-UNEXPECTED-%s | %s | %s\n" % (
-                data["status"], self.id_str(test_id), message)
+                data["status"], test_id, message)
 
             if data["expected"] not in ("PASS", "OK"):
                 expected_msg = "expected %s | " % data["expected"]
@@ -198,7 +234,7 @@ class TbplFormatter(BaseFormatter):
 
             return failure_line + info_line
 
-        sections = ["TEST-%s" % data['status'], self.id_str(test_id)]
+        sections = ["TEST-%s" % data['status'], test_id]
         if duration_msg:
             sections.append(duration_msg)
         rv.append(' | '.join(sections) + '\n')
@@ -216,12 +252,6 @@ class TbplFormatter(BaseFormatter):
         else:
             return tuple(test_id)
 
-    def id_str(self, test_id):
-        if isinstance(test_id, (str, unicode)):
-            return test_id
-        else:
-            return " ".join(test_id)
-
     @output_subtests
     def valgrind_error(self, data):
         rv = "TEST-UNEXPECTED-VALGRIND-ERROR | " + data['primary'] + "\n"
@@ -229,3 +259,9 @@ class TbplFormatter(BaseFormatter):
             rv = rv + line + "\n"
 
         return rv
+
+    def lint(self, data):
+        fmt = "TEST-UNEXPECTED-{level} | {path}:{lineno}{column} | {message} ({rule})"
+        data["column"] = ":%s" % data["column"] if data["column"] else ""
+        data['rule'] = data['rule'] or data['linter'] or ""
+        return fmt.append(fmt.format(**data))

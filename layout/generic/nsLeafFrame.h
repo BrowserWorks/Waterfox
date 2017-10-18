@@ -34,21 +34,21 @@ public:
    * Both GetMinISize and GetPrefISize will return whatever GetIntrinsicISize
    * returns.
    */
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   /**
    * Our auto size is just intrinsic width and intrinsic height.
    */
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
   /**
    * Reflow our frame.  This will use the computed width plus borderpadding for
@@ -60,7 +60,7 @@ public:
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&      aStatus) override;
-  
+
   /**
    * This method does most of the work that Reflow() above need done.
    */
@@ -77,7 +77,10 @@ public:
   }
 
 protected:
-  explicit nsLeafFrame(nsStyleContext* aContext) : nsFrame(aContext) {}
+  nsLeafFrame(nsStyleContext* aContext, ClassID aID)
+    : nsFrame(aContext, aID)
+  {}
+
   virtual ~nsLeafFrame();
 
   /**

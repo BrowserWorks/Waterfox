@@ -6,11 +6,11 @@
 #include "nsGfxRadioControlFrame.h"
 
 #include "gfx2DGlue.h"
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
 #include "nsDisplayList.h"
 
 using namespace mozilla;
@@ -25,7 +25,7 @@ NS_NewGfxRadioControlFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsGfxRadioControlFrame)
 
 nsGfxRadioControlFrame::nsGfxRadioControlFrame(nsStyleContext* aContext):
-  nsFormControlFrame(aContext)
+  nsFormControlFrame(aContext, kClassID)
 {
 }
 
@@ -40,6 +40,8 @@ nsGfxRadioControlFrame::AccessibleType()
   return a11y::eHTMLRadioButtonType;
 }
 #endif
+
+#ifdef MOZ_WIDGET_ANDROID
 
 //--------------------------------------------------------------
 // Draw the dot for a non-native radio button in the checked state.
@@ -77,7 +79,7 @@ nsGfxRadioControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   if (!IsVisibleForPainting(aBuilder))
     return;
-  
+
   if (IsThemed())
     return; // The theme will paint the check, if any.
 
@@ -85,9 +87,11 @@ nsGfxRadioControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   GetCurrentCheckState(&checked); // Get check state from the content model
   if (!checked)
     return;
-    
+
   aLists.Content()->AppendNewToTop(new (aBuilder)
     nsDisplayGeneric(aBuilder, this, PaintCheckedRadioButton,
                      "CheckedRadioButton",
                      nsDisplayItem::TYPE_CHECKED_RADIOBUTTON));
 }
+
+#endif

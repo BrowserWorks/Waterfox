@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 load(libdir + "asm.js");
 
 assertAsmTypeFail('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f() { i32[0>>2] = 4.0; return i32[0>>2]|0; } return f');
@@ -18,50 +17,55 @@ assertEq(f(0), 0);
 
 setCachingEnabled(true);
 
+// In order to allow following tests work on both big-endian and little-
+// endian architectures we need to define least significant byte (lsb) and
+// least significant word (lsw).
 var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i8[0]|0}; return f');
+var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
+var lsb=0;
+var lsw=0
+if (f(0x12345678) == 0x12) {
+  lsb=3;
+  lsw=1;
+}
+
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i8[' + lsb + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7f),0x7f);
 assertEq(f(0xff),-1);
 assertEq(f(0x100),0);
 
-// Test signal handlers deactivation
-if (wasmUsesSignalForOOB()) {
-    suppressSignalHandlers(true);
-    assertEq(wasmUsesSignalForOOB(), false);
+{
+      var buf = new ArrayBuffer(BUF_MIN);
+      var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + '/* not a clone */ function f(i) {i=i|0; i32[0] = i; return i8[' + lsb + ']|0}; return f');
+      var f = asmLink(code, this, null, buf);
+      assertEq(f(0),0);
+      assertEq(f(0x7f),0x7f);
+      assertEq(f(0xff),-1);
+      assertEq(f(0x100),0);
 
-    var buf = new ArrayBuffer(BUF_MIN);
-    var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + '/* not a clone */ function f(i) {i=i|0; i32[0] = i; return i8[0]|0}; return f');
-    var f = asmLink(code, this, null, buf);
-    assertEq(f(0),0);
-    assertEq(f(0x7f),0x7f);
-    assertEq(f(0xff),-1);
-    assertEq(f(0x100),0);
-
-    // Bug 1088655
-    assertEq(asmLink(asmCompile('stdlib', 'foreign', 'heap', USE_ASM + 'var i32=new stdlib.Int32Array(heap); function f(i) {i=i|0;var j=0x10000;return (i32[j>>2] = i)|0 } return f'), this, null, buf)(1), 1);
-
-    suppressSignalHandlers(false);
-    assertEq(wasmUsesSignalForOOB(), true);
+      // Bug 1088655
+      assertEq(asmLink(asmCompile('stdlib', 'foreign', 'heap', USE_ASM + 'var i32=new stdlib.Int32Array(heap); function f(i) {i=i|0;var j=0x10000;return (i32[j>>2] = i)|0 } return f'), this, null, buf)(1), 1);
 }
 
 setCachingEnabled(false);
 
-var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u8[0]|0}; return f');
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u8[' + lsb + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7f),0x7f);
 assertEq(f(0xff),0xff);
 assertEq(f(0x100),0);
 
-var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i16[0]|0}; return f');
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i16[' + lsw + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7fff),0x7fff);
 assertEq(f(0xffff),-1);
 assertEq(f(0x10000),0);
 
-var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u16[0]|0}; return f');
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u16[' + lsw + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7fff),0x7fff);
@@ -82,14 +86,14 @@ assertEq(f(0x7fffffff),0x7fffffff);
 assertEq(f(0xffffffff),-1);
 assertEq(f(0x100000000),0);
 
-var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i8[0]|0}; return f');
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return i8[' + lsb + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7f),0x7f);
 assertEq(f(0xff),-1);
 assertEq(f(0x100),0);
 
-var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u8[0]|0}; return f');
+var code = asmCompile('glob', 'imp', 'b', USE_ASM + HEAP_IMPORTS + 'function f(i) {i=i|0; i32[0] = i; return u8[' + lsb + ']|0}; return f');
 var f = asmLink(code, this, null, new ArrayBuffer(BUF_MIN));
 assertEq(f(0),0);
 assertEq(f(0x7f),0x7f);

@@ -11,7 +11,7 @@
 
 class nsIBaseWindow;
 
-class nsResizerFrame : public nsTitleBarFrame 
+class nsResizerFrame final : public nsTitleBarFrame
 {
 protected:
   struct Direction {
@@ -20,9 +20,9 @@ protected:
   };
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsResizerFrame)
 
-  friend nsIFrame* NS_NewResizerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);  
+  friend nsIFrame* NS_NewResizerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
   explicit nsResizerFrame(nsStyleContext* aContext);
 

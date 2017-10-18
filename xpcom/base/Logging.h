@@ -10,17 +10,10 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "prlog.h"
-
 #include "mozilla/Assertions.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/Likely.h"
-#include "mozilla/MacroForEach.h"
-
-// This file is a placeholder for a replacement to the NSPR logging framework
-// that is defined in prlog.h. Currently it is just a pass through, but as
-// work progresses more functionality will be swapped out in favor of
-// mozilla logging implementations.
 
 // We normally have logging enabled everywhere, but measurements showed that
 // having logging enabled on Android is quite expensive (hundreds of kilobytes
@@ -31,7 +24,7 @@
 // devices, we've chosen to leave logging enabled on desktop, but disabled on
 // Android.  Given that logging can still be useful for development purposes,
 // however, we leave logging enabled on Android developer builds.
-#if !defined(ANDROID) || !defined(RELEASE_BUILD)
+#if !defined(ANDROID) || !defined(RELEASE_OR_BETA)
 #define MOZ_LOGGING_ENABLED 1
 #else
 #define MOZ_LOGGING_ENABLED 0
@@ -86,6 +79,29 @@ public:
   static void Init();
 
   /**
+   * Sets the log file to the given filename.
+   */
+  static void SetLogFile(const char* aFilename);
+
+  /**
+   * @param aBuffer - pointer to a buffer
+   * @param aLength - the length of the buffer
+   *
+   * @return the actual length of the filepath.
+   */
+  static uint32_t GetLogFile(char *aBuffer, size_t aLength);
+
+  /**
+   * @param aAddTimestamp If we should log a time stamp with every message.
+   */
+  static void SetAddTimestamp(bool aAddTimestamp);
+
+  /**
+   * @param aIsSync If we should flush the file after every logged message.
+   */
+  static void SetIsSync(bool aIsSync);
+
+  /**
    * Indicates whether or not the given log level is enabled.
    */
   bool ShouldLog(LogLevel aLevel) const { return mLevel >= aLevel; }
@@ -103,7 +119,7 @@ public:
   /**
    * Print a log message for this module.
    */
-  void Printv(LogLevel aLevel, const char* aFmt, va_list aArgs) const;
+  void Printv(LogLevel aLevel, const char* aFmt, va_list aArgs) const MOZ_FORMAT_PRINTF(3, 0);
 
   /**
    * Retrieves the module name.
@@ -168,20 +184,6 @@ private:
 
 namespace detail {
 
-inline bool log_test(const PRLogModuleInfo* module, LogLevel level) {
-  MOZ_ASSERT(level != LogLevel::Disabled);
-  return module && module->level >= static_cast<int>(level);
-}
-
-/**
- * A rather inefficient wrapper for PR_LogPrint that always allocates.
- * PR_LogModuleInfo is deprecated so it's not worth the effort to do
- * any better.
- */
-void log_print(const PRLogModuleInfo* aModule,
-                      LogLevel aLevel,
-                      const char* aFmt, ...);
-
 inline bool log_test(const LogModule* module, LogLevel level) {
   MOZ_ASSERT(level != LogLevel::Disabled);
   return module && module->ShouldLog(level);
@@ -189,7 +191,7 @@ inline bool log_test(const LogModule* module, LogLevel level) {
 
 void log_print(const LogModule* aModule,
                LogLevel aLevel,
-               const char* aFmt, ...);
+               const char* aFmt, ...) MOZ_FORMAT_PRINTF(3, 4);
 } // namespace detail
 
 } // namespace mozilla
@@ -215,15 +217,12 @@ void log_print(const LogModule* aModule,
 #define MOZ_LOG_TEST(_module,_level) false
 #endif
 
-#define MOZ_LOG(_module,_level,_args)     \
-  PR_BEGIN_MACRO             \
-    if (MOZ_LOG_TEST(_module,_level)) { \
-      mozilla::detail::log_print(_module, _level, MOZ_LOG_EXPAND_ARGS _args);         \
-    }                     \
-  PR_END_MACRO
-
-#undef PR_LOG
-#undef PR_LOG_TEST
+#define MOZ_LOG(_module,_level,_args)                                         \
+  do {                                                                        \
+    if (MOZ_LOG_TEST(_module,_level)) {                                       \
+      mozilla::detail::log_print(_module, _level, MOZ_LOG_EXPAND_ARGS _args); \
+    }                                                                         \
+  } while (0)
 
 // This #define is a Logging.h-only knob!  Don't encourage people to get fancy
 // with their log definitions by exporting it outside of Logging.h.

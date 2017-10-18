@@ -4,13 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('cors/**'):
+    BUG_COMPONENT = ('Core', 'Networking')
+
 XPCSHELL_TESTS_MANIFESTS += [
     'unit/xpcshell.ini',
 ]
 
-GeckoCppUnitTests([
-     'TestCSPParser',
-])
+TEST_DIRS += [
+    'gtest',
+]
 
 MOCHITEST_MANIFESTS += [
     'cors/mochitest.ini',
@@ -21,10 +24,12 @@ MOCHITEST_MANIFESTS += [
 ]
 
 MOCHITEST_CHROME_MANIFESTS += [
-    'csp/chrome.ini',
+    'general/chrome.ini',
 ]
 
 BROWSER_CHROME_MANIFESTS += [
-    'contentverifier/browser.ini',
+    'cors/browser.ini',
     'csp/browser.ini',
+    'general/browser.ini',
+    'hsts/browser.ini',
 ]

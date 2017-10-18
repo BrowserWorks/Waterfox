@@ -12,6 +12,7 @@
 #include "BaseElf.h"
 #include "Mappable.h"
 #include "Logging.h"
+#include "mozilla/IntegerPrintfMacros.h"
 
 using namespace Elf;
 using namespace mozilla;
@@ -23,9 +24,11 @@ using namespace mozilla;
 #ifdef ANDROID
 extern "C" {
   void report_mapping(char *name, void *base, uint32_t len, uint32_t offset);
+  void delete_mapping(const char *name);
 }
 #else
 #define report_mapping(...)
+#define delete_mapping(...)
 #endif
 
 const Ehdr *Ehdr::validate(const void *buf)
@@ -57,13 +60,14 @@ namespace {
 
 void debug_phdr(const char *type, const Phdr *phdr)
 {
-  DEBUG_LOG("%s @0x%08" PRIxAddr " ("
-            "filesz: 0x%08" PRIxAddr ", "
-            "memsz: 0x%08" PRIxAddr ", "
-            "offset: 0x%08" PRIxAddr ", "
+  DEBUG_LOG("%s @0x%08" PRIxPTR " ("
+            "filesz: 0x%08" PRIxPTR ", "
+            "memsz: 0x%08" PRIxPTR ", "
+            "offset: 0x%08" PRIxPTR ", "
             "flags: %c%c%c)",
-            type, phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz,
-            phdr->p_offset, phdr->p_flags & PF_R ? 'r' : '-',
+            type, uintptr_t(phdr->p_vaddr), uintptr_t(phdr->p_filesz),
+            uintptr_t(phdr->p_memsz), uintptr_t(phdr->p_offset),
+            phdr->p_flags & PF_R ? 'r' : '-',
             phdr->p_flags & PF_W ? 'w' : '-', phdr->p_flags & PF_X ? 'x' : '-');
 }
 
@@ -87,8 +91,6 @@ public:
       mappable->mmap(nullptr, PageSize(), PROT_READ, MAP_PRIVATE, 0))
   , mappable(mappable)
   {
-    /* Ensure the content of this page */
-    mappable->ensure(*this);
   }
 
 private:
@@ -182,8 +184,8 @@ CustomElf::Load(Mappable *mappable, const char *path, int flags)
   }
 
   if (min_vaddr != 0) {
-    ERROR("%s: Unsupported minimal virtual address: 0x%08" PRIxAddr,
-        elf->GetPath(), min_vaddr);
+    ERROR("%s: Unsupported minimal virtual address: 0x%08" PRIxPTR,
+        elf->GetPath(), uintptr_t(min_vaddr));
     return nullptr;
   }
   if (!dyn) {
@@ -258,9 +260,6 @@ CustomElf::Load(Mappable *mappable, const char *path, int flags)
                             arm_exidx_phdr->p_memsz);
 #endif
 
-  if (MOZ_UNLIKELY(Logging::isVerbose())) {
-    elf->stats("oneLibLoaded");
-  }
   DEBUG_LOG("CustomElf::Load(\"%s\", 0x%x) = %p", path, flags,
             static_cast<void *>(elf));
   return elf.forget();
@@ -276,6 +275,7 @@ CustomElf::~CustomElf()
    * calls destructors once, so call it in all cases. */
   ElfLoader::__wrap_cxa_finalize(this);
   ElfLoader::Singleton.Forget(this);
+  delete_mapping(GetName());
 }
 
 void *
@@ -308,8 +308,6 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
       return FunctionPtr(&ElfLoader::__wrap_cxa_finalize);
     if (strcmp(symbol + 2, "dso_handle") == 0)
       return const_cast<CustomElf *>(this);
-    if (strcmp(symbol + 2, "moz_linker_stats") == 0)
-      return FunctionPtr(&ElfLoader::stats);
 #ifdef __ARM_EABI__
     if (strcmp(symbol + 2, "gnu_Unwind_Find_exidx") == 0)
       return FunctionPtr(__wrap___gnu_Unwind_Find_exidx);
@@ -358,12 +356,6 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
   return nullptr;
 }
 
-void
-CustomElf::stats(const char *when) const
-{
-  mappable->stats(when, GetPath());
-}
-
 bool
 CustomElf::LoadSegment(const Phdr *pt_load) const
 {
@@ -410,17 +402,6 @@ CustomElf::LoadSegment(const Phdr *pt_load) const
     return false;
   }
 
-  /* Ensure the availability of all pages within the mapping if on-demand
-   * decompression is disabled (MOZ_LINKER_ONDEMAND=0 or signal handler not
-   * registered). */
-  const char *ondemand = getenv("MOZ_LINKER_ONDEMAND");
-  if (!ElfLoader::Singleton.hasRegisteredHandler() ||
-      (ondemand && !strncmp(ondemand, "0", 2 /* Including '\0' */))) {
-    for (Addr off = 0; off < pt_load->p_filesz + align_offset;
-         off += PageSize()) {
-      mappable->ensure(reinterpret_cast<char *>(mapped) + off);
-    }
-  }
   /* When p_memsz is greater than p_filesz, we need to have nulled out memory
    * after p_filesz and before p_memsz.
    * Above the end of the last page, and up to p_memsz, we already have nulled
@@ -432,10 +413,7 @@ CustomElf::LoadSegment(const Phdr *pt_load) const
     Addr mem_end = pt_load->p_vaddr + pt_load->p_memsz;
     Addr next_page = PageAlignedEndPtr(file_end);
     if (next_page > file_end) {
-      /* The library is not registered at this point, so we can't rely on
-       * on-demand decompression to handle missing pages here. */
       void *ptr = GetPtr(file_end);
-      mappable->ensure(ptr);
       memset(ptr, 0, next_page - file_end);
     }
     if (mem_end > next_page) {
@@ -452,7 +430,7 @@ namespace {
 
 void debug_dyn(const char *type, const Dyn *dyn)
 {
-  DEBUG_LOG("%s 0x%08" PRIxAddr, type, dyn->d_un.d_val);
+  DEBUG_LOG("%s 0x%08" PRIxPTR, type, uintptr_t(dyn->d_un.d_val));
 }
 
 } /* anonymous namespace */
@@ -582,8 +560,8 @@ CustomElf::InitDyn(const Phdr *pt_dyn)
            /* we can treat this like having a DT_SYMBOLIC tag */
            flags &= ~DF_SYMBOLIC;
            if (flags)
-             WARN("%s: unhandled flags #%" PRIxAddr" not handled",
-                 GetPath(), flags);
+             WARN("%s: unhandled flags #%" PRIxPTR" not handled",
+                 GetPath(), uintptr_t(flags));
         }
         break;
       case DT_SONAME: /* Should match GetName(), but doesn't matter */
@@ -605,8 +583,8 @@ CustomElf::InitDyn(const Phdr *pt_dyn)
         /* Ignored */
         break;
       default:
-        WARN("%s: dynamic header type #%" PRIxAddr" not handled",
-            GetPath(), dyn->d_tag);
+        WARN("%s: dynamic header type #%" PRIxPTR" not handled",
+            GetPath(), uintptr_t(dyn->d_tag));
     }
   }
 
@@ -666,8 +644,8 @@ CustomElf::Relocate()
     }
 
     if (symptr == nullptr)
-      WARN("%s: Relocation to NULL @0x%08" PRIxAddr,
-          GetPath(), rel->r_offset);
+      WARN("%s: Relocation to NULL @0x%08" PRIxPTR,
+          GetPath(), uintptr_t(rel->r_offset));
 
     /* Apply relocation */
     switch (ELF_R_TYPE(rel->r_info)) {
@@ -680,8 +658,8 @@ CustomElf::Relocate()
       *(const char **) ptr = (const char *)symptr + rel->GetAddend(base);
       break;
     default:
-      ERROR("%s: Unsupported relocation type: 0x%" PRIxAddr,
-          GetPath(), ELF_R_TYPE(rel->r_info));
+      ERROR("%s: Unsupported relocation type: 0x%" PRIxPTR,
+          GetPath(), uintptr_t(ELF_R_TYPE(rel->r_info)));
       return false;
     }
   }
@@ -713,13 +691,13 @@ CustomElf::RelocateJumps()
 
     if (symptr == nullptr) {
       if (ELF_ST_BIND(sym.st_info) == STB_WEAK) {
-        WARN("%s: Relocation to NULL @0x%08" PRIxAddr " for symbol \"%s\"",
+        WARN("%s: Relocation to NULL @0x%08" PRIxPTR " for symbol \"%s\"",
             GetPath(),
-            rel->r_offset, strtab.GetStringAt(sym.st_name));
+            uintptr_t(rel->r_offset), strtab.GetStringAt(sym.st_name));
       } else {
-        ERROR("%s: Relocation to NULL @0x%08" PRIxAddr " for symbol \"%s\"",
+        ERROR("%s: Relocation to NULL @0x%08" PRIxPTR " for symbol \"%s\"",
             GetPath(),
-            rel->r_offset, strtab.GetStringAt(sym.st_name));
+            uintptr_t(rel->r_offset), strtab.GetStringAt(sym.st_name));
         return false;
       }
     }

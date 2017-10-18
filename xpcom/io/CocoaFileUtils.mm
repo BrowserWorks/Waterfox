@@ -5,10 +5,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CocoaFileUtils.h"
+#include "nsCocoaFeatures.h"
 #include "nsCocoaUtils.h"
 #include <Cocoa/Cocoa.h>
 #include "nsObjCExceptions.h"
 #include "nsDebug.h"
+
+// Need to cope with us using old versions of the SDK and needing this on 10.10+
+#if !defined(MAC_OS_X_VERSION_10_10) || (MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_10)
+const CFStringRef kCFURLQuarantinePropertiesKey = CFSTR("NSURLQuarantinePropertiesKey");
+#endif
 
 namespace CocoaFileUtils {
 
@@ -134,6 +140,128 @@ nsresult SetFileTypeCode(CFURLRef url, OSType typeCode)
   return (success ? NS_OK : NS_ERROR_FAILURE);
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+void AddOriginMetadataToFile(const CFStringRef filePath,
+                             const CFURLRef sourceURL,
+                             const CFURLRef referrerURL) {
+  typedef OSStatus (*MDItemSetAttribute_type)(MDItemRef, CFStringRef, CFTypeRef);
+  static MDItemSetAttribute_type mdItemSetAttributeFunc = NULL;
+
+  static bool did_symbol_lookup = false;
+  if (!did_symbol_lookup) {
+    did_symbol_lookup = true;
+
+    CFBundleRef metadata_bundle = ::CFBundleGetBundleWithIdentifier(CFSTR("com.apple.Metadata"));
+    if (!metadata_bundle) {
+      return;
+    }
+
+    mdItemSetAttributeFunc = (MDItemSetAttribute_type)
+        ::CFBundleGetFunctionPointerForName(metadata_bundle, CFSTR("MDItemSetAttribute"));
+  }
+  if (!mdItemSetAttributeFunc) {
+    return;
+  }
+
+  MDItemRef mdItem = ::MDItemCreate(NULL, filePath);
+  if (!mdItem) {
+    return;
+  }
+
+  CFMutableArrayRef list = ::CFArrayCreateMutable(kCFAllocatorDefault, 2, NULL);
+  if (!list) {
+    ::CFRelease(mdItem);
+    return;
+  }
+
+  // The first item in the list is the source URL of the downloaded file.
+  if (sourceURL) {
+    ::CFArrayAppendValue(list, ::CFURLGetString(sourceURL));
+  }
+
+  // If the referrer is known, store that in the second position.
+  if (referrerURL) {
+    ::CFArrayAppendValue(list, ::CFURLGetString(referrerURL));
+  }
+
+  mdItemSetAttributeFunc(mdItem, kMDItemWhereFroms, list);
+
+  ::CFRelease(list);
+  ::CFRelease(mdItem);
+}
+
+void AddQuarantineMetadataToFile(const CFStringRef filePath,
+                                 const CFURLRef sourceURL,
+                                 const CFURLRef referrerURL,
+                                 const bool isFromWeb) {
+  CFURLRef fileURL = ::CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
+                                                     filePath,
+                                                     kCFURLPOSIXPathStyle,
+                                                     false);
+
+  // The properties key changed in 10.10:
+  CFStringRef quarantinePropKey;
+  if (nsCocoaFeatures::OnYosemiteOrLater()) {
+    quarantinePropKey = kCFURLQuarantinePropertiesKey;
+  } else {
+    quarantinePropKey = kLSItemQuarantineProperties;
+  }
+  CFDictionaryRef quarantineProps = NULL;
+  Boolean success = ::CFURLCopyResourcePropertyForKey(fileURL,
+                                                      quarantinePropKey,
+                                                      &quarantineProps,
+                                                      NULL);
+
+  // If there aren't any quarantine properties then the user probably
+  // set up an exclusion and we don't need to add metadata.
+  if (!success || !quarantineProps) {
+    ::CFRelease(fileURL);
+    return;
+  }
+
+  // We don't know what to do if the props aren't a dictionary.
+  if (::CFGetTypeID(quarantineProps) != ::CFDictionaryGetTypeID()) {
+    ::CFRelease(fileURL);
+    ::CFRelease(quarantineProps);
+    return;
+  }
+
+  // Make a mutable copy of the properties.
+  CFMutableDictionaryRef mutQuarantineProps =
+    ::CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, (CFDictionaryRef)quarantineProps);
+  ::CFRelease(quarantineProps);
+
+  // Add metadata that the OS couldn't infer.
+
+  if (!::CFDictionaryGetValue(mutQuarantineProps, kLSQuarantineTypeKey)) {
+    CFStringRef type = isFromWeb ? kLSQuarantineTypeWebDownload : kLSQuarantineTypeOtherDownload;
+    ::CFDictionarySetValue(mutQuarantineProps, kLSQuarantineTypeKey, type);
+  }
+
+  if (!::CFDictionaryGetValue(mutQuarantineProps, kLSQuarantineOriginURLKey) && referrerURL) {
+    ::CFDictionarySetValue(mutQuarantineProps, kLSQuarantineOriginURLKey, referrerURL);
+  }
+
+  if (!::CFDictionaryGetValue(mutQuarantineProps, kLSQuarantineDataURLKey) && sourceURL) {
+    ::CFDictionarySetValue(mutQuarantineProps, kLSQuarantineDataURLKey, sourceURL);
+  }
+
+  // Set quarantine properties on file.
+  ::CFURLSetResourcePropertyForKey(fileURL,
+                                   quarantinePropKey,
+                                   mutQuarantineProps,
+                                   NULL);
+
+  ::CFRelease(fileURL);
+  ::CFRelease(mutQuarantineProps);
+}
+
+CFURLRef GetTemporaryFolderCFURLRef()
+{
+  NSString* tempDir = ::NSTemporaryDirectory();
+  return tempDir == nil ? NULL : (CFURLRef)[NSURL fileURLWithPath:tempDir
+                                                      isDirectory:YES];
 }
 
 } // namespace CocoaFileUtils

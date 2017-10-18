@@ -32,7 +32,7 @@ load 360642-1.xul
 load 365151.xul
 load 366112-1.xul
 asserts(0-50) load 366203-1.xul # bug 1217984
-asserts(24) asserts-if(Android&&!asyncPan,9) load 367185-1.xhtml # bug 1220345
+load 367185-1.xhtml
 load 369942-1.xhtml
 load 374102-1.xul
 load 376137-1.html
@@ -53,9 +53,9 @@ load 387033-1.xhtml
 load 387080-1.xul
 load 391974-1.html
 load 394120-1.xhtml
-load 397293.xhtml
+load 397293.xhtml # bug 1323652
 load 397304-1.html
-load 398326-1.xhtml
+asserts-if(stylo,0-2) load 398326-1.xhtml # bug 1324660
 load 399013.xul
 load 400779-1.xhtml
 load 402912-1.xhtml
@@ -63,7 +63,7 @@ load 404192.xhtml
 load 407152.xul
 load 408904-1.xul
 load 412479-1.xhtml
-asserts(4) asserts-if(gtkWidget&&browserIsRemote,6) load 415394-1.xhtml # Bug 163838, bug 1195474
+asserts(4) asserts-if(gtkWidget&&browserIsRemote,6) asserts-if(stylo,4-6) load 415394-1.xhtml # Bug 163838, bug 1195474 # bug 1324651
 load 417509.xul
 load 420424-1.xul
 load 430356-1.xhtml
@@ -77,7 +77,7 @@ load 434458-1.xul
 load 452185.html
 load 460900-1.xul
 load 464149-1.xul
-asserts-if(winWidget,1) asserts-if(Android,0-1) load 464407-1.xhtml # Bug 450974 on win, Bug 1267054 on Android
+asserts-if(winWidget,1) asserts-if(Android,0-1) asserts-if(stylo,0-1) load 464407-1.xhtml # Bug 450974 on win, Bug 1267054 on Android, bug 718883 for stylo
 load 467080.xul
 load 467481-1.xul
 load 470063-1.html
@@ -90,9 +90,9 @@ load 508927-1.xul
 load 508927-2.xul
 load 514300-1.xul
 load 536931-1.xhtml
-asserts(1) load 538308-1.xul
+load 538308-1.xul
 load 557174-1.xml
-load 564705-1.xul 
+load 564705-1.xul
 load 583957-1.html
 load 617089.html
 load menulist-focused.xhtml

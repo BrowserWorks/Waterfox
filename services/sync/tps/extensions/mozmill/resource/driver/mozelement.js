@@ -131,7 +131,7 @@ MozMillElement.prototype.__defineGetter__("element", function () {
 
 /**
  * Drag an element to the specified offset on another element, firing mouse and
- * drag events. Adapted from ChromeUtils.js synthesizeDrop()
+ * drag events. Adapted from EventUtils.js synthesizeDrop()
  *
  * By default it will drag the source element over the destination's element
  * center with a "move" dropEffect.
@@ -166,12 +166,8 @@ MozMillElement.prototype.dragToElement = function(aElement, aOffsetX, aOffsetY,
 
   var srcNode = this.element;
   var destNode = aElement.getNode();
-  var srcWindow = aSourceWindow ||
-                  (srcNode.ownerDocument ? srcNode.ownerDocument.defaultView
-                                         : srcNode);
-  var destWindow = aDestWindow ||
-                  (destNode.ownerDocument ? destNode.ownerDocument.defaultView
-                                          : destNode);
+  var srcWindow = aSourceWindow || srcNode.ownerGlobal || srcNode;
+  var destWindow = aDestWindow || destNode.ownerGlobal || destNode;
 
   var srcRect = srcNode.getBoundingClientRect();
   var srcCoords = {
@@ -218,7 +214,7 @@ MozMillElement.prototype.dragToElement = function(aElement, aOffsetX, aOffsetY,
     EventUtils.synthesizeMouse(destNode, destCoords.x, destCoords.y,
                                { type: "mousemove" }, destWindow);
 
-    var event = destWindow.document.createEvent("DragEvents");
+    var event = destWindow.document.createEvent("DragEvent");
     event.initDragEvent("dragenter", true, true, destWindow, 0, 0, 0, 0, 0,
                         false, false, false, false, 0, null, dataTransfer);
     event.initDragEvent("dragover", true, true, destWindow, 0, 0, 0, 0, 0,
@@ -288,8 +284,7 @@ MozMillElement.prototype.keypress = function (aKey, aModifiers, aExpectedEvent) 
     throw new Error("Could not find element " + this.getInfo());
   }
 
-  var win = this.element.ownerDocument ? this.element.ownerDocument.defaultView
-                                       : this.element;
+  var win = this.element.ownerGlobal || this.element;
   this.element.focus();
 
   if (aExpectedEvent) {
@@ -383,10 +378,10 @@ MozMillElement.prototype.mouseEvent = function (aOffsetX, aOffsetY, aEvent, aExp
     EventUtils.synthesizeMouseExpectEvent(this.element, aOffsetX, aOffsetY, aEvent,
                                           target, aExpectedEvent.type,
                                           "MozMillElement.mouseEvent()",
-                                          this.element.ownerDocument.defaultView);
+                                          this.element.ownerGlobal);
   } else {
     EventUtils.synthesizeMouse(this.element, aOffsetX, aOffsetY, aEvent,
-                               this.element.ownerDocument.defaultView);
+                               this.element.ownerGlobal);
   }
 
   // Bug 555347
@@ -574,7 +569,7 @@ MozMillElement.prototype.touchEvent = function (aOffsetX, aOffsetY, aEvent) {
   }
 
   EventUtils.synthesizeTouch(this.element, aOffsetX, aOffsetY, aEvent,
-                             this.element.ownerDocument.defaultView);
+                             this.element.ownerGlobal);
 
   return true;
 };
@@ -1121,8 +1116,7 @@ MozMillTextBox.prototype = Object.create(MozMillElement.prototype, {
 
       var element = this.element;
       Array.forEach(aText, function (letter) {
-        var win = element.ownerDocument ? element.ownerDocument.defaultView
-          : element;
+        var win = element.ownerGlobal || element;
         element.focus();
 
         if (aExpectedEvent) {

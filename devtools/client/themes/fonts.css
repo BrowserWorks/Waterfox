@@ -6,7 +6,6 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: 20px;
   width: 100%;
   height: 100%;
 }
@@ -26,13 +25,12 @@
 }
 
 #font-showall {
-  border-radius: 0;
-  border: 1px solid black;
-  margin: 3px;
   cursor: pointer;
-  position: absolute;
-  bottom: 0;
-  offset-inline-end: 0;
+  flex-shrink: 0;
+}
+
+#font-showall:hover {
+  text-decoration: underline;
 }
 
 .dim > #font-container,
@@ -113,6 +111,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 5px;
+  direction: ltr;
 }
 
 .theme-light .font-css-code,

@@ -9,8 +9,6 @@
 
 "use strict";
 
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("null");
-
 // Test the webconsole output for various types of objects.
 
 const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
@@ -58,9 +56,8 @@ var inputTests = [
   // 4
   {
     input: "testDOMException()",
-    output: 'DOMException [SyntaxError: "An invalid or illegal string was ' +
-            'specified"',
-    printOutput: '"SyntaxError: An invalid or illegal string was specified"',
+    output: `DOMException [SyntaxError: "'foo;()bar!' is not a valid selector"`,
+    printOutput: `"SyntaxError: 'foo;()bar!' is not a valid selector"`,
     inspectable: true,
     variablesViewLabel: "SyntaxError",
   },

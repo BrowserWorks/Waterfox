@@ -22,7 +22,7 @@ function promiseTimezoneMessage() {
   return new Promise(resolve => {
     let listener = {
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIConsoleListener]),
-      observe : function (msg) {
+      observe(msg) {
         if (msg.message.startsWith("getIsUS() fell back to a timezone check with the result=")) {
           Services.console.unregisterListener(listener);
           resolve(msg);
@@ -41,7 +41,7 @@ function run_test() {
 
 // Force a sync init and ensure the right thing happens (ie, that no xhr
 // request is made and we fall back to the timezone-only trick)
-add_task(function* test_simple() {
+add_task(async function test_simple() {
   deepEqual(getCountryCodePref(), undefined, "no countryCode pref");
   deepEqual(getIsUSPref(), undefined, "no isUS pref");
 
@@ -55,15 +55,15 @@ add_task(function* test_simple() {
 
   // fetching the engines forces a sync init, and should have caused us to
   // check the timezone.
-  let engines = Services.search.getEngines();
+  Services.search.getEngines();
   ok(Services.search.isInitialized);
 
   // a little wait to check we didn't do the xhr thang.
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     do_timeout(500, resolve);
   });
 
-  let msg = yield promiseTzMessage;
+  let msg = await promiseTzMessage;
   print("Timezone message:", msg.message);
   ok(msg.message.endsWith(isUSTimezone().toString()), "fell back to timezone and it matches our timezone");
 
@@ -84,15 +84,15 @@ add_task(function* test_simple() {
         case Ci.nsITelemetry.HISTOGRAM_FLAG:
           // flags are a special case in that they are initialized with a default
           // of one |0|.
-          deepEqual(snapshot.counts, [1,0,0], hid);
+          deepEqual(snapshot.counts, [1, 0, 0], hid);
           break;
         case Ci.nsITelemetry.HISTOGRAM_BOOLEAN:
           // booleans aren't initialized at all, so should have all zeros.
-          deepEqual(snapshot.counts, [0,0,0], hid);
+          deepEqual(snapshot.counts, [0, 0, 0], hid);
           break;
         case Ci.nsITelemetry.HISTOGRAM_EXPONENTIAL:
         case Ci.nsITelemetry.HISTOGRAM_LINEAR:
-          equal(snapshot.counts.reduce((a, b) => a+b), 0, hid);
+          equal(snapshot.counts.reduce((a, b) => a + b), 0, hid);
           break;
         default:
           ok(false, "unknown histogram type " + snapshot.histogram_type + " for " + hid);

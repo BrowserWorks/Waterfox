@@ -36,10 +36,8 @@ public:
   // CanvasLayer impl
   virtual void Initialize(const Data& aData) override
   {
-    NS_RUNTIMEABORT("Incompatibe surface type");
+    MOZ_CRASH("Incompatibe surface type");
   }
-
-  virtual LayerRenderState GetRenderState() override;
 
   virtual bool SetCompositableHost(CompositableHost* aHost) override;
 
@@ -48,10 +46,11 @@ public:
     Destroy();
   }
 
-  virtual void SetLayerManager(LayerManagerComposite* aManager) override;
+  virtual void SetLayerManager(HostLayerManager* aManager) override;
 
   virtual Layer* GetLayer() override;
-  virtual void RenderLayer(const gfx::IntRect& aClipRect) override;
+  virtual void RenderLayer(const gfx::IntRect& aClipRect,
+                           const Maybe<gfx::Polygon>& aGeometry) override;
 
   virtual void CleanupResources() override;
 
@@ -59,9 +58,7 @@ public:
 
   CompositableHost* GetCompositableHost() override;
 
-  virtual LayerComposite* AsLayerComposite() override { return this; }
-
-  void SetBounds(gfx::IntRect aBounds) { mBounds = aBounds; }
+  virtual HostLayer* AsHostLayer() override { return this; }
 
   virtual const char* Name() const override { return "CanvasLayerComposite"; }
 

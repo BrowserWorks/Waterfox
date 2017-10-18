@@ -12,13 +12,16 @@
 #define mozilla_css_StyleRule_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/BindingStyleRule.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/css/Rule.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/UniquePtr.h"
 
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsCSSPseudoElements.h"
 #include "nsIStyleRule.h"
+#include "nsICSSStyleRuleDOMWrapper.h"
 
 class nsIAtom;
 struct nsCSSSelectorList;
@@ -105,11 +108,11 @@ public:
   };
 
   nsAttrSelector(int32_t aNameSpace, const nsString& aAttr);
-  nsAttrSelector(int32_t aNameSpace, const nsString& aAttr, uint8_t aFunction, 
+  nsAttrSelector(int32_t aNameSpace, const nsString& aAttr, uint8_t aFunction,
                  const nsString& aValue,
                  ValueCaseSensitivity aValueCaseSensitivity);
-  nsAttrSelector(int32_t aNameSpace, nsIAtom* aLowercaseAttr, 
-                 nsIAtom* aCasedAttr, uint8_t aFunction, 
+  nsAttrSelector(int32_t aNameSpace, nsIAtom* aLowercaseAttr,
+                 nsIAtom* aCasedAttr, uint8_t aFunction,
                  const nsString& aValue,
                  ValueCaseSensitivity aValueCaseSensitivity);
   ~nsAttrSelector(void);
@@ -249,7 +252,11 @@ private:
  * items (where each |nsCSSSelectorList| object's |mSelectors| has
  * an |mNext| for the P or H1).  We represent them as linked lists.
  */
-class inDOMUtils;
+namespace mozilla {
+namespace css {
+class StyleRule;
+} // namespace css
+} // namespace mozilla
 
 struct nsCSSSelectorList {
   nsCSSSelectorList(void);
@@ -289,7 +296,7 @@ struct nsCSSSelectorList {
   int32_t            mWeight;
   nsCSSSelectorList* mNext;
 protected:
-  friend class inDOMUtils;
+  friend class mozilla::css::StyleRule;
   nsCSSSelectorList* Clone(bool aDeep) const;
 
 private:
@@ -302,13 +309,15 @@ private:
 { 0x464bab7a, 0x2fce, 0x4f30, \
   { 0xab, 0x44, 0xb7, 0xa5, 0xf3, 0xaa, 0xe5, 0x7d } }
 
+class DOMCSSDeclarationImpl;
+
 namespace mozilla {
 namespace css {
 
 class Declaration;
-class DOMCSSStyleRule;
 
-class StyleRule final : public Rule
+class StyleRule final : public BindingStyleRule
+                      , public nsICSSStyleRuleDOMWrapper
 {
  public:
   StyleRule(nsCSSSelectorList* aSelector,
@@ -320,7 +329,29 @@ private:
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_CSS_STYLE_RULE_IMPL_CID)
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(StyleRule, Rule)
+  bool IsCCLeaf() const override;
+
+  NS_DECL_NSIDOMCSSSTYLERULE
+
+  // nsICSSStyleRuleDOMWrapper
+  NS_IMETHOD GetCSSStyleRule(BindingStyleRule **aResult) override;
+
+  uint32_t GetSelectorCount() override;
+  nsresult GetSelectorText(uint32_t aSelectorIndex,
+                                   nsAString& aText) override;
+  nsresult GetSpecificity(uint32_t aSelectorIndex,
+                          uint64_t* aSpecificity) override;
+  nsresult SelectorMatchesElement(dom::Element* aElement,
+                                  uint32_t aSelectorIndex,
+                                  const nsAString& aPseudo,
+                                  bool* aMatches) override;
+
+  // WebIDL interface
+  uint16_t Type() const override;
+  void GetCssTextImpl(nsAString& aCssText) const override;
+  nsICSSDeclaration* Style() override;
 
   // null for style attribute
   nsCSSSelectorList* Selector() { return mSelector; }
@@ -329,33 +360,39 @@ public:
 
   void SetDeclaration(Declaration* aDecl);
 
-  // hooks for DOM rule
-  void GetCssText(nsAString& aCssText);
-  void SetCssText(const nsAString& aCssText);
-  void GetSelectorText(nsAString& aSelectorText);
-  void SetSelectorText(const nsAString& aSelectorText);
+  int32_t GetType() const override;
+  using Rule::GetType;
 
-  virtual int32_t GetType() const override;
+  CSSStyleSheet* GetStyleSheet() const
+  {
+    StyleSheet* sheet = Rule::GetStyleSheet();
+    return sheet ? sheet->AsGecko() : nullptr;
+  }
 
-  virtual already_AddRefed<Rule> Clone() const override;
-
-  virtual nsIDOMCSSRule* GetDOMRule() override;
-
-  virtual nsIDOMCSSRule* GetExistingDOMRule() override;
+  already_AddRefed<Rule> Clone() const override;
 
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
+  void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
 private:
   ~StyleRule();
 
+  // Drop our references to mDeclaration and mRule, and let them know we're
+  // doing that.
+  void DropReferences();
+
+  nsCSSSelectorList*
+  GetSelectorAtIndex(uint32_t aIndex, ErrorResult& rv);
+
 private:
   nsCSSSelectorList*      mSelector; // null for style attribute
   RefPtr<Declaration>     mDeclaration;
-  RefPtr<DOMCSSStyleRule> mDOMRule;
+
+  // We own it, and it aggregates its refcount with us.
+  UniquePtr<DOMCSSDeclarationImpl> mDOMDeclaration;
 
 private:
   StyleRule& operator=(const StyleRule& aCopy) = delete;

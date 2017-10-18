@@ -2,15 +2,15 @@ import cgi
 import json
 import os
 import traceback
-import urllib
-import urlparse
 
-from constants import content_types
-from pipes import Pipeline, template
-from ranges import RangeParser
-from request import Authentication
-from response import MultipartContent
-from utils import HTTPException
+from six.moves.urllib.parse import parse_qs, quote, unquote, urljoin
+
+from .constants import content_types
+from .pipes import Pipeline, template
+from .ranges import RangeParser
+from .request import Authentication
+from .response import MultipartContent
+from .utils import HTTPException
 
 __all__ = ["file_handler", "python_script_handler",
            "FunctionHandler", "handler", "json_handler",
@@ -30,7 +30,7 @@ def filesystem_path(base_path, request, url_base="/"):
     if base_path is None:
         base_path = request.doc_root
 
-    path = urllib.unquote(request.url_parts.path)
+    path = unquote(request.url_parts.path)
 
     if path.startswith(url_base):
         path = path[len(url_base):]
@@ -55,13 +55,14 @@ class DirectoryHandler(object):
         return "<%s base_path:%s url_base:%s>" % (self.__class__.__name__, self.base_path, self.url_base)
 
     def __call__(self, request, response):
-        if not request.url_parts.path.endswith("/"):
+        url_path = request.url_parts.path
+
+        if not url_path.endswith("/"):
             raise HTTPException(404)
 
         path = filesystem_path(self.base_path, request, self.url_base)
 
-        if not os.path.isdir(path):
-            raise HTTPException(404, "%s is not a directory" % path)
+        assert os.path.isdir(path)
 
         response.headers = [("Content-Type", "text/html")]
         response.content = """<!doctype html>
@@ -71,25 +72,24 @@ class DirectoryHandler(object):
 <ul>
 %(items)s
 </ul>
-""" % {"path": cgi.escape(request.url_parts.path),
-       "items": "\n".join(self.list_items(request, path))}
+""" % {"path": cgi.escape(url_path),
+       "items": "\n".join(self.list_items(url_path, path))}  # flake8: noqa
 
-    def list_items(self, request, path):
+    def list_items(self, base_path, path):
+        assert base_path.endswith("/")
+
         # TODO: this won't actually list all routes, only the
         # ones that correspond to a real filesystem path. It's
         # not possible to list every route that will match
         # something, but it should be possible to at least list the
         # statically defined ones
-        base_path = request.url_parts.path
 
-        if not base_path.endswith("/"):
-            base_path += "/"
         if base_path != "/":
-            link = urlparse.urljoin(base_path, "..")
+            link = urljoin(base_path, "..")
             yield ("""<li class="dir"><a href="%(link)s">%(name)s</a></li>""" %
                    {"link": link, "name": ".."})
         for item in sorted(os.listdir(path)):
-            link = cgi.escape(urllib.quote(item))
+            link = cgi.escape(quote(item))
             if os.path.isdir(os.path.join(path, item)):
                 link += "/"
                 class_ = "dir"
@@ -99,7 +99,21 @@ class DirectoryHandler(object):
                    {"link": link, "name": cgi.escape(item), "class": class_})
 
 
-directory_handler = DirectoryHandler()
+def wrap_pipeline(path, request, response):
+    query = parse_qs(request.url_parts.query)
+
+    pipeline = None
+    if "pipe" in query:
+        pipeline = Pipeline(query["pipe"][-1])
+    elif ".sub." in path:
+        ml_extensions = {".html", ".htm", ".xht", ".xhtml", ".xml", ".svg"}
+        escape_type = "html" if os.path.splitext(path)[1] in ml_extensions else "none"
+        pipeline = Pipeline("sub(%s)" % escape_type)
+
+    if pipeline is not None:
+        response = pipeline(request, response)
+
+    return response
 
 
 class FileHandler(object):
@@ -131,28 +145,19 @@ class FileHandler(object):
                 byte_ranges = None
             data = self.get_data(response, path, byte_ranges)
             response.content = data
-            query = urlparse.parse_qs(request.url_parts.query)
-
-            pipeline = None
-            if "pipe" in query:
-                pipeline = Pipeline(query["pipe"][-1])
-            elif os.path.splitext(path)[0].endswith(".sub"):
-                ml_extensions = {".html", ".htm", ".xht", ".xhtml", ".xml", ".svg"}
-                escape_type = "html" if os.path.splitext(path)[1] in ml_extensions else "none"
-                pipeline = Pipeline("sub(%s)" % escape_type)
-
-            if pipeline is not None:
-                response = pipeline(request, response)
-
+            response = wrap_pipeline(path, request, response)
             return response
 
         except (OSError, IOError):
             raise HTTPException(404)
 
     def get_headers(self, request, path):
-        rv = self.default_headers(path)
-        rv.extend(self.load_headers(request, os.path.join(os.path.split(path)[0], "__dir__")))
-        rv.extend(self.load_headers(request, path))
+        rv = (self.load_headers(request, os.path.join(os.path.split(path)[0], "__dir__")) +
+              self.load_headers(request, path))
+
+        if not any(key.lower() == "content-type" for (key, _) in rv):
+            rv.insert(0, ("Content-Type", guess_content_type(path)))
+
         return rv
 
     def load_headers(self, request, path):
@@ -208,9 +213,6 @@ class FileHandler(object):
     def get_range_data(self, f, byte_range):
         f.seek(byte_range.lower)
         return f.read(byte_range.upper - byte_range.lower)
-
-    def default_headers(self, path):
-        return [("Content-Type", guess_content_type(path))]
 
 
 file_handler = FileHandler()

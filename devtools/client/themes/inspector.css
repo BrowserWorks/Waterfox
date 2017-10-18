@@ -19,9 +19,65 @@
   --breadcrumbs-border-color: #454d5d;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+/* Make sure to hide scroll bars for the parent window */
+window {
+  overflow: hidden;
+}
+
+/* The main Inspector panel container. */
+.inspector-responsive-container {
+  height: 100vh;
+}
+
+/* The main panel layout. This area consists of a toolbar, markup view
+  and breadcrumbs bar. */
+#inspector-main-content {
+  /* Subtract 1 pixel from the panel height. It's puzzling why this
+    is needed, but if not presented the entire Inspector panel
+    content jumps 1 pixel up when the Toolbox is opened. */
+  height: calc(100% - 1px);
+  /* This min-width avoids a visual glitch when moving the splitter quickly to the left.
+     See bug 1307408 comment #12. */
+  min-width: 125px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+/* Inspector Panel Splitter */
+
+#inspector-splitter-box {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+}
+
+/* Minimum dimensions for the Inspector splitter areas. */
+#inspector-splitter-box .uncontrolled,
+#inspector-splitter-box .controlled {
+  min-height: 50px;
+  min-width: 50px;
+  overflow-x: hidden;
+}
+
+/* Set a minimum width of 200px for tab content to avoid breaking the layout when resizing
+   the sidebar tab to small width. If a specific panel supports smaller width, this should
+   be overridden on a panel-by-panel basis */
+.inspector-tabpanel {
+  min-width: 200px;
+}
+
+#inspector-splitter-box .controlled.pane-collapsed {
+  visibility: collapse;
+}
+
 /* Use flex layout for the Inspector toolbar. For now, it's done
    specifically for the Inspector toolbar since general rule applied
-   on .devtools-toolbar breaks breadcrubs and also toolbars in other
+   on .devtools-toolbar breaks breadcrumbs and also toolbars in other
    panels (e.g. webconsole, debugger), these are not ready for HTML
    layout yet. */
 #inspector-toolbar.devtools-toolbar {
@@ -33,20 +89,35 @@
   display: inline-block;
 }
 
-#inspector-searchlabel {
-  overflow: hidden;
+/* Add element toolbar button */
+#inspector-element-add-button::before {
+  background-image: url("chrome://devtools/skin/images/add.svg");
+  list-style-image: url("chrome://devtools/skin/images/add.svg");
+  -moz-user-focus: normal;
 }
 
-/* Make sure the text is vertically centered in Inspector's
-   search box. This can be removed when the search box is
-   switched to HTML.
-   See also: https://bugzilla.mozilla.org/show_bug.cgi?id=1265759 */
-.theme-dark #inspector-searchbox,
-.theme-light #inspector-searchbox {
-  line-height: 19px;
+#inspector-searchlabel {
+  overflow: hidden;
+  margin-inline-end: 2px;
 }
-.theme-firebug #inspector-searchbox {
-  line-height: 17px;
+
+#inspector-search {
+  flex: unset;
+}
+
+/* Eyedropper toolbar button */
+
+#inspector-eyedropper-toggle {
+  /* Required to display tooltip when eyedropper is disabled in non-HTML documents */
+  pointer-events: auto;
+}
+
+#inspector-eyedropper-toggle::before {
+  background-image: var(--eyedropper-image);
+}
+
+#inspector-sidebar-toggle-box {
+  line-height: initial;
 }
 
 #inspector-breadcrumbs-toolbar {
@@ -98,21 +169,22 @@
   font: message-box;
 }
 
-/* Eyedropper toolbar button */
-
-#inspector-eyedropper-toggle {
-  /* hidden by default, until we can check that the required highlighter exists */
-  display: none;
+#inspector-sidebar-container {
+  overflow: hidden;
+  position: relative;
+  height: 100%;
 }
 
-#inspector-eyedropper-toggle::before {
-  background-image: var(--eyedropper-image);
+#inspector-sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
-/* Add element toolbar button */
-#inspector-element-add-button::before {
-  background-image: url("chrome://devtools/skin/images/add.svg");
-  list-style-image: url("chrome://devtools/skin/images/add.svg");
+/* Override `-moz-user-focus:ignore;` from toolkit/content/minimal-xul.css */
+.inspector-tabpanel > * {
   -moz-user-focus: normal;
 }
 
@@ -124,3 +196,21 @@
   text-align: center;
   margin: 5px;
 }
+
+/* Markup Box */
+
+iframe {
+  border: 0;
+}
+
+#markup-box {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+#markup-box > iframe {
+  height: 100%;
+  width: 100%;
+}
+

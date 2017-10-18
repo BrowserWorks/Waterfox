@@ -4,120 +4,131 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsLanguageAtomService.h"
-#include "nsILocaleService.h"
 #include "nsUConvPropertySearch.h"
 #include "nsUnicharUtils.h"
 #include "nsIAtom.h"
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/Services.h"
-#include "nsServiceManagerUtils.h"
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/ClearOnShutdown.h"
+#include "mozilla/Encoding.h"
+#include "mozilla/intl/OSPreferences.h"
+#include "mozilla/ServoBindings.h"
 
 using namespace mozilla;
+using mozilla::intl::OSPreferences;
 
-static const nsUConvProp kLangGroups[] = {
+static constexpr nsUConvProp encodingsGroups[] = {
+#include "encodingsgroups.properties.h"
+};
+
+static constexpr nsUConvProp kLangGroups[] = {
 #include "langGroups.properties.h"
 };
 
-NS_IMPL_ISUPPORTS(nsLanguageAtomService, nsILanguageAtomService)
-
-nsLanguageAtomService::nsLanguageAtomService()
+// static
+nsLanguageAtomService*
+nsLanguageAtomService::GetService()
 {
+  static UniquePtr<nsLanguageAtomService> gLangAtomService;
+  if (!gLangAtomService) {
+    gLangAtomService = MakeUnique<nsLanguageAtomService>();
+    ClearOnShutdown(&gLangAtomService);
+  }
+  return gLangAtomService.get();
 }
 
 nsIAtom*
-nsLanguageAtomService::LookupLanguage(const nsACString &aLanguage,
-                                      nsresult *aError)
+nsLanguageAtomService::LookupLanguage(const nsACString &aLanguage)
 {
   nsAutoCString lowered(aLanguage);
   ToLowerCase(lowered);
 
   nsCOMPtr<nsIAtom> lang = NS_Atomize(lowered);
-  return GetLanguageGroup(lang, aError);
+  return GetLanguageGroup(lang);
 }
 
 already_AddRefed<nsIAtom>
-nsLanguageAtomService::LookupCharSet(const nsACString& aCharSet)
+nsLanguageAtomService::LookupCharSet(NotNull<const Encoding*> aEncoding)
 {
+  nsAutoCString charset;
+  aEncoding->Name(charset);
   nsAutoCString group;
-  mozilla::dom::EncodingUtils::LangGroupForEncoding(aCharSet, group);
+  if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
+      encodingsGroups, ArrayLength(encodingsGroups), charset, group))) {
+    return RefPtr<nsIAtom>(nsGkAtoms::Unicode).forget();
+  }
   return NS_Atomize(group);
 }
 
 nsIAtom*
-nsLanguageAtomService::GetLocaleLanguage(nsresult *aError)
+nsLanguageAtomService::GetLocaleLanguage()
 {
-  nsresult res = NS_OK;
-
   do {
     if (!mLocaleLanguage) {
-      nsCOMPtr<nsILocaleService> localeService;
-      localeService = do_GetService(NS_LOCALESERVICE_CONTRACTID);
-      if (!localeService) {
-        res = NS_ERROR_FAILURE;
-        break;
+      AutoTArray<nsCString, 10> regionalPrefsLocales;
+      if (OSPreferences::GetInstance()->GetRegionalPrefsLocales(
+                                          regionalPrefsLocales)) {
+        // use lowercase for all language atoms
+        ToLowerCase(regionalPrefsLocales[0]);
+        mLocaleLanguage = NS_Atomize(regionalPrefsLocales[0]);
+      } else {
+        nsAutoCString locale;
+        OSPreferences::GetInstance()->GetSystemLocale(locale);
+
+        ToLowerCase(locale); // use lowercase for all language atoms
+        mLocaleLanguage = NS_Atomize(locale);
       }
-
-      nsCOMPtr<nsILocale> locale;
-      res = localeService->GetApplicationLocale(getter_AddRefs(locale));
-      if (NS_FAILED(res))
-        break;
-
-      nsAutoString loc;
-      res = locale->GetCategory(NS_LITERAL_STRING(NSILOCALE_MESSAGE), loc);
-      if (NS_FAILED(res))
-        break;
-
-      ToLowerCase(loc); // use lowercase for all language atoms
-      mLocaleLanguage = NS_Atomize(loc);
     }
   } while (0);
-
-  if (aError)
-    *aError = res;
 
   return mLocaleLanguage;
 }
 
 nsIAtom*
-nsLanguageAtomService::GetLanguageGroup(nsIAtom *aLanguage,
-                                        nsresult *aError)
+nsLanguageAtomService::GetLanguageGroup(nsIAtom *aLanguage, bool* aNeedsToCache)
 {
-  nsIAtom *retVal;
-  nsresult res = NS_OK;
-
-  retVal = mLangToGroup.GetWeak(aLanguage);
+  nsIAtom *retVal = mLangToGroup.GetWeak(aLanguage);
 
   if (!retVal) {
-    nsAutoCString langStr;
-    aLanguage->ToUTF8String(langStr);
-
-    nsAutoCString langGroupStr;
-    res = nsUConvPropertySearch::SearchPropertyValue(kLangGroups,
-                                                     ArrayLength(kLangGroups),
-                                                     langStr, langGroupStr);
-    while (NS_FAILED(res)) {
-      int32_t hyphen = langStr.RFindChar('-');
-      if (hyphen <= 0) {
-        langGroupStr.AssignLiteral("x-unicode");
-        break;
-      }
-      langStr.Truncate(hyphen);
-      res = nsUConvPropertySearch::SearchPropertyValue(kLangGroups,
-                                                       ArrayLength(kLangGroups),
-                                                       langStr, langGroupStr);
+    if (aNeedsToCache) {
+      *aNeedsToCache = true;
+      return nullptr;
     }
+    nsCOMPtr<nsIAtom> uncached = GetUncachedLanguageGroup(aLanguage);
+    retVal = uncached.get();
 
-    nsCOMPtr<nsIAtom> langGroup = NS_Atomize(langGroupStr);
-
+    AssertIsMainThreadOrServoLangFontPrefsCacheLocked();
     // The hashtable will keep an owning reference to the atom
-    mLangToGroup.Put(aLanguage, langGroup);
-    retVal = langGroup.get();
-  }
-
-  if (aError) {
-    *aError = res;
+    mLangToGroup.Put(aLanguage, uncached);
   }
 
   return retVal;
+}
+
+already_AddRefed<nsIAtom>
+nsLanguageAtomService::GetUncachedLanguageGroup(nsIAtom* aLanguage) const
+{
+  nsAutoCString langStr;
+  aLanguage->ToUTF8String(langStr);
+  ToLowerCase(langStr);
+
+  nsAutoCString langGroupStr;
+  nsresult res =
+    nsUConvPropertySearch::SearchPropertyValue(kLangGroups,
+                                               ArrayLength(kLangGroups),
+                                               langStr, langGroupStr);
+  while (NS_FAILED(res)) {
+    int32_t hyphen = langStr.RFindChar('-');
+    if (hyphen <= 0) {
+      langGroupStr.AssignLiteral("x-unicode");
+      break;
+    }
+    langStr.Truncate(hyphen);
+    res = nsUConvPropertySearch::SearchPropertyValue(kLangGroups,
+                                                     ArrayLength(kLangGroups),
+                                                     langStr, langGroupStr);
+  }
+
+  nsCOMPtr<nsIAtom> langGroup = NS_Atomize(langGroupStr);
+
+  return langGroup.forget();
 }

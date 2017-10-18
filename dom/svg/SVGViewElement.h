@@ -28,13 +28,14 @@ namespace mozilla {
 class SVGFragmentIdentifier;
 
 namespace dom {
-class SVGSVGElement;
+class SVGViewportElement;
 
 class SVGViewElement : public SVGViewElementBase
 {
 protected:
   friend class mozilla::SVGFragmentIdentifier;
   friend class SVGSVGElement;
+  friend class SVGViewportElement;
   friend class ::nsSVGOuterSVGFrame;
   explicit SVGViewElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   friend nsresult (::NS_NewSVGViewElement(nsIContent **aResult,
@@ -42,7 +43,8 @@ protected:
   virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   uint16_t ZoomAndPan() { return mEnumAttributes[ZOOMANDPAN].GetAnimValue(); }

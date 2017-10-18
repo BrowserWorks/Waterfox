@@ -33,7 +33,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "ds/PageProtectingVector.h"
 #include "jit/ExecutableAllocator.h"
 #include "jit/JitSpewer.h"
 
@@ -84,10 +83,7 @@ namespace jit {
         }
 
     public:
-        AssemblerBuffer()
-            : m_oom(false)
-        {
-        }
+        AssemblerBuffer() : m_oom(false) {}
 
         void ensureSpace(size_t space)
         {
@@ -119,11 +115,6 @@ namespace jit {
             return true;
         }
 
-        unsigned char* data()
-        {
-            return m_buffer.begin();
-        }
-
         size_t size() const
         {
             return m_buffer.length();
@@ -134,19 +125,15 @@ namespace jit {
             return m_oom;
         }
 
-        const unsigned char* buffer() const {
-            MOZ_ASSERT(!m_oom);
+        const unsigned char* buffer() const
+        {
+            MOZ_RELEASE_ASSERT(!m_oom);
             return m_buffer.begin();
         }
 
-        void enableBufferProtection() { m_buffer.enableProtection(); }
-        void disableBufferProtection() { m_buffer.disableProtection(); }
-
-        void unprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
-            m_buffer.unprotectRegion(firstByteOffset, lastByteOffset);
-        }
-        void reprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
-            m_buffer.reprotectRegion(firstByteOffset, lastByteOffset);
+        unsigned char* data()
+        {
+            return m_buffer.begin();
         }
 
     protected:
@@ -164,33 +151,38 @@ namespace jit {
          *
          * See also the |buffer| method.
          */
-        void oomDetected() {
+        void oomDetected()
+        {
             m_oom = true;
             m_buffer.clear();
         }
 
-        PageProtectingVector<unsigned char, 256, SystemAllocPolicy> m_buffer;
+        mozilla::Vector<unsigned char, 256, SystemAllocPolicy> m_buffer;
         bool m_oom;
     };
 
     class GenericAssembler
     {
+#ifdef JS_JITSPEW
         Sprinter* printer;
-
+#endif
       public:
 
         GenericAssembler()
-          : printer(NULL)
+#ifdef JS_JITSPEW
+          : printer(nullptr)
+#endif
         {}
 
-        void setPrinter(Sprinter* sp) {
+        void setPrinter(Sprinter* sp)
+        {
+#ifdef JS_JITSPEW
             printer = sp;
+#endif
         }
 
-        void spew(const char* fmt, ...)
-#ifdef __GNUC__
-            __attribute__ ((format (printf, 2, 3)))
-#endif
+#ifdef JS_JITSPEW
+        inline void spew(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3)
         {
             if (MOZ_UNLIKELY(printer || JitSpewEnabled(JitSpew_Codegen))) {
                 va_list va;
@@ -199,8 +191,14 @@ namespace jit {
                 va_end(va);
             }
         }
+#else
+        MOZ_ALWAYS_INLINE void spew(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3)
+        { }
+#endif
 
-        MOZ_COLD void spew(const char* fmt, va_list va);
+#ifdef JS_JITSPEW
+        MOZ_COLD void spew(const char* fmt, va_list va) MOZ_FORMAT_PRINTF(2, 0);
+#endif
     };
 
 } // namespace jit

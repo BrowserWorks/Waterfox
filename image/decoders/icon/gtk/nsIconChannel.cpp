@@ -12,9 +12,7 @@
 #include "mozilla/EndianUtils.h"
 #include <algorithm>
 
-#ifdef MOZ_ENABLE_GIO
 #include <gio/gio.h>
-#endif
 
 #include <gtk/gtk.h>
 
@@ -27,9 +25,10 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIStringStream.h"
 #include "nsServiceManagerUtils.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsIURL.h"
 #include "prlink.h"
+#include "gfxPlatform.h"
 
 NS_IMPL_ISUPPORTS(nsIconChannel,
                   nsIRequest,
@@ -107,7 +106,7 @@ moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
   // nsIconProtocolHandler::NewChannel2 will provide the correct loadInfo for
   // this iconChannel. Use the most restrictive security settings for the
   // temporary loadInfo to make sure the channel can not be openend.
-  nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+  nsCOMPtr<nsIPrincipal> nullPrincipal = NullPrincipal::Create();
   return NS_NewInputStreamChannel(aChannel,
                                   aURI,
                                   stream,
@@ -167,7 +166,6 @@ moz_gtk_icon_size(const char* name)
   return GTK_ICON_SIZE_MENU;
 }
 
-#ifdef MOZ_ENABLE_GIO
 static int32_t
 GetIconSize(nsIMozIconURI* aIconURI)
 {
@@ -179,13 +177,12 @@ GetIconSize(nsIMozIconURI* aIconURI)
     mozilla::DebugOnly<nsresult> rv = aIconURI->GetImageSize(&size);
     NS_ASSERTION(NS_SUCCEEDED(rv), "GetImageSize failed");
     return size;
-  } else {
-    int size;
-
-    GtkIconSize icon_size = moz_gtk_icon_size(iconSizeString.get());
-    gtk_icon_size_lookup(icon_size, &size, nullptr);
-    return size;
   }
+  int size;
+
+  GtkIconSize icon_size = moz_gtk_icon_size(iconSizeString.get());
+  gtk_icon_size_lookup(icon_size, &size, nullptr);
+  return size;
 }
 
 /* Scale icon buffer to preferred size */
@@ -301,7 +298,6 @@ nsIconChannel::InitWithGIO(nsIMozIconURI* aIconURI)
   g_object_unref(buf);
   return rv;
 }
-#endif // MOZ_ENABLE_GIO
 
 nsresult
 nsIconChannel::Init(nsIURI* aURI)
@@ -309,14 +305,14 @@ nsIconChannel::Init(nsIURI* aURI)
   nsCOMPtr<nsIMozIconURI> iconURI = do_QueryInterface(aURI);
   NS_ASSERTION(iconURI, "URI is not an nsIMozIconURI");
 
+  if (gfxPlatform::IsHeadless()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   nsAutoCString stockIcon;
   iconURI->GetStockIcon(stockIcon);
   if (stockIcon.IsEmpty()) {
-#ifdef MOZ_ENABLE_GIO
     return InitWithGIO(iconURI);
-#else
-    return NS_ERROR_NOT_AVAILABLE;
-#endif
   }
 
   // Search for stockIcon

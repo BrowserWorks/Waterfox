@@ -14,6 +14,7 @@ import android.support.v4.content.ContextCompat;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.Tab;
@@ -28,6 +29,8 @@ import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.lwt.LightweightThemeDrawable;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.MenuPopup;
+import org.mozilla.gecko.preferences.GeckoPreferences;
+import org.mozilla.gecko.skin.SkinConfig;
 import org.mozilla.gecko.tabs.TabHistoryController;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnStopListener;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnTitleChangeListener;
@@ -122,7 +125,8 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
     private ToolbarProgressView progressBar;
     protected final TabCounter tabsCounter;
-    protected final ThemedFrameLayout menuButton;
+    protected final View menuButton;
+    // bug 1375351: There is no menuIcon in Photon flavor, menuIcon should be removed
     protected final ThemedImageView menuIcon;
     private MenuPopup menuPopup;
     protected final List<View> focusOrder;
@@ -191,11 +195,9 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
         tabsButton = (ThemedImageButton) findViewById(R.id.tabs);
         tabsCounter = (TabCounter) findViewById(R.id.tabs_counter);
-        if (Versions.feature11Plus) {
-            tabsCounter.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        }
+        tabsCounter.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
-        menuButton = (ThemedFrameLayout) findViewById(R.id.menu);
+        menuButton = findViewById(R.id.menu);
         menuIcon = (ThemedImageView) findViewById(R.id.menu_icon);
 
         // The focusOrder List should be filled by sub-classes.
@@ -241,14 +243,18 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
                     if (url == null) {
                         menu.findItem(R.id.copyurl).setVisible(false);
                         menu.findItem(R.id.add_to_launcher).setVisible(false);
+                        menu.findItem(R.id.set_as_homepage).setVisible(false);
                     }
 
                     MenuUtils.safeSetVisible(menu, R.id.subscribe, tab.hasFeeds());
                     MenuUtils.safeSetVisible(menu, R.id.add_search_engine, tab.hasOpenSearch());
+                    final boolean distSetAsHomepage = GeckoSharedPrefs.forProfile(context).getBoolean(GeckoPreferences.PREFS_SET_AS_HOMEPAGE, false);
+                    MenuUtils.safeSetVisible(menu, R.id.set_as_homepage, distSetAsHomepage);
                 } else {
                     // if there is no tab, remove anything tab dependent
                     menu.findItem(R.id.copyurl).setVisible(false);
                     menu.findItem(R.id.add_to_launcher).setVisible(false);
+                    menu.findItem(R.id.set_as_homepage).setVisible(false);
                     MenuUtils.safeSetVisible(menu, R.id.subscribe, false);
                     MenuUtils.safeSetVisible(menu, R.id.add_search_engine, false);
                 }
@@ -361,7 +367,9 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     }
 
     public void refresh() {
+        progressBar.setImageDrawable(getResources().getDrawable(R.drawable.progress));
         urlDisplayLayout.dismissSiteIdentityPopup();
+        urlEditLayout.refresh();
     }
 
     public boolean onBackPressed() {
@@ -471,11 +479,10 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
                     setPrivateMode(tab.isPrivate());
                     // Fall through.
                 case LOAD_ERROR:
-                    flags.add(UpdateFlags.TITLE);
-                    // Fall through.
                 case LOCATION_CHANGE:
-                    // A successful location change will cause Tab to notify
-                    // us of a title change, so we don't update the title here.
+                    // We're displaying the tab URL in place of the title,
+                    // so we always need to update our "title" here as well.
+                    flags.add(UpdateFlags.TITLE);
                     flags.add(UpdateFlags.FAVICON);
                     flags.add(UpdateFlags.SITE_IDENTITY);
 
@@ -522,8 +529,10 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             progressBar.setProgress(progress);
             progressBar.setPrivateMode(selectedTab.isPrivate());
             progressBar.setVisibility(View.VISIBLE);
+            progressBar.pinDynamicToolbar();
         } else {
             progressBar.setVisibility(View.GONE);
+            progressBar.unpinDynamicToolbar();
         }
     }
 
@@ -654,13 +663,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
         if (needsNewFocus) {
             requestFocus();
-        }
-    }
-
-    public void setToolBarButtonsAlpha(float alpha) {
-        ViewHelper.setAlpha(tabsCounter, alpha);
-        if (!HardwareUtils.isTablet()) {
-            ViewHelper.setAlpha(menuIcon, alpha);
         }
     }
 
@@ -839,8 +841,16 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         super.setPrivateMode(isPrivate);
 
         tabsButton.setPrivateMode(isPrivate);
-        menuButton.setPrivateMode(isPrivate);
+        tabsCounter.setPrivateMode(isPrivate);
         urlEditLayout.setPrivateMode(isPrivate);
+        urlDisplayLayout.setPrivateMode(isPrivate);
+
+        // bug 1375351: menuButton is a ThemedImageButton in Photon flavor
+        if (SkinConfig.isPhoton()) {
+            ((ThemedImageButton)menuButton).setPrivateMode(isPrivate);
+        } else {
+            ((ThemedFrameLayout)menuButton).setPrivateMode(isPrivate);
+        }
 
         shadowPaint.setColor(isPrivate ? shadowPrivateColor : shadowColor);
     }
@@ -877,7 +887,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             });
         }
 
-        GeckoAppShell.getGeckoInterface().invalidateOptionsMenu();
+        activity.invalidateOptionsMenu();
         if (!menuPopup.isShowing()) {
             menuPopup.showAsDropDown(menuButton);
         }

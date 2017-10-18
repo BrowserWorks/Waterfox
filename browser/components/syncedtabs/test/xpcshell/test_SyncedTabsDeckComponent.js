@@ -9,21 +9,22 @@ let { TabListView } = Cu.import("resource:///modules/syncedtabs/TabListView.js",
 let { DeckView } = Cu.import("resource:///modules/syncedtabs/SyncedTabsDeckView.js", {});
 
 
-add_task(function* testInitUninit() {
+add_task(async function testInitUninit() {
   let deckStore = new SyncedTabsDeckStore();
   let listComponent = {};
+  let mockWindow = {};
 
   let ViewMock = sinon.stub();
   let view = {render: sinon.spy(), destroy: sinon.spy(), container: {}};
   ViewMock.returns(view);
 
-  sinon.stub(SyncedTabs, "syncTabs", ()=> Promise.resolve());
+  sinon.stub(SyncedTabs, "syncTabs", () => Promise.resolve());
 
   sinon.spy(deckStore, "on");
   sinon.stub(deckStore, "setPanels");
 
   let component = new SyncedTabsDeckComponent({
-    window,
+    window: mockWindow,
     deckStore,
     listComponent,
     SyncedTabs,
@@ -38,7 +39,7 @@ add_task(function* testInitUninit() {
   SyncedTabs.syncTabs.restore();
 
   Assert.ok(ViewMock.calledWithNew(), "view is instantiated");
-  Assert.equal(ViewMock.args[0][0], window);
+  Assert.equal(ViewMock.args[0][0], mockWindow);
   Assert.equal(ViewMock.args[0][1], listComponent);
   Assert.ok(ViewMock.args[0][2].onAndroidClick,
     "view is passed onAndroidClick prop");
@@ -73,20 +74,21 @@ function waitForObserver() {
   return new Promise((resolve, reject) => {
     Services.obs.addObserver((subject, topic) => {
       resolve();
-    }, SyncedTabs.TOPIC_TABS_CHANGED, false);
+    }, SyncedTabs.TOPIC_TABS_CHANGED);
   });
 }
 
-add_task(function* testObserver() {
+add_task(async function testObserver() {
   let deckStore = new SyncedTabsDeckStore();
   let listStore = new SyncedTabsListStore(SyncedTabs);
   let listComponent = {};
+  let mockWindow = {};
 
   let ViewMock = sinon.stub();
   let view = {render: sinon.spy(), destroy: sinon.spy(), container: {}};
   ViewMock.returns(view);
 
-  sinon.stub(SyncedTabs, "syncTabs", ()=> Promise.resolve());
+  sinon.stub(SyncedTabs, "syncTabs", () => Promise.resolve());
 
   sinon.spy(deckStore, "on");
   sinon.stub(deckStore, "setPanels");
@@ -94,7 +96,7 @@ add_task(function* testObserver() {
   sinon.stub(listStore, "getData");
 
   let component = new SyncedTabsDeckComponent({
-    window,
+    mockWindow,
     deckStore,
     listStore,
     listComponent,
@@ -109,22 +111,28 @@ add_task(function* testObserver() {
   SyncedTabs.syncTabs.restore();
   Assert.ok(component.updatePanel.called, "triggers panel update during init");
 
-  Services.obs.notifyObservers(null, SyncedTabs.TOPIC_TABS_CHANGED, "");
+  Services.obs.notifyObservers(null, SyncedTabs.TOPIC_TABS_CHANGED);
 
-  Assert.ok(component.observe.calledWith(null, SyncedTabs.TOPIC_TABS_CHANGED, ""),
+  Assert.ok(component.observe.calledWith(null, SyncedTabs.TOPIC_TABS_CHANGED),
     "component is notified");
 
   Assert.ok(listStore.getData.called, "gets list data");
   Assert.ok(component.updatePanel.calledTwice, "triggers panel update");
 
-  Services.obs.notifyObservers(null, FxAccountsCommon.ONLOGIN_NOTIFICATION, "");
+  Services.obs.notifyObservers(null, FxAccountsCommon.ONLOGIN_NOTIFICATION);
 
-  Assert.ok(component.observe.calledWith(null, FxAccountsCommon.ONLOGIN_NOTIFICATION, ""),
+  Assert.ok(component.observe.calledWith(null, FxAccountsCommon.ONLOGIN_NOTIFICATION),
     "component is notified of login");
   Assert.equal(component.updatePanel.callCount, 3, "triggers panel update again");
+
+  Services.obs.notifyObservers(null, "weave:service:login:change");
+
+  Assert.ok(component.observe.calledWith(null, "weave:service:login:change"),
+    "component is notified of login change");
+  Assert.equal(component.updatePanel.callCount, 4, "triggers panel update again");
 });
 
-add_task(function* testPanelStatus() {
+add_task(async function testPanelStatus() {
   let deckStore = new SyncedTabsDeckStore();
   let listStore = new SyncedTabsListStore();
   let listComponent = {};
@@ -142,60 +150,64 @@ add_task(function* testPanelStatus() {
     fxAccounts,
     deckStore,
     listComponent,
-    SyncedTabs: SyncedTabsMock,
+    SyncedTabs: SyncedTabsMock
   });
 
   let isAuthed = false;
-  sinon.stub(fxAccounts, "accountStatus", ()=> Promise.resolve(isAuthed));
-  let result = yield component.getPanelStatus();
+  sinon.stub(fxAccounts, "accountStatus", () => Promise.resolve(isAuthed));
+  let result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.NOT_AUTHED_INFO);
 
   isAuthed = true;
 
+  SyncedTabsMock.loginFailed = true;
+  result = await component.getPanelStatus();
+  Assert.equal(result, component.PANELS.NOT_AUTHED_INFO);
+  SyncedTabsMock.loginFailed = false;
+
   SyncedTabsMock.isConfiguredToSyncTabs = false;
-  result = yield component.getPanelStatus();
+  result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.TABS_DISABLED);
 
   SyncedTabsMock.isConfiguredToSyncTabs = true;
 
   SyncedTabsMock.hasSyncedThisSession = false;
-  result = yield component.getPanelStatus();
+  result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.TABS_FETCHING);
 
   SyncedTabsMock.hasSyncedThisSession = true;
 
   let clients = [];
-  sinon.stub(SyncedTabsMock, "getTabClients", ()=> Promise.resolve(clients));
-  result = yield component.getPanelStatus();
+  sinon.stub(SyncedTabsMock, "getTabClients", () => Promise.resolve(clients));
+  result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.SINGLE_DEVICE_INFO);
 
   clients = ["mock-client"];
-  result = yield component.getPanelStatus();
+  result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.TABS_CONTAINER);
 
   fxAccounts.accountStatus.restore();
-  sinon.stub(fxAccounts, "accountStatus", ()=> Promise.reject("err"));
-  result = yield component.getPanelStatus();
+  sinon.stub(fxAccounts, "accountStatus", () => Promise.reject("err"));
+  result = await component.getPanelStatus();
   Assert.equal(result, component.PANELS.NOT_AUTHED_INFO);
 
-  sinon.stub(component, "getPanelStatus", ()=> Promise.resolve("mock-panelId"));
+  sinon.stub(component, "getPanelStatus", () => Promise.resolve("mock-panelId"));
   sinon.spy(deckStore, "selectPanel");
-  yield component.updatePanel();
+  await component.updatePanel();
   Assert.ok(deckStore.selectPanel.calledWith("mock-panelId"));
 });
 
-add_task(function* testActions() {
-  let listComponent = {};
+add_task(async function testActions() {
   let windowMock = {
     openUILink() {},
   };
   let chromeWindowMock = {
-    gSyncUI: {
-      openSetup() {}
+    gSync: {
+      openPrefs() {}
     }
   };
   sinon.spy(windowMock, "openUILink");
-  sinon.spy(chromeWindowMock.gSyncUI, "openSetup");
+  sinon.spy(chromeWindowMock.gSync, "openPrefs");
 
   let getChromeWindowMock = sinon.stub();
   getChromeWindowMock.returns(chromeWindowMock);
@@ -215,5 +227,5 @@ add_task(function* testActions() {
 
   component.openSyncPrefs();
   Assert.ok(getChromeWindowMock.calledWith(windowMock));
-  Assert.ok(chromeWindowMock.gSyncUI.openSetup.called);
+  Assert.ok(chromeWindowMock.gSync.openPrefs.called);
 });

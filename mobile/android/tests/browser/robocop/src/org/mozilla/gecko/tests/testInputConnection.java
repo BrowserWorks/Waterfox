@@ -5,12 +5,6 @@
 package org.mozilla.gecko.tests;
 
 import static org.mozilla.gecko.tests.helpers.AssertionHelper.fAssertEquals;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.assertSelection;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.assertSelectionAt;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.assertText;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.assertTextAndSelection;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.assertTextAndSelectionAt;
-import static org.mozilla.gecko.tests.helpers.TextInputHelper.getText;
 import static org.mozilla.gecko.tests.helpers.WaitHelper.waitFor;
 
 import org.mozilla.gecko.tests.components.GeckoViewComponent.InputConnectionTest;
@@ -19,6 +13,7 @@ import org.mozilla.gecko.tests.helpers.NavigationHelper;
 
 import com.robotium.solo.Condition;
 
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -29,6 +24,8 @@ import android.view.inputmethod.InputConnection;
 public class testInputConnection extends JavascriptBridgeTest {
 
     private static final String INITIAL_TEXT = "foo";
+
+    private String mEventsLog;
 
     public void testInputConnection() throws InterruptedException {
         GeckoHelper.blockForReady();
@@ -41,25 +38,25 @@ public class testInputConnection extends JavascriptBridgeTest {
         getJS().syncCall("focus_input", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
-            .testInputConnection(new BasicInputConnectionTest());
+            .testInputConnection(new BasicInputConnectionTest("input"));
 
         // Then switch focus to the text area and rerun tests.
         getJS().syncCall("focus_text_area", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
-            .testInputConnection(new BasicInputConnectionTest());
+            .testInputConnection(new BasicInputConnectionTest("textarea"));
 
         // Then switch focus to the content editable and rerun tests.
         getJS().syncCall("focus_content_editable", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
-            .testInputConnection(new BasicInputConnectionTest());
+            .testInputConnection(new BasicInputConnectionTest("contentEditable"));
 
         // Then switch focus to the design mode document and rerun tests.
         getJS().syncCall("focus_design_mode", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
-            .testInputConnection(new BasicInputConnectionTest());
+            .testInputConnection(new BasicInputConnectionTest("designMode"));
 
         // Then switch focus to the resetting input field, and run tests there.
         getJS().syncCall("focus_resetting_input", "");
@@ -76,7 +73,21 @@ public class testInputConnection extends JavascriptBridgeTest {
         getJS().syncCall("finish_test");
     }
 
+    public void setEventsLog(final String log) {
+        mEventsLog = log;
+    }
+
+    public String getEventsLog() {
+        return mEventsLog;
+    }
+
     private class BasicInputConnectionTest extends InputConnectionTest {
+        private final String mType;
+
+        BasicInputConnectionTest(final String type) {
+            mType = type;
+        }
+
         @Override
         public void test(final InputConnection ic, EditorInfo info) {
             waitFor("focus change", new Condition() {
@@ -150,10 +161,13 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can finish composition", ic, "frabar", 6);
 
             // Test sendKeyEvent
-            final KeyEvent shiftKey = new KeyEvent(KeyEvent.ACTION_DOWN,
-                                                   KeyEvent.KEYCODE_SHIFT_LEFT);
-            final KeyEvent leftKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT);
-            final KeyEvent tKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_T);
+            final long time = SystemClock.uptimeMillis();
+            final KeyEvent shiftKey = new KeyEvent(time, time, KeyEvent.ACTION_DOWN,
+                                                   KeyEvent.KEYCODE_SHIFT_LEFT, 0);
+            final KeyEvent leftKey = new KeyEvent(time, time, KeyEvent.ACTION_DOWN,
+                                                  KeyEvent.KEYCODE_DPAD_LEFT, 0);
+            final KeyEvent tKey = new KeyEvent(time, time, KeyEvent.ACTION_DOWN,
+                                               KeyEvent.KEYCODE_T, 0);
 
             ic.sendKeyEvent(shiftKey);
             ic.sendKeyEvent(leftKey);
@@ -197,14 +211,14 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can set the composing text", ic, "bad", 3);
             getJS().asyncCall("test_reflush_changes");
             // Wait for text change notifications to come in.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             assertTextAndSelectionAt("Can re-flush text changes", ic, "good", 4);
             ic.setComposingText("done", 1);
-            assertTextAndSelectionAt("Can update composition after re-flushing", ic, "done", 4);
+            assertTextAndSelectionAt("Can update composition after re-flushing", ic, "gooddone", 8);
             ic.finishComposingText();
-            assertTextAndSelectionAt("Can finish composing text", ic, "done", 4);
+            assertTextAndSelectionAt("Can finish composing text", ic, "gooddone", 8);
 
-            ic.deleteSurroundingText(4, 0);
+            ic.deleteSurroundingText(8, 0);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
 
             // Bug 1241558 - wrong selection due to ignoring selection notification.
@@ -212,7 +226,7 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can set the composing text", ic, "foobar", 6);
             getJS().asyncCall("test_set_selection");
             // Wait for text change notifications to come in.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             assertTextAndSelectionAt("Can select after committing", ic, "foobar", 3);
             ic.setComposingText("barfoo", 1);
             assertTextAndSelectionAt("Can compose after selecting", ic, "barfoo", 6);
@@ -227,8 +241,8 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
 
             // Bug 1275371 - shift+backspace should not forward delete on Android.
-            final KeyEvent delKey = new KeyEvent(KeyEvent.ACTION_DOWN,
-                                                 KeyEvent.KEYCODE_DEL);
+            final KeyEvent delKey = new KeyEvent(time, time, KeyEvent.ACTION_DOWN,
+                                                 KeyEvent.KEYCODE_DEL, 0);
 
             ic.beginBatchEdit();
             ic.commitText("foo", 1);
@@ -249,8 +263,64 @@ public class testInputConnection extends JavascriptBridgeTest {
             ic.deleteSurroundingText(0, 2);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
 
+            // Bug 1123514 - exception due to incorrect text replacement offsets.
+            getJS().syncCall("test_bug1123514");
+            // Gecko will change text to 'abc' when we input 'b', potentially causing
+            // incorrect calculation of text replacement offsets.
+            ic.commitText("b", 1);
+            // This test only works for input/textarea,
+            if (mType.equals("input") || mType.equals("textarea")) {
+                assertTextAndSelectionAt("Can handle text replacement", ic, "abc", 2);
+            } else {
+                processGeckoEvents();
+                processInputConnectionEvents();
+            }
+
+            ic.deleteSurroundingText(2, 1);
+            assertTextAndSelectionAt("Can clear text", ic, "", 0);
+
+            // Bug 1307816 - Don't end then start composition when setting
+            // composing text, which can confuse the Facebook comment box.
+            getJS().syncCall("start_events_log");
+            ic.setComposingText("f", 1);
+            processGeckoEvents();
+            ic.setComposingText("fo", 1);
+            processGeckoEvents();
+            ic.setComposingText("foo", 1);
+            processGeckoEvents();
+            ic.finishComposingText();
+            assertTextAndSelectionAt("Can reuse composition in Java", ic, "foo", 3);
+
+            getJS().syncCall("end_events_log");
+            if (mType.equals("textarea")) {
+                // textarea has a buggy selectionchange behavior.
+                fAssertEquals("Can reuse composition in Gecko", "<=|==", getEventsLog());
+            } else {
+                // compositionstart > (compositionchange > selectionchange) x3
+                fAssertEquals("Can reuse composition in Gecko", "<=|=|=|", getEventsLog());
+            }
+
+            ic.deleteSurroundingText(3, 0);
+            assertTextAndSelectionAt("Can clear text", ic, "", 0);
+
+            // Bug 1353799 - Can set selection while having a composition, so
+            // the caret can be moved to the start of the composition.
+            getJS().syncCall("start_events_log");
+            ic.setComposingText("foo", 1);
+            assertTextAndSelectionAt("Can set composition before selection", ic, "foo", 3);
+            ic.setSelection(0, 0);
+            assertTextAndSelectionAt("Can set selection after composition", ic, "foo", 0);
+
+            getJS().syncCall("end_events_log");
+            // compositionstart > compositionchange > selectionchange x2
+            fAssertEquals("Can update composition caret", "<=||", getEventsLog());
+
+            ic.finishComposingText();
+            ic.deleteSurroundingText(0, 3);
+            assertTextAndSelectionAt("Can clear text", ic, "", 0);
+
             // Make sure we don't leave behind stale events for the following test.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
         }
     }
@@ -281,21 +351,21 @@ public class testInputConnection extends JavascriptBridgeTest {
             // and the input connection thread. Therefore, to ensure these events are
             // issued and to ensure the bug appears, we have to process all Gecko events,
             // then all input connection events, and finally all Gecko events again.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
-            processGeckoEvents(ic);
+            processGeckoEvents();
             assertTextAndSelectionAt("Can set composing region (resetting)", ic, "foo", 3);
 
             ic.setComposingText("foobar", 1);
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
-            processGeckoEvents(ic);
+            processGeckoEvents();
             assertTextAndSelectionAt("Can change composing text (resetting)", ic, "foobar", 6);
 
             ic.setComposingText("baz", 1);
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
-            processGeckoEvents(ic);
+            processGeckoEvents();
             assertTextAndSelectionAt("Can reset composing text (resetting)", ic, "baz", 3);
 
             ic.finishComposingText();
@@ -305,7 +375,7 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
 
             // Make sure we don't leave behind stale events for the following test.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
         }
     }
@@ -335,7 +405,7 @@ public class testInputConnection extends JavascriptBridgeTest {
             assertTextAndSelectionAt("Can handle hiding input", ic, "foo", 3);
 
             // Make sure we don't leave behind stale events for the following test.
-            processGeckoEvents(ic);
+            processGeckoEvents();
             processInputConnectionEvents();
         }
     }

@@ -13,7 +13,6 @@
 #include "nsObjCExceptions.h"
 #include "nsNumberControlFrame.h"
 #include "nsRangeFrame.h"
-#include "nsRenderingContext.h"
 #include "nsRect.h"
 #include "nsSize.h"
 #include "nsThemeConstants.h"
@@ -451,7 +450,7 @@ static NSWindow* NativeWindowForFrame(nsIFrame* aFrame,
                                       nsIWidget** aTopLevelWidget = NULL)
 {
   if (!aFrame)
-    return nil;  
+    return nil;
 
   nsIWidget* widget = aFrame->GetNearestWidget();
   if (!widget)
@@ -514,6 +513,15 @@ static BOOL IsActive(nsIFrame* aFrame, BOOL aIsToolbarControl)
   return FrameIsInActiveWindow(aFrame);
 }
 
+static bool IsInSourceList(nsIFrame* aFrame) {
+  for (nsIFrame* frame = aFrame->GetParent(); frame; frame = frame->GetParent()) {
+    if (frame->StyleDisplay()->mAppearance == NS_THEME_MAC_SOURCE_LIST) {
+      return true;
+    }
+  }
+  return false;
+}
+
 NS_IMPL_ISUPPORTS_INHERITED(nsNativeThemeCocoa, nsNativeTheme, nsITheme)
 
 nsNativeThemeCocoa::nsNativeThemeCocoa()
@@ -530,7 +538,7 @@ nsNativeThemeCocoa::nsNativeThemeCocoa()
   [mDisclosureButtonCell setBezelStyle:NSRoundedDisclosureBezelStyle];
   [mDisclosureButtonCell setButtonType:NSPushOnPushOffButton];
   [mDisclosureButtonCell setHighlightsBy:NSPushInCellMask];
-  
+
   mHelpButtonCell = [[NSButtonCell alloc] initTextCell:@""];
   [mHelpButtonCell setBezelStyle:NSHelpButtonBezelStyle];
   [mHelpButtonCell setButtonType:NSMomentaryPushInButton];
@@ -611,7 +619,7 @@ GetBackingScaleFactorForRendering(CGContextRef cgContext)
   CGRect transformedUserSpacePixel = CGRectApplyAffineTransform(CGRectMake(0, 0, 1, 1), ctm);
   float maxScale = std::max(fabs(transformedUserSpacePixel.size.width),
                           fabs(transformedUserSpacePixel.size.height));
-  return maxScale > 1.0 ? 2 : 1;  
+  return maxScale > 1.0 ? 2 : 1;
 }
 
 /*
@@ -1392,7 +1400,7 @@ nsNativeThemeCocoa::DrawButton(CGContextRef cgContext, ThemeButtonKind inKind,
   if (inState.HasState(NS_EVENT_STATE_FOCUS) && isActive)
     bdi.adornment |= kThemeAdornmentFocus;
 
-  if (inIsDefault && !isDisabled && isActive &&
+  if (inIsDefault && !isDisabled &&
       !inState.HasState(NS_EVENT_STATE_ACTIVE)) {
     bdi.adornment |= kThemeAdornmentDefault;
     bdi.animation.time.start = 0;
@@ -2048,7 +2056,7 @@ nsNativeThemeCocoa::DrawSegment(CGContextRef cgContext, const HIRect& inBoxRect,
             nil]);
 }
 
-void 
+void
 nsNativeThemeCocoa::GetScrollbarPressStates(nsIFrame* aFrame,
                                             EventStates aButtonStates[])
 {
@@ -2064,7 +2072,7 @@ nsNativeThemeCocoa::GetScrollbarPressStates(nsIFrame* aFrame,
   for (nsIFrame *childFrame : aFrame->PrincipalChildList()) {
     nsIContent *childContent = childFrame->GetContent();
     if (!childContent) continue;
-    int32_t attrIndex = childContent->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::sbattr, 
+    int32_t attrIndex = childContent->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::sbattr,
                                                       attributeValues, eCaseMatters);
     if (attrIndex < 0) continue;
 
@@ -2076,9 +2084,9 @@ nsIFrame*
 nsNativeThemeCocoa::GetParentScrollbarFrame(nsIFrame *aFrame)
 {
   // Walk our parents to find a scrollbar frame
-  nsIFrame *scrollbarFrame = aFrame;
+  nsIFrame* scrollbarFrame = aFrame;
   do {
-    if (scrollbarFrame->GetType() == nsGkAtoms::scrollbarFrame) break;
+    if (scrollbarFrame->IsScrollbarFrame()) break;
   } while ((scrollbarFrame = scrollbarFrame->GetParent()));
 
   // We return null if we can't find a parent scrollbar frame
@@ -2264,14 +2272,14 @@ nsNativeThemeCocoa::IsParentScrollbarRolledOver(nsIFrame* aFrame)
 }
 
 static bool
-IsHiDPIContext(nsPresContext* aContext)
+IsHiDPIContext(nsDeviceContext* aContext)
 {
   return nsPresContext::AppUnitsPerCSSPixel() >=
-    2 * aContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom();
+    2 * aContext->AppUnitsPerDevPixelAtUnitFullZoom();
 }
 
 NS_IMETHODIMP
-nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
+nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext,
                                          nsIFrame* aFrame,
                                          uint8_t aWidgetType,
                                          const nsRect& aRect,
@@ -2286,7 +2294,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
 
   gfx::Rect nativeDirtyRect = NSRectToRect(aDirtyRect, p2a);
   gfxRect nativeWidgetRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  nativeWidgetRect.ScaleInverse(gfxFloat(p2a));
+  nativeWidgetRect.Scale(1.0 / gfxFloat(p2a));
   float nativeWidgetHeight = round(nativeWidgetRect.Height());
   nativeWidgetRect.Round();
   if (nativeWidgetRect.IsEmpty())
@@ -2294,7 +2302,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
 
   AutoRestoreTransform autoRestoreTransform(&aDrawTarget);
 
-  bool hidpi = IsHiDPIContext(aFrame->PresContext());
+  bool hidpi = IsHiDPIContext(aFrame->PresContext()->DeviceContext());
   if (hidpi) {
     // Use high-resolution drawing.
     nativeWidgetRect.Scale(0.5f);
@@ -2468,11 +2476,22 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
 
     case NS_THEME_BUTTON:
       if (IsDefaultButton(aFrame)) {
-        if (!IsDisabled(aFrame, eventState) && FrameIsInActiveWindow(aFrame) &&
+        // Check whether the default button is in a document that does not
+        // match the :-moz-window-inactive pseudoclass. This activeness check
+        // is different from the other "active window" checks in this file
+        // because we absolutely need the button's default button appearance to
+        // be in sync with its text color, and the text color is changed by
+        // such a :-moz-window-inactive rule. (That's because on 10.10 and up,
+        // default buttons in active windows have blue background and white
+        // text, and default buttons in inactive windows have white background
+        // and black text.)
+        EventStates docState = aFrame->GetContent()->OwnerDoc()->GetDocumentState();
+        bool isInActiveWindow = !docState.HasState(NS_DOCUMENT_STATE_WINDOW_INACTIVE);
+        if (!IsDisabled(aFrame, eventState) && isInActiveWindow &&
             !QueueAnimatedContentForRefresh(aFrame->GetContent(), 10)) {
           NS_WARNING("Unable to animate button!");
         }
-        DrawButton(cgContext, kThemePushButton, macRect, true,
+        DrawButton(cgContext, kThemePushButton, macRect, isInActiveWindow,
                    kThemeButtonOff, kThemeAdornmentNone, eventState, aFrame);
       } else if (IsButtonTypeMenu(aFrame)) {
         DrawDropdown(cgContext, macRect, eventState, aWidgetType, aFrame);
@@ -2583,7 +2602,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
     }
       break;
 
-    case NS_THEME_STATUSBAR: 
+    case NS_THEME_STATUSBAR:
       DrawStatusBar(cgContext, macRect, aFrame);
       break;
 
@@ -2621,7 +2640,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
       DrawFrame(cgContext, kHIThemeFrameTextFieldSquare, macRect,
                 IsDisabled(aFrame, eventState) || IsReadOnly(aFrame), eventState);
       break;
-      
+
     case NS_THEME_SEARCHFIELD:
       DrawSearchField(cgContext, macRect, aFrame, eventState);
       break;
@@ -2811,7 +2830,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
     case NS_THEME_TEXTFIELD_MULTILINE: {
       // we have to draw this by hand because there is no HITheme value for it
       CGContextSetRGBFillColor(cgContext, 1.0, 1.0, 1.0, 1.0);
-      
+
       CGContextFillRect(cgContext, macRect);
 
       // #737373 for the top border, #999999 for the rest.
@@ -2879,7 +2898,32 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
       }
     }
       break;
-    
+
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION: {
+      // If we're in XUL tree, we need to rely on the source list's clear
+      // background display item. If we cleared the background behind the
+      // selections, the source list would not pick up the right font
+      // smoothing background. So, to simplify a bit, we only support vibrancy
+      // if we're in a source list.
+      if (VibrancyManager::SystemSupportsVibrancy() && IsInSourceList(aFrame)) {
+        ThemeGeometryType type = ThemeGeometryTypeForWidget(aFrame, aWidgetType);
+        DrawVibrancyBackground(cgContext, macRect, aFrame, type);
+      } else {
+        BOOL isActiveSelection =
+          aWidgetType == NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION;
+        RenderWithCoreUI(macRect, cgContext,
+          [NSDictionary dictionaryWithObjectsAndKeys:
+            [NSNumber numberWithBool:isActiveSelection], @"focus",
+            [NSNumber numberWithBool:YES], @"is.flipped",
+            @"kCUIVariantGradientSideBarSelection", @"kCUIVariantKey",
+            (FrameIsInActiveWindow(aFrame) ? @"normal" : @"inactive"), @"state",
+            @"gradient", @"widget",
+            nil]);
+      }
+    }
+      break;
+
     case NS_THEME_TAB:
       DrawSegment(cgContext, macRect, eventState, aFrame, tabRenderSettings);
       break;
@@ -2930,7 +2974,7 @@ static const nsIntMargin kAquaComboboxBorder(3, 20, 3, 4);
 static const nsIntMargin kAquaSearchfieldBorder(3, 5, 2, 19);
 
 NS_IMETHODIMP
-nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext, 
+nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
                                     nsIFrame* aFrame,
                                     uint8_t aWidgetType,
                                     nsIntMargin* aResult)
@@ -3040,7 +3084,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
       break;
   }
 
-  if (IsHiDPIContext(aFrame->PresContext())) {
+  if (IsHiDPIContext(aContext)) {
     *aResult = *aResult + *aResult; // doubled
   }
 
@@ -3054,7 +3098,7 @@ nsNativeThemeCocoa::GetWidgetBorder(nsDeviceContext* aContext,
 // whatever values you want in GetWidgetBorder and only use this to return true
 // if you want to override CSS padding values.
 bool
-nsNativeThemeCocoa::GetWidgetPadding(nsDeviceContext* aContext, 
+nsNativeThemeCocoa::GetWidgetPadding(nsDeviceContext* aContext,
                                      nsIFrame* aFrame,
                                      uint8_t aWidgetType,
                                      nsIntMargin* aResult)
@@ -3077,7 +3121,7 @@ bool
 nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFrame,
                                       uint8_t aWidgetType, nsRect* aOverflowRect)
 {
-  int32_t p2a = aFrame->PresContext()->AppUnitsPerDevPixel();
+  nsIntMargin overflow;
   switch (aWidgetType) {
     case NS_THEME_BUTTON:
     case NS_THEME_MAC_DISCLOSURE_BUTTON_OPEN:
@@ -3095,32 +3139,40 @@ nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFram
     case NS_THEME_CHECKBOX:
     case NS_THEME_RADIO:
     case NS_THEME_TAB:
+    case NS_THEME_FOCUS_OUTLINE:
     {
-      // We assume that the above widgets can draw a focus ring that will be less than
-      // or equal to 4 pixels thick.
-      nsIntMargin extraSize = nsIntMargin(kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth,
-                                          kMaxFocusRingWidth);
-      nsMargin m(NSIntPixelsToAppUnits(extraSize.top, p2a),
-                 NSIntPixelsToAppUnits(extraSize.right, p2a),
-                 NSIntPixelsToAppUnits(extraSize.bottom, p2a),
-                 NSIntPixelsToAppUnits(extraSize.left, p2a));
-      aOverflowRect->Inflate(m);
-      return true;
+      overflow.SizeTo(kMaxFocusRingWidth,
+                      kMaxFocusRingWidth,
+                      kMaxFocusRingWidth,
+                      kMaxFocusRingWidth);
+      break;
     }
     case NS_THEME_PROGRESSBAR:
     {
-      // Progress bars draw a 2 pixel white shadow under their progress indicators
-      nsMargin m(0, 0, NSIntPixelsToAppUnits(2, p2a), 0);
-      aOverflowRect->Inflate(m);
-      return true;
+      // Progress bars draw a 2 pixel white shadow under their progress indicators.
+      overflow.bottom = 2;
+      break;
     }
-    case NS_THEME_FOCUS_OUTLINE:
+    case NS_THEME_METERBAR:
     {
-      aOverflowRect->Inflate(NSIntPixelsToAppUnits(2, p2a));
-      return true;
+      // Meter bars overflow their boxes by about 2 pixels.
+      overflow.SizeTo(2, 2, 2, 2);
+      break;
     }
+  }
+
+  if (IsHiDPIContext(aContext)) {
+    // Double the number of device pixels.
+    overflow += overflow;
+  }
+
+  if (overflow != nsIntMargin()) {
+    int32_t p2a = aFrame->PresContext()->AppUnitsPerDevPixel();
+    aOverflowRect->Inflate(nsMargin(NSIntPixelsToAppUnits(overflow.top, p2a),
+                                    NSIntPixelsToAppUnits(overflow.right, p2a),
+                                    NSIntPixelsToAppUnits(overflow.bottom, p2a),
+                                    NSIntPixelsToAppUnits(overflow.left, p2a)));
+    return true;
   }
 
   return false;
@@ -3256,7 +3308,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
 
     case NS_THEME_TREETWISTY:
-    case NS_THEME_TREETWISTYOPEN:   
+    case NS_THEME_TREETWISTYOPEN:
     {
       SInt32 twistyHeight = 0, twistyWidth = 0;
       ::GetThemeMetric(kThemeMetricDisclosureButtonWidth, &twistyWidth);
@@ -3265,7 +3317,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
       *aIsOverridable = false;
       break;
     }
-    
+
     case NS_THEME_TREEHEADER:
     case NS_THEME_TREEHEADERCELL:
     {
@@ -3424,7 +3476,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
         aResult->SizeTo(scrollbarWidth+1, scrollbarWidth);
       else
         aResult->SizeTo(scrollbarWidth, scrollbarWidth+1);
- 
+
       *aIsOverridable = false;
       break;
     }
@@ -3444,7 +3496,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
   }
 
-  if (IsHiDPIContext(aPresContext)) {
+  if (IsHiDPIContext(aPresContext->DeviceContext())) {
     *aResult = *aResult * 2;
   }
 
@@ -3454,7 +3506,7 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
 }
 
 NS_IMETHODIMP
-nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
+nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                        nsIAtom* aAttribute, bool* aShouldRepaint,
                                        const nsAttrValue* aOldValue)
 {
@@ -3491,7 +3543,7 @@ nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     // Hover/focus/active changed.  Always repaint.
     *aShouldRepaint = true;
   } else {
-    // Check the attribute to see if it's relevant.  
+    // Check the attribute to see if it's relevant.
     // disabled, checked, dlgtype, default, etc.
     *aShouldRepaint = false;
     if (aAttribute == nsGkAtoms::disabled ||
@@ -3518,20 +3570,14 @@ nsNativeThemeCocoa::ThemeChanged()
   return NS_OK;
 }
 
-bool 
+bool
 nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* aFrame,
                                       uint8_t aWidgetType)
 {
-  // We don't have CSS set up to render non-native scrollbars on Mac OS X so we
-  // render natively even if native theme support is disabled.
-  if (aWidgetType != NS_THEME_SCROLLBAR &&
-      aPresContext && !aPresContext->PresShell()->IsThemeSupportEnabled())
-    return false;
-
   // if this is a dropdown button in a combobox the answer is always no
   if (aWidgetType == NS_THEME_MENULIST_BUTTON) {
     nsIFrame* parentFrame = aFrame->GetParent();
-    if (parentFrame && (parentFrame->GetType() == nsGkAtoms::comboboxControlFrame))
+    if (parentFrame && parentFrame->IsComboboxControlFrame())
       return false;
   }
 
@@ -3559,7 +3605,7 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_MENUSEPARATOR:
     case NS_THEME_MAC_FULLSCREEN_BUTTON:
     case NS_THEME_TOOLTIP:
-    
+
     case NS_THEME_CHECKBOX:
     case NS_THEME_CHECKBOX_CONTAINER:
     case NS_THEME_RADIO:
@@ -3591,10 +3637,10 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_METERBAR:
     case NS_THEME_METERCHUNK:
     case NS_THEME_SEPARATOR:
-    
+
     case NS_THEME_TABPANELS:
     case NS_THEME_TAB:
-    
+
     case NS_THEME_TREETWISTY:
     case NS_THEME_TREETWISTYOPEN:
     case NS_THEME_TREEVIEW:
@@ -3604,6 +3650,8 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_TREEITEM:
     case NS_THEME_TREELINE:
     case NS_THEME_MAC_SOURCE_LIST:
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION:
 
     case NS_THEME_RANGE:
 
@@ -3628,7 +3676,7 @@ nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext, nsIFrame* a
     case NS_THEME_RESIZER:
     {
       nsIFrame* parentFrame = aFrame->GetParent();
-      if (!parentFrame || parentFrame->GetType() != nsGkAtoms::scrollFrame)
+      if (!parentFrame || !parentFrame->IsScrollFrame())
         return true;
 
       // Note that IsWidgetStyled is not called for resizers on Mac. This is
@@ -3745,6 +3793,12 @@ nsNativeThemeCocoa::NeedToClearBackgroundBehindWidget(nsIFrame* aFrame,
 {
   switch (aWidgetType) {
     case NS_THEME_MAC_SOURCE_LIST:
+    // If we're in a XUL tree, we don't want to clear the background behind the
+    // selections below, since that would make our source list to not pick up
+    // the right font smoothing background. But since we don't call this method
+    // in nsTreeBodyFrame::BuildDisplayList, we never get here.
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION:
     case NS_THEME_MAC_VIBRANCY_LIGHT:
     case NS_THEME_MAC_VIBRANCY_DARK:
     case NS_THEME_TOOLTIP:
@@ -3775,6 +3829,8 @@ nsNativeThemeCocoa::WidgetProvidesFontSmoothingBackgroundColor(nsIFrame* aFrame,
 {
   switch (aWidgetType) {
     case NS_THEME_MAC_SOURCE_LIST:
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION:
     case NS_THEME_MAC_VIBRANCY_LIGHT:
     case NS_THEME_MAC_VIBRANCY_DARK:
     case NS_THEME_TOOLTIP:
@@ -3783,7 +3839,10 @@ nsNativeThemeCocoa::WidgetProvidesFontSmoothingBackgroundColor(nsIFrame* aFrame,
     case NS_THEME_CHECKMENUITEM:
     case NS_THEME_DIALOG:
     {
-      if (aWidgetType == NS_THEME_DIALOG && !IsWindowSheet(aFrame)) {
+      if ((aWidgetType == NS_THEME_DIALOG && !IsWindowSheet(aFrame)) ||
+          ((aWidgetType == NS_THEME_MAC_SOURCE_LIST_SELECTION ||
+            aWidgetType == NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION) &&
+            !IsInSourceList(aFrame))) {
         return false;
       }
       ChildView* childView = ChildViewForFrame(aFrame);
@@ -3833,6 +3892,12 @@ nsNativeThemeCocoa::ThemeGeometryTypeForWidget(nsIFrame* aFrame, uint8_t aWidget
       return IsWindowSheet(aFrame) ? eThemeGeometryTypeSheet : eThemeGeometryTypeUnknown;
     case NS_THEME_MAC_SOURCE_LIST:
       return eThemeGeometryTypeSourceList;
+    case NS_THEME_MAC_SOURCE_LIST_SELECTION:
+      return IsInSourceList(aFrame) ? eThemeGeometryTypeSourceListSelection
+                                    : eThemeGeometryTypeUnknown;
+    case NS_THEME_MAC_ACTIVE_SOURCE_LIST_SELECTION:
+      return IsInSourceList(aFrame) ? eThemeGeometryTypeActiveSourceListSelection
+                                    : eThemeGeometryTypeUnknown;
     default:
       return eThemeGeometryTypeUnknown;
   }

@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For more information on this interface, please see
- * http://www.whatwg.org/specs/web-apps/current-work/#messageevent
+ * https://html.spec.whatwg.org/#messageevent
  */
 
 [Constructor(DOMString type, optional MessageEventInit eventInitDict),
@@ -22,7 +22,7 @@ interface MessageEvent : Event {
    * host, and if the port is not the default for the given scheme,
    * ":" followed by that port.  This value does not have a trailing slash.
    */
-  readonly attribute DOMString origin;
+  readonly attribute USVString origin;
 
   /**
    * The last event ID string of the event source, for server-sent DOM events; this
@@ -33,25 +33,32 @@ interface MessageEvent : Event {
   /**
    * The window or port which originated this event.
    */
-  readonly attribute (WindowProxy or MessagePort)? source;
+  readonly attribute MessageEventSource? source;
 
   /**
    * Initializes this event with the given data, in a manner analogous to
    * the similarly-named method on the nsIDOMEvent interface, also setting the
    * data, origin, source, and lastEventId attributes of this appropriately.
    */
-  readonly attribute MessagePortList? ports;
+  [Pure, Cached, Frozen]
+  readonly attribute sequence<MessagePort> ports;
 
-  void initMessageEvent(DOMString type, boolean bubbles, boolean cancelable,
-                        any data, DOMString origin, DOMString lastEventId,
-                        (WindowProxy or MessagePort)? source,
-                        sequence<MessagePort>? ports);
+  void initMessageEvent(DOMString type,
+                        optional boolean bubbles = false,
+                        optional boolean cancelable = false,
+                        optional any data = null,
+                        optional DOMString origin = "",
+                        optional DOMString lastEventId = "",
+                        optional MessageEventSource? source = null,
+                        optional sequence<MessagePort> ports = []);
 };
 
 dictionary MessageEventInit : EventInit {
-  any data;
-  DOMString origin;
-  DOMString lastEventId;
-  (Window or MessagePort)? source = null;
-  sequence<MessagePort>? ports;
+  any data = null;
+  DOMString origin = "";
+  DOMString lastEventId = "";
+  MessageEventSource? source = null;
+  sequence<MessagePort> ports = [];
 };
+
+typedef (WindowProxy or MessagePort or ServiceWorker) MessageEventSource;

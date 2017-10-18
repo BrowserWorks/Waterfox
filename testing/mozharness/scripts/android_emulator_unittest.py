@@ -14,7 +14,6 @@ import sys
 import signal
 import socket
 import subprocess
-import telnetlib
 import time
 import tempfile
 
@@ -24,9 +23,10 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozprocess import ProcessHandler
 
 from mozharness.base.log import FATAL
-from mozharness.base.script import BaseScript, PreScriptAction
+from mozharness.base.script import BaseScript, PreScriptAction, PostScriptAction
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
+from mozharness.mozilla.buildbot import TBPL_RETRY, EXIT_STATUS_DICT
 from mozharness.mozilla.mozbase import MozbaseMixin
 from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.mozilla.testing.unittest import EmulatorMixin
@@ -85,7 +85,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                          'verify-emulator',
                          'install',
                          'run-tests',
-                         'stop-emulator'],
+                        ],
             default_actions=['clobber',
                              'start-emulator',
                              'download-and-extract',
@@ -93,7 +93,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                              'verify-emulator',
                              'install',
                              'run-tests',
-                             'stop-emulator'],
+                            ],
             require_config_file=require_config_file,
             config={
                 'virtualenv_modules': self.virtualenv_modules,
@@ -150,10 +150,14 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             dirs['abs_test_install_dir'], 'modules')
         dirs['abs_blob_upload_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
-        dirs['abs_emulator_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'emulator')
+        dirs['abs_emulator_dir'] = abs_dirs['abs_work_dir']
         dirs['abs_mochitest_dir'] = os.path.join(
             dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_marionette_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'marionette', 'harness', 'marionette_harness')
+        dirs['abs_marionette_tests_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'marionette', 'tests', 'testing',
+            'marionette', 'harness', 'marionette_harness', 'tests')
         dirs['abs_avds_dir'] = self.config.get("avds_dir", "/home/cltbld/.android")
 
         for key in dirs.keys():
@@ -165,13 +169,16 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
-
-        if os.path.isdir(dirs['abs_mochitest_dir']):
-            # mochitest is the only thing that needs this
+        requirements = None
+        if self.test_suite == 'mochitest-media':
+            # mochitest-media is the only thing that needs this
             requirements = os.path.join(dirs['abs_mochitest_dir'],
                         'websocketprocessbridge',
                         'websocketprocessbridge_requirements.txt')
-
+        elif self.test_suite == 'marionette':
+            requirements = os.path.join(dirs['abs_test_install_dir'],
+                                    'config', 'marionette_requirements.txt')
+        if requirements:
             self.register_virtualenv_module(requirements=[requirements],
                                             two_pass=True)
 
@@ -183,8 +190,19 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         # constructed in start_emulator.
         env['LD_LIBRARY_PATH'] = self.abs_dirs['abs_work_dir']
 
+        # Write a default ddms.cfg to avoid unwanted prompts
         avd_home_dir = self.abs_dirs['abs_avds_dir']
+        with open(os.path.join(avd_home_dir, "ddms.cfg"), 'w') as f:
+            f.write("pingOptIn=false\npingId=0\n")
+
+        # Set environment variables to help emulator find the AVD.
+        # In newer versions of the emulator, ANDROID_AVD_HOME should
+        # point to the 'avd' directory.
+        # For older versions of the emulator, ANDROID_SDK_HOME should
+        # point to the directory containing the '.android' directory
+        # containing the 'avd' directory.
         env['ANDROID_AVD_HOME'] = os.path.join(avd_home_dir, 'avd')
+        env['ANDROID_SDK_HOME'] = os.path.abspath(os.path.join(avd_home_dir, '..'))
 
         command = [
             "emulator", "-avd", self.emulator["name"],
@@ -229,29 +247,23 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             status = func()
         return status
 
-    def _run_with_timeout(self, timeout, cmd):
+    def _run_with_timeout(self, timeout, cmd, quiet=False):
         timeout_cmd = ['timeout', '%s' % timeout] + cmd
-        return self._run_proc(timeout_cmd)
+        return self._run_proc(timeout_cmd, quiet=quiet)
 
-    def _run_proc(self, cmd):
+    def _run_proc(self, cmd, quiet=False):
         self.info('Running %s' % subprocess.list2cmdline(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         out, err = p.communicate()
-        if out:
+        if out and not quiet:
             self.info('%s' % str(out.strip()))
-        if err:
+        if err and not quiet:
             self.info('stderr: %s' % str(err.strip()))
         return out
 
-    def _telnet_cmd(self, telnet, command):
-        telnet.write('%s\n' % command)
-        result = telnet.read_until('OK', 10)
-        self.info('%s: %s' % (command, result))
-        return result
-
     def _verify_adb(self):
         self.info('Verifying adb connectivity')
-        self._run_with_timeout(300, [self.adb_path, 'wait-for-device'])
+        self._run_with_timeout(180, [self.adb_path, 'wait-for-device'])
         return True
 
     def _verify_adb_device(self):
@@ -268,75 +280,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             return True
         return False
 
-    def _telnet_to_emulator(self):
-        port = self.emulator["emulator_port"]
-        telnet_ok = False
-        try:
-            tn = telnetlib.Telnet('localhost', port, 10)
-            if tn is not None:
-                self.info('Connected to port %d' % port)
-                res = tn.read_until('OK', 10)
-                self.info(res)
-                self._telnet_cmd(tn, 'avd status')
-                if self.config["device_manager"] == "sut":
-                    sutport1 = self.emulator["sut_port1"]
-                    sutport2 = self.emulator["sut_port2"]
-                    cmd = 'redir add tcp:' + str(sutport1) + ':' + str(self.config["default_sut_port1"])
-                    self._telnet_cmd(tn, cmd)
-                    cmd = 'redir add tcp:' + str(sutport2) + ':' + str(self.config["default_sut_port2"])
-                    self._telnet_cmd(tn, cmd)
-                self._telnet_cmd(tn, 'redir list')
-                self._telnet_cmd(tn, 'network status')
-                tn.write('quit\n')
-                tn.read_all()
-                telnet_ok = True
-            else:
-                self.warning('Unable to connect to port %d' % port)
-        except socket.error, e:
-            self.info('Trying again after socket error: %s' % str(e))
-            pass
-        except EOFError:
-            self.info('Trying again after EOF')
-            pass
-        except:
-            self.info('Trying again after unexpected exception')
-            pass
-        finally:
-            if tn is not None:
-                tn.close()
-        return telnet_ok
-
-    def _telnet_to_sut(self):
-        port = self.emulator["sut_port1"]
-        contacted_sut = False
-        try:
-            tn = telnetlib.Telnet('localhost', port, 10)
-            if tn is not None:
-                self.info('Connected to port %d' % port)
-                res = tn.read_until('$>', 10)
-                if res.find('$>') == -1:
-                    self.warning('Unexpected SUT response: %s' % res)
-                else:
-                    self.info('SUT response: %s' % res)
-                    contacted_sut = True
-                tn.write('quit\n')
-                tn.read_all()
-            else:
-                self.warning('Unable to connect to port %d' % port)
-        except socket.error, e:
-            self.info('Trying again after socket error: %s' % str(e))
-            pass
-        except EOFError:
-            self.info('Trying again after EOF')
-            pass
-        except:
-            self.info('Trying again after unexpected exception')
-            pass
-        finally:
-            if tn is not None:
-                tn.close()
-        return contacted_sut
-
     def _verify_emulator(self):
         adb_ok = self._verify_adb()
         if not adb_ok:
@@ -350,15 +293,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         if not boot_ok:
             self.warning('Unable to verify Android boot completion')
             return False
-        telnet_ok = self._retry(4, 30, self._telnet_to_emulator, "Verify telnet to emulator")
-        if not telnet_ok:
-            self.warning('Unable to telnet to emulator on port %d' % self.emulator["emulator_port"])
-            return False
-        if self.config["device_manager"] == "sut":
-            sut_ok = self._retry(8, 30, self._telnet_to_sut, "Verify telnet to SUT agent")
-            if not sut_ok:
-                self.warning('Unable to communicate with SUT agent on port %d' % self.emulator["sut_port1"])
-                return False
         return True
 
     def _verify_emulator_and_restart_on_fail(self):
@@ -367,8 +301,13 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             self._dump_host_state()
             self._screenshot("emulator-startup-screenshot-")
             self._kill_processes(self.config["emulator_process_name"])
+            self._run_proc(['ps', '-ef'])
             self._dump_emulator_log()
+            # remove emulator tmp files
+            for dir in glob.glob("/tmp/android-*"):
+                self.rmtree(dir)
             self._restart_adbd()
+            time.sleep(5)
             self.emulator_proc = self._launch_emulator()
         return emulator_ok
 
@@ -439,7 +378,13 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
 
     def _query_package_name(self):
         if self.app_name is None:
-            #find appname from package-name.txt - assumes download-and-extract has completed successfully
+            # Find appname from package-name.txt - assumes download-and-extract
+            # has completed successfully.
+            # The app/package name will typically be org.mozilla.fennec,
+            # but org.mozilla.firefox for release builds, and there may be
+            # other variations. 'aapt dump badging <apk>' could be used as an
+            # alternative to package-name.txt, but introduces a dependency
+            # on aapt, found currently in the Android SDK build-tools component.
             apk_dir = self.abs_dirs['abs_work_dir']
             self.apk_path = os.path.join(apk_dir, self.installer_path)
             unzip = self.query_exe("unzip")
@@ -475,7 +420,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         error_summary_file = os.path.join(dirs['abs_blob_upload_dir'],
                                           '%s_errorsummary.log' % self.test_suite)
         str_format_values = {
-            'app': self._query_package_name(),
             'remote_webserver': c['remote_webserver'],
             'xre_path': self.xre_path,
             'utility_path': self.xre_path,
@@ -489,13 +433,14 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             'installer_path': self.installer_path,
             'raw_log_file': raw_log_file,
             'error_summary_file': error_summary_file,
-            'dm_trans': c['device_manager'],
+            # marionette options
+            'address': c.get('marionette_address'),
+            'gecko_log': os.path.join(dirs["abs_blob_upload_dir"], 'gecko.log'),
+            'test_manifest': os.path.join(
+                dirs['abs_marionette_tests_dir'],
+                self.config.get('marionette_test_manifest', '')
+            ),
         }
-        if self.config["device_manager"] == "sut":
-            str_format_values.update({
-                'device_ip': c['device_ip'],
-                'device_port': str(self.emulator['sut_port1']),
-            })
         for option in self.config["suite_definitions"][self.test_suite]["options"]:
             opt = option.split('=')[0]
             # override configured chunk options with script args, if specified
@@ -503,7 +448,11 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                 continue
             if opt == '--total-chunks' and self.total_chunks is not None:
                 continue
-            cmd.extend([option % str_format_values])
+            if '%(app)' in option:
+                # only query package name if requested
+                cmd.extend([option % {'app' : self._query_package_name()}])
+            else:
+                cmd.extend([option % str_format_values])
 
         if self.this_chunk is not None:
             cmd.extend(['--this-chunk', self.this_chunk])
@@ -518,6 +467,33 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             try_tests))
 
         return cmd
+
+    def _get_repo_url(self, path):
+        """
+           Return a url for a file (typically a tooltool manifest) in this hg repo
+           and using this revision (or mozilla-central/default if repo/rev cannot
+           be determined).
+
+           :param path specifies the directory path to the file of interest.
+        """
+        if 'GECKO_HEAD_REPOSITORY' in os.environ and 'GECKO_HEAD_REV' in os.environ:
+            # probably taskcluster
+            repo = os.environ['GECKO_HEAD_REPOSITORY']
+            revision = os.environ['GECKO_HEAD_REV']
+        elif self.buildbot_config and 'properties' in self.buildbot_config:
+            # probably buildbot
+            repo = 'https://hg.mozilla.org/%s' % self.buildbot_config['properties']['repo_path']
+            revision = self.buildbot_config['properties']['revision']
+        else:
+            # something unexpected!
+            repo = 'https://hg.mozilla.org/mozilla-central'
+            revision = 'default'
+            self.warning('Unable to find repo/revision for manifest; using mozilla-central/default')
+        url = '%s/raw-file/%s/%s' % (
+            repo,
+            revision,
+            path)
+        return url
 
     def _tooltool_fetch(self, url, dir):
         c = self.config
@@ -554,20 +530,14 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         # contents of the tar ball
         self.rmtree(dirs['abs_avds_dir'])
         self.mkdir_p(dirs['abs_avds_dir'])
-        if not self.buildbot_config:
-            # XXX until we figure out how to determine the repo_path, revision
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (
-                "try", "default", c["tooltool_manifest_path"])
-            self._tooltool_fetch(url, dirs['abs_avds_dir'])
-        elif self.buildbot_config and 'properties' in self.buildbot_config:
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (
-                self.buildbot_config['properties']['repo_path'],
-                self.buildbot_config['properties']['revision'],
-                c["tooltool_manifest_path"])
-            self._tooltool_fetch(url, dirs['abs_avds_dir'])
+        if 'avd_url' in c:
+            # Intended for experimental setups to evaluate an avd prior to
+            # tooltool deployment.
+            url = c['avd_url']
+            self.download_unpack(url, dirs['abs_avds_dir'])
         else:
-            self.fatal("properties in self.buildbot_config are required to "
-                       "retrieve tooltool manifest to be used for avds setup")
+            url = self._get_repo_url(c["tooltool_manifest_path"])
+            self._tooltool_fetch(url, dirs['abs_avds_dir'])
 
         avd_home_dir = self.abs_dirs['abs_avds_dir']
         if avd_home_dir != "/home/cltbld/.android":
@@ -617,16 +587,59 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
                 break
         self.emulator_proc = self._launch_emulator()
 
+    def _dump_perf_info(self):
+        '''
+        Dump some host and emulator performance-related information
+        to an artifact file, to help understand why jobs run slowly
+        sometimes. This is hopefully a temporary diagnostic.
+        See bug 1321605.
+        '''
+        dir = self.query_abs_dirs()['abs_blob_upload_dir']
+        perf_path = os.path.join(dir, "android-performance.log")
+        with open(perf_path, "w") as f:
+
+            f.write('\n\nHost /proc/cpuinfo:\n')
+            out = self._run_proc(['cat', '/proc/cpuinfo'], quiet=True)
+            f.write(out)
+
+            f.write('\n\nHost /proc/meminfo:\n')
+            out = self._run_proc(['cat', '/proc/meminfo'], quiet=True)
+            f.write(out)
+
+            f.write('\n\nHost process list:\n')
+            out = self._run_proc(['ps', '-ef'], quiet=True)
+            f.write(out)
+
+            f.write('\n\nEmulator /proc/cpuinfo:\n')
+            cmd = [self.adb_path, '-s', self.emulator['device_id'],
+                    'shell', 'cat', '/proc/cpuinfo']
+            out = self._run_with_timeout(30, cmd, quiet=True)
+            f.write(out)
+
+            f.write('\n\nEmulator /proc/meminfo:\n')
+            cmd = [self.adb_path, '-s', self.emulator['device_id'],
+                    'shell', 'cat', '/proc/meminfo']
+            out = self._run_with_timeout(30, cmd, quiet=True)
+            f.write(out)
+
+            f.write('\n\nEmulator process list:\n')
+            cmd = [self.adb_path, '-s', self.emulator['device_id'],
+                    'shell', 'ps']
+            out = self._run_with_timeout(30, cmd, quiet=True)
+            f.write(out)
+
     def verify_emulator(self):
         '''
-        Check to see if the emulator can be contacted via adb, telnet, and sut, if configured.
+        Check to see if the emulator can be contacted via adb.
         If any communication attempt fails, kill the emulator, re-launch, and re-check.
         '''
         self.mkdir_p(self.query_abs_dirs()['abs_blob_upload_dir'])
-        max_restarts = 3
-        emulator_ok = self._retry(max_restarts, 30, self._verify_emulator_and_restart_on_fail, "Check emulator")
+        max_restarts = 5
+        emulator_ok = self._retry(max_restarts, 10, self._verify_emulator_and_restart_on_fail, "Check emulator")
         if not emulator_ok:
-            self.fatal('INFRA-ERROR: Unable to start emulator after %d attempts' % max_restarts)
+            self.fatal('INFRA-ERROR: Unable to start emulator after %d attempts' % max_restarts,
+                EXIT_STATUS_DICT[TBPL_RETRY])
+        self._dump_perf_info()
         # Start logcat for the emulator. The adb process runs until the
         # corresponding emulator is killed. Output is written directly to
         # the blobber upload directory so that it is uploaded automatically
@@ -654,8 +667,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         self.rmtree(dirs['abs_xre_dir'])
         self.mkdir_p(dirs['abs_xre_dir'])
         if self.config["hostutils_manifest_path"]:
-            url = 'https://hg.mozilla.org/%s/raw-file/%s/%s' % (
-                "try", "default", self.config["hostutils_manifest_path"])
+            url = self._get_repo_url(self.config["hostutils_manifest_path"])
             self._tooltool_fetch(url, dirs['abs_xre_dir'])
             for p in glob.glob(os.path.join(dirs['abs_xre_dir'], 'host-utils-*')):
                 if os.path.isdir(p) and os.path.isfile(os.path.join(p, 'xpcshell')):
@@ -669,26 +681,29 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         """
         Install APKs on the emulator
         """
-        assert self.installer_path is not None, \
-            "Either add installer_path to the config or use --installer-path."
         install_needed = self.config["suite_definitions"][self.test_suite].get("install")
         if install_needed == False:
             self.info("Skipping apk installation for %s" % self.test_suite)
             return
 
+        assert self.installer_path is not None, \
+            "Either add installer_path to the config or use --installer-path."
+
         self.sdk_level = self._run_with_timeout(30, [self.adb_path, '-s', self.emulator['device_id'],
             'shell', 'getprop', 'ro.build.version.sdk'])
 
         # Install Fennec
-        install_ok = self._retry(3, 30, self._install_fennec_apk, "Install Fennec APK")
+        install_ok = self._retry(3, 30, self._install_fennec_apk, "Install app APK")
         if not install_ok:
-            self.fatal('INFRA-ERROR: Failed to install %s on %s' % (self.installer_path, self.emulator["name"]))
+            self.fatal('INFRA-ERROR: Failed to install %s on %s' %
+                (self.installer_path, self.emulator["name"]), EXIT_STATUS_DICT[TBPL_RETRY])
 
         # Install Robocop if required
         if self.test_suite.startswith('robocop'):
             install_ok = self._retry(3, 30, self._install_robocop_apk, "Install Robocop APK")
             if not install_ok:
-                self.fatal('INFRA-ERROR: Failed to install %s on %s' % (self.robocop_path, self.emulator["name"]))
+                self.fatal('INFRA-ERROR: Failed to install %s on %s' %
+                    (self.robocop_path, self.emulator["name"]), EXIT_STATUS_DICT[TBPL_RETRY])
 
         self.info("Finished installing apps for %s" % self.emulator["name"])
 
@@ -707,6 +722,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
         env['MOZ_UPLOAD_DIR'] = self.query_abs_dirs()['abs_blob_upload_dir']
         env['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        env['RUST_BACKTRACE'] = '1'
 
         self.info("Running on %s the command %s" % (self.emulator["name"], subprocess.list2cmdline(cmd)))
         self.info("##### %s log begins" % self.test_suite)
@@ -731,7 +747,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         self._dump_emulator_log()
         self.buildbot_status(tbpl_status, level=log_level)
 
-    def stop_emulator(self):
+    @PostScriptAction('run-tests')
+    def stop_emulator(self, action, success=None):
         '''
         Report emulator health, then make sure that the emulator has been stopped
         '''
@@ -744,7 +761,11 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         first (if the emulator is still running, logcat may still be running, which
         may lock the blob upload directory, causing a hang).
         '''
-        self._kill_processes(self.config["emulator_process_name"])
+        if self.config.get('blob_upload_branch'):
+            # Except on interactive workers, we want the emulator to keep running
+            # after the script is finished. So only kill it if blobber would otherwise
+            # have run anyway (it doesn't get run on interactive workers).
+            self._kill_processes(self.config["emulator_process_name"])
         super(AndroidEmulatorTest, self).upload_blobber_files()
 
 if __name__ == '__main__':

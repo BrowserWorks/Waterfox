@@ -16,27 +16,27 @@
 
 const testCases = [
   {
-    location: ["cookies", "sectest1.example.org"],
+    location: ["cookies", "https://sectest1.example.org"],
     sidebarHidden: true
   },
   {
-    location: "cs2",
+    location: getCookieId("cs2", ".example.org", "/"),
     sidebarHidden: false
   },
   {
     sendEscape: true
   },
   {
-    location: "cs2",
-    sidebarHidden: false
+    location: getCookieId("cs2", ".example.org", "/"),
+    sidebarHidden: true
   },
   {
-    location: "uc1",
-    sidebarHidden: false
+    location: getCookieId("uc1", ".example.org", "/"),
+    sidebarHidden: true
   },
   {
-    location: "uc1",
-    sidebarHidden: false
+    location: getCookieId("uc1", ".example.org", "/"),
+    sidebarHidden: true
   },
 
   {
@@ -72,17 +72,17 @@ const testCases = [
     sidebarHidden: true
   },
   {
-    location: "idb2",
+    location: "idb2 (default)",
     sidebarHidden: false
   },
 
   {
-    location: ["indexedDB", "http://test1.example.org", "idb2", "obj3"],
+    location: ["indexedDB", "http://test1.example.org", "idb2 (default)", "obj3"],
     sidebarHidden: true
   },
 
   {
-    location: ["indexedDB", "https://sectest1.example.org", "idb-s2"],
+    location: ["indexedDB", "https://sectest1.example.org", "idb-s2 (default)"],
     sidebarHidden: true
   },
   {
@@ -93,7 +93,7 @@ const testCases = [
     sendEscape: true
   }, {
     location: "obj-s2",
-    sidebarHidden: false
+    sidebarHidden: true
   }
 ];
 

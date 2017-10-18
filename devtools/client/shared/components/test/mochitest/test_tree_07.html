@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -12,16 +15,15 @@ Test that arrows get the open attribute when their item's children are expanded.
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
     const ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
     const React = browserRequire("devtools/client/shared/vendor/react");
     const Tree = React.createFactory(browserRequire("devtools/client/shared/components/tree"));
-    const tree = ReactDOM.render(Tree(TEST_TREE_INTERFACE), window.document.body);
 
-    yield setProps(tree, {
+    const treeProps = Object.assign({}, TEST_TREE_INTERFACE, {
       renderItem: (item, depth, focused, arrow) => {
         return React.DOM.div(
           {
@@ -33,6 +35,7 @@ window.onload = Task.async(function* () {
         );
       }
     });
+    const tree = ReactDOM.render(Tree(treeProps), window.document.body);
 
     TEST_TREE.expanded = new Set("ABCDEFGHIJKLMNO".split(""));
     yield forceRender(tree);

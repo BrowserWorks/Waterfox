@@ -76,6 +76,9 @@ class TPSTestRunner(object):
         'toolkit.startup.max_resumed_crashes': -1,
         # hrm - not sure what the release/beta channels will do?
         'xpinstall.signatures.required': False,
+        'services.sync.testing.tps': True,
+        'engine.bookmarks.repair.enabled': False,
+        'extensions.allow-non-mpc-extensions': True,
     }
 
     debug_preferences = {
@@ -238,12 +241,7 @@ class TPSTestRunner(object):
         except:
             test = json.loads(testcontent[testcontent.find('{'):testcontent.find('}') + 1])
 
-        testcontent += 'var config = %s;\n' % json.dumps(self.config, indent=2)
-        testcontent += 'var seconds_since_epoch = %d;\n' % int(time.time())
-
-        tmpfile = TempFile(prefix='tps_test_')
-        tmpfile.write(testcontent)
-        tmpfile.close()
+        self.preferences['tps.seconds_since_epoch'] = int(time.time())
 
         # generate the profiles defined in the test, and a list of test phases
         profiles = {}
@@ -261,7 +259,7 @@ class TPSTestRunner(object):
                 phase,
                 profiles[profilename],
                 testname,
-                tmpfile.filename,
+                testpath,
                 self.logfile,
                 self.env,
                 self.firefoxRunner,
@@ -283,7 +281,7 @@ class TPSTestRunner(object):
             cleanup_phase = TPSTestPhase(
                 'cleanup-' + profilename,
                 profiles[profilename], testname,
-                tmpfile.filename,
+                testpath,
                 self.logfile,
                 self.env,
                 self.firefoxRunner,
@@ -370,6 +368,11 @@ class TPSTestRunner(object):
 
         if self.debug:
             self.preferences.update(self.debug_preferences)
+
+        if 'preferences' in self.config:
+            self.preferences.update(self.config['preferences'])
+
+        self.preferences['tps.config'] = json.dumps(self.config)
 
     def run_tests(self):
         # delete the logfile if it already exists

@@ -105,7 +105,7 @@ static uint32_t FirstNonDigit(nsDependentSubstring& aString, uint32_t aStart)
   }
   return aStart;
 }
- 
+
 bool nsMediaFragmentURIParser::ParseNPTSec(nsDependentSubstring& aString, double& aSec)
 {
   nsDependentSubstring original(aString);
@@ -335,19 +335,6 @@ bool nsMediaFragmentURIParser::ParseXYWH(nsDependentSubstring aString)
   return false;
 }
 
-bool nsMediaFragmentURIParser::ParseMozSampleSize(nsDependentSubstring aString)
-{
-  int32_t sampleSize;
-
-  // Read and validate coordinates.
-  if (ParseInteger(aString, sampleSize) && sampleSize > 0) {
-    mSampleSize.emplace(sampleSize);
-    return true;
-  }
-
-  return false;
-}
-
 void nsMediaFragmentURIParser::Parse(nsACString& aRef)
 {
   // Create an array of possibly-invalid media fragments.
@@ -355,7 +342,7 @@ void nsMediaFragmentURIParser::Parse(nsACString& aRef)
   nsCCharSeparatedTokenizer tokenizer(aRef, '&');
 
   while (tokenizer.hasMoreTokens()) {
-    const nsCSubstring& nv = tokenizer.nextToken();
+    const nsACString& nv = tokenizer.nextToken();
     int32_t index = nv.FindChar('=');
     if (index >= 0) {
       nsAutoCString name;
@@ -368,9 +355,9 @@ void nsMediaFragmentURIParser::Parse(nsACString& aRef)
   }
 
   // Parse the media fragment values.
-  bool gotTemporal = false, gotSpatial = false, gotSampleSize = false;
+  bool gotTemporal = false, gotSpatial = false;
   for (int i = fragments.Length() - 1 ; i >= 0 ; --i) {
-    if (gotTemporal && gotSpatial && gotSampleSize) {
+    if (gotTemporal && gotSpatial) {
       // We've got one of each possible type. No need to look at the rest.
       break;
     } else if (!gotTemporal && fragments[i].first.EqualsLiteral("t")) {
@@ -379,9 +366,6 @@ void nsMediaFragmentURIParser::Parse(nsACString& aRef)
     } else if (!gotSpatial && fragments[i].first.EqualsLiteral("xywh")) {
       nsAutoString value = NS_ConvertUTF8toUTF16(fragments[i].second);
       gotSpatial = ParseXYWH(nsDependentSubstring(value, 0));
-    } else if (!gotSampleSize && fragments[i].first.EqualsLiteral("-moz-samplesize")) {
-      nsAutoString value = NS_ConvertUTF8toUTF16(fragments[i].second);
-      gotSampleSize = ParseMozSampleSize(nsDependentSubstring(value, 0));
     }
   }
 }

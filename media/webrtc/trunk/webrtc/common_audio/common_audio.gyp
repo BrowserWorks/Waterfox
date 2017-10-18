@@ -94,13 +94,17 @@
         'signal_processing/resample_by_2_internal.h',
         'signal_processing/resample_fractional.c',
         'signal_processing/spl_init.c',
+        'signal_processing/spl_inl.c',
         'signal_processing/spl_sqrt.c',
         'signal_processing/spl_sqrt_floor.c',
         'signal_processing/splitting_filter.c',
         'signal_processing/sqrt_of_one_minus_x_squared.c',
         'signal_processing/vector_scaling_operations.c',
+        'smoothing_filter.cc',
+        'smoothing_filter.h',
+        'sparse_fir_filter.cc',
+        'sparse_fir_filter.h',
         'vad/include/vad.h',
-        'vad/include/webrtc_vad.h',
         'vad/vad.cc',
         'vad/webrtc_vad.c',
         'vad/vad_core.c',
@@ -119,20 +123,24 @@
         'window_generator.h',
       ],
       'conditions': [
-        ['rtc_use_openmax_dl==1', {
-          'sources': [
-            'real_fourier_openmax.cc',
-            'real_fourier_openmax.h',
-          ],
-          'defines': ['RTC_USE_OPENMAX_DL',],
-          'conditions': [
-            ['build_openmax_dl==1', {
-              'dependencies': ['<(DEPTH)/third_party/openmax_dl/dl/dl.gyp:openmax_dl',],
-            }],
-          ],
-        }],
+        #TODO: not defined
+        #['rtc_use_openmax_dl==1', {
+        #  'sources': [
+        #    'real_fourier_openmax.cc',
+        #    'real_fourier_openmax.h',
+        #  ],
+        #  'defines': ['RTC_USE_OPENMAX_DL',],
+        #  'conditions': [
+        #    ['build_openmax_dl==1', {
+        #      'dependencies': ['<(DEPTH)/third_party/openmax_dl/dl/dl.gyp:openmax_dl',],
+        #    }],
+        #  ],
+        #}],
         ['target_arch=="ia32" or target_arch=="x64"', {
           'dependencies': ['common_audio_sse2',],
+        }],
+        ['build_with_neon==1', {
+          'dependencies': ['common_audio_neon',],
         }],
         ['target_arch=="arm"', {
           'sources': [
@@ -145,7 +153,6 @@
           ],
           'conditions': [
             ['arm_version>=7', {
-              'dependencies': ['common_audio_neon',],
               'sources': [
                 'signal_processing/filter_ar_fast_q12_armv7.S',
               ],
@@ -155,10 +162,7 @@
             }],
           ],  # conditions
         }],
-        ['target_arch=="arm64"', {
-          'dependencies': ['common_audio_neon',],
-        }],
-        ['target_arch=="mipsel" and mips_arch_variant!="r6" and android_webview_build==0', {
+        ['target_arch=="mipsel" and mips_arch_variant!="r6"', {
           'sources': [
             'signal_processing/include/spl_inl_mips.h',
             'signal_processing/complex_bit_reverse_mips.c',
@@ -199,19 +203,19 @@
             'fir_filter_sse.cc',
             'resampler/sinc_resampler_sse.cc',
           ],
-          'cflags': ['-msse2',],
           'conditions': [
-            [ 'os_posix == 1', {
+            ['os_posix==1', {
+              'cflags': [ '-msse2', ],
               'cflags_mozilla': ['-msse2',],
+              'xcode_settings': {
+                'OTHER_CFLAGS': [ '-msse2', ],
+              },
             }],
           ],
-          'xcode_settings': {
-            'OTHER_CFLAGS': ['-msse2',],
-          },
         },
       ],  # targets
     }],
-    ['target_arch=="arm" and arm_version>=7 or target_arch=="arm64"', {
+    ['build_with_neon==1', {
       'targets': [
         {
           'target_name': 'common_audio_neon',
@@ -224,98 +228,8 @@
             'signal_processing/downsample_fast_neon.c',
             'signal_processing/min_max_operations_neon.c',
           ],
-          'conditions': [
-            # Disable LTO in common_audio_neon target due to compiler bug
-            ['use_lto==1', {
-              'cflags!': [
-                '-flto',
-                '-ffat-lto-objects',
-              ],
-            }],
-          ],
         },
       ],  # targets
-    }],
-    ['include_tests==1', {
-      'targets' : [
-        {
-          'target_name': 'common_audio_unittests',
-          'type': '<(gtest_target_type)',
-          'dependencies': [
-            'common_audio',
-            '<(webrtc_root)/test/test.gyp:test_support_main',
-            '<(DEPTH)/testing/gmock.gyp:gmock',
-            '<(DEPTH)/testing/gtest.gyp:gtest',
-          ],
-          'sources': [
-            'audio_converter_unittest.cc',
-            'audio_ring_buffer_unittest.cc',
-            'audio_util_unittest.cc',
-            'blocker_unittest.cc',
-            'fir_filter_unittest.cc',
-            'lapped_transform_unittest.cc',
-            'real_fourier_unittest.cc',
-            'resampler/resampler_unittest.cc',
-            'resampler/push_resampler_unittest.cc',
-            'resampler/push_sinc_resampler_unittest.cc',
-            'resampler/sinc_resampler_unittest.cc',
-            'resampler/sinusoidal_linear_chirp_source.cc',
-            'resampler/sinusoidal_linear_chirp_source.h',
-            'ring_buffer_unittest.cc',
-            'signal_processing/real_fft_unittest.cc',
-            'signal_processing/signal_processing_unittest.cc',
-            'vad/vad_core_unittest.cc',
-            'vad/vad_filterbank_unittest.cc',
-            'vad/vad_gmm_unittest.cc',
-            'vad/vad_sp_unittest.cc',
-            'vad/vad_unittest.cc',
-            'vad/vad_unittest.h',
-            'wav_header_unittest.cc',
-            'wav_file_unittest.cc',
-            'window_generator_unittest.cc',
-          ],
-          'conditions': [
-            ['rtc_use_openmax_dl==1', {
-              'defines': ['RTC_USE_OPENMAX_DL',],
-            }],
-            ['OS=="android"', {
-              'dependencies': [
-                '<(DEPTH)/testing/android/native_test.gyp:native_test_native_code',
-              ],
-            }],
-          ],
-        },
-      ],  # targets
-      'conditions': [
-        ['OS=="android"', {
-          'targets': [
-            {
-              'target_name': 'common_audio_unittests_apk_target',
-              'type': 'none',
-              'dependencies': [
-                '<(apk_tests_path):common_audio_unittests_apk',
-              ],
-            },
-          ],
-        }],
-        ['test_isolation_mode != "noop"', {
-          'targets': [
-            {
-              'target_name': 'common_audio_unittests_run',
-              'type': 'none',
-              'dependencies': [
-                'common_audio_unittests',
-              ],
-              'includes': [
-                '../build/isolate.gypi',
-              ],
-              'sources': [
-                'common_audio_unittests.isolate',
-              ],
-            },
-          ],
-        }],
-      ],
     }],
   ],  # conditions
 }

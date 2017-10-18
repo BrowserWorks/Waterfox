@@ -49,8 +49,11 @@ TestUrgentHangsParent::Main()
 
     // Do a second round of testing once the reply to Test2 comes back.
     MessageLoop::current()->PostDelayedTask(
-        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::SecondStage),
-        3000);
+      NewNonOwningRunnableMethod(
+        "_ipdltest::TestUrgentHangsParent::SecondStage",
+        this,
+        &TestUrgentHangsParent::SecondStage),
+      3000);
 }
 
 void
@@ -67,8 +70,10 @@ TestUrgentHangsParent::SecondStage()
         fail("sending Test4_1");
 
     MessageLoop::current()->PostDelayedTask(
-        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::ThirdStage),
-        3000);
+      NewNonOwningRunnableMethod("_ipdltest::TestUrgentHangsParent::ThirdStage",
+                                 this,
+                                 &TestUrgentHangsParent::ThirdStage),
+      3000);
 }
 
 void
@@ -90,53 +95,54 @@ TestUrgentHangsParent::ThirdStage()
 
     // Close the channel after the child finishes its work in RecvTest5.
     MessageLoop::current()->PostDelayedTask(
-        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::Close),
-        3000);
+      NewNonOwningRunnableMethod(
+        "ipc::IToplevelProtocol::Close", this, &TestUrgentHangsParent::Close),
+      3000);
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsParent::RecvTest1_2()
 {
     if (!SendTest1_3())
         fail("sending Test1_3");
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsParent::RecvTestInner()
 {
     mInnerCount++;
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsParent::RecvTestInnerUrgent()
 {
     mInnerUrgentCount++;
-    return true;
+    return IPC_OK();
 }
 
 //-----------------------------------------------------------------------------
 // child
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest1_1()
 {
     if (!SendTest1_2())
         fail("sending Test1_2");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest1_3()
 {
     PR_Sleep(PR_SecondsToInterval(2));
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest2()
 {
     PR_Sleep(PR_SecondsToInterval(2));
@@ -145,17 +151,17 @@ TestUrgentHangsChild::RecvTest2()
     if (SendTestInner())
         fail("sending TestInner");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest3()
 {
     fail("RecvTest3 should never be called");
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest4()
 {
     PR_Sleep(PR_SecondsToInterval(2));
@@ -165,10 +171,10 @@ TestUrgentHangsChild::RecvTest4()
     if (!SendTestInner())
         fail("sending TestInner");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest4_1()
 {
     // This should fail because Test4_1 timed out and hasn't gotten a response
@@ -176,10 +182,10 @@ TestUrgentHangsChild::RecvTest4_1()
     if (SendTestInner())
         fail("sending TestInner");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest5()
 {
     PR_Sleep(PR_SecondsToInterval(2));
@@ -189,10 +195,10 @@ TestUrgentHangsChild::RecvTest5()
     if (!SendTestInnerUrgent())
         fail("sending TestInner");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestUrgentHangsChild::RecvTest5_1()
 {
     // This message will actually be handled by the parent even though it's in
@@ -200,7 +206,7 @@ TestUrgentHangsChild::RecvTest5_1()
     if (!SendTestInnerUrgent())
         fail("sending TestInner");
 
-    return true;
+    return IPC_OK();
 }
 
 TestUrgentHangsChild::TestUrgentHangsChild()

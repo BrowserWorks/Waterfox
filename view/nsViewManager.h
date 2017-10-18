@@ -30,8 +30,6 @@ public:
   typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
   typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
-
   NS_INLINE_DECL_REFCOUNTING(nsViewManager)
 
   nsViewManager();
@@ -147,8 +145,6 @@ public:
    */
   void InsertChild(nsView *aParent, nsView *aChild, nsView *aSibling,
                    bool aAfter);
-
-  void InsertChild(nsView *aParent, nsView *aChild, int32_t aZIndex);
 
   /**
    * Remove a specific child view from its parent. This will NOT remove its placeholder
@@ -333,7 +329,7 @@ private:
   void ProcessPendingUpdatesForView(nsView *aView,
                                     bool aFlushDirtyRegion = true);
   void ProcessPendingUpdatesRecurse(nsView* aView,
-                                    nsTArray<nsCOMPtr<nsIWidget> >& aWidgets);
+                                    AutoTArray<nsCOMPtr<nsIWidget>, 1>& aWidgets);
   void ProcessPendingUpdatesPaint(nsIWidget* aWidget);
 
   void FlushDirtyRegionToWidget(nsView* aView);
@@ -383,7 +379,7 @@ private:
   bool IsPaintingAllowed() { return RootViewManager()->mRefreshDisableCount == 0; }
 
   void WillPaintWindow(nsIWidget* aWidget);
-  bool PaintWindow(nsIWidget* aWidget, LayoutDeviceIntRegion aRegion);
+  bool PaintWindow(nsIWidget* aWidget, const LayoutDeviceIntRegion& aRegion);
   void DidPaintWindow();
 
   // Call this when you need to let the viewmanager know that it now has

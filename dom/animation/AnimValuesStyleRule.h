@@ -8,8 +8,10 @@
 #define mozilla_AnimValuesStyleRule_h
 
 #include "mozilla/StyleAnimationValue.h"
-#include "nsCSSProperty.h"
-#include "nsCSSPropertySet.h"
+#include "nsCSSPropertyID.h"
+#include "nsCSSPropertyIDSet.h"
+#include "nsDataHashtable.h"
+#include "nsHashKeys.h" // For nsUint32HashKey
 #include "nsIStyleRule.h"
 #include "nsISupportsImpl.h" // For NS_DECL_ISUPPORTS
 #include "nsRuleNode.h" // For nsCachedStyleData
@@ -32,31 +34,27 @@ public:
   // nsIStyleRule implementation
   void MapRuleInfoInto(nsRuleData* aRuleData) override;
   bool MightMapInheritedStyleData() override;
+  bool GetDiscretelyAnimatedCSSValue(nsCSSPropertyID aProperty,
+                                     nsCSSValue* aValue) override;
 #ifdef DEBUG
   void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
-  void AddValue(nsCSSProperty aProperty, const StyleAnimationValue &aStartValue)
-  {
-    PropertyStyleAnimationValuePair pair = { aProperty, aStartValue };
-    mPropertyValuePairs.AppendElement(pair);
-    mStyleBits |=
-      nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
-  }
+  // For the following functions, it there is already a value for |aProperty| it
+  // will be replaced with |aValue|.
+  void AddValue(nsCSSPropertyID aProperty, const StyleAnimationValue &aValue);
+  void AddValue(nsCSSPropertyID aProperty, StyleAnimationValue&& aValue);
 
-  void AddValue(nsCSSProperty aProperty, StyleAnimationValue&& aStartValue)
-  {
-    PropertyStyleAnimationValuePair* pair = mPropertyValuePairs.AppendElement();
-    pair->mProperty = aProperty;
-    pair->mValue = Move(aStartValue);
-    mStyleBits |=
-      nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
+  bool HasValue(nsCSSPropertyID aProperty) const {
+    return mAnimationValues.Contains(aProperty);
   }
+  bool GetValue(nsCSSPropertyID aProperty, StyleAnimationValue& aValue) const;
 
 private:
   ~AnimValuesStyleRule() {}
 
-  InfallibleTArray<PropertyStyleAnimationValuePair> mPropertyValuePairs;
+  nsDataHashtable<nsUint32HashKey, StyleAnimationValue> mAnimationValues;
+
   uint32_t mStyleBits;
 };
 

@@ -12,7 +12,6 @@ this.EXPORTED_SYMBOLS = ["FxAccountsOAuthGrantClient", "FxAccountsOAuthGrantClie
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://services-common/rest.js");
@@ -59,7 +58,7 @@ this.FxAccountsOAuthGrantClient.prototype = {
    * @return Promise
    *        Resolves: {Object} Object with access_token property
    */
-  getTokenFromAssertion: function (assertion, scope) {
+  getTokenFromAssertion(assertion, scope) {
     if (!assertion) {
       throw new Error("Missing 'assertion' parameter");
     }
@@ -67,9 +66,9 @@ this.FxAccountsOAuthGrantClient.prototype = {
       throw new Error("Missing 'scope' parameter");
     }
     let params = {
-      scope: scope,
+      scope,
       client_id: this.parameters.client_id,
-      assertion: assertion,
+      assertion,
       response_type: "token"
     };
 
@@ -84,12 +83,12 @@ this.FxAccountsOAuthGrantClient.prototype = {
    *        Resolves: {Object} with the server response, which is typically
    *        ignored.
    */
-  destroyToken: function (token) {
+  destroyToken(token) {
     if (!token) {
       throw new Error("Missing 'token' parameter");
     }
     let params = {
-      token: token,
+      token,
     };
 
     return this._createRequest(DESTROY_ENDPOINT, "POST", params);
@@ -102,7 +101,7 @@ this.FxAccountsOAuthGrantClient.prototype = {
    *        OAuth client options
    * @private
    */
-  _validateOptions: function (options) {
+  _validateOptions(options) {
     if (!options) {
       throw new Error("Missing configuration options");
     }
@@ -131,7 +130,7 @@ this.FxAccountsOAuthGrantClient.prototype = {
    *         Rejects: {FxAccountsOAuthGrantClientError} Profile client error.
    * @private
    */
-  _createRequest: function(path, method = "POST", params) {
+  _createRequest(path, method = "POST", params) {
     return new Promise((resolve, reject) => {
       let profileDataUrl = this.serverURL + path;
       let request = new this._Request(profileDataUrl);
@@ -140,46 +139,49 @@ this.FxAccountsOAuthGrantClient.prototype = {
       request.setHeader("Accept", "application/json");
       request.setHeader("Content-Type", "application/json");
 
-      request.onComplete = function (error) {
+      request.onComplete = function(error) {
         if (error) {
-          return reject(new FxAccountsOAuthGrantClientError({
+          reject(new FxAccountsOAuthGrantClientError({
             error: ERROR_NETWORK,
             errno: ERRNO_NETWORK,
             message: error.toString(),
           }));
+          return;
         }
 
         let body = null;
         try {
           body = JSON.parse(request.response.body);
         } catch (e) {
-          return reject(new FxAccountsOAuthGrantClientError({
+          reject(new FxAccountsOAuthGrantClientError({
             error: ERROR_PARSE,
             errno: ERRNO_PARSE,
             code: request.response.status,
             message: request.response.body,
           }));
+          return;
         }
 
         // "response.success" means status code is 200
         if (request.response.success) {
-          return resolve(body);
+          resolve(body);
+          return;
         }
 
-        if (typeof body.errno === 'number') {
+        if (typeof body.errno === "number") {
           // Offset oauth server errnos to avoid conflict with other FxA server errnos
           body.errno += OAUTH_SERVER_ERRNO_OFFSET;
         } else if (body.errno) {
           body.errno = ERRNO_UNKNOWN_ERROR;
         }
-        return reject(new FxAccountsOAuthGrantClientError(body));
+        reject(new FxAccountsOAuthGrantClientError(body));
       };
 
       if (method === "POST") {
         request.post(params);
       } else {
         // method not supported
-        return reject(new FxAccountsOAuthGrantClientError({
+        reject(new FxAccountsOAuthGrantClientError({
           error: ERROR_NETWORK,
           errno: ERRNO_NETWORK,
           code: ERROR_CODE_METHOD_NOT_ALLOWED,

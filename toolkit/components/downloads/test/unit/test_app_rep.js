@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Cu.import('resource://gre/modules/NetUtil.jsm');
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const gAppRep = Cc["@mozilla.org/downloads/application-reputation-service;1"].
@@ -59,7 +59,7 @@ function registerTableUpdate(aTable, aFilename) {
   });
 }
 
-add_task(function* test_setup() {
+add_task(async function test_setup() {
   // Set up a local HTTP server to return bad verdicts.
   Services.prefs.setCharPref(appRepURLPref,
                              "http://localhost:4444/download");
@@ -89,6 +89,14 @@ add_task(function* test_setup() {
     do_throw("This test should never make a remote lookup");
   });
   gHttpServ.start(4444);
+
+  do_register_cleanup(function() {
+    return (async function() {
+      await new Promise(resolve => {
+        gHttpServ.stop(resolve);
+      });
+    })();
+  });
 });
 
 function run_test() {
@@ -187,8 +195,6 @@ add_test(function test_local_list() {
     return response;
   }
   gHttpServ.registerPathHandler("/downloads", function(request, response) {
-    let buf = NetUtil.readInputStreamToString(request.bodyInputStream,
-      request.bodyInputStream.available());
     let blob = processUpdateRequest();
     response.setHeader("Content-Type",
                        "application/vnd.google.safebrowsing-update", false);
@@ -220,6 +226,7 @@ add_test(function test_local_list() {
   streamUpdater.downloadUpdates(
     "goog-downloadwhite-digest256,goog-badbinurl-shavar",
     "goog-downloadwhite-digest256,goog-badbinurl-shavar;\n",
+    true, // isPostRequest.
     "http://localhost:4444/downloads",
     updateSuccess, handleError, handleError);
 });
@@ -323,12 +330,25 @@ add_test(function test_redirect_on_blocklist() {
   let secman = Services.scriptSecurityManager;
   let badRedirects = Cc["@mozilla.org/array;1"]
                        .createInstance(Ci.nsIMutableArray);
-  badRedirects.appendElement(secman.createCodebasePrincipal(exampleURI, {}),
-                             false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(blocklistedURI, {}),
-                             false);
-  badRedirects.appendElement(secman.createCodebasePrincipal(whitelistedURI, {}),
-                             false);
+
+  let redirect1 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(exampleURI, {}),
+  };
+  badRedirects.appendElement(redirect1);
+
+  let redirect2 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(blocklistedURI, {}),
+  };
+  badRedirects.appendElement(redirect2);
+
+  let redirect3 = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
+    principal: secman.createCodebasePrincipal(whitelistedURI, {}),
+  };
+  badRedirects.appendElement(redirect3);
+
   gAppRep.queryReputation({
     sourceURI: whitelistedURI,
     referrerURI: exampleURI,

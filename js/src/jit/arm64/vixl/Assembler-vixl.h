@@ -858,7 +858,9 @@ class Assembler : public MozBaseAssembler {
   COPYENUM(NotEqual);
   COPYENUM(NonZero);
   COPYENUM(AboveOrEqual);
+  COPYENUM(CarrySet);
   COPYENUM(Below);
+  COPYENUM(CarryClear);
   COPYENUM(Signed);
   COPYENUM(NotSigned);
   COPYENUM(Overflow);
@@ -937,6 +939,10 @@ class Assembler : public MozBaseAssembler {
       MOZ_CRASH("TODO: figure this case out.");
     }
     return static_cast<Condition>(cond ^ 1);
+  }
+
+  static inline DoubleCondition InvertCondition(DoubleCondition cond) {
+    MOZ_CRASH("Not yet implemented: InvertCondition(DoubleCondition)");
   }
 
   static inline Condition ConditionFromDoubleCondition(DoubleCondition cond) {

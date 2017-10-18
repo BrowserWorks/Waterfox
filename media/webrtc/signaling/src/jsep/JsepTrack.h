@@ -5,6 +5,7 @@
 #ifndef _JSEPTRACK_H_
 #define _JSEPTRACK_H_
 
+#include <functional>
 #include <algorithm>
 #include <string>
 #include <map>
@@ -28,6 +29,10 @@ namespace mozilla {
 class JsepTrackNegotiatedDetails
 {
 public:
+  JsepTrackNegotiatedDetails() :
+    mTias(0)
+  {}
+
   size_t
   GetEncodingCount() const
   {
@@ -51,9 +56,23 @@ public:
     return nullptr;
   }
 
+  void
+  ForEachRTPHeaderExtension(
+    const std::function<void(const SdpExtmapAttributeList::Extmap& extmap)> & fn) const
+  {
+    for(auto entry: mExtmap) {
+      fn(entry.second);
+    }
+  }
+
   std::vector<uint8_t> GetUniquePayloadTypes() const
   {
     return mUniquePayloadTypes;
+  }
+
+  uint32_t GetTias() const
+  {
+    return mTias;
   }
 
 private:
@@ -62,6 +81,7 @@ private:
   std::map<std::string, SdpExtmapAttributeList::Extmap> mExtmap;
   std::vector<uint8_t> mUniquePayloadTypes;
   PtrVector<JsepTrackEncoding> mEncodings;
+  uint32_t mTias; // bits per second
 };
 
 class JsepTrack
@@ -135,7 +155,9 @@ public:
   virtual void
   AddSsrc(uint32_t ssrc)
   {
-    mSsrcs.push_back(ssrc);
+    if (mType != SdpMediaSection::kApplication) {
+      mSsrcs.push_back(ssrc);
+    }
   }
 
   bool
@@ -279,12 +301,26 @@ private:
 struct JsepTrackPair {
   size_t mLevel;
   // Is this track pair sharing a transport with another?
-  Maybe<size_t> mBundleLevel;
+  size_t mBundleLevel = SIZE_MAX; // SIZE_MAX if no bundle level
   uint32_t mRecvonlySsrc;
   RefPtr<JsepTrack> mSending;
   RefPtr<JsepTrack> mReceiving;
   RefPtr<JsepTransport> mRtpTransport;
   RefPtr<JsepTransport> mRtcpTransport;
+
+  bool HasBundleLevel() const {
+    return mBundleLevel != SIZE_MAX;
+  }
+
+  size_t BundleLevel() const {
+    MOZ_ASSERT(HasBundleLevel());
+    return mBundleLevel;
+  }
+
+  void SetBundleLevel(size_t aBundleLevel) {
+    MOZ_ASSERT(aBundleLevel != SIZE_MAX);
+    mBundleLevel = aBundleLevel;
+  }
 };
 
 } // namespace mozilla

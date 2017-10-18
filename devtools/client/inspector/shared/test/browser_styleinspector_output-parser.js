@@ -9,7 +9,7 @@
 // This is more of a unit test than a mochitest-browser test, but can't be
 // tested with an xpcshell test as the output-parser requires the DOM to work.
 
-const {OutputParser} = require("devtools/client/shared/output-parser");
+const OutputParser = require("devtools/client/shared/output-parser");
 const {initCssProperties, getCssProperties} = require("devtools/shared/fronts/css-properties");
 
 const COLOR_CLASS = "color-class";
@@ -162,17 +162,13 @@ const TEST_DATA = [
   },
   {
     name: "background",
-    value: "-moz-radial-gradient(center 45deg, circle closest-side, " +
-           "orange 0%, red 100%)",
+    value: "radial-gradient(circle closest-side at center, orange 0%, red 100%)",
     test: fragment => {
-      is(countAll(fragment), 6);
+      is(countAll(fragment), 4);
       let colorSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
       is(colorSwatches.length, 2);
       is(colorSwatches[0].textContent, "orange");
       is(colorSwatches[1].textContent, "red");
-      let angleSwatches = fragment.querySelectorAll("." + ANGLE_CLASS);
-      is(angleSwatches.length, 1);
-      is(angleSwatches[0].textContent, "45deg");
     }
   },
   {
@@ -302,7 +298,7 @@ add_task(function* () {
   yield initCssProperties(toolbox);
   let cssProperties = getCssProperties(toolbox);
 
-  let parser = new OutputParser(document, cssProperties.supportsType);
+  let parser = new OutputParser(document, cssProperties);
   for (let i = 0; i < TEST_DATA.length; i++) {
     let data = TEST_DATA[i];
     info("Output-parser test data " + i + ". {" + data.name + " : " +

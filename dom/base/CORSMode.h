@@ -7,9 +7,11 @@
 #ifndef CORSMode_h_
 #define CORSMode_h_
 
+#include <stdint.h>
+
 namespace mozilla {
 
-enum CORSMode {
+enum CORSMode : uint8_t {
   /**
    * The default of not using CORS to validate cross-origin loads.
    */

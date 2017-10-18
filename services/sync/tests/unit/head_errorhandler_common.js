@@ -1,7 +1,18 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* import-globals-from head_appinfo.js */
+/* import-globals-from ../../../common/tests/unit/head_helpers.js */
+/* import-globals-from head_helpers.js */
+/* import-globals-from head_http_server.js */
+
+// This file expects Service to be defined in the global scope when EHTestsCommon
+// is used (from service.js).
+/* global Service */
+
 Cu.import("resource://services-sync/engines.js");
+Cu.import("resource://services-sync/constants.js");
+Cu.import("resource://services-sync/keys.js");
 
 // Common code for test_errorhandler_{1,2}.js -- pulled out to make it less
 // monolithic and take less time to execute.
@@ -14,7 +25,7 @@ const EHTestsCommon = {
     response.bodyOutputStream.write(body, body.length);
   },
 
-  sync_httpd_setup() {
+  async sync_httpd_setup() {
     let global = new ServerWBO("global", {
       syncID: Service.syncID,
       storageVersion: STORAGE_VERSION,
@@ -43,25 +54,25 @@ const EHTestsCommon = {
       "/1.1/janedoe/info/collections": handler_401,
 
       // Maintenance or overloaded (503 + Retry-After) at info/collections.
-      "/maintenance/1.1/broken.info/info/collections": EHTestsCommon.service_unavailable,
+      "/1.1/broken.info/info/collections": EHTestsCommon.service_unavailable,
 
       // Maintenance or overloaded (503 + Retry-After) at meta/global.
-      "/maintenance/1.1/broken.meta/storage/meta/global": EHTestsCommon.service_unavailable,
-      "/maintenance/1.1/broken.meta/info/collections": collectionsHelper.handler,
+      "/1.1/broken.meta/storage/meta/global": EHTestsCommon.service_unavailable,
+      "/1.1/broken.meta/info/collections": collectionsHelper.handler,
 
       // Maintenance or overloaded (503 + Retry-After) at crypto/keys.
-      "/maintenance/1.1/broken.keys/storage/meta/global": upd("meta", global.handler()),
-      "/maintenance/1.1/broken.keys/info/collections": collectionsHelper.handler,
-      "/maintenance/1.1/broken.keys/storage/crypto/keys": EHTestsCommon.service_unavailable,
+      "/1.1/broken.keys/storage/meta/global": upd("meta", global.handler()),
+      "/1.1/broken.keys/info/collections": collectionsHelper.handler,
+      "/1.1/broken.keys/storage/crypto/keys": EHTestsCommon.service_unavailable,
 
       // Maintenance or overloaded (503 + Retry-After) at wiping collection.
-      "/maintenance/1.1/broken.wipe/info/collections": collectionsHelper.handler,
-      "/maintenance/1.1/broken.wipe/storage/meta/global": upd("meta", global.handler()),
-      "/maintenance/1.1/broken.wipe/storage/crypto/keys":
+      "/1.1/broken.wipe/info/collections": collectionsHelper.handler,
+      "/1.1/broken.wipe/storage/meta/global": upd("meta", global.handler()),
+      "/1.1/broken.wipe/storage/crypto/keys":
         upd("crypto", (new ServerWBO("keys")).handler()),
-      "/maintenance/1.1/broken.wipe/storage": EHTestsCommon.service_unavailable,
-      "/maintenance/1.1/broken.wipe/storage/clients": upd("clients", clientsColl.handler()),
-      "/maintenance/1.1/broken.wipe/storage/catapult": EHTestsCommon.service_unavailable
+      "/1.1/broken.wipe/storage": EHTestsCommon.service_unavailable,
+      "/1.1/broken.wipe/storage/clients": upd("clients", clientsColl.handler()),
+      "/1.1/broken.wipe/storage/catapult": EHTestsCommon.service_unavailable
     });
   },
 
@@ -72,7 +83,7 @@ const EHTestsCommon = {
     CatapultEngine.prototype = {
       __proto__: SyncEngine.prototype,
       exception: null, // tests fill this in
-      _sync: function _sync() {
+      async _sync() {
         if (this.exception) {
           throw this.exception;
         }
@@ -86,27 +97,23 @@ const EHTestsCommon = {
   generateCredentialsChangedFailure() {
     // Make sync fail due to changed credentials. We simply re-encrypt
     // the keys with a different Sync Key, without changing the local one.
-    let newSyncKeyBundle = new SyncKeyBundle("johndoe", "23456234562345623456234562");
+    let newSyncKeyBundle = new BulkKeyBundle("crypto");
+    newSyncKeyBundle.generateRandom();
     let keys = Service.collectionKeys.asWBO();
     keys.encrypt(newSyncKeyBundle);
-    keys.upload(Service.resource(Service.cryptoKeysURL));
+    return keys.upload(Service.resource(Service.cryptoKeysURL));
   },
 
-  setUp(server) {
-    return configureIdentity({ username: "johndoe" }).then(
-      () => {
-        Service.serverURL  = server.baseURI + "/";
-        Service.clusterURL = server.baseURI + "/";
-      }
-    ).then(
-      () => EHTestsCommon.generateAndUploadKeys()
-    );
+  async setUp(server) {
+    await configureIdentity({ username: "johndoe" }, server);
+    return EHTestsCommon.generateAndUploadKeys()
   },
 
-  generateAndUploadKeys() {
+  async generateAndUploadKeys() {
     generateNewKeys(Service.collectionKeys);
     let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
     serverKeys.encrypt(Service.identity.syncKeyBundle);
-    return serverKeys.upload(Service.resource(Service.cryptoKeysURL)).success;
+    let response = await serverKeys.upload(Service.resource(Service.cryptoKeysURL));
+    return response.success;
   }
 };

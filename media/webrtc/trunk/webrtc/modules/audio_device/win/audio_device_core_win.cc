@@ -35,9 +35,10 @@
 #include <strsafe.h>
 #include <uuids.h>
 
-#include "webrtc/modules/audio_device/audio_device_utility.h"
-#include "webrtc/system_wrappers/interface/sleep.h"
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/base/logging.h"
+#include "webrtc/base/platform_thread.h"
+#include "webrtc/system_wrappers/include/sleep.h"
+#include "webrtc/system_wrappers/include/trace.h"
 
 // Macro that calls a COM method returning HRESULT value.
 #define EXIT_ON_ERROR(hres)    do { if (FAILED(hres)) goto Exit; } while(0)
@@ -333,7 +334,9 @@ bool AudioDeviceWindowsCore::CoreAudioIsSupported()
         int temp_ok(0);
         bool available(false);
 
-        ok |= p->Init();
+        if (p->Init() != InitStatus::OK) {
+          ok |= -1;
+        }
 
         int16_t numDevsRec = p->RecordingDevices();
         for (uint16_t i = 0; i < numDevsRec; i++)
@@ -678,31 +681,27 @@ int32_t AudioDeviceWindowsCore::ActiveAudioLayer(AudioDeviceModule::AudioLayer& 
 //  Init
 // ----------------------------------------------------------------------------
 
-int32_t AudioDeviceWindowsCore::Init()
-{
+AudioDeviceGeneric::InitStatus AudioDeviceWindowsCore::Init() {
+  CriticalSectionScoped lock(&_critSect);
 
-    CriticalSectionScoped lock(&_critSect);
+  if (_initialized) {
+    return InitStatus::OK;
+  }
 
-    if (_initialized)
-    {
-        return 0;
-    }
+  _playWarning = 0;
+  _playError = 0;
+  _recWarning = 0;
+  _recError = 0;
 
-    _playWarning = 0;
-    _playError = 0;
-    _recWarning = 0;
-    _recError = 0;
+  // Enumerate all audio rendering and capturing endpoint devices.
+  // Note that, some of these will not be able to select by the user.
+  // The complete collection is for internal use only.
+  _EnumerateEndpointDevicesAll(eRender);
+  _EnumerateEndpointDevicesAll(eCapture);
 
-    // Enumerate all audio rendering and capturing endpoint devices.
-    // Note that, some of these will not be able to select by the user.
-    // The complete collection is for internal use only.
-    //
-    _EnumerateEndpointDevicesAll(eRender);
-    _EnumerateEndpointDevicesAll(eCapture);
+  _initialized = true;
 
-    _initialized = true;
-
-    return 0;
+  return InitStatus::OK;
 }
 
 // ----------------------------------------------------------------------------
@@ -2240,9 +2239,9 @@ int32_t AudioDeviceWindowsCore::InitPlayout()
     hr = S_FALSE;
 
     // Iterate over frequencies and channels, in order of priority
-    for (int freq = 0; freq < sizeof(freqs)/sizeof(freqs[0]); freq++)
+    for (unsigned int freq = 0; freq < sizeof(freqs)/sizeof(freqs[0]); freq++)
     {
-        for (int chan = 0; chan < sizeof(_playChannelsPrioList)/sizeof(_playChannelsPrioList[0]); chan++)
+        for (unsigned int chan = 0; chan < sizeof(_playChannelsPrioList)/sizeof(_playChannelsPrioList[0]); chan++)
         {
             Wfx.nChannels = _playChannelsPrioList[chan];
             Wfx.nSamplesPerSec = freqs[freq];
@@ -2577,9 +2576,9 @@ int32_t AudioDeviceWindowsCore::InitRecording()
     hr = S_FALSE;
 
     // Iterate over frequencies and channels, in order of priority
-    for (int freq = 0; freq < sizeof(freqs)/sizeof(freqs[0]); freq++)
+    for (unsigned int freq = 0; freq < sizeof(freqs)/sizeof(freqs[0]); freq++)
     {
-        for (int chan = 0; chan < sizeof(_recChannelsPrioList)/sizeof(_recChannelsPrioList[0]); chan++)
+        for (unsigned int chan = 0; chan < sizeof(_recChannelsPrioList)/sizeof(_recChannelsPrioList[0]); chan++)
         {
             Wfx.nChannels = _recChannelsPrioList[chan];
             Wfx.nSamplesPerSec = freqs[freq];
@@ -3392,7 +3391,7 @@ DWORD AudioDeviceWindowsCore::DoRenderThread()
       return 1;
     }
 
-    _SetThreadName(0, "webrtc_core_audio_render_thread");
+    rtc::SetCurrentThreadName("webrtc_core_audio_render_thread");
 
     // Use Multimedia Class Scheduler Service (MMCSS) to boost the thread priority.
     //
@@ -3669,7 +3668,7 @@ DWORD AudioDeviceWindowsCore::InitCaptureThreadPriority()
 {
     _hMmTask = NULL;
 
-    _SetThreadName(0, "webrtc_core_audio_capture_thread");
+    rtc::SetCurrentThreadName("webrtc_core_audio_capture_thread");
 
     // Use Multimedia Class Scheduler Service (MMCSS) to boost the thread
     // priority.
@@ -4198,17 +4197,12 @@ int32_t AudioDeviceWindowsCore::EnableBuiltInAEC(bool enable)
     return 0;
 }
 
-bool AudioDeviceWindowsCore::BuiltInAECIsEnabled() const
-{
-    return _builtInAecEnabled;
-}
-
 int AudioDeviceWindowsCore::SetDMOProperties()
 {
     HRESULT hr = S_OK;
     assert(_dmo != NULL);
 
-    scoped_refptr<IPropertyStore> ps;
+    rtc::scoped_refptr<IPropertyStore> ps;
     {
         IPropertyStore* ptrPS = NULL;
         hr = _dmo->QueryInterface(IID_IPropertyStore,
@@ -4641,7 +4635,7 @@ int32_t AudioDeviceWindowsCore::_GetDefaultDeviceIndex(EDataFlow dir,
     for (UINT i = 0; i < count; i++)
     {
         memset(szDeviceID, 0, sizeof(szDeviceID));
-        scoped_refptr<IMMDevice> device;
+        rtc::scoped_refptr<IMMDevice> device;
         {
             IMMDevice* ptrDevice = NULL;
             hr = collection->Item(i, &ptrDevice);
@@ -5073,30 +5067,6 @@ void AudioDeviceWindowsCore::_TraceCOMError(HRESULT hr) const
 }
 
 // ----------------------------------------------------------------------------
-//  _SetThreadName
-// ----------------------------------------------------------------------------
-
-void AudioDeviceWindowsCore::_SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
-{
-    // See http://msdn.microsoft.com/en-us/library/xcb2z8hs(VS.71).aspx for details on the code
-    // in this function. Name of article is "Setting a Thread Name (Unmanaged)".
-
-    THREADNAME_INFO info;
-    info.dwType = 0x1000;
-    info.szName = szThreadName;
-    info.dwThreadID = dwThreadID;
-    info.dwFlags = 0;
-
-    __try
-    {
-        RaiseException( 0x406D1388, 0, sizeof(info)/sizeof(DWORD), (ULONG_PTR *)&info );
-    }
-    __except (EXCEPTION_CONTINUE_EXECUTION)
-    {
-    }
-}
-
-// ----------------------------------------------------------------------------
 //  WideToUTF8
 // ----------------------------------------------------------------------------
 
@@ -5105,7 +5075,7 @@ char* AudioDeviceWindowsCore::WideToUTF8(const TCHAR* src) const {
     const size_t kStrLen = sizeof(_str);
     memset(_str, 0, kStrLen);
     // Get required size (in bytes) to be able to complete the conversion.
-    int required_size = WideCharToMultiByte(CP_UTF8, 0, src, -1, _str, 0, 0, 0);
+    unsigned int required_size = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, src, -1, _str, 0, 0, 0);
     if (required_size <= kStrLen)
     {
         // Process the entire input string, including the terminating null char.

@@ -5,7 +5,7 @@
 #ifndef SANDBOX_SRC_SECURITY_LEVEL_H_
 #define SANDBOX_SRC_SECURITY_LEVEL_H_
 
-#include "base/basictypes.h"
+#include <stdint.h>
 
 namespace sandbox {
 
@@ -138,7 +138,7 @@ enum JobLevel {
 // Flags that are unsupported for the target OS will be silently ignored.
 // Flags that are invalid for their application (pre or post startup) will
 // return SBOX_ERROR_BAD_PARAMS.
-typedef uint64 MitigationFlags;
+typedef uint64_t MitigationFlags;
 
 // Permanently enables DEP for the target process. Corresponds to
 // PROCESS_CREATION_MITIGATION_POLICY_DEP_ENABLE.
@@ -154,11 +154,13 @@ const MitigationFlags MITIGATION_DEP_NO_ATL_THUNK                 = 0x00000002;
 // PROCESS_CREATION_MITIGATION_POLICY_SEHOP_ENABLE.
 const MitigationFlags MITIGATION_SEHOP                            = 0x00000004;
 
-// Forces ASLR on all images in the child process. Corresponds to
+// Forces ASLR on all images in the child process. In debug builds, must be
+// enabled after startup. Corresponds to
 // PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_ALWAYS_ON .
 const MitigationFlags MITIGATION_RELOCATE_IMAGE                   = 0x00000008;
 
-// Refuses to load DLLs that cannot support ASLR. Corresponds to
+// Refuses to load DLLs that cannot support ASLR. In debug builds, must be
+// enabled after startup. Corresponds to
 // PROCESS_CREATION_MITIGATION_POLICY_FORCE_RELOCATE_IMAGES_ALWAYS_ON_REQ_RELOCS.
 const MitigationFlags MITIGATION_RELOCATE_IMAGE_REQUIRED          = 0x00000010;
 
@@ -183,21 +185,47 @@ const MitigationFlags MITIGATION_HIGH_ENTROPY_ASLR                = 0x00000080;
 // PROCESS_CREATION_MITIGATION_POLICY_STRICT_HANDLE_CHECKS_ALWAYS_ON.
 const MitigationFlags MITIGATION_STRICT_HANDLE_CHECKS             = 0x00000100;
 
-// Prevents the process from making Win32k calls. Must be enabled after
-// startup. Corresponds to
+// Prevents the process from making Win32k calls. Corresponds to
 // PROCESS_CREATION_MITIGATION_POLICY_WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON.
+//
+// Applications linked to user32.dll or gdi32.dll make Win32k calls during
+// setup, even if Win32k is not otherwise used. So they also need to add a rule
+// with SUBSYS_WIN32K_LOCKDOWN and semantics FAKE_USER_GDI_INIT to allow the
+// initialization to succeed.
 const MitigationFlags MITIGATION_WIN32K_DISABLE                   = 0x00000200;
 
-// Disables common DLL injection methods (e.g. window hooks and
-// App_InitDLLs). Corresponds to
+// Prevents certain built-in third party extension points from being used.
+// - App_Init DLLs
+// - Winsock Layered Service Providers (LSPs)
+// - Global Windows Hooks (NOT thread-targeted hooks)
+// - Legacy Input Method Editors (IMEs).
+// I.e.: Disable legacy hooking mechanisms.  Corresponds to
 // PROCESS_CREATION_MITIGATION_POLICY_EXTENSION_POINT_DISABLE_ALWAYS_ON.
-const MitigationFlags MITIGATION_EXTENSION_DLL_DISABLE            = 0x00000400;
+const MitigationFlags MITIGATION_EXTENSION_POINT_DISABLE = 0x00000400;
+
+// Prevents the process from loading non-system fonts into GDI.
+// Corresponds to
+// PROCESS_CREATION_MITIGATION_POLICY_FONT_DISABLE_ALWAYS_ON
+const MitigationFlags MITIGATION_NONSYSTEM_FONT_DISABLE = 0x00000800;
 
 // Sets the DLL search order to LOAD_LIBRARY_SEARCH_DEFAULT_DIRS. Additional
 // directories can be added via the Windows AddDllDirectory() function.
 // http://msdn.microsoft.com/en-us/library/windows/desktop/hh310515
 // Must be enabled after startup.
 const MitigationFlags MITIGATION_DLL_SEARCH_ORDER        = 0x00000001ULL << 32;
+
+// Changes the mandatory integrity level policy on the current process' token
+// to enable no-read and no-execute up. This prevents a lower IL process from
+// opening the process token for impersonate/duplicate/assignment.
+const MitigationFlags MITIGATION_HARDEN_TOKEN_IL_POLICY  = 0x00000001ULL << 33;
+
+// Blocks mapping of images from remote devices. Corresponds to
+// PROCESS_CREATION_MITIGATION_POLICY_IMAGE_LOAD_NO_REMOTE_ALWAYS_ON.
+const MitigationFlags MITIGATION_IMAGE_LOAD_NO_REMOTE = 0x00000001ULL << 52;
+
+// Blocks mapping of images that have the low manditory label. Corresponds to
+// PROCESS_CREATION_MITIGATION_POLICY_IMAGE_LOAD_NO_LOW_LABEL_ALWAYS_ON.
+const MitigationFlags MITIGATION_IMAGE_LOAD_NO_LOW_LABEL = 0x00000001ULL << 56;
 
 }  // namespace sandbox
 

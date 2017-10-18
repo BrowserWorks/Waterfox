@@ -65,9 +65,9 @@ public:
   }
   virtual void GetBackendName(nsAString& aName) {}
   virtual LayersBackend GetBackendType() { return LayersBackend::LAYERS_BASIC; }
-  virtual void BeginTransaction() {}
+  virtual bool BeginTransaction() { return true; }
   virtual already_AddRefed<ImageLayer> CreateImageLayer() {
-    NS_RUNTIMEABORT("Not implemented.");
+    MOZ_CRASH("Not implemented.");
     return nullptr;
   }
   virtual already_AddRefed<PaintedLayer> CreatePaintedLayer() {
@@ -78,8 +78,16 @@ public:
     NS_RUNTIMEABORT("Not implemented.");
     return nullptr;
   }
+  virtual already_AddRefed<TextLayer> CreateTextLayer() {
+    NS_RUNTIMEABORT("Not implemented.");
+    return nullptr;
+  }
+  virtual already_AddRefed<BorderLayer> CreateBorderLayer() {
+    NS_RUNTIMEABORT("Not implemented.");
+    return nullptr;
+  }
   virtual void SetRoot(Layer* aLayer) {}
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) {}
+  virtual bool BeginTransactionWithTarget(gfxContext* aTarget) { return true; }
   virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() {
     NS_RUNTIMEABORT("Not implemented.");
     return nullptr;
@@ -238,7 +246,7 @@ already_AddRefed<Layer> CreateLayerTree(
   if (rootLayer) {
     rootLayer->ComputeEffectiveTransforms(Matrix4x4());
     manager->SetRoot(rootLayer);
-    if (rootLayer->AsLayerComposite()) {
+    if (rootLayer->AsHostLayer()) {
       // Only perform this for LayerManagerComposite
       CompositorBridgeParent::SetShadowProperties(rootLayer);
     }

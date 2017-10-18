@@ -12,12 +12,27 @@
 #include "mozilla/gfx/TiledRegion.h"    // for TiledRegion
 #include "mozilla/gfx/Types.h"          // for SamplingFilter, SurfaceFormat
 #include "mozilla/layers/CompositorTypes.h"  // for TextureFlags
+#include "mozilla/layers/WebRenderLayersLogging.h"
 #include "nsAString.h"
 #include "nsPrintfCString.h"            // for nsPrintfCString
 #include "nsRegion.h"                   // for nsRegion, nsIntRegion
 #include "nscore.h"                     // for nsACString, etc
 
 namespace mozilla {
+
+namespace wr {
+struct ColorF;
+
+struct TypedSize2D_f32__LayerPixel;
+typedef TypedSize2D_f32__LayerPixel LayerSize;
+typedef LayerSize LayoutSize;
+
+struct TypedRect_f32__LayerPixel;
+typedef TypedRect_f32__LayerPixel LayerRect;
+typedef LayerRect LayoutRect;
+
+} // namespace wr
+
 namespace gfx {
 template <class units, class F> struct RectTyped;
 } // namespace gfx
@@ -85,6 +100,18 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::IntRectTyped<T>& 
     r.x, r.y, r.width, r.height).get();
   aStream << sfx;
 }
+
+void
+AppendToString(std::stringstream& aStream, const wr::ColorF& c,
+               const char* pfx="", const char* sfx="");
+
+void
+AppendToString(std::stringstream& aStream, const wr::LayoutRect& r,
+               const char* pfx="", const char* sfx="");
+
+void
+AppendToString(std::stringstream& aStream, const wr::LayoutSize& s,
+               const char* pfx="", const char* sfx="");
 
 void
 AppendToString(std::stringstream& aStream, const nsRegion& r,

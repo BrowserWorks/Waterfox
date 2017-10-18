@@ -25,6 +25,7 @@ public:
     explicit SkColorShader(SkColor c);
 
     bool isOpaque() const override;
+    bool isConstant() const override { return true; }
 
     class ColorShaderContext : public SkShader::Context {
     public:
@@ -49,8 +50,7 @@ public:
     GradientType asAGradient(GradientInfo* info) const override;
 
 #if SK_SUPPORT_GPU
-    const GrFragmentProcessor* asFragmentProcessor(GrContext*, const SkMatrix& viewM,
-                                                   const SkMatrix*, SkFilterQuality) const override;
+    sk_sp<GrFragmentProcessor> asFragmentProcessor(const AsFPArgs&) const override;
 #endif
 
     SK_TO_STRING_OVERRIDE()
@@ -59,15 +59,75 @@ public:
 protected:
     SkColorShader(SkReadBuffer&);
     void flatten(SkWriteBuffer&) const override;
-    Context* onCreateContext(const ContextRec&, void* storage) const override;
-    size_t onContextSize(const ContextRec&) const override { return sizeof(ColorShaderContext); }
+    Context* onMakeContext(const ContextRec&, SkArenaAlloc* storage) const override;
+
     bool onAsLuminanceColor(SkColor* lum) const override {
         *lum = fColor;
         return true;
     }
 
+    bool onAppendStages(SkRasterPipeline*, SkColorSpace*, SkArenaAlloc*,
+                        const SkMatrix& ctm, const SkPaint&, const SkMatrix*) const override;
+
 private:
     SkColor fColor;
+
+    typedef SkShader INHERITED;
+};
+
+class SkColor4Shader : public SkShader {
+public:
+    SkColor4Shader(const SkColor4f&, sk_sp<SkColorSpace>);
+
+    bool isOpaque() const override {
+        return SkColorGetA(fCachedByteColor) == 255;
+    }
+    bool isConstant() const override { return true; }
+
+    class Color4Context : public SkShader::Context {
+    public:
+        Color4Context(const SkColor4Shader& shader, const ContextRec&);
+
+        uint32_t getFlags() const override;
+        void shadeSpan(int x, int y, SkPMColor span[], int count) override;
+        void shadeSpanAlpha(int x, int y, uint8_t alpha[], int count) override;
+        void shadeSpan4f(int x, int y, SkPM4f[], int count) override;
+
+    protected:
+        bool onChooseBlitProcs(const SkImageInfo&, BlitState*) override;
+
+    private:
+        SkPM4f      fPM4f;
+        SkPMColor   fPMColor;
+        uint32_t    fFlags;
+
+        typedef SkShader::Context INHERITED;
+    };
+
+    GradientType asAGradient(GradientInfo* info) const override;
+
+#if SK_SUPPORT_GPU
+    sk_sp<GrFragmentProcessor> asFragmentProcessor(const AsFPArgs&) const override;
+#endif
+
+    SK_TO_STRING_OVERRIDE()
+    SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(SkColorShader)
+
+protected:
+    SkColor4Shader(SkReadBuffer&);
+    void flatten(SkWriteBuffer&) const override;
+    Context* onMakeContext(const ContextRec&, SkArenaAlloc*) const override;
+    bool onAsLuminanceColor(SkColor* lum) const override {
+        *lum = fCachedByteColor;
+        return true;
+    }
+    bool onAppendStages(SkRasterPipeline*, SkColorSpace*, SkArenaAlloc*,
+                        const SkMatrix& ctm, const SkPaint&, const SkMatrix*) const override;
+
+private:
+    sk_sp<SkColorSpace> fColorSpace;
+    const SkColor4f     fColor4;
+    const SkColor       fCachedByteColor;
 
     typedef SkShader INHERITED;
 };

@@ -23,7 +23,7 @@ class IPDLCompile:
                 '-d', tmpoutdir,
                 self.specfilename
             ])
-            
+
             proc = subprocess.Popen(args=self.argv,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -50,12 +50,13 @@ class IPDLCompile:
                 and isinstance(self.stderr, str))
 
 
-    def error(self):
+    def error(self, expectedError):
         '''Return True iff compiling self.specstring resulted in an
 IPDL compiler error.'''
         assert self.completed()
 
-        return None is not re.search(r'error:', self.stderr)
+        errorRe = re.compile(re.escape(expectedError))
+        return None is not re.search(errorRe, self.stderr)
 
 
     def exception(self):
@@ -69,7 +70,7 @@ exception being raised.'''
     def ok(self):
         '''Return True iff compiling self.specstring was successful.'''
         assert self.completed()
-        
+
         return (not self.exception()
-                and not self.error()
+                and not self.error("error:")
                 and (0 == self.returncode))

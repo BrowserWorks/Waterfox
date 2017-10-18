@@ -5,21 +5,41 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPVideoDecoder.h"
+#include "GMPDecoderModule.h"
 #include "GMPVideoHost.h"
+#include "MediaData.h"
+#include "VPXDecoder.h"
 #include "mozilla/EndianUtils.h"
 #include "prsystem.h"
-#include "MediaData.h"
-#include "GMPDecoderModule.h"
-#include "VPXDecoder.h"
+#include "mp4_demuxer/AnnexB.h"
 
 namespace mozilla {
 
 #if defined(DEBUG)
-extern bool IsOnGMPThread();
+static bool IsOnGMPThread()
+{
+  nsCOMPtr<mozIGeckoMediaPluginService> mps =
+    do_GetService("@mozilla.org/gecko-media-plugin-service;1");
+  MOZ_ASSERT(mps);
+
+  nsCOMPtr<nsIThread> gmpThread;
+  nsresult rv = mps->GetThread(getter_AddRefs(gmpThread));
+  MOZ_ASSERT(NS_SUCCEEDED(rv) && gmpThread);
+  return gmpThread->EventTarget()->IsOnCurrentThread();
+}
 #endif
 
+GMPVideoDecoderParams::GMPVideoDecoderParams(const CreateDecoderParams& aParams)
+  : mConfig(aParams.VideoConfig())
+  , mTaskQueue(aParams.mTaskQueue)
+  , mImageContainer(aParams.mImageContainer)
+  , mLayersBackend(aParams.GetLayersBackend())
+  , mCrashHelper(aParams.mCrashHelper)
+{
+}
+
 void
-VideoCallbackAdapter::Decoded(GMPVideoi420Frame* aDecodedFrame)
+GMPVideoDecoder::Decoded(GMPVideoi420Frame* aDecodedFrame)
 {
   GMPUniquePtr<GMPVideoi420Frame> decodedFrame(aDecodedFrame);
 
@@ -40,130 +60,99 @@ VideoCallbackAdapter::Decoded(GMPVideoi420Frame* aDecodedFrame)
     b.mPlanes[i].mSkip = 0;
   }
 
-  gfx::IntRect pictureRegion(0, 0, decodedFrame->Width(), decodedFrame->Height());
-  RefPtr<VideoData> v = VideoData::Create(mVideoInfo,
-                                            mImageContainer,
-                                            mLastStreamOffset,
-                                            decodedFrame->Timestamp(),
-                                            decodedFrame->Duration(),
-                                            b,
-                                            false,
-                                            -1,
-                                            pictureRegion);
+  gfx::IntRect pictureRegion(
+    0, 0, decodedFrame->Width(), decodedFrame->Height());
+  RefPtr<VideoData> v = VideoData::CreateAndCopyData(
+    mConfig,
+    mImageContainer,
+    mLastStreamOffset,
+    media::TimeUnit::FromMicroseconds(decodedFrame->Timestamp()),
+    media::TimeUnit::FromMicroseconds(decodedFrame->Duration()),
+    b,
+    false,
+    media::TimeUnit::FromMicroseconds(-1),
+    pictureRegion);
+  RefPtr<GMPVideoDecoder> self = this;
   if (v) {
-    mCallback->Output(v);
+    mDecodedData.AppendElement(Move(v));
   } else {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+    mDecodedData.Clear();
+    mDecodePromise.RejectIfExists(
+      MediaResult(NS_ERROR_OUT_OF_MEMORY,
+                  RESULT_DETAIL("CallBack::CreateAndCopyData")),
+      __func__);
   }
 }
 
 void
-VideoCallbackAdapter::ReceivedDecodedReferenceFrame(const uint64_t aPictureId)
+GMPVideoDecoder::ReceivedDecodedReferenceFrame(const uint64_t aPictureId)
 {
   MOZ_ASSERT(IsOnGMPThread());
 }
 
 void
-VideoCallbackAdapter::ReceivedDecodedFrame(const uint64_t aPictureId)
+GMPVideoDecoder::ReceivedDecodedFrame(const uint64_t aPictureId)
 {
   MOZ_ASSERT(IsOnGMPThread());
 }
 
 void
-VideoCallbackAdapter::InputDataExhausted()
+GMPVideoDecoder::InputDataExhausted()
 {
   MOZ_ASSERT(IsOnGMPThread());
-  mCallback->InputExhausted();
+  mDecodePromise.ResolveIfExists(mDecodedData, __func__);
+  mDecodedData.Clear();
 }
 
 void
-VideoCallbackAdapter::DrainComplete()
+GMPVideoDecoder::DrainComplete()
 {
   MOZ_ASSERT(IsOnGMPThread());
-  mCallback->DrainComplete();
+  mDrainPromise.ResolveIfExists(mDecodedData, __func__);
+  mDecodedData.Clear();
 }
 
 void
-VideoCallbackAdapter::ResetComplete()
+GMPVideoDecoder::ResetComplete()
 {
   MOZ_ASSERT(IsOnGMPThread());
-  mCallback->FlushComplete();
+  mFlushPromise.ResolveIfExists(true, __func__);
 }
 
 void
-VideoCallbackAdapter::Error(GMPErr aErr)
+GMPVideoDecoder::Error(GMPErr aErr)
 {
   MOZ_ASSERT(IsOnGMPThread());
-  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
+  auto error = MediaResult(aErr == GMPDecodeErr ? NS_ERROR_DOM_MEDIA_DECODE_ERR
+                                                : NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                           RESULT_DETAIL("GMPErr:%x", aErr));
+  mDecodePromise.RejectIfExists(error, __func__);
+  mDrainPromise.RejectIfExists(error, __func__);
+  mFlushPromise.RejectIfExists(error, __func__);
 }
 
 void
-VideoCallbackAdapter::Terminated()
+GMPVideoDecoder::Terminated()
 {
-  // Note that this *may* be called from the proxy thread also.
-  NS_WARNING("GMP decoder terminated.");
-  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-}
-
-GMPVideoDecoderParams::GMPVideoDecoderParams(const CreateDecoderParams& aParams)
-  : mConfig(aParams.VideoConfig())
-  , mTaskQueue(aParams.mTaskQueue)
-  , mCallback(nullptr)
-  , mAdapter(nullptr)
-  , mImageContainer(aParams.mImageContainer)
-  , mLayersBackend(aParams.mLayersBackend)
-  , mCrashHelper(aParams.mCrashHelper)
-{}
-
-GMPVideoDecoderParams&
-GMPVideoDecoderParams::WithCallback(MediaDataDecoderProxy* aWrapper)
-{
-  MOZ_ASSERT(aWrapper);
-  MOZ_ASSERT(!mCallback); // Should only be called once per instance.
-  mCallback = aWrapper->Callback();
-  mAdapter = nullptr;
-  return *this;
-}
-
-GMPVideoDecoderParams&
-GMPVideoDecoderParams::WithAdapter(VideoCallbackAdapter* aAdapter)
-{
-  MOZ_ASSERT(aAdapter);
-  MOZ_ASSERT(!mAdapter); // Should only be called once per instance.
-  mCallback = aAdapter->Callback();
-  mAdapter = aAdapter;
-  return *this;
+  MOZ_ASSERT(IsOnGMPThread());
+  Error(GMPErr::GMPAbortedErr);
 }
 
 GMPVideoDecoder::GMPVideoDecoder(const GMPVideoDecoderParams& aParams)
   : mConfig(aParams.mConfig)
-  , mCallback(aParams.mCallback)
   , mGMP(nullptr)
   , mHost(nullptr)
-  , mAdapter(aParams.mAdapter)
   , mConvertNALUnitLengths(false)
   , mCrashHelper(aParams.mCrashHelper)
+  , mImageContainer(aParams.mImageContainer)
 {
-  MOZ_ASSERT(!mAdapter || mCallback == mAdapter->Callback());
-  if (!mAdapter) {
-    mAdapter = new VideoCallbackAdapter(mCallback,
-                                        VideoInfo(mConfig.mDisplay.width,
-                                                  mConfig.mDisplay.height),
-                                        aParams.mImageContainer);
-  }
 }
 
 void
 GMPVideoDecoder::InitTags(nsTArray<nsCString>& aTags)
 {
-  if (mConfig.mMimeType.EqualsLiteral("video/avc") ||
-      mConfig.mMimeType.EqualsLiteral("video/mp4")) {
+  if (MP4Decoder::IsH264(mConfig.mMimeType)) {
     aTags.AppendElement(NS_LITERAL_CSTRING("h264"));
-    const Maybe<nsCString> gmp(
-      GMPDecoderModule::PreferredGMP(NS_LITERAL_CSTRING("video/avc")));
-    if (gmp.isSome()) {
-      aTags.AppendElement(gmp.value());
-    }
   } else if (VPXDecoder::IsVP8(mConfig.mMimeType)) {
     aTags.AppendElement(NS_LITERAL_CSTRING("vp8"));
   } else if (VPXDecoder::IsVP9(mConfig.mMimeType)) {
@@ -183,14 +172,13 @@ GMPVideoDecoder::CreateFrame(MediaRawData* aSample)
   GMPVideoFrame* ftmp = nullptr;
   GMPErr err = mHost->CreateFrame(kGMPEncodedVideoFrame, &ftmp);
   if (GMP_FAILED(err)) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
     return nullptr;
   }
 
-  GMPUniquePtr<GMPVideoEncodedFrame> frame(static_cast<GMPVideoEncodedFrame*>(ftmp));
+  GMPUniquePtr<GMPVideoEncodedFrame> frame(
+    static_cast<GMPVideoEncodedFrame*>(ftmp));
   err = frame->CreateEmptyFrame(aSample->Size());
   if (GMP_FAILED(err)) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
     return nullptr;
   }
 
@@ -212,9 +200,9 @@ GMPVideoDecoder::CreateFrame(MediaRawData* aSample)
 
   frame->SetEncodedWidth(mConfig.mDisplay.width);
   frame->SetEncodedHeight(mConfig.mDisplay.height);
-  frame->SetTimeStamp(aSample->mTime);
+  frame->SetTimeStamp(aSample->mTime.ToMicroseconds());
   frame->SetCompleteFrame(true);
-  frame->SetDuration(aSample->mDuration);
+  frame->SetDuration(aSample->mDuration.ToMicroseconds());
   frame->SetFrameType(aSample->mKeyframe ? kGMPKeyFrame : kGMPDeltaFrame);
 
   return frame;
@@ -232,7 +220,7 @@ GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
   MOZ_ASSERT(IsOnGMPThread());
 
   if (!aGMP) {
-    mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
   MOZ_ASSERT(aHost);
@@ -244,17 +232,21 @@ GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
     return;
   }
 
+  bool isOpenH264 = aGMP->GetDisplayName().EqualsLiteral("gmpopenh264");
+
   GMPVideoCodec codec;
   memset(&codec, 0, sizeof(codec));
 
   codec.mGMPApiVersion = kGMPVersion33;
   nsTArray<uint8_t> codecSpecific;
-  if (mConfig.mMimeType.EqualsLiteral("video/avc") ||
-      mConfig.mMimeType.EqualsLiteral("video/mp4")) {
+  if (MP4Decoder::IsH264(mConfig.mMimeType)) {
     codec.mCodecType = kGMPVideoCodecH264;
     codecSpecific.AppendElement(0); // mPacketizationMode.
     codecSpecific.AppendElements(mConfig.mExtraData->Elements(),
                                  mConfig.mExtraData->Length());
+    // OpenH264 expects pseudo-AVCC, but others must be passed
+    // AnnexB for H264.
+    mConvertToAnnexB = !isOpenH264;
   } else if (VPXDecoder::IsVP8(mConfig.mMimeType)) {
     codec.mCodecType = kGMPVideoCodecVP8;
   } else if (VPXDecoder::IsVP9(mConfig.mMimeType)) {
@@ -262,7 +254,7 @@ GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
   } else {
     // Unrecognized mime type
     aGMP->Close();
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
   codec.mWidth = mConfig.mImage.width;
@@ -270,11 +262,11 @@ GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
 
   nsresult rv = aGMP->InitDecode(codec,
                                  codecSpecific,
-                                 mAdapter,
+                                 this,
                                  PR_GetNumberOfProcessors());
   if (NS_FAILED(rv)) {
     aGMP->Close();
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
     return;
   }
 
@@ -289,7 +281,7 @@ GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
   // combined with kGMPVideoCodecH264) to mean "like AVCC but restricted to
   // 4-byte NAL lengths" (i.e. buffer lengths are specified in big-endian
   // and do not include the length of the buffer length field.
-  mConvertNALUnitLengths = mGMP->GetDisplayName().EqualsLiteral("gmpopenh264");
+  mConvertNALUnitLengths = isOpenH264;
 
   mInitPromise.Resolve(TrackInfo::kVideoTrack, __func__);
 }
@@ -307,79 +299,97 @@ GMPVideoDecoder::Init()
   nsTArray<nsCString> tags;
   InitTags(tags);
   UniquePtr<GetGMPVideoDecoderCallback> callback(new GMPInitDoneCallback(this));
-  if (NS_FAILED(mMPS->GetGMPVideoDecoder(mCrashHelper, &tags, GetNodeId(), Move(callback)))) {
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+  if (NS_FAILED(mMPS->GetDecryptingGMPVideoDecoder(mCrashHelper,
+                                                   &tags,
+                                                   GetNodeId(),
+                                                   Move(callback),
+                                                   DecryptorId()))) {
+    mInitPromise.Reject(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__);
   }
 
   return promise;
 }
 
-nsresult
-GMPVideoDecoder::Input(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+GMPVideoDecoder::Decode(MediaRawData* aSample)
 {
   MOZ_ASSERT(IsOnGMPThread());
 
   RefPtr<MediaRawData> sample(aSample);
   if (!mGMP) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-    return NS_ERROR_FAILURE;
+    return DecodePromise::CreateAndReject(
+      MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                  RESULT_DETAIL("mGMP not initialized")),
+      __func__);
   }
 
-  mAdapter->SetLastStreamOffset(sample->mOffset);
+  mLastStreamOffset = sample->mOffset;
 
   GMPUniquePtr<GMPVideoEncodedFrame> frame = CreateFrame(sample);
   if (!frame) {
-    mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-    return NS_ERROR_FAILURE;
+    return DecodePromise::CreateAndReject(
+      MediaResult(NS_ERROR_OUT_OF_MEMORY,
+                  RESULT_DETAIL("CreateFrame returned null")),
+      __func__);
   }
+  RefPtr<DecodePromise> p = mDecodePromise.Ensure(__func__);
   nsTArray<uint8_t> info; // No codec specific per-frame info to pass.
   nsresult rv = mGMP->Decode(Move(frame), false, info, 0);
   if (NS_FAILED(rv)) {
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-    return rv;
+    mDecodePromise.Reject(MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                                      RESULT_DETAIL("mGMP->Decode:%" PRIx32,
+                                                    static_cast<uint32_t>(rv))),
+                          __func__);
   }
-
-  return NS_OK;
+  return p;
 }
 
-nsresult
+RefPtr<MediaDataDecoder::FlushPromise>
 GMPVideoDecoder::Flush()
 {
   MOZ_ASSERT(IsOnGMPThread());
 
+  mDecodePromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+  mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+
+  RefPtr<FlushPromise> p = mFlushPromise.Ensure(__func__);
   if (!mGMP || NS_FAILED(mGMP->Reset())) {
     // Abort the flush.
-    mCallback->FlushComplete();
+    mFlushPromise.Resolve(true, __func__);
   }
-
-  return NS_OK;
+  return p;
 }
 
-nsresult
+RefPtr<MediaDataDecoder::DecodePromise>
 GMPVideoDecoder::Drain()
 {
   MOZ_ASSERT(IsOnGMPThread());
 
+  MOZ_ASSERT(mDecodePromise.IsEmpty(), "Must wait for decoding to complete");
+
+  RefPtr<DecodePromise> p = mDrainPromise.Ensure(__func__);
   if (!mGMP || NS_FAILED(mGMP->Drain())) {
-    mCallback->DrainComplete();
+    mDrainPromise.Resolve(DecodedData(), __func__);
   }
 
-  return NS_OK;
+  return p;
 }
 
-nsresult
+RefPtr<ShutdownPromise>
 GMPVideoDecoder::Shutdown()
 {
-  mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::CANCELED, __func__);
+  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+  mFlushPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
+
   // Note that this *may* be called from the proxy thread also.
+  // TODO: If that's the case, then this code is racy.
   if (!mGMP) {
-    return NS_ERROR_FAILURE;
+    return ShutdownPromise::CreateAndResolve(true, __func__);
   }
   // Note this unblocks flush and drain operations waiting for callbacks.
   mGMP->Close();
   mGMP = nullptr;
-
-  return NS_OK;
+  return ShutdownPromise::CreateAndResolve(true, __func__);
 }
 
 } // namespace mozilla

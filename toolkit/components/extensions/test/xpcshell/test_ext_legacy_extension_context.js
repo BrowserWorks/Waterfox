@@ -5,7 +5,7 @@
 Cu.import("resource://gre/modules/Extension.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-const {LegacyExtensionContext} = Cu.import("resource://gre/modules/LegacyExtensionsUtils.jsm");
+const {LegacyExtensionContext} = Cu.import("resource://gre/modules/LegacyExtensionsUtils.jsm", {});
 
 /**
  * This test case ensures that LegacyExtensionContext instances:
@@ -17,8 +17,8 @@ const {LegacyExtensionContext} = Cu.import("resource://gre/modules/LegacyExtensi
  *  - the received Port receive a disconnect event when the webextension is
  *    shutting down
  */
-add_task(function* test_legacy_extension_context() {
-  function backgroundScript() {
+add_task(async function test_legacy_extension_context() {
+  function background() {
     let bgURL = window.location.href;
 
     let extensionInfo = {
@@ -31,18 +31,18 @@ add_task(function* test_legacy_extension_context() {
 
     let port;
 
-    browser.test.onMessage.addListener(msg => {
+    browser.test.onMessage.addListener(async msg => {
       if (msg == "do-send-message") {
-        browser.runtime.sendMessage("webextension -> legacy_extension message").then(reply => {
-          browser.test.assertEq("legacy_extension -> webextension reply", reply,
-                                "Got the expected message from the LegacyExtensionContext");
-          browser.test.sendMessage("got-reply-message");
-        });
+        let reply = await browser.runtime.sendMessage("webextension -> legacy_extension message");
+
+        browser.test.assertEq("legacy_extension -> webextension reply", reply,
+                              "Got the expected message from the LegacyExtensionContext");
+        browser.test.sendMessage("got-reply-message");
       } else if (msg == "do-connect") {
         port = browser.runtime.connect();
 
-        port.onMessage.addListener(msg => {
-          browser.test.assertEq("legacy_extension -> webextension port message", msg,
+        port.onMessage.addListener(portMsg => {
+          browser.test.assertEq("legacy_extension -> webextension port message", portMsg,
                                 "Got the expected message from the LegacyExtensionContext");
           port.postMessage("webextension -> legacy_extension port message");
         });
@@ -53,10 +53,11 @@ add_task(function* test_legacy_extension_context() {
   }
 
   let extensionData = {
-    background: "new " + backgroundScript,
+    background,
   };
 
-  let extension = Extension.generate("test-legacy-context-addon@mozilla.com", extensionData);
+  let extension = Extension.generate(extensionData);
+  extension.isEmbedded = true;
 
   let waitForExtensionInfo = new Promise((resolve, reject) => {
     extension.on("test-message", function testMessageListener(kind, msg, ...args) {
@@ -81,11 +82,11 @@ add_task(function* test_legacy_extension_context() {
     });
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  let extensionInfo = yield waitForExtensionInfo;
+  let extensionInfo = await waitForExtensionInfo;
 
-  equal(legacyContext.type, "legacy_extension",
+  equal(legacyContext.envType, "legacy_extension",
      "LegacyExtensionContext instance has the expected type");
 
   ok(legacyContext.api, "Got the expected API object");
@@ -103,16 +104,16 @@ add_task(function* test_legacy_extension_context() {
 
   extension.testMessage("do-send-message");
 
-  let {singleMsg, msgSender} = yield waitMessage;
+  let {singleMsg, msgSender} = await waitMessage;
   equal(singleMsg, "webextension -> legacy_extension message",
      "Got the expected message");
   ok(msgSender, "Got a message sender object");
 
-  equal(msgSender.id, extensionInfo.uuid, "The sender has the expected id property");
+  equal(msgSender.id, extension.id, "The sender has the expected id property");
   equal(msgSender.url, extensionInfo.bgURL, "The sender has the expected url property");
 
   // Wait confirmation that the reply has been received.
-  yield new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     extension.on("test-message", function testMessageListener(kind, msg, ...args) {
       if (msg != "got-reply-message") {
         reject(new Error(`Got an unexpected test-message: ${msg}`));
@@ -132,11 +133,11 @@ add_task(function* test_legacy_extension_context() {
 
   extension.testMessage("do-connect");
 
-  let port = yield waitConnectPort;
+  let port = await waitConnectPort;
 
   ok(port, "Got the Port API object");
   ok(port.sender, "The port has a sender property");
-  equal(port.sender.id, extensionInfo.uuid,
+  equal(port.sender.id, extension.id,
      "The port sender has the expected id property");
   equal(port.sender.url, extensionInfo.bgURL,
      "The port sender has the expected url property");
@@ -149,7 +150,7 @@ add_task(function* test_legacy_extension_context() {
 
   port.postMessage("legacy_extension -> webextension port message");
 
-  let msg = yield waitPortMessage;
+  let msg = await waitPortMessage;
 
   equal(msg, "webextension -> legacy_extension port message",
      "LegacyExtensionContext received the expected message from the webextension");
@@ -160,9 +161,9 @@ add_task(function* test_legacy_extension_context() {
 
   extension.testMessage("do-disconnect");
 
-  yield waitForDisconnect;
+  await waitForDisconnect;
 
   do_print("Got the disconnect event on unload");
 
-  yield extension.shutdown();
+  await extension.shutdown();
 });

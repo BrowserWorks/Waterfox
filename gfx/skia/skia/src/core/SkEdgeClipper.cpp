@@ -8,6 +8,7 @@
 
 #include "SkEdgeClipper.h"
 #include "SkGeometry.h"
+#include "SkLineClipper.h"
 
 static bool quick_reject(const SkRect& bounds, const SkRect& clip) {
     return bounds.fTop >= clip.fBottom || bounds.fBottom <= clip.fTop;
@@ -40,6 +41,23 @@ static bool sort_increasing_Y(SkPoint dst[], const SkPoint src[], int count) {
         memcpy(dst, src, count * sizeof(SkPoint));
         return false;
     }
+}
+
+bool SkEdgeClipper::clipLine(SkPoint p0, SkPoint p1, const SkRect& clip) {
+    fCurrPoint = fPoints;
+    fCurrVerb = fVerbs;
+
+    SkPoint lines[SkLineClipper::kMaxPoints];
+    const SkPoint pts[] = { p0, p1 };
+    int lineCount = SkLineClipper::ClipLine(pts, clip, lines, fCanCullToTheRight);
+    for (int i = 0; i < lineCount; i++) {
+        this->appendLine(lines[i], lines[i + 1]);
+    }
+
+    *fCurrVerb = SkPath::kDone_Verb;
+    fCurrPoint = fPoints;
+    fCurrVerb = fVerbs;
+    return SkPath::kDone_Verb != fVerbs[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -263,9 +281,25 @@ static void chop_cubic_in_Y(SkPoint pts[4], const SkRect& clip) {
     if (pts[0].fY < clip.fTop) {
         SkPoint tmp[7];
         chop_mono_cubic_at_y(pts, clip.fTop, tmp);
+
+        /*
+         *  For a large range in the points, we can do a poor job of chopping, such that the t
+         *  we computed resulted in the lower cubic still being partly above the clip.
+         *
+         *  If just the first or first 2 Y values are above the fTop, we can just smash them
+         *  down. If the first 3 Ys are above fTop, we can't smash all 3, as that can really
+         *  distort the cubic. In this case, we take the first output (tmp[3..6] and treat it as
+         *  a guess, and re-chop against fTop. Then we fall through to checking if we need to
+         *  smash the first 1 or 2 Y values.
+         */
+        if (tmp[3].fY < clip.fTop && tmp[4].fY < clip.fTop && tmp[5].fY < clip.fTop) {
+            SkPoint tmp2[4];
+            memcpy(tmp2, &tmp[3].fX, 4 * sizeof(SkPoint));
+            chop_mono_cubic_at_y(tmp2, clip.fTop, tmp);
+        }
+
         // tmp[3, 4].fY should all be to the below clip.fTop.
-        // Since we can't trust the numerics of
-        // the chopper, we force those conditions now
+        // Since we can't trust the numerics of the chopper, we force those conditions now
         tmp[3].fY = clip.fTop;
         clamp_ge(tmp[4].fY, clip.fTop);
 
@@ -357,28 +391,49 @@ void SkEdgeClipper::clipMonoCubic(const SkPoint src[4], const SkRect& clip) {
     }
 }
 
-static bool quick_reject_in_y(const SkPoint pts[4], const SkRect& clip) {
-    Sk4s ys(pts[0].fY, pts[1].fY, pts[2].fY, pts[3].fY);
-    Sk4s t(clip.top());
-    Sk4s b(clip.bottom());
+static SkRect compute_cubic_bounds(const SkPoint pts[4]) {
+    SkRect r;
+    r.set(pts, 4);
+    return r;
+}
 
-    return (ys < t).allTrue() || (ys > b).allTrue();
+static bool too_big_for_reliable_float_math(const SkRect& r) {
+    // limit set as the largest float value for which we can still reliably compute things like
+    // - chopping at XY extrema
+    // - chopping at Y or X values for clipping
+    //
+    // Current value chosen just by experiment. Larger (and still succeeds) is always better.
+    //
+    const SkScalar limit = 1 << 22;
+    return r.fLeft < -limit || r.fTop < -limit || r.fRight > limit || r.fBottom > limit;
 }
 
 bool SkEdgeClipper::clipCubic(const SkPoint srcPts[4], const SkRect& clip) {
     fCurrPoint = fPoints;
     fCurrVerb = fVerbs;
 
-    if (!quick_reject_in_y(srcPts, clip)) {
-        SkPoint monoY[10];
-        int countY = SkChopCubicAtYExtrema(srcPts, monoY);
-        for (int y = 0; y <= countY; y++) {
-            SkPoint monoX[10];
-            int countX = SkChopCubicAtXExtrema(&monoY[y * 3], monoX);
-            for (int x = 0; x <= countX; x++) {
-                this->clipMonoCubic(&monoX[x * 3], clip);
-                SkASSERT(fCurrVerb - fVerbs < kMaxVerbs);
-                SkASSERT(fCurrPoint - fPoints <= kMaxPoints);
+    const SkRect bounds = compute_cubic_bounds(srcPts);
+    // check if we're clipped out vertically
+    if (bounds.fBottom > clip.fTop && bounds.fTop < clip.fBottom) {
+        if (too_big_for_reliable_float_math(bounds)) {
+            // can't safely clip the cubic, so we give up and draw a line (which we can safely clip)
+            //
+            // If we rewrote chopcubicat*extrema and chopmonocubic using doubles, we could very
+            // likely always handle the cubic safely, but (it seems) at a big loss in speed, so
+            // we'd only want to take that alternate impl if needed. Perhaps a TODO to try it.
+            //
+            return this->clipLine(srcPts[0], srcPts[3], clip);
+        } else {
+            SkPoint monoY[10];
+            int countY = SkChopCubicAtYExtrema(srcPts, monoY);
+            for (int y = 0; y <= countY; y++) {
+                SkPoint monoX[10];
+                int countX = SkChopCubicAtXExtrema(&monoY[y * 3], monoX);
+                for (int x = 0; x <= countX; x++) {
+                    this->clipMonoCubic(&monoX[x * 3], clip);
+                    SkASSERT(fCurrVerb - fVerbs < kMaxVerbs);
+                    SkASSERT(fCurrPoint - fPoints <= kMaxPoints);
+                }
             }
         }
     }
@@ -390,6 +445,13 @@ bool SkEdgeClipper::clipCubic(const SkPoint srcPts[4], const SkRect& clip) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+void SkEdgeClipper::appendLine(SkPoint p0, SkPoint p1) {
+    *fCurrVerb++ = SkPath::kLine_Verb;
+    fCurrPoint[0] = p0;
+    fCurrPoint[1] = p1;
+    fCurrPoint += 2;
+}
 
 void SkEdgeClipper::appendVLine(SkScalar x, SkScalar y0, SkScalar y1,
                                 bool reverse) {

@@ -10,7 +10,7 @@
 
 #include "webrtc/modules/desktop_capture/win/scoped_thread_desktop.h"
 
-#include "webrtc/system_wrappers/interface/logging.h"
+#include "webrtc/system_wrappers/include/logging.h"
 
 #include "webrtc/modules/desktop_capture/win/desktop.h"
 
@@ -42,7 +42,7 @@ void ScopedThreadDesktop::Revert() {
 bool ScopedThreadDesktop::SetThreadDesktop(Desktop* desktop) {
   Revert();
 
-  rtc::scoped_ptr<Desktop> scoped_desktop(desktop);
+  std::unique_ptr<Desktop> scoped_desktop(desktop);
 
   if (initial_->IsSame(*desktop))
     return true;

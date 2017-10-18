@@ -16,14 +16,17 @@
 #include "dirent.h"
 #include "poll.h"
 #include "sys/stat.h"
-#if defined(ANDROID)
+#if defined(XP_LINUX)
 #include <sys/vfs.h>
 #define statvfs statfs
+#define f_frsize f_bsize
 #else
 #include "sys/statvfs.h"
+#endif // defined(XP_LINUX)
+#if !defined(ANDROID)
 #include "sys/wait.h"
 #include <spawn.h>
-#endif // defined(ANDROID)
+#endif // !defined(ANDROID)
 #endif // defined(XP_UNIX)
 
 #if defined(XP_LINUX)
@@ -57,6 +60,7 @@
 #include "nsXPCOMCIDInternal.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
+#include "nsSystemInfo.h"
 #include "nsAutoPtr.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsXULAppAPI.h"
@@ -323,14 +327,9 @@ nsresult InitOSFileConstants()
   // Get the umask from the system-info service.
   // The property will always be present, but it will be zero on
   // non-Unix systems.
-  nsCOMPtr<nsIPropertyBag2> infoService =
-    do_GetService("@mozilla.org/system-info;1");
-  MOZ_ASSERT(infoService, "Could not access the system information service");
-  rv = infoService->GetPropertyAsUint32(NS_LITERAL_STRING("umask"),
-                                        &gUserUmask);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
+  // nsSystemInfo::gUserUmask is initialized by NS_InitXPCOM2 so we don't need
+  // to initialize the service.
+  gUserUmask = nsSystemInfo::gUserUmask;
 
   return NS_OK;
 }
@@ -548,6 +547,7 @@ static const dom::ConstantSpec gLibcProperties[] =
   INT_CONSTANT(EFAULT),
   INT_CONSTANT(EFBIG),
   INT_CONSTANT(EINVAL),
+  INT_CONSTANT(EINTR),
   INT_CONSTANT(EIO),
   INT_CONSTANT(EISDIR),
 #if defined(ELOOP) // not defined with VC9
@@ -699,7 +699,7 @@ static const dom::ConstantSpec gLibcProperties[] =
 
   { "OSFILE_SIZEOF_STATVFS", JS::Int32Value(sizeof (struct statvfs)) },
 
-  { "OSFILE_OFFSETOF_STATVFS_F_BSIZE", JS::Int32Value(offsetof (struct statvfs, f_bsize)) },
+  { "OSFILE_OFFSETOF_STATVFS_F_FRSIZE", JS::Int32Value(offsetof (struct statvfs, f_frsize)) },
   { "OSFILE_OFFSETOF_STATVFS_F_BAVAIL", JS::Int32Value(offsetof (struct statvfs, f_bavail)) },
 
 #endif // defined(XP_UNIX)
@@ -841,8 +841,9 @@ JSObject *GetOrCreateObjectProperty(JSContext *cx, JS::Handle<JSObject*> aObject
       return &val.toObject();
     }
 
-    JS_ReportErrorNumber(cx, js::GetErrorMessage, nullptr,
-      JSMSG_UNEXPECTED_TYPE, aProperty, "not an object");
+    JS_ReportErrorNumberASCII(cx, js::GetErrorMessage, nullptr,
+                              JSMSG_UNEXPECTED_TYPE,
+                              aProperty, "not an object");
     return nullptr;
   }
   return JS_DefineObject(cx, aObject, aProperty, nullptr, JSPROP_ENUMERATE);
@@ -880,8 +881,9 @@ bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
     // |gInitialized == true| but |gPaths == nullptr|. We cannot
     // |MOZ_ASSERT| this, as this would kill precompile_cache.js,
     // so we simply return an error.
-    JS_ReportErrorNumber(cx, js::GetErrorMessage, nullptr,
-      JSMSG_CANT_OPEN, "OSFileConstants", "initialization has failed");
+    JS_ReportErrorNumberASCII(cx, js::GetErrorMessage, nullptr,
+                              JSMSG_CANT_OPEN,
+                              "OSFileConstants", "initialization has failed");
     return false;
   }
 
@@ -923,16 +925,6 @@ bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
     return false;
   }
 
-#if defined(MOZ_WIDGET_GONK)
-    JSString* strVersion = JS_NewStringCopyZ(cx, "Gonk");
-    if (!strVersion){
-      return false;
-    }
-    JS::Rooted<JS::Value> valVersion(cx, JS::StringValue(strVersion));
-    if (!JS_SetProperty(cx, objSys, "Name", valVersion)) {
-      return false;
-  }
-#else
   nsCOMPtr<nsIXULRuntime> runtime = do_GetService(XULRUNTIME_SERVICE_CONTRACTID);
   if (runtime) {
     nsAutoCString os;
@@ -949,7 +941,6 @@ bool DefineOSFileConstants(JSContext *cx, JS::Handle<JSObject*> global)
       return false;
     }
   }
-#endif // defined(MOZ_WIDGET_GONK)
 
 #if defined(DEBUG)
   JS::Rooted<JS::Value> valDebug(cx, JS::TrueValue());
@@ -1105,8 +1096,7 @@ OSFileConstantsService::Init(JSContext *aCx)
 
   mozJSComponentLoader* loader = mozJSComponentLoader::Get();
   JS::Rooted<JSObject*> targetObj(aCx);
-  rv = loader->FindTargetObject(aCx, &targetObj);
-  NS_ENSURE_SUCCESS(rv, rv);
+  loader->FindTargetObject(aCx, &targetObj);
 
   if (!mozilla::DefineOSFileConstants(aCx, targetObj)) {
     return NS_ERROR_FAILURE;

@@ -15,7 +15,9 @@
 #include "SharedSurfaceGL.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/TextureClientSharedSurface.h"
-#include "mozilla/unused.h"
+#include "mozilla/layers/TextureForwarder.h"
+#include "mozilla/Unused.h"
+#include "VRManagerChild.h"
 
 namespace mozilla {
 namespace gl {
@@ -112,7 +114,7 @@ SharedSurface::ProdCopy(SharedSurface* src, SharedSurface* dest,
                                                        src->mSize,
                                                        dest->mSize,
                                                        srcTarget,
-                                                       true);
+                                                       !!gl->Screen());
         } else if (src->mAttachType == AttachmentType::GLRenderbuffer) {
             GLuint srcRB = src->ProdRenderbuffer();
             ScopedFramebufferForRenderbuffer srcWrapper(gl, srcRB);
@@ -214,10 +216,6 @@ SharedSurface::SharedSurface(SharedSurfaceType type,
     , mCanRecycle(canRecycle)
     , mIsLocked(false)
     , mIsProducerAcquired(false)
-    , mIsConsumerAcquired(false)
-#ifdef DEBUG
-    , mOwningThread(NS_GetCurrentThread())
-#endif
 { }
 
 layers::TextureFlags
@@ -288,7 +286,7 @@ ChooseBufferBits(const SurfaceCaps& caps,
 
 SurfaceFactory::SurfaceFactory(SharedSurfaceType type, GLContext* gl,
                                const SurfaceCaps& caps,
-                               const RefPtr<layers::ClientIPCAllocator>& allocator,
+                               const RefPtr<layers::LayersIPCChannel>& allocator,
                                const layers::TextureFlags& flags)
     : mType(type)
     , mGL(gl)
@@ -317,15 +315,22 @@ SurfaceFactory::~SurfaceFactory()
 }
 
 already_AddRefed<layers::SharedSurfaceTextureClient>
-SurfaceFactory::NewTexClient(const gfx::IntSize& size)
+SurfaceFactory::NewTexClient(const gfx::IntSize& size, const layers::LayersIPCChannel* aLayersChannel)
 {
     while (!mRecycleFreePool.empty()) {
         RefPtr<layers::SharedSurfaceTextureClient> cur = mRecycleFreePool.front();
         mRecycleFreePool.pop();
 
-        if (cur->Surf()->mSize == size) {
-            cur->Surf()->WaitForBufferOwnership();
-            return cur.forget();
+        if (cur->Surf()->mSize == size){
+            // In the general case, textureClients transit textures through
+            // CompositorForwarder. But, the textureClient created by VRManagerChild
+            // has a different LayerIPCChannel, PVRManager. Therefore, textureClients
+            // need to be separated into different cases.
+            if ((aLayersChannel && aLayersChannel == cur->GetAllocator()) ||
+                (cur->GetAllocator() != gfx::VRManagerChild::Get())) {
+                cur->Surf()->WaitForBufferOwnership();
+                return cur.forget();
+            }
         }
 
         StopRecycling(cur);

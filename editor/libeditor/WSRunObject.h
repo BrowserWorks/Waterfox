@@ -296,7 +296,7 @@ protected:
     char16_t mChar;
 
     WSPoint()
-      : mTextNode(0)
+      : mTextNode(nullptr)
       , mOffset(0)
       , mChar(0)
     {}
@@ -306,11 +306,6 @@ protected:
       , mOffset(aOffset)
       , mChar(aChar)
     {}
-  };
-
-  enum AreaRestriction
-  {
-    eAnywhere, eOutsideUserSelectAll
   };
 
   /**
@@ -332,14 +327,12 @@ protected:
   nsresult PrepareToDeleteRangePriv(WSRunObject* aEndObject);
   nsresult PrepareToSplitAcrossBlocksPriv();
   nsresult DeleteChars(nsINode* aStartNode, int32_t aStartOffset,
-                       nsINode* aEndNode, int32_t aEndOffset,
-                       AreaRestriction aAR = eAnywhere);
+                       nsINode* aEndNode, int32_t aEndOffset);
   WSPoint GetCharAfter(nsINode* aNode, int32_t aOffset);
   WSPoint GetCharBefore(nsINode* aNode, int32_t aOffset);
   WSPoint GetCharAfter(const WSPoint& aPoint);
   WSPoint GetCharBefore(const WSPoint& aPoint);
-  nsresult ConvertToNBSP(WSPoint aPoint,
-                         AreaRestriction aAR = eAnywhere);
+  nsresult ConvertToNBSP(WSPoint aPoint);
   void GetAsciiWSBounds(int16_t aDir, nsINode* aNode, int32_t aOffset,
                         dom::Text** outStartNode, int32_t* outStartOffset,
                         dom::Text** outEndNode, int32_t* outEndOffset);

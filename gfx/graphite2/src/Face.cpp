@@ -190,9 +190,10 @@ bool Face::runGraphite(Segment *seg, const Silf *aSilf) const
 #if !defined GRAPHITE2_NTRACING
     if (dbgout)
 {
-        seg->positionSlots(0, 0, 0, aSilf->dir());
+        seg->positionSlots(0, 0, 0, seg->currdir());
         *dbgout             << json::item
                             << json::close // Close up the passes array
+                << "outputdir" << (seg->currdir() ? "rtl" : "ltr")
                 << "output" << json::array;
         for(Slot * s = seg->first(); s; s = s->next())
             *dbgout     << dslot(seg, s);
@@ -331,10 +332,12 @@ Error Face::Table::decompress()
         uncompressed_size  = hdr & 0x07ffffff;
         uncompressed_table = gralloc<byte>(uncompressed_size);
         if (!e.test(!uncompressed_table || uncompressed_size < 4, E_OUTOFMEM))
+        {
             memset(uncompressed_table, 0, 4);   // make sure version number is initialised
             // coverity[forward_null : FALSE] - uncompressed_table has been checked so can't be null
             // coverity[checked_return : FALSE] - we test e later
             e.test(lz4::decompress(p, _sz - 2*sizeof(uint32), uncompressed_table, uncompressed_size) != signed(uncompressed_size), E_SHRINKERFAILED);
+        }
         break;
     }
 

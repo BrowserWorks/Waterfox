@@ -4,6 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Defined in dialog.xml.
+/* globals moveToAlertPosition */
+
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/FormHistory.jsm");
 
@@ -11,10 +14,9 @@ var dialog;     // Quick access to document/form elements.
 var gFindInst;   // nsIWebBrowserFind that we're going to use
 var gFindInstData; // use this to update the find inst data
 
-function initDialogObject()
-{
+function initDialogObject() {
   // Create dialog object and initialize.
-  dialog = new Object;
+  dialog = {};
   dialog.findKey         = document.getElementById("dialog.findKey");
   dialog.caseSensitive   = document.getElementById("dialog.caseSensitive");
   dialog.wrap            = document.getElementById("dialog.wrap");
@@ -26,15 +28,13 @@ function initDialogObject()
 
   // Move dialog to center, if it not been shown before
   var windowElement = document.getElementById("findDialog");
-  if (!windowElement.hasAttribute("screenX") || !windowElement.hasAttribute("screenY"))
-  {
+  if (!windowElement.hasAttribute("screenX") || !windowElement.hasAttribute("screenY")) {
     sizeToContent();
     moveToAlertPosition();
   }
 }
 
-function fillDialog()
-{
+function fillDialog() {
   // get the find service, which stores global find state
   var findService = Components.classes["@mozilla.org/find/find_service;1"]
                               .getService(Components.interfaces.nsIFindService);
@@ -51,8 +51,7 @@ function fillDialog()
     dialog.rg.selectedItem = dialog.down;
 }
 
-function saveFindData()
-{
+function saveFindData() {
   // get the find service, which stores global find state
   var findService = Components.classes["@mozilla.org/find/find_service;1"]
                          .getService(Components.interfaces.nsIFindService);
@@ -64,8 +63,7 @@ function saveFindData()
   findService.findBackwards = dialog.up.selected;
 }
 
-function onLoad()
-{
+function onLoad() {
   initDialogObject();
 
   // get the find instance
@@ -87,13 +85,11 @@ function onLoad()
   dialog.findKey.focus();
 }
 
-function onUnload()
-{
+function onUnload() {
   window.opener.findDialog = 0;
 }
 
-function onAccept()
-{
+function onAccept() {
   if (gFindInstData && gFindInst != gFindInstData.webBrowserFind) {
     gFindInstData.init();
     gFindInst = gFindInstData.webBrowserFind;
@@ -112,8 +108,7 @@ function onAccept()
   // Search.
   var result = gFindInst.findNext();
 
-  if (!result)
-  {
+  if (!result) {
     if (!dialog.bundle)
       dialog.bundle = document.getElementById("findBundle");
     Services.prompt.alert(window, dialog.bundle.getString("notFoundTitle"),
@@ -124,13 +119,11 @@ function onAccept()
   return false;
 }
 
-function doEnabling()
-{
+function doEnabling() {
   dialog.find.disabled = !dialog.findKey.value;
 }
 
-function updateFormHistory()
-{
+function updateFormHistory() {
   if (window.opener.PrivateBrowsingUtils &&
       window.opener.PrivateBrowsingUtils.isWindowPrivate(window.opener) ||
       !dialog.findKey.value)
@@ -142,7 +135,7 @@ function updateFormHistory()
       fieldname: "find-dialog",
       value: dialog.findKey.value
     }, {
-      handleError: function(aError) {
+      handleError(aError) {
         Components.utils.reportError("Saving find to form history failed: " +
                                      aError.message);
       }

@@ -47,6 +47,7 @@ function filepickerLoad() {
     if (o.displayDirectory) {
       var directory = o.displayDirectory.path;
     }
+    var specialDirectory = o.displaySpecialDirectory;
 
     const initialText = o.defaultString;
     var filterTitles = o.filters.titles;
@@ -133,45 +134,43 @@ function filepickerLoad() {
   // This allows the window to show onscreen before we begin
   // loading the file list
 
-  setTimeout(setInitialDirectory, 0, directory);
+  setTimeout(setInitialDirectory, 0, { directory, specialDirectory });
 }
 
-function setInitialDirectory(directory)
-{
+function setInitialDirectory(directories) {
   // Start in the user's home directory
   var dirService = Components.classes[NS_DIRECTORYSERVICE_CONTRACTID]
                              .getService(nsIProperties);
-  homeDir = dirService.get("Home", Components.interfaces.nsIFile);
+  homeDir = dirService.get(directories.specialDirectory
+                             ? directories.specialDirectory : "Home",
+                           Components.interfaces.nsIFile);
 
-  if (directory) {
-    sfile.initWithPath(directory);
+  if (directories.directory) {
+    sfile.initWithPath(directories.directory);
     if (!sfile.exists() || !sfile.isDirectory())
-      directory = false;
+      directories.directory = false;
   }
-  if (!directory) {
+  if (!directories.directory) {
     sfile.initWithPath(homeDir.path);
   }
 
   gotoDirectory(sfile);
 }
 
-function onFilterChanged(target)
-{
+function onFilterChanged(target) {
   // Do this on a timeout callback so the filter list can roll up
   // and we don't keep the mouse grabbed while we are refiltering.
 
   setTimeout(changeFilter, 0, target.getAttribute("filters"));
 }
 
-function changeFilter(filterTypes)
-{
+function changeFilter(filterTypes) {
   window.setCursor("wait");
   treeView.setFilter(filterTypes);
   window.setCursor("auto");
 }
 
-function showErrorDialog(titleStrName, messageStrName, file)
-{
+function showErrorDialog(titleStrName, messageStrName, file) {
   var errorTitle =
     gFilePickerBundle.getFormattedString(titleStrName, [file.path]);
   var errorMessage =
@@ -182,8 +181,7 @@ function showErrorDialog(titleStrName, messageStrName, file)
   promptService.alert(window, errorTitle, errorMessage);
 }
 
-function openOnOK()
-{
+function openOnOK() {
   var dir = treeView.selectedFiles.queryElementAt(0, nsIFile);
   if (dir)
     gotoDirectory(dir);
@@ -191,8 +189,7 @@ function openOnOK()
   return false;
 }
 
-function selectOnOK()
-{
+function selectOnOK() {
   var errorTitle, errorMessage, promptService;
   var ret = nsIFilePicker.returnOK;
 
@@ -205,7 +202,7 @@ function selectOnOK()
   if (allowURLs) {
     try {
       var ios = Components.classes[NS_IOSERVICE_CONTRACTID].getService(Components.interfaces.nsIIOService);
-      retvals.fileURL = ios.newURI(textInput.value, null, null);
+      retvals.fileURL = ios.newURI(textInput.value);
       let fileList = [];
       if (retvals.fileURL instanceof Components.interfaces.nsIFileURL)
         fileList.push(retvals.fileURL.file);
@@ -235,10 +232,10 @@ function selectOnOK()
     // try to normalize - if this fails we will ignore the error
     // because we will notice the
     // error later and show a fitting error alert.
-    try{
+    try {
       file.normalize();
-    } catch(e) {
-      //promptService.alert(window, "Problem", "normalize failed, continuing");
+    } catch (e) {
+      // promptService.alert(window, "Problem", "normalize failed, continuing");
     }
 
     var fileExists = file.exists();
@@ -263,7 +260,7 @@ function selectOnOK()
       isFile = file.isFile();
     }
 
-    switch(filePickerMode) {
+    switch (filePickerMode) {
     case nsIFilePicker.modeOpen:
     case nsIFilePicker.modeOpenMultiple:
       if (isFile) {
@@ -368,20 +365,17 @@ var gFilesEnumerator = {
   mFiles: null,
   mIndex: 0,
 
-  hasMoreElements: function()
-  {
+  hasMoreElements() {
     return (this.mIndex < this.mFiles.length);
   },
-  getNext: function()
-  {
+  getNext() {
     if (this.mIndex >= this.mFiles.length)
       throw Components.results.NS_ERROR_FAILURE;
     return this.mFiles[this.mIndex++];
   }
 };
 
-function onCancel()
-{
+function onCancel() {
   // Close the window.
   retvals.buttonStatus = nsIFilePicker.returnCancel;
   retvals.file = null;
@@ -488,10 +482,9 @@ function setOKAction(file) {
   if (file && file.isDirectory()) {
     document.documentElement.setAttribute("ondialogaccept", "return openOnOK();");
     buttonLabel = gFilePickerBundle.getString("openButtonLabel");
-  }
-  else {
+  } else {
     document.documentElement.setAttribute("ondialogaccept", "return selectOnOK();");
-    switch(filePickerMode) {
+    switch (filePickerMode) {
     case nsIFilePicker.modeGetFolder:
       buttonLabel = gFilePickerBundle.getString("selectFolderButtonLabel");
       break;
@@ -551,8 +544,7 @@ function onFileSelected(/* nsIArray */ selectedFileList) {
     okButton.disabled = (textInput.value == "");
 }
 
-function addToTextFieldValue(path)
-{
+function addToTextFieldValue(path) {
   var newValue = "";
 
   if (textInput.value == "")
@@ -576,8 +568,7 @@ function onTextFieldFocus() {
   doEnabling();
 }
 
-function onDirectoryChanged(target)
-{
+function onDirectoryChanged(target) {
   var path = target.getAttribute("label");
 
   var file = Components.classes[NS_LOCAL_FILE_CONTRACTID].createInstance(nsILocalFile);
@@ -595,7 +586,7 @@ function populateAncestorList(directory) {
   var menu = document.getElementById("lookInMenu");
 
   while (menu.hasChildNodes()) {
-    menu.removeChild(menu.firstChild);
+    menu.firstChild.remove();
   }
 
   var menuItem = document.createElement("menuitem");
@@ -621,7 +612,7 @@ function populateAncestorList(directory) {
 function goUp() {
   try {
     var parent = sfile.parent;
-  } catch(ex) { dump("can't get parent directory\n"); }
+  } catch (ex) { dump("can't get parent directory\n"); }
 
   if (parent) {
     gotoDirectory(parent);
@@ -640,7 +631,7 @@ function newDir() {
     gFilePickerBundle.getString("promptNewDirTitle");
   var dialogMsg =
     gFilePickerBundle.getString("promptNewDirMessage");
-  var ret = promptService.prompt(window, dialogTitle, dialogMsg, gNewDirName, null, {value:0});
+  var ret = promptService.prompt(window, dialogTitle, dialogMsg, gNewDirName, null, {value: 0});
 
   if (ret) {
     file = processPath(gNewDirName.value);
@@ -661,9 +652,7 @@ function newDir() {
 
     var parent = file.parent;
     if (!(parent.exists() && parent.isDirectory() && parent.isWritable())) {
-      var oldParent = parent;
       while (!parent.exists()) {
-        oldParent = parent;
         parent = parent.parent;
       }
       if (parent.isFile()) {
@@ -704,7 +693,7 @@ function gotoDirectory(directory) {
     populateAncestorList(directory);
     treeView.setDirectory(directory);
     document.getElementById("errorShower").selectedIndex = 0;
-  } catch(ex) {
+  } catch (ex) {
     document.getElementById("errorShower").selectedIndex = 1;
   }
 
@@ -729,9 +718,8 @@ function toggleShowHidden(event) {
 // of a path), and ".." to denote the parent directory.
 // returns an array of the files listed,
 // or false if an error occurred.
-function processPath(path)
-{
-  var fileArray = new Array();
+function processPath(path) {
+  var fileArray = [];
   var strLength = path.length;
 
   if (path[0] == '"' && filePickerMode == nsIFilePicker.modeOpenMultiple &&
@@ -749,7 +737,7 @@ function processPath(path)
       do {
         nextQuote = path.indexOf('"', quoteSearchStart);
         quoteSearchStart = nextQuote + 1;
-      } while (nextQuote != -1 && path[nextQuote - 1] == '\\');
+      } while (nextQuote != -1 && path[nextQuote - 1] == "\\");
 
       if (nextQuote == -1) {
         // we have a filename with no trailing quote.
@@ -775,30 +763,28 @@ function processPath(path)
       }
       ++curFileStart;
     }
-  } else {
+  } else if (!processPathEntry(path, fileArray)) {
     // If we didn't start with a quote, assume we just have a single file.
-    if (!processPathEntry(path, fileArray))
-      return false;
+    return false;
   }
 
   return fileArray;
 }
 
-function processPathEntry(path, fileArray)
-{
+function processPathEntry(path, fileArray) {
   var filePath;
   var file;
 
   try {
     file = sfile.clone().QueryInterface(nsILocalFile);
-  } catch(e) {
-    dump("Couldn't clone\n"+e);
+  } catch (e) {
+    dump("Couldn't clone\n" + e);
     return false;
   }
 
   var tilde_file = file.clone();
   tilde_file.append("~");
-  if (path[0] == '~' &&                        // Expand ~ to $HOME, except:
+  if (path[0] == "~" &&                        // Expand ~ to $HOME, except:
       !(path == "~" && tilde_file.exists()) && // If ~ was entered and such a file exists, don't expand
       (path.length == 1 || path[1] == "/"))    // We don't want to expand ~file to ${HOME}file
     filePath = homeDir.path + path.substring(1);
@@ -808,25 +794,24 @@ function processPathEntry(path, fileArray)
   // Unescape quotes
   filePath = filePath.replace(/\\\"/g, "\"");
 
-  if (filePath[0] == '/')   /* an absolute path was entered */
+  if (filePath[0] == "/")   /* an absolute path was entered */
     file.initWithPath(filePath);
   else if ((filePath.indexOf("/../") > 0) ||
            (filePath.substr(-3) == "/..") ||
-           (filePath.substr(0,3) == "../") ||
+           (filePath.substr(0, 3) == "../") ||
            (filePath == "..")) {
     /* appendRelativePath doesn't allow .. */
-    try{
+    try {
       file.initWithPath(file.path + "/" + filePath);
     } catch (e) {
-      dump("Couldn't init path\n"+e);
+      dump("Couldn't init path\n" + e);
       return false;
     }
-  }
-  else {
+  } else {
     try {
       file.appendRelativePath(filePath);
     } catch (e) {
-      dump("Couldn't append path\n"+e);
+      dump("Couldn't append path\n" + e);
       return false;
     }
   }

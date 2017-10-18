@@ -11,17 +11,15 @@
 const Profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
 const WAIT_TIME = 1000; // ms
 
-function run_test()
-{
+function run_test() {
   // Ensure the profiler is already running when the test starts.
   Profiler.StartProfiler(1000000, 1, ["js"], 1);
 
   DevToolsUtils.waitForTime(WAIT_TIME).then(() => {
-
     get_chrome_actors((client, form) => {
       let actor = form.profilerActor;
       test_start_time(client, actor, () => {
-        client.close(do_test_finished);
+        client.close().then(do_test_finished);
       });
     });
   });

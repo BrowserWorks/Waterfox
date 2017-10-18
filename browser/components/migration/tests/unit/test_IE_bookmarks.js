@@ -1,4 +1,6 @@
-add_task(function* () {
+"use strict";
+
+add_task(async function() {
   let migrator = MigrationUtils.getMigrator("ie");
   // Sanity check for the source.
   Assert.ok(migrator.sourceExists);
@@ -11,14 +13,16 @@ add_task(function* () {
   let expectedParents = [ PlacesUtils.bookmarksMenuFolderId,
                           PlacesUtils.toolbarFolderId ];
 
-  PlacesUtils.bookmarks.addObserver({
+  let itemCount = 0;
+  let bmObserver = {
     onItemAdded(aItemId, aParentId, aIndex, aItemType, aURI, aTitle) {
-      if (aTitle == label) {
+      if (aTitle != label) {
+        itemCount++;
+      }
+      if (expectedParents.length > 0 && aTitle == label) {
         let index = expectedParents.indexOf(aParentId);
         Assert.notEqual(index, -1);
         expectedParents.splice(index, 1);
-        if (expectedParents.length == 0)
-          PlacesUtils.bookmarks.removeObserver(this);
       }
     },
     onBeginUpdateBatch() {},
@@ -27,10 +31,14 @@ add_task(function* () {
     onItemChanged() {},
     onItemVisited() {},
     onItemMoved() {},
-  }, false);
+  };
+  PlacesUtils.bookmarks.addObserver(bmObserver);
 
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  PlacesUtils.bookmarks.removeObserver(bmObserver);
+  Assert.equal(MigrationUtils._importQuantities.bookmarks, itemCount,
+               "Ensure telemetry matches actual number of imported items.");
 
   // Check the bookmarks have been imported to all the expected parents.
-  Assert.equal(expectedParents.length, 0);
+  Assert.equal(expectedParents.length, 0, "Got all the expected parents");
 });

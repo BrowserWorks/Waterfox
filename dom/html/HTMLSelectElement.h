@@ -106,6 +106,11 @@ private:
   bool                       mTopLevelMutation;
   /** true if it is known that the option list must be recreated. */
   bool                       mNeedsRebuild;
+  /** Whether we should be notifying when we make various method calls on
+      mSelect */
+  const bool                 mNotify;
+  /** The selected index at mutation start. */
+  int32_t                    mInitialSelectedIndex;
   /** Option list must be recreated if more than one mutation is detected. */
   nsMutationGuard            mGuard;
 };
@@ -129,12 +134,16 @@ public:
    *                (for JavaScript)
    *
    *  NOTIFY        whether to notify frames and such
+   *
+   *  NO_RESELECT   no need to select something after an option is deselected
+   *                (for reset)
    */
   enum OptionType {
     IS_SELECTED   = 1 << 0,
     CLEAR_ALL     = 1 << 1,
     SET_DISABLED  = 1 << 2,
-    NOTIFY        = 1 << 3
+    NOTIFY        = 1 << 3,
+    NO_RESELECT   = 1 << 4
   };
 
   using nsIConstraintValidation::GetValidationMessage;
@@ -172,6 +181,9 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::autocomplete, aValue, aRv);
   }
+
+  void GetAutocompleteInfo(AutocompleteInfo& aInfo);
+
   bool Disabled() const
   {
     return GetBoolAttr(nsGkAtoms::disabled);
@@ -247,7 +259,7 @@ public:
     mOptions->IndexedSetter(aIndex, aOption, aRv);
   }
 
-  static bool MatchSelectedOptions(nsIContent* aContent, int32_t, nsIAtom*,
+  static bool MatchSelectedOptions(Element* aElement, int32_t, nsIAtom*,
                                    void*);
 
   nsIHTMLCollection* SelectedOptions();
@@ -263,22 +275,18 @@ public:
   void GetValue(DOMString& aValue);
   // Uses XPCOM SetValue.
 
-  // nsIConstraintValidation::WillValidate is fine.
-  // nsIConstraintValidation::Validity() is fine.
-  // nsIConstraintValidation::GetValidationMessage() is fine.
-  // nsIConstraintValidation::CheckValidity() is fine.
-  using nsIConstraintValidation::CheckValidity;
-  using nsIConstraintValidation::ReportValidity;
-  // nsIConstraintValidation::SetCustomValidity() is fine.
+  // Override SetCustomValidity so we update our state properly when it's called
+  // via bindings.
+  void SetCustomValidity(const nsAString& aError);
 
   using nsINode::Remove;
-
 
   // nsINode
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
 
@@ -288,7 +296,6 @@ public:
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
 
   // Overriden nsIFormControl methods
-  NS_IMETHOD_(uint32_t) GetType() const override { return NS_FORM_SELECT; }
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
@@ -374,12 +381,12 @@ public:
                                bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   virtual void DoneAddingChildren(bool aHaveNotified) override;
   virtual bool IsDoneAddingChildren() override {
@@ -395,7 +402,8 @@ public:
                                               int32_t aModType) const override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLSelectElement,
                                            nsGenericHTMLFormElementWithState)
@@ -434,6 +442,9 @@ public:
 
   bool OpenInParentProcess();
   void SetOpenInParentProcess(bool aVal);
+
+  void GetPreviewValue(nsAString& aValue);
+  void SetPreviewValue(const nsAString& aValue);
 
 protected:
   virtual ~HTMLSelectElement();
@@ -599,6 +610,7 @@ protected:
   /** The options[] array */
   RefPtr<HTMLOptionsCollection> mOptions;
   nsContentUtils::AutocompleteAttrState mAutocompleteAttrState;
+  nsContentUtils::AutocompleteAttrState mAutocompleteInfoState;
   /** false if the parser is in the middle of adding children. */
   bool            mIsDoneAddingChildren;
   /** true if our disabled state has changed from the default **/
@@ -650,7 +662,7 @@ protected:
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                    nsRuleData* aData);
+                                    GenericSpecifiedValues* aGenericData);
 };
 
 } // namespace dom

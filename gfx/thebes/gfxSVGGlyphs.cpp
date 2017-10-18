@@ -4,6 +4,7 @@
 
 #include "gfxSVGGlyphs.h"
 
+#include "mozilla/SVGContextPaint.h"
 #include "nsError.h"
 #include "nsIDOMDocument.h"
 #include "nsString.h"
@@ -15,7 +16,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIPresShell.h"
 #include "nsNetUtil.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsIInputStream.h"
 #include "nsStringStream.h"
 #include "nsStreamUtils.h"
@@ -30,6 +31,7 @@
 #include "nsSMILAnimationController.h"
 #include "gfxContext.h"
 #include "harfbuzz/hb.h"
+#include "mozilla/dom/ImageTracker.h"
 
 #define SVG_CONTENT_TYPE NS_LITERAL_CSTRING("image/svg+xml")
 #define UTF8_CHARSET NS_LITERAL_CSTRING("utf-8")
@@ -37,8 +39,6 @@
 using namespace mozilla;
 
 typedef mozilla::dom::Element Element;
-
-mozilla::gfx::UserDataKey gfxTextContextPaint::sUserDataKey;
 
 /* static */ const Color SimpleTextContextPaint::sZero = Color();
 
@@ -165,13 +165,13 @@ gfxSVGGlyphsDocument::SetupPresentation()
         NS_ENSURE_SUCCESS(rv, rv);
     }
 
-    mDocument->FlushPendingNotifications(Flush_Layout);
+    mDocument->FlushPendingNotifications(FlushType::Layout);
 
     nsSMILAnimationController* controller = mDocument->GetAnimationController();
     if (controller) {
       controller->Resume(nsSMILTimeContainer::PAUSE_IMAGE);
     }
-    mDocument->SetImagesNeedAnimating(true);
+    mDocument->ImageTracker()->SetAnimatingState(true);
 
     mViewer = viewer;
     mPresShell = presShell;
@@ -212,16 +212,18 @@ gfxSVGGlyphsDocument::FindGlyphElements(Element *aElem)
  * @param aGlyphId The glyph id
  * @return true iff rendering succeeded
  */
-bool
+void
 gfxSVGGlyphs::RenderGlyph(gfxContext *aContext, uint32_t aGlyphId,
-                          gfxTextContextPaint *aContextPaint)
+                          SVGContextPaint* aContextPaint)
 {
     gfxContextAutoSaveRestore aContextRestorer(aContext);
 
     Element *glyph = mGlyphIdMap.Get(aGlyphId);
-    NS_ASSERTION(glyph, "No glyph element. Should check with HasSVGGlyph() first!");
+    MOZ_ASSERT(glyph, "No glyph element. Should check with HasSVGGlyph() first!");
 
-    return nsSVGUtils::PaintSVGGlyph(glyph, aContext, aContextPaint);
+    AutoSetRestoreSVGContextPaint autoSetRestore(aContextPaint, glyph->OwnerDoc());
+
+    nsSVGUtils::PaintSVGGlyph(glyph, aContext);
 }
 
 bool
@@ -357,7 +359,7 @@ gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer, uint32_t aBufLen)
     rv = NS_NewURI(getter_AddRefs(uri), mSVGGlyphsDocumentURI);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+    nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
 
     nsCOMPtr<nsIDOMDocument> domDoc;
     rv = NS_NewDOMDocument(getter_AddRefs(domDoc),
@@ -458,16 +460,4 @@ gfxSVGGlyphsDocument::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) c
            + mGlyphIdMap.ShallowSizeOfExcludingThis(aMallocSizeOf)
            + mSVGGlyphsDocumentURI.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
 
-}
-
-void
-gfxTextContextPaint::InitStrokeGeometry(gfxContext *aContext,
-                                        float devUnitsPerSVGUnit)
-{
-    mStrokeWidth = aContext->CurrentLineWidth() / devUnitsPerSVGUnit;
-    aContext->CurrentDash(mDashes, &mDashOffset);
-    for (uint32_t i = 0; i < mDashes.Length(); i++) {
-        mDashes[i] /= devUnitsPerSVGUnit;
-    }
-    mDashOffset /= devUnitsPerSVGUnit;
 }

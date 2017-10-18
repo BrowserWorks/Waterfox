@@ -49,11 +49,13 @@ class nsListControlFrame final : public nsHTMLScrollFrame,
                                  public nsISelectControlFrame
 {
 public:
+  typedef mozilla::dom::HTMLOptionElement HTMLOptionElement;
+
   friend nsContainerFrame* NS_NewListControlFrame(nsIPresShell* aPresShell,
                                                   nsStyleContext* aContext);
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsListControlFrame)
 
     // nsIFrame
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
@@ -63,8 +65,8 @@ public:
   virtual void SetInitialChildList(ChildListID     aListID,
                                    nsFrameList&    aChildList) override;
 
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
 
   virtual void Reflow(nsPresContext*           aCX,
                       ReflowOutput&     aDesiredSize,
@@ -85,13 +87,6 @@ public:
                                 const nsDisplayListSet& aLists) override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::scrollFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -118,7 +113,7 @@ public:
     // nsIListControlFrame
   virtual void SetComboboxFrame(nsIFrame* aComboboxFrame) override;
   virtual int32_t GetSelectedIndex() override;
-  virtual mozilla::dom::HTMLOptionElement* GetCurrentOption() override;
+  virtual HTMLOptionElement* GetCurrentOption() override;
 
   /**
    * Gets the text of the currently selected item.
@@ -180,7 +175,7 @@ public:
   /**
    * Returns the HTMLOptionElement for a given index in mContent's collection.
    */
-  mozilla::dom::HTMLOptionElement* GetOption(uint32_t aIndex) const;
+  HTMLOptionElement* GetOption(uint32_t aIndex) const;
 
   static void ComboboxFocusSet();
 
@@ -238,11 +233,6 @@ public:
   bool GetDropdownCanGrow() const { return mDropdownCanGrow; }
 
   /**
-   * Dropdowns need views
-   */
-  virtual bool NeedsView() override { return IsInDropDownMode(); }
-
-  /**
    * Frees statics owned by this class.
    */
   static void Shutdown();
@@ -257,6 +247,13 @@ public:
 #endif
 
 protected:
+  /**
+   * Return the first non-disabled option starting at aFromIndex (inclusive).
+   * @param aFoundIndex if non-null, set to the index of the returned option
+   */
+  HTMLOptionElement* GetNonDisabledOptionFrom(int32_t aFromIndex,
+                                              int32_t* aFoundIndex = nullptr);
+
   /**
    * Updates the selected text in a combobox and then calls FireOnChange().
    * @note This method might destroy the frame, pres shell and other objects.
@@ -282,7 +279,7 @@ protected:
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
-  void ScrollToFrame(mozilla::dom::HTMLOptionElement& aOptElement);
+  void ScrollToFrame(HTMLOptionElement& aOptElement);
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
@@ -389,16 +386,23 @@ protected:
    */
   uint32_t GetNumberOfRows();
 
+  nsView* GetViewInternal() const override { return mView; }
+  void SetViewInternal(nsView* aView) override { mView = aView; }
+
   // Data Members
   int32_t      mStartSelectionIndex;
   int32_t      mEndSelectionIndex;
 
-  nsIComboboxControlFrame *mComboboxFrame;
-  uint32_t     mNumDisplayRows;
+  nsIComboboxControlFrame* mComboboxFrame;
+
+  // The view is only created (& non-null) if IsInDropDownMode() is true.
+  nsView* mView;
+
+  uint32_t mNumDisplayRows;
   bool mChangesSinceDragStart:1;
   bool mButtonDown:1;
-  // Has the user selected a visible item since we showed the
-  // dropdown?
+
+  // Has the user selected a visible item since we showed the dropdown?
   bool mItemSelectionStarted:1;
 
   bool mIsAllContentHere:1;

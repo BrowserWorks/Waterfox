@@ -1,12 +1,12 @@
-add_task(function*() {
-  yield new Promise(resolve => waitForFocus(resolve, window));
+add_task(async function() {
+  await new Promise(resolve => waitForFocus(resolve, window));
 
   const kPageURL = "http://example.org/browser/editor/libeditor/tests/bug629172.html";
-  yield BrowserTestUtils.withNewTab({
+  await BrowserTestUtils.withNewTab({
     gBrowser,
     url: kPageURL
-  }, function*(aBrowser) {
-    yield ContentTask.spawn(aBrowser, {}, function*() {
+  }, async function(aBrowser) {
+    await ContentTask.spawn(aBrowser, {}, async function() {
       var window = content.window.wrappedJSObject;
       var document = window.document;
 
@@ -28,17 +28,13 @@ add_task(function*() {
       LTRRef.style.display = "";
       document.body.clientWidth;
       window.Screenshots.ltr = window.snapshotWindow(window);
-      LTRRef.parentNode.removeChild(LTRRef);
+      LTRRef.remove();
       RTLRef.style.display = "";
       document.body.clientWidth;
       window.Screenshots.rtl = window.snapshotWindow(window);
-      RTLRef.parentNode.removeChild(RTLRef);
-      window.Screenshots.get = function(dir, flip) {
-        if (flip) {
-          return this[dir == "rtl" ? "ltr" : "rtl"];
-        } else {
-          return this[dir];
-        }
+      RTLRef.remove();
+      window.Screenshots.get = function(dir) {
+        return this[dir];
       };
     });
 
@@ -55,8 +51,8 @@ add_task(function*() {
       return Promise.resolve();
     }
 
-    function* testDirection(initialDir, aBrowser) {
-      yield ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
+    async function testDirection(initialDir, aBrowser) {
+      await ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
         var window = content.window.wrappedJSObject;
         var document = window.document;
 
@@ -68,39 +64,55 @@ add_task(function*() {
         document.getElementById("content").appendChild(t);
         document.body.clientWidth;
         var s1 = window.snapshotWindow(window);
-        ok(window.compareSnapshots(s1, window.Screenshots.get(initialDir, false), true)[0],
-           "Textarea should appear correctly before switching the direction (" + initialDir + ")");
+        window.ok = ok; // for assertSnapshots
+        window.
+          assertSnapshots(s1, window.Screenshots.get(initialDir), true,
+                          /* fuzz = */ null,
+                          "Textarea before switching the direction from " +
+                            initialDir,
+                          "Reference " + initialDir + " textarea");
         t.focus();
         is(window.inputEventCount, 0, "input event count must be 0 before");
       });
-      yield simulateCtrlShiftX(aBrowser);
-      yield ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
+      await simulateCtrlShiftX(aBrowser);
+      await ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
         var window = content.window.wrappedJSObject;
-
-        is(window.t.getAttribute("dir"), initialDir == "ltr" ? "rtl" : "ltr", "The dir attribute must be correctly updated");
+        var expectedDir = initialDir == "ltr" ? "rtl" : "ltr"
+        is(window.t.getAttribute("dir"), expectedDir,
+           "The dir attribute must be correctly updated");
         is(window.inputEventCount, 1, "input event count must be 1 after");
         window.t.blur();
         var s2 = window.snapshotWindow(window);
-        ok(window.compareSnapshots(s2, window.Screenshots.get(initialDir, true), true)[0],
-           "Textarea should appear correctly after switching the direction (" + initialDir + ")");
+        window.ok = ok; // for assertSnapshots
+        window.
+          assertSnapshots(s2, window.Screenshots.get(expectedDir), true,
+                        /* fuzz = */ null,
+                          "Textarea after switching the direction from " +
+                            initialDir,
+                          "Reference " + expectedDir + " textarea");
         window.t.focus();
         is(window.inputEventCount, 1, "input event count must be 1 before");
       });
-      yield simulateCtrlShiftX(aBrowser);
-      yield ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
+      await simulateCtrlShiftX(aBrowser);
+      await ContentTask.spawn(aBrowser, {initialDir}, function({initialDir}) {
         var window = content.window.wrappedJSObject;
 
         is(window.inputEventCount, 2, "input event count must be 2 after");
         is(window.t.getAttribute("dir"), initialDir == "ltr" ? "ltr" : "rtl", "The dir attribute must be correctly updated");
         window.t.blur();
         var s3 = window.snapshotWindow(window);
-        ok(window.compareSnapshots(s3, window.Screenshots.get(initialDir, false), true)[0],
-           "Textarea should appear correctly after switching back the direction (" + initialDir + ")");
-        window.t.parentNode.removeChild(window.t);
+        window.ok = ok; // for assertSnapshots
+        window.
+          assertSnapshots(s3, window.Screenshots.get(initialDir), true,
+                          /* fuzz = */ null,
+                          "Textarea after switching back the direction to " +
+                            initialDir,
+                          "Reference " + initialDir + " textarea");
+        window.t.remove();
       });
     }
 
-    yield testDirection("ltr", aBrowser);
-    yield testDirection("rtl", aBrowser);
+    await testDirection("ltr", aBrowser);
+    await testDirection("rtl", aBrowser);
   });
 });

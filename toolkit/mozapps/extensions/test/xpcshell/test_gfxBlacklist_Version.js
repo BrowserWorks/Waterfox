@@ -71,8 +71,7 @@ function run_test() {
 
   do_test_pending();
 
-  function checkBlacklist()
-  {
+  function checkBlacklist() {
     var failureId = {};
     var status;
 
@@ -105,6 +104,10 @@ function run_test() {
     do_check_eq(status, Ci.nsIGfxInfo.FEATURE_BLOCKED_DRIVER_VERSION);
     do_check_eq(failureId.value, "FEATURE_FAILURE_DL_BLACKLIST_NO_ID");
 
+    status = gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL2, failureId);
+    do_check_eq(status, Ci.nsIGfxInfo.FEATURE_BLOCKED_DRIVER_VERSION);
+    do_check_eq(failureId.value, "FEATURE_FAILURE_DL_BLACKLIST_NO_ID");
+
     status = gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL_MSAA, failureId);
     do_check_eq(status, Ci.nsIGfxInfo.FEATURE_BLOCKED_DRIVER_VERSION);
 
@@ -129,6 +132,9 @@ function run_test() {
     status = gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_DIRECT3D_11_ANGLE, failureId);
     do_check_eq(status, Ci.nsIGfxInfo.FEATURE_STATUS_OK);
 
+    status = gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_DX_INTEROP2, failureId);
+    do_check_eq(status, Ci.nsIGfxInfo.FEATURE_STATUS_OK);
+
     gTestserver.stop(do_test_finished);
   }
 
@@ -136,7 +142,7 @@ function run_test() {
     // If we wait until after we go through the event loop, gfxInfo is sure to
     // have processed the gfxItems event.
     do_execute_soon(checkBlacklist);
-  }, "blocklist-data-gfxItems", false);
+  }, "blocklist-data-gfxItems");
 
   load_blocklist("test_gfxBlacklist_AllOS.xml");
 }

@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* import-globals-from ../../../common/tests/unit/head_helpers.js */
+
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -43,8 +45,7 @@ function addResourceAlias() {
   const resProt = Services.io.getProtocolHandler("resource")
                           .QueryInterface(Ci.nsIResProtocolHandler);
   for (let s of ["common", "sync", "crypto"]) {
-    let uri = Services.io.newURI("resource://gre/modules/services-" + s + "/", null,
-                                 null);
+    let uri = Services.io.newURI("resource://gre/modules/services-" + s + "/");
     resProt.setSubstitution("services-" + s, uri);
   }
 }

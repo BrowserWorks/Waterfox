@@ -21,9 +21,11 @@ public:
 
   // These are called in place of the corresponding GMP API functions.
   GMPErr GMPInit(const GMPPlatformAPI* aPlatformAPI) override;
-  GMPErr GMPGetAPI(const char* aAPIName, void* aHostAPI, void** aPluginAPI) override;
+  GMPErr GMPGetAPI(const char* aAPIName,
+                   void* aHostAPI,
+                   void** aPluginAPI,
+                   uint32_t aDecryptorId) override;
   void GMPShutdown() override;
-  void GMPSetNodeId(const char* aNodeId, uint32_t aLength) override;
 
   static bool Supports(int32_t aModuleVersion,
                        int32_t aInterfaceVersion,
@@ -47,9 +49,6 @@ GMPErr GMPCreateRecord(const char* aRecordName,
 GMPErr GMPSetTimerOnMainThread(GMPTask* aTask, int64_t aTimeoutMS);
 
 GMPErr GMPGetCurrentTime(GMPTimestamp* aOutTime);
-
-GMPErr GMPCreateRecordIterator(RecvGMPRecordIteratorPtr aRecvIteratorFunc,
-                               void* aUserArg);
 
 } // namespace mozilla
 

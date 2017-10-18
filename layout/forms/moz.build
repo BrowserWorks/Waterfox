@@ -22,6 +22,7 @@ UNIFIED_SOURCES += [
     'nsButtonFrameRenderer.cpp',
     'nsColorControlFrame.cpp',
     'nsComboboxControlFrame.cpp',
+    'nsDateTimeControlFrame.cpp',
     'nsFieldSetFrame.cpp',
     'nsFileControlFrame.cpp',
     'nsFormControlFrame.cpp',
@@ -42,10 +43,13 @@ UNIFIED_SOURCES += [
 
 FINAL_LIBRARY = 'xul'
 
+include('/ipc/chromium/chromium-config.mozbuild')
+
 LOCAL_INCLUDES += [
     '../../editor/txmgr',
     '../base',
     '../generic',
+    '../painting',
     '../style',
     '../xul',
     '/dom/base',

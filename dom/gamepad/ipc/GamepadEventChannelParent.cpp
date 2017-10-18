@@ -20,12 +20,13 @@ class SendGamepadUpdateRunnable final : public Runnable
   RefPtr<GamepadEventChannelParent> mParent;
   GamepadChangeEvent mEvent;
  public:
-  SendGamepadUpdateRunnable(GamepadEventChannelParent* aParent,
-                            GamepadChangeEvent aEvent)
-    : mEvent(aEvent)
-  {
-    MOZ_ASSERT(aParent);
-    mParent = aParent;
+   SendGamepadUpdateRunnable(GamepadEventChannelParent* aParent,
+                             GamepadChangeEvent aEvent)
+     : Runnable("dom::SendGamepadUpdateRunnable")
+     , mEvent(aEvent)
+   {
+     MOZ_ASSERT(aParent);
+     mParent = aParent;
   }
   NS_IMETHOD Run() override
   {
@@ -45,21 +46,22 @@ GamepadEventChannelParent::GamepadEventChannelParent()
   RefPtr<GamepadPlatformService> service =
     GamepadPlatformService::GetParentService();
   MOZ_ASSERT(service);
+
+  mBackgroundEventTarget = GetCurrentThreadEventTarget();
   service->AddChannelParent(this);
-  mBackgroundThread = NS_GetCurrentThread();
 }
 
-bool
+mozilla::ipc::IPCResult
 GamepadEventChannelParent::RecvGamepadListenerAdded()
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(!mHasGamepadListener);
   mHasGamepadListener = true;
   StartGamepadMonitoring();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 GamepadEventChannelParent::RecvGamepadListenerRemoved()
 {
   AssertIsOnBackgroundThread();
@@ -70,7 +72,30 @@ GamepadEventChannelParent::RecvGamepadListenerRemoved()
   MOZ_ASSERT(service);
   service->RemoveChannelParent(this);
   Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+GamepadEventChannelParent::RecvVibrateHaptic(const uint32_t& aControllerIdx,
+                                   const uint32_t& aHapticIndex,
+                                   const double& aIntensity,
+                                   const double& aDuration,
+                                   const uint32_t& aPromiseID)
+{
+  // TODO: Bug 680289, implement for standard gamepads
+
+  if (SendReplyGamepadVibrateHaptic(aPromiseID)) {
+    return IPC_OK();
+  }
+
+  return IPC_FAIL(this, "SendReplyGamepadVibrateHaptic fail.");
+}
+
+mozilla::ipc::IPCResult
+GamepadEventChannelParent::RecvStopVibrateHaptic(const uint32_t& aGamepadIndex)
+{
+  // TODO: Bug 680289, implement for standard gamepads
+  return IPC_OK();
 }
 
 void
@@ -93,8 +118,8 @@ GamepadEventChannelParent::ActorDestroy(ActorDestroyReason aWhy)
 void
 GamepadEventChannelParent::DispatchUpdateEvent(const GamepadChangeEvent& aEvent)
 {
-  mBackgroundThread->Dispatch(new SendGamepadUpdateRunnable(this, aEvent),
-                              NS_DISPATCH_NORMAL);
+  mBackgroundEventTarget->Dispatch(new SendGamepadUpdateRunnable(this, aEvent),
+                                   NS_DISPATCH_NORMAL);
 }
 
 } // namespace dom

@@ -5,7 +5,7 @@
 
 #include "BasicPaintedLayer.h"
 #include <stdint.h>                     // for uint32_t
-#include "GeckoProfiler.h"              // for PROFILER_LABEL
+#include "GeckoProfiler.h"              // for AUTO_PROFILER_LABEL
 #include "ReadbackLayer.h"              // for ReadbackLayer, ReadbackSink
 #include "ReadbackProcessor.h"          // for ReadbackProcessor::Update, etc
 #include "RenderTrace.h"                // for RenderTraceInvalidateEnd, etc
@@ -36,10 +36,9 @@ static nsIntRegion
 IntersectWithClip(const nsIntRegion& aRegion, gfxContext* aContext)
 {
   gfxRect clip = aContext->GetClipExtents();
-  clip.RoundOut();
-  IntRect r(clip.X(), clip.Y(), clip.Width(), clip.Height());
   nsIntRegion result;
-  result.And(aRegion, r);
+  result.And(aRegion, IntRect::RoundOut(clip.X(), clip.Y(),
+                                        clip.Width(), clip.Height()));
   return result;
 }
 
@@ -49,8 +48,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
                               LayerManager::DrawPaintedLayerCallback aCallback,
                               void* aCallbackData)
 {
-  PROFILER_LABEL("BasicPaintedLayer", "PaintThebes",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("BasicPaintedLayer::PaintThebes", GRAPHICS);
 
   NS_ASSERTION(BasicManager()->InDrawing(),
                "Can only draw in drawing phase");
@@ -59,7 +57,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
   CompositionOp effectiveOperator = GetEffectiveOperator(this);
 
   if (!BasicManager()->IsRetained()) {
-    mValidRegion.SetEmpty();
+    ClearValidRegion();
     mContentClient->Clear();
 
     nsIntRegion toDraw = IntersectWithClip(GetLocalVisibleRegion().ToUnknownRegion(), aContext);
@@ -137,7 +135,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
   if (!mContentClient) {
     // This client will have a null Forwarder, which means it will not have
     // a ContentHost on the other side.
-    mContentClient = new ContentClientBasic();
+    mContentClient = new ContentClientBasic(mBackend);
   }
 
   if (!BasicManager()->IsRetained()) {
@@ -165,7 +163,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
   }
   PaintState state =
     mContentClient->BeginPaintBuffer(this, flags);
-  mValidRegion.Sub(mValidRegion, state.mRegionToInvalidate);
+  SubtractFromValidRegion(state.mRegionToInvalidate);
 
   DrawTarget* target = mContentClient->BorrowDrawTargetForPainting(state);
   if (target && target->IsValid()) {
@@ -203,8 +201,9 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
     // It's possible that state.mRegionToInvalidate is nonempty here,
     // if we are shrinking the valid region to nothing. So use mRegionToDraw
     // instead.
-    NS_WARN_IF_FALSE(state.mRegionToDraw.IsEmpty(),
-                     "No context when we have something to draw, resource exhaustion?");
+    NS_WARNING_ASSERTION(
+      state.mRegionToDraw.IsEmpty(),
+      "No context when we have something to draw, resource exhaustion?");
   }
 
   for (uint32_t i = 0; i < readbackUpdates.Length(); ++i) {
@@ -228,7 +227,16 @@ already_AddRefed<PaintedLayer>
 BasicLayerManager::CreatePaintedLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  RefPtr<PaintedLayer> layer = new BasicPaintedLayer(this);
+
+  BackendType backend = gfxPlatform::GetPlatform()->GetDefaultContentBackend();
+
+  if (mDefaultTarget) {
+    backend = mDefaultTarget->GetDrawTarget()->GetBackendType();
+  } else if (mType == BLM_WIDGET) {
+    backend = gfxPlatform::GetPlatform()->GetContentBackendFor(LayersBackend::LAYERS_BASIC);
+  }
+
+  RefPtr<PaintedLayer> layer = new BasicPaintedLayer(this, backend);
   return layer.forget();
 }
 

@@ -154,7 +154,7 @@ private:
  *     {
  *     public:
  *       FooRunnable(const Bar &aBar) : mBar(aBar) {}
- *       NS_IMETHOD Run()
+ *       NS_IMETHOD Run() override
  *       {
  *         // Use mBar
  *       }
@@ -173,7 +173,7 @@ private:
  *     RefPtr<Bar> bar = new Bar();
  *     NS_DispatchToMainThread(media::NewRunnableFrom([bar]() mutable {
  *       // use bar
- *     });
+ *     }));
  *   }
  *
  * Capture is by-copy by default, so the nsRefPtr 'bar' is safely copied for
@@ -186,10 +186,15 @@ template<typename OnRunType>
 class LambdaRunnable : public Runnable
 {
 public:
-  explicit LambdaRunnable(OnRunType&& aOnRun) : mOnRun(Move(aOnRun)) {}
+  explicit LambdaRunnable(OnRunType&& aOnRun)
+    : Runnable("media::LambdaRunnable")
+    , mOnRun(Move(aOnRun))
+  {
+  }
+
 private:
   NS_IMETHODIMP
-  Run()
+  Run() override
   {
     return mOnRun();
   }
@@ -319,11 +324,28 @@ private:
  * a constructor. Please add below (UniquePtr covers a lot of ground though).
  */
 
-template<typename T>
-class Refcountable : public T
+class RefcountableBase
 {
 public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Refcountable<T>)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefcountableBase)
+protected:
+  virtual ~RefcountableBase() {}
+};
+
+template<typename T>
+class Refcountable : public T, public RefcountableBase
+{
+public:
+  NS_METHOD_(MozExternalRefCountType) AddRef()
+  {
+    return RefcountableBase::AddRef();
+  }
+
+  NS_METHOD_(MozExternalRefCountType) Release()
+  {
+    return RefcountableBase::Release();
+  }
+
 private:
   ~Refcountable<T>() {}
 };

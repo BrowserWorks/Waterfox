@@ -13,14 +13,11 @@ const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Log.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Preferences.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
+Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 
 const LOGGER_NAME = "Toolkit.Telemetry";
 const LOGGER_PREFIX = "TelemetryArchive::";
-
-const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ARCHIVE_ENABLED = PREF_BRANCH + "archive.enabled";
 
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStorage",
                                   "resource://gre/modules/TelemetryStorage.jsm");
@@ -37,7 +34,7 @@ this.TelemetryArchive = {
    *                      timestampCreated: <number>,
    *                      type: <string> }
    */
-  promiseArchivedPingList: function() {
+  promiseArchivedPingList() {
     return TelemetryArchiveImpl.promiseArchivedPingList();
   },
 
@@ -47,7 +44,7 @@ this.TelemetryArchive = {
    * @param id {String} The pings UUID.
    * @return {Promise<PingData>} A promise resolved with the pings data on success.
    */
-  promiseArchivedPingById: function(id) {
+  promiseArchivedPingById(id) {
     return TelemetryArchiveImpl.promiseArchivedPingById(id);
   },
 
@@ -57,7 +54,7 @@ this.TelemetryArchive = {
    * @param {object} ping The ping data to archive.
    * @return {promise} Promise that is resolved when the ping is successfully archived.
    */
-  promiseArchivePing: function(ping) {
+  promiseArchivePing(ping) {
     return TelemetryArchiveImpl.promiseArchivePing(ping);
   },
 };
@@ -68,7 +65,7 @@ this.TelemetryArchive = {
  * @return {Boolean} True if pings should be archived, false otherwise.
  */
 function shouldArchivePings() {
-  return Preferences.get(PREF_ARCHIVE_ENABLED, false);
+  return Preferences.get(TelemetryUtils.Preferences.ArchiveEnabled, false);
 }
 
 var TelemetryArchiveImpl = {
@@ -82,7 +79,7 @@ var TelemetryArchiveImpl = {
     return this._logger;
   },
 
-  promiseArchivePing: function(ping) {
+  promiseArchivePing(ping) {
     if (!shouldArchivePings()) {
       this._log.trace("promiseArchivePing - archiving is disabled");
       return Promise.resolve();
@@ -98,7 +95,7 @@ var TelemetryArchiveImpl = {
     return TelemetryStorage.saveArchivedPing(ping);
   },
 
-  _buildArchivedPingList: function(archivedPingsMap) {
+  _buildArchivedPingList(archivedPingsMap) {
     let list = Array.from(archivedPingsMap, p => ({
       id: p[0],
       timestampCreated: p[1].timestampCreated,
@@ -110,7 +107,7 @@ var TelemetryArchiveImpl = {
     return list;
   },
 
-  promiseArchivedPingList: function() {
+  promiseArchivedPingList() {
     this._log.trace("promiseArchivedPingList");
 
     return TelemetryStorage.loadArchivedPingList().then(loadedInfo => {
@@ -118,7 +115,7 @@ var TelemetryArchiveImpl = {
     });
   },
 
-  promiseArchivedPingById: function(id) {
+  promiseArchivedPingById(id) {
     this._log.trace("promiseArchivedPingById - id: " + id);
     return TelemetryStorage.loadArchivedPing(id);
   },

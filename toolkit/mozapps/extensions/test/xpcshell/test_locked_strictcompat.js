@@ -134,7 +134,7 @@ var theme2 = {
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
-add_task(function* init() {
+add_task(async function init() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "2", "2");
 
   writeInstallRDFForExtension(addon1, profileDir);
@@ -148,45 +148,43 @@ add_task(function* init() {
   writeInstallRDFForExtension(theme2, profileDir);
 
   // Startup the profile and setup the initial state
-  startupManager();
+  await promiseStartupManager();
 
   // New profile so new add-ons are ignored
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
 
-  let a1, a2, a3, a4, a5, a6, a7, t1, t2;
-
-  [a2, a3, a4, a7, t2] =
-    yield promiseAddonsByIDs(["addon2@tests.mozilla.org",
+  let [a2, a3, a4, a7, t2] =
+    await promiseAddonsByIDs(["addon2@tests.mozilla.org",
                               "addon3@tests.mozilla.org",
                               "addon4@tests.mozilla.org",
                               "addon7@tests.mozilla.org",
                               "theme2@tests.mozilla.org"]);
 
   // Set up the initial state
-  let deferredUpdateFinished = Promise.defer();
+  await new Promise(resolve => {
 
-  a2.userDisabled = true;
-  a4.userDisabled = true;
-  a7.userDisabled = true;
-  t2.userDisabled = false;
-  a3.findUpdates({
-    onUpdateFinished: function() {
-      a4.findUpdates({
-        onUpdateFinished: function() {
-          deferredUpdateFinished.resolve();
-        }
-      }, AddonManager.UPDATE_WHEN_PERIODIC_UPDATE);
-    }
-  }, AddonManager.UPDATE_WHEN_PERIODIC_UPDATE);
-  yield deferredUpdateFinished.promise;
+    a2.userDisabled = true;
+    a4.userDisabled = true;
+    a7.userDisabled = true;
+    t2.userDisabled = false;
+    a3.findUpdates({
+      onUpdateFinished() {
+        a4.findUpdates({
+          onUpdateFinished() {
+            resolve();
+          }
+        }, AddonManager.UPDATE_WHEN_PERIODIC_UPDATE);
+      }
+    }, AddonManager.UPDATE_WHEN_PERIODIC_UPDATE);
+  });
 });
 
-add_task(function* run_test_1() {
+add_task(async function run_test_1() {
   let a1, a2, a3, a4, a5, a6, a7, t1, t2;
 
   restartManager();
   [a1, a2, a3, a4, a5, a6, a7, t1, t2] =
-    yield promiseAddonsByIDs(["addon1@tests.mozilla.org",
+    await promiseAddonsByIDs(["addon1@tests.mozilla.org",
                              "addon2@tests.mozilla.org",
                              "addon3@tests.mozilla.org",
                              "addon4@tests.mozilla.org",
@@ -267,20 +265,20 @@ add_task(function* run_test_1() {
   if (OS.Constants.libc.O_EXLOCK)
     options.unixFlags = OS.Constants.libc.O_EXLOCK;
 
-  let file = yield OS.File.open(gExtensionsJSON.path, {read:true, write:true, existing:true}, options);
+  let file = await OS.File.open(gExtensionsJSON.path, {read: true, write: true, existing: true}, options);
 
   let filePermissions = gExtensionsJSON.permissions;
   if (!OS.Constants.Win) {
     gExtensionsJSON.permissions = 0;
   }
-  startupManager(false);
+  await promiseStartupManager(false);
 
   // Shouldn't have seen any startup changes
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
 
   // Accessing the add-ons should open and recover the database
   [a1, a2, a3, a4, a5, a6, a7, t1, t2] =
-    yield promiseAddonsByIDs(["addon1@tests.mozilla.org",
+    await promiseAddonsByIDs(["addon1@tests.mozilla.org",
                               "addon2@tests.mozilla.org",
                               "addon3@tests.mozilla.org",
                               "addon4@tests.mozilla.org",
@@ -362,13 +360,18 @@ add_task(function* run_test_1() {
   // Restarting will actually apply changes to extensions.ini which will
   // then be put into the in-memory database when we next fail to load the
   // real thing
-  restartManager();
+  try {
+    shutdownManager();
+  } catch (e) {
+    // We're expecting an error here.
+  }
+  await promiseStartupManager(false);
 
   // Shouldn't have seen any startup changes
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
 
   [a1, a2, a3, a4, a5, a6, a7, t1, t2] =
-    yield promiseAddonsByIDs(["addon1@tests.mozilla.org",
+    await promiseAddonsByIDs(["addon1@tests.mozilla.org",
                                "addon2@tests.mozilla.org",
                                "addon3@tests.mozilla.org",
                                "addon4@tests.mozilla.org",
@@ -441,17 +444,22 @@ add_task(function* run_test_1() {
 
   // After allowing access to the original DB things should go back to as
   // back how they were before the lock
-  shutdownManager();
+  let shutdownError;
+  try {
+    shutdownManager();
+  } catch (e) {
+    shutdownError = e;
+  }
   do_print("Unlocking " + gExtensionsJSON.path);
-  yield file.close();
+  await file.close();
   gExtensionsJSON.permissions = filePermissions;
-  startupManager(false);
+  await promiseStartupManager(false);
 
   // Shouldn't have seen any startup changes
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
 
   [a1, a2, a3, a4, a5, a6, a7, t1, t2] =
-    yield promiseAddonsByIDs(["addon1@tests.mozilla.org",
+    await promiseAddonsByIDs(["addon1@tests.mozilla.org",
                               "addon2@tests.mozilla.org",
                               "addon3@tests.mozilla.org",
                               "addon4@tests.mozilla.org",
@@ -481,13 +489,12 @@ add_task(function* run_test_1() {
   // remember that this extension was changed to disabled. On Windows we
   // couldn't replace the old DB so we read the older version of the DB
   // where the extension is enabled
-  if (gXPISaveError) {
+  if (shutdownError) {
     do_print("XPI save failed");
     do_check_true(a3.isActive);
     do_check_false(a3.appDisabled);
     do_check_true(isExtensionInAddonsList(profileDir, a3.id));
-  }
-  else {
+  } else {
     do_print("XPI save succeeded");
     do_check_false(a3.isActive);
     do_check_true(a3.appDisabled);
@@ -503,8 +510,7 @@ add_task(function* run_test_1() {
   if (OS.Constants.Win) {
     do_check_true(a4.userDisabled);
     do_check_false(a4.appDisabled);
-  }
-  else {
+  } else {
     do_check_false(a4.userDisabled);
     do_check_true(a4.appDisabled);
   }
@@ -543,6 +549,12 @@ add_task(function* run_test_1() {
   do_check_false(t2.appDisabled);
   do_check_eq(t2.pendingOperations, AddonManager.PENDING_NONE);
   do_check_true(isThemeInAddonsList(profileDir, t2.id));
+
+  try {
+    shutdownManager();
+  } catch (e) {
+    // An error is expected here.
+  }
 });
 
 function run_test() {

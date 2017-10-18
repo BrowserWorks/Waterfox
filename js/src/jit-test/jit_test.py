@@ -73,8 +73,11 @@ def main(argv):
                   action='store_true',
                   help="don't print output for failed tests"
                   " (no-op with --show-output)")
-    op.add_option('-x', '--exclude', dest='exclude', action='append',
+    op.add_option('-x', '--exclude', dest='exclude',
+                  default=[], action='append',
                   help='exclude given test dir or path')
+    op.add_option('--exclude-from', dest='exclude_from', type=str,
+                  help='exclude each test dir or path in FILE')
     op.add_option('--slow', dest='run_slow', action='store_true',
                   help='also run tests marked as slow')
     op.add_option('--no-slow', dest='run_slow', action='store_false',
@@ -95,6 +98,8 @@ def main(argv):
     op.add_option('-w', '--write-failures', dest='write_failures',
                   metavar='FILE',
                   help='Write a list of failed tests to [FILE]')
+    op.add_option('-C', '--check-output', action='store_true', dest='check_output',
+                  help='Run tests to check output for different jit-flags')
     op.add_option('-r', '--read-tests', dest='read_tests', metavar='FILE',
                   help='Run test files listed in [FILE]')
     op.add_option('-R', '--retest', dest='retest', metavar='FILE',
@@ -107,6 +112,8 @@ def main(argv):
                   help='Run a single test under the specified debugger')
     op.add_option('--valgrind', dest='valgrind', action='store_true',
                   help='Enable the |valgrind| flag, if valgrind is in $PATH.')
+    op.add_option('--unusable-error-status', action='store_true',
+                  help='Ignore incorrect exit status on tests that should return nonzero.')
     op.add_option('--valgrind-all', dest='valgrind_all', action='store_true',
                   help='Run all tests with valgrind, if valgrind is in $PATH.')
     op.add_option('--avoid-stdio', dest='avoid_stdio', action='store_true',
@@ -138,10 +145,6 @@ def main(argv):
     op.add_option('--deviceSerial', action='store',
                   type='string', dest='device_serial', default=None,
                   help='ADB device serial number of remote device to test')
-    op.add_option('--deviceTransport', action='store',
-                  type='string', dest='device_transport', default='sut',
-                  help='The transport to use to communicate with device:'
-                  ' [adb|sut]; default=sut')
     op.add_option('--remoteTestRoot', dest='remote_test_root', action='store',
                   type='string', default='/data/local/tests',
                   help='The remote directory to use as test root'
@@ -193,17 +196,19 @@ def main(argv):
     test_list = []
     read_all = True
 
-    # Forbid running several variants of the same asmjs test, when debugging.
-    # But also, no point in adding in noasmjs and wasm-baseline variants if the
+    # No point in adding in noasmjs and wasm-baseline variants if the
     # jitflags forbid asmjs in the first place. (This is to avoid getting a
     # wasm-baseline run when requesting --jitflags=interp, but the test
     # contains test-also-noasmjs.)
     test_flags = get_jitflags(options.jitflags)
-    options.can_test_also_noasmjs = True
-    options.can_test_also_wasm_baseline = True
-    if options.debugger or all(['--no-asmjs' in flags for flags in test_flags]):
-        options.can_test_also_noasmjs = False
-        options.can_test_also_wasm_baseline = False
+    options.asmjs_enabled = True
+    options.wasm_enabled = True
+    if all(['--no-asmjs' in flags for flags in test_flags]):
+        options.asmjs_enabled = False
+        options.wasm_enabled = False
+    if all(['--no-wasm' in flags for flags in test_flags]):
+        options.asmjs_enabled = False
+        options.wasm_enabled = False
 
     if test_args:
         read_all = False
@@ -229,6 +234,33 @@ def main(argv):
 
     if read_all:
         test_list = jittests.find_tests()
+
+    # Exclude tests when code coverage is enabled.
+    # This part is equivalent to:
+    # skip-if = coverage
+    if os.getenv('GCOV_PREFIX') is not None:
+        # GCOV errors.
+        options.exclude += ['asm.js/testSIMD.js']               # Bug 1347245
+
+        # JSVM errors.
+        options.exclude += ['basic/functionnames.js']           # Bug 1369783
+        options.exclude += ['debug/Debugger-findScripts-23.js']
+        options.exclude += ['debug/bug1160182.js']
+        options.exclude += ['xdr/incremental-encoder.js']
+        options.exclude += ['xdr/bug1186973.js']                # Bug 1369785
+        options.exclude += ['xdr/relazify.js']
+        options.exclude += ['basic/werror.js']
+
+        # Prevent code coverage test that expects coverage
+        # to be off when it starts.
+        options.exclude += ['debug/Script-getOffsetsCoverage-02.js']
+
+    if options.exclude_from:
+        with open(options.exclude_from) as fh:
+            for line in fh:
+                line = line.strip()
+                if not line.startswith("#") and len(line):
+                    options.exclude.append(line)
 
     if options.exclude:
         exclude_list = []
@@ -305,6 +337,7 @@ def main(argv):
             jobs = list(job_list)
 
             def display_job(job):
+                flags = ""
                 if len(job.jitflags) != 0:
                     flags = "({})".format(' '.join(job.jitflags))
                 return '{} {}'.format(job.path, flags)

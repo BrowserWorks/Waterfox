@@ -14,17 +14,17 @@
 #include <algorithm>
 #include <Cocoa/Cocoa.h>
 
-#include "webrtc/system_wrappers/interface/logging.h"
+#include "webrtc/system_wrappers/include/logging.h"
 
 #if !defined(MAC_OS_X_VERSION_10_7) || \
-    MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+    MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_7
 
 @interface NSScreen (LionAPI)
 - (CGFloat)backingScaleFactor;
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 @end
 
-#endif  // 10.7
+#endif  // MAC_OS_X_VERSION_10_7
 
 namespace webrtc {
 
@@ -85,17 +85,29 @@ MacDisplayConfiguration GetConfigurationForScreen(NSScreen* screen) {
 
 }  // namespace
 
-MacDisplayConfiguration::MacDisplayConfiguration()
-    : id(0),
-      dip_to_pixel_scale(1.0f) {
-}
+MacDisplayConfiguration::MacDisplayConfiguration() = default;
+MacDisplayConfiguration::MacDisplayConfiguration(
+    const MacDisplayConfiguration& other) = default;
+MacDisplayConfiguration::MacDisplayConfiguration(
+    MacDisplayConfiguration&& other) = default;
+MacDisplayConfiguration::~MacDisplayConfiguration() = default;
 
-MacDesktopConfiguration::MacDesktopConfiguration()
-    : dip_to_pixel_scale(1.0f) {
-}
+MacDisplayConfiguration& MacDisplayConfiguration::operator=(
+    const MacDisplayConfiguration& other) = default;
+MacDisplayConfiguration& MacDisplayConfiguration::operator=(
+    MacDisplayConfiguration&& other) = default;
 
-MacDesktopConfiguration::~MacDesktopConfiguration() {
-}
+MacDesktopConfiguration::MacDesktopConfiguration() = default;
+MacDesktopConfiguration::MacDesktopConfiguration(
+    const MacDesktopConfiguration& other) = default;
+MacDesktopConfiguration::MacDesktopConfiguration(
+    MacDesktopConfiguration&& other) = default;
+MacDesktopConfiguration::~MacDesktopConfiguration() = default;
+
+MacDesktopConfiguration& MacDesktopConfiguration::operator=(
+    const MacDesktopConfiguration& other) = default;
+MacDesktopConfiguration& MacDesktopConfiguration::operator=(
+    MacDesktopConfiguration&& other) = default;
 
 // static
 MacDesktopConfiguration MacDesktopConfiguration::GetCurrent(Origin origin) {

@@ -15,7 +15,6 @@
 #include "nsISimpleEnumerator.h"
 #include "prenv.h"
 #include "nsCRT.h"
-
 #if defined(MOZ_WIDGET_COCOA)
 #include <Carbon/Carbon.h>
 #include "nsILocalFileMac.h"
@@ -51,7 +50,6 @@
 #ifdef MOZ_WIDGET_COCOA
 #define NS_MACOSX_USER_PLUGIN_DIR   "OSXUserPlugins"
 #define NS_MACOSX_LOCAL_PLUGIN_DIR  "OSXLocalPlugins"
-#define NS_MACOSX_JAVA2_PLUGIN_DIR  "OSXJavaPlugins"
 #elif XP_UNIX
 #define NS_SYSTEM_PLUGINS_DIR       "SysPlugins"
 #endif
@@ -159,11 +157,6 @@ nsAppFileLocationProvider::GetFile(const char* aProp, bool* aPersistent,
         localFile = macFile;
       }
     }
-  } else if (nsCRT::strcmp(aProp, NS_MACOSX_JAVA2_PLUGIN_DIR) == 0) {
-    static const char* const java2PluginDirPath =
-      "/System/Library/Java/Support/Deploy.bundle/Contents/Resources/";
-    rv = NS_NewNativeLocalFile(nsDependentCString(java2PluginDirPath), true,
-                               getter_AddRefs(localFile));
   }
 #else
   else if (nsCRT::strcmp(aProp, NS_ENV_PLUGINS_DIR) == 0) {
@@ -227,7 +220,7 @@ nsAppFileLocationProvider::GetFile(const char* aProp, bool* aPersistent,
 }
 
 
-NS_METHOD
+nsresult
 nsAppFileLocationProvider::CloneMozBinDirectory(nsIFile** aLocalFile)
 {
   if (NS_WARN_IF(!aLocalFile)) {
@@ -275,7 +268,7 @@ nsAppFileLocationProvider::CloneMozBinDirectory(nsIFile** aLocalFile)
 // WIN    : <Application Data folder on user's machine>\Mozilla
 // Mac    : :Documents:Mozilla:
 //----------------------------------------------------------------------------------------
-NS_METHOD
+nsresult
 nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
                                                bool aLocal)
 {
@@ -352,7 +345,7 @@ nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
 // WIN    : <Application Data folder on user's machine>\Mozilla\Profiles
 // Mac    : :Documents:Mozilla:Profiles:
 //----------------------------------------------------------------------------------------
-NS_METHOD
+nsresult
 nsAppFileLocationProvider::GetDefaultUserProfileRoot(nsIFile** aLocalFile,
                                                      bool aLocal)
 {
@@ -543,18 +536,10 @@ nsAppFileLocationProvider::GetFiles(const char* aProp,
 
   if (!nsCRT::strcmp(aProp, NS_APP_PLUGINS_DIR_LIST)) {
 #ifdef MOZ_WIDGET_COCOA
-    // As of Java for Mac OS X 10.5 Update 10, Apple has (in effect) deprecated Java Plugin2 on
-    // on OS X 10.5, and removed the soft link to it from /Library/Internet Plug-Ins/.  Java
-    // Plugin2 is still present and usable, but there are no longer any links to it in the
-    // "normal" locations.  So we won't be able to find it unless we look in the "non-normal"
-    // location where it actually is.  Safari can use the WebKit-specific JavaPluginCocoa.bundle,
-    // which (of course) is still fully supported on OS X 10.5.  But we have no alternative to
-    // using Java Plugin2.  For more information see bug 668639.
     static const char* keys[] = {
       NS_APP_PLUGINS_DIR,
       NS_MACOSX_USER_PLUGIN_DIR,
       NS_MACOSX_LOCAL_PLUGIN_DIR,
-      IsOSXLeopard() ? NS_MACOSX_JAVA2_PLUGIN_DIR : nullptr,
       nullptr
     };
     *aResult = new nsAppDirectoryEnumerator(this, keys);
@@ -588,22 +573,3 @@ nsAppFileLocationProvider::GetFiles(const char* aProp,
   }
   return rv;
 }
-
-#if defined(MOZ_WIDGET_COCOA)
-bool
-nsAppFileLocationProvider::IsOSXLeopard()
-{
-  static SInt32 version = 0;
-
-  if (!version) {
-    OSErr err = ::Gestalt(gestaltSystemVersion, &version);
-    if (err != noErr) {
-      version = 0;
-    } else {
-      version &= 0xFFFF; // The system version is in the low order word
-    }
-  }
-
-  return ((version >= 0x1050) && (version < 0x1060));
-}
-#endif

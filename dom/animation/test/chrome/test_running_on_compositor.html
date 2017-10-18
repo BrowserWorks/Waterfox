@@ -10,6 +10,14 @@
 @keyframes anim {
   to { transform: translate(100px) }
 }
+@keyframes transform-starts-with-none {
+    0% { transform: none }
+   99% { transform: none }
+  100% { transform: translate(100px) }
+}
+@keyframes opacity {
+  to { opacity: 0 }
+}
 @keyframes background_and_translate {
   to { background-color: red; transform: translate(100px); }
 }
@@ -20,7 +28,7 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@keyframes rotate_and_opacity {
+@keyframes rotate-and-opacity {
   from { transform: rotate(0deg); opacity: 1;}
   to { transform: rotate(360deg); opacity: 0;}
 }
@@ -42,9 +50,17 @@ div {
 /** Test for bug 1045994 - Add a chrome-only property to inspect if an
     animation is running on the compositor or not **/
 
-const OMTAPrefKey = 'layers.offmainthreadcomposition.async-animations';
-var omtaEnabled = SpecialPowers.DOMWindowUtils.layerManagerRemote &&
-                  SpecialPowers.getBoolPref(OMTAPrefKey);
+var omtaEnabled = isOMTAEnabled();
+
+function assert_animation_is_running_on_compositor(animation, desc) {
+  assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+                desc + ' at ' + animation.currentTime + 'ms');
+}
+
+function assert_animation_is_not_running_on_compositor(animation, desc) {
+  assert_equals(animation.isRunningOnCompositor, false,
+                desc + ' at ' + animation.currentTime + 'ms');
+}
 
 promise_test(function(t) {
   // FIXME: When we implement Element.animate, use that here instead of CSS
@@ -53,7 +69,7 @@ promise_test(function(t) {
   var animation = div.getAnimations()[0];
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
        'Animation reports that it is running on the compositor'
        + ' during playback');
 
@@ -61,7 +77,7 @@ promise_test(function(t) {
 
     return animation.ready;
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' when paused');
   });
@@ -72,7 +88,7 @@ promise_test(function(t) {
   var animation = div.getAnimations()[0];
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' for animation of "background"');
   });
@@ -83,7 +99,7 @@ promise_test(function(t) {
   var animation = div.getAnimations()[0];
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
        'Animation reports that it is running on the compositor'
         + ' when the animation has two properties, where one can run'
         + ' on the compositor, the other cannot');
@@ -99,7 +115,7 @@ promise_test(function(t) {
     animation.pause();
     return animation.ready;
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' when animation.pause() is called');
   });
@@ -111,13 +127,13 @@ promise_test(function(t) {
 
   return animation.ready.then(function() {
     animation.finish();
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' immediately after animation.finish() is called');
     // Check that we don't set the flag back again on the next tick.
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' on the next tick after animation.finish() is called');
   });
@@ -129,13 +145,13 @@ promise_test(function(t) {
 
   return animation.ready.then(function() {
     animation.currentTime = 100 * MS_PER_SEC;
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' immediately after manually seeking the animation to the end');
     // Check that we don't set the flag back again on the next tick.
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' on the next tick after manually seeking the animation to the end');
   });
@@ -148,28 +164,17 @@ promise_test(function(t) {
 
   return animation.ready.then(function() {
     animation.cancel();
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' immediately after animation.cancel() is called');
     // Check that we don't set the flag back again on the next tick.
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' on the next tick after animation.cancel() is called');
   });
 }, 'isRunningOnCompositor is false when animation.cancel() is called');
-
-promise_test(function(t) {
-  var div = addDiv(t, { style: 'animation: anim 100s 100s' });
-  var animation = div.getAnimations()[0];
-
-  return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
-       'Animation reports that it is NOT running on the compositor'
-       + ' while in the delay phase');
-  });
-}, 'isRunningOnCompositor is false while in the delay phase');
 
 // This is to test that we don't simply clobber the flag when ticking
 // animations and then set it again during painting.
@@ -181,7 +186,7 @@ promise_test(function(t) {
     return new Promise(function(resolve) {
       window.requestAnimationFrame(function() {
         t.step(function() {
-          assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+          assert_animation_is_running_on_compositor(animation,
             'Animation reports that it is running on the compositor'
              + ' in requestAnimationFrame callback');
         });
@@ -212,7 +217,7 @@ promise_test(function(t) {
           assert_true(!!changedAnimation, 'The animation should be recorded '
             + 'as one of the changedAnimations');
 
-          assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+          assert_animation_is_running_on_compositor(animation,
             'Animation reports that it is running on the compositor'
              + ' in MutationObserver callback');
         });
@@ -231,11 +236,9 @@ promise_test(function(t) {
 // This is to test that we don't temporarily clear the flag when forcing
 // an unthrottled sample.
 promise_test(function(t) {
-  return new Promise(function(resolve) {
-    // Needs scrollbars to cause overflow.
-    SpecialPowers.pushPrefEnv({ set: [["ui.showHideScrollbars", 1]] },
-                              resolve);
-  }).then(function() {
+  // Needs scrollbars to cause overflow.
+  return SpecialPowers.pushPrefEnv({ set: [["ui.showHideScrollbars", 1]] })
+  .then(function() {
     var div = addDiv(t, { style: 'animation: rotate 100s' });
     var animation = div.getAnimations()[0];
 
@@ -244,14 +247,14 @@ promise_test(function(t) {
         var timeAtStart = window.performance.now();
         function handleFrame() {
           t.step(function() {
-            assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+            assert_animation_is_running_on_compositor(animation,
               'Animation reports that it is running on the compositor'
                + ' in requestAnimationFrame callback');
           });
 
           // we have to wait at least 200ms because this animation is
           // unthrottled on every 200ms.
-          // See http://hg.mozilla.org/mozilla-central/file/cafb1c90f794/layout/style/AnimationCommon.cpp#l863
+          // See https://hg.mozilla.org/mozilla-central/file/cafb1c90f794/layout/style/AnimationCommon.cpp#l863
           if (window.performance.now() - timeAtStart > 200) {
             resolve();
             return;
@@ -274,20 +277,20 @@ promise_test(function(t) {
   var animation = div.getAnimations()[0];
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
        'Transition reports that it is running on the compositor'
        + ' during playback for opacity transition');
   });
 }, 'isRunningOnCompositor for transitions');
 
 promise_test(function(t) {
-  var div = addDiv(t, { style: 'animation: rotate_and_opacity 100s; ' +
+  var div = addDiv(t, { style: 'animation: rotate-and-opacity 100s; ' +
                                'backface-visibility: hidden; ' +
                                'transform: none !important;' });
   var animation = div.getAnimations()[0];
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
        'If an animation has a property that can run on the compositor and a '
        + 'property that cannot (due to Gecko limitations) but where the latter'
        + 'property is overridden in the CSS cascade, the animation should '
@@ -302,13 +305,13 @@ promise_test(function(t) {
                                    { opacity: [ 0, 1 ] }, 200 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor');
 
     animation.currentTime = 150 * MS_PER_SEC;
     animation.effect.timing.duration = 100 * MS_PER_SEC;
 
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
        'Animation reports that it is NOT running on the compositor'
        + ' when the animation is set a shorter duration than current time');
   });
@@ -321,19 +324,19 @@ promise_test(function(t) {
                                    { opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor');
 
     animation.currentTime = 500 * MS_PER_SEC;
 
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
       'Animation reports that it is NOT running on the compositor'
       + ' when finished');
 
     animation.effect.timing.duration = 1000 * MS_PER_SEC;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor'
       + ' when restarted');
   });
@@ -346,19 +349,19 @@ promise_test(function(t) {
                                    { opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor');
 
     animation.effect.timing.endDelay = 100 * MS_PER_SEC;
 
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor'
       + ' when endDelay is changed');
 
     animation.currentTime = 110 * MS_PER_SEC;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
       'Animation reports that it is NOT running on the compositor'
       + ' when currentTime is during endDelay');
   });
@@ -371,13 +374,13 @@ promise_test(function(t) {
                                    { opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor');
 
     animation.effect.timing.endDelay = -200 * MS_PER_SEC;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
       'Animation reports that it is NOT running on the compositor'
       + ' when endTime is negative value');
   });
@@ -387,22 +390,22 @@ promise_test(function(t) {
 promise_test(function(t) {
   var animation = addDivAndAnimate(t,
                                    {},
-                                   { opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
+                                   { opacity: [ 0, 1 ] }, 200 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor');
 
-    animation.effect.timing.endDelay = -50 * MS_PER_SEC;
+    animation.effect.timing.endDelay = -100 * MS_PER_SEC;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Animation reports that it is running on the compositor'
       + ' when endTime is positive and endDelay is negative');
-    animation.currentTime = 60 * MS_PER_SEC;
+    animation.currentTime = 110 * MS_PER_SEC;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
       'Animation reports that it is NOT running on the compositor'
       + ' when currentTime is after endTime');
   });
@@ -419,14 +422,14 @@ promise_test(function(t) {
   var div = addDiv(t);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
                   'Animation with null target reports that it is not running ' +
                   'on the compositor');
 
     animation.effect.target = div;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   'Animation reports that it is running on the compositor ' +
                   'after setting a valid target');
   });
@@ -437,11 +440,11 @@ promise_test(function(t) {
   var animation = div.animate({ opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   'Animation reports that it is running on the compositor');
 
     animation.effect.target = null;
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
                   'Animation reports that it is NOT running on the ' +
                   'compositor after setting null target');
   });
@@ -455,15 +458,14 @@ promise_test(function(t) {
                                 fill: 'backwards' });
 
   return animation.ready.then(function() {
-    // Will be fixed in bug 1223658.
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_running_on_compositor(animation,
                   'Animation with fill:backwards in delay phase reports ' +
-                  'that it is NOT running on the compositor');
+                  'that it is running on the compositor');
 
     animation.currentTime = 100 * MS_PER_SEC;
     return waitForFrame();
  }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   'Animation with fill:backwards in delay phase reports ' +
                   'that it is running on the compositor after delay phase');
   });
@@ -479,14 +481,14 @@ promise_test(function(t) {
   var another = addDiv(t);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   'Opacity animation on a 100% opacity keyframe reports ' +
                   'that it is running on the compositor from the begining');
 
     animation.effect.target = another;
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   'Opacity animation on a 100% opacity keyframe keeps ' +
                   'running on the compositor after changing the target ' +
                   'element');
@@ -499,7 +501,7 @@ promise_test(function(t) {
   var animation = div.animate({ color: ['red', 'black'] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
                   'Color animation reports that it is not running on the ' +
                   'compositor');
 
@@ -508,7 +510,7 @@ promise_test(function(t) {
                                    { opacity: 0, offset: 1 }]);
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
                   '100% opacity animation set by using setKeyframes reports ' +
                   'that it is running on the compositor');
   });
@@ -516,24 +518,447 @@ promise_test(function(t) {
    'cannot be run on the compositor, is running on the compositor');
 
 promise_test(function(t) {
+  var div = addDiv(t);
+  var animation = div.animate({ color: ['red', 'black'] }, 100 * MS_PER_SEC);
+  var effect = new KeyframeEffect(div,
+                                  [{ opacity: 1, offset: 0 },
+                                   { opacity: 1, offset: 0.99 },
+                                   { opacity: 0, offset: 1 }],
+                                  100 * MS_PER_SEC);
+
+  return animation.ready.then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+                  'Color animation reports that it is not running on the ' +
+                  'compositor');
+
+    animation.effect = effect;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(animation,
+                  '100% opacity animation set up by changing effects reports ' +
+                  'that it is running on the compositor');
+  });
+}, '100% opacity animation set up by changing the effects on an existing ' +
+   'animation which cannot be run on the compositor, is running on the ' +
+   'compositor');
+
+promise_test(function(t) {
   var div = addDiv(t, { style: "opacity: 1 ! important" });
 
   var animation = div.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
-    assert_equals(animation.isRunningOnCompositor, false,
+    assert_animation_is_not_running_on_compositor(animation,
       'Opacity animation on an element which has 100% opacity style with ' +
       '!important flag reports that it is not running on the compositor');
     // Clear important flag from the opacity style on the target element.
     div.style.setProperty("opacity", "1", "");
     return waitForFrame();
   }).then(function() {
-    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+    assert_animation_is_running_on_compositor(animation,
       'Opacity animation reports that it is running on the compositor after '
       + 'clearing the !important flag');
   });
 }, 'Clearing *important* opacity style on the target element sends the ' +
    'animation to the compositor');
+
+promise_test(function(t) {
+  var div = addDiv(t);
+  var lowerAnimation = div.animate({ opacity: [1, 0] }, 100 * MS_PER_SEC);
+  var higherAnimation = div.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
+
+  return Promise.all([lowerAnimation.ready, higherAnimation.ready]).then(function() {
+    assert_animation_is_running_on_compositor(higherAnimation,
+                  'A higher-priority opacity animation on an element ' +
+                  'reports that it is running on the compositor');
+    assert_animation_is_running_on_compositor(lowerAnimation,
+                  'A lower-priority opacity animation on the same ' +
+                  'element also reports that it is running on the compositor');
+  });
+}, 'Opacity animations on the same element run on the compositor');
+
+promise_test(function(t) {
+  var div = addDiv(t, { style: 'transition: opacity 100s; opacity: 1' });
+
+  getComputedStyle(div).opacity;
+
+  div.style.opacity = 0;
+  getComputedStyle(div).opacity;
+
+  var transition = div.getAnimations()[0];
+  var animation = div.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
+
+  return Promise.all([transition.ready, animation.ready]).then(function() {
+    assert_animation_is_running_on_compositor(animation,
+                  'An opacity animation on an element reports that' +
+                  'that it is running on the compositor');
+    assert_animation_is_running_on_compositor(transition,
+                  'An opacity transition on the same element reports that ' +
+                  'it is running on the compositor');
+  });
+}, 'Both of transition and script animation on the same element run on the ' +
+   'compositor');
+
+promise_test(function(t) {
+  var div = addDiv(t);
+  var importantOpacityElement = addDiv(t, { style: "opacity: 1 ! important" });
+
+  var animation = div.animate({ opacity: [1, 0] }, 100 * MS_PER_SEC);
+
+  return animation.ready.then(function() {
+    assert_animation_is_running_on_compositor(animation,
+                  'Opacity animation on an element reports ' +
+                  'that it is running on the compositor');
+
+    animation.effect.target = null;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+                  'Animation is no longer running on the compositor after ' +
+                  'removing from the element');
+    animation.effect.target = importantOpacityElement;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+                  'Animation is NOT running on the compositor even after ' +
+                  'being applied to a different element which has an ' +
+                  '!important opacity declaration');
+  });
+}, 'Animation continues not running on the compositor after being ' +
+   'applied to an element which has an important declaration and ' +
+   'having previously been temporarily associated with no target element');
+
+promise_test(function(t) {
+  var div = addDiv(t);
+  var another = addDiv(t);
+
+  var lowerAnimation = div.animate({ opacity: [1, 0] }, 100 * MS_PER_SEC);
+  var higherAnimation = another.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
+
+  return Promise.all([lowerAnimation.ready, higherAnimation.ready]).then(function() {
+    assert_animation_is_running_on_compositor(lowerAnimation,
+                  'An opacity animation on an element reports that ' +
+                  'it is running on the compositor');
+    assert_animation_is_running_on_compositor(higherAnimation,
+                  'Opacity animation on a different element reports ' +
+                  'that it is running on the compositor');
+
+    lowerAnimation.effect.target = null;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_not_running_on_compositor(lowerAnimation,
+                  'Animation is no longer running on the compositor after ' +
+                  'being removed from the element');
+    lowerAnimation.effect.target = another;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(lowerAnimation,
+                  'A lower-priority animation begins running ' +
+                  'on the compositor after being applied to an element ' +
+                  'which has a higher-priority animation');
+    assert_animation_is_running_on_compositor(higherAnimation,
+                  'A higher-priority animation continues to run on the ' +
+                  'compositor even after a lower-priority animation is ' +
+                  'applied to the same element');
+  });
+}, 'Animation begins running on the compositor after being applied ' +
+   'to an element which has a higher-priority animation and after ' +
+   'being temporarily associated with no target element');
+
+promise_test(function(t) {
+  var div = addDiv(t);
+  var another = addDiv(t);
+
+  var lowerAnimation = div.animate({ opacity: [1, 0] }, 100 * MS_PER_SEC);
+  var higherAnimation = another.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
+
+  return Promise.all([lowerAnimation.ready, higherAnimation.ready]).then(function() {
+    assert_animation_is_running_on_compositor(lowerAnimation,
+                  'An opacity animation on an element reports that ' +
+                  'it is running on the compositor');
+    assert_animation_is_running_on_compositor(higherAnimation,
+                  'Opacity animation on a different element reports ' +
+                  'that it is running on the compositor');
+
+    higherAnimation.effect.target = null;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_not_running_on_compositor(higherAnimation,
+                  'Animation is no longer running on the compositor after ' +
+                  'being removed from the element');
+    higherAnimation.effect.target = div;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(lowerAnimation,
+                  'Animation continues running on the compositor after ' +
+                  'a higher-priority animation applied to the same element');
+    assert_animation_is_running_on_compositor(higherAnimation,
+                  'A higher-priority animation begins to running on the ' +
+                  'compositor after being applied to an element which has ' +
+                  'a lower-priority-animation');
+  });
+}, 'Animation begins running on the compositor after being applied ' +
+   'to an element which has a lower-priority animation once after ' +
+   'disassociating with an element');
+
+var delayPhaseTests = [
+  {
+    desc: 'script animation of opacity',
+    setupAnimation: function(t) {
+      return addDiv(t).animate(
+        { opacity: [0, 1] },
+        { delay: 100 * MS_PER_SEC, duration: 100 * MS_PER_SEC });
+    },
+  },
+  {
+    desc: 'script animation of transform',
+    setupAnimation: function(t) {
+      return addDiv(t).animate(
+        { transform: ['translateX(0px)', 'translateX(100px)'] },
+        { delay: 100 * MS_PER_SEC, duration: 100 * MS_PER_SEC });
+    },
+  },
+  {
+    desc: 'CSS animation of opacity',
+    setupAnimation: function(t) {
+      return addDiv(t, { style: 'animation: opacity 100s 100s' })
+        .getAnimations()[0];
+    },
+  },
+  {
+    desc: 'CSS animation of transform',
+    setupAnimation: function(t) {
+      return addDiv(t, { style: 'animation: anim 100s 100s' })
+        .getAnimations()[0];
+    },
+  },
+  {
+    desc: 'CSS transition of opacity',
+    setupAnimation: function(t) {
+      var div = addDiv(t, { style: 'transition: opacity 100s 100s' });
+      getComputedStyle(div).opacity;
+
+      div.style.opacity = 0;
+      return div.getAnimations()[0];
+    },
+  },
+  {
+    desc: 'CSS transition of transform',
+    setupAnimation: function(t) {
+      var div = addDiv(t, { style: 'transition: transform 100s 100s' });
+      getComputedStyle(div).transform;
+
+      div.style.transform = 'translateX(100px)';
+      return div.getAnimations()[0];
+    },
+  },
+];
+
+delayPhaseTests.forEach(function(test) {
+  promise_test(function(t) {
+    var animation = test.setupAnimation(t);
+
+    return animation.ready.then(function() {
+      assert_animation_is_running_on_compositor(animation,
+         test.desc + ' reports that it is running on the '
+         + 'compositor even though it is in the delay phase');
+    });
+  }, 'isRunningOnCompositor for ' + test.desc + ' is true even though ' +
+     'it is in the delay phase');
+});
+
+// The purpose of thie test cases is to check that
+// NS_FRAME_MAY_BE_TRANSFORMED flag on the associated nsIFrame persists
+// after transform style on the frame is removed.
+var delayPhaseWithTransformStyleTests = [
+  {
+    desc: 'script animation of transform with transform style',
+    setupAnimation: function(t) {
+      return addDiv(t, { style: 'transform: translateX(10px)' }).animate(
+        { transform: ['translateX(0px)', 'translateX(100px)'] },
+        { delay: 100 * MS_PER_SEC, duration: 100 * MS_PER_SEC });
+    },
+  },
+  {
+    desc: 'CSS animation of transform with transform style',
+    setupAnimation: function(t) {
+      return addDiv(t, { style: 'animation: anim 100s 100s;' +
+                                'transform: translateX(10px)' })
+        .getAnimations()[0];
+    },
+  },
+  {
+    desc: 'CSS transition of transform with transform style',
+    setupAnimation: function(t) {
+      var div = addDiv(t, { style: 'transition: transform 100s 100s;' +
+                                   'transform: translateX(10px)'});
+      getComputedStyle(div).transform;
+
+      div.style.transform = 'translateX(100px)';
+      return div.getAnimations()[0];
+    },
+  },
+];
+
+delayPhaseWithTransformStyleTests.forEach(function(test) {
+  promise_test(function(t) {
+    var animation = test.setupAnimation(t);
+
+    return animation.ready.then(function() {
+      assert_animation_is_running_on_compositor(animation,
+         test.desc + ' reports that it is running on the '
+         + 'compositor even though it is in the delay phase');
+    }).then(function() {
+      // Remove the initial transform style during delay phase.
+      animation.effect.target.style.transform = 'none';
+      return animation.ready;
+    }).then(function() {
+      assert_animation_is_running_on_compositor(animation,
+         test.desc + ' reports that it keeps running on the '
+         + 'compositor after removing the initial transform style');
+    });
+  }, 'isRunningOnCompositor for ' + test.desc + ' is true after removing ' +
+     'the initial transform style during the delay phase');
+});
+
+var startsWithNoneTests = [
+  {
+    desc: 'script animation of transform starts with transform:none segment',
+    setupAnimation: function(t) {
+      return addDiv(t).animate(
+        { transform: ['none', 'none', 'translateX(100px)'] }, 100 * MS_PER_SEC);
+    },
+  },
+  {
+    desc: 'CSS animation of transform starts with transform:none segment',
+    setupAnimation: function(t) {
+      return addDiv(t,
+        { style: 'animation: transform-starts-with-none 100s 100s' })
+          .getAnimations()[0];
+    },
+  },
+];
+
+startsWithNoneTests.forEach(function(test) {
+  promise_test(function(t) {
+    var animation = test.setupAnimation(t);
+
+    return animation.ready.then(function() {
+      assert_animation_is_running_on_compositor(animation,
+         test.desc + ' reports that it is running on the '
+         + 'compositor even though it is in transform:none segment');
+    });
+  }, 'isRunningOnCompositor for ' + test.desc + ' is true even though ' +
+     'it is in transform:none segment');
+});
+
+promise_test(function(t) {
+  var div = addDiv(t, { style: 'opacity: 1 ! important' });
+
+  var animation = div.animate(
+    { opacity: [0, 1] },
+    { delay: 100 * MS_PER_SEC, duration: 100 * MS_PER_SEC });
+
+  return animation.ready.then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+      'Opacity animation on an element which has opacity:1 important style'
+      + 'reports that it is not running on the compositor');
+    // Clear the opacity style on the target element.
+    div.style.setProperty("opacity", "1", "");
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(animation,
+      'Opacity animations reports that it is running on the compositor after '
+      + 'clearing the opacity style on the element');
+  });
+}, 'Clearing *important* opacity style on the target element sends the ' +
+   'animation to the compositor even if the animation is in the delay phase');
+
+promise_test(function(t) {
+  var opaqueDiv = addDiv(t, { style: 'opacity: 1 ! important' });
+  var anotherDiv = addDiv(t);
+
+  var animation = opaqueDiv.animate(
+    { opacity: [0, 1] },
+    { delay: 100 * MS_PER_SEC, duration: 100 * MS_PER_SEC });
+
+  return animation.ready.then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+      'Opacity animation on an element which has opacity:1 important style'
+      + 'reports that it is not running on the compositor');
+    // Changing target element to another element which has no opacity style.
+    animation.effect.target = anotherDiv;
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(animation,
+      'Opacity animations reports that it is running on the compositor after '
+      + 'changing the target element to another elemenent having no '
+      + 'opacity style');
+  });
+}, 'Changing target element of opacity animation sends the animation to the ' +
+   'the compositor even if the animation is in the delay phase');
+
+promise_test(function(t) {
+  var animation =
+    addDivAndAnimate(t,
+                     {},
+                     { width: ['100px', '200px'] },
+                     { duration: 100 * MS_PER_SEC, delay: 100 * MS_PER_SEC });
+
+  return animation.ready.then(function() {
+    assert_animation_is_not_running_on_compositor(animation,
+      'Width animation reports that it is not running on the compositor '
+      + 'in the delay phase');
+    // Changing to property runnable on the compositor.
+    animation.effect.setKeyframes({ opacity: [0, 1] });
+    return waitForFrame();
+  }).then(function() {
+    assert_animation_is_running_on_compositor(animation,
+      'Opacity animation reports that it is running on the compositor '
+      + 'after changing the property from width property in the delay phase');
+  });
+}, 'Dynamic change to a property runnable on the compositor ' +
+   'in the delay phase');
+
+promise_test(function(t) {
+  var div = addDiv(t, { style: 'transition: opacity 100s; ' +
+                               'opacity: 0 !important' });
+  getComputedStyle(div).opacity;
+
+  div.style.setProperty('opacity', '1', 'important');
+  getComputedStyle(div).opacity;
+
+  var animation = div.getAnimations()[0];
+
+  return animation.ready.then(function() {
+    assert_animation_is_running_on_compositor(animation,
+       'Transition reports that it is running on the compositor even if the ' +
+       'property is overridden by an !important rule');
+  });
+}, 'Transitions override important rules');
+
+promise_test(function(t) {
+  var div = addDiv(t, { style: 'transition: opacity 100s; ' +
+                               'opacity: 0 !important' });
+  getComputedStyle(div).opacity;
+
+  div.animate({ opacity: [ 0, 1 ] }, 100 * MS_PER_SEC);
+
+  div.style.setProperty('opacity', '1', 'important');
+  getComputedStyle(div).opacity;
+
+  var [transition, animation] = div.getAnimations();
+
+  return Promise.all([transition.ready, animation.ready]).then(function() {
+    assert_animation_is_not_running_on_compositor(transition,
+       'Transition suppressed by an animation which is overridden by an ' +
+       '!important rule reports that it is NOT running on the compositor');
+    assert_animation_is_not_running_on_compositor(animation,
+       'Animation overridden by an !important rule reports that it is ' +
+       'NOT running on the compositor');
+  });
+}, 'Neither transition nor animation does run on the compositor if the ' +
+   'property is overridden by an !important rule');
 
 </script>
 </body>

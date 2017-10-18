@@ -13,9 +13,7 @@
 #include "js/CallNonGenericMethod.h"
 
 namespace JS {
-template <typename T>
-class AutoVectorRooter;
-typedef AutoVectorRooter<jsid> AutoIdVector;
+class AutoIdVector;
 } // namespace JS
 
 namespace xpc {
@@ -26,7 +24,7 @@ class FilteringWrapper : public Base {
     constexpr explicit FilteringWrapper(unsigned flags) : Base(flags) {}
 
     virtual bool enter(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<jsid> id,
-                       js::Wrapper::Action act, bool* bp) const override;
+                       js::Wrapper::Action act, bool mayThrow, bool* bp) const override;
 
     virtual bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                           JS::Handle<jsid> id,
@@ -39,8 +37,7 @@ class FilteringWrapper : public Base {
                                        JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                               JS::AutoIdVector& props) const override;
-    virtual bool enumerate(JSContext* cx, JS::Handle<JSObject*> wrapper,
-                           JS::MutableHandle<JSObject*> objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, JS::Handle<JSObject*> wrapper) const override;
 
     virtual bool call(JSContext* cx, JS::Handle<JSObject*> wrapper,
                       const JS::CallArgs& args) const override;
@@ -82,7 +79,15 @@ class CrossOriginXrayWrapper : public SecurityXrayDOM {
     virtual bool getPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                        JS::Handle<jsid> id,
                                        JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
+
+    virtual bool setPrototype(JSContext* cx, JS::HandleObject wrapper,
+                              JS::HandleObject proto,
+                              JS::ObjectOpResult& result) const override;
 };
+
+// Check whether the given jsid is a symbol whose value can be gotten
+// cross-origin.  Cross-origin gets always return undefined as the value.
+bool IsCrossOriginWhitelistedSymbol(JSContext* cx, JS::HandleId id);
 
 } // namespace xpc
 

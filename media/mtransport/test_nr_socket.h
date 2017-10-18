@@ -113,6 +113,21 @@ class TestNrSocket;
 */
 class TestNat {
   public:
+
+    /**
+      * This allows TestNat traffic to be passively inspected.
+      * If a non-zero (error) value is returned, the packet will be dropped,
+      * allowing for tests to extend how packet manipulation is done by
+      * TestNat with having to modify TestNat itself.
+    */
+    class NatDelegate {
+    public:
+      virtual int on_read(TestNat *nat, void *buf, size_t maxlen, size_t *len) = 0;
+      virtual int on_sendto(TestNat *nat, const void *msg, size_t len,
+                    int flags, nr_transport_addr *to) = 0;
+      virtual int on_write(TestNat *nat, const void *msg, size_t len, size_t *written) = 0;
+    };
+
     typedef enum {
       /** For mapping, one port is used for all destinations.
        *  For filtering, allow any external address/port. */
@@ -138,7 +153,9 @@ class TestNat {
       refresh_on_ingress_(false),
       block_udp_(false),
       block_stun_(false),
+      block_tcp_(false),
       delay_stun_resp_ms_(0),
+      nat_delegate_(nullptr),
       sockets_() {}
 
     bool has_port_mappings() const;
@@ -169,8 +186,11 @@ class TestNat {
     bool refresh_on_ingress_;
     bool block_udp_;
     bool block_stun_;
+    bool block_tcp_;
     /* Note: this can only delay a single response so far (bug 1253657) */
     uint32_t delay_stun_resp_ms_;
+
+    NatDelegate* nat_delegate_;
 
   private:
     std::set<TestNrSocket*> sockets_;
@@ -320,6 +340,7 @@ class TestNrSocket : public NrSocketBase {
     // same nat.
     RefPtr<NrSocketBase> internal_socket_;
     RefPtr<TestNat> nat_;
+    bool tls_;
     // Since our comparison logic is different depending on what kind of NAT
     // we simulate, and the STL does not make it very easy to switch out the
     // comparison function at runtime, and these lists are going to be very

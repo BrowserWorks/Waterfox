@@ -15,21 +15,29 @@
 #include "mozilla/Logging.h"
 #include "prenv.h"
 #include "mozilla/HangMonitor.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "GeckoProfiler.h"
 #include "nsIPowerManagerService.h"
 #ifdef MOZ_ENABLE_DBUS
 #include "WakeLockListener.h"
 #endif
+#include "gfxPlatform.h"
+#include "ScreenHelperGTK.h"
+#include "HeadlessScreenHelper.h"
+#include "mozilla/widget/ScreenManager.h"
 
 using mozilla::Unused;
+using mozilla::widget::ScreenHelperGTK;
+using mozilla::widget::HeadlessScreenHelper;
+using mozilla::widget::ScreenManager;
+using mozilla::LazyLogModule;
 
 #define NOTIFY_TOKEN 0xFA
 
-PRLogModuleInfo *gWidgetLog = nullptr;
-PRLogModuleInfo *gWidgetFocusLog = nullptr;
-PRLogModuleInfo *gWidgetDragLog = nullptr;
-PRLogModuleInfo *gWidgetDrawLog = nullptr;
+LazyLogModule gWidgetLog("Widget");
+LazyLogModule gWidgetFocusLog("WidgetFocus");
+LazyLogModule gWidgetDragLog("WidgetDrag");
+LazyLogModule gWidgetDrawLog("WidgetDraw");
 
 static GPollFunc sPollFunc;
 
@@ -38,9 +46,9 @@ static gint
 PollWrapper(GPollFD *ufds, guint nfsd, gint timeout_)
 {
     mozilla::HangMonitor::Suspend();
-    profiler_sleep_start();
+    profiler_thread_sleep();
     gint result = (*sPollFunc)(ufds, nfsd, timeout_);
-    profiler_sleep_end();
+    profiler_thread_wake();
     mozilla::HangMonitor::NotifyActivity();
     return result;
 }
@@ -139,29 +147,31 @@ nsAppShell::Init()
     // is a no-op.
     g_type_init();
 
-    if (!gWidgetLog)
-        gWidgetLog = PR_NewLogModule("Widget");
-    if (!gWidgetFocusLog)
-        gWidgetFocusLog = PR_NewLogModule("WidgetFocus");
-    if (!gWidgetDragLog)
-        gWidgetDragLog = PR_NewLogModule("WidgetDrag");
-    if (!gWidgetDrawLog)
-        gWidgetDrawLog = PR_NewLogModule("WidgetDraw");
-
 #ifdef MOZ_ENABLE_DBUS
-    nsCOMPtr<nsIPowerManagerService> powerManagerService =
-      do_GetService(POWERMANAGERSERVICE_CONTRACTID);
+    if (XRE_IsParentProcess()) {
+        nsCOMPtr<nsIPowerManagerService> powerManagerService =
+            do_GetService(POWERMANAGERSERVICE_CONTRACTID);
 
-    if (powerManagerService) {
-        powerManagerService->AddWakeLockListener(WakeLockListener::GetSingleton());
-    } else {
-        NS_WARNING("Failed to retrieve PowerManagerService, wakelocks will be broken!");
+        if (powerManagerService) {
+            powerManagerService->AddWakeLockListener(WakeLockListener::GetSingleton());
+        } else {
+            NS_WARNING("Failed to retrieve PowerManagerService, wakelocks will be broken!");
+        }
     }
 #endif
 
     if (!sPollFunc) {
         sPollFunc = g_main_context_get_poll_func(nullptr);
         g_main_context_set_poll_func(nullptr, &PollWrapper);
+    }
+
+    if (XRE_IsParentProcess()) {
+        ScreenManager& screenManager = ScreenManager::GetSingleton();
+        if (gfxPlatform::IsHeadless()) {
+            screenManager.SetHelper(mozilla::MakeUnique<HeadlessScreenHelper>());
+        } else {
+            screenManager.SetHelper(mozilla::MakeUnique<ScreenHelperGTK>());
+        }
     }
 
 #if MOZ_WIDGET_GTK == 3

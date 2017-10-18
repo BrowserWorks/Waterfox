@@ -3,14 +3,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "webrtc/modules/desktop_capture/x11/desktop_device_info_x11.h"
-#include "webrtc/system_wrappers/interface/logging.h"
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/system_wrappers/interface/scoped_refptr.h"
+#include "webrtc/system_wrappers/include/logging.h"
 #include <inttypes.h>
 #include <unistd.h>
 #include <stdio.h>
 #include "webrtc/modules/desktop_capture/x11/shared_x_util.h"
-#include "webrtc/modules/desktop_capture/window_capturer.h"
 #include "webrtc/modules/desktop_capture/x11/x_error_trap.h"
 #include "webrtc/modules/desktop_capture/x11/x_server_pixel_buffer.h"
 
@@ -51,7 +48,7 @@ void DesktopDeviceInfoX11::InitializeScreenList() {
 
 void DesktopDeviceInfoX11::InitializeApplicationList() {
   //List all running applications exclude background process.
-  scoped_refptr<SharedXDisplay> SharedDisplay = SharedXDisplay::CreateDefault();
+  rtc::scoped_refptr<SharedXDisplay> SharedDisplay = SharedXDisplay::CreateDefault();
   XErrorTrap error_trap(SharedDisplay->display());
 
   WindowUtilX11 window_util_x11(SharedDisplay);

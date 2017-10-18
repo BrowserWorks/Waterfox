@@ -39,15 +39,14 @@ var testData = [
   [ "time",     true ],
   [ "range",    true ],
   [ "color",    true ],
-  [ 'month',    true ]
+  [ 'month',    true ],
+  [ 'week',     true ],
+  [ 'datetime-local', true ]
   // 'file' is treated separatly.
 ];
 
-var todoTypes = [
-  "datetime", "week", "datetime-local"
-];
-
-var nonTrivialSanitizing = [ 'number', 'date', 'time', 'color', 'month' ];
+var nonTrivialSanitizing = [ 'number', 'date', 'time', 'color', 'month', 'week',
+                             'datetime-local' ];
 
 var length = testData.length;
 for (var i=0; i<length; ++i) {
@@ -61,7 +60,8 @@ for (var i=0; i<length; ++i) {
     // number. We need to handle that specially.
     if (testData[j][0] == 'range' || testData[i][0] == 'range') {
       if (testData[j][0] == 'date' || testData[j][0] == 'time' ||
-          testData[j][0] == 'month') {
+          testData[j][0] == 'month' || testData[j][0] == 'week' ||
+          testData[j][0] == 'datetime-local') {
         expectedValue = '';
       } else if (testData[j][0] == 'color') {
         expectedValue = '#000000';
@@ -70,7 +70,8 @@ for (var i=0; i<length; ++i) {
       }
     } else if (testData[i][0] == 'color' || testData[j][0] == 'color') {
         if (testData[j][0] == 'number' || testData[j][0] == 'date' ||
-            testData[j][0] == 'time' || testData[j][0] == 'month') {
+            testData[j][0] == 'time' || testData[j][0] == 'month' ||
+            testData[j][0] == 'week' || testData[j][0] == 'datetime-local') {
           expectedValue = ''
         } else {
           expectedValue = '#000000';
@@ -86,6 +87,11 @@ for (var i=0; i<length; ++i) {
       expectedValue = '21:21';
     } else if (testData[i][0] == 'month' || testData[j][0] == 'month') {
       expectedValue = '2013-03';
+    } else if (testData[i][0] == 'week' || testData[j][0] == 'week') {
+      expectedValue = '2016-W35';
+    } else if (testData[i][0] == 'datetime-local' ||
+               testData[j][0] == 'datetime-local') {
+      expectedValue = '2016-11-07T16:40';
     } else {
       expectedValue = "foo";
     }
@@ -119,13 +125,6 @@ for (var data of testData) {
     is(e.value, 'foo', ".value should still return the same value after " +
        "changing type from " + data[0] + " to 'file' then reverting to " + data[0]);
   }
-}
-
-// TODO checks
-for (var type of todoTypes) {
-  var e = document.createElement('input');
-  e.type = type;
-  todo_is(e.type, type, type + " type isn't supported yet");
 }
 
 </script>

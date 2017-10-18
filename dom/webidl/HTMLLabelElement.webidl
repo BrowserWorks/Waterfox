@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLLabelElement : HTMLElement {
   readonly attribute HTMLFormElement? form;
+  [CEReactions]
            attribute DOMString htmlFor;
   readonly attribute HTMLElement? control;
 };

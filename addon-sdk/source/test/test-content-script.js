@@ -28,7 +28,7 @@ function createProxyTest(html, callback) {
       uri: testURI
     });
 
-    element.addEventListener("DOMContentLoaded", onDOMReady, false);
+    element.addEventListener("DOMContentLoaded", onDOMReady);
 
     function onDOMReady() {
       // Reload frame after getting principal from `testURI`
@@ -39,8 +39,7 @@ function createProxyTest(html, callback) {
       }
 
       assert.equal(element.getAttribute("src"), url, "correct URL loaded");
-      element.removeEventListener("DOMContentLoaded", onDOMReady,
-                                                  false);
+      element.removeEventListener("DOMContentLoaded", onDOMReady);
       let xrayWindow = element.contentWindow;
       let rawWindow = xrayWindow.wrappedJSObject;
 
@@ -55,7 +54,7 @@ function createProxyTest(html, callback) {
           if (isDone)
             return;
           isDone = true;
-          element.parentNode.removeChild(element);
+          element.remove();
           done();
         }
       };
@@ -174,8 +173,7 @@ exports["test postMessage"] = createProxyTest(html, function (helper, assert) {
   let ifWindow = helper.xrayWindow.document.getElementById("iframe").contentWindow;
   // Listen without proxies, to check that it will work in regular case
   // simulate listening from a web document.
-  ifWindow.addEventListener("message", function listener(event) {
-    ifWindow.removeEventListener("message", listener, false);
+  ifWindow.addEventListener("message", function(event) {
     // As we are in system principal, event is an XrayWrapper
     // xrays use current compartments when calling postMessage method.
     // Whereas js proxies was using postMessage method compartment,
@@ -188,7 +186,7 @@ exports["test postMessage"] = createProxyTest(html, function (helper, assert) {
                      "message data is correct");
 
     helper.done();
-  }, false);
+  }, {once: true});
 
   helper.createWorker(
     'new ' + function ContentScriptScope() {
@@ -423,9 +421,9 @@ exports["test Object Tag"] = createProxyTest("", function (helper) {
 
   helper.createWorker(
     'new ' + function ContentScriptScope() {
-      // <object>, <embed> and other tags return typeof 'function'
+      // <object>, <embed> and other tags return typeof 'object'
       let flash = document.createElement("object");
-      assert(typeof flash == "function", "<object> is typeof 'function'");
+      assert(typeof flash == "object", "<object> is typeof 'function'");
       assert(flash.toString().match(/\[object HTMLObjectElement.*\]/), "<object> is HTMLObjectElement");
       assert("setAttribute" in flash, "<object> has a setAttribute method");
       done();
@@ -660,8 +658,6 @@ exports["test Listeners"] = createProxyTest(html, function (helper) {
       let addEventListenerCalled = false;
       let expandoCalled = false;
       input.addEventListener("click", function onclick(event) {
-        input.removeEventListener("click", onclick, true);
-
         assert(!addEventListenerCalled, "closure given to addEventListener is called once");
         if (addEventListenerCalled)
           return;
@@ -690,7 +686,7 @@ exports["test Listeners"] = createProxyTest(html, function (helper) {
           input.click();
         }, 0);
 
-      }, true);
+      }, {capture: true, once: true});
 
       input.click();
     }
@@ -748,21 +744,18 @@ exports["test Cross Domain Iframe"] = createProxyTest("", function (helper) {
       self.on("message", function (url) {
         // Creates an iframe with this page
         let iframe = document.createElement("iframe");
-        iframe.addEventListener("load", function onload() {
-          iframe.removeEventListener("load", onload, true);
+        iframe.addEventListener("load", function() {
           try {
             // Try to communicate with iframe's content
-            window.addEventListener("message", function onmessage(event) {
-              window.removeEventListener("message", onmessage, true);
-
+            window.addEventListener("message", function(event) {
               assert(event.data == "hello world", "COW works properly");
               self.port.emit("end");
-            }, true);
+            }, {capture: true, once: true});
             iframe.contentWindow.postMessage("hello", "*");
           } catch(e) {
             assert(false, "COW fails : "+e.message);
           }
-        }, true);
+        }, {capture: true, once: true});
         iframe.setAttribute("src", url);
         document.body.appendChild(iframe);
       });

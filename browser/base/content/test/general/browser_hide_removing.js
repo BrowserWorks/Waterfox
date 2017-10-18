@@ -8,19 +8,17 @@ function test() {
   waitForExplicitFinish();
 
   // Add a tab that will get removed and hidden
-  let testTab = gBrowser.addTab("about:blank", {skipAnimation: true});
+  let testTab = BrowserTestUtils.addTab(gBrowser, "about:blank", {skipAnimation: true});
   is(gBrowser.visibleTabs.length, 2, "just added a tab, so 2 tabs");
   gBrowser.selectedTab = testTab;
 
   let numVisBeforeHide, numVisAfterHide;
   gBrowser.tabContainer.addEventListener("TabSelect", function() {
-    gBrowser.tabContainer.removeEventListener("TabSelect", arguments.callee, false);
-
     // While the next tab is being selected, hide the removing tab
     numVisBeforeHide = gBrowser.visibleTabs.length;
     gBrowser.hideTab(testTab);
     numVisAfterHide = gBrowser.visibleTabs.length;
-  }, false);
+  }, {once: true});
   gBrowser.removeTab(testTab, {animate: true});
 
   // Make sure the tab gets removed at the end of the animation by polling

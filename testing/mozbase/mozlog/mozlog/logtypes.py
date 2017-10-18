@@ -2,11 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import inspect
+
 convertor_registry = {}
 missing = object()
 no_default = object()
 
+
 class log_action(object):
+
     def __init__(self, *args):
         self.args = {}
 
@@ -36,7 +40,6 @@ class log_action(object):
 
         for extra in self.default_args:
             self.args[extra.name] = extra
-
 
     def __call__(self, f):
         convertor_registry[f.__name__] = self
@@ -72,7 +75,6 @@ class log_action(object):
         positional_with_default = [self.args_with_default[i]
                                    for i in range(len(args) - num_no_default)]
 
-
         for i, name in enumerate(positional_with_default):
             if name in values:
                 raise TypeError("Argument %s specified twice" % name)
@@ -98,7 +100,9 @@ class log_action(object):
                         if name in self.args}
         return self.convert(**known_kwargs)
 
+
 class DataType(object):
+
     def __init__(self, name, default=no_default, optional=False):
         self.name = name
         self.default = default
@@ -120,7 +124,34 @@ class DataType(object):
             raise ValueError("Failed to convert value %s of type %s for field %s to type %s" %
                              (value, type(value).__name__, self.name, self.__class__.__name__))
 
+
+class ContainerType(DataType):
+    """A DataType that contains other DataTypes.
+
+    ContainerTypes must specify which other DataType they will contain. ContainerTypes
+    may contain other ContainerTypes.
+
+    Some examples:
+
+        List(Int, 'numbers')
+        Tuple((Unicode, Int, Any), 'things')
+        Dict(Unicode, 'config')
+        Dict({TestId: Status}, 'results')
+        Dict(List(Unicode), 'stuff')
+    """
+
+    def __init__(self, item_type, name=None, **kwargs):
+        DataType.__init__(self, name, **kwargs)
+        self.item_type = self._format_item_type(item_type)
+
+    def _format_item_type(self, item_type):
+        if inspect.isclass(item_type):
+            return item_type(None)
+        return item_type
+
+
 class Unicode(DataType):
+
     def convert(self, data):
         if isinstance(data, unicode):
             return data
@@ -128,7 +159,9 @@ class Unicode(DataType):
             return data.decode("utf8", "replace")
         return unicode(data)
 
+
 class TestId(DataType):
+
     def convert(self, data):
         if isinstance(data, unicode):
             return data
@@ -142,33 +175,82 @@ class TestId(DataType):
         else:
             raise ValueError
 
+
 class Status(DataType):
     allowed = ["PASS", "FAIL", "OK", "ERROR", "TIMEOUT", "CRASH", "ASSERT", "SKIP"]
+
     def convert(self, data):
         value = data.upper()
         if value not in self.allowed:
             raise ValueError
         return value
 
+
 class SubStatus(Status):
     allowed = ["PASS", "FAIL", "ERROR", "TIMEOUT", "ASSERT", "NOTRUN", "SKIP"]
 
-class Dict(DataType):
-    def convert(self, data):
-        return dict(data)
 
-class List(DataType):
-    def __init__(self, name, item_type, default=no_default, optional=False):
-        DataType.__init__(self, name, default, optional)
-        self.item_type = item_type(None)
+class Dict(ContainerType):
+
+    def _format_item_type(self, item_type):
+        superfmt = super(Dict, self)._format_item_type
+
+        if isinstance(item_type, dict):
+            if len(item_type) != 1:
+                raise ValueError("Dict item type specifier must contain a single entry.")
+            key_type, value_type = item_type.items()[0]
+            return superfmt(key_type), superfmt(value_type)
+        return Any(None), superfmt(item_type)
 
     def convert(self, data):
+        key_type, value_type = self.item_type
+        return {key_type.convert(k): value_type.convert(v) for k, v in dict(data).items()}
+
+
+class List(ContainerType):
+
+    def convert(self, data):
+        # while dicts and strings _can_ be cast to lists,
+        # doing so is likely not intentional behaviour
+        if isinstance(data, (basestring, dict)):
+            raise ValueError("Expected list but got %s" % type(data))
         return [self.item_type.convert(item) for item in data]
 
+
+class TestList(DataType):
+    """A TestList is a list of tests that can be either keyed by a group name,
+    or specified as a flat list.
+    """
+
+    def convert(self, data):
+        if isinstance(data, (list, tuple)):
+            data = {'default': data}
+        return Dict({Unicode: List(Unicode)}).convert(data)
+
+
 class Int(DataType):
+
     def convert(self, data):
         return int(data)
 
+
 class Any(DataType):
+
     def convert(self, data):
         return data
+
+
+class Tuple(ContainerType):
+
+    def _format_item_type(self, item_type):
+        superfmt = super(Tuple, self)._format_item_type
+
+        if isinstance(item_type, (tuple, list)):
+            return [superfmt(t) for t in item_type]
+        return (superfmt(item_type),)
+
+    def convert(self, data):
+        if len(data) != len(self.item_type):
+            raise ValueError("Expected %i items got %i" % (len(self.item_type), len(data)))
+        return tuple(item_type.convert(value)
+                     for item_type, value in zip(self.item_type, data))

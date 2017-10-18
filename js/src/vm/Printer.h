@@ -12,18 +12,20 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 class JSString;
 
+struct JSContext;
+
 namespace js {
 
-class ExclusiveContext;
 class LifoAlloc;
 
 // Generic printf interface, similar to an ostream in the standard library.
 //
 // This class is useful to make generic printers which can work either with a
-// file backend, with a buffer allocated with an ExclusiveContext or a link-list
+// file backend, with a buffer allocated with an JSContext or a link-list
 // of chunks allocated with a LifoAlloc.
 class GenericPrinter
 {
@@ -33,18 +35,19 @@ class GenericPrinter
     GenericPrinter();
 
   public:
-    // Puts |len| characters from |s| at the current position and return an offset to
-    // the beginning of this new data.
-    virtual int put(const char* s, size_t len) = 0;
-    virtual int put(const char* s);
+    // Puts |len| characters from |s| at the current position and
+    // return true on success, false on failure.
+    virtual bool put(const char* s, size_t len) = 0;
+
+    inline bool put(const char* s) {
+        return put(s, strlen(s));
+    }
 
     // Prints a formatted string into the buffer.
-    virtual int printf(const char* fmt, ...);
-    virtual int vprintf(const char* fmt, va_list ap);
+    bool printf(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
+    bool vprintf(const char* fmt, va_list ap) MOZ_FORMAT_PRINTF(2, 0);
 
-    // Report that a string operation failed to get the memory it requested. The
-    // first call to this function calls JS_ReportOutOfMemory, and sets this
-    // Sprinter's outOfMemory flag; subsequent calls do nothing.
+    // Report that a string operation failed to get the memory it requested.
     virtual void reportOutOfMemory();
 
     // Return true if this Sprinter ran out of memory.
@@ -68,7 +71,7 @@ class Sprinter final : public GenericPrinter
         }
     };
 
-    ExclusiveContext*     context;          // context executing the decompiler
+    JSContext*            context;          // context executing the decompiler
 
   private:
     static const size_t   DefaultSize;
@@ -83,7 +86,7 @@ class Sprinter final : public GenericPrinter
     MOZ_MUST_USE bool realloc_(size_t newSize);
 
   public:
-    explicit Sprinter(ExclusiveContext* cx, bool shouldReportOOM = true);
+    explicit Sprinter(JSContext* cx, bool shouldReportOOM = true);
     ~Sprinter();
 
     // Initialize this sprinter, returns false on error.
@@ -91,8 +94,10 @@ class Sprinter final : public GenericPrinter
 
     void checkInvariants() const;
 
-    const char* string() const;
-    const char* stringEnd() const;
+    const char* string() const { return base; }
+    const char* stringEnd() const { return base + offset; }
+    char* release();
+
     // Returns the string at offset |off|.
     char* stringAt(ptrdiff_t off) const;
     // Returns the char at offset |off|.
@@ -103,15 +108,17 @@ class Sprinter final : public GenericPrinter
     // internal content. The caller *must* completely fill this space on success.
     char* reserve(size_t len);
 
-    // Puts |len| characters from |s| at the current position and return an offset to
-    // the beginning of this new data.
-    using GenericPrinter::put;
-    virtual int put(const char* s, size_t len) override;
+    // Puts |len| characters from |s| at the current position and
+    // return true on success, false on failure.
+    virtual bool put(const char* s, size_t len) override;
+    using GenericPrinter::put; // pick up |inline bool put(const char* s);|
 
-    // Prints a formatted string into the buffer.
-    virtual int vprintf(const char* fmt, va_list ap) override;
+    // Format the given format/arguments as if by JS_vsmprintf, then put it.
+    // Return true on success, else return false and report an error (typically
+    // OOM).
+    MOZ_MUST_USE bool jsprintf(const char* fmt, ...) MOZ_FORMAT_PRINTF(2, 3);
 
-    int putString(JSString* str);
+    bool putString(JSString* str);
 
     ptrdiff_t getOffset() const;
 
@@ -142,18 +149,14 @@ class Fprinter final : public GenericPrinter
     void flush();
     void finish();
 
-    // Puts |len| characters from |s| at the current position and return an
-    // offset to the beginning of this new data.
-    virtual int put(const char* s, size_t len) override;
-    virtual int put(const char* s) override;
-
-    // Prints a formatted string into the buffer.
-    virtual int printf(const char* fmt, ...) override;
-    virtual int vprintf(const char* fmt, va_list ap) override;
+    // Puts |len| characters from |s| at the current position and
+    // return true on success, false on failure.
+    virtual bool put(const char* s, size_t len) override;
+    using GenericPrinter::put; // pick up |inline bool put(const char* s);|
 };
 
 // LSprinter, is similar to Sprinter except that instead of using an
-// ExclusiveContext to allocate strings, it use a LifoAlloc as a backend for the
+// JSContext to allocate strings, it use a LifoAlloc as a backend for the
 // allocation of the chunk of the string.
 class LSprinter final : public GenericPrinter
 {
@@ -188,26 +191,11 @@ class LSprinter final : public GenericPrinter
     // Drop the current string, and let them be free with the LifoAlloc.
     void clear();
 
-    // Puts |len| characters from |s| at the current position and return an
-    // offset to the beginning of this new data.
-    virtual int put(const char* s, size_t len) override;
-    virtual int put(const char* s) override;
-
-    // Prints a formatted string into the buffer.
-    virtual int printf(const char* fmt, ...) override;
-    virtual int vprintf(const char* fmt, va_list ap) override;
-
-    // Report that a string operation failed to get the memory it requested. The
-    // first call to this function calls JS_ReportOutOfMemory, and sets this
-    // Sprinter's outOfMemory flag; subsequent calls do nothing.
-    virtual void reportOutOfMemory() override;
-
-    // Return true if this Sprinter ran out of memory.
-    virtual bool hadOutOfMemory() const override;
+    // Puts |len| characters from |s| at the current position and
+    // return true on success, false on failure.
+    virtual bool put(const char* s, size_t len) override;
+    using GenericPrinter::put; // pick up |inline bool put(const char* s);|
 };
-
-extern ptrdiff_t
-Sprint(Sprinter* sp, const char* format, ...);
 
 // Map escaped code to the letter/symbol escaped with a backslash.
 extern const char       js_EscapeMap[];
@@ -216,7 +204,7 @@ extern const char       js_EscapeMap[];
 // chars or quotes (' or " as specified by the quote argument) escaped, and
 // with the quote character at the beginning and end of the result string.
 extern JSString*
-QuoteString(ExclusiveContext* cx, JSString* str, char16_t quote);
+QuoteString(JSContext* cx, JSString* str, char16_t quote);
 
 extern char*
 QuoteString(Sprinter* sp, JSString* str, char16_t quote);

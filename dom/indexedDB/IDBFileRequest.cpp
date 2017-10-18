@@ -24,15 +24,15 @@ namespace dom {
 
 using namespace mozilla::dom::indexedDB;
 
-IDBFileRequest::IDBFileRequest(nsPIDOMWindowInner* aWindow,
-                               IDBFileHandle* aFileHandle,
+IDBFileRequest::IDBFileRequest(IDBFileHandle* aFileHandle,
                                bool aWrapAsDOMRequest)
-  : DOMRequest(aWindow)
-  , FileRequestBase(DEBUGONLY(aFileHandle->OwningThread()))
+  : DOMRequest(aFileHandle->GetOwner())
   , mFileHandle(aFileHandle)
   , mWrapAsDOMRequest(aWrapAsDOMRequest)
+  , mHasEncoding(false)
 {
-  AssertIsOnOwningThread();
+  MOZ_ASSERT(aFileHandle);
+  aFileHandle->AssertIsOnOwningThread();
 }
 
 IDBFileRequest::~IDBFileRequest()
@@ -42,63 +42,37 @@ IDBFileRequest::~IDBFileRequest()
 
 // static
 already_AddRefed<IDBFileRequest>
-IDBFileRequest::Create(nsPIDOMWindowInner* aOwner, IDBFileHandle* aFileHandle,
+IDBFileRequest::Create(IDBFileHandle* aFileHandle,
                        bool aWrapAsDOMRequest)
 {
   MOZ_ASSERT(aFileHandle);
   aFileHandle->AssertIsOnOwningThread();
 
   RefPtr<IDBFileRequest> request =
-    new IDBFileRequest(aOwner, aFileHandle, aWrapAsDOMRequest);
+    new IDBFileRequest(aFileHandle, aWrapAsDOMRequest);
 
   return request.forget();
 }
 
-NS_IMPL_ADDREF_INHERITED(IDBFileRequest, DOMRequest)
-NS_IMPL_RELEASE_INHERITED(IDBFileRequest, DOMRequest)
-
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBFileRequest)
-NS_INTERFACE_MAP_END_INHERITING(DOMRequest)
-
-NS_IMPL_CYCLE_COLLECTION_INHERITED(IDBFileRequest, DOMRequest,
-                                   mFileHandle)
-
-nsresult
-IDBFileRequest::PreHandleEvent(EventChainPreVisitor& aVisitor)
-{
-  AssertIsOnOwningThread();
-
-  aVisitor.mCanHandle = true;
-  aVisitor.mParentTarget = mFileHandle;
-  return NS_OK;
-}
-
-// virtual
-JSObject*
-IDBFileRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
-{
-  AssertIsOnOwningThread();
-
-  if (mWrapAsDOMRequest) {
-    return DOMRequest::WrapObject(aCx, aGivenProto);
-  }
-  return IDBFileRequestBinding::Wrap(aCx, this, aGivenProto);
-}
-
-mozilla::dom::FileHandleBase*
-IDBFileRequest::FileHandle() const
-{
-  AssertIsOnOwningThread();
-
-  return mFileHandle;
-}
-
 void
-IDBFileRequest::OnProgress(uint64_t aProgress, uint64_t aProgressMax)
+IDBFileRequest::FireProgressEvent(uint64_t aLoaded, uint64_t aTotal)
 {
   AssertIsOnOwningThread();
 
-  FireProgressEvent(aProgress, aProgressMax);
+  if (NS_FAILED(CheckInnerWindowCorrectness())) {
+    return;
+  }
+
+  ProgressEventInit init;
+  init.mBubbles = false;
+  init.mCancelable = false;
+  init.mLengthComputable = false;
+  init.mLoaded = aLoaded;
+  init.mTotal = aTotal;
+
+  RefPtr<ProgressEvent> event =
+    ProgressEvent::Constructor(this, NS_LITERAL_STRING("progress"), init);
+  DispatchTrustedEvent(event);
 }
 
 void
@@ -124,33 +98,35 @@ IDBFileRequest::SetResultCallback(ResultCallback* aCallback)
   }
 }
 
-void
-IDBFileRequest::SetError(nsresult aError)
+NS_IMPL_ADDREF_INHERITED(IDBFileRequest, DOMRequest)
+NS_IMPL_RELEASE_INHERITED(IDBFileRequest, DOMRequest)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBFileRequest)
+NS_INTERFACE_MAP_END_INHERITING(DOMRequest)
+
+NS_IMPL_CYCLE_COLLECTION_INHERITED(IDBFileRequest, DOMRequest,
+                                   mFileHandle)
+
+nsresult
+IDBFileRequest::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   AssertIsOnOwningThread();
 
-  FireError(aError);
+  aVisitor.mCanHandle = true;
+  aVisitor.mParentTarget = mFileHandle;
+  return NS_OK;
 }
 
-void
-IDBFileRequest::FireProgressEvent(uint64_t aLoaded, uint64_t aTotal)
+// virtual
+JSObject*
+IDBFileRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   AssertIsOnOwningThread();
 
-  if (NS_FAILED(CheckInnerWindowCorrectness())) {
-    return;
+  if (mWrapAsDOMRequest) {
+    return DOMRequest::WrapObject(aCx, aGivenProto);
   }
-
-  ProgressEventInit init;
-  init.mBubbles = false;
-  init.mCancelable = false;
-  init.mLengthComputable = false;
-  init.mLoaded = aLoaded;
-  init.mTotal = aTotal;
-
-  RefPtr<ProgressEvent> event =
-    ProgressEvent::Constructor(this, NS_LITERAL_STRING("progress"), init);
-  DispatchTrustedEvent(event);
+  return IDBFileRequestBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

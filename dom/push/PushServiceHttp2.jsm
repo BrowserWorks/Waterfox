@@ -17,13 +17,10 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/IndexedDBHelper.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 
 const {
   PushCrypto,
   concatArray,
-  getCryptoParams,
 } = Cu.import("resource://gre/modules/PushCrypto.jsm");
 
 this.EXPORTED_SYMBOLS = ["PushServiceHttp2"];
@@ -36,7 +33,7 @@ XPCOMUtils.defineLazyGetter(this, "console", () => {
   });
 });
 
-const prefs = new Preferences("dom.push.");
+const prefs = Services.prefs.getBranch("dom.push.");
 
 const kPUSHHTTP2DB_DB_NAME = "pushHttp2";
 const kPUSHHTTP2DB_DB_VERSION = 5; // Change this if the IndexedDB format changes
@@ -157,13 +154,12 @@ PushChannelListener.prototype = {
         encryption: getHeaderField(aRequest, "Encryption"),
         encoding: getHeaderField(aRequest, "Content-Encoding"),
       };
-      let cryptoParams = getCryptoParams(headers);
       let msg = concatArray(this._message);
 
       this._mainListener._pushService._pushChannelOnStop(this._mainListener.uri,
                                                          this._ackUri,
-                                                         msg,
-                                                         cryptoParams);
+                                                         headers,
+                                                         msg);
     }
   }
 };
@@ -260,7 +256,7 @@ SubscriptionListener.prototype = {
     var statusCode = aRequest.QueryInterface(Ci.nsIHttpChannel).responseStatus;
 
     if (Math.floor(statusCode / 100) == 5) {
-      if (this._subInfo.retries < prefs.get("http2.maxRetries")) {
+      if (this._subInfo.retries < prefs.getIntPref("http2.maxRetries")) {
         this._subInfo.retries++;
         var retryAfter = retryAfterParser(aRequest);
         this._retryTimeoutID = setTimeout(_ =>
@@ -314,7 +310,7 @@ SubscriptionListener.prototype = {
       return;
     }
     try {
-      let uriTry = Services.io.newURI(subscriptionUri, null, null);
+      let uriTry = Services.io.newURI(subscriptionUri);
     } catch (e) {
       console.error("onStopRequest: Invalid subscription URI",
         subscriptionUri);
@@ -334,7 +330,6 @@ SubscriptionListener.prototype = {
       ctime: Date.now(),
     });
 
-    Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_HTTP2_TIME").add(Date.now() - this._ctime);
     this._resolve(reply);
   },
 
@@ -436,7 +431,7 @@ this.PushServiceHttp2 = {
 
   validServerURI: function(serverURI) {
     if (serverURI.scheme == "http") {
-      return !!prefs.get("testing.allowInsecureServerURL");
+      return !!prefs.getBoolPref("testing.allowInsecureServerURL", false);
     }
     return serverURI.scheme == "https";
   },
@@ -586,14 +581,14 @@ this.PushServiceHttp2 = {
   _retryAfterBackoff: function(aSubscriptionUri, retryAfter) {
     console.debug("retryAfterBackoff()");
 
-    var resetRetryCount = prefs.get("http2.reset_retry_count_after_ms");
+    var resetRetryCount = prefs.getIntPref("http2.reset_retry_count_after_ms");
     // If it was running for some time, reset retry counter.
     if ((Date.now() - this._conns[aSubscriptionUri].lastStartListening) >
         resetRetryCount) {
       this._conns[aSubscriptionUri].countUnableToConnect = 0;
     }
 
-    let maxRetries = prefs.get("http2.maxRetries");
+    let maxRetries = prefs.getIntPref("http2.maxRetries");
     if (this._conns[aSubscriptionUri].countUnableToConnect >= maxRetries) {
       this._shutdownSubscription(aSubscriptionUri);
       this._resubscribe(aSubscriptionUri);
@@ -608,7 +603,7 @@ this.PushServiceHttp2 = {
       return;
     }
 
-    retryAfter = prefs.get("http2.retryInterval") *
+    retryAfter = prefs.getIntPref("http2.retryInterval") *
       Math.pow(2, this._conns[aSubscriptionUri].countUnableToConnect);
 
     retryAfter = retryAfter * (0.8 + Math.random() * 0.4); // add +/-20%.
@@ -784,11 +779,11 @@ this.PushServiceHttp2 = {
     }
   },
 
-  _pushChannelOnStop: function(aUri, aAckUri, aMessage, cryptoParams) {
+  _pushChannelOnStop: function(aUri, aAckUri, aHeaders, aMessage) {
     console.debug("pushChannelOnStop()");
 
     this._mainPushService.receivedPushMessage(
-      aUri, "", aMessage, cryptoParams, record => {
+      aUri, "", aHeaders, aMessage, record => {
         // Always update the stored record.
         return record;
       }

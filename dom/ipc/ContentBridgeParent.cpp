@@ -21,8 +21,8 @@ NS_IMPL_ISUPPORTS(ContentBridgeParent,
                   nsIContentParent,
                   nsIObserver)
 
-ContentBridgeParent::ContentBridgeParent(Transport* aTransport)
-  : mTransport(aTransport)
+ContentBridgeParent::ContentBridgeParent()
+  : mIsForJSPlugin(false)
 {}
 
 ContentBridgeParent::~ContentBridgeParent()
@@ -36,18 +36,19 @@ ContentBridgeParent::ActorDestroy(ActorDestroyReason aWhy)
   if (os) {
     os->RemoveObserver(this, "content-child-shutdown");
   }
-  MessageLoop::current()->PostTask(NewRunnableMethod(this, &ContentBridgeParent::DeferredDestroy));
+  MessageLoop::current()->PostTask(
+    NewRunnableMethod("dom::ContentBridgeParent::DeferredDestroy",
+                      this,
+                      &ContentBridgeParent::DeferredDestroy));
 }
 
 /*static*/ ContentBridgeParent*
-ContentBridgeParent::Create(Transport* aTransport, ProcessId aOtherPid)
+ContentBridgeParent::Create(Endpoint<PContentBridgeParent>&& aEndpoint)
 {
-  RefPtr<ContentBridgeParent> bridge =
-    new ContentBridgeParent(aTransport);
+  RefPtr<ContentBridgeParent> bridge = new ContentBridgeParent();
   bridge->mSelfRef = bridge;
 
-  DebugOnly<bool> ok = bridge->Open(aTransport, aOtherPid,
-                                    XRE_GetIOMessageLoop());
+  DebugOnly<bool> ok = aEndpoint.Bind(bridge);
   MOZ_ASSERT(ok);
 
   nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
@@ -69,7 +70,7 @@ ContentBridgeParent::DeferredDestroy()
   // |this| was just destroyed, hands off
 }
 
-bool
+mozilla::ipc::IPCResult
 ContentBridgeParent::RecvSyncMessage(const nsString& aMsg,
                                      const ClonedMessageData& aData,
                                      InfallibleTArray<jsipc::CpowEntry>&& aCpows,
@@ -80,7 +81,7 @@ ContentBridgeParent::RecvSyncMessage(const nsString& aMsg,
                                            aPrincipal, aRetvals);
 }
 
-bool
+mozilla::ipc::IPCResult
 ContentBridgeParent::RecvAsyncMessage(const nsString& aMsg,
                                       InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                       const IPC::Principal& aPrincipal,
@@ -90,41 +91,50 @@ ContentBridgeParent::RecvAsyncMessage(const nsString& aMsg,
                                             aPrincipal, aData);
 }
 
-PBlobParent*
-ContentBridgeParent::SendPBlobConstructor(PBlobParent* actor,
-                                          const BlobConstructorParams& params)
-{
-  return PContentBridgeParent::SendPBlobConstructor(actor, params);
-}
-
 PBrowserParent*
 ContentBridgeParent::SendPBrowserConstructor(PBrowserParent* aActor,
                                              const TabId& aTabId,
+                                             const TabId& aSameTabGroupAs,
                                              const IPCTabContext& aContext,
                                              const uint32_t& aChromeFlags,
                                              const ContentParentId& aCpID,
-                                             const bool& aIsForApp,
                                              const bool& aIsForBrowser)
 {
   return PContentBridgeParent::SendPBrowserConstructor(aActor,
                                                        aTabId,
+                                                       aSameTabGroupAs,
                                                        aContext,
                                                        aChromeFlags,
                                                        aCpID,
-                                                       aIsForApp,
                                                        aIsForBrowser);
 }
 
-PBlobParent*
-ContentBridgeParent::AllocPBlobParent(const BlobConstructorParams& aParams)
+PParentToChildStreamParent*
+ContentBridgeParent::SendPParentToChildStreamConstructor(PParentToChildStreamParent* aActor)
 {
-  return nsIContentParent::AllocPBlobParent(aParams);
+  return PContentBridgeParent::SendPParentToChildStreamConstructor(aActor);
+}
+
+PIPCBlobInputStreamParent*
+ContentBridgeParent::SendPIPCBlobInputStreamConstructor(PIPCBlobInputStreamParent* aActor,
+                                                        const nsID& aID,
+                                                        const uint64_t& aSize)
+{
+  return
+    PContentBridgeParent::SendPIPCBlobInputStreamConstructor(aActor, aID, aSize);
+}
+
+PIPCBlobInputStreamParent*
+ContentBridgeParent::AllocPIPCBlobInputStreamParent(const nsID& aID,
+                                                    const uint64_t& aSize)
+{
+  return nsIContentParent::AllocPIPCBlobInputStreamParent(aID, aSize);
 }
 
 bool
-ContentBridgeParent::DeallocPBlobParent(PBlobParent* aActor)
+ContentBridgeParent::DeallocPIPCBlobInputStreamParent(PIPCBlobInputStreamParent* aActor)
 {
-  return nsIContentParent::DeallocPBlobParent(aActor);
+  return nsIContentParent::DeallocPIPCBlobInputStreamParent(aActor);
 }
 
 mozilla::jsipc::PJavaScriptParent *
@@ -141,17 +151,17 @@ ContentBridgeParent::DeallocPJavaScriptParent(PJavaScriptParent *parent)
 
 PBrowserParent*
 ContentBridgeParent::AllocPBrowserParent(const TabId& aTabId,
+                                         const TabId& aSameTabGroupAs,
                                          const IPCTabContext &aContext,
                                          const uint32_t& aChromeFlags,
                                          const ContentParentId& aCpID,
-                                         const bool& aIsForApp,
                                          const bool& aIsForBrowser)
 {
   return nsIContentParent::AllocPBrowserParent(aTabId,
+                                               aSameTabGroupAs,
                                                aContext,
                                                aChromeFlags,
                                                aCpID,
-                                               aIsForApp,
                                                aIsForBrowser);
 }
 
@@ -166,7 +176,8 @@ ContentBridgeParent::NotifyTabDestroyed()
 {
   int32_t numLiveTabs = ManagedPBrowserParent().Count();
   if (numLiveTabs == 1) {
-    MessageLoop::current()->PostTask(NewRunnableMethod(this, &ContentBridgeParent::Close));
+    MessageLoop::current()->PostTask(NewRunnableMethod(
+      "dom::ContentBridgeParent::Close", this, &ContentBridgeParent::Close));
   }
 }
 
@@ -191,6 +202,48 @@ ContentBridgeParent::Observe(nsISupports* aSubject,
     Close();
   }
   return NS_OK;
+}
+
+PFileDescriptorSetParent*
+ContentBridgeParent::SendPFileDescriptorSetConstructor(const FileDescriptor& aFD)
+{
+  return PContentBridgeParent::SendPFileDescriptorSetConstructor(aFD);
+}
+
+PFileDescriptorSetParent*
+ContentBridgeParent::AllocPFileDescriptorSetParent(const FileDescriptor& aFD)
+{
+  return nsIContentParent::AllocPFileDescriptorSetParent(aFD);
+}
+
+bool
+ContentBridgeParent::DeallocPFileDescriptorSetParent(PFileDescriptorSetParent* aActor)
+{
+  return nsIContentParent::DeallocPFileDescriptorSetParent(aActor);
+}
+
+PChildToParentStreamParent*
+ContentBridgeParent::AllocPChildToParentStreamParent()
+{
+  return nsIContentParent::AllocPChildToParentStreamParent();
+}
+
+bool
+ContentBridgeParent::DeallocPChildToParentStreamParent(PChildToParentStreamParent* aActor)
+{
+  return nsIContentParent::DeallocPChildToParentStreamParent(aActor);
+}
+
+PParentToChildStreamParent*
+ContentBridgeParent::AllocPParentToChildStreamParent()
+{
+  return nsIContentParent::AllocPParentToChildStreamParent();
+}
+
+bool
+ContentBridgeParent::DeallocPParentToChildStreamParent(PParentToChildStreamParent* aActor)
+{
+  return nsIContentParent::DeallocPParentToChildStreamParent(aActor);
 }
 
 } // namespace dom

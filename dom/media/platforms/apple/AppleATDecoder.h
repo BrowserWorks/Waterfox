@@ -9,7 +9,6 @@
 
 #include <AudioToolbox/AudioToolbox.h>
 #include "PlatformDecoderModule.h"
-#include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Vector.h"
 #include "nsIThread.h"
 #include "AudioConverter.h"
@@ -17,20 +16,18 @@
 namespace mozilla {
 
 class TaskQueue;
-class MediaDataDecoderCallback;
 
 class AppleATDecoder : public MediaDataDecoder {
 public:
   AppleATDecoder(const AudioInfo& aConfig,
-                 TaskQueue* aTaskQueue,
-                 MediaDataDecoderCallback* aCallback);
-  virtual ~AppleATDecoder();
+                 TaskQueue* aTaskQueue);
+  ~AppleATDecoder();
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<DecodePromise> Drain() override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
 
   const char* GetDescriptionName() const override
   {
@@ -46,9 +43,9 @@ public:
   // the magic cookie property.
   bool mFileStreamError;
 
-private:
   const RefPtr<TaskQueue> mTaskQueue;
-  MediaDataDecoderCallback* mCallback;
+
+private:
   AudioConverterRef mConverter;
   AudioStreamBasicDescription mOutputFormat;
   UInt32 mFormatID;
@@ -56,19 +53,21 @@ private:
   nsTArray<RefPtr<MediaRawData>> mQueuedSamples;
   UniquePtr<AudioConfig::ChannelLayout> mChannelLayout;
   UniquePtr<AudioConverter> mAudioConverter;
-  Atomic<bool> mIsFlushing;
+  DecodedData mDecodedSamples;
 
-  void ProcessFlush();
-  void SubmitSample(MediaRawData* aSample);
-  nsresult DecodeSample(MediaRawData* aSample);
-  nsresult GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
-                                    const nsTArray<uint8_t>& aExtraData);
+  RefPtr<DecodePromise> ProcessDecode(MediaRawData* aSample);
+  RefPtr<FlushPromise> ProcessFlush();
+  void ProcessShutdown();
+  MediaResult DecodeSample(MediaRawData* aSample);
+  MediaResult GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
+                                       const nsTArray<uint8_t>& aExtraData);
   // Setup AudioConverter once all information required has been gathered.
   // Will return NS_ERROR_NOT_INITIALIZED if more data is required.
-  nsresult SetupDecoder(MediaRawData* aSample);
+  MediaResult SetupDecoder(MediaRawData* aSample);
   nsresult GetImplicitAACMagicCookie(const MediaRawData* aSample);
   nsresult SetupChannelLayout();
   uint32_t mParsedFramesForAACMagicCookie;
+  bool mErrored;
 };
 
 } // namespace mozilla

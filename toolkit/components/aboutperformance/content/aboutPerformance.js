@@ -8,12 +8,11 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-const { AddonManager } = Cu.import("resource://gre/modules/AddonManager.jsm", {});
-const { AddonWatcher } = Cu.import("resource://gre/modules/AddonWatcher.jsm", {});
 const { PerformanceStats } = Cu.import("resource://gre/modules/PerformanceStats.jsm", {});
 const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 const { ObjectUtils } = Cu.import("resource://gre/modules/ObjectUtils.jsm", {});
+const { Memory } = Cu.import("resource://gre/modules/Memory.jsm", {});
+const { DownloadUtils } = Cu.import("resource://gre/modules/DownloadUtils.jsm", {});
 
 // about:performance observes notifications on this topic.
 // if a notification is sent, this causes the page to be updated immediately,
@@ -70,7 +69,7 @@ const MODE_GLOBAL = "global";
 const MODE_RECENT = "recent";
 
 let tabFinder = {
-  update: function() {
+  update() {
     this._map = new Map();
     let windows = Services.wm.getEnumerator("navigator:browser");
     while (windows.hasMoreElements()) {
@@ -95,16 +94,16 @@ let tabFinder = {
    * @return {{tabbrowser: <xul:tabbrowser>, tab: <xul.tab>}} The
    * tabbrowser and tab if the latter could be found.
    */
-  get: function(id) {
+  get(id) {
     let browser = this._map.get(id);
     if (!browser) {
       return null;
     }
     let tabbrowser = browser.getTabBrowser();
-    return {tabbrowser, tab:tabbrowser.getTabForBrowser(browser)};
+    return {tabbrowser, tab: tabbrowser.getTabForBrowser(browser)};
   },
 
-  getAny: function(ids) {
+  getAny(ids) {
     for (let id of ids) {
       let result = this.get(id);
       if (result) {
@@ -130,7 +129,7 @@ let tabFinder = {
 function wait(ms = 0) {
   try {
     let resolve;
-    let p = new Promise(resolve_ => {resolve = resolve_});
+    let p = new Promise(resolve_ => { resolve = resolve_ });
     setTimeout(resolve, ms);
     return p;
   } catch (e) {
@@ -140,12 +139,12 @@ function wait(ms = 0) {
 }
 
 /**
- * The performance of a webpage or an add-on between two instants.
+ * The performance of a webpage between two instants.
  *
  * Clients should call `promiseInit()` before using the methods of this object.
  *
  * @param {PerformanceDiff} The underlying performance data.
- * @param {"addons"|"webpages"} The kind of delta represented by this object.
+ * @param {"webpages"} The kind of delta represented by this object.
  * @param {Map<groupId, timestamp>} ageMap A map containing the oldest known
  *  appearance of each groupId, used to determine how long we have been monitoring
  *  this item.
@@ -153,12 +152,12 @@ function wait(ms = 0) {
  *  item has already triggered in the past.
  */
 function Delta(diff, kind, snapshotDate, ageMap, alertMap) {
-  if (kind != "addons" && kind != "webpages") {
+  if (kind != "webpages") {
     throw new TypeError(`Unknown kind: ${kind}`);
   }
 
   /**
-   * Either "addons" or "webpages".
+   * We only understand "webpages" right now.
    */
   this.kind = kind;
 
@@ -169,7 +168,7 @@ function Delta(diff, kind, snapshotDate, ageMap, alertMap) {
   this.diff = diff;
 
   /**
-   * A key unique to the item (webpage or add-on), shared by successive
+   * A key unique to the item (webpage), shared by successive
    * instances of `Delta`.
    * @type{string}
    */
@@ -256,15 +255,13 @@ Delta.prototype = {
   /**
    * Initialize, asynchronously.
    */
-  promiseInit: function() {
+  promiseInit() {
     if (this.kind == "webpages") {
       return this._initWebpage();
-    } else if (this.kind == "addons") {
-      return this._promiseInitAddon();
     }
     throw new TypeError();
   },
-  _initWebpage: function() {
+  _initWebpage() {
     this._initialized = true;
     let found = tabFinder.getAny(this.diff.windowIds);
     if (!found || found.tab.linkedBrowser.contentTitle == null) {
@@ -276,25 +273,7 @@ Delta.prototype = {
     this.fullName = this.diff.names.join(", ");
     this._show = true;
   },
-  _promiseInitAddon: Task.async(function*() {
-    let found = yield (new Promise(resolve =>
-      AddonManager.getAddonByID(this.diff.addonId, a => {
-        if (a) {
-          this.readableName = a.name;
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      })));
-
-    this._initialized = true;
-
-    // If the add-on manager doesn't know about an add-on, it's
-    // probably not a real add-on.
-    this._show = found;
-    this.fullName = this.diff.addonId;
-  }),
-  toString: function() {
+  toString() {
     return `[Delta] ${this.diff.key} => ${this.readableName}, ${this.fullName}`;
   }
 };
@@ -410,15 +389,15 @@ var State = {
    *
    * @return {Promise}
    */
-  update: Task.async(function*() {
+  async update() {
     // If the buffer is empty, add one value for bootstraping purposes.
     if (this._buffer.length == 0) {
       if (this._oldest) {
         throw new Error("Internal Error, we shouldn't have a `_oldest` value yet.");
       }
-      this._latest = this._oldest = yield this._monitor.promiseSnapshot();
+      this._latest = this._oldest = await this._monitor.promiseSnapshot();
       this._buffer.push(this._oldest);
-      yield wait(BUFFER_SAMPLING_RATE_MS * 1.1);
+      await wait(BUFFER_SAMPLING_RATE_MS * 1.1);
     }
 
 
@@ -428,7 +407,7 @@ var State = {
     let latestInBuffer = this._buffer[this._buffer.length - 1];
     let deltaT = now - latestInBuffer.date;
     if (deltaT > BUFFER_SAMPLING_RATE_MS) {
-      this._latest = yield this._monitor.promiseSnapshot();
+      this._latest = await this._monitor.promiseSnapshot();
       this._buffer.push(this._latest);
     }
 
@@ -437,32 +416,31 @@ var State = {
     if (oldestInBuffer.date + BUFFER_DURATION_MS < this._latest.date) {
       this._buffer.shift();
     }
-  }),
+  },
 
   /**
    * @return {Promise}
    */
-  promiseDeltaSinceStartOfTime: function() {
+  promiseDeltaSinceStartOfTime() {
     return this._promiseDeltaSince(this._oldest);
   },
 
   /**
    * @return {Promise}
    */
-  promiseDeltaSinceStartOfBuffer: function() {
+  promiseDeltaSinceStartOfBuffer() {
     return this._promiseDeltaSince(this._buffer[0]);
   },
 
   /**
    * @return {Promise}
    * @resolve {{
-   *  addons: Array<Delta>,
    *  webpages: Array<Delta>,
    *  deltas: Set<Delta key>,
    *  duration: number of milliseconds
    * }}
    */
-  _promiseDeltaSince: Task.async(function*(oldest) {
+  async _promiseDeltaSince(oldest) {
     let current = this._latest;
     if (!oldest) {
       throw new TypeError();
@@ -482,16 +460,15 @@ var State = {
     let cleanedUpAlerts = new Map();
 
     let result = {
-      addons: [],
       webpages: [],
       deltas: new Set(),
       duration: current.date - oldest.date
     };
 
-    for (let kind of ["webpages", "addons"]) {
+    for (let kind of ["webpages"]) {
       for (let [key, value] of current[kind]) {
         let item = ObjectUtils.strict(new Delta(value.subtract(oldest[kind].get(key)), kind, current.date, oldFirstSeen, oldAlerts));
-        yield item.promiseInit();
+        await item.promiseInit();
 
         if (!item.show) {
           continue;
@@ -509,7 +486,7 @@ var State = {
     this._firstSeen = cleanedUpFirstSeen;
     this._alerts = cleanedUpAlerts;
     return result;
-  }),
+  },
 };
 
 var View = {
@@ -526,10 +503,10 @@ var View = {
      * @return {null} If the `deltaKey` doesn't have a component cached yet.
      * Otherwise, the value stored with `set`.
      */
-    get: function(deltaKey) {
+    get(deltaKey) {
       return this._map.get(deltaKey);
     },
-    set: function(deltaKey, value) {
+    set(deltaKey, value) {
       this._map.set(deltaKey, value);
     },
     /**
@@ -537,7 +514,7 @@ var View = {
      *
      * @param {Set} set a set of deltaKey.
      */
-    trimTo: function(set) {
+    trimTo(set) {
       let remove = [];
       for (let key of this._map.keys()) {
         if (!set.has(key)) {
@@ -555,19 +532,15 @@ var View = {
    * @param {Array<PerformanceDiff>} subset The items to display. They will
    * be displayed in the order of `subset`.
    * @param {string} id The id of the DOM element that will contain the items.
-   * @param {string} nature The nature of the subset. One of "addons", "webpages" or "system".
+   * @param {string} nature The nature of the subset. One of "webpages" or "system".
    * @param {string} currentMode The current display mode. One of MODE_GLOBAL or MODE_RECENT.
    */
-  updateCategory: function(subset, id, nature, currentMode) {
+  updateCategory(subset, id, nature, currentMode) {
     subset = subset.slice().sort(Delta.revCompare);
 
-    let watcherAlerts = null;
-    if (nature == "addons") {
-      watcherAlerts = AddonWatcher.alerts;
-    }
 
     // Grab everything from the DOM before cleaning up
-    let eltContainer = this._setupStructure(id);
+    this._setupStructure(id);
 
     // An array of `cachedElements` that need to be added
     let toAdd = [];
@@ -579,19 +552,10 @@ var View = {
       toAdd.push(cachedElements);
       cachedElements.eltTitle.textContent = delta.readableName;
       cachedElements.eltName.textContent = `Full name: ${delta.fullName}.`;
-      cachedElements.eltLoaded.textContent = `Measure start: ${Math.round(delta.age/1000)} seconds ago.`
+      cachedElements.eltLoaded.textContent = `Measure start: ${Math.round(delta.age / 1000)} seconds ago.`
 
-      let processes = delta.diff.processes.map(proc => `${proc.processId} (${proc.isChildProcess?"child":"parent"})`);
+      let processes = delta.diff.processes.map(proc => `${proc.processId} (${proc.isChildProcess ? "child" : "parent"})`);
       cachedElements.eltProcess.textContent = `Processes: ${processes.join(", ")}`;
-      let jankSuffix = "";
-      if (watcherAlerts) {
-        let deltaAlerts = watcherAlerts.get(delta.diff.addonId);
-        if (deltaAlerts) {
-          if (deltaAlerts.occurrences) {
-            jankSuffix = ` (${deltaAlerts.occurrences} alerts)`;
-          }
-        }
-      }
 
       let eltImpact = cachedElements.eltImpact;
       if (currentMode == MODE_RECENT) {
@@ -604,10 +568,10 @@ var View = {
           eltImpact.textContent = ` is currently considerably slowing down ${BRAND_NAME}.`;
         }
 
-        cachedElements.eltFPS.textContent = `Impact on framerate: ${delta.diff.jank.longestDuration + 1}/${delta.diff.jank.durations.length}${jankSuffix}.`;
-        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT/10)}%.`;
-        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT/10)}%.`;
-        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT/10)}%.`;
+        cachedElements.eltFPS.textContent = `Impact on framerate: ${delta.diff.jank.longestDuration + 1}/${delta.diff.jank.durations.length}`;
+        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime / delta.diff.deltaT / 10)}%.`;
+        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime / delta.diff.deltaT / 10)}%.`;
+        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime / delta.diff.deltaT / 10)}%.`;
       } else {
         if (delta.alerts.length == 0) {
           eltImpact.textContent = " has performed well so far.";
@@ -642,21 +606,20 @@ var View = {
             }
 
             eltImpact.textContent = ` ${describeFrequency} ${describeImpact}`;
-            cachedElements.eltFPS.textContent = `Impact on framerate: ${delta.alerts[1] || 0} high-impacts, ${delta.alerts[0] || 0} medium-impact${jankSuffix}.`;
+            cachedElements.eltFPS.textContent = `Impact on framerate: ${delta.alerts[1] || 0} high-impacts, ${delta.alerts[0] || 0} medium-impact.`;
           }
           cachedElements.eltRoot.setAttribute("impact", Math.round(impact));
         }
 
-        let result = delta.diff.jank.totalCPUTime/delta.diff.deltaT;
-        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT/10)}% (total ${delta.diff.jank.totalUserTime}ms).`;
-        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT/10)}% (total ${delta.diff.jank.totalSystemTime}ms).`;
-        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT/10)}% (total ${delta.diff.cpow.totalCPOWTime}ms).`;
+        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime / delta.diff.deltaT / 10)}% (total ${delta.diff.jank.totalUserTime}ms).`;
+        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime / delta.diff.deltaT / 10)}% (total ${delta.diff.jank.totalSystemTime}ms).`;
+        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime / delta.diff.deltaT / 10)}% (total ${delta.diff.cpow.totalCPOWTime}ms).`;
       }
     }
     this._insertElements(toAdd, id);
   },
 
-  _insertElements: function(elements, id) {
+  _insertElements(elements, id) {
     let eltContainer = document.getElementById(id);
     eltContainer.classList.remove("measuring");
     eltContainer.eltVisibleContent.innerHTML = "";
@@ -680,7 +643,7 @@ var View = {
       eltContainer.textContent = "Nothing";
     }
   },
-  _setupStructure: function(id) {
+  _setupStructure(id) {
     let eltContainer = document.getElementById(id);
     if (!eltContainer.eltVisibleContent) {
       eltContainer.eltVisibleContent = document.createElement("ul");
@@ -711,7 +674,7 @@ var View = {
     return eltContainer;
   },
 
-  _grabOrCreateElements: function(delta, nature) {
+  _grabOrCreateElements(delta, nature) {
     let cachedElements = this.DOMCache.get(delta.key);
     if (cachedElements) {
       if (cachedElements.eltRoot.parentElement) {
@@ -757,48 +720,7 @@ var View = {
       });
 
       // Add buttons
-      if (nature == "addons") {
-        eltSpan.appendChild(document.createElement("br"));
-        let eltDisable = document.createElement("button");
-        eltDisable.textContent = "Disable";
-        eltSpan.appendChild(eltDisable);
-
-        let eltUninstall = document.createElement("button");
-        eltUninstall.textContent = "Uninstall";
-        eltSpan.appendChild(eltUninstall);
-
-        let eltRestart = document.createElement("button");
-        eltRestart.textContent = `Restart ${BRAND_NAME} to apply your changes.`
-        eltRestart.classList.add("hidden");
-        eltSpan.appendChild(eltRestart);
-
-        eltRestart.addEventListener("click", () => {
-          Services.startup.quit(Services.startup.eForceQuit | Services.startup.eRestart);
-        });
-        AddonManager.getAddonByID(delta.diff.addonId, addon => {
-          eltDisable.addEventListener("click", () => {
-            addon.userDisabled = true;
-            if (addon.pendingOperations == addon.PENDING_NONE) {
-              // Restartless add-on is now disabled.
-              return;
-            }
-            eltDisable.classList.add("hidden");
-            eltUninstall.classList.add("hidden");
-            eltRestart.classList.remove("hidden");
-          });
-
-          eltUninstall.addEventListener("click", () => {
-            addon.uninstall();
-            if (addon.pendingOperations == addon.PENDING_NONE) {
-              // Restartless add-on is now disabled.
-              return;
-            }
-            eltDisable.classList.add("hidden");
-            eltUninstall.classList.add("hidden");
-            eltRestart.classList.remove("hidden");
-          });
-        });
-      } else if (nature == "webpages") {
+      if (nature == "webpages") {
         eltSpan.appendChild(document.createElement("br"));
 
         let eltCloseTab = document.createElement("button");
@@ -856,36 +778,36 @@ var View = {
 };
 
 var Control = {
-  init: function() {
+  init() {
     this._initAutorefresh();
     this._initDisplayMode();
   },
-  update: Task.async(function*() {
+  async update() {
     let mode = this._displayMode;
     if (this._autoRefreshInterval || !State._buffer[0]) {
       // Update the state only if we are not on pause.
-      yield State.update();
+      await State.update();
     }
-    yield wait(0);
-    let state = yield (mode == MODE_GLOBAL?
-      State.promiseDeltaSinceStartOfTime():
+    await wait(0);
+    let state = await (mode == MODE_GLOBAL ?
+      State.promiseDeltaSinceStartOfTime() :
       State.promiseDeltaSinceStartOfBuffer());
 
-    for (let category of ["webpages", "addons"]) {
-      yield wait(0);
-      yield View.updateCategory(state[category], category, category, mode);
+    for (let category of ["webpages"]) {
+      await wait(0);
+      await View.updateCategory(state[category], category, category, mode);
     }
-    yield wait(0);
+    await wait(0);
 
     // Make sure that we do not keep obsolete stuff around.
     View.DOMCache.trimTo(state.deltas);
 
-    yield wait(0);
+    await wait(0);
 
     // Inform watchers
     Services.obs.notifyObservers(null, UPDATE_COMPLETE_TOPIC, mode);
-  }),
-  _setOptions: function(options) {
+  },
+  _setOptions(options) {
     dump(`about:performance _setOptions ${JSON.stringify(options)}\n`);
     let eltRefresh = document.getElementById("check-autorefresh");
     if ((options.autoRefresh > 0) != eltRefresh.checked) {
@@ -896,7 +818,7 @@ var Control = {
       eltCheckRecent.click();
     }
   },
-  _initAutorefresh: function() {
+  _initAutorefresh() {
     let onRefreshChange = (shouldUpdateNow = false) => {
       if (eltRefresh.checked == !!this._autoRefreshInterval) {
         // Nothing to change.
@@ -919,7 +841,7 @@ var Control = {
     onRefreshChange(false);
   },
   _autoRefreshInterval: null,
-  _initDisplayMode: function() {
+  _initDisplayMode() {
     let onModeChange = (shouldUpdateNow) => {
       if (eltCheckRecent.checked) {
         this._displayMode = MODE_RECENT;
@@ -934,7 +856,7 @@ var Control = {
     let eltCheckRecent = document.getElementById("check-display-recent");
     let eltLabelRecent = document.getElementById("label-display-recent");
     eltCheckRecent.addEventListener("click", () => onModeChange(true));
-    eltLabelRecent.textContent = `Display only the latest ${Math.round(BUFFER_DURATION_MS/1000)}s`;
+    eltLabelRecent.textContent = `Display only the latest ${Math.round(BUFFER_DURATION_MS / 1000)}s`;
 
     onModeChange(false);
   },
@@ -942,7 +864,123 @@ var Control = {
   _displayMode: MODE_GLOBAL,
 };
 
-var go = Task.async(function*() {
+/**
+ * This functionality gets memory related information of sub-processes and
+ * updates the performance table regularly.
+ * If the page goes hidden, it also handles visibility change by not
+ * querying the content processes unnecessarily.
+ */
+var SubprocessMonitor = {
+  _timeout: null,
+
+  /**
+   * Init will start the process of updating the table if the page is not hidden,
+   * and set up an event listener for handling visibility changes.
+   */
+  init() {
+    if (!document.hidden) {
+      SubprocessMonitor.updateTable();
+    }
+    document.addEventListener("visibilitychange", SubprocessMonitor.handleVisibilityChange);
+  },
+
+  /**
+   * This function updates the table after an interval if the page is visible
+   * and clears the interval otherwise.
+   */
+  handleVisibilityChange() {
+    if (!document.hidden) {
+      SubprocessMonitor.queueUpdate();
+    } else {
+      clearTimeout(this._timeout);
+      this._timeout = null;
+    }
+  },
+
+  /**
+   * This function queues a timer to request the next summary using updateTable
+   * after some delay.
+   */
+  queueUpdate() {
+    this._timeout = setTimeout(() => this.updateTable(), UPDATE_INTERVAL_MS);
+  },
+
+  /**
+   * This is a helper function for updateTable, which updates a particular row.
+   * @param {<tr> node} row The row to be updated.
+   * @param {object} summaries The object with the updated RSS and USS values.
+   * @param {string} pid The pid represented by the row for which we update.
+   */
+  updateRow(row, summaries, pid) {
+    row.cells[0].textContent = pid;
+    let RSSval = DownloadUtils.convertByteUnits(summaries[pid].rss);
+    row.cells[1].textContent = RSSval.join(" ");
+    let USSval = DownloadUtils.convertByteUnits(summaries[pid].uss);
+    row.cells[2].textContent = USSval.join(" ");
+  },
+
+  /**
+   * This function adds a row to the subprocess-performance table for every new pid
+   * and populates and regularly updates it with RSS/USS measurements.
+   */
+  updateTable() {
+    if (!document.hidden) {
+      Memory.summary().then((summaries) => {
+        if (!(Object.keys(summaries).length)) {
+          // The summaries list was empty, which means we timed out getting
+          // the memory reports. We'll try again later.
+          SubprocessMonitor.queueUpdate();
+          return;
+        }
+        let resultTable = document.getElementById("subprocess-reports");
+        let recycle = [];
+        // We first iterate the table to check if summaries exist for rowPids,
+        // if yes, update them and delete the pid's summary or else hide the row
+        // for recycling it. Start at row 1 instead of 0 (to skip the header row).
+        for (let i = 1, row; (row = resultTable.rows[i]); i++) {
+          let rowPid = row.dataset.pid;
+          let summary = summaries[rowPid];
+          if (summary) {
+            // Now we update the values in the row, which is hardcoded for now,
+            // but we might want to make this more adaptable in the future.
+            SubprocessMonitor.updateRow(row, summaries, rowPid);
+            delete summaries[rowPid];
+          } else {
+            // Take this unnecessary row, hide it and stash it for potential re-use.
+            row.hidden = true;
+            recycle.push(row);
+          }
+        }
+        // For the remaining pids in summaries, we choose from the recyclable
+        // (hidden) nodes, and if they get exhausted, append a row to the table.
+        for (let pid in summaries) {
+          let row = recycle.pop();
+          if (row) {
+            row.hidden = false;
+          } else {
+            // We create a new row here, and set it to row
+            row = document.createElement("tr");
+            // Insert cell for pid
+            row.insertCell();
+            // Insert a cell for USS.
+            row.insertCell();
+            // Insert another cell for RSS.
+            row.insertCell();
+          }
+          row.dataset.pid = pid;
+          // Update the row and put it at the bottom
+          SubprocessMonitor.updateRow(row, summaries, pid);
+          resultTable.appendChild(row);
+        }
+      });
+      SubprocessMonitor.queueUpdate();
+    }
+  },
+};
+
+var go = async function() {
+
+  SubprocessMonitor.init();
   Control.init();
 
   // Setup a hook to allow tests to configure and control this page
@@ -951,10 +989,10 @@ var go = Task.async(function*() {
     Control._setOptions(options);
     Control.update();
   };
-  Services.obs.addObserver(testUpdate, TEST_DRIVER_TOPIC, false);
+  Services.obs.addObserver(testUpdate, TEST_DRIVER_TOPIC);
   window.addEventListener("unload", () => Services.obs.removeObserver(testUpdate, TEST_DRIVER_TOPIC));
 
-  yield Control.update();
-  yield wait(BUFFER_SAMPLING_RATE_MS * 1.1);
-  yield Control.update();
-});
+  await Control.update();
+  await wait(BUFFER_SAMPLING_RATE_MS * 1.1);
+  await Control.update();
+};

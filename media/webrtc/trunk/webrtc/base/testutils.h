@@ -24,7 +24,9 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <vector>
+#include "webrtc/base/arraysize.h"
 #include "webrtc/base/asyncsocket.h"
 #include "webrtc/base/common.h"
 #include "webrtc/base/gunit.h"
@@ -357,7 +359,7 @@ private:
   }
   void OnReadEvent(AsyncSocket* socket) {
     char data[64 * 1024];
-    int result = socket_->Recv(data, ARRAY_SIZE(data));
+    int result = socket_->Recv(data, arraysize(data), nullptr);
     if (result > 0) {
       recv_buffer_.insert(recv_buffer_.end(), data, data + result);
     }
@@ -370,7 +372,7 @@ private:
   void OnCloseEvent(AsyncSocket* socket, int error) {
   }
 
-  scoped_ptr<AsyncSocket> socket_;
+  std::unique_ptr<AsyncSocket> socket_;
   Buffer send_buffer_, recv_buffer_;
 };
 
@@ -413,52 +415,9 @@ class SocketTestServer : public sigslot::has_slots<> {
     clients_.push_back(new SocketTestClient(accepted));
   }
 
-  scoped_ptr<AsyncSocket> socket_;
+  std::unique_ptr<AsyncSocket> socket_;
   std::vector<SocketTestClient*> clients_;
 };
-
-///////////////////////////////////////////////////////////////////////////////
-// Generic Utilities
-///////////////////////////////////////////////////////////////////////////////
-
-inline bool ReadFile(const char* filename, std::string* contents) {
-  FILE* fp = fopen(filename, "rb");
-  if (!fp)
-    return false;
-  char buffer[1024*64];
-  size_t read;
-  contents->clear();
-  while ((read = fread(buffer, 1, sizeof(buffer), fp))) {
-    contents->append(buffer, read);
-  }
-  bool success = (0 != feof(fp));
-  fclose(fp);
-  return success;
-}
-
-// Look in parent dir for parallel directory.
-inline rtc::Pathname GetSiblingDirectory(
-    const std::string& parallel_dir) {
-  rtc::Pathname path = rtc::Filesystem::GetCurrentDirectory();
-  while (!path.empty()) {
-    rtc::Pathname potential_parallel_dir = path;
-    potential_parallel_dir.AppendFolder(parallel_dir);
-    if (rtc::Filesystem::IsFolder(potential_parallel_dir)) {
-      return potential_parallel_dir;
-    }
-
-    path.SetFolder(path.parent_folder());
-  }
-  return path;
-}
-
-inline rtc::Pathname GetGoogle3Directory() {
-  return GetSiblingDirectory("google3");
-}
-
-inline rtc::Pathname GetTalkDirectory() {
-  return GetSiblingDirectory("talk");
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Unittest predicates which are similar to STREQ, but for raw memory
@@ -502,25 +461,6 @@ inline AssertionResult CmpHelperMemEq(const char* expected_expression,
   return AssertionFailure(msg);
 }
 
-inline AssertionResult CmpHelperFileEq(const char* expected_expression,
-                                       const char* expected_length_expression,
-                                       const char* actual_filename,
-                                       const void* expected,
-                                       size_t expected_length,
-                                       const char* filename)
-{
-  std::string contents;
-  if (!ReadFile(filename, &contents)) {
-    Message msg;
-    msg << "File '" << filename << "' could not be read.";
-    return AssertionFailure(msg);
-  }
-  return CmpHelperMemEq(expected_expression, expected_length_expression,
-                        actual_filename, "",
-                        expected, expected_length,
-                        contents.c_str(), contents.size());
-}
-
 #define EXPECT_MEMEQ(expected, expected_length, actual, actual_length) \
   EXPECT_PRED_FORMAT4(::testing::CmpHelperMemEq, expected, expected_length, \
                       actual, actual_length)
@@ -529,42 +469,38 @@ inline AssertionResult CmpHelperFileEq(const char* expected_expression,
   ASSERT_PRED_FORMAT4(::testing::CmpHelperMemEq, expected, expected_length, \
                       actual, actual_length)
 
-#define EXPECT_FILEEQ(expected, expected_length, filename) \
-  EXPECT_PRED_FORMAT3(::testing::CmpHelperFileEq, expected, expected_length, \
-                      filename)
-
-#define ASSERT_FILEEQ(expected, expected_length, filename) \
-  ASSERT_PRED_FORMAT3(::testing::CmpHelperFileEq, expected, expected_length, \
-                      filename)
-
 ///////////////////////////////////////////////////////////////////////////////
 // Helpers for initializing constant memory with integers in a particular byte
 // order
 ///////////////////////////////////////////////////////////////////////////////
 
-#define BYTE_CAST(x) static_cast<uint8>((x) & 0xFF)
+#define BYTE_CAST(x) static_cast<uint8_t>((x)&0xFF)
 
 // Declare a N-bit integer as a little-endian sequence of bytes
-#define LE16(x) BYTE_CAST(((uint16)x) >>  0), BYTE_CAST(((uint16)x) >>  8)
+#define LE16(x) BYTE_CAST(((uint16_t)x) >> 0), BYTE_CAST(((uint16_t)x) >> 8)
 
-#define LE32(x) BYTE_CAST(((uint32)x) >>  0), BYTE_CAST(((uint32)x) >>  8), \
-                BYTE_CAST(((uint32)x) >> 16), BYTE_CAST(((uint32)x) >> 24)
+#define LE32(x) \
+  BYTE_CAST(((uint32_t)x) >> 0), BYTE_CAST(((uint32_t)x) >> 8), \
+      BYTE_CAST(((uint32_t)x) >> 16), BYTE_CAST(((uint32_t)x) >> 24)
 
-#define LE64(x) BYTE_CAST(((uint64)x) >>  0), BYTE_CAST(((uint64)x) >>  8), \
-                BYTE_CAST(((uint64)x) >> 16), BYTE_CAST(((uint64)x) >> 24), \
-                BYTE_CAST(((uint64)x) >> 32), BYTE_CAST(((uint64)x) >> 40), \
-                BYTE_CAST(((uint64)x) >> 48), BYTE_CAST(((uint64)x) >> 56)
+#define LE64(x) \
+  BYTE_CAST(((uint64_t)x) >> 0), BYTE_CAST(((uint64_t)x) >> 8),       \
+      BYTE_CAST(((uint64_t)x) >> 16), BYTE_CAST(((uint64_t)x) >> 24), \
+      BYTE_CAST(((uint64_t)x) >> 32), BYTE_CAST(((uint64_t)x) >> 40), \
+      BYTE_CAST(((uint64_t)x) >> 48), BYTE_CAST(((uint64_t)x) >> 56)
 
 // Declare a N-bit integer as a big-endian (Internet) sequence of bytes
-#define BE16(x) BYTE_CAST(((uint16)x) >>  8), BYTE_CAST(((uint16)x) >>  0)
+#define BE16(x) BYTE_CAST(((uint16_t)x) >> 8), BYTE_CAST(((uint16_t)x) >> 0)
 
-#define BE32(x) BYTE_CAST(((uint32)x) >> 24), BYTE_CAST(((uint32)x) >> 16), \
-                BYTE_CAST(((uint32)x) >>  8), BYTE_CAST(((uint32)x) >>  0)
+#define BE32(x) \
+  BYTE_CAST(((uint32_t)x) >> 24), BYTE_CAST(((uint32_t)x) >> 16), \
+      BYTE_CAST(((uint32_t)x) >> 8), BYTE_CAST(((uint32_t)x) >> 0)
 
-#define BE64(x) BYTE_CAST(((uint64)x) >> 56), BYTE_CAST(((uint64)x) >> 48), \
-                BYTE_CAST(((uint64)x) >> 40), BYTE_CAST(((uint64)x) >> 32), \
-                BYTE_CAST(((uint64)x) >> 24), BYTE_CAST(((uint64)x) >> 16), \
-                BYTE_CAST(((uint64)x) >>  8), BYTE_CAST(((uint64)x) >>  0)
+#define BE64(x) \
+  BYTE_CAST(((uint64_t)x) >> 56), BYTE_CAST(((uint64_t)x) >> 48),     \
+      BYTE_CAST(((uint64_t)x) >> 40), BYTE_CAST(((uint64_t)x) >> 32), \
+      BYTE_CAST(((uint64_t)x) >> 24), BYTE_CAST(((uint64_t)x) >> 16), \
+      BYTE_CAST(((uint64_t)x) >> 8), BYTE_CAST(((uint64_t)x) >> 0)
 
 // Declare a N-bit integer as a this-endian (local machine) sequence of bytes
 #ifndef BIG_ENDIAN

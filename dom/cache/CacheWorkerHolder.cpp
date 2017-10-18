@@ -19,23 +19,45 @@ using mozilla::dom::workers::WorkerPrivate;
 
 // static
 already_AddRefed<CacheWorkerHolder>
-CacheWorkerHolder::Create(WorkerPrivate* aWorkerPrivate)
+CacheWorkerHolder::Create(WorkerPrivate* aWorkerPrivate, Behavior aBehavior)
 {
-  MOZ_ASSERT(aWorkerPrivate);
+  MOZ_DIAGNOSTIC_ASSERT(aWorkerPrivate);
 
-  RefPtr<CacheWorkerHolder> workerHolder = new CacheWorkerHolder();
-  if (NS_WARN_IF(!workerHolder->HoldWorker(aWorkerPrivate))) {
+  RefPtr<CacheWorkerHolder> workerHolder = new CacheWorkerHolder(aBehavior);
+  if (NS_WARN_IF(!workerHolder->HoldWorker(aWorkerPrivate, Terminating))) {
     return nullptr;
   }
 
   return workerHolder.forget();
 }
 
+// static
+already_AddRefed<CacheWorkerHolder>
+CacheWorkerHolder::PreferBehavior(CacheWorkerHolder* aCurrentHolder,
+                                  Behavior aBehavior)
+{
+  if (!aCurrentHolder) {
+    return nullptr;
+  }
+
+  RefPtr<CacheWorkerHolder> orig = aCurrentHolder;
+  if (orig->GetBehavior() == aBehavior) {
+    return orig.forget();
+  }
+
+  RefPtr<CacheWorkerHolder> replace = Create(orig->mWorkerPrivate, aBehavior);
+  if (!replace) {
+    return orig.forget();
+  }
+
+  return replace.forget();
+}
+
 void
 CacheWorkerHolder::AddActor(ActorChild* aActor)
 {
   NS_ASSERT_OWNINGTHREAD(CacheWorkerHolder);
-  MOZ_ASSERT(aActor);
+  MOZ_DIAGNOSTIC_ASSERT(aActor);
   MOZ_ASSERT(!mActorList.Contains(aActor));
 
   mActorList.AppendElement(aActor);
@@ -53,11 +75,14 @@ void
 CacheWorkerHolder::RemoveActor(ActorChild* aActor)
 {
   NS_ASSERT_OWNINGTHREAD(CacheWorkerHolder);
-  MOZ_ASSERT(aActor);
+  MOZ_DIAGNOSTIC_ASSERT(aActor);
 
-  DebugOnly<bool> removed = mActorList.RemoveElement(aActor);
+#if defined(RELEASE_OR_BETA)
+  mActorList.RemoveElement(aActor);
+#else
+  MOZ_DIAGNOSTIC_ASSERT(mActorList.RemoveElement(aActor));
+#endif
 
-  MOZ_ASSERT(removed);
   MOZ_ASSERT(!mActorList.Contains(aActor));
 }
 
@@ -83,21 +108,23 @@ CacheWorkerHolder::Notify(Status aStatus)
   // Start the asynchronous destruction of our actors.  These will call back
   // into RemoveActor() once the actor is destroyed.
   for (uint32_t i = 0; i < mActorList.Length(); ++i) {
+    MOZ_DIAGNOSTIC_ASSERT(mActorList[i]);
     mActorList[i]->StartDestroy();
   }
 
   return true;
 }
 
-CacheWorkerHolder::CacheWorkerHolder()
-  : mNotified(false)
+CacheWorkerHolder::CacheWorkerHolder(Behavior aBehavior)
+  : WorkerHolder(aBehavior)
+  , mNotified(false)
 {
 }
 
 CacheWorkerHolder::~CacheWorkerHolder()
 {
   NS_ASSERT_OWNINGTHREAD(CacheWorkerHolder);
-  MOZ_ASSERT(mActorList.IsEmpty());
+  MOZ_DIAGNOSTIC_ASSERT(mActorList.IsEmpty());
 }
 
 } // namespace cache

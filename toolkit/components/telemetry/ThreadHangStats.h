@@ -13,12 +13,20 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/Vector.h"
+#include "mozilla/CombinedStacks.h"
 
 #include "nsString.h"
 #include "prinrval.h"
+#include "jsapi.h"
 
 namespace mozilla {
 namespace Telemetry {
+
+// This variable controls the maximum number of native hang stacks which may be
+// attached to a ping. This is due to how large native stacks can be. We want to
+// reduce the chance of a ping being discarded due to it exceeding the maximum
+// ping size.
+static const uint32_t kMaximumNativeHangStacks = 300;
 
 static const size_t kTimeHistogramBuckets = 8 * sizeof(PRIntervalTime);
 
@@ -45,12 +53,20 @@ public:
   void Add(PRIntervalTime aTime);
 };
 
+/* A native stack is a simple list of pointers, so rather than building a
+   wrapper type, we typdef the type here. */
+typedef std::vector<uintptr_t> NativeHangStack;
+
 /* HangStack stores an array of const char pointers,
    with optional internal storage for strings. */
 class HangStack
 {
 public:
   static const size_t sMaxInlineStorage = 8;
+
+  // The maximum depth for the native stack frames that we might collect.
+  // XXX: Consider moving this to a different object?
+  static const size_t sMaxNativeFrames = 150;
 
 private:
   typedef mozilla::Vector<const char*, sMaxInlineStorage> Impl;
@@ -61,12 +77,18 @@ private:
   mozilla::Vector<char, 0> mBuffer;
 
 public:
-  HangStack() { }
+  HangStack() {}
 
   HangStack(HangStack&& aOther)
     : mImpl(mozilla::Move(aOther.mImpl))
     , mBuffer(mozilla::Move(aOther.mBuffer))
   {
+  }
+
+  HangStack& operator=(HangStack&& aOther) {
+    mImpl = mozilla::Move(aOther.mImpl);
+    mBuffer = mozilla::Move(aOther.mBuffer);
+    return *this;
   }
 
   bool operator==(const HangStack& aOther) const {
@@ -142,29 +164,43 @@ public:
    hang, along with a time histogram of the hang times. */
 class HangHistogram : public TimeHistogram
 {
+public:
+  // Value used for mNativeStackIndex to represent the absence of a cached
+  // native stack.
+  static const uint32_t NO_NATIVE_STACK_INDEX = UINT32_MAX;
+
 private:
   static uint32_t GetHash(const HangStack& aStack);
 
   HangStack mStack;
-  // Native stack that corresponds to the pseudostack in mStack
-  HangStack mNativeStack;
+  // Cached index of the native stack in the mCombinedStacks list in the owning
+  // ThreadHangStats object. A default value of NO_NATIVE_STACK_INDEX means that
+  // the ThreadHangStats object which owns this HangHistogram doesn't have a
+  // cached CombinedStacks with this HangHistogram in it.
+  uint32_t mNativeStackIndex;
   // Use a hash to speed comparisons
   const uint32_t mHash;
   // Annotations attributed to this stack
   HangMonitor::HangAnnotationsVector mAnnotations;
+  // The name of the runnable on the current thread.
+  nsCString mRunnableName;
 
 public:
-  explicit HangHistogram(HangStack&& aStack)
+  explicit HangHistogram(HangStack&& aStack, const nsACString& aRunnableName)
     : mStack(mozilla::Move(aStack))
+    , mNativeStackIndex(NO_NATIVE_STACK_INDEX)
     , mHash(GetHash(mStack))
+    , mRunnableName(aRunnableName)
   {
   }
+
   HangHistogram(HangHistogram&& aOther)
     : TimeHistogram(mozilla::Move(aOther))
     , mStack(mozilla::Move(aOther.mStack))
-    , mNativeStack(mozilla::Move(aOther.mNativeStack))
+    , mNativeStackIndex(mozilla::Move(aOther.mNativeStackIndex))
     , mHash(mozilla::Move(aOther.mHash))
     , mAnnotations(mozilla::Move(aOther.mAnnotations))
+    , mRunnableName(aOther.mRunnableName)
   {
   }
   bool operator==(const HangHistogram& aOther) const;
@@ -175,11 +211,15 @@ public:
   const HangStack& GetStack() const {
     return mStack;
   }
-  HangStack& GetNativeStack() {
-    return mNativeStack;
+  uint32_t GetNativeStackIndex() const {
+    return mNativeStackIndex;
   }
-  const HangStack& GetNativeStack() const {
-    return mNativeStack;
+  void SetNativeStackIndex(uint32_t aIndex) {
+    MOZ_ASSERT(aIndex != NO_NATIVE_STACK_INDEX);
+    mNativeStackIndex = aIndex;
+  }
+  const char* GetRunnableName() const {
+    return mRunnableName.get();
   }
   const HangMonitor::HangAnnotationsVector& GetAnnotations() const {
     return mAnnotations;
@@ -199,6 +239,7 @@ public:
  - time histogram of all task run times
  - hang histograms of individual hangs
  - annotations for each hang
+ - combined native stacks for all hangs
 */
 class ThreadHangStats
 {
@@ -208,21 +249,39 @@ private:
 public:
   TimeHistogram mActivity;
   mozilla::Vector<HangHistogram, 4> mHangs;
+  uint32_t mNativeStackCnt;
+  CombinedStacks mCombinedStacks;
 
   explicit ThreadHangStats(const char* aName)
     : mName(aName)
+    , mNativeStackCnt(0)
+    , mCombinedStacks(Telemetry::kMaximumNativeHangStacks)
   {
   }
   ThreadHangStats(ThreadHangStats&& aOther)
     : mName(mozilla::Move(aOther.mName))
     , mActivity(mozilla::Move(aOther.mActivity))
     , mHangs(mozilla::Move(aOther.mHangs))
+    , mNativeStackCnt(aOther.mNativeStackCnt)
+    , mCombinedStacks(mozilla::Move(aOther.mCombinedStacks))
   {
+    aOther.mNativeStackCnt = 0;
   }
   const char* GetName() const {
     return mName.get();
   }
 };
+
+/**
+ * Reflects thread hang stats object as a JS object.
+ *
+ * @param JSContext* cx javascript context.
+ * @param JSContext* cx thread hang statistics.
+ *
+ * @return JSObject* Javascript reflection of the statistics.
+ */
+JSObject*
+CreateJSThreadHangStats(JSContext* cx, const Telemetry::ThreadHangStats& thread);
 
 } // namespace Telemetry
 } // namespace mozilla

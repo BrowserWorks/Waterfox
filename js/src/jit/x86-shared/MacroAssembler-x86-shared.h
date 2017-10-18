@@ -63,7 +63,7 @@ class MacroAssemblerX86Shared : public Assembler
         explicit Constant(const Constant<T>&) = delete;
     };
 
-    // Containers use SystemAllocPolicy since asm.js releases memory after each
+    // Containers use SystemAllocPolicy since wasm releases memory after each
     // function is compiled, and these need to live until after all functions
     // are compiled.
     using Double = Constant<double>;
@@ -103,12 +103,9 @@ class MacroAssemblerX86Shared : public Assembler
     bool asmMergeWith(const MacroAssemblerX86Shared& other);
 
     // Evaluate srcDest = minmax<isMax>{Float32,Double}(srcDest, second).
-    // Handle NaN specially if handleNaN is true.
-    void minMaxDouble(FloatRegister srcDest, FloatRegister second, bool handleNaN, bool isMax);
-    void minMaxFloat32(FloatRegister srcDest, FloatRegister second, bool handleNaN, bool isMax);
-
-    void outOfLineWasmTruncateCheck(FloatRegister input, MIRType fromType, MIRType toType,
-                                    bool isUnsigned, Label* rejoin);
+    // Checks for NaN if canBeNaN is true.
+    void minMaxDouble(FloatRegister srcDest, FloatRegister second, bool canBeNaN, bool isMax);
+    void minMaxFloat32(FloatRegister srcDest, FloatRegister second, bool canBeNaN, bool isMax);
 
     void compareDouble(DoubleCondition cond, FloatRegister lhs, FloatRegister rhs) {
         if (cond & DoubleConditionBitInvert)
@@ -551,7 +548,7 @@ class MacroAssemblerX86Shared : public Assembler
     void jump(const Address& addr) {
         jmp(Operand(addr));
     }
-    void jump(wasm::JumpTarget target) {
+    void jump(wasm::TrapDesc target) {
         jmp(target);
     }
 
@@ -811,6 +808,19 @@ class MacroAssemblerX86Shared : public Assembler
     }
     void convertDoubleToFloat32(FloatRegister src, FloatRegister dest) {
         vcvtsd2ss(src, dest, dest);
+    }
+
+    void loadInt32x4(const Address& addr, FloatRegister dest) {
+        vmovdqa(Operand(addr), dest);
+    }
+    void loadFloat32x4(const Address& addr, FloatRegister dest) {
+        vmovaps(Operand(addr), dest);
+    }
+    void storeInt32x4(FloatRegister src, const Address& addr) {
+        vmovdqa(src, Operand(addr));
+    }
+    void storeFloat32x4(FloatRegister src, const Address& addr) {
+        vmovaps(src, Operand(addr));
     }
 
     void convertFloat32x4ToInt32x4(FloatRegister src, FloatRegister dest) {
@@ -1214,10 +1224,8 @@ class MacroAssemblerX86Shared : public Assembler
     inline void clampIntToUint8(Register reg);
 
     bool maybeInlineDouble(double d, FloatRegister dest) {
-        uint64_t u = mozilla::BitwiseCast<uint64_t>(d);
-
         // Loading zero with xor is specially optimized in hardware.
-        if (u == 0) {
+        if (mozilla::IsPositiveZero(d)) {
             zeroDouble(dest);
             return true;
         }
@@ -1234,10 +1242,8 @@ class MacroAssemblerX86Shared : public Assembler
     }
 
     bool maybeInlineFloat(float f, FloatRegister dest) {
-        uint32_t u = mozilla::BitwiseCast<uint32_t>(f);
-
         // See comment above
-        if (u == 0) {
+        if (mozilla::IsPositiveZero(f)) {
             zeroFloat32(dest);
             return true;
         }
@@ -1307,13 +1313,6 @@ class MacroAssemblerX86Shared : public Assembler
 
             bind(&end);
         }
-    }
-
-    template <typename T1, typename T2>
-    void cmp32Set(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
-    {
-        cmp32(lhs, rhs);
-        emitSet(cond, dest);
     }
 
     // Emit a JMP that can be toggled to a CMP. See ToggleToJmp(), ToggleToCmp().

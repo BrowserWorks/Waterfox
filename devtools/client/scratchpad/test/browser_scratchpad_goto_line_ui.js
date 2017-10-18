@@ -7,11 +7,10 @@ function test()
 {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function browserLoad() {
-    gBrowser.selectedBrowser.removeEventListener("load", browserLoad, true);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
+  gBrowser.selectedBrowser.addEventListener("load", function () {
     openScratchpad(runTests);
-  }, true);
+  }, {capture: true, once: true});
 
   content.location = "data:text/html,<p>test the 'Jump to line' feature in Scratchpad";
 }
@@ -35,7 +34,7 @@ function runTests(aWindow, aScratchpad)
   is(editor.getCursor().line, 2, "line is correct");
 
   desiredValue = 2;
-  aWindow.goDoCommand("cmd_gotoLine");
+  EventUtils.synthesizeKey("J", {accelKey: true}, aWindow);
   is(editor.getCursor().line, 1, "line is correct (again)");
 
   editor.openDialog = oldPrompt;

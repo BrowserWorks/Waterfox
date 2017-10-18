@@ -8,12 +8,11 @@
 
 #include "EditAggregateTransaction.h"
 #include "mozilla/EditorUtils.h"
+#include "mozilla/Maybe.h"
 #include "nsIAbsorbingTransaction.h"
 #include "nsIDOMNode.h"
 #include "nsCOMPtr.h"
 #include "nsWeakPtr.h"
-#include "nsWeakReference.h"
-#include "nsAutoPtr.h"
 
 namespace mozilla {
 
@@ -26,14 +25,15 @@ class CompositionTransaction;
  * transactions it has absorbed.
  */
 
-class PlaceholderTransaction final : public EditAggregateTransaction,
-                                     public nsIAbsorbingTransaction,
-                                     public nsSupportsWeakReference
+class PlaceholderTransaction final
+ : public EditAggregateTransaction
+ , public nsIAbsorbingTransaction
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
 
-  PlaceholderTransaction();
+  PlaceholderTransaction(EditorBase& aEditorBase, nsIAtom* aName,
+                         Maybe<SelectionState>&& aSelState);
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(PlaceholderTransaction,
                                            EditAggregateTransaction)
@@ -46,9 +46,6 @@ public:
 
 // ------------ nsIAbsorbingTransaction -----------------------
 
-  NS_IMETHOD Init(nsIAtom* aName, SelectionState* aSelState,
-                  EditorBase* aEditorBase) override;
-
   NS_IMETHOD GetTxnName(nsIAtom** aName) override;
 
   NS_IMETHOD StartSelectionEquals(SelectionState* aSelState,
@@ -60,6 +57,11 @@ public:
                nsIAbsorbingTransaction* aForwardingAddress) override;
 
   NS_IMETHOD Commit() override;
+
+  NS_IMETHOD_(PlaceholderTransaction*) AsPlaceholderTransaction() override
+  {
+    return this;
+  }
 
   nsresult RememberEndingSelection();
 
@@ -79,12 +81,11 @@ protected:
   // at the end.  This is so that UndoTransaction() and RedoTransaction() can
   // restore the selection properly.
 
-  // Use a pointer because this is constructed before we exist.
-  nsAutoPtr<SelectionState> mStartSel;
+  SelectionState mStartSel;
   SelectionState mEndSel;
 
   // The editor for this transaction.
-  EditorBase* mEditorBase;
+  RefPtr<EditorBase> mEditorBase;
 };
 
 } // namespace mozilla

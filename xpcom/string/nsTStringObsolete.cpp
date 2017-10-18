@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsTArray.h"
+#include "nsASCIIMask.h"
+#include "mozilla/CheckedInt.h"
 
 /**
  * nsTString::Find
@@ -400,18 +402,40 @@ nsTString_CharT::SetCharAt( char16_t aChar, uint32_t aIndex )
 void
 nsTString_CharT::StripChars( const char* aSet )
 {
-  if (!EnsureMutable())
+  if (!StripChars(aSet, mozilla::fallible)) {
     AllocFailed(mLength);
+  }
+}
+
+bool
+nsTString_CharT::StripChars( const char* aSet, const fallible_t& )
+{
+  if (!EnsureMutable()) {
+    return false;
+  }
 
   mLength = nsBufferRoutines<CharT>::strip_chars(mData, mLength, aSet);
+  return true;
 }
 
 void
 nsTString_CharT::StripWhitespace()
 {
-  StripChars(kWhitespace);
+  if (!StripWhitespace(mozilla::fallible)) {
+    AllocFailed(mLength);
+  }
 }
 
+bool
+nsTString_CharT::StripWhitespace( const fallible_t& )
+{
+  if (!EnsureMutable()) {
+    return false;
+  }
+
+  StripTaggedASCII(mozilla::ASCIIMask::MaskWhitespace());
+  return true;
+}
 
 /**
  * nsTString::ReplaceChar,ReplaceSubstring
@@ -451,7 +475,7 @@ nsTString_CharT::ReplaceChar( const char* aSet, char_type aNewChar )
   }
 }
 
-void ReleaseData(void* aData, uint32_t aFlags);
+void ReleaseData(void* aData, nsAString::DataFlags aFlags);
 
 void
 nsTString_CharT::ReplaceSubstring(const char_type* aTarget,
@@ -493,7 +517,7 @@ nsTString_CharT::ReplaceSubstring(const self_type& aTarget,
   // Remember all of the non-matching parts.
   AutoTArray<Segment, 16> nonMatching;
   uint32_t i = 0;
-  uint32_t newLength = 0;
+  mozilla::CheckedUint32 newLength;
   while (true)
   {
     int32_t r = FindSubstring(mData + i, mLength - i, static_cast<const char_type*>(aTarget.Data()), aTarget.Length(), false);
@@ -514,6 +538,10 @@ nsTString_CharT::ReplaceSubstring(const self_type& aTarget,
     }
   }
 
+  if (!newLength.isValid()) {
+    return false;
+  }
+
   // If there's only one non-matching segment, then the target string was not
   // found, and there's nothing to do.
   if (nonMatching.Length() == 1) {
@@ -527,8 +555,8 @@ nsTString_CharT::ReplaceSubstring(const self_type& aTarget,
   // rest of the algorithm relies on having access to all of the original
   // string.  In other words, we over-allocate in the shrinking case.
   char_type* oldData;
-  uint32_t oldFlags;
-  if (!MutatePrep(XPCOM_MAX(mLength, newLength), &oldData, &oldFlags))
+  DataFlags oldFlags;
+  if (!MutatePrep(XPCOM_MAX(mLength, newLength.value()), &oldData, &oldFlags))
     return false;
   if (oldData) {
     // Copy all of the old data to the new buffer.
@@ -571,7 +599,7 @@ nsTString_CharT::ReplaceSubstring(const self_type& aTarget,
   }
 
   // Adjust the length and make sure the string is null terminated.
-  mLength = newLength;
+  mLength = newLength.value();
   mData[mLength] = char_type(0);
 
   return true;
@@ -645,40 +673,48 @@ nsTString_CharT::Trim( const char* aSet, bool aTrimLeading, bool aTrimTrailing, 
 
 
 /**
- * nsTString::CompressWhitespace
+ * nsTString::CompressWhitespace.
  */
 
 void
 nsTString_CharT::CompressWhitespace( bool aTrimLeading, bool aTrimTrailing )
 {
-  const char* set = kWhitespace;
-
-  ReplaceChar(set, ' ');
-  Trim(set, aTrimLeading, aTrimTrailing);
-
-  // this one does some questionable fu... just copying the old code!
-  mLength = nsBufferRoutines<char_type>::compress_chars(mData, mLength, set);
-}
-
-
-/**
- * nsTString::AssignWithConversion
- */
-
-void
-nsTString_CharT::AssignWithConversion( const incompatible_char_type* aData, int32_t aLength )
-{
-  // for compatibility with the old string implementation, we need to allow
-  // for a nullptr input buffer :-(
-  if (!aData)
-  {
-    Truncate();
+  // Quick exit
+  if (mLength == 0) {
+    return;
   }
-  else
-  {
-    if (aLength < 0)
-      aLength = nsCharTraits<incompatible_char_type>::length(aData);
 
-    AssignWithConversion(Substring(aData, aLength));
+  if (!EnsureMutable())
+    AllocFailed(mLength);
+
+  const ASCIIMaskArray& mask = mozilla::ASCIIMask::MaskWhitespace();
+
+  char_type* to   = mData;
+  char_type* from = mData;
+  char_type* end  = mData + mLength;
+
+  // Compresses runs of whitespace down to a normal space ' ' and convert
+  // any whitespace to a normal space.  This assumes that whitespace is
+  // all standard 7-bit ASCII.
+  bool skipWS = aTrimLeading;
+  while (from < end) {
+    uint32_t theChar = *from++;
+    if (mozilla::ASCIIMask::IsMasked(mask, theChar)) {
+      if (!skipWS) {
+        *to++ = ' ';
+        skipWS = true;
+      }
+    } else {
+      *to++ = theChar;
+      skipWS = false;
+    }
   }
+
+  // If we need to trim the trailing whitespace, back up one character.
+  if (aTrimTrailing && skipWS && to > mData) {
+    to--;
+  }
+
+  *to = char_type(0); // add the null
+  mLength = to - mData;
 }

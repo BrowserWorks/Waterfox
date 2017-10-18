@@ -134,13 +134,6 @@ AssemblerMIPSShared::copyDataRelocationTable(uint8_t* dest)
 }
 
 void
-AssemblerMIPSShared::copyPreBarrierTable(uint8_t* dest)
-{
-    if (preBarriers_.length())
-        memcpy(dest, preBarriers_.buffer(), preBarriers_.length());
-}
-
-void
 AssemblerMIPSShared::processCodeLabels(uint8_t* rawCode)
 {
     for (size_t i = 0; i < codeLabels_.length(); i++) {
@@ -240,8 +233,7 @@ AssemblerMIPSShared::oom() const
     return AssemblerShared::oom() ||
            m_buffer.oom() ||
            jumpRelocations_.oom() ||
-           dataRelocations_.oom() ||
-           preBarriers_.oom();
+           dataRelocations_.oom();
 }
 
 // Size of the instruction stream, in bytes.
@@ -264,20 +256,13 @@ AssemblerMIPSShared::dataRelocationTableBytes() const
     return dataRelocations_.length();
 }
 
-size_t
-AssemblerMIPSShared::preBarrierTableBytes() const
-{
-    return preBarriers_.length();
-}
-
 // Size of the data table, in bytes.
 size_t
 AssemblerMIPSShared::bytesNeeded() const
 {
     return size() +
            jumpRelocationTableBytes() +
-           dataRelocationTableBytes() +
-           preBarrierTableBytes();
+           dataRelocationTableBytes();
 }
 
 // write a blob of binary into the instruction stream
@@ -377,6 +362,13 @@ AssemblerMIPSShared::as_xori(Register rd, Register rs, int32_t j)
 {
     MOZ_ASSERT(Imm16::IsInUnsignedRange(j));
     return writeInst(InstImm(op_xori, rs, rd, Imm16(j)).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_lui(Register rd, int32_t j)
+{
+    MOZ_ASSERT(Imm16::IsInUnsignedRange(j));
+    return writeInst(InstImm(op_lui, zero, rd, Imm16(j)).encode());
 }
 
 // Branch and jump instructions
@@ -564,13 +556,6 @@ BufferOffset
 AssemblerMIPSShared::as_mul(Register rd, Register rs, Register rt)
 {
     return writeInst(InstReg(op_special2, rs, rt, rd, ff_mul).encode());
-}
-
-BufferOffset
-AssemblerMIPSShared::as_lui(Register rd, int32_t j)
-{
-    MOZ_ASSERT(Imm16::IsInUnsignedRange(j));
-    return writeInst(InstImm(op_lui, zero, rd, Imm16(j)).encode());
 }
 
 // Shift instructions
@@ -1343,6 +1328,12 @@ AssemblerMIPSShared::as_cvtsd(FloatRegister fd, FloatRegister fs)
 }
 
 BufferOffset
+AssemblerMIPSShared::as_cvtsl(FloatRegister fd, FloatRegister fs)
+{
+    return writeInst(InstReg(op_cop1, rs_l, zero, fs, fd, ff_cvt_s_fmt).encode());
+}
+
+BufferOffset
 AssemblerMIPSShared::as_cvtsw(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_w, zero, fs, fd, ff_cvt_s_fmt).encode());
@@ -1562,7 +1553,7 @@ AssemblerMIPSShared::bind(Label* label, BufferOffset boff)
 }
 
 void
-AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
+AssemblerMIPSShared::bindLater(Label* label, wasm::TrapDesc target)
 {
     if (label->used()) {
         int32_t next;
@@ -1571,7 +1562,7 @@ AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
         do {
             Instruction* inst = editSrc(b);
 
-            append(target, b.getOffset());
+            append(wasm::TrapSite(target, b.getOffset()));
             next = inst[1].encode();
             inst[1].makeNop();
 
@@ -1629,6 +1620,8 @@ void
 AssemblerMIPSShared::as_sync(uint32_t stype)
 {
     MOZ_ASSERT(stype <= 31);
+    if (isLoongson())
+        stype = 0;
     writeInst(InstReg(op_special, zero, zero, zero, stype, ff_sync).encode());
 }
 
@@ -1738,3 +1731,12 @@ AssemblerMIPSShared::ToggleToCmp(CodeLocationLabel inst_)
     AutoFlushICache::flush(uintptr_t(inst), 4);
 }
 
+void
+AssemblerMIPSShared::UpdateLuiOriValue(Instruction* inst0, Instruction* inst1, uint32_t value)
+{
+    MOZ_ASSERT(inst0->extractOpcode() == ((uint32_t)op_lui >> OpcodeShift));
+    MOZ_ASSERT(inst1->extractOpcode() == ((uint32_t)op_ori >> OpcodeShift));
+
+    ((InstImm*) inst0)->setImm16(Imm16::Upper(Imm32(value)));
+    ((InstImm*) inst1)->setImm16(Imm16::Lower(Imm32(value)));
+}

@@ -4,6 +4,7 @@
 #ifndef _KEYTHI_H_
 #define _KEYTHI_H_ 1
 
+#include "eccutil.h"
 #include "plarena.h"
 #include "pkcs11t.h"
 #include "secmodt.h"
@@ -124,14 +125,9 @@ typedef SECItem SECKEYECParams;
 
 struct SECKEYECPublicKeyStr {
     SECKEYECParams DEREncodedParams;
-    int size;            /* size in bits */
-    SECItem publicValue; /* encoded point */
-    /* XXX Even though the PKCS#11 interface takes encoded parameters,
-     * we may still wish to decode them above PKCS#11 for things like
-     * printing key information. For named curves, which is what
-     * we initially support, we ought to have the curve name at the
-     * very least.
-     */
+    int size;                 /* size in bits */
+    SECItem publicValue;      /* encoded point */
+    ECPointEncoding encoding; /* deprecated, ignored */
 };
 typedef struct SECKEYECPublicKeyStr SECKEYECPublicKey;
 
@@ -206,18 +202,14 @@ typedef struct SECKEYPublicKeyStr SECKEYPublicKey;
 #define SECKEY_ATTRIBUTES_CACHED(key) \
     (0 != (key->staticflags & SECKEY_Attributes_Cached))
 
-#define SECKEY_ATTRIBUTE_VALUE(key,attribute) \
+#define SECKEY_ATTRIBUTE_VALUE(key, attribute) \
     (0 != (key->staticflags & SECKEY_##attribute))
 
-#define SECKEY_HAS_ATTRIBUTE_SET(key,attribute) \
-    (0 != (key->staticflags & SECKEY_Attributes_Cached)) ? \
-    (0 != (key->staticflags & SECKEY_##attribute)) : \
-    PK11_HasAttributeSet(key->pkcs11Slot,key->pkcs11ID,attribute, PR_FALSE)
+#define SECKEY_HAS_ATTRIBUTE_SET(key, attribute) \
+    (0 != (key->staticflags & SECKEY_Attributes_Cached)) ? (0 != (key->staticflags & SECKEY_##attribute)) : PK11_HasAttributeSet(key->pkcs11Slot, key->pkcs11ID, attribute, PR_FALSE)
 
-#define SECKEY_HAS_ATTRIBUTE_SET_LOCK(key,attribute, haslock) \
-    (0 != (key->staticflags & SECKEY_Attributes_Cached)) ? \
-    (0 != (key->staticflags & SECKEY_##attribute)) : \
-    PK11_HasAttributeSet(key->pkcs11Slot,key->pkcs11ID,attribute, haslock)
+#define SECKEY_HAS_ATTRIBUTE_SET_LOCK(key, attribute, haslock) \
+    (0 != (key->staticflags & SECKEY_Attributes_Cached)) ? (0 != (key->staticflags & SECKEY_##attribute)) : pk11_HasAttributeSet_Lock(key->pkcs11Slot, key->pkcs11ID, attribute, haslock)
 
 /*
 ** A generic key structure

@@ -11,85 +11,115 @@
 #ifndef WEBRTC_BASE_TIMEUTILS_H_
 #define WEBRTC_BASE_TIMEUTILS_H_
 
+#include <stdint.h>
 #include <time.h>
 
-#include "webrtc/base/basictypes.h"
+#include <ctime>
 
 namespace rtc {
 
-static const int64 kNumMillisecsPerSec = INT64_C(1000);
-static const int64 kNumMicrosecsPerSec = INT64_C(1000000);
-static const int64 kNumNanosecsPerSec = INT64_C(1000000000);
+static const int64_t kNumMillisecsPerSec = INT64_C(1000);
+static const int64_t kNumMicrosecsPerSec = INT64_C(1000000);
+static const int64_t kNumNanosecsPerSec = INT64_C(1000000000);
 
-static const int64 kNumMicrosecsPerMillisec = kNumMicrosecsPerSec /
-    kNumMillisecsPerSec;
-static const int64 kNumNanosecsPerMillisec =  kNumNanosecsPerSec /
-    kNumMillisecsPerSec;
-static const int64 kNumNanosecsPerMicrosec =  kNumNanosecsPerSec /
-    kNumMicrosecsPerSec;
+static const int64_t kNumMicrosecsPerMillisec =
+    kNumMicrosecsPerSec / kNumMillisecsPerSec;
+static const int64_t kNumNanosecsPerMillisec =
+    kNumNanosecsPerSec / kNumMillisecsPerSec;
+static const int64_t kNumNanosecsPerMicrosec =
+    kNumNanosecsPerSec / kNumMicrosecsPerSec;
 
-// January 1970, in NTP milliseconds.
-static const int64 kJan1970AsNtpMillisecs = INT64_C(2208988800000);
+// TODO(honghaiz): Define a type for the time value specifically.
 
-typedef uint32 TimeStamp;
+class ClockInterface {
+ public:
+  virtual ~ClockInterface() {}
+  virtual int64_t TimeNanos() const = 0;
+};
 
-// Returns the current time in milliseconds.
-uint32 Time();
+// Sets the global source of time. This is useful mainly for unit tests.
+//
+// Returns the previously set ClockInterface, or nullptr if none is set.
+//
+// Does not transfer ownership of the clock. SetClockForTesting(nullptr)
+// should be called before the ClockInterface is deleted.
+//
+// This method is not thread-safe; it should only be used when no other thread
+// is running (for example, at the start/end of a unit test, or start/end of
+// main()).
+//
+// TODO(deadbeef): Instead of having functions that access this global
+// ClockInterface, we may want to pass the ClockInterface into everything
+// that uses it, eliminating the need for a global variable and this function.
+ClockInterface* SetClockForTesting(ClockInterface* clock);
+
+// Returns the actual system time, even if a clock is set for testing.
+// Useful for timeouts while using a test clock, or for logging.
+int64_t SystemTimeNanos();
+int64_t SystemTimeMillis();
+
+// Returns the current time in milliseconds in 32 bits.
+uint32_t Time32();
+
+// Returns the current time in milliseconds in 64 bits.
+int64_t TimeMillis();
+// Deprecated. Do not use this in any new code.
+inline int64_t Time() {
+  return TimeMillis();
+}
+
 // Returns the current time in microseconds.
-uint64 TimeMicros();
-// Returns the current time in nanoseconds.
-uint64 TimeNanos();
+int64_t TimeMicros();
 
-// Stores current time in *tm and microseconds in *microseconds.
-void CurrentTmTime(struct tm *tm, int *microseconds);
+// Returns the current time in nanoseconds.
+int64_t TimeNanos();
+
 
 // Returns a future timestamp, 'elapsed' milliseconds from now.
-uint32 TimeAfter(int32 elapsed);
-
-// Comparisons between time values, which can wrap around.
-bool TimeIsBetween(uint32 earlier, uint32 middle, uint32 later);  // Inclusive
-bool TimeIsLaterOrEqual(uint32 earlier, uint32 later);  // Inclusive
-bool TimeIsLater(uint32 earlier, uint32 later);  // Exclusive
-
-// Returns the later of two timestamps.
-inline uint32 TimeMax(uint32 ts1, uint32 ts2) {
-  return TimeIsLaterOrEqual(ts1, ts2) ? ts2 : ts1;
-}
-
-// Returns the earlier of two timestamps.
-inline uint32 TimeMin(uint32 ts1, uint32 ts2) {
-  return TimeIsLaterOrEqual(ts1, ts2) ? ts1 : ts2;
-}
+int64_t TimeAfter(int64_t elapsed);
 
 // Number of milliseconds that would elapse between 'earlier' and 'later'
 // timestamps.  The value is negative if 'later' occurs before 'earlier'.
-int32 TimeDiff(uint32 later, uint32 earlier);
+int64_t TimeDiff(int64_t later, int64_t earlier);
+int32_t TimeDiff32(uint32_t later, uint32_t earlier);
 
 // The number of milliseconds that have elapsed since 'earlier'.
-inline int32 TimeSince(uint32 earlier) {
-  return TimeDiff(Time(), earlier);
+inline int64_t TimeSince(int64_t earlier) {
+  return TimeMillis() - earlier;
 }
 
 // The number of milliseconds that will elapse between now and 'later'.
-inline int32 TimeUntil(uint32 later) {
-  return TimeDiff(later, Time());
-}
-
-// Converts a unix timestamp in nanoseconds to an NTP timestamp in ms.
-inline int64 UnixTimestampNanosecsToNtpMillisecs(int64 unix_ts_ns) {
-  return unix_ts_ns / kNumNanosecsPerMillisec + kJan1970AsNtpMillisecs;
+inline int64_t TimeUntil(int64_t later) {
+  return later - TimeMillis();
 }
 
 class TimestampWrapAroundHandler {
  public:
   TimestampWrapAroundHandler();
 
-  int64 Unwrap(uint32 ts);
+  int64_t Unwrap(uint32_t ts);
 
  private:
-  uint32 last_ts_;
-  int64 num_wrap_;
+  uint32_t last_ts_;
+  int64_t num_wrap_;
 };
+
+// Convert from std::tm, which is relative to 1900-01-01 00:00 to number of
+// seconds from 1970-01-01 00:00 ("epoch").  Don't return time_t since that
+// is still 32 bits on many systems.
+int64_t TmToSeconds(const std::tm& tm);
+
+// Return the number of microseconds since January 1, 1970, UTC.
+// Useful mainly when producing logs to be correlated with other
+// devices, and when the devices in question all have properly
+// synchronized clocks.
+//
+// Note that this function obeys the system's idea about what the time
+// is. It is not guaranteed to be monotonic; it will jump in case the
+// system time is changed, e.g., by some other process calling
+// settimeofday. Always use rtc::TimeMicros(), not this function, for
+// measuring time intervals and timeouts.
+int64_t TimeUTCMicros();
 
 }  // namespace rtc
 

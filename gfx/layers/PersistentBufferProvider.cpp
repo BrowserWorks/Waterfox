@@ -6,6 +6,7 @@
 #include "PersistentBufferProvider.h"
 
 #include "Layers.h"
+#include "mozilla/layers/ShadowLayers.h"
 #include "mozilla/gfx/Logging.h"
 #include "pratom.h"
 #include "gfxPlatform.h"
@@ -86,9 +87,9 @@ PersistentBufferProviderBasic::Create(gfx::IntSize aSize, gfx::SurfaceFormat aFo
 already_AddRefed<PersistentBufferProviderShared>
 PersistentBufferProviderShared::Create(gfx::IntSize aSize,
                                        gfx::SurfaceFormat aFormat,
-                                       CompositableForwarder* aFwd)
+                                       ShadowLayerForwarder* aFwd)
 {
-  if (!aFwd || !aFwd->IPCOpen()) {
+  if (!aFwd || !aFwd->GetTextureForwarder()->IPCOpen()) {
     return nullptr;
   }
 
@@ -110,7 +111,7 @@ PersistentBufferProviderShared::Create(gfx::IntSize aSize,
 
 PersistentBufferProviderShared::PersistentBufferProviderShared(gfx::IntSize aSize,
                                                                gfx::SurfaceFormat aFormat,
-                                                               CompositableForwarder* aFwd,
+                                                               ShadowLayerForwarder* aFwd,
                                                                RefPtr<TextureClient>& aTexture)
 
 : mSize(aSize)
@@ -136,7 +137,7 @@ PersistentBufferProviderShared::~PersistentBufferProviderShared()
 }
 
 bool
-PersistentBufferProviderShared::SetForwarder(CompositableForwarder* aFwd)
+PersistentBufferProviderShared::SetForwarder(ShadowLayerForwarder* aFwd)
 {
   MOZ_ASSERT(aFwd);
   if (!aFwd) {
@@ -152,7 +153,7 @@ PersistentBufferProviderShared::SetForwarder(CompositableForwarder* aFwd)
     mFwd->GetActiveResourceTracker().RemoveObject(this);
   }
 
-  if (mFwd->AsTextureForwarder() != aFwd->AsTextureForwarder() ||
+  if (mFwd->GetTextureForwarder() != aFwd->GetTextureForwarder() ||
       mFwd->GetCompositorBackendType() != aFwd->GetCompositorBackendType()) {
     // We are going to be used with an different and/or incompatible forwarder.
     // This should be extremely rare. We have to copy the front buffer into a
@@ -214,7 +215,7 @@ PersistentBufferProviderShared::SetForwarder(CompositableForwarder* aFwd)
 }
 
 TextureClient*
-PersistentBufferProviderShared::GetTexture(Maybe<uint32_t> aIndex)
+PersistentBufferProviderShared::GetTexture(const Maybe<uint32_t>& aIndex)
 {
   if (aIndex.isNothing() || !CheckIndex(aIndex.value())) {
     return nullptr;
@@ -225,7 +226,7 @@ PersistentBufferProviderShared::GetTexture(Maybe<uint32_t> aIndex)
 already_AddRefed<gfx::DrawTarget>
 PersistentBufferProviderShared::BorrowDrawTarget(const gfx::IntRect& aPersistedRect)
 {
-  if (!mFwd->IPCOpen()) {
+  if (!mFwd->GetTextureForwarder()->IPCOpen()) {
     return nullptr;
   }
 
@@ -241,8 +242,6 @@ PersistentBufferProviderShared::BorrowDrawTarget(const gfx::IntRect& aPersistedR
     RefPtr<gfx::DrawTarget> dt(mDrawTarget);
     return dt.forget();
   }
-
-  mFront = Nothing();
 
   auto previousBackBuffer = mBack;
 
@@ -271,17 +270,32 @@ PersistentBufferProviderShared::BorrowDrawTarget(const gfx::IntRect& aPersistedR
     // We have to allocate a new texture.
     if (mTextures.length() >= 4) {
       // We should never need to buffer that many textures, something's wrong.
-      MOZ_ASSERT(false);
       // In theory we throttle the main thread when the compositor can't keep up,
       // so we shoud never get in a situation where we sent 4 textures to the
-      // compositor and the latter as not released any of them.
-      // This seems to happen, however, in some edge cases such as just after a
-      // device reset (cf. Bug 1291163).
-      // It would be pretty bad to keep piling textures up at this point so we
-      // call NotifyInactive to remove some of our textures.
-      NotifyInactive();
-      // Give up now. The caller can fall-back to a non-shared buffer provider.
-      return nullptr;
+      // compositor and the latter has not released any of them.
+      // In practice, though, the throttling mechanism appears to have some issues,
+      // especially when switching between layer managers (during tab-switch).
+      // To make sure we don't get too far ahead of the compositor, we send a
+      // sync ping to the compositor thread...
+      mFwd->SyncWithCompositor();
+      // ...and try again.
+      for (uint32_t i = 0; i < mTextures.length(); ++i) {
+        if (!mTextures[i]->IsReadLocked()) {
+          gfxCriticalNote << "Managed to allocate after flush.";
+          mBack = Some(i);
+          tex = mTextures[i];
+          break;
+        }
+      }
+
+      if (!tex) {
+        gfxCriticalError() << "Unexpected BufferProvider over-production.";
+        // It would be pretty bad to keep piling textures up at this point so we
+        // call NotifyInactive to remove some of our textures.
+        NotifyInactive();
+        // Give up now. The caller can fall-back to a non-shared buffer provider.
+        return nullptr;
+      }
     }
 
     RefPtr<TextureClient> newTexture = TextureClient::CreateForDrawing(
@@ -402,6 +416,12 @@ PersistentBufferProviderShared::ReturnSnapshot(already_AddRefed<gfx::SourceSurfa
 void
 PersistentBufferProviderShared::NotifyInactive()
 {
+  ClearCachedResources();
+}
+
+void
+PersistentBufferProviderShared::ClearCachedResources()
+{
   RefPtr<TextureClient> front = GetTexture(mFront);
   RefPtr<TextureClient> back = GetTexture(mBack);
 
@@ -430,8 +450,8 @@ PersistentBufferProviderShared::Destroy()
   mSnapshot = nullptr;
   mDrawTarget = nullptr;
 
-  for (uint32_t i = 0; i < mTextures.length(); ++i) {
-    TextureClient* texture = mTextures[i];
+  for (auto& mTexture : mTextures) {
+    TextureClient* texture = mTexture;
     if (texture && texture->IsLocked()) {
       MOZ_ASSERT(false);
       texture->Unlock();

@@ -9,10 +9,10 @@
 const {CubicBezierWidget} =
   require("devtools/client/shared/widgets/CubicBezierWidget");
 
-const TEST_URI = `data:text/html,<div id="cubic-bezier-container" />`;
+const TEST_URI = CHROME_URL_ROOT + "doc_cubic-bezier-01.html";
 
 add_task(function* () {
-  let [host, win, doc] = yield createHost("bottom", TEST_URI);
+  let [host,, doc] = yield createHost("bottom", TEST_URI);
 
   info("Checking that the graph markup is created in the parent");
   let container = doc.querySelector("#cubic-bezier-container");

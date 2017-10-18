@@ -6,7 +6,6 @@ this.EXPORTED_SYMBOLS = ["CrashTestUtils"];
 this.CrashTestUtils = {
   // These will be defined using ctypes APIs below.
   crash: null,
-  lockDir: null,
   dumpHasStream: null,
   dumpHasInstructionPointerMemory: null,
 
@@ -18,6 +17,7 @@ this.CrashTestUtils = {
   CRASH_OOM:                   3,
   CRASH_MOZ_CRASH:             4,
   CRASH_ABORT:                 5,
+  CRASH_UNCAUGHT_EXCEPTION:    6,
 
   // Constants for dumpHasStream()
   // From google_breakpad/common/minidump_format.h
@@ -41,18 +41,11 @@ CrashTestUtils.saveAppMemory = lib.declare("SaveAppMemory",
                                            ctypes.default_abi,
                                            ctypes.uint64_t);
 
-CrashTestUtils.lockDir = lib.declare("LockDir",
-                                     ctypes.default_abi,
-                                     ctypes.voidptr_t,   // nsILocalFile*
-                                     ctypes.voidptr_t);  // nsISupports*
-
-
 try {
   CrashTestUtils.TryOverrideExceptionHandler = lib.declare("TryOverrideExceptionHandler",
                                                            ctypes.default_abi,
                                                            ctypes.void_t);
-}
-catch(ex) {}
+} catch (ex) {}
 
 CrashTestUtils.dumpHasStream = lib.declare("DumpHasStream",
                                            ctypes.default_abi,

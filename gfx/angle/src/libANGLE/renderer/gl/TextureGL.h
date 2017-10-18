@@ -74,6 +74,26 @@ class TextureGL : public TextureImpl
     gl::Error copySubImage(GLenum target, size_t level, const gl::Offset &destOffset, const gl::Rectangle &sourceArea,
                            const gl::Framebuffer *source) override;
 
+    gl::Error copyTexture(GLenum internalFormat,
+                          GLenum type,
+                          bool unpackFlipY,
+                          bool unpackPremultiplyAlpha,
+                          bool unpackUnmultiplyAlpha,
+                          const gl::Texture *source) override;
+    gl::Error copySubTexture(const gl::Offset &destOffset,
+                             const gl::Rectangle &sourceArea,
+                             bool unpackFlipY,
+                             bool unpackPremultiplyAlpha,
+                             bool unpackUnmultiplyAlpha,
+                             const gl::Texture *source) override;
+    gl::Error copySubTextureHelper(const gl::Offset &destOffset,
+                                   const gl::Rectangle &sourceArea,
+                                   GLenum destFormat,
+                                   bool unpackFlipY,
+                                   bool unpackPremultiplyAlpha,
+                                   bool unpackUnmultiplyAlpha,
+                                   const gl::Texture *source);
+
     gl::Error setStorage(GLenum target, size_t levels, GLenum internalFormat, const gl::Extents &size) override;
 
     gl::Error setImageExternal(GLenum target,
@@ -87,16 +107,18 @@ class TextureGL : public TextureImpl
 
     gl::Error setEGLImageTarget(GLenum target, egl::Image *image) override;
 
-    void syncState(size_t textureUnit) const;
     GLuint getTextureID() const;
-
-    gl::Error getAttachmentRenderTarget(const gl::FramebufferAttachment::Target &target,
-                                        FramebufferAttachmentRenderTarget **rtOut) override
-    {
-        return gl::Error(GL_OUT_OF_MEMORY, "Not supported on OpenGL");
-    }
+    GLenum getTarget() const;
 
     void setBaseLevel(GLuint) override {}
+
+    void syncState(const gl::Texture::DirtyBits &dirtyBits) override;
+    bool hasAnyDirtyBit() const;
+
+    void setMinFilter(GLenum filter);
+    void setMagFilter(GLenum filter);
+
+    void setSwizzle(GLint swizzle[4]);
 
   private:
     void setImageHelper(GLenum target,
@@ -106,6 +128,7 @@ class TextureGL : public TextureImpl
                         GLenum format,
                         GLenum type,
                         const uint8_t *pixels);
+    // This changes the current pixel unpack state that will have to be reapplied.
     void reserveTexImageToBeFilled(GLenum target,
                                    size_t level,
                                    GLenum internalFormat,
@@ -120,14 +143,34 @@ class TextureGL : public TextureImpl
                                             const gl::PixelUnpackState &unpack,
                                             const uint8_t *pixels);
 
+    gl::Error setSubImagePaddingWorkaround(GLenum target,
+                                           size_t level,
+                                           const gl::Box &area,
+                                           GLenum format,
+                                           GLenum type,
+                                           const gl::PixelUnpackState &unpack,
+                                           const uint8_t *pixels);
+
+    void syncTextureStateSwizzle(const FunctionsGL *functions,
+                                 GLenum name,
+                                 GLenum value,
+                                 GLenum *outValue);
+
+    void setLevelInfo(size_t level, size_t levelCount, const LevelInfoGL &levelInfo);
+
     const FunctionsGL *mFunctions;
     const WorkaroundsGL &mWorkarounds;
     StateManagerGL *mStateManager;
     BlitGL *mBlitter;
 
     std::vector<LevelInfoGL> mLevelInfo;
+    gl::Texture::DirtyBits mLocalDirtyBits;
 
-    mutable gl::TextureState mAppliedTextureState;
+    gl::SwizzleState mAppliedSwizzle;
+    gl::SamplerState mAppliedSampler;
+    GLuint mAppliedBaseLevel;
+    GLuint mAppliedMaxLevel;
+
     GLuint mTextureID;
 };
 

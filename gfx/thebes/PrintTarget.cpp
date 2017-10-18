@@ -6,7 +6,14 @@
 #include "PrintTarget.h"
 
 #include "cairo.h"
+#ifdef CAIRO_HAS_QUARTZ_SURFACE
+#include "cairo-quartz.h"
+#endif
+#ifdef CAIRO_HAS_WIN32_SURFACE
+#include "cairo-win32.h"
+#endif
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/HelpersCairo.h"
 #include "mozilla/gfx/Logging.h"
 
 namespace mozilla {
@@ -16,6 +23,11 @@ PrintTarget::PrintTarget(cairo_surface_t* aCairoSurface, const IntSize& aSize)
   : mCairoSurface(aCairoSurface)
   , mSize(aSize)
   , mIsFinished(false)
+#ifdef DEBUG
+  , mHasActivePage(false)
+  , mRecorder(nullptr)
+#endif
+
 {
 #if 0
   // aCairoSurface is null when our PrintTargetThebes subclass's ctor calls us.
@@ -52,6 +64,10 @@ PrintTarget::MakeDrawTarget(const IntSize& aSize,
   MOZ_ASSERT(mCairoSurface,
              "We shouldn't have been constructed without a cairo surface");
 
+  // This should not be called outside of BeginPage()/EndPage() calls since
+  // some backends can only provide a valid DrawTarget at that time.
+  MOZ_ASSERT(mHasActivePage, "We can't guarantee a valid DrawTarget");
+
   if (cairo_surface_status(mCairoSurface)) {
     return nullptr;
   }
@@ -66,7 +82,7 @@ PrintTarget::MakeDrawTarget(const IntSize& aSize,
   }
 
   if (aRecorder) {
-    dt = CreateRecordingDrawTarget(aRecorder, dt);
+    dt = CreateWrapAndRecordDrawTarget(aRecorder, dt);
     if (!dt || !dt->IsValid()) {
       return nullptr;
     }
@@ -76,7 +92,76 @@ PrintTarget::MakeDrawTarget(const IntSize& aSize,
 }
 
 already_AddRefed<DrawTarget>
-PrintTarget::CreateRecordingDrawTarget(DrawEventRecorder* aRecorder,
+PrintTarget::GetReferenceDrawTarget(DrawEventRecorder* aRecorder)
+{
+  if (!mRefDT) {
+    const IntSize size(1, 1);
+
+    cairo_surface_t* similar;
+    switch (cairo_surface_get_type(mCairoSurface)) {
+#ifdef CAIRO_HAS_WIN32_SURFACE
+    case CAIRO_SURFACE_TYPE_WIN32:
+      similar = cairo_win32_surface_create_with_dib(
+        CairoContentToCairoFormat(cairo_surface_get_content(mCairoSurface)),
+        size.width, size.height);
+      break;
+#endif
+#ifdef CAIRO_HAS_QUARTZ_SURFACE
+    case CAIRO_SURFACE_TYPE_QUARTZ:
+      similar = cairo_quartz_surface_create_cg_layer(
+                  mCairoSurface, cairo_surface_get_content(mCairoSurface),
+                  size.width, size.height);
+      break;
+#endif
+    default:
+      similar = cairo_surface_create_similar(
+                  mCairoSurface, cairo_surface_get_content(mCairoSurface),
+                  size.width, size.height);
+      break;
+    }
+
+    if (cairo_surface_status(similar)) {
+      return nullptr;
+    }
+
+    RefPtr<DrawTarget> dt =
+      Factory::CreateDrawTargetForCairoSurface(similar, size);
+
+    // The DT addrefs the surface, so we need drop our own reference to it:
+    cairo_surface_destroy(similar);
+
+    if (!dt || !dt->IsValid()) {
+      return nullptr;
+    }
+    mRefDT = dt.forget();
+  }
+
+  if (aRecorder) {
+    if (!mRecordingRefDT) {
+      RefPtr<DrawTarget> dt = CreateWrapAndRecordDrawTarget(aRecorder, mRefDT);
+      if (!dt || !dt->IsValid()) {
+        return nullptr;
+      }
+      mRecordingRefDT = dt.forget();
+#ifdef DEBUG
+      mRecorder = aRecorder;
+#endif
+    }
+#ifdef DEBUG
+    else {
+      MOZ_ASSERT(aRecorder == mRecorder,
+                 "Caching mRecordingRefDT assumes the aRecorder is an invariant");
+    }
+#endif
+
+    return do_AddRef(mRecordingRefDT);
+  }
+
+  return do_AddRef(mRefDT);
+}
+
+/* static */ already_AddRefed<DrawTarget>
+PrintTarget::CreateWrapAndRecordDrawTarget(DrawEventRecorder* aRecorder,
                                        DrawTarget* aDrawTarget)
 {
   MOZ_ASSERT(aRecorder);
@@ -86,7 +171,7 @@ PrintTarget::CreateRecordingDrawTarget(DrawEventRecorder* aRecorder,
 
   if (aRecorder) {
     // It doesn't really matter what we pass as the DrawTarget here.
-    dt = gfx::Factory::CreateRecordingDrawTarget(aRecorder, aDrawTarget);
+    dt = gfx::Factory::CreateWrapAndRecordDrawTarget(aRecorder, aDrawTarget);
   }
 
   if (!dt || !dt->IsValid()) {

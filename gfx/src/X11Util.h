@@ -13,6 +13,7 @@
 #if defined(MOZ_WIDGET_GTK)
 #  include <gdk/gdk.h>
 #  include <gdk/gdkx.h>
+#  include "X11UndefineNone.h"
 #else
 #  error Unknown toolkit
 #endif
@@ -117,7 +118,10 @@ public:
     static int
     ErrorHandler(Display *, XErrorEvent *ev);
 
-    ScopedXErrorHandler();
+    /**
+     * @param aAllowOffMainThread whether to warn if used off main thread
+     */
+    explicit ScopedXErrorHandler(bool aAllowOffMainThread = false);
 
     ~ScopedXErrorHandler();
 
@@ -128,6 +132,15 @@ public:
      *           the first one will be returned.
      */
     bool SyncAndGetError(Display *dpy, XErrorEvent *ev = nullptr);
+};
+
+class OffMainThreadScopedXErrorHandler : public ScopedXErrorHandler
+{
+public:
+  OffMainThreadScopedXErrorHandler()
+    : ScopedXErrorHandler(true)
+  {
+  }
 };
 
 } // namespace mozilla

@@ -1,4 +1,4 @@
-// |jit-test| allow-oom
+// |jit-test| slow; allow-oom
 
 if (typeof oomTest !== 'function' || !wasmIsSupported()) {
     print('Missing oomTest or wasm support in wasm/regress/oom-eval');
@@ -7,6 +7,6 @@ if (typeof oomTest !== 'function' || !wasmIsSupported()) {
 
 function foo() {
   var g = newGlobal();
-  g.eval(`o = Wasm.instantiateModule(wasmTextToBinary('(module (func) (export "" 0))'));`);
+  g.eval(`o = new WebAssembly.Instance(new WebAssembly.Module(wasmTextToBinary('(module (func) (export "" 0))')));`);
 }
 oomTest(foo);

@@ -7,7 +7,7 @@
  * We assert the presentation of the multiple alerts, ensuring we show only
  * the oldest one.
  */
-add_task(function*() {
+add_task(async function() {
   const PROMPTCOUNT = 5;
 
   let contentScript = function() {
@@ -32,13 +32,13 @@ add_task(function*() {
         info("Prompts opened.");
         resolve();
       }
-    }, "tabmodal-dialog-loaded", false);
+    }, "tabmodal-dialog-loaded");
   });
 
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, url, true);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, url, true);
   info("Tab loaded");
 
-  yield promptsOpenedPromise;
+  await promptsOpenedPromise;
 
   let promptsCount = PROMPTCOUNT;
   while (promptsCount--) {
@@ -56,11 +56,17 @@ add_task(function*() {
 
       is(prompt.hidden, false, "The last prompt should not be hidden.");
       prompt.onButtonClick(0);
+
+      // The click is handled async; wait for an event loop turn for that to
+      // happen.
+      await new Promise(function(resolve) {
+        Services.tm.dispatchToMainThread(resolve);
+      });
     }
   }
 
   let prompts = tab.linkedBrowser.parentNode.querySelectorAll("tabmodalprompt");
   is(prompts.length, 0, "Prompts should all be dismissed.");
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

@@ -47,7 +47,7 @@ HTMLLegendElement::ParseAttribute(int32_t aNamespaceID,
     { "center", NS_STYLE_TEXT_ALIGN_CENTER },
     { "bottom", NS_STYLE_VERTICAL_ALIGN_BOTTOM },
     { "top", NS_STYLE_VERTICAL_ALIGN_TOP },
-    { 0 }
+    { nullptr, 0 }
   };
 
   if (aAttribute == nsGkAtoms::align && aNamespaceID == kNameSpaceID_None) {
@@ -68,21 +68,6 @@ HTMLLegendElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
     retval |= NS_STYLE_HINT_REFLOW;
   }
   return retval;
-}
-
-nsresult
-HTMLLegendElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify)
-{
-  return nsGenericHTMLElement::SetAttr(aNameSpaceID, aAttribute,
-                                       aPrefix, aValue, aNotify);
-}
-nsresult
-HTMLLegendElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify)
-{
-  return nsGenericHTMLElement::UnsetAttr(aNameSpaceID, aAttribute, aNotify);
 }
 
 nsresult

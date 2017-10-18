@@ -65,7 +65,8 @@ LIRGeneratorShared::define(details::LInstructionFixedDefsTempsHelper<1, X>* lir,
 }
 
 template <size_t X, size_t Y> void
-LIRGeneratorShared::defineFixed(LInstructionHelper<1, X, Y>* lir, MDefinition* mir, const LAllocation& output)
+LIRGeneratorShared::defineFixed(LInstructionHelper<1, X, Y>* lir, MDefinition* mir,
+                                const LAllocation& output)
 {
     LDefinition::Type type = LDefinition::TypeFrom(mir->type());
 
@@ -126,10 +127,6 @@ template <size_t Ops, size_t Temps> void
 LIRGeneratorShared::defineInt64ReuseInput(LInstructionHelper<INT64_PIECES, Ops, Temps>* lir,
                                           MDefinition* mir, uint32_t operand)
 {
-#if JS_BITS_PER_WORD == 32
-    MOZ_CRASH("Temporarily disabled due to bug 1290450.");
-#endif
-
     // Note: Any other operand that is not the same as this operand should be
     // marked as not being "atStart". The regalloc cannot handle those and can
     // overwrite the inputs!
@@ -162,9 +159,9 @@ LIRGeneratorShared::defineInt64ReuseInput(LInstructionHelper<INT64_PIECES, Ops, 
 
 }
 
-template <size_t Ops, size_t Temps> void
-LIRGeneratorShared::defineBox(LInstructionHelper<BOX_PIECES, Ops, Temps>* lir, MDefinition* mir,
-                              LDefinition::Policy policy)
+template <size_t Temps> void
+LIRGeneratorShared::defineBox(details::LInstructionFixedDefsTempsHelper<BOX_PIECES, Temps>* lir,
+                              MDefinition* mir, LDefinition::Policy policy)
 {
     // Call instructions should use defineReturn.
     MOZ_ASSERT(!lir->isCall());
@@ -238,6 +235,7 @@ LIRGeneratorShared::defineReturn(LInstruction* lir, MDefinition* mir)
     lir->setMir(mir);
 
     MOZ_ASSERT(lir->isCall());
+    gen->setNeedsStaticStackAlignment();
 
     uint32_t vreg = getVirtualRegister();
 
@@ -321,8 +319,6 @@ LIRGeneratorShared::defineSinCos(LInstructionHelper<2, Ops, Temps> *lir, MDefini
     lir->setMir(mir);
     mir->setVirtualRegister(vreg);
     add(lir);
-
-    return;
 }
 
 // In LIR, we treat booleans and integers as the same low-level type (INTEGER).
@@ -491,6 +487,14 @@ LIRGeneratorShared::useRegisterOrConstantAtStart(MDefinition* mir)
 }
 
 LAllocation
+LIRGeneratorShared::useRegisterOrZero(MDefinition* mir)
+{
+    if (mir->isConstant() && mir->toConstant()->isInt32(0))
+        return LAllocation();
+    return useRegister(mir);
+}
+
+LAllocation
 LIRGeneratorShared::useRegisterOrZeroAtStart(MDefinition* mir)
 {
     if (mir->isConstant() && mir->toConstant()->isInt32(0))
@@ -589,6 +593,12 @@ LUse
 LIRGeneratorShared::useFixed(MDefinition* mir, AnyRegister reg)
 {
     return reg.isFloat() ? use(mir, LUse(reg.fpu())) : use(mir, LUse(reg.gpr()));
+}
+
+LUse
+LIRGeneratorShared::useFixedAtStart(MDefinition* mir, AnyRegister reg)
+{
+    return reg.isFloat() ? use(mir, LUse(reg.fpu(), true)) : use(mir, LUse(reg.gpr(), true));
 }
 
 LDefinition
@@ -748,12 +758,22 @@ LIRGeneratorShared::useBox(MDefinition* mir, LUse::Policy policy, bool useAtStar
 }
 
 LBoxAllocation
-LIRGeneratorShared::useBoxOrTypedOrConstant(MDefinition* mir, bool useConstant)
+LIRGeneratorShared::useBoxOrTyped(MDefinition* mir)
 {
     if (mir->type() == MIRType::Value)
         return useBox(mir);
 
 
+#if defined(JS_NUNBOX32)
+    return LBoxAllocation(useRegister(mir), LAllocation());
+#else
+    return LBoxAllocation(useRegister(mir));
+#endif
+}
+
+LBoxAllocation
+LIRGeneratorShared::useBoxOrTypedOrConstant(MDefinition* mir, bool useConstant)
+{
     if (useConstant && mir->isConstant()) {
 #if defined(JS_NUNBOX32)
         return LBoxAllocation(LAllocation(mir->toConstant()), LAllocation());
@@ -762,11 +782,7 @@ LIRGeneratorShared::useBoxOrTypedOrConstant(MDefinition* mir, bool useConstant)
 #endif
     }
 
-#if defined(JS_NUNBOX32)
-    return LBoxAllocation(useRegister(mir), LAllocation());
-#else
-    return LBoxAllocation(useRegister(mir));
-#endif
+    return useBoxOrTyped(mir);
 }
 
 LInt64Allocation
@@ -799,6 +815,12 @@ LIRGeneratorShared::useInt64Fixed(MDefinition* mir, Register64 regs, bool useAtS
 #else
     return LInt64Allocation(LUse(regs.reg, vreg, useAtStart));
 #endif
+}
+
+LInt64Allocation
+LIRGeneratorShared::useInt64FixedAtStart(MDefinition* mir, Register64 regs)
+{
+    return useInt64Fixed(mir, regs, true);
 }
 
 LInt64Allocation
@@ -835,6 +857,19 @@ LIRGeneratorShared::useInt64OrConstant(MDefinition* mir, bool useAtStart)
 #endif
     }
     return useInt64(mir, useAtStart);
+}
+
+LInt64Allocation
+LIRGeneratorShared::useInt64RegisterOrConstant(MDefinition* mir, bool useAtStart)
+{
+    if (mir->isConstant()) {
+#if defined(JS_NUNBOX32)
+        return LInt64Allocation(LAllocation(mir->toConstant()), LAllocation());
+#else
+        return LInt64Allocation(LAllocation(mir->toConstant()));
+#endif
+    }
+    return useInt64Register(mir, useAtStart);
 }
 
 } // namespace jit

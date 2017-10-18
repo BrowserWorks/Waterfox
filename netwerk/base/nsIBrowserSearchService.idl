@@ -109,6 +109,7 @@ interface nsISearchEngine : nsISupports
    * @param  options
    *         An object that must contain the following fields:
    *         {window} the content window for the window performing the search
+   *         {originAttributes} the originAttributes for performing the search
    *
    * @throws NS_ERROR_INVALID_ARG if options is omitted or lacks required
    *         elemeents
@@ -412,6 +413,16 @@ interface nsIBrowserSearchService : nsISupports
   void getDefaultEngines(
             [optional] out unsigned long engineCount,
             [retval, array, size_is(engineCount)] out nsISearchEngine engines);
+
+  /**
+   * Returns an array of search engines installed by a given extension.
+   *
+   * @returns an array of nsISearchEngine objects.
+   */
+  void getEnginesByExtensionID(in AString extensionID,
+            [optional] out unsigned long engineCount,
+            [retval, array, size_is(engineCount)] out nsISearchEngine engines);
+
 
   /**
    * Moves a visible search engine.

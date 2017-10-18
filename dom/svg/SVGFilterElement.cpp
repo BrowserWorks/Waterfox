@@ -43,8 +43,9 @@ nsSVGElement::EnumInfo SVGFilterElement::sEnumInfo[2] =
   }
 };
 
-nsSVGElement::StringInfo SVGFilterElement::sStringInfo[1] =
+nsSVGElement::StringInfo SVGFilterElement::sStringInfo[2] =
 {
+  { &nsGkAtoms::href, kNameSpaceID_None, true },
   { &nsGkAtoms::href, kNameSpaceID_XLink, true }
 };
 
@@ -104,7 +105,9 @@ SVGFilterElement::PrimitiveUnits()
 already_AddRefed<SVGAnimatedString>
 SVGFilterElement::Href()
 {
-  return mStringAttributes[HREF].ToDOMAnimatedString(this);
+  return mStringAttributes[HREF].IsExplicitlySet()
+         ? mStringAttributes[HREF].ToDOMAnimatedString(this)
+         : mStringAttributes[XLINK_HREF].ToDOMAnimatedString(this);
 }
 
 //----------------------------------------------------------------------
@@ -130,10 +133,10 @@ SVGFilterElement::IsAttributeMapped(const nsIAtom* name) const
 void
 SVGFilterElement::Invalidate()
 {
-  nsTObserverArray<nsIMutationObserver*> *observers = GetMutationObservers();
+  nsAutoTObserverArray<nsIMutationObserver*, 1> *observers = GetMutationObservers();
 
   if (observers && !observers->IsEmpty()) {
-    nsTObserverArray<nsIMutationObserver*>::ForwardIterator iter(*observers);
+    nsAutoTObserverArray<nsIMutationObserver*, 1>::ForwardIterator iter(*observers);
     while (iter.HasMore()) {
       nsCOMPtr<nsIMutationObserver> obs(iter.GetNext());
       nsCOMPtr<nsISVGFilterReference> filter = do_QueryInterface(obs);

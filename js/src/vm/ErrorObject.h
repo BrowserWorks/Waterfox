@@ -38,12 +38,8 @@ class ErrorObject : public NativeObject
          ScopedJSFreePtr<JSErrorReport>* errorReport, HandleString fileName, HandleObject stack,
          uint32_t lineNumber, uint32_t columnNumber, HandleString message);
 
-    static bool checkAndUnwrapThis(JSContext* cx, CallArgs& args, const char* fnName,
-                                   MutableHandle<ErrorObject*> error);
-
-    static const ClassSpec errorClassSpec_;
-    static const ClassSpec subErrorClassSpec_;
-    static const ClassSpec debuggeeWouldRunClassSpec_;
+    static const ClassSpec classSpecs[JSEXN_ERROR_LIMIT];
+    static const Class protoClasses[JSEXN_ERROR_LIMIT];
 
   protected:
     static const uint32_t EXNTYPE_SLOT          = 0;
@@ -57,7 +53,7 @@ class ErrorObject : public NativeObject
     static const uint32_t RESERVED_SLOTS = MESSAGE_SLOT + 1;
 
   public:
-    static const Class classes[JSEXN_LIMIT];
+    static const Class classes[JSEXN_ERROR_LIMIT];
 
     static const Class * classForType(JSExnType type) {
         MOZ_ASSERT(type < JSEXN_WARN);
@@ -83,7 +79,7 @@ class ErrorObject : public NativeObject
      * ErrorObject::init.)
      */
     static Shape*
-    assignInitialShape(ExclusiveContext* cx, Handle<ErrorObject*> obj);
+    assignInitialShape(JSContext* cx, Handle<ErrorObject*> obj);
 
     JSExnType type() const {
         return JSExnType(getReservedSlot(EXNTYPE_SLOT).toInt32());
@@ -110,6 +106,7 @@ class ErrorObject : public NativeObject
 
     // Getter and setter for the Error.prototype.stack accessor.
     static bool getStack(JSContext* cx, unsigned argc, Value* vp);
+    static bool getStack_impl(JSContext* cx, const CallArgs& args);
     static bool setStack(JSContext* cx, unsigned argc, Value* vp);
     static bool setStack_impl(JSContext* cx, const CallArgs& args);
 };

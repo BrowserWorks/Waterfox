@@ -34,7 +34,9 @@ cmmf_create_witness_and_challenge(PLArenaPool *poolp,
 
     encodedRandNum = SEC_ASN1EncodeInteger(poolp, &challenge->randomNumber,
                                            inRandom);
-    encodedRandNum = &challenge->randomNumber;
+    if (!encodedRandNum) {
+        goto loser;
+    }
     randHash = PORT_ArenaNewArray(poolp, unsigned char, SHA1_LENGTH);
     senderHash = PORT_ArenaNewArray(poolp, unsigned char, SHA1_LENGTH);
     if (randHash == NULL) {
@@ -97,7 +99,7 @@ cmmf_create_witness_and_challenge(PLArenaPool *poolp,
     }
     rv = SECITEM_CopyItem(poolp, &challenge->senderDER, senderDER);
     crmf_get_public_value(inPubKey, &challenge->key);
-    /* Fall through */
+/* Fall through */
 loser:
     if (spki != NULL) {
         SECKEY_DestroySubjectPublicKeyInfo(spki);

@@ -1,5 +1,6 @@
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://gre/modules/NetUtil.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 var httpserver = new HttpServer();
 httpserver.start(-1);
@@ -34,7 +35,7 @@ function make_channel(url, cache_control)
 function make_uri(url) {
   var ios = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService);
-  return ios.newURI(url, null, null);
+  return ios.newURI(url);
 }
 
 function resource_age_100_handler(metadata, response)
@@ -91,6 +92,8 @@ function run_test()
   }
 
   do_test_pending();
+
+  Services.prefs.setBoolPref("network.http.rcwn.enabled", false);
 
   httpserver.registerPathHandler(resource_age_100, resource_age_100_handler);
   httpserver.registerPathHandler(resource_stale_100, resource_stale_100_handler);

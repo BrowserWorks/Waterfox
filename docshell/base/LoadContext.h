@@ -25,9 +25,6 @@ namespace mozilla {
  * typically provided by nsDocShell.  This is only used when the original
  * docshell is in a different process and we need to copy certain values from
  * it.
- *
- * Note: we also generate a new nsILoadContext using LoadContext(uint32_t aAppId)
- * to separate the safebrowsing cookie.
  */
 
 class LoadContext final
@@ -43,64 +40,63 @@ public:
   // provided by child process.
   LoadContext(const IPC::SerializedLoadContext& aToCopy,
               dom::Element* aTopFrameElement,
-              DocShellOriginAttributes& aAttrs)
+              OriginAttributes& aAttrs)
     : mTopFrameElement(do_GetWeakReference(aTopFrameElement))
     , mNestedFrameId(0)
     , mIsContent(aToCopy.mIsContent)
-    , mUsePrivateBrowsing(aToCopy.mUsePrivateBrowsing)
     , mUseRemoteTabs(aToCopy.mUseRemoteTabs)
+    , mUseTrackingProtection(aToCopy.mUseTrackingProtection)
     , mOriginAttributes(aAttrs)
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
   {
-    MOZ_ASSERT(aToCopy.mUsePrivateBrowsing == (aAttrs.mPrivateBrowsingId != 0));
   }
 
   // appId/inIsolatedMozBrowser arguments override those in SerializedLoadContext
   // provided by child process.
   LoadContext(const IPC::SerializedLoadContext& aToCopy,
               uint64_t aNestedFrameId,
-              DocShellOriginAttributes& aAttrs)
+              OriginAttributes& aAttrs)
     : mTopFrameElement(nullptr)
     , mNestedFrameId(aNestedFrameId)
     , mIsContent(aToCopy.mIsContent)
-    , mUsePrivateBrowsing(aToCopy.mUsePrivateBrowsing)
     , mUseRemoteTabs(aToCopy.mUseRemoteTabs)
+    , mUseTrackingProtection(aToCopy.mUseTrackingProtection)
     , mOriginAttributes(aAttrs)
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
   {
-    MOZ_ASSERT(aToCopy.mUsePrivateBrowsing == (aAttrs.mPrivateBrowsingId != 0));
   }
 
   LoadContext(dom::Element* aTopFrameElement,
               bool aIsContent,
               bool aUsePrivateBrowsing,
               bool aUseRemoteTabs,
-              const DocShellOriginAttributes& aAttrs)
+              bool aUseTrackingProtection,
+              const OriginAttributes& aAttrs)
     : mTopFrameElement(do_GetWeakReference(aTopFrameElement))
     , mNestedFrameId(0)
     , mIsContent(aIsContent)
-    , mUsePrivateBrowsing(aUsePrivateBrowsing)
     , mUseRemoteTabs(aUseRemoteTabs)
+    , mUseTrackingProtection(aUseTrackingProtection)
     , mOriginAttributes(aAttrs)
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
   {
-    MOZ_ASSERT(aUsePrivateBrowsing == (aAttrs.mPrivateBrowsingId != 0));
+    MOZ_DIAGNOSTIC_ASSERT(aUsePrivateBrowsing == (aAttrs.mPrivateBrowsingId > 0));
   }
 
-  // Constructor taking reserved appId for the safebrowsing cookie.
-  explicit LoadContext(uint32_t aAppId)
+  // Constructor taking reserved origin attributes.
+  explicit LoadContext(OriginAttributes& aAttrs)
     : mTopFrameElement(nullptr)
     , mNestedFrameId(0)
     , mIsContent(false)
-    , mUsePrivateBrowsing(false)
     , mUseRemoteTabs(false)
-    , mOriginAttributes(aAppId, false)
+    , mUseTrackingProtection(false)
+    , mOriginAttributes(aAttrs)
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
@@ -118,13 +114,16 @@ private:
   nsWeakPtr mTopFrameElement;
   uint64_t mNestedFrameId;
   bool mIsContent;
-  bool mUsePrivateBrowsing;
   bool mUseRemoteTabs;
-  DocShellOriginAttributes mOriginAttributes;
+  bool mUseTrackingProtection;
+  OriginAttributes mOriginAttributes;
 #ifdef DEBUG
   bool mIsNotNull;
 #endif
 };
+
+nsresult CreateTestLoadContext(nsISupports *aOuter, REFNSIID aIID, void **aResult);
+nsresult CreatePrivateTestLoadContext(nsISupports *aOuter, REFNSIID aIID, void **aResult);
 
 } // namespace mozilla
 

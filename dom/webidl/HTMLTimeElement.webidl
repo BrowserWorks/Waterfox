@@ -7,7 +7,8 @@
  * http://www.whatwg.org/specs/web-apps/current-work/multipage/text-level-semantics.html#the-time-element
  */
 
+[HTMLConstructor]
 interface HTMLTimeElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString dateTime;
 };

@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Security: PSM")
+
 UNIFIED_SOURCES += [
     'AppSignatureVerification.cpp',
     'AppTrustDomain.cpp',
@@ -21,16 +24,19 @@ DEFINES['NSS_ENABLE_ECC'] = 'True'
 for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += [
+        '-Wextra',
+    ]
+
+    # Gecko headers aren't warning-free enough for us to enable these warnings.
+    CXXFLAGS += [
+        '-Wno-unused-parameter',
+    ]
+
 test_ssl_path = '/security/manager/ssl/tests/unit'
 
 headers_arrays_certs = [
-    ('marketplace-prod-public.inc', 'marketplaceProdPublicRoot', 'marketplace-prod-public.crt'),
-    ('marketplace-prod-reviewers.inc', 'marketplaceProdReviewersRoot', 'marketplace-prod-reviewers.crt'),
-    ('marketplace-dev-public.inc', 'marketplaceDevPublicRoot', 'marketplace-dev-public.crt'),
-    ('marketplace-dev-reviewers.inc', 'marketplaceDevReviewersRoot', 'marketplace-dev-reviewers.crt'),
-    ('marketplace-stage.inc', 'marketplaceStageRoot', 'marketplace-stage.crt'),
-    ('manifest-signing-root.inc', 'trustedAppPublicRoot', 'trusted-app-public.der'),
-    ('manifest-signing-test-root.inc', 'trustedAppTestRoot', test_ssl_path + '/test_signed_manifest/trusted_ca1.der'),
     ('xpcshell.inc', 'xpcshellRoot', test_ssl_path + '/test_signed_apps/trusted_ca1.der'),
     ('addons-public.inc', 'addonsPublicRoot', 'addons-public.crt'),
     ('addons-stage.inc', 'addonsStageRoot', 'addons-stage.crt'),

@@ -5,6 +5,7 @@
 #include "DriverCrashGuard.h"
 #include "gfxEnv.h"
 #include "gfxPrefs.h"
+#include "gfxConfig.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #ifdef MOZ_CRASHREPORTER
@@ -66,6 +67,11 @@ DriverCrashGuard::InitializeIfNeeded()
 static inline bool
 AreCrashGuardsEnabled()
 {
+  // Crash guard isn't supported in the GPU process since the entire
+  // process is basically a crash guard.
+  if (XRE_IsGPUProcess()) {
+    return false;
+  }
 #ifdef NIGHTLY_BUILD
   // We only use the crash guard on non-nightly channels, since the nightly
   // channel is for development and having graphics features perma-disabled
@@ -345,7 +351,8 @@ DriverCrashGuard::CheckAndUpdatePref(const char* aPrefName, const nsAString& aCu
 {
   std::string pref = GetFullPrefName(aPrefName);
 
-  nsAdoptingString oldValue = Preferences::GetString(pref.c_str());
+  nsAutoString oldValue;
+  Preferences::GetString(pref.c_str(), oldValue);
   if (oldValue == aCurrentValue) {
     return false;
   }
@@ -382,7 +389,7 @@ DriverCrashGuard::FlushPreferences()
   MOZ_ASSERT(XRE_IsParentProcess());
 
   if (nsIPrefService* prefService = Preferences::GetService()) {
-    prefService->SavePrefFile(nullptr);
+    static_cast<Preferences *>(prefService)->SavePrefFileBlocking();
   }
 }
 
@@ -451,10 +458,7 @@ D3D11LayersCrashGuard::UpdateEnvironment()
                     (!gfxPrefs::Direct2DDisabled() && FeatureEnabled(nsIGfxInfo::FEATURE_DIRECT2D));
   changed |= CheckAndUpdateBoolPref("feature-d2d", d2dEnabled);
 
-  bool d3d11Enabled = !gfxPrefs::LayersPreferD3D9();
-  if (!FeatureEnabled(nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS)) {
-    d3d11Enabled = false;
-  }
+  bool d3d11Enabled = gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING);
   changed |= CheckAndUpdateBoolPref("feature-d3d11", d3d11Enabled);
 #endif
 

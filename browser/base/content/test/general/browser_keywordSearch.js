@@ -20,14 +20,13 @@ function test() {
   waitForExplicitFinish();
 
   let windowObserver = {
-    observe: function(aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       if (aTopic == "domwindowopened") {
         ok(false, "Alert window opened");
         let win = aSubject.QueryInterface(Ci.nsIDOMEventTarget);
         win.addEventListener("load", function() {
-          win.removeEventListener("load", arguments.callee, false);
           win.close();
-        }, false);
+        }, {once: true});
         executeSoon(finish);
       }
     }
@@ -35,7 +34,7 @@ function test() {
 
   Services.ww.registerNotification(windowObserver);
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   let listener = {
     onStateChange: function onLocationChange(webProgress, req, flags, status) {
@@ -58,7 +57,7 @@ function test() {
   };
   gBrowser.addProgressListener(listener);
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.ww.unregisterNotification(windowObserver);
 
     gBrowser.removeProgressListener(listener);

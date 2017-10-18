@@ -6,8 +6,7 @@
 
 #include "mozilla/dom/cache/CacheStreamControlParent.h"
 
-#include "mozilla/DebugOnly.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/dom/cache/StreamList.h"
@@ -40,7 +39,7 @@ CacheStreamControlParent::CacheStreamControlParent()
 CacheStreamControlParent::~CacheStreamControlParent()
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
-  MOZ_ASSERT(!mStreamList);
+  MOZ_DIAGNOSTIC_ASSERT(!mStreamList);
   MOZ_COUNT_DTOR(cache::CacheStreamControlParent);
 }
 
@@ -48,6 +47,7 @@ void
 CacheStreamControlParent::SerializeControl(CacheReadStream* aReadStreamOut)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
   aReadStreamOut->controlChild() = nullptr;
   aReadStreamOut->controlParent() = this;
 }
@@ -58,9 +58,13 @@ CacheStreamControlParent::SerializeStream(CacheReadStream* aReadStreamOut,
                                           nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
-  MOZ_ASSERT(aStream);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
+  MOZ_DIAGNOSTIC_ASSERT(aStream);
+
   UniquePtr<AutoIPCStream> autoStream(new AutoIPCStream(aReadStreamOut->stream()));
-  autoStream->Serialize(aStream, Manager());
+  DebugOnly<bool> ok = autoStream->Serialize(aStream, Manager());
+  MOZ_ASSERT(ok);
+
   aStreamCleanupList.AppendElement(Move(autoStream));
 }
 
@@ -84,25 +88,30 @@ CacheStreamControlParent::ActorDestroy(ActorDestroyReason aReason)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
   CloseAllReadStreamsWithoutReporting();
+  // If the initial SendPStreamControlConstructor() fails we will
+  // be called before mStreamList is set.
+  if (!mStreamList) {
+    return;
+  }
   mStreamList->RemoveStreamControl(this);
   mStreamList->NoteClosedAll();
   mStreamList = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheStreamControlParent::RecvNoteClosed(const nsID& aId)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
-  MOZ_ASSERT(mStreamList);
+  MOZ_DIAGNOSTIC_ASSERT(mStreamList);
   mStreamList->NoteClosed(aId);
-  return true;
+  return IPC_OK();
 }
 
 void
 CacheStreamControlParent::SetStreamList(StreamList* aStreamList)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlParent);
-  MOZ_ASSERT(!mStreamList);
+  MOZ_DIAGNOSTIC_ASSERT(!mStreamList);
   mStreamList = aStreamList;
 }
 

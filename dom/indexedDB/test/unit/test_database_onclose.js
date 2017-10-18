@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   function testInvalidStateError(aDb, aTxn) {
     try {
@@ -71,7 +71,7 @@ function testSteps()
   testInvalidStateError(db, txn);
 
   info("#2: Verifying IDBDatabase.onclose && IDBTransaction.onerror " +
-  		 "in *write* operation after cleared by the agent.");
+       "in *write* operation after cleared by the agent.");
   openRequest = indexedDB.open(name, 1);
   openRequest.onerror = errorHandler;
   openRequest.onsuccess = unexpectedSuccessHandler;
@@ -100,15 +100,15 @@ function testSteps()
   objectStore = txn.objectStore("store");
 
   let objectId = 0;
-  while(true) {
+  while (true) {
     let addRequest = objectStore.add({foo: "foo"}, objectId);
     addRequest.onerror = function(event) {
       info("addRequest.onerror, objectId: " + objectId);
       txn.onerror = grabEventAndContinueHandler;
-      testGenerator.send(true);
+      testGenerator.next(true);
     }
     addRequest.onsuccess = function() {
-      testGenerator.send(false);
+      testGenerator.next(false);
     }
 
     if (objectId == 0) {
@@ -166,11 +166,11 @@ function testSteps()
   // during testing.
   let numberOfObjects = 3000;
   objectId = 0;
-  while(true) {
+  while (true) {
     let addRequest = objectStore.add({foo: "foo"});
     addRequest.onsuccess = function() {
       objectId++;
-      testGenerator.send(objectId == numberOfObjects);
+      testGenerator.next(objectId == numberOfObjects);
     }
     addRequest.onerror = errorHandler;
 
@@ -196,7 +196,7 @@ function testSteps()
   let readRequest = objectStore.openCursor();
   readRequest.onerror = function(event) {
     info("readRequest.onerror, numberOfReadObjects: " + numberOfReadObjects);
-    testGenerator.send(true);
+    testGenerator.next(true);
   }
   readRequest.onsuccess = function(event) {
     let cursor = event.target.result;
@@ -206,7 +206,7 @@ function testSteps()
     } else {
       info("Cursor is invalid, numberOfReadObjects: " + numberOfReadObjects);
       todo(false, "All records are iterated before database is cleared!");
-      testGenerator.send(false);
+      testGenerator.next(false);
     }
   }
 
@@ -215,7 +215,7 @@ function testSteps()
     continueToNextStep();
   });
 
-  readRequestError = yield undefined;
+  let readRequestError = yield undefined;
   if (readRequestError) {
     txn.onerror = grabEventAndContinueHandler;
 
@@ -241,5 +241,4 @@ function testSteps()
   yield undefined;
 
   finishTest();
-  yield undefined;
 }

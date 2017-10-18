@@ -23,6 +23,7 @@
 #if defined(WEBRTC_MAC)
 
 #include "webrtc/base/common.h"
+#include "webrtc/base/constructormagic.h"
 
 // This header may be included from Obj-C files or C++ files.
 #ifdef __OBJC__
@@ -50,7 +51,7 @@ class ScopedAutoreleasePool {
 
   NSAutoreleasePool* pool_;
 
-  DISALLOW_EVIL_CONSTRUCTORS(ScopedAutoreleasePool);
+  RTC_DISALLOW_COPY_AND_ASSIGN(ScopedAutoreleasePool);
 };
 
 }  // namespace rtc

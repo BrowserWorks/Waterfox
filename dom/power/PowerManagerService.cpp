@@ -33,7 +33,7 @@ static void LogFunctionAndJSStack(const char* funcname) {
                       "Call to %s. The JS stack is:\n%s\n",
                       funcname,
                       jsstack ? jsstack : "<no JS stack>");
-  JS_smprintf_free(jsstack);
+  js_free(jsstack);
 }
 // bug 839452
 #define LOG_FUNCTION_AND_JS_STACK() \
@@ -124,12 +124,12 @@ PowerManagerService::SyncProfile()
 {
   nsCOMPtr<nsIObserverService> obsServ = services::GetObserverService();
   if (obsServ) {
-    NS_NAMED_LITERAL_STRING(context, "shutdown-persist");
-    obsServ->NotifyObservers(nullptr, "profile-change-net-teardown", context.get());
-    obsServ->NotifyObservers(nullptr, "profile-change-teardown", context.get());
-    obsServ->NotifyObservers(nullptr, "profile-before-change", context.get());
-    obsServ->NotifyObservers(nullptr, "profile-before-change-qm", context.get());
-    obsServ->NotifyObservers(nullptr, "profile-before-change-telemetry", context.get());
+    const char16_t* context = u"shutdown-persist";
+    obsServ->NotifyObservers(nullptr, "profile-change-net-teardown", context);
+    obsServ->NotifyObservers(nullptr, "profile-change-teardown", context);
+    obsServ->NotifyObservers(nullptr, "profile-before-change", context);
+    obsServ->NotifyObservers(nullptr, "profile-before-change-qm", context);
+    obsServ->NotifyObservers(nullptr, "profile-before-change-telemetry", context);
   }
 }
 

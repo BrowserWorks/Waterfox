@@ -18,14 +18,9 @@ const PushService = Cc["@mozilla.org/push/Service;1"]
 
 add_task(function* () {
   info("Turn on workers via mochitest http.");
-  yield SpecialPowers.pushPrefEnv({
-    "set": [
-      // Accept workers from mochitest's http.
-      ["dom.serviceWorkers.testing.enabled", true],
-      // Enable the push service.
-      ["dom.push.connection.enabled", true],
-    ]
-  });
+  yield enableServiceWorkerDebugging();
+  // Enable the push service.
+  yield pushPref("dom.push.connection.enabled", true);
 
   info("Mock the push service");
   PushService.service = {
@@ -72,16 +67,23 @@ add_task(function* () {
   // Check that the service worker appears in the UI.
   assertHasTarget(true, document, "service-workers", SERVICE_WORKER);
 
+  yield waitForServiceWorkerActivation(SERVICE_WORKER, document);
+
   // Wait for the service worker details to update.
   let names = [...document.querySelectorAll("#service-workers .target-name")];
   let name = names.filter(element => element.textContent === SERVICE_WORKER)[0];
   ok(name, "Found the service worker in the list");
+
   let targetContainer = name.parentNode.parentNode;
   let targetDetailsElement = targetContainer.querySelector(".target-details");
-  yield waitForMutation(targetDetailsElement, { childList: true });
 
   // Retrieve the push subscription endpoint URL, and verify it looks good.
   let pushURL = targetContainer.querySelector(".service-worker-push-url");
+  if (!pushURL) {
+    yield waitForMutation(targetDetailsElement, { childList: true });
+    pushURL = targetContainer.querySelector(".service-worker-push-url");
+  }
+
   ok(pushURL, "Found the push service URL in the service worker details");
   is(pushURL.textContent, FAKE_ENDPOINT, "The push service URL looks correct");
 
@@ -97,11 +99,12 @@ add_task(function* () {
     "The push service URL should be removed");
 
   // Finally, unregister the service worker itself.
-  yield unregisterServiceWorker(swTab).then(() => {
+  try {
+    yield unregisterServiceWorker(swTab, serviceWorkersElement);
     ok(true, "Service worker registration unregistered");
-  }).catch(function (e) {
-    ok(false, "Service worker not unregistered; " + e);
-  });
+  } catch (e) {
+    ok(false, "SW not unregistered; " + e);
+  }
 
   info("Unmock the push service");
   PushService.service = null;

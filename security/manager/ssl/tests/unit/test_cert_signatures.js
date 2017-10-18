@@ -25,9 +25,9 @@ function readAndTamperWithNthByte(certificatePath, n) {
     // remember, n is negative at this point
     n = der.length + n;
   }
-  let replacement = '\x22';
+  let replacement = "\x22";
   if (der.charCodeAt(n) == replacement) {
-    replacement = '\x23';
+    replacement = "\x23";
   }
   der = der.substring(0, n) + replacement + der.substring(n + 1);
   return btoa(der);
@@ -39,7 +39,7 @@ function readAndTamperWithNthByte(certificatePath, n) {
 const BYTE_IN_SIGNATURE = -8;
 function addSignatureTamperedCertificate(certificatePath) {
   let base64 = readAndTamperWithNthByte(certificatePath, BYTE_IN_SIGNATURE);
-  certdb.addCertFromBase64(base64, ",,", null);
+  certdb.addCertFromBase64(base64, ",,");
 }
 
 function ensureSignatureVerificationFailure(certificatePath) {
@@ -74,7 +74,7 @@ const BYTE_IN_SERIAL_NUMBER = 17;
 function addSerialNumberTamperedCertificate(certificatePath) {
   let base64 = readAndTamperWithNthByte(certificatePath,
                                         BYTE_IN_SERIAL_NUMBER);
-  certdb.addCertFromBase64(base64, ",,", null);
+  certdb.addCertFromBase64(base64, ",,");
 }
 
 function tamperWithSerialNumberAndEnsureVerificationFailure(certificatePath) {

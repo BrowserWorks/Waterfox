@@ -24,7 +24,7 @@
 #include "nsCRT.h"
 #include "nsContentUtils.h"
 #include "nsReadableUtils.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsIDocument.h"
 #include "nsGkAtoms.h"
 #include "nsCCUncollectableMarker.h"
@@ -36,24 +36,27 @@ using mozilla::dom::NodeInfo;
 NodeInfo::~NodeInfo()
 {
   mOwnerManager->RemoveNodeInfo(this);
+
+  // We can't use NS_IF_RELEASE because mName is const.
+  if (mInner.mName) {
+    mInner.mName->Release();
+  }
+  NS_IF_RELEASE(mInner.mPrefix);
+  NS_IF_RELEASE(mInner.mExtraName);
 }
 
 NodeInfo::NodeInfo(nsIAtom *aName, nsIAtom *aPrefix, int32_t aNamespaceID,
                    uint16_t aNodeType, nsIAtom* aExtraName,
                    nsNodeInfoManager *aOwnerManager)
+  : mDocument(aOwnerManager->GetDocument()),
+    mInner(aName, aPrefix, aNamespaceID, aNodeType, aExtraName),
+    mOwnerManager(aOwnerManager)
 {
   CheckValidNodeInfo(aNodeType, aName, aNamespaceID, aExtraName);
-  MOZ_ASSERT(aOwnerManager, "Invalid aOwnerManager");
 
-  // Initialize mInner
-  mInner.mName = aName;
-  mInner.mPrefix = aPrefix;
-  mInner.mNamespaceID = aNamespaceID;
-  mInner.mNodeType = aNodeType;
-  mOwnerManager = aOwnerManager;
-  mInner.mExtraName = aExtraName;
-
-  mDocument = aOwnerManager->GetDocument();
+  NS_IF_ADDREF(mInner.mName);
+  NS_IF_ADDREF(mInner.mPrefix);
+  NS_IF_ADDREF(mInner.mExtraName);
 
   // Now compute our cached members.
 
@@ -129,11 +132,11 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(NodeInfo)
     uint32_t nsid = tmp->NamespaceID();
     nsAtomCString localName(tmp->NameAtom());
     if (nsid < ArrayLength(kNodeInfoNSURIs)) {
-      snprintf_literal(name, "NodeInfo%s %s", kNodeInfoNSURIs[nsid],
-                       localName.get());
+      SprintfLiteral(name, "NodeInfo%s %s", kNodeInfoNSURIs[nsid],
+                     localName.get());
     }
     else {
-      snprintf_literal(name, "NodeInfo %s", localName.get());
+      SprintfLiteral(name, "NodeInfo %s", localName.get());
     }
 
     cb.DescribeRefCountedNode(tmp->mRefCnt.get(), name);
@@ -197,7 +200,8 @@ bool
 NodeInfo::NamespaceEquals(const nsAString& aNamespaceURI) const
 {
   int32_t nsid =
-    nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNamespaceURI);
+    nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNamespaceURI,
+      nsContentUtils::IsChromeDoc(mOwnerManager->GetDocument()));
 
   return mozilla::dom::NodeInfo::NamespaceEquals(nsid);
 }

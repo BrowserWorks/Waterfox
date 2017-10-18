@@ -16,7 +16,7 @@
 #endif
 #include "mozilla/Tuple.h"
 
-#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_ANDROID)
 #include "nsDebug.h"
 #endif
 #include "Point.h"
@@ -127,6 +127,11 @@ enum class LogReason : int {
   TextureCreation,
   InvalidCacheSurface,
   AlphaWithBasicClient,
+  UnbalancedClipStack,
+  ProcessingError,
+  InvalidDrawTarget,
+  NativeFontResourceNotFound,
+  UnscaledFontNotFound,
   // End
   MustBeLessThanThis = 101,
 };
@@ -138,7 +143,7 @@ struct BasicLogger
   // in the appropriate places in that method.
   static bool ShouldOutputMessage(int aLevel) {
     if (LoggingPrefs::sGfxLogLevel >= aLevel) {
-#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_ANDROID)
       return true;
 #else
 #if defined(MOZ_LOGGING)
@@ -171,12 +176,12 @@ struct BasicLogger
     // make the corresponding change in the ShouldOutputMessage method
     // above.
     if (LoggingPrefs::sGfxLogLevel >= aLevel) {
-#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
+#if defined(MOZ_WIDGET_ANDROID)
       printf_stderr("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
 #else
 #if defined(MOZ_LOGGING)
       if (MOZ_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
-        PR_LogPrint("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
+        MOZ_LOG(GetGFX2DLog(), PRLogLevelForLevel(aLevel), ("%s%s", aString.c_str(), aNoNewline ? "" : "\n"));
       } else
 #endif
       if ((LoggingPrefs::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
@@ -461,6 +466,9 @@ public:
         case SurfaceType::TILED:
           mMessage << "SurfaceType::TILED";
           break;
+        case SurfaceType::DATA_SHARED:
+          mMessage << "SurfaceType::DATA_SHARED";
+          break;
         default:
           mMessage << "Invalid SurfaceType (" << (int)aType << ")";
           break;
@@ -495,7 +503,9 @@ private:
       if ((mOptions & int(LogOptions::CrashAction)) && ValidReason()) {
         mMessage << " " << (int)mReason;
       }
-      mMessage << "]: ";
+      if (AutoPrefix()) {
+        mMessage << "]: ";
+      }
     }
   }
 
@@ -639,7 +649,10 @@ public:
   }
 
   void IncreaseIndent() { ++mDepth; }
-  void DecreaseIndent() { --mDepth; }
+  void DecreaseIndent() {
+    MOZ_ASSERT(mDepth > 0);
+    --mDepth;
+  }
 
   void ConditionOnPrefFunction(bool(*aPrefFunction)()) {
     mConditionedOnPref = true;
@@ -677,6 +690,14 @@ public:
   explicit TreeAutoIndent(TreeLog& aTreeLog) : mTreeLog(aTreeLog) {
     mTreeLog.IncreaseIndent();
   }
+
+  TreeAutoIndent(const TreeAutoIndent& aTreeAutoIndent) :
+      mTreeLog(aTreeAutoIndent.mTreeLog) {
+    mTreeLog.IncreaseIndent();
+  }
+
+  TreeAutoIndent& operator=(const TreeAutoIndent& aTreeAutoIndent) = delete;
+
   ~TreeAutoIndent() {
     mTreeLog.DecreaseIndent();
   }

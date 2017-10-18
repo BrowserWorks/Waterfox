@@ -32,6 +32,7 @@
 
 #include "nsIDocument.h"
 #include "nsIServiceWorkerManager.h"
+#include "nsIScriptTimeoutHandler.h"
 
 #ifdef ANDROID
 #include <android/log.h>
@@ -51,6 +52,18 @@
 #undef PostMessage
 #endif
 
+extern already_AddRefed<nsIScriptTimeoutHandler>
+NS_CreateJSTimeoutHandler(JSContext* aCx,
+                          mozilla::dom::workers::WorkerPrivate* aWorkerPrivate,
+                          mozilla::dom::Function& aFunction,
+                          const mozilla::dom::Sequence<JS::Value>& aArguments,
+                          mozilla::ErrorResult& aError);
+
+extern already_AddRefed<nsIScriptTimeoutHandler>
+NS_CreateJSTimeoutHandler(JSContext* aCx,
+                          mozilla::dom::workers::WorkerPrivate* aWorkerPrivate,
+                          const nsAString& aExpression);
+
 using namespace mozilla;
 using namespace mozilla::dom;
 USING_WORKERS_NAMESPACE
@@ -59,10 +72,14 @@ using mozilla::dom::cache::CacheStorage;
 using mozilla::ipc::PrincipalInfo;
 
 WorkerGlobalScope::WorkerGlobalScope(WorkerPrivate* aWorkerPrivate)
-: mWindowInteractionsAllowed(0)
+: mSerialEventTarget(aWorkerPrivate->HybridEventTarget())
+, mWindowInteractionsAllowed(0)
 , mWorkerPrivate(aWorkerPrivate)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
+
+  // We should always have an event target when the global is created.
+  MOZ_DIAGNOSTIC_ASSERT(mSerialEventTarget);
 }
 
 WorkerGlobalScope::~WorkerGlobalScope()
@@ -83,6 +100,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(WorkerGlobalScope,
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mIndexedDB)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCacheStorage)
   tmp->TraverseHostObjectURIs(cb);
+  tmp->mWorkerPrivate->TraverseTimeouts(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(WorkerGlobalScope,
@@ -96,13 +114,12 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(WorkerGlobalScope,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mIndexedDB)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mCacheStorage)
   tmp->UnlinkHostObjectURIs();
+  tmp->mWorkerPrivate->UnlinkTimeouts();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(WorkerGlobalScope,
                                                DOMEventTargetHelper)
   tmp->mWorkerPrivate->AssertIsOnWorkerThread();
-
-  tmp->mWorkerPrivate->TraceTimeouts(aCallbacks, aClosure);
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_ADDREF_INHERITED(WorkerGlobalScope, DOMEventTargetHelper)
@@ -160,6 +177,15 @@ WorkerGlobalScope::GetCaches(ErrorResult& aRv)
   return ref.forget();
 }
 
+bool
+WorkerGlobalScope::IsSecureContext() const
+{
+  bool globalSecure =
+    JS_GetIsSecureContext(js::GetObjectCompartment(GetWrapperPreserveColor()));
+  MOZ_ASSERT(globalSecure == mWorkerPrivate->IsSecureContext());
+  return globalSecure;
+}
+
 already_AddRefed<WorkerLocation>
 WorkerGlobalScope::Location()
 {
@@ -199,18 +225,6 @@ WorkerGlobalScope::GetExistingNavigator() const
   return navigator.forget();
 }
 
-void
-WorkerGlobalScope::Close(JSContext* aCx, ErrorResult& aRv)
-{
-  mWorkerPrivate->AssertIsOnWorkerThread();
-
-  if (mWorkerPrivate->IsServiceWorker()) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-  } else {
-    mWorkerPrivate->CloseInternal(aCx);
-  }
-}
-
 OnErrorEventHandlerNonNull*
 WorkerGlobalScope::GetOnerror()
 {
@@ -247,8 +261,14 @@ WorkerGlobalScope::SetTimeout(JSContext* aCx,
                               ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
-  return mWorkerPrivate->SetTimeout(aCx, &aHandler, EmptyString(), aTimeout,
-                                    aArguments, false, aRv);
+
+  nsCOMPtr<nsIScriptTimeoutHandler> handler =
+    NS_CreateJSTimeoutHandler(aCx, mWorkerPrivate, aHandler, aArguments, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return 0;
+  }
+
+  return mWorkerPrivate->SetTimeout(aCx, handler, aTimeout, false, aRv);
 }
 
 int32_t
@@ -259,9 +279,10 @@ WorkerGlobalScope::SetTimeout(JSContext* aCx,
                               ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
-  Sequence<JS::Value> dummy;
-  return mWorkerPrivate->SetTimeout(aCx, nullptr, aHandler, aTimeout, dummy,
-                                    false, aRv);
+
+  nsCOMPtr<nsIScriptTimeoutHandler> handler =
+    NS_CreateJSTimeoutHandler(aCx, mWorkerPrivate, aHandler);
+  return mWorkerPrivate->SetTimeout(aCx, handler, aTimeout, false, aRv);
 }
 
 void
@@ -283,8 +304,13 @@ WorkerGlobalScope::SetInterval(JSContext* aCx,
   bool isInterval = aTimeout.WasPassed();
   int32_t timeout = aTimeout.WasPassed() ? aTimeout.Value() : 0;
 
-  return mWorkerPrivate->SetTimeout(aCx, &aHandler, EmptyString(), timeout,
-                                    aArguments, isInterval, aRv);
+  nsCOMPtr<nsIScriptTimeoutHandler> handler =
+    NS_CreateJSTimeoutHandler(aCx, mWorkerPrivate, aHandler, aArguments, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return 0;
+  }
+
+  return mWorkerPrivate->SetTimeout(aCx, handler,  timeout, isInterval, aRv);
 }
 
 int32_t
@@ -301,8 +327,9 @@ WorkerGlobalScope::SetInterval(JSContext* aCx,
   bool isInterval = aTimeout.WasPassed();
   int32_t timeout = aTimeout.WasPassed() ? aTimeout.Value() : 0;
 
-  return mWorkerPrivate->SetTimeout(aCx, nullptr, aHandler, timeout, dummy,
-                                    isInterval, aRv);
+  nsCOMPtr<nsIScriptTimeoutHandler> handler =
+    NS_CreateJSTimeoutHandler(aCx, mWorkerPrivate, aHandler);
+  return mWorkerPrivate->SetTimeout(aCx, handler, timeout, isInterval, aRv);
 }
 
 void
@@ -310,6 +337,13 @@ WorkerGlobalScope::ClearInterval(int32_t aHandle)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
   mWorkerPrivate->ClearTimeout(aHandle);
+}
+
+void
+WorkerGlobalScope::GetOrigin(nsAString& aOrigin) const
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  aOrigin = mWorkerPrivate->Origin();
 }
 
 void
@@ -365,9 +399,10 @@ WorkerGlobalScope::GetPerformance()
 
 already_AddRefed<Promise>
 WorkerGlobalScope::Fetch(const RequestOrUSVString& aInput,
-                         const RequestInit& aInit, ErrorResult& aRv)
+                         const RequestInit& aInit,
+                         CallerType aCallerType, ErrorResult& aRv)
 {
-  return FetchRequest(this, aInput, aInit, aRv);
+  return FetchRequest(this, aInput, aInit, aCallerType, aRv);
 }
 
 already_AddRefed<IDBFactory>
@@ -410,7 +445,8 @@ WorkerGlobalScope::GetIndexedDB(ErrorResult& aErrorResult)
 }
 
 already_AddRefed<Promise>
-WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
+WorkerGlobalScope::CreateImageBitmap(JSContext* aCx,
+                                     const ImageBitmapSource& aImage,
                                      ErrorResult& aRv)
 {
   if (aImage.IsArrayBuffer() || aImage.IsArrayBufferView()) {
@@ -422,7 +458,8 @@ WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
 }
 
 already_AddRefed<Promise>
-WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
+WorkerGlobalScope::CreateImageBitmap(JSContext* aCx,
+                                     const ImageBitmapSource& aImage,
                                      int32_t aSx, int32_t aSy, int32_t aSw, int32_t aSh,
                                      ErrorResult& aRv)
 {
@@ -435,12 +472,18 @@ WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
 }
 
 already_AddRefed<mozilla::dom::Promise>
-WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
+WorkerGlobalScope::CreateImageBitmap(JSContext* aCx,
+                                     const ImageBitmapSource& aImage,
                                      int32_t aOffset, int32_t aLength,
                                      ImageBitmapFormat aFormat,
                                      const Sequence<ChannelPixelLayout>& aLayout,
                                      ErrorResult& aRv)
 {
+  if (!ImageBitmap::ExtensionsEnabled(aCx)) {
+    aRv.Throw(NS_ERROR_TYPE_ERR);
+    return nullptr;
+  }
+
   if (aImage.IsArrayBuffer() || aImage.IsArrayBufferView()) {
     return ImageBitmap::Create(this, aImage, aOffset, aLength, aFormat, aLayout,
                                aRv);
@@ -450,8 +493,30 @@ WorkerGlobalScope::CreateImageBitmap(const ImageBitmapSource& aImage,
   }
 }
 
-DedicatedWorkerGlobalScope::DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate)
-: WorkerGlobalScope(aWorkerPrivate)
+nsresult
+WorkerGlobalScope::Dispatch(TaskCategory aCategory,
+                            already_AddRefed<nsIRunnable>&& aRunnable)
+{
+  return EventTargetFor(aCategory)->Dispatch(Move(aRunnable),
+                                             NS_DISPATCH_NORMAL);
+}
+
+nsISerialEventTarget*
+WorkerGlobalScope::EventTargetFor(TaskCategory aCategory) const
+{
+  return mSerialEventTarget;
+}
+
+AbstractThread*
+WorkerGlobalScope::AbstractMainThreadFor(TaskCategory aCategory)
+{
+  MOZ_CRASH("AbstractMainThreadFor not supported for workers.");
+}
+
+DedicatedWorkerGlobalScope::DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
+                                                       const nsString& aName)
+  : WorkerGlobalScope(aWorkerPrivate)
+  , mName(aName)
 {
 }
 
@@ -493,15 +558,22 @@ DedicatedWorkerGlobalScope::WrapGlobalObject(JSContext* aCx,
 void
 DedicatedWorkerGlobalScope::PostMessage(JSContext* aCx,
                                         JS::Handle<JS::Value> aMessage,
-                                        const Optional<Sequence<JS::Value>>& aTransferable,
+                                        const Sequence<JSObject*>& aTransferable,
                                         ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
   mWorkerPrivate->PostMessageToParent(aCx, aMessage, aTransferable, aRv);
 }
 
+void
+DedicatedWorkerGlobalScope::Close(JSContext* aCx)
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  mWorkerPrivate->CloseInternal(aCx);
+}
+
 SharedWorkerGlobalScope::SharedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
-                                                 const nsCString& aName)
+                                                 const nsString& aName)
 : WorkerGlobalScope(aWorkerPrivate), mName(aName)
 {
 }
@@ -519,6 +591,13 @@ SharedWorkerGlobalScope::WrapGlobalObject(JSContext* aCx,
   return SharedWorkerGlobalScopeBinding::Wrap(aCx, this, this, options,
                                               GetWorkerPrincipal(),
                                               true, aReflector);
+}
+
+void
+SharedWorkerGlobalScope::Close(JSContext* aCx)
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  mWorkerPrivate->CloseInternal(aCx);
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ServiceWorkerGlobalScope, WorkerGlobalScope,
@@ -576,6 +655,96 @@ ServiceWorkerGlobalScope::Registration()
   return mRegistration;
 }
 
+EventHandlerNonNull*
+ServiceWorkerGlobalScope::GetOnfetch()
+{
+  MOZ_ASSERT(mWorkerPrivate);
+  mWorkerPrivate->AssertIsOnWorkerThread();
+
+  return GetEventHandler(nullptr, NS_LITERAL_STRING("fetch"));
+}
+
+namespace {
+
+class ReportFetchListenerWarningRunnable final : public Runnable
+{
+  const nsCString mScope;
+  nsCString mSourceSpec;
+  uint32_t mLine;
+  uint32_t mColumn;
+
+public:
+  explicit ReportFetchListenerWarningRunnable(const nsString& aScope)
+    : mozilla::Runnable("ReportFetchListenerWarningRunnable")
+    , mScope(NS_ConvertUTF16toUTF8(aScope))
+  {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+    JSContext* cx = workerPrivate->GetJSContext();
+    MOZ_ASSERT(cx);
+
+    nsJSUtils::GetCallingLocation(cx, mSourceSpec, &mLine, &mColumn);
+  }
+
+  NS_IMETHOD
+  Run() override
+  {
+    AssertIsOnMainThread();
+
+    ServiceWorkerManager::LocalizeAndReportToAllClients(mScope, "ServiceWorkerNoFetchHandler",
+        nsTArray<nsString>{}, nsIScriptError::warningFlag, NS_ConvertUTF8toUTF16(mSourceSpec),
+        EmptyString(), mLine, mColumn);
+
+    return NS_OK;
+  }
+};
+
+} // anonymous namespace
+
+void
+ServiceWorkerGlobalScope::SetOnfetch(mozilla::dom::EventHandlerNonNull* aCallback)
+{
+  MOZ_ASSERT(mWorkerPrivate);
+  mWorkerPrivate->AssertIsOnWorkerThread();
+
+  if (aCallback) {
+    if (mWorkerPrivate->WorkerScriptExecutedSuccessfully()) {
+      RefPtr<Runnable> r = new ReportFetchListenerWarningRunnable(mScope);
+      mWorkerPrivate->DispatchToMainThread(r.forget());
+    }
+    mWorkerPrivate->SetFetchHandlerWasAdded();
+  }
+  SetEventHandler(nullptr, NS_LITERAL_STRING("fetch"), aCallback);
+}
+
+void
+ServiceWorkerGlobalScope::AddEventListener(
+                          const nsAString& aType,
+                          dom::EventListener* aListener,
+                          const dom::AddEventListenerOptionsOrBoolean& aOptions,
+                          const dom::Nullable<bool>& aWantsUntrusted,
+                          ErrorResult& aRv)
+{
+  MOZ_ASSERT(mWorkerPrivate);
+  mWorkerPrivate->AssertIsOnWorkerThread();
+
+  DOMEventTargetHelper::AddEventListener(aType, aListener, aOptions,
+                                         aWantsUntrusted, aRv);
+
+  if (!aType.EqualsLiteral("fetch")) {
+    return;
+  }
+
+  if (mWorkerPrivate->WorkerScriptExecutedSuccessfully()) {
+    RefPtr<Runnable> r = new ReportFetchListenerWarningRunnable(mScope);
+    mWorkerPrivate->DispatchToMainThread(r.forget());
+  }
+
+  if (!aRv.Failed()) {
+    mWorkerPrivate->SetFetchHandlerWasAdded();
+  }
+}
+
 namespace {
 
 class SkipWaitingResultRunnable final : public WorkerRunnable
@@ -598,7 +767,7 @@ public:
     aWorkerPrivate->AssertIsOnWorkerThread();
 
     RefPtr<Promise> promise = mPromiseProxy->WorkerPromise();
-    promise->MaybeResolve(JS::UndefinedHandleValue);
+    promise->MaybeResolveWithUndefined();
 
     // Release the reference on the worker thread.
     mPromiseProxy->CleanUp();
@@ -615,18 +784,17 @@ class WorkerScopeSkipWaitingRunnable final : public Runnable
 public:
   WorkerScopeSkipWaitingRunnable(PromiseWorkerProxy* aPromiseProxy,
                                  const nsCString& aScope)
-    : mPromiseProxy(aPromiseProxy)
+    : mozilla::Runnable("WorkerScopeSkipWaitingRunnable")
+    , mPromiseProxy(aPromiseProxy)
     , mScope(aScope)
   {
     MOZ_ASSERT(aPromiseProxy);
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   Run() override
   {
     AssertIsOnMainThread();
-    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-    MOZ_ASSERT(swm);
 
     MutexAutoLock lock(mPromiseProxy->Lock());
     if (mPromiseProxy->CleanedUp()) {
@@ -634,8 +802,13 @@ public:
     }
 
     WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
-    swm->SetSkipWaitingFlag(workerPrivate->GetPrincipal(), mScope,
-                            workerPrivate->ServiceWorkerID());
+    MOZ_DIAGNOSTIC_ASSERT(workerPrivate);
+
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (swm) {
+      swm->SetSkipWaitingFlag(workerPrivate->GetPrincipal(), mScope,
+                              workerPrivate->ServiceWorkerID());
+    }
 
     RefPtr<SkipWaitingResultRunnable> runnable =
       new SkipWaitingResultRunnable(workerPrivate, mPromiseProxy);
@@ -663,7 +836,7 @@ ServiceWorkerGlobalScope::SkipWaiting(ErrorResult& aRv)
   RefPtr<PromiseWorkerProxy> promiseProxy =
     PromiseWorkerProxy::Create(mWorkerPrivate, promise);
   if (!promiseProxy) {
-    promise->MaybeResolve(JS::UndefinedHandleValue);
+    promise->MaybeResolveWithUndefined();
     return promise.forget();
   }
 
@@ -671,7 +844,7 @@ ServiceWorkerGlobalScope::SkipWaiting(ErrorResult& aRv)
     new WorkerScopeSkipWaitingRunnable(promiseProxy,
                                        NS_ConvertUTF16toUTF8(mScope));
 
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
+  MOZ_ALWAYS_SUCCEEDS(mWorkerPrivate->DispatchToMainThread(runnable.forget()));
   return promise.forget();
 }
 
@@ -687,8 +860,12 @@ ServiceWorkerGlobalScope::OpenWindowEnabled(JSContext* aCx, JSObject* aObj)
 WorkerDebuggerGlobalScope::WorkerDebuggerGlobalScope(
                                                   WorkerPrivate* aWorkerPrivate)
 : mWorkerPrivate(aWorkerPrivate)
+, mSerialEventTarget(aWorkerPrivate->HybridEventTarget())
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
+
+  // We should always have an event target when the global is created.
+  MOZ_DIAGNOSTIC_ASSERT(mSerialEventTarget);
 }
 
 WorkerDebuggerGlobalScope::~WorkerDebuggerGlobalScope()
@@ -744,6 +921,7 @@ WorkerDebuggerGlobalScope::GetGlobal(JSContext* aCx,
   WorkerGlobalScope* scope = mWorkerPrivate->GetOrCreateGlobalScope(aCx);
   if (!scope) {
     aRv.Throw(NS_ERROR_FAILURE);
+    return;
   }
 
   aGlobal.set(scope->GetWrapper());
@@ -901,22 +1079,38 @@ WorkerDebuggerGlobalScope::Dump(JSContext* aCx,
   }
 }
 
+nsresult
+WorkerDebuggerGlobalScope::Dispatch(TaskCategory aCategory,
+                                    already_AddRefed<nsIRunnable>&& aRunnable)
+{
+  return EventTargetFor(aCategory)->Dispatch(Move(aRunnable),
+                                             NS_DISPATCH_NORMAL);
+}
+
+nsISerialEventTarget*
+WorkerDebuggerGlobalScope::EventTargetFor(TaskCategory aCategory) const
+{
+  return mSerialEventTarget;
+}
+
+AbstractThread*
+WorkerDebuggerGlobalScope::AbstractMainThreadFor(TaskCategory aCategory)
+{
+  MOZ_CRASH("AbstractMainThreadFor not supported for workers.");
+}
+
 BEGIN_WORKERS_NAMESPACE
 
 bool
 IsWorkerGlobal(JSObject* object)
 {
-  nsIGlobalObject* globalObject = nullptr;
-  return NS_SUCCEEDED(UNWRAP_OBJECT(WorkerGlobalScope, object,
-                                    globalObject)) && !!globalObject;
+  return IS_INSTANCE_OF(WorkerGlobalScope, object);
 }
 
 bool
 IsDebuggerGlobal(JSObject* object)
 {
-  nsIGlobalObject* globalObject = nullptr;
-  return NS_SUCCEEDED(UNWRAP_OBJECT(WorkerDebuggerGlobalScope, object,
-                                    globalObject)) && !!globalObject;
+  return IS_INSTANCE_OF(WorkerDebuggerGlobalScope, object);
 }
 
 bool
@@ -924,13 +1118,6 @@ IsDebuggerSandbox(JSObject* object)
 {
   return SimpleGlobalObject::SimpleGlobalType(object) ==
     SimpleGlobalObject::GlobalType::WorkerDebuggerSandbox;
-}
-
-bool
-GetterOnlyJSNative(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
-{
-  JS_ReportErrorNumber(aCx, js::GetErrorMessage, nullptr, JSMSG_GETTER_ONLY);
-  return false;
 }
 
 END_WORKERS_NAMESPACE

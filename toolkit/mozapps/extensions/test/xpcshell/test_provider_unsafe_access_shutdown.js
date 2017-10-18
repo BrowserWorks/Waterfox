@@ -36,7 +36,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* unsafeProviderShutdown() {
+add_task(async function unsafeProviderShutdown() {
   let firstProvider = mockAddonProvider("Mock1");
   AddonManagerPrivate.registerProvider(firstProvider);
   let secondProvider = mockAddonProvider("Mock2");
@@ -45,19 +45,16 @@ add_task(function* unsafeProviderShutdown() {
   startupManager();
 
   let shutdownPromise = null;
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     secondProvider.shutdownCallback = function() {
-      return new Promise(shutdownResolve => {
-        AddonManager.getAddonByID("does-not-exist", () => {
-          shutdownResolve();
-          resolve();
-        });
+      return AddonManager.getAddonByID("does-not-exist").then(() => {
+        resolve();
       });
     };
 
     shutdownPromise = promiseShutdownManager();
   });
-  yield shutdownPromise;
+  await shutdownPromise;
 
   equal(shutdownOrder.join(","), ["Mock1", "Mock2"].join(","), "Mock providers should have shutdown in expected order");
   ok(!firstProvider.unsafeAccess, "First registered mock provider should not have been accessed unsafely");

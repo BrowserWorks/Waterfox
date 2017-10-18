@@ -24,31 +24,32 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1044556
   Cu.import("resource://gre/modules/Messaging.jsm");
   Cu.import("resource://gre/modules/Task.jsm");
 
-  // Import the MemoryObserver
-  Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-  XPCOMUtils.defineLazyGetter(this, "MemoryObserver", function() {
-    let sandbox = {};
-    Services.scriptloader.loadSubScript("chrome://browser/content/MemoryObserver.js", sandbox);
-    return sandbox["MemoryObserver"];
-  });
-
   // The chrome window
-  let chromeWin;
+  let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
+  let BrowserApp = chromeWin.BrowserApp;
 
   // Track the tabs where the tests are happening
   let tabBlank;
   let tabTest;
 
+  function cleanupTabs() {
+    if (tabBlank) {
+      BrowserApp.closeTab(tabBlank);
+      tabBlank = null;
+    }
+
+    if (tabTest) {
+      BrowserApp.closeTab(tabTest);
+      tabTest = null;
+    }
+  }
+
   const url1 = "data:text/html;charset=utf-8,It%20was%20a%20dark%20and%20stormy%20night.";
   const url2 = "data:text/html;charset=utf-8,Suddenly%2C%20a%20tab%20was%20zombified.";
 
   add_task(function* test_sessionStoreZombify() {
-    chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
-    let BrowserApp = chromeWin.BrowserApp;
-
     SimpleTest.registerCleanupFunction(function() {
-      BrowserApp.closeTab(tabBlank);
-      BrowserApp.closeTab(tabTest);
+      cleanupTabs();
     });
 
     // Add a new tab with some content
@@ -60,7 +61,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1044556
     is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
 
     // Zombify the backgrounded test tab
-    MemoryObserver.zombify(tabTest);
+    tabTest.zombify();
 
     // Check that the test tab is actually zombified
     ok(tabTest.browser.__SS_restore, "Test tab is set for delay loading.");
@@ -83,17 +84,93 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1044556
     is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
 
     // Zombify the backgrounded test tab again
-    MemoryObserver.zombify(tabTest);
+    tabTest.zombify();
 
     // Check that the test tab is actually zombified
     ok(tabTest.browser.__SS_restore, "Test tab is set for delay loading.");
 
-    // Switch back to the test tab and wait for it to reload
-    BrowserApp.selectTab(tabTest);
+    // Test that the tab's own function for unzombifying works as well
+    tabTest.unzombify();
     yield promiseBrowserEvent(tabTest.browser, "DOMContentLoaded");
 
     // Check that the test tab has loaded the correct url
     is(tabTest.browser.currentURI.spec, url2, "Test tab is showing the second URL.");
+
+    cleanupTabs();
+  });
+
+  add_task(function* test_sessionStoreKeepAsZombie() {
+    let observerService = Services.obs;
+
+    SimpleTest.registerCleanupFunction(function() {
+      cleanupTabs();
+    });
+
+    // Add a new tab with some content
+    tabTest = BrowserApp.addTab(url1 , { selected: true, parentId: BrowserApp.selectedTab.id });
+    yield promiseBrowserEvent(tabTest.browser, "DOMContentLoaded");
+
+    // Add a new tab with a blank page
+    tabBlank = BrowserApp.addTab("about:blank", { selected: true, parentId: BrowserApp.selectedTab.id });
+    yield promiseTabEvent(BrowserApp.deck, "TabSelect");
+    is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
+
+    // Zombify the backgrounded test tab
+    tabTest.zombify();
+
+    // Check that the test tab is actually zombified
+    ok(tabTest.browser.__SS_restore, "Test tab is set for delay loading.");
+    is(tabTest.browser.currentURI.spec, "about:blank", "Test tab is zombified.");
+
+    // Tell the session store that it shouldn't restore that tab on selecting
+    EventDispatcher.instance.dispatch("Tab:KeepZombified", {nextSelectedTabId: tabTest.id});
+
+    // Switch back to the test tab and check that it remains zombified
+    BrowserApp.selectTab(tabTest);
+    yield promiseTabEvent(BrowserApp.deck, "TabSelect");
+    is(BrowserApp.selectedTab, tabTest, "Test tab is selected.");
+    ok(tabTest.browser.__SS_restore, "Test tab is still set for delay loading.");
+
+    // Switch to the other tab and back again
+    BrowserApp.selectTab(tabBlank);
+    yield promiseTabEvent(BrowserApp.deck, "TabSelect");
+    is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
+    BrowserApp.selectTab(tabTest);
+
+    // "Tab:KeepZombified should be good for one TabSelect only
+    yield promiseBrowserEvent(tabTest.browser, "DOMContentLoaded");
+    is(BrowserApp.selectedTab, tabTest, "Test tab is selected.");
+
+    // Check that the test tab is no longer a zombie and has loaded the correct url
+    ok(!tabTest.browser.__SS_restore, "Test tab is no longer set for delay loading.");
+    is(tabTest.browser.currentURI.spec, url1, "Test tab is showing the test URL.");
+
+    // Zombify the test tab again
+    BrowserApp.selectTab(tabBlank);
+    yield promiseTabEvent(BrowserApp.deck, "TabSelect");
+    is(BrowserApp.selectedTab, tabBlank, "Test tab is in background.");
+    tabTest.zombify();
+    ok(tabTest.browser.__SS_restore, "Test tab is set for delay loading.");
+    is(tabTest.browser.currentURI.spec, "about:blank", "Test tab is zombified.");
+
+    // Tell the session store that it shouldn't restore that tab on selecting
+    EventDispatcher.instance.dispatch("Tab:KeepZombified", {nextSelectedTabId: tabTest.id});
+
+    // Switch back to the test tab and check that it remains zombified
+    BrowserApp.selectTab(tabTest);
+    yield promiseTabEvent(BrowserApp.deck, "TabSelect");
+    is(BrowserApp.selectedTab, tabTest, "Test tab is selected.");
+    ok(tabTest.browser.__SS_restore, "Test tab is still set for delay loading.");
+
+    // Fake an "application-foreground" notification
+    observerService.notifyObservers(null, "application-foreground");
+
+    // The test tab should now start reloading
+    yield promiseBrowserEvent(tabTest.browser, "DOMContentLoaded");
+    ok(!tabTest.browser.__SS_restore, "Test tab is no longer set for delay loading.");
+    is(tabTest.browser.currentURI.spec, url1, "Test tab is showing the test URL.");
+
+    cleanupTabs();
   });
 
   </script>

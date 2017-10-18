@@ -5,7 +5,23 @@
 
 /* Toolbar */
 #placesToolbar {
-  border: none;
+  -moz-appearance: menubar;
+}
+
+#placesToolbar:-moz-system-metric(menubar-drag) {
+  -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
+}
+
+#placesToolbar > toolbarbutton {
+  color: -moz-menubartext;
+}
+
+#placesToolbar > toolbarbutton:hover {
+  color: ButtonText;
+}
+
+#placesToolbar > toolbarbutton[disabled=true] {
+  color: GrayText;
 }
 
 /* back button */
@@ -50,11 +66,12 @@
   padding-inline-start: 4px;
   -moz-binding: url("chrome://browser/skin/places/organizer.xml#toolbarbutton-dropdown");
   -moz-appearance: toolbarbutton;
-  color: -moz-DialogText;
 }
 
-#placesMenu > menu:hover:not(:active):not([open="true"]) {
-  color: -moz-buttonhovertext;
+#placesMenu > menu:active,
+#placesMenu > menu:hover,
+#placesMenu > menu[open] {
+  color: ButtonText;
 }
 
 #placesMenu > menu > .menubar-right {
@@ -75,19 +92,6 @@
 
 #infoBoxExpanderLabel {
   padding-inline-start: 2px;
-}
-
-/**** menuitem stock icons ****/
-#orgClose {
-  list-style-image: url("moz-icon://stock/gtk-close?size=menu");
-}
-
-#fileImport {
-  list-style-image: url("moz-icon://stock/gtk-revert-to-saved?size=menu");
-}
-
-#fileExport {
-  list-style-image: url("moz-icon://stock/gtk-save-as?size=menu");
 }
 
 /**

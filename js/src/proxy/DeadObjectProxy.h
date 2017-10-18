@@ -11,6 +11,17 @@
 
 namespace js {
 
+class ProxyObject;
+
+enum DeadProxyIsCallableIsConstructorOption
+{
+    DeadProxyNotCallableNotConstructor,
+    DeadProxyNotCallableIsConstructor,
+    DeadProxyIsCallableNotConstructor,
+    DeadProxyIsCallableIsConstructor
+};
+
+template <DeadProxyIsCallableIsConstructorOption CC>
 class DeadObjectProxy : public BaseProxyHandler
 {
   public:
@@ -48,15 +59,33 @@ class DeadObjectProxy : public BaseProxyHandler
     virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
-    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
+                                   bool isToSource) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
+
+    virtual bool isCallable(JSObject* obj) const override {
+        return CC == DeadProxyIsCallableIsConstructor || CC == DeadProxyIsCallableNotConstructor;
+    }
+    virtual bool isConstructor(JSObject* obj) const override {
+        return CC == DeadProxyIsCallableIsConstructor || CC == DeadProxyNotCallableIsConstructor;
+    }
+
+    static const DeadObjectProxy* singleton() {
+        static DeadObjectProxy singleton;
+        return &singleton;
+    }
 
     static const char family;
-    static const DeadObjectProxy singleton;
 };
 
 bool
 IsDeadProxyObject(JSObject* obj);
+
+const BaseProxyHandler*
+SelectDeadProxyHandler(ProxyObject* obj);
+
+JSObject*
+NewDeadProxyObject(JSContext* cx, JSObject* origObj = nullptr);
 
 } /* namespace js */
 

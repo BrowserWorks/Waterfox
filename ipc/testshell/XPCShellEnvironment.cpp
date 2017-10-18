@@ -54,24 +54,6 @@ namespace {
 
 static const char kDefaultRuntimeScriptFilename[] = "xpcshell.js";
 
-class XPCShellDirProvider : public nsIDirectoryServiceProvider
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIDIRECTORYSERVICEPROVIDER
-
-    XPCShellDirProvider() { }
-    ~XPCShellDirProvider() { }
-
-    bool SetGREDirs(const char *dir);
-    void ClearGREDirs() { mGREDir = nullptr;
-                          mGREBinDir = nullptr; }
-
-private:
-    nsCOMPtr<nsIFile> mGREDir;
-    nsCOMPtr<nsIFile> mGREBinDir;
-};
-
 inline XPCShellEnvironment*
 Environment(Handle<JSObject*> global)
 {
@@ -155,7 +137,7 @@ Load(JSContext *cx,
         return false;
 
     if (!JS_IsGlobalObject(obj)) {
-        JS_ReportError(cx, "Trying to load() into a non-global object");
+        JS_ReportErrorASCII(cx, "Trying to load() into a non-global object");
         return false;
     }
 
@@ -168,7 +150,10 @@ Load(JSContext *cx,
             return false;
         FILE *file = fopen(filename.ptr(), "r");
         if (!file) {
-            JS_ReportError(cx, "cannot open file '%s' for reading", filename.ptr());
+            filename.clear();
+            if (!filename.encodeUtf8(cx, str))
+                return false;
+            JS_ReportErrorUTF8(cx, "cannot open file '%s' for reading", filename.ptr());
             return false;
         }
         JS::CompileOptions options(cx);
@@ -389,56 +374,11 @@ XPCShellEnvironment::ProcessFile(JSContext *cx,
     fprintf(stdout, "\n");
 }
 
-NS_IMETHODIMP_(MozExternalRefCountType)
-XPCShellDirProvider::AddRef()
-{
-    return 2;
-}
-
-NS_IMETHODIMP_(MozExternalRefCountType)
-XPCShellDirProvider::Release()
-{
-    return 1;
-}
-
-NS_IMPL_QUERY_INTERFACE(XPCShellDirProvider, nsIDirectoryServiceProvider)
-
-bool
-XPCShellDirProvider::SetGREDirs(const char *dir)
-{
-    nsresult rv = XRE_GetFileFromPath(dir, getter_AddRefs(mGREDir));
-    if (NS_SUCCEEDED(rv)) {
-        mGREDir->Clone(getter_AddRefs(mGREBinDir));
-#ifdef XP_MACOSX
-        mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
-#endif
-    }
-    return NS_SUCCEEDED(rv);
-}
-
-NS_IMETHODIMP
-XPCShellDirProvider::GetFile(const char *prop,
-                             bool *persistent,
-                             nsIFile* *result)
-{
-    if (mGREDir && !strcmp(prop, NS_GRE_DIR)) {
-        *persistent = true;
-        NS_ADDREF(*result = mGREDir);
-        return NS_OK;
-    } else if (mGREBinDir && !strcmp(prop, NS_GRE_BIN_DIR)) {
-        *persistent = true;
-        NS_ADDREF(*result = mGREBinDir);
-        return NS_OK;
-    }
-
-    return NS_ERROR_FAILURE;
-}
-
 // static
 XPCShellEnvironment*
 XPCShellEnvironment::CreateEnvironment()
 {
-    XPCShellEnvironment* env = new XPCShellEnvironment();
+    auto* env = new XPCShellEnvironment();
     if (env && !env->Init()) {
         delete env;
         env = nullptr;
@@ -480,15 +420,9 @@ XPCShellEnvironment::Init()
     // is unbuffered by default
     setbuf(stdout, 0);
 
-    JSRuntime *rt = xpc::GetJSRuntime();
-    if (!rt) {
-        NS_ERROR("failed to get JSRuntime from nsJSRuntimeService!");
-        return false;
-    }
-
-    mGlobalHolder.init(rt);
-
     AutoSafeJSContext cx;
+
+    mGlobalHolder.init(cx);
 
     nsCOMPtr<nsIXPConnect> xpc =
       do_GetService(nsIXPConnect::GetCID());
@@ -517,7 +451,7 @@ XPCShellEnvironment::Init()
     }
 
     JS::CompartmentOptions options;
-    options.creationOptions().setZone(JS::SystemZone);
+    options.creationOptions().setSystemZone();
     options.behaviors().setVersion(JSVERSION_LATEST);
     if (xpc::SharedMemoryEnabled())
         options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);

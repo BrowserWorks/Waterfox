@@ -11,11 +11,13 @@
 #ifndef WEBRTC_BASE_HTTPCLIENT_H__
 #define WEBRTC_BASE_HTTPCLIENT_H__
 
+#include <memory>
+
+#include "webrtc/base/checks.h"
 #include "webrtc/base/common.h"
 #include "webrtc/base/httpbase.h"
 #include "webrtc/base/nethelpers.h"
 #include "webrtc/base/proxyinfo.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/base/sigslot.h"
 #include "webrtc/base/socketaddress.h"
 #include "webrtc/base/socketpool.h"
@@ -50,7 +52,7 @@ class SignalThread;
 // What to do:  Define STRICT_HTTP_ERROR=1 in your makefile.  Use HttpError in
 // your code (HttpErrorType should only be used for code that is shared
 // with groups which have not yet migrated).
-#if STRICT_HTTP_ERROR
+#if defined(STRICT_HTTP_ERROR) && STRICT_HTTP_ERROR
 typedef HttpError HttpErrorType;
 #else  // !STRICT_HTTP_ERROR
 typedef int HttpErrorType;
@@ -68,7 +70,7 @@ public:
 
   void set_agent(const std::string& agent) { agent_ = agent; }
   const std::string& agent() const { return agent_; }
-  
+
   void set_proxy(const ProxyInfo& proxy) { proxy_ = proxy; }
   const ProxyInfo& proxy() const { return proxy_; }
 
@@ -83,38 +85,34 @@ public:
   enum RedirectAction { REDIRECT_DEFAULT, REDIRECT_ALWAYS, REDIRECT_NEVER };
   void set_redirect_action(RedirectAction action) { redirect_action_ = action; }
   RedirectAction redirect_action() const { return redirect_action_; }
-  // Deprecated
-  void set_fail_redirect(bool fail_redirect) {
-    redirect_action_ = REDIRECT_NEVER;
-  }
-  bool fail_redirect() const { return (REDIRECT_NEVER == redirect_action_); }
 
   enum UriForm { URI_DEFAULT, URI_ABSOLUTE, URI_RELATIVE };
   void set_uri_form(UriForm form) { uri_form_ = form; }
   UriForm uri_form() const { return uri_form_; }
 
-  void set_cache(DiskCache* cache) { ASSERT(!IsCacheActive()); cache_ = cache; }
+  void set_cache(DiskCache* cache) {
+    RTC_DCHECK(!IsCacheActive());
+    cache_ = cache;
+  }
   bool cache_enabled() const { return (NULL != cache_); }
 
   // reset clears the server, request, and response structures.  It will also
   // abort an active request.
   void reset();
-  
+
   void set_server(const SocketAddress& address);
   const SocketAddress& server() const { return server_; }
 
   // Note: in order for HttpClient to retry a POST in response to
   // an authentication challenge, a redirect response, or socket disconnection,
   // the request document must support 'replaying' by calling Rewind() on it.
-  // In the case where just a subset of a stream should be used as the request
-  // document, the stream may be wrapped with the StreamSegment adapter.
   HttpTransaction* transaction() { return transaction_; }
   const HttpTransaction* transaction() const { return transaction_; }
   HttpRequestData& request() { return transaction_->request; }
   const HttpRequestData& request() const { return transaction_->request; }
   HttpResponseData& response() { return transaction_->response; }
   const HttpResponseData& response() const { return transaction_->response; }
-  
+
   // convenience methods
   void prepare_get(const std::string& url);
   void prepare_post(const std::string& url, const std::string& content_type,
@@ -125,7 +123,7 @@ public:
 
   // After you finish setting up your request, call start.
   void start();
-  
+
   // Signalled when the header has finished downloading, before the document
   // content is processed.  You may change the response document in response
   // to this signal.  The second parameter indicates whether this is an
@@ -179,7 +177,7 @@ private:
   size_t retries_, attempt_, redirects_;
   RedirectAction redirect_action_;
   UriForm uri_form_;
-  scoped_ptr<HttpAuthContext> context_;
+  std::unique_ptr<HttpAuthContext> context_;
   DiskCache* cache_;
   CacheState cache_state_;
   AsyncResolverInterface* resolver_;

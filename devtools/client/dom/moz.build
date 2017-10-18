@@ -11,6 +11,7 @@ DIRS += [
 
 DevToolsModules(
     'dom-panel.js',
-    'dom.html',
-    'main.js',
 )
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools: DOM')

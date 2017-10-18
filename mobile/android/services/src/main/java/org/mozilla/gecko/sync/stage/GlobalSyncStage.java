@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.stage;
 
+import android.support.annotation.Nullable;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -11,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.telemetry.TelemetryStageCollector;
 
 
 public interface GlobalSyncStage {
@@ -18,6 +21,7 @@ public interface GlobalSyncStage {
     idle,                       // Start state.
     checkPreconditions,         // Preparation of the basics. TODO: clear status
     fetchInfoCollections,       // Take a look at timestamps.
+    fetchInfoConfiguration,     // Fetch server upload limits
     fetchMetaGlobal,
     ensureKeysStage,
     /*
@@ -32,8 +36,9 @@ public interface GlobalSyncStage {
     */
     syncTabs("tabs"),
     syncPasswords("passwords"),
+    syncRecentHistory("recentHistory"),
     syncBookmarks("bookmarks"),
-    syncHistory("history"),
+    syncFullHistory("history"),
     syncFormHistory("forms"),
 
     uploadMetaGlobal,
@@ -65,7 +70,7 @@ public interface GlobalSyncStage {
 
     // Each Stage tracks its repositoryName.
     private final String repositoryName;
-    public String getRepositoryName() {
+    @Nullable public String getRepositoryName() {
       return repositoryName;
     }
 
@@ -78,7 +83,7 @@ public interface GlobalSyncStage {
     }
   }
 
-  public void execute(GlobalSession session) throws NoSuchStageException;
+  void execute(GlobalSession session, TelemetryStageCollector telemetryStageCollector) throws NoSuchStageException;
   public void resetLocal(GlobalSession session);
   public void wipeLocal(GlobalSession session) throws Exception;
 

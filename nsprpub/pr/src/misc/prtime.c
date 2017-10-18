@@ -279,8 +279,7 @@ static int IsLeapYear(PRInt16 year)
 {
     if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)
         return 1;
-    else
-        return 0;
+    return 0;
 }
 
 /*
@@ -495,6 +494,20 @@ PR_NormalizeTime(PRExplodedTime *time, PRTimeParamFn params)
 
 #define MT_safe_localtime localtime_r
 
+#elif defined(_MSC_VER)
+
+/* Visual C++ has had localtime_s() since Visual C++ 2005. */
+
+static struct tm *MT_safe_localtime(const time_t *clock, struct tm *result)
+{
+    errno_t err = localtime_s(result, clock);
+    if (err != 0) {
+        errno = err;
+        return NULL;
+    }
+    return result;
+}
+
 #else
 
 #define HAVE_LOCALTIME_MONITOR 1  /* We use 'monitor' to serialize our calls
@@ -580,6 +593,7 @@ PR_LocalTimeParameters(const PRExplodedTime *gmt)
 
     PRTimeParameters retVal;
     struct tm localTime;
+    struct tm *localTimeResult;
     time_t secs;
     PRTime secs64;
     PRInt64 usecPerSec;
@@ -606,7 +620,12 @@ PR_LocalTimeParameters(const PRExplodedTime *gmt)
      */
 
     secs = 86400L;
-    (void) MT_safe_localtime(&secs, &localTime);
+    localTimeResult = MT_safe_localtime(&secs, &localTime);
+    PR_ASSERT(localTimeResult != NULL);
+    if (localTimeResult == NULL) {
+        /* Shouldn't happen. Use safe fallback for optimized builds. */
+        return PR_GMTParameters(gmt);
+    }
 
     /* GMT is 00:00:00, 2nd of Jan. */
 
@@ -957,6 +976,7 @@ PR_ParseTimeStringToExplodedTime(
   int hour = -1;
   int min = -1;
   int sec = -1;
+  struct tm *localTimeResult;
 
   const char *rest = string;
 
@@ -1215,7 +1235,7 @@ PR_ParseTimeStringToExplodedTime(
                                 if ((end - rest) > 2)
                                   /* it is [0-9][0-9][0-9]+: */
                                   break;
-                                else if ((end - rest) == 2)
+                                if ((end - rest) == 2)
                                   tmp_hour = ((rest[0]-'0')*10 +
                                                           (rest[1]-'0'));
                                 else
@@ -1230,12 +1250,12 @@ PR_ParseTimeStringToExplodedTime(
                                 if (end == rest)
                                   /* no digits after first colon? */
                                   break;
-                                else if ((end - rest) > 2)
+                                if ((end - rest) > 2)
                                   /* it is [0-9][0-9][0-9]+: */
                                   break;
-                                else if ((end - rest) == 2)
+                                if ((end - rest) == 2)
                                   tmp_min = ((rest[0]-'0')*10 +
-                                                         (rest[1]-'0'));
+                                             (rest[1]-'0'));
                                 else
                                   tmp_min = (rest[0]-'0');
 
@@ -1253,7 +1273,7 @@ PR_ParseTimeStringToExplodedTime(
                                 else if ((end - rest) > 2)
                                   /* it is [0-9][0-9][0-9]+: */
                                   break;
-                                else if ((end - rest) == 2)
+                                if ((end - rest) == 2)
                                   tmp_sec = ((rest[0]-'0')*10 +
                                                          (rest[1]-'0'));
                                 else
@@ -1287,7 +1307,7 @@ PR_ParseTimeStringToExplodedTime(
                                 rest = end;
                                 break;
                           }
-                        else if ((*end == '/' || *end == '-') &&
+                        if ((*end == '/' || *end == '-') &&
                                          end[1] >= '0' && end[1] <= '9')
                           {
                                 /* Perhaps this is 6/16/95, 16/6/95, 6-16-95, or 16-6-95
@@ -1618,7 +1638,11 @@ PR_ParseTimeStringToExplodedTime(
                    zone_offset for the date we are parsing is the same as
                    the zone offset on 00:00:00 2 Jan 1970 GMT. */
                 secs = 86400;
-                (void) MT_safe_localtime(&secs, &localTime);
+                localTimeResult = MT_safe_localtime(&secs, &localTime);
+                PR_ASSERT(localTimeResult != NULL);
+                if (localTimeResult == NULL) {
+                    return PR_FAILURE;
+                }
                 zone_offset = localTime.tm_min
                               + 60 * localTime.tm_hour
                               + 1440 * (localTime.tm_mday - 2);
@@ -1989,24 +2013,22 @@ pr_WeekOfYear(const PRExplodedTime* time, unsigned int firstDayOfWeek)
   dayOfWeek = time->tm_wday - firstDayOfWeek;
   if (dayOfWeek < 0)
     dayOfWeek += 7;
-  
-  dayOfYear = time->tm_yday - dayOfWeek;
 
+  dayOfYear = time->tm_yday - dayOfWeek;
 
   if( dayOfYear <= 0 )
   {
      /* If dayOfYear is <= 0, it is in the first partial week of the year. */
      return 0;
   }
-  else
-  {
-     /* Count the number of full weeks ( dayOfYear / 7 ) then add a week if there
-      * are any days left over ( dayOfYear % 7 ).  Because we are only counting to
-      * the first day of the week containing the given time, rather than to the
-      * actual day representing the given time, any days in week 0 will be "absorbed"
-      * as extra days in the given week.
-      */
-     return (dayOfYear / 7) + ( (dayOfYear % 7) == 0 ? 0 : 1 );
-  }
+
+  /* Count the number of full weeks ( dayOfYear / 7 ) then add a week if there
+   * are any days left over ( dayOfYear % 7 ).  Because we are only counting to
+   * the first day of the week containing the given time, rather than to the
+   * actual day representing the given time, any days in week 0 will be "absorbed"
+   * as extra days in the given week.
+   */
+  return (dayOfYear / 7) + ( (dayOfYear % 7) == 0 ? 0 : 1 );
+
 }
 

@@ -11,7 +11,8 @@
 #include "webrtc/modules/audio_processing/ns/nsx_core.h"
 
 #include <arm_neon.h>
-#include <assert.h>
+
+#include "webrtc/base/checks.h"
 
 // Constants to compensate for shifting signal log(2^shifts).
 const int16_t WebRtcNsx_kLogTable[9] = {
@@ -141,11 +142,11 @@ void WebRtcNsx_NoiseEstimationNeon(NoiseSuppressionFixedC* inst,
   const int16_t log2_const = 22713;
   const int16_t width_factor = 21845;
 
-  int i, s, offset;
+  size_t i, s, offset;
 
   tabind = inst->stages - inst->normData;
-  assert(tabind < 9);
-  assert(tabind > -9);
+  RTC_DCHECK_LT(tabind, 9);
+  RTC_DCHECK_GT(tabind, -9);
   if (tabind < 0) {
     logval = -WebRtcNsx_kLogTable[-tabind];
   } else {
@@ -163,7 +164,7 @@ void WebRtcNsx_NoiseEstimationNeon(NoiseSuppressionFixedC* inst,
       zeros = WebRtcSpl_NormU32((uint32_t)magn[i]);
       frac = (int16_t)((((uint32_t)magn[i] << zeros)
                         & 0x7FFFFFFF) >> 23);
-      assert(frac < 256);
+      RTC_DCHECK_LT(frac, 256);
       // log2(magn(i))
       log2 = (int16_t)(((31 - zeros) << 8)
                        + WebRtcNsx_kLogTableFrac[frac]);
@@ -190,7 +191,7 @@ void WebRtcNsx_NoiseEstimationNeon(NoiseSuppressionFixedC* inst,
 
     // Get counter values from state
     counter = inst->noiseEstCounter[s];
-    assert(counter < 201);
+    RTC_DCHECK_LT(counter, 201);
     countDiv = WebRtcNsx_kCounterDiv[counter];
     countProd = (int16_t)(counter * countDiv);
 
@@ -208,7 +209,7 @@ void WebRtcNsx_NoiseEstimationNeon(NoiseSuppressionFixedC* inst,
     uint16x8_t tmp16x8_4;
     int32x4_t tmp32x4;
 
-    for (i = 0; i < inst->magnLen - 7; i += 8) {
+    for (i = 0; i + 7 < inst->magnLen; i += 8) {
       // Compute delta.
       // Smaller step size during startup. This prevents from using
       // unrealistic values causing overflow.
@@ -354,8 +355,8 @@ void WebRtcNsx_NoiseEstimationNeon(NoiseSuppressionFixedC* inst,
 // Filter the data in the frequency domain, and create spectrum.
 void WebRtcNsx_PrepareSpectrumNeon(NoiseSuppressionFixedC* inst,
                                    int16_t* freq_buf) {
-  assert(inst->magnLen % 8 == 1);
-  assert(inst->anaLen2 % 16 == 0);
+  RTC_DCHECK_EQ(1, inst->magnLen % 8);
+  RTC_DCHECK_EQ(0, inst->anaLen2 % 16);
 
   // (1) Filtering.
 
@@ -445,8 +446,8 @@ void WebRtcNsx_PrepareSpectrumNeon(NoiseSuppressionFixedC* inst,
 void WebRtcNsx_SynthesisUpdateNeon(NoiseSuppressionFixedC* inst,
                                    int16_t* out_frame,
                                    int16_t gain_factor) {
-  assert(inst->anaLen % 16 == 0);
-  assert(inst->blockLen10ms % 16 == 0);
+  RTC_DCHECK_EQ(0, inst->anaLen % 16);
+  RTC_DCHECK_EQ(0, inst->blockLen10ms % 16);
 
   int16_t* preal_start = inst->real;
   const int16_t* pwindow = inst->window;
@@ -537,13 +538,12 @@ void WebRtcNsx_SynthesisUpdateNeon(NoiseSuppressionFixedC* inst,
 void WebRtcNsx_AnalysisUpdateNeon(NoiseSuppressionFixedC* inst,
                                   int16_t* out,
                                   int16_t* new_speech) {
-  assert(inst->blockLen10ms % 16 == 0);
-  assert(inst->anaLen % 16 == 0);
+  RTC_DCHECK_EQ(0, inst->blockLen10ms % 16);
+  RTC_DCHECK_EQ(0, inst->anaLen % 16);
 
   // For lower band update analysis buffer.
-  // WEBRTC_SPL_MEMCPY_W16(inst->analysisBuffer,
-  //                      inst->analysisBuffer + inst->blockLen10ms,
-  //                      inst->anaLen - inst->blockLen10ms);
+  // memcpy(inst->analysisBuffer, inst->analysisBuffer + inst->blockLen10ms,
+  //     (inst->anaLen - inst->blockLen10ms) * sizeof(*inst->analysisBuffer));
   int16_t* p_start_src = inst->analysisBuffer + inst->blockLen10ms;
   int16_t* p_end_src = inst->analysisBuffer + inst->anaLen;
   int16_t* p_start_dst = inst->analysisBuffer;
@@ -555,8 +555,8 @@ void WebRtcNsx_AnalysisUpdateNeon(NoiseSuppressionFixedC* inst,
     p_start_dst += 8;
   }
 
-  // WEBRTC_SPL_MEMCPY_W16(inst->analysisBuffer
-  //    + inst->anaLen - inst->blockLen10ms, new_speech, inst->blockLen10ms);
+  // memcpy(inst->analysisBuffer + inst->anaLen - inst->blockLen10ms,
+  //     new_speech, inst->blockLen10ms * sizeof(*inst->analysisBuffer));
   p_start_src = new_speech;
   p_end_src = new_speech + inst->blockLen10ms;
   p_start_dst = inst->analysisBuffer + inst->anaLen - inst->blockLen10ms;
@@ -571,8 +571,8 @@ void WebRtcNsx_AnalysisUpdateNeon(NoiseSuppressionFixedC* inst,
   // Window data before FFT.
   int16_t* p_start_window = (int16_t*) inst->window;
   int16_t* p_start_buffer = inst->analysisBuffer;
+  int16_t* p_end_buffer = inst->analysisBuffer + inst->anaLen;
   int16_t* p_start_out = out;
-  const int16_t* p_end_out = out + inst->anaLen;
 
   // Load the first element to reduce pipeline bubble.
   int16x8_t window = vld1q_s16(p_start_window);
@@ -580,7 +580,7 @@ void WebRtcNsx_AnalysisUpdateNeon(NoiseSuppressionFixedC* inst,
   p_start_window += 8;
   p_start_buffer += 8;
 
-  while (p_start_out < p_end_out) {
+  while (p_start_buffer < p_end_buffer) {
     // Unroll loop.
     int32x4_t tmp32_low = vmull_s16(vget_low_s16(window), vget_low_s16(buffer));
     int32x4_t tmp32_high = vmull_s16(vget_high_s16(window),
@@ -596,4 +596,11 @@ void WebRtcNsx_AnalysisUpdateNeon(NoiseSuppressionFixedC* inst,
     p_start_window += 8;
     p_start_out += 8;
   }
+  int32x4_t tmp32_low = vmull_s16(vget_low_s16(window), vget_low_s16(buffer));
+  int32x4_t tmp32_high = vmull_s16(vget_high_s16(window),
+                                   vget_high_s16(buffer));
+
+  int16x4_t result_low = vrshrn_n_s32(tmp32_low, 14);
+  int16x4_t result_high = vrshrn_n_s32(tmp32_high, 14);
+  vst1q_s16(p_start_out, vcombine_s16(result_low, result_high));
 }

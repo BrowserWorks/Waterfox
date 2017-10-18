@@ -9,41 +9,89 @@
 // React & Redux
 const {
   createFactory,
-  DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const GripMessageBody = createFactory(require("devtools/client/webconsole/new-console-output/components/grip-message-body").GripMessageBody);
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
+const GripMessageBody = require("devtools/client/webconsole/new-console-output/components/grip-message-body");
 
 EvaluationResult.displayName = "EvaluationResult";
 
 EvaluationResult.propTypes = {
+  dispatch: PropTypes.func.isRequired,
   message: PropTypes.object.isRequired,
+  timestampsVisible: PropTypes.bool.isRequired,
+  serviceContainer: PropTypes.object,
+  loadedObjectProperties: PropTypes.object,
+  loadedObjectEntries: PropTypes.object,
 };
 
 function EvaluationResult(props) {
-  const { message } = props;
-  const icon = MessageIcon({severity: message.severity});
+  const {
+    dispatch,
+    message,
+    serviceContainer,
+    timestampsVisible,
+    loadedObjectProperties,
+    loadedObjectEntries,
+  } = props;
 
-  // @TODO Use of "is" is a temporary hack to get the category and severity
-  // attributes to be applied. There are targeted in webconsole's CSS rules,
-  // so if we remove this hack, we have to modify the CSS rules accordingly.
-  return dom.div({
-    class: "message cm-s-mozilla",
-    is: "fdt-message",
-    category: message.category,
-    severity: message.severity
-  },
-    // @TODO add timestamp
-    // @TODO add indent if needed with console.group
-    icon,
-    dom.span(
-      {className: "message-body-wrapper message-body devtools-monospace"},
-      dom.span({},
-        GripMessageBody({grip: message.parameters})
-      )
-    )
-  );
+  const {
+    source,
+    type,
+    helperType,
+    level,
+    id: messageId,
+    indent,
+    exceptionDocURL,
+    frame,
+    timeStamp,
+    parameters,
+    notes,
+  } = message;
+
+  let messageBody;
+  if (message.messageText) {
+    if (typeof message.messageText === "string") {
+      messageBody = message.messageText;
+    } else if (
+      typeof message.messageText === "object"
+      && message.messageText.type === "longString"
+    ) {
+      messageBody = `${message.messageText.initial}…`;
+    }
+  } else {
+    messageBody = GripMessageBody({
+      dispatch,
+      messageId,
+      grip: parameters,
+      serviceContainer,
+      useQuotes: true,
+      escapeWhitespace: false,
+      loadedObjectProperties,
+      loadedObjectEntries,
+      type,
+      helperType,
+    });
+  }
+
+  const topLevelClasses = ["cm-s-mozilla"];
+
+  return Message({
+    source,
+    type,
+    level,
+    indent,
+    topLevelClasses,
+    messageBody,
+    messageId,
+    serviceContainer,
+    exceptionDocURL,
+    frame,
+    timeStamp,
+    parameters,
+    notes,
+    timestampsVisible,
+  });
 }
 
-module.exports.EvaluationResult = EvaluationResult;
+module.exports = EvaluationResult;

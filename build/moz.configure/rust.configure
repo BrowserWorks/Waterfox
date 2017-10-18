@@ -4,57 +4,115 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-option('--enable-rust', help='Include Rust language sources')
-
-@depends('--enable-rust')
-def rust_compiler_names(value):
-    if value:
-        return ['rustc']
-
-rustc = check_prog('RUSTC', rust_compiler_names, allow_missing=True)
+# Rust is required by `rust_compiler` below. We allow_missing here
+# to propagate failures to the better error message there.
+rustc = check_prog('RUSTC', ['rustc'], allow_missing=True)
+cargo = check_prog('CARGO', ['cargo'], allow_missing=True)
 
 @depends_if(rustc)
 @checking('rustc version', lambda info: info.version)
 def rustc_info(rustc):
-        out = check_cmd_output(rustc, '--version', '--verbose').splitlines()
-        info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
-        return namespace(
-            version=Version(info.get('release', '0')),
-            commit=info.get('commit-hash', 'unknown'),
-        )
+    out = check_cmd_output(rustc, '--version', '--verbose').splitlines()
+    info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
+    return namespace(
+        version=Version(info.get('release', '0')),
+        commit=info.get('commit-hash', 'unknown'),
+    )
 
-@depends('--enable-rust', rustc, rustc_info)
+@depends_if(cargo)
+@checking('cargo version', lambda info: info.version)
+@imports('re')
+def cargo_info(cargo):
+    out = check_cmd_output(cargo, '--version', '--verbose').splitlines()
+    info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
+    version = info.get('release')
+    # Older versions of cargo didn't support --verbose, in which case, they
+    # only output a not-really-pleasant-to-parse output. Fortunately, they
+    # don't error out, so we can just try some regexp matching on the output
+    # we already got.
+    if version is None:
+        VERSION_FORMAT = r'^cargo (\d\.\d+\.\d+).*'
+
+        m = re.search(VERSION_FORMAT, out[0])
+        # Fail fast if cargo changes its output on us.
+        if not m:
+            die('Could not determine cargo version from output: %s', out)
+        version = m.group(1)
+
+    return namespace(
+        version=Version(version),
+    )
+
+@depends(rustc_info, cargo_info)
 @imports(_from='textwrap', _import='dedent')
-def rust_compiler(value, rustc, rustc_info):
-    if value:
-        if not rustc:
-            die(dedent('''\
-            Rust compiler not found.
-            To compile rust language sources, you must have 'rustc' in your path.
-            See https//www.rust-lang.org/ for more information.
-            '''))
-        version = rustc_info.version
-        min_version = Version('1.5')
-        if version < min_version:
-            die(dedent('''\
-            Rust compiler {} is too old.
-            To compile Rust language sources please install at least
-            version {} of the 'rustc' toolchain and make sure it is
-            first in your path.
-            You can verify this by typing 'rustc --version'.
-            '''.format(version, min_version)))
-        return True
+def rust_compiler(rustc_info, cargo_info):
+    if not rustc_info:
+        die(dedent('''\
+        Rust compiler not found.
+        To compile rust language sources, you must have 'rustc' in your path.
+        See https://www.rust-lang.org/ for more information.
 
-set_config('MOZ_RUST', rust_compiler)
+        You can install rust by running './mach bootstrap'
+        or by directly running the installer from https://rustup.rs/
+        '''))
+    rustc_min_version = Version('1.17.0')
+    cargo_min_version = Version('0.{}'.format(rustc_min_version.minor + 1))
 
-@depends(rust_compiler, rustc, target, cross_compiling)
-@imports('os')
-@imports('subprocess')
-@imports(_from='mozbuild.configure.util', _import='LineIO')
-@imports(_from='mozbuild.shellutil', _import='quote')
-@imports(_from='tempfile', _import='mkstemp')
-def rust_target(rust_compiler, rustc, target, cross_compiling):
-    if rust_compiler:
+    version = rustc_info.version
+    if version < rustc_min_version:
+        die(dedent('''\
+        Rust compiler {} is too old.
+
+        To compile Rust language sources please install at least
+        version {} of the 'rustc' toolchain and make sure it is
+        first in your path.
+
+        You can verify this by typing 'rustc --version'.
+
+        If you have the 'rustup' tool installed you can upgrade
+        to the latest release by typing 'rustup update'. The
+        installer is available from https://rustup.rs/
+        '''.format(version, rustc_min_version)))
+
+    if not cargo_info:
+        die(dedent('''\
+        Cargo package manager not found.
+        To compile Rust language sources, you must have 'cargo' in your path.
+        See https://www.rust-lang.org/ for more information.
+
+        You can install cargo by running './mach bootstrap'
+        or by directly running the installer from https://rustup.rs/
+        '''))
+
+    version = cargo_info.version
+    if version < cargo_min_version:
+        die(dedent('''\
+        Cargo package manager {} is too old.
+
+        To compile Rust language sources please install at least
+        version {} of 'cargo' and make sure it is first in your path.
+
+        You can verify this by typing 'cargo --version'.
+        ''').format(version, cargo_min_version))
+
+    return True
+
+@template
+def rust_triple_alias(host_or_target):
+    """Template defining the alias used for rustc's --target flag.
+    `host_or_target` is either `host` or `target` (the @depends functions
+    from init.configure).
+    """
+    assert host_or_target in (host, target)
+
+    @depends(rustc, host_or_target, building_with_gcc, when=rust_compiler)
+    @imports('os')
+    @imports('subprocess')
+    @imports(_from='mozbuild.configure.util', _import='LineIO')
+    @imports(_from='mozbuild.shellutil', _import='quote')
+    @imports(_from='tempfile', _import='mkstemp')
+    @imports(_from='textwrap', _import='dedent')
+    def rust_target(rustc, host_or_target, building_with_gcc):
         # Rust's --target options are similar to, but not exactly the same
         # as, the autoconf-derived targets we use.  An example would be that
         # Rust uses distinct target triples for targetting the GNU C++ ABI
@@ -65,44 +123,59 @@ def rust_target(rust_compiler, rustc, target, cross_compiling):
         #
         # The canonical list of targets supported can be derived from:
         #
-        # https://github.com/rust-lang/rust/tree/master/mk/cfg
+        # https://github.com/rust-lang/rust/blob/master/src/librustc_back/target/mod.rs
 
         # Avoid having to write out os+kernel for all the platforms where
         # they don't differ.
-        os_or_kernel = target.kernel if target.kernel == 'Linux' and target.os != 'Android' else target.os
+        os_or_kernel = host_or_target.kernel if host_or_target.kernel == 'Linux' and host_or_target.os != 'Android' else host_or_target.os
+        # If we are targetting Windows but the compiler is gcc, we need to
+        # use a different rustc target
+        os_or_kernel = 'WINNT-MINGW' if building_with_gcc and host_or_target.kernel == 'WINNT' else os_or_kernel
         rustc_target = {
             # DragonFly
             ('x86_64', 'DragonFly'): 'x86_64-unknown-dragonfly',
             # FreeBSD
+            ('aarch64', 'FreeBSD'): 'aarch64-unknown-freebsd',
             ('x86', 'FreeBSD'): 'i686-unknown-freebsd',
             ('x86_64', 'FreeBSD'): 'x86_64-unknown-freebsd',
             # NetBSD
+            ('sparc64', 'NetBSD'): 'sparc64-unknown-netbsd',
+            ('x86', 'NetBSD'): 'i686-unknown-netbsd',
             ('x86_64', 'NetBSD'): 'x86_64-unknown-netbsd',
             # OpenBSD
+            ('x86', 'OpenBSD'): 'i686-unknown-openbsd',
             ('x86_64', 'OpenBSD'): 'x86_64-unknown-openbsd',
             # Linux
-            ('x86', 'Linux'): 'i586-unknown-linux-gnu',
-            # Linux
+            ('aarch64', 'Linux'): 'aarch64-unknown-linux-gnu',
+            ('arm', 'Linux'): 'armv7-unknown-linux-gnueabihf',
+            ('sparc64', 'Linux'): 'sparc64-unknown-linux-gnu',
+            ('x86', 'Linux'): 'i686-unknown-linux-gnu',
             ('x86_64', 'Linux'): 'x86_64-unknown-linux-gnu',
-            # OS X and iOS
+            # OS X
             ('x86', 'OSX'): 'i686-apple-darwin',
-            ('x86', 'iOS'): 'i386-apple-ios',
             ('x86_64', 'OSX'): 'x86_64-apple-darwin',
+            # iOS
+            ('aarch64', 'iOS'): 'aarch64-apple-ios',
+            ('arm', 'iOS'): 'armv7s-apple-ios',
+            ('x86', 'iOS'): 'i386-apple-ios',
+            ('x86_64', 'iOS'): 'x86_64-apple-ios',
             # Android
+            ('aarch64', 'Android'): 'aarch64-linux-android',
+            ('arm', 'Android'): 'armv7-linux-androideabi',
             ('x86', 'Android'): 'i686-linux-android',
-            ('arm', 'Android'): 'arm-linux-androideabi',
+            ('x86_64', 'Android'): 'x86_64-linux-android',
             # Windows
-            # XXX better detection of CXX needed here, to figure out whether
-            # we need i686-pc-windows-gnu instead, since mingw32 builds work.
             ('x86', 'WINNT'): 'i686-pc-windows-msvc',
             ('x86_64', 'WINNT'): 'x86_64-pc-windows-msvc',
-        }.get((target.cpu, os_or_kernel), None)
+            ('x86', 'WINNT-MINGW'): 'i686-pc-windows-gnu',
+            ('x86_64', 'WINNT-MINGW'): 'x86_64-pc-windows-gnu',
+            # Solaris
+            ('x86_64', 'SunOS'): 'x86_64-sun-solaris',
+            ('sparc64', 'SunOS'): 'sparcv9-sun-solaris',
+        }.get((host_or_target.cpu, os_or_kernel), None)
 
         if rustc_target is None:
-            if cross_compiling:
-                die("Don't know how to translate {} for rustc".format(target.alias))
-            # Fall back to implicit (native) target when not cross-compiling
-            return None
+            die("Don't know how to translate {} for rustc".format(host_or_target.alias))
 
         # Check to see whether our rustc has a reasonably functional stdlib
         # for our chosen target.
@@ -127,19 +200,43 @@ def rust_target(rust_compiler, rustc, target, cross_compiling):
                 in_path,
             ]
             def failed():
-                die('Cannot compile for {} with {}'.format(target.alias, rustc))
+                die(dedent('''\
+                Cannot compile for {} with {}
+                The target may be unsupported, or you may not have
+                a rust std library for that target installed. Try:
+
+                  rustup target add {}
+                '''.format(host_or_target.alias, rustc, rustc_target)))
             check_cmd_output(*cmd, onerror=failed)
             if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
                 failed()
         finally:
             os.remove(in_path)
             os.remove(out_path)
-        # This target is usable.
-        return target_arg
 
-set_config('RUST_TARGET', rust_target)
+        # This target is usable.
+        return rustc_target
+
+    return rust_target
+
+rust_target_triple = rust_triple_alias(target)
+rust_host_triple = rust_triple_alias(host)
+
+set_config('RUST_TARGET', rust_target_triple)
+set_config('RUST_HOST_TARGET', rust_host_triple)
+
+@depends(rust_target_triple)
+def rust_target_env_name(triple):
+    return triple.upper().replace('-','_')
+
+# We need this to form various Cargo environment variables, as there is no
+# uppercase function in make, and we don't want to shell out just for
+# converting a string to uppercase.
+set_config('RUST_TARGET_ENV_NAME', rust_target_env_name)
+
+# This is used for putting source info into symbol files.
+set_config('RUSTC_COMMIT', depends(rustc_info)(lambda i: i.commit))
 
 # Until we remove all the other Rust checks in old-configure.
-add_old_configure_assignment('MOZ_RUST', rust_compiler)
 add_old_configure_assignment('RUSTC', rustc)
-add_old_configure_assignment('RUST_TARGET', rust_target)
+add_old_configure_assignment('RUST_TARGET', rust_target_triple)

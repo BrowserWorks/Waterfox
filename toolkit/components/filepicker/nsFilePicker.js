@@ -20,6 +20,7 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const DEBUG = false; /* set to true to enable debug messages */
+var debug;
 
 const LOCAL_FILE_CONTRACTID = "@mozilla.org/file/local;1";
 const APPSHELL_SERV_CONTRACTID  = "@mozilla.org/appshell/appShellService;1";
@@ -38,12 +39,11 @@ const nsIWebNavigation      = Components.interfaces.nsIWebNavigation;
 const nsIDocShellTreeItem   = Components.interfaces.nsIDocShellTreeItem;
 const nsIBaseWindow         = Components.interfaces.nsIBaseWindow;
 
-var   titleBundle           = null;
-var   filterBundle          = null;
-var   lastDirectory         = null;
+var titleBundle           = null;
+var filterBundle          = null;
+var lastDirectory         = null;
 
-function nsFilePicker()
-{
+function nsFilePicker() {
   if (!titleBundle)
     titleBundle = srGetStrBundle("chrome://global/locale/filepicker.properties");
   if (!filterBundle)
@@ -52,9 +52,10 @@ function nsFilePicker()
   /* attributes */
   this.mDefaultString = "";
   this.mFilterIndex = 0;
-  this.mFilterTitles = new Array();
-  this.mFilters = new Array();
+  this.mFilterTitles = [];
+  this.mFilters = [];
   this.mDisplayDirectory = null;
+  this.mDisplaySpecialDirectory = null;
   if (lastDirectory) {
     try {
       var dir = Components.classes[LOCAL_FILE_CONTRACTID].createInstance(nsILocalFile);
@@ -67,7 +68,7 @@ function nsFilePicker()
 nsFilePicker.prototype = {
   classID: Components.ID("{54ae32f8-1dd2-11b2-a209-df7c505370f8}"),
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(nsIFilePicker) ||
         iid.equals(nsISupports))
       return this;
@@ -81,63 +82,42 @@ nsFilePicker.prototype = {
     this.mDisplayDirectory = a &&
       a.clone().QueryInterface(nsILocalFile);
   },
-  get displayDirectory()  {
+  get displayDirectory() {
     return this.mDisplayDirectory &&
            this.mDisplayDirectory.clone()
                .QueryInterface(nsILocalFile);
   },
 
+  /* attribute AString displaySpecialDirectory; */
+  set displaySpecialDirectory(a) {
+    this.mDisplaySpecialDirectory = a;
+  },
+  get displaySpecialDirectory() {
+    return this.mDisplaySpecialDirectory;
+  },
+
   /* readonly attribute nsILocalFile file; */
-  get file()  { return this.mFilesEnumerator.mFiles[0]; },
+  get file() { return this.mFilesEnumerator.mFiles[0]; },
 
   /* readonly attribute nsISimpleEnumerator files; */
-  get files()  { return this.mFilesEnumerator; },
+  get files() { return this.mFilesEnumerator; },
 
   /* we don't support directories, yet */
-  get domFileOrDirectory()  {
+  get domFileOrDirectory() {
     let enumerator = this.domFileOrDirectoryEnumerator;
     return enumerator ? enumerator.mFiles[0] : null;
   },
 
   /* readonly attribute nsISimpleEnumerator domFileOrDirectoryEnumerator; */
-  get domFileOrDirectoryEnumerator()  {
+  get domFileOrDirectoryEnumerator() {
     if (!this.mFilesEnumerator) {
       return null;
     }
-
-    if (!this.mDOMFilesEnumerator) {
-      this.mDOMFilesEnumerator = {
-        QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISimpleEnumerator]),
-
-        mFiles: [],
-        mIndex: 0,
-
-        hasMoreElements: function() {
-          return (this.mIndex < this.mFiles.length);
-        },
-
-        getNext: function() {
-          if (this.mIndex >= this.mFiles.length) {
-            throw Components.results.NS_ERROR_FAILURE;
-          }
-          return this.mFiles[this.mIndex++];
-        }
-      };
-
-      var utils = this.mParentWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                                    .getInterface(Components.interfaces.nsIDOMWindowUtils);
-
-      for (var i = 0; i < this.mFilesEnumerator.mFiles.length; ++i) {
-        var file = utils.wrapDOMFile(this.mFilesEnumerator.mFiles[i]);
-        this.mDOMFilesEnumerator.mFiles.push(file);
-      }
-    }
-
     return this.mDOMFilesEnumerator;
   },
 
   /* readonly attribute nsIURI fileURL; */
-  get fileURL()  {
+  get fileURL() {
     if (this.mFileURL)
       return this.mFileURL;
 
@@ -152,7 +132,7 @@ nsFilePicker.prototype = {
 
   /* attribute wstring defaultString; */
   set defaultString(a) { this.mDefaultString = a; },
-  get defaultString()  { return this.mDefaultString; },
+  get defaultString() { return this.mDefaultString; },
 
   /* attribute wstring defaultExtension */
   set defaultExtension(ext) { },
@@ -164,7 +144,7 @@ nsFilePicker.prototype = {
 
   /* attribute boolean addToRecentDocs; */
   set addToRecentDocs(a) {},
-  get addToRecentDocs()  { return false; },
+  get addToRecentDocs() { return false; },
 
   /* readonly attribute short mode; */
   get mode() { return this.mMode; },
@@ -175,13 +155,13 @@ nsFilePicker.prototype = {
   mParentWindow: null,
 
   /* methods */
-  init: function(parent, title, mode) {
+  init(parent, title, mode) {
     this.mParentWindow = parent;
     this.mTitle = title;
     this.mMode = mode;
   },
 
-  appendFilters: function(filterMask) {
+  appendFilters(filterMask) {
     if (filterMask & nsIFilePicker.filterHTML) {
       this.appendFilter(titleBundle.GetStringFromName("htmlTitle"),
                         filterBundle.GetStringFromName("htmlFilter"));
@@ -222,38 +202,77 @@ nsFilePicker.prototype = {
     }
   },
 
-  appendFilter: function(title, extensions) {
+  appendFilter(title, extensions) {
     this.mFilterTitles.push(title);
     this.mFilters.push(extensions);
   },
 
-  open: function(aFilePickerShownCallback) {
+  open(aFilePickerShownCallback) {
     var tm = Components.classes["@mozilla.org/thread-manager;1"]
                        .getService(Components.interfaces.nsIThreadManager);
-    tm.mainThread.dispatch(function() {
+    tm.dispatchToMainThread(() => {
       let result = Components.interfaces.nsIFilePicker.returnCancel;
       try {
         result = this.show();
-      } catch(ex) {
+      } catch (ex) {
       }
-      if (aFilePickerShownCallback) {
-        aFilePickerShownCallback.done(result);
+
+      let promises = [];
+
+      // Let's create the DOMFileEnumerator right now because it requires some
+      // async operation.
+      if (this.mFilesEnumerator) {
+        this.mDOMFilesEnumerator = {
+          QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISimpleEnumerator]),
+
+          mFiles: [],
+          mIndex: 0,
+
+          hasMoreElements() {
+            return (this.mIndex < this.mFiles.length);
+          },
+
+          getNext() {
+            if (this.mIndex >= this.mFiles.length) {
+              throw Components.results.NS_ERROR_FAILURE;
+            }
+            return this.mFiles[this.mIndex++];
+          }
+        };
+
+        for (let i = 0; i < this.mFilesEnumerator.mFiles.length; ++i) {
+          if (this.mFilesEnumerator.mFiles[i].exists()) {
+            let promise =
+              this.mParentWindow.File.createFromNsIFile(
+                this.mFilesEnumerator.mFiles[i]).then(file => {
+                  this.mDOMFilesEnumerator.mFiles.push(file);
+                });
+            promises.push(promise);
+          }
+        }
       }
-    }.bind(this), Components.interfaces.nsIThread.DISPATCH_NORMAL);
+
+      Promise.all(promises).then(() => {
+        if (aFilePickerShownCallback) {
+          aFilePickerShownCallback.done(result);
+        }
+      });
+    });
   },
 
-  show: function() {
-    var o = new Object();
+  show() {
+    var o = {};
     o.title = this.mTitle;
     o.mode = this.mMode;
     o.displayDirectory = this.mDisplayDirectory;
+    o.displaySpecialDirectory = this.mDisplaySpecialDirectory;
     o.defaultString = this.mDefaultString;
     o.filterIndex = this.mFilterIndex;
-    o.filters = new Object();
+    o.filters = {};
     o.filters.titles = this.mFilterTitles;
     o.filters.types = this.mFilters;
     o.allowURLs = this.mAllowURLs;
-    o.retvals = new Object();
+    o.retvals = {};
 
     var parent;
     if (this.mParentWindow) {
@@ -264,23 +283,12 @@ nsFilePicker.prototype = {
       try {
         var appShellService = Components.classes[APPSHELL_SERV_CONTRACTID].getService(nsIAppShellService);
         parent = appShellService.hiddenDOMWindow;
-      } catch(ex) {
+      } catch (ex) {
         debug("Can't get parent.  xpconnect hates me so we can't get one from the appShellService.\n");
         debug(ex + "\n");
       }
     }
 
-    var parentWin = null;
-    try {
-      parentWin = parent.QueryInterface(nsIInterfaceRequestor)
-                        .getInterface(nsIWebNavigation)
-                        .QueryInterface(nsIDocShellTreeItem)
-                        .treeOwner
-                        .QueryInterface(nsIInterfaceRequestor)
-                        .getInterface(nsIBaseWindow);
-    } catch(ex) {
-      dump("file picker couldn't get base window\n"+ex+"\n");
-    }
     try {
       parent.openDialog("chrome://global/content/filepicker.xul",
                         "",
@@ -292,16 +300,16 @@ nsFilePicker.prototype = {
       this.mFileURL = o.retvals.fileURL;
       lastDirectory = o.retvals.directory;
       return o.retvals.buttonStatus;
-    } catch(ex) { dump("unable to open file picker\n" + ex + "\n"); }
+    } catch (ex) { dump("unable to open file picker\n" + ex + "\n"); }
 
     return null;
   }
 }
 
 if (DEBUG)
-  debug = function (s) { dump("-*- filepicker: " + s + "\n"); };
+  debug = function(s) { dump("-*- filepicker: " + s + "\n"); };
 else
-  debug = function (s) {};
+  debug = function(s) {};
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([nsFilePicker]);
 
@@ -309,8 +317,7 @@ this.NSGetFactory = XPCOMUtils.generateNSGetFactory([nsFilePicker]);
 
 var strBundleService = null;
 
-function srGetStrBundle(path)
-{
+function srGetStrBundle(path) {
   var strBundle = null;
 
   if (!strBundleService) {
@@ -324,8 +331,7 @@ function srGetStrBundle(path)
 
   strBundle = strBundleService.createBundle(path);
   if (!strBundle) {
-	dump("\n--** strBundle createInstance failed **--\n");
+    dump("\n--** strBundle createInstance failed **--\n");
   }
   return strBundle;
 }
-

@@ -9,7 +9,7 @@
 define(function (require, exports, module) {
   const { DOM: dom, createFactory, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
 
-  const { div, span, table, tbody, tr, td, code } = dom;
+  const { div, span, table, tbody, tr, td, } = dom;
 
   /**
    * This template is responsible for rendering basic layout
@@ -34,7 +34,7 @@ define(function (require, exports, module) {
         div({className: "netInfoHeadersTable"},
           div({className: "netHeadersGroup"},
             div({className: "netInfoHeadersGroup"},
-              Locale.$STR("jsonViewer.responseHeaders")
+              JSONView.Locale.$STR("jsonViewer.responseHeaders")
             ),
             table({cellPadding: 0, cellSpacing: 0},
               HeaderList({headers: data.response})
@@ -42,7 +42,7 @@ define(function (require, exports, module) {
           ),
           div({className: "netHeadersGroup"},
             div({className: "netInfoHeadersGroup"},
-              Locale.$STR("jsonViewer.requestHeaders")
+              JSONView.Locale.$STR("jsonViewer.requestHeaders")
             ),
             table({cellPadding: 0, cellSpacing: 0},
               HeaderList({headers: data.request})
@@ -87,9 +87,7 @@ define(function (require, exports, module) {
             td({className: "netInfoParamName"},
               span({title: header.name}, header.name)
             ),
-            td({className: "netInfoParamValue"},
-              code({}, header.value)
-            )
+            td({className: "netInfoParamValue"}, header.value)
           )
         );
       });

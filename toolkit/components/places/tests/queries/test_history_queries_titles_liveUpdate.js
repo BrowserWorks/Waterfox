@@ -4,26 +4,32 @@
 // This test ensures that tags changes are correctly live-updated in a history
 // query.
 
-var gNow = Date.now();
+let timeInMicroseconds = PlacesUtils.toPRTime(Date.now() - 10000);
+
+function newTimeInMicroseconds() {
+  timeInMicroseconds = timeInMicroseconds + 1000;
+  return timeInMicroseconds;
+}
+
 var gTestData = [
   {
     isVisit: true,
     uri: "http://example.com/1/",
-    lastVisit: gNow,
+    lastVisit: newTimeInMicroseconds(),
     isInQuery: true,
     title: "title1",
   },
   {
     isVisit: true,
     uri: "http://example.com/2/",
-    lastVisit: gNow++,
+    lastVisit: newTimeInMicroseconds(),
     isInQuery: true,
     title: "title2",
   },
   {
     isVisit: true,
     uri: "http://example.com/3/",
-    lastVisit: gNow++,
+    lastVisit: newTimeInMicroseconds(),
     isInQuery: true,
     title: "title3",
   },
@@ -38,20 +44,13 @@ function searchNodeHavingUrl(aRoot, aUrl) {
   return undefined;
 }
 
-function newQueryWithOptions()
-{
+function newQueryWithOptions() {
   return [ PlacesUtils.history.getNewQuery(),
            PlacesUtils.history.getNewQueryOptions() ];
 }
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* pages_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function pages_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   let root = PlacesUtils.history.executeQuery(query, options).root;
@@ -62,19 +61,18 @@ add_task(function* pages_query()
     let node = root.getChild(i);
     do_check_eq(node.title, gTestData[i].title);
     let uri = NetUtil.newURI(node.uri);
-    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
+    await PlacesTestUtils.addVisits({uri, title: "changedTitle"});
     do_check_eq(node.title, "changedTitle");
-    yield PlacesTestUtils.addVisits({uri: uri, title: gTestData[i].title});
+    await PlacesTestUtils.addVisits({uri, title: gTestData[i].title});
     do_check_eq(node.title, gTestData[i].title);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* visits_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function visits_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   options.resultType = Ci.nsINavHistoryQueryOptions.RESULTS_AS_VISIT;
@@ -87,21 +85,20 @@ add_task(function* visits_query()
     let uri = NetUtil.newURI(testData.uri);
     let node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
-    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
+    await PlacesTestUtils.addVisits({uri, title: "changedTitle"});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, "changedTitle");
-    yield PlacesTestUtils.addVisits({uri: uri, title: testData.title});
+    await PlacesTestUtils.addVisits({uri, title: testData.title});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* pages_searchterm_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function pages_searchterm_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "example";
@@ -113,19 +110,18 @@ add_task(function* pages_searchterm_query()
     let node = root.getChild(i);
     let uri = NetUtil.newURI(node.uri);
     do_check_eq(node.title, gTestData[i].title);
-    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
+    await PlacesTestUtils.addVisits({uri, title: "changedTitle"});
     do_check_eq(node.title, "changedTitle");
-    yield PlacesTestUtils.addVisits({uri: uri, title: gTestData[i].title});
+    await PlacesTestUtils.addVisits({uri, title: gTestData[i].title});
     do_check_eq(node.title, gTestData[i].title);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* visits_searchterm_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function visits_searchterm_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "example";
@@ -138,21 +134,20 @@ add_task(function* visits_searchterm_query()
     let uri = NetUtil.newURI(testData.uri);
     let node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
-    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
+    await PlacesTestUtils.addVisits({uri, title: "changedTitle"});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, "changedTitle");
-    yield PlacesTestUtils.addVisits({uri: uri, title: testData.title});
+    await PlacesTestUtils.addVisits({uri, title: testData.title});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* pages_searchterm_is_title_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function pages_searchterm_is_title_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "match";
@@ -163,22 +158,21 @@ add_task(function* pages_searchterm_is_title_query()
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+    await PlacesTestUtils.addVisits({ uri, title: data.title,
                                       visitDate: data.lastVisit });
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+    await PlacesTestUtils.addVisits({ uri, title: data.title,
                                       visitDate: data.lastVisit });
     compareArrayToResult([], root);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 
-add_task(function* visits_searchterm_is_title_query()
-{
-  yield task_populateDB(gTestData);
+add_task(async function visits_searchterm_is_title_query() {
+  await task_populateDB(gTestData);
 
   let [query, options] = newQueryWithOptions();
   query.searchTerms = "match";
@@ -190,15 +184,15 @@ add_task(function* visits_searchterm_is_title_query()
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+    await PlacesTestUtils.addVisits({ uri, title: data.title,
                                       visitDate: data.lastVisit });
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+    await PlacesTestUtils.addVisits({ uri, title: data.title,
                                       visitDate: data.lastVisit });
     compareArrayToResult([], root);
   }
 
   root.containerOpen = false;
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });

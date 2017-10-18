@@ -1,15 +1,15 @@
-add_task(function*() {
-  let bm = yield PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+add_task(async function() {
+  let bm = await PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
                                                 url: "http://example.com/?q=%s",
                                                 title: "test" });
-  yield PlacesUtils.keywords.insert({ keyword: "keyword",
+  await PlacesUtils.keywords.insert({ keyword: "keyword",
                                       url: "http://example.com/?q=%s" })
 
-  registerCleanupFunction(function* () {
-    yield PlacesUtils.bookmarks.remove(bm);
+  registerCleanupFunction(async function() {
+    await PlacesUtils.bookmarks.remove(bm);
   });
 
-  yield promiseAutocompleteResultPopup("keyword search");
+  await promiseAutocompleteResultPopup("keyword search");
   let result = gURLBar.popup.richlistbox.children[0];
 
   info("Before override");
@@ -27,14 +27,14 @@ add_task(function*() {
   is(result._actionText.textContent, "", "Action text should be empty");
 
   info("During override");
-  EventUtils.synthesizeKey("VK_SHIFT" , { type: "keydown" });
+  EventUtils.synthesizeKey("VK_SHIFT", { type: "keydown" });
   is_element_visible(titleHbox, "Title element should be visible");
   is_element_hidden(urlHbox, "URL element should be hidden");
   is_element_visible(actionHbox, "Action element should be visible");
   is(result._actionText.textContent, "", "Action text should be empty");
 
-  EventUtils.synthesizeKey("VK_SHIFT" , { type: "keyup" });
+  EventUtils.synthesizeKey("VK_SHIFT", { type: "keyup" });
 
   gURLBar.popup.hidePopup();
-  yield promisePopupHidden(gURLBar.popup);
+  await promisePopupHidden(gURLBar.popup);
 });

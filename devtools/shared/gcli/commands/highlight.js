@@ -5,18 +5,15 @@
 "use strict";
 
 const l10n = require("gcli/l10n");
-const Services = require("Services");
-const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 require("devtools/server/actors/inspector");
 const {
   BoxModelHighlighter,
   HighlighterEnvironment
 } = require("devtools/server/actors/highlighters");
 
-XPCOMUtils.defineLazyGetter(this, "nodesSelected", function () {
-  return Services.strings.createBundle("chrome://devtools-shared/locale/gclicommands.properties");
-});
-XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
+const {PluralForm} = require("devtools/shared/plural-form");
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/shared/locales/gclicommands.properties");
 
 // How many maximum nodes can be highlighted in parallel
 const MAX_HIGHLIGHTED_ELEMENTS = 100;
@@ -106,7 +103,7 @@ exports.items = [
         ]
       }
     ],
-    exec: function(args, context) {
+    exec: function (args, context) {
       // Remove all existing highlighters unless told otherwise
       if (!args.keep) {
         unhighlightAll();
@@ -139,7 +136,7 @@ exports.items = [
         i++;
       }
 
-      let highlightText = nodesSelected.GetStringFromName("highlightOutputConfirm2");
+      let highlightText = L10N.getStr("highlightOutputConfirm2");
       let output = PluralForm.get(args.selector.length, highlightText)
                              .replace("%1$S", args.selector.length);
       if (args.selector.length > i) {

@@ -6,26 +6,58 @@
   pointer-events: none;
 }
 
-.panel-mainview,
-.panel-viewcontainer,
-.panel-viewstack {
+.panel-viewcontainer {
   overflow: hidden;
 }
 
 .panel-viewstack {
-  position: relative;
+  transition: height var(--panelui-subview-transition-duration);
 }
 
 .panel-subviews {
-  -moz-stack-sizing: ignore;
+  -moz-stack-sizing: ignore-horizontal;
   transform: translateX(0);
-  overflow-y: auto;
+}
+
+.panel-viewstack[viewtype="main"] > .panel-subviews {
+  -moz-stack-sizing: ignore;
 }
 
 .panel-subviews[panelopen] {
   transition: transform var(--panelui-subview-transition-duration);
 }
 
-.panel-viewcontainer[panelopen]:-moz-any(:not([viewtype="main"]),[transitioning="true"]) {
-  transition: height var(--panelui-subview-transition-duration);
+.panel-viewcontainer[panelopen]:-moz-any(:not([viewtype="main"]),[transitioning]) {
+  transition-property: height;
+  transition-timing-function: ease-in;
+  transition-duration: var(--panelui-subview-transition-duration);
+  will-change: height;
 }
+
+.panel-viewcontainer[panelopen]:-moz-any(:not([viewtype="main"]),[transitioning])[transition-reverse] {
+  transition-timing-function: ease-out;
+}
+
+/* START photon adjustments */
+
+photonpanelmultiview > .panel-viewcontainer > .panel-viewstack {
+  overflow: visible;
+}
+
+photonpanelmultiview[transitioning] {
+  pointer-events: none;
+}
+
+.panel-viewcontainer.offscreen {
+  position: absolute;
+  top: 100000px;
+  left: 100000px;
+}
+
+.panel-viewcontainer.offscreen,
+.panel-viewcontainer.offscreen > .panel-viewstack {
+  margin: 0;
+  padding: 0;
+}
+
+/* END photon adjustments */

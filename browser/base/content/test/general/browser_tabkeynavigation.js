@@ -1,19 +1,19 @@
 /*
  * This test checks that keyboard navigation for tabs isn't blocked by content
  */
-add_task(function* test() {
+add_task(async function test() {
 
   let testPage1 = "data:text/html,<html id='tab1'><body><button id='button1'>Tab 1</button></body></html>";
   let testPage2 = "data:text/html,<html id='tab2'><body><button id='button2'>Tab 2</button><script>function preventDefault(event) { event.preventDefault(); event.stopImmediatePropagation(); } window.addEventListener('keydown', preventDefault, true); window.addEventListener('keypress', preventDefault, true);</script></body></html>";
   let testPage3 = "data:text/html,<html id='tab3'><body><button id='button3'>Tab 3</button></body></html>";
 
-  let tab1 = yield BrowserTestUtils.openNewForegroundTab(gBrowser, testPage1);
+  let tab1 = await BrowserTestUtils.openNewForegroundTab(gBrowser, testPage1);
   let browser1 = gBrowser.getBrowserForTab(tab1);
-  let tab2 = yield BrowserTestUtils.openNewForegroundTab(gBrowser, testPage2);
-  let tab3 = yield BrowserTestUtils.openNewForegroundTab(gBrowser, testPage3);
+  let tab2 = await BrowserTestUtils.openNewForegroundTab(gBrowser, testPage2);
+  let tab3 = await BrowserTestUtils.openNewForegroundTab(gBrowser, testPage3);
 
   // Kill the animation for simpler test.
-  Services.prefs.setBoolPref("browser.tabs.animate", false);
+  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
 
   gBrowser.selectedTab = tab1;
   browser1.focus();
@@ -61,7 +61,7 @@ add_task(function* test() {
     gBrowser.selectedTab = tab1;
     browser1.focus();
 
-    let ltr = window.getComputedStyle(gBrowser.mTabBox, "").direction == "ltr";
+    let ltr = window.getComputedStyle(gBrowser.mTabBox).direction == "ltr";
     let advanceKey = ltr ? "VK_RIGHT" : "VK_LEFT";
     let reverseKey = ltr ? "VK_LEFT" : "VK_RIGHT";
 
@@ -109,7 +109,7 @@ add_task(function* test() {
     // XXX Currently, Command + "{" and "}" don't work if keydown event is
     //     consumed because following keypress event isn't fired.
 
-    let ltr = window.getComputedStyle(gBrowser.mTabBox, "").direction == "ltr";
+    let ltr = window.getComputedStyle(gBrowser.mTabBox).direction == "ltr";
     let advanceKey = ltr ? "}" : "{";
     let reverseKey = ltr ? "{" : "}";
 
@@ -140,7 +140,6 @@ add_task(function* test() {
     is(gBrowser.tabs.length, 3,
       "The count of tabs should be 3 since tab2 should be closed");
 
-    let activeWindow = gBrowser.getBrowserForTab(gBrowser.selectedTab).contentWindow;
     // NOTE: keypress event shouldn't be fired since the keydown event should
     //       be consumed by tab2.
       EventUtils.synthesizeKey("VK_F4", { type: "keyup", ctrlKey: true });
@@ -153,5 +152,5 @@ add_task(function* test() {
     gBrowser.removeCurrentTab();
   }
 
-    Services.prefs.clearUserPref("browser.tabs.animate");
+    Services.prefs.clearUserPref("toolkit.cosmeticAnimations.enabled");
 });

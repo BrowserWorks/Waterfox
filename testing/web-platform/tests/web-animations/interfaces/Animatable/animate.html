@@ -5,6 +5,7 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="../../testcommon.js"></script>
+<script src="../../resources/easing-tests.js"></script>
 <script src="../../resources/keyframe-utils.js"></script>
 <body>
 <div id="log"></div>
@@ -71,6 +72,15 @@ test(function(t) {
    + ' whose AnimationEffectTiming object is created in the relevant realm'
    + ' of the target element');
 
+gEmptyKeyframeListTests.forEach(function(subTest) {
+  test(function(t) {
+    var div = createDiv(t);
+    var anim = div.animate(subTest, 2000);
+    assert_not_equals(anim, null);
+  }, 'Element.animate() accepts empty keyframe lists ' +
+     `(input: ${JSON.stringify(subTest)})`);
+});
+
 gPropertyIndexedKeyframesTests.forEach(function(subtest) {
   test(function(t) {
     var div = createDiv(t);
@@ -94,6 +104,15 @@ gInvalidKeyframesTests.forEach(function(subtest) {
       div.animate(subtest.input, 2000);
     });
   }, 'Element.animate() does not accept ' + subtest.desc);
+});
+
+gInvalidEasings.forEach(invalidEasing => {
+  test(function(t) {
+    var div = createDiv(t);
+    assert_throws(new TypeError, () => {
+      div.animate({ easing: invalidEasing }, 2000);
+    });
+  }, `Element.animate() does not accept invalid easing: '${invalidEasing}'`);
 });
 
 test(function(t) {

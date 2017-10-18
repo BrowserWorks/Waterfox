@@ -6,7 +6,7 @@
 
 #include "RemotePrintJobChild.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsPagePrintTimer.h"
 #include "nsPrintEngine.h"
 
@@ -18,7 +18,6 @@ NS_IMPL_ISUPPORTS(RemotePrintJobChild,
 
 RemotePrintJobChild::RemotePrintJobChild()
 {
-  MOZ_COUNT_CTOR(RemotePrintJobChild);
 }
 
 nsresult
@@ -31,46 +30,44 @@ RemotePrintJobChild::InitializePrint(const nsString& aDocumentTitle,
   // need to spin a nested event loop until initialization completes.
   Unused << SendInitializePrint(aDocumentTitle, aPrintToFile, aStartPage,
                                 aEndPage);
-  while (!mPrintInitialized) {
-    Unused << NS_ProcessNextEvent();
-  }
+  mozilla::SpinEventLoopUntil([&]() { return mPrintInitialized; });
 
   return mInitializationResult;
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobChild::RecvPrintInitializationResult(const nsresult& aRv)
 {
   mPrintInitialized = true;
   mInitializationResult = aRv;
-  return true;
+  return IPC_OK();
 }
 
 void
-RemotePrintJobChild::ProcessPage(Shmem& aStoredPage)
+RemotePrintJobChild::ProcessPage(const nsCString& aPageFileName)
 {
   MOZ_ASSERT(mPagePrintTimer);
 
   mPagePrintTimer->WaitForRemotePrint();
-  Unused << SendProcessPage(aStoredPage);
+  Unused << SendProcessPage(aPageFileName);
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobChild::RecvPageProcessed()
 {
   MOZ_ASSERT(mPagePrintTimer);
 
   mPagePrintTimer->RemotePrintFinished();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 RemotePrintJobChild::RecvAbortPrint(const nsresult& aRv)
 {
   MOZ_ASSERT(mPrintEngine);
 
   mPrintEngine->CleanupOnFailure(aRv, true);
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -141,7 +138,6 @@ RemotePrintJobChild::OnSecurityChange(nsIWebProgress* aProgress,
 
 RemotePrintJobChild::~RemotePrintJobChild()
 {
-  MOZ_COUNT_DTOR(RemotePrintJobChild);
 }
 
 void

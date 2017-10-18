@@ -36,6 +36,10 @@ already_AddRefed<DrawTarget>
 PrintTargetThebes::MakeDrawTarget(const IntSize& aSize,
                                   DrawEventRecorder* aRecorder)
 {
+  // This should not be called outside of BeginPage()/EndPage() calls since
+  // some backends can only provide a valid DrawTarget at that time.
+  MOZ_ASSERT(mHasActivePage, "We can't guarantee a valid DrawTarget");
+
   RefPtr<gfx::DrawTarget> dt =
     gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(mGfxSurface, aSize);
   if (!dt || !dt->IsValid()) {
@@ -43,7 +47,7 @@ PrintTargetThebes::MakeDrawTarget(const IntSize& aSize,
   }
 
   if (aRecorder) {
-    dt = CreateRecordingDrawTarget(aRecorder, dt);
+    dt = CreateWrapAndRecordDrawTarget(aRecorder, dt);
     if (!dt || !dt->IsValid()) {
       return nullptr;
     }
@@ -52,9 +56,47 @@ PrintTargetThebes::MakeDrawTarget(const IntSize& aSize,
   return dt.forget();
 }
 
+already_AddRefed<DrawTarget>
+PrintTargetThebes::GetReferenceDrawTarget(DrawEventRecorder* aRecorder)
+{
+  if (!mRefDT) {
+    RefPtr<gfx::DrawTarget> dt =
+      gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(mGfxSurface, mSize);
+    if (!dt || !dt->IsValid()) {
+      return nullptr;
+    }
+    mRefDT = dt->CreateSimilarDrawTarget(IntSize(1,1), dt->GetFormat());
+  }
+
+  if (aRecorder) {
+    if (!mRecordingRefDT) {
+      RefPtr<DrawTarget> dt = CreateWrapAndRecordDrawTarget(aRecorder, mRefDT);
+      if (!dt || !dt->IsValid()) {
+        return nullptr;
+      }
+      mRecordingRefDT = dt.forget();
+#ifdef DEBUG
+      mRecorder = aRecorder;
+#endif
+    }
+#ifdef DEBUG
+    else {
+      MOZ_ASSERT(aRecorder == mRecorder,
+                 "Caching mRecordingRefDT assumes the aRecorder is an invariant");
+    }
+#endif
+
+    return do_AddRef(mRecordingRefDT);
+  }
+
+  return do_AddRef(mRefDT);
+}
+
 nsresult
 PrintTargetThebes::BeginPrinting(const nsAString& aTitle,
-                                 const nsAString& aPrintToFileName)
+                                 const nsAString& aPrintToFileName,
+                                 int32_t aStartPage,
+                                 int32_t aEndPage)
 {
   return mGfxSurface->BeginPrinting(aTitle, aPrintToFileName);
 }
@@ -68,18 +110,27 @@ PrintTargetThebes::EndPrinting()
 nsresult
 PrintTargetThebes::AbortPrinting()
 {
+#ifdef DEBUG
+  mHasActivePage = false;
+#endif
   return mGfxSurface->AbortPrinting();
 }
 
 nsresult
 PrintTargetThebes::BeginPage()
 {
+#ifdef DEBUG
+  mHasActivePage = true;
+#endif
   return mGfxSurface->BeginPage();
 }
 
 nsresult
 PrintTargetThebes::EndPage()
 {
+#ifdef DEBUG
+  mHasActivePage = false;
+#endif
   return mGfxSurface->EndPage();
 }
 

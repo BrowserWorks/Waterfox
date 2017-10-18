@@ -11,35 +11,45 @@
 #include "nsIFormControlFrame.h"
 #include "nsButtonFrameRenderer.h"
 
-class nsRenderingContext;
+class gfxContext;
 class nsPresContext;
 
 class nsHTMLButtonControlFrame : public nsContainerFrame,
-                                 public nsIFormControlFrame 
+                                 public nsIFormControlFrame
 {
 public:
-  explicit nsHTMLButtonControlFrame(nsStyleContext* aContext);
+  explicit nsHTMLButtonControlFrame(nsStyleContext* aContext)
+    : nsHTMLButtonControlFrame(aContext, kClassID)
+  {}
+
   ~nsHTMLButtonControlFrame();
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLButtonControlFrame)
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
 
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       ReflowOutput&     aDesiredSize,
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
 
-  virtual nsresult HandleEvent(nsPresContext* aPresContext, 
+  bool GetVerticalAlignBaseline(mozilla::WritingMode aWM,
+                                nscoord* aBaseline) const override;
+
+  bool GetNaturalBaselineBOffset(mozilla::WritingMode aWM,
+                                 BaselineSharingGroup aBaselineGroup,
+                                 nscoord* aBaseline) const override;
+
+  virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
 
@@ -48,9 +58,9 @@ public:
                     nsIFrame*         aPrevInFlow) override;
 
   virtual nsStyleContext* GetAdditionalStyleContext(int32_t aIndex) const override;
-  virtual void SetAdditionalStyleContext(int32_t aIndex, 
+  virtual void SetAdditionalStyleContext(int32_t aIndex,
                                          nsStyleContext* aStyleContext) override;
- 
+
 #ifdef DEBUG
   virtual void AppendFrames(ChildListID     aListID,
                             nsFrameList&    aFrameList) override;
@@ -65,8 +75,6 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nsIAtom* GetType() const override;
-  
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {
     return MakeFrameName(NS_LITERAL_STRING("HTMLButtonControl"), aResult);
@@ -90,7 +98,12 @@ public:
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedContainsBlock));
   }
 
+  // Return the ::-moz-button-content anonymous box.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
+
 protected:
+  nsHTMLButtonControlFrame(nsStyleContext* aContext, nsIFrame::ClassID aID);
+
   virtual bool IsInput() { return false; }
 
   // Indicates whether we should clip our children's painting to our

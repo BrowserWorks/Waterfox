@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global PrefCache, Roles, Prefilters, States, Filters, Utils,
-   TraversalRules, Components, XPCOMUtils */
 /* exported TraversalRules, TraversalHelper */
 
 'use strict';
@@ -382,7 +380,7 @@ this.TraversalHelper = {
   getHelperPivot: function TraversalHelper_getHelperPivot(aRoot) {
     let pivot = this.helperPivotCache.get(aRoot.DOMNode);
     if (!pivot) {
-      pivot = Utils.AccRetrieval.createAccessiblePivot(aRoot);
+      pivot = Utils.AccService.createAccessiblePivot(aRoot);
       this.helperPivotCache.set(aRoot.DOMNode, pivot);
     }
 

@@ -11,12 +11,12 @@
 #include "LayersLogging.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/PresShell.h"
 #include "mozilla/dom/Event.h"
 #include "nsDocument.h"
 #include "nsIFrame.h"
 #include "nsLayoutUtils.h"
 #include "nsPoint.h"
-#include "nsPresShell.h"
 #include "nsView.h"
 #include "nsViewportInfo.h"
 #include "Units.h"
@@ -158,8 +158,12 @@ ZoomConstraintsClient::Observe(nsISupports* aSubject, const char* aTopic, const 
     // We need to run this later because all the pref change listeners need
     // to execute before we can be guaranteed that gfxPrefs::ForceUserScalable()
     // returns the updated value.
-    NS_DispatchToMainThread(NewRunnableMethod(
-      this, &ZoomConstraintsClient::RefreshZoomConstraints));
+
+    RefPtr<nsRunnableMethod<ZoomConstraintsClient>> event =
+      NewRunnableMethod("ZoomConstraintsClient::RefreshZoomConstraints",
+                        this,
+                        &ZoomConstraintsClient::RefreshZoomConstraints);
+    mDocument->Dispatch(TaskCategory::Other, event.forget());
   }
   return NS_OK;
 }

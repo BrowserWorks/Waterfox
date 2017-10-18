@@ -11,18 +11,18 @@
 #include "cryptohi.h"
 #include "keyhi.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Base64.h"
 #include "mozilla/Casting.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "nsISupportsPriority.h"
 #include "nsIURI.h"
 #include "nsNSSComponent.h"
+#include "nsPromiseFlatString.h"
 #include "nsSecurityHeaderParser.h"
 #include "nsStreamUtils.h"
 #include "nsWhitespaceTokenizer.h"
-#include "nsXPCOMStrings.h"
-#include "nssb64.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixtypes.h"
 #include "secerr.h"
@@ -49,7 +49,7 @@ ContentSignatureVerifier::~ContentSignatureVerifier()
     return;
   }
   destructorSafeDestroyNSSReference();
-  shutdown(calledFromObject);
+  shutdown(ShutdownCalledFrom::Object);
 }
 
 NS_IMETHODIMP
@@ -100,12 +100,17 @@ ReadChainIntoCertList(const nsACString& aCertChain, CERTCertList* aCertList,
         inBlock = false;
         certFound = true;
         // base64 decode data, make certs, append to chain
-        ScopedAutoSECItem der;
-        if (!NSSBase64_DecodeBuffer(nullptr, &der, blockData.BeginReading(),
-                                    blockData.Length())) {
+        nsAutoCString derString;
+        nsresult rv = Base64Decode(blockData, derString);
+        if (NS_FAILED(rv)) {
           CSVerifier_LOG(("CSVerifier: decoding the signature failed\n"));
-          return NS_ERROR_FAILURE;
+          return rv;
         }
+        SECItem der = {
+          siBuffer,
+          BitwiseCast<unsigned char*, const char*>(derString.get()),
+          derString.Length(),
+        };
         UniqueCERTCertificate tmpCert(
           CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &der, nullptr, false,
                                   true));
@@ -157,14 +162,14 @@ ContentSignatureVerifier::CreateContextInternal(const nsACString& aData,
   }
 
   CERTCertListNode* node = CERT_LIST_HEAD(certCertList.get());
-  if (!node || !node->cert) {
+  if (!node || CERT_LIST_END(node, certCertList.get()) || !node->cert) {
     return NS_ERROR_FAILURE;
   }
 
   SECItem* certSecItem = &node->cert->derCert;
 
   Input certDER;
-  Result result =
+  mozilla::pkix::Result result =
     certDER.Init(BitwiseCast<uint8_t*, unsigned char*>(certSecItem->data),
                  certSecItem->len);
   if (result != Success) {
@@ -193,8 +198,9 @@ ContentSignatureVerifier::CreateContextInternal(const nsACString& aData,
   // Check the SAN
   Input hostnameInput;
 
-  result = hostnameInput.Init(uint8_t_ptr_cast(aName.BeginReading()),
-                              aName.Length());
+  result = hostnameInput.Init(
+    BitwiseCast<const uint8_t*, const char*>(aName.BeginReading()),
+    aName.Length());
   if (result != Success) {
     return NS_ERROR_FAILURE;
   }
@@ -214,15 +220,20 @@ ContentSignatureVerifier::CreateContextInternal(const nsACString& aData,
   }
 
   // Base 64 decode the signature
-  ScopedAutoSECItem rawSignatureItem;
-  if (!NSSBase64_DecodeBuffer(nullptr, &rawSignatureItem, mSignature.get(),
-                              mSignature.Length())) {
+  nsAutoCString rawSignature;
+  rv = Base64Decode(mSignature, rawSignature);
+  if (NS_FAILED(rv)) {
     CSVerifier_LOG(("CSVerifier: decoding the signature failed\n"));
-    return NS_ERROR_FAILURE;
+    return rv;
   }
 
   // get signature object
   ScopedAutoSECItem signatureItem;
+  SECItem rawSignatureItem = {
+    siBuffer,
+    BitwiseCast<unsigned char*, const char*>(rawSignature.get()),
+    rawSignature.Length(),
+  };
   // We have a raw ecdsa signature r||s so we have to DER-encode it first
   // Note that we have to check rawSignatureItem->len % 2 here as
   // DSAU_EncodeDerSigWithLen asserts this
@@ -432,7 +443,8 @@ ContentSignatureVerifier::ParseContentSignatureHeader(
   NS_NAMED_LITERAL_CSTRING(signature_var, "p384ecdsa");
   NS_NAMED_LITERAL_CSTRING(certChainURL_var, "x5u");
 
-  nsSecurityHeaderParser parser(aContentSignatureHeader.BeginReading());
+  const nsCString& flatHeader = PromiseFlatCString(aContentSignatureHeader);
+  nsSecurityHeaderParser parser(flatHeader);
   nsresult rv = parser.Parse();
   if (NS_FAILED(rv)) {
     CSVerifier_LOG(("CSVerifier: could not parse ContentSignature header\n"));

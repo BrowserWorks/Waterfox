@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 var gSystemScrollbarWidth = null;
 
 this.ScrollbarSampler = {
-  getSystemScrollbarWidth: function() {
+  getSystemScrollbarWidth() {
     if (gSystemScrollbarWidth !== null) {
       return Promise.resolve(gSystemScrollbarWidth);
     }
@@ -27,11 +27,11 @@ this.ScrollbarSampler = {
     });
   },
 
-  resetSystemScrollbarWidth: function() {
+  resetSystemScrollbarWidth() {
     gSystemScrollbarWidth = null;
   },
 
-  _sampleSystemScrollbarWidth: function() {
+  _sampleSystemScrollbarWidth() {
     let hwin = Services.appShell.hiddenDOMWindow;
     let hdoc = hwin.document.documentElement;
     let iframe = hwin.document.createElementNS("http://www.w3.org/1999/xhtml",
@@ -44,12 +44,11 @@ this.ScrollbarSampler = {
                        .getInterface(Ci.nsIDOMWindowUtils);
 
     return new Promise(resolve => {
-      cwindow.addEventListener("load", function onLoad(aEvent) {
-        cwindow.removeEventListener("load", onLoad);
+      cwindow.addEventListener("load", function(aEvent) {
         let sbWidth = {};
         try {
           utils.getScrollbarSize(true, sbWidth, {});
-        } catch(e) {
+        } catch (e) {
           Cu.reportError("Could not sample scrollbar size: " + e + " -- " +
                          e.stack);
           sbWidth.value = 0;
@@ -58,7 +57,7 @@ this.ScrollbarSampler = {
         sbWidth.value = Math.max(sbWidth.value, 10);
         resolve(sbWidth.value);
         iframe.remove();
-      });
+      }, {once: true});
     });
   }
 };

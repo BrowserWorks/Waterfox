@@ -25,7 +25,8 @@
 
 namespace mozilla {
 namespace layers {
-class CompositableForwarder;
+class KnowsCompositor;
+class LayersIPCChannel;
 class SharedSurfaceTextureClient;
 } // namespace layers
 
@@ -137,12 +138,12 @@ public:
     static UniquePtr<SurfaceFactory>
     CreateFactory(GLContext* gl,
                   const SurfaceCaps& caps,
-                  const RefPtr<layers::CompositableForwarder>& forwarder,
+                  layers::KnowsCompositor* compositorConnection,
                   const layers::TextureFlags& flags);
     static UniquePtr<SurfaceFactory>
     CreateFactory(GLContext* gl,
                   const SurfaceCaps& caps,
-                  const RefPtr<layers::ClientIPCAllocator>& allocator,
+                  layers::LayersIPCChannel* ipcChannel,
                   const mozilla::layers::LayersBackend backend,
                   const layers::TextureFlags& flags);
 
@@ -240,9 +241,8 @@ public:
     void SetReadBuffer(GLenum userMode);
     void SetDrawBuffer(GLenum userMode);
 
-    GLenum GetReadBufferMode() const {
-        return mUserReadBufferMode;
-    }
+    GLenum GetReadBufferMode() const { return mUserReadBufferMode; }
+    GLenum GetDrawBufferMode() const { return mUserDrawBufferMode; }
 
     /**
      * Attempts to read pixels from the current bound framebuffer, if

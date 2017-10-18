@@ -35,13 +35,6 @@ interface nsIVerifySignedDirectoryCallback : nsISupports
                                      in nsIX509Cert aSignerCert);
 };
 
-[scriptable, function, uuid(3d6a9c87-5c5f-46fc-9410-96da6092f0f2)]
-interface nsIVerifySignedManifestCallback : nsISupports
-{
-  void verifySignedManifestFinished(in nsresult rv,
-                                    in nsIX509Cert aSignerCert);
-};
-
 /**
  * Callback type for use with asyncVerifyCertAtTime.
  * If aPRErrorCode is PRErrorCodeSuccess (i.e. 0), aVerifiedChain represents the
@@ -75,17 +68,6 @@ interface nsIX509CertDB : nsISupports {
   const unsigned long TRUSTED_OBJSIGN = 1 << 2;
 
   /**
-   *  Given a nickname,
-   *  locate the matching certificate.
-   *
-   *  @param aNickname The nickname to be used as the key
-   *                   to find a certificate.
-   *
-   *  @return The matching certificate if found.
-   */
-  nsIX509Cert findCertByNickname(in AString aNickname);
-
-  /**
    *  Will find a certificate based on its dbkey
    *  retrieved by getting the dbKey attribute of
    *  the certificate.
@@ -93,27 +75,8 @@ interface nsIX509CertDB : nsISupports {
    *  @param aDBkey Database internal key, as obtained using
    *                attribute dbkey in nsIX509Cert.
    */
-  nsIX509Cert findCertByDBKey(in string aDBkey);
-
-  /**
-   *  Find user's own email encryption certificate by nickname.
-   *
-   *  @param aNickname The nickname to be used as the key
-   *                   to find the certificate.
-   *
-   *  @return The matching certificate if found.
-   */
-  nsIX509Cert findEmailEncryptionCert(in AString aNickname);
-
-  /**
-   *  Find user's own email signing certificate by nickname.
-   *
-   *  @param aNickname The nickname to be used as the key
-   *                   to find the certificate.
-   *
-   *  @return The matching certificate if found.
-   */
-  nsIX509Cert findEmailSigningCert(in AString aNickname);
+  [must_use]
+  nsIX509Cert findCertByDBKey(in ACString aDBkey);
 
   /**
    *  Find a certificate by email address.
@@ -123,7 +86,8 @@ interface nsIX509CertDB : nsISupports {
    *
    *  @return The matching certificate if found.
    */
-  nsIX509Cert findCertByEmailAddress(in string aEmailAddress);
+  [must_use]
+  nsIX509Cert findCertByEmailAddress(in ACString aEmailAddress);
 
   /**
    *  Use this to import a stream sent down as a mime type into
@@ -181,6 +145,7 @@ interface nsIX509CertDB : nsISupports {
    *  @param trust A bitmask. The new trust for the possible usages.
    *               See the trust constants defined within this interface.
    */
+  [must_use]
   void setCertTrust(in nsIX509Cert cert,
                     in unsigned long type,
                     in unsigned long trust);
@@ -191,7 +156,8 @@ interface nsIX509CertDB : nsISupports {
    *                    characters, indicating SSL, Email, and Obj signing
    *                    trust.
    */
-  void setCertTrustFromString(in nsIX509Cert cert, in string trustString);
+  [must_use]
+  void setCertTrustFromString(in nsIX509Cert cert, in ACString trustString);
 
   /**
    *  Query whether a certificate is trusted for a particular use.
@@ -203,6 +169,7 @@ interface nsIX509CertDB : nsISupports {
    *
    *  @return Returns true if the certificate is trusted for the given use.
    */
+  [must_use]
   boolean isCertTrusted(in nsIX509Cert cert,
                         in unsigned long certType,
                         in unsigned long trustType);
@@ -215,34 +182,28 @@ interface nsIX509CertDB : nsISupports {
    *  @param aType Describes the type of certificate that is going to
    *               be imported. See type constants in nsIX509Cert.
    */
+  [must_use]
   void importCertsFromFile(in nsIFile aFile,
                            in unsigned long aType);
 
   /**
    *  Import a PKCS#12 file containing cert(s) and key(s) into the database.
    *
-   *  @param aToken Optionally limits the scope of
-   *                this function to a token device.
-   *                Can be null to mean any token.
-   *  @param aFile Identifies a file that contains the data
-   *               to be imported.
+   *  @param aFile Identifies a file that contains the data to be imported.
    */
-  void importPKCS12File(in nsISupports aToken,
-                        in nsIFile aFile);
+  [must_use]
+  void importPKCS12File(in nsIFile aFile);
 
   /**
    *  Export a set of certs and keys from the database to a PKCS#12 file.
    *
-   *  @param aToken Optionally limits the scope of
-   *                this function to a token device.
-   *                Can be null to mean any token.
-   *  @param aFile Identifies a file that will be filled with the data
-   *               to be exported.
+   *  @param aFile Identifies a file that will be filled with the data to be
+   *               exported.
    *  @param count The number of certificates to be exported.
    *  @param aCerts The array of all certificates to be exported.
    */
-  void exportPKCS12File(in nsISupports aToken,
-                        in nsIFile aFile,
+  [must_use]
+  void exportPKCS12File(in nsIFile aFile,
                         in unsigned long count,
                         [array, size_is(count)] in nsIX509Cert aCerts);
 
@@ -253,17 +214,18 @@ interface nsIX509CertDB : nsISupports {
    *                encoded as Base 64.
    *  @return The new certificate object.
    */
-  nsIX509Cert constructX509FromBase64(in string base64);
+  [must_use]
+  nsIX509Cert constructX509FromBase64(in ACString base64);
 
   /*
    *  Decode a raw data presentation and instantiate an object in memory.
    *
    *  @param certDER The raw representation of a certificate,
    *                 encoded as raw DER.
-   *  @param length  The length of the DER string.
    *  @return The new certificate object.
    */
-  nsIX509Cert constructX509(in string certDER, in unsigned long length);
+  [must_use]
+  nsIX509Cert constructX509(in ACString certDER);
 
   /**
    *  Verifies the signature on the given JAR file to verify that it has a
@@ -281,11 +243,11 @@ interface nsIX509CertDB : nsISupports {
    *  as input, to encourage users of the API to verify the signature as the
    *  first step in opening the JAR.
    */
-  const AppTrustedRoot AppMarketplaceProdPublicRoot = 1;
-  const AppTrustedRoot AppMarketplaceProdReviewersRoot = 2;
-  const AppTrustedRoot AppMarketplaceDevPublicRoot = 3;
-  const AppTrustedRoot AppMarketplaceDevReviewersRoot = 4;
-  const AppTrustedRoot AppMarketplaceStageRoot = 5;
+  // 1 used to be AppMarketplaceProdPublicRoot.
+  // 2 used to be AppMarketplaceProdReviewersRoot.
+  // 3 used to be AppMarketplaceDevPublicRoot.
+  // 4 used to be AppMarketplaceDevReviewersRoot.
+  // 5 used to be AppMarketplaceStageRoot.
   const AppTrustedRoot AppXPCShellRoot = 6;
   const AppTrustedRoot AddonsPublicRoot = 7;
   const AppTrustedRoot AddonsStageRoot = 8;
@@ -298,6 +260,7 @@ interface nsIX509CertDB : nsISupports {
    * "network.http.packaged-apps-developer-trusted-root".
    */
   const AppTrustedRoot DeveloperImportedRoot = 10;
+  [must_use]
   void openSignedAppFileAsync(in AppTrustedRoot trustedRoot,
                               in nsIFile aJarFile,
                               in nsIOpenSignedAppFileCallback callback);
@@ -314,35 +277,23 @@ interface nsIX509CertDB : nsISupports {
    *
    *  On failure, an error code is returned.
    */
+  [must_use]
   void verifySignedDirectoryAsync(in AppTrustedRoot trustedRoot,
                                   in nsIFile aUnpackedDir,
                                   in nsIVerifySignedDirectoryCallback callback);
-
-  /**
-   * Given streams containing a signature and a manifest file, verifies
-   * that the signature is valid for the manifest. The signature must
-   * come from a certificate that is trusted for code signing and that
-   * was issued by the given trusted root.
-   *
-   *  On success, NS_OK and the trusted certificate that signed the
-   *  Manifest are returned.
-   *
-   *  On failure, an error code is returned.
-   */
-  void verifySignedManifestAsync(in AppTrustedRoot trustedRoot,
-                                 in nsIInputStream aManifestStream,
-                                 in nsIInputStream aSignatureStream,
-                                 in nsIVerifySignedManifestCallback callback);
 
   /*
    * Add a cert to a cert DB from a binary string.
    *
    * @param certDER The raw DER encoding of a certificate.
-   * @param aTrust decoded by CERT_DecodeTrustString. 3 comma separated characters,
-   *                indicating SSL, Email, and Obj signing trust
-   * @param aName name of the cert for display purposes.
+   * @param trust String describing the trust settings to assign the
+   *              certificate. Decoded by CERT_DecodeTrustString. Consists of 3
+   *              comma separated sets of characters, indicating SSL, Email, and
+   *              Object signing trust.
+   * @return nsIX509Cert the resulting certificate
    */
-  void addCert(in ACString certDER, in string aTrust, in string aName);
+  [must_use]
+  nsIX509Cert addCert(in ACString certDER, in ACString trust);
 
   // Flags for verifyCertNow (these must match the values in CertVerifier.cpp):
   // Prevent network traffic. Doesn't work with classic verification.
@@ -371,19 +322,21 @@ interface nsIX509CertDB : nsISupports {
    *  @return 0 if success or the value or the error code for the verification
    *          failure
    */
+  [must_use]
   int32_t /*PRErrorCode*/
     verifyCertAtTime(in nsIX509Cert aCert,
                      in int64_t /*SECCertificateUsage*/ aUsage,
                      in uint32_t aFlags,
-                     in string aHostname,
+                     in ACString aHostname,
                      in uint64_t aTime,
                      out nsIX509CertList aVerifiedChain,
                      out bool aHasEVPolicy);
+  [must_use]
   int32_t /*PRErrorCode*/
     verifyCertNow(in nsIX509Cert aCert,
                   in int64_t /*SECCertificateUsage*/ aUsage,
                   in uint32_t aFlags,
-                  in string aHostname,
+                  in ACString aHostname,
                   out nsIX509CertList aVerifiedChain,
                   out bool aHasEVPolicy);
 
@@ -391,36 +344,42 @@ interface nsIX509CertDB : nsISupports {
    * Similar to the above, but asynchronous. As a result, use of this API is not
    * limited to tests.
    */
+  [must_use]
   void asyncVerifyCertAtTime(in nsIX509Cert aCert,
                              in int64_t /*SECCertificateUsage*/ aUsage,
                              in uint32_t aFlags,
-                             in string aHostname,
+                             in ACString aHostname,
                              in uint64_t aTime,
                              in nsICertVerificationCallback aCallback);
 
   // Clears the OCSP cache for the current certificate verification
   // implementation.
+  [must_use]
   void clearOCSPCache();
 
   /*
    * Add a cert to a cert DB from a base64 encoded string.
    *
-   * @param base64 The raw representation of a certificate,
-   *                encoded as Base 64.
-   * @param aTrust decoded by CERT_DecodeTrustString. 3 comma separated characters,
-   *                indicating SSL, Email, and Obj signing trust
-   * @param aName name of the cert for display purposes.
+   * @param base64 The raw representation of a certificate, encoded as Base 64.
+   * @param trust String describing the trust settings to assign the
+   *              certificate. Decoded by CERT_DecodeTrustString. Consists of 3
+   *              comma separated sets of characters, indicating SSL, Email, and
+   *              Object signing trust.
+   * @return nsIX509Cert the resulting certificate
    */
-  void addCertFromBase64(in string base64, in string aTrust, in string aName);
+  [must_use]
+  nsIX509Cert addCertFromBase64(in ACString base64, in ACString trust);
 
   /*
    * Get all the known certs in the database
    */
+  [must_use]
   nsIX509CertList getCerts();
 
   /*
    * Get a list of imported enterprise root certificates (currently only
    * implemented on Windows).
    */
+  [must_use]
   nsIX509CertList getEnterpriseRoots();
 };

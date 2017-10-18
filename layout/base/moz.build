@@ -4,30 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-with Files('ActiveLayerTracker.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('Display*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('FrameLayerBuilder.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('LayerState.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('MaskLayerImageCache.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('PaintTracker.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('nsCSSRendering.*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
-with Files('nsDisplay*'):
-    BUG_COMPONENT = ('Core', 'Layout: View Rendering')
-
 with Files('Restyle*'):
     BUG_COMPONENT = ('Core', 'CSS Parsing and Computation')
 
@@ -44,6 +20,8 @@ with Files('AccessibleCaret*'):
     BUG_COMPONENT = ('Core', 'Selection')
 
 XPIDL_SOURCES += [
+    'nsILayoutHistoryState.idl',
+    'nsIPreloadedStyleSheet.idl',
     'nsIStyleSheetService.idl',
 ]
 
@@ -55,14 +33,8 @@ if CONFIG['MOZ_DEBUG']:
 XPIDL_MODULE = 'layout_base'
 
 EXPORTS += [
-    'ActiveLayerTracker.h',
     'CaretAssociationHint.h',
-    'DisplayItemClip.h',
-    'DisplayItemScrollClip.h',
-    'DisplayListClipState.h',
-    'FrameLayerBuilder.h',
-    'FramePropertyTable.h',
-    'LayerState.h',
+    'FrameProperties.h',
     'LayoutLogging.h',
     'nsArenaMemoryStats.h',
     'nsBidi.h',
@@ -71,18 +43,14 @@ EXPORTS += [
     'nsChangeHint.h',
     'nsCompatibility.h',
     'nsCSSFrameConstructor.h',
-    'nsDisplayItemTypes.h',
-    'nsDisplayItemTypesList.h',
-    'nsDisplayList.h',
-    'nsDisplayListInvalidation.h',
     'nsFrameManager.h',
     'nsFrameManagerBase.h',
     'nsFrameTraversal.h',
     'nsIFrameTraversal.h',
     'nsILayoutDebugger.h',
-    'nsILayoutHistoryState.h',
     'nsIPercentBSizeObserver.h',
     'nsIPresShell.h',
+    'nsIPresShellInlines.h',
     'nsIReflowCallback.h',
     'nsLayoutUtils.h',
     'nsPresArena.h',
@@ -103,14 +71,15 @@ EXPORTS.mozilla += [
     'ArenaObjectID.h',
     'ArenaRefPtr.h',
     'ArenaRefPtrInlines.h',
+    'GeckoRestyleManager.h',
     'GeometryUtils.h',
-    'PaintTracker.h',
+    'OverflowChangedTracker.h',
+    'PresShell.h',
     'RestyleLogging.h',
     'RestyleManager.h',
-    'RestyleManagerBase.h',
-    'RestyleManagerHandle.h',
-    'RestyleManagerHandleInlines.h',
+    'RestyleManagerInlines.h',
     'ServoRestyleManager.h',
+    'ShapeUtils.h',
     'StaticPresData.h',
 ]
 
@@ -118,28 +87,15 @@ UNIFIED_SOURCES += [
     'AccessibleCaret.cpp',
     'AccessibleCaretEventHub.cpp',
     'AccessibleCaretManager.cpp',
-    'ActiveLayerTracker.cpp',
-    'DashedCornerFinder.cpp',
-    'DisplayItemClip.cpp',
-    'DisplayItemScrollClip.cpp',
-    'DisplayListClipState.cpp',
-    'DottedCornerFinder.cpp',
-    'FrameLayerBuilder.cpp',
-    'FramePropertyTable.cpp',
+    'GeckoRestyleManager.cpp',
     'GeometryUtils.cpp',
     'LayoutLogging.cpp',
-    'MaskLayerImageCache.cpp',
     'MobileViewportManager.cpp',
-    'nsBidi.cpp',
     'nsBidiPresUtils.cpp',
     'nsCaret.cpp',
     'nsCounterManager.cpp',
     'nsCSSColorUtils.cpp',
     'nsCSSFrameConstructor.cpp',
-    'nsCSSRendering.cpp',
-    'nsCSSRenderingBorders.cpp',
-    'nsDisplayList.cpp',
-    'nsDisplayListInvalidation.cpp',
     'nsDocumentViewer.cpp',
     'nsFrameManager.cpp',
     'nsFrameTraversal.cpp',
@@ -147,28 +103,41 @@ UNIFIED_SOURCES += [
     'nsLayoutDebugger.cpp',
     'nsLayoutHistoryState.cpp',
     'nsLayoutUtils.cpp',
+    'nsPresArena.cpp',
     'nsPresContext.cpp',
-    'nsPresShell.cpp',
     'nsQuoteList.cpp',
     'nsStyleChangeList.cpp',
     'nsStyleSheetService.cpp',
-    'PaintTracker.cpp',
     'PositionedEventTargeting.cpp',
+    'PresShell.cpp',
     'RestyleManager.cpp',
-    'RestyleManagerBase.cpp',
     'RestyleTracker.cpp',
     'ScrollbarStyles.cpp',
     'ServoRestyleManager.cpp',
+    'ShapeUtils.cpp',
     'StackArena.cpp',
     'StaticPresData.cpp',
     'TouchManager.cpp',
     'ZoomConstraintsClient.cpp',
 ]
 
-# nsPresArena.cpp needs to be built separately because it uses plarena.h.
+if CONFIG['ENABLE_INTL_API']:
+    EXPORTS += [
+        'nsBidi_ICU.h',
+    ]
+    UNIFIED_SOURCES += [
+        'nsBidi_ICU.cpp',
+    ]
+else:
+    EXPORTS += [
+        'nsBidi_noICU.h',
+    ]
+    UNIFIED_SOURCES += [
+        'nsBidi_noICU.cpp',
+    ]
+
 # nsRefreshDriver.cpp needs to be built separately because of name clashes in the OS X headers
 SOURCES += [
-    'nsPresArena.cpp',
     'nsRefreshDriver.cpp',
 ]
 
@@ -181,6 +150,7 @@ LOCAL_INCLUDES += [
     '../forms',
     '../generic',
     '../mathml',
+    '../painting',
     '../printing',
     '../style',
     '../svg',
@@ -192,6 +162,7 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/svg',
     '/dom/xbl',
+    '/dom/xul',
     '/view',
 ]
 
@@ -206,8 +177,6 @@ BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
 MARIONETTE_LAYOUT_MANIFESTS += ['tests/marionette/manifest.ini']
 MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
-
-CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
 if CONFIG['_MSC_VER']:
     # This is intended as a temporary hack to support building with VS2015.

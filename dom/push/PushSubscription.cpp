@@ -8,7 +8,7 @@
 #include "nsIScriptObjectPrincipal.h"
 
 #include "mozilla/Base64.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
@@ -141,9 +141,9 @@ NS_IMPL_ISUPPORTS(WorkerUnsubscribeResultCallback, nsIUnsubscribeResultCallback)
 class UnsubscribeRunnable final : public Runnable
 {
 public:
-  UnsubscribeRunnable(PromiseWorkerProxy* aProxy,
-                      const nsAString& aScope)
-    : mProxy(aProxy)
+  UnsubscribeRunnable(PromiseWorkerProxy* aProxy, const nsAString& aScope)
+    : Runnable("dom::UnsubscribeRunnable")
+    , mProxy(aProxy)
     , mScope(aScope)
   {
     MOZ_ASSERT(aProxy);

@@ -11,7 +11,8 @@
 #ifndef WEBRTC_BASE_WINDOW_H_
 #define WEBRTC_BASE_WINDOW_H_
 
-#include "webrtc/base/basictypes.h"
+#include <stdint.h>
+
 #include "webrtc/base/stringencode.h"
 
 // Define platform specific window types.
@@ -40,7 +41,7 @@ class WindowId {
   typedef unsigned int WindowT;
 #endif
 
-  static WindowId Cast(uint64 id) {
+  static WindowId Cast(uint64_t id) {
 #if defined(WEBRTC_WIN)
     return WindowId(reinterpret_cast<WindowId::WindowT>(id));
 #else
@@ -48,11 +49,11 @@ class WindowId {
 #endif
   }
 
-  static uint64 Format(const WindowT& id) {
+  static uint64_t Format(const WindowT& id) {
 #if defined(WEBRTC_WIN)
-    return static_cast<uint64>(reinterpret_cast<uintptr_t>(id));
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(id));
 #else
-    return static_cast<uint64>(id);
+    return static_cast<uint64_t>(id);
 #endif
   }
 

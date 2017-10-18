@@ -6,6 +6,7 @@
 
 #include "IndexedDatabaseManager.h"
 
+#include "chrome/common/ipc_channel.h" // for IPC::Channel::kMaximumMessageSize
 #include "nsIConsoleService.h"
 #include "nsIDiskSpaceWatcher.h"
 #include "nsIDOMWindow.h"
@@ -133,18 +134,28 @@ NS_DEFINE_IID(kIDBRequestIID, PRIVATE_IDBREQUEST_IID);
 
 const uint32_t kDeleteTimeoutMs = 1000;
 
+// The threshold we use for structured clone data storing.
+// Anything smaller than the threshold is compressed and stored in the database.
+// Anything larger is compressed and stored outside the database.
+const int32_t kDefaultDataThresholdBytes = 1024 * 1024; // 1MB
+
+// The maximal size of a serialized object to be transfered through IPC.
+const int32_t kDefaultMaxSerializedMsgSize = IPC::Channel::kMaximumMessageSize;
+
 #define IDB_PREF_BRANCH_ROOT "dom.indexedDB."
 
 const char kTestingPref[] = IDB_PREF_BRANCH_ROOT "testing";
 const char kPrefExperimental[] = IDB_PREF_BRANCH_ROOT "experimental";
 const char kPrefFileHandle[] = "dom.fileHandle.enabled";
+const char kDataThresholdPref[] = IDB_PREF_BRANCH_ROOT "dataThreshold";
+const char kPrefMaxSerilizedMsgSize[] = IDB_PREF_BRANCH_ROOT "maxSerializedMsgSize";
 
 #define IDB_PREF_LOGGING_BRANCH_ROOT IDB_PREF_BRANCH_ROOT "logging."
 
 const char kPrefLoggingEnabled[] = IDB_PREF_LOGGING_BRANCH_ROOT "enabled";
 const char kPrefLoggingDetails[] = IDB_PREF_LOGGING_BRANCH_ROOT "details";
 
-#if defined(DEBUG) || defined(MOZ_ENABLE_PROFILER_SPS)
+#if defined(DEBUG) || defined(MOZ_GECKO_PROFILER)
 const char kPrefLoggingProfiler[] =
   IDB_PREF_LOGGING_BRANCH_ROOT "profiler-marks";
 #endif
@@ -159,6 +170,8 @@ Atomic<bool> gClosed(false);
 Atomic<bool> gTestingMode(false);
 Atomic<bool> gExperimentalFeaturesEnabled(false);
 Atomic<bool> gFileHandleEnabled(false);
+Atomic<int32_t> gDataThresholdBytes(0);
+Atomic<int32_t> gMaxSerializedMsgSize(0);
 
 class DeleteFilesRunnable final
   : public nsIRunnable
@@ -242,6 +255,36 @@ AtomicBoolPrefChangedCallback(const char* aPrefName, void* aClosure)
   MOZ_ASSERT(aClosure);
 
   *static_cast<Atomic<bool>*>(aClosure) = Preferences::GetBool(aPrefName);
+}
+
+void
+DataThresholdPrefChangedCallback(const char* aPrefName, void* aClosure)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!strcmp(aPrefName, kDataThresholdPref));
+  MOZ_ASSERT(!aClosure);
+
+  int32_t dataThresholdBytes =
+    Preferences::GetInt(aPrefName, kDefaultDataThresholdBytes);
+
+  // The magic -1 is for use only by tests that depend on stable blob file id's.
+  if (dataThresholdBytes == -1) {
+    dataThresholdBytes = INT32_MAX;
+  }
+
+  gDataThresholdBytes = dataThresholdBytes;
+}
+
+void
+MaxSerializedMsgSizePrefChangeCallback(const char* aPrefName, void* aClosure)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!strcmp(aPrefName, kPrefMaxSerilizedMsgSize));
+  MOZ_ASSERT(!aClosure);
+
+  gMaxSerializedMsgSize =
+    Preferences::GetInt(aPrefName, kDefaultMaxSerializedMsgSize);
+  MOZ_ASSERT(gMaxSerializedMsgSize > 0);
 }
 
 } // namespace
@@ -374,16 +417,22 @@ IndexedDatabaseManager::Init()
 
   Preferences::RegisterCallback(LoggingModePrefChangedCallback,
                                 kPrefLoggingDetails);
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
   Preferences::RegisterCallback(LoggingModePrefChangedCallback,
                                 kPrefLoggingProfiler);
 #endif
   Preferences::RegisterCallbackAndCall(LoggingModePrefChangedCallback,
                                        kPrefLoggingEnabled);
 
+  Preferences::RegisterCallbackAndCall(DataThresholdPrefChangedCallback,
+                                       kDataThresholdPref);
+
+  Preferences::RegisterCallbackAndCall(MaxSerializedMsgSizePrefChangeCallback,
+                                       kPrefMaxSerilizedMsgSize);
+
 #ifdef ENABLE_INTL_API
-  const nsAdoptingCString& acceptLang =
-    Preferences::GetLocalizedCString("intl.accept_languages");
+  nsAutoCString acceptLang;
+  Preferences::GetLocalizedCString("intl.accept_languages", acceptLang);
 
   // Split values on commas.
   nsCCharSeparatedTokenizer langTokenizer(acceptLang, ',');
@@ -434,12 +483,18 @@ IndexedDatabaseManager::Destroy()
 
   Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
                                   kPrefLoggingDetails);
-#ifdef MOZ_ENABLE_PROFILER_SPS
+#ifdef MOZ_GECKO_PROFILER
   Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
                                   kPrefLoggingProfiler);
 #endif
   Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
                                   kPrefLoggingEnabled);
+
+  Preferences::UnregisterCallback(DataThresholdPrefChangedCallback,
+                                  kDataThresholdPref);
+
+  Preferences::UnregisterCallback(MaxSerializedMsgSizePrefChangeCallback,
+                                  kPrefMaxSerilizedMsgSize);
 
   delete this;
 }
@@ -489,7 +544,7 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
     error->GetName(errorName);
   }
 
-  RootedDictionary<ErrorEventInit> init(nsContentUtils::RootingCx());
+  RootedDictionary<ErrorEventInit> init(RootingCx());
   request->GetCallerLocation(init.mFilename, &init.mLineno, &init.mColno);
 
   init.mMessage = errorName;
@@ -742,6 +797,27 @@ IndexedDatabaseManager::IsFileHandleEnabled()
   return gFileHandleEnabled;
 }
 
+// static
+uint32_t
+IndexedDatabaseManager::DataThreshold()
+{
+  MOZ_ASSERT(gDBManager,
+             "DataThreshold() called before indexedDB has been initialized!");
+
+  return gDataThresholdBytes;
+}
+
+// static
+uint32_t
+IndexedDatabaseManager::MaxSerializedMsgSize()
+{
+  MOZ_ASSERT(gDBManager,
+             "MaxSerializedMsgSize() called before indexedDB has been initialized!");
+  MOZ_ASSERT(gMaxSerializedMsgSize > 0);
+
+  return gMaxSerializedMsgSize;
+}
+
 void
 IndexedDatabaseManager::ClearBackgroundActor()
 {
@@ -918,6 +994,11 @@ IndexedDatabaseManager::BlockAndGetFileReferences(
 
     BackgroundUtilsChild* actor = new BackgroundUtilsChild(this);
 
+    // We don't set event target for BackgroundUtilsChild because:
+    // 1. BackgroundUtilsChild is a singleton.
+    // 2. SendGetFileReferences is a sync operation to be returned asap if unlabeled.
+    // 3. The rest operations like DeleteMe/__delete__ only happens at shutdown.
+    // Hence, we should keep it unlabeled.
     mBackgroundActor =
       static_cast<BackgroundUtilsChild*>(
         bgActor->SendPBackgroundIndexedDBUtilsConstructor(actor));
@@ -988,9 +1069,9 @@ IndexedDatabaseManager::LoggingModePrefChangedCallback(
   }
 
   bool useProfiler =
-#if defined(DEBUG) || defined(MOZ_ENABLE_PROFILER_SPS)
+#if defined(DEBUG) || defined(MOZ_GECKO_PROFILER)
     Preferences::GetBool(kPrefLoggingProfiler);
-#if !defined(MOZ_ENABLE_PROFILER_SPS)
+#if !defined(MOZ_GECKO_PROFILER)
   if (useProfiler) {
     NS_WARNING("IndexedDB cannot create profiler marks because this build does "
                "not have profiler extensions enabled!");
@@ -1026,7 +1107,8 @@ IndexedDatabaseManager::GetLocale()
 
 NS_IMPL_ADDREF(IndexedDatabaseManager)
 NS_IMPL_RELEASE_WITH_DESTROY(IndexedDatabaseManager, Destroy())
-NS_IMPL_QUERY_INTERFACE(IndexedDatabaseManager, nsIObserver, nsITimerCallback)
+NS_IMPL_QUERY_INTERFACE(IndexedDatabaseManager, nsIObserver, nsITimerCallback,
+                        nsINamed)
 
 NS_IMETHODIMP
 IndexedDatabaseManager::Observe(nsISupports* aSubject, const char* aTopic,
@@ -1079,6 +1161,13 @@ IndexedDatabaseManager::Notify(nsITimer* aTimer)
 
   mPendingDeleteInfos.Clear();
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+IndexedDatabaseManager::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("IndexedDatabaseManager");
   return NS_OK;
 }
 
@@ -1285,7 +1374,6 @@ DeleteFilesRunnable::Open()
   quotaManager->OpenDirectory(mFileManager->Type(),
                               mFileManager->Group(),
                               mFileManager->Origin(),
-                              mFileManager->IsApp(),
                               Client::IDB,
                               /* aExclusive */ false,
                               this);

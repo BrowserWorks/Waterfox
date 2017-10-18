@@ -98,13 +98,16 @@ private:
   HandleResponse(nsresult aResponse);
 
   void
-  HandleResponse(const UsageResponse& aResponse);
+  HandleResponse(const nsTArray<OriginUsage>& aResponse);
+
+  void
+  HandleResponse(const OriginUsageResponse& aResponse);
 
   // IPDL methods are only called by IPDL.
   virtual void
   ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   Recv__delete__(const UsageRequestResponse& aResponse) override;
 };
 
@@ -138,11 +141,14 @@ private:
   void
   HandleResponse();
 
+  void
+  HandleResponse(bool aResponse);
+
   // IPDL methods are only called by IPDL.
   virtual void
   ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   Recv__delete__(const RequestResponse& aResponse) override;
 };
 

@@ -16,7 +16,7 @@ const TEXT = "this is test text";
 const REAL = 3.23;
 const BLOB = [1, 2];
 
-add_task(function* test_first_create_and_add() {
+add_task(async function test_first_create_and_add() {
   // synchronously open the database and let gDBConn hold onto it because we
   // use this database
   let db = getOpenedDatabase();
@@ -49,14 +49,14 @@ add_task(function* test_first_create_and_add() {
   stmts[1].bindBlobByIndex(3, BLOB, BLOB.length);
 
   // asynchronously execute the statements
-  let execResult = yield executeMultipleStatementsAsync(
+  let execResult = await executeMultipleStatementsAsync(
     db,
     stmts,
     function(aResultSet) {
-      ok(false, 'we only did inserts so we should not have gotten results!');
+      ok(false, "we only did inserts so we should not have gotten results!");
     });
   equal(Ci.mozIStorageStatementCallback.REASON_FINISHED, execResult,
-        'execution should have finished successfully.');
+        "execution should have finished successfully.");
 
   // Check that the result is in the table
   let stmt = db.createStatement(
@@ -74,8 +74,7 @@ add_task(function* test_first_create_and_add() {
     do_check_eq(BLOB.length, count.value);
     for (let i = 0; i < BLOB.length; i++)
       do_check_eq(BLOB[i], blob.value[i]);
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 
@@ -86,8 +85,7 @@ add_task(function* test_first_create_and_add() {
   try {
     do_check_true(stmt.executeStep());
     do_check_eq(2, stmt.getInt32(0));
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 
@@ -95,7 +93,7 @@ add_task(function* test_first_create_and_add() {
   stmts[1].finalize();
 });
 
-add_task(function* test_last_multiple_bindings_on_statements() {
+add_task(async function test_last_multiple_bindings_on_statements() {
   // This tests to make sure that we pass all the statements multiply bound
   // parameters when we call executeAsync.
   const AMOUNT_TO_ADD = 5;
@@ -134,28 +132,26 @@ add_task(function* test_last_multiple_bindings_on_statements() {
   try {
     do_check_true(countStmt.executeStep());
     currentRows = countStmt.row.count;
-  }
-  finally {
+  } finally {
     countStmt.reset();
   }
 
   // Execute asynchronously.
-  let execResult = yield executeMultipleStatementsAsync(
+  let execResult = await executeMultipleStatementsAsync(
     db,
     stmts,
     function(aResultSet) {
-      ok(false, 'we only did inserts so we should not have gotten results!');
+      ok(false, "we only did inserts so we should not have gotten results!");
     });
   equal(Ci.mozIStorageStatementCallback.REASON_FINISHED, execResult,
-        'execution should have finished successfully.');
+        "execution should have finished successfully.");
 
   // Check to make sure we added all of our rows.
   try {
     do_check_true(countStmt.executeStep());
     do_check_eq(currentRows + (ITERATIONS * AMOUNT_TO_ADD),
                 countStmt.row.count);
-  }
-  finally {
+  } finally {
     countStmt.finalize();
   }
 
@@ -163,7 +159,7 @@ add_task(function* test_last_multiple_bindings_on_statements() {
 
   // we are the last test using this connection and since it has gone async
   // we *must* call asyncClose on it.
-  yield asyncClose(db);
+  await asyncClose(db);
   gDBConn = null;
 });
 

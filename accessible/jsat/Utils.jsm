@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global Components, XPCOMUtils, Services, PluralForm, Logger, Rect, Utils,
-          States, Relations, Roles, dump, Events, PivotContext, PrefCache */
-/* exported Utils, Logger, PivotContext, PrefCache, SettingCache */
+/* exported Utils, Logger, PivotContext, PrefCache */
 
 'use strict';
 
@@ -26,8 +24,7 @@ XPCOMUtils.defineLazyModuleGetter(this, 'States', // jshint ignore:line
 XPCOMUtils.defineLazyModuleGetter(this, 'PluralForm', // jshint ignore:line
   'resource://gre/modules/PluralForm.jsm');
 
-this.EXPORTED_SYMBOLS = ['Utils', 'Logger', 'PivotContext', 'PrefCache',  // jshint ignore:line
-                         'SettingCache'];
+this.EXPORTED_SYMBOLS = ['Utils', 'Logger', 'PivotContext', 'PrefCache']; // jshint ignore:line
 
 this.Utils = { // jshint ignore:line
   _buildAppMap: {
@@ -69,13 +66,13 @@ this.Utils = { // jshint ignore:line
       Ci.nsIDOMWindowUtils);
   },
 
-  get AccRetrieval() {
-    if (!this._AccRetrieval) {
-      this._AccRetrieval = Cc['@mozilla.org/accessibleRetrieval;1'].
-        getService(Ci.nsIAccessibleRetrieval);
+  get AccService() {
+    if (!this._AccService) {
+      this._AccService = Cc['@mozilla.org/accessibilityService;1'].
+        getService(Ci.nsIAccessibilityService);
     }
 
-    return this._AccRetrieval;
+    return this._AccService;
   },
 
   set MozBuildApp(value) {
@@ -295,7 +292,7 @@ this.Utils = { // jshint ignore:line
 
   getVirtualCursor: function getVirtualCursor(aDocument) {
     let doc = (aDocument instanceof Ci.nsIAccessible) ? aDocument :
-      this.AccRetrieval.getAccessibleFor(aDocument);
+      this.AccService.getAccessibleFor(aDocument);
 
     return doc.QueryInterface(Ci.nsIAccessibleDocument).virtualCursor;
   },
@@ -496,7 +493,7 @@ this.Utils = { // jshint ignore:line
     let details = {
       type: aType,
       details: JSON.stringify(
-        typeof aDetails === 'string' ? { eventType : aDetails } : aDetails)
+        typeof aDetails === 'string' ? { eventType: aDetails } : aDetails)
     };
     let window = this.win;
     let shell = window.shell || window.content.shell;
@@ -539,7 +536,7 @@ State.prototype = {
     return !!(this.base & other.base || this.extended & other.extended);
   },
   toString: function State_toString() {
-    let stateStrings = Utils.AccRetrieval.
+    let stateStrings = Utils.AccService.
       getStringStates(this.base, this.extended);
     let statesArray = new Array(stateStrings.length);
     for (let i = 0; i < statesArray.length; i++) {
@@ -640,7 +637,7 @@ this.Logger = { // jshint ignore:line
     }
 
     try {
-      return'[ ' + Utils.AccRetrieval.getStringRole(aAccessible.role) +
+      return '[ ' + Utils.AccService.getStringRole(aAccessible.role) +
         ' | ' + aAccessible.name + ' ]';
     } catch (x) {
       return '[ defunct ]';
@@ -648,12 +645,12 @@ this.Logger = { // jshint ignore:line
   },
 
   eventToString: function eventToString(aEvent) {
-    let str = Utils.AccRetrieval.getStringEventType(aEvent.eventType);
+    let str = Utils.AccService.getStringEventType(aEvent.eventType);
     if (aEvent.eventType == Events.STATE_CHANGE) {
       let event = aEvent.QueryInterface(Ci.nsIAccessibleStateChangeEvent);
       let stateStrings = event.isExtraState ?
-        Utils.AccRetrieval.getStringStates(0, event.state) :
-        Utils.AccRetrieval.getStringStates(event.state, 0);
+        Utils.AccService.getStringStates(0, event.state) :
+        Utils.AccService.getStringStates(event.state, 0);
       str += ' (' + stateStrings.item(0) + ')';
     }
 
@@ -663,7 +660,7 @@ this.Logger = { // jshint ignore:line
       let pivot = aEvent.accessible.QueryInterface(
         Ci.nsIAccessibleDocument).virtualCursor;
       str += ' (' + this.accessibleToString(event.oldAccessible) + ' -> ' +
-	this.accessibleToString(pivot.position) + ')';
+        this.accessibleToString(pivot.position) + ')';
     }
 
     return str;
@@ -887,7 +884,7 @@ PivotContext.prototype = {
         hints.push(hint);
       } else if (aAccessible.actionCount > 0) {
         hints.push({
-          string: Utils.AccRetrieval.getStringRole(
+          string: Utils.AccService.getStringRole(
             aAccessible.role).replace(/\s/g, '') + '-hint'
         });
       }
@@ -1071,44 +1068,6 @@ PrefCache.prototype = {
     }
   },
 
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                           Ci.nsISupportsWeakReference])
-};
-
-this.SettingCache = function SettingCache(aName, aCallback, aOptions = {}) { // jshint ignore:line
-  this.value = aOptions.defaultValue;
-  let runCallback = () => {
-    if (aCallback) {
-      aCallback(aName, this.value);
-      if (aOptions.callbackOnce) {
-        runCallback = () => {};
-      }
-    }
-  };
-
-  let settings = Utils.win.navigator.mozSettings;
-  if (!settings) {
-    if (aOptions.callbackNow) {
-      runCallback();
-    }
-    return;
-  }
-
-
-  let lock = settings.createLock();
-  let req = lock.get(aName);
-
-  req.addEventListener('success', () => {
-    this.value = req.result[aName] === undefined ?
-      aOptions.defaultValue : req.result[aName];
-    if (aOptions.callbackNow) {
-      runCallback();
-    }
-  });
-
-  settings.addObserver(aName,
-                       (evt) => {
-                         this.value = evt.settingValue;
-                         runCallback();
-                       });
 };

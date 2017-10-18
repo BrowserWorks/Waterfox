@@ -399,7 +399,7 @@
        throw_on_negative("statvfs",  (UnixFile.statvfs || UnixFile.statfs)(sourcePath, fileSystemInfoPtr));
 
        let bytes = new Type.uint64_t.implementation(
-                        fileSystemInfo.f_bsize * fileSystemInfo.f_bavail);
+                        fileSystemInfo.f_frsize * fileSystemInfo.f_bavail);
 
        return bytes.value;
      };
@@ -838,7 +838,7 @@
       * implementation.
       */
      File.DirectoryIterator.Entry.toMsg = function toMsg(value) {
-       if (!value instanceof File.DirectoryIterator.Entry) {
+       if (!(value instanceof File.DirectoryIterator.Entry)) {
          throw new TypeError("parameter of " +
            "File.DirectoryIterator.Entry.toMsg must be a " +
            "File.DirectoryIterator.Entry");
@@ -905,7 +905,7 @@
       * is asymmetric and returns an object with a different implementation.
       */
      File.Info.toMsg = function toMsg(stat) {
-       if (!stat instanceof File.Info) {
+       if (!(stat instanceof File.Info)) {
          throw new TypeError("parameter of File.Info.toMsg must be a File.Info");
        }
        let serialized = {};
@@ -1158,7 +1158,7 @@
          date = date.getTime();
        }
 
-       if (isNaN(date)) {
+       if (typeof date !== "number" || Number.isNaN(date)) {
          throw new TypeError("|date| parameter of " + fn + " must be a " +
                              "|Date| instance or number");
        }

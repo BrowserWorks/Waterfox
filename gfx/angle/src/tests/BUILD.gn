@@ -4,7 +4,7 @@
 
 import("//testing/test.gni")
 import("//build/config/chromecast_build.gni")
-import("//third_party/angle/build/angle_common.gni")
+import("//third_party/angle/gni/angle.gni")
 
 unittests_gypi = exec_script("//build/gypi_to_gn.py",
                              [
@@ -37,7 +37,7 @@ test("angle_unittests") {
     "//testing/gtest",
     "//third_party/angle:libANGLE",
     "//third_party/angle:preprocessor",
-    "//third_party/angle:translator_static",
+    "//third_party/angle:translator",
   ]
 }
 
@@ -97,7 +97,7 @@ if (is_win || is_linux || is_mac || is_android) {
       "//third_party/angle:libEGL",
       "//third_party/angle:libGLESv2",
       "//third_party/angle:preprocessor",
-      "//third_party/angle:translator_static",
+      "//third_party/angle:translator",
     ]
   }
 }
@@ -169,6 +169,9 @@ if (build_angle_deqp_tests) {
       include_dirs += [ "../deqp/src/framework/platform/win32" ]
       cflags = deqp_gypi.deqp_win_cflags
     }
+    if (is_android) {
+      include_dirs += [ "../../../deqp/src/framework/platform/android" ]
+    }
     defines = deqp_gypi.deqp_defines
     defines += [ "_MBCS" ]
 
@@ -239,6 +242,8 @@ if (build_angle_deqp_tests) {
           rebase_path(deqp_gypi.deqp_libtester_sources_unix, ".", "../..")
     }
     if (is_android) {
+      sources +=
+          rebase_path(deqp_gypi.deqp_libtester_sources_android, ".", "../..")
       libs = [ "log" ]
     }
   }
@@ -303,6 +308,7 @@ if (build_angle_deqp_tests) {
     shared_library(shared_library_name) {
       deps = [
         ":angle_deqp_libtester",
+        "//third_party/angle:angle_util",
       ]
 
       configs -= deqp_undefine_configs

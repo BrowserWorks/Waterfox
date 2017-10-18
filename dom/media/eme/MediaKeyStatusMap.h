@@ -44,12 +44,16 @@ public:
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  MediaKeyStatus Get(const ArrayBufferViewOrArrayBuffer& aKey) const;
+  void Get(JSContext* aCx,
+           const ArrayBufferViewOrArrayBuffer& aKey,
+           JS::MutableHandle<JS::Value> aOutValue,
+           ErrorResult& aOutRv) const;
   bool Has(const ArrayBufferViewOrArrayBuffer& aKey) const;
   uint32_t Size() const;
 
   uint32_t GetIterableLength() const;
   TypedArrayCreator<ArrayBuffer> GetKeyAtIndex(uint32_t aIndex) const;
+  nsString GetKeyIDAsHexString(uint32_t aIndex) const;
   MediaKeyStatus GetValueAtIndex(uint32_t aIndex) const;
 
   void Update(const nsTArray<CDMCaps::KeyStatus>& keys);

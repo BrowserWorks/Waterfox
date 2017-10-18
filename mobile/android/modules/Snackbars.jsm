@@ -10,7 +10,7 @@ this.EXPORTED_SYMBOLS = ["Snackbars"];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher", "resource://gre/modules/Messaging.jsm");
 
 const LENGTH_INDEFINITE = -2;
 const LENGTH_LONG = 0;
@@ -45,9 +45,17 @@ var Snackbars = {
         msg.action.label = aOptions.action.label;
       }
 
-      Messaging.sendRequestForResult(msg).then(result => aOptions.action.callback());
+      EventDispatcher.instance.sendRequestForResult(msg)
+        .then(result => aOptions.action.callback())
+        .catch(result => {
+          if (result === null) {
+            /* The snackbar was dismissed without executing the callback, nothing to do here. */
+          } else {
+            Cu.reportError(result);
+          }
+        });
     } else {
-      Messaging.sendRequest(msg);
+      EventDispatcher.instance.sendRequest(msg);
     }
   }
 };

@@ -1,16 +1,30 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 FINAL_LIBRARY = 'mozglue'
 
 EXPORTS.mozilla += [
+    'AutoProfilerLabel.h',
+    'PlatformConditionVariable.h',
+    'PlatformMutex.h',
+    'Printf.h',
     'StackWalk.h',
     'TimeStamp.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     EXPORTS.mozilla += [
+        'StackWalk_windows.h',
         'TimeStamp_windows.h',
     ]
 
 SOURCES += [
+    'AutoProfilerLabel.cpp',
+    'Printf.cpp',
+    'StackWalk.cpp',
     'TimeStamp.cpp',
 ]
 
@@ -34,12 +48,13 @@ elif CONFIG['OS_ARCH'] == 'Darwin':
 elif CONFIG['COMPILE_ENVIRONMENT']:
     error('No TimeStamp implementation on this platform.  Build will not succeed')
 
-# MOZ_STACKWALKING is defined in configure.in when the build configuration meets
-# the conditions for GeckoStackWalk to work correctly.
-# We exclude this file from other build configurations so that if somebody adds a
-# new usage of NS_StackWalk it will cause a link error, which is better than having
-# GeckoStackWalk silently return garbage at runtime.
-if CONFIG['MOZ_STACKWALKING']:
+if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
-        'StackWalk.cpp',
+        'ConditionVariable_windows.cpp',
+        'Mutex_windows.cpp',
+    ]
+else:
+    SOURCES += [
+        'ConditionVariable_posix.cpp',
+        'Mutex_posix.cpp',
     ]

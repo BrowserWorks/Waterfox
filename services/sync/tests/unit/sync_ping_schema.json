@@ -3,28 +3,43 @@
   "description": "schema for Sync pings, documentation avaliable in toolkit/components/telemetry/docs/sync-ping.rst",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "syncs", "why"],
+  "required": ["version", "syncs", "why", "uid"],
   "properties": {
     "version": { "type": "integer", "minimum": 0 },
+    "os": { "type": "object" },
     "discarded": { "type": "integer", "minimum": 1 },
-    "why": { "enum": ["shutdown", "schedule"] },
+    "why": { "enum": ["shutdown", "schedule", "idchange"] },
+    "uid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "deviceID": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sessionStartDate": { "type": "string" },
     "syncs": {
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/definitions/payload" }
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/event" }
     }
   },
   "definitions": {
     "payload": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["when", "uid", "took"],
+      "required": ["when", "took"],
       "properties": {
         "didLogin": { "type": "boolean" },
         "when": { "type": "integer" },
-        "uid": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{32}$"
+        "devices": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/device" }
         },
         "status": {
           "type": "object",
@@ -48,12 +63,22 @@
         }
       }
     },
+    "device": {
+      "required": ["os", "id", "version"],
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "os": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
     "engine": {
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
         "failureReason": { "$ref": "#/definitions/error" },
-        "name": { "enum": ["addons", "bookmarks", "clients", "forms", "history", "passwords", "prefs", "tabs"] },
+        "name": { "enum": ["addons", "bookmarks", "clients", "forms", "history", "passwords", "prefs", "tabs", "extension-storage"] },
         "took": { "type": "integer", "minimum": 1 },
         "status": { "type": "string" },
         "incoming": {
@@ -78,9 +103,23 @@
           "items": { "$ref": "#/definitions/outgoingBatch" }
         },
         "validation": {
-          "type": "array",
-          "minItems": 1,
-          "$ref": "#/definitions/validationProblem"
+          "type": "object",
+          "additionalProperties": false,
+          "anyOf": [
+            { "required": ["checked"] },
+            { "required": ["failureReason"] }
+          ],
+          "properties": {
+            "checked": { "type": "integer", "minimum": 0 },
+            "failureReason": { "$ref": "#/definitions/error" },
+            "took": { "type": "integer" },
+            "version": { "type": "integer" },
+            "problems": {
+              "type": "array",
+              "minItems": 1,
+              "$ref": "#/definitions/validationProblem"
+            }
+          }
         }
       }
     },
@@ -96,6 +135,11 @@
         "failed": { "type": "integer", "minimum": 1 }
       }
     },
+    "event": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 6
+    },
     "error": {
       "oneOf": [
         { "$ref": "#/definitions/httpError" },
@@ -103,7 +147,8 @@
         { "$ref": "#/definitions/shutdownError" },
         { "$ref": "#/definitions/authError" },
         { "$ref": "#/definitions/otherError" },
-        { "$ref": "#/definitions/unexpectedError" }
+        { "$ref": "#/definitions/unexpectedError" },
+        { "$ref": "#/definitions/sqlError" }
       ]
     },
     "httpError": {
@@ -145,6 +190,13 @@
       "properties": {
         "name": { "enum": ["unexpectederror"] },
         "error": { "type": "string" }
+      }
+    },
+    "sqlError": {
+      "required": ["name"],
+      "properties": {
+        "name": { "enum": ["sqlerror"] },
+        "code": { "type": "integer" }
       }
     },
     "validationProblem": {

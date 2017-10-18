@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
   </head>
   <body onload="setup();">
-    <script type="application/javascript;version=1.7">
+    <script type="application/javascript">
 "use strict";
 
 function childFrameScript() {
@@ -149,6 +149,7 @@ function setup() {
   SpecialPowers.pushPrefEnv(
     { set: [ ["dom.ipc.browser_frames.oop_by_default", true],
               ["dom.mozBrowserFramesEnabled", true],
+              ["network.disable.ipc.security", true],
               ["browser.pagethumbnails.capturing_disabled", true] ] },
     function() {
       info("Prefs set");

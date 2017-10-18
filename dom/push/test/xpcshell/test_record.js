@@ -6,7 +6,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_updateQuota() {
+add_task(async function test_updateQuota() {
   let record = new PushRecord({
     quota: 8,
     lastPush: Date.now() - 1 * MS_IN_ONE_DAY,
@@ -36,7 +36,7 @@ add_task(function* test_updateQuota() {
   strictEqual(record.quota, 0, 'Quota should never be negative');
 });
 
-add_task(function* test_systemRecord_updateQuota() {
+add_task(async function test_systemRecord_updateQuota() {
   let systemRecord = new PushRecord({
     quota: Infinity,
     systemRecord: true,
@@ -49,5 +49,45 @@ add_task(function* test_systemRecord_updateQuota() {
     'System subscriptions should ignore the last visit time');
   systemRecord.reduceQuota();
   equal(systemRecord.quota, Infinity,
-    'SYstem subscriptions should ignore quota reductions');
+    'System subscriptions should ignore quota reductions');
+});
+
+function testPermissionCheck(props) {
+  let record = new PushRecord(props);
+  equal(record.uri.spec, props.scope,
+    `Record URI should match scope URL for ${JSON.stringify(props)}`);
+  if (props.originAttributes) {
+    let originSuffix = ChromeUtils.originAttributesToSuffix(
+      record.principal.originAttributes);
+    equal(originSuffix, props.originAttributes,
+      `Origin suffixes should match for ${JSON.stringify(props)}`);
+  }
+  ok(!record.hasPermission(), `Record ${
+    JSON.stringify(props)} should not have permission yet`);
+  let permURI = Services.io.newURI(props.scope);
+  Services.perms.add(permURI, 'desktop-notification',
+                     Ci.nsIPermissionManager.ALLOW_ACTION);
+  try {
+    ok(record.hasPermission(), `Record ${
+      JSON.stringify(props)} should have permission`);
+  } finally {
+    Services.perms.remove(permURI, 'desktop-notification');
+  }
+}
+
+add_task(async function test_principal_permissions() {
+  let testProps = [{
+    scope: 'https://example.com/',
+  }, {
+    scope: 'https://example.com/',
+    originAttributes: '^userContextId=1',
+  }, {
+    scope: 'https://блог.фанфрог.рф/',
+  }, {
+    scope: 'https://блог.фанфрог.рф/',
+    originAttributes: '^userContextId=1',
+  }];
+  for (let props of testProps) {
+    testPermissionCheck(props);
+  }
 });

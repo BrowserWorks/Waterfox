@@ -5,6 +5,7 @@
 import time
 import psutil
 import mozcrash
+import traceback
 from mozprocess import ProcessHandler
 from threading import Event
 
@@ -34,7 +35,15 @@ class ProcessContext(object):
         """
         if self.process and self.process.is_running():
             LOG.debug("Terminating %s" % self.process)
-            self.process.terminate()
+            try:
+                self.process.terminate()
+            except psutil.NoSuchProcess:
+                procs = self.process.children()
+                for p in procs:
+                    c = ProcessContext()
+                    c.process = p
+                    c.kill_process()
+                return self.process.returncode
             try:
                 return self.process.wait(3)
             except psutil.TimeoutExpired:
@@ -112,6 +121,7 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
         # wait until we saw __endTimestamp in the proc output,
         # or the browser just terminated - or we have a timeout
         if not event.wait(timeout):
+            LOG.info("Timeout waiting for test completion; killing browser...")
             # try to extract the minidump stack if the browser hangs
             mozcrash.kill_and_get_minidump(proc.pid, minidump_dir)
             raise TalosError("timeout")
@@ -129,9 +139,15 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
     finally:
         # this also handle KeyboardInterrupt
         # ensure early the process is really terminated
-        return_code = context.kill_process()
-        if return_code is None:
-            return_code = proc.wait(1)
+        return_code = None
+        try:
+            return_code = context.kill_process()
+            if return_code is None:
+                return_code = proc.wait(1)
+        except:
+            # Maybe killed by kill_and_get_minidump(), maybe ended?
+            LOG.info("Unable to kill process")
+            LOG.info(traceback.format_exc())
 
     reader.output.append(
         "__startBeforeLaunchTimestamp%d__endBeforeLaunchTimestamp"

@@ -5,7 +5,6 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="../../testcommon.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
 <body>
 <div id="log"></div>
 <script>
@@ -13,7 +12,7 @@
 
 promise_test(function(t) {
   var div = createDiv(t);
-  var animation = div.animate({}, 100 * MS_PER_SEC);
+  var animation = div.animate(null, 100 * MS_PER_SEC);
   var originalReadyPromise = animation.ready;
   var pauseReadyPromise;
 
@@ -36,7 +35,7 @@ promise_test(function(t) {
 
 promise_test(function(t) {
   var div = createDiv(t);
-  var animation = div.animate({}, 100 * MS_PER_SEC);
+  var animation = div.animate(null, 100 * MS_PER_SEC);
 
   return animation.ready.then(function() {
     var promiseBeforeCallingPlay = animation.ready;
@@ -49,7 +48,7 @@ promise_test(function(t) {
 
 promise_test(function(t) {
   var div = createDiv(t);
-  var animation = div.animate({}, 100 * MS_PER_SEC);
+  var animation = div.animate(null, 100 * MS_PER_SEC);
 
   return animation.ready.then(function(resolvedAnimation) {
     assert_equals(resolvedAnimation, animation,
@@ -57,41 +56,6 @@ promise_test(function(t) {
                   + ' matches the Animation object owning the Promise');
   });
 }, 'The ready promise is fulfilled with its Animation');
-
-promise_test(function(t) {
-  var div = createDiv(t);
-  var animation = div.animate({}, 100 * MS_PER_SEC);
-
-  var retPromise = animation.ready.then(function() {
-    assert_unreached('ready promise was fulfilled');
-  }).catch(function(err) {
-    assert_equals(err.name, 'AbortError',
-                  'ready promise is rejected with AbortError');
-  });
-
-  animation.cancel();
-
-  return retPromise;
-}, 'ready promise is rejected when a pause-pending animation is cancelled by'
-   + ' calling cancel()');
-
-promise_test(function(t) {
-  var div = createDiv(t);
-  var animation = div.animate({}, 100 * MS_PER_SEC);
-  return animation.ready.then(function() {
-    animation.pause();
-    // Set up listeners on pause-pending ready promise
-    var retPromise = animation.ready.then(function() {
-      assert_unreached('ready promise was fulfilled');
-    }).catch(function(err) {
-      assert_equals(err.name, 'AbortError',
-                    'ready promise is rejected with AbortError');
-    });
-    animation.cancel();
-    return retPromise;
-  });
-}, 'ready promise is rejected when a pause-pending animation is cancelled by'
-   + ' calling cancel()');
 
 </script>
 </body>

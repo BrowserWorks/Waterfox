@@ -35,15 +35,23 @@ public:
                               nsAttrValue& aResult) override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL API
+  void GetAlign(nsAString& aValue) const
+  {
+    GetHTMLAttr(nsGkAtoms::align, aValue);
+  }
   void SetAlign(const nsAString& aAlign, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::align, aAlign, aError);
   }
 
-  // The XPCOM GetColor is OK for us
+  void GetColor(nsAString& aValue) const
+  {
+    GetHTMLAttr(nsGkAtoms::color, aValue);
+  }
   void SetColor(const nsAString& aColor, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::color, aColor, aError);
@@ -58,13 +66,19 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::noshade, aNoShade, aError);
   }
 
-  // The XPCOM GetSize is OK for us
+  void GetSize(nsAString& aValue) const
+  {
+    GetHTMLAttr(nsGkAtoms::size, aValue);
+  }
   void SetSize(const nsAString& aSize, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::size, aSize, aError);
   }
 
-  // The XPCOM GetWidth is OK for us
+  void GetWidth(nsAString& aValue) const
+  {
+    GetHTMLAttr(nsGkAtoms::width, aValue);
+  }
   void SetWidth(const nsAString& aWidth, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::width, aWidth, aError);
@@ -77,7 +91,7 @@ protected:
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                    nsRuleData* aData);
+                                    GenericSpecifiedValues* aGenericData);
 };
 
 } // namespace dom

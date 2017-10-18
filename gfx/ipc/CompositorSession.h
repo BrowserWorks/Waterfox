@@ -7,7 +7,12 @@
 #define _include_mozilla_gfx_ipc_CompositorSession_h_
 
 #include "base/basictypes.h"
+#include "mozilla/layers/LayersTypes.h"
+#include "mozilla/layers/CompositorTypes.h"
 #include "nsISupportsImpl.h"
+#if defined(MOZ_WIDGET_ANDROID)
+#include "mozilla/layers/UiCompositorControllerChild.h"
+#endif // defined(MOZ_WIDGET_ANDROID)
 
 class nsIWidget;
 
@@ -51,7 +56,7 @@ public:
   virtual void SetContentController(GeckoContentController* aController) = 0;
 
   // Return the Async Pan/Zoom Tree Manager for this compositor.
-  virtual already_AddRefed<IAPZCTreeManager> GetAPZCTreeManager() const = 0;
+  virtual RefPtr<IAPZCTreeManager> GetAPZCTreeManager() const = 0;
 
   // Return the child end of the compositor IPC bridge.
   CompositorBridgeChild* GetCompositorBridgeChild();
@@ -66,6 +71,17 @@ public:
     return mRootLayerTreeId;
   }
 
+#if defined(MOZ_WIDGET_ANDROID)
+  // Set the UiCompositorControllerChild after Session creation so the Session constructor
+  // doesn't get mucked up for other platforms.
+  void SetUiCompositorControllerChild(RefPtr<UiCompositorControllerChild> aUiController) {
+    mUiCompositorControllerChild = aUiController;
+  }
+
+  RefPtr<UiCompositorControllerChild> GetUiCompositorControllerChild() {
+    return mUiCompositorControllerChild;
+  }
+#endif // defined(MOZ_WIDGET_ANDROID)
 protected:
   CompositorSession(CompositorWidgetDelegate* aDelegate,
                     CompositorBridgeChild* aChild,
@@ -76,7 +92,9 @@ protected:
   CompositorWidgetDelegate* mCompositorWidgetDelegate;
   RefPtr<CompositorBridgeChild> mCompositorBridgeChild;
   uint64_t mRootLayerTreeId;
-
+#if defined(MOZ_WIDGET_ANDROID)
+  RefPtr<UiCompositorControllerChild> mUiCompositorControllerChild;
+#endif // defined(MOZ_WIDGET_ANDROID)
 private:
   DISALLOW_COPY_AND_ASSIGN(CompositorSession);
 };

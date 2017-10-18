@@ -66,7 +66,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
         mFlags(aFlags)
     { }
 
-    virtual bool finalizeInBackground(Value priv) const override;
+    virtual bool finalizeInBackground(const Value& priv) const override;
 
     /* Standard internal methods. */
     virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
@@ -78,8 +78,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject proxy,
-                           MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject proxy) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject proxy,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
@@ -116,9 +115,8 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
-                                   unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy,
-                                 RegExpGuard* g) const override;
+                                   bool isToSource) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy,
                                   MutableHandleValue vp) const override;
     virtual bool isCallable(JSObject* obj) const override;
@@ -136,7 +134,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
     static JSObject* New(JSContext* cx, JSObject* obj, const Wrapper* handler,
                          const WrapperOptions& options = WrapperOptions());
 
-    static JSObject* Renew(JSContext* cx, JSObject* existing, JSObject* obj, const Wrapper* handler);
+    static JSObject* Renew(JSObject* existing, JSObject* obj, const Wrapper* handler);
 
     static const Wrapper* wrapperHandler(JSObject* wrapper);
 
@@ -178,7 +176,7 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject wrapper, MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject wrapper) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject proxy,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
@@ -211,9 +209,12 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
                              bool* bp) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject wrapper,
-                                   unsigned indent) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+                                   bool isToSource) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
+
+    // Allocate CrossCompartmentWrappers in the nursery.
+    virtual bool canNurseryAllocate() const override { return true; }
 
     static const CrossCompartmentWrapper singleton;
     static const CrossCompartmentWrapper singletonWithPrototype;
@@ -235,8 +236,7 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject wrapper,
-                           MutableHandleObject objp) const override;
+    virtual JSObject* enumerate(JSContext* cx, HandleObject wrapper) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject wrapper,
                               MutableHandleObject protop) const override;
     virtual bool setPrototype(JSContext* cx, HandleObject wrapper, HandleObject proto,
@@ -268,7 +268,8 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
     virtual bool isArray(JSContext* cx, HandleObject obj,
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject wrapper) const override;
-    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const override;
+    virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
+                                   bool isToSource) const override;
 
     static const OpaqueCrossCompartmentWrapper singleton;
 };
@@ -291,7 +292,7 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
     { }
 
     virtual bool enter(JSContext* cx, HandleObject wrapper, HandleId id, Wrapper::Action act,
-                       bool* bp) const override;
+                       bool mayThrow, bool* bp) const override;
 
     virtual bool defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
                                 Handle<PropertyDescriptor> desc,
@@ -307,7 +308,7 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
                             const CallArgs& args) const override;
     virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject wrapper, JS::IsArrayAnswer* answer) const override;
-    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+    virtual RegExpShared* regexp_toShared(JSContext* cx, HandleObject proxy) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;
 
     // Allow isCallable and isConstructor. They used to be class-level, and so could not be guarded
@@ -325,7 +326,6 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
     typedef SecurityWrapper<Base> Restrictive;
 };
 
-typedef SecurityWrapper<Wrapper> SameCompartmentSecurityWrapper;
 typedef SecurityWrapper<CrossCompartmentWrapper> CrossCompartmentSecurityWrapper;
 
 extern JSObject*
@@ -339,8 +339,12 @@ IsWrapper(JSObject* obj)
 
 // Given a JSObject, returns that object stripped of wrappers. If
 // stopAtWindowProxy is true, then this returns the WindowProxy if it was
-// previously wrapped. Otherwise, this returns the first object for
-// which JSObject::isWrapper returns false.
+// previously wrapped. Otherwise, this returns the first object for which
+// JSObject::isWrapper returns false.
+//
+// ExposeToActiveJS is called on wrapper targets to allow gray marking
+// assertions to work while an incremental GC is in progress, but this means
+// that this cannot be called from the GC or off the main thread.
 JS_FRIEND_API(JSObject*)
 UncheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true, unsigned* flagsp = nullptr);
 
@@ -348,6 +352,10 @@ UncheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true, unsigned* flagsp =
 // the security wrapper has the opportunity to veto the unwrap. If
 // stopAtWindowProxy is true, then this returns the WindowProxy if it was
 // previously wrapped.
+//
+// ExposeToActiveJS is called on wrapper targets to allow gray marking
+// assertions to work while an incremental GC is in progress, but this means
+// that this cannot be called from the GC or off the main thread.
 JS_FRIEND_API(JSObject*)
 CheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true);
 
@@ -356,10 +364,21 @@ CheckedUnwrap(JSObject* obj, bool stopAtWindowProxy = true);
 JS_FRIEND_API(JSObject*)
 UnwrapOneChecked(JSObject* obj, bool stopAtWindowProxy = true);
 
+// Given a JSObject, returns that object stripped of wrappers. This returns the
+// WindowProxy if it was previously wrapped.
+//
+// ExposeToActiveJS is not called on wrapper targets so this can be called from
+// the GC or off the main thread.
+JS_FRIEND_API(JSObject*)
+UncheckedUnwrapWithoutExpose(JSObject* obj);
+
+void
+ReportAccessDenied(JSContext* cx);
+
 JS_FRIEND_API(bool)
 IsCrossCompartmentWrapper(JSObject* obj);
 
-void
+JS_FRIEND_API(void)
 NukeCrossCompartmentWrapper(JSContext* cx, JSObject* wrapper);
 
 void

@@ -5,16 +5,15 @@
 
 #include "ContextStateTracker.h"
 #include "GLContext.h"
-#ifdef MOZ_ENABLE_PROFILER_SPS
-#include "ProfilerMarkers.h"
-#endif
+#include "GeckoProfiler.h"
+#include "ProfilerMarkerPayload.h"
 
 namespace mozilla {
 
 void
 ContextStateTrackerOGL::PushOGLSection(GLContext* aGL, const char* aSectionName)
 {
-  if (!profiler_feature_active("gpu")) {
+  if (!profiler_feature_active(ProfilerFeature::GPU)) {
     return;
   }
 
@@ -110,14 +109,13 @@ ContextStateTrackerOGL::Flush(GLContext* aGL)
 
     aGL->fDeleteQueries(1, &handle);
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
-    PROFILER_MARKER_PAYLOAD("gpu_timer_query", new GPUMarkerPayload(
-      mCompletedSections[0].mCpuTimeStart,
-      mCompletedSections[0].mCpuTimeEnd,
-      0,
-      gpuTime
-    ));
-#endif
+    if (profiler_is_active()) {
+      profiler_add_marker(
+        "gpu_timer_query",
+        MakeUnique<GPUMarkerPayload>(mCompletedSections[0].mCpuTimeStart,
+                                     mCompletedSections[0].mCpuTimeEnd,
+                                     0, gpuTime));
+    }
 
     mCompletedSections.RemoveElementAt(0);
   }

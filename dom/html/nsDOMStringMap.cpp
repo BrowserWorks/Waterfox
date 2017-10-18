@@ -19,7 +19,6 @@ using namespace mozilla::dom;
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsDOMStringMap)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsDOMStringMap)
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mElement)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -46,7 +45,7 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsDOMStringMap)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsDOMStringMap)
 
-nsDOMStringMap::nsDOMStringMap(nsGenericHTMLElement* aElement)
+nsDOMStringMap::nsDOMStringMap(Element* aElement)
   : mElement(aElement),
     mRemovingProp(false)
 {
@@ -118,7 +117,7 @@ nsDOMStringMap::NamedDeleter(const nsAString& aProp, bool& found)
     found = false;
     return;
   }
-  
+
   nsAutoString attr;
   if (!DataPropToAttr(aProp, attr)) {
     found = false;
@@ -230,7 +229,7 @@ bool nsDOMStringMap::AttrToDataProp(const nsAString& aAttr,
   // Otherwise append character to property name.
   for (; cur < end; ++cur) {
     const char16_t* next = cur + 1;
-    if (char16_t('-') == *cur && next < end && 
+    if (char16_t('-') == *cur && next < end &&
         char16_t('a') <= *next && *next <= char16_t('z')) {
       // Upper case the lower case letters that follow a "-".
       aResult.Append(*next - 'a' + 'A');

@@ -18,6 +18,8 @@
 == flexbox-align-self-baseline-horiz-003.xhtml flexbox-align-self-baseline-horiz-003-ref.xhtml
 == flexbox-align-self-baseline-horiz-004.xhtml flexbox-align-self-baseline-horiz-004-ref.xhtml
 == flexbox-align-self-baseline-horiz-005.xhtml flexbox-align-self-baseline-horiz-005-ref.xhtml
+== flexbox-align-self-baseline-horiz-006.xhtml flexbox-align-self-baseline-horiz-006-ref.xhtml
+== flexbox-align-self-baseline-horiz-007.xhtml flexbox-align-self-baseline-horiz-007-ref.xhtml
 
 == flexbox-align-self-stretch-vert-001.html flexbox-align-self-stretch-vert-001-ref.html
 == flexbox-align-self-stretch-vert-002.html flexbox-align-self-stretch-vert-002-ref.html
@@ -26,7 +28,7 @@
 == flexbox-align-self-horiz-001-table.xhtml  flexbox-align-self-horiz-001-ref.xhtml
 == flexbox-align-self-horiz-002.xhtml  flexbox-align-self-horiz-002-ref.xhtml
 == flexbox-align-self-horiz-003.xhtml  flexbox-align-self-horiz-003-ref.xhtml
-== flexbox-align-self-horiz-004.xhtml  flexbox-align-self-horiz-004-ref.xhtml
+fuzzy-if(webrender,1,2) == flexbox-align-self-horiz-004.xhtml  flexbox-align-self-horiz-004-ref.xhtml
 == flexbox-align-self-horiz-005.xhtml  flexbox-align-self-horiz-005-ref.xhtml
 == flexbox-align-self-vert-001.xhtml  flexbox-align-self-vert-001-ref.xhtml
 == flexbox-align-self-vert-002.xhtml  flexbox-align-self-vert-002-ref.xhtml
@@ -37,13 +39,17 @@ fuzzy-if(Android,158,32) == flexbox-align-self-vert-rtl-001.xhtml  flexbox-align
 == flexbox-align-self-vert-rtl-003.xhtml  flexbox-align-self-vert-rtl-003-ref.xhtml
 == flexbox-align-self-vert-rtl-004.xhtml  flexbox-align-self-vert-rtl-004-ref.xhtml
 
+== flexbox-align-items-center-nested-001.html flexbox-align-items-center-nested-001-ref.html
+
 # Tests for computing the baseline of a flex container
 == flexbox-baseline-align-self-baseline-horiz-001.html flexbox-baseline-align-self-baseline-horiz-001-ref.html
 == flexbox-baseline-align-self-baseline-vert-001.html flexbox-baseline-align-self-baseline-vert-001-ref.html
 == flexbox-baseline-empty-001a.html flexbox-baseline-empty-001-ref.html
 == flexbox-baseline-empty-001b.html flexbox-baseline-empty-001-ref.html
-== flexbox-baseline-multi-item-horiz-001.html flexbox-baseline-multi-item-horiz-001-ref.html
-== flexbox-baseline-multi-item-vert-001.html flexbox-baseline-multi-item-vert-001-ref.html
+== flexbox-baseline-multi-item-horiz-001a.html flexbox-baseline-multi-item-horiz-001-ref.html
+== flexbox-baseline-multi-item-horiz-001b.html flexbox-baseline-multi-item-horiz-001-ref.html
+== flexbox-baseline-multi-item-vert-001a.html flexbox-baseline-multi-item-vert-001-ref.html
+== flexbox-baseline-multi-item-vert-001b.html flexbox-baseline-multi-item-vert-001-ref.html
 == flexbox-baseline-multi-line-horiz-001.html flexbox-baseline-multi-line-horiz-001-ref.html
 == flexbox-baseline-multi-line-horiz-002.html flexbox-baseline-multi-line-horiz-002-ref.html
 == flexbox-baseline-multi-line-horiz-003.html flexbox-baseline-multi-line-horiz-003-ref.html
@@ -142,7 +148,7 @@ fuzzy-if(Android,158,32) == flexbox-align-self-vert-rtl-001.xhtml  flexbox-align
 # Tests for min-height:auto / min-width:auto on flex items
 == flexbox-min-height-auto-001.html flexbox-min-height-auto-001-ref.html
 == flexbox-min-height-auto-002a.html flexbox-min-height-auto-002-ref.html
-fails == flexbox-min-height-auto-002b.html flexbox-min-height-auto-002-ref.html # bug 1055354
+fails-if(!styloVsGecko) == flexbox-min-height-auto-002b.html flexbox-min-height-auto-002-ref.html # bug 1055354
 == flexbox-min-height-auto-002c.html flexbox-min-height-auto-002-ref.html
 == flexbox-min-height-auto-003.html flexbox-min-height-auto-003-ref.html
 == flexbox-min-height-auto-004.html flexbox-min-height-auto-004-ref.html
@@ -193,12 +199,17 @@ fails == flexbox-min-height-auto-002b.html flexbox-min-height-auto-002-ref.html 
 == flexbox-with-pseudo-elements-003.html flexbox-with-pseudo-elements-003-ref.html
 
 # Tests for combined influence of 'writing-mode' & 'direction' on flex axes
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-001.html flexbox-writing-mode-001-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-002.html flexbox-writing-mode-002-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-003.html flexbox-writing-mode-003-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-004.html flexbox-writing-mode-004-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-005.html flexbox-writing-mode-005-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-006.html flexbox-writing-mode-006-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-007.html flexbox-writing-mode-007-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-008.html flexbox-writing-mode-008-ref.html
-test-pref(layout.css.vertical-text.enabled,true) == flexbox-writing-mode-009.html flexbox-writing-mode-009-ref.html
+== flexbox-writing-mode-001.html flexbox-writing-mode-001-ref.html
+== flexbox-writing-mode-002.html flexbox-writing-mode-002-ref.html
+== flexbox-writing-mode-003.html flexbox-writing-mode-003-ref.html
+== flexbox-writing-mode-004.html flexbox-writing-mode-004-ref.html
+== flexbox-writing-mode-005.html flexbox-writing-mode-005-ref.html
+== flexbox-writing-mode-006.html flexbox-writing-mode-006-ref.html
+== flexbox-writing-mode-007.html flexbox-writing-mode-007-ref.html
+== flexbox-writing-mode-008.html flexbox-writing-mode-008-ref.html
+== flexbox-writing-mode-009.html flexbox-writing-mode-009-ref.html
+
+# Single-line size clamping
+== flexbox-single-line-clamp-1.html flexbox-single-line-clamp-1-ref.html
+== flexbox-single-line-clamp-2.html flexbox-single-line-clamp-2-ref.html
+== flexbox-single-line-clamp-3.html flexbox-single-line-clamp-3-ref.html

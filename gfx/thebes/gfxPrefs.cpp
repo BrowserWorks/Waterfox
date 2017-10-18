@@ -8,7 +8,8 @@
 #include "MainThreadUtils.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/gfx/GPUChild.h"
 #include "mozilla/gfx/GPUProcessManager.h"
@@ -52,15 +53,15 @@ void
 gfxPrefs::Init()
 {
   // Set up Moz2D prefs.
-  mPrefGfxLoggingLevel.SetChangeCallback([]() -> void {
-    mozilla::gfx::LoggingPrefs::sGfxLogLevel = GetSingleton().mPrefGfxLoggingLevel.GetLiveValue();
+  SetGfxLoggingLevelChangeCallback([](const GfxPrefValue& aValue) -> void {
+    mozilla::gfx::LoggingPrefs::sGfxLogLevel = aValue.get_int32_t();
   });
 }
 
 gfxPrefs::~gfxPrefs()
 {
   gfxPrefs::AssertMainThread();
-  mPrefGfxLoggingLevel.SetChangeCallback(nullptr);
+  SetGfxLoggingLevelChangeCallback(nullptr);
   delete sGfxPrefList;
   sGfxPrefList = nullptr;
 }
@@ -76,7 +77,7 @@ gfxPrefs::Pref::OnChange()
   if (auto gpm = gfx::GPUProcessManager::Get()) {
     if (gfx::GPUChild* gpu = gpm->GetGPUChild()) {
       GfxPrefValue value;
-      GetCachedValue(&value);
+      GetLiveValue(&value);
       Unused << gpu->SendUpdatePref(gfx::GfxPrefSetting(mIndex, value));
     }
   }
@@ -87,7 +88,9 @@ void
 gfxPrefs::Pref::FireChangeCallback()
 {
   if (mChangeCallback) {
-    mChangeCallback();
+    GfxPrefValue value;
+    GetLiveValue(&value);
+    mChangeCallback(value);
   }
 }
 
@@ -158,6 +161,14 @@ void gfxPrefs::PrefAddVarCache(float* aVariable,
   Preferences::AddFloatVarCache(aVariable, aPref, aDefault);
 }
 
+void gfxPrefs::PrefAddVarCache(std::string* aVariable,
+                               const char* aPref,
+                               std::string aDefault)
+{
+  MOZ_ASSERT(IsPrefsServiceAvailable());
+  Preferences::SetCString(aPref, aVariable->c_str());
+}
+
 bool gfxPrefs::PrefGet(const char* aPref, bool aDefault)
 {
   MOZ_ASSERT(IsPrefsServiceAvailable());
@@ -180,6 +191,20 @@ float gfxPrefs::PrefGet(const char* aPref, float aDefault)
 {
   MOZ_ASSERT(IsPrefsServiceAvailable());
   return Preferences::GetFloat(aPref, aDefault);
+}
+
+std::string gfxPrefs::PrefGet(const char* aPref, std::string aDefault)
+{
+  MOZ_ASSERT(IsPrefsServiceAvailable());
+
+  nsAutoCString result;
+  Preferences::GetCString(aPref, result);
+
+  if (result.IsEmpty()) {
+    return aDefault;
+  }
+
+  return result.get();
 }
 
 void gfxPrefs::PrefSet(const char* aPref, bool aValue)
@@ -206,6 +231,12 @@ void gfxPrefs::PrefSet(const char* aPref, float aValue)
   Preferences::SetFloat(aPref, aValue);
 }
 
+void gfxPrefs::PrefSet(const char* aPref, std::string aValue)
+{
+  MOZ_ASSERT(IsPrefsServiceAvailable());
+  Preferences::SetCString(aPref, aValue.c_str());
+}
+
 static void
 OnGfxPrefChanged(const char* aPrefname, void* aClosure)
 {
@@ -215,14 +246,14 @@ OnGfxPrefChanged(const char* aPrefname, void* aClosure)
 void gfxPrefs::WatchChanges(const char* aPrefname, Pref* aPref)
 {
   MOZ_ASSERT(IsPrefsServiceAvailable());
-  Preferences::RegisterCallback(OnGfxPrefChanged, aPrefname, aPref, Preferences::ExactMatch);
+  Preferences::RegisterCallback(OnGfxPrefChanged, aPrefname, aPref);
 }
 
 void gfxPrefs::UnwatchChanges(const char* aPrefname, Pref* aPref)
 {
   // The Preferences service can go offline before gfxPrefs is destroyed.
   if (IsPrefsServiceAvailable()) {
-    Preferences::UnregisterCallback(OnGfxPrefChanged, aPrefname, aPref, Preferences::ExactMatch);
+    Preferences::UnregisterCallback(OnGfxPrefChanged, aPrefname, aPref);
   }
 }
 
@@ -246,6 +277,11 @@ void gfxPrefs::CopyPrefValue(const float* aValue, GfxPrefValue* aOutValue)
   *aOutValue = *aValue;
 }
 
+void gfxPrefs::CopyPrefValue(const std::string* aValue, GfxPrefValue* aOutValue)
+{
+  *aOutValue = nsCString(aValue->c_str());
+}
+
 void gfxPrefs::CopyPrefValue(const GfxPrefValue* aValue, bool* aOutValue)
 {
   *aOutValue = aValue->get_bool();
@@ -264,4 +300,19 @@ void gfxPrefs::CopyPrefValue(const GfxPrefValue* aValue, uint32_t* aOutValue)
 void gfxPrefs::CopyPrefValue(const GfxPrefValue* aValue, float* aOutValue)
 {
   *aOutValue = aValue->get_float();
+}
+
+void gfxPrefs::CopyPrefValue(const GfxPrefValue* aValue, std::string* aOutValue)
+{
+  *aOutValue = aValue->get_nsCString().get();
+}
+
+bool gfxPrefs::OverrideBase_WebRender()
+{
+  return gfx::gfxVars::UseWebRender();
+}
+
+bool gfxPrefs::OverrideBase_WebRendest()
+{
+  return gfx::gfxVars::UseWebRender() && gfxPrefs::WebRendestEnabled();
 }

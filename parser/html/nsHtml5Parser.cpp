@@ -7,6 +7,7 @@
 #include "nsHtml5Parser.h"
 
 #include "mozilla/AutoRestore.h"
+#include "nsCRT.h"
 #include "nsContentUtils.h" // for kLoadAsData
 #include "nsHtml5Tokenizer.h"
 #include "nsHtml5TreeBuilder.h"
@@ -35,15 +36,22 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsHtml5Parser)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 nsHtml5Parser::nsHtml5Parser()
-  : mFirstBuffer(new nsHtml5OwningUTF16Buffer((void*)nullptr))
+  : mLastWasCR(false)
+  , mDocWriteSpeculativeLastWasCR(false)
+  , mBlocked(0)
+  , mDocWriteSpeculatorActive(false)
+  , mInsertionPointPushLevel(0)
+  , mDocumentClosed(false)
+  , mInDocumentWrite(false)
+  , mFirstBuffer(new nsHtml5OwningUTF16Buffer((void*)nullptr))
   , mLastBuffer(mFirstBuffer)
   , mExecutor(new nsHtml5TreeOpExecutor())
   , mTreeBuilder(new nsHtml5TreeBuilder(mExecutor, nullptr))
   , mTokenizer(new nsHtml5Tokenizer(mTreeBuilder, false))
   , mRootContextLineNumber(1)
+  , mReturnToStreamParserPermitted(false)
 {
   mTokenizer->setInterner(&mAtomTable);
-  // There's a zeroing operator new for everything else
 }
 
 nsHtml5Parser::~nsHtml5Parser()
@@ -57,7 +65,7 @@ nsHtml5Parser::~nsHtml5Parser()
 NS_IMETHODIMP_(void)
 nsHtml5Parser::SetContentSink(nsIContentSink* aSink)
 {
-  NS_ASSERTION(aSink == static_cast<nsIContentSink*> (mExecutor), 
+  NS_ASSERTION(aSink == static_cast<nsIContentSink*>(mExecutor),
                "Attempt to set a foreign sink.");
 }
 
@@ -87,23 +95,19 @@ nsHtml5Parser::SetCommand(const char* aCommand)
 NS_IMETHODIMP_(void)
 nsHtml5Parser::SetCommand(eParserCommands aParserCommand)
 {
-  NS_ASSERTION(aParserCommand == eViewNormal, 
+  NS_ASSERTION(aParserCommand == eViewNormal,
                "Parser command was not eViewNormal.");
 }
 
-NS_IMETHODIMP_(void)
-nsHtml5Parser::SetDocumentCharset(const nsACString& aCharset,
+void
+nsHtml5Parser::SetDocumentCharset(NotNull<const Encoding*> aEncoding,
                                   int32_t aCharsetSource)
 {
   NS_PRECONDITION(!mExecutor->HasStarted(),
                   "Document charset set too late.");
   NS_PRECONDITION(GetStreamParser(), "Setting charset on a script-only parser.");
-  nsAutoCString trimmed;
-  trimmed.Assign(aCharset);
-  trimmed.Trim(" \t\r\n\f");
-  GetStreamParser()->SetDocumentCharset(trimmed, aCharsetSource);
-  mExecutor->SetDocumentCharsetAndSource(trimmed,
-                                         aCharsetSource);
+  GetStreamParser()->SetDocumentCharset(aEncoding, aCharsetSource);
+  mExecutor->SetDocumentCharsetAndSource(aEncoding, aCharsetSource);
 }
 
 NS_IMETHODIMP
@@ -139,14 +143,19 @@ nsHtml5Parser::ContinueInterruptedParsing()
 NS_IMETHODIMP_(void)
 nsHtml5Parser::BlockParser()
 {
-  mBlocked = true;
+  mBlocked++;
 }
 
 NS_IMETHODIMP_(void)
 nsHtml5Parser::UnblockParser()
 {
-  mBlocked = false;
-  mExecutor->ContinueInterruptedParsingAsync();
+  MOZ_DIAGNOSTIC_ASSERT(mBlocked > 0);
+  if (MOZ_LIKELY(mBlocked > 0)) {
+    mBlocked--;
+  }
+  if (MOZ_LIKELY(mBlocked == 0)) {
+    mExecutor->ContinueInterruptedParsingAsync();
+  }
 }
 
 NS_IMETHODIMP_(void)
@@ -177,7 +186,7 @@ nsHtml5Parser::Parse(nsIURI* aURL,
    * Do NOT cause WillBuildModel to be called synchronously from here!
    * The document won't be ready for it until OnStartRequest!
    */
-  NS_PRECONDITION(!mExecutor->HasStarted(), 
+  NS_PRECONDITION(!mExecutor->HasStarted(),
                   "Tried to start parse without initializing the parser.");
   NS_PRECONDITION(GetStreamParser(),
                   "Can't call this Parse() variant on script-created parser");
@@ -206,7 +215,7 @@ nsHtml5Parser::Parse(const nsAString& aSourceBuffer,
   // Maintain a reference to ourselves so we don't go away
   // till we're completely done. The old parser grips itself in this method.
   nsCOMPtr<nsIParser> kungFuDeathGrip(this);
-  
+
   // Gripping the other objects just in case, since the other old grip
   // required grips to these, too.
   RefPtr<nsHtml5StreamParser> streamKungFuDeathGrip(GetStreamParser());
@@ -235,8 +244,8 @@ nsHtml5Parser::Parse(const nsAString& aSourceBuffer,
       mTokenizer->StartPlainText();
     }
     /*
-     * If you move the following line, be very careful not to cause 
-     * WillBuildModel to be called before the document has had its 
+     * If you move the following line, be very careful not to cause
+     * WillBuildModel to be called before the document has had its
      * script global object set.
      */
     rv = executor->WillBuildModel(eDTDMode_unknown);
@@ -554,19 +563,19 @@ bool
 nsHtml5Parser::IsInsertionPointDefined()
 {
   return !mExecutor->IsFlushing() &&
-    (!GetStreamParser() || mParserInsertedScriptsBeingEvaluated);
+    (!GetStreamParser() || mInsertionPointPushLevel);
 }
 
 void
-nsHtml5Parser::BeginEvaluatingParserInsertedScript()
+nsHtml5Parser::PushDefinedInsertionPoint()
 {
-  ++mParserInsertedScriptsBeingEvaluated;
+  ++mInsertionPointPushLevel;
 }
 
 void
-nsHtml5Parser::EndEvaluatingParserInsertedScript()
+nsHtml5Parser::PopDefinedInsertionPoint()
 {
-  --mParserInsertedScriptsBeingEvaluated;
+  --mInsertionPointPushLevel;
 }
 
 void
@@ -704,7 +713,6 @@ nsHtml5Parser::ParseUntilBlocked()
         return NS_OK;
       }
     }
-    continue;
   }
 }
 

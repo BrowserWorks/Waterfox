@@ -1,5 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 "use strict";
 
@@ -11,7 +12,6 @@ const MANIFEST_HANDLER         = "manifests/handler";
 const SEC_IN_ONE_DAY  = 24 * 60 * 60;
 const MS_IN_ONE_DAY   = SEC_IN_ONE_DAY * 1000;
 
-var gProfileDir          = null;
 var gHttpServer          = null;
 var gHttpRoot            = null;
 var gDataRoot            = null;
@@ -23,10 +23,9 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_setup() {
+add_task(async function test_setup() {
   loadAddonManager();
-  gProfileDir = do_get_profile();
-  yield removeCacheFile();
+  await removeCacheFile();
 
   gHttpServer = new HttpServer();
   gHttpServer.start(-1);
@@ -49,7 +48,7 @@ add_task(function* test_setup() {
   Services.prefs.setCharPref(PREF_MANIFEST_URI, gManifestHandlerURI);
   Services.prefs.setIntPref(PREF_FETCHINTERVAL, 0);
 
-  let ExperimentsScope = Cu.import("resource:///modules/experiments/Experiments.jsm");
+  let ExperimentsScope = Cu.import("resource:///modules/experiments/Experiments.jsm", {});
   let Experiments = ExperimentsScope.Experiments;
 
   gPolicy = new Experiments.Policy();
@@ -96,7 +95,7 @@ add_task(function* test_setup() {
   Assert.strictEqual(ExperimentsScope.gExperiments, null);
   ExperimentsScope.gExperiments = experiments;
 
-  yield experiments.updateManifest();
+  await experiments.updateManifest();
   let active = experiments._getActiveExperiment();
   Assert.ok(active);
   Assert.equal(active.branch, "racy-set");

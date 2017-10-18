@@ -6,9 +6,9 @@ const PREF_RESTORE_ON_DEMAND = "browser.sessionstore.restore_on_demand";
 
 requestLongerTimeout(2);
 
-add_task(function* test() {
+add_task(async function test() {
   Services.prefs.setBoolPref(PREF_RESTORE_ON_DEMAND, false);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(PREF_RESTORE_ON_DEMAND);
   });
 
@@ -17,19 +17,19 @@ add_task(function* test() {
   let state1 = { windows: [
     {
       tabs: [
-        { entries: [{ url: "http://example.org#1" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#2" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#3" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#4" }], extData: { "uniq": r() } }
+        { entries: [{ url: "http://example.org#1", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#2", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#3", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#4", triggeringPrincipal_base64 }], extData: { "uniq": r() } }
       ],
       selected: 1
     },
     {
       tabs: [
-        { entries: [{ url: "http://example.com#1" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#2" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#3" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#4" }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#1", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#2", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#3", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#4", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
       ],
       selected: 3
     }
@@ -37,19 +37,19 @@ add_task(function* test() {
   let state2 = { windows: [
     {
       tabs: [
-        { entries: [{ url: "http://example.org#5" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#6" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#7" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.org#8" }], extData: { "uniq": r() } }
+        { entries: [{ url: "http://example.org#5", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#6", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#7", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.org#8", triggeringPrincipal_base64 }], extData: { "uniq": r() } }
       ],
       selected: 3
     },
     {
       tabs: [
-        { entries: [{ url: "http://example.com#5" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#6" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#7" }], extData: { "uniq": r() } },
-        { entries: [{ url: "http://example.com#8" }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#5", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#6", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#7", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+        { entries: [{ url: "http://example.com#8", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
       ],
       selected: 1
     }
@@ -63,7 +63,7 @@ add_task(function* test() {
 
   let loadCount = 0;
   let promiseRestoringTabs = new Promise(resolve => {
-    gProgressListener.setCallback(function (aBrowser, aNeedRestore, aRestoring, aRestored) {
+    gProgressListener.setCallback(function(aBrowser, aNeedRestore, aRestoring, aRestored) {
       loadCount++;
 
       if (aBrowser.currentURI.spec == state1.windows[0].tabs[2].entries[0].url)
@@ -95,19 +95,18 @@ add_task(function* test() {
   Services.ww.registerNotification(function observer(aSubject, aTopic, aData) {
     if (aTopic == "domwindowopened") {
       let win = aSubject.QueryInterface(Ci.nsIDOMWindow);
-      win.addEventListener("load", function onLoad() {
-        win.removeEventListener("load", onLoad);
+      win.addEventListener("load", function() {
         Services.ww.unregisterNotification(observer);
         win.gBrowser.addTabsProgressListener(gProgressListener);
-      });
+      }, {once: true});
     }
   });
 
   let backupState = ss.getBrowserState();
   ss.setBrowserState(JSON.stringify(state1));
-  yield promiseRestoringTabs;
+  await promiseRestoringTabs;
 
   // Cleanup.
-  yield promiseAllButPrimaryWindowClosed();
-  yield promiseBrowserState(backupState);
+  await promiseAllButPrimaryWindowClosed();
+  await promiseBrowserState(backupState);
 });

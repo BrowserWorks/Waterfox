@@ -13,7 +13,7 @@ const PAGE = "http://example.com/browser/browser/base/content/test/general/page_
  * @return Promise
  */
 function promiseStylesheetsUpdated(browser) {
-  return ContentTask.spawn(browser, { PAGE }, function*(args) {
+  return ContentTask.spawn(browser, { PAGE }, async function(args) {
     return new Promise((resolve) => {
       addEventListener("pageshow", function onPageShow(e) {
         if (e.target.location == args.PAGE) {
@@ -29,12 +29,12 @@ function promiseStylesheetsUpdated(browser) {
  * Tests that the Page Style menu shows the currently
  * selected Page Style after a new one has been selected.
  */
-add_task(function*() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
+add_task(async function() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
   let browser = tab.linkedBrowser;
 
-  yield BrowserTestUtils.loadURI(browser, PAGE);
-  yield promiseStylesheetsUpdated(browser);
+  await BrowserTestUtils.loadURI(browser, PAGE);
+  await promiseStylesheetsUpdated(browser);
 
   let menupopup = document.getElementById("pageStyleMenu").menupopup;
   gPageStyleMenu.fillPopup(menupopup);
@@ -45,7 +45,6 @@ add_task(function*() {
   is(selected.getAttribute("label"), "6", "Should have '6' stylesheet selected by default");
 
   // Now select stylesheet "1"
-  let targets = menupopup.querySelectorAll("menuitem");
   let target = menupopup.querySelector("menuitem[label='1']");
   target.click();
 
@@ -54,8 +53,8 @@ add_task(function*() {
   // guaranteed to be sent in order, we'll make sure we do the check
   // after the parent has been updated by yielding until the child
   // has finished running a ContentTask for us.
-  yield ContentTask.spawn(browser, {}, function*() {
-    dump('\nJust wasting some time.\n');
+  await ContentTask.spawn(browser, {}, async function() {
+    dump("\nJust wasting some time.\n");
   });
 
   gPageStyleMenu.fillPopup(menupopup);
@@ -64,5 +63,5 @@ add_task(function*() {
   selected = menupopup.querySelector("menuitem[checked='true']");
   is(selected.getAttribute("label"), "1", "Should now have stylesheet 1 selected");
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

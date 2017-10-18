@@ -6,10 +6,8 @@
 package org.mozilla.gecko.toolbar;
 
 import org.mozilla.gecko.AboutPages;
-import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.CustomEditText;
 import org.mozilla.gecko.InputMethods;
-import org.mozilla.gecko.R;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnCommitListener;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnDismissListener;
 import org.mozilla.gecko.toolbar.BrowserToolbar.OnFilterListener;
@@ -20,6 +18,7 @@ import org.mozilla.gecko.util.StringUtils;
 import android.content.Context;
 import android.graphics.Rect;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.NoCopySpan;
 import android.text.Selection;
 import android.text.Spanned;
@@ -417,12 +416,18 @@ public class ToolbarEditText extends CustomEditText
      * If there is no autocomplete text, both removeAutocomplete() and commitAutocomplete()
      * are no-ops and return false. Therefore we can use them here without checking explicitly
      * if we have autocomplete text or not.
+     *
+     * Also turns off text prediction for private mode tabs.
      */
     @Override
     public InputConnection onCreateInputConnection(final EditorInfo outAttrs) {
         final InputConnection ic = super.onCreateInputConnection(outAttrs);
         if (ic == null) {
             return null;
+        }
+
+        if (isPrivateMode()) {
+            outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
         }
 
         return new InputConnectionWrapper(ic, false) {
@@ -434,10 +439,7 @@ public class ToolbarEditText extends CustomEditText
                     // are deleting, we should delete the autocomplete text first.
                     // Make the IME aware that we interrupted the deleteSurroundingText call,
                     // by restarting the IME.
-                    final InputMethodManager imm = InputMethods.getInputMethodManager(mContext);
-                    if (imm != null) {
-                        imm.restartInput(ToolbarEditText.this);
-                    }
+                    InputMethods.restartInput(mContext, ToolbarEditText.this);
                     return false;
                 }
                 return super.deleteSurroundingText(beforeLength, afterLength);
@@ -473,6 +475,9 @@ public class ToolbarEditText extends CustomEditText
             @Override
             public boolean setComposingText(final CharSequence text, final int newCursorPosition) {
                 if (removeAutocompleteOnComposing(text)) {
+                    if (InputMethods.needsRemoveAutocompleteHack(mContext)) {
+                        InputMethods.restartInput(mContext, ToolbarEditText.this);
+                    }
                     return false;
                 }
                 return super.setComposingText(text, newCursorPosition);
@@ -618,8 +623,7 @@ public class ToolbarEditText extends CustomEditText
             }
 
             if ((keyCode == KeyEvent.KEYCODE_DEL ||
-                (Versions.feature11Plus &&
-                 keyCode == KeyEvent.KEYCODE_FORWARD_DEL)) &&
+                (keyCode == KeyEvent.KEYCODE_FORWARD_DEL)) &&
                 removeAutocomplete(getText())) {
                 // Delete autocomplete text when backspacing or forward deleting.
                 return true;

@@ -15,6 +15,7 @@
 
 class nsILoadInfo;
 class nsIPrincipal;
+class nsIRedirectHistoryEntry;
 
 namespace IPC {
 
@@ -41,26 +42,15 @@ struct OriginAttributesParamTraits
 } // namespace detail
 
 template<>
-struct ParamTraits<mozilla::PrincipalOriginAttributes>
-  : public detail::OriginAttributesParamTraits<mozilla::PrincipalOriginAttributes> {};
-
-template<>
-struct ParamTraits<mozilla::DocShellOriginAttributes>
-  : public detail::OriginAttributesParamTraits<mozilla::DocShellOriginAttributes> {};
-
-template<>
-struct ParamTraits<mozilla::NeckoOriginAttributes>
-  : public detail::OriginAttributesParamTraits<mozilla::NeckoOriginAttributes> {};
-
-template<>
-struct ParamTraits<mozilla::GenericOriginAttributes>
-  : public detail::OriginAttributesParamTraits<mozilla::GenericOriginAttributes> {};
+struct ParamTraits<mozilla::OriginAttributes>
+  : public detail::OriginAttributesParamTraits<mozilla::OriginAttributes> {};
 
 } // namespace IPC
 
 namespace mozilla {
 namespace net {
 class OptionalLoadInfoArgs;
+class RedirectHistoryEntryInfo;
 } // namespace net
 
 using namespace mozilla::net;
@@ -86,6 +76,28 @@ PrincipalInfoToPrincipal(const PrincipalInfo& aPrincipalInfo,
 nsresult
 PrincipalToPrincipalInfo(nsIPrincipal* aPrincipal,
                          PrincipalInfo* aPrincipalInfo);
+
+/**
+ * Return true if this PrincipalInfo is a content principal and it has
+ * a privateBrowsing id in its OriginAttributes
+ */
+bool
+IsPincipalInfoPrivate(const PrincipalInfo& aPrincipalInfo);
+
+/**
+ * Convert an RedirectHistoryEntryInfo to a nsIRedirectHistoryEntry.
+ */
+
+already_AddRefed<nsIRedirectHistoryEntry>
+RHEntryInfoToRHEntry(const RedirectHistoryEntryInfo& aRHEntryInfo);
+
+/**
+ * Convert an nsIRedirectHistoryEntry to a RedirectHistoryEntryInfo.
+ */
+
+nsresult
+RHEntryToRHEntryInfo(nsIRedirectHistoryEntry* aRHEntry,
+                     RedirectHistoryEntryInfo* aRHEntryInfo);
 
 /**
  * Convert a LoadInfo to LoadInfoArgs struct.

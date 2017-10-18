@@ -11,6 +11,7 @@
 #define nsMenuPopupFrame_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/gfx/Types.h"
 #include "nsIAtom.h"
 #include "nsGkAtoms.h"
 #include "nsCOMPtr.h"
@@ -48,6 +49,8 @@ enum nsPopupState {
   // state from when a popup is requested to be shown to after the
   // popupshowing event has been fired.
   ePopupShowing,
+  // state while a popup is waiting to be laid out and positioned
+  ePopupPositioning,
   // state while a popup is open but the widget is not yet visible
   ePopupOpening,
   // state while a popup is visible and waiting for the popupshown event
@@ -120,6 +123,7 @@ enum MenuPopupAnchorType {
 #define POPUPPOSITION_ENDAFTER 7
 #define POPUPPOSITION_OVERLAP 8
 #define POPUPPOSITION_AFTERPOINTER 9
+#define POPUPPOSITION_SELECTION 10
 
 #define POPUPPOSITION_HFLIP(v) (v ^ 1)
 #define POPUPPOSITION_VFLIP(v) (v ^ 2)
@@ -134,8 +138,10 @@ class nsXULPopupShownEvent : public mozilla::Runnable,
                              public nsIDOMEventListener
 {
 public:
-  nsXULPopupShownEvent(nsIContent *aPopup, nsPresContext* aPresContext)
-    : mPopup(aPopup), mPresContext(aPresContext)
+  nsXULPopupShownEvent(nsIContent* aPopup, nsPresContext* aPresContext)
+    : mozilla::Runnable("nsXULPopupShownEvent")
+    , mPopup(aPopup)
+    , mPresContext(aPresContext)
   {
   }
 
@@ -157,9 +163,8 @@ class nsMenuPopupFrame final : public nsBoxFrame, public nsMenuParent,
                                public nsIReflowCallback
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsMenuPopupFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMenuPopupFrame)
 
   explicit nsMenuPopupFrame(nsStyleContext* aContext);
 
@@ -182,17 +187,17 @@ public:
 
   /*
    * When this popup is open, should clicks outside of it be consumed?
-   * Return true if the popup should rollup on an outside click, 
+   * Return true if the popup should rollup on an outside click,
    * but consume that click so it can't be used for anything else.
-   * Return false to allow clicks outside the popup to activate content 
+   * Return false to allow clicks outside the popup to activate content
    * even when the popup is open.
    * ---------------------------------------------------------------------
-   * 
+   *
    * Should clicks outside of a popup be eaten?
    *
    *       Menus     Autocomplete     Comboboxes
    * Mac     Eat           No              Eat
-   * Win     No            No              Eat     
+   * Win     No            No              Eat
    * Unix    Eat           No              Eat
    *
    */
@@ -221,16 +226,21 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
+  bool HasRemoteContent() const;
+
   // returns true if the popup is a panel with the noautohide attribute set to
   // true. These panels do not roll up automatically.
   bool IsNoAutoHide() const;
 
   nsPopupLevel PopupLevel() const
   {
-    return PopupLevel(IsNoAutoHide()); 
+    return PopupLevel(IsNoAutoHide());
   }
 
-  void EnsureWidget();
+  // Ensure that a widget has already been created for this view, and create
+  // one if it hasn't. If aRecreate is true, destroys any existing widget and
+  // creates a new one, regardless of whether one has already been created.
+  void EnsureWidget(bool aRecreate = false);
 
   nsresult CreateWidgetForView(nsView* aView);
   uint8_t GetShadowStyle();
@@ -238,7 +248,9 @@ public:
   virtual void SetInitialChildList(ChildListID  aListID,
                                    nsFrameList& aChildList) override;
 
-  virtual bool IsLeaf() const override;
+  virtual bool IsLeafDynamic() const override;
+
+  virtual void UpdateWidgetProperties() override;
 
   // layout, position and display the popup as needed
   void LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
@@ -250,8 +262,10 @@ public:
   // (or the frame for mAnchorContent if aAnchorFrame is null), anchored at a
   // rectangle, or at a specific point if a screen position is set. The popup
   // will be adjusted so that it is on screen. If aIsMove is true, then the
-  // popup is being moved, and should not be flipped.
-  nsresult SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aSizedToPopup);
+  // popup is being moved, and should not be flipped. If aNotify is true, then
+  // a popuppositioned event is sent.
+  nsresult SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove,
+                            bool aSizedToPopup, bool aNotify);
 
   bool HasGeneratedChildren() { return mGeneratedChildren; }
   void SetGeneratedChildren() { mGeneratedChildren = true; }
@@ -271,6 +285,9 @@ public:
                                       mPopupState == ePopupShown; }
   bool IsVisible() { return mPopupState == ePopupVisible ||
                             mPopupState == ePopupShown; }
+
+  // Return true if the popup is for a menulist.
+  bool IsMenuList();
 
   bool IsMouseTransparent() { return mMouseTransparent; }
 
@@ -324,8 +341,9 @@ public:
   nsMenuFrame* FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent, bool& doAction);
 
   void ClearIncrementalString() { mIncrementalString.Truncate(); }
-
-  virtual nsIAtom* GetType() const override { return nsGkAtoms::menuPopupFrame; }
+  static bool IsWithinIncrementalTime(DOMTimeStamp time) {
+    return !sTimeoutOfIncrementalSearch || time - sLastKeyTime <= sTimeoutOfIncrementalSearch;
+  }
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -374,17 +392,16 @@ public:
                     nsPopupLevel aPopupLevel);
 
   // Determines whether the given edges of the popup may be moved, where
-  // aHorizontalSide and aVerticalSide are one of the NS_SIDE_* constants, or
-  // 0 for no movement in that direction. aChange is the distance to move on
-  // those sides. If will be reset to 0 if the side cannot be adjusted at all
-  // in that direction. For example, a popup cannot be moved if it is anchored
-  // on a particular side.
+  // aHorizontalSide and aVerticalSide are one of the enum Side constants.
+  // aChange is the distance to move on those sides. If will be reset to 0
+  // if the side cannot be adjusted at all in that direction. For example, a
+  // popup cannot be moved if it is anchored on a particular side.
   //
   // Later, when bug 357725 is implemented, we can make this adjust aChange by
   // the amount that the side can be resized, so that minimums and maximums
   // can be taken into account.
-  void CanAdjustEdges(int8_t aHorizontalSide,
-                      int8_t aVerticalSide,
+  void CanAdjustEdges(mozilla::Side aHorizontalSide,
+                      mozilla::Side aVerticalSide,
                       mozilla::LayoutDeviceIntPoint& aChange);
 
   // Return true if the popup is positioned relative to an anchor.
@@ -421,6 +438,18 @@ public:
     return false;
   }
 
+  void ShowWithPositionedEvent() {
+    mPopupState = ePopupPositioning;
+    mShouldAutoPosition = true;
+  }
+
+  // Checks for the anchor to change and either moves or hides the popup
+  // accordingly. The original position of the anchor should be supplied as
+  // the argument. If the popup needs to be hidden, HidePopup will be called by
+  // CheckForAnchorChange. If the popup needs to be moved, aRect will be updated
+  // with the new rectangle.
+  void CheckForAnchorChange(nsRect& aRect);
+
   // nsIReflowCallback
   virtual bool ReflowFinished() override;
   virtual void ReflowCallbackCanceled() override;
@@ -442,6 +471,10 @@ protected:
   nsPoint AdjustPositionForAnchorAlign(nsRect& anchorRect,
                                        FlipStyle& aHFlip, FlipStyle& aVFlip);
 
+  // For popups that are going to align to their selected item, get the frame of
+  // the selected item.
+  nsIFrame* GetSelectedItemForAlignment();
+
   // check if the popup will fit into the available space and resize it. This
   // method handles only one axis at a time so is called twice, once for
   // horizontal and once for vertical. All arguments are specified for this
@@ -457,12 +490,12 @@ protected:
   //   aOffsetForContextMenu - the additional offset to add for context menus
   //   aFlip - how to flip or resize the popup when there isn't space
   //   aFlipSide - pointer to where current flip mode is stored
-  nscoord FlipOrResize(nscoord& aScreenPoint, nscoord aSize, 
+  nscoord FlipOrResize(nscoord& aScreenPoint, nscoord aSize,
                        nscoord aScreenBegin, nscoord aScreenEnd,
                        nscoord aAnchorBegin, nscoord aAnchorEnd,
                        nscoord aMarginBegin, nscoord aMarginEnd,
                        nscoord aOffsetForContextMenu, FlipStyle aFlip,
-                       bool* aFlipSide);
+                       bool aIsOnEnd, bool* aFlipSide);
 
   // check if the popup can fit into the available space by "sliding" (i.e.,
   // by having the anchor arrow slide along one axis and only resizing if that
@@ -481,6 +514,10 @@ protected:
   nscoord SlideOrResize(nscoord& aScreenPoint, nscoord aSize,
                         nscoord aScreenBegin, nscoord aScreenEnd,
                         nscoord *aOffset);
+
+  // Given an anchor frame, compute the anchor rectangle relative to the screen,
+  // using the popup frame's app units, and taking into account transforms.
+  nsRect ComputeAnchorRect(nsPresContext* aRootPresContext, nsIFrame* aAnchorFrame);
 
   // Move the popup to the position specified in its |left| and |top| attributes.
   void MoveToAttributePosition();
@@ -502,6 +539,20 @@ protected:
   // view, and is initially hidden.
   void CreatePopupView();
 
+  nsView* GetViewInternal() const override { return mView; }
+  void SetViewInternal(nsView* aView) override { mView = aView; }
+
+  // Returns true if the popup should try to remain at the same relative
+  // location as the anchor while it is open. If the anchor becomes hidden
+  // either directly or indirectly because a parent popup or other element
+  // is no longer visible, or a parent deck page is changed, the popup hides
+  // as well. The second variation also sets the anchor rectangle, relative to
+  // the popup frame.
+  bool ShouldFollowAnchor();
+public:
+  bool ShouldFollowAnchor(nsRect& aRect);
+
+protected:
   nsString     mIncrementalString;  // for incremental typing navigation
 
   // the content that the popup is anchored to, if any, which may be in a
@@ -513,8 +564,12 @@ protected:
   nsCOMPtr<nsIContent> mTriggerContent;
 
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
+  nsView* mView;
 
   RefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
+
+  // The popup's screen rectangle in app units.
+  nsIntRect mUsedScreenRect;
 
   // A popup's preferred size may be different than its actual size stored in
   // mRect in the case where the popup was resized because it was too large
@@ -585,6 +640,11 @@ protected:
   bool mIsMenuLocked; // Should events inside this menu be ignored?
   bool mMouseTransparent; // True if this is a popup is transparent to mouse events
 
+  // True if this popup has been offset due to moving off / near the edge of the screen.
+  // (This is useful for ensuring that a move, which can't offset the popup, doesn't undo
+  // a previously set offset.)
+  bool mIsOffset;
+
   // the flip modes that were used when the popup was opened
   bool mHFlip;
   bool mVFlip;
@@ -595,6 +655,8 @@ protected:
   nsRect mOverrideConstraintRect;
 
   static int8_t sDefaultLevelIsTop;
+
+  static DOMTimeStamp sLastKeyTime;
 
   // If 0, never timed out.  Otherwise, the value is in milliseconds.
   static uint32_t sTimeoutOfIncrementalSearch;

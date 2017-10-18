@@ -17,12 +17,11 @@ javaparser:: \
   jar cf javaparser.jar -C javaparser/bin .
 
 sync_javaparser:: \
-; if [ -d javaparser/.svn ] ; \
-  then cd javaparser ; svn up ; cd .. ; \
-  else \
-    rm -rf javaparser ; \
-    svn co http://javaparser.googlecode.com/svn/trunk/JavaParser javaparser ; \
-  fi
+; if [ ! -d javaparser/.git ] ; \
+    then rm -rf javaparser ; \
+    git clone https://github.com/javaparser/javaparser.git ; \
+  fi ; \
+  cd javaparser ; git checkout javaparser-1.0.6 ; cd ..
 
 sync_htmlparser:: \
 ; if [ -d htmlparser/.hg ] ; \
@@ -38,13 +37,13 @@ translate:: translator \
 ; mkdir -p ../javasrc ; \
   java -jar translator.jar \
     htmlparser/src/nu/validator/htmlparser/impl \
-    .. ../nsHtml5AtomList.h
+    .. ../../../dom/base/nsGkAtomList.h
 
 translate_from_snapshot:: translator \
 ; mkdir -p ../javasrc ; \
   java -jar translator.jar \
     ../javasrc \
-    .. ../nsHtml5AtomList.h
+    .. ../../../dom/base/nsGkAtomList.h
 
 named_characters:: translator \
 ; java -cp translator.jar \

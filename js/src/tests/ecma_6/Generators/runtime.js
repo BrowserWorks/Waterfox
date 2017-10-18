@@ -74,9 +74,7 @@ function TestGeneratorObjectPrototype() {
     found_property_names.sort();
 
     assertDeepEq(found_property_names, expected_property_names);
-
-    // No symbol properties, at least until we have @@toStringTag.
-    assertEq(Object.getOwnPropertySymbols(GeneratorObjectPrototype).length, 0);
+    assertDeepEq(Object.getOwnPropertySymbols(GeneratorObjectPrototype), [Symbol.toStringTag]);
 }
 TestGeneratorObjectPrototype();
 
@@ -111,7 +109,7 @@ function TestGeneratorFunction() {
     // Doesn't matter particularly what string gets serialized, as long
     // as it contains "function*" and "yield 10".
     assertEq(GeneratorFunction('yield 10').toString(),
-             "function* anonymous() {\nyield 10\n}");
+             "function* anonymous(\n) {\nyield 10\n}");
 }
 TestGeneratorFunction();
 

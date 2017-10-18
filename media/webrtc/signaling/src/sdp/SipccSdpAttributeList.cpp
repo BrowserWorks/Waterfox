@@ -133,6 +133,10 @@ SipccSdpAttributeList::LoadSimpleNumbers(sdp_t* sdp, uint16_t level,
                    errorHolder);
   LoadSimpleNumber(sdp, level, SDP_ATTR_MAXPTIME,
                    SdpAttribute::kMaxptimeAttribute, errorHolder);
+  LoadSimpleNumber(sdp, level, SDP_ATTR_SCTPPORT,
+                   SdpAttribute::kSctpPortAttribute, errorHolder);
+  LoadSimpleNumber(sdp, level, SDP_ATTR_MAXMESSAGESIZE,
+                   SdpAttribute::kMaxMessageSizeAttribute, errorHolder);
 }
 
 void
@@ -363,6 +367,8 @@ SipccSdpAttributeList::GetCodecType(rtp_ptype type)
       return SdpRtpmapAttributeList::kRed;
     case RTP_ULPFEC:
       return SdpRtpmapAttributeList::kUlpfec;
+    case RTP_TELEPHONE_EVENT:
+      return SdpRtpmapAttributeList::kTelephoneEvent;
     case RTP_NONE:
     // Happens when sipcc doesn't know how to translate to the enum
     case RTP_CELP:
@@ -377,7 +383,6 @@ SipccSdpAttributeList::GetCodecType(rtp_ptype type)
     case RTP_JPEG:
     case RTP_NV:
     case RTP_H261:
-    case RTP_AVT:
     case RTP_L16:
     case RTP_H263:
     case RTP_ILBC:
@@ -660,6 +665,19 @@ SipccSdpAttributeList::LoadIdentity(sdp_t* sdp, uint16_t level)
 }
 
 void
+SipccSdpAttributeList::LoadDtlsMessage(sdp_t* sdp, uint16_t level)
+{
+  const char* val = sdp_attr_get_long_string(sdp, SDP_ATTR_DTLS_MESSAGE, level,
+                                             0, 1);
+  if (val) {
+    // sipcc does not expose parse code for this, so we use a SDParta-provided
+    // parser
+    std::string strval(val);
+    SetAttribute(new SdpDtlsMessageAttribute(strval));
+  }
+}
+
+void
 SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
 {
   auto fmtps = MakeUnique<SdpFmtpAttributeList>();
@@ -743,6 +761,14 @@ SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
         opusParameters->stereo = fmtp->stereo;
         opusParameters->useInBandFec = fmtp->useinbandfec;
         parameters.reset(opusParameters);
+      } break;
+      case RTP_TELEPHONE_EVENT: {
+        SdpFmtpAttributeList::TelephoneEventParameters* teParameters(
+          new SdpFmtpAttributeList::TelephoneEventParameters);
+        if (strlen(fmtp->dtmf_tones) > 0) {
+          teParameters->dtmfTones = fmtp->dtmf_tones;
+        }
+        parameters.reset(teParameters);
       } break;
       default: {
       }
@@ -1025,12 +1051,11 @@ SipccSdpAttributeList::Load(sdp_t* sdp, uint16_t level,
     }
 
     LoadIdentity(sdp, level);
+    LoadDtlsMessage(sdp, level);
   } else {
     sdp_media_e mtype = sdp_get_media_type(sdp, level);
     if (mtype == SDP_MEDIA_APPLICATION) {
-      if (!LoadSctpmap(sdp, level, errorHolder)) {
-        return false;
-      }
+      LoadSctpmap(sdp, level, errorHolder);
     } else {
       if (!LoadRtpmap(sdp, level, errorHolder)) {
         return false;
@@ -1119,6 +1144,16 @@ SipccSdpAttributeList::GetDirection() const
 
   const SdpAttribute* attr = GetAttribute(SdpAttribute::kDirectionAttribute);
   return static_cast<const SdpDirectionAttribute*>(attr)->mValue;
+}
+
+const SdpDtlsMessageAttribute&
+SipccSdpAttributeList::GetDtlsMessage() const
+{
+  if (!HasAttribute(SdpAttribute::kDtlsMessageAttribute)) {
+    MOZ_CRASH();
+  }
+  const SdpAttribute* attr = GetAttribute(SdpAttribute::kDtlsMessageAttribute);
+  return *static_cast<const SdpDtlsMessageAttribute*>(attr);
 }
 
 const SdpExtmapAttributeList&
@@ -1339,6 +1374,28 @@ SipccSdpAttributeList::GetSctpmap() const
   }
   const SdpAttribute* attr = GetAttribute(SdpAttribute::kSctpmapAttribute);
   return *static_cast<const SdpSctpmapAttributeList*>(attr);
+}
+
+uint32_t
+SipccSdpAttributeList::GetSctpPort() const
+{
+  if (!HasAttribute(SdpAttribute::kSctpPortAttribute)) {
+    MOZ_CRASH();
+  }
+
+  const SdpAttribute* attr = GetAttribute(SdpAttribute::kSctpPortAttribute);
+  return static_cast<const SdpNumberAttribute*>(attr)->mValue;
+}
+
+uint32_t
+SipccSdpAttributeList::GetMaxMessageSize() const
+{
+  if (!HasAttribute(SdpAttribute::kMaxMessageSizeAttribute)) {
+    MOZ_CRASH();
+  }
+
+  const SdpAttribute* attr = GetAttribute(SdpAttribute::kMaxMessageSizeAttribute);
+  return static_cast<const SdpNumberAttribute*>(attr)->mValue;
 }
 
 const SdpSetupAttribute&

@@ -4,32 +4,30 @@
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 
-function* testBackgroundPage(expected) {
+async function testBackgroundPage(expected) {
   let extension = ExtensionTestUtils.loadExtension({
-    background() {
-      browser.runtime.getBackgroundPage().then(bgPage => {
-        browser.test.assertEq(window, browser.extension.getBackgroundPage(),
-                              "Caller should be able to access itself as a background page");
-        browser.test.assertEq(window, bgPage,
-                              "Caller should be able to access itself as a background page");
+    async background() {
+      browser.test.assertEq(window, browser.extension.getBackgroundPage(),
+                            "Caller should be able to access itself as a background page");
+      browser.test.assertEq(window, await browser.runtime.getBackgroundPage(),
+                            "Caller should be able to access itself as a background page");
 
-        browser.test.sendMessage("incognito", browser.extension.inIncognitoContext);
-      });
+      browser.test.sendMessage("incognito", browser.extension.inIncognitoContext);
     },
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  let incognito = yield extension.awaitMessage("incognito");
+  let incognito = await extension.awaitMessage("incognito");
   equal(incognito, expected.incognito, "Expected incognito value");
 
-  yield extension.unload();
+  await extension.unload();
 }
 
-add_task(function* test_background_incognito() {
+add_task(async function test_background_incognito() {
   do_print("Test background page incognito value with permanent private browsing disabled");
 
-  yield testBackgroundPage({incognito: false});
+  await testBackgroundPage({incognito: false});
 
   do_print("Test background page incognito value with permanent private browsing enabled");
 
@@ -38,5 +36,5 @@ add_task(function* test_background_incognito() {
     Preferences.reset("browser.privatebrowsing.autostart");
   });
 
-  yield testBackgroundPage({incognito: true});
+  await testBackgroundPage({incognito: true});
 });

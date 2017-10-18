@@ -1,0 +1,60 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+interface nsIFile;
+
+[scriptable, builtinclass, uuid(01dfa47b-87e4-4135-877b-586d033e1b5d)]
+interface amIAddonManagerStartup : nsISupports
+{
+  /**
+   * Reads and parses startup data from the addonState.json.lz4 file, checks
+   * for modifications, and returns the result.
+   *
+   * Returns null for an empty or nonexistent state file, but throws for an
+   * invalid one.
+   */
+  [implicit_jscontext]
+  jsval readStartupData();
+
+  /**
+   * Initializes the chrome registry for the enabled, non-restartless add-on
+   * in the given state data.
+   */
+  [implicit_jscontext]
+  void initializeExtensions(in jsval locations);
+
+  [implicit_jscontext]
+  jsval encodeBlob(in jsval value);
+
+  [implicit_jscontext]
+  jsval decodeBlob(in jsval value);
+
+  /**
+   * Enumerates over all entries in the given zip file matching the given
+   * pattern, and returns an array of their paths.
+   *
+   * This should be used in preference to manually opening or retrieving a
+   * ZipReader from the zip cache, since the former causes main thread IO and
+   * the latter can lead to file locking issues due to unpredictable GC behavior
+   * keeping the cached ZipReader alive after the cache is flushed.
+   *
+   * @param file The zip file to enumerate.
+   * @param pattern The pattern to match, as passed to nsIZipReader.findEntries.
+   */
+  void enumerateZipFile(in nsIFile file, in AUTF8String pattern,
+                        [optional] out unsigned long count,
+                        [retval, array, size_is(count)] out wstring entries);
+
+  /**
+   * Resets the internal state of the startup service, and allows
+   * initializeExtensions() to be called again. Does *not* fully unregister
+   * chrome registry locations for previously registered add-ons.
+   *
+   * NOT FOR USE OUTSIDE OF UNIT TESTS.
+   */
+  void reset();
+};
+

@@ -6,14 +6,15 @@
 #include "ScrollbarActivity.h"
 #include "nsIScrollbarMediator.h"
 #include "nsIContent.h"
+#include "nsICSSDeclaration.h"
 #include "nsIDOMEvent.h"
-#include "nsIDOMElementCSSInlineStyle.h"
 #include "nsIDOMCSSStyleDeclaration.h"
 #include "nsIFrame.h"
 #include "nsContentUtils.h"
 #include "nsAString.h"
 #include "nsQueryFrame.h"
 #include "nsComponentManagerUtils.h"
+#include "nsStyledElement.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Preferences.h"
 
@@ -307,7 +308,7 @@ ScrollbarActivity::RegisterWithRefreshDriver()
 {
   nsRefreshDriver* refreshDriver = GetRefreshDriver();
   if (refreshDriver) {
-    refreshDriver->AddRefreshObserver(this, Flush_Style);
+    refreshDriver->AddRefreshObserver(this, FlushType::Style);
   }
 }
 
@@ -316,7 +317,7 @@ ScrollbarActivity::UnregisterFromRefreshDriver()
 {
   nsRefreshDriver* refreshDriver = GetRefreshDriver();
   if (refreshDriver) {
-    refreshDriver->RemoveRefreshObserver(this, Flush_Style);
+    refreshDriver->RemoveRefreshObserver(this, FlushType::Style);
   }
 }
 
@@ -352,16 +353,13 @@ ScrollbarActivity::SetIsActive(bool aNewActive)
 static void
 SetOpacityOnElement(nsIContent* aContent, double aOpacity)
 {
-  nsCOMPtr<nsIDOMElementCSSInlineStyle> inlineStyleContent =
+  nsCOMPtr<nsStyledElement> inlineStyleContent =
     do_QueryInterface(aContent);
   if (inlineStyleContent) {
-    nsCOMPtr<nsIDOMCSSStyleDeclaration> decl;
-    inlineStyleContent->GetStyle(getter_AddRefs(decl));
-    if (decl) {
-      nsAutoString str;
-      str.AppendFloat(aOpacity);
-      decl->SetProperty(NS_LITERAL_STRING("opacity"), str, EmptyString());
-    }
+    nsICSSDeclaration* decl = inlineStyleContent->Style();
+    nsAutoString str;
+    str.AppendFloat(aOpacity);
+    decl->SetProperty(NS_LITERAL_STRING("opacity"), str, EmptyString());
   }
 }
 
@@ -376,7 +374,7 @@ ScrollbarActivity::UpdateOpacity(TimeStamp aTime)
   double opacity = 1.0 - std::max(0.0, std::min(1.0, progress));
 
   // 'this' may be getting destroyed during SetOpacityOnElement calls.
-  nsWeakFrame weakFrame((do_QueryFrame(mScrollableFrame)));
+  AutoWeakFrame weakFrame((do_QueryFrame(mScrollableFrame)));
   SetOpacityOnElement(GetHorizontalScrollbar(), opacity);
   if (!weakFrame.IsAlive()) {
     return false;
@@ -391,15 +389,12 @@ ScrollbarActivity::UpdateOpacity(TimeStamp aTime)
 static void
 UnsetOpacityOnElement(nsIContent* aContent)
 {
-  nsCOMPtr<nsIDOMElementCSSInlineStyle> inlineStyleContent =
+  nsCOMPtr<nsStyledElement> inlineStyleContent =
     do_QueryInterface(aContent);
   if (inlineStyleContent) {
-    nsCOMPtr<nsIDOMCSSStyleDeclaration> decl;
-    inlineStyleContent->GetStyle(getter_AddRefs(decl));
-    if (decl) {
-      nsAutoString dummy;
-      decl->RemoveProperty(NS_LITERAL_STRING("opacity"), dummy);
-    }
+    nsICSSDeclaration* decl = inlineStyleContent->Style();
+    nsAutoString dummy;
+    decl->RemoveProperty(NS_LITERAL_STRING("opacity"), dummy);
   }
 }
 
@@ -413,7 +408,7 @@ ScrollbarActivity::SetIsFading(bool aNewFading)
   if (!mIsFading) {
     mFadeBeginTime = TimeStamp();
     // 'this' may be getting destroyed during UnsetOpacityOnElement calls.
-    nsWeakFrame weakFrame((do_QueryFrame(mScrollableFrame)));
+    AutoWeakFrame weakFrame((do_QueryFrame(mScrollableFrame)));
     UnsetOpacityOnElement(GetHorizontalScrollbar());
     if (!weakFrame.IsAlive()) {
       return false;

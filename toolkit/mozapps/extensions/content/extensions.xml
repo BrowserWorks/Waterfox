@@ -109,7 +109,7 @@
             return;
           var stars = this.stars;
           for (let i = 0; i < stars.length; i++)
-            stars[i].setAttribute("on", i <= (aScore -1));
+            stars[i].setAttribute("on", i <= (aScore - 1));
         ]]></body>
       </method>
 
@@ -396,7 +396,7 @@
           if (aItem.hasAttribute("disabled") &&
               aItem.getAttribute("disabled") == "true")
             return false;
-          var style = document.defaultView.getComputedStyle(aItem, "");
+          var style = document.defaultView.getComputedStyle(aItem);
           return style.display != "none" && style.visibility == "visible";
         ]]>
         </body>
@@ -653,6 +653,31 @@
           delete this.mControl.mAddon;
           this.mControl.mInstall = this.mInstall;
           this.mControl.setAttribute("status", "installing");
+          let prompt = Services.prefs.getBoolPref("extensions.webextPermissionPrompts", false);
+          if (prompt) {
+            this.mInstall.promptHandler = info => new Promise((resolve, reject) => {
+              // Skip prompts for non-webextensions
+              if (!info.addon.userPermissions) {
+                resolve();
+                return;
+              }
+              let subject = {
+                wrappedJSObject: {
+                  target: window.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIDocShell).chromeEventHandler,
+                  info: {
+                    addon: info.addon,
+                    source: "AMO",
+                    icon: info.addon.iconURL,
+                    permissions: info.addon.userPermissions,
+                    resolve,
+                    reject,
+                  },
+                },
+              };
+              Services.obs.notifyObservers(subject, "webextension-permission-prompt");
+            });
+          }
           this.mInstall.install();
         ]]></body>
       </method>
@@ -723,6 +748,15 @@
   <binding id="addon-base"
            extends="chrome://global/content/bindings/richlistbox.xml#richlistitem">
     <implementation>
+      <property name="isLegacy" readonly="true">
+        <getter><![CDATA[
+          if (this.mAddon.install) {
+            return false;
+          }
+          return isLegacyExtension(this.mAddon);
+        ]]></getter>
+      </property>
+
       <method name="hasPermission">
         <parameter name="aPerm"/>
         <body><![CDATA[
@@ -759,7 +793,7 @@
 
       <method name="onUninstalled">
         <body><![CDATA[
-          this.parentNode.removeChild(this);
+          this.remove();
         ]]></body>
       </method>
     </implementation>
@@ -808,6 +842,7 @@
               <xul:hbox class="name-container">
                 <xul:label anonid="name" class="name" crop="end" flex="1"
                            tooltip="addonitem-tooltip" xbl:inherits="value=name"/>
+                <xul:label anonid="legacy" class="legacy-warning text-link" value="&addon.legacy.label;"/>
                 <xul:label class="disabled-postfix" value="&addon.disabled.postfix;"/>
                 <xul:label class="update-postfix" value="&addon.update.postfix;"/>
                 <xul:spacer flex="5000"/> <!-- Necessary to make the name crop -->
@@ -895,6 +930,9 @@
             <xul:button anonid="disable-btn" class="addon-control disable"
                         label="&cmd.disableAddon.label;"
                         oncommand="document.getBindingParent(this).userDisabled = true;"/>
+            <xul:button anonid="replacement-btn" class="addon-control replacement"
+                        label="&cmd.findReplacement.label;"
+                        oncommand="document.getBindingParent(this).findReplacement();"/>
             <xul:button anonid="remove-btn" class="addon-control remove"
                         label="&cmd.uninstallAddon.label;"
                         oncommand="document.getBindingParent(this).uninstall();"/>
@@ -1086,7 +1124,13 @@
           return this.mAddon.userDisabled;
         ]]></getter>
         <setter><![CDATA[
-          this.mAddon.userDisabled = val;
+          if (val === true) {
+            gViewController.commands["cmd_disableItem"].doCommand(this.mAddon);
+          } else if (val === false) {
+            gViewController.commands["cmd_enableItem"].doCommand(this.mAddon);
+          } else {
+            this.mAddon.userDisabled = val;
+          }
         ]]></setter>
       </property>
 
@@ -1095,8 +1139,8 @@
           return this._includeUpdate.checked && !!this.mManualUpdate;
         ]]></getter>
         <setter><![CDATA[
-          //XXXunf Eventually, we'll want to persist this for individual
-          //       updates - see bug 594619.
+          // XXXunf Eventually, we'll want to persist this for individual
+          //        updates - see bug 594619.
           this._includeUpdate.checked = !!val;
         ]]></setter>
       </property>
@@ -1122,6 +1166,11 @@
             this._description.value = this.mAddon.description;
           else
             this._description.hidden = true;
+
+          let legacyWarning = legacyExtensionsEnabled && !this.mAddon.install &&
+            isLegacyExtension(this.mAddon);
+          this.setAttribute("legacy", legacyWarning);
+          document.getAnonymousElementByAttribute(this, "anonid", "legacy").href = SUPPORT_URL + "webextensions";
 
           if (!("applyBackgroundUpdates" in this.mAddon) ||
               (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DISABLE ||
@@ -1165,14 +1214,8 @@
       <method name="_updateDates">
         <body><![CDATA[
           function formatDate(aDate) {
-            return Cc["@mozilla.org/intl/scriptabledateformat;1"]
-                     .getService(Ci.nsIScriptableDateFormat)
-                     .FormatDate("",
-                                 Ci.nsIScriptableDateFormat.dateFormatLong,
-                                 aDate.getFullYear(),
-                                 aDate.getMonth() + 1,
-                                 aDate.getDate()
-                                 );
+            const dtOptions = { year: "numeric", month: "long", day: "numeric" };
+            return aDate.toLocaleDateString(undefined, dtOptions);
           }
 
           if (this.mAddon.updateDate)
@@ -1241,13 +1284,14 @@
               this._errorLink.value = gStrings.ext.GetStringFromName("notification.blocked.link");
               this._errorLink.href = this.mAddon.blocklistURL;
               this._errorLink.hidden = false;
-            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon) && SIGNING_REQUIRED) {
+            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon) &&
+                       AddonSettings.REQUIRE_SIGNING) {
               this.setAttribute("notification", "error");
               this._error.textContent = gStrings.ext.formatStringFromName(
                 "notification.unsignedAndDisabled", [this.mAddon.name, gStrings.brandShortName], 2
               );
               this._errorLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
-              this._errorLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+              this._errorLink.href = SUPPORT_URL + "unsigned-addons";
               this._errorLink.hidden = false;
             } else if ((!isUpgrade && !this.mAddon.isCompatible) && (AddonManager.checkCompatibility
             || (this.mAddon.blocklistState != Ci.nsIBlocklistService.STATE_SOFTBLOCKED))) {
@@ -1258,13 +1302,23 @@
               );
               this._warningLink.hidden = true;
               this._warningBtn.hidden = true;
+            } else if (!isUpgrade && this.mAddon.appDisabled &&
+                       !this.mAddon.multiprocessCompatible &&
+                       !Services.prefs.getBoolPref("extensions.allow-non-mpc-extensions", true)) {
+              this.setAttribute("notification", "error");
+              this._error.textContent = gStrings.ext.formatStringFromName(
+                "notification.nonMpcDisabled", [this.mAddon.name], 1
+              );
+              this._errorLink.value = gStrings.ext.GetStringFromName("notification.nonMpcDisabled.link");
+              this._errorLink.href = "https://wiki.mozilla.org/Add-ons/ShimsNightly";
+              this._errorLink.hidden = false;
             } else if (!isUpgrade && !isCorrectlySigned(this.mAddon)) {
               this.setAttribute("notification", "warning");
               this._warning.textContent = gStrings.ext.formatStringFromName(
                 "notification.unsigned", [this.mAddon.name, gStrings.brandShortName], 2
               );
               this._warningLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
-              this._warningLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+              this._warningLink.href = SUPPORT_URL + "unsigned-addons";
               this._warningLink.hidden = false;
             } else if (!isUpgrade && this.mAddon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
               this.setAttribute("notification", "warning");
@@ -1335,33 +1389,34 @@
               ["ask_to_activate", "enable", "disable"].some(perm => this.hasPermission(perm));
             this._stateMenulist.disabled = !hasActivatePermission;
             this._stateMenulist.hidden = false;
-            this._stateMenulist.classList.add('no-auto-hide');
+            this._stateMenulist.classList.add("no-auto-hide");
           } else {
             this._stateMenulist.hidden = true;
+
+            let enableTooltip = gViewController.commands["cmd_enableItem"]
+                                               .getTooltip(this.mAddon);
+            this._enableBtn.setAttribute("tooltiptext", enableTooltip);
             if (this.hasPermission("enable")) {
               this._enableBtn.hidden = false;
-              let tooltip = gViewController.commands["cmd_enableItem"]
-                                           .getTooltip(this.mAddon);
-              this._enableBtn.setAttribute("tooltiptext", tooltip);
             } else {
               this._enableBtn.hidden = true;
             }
 
+            let disableTooltip = gViewController.commands["cmd_disableItem"]
+                                                .getTooltip(this.mAddon);
+            this._disableBtn.setAttribute("tooltiptext", disableTooltip);
             if (this.hasPermission("disable")) {
               this._disableBtn.hidden = false;
-              let tooltip = gViewController.commands["cmd_disableItem"]
-                                           .getTooltip(this.mAddon);
-              this._disableBtn.setAttribute("tooltiptext", tooltip);
             } else {
               this._disableBtn.hidden = true;
             }
           }
 
+          let uninstallTooltip = gViewController.commands["cmd_uninstallItem"]
+                                                .getTooltip(this.mAddon);
+          this._removeBtn.setAttribute("tooltiptext", uninstallTooltip);
           if (this.hasPermission("uninstall")) {
             this._removeBtn.hidden = false;
-            let tooltip = gViewController.commands["cmd_uninstallItem"]
-                                         .getTooltip(this.mAddon);
-            this._removeBtn.setAttribute("tooltiptext", tooltip);
           } else {
             this._removeBtn.hidden = true;
           }
@@ -1473,15 +1528,17 @@
           var dataReq = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                               .createInstance(Components.interfaces.nsIXMLHttpRequest);
           dataReq.open("GET", aURI.spec, true);
-          dataReq.addEventListener("load", handleResponse, false);
-          dataReq.addEventListener("error", handleError, false);
+          dataReq.responseType = "document";
+          dataReq.addEventListener("load", handleResponse);
+          dataReq.addEventListener("error", handleError);
           dataReq.send(null);
 
           var styleReq = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                               .createInstance(Components.interfaces.nsIXMLHttpRequest);
           styleReq.open("GET", UPDATES_RELEASENOTES_TRANSFORMFILE, true);
-          styleReq.addEventListener("load", handleResponse, false);
-          styleReq.addEventListener("error", handleError, false);
+          styleReq.responseType = "document";
+          styleReq.addEventListener("load", handleResponse);
+          styleReq.addEventListener("error", handleError);
           styleReq.send(null);
         ]]></body>
       </method>
@@ -1585,6 +1642,12 @@
         <body><![CDATA[
           gViewController.loadView("addons://detail/" +
                                    encodeURIComponent(this.mAddon.id));
+        ]]></body>
+      </method>
+
+      <method name="findReplacement">
+        <body><![CDATA[
+          openURL(`https://addons.mozilla.org/find-replacement/?guid=${this.mAddon.id}`);
         ]]></body>
       </method>
 
@@ -1750,8 +1813,8 @@
           this._lastClickTarget = event.originalTarget;
           break;
         case 2:
-          if (event.originalTarget.localName != 'button' &&
-              !event.originalTarget.classList.contains('text-link') &&
+          if (event.originalTarget.localName != "button" &&
+              !event.originalTarget.classList.contains("text-link") &&
               event.originalTarget == this._lastClickTarget) {
             this.showInDetailView();
           }

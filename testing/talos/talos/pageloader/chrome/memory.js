@@ -1,3 +1,4 @@
+/* import-globals-from pageloader.js */
 
 var gChildProcess = true;
 var gMemCallback = null;
@@ -12,30 +13,30 @@ function initializeMemoryCollector(callback, args) {
     var os = Components.classes["@mozilla.org/observer-service;1"].
         getService(Components.interfaces.nsIObserverService);
 
-    os.addObserver(function () {
+    os.addObserver(function() {
         var os = Components.classes["@mozilla.org/observer-service;1"].
             getService(Components.interfaces.nsIObserverService);
 
         memTimer.cancel();
         memTimer = null;
 
-        os.removeObserver(arguments.callee, "child-memory-reporter-update", false);
-        os.addObserver(collectAndReport, "child-memory-reporter-update", false);
+        os.removeObserver(arguments.callee, "child-memory-reporter-update");
+        os.addObserver(collectAndReport, "child-memory-reporter-update");
         gMemCallback();
-    }, "child-memory-reporter-update", false);
+    }, "child-memory-reporter-update");
 
    /*
     * Assume we have a child process, but if timer fires before we call the observer
     * we will assume there is no child process.
     */
     var event = {
-      notify: function(timer) {
+      notify(timer) {
         memTimer = null;
         gChildProcess = false;
         gMemCallback();
       }
     }
- 
+
     var memTimer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
     memTimer.initWithCallback(event, 10000, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
 
@@ -52,7 +53,7 @@ function collectMemory(callback, args) {
     var os = Components.classes["@mozilla.org/observer-service;1"].
         getService(Components.interfaces.nsIObserverService);
 
-    os.notifyObservers(null, "child-memory-reporter-request", null);
+    os.notifyObservers(null, "child-memory-reporter-request");
   } else {
     collectAndReport(null, null, null);
   }

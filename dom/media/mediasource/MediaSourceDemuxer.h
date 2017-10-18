@@ -13,19 +13,20 @@
 #include "AutoTaskQueue.h"
 
 #include "MediaDataDemuxer.h"
-#include "MediaDecoderReader.h"
 #include "MediaResource.h"
 #include "MediaSource.h"
 #include "TrackBuffersManager.h"
 
 namespace mozilla {
 
+class AbstractThread;
+class MediaResult;
 class MediaSourceTrackDemuxer;
 
 class MediaSourceDemuxer : public MediaDataDemuxer
 {
 public:
-  explicit MediaSourceDemuxer();
+  explicit MediaSourceDemuxer(AbstractThread* aAbstractMainThread);
 
   RefPtr<InitPromise> Init() override;
 
@@ -33,8 +34,8 @@ public:
 
   uint32_t GetNumberTracks(TrackInfo::TrackType aType) const override;
 
-  already_AddRefed<MediaTrackDemuxer> GetTrackDemuxer(TrackInfo::TrackType aType,
-                                                              uint32_t aTrackNumber) override;
+  already_AddRefed<MediaTrackDemuxer>
+  GetTrackDemuxer(TrackInfo::TrackType aType, uint32_t aTrackNumber) override;
 
   bool IsSeekable() const override;
 
@@ -42,28 +43,29 @@ public:
 
   bool ShouldComputeStartTime() const override { return false; }
 
-  void NotifyDataArrived() override;
-
   /* interface for TrackBuffersManager */
   void AttachSourceBuffer(TrackBuffersManager* aSourceBuffer);
   void DetachSourceBuffer(TrackBuffersManager* aSourceBuffer);
   AutoTaskQueue* GetTaskQueue() { return mTaskQueue; }
+  void NotifyInitDataArrived();
 
   // Returns a string describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
-  void GetMozDebugReaderData(nsAString& aString);
+  void GetMozDebugReaderData(nsACString& aString);
 
   void AddSizeOfResources(MediaSourceDecoder::ResourceSizes* aSizes);
 
   // Gap allowed between frames.
-  static const media::TimeUnit EOS_FUZZ;
+  // Due to inaccuracies in determining buffer end
+  // frames (Bug 1065207). This value is based on videos seen in the wild.
+  static constexpr media::TimeUnit EOS_FUZZ =
+    media::TimeUnit::FromMicroseconds(500000);
 
 private:
   ~MediaSourceDemuxer();
   friend class MediaSourceTrackDemuxer;
   // Scan source buffers and update information.
   bool ScanSourceBuffersForContent();
-  RefPtr<InitPromise> AttemptInit();
   TrackBuffersManager* GetManager(TrackInfo::TrackType aType);
   TrackInfo* GetTrackInfo(TrackInfo::TrackType);
   void DoAttachSourceBuffer(TrackBuffersManager* aSourceBuffer);
@@ -96,7 +98,7 @@ public:
 
   UniquePtr<TrackInfo> GetInfo() const override;
 
-  RefPtr<SeekPromise> Seek(media::TimeUnit aTime) override;
+  RefPtr<SeekPromise> Seek(const media::TimeUnit& aTime) override;
 
   RefPtr<SamplesPromise> GetSamples(int32_t aNumSamples = 1) override;
 
@@ -104,7 +106,8 @@ public:
 
   nsresult GetNextRandomAccessPoint(media::TimeUnit* aTime) override;
 
-  RefPtr<SkipAccessPointPromise> SkipToNextRandomAccessPoint(media::TimeUnit aTimeThreshold) override;
+  RefPtr<SkipAccessPointPromise> SkipToNextRandomAccessPoint(
+    const media::TimeUnit& aTimeThreshold) override;
 
   media::TimeIntervals GetBuffered() override;
 
@@ -116,10 +119,11 @@ public:
   }
 
 private:
-  RefPtr<SeekPromise> DoSeek(media::TimeUnit aTime);
+  RefPtr<SeekPromise> DoSeek(const media::TimeUnit& aTime);
   RefPtr<SamplesPromise> DoGetSamples(int32_t aNumSamples);
-  RefPtr<SkipAccessPointPromise> DoSkipToNextRandomAccessPoint(media::TimeUnit aTimeThreadshold);
-  already_AddRefed<MediaRawData> GetSample(DemuxerFailureReason& aFailure);
+  RefPtr<SkipAccessPointPromise> DoSkipToNextRandomAccessPoint(
+    const media::TimeUnit& aTimeThreadshold);
+  already_AddRefed<MediaRawData> GetSample(MediaResult& aError);
   // Return the timestamp of the next keyframe after mLastSampleIndex.
   media::TimeUnit GetNextRandomAccessPoint();
 

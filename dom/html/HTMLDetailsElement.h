@@ -23,8 +23,6 @@ class HTMLDetailsElement final : public nsGenericHTMLElement
 public:
   using NodeInfo = mozilla::dom::NodeInfo;
 
-  static bool IsDetailsEnabled();
-
   explicit HTMLDetailsElement(already_AddRefed<NodeInfo>& aNodeInfo)
     : nsGenericHTMLElement(aNodeInfo)
   {
@@ -34,13 +32,15 @@ public:
 
   nsIContent* GetFirstSummary() const;
 
-  nsresult Clone(NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  nsresult Clone(NodeInfo* aNodeInfo, nsINode** aResult,
+                 bool aPreallocateChildren) const override;
 
   nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                       int32_t aModType) const override;
 
   nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                         nsAttrValueOrString* aValue, bool aNotify) override;
+                         const nsAttrValueOrString* aValue,
+                         bool aNotify) override;
 
   // HTMLDetailsElement WebIDL
   bool Open() const { return GetBoolAttr(nsGkAtoms::open); }
@@ -57,31 +57,15 @@ public:
     rv.SuppressException();
   }
 
+  virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
+
 protected:
   virtual ~HTMLDetailsElement();
 
   JSObject* WrapNode(JSContext* aCx,
                      JS::Handle<JSObject*> aGivenProto) override;
 
-  class ToggleEventDispatcher final : public AsyncEventDispatcher
-  {
-  public:
-    // According to the html spec, a 'toggle' event is a simple event which does
-    // not bubble.
-    explicit ToggleEventDispatcher(nsINode* aTarget)
-      : AsyncEventDispatcher(aTarget, NS_LITERAL_STRING("toggle"), false)
-    {
-    }
-
-    NS_IMETHOD Run() override
-    {
-      auto* details = static_cast<HTMLDetailsElement*>(mTarget.get());
-      details->mToggleEventDispatcher = nullptr;
-      return AsyncEventDispatcher::Run();
-    }
-  };
-
-  RefPtr<ToggleEventDispatcher> mToggleEventDispatcher;
+  RefPtr<AsyncEventDispatcher> mToggleEventDispatcher;
 };
 
 } // namespace dom

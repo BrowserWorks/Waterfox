@@ -7,12 +7,14 @@
 #ifndef jit_CompileInfo_h
 #define jit_CompileInfo_h
 
+#include "mozilla/Maybe.h"
+
 #include "jsfun.h"
 
 #include "jit/JitAllocPolicy.h"
 #include "jit/JitFrames.h"
 #include "jit/Registers.h"
-#include "vm/ScopeObject.h"
+#include "vm/EnvironmentObject.h"
 
 namespace js {
 namespace jit {
@@ -23,7 +25,7 @@ inline unsigned
 StartArgSlot(JSScript* script)
 {
     // Reserved slots:
-    // Slot 0: Scope chain.
+    // Slot 0: Environment chain.
     // Slot 1: Return value.
 
     // When needed:
@@ -195,10 +197,10 @@ enum AnalysisMode {
 class CompileInfo
 {
   public:
-    CompileInfo(JSScript* script, JSFunction* fun, jsbytecode* osrPc, bool constructing,
+    CompileInfo(JSScript* script, JSFunction* fun, jsbytecode* osrPc,
                 AnalysisMode analysisMode, bool scriptNeedsArgsObj,
                 InlineScriptTree* inlineScriptTree)
-      : script_(script), fun_(fun), osrPc_(osrPc), constructing_(constructing),
+      : script_(script), fun_(fun), osrPc_(osrPc),
         analysisMode_(analysisMode), scriptNeedsArgsObj_(scriptNeedsArgsObj),
         hadOverflowBailout_(script->hadOverflowBailout()),
         mayReadFrameArgsDirectly_(script->mayReadFrameArgsDirectly()),
@@ -215,37 +217,57 @@ class CompileInfo
             MOZ_ASSERT(fun_->isTenured());
         }
 
-        osrStaticScope_ = osrPc ? script->getStaticBlockScope(osrPc) : nullptr;
-
-        nimplicit_ = StartArgSlot(script)                   /* scope chain and argument obj */
+        nimplicit_ = StartArgSlot(script)                   /* env chain and argument obj */
                    + (fun ? 1 : 0);                         /* this */
         nargs_ = fun ? fun->nargs() : 0;
-        nbodyfixed_ = script->nbodyfixed();
         nlocals_ = script->nfixed();
-        fixedLexicalBegin_ = script->fixedLexicalBegin();
-        nstack_ = Max<unsigned>(script->nslots() - script->nfixed(), MinJITStackSize);
+
+        // An extra slot is needed for global scopes because INITGLEXICAL (stack
+        // depth 1) is compiled as a SETPROP (stack depth 2) on the global lexical
+        // scope.
+        uint32_t extra = script->isGlobalCode() ? 1 : 0;
+        nstack_ = Max<unsigned>(script->nslots() - script->nfixed(), MinJITStackSize) + extra;
         nslots_ = nimplicit_ + nargs_ + nlocals_ + nstack_;
-        needsCallObject_ = fun ? fun->needsCallObject() : false;
+
+        // For derived class constructors, find and cache the frame slot for
+        // the .this binding. This slot is assumed to be always
+        // observable. See isObservableFrameSlot.
+        if (script->isDerivedClassConstructor()) {
+            MOZ_ASSERT(script->functionHasThisBinding());
+            CompileRuntime* runtime = GetJitContext()->runtime;
+            for (BindingIter bi(script); bi; bi++) {
+                if (bi.name() != runtime->names().dotThis)
+                    continue;
+                BindingLocation loc = bi.location();
+                if (loc.kind() == BindingLocation::Kind::Frame) {
+                    thisSlotForDerivedClassConstructor_ = mozilla::Some(localSlot(loc.slot()));
+                    break;
+                }
+            }
+        }
+
+        // If the script uses an environment in body, the environment chain
+        // will need to be observable.
+        needsBodyEnvironmentObject_ = script->needsBodyEnvironment();
     }
 
     explicit CompileInfo(unsigned nlocals)
-      : script_(nullptr), fun_(nullptr), osrPc_(nullptr), osrStaticScope_(nullptr),
-        constructing_(false), needsCallObject_(false), analysisMode_(Analysis_None),
-        scriptNeedsArgsObj_(false), mayReadFrameArgsDirectly_(false), inlineScriptTree_(nullptr)
+      : script_(nullptr), fun_(nullptr), osrPc_(nullptr),
+        analysisMode_(Analysis_None), scriptNeedsArgsObj_(false),
+        mayReadFrameArgsDirectly_(false), inlineScriptTree_(nullptr),
+        needsBodyEnvironmentObject_(false)
     {
         nimplicit_ = 0;
         nargs_ = 0;
-        nbodyfixed_ = 0;
         nlocals_ = nlocals;
         nstack_ = 1;  /* For FunctionCompiler::pushPhiInput/popPhiOutput */
         nslots_ = nlocals_ + nstack_;
-        fixedLexicalBegin_ = nlocals;
     }
 
     JSScript* script() const {
         return script_;
     }
-    bool compilingAsmJS() const {
+    bool compilingWasm() const {
         return script() == nullptr;
     }
     JSFunction* funMaybeLazy() const {
@@ -254,14 +276,8 @@ class CompileInfo
     ModuleObject* module() const {
         return script_->module();
     }
-    bool constructing() const {
-        return constructing_;
-    }
     jsbytecode* osrPc() const {
         return osrPc_;
-    }
-    NestedStaticScope* osrStaticScope() const {
-        return osrStaticScope_;
     }
     InlineScriptTree* inlineScriptTree() const {
         return inlineScriptTree_;
@@ -321,7 +337,7 @@ class CompileInfo
         return nslots_;
     }
 
-    // Number of slots needed for Scope chain, return value,
+    // Number of slots needed for env chain, return value,
     // maybe argumentsobject and this value.
     unsigned nimplicit() const {
         return nimplicit_;
@@ -329,15 +345,6 @@ class CompileInfo
     // Number of arguments (without counting this value).
     unsigned nargs() const {
         return nargs_;
-    }
-    bool needsCallObject() const {
-        MOZ_ASSERT(funMaybeLazy());
-        return needsCallObject_;
-    }
-    // Number of slots needed for fixed body-level bindings.  Note that this
-    // is only non-zero for function code.
-    unsigned nbodyfixed() const {
-        return nbodyfixed_;
     }
     // Number of slots needed for all local variables.  This includes "fixed
     // vars" (see above) and also block-scoped locals.
@@ -347,12 +354,8 @@ class CompileInfo
     unsigned ninvoke() const {
         return nslots_ - nstack_;
     }
-    // The slot number at which fixed lexicals begin.
-    unsigned fixedLexicalBegin() const {
-        return fixedLexicalBegin_;
-    }
 
-    uint32_t scopeChainSlot() const {
+    uint32_t environmentChainSlot() const {
         MOZ_ASSERT(script());
         return 0;
     }
@@ -412,53 +415,12 @@ class CompileInfo
         return nimplicit() + nargs() + nlocals();
     }
 
-    bool isSlotAliased(uint32_t index, NestedStaticScope* staticScope) const {
+    bool isSlotAliased(uint32_t index) const {
         MOZ_ASSERT(index >= startArgSlot());
-
-        if (funMaybeLazy() && index == thisSlot())
-            return false;
-
         uint32_t arg = index - firstArgSlot();
         if (arg < nargs())
             return script()->formalIsAliased(arg);
-
-        uint32_t local = index - firstLocalSlot();
-        if (local < nlocals()) {
-            // First, check if this local is body-level. If we have a slot for
-            // it, it is by definition unaliased. Aliased body-level locals do
-            // not have fixed slots on the frame and live in the CallObject.
-            //
-            // Note that this is not true for lexical (block-scoped)
-            // bindings. Such bindings, even when aliased, may be considered
-            // part of the "fixed" part (< nlocals()) of the frame.
-            if (local < nbodyfixed())
-                return false;
-
-            // Otherwise, it might be part of a block scope.
-            for (; staticScope; staticScope = staticScope->enclosingNestedScope()) {
-                if (!staticScope->is<StaticBlockScope>())
-                    continue;
-                StaticBlockScope& blockScope = staticScope->as<StaticBlockScope>();
-                if (blockScope.localOffset() < local) {
-                    if (local - blockScope.localOffset() < blockScope.numVariables())
-                        return blockScope.isAliased(local - blockScope.localOffset());
-                    return false;
-                }
-            }
-
-            // In this static scope, this var is dead.
-            return false;
-        }
-
-        MOZ_ASSERT(index >= firstStackSlot());
         return false;
-    }
-
-    bool isSlotAliasedAtEntry(uint32_t index) const {
-        return isSlotAliased(index, nullptr);
-    }
-    bool isSlotAliasedAtOsr(uint32_t index) const {
-        return isSlotAliased(index, osrStaticScope());
     }
 
     bool hasArguments() const {
@@ -482,21 +444,34 @@ class CompileInfo
         return analysisMode_ != Analysis_None;
     }
 
+    bool needsBodyEnvironmentObject() const {
+        return needsBodyEnvironmentObject_;
+    }
+
     // Returns true if a slot can be observed out-side the current frame while
     // the frame is active on the stack.  This implies that these definitions
     // would have to be executed and that they cannot be removed even if they
     // are unused.
-    bool isObservableSlot(uint32_t slot) const {
-        if (isObservableFrameSlot(slot))
-            return true;
+    inline bool isObservableSlot(uint32_t slot) const {
+        if (slot >= firstLocalSlot()) {
+            // The |this| slot for a derived class constructor is a local slot.
+            if (thisSlotForDerivedClassConstructor_)
+                return *thisSlotForDerivedClassConstructor_ == slot;
+            return false;
+        }
 
-        if (isObservableArgumentSlot(slot))
-            return true;
+        if (slot < firstArgSlot())
+            return isObservableFrameSlot(slot);
 
-        return false;
+        return isObservableArgumentSlot(slot);
     }
 
     bool isObservableFrameSlot(uint32_t slot) const {
+        // The |envChain| value must be preserved if environments are added
+        // after the prologue.
+        if (needsBodyEnvironmentObject() && slot == environmentChainSlot())
+            return true;
+
         if (!funMaybeLazy())
             return false;
 
@@ -504,14 +479,21 @@ class CompileInfo
         if (slot == thisSlot())
             return true;
 
-        if (needsCallObject() && slot == scopeChainSlot())
+        // The |this| frame slot in derived class constructors should never be
+        // optimized out, as a Debugger might need to perform TDZ checks on it
+        // via, e.g., an exceptionUnwind handler. The TDZ check is required
+        // for correctness if the handler decides to continue execution.
+        if (thisSlotForDerivedClassConstructor_ && *thisSlotForDerivedClassConstructor_ == slot)
+            return true;
+
+        if (funMaybeLazy()->needsSomeEnvironmentObject() && slot == environmentChainSlot())
             return true;
 
         // If the function may need an arguments object, then make sure to
-        // preserve the scope chain, because it may be needed to construct the
+        // preserve the env chain, because it may be needed to construct the
         // arguments object during bailout. If we've already created an
         // arguments object (or got one via OSR), preserve that as well.
-        if (hasArguments() && (slot == scopeChainSlot() || slot == argsObjSlot()))
+        if (hasArguments() && (slot == environmentChainSlot() || slot == argsObjSlot()))
             return true;
 
         return false;
@@ -536,14 +518,16 @@ class CompileInfo
     // definition which can be observed and recovered, implies that this
     // definition can be optimized away as long as we can compute its values.
     bool isRecoverableOperand(uint32_t slot) const {
-        // If this script is not a function, then none of the slots are
-        // observable.  If it this |slot| is not observable, thus we can always
-        // recover it.
+        // The |envChain| value cannot be recovered if environments can be
+        // added in body (after the prologue).
+        if (needsBodyEnvironmentObject() && slot == environmentChainSlot())
+            return false;
+
         if (!funMaybeLazy())
             return true;
 
-        // The |this| and the |scopeChain| values can be recovered.
-        if (slot == thisSlot() || slot == scopeChainSlot())
+        // The |this| and the |envChain| values can be recovered.
+        if (slot == thisSlot() || slot == environmentChainSlot())
             return true;
 
         if (isObservableFrameSlot(slot))
@@ -567,21 +551,17 @@ class CompileInfo
   private:
     unsigned nimplicit_;
     unsigned nargs_;
-    unsigned nbodyfixed_;
     unsigned nlocals_;
     unsigned nstack_;
     unsigned nslots_;
-    unsigned fixedLexicalBegin_;
+    mozilla::Maybe<unsigned> thisSlotForDerivedClassConstructor_;
     JSScript* script_;
     JSFunction* fun_;
     jsbytecode* osrPc_;
-    NestedStaticScope* osrStaticScope_;
-    bool constructing_;
-    bool needsCallObject_;
     AnalysisMode analysisMode_;
 
     // Whether a script needs an arguments object is unstable over compilation
-    // since the arguments optimization could be marked as failed on the main
+    // since the arguments optimization could be marked as failed on the active
     // thread, so cache a value here and use it throughout for consistency.
     bool scriptNeedsArgsObj_;
 
@@ -592,6 +572,10 @@ class CompileInfo
     bool mayReadFrameArgsDirectly_;
 
     InlineScriptTree* inlineScriptTree_;
+
+    // Whether a script needs environments within its body. This informs us
+    // that the environment chain is not easy to reconstruct.
+    bool needsBodyEnvironmentObject_;
 };
 
 } // namespace jit

@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from head.js */
+
 // Basic test to assert that the storage tree and table corresponding to each
 // item in the storage tree is correctly displayed
 
@@ -21,10 +23,23 @@
 "use strict";
 
 const testCases = [
-  [["cookies", "test1.example.org"],
-   ["c1", "cs2", "c3", "uc1"]],
-  [["cookies", "sectest1.example.org"],
-   ["uc1", "cs2", "sc1"]],
+  [
+    ["cookies", "http://test1.example.org"],
+    [
+      getCookieId("c1", "test1.example.org", "/browser"),
+      getCookieId("cs2", ".example.org", "/"),
+      getCookieId("c3", "test1.example.org", "/"),
+      getCookieId("uc1", ".example.org", "/")
+    ]
+  ],
+  [
+    ["cookies", "https://sectest1.example.org"],
+    [
+      getCookieId("uc1", ".example.org", "/"),
+      getCookieId("cs2", ".example.org", "/"),
+      getCookieId("sc1", "sectest1.example.org", "/browser/devtools/client/storage/test/")
+    ]
+  ],
   [["localStorage", "http://test1.example.org"],
    ["ls1", "ls2"]],
   [["localStorage", "http://sectest1.example.org"],
@@ -38,28 +53,28 @@ const testCases = [
   [["sessionStorage", "https://sectest1.example.org"],
    ["iframe-s-ss1"]],
   [["indexedDB", "http://test1.example.org"],
-   ["idb1", "idb2"]],
-  [["indexedDB", "http://test1.example.org", "idb1"],
+   ["idb1 (default)", "idb2 (default)"]],
+  [["indexedDB", "http://test1.example.org", "idb1 (default)"],
    ["obj1", "obj2"]],
-  [["indexedDB", "http://test1.example.org", "idb2"],
+  [["indexedDB", "http://test1.example.org", "idb2 (default)"],
    ["obj3"]],
-  [["indexedDB", "http://test1.example.org", "idb1", "obj1"],
+  [["indexedDB", "http://test1.example.org", "idb1 (default)", "obj1"],
    [1, 2, 3]],
-  [["indexedDB", "http://test1.example.org", "idb1", "obj2"],
+  [["indexedDB", "http://test1.example.org", "idb1 (default)", "obj2"],
    [1]],
-  [["indexedDB", "http://test1.example.org", "idb2", "obj3"],
+  [["indexedDB", "http://test1.example.org", "idb2 (default)", "obj3"],
    []],
   [["indexedDB", "http://sectest1.example.org"],
    []],
   [["indexedDB", "https://sectest1.example.org"],
-   ["idb-s1", "idb-s2"]],
-  [["indexedDB", "https://sectest1.example.org", "idb-s1"],
+   ["idb-s1 (default)", "idb-s2 (default)"]],
+  [["indexedDB", "https://sectest1.example.org", "idb-s1 (default)"],
    ["obj-s1"]],
-  [["indexedDB", "https://sectest1.example.org", "idb-s2"],
+  [["indexedDB", "https://sectest1.example.org", "idb-s2 (default)"],
    ["obj-s2"]],
-  [["indexedDB", "https://sectest1.example.org", "idb-s1", "obj-s1"],
+  [["indexedDB", "https://sectest1.example.org", "idb-s1 (default)", "obj-s1"],
    [6, 7]],
-  [["indexedDB", "https://sectest1.example.org", "idb-s2", "obj-s2"],
+  [["indexedDB", "https://sectest1.example.org", "idb-s2 (default)", "obj-s2"],
    [16]],
   [["Cache", "http://test1.example.org", "plop"],
    [MAIN_DOMAIN + "404_cached_file.js",
@@ -71,8 +86,8 @@ const testCases = [
  */
 function testTree() {
   let doc = gPanelWindow.document;
-  for (let item of testCases) {
-    ok(doc.querySelector("[data-id='" + JSON.stringify(item[0]) + "']"),
+  for (let [item] of testCases) {
+    ok(doc.querySelector("[data-id='" + JSON.stringify(item) + "']"),
        "Tree item " + item[0] + " should be present in the storage tree");
   }
 }
@@ -92,16 +107,16 @@ function* testTables() {
   }
 
   // Click rest of the tree items and wait for the table to be updated
-  for (let item of testCases.slice(1)) {
-    yield selectTreeItem(item[0]);
+  for (let [treeItem, items] of testCases.slice(1)) {
+    yield selectTreeItem(treeItem);
 
     // Check whether correct number of items are present in the table
     is(doc.querySelectorAll(
          ".table-widget-wrapper:first-of-type .table-widget-cell"
-       ).length, item[1].length, "Number of items in table is correct");
+       ).length, items.length, "Number of items in table is correct");
 
     // Check if all the desired items are present in the table
-    for (let id of item[1]) {
+    for (let id of items) {
       ok(doc.querySelector(".table-widget-cell[data-id='" + id + "']"),
          "Table item " + id + " should be present");
     }

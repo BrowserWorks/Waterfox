@@ -32,7 +32,7 @@ typedef struct ZipLocal_
  * 'sizeof(struct XXX)' includes padding on ARM (see bug 87965)
  * As the internals of a jar/zip file must not depend on the target
  * architecture (i386, ppc, ARM, ...), use a fixed value instead.
- */ 
+ */
 #define ZIPLOCAL_SIZE (4+2+2+2+2+2+4+4+4+2+2)
 
 typedef struct ZipCentral_
@@ -60,7 +60,7 @@ typedef struct ZipCentral_
  * 'sizeof(struct XXX)' includes padding on ARM (see bug 87965)
  * As the internals of a jar/zip file must not depend on the target
  * architecture (i386, ppc, ARM, ...), use a fixed value instead.
- */ 
+ */
 #define ZIPCENTRAL_SIZE (4+2+2+2+2+2+2+4+4+4+2+2+2+2+2+4+4)
 
 typedef struct ZipEnd_
@@ -79,7 +79,7 @@ typedef struct ZipEnd_
  * 'sizeof(struct XXX)' includes padding on ARM (see bug 87965)
  * As the internals of a jar/zip file must not depend on the target
  * architecture (i386, ppc, ARM, ...), use a fixed value instead.
- */ 
+ */
 #define ZIPEND_SIZE (4+2+2+2+2+4+4+2)
 
 /* signatures */
@@ -102,6 +102,9 @@ typedef struct ZipEnd_
 #define TOKENIZED         7
 #define DEFLATED          8
 #define UNSUPPORTED       0xFF
-
+/* non-standard extension */
+#ifdef NIGHTLY_BUILD
+#define MOZ_JAR_BROTLI    0x81
+#endif
 
 #endif /* _zipstruct_h */

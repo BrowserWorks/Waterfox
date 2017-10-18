@@ -7,7 +7,7 @@ var disableWorkerTest = "This test uses SpecialPowers";
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const fileData = "abcdefghijklmnopqrstuvwxyz";
   const fileType = "text/plain";
@@ -19,7 +19,7 @@ function testSteps()
 
   info("Creating temp file");
 
-  SpecialPowers.createFiles([{data:fileData, options:{type:fileType}}], function (files) {
+  SpecialPowers.createFiles([{data: fileData, options: {type: fileType}}], function(files) {
       testGenerator.next(files[0]);
   });
 
@@ -74,5 +74,4 @@ function testSteps()
   is(fileReader.result, fileData, "Correct data");
 
   finishTest();
-  yield undefined;
 }

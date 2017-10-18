@@ -148,7 +148,7 @@ function testCreateEvent()
 {
   var evt;
   try {
-    evt = document.createEvent("TimeEvents");
+    evt = document.createEvent("TimeEvent");
   } catch (e) {
     ok(false, "Failed to create TimeEvent via script: " + e);
     return;
@@ -200,8 +200,8 @@ function testRegistration()
 
   // Add bogus handlers
   gAnim.setAttribute('onbeginElement', 'handleOnBegin(evt)');
-  gAnim.addEventListener("begin", handleOnBegin, false);
-  gAnim.addEventListener("onbegin", handleOnBegin, false);
+  gAnim.addEventListener("begin", handleOnBegin);
+  gAnim.addEventListener("onbegin", handleOnBegin);
 
   // We should now have just one legitimate listener: the one registered to
   // handle 'beginElement'
@@ -278,15 +278,15 @@ function parentHandler(evt)
   ok(false, "Handler on parent got called but event shouldn't bubble.");
 }
 
-window.addEventListener("load", continueTest, false);
+window.addEventListener("load", continueTest);
 
 // Register event handlers *in addition* to the handlers already added via the
 // "onbegin", "onend", "onrepeat" attributes on the <animate> and <circle>
 // elements. This is to test that both types of registration work.
-gAnim.addEventListener("beginEvent", handleOnBegin, false);
-gAnim.addEventListener("repeatEvent", handleOnRepeat, false);
-gAnim.addEventListener("endEvent", handleOnEnd, false);
-gCircle.addEventListener("beginEvent", parentHandler, false);
+gAnim.addEventListener("beginEvent", handleOnBegin);
+gAnim.addEventListener("repeatEvent", handleOnRepeat);
+gAnim.addEventListener("endEvent", handleOnEnd);
+gCircle.addEventListener("beginEvent", parentHandler);
 
 var expectedEvents =
   ["begin", "beginEvent", "repeat", "repeatEvent", "end", "endEvent", "SVGZoom", "zoom"];
@@ -321,14 +321,6 @@ d.addEventListener("zoom", function(e) {
   is(e.type, expectedEvents[0]);
   expectedEvents.shift();
 });
-
-var zoomEvent = document.createEvent("svgzoomevent");
-zoomEvent.initEvent("zoom", true, true);
-d.dispatchEvent(zoomEvent);
-zoomEvent = document.createEvent("svgzoomevent");
-zoomEvent.initEvent("SVGZoom", true, true);
-d.dispatchEvent(zoomEvent);
-is(expectedEvents.length, 0, "Got all the expected events.");
 
 ]]>
 </script>

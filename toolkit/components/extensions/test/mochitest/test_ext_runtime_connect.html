@@ -13,7 +13,7 @@
 <script type="text/javascript">
 "use strict";
 
-function backgroundScript() {
+function background() {
   browser.runtime.onConnect.addListener(port => {
     browser.test.assertEq(port.name, "ernie", "port name correct");
     browser.test.assertTrue(port.sender.url.endsWith("file_sample.html"), "URL correct");
@@ -31,6 +31,7 @@ function backgroundScript() {
       }
     });
     port.onDisconnect.addListener(() => {
+      browser.test.assertEq(null, port.error, "No error because port is closed by disconnect() at other end");
       browser.test.assertEq(expected, "disconnect", "got disconnection at right time");
     });
   });
@@ -48,7 +49,7 @@ function contentScript() {
 }
 
 let extensionData = {
-  background: "(" + backgroundScript.toString() + ")()",
+  background,
   manifest: {
     "permissions": ["tabs"],
     "content_scripts": [{
@@ -59,21 +60,21 @@ let extensionData = {
   },
 
   files: {
-    "content_script.js": "(" + contentScript.toString() + ")()",
+    "content_script.js": contentScript,
   },
 };
 
-add_task(function* test_contentscript() {
+add_task(async function test_contentscript() {
   let extension = ExtensionTestUtils.loadExtension(extensionData);
-  yield extension.startup();
+  await extension.startup();
 
   let win = window.open("file_sample.html");
 
-  yield Promise.all([waitForLoad(win), extension.awaitFinish("runtime.connect")]);
+  await Promise.all([waitForLoad(win), extension.awaitFinish("runtime.connect")]);
 
   win.close();
 
-  yield extension.unload();
+  await extension.unload();
   info("extension unloaded");
 });
 </script>

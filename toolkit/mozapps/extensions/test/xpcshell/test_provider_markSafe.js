@@ -1,7 +1,5 @@
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
-var startupOrder = [];
-
 function mockAddonProvider(name) {
   let mockProvider = {
     markSafe: false,
@@ -11,7 +9,6 @@ function mockAddonProvider(name) {
       if (this.markSafe)
         AddonManagerPrivate.markProviderSafe(this);
 
-      let uri = Services.io.newURI("beard://long", null, null);
       AddonManager.isInstallEnabled("made-up-mimetype");
     },
     supportsMimetype(mimetype) {
@@ -31,14 +28,14 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* testMarkSafe() {
+add_task(async function testMarkSafe() {
   do_print("Starting with provider normally");
   let provider = mockAddonProvider("Mock1");
   AddonManagerPrivate.registerProvider(provider);
   startupManager();
   ok(!provider.apiAccessed, "Provider API should not have been accessed");
   AddonManagerPrivate.unregisterProvider(provider);
-  yield promiseShutdownManager();
+  await promiseShutdownManager();
 
   do_print("Starting with provider that marks itself safe");
   provider.apiAccessed = false;

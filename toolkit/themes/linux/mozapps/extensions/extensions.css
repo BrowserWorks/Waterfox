@@ -5,7 +5,9 @@
 %include ../../../shared/extensions/extensions.inc.css
 
 #header-utils-btn .toolbarbutton-icon {
-  list-style-image: url("chrome://mozapps/skin/extensions/utilities.svg#utilities-native");
+  list-style-image: url("chrome://mozapps/skin/extensions/utilities.svg");
+  -moz-context-properties: fill;
+  fill: GrayText;
 }
 
 .sorter[checkState="1"] .button-icon {
@@ -33,11 +35,6 @@
 .meta-rating[showrating="average"] > .star {
   list-style-image: url("chrome://mozapps/skin/extensions/rating-not-won.png");
   padding: 0 1px;
-}
-
-.meta-rating[showrating="user"] > .star {
-  list-style-image: url("chrome://mozapps/skin/extensions/rating-unrated.png");
-  padding: 2px 3px;
 }
 
 .meta-rating > .star[on="true"],

@@ -13,6 +13,7 @@
 #include "mozilla/TimeStamp.h"
 #include "nsAutoPtr.h"
 #include "nsNativeCharsetUtils.h"
+#include "nsThreadUtils.h"
 
 /**
  * This code uses NSPR stuff and STL containers because it must be detached
@@ -114,7 +115,8 @@ MainThreadIOLoggerImpl::Init()
 /* static */ void
 MainThreadIOLoggerImpl::sIOThreadFunc(void* aArg)
 {
-  PR_SetCurrentThreadName("MainThreadIOLogger");
+  AutoProfilerRegisterThread registerThread("MainThreadIOLogger");
+  NS_SetCurrentThreadName("MainThreadIOLogger");
   MainThreadIOLoggerImpl* obj = static_cast<MainThreadIOLoggerImpl*>(aArg);
   obj->IOThreadFunc();
 }
@@ -172,12 +174,8 @@ MainThreadIOLoggerImpl::IOThreadFunc()
                        (i->mObservation.Start() - mLogStartTime).ToMilliseconds(),
                        i->mObservation.ObservedOperationString(), durationMs,
                        i->mObservation.Reference(), nativeFilename.get()) > 0) {
-          ProfilerBacktrace* stack = i->mStack;
-          if (stack) {
-            // TODO: Write out the callstack
-            //       (This will be added in a later bug)
-            profiler_free_backtrace(stack);
-          }
+          // TODO: Write out the callstack
+          i->mStack = nullptr;
         }
       }
     }

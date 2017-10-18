@@ -7,9 +7,7 @@
 "use strict";
 
 const {Ci} = require("chrome");
-const {Class} = require("sdk/core/heritage");
 const Services = require("Services");
-
 const {DebuggerServer} = require("devtools/server/main");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
@@ -35,32 +33,28 @@ const acceptableHeaders = ["x-chromelogger-data"];
  *
  * A listeners for "http-on-examine-response" is registered when
  * the listener starts and removed when destroy is executed.
+ *
+ * @param {Object} win (nsIDOMWindow):
+ *        filter network requests by the associated window object.
+ *        If null (i.e. in the browser context) log everything
+ * @param {Object} owner
+ *        The {@WebConsoleActor} instance
  */
-var ServerLoggingListener = Class({
-  /**
-   * Initialization of the listener. The main step during the initialization
-   * process is registering a listener for "http-on-examine-response" event.
-   *
-   * @param {Object} win (nsIDOMWindow):
-   *        filter network requests by the associated window object.
-   *        If null (i.e. in the browser context) log everything
-   * @param {Object} owner
-   *        The {@WebConsoleActor} instance
-   */
-  initialize: function (win, owner) {
-    trace.log("ServerLoggingListener.initialize; ", owner.actorID,
-      ", child process: ", DebuggerServer.isInChildProcess);
+function ServerLoggingListener(win, owner) {
+  trace.log("ServerLoggingListener.initialize; ", owner.actorID,
+    ", child process: ", DebuggerServer.isInChildProcess);
 
-    this.owner = owner;
-    this.window = win;
+  this.owner = owner;
+  this.window = win;
 
-    this.onExamineResponse = this.onExamineResponse.bind(this);
-    this.onExamineHeaders = this.onExamineHeaders.bind(this);
-    this.onParentMessage = this.onParentMessage.bind(this);
+  this.onExamineResponse = this.onExamineResponse.bind(this);
+  this.onExamineHeaders = this.onExamineHeaders.bind(this);
+  this.onParentMessage = this.onParentMessage.bind(this);
 
-    this.attach();
-  },
+  this.attach();
+}
 
+ServerLoggingListener.prototype = {
   /**
    * The destroy is called by the parent WebConsoleActor actor.
    */
@@ -87,7 +81,7 @@ var ServerLoggingListener = Class({
       this.attachParentProcess();
     } else {
       Services.obs.addObserver(this.onExamineResponse,
-        "http-on-examine-response", false);
+        "http-on-examine-response");
     }
   }),
 
@@ -101,7 +95,7 @@ var ServerLoggingListener = Class({
       this.detachParentProcess();
     } else {
       Services.obs.removeObserver(this.onExamineResponse,
-        "http-on-examine-response", false);
+        "http-on-examine-response");
     }
   }),
 
@@ -305,7 +299,7 @@ var ServerLoggingListener = Class({
       // If multiple logs come from the same line only the first log
       // has info about the backtrace. So, remember the last valid
       // location and use it for those that not set.
-      let location = this.parseBacktrace(backtrace);
+      let location = parseBacktrace(backtrace);
       if (location) {
         lastLocation = location;
       } else {
@@ -320,22 +314,6 @@ var ServerLoggingListener = Class({
     }
 
     return parsedMessage;
-  },
-
-  parseBacktrace: function (backtrace) {
-    if (!backtrace) {
-      return null;
-    }
-
-    let result = backtrace.match(/\s*(\d+)$/);
-    if (!result || result.length < 2) {
-      return backtrace;
-    }
-
-    return {
-      url: backtrace.slice(0, -result[0].length),
-      line: result[1]
-    };
   },
 
   getColumnMap: function (data) {
@@ -393,7 +371,7 @@ var ServerLoggingListener = Class({
 
     this.owner.onServerLogCall(message);
   },
-});
+};
 
 // Helpers
 
@@ -503,6 +481,22 @@ function format(msg) {
   return msg;
 }
 
+function parseBacktrace(backtrace) {
+  if (!backtrace) {
+    return null;
+  }
+
+  let result = backtrace.match(/^(.+?)\s*:\s*(\d+)$/);
+  if (!result || result.length != 3) {
+    return { url: backtrace };
+  }
+
+  return {
+    url: result[1],
+    line: parseInt(result[2], 10)
+  };
+}
+
 // These helper are cloned from SDK to avoid loading to
 // much SDK modules just because of two functions.
 function getInnerId(win) {
@@ -512,3 +506,4 @@ function getInnerId(win) {
 
 // Exports from this module
 exports.ServerLoggingListener = ServerLoggingListener;
+exports.parseBacktrace = parseBacktrace;

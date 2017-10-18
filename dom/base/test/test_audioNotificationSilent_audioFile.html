@@ -6,13 +6,12 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 SimpleTest.waitForExplicitFinish();
 
 var generator = runTest();
 var expectedPlaybackActive = null;
-var expectedPlaying = null;
 
 var audio = new Audio();
 audio.src = "audioEndedDuringPlaying.webm";
@@ -24,25 +23,19 @@ var observer = {
   observe: function(subject, topic, data) {
     is(topic, "audio-playback", "audio-playback received");
     is(data, expectedPlaybackActive, "Corrrect audible state");
-    is(!audio.ended, expectedPlaying, "Corrrect playing state");
     continueTest();
   }
 };
 
 function continueTest() {
-  try {
-    generator.next();
-  } catch (e if e instanceof StopIteration) {
-    error("Stop test because of exception!");
-  }
+  generator.next();
 }
 
 function audioPlayingStart() {
-  observerService.addObserver(observer, "audio-playback", false);
+  observerService.addObserver(observer, "audio-playback");
   ok(true, "Observer set");
 
   expectedPlaybackActive = 'active';
-  expectedPlaying = true;
 
   info("Audio playing start");
   audio.play();
@@ -52,7 +45,6 @@ function audioBecomeSilentDuringPlaying() {
   info("Audio would become silent during playing");
 
   expectedPlaybackActive = 'inactive-nonaudible';
-  expectedPlaying = true;
 }
 
 function finish() {
@@ -62,12 +54,12 @@ function finish() {
   SimpleTest.finish();
 }
 
-function runTest() {
+function* runTest() {
   yield audioPlayingStart();
 
   yield audioBecomeSilentDuringPlaying();
 
-  yield finish();
+  finish();
 }
 
 continueTest();

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
  <head>
   <title>CSS Test: handling of invalid url() functions</title>
-  <link rel="author" title="L. David Baron" href="http://dbaron.org/" />
+  <link rel="author" title="L. David Baron" href="https://dbaron.org/" />
   <link rel="author" title="Mozilla Corporation" href="http://mozilla.com/" />
   <link rel="help" href="http://www.w3.org/TR/CSS21/syndata.html#tokenization" />
   <link rel="help" href="http://www.w3.org/TR/CSS21/syndata.html#parsing-errors" />
@@ -22,17 +22,16 @@
   #two { background-color: green; }
   </style>
   <style type="text/css">
-  /* not a URI token; the unterminated string ends at end of line, so
-     the brace never matches */
-  #three { background-color: green; }
+  /* not a URI token; bad-url token is consumed until the first closing ) */
   #foo { background: url(foo"bar) }
-  #three { background-color: red; }
+  #three { background-color: green; }
   </style>
   <style type="text/css">
-  /* not a URI token; the unterminated string ends at end of line */
+  /* not a URI token; bad-url token is consumed until the first closing ) */
+  #four { background-color: green; }
   #foo { background: url(foo"bar) }
   ) }
-  #four { background-color: green; }
+  #four { background-color: red; }
   </style>
   <style type="text/css">
   /* not a URI token; the unterminated string ends at end of line, so
@@ -68,18 +67,19 @@
   #eleven { background: url([) green; }
   </style>
   <style type="text/css">
-  /* not a URI token; brace matching should work only after invalid URI token */
-  #twelve { background: url(}{""{)}); background-color: green; }
+  /* not a URI token; bad-url token is consumed until the first closing )
+     so the brace immediately after it closes the declaration block */
+  #twelve { background-color: green; }
+  #twelve { background: url(}{""{)}); background-color: red; }
   </style>
   <style type="text/css">
   /* invalid URI token absorbs the [ */
   #thirteen { background: url([""); background-color: green; }
   </style>
   <style type="text/css">
-  /* not a URI token; the opening ( is never matched */
-  #fourteen { background-color: green; }
+  /* not a URI token; bad-url token is consumed until the first closing ) */
   #foo { background: url(() }
-  #fourteen { background-color: red; }
+  #fourteen { background-color: green; }
   </style>
   <!-- The next three tests test that invalid URI tokens absorb [ and { -->
   <style type="text/css">
@@ -93,6 +93,22 @@
   <style type="text/css">
   #foo { background: url({()); }
   #seventeen { background-color: green }
+  </style>
+  <!-- Test that url() starting with a quote and without its closing ')' eaten
+  by any of the tokens that come after the initial quote doesn't eat the rest of
+  the stylesheet.  In particular, this checks whether, once we reach the end of
+  the string and discover garbage after it, we tokenize the garbage or just skip
+  to the nearest ')'. -->
+  <style type="text/css">
+  #eighteen { background-color: red; }
+  #foo { background: url('('')'); }
+  #eighteen { background-color: green; }
+  </style>
+  <!-- And the same thing with double quotes -->
+  <style type="text/css">
+  #nineteen { background-color: red; }
+  #foo { background: url("("')'); }
+  #nineteen { background-color: green; }
   </style>
  </head>
  <body>
@@ -113,5 +129,7 @@
   <div id="fifteen">This should have a green background</div>
   <div id="sixteen">This should have a green background</div>
   <div id="seventeen">This should have a green background</div>
+  <div id="eighteen">This should have a green background</div>
+  <div id="nineteen">This should have a green background</div>
  </body>
 </html>

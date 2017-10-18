@@ -3,13 +3,14 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 backends = {
-    'AndroidEclipse': 'mozbuild.backend.android_eclipse',
     'ChromeMap': 'mozbuild.codecoverage.chrome_map',
     'CompileDB': 'mozbuild.compilation.database',
     'CppEclipse': 'mozbuild.backend.cpp_eclipse',
     'FasterMake': 'mozbuild.backend.fastermake',
     'FasterMake+RecursiveMake': None,
     'RecursiveMake': 'mozbuild.backend.recursivemake',
+    'TestManifest': 'mozbuild.backend.test_manifest',
+    'Tup': 'mozbuild.backend.tup',
     'VisualStudio': 'mozbuild.backend.visualstudio',
 }
 

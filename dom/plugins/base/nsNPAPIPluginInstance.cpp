@@ -5,13 +5,7 @@
 
 #include "mozilla/DebugOnly.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-// For ScreenOrientation.h and Hal.h
-#include "base/basictypes.h"
-#endif
-
 #include "mozilla/Logging.h"
-#include "prmem.h"
 #include "nscore.h"
 #include "prenv.h"
 
@@ -37,72 +31,13 @@
 #include "nsIContent.h"
 #include "nsVersionComparator.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsILoadContext.h"
 #include "mozilla/dom/HTMLObjectElementBinding.h"
 #include "AudioChannelService.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
-
-#ifdef MOZ_WIDGET_ANDROID
-#include "ANPBase.h"
-#include <android/log.h>
-#include "android_npapi.h"
-#include "mozilla/Mutex.h"
-#include "mozilla/CondVar.h"
-#include "AndroidBridge.h"
-#include "mozilla/dom/ScreenOrientation.h"
-#include "mozilla/Hal.h"
-#include "GLContextProvider.h"
-#include "GLContext.h"
-#include "TexturePoolOGL.h"
-#include "SurfaceTypes.h"
-#include "EGLUtils.h"
-
-using namespace mozilla;
-using namespace mozilla::gl;
-
-typedef nsNPAPIPluginInstance::VideoInfo VideoInfo;
-
-class PluginEventRunnable : public Runnable
-{
-public:
-  PluginEventRunnable(nsNPAPIPluginInstance* instance, ANPEvent* event)
-    : mInstance(instance), mEvent(*event), mCanceled(false) {}
-
-  virtual nsresult Run() {
-    if (mCanceled)
-      return NS_OK;
-
-    mInstance->HandleEvent(&mEvent, nullptr);
-    mInstance->PopPostedEvent(this);
-    return NS_OK;
-  }
-
-  void Cancel() { mCanceled = true; }
-private:
-  nsNPAPIPluginInstance* mInstance;
-  ANPEvent mEvent;
-  bool mCanceled;
-};
-
-static RefPtr<GLContext> sPluginContext = nullptr;
-
-static bool EnsureGLContext()
-{
-  if (!sPluginContext) {
-    const auto flags = CreateContextFlags::REQUIRE_COMPAT_PROFILE;
-    nsCString discardedFailureId;
-    sPluginContext = GLContextProvider::CreateHeadless(flags, &discardedFailureId);
-  }
-
-  return sPluginContext != nullptr;
-}
-
-static std::map<NPP, nsNPAPIPluginInstance*> sPluginNPPMap;
-
-#endif
 
 using namespace mozilla;
 using namespace mozilla::plugins::parent;
@@ -114,13 +49,6 @@ NS_IMPL_ISUPPORTS(nsNPAPIPluginInstance, nsIAudioChannelAgentCallback)
 
 nsNPAPIPluginInstance::nsNPAPIPluginInstance()
   : mDrawingModel(kDefaultDrawingModel)
-#ifdef MOZ_WIDGET_ANDROID
-  , mANPDrawingModel(0)
-  , mFullScreenOrientation(dom::eScreenOrientation_LandscapePrimary)
-  , mWakeLocked(false)
-  , mFullScreen(false)
-  , mOriginPos(gl::OriginPos::TopLeft)
-#endif
   , mRunning(NOT_STARTED)
   , mWindowless(false)
   , mTransparent(false)
@@ -133,34 +61,24 @@ nsNPAPIPluginInstance::nsNPAPIPluginInstance()
 #ifdef XP_MACOSX
   , mCurrentPluginEvent(nullptr)
 #endif
-#ifdef MOZ_WIDGET_ANDROID
-  , mOnScreen(true)
-#endif
   , mHaveJavaC2PJSObjectQuirk(false)
   , mCachedParamLength(0)
   , mCachedParamNames(nullptr)
   , mCachedParamValues(nullptr)
+  , mMuted(false)
 {
   mNPP.pdata = nullptr;
   mNPP.ndata = this;
 
   PLUGIN_LOG(PLUGIN_LOG_BASIC, ("nsNPAPIPluginInstance ctor: this=%p\n",this));
-
-#ifdef MOZ_WIDGET_ANDROID
-  sPluginNPPMap[&mNPP] = this;
-#endif
 }
 
 nsNPAPIPluginInstance::~nsNPAPIPluginInstance()
 {
   PLUGIN_LOG(PLUGIN_LOG_BASIC, ("nsNPAPIPluginInstance dtor: this=%p\n",this));
 
-#ifdef MOZ_WIDGET_ANDROID
-  sPluginNPPMap.erase(&mNPP);
-#endif
-
   if (mMIMEType) {
-    PR_Free((void *)mMIMEType);
+    free(mMIMEType);
     mMIMEType = nullptr;
   }
 
@@ -195,21 +113,6 @@ nsNPAPIPluginInstance::Destroy()
   Stop();
   mPlugin = nullptr;
   mAudioChannelAgent = nullptr;
-
-#if MOZ_WIDGET_ANDROID
-  if (mContentSurface)
-    mContentSurface->SetFrameAvailableCallback(nullptr);
-
-  mContentSurface = nullptr;
-
-  std::map<void*, VideoInfo*>::iterator it;
-  for (it = mVideos.begin(); it != mVideos.end(); it++) {
-    it->second->mSurfaceTexture->SetFrameAvailableCallback(nullptr);
-    delete it->second;
-  }
-  mVideos.clear();
-  SetWakeLock(false);
-#endif
 }
 
 TimeStamp
@@ -220,7 +123,7 @@ nsNPAPIPluginInstance::StopTime()
 
 nsresult nsNPAPIPluginInstance::Initialize(nsNPAPIPlugin *aPlugin, nsPluginInstanceOwner* aOwner, const nsACString& aMIMEType)
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsNPAPIPlugin::Initialize", OTHER);
   PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::Initialize this=%p\n",this));
 
   NS_ENSURE_ARG_POINTER(aPlugin);
@@ -297,14 +200,6 @@ nsresult nsNPAPIPluginInstance::Stop()
   }
   mRunning = DESTROYED;
 
-#if MOZ_WIDGET_ANDROID
-  for (uint32_t i = 0; i < mPostedEvents.Length(); i++) {
-    mPostedEvents[i]->Cancel();
-  }
-
-  mPostedEvents.Clear();
-#endif
-
   nsJSNPRuntime::OnPluginDestroy(&mNPP);
 
   if (error != NPERR_NO_ERROR)
@@ -339,15 +234,6 @@ nsNPAPIPluginInstance::GetTagType(nsPluginTagType *result)
   }
 
   return mOwner->GetTagType(result);
-}
-
-nsresult
-nsNPAPIPluginInstance::GetMode(int32_t *result)
-{
-  if (mOwner)
-    return mOwner->GetMode(result);
-  else
-    return NS_ERROR_FAILURE;
 }
 
 nsTArray<nsNPAPIPluginStreamListener*>*
@@ -404,13 +290,8 @@ nsNPAPIPluginInstance::Start()
     mCachedParamValues[i] = ToNewUTF8String(attributes[i].mValue);
   }
 
-  // Android expects and empty string instead of null.
   mCachedParamNames[attributes.Length()] = ToNewUTF8String(NS_LITERAL_STRING("PARAM"));
-  #ifdef MOZ_WIDGET_ANDROID
-    mCachedParamValues[attributes.Length()] = ToNewUTF8String(NS_LITERAL_STRING(""));
-  #else
-    mCachedParamValues[attributes.Length()] = nullptr;
-  #endif
+  mCachedParamValues[attributes.Length()] = nullptr;
 
   for (uint32_t i = 0, pos = attributes.Length() + 1; i < params.Length(); i ++) {
     mCachedParamNames[pos] = ToNewUTF8String(params[i].mName);
@@ -418,14 +299,10 @@ nsNPAPIPluginInstance::Start()
     pos++;
   }
 
-  int32_t       mode;
   const char*   mimetype;
   NPError       error = NPERR_GENERIC_ERROR;
 
-  GetMode(&mode);
   GetMIMEType(&mimetype);
-
-  CheckJavaC2PJSObjectQuirk(quirkParamLength, mCachedParamNames, mCachedParamValues);
 
   bool oldVal = mInPluginInitCall;
   mInPluginInitCall = true;
@@ -446,14 +323,14 @@ nsNPAPIPluginInstance::Start()
   // before returning. If the plugin returns failure, we'll clear it out below.
   mRunning = RUNNING;
 
-  nsresult newResult = library->NPP_New((char*)mimetype, &mNPP, (uint16_t)mode,
+  nsresult newResult = library->NPP_New((char*)mimetype, &mNPP,
                                         quirkParamLength, mCachedParamNames,
                                         mCachedParamValues, nullptr, &error);
   mInPluginInitCall = oldVal;
 
   NPP_PLUGIN_LOG(PLUGIN_LOG_NORMAL,
-  ("NPP New called: this=%p, npp=%p, mime=%s, mode=%d, argc=%d, return=%d\n",
-  this, &mNPP, mimetype, mode, quirkParamLength, error));
+  ("NPP New called: this=%p, npp=%p, mime=%s, argc=%d, return=%d\n",
+  this, &mNPP, mimetype, quirkParamLength, error));
 
   if (NS_FAILED(newResult) || error != NPERR_NO_ERROR) {
     mRunning = DESTROYED;
@@ -471,14 +348,8 @@ nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window)
     return NS_OK;
 
 #if MOZ_WIDGET_GTK
-  // bug 108347, flash plugin on linux doesn't like window->width <=
-  // 0, but Java needs wants this call.
-  if (window && window->type == NPWindowTypeWindow &&
-      (window->width <= 0 || window->height <= 0) &&
-      (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) !=
-       nsPluginHost::eSpecialType_Java)) {
-    return NS_OK;
-  }
+  // bug 108347, flash plugin on linux doesn't like window->width <= 0
+  return NS_OK;
 #endif
 
   if (!mPlugin || !mPlugin->GetLibrary())
@@ -516,14 +387,6 @@ nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window)
     window->clipRect.top, window->clipRect.bottom, window->clipRect.left, window->clipRect.right, error));
   }
   return NS_OK;
-}
-
-nsresult
-nsNPAPIPluginInstance::NewStreamFromPlugin(const char* type, const char* target,
-                                           nsIOutputStream* *result)
-{
-  nsPluginStreamToFile* stream = new nsPluginStreamToFile(target, mOwner);
-  return stream->QueryInterface(kIOutputStreamIID, (void**)result);
 }
 
 nsresult
@@ -596,7 +459,7 @@ nsresult nsNPAPIPluginInstance::HandleEvent(void* event, int16_t* result,
   if (RUNNING != mRunning)
     return NS_OK;
 
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("nsNPAPIPluginInstance::HandleEvent", OTHER);
 
   if (!event)
     return NS_ERROR_FAILURE;
@@ -618,7 +481,6 @@ nsresult nsNPAPIPluginInstance::HandleEvent(void* event, int16_t* result,
     NS_TRY_SAFE_CALL_RETURN(tmpResult, (*pluginFunctions->event)(&mNPP, event), this,
                             aSafeToReenterGecko);
 #else
-    MAIN_THREAD_JNI_REF_GUARD;
     tmpResult = (*pluginFunctions->event)(&mNPP, event);
 #endif
     NPP_PLUGIN_LOG(PLUGIN_LOG_NOISY,
@@ -651,7 +513,7 @@ nsresult nsNPAPIPluginInstance::GetValueFromPlugin(NPPVariable variable, void* v
     NS_TRY_SAFE_CALL_RETURN(pluginError, (*pluginFunctions->getvalue)(&mNPP, variable, value), this,
                             NS_PLUGIN_CALL_UNSAFE_TO_REENTER_GECKO);
     NPP_PLUGIN_LOG(PLUGIN_LOG_NORMAL,
-    ("NPP GetValue called: this=%p, npp=%p, var=%d, value=%d, return=%d\n",
+    ("NPP GetValue called: this=%p, npp=%p, var=%d, value=%p, return=%d\n",
     this, &mNPP, variable, value, pluginError));
 
     if (pluginError == NPERR_NO_ERROR) {
@@ -680,20 +542,6 @@ nsresult nsNPAPIPluginInstance::GetNPP(NPP* aNPP)
 NPError nsNPAPIPluginInstance::SetWindowless(bool aWindowless)
 {
   mWindowless = aWindowless;
-
-  if (mMIMEType) {
-    // bug 558434 - Prior to 3.6.4, we assumed windowless was transparent.
-    // Silverlight apparently relied on this quirk, so we default to
-    // transparent unless they specify otherwise after setting the windowless
-    // property. (Last tested version: sl 4.0).
-    // Changes to this code should be matched with changes in
-    // PluginInstanceChild::InitQuirksMode.
-    if (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) ==
-        nsPluginHost::eSpecialType_Silverlight) {
-      mTransparent = true;
-    }
-  }
-
   return NPERR_NO_ERROR;
 }
 
@@ -738,249 +586,6 @@ void nsNPAPIPluginInstance::SetEventModel(NPEventModel aModel)
 }
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-
-static void SendLifecycleEvent(nsNPAPIPluginInstance* aInstance, uint32_t aAction)
-{
-  ANPEvent event;
-  event.inSize = sizeof(ANPEvent);
-  event.eventType = kLifecycle_ANPEventType;
-  event.data.lifecycle.action = aAction;
-  aInstance->HandleEvent(&event, nullptr);
-}
-
-void nsNPAPIPluginInstance::NotifyForeground(bool aForeground)
-{
-  PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::SetForeground this=%p\n foreground=%d",this, aForeground));
-  if (RUNNING != mRunning)
-    return;
-
-  SendLifecycleEvent(this, aForeground ? kResume_ANPLifecycleAction : kPause_ANPLifecycleAction);
-}
-
-void nsNPAPIPluginInstance::NotifyOnScreen(bool aOnScreen)
-{
-  PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::SetOnScreen this=%p\n onScreen=%d",this, aOnScreen));
-  if (RUNNING != mRunning || mOnScreen == aOnScreen)
-    return;
-
-  mOnScreen = aOnScreen;
-  SendLifecycleEvent(this, aOnScreen ? kOnScreen_ANPLifecycleAction : kOffScreen_ANPLifecycleAction);
-}
-
-void nsNPAPIPluginInstance::MemoryPressure()
-{
-  PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::MemoryPressure this=%p\n",this));
-  if (RUNNING != mRunning)
-    return;
-
-  SendLifecycleEvent(this, kFreeMemory_ANPLifecycleAction);
-}
-
-void nsNPAPIPluginInstance::NotifyFullScreen(bool aFullScreen)
-{
-  PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::NotifyFullScreen this=%p\n",this));
-
-  if (RUNNING != mRunning || mFullScreen == aFullScreen)
-    return;
-
-  mFullScreen = aFullScreen;
-  SendLifecycleEvent(this, mFullScreen ? kEnterFullScreen_ANPLifecycleAction : kExitFullScreen_ANPLifecycleAction);
-
-  if (mFullScreen && mFullScreenOrientation != dom::eScreenOrientation_None) {
-    java::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
-  }
-}
-
-void nsNPAPIPluginInstance::NotifySize(nsIntSize size)
-{
-  if (kOpenGL_ANPDrawingModel != GetANPDrawingModel() ||
-      size == mCurrentSize)
-    return;
-
-  mCurrentSize = size;
-
-  ANPEvent event;
-  event.inSize = sizeof(ANPEvent);
-  event.eventType = kDraw_ANPEventType;
-  event.data.draw.model = kOpenGL_ANPDrawingModel;
-  event.data.draw.data.surfaceSize.width = size.width;
-  event.data.draw.data.surfaceSize.height = size.height;
-
-  HandleEvent(&event, nullptr);
-}
-
-void nsNPAPIPluginInstance::SetANPDrawingModel(uint32_t aModel)
-{
-  mANPDrawingModel = aModel;
-}
-
-void* nsNPAPIPluginInstance::GetJavaSurface()
-{
-  void* surface = nullptr;
-  nsresult rv = GetValueFromPlugin(kJavaSurface_ANPGetValue, &surface);
-  if (NS_FAILED(rv))
-    return nullptr;
-
-  return surface;
-}
-
-void nsNPAPIPluginInstance::PostEvent(void* event)
-{
-  PluginEventRunnable *r = new PluginEventRunnable(this, (ANPEvent*)event);
-  mPostedEvents.AppendElement(RefPtr<PluginEventRunnable>(r));
-
-  NS_DispatchToMainThread(r);
-}
-
-void nsNPAPIPluginInstance::SetFullScreenOrientation(uint32_t orientation)
-{
-  if (mFullScreenOrientation == orientation)
-    return;
-
-  uint32_t oldOrientation = mFullScreenOrientation;
-  mFullScreenOrientation = orientation;
-
-  if (mFullScreen) {
-    // We're already fullscreen so immediately apply the orientation change
-
-    if (mFullScreenOrientation != dom::eScreenOrientation_None) {
-      java::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
-    } else if (oldOrientation != dom::eScreenOrientation_None) {
-      // We applied an orientation when we entered fullscreen, but
-      // we don't want it anymore
-      java::GeckoAppShell::UnlockScreenOrientation();
-    }
-  }
-}
-
-void nsNPAPIPluginInstance::PopPostedEvent(PluginEventRunnable* r)
-{
-  mPostedEvents.RemoveElement(r);
-}
-
-void nsNPAPIPluginInstance::SetWakeLock(bool aLocked)
-{
-  if (aLocked == mWakeLocked)
-    return;
-
-  mWakeLocked = aLocked;
-  hal::ModifyWakeLock(NS_LITERAL_STRING("screen"),
-                      mWakeLocked ? hal::WAKE_LOCK_ADD_ONE : hal::WAKE_LOCK_REMOVE_ONE,
-                      hal::WAKE_LOCK_NO_CHANGE);
-}
-
-GLContext* nsNPAPIPluginInstance::GLContext()
-{
-  if (!EnsureGLContext())
-    return nullptr;
-
-  return sPluginContext;
-}
-
-already_AddRefed<AndroidSurfaceTexture> nsNPAPIPluginInstance::CreateSurfaceTexture()
-{
-  if (!EnsureGLContext())
-    return nullptr;
-
-  GLuint texture = TexturePoolOGL::AcquireTexture();
-  if (!texture)
-    return nullptr;
-
-  RefPtr<AndroidSurfaceTexture> surface = AndroidSurfaceTexture::Create(TexturePoolOGL::GetGLContext(),
-                                                                        texture);
-  if (!surface) {
-    return nullptr;
-  }
-
-  nsCOMPtr<nsIRunnable> frameCallback = NewRunnableMethod(this, &nsNPAPIPluginInstance::OnSurfaceTextureFrameAvailable);
-  surface->SetFrameAvailableCallback(frameCallback);
-  return surface.forget();
-}
-
-void nsNPAPIPluginInstance::OnSurfaceTextureFrameAvailable()
-{
-  if (mRunning == RUNNING && mOwner)
-    AndroidBridge::Bridge()->InvalidateAndScheduleComposite();
-}
-
-void* nsNPAPIPluginInstance::AcquireContentWindow()
-{
-  if (!mContentSurface) {
-    mContentSurface = CreateSurfaceTexture();
-
-    if (!mContentSurface)
-      return nullptr;
-  }
-
-  return mContentSurface->NativeWindow();
-}
-
-AndroidSurfaceTexture*
-nsNPAPIPluginInstance::AsSurfaceTexture()
-{
-  if (!mContentSurface)
-    return nullptr;
-
-  return mContentSurface;
-}
-
-void* nsNPAPIPluginInstance::AcquireVideoWindow()
-{
-  RefPtr<AndroidSurfaceTexture> surface = CreateSurfaceTexture();
-  if (!surface) {
-    return nullptr;
-  }
-
-  VideoInfo* info = new VideoInfo(surface);
-
-  void* window = info->mSurfaceTexture->NativeWindow();
-  mVideos.insert(std::pair<void*, VideoInfo*>(window, info));
-
-  return window;
-}
-
-void nsNPAPIPluginInstance::ReleaseVideoWindow(void* window)
-{
-  std::map<void*, VideoInfo*>::iterator it = mVideos.find(window);
-  if (it == mVideos.end())
-    return;
-
-  delete it->second;
-  mVideos.erase(window);
-}
-
-void nsNPAPIPluginInstance::SetVideoDimensions(void* window, gfxRect aDimensions)
-{
-  std::map<void*, VideoInfo*>::iterator it;
-
-  it = mVideos.find(window);
-  if (it == mVideos.end())
-    return;
-
-  it->second->mDimensions = aDimensions;
-}
-
-void nsNPAPIPluginInstance::GetVideos(nsTArray<VideoInfo*>& aVideos)
-{
-  std::map<void*, VideoInfo*>::iterator it;
-  for (it = mVideos.begin(); it != mVideos.end(); it++)
-    aVideos.AppendElement(it->second);
-}
-
-nsNPAPIPluginInstance* nsNPAPIPluginInstance::GetFromNPP(NPP npp)
-{
-  std::map<NPP, nsNPAPIPluginInstance*>::iterator it;
-
-  it = sPluginNPPMap.find(npp);
-  if (it == sPluginNPPMap.end())
-    return nullptr;
-
-  return it->second;
-}
-
-#endif
-
 nsresult nsNPAPIPluginInstance::GetDrawingModel(int32_t* aModel)
 {
   *aModel = (int32_t)mDrawingModel;
@@ -1006,7 +611,7 @@ nsresult nsNPAPIPluginInstance::IsRemoteDrawingCoreAnimation(bool* aDrawing)
 nsresult
 nsNPAPIPluginInstance::ContentsScaleFactorChanged(double aContentsScaleFactor)
 {
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(XP_WIN)
   if (!mPlugin)
       return NS_ERROR_FAILURE;
 
@@ -1052,10 +657,6 @@ nsNPAPIPluginInstance::CSSZoomFactorChanged(float aCSSZoomFactor)
 nsresult
 nsNPAPIPluginInstance::GetJSObject(JSContext *cx, JSObject** outObject)
 {
-  if (mHaveJavaC2PJSObjectQuirk) {
-    return NS_ERROR_FAILURE;
-  }
-
   NPObject *npobj = nullptr;
   nsresult rv = GetValueFromPlugin(NPPVpluginScriptableNPObject, &npobj);
   if (NS_FAILED(rv) || !npobj)
@@ -1083,9 +684,8 @@ nsNPAPIPluginInstance::ShouldCache()
 nsresult
 nsNPAPIPluginInstance::IsWindowless(bool* isWindowless)
 {
-#if defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
+#if defined(XP_MACOSX)
   // All OS X plugins are windowless.
-  // On android, pre-honeycomb, all plugins are treated as windowless.
   *isWindowless = true;
 #else
   *isWindowless = mWindowless;
@@ -1388,7 +988,6 @@ PluginTimerCallback(nsITimer *aTimer, void *aClosure)
 
   PLUGIN_LOG(PLUGIN_LOG_NOISY, ("nsNPAPIPluginInstance running plugin timer callback this=%p\n", npp->ndata));
 
-  MAIN_THREAD_JNI_REF_GUARD;
   // Some plugins (Flash on Android) calls unscheduletimer
   // from this callback.
   t->inCallback = true;
@@ -1447,7 +1046,11 @@ nsNPAPIPluginInstance::ScheduleTimer(uint32_t interval, NPBool repeat, void (*ti
     return 0;
   }
   const short timerType = (repeat ? (short)nsITimer::TYPE_REPEATING_SLACK : (short)nsITimer::TYPE_ONE_SHOT);
-  xpcomTimer->InitWithFuncCallback(PluginTimerCallback, newTimer, interval, timerType);
+  xpcomTimer->InitWithNamedFuncCallback(PluginTimerCallback,
+                                        newTimer,
+                                        interval,
+                                        timerType,
+                                        "nsNPAPIPluginInstance::ScheduleTimer");
   newTimer->timer = xpcomTimer;
 
   // save callback function
@@ -1603,139 +1206,6 @@ nsNPAPIPluginInstance::SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *c
   }
 }
 
-class CarbonEventModelFailureEvent : public Runnable {
-public:
-  nsCOMPtr<nsIContent> mContent;
-
-  explicit CarbonEventModelFailureEvent(nsIContent* aContent)
-    : mContent(aContent)
-  {}
-
-  ~CarbonEventModelFailureEvent() {}
-
-  NS_IMETHOD Run();
-};
-
-NS_IMETHODIMP
-CarbonEventModelFailureEvent::Run()
-{
-  nsString type = NS_LITERAL_STRING("npapi-carbon-event-model-failure");
-  nsContentUtils::DispatchTrustedEvent(mContent->GetComposedDoc(), mContent,
-                                       type, true, true);
-  return NS_OK;
-}
-
-void
-nsNPAPIPluginInstance::CarbonNPAPIFailure()
-{
-  nsCOMPtr<nsIDOMElement> element;
-  GetDOMElement(getter_AddRefs(element));
-  if (!element) {
-    return;
-  }
-
-  nsCOMPtr<nsIContent> content(do_QueryInterface(element));
-  if (!content) {
-    return;
-  }
-
-  nsCOMPtr<nsIRunnable> e = new CarbonEventModelFailureEvent(content);
-  nsresult rv = NS_DispatchToCurrentThread(e);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to dispatch CarbonEventModelFailureEvent.");
-  }
-}
-
-static bool
-GetJavaVersionFromMimetype(nsPluginTag* pluginTag, nsCString& version)
-{
-  for (uint32_t i = 0; i < pluginTag->MimeTypes().Length(); ++i) {
-    nsCString type = pluginTag->MimeTypes()[i];
-    nsAutoCString jpi("application/x-java-applet;jpi-version=");
-
-    int32_t idx = type.Find(jpi, false, 0, -1);
-    if (idx != 0) {
-      continue;
-    }
-
-    type.Cut(0, jpi.Length());
-    if (type.IsEmpty()) {
-      continue;
-    }
-
-    type.ReplaceChar('_', '.');
-    version = type;
-    return true;
-  }
-
-  return false;
-}
-
-void
-nsNPAPIPluginInstance::CheckJavaC2PJSObjectQuirk(uint16_t paramCount,
-                                                 const char* const* paramNames,
-                                                 const char* const* paramValues)
-{
-  if (!mMIMEType || !mPlugin) {
-    return;
-  }
-
-  nsPluginTagType tagtype;
-  nsresult rv = GetTagType(&tagtype);
-  if (NS_FAILED(rv) ||
-      (tagtype != nsPluginTagType_Applet)) {
-    return;
-  }
-
-  RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
-  if (!pluginHost) {
-    return;
-  }
-
-  nsPluginTag* pluginTag = pluginHost->TagForPlugin(mPlugin);
-  if (!pluginTag ||
-      !pluginTag->mIsJavaPlugin) {
-    return;
-  }
-
-  // check the params for "code" being present and non-empty
-  bool haveCodeParam = false;
-  bool isCodeParamEmpty = true;
-
-  for (uint16_t i = paramCount; i > 0; --i) {
-    if (PL_strcasecmp(paramNames[i - 1], "code") == 0) {
-      haveCodeParam = true;
-      if (strlen(paramValues[i - 1]) > 0) {
-        isCodeParamEmpty = false;
-      }
-      break;
-    }
-  }
-
-  // Due to the Java version being specified inconsistently across platforms
-  // check the version via the mimetype for choosing specific Java versions
-  nsCString javaVersion;
-  if (!GetJavaVersionFromMimetype(pluginTag, javaVersion)) {
-    return;
-  }
-
-  mozilla::Version version(javaVersion.get());
-
-  if (version >= "1.7.0.4") {
-    return;
-  }
-
-  if (!haveCodeParam && version >= "1.6.0.34" && version < "1.7") {
-    return;
-  }
-
-  if (haveCodeParam && !isCodeParamEmpty) {
-    return;
-  }
-
-  mHaveJavaC2PJSObjectQuirk = true;
-}
-
 double
 nsNPAPIPluginInstance::GetContentsScaleFactor()
 {
@@ -1776,45 +1246,110 @@ nsNPAPIPluginInstance::GetRunID(uint32_t* aRunID)
 }
 
 nsresult
-nsNPAPIPluginInstance::GetOrCreateAudioChannelAgent(nsIAudioChannelAgent** aAgent)
+nsNPAPIPluginInstance::CreateAudioChannelAgentIfNeeded()
 {
-  if (!mAudioChannelAgent) {
-    nsresult rv;
-    mAudioChannelAgent = do_CreateInstance("@mozilla.org/audiochannelagent;1", &rv);
-    if (NS_WARN_IF(!mAudioChannelAgent)) {
-      return NS_ERROR_FAILURE;
-    }
-
-    nsCOMPtr<nsPIDOMWindowOuter> window = GetDOMWindow();
-    if (NS_WARN_IF(!window)) {
-      return NS_ERROR_FAILURE;
-    }
-
-    rv = mAudioChannelAgent->Init(window->GetCurrentInnerWindow(),
-                                 (int32_t)AudioChannelService::GetDefaultAudioChannel(),
-                                 this);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
+  if (mAudioChannelAgent) {
+    return NS_OK;
   }
 
-  nsCOMPtr<nsIAudioChannelAgent> agent = mAudioChannelAgent;
-  agent.forget(aAgent);
+  nsresult rv;
+  mAudioChannelAgent = do_CreateInstance("@mozilla.org/audiochannelagent;1", &rv);
+  if (NS_WARN_IF(!mAudioChannelAgent)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsPIDOMWindowOuter> window = GetDOMWindow();
+  if (NS_WARN_IF(!window)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  rv = mAudioChannelAgent->Init(window->GetCurrentInnerWindow(),
+                               (int32_t)AudioChannelService::GetDefaultAudioChannel(),
+                               this);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
   return NS_OK;
+}
+
+void
+nsNPAPIPluginInstance::NotifyStartedPlaying()
+{
+  nsresult rv = CreateAudioChannelAgentIfNeeded();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  MOZ_ASSERT(mAudioChannelAgent);
+  dom::AudioPlaybackConfig config;
+  rv = mAudioChannelAgent->NotifyStartedPlaying(&config,
+                                                dom::AudioChannelService::AudibleState::eAudible);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  rv = WindowVolumeChanged(config.mVolume, config.mMuted);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  // Since we only support muting for now, the implementation of suspend
+  // is equal to muting. Therefore, if we have already muted the plugin,
+  // then we don't need to call WindowSuspendChanged() again.
+  if (config.mMuted) {
+    return;
+  }
+
+  rv = WindowSuspendChanged(config.mSuspend);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+}
+
+void
+nsNPAPIPluginInstance::NotifyStoppedPlaying()
+{
+  MOZ_ASSERT(mAudioChannelAgent);
+
+  // Reset the attribute.
+  mMuted = false;
+  nsresult rv = mAudioChannelAgent->NotifyStoppedPlaying();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
 }
 
 NS_IMETHODIMP
 nsNPAPIPluginInstance::WindowVolumeChanged(float aVolume, bool aMuted)
 {
+  MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
+         ("nsNPAPIPluginInstance, WindowVolumeChanged, "
+          "this = %p, aVolume = %f, aMuted = %s\n",
+          this, aVolume, aMuted ? "true" : "false"));
+
   // We just support mute/unmute
   nsresult rv = SetMuted(aMuted);
-  NS_WARN_IF(NS_FAILED(rv));
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "SetMuted failed");
+  if (mMuted != aMuted) {
+    mMuted = aMuted;
+    if (mAudioChannelAgent) {
+      AudioChannelService::AudibleState audible = aMuted ?
+        AudioChannelService::AudibleState::eNotAudible :
+        AudioChannelService::AudibleState::eAudible;
+      mAudioChannelAgent->NotifyStartedAudible(audible,
+                                               AudioChannelService::AudibleChangedReasons::eVolumeChanged);
+    }
+  }
   return rv;
 }
 
 NS_IMETHODIMP
 nsNPAPIPluginInstance::WindowSuspendChanged(nsSuspendedTypes aSuspend)
 {
+  MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
+         ("nsNPAPIPluginInstance, WindowSuspendChanged, "
+          "this = %p, aSuspend = %s\n", this, SuspendTypeToStr(aSuspend)));
+
   // It doesn't support suspended, so we just do something like mute/unmute.
   WindowVolumeChanged(1.0, /* useless */
                       aSuspend != nsISuspendedTypes::NONE_SUSPENDED);

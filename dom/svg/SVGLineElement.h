@@ -7,7 +7,7 @@
 #ifndef mozilla_dom_SVGLineElement_h
 #define mozilla_dom_SVGLineElement_h
 
-#include "nsSVGPathGeometryElement.h"
+#include "SVGGeometryElement.h"
 #include "nsSVGLength2.h"
 
 nsresult NS_NewSVGLineElement(nsIContent **aResult,
@@ -16,7 +16,7 @@ nsresult NS_NewSVGLineElement(nsIContent **aResult,
 namespace mozilla {
 namespace dom {
 
-typedef nsSVGPathGeometryElement SVGLineElementBase;
+typedef SVGGeometryElement SVGLineElementBase;
 
 class SVGLineElement final : public SVGLineElementBase
 {
@@ -34,7 +34,7 @@ public:
   // nsIContent interface
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* name) const override;
 
-  // nsSVGPathGeometryElement methods:
+  // SVGGeometryElement methods:
   virtual bool IsMarkable() override { return true; }
   virtual void GetMarkPoints(nsTArray<nsSVGMark> *aMarks) override;
   virtual void GetAsSimplePath(SimplePath* aSimplePath) override;
@@ -43,7 +43,8 @@ public:
                                  const Matrix& aToBoundsSpace,
                                  const Matrix* aToNonScalingStrokeSpace = nullptr) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedLength> X1();

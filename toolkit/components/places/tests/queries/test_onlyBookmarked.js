@@ -20,6 +20,7 @@ var testData = [
   // Add a bookmark that should be in the results
   { isBookmark: true,
     uri: "http://bookmarked.com/",
+    title: "",
     parentGuid: PlacesUtils.bookmarks.toolbarGuid,
     index: PlacesUtils.bookmarks.DEFAULT_INDEX,
     isInQuery: true },
@@ -27,6 +28,7 @@ var testData = [
   // Add a bookmark that should not be in the results
   { isBookmark: true,
     uri: "http://bookmarked-elsewhere.com/",
+    title: "",
     parentGuid: PlacesUtils.bookmarks.menuGuid,
     index: PlacesUtils.bookmarks.DEFAULT_INDEX,
     isInQuery: false },
@@ -34,24 +36,14 @@ var testData = [
   // Add an un-bookmarked visit
   { isVisit: true,
     uri: "http://notbookmarked.com/",
+    title: "",
     isInQuery: false }
 ];
 
 
-/**
- * run_test is where the magic happens.  This is automatically run by the test
- * harness.  It is where you do the work of creating the query, running it, and
- * playing with the result set.
- */
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_onlyBookmarked()
-{
+add_task(async function test_onlyBookmarked() {
   // This function in head_queries.js creates our database with the above data
-  yield task_populateDB(testData);
+  await task_populateDB(testData);
 
   // Query
   var query = PlacesUtils.history.getNewQuery();
@@ -74,27 +66,26 @@ add_task(function* test_onlyBookmarked()
   compareArrayToResult(testData, root);
   do_print("end first test");
 
-  /* ******************
-  Test live-update
-  ********************/
-
+  // Test live-update
   var liveUpdateTestData = [
-    //Add a bookmark that should show up
+    // Add a bookmark that should show up
     { isBookmark: true,
       uri: "http://bookmarked2.com/",
+      title: "",
       parentGuid: PlacesUtils.bookmarks.toolbarGuid,
       index: PlacesUtils.bookmarks.DEFAULT_INDEX,
       isInQuery: true },
 
-    //Add a bookmark that should not show up
+    // Add a bookmark that should not show up
     { isBookmark: true,
       uri: "http://bookmarked-elsewhere2.com/",
+      title: "",
       parentGuid: PlacesUtils.bookmarks.menuGuid,
       index: PlacesUtils.bookmarks.DEFAULT_INDEX,
       isInQuery: false }
   ];
 
-  yield task_populateDB(liveUpdateTestData); // add to the db
+  await task_populateDB(liveUpdateTestData); // add to the db
 
   // add to the test data
   testData.push(liveUpdateTestData[0]);

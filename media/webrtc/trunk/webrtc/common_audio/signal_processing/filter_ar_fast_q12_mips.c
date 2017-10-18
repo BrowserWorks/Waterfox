@@ -7,15 +7,15 @@
  *  in the file PATENTS.  All contributing project authors may
  *  be found in the AUTHORS file in the root of the source tree.
  */
-#include <assert.h>
 
+#include "webrtc/base/checks.h"
 #include "webrtc/common_audio/signal_processing/include/signal_processing_library.h"
 
 void WebRtcSpl_FilterARFastQ12(const int16_t* data_in,
                                int16_t* data_out,
                                const int16_t* __restrict coefficients,
-                               int coefficients_length,
-                               int data_length) {
+                               size_t coefficients_length,
+                               size_t data_length) {
   int r0, r1, r2, r3;
   int coef0, offset;
   int i, j, k;
@@ -25,8 +25,8 @@ void WebRtcSpl_FilterARFastQ12(const int16_t* data_in,
   int min16 = 0xFFFF8000;
 #endif  // #if !defined(MIPS_DSP_R1_LE)
 
-  assert(data_length > 0);
-  assert(coefficients_length > 1);
+  RTC_DCHECK_GT(data_length, 0);
+  RTC_DCHECK_GT(coefficients_length, 1);
 
   __asm __volatile (
     ".set       push                                             \n\t"

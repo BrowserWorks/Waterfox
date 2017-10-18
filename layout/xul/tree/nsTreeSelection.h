@@ -20,7 +20,7 @@ class nsTreeSelection final : public nsINativeTreeSelection
 {
 public:
   explicit nsTreeSelection(nsITreeBoxObject* aTree);
-   
+
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(nsTreeSelection)
   NS_DECL_NSITREESELECTION
@@ -37,6 +37,9 @@ protected:
   static void SelectCallback(nsITimer *aTimer, void *aClosure);
 
 protected:
+  // Helper function to get the content node associated with mTree.
+  already_AddRefed<nsIContent> GetContent();
+
   // Members
   nsCOMPtr<nsITreeBoxObject> mTree; // The tree will hold on to us through the view and let go when it dies.
 

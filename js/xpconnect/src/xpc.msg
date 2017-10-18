@@ -191,7 +191,7 @@ XPC_MSG_DEF(NS_ERROR_STORAGE_CONSTRAINT             , "SQLite database operation
 /* plugin related codes (from nsPluginError.h) */
 XPC_MSG_DEF(NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED, "Clearing site data by time range not supported by plugin")
 
-/* character converter related codes (from nsIUnicodeDecoder.h) */
+/* character converter related codes */
 XPC_MSG_DEF(NS_ERROR_ILLEGAL_INPUT                  , "The input characters have illegal sequences")
 
 /* Codes related to signd jars */
@@ -222,3 +222,14 @@ XPC_MSG_DEF(NS_ERROR_CONTENT_CRASHED                  , "The process that hosted
 /* Codes for the JS-implemented Push DOM API. These can be removed as part of bug 1252660. */
 XPC_MSG_DEF(NS_ERROR_DOM_PUSH_INVALID_KEY_ERR         , "Invalid raw ECDSA P-256 public key.")
 XPC_MSG_DEF(NS_ERROR_DOM_PUSH_MISMATCHED_KEY_ERR      , "A subscription with a different application server key already exists.")
+
+/* Codes defined in WebIDL https://heycam.github.io/webidl/#idl-DOMException-error-names */
+XPC_MSG_DEF(NS_ERROR_DOM_NOT_FOUND_ERR                , "The object can not be found here.")
+XPC_MSG_DEF(NS_ERROR_DOM_NOT_ALLOWED_ERR              , "The request is not allowed.")
+
+/* Codes related to the URIClassifier service */
+XPC_MSG_DEF(NS_ERROR_MALWARE_URI                      , "The URI is malware")
+XPC_MSG_DEF(NS_ERROR_PHISHING_URI                     , "The URI is phishing")
+XPC_MSG_DEF(NS_ERROR_TRACKING_URI                     , "The URI is tracking")
+XPC_MSG_DEF(NS_ERROR_UNWANTED_URI                     , "The URI is unwanted")
+XPC_MSG_DEF(NS_ERROR_BLOCKED_URI                      , "The URI is blocked")

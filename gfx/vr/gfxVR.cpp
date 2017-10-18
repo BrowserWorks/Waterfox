@@ -5,25 +5,9 @@
 
 #include <math.h>
 
-#include "prlink.h"
-#include "prmem.h"
-#include "prenv.h"
-#include "nsString.h"
-
-#include "gfxPrefs.h"
 #include "gfxVR.h"
-#if defined(XP_WIN)
-#include "gfxVROculus.h"
-#endif
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
-#include "gfxVROculus050.h"
-#include "gfxVROSVR.h"
-#endif
-#include "gfxVRCardboard.h"
-
-#include "mozilla/unused.h"
-#include "mozilla/layers/Compositor.h"
-#include "mozilla/layers/TextureHost.h"
+#include "mozilla/dom/GamepadEventTypes.h"
+#include "mozilla/dom/GamepadBinding.h"
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -32,37 +16,24 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 
-Atomic<uint32_t> VRHMDManager::sDeviceBase(0);
+Atomic<uint32_t> VRSystemManager::sDisplayBase(0);
+Atomic<uint32_t> VRSystemManager::sControllerBase(0);
 
-VRHMDInfo::VRHMDInfo(VRHMDType aType, bool aUseMainThreadOrientation)
+/* static */ uint32_t
+VRSystemManager::AllocateDisplayID()
 {
-  MOZ_COUNT_CTOR(VRHMDInfo);
-  mDeviceInfo.mType = aType;
-  mDeviceInfo.mDeviceID = VRHMDManager::AllocateDeviceID();
-  mDeviceInfo.mUseMainThreadOrientation = aUseMainThreadOrientation;
-}
-
-VRHMDInfo::~VRHMDInfo()
-{
-  MOZ_COUNT_DTOR(VRHMDInfo);
+  return ++sDisplayBase;
 }
 
 /* static */ uint32_t
-VRHMDManager::AllocateDeviceID()
+VRSystemManager::AllocateControllerID()
 {
-  return ++sDeviceBase;
-}
-
-VRHMDRenderingSupport::RenderTargetSet::RenderTargetSet()
-{
-}
-
-VRHMDRenderingSupport::RenderTargetSet::~RenderTargetSet()
-{
+  return ++sControllerBase;
 }
 
 Matrix4x4
-VRFieldOfView::ConstructProjectionMatrix(float zNear, float zFar, bool rightHanded)
+VRFieldOfView::ConstructProjectionMatrix(float zNear, float zFar,
+                                         bool rightHanded) const
 {
   float upTan = tan(upDegrees * M_PI / 180.0);
   float downTan = tan(downDegrees * M_PI / 180.0);
@@ -93,3 +64,68 @@ VRFieldOfView::ConstructProjectionMatrix(float zNear, float zFar, bool rightHand
 
   return mobj;
 }
+
+void
+VRSystemManager::AddGamepad(const VRControllerInfo& controllerInfo)
+{
+  dom::GamepadAdded a(NS_ConvertUTF8toUTF16(controllerInfo.GetControllerName()),
+                      controllerInfo.GetMappingType(),
+                      controllerInfo.GetHand(),
+                      controllerInfo.GetDisplayID(),
+                      controllerInfo.GetNumButtons(),
+                      controllerInfo.GetNumAxes(),
+                      controllerInfo.GetNumHaptics());
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadAdded>(mControllerCount, a);
+}
+
+void
+VRSystemManager::RemoveGamepad(uint32_t aIndex)
+{
+  dom::GamepadRemoved a;
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadRemoved>(aIndex, a);
+}
+
+void
+VRSystemManager::NewButtonEvent(uint32_t aIndex, uint32_t aButton,
+                                bool aPressed, bool aTouched, double aValue)
+{
+  dom::GamepadButtonInformation a(aButton, aValue, aPressed, aTouched);
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadButtonInformation>(aIndex, a);
+}
+
+void
+VRSystemManager::NewAxisMove(uint32_t aIndex, uint32_t aAxis,
+                             double aValue)
+{
+  dom::GamepadAxisInformation a(aAxis, aValue);
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadAxisInformation>(aIndex, a);
+}
+
+void
+VRSystemManager::NewPoseState(uint32_t aIndex,
+                              const dom::GamepadPoseState& aPose)
+{
+  dom::GamepadPoseInformation a(aPose);
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadPoseInformation>(aIndex, a);
+}
+
+void
+VRSystemManager::NewHandChangeEvent(uint32_t aIndex,
+                                    const dom::GamepadHand aHand)
+{
+  dom::GamepadHandInformation a(aHand);
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyGamepadChange<dom::GamepadHandInformation>(aIndex, a);
+}
+

@@ -67,6 +67,8 @@ MouseEvent::InitMouseEvent(const nsAString& aType,
                            uint16_t aButton,
                            EventTarget* aRelatedTarget)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, aDetail);
 
   switch(mEvent->mClass) {
@@ -138,6 +140,8 @@ MouseEvent::InitMouseEvent(const nsAString& aType,
                            EventTarget* aRelatedTarget,
                            const nsAString& aModifiersList)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   Modifiers modifiers = ComputeModifierState(aModifiersList);
 
   InitMouseEvent(aType, aCanBubble, aCancelable, aView, aDetail,
@@ -187,7 +191,7 @@ MouseEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mMetaKey, aParam.mButton, aParam.mRelatedTarget);
   e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
-
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 
@@ -210,6 +214,8 @@ MouseEvent::InitNSMouseEvent(const nsAString& aType,
                              float aPressure,
                              uint16_t aInputSource)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable,
                              aView, aDetail, aScreenX, aScreenY,
                              aClientX, aClientY,
@@ -296,27 +302,7 @@ MouseEvent::GetRelatedTarget()
       break;
   }
 
-  if (relatedTarget) {
-    nsCOMPtr<nsIContent> content = do_QueryInterface(relatedTarget);
-    nsCOMPtr<nsIContent> currentTarget =
-      do_QueryInterface(mEvent->mCurrentTarget);
-
-    nsIContent* shadowRelatedTarget = GetShadowRelatedTarget(currentTarget, content);
-    if (shadowRelatedTarget) {
-      relatedTarget = shadowRelatedTarget;
-    }
-
-    if (content && content->ChromeOnlyAccess() &&
-        !nsContentUtils::CanAccessNativeAnon()) {
-      relatedTarget = do_QueryInterface(content->FindFirstNonChromeOnlyAccessContent());
-    }
-
-    if (relatedTarget) {
-      relatedTarget = relatedTarget->GetTargetForDOMEvent();
-    }
-    return relatedTarget.forget();
-  }
-  return nullptr;
+  return EnsureWebAccessibleRelatedTarget(relatedTarget);
 }
 
 void
@@ -351,13 +337,24 @@ NS_IMETHODIMP
 MouseEvent::GetScreenX(int32_t* aScreenX)
 {
   NS_ENSURE_ARG_POINTER(aScreenX);
-  *aScreenX = ScreenX();
+  *aScreenX = ScreenX(CallerType::System);
   return NS_OK;
 }
 
 int32_t
-MouseEvent::ScreenX()
+MouseEvent::ScreenX(CallerType aCallerType)
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
+  if (nsContentUtils::ResistFingerprinting(aCallerType)) {
+    // Sanitize to something sort of like client cooords, but not quite
+    // (defaulting to (0,0) instead of our pre-specified client coords).
+    return Event::GetClientCoords(mPresContext, mEvent, mEvent->mRefPoint,
+                                  CSSIntPoint(0, 0)).x;
+  }
+
   return Event::GetScreenCoords(mPresContext, mEvent, mEvent->mRefPoint).x;
 }
 
@@ -365,13 +362,24 @@ NS_IMETHODIMP
 MouseEvent::GetScreenY(int32_t* aScreenY)
 {
   NS_ENSURE_ARG_POINTER(aScreenY);
-  *aScreenY = ScreenY();
+  *aScreenY = ScreenY(CallerType::System);
   return NS_OK;
 }
 
 int32_t
-MouseEvent::ScreenY()
+MouseEvent::ScreenY(CallerType aCallerType)
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
+  if (nsContentUtils::ResistFingerprinting(aCallerType)) {
+    // Sanitize to something sort of like client cooords, but not quite
+    // (defaulting to (0,0) instead of our pre-specified client coords).
+    return Event::GetClientCoords(mPresContext, mEvent, mEvent->mRefPoint,
+                                  CSSIntPoint(0, 0)).y;
+  }
+
   return Event::GetScreenCoords(mPresContext, mEvent, mEvent->mRefPoint).y;
 }
 
@@ -387,6 +395,10 @@ MouseEvent::GetClientX(int32_t* aClientX)
 int32_t
 MouseEvent::ClientX()
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
   return Event::GetClientCoords(mPresContext, mEvent, mEvent->mRefPoint,
                                 mClientPoint).x;
 }
@@ -402,6 +414,10 @@ MouseEvent::GetClientY(int32_t* aClientY)
 int32_t
 MouseEvent::ClientY()
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
   return Event::GetClientCoords(mPresContext, mEvent, mEvent->mRefPoint,
                                 mClientPoint).y;
 }
@@ -409,6 +425,9 @@ MouseEvent::ClientY()
 int32_t
 MouseEvent::OffsetX()
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
   return Event::GetOffsetCoords(mPresContext, mEvent, mEvent->mRefPoint,
                                 mClientPoint).x;
 }
@@ -416,6 +435,9 @@ MouseEvent::OffsetX()
 int32_t
 MouseEvent::OffsetY()
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
   return Event::GetOffsetCoords(mPresContext, mEvent, mEvent->mRefPoint,
                                 mClientPoint).y;
 }

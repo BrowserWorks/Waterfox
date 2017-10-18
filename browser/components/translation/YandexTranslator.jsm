@@ -10,8 +10,7 @@ this.EXPORTED_SYMBOLS = [ "YandexTranslator" ];
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://gre/modules/Http.jsm");
 
@@ -76,10 +75,10 @@ this.YandexTranslator.prototype = {
    * @returns {Promise}          A promise that will resolve when the translation
    *                             task is finished.
    */
-  translate: function() {
-    return Task.spawn(function *() {
+  translate() {
+    return (async () => {
       let currentIndex = 0;
-      this._onFinishedDeferred = Promise.defer();
+      this._onFinishedDeferred = PromiseUtils.defer();
 
       // Let's split the document into various requests to be sent to
       // Yandex's Translation API.
@@ -88,7 +87,7 @@ this.YandexTranslator.prototype = {
         // let's take the opportunity of the chunkification process to
         // allow for the event loop to attend other pending events
         // before we continue.
-        yield CommonUtils.laterTickResolvingPromise();
+        await CommonUtils.laterTickResolvingPromise();
 
         // Determine the data for the next request.
         let request = this._generateNextTranslationRequest(currentIndex);
@@ -109,7 +108,7 @@ this.YandexTranslator.prototype = {
       }
 
       return this._onFinishedDeferred.promise;
-    }.bind(this));
+    })();
   },
 
   /**
@@ -120,7 +119,7 @@ this.YandexTranslator.prototype = {
    *
    * @param   request   The YandexRequest sent to the server
    */
-  _chunkCompleted: function(yandexRequest) {
+  _chunkCompleted(yandexRequest) {
     if (this._parseChunkResult(yandexRequest)) {
       this._partialSuccess = true;
       // Count the number of characters successfully translated.
@@ -140,7 +139,7 @@ this.YandexTranslator.prototype = {
    *
    * @param   aError   [optional] The XHR object of the request that failed.
    */
-  _chunkFailed: function(aError) {
+  _chunkFailed(aError) {
     if (aError instanceof Ci.nsIXMLHttpRequest) {
       let body = aError.responseText;
       let json = { code: 0 };
@@ -160,7 +159,7 @@ this.YandexTranslator.prototype = {
    * This function handles resolving the promise
    * returned by the public `translate()` method when all chunks are completed.
    */
-  _checkIfFinished: function() {
+  _checkIfFinished() {
     // Check if all pending requests have been
     // completed and then resolves the promise.
     // If at least one chunk was successful, the
@@ -188,7 +187,7 @@ this.YandexTranslator.prototype = {
    * @param   request      The request sent to the server.
    * @returns boolean      True if parsing of this chunk was successful.
    */
-  _parseChunkResult: function(yandexRequest) {
+  _parseChunkResult(yandexRequest) {
     let results;
     try {
       let result = JSON.parse(yandexRequest.networkRequest.responseText);
@@ -228,7 +227,7 @@ this.YandexTranslator.prototype = {
    * @param startIndex What is the index, in the roots list, that the
    *                   chunk should start.
    */
-  _generateNextTranslationRequest: function(startIndex) {
+  _generateNextTranslationRequest(startIndex) {
     let currentDataSize = 0;
     let currentChunks = 0;
     let output = [];
@@ -292,8 +291,8 @@ YandexRequest.prototype = {
   /**
    * Initiates the request
    */
-  fireRequest: function() {
-    return Task.spawn(function *(){
+  fireRequest() {
+    return (async () => {
       // Prepare URL.
       let url = getUrlParam("https://translate.yandex.net/api/v1.5/tr.json/translate",
                             "browser.translation.yandex.translateURLOverride");
@@ -312,22 +311,22 @@ YandexRequest.prototype = {
       }
 
       // Set up request options.
-      let deferred = Promise.defer();
-      let options = {
-        onLoad: (function(responseText, xhr) {
-          deferred.resolve(this);
-        }).bind(this),
-        onError: function(e, responseText, xhr) {
-          deferred.reject(xhr);
-        },
-        postData: params
-      };
+      return new Promise((resolve, reject) => {
+        let options = {
+          onLoad: (responseText, xhr) => {
+            resolve(this);
+          },
+          onError(e, responseText, xhr) {
+            reject(xhr);
+          },
+          postData: params
+        };
 
-      // Fire the request.
-      this.networkRequest = httpRequest(url, options);
+        // Fire the request.
+        this.networkRequest = httpRequest(url, options);
 
-      return deferred.promise;
-    }.bind(this));
+      });
+    })();
   }
 };
 

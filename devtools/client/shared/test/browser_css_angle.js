@@ -4,12 +4,11 @@
 /* import-globals-from head.js */
 "use strict";
 
-const TEST_URI = "data:text/html;charset=utf-8,browser_css_angle.js";
 var {angleUtils} = require("devtools/client/shared/css-angle");
 
 add_task(function* () {
   yield addTab("about:blank");
-  let [host] = yield createHost("bottom", TEST_URI);
+  let [host] = yield createHost("bottom");
 
   info("Starting the test");
   testAngleUtils();
@@ -41,8 +40,10 @@ function testAngleValidity() {
 
   for (let {angle, result} of data) {
     let testAngle = new angleUtils.CssAngle(angle);
+    let validString = testAngle.valid ? " a valid" : "an invalid";
 
-    is(testAngle.valid, result, `Testing that "${angle}" is ${testAngle.valid ? " a valid" : "an invalid" } angle`);
+    is(testAngle.valid, result,
+       `Testing that "${angle}" is ${validString} angle`);
   }
 }
 

@@ -15,14 +15,14 @@
 #error "This file should not be included"
 #endif
 
-class nsXULLabelFrame : public nsBlockFrame
+class nsXULLabelFrame final : public nsBlockFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsXULLabelFrame)
 
   friend nsIFrame* NS_NewXULLabelFrame(nsIPresShell* aPresShell,
                                        nsStyleContext *aContext);
-  
+
   // nsIFrame
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -34,19 +34,14 @@ public:
                                     nsIAtom* aAttribute,
                                     int32_t aModType) override;
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::XULLabelFrame
-   */
-  virtual nsIAtom* GetType() const override;
-  
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
 protected:
-  explicit nsXULLabelFrame(nsStyleContext *aContext) : nsBlockFrame(aContext) {}
+  explicit nsXULLabelFrame(nsStyleContext* aContext)
+    : nsBlockFrame(aContext, kClassID)
+  {}
 
   nsresult RegUnregAccessKey(bool aDoReg);
 };

@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.net.test;
 
+import android.os.SystemClock;
+
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
@@ -25,6 +27,8 @@ import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.HTTPFailureException;
+import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -32,6 +36,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -50,12 +55,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 @RunWith(TestRunner.class)
 public class TestGlobalSession {
@@ -65,6 +72,7 @@ public class TestGlobalSession {
   private final String TEST_PASSWORD            = "password";
   private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
   private final long   TEST_BACKOFF_IN_SECONDS  = 2401;
+  private final long   SYNC_DEADLINE            = SystemClock.elapsedRealtime() + TimeUnit.MINUTES.toMillis(30);
 
   public static WaitHelper getTestWaiter() {
     return WaitHelper.getTestWaiter();
@@ -147,7 +155,7 @@ public class TestGlobalSession {
         @Override
         public void run() {
           try {
-            session.start();
+            session.start(SYNC_DEADLINE);
           } catch (Exception e) {
             final AssertionFailedError error = new AssertionFailedError();
             error.initCause(e);
@@ -195,7 +203,7 @@ public class TestGlobalSession {
         @Override
         public void run() {
           try {
-            session.start();
+            session.start(SYNC_DEADLINE);
           } catch (Exception e) {
             final AssertionFailedError error = new AssertionFailedError();
             error.initCause(e);
@@ -275,7 +283,7 @@ public class TestGlobalSession {
       @Override
       public void run() {
         try {
-          session.start();
+          session.start(SYNC_DEADLINE);
         } catch (Exception e) {
           final AssertionFailedError error = new AssertionFailedError();
           error.initCause(e);
@@ -349,7 +357,7 @@ public class TestGlobalSession {
     List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
     Collections.sort(namesList);
     String[] names = namesList.toArray(new String[namesList.size()]);
-    String[] expected = new String[] { "bookmarks", "clients", "forms", "history", "passwords", "tabs" };
+    String[] expected = new String[] { "bookmarks", "clients", "forms", "history", "passwords", "recentHistory", "tabs" };
     assertArrayEquals(expected, names);
   }
 
@@ -387,6 +395,7 @@ public class TestGlobalSession {
     final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null);
     session.config.metaGlobal = session.generateNewMetaGlobal();
+    session.config.infoCollections = mock(InfoCollections.class);
     session.enginesToUpdate.clear();
 
     // Set enabledEngines in meta/global, including a "new engine."
@@ -429,8 +438,53 @@ public class TestGlobalSession {
     assertEquals(expected, session.config.metaGlobal.getEnabledEngineNames());
   }
 
+  @Test
+  public void testUploadMetaGlobalDelegate412() {
+    final Object monitor = new Object();
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    MetaGlobalDelegate metaGlobalDelegate = GlobalSession.makeMetaGlobalUploadDelegate(
+            mock(SyncConfiguration.class),
+            callback,
+            monitor
+    );
+
+    metaGlobalDelegate.handleFailure(makeSyncStorageResponse(412));
+
+    assertTrue(callback.calledFullSyncNecessary);
+  }
+
+  @Test
+  public void testUploadMetaGlobalDelegateNon412() {
+    final Object monitor = new Object();
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    MetaGlobalDelegate metaGlobalDelegate = GlobalSession.makeMetaGlobalUploadDelegate(
+            mock(SyncConfiguration.class),
+            callback,
+            monitor
+    );
+
+    metaGlobalDelegate.handleFailure(makeSyncStorageResponse(400));
+
+    assertFalse(callback.calledFullSyncNecessary);
+  }
+
   public void testStageAdvance() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
+  }
+
+  public static HTTPFailureException makeHttpFailureException(int statusCode) {
+    return new HTTPFailureException(makeSyncStorageResponse(statusCode));
+  }
+
+  public static SyncStorageResponse makeSyncStorageResponse(int statusCode) {
+    // \\( >.<)//
+    return new SyncStorageResponse(
+            new BasicHttpResponse(
+                    new BasicStatusLine(
+                            new ProtocolVersion("HTTP", 1, 1), statusCode, null
+                    )
+            )
+    );
   }
 }

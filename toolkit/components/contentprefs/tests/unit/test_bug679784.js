@@ -5,18 +5,16 @@
 
 var prefObserver = {
     setCalledNum: 0,
-    onContentPrefSet: function(aGroup, aName, aValue) {
+    onContentPrefSet(aGroup, aName, aValue) {
         this.setCalledNum++;
     },
     removedCalledNum: 0,
-    onContentPrefRemoved: function(aGroup, aName) {
+    onContentPrefRemoved(aGroup, aName) {
         this.removedCalledNum++;
     }
 };
 
 function run_test() {
-  let loadContext = { get usePrivateBrowsing() { return gInPrivateBrowsing; } };
-
   var cps = new ContentPrefInstance(loadContext);
   cps.removeGroupedPrefs();
 
@@ -31,7 +29,7 @@ function run_test() {
   cps.addObserver("value", prefObserver);
   cps.addObserver("value-global", prefObserver);
 
-  enterPBMode();
+  enterPBMode(cps);
 
   // test setPref
   num = prefObserver.setCalledNum;

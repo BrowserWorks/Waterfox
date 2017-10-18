@@ -6,7 +6,7 @@
 function boom()
 {
   while (document.documentElement.firstChild) {
-    document.documentElement.removeChild(document.documentElement.firstChild);
+    document.documentElement.firstChild.remove();
   }
 
   var td = document.createElementNS("http://www.w3.org/1999/xhtml", "td");
@@ -18,7 +18,7 @@ function boom()
   head.appendChild(td);
 }
 
-window.addEventListener("load", boom, false);
+window.addEventListener("load", boom);
 
 ]]>
 </script>

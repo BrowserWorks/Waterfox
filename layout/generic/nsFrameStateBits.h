@@ -140,7 +140,7 @@ FRAME_STATE_BIT(Generic, 14, NS_FRAME_INDEPENDENT_SELECTION)
 // If this bit is set, the frame is part of the mangled frame hierarchy
 // that results when an inline has been split because of a nested block.
 // See the comments in nsCSSFrameConstructor::ConstructInline for
-// more details.
+// more details.  (this is only set on nsBlockFrame/nsInlineFrame frames)
 FRAME_STATE_BIT(Generic, 15, NS_FRAME_PART_OF_IBSPLIT)
 
 // If this bit is set, then transforms (e.g. CSS or SVG transforms) are allowed
@@ -266,8 +266,16 @@ FRAME_STATE_BIT(Generic, 53, NS_FRAME_IS_NONDISPLAY)
 // Frame has a LayerActivityProperty property
 FRAME_STATE_BIT(Generic, 54, NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY)
 
-// Frame has VR content, and needs VR display items created
-FRAME_STATE_BIT(Generic, 57, NS_FRAME_HAS_VR_CONTENT)
+// Frame owns anonymous boxes whose style contexts it will need to update during
+// a stylo tree traversal.
+FRAME_STATE_BIT(Generic, 55, NS_FRAME_OWNS_ANON_BOXES)
+
+// Frame maybe has a counter-reset/increment style
+FRAME_STATE_BIT(Generic, 56, NS_FRAME_HAS_CSS_COUNTER_STYLE)
+
+// The display list of the frame can be handled by the shortcut for
+// COMMON CASE.
+FRAME_STATE_BIT(Generic, 57, NS_FRAME_SIMPLE_DISPLAYLIST)
 
 // Set for all descendants of MathML sub/supscript elements (other than the
 // base frame) to indicate that the SSTY font feature should be used.
@@ -306,9 +314,16 @@ FRAME_STATE_BIT(Box, 61, NS_FRAME_MOUSE_THROUGH_NEVER)
 
 FRAME_STATE_GROUP(FlexContainer, nsFlexContainerFrame)
 
-// Set for a flex container whose children have been reordered due to 'order'.
-// (Means that we have to be more thorough about checking them for sortedness.)
-FRAME_STATE_BIT(FlexContainer, 20, NS_STATE_FLEX_CHILDREN_REORDERED)
+// True iff the normal flow children are already in CSS 'order' in the
+// order they occur in the child frame list.
+FRAME_STATE_BIT(FlexContainer, 20, NS_STATE_FLEX_NORMAL_FLOW_CHILDREN_IN_CSS_ORDER)
+
+// Set for a flex container that is emulating a legacy
+// 'display:-webkit-{inline-}box' container.
+FRAME_STATE_BIT(FlexContainer, 21, NS_STATE_FLEX_IS_LEGACY_WEBKIT_BOX)
+
+// True if the container has no flex items; may lie if there is a pending reflow
+FRAME_STATE_BIT(FlexContainer, 22, NS_STATE_FLEX_SYNTHESIZE_BASELINE)
 
 // == Frame state bits that apply to grid container frames ====================
 
@@ -327,9 +342,12 @@ FRAME_STATE_BIT(GridContainer, 21, NS_STATE_GRID_DID_PUSH_ITEMS)
 // True iff computed grid values should be generated on the next reflow
 FRAME_STATE_BIT(GridContainer, 22, NS_STATE_GRID_GENERATE_COMPUTED_VALUES)
 
+// True if the container has no grid items; may lie if there is a pending reflow
+FRAME_STATE_BIT(GridContainer, 23, NS_STATE_GRID_SYNTHESIZE_BASELINE)
+
 // == Frame state bits that apply to SVG frames ===============================
 
-FRAME_STATE_GROUP(SVG, nsISVGChildFrame)
+FRAME_STATE_GROUP(SVG, nsSVGDisplayableFrame)
 FRAME_STATE_GROUP(SVG, nsSVGContainerFrame)
 
 FRAME_STATE_BIT(SVG, 20, NS_STATE_IS_OUTER_SVG)
@@ -468,13 +486,16 @@ FRAME_STATE_BIT(Block, 21, NS_BLOCK_HAS_PUSHED_FLOATS)
 // nsBlockFrame::IsMarginRoot().
 //
 // This causes the BlockReflowInput's constructor to set the
-// BRS_ISBSTARTMARGINROOT and BRS_ISBENDMARGINROOT flags.
+// mIsBStartMarginRoot and mIsBEndMarginRoot flags.
 FRAME_STATE_BIT(Block, 22, NS_BLOCK_MARGIN_ROOT)
 
 // This indicates that a block frame should create its own float manager. This
 // is required by each block frame that can contain floats. The float manager is
 // used to reserve space for the floated frames.
 FRAME_STATE_BIT(Block, 23, NS_BLOCK_FLOAT_MGR)
+
+// For setting the relevant bits on a block formatting context:
+#define NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS (NS_BLOCK_FLOAT_MGR | NS_BLOCK_MARGIN_ROOT)
 
 FRAME_STATE_BIT(Block, 24, NS_BLOCK_HAS_LINE_CURSOR)
 
@@ -594,6 +615,19 @@ FRAME_STATE_BIT(Placeholder, 22, PLACEHOLDER_FOR_FIXEDPOS)
 FRAME_STATE_BIT(Placeholder, 23, PLACEHOLDER_FOR_POPUP)
 FRAME_STATE_BIT(Placeholder, 24, PLACEHOLDER_FOR_TOPLAYER)
 
+// This bit indicates that the out-of-flow frame's static position needs to be
+// determined using the CSS Box Alignment properties
+// ([align,justify]-[self,content]).  When this is set, the placeholder frame's
+// position doesn't represent the static position, as it usually would --
+// rather, it represents the logical start corner of the alignment containing
+// block.  Then, after we've determined the out-of-flow frame's size, we can
+// resolve the actual static position using the alignment properties.
+FRAME_STATE_BIT(Placeholder, 25, PLACEHOLDER_STATICPOS_NEEDS_CSSALIGN)
+
+// Are all earlier frames on the same block line empty?
+FRAME_STATE_BIT(Placeholder, 26, PLACEHOLDER_LINE_IS_EMPTY_SO_FAR)
+// Does the above bit have a valid value?
+FRAME_STATE_BIT(Placeholder, 27, PLACEHOLDER_HAVE_LINE_IS_EMPTY_SO_FAR)
 
 // == Frame state bits that apply to table cell frames ========================
 

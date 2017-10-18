@@ -9,12 +9,21 @@
 const TEST_URL = TEST_BASE_HTTP + "doc_uncached.html";
 
 add_task(function* () {
+  // Disable rcwn to make cache behavior deterministic.
+  yield pushPref("network.http.rcwn.enabled", false);
+
   info("Opening netmonitor");
   let tab = yield addTab("about:blank");
   let target = TargetFactory.forTab(tab);
   let toolbox = yield gDevTools.showToolbox(target, "netmonitor");
-  let netmonitor = toolbox.getPanel("netmonitor");
-  netmonitor._view.RequestsMenu.lazyUpdate = false;
+  let monitor = toolbox.getPanel("netmonitor");
+  let { store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
+
+  store.dispatch(Actions.batchEnable(false));
 
   info("Navigating to test page");
   yield navigateTo(TEST_URL);
@@ -26,15 +35,15 @@ add_task(function* () {
   yield styleeditor.UI.editors[0].getSourceEditor();
 
   info("Checking Netmonitor contents.");
-  let attachments = [];
-  for (let item of netmonitor._view.RequestsMenu) {
-    if (item.attachment.url.endsWith("doc_uncached.css")) {
-      attachments.push(item.attachment);
+  let items = [];
+  for (let item of getSortedRequests(store.getState())) {
+    if (item.url.endsWith("doc_uncached.css")) {
+      items.push(item);
     }
   }
 
-  is(attachments.length, 2,
+  is(items.length, 2,
      "Got two requests for doc_uncached.css after Style Editor was loaded.");
-  ok(attachments[1].fromCache,
+  ok(items[1].fromCache,
      "Second request was loaded from browser cache");
 });

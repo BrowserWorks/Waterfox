@@ -15,11 +15,6 @@ textbox {
   -moz-appearance: textfield;
   cursor: text;
   margin: 2px 4px;
-  border: 2px solid;
-  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
-  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
-  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
-  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
   padding: 2px 2px 3px;
   padding-inline-start: 4px;
   background-color: -moz-Field;
@@ -72,8 +67,13 @@ textbox.plain html|*.textbox-textarea {
 
 /* ::::: search textbox ::::: */
 
-.textbox-search-icon {
-  list-style-image: url(moz-icon://stock/gtk-find?size=menu);
+textbox:not([searchbutton]) > .textbox-input-box > .textbox-search-sign {
+  list-style-image: url(chrome://global/skin/icons/search-textbox.svg);
+  margin-inline-end: 5px;
+}
+
+.textbox-search-icon[searchbutton] {
+  list-style-image: url(chrome://global/skin/icons/search-textbox.svg);
 }
 
 .textbox-search-clear {
@@ -90,58 +90,3 @@ textbox.plain html|*.textbox-textarea {
 toolbarpaletteitem > toolbaritem > textbox > .textbox-input-box > html|*.textbox-input {
   visibility: hidden;
 }
-
-/* ::::: context menu ::::: */
-
-menuitem:not([type]) {
-  -moz-binding: url("chrome://global/content/bindings/menu.xml#menuitem-iconic");
-}
-
-menuitem[cmd="cmd_undo"] {
-  list-style-image: url("moz-icon://stock/gtk-undo?size=menu");
-}
-
-menuitem[cmd="cmd_undo"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-undo?size=menu&state=disabled");
-}
-
-menuitem[cmd="cmd_cut"] {
-  list-style-image: url("moz-icon://stock/gtk-cut?size=menu");
-}
-
-menuitem[cmd="cmd_cut"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-cut?size=menu&state=disabled");
-}
-
-menuitem[cmd="cmd_copy"] {
-  list-style-image: url("moz-icon://stock/gtk-copy?size=menu");
-}
-
-menuitem[cmd="cmd_copy"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-copy?size=menu&state=disabled");
-}
-
-menuitem[cmd="cmd_paste"] {
-  list-style-image: url("moz-icon://stock/gtk-paste?size=menu");
-}
-
-menuitem[cmd="cmd_paste"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-paste?size=menu&state=disabled");
-}
-
-menuitem[cmd="cmd_delete"] {
-  list-style-image: url("moz-icon://stock/gtk-delete?size=menu");
-}
-
-menuitem[cmd="cmd_delete"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-delete?size=menu&state=disabled");
-}
-
-menuitem[cmd="cmd_selectAll"] {
-  list-style-image: url("moz-icon://stock/gtk-select-all?size=menu");
-}
-
-menuitem[cmd="cmd_selectAll"][disabled] {
-  list-style-image: url("moz-icon://stock/gtk-select-all?size=menu&state=disabled");
-}
-

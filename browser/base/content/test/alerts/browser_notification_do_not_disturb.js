@@ -7,7 +7,7 @@ const ALERT_SERVICE = Cc["@mozilla.org/alerts-service;1"]
                         .getService(Ci.nsIAlertsService)
                         .QueryInterface(Ci.nsIAlertsDoNotDisturb);
 
-function test () {
+function test() {
   waitForExplicitFinish();
 
   try {
@@ -35,7 +35,7 @@ function test () {
   ok(!ALERT_SERVICE.manualDoNotDisturb, "Alert service should not be disabled when test starts");
   ALERT_SERVICE.manualDoNotDisturb = false;
 
-  tab = gBrowser.addTab(notificationURL);
+  tab = BrowserTestUtils.addTab(gBrowser, notificationURL);
   gBrowser.selectedTab = tab;
   tab.linkedBrowser.addEventListener("load", onLoad, true);
 }

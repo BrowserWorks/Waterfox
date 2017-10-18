@@ -8,6 +8,7 @@
 
 #include "nsIContent.h"
 #include "nsCSSProps.h"
+#include "nsContentUtils.h"
 #include "nsRuleNode.h"
 #include "nsROCSSPrimitiveValue.h"
 #include "nsStyleStruct.h"
@@ -15,6 +16,7 @@
 #include "nsIContentSecurityPolicy.h"
 #include "nsIURI.h"
 #include "nsPrintfCString.h"
+#include <cctype>
 
 using namespace mozilla;
 
@@ -51,8 +53,8 @@ bool nsStyleUtil::DashMatchCompare(const nsAString& aAttributeValue,
 }
 
 bool
-nsStyleUtil::ValueIncludes(const nsSubstring& aValueList,
-                           const nsSubstring& aValue,
+nsStyleUtil::ValueIncludes(const nsAString& aValueList,
+                           const nsAString& aValue,
                            const nsStringComparator& aComparator)
 {
   const char16_t *p = aValueList.BeginReading(),
@@ -93,7 +95,7 @@ void nsStyleUtil::AppendEscapedCSSString(const nsAString& aString,
   for (; in != end; in++) {
     if (*in < 0x20 || (*in >= 0x7F && *in < 0xA0)) {
       // Escape U+0000 through U+001F and U+007F through U+009F numerically.
-      aReturn.AppendPrintf("\\%hx ", *in);
+      aReturn.AppendPrintf("\\%x ", *in);
     } else {
       if (*in == '"' || *in == '\'' || *in == '\\') {
         // Escape backslash and quote characters symbolically.
@@ -147,7 +149,7 @@ nsStyleUtil::AppendEscapedCSSIdent(const nsAString& aIdent, nsAString& aReturn)
   // numerically.  If we didn't escape it numerically, it would get
   // interpreted as a numeric escape for the wrong character.
   if (in != end && ('0' <= *in && *in <= '9')) {
-    aReturn.AppendPrintf("\\%hx ", *in);
+    aReturn.AppendPrintf("\\%x ", *in);
     ++in;
   }
 
@@ -157,7 +159,7 @@ nsStyleUtil::AppendEscapedCSSIdent(const nsAString& aIdent, nsAString& aReturn)
       aReturn.Append(char16_t(0xFFFD));
     } else if (ch < 0x20 || (0x7F <= ch && ch < 0xA0)) {
       // Escape U+0000 through U+001F and U+007F through U+009F numerically.
-      aReturn.AppendPrintf("\\%hx ", *in);
+      aReturn.AppendPrintf("\\%x ", *in);
     } else {
       // Escape ASCII non-identifier printables as a backslash plus
       // the character.
@@ -228,7 +230,7 @@ nsStyleUtil::AppendEscapedCSSFontFamilyList(
 
 
 /* static */ void
-nsStyleUtil::AppendBitmaskCSSValue(nsCSSProperty aProperty,
+nsStyleUtil::AppendBitmaskCSSValue(nsCSSPropertyID aProperty,
                                    int32_t aMaskedValue,
                                    int32_t aFirstMask,
                                    int32_t aLastMask,
@@ -327,6 +329,24 @@ nsStyleUtil::AppendPaintOrderValue(uint8_t aValue,
 }
 
 /* static */ void
+nsStyleUtil::AppendFontTagAsString(uint32_t aTag, nsAString& aResult)
+{
+  // A font tag (for feature/variation settings) is a 4-char code interpreted
+  // as a bigendian 32-bit value and stored/processed as a uint32_t.
+  // To serialize it, we put the four bytes (which are all guaranteed to be
+  // printable ASCII values) into a string, starting from the high byte of the
+  // value, then append that to the result with CSS escaping and quotes.
+  nsAutoString tagStr;
+  for (int shiftAmount = 24; shiftAmount >= 0; shiftAmount -= 8) {
+    char c = (aTag >> shiftAmount) & 0xff;
+    MOZ_ASSERT(isascii(c) && isprint(c),
+               "parser should have restricted tag to printable ASCII chars");
+    tagStr.Append(c);
+  }
+  AppendEscapedCSSString(tagStr, aResult);
+}
+
+/* static */ void
 nsStyleUtil::AppendFontFeatureSettings(const nsTArray<gfxFontFeature>& aFeatures,
                                        nsAString& aResult)
 {
@@ -334,19 +354,10 @@ nsStyleUtil::AppendFontFeatureSettings(const nsTArray<gfxFontFeature>& aFeatures
     const gfxFontFeature& feat = aFeatures[i];
 
     if (i != 0) {
-        aResult.AppendLiteral(", ");
+      aResult.AppendLiteral(", ");
     }
 
-    // output tag
-    char tag[7];
-    tag[0] = '"';
-    tag[1] = (feat.mTag >> 24) & 0xff;
-    tag[2] = (feat.mTag >> 16) & 0xff;
-    tag[3] = (feat.mTag >> 8) & 0xff;
-    tag[4] = feat.mTag & 0xff;
-    tag[5] = '"';
-    tag[6] = 0;
-    aResult.AppendASCII(tag);
+    AppendFontTagAsString(feat.mTag, aResult);
 
     // output value, if necessary
     if (feat.mValue == 0) {
@@ -377,6 +388,45 @@ nsStyleUtil::AppendFontFeatureSettings(const nsCSSValue& aSrc,
   nsTArray<gfxFontFeature> featureSettings;
   nsRuleNode::ComputeFontFeatures(aSrc.GetPairListValue(), featureSettings);
   AppendFontFeatureSettings(featureSettings, aResult);
+}
+
+/* static */ void
+nsStyleUtil::AppendFontVariationSettings(const nsTArray<gfxFontVariation>& aVariations,
+                                         nsAString& aResult)
+{
+  for (uint32_t i = 0, numVars = aVariations.Length(); i < numVars; i++) {
+    const gfxFontVariation& var = aVariations[i];
+
+    if (i != 0) {
+      aResult.AppendLiteral(", ");
+    }
+
+    // output tag
+    AppendFontTagAsString(var.mTag, aResult);
+
+    // output value
+    aResult.Append(' ');
+    aResult.AppendFloat(var.mValue);
+  }
+}
+
+/* static */ void
+nsStyleUtil::AppendFontVariationSettings(const nsCSSValue& aSrc,
+                                         nsAString& aResult)
+{
+  nsCSSUnit unit = aSrc.GetUnit();
+
+  if (unit == eCSSUnit_Normal) {
+    aResult.AppendLiteral("normal");
+    return;
+  }
+
+  NS_PRECONDITION(unit == eCSSUnit_PairList || unit == eCSSUnit_PairListDep,
+                  "improper value unit for font-variation-settings:");
+
+  nsTArray<gfxFontVariation> variationSettings;
+  nsRuleNode::ComputeFontVariations(aSrc.GetPairListValue(), variationSettings);
+  AppendFontVariationSettings(variationSettings, aResult);
 }
 
 /* static */ void
@@ -466,8 +516,7 @@ nsStyleUtil::ComputeFunctionalAlternates(const nsCSSValueList* aList,
     NS_ASSERTION(key != eCSSKeyword_UNKNOWN, "unknown alternate property value");
 
     int32_t alternate;
-    if (key == eCSSKeyword_UNKNOWN ||
-        !nsCSSProps::FindKeyword(key,
+    if (!nsCSSProps::FindKeyword(key,
                                  nsCSSProps::kFontVariantAlternatesFuncsKTable,
                                  alternate)) {
       NS_NOTREACHED("keyword not a font-variant-alternates value");
@@ -608,6 +657,15 @@ nsStyleUtil::AppendStepsTimingFunction(nsTimingFunction::Type aType,
 }
 
 /* static */ void
+nsStyleUtil::AppendFramesTimingFunction(uint32_t aFrames,
+                                        nsAString& aResult)
+{
+  aResult.AppendLiteral("frames(");
+  aResult.AppendInt(aFrames);
+  aResult.AppendLiteral(")");
+}
+
+/* static */ void
 nsStyleUtil::AppendCubicBezierTimingFunction(float aX1, float aY1,
                                              float aX2, float aY2,
                                              nsAString& aResult)
@@ -683,12 +741,31 @@ nsStyleUtil::IsSignificantChild(nsIContent* aChild, bool aTextIsSignificant,
           !aChild->TextIsOnlyWhitespace());
 }
 
+/* static */ bool
+nsStyleUtil::ThreadSafeIsSignificantChild(const nsIContent* aChild,
+                                          bool aTextIsSignificant,
+                                          bool aWhitespaceIsSignificant)
+{
+  NS_ASSERTION(!aWhitespaceIsSignificant || aTextIsSignificant,
+               "Nonsensical arguments");
+
+  bool isText = aChild->IsNodeOfType(nsINode::eTEXT);
+
+  if (!isText && !aChild->IsNodeOfType(nsINode::eCOMMENT) &&
+      !aChild->IsNodeOfType(nsINode::ePROCESSING_INSTRUCTION)) {
+    return true;
+  }
+
+  return aTextIsSignificant && isText && aChild->TextLength() != 0 &&
+         (aWhitespaceIsSignificant ||
+          !aChild->ThreadSafeTextIsOnlyWhitespace());
+}
+
 // For a replaced element whose concrete object size is no larger than the
 // element's content-box, this method checks whether the given
 // "object-position" coordinate might cause overflow in its dimension.
-typedef nsStyleImageLayers::Position::PositionCoord PositionCoord;
 static bool
-ObjectPositionCoordMightCauseOverflow(const PositionCoord& aCoord)
+ObjectPositionCoordMightCauseOverflow(const Position::Coord& aCoord)
 {
   // Any nonzero length in "object-position" can push us to overflow
   // (particularly if our concrete object size is exactly the same size as the
@@ -724,7 +801,7 @@ nsStyleUtil::ObjectPropsMightCauseOverflow(const nsStylePosition* aStylePos)
 
   // Check each of our "object-position" coords to see if it could cause
   // overflow in its dimension:
-  const nsStyleImageLayers::Position& objectPosistion = aStylePos->mObjectPosition;
+  const Position& objectPosistion = aStylePos->mObjectPosition;
   if (ObjectPositionCoordMightCauseOverflow(objectPosistion.mXPosition) ||
       ObjectPositionCoordMightCauseOverflow(objectPosistion.mYPosition)) {
     return true;
@@ -739,7 +816,7 @@ nsStyleUtil::CSPAllowsInlineStyle(nsIContent* aContent,
                                   nsIPrincipal* aPrincipal,
                                   nsIURI* aSourceURI,
                                   uint32_t aLineNumber,
-                                  const nsSubstring& aStyleText,
+                                  const nsAString& aStyleText,
                                   nsresult* aRv)
 {
   nsresult rv;
@@ -774,7 +851,9 @@ nsStyleUtil::CSPAllowsInlineStyle(nsIContent* aContent,
 
   bool allowInlineStyle = true;
   rv = csp->GetAllowsInline(nsIContentPolicy::TYPE_STYLESHEET,
-                            nonce, aStyleText, aLineNumber,
+                            nonce,
+                            false, // aParserCreated only applies to scripts
+                            aStyleText, aLineNumber,
                             &allowInlineStyle);
   NS_ENSURE_SUCCESS(rv, false);
 

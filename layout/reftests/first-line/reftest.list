@@ -5,7 +5,7 @@
 == out-of-flow-1a.html out-of-flow-1-ref.html
 == out-of-flow-1b.html out-of-flow-1-ref.html
 == out-of-flow-1c.html out-of-flow-1-ref.html
-fails == out-of-flow-1d.html out-of-flow-1-ref.html # bug 396645
+fails-if(!stylo) fails-if(styloVsGecko) == out-of-flow-1d.html out-of-flow-1-ref.html # bug 396645
 
 # parent style context correct
 == parent-style-1.html parent-style-1-ref.html
@@ -13,7 +13,7 @@ fails == out-of-flow-1d.html out-of-flow-1-ref.html # bug 396645
 == parent-style-3.html parent-style-3-ref.html
 
 # stress-tests
-load stress-1.html # assertion test
+skip-if(styloVsGecko) load stress-1.html # assertion test
 == stress-2.html stress-2-ref.html # assertion + rendering test
 load stress-3.html # assertion test
 load stress-4.html # assertion/crash test.
@@ -35,3 +35,7 @@ load stress-10.html # crash test
 == restyle-inside-first-line.html restyle-inside-first-line-ref.html
 == font-styles.html font-styles-ref.html
 fuzzy-if(OSX==1010,1,2) == font-styles-nooverflow.html font-styles-ref.html
+
+fails-if(!stylo) == ib-split-1.html ib-split-1-ref.html
+
+== first-line-in-columnset-1.html first-line-in-columnset-1-ref.html

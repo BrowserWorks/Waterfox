@@ -157,8 +157,6 @@ protected:
 #ifdef MOZ_SANDBOX
   SandboxBroker mSandboxBroker;
   std::vector<std::wstring> mAllowedFilesRead;
-  std::vector<std::wstring> mAllowedFilesReadWrite;
-  std::vector<std::wstring> mAllowedDirectories;
   bool mEnableSandboxLogging;
   int32_t mSandboxLevel;
 #endif
@@ -173,7 +171,7 @@ protected:
   task_t mChildTask;
 #endif
 
-  void OpenPrivilegedHandle(base::ProcessId aPid);
+  bool OpenPrivilegedHandle(base::ProcessId aPid);
 
 private:
   DISALLOW_EVIL_CONSTRUCTORS(GeckoChildProcessHost);
@@ -185,7 +183,12 @@ private:
   bool RunPerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
                              base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
-  static void GetPathToBinary(FilePath& exePath, GeckoProcessType processType);
+  enum class BinaryPathType {
+    Self,
+    PluginContainer
+  };
+
+  static BinaryPathType GetPathToBinary(FilePath& exePath, GeckoProcessType processType);
 
   // The buffer is passed to preserve its lifetime until we are done
   // with launching the sub-process.
@@ -210,29 +213,15 @@ private:
   static uint32_t sNextUniqueID;
 
   static bool sRunSelfAsContentProc;
+
+#if defined(MOZ_WIDGET_ANDROID)
+  void LaunchAndroidService(const char* type,
+                            const std::vector<std::string>& argv,
+                            const base::file_handle_mapping_vector& fds_to_remap,
+                            ProcessHandle* process_handle);
+#endif // defined(MOZ_WIDGET_ANDROID)
+
 };
-
-#ifdef MOZ_NUWA_PROCESS
-class GeckoExistingProcessHost final : public GeckoChildProcessHost
-{
-public:
-  GeckoExistingProcessHost(GeckoProcessType aProcessType,
-                           base::ProcessHandle aProcess,
-                           const FileDescriptor& aFileDescriptor,
-                           ChildPrivileges aPrivileges=base::PRIVILEGES_DEFAULT);
-
-  ~GeckoExistingProcessHost();
-
-  virtual bool PerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
-          base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture()) override;
-
-  virtual void InitializeChannel() override;
-
-private:
-  base::ProcessHandle mExistingProcessHandle;
-  mozilla::ipc::FileDescriptor mExistingFileDescriptor;
-};
-#endif /* MOZ_NUWA_PROCESS */
 
 } /* namespace ipc */
 } /* namespace mozilla */

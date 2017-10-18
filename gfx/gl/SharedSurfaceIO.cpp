@@ -142,7 +142,7 @@ BackTextureWithIOSurf(GLContext* gl, GLuint tex, MacIOSurface* ioSurf)
     CGLContextObj cgl = GLContextCGL::Cast(gl)->GetCGLContext();
     MOZ_ASSERT(cgl);
 
-    ioSurf->CGLTexImageIOSurface2D(cgl);
+    ioSurf->CGLTexImageIOSurface2D(gl, cgl, 0);
 }
 
 SharedSurface_IOSurface::SharedSurface_IOSurface(const RefPtr<MacIOSurface>& ioSurf,
@@ -211,7 +211,7 @@ SharedSurface_IOSurface::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surf
 
 /*static*/ UniquePtr<SurfaceFactory_IOSurface>
 SurfaceFactory_IOSurface::Create(GLContext* gl, const SurfaceCaps& caps,
-                                 const RefPtr<layers::ClientIPCAllocator>& allocator,
+                                 const RefPtr<layers::LayersIPCChannel>& allocator,
                                  const layers::TextureFlags& flags)
 {
     auto maxDims = gfx::IntSize::Truncate(MacIOSurface::GetMaxWidth(),

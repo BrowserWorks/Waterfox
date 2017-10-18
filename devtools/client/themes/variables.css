@@ -21,11 +21,16 @@
 
   --theme-tab-toolbar-background: #fcfcfc;
   --theme-toolbar-background: #fcfcfc;
+  --theme-toolbar-background-hover: rgba(221, 225, 228, 0.66);
+  --theme-toolbar-background-alt: #f5f5f5;
+  --theme-toolbar-hover: rgba(170, 170, 170, .2);
+  --theme-toolbar-hover-active: rgba(170, 170, 170, .4);
   --theme-selection-background: #4c9ed9;
   --theme-selection-background-semitransparent: rgba(76, 158, 217, 0.15);
   --theme-selection-color: #f5f7fa;
   --theme-splitter-color: #dde1e4;
   --theme-comment: #696969;
+  --theme-comment-alt: #ccd1d5;
 
   --theme-body-color: #393f4c;
   --theme-body-color-alt: #585959;
@@ -43,6 +48,7 @@
   --theme-highlight-red: #ed2655;
   --theme-highlight-pink: #b82ee5;
   --theme-highlight-gray: #dde1e4;
+  --theme-highlight-yellow: #ffffb4;
 
   /* For accessibility purposes we want to enhance the focus styling. This
    * should improve keyboard navigation usability. */
@@ -72,6 +78,8 @@
   /* Command line */
   --theme-command-line-image: url(chrome://devtools/skin/images/commandline-icon.svg#light-theme);
   --theme-command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#light-theme-focus);
+
+  --theme-codemirror-gutter-background: #f4f4f4;
 }
 
 :root.theme-dark {
@@ -81,11 +89,16 @@
 
   --theme-tab-toolbar-background: #272b35;
   --theme-toolbar-background: #272b35;
+  --theme-toolbar-background-hover: #20232B;
+  --theme-toolbar-background-alt: #2F343E;
+  --theme-toolbar-hover: rgba(110, 120, 130, 0.1);
+  --theme-toolbar-hover-active: rgba(110, 120, 130, 0.2);
   --theme-selection-background: #5675B9;
   --theme-selection-background-semitransparent: rgba(86, 117, 185, 0.5);
   --theme-selection-color: #f5f7fa;
   --theme-splitter-color: #454d5d;
   --theme-comment: #757873;
+  --theme-comment-alt: #5a6375;
 
   --theme-body-color: #8fa1b2;
   --theme-body-color-alt: #b6babf;
@@ -103,6 +116,7 @@
   --theme-highlight-red: #eb5368;
   --theme-highlight-pink: #df80ff;
   --theme-highlight-gray: #e9f4fe;
+  --theme-highlight-yellow: #ffffb4;
 
   /* For accessibility purposes we want to enhance the focus styling. This
    * should improve keyboard navigation usability. */
@@ -132,22 +146,25 @@
   /* Command line */
   --theme-command-line-image: url(chrome://devtools/skin/images/commandline-icon.svg#dark-theme);
   --theme-command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#dark-theme-focus);
+
+  --theme-codemirror-gutter-background: #262b37;
 }
 
 :root.theme-firebug {
-  --theme-body-background: #fcfcfc;
+  --theme-body-background: #fff;
   --theme-sidebar-background: #fcfcfc;
   --theme-contrast-background: #e6b064;
 
-  --theme-tab-toolbar-background: #ebeced;
-  --theme-toolbar-background: #f0f1f2;
+  --theme-tab-toolbar-background: rgb(240, 240, 240) linear-gradient(rgba(255, 255, 255, 0.8), transparent);
+  --theme-toolbar-background: rgb(240, 240, 240) linear-gradient(rgba(255, 255, 255, 0.8), transparent);
+  --theme-toolbar-tab-selected-background: rgb(253, 253, 253);
   --theme-selection-background: #3399ff;
   --theme-selection-background-semitransparent: rgba(128,128,128,0.2);
   --theme-selection-color: white;
-  --theme-splitter-color: #aabccf;
-  --theme-comment: green;
+  --theme-splitter-color: #bfbfbf;
+  --theme-comment: darkgreen;
 
-  --theme-body-color: #18191a;
+  --theme-body-color: #252525;
   --theme-body-color-alt: #585959;
   --theme-content-color1: #292e33;
   --theme-content-color2: #8fa1b2;
@@ -156,10 +173,10 @@
   --theme-highlight-green: #2cbb0f;
   --theme-highlight-blue: #3455db;
   --theme-highlight-bluegrey: #0072ab;
-  --theme-highlight-purple: #887ce6;
+  --theme-highlight-purple: #000080;
   --theme-highlight-lightorange: #d97e00;
   --theme-highlight-orange: #f13c00;
-  --theme-highlight-red: #e22f6f;
+  --theme-highlight-red: #f00;
   --theme-highlight-pink: #b82ee5;
   --theme-highlight-gray: #dde1e4;
 
@@ -190,6 +207,23 @@
   /* Command line */
   --theme-command-line-image: url(chrome://devtools/skin/images/firebug/commandline-icon.svg);
   --theme-command-line-image-focus: url(chrome://devtools/skin/images/firebug/commandline-icon.svg#focus);
+
+  /* Toolbar buttons */
+  --toolbarbutton-background: transparent linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2)) no-repeat;
+  --toolbarbutton-hover-background: transparent;
+  --toolbarbutton-hover-border-color: var(--theme-splitter-color);
+  --toolbarbutton-checked-background: linear-gradient(rgba(0, 0, 0, 0.1), transparent);
+  --toolbarbutton-checked-color: var(--theme-body-color);
+  --toolbarbutton-checked-border-color: var(--toolbarbutton-hover-border-color);
+
+  --theme-codemirror-gutter-background: #ebeced;
+}
+
+:root.theme-firebug[platform="win"] {
+  --theme-tab-toolbar-background: #d8eaf9 linear-gradient(rgba(253, 253, 253, 0.2), rgba(253, 253, 253, 0));
+  --theme-toolbar-background: #d8eaf9 linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+  --theme-toolbar-tab-selected-background: rgb(247, 251, 254);
+  --theme-splitter-color: #aabccf;
 }
 
 :root {
@@ -200,4 +234,12 @@
    * should improve keyboard navigation usability. */
   --theme-focus-outline: 1px dotted var(--theme-focus-outline-color);
   --theme-focus-box-shadow-textbox: 0 0 0 1px var(--theme-textbox-box-shadow);
+
+  --toolbarbutton-background: rgba(110,120,130,0.1);
+  --toolbarbutton-border-color: transparent;
+  --toolbarbutton-hover-background: rgba(110,120,130,0.2);
+  --toolbarbutton-hover-border-color: var(--toolbarbutton-border-color);
+  --toolbarbutton-checked-background: var(--theme-selection-background);
+  --toolbarbutton-checked-color: var(--theme-selection-color);
+  --toolbarbutton-checked-border-color: var(--toolbarbutton-border-color);
 }

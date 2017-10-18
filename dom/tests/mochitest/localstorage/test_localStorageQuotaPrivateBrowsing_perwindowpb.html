@@ -14,13 +14,7 @@ const Ci = Components.interfaces;
 const CONTENT_PAGE = "http://mochi.test:8888/chrome/dom/tests/mochitest/localstorage/page_blank.html";
 const slavePath = "/chrome/dom/tests/mochitest/localstorage/";
 var currentTest = 1;
-var quota;
-
-try {
-  quota = Services.prefs.getIntPref("dom.storage.default_quota");
-} catch (ex) {
-  quota = 5 * 1024;
-}
+var quota = Services.prefs.getIntPref("dom.storage.default_quota", 5 * 1024);
 Services.prefs.setIntPref("browser.startup.page", 0);
 Services.prefs.setIntPref("dom.storage.default_quota", 1);
 
@@ -36,7 +30,7 @@ function startTest() {
     aWindow.content.document.body.appendChild(frame);
     aWindow.content.addEventListener("message", function(aEvent) {
       onMessageReceived(aEvent, aWindow)
-    }, false);
+    });
     slave = aWindow.content.frames[0];
 
     SimpleTest.waitForFocus(() => doNextTest(aWindow), aWindow);
@@ -164,14 +158,13 @@ function whenDelayedStartupFinished(aWindow, aCallback) {
     }
 
     if (aWindow.content == null || aWindow.content.location.href != CONTENT_PAGE ) {
-      aWindow.addEventListener("DOMContentLoaded", function onInnerLoad() {
-        aWindow.removeEventListener("DOMContentLoaded", onInnerLoad, true);
+      aWindow.addEventListener("DOMContentLoaded", function() {
         SimpleTest.executeSoon(function() { aCallback(aWindow); });
-      }, true);
+      }, {capture: true, once: true});
 
       aWindow.gBrowser.loadURI(CONTENT_PAGE);
     }
-  }, "browser-delayed-startup-finished", false);
+  }, "browser-delayed-startup-finished");
 }
 
 function testOnWindow(aIsPrivate, callback) {

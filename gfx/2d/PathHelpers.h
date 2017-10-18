@@ -41,7 +41,9 @@ inline void PartialArcToBezier(T* aSink,
   Point cp2 =
     aEndOffset + Point(aEndOffset.y, -aEndOffset.x) * aKappaFactor;
 
-  aSink->BezierTo(aTransform * cp1, aTransform * cp2, aTransform * aEndOffset);
+  aSink->BezierTo(aTransform.TransformPoint(cp1),
+                  aTransform.TransformPoint(cp2),
+                  aTransform.TransformPoint(aEndOffset));
 }
 
 /**
@@ -110,7 +112,7 @@ void ArcToBezier(T* aSink, const Point &aOrigin, const Size &aRadius,
     transform *= Matrix::Rotation(aRotation);
   }
   transform.PostTranslate(aOrigin);
-  aSink->LineTo(transform * currentStartOffset);
+  aSink->LineTo(transform.TransformPoint(currentStartOffset));
 
   while (arcSweepLeft > 0) {
     Float currentEndAngle =
@@ -137,7 +139,7 @@ void EllipseToBezier(T* aSink, const Point &aOrigin, const Size &aRadius)
   Matrix transform(aRadius.width, 0, 0, aRadius.height, aOrigin.x, aOrigin.y);
   Point currentStartOffset(1, 0);
 
-  aSink->LineTo(transform * currentStartOffset);
+  aSink->LineTo(transform.TransformPoint(currentStartOffset));
 
   for (int i = 0; i < 4; i++) {
     // cos(x+pi/2) == -sin(x)
@@ -176,35 +178,35 @@ inline already_AddRefed<Path> MakePathForRect(const DrawTarget& aDrawTarget,
 }
 
 struct RectCornerRadii {
-  Size radii[RectCorner::Count];
+  Size radii[eCornerCount];
 
   RectCornerRadii() {}
 
   explicit RectCornerRadii(Float radius) {
-    for (int i = 0; i < RectCorner::Count; i++) {
+    NS_FOR_CSS_FULL_CORNERS(i) {
       radii[i].SizeTo(radius, radius);
     }
   }
 
   explicit RectCornerRadii(Float radiusX, Float radiusY) {
-    for (int i = 0; i < RectCorner::Count; i++) {
+    NS_FOR_CSS_FULL_CORNERS(i) {
       radii[i].SizeTo(radiusX, radiusY);
     }
   }
 
   RectCornerRadii(Float tl, Float tr, Float br, Float bl) {
-    radii[RectCorner::TopLeft].SizeTo(tl, tl);
-    radii[RectCorner::TopRight].SizeTo(tr, tr);
-    radii[RectCorner::BottomRight].SizeTo(br, br);
-    radii[RectCorner::BottomLeft].SizeTo(bl, bl);
+    radii[eCornerTopLeft].SizeTo(tl, tl);
+    radii[eCornerTopRight].SizeTo(tr, tr);
+    radii[eCornerBottomRight].SizeTo(br, br);
+    radii[eCornerBottomLeft].SizeTo(bl, bl);
   }
 
   RectCornerRadii(const Size& tl, const Size& tr,
                   const Size& br, const Size& bl) {
-    radii[RectCorner::TopLeft] = tl;
-    radii[RectCorner::TopRight] = tr;
-    radii[RectCorner::BottomRight] = br;
-    radii[RectCorner::BottomLeft] = bl;
+    radii[eCornerTopLeft] = tl;
+    radii[eCornerTopRight] = tr;
+    radii[eCornerBottomRight] = br;
+    radii[eCornerBottomLeft] = bl;
   }
 
   const Size& operator[](size_t aCorner) const {
@@ -216,29 +218,40 @@ struct RectCornerRadii {
   }
 
   bool operator==(const RectCornerRadii& aOther) const {
-    for (size_t i = 0; i < RectCorner::Count; i++) {
-      if (radii[i] != aOther.radii[i]) return false;
-    }
-    return true;
+    return TopLeft() == aOther.TopLeft() &&
+           TopRight() == aOther.TopRight() &&
+           BottomRight() == aOther.BottomRight() &&
+           BottomLeft() == aOther.BottomLeft();
+  }
+
+  bool AreRadiiSame() const {
+    return TopLeft() == TopRight() &&
+           TopLeft() == BottomRight() &&
+           TopLeft() == BottomLeft();
   }
 
   void Scale(Float aXScale, Float aYScale) {
-    for (int i = 0; i < RectCorner::Count; i++) {
+    NS_FOR_CSS_FULL_CORNERS(i) {
       radii[i].Scale(aXScale, aYScale);
     }
   }
 
-  const Size TopLeft() const { return radii[RectCorner::TopLeft]; }
-  Size& TopLeft() { return radii[RectCorner::TopLeft]; }
+  const Size TopLeft() const { return radii[eCornerTopLeft]; }
+  Size& TopLeft() { return radii[eCornerTopLeft]; }
 
-  const Size TopRight() const { return radii[RectCorner::TopRight]; }
-  Size& TopRight() { return radii[RectCorner::TopRight]; }
+  const Size TopRight() const { return radii[eCornerTopRight]; }
+  Size& TopRight() { return radii[eCornerTopRight]; }
 
-  const Size BottomRight() const { return radii[RectCorner::BottomRight]; }
-  Size& BottomRight() { return radii[RectCorner::BottomRight]; }
+  const Size BottomRight() const { return radii[eCornerBottomRight]; }
+  Size& BottomRight() { return radii[eCornerBottomRight]; }
 
-  const Size BottomLeft() const { return radii[RectCorner::BottomLeft]; }
-  Size& BottomLeft() { return radii[RectCorner::BottomLeft]; }
+  const Size BottomLeft() const { return radii[eCornerBottomLeft]; }
+  Size& BottomLeft() { return radii[eCornerBottomLeft]; }
+
+  bool IsEmpty() const {
+    return TopLeft().IsEmpty() && TopRight().IsEmpty() &&
+           BottomRight().IsEmpty() && BottomLeft().IsEmpty();
+  }
 };
 
 /**
@@ -363,9 +376,9 @@ inline bool UserToDevicePixelSnapped(Rect& aRect, const DrawTarget& aDrawTarget,
   }
 #undef WITHIN_E
 
-  Point p1 = mat * aRect.TopLeft();
-  Point p2 = mat * aRect.TopRight();
-  Point p3 = mat * aRect.BottomRight();
+  Point p1 = mat.TransformPoint(aRect.TopLeft());
+  Point p2 = mat.TransformPoint(aRect.TopRight());
+  Point p3 = mat.TransformPoint(aRect.BottomRight());
 
   // Check that the rectangle is axis-aligned. For an axis-aligned rectangle,
   // two opposite corners define the entire rectangle. So check if

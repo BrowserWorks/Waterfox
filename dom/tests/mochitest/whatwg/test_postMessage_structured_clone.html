@@ -6,7 +6,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=553125
 <head>
   <title>postMessage uses structured clone</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>  
-  <script type="application/javascript;version=1.7"
+  <script type="application/javascript"
           src="postMessage_structured_clone_helper.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
@@ -29,25 +29,27 @@ SimpleTest.waitForExplicitFinish();
 
 var lastMessage = null;
 var crossOrigin = false;
-var generator = new getTestContent();
+var generator = getTestContent();
 
 function runNextSameOrigin() {
-  try {
-    lastMessage = generator.next();
-  } catch (e) {
-    generator = new getTestContent();
+  let {done, value} = generator.next();
+  if (done) {
+    generator = getTestContent();
     crossOrigin = true;
     runNextCrossOrigin();
-  } 
+    return;
+  }
+  lastMessage = value;
   window.frames.sameDomain.postMessage(lastMessage, "http://mochi.test:8888");
 }
 
 function runNextCrossOrigin() {
-  try {
-    lastMessage = generator.next();
-  } catch (e) {
+  let {done, value} = generator.next();
+  if (done) {
     SimpleTest.finish();
+    return;
   }
+  lastMessage = value;
   window.frames.crossDomain.postMessage(lastMessage, "http://example.org:8000");
 }
 
@@ -59,8 +61,8 @@ function receiveMessage(evt) {
   setTimeout(crossOrigin ? runNextCrossOrigin : runNextSameOrigin, 0);
 }
 
-window.addEventListener("message", receiveMessage, false);
-window.addEventListener("load", runNextSameOrigin, false);
+window.addEventListener("message", receiveMessage);
+window.addEventListener("load", runNextSameOrigin);
 
 </script>
 </pre>

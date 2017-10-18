@@ -5,12 +5,9 @@
 
 package org.mozilla.gecko.updater;
 
-import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.util.Log;
-
-import com.keepsafe.switchboard.SwitchBoard;
 
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.BrowserApp;
@@ -21,14 +18,10 @@ import org.mozilla.gecko.util.IOUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * Perform tasks in the background after the app has been installed/updated.
@@ -62,7 +55,7 @@ public class PostUpdateHandler extends BrowserAppDelegateWithReference {
 
         final String dataDir = browserApp.getApplicationInfo().dataDir;
         final SharedPreferences prefs = GeckoSharedPrefs.forApp(browserApp);
-        final AssetManager assetManager = browserApp.getContext().getAssets();
+        final AssetManager assetManager = browserApp.getAssets();
 
         try {
             final String[] assetNames = assetManager.list("features");

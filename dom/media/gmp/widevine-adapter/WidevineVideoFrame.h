@@ -8,6 +8,7 @@
 
 #include "stddef.h"
 #include "content_decryption_module.h"
+#include "mozilla/Attributes.h"
 #include <vector>
 
 namespace mozilla {
@@ -35,6 +36,8 @@ public:
 
   void SetTimestamp(int64_t aTimestamp) override;
   int64_t Timestamp() const override;
+
+  MOZ_MUST_USE bool InitToBlack(uint32_t aWidth, uint32_t aHeight, int64_t aTimeStamp);
 
 protected:
   cdm::VideoFormat mFormat;

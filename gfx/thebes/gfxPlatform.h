@@ -39,6 +39,7 @@ class nsIAtom;
 class nsIObserver;
 class SRGBOverrideObserver;
 class gfxTextPerfMetrics;
+typedef struct FT_LibraryRec_ *FT_Library;
 
 namespace mozilla {
 namespace gl {
@@ -51,7 +52,9 @@ class DataSourceSurface;
 class ScaledFont;
 class DrawEventRecorder;
 class VsyncSource;
-class DeviceInitData;
+class ContentDeviceData;
+class GPUDeviceData;
+class FeatureState;
 
 inline uint32_t
 BackendTypeBit(BackendType b)
@@ -60,6 +63,9 @@ BackendTypeBit(BackendType b)
 }
 
 } // namespace gfx
+namespace dom {
+class FontFamilyListEntry;
+}
 } // namespace mozilla
 
 #define MOZ_PERFORMANCE_WARNING(module, ...) \
@@ -102,10 +108,6 @@ GetBackendName(mozilla::gfx::BackendType aBackend)
   switch (aBackend) {
       case mozilla::gfx::BackendType::DIRECT2D:
         return "direct2d";
-      case mozilla::gfx::BackendType::COREGRAPHICS_ACCELERATED:
-        return "quartz accelerated";
-      case mozilla::gfx::BackendType::COREGRAPHICS:
-        return "quartz";
       case mozilla::gfx::BackendType::CAIRO:
         return "cairo";
       case mozilla::gfx::BackendType::SKIA:
@@ -116,6 +118,8 @@ GetBackendName(mozilla::gfx::BackendType aBackend)
         return "direct2d 1.1";
       case mozilla::gfx::BackendType::NONE:
         return "none";
+      case mozilla::gfx::BackendType::BACKEND_LAST:
+        return "invalid";
   }
   MOZ_CRASH("Incomplete switch");
 }
@@ -130,7 +134,8 @@ enum class DeviceResetReason
   INVALID_CALL,
   OUT_OF_MEMORY,
   FORCED_RESET,
-  UNKNOWN
+  UNKNOWN,
+  D3D9_RESET
 };
 
 enum class ForcedDeviceResetReason
@@ -170,6 +175,12 @@ public:
      */
     static void Shutdown();
 
+    /**
+     * Initialize gfxPlatform (if not already done) in a child process, with
+     * the provided ContentDeviceData.
+     */
+    static void InitChild(const mozilla::gfx::ContentDeviceData& aData);
+
     static void InitLayersIPC();
     static void ShutdownLayersIPC();
 
@@ -177,6 +188,12 @@ public:
      * Initialize ScrollMetadata statics. Does not depend on gfxPlatform.
      */
     static void InitNullMetadata();
+
+    static int32_t MaxTextureSize();
+    static int32_t MaxAllocSize();
+    static void InitMoz2DLogging();
+
+    static bool IsHeadless();
 
     /**
      * Create an offscreen surface of the given dimensions
@@ -194,7 +211,7 @@ public:
      * support the DrawTarget we get back.
      * See SupportsAzureContentForDrawTarget.
      */
-    virtual already_AddRefed<DrawTarget>
+    static already_AddRefed<DrawTarget>
       CreateDrawTargetForSurface(gfxASurface *aSurface, const mozilla::gfx::IntSize& aSize);
 
     /*
@@ -208,9 +225,14 @@ public:
      * This function is static so that it can be accessed from
      * PluginInstanceChild (where we can't call gfxPlatform::GetPlatform()
      * because the prefs service can only be accessed from the main process).
+     *
+     * aIsPlugin is used to tell the backend that they can optimize this surface
+     * specifically because it's used for a plugin. This is mostly for Skia.
      */
-    static already_AddRefed<SourceSurface>
-      GetSourceSurfaceForSurface(mozilla::gfx::DrawTarget *aTarget, gfxASurface *aSurface);
+    static already_AddRefed<SourceSurface> GetSourceSurfaceForSurface(
+      RefPtr<mozilla::gfx::DrawTarget> aTarget,
+      gfxASurface *aSurface,
+      bool aIsPlugin = false);
 
     static void ClearSourceSurfaceForSurface(gfxASurface *aSurface);
 
@@ -220,8 +242,10 @@ public:
     virtual already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
-    already_AddRefed<DrawTarget>
-      CreateOffscreenContentDrawTarget(const mozilla::gfx::IntSize& aSize, mozilla::gfx::SurfaceFormat aFormat);
+    already_AddRefed<DrawTarget> CreateOffscreenContentDrawTarget(
+      const mozilla::gfx::IntSize& aSize,
+      mozilla::gfx::SurfaceFormat aFormat,
+      bool aFallback = false);
 
     already_AddRefed<DrawTarget>
       CreateOffscreenCanvasDrawTarget(const mozilla::gfx::IntSize& aSize, mozilla::gfx::SurfaceFormat aFormat);
@@ -229,9 +253,12 @@ public:
     already_AddRefed<DrawTarget>
       CreateSimilarSoftwareDrawTarget(DrawTarget* aDT, const IntSize &aSize, mozilla::gfx::SurfaceFormat aFormat);
 
-    virtual already_AddRefed<DrawTarget>
-      CreateDrawTargetForData(unsigned char* aData, const mozilla::gfx::IntSize& aSize, 
-                              int32_t aStride, mozilla::gfx::SurfaceFormat aFormat);
+    static already_AddRefed<DrawTarget>
+      CreateDrawTargetForData(unsigned char* aData,
+                              const mozilla::gfx::IntSize& aSize,
+                              int32_t aStride,
+                              mozilla::gfx::SurfaceFormat aFormat,
+                              bool aUninitialized = false);
 
     /**
      * Returns true if rendering to data surfaces produces the same results as
@@ -262,21 +289,12 @@ public:
     /// asking for it, we will examine the commands in the first few seconds
     /// of the canvas usage, and potentially change to accelerated or
     /// non-accelerated canvas.
-    virtual bool UseAcceleratedCanvas();
+    bool AllowOpenGLCanvas();
     virtual void InitializeSkiaCacheLimits();
-
-    /// These should be used instead of directly accessing the preference,
-    /// as different platforms may override the behaviour.
-    virtual bool UseProgressivePaint();
 
     static bool AsyncPanZoomEnabled();
 
-    virtual void GetAzureBackendInfo(mozilla::widget::InfoObject &aObj) {
-      aObj.DefineProperty("AzureCanvasBackend", GetBackendName(mPreferredCanvasBackend));
-      aObj.DefineProperty("AzureCanvasAccelerated", UseAcceleratedCanvas());
-      aObj.DefineProperty("AzureFallbackCanvasBackend", GetBackendName(mFallbackCanvasBackend));
-      aObj.DefineProperty("AzureContentBackend", GetBackendName(mContentBackend));
-    }
+    virtual void GetAzureBackendInfo(mozilla::widget::InfoObject &aObj);
     void GetApzSupportInfo(mozilla::widget::InfoObject& aObj);
     void GetTilesSupportInfo(mozilla::widget::InfoObject& aObj);
 
@@ -285,6 +303,11 @@ public:
     // GetContentBackendFor() should be called instead.
     mozilla::gfx::BackendType GetDefaultContentBackend() {
       return mContentBackend;
+    }
+
+    /// Return the software backend to use by default.
+    mozilla::gfx::BackendType GetSoftwareBackend() {
+        return mSoftwareBackend;
     }
 
     // Return the best content backend available that is compatible with the
@@ -314,9 +337,14 @@ public:
                                  const nsACString& aGenericFamily,
                                  nsTArray<nsString>& aListOfFonts);
 
-    int GetTileWidth();
-    int GetTileHeight();
-    void SetTileSize(int aWidth, int aHeight);
+    /**
+     * Fill aFontFamilies with a list of FontFamilyListEntry records for the
+     * available fonts on the platform; used to pass the list from chrome to
+     * content process. Currently implemented only on MacOSX.
+     */
+    virtual void GetSystemFontFamilyList(
+      InfallibleTArray<mozilla::dom::FontFamilyListEntry>* aFontFamilies)
+    { }
 
     /**
      * Rebuilds the any cached system font lists
@@ -340,6 +368,16 @@ public:
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName);
 
     /**
+     * Returns default font name (localized family name) for aLangGroup and
+     * aGenericFamily.  The result is typically the first font in
+     * font.name-list.<aGenericFamily>.<aLangGroup>.  However, if it's not
+     * available in the system, this may return second or later font in the
+     * pref.  If there are no available fonts in the pref, returns empty string.
+     */
+    nsString GetDefaultFontName(const nsACString& aLangGroup,
+                                const nsACString& aGenericFamily);
+
+    /**
      * Create the appropriate platform font group
      */
     virtual gfxFontGroup*
@@ -348,7 +386,7 @@ public:
                     gfxTextPerfMetrics* aTextPerf,
                     gfxUserFontSet *aUserFontSet,
                     gfxFloat aDevToCssSize) = 0;
-                                          
+
     /**
      * Look up a local platform font using the full font face name.
      * (Needed to support @font-face src local().)
@@ -393,9 +431,7 @@ public:
      * True when zooming should not require reflow, so glyph metrics and
      * positioning should not be adjusted for device pixels.
      * If this is TRUE, then FontHintingEnabled() should be FALSE,
-     * but the converse is not necessarily required; in particular,
-     * B2G always has FontHintingEnabled FALSE, but RequiresLinearZoom
-     * is only true for the browser process, not Gaia or other apps.
+     * but the converse is not necessarily required;
      *
      * Like FontHintingEnabled (above), this setting shouldn't
      * change per gecko process, while the process is live.  If so the
@@ -437,8 +473,10 @@ public:
      */
     bool UseGraphiteShaping();
 
-    // check whether format is supported on a platform or not (if unclear, returns true)
-    virtual bool IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags) { return false; }
+    // Check whether format is supported on a platform (if unclear, returns true).
+    // Default implementation checks for "common" formats that we support across
+    // all platforms, but individual platform implementations may override.
+    virtual bool IsFontFormatSupported(uint32_t aFormatFlags);
 
     virtual bool DidRenderingDeviceReset(DeviceResetReason* aResetReason = nullptr) { return false; }
 
@@ -456,7 +494,7 @@ public:
 
     static bool OffMainThreadCompositingEnabled();
 
-    virtual bool CanUseHardwareVideoDecoding();
+    void UpdateCanUseHardwareVideoDecoding();
 
     // Returns a prioritized list of all available compositor backends.
     void GetCompositorBackends(bool useAcceleration, nsTArray<mozilla::layers::LayersBackend>& aBackends);
@@ -536,7 +574,7 @@ public:
      * it would measure if rendered on-screen.  Guaranteed to return a
      * non-null and valid DrawTarget.
      */
-    mozilla::gfx::DrawTarget* ScreenReferenceDrawTarget() { return mScreenReferenceDrawTarget; }
+    RefPtr<mozilla::gfx::DrawTarget> ScreenReferenceDrawTarget();
 
     virtual mozilla::gfx::SurfaceFormat Optimal2DFormatForContent(gfxContentType aContent);
 
@@ -557,12 +595,6 @@ public:
      * Return the layer debugging options to use browser-wide.
      */
     mozilla::layers::DiagnosticTypes GetLayerDiagnosticTypes();
-
-    static mozilla::gfx::IntRect FrameCounterBounds() {
-      int bits = 16;
-      int sizeOfBit = 3;
-      return mozilla::gfx::IntRect(0, 0, bits * sizeOfBit, sizeOfBit);
-    }
 
     mozilla::gl::SkiaGLGlue* GetSkiaGLGlue();
     void PurgeSkiaGPUCache();
@@ -612,10 +644,9 @@ public:
     virtual bool SupportsApzWheelInput() const {
       return false;
     }
-    virtual bool SupportsApzTouchInput() const {
-      return false;
-    }
+    bool SupportsApzTouchInput() const;
     bool SupportsApzDragInput() const;
+    bool SupportsApzKeyboardInput() const;
 
     virtual void FlushContentDrawing() {}
 
@@ -638,16 +669,14 @@ public:
      */
     static bool PerfWarnings();
 
+    static void NotifyGPUProcessDisabled();
+
     void NotifyCompositorCreated(mozilla::layers::LayersBackend aBackend);
     mozilla::layers::LayersBackend GetCompositorBackend() const {
       return mCompositorBackend;
     }
 
     virtual void CompositorUpdated() {}
-
-    // Return information on how child processes should initialize graphics
-    // devices. Currently this is only used on Windows.
-    virtual void GetDeviceInitData(mozilla::gfx::DeviceInitData* aOut);
 
     // Plugin async drawing support.
     virtual bool SupportsPluginDirectBitmapDrawing() {
@@ -660,10 +689,6 @@ public:
       return false;
     }
 
-    uint64_t GetDeviceCounter() const {
-      return mDeviceCounter;
-    }
-
     /**
      * Check the blocklist for a feature. Returns false if the feature is blocked
      * with an appropriate message and failure ID.
@@ -672,6 +697,22 @@ public:
                                     nsCString& aFailureId);
 
     const gfxSkipChars& EmptySkipChars() const { return kEmptySkipChars; }
+
+    /**
+     * Return information on how child processes should initialize graphics
+     * devices.
+     */
+    virtual void BuildContentDeviceData(mozilla::gfx::ContentDeviceData* aOut);
+
+    /**
+     * Imports settings from the GPU process. This should only be called through
+     * GPUProcessManager, in the UI process.
+     */
+    virtual void ImportGPUDeviceData(const mozilla::gfx::GPUDeviceData& aData);
+
+    virtual FT_Library GetFTLibrary() {
+      return nullptr;
+    }
 
 protected:
     gfxPlatform();
@@ -705,10 +746,11 @@ protected:
                           uint32_t aContentBitmask, mozilla::gfx::BackendType aContentDefault);
 
     /**
-     * If in a child process, triggers a refresh of device preferences, then returns true.
-     * In a parent process, nothing happens and false is returned.
+     * Content-process only. Requests device preferences from the parent process
+     * and updates any cached settings.
      */
-    virtual bool UpdateDeviceInitData();
+    void FetchAndImportContentDeviceData();
+    virtual void ImportContentDeviceData(const mozilla::gfx::ContentDeviceData& aData);
 
     /**
      * Increase the global device counter after a device has been removed/reset.
@@ -743,7 +785,7 @@ protected:
     static already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFontWithCairoSkia(mozilla::gfx::DrawTarget* aTarget, gfxFont* aFont);
 
-    static mozilla::gfx::DeviceInitData& GetParentDevicePrefs();
+    virtual bool CanUseHardwareVideoDecoding();
 
     int8_t  mAllowDownloadableFonts;
     int8_t  mGraphiteShapingEnabled;
@@ -751,7 +793,7 @@ protected:
 
     int8_t  mBidiNumeralOption;
 
-    // whether to always search font cmaps globally 
+    // whether to always search font cmaps globally
     // when doing system font fallback
     int8_t  mFallbackUsesCmaps;
 
@@ -761,7 +803,7 @@ protected:
     // max number of entries in word cache
     int32_t mWordCacheMaxEntries;
 
-    uint32_t mTotalSystemMemory;
+    uint64_t mTotalSystemMemory;
 
     // Hardware vsync source. Only valid on parent process
     RefPtr<mozilla::gfx::VsyncSource> mVsyncSource;
@@ -796,6 +838,11 @@ private:
     void PopulateScreenInfo();
 
     void InitCompositorAccelerationPrefs();
+    void InitGPUProcessPrefs();
+    void InitWebRenderConfig();
+    void InitOMTPConfig();
+
+    static bool IsDXInterop2Blocked();
 
     RefPtr<gfxASurface> mScreenReferenceSurface;
     nsCOMPtr<nsIObserver> mSRGBOverrideObserver;
@@ -808,11 +855,10 @@ private:
     mozilla::gfx::BackendType mFallbackCanvasBackend;
     // The backend to use for content
     mozilla::gfx::BackendType mContentBackend;
+    // The backend to use when we need it not to be accelerated.
+    mozilla::gfx::BackendType mSoftwareBackend;
     // Bitmask of backend types we can use to render content
     uint32_t mContentBackendBitmask;
-
-    int mTileWidth;
-    int mTileHeight;
 
     mozilla::widget::GfxInfoCollector<gfxPlatform> mAzureCanvasBackendCollector;
     mozilla::widget::GfxInfoCollector<gfxPlatform> mApzSupportCollector;
@@ -827,9 +873,6 @@ private:
 
     int32_t mScreenDepth;
     mozilla::gfx::IntSize mScreenSize;
-
-    // Generation number for devices that ClientLayerManagers might depend on.
-    uint64_t mDeviceCounter;
 
     // An instance of gfxSkipChars which is empty. It is used as the
     // basis for error-case iterators.

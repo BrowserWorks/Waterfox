@@ -6,7 +6,7 @@
  * This utility script is for instrumenting your Talos test for
  * performance profiles while running within the parent process.
  * Almost all of the functions that this script exposes to the
- * SPS Profiler are synchronous, except for finishTest, since that
+ * Gecko Profiler are synchronous, except for finishTest, since that
  * involves requesting the profiles from any content processes and
  * then writing to disk.
  *
@@ -17,21 +17,20 @@
 var TalosParentProfiler;
 
 (function() {
+  Components.utils.import("resource://gre/modules/Services.jsm");
+  Components.utils.import("resource://gre/modules/Console.jsm");
 
   // Whether or not this TalosContentProfiler object has had initFromObject
   // or initFromURLQueryParams called on it. Any functions that change the
-  // state of the SPS Profiler should only be called after calling either
+  // state of the Gecko Profiler should only be called after calling either
   // initFromObject or initFromURLQueryParams.
-  let initted = false;
+  let initted = Services.profiler.IsActive();
 
   // The subtest name that beginTest() was called with.
   let currentTest = "unknown";
 
   // Profiler settings.
   let interval, entries, threadsArray, profileDir;
-
-  Components.utils.import("resource://gre/modules/Services.jsm");
-  Components.utils.import("resource://gre/modules/Console.jsm");
 
   // Use a bit of XPCOM hackery to get at the Talos Powers service
   // implementation...
@@ -69,21 +68,21 @@ var TalosParentProfiler;
      *
      * @param obj (object)
      *   The following properties on the object are respected:
-     *     sps_profile_interval (int)
-     *     sps_profile_entries (int)
-     *     sps_profile_threads (string, comma separated list of threads to filter with)
-     *     sps_profile_dir (string)
+     *     gecko_profile_interval (int)
+     *     gecko_profile_entries (int)
+     *     gecko_profile_threads (string, comma separated list of threads to filter with)
+     *     gecko_profile_dir (string)
      */
-    initFromObject(obj={}) {
+    initFromObject(obj = {}) {
       if (!initted) {
-        if (("sps_profile_dir" in obj) && typeof obj.sps_profile_dir == "string" &&
-            ("sps_profile_interval" in obj) && Number.isFinite(obj.sps_profile_interval * 1) &&
-            ("sps_profile_entries" in obj) && Number.isFinite(obj.sps_profile_entries * 1) &&
-            ("sps_profile_threads" in obj) && typeof obj.sps_profile_threads == "string") {
-          interval = obj.sps_profile_interval;
-          entries = obj.sps_profile_entries;
-          threadsArray = obj.sps_profile_threads.split(",");
-          profileDir = obj.sps_profile_dir;
+        if (("gecko_profile_dir" in obj) && typeof obj.gecko_profile_dir == "string" &&
+            ("gecko_profile_interval" in obj) && Number.isFinite(obj.gecko_profile_interval * 1) &&
+            ("gecko_profile_entries" in obj) && Number.isFinite(obj.gecko_profile_entries * 1) &&
+            ("gecko_profile_threads" in obj) && typeof obj.gecko_profile_threads == "string") {
+          interval = obj.gecko_profile_interval;
+          entries = obj.gecko_profile_entries;
+          threadsArray = obj.gecko_profile_threads.split(",");
+          profileDir = obj.gecko_profile_dir;
           initted = true;
         } else {
           console.error("Profiler could not init with object: " + JSON.stringify(obj));
@@ -102,7 +101,7 @@ var TalosParentProfiler;
     },
 
     /**
-     * A Talos test is about to start. Note that the SPS profiler will be
+     * A Talos test is about to start. Note that the Gecko Profiler will be
      * paused immediately after starting and that resume() should be called
      * in order to collect samples.
      *
@@ -121,9 +120,9 @@ var TalosParentProfiler;
     },
 
     /**
-     * A Talos test has finished. This will stop the SPS profiler from sampling,
-     * and return a Promise that resolves once the Profiler has finished dumping
-     * the multi-process profile to disk.
+     * A Talos test has finished. This will stop the Gecko Profiler from
+     * sampling, and return a Promise that resolves once the Profiler has
+     * finished dumping the multi-process profile to disk.
      *
      * @returns Promise
      *          Resolves once the profile has been dumped to disk. The test should
@@ -131,14 +130,14 @@ var TalosParentProfiler;
      */
     finishTest() {
       if (initted) {
-        let profileFile = profileDir + "/" + currentTest + ".sps";
+        let profileFile = profileDir + "/" + currentTest + ".profile";
         return TalosPowers.profilerFinish(profileFile);
-      } else {
+      }
         let msg = "You should not call finishTest without having first " +
                   "initted the Profiler";
         console.error(msg);
         return Promise.reject(msg);
-      }
+
     },
 
     /**
@@ -152,31 +151,31 @@ var TalosParentProfiler;
      */
     finishStartupProfiling() {
       if (initted) {
-        let profileFile = profileDir + "/startup.sps";
+        let profileFile = profileDir + "/startup.profile";
         return TalosPowers.profilerFinish(profileFile);
       }
       return Promise.resolve();
     },
 
     /**
-     * Resumes the SPS profiler sampler. Can also simultaneously set a marker.
+     * Resumes the Gecko Profiler sampler. Can also simultaneously set a marker.
      *
      * @returns Promise
-     *          Resolves once the SPS profiler has resumed.
+     *          Resolves once the Gecko Profiler has resumed.
      */
-    resume(marker="") {
+    resume(marker = "") {
       if (initted) {
         TalosPowers.profilerResume(marker);
       }
     },
 
     /**
-     * Pauses the SPS profiler sampler. Can also simultaneously set a marker.
+     * Pauses the Gecko Profiler sampler. Can also simultaneously set a marker.
      *
      * @returns Promise
-     *          Resolves once the SPS profiler has paused.
+     *          Resolves once the Gecko Profiler has paused.
      */
-    pause(marker="") {
+    pause(marker = "") {
       if (initted) {
         TalosPowers.profilerPause(marker);
       }
@@ -198,5 +197,18 @@ var TalosParentProfiler;
         TalosPowers.profilerMarker(marker);
       }
     },
+
+    afterProfileGathered() {
+      if (!initted) {
+        return Promise.resolve();
+      }
+
+      return new Promise(resolve => {
+        Services.obs.addObserver(function onGathered() {
+          Services.obs.removeObserver(onGathered, "talos-profile-gathered");
+          resolve();
+        }, "talos-profile-gathered");
+      });
+    }
   };
 })();

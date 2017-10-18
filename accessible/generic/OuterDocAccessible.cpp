@@ -30,6 +30,12 @@ OuterDocAccessible::
 {
   mType = eOuterDocType;
 
+#ifdef XP_WIN
+  if (DocAccessibleParent* remoteDoc = RemoteChildDoc()) {
+    remoteDoc->SendParentCOMProxy();
+  }
+#endif
+
   // Request document accessible for the content document to make sure it's
   // created. It will appended to outerdoc accessible children asynchronously.
   nsIDocument* outerDoc = mContent->GetUncomposedDoc();
@@ -173,7 +179,41 @@ OuterDocAccessible::IsAcceptableChild(nsIContent* aEl) const
   return false;
 }
 
-ProxyAccessible*
+#if defined(XP_WIN)
+
+// On Windows e10s, since we don't cache in the chrome process, these next two
+// functions must be implemented so that we properly cross the chrome-to-content
+// boundary when traversing.
+
+uint32_t
+OuterDocAccessible::ChildCount() const
+{
+  uint32_t result = mChildren.Length();
+  if (!result && RemoteChildDoc()) {
+    result = 1;
+  }
+  return result;
+}
+
+Accessible*
+OuterDocAccessible::GetChildAt(uint32_t aIndex) const
+{
+  Accessible* result = AccessibleWrap::GetChildAt(aIndex);
+  if (result || aIndex) {
+    return result;
+  }
+  // If we are asking for child 0 and GetChildAt doesn't return anything, try
+  // to get the remote child doc and return that instead.
+  ProxyAccessible* remoteChild = RemoteChildDoc();
+  if (!remoteChild) {
+    return nullptr;
+  }
+  return WrapperFor(remoteChild);
+}
+
+#endif // defined(XP_WIN)
+
+DocAccessibleParent*
 OuterDocAccessible::RemoteChildDoc() const
 {
   dom::TabParent* tab = dom::TabParent::GetFrom(GetContent());

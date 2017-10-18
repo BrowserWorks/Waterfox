@@ -20,21 +20,22 @@
 #include "nsURIHashKey.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CORSMode.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StyleBackendType.h"
-#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheet.h"
 #include "mozilla/net/ReferrerPolicy.h"
 
 class nsICSSLoaderObserver;
+class nsIConsoleReportCollector;
 class nsIContent;
 class nsIDocument;
-class nsMediaList;
 class nsIStyleSheetLinkingElement;
 
 namespace mozilla {
 namespace dom {
+class DocGroup;
 class Element;
 } // namespace dom
 } // namespace mozilla
@@ -154,7 +155,7 @@ public:
    * @param aURL the url to match
    * @param aResult [out] the style sheet which can be reused
    */
-  bool FindReusableStyleSheet(nsIURI* aURL, RefPtr<CSSStyleSheet>& aResult);
+  bool FindReusableStyleSheet(nsIURI* aURL, RefPtr<StyleSheet>& aResult);
 
   /**
    * Indicate that a certain style sheet is available for reuse if its
@@ -163,7 +164,7 @@ public:
    *
    * @param aSheet the sheet which can be reused
    */
-  void AddReusableSheet(CSSStyleSheet* aSheet) {
+  void AddReusableSheet(StyleSheet* aSheet) {
     mReusableSheets.AppendElement(aSheet);
   }
 
@@ -172,7 +173,7 @@ private:
   LoaderReusableStyleSheets& operator=(const LoaderReusableStyleSheets&) = delete;
 
   // The sheets that can be reused.
-  nsTArray<RefPtr<CSSStyleSheet>> mReusableSheets;
+  nsTArray<RefPtr<StyleSheet>> mReusableSheets;
 };
 
 /***********************************************************************
@@ -190,7 +191,11 @@ class Loader final {
   typedef mozilla::net::ReferrerPolicy ReferrerPolicy;
 
 public:
-  explicit Loader(StyleBackendType aType);
+  // aDocGroup is used for dispatching SheetLoadData in PostLoadEvent(). It
+  // can be null if you want to use this constructor, and there's no
+  // document when the Loader is constructed.
+  Loader(StyleBackendType aType, mozilla::dom::DocGroup* aDocGroup);
+
   explicit Loader(nsIDocument*);
 
  private:
@@ -284,15 +289,16 @@ public:
    * @param aParentSheet the parent of this child sheet
    * @param aURL the URL of the child sheet
    * @param aMedia the already-parsed media list for the child sheet
-   * @param aRule the @import rule importing this child.  This is used to
-   *              properly order the child sheet list of aParentSheet.
+   * @param aGeckoParentRule the @import rule importing this child, when using
+   *                         Gecko's style system. This is used to properly
+   *                         order the child sheet list of aParentSheet.
    * @param aSavedSheets any saved style sheets which could be reused
    *              for this load
    */
-  nsresult LoadChildSheet(StyleSheetHandle aParentSheet,
+  nsresult LoadChildSheet(StyleSheet* aParentSheet,
                           nsIURI* aURL,
-                          nsMediaList* aMedia,
-                          ImportRule* aRule,
+                          dom::MediaList* aMedia,
+                          ImportRule* aGeckoParentRule,
                           LoaderReusableStyleSheets* aSavedSheets);
 
   /**
@@ -320,15 +326,41 @@ public:
   nsresult LoadSheetSync(nsIURI* aURL,
                          SheetParsingMode aParsingMode,
                          bool aUseSystemPrincipal,
-                         StyleSheetHandle::RefPtr* aSheet);
+                         RefPtr<StyleSheet>* aSheet);
 
   /**
    * As above, but defaults aParsingMode to eAuthorSheetFeatures and
    * aUseSystemPrincipal to false.
    */
-  nsresult LoadSheetSync(nsIURI* aURL, StyleSheetHandle::RefPtr* aSheet) {
+  nsresult LoadSheetSync(nsIURI* aURL, RefPtr<StyleSheet>* aSheet) {
     return LoadSheetSync(aURL, eAuthorSheetFeatures, false, aSheet);
   }
+
+  /**
+   * Asynchronously load the stylesheet at aURL.  If a successful result is
+   * returned, aObserver is guaranteed to be notified asynchronously once the
+   * sheet is loaded and marked complete.  This method can be used to load
+   * sheets not associated with a document.
+   *
+   * @param aURL the URL of the sheet to load
+   * @param aParsingMode the mode in which to parse the sheet
+   *        (see comments at enum SheetParsingMode, above).
+   * @param aUseSystemPrincipal if true, give the resulting sheet the system
+   * principal no matter where it's being loaded from.
+   * @param aObserver the observer to notify when the load completes.
+   *                  Must not be null.
+   * @param [out] aSheet the sheet to load. Note that the sheet may well
+   *              not be loaded by the time this method returns.
+   *
+   * NOTE: At the moment, this method assumes the sheet will be UTF-8, but
+   * ideally it would allow arbitrary encodings.  Callers should NOT depend on
+   * non-UTF8 sheets being treated as UTF-8 by this method.
+   */
+  nsresult LoadSheet(nsIURI* aURL,
+                     SheetParsingMode aParsingMode,
+                     bool aUseSystemPrincipal,
+                     nsICSSLoaderObserver* aObserver,
+                     RefPtr<StyleSheet>* aSheet);
 
   /**
    * Asynchronously load the stylesheet at aURL.  If a successful result is
@@ -355,7 +387,7 @@ public:
                      nsIPrincipal* aOriginPrincipal,
                      const nsCString& aCharset,
                      nsICSSLoaderObserver* aObserver,
-                     StyleSheetHandle::RefPtr* aSheet);
+                     RefPtr<StyleSheet>* aSheet);
 
   /**
    * Same as above, to be used when the caller doesn't care about the
@@ -367,7 +399,7 @@ public:
                      const nsCString& aCharset,
                      nsICSSLoaderObserver* aObserver,
                      CORSMode aCORSMode = CORS_NONE,
-                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Unset,
                      const nsAString& aIntegrity = EmptyString());
 
   /**
@@ -456,6 +488,7 @@ private:
   nsresult CreateSheet(nsIURI* aURI,
                        nsIContent* aLinkingContent,
                        nsIPrincipal* aLoaderPrincipal,
+                       css::SheetParsingMode aParsingMode,
                        CORSMode aCORSMode,
                        ReferrerPolicy aReferrerPolicy,
                        const nsAString& aIntegrity,
@@ -464,25 +497,26 @@ private:
                        const nsAString& aTitle,
                        StyleSheetState& aSheetState,
                        bool *aIsAlternate,
-                       StyleSheetHandle::RefPtr* aSheet);
+                       RefPtr<StyleSheet>* aSheet);
 
-  // Pass in either a media string or the nsMediaList from the
-  // CSSParser.  Don't pass both.
-  // This method will set the sheet's enabled state based on isAlternate
-  void PrepareSheet(StyleSheetHandle aSheet,
+  // Pass in either a media string or the MediaList from the CSSParser.  Don't
+  // pass both.
+  //
+  // This method will set the sheet's enabled state based on aIsAlternate
+  void PrepareSheet(StyleSheet* aSheet,
                     const nsAString& aTitle,
                     const nsAString& aMediaString,
-                    nsMediaList* aMediaList,
+                    dom::MediaList* aMediaList,
                     dom::Element* aScopeElement,
-                    bool isAlternate);
+                    bool aIsAlternate);
 
-  nsresult InsertSheetInDoc(StyleSheetHandle aSheet,
+  nsresult InsertSheetInDoc(StyleSheet* aSheet,
                             nsIContent* aLinkingContent,
                             nsIDocument* aDocument);
 
-  nsresult InsertChildSheet(StyleSheetHandle aSheet,
-                            StyleSheetHandle aParentSheet,
-                            ImportRule* aParentRule);
+  nsresult InsertChildSheet(StyleSheet* aSheet,
+                            StyleSheet* aParentSheet,
+                            ImportRule* aGeckoParentRule);
 
   nsresult InternalLoadNonDocumentSheet(nsIURI* aURL,
                                         bool aIsPreload,
@@ -490,10 +524,10 @@ private:
                                         bool aUseSystemPrincipal,
                                         nsIPrincipal* aOriginPrincipal,
                                         const nsCString& aCharset,
-                                        StyleSheetHandle::RefPtr* aSheet,
+                                        RefPtr<StyleSheet>* aSheet,
                                         nsICSSLoaderObserver* aObserver,
                                         CORSMode aCORSMode = CORS_NONE,
-                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Unset,
                                         const nsAString& aIntegrity = EmptyString());
 
   // Post a load event for aObserver to be notified about aSheet.  The
@@ -504,7 +538,7 @@ private:
   // sheet was loaded from (may be null for inline sheets).  aElement is the
   // owning element for this sheet.
   nsresult PostLoadEvent(nsIURI* aURI,
-                         StyleSheetHandle aSheet,
+                         StyleSheet* aSheet,
                          nsICSSLoaderObserver* aObserver,
                          bool aWasAlternate,
                          nsIStyleSheetLinkingElement* aElement);
@@ -543,8 +577,8 @@ private:
 
   struct Sheets {
     nsBaseHashtable<URIPrincipalReferrerPolicyAndCORSModeHashKey,
-                    StyleSheetHandle::RefPtr,
-                    StyleSheetHandle> mCompleteSheets;
+                    RefPtr<StyleSheet>,
+                    StyleSheet*> mCompleteSheets;
     nsDataHashtable<URIPrincipalReferrerPolicyAndCORSModeHashKey, SheetLoadData*>
                       mLoadingDatas; // weak refs
     nsDataHashtable<URIPrincipalReferrerPolicyAndCORSModeHashKey, SheetLoadData*>
@@ -567,6 +601,8 @@ private:
   // DropDocumentReference().
   nsIDocument* MOZ_NON_OWNING_REF mDocument;  // the document we live for
 
+  // For dispatching events via DocGroup::Dispatch() when mDocument is nullptr.
+  RefPtr<mozilla::dom::DocGroup> mDocGroup;
 
   // Number of datas still waiting to be notified on if we're notifying on a
   // whole bunch at once (e.g. in one of the stop methods).  This is used to
@@ -582,6 +618,8 @@ private:
   mozilla::Maybe<StyleBackendType> mStyleBackendType;
 
   bool              mEnabled; // is enabled to load new styles
+
+  nsCOMPtr<nsIConsoleReportCollector> mReporter;
 
 #ifdef DEBUG
   bool              mSyncCallback;

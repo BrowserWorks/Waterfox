@@ -46,7 +46,6 @@
 #include "nsIScriptSecurityManager.h"
 #include "mozilla/dom/XBLChildrenElement.h"
 
-#include "prprf.h"
 #include "nsNodeUtils.h"
 #include "nsJSUtils.h"
 
@@ -58,7 +57,6 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/ShadowRoot.h"
-#include "mozilla/ServoStyleSet.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -89,14 +87,16 @@ XBLEnumerate(JSContext *cx, JS::Handle<JSObject*> obj)
 
 static const JSClassOps gPrototypeJSClassOps = {
     nullptr, nullptr, nullptr, nullptr,
-    XBLEnumerate, nullptr,
+    XBLEnumerate, nullptr, nullptr,
     nullptr, XBLFinalize,
     nullptr, nullptr, nullptr, nullptr
 };
 
 static const JSClass gPrototypeJSClass = {
     "XBL prototype JSClass",
-    JSCLASS_HAS_PRIVATE | JSCLASS_PRIVATE_IS_NSISUPPORTS |
+    JSCLASS_HAS_PRIVATE |
+    JSCLASS_PRIVATE_IS_NSISUPPORTS |
+    JSCLASS_FOREGROUND_FINALIZE |
     // Our one reserved slot holds the relevant nsXBLPrototypeBinding
     JSCLASS_HAS_RESERVED_SLOTS(1),
     &gPrototypeJSClassOps
@@ -204,10 +204,6 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
   // (2) The children's parent back pointer should not be to this synthetic root
   // but should instead point to the enclosing parent element.
   nsIDocument* doc = aElement->GetUncomposedDoc();
-  ServoStyleSet* servoStyleSet = nullptr;
-  if (nsIPresShell* presShell = aElement->OwnerDoc()->GetShell()) {
-    servoStyleSet = presShell->StyleSet()->GetAsServo();
-  }
   bool allowScripts = AllowScripts();
 
   nsAutoScriptBlocker scriptBlocker;
@@ -219,6 +215,7 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
       child->SetFlags(NODE_CHROME_ONLY_ACCESS |
                       NODE_IS_ROOT_OF_CHROME_ONLY_ACCESS);
     }
+    child->SetFlags(NODE_IS_ANONYMOUS_ROOT);
     nsresult rv =
       child->BindToTree(doc, aElement, mBoundElement, allowScripts);
     if (NS_FAILED(rv)) {
@@ -228,8 +225,6 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
       return;
     }
 
-    child->SetFlags(NODE_IS_ANONYMOUS_ROOT);
-
 #ifdef MOZ_XUL
     // To make XUL templates work (and other goodies that happen when
     // an element is added to a XUL document), we need to notify the
@@ -238,10 +233,6 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
     if (xuldoc)
       xuldoc->AddSubtreeToDocument(child);
 #endif
-
-    if (servoStyleSet) {
-      servoStyleSet->RestyleSubtree(child);
-    }
   }
 }
 
@@ -329,9 +320,8 @@ nsXBLBinding::GenerateAnonymousContent()
     nsIDocument* doc = mBoundElement->OwnerDoc();
 
     nsCOMPtr<nsINode> clonedNode;
-    nsCOMArray<nsINode> nodesWithProperties;
-    nsNodeUtils::Clone(content, true, doc->NodeInfoManager(),
-                       nodesWithProperties, getter_AddRefs(clonedNode));
+    nsNodeUtils::Clone(content, true, doc->NodeInfoManager(), nullptr,
+                       getter_AddRefs(clonedNode));
     mContent = clonedNode->AsElement();
 
     // Search for <xbl:children> elements in the XBL content. In the presence
@@ -426,6 +416,18 @@ nsXBLBinding::GenerateAnonymousContent()
     if (mContent)
       mContent->UnsetAttr(namespaceID, name, false);
   }
+}
+
+nsIURI*
+nsXBLBinding::GetSourceDocURI()
+{
+  nsIContent* targetContent =
+    mPrototypeBinding->GetImmediateChild(nsGkAtoms::content);
+  if (!targetContent) {
+    return nullptr;
+  }
+
+  return targetContent->OwnerDoc()->GetDocumentURI();
 }
 
 XBLChildrenElement*
@@ -867,6 +869,12 @@ nsXBLBinding::WalkRules(nsIStyleRuleProcessor::EnumFunc aFunc, void* aData)
     (*aFunc)(rules, aData);
 }
 
+const ServoStyleSet*
+nsXBLBinding::GetServoStyleSet() const
+{
+  return mPrototypeBinding->GetServoStyleSet();
+}
+
 // Internal helper methods ////////////////////////////////////////////////////////////////
 
 // Get or create a WeakMap object on a given XBL-hosting global.
@@ -979,7 +987,7 @@ GetProtoBindingFromClassObject(JSObject* obj)
 nsresult
 nsXBLBinding::DoInitJSClass(JSContext *cx,
                             JS::Handle<JSObject*> obj,
-                            const nsAFlatString& aClassName,
+                            const nsString& aClassName,
                             nsXBLPrototypeBinding* aProtoBinding,
                             JS::MutableHandle<JSObject*> aClassObject,
                             bool* aNew)

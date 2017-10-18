@@ -35,7 +35,7 @@
 #include "nsTextNode.h"
 
 #include "PLDHashTable.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsWrapperCacheInlines.h"
 
 using namespace mozilla;
@@ -91,16 +91,12 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsGenericDOMDataNode)
   if (MOZ_UNLIKELY(cb.WantDebugInfo())) {
     char name[40];
-    snprintf_literal(name, "nsGenericDOMDataNode (len=%d)",
-                     tmp->mText.GetLength());
+    SprintfLiteral(name, "nsGenericDOMDataNode (len=%d)",
+                   tmp->mText.GetLength());
     cb.DescribeRefCountedNode(tmp->mRefCnt.get(), name);
   } else {
     NS_IMPL_CYCLE_COLLECTION_DESCRIBE(nsGenericDOMDataNode, tmp->mRefCnt.get())
   }
-
-  // Always need to traverse script objects, so do that before we check
-  // if we're uncollectable.
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 
   if (!nsINode::Traverse(tmp, cb)) {
     return NS_SUCCESS_INTERRUPTED_TRAVERSE;
@@ -233,13 +229,6 @@ nsGenericDOMDataNode::SubstringData(uint32_t aStart, uint32_t aCount,
     const char *data = mText.Get1b() + aStart;
     CopyASCIItoUTF16(Substring(data, data + amount), aReturn);
   }
-}
-
-NS_IMETHODIMP
-nsGenericDOMDataNode::MozRemove()
-{
-  Remove();
-  return NS_OK;
 }
 
 //----------------------------------------------------------------------
@@ -430,7 +419,7 @@ nsGenericDOMDataNode::ToCString(nsAString& aBuf, int32_t aOffset,
         aBuf.AppendLiteral("&gt;");
       } else if ((ch < ' ') || (ch >= 127)) {
         char buf[10];
-        snprintf_literal(buf, "\\u%04x", ch);
+        SprintfLiteral(buf, "\\u%04x", ch);
         AppendASCIItoUTF16(buf, aBuf);
       } else {
         aBuf.Append(ch);
@@ -450,7 +439,7 @@ nsGenericDOMDataNode::ToCString(nsAString& aBuf, int32_t aOffset,
         aBuf.AppendLiteral("&gt;");
       } else if ((ch < ' ') || (ch >= 127)) {
         char buf[10];
-        snprintf_literal(buf, "\\u%04x", ch);
+        SprintfLiteral(buf, "\\u%04x", ch);
         AppendASCIItoUTF16(buf, aBuf);
       } else {
         aBuf.Append(ch);
@@ -506,6 +495,9 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     }
     if (aParent->HasFlag(NODE_CHROME_ONLY_ACCESS)) {
       SetFlags(NODE_CHROME_ONLY_ACCESS);
+    }
+    if (HasFlag(NODE_IS_ANONYMOUS_ROOT)) {
+      aParent->SetMayHaveAnonymousChildren();
     }
     if (aParent->IsInShadowTree()) {
       ClearSubtreeRootPointer();
@@ -589,12 +581,6 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
   ClearInDocument();
-
-#ifdef MOZ_STYLO
-  // Drop any servo node data, since it will generally need to be recomputed on
-  // re-insertion anyway.
-  ServoData().reset();
-#endif
 
   if (aNullParent || !mParent->IsInShadowTree()) {
     UnsetFlags(NODE_IS_IN_SHADOW_TREE);
@@ -710,12 +696,6 @@ nsGenericDOMDataNode::GetBindingParent() const
 }
 
 ShadowRoot *
-nsGenericDOMDataNode::GetShadowRoot() const
-{
-  return nullptr;
-}
-
-ShadowRoot *
 nsGenericDOMDataNode::GetContainingShadow() const
 {
   nsDataSlots *slots = GetExistingDataSlots();
@@ -785,17 +765,6 @@ nsGenericDOMDataNode::SetXBLInsertionParent(nsIContent* aContent)
       slots->mXBLInsertionParent = nullptr;
     }
   }
-}
-
-CustomElementData *
-nsGenericDOMDataNode::GetCustomElementData() const
-{
-  return nullptr;
-}
-
-void
-nsGenericDOMDataNode::SetCustomElementData(CustomElementData* aData)
-{
 }
 
 bool
@@ -960,9 +929,9 @@ nsGenericDOMDataNode::GetWholeText(nsAString& aWholeText)
     return GetData(aWholeText);
 
   int32_t index = parent->IndexOf(this);
-  NS_WARN_IF_FALSE(index >= 0,
-                   "Trying to use .wholeText with an anonymous"
-                    "text node child of a binding parent?");
+  NS_WARNING_ASSERTION(index >= 0,
+                       "Trying to use .wholeText with an anonymous"
+                       "text node child of a binding parent?");
   NS_ENSURE_TRUE(index >= 0, NS_ERROR_DOM_NOT_SUPPORTED_ERR);
   int32_t first =
     FirstLogicallyAdjacentTextNode(parent, index);
@@ -1017,6 +986,21 @@ nsGenericDOMDataNode::AppendText(const char16_t* aBuffer,
 bool
 nsGenericDOMDataNode::TextIsOnlyWhitespace()
 {
+
+  MOZ_ASSERT(NS_IsMainThread());
+  if (!ThreadSafeTextIsOnlyWhitespace()) {
+    UnsetFlags(NS_TEXT_IS_ONLY_WHITESPACE);
+    SetFlags(NS_CACHED_TEXT_IS_ONLY_WHITESPACE);
+    return false;
+  }
+
+  SetFlags(NS_CACHED_TEXT_IS_ONLY_WHITESPACE | NS_TEXT_IS_ONLY_WHITESPACE);
+  return true;
+}
+
+bool
+nsGenericDOMDataNode::ThreadSafeTextIsOnlyWhitespace() const
+{
   // FIXME: should this method take content language into account?
   if (mText.Is2b()) {
     // The fragment contains non-8bit characters and such characters
@@ -1035,15 +1019,12 @@ nsGenericDOMDataNode::TextIsOnlyWhitespace()
     char ch = *cp;
 
     if (!dom::IsSpaceCharacter(ch)) {
-      UnsetFlags(NS_TEXT_IS_ONLY_WHITESPACE);
-      SetFlags(NS_CACHED_TEXT_IS_ONLY_WHITESPACE);
       return false;
     }
 
     ++cp;
   }
 
-  SetFlags(NS_CACHED_TEXT_IS_ONLY_WHITESPACE | NS_TEXT_IS_ONLY_WHITESPACE);
   return true;
 }
 
@@ -1129,10 +1110,10 @@ nsGenericDOMDataNode::GetAttributeChangeHint(const nsIAtom* aAttribute,
 }
 
 size_t
-nsGenericDOMDataNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
+nsGenericDOMDataNode::SizeOfExcludingThis(SizeOfState& aState) const
 {
-  size_t n = nsIContent::SizeOfExcludingThis(aMallocSizeOf);
-  n += mText.SizeOfExcludingThis(aMallocSizeOf);
+  size_t n = nsIContent::SizeOfExcludingThis(aState);
+  n += mText.SizeOfExcludingThis(aState.mMallocSizeOf);
   return n;
 }
 

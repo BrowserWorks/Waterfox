@@ -20,7 +20,7 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "SpeechSynthesisChild.h"
 #include "SpeechSynthesisParent.h"
@@ -149,25 +149,6 @@ nsSynthVoiceRegistry::nsSynthVoiceRegistry()
 
     mSpeechSynthChild = new SpeechSynthesisChild();
     ContentChild::GetSingleton()->SendPSpeechSynthesisConstructor(mSpeechSynthChild);
-
-    InfallibleTArray<RemoteVoice> voices;
-    InfallibleTArray<nsString> defaults;
-    bool isSpeaking;
-
-    mSpeechSynthChild->SendReadVoicesAndState(&voices, &defaults, &isSpeaking);
-
-    for (uint32_t i = 0; i < voices.Length(); ++i) {
-      RemoteVoice voice = voices[i];
-      AddVoiceImpl(nullptr, voice.voiceURI(),
-                   voice.name(), voice.lang(),
-                   voice.localService(), voice.queued());
-    }
-
-    for (uint32_t i = 0; i < defaults.Length(); ++i) {
-      SetDefaultVoice(defaults[i], true);
-    }
-
-    mIsSpeaking = isSpeaking;
   }
 }
 
@@ -214,23 +195,53 @@ nsSynthVoiceRegistry::Shutdown()
   gSynthVoiceRegistry = nullptr;
 }
 
-void
-nsSynthVoiceRegistry::SendVoicesAndState(InfallibleTArray<RemoteVoice>* aVoices,
-                                         InfallibleTArray<nsString>* aDefaults,
-                                         bool* aIsSpeaking)
+bool
+nsSynthVoiceRegistry::SendInitialVoicesAndState(SpeechSynthesisParent* aParent)
 {
+  MOZ_ASSERT(XRE_IsParentProcess());
+
+  InfallibleTArray<RemoteVoice> voices;
+  InfallibleTArray<nsString> defaults;
+
   for (uint32_t i=0; i < mVoices.Length(); ++i) {
     RefPtr<VoiceData> voice = mVoices[i];
 
-    aVoices->AppendElement(RemoteVoice(voice->mUri, voice->mName, voice->mLang,
-                                       voice->mIsLocal, voice->mIsQueued));
+    voices.AppendElement(RemoteVoice(voice->mUri, voice->mName, voice->mLang,
+                                     voice->mIsLocal, voice->mIsQueued));
   }
 
   for (uint32_t i=0; i < mDefaultVoices.Length(); ++i) {
-    aDefaults->AppendElement(mDefaultVoices[i]->mUri);
+    defaults.AppendElement(mDefaultVoices[i]->mUri);
   }
 
-  *aIsSpeaking = IsSpeaking();
+  return aParent->SendInitialVoicesAndState(voices, defaults, IsSpeaking());
+}
+
+void
+nsSynthVoiceRegistry::RecvInitialVoicesAndState(const nsTArray<RemoteVoice>& aVoices,
+                                                const nsTArray<nsString>& aDefaults,
+                                                const bool& aIsSpeaking)
+{
+  // We really should have a local instance since this is a directed response to
+  // an Init() call.
+  MOZ_ASSERT(gSynthVoiceRegistry);
+
+  for (uint32_t i = 0; i < aVoices.Length(); ++i) {
+    RemoteVoice voice = aVoices[i];
+    gSynthVoiceRegistry->AddVoiceImpl(nullptr, voice.voiceURI(),
+                                      voice.name(), voice.lang(),
+                                      voice.localService(), voice.queued());
+  }
+
+  for (uint32_t i = 0; i < aDefaults.Length(); ++i) {
+    gSynthVoiceRegistry->SetDefaultVoice(aDefaults[i], true);
+  }
+
+  gSynthVoiceRegistry->mIsSpeaking = aIsSpeaking;
+
+  if (aVoices.Length()) {
+    gSynthVoiceRegistry->NotifyVoicesChanged();
+  }
 }
 
 void
@@ -668,9 +679,14 @@ nsSynthVoiceRegistry::SpeakUtterance(SpeechSynthesisUtterance& aUtterance,
     }
   }
 
+  nsCOMPtr<nsPIDOMWindowInner> window = aUtterance.GetOwner();
+  nsCOMPtr<nsIDocument> doc = window ? window->GetDoc() : nullptr;
+
+  bool isChrome = nsContentUtils::IsChromeDoc(doc);
+
   RefPtr<nsSpeechTask> task;
   if (XRE_IsContentProcess()) {
-    task = new SpeechTaskChild(&aUtterance);
+    task = new SpeechTaskChild(&aUtterance, isChrome);
     SpeechSynthesisRequestChild* actor =
       new SpeechSynthesisRequestChild(static_cast<SpeechTaskChild*>(task.get()));
     mSpeechSynthChild->SendPSpeechSynthesisRequestConstructor(actor,
@@ -679,9 +695,10 @@ nsSynthVoiceRegistry::SpeakUtterance(SpeechSynthesisUtterance& aUtterance,
                                                               uri,
                                                               volume,
                                                               aUtterance.Rate(),
-                                                              aUtterance.Pitch());
+                                                              aUtterance.Pitch(),
+                                                              isChrome);
   } else {
-    task = new nsSpeechTask(&aUtterance);
+    task = new nsSpeechTask(&aUtterance, isChrome);
     Speak(aUtterance.mText, lang, uri,
           volume, aUtterance.Rate(), aUtterance.Pitch(), task);
   }
@@ -700,11 +717,16 @@ nsSynthVoiceRegistry::Speak(const nsAString& aText,
 {
   MOZ_ASSERT(XRE_IsParentProcess());
 
+  if (!aTask->IsChrome() && nsContentUtils::ShouldResistFingerprinting()) {
+    aTask->ForceError(0, 0);
+    return;
+  }
+
   VoiceData* voice = FindBestMatch(aUri, aLang);
 
   if (!voice) {
     NS_WARNING("No voices found.");
-    aTask->DispatchError(0, 0);
+    aTask->ForceError(0, 0);
     return;
   }
 
@@ -814,7 +836,7 @@ nsSynthVoiceRegistry::SpeakImpl(VoiceData* aVoice,
   SpeechServiceType serviceType;
 
   DebugOnly<nsresult> rv = aVoice->mService->GetServiceType(&serviceType);
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to get speech service type");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to get speech service type");
 
   if (serviceType == nsISpeechService::SERVICETYPE_INDIRECT_AUDIO) {
     aTask->InitIndirectAudio();

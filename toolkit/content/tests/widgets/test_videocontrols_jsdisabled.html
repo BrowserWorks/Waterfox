@@ -49,17 +49,16 @@ function loadevent(event) {
   is(win["testExpando"], undefined, "expando shouldn't exist because js is disabled");
   video = win.document.querySelector("video");
   // Other events expected by the test.
-  video.addEventListener("timeupdate", runTest, false);
-  video.addEventListener("pause", runTest, false);
+  video.addEventListener("timeupdate", runTest);
+  video.addEventListener("pause", runTest);
 }
 
 var win;
 function startTest() {
-  var videoURL = new URL("seek_with_sound.ogg", document.documentURI).href;
-  var url = "data:text/html,<video src=" + videoURL + " controls autoplay=true></video><script>window.testExpando = true;</scr" + "ipt>";
-
-  win = window.open(url);
-  win.addEventListener("load", loadevent, false);
+  const TEST_FILE = location.href.replace("test_videocontrols_jsdisabled.html",
+                                          "file_videocontrols_jsdisabled.html");
+  win = window.open(TEST_FILE);
+  win.addEventListener("load", loadevent);
 }
 
 SimpleTest.waitForExplicitFinish();

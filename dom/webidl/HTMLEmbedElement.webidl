@@ -13,30 +13,29 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-embed-element
-[NeedResolve]
+[HTMLConstructor, NeedResolve]
 interface HTMLEmbedElement : HTMLElement {
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString src;
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString type;
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString width;
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString height;
-  [Throws]
-  legacycaller any (any... arguments);
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#HTMLEmbedElement-partial
 partial interface HTMLEmbedElement {
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString align;
-  [Pure, SetterThrows]
+  [CEReactions, Pure, SetterThrows]
            attribute DOMString name;
 };
 
 partial interface HTMLEmbedElement {
   // GetSVGDocument
+  [NeedsSubjectPrincipal]
   Document? getSVGDocument();
 };
 

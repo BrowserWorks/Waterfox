@@ -25,11 +25,6 @@ if [ ! -f /etc/redhat-release ] || [ "$(< /etc/redhat-release)" != "CentOS relea
     mk_add_options "export PATH=$PATH:$topsrcdir/java_home/bin"
 fi
 
-# Set the most aggressive settings for szip. Not the default because it's
-# much slower and we didn't want to slow down developers builds.
-# Has no effect when MOZ_ENABLE_SZIP is not set in mobile/android/confvars.sh.
-MOZ_SZIP_FLAGS="-D auto -f auto"
-
 ac_add_options --enable-elf-hack
 
 ANDROID_NDK_VERSION="r10e"
@@ -44,12 +39,9 @@ if [ -z "$NO_NDK" ]; then
     ac_add_options --with-android-gnu-compiler-version=4.9
 fi
 
-ac_add_options --with-system-zlib
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 
-# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
-ac_add_options --enable-warnings-as-errors
-
+ac_add_options --with-google-api-keyfile=/builds/gapi.data
 ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-fennec-geoloc-api.key
 
 # MOZ_INSTALL_TRACKING does not guarantee MOZ_UPDATE_CHANNEL will be set so we
@@ -72,13 +64,26 @@ elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
 else
     ac_add_options --with-adjust-sdk-keyfile="$topsrcdir/mobile/android/base/adjust-sdk-sandbox.token"
 fi
+
+# MOZ_ANDROID_MMA depends on --with-leanplum-sdk-keyfile, and there's no default
+# keyfile set, so if we misconfigure beta or release, the builds will fail (at
+# configure time).
+if test "$MOZ_UPDATE_CHANNEL" = "release" ; then
+    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-release.token
+elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
+    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-beta.token
+elif test "$MOZ_UPDATE_CHANNEL" = "nightly" ; then
+    ac_add_options --with-leanplum-sdk-keyfile=/builds/leanplum-sdk-nightly.token
+else
+    ac_add_options --with-leanplum-sdk-keyfile="$topsrcdir/mobile/android/base/leanplum-sdk-sandbox.token"
+fi
+
 export SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE=/builds/crash-stats-api.token
 
 # Package js shell.
 export MOZ_PACKAGE_JSSHELL=1
 
 # Use ccache
-. "$topsrcdir/build/mozconfig.cache"
 
 HOST_CC="$topsrcdir/gcc/bin/gcc"
 HOST_CXX="$topsrcdir/gcc/bin/g++"

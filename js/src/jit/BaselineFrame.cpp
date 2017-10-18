@@ -9,7 +9,7 @@
 #include "jit/BaselineJIT.h"
 #include "jit/Ion.h"
 #include "vm/Debugger.h"
-#include "vm/ScopeObject.h"
+#include "vm/EnvironmentObject.h"
 
 #include "jit/JitFrames-inl.h"
 #include "vm/Stack-inl.h"
@@ -18,7 +18,7 @@ using namespace js;
 using namespace js::jit;
 
 static void
-MarkLocals(BaselineFrame* frame, JSTracer* trc, unsigned start, unsigned end)
+TraceLocals(BaselineFrame* frame, JSTracer* trc, unsigned start, unsigned end)
 {
     if (start < end) {
         // Stack grows down.
@@ -30,9 +30,9 @@ MarkLocals(BaselineFrame* frame, JSTracer* trc, unsigned start, unsigned end)
 void
 BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
 {
-    replaceCalleeToken(MarkCalleeToken(trc, calleeToken()));
+    replaceCalleeToken(TraceCalleeToken(trc, calleeToken()));
 
-    // Mark |this|, actual and formal args.
+    // Trace |this|, actual and formal args.
     if (isFunctionFrame()) {
         TraceRoot(trc, &thisArgument(), "baseline-this");
 
@@ -40,11 +40,11 @@ BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
         TraceRootRange(trc, numArgs + isConstructing(), argv(), "baseline-args");
     }
 
-    // Mark scope chain, if it exists.
-    if (scopeChain_)
-        TraceRoot(trc, &scopeChain_, "baseline-scopechain");
+    // Trace environment chain, if it exists.
+    if (envChain_)
+        TraceRoot(trc, &envChain_, "baseline-envchain");
 
-    // Mark return value.
+    // Trace return value.
     if (hasReturnValue())
         TraceRoot(trc, returnValue().address(), "baseline-rval");
 
@@ -54,7 +54,7 @@ BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
     if (hasArgsObj())
         TraceRoot(trc, &argsObj_, "baseline-args-obj");
 
-    // Mark locals and stack values.
+    // Trace locals and stack values.
     JSScript* script = this->script();
     size_t nfixed = script->nfixed();
     jsbytecode* pc;
@@ -70,69 +70,39 @@ BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
 
     if (nfixed == nlivefixed) {
         // All locals are live.
-        MarkLocals(this, trc, 0, numValueSlots());
+        TraceLocals(this, trc, 0, numValueSlots());
     } else {
-        // Mark operand stack.
-        MarkLocals(this, trc, nfixed, numValueSlots());
+        // Trace operand stack.
+        TraceLocals(this, trc, nfixed, numValueSlots());
 
         // Clear dead block-scoped locals.
         while (nfixed > nlivefixed)
-            unaliasedLocal(--nfixed).setMagic(JS_UNINITIALIZED_LEXICAL);
+            unaliasedLocal(--nfixed).setUndefined();
 
-        // Mark live locals.
-        MarkLocals(this, trc, 0, nlivefixed);
+        // Trace live locals.
+        TraceLocals(this, trc, 0, nlivefixed);
     }
+
+    if (script->compartment()->debugEnvs)
+        script->compartment()->debugEnvs->traceLiveFrame(trc, this);
 }
 
 bool
 BaselineFrame::isNonGlobalEvalFrame() const
 {
-    return isEvalFrame() &&
-           script()->enclosingStaticScope()->as<StaticEvalScope>().isNonGlobal();
+    return isEvalFrame() && script()->enclosingScope()->as<EvalScope>().isNonGlobal();
 }
 
 bool
-BaselineFrame::copyRawFrameSlots(MutableHandle<GCVector<Value>> vec) const
+BaselineFrame::initFunctionEnvironmentObjects(JSContext* cx)
 {
-    unsigned nfixed = script()->nfixed();
-    unsigned nformals = numFormalArgs();
-
-    if (!vec.resize(nformals + nfixed))
-        return false;
-
-    mozilla::PodCopy(vec.begin(), argv(), nformals);
-    for (unsigned i = 0; i < nfixed; i++)
-        vec[nformals + i].set(*valueSlot(i));
-    return true;
+    return js::InitFunctionEnvironmentObjects(cx, this);
 }
 
 bool
-BaselineFrame::initStrictEvalScopeObjects(JSContext* cx)
+BaselineFrame::pushVarEnvironment(JSContext* cx, HandleScope scope)
 {
-    MOZ_ASSERT(isStrictEvalFrame());
-
-    CallObject* callobj = CallObject::createForStrictEval(cx, this);
-    if (!callobj)
-        return false;
-
-    pushOnScopeChain(*callobj);
-    flags_ |= HAS_CALL_OBJ;
-    return true;
-}
-
-bool
-BaselineFrame::initFunctionScopeObjects(JSContext* cx)
-{
-    MOZ_ASSERT(isFunctionFrame());
-    MOZ_ASSERT(callee()->needsCallObject());
-
-    CallObject* callobj = CallObject::createForFunction(cx, this);
-    if (!callobj)
-        return false;
-
-    pushOnScopeChain(*callobj);
-    flags_ |= HAS_CALL_OBJ;
-    return true;
+    return js::PushVarEnvironmentObject(cx, scope, this);
 }
 
 bool
@@ -140,10 +110,10 @@ BaselineFrame::initForOsr(InterpreterFrame* fp, uint32_t numStackValues)
 {
     mozilla::PodZero(this);
 
-    scopeChain_ = fp->scopeChain();
+    envChain_ = fp->environmentChain();
 
-    if (fp->hasCallObjUnchecked())
-        flags_ |= BaselineFrame::HAS_CALL_OBJ;
+    if (fp->hasInitialEnvironmentUnchecked())
+        flags_ |= BaselineFrame::HAS_INITIAL_ENV;
 
     if (fp->script()->needsArgsObj() && fp->hasArgsObj()) {
         flags_ |= BaselineFrame::HAS_ARGS_OBJ;
@@ -163,7 +133,7 @@ BaselineFrame::initForOsr(InterpreterFrame* fp, uint32_t numStackValues)
         *valueSlot(i) = fp->slots()[i];
 
     if (fp->isDebuggee()) {
-        JSContext* cx = GetJSContextFromMainThread();
+        JSContext* cx = TlsContext.get();
 
         // For debuggee frames, update any Debugger.Frame objects for the
         // InterpreterFrame to point to the BaselineFrame.

@@ -10,8 +10,6 @@
 
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/Navigator.h"
-#include "mozilla/dom/ServiceWorkerMessageEvent.h"
-#include "mozilla/dom/ServiceWorkerMessageEventBinding.h"
 #include "nsGlobalWindow.h"
 #include "nsIBrowserDOMWindow.h"
 #include "nsIDocument.h"
@@ -33,8 +31,10 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ServiceWorkerClient)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
-  : mWindowId(0)
+ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc, uint32_t aOrdinal)
+  : mType(ClientType::Window)
+  , mOrdinal(aOrdinal)
+  , mWindowId(0)
   , mFrameType(FrameType::None)
 {
   MOZ_ASSERT(aDoc);
@@ -58,11 +58,16 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
   }
   mVisibilityState = aDoc->VisibilityState();
 
+  mLastFocusTime = aDoc->LastFocusTime();
+
   ErrorResult result;
   mFocused = aDoc->HasFocus(result);
   if (result.Failed()) {
     NS_WARNING("Failed to get focus information.");
   }
+
+  MOZ_ASSERT_IF(mLastFocusTime.IsNull(), !mFocused);
+  MOZ_ASSERT_IF(mFocused, !mLastFocusTime.IsNull());
 
   RefPtr<nsGlobalWindow> outerWindow = nsGlobalWindow::Cast(aDoc->GetWindow());
   if (!outerWindow) {
@@ -76,10 +81,46 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
   }
 }
 
+bool
+ServiceWorkerClientInfo::operator<(const ServiceWorkerClientInfo& aRight) const
+{
+  // Note: the mLastFocusTime comparisons are reversed because we need to
+  // put most recently focused values first.  The mOrdinal comparison is
+  // normal, though, because otherwise we want normal creation order.
+
+  if (mLastFocusTime == aRight.mLastFocusTime) {
+    return mOrdinal < aRight.mOrdinal;
+  }
+
+  if (mLastFocusTime.IsNull()) {
+    return false;
+  }
+
+  if (aRight.mLastFocusTime.IsNull()) {
+    return true;
+  }
+
+  return mLastFocusTime > aRight.mLastFocusTime;
+}
+
+bool
+ServiceWorkerClientInfo::operator==(const ServiceWorkerClientInfo& aRight) const
+{
+  return mLastFocusTime == aRight.mLastFocusTime &&
+         mOrdinal == aRight.mOrdinal &&
+         mClientId == aRight.mClientId;
+}
+
 JSObject*
 ServiceWorkerClient::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return ClientBinding::Wrap(aCx, this, aGivenProto);
+}
+
+ClientType
+ServiceWorkerClient::Type() const
+{
+  return mType;
 }
 
 namespace {
@@ -88,17 +129,25 @@ class ServiceWorkerClientPostMessageRunnable final
   : public Runnable
   , public StructuredCloneHolder
 {
-  uint64_t mWindowId;
+  const uint64_t mSourceID;
+  const nsCString mSourceScope;
+  const uint64_t mWindowId;
 
 public:
-  explicit ServiceWorkerClientPostMessageRunnable(uint64_t aWindowId)
-    : StructuredCloneHolder(CloningSupported, TransferringSupported,
+  ServiceWorkerClientPostMessageRunnable(uint64_t aSourceID,
+                                         const nsACString& aSourceScope,
+                                         uint64_t aWindowId)
+    : mozilla::Runnable("ServiceWorkerClientPostMessageRunnable")
+    , StructuredCloneHolder(CloningSupported,
+                            TransferringSupported,
                             StructuredCloneScope::SameProcessDifferentThread)
+    , mSourceID(aSourceID)
+    , mSourceScope(aSourceScope)
     , mWindowId(aWindowId)
   {}
 
   NS_IMETHOD
-  Run()
+  Run() override
   {
     AssertIsOnMainThread();
     nsGlobalWindow* window = nsGlobalWindow::GetInnerWindowWithId(mWindowId);
@@ -106,10 +155,9 @@ public:
       return NS_ERROR_FAILURE;
     }
 
-    ErrorResult result;
-    dom::Navigator* navigator = window->GetNavigator(result);
-    if (NS_WARN_IF(result.Failed())) {
-      return result.StealNSResult();
+    dom::Navigator* navigator = window->Navigator();
+    if (!navigator) {
+      return NS_ERROR_FAILURE;
     }
 
     RefPtr<ServiceWorkerContainer> container = navigator->ServiceWorker();
@@ -119,12 +167,13 @@ public:
     }
     JSContext* cx = jsapi.cx();
 
-    return DispatchDOMEvent(cx, container);
+    return DispatchDOMEvent(cx, window->AsInner(), container);
   }
 
 private:
   NS_IMETHOD
-  DispatchDOMEvent(JSContext* aCx, ServiceWorkerContainer* aTargetContainer)
+  DispatchDOMEvent(JSContext* aCx, nsPIDOMWindowInner* aWindow,
+                   ServiceWorkerContainer* aTargetContainer)
   {
     AssertIsOnMainThread();
 
@@ -139,17 +188,17 @@ private:
       return NS_ERROR_FAILURE;
     }
 
-    RootedDictionary<ServiceWorkerMessageEventInit> init(aCx);
+    RootedDictionary<MessageEventInit> init(aCx);
 
     nsCOMPtr<nsIPrincipal> principal = aTargetContainer->GetParentObject()->PrincipalOrNull();
-    NS_WARN_IF_FALSE(principal, "Why is the principal null here?");
+    NS_WARNING_ASSERTION(principal, "Why is the principal null here?");
 
     bool isNullPrincipal = false;
     bool isSystemPrincipal = false;
     if (principal) {
-      principal->GetIsNullPrincipal(&isNullPrincipal);
+      isNullPrincipal = principal->GetIsNullPrincipal();
       MOZ_ASSERT(!isNullPrincipal);
-      principal->GetIsSystemPrincipal(&isSystemPrincipal);
+      isSystemPrincipal = principal->GetIsSystemPrincipal();
       MOZ_ASSERT(!isSystemPrincipal);
     }
 
@@ -158,29 +207,29 @@ private:
     if (principal && !isNullPrincipal && !isSystemPrincipal) {
       principal->GetOrigin(origin);
     }
-    init.mOrigin.Construct(NS_ConvertUTF8toUTF16(origin));
-    init.mLastEventId.Construct(EmptyString());
-    init.mPorts.Construct();
-    init.mPorts.Value().SetNull();
+    init.mOrigin = NS_ConvertUTF8toUTF16(origin);
 
-    RefPtr<ServiceWorker> serviceWorker = aTargetContainer->GetController();
-    init.mSource.Construct();
-    if (serviceWorker) {
-      init.mSource.Value().SetValue().SetAsServiceWorker() = serviceWorker;
-    } else {
-      init.mSource.Value().SetNull();
+
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (swm) {
+      RefPtr<ServiceWorkerRegistrationInfo> reg =
+        swm->GetRegistration(principal, mSourceScope);
+      if (reg) {
+        RefPtr<ServiceWorkerInfo> serviceWorker = reg->GetByID(mSourceID);
+        if (serviceWorker) {
+          init.mSource.SetValue().SetAsServiceWorker() =
+            serviceWorker->GetOrCreateInstance(aWindow);
+        }
+      }
     }
 
-    RefPtr<ServiceWorkerMessageEvent> event =
-      ServiceWorkerMessageEvent::Constructor(aTargetContainer,
-                                             NS_LITERAL_STRING("message"), init, rv);
+    if (!TakeTransferredPortsAsSequence(init.mPorts)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
-    nsTArray<RefPtr<MessagePort>> ports = TakeTransferredPorts();
-
-    RefPtr<MessagePortList> portList =
-      new MessagePortList(static_cast<dom::Event*>(event.get()),
-                          ports);
-    event->SetPorts(portList);
+    RefPtr<MessageEvent> event =
+      MessageEvent::Constructor(aTargetContainer, NS_LITERAL_STRING("message"),
+                                init);
 
     event->SetTrusted(true);
     bool status = false;
@@ -199,7 +248,7 @@ private:
 
 void
 ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-                                 const Optional<Sequence<JS::Value>>& aTransferable,
+                                 const Sequence<JSObject*>& aTransferable,
                                  ErrorResult& aRv)
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
@@ -207,31 +256,29 @@ ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
   workerPrivate->AssertIsOnWorkerThread();
 
   JS::Rooted<JS::Value> transferable(aCx, JS::UndefinedValue());
-  if (aTransferable.WasPassed()) {
-    const Sequence<JS::Value>& realTransferable = aTransferable.Value();
 
-    JS::HandleValueArray elements =
-      JS::HandleValueArray::fromMarkedLocation(realTransferable.Length(),
-                                               realTransferable.Elements());
-
-    JSObject* array = JS_NewArrayObject(aCx, elements);
-    if (!array) {
-      aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-      return;
-    }
-
-    transferable.setObject(*array);
-  }
-
-  RefPtr<ServiceWorkerClientPostMessageRunnable> runnable =
-    new ServiceWorkerClientPostMessageRunnable(mWindowId);
-
-  runnable->Write(aCx, aMessage, transferable, aRv);
+  aRv = nsContentUtils::CreateJSValueFromSequenceOfObject(aCx, aTransferable,
+                                                          &transferable);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
-  aRv = NS_DispatchToMainThread(runnable);
+  // At the moment we only expose Client on ServiceWorker globals.
+  MOZ_ASSERT(workerPrivate->IsServiceWorker());
+  uint32_t serviceWorkerID = workerPrivate->ServiceWorkerID();
+  nsCString scope = workerPrivate->ServiceWorkerScope();
+
+  RefPtr<ServiceWorkerClientPostMessageRunnable> runnable =
+    new ServiceWorkerClientPostMessageRunnable(serviceWorkerID, scope,
+                                               mWindowId);
+
+  runnable->Write(aCx, aMessage, transferable, JS::CloneDataPolicy().denySharedArrayBuffer(),
+                  aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
+  }
+
+  aRv = workerPrivate->DispatchToMainThread(runnable.forget());
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }

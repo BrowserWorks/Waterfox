@@ -20,7 +20,7 @@ log = mozlog.unstructured.getLogger('gtest')
 
 class GTests(object):
     # Time (seconds) to wait for test process to complete
-    TEST_PROC_TIMEOUT = 1200
+    TEST_PROC_TIMEOUT = 1800
     # Time (seconds) in which process will be killed if it produces no output.
     TEST_PROC_NO_OUTPUT_TIMEOUT = 300
 
@@ -112,9 +112,12 @@ class GTests(object):
             raise Exception("xre_path does not exist: %s", self.xre_path)
         env = dict(os.environ)
         env = self.build_core_environment(env)
+        env["PERFHERDER_ALERTING_ENABLED"] = "1"
         pathvar = ""
         if mozinfo.os == "linux":
             pathvar = "LD_LIBRARY_PATH"
+            # disable alerts for unstable tests (Bug 1369807)
+            del env["PERFHERDER_ALERTING_ENABLED"]
         elif mozinfo.os == "mac":
             pathvar = "DYLD_LIBRARY_PATH"
         elif mozinfo.os == "win":
@@ -128,7 +131,9 @@ class GTests(object):
         # ASan specific environment stuff
         if mozinfo.info["asan"]:
             # Symbolizer support
-            llvmsym = os.path.join(self.xre_path, "llvm-symbolizer")
+            llvmsym = os.path.join(
+                self.xre_path,
+                "llvm-symbolizer" + mozinfo.info["bin_suffix"].encode('ascii'))
             if os.path.isfile(llvmsym):
                 env["ASAN_SYMBOLIZER_PATH"] = llvmsym
                 log.info("gtest | ASan using symbolizer at %s", llvmsym)

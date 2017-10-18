@@ -3,19 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PBackground;
-include protocol PBlob;
+include protocol PChildToParentStream; // FIXME: bug 792908
+include protocol PFileDescriptorSet; // FIXME: bug 792908
+include protocol PIPCBlobInputStream; // FIXME: bug 792908
+include protocol PParentToChildStream; // FIXME: bug 792908
 
 include DOMTypes;
 
+using struct mozilla::SerializedStructuredCloneBuffer
+  from "ipc/IPCMessageUtils.h";
+
 namespace mozilla {
 namespace dom {
-
-struct MessagePortMessage
-{
-  MessagePortIdentifier[] transferredPorts;
-  uint8_t[] data;
-  PBlob[] blobs;
-};
 
 // This protocol is used for the MessageChannel/MessagePort API
 protocol PMessagePort
@@ -36,14 +35,14 @@ protocol PMessagePort
      4. Recv__delete__(); */
 
 parent:
-  async PostMessages(MessagePortMessage[] messages);
-  async Disentangle(MessagePortMessage[] messages);
+  async PostMessages(ClonedMessageData[] messages);
+  async Disentangle(ClonedMessageData[] messages);
   async StopSendingData();
   async Close();
 
 child:
-  async Entangled(MessagePortMessage[] messages);
-  async ReceiveData(MessagePortMessage[] messages);
+  async Entangled(ClonedMessageData[] messages);
+  async ReceiveData(ClonedMessageData[] messages);
   async StopSendingDataConfirmed();
 
   async __delete__();
@@ -51,4 +50,3 @@ child:
 
 } // namespace dom
 } // namespace mozilla
-

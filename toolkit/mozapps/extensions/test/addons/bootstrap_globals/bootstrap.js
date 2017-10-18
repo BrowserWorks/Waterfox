@@ -1,3 +1,4 @@
+/* exported startup, shutdown, install, uninstall */
 Components.utils.import("resource://gre/modules/Services.jsm");
 
 var seenGlobals = new Set();
@@ -8,7 +9,7 @@ function checkGlobal(name, type) {
 }
 
 var wrapped = {};
-Services.obs.notifyObservers({ wrappedJSObject: wrapped }, "bootstrap-request-globals", null);
+Services.obs.notifyObservers({ wrappedJSObject: wrapped }, "bootstrap-request-globals");
 for (let [name, type] of wrapped.expectedGlobals) {
   checkGlobal(name, type);
 }
@@ -19,7 +20,7 @@ function install(data, reason) {
 function startup(data, reason) {
   Services.obs.notifyObservers({
     wrappedJSObject: seenGlobals
-  }, "bootstrap-seen-globals", null);
+  }, "bootstrap-seen-globals");
 }
 
 function shutdown(data, reason) {

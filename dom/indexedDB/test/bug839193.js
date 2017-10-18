@@ -4,7 +4,7 @@
 
 const nsIQuotaManagerService = Components.interfaces.nsIQuotaManagerService;
 
-var gURI = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newURI("http://localhost", null, null);
+var gURI = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newURI("http://localhost");
 
 function onUsageCallback(request) {}
 
@@ -21,12 +21,12 @@ function onLoad()
   quotaRequest.cancel();
   Components.classes["@mozilla.org/observer-service;1"]
             .getService(Components.interfaces.nsIObserverService)
-            .notifyObservers(window, "bug839193-loaded", null);
+            .notifyObservers(window, "bug839193-loaded");
 }
 
 function onUnload()
 {
   Components.classes["@mozilla.org/observer-service;1"]
             .getService(Components.interfaces.nsIObserverService)
-            .notifyObservers(window, "bug839193-unloaded", null);
+            .notifyObservers(window, "bug839193-unloaded");
 }

@@ -11,17 +11,16 @@
 #ifndef WEBRTC_MODULES_RTP_RTCP_SOURCE_RECEIVE_STATISTICS_IMPL_H_
 #define WEBRTC_MODULES_RTP_RTCP_SOURCE_RECEIVE_STATISTICS_IMPL_H_
 
-#include "webrtc/modules/rtp_rtcp/interface/receive_statistics.h"
+#include "webrtc/modules/rtp_rtcp/include/receive_statistics.h"
 
 #include <algorithm>
+#include <map>
 
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/modules/rtp_rtcp/source/bitrate.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
+#include "webrtc/base/criticalsection.h"
+#include "webrtc/base/rate_statistics.h"
+#include "webrtc/system_wrappers/include/ntp_time.h"
 
 namespace webrtc {
-
-class CriticalSectionWrapper;
 
 class StreamStatisticianImpl : public StreamStatistician {
  public:
@@ -36,7 +35,6 @@ class StreamStatisticianImpl : public StreamStatistician {
   void GetReceiveStreamDataCounters(
       StreamDataCounters* data_counters) const override;
   uint32_t BitrateReceived() const override;
-  void ResetStatistics() override;
   bool IsRetransmitOfOldPacket(const RTPHeader& header,
                                int64_t min_rtt) const override;
   bool IsPacketInOrder(uint16_t sequence_number) const override;
@@ -46,24 +44,21 @@ class StreamStatisticianImpl : public StreamStatistician {
                       bool retransmitted);
   void FecPacketReceived(const RTPHeader& header, size_t packet_length);
   void SetMaxReorderingThreshold(int max_reordering_threshold);
-  void ProcessBitrate();
   virtual void LastReceiveTimeNtp(uint32_t* secs, uint32_t* frac) const;
 
  private:
   bool InOrderPacketInternal(uint16_t sequence_number) const;
   RtcpStatistics CalculateRtcpStatistics();
-  void UpdateJitter(const RTPHeader& header,
-                    uint32_t receive_time_secs,
-                    uint32_t receive_time_frac);
+  void UpdateJitter(const RTPHeader& header, NtpTime receive_time);
   void UpdateCounters(const RTPHeader& rtp_header,
                       size_t packet_length,
                       bool retransmitted);
-  void NotifyRtpCallback() LOCKS_EXCLUDED(stream_lock_.get());
-  void NotifyRtcpCallback() LOCKS_EXCLUDED(stream_lock_.get());
+  void NotifyRtpCallback() LOCKS_EXCLUDED(stream_lock_);
+  void NotifyRtcpCallback() LOCKS_EXCLUDED(stream_lock_);
 
-  Clock* clock_;
-  rtc::scoped_ptr<CriticalSectionWrapper> stream_lock_;
-  Bitrate incoming_bitrate_;
+  Clock* const clock_;
+  rtc::CriticalSection stream_lock_;
+  RateStatistics incoming_bitrate_;
   uint32_t ssrc_;
   int max_reordering_threshold_;  // In number of packets or sequence numbers.
 
@@ -73,8 +68,7 @@ class StreamStatisticianImpl : public StreamStatistician {
   uint32_t jitter_q4_transmission_time_offset_;
 
   int64_t last_receive_time_ms_;
-  uint32_t last_receive_time_secs_;
-  uint32_t last_receive_time_frac_;
+  NtpTime last_receive_time_ntp_;
   uint32_t last_received_timestamp_;
   int32_t last_received_transmission_time_offset_;
   uint16_t received_seq_first_;
@@ -84,9 +78,6 @@ class StreamStatisticianImpl : public StreamStatistician {
   // Current counter values.
   size_t received_packet_overhead_;
   StreamDataCounters receive_counters_;
-
-  // Stored counter values. Includes sum of reset counter values for the stream.
-  StreamDataCounters stored_sum_receive_counters_;
 
   // Counter values when we sent the last report.
   uint32_t last_report_inorder_packets_;
@@ -116,10 +107,6 @@ class ReceiveStatisticsImpl : public ReceiveStatistics,
   StreamStatistician* GetStatistician(uint32_t ssrc) const override;
   void SetMaxReorderingThreshold(int max_reordering_threshold) override;
 
-  // Implement Module.
-  int32_t Process() override;
-  int64_t TimeUntilNextProcess() override;
-
   void RegisterRtcpStatisticsCallback(
       RtcpStatisticsCallback* callback) override;
 
@@ -135,9 +122,8 @@ class ReceiveStatisticsImpl : public ReceiveStatistics,
 
   typedef std::map<uint32_t, StreamStatisticianImpl*> StatisticianImplMap;
 
-  Clock* clock_;
-  rtc::scoped_ptr<CriticalSectionWrapper> receive_statistics_lock_;
-  int64_t last_rate_update_ms_;
+  Clock* const clock_;
+  rtc::CriticalSection receive_statistics_lock_;
   StatisticianImplMap statisticians_;
 
   RtcpStatisticsCallback* rtcp_stats_callback_;

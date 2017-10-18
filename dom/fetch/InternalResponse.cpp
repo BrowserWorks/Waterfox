@@ -80,14 +80,14 @@ InternalResponse::~InternalResponse()
 }
 
 template void
-InternalResponse::ToIPC<PContentParent>
+InternalResponse::ToIPC<nsIContentParent>
   (IPCInternalResponse* aIPCResponse,
-   PContentParent* aManager,
+   nsIContentParent* aManager,
    UniquePtr<mozilla::ipc::AutoIPCStream>& aAutoStream);
 template void
-InternalResponse::ToIPC<PContentChild>
+InternalResponse::ToIPC<nsIContentChild>
   (IPCInternalResponse* aIPCResponse,
-   PContentChild* aManager,
+   nsIContentChild* aManager,
    UniquePtr<mozilla::ipc::AutoIPCStream>& aAutoStream);
 template void
 InternalResponse::ToIPC<mozilla::ipc::PBackgroundParent>
@@ -127,7 +127,8 @@ InternalResponse::ToIPC(IPCInternalResponse* aIPCResponse,
 
   if (body) {
     aAutoStream.reset(new mozilla::ipc::AutoIPCStream(aIPCResponse->body()));
-    aAutoStream->Serialize(body, aManager);
+    DebugOnly<bool> ok = aAutoStream->Serialize(body, aManager);
+    MOZ_ASSERT(ok);
   } else {
     aIPCResponse->body() = void_t();
   }

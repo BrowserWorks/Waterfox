@@ -5,6 +5,10 @@
 #include "InProcessCompositorWidget.h"
 #include "nsBaseWidget.h"
 
+#if defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING)
+#include "mozilla/widget/AndroidCompositorWidget.h"
+#endif
+
 namespace mozilla {
 namespace widget {
 
@@ -12,42 +16,50 @@ namespace widget {
 // InProcessCompositorWidget by default.
 #if !defined(MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING)
 /* static */ RefPtr<CompositorWidget>
-CompositorWidget::CreateLocal(const CompositorWidgetInitData& aInitData, nsIWidget* aWidget)
+CompositorWidget::CreateLocal(const CompositorWidgetInitData& aInitData,
+                              const layers::CompositorOptions& aOptions,
+                              nsIWidget* aWidget)
 {
   MOZ_ASSERT(aWidget);
-  return new InProcessCompositorWidget(static_cast<nsBaseWidget*>(aWidget));
+#ifdef MOZ_WIDGET_ANDROID
+  return new AndroidCompositorWidget(aOptions, static_cast<nsBaseWidget*>(aWidget));
+#else
+  return new InProcessCompositorWidget(aOptions, static_cast<nsBaseWidget*>(aWidget));
+#endif
 }
 #endif
 
-InProcessCompositorWidget::InProcessCompositorWidget(nsBaseWidget* aWidget)
- : mWidget(aWidget)
+InProcessCompositorWidget::InProcessCompositorWidget(const layers::CompositorOptions& aOptions,
+                                                     nsBaseWidget* aWidget)
+ : CompositorWidget(aOptions)
+ , mWidget(aWidget)
 {
 }
 
 bool
-InProcessCompositorWidget::PreRender(layers::LayerManagerComposite* aManager)
+InProcessCompositorWidget::PreRender(WidgetRenderingContext* aContext)
 {
-  return mWidget->PreRender(aManager);
+  return mWidget->PreRender(aContext);
 }
 
 void
-InProcessCompositorWidget::PostRender(layers::LayerManagerComposite* aManager)
+InProcessCompositorWidget::PostRender(WidgetRenderingContext* aContext)
 {
-  mWidget->PostRender(aManager);
+  mWidget->PostRender(aContext);
 }
 
 void
-InProcessCompositorWidget::DrawWindowUnderlay(layers::LayerManagerComposite* aManager,
-                                          LayoutDeviceIntRect aRect)
+InProcessCompositorWidget::DrawWindowUnderlay(WidgetRenderingContext* aContext,
+                                              LayoutDeviceIntRect aRect)
 {
-  mWidget->DrawWindowUnderlay(aManager, aRect);
+  mWidget->DrawWindowUnderlay(aContext, aRect);
 }
 
 void
-InProcessCompositorWidget::DrawWindowOverlay(layers::LayerManagerComposite* aManager,
-                                         LayoutDeviceIntRect aRect)
+InProcessCompositorWidget::DrawWindowOverlay(WidgetRenderingContext* aContext,
+                                             LayoutDeviceIntRect aRect)
 {
-  mWidget->DrawWindowOverlay(aManager, aRect);
+  mWidget->DrawWindowOverlay(aContext, aRect);
 }
 
 already_AddRefed<gfx::DrawTarget>
@@ -106,12 +118,6 @@ InProcessCompositorWidget::GetGLFrameBufferFormat()
   return mWidget->GetGLFrameBufferFormat();
 }
 
-layers::Composer2D*
-InProcessCompositorWidget::GetComposer2D()
-{
-  return mWidget->GetComposer2D();
-}
-
 uintptr_t
 InProcessCompositorWidget::GetWidgetKey()
 {
@@ -127,8 +133,9 @@ InProcessCompositorWidget::RealWidget()
 void
 InProcessCompositorWidget::ObserveVsync(VsyncObserver* aObserver)
 {
-  RefPtr<CompositorVsyncDispatcher> cvd = mWidget->GetCompositorVsyncDispatcher();
-  cvd->SetCompositorVsyncObserver(aObserver);
+  if (RefPtr<CompositorVsyncDispatcher> cvd = mWidget->GetCompositorVsyncDispatcher()) {
+    cvd->SetCompositorVsyncObserver(aObserver);
+  }
 }
 
 } // namespace widget

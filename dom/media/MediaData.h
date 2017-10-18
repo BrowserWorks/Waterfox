@@ -6,28 +6,32 @@
 #if !defined(MediaData_h)
 #define MediaData_h
 
-#include "nsSize.h"
-#include "mozilla/gfx/Rect.h"
-#include "nsRect.h"
 #include "AudioSampleFormat.h"
-#include "nsIMemoryReporter.h"
+#include "ImageTypes.h"
 #include "SharedBuffer.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/UniquePtr.h"
-#include "mozilla/UniquePtrExtensions.h"
-#include "nsTArray.h"
+#include "TimeUnits.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/Span.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/gfx/Rect.h"
+#include "nsIMemoryReporter.h"
+#include "nsRect.h"
+#include "nsSize.h"
+#include "nsTArray.h"
 
 namespace mozilla {
 
 namespace layers {
 class Image;
 class ImageContainer;
+class KnowsCompositor;
 } // namespace layers
 
 class MediaByteBuffer;
-class SharedTrackInfo;
+class TrackInfoSharedPtr;
 
 // AlignedBuffer:
 // Memory allocations are fallibles. Methods return a boolean indicating if
@@ -65,7 +69,8 @@ public:
     , mLength(0)
     , mBuffer(nullptr)
     , mCapacity(0)
-  {}
+  {
+  }
 
   explicit AlignedBuffer(size_t aLength)
     : mData(nullptr)
@@ -89,7 +94,8 @@ public:
 
   AlignedBuffer(const AlignedBuffer& aOther)
     : AlignedBuffer(aOther.Data(), aOther.Length())
-  {}
+  {
+  }
 
   AlignedBuffer(AlignedBuffer&& aOther)
     : mData(aOther.mData)
@@ -219,6 +225,10 @@ private:
   // Returns false if memory couldn't be allocated.
   bool EnsureCapacity(size_t aLength)
   {
+    if (!aLength) {
+      // No need to allocate a buffer yet.
+      return true;
+    }
     const CheckedInt<size_t> sizeNeeded =
       CheckedInt<size_t>(aLength) * sizeof(Type) + AlignmentPaddingSize();
 
@@ -265,12 +275,14 @@ typedef AlignedBuffer<int16_t> AlignedShortBuffer;
 typedef AlignedBuffer<AudioDataValue> AlignedAudioBuffer;
 
 // Container that holds media samples.
-class MediaData {
+class MediaData
+{
 public:
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaData)
 
-  enum Type {
+  enum Type
+  {
     AUDIO_DATA = 0,
     VIDEO_DATA,
     RAW_DATA,
@@ -279,8 +291,8 @@ public:
 
   MediaData(Type aType,
             int64_t aOffset,
-            int64_t aTimestamp,
-            int64_t aDuration,
+            const media::TimeUnit& aTimestamp,
+            const media::TimeUnit& aDuration,
             uint32_t aFrames)
     : mType(aType)
     , mOffset(aOffset)
@@ -289,8 +301,8 @@ public:
     , mDuration(aDuration)
     , mFrames(aFrames)
     , mKeyframe(false)
-    , mDiscontinuity(false)
-  {}
+  {
+  }
 
   // Type of contained data.
   const Type mType;
@@ -298,31 +310,30 @@ public:
   // Approximate byte offset where this data was demuxed from its media.
   int64_t mOffset;
 
-  // Start time of sample, in microseconds.
-  int64_t mTime;
+  // Start time of sample.
+  media::TimeUnit mTime;
 
   // Codec specific internal time code. For Ogg based codecs this is the
   // granulepos.
-  int64_t mTimecode;
+  media::TimeUnit mTimecode;
 
   // Duration of sample, in microseconds.
-  int64_t mDuration;
+  media::TimeUnit mDuration;
 
   // Amount of frames for contained data.
   const uint32_t mFrames;
 
   bool mKeyframe;
 
-  // True if this is the first sample after a gap or discontinuity in
-  // the stream. This is true for the first sample in a stream after a seek.
-  bool mDiscontinuity;
-
-  int64_t GetEndTime() const { return mTime + mDuration; }
+  media::TimeUnit GetEndTime() const
+  {
+    return mTime + mDuration;
+  }
 
   bool AdjustForStartTime(int64_t aStartTime)
   {
-    mTime = mTime - aStartTime;
-    return mTime >= 0;
+    mTime = mTime - media::TimeUnit::FromMicroseconds(aStartTime);
+    return !mTime.IsNegative();
   }
 
   template <typename ReturnType>
@@ -343,36 +354,38 @@ protected:
   MediaData(Type aType, uint32_t aFrames)
     : mType(aType)
     , mOffset(0)
-    , mTime(0)
-    , mTimecode(0)
-    , mDuration(0)
     , mFrames(aFrames)
     , mKeyframe(false)
-    , mDiscontinuity(false)
-  {}
+  {
+  }
 
-  virtual ~MediaData() {}
+  virtual ~MediaData() { }
 
 };
 
 // NullData is for decoder generating a sample which doesn't need to be
 // rendered.
-class NullData : public MediaData {
+class NullData : public MediaData
+{
 public:
-  NullData(int64_t aOffset, int64_t aTime, int64_t aDuration)
+  NullData(int64_t aOffset,
+           const media::TimeUnit& aTime,
+           const media::TimeUnit& aDuration)
     : MediaData(NULL_DATA, aOffset, aTime, aDuration, 0)
-  {}
+  {
+  }
 
   static const Type sType = NULL_DATA;
 };
 
 // Holds chunk a decoded audio frames.
-class AudioData : public MediaData {
+class AudioData : public MediaData
+{
 public:
 
   AudioData(int64_t aOffset,
-            int64_t aTime,
-            int64_t aDuration,
+            const media::TimeUnit& aTime,
+            const media::TimeUnit& aDuration,
             uint32_t aFrames,
             AlignedAudioBuffer&& aData,
             uint32_t aChannels,
@@ -380,7 +393,9 @@ public:
     : MediaData(sType, aOffset, aTime, aDuration, aFrames)
     , mChannels(aChannels)
     , mRate(aRate)
-    , mAudioData(Move(aData)) {}
+    , mAudioData(Move(aData))
+  {
+  }
 
   static const Type sType = AUDIO_DATA;
   static const char* sTypeName;
@@ -391,8 +406,8 @@ public:
   // After such call, the original aOther is unusable.
   static already_AddRefed<AudioData>
   TransferAndUpdateTimestampAndDuration(AudioData* aOther,
-                                        int64_t aTimestamp,
-                                        int64_t aDuration);
+                                        const media::TimeUnit& aTimestamp,
+                                        const media::TimeUnit& aDuration);
 
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
@@ -412,7 +427,7 @@ public:
   AlignedAudioBuffer mAudioData;
 
 protected:
-  ~AudioData() {}
+  ~AudioData() { }
 };
 
 namespace layers {
@@ -423,7 +438,8 @@ class PlanarYCbCrImage;
 class VideoInfo;
 
 // Holds a decoded video frame, in YCbCr format. These are queued in the reader.
-class VideoData : public MediaData {
+class VideoData : public MediaData
+{
 public:
   typedef gfx::IntRect IntRect;
   typedef gfx::IntSize IntSize;
@@ -438,8 +454,10 @@ public:
   //   0 = Y
   //   1 = Cb
   //   2 = Cr
-  struct YCbCrBuffer {
-    struct Plane {
+  struct YCbCrBuffer
+  {
+    struct Plane
+    {
       uint8_t* mData;
       uint32_t mWidth;
       uint32_t mHeight;
@@ -449,6 +467,14 @@ public:
     };
 
     Plane mPlanes[3];
+    YUVColorSpace mYUVColorSpace = YUVColorSpace::BT601;
+  };
+
+  class Listener
+  {
+  public:
+    virtual void OnSentToCompositor() = 0;
+    virtual ~Listener() { }
   };
 
   // Constructs a VideoData object. If aImage is nullptr, creates a new Image
@@ -459,87 +485,58 @@ public:
   // Returns nsnull if an error occurs. This may indicate that memory couldn't
   // be allocated to create the VideoData object, or it may indicate some
   // problem with the input data (e.g. negative stride).
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            Image* aImage,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
 
-  // Variant that always makes a copy of aBuffer
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
 
-  // Variant to create a VideoData instance given an existing aImage
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            Image* aImage,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            const YCbCrBuffer &aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
+  // Creates a new VideoData containing a deep copy of aBuffer. May use
+  // aContainer to allocate an Image to hold the copied data.
+  static already_AddRefed<VideoData> CreateAndCopyData(
+    const VideoInfo& aInfo,
+    ImageContainer* aContainer,
+    int64_t aOffset,
+    const media::TimeUnit& aTime,
+    const media::TimeUnit& aDuration,
+    const YCbCrBuffer& aBuffer,
+    bool aKeyframe,
+    const media::TimeUnit& aTimecode,
+    const IntRect& aPicture,
+    layers::KnowsCompositor* aAllocator = nullptr);
 
-  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
-                                            ImageContainer* aContainer,
-                                            int64_t aOffset,
-                                            int64_t aTime,
-                                            int64_t aDuration,
-                                            layers::TextureClient* aBuffer,
-                                            bool aKeyframe,
-                                            int64_t aTimecode,
-                                            const IntRect& aPicture);
+  static already_AddRefed<VideoData> CreateAndCopyData(
+    const VideoInfo& aInfo,
+    ImageContainer* aContainer,
+    int64_t aOffset,
+    const media::TimeUnit& aTime,
+    const media::TimeUnit& aDuration,
+    const YCbCrBuffer& aBuffer,
+    const YCbCrBuffer::Plane& aAlphaPlane,
+    bool aKeyframe,
+    const media::TimeUnit& aTimecode,
+    const IntRect& aPicture);
 
-  static already_AddRefed<VideoData> CreateFromImage(const VideoInfo& aInfo,
-                                                     ImageContainer* aContainer,
-                                                     int64_t aOffset,
-                                                     int64_t aTime,
-                                                     int64_t aDuration,
-                                                     const RefPtr<Image>& aImage,
-                                                     bool aKeyframe,
-                                                     int64_t aTimecode,
-                                                     const IntRect& aPicture);
+  static already_AddRefed<VideoData> CreateAndCopyIntoTextureClient(
+    const VideoInfo& aInfo,
+    int64_t aOffset,
+    const media::TimeUnit& aTime,
+    const media::TimeUnit& aDuration,
+    layers::TextureClient* aBuffer,
+    bool aKeyframe,
+    const media::TimeUnit& aTimecode,
+    const IntRect& aPicture);
 
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified duration. All data from aOther is copied into the new
-  // VideoData. The new VideoData's mImage field holds a reference to
-  // aOther's mImage, i.e. the Image is not copied. This function is useful
-  // in reader backends that can't determine the duration of a VideoData
-  // until the next frame is decoded, i.e. it's a way to change the const
-  // duration field on a VideoData.
-  static already_AddRefed<VideoData> ShallowCopyUpdateDuration(const VideoData* aOther,
-                                                               int64_t aDuration);
-
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified timestamp. All data from aOther is copied into the new
-  // VideoData, as ShallowCopyUpdateDuration() does.
-  static already_AddRefed<VideoData> ShallowCopyUpdateTimestamp(const VideoData* aOther,
-                                                                int64_t aTimestamp);
-
-  // Creates a new VideoData identical to aOther, but with a different
-  // specified timestamp and duration. All data from aOther is copied
-  // into the new VideoData, as ShallowCopyUpdateDuration() does.
-  static already_AddRefed<VideoData>
-  ShallowCopyUpdateTimestampAndDuration(const VideoData* aOther, int64_t aTimestamp,
-                                        int64_t aDuration);
+  static already_AddRefed<VideoData> CreateFromImage(
+    const IntSize& aDisplay,
+    int64_t aOffset,
+    const media::TimeUnit& aTime,
+    const media::TimeUnit& aDuration,
+    const RefPtr<Image>& aImage,
+    bool aKeyframe,
+    const media::TimeUnit& aTimecode);
 
   // Initialize PlanarYCbCrImage. Only When aCopyData is true,
   // video data is copied to PlanarYCbCrImage.
   static bool SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
                                   const VideoInfo& aInfo,
-                                  const YCbCrBuffer &aBuffer,
+                                  const YCbCrBuffer& aBuffer,
                                   const IntRect& aPicture,
                                   bool aCopyData);
 
@@ -555,24 +552,43 @@ public:
 
   int32_t mFrameID;
 
-  bool mSentToCompositor;
-
   VideoData(int64_t aOffset,
-            int64_t aTime,
-            int64_t aDuration,
+            const media::TimeUnit& aTime,
+            const media::TimeUnit& aDuration,
             bool aKeyframe,
-            int64_t aTimecode,
+            const media::TimeUnit& aTimecode,
             IntSize aDisplay,
             uint32_t aFrameID);
 
+  void SetListener(UniquePtr<Listener> aListener);
+  void MarkSentToCompositor();
+  bool IsSentToCompositor() { return mSentToCompositor; }
+
+  void UpdateDuration(const media::TimeUnit& aDuration);
+  void UpdateTimestamp(const media::TimeUnit& aTimestamp);
+
+  void SetNextKeyFrameTime(const media::TimeUnit& aTime)
+  {
+    mNextKeyFrameTime = aTime;
+  }
+
+  const media::TimeUnit& NextKeyFrameTime() const
+  {
+    return mNextKeyFrameTime;
+  }
+
 protected:
   ~VideoData();
+
+  bool mSentToCompositor;
+  UniquePtr<Listener> mListener;
+  media::TimeUnit mNextKeyFrameTime;
 };
 
 class CryptoTrack
 {
 public:
-  CryptoTrack() : mValid(false), mMode(0), mIVSize(0) {}
+  CryptoTrack() : mValid(false), mMode(0), mIVSize(0) { }
   bool mValid;
   int32_t mMode;
   int32_t mIVSize;
@@ -586,6 +602,8 @@ public:
   nsTArray<uint32_t> mEncryptedSizes;
   nsTArray<uint8_t> mIV;
   nsTArray<nsCString> mSessionIds;
+  nsTArray<nsTArray<uint8_t>> mInitDatas;
+  nsString mInitDataType;
 };
 
 // MediaRawData is a MediaData container used to store demuxed, still compressed
@@ -639,19 +657,29 @@ private:
   MediaRawData* mTarget;
 };
 
-class MediaRawData : public MediaData {
+class MediaRawData : public MediaData
+{
 public:
   MediaRawData();
-  MediaRawData(const uint8_t* aData, size_t mSize);
+  MediaRawData(const uint8_t* aData, size_t aSize);
+  MediaRawData(const uint8_t* aData, size_t aSize,
+               const uint8_t* aAlphaData, size_t aAlphaSize);
 
   // Pointer to data or null if not-yet allocated
   const uint8_t* Data() const { return mBuffer.Data(); }
+  // Pointer to alpha data or null if not-yet allocated
+  const uint8_t* AlphaData() const { return mAlphaBuffer.Data(); }
   // Size of buffer.
   size_t Size() const { return mBuffer.Length(); }
+  size_t AlphaSize() const { return mAlphaBuffer.Length(); }
   size_t ComputedSizeOfIncludingThis() const
   {
-    return sizeof(*this) + mBuffer.ComputedSizeOfExcludingThis();
+    return sizeof(*this)
+           + mBuffer.ComputedSizeOfExcludingThis()
+           + mAlphaBuffer.ComputedSizeOfExcludingThis();
   }
+  // Access the buffer as a Span.
+  operator Span<const uint8_t>() { return MakeSpan(Data(), Size()); }
 
   const CryptoSample& mCrypto;
   RefPtr<MediaByteBuffer> mExtraData;
@@ -660,7 +688,11 @@ public:
   // Indicates that this is the last packet of the stream.
   bool mEOS = false;
 
-  RefPtr<SharedTrackInfo> mTrackInfo;
+  // Indicate to the audio decoder that mDiscardPadding frames should be
+  // trimmed.
+  uint32_t mDiscardPadding = 0;
+
+  RefPtr<TrackInfoSharedPtr> mTrackInfo;
 
   // Return a deep copy or nullptr if out of memory.
   virtual already_AddRefed<MediaRawData> Clone() const;
@@ -675,18 +707,20 @@ protected:
 private:
   friend class MediaRawDataWriter;
   AlignedByteBuffer mBuffer;
+  AlignedByteBuffer mAlphaBuffer;
   CryptoSample mCryptoInternal;
   MediaRawData(const MediaRawData&); // Not implemented
 };
 
   // MediaByteBuffer is a ref counted infallible TArray.
-class MediaByteBuffer : public nsTArray<uint8_t> {
+class MediaByteBuffer : public nsTArray<uint8_t>
+{
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaByteBuffer);
   MediaByteBuffer() = default;
-  explicit MediaByteBuffer(size_t aCapacity) : nsTArray<uint8_t>(aCapacity) {}
+  explicit MediaByteBuffer(size_t aCapacity) : nsTArray<uint8_t>(aCapacity) { }
 
 private:
-  ~MediaByteBuffer() {}
+  ~MediaByteBuffer() { }
 };
 
 } // namespace mozilla

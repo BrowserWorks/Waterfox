@@ -9,8 +9,12 @@ import os
 import tempfile
 import unittest
 import mozfile
+
+import mozunit
+
 from mozprofile.prefs import Preferences
 from mozprofile.profile import Profile
+
 
 class PreferencesNonceTest(unittest.TestCase):
 
@@ -44,5 +48,6 @@ class PreferencesNonceTest(unittest.TestCase):
         prefs = Preferences.read_prefs(user_js)
         self.assertEqual(dict(prefs), {'foo': 'bar'})
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

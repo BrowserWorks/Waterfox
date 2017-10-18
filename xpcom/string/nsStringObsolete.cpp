@@ -392,7 +392,7 @@ Compare1To2(const char* aStr1,const char16_t* aStr2,uint32_t aCount,bool aIgnore
  * @return  the new length of the given buffer
  */
 static int32_t
-CompressChars1(char* aString,uint32_t aLength,const char* aSet){ 
+CompressChars1(char* aString,uint32_t aLength,const char* aSet){
 
   char*  from = aString;
   char*  end =  aString + aLength;
@@ -539,8 +539,6 @@ StripChars2(char16_t* aString,uint32_t aLength,const char* aSet) {
 }
 
 /* ***** END RICKG BLOCK ***** */
-
-static const char* kWhitespace="\f\t\r\n ";
 
 // This function is used to implement FindCharInSet and friends
 template <class CharT>
@@ -866,7 +864,7 @@ RFind_ComputeSearchRange( uint32_t bigLen, uint32_t littleLen, int32_t& offset, 
 // specialized methods:
 
 int32_t
-nsString::Find( const nsAFlatString& aString, int32_t aOffset, int32_t aCount ) const
+nsString::Find( const nsString& aString, int32_t aOffset, int32_t aCount ) const
 {
   // this method changes the meaning of aOffset and aCount:
   Find_ComputeSearchRange(mLength, aString.Length(), aOffset, aCount);
@@ -884,7 +882,7 @@ nsString::Find( const char16_t* aString, int32_t aOffset, int32_t aCount ) const
 }
 
 int32_t
-nsString::RFind( const nsAFlatString& aString, int32_t aOffset, int32_t aCount ) const
+nsString::RFind( const nsString& aString, int32_t aOffset, int32_t aCount ) const
 {
   // this method changes the meaning of aOffset and aCount:
   RFind_ComputeSearchRange(mLength, aString.Length(), aOffset, aCount);
@@ -1031,23 +1029,6 @@ double
 nsString::ToDouble(nsresult* aErrorCode) const
 {
   return NS_LossyConvertUTF16toASCII(*this).ToDouble(aErrorCode);
-}
-
-
-/**
- * nsTString::AssignWithConversion
- */
-
-void
-nsCString::AssignWithConversion( const nsAString& aData )
-{
-  LossyCopyUTF16toASCII(aData, *this);
-}
-
-void
-nsString::AssignWithConversion( const nsACString& aData )
-{
-  CopyASCIItoUTF16(aData, *this);
 }
 
 #endif // !MOZ_STRING_WITH_OBSOLETE_API

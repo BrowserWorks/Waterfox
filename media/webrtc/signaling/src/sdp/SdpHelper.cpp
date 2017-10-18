@@ -168,7 +168,7 @@ SdpHelper::DisableMsection(Sdp* sdp, SdpMediaSection* msection)
       msection->AddCodec("120", "VP8", 90000, 1);
       break;
     case SdpMediaSection::kApplication:
-      msection->AddDataChannel("5000", "rejected", 0);
+      msection->AddDataChannel("rejected", 0, 0, 0);
       break;
     default:
       // We need to have something here to fit the grammar, this seems safe
@@ -424,14 +424,19 @@ SdpHelper::SetDefaultAddresses(const std::string& defaultCandidateAddr,
                                SdpMediaSection* msection)
 {
   msection->GetConnection().SetAddress(defaultCandidateAddr);
-  msection->SetPort(defaultCandidatePort);
+  SdpAttributeList& attrList = msection->GetAttributeList();
+
+  // only set the port if there is no bundle-only attribute
+  if (!attrList.HasAttribute(SdpAttribute::kBundleOnlyAttribute)) {
+    msection->SetPort(defaultCandidatePort);
+  }
 
   if (!defaultRtcpCandidateAddr.empty()) {
     sdp::AddrType ipVersion = sdp::kIPv4;
     if (defaultRtcpCandidateAddr.find(':') != std::string::npos) {
       ipVersion = sdp::kIPv6;
     }
-    msection->GetAttributeList().SetAttribute(new SdpRtcpAttribute(
+    attrList.SetAttribute(new SdpRtcpAttribute(
           defaultRtcpCandidatePort,
           sdp::kInternet,
           ipVersion,
@@ -485,10 +490,9 @@ SdpHelper::GetIdsFromMsid(const Sdp& sdp,
         *trackId = i->appdata;
         found = true;
       } else if ((*streamId != i->identifier) || (*trackId != i->appdata)) {
-        SDP_SET_ERROR("Found multiple different webrtc msids in m-section "
-                       << msection.GetLevel() << ". The behavior here is "
-                       "undefined.");
-        return NS_ERROR_INVALID_ARG;
+        MOZ_MTLOG(ML_WARNING, "Found multiple different webrtc msids in "
+                       "m-section " << msection.GetLevel() << ". The "
+                       "behavior w/o transceivers is undefined.");
       }
     }
   }
@@ -688,8 +692,9 @@ SdpHelper::HasRtcp(SdpMediaSection::Protocol proto) const
     case SdpMediaSection::kPstn:
     case SdpMediaSection::kUdpTlsUdptl:
     case SdpMediaSection::kSctp:
-    case SdpMediaSection::kSctpDtls:
     case SdpMediaSection::kDtlsSctp:
+    case SdpMediaSection::kUdpDtlsSctp:
+    case SdpMediaSection::kTcpDtlsSctp:
       return false;
   }
   MOZ_CRASH("Unknown protocol, probably corruption.");
@@ -700,6 +705,8 @@ SdpHelper::GetProtocolForMediaType(SdpMediaSection::MediaType type)
 {
   if (type == SdpMediaSection::kApplication) {
     return SdpMediaSection::kDtlsSctp;
+    // TODO switch to offer the new SCTP SDP (Bug 1335206)
+    //return SdpMediaSection::kUdpDtlsSctp;
   }
 
   return SdpMediaSection::kUdpTlsRtpSavpf;
@@ -744,18 +751,29 @@ SdpHelper::AddCommonExtmaps(
 
   UniquePtr<SdpExtmapAttributeList> localExtmap(new SdpExtmapAttributeList);
   auto& theirExtmap = remoteMsection.GetAttributeList().GetExtmap().mExtmaps;
-  for (auto i = theirExtmap.begin(); i != theirExtmap.end(); ++i) {
-    for (auto j = localExtensions.begin(); j != localExtensions.end(); ++j) {
-      if (i->extensionname == j->extensionname) {
-        localExtmap->mExtmaps.push_back(*i);
-
-        // RFC 5285 says that ids >= 4096 can be used by the offerer to
-        // force the answerer to pick, otherwise the value in the offer is
-        // used.
-        if (localExtmap->mExtmaps.back().entry >= 4096) {
-          localExtmap->mExtmaps.back().entry = j->entry;
-        }
+  for (const auto& theirExt : theirExtmap) {
+    for (const auto& ourExt : localExtensions) {
+      if (theirExt.extensionname != ourExt.extensionname) {
+        continue;
       }
+
+      auto negotiatedExt = theirExt;
+
+      negotiatedExt.direction =
+        reverse(negotiatedExt.direction) & ourExt.direction;
+      if (negotiatedExt.direction ==
+            SdpDirectionAttribute::Direction::kInactive) {
+        continue;
+      }
+
+      // RFC 5285 says that ids >= 4096 can be used by the offerer to
+      // force the answerer to pick, otherwise the value in the offer is
+      // used.
+      if (negotiatedExt.entry >= 4096) {
+        negotiatedExt.entry = ourExt.entry;
+      }
+
+      localExtmap->mExtmaps.push_back(negotiatedExt);
     }
   }
 

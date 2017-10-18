@@ -13,8 +13,15 @@
 #include "nscore.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/SSE.h"
+#include "mozilla/TypeTraits.h"
 
 #include "nsCharTraits.h"
+
+#ifdef MOZILLA_INTERNAL_API
+#define UTF8UTILS_WARNING(msg) NS_WARNING(msg)
+#else
+#define UTF8UTILS_WARNING(msg)
+#endif
 
 class UTF8traits
 {
@@ -209,7 +216,7 @@ public:
         // as an error and return the Unicode replacement
         // character 0xFFFD.
 
-        NS_WARNING("Unexpected end of buffer after high surrogate");
+        UTF8UTILS_WARNING("Unexpected end of buffer after high surrogate");
 
         if (aErr) {
           *aErr = true;
@@ -242,7 +249,7 @@ public:
         // treated as an illegally terminated code unit sequence
         // (also Chapter 3 D91, "isolated [not paired and ill-formed]
         // UTF-16 code units in the range D800..DFFF are ill-formed").
-        NS_WARNING("got a High Surrogate but no low surrogate");
+        UTF8UTILS_WARNING("got a High Surrogate but no low surrogate");
 
         if (aErr) {
           *aErr = true;
@@ -257,7 +264,7 @@ public:
       // this as an error and return the Unicode replacement
       // character 0xFFFD.
 
-      NS_WARNING("got a low Surrogate but no high surrogate");
+      UTF8UTILS_WARNING("got a low Surrogate but no high surrogate");
       if (aErr) {
         *aErr = true;
       }
@@ -491,7 +498,7 @@ public:
           *out++ = '\xBF';
           *out++ = '\xBD';
 
-          NS_WARNING("String ending in half a surrogate pair!");
+          UTF8UTILS_WARNING("String ending in half a surrogate pair!");
 
           break;
         }
@@ -524,7 +531,7 @@ public:
           // D800..DFFF are ill-formed").
           p--;
 
-          NS_WARNING("got a High Surrogate but no low surrogate");
+          UTF8UTILS_WARNING("got a High Surrogate but no low surrogate");
         }
       } else { // U+DC00 - U+DFFF
         // Treat broken characters as the Unicode replacement
@@ -534,7 +541,7 @@ public:
         *out++ = '\xBD';
 
         // DC00- DFFF - Low Surrogate
-        NS_WARNING("got a low Surrogate but no high surrogate");
+        UTF8UTILS_WARNING("got a low Surrogate but no high surrogate");
       }
     }
 
@@ -590,7 +597,7 @@ public:
           // UTF-8)
           mSize += 3;
 
-          NS_WARNING("String ending in half a surrogate pair!");
+          UTF8UTILS_WARNING("String ending in half a surrogate pair!");
 
           break;
         }
@@ -613,14 +620,14 @@ public:
           // are ill-formed").
           p--;
 
-          NS_WARNING("got a high Surrogate but no low surrogate");
+          UTF8UTILS_WARNING("got a high Surrogate but no low surrogate");
         }
       } else { // U+DC00 - U+DFFF
         // Treat broken characters as the Unicode replacement
         // character 0xFFFD (0xEFBFBD in UTF-8)
         mSize += 3;
 
-        NS_WARNING("got a low Surrogate but no high surrogate");
+        UTF8UTILS_WARNING("got a low Surrogate but no high surrogate");
       }
     }
   }
@@ -721,5 +728,23 @@ private:
   char* mDestination;
 };
 #endif // MOZILLA_INTERNAL_API
+
+
+template<typename Char, typename UnsignedT>
+inline UnsignedT
+RewindToPriorUTF8Codepoint(const Char* utf8Chars, UnsignedT index)
+{
+  static_assert(mozilla::IsSame<Char, char>::value ||
+                mozilla::IsSame<Char, unsigned char>::value ||
+                mozilla::IsSame<Char, signed char>::value,
+                "UTF-8 data must be in 8-bit units");
+  static_assert(mozilla::IsUnsigned<UnsignedT>::value, "index type must be unsigned");
+  while (index > 0 && (utf8Chars[index] & 0xC0) == 0x80)
+    --index;
+
+  return index;
+}
+
+#undef UTF8UTILS_WARNING
 
 #endif /* !defined(nsUTF8Utils_h_) */

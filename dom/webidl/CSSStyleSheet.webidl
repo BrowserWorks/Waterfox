@@ -7,8 +7,6 @@
  * http://dev.w3.org/csswg/cssom/
  */
 
-interface CSSRule;
-
 enum CSSStyleSheetParsingMode {
   "author",
   "user",
@@ -18,12 +16,12 @@ enum CSSStyleSheetParsingMode {
 interface CSSStyleSheet : StyleSheet {
   [Pure]
   readonly attribute CSSRule? ownerRule;
-  [Throws]
+  [Throws, NeedsSubjectPrincipal]
   readonly attribute CSSRuleList cssRules;
-  [ChromeOnly]
+  [ChromeOnly, BinaryName="parsingModeDOM"]
   readonly attribute CSSStyleSheetParsingMode parsingMode;
-  [Throws]
-  unsigned long insertRule(DOMString rule, unsigned long index);
-  [Throws]
+  [Throws, NeedsSubjectPrincipal]
+  unsigned long insertRule(DOMString rule, optional unsigned long index = 0);
+  [Throws, NeedsSubjectPrincipal]
   void deleteRule(unsigned long index);
 };

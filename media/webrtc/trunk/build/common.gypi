@@ -917,23 +917,24 @@
     'android_app_version_name%': 'Developer Build',
     'android_app_version_code%': 0,
 
-    'sas_dll_exists': '<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(sas_dll_path))',
-    'wix_exists': '<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(wix_path))',
+    'sas_dll_exists': 0, # '<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(sas_dll_path))',
+    'wix_exists': 0, # '<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(wix_path))',
 
     'windows_sdk_default_path': '<(DEPTH)/third_party/platformsdk_win8/files',
-    'directx_sdk_default_path': '<(DEPTH)/third_party/directxsdk/files',
+#    'directx_sdk_default_path': '<(DEPTH)/third_party/directxsdk/files',
+    'windows_sdk_path%': '<(windows_sdk_default_path)',
 
     'conditions': [
-      ['"<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(windows_sdk_default_path))"=="True"', {
-        'windows_sdk_path%': '<(windows_sdk_default_path)',
-      }, {
-        'windows_sdk_path%': 'C:/Program Files (x86)/Windows Kits/8.0',
-      }],
-      ['OS=="win" and "<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(directx_sdk_default_path))"=="True"', {
-        'directx_sdk_path%': '<(directx_sdk_default_path)',
-      }, {
-        'directx_sdk_path%': '$(DXSDK_DIR)',
-      }],
+      #['"<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(windows_sdk_default_path))"=="True"', {
+      #  'windows_sdk_path%': '<(windows_sdk_default_path)',
+      #}, {
+      #  'windows_sdk_path%': 'C:/Program Files (x86)/Windows Kits/8.0',
+      #}],
+      #['OS=="win" and "<!(<(PYTHON) <(DEPTH)/build/dir_exists.py <(directx_sdk_default_path))"=="True"', {
+      #  'directx_sdk_path%': '<(directx_sdk_default_path)',
+      #}, {
+      #  'directx_sdk_path%': '$(DXSDK_DIR)',
+      #}],
       # If use_official_google_api_keys is already set (to 0 or 1), we
       # do none of the implicit checking.  If it is set to 1 and the
       # internal keys file is missing, the build will fail at compile
@@ -1027,7 +1028,7 @@
                   }],
                 ],
               }],
-              ['target_arch=="aarch64"', {
+              ['target_arch=="arm64"', {
                 'android_app_abi%': 'arm64-v8a',
                 'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-21/arch-arm64',
               }],
@@ -3326,7 +3327,6 @@
           'WIN32',
           '_WINDOWS',
           'NOMINMAX',
-          'PSAPI_VERSION=1',
           '_CRT_RAND_S',
           'CERT_CHAIN_PARA_HAS_EXTRA_FIELDS',
           'WIN32_LEAN_AND_MEAN',
@@ -3410,7 +3410,7 @@
           '<(windows_sdk_path)/Include/shared',
           '<(windows_sdk_path)/Include/um',
           '<(windows_sdk_path)/Include/winrt',
-          '<(directx_sdk_path)/Include',
+#          '<(directx_sdk_path)/Include',
           '$(VSInstallDir)/VC/atlmfc/include',
         ],
         'msvs_cygwin_dirs': ['<(DEPTH)/third_party/cygwin'],
@@ -3442,7 +3442,7 @@
           'VCLibrarianTool': {
             'AdditionalOptions': ['/ignore:4221'],
             'AdditionalLibraryDirectories': [
-              '<(directx_sdk_path)/Lib/x86',
+#              '<(directx_sdk_path)/Lib/x86',
               '<(windows_sdk_path)/Lib/win8/um/x86',
             ],
           },
@@ -3454,7 +3454,6 @@
               'msimg32.lib',
               'ws2_32.lib',
               'usp10.lib',
-              'psapi.lib',
               'dbghelp.lib',
               'winmm.lib',
               'shlwapi.lib',
@@ -3488,7 +3487,7 @@
               }],
             ],
             'AdditionalLibraryDirectories': [
-              '<(directx_sdk_path)/Lib/x86',
+#              '<(directx_sdk_path)/Lib/x86', XXXX
               '<(windows_sdk_path)/Lib/win8/um/x86',
             ],
             'GenerateDebugInformation': 'true',

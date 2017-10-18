@@ -6,6 +6,7 @@
 
 #include "mozilla/PRemoteSpellcheckEngineParent.h"
 #include "nsCOMPtr.h"
+#include "nsTArray.h"
 
 class nsISpellChecker;
 
@@ -20,14 +21,18 @@ public:
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool RecvSetDictionary(const nsString& aDictionary,
-                                   bool* success) override;
+  virtual mozilla::ipc::IPCResult RecvSetDictionary(const nsString& aDictionary,
+                                                    bool* success) override;
 
-  virtual bool RecvCheck(const nsString& aWord, bool* aIsMisspelled) override;
+  virtual mozilla::ipc::IPCResult RecvSetDictionaryFromList(
+                                    nsTArray<nsString>&& aList,
+                                    const intptr_t& aPromiseId) override;
 
-  virtual bool RecvCheckAndSuggest(const nsString& aWord,
-                                     bool* aIsMisspelled,
-                                     InfallibleTArray<nsString>* aSuggestions)
+  virtual mozilla::ipc::IPCResult RecvCheck(const nsString& aWord, bool* aIsMisspelled) override;
+
+  virtual mozilla::ipc::IPCResult RecvCheckAndSuggest(const nsString& aWord,
+                                                      bool* aIsMisspelled,
+                                                      InfallibleTArray<nsString>* aSuggestions)
       override;
 
 private:

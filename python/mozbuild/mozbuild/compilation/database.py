@@ -7,28 +7,23 @@
 import os
 import types
 
-from mozbuild.base import MozbuildObject
 from mozbuild.compilation import util
 from mozbuild.backend.common import CommonBackend
 from mozbuild.frontend.data import (
     Sources,
-    HostSources,
-    UnifiedSources,
     GeneratedSources,
     DirectoryTraversal,
     Defines,
     Linkable,
     LocalInclude,
+    PerSourceFlag,
     VariablePassthru,
     SimpleProgram,
 )
 from mozbuild.shellutil import (
-    split as shell_split,
     quote as shell_quote,
 )
 from mozbuild.util import expand_variables
-from mach.config import ConfigSettings
-from mach.logging import LoggingManager
 import mozpack.path as mozpath
 from collections import (
     defaultdict,
@@ -48,14 +43,11 @@ class CompileDBBackend(CommonBackend):
         # The cache for per-directory flags
         self._flags = {}
 
-        log_manager = LoggingManager()
-        self._cmd = MozbuildObject(self.environment.topsrcdir, ConfigSettings(),
-                                   log_manager, self.environment.topobjdir)
-
         self._envs = {}
         self._includes = defaultdict(list)
         self._defines = defaultdict(list)
         self._local_flags = defaultdict(dict)
+        self._per_source_flags = defaultdict(list)
         self._extra_includes = defaultdict(list)
         self._gyp_dirs = set()
         self._dist_include_testing = '-I%s' % mozpath.join(
@@ -68,7 +60,6 @@ class CompileDBBackend(CommonBackend):
                 'build/unix/elfhack/inject',
                 'build/clang-plugin',
                 'build/clang-plugin/tests',
-                'security/sandbox/win/wow_helper',
                 'toolkit/crashreporter/google-breakpad/src/common'):
             return True
 
@@ -121,6 +112,9 @@ class CompileDBBackend(CommonBackend):
                     'WARNINGS_AS_ERRORS' in self._local_flags[obj.objdir]):
                 del self._local_flags[obj.objdir]['WARNINGS_AS_ERRORS']
 
+        elif isinstance(obj, PerSourceFlag):
+            self._per_source_flags[obj.file_name].extend(obj.flags)
+
         return True
 
     def consume_finished(self):
@@ -128,10 +122,13 @@ class CompileDBBackend(CommonBackend):
 
         db = []
 
-        for (directory, filename), cmd in self._db.iteritems():
+        for (directory, filename, unified), cmd in self._db.iteritems():
             env = self._envs[directory]
             cmd = list(cmd)
-            cmd.append(filename)
+            if unified is None:
+                cmd.append(filename)
+            else:
+                cmd.append(unified)
             local_extra = list(self._extra_includes[directory])
             if directory not in self._gyp_dirs:
                 for var in (
@@ -165,10 +162,13 @@ class CompileDBBackend(CommonBackend):
                     c.append(a)
                 else:
                     c.extend(a)
+            per_source_flags = self._per_source_flags.get(filename)
+            if per_source_flags is not None:
+                c.extend(per_source_flags)
             db.append({
                 'directory': directory,
                 'command': ' '.join(shell_quote(a) for a in c),
-                'file': filename,
+                'file': mozpath.join(directory, filename),
             })
 
         import json
@@ -183,6 +183,9 @@ class CompileDBBackend(CommonBackend):
         for f in obj.unified_source_mapping:
             self._build_db_line(obj.objdir, obj.relativedir, obj.config, f[0],
                                 obj.canonical_suffix)
+            for entry in f[1]:
+                self._build_db_line(obj.objdir, obj.relativedir, obj.config,
+                                    entry, obj.canonical_suffix, unified=f[0])
 
     def _handle_idl_manager(self, idl_manager):
         pass
@@ -214,10 +217,11 @@ class CompileDBBackend(CommonBackend):
         '.mm': 'CXXFLAGS',
     }
 
-    def _build_db_line(self, objdir, reldir, cenv, filename, canonical_suffix):
+    def _build_db_line(self, objdir, reldir, cenv, filename,
+                       canonical_suffix, unified=None):
         if canonical_suffix not in self.COMPILERS:
             return
-        db = self._db.setdefault((objdir, filename),
+        db = self._db.setdefault((objdir, filename, unified),
             cenv.substs[self.COMPILERS[canonical_suffix]].split() +
             ['-o', '/dev/null', '-c'])
         reldir = reldir or mozpath.relpath(objdir, cenv.topobjdir)

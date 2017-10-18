@@ -54,7 +54,7 @@ public:
   constexpr operator E() const { return mValue; }
 
   template<typename DestinationType>
-  MOZ_EXPLICIT_CONVERSION constexpr
+  explicit constexpr
   operator DestinationType() const { return DestinationType(mValue); }
 
   constexpr bool operator !() const { return !bool(mValue); }
@@ -86,8 +86,6 @@ MOZ_CASTABLETYPEDENUMRESULT_BINOP(&, E, CastableTypedEnumResult<E>)
 MOZ_CASTABLETYPEDENUMRESULT_BINOP(^, E, CastableTypedEnumResult<E>)
 MOZ_CASTABLETYPEDENUMRESULT_BINOP(==, E, bool)
 MOZ_CASTABLETYPEDENUMRESULT_BINOP(!=, E, bool)
-MOZ_CASTABLETYPEDENUMRESULT_BINOP(||, bool, bool)
-MOZ_CASTABLETYPEDENUMRESULT_BINOP(&&, bool, bool)
 
 template <typename E>
 constexpr CastableTypedEnumResult<E>

@@ -17,6 +17,9 @@ namespace mozilla {
 // object on the main thread.
 class GMPCDMCallbackProxy : public GMPDecryptorProxyCallback {
 public:
+
+  void SetDecryptorId(uint32_t aId) override;
+
   void SetSessionId(uint32_t aCreateSessionToken,
                     const nsCString& aSessionId) override;
 
@@ -30,11 +33,11 @@ public:
                      const nsCString& aSessionId) override;
 
   void SessionMessage(const nsCString& aSessionId,
-                      GMPSessionMessageType aMessageType,
+                      dom::MediaKeyMessageType aMessageType,
                       const nsTArray<uint8_t>& aMessage) override;
 
   void ExpirationChange(const nsCString& aSessionId,
-                        GMPTimestamp aExpiryTime) override;
+                        UnixTime aExpiryTime) override;
 
   void SessionClosed(const nsCString& aSessionId) override;
 
@@ -43,13 +46,12 @@ public:
                     uint32_t aSystemCode,
                     const nsCString& aMessage) override;
 
-  void KeyStatusChanged(const nsCString& aSessionId,
-                        const nsTArray<uint8_t>& aKeyId,
-                        GMPMediaKeyStatus aStatus) override;
-
   void Decrypted(uint32_t aId,
-                 GMPErr aResult,
+                 DecryptStatus aResult,
                  const nsTArray<uint8_t>& aDecryptedData) override;
+
+  void BatchedKeyStatusChanged(const nsCString& aSessionId,
+                               const nsTArray<CDMKeyInfo>& aKeyInfos) override;
 
   void Terminated() override;
 
@@ -57,10 +59,14 @@ public:
 
 private:
   friend class GMPCDMProxy;
-  explicit GMPCDMCallbackProxy(CDMProxy* aProxy);
+  GMPCDMCallbackProxy(CDMProxy* aProxy, nsIEventTarget* aMainThread);
 
+  void BatchedKeyStatusChangedInternal(const nsCString& aSessionId,
+                                       const nsTArray<CDMKeyInfo>& aKeyInfos);
   // Warning: Weak ref.
   CDMProxy* mProxy;
+
+  const nsCOMPtr<nsIEventTarget> mMainThread;
 };
 
 } // namespace mozilla

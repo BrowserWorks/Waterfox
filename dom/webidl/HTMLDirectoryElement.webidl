@@ -12,8 +12,9 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
+[HTMLConstructor]
 interface HTMLDirectoryElement : HTMLElement {
-           [SetterThrows, Pure]
+           [CEReactions, SetterThrows, Pure]
            attribute boolean compact;
 };
 

@@ -107,14 +107,10 @@ struct BGRAColor
  * use this class to ensure that ImageLib services are available. Failure to do
  * so can result in strange, non-deterministic failures.
  */
-struct AutoInitializeImageLib
+class AutoInitializeImageLib
 {
-  AutoInitializeImageLib()
-  {
-    // Ensure that ImageLib services are initialized.
-    nsCOMPtr<imgITools> imgTools = do_CreateInstance("@mozilla.org/image/tools;1");
-    EXPECT_TRUE(imgTools != nullptr);
-  }
+public:
+  AutoInitializeImageLib();
 };
 
 /// Loads a file from the current directory. @return an nsIInputStream for it.
@@ -122,7 +118,7 @@ already_AddRefed<nsIInputStream> LoadFile(const char* aRelativePath);
 
 /**
  * @returns true if every pixel of @aSurface is @aColor.
- * 
+ *
  * If @aFuzz is nonzero, a tolerance of @aFuzz is allowed in each color
  * component. This may be necessary for tests that involve JPEG images or
  * downscaling.
@@ -354,10 +350,10 @@ void CheckGeneratedPalettedImage(Decoder* aDecoder, const gfx::IntRect& aRect);
  */
 void CheckWritePixels(Decoder* aDecoder,
                       SurfaceFilter* aFilter,
-                      Maybe<gfx::IntRect> aOutputRect = Nothing(),
-                      Maybe<gfx::IntRect> aInputRect = Nothing(),
-                      Maybe<gfx::IntRect> aInputWriteRect = Nothing(),
-                      Maybe<gfx::IntRect> aOutputWriteRect = Nothing(),
+                      const Maybe<gfx::IntRect>& aOutputRect = Nothing(),
+                      const Maybe<gfx::IntRect>& aInputRect = Nothing(),
+                      const Maybe<gfx::IntRect>& aInputWriteRect = Nothing(),
+                      const Maybe<gfx::IntRect>& aOutputWriteRect = Nothing(),
                       uint8_t aFuzz = 0);
 
 /**
@@ -367,10 +363,10 @@ void CheckWritePixels(Decoder* aDecoder,
  */
 void CheckPalettedWritePixels(Decoder* aDecoder,
                               SurfaceFilter* aFilter,
-                              Maybe<gfx::IntRect> aOutputRect = Nothing(),
-                              Maybe<gfx::IntRect> aInputRect = Nothing(),
-                              Maybe<gfx::IntRect> aInputWriteRect = Nothing(),
-                              Maybe<gfx::IntRect> aOutputWriteRect = Nothing(),
+                              const Maybe<gfx::IntRect>& aOutputRect = Nothing(),
+                              const Maybe<gfx::IntRect>& aInputRect = Nothing(),
+                              const Maybe<gfx::IntRect>& aInputWriteRect = Nothing(),
+                              const Maybe<gfx::IntRect>& aOutputWriteRect = Nothing(),
                               uint8_t aFuzz = 0);
 
 
@@ -392,6 +388,7 @@ ImageTestCase CorruptTestCase();
 ImageTestCase CorruptBMPWithTruncatedHeader();
 ImageTestCase CorruptICOWithBadBMPWidthTestCase();
 ImageTestCase CorruptICOWithBadBMPHeightTestCase();
+ImageTestCase CorruptICOWithBadBppTestCase();
 
 ImageTestCase TransparentPNGTestCase();
 ImageTestCase TransparentGIFTestCase();
@@ -410,6 +407,12 @@ ImageTestCase DownscaledBMPTestCase();
 ImageTestCase DownscaledICOTestCase();
 ImageTestCase DownscaledIconTestCase();
 ImageTestCase DownscaledTransparentICOWithANDMaskTestCase();
+
+ImageTestCase TruncatedSmallGIFTestCase();
+
+ImageTestCase LargeICOWithBMPTestCase();
+ImageTestCase LargeICOWithPNGTestCase();
+ImageTestCase GreenMultipleSizesICOTestCase();
 
 } // namespace image
 } // namespace mozilla

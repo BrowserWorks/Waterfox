@@ -90,8 +90,8 @@ function eventHandler(event) {
 
 function createVideo() {
   var v = document.createElement('video');
-  v.addEventListener('loadeddata', eventHandler, false);
-  v.addEventListener('error', eventHandler, false);
+  v.addEventListener('loadeddata', eventHandler);
+  v.addEventListener('error', eventHandler);
   v.crossOrigin = 'anonymous';
   return v;
 }
@@ -120,12 +120,15 @@ function nextTest() {
     }
   }
 
-  if (gVideo && gVideo.parentNode)
-    gVideo.parentNode.removeChild(gVideo);
+  if (gVideo) {
+    gVideo.remove();
+    gVideo.removeAttribute("src");
+    gVideo.load();
+  }
 
   gVideo = null;
-  SpecialPowers.forceGC();  
-  
+  SpecialPowers.forceGC();
+
   gVideo = createVideo();
   gVideo.expectedResult = gTests[gTestNum].result;
   gVideo.testDescription = gTests[gTestNum].description;
@@ -138,7 +141,7 @@ function nextTest() {
   gVideo.src = url;
   //dump("Starting test " + gTestNum + " at " + gVideo.src + " expecting:" + gVideo.expectedResult + "\n");
   if (!gTestedRemoved) {
-    document.body.appendChild(gVideo); 
+    document.body.appendChild(gVideo);
     // Will cause load() to be invoked.
   } else {
     gVideo.load();

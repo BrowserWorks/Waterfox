@@ -17,73 +17,116 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
-#include "ClearKeyAsyncShutdown.h"
+#include "ClearKeyCDM.h"
 #include "ClearKeySessionManager.h"
-#include "gmp-api/gmp-async-shutdown.h"
-#include "gmp-api/gmp-decryption.h"
-#include "gmp-api/gmp-platform.h"
+// This include is required in order for content_decryption_module to work
+// on Unix systems.
+#include "stddef.h"
+#include "content_decryption_module.h"
+#include "content_decryption_module_ext.h"
 
-#if defined(ENABLE_WMF)
+#ifndef XP_WIN
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
+#ifdef ENABLE_WMF
 #include "WMFUtils.h"
-#include "AudioDecoder.h"
-#include "VideoDecoder.h"
-#endif
-
-#if defined(WIN32)
-#define GMP_EXPORT __declspec(dllexport)
-#else
-#define GMP_EXPORT __attribute__((visibility("default")))
-#endif
-
-static GMPPlatformAPI* sPlatform = nullptr;
-GMPPlatformAPI*
-GetPlatform()
-{
-  return sPlatform;
-}
+#endif // ENABLE_WMF
 
 extern "C" {
 
-GMP_EXPORT GMPErr
-GMPInit(GMPPlatformAPI* aPlatformAPI)
-{
-  sPlatform = aPlatformAPI;
-  return GMPNoErr;
+CDM_API
+void INITIALIZE_CDM_MODULE() {
+
 }
 
-GMP_EXPORT GMPErr
-GMPGetAPI(const char* aApiName, void* aHostAPI, void** aPluginAPI)
-{
-  CK_LOGD("ClearKey GMPGetAPI |%s|", aApiName);
-  assert(!*aPluginAPI);
+static bool sCanReadHostVerificationFiles = false;
 
-  if (!strcmp(aApiName, GMP_API_DECRYPTOR)) {
-    *aPluginAPI = new ClearKeySessionManager();
-  }
-#if defined(ENABLE_WMF)
-  else if (!strcmp(aApiName, GMP_API_AUDIO_DECODER) &&
-           wmf::EnsureLibs()) {
-    *aPluginAPI = new AudioDecoder(static_cast<GMPAudioHost*>(aHostAPI));
-  } else if (!strcmp(aApiName, GMP_API_VIDEO_DECODER) &&
-             wmf::EnsureLibs()) {
-    *aPluginAPI = new VideoDecoder(static_cast<GMPVideoHost*>(aHostAPI));
+CDM_API
+void* CreateCdmInstance(int cdm_interface_version,
+                        const char* key_system,
+                        uint32_t key_system_size,
+                        GetCdmHostFunc get_cdm_host_func,
+                        void* user_data)
+{
+
+  CK_LOGE("ClearKey CreateCDMInstance");
+
+#ifdef ENABLE_WMF
+  if (!wmf::EnsureLibs()) {
+    CK_LOGE("Required libraries were not found");
+    return nullptr;
   }
 #endif
-  else if (!strcmp(aApiName, GMP_API_ASYNC_SHUTDOWN)) {
-    *aPluginAPI = new ClearKeyAsyncShutdown(static_cast<GMPAsyncShutdownHost*> (aHostAPI));
-  } else {
-    CK_LOGE("GMPGetAPI couldn't resolve API name |%s|\n", aApiName);
+
+#ifdef MOZILLA_OFFICIAL
+  // Test that we're able to read the host files.
+  if (!sCanReadHostVerificationFiles) {
+    return nullptr;
   }
+#endif
 
-  return *aPluginAPI ? GMPNoErr : GMPNotImplementedErr;
+  cdm::Host_8* host = static_cast<cdm::Host_8*>(
+    get_cdm_host_func(cdm_interface_version, user_data));
+  ClearKeyCDM* clearKey = new ClearKeyCDM(host);
+
+  CK_LOGE("Created ClearKeyCDM instance!");
+
+  return clearKey;
 }
 
-GMP_EXPORT GMPErr
-GMPShutdown(void)
+const size_t TEST_READ_SIZE = 16 * 1024;
+
+bool
+CanReadSome(cdm::PlatformFile aFile)
 {
-  CK_LOGD("ClearKey GMPShutdown");
-  return GMPNoErr;
+  vector<uint8_t> data;
+  data.resize(TEST_READ_SIZE);
+#ifdef XP_WIN
+  DWORD bytesRead = 0;
+  return ReadFile(aFile, &data.front(), TEST_READ_SIZE, &bytesRead, nullptr) &&
+         bytesRead > 0;
+#else
+  return read(aFile, &data.front(), TEST_READ_SIZE) > 0;
+#endif
 }
 
+void
+ClosePlatformFile(cdm::PlatformFile aFile)
+{
+#ifdef XP_WIN
+  CloseHandle(aFile);
+#else
+  close(aFile);
+#endif
 }
+
+CDM_API
+bool
+VerifyCdmHost_0(const cdm::HostFile* aHostFiles, uint32_t aNumFiles)
+{
+  // We expect 4 binaries: clearkey, libxul, plugin-container, and Firefox.
+  bool rv = (aNumFiles == 4);
+  // Verify that each binary is readable inside the sandbox,
+  // and close the handle.
+  for (uint32_t i = 0; i < aNumFiles; i++) {
+    const cdm::HostFile& hostFile = aHostFiles[i];
+    if (hostFile.file != cdm::kInvalidPlatformFile) {
+      if (!CanReadSome(hostFile.file)) {
+        rv = false;
+      }
+      ClosePlatformFile(hostFile.file);
+    }
+    if (hostFile.sig_file != cdm::kInvalidPlatformFile) {
+      ClosePlatformFile(hostFile.sig_file);
+    }
+  }
+  sCanReadHostVerificationFiles = rv;
+  return rv;
+}
+
+} // extern "C".

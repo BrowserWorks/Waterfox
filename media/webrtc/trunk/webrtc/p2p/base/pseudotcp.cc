@@ -14,14 +14,16 @@
 #include <stdlib.h>
 
 #include <algorithm>
+#include <memory>
 #include <set>
 
+#include "webrtc/base/arraysize.h"
 #include "webrtc/base/basictypes.h"
 #include "webrtc/base/bytebuffer.h"
 #include "webrtc/base/byteorder.h"
+#include "webrtc/base/checks.h"
 #include "webrtc/base/common.h"
 #include "webrtc/base/logging.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/base/socket.h"
 #include "webrtc/base/stringutils.h"
 #include "webrtc/base/timeutils.h"
@@ -39,40 +41,40 @@ namespace cricket {
 //////////////////////////////////////////////////////////////////////
 
 // Standard MTUs
-const uint16 PACKET_MAXIMUMS[] = {
-  65535,    // Theoretical maximum, Hyperchannel
-  32000,    // Nothing
-  17914,    // 16Mb IBM Token Ring
-  8166,   // IEEE 802.4
-  //4464,   // IEEE 802.5 (4Mb max)
-  4352,   // FDDI
-  //2048,   // Wideband Network
-  2002,   // IEEE 802.5 (4Mb recommended)
-  //1536,   // Expermental Ethernet Networks
-  //1500,   // Ethernet, Point-to-Point (default)
-  1492,   // IEEE 802.3
-  1006,   // SLIP, ARPANET
-  //576,    // X.25 Networks
-  //544,    // DEC IP Portal
-  //512,    // NETBIOS
-  508,    // IEEE 802/Source-Rt Bridge, ARCNET
-  296,    // Point-to-Point (low delay)
-  //68,     // Official minimum
-  0,      // End of list marker
+const uint16_t PACKET_MAXIMUMS[] = {
+    65535,  // Theoretical maximum, Hyperchannel
+    32000,  // Nothing
+    17914,  // 16Mb IBM Token Ring
+    8166,   // IEEE 802.4
+    // 4464,   // IEEE 802.5 (4Mb max)
+    4352,  // FDDI
+    // 2048,   // Wideband Network
+    2002,  // IEEE 802.5 (4Mb recommended)
+    // 1536,   // Expermental Ethernet Networks
+    // 1500,   // Ethernet, Point-to-Point (default)
+    1492,  // IEEE 802.3
+    1006,  // SLIP, ARPANET
+    // 576,    // X.25 Networks
+    // 544,    // DEC IP Portal
+    // 512,    // NETBIOS
+    508,  // IEEE 802/Source-Rt Bridge, ARCNET
+    296,  // Point-to-Point (low delay)
+    // 68,     // Official minimum
+    0,  // End of list marker
 };
 
-const uint32 MAX_PACKET = 65535;
+const uint32_t MAX_PACKET = 65535;
 // Note: we removed lowest level because packet overhead was larger!
-const uint32 MIN_PACKET = 296;
+const uint32_t MIN_PACKET = 296;
 
-const uint32 IP_HEADER_SIZE = 20; // (+ up to 40 bytes of options?)
-const uint32 UDP_HEADER_SIZE = 8;
+const uint32_t IP_HEADER_SIZE = 20;  // (+ up to 40 bytes of options?)
+const uint32_t UDP_HEADER_SIZE = 8;
 // TODO: Make JINGLE_HEADER_SIZE transparent to this code?
-const uint32 JINGLE_HEADER_SIZE = 64; // when relay framing is in use
+const uint32_t JINGLE_HEADER_SIZE = 64;  // when relay framing is in use
 
 // Default size for receive and send buffer.
-const uint32 DEFAULT_RCV_BUF_SIZE = 60 * 1024;
-const uint32 DEFAULT_SND_BUF_SIZE = 90 * 1024;
+const uint32_t DEFAULT_RCV_BUF_SIZE = 60 * 1024;
+const uint32_t DEFAULT_SND_BUF_SIZE = 90 * 1024;
 
 //////////////////////////////////////////////////////////////////////
 // Global Constants and Functions
@@ -102,55 +104,59 @@ const uint32 DEFAULT_SND_BUF_SIZE = 90 * 1024;
 
 #define PSEUDO_KEEPALIVE 0
 
-const uint32 HEADER_SIZE = 24;
-const uint32 PACKET_OVERHEAD = HEADER_SIZE + UDP_HEADER_SIZE + IP_HEADER_SIZE + JINGLE_HEADER_SIZE;
+const uint32_t HEADER_SIZE = 24;
+const uint32_t PACKET_OVERHEAD =
+    HEADER_SIZE + UDP_HEADER_SIZE + IP_HEADER_SIZE + JINGLE_HEADER_SIZE;
 
-const uint32 MIN_RTO   =   250; // 250 ms (RFC1122, Sec 4.2.3.1 "fractions of a second")
-const uint32 DEF_RTO   =  3000; // 3 seconds (RFC1122, Sec 4.2.3.1)
-const uint32 MAX_RTO   = 60000; // 60 seconds
-const uint32 DEF_ACK_DELAY = 100; // 100 milliseconds
+const uint32_t MIN_RTO =
+    250;  // 250 ms (RFC1122, Sec 4.2.3.1 "fractions of a second")
+const uint32_t DEF_RTO = 3000;       // 3 seconds (RFC1122, Sec 4.2.3.1)
+const uint32_t MAX_RTO = 60000;      // 60 seconds
+const uint32_t DEF_ACK_DELAY = 100;  // 100 milliseconds
 
-const uint8 FLAG_CTL = 0x02;
-const uint8 FLAG_RST = 0x04;
+const uint8_t FLAG_CTL = 0x02;
+const uint8_t FLAG_RST = 0x04;
 
-const uint8 CTL_CONNECT = 0;
+const uint8_t CTL_CONNECT = 0;
 
 // TCP options.
-const uint8 TCP_OPT_EOL = 0;  // End of list.
-const uint8 TCP_OPT_NOOP = 1;  // No-op.
-const uint8 TCP_OPT_MSS = 2;  // Maximum segment size.
-const uint8 TCP_OPT_WND_SCALE = 3;  // Window scale factor.
+const uint8_t TCP_OPT_EOL = 0;        // End of list.
+const uint8_t TCP_OPT_NOOP = 1;       // No-op.
+const uint8_t TCP_OPT_MSS = 2;        // Maximum segment size.
+const uint8_t TCP_OPT_WND_SCALE = 3;  // Window scale factor.
 
 const long DEFAULT_TIMEOUT = 4000; // If there are no pending clocks, wake up every 4 seconds
 const long CLOSED_TIMEOUT = 60 * 1000; // If the connection is closed, once per minute
 
 #if PSEUDO_KEEPALIVE
 // !?! Rethink these times
-const uint32 IDLE_PING = 20 * 1000; // 20 seconds (note: WinXP SP2 firewall udp timeout is 90 seconds)
-const uint32 IDLE_TIMEOUT = 90 * 1000; // 90 seconds;
+const uint32_t IDLE_PING =
+    20 *
+    1000;  // 20 seconds (note: WinXP SP2 firewall udp timeout is 90 seconds)
+const uint32_t IDLE_TIMEOUT = 90 * 1000;  // 90 seconds;
 #endif // PSEUDO_KEEPALIVE
 
 //////////////////////////////////////////////////////////////////////
 // Helper Functions
 //////////////////////////////////////////////////////////////////////
 
-inline void long_to_bytes(uint32 val, void* buf) {
-  *static_cast<uint32*>(buf) = rtc::HostToNetwork32(val);
+inline void long_to_bytes(uint32_t val, void* buf) {
+  *static_cast<uint32_t*>(buf) = rtc::HostToNetwork32(val);
 }
 
-inline void short_to_bytes(uint16 val, void* buf) {
-  *static_cast<uint16*>(buf) = rtc::HostToNetwork16(val);
+inline void short_to_bytes(uint16_t val, void* buf) {
+  *static_cast<uint16_t*>(buf) = rtc::HostToNetwork16(val);
 }
 
-inline uint32 bytes_to_long(const void* buf) {
-  return rtc::NetworkToHost32(*static_cast<const uint32*>(buf));
+inline uint32_t bytes_to_long(const void* buf) {
+  return rtc::NetworkToHost32(*static_cast<const uint32_t*>(buf));
 }
 
-inline uint16 bytes_to_short(const void* buf) {
-  return rtc::NetworkToHost16(*static_cast<const uint16*>(buf));
+inline uint16_t bytes_to_short(const void* buf) {
+  return rtc::NetworkToHost16(*static_cast<const uint16_t*>(buf));
 }
 
-uint32 bound(uint32 lower, uint32 middle, uint32 upper) {
+uint32_t bound(uint32_t lower, uint32_t middle, uint32_t upper) {
   return std::min(std::max(lower, middle), upper);
 }
 
@@ -183,7 +189,7 @@ void ReportStats() {
   char buffer[256];
   size_t len = 0;
   for (int i = 0; i < S_NUM_STATS; ++i) {
-    len += rtc::sprintfn(buffer, ARRAY_SIZE(buffer), "%s%s:%d",
+    len += rtc::sprintfn(buffer, arraysize(buffer), "%s%s:%d",
                                (i == 0) ? "" : ",", STAT_NAMES[i], g_stats[i]);
     g_stats[i] = 0;
   }
@@ -196,15 +202,15 @@ void ReportStats() {
 // PseudoTcp
 //////////////////////////////////////////////////////////////////////
 
-uint32 PseudoTcp::Now() {
+uint32_t PseudoTcp::Now() {
 #if 0  // Use this to synchronize timers with logging timestamps (easier debug)
-  return rtc::TimeSince(StartTime());
+  return static_cast<uint32_t>(rtc::TimeSince(StartTime()));
 #else
-  return rtc::Time();
+  return rtc::Time32();
 #endif
 }
 
-PseudoTcp::PseudoTcp(IPseudoTcpNotify* notify, uint32 conv)
+PseudoTcp::PseudoTcp(IPseudoTcpNotify* notify, uint32_t conv)
     : m_notify(notify),
       m_shutdown(SD_NONE),
       m_error(0),
@@ -212,11 +218,10 @@ PseudoTcp::PseudoTcp(IPseudoTcpNotify* notify, uint32 conv)
       m_rbuf(m_rbuf_len),
       m_sbuf_len(DEFAULT_SND_BUF_SIZE),
       m_sbuf(m_sbuf_len) {
-
   // Sanity check on buffer sizes (needed for OnTcpWriteable notification logic)
-  ASSERT(m_rbuf_len + MIN_PACKET < m_sbuf_len);
+  RTC_DCHECK(m_rbuf_len + MIN_PACKET < m_sbuf_len);
 
-  uint32 now = Now();
+  uint32_t now = Now();
 
   m_state = TCP_LISTEN;
   m_conv = conv;
@@ -231,7 +236,7 @@ PseudoTcp::PseudoTcp(IPseudoTcpNotify* notify, uint32 conv)
 
   m_msslevel = 0;
   m_largest = 0;
-  ASSERT(MIN_PACKET > PACKET_OVERHEAD);
+  RTC_DCHECK(MIN_PACKET > PACKET_OVERHEAD);
   m_mss = MIN_PACKET - PACKET_OVERHEAD;
   m_mtu_advise = MAX_PACKET;
 
@@ -273,21 +278,21 @@ int PseudoTcp::Connect() {
   return 0;
 }
 
-void PseudoTcp::NotifyMTU(uint16 mtu) {
+void PseudoTcp::NotifyMTU(uint16_t mtu) {
   m_mtu_advise = mtu;
   if (m_state == TCP_ESTABLISHED) {
     adjustMTU();
   }
 }
 
-void PseudoTcp::NotifyClock(uint32 now) {
+void PseudoTcp::NotifyClock(uint32_t now) {
   if (m_state == TCP_CLOSED)
     return;
 
     // Check if it's time to retransmit a segment
-  if (m_rto_base && (rtc::TimeDiff(m_rto_base + m_rx_rto, now) <= 0)) {
+  if (m_rto_base && (rtc::TimeDiff32(m_rto_base + m_rx_rto, now) <= 0)) {
     if (m_slist.empty()) {
-      ASSERT(false);
+      RTC_NOTREACHED();
     } else {
       // Note: (m_slist.front().xmit == 0)) {
       // retransmit segments
@@ -303,22 +308,21 @@ void PseudoTcp::NotifyClock(uint32 now) {
         return;
       }
 
-      uint32 nInFlight = m_snd_nxt - m_snd_una;
+      uint32_t nInFlight = m_snd_nxt - m_snd_una;
       m_ssthresh = std::max(nInFlight / 2, 2 * m_mss);
       //LOG(LS_INFO) << "m_ssthresh: " << m_ssthresh << "  nInFlight: " << nInFlight << "  m_mss: " << m_mss;
       m_cwnd = m_mss;
 
       // Back off retransmit timer.  Note: the limit is lower when connecting.
-      uint32 rto_limit = (m_state < TCP_ESTABLISHED) ? DEF_RTO : MAX_RTO;
+      uint32_t rto_limit = (m_state < TCP_ESTABLISHED) ? DEF_RTO : MAX_RTO;
       m_rx_rto = std::min(rto_limit, m_rx_rto * 2);
       m_rto_base = now;
     }
   }
 
   // Check if it's time to probe closed windows
-  if ((m_snd_wnd == 0)
-        && (rtc::TimeDiff(m_lastsend + m_rx_rto, now) <= 0)) {
-    if (rtc::TimeDiff(now, m_lastrecv) >= 15000) {
+  if ((m_snd_wnd == 0) && (rtc::TimeDiff32(m_lastsend + m_rx_rto, now) <= 0)) {
+    if (rtc::TimeDiff32(now, m_lastrecv) >= 15000) {
       closedown(ECONNABORTED);
       return;
     }
@@ -332,19 +336,22 @@ void PseudoTcp::NotifyClock(uint32 now) {
   }
 
   // Check if it's time to send delayed acks
-  if (m_t_ack && (rtc::TimeDiff(m_t_ack + m_ack_delay, now) <= 0)) {
+  if (m_t_ack && (rtc::TimeDiff32(m_t_ack + m_ack_delay, now) <= 0)) {
     packet(m_snd_nxt, 0, 0, 0);
   }
 
 #if PSEUDO_KEEPALIVE
   // Check for idle timeout
-  if ((m_state == TCP_ESTABLISHED) && (TimeDiff(m_lastrecv + IDLE_TIMEOUT, now) <= 0)) {
+  if ((m_state == TCP_ESTABLISHED) &&
+      (TimeDiff32(m_lastrecv + IDLE_TIMEOUT, now) <= 0)) {
     closedown(ECONNABORTED);
     return;
   }
 
   // Check for ping timeout (to keep udp mapping open)
-  if ((m_state == TCP_ESTABLISHED) && (TimeDiff(m_lasttraffic + (m_bOutgoing ? IDLE_PING * 3/2 : IDLE_PING), now) <= 0)) {
+  if ((m_state == TCP_ESTABLISHED) &&
+      (TimeDiff32(m_lasttraffic + (m_bOutgoing ? IDLE_PING * 3 / 2 : IDLE_PING),
+                  now) <= 0)) {
     packet(m_snd_nxt, 0, 0, 0);
   }
 #endif // PSEUDO_KEEPALIVE
@@ -355,10 +362,10 @@ bool PseudoTcp::NotifyPacket(const char* buffer, size_t len) {
     LOG_F(WARNING) << "packet too large";
     return false;
   }
-  return parse(reinterpret_cast<const uint8 *>(buffer), uint32(len));
+  return parse(reinterpret_cast<const uint8_t*>(buffer), uint32_t(len));
 }
 
-bool PseudoTcp::GetNextClock(uint32 now, long& timeout) {
+bool PseudoTcp::GetNextClock(uint32_t now, long& timeout) {
   return clock_check(now, timeout);
 }
 
@@ -372,7 +379,7 @@ void PseudoTcp::GetOption(Option opt, int* value) {
   } else if (opt == OPT_RCVBUF) {
     *value = m_rbuf_len;
   } else {
-    ASSERT(false);
+    RTC_NOTREACHED();
   }
 }
 void PseudoTcp::SetOption(Option opt, int value) {
@@ -381,31 +388,31 @@ void PseudoTcp::SetOption(Option opt, int value) {
   } else if (opt == OPT_ACKDELAY) {
     m_ack_delay = value;
   } else if (opt == OPT_SNDBUF) {
-    ASSERT(m_state == TCP_LISTEN);
+    RTC_DCHECK(m_state == TCP_LISTEN);
     resizeSendBuffer(value);
   } else if (opt == OPT_RCVBUF) {
-    ASSERT(m_state == TCP_LISTEN);
+    RTC_DCHECK(m_state == TCP_LISTEN);
     resizeReceiveBuffer(value);
   } else {
-    ASSERT(false);
+    RTC_NOTREACHED();
   }
 }
 
-uint32 PseudoTcp::GetCongestionWindow() const {
+uint32_t PseudoTcp::GetCongestionWindow() const {
   return m_cwnd;
 }
 
-uint32 PseudoTcp::GetBytesInFlight() const {
+uint32_t PseudoTcp::GetBytesInFlight() const {
   return m_snd_nxt - m_snd_una;
 }
 
-uint32 PseudoTcp::GetBytesBufferedNotSent() const {
+uint32_t PseudoTcp::GetBytesBufferedNotSent() const {
   size_t buffered_bytes = 0;
   m_sbuf.GetBuffered(&buffered_bytes);
-  return static_cast<uint32>(m_snd_una + buffered_bytes - m_snd_nxt);
+  return static_cast<uint32_t>(m_snd_una + buffered_bytes - m_snd_nxt);
 }
 
-uint32 PseudoTcp::GetRoundTripTimeEstimateMs() const {
+uint32_t PseudoTcp::GetRoundTripTimeEstimateMs() const {
   return m_rx_srtt;
 }
 
@@ -428,16 +435,16 @@ int PseudoTcp::Recv(char* buffer, size_t len) {
     m_error = EWOULDBLOCK;
     return SOCKET_ERROR;
   }
-  ASSERT(result == rtc::SR_SUCCESS);
+  RTC_DCHECK(result == rtc::SR_SUCCESS);
 
   size_t available_space = 0;
   m_rbuf.GetWriteRemaining(&available_space);
 
-  if (uint32(available_space) - m_rcv_wnd >=
-      std::min<uint32>(m_rbuf_len / 2, m_mss)) {
+  if (uint32_t(available_space) - m_rcv_wnd >=
+      std::min<uint32_t>(m_rbuf_len / 2, m_mss)) {
     // TODO(jbeda): !?! Not sure about this was closed business
     bool bWasClosed = (m_rcv_wnd == 0);
-    m_rcv_wnd = static_cast<uint32>(available_space);
+    m_rcv_wnd = static_cast<uint32_t>(available_space);
 
     if (bWasClosed) {
       attemptSend(sfImmediateAck);
@@ -462,7 +469,7 @@ int PseudoTcp::Send(const char* buffer, size_t len) {
     return SOCKET_ERROR;
   }
 
-  int written = queue(buffer, uint32(len), false);
+  int written = queue(buffer, uint32_t(len), false);
   attemptSend();
   return written;
 }
@@ -480,13 +487,13 @@ int PseudoTcp::GetError() {
 // Internal Implementation
 //
 
-uint32 PseudoTcp::queue(const char* data, uint32 len, bool bCtrl) {
+uint32_t PseudoTcp::queue(const char* data, uint32_t len, bool bCtrl) {
   size_t available_space = 0;
   m_sbuf.GetWriteRemaining(&available_space);
 
-  if (len > static_cast<uint32>(available_space)) {
-    ASSERT(!bCtrl);
-    len = static_cast<uint32>(available_space);
+  if (len > static_cast<uint32_t>(available_space)) {
+    RTC_DCHECK(!bCtrl);
+    len = static_cast<uint32_t>(available_space);
   }
 
   // We can concatenate data if the last segment is the same type
@@ -497,29 +504,31 @@ uint32 PseudoTcp::queue(const char* data, uint32 len, bool bCtrl) {
   } else {
     size_t snd_buffered = 0;
     m_sbuf.GetBuffered(&snd_buffered);
-    SSegment sseg(static_cast<uint32>(m_snd_una + snd_buffered), len, bCtrl);
+    SSegment sseg(static_cast<uint32_t>(m_snd_una + snd_buffered), len, bCtrl);
     m_slist.push_back(sseg);
   }
 
   size_t written = 0;
   m_sbuf.Write(data, len, &written, NULL);
-  return static_cast<uint32>(written);
+  return static_cast<uint32_t>(written);
 }
 
-IPseudoTcpNotify::WriteResult PseudoTcp::packet(uint32 seq, uint8 flags,
-                                                uint32 offset, uint32 len) {
-  ASSERT(HEADER_SIZE + len <= MAX_PACKET);
+IPseudoTcpNotify::WriteResult PseudoTcp::packet(uint32_t seq,
+                                                uint8_t flags,
+                                                uint32_t offset,
+                                                uint32_t len) {
+  RTC_DCHECK(HEADER_SIZE + len <= MAX_PACKET);
 
-  uint32 now = Now();
+  uint32_t now = Now();
 
-  rtc::scoped_ptr<uint8[]> buffer(new uint8[MAX_PACKET]);
+  std::unique_ptr<uint8_t[]> buffer(new uint8_t[MAX_PACKET]);
   long_to_bytes(m_conv, buffer.get());
   long_to_bytes(seq, buffer.get() + 4);
   long_to_bytes(m_rcv_nxt, buffer.get() + 8);
   buffer[12] = 0;
   buffer[13] = flags;
-  short_to_bytes(
-      static_cast<uint16>(m_rcv_wnd >> m_rwnd_scale), buffer.get() + 14);
+  short_to_bytes(static_cast<uint16_t>(m_rcv_wnd >> m_rwnd_scale),
+                 buffer.get() + 14);
 
   // Timestamp computations
   long_to_bytes(now, buffer.get() + 16);
@@ -531,8 +540,8 @@ IPseudoTcpNotify::WriteResult PseudoTcp::packet(uint32 seq, uint8 flags,
     rtc::StreamResult result = m_sbuf.ReadOffset(
         buffer.get() + HEADER_SIZE, len, offset, &bytes_read);
     RTC_UNUSED(result);
-    ASSERT(result == rtc::SR_SUCCESS);
-    ASSERT(static_cast<uint32>(bytes_read) == len);
+    RTC_DCHECK(result == rtc::SR_SUCCESS);
+    RTC_DCHECK(static_cast<uint32_t>(bytes_read) == len);
   }
 
 #if _DEBUGMSG >= _DBG_VERBOSE
@@ -564,8 +573,8 @@ IPseudoTcpNotify::WriteResult PseudoTcp::packet(uint32 seq, uint8 flags,
   return IPseudoTcpNotify::WR_SUCCESS;
 }
 
-bool PseudoTcp::parse(const uint8* buffer, uint32 size) {
-  if (size < 12)
+bool PseudoTcp::parse(const uint8_t* buffer, uint32_t size) {
+  if (size < HEADER_SIZE)
     return false;
 
   Segment seg;
@@ -595,7 +604,7 @@ bool PseudoTcp::parse(const uint8* buffer, uint32 size) {
   return process(seg);
 }
 
-bool PseudoTcp::clock_check(uint32 now, long& nTimeout) {
+bool PseudoTcp::clock_check(uint32_t now, long& nTimeout) {
   if (m_shutdown == SD_FORCEFUL)
     return false;
 
@@ -615,23 +624,24 @@ bool PseudoTcp::clock_check(uint32 now, long& nTimeout) {
   nTimeout = DEFAULT_TIMEOUT;
 
   if (m_t_ack) {
-    nTimeout =
-        std::min<int32>(nTimeout, rtc::TimeDiff(m_t_ack + m_ack_delay, now));
+    nTimeout = std::min<int32_t>(nTimeout,
+                                 rtc::TimeDiff32(m_t_ack + m_ack_delay, now));
   }
   if (m_rto_base) {
-    nTimeout =
-        std::min<int32>(nTimeout, rtc::TimeDiff(m_rto_base + m_rx_rto, now));
+    nTimeout = std::min<int32_t>(nTimeout,
+                                 rtc::TimeDiff32(m_rto_base + m_rx_rto, now));
   }
   if (m_snd_wnd == 0) {
-    nTimeout =
-        std::min<int32>(nTimeout, rtc::TimeDiff(m_lastsend + m_rx_rto, now));
+    nTimeout = std::min<int32_t>(nTimeout,
+                                 rtc::TimeDiff32(m_lastsend + m_rx_rto, now));
   }
 #if PSEUDO_KEEPALIVE
   if (m_state == TCP_ESTABLISHED) {
-    nTimeout = std::min<int32>(
-        nTimeout, rtc::TimeDiff(m_lasttraffic + (m_bOutgoing ? IDLE_PING * 3 / 2
-                                                             : IDLE_PING),
-                                now));
+    nTimeout = std::min<int32_t>(
+        nTimeout,
+        rtc::TimeDiff32(
+            m_lasttraffic + (m_bOutgoing ? IDLE_PING * 3 / 2 : IDLE_PING),
+            now));
   }
 #endif // PSEUDO_KEEPALIVE
   return true;
@@ -647,7 +657,7 @@ bool PseudoTcp::process(Segment& seg) {
     return false;
   }
 
-  uint32 now = Now();
+  uint32_t now = Now();
   m_lasttraffic = m_lastrecv = now;
   m_bOutgoing = false;
 
@@ -704,41 +714,43 @@ bool PseudoTcp::process(Segment& seg) {
   if ((seg.ack > m_snd_una) && (seg.ack <= m_snd_nxt)) {
     // Calculate round-trip time
     if (seg.tsecr) {
-      int32 rtt = rtc::TimeDiff(now, seg.tsecr);
+      int32_t rtt = rtc::TimeDiff32(now, seg.tsecr);
       if (rtt >= 0) {
         if (m_rx_srtt == 0) {
           m_rx_srtt = rtt;
           m_rx_rttvar = rtt / 2;
         } else {
-          uint32 unsigned_rtt = static_cast<uint32>(rtt);
-          uint32 abs_err = unsigned_rtt > m_rx_srtt ? unsigned_rtt - m_rx_srtt
-                                                    : m_rx_srtt - unsigned_rtt;
+          uint32_t unsigned_rtt = static_cast<uint32_t>(rtt);
+          uint32_t abs_err = unsigned_rtt > m_rx_srtt
+                                 ? unsigned_rtt - m_rx_srtt
+                                 : m_rx_srtt - unsigned_rtt;
           m_rx_rttvar = (3 * m_rx_rttvar + abs_err) / 4;
           m_rx_srtt = (7 * m_rx_srtt + rtt) / 8;
         }
-        m_rx_rto = bound(
-            MIN_RTO, m_rx_srtt + std::max<uint32>(1, 4 * m_rx_rttvar), MAX_RTO);
+        m_rx_rto =
+            bound(MIN_RTO, m_rx_srtt + std::max<uint32_t>(1, 4 * m_rx_rttvar),
+                  MAX_RTO);
 #if _DEBUGMSG >= _DBG_VERBOSE
         LOG(LS_INFO) << "rtt: " << rtt
                      << "  srtt: " << m_rx_srtt
                      << "  rto: " << m_rx_rto;
 #endif // _DEBUGMSG
       } else {
-        ASSERT(false);
+        RTC_NOTREACHED();
       }
     }
 
-    m_snd_wnd = static_cast<uint32>(seg.wnd) << m_swnd_scale;
+    m_snd_wnd = static_cast<uint32_t>(seg.wnd) << m_swnd_scale;
 
-    uint32 nAcked = seg.ack - m_snd_una;
+    uint32_t nAcked = seg.ack - m_snd_una;
     m_snd_una = seg.ack;
 
     m_rto_base = (m_snd_una == m_snd_nxt) ? 0 : now;
 
     m_sbuf.ConsumeReadData(nAcked);
 
-    for (uint32 nFree = nAcked; nFree > 0; ) {
-      ASSERT(!m_slist.empty());
+    for (uint32_t nFree = nAcked; nFree > 0;) {
+      RTC_DCHECK(!m_slist.empty());
       if (nFree < m_slist.front().len) {
         m_slist.front().len -= nFree;
         nFree = 0;
@@ -753,7 +765,7 @@ bool PseudoTcp::process(Segment& seg) {
 
     if (m_dup_acks >= 3) {
       if (m_snd_una >= m_recover) { // NewReno
-        uint32 nInFlight = m_snd_nxt - m_snd_una;
+        uint32_t nInFlight = m_snd_nxt - m_snd_una;
         m_cwnd = std::min(m_ssthresh, nInFlight + m_mss);  // (Fast Retransmit)
 #if _DEBUGMSG >= _DBG_NORMAL
         LOG(LS_INFO) << "exit recovery";
@@ -775,12 +787,12 @@ bool PseudoTcp::process(Segment& seg) {
       if (m_cwnd < m_ssthresh) {
         m_cwnd += m_mss;
       } else {
-        m_cwnd += std::max<uint32>(1, m_mss * m_mss / m_cwnd);
+        m_cwnd += std::max<uint32_t>(1, m_mss * m_mss / m_cwnd);
       }
     }
   } else if (seg.ack == m_snd_una) {
     // !?! Note, tcp says don't do this... but otherwise how does a closed window become open?
-    m_snd_wnd = static_cast<uint32>(seg.wnd) << m_swnd_scale;
+    m_snd_wnd = static_cast<uint32_t>(seg.wnd) << m_swnd_scale;
 
     // Check duplicate acks
     if (seg.len > 0) {
@@ -797,7 +809,7 @@ bool PseudoTcp::process(Segment& seg) {
           return false;
         }
         m_recover = m_snd_nxt;
-        uint32 nInFlight = m_snd_nxt - m_snd_una;
+        uint32_t nInFlight = m_snd_nxt - m_snd_una;
         m_ssthresh = std::max(nInFlight / 2, 2 * m_mss);
         //LOG(LS_INFO) << "m_ssthresh: " << m_ssthresh << "  nInFlight: " << nInFlight << "  m_mss: " << m_mss;
         m_cwnd = m_ssthresh + 3 * m_mss;
@@ -823,10 +835,11 @@ bool PseudoTcp::process(Segment& seg) {
   // If we make room in the send queue, notify the user
   // The goal it to make sure we always have at least enough data to fill the
   // window.  We'd like to notify the app when we are halfway to that point.
-  const uint32 kIdealRefillSize = (m_sbuf_len + m_rbuf_len) / 2;
+  const uint32_t kIdealRefillSize = (m_sbuf_len + m_rbuf_len) / 2;
   size_t snd_buffered = 0;
   m_sbuf.GetBuffered(&snd_buffered);
-  if (m_bWriteEnable && static_cast<uint32>(snd_buffered) < kIdealRefillSize) {
+  if (m_bWriteEnable &&
+      static_cast<uint32_t>(snd_buffered) < kIdealRefillSize) {
     m_bWriteEnable = false;
     if (m_notify) {
       m_notify->OnTcpWriteable(this);
@@ -862,7 +875,7 @@ bool PseudoTcp::process(Segment& seg) {
 
   // Adjust the incoming segment to fit our receive buffer
   if (seg.seq < m_rcv_nxt) {
-    uint32 nAdjust = m_rcv_nxt - seg.seq;
+    uint32_t nAdjust = m_rcv_nxt - seg.seq;
     if (nAdjust < seg.len) {
       seg.seq += nAdjust;
       seg.data += nAdjust;
@@ -875,8 +888,10 @@ bool PseudoTcp::process(Segment& seg) {
   size_t available_space = 0;
   m_rbuf.GetWriteRemaining(&available_space);
 
-  if ((seg.seq + seg.len - m_rcv_nxt) > static_cast<uint32>(available_space)) {
-    uint32 nAdjust = seg.seq + seg.len - m_rcv_nxt - static_cast<uint32>(available_space);
+  if ((seg.seq + seg.len - m_rcv_nxt) >
+      static_cast<uint32_t>(available_space)) {
+    uint32_t nAdjust =
+        seg.seq + seg.len - m_rcv_nxt - static_cast<uint32_t>(available_space);
     if (nAdjust < seg.len) {
       seg.len -= nAdjust;
     } else {
@@ -893,11 +908,11 @@ bool PseudoTcp::process(Segment& seg) {
         m_rcv_nxt += seg.len;
       }
     } else {
-      uint32 nOffset = seg.seq - m_rcv_nxt;
+      uint32_t nOffset = seg.seq - m_rcv_nxt;
 
       rtc::StreamResult result = m_rbuf.WriteOffset(seg.data, seg.len,
                                                           nOffset, NULL);
-      ASSERT(result == rtc::SR_SUCCESS);
+      RTC_DCHECK(result == rtc::SR_SUCCESS);
       RTC_UNUSED(result);
 
       if (seg.seq == m_rcv_nxt) {
@@ -910,7 +925,7 @@ bool PseudoTcp::process(Segment& seg) {
         while ((it != m_rlist.end()) && (it->seq <= m_rcv_nxt)) {
           if (it->seq + it->len > m_rcv_nxt) {
             sflags = sfImmediateAck; // (Fast Recovery)
-            uint32 nAdjust = (it->seq + it->len) - m_rcv_nxt;
+            uint32_t nAdjust = (it->seq + it->len) - m_rcv_nxt;
 #if _DEBUGMSG >= _DBG_NORMAL
             LOG(LS_INFO) << "Recovered " << nAdjust << " bytes (" << m_rcv_nxt << " -> " << m_rcv_nxt + nAdjust << ")";
 #endif // _DEBUGMSG
@@ -950,17 +965,17 @@ bool PseudoTcp::process(Segment& seg) {
   return true;
 }
 
-bool PseudoTcp::transmit(const SList::iterator& seg, uint32 now) {
+bool PseudoTcp::transmit(const SList::iterator& seg, uint32_t now) {
   if (seg->xmit >= ((m_state == TCP_ESTABLISHED) ? 15 : 30)) {
     LOG_F(LS_VERBOSE) << "too many retransmits";
     return false;
   }
 
-  uint32 nTransmit = std::min(seg->len, m_mss);
+  uint32_t nTransmit = std::min(seg->len, m_mss);
 
   while (true) {
-    uint32 seq = seg->seq;
-    uint8 flags = (seg->bCtrl ? FLAG_CTL : 0);
+    uint32_t seq = seg->seq;
+    uint8_t flags = (seg->bCtrl ? FLAG_CTL : 0);
     IPseudoTcpNotify::WriteResult wres = packet(seq,
                                                 flags,
                                                 seg->seq - m_snd_una,
@@ -974,7 +989,7 @@ bool PseudoTcp::transmit(const SList::iterator& seg, uint32 now) {
       return false;
     }
 
-    ASSERT(wres == IPseudoTcpNotify::WR_TOO_LARGE);
+    RTC_DCHECK(wres == IPseudoTcpNotify::WR_TOO_LARGE);
 
     while (true) {
       if (PACKET_MAXIMUMS[m_msslevel + 1] == 0) {
@@ -1020,9 +1035,9 @@ bool PseudoTcp::transmit(const SList::iterator& seg, uint32 now) {
 }
 
 void PseudoTcp::attemptSend(SendFlags sflags) {
-  uint32 now = Now();
+  uint32_t now = Now();
 
-  if (rtc::TimeDiff(now, m_lastsend) > static_cast<long>(m_rx_rto)) {
+  if (rtc::TimeDiff32(now, m_lastsend) > static_cast<long>(m_rx_rto)) {
     m_cwnd = m_mss;
   }
 
@@ -1032,18 +1047,18 @@ void PseudoTcp::attemptSend(SendFlags sflags) {
 #endif // _DEBUGMSG
 
   while (true) {
-    uint32 cwnd = m_cwnd;
+    uint32_t cwnd = m_cwnd;
     if ((m_dup_acks == 1) || (m_dup_acks == 2)) { // Limited Transmit
       cwnd += m_dup_acks * m_mss;
     }
-    uint32 nWindow = std::min(m_snd_wnd, cwnd);
-    uint32 nInFlight = m_snd_nxt - m_snd_una;
-    uint32 nUseable = (nInFlight < nWindow) ? (nWindow - nInFlight) : 0;
+    uint32_t nWindow = std::min(m_snd_wnd, cwnd);
+    uint32_t nInFlight = m_snd_nxt - m_snd_una;
+    uint32_t nUseable = (nInFlight < nWindow) ? (nWindow - nInFlight) : 0;
 
     size_t snd_buffered = 0;
     m_sbuf.GetBuffered(&snd_buffered);
-    uint32 nAvailable =
-        std::min(static_cast<uint32>(snd_buffered) - nInFlight, m_mss);
+    uint32_t nAvailable =
+        std::min(static_cast<uint32_t>(snd_buffered) - nInFlight, m_mss);
 
     if (nAvailable > nUseable) {
       if (nUseable * 4 < nWindow) {
@@ -1095,7 +1110,7 @@ void PseudoTcp::attemptSend(SendFlags sflags) {
     SList::iterator it = m_slist.begin();
     while (it->xmit > 0) {
       ++it;
-      ASSERT(it != m_slist.end());
+      RTC_DCHECK(it != m_slist.end());
     }
     SList::iterator seg = it;
 
@@ -1116,8 +1131,7 @@ void PseudoTcp::attemptSend(SendFlags sflags) {
   }
 }
 
-void
-PseudoTcp::closedown(uint32 err) {
+void PseudoTcp::closedown(uint32_t err) {
   LOG(LS_INFO) << "State: TCP_CLOSED";
   m_state = TCP_CLOSED;
   if (m_notify) {
@@ -1130,7 +1144,7 @@ void
 PseudoTcp::adjustMTU() {
   // Determine our current mss level, so that we can adjust appropriately later
   for (m_msslevel = 0; PACKET_MAXIMUMS[m_msslevel + 1] > 0; ++m_msslevel) {
-    if (static_cast<uint16>(PACKET_MAXIMUMS[m_msslevel]) <= m_mtu_advise) {
+    if (static_cast<uint16_t>(PACKET_MAXIMUMS[m_msslevel]) <= m_mtu_advise) {
       break;
     }
   }
@@ -1158,7 +1172,7 @@ PseudoTcp::disableWindowScale() {
 
 void
 PseudoTcp::queueConnectMessage() {
-  rtc::ByteBuffer buf(rtc::ByteBuffer::ORDER_NETWORK);
+  rtc::ByteBufferWriter buf(rtc::ByteBuffer::ORDER_NETWORK);
 
   buf.WriteUInt8(CTL_CONNECT);
   if (m_support_wnd_scale) {
@@ -1166,19 +1180,18 @@ PseudoTcp::queueConnectMessage() {
     buf.WriteUInt8(1);
     buf.WriteUInt8(m_rwnd_scale);
   }
-  m_snd_wnd = static_cast<uint32>(buf.Length());
-  queue(buf.Data(), static_cast<uint32>(buf.Length()), true);
+  m_snd_wnd = static_cast<uint32_t>(buf.Length());
+  queue(buf.Data(), static_cast<uint32_t>(buf.Length()), true);
 }
 
-void
-PseudoTcp::parseOptions(const char* data, uint32 len) {
-  std::set<uint8> options_specified;
+void PseudoTcp::parseOptions(const char* data, uint32_t len) {
+  std::set<uint8_t> options_specified;
 
   // See http://www.freesoft.org/CIE/Course/Section4/8.htm for
   // parsing the options list.
-  rtc::ByteBuffer buf(data, len);
+  rtc::ByteBufferReader buf(data, len);
   while (buf.Length()) {
-    uint8 kind = TCP_OPT_EOL;
+    uint8_t kind = TCP_OPT_EOL;
     buf.ReadUInt8(&kind);
 
     if (kind == TCP_OPT_EOL) {
@@ -1190,9 +1203,9 @@ PseudoTcp::parseOptions(const char* data, uint32 len) {
     }
 
     // Length of this option.
-    ASSERT(len != 0);
+    RTC_DCHECK(len != 0);
     RTC_UNUSED(len);
-    uint8 opt_len = 0;
+    uint8_t opt_len = 0;
     buf.ReadUInt8(&opt_len);
 
     // Content of this option.
@@ -1218,8 +1231,7 @@ PseudoTcp::parseOptions(const char* data, uint32 len) {
   }
 }
 
-void
-PseudoTcp::applyOption(char kind, const char* data, uint32 len) {
+void PseudoTcp::applyOption(char kind, const char* data, uint32_t len) {
   if (kind == TCP_OPT_MSS) {
     LOG(LS_WARNING) << "Peer specified MSS option which is not supported.";
     // TODO: Implement.
@@ -1234,20 +1246,17 @@ PseudoTcp::applyOption(char kind, const char* data, uint32 len) {
   }
 }
 
-void
-PseudoTcp::applyWindowScaleOption(uint8 scale_factor) {
+void PseudoTcp::applyWindowScaleOption(uint8_t scale_factor) {
   m_swnd_scale = scale_factor;
 }
 
-void
-PseudoTcp::resizeSendBuffer(uint32 new_size) {
+void PseudoTcp::resizeSendBuffer(uint32_t new_size) {
   m_sbuf_len = new_size;
   m_sbuf.SetCapacity(new_size);
 }
 
-void
-PseudoTcp::resizeReceiveBuffer(uint32 new_size) {
-  uint8 scale_factor = 0;
+void PseudoTcp::resizeReceiveBuffer(uint32_t new_size) {
+  uint8_t scale_factor = 0;
 
   // Determine the scale factor such that the scaled window size can fit
   // in a 16-bit unsigned integer.
@@ -1264,7 +1273,7 @@ PseudoTcp::resizeReceiveBuffer(uint32 new_size) {
   // buffer. This should always be true because this method is called either
   // before connection is established or when peers are exchanging connect
   // messages.
-  ASSERT(result);
+  RTC_DCHECK(result);
   RTC_UNUSED(result);
   m_rbuf_len = new_size;
   m_rwnd_scale = scale_factor;
@@ -1272,7 +1281,7 @@ PseudoTcp::resizeReceiveBuffer(uint32 new_size) {
 
   size_t available_space = 0;
   m_rbuf.GetWriteRemaining(&available_space);
-  m_rcv_wnd = static_cast<uint32>(available_space);
+  m_rcv_wnd = static_cast<uint32_t>(available_space);
 }
 
 }  // namespace cricket

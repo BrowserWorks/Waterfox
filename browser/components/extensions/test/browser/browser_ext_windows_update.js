@@ -2,7 +2,7 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   function promiseWaitForFocus(window) {
     return new Promise(resolve => {
       waitForFocus(function() {
@@ -13,10 +13,10 @@ add_task(function* () {
   }
 
   let window1 = window;
-  let window2 = yield BrowserTestUtils.openNewBrowserWindow();
+  let window2 = await BrowserTestUtils.openNewBrowserWindow();
 
   Services.focus.activeWindow = window2;
-  yield promiseWaitForFocus(window2);
+  await promiseWaitForFocus(window2);
 
   let extension = ExtensionTestUtils.loadExtension({
     background: function() {
@@ -39,19 +39,19 @@ add_task(function* () {
     },
   });
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("check")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("check")]);
 
-  yield promiseWaitForFocus(window1);
+  await promiseWaitForFocus(window1);
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield BrowserTestUtils.closeWindow(window2);
+  await BrowserTestUtils.closeWindow(window2);
 });
 
 
-add_task(function* testWindowUpdate() {
+add_task(async function testWindowUpdate() {
   let extension = ExtensionTestUtils.loadExtension({
-    background() {
+    async background() {
       let _checkWindowPromise;
       browser.test.onMessage.addListener(msg => {
         if (msg == "checked-window") {
@@ -68,37 +68,44 @@ add_task(function* testWindowUpdate() {
         });
       }
 
-      function updateWindow(windowId, params, expected) {
-        return browser.windows.update(windowId, params).then(window => {
-          for (let key of Object.keys(params)) {
-            if (key == "state" && os == "mac" && params.state == "normal") {
-              // OS-X doesn't have a hard distinction between "normal" and
-              // "maximized" states.
-              browser.test.assertTrue(window.state == "normal" || window.state == "maximized",
-                                      `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`);
-            } else {
-              browser.test.assertEq(params[key], window[key], `Got expected value for window.${key}`);
-            }
-          }
+      let currentWindowId;
+      async function updateWindow(windowId, params, expected) {
+        let window = await browser.windows.update(windowId, params);
 
-          return checkWindow(expected);
-        });
+        browser.test.assertEq(currentWindowId, window.id, "Expected WINDOW_ID_CURRENT to refer to the same window");
+        for (let key of Object.keys(params)) {
+          if (key == "state" && os == "mac" && params.state == "normal") {
+            // OS-X doesn't have a hard distinction between "normal" and
+            // "maximized" states.
+            browser.test.assertTrue(window.state == "normal" || window.state == "maximized",
+                                    `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`);
+          } else {
+            browser.test.assertEq(params[key], window[key], `Got expected value for window.${key}`);
+          }
+        }
+
+        return checkWindow(expected);
       }
 
-      let windowId = browser.windows.WINDOW_ID_CURRENT;
+      try {
+        let windowId = browser.windows.WINDOW_ID_CURRENT;
 
-      browser.runtime.getPlatformInfo().then(info => { os = info.os; })
-      .then(() => updateWindow(windowId, {state: "maximized"}, {state: "STATE_MAXIMIZED"}))
-      .then(() => updateWindow(windowId, {state: "minimized"}, {state: "STATE_MINIMIZED"}))
-      .then(() => updateWindow(windowId, {state: "normal"}, {state: "STATE_NORMAL"}))
-      .then(() => updateWindow(windowId, {state: "fullscreen"}, {state: "STATE_FULLSCREEN"}))
-      .then(() => updateWindow(windowId, {state: "normal"}, {state: "STATE_NORMAL"}))
-      .then(() => {
+        ({os} = await browser.runtime.getPlatformInfo());
+
+        let window = await browser.windows.getCurrent();
+        currentWindowId = window.id;
+
+        await updateWindow(windowId, {state: "maximized"}, {state: "STATE_MAXIMIZED"});
+        await updateWindow(windowId, {state: "minimized"}, {state: "STATE_MINIMIZED"});
+        await updateWindow(windowId, {state: "normal"}, {state: "STATE_NORMAL"});
+        await updateWindow(windowId, {state: "fullscreen"}, {state: "STATE_FULLSCREEN"});
+        await updateWindow(windowId, {state: "normal"}, {state: "STATE_NORMAL"});
+
         browser.test.notifyPass("window-update");
-      }).catch(e => {
+      } catch (e) {
         browser.test.fail(`${e} :: ${e.stack}`);
         browser.test.notifyFail("window-update");
-      });
+      }
     },
   });
 
@@ -109,7 +116,8 @@ add_task(function* testWindowUpdate() {
         windowState = window.STATE_FULLSCREEN;
       }
 
-      if (expected.state == "STATE_NORMAL" && AppConstants.platform == "macosx") {
+      // Temporarily accepting STATE_MAXIMIZED on Linux because of bug 1307759.
+      if (expected.state == "STATE_NORMAL" && (AppConstants.platform == "macosx" || AppConstants.platform == "linux")) {
         ok(windowState == window.STATE_NORMAL || windowState == window.STATE_MAXIMIZED,
            `Expected windowState (currently ${windowState}) to be STATE_NORMAL but will accept STATE_MAXIMIZED`);
       } else {
@@ -121,13 +129,13 @@ add_task(function* testWindowUpdate() {
     extension.sendMessage("checked-window");
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("window-update");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("window-update");
+  await extension.unload();
 });
 
-add_task(function* () {
-  let window2 = yield BrowserTestUtils.openNewBrowserWindow();
+add_task(async function() {
+  let window2 = await BrowserTestUtils.openNewBrowserWindow();
 
   let extension = ExtensionTestUtils.loadExtension({
     background: function() {
@@ -142,47 +150,40 @@ add_task(function* () {
     },
   });
 
-  yield Promise.all([extension.startup(), extension.awaitMessage("check")]);
+  await Promise.all([extension.startup(), extension.awaitMessage("check")]);
 
-  yield extension.unload();
+  await extension.unload();
 
-  yield BrowserTestUtils.closeWindow(window2);
+  await BrowserTestUtils.closeWindow(window2);
 });
 
 
 // Tests that incompatible parameters can't be used together.
-add_task(function* testWindowUpdateParams() {
+add_task(async function testWindowUpdateParams() {
   let extension = ExtensionTestUtils.loadExtension({
-    background() {
-      function* getCalls() {
+    async background() {
+      try {
         for (let state of ["minimized", "maximized", "fullscreen"]) {
           for (let param of ["left", "top", "width", "height"]) {
             let expected = `"state": "${state}" may not be combined with "left", "top", "width", or "height"`;
 
             let windowId = browser.windows.WINDOW_ID_CURRENT;
-            yield browser.windows.update(windowId, {state, [param]: 100}).then(
-              val => {
-                browser.test.fail(`Expected error but got "${val}" instead`);
-              },
-              error => {
-                browser.test.assertTrue(
-                  error.message.includes(expected),
-                  `Got expected error (got: '${error.message}', expected: '${expected}'`);
-              });
+            await browser.test.assertRejects(
+              browser.windows.update(windowId, {state, [param]: 100}),
+              RegExp(expected),
+              `Got expected error for create(${param}=100`);
           }
         }
-      }
 
-      Promise.all(getCalls()).then(() => {
         browser.test.notifyPass("window-update-params");
-      }).catch(e => {
+      } catch (e) {
         browser.test.fail(`${e} :: ${e.stack}`);
         browser.test.notifyFail("window-update-params");
-      });
+      }
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("window-update-params");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("window-update-params");
+  await extension.unload();
 });

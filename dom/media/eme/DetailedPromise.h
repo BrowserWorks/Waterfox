@@ -30,14 +30,14 @@ public:
   static already_AddRefed<DetailedPromise>
   Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
          const nsACString& aName,
-         Telemetry::ID aSuccessLatencyProbe,
-         Telemetry::ID aFailureLatencyProbe);
+         Telemetry::HistogramID aSuccessLatencyProbe,
+         Telemetry::HistogramID aFailureLatencyProbe);
 
   template <typename T>
   void MaybeResolve(const T& aArg)
   {
     EME_LOG("%s promise resolved", mName.get());
-    MaybeReportTelemetry(Succeeded);
+    MaybeReportTelemetry(eStatus::kSucceeded);
     Promise::MaybeResolve<T>(aArg);
   }
 
@@ -53,18 +53,18 @@ private:
 
   explicit DetailedPromise(nsIGlobalObject* aGlobal,
                            const nsACString& aName,
-                           Telemetry::ID aSuccessLatencyProbe,
-                           Telemetry::ID aFailureLatencyProbe);
+                           Telemetry::HistogramID aSuccessLatencyProbe,
+                           Telemetry::HistogramID aFailureLatencyProbe);
   virtual ~DetailedPromise();
 
-  enum Status { Succeeded, Failed };
-  void MaybeReportTelemetry(Status aStatus);
+  enum eStatus { kSucceeded, kFailed };
+  void MaybeReportTelemetry(eStatus aStatus);
 
   nsCString mName;
   bool mResponded;
   TimeStamp mStartTime;
-  Optional<Telemetry::ID> mSuccessLatencyProbe;
-  Optional<Telemetry::ID> mFailureLatencyProbe;
+  Optional<Telemetry::HistogramID> mSuccessLatencyProbe;
+  Optional<Telemetry::HistogramID> mFailureLatencyProbe;
 };
 
 } // namespace dom

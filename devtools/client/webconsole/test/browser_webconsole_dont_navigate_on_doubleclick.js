@@ -41,12 +41,11 @@ function test() {
     let urlNode = networkEventMessage.querySelector(".url");
 
     let deferred = promise.defer();
-    urlNode.addEventListener("click", function onClick(aEvent) {
-      urlNode.removeEventListener("click", onClick);
-      ok(aEvent.defaultPrevented, "The default action was prevented.");
+    urlNode.addEventListener("click", function (event) {
+      ok(event.defaultPrevented, "The default action was prevented.");
 
       deferred.resolve();
-    });
+    }, {once: true});
 
     EventUtils.synthesizeMouseAtCenter(urlNode, {clickCount: 2},
                                        hud.iframeWindow);

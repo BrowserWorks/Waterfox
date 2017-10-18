@@ -6,7 +6,7 @@
 #define nsStyleUtil_h___
 
 #include "nsCoord.h"
-#include "nsCSSProperty.h"
+#include "nsCSSPropertyID.h"
 #include "nsString.h"
 #include "nsTArrayForwardDeclare.h"
 #include "gfxFontFamilyList.h"
@@ -31,8 +31,8 @@ public:
                                 const nsAString& aSelectorValue,
                                 const nsStringComparator& aComparator);
 
- static bool ValueIncludes(const nsSubstring& aValueList,
-                           const nsSubstring& aValue,
+ static bool ValueIncludes(const nsAString& aValueList,
+                           const nsAString& aValue,
                            const nsStringComparator& aComparator);
 
   // Append a quoted (with 'quoteChar') and escaped version of aString
@@ -53,7 +53,7 @@ public:
                                  nsAString& aResult);
 
   // Append a bitmask-valued property's value(s) (space-separated) to aResult.
-  static void AppendBitmaskCSSValue(nsCSSProperty aProperty,
+  static void AppendBitmaskCSSValue(nsCSSPropertyID aProperty,
                                     int32_t aMaskedValue,
                                     int32_t aFirstMask,
                                     int32_t aLastMask,
@@ -63,11 +63,19 @@ public:
 
   static void AppendPaintOrderValue(uint8_t aValue, nsAString& aResult);
 
+  static void AppendFontTagAsString(uint32_t aTag, nsAString& aResult);
+
   static void AppendFontFeatureSettings(const nsTArray<gfxFontFeature>& aFeatures,
                                         nsAString& aResult);
 
   static void AppendFontFeatureSettings(const nsCSSValue& src,
                                         nsAString& aResult);
+
+  static void AppendFontVariationSettings(const nsTArray<gfxFontVariation>& aVariations,
+                                          nsAString& aResult);
+
+  static void AppendFontVariationSettings(const nsCSSValue& src,
+                                          nsAString& aResult);
 
   static void AppendUnicodeRange(const nsCSSValue& aValue, nsAString& aResult);
 
@@ -79,6 +87,8 @@ public:
   static void AppendStepsTimingFunction(nsTimingFunction::Type aType,
                                         uint32_t aSteps,
                                         nsAString& aResult);
+  static void AppendFramesTimingFunction(uint32_t aFrames,
+                                         nsAString& aResult);
   static void AppendCubicBezierTimingFunction(float aX1, float aY1,
                                               float aX2, float aY2,
                                               nsAString& aResult);
@@ -128,6 +138,13 @@ public:
   static bool IsSignificantChild(nsIContent* aChild,
                                    bool aTextIsSignificant,
                                    bool aWhitespaceIsSignificant);
+
+  /*
+   * Thread-safe version of IsSignificantChild()
+   */
+  static bool ThreadSafeIsSignificantChild(const nsIContent* aChild,
+                                           bool aTextIsSignificant,
+                                           bool aWhitespaceIsSignificant);
   /**
    * Returns true if our object-fit & object-position properties might cause
    * a replaced element's contents to overflow its content-box (requiring
@@ -175,7 +192,7 @@ public:
                                    nsIPrincipal* aPrincipal,
                                    nsIURI* aSourceURI,
                                    uint32_t aLineNumber,
-                                   const nsSubstring& aStyleText,
+                                   const nsAString& aStyleText,
                                    nsresult* aRv);
 
   template<size_t N>

@@ -7,7 +7,6 @@
 #include "nsBMPEncoder.h"
 #include "nsPNGEncoder.h"
 #include "nsICOEncoder.h"
-#include "prprf.h"
 #include "nsString.h"
 #include "nsStreamUtils.h"
 #include "nsTArray.h"
@@ -229,10 +228,11 @@ nsICOEncoder::StartImageEncode(uint32_t aWidth,
   }
 
   // parse and check any provided output options
-  uint32_t bpp = 24;
+  uint16_t bpp = 24;
   bool usePNG = true;
   nsresult rv = ParseOptions(aOutputOptions, bpp, usePNG);
   NS_ENSURE_SUCCESS(rv, rv);
+  MOZ_ASSERT(bpp <= 32);
 
   mUsePNG = usePNG;
 
@@ -266,7 +266,7 @@ nsICOEncoder::EndImageEncode()
 // Parses the encoder options and sets the bits per pixel to use and PNG or BMP
 // See InitFromData for a description of the parse options
 nsresult
-nsICOEncoder::ParseOptions(const nsAString& aOptions, uint32_t& aBppOut,
+nsICOEncoder::ParseOptions(const nsAString& aOptions, uint16_t& aBppOut,
                            bool& aUsePNGOut)
 {
   // If no parsing options just use the default of 24BPP and PNG yes
@@ -442,7 +442,8 @@ nsICOEncoder::NotifyListener()
          mImageBufferReadPoint >= mNotifyThreshold || mFinished)) {
     nsCOMPtr<nsIInputStreamCallback> callback;
     if (mCallbackTarget) {
-      callback = NS_NewInputStreamReadyEvent(mCallback, mCallbackTarget);
+      callback = NS_NewInputStreamReadyEvent("nsICOEncoder::NotifyListener",
+                                             mCallback, mCallbackTarget);
     } else {
       callback = mCallback;
     }
@@ -470,7 +471,7 @@ nsICOEncoder::InitFileHeader()
 
 // Initializes the icon directory info header mICODirEntry
 void
-nsICOEncoder::InitInfoHeader(uint32_t aBPP, uint8_t aWidth, uint8_t aHeight)
+nsICOEncoder::InitInfoHeader(uint16_t aBPP, uint8_t aWidth, uint8_t aHeight)
 {
   memset(&mICODirEntry, 0, sizeof(mICODirEntry));
   mICODirEntry.mBitCount = aBPP;

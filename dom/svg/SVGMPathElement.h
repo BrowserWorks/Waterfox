@@ -42,7 +42,8 @@ public:
   NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTECHANGED
 
   // nsIContent interface
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
                               bool aCompileEventHandlers) override;
@@ -97,9 +98,9 @@ protected:
   void UnlinkHrefTarget(bool aNotifyParent);
   void NotifyParentOfMpathChange(nsIContent* aParent);
 
-  enum { HREF };
-  nsSVGString        mStringAttributes[1];
-  static StringInfo  sStringInfo[1];
+  enum { HREF, XLINK_HREF };
+  nsSVGString        mStringAttributes[2];
+  static StringInfo  sStringInfo[2];
   PathReference      mHrefTarget;
 };
 

@@ -2,20 +2,21 @@
     "work_dir": ".",
     "log_name": "multilocale",
     "objdir": "obj-firefox",
-    "locales_file": "build/mobile/android/locales/maemo-locales",
+    "locales_file": "build/mobile/locales/l10n-changesets.json",
+    "locales_platform": "android-multilocale",
     "locales_dir": "mobile/android/locales",
     "ignore_locales": ["en-US", "multi"],
     "repos": [{
         "repo": "https://hg.mozilla.org/projects/ash",
-        "tag": "default",
+        "branch": "default",
         "dest": "build"
     },{
         "repo": "https://hg.mozilla.org/build/buildbot-configs",
-        "tag": "default",
+        "branch": "production",
         "dest": "build/configs"
     },{
         "repo": "https://hg.mozilla.org/build/tools",
-        "tag": "default",
+        "branch": "default",
         "dest": "tools"
     }],
     "vcs_share_base": "/builds/hg-shared",

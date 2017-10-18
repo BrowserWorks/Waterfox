@@ -27,8 +27,9 @@ SVGAElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
   return SVGAElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
-nsSVGElement::StringInfo SVGAElement::sStringInfo[2] =
+nsSVGElement::StringInfo SVGAElement::sStringInfo[3] =
 {
+  { &nsGkAtoms::href, kNameSpaceID_None, true },
   { &nsGkAtoms::href, kNameSpaceID_XLink, true },
   { &nsGkAtoms::target, kNameSpaceID_None, true }
 };
@@ -74,19 +75,31 @@ SVGAElement::~SVGAElement()
 already_AddRefed<SVGAnimatedString>
 SVGAElement::Href()
 {
-  return mStringAttributes[HREF].ToDOMAnimatedString(this);
+  return mStringAttributes[HREF].IsExplicitlySet()
+         ? mStringAttributes[HREF].ToDOMAnimatedString(this)
+         : mStringAttributes[XLINK_HREF].ToDOMAnimatedString(this);
+}
+
+//----------------------------------------------------------------------
+// Link methods
+
+bool
+SVGAElement::ElementHasHref() const
+{
+  return mStringAttributes[HREF].IsExplicitlySet() ||
+         mStringAttributes[XLINK_HREF].IsExplicitlySet();
 }
 
 //----------------------------------------------------------------------
 // nsINode methods
 
 nsresult
-SVGAElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+SVGAElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
-  nsresult rv = Element::PreHandleEvent(aVisitor);
+  nsresult rv = Element::GetEventTargetParent(aVisitor);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  return PreHandleEventForLinks(aVisitor);
+  return GetEventTargetParentForLinks(aVisitor);
 }
 
 nsresult
@@ -148,13 +161,6 @@ SVGAElement::UnbindFromTree(bool aDeep, bool aNullParent)
   // be under a different xml:base, so forget the cached state now.
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  // Note, we need to use OwnerDoc() here since GetComposedDoc() may
-  // return null already at this point.
-  nsIDocument* doc = OwnerDoc();
-  if (doc) {
-    doc->UnregisterPendingLinkUpdate(this);
-  }
-
   SVGAElementBase::UnbindFromTree(aDeep, aNullParent);
 }
 
@@ -184,20 +190,76 @@ SVGAElement::IsAttributeMapped(const nsIAtom* name) const
     SVGAElementBase::IsAttributeMapped(name);
 }
 
-bool
-SVGAElement::IsFocusableInternal(int32_t *aTabIndex, bool aWithMouse)
+int32_t
+SVGAElement::TabIndexDefault()
 {
-  nsCOMPtr<nsIURI> uri;
-  if (IsLink(getter_AddRefs(uri))) {
-    if (aTabIndex) {
-      *aTabIndex = ((sTabFocusModel & eTabFocus_linksMask) == 0 ? -1 : 0);
+  return 0;
+}
+
+static bool
+IsNodeInEditableRegion(nsINode* aNode)
+{
+  while (aNode) {
+    if (aNode->IsEditable()) {
+      return true;
     }
+    aNode = aNode->GetParent();
+  }
+  return false;
+}
+
+bool
+SVGAElement::IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex)
+{
+  if (nsSVGElement::IsSVGFocusable(aIsFocusable, aTabIndex)) {
     return true;
   }
 
-  if (aTabIndex) {
+  // cannot focus links if there is no link handler
+  nsIDocument* doc = GetComposedDoc();
+  if (doc) {
+    nsIPresShell* presShell = doc->GetShell();
+    if (presShell) {
+      nsPresContext* presContext = presShell->GetPresContext();
+      if (presContext && !presContext->GetLinkHandler()) {
+        *aIsFocusable = false;
+        return false;
+      }
+    }
+  }
+
+  // Links that are in an editable region should never be focusable, even if
+  // they are in a contenteditable="false" region.
+  if (IsNodeInEditableRegion(this)) {
+    if (aTabIndex) {
+      *aTabIndex = -1;
+    }
+
+    *aIsFocusable = false;
+
+    return true;
+  }
+
+  if (!HasAttr(kNameSpaceID_None, nsGkAtoms::tabindex)) {
+    // check whether we're actually a link
+    if (!Link::HasURI()) {
+      // Not tabbable or focusable without href (bug 17605), unless
+      // forced to be via presence of nonnegative tabindex attribute
+      if (aTabIndex) {
+        *aTabIndex = -1;
+      }
+
+      *aIsFocusable = false;
+
+      return false;
+    }
+  }
+
+  if (aTabIndex && (sTabFocusModel & eTabFocus_linksMask) == 0) {
     *aTabIndex = -1;
   }
+
+  *aIsFocusable = true;
 
   return false;
 }
@@ -225,9 +287,9 @@ SVGAElement::IsLink(nsIURI** aURI) const
     { &nsGkAtoms::_empty, &nsGkAtoms::onRequest, nullptr };
 
   // Optimization: check for href first for early return
-  const nsAttrValue* href = mAttrsAndChildren.GetAttr(nsGkAtoms::href,
-                                                      kNameSpaceID_XLink);
-  if (href &&
+  bool useBareHref = mStringAttributes[HREF].IsExplicitlySet();
+
+  if ((useBareHref || mStringAttributes[XLINK_HREF].IsExplicitlySet()) &&
       FindAttrValueIn(kNameSpaceID_XLink, nsGkAtoms::type,
                       sTypeVals, eCaseMatters) !=
                       nsIContent::ATTR_VALUE_NO_MATCH &&
@@ -240,9 +302,9 @@ SVGAElement::IsLink(nsIURI** aURI) const
     nsCOMPtr<nsIURI> baseURI = GetBaseURI();
     // Get absolute URI
     nsAutoString str;
-    mStringAttributes[HREF].GetAnimValue(str, this);
-    nsContentUtils::NewURIWithDocumentCharset(aURI, str,
-                                              OwnerDoc(), baseURI);
+    const uint8_t idx = useBareHref ? HREF : XLINK_HREF;
+    mStringAttributes[idx].GetAnimValue(str, this);
+    nsContentUtils::NewURIWithDocumentCharset(aURI, str, OwnerDoc(), baseURI);
     // must promise out param is non-null if we return true
     return !!*aURI;
   }
@@ -294,7 +356,9 @@ SVGAElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   // we will need the updated attribute value because notifying the document
   // that content states have changed will call IntrinsicState, which will try
   // to get updated information about the visitedness from Link.
-  if (aName == nsGkAtoms::href && aNameSpaceID == kNameSpaceID_XLink) {
+  if (aName == nsGkAtoms::href &&
+      (aNameSpaceID == kNameSpaceID_XLink ||
+       aNameSpaceID == kNameSpaceID_None)) {
     Link::ResetLinkState(!!aNotify, true);
   }
 
@@ -312,8 +376,10 @@ SVGAElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttr,
   // we will need the updated attribute value because notifying the document
   // that content states have changed will call IntrinsicState, which will try
   // to get updated information about the visitedness from Link.
-  if (aAttr == nsGkAtoms::href && aNameSpaceID == kNameSpaceID_XLink) {
-    Link::ResetLinkState(!!aNotify, false);
+  if (aAttr == nsGkAtoms::href &&
+      (aNameSpaceID == kNameSpaceID_XLink ||
+       aNameSpaceID == kNameSpaceID_None)) {
+    Link::ResetLinkState(!!aNotify, Link::ElementHasHref());
   }
 
   return rv;

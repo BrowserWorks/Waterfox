@@ -30,11 +30,11 @@ class RuntimeService final : public nsIObserver
   {
     WorkerPrivate* mWorkerPrivate;
     nsCString mScriptSpec;
-    nsCString mName;
+    nsString mName;
 
     SharedWorkerInfo(WorkerPrivate* aWorkerPrivate,
                      const nsACString& aScriptSpec,
-                     const nsACString& aName)
+                     const nsAString& aName)
     : mWorkerPrivate(aWorkerPrivate), mScriptSpec(aScriptSpec), mName(aName)
     { }
   };
@@ -42,21 +42,34 @@ class RuntimeService final : public nsIObserver
   struct WorkerDomainInfo
   {
     nsCString mDomain;
-    nsTArray<WorkerPrivate*> mWorkers;
-    nsTArray<WorkerPrivate*> mServiceWorkers;
+    nsTArray<WorkerPrivate*> mActiveWorkers;
+    nsTArray<WorkerPrivate*> mActiveServiceWorkers;
+    nsTArray<WorkerPrivate*> mQueuedWorkers;
     nsClassHashtable<nsCStringHashKey, SharedWorkerInfo> mSharedWorkerInfos;
     uint32_t mChildWorkerCount;
 
     WorkerDomainInfo()
-    : mWorkers(1), mChildWorkerCount(0)
+    : mActiveWorkers(1), mChildWorkerCount(0)
     { }
+
+    uint32_t
+    ActiveWorkerCount() const
+    {
+      return mActiveWorkers.Length() +
+             mChildWorkerCount;
+    }
+
+    uint32_t
+    ActiveServiceWorkerCount() const
+    {
+      return mActiveServiceWorkers.Length();
+    }
 
     bool
     HasNoWorkers() const
     {
-      return mWorkers.IsEmpty() &&
-             mServiceWorkers.IsEmpty() &&
-             !mChildWorkerCount;
+      return ActiveWorkerCount() == 0 &&
+             ActiveServiceWorkerCount() == 0;
     }
   };
 
@@ -138,7 +151,7 @@ public:
   nsresult
   CreateSharedWorker(const GlobalObject& aGlobal,
                      const nsAString& aScriptURL,
-                     const nsACString& aName,
+                     const nsAString& aName,
                      SharedWorker** aSharedWorker);
 
   void
@@ -202,18 +215,6 @@ public:
   void
   UpdateAllWorkerMemoryParameter(JSGCParamKey aKey, uint32_t aValue);
 
-  static uint32_t
-  GetContentCloseHandlerTimeoutSeconds()
-  {
-    return sDefaultJSSettings.content.maxScriptRuntime;
-  }
-
-  static uint32_t
-  GetChromeCloseHandlerTimeoutSeconds()
-  {
-    return sDefaultJSSettings.chrome.maxScriptRuntime;
-  }
-
 #ifdef JS_GC_ZEAL
   static void
   SetDefaultGCZeal(uint8_t aGCZeal, uint32_t aFrequency)
@@ -270,14 +271,11 @@ private:
   static void
   WorkerPrefChanged(const char* aPrefName, void* aClosure);
 
-  static void
-  JSVersionChanged(const char* aPrefName, void* aClosure);
-
   nsresult
   CreateSharedWorkerFromLoadInfo(JSContext* aCx,
                                  WorkerLoadInfo* aLoadInfo,
                                  const nsAString& aScriptURL,
-                                 const nsACString& aName,
+                                 const nsAString& aName,
                                  SharedWorker** aSharedWorker);
 };
 

@@ -31,15 +31,6 @@ WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
     if (!writeBuffer)
         return;
 
-    if (readBuffer->mNumActiveTFOs ||
-        writeBuffer->mNumActiveTFOs)
-    {
-        ErrorInvalidOperation("%s: Buffer is bound to an active transform feedback"
-                              " object.",
-                              funcName);
-        return;
-    }
-
     if (!ValidateNonNegative(funcName, "readOffset", readOffset) ||
         !ValidateNonNegative(funcName, "writeOffset", writeOffset) ||
         !ValidateNonNegative(funcName, "size", size))
@@ -64,10 +55,18 @@ WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
         return;
     }
 
-    if (readBuffer == writeBuffer &&
-        !ValidateDataRanges(readOffset, writeOffset, size, funcName))
-    {
-        return;
+    if (readBuffer == writeBuffer) {
+        MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(readOffset) + size).isValid());
+        MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(writeOffset) + size).isValid());
+
+        const bool separate = (readOffset + size <= writeOffset ||
+                               writeOffset + size <= readOffset);
+        if (!separate) {
+            ErrorInvalidValue("%s: ranges [readOffset, readOffset + size) and"
+                              " [writeOffset, writeOffset + size) overlap",
+                              funcName);
+            return;
+        }
     }
 
     const auto& readType = readBuffer->Content();
@@ -85,70 +84,75 @@ WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
     }
 
     gl->MakeCurrent();
+    const ScopedLazyBind readBind(gl, readTarget, readBuffer);
+    const ScopedLazyBind writeBind(gl, writeTarget, writeBuffer);
     gl->fCopyBufferSubData(readTarget, writeTarget, readOffset, writeOffset, size);
 }
 
 void
-WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
-                                const dom::ArrayBufferView& data)
+WebGL2Context::GetBufferSubData(GLenum target, GLintptr srcByteOffset,
+                                const dom::ArrayBufferView& dstData, GLuint dstElemOffset,
+                                GLuint dstElemCountOverride)
 {
     const char funcName[] = "getBufferSubData";
     if (IsContextLost())
         return;
 
-    if (!ValidateNonNegative(funcName, "offset", offset))
+    if (!ValidateNonNegative(funcName, "srcByteOffset", srcByteOffset))
         return;
+
+    uint8_t* bytes;
+    size_t byteLen;
+    if (!ValidateArrayBufferView(funcName, dstData, dstElemOffset, dstElemCountOverride,
+                                 &bytes, &byteLen))
+    {
+        return;
+    }
+
+    ////
 
     const auto& buffer = ValidateBufferSelection(funcName, target);
     if (!buffer)
         return;
 
-    ////
-
-    // If offset + returnedData.byteLength would extend beyond the end
-    // of the buffer an INVALID_VALUE error is generated.
-    data.ComputeLengthAndData();
-
-    const auto neededByteLength = CheckedInt<size_t>(offset) + data.LengthAllowShared();
-    if (!neededByteLength.isValid()) {
-        ErrorInvalidValue("%s: Integer overflow computing the needed byte length.",
-                          funcName);
+    if (!buffer->ValidateRange(funcName, srcByteOffset, byteLen))
         return;
-    }
-
-    if (neededByteLength.value() > buffer->ByteLength()) {
-        ErrorInvalidValue("%s: Not enough data. Operation requires %d bytes, but buffer"
-                          " only has %d bytes.",
-                          funcName, neededByteLength.value(), buffer->ByteLength());
-        return;
-    }
 
     ////
 
-    if (buffer->mNumActiveTFOs) {
-        ErrorInvalidOperation("%s: Buffer is bound to an active transform feedback"
-                              " object.",
-                              funcName);
+    if (!CheckedInt<GLsizeiptr>(byteLen).isValid()) {
+        ErrorOutOfMemory("%s: Size too large.", funcName);
         return;
     }
-
-    if (target == LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER &&
-        mBoundTransformFeedback->mIsActive)
-    {
-        ErrorInvalidOperation("%s: Currently bound transform feedback is active.",
-                              funcName);
-        return;
-    }
+    const GLsizeiptr glByteLen(byteLen);
 
     ////
 
     gl->MakeCurrent();
+    const ScopedLazyBind readBind(gl, target, buffer);
 
-    const auto ptr = gl->fMapBufferRange(target, offset, data.LengthAllowShared(),
-                                         LOCAL_GL_MAP_READ_BIT);
-    // Warning: Possibly shared memory.  See bug 1225033.
-    memcpy(data.DataAllowShared(), ptr, data.LengthAllowShared());
-    gl->fUnmapBuffer(target);
+    if (byteLen) {
+        const bool isTF = (target == LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER);
+        GLenum mapTarget = target;
+        if (isTF) {
+            gl->fBindTransformFeedback(LOCAL_GL_TRANSFORM_FEEDBACK, mEmptyTFO);
+            gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, buffer->mGLName);
+            mapTarget = LOCAL_GL_ARRAY_BUFFER;
+        }
+
+        const auto mappedBytes = gl->fMapBufferRange(mapTarget, srcByteOffset, glByteLen,
+                                                     LOCAL_GL_MAP_READ_BIT);
+        memcpy(bytes, mappedBytes, byteLen);
+        gl->fUnmapBuffer(mapTarget);
+
+        if (isTF) {
+            const GLuint vbo = (mBoundArrayBuffer ? mBoundArrayBuffer->mGLName : 0);
+            gl->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, vbo);
+            const GLuint tfo = (mBoundTransformFeedback ? mBoundTransformFeedback->mGLName
+                                                        : 0);
+            gl->fBindTransformFeedback(LOCAL_GL_TRANSFORM_FEEDBACK, tfo);
+        }
+    }
 }
 
 } // namespace mozilla

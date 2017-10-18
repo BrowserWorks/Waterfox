@@ -22,7 +22,6 @@ import mozinfo
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-# TODO inherit from MochitestBase instead
 class MochiRemote(MochitestDesktop):
     _automation = None
     _dm = None
@@ -30,7 +29,7 @@ class MochiRemote(MochitestDesktop):
     logMessages = []
 
     def __init__(self, automation, devmgr, options):
-        MochitestDesktop.__init__(self, options)
+        MochitestDesktop.__init__(self, options.flavor, options)
 
         self._automation = automation
         self._dm = devmgr
@@ -51,6 +50,7 @@ class MochiRemote(MochitestDesktop):
             "chrome")
         self._dm.removeDir(self.remoteChromeTestDir)
         self._dm.mkDir(self.remoteChromeTestDir)
+        self._dm.removeDir(self.remoteProfile)
 
     def cleanup(self, options):
         if self._dm.fileExists(self.remoteLog):
@@ -190,11 +190,11 @@ class MochiRemote(MochitestDesktop):
     def addChromeToProfile(self, options):
         manifest = MochitestDesktop.addChromeToProfile(self, options)
 
-        # Support Firefox (browser), B2G (shell), SeaMonkey (navigator), and Webapp
-        # Runtime (webapp).
-        if options.chrome:
+        # Support Firefox (browser), SeaMonkey (navigator), and Webapp Runtime (webapp).
+        if options.flavor == 'chrome':
             # append overlay to chrome.manifest
-            chrome = "overlay chrome://browser/content/browser.xul chrome://mochikit/content/browser-test-overlay.xul"
+            chrome = ("overlay chrome://browser/content/browser.xul "
+                      "chrome://mochikit/content/browser-test-overlay.xul")
             path = os.path.join(options.profilePath, 'extensions', 'staged',
                                 'mochikit@mozilla.org', 'chrome.manifest')
             with open(path, "a") as f:
@@ -226,7 +226,7 @@ class MochiRemote(MochitestDesktop):
         local = super(MochiRemote, self).getChromeTestDir(options)
         local = os.path.join(local, "chrome")
         remote = self.remoteChromeTestDir
-        if options.chrome:
+        if options.flavor == 'chrome':
             self.log.info("pushing %s to %s on device..." % (local, remote))
             self._dm.pushDir(local, remote)
         return remote
@@ -267,8 +267,6 @@ class MochiRemote(MochitestDesktop):
             options,
             debugger=debugger)
         # remove desktop environment not used on device
-        if "MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA" in browserEnv:
-            del browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"]
         if "XPCOM_MEM_BLOAT_LOG" in browserEnv:
             del browserEnv["XPCOM_MEM_BLOAT_LOG"]
         # override mozLogs to avoid processing in MochitestDesktop base class
@@ -288,9 +286,9 @@ class MochiRemote(MochitestDesktop):
 
         # remove args not supported by automation.py
         kwargs.pop('marionette_args', None)
-        kwargs.pop('quiet', None)
 
-        return self._automation.runApp(*args, **kwargs)
+        ret, _ = self._automation.runApp(*args, **kwargs)
+        return ret, None
 
 
 def run_test_harness(parser, options):
@@ -306,7 +304,7 @@ def run_test_harness(parser, options):
     options.runByDir = False
     # roboextender is used by mochitest-chrome tests like test_java_addons.html,
     # but not by any plain mochitests
-    if not options.chrome:
+    if options.flavor != 'chrome':
         options.extensionsToExclude.append('roboextender@mozilla.org')
 
     dm = options.dm
@@ -332,6 +330,7 @@ def run_test_harness(parser, options):
     auto.setAppName(options.remoteappname)
 
     logParent = os.path.dirname(options.remoteLogFile)
+    dm.removeDir(logParent)
     dm.mkDir(logParent)
     auto.setRemoteLog(options.remoteLogFile)
     auto.setServerInfo(options.webServer, options.httpPort, options.sslPort)
@@ -359,6 +358,8 @@ def run_test_harness(parser, options):
 
     procName = options.app.split('/')[-1]
     dm.killProcess(procName)
+    if dm.processExist(procName):
+        log.warning("unable to kill %s before running tests!" % procName)
 
     mochitest.mozLogName = "moz.log"
     try:

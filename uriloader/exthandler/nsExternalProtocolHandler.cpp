@@ -91,6 +91,7 @@ nsExtProtocolChannel::nsExtProtocolChannel(nsIURI* aURI,
   : mUrl(aURI)
   , mOriginalURI(aURI)
   , mStatus(NS_OK)
+  , mLoadFlags(nsIRequest::LOAD_NORMAL)
   , mWasOpened(false)
   , mConnectedParent(false)
   , mLoadInfo(aLoadInfo)
@@ -183,7 +184,7 @@ nsresult nsExtProtocolChannel::OpenURL()
   }
 
 finish:
-  mCallbacks = 0;
+  mCallbacks = nullptr;
   return rv;
 }
 
@@ -225,7 +226,10 @@ NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen2(nsIStreamListener *aListener)
 {
   nsCOMPtr<nsIStreamListener> listener = aListener;
   nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
   return AsyncOpen(listener, nullptr);
 }
 
@@ -239,6 +243,11 @@ NS_IMETHODIMP nsExtProtocolChannel::SetLoadFlags(nsLoadFlags aLoadFlags)
 {
   mLoadFlags = aLoadFlags;
   return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::GetIsDocument(bool *aIsDocument)
+{
+  return NS_GetIsDocumentChannel(this, aIsDocument);
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::GetContentType(nsACString &aContentType)
@@ -396,6 +405,20 @@ NS_IMETHODIMP nsExtProtocolChannel::SetParentListener(HttpChannelParentListener*
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::NotifyTrackingProtectionDisabled()
+{
+  // nothing to do
+  return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::SetClassifierMatchedInfo(const nsACString& aList,
+                                                             const nsACString& aProvider,
+                                                             const nsACString& aPrefix)
+{
+  // nothing to do
+  return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::NotifyTrackingResource()
 {
   // nothing to do
   return NS_OK;

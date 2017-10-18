@@ -130,45 +130,45 @@ var testcases = [ {
     protocolChange: true,
   }, {
     input: "1.2.3",
-    fixedURI: "http://1.2.3/",
+    fixedURI: "http://1.2.0.3/",
     protocolChange: true,
   }, {
     input: "1.2.3/",
-    fixedURI: "http://1.2.3/",
+    fixedURI: "http://1.2.0.3/",
     protocolChange: true,
   }, {
     input: "1.2.3/foo",
-    fixedURI: "http://1.2.3/foo",
+    fixedURI: "http://1.2.0.3/foo",
     protocolChange: true,
   }, {
     input: "1.2.3/123",
-    fixedURI: "http://1.2.3/123",
+    fixedURI: "http://1.2.0.3/123",
     protocolChange: true,
   }, {
     input: "1.2.3:8000",
-    fixedURI: "http://1.2.3:8000/",
+    fixedURI: "http://1.2.0.3:8000/",
     protocolChange: true,
   }, {
     input: "1.2.3:8000/",
-    fixedURI: "http://1.2.3:8000/",
+    fixedURI: "http://1.2.0.3:8000/",
     protocolChange: true,
   }, {
     input: "1.2.3:8000/foo",
-    fixedURI: "http://1.2.3:8000/foo",
+    fixedURI: "http://1.2.0.3:8000/foo",
     protocolChange: true,
   }, {
     input: "1.2.3:8000/123",
-    fixedURI: "http://1.2.3:8000/123",
+    fixedURI: "http://1.2.0.3:8000/123",
     protocolChange: true,
   }, {
     input: "http://1.2.3",
-    fixedURI: "http://1.2.3/",
+    fixedURI: "http://1.2.0.3/",
   }, {
     input: "http://1.2.3/",
-    fixedURI: "http://1.2.3/",
+    fixedURI: "http://1.2.0.3/",
   }, {
     input: "http://1.2.3/foo",
-    fixedURI: "http://1.2.3/foo",
+    fixedURI: "http://1.2.0.3/foo",
   }, {
     input: "[::1]",
     fixedURI: "http://[::1]/",
@@ -182,12 +182,10 @@ var testcases = [ {
   }, {
     input: "[::1]:8000",
     fixedURI: "http://[::1]:8000/",
-    alternateURI: "http://[::1]:8000/",
     protocolChange: true,
   }, {
     input: "[::1]:8000/",
     fixedURI: "http://[::1]:8000/",
-    alternateURI: "http://[::1]:8000/",
     protocolChange: true,
   }, {
     input: "[[::1]]/",
@@ -200,11 +198,13 @@ var testcases = [ {
     protocolChange: true,
   }, {
     input: "[64:ff9b::8.8.8.8]",
-    fixedURI: "http://[64:ff9b::8.8.8.8]/",
+    fixedURI: "http://[64:ff9b::808:808]/",
+    alternateURI: "http://[64:ff9b::808:808]/",
     protocolChange: true
   }, {
     input: "[64:ff9b::8.8.8.8]/~moz",
-    fixedURI: "http://[64:ff9b::8.8.8.8]/~moz",
+    fixedURI: "http://[64:ff9b::808:808]/~moz",
+    alternateURI: "http://[64:ff9b::808:808]/~moz",
     protocolChange: true
   }, {
     input: "[::1][::1]",
@@ -213,7 +213,6 @@ var testcases = [ {
   }, {
     input: "[::1][100",
     fixedURI: null,
-    alternateURI: null,
     keywordLookup: true,
     protocolChange: true
   }, {
@@ -222,8 +221,7 @@ var testcases = [ {
     protocolChange: true
   }, {
     input: "1234",
-    fixedURI: "http://1234/",
-    alternateURI: "http://www.1234.com/",
+    fixedURI: "http://0.0.4.210/",
     keywordLookup: true,
     protocolChange: true,
     affectedByDNSForSingleHosts: true,
@@ -362,8 +360,7 @@ var testcases = [ {
     affectedByDNSForSingleHosts: true,
   }, {
     input: "32.7",
-    fixedURI: "http://32.7/",
-    alternateURI: "http://www.32.7/",
+    fixedURI: "http://32.0.0.7/",
     keywordLookup: true,
     protocolChange: true,
     affectedByDNSForSingleHosts: true,
@@ -376,8 +373,7 @@ var testcases = [ {
     affectedByDNSForSingleHosts: true,
   }, {
     input: "5/2",
-    fixedURI: "http://5/2",
-    alternateURI: "http://www.5.com/2",
+    fixedURI: "http://0.0.0.5/2",
     keywordLookup: true,
     protocolChange: true,
     affectedByDNSForSingleHosts: true,
@@ -429,8 +425,6 @@ var testcases = [ {
     protocolChange: true,
   }, {
     input: "?'.com",
-    fixedURI: "http:///?%27.com",
-    alternateURI: "http://www..com/?%27.com",
     keywordLookup: true,
     protocolChange: true,
   }, {
@@ -439,14 +433,10 @@ var testcases = [ {
     protocolChange: true
   }, {
     input: "?mozilla",
-    fixedURI: "http:///?mozilla",
-    alternateURI: "http://www..com/?mozilla",
     keywordLookup: true,
     protocolChange: true,
   }, {
     input: "??mozilla",
-    fixedURI: "http:///??mozilla",
-    alternateURI: "http://www..com/??mozilla",
     keywordLookup: true,
     protocolChange: true,
   }, {
@@ -478,7 +468,22 @@ var testcases = [ {
     keywordLookup: true,
     protocolChange: true,
     affectedByDNSForSingleHosts: true,
-  }];
+  }, {
+    input: "localhost",
+    fixedURI: "http://localhost/",
+    keywordLookup: true,
+    protocolChange: true,
+    affectedByDNSForSingleHosts: true,
+  }, {
+    input: "localhost:8080",
+    fixedURI: "http://localhost:8080/",
+    protocolChange: true,
+  }, {
+    input: "plonk:8080",
+    fixedURI: "http://plonk:8080/",
+    protocolChange: true,
+  }
+];
 
 if (Services.appinfo.OS.toLowerCase().startsWith("win")) {
   testcases.push({

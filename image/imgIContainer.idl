@@ -195,6 +195,15 @@ interface imgIContainer : nsISupports
    * the given image non-uniformly if necessary such that the image's
    * viewBox (if specified or implied by height/width attributes) exactly
    * matches the viewport rectangle.
+   *
+   * FLAG_FORCE_UNIFORM_SCALING: Signal to ClippedImage::OptimalSizeForDest that
+   * its returned size can only scale the image's size *uniformly* (by the same
+   * factor in each dimension). We need this flag when painting border-image
+   * section with SVG image source-data, if the SVG image has no viewBox and no
+   * intrinsic size. In such a case, we synthesize a viewport for the SVG image
+   * (a "window into SVG space") based on the border image area, and we need to
+   * be sure we don't subsequently scale that viewport in a way that distorts
+   * its contents by stretching them more in one dimension than the other.
    */
   const unsigned long FLAG_NONE                            = 0x0;
   const unsigned long FLAG_SYNC_DECODE                     = 0x1;
@@ -398,15 +407,28 @@ interface imgIContainer : nsISupports
        in uint32_t aWhichFrame,
        in SamplingFilter aSamplingFilter,
        [const] in MaybeSVGImageContext aSVGContext,
-       in uint32_t aFlags);
+       in uint32_t aFlags,
+       in float aOpacity);
 
   /*
    * Ensures that an image is decoding. Calling this function guarantees that
    * the image will at some point fire off decode notifications. Images that
    * can be decoded "quickly" according to some heuristic will be decoded
    * synchronously.
+   *
+   * @param aFlags Flags of the FLAG_* variety. Only FLAG_ASYNC_NOTIFY
+   *               is accepted; all others are ignored.
    */
-  [noscript] void startDecoding();
+  [noscript] void startDecoding(in uint32_t aFlags);
+
+  /*
+   * Exactly like startDecoding above except returns whether the current frame
+   * of the image is complete or not.
+   *
+   * @param aFlags Flags of the FLAG_* variety. Only FLAG_ASYNC_NOTIFY
+   *               is accepted; all others are ignored.
+   */
+  [noscript, notxpcom] boolean startDecodingWithResult(in uint32_t aFlags);
 
   /*
    * This method triggers decoding for an image, but unlike startDecoding() it
@@ -537,4 +559,11 @@ interface imgIContainer : nsISupports
    * document.
    */
   [noscript, notxpcom] void propagateUseCounters(in nsIDocument aDocument);
+
+  %{C++
+  /*
+   * Get the set of sizes the image can decode to natively.
+   */
+  virtual nsresult GetNativeSizes(nsTArray<nsIntSize>& aNativeSizes) const = 0;
+  %}
 };

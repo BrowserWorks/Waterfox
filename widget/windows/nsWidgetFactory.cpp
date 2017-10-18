@@ -12,10 +12,10 @@
 #include "nsAppShellSingleton.h"
 #include "mozilla/ModuleUtils.h"
 #include "mozilla/WidgetUtils.h"
+#include "mozilla/widget/ScreenManager.h"
 #include "nsIServiceManager.h"
 #include "nsIdleServiceWin.h"
 #include "nsLookAndFeel.h"
-#include "nsScreenManagerWin.h"
 #include "nsSound.h"
 #include "WinMouseScrollHandler.h"
 #include "KeyboardLayout.h"
@@ -75,7 +75,7 @@ ChildWindowConstructor(nsISupports *aOuter, REFNSIID aIID,
   if (aOuter != nullptr) {
     return NS_ERROR_NO_AGGREGATION;
   }
-  nsCOMPtr<nsIWidget> widget = new ChildWindow;
+  nsCOMPtr<nsIWidget> widget = new nsWindow(true);
   return widget->QueryInterface(aIID, aResult);
 }
 
@@ -103,11 +103,11 @@ ColorPickerConstructor(nsISupports *aOuter, REFNSIID aIID,
   return picker->QueryInterface(aIID, aResult);
 }
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerWin)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(ScreenManager, ScreenManager::GetAddRefedSingleton)
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIdleServiceWin, nsIdleServiceWin::GetInstance)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboard)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIClipboard, nsClipboard::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISound, nsSound::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
 NS_GENERIC_FACTORY_CONSTRUCTOR(WinTaskbar)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListBuilder)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListItem)
@@ -171,15 +171,15 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_CHILD_CID, false, nullptr, ChildWindowConstructor },
   { &kNS_FILEPICKER_CID, false, nullptr, FilePickerConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_COLORPICKER_CID, false, nullptr, ColorPickerConstructor, Module::MAIN_PROCESS_ONLY },
-  { &kNS_APPSHELL_CID, false, nullptr, nsAppShellConstructor },
-  { &kNS_SCREENMANAGER_CID, false, nullptr, nsScreenManagerWinConstructor,
+  { &kNS_APPSHELL_CID, false, nullptr, nsAppShellConstructor, Module::ALLOW_IN_GPU_PROCESS },
+  { &kNS_SCREENMANAGER_CID, false, nullptr, ScreenManagerConstructor,
     Module::MAIN_PROCESS_ONLY },
   { &kNS_GFXINFO_CID, false, nullptr, GfxInfoConstructor },
   { &kNS_THEMERENDERER_CID, false, nullptr, NS_NewNativeTheme },
   { &kNS_IDLE_SERVICE_CID, false, nullptr, nsIdleServiceWinConstructor },
-  { &kNS_CLIPBOARD_CID, false, nullptr, nsClipboardConstructor, Module::MAIN_PROCESS_ONLY },
+  { &kNS_CLIPBOARD_CID, false, nullptr, nsIClipboardConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_CLIPBOARDHELPER_CID, false, nullptr, nsClipboardHelperConstructor },
-  { &kNS_SOUND_CID, false, nullptr, nsSoundConstructor, Module::MAIN_PROCESS_ONLY },
+  { &kNS_SOUND_CID, false, nullptr, nsISoundConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_TRANSFERABLE_CID, false, nullptr, nsTransferableConstructor },
   { &kNS_HTMLFORMATCONVERTER_CID, false, nullptr, nsHTMLFormatConverterConstructor },
   { &kNS_WIN_TASKBAR_CID, false, nullptr, WinTaskbarConstructor },
@@ -206,7 +206,7 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
   { "@mozilla.org/widgets/child_window/win;1", &kNS_CHILD_CID },
   { "@mozilla.org/filepicker;1", &kNS_FILEPICKER_CID, Module::MAIN_PROCESS_ONLY },
   { "@mozilla.org/colorpicker;1", &kNS_COLORPICKER_CID, Module::MAIN_PROCESS_ONLY },
-  { "@mozilla.org/widget/appshell/win;1", &kNS_APPSHELL_CID },
+  { "@mozilla.org/widget/appshell/win;1", &kNS_APPSHELL_CID, Module::ALLOW_IN_GPU_PROCESS },
   { "@mozilla.org/gfx/screenmanager;1", &kNS_SCREENMANAGER_CID, Module::MAIN_PROCESS_ONLY },
   { "@mozilla.org/gfx/info;1", &kNS_GFXINFO_CID },
   { "@mozilla.org/chrome/chrome-native-theme;1", &kNS_THEMERENDERER_CID },
@@ -255,7 +255,8 @@ static const mozilla::Module kWidgetModule = {
   nullptr,
   nullptr,
   nsAppShellInit,
-  nsWidgetWindowsModuleDtor
+  nsWidgetWindowsModuleDtor,
+  Module::ALLOW_IN_GPU_PROCESS
 };
 
 NSMODULE_DEFN(nsWidgetModule) = &kWidgetModule;

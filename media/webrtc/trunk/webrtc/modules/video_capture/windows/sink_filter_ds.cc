@@ -11,7 +11,7 @@
 #include "webrtc/modules/video_capture/windows/sink_filter_ds.h"
 
 #include "webrtc/modules/video_capture/windows/help_functions_ds.h"
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/system_wrappers/include/trace.h"
 
 #include <Dvdmedia.h> // VIDEOINFOHEADER2
 #include <initguid.h>
@@ -332,7 +332,7 @@ CaptureInputPin::Receive ( IN IMediaSample * pIMediaSample )
         SetThreadPriority(handle, THREAD_PRIORITY_HIGHEST);
         _threadHandle = handle;
         // See http://msdn.microsoft.com/en-us/library/xcb2z8hs(VS.71).aspx for details on the code
-        // in this function. Name od article is "Setting a Thread Name (Unmanaged)".
+        // in this function. Name of article is "Setting a Thread Name (Unmanaged)".
 
         THREADNAME_INFO info;
         info.dwType = 0x1000;

@@ -70,10 +70,10 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
 
   // request
   [Throws]
-  void open(ByteString method, DOMString url);
+  void open(ByteString method, USVString url);
   [Throws]
-  void open(ByteString method, DOMString url, boolean async,
-            optional DOMString? user, optional DOMString? password);
+  void open(ByteString method, USVString url, boolean async,
+            optional USVString? user=null, optional USVString? password=null);
   [Throws]
   void setRequestHeader(ByteString header, ByteString value);
 
@@ -97,7 +97,7 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
   [Throws]
   void send(Document data);
   [Throws]
-  void send(DOMString? data);
+  void send(USVString? data);
   [Throws]
   void send(FormData data);
   [Throws]
@@ -109,7 +109,7 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
   void abort();
 
   // response
-  readonly attribute DOMString responseURL;
+  readonly attribute USVString responseURL;
 
   [Throws]
   readonly attribute unsigned short status;
@@ -130,8 +130,8 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
   attribute XMLHttpRequestResponseType responseType;
   [Throws]
   readonly attribute any response;
-  [Throws]
-  readonly attribute DOMString? responseText;
+  [Cached, Pure, Throws]
+  readonly attribute USVString? responseText;
 
   [Throws, Exposed=Window]
   readonly attribute Document? responseXML;
@@ -151,6 +151,14 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
 
   [Throws, ChromeOnly, Exposed=Window]
   any getInterface(IID iid);
+
+  [ChromeOnly, Exposed=Window]
+  void setOriginAttributes(optional OriginAttributesDictionary originAttributes);
+
+  // Only works on MainThread.
+  // Its permanence is to be evaluated in bug 1368540 for Firefox 60.
+  [ChromeOnly]
+  readonly attribute unsigned short errorCode;
 
   readonly attribute boolean mozAnon;
   readonly attribute boolean mozSystem;

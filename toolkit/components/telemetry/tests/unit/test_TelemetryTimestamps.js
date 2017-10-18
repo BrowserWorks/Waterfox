@@ -7,7 +7,7 @@ var Ci = Components.interfaces;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/TelemetryController.jsm", this);
 Cu.import("resource://gre/modules/TelemetrySession.jsm", this);
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 // The @mozilla/xre/app-info;1 XPCOM object provided by the xpcshell test harness doesn't
 // implement the nsIXULAppInfo interface, which is needed by Services.jsm and
@@ -16,41 +16,27 @@ Cu.import("resource://testing-common/AppInfo.jsm");
 updateAppInfo();
 
 var gGlobalScope = this;
-function loadAddonManager() {
-  let ns = {};
-  Cu.import("resource://gre/modules/Services.jsm", ns);
-  let head = "../../../../mozapps/extensions/test/xpcshell/head_addons.js";
-  let file = do_get_file(head);
-  let uri = ns.Services.io.newFileURI(file);
-  ns.Services.scriptloader.loadSubScript(uri.spec, gGlobalScope);
-  createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
-  startupManager();
-}
 
 function getSimpleMeasurementsFromTelemetryController() {
   return TelemetrySession.getPayload().simpleMeasurements;
 }
 
-function initialiseTelemetry() {
-  return TelemetryController.testSetup();
-}
-
-function run_test() {
+add_task(async function test_setup() {
   // Telemetry needs the AddonManager.
   loadAddonManager();
+  finishAddonManagerStartup();
   // Make profile available for |TelemetryController.testShutdown()|.
   do_get_profile();
 
   // Make sure we don't generate unexpected pings due to pref changes.
-  setEmptyPrefWatchlist();
+  await setEmptyPrefWatchlist();
 
-  do_test_pending();
-  const Telemetry = Services.telemetry;
-  Telemetry.asyncFetchTelemetryData(run_next_test);
-}
+  await new Promise(resolve =>
+    Services.telemetry.asyncFetchTelemetryData(resolve));
+});
 
-add_task(function* actualTest() {
-  yield initialiseTelemetry();
+add_task(async function actualTest() {
+  await TelemetryController.testSetup();
 
   // Test the module logic
   let tmp = {};
@@ -88,7 +74,5 @@ add_task(function* actualTest() {
   do_check_true(simpleMeasurements.bar > 1); // bar was included
   do_check_eq(undefined, simpleMeasurements.baz); // baz wasn't included since it wasn't added
 
-  yield TelemetryController.testShutdown();
-
-  do_test_finished();
+  await TelemetryController.testShutdown();
 });

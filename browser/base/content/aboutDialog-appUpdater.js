@@ -2,7 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Note: this file is included in aboutDialog.xul if MOZ_UPDATER is defined.
+// Note: this file is included in aboutDialog.xul and preferences/advanced.xul
+// if MOZ_UPDATER is defined.
+
+/* import-globals-from aboutDialog.js */
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
@@ -24,8 +27,7 @@ function onUnload(aEvent) {
 }
 
 
-function appUpdater()
-{
+function appUpdater(options = {}) {
   XPCOMUtils.defineLazyServiceGetter(this, "aus",
                                      "@mozilla.org/updates/update-service;1",
                                      "nsIApplicationUpdateService");
@@ -36,6 +38,7 @@ function appUpdater()
                                      "@mozilla.org/updates/update-manager;1",
                                      "nsIUpdateManager");
 
+  this.options = options;
   this.updateDeck = document.getElementById("updateDeck");
 
   // Hide the update deck when the update window is already open and it's not
@@ -142,8 +145,7 @@ appUpdater.prototype =
   get updateEnabled() {
     try {
       return Services.prefs.getBoolPref("app.update.enabled");
-    }
-    catch (e) { }
+    } catch (e) { }
     return true; // Firefox default is true
   },
 
@@ -157,8 +159,7 @@ appUpdater.prototype =
   get updateAuto() {
     try {
       return Services.prefs.getBoolPref("app.update.auto");
-    }
-    catch (e) { }
+    } catch (e) { }
     return true; // Firefox default is true
   },
 
@@ -168,21 +169,30 @@ appUpdater.prototype =
    * @param  aChildID
    *         The id of the deck's child to select, e.g. "apply".
    */
-  selectPanel: function(aChildID) {
+  selectPanel(aChildID) {
     let panel = document.getElementById(aChildID);
 
     let button = panel.querySelector("button");
     if (button) {
       if (aChildID == "downloadAndInstall") {
         let updateVersion = gAppUpdater.update.displayVersion;
+        // Include the build ID if this is an "a#" (nightly or aurora) build
+        if (/a\d+$/.test(updateVersion)) {
+          let buildID = gAppUpdater.update.buildID;
+          let year = buildID.slice(0, 4);
+          let month = buildID.slice(4, 6);
+          let day = buildID.slice(6, 8);
+          updateVersion += ` (${year}-${month}-${day})`;
+        }
         button.label = this.bundle.formatStringFromName("update.downloadAndInstallButton.label", [updateVersion], 1);
         button.accessKey = this.bundle.GetStringFromName("update.downloadAndInstallButton.accesskey");
       }
       this.updateDeck.selectedPanel = panel;
-      if (!document.commandDispatcher.focusedElement || // don't steal the focus
-          document.commandDispatcher.focusedElement.localName == "button") // except from the other buttons
+      if (this.options.buttonAutoFocus &&
+          (!document.commandDispatcher.focusedElement || // don't steal the focus
+           document.commandDispatcher.focusedElement.localName == "button")) { // except from the other buttons
         button.focus();
-
+      }
     } else {
       this.updateDeck.selectedPanel = panel;
     }
@@ -191,7 +201,7 @@ appUpdater.prototype =
   /**
    * Check for updates
    */
-  checkForUpdates: function() {
+  checkForUpdates() {
     // Clear prefs that could prevent a user from discovering available updates.
     if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_CANCELATIONS_OSX)) {
       Services.prefs.clearUserPref(PREF_APP_UPDATE_CANCELATIONS_OSX);
@@ -209,7 +219,7 @@ appUpdater.prototype =
    * Handles oncommand for the "Restart to Update" button
    * which is presented after the download has been downloaded.
    */
-  buttonRestartAfterDownload: function() {
+  buttonRestartAfterDownload() {
     if (!this.isPending && !this.isApplied) {
       return;
     }
@@ -241,21 +251,6 @@ appUpdater.prototype =
   },
 
   /**
-   * Handles oncommand for the "Apply Update…" button
-   * which is presented if we need to show the billboard.
-   */
-  buttonApplyBillboard: function() {
-    const URI_UPDATE_PROMPT_DIALOG = "chrome://mozapps/content/update/updates.xul";
-    var ary = null;
-    ary = Components.classes["@mozilla.org/supports-array;1"].
-          createInstance(Components.interfaces.nsISupportsArray);
-    ary.AppendElement(this.update);
-    var openFeatures = "chrome,centerscreen,dialog=no,resizable=no,titlebar,toolbar=no";
-    Services.ww.openWindow(null, URI_UPDATE_PROMPT_DIALOG, "", openFeatures, ary);
-    window.close(); // close the "About" window; updates.xul takes over.
-  },
-
-  /**
    * Implements nsIUpdateCheckListener. The methods implemented by
    * nsIUpdateCheckListener are in a different scope from nsIIncrementalDownload
    * to make it clear which are used by each interface.
@@ -264,7 +259,7 @@ appUpdater.prototype =
     /**
      * See nsIUpdateService.idl
      */
-    onCheckComplete: function(aRequest, aUpdates, aUpdateCount) {
+    onCheckComplete(aRequest, aUpdates, aUpdateCount) {
       gAppUpdater.isChecking = false;
       gAppUpdater.update = gAppUpdater.aus.
                            selectUpdate(aUpdates, aUpdates.length);
@@ -287,11 +282,6 @@ appUpdater.prototype =
         return;
       }
 
-      if (gAppUpdater.update.billboardURL) {
-        gAppUpdater.selectPanel("applyBillboard");
-        return;
-      }
-
       if (gAppUpdater.updateAuto) // automatically download and install
         gAppUpdater.startDownload();
       else // ask
@@ -301,7 +291,7 @@ appUpdater.prototype =
     /**
      * See nsIUpdateService.idl
      */
-    onError: function(aRequest, aUpdate) {
+    onError(aRequest, aUpdate) {
       // Errors in the update check are treated as no updates found. If the
       // update check fails repeatedly without a success the user will be
       // notified with the normal app update user interface so this is safe.
@@ -312,7 +302,7 @@ appUpdater.prototype =
     /**
      * See nsISupports.idl
      */
-    QueryInterface: function(aIID) {
+    QueryInterface(aIID) {
       if (!aIID.equals(Components.interfaces.nsIUpdateCheckListener) &&
           !aIID.equals(Components.interfaces.nsISupports))
         throw Components.results.NS_ERROR_NO_INTERFACE;
@@ -323,7 +313,7 @@ appUpdater.prototype =
   /**
    * Starts the download of an update mar.
    */
-  startDownload: function() {
+  startDownload() {
     if (!this.update)
       this.update = this.um.activeUpdate;
     this.update.QueryInterface(Components.interfaces.nsIWritablePropertyBag);
@@ -342,7 +332,7 @@ appUpdater.prototype =
   /**
    * Switches to the UI responsible for tracking the download.
    */
-  setupDownloadingUI: function() {
+  setupDownloadingUI() {
     this.downloadStatus = document.getElementById("downloadStatus");
     this.downloadStatus.value =
       DownloadUtils.getTransferTotal(0, this.update.selectedPatch.size);
@@ -350,7 +340,7 @@ appUpdater.prototype =
     this.aus.addDownloadListener(this);
   },
 
-  removeDownloadListener: function() {
+  removeDownloadListener() {
     if (this.aus) {
       this.aus.removeDownloadListener(this);
     }
@@ -359,13 +349,13 @@ appUpdater.prototype =
   /**
    * See nsIRequestObserver.idl
    */
-  onStartRequest: function(aRequest, aContext) {
+  onStartRequest(aRequest, aContext) {
   },
 
   /**
    * See nsIRequestObserver.idl
    */
-  onStopRequest: function(aRequest, aContext, aStatusCode) {
+  onStopRequest(aRequest, aContext, aStatusCode) {
     switch (aStatusCode) {
     case Components.results.NS_ERROR_UNEXPECTED:
       if (this.update.selectedPatch.state == "download-failed" &&
@@ -386,9 +376,8 @@ appUpdater.prototype =
       this.removeDownloadListener();
       if (this.backgroundUpdateEnabled) {
         this.selectPanel("applying");
-        let update = this.um.activeUpdate;
         let self = this;
-        Services.obs.addObserver(function (aSubject, aTopic, aData) {
+        Services.obs.addObserver(function(aSubject, aTopic, aData) {
           // Update the UI when the background updater is finished
           let status = aData;
           if (status == "applied" || status == "applied-service" ||
@@ -410,7 +399,7 @@ appUpdater.prototype =
             return;
           }
           Services.obs.removeObserver(arguments.callee, "update-staged");
-        }, "update-staged", false);
+        }, "update-staged");
       } else {
         this.selectPanel("apply");
       }
@@ -425,13 +414,13 @@ appUpdater.prototype =
   /**
    * See nsIProgressEventSink.idl
    */
-  onStatus: function(aRequest, aContext, aStatus, aStatusArg) {
+  onStatus(aRequest, aContext, aStatus, aStatusArg) {
   },
 
   /**
    * See nsIProgressEventSink.idl
    */
-  onProgress: function(aRequest, aContext, aProgress, aProgressMax) {
+  onProgress(aRequest, aContext, aProgress, aProgressMax) {
     this.downloadStatus.value =
       DownloadUtils.getTransferTotal(aProgress, aProgressMax);
   },
@@ -439,7 +428,7 @@ appUpdater.prototype =
   /**
    * See nsISupports.idl
    */
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (!aIID.equals(Components.interfaces.nsIProgressEventSink) &&
         !aIID.equals(Components.interfaces.nsIRequestObserver) &&
         !aIID.equals(Components.interfaces.nsISupports))

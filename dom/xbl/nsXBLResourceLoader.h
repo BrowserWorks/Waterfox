@@ -19,6 +19,7 @@ class nsXBLPrototypeResources;
 class nsXBLPrototypeBinding;
 struct nsXBLResource;
 class nsIObjectOutputStream;
+class nsIDocument;
 
 // *********************************************************************/
 // The XBLResourceLoader class
@@ -30,11 +31,11 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS(nsXBLResourceLoader)
 
   // nsICSSLoaderObserver
-  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheetHandle aSheet,
+  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet,
                               bool aWasAlternate,
                               nsresult aStatus) override;
 
-  void LoadResources(bool* aResult);
+  bool LoadResources(nsIContent* aBoundElement);
   void AddResource(nsIAtom* aResourceType, const nsAString& aSrc);
   void AddResourceListener(nsIContent* aElement);
 
@@ -51,7 +52,7 @@ public:
                                        // information.  May be null if the
                                        // resources have already been
                                        // destroyed.
-  
+
   nsXBLResource* mResourceList; // The list of resources we need to load.
   nsXBLResource* mLastResource;
 
@@ -66,6 +67,11 @@ public:
 
 protected:
   virtual ~nsXBLResourceLoader();
+
+private:
+  // The bound document is needed in StyleSheetLoaded() for servo style
+  // backend, which will be set in LoadResources().
+  nsIDocument* MOZ_NON_OWNING_REF mBoundDocument;
 };
 
 #endif

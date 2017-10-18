@@ -38,7 +38,8 @@ class nsPluginHangUITelemetry : public mozilla::Runnable
 public:
   nsPluginHangUITelemetry(int aResponseCode, int aDontAskCode,
                           uint32_t aResponseTimeMs, uint32_t aTimeoutMs)
-    : mResponseCode(aResponseCode),
+    : Runnable("nsPluginHangUITelemetry"),
+      mResponseCode(aResponseCode),
       mDontAskCode(aDontAskCode),
       mResponseTimeMs(aResponseTimeMs),
       mTimeoutMs(aTimeoutMs)
@@ -46,7 +47,7 @@ public:
   }
 
   NS_IMETHOD
-  Run()
+  Run() override
   {
     mozilla::Telemetry::Accumulate(
               mozilla::Telemetry::PLUGIN_HANG_UI_USER_RESPONSE, mResponseCode);
@@ -255,10 +256,10 @@ PluginHangUIParent::Init(const nsString& aPluginName)
                                   WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE);
     ::WaitForSingleObject(mShowEvent, ::IsDebuggerPresent() ? INFINITE
                                                             : mIPCTimeoutMs);
-    // Setting this to true even if we time out on mShowEvent. This timeout 
-    // typically occurs when the machine is thrashing so badly that 
-    // plugin-hang-ui.exe is taking a while to start. If we didn't set 
-    // this to true, Firefox would keep spawning additional plugin-hang-ui 
+    // Setting this to true even if we time out on mShowEvent. This timeout
+    // typically occurs when the machine is thrashing so badly that
+    // plugin-hang-ui.exe is taking a while to start. If we didn't set
+    // this to true, Firefox would keep spawning additional plugin-hang-ui
     // processes, which is not what we want.
     mIsShowing = true;
   }
@@ -354,10 +355,13 @@ PluginHangUIParent::RecvUserResponse(const unsigned int& aResponse)
   int responseCode;
   if (aResponse & HANGUI_USER_RESPONSE_STOP) {
     // User clicked Stop
+    std::function<void(bool)> callback = [](bool aResult) { };
     mModule->TerminateChildProcess(mMainThreadMessageLoop,
                                    mozilla::ipc::kInvalidProcessId,
                                    NS_LITERAL_CSTRING("ModalHangUI"),
-                                   EmptyString());
+                                   EmptyString(),
+                                   mModule->DummyCallback<bool>(),
+                                   /* aAsync = */ false);
     responseCode = 1;
   } else if(aResponse & HANGUI_USER_RESPONSE_CONTINUE) {
     mModule->OnHangUIContinue();
@@ -404,7 +408,7 @@ PluginHangUIParent::GetHangUIOwnerWindowHandle(NativeWindowHandle& windowHandle)
   if (!windowHandle) {
     return NS_ERROR_FAILURE;
   }
-  
+
   return NS_OK;
 }
 
@@ -416,7 +420,7 @@ PluginHangUIParent::OnMiniShmEvent(MiniShmBase *aMiniShmObj)
   NS_ASSERTION(NS_SUCCEEDED(rv),
                "Couldn't obtain read pointer OnMiniShmEvent");
   if (NS_SUCCEEDED(rv)) {
-    // The child process has returned a response so we shouldn't worry about 
+    // The child process has returned a response so we shouldn't worry about
     // its state anymore.
     MutexAutoLock lock(mMutex);
     UnwatchHangUIChildProcess(false);

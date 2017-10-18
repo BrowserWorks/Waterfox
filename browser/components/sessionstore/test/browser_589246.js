@@ -58,7 +58,7 @@ tests.push({
   extra: false,
   close: false,
   checkWinLin: checkNoWindowsGenerator(1),
-  checkOSX: function(aPreviousState, aCurState) {
+  checkOSX(aPreviousState, aCurState) {
     is(aCurState, aPreviousState, "test #1: closed window state is unchanged");
   }
 });
@@ -118,8 +118,7 @@ function test() {
 function runNextTestOrFinish() {
   if (tests.length) {
     setupForTest(tests.shift())
-  }
-  else {
+  } else {
     // some state is cleaned up at the end of each test, but not all
     ["browser.tabs.warnOnClose", "browser.startup.page"].forEach(function(p) {
       if (gPrefService.prefHasUserValue(p))
@@ -144,10 +143,10 @@ function setupForTest(aConditions) {
                                                      : aConditions.checkWinLin;
 
   // Add observers
-  Services.obs.addObserver(onLastWindowClosed, "browser-lastwindow-close-granted", false);
+  Services.obs.addObserver(onLastWindowClosed, "browser-lastwindow-close-granted");
 
   // Set the state
-  Services.obs.addObserver(onStateRestored, "sessionstore-browser-state-restored", false);
+  Services.obs.addObserver(onStateRestored, "sessionstore-browser-state-restored");
   ss.setBrowserState(JSON.stringify(testState));
 }
 
@@ -161,17 +160,14 @@ function onStateRestored(aSubject, aTopic, aData) {
 
   let newWin = openDialog(location, "_blank", "chrome,all,dialog=no", "http://example.com");
   newWin.addEventListener("load", function(aEvent) {
-    newWin.removeEventListener("load", arguments.callee, false);
-
     promiseBrowserLoaded(newWin.gBrowser.selectedBrowser).then(() => {
       // pin this tab
       if (shouldPinTab)
         newWin.gBrowser.pinTab(newWin.gBrowser.selectedTab);
 
-      newWin.addEventListener("unload", function () {
-        newWin.removeEventListener("unload", arguments.callee, false);
+      newWin.addEventListener("unload", function() {
         onWindowUnloaded();
-      }, false);
+      }, {once: true});
       // Open a new tab as well. On Windows/Linux this will be restored when the
       // new window is opened below (in onWindowUnloaded). On OS X we'll just
       // restore the pinned tabs, leaving the unpinned tab in the closedWindowsData.
@@ -180,23 +176,19 @@ function onStateRestored(aSubject, aTopic, aData) {
         let newTab2 = newWin.gBrowser.addTab("about:buildconfig");
 
         newTab.linkedBrowser.addEventListener("load", function() {
-          newTab.linkedBrowser.removeEventListener("load", arguments.callee, true);
-
           if (shouldCloseTab == "one") {
             newWin.gBrowser.removeTab(newTab2);
-          }
-          else if (shouldCloseTab == "both") {
+          } else if (shouldCloseTab == "both") {
             newWin.gBrowser.removeTab(newTab);
             newWin.gBrowser.removeTab(newTab2);
           }
           newWin.BrowserTryToCloseWindow();
-        }, true);
-      }
-      else {
+        }, {capture: true, once: true});
+      } else {
         newWin.BrowserTryToCloseWindow();
       }
     });
-  }, false);
+  }, {once: true});
 }
 
 // This will be called before the window is actually closed
@@ -219,17 +211,13 @@ function onWindowUnloaded() {
   // Now we want to open a new window
   let newWin = openDialog(location, "_blank", "chrome,all,dialog=no", "about:mozilla");
   newWin.addEventListener("load", function(aEvent) {
-    newWin.removeEventListener("load", arguments.callee, false);
-
-    newWin.gBrowser.selectedBrowser.addEventListener("load", function () {
-      newWin.gBrowser.selectedBrowser.removeEventListener("load", arguments.callee, true);
-
+    newWin.gBrowser.selectedBrowser.addEventListener("load", function() {
       // Good enough for checking the state
       afterTestCallback(previousClosedWindowData, ss.getClosedWindowData());
       afterTestCleanup(newWin);
-    }, true);
+    }, {capture: true, once: true});
 
-  }, false);
+  }, {once: true});
 }
 
 function afterTestCleanup(aNewWin) {

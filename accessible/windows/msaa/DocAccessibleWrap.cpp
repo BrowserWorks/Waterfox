@@ -7,8 +7,9 @@
 #include "DocAccessibleWrap.h"
 
 #include "Compatibility.h"
-#include "nsWinUtils.h"
 #include "mozilla/dom/TabChild.h"
+#include "DocAccessibleChild.h"
+#include "nsWinUtils.h"
 #include "Role.h"
 #include "RootAccessible.h"
 #include "sdnDocAccessible.h"
@@ -44,10 +45,34 @@ IMPL_IUNKNOWN_QUERY_HEAD(DocAccessibleWrap)
 IMPL_IUNKNOWN_QUERY_TAIL_INHERITED(HyperTextAccessibleWrap)
 
 STDMETHODIMP
+DocAccessibleWrap::get_accParent(
+      /* [retval][out] */ IDispatch __RPC_FAR *__RPC_FAR *ppdispParent)
+{
+  // We might be a top-level document in a content process.
+  DocAccessibleChild* ipcDoc = IPCDoc();
+  if (!ipcDoc) {
+    return DocAccessible::get_accParent(ppdispParent);
+  }
+
+  // Emulated window proxy is only set for the top level content document when
+  // emulation is enabled.
+  IAccessible* dispParent = ipcDoc->GetEmulatedWindowIAccessible();
+  if (!dispParent) {
+    dispParent = ipcDoc->GetParentIAccessible();
+  }
+
+  if (!dispParent) {
+    return S_FALSE;
+  }
+
+  dispParent->AddRef();
+  *ppdispParent = static_cast<IDispatch*>(dispParent);
+  return S_OK;
+}
+
+STDMETHODIMP
 DocAccessibleWrap::get_accValue(VARIANT aVarChild, BSTR __RPC_FAR* aValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (!aValue)
     return E_INVALIDARG;
   *aValue = nullptr;
@@ -71,8 +96,6 @@ DocAccessibleWrap::get_accValue(VARIANT aVarChild, BSTR __RPC_FAR* aValue)
 
   *aValue = ::SysAllocStringLen(url.get(), url.Length());
   return *aValue ? S_OK : E_OUTOFMEMORY;
-
-  A11Y_TRYBLOCK_END
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,8 +108,9 @@ DocAccessibleWrap::Shutdown()
   if (nsWinUtils::IsWindowEmulationStarted()) {
     // Destroy window created for root document.
     if (mDocFlags & eTabDocument) {
-      nsWinUtils::sHWNDCache->Remove(mHWND);
-      ::DestroyWindow(static_cast<HWND>(mHWND));
+      HWND hWnd = static_cast<HWND>(mHWND);
+      ::RemovePropW(hWnd, kPropNameDocAcc);
+      ::DestroyWindow(hWnd);
     }
 
     mHWND = nullptr;
@@ -101,7 +125,17 @@ DocAccessibleWrap::Shutdown()
 void*
 DocAccessibleWrap::GetNativeWindow() const
 {
-  return mHWND ? mHWND : DocAccessible::GetNativeWindow();
+  if (XRE_IsContentProcess()) {
+    DocAccessibleChild* ipcDoc = IPCDoc();
+    if (!ipcDoc) {
+      return nullptr;
+    }
+
+    return ipcDoc->GetNativeWindowHandle();
+  } else if (mHWND) {
+    return mHWND;
+  }
+  return DocAccessible::GetNativeWindow();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,18 +149,7 @@ DocAccessibleWrap::DoInitialUpdate()
   if (nsWinUtils::IsWindowEmulationStarted()) {
     // Create window for tab document.
     if (mDocFlags & eTabDocument) {
-      mozilla::dom::TabChild* tabChild =
-        mozilla::dom::TabChild::GetFrom(mDocumentNode->GetShell());
-
       a11y::RootAccessible* rootDocument = RootAccessible();
-
-      mozilla::WindowsHandle nativeData = 0;
-      if (tabChild)
-        tabChild->SendGetWidgetNativeData(&nativeData);
-      else
-        nativeData = reinterpret_cast<mozilla::WindowsHandle>(
-          rootDocument->GetNativeWindow());
-
       bool isActive = true;
       nsIntRect rect(CW_USEDEFAULT, CW_USEDEFAULT, 0, 0);
       if (Compatibility::IsDolphin()) {
@@ -140,13 +163,16 @@ DocAccessibleWrap::DoInitialUpdate()
         docShell->GetIsActive(&isActive);
       }
 
-      HWND parentWnd = reinterpret_cast<HWND>(nativeData);
+      RefPtr<DocAccessibleWrap> self(this);
+      nsWinUtils::NativeWindowCreateProc onCreate([self](HWND aHwnd) -> void {
+        ::SetPropW(aHwnd, kPropNameDocAcc, reinterpret_cast<HANDLE>(self.get()));
+      });
+
+      HWND parentWnd = reinterpret_cast<HWND>(rootDocument->GetNativeWindow());
       mHWND = nsWinUtils::CreateNativeWindow(kClassNameTabContent, parentWnd,
                                              rect.x, rect.y,
-                                             rect.width, rect.height, isActive);
-
-      nsWinUtils::sHWNDCache->Put(mHWND, this);
-
+                                             rect.width, rect.height, isActive,
+                                             &onCreate);
     } else {
       DocAccessible* parentDocument = ParentDocument();
       if (parentDocument)

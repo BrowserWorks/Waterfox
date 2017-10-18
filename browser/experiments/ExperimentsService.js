@@ -8,7 +8,6 @@ const {interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Experiments",
                                   "resource:///modules/experiments/Experiments.jsm");
@@ -16,34 +15,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryUtils",
+                                  "resource://gre/modules/TelemetryUtils.jsm");
+
 
 const PREF_EXPERIMENTS_ENABLED  = "experiments.enabled";
 const PREF_ACTIVE_EXPERIMENT    = "experiments.activeExperiment"; // whether we have an active experiment
-const PREF_TELEMETRY_ENABLED    = "toolkit.telemetry.enabled";
-const PREF_TELEMETRY_UNIFIED    = "toolkit.telemetry.unified";
 const DELAY_INIT_MS             = 30 * 1000;
-
-// Whether the FHR/Telemetry unification features are enabled.
-// Changing this pref requires a restart.
-const IS_UNIFIED_TELEMETRY = Preferences.get(PREF_TELEMETRY_UNIFIED, false);
-
-XPCOMUtils.defineLazyGetter(
-  this, "gPrefs", () => {
-    return new Preferences();
-  });
-
-XPCOMUtils.defineLazyGetter(
-  this, "gExperimentsEnabled", () => {
-    // We can enable experiments if either unified Telemetry or FHR is on, and the user
-    // has opted into Telemetry.
-    return gPrefs.get(PREF_EXPERIMENTS_ENABLED, false) &&
-           IS_UNIFIED_TELEMETRY && gPrefs.get(PREF_TELEMETRY_ENABLED, false);
-  });
-
-XPCOMUtils.defineLazyGetter(
-  this, "gActiveExperiment", () => {
-    return gPrefs.get(PREF_ACTIVE_EXPERIMENT);
-  });
 
 function ExperimentsService() {
   this._initialized = false;
@@ -54,8 +32,15 @@ ExperimentsService.prototype = {
   classID: Components.ID("{f7800463-3b97-47f9-9341-b7617e6d8d49}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback, Ci.nsIObserver]),
 
-  notify: function (timer) {
-    if (!gExperimentsEnabled) {
+  get _experimentsEnabled() {
+    // We can enable experiments if either unified Telemetry or FHR is on, and the user
+    // has opted into Telemetry.
+    return Services.prefs.getBoolPref(PREF_EXPERIMENTS_ENABLED, false) &&
+           TelemetryUtils.isTelemetryEnabled;
+  },
+
+  notify(timer) {
+    if (!this._experimentsEnabled) {
       return;
     }
     if (OS.Constants.Path.profileDir === undefined) {
@@ -63,26 +48,30 @@ ExperimentsService.prototype = {
     }
     let instance = Experiments.instance();
     if (instance.isReady) {
-      instance.updateManifest();
+      instance.updateManifest().catch(error => {
+        // Don't throw, as this breaks tests. In any case the best we can do here
+        // is to log the failure.
+        Cu.reportError(error);
+      });
     }
   },
 
-  _delayedInit: function () {
+  _delayedInit() {
     if (!this._initialized) {
       this._initialized = true;
       Experiments.instance(); // for side effects
     }
   },
 
-  observe: function (subject, topic, data) {
+  observe(subject, topic, data) {
     switch (topic) {
       case "profile-after-change":
-        if (gExperimentsEnabled) {
-          Services.obs.addObserver(this, "quit-application", false);
-          Services.obs.addObserver(this, "sessionstore-state-finalized", false);
-          Services.obs.addObserver(this, "EM-loaded", false);
+        if (this._experimentsEnabled) {
+          Services.obs.addObserver(this, "quit-application");
+          Services.obs.addObserver(this, "sessionstore-state-finalized");
+          Services.obs.addObserver(this, "EM-loaded");
 
-          if (gActiveExperiment) {
+          if (Services.prefs.getBoolPref(PREF_ACTIVE_EXPERIMENT, false)) {
             this._initialized = true;
             Experiments.instance(); // for side effects
           }

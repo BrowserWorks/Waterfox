@@ -151,7 +151,7 @@ var RemoteDebugger = {
       return this._receivingOOB;
     }
 
-    this._receivingOOB = Messaging.sendRequestForResult({
+    this._receivingOOB = WindowEventDispatcher.sendRequestForResult({
       type: "DevToolsAuth:Scan"
     }).then(data => {
       return JSON.parse(data);
@@ -199,7 +199,7 @@ RemoteDebugger.receiveOOB =
 var USBRemoteDebugger = {
 
   init() {
-    Services.prefs.addObserver("devtools.", this, false);
+    Services.prefs.addObserver("devtools.", this);
 
     if (this.isEnabled) {
       this.start();
@@ -279,7 +279,7 @@ var USBRemoteDebugger = {
 var WiFiRemoteDebugger = {
 
   init() {
-    Services.prefs.addObserver("devtools.", this, false);
+    Services.prefs.addObserver("devtools.", this);
 
     if (this.isEnabled) {
       this.start();

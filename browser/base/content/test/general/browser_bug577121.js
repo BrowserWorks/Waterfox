@@ -3,15 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 function test() {
-  Services.prefs.setBoolPref("browser.tabs.animate", false);
+  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
   registerCleanupFunction(function() {
-    Services.prefs.clearUserPref("browser.tabs.animate");
+    Services.prefs.clearUserPref("toolkit.cosmeticAnimations.enabled");
   });
 
   // Open 2 other tabs, and pin the second one. Like that, the initial tab
   // should get closed.
-  let testTab1 = gBrowser.addTab();
-  let testTab2 = gBrowser.addTab();
+  let testTab1 = BrowserTestUtils.addTab(gBrowser);
+  let testTab2 = BrowserTestUtils.addTab(gBrowser);
   gBrowser.pinTab(testTab2);
 
   // Now execute "Close other Tabs" on the first manually opened tab (tab1).
@@ -22,7 +22,7 @@ function test() {
   is(gBrowser.tabs.length, 2, "there are two remaining tabs open");
   is(gBrowser.tabs[0], testTab2, "pinned tab2 stayed open");
   is(gBrowser.tabs[1], testTab1, "tab1 stayed open");
-  
+
   // Cleanup. Close only one tab because we need an opened tab at the end of
   // the test.
   gBrowser.removeTab(testTab2);

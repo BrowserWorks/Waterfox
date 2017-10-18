@@ -30,7 +30,6 @@
 #include "nsReadableUtils.h"
 #include "nsCRT.h"
 #include "nsError.h"
-#include "nsDOMClassInfoID.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/dom/Element.h"
@@ -42,7 +41,7 @@ static LazyLogModule gCommandLog("nsXULCommandDispatcher");
 ////////////////////////////////////////////////////////////////////////
 
 nsXULCommandDispatcher::nsXULCommandDispatcher(nsIDocument* aDocument)
-    : mDocument(aDocument), mUpdaters(nullptr)
+    : mDocument(aDocument), mUpdaters(nullptr), mLocked(false)
 {
 }
 
@@ -57,7 +56,6 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsXULCommandDispatcher)
     NS_INTERFACE_MAP_ENTRY(nsIDOMXULCommandDispatcher)
     NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMXULCommandDispatcher)
-    NS_DOM_INTERFACE_MAP_ENTRY_CLASSINFO(XULCommandDispatcher)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsXULCommandDispatcher)
@@ -264,9 +262,9 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
 
 #ifdef DEBUG
       if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
-        nsAutoCString eventsC, targetsC, aeventsC, atargetsC; 
-        eventsC.AssignWithConversion(updater->mEvents);
-        targetsC.AssignWithConversion(updater->mTargets);
+        nsAutoCString eventsC, targetsC, aeventsC, atargetsC;
+        LossyCopyUTF16toASCII(updater->mEvents, eventsC);
+        LossyCopyUTF16toASCII(updater->mTargets, targetsC);
         CopyUTF16toUTF8(aEvents, aeventsC);
         CopyUTF16toUTF8(aTargets, atargetsC);
         MOZ_LOG(gCommandLog, LogLevel::Debug,
@@ -292,7 +290,7 @@ nsXULCommandDispatcher::AddCommandUpdater(nsIDOMElement* aElement,
   }
 #ifdef DEBUG
   if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
-    nsAutoCString aeventsC, atargetsC; 
+    nsAutoCString aeventsC, atargetsC;
     CopyUTF16toUTF8(aEvents, aeventsC);
     CopyUTF16toUTF8(aTargets, atargetsC);
 
@@ -323,9 +321,9 @@ nsXULCommandDispatcher::RemoveCommandUpdater(nsIDOMElement* aElement)
     if (updater->mElement == aElement) {
 #ifdef DEBUG
       if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
-        nsAutoCString eventsC, targetsC; 
-        eventsC.AssignWithConversion(updater->mEvents);
-        targetsC.AssignWithConversion(updater->mTargets);
+        nsAutoCString eventsC, targetsC;
+        LossyCopyUTF16toASCII(updater->mEvents, eventsC);
+        LossyCopyUTF16toASCII(updater->mTargets, targetsC);
         MOZ_LOG(gCommandLog, LogLevel::Debug,
                ("xulcmd[%p] remove  %p(events=%s targets=%s)",
                 this, aElement,
@@ -350,6 +348,14 @@ nsXULCommandDispatcher::RemoveCommandUpdater(nsIDOMElement* aElement)
 NS_IMETHODIMP
 nsXULCommandDispatcher::UpdateCommands(const nsAString& aEventName)
 {
+  if (mLocked) {
+    if (!mPendingUpdates.Contains(aEventName)) {
+      mPendingUpdates.AppendElement(aEventName);
+    }
+
+    return NS_OK;
+  }
+
   nsAutoString id;
   nsCOMPtr<nsIDOMElement> element;
   GetFocusedElement(getter_AddRefs(element));
@@ -383,7 +389,7 @@ nsXULCommandDispatcher::UpdateCommands(const nsAString& aEventName)
 
 #ifdef DEBUG
     if (MOZ_LOG_TEST(gCommandLog, LogLevel::Debug)) {
-      nsAutoCString aeventnameC; 
+      nsAutoCString aeventnameC;
       CopyUTF16toUTF8(aEventName, aeventnameC);
       MOZ_LOG(gCommandLog, LogLevel::Debug,
              ("xulcmd[%p] update %p event=%s",
@@ -399,7 +405,7 @@ nsXULCommandDispatcher::UpdateCommands(const nsAString& aEventName)
 }
 
 bool
-nsXULCommandDispatcher::Matches(const nsString& aList, 
+nsXULCommandDispatcher::Matches(const nsString& aList,
                                 const nsAString& aElement)
 {
   if (aList.EqualsLiteral("*"))
@@ -457,3 +463,30 @@ nsXULCommandDispatcher::SetSuppressFocusScroll(bool aSuppressFocusScroll)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsXULCommandDispatcher::Lock()
+{
+  // Since locking is used only as a performance optimization, we don't worry
+  // about nested lock calls. If that does happen, it just means we will unlock
+  // and process updates earlier.
+  mLocked = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULCommandDispatcher::Unlock()
+{
+  if (mLocked) {
+    mLocked = false;
+
+    // Handle any pending updates one at a time. In the unlikely case where a
+    // lock is added during the update, break out.
+    while (!mLocked && mPendingUpdates.Length() > 0) {
+      nsString name = mPendingUpdates.ElementAt(0);
+      mPendingUpdates.RemoveElementAt(0);
+      UpdateCommands(name);
+    }
+  }
+
+  return NS_OK;
+}

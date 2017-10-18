@@ -40,8 +40,8 @@ public:
     NS_IMETHOD WillInterrupt(void) override;
     NS_IMETHOD WillResume(void) override;
     NS_IMETHOD SetParser(nsParserBase* aParser) override;
-    virtual void FlushPendingNotifications(mozFlushType aType) override { }
-    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override;
+    virtual void FlushPendingNotifications(mozilla::FlushType aType) override { }
+    virtual void SetDocumentCharset(NotNull<const Encoding*> aEncoding) override;
     virtual nsISupports *GetTarget() override;
 
     /**

@@ -7,24 +7,31 @@
         <meta name="assert" content="After invoking the releasePointerCapture method on an element, subsequent events for the specified pointer must follow normal hit testing mechanisms for determining the event target"/>
         <link rel="stylesheet" type="text/css" href="pointerevent_styles.css">
         <script src="/resources/testharness.js"></script>
-        <!--script src="/resources/testharnessreport.js"></script-->
+        <script src="/resources/testharnessreport.js"></script>
         <!-- Additional helper script for common checks across event types -->
         <script type="text/javascript" src="pointerevent_support.js"></script>
-        <script type="text/javascript" src="mochitest_support_internal.js"></script>
         <script type="text/javascript">
+            var test_pointerEvent;
             var detected_pointertypes = {};
-            var test_pointerEvent = async_test("lostpointercapture: subsequent events to target.");  // set up test harness
-            var suppressedEventsFail = false;
-            // showPointerTypes is defined in pointerevent_support.js
-            // Requirements: the callback function will reference the test_pointerEvent object and
-            // will fail unless the async_test is created with the var name "test_pointerEvent".
-            add_completion_callback(showPointerTypes);
-
-            var captured_event;
+            var captured_event = null;
+            var test_done = false;
+            var overEnterEventsFail = false;
+            var outLeaveEventsFail = false;
             var f_gotPointerCapture = false;
             var f_lostPointerCapture = false;
 
+            function resetTestState() {
+              captured_event = null;
+              test_done = false;
+              overEnterEventsFail = false;
+              outLeaveEventsFail = false;
+              f_gotPointerCapture = false;
+              f_lostPointerCapture = false;
+            }
+
             function listenerEventHandler(event) {
+                if (test_done)
+                    return;
                 detected_pointertypes[event.pointerType] = true;
                 if (event.type == "gotpointercapture") {
                     f_gotPointerCapture = true;
@@ -35,12 +42,20 @@
                     f_gotPointerCapture = false;
                     check_PointerEvent(event);
                 }
-                else if(event.type == "pointerover" || event.type == "pointerenter" || event.type == "pointerout" || event.type == "pointerleave") {
-                    if(!suppressedEventsFail) {
+                else if(event.type == "pointerover" || event.type == "pointerenter") {
+                    if(captured_event && !overEnterEventsFail) {
                         test(function() {
-                            assert_true(false, "Suppressed events were received");
-                        }, "Suppressed events were received");
-                        suppressedEventsFail = true;
+                            assert_false(f_gotPointerCapture, "pointerover/enter should be received before the target receives gotpointercapture even when the pointer is not over it.");
+                        }, expectedPointerType + " pointerover/enter should be received before the target receives gotpointercapture even when the pointer is not over it.");
+                        overEnterEventsFail = true;
+                    }
+                }
+                else if(event.type == "pointerout" || event.type == "pointerleave") {
+                    if(!outLeaveEventsFail) {
+                        test(function() {
+                            assert_true(f_lostPointerCapture, "pointerout/leave should not be received unless the target just lost the capture.");
+                        }, expectedPointerType + " pointerout/leave should not be received unless the target just lost the capture.");
+                        outLeaveEventsFail = true;
                     }
                 }
                 else if (event.pointerId == captured_event.pointerId) {
@@ -50,19 +65,21 @@
                     }
                     else {
                         // if any other events are received after releaseCapture, then the test fails
-                        test_pointerEvent.step(function () {
-                            assert_true(false, event.target.id + "-" + event.type + " should be handled by target element handler");
-                        });
+                        test(function () {
+                            assert_unreached(event.target.id + "-" + event.type + " should be handled by target element handler");
+                        }, expectedPointerType + " No other events should be recieved by capturing node after release");
                     }
                 }
             }
 
             function targetEventHandler(event) {
+                if (test_done)
+                    return;
                 if (f_gotPointerCapture) {
                     if(event.type != "pointerout" && event.type != "pointerleave") {
-                        test_pointerEvent.step(function () {
-                            assert_true(false, "The Target element should not have received any events while capture is active. Event recieved:" + event.type + ".  ");
-                        });
+                        test(function () {
+                            assert_unreached("The Target element should not have received any events while capture is active. Event recieved:" + event.type + ".  ");
+                        }, expectedPointerType + " The target element should not receive any events while capture is active");
                     }
                 }
 
@@ -77,12 +94,14 @@
                         assert_equals(event.pointerId, captured_event.pointerId, "pointerID is same for event captured and after release");
                     });
                     if (event.type == "pointerup") {
+                        test_done = true;
                         test_pointerEvent.done(); // complete test
                     }
                 }
             }
 
             function run() {
+                test_pointerEvent = setup_pointerevent_test("got/lost pointercapture: subsequent events to target", ALL_POINTERS);  // set up test harness
                 var listener = document.getElementById("listener");
                 var target0 = document.getElementById("target0");
                 target0.style["touchAction"] = "none";
@@ -96,18 +115,17 @@
         </script>
     </head>
     <body onload="run()">
+        <h2 id="pointerTypeDescription"></h2>
         <div id="listener"></div>
         <h1>Pointer Event: releasePointerCapture() - subsequent events follow normal hitting testing mechanisms</h1>
-        <!--
         <h4>
             Test Description:
+            Use your pointer and press down in the black box. Then move around in the box and release your pointer.
             After invoking the releasePointerCapture method on an element, subsequent events for the specified
-            pointer must follow normal hit testing mechanisms for determining the event target
+            pointer must follow normal hit testing mechanisms for determining the event target.
         </h4>
         <br />
-        -->
         <div id="target0">
-            Use mouse, touch or pen to contact here and move around.
         </div>
         <div id="complete-notice">
             <p>Test complete:  Scroll to Summary to view Pass/Fail Results.</p>

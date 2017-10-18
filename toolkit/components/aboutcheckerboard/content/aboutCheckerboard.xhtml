@@ -8,12 +8,14 @@
  <head>
   <meta name="viewport" content="width=device-width"/>
   <link rel="stylesheet" href="chrome://global/content/aboutCheckerboard.css" type="text/css"/>
-  <script type="text/javascript;version=1.8" src="chrome://global/content/aboutCheckerboard.js"></script>
+  <script type="text/javascript" src="chrome://global/content/aboutCheckerboard.js"></script>
  </head>
 
  <body onload="onLoad()">
   <p>Checkerboard recording is <span id="enabled" style="color: red">undetermined</span>.
      <button onclick="toggleEnabled()">Toggle it!</button>.</p>
+  <p>If there are active reports in progress, you can stop and flush them by clicking here:
+     <button onclick="flushReports()">Flush active reports</button></p>
   <table class="listing" cellspacing="0">
    <tr>
     <th>Most severe checkerboarding reports</th>

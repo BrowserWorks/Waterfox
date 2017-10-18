@@ -8,6 +8,7 @@
 #include "SkImageSource.h"
 
 #include "SkCanvas.h"
+#include "SkColorSpaceXformer.h"
 #include "SkImage.h"
 #include "SkReadBuffer.h"
 #include "SkSpecialImage.h"
@@ -15,9 +16,29 @@
 #include "SkWriteBuffer.h"
 #include "SkString.h"
 
+sk_sp<SkImageFilter> SkImageSource::Make(sk_sp<SkImage> image) {
+    if (!image) {
+        return nullptr;
+    }
+
+    return sk_sp<SkImageFilter>(new SkImageSource(std::move(image)));
+}
+
+sk_sp<SkImageFilter> SkImageSource::Make(sk_sp<SkImage> image,
+                                         const SkRect& srcRect,
+                                         const SkRect& dstRect,
+                                         SkFilterQuality filterQuality) {
+    if (!image || srcRect.width() <= 0.0f || srcRect.height() <= 0.0f) {
+        return nullptr;
+    }
+
+    return sk_sp<SkImageFilter>(new SkImageSource(std::move(image),
+                                                  srcRect, dstRect,
+                                                  filterQuality));
+}
 
 SkImageSource::SkImageSource(sk_sp<SkImage> image)
-    : INHERITED(0, nullptr)
+    : INHERITED(nullptr, 0, nullptr)
     , fImage(std::move(image))
     , fSrcRect(SkRect::MakeIWH(fImage->width(), fImage->height()))
     , fDstRect(fSrcRect)
@@ -28,7 +49,7 @@ SkImageSource::SkImageSource(sk_sp<SkImage> image,
                              const SkRect& srcRect,
                              const SkRect& dstRect,
                              SkFilterQuality filterQuality)
-    : INHERITED(0, nullptr)
+    : INHERITED(nullptr, 0, nullptr)
     , fImage(std::move(image))
     , fSrcRect(srcRect)
     , fDstRect(dstRect)
@@ -63,22 +84,26 @@ sk_sp<SkSpecialImage> SkImageSource::onFilterImage(SkSpecialImage* source, const
     ctx.ctm().mapRect(&dstRect, fDstRect);
 
     SkRect bounds = SkRect::MakeIWH(fImage->width(), fImage->height());
-    if (fSrcRect == bounds && dstRect == bounds) {
-        // No regions cropped out or resized; return entire image.
-        offset->fX = offset->fY = 0;
-        return SkSpecialImage::MakeFromImage(source->internal_getProxy(),
-                                             SkIRect::MakeWH(fImage->width(), fImage->height()),
-                                             fImage,
-                                             &source->props());
+    if (fSrcRect == bounds) {
+        int iLeft = dstRect.fLeft;
+        int iTop = dstRect.fTop;
+        // TODO: this seems to be a very noise-prone way to determine this (esp. the floating-point
+        // widths & heights).
+        if (dstRect.width() == bounds.width() && dstRect.height() == bounds.height() &&
+            iLeft == dstRect.fLeft && iTop == dstRect.fTop) {
+            // The dest is just an un-scaled integer translation of the entire image; return it
+            offset->fX = iLeft;
+            offset->fY = iTop;
+
+            return SkSpecialImage::MakeFromImage(SkIRect::MakeWH(fImage->width(), fImage->height()),
+                                                 fImage, ctx.outputProperties().colorSpace(),
+                                                 &source->props());
+        }
     }
 
     const SkIRect dstIRect = dstRect.roundOut();
 
-    // SRGBTODO: Propagate SkColorType?
-    const SkImageInfo info = SkImageInfo::MakeN32(dstIRect.width(), dstIRect.height(),
-                                                  kPremul_SkAlphaType);
-
-    sk_sp<SkSpecialSurface> surf(source->makeSurface(info));
+    sk_sp<SkSpecialSurface> surf(source->makeSurface(ctx.outputProperties(), dstIRect.size()));
     if (!surf) {
         return nullptr;
     }
@@ -93,7 +118,7 @@ sk_sp<SkSpecialImage> SkImageSource::onFilterImage(SkSpecialImage* source, const
 
     // Subtract off the integer component of the translation (will be applied in offset, below).
     dstRect.offset(-SkIntToScalar(dstIRect.fLeft), -SkIntToScalar(dstIRect.fTop));
-    paint.setXfermodeMode(SkXfermode::kSrc_Mode);
+    paint.setBlendMode(SkBlendMode::kSrc);
     // FIXME: this probably shouldn't be necessary, but drawImageRect asserts
     // None filtering when it's translate-only
     paint.setFilterQuality(
@@ -105,6 +130,12 @@ sk_sp<SkSpecialImage> SkImageSource::onFilterImage(SkSpecialImage* source, const
     offset->fX = dstIRect.fLeft;
     offset->fY = dstIRect.fTop;
     return surf->makeImageSnapshot();
+}
+
+sk_sp<SkImageFilter> SkImageSource::onMakeColorSpace(SkColorSpaceXformer* xformer) const {
+    SkASSERT(0 == this->countInputs());
+
+    return SkImageSource::Make(xformer->apply(fImage.get()), fSrcRect, fDstRect, fFilterQuality);
 }
 
 SkRect SkImageSource::computeFastBounds(const SkRect& src) const {

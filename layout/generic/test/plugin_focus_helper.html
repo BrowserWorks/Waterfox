@@ -72,7 +72,7 @@ function done() {
   // continuing. (Bug 874843)
   for (var p of [ "p1", "p2" ]) {
     p = document.getElementById(p);
-    p.parentNode.removeChild(p);
+    p.remove();
     p = null;
   }
   SimpleTest.waitForFocus(window.opener.childDone, window);
@@ -105,8 +105,8 @@ function handleEvent(event) {
 var elems = ["input", "p1", "p2"];
 for (var i = 0; i < elems.length; ++i) {
   var e = document.getElementById(elems[i]);
-  e.addEventListener("focus", handleEvent, false);
-  e.addEventListener("blur", handleEvent, false);
+  e.addEventListener("focus", handleEvent);
+  e.addEventListener("blur", handleEvent);
 }
 
 function doTest() {

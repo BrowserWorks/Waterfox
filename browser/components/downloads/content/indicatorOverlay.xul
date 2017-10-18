@@ -25,12 +25,12 @@
          its arrow unexpectedly. -->
     <stack id="downloads-indicator-anchor"
            consumeanchor="downloads-button">
-      <vbox id="downloads-indicator-progress-area" pack="center">
-        <description id="downloads-indicator-counter"/>
-        <progressmeter id="downloads-indicator-progress" class="plain"
-                       min="0" max="100"/>
-      </vbox>
-      <vbox id="downloads-indicator-icon"/>
+#ifdef MOZ_PHOTON_ANIMATIONS
+      <box id="downloads-indicator-icon"/>
+#endif
+      <stack id="downloads-indicator-progress-outer">
+        <box id="downloads-indicator-progress-inner"/>
+      </stack>
     </stack>
   </toolbarbutton>
 </overlay>

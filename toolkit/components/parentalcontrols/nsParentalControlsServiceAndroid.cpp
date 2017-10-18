@@ -6,7 +6,7 @@
 #include "nsParentalControlsService.h"
 #include "nsString.h"
 #include "nsIFile.h"
-#include "GeneratedJNIWrappers.h"
+#include "FennecJNIWrappers.h"
 
 namespace java = mozilla::java;
 
@@ -15,7 +15,7 @@ NS_IMPL_ISUPPORTS(nsParentalControlsService, nsIParentalControlsService)
 nsParentalControlsService::nsParentalControlsService() :
   mEnabled(false)
 {
-  if (mozilla::jni::IsAvailable()) {
+  if (mozilla::jni::IsFennec()) {
     mEnabled = java::Restrictions::IsUserRestricted();
   }
 }
@@ -87,7 +87,7 @@ nsParentalControlsService::IsAllowed(int16_t aAction,
     return rv;
   }
 
-  if (mozilla::jni::IsAvailable()) {
+  if (mozilla::jni::IsFennec()) {
     nsAutoCString url;
     if (aUri) {
       rv = aUri->GetSpec(url);
@@ -95,7 +95,7 @@ nsParentalControlsService::IsAllowed(int16_t aAction,
     }
 
     *_retval = java::Restrictions::IsAllowed(aAction,
-                                                    NS_ConvertUTF8toUTF16(url));
+                                             NS_ConvertUTF8toUTF16(url));
     return rv;
   }
 

@@ -12,7 +12,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
                                   "resource://gre/modules/Prompt.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging",
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
                                   "resource://gre/modules/Messaging.jsm");
 
 function TabSource() {
@@ -56,10 +56,7 @@ TabSource.prototype = {
     });
 
     // Spin this thread while we wait for a result.
-    let thread = Services.tm.currentThread;
-    while (result == null) {
-      thread.processNextEvent(true);
-    }
+    Services.tm.spinEventLoopUntil(() => result != null);
 
     if (result == -1) {
       return null;
@@ -72,7 +69,11 @@ TabSource.prototype = {
     let tabs = app.tabs;
     for (var i in tabs) {
       if (tabs[i].browser.contentWindow == window) {
-        Messaging.sendRequest({ type: "Tab:StreamStart", tabID: tabs[i].id });
+        EventDispatcher.instance.sendRequest({
+          type: "Tab:RecordingChange",
+          recording: true,
+          tabID: tabs[i].id,
+        });
       }
     }
   },
@@ -82,7 +83,11 @@ TabSource.prototype = {
     let tabs = app.tabs;
     for (let i in tabs) {
       if (tabs[i].browser.contentWindow == window) {
-        Messaging.sendRequest({ type: "Tab:StreamStop", tabID: tabs[i].id });
+        EventDispatcher.instance.sendRequest({
+          type: "Tab:RecordingChange",
+          recording: false,
+          tabID: tabs[i].id,
+        });
       }
     }
   }

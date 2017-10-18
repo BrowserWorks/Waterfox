@@ -82,7 +82,7 @@ class SphinxManager(object):
         for p in sorted(self._python_package_dirs):
             full = os.path.join(self._topsrcdir, p)
 
-            finder = FileFinder(full, find_executables=False)
+            finder = FileFinder(full)
             dirs = {os.path.dirname(f[0]) for f in finder.find('**')}
 
             excludes = {d for d in dirs if d.endswith('test')}
@@ -96,7 +96,7 @@ class SphinxManager(object):
     def _synchronize_docs(self):
         m = InstallManifest()
 
-        m.add_symlink(self._conf_py_path, 'conf.py')
+        m.add_link(self._conf_py_path, 'conf.py')
 
         for dest, source in sorted(self._trees.items()):
             source_dir = os.path.join(self._topsrcdir, source)
@@ -105,7 +105,7 @@ class SphinxManager(object):
                     source_path = os.path.join(root, f)
                     rel_source = source_path[len(source_dir) + 1:]
 
-                    m.add_symlink(source_path, os.path.join(dest, rel_source))
+                    m.add_link(source_path, os.path.join(dest, rel_source))
 
         copier = FileCopier()
         m.populate_registry(copier)

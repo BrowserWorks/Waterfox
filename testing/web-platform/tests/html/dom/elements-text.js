@@ -4,11 +4,12 @@ var textElements = {
     // Conforming
     target: "string",
     download: "string",
-    ping: "urls",
+    ping: "string",
     rel: "string",
     relList: {type: "tokenlist", domAttrName: "rel"},
     hreflang: "string",
     type: "string",
+    referrerPolicy: {type: "enum", keywords: ["", "no-referrer", "no-referrer-when-downgrade", "same-origin", "origin", "strict-origin", "origin-when-cross-origin", "strict-origin-when-cross-origin", "unsafe-url"]},
 
     // HTMLHyperlinkElementUtils
     href: "url",

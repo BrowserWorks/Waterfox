@@ -10,8 +10,6 @@ interface nsIRequestObserver;
 interface nsIInterfaceRequestor;
 interface nsIRequestContext;
 
-typedef unsigned long nsLoadFlags;
-
 /**
  * A load group maintains a collection of nsIRequest objects.
  * This is used in lots of places where groups of requests need to be tracked.
@@ -83,7 +81,7 @@ interface nsILoadGroup : nsIRequest
      * Context for managing things like js/css connection blocking,
      * and per-tab connection grouping.
      */
-    [noscript] readonly attribute nsID requestContextID;
+    [noscript] readonly attribute unsigned long long requestContextID;
 
     /**
      * The set of load flags that will be added to all new requests added to

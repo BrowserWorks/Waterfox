@@ -56,7 +56,7 @@
       <property name="disabled">
         <getter>
         <![CDATA[
-          if (this.getAttribute('disabled') == 'true')
+          if (this.getAttribute("disabled") == "true")
             return true;
           var children = this._getRadioChildren();
           for (var i = 0; i < children.length; ++i) {
@@ -69,9 +69,9 @@
         <setter>
         <![CDATA[
           if (val)
-            this.setAttribute('disabled', 'true');
+            this.setAttribute("disabled", "true");
           else
-            this.removeAttribute('disabled');
+            this.removeAttribute("disabled");
           var children = this._getRadioChildren();
           for (var i = 0; i < children.length; ++i) {
             children[i].disabled = val;
@@ -124,8 +124,7 @@
             val.setAttribute("focused", focused);
             val.setAttribute("selected", "true");
             this.setAttribute("value", val.value);
-          }
-          else {
+          } else {
             this.removeAttribute("value");
           }
 
@@ -218,8 +217,7 @@
 
             this.selectedItem = children[i];
             children[i].doCommand();
-          }
-          else {
+          } else {
             do {
               if (i == 0)
                 i = children.length;
@@ -347,7 +345,7 @@
         <![CDATA[
           var remove = this.getItemAtIndex(index);
           if (remove) {
-            remove.parentNode.removeChild(remove);
+            remove.remove();
             this._radioChildren = null;
           }
           return remove;
@@ -370,8 +368,10 @@
            is done solely through the arrow keys and not the tab button. Tab
            takes you to the next widget in the tab order -->
       <handler event="keypress" key=" " phase="target">
-         this.selectedItem = this.focusedItem;
-         this.selectedItem.doCommand();
+        this.selectedItem = this.focusedItem;
+        this.selectedItem.doCommand();
+        // Prevent page from scrolling on the space key.
+        event.preventDefault();
       </handler>
       <handler event="keypress" keycode="VK_UP" phase="target">
         this.checkAdjacentElement(false);
@@ -381,7 +381,7 @@
       <handler event="keypress" keycode="VK_LEFT" phase="target">
         // left arrow goes back when we are ltr, forward when we are rtl
         this.checkAdjacentElement(document.defaultView.getComputedStyle(
-                                    this, "").direction == "rtl");
+                                    this).direction == "rtl");
         event.stopPropagation();
         event.preventDefault();
       </handler>
@@ -393,7 +393,7 @@
       <handler event="keypress" keycode="VK_RIGHT" phase="target">
         // right arrow goes forward when we are ltr, back when we are rtl
         this.checkAdjacentElement(document.defaultView.getComputedStyle(
-                                    this, "").direction == "ltr");
+                                    this).direction == "ltr");
         event.stopPropagation();
         event.preventDefault();
       </handler>
@@ -470,7 +470,7 @@
       <property name="selected" readonly="true">
         <getter>
           <![CDATA[
-            return this.hasAttribute('selected');
+            return this.hasAttribute("selected");
           ]]>
         </getter>
       </property>

@@ -11,10 +11,11 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLFrameSetElement : HTMLElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString cols;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString rows;
 };
 

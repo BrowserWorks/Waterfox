@@ -10,7 +10,7 @@
 #include "mozilla/dom/Directory.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/ipc/BlobChild.h"
+#include "mozilla/dom/IPCBlobUtils.h"
 
 using namespace mozilla::dom;
 
@@ -18,6 +18,7 @@ NS_IMPL_ISUPPORTS(nsFilePickerProxy, nsIFilePicker)
 
 nsFilePickerProxy::nsFilePickerProxy()
   : mSelectedType(0)
+  , mIPCActive(false)
 {
 }
 
@@ -40,6 +41,8 @@ nsFilePickerProxy::Init(mozIDOMWindowProxy* aParent, const nsAString& aTitle,
 
   NS_ADDREF_THIS();
   tabChild->SendPFilePickerConstructor(this, nsString(aTitle), aMode);
+
+  mIPCActive = true;
   return NS_OK;
 }
 
@@ -136,25 +139,29 @@ nsFilePickerProxy::Open(nsIFilePickerShownCallback* aCallback)
     mDisplayDirectory->GetPath(displayDirectory);
   }
 
+  if (!mIPCActive) {
+    return NS_ERROR_FAILURE;
+  }
+
   SendOpen(mSelectedType, mAddToRecentDocs, mDefault, mDefaultExtension,
-           mFilters, mFilterNames, displayDirectory, mOkButtonLabel);
+           mFilters, mFilterNames, displayDirectory, mDisplaySpecialDirectory,
+           mOkButtonLabel);
 
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 nsFilePickerProxy::Recv__delete__(const MaybeInputData& aData,
                                   const int16_t& aResult)
 {
   if (aData.type() == MaybeInputData::TInputBlobs) {
-    const InfallibleTArray<PBlobChild*>& blobs = aData.get_InputBlobs().blobsChild();
+    const InfallibleTArray<IPCBlob>& blobs = aData.get_InputBlobs().blobs();
     for (uint32_t i = 0; i < blobs.Length(); ++i) {
-      BlobChild* actor = static_cast<BlobChild*>(blobs[i]);
-      RefPtr<BlobImpl> blobImpl = actor->GetBlobImpl();
-      NS_ENSURE_TRUE(blobImpl, true);
+      RefPtr<BlobImpl> blobImpl = IPCBlobUtils::Deserialize(blobs[i]);
+      NS_ENSURE_TRUE(blobImpl, IPC_OK());
 
       if (!blobImpl->IsFile()) {
-        return true;
+        return IPC_OK();
       }
 
       nsPIDOMWindowInner* inner =
@@ -167,10 +174,10 @@ nsFilePickerProxy::Recv__delete__(const MaybeInputData& aData,
     }
   } else if (aData.type() == MaybeInputData::TInputDirectory) {
     nsCOMPtr<nsIFile> file;
-    NS_ConvertUTF16toUTF8 path(aData.get_InputDirectory().directoryPath());
-    nsresult rv = NS_NewNativeLocalFile(path, true, getter_AddRefs(file));
+    const nsAString& path(aData.get_InputDirectory().directoryPath());
+    nsresult rv = NS_NewLocalFile(path, true, getter_AddRefs(file));
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      return true;
+      return IPC_OK();
     }
 
     RefPtr<Directory> directory =
@@ -186,7 +193,7 @@ nsFilePickerProxy::Recv__delete__(const MaybeInputData& aData,
     mCallback = nullptr;
   }
 
-  return true;
+  return IPC_OK();
 }
 
 NS_IMETHODIMP
@@ -270,4 +277,15 @@ nsFilePickerProxy::GetDomFileOrDirectoryEnumerator(nsISimpleEnumerator** aDomfil
     new SimpleEnumerator(mFilesOrDirectories);
   enumerator.forget(aDomfiles);
   return NS_OK;
+}
+
+void
+nsFilePickerProxy::ActorDestroy(ActorDestroyReason aWhy)
+{
+  mIPCActive = false;
+
+  if (mCallback) {
+    mCallback->Done(nsIFilePicker::returnCancel);
+    mCallback = nullptr;
+  }
 }

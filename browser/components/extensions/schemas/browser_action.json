@@ -22,6 +22,13 @@
                 "$ref": "IconPath",
                 "optional": true
               },
+              "theme_icons": {
+                "type": "array",
+                "optional": true,
+                "minItems": 1,
+                "items": { "$ref": "ThemeIcons" },
+                "description": "Specifies icons to use for dark and light themes"
+              },
               "default_popup": {
                 "type": "string",
                 "format": "relativeUrl",
@@ -30,6 +37,12 @@
               },
               "browser_style": {
                 "type": "boolean",
+                "optional": true
+              },
+              "default_area": {
+                "description": "Defines the location the browserAction will appear by default.  The default location is navbar.",
+                "type": "string",
+                "enum": ["navbar", "menupanel", "tabstrip", "personaltoolbar"],
                 "optional": true
               }
             },
@@ -42,6 +55,7 @@
   {
     "namespace": "browserAction",
     "description": "Use browser actions to put icons in the main browser toolbar, to the right of the address bar. In addition to its icon, a browser action can also have a tooltip, a badge, and a popup.",
+    "permissions": ["manifest:browser_action"],
     "types": [
       {
         "id": "ColorArray",
@@ -59,6 +73,7 @@
         "type": "object",
         "isInstanceOf": "ImageData",
         "additionalProperties": { "type": "any" },
+        "postprocess": "convertImageDataToURL",
         "description": "Pixel data for an image. Must be an ImageData object (for example, from a <code>canvas</code> element)."
       }
     ],
@@ -67,6 +82,7 @@
         "name": "setTitle",
         "type": "function",
         "description": "Sets the title of the browser action. This shows up in the tooltip.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -82,6 +98,12 @@
                 "description": "Limits the change to when a particular tab is selected. Automatically resets when the tab is closed."
               }
             }
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },
@@ -165,6 +187,7 @@
         "name": "setPopup",
         "type": "function",
         "description": "Sets the html document to be opened as a popup when the user clicks on the browser action's icon.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -181,6 +204,12 @@
                 "description": "The html file to show in a popup.  If set to the empty string (''), no popup is shown."
               }
             }
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },
@@ -217,6 +246,7 @@
         "name": "setBadgeText",
         "type": "function",
         "description": "Sets the badge text for the browser action. The badge is displayed on top of the icon.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -232,6 +262,12 @@
                 "description": "Limits the change to when a particular tab is selected. Automatically resets when the tab is closed."
               }
             }
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },
@@ -268,6 +304,7 @@
         "name": "setBadgeBackgroundColor",
         "type": "function",
         "description": "Sets the background color for the badge.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -286,6 +323,12 @@
                 "description": "Limits the change to when a particular tab is selected. Automatically resets when the tab is closed."
               }
             }
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },
@@ -322,6 +365,7 @@
         "name": "enable",
         "type": "function",
         "description": "Enables the browser action for a tab. By default, browser actions are enabled.",
+        "async": "callback",
         "parameters": [
           {
             "type": "integer",
@@ -329,6 +373,12 @@
             "name": "tabId",
             "minimum": 0,
             "description": "The id of the tab for which you want to modify the browser action."
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },
@@ -336,6 +386,7 @@
         "name": "disable",
         "type": "function",
         "description": "Disables the browser action for a tab.",
+        "async": "callback",
         "parameters": [
           {
             "type": "integer",
@@ -343,6 +394,12 @@
             "name": "tabId",
             "minimum": 0,
             "description": "The id of the tab for which you want to modify the browser action."
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       },

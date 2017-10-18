@@ -74,16 +74,15 @@ extern "C" void  hb_free_impl(void *ptr);
 /* Compiler attributes */
 
 
-#if defined(__GNUC__) && (__GNUC__ > 2) && defined(__OPTIMIZE__)
-#define _HB_BOOLEAN_EXPR(expr) ((expr) ? 1 : 0)
-#define likely(expr) (__builtin_expect (_HB_BOOLEAN_EXPR(expr), 1))
-#define unlikely(expr) (__builtin_expect (_HB_BOOLEAN_EXPR(expr), 0))
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__OPTIMIZE__)
+#define likely(expr) (__builtin_expect (!!(expr), 1))
+#define unlikely(expr) (__builtin_expect (!!(expr), 0))
 #else
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
 #endif
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__clang__)
 #undef __attribute__
 #define __attribute__(x)
 #endif
@@ -168,7 +167,7 @@ extern "C" void  hb_free_impl(void *ptr);
 
 #  if defined(_WIN32_WCE)
      /* Some things not defined on Windows CE. */
-#    define strdup _strdup
+#    define vsnprintf _vsnprintf
 #    define getenv(Name) NULL
 #    if _WIN32_WCE < 0x800
 #      define setlocale(Category, Locale) "C"
@@ -179,9 +178,6 @@ static int errno = 0; /* Use something better? */
 #  endif
 #  if defined(_MSC_VER) && _MSC_VER < 1900
 #    define snprintf _snprintf
-#  elif defined(_MSC_VER) && _MSC_VER >= 1900
-#    /* Covers VC++ Error for strdup being a deprecated POSIX name and to instead use _strdup instead */
-#    define strdup _strdup
 #  endif
 #endif
 
@@ -688,17 +684,20 @@ _hb_debug_msg_va (const char *what,
     fprintf (stderr, " %*s  ", (unsigned int) (2 * sizeof (void *)), "");
 
   if (indented) {
-/* One may want to add ASCII version of these.  See:
- * https://bugs.freedesktop.org/show_bug.cgi?id=50970 */
 #define VBAR	"\342\224\202"	/* U+2502 BOX DRAWINGS LIGHT VERTICAL */
 #define VRBAR	"\342\224\234"	/* U+251C BOX DRAWINGS LIGHT VERTICAL AND RIGHT */
 #define DLBAR	"\342\225\256"	/* U+256E BOX DRAWINGS LIGHT ARC DOWN AND LEFT */
 #define ULBAR	"\342\225\257"	/* U+256F BOX DRAWINGS LIGHT ARC UP AND LEFT */
 #define LBAR	"\342\225\264"	/* U+2574 BOX DRAWINGS LIGHT LEFT */
-    static const char bars[] = VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR;
+    static const char bars[] =
+      VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR
+      VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR
+      VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR
+      VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR
+      VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR VBAR;
     fprintf (stderr, "%2u %s" VRBAR "%s",
 	     level,
-	     bars + sizeof (bars) - 1 - MIN ((unsigned int) sizeof (bars), (unsigned int) (sizeof (VBAR) - 1) * level),
+	     bars + sizeof (bars) - 1 - MIN ((unsigned int) sizeof (bars) - 1, (unsigned int) (sizeof (VBAR) - 1) * level),
 	     level_dir ? (level_dir > 0 ? DLBAR : ULBAR) : LBAR);
   } else
     fprintf (stderr, "   " VRBAR LBAR);

@@ -10,11 +10,12 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>webcompat@mozilla.org</em:id>
-    <em:version>1.0</em:version>
+    <em:version>1.1</em:version>
     <em:type>2</em:type>
     <em:bootstrap>true</em:bootstrap>
+    <em:multiprocessCompatible>true</em:multiprocessCompatible>
 
-    <!-- Target Application this theme can install into,
+    <!-- Target Application this extension can install into,
         with minimum and maximum supported versions. -->
     <em:targetApplication>
       <Description>

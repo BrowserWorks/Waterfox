@@ -102,7 +102,7 @@ DocumentType::GetText()
   return nullptr;
 }
 
-NS_IMETHODIMP    
+NS_IMETHODIMP
 DocumentType::GetName(nsAString& aName)
 {
   aName = NodeName();
@@ -129,13 +129,6 @@ NS_IMETHODIMP
 DocumentType::GetInternalSubset(nsAString& aInternalSubset)
 {
   aInternalSubset = mInternalSubset;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DocumentType::MozRemove()
-{
-  Remove();
   return NS_OK;
 }
 

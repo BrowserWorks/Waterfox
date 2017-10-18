@@ -1,0 +1,6 @@
+platforms:
+  pypi:
+    charade:
+      tests:
+        removed: skip
+        unmaintained: skip

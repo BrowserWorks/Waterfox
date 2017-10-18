@@ -10,6 +10,7 @@
 #include "mozilla/dom/Navigator.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
+#include "mozilla/dom/ipc/StructuredCloneData.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
@@ -32,15 +33,15 @@ using namespace ipc;
 namespace dom {
 
 using namespace workers;
+using namespace ipc;
 
-class BroadcastChannelMessage final : public StructuredCloneHolder
+class BroadcastChannelMessage final : public StructuredCloneDataNoTransfers
 {
 public:
   NS_INLINE_DECL_REFCOUNTING(BroadcastChannelMessage)
 
   BroadcastChannelMessage()
-    : StructuredCloneHolder(CloningSupported, TransferringNotSupported,
-                            StructuredCloneScope::DifferentProcess)
+    : StructuredCloneDataNoTransfers()
   {}
 
 private:
@@ -92,17 +93,6 @@ public:
       return true;
     }
 
-    bool isNullPrincipal;
-    mRv = principal->GetIsNullPrincipal(&isNullPrincipal);
-    if (NS_WARN_IF(mRv.Failed())) {
-      return true;
-    }
-
-    if (NS_WARN_IF(isNullPrincipal)) {
-      mRv.Throw(NS_ERROR_FAILURE);
-      return true;
-    }
-
     mRv = PrincipalToPrincipalInfo(principal, &mPrincipalInfo);
     if (NS_WARN_IF(mRv.Failed())) {
       return true;
@@ -149,7 +139,7 @@ public:
     MOZ_ASSERT(mActor);
   }
 
-  NS_IMETHODIMP Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mActor);
     if (mActor->IsActorDestroyed()) {
@@ -157,29 +147,7 @@ public:
     }
 
     ClonedMessageData message;
-
-    SerializedStructuredCloneBuffer& buffer = message.data();
-    buffer.data = mData->BufferData();
-    buffer.dataLength = mData->BufferSize();
-
-    PBackgroundChild* backgroundManager = mActor->Manager();
-    MOZ_ASSERT(backgroundManager);
-
-    const nsTArray<RefPtr<BlobImpl>>& blobImpls = mData->BlobImpls();
-
-    if (!blobImpls.IsEmpty()) {
-      message.blobsChild().SetCapacity(blobImpls.Length());
-
-      for (uint32_t i = 0, len = blobImpls.Length(); i < len; ++i) {
-        PBlobChild* blobChild =
-          BackgroundChild::GetOrCreateActorForBlobImpl(backgroundManager,
-                                                       blobImpls[i]);
-        MOZ_ASSERT(blobChild);
-
-        message.blobsChild().AppendElement(blobChild);
-      }
-    }
-
+    mData->BuildClonedMessageDataForBackgroundChild(mActor->Manager(), message);
     mActor->SendPostMessage(message);
     return NS_OK;
   }
@@ -211,7 +179,7 @@ public:
     MOZ_ASSERT(mBC);
   }
 
-  NS_IMETHODIMP Run() override
+  NS_IMETHOD Run() override
   {
     mBC->Shutdown();
     return NS_OK;
@@ -243,7 +211,7 @@ public:
     MOZ_ASSERT(mActor);
   }
 
-  NS_IMETHODIMP Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mActor);
     if (!mActor->IsActorDestroyed()) {
@@ -304,11 +272,12 @@ BroadcastChannel::BroadcastChannel(nsPIDOMWindowInner* aWindow,
   , mPrincipalInfo(new PrincipalInfo(aPrincipalInfo))
   , mOrigin(aOrigin)
   , mChannel(aChannel)
-  , mIsKeptAlive(false)
   , mInnerID(0)
   , mState(StateActive)
 {
   // Window can be null in workers
+
+  KeepAliveIfHasListenersFor(NS_LITERAL_STRING("message"));
 }
 
 BroadcastChannel::~BroadcastChannel()
@@ -350,17 +319,6 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
       return nullptr;
     }
 
-    bool isNullPrincipal;
-    aRv = principal->GetIsNullPrincipal(&isNullPrincipal);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return nullptr;
-    }
-
-    if (NS_WARN_IF(isNullPrincipal)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return nullptr;
-    }
-
     aRv = principal->GetOrigin(origin);
     if (NS_WARN_IF(aRv.Failed())) {
       return nullptr;
@@ -377,7 +335,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
 
     RefPtr<InitializeRunnable> runnable =
       new InitializeRunnable(workerPrivate, origin, principalInfo, aRv);
-    runnable->Dispatch(aRv);
+    runnable->Dispatch(Closing, aRv);
   }
 
   if (aRv.Failed()) {
@@ -407,7 +365,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
     }
   } else {
     bc->mWorkerHolder = new BroadcastChannelWorkerHolder(bc);
-    if (NS_WARN_IF(!bc->mWorkerHolder->HoldWorker(workerPrivate))) {
+    if (NS_WARN_IF(!bc->mWorkerHolder->HoldWorker(workerPrivate, Closing))) {
       bc->mWorkerHolder = nullptr;
       aRv.Throw(NS_ERROR_FAILURE);
       return nullptr;
@@ -539,82 +497,7 @@ BroadcastChannel::Shutdown()
     mActor = nullptr;
   }
 
-  // If shutdown() is called we have to release the reference if we still keep
-  // it.
-  if (mIsKeptAlive) {
-    mIsKeptAlive = false;
-    Release();
-  }
-}
-
-EventHandlerNonNull*
-BroadcastChannel::GetOnmessage()
-{
-  if (NS_IsMainThread()) {
-    return GetEventHandler(nsGkAtoms::onmessage, EmptyString());
-  }
-  return GetEventHandler(nullptr, NS_LITERAL_STRING("message"));
-}
-
-void
-BroadcastChannel::SetOnmessage(EventHandlerNonNull* aCallback)
-{
-  if (NS_IsMainThread()) {
-    SetEventHandler(nsGkAtoms::onmessage, EmptyString(), aCallback);
-  } else {
-    SetEventHandler(nullptr, NS_LITERAL_STRING("message"), aCallback);
-  }
-
-  UpdateMustKeepAlive();
-}
-
-void
-BroadcastChannel::AddEventListener(const nsAString& aType,
-                                   EventListener* aCallback,
-                                   const AddEventListenerOptionsOrBoolean& aOptions,
-                                   const dom::Nullable<bool>& aWantsUntrusted,
-                                   ErrorResult& aRv)
-{
-  DOMEventTargetHelper::AddEventListener(aType, aCallback, aOptions,
-                                         aWantsUntrusted, aRv);
-
-  if (aRv.Failed()) {
-    return;
-  }
-
-  UpdateMustKeepAlive();
-}
-
-void
-BroadcastChannel::RemoveEventListener(const nsAString& aType,
-                                      EventListener* aCallback,
-                                      const EventListenerOptionsOrBoolean& aOptions,
-                                      ErrorResult& aRv)
-{
-  DOMEventTargetHelper::RemoveEventListener(aType, aCallback, aOptions, aRv);
-
-  if (aRv.Failed()) {
-    return;
-  }
-
-  UpdateMustKeepAlive();
-}
-
-void
-BroadcastChannel::UpdateMustKeepAlive()
-{
-  bool toKeepAlive = HasListenersFor(NS_LITERAL_STRING("message"));
-  if (toKeepAlive == mIsKeptAlive) {
-    return;
-  }
-
-  mIsKeptAlive = toKeepAlive;
-
-  if (toKeepAlive) {
-    AddRef();
-  } else {
-    Release();
-  }
+  IgnoreKeepAliveIfHasListenersFor(NS_LITERAL_STRING("message"));
 }
 
 NS_IMETHODIMP

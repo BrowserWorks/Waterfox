@@ -6,13 +6,22 @@
 package org.mozilla.gecko;
 
 import org.mozilla.gecko.annotation.RobocopTarget;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.TelemetryContract.Event;
 import org.mozilla.gecko.TelemetryContract.Method;
 import org.mozilla.gecko.TelemetryContract.Reason;
 import org.mozilla.gecko.TelemetryContract.Session;
+import org.mozilla.gecko.mma.MmaDelegate;
 
 import android.os.SystemClock;
 import android.util.Log;
+
+import static org.mozilla.gecko.mma.MmaDelegate.INTERACT_WITH_SEARCH_URL_AREA;
+import static org.mozilla.gecko.mma.MmaDelegate.OPENED_BOOKMARK;
+import static org.mozilla.gecko.mma.MmaDelegate.SAVED_BOOKMARK;
+import static org.mozilla.gecko.mma.MmaDelegate.SAVED_LOGIN_AND_PASSWORD;
+import static org.mozilla.gecko.mma.MmaDelegate.SCREENSHOT;
+
 
 /**
  * All telemetry times are relative to one of two clocks:
@@ -28,6 +37,18 @@ import android.util.Log;
 public class Telemetry {
     private static final String LOGTAG = "Telemetry";
 
+    @WrapForJNI(stubName = "AddHistogram", dispatchTo = "gecko")
+    private static native void nativeAddHistogram(String name, int value);
+    @WrapForJNI(stubName = "AddKeyedHistogram", dispatchTo = "gecko")
+    private static native void nativeAddKeyedHistogram(String name, String key, int value);
+    @WrapForJNI(stubName = "StartUISession", dispatchTo = "gecko")
+    private static native void nativeStartUiSession(String name, long timestamp);
+    @WrapForJNI(stubName = "StopUISession", dispatchTo = "gecko")
+    private static native void nativeStopUiSession(String name, String reason, long timestamp);
+    @WrapForJNI(stubName = "AddUIEvent", dispatchTo = "gecko")
+    private static native void nativeAddUiEvent(String action, String method,
+                                                long timestamp, String extras);
+
     public static long uptime() {
         return SystemClock.uptimeMillis();
     }
@@ -39,14 +60,21 @@ public class Telemetry {
     // Define new histograms in:
     // toolkit/components/telemetry/Histograms.json
     public static void addToHistogram(String name, int value) {
-        GeckoEvent event = GeckoEvent.createTelemetryHistogramAddEvent(name, value);
-        GeckoAppShell.sendEventToGecko(event);
+        if (GeckoThread.isRunning()) {
+            nativeAddHistogram(name, value);
+        } else {
+            GeckoThread.queueNativeCall(Telemetry.class, "nativeAddHistogram",
+                                        String.class, name, value);
+        }
     }
 
-    public static void addToKeyedHistogram(String histogram, String keyName, int value) {
-        GeckoEvent event = GeckoEvent.createTelemetryKeyedHistogramAddEvent(histogram,
-                keyName, value);
-        GeckoAppShell.sendEventToGecko(event);
+    public static void addToKeyedHistogram(String name, String key, int value) {
+        if (GeckoThread.isRunning()) {
+            nativeAddKeyedHistogram(name, key, value);
+        } else {
+            GeckoThread.queueNativeCall(Telemetry.class, "nativeAddKeyedHistogram",
+                                        String.class, name, String.class, key, value);
+        }
     }
 
     public abstract static class Timer {
@@ -121,9 +149,12 @@ public class Telemetry {
         final String sessionName = getSessionName(session, sessionNameSuffix);
 
         Log.d(LOGTAG, "StartUISession: " + sessionName);
-        final GeckoEvent geckoEvent =
-                GeckoEvent.createTelemetryUISessionStartEvent(sessionName, realtime());
-        GeckoAppShell.sendEventToGecko(geckoEvent);
+        if (GeckoThread.isRunning()) {
+            nativeStartUiSession(sessionName, realtime());
+        } else {
+            GeckoThread.queueNativeCall(Telemetry.class, "nativeStartUiSession",
+                                        String.class, sessionName, realtime());
+        }
     }
 
     public static void startUISession(final Session session) {
@@ -135,9 +166,13 @@ public class Telemetry {
         final String sessionName = getSessionName(session, sessionNameSuffix);
 
         Log.d(LOGTAG, "StopUISession: " + sessionName + ", reason=" + reason);
-        final GeckoEvent geckoEvent = GeckoEvent.createTelemetryUISessionStopEvent(
-                sessionName, reason.toString(), realtime());
-        GeckoAppShell.sendEventToGecko(geckoEvent);
+        if (GeckoThread.isRunning()) {
+            nativeStopUiSession(sessionName, reason.toString(), realtime());
+        } else {
+            GeckoThread.queueNativeCall(Telemetry.class, "nativeStopUiSession",
+                                        String.class, sessionName,
+                                        String.class, reason.toString(), realtime());
+        }
     }
 
     public static void stopUISession(final Session session, final Reason reason) {
@@ -169,14 +204,36 @@ public class Telemetry {
             throw new IllegalArgumentException("Expected non-null method - use Method.NONE?");
         }
 
-        if (!AppConstants.RELEASE_BUILD) {
+        if (!AppConstants.RELEASE_OR_BETA) {
             final String logString = "SendUIEvent: event = " + eventName + " method = " + method + " timestamp = " +
                     timestamp + " extras = " + extras;
             Log.d(LOGTAG, logString);
         }
-        final GeckoEvent geckoEvent = GeckoEvent.createTelemetryUIEvent(
-                eventName, method.toString(), timestamp, extras);
-        GeckoAppShell.sendEventToGecko(geckoEvent);
+        if (GeckoThread.isRunning()) {
+            nativeAddUiEvent(eventName, method.toString(), timestamp, extras);
+        } else {
+            GeckoThread.queueNativeCall(Telemetry.class, "nativeAddUiEvent",
+                                        String.class, eventName, String.class, method.toString(),
+                                        timestamp, String.class, extras);
+        }
+        mappingMmaTracking(eventName, method, extras);
+    }
+
+    private static void mappingMmaTracking(String eventName, Method method, String extras) {
+        if (eventName == null || method == null || extras == null) {
+            return;
+        }
+        if (eventName.equalsIgnoreCase(Event.SAVE.toString()) && method == Method.MENU && extras.equals("bookmark")) {
+            MmaDelegate.track(SAVED_BOOKMARK);
+        } else if (eventName.equalsIgnoreCase(Event.LOAD_URL.toString()) && method == Method.LIST_ITEM && extras.equals("bookmarks")) {
+            MmaDelegate.track(OPENED_BOOKMARK);
+        } else if (eventName.equalsIgnoreCase(Event.SHOW.toString()) && method == Method.ACTIONBAR && extras.equals("urlbar-url")) {
+            MmaDelegate.track(INTERACT_WITH_SEARCH_URL_AREA);
+        } else if (eventName.equalsIgnoreCase(Event.SHARE.toString()) && method == Method.BUTTON && extras.equals("screenshot")) {
+            MmaDelegate.track(SCREENSHOT);
+        } else if (eventName.equalsIgnoreCase(Event.ACTION.toString()) && method == Method.DOORHANGER && extras.equals("login-positive")) {
+            MmaDelegate.track(SAVED_LOGIN_AND_PASSWORD);
+        }
     }
 
     public static void sendUIEvent(final Event event, final Method method, final long timestamp,

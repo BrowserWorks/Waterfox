@@ -1,0 +1,113 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+loader: taskgraph.loader.single_dep:loader
+
+
+transforms:
+   - taskgraph.transforms.l10n:transforms
+   - taskgraph.transforms.job:transforms
+   - taskgraph.transforms.task:transforms
+
+kind-dependencies:
+   - build
+
+only-for-build-platforms:
+   - linux64/opt
+   - linux/opt
+   - android-api-16/opt
+   #- macosx64/opt
+
+job-template:
+   description:
+      by-build-platform:
+         default: Localization
+         android-api-16-l10n: Single Locale Repack
+   locales-file:
+      by-build-platform:
+         default: browser/locales/all-locales
+         android-api-16-l10n: mobile/locales/l10n-changesets.json
+   ignore-locales:
+      by-build-platform:
+         # OSX has a special locale for japanese
+         macosx64.*: [ja]
+         default: [ja-JP-mac]
+   run-time:
+      by-build-platform:
+         default: 36000
+         android-api-16-l10n: 18000
+   tooltool:
+      by-build-platform:
+         default: public
+         android-api-16-l10n: internal
+         macosx64-nightly: internal
+   worker-type:
+      by-build-platform:
+         default: aws-provisioner-v1/gecko-{level}-b-linux
+         android: aws-provisioner-v1/gecko-{level}-b-android
+   treeherder:
+      symbol: tc(L10n)
+      tier:
+         by-build-platform:
+            default: 2
+      platform:
+         by-build-platform:
+            linux64-l10n: linux64/opt
+            linux-l10n: linux32/opt
+            macosx64: osx-cross/opt
+            android-api-16-l10n: android-4-0-armv7-api16/opt
+   mozharness:
+      config:
+         by-build-platform:
+            linux-l10n:
+               - single_locale/tc_linux32.py
+            linux64-l10n:
+               - single_locale/tc_linux64.py
+            macosx64:
+               - single_locale/tc_macosx64.py
+            android-api-16-l10n:
+               - single_locale/{project}_android-api-16.py
+               - single_locale/tc_android-api-16.py
+            # no default, so we fail on new entries
+      options:
+         by-build-platform:
+            linux-l10n:
+               - environment-config=single_locale/production.py
+               - branch-config=single_locale/{project}.py
+               - platform-config=single_locale/linux32.py
+               - total-chunks=1
+               - this-chunk=1
+            linux64-l10n:
+               - environment-config=single_locale/production.py
+               - branch-config=single_locale/{project}.py
+               - platform-config=single_locale/linux64.py
+               - total-chunks=1
+               - this-chunk=1
+            macosx64:
+               - environment-config=single_locale/production.py
+               - branch-config=single_locale/{project}.py
+               - platform-config=single_locale/macosx64.py
+               - total-chunks=1
+               - this-chunk=1
+            default:
+               - total-chunks=1
+               - this-chunk=1
+      actions:
+         by-build-platform:
+            default: [clone-locales list-locales setup repack summary]
+            android-api-16-l10n: [clone-locales list-locales setup repack
+                                  upload-repacks summary]
+      script:
+         by-build-platform:
+            default: mozharness/scripts/desktop_l10n.py
+            android-api-16-l10n: mozharness/scripts/mobile_l10n.py
+   when:
+      files-changed:
+         - browser/locales/all-locales
+         - testing/mozharness/configs/single_locale/**
+         - testing/mozharness/mozharness/mozilla/l10n/locales.py
+         - testing/mozharness/scripts/desktop_l10n.py
+         - third_party/python/compare-locales/**
+         - toolkit/locales/**
+         - toolkit/mozapps/installer/**

@@ -1,12 +1,12 @@
 "use strict";
 
-function* sendMessage(options) {
+async function sendMessage(options) {
   function background(options) {
-    browser.runtime.sendMessage("invalid-extension-id", {}, {}, result => {
+    browser.runtime.sendMessage(result => {
       browser.test.assertEq(undefined, result, "Argument value");
       if (options.checkLastError) {
         let lastError = browser[options.checkLastError].lastError;
-        browser.test.assertEq("Invalid extension ID",
+        browser.test.assertEq("runtime.sendMessage's message argument is missing",
                               lastError && lastError.message,
                               "lastError value");
       }
@@ -18,14 +18,14 @@ function* sendMessage(options) {
     background: `(${background})(${JSON.stringify(options)})`,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  yield extension.awaitMessage("done");
+  await extension.awaitMessage("done");
 
-  yield extension.unload();
+  await extension.unload();
 }
 
-add_task(function* testLastError() {
+add_task(async function testLastError() {
   // Not necessary in browser-chrome tests, but monitorConsole gripes
   // if we don't call it.
   SimpleTest.waitForExplicitFinish();
@@ -34,22 +34,22 @@ add_task(function* testLastError() {
   // checked.
   for (let api of ["extension", "runtime"]) {
     let waitForConsole = new Promise(resolve => {
-      SimpleTest.monitorConsole(resolve, [{message: /Invalid extension ID/, forbid: true}]);
+      SimpleTest.monitorConsole(resolve, [{message: /message argument is missing/, forbid: true}]);
     });
 
-    yield sendMessage({checkLastError: api});
+    await sendMessage({checkLastError: api});
 
     SimpleTest.endMonitorConsole();
-    yield waitForConsole;
+    await waitForConsole;
   }
 
   // Check that we do have a console message when lastError is not checked.
   let waitForConsole = new Promise(resolve => {
-    SimpleTest.monitorConsole(resolve, [{message: /Unchecked lastError value: Error: Invalid extension ID/}]);
+    SimpleTest.monitorConsole(resolve, [{message: /Unchecked lastError value: Error: runtime.sendMessage's message argument is missing/}]);
   });
 
-  yield sendMessage({});
+  await sendMessage({});
 
   SimpleTest.endMonitorConsole();
-  yield waitForConsole;
+  await waitForConsole;
 });

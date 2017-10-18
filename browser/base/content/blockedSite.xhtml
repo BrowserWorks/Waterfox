@@ -31,16 +31,14 @@
       // which is the URL displayed in the location bar, i.e.
       // the URI that the user attempted to load.
 
-      function getErrorCode()
-      {
+      function getErrorCode() {
         var url = document.documentURI;
         var error = url.search(/e\=/);
         var duffUrl = url.search(/\&u\=/);
         return decodeURIComponent(url.slice(error + 2, duffUrl));
       }
 
-      function getURL()
-      {
+      function getURL() {
         var url = document.documentURI;
         var match = url.match(/&u=([^&]+)&/);
 
@@ -61,8 +59,7 @@
        * Check whether this warning page should be overridable or whether
        * the "ignore warning" button should be hidden.
        */
-      function getOverride()
-      {
+      function getOverride() {
         var url = document.documentURI;
         var match = url.match(/&o=1&/);
         return !!match;
@@ -72,8 +69,7 @@
        * Attempt to get the hostname via document.location.  Fail back
        * to getURL so that we always return something meaningful.
        */
-      function getHostString()
-      {
+      function getHostString() {
         try {
           return document.location.hostname;
         } catch (e) {
@@ -81,8 +77,7 @@
         }
       }
 
-      function initPage()
-      {
+      function initPage() {
         var error = "";
         switch (getErrorCode()) {
           case "malwareBlocked" :
@@ -102,45 +97,49 @@
 
         if (error !== "malware") {
           el = document.getElementById("errorTitleText_malware");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorShortDescText_malware");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorLongDescText_malware");
-          el.parentNode.removeChild(el);
+          el.remove();
         }
 
         if (error !== "phishing") {
           el = document.getElementById("errorTitleText_phishing");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorShortDescText_phishing");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorLongDescText_phishing");
-          el.parentNode.removeChild(el);
+          el.remove();
         }
 
         if (error !== "unwanted") {
           el = document.getElementById("errorTitleText_unwanted");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorShortDescText_unwanted");
-          el.parentNode.removeChild(el);
+          el.remove();
           el = document.getElementById("errorLongDescText_unwanted");
-          el.parentNode.removeChild(el);
+          el.remove();
         }
 
-        // Set sitename
-        document.getElementById(error + "_sitename").textContent = getHostString();
+        // Set sitename if necessary.
+        let sitenameElem = document.getElementById(error + "_sitename");
+        if (sitenameElem) {
+          sitenameElem.textContent = getHostString();
+        }
+
         document.title = document.getElementById("errorTitleText_" + error)
                                  .innerHTML;
 
         if (!getOverride()) {
           var btn = document.getElementById("ignoreWarningButton");
           if (btn) {
-            btn.parentNode.removeChild(btn);
+            btn.remove();
           }
         }
 
         // Inform the test harness that we're done loading the page
-        var event = new CustomEvent("AboutBlockedLoaded");
+        var event = new CustomEvent("AboutBlockedLoaded", {bubbles: true});
         document.dispatchEvent(event);
       }
     ]]></script>
@@ -172,6 +171,11 @@
           <p id="errorLongDescText_unwanted">&safeb.blocked.unwantedPage.longDesc;</p>
         </div>
 
+        <!-- Advisory -->
+        <div id="advisoryDesc">
+          <p id="advisoryDescText">&safeb.palm.advisory.desc;</p>
+        </div>
+
         <!-- Action buttons -->
         <div id="buttons" class="button-container">
           <!-- Commands handled in browser.js -->
@@ -189,6 +193,8 @@
     - an onload handler. This is because error pages are loaded as
     - LOAD_BACKGROUND, which means that onload handlers will not be executed.
     -->
-    <script type="application/javascript">initPage();</script>
+    <script type="application/javascript">
+      initPage();
+    </script>
   </body>
 </html>

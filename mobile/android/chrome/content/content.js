@@ -5,7 +5,6 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-Cu.import("resource://gre/modules/ExtensionContent.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -17,12 +16,62 @@ var dump = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.b
 
 var global = this;
 
+var AboutBlockedSiteListener = {
+  init(chromeGlobal) {
+    addEventListener("AboutBlockedLoaded", this, false, true);
+  },
+
+  get isBlockedSite() {
+    return content.document.documentURI.startsWith("about:blocked");
+  },
+
+  handleEvent(aEvent) {
+    if (!this.isBlockedSite) {
+      return;
+    }
+
+    if (aEvent.type != "AboutBlockedLoaded") {
+      return;
+    }
+
+    let provider = "";
+    if (docShell.failedChannel) {
+      let classifiedChannel = docShell.failedChannel.
+                              QueryInterface(Ci.nsIClassifiedChannel);
+      if (classifiedChannel) {
+        provider = classifiedChannel.matchedProvider;
+      }
+    }
+
+    let advisoryUrl = Services.prefs.getCharPref(
+      "browser.safebrowsing.provider." + provider + ".advisoryURL", "");
+    if (!advisoryUrl) {
+      let el = content.document.getElementById("advisoryDesc");
+      el.remove();
+      return;
+    }
+
+    let advisoryLinkText = Services.prefs.getCharPref(
+      "browser.safebrowsing.provider." + provider + ".advisoryName", "");
+    if (!advisoryLinkText) {
+      let el = content.document.getElementById("advisoryDesc");
+      el.remove();
+      return;
+    }
+
+    let anchorEl = content.document.getElementById("advisory_provider");
+    anchorEl.setAttribute("href", advisoryUrl);
+    anchorEl.textContent = advisoryLinkText;
+  },
+}
+AboutBlockedSiteListener.init();
+
 // This is copied from desktop's tab-content.js. See bug 1153485 about sharing this code somehow.
 var AboutReaderListener = {
 
   _articlePromise: null,
 
-  _isLeavingReaderMode: false,
+  _isLeavingReaderableReaderMode: false,
 
   init: function() {
     addEventListener("AboutReaderContentLoaded", this, false, true);
@@ -41,7 +90,7 @@ var AboutReaderListener = {
           this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
           ReaderMode.enterReaderMode(docShell, content);
         } else {
-          this._isLeavingReaderMode = true;
+          this._isLeavingReaderableReaderMode = this.isReaderableAboutReader;
           ReaderMode.leaveReaderMode(docShell, content);
         }
         break;
@@ -54,6 +103,17 @@ var AboutReaderListener = {
 
   get isAboutReader() {
     return content.document.documentURI.startsWith("about:reader");
+  },
+
+  get isReaderableAboutReader() {
+    return this.isAboutReader &&
+      !content.document.documentElement.dataset.isError;
+  },
+
+  get isErrorPage() {
+    return content.document.documentURI.startsWith("about:neterror") ||
+        content.document.documentURI.startsWith("about:certerror") ||
+        content.document.documentURI.startsWith("about:blocked");
   },
 
   handleEvent: function(aEvent) {
@@ -78,12 +138,12 @@ var AboutReaderListener = {
         break;
 
       case "pagehide":
-        // this._isLeavingReaderMode is used here to keep the Reader Mode icon
+        // this._isLeavingReaderableReaderMode is used here to keep the Reader Mode icon
         // visible in the location bar when transitioning from reader-mode page
         // back to the source page.
-        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: this._isLeavingReaderMode });
-        if (this._isLeavingReaderMode) {
-          this._isLeavingReaderMode = false;
+        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: this._isLeavingReaderableReaderMode });
+        if (this._isLeavingReaderableReaderMode) {
+          this._isLeavingReaderableReaderMode = false;
         }
         break;
 
@@ -100,13 +160,16 @@ var AboutReaderListener = {
     }
   },
   updateReaderButton: function(forceNonArticle) {
-    if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader ||
+    // Do not show Reader View icon on error pages (bug 1320900)
+    if (this.isErrorPage) {
+        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
+    } else if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader ||
         !(content.document instanceof content.HTMLDocument) ||
         content.document.mozSyntheticDocument) {
       return;
+    } else {
+        this.scheduleReadabilityCheckPostPaint(forceNonArticle);
     }
-
-    this.scheduleReadabilityCheckPostPaint(forceNonArticle);
   },
 
   cancelPotentialPendingReadabilityCheck: function() {
@@ -153,7 +216,4 @@ addMessageListener("RemoteLogins:fillForm", function(message) {
   LoginManagerContent.receiveMessage(message, content);
 });
 
-ExtensionContent.init(this);
-addEventListener("unload", () => {
-  ExtensionContent.uninit(this);
-});
+Services.obs.notifyObservers(this, "tab-content-frameloader-created");

@@ -20,6 +20,8 @@
 #include "nsTArray.h"
 #include "mozilla/LookAndFeel.h"
 
+#include "mozilla/gfx/UnscaledFontMac.h"
+
 class gfxMacPlatformFontList;
 
 // a single member of a font family (i.e. a single face, such as Times Italic)
@@ -41,25 +43,27 @@ public:
         ::CGFontRelease(mFontRef);
     }
 
-    virtual CGFontRef GetFontRef();
+    CGFontRef GetFontRef();
 
     // override gfxFontEntry table access function to bypass table cache,
     // use CGFontRef API to get direct access to system font data
-    virtual hb_blob_t *GetFontTable(uint32_t aTag) override;
+    hb_blob_t *GetFontTable(uint32_t aTag) override;
 
-    virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
-                                        FontListSizes* aSizes) const override;
+    void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
+                                FontListSizes* aSizes) const override;
 
     nsresult ReadCMAP(FontInfoData *aFontInfoData = nullptr) override;
 
     bool RequiresAATLayout() const { return mRequiresAAT; }
 
+    bool HasVariations();
     bool IsCFF();
 
 protected:
-    virtual gfxFont* CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold) override;
+    gfxFont* CreateFontInstance(const gfxFontStyle *aFontStyle,
+                                bool aNeedsBold) override;
 
-    virtual bool HasFontTable(uint32_t aTableTag) override;
+    bool HasFontTable(uint32_t aTableTag) override;
 
     static void DestroyBlobFunc(void* aUserData);
 
@@ -71,7 +75,11 @@ protected:
     bool mRequiresAAT;
     bool mIsCFF;
     bool mIsCFFInitialized;
+    bool mHasVariations;
+    bool mHasVariationsInitialized;
     nsTHashtable<nsUint32HashKey> mAvailableTables;
+
+    mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFont;
 };
 
 class gfxMacPlatformFontList : public gfxPlatformFontList {
@@ -81,8 +89,6 @@ public:
     }
 
     static int32_t AppleWeightToCSSWeight(int32_t aAppleWeight);
-
-    gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle) override;
 
     bool GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName) override;
 
@@ -110,6 +116,21 @@ public:
                           gfxFontStyle &aFontStyle,
                           float aDevPixPerCSSPixel);
 
+    // Values for the entryType field in FontFamilyListEntry records passed
+    // from chrome to content process.
+    enum FontFamilyEntryType {
+        kStandardFontFamily = 0, // a standard installed font family
+        kHiddenSystemFontFamily = 1, // hidden system family, not exposed to UI
+        kTextSizeSystemFontFamily = 2, // name of 'system' font at text sizes
+        kDisplaySizeSystemFontFamily = 3 // 'system' font at display sizes
+    };
+    void GetSystemFontFamilyList(
+        InfallibleTArray<mozilla::dom::FontFamilyListEntry>* aList);
+
+protected:
+    gfxFontFamily*
+    GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
+
 private:
     friend class gfxPlatformMac;
 
@@ -117,7 +138,7 @@ private:
     virtual ~gfxMacPlatformFontList();
 
     // initialize font lists
-    nsresult InitFontList() override;
+    nsresult InitFontListForPlatform() override;
 
     // special case font faces treated as font families (set via prefs)
     void InitSingleFaceList();
@@ -128,18 +149,20 @@ private:
     // helper function to lookup in both hidden system fonts and normal fonts
     gfxFontFamily* FindSystemFontFamily(const nsAString& aFamily);
 
-    static void RegisteredFontsChangedNotificationCallback(CFNotificationCenterRef center,
-                                                           void *observer,
-                                                           CFStringRef name,
-                                                           const void *object,
-                                                           CFDictionaryRef userInfo);
+    static void
+    RegisteredFontsChangedNotificationCallback(CFNotificationCenterRef center,
+                                               void *observer,
+                                               CFStringRef name,
+                                               const void *object,
+                                               CFDictionaryRef userInfo);
 
-    // search fonts system-wide for a given character, null otherwise
-    gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
-                                     Script aRunScript,
-                                     const gfxFontStyle* aMatchStyle,
-                                     uint32_t& aCmapCount,
-                                     gfxFontFamily** aMatchedFamily) override;
+    // attempt to use platform-specific fallback for the given character
+    // return null if no usable result found
+    gfxFontEntry*
+    PlatformGlobalFontFallback(const uint32_t aCh,
+                               Script aRunScript,
+                               const gfxFontStyle* aMatchStyle,
+                               gfxFontFamily** aMatchedFamily) override;
 
     bool UsesSystemFallback() override { return true; }
 
@@ -151,6 +174,8 @@ private:
     // But CFStringRef and NSString* are the same thing anyway (they're
     // toll-free bridged).
     void AddFamily(CFStringRef aFamily);
+
+    void AddFamily(const nsAString& aFamilyName, bool aSystemFont);
 
 #ifdef MOZ_BUNDLED_FONTS
     void ActivateBundledFonts();

@@ -19,7 +19,7 @@ class txXPathNode;
  *
  * This interface describes the context needed to create
  * XPath Expressions and XSLT Patters.
- * (not completely though. key() requires the ProcessorState, which is 
+ * (not completely though. key() requires the ProcessorState, which is
  * not part of this interface.)
  */
 
@@ -78,7 +78,7 @@ public:
     }
 
     /*
-     * Return the ExprResult associated with the variable with the 
+     * Return the ExprResult associated with the variable with the
      * given namespace and local name.
      */
     virtual nsresult getVariable(int32_t aNamespace, nsIAtom* aLName,
@@ -88,7 +88,8 @@ public:
      * Is whitespace stripping allowed for the given node?
      * See http://www.w3.org/TR/xslt#strip
      */
-    virtual bool isStripSpaceAllowed(const txXPathNode& aNode) = 0;
+    virtual nsresult isStripSpaceAllowed(const txXPathNode& aNode,
+                                         bool& aAllowed) = 0;
 
     /**
      * Returns a pointer to the private context
@@ -106,7 +107,7 @@ public:
 #define TX_DECL_MATCH_CONTEXT \
     nsresult getVariable(int32_t aNamespace, nsIAtom* aLName, \
                          txAExprResult*& aResult); \
-    bool isStripSpaceAllowed(const txXPathNode& aNode); \
+    nsresult isStripSpaceAllowed(const txXPathNode& aNode, bool& aAllowed); \
     void* getPrivateContext(); \
     txResultRecycler* recycler(); \
     void receiveError(const nsAString& aMsg, nsresult aRes)

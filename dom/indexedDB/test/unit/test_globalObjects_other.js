@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   let ioService =
     Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
@@ -17,6 +17,7 @@ function testSteps()
   }
 
   // Test for IDBKeyRange and indexedDB availability in JS modules.
+  /* import-globals-from GlobalObjectsModule.jsm */
   Cu.import(getSpec("GlobalObjectsModule.jsm"));
   let test = new GlobalObjectsModule();
   test.ok = ok;

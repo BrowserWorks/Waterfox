@@ -13,6 +13,7 @@
 #include "ipc/IPCMessageUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/AutoRestore.h"
+#include "mozilla/ConsoleReportCollector.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TypedEnumBits.h"
@@ -32,14 +33,15 @@
 #include "nsTArrayForwardDeclare.h"
 #include "nsTObserverArray.h"
 
-class mozIApplicationClearPrivateDataParams;
+class nsIConsoleReportCollector;
 
 namespace mozilla {
 
-class PrincipalOriginAttributes;
+class OriginAttributes;
 
 namespace dom {
 
+class ServiceWorkerRegistrar;
 class ServiceWorkerRegistrationListener;
 
 namespace workers {
@@ -129,8 +131,27 @@ public:
   bool
   IsControlled(nsIDocument* aDocument, ErrorResult& aRv);
 
+  // Return true if the given content process could potentially be executing
+  // service worker code with the given principal.  At the current time, this
+  // just means that we have any registration for the origin, regardless of
+  // scope.  This is a very weak guarantee but is the best we can do when push
+  // notifications can currently spin up a service worker in content processes
+  // without our involvement in the parent process.
+  //
+  // In the future when there is only a single ServiceWorkerManager in the
+  // parent process that is entirely in control of spawning and running service
+  // worker code, we will be able to authoritatively indicate whether there is
+  // an activate service worker in the given content process.  At that time we
+  // will rename this method HasActiveServiceWorkerInstance and provide
+  // semantics that ensure this method returns true until the worker is known to
+  // have shut down in order to allow the caller to induce a crash for security
+  // reasons without having to worry about shutdown races with the worker.
+  bool
+  MayHaveActiveServiceWorkerInstance(ContentParent* aContent,
+                                     nsIPrincipal* aPrincipal);
+
   void
-  DispatchFetchEvent(const PrincipalOriginAttributes& aOriginAttributes,
+  DispatchFetchEvent(const OriginAttributes& aOriginAttributes,
                      nsIDocument* aDoc,
                      const nsAString& aDocumentIdForTopLevelNavigation,
                      nsIInterceptedChannel* aChannel,
@@ -144,11 +165,22 @@ public:
          ServiceWorkerUpdateFinishCallback* aCallback);
 
   void
-  SoftUpdate(const PrincipalOriginAttributes& aOriginAttributes,
+  UpdateInternal(nsIPrincipal* aPrincipal,
+                 const nsACString& aScope,
+                 ServiceWorkerUpdateFinishCallback* aCallback);
+
+  void
+  SoftUpdate(const OriginAttributes& aOriginAttributes,
              const nsACString& aScope);
 
   void
-  PropagateSoftUpdate(const PrincipalOriginAttributes& aOriginAttributes,
+  SoftUpdateInternal(const OriginAttributes& aOriginAttributes,
+                     const nsACString& aScope,
+                     ServiceWorkerUpdateFinishCallback* aCallback);
+
+
+  void
+  PropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
                       const nsAString& aScope);
 
   void
@@ -166,8 +198,10 @@ public:
   already_AddRefed<ServiceWorkerRegistrationInfo>
   GetRegistration(nsIPrincipal* aPrincipal, const nsACString& aScope) const;
 
-  ServiceWorkerRegistrationInfo*
-  CreateNewRegistration(const nsCString& aScope, nsIPrincipal* aPrincipal);
+  already_AddRefed<ServiceWorkerRegistrationInfo>
+  CreateNewRegistration(const nsCString& aScope,
+                        nsIPrincipal* aPrincipal,
+                        nsLoadFlags aLoadFlags);
 
   void
   RemoveRegistration(ServiceWorkerRegistrationInfo* aRegistration);
@@ -222,6 +256,10 @@ public:
                                 uint32_t aLineNumber = 0,
                                 uint32_t aColumnNumber = 0);
 
+  void
+  FlushReportsToAllClients(const nsACString& aScope,
+                           nsIConsoleReportCollector* aReporter);
+
   // Always consumes the error by reporting to consoles of all controlled
   // documents.
   void
@@ -245,6 +283,7 @@ public:
   void
   GetAllClients(nsIPrincipal* aPrincipal,
                 const nsCString& aScope,
+                uint64_t aServiceWorkerID,
                 bool aIncludeUncontrolled,
                 nsTArray<ServiceWorkerClientInfo>& aDocuments);
 
@@ -262,8 +301,8 @@ public:
   static already_AddRefed<ServiceWorkerManager>
   GetInstance();
 
- void
- LoadRegistration(const ServiceWorkerRegistrationData& aRegistration);
+  void
+  LoadRegistration(const ServiceWorkerRegistrationData& aRegistration);
 
   void
   LoadRegistrations(const nsTArray<ServiceWorkerRegistrationData>& aRegistrations);
@@ -302,7 +341,10 @@ private:
   ~ServiceWorkerManager();
 
   void
-  Init();
+  Init(ServiceWorkerRegistrar* aRegistrar);
+
+  void
+  MaybeStartShutdown();
 
   already_AddRefed<ServiceWorkerJobQueue>
   GetOrCreateJobQueue(const nsACString& aOriginSuffix,
@@ -332,12 +374,15 @@ private:
                            nsISupports** aServiceWorker);
 
   ServiceWorkerInfo*
-  GetActiveWorkerInfoForScope(const PrincipalOriginAttributes& aOriginAttributes,
+  GetActiveWorkerInfoForScope(const OriginAttributes& aOriginAttributes,
                               const nsACString& aScope);
 
   ServiceWorkerInfo*
   GetActiveWorkerInfoForDocument(nsIDocument* aDocument);
 
+  void
+  TransitionServiceWorkerRegistrationWorker(ServiceWorkerRegistrationInfo* aRegistration,
+                                            WhichServiceWorker aWhichOne);
   void
   InvalidateServiceWorkerRegistrationWorker(ServiceWorkerRegistrationInfo* aRegistration,
                                             WhichServiceWorker aWhichOnes);

@@ -7,7 +7,7 @@
 const { Ci } = require("chrome");
 const Services = require("Services");
 const { DebuggerServer } = require("../main");
-const { getChildDocShells, TabActor } = require("./webbrowser");
+const { getChildDocShells, TabActor } = require("./tab");
 const makeDebugger = require("./utils/make-debugger");
 
 /**
@@ -27,11 +27,11 @@ const makeDebugger = require("./utils/make-debugger");
  * Global actors are now only the actors that are meant to be global,
  * and are no longer related to any specific scope/document.
  *
- * @param aConnection DebuggerServerConnection
+ * @param connection DebuggerServerConnection
  *        The connection to the client.
  */
-function ChromeActor(aConnection) {
-  TabActor.call(this, aConnection);
+function ChromeActor(connection) {
+  TabActor.call(this, connection);
 
   // This creates a Debugger instance for chrome debugging all globals.
   this.makeDebugger = makeDebugger.bind(null, {
@@ -50,7 +50,18 @@ function ChromeActor(aConnection) {
   if (!window) {
     window = Services.wm.getMostRecentWindow(null);
   }
-  // On xpcshell, there is no window/docshell
+
+  // We really want _some_ window at least, so fallback to the hidden window if
+  // there's nothing else (such as during early startup).
+  if (!window) {
+    try {
+      window = Services.appShell.hiddenDOMWindow;
+    } catch (e) {
+      // On XPCShell, the above line will throw.
+    }
+  }
+
+  // On XPCShell, there is no window/docshell
   let docShell = window ? window.QueryInterface(Ci.nsIInterfaceRequestor)
                                 .getInterface(Ci.nsIDocShell)
                         : null;
@@ -88,16 +99,18 @@ Object.defineProperty(ChromeActor.prototype, "docShells", {
   }
 });
 
-ChromeActor.prototype.observe = function (aSubject, aTopic, aData) {
-  TabActor.prototype.observe.call(this, aSubject, aTopic, aData);
+ChromeActor.prototype.observe = function (subject, topic, data) {
+  TabActor.prototype.observe.call(this, subject, topic, data);
   if (!this.attached) {
     return;
   }
-  if (aTopic == "chrome-webnavigation-create") {
-    aSubject.QueryInterface(Ci.nsIDocShell);
-    this._onDocShellCreated(aSubject);
-  } else if (aTopic == "chrome-webnavigation-destroy") {
-    this._onDocShellDestroy(aSubject);
+
+  subject.QueryInterface(Ci.nsIDocShell);
+
+  if (topic == "chrome-webnavigation-create") {
+    this._onDocShellCreated(subject);
+  } else if (topic == "chrome-webnavigation-destroy") {
+    this._onDocShellDestroy(subject);
   }
 };
 
@@ -109,11 +122,10 @@ ChromeActor.prototype._attach = function () {
   TabActor.prototype._attach.call(this);
 
   // Listen for any new/destroyed chrome docshell
-  Services.obs.addObserver(this, "chrome-webnavigation-create", false);
-  Services.obs.addObserver(this, "chrome-webnavigation-destroy", false);
+  Services.obs.addObserver(this, "chrome-webnavigation-create");
+  Services.obs.addObserver(this, "chrome-webnavigation-destroy");
 
   // Iterate over all top-level windows.
-  let docShells = [];
   let e = Services.ww.getWindowEnumerator();
   while (e.hasMoreElements()) {
     let window = e.getNext();
@@ -125,6 +137,7 @@ ChromeActor.prototype._attach = function () {
     }
     this._progressListener.watch(docShell);
   }
+  return undefined;
 };
 
 ChromeActor.prototype._detach = function () {
@@ -136,7 +149,6 @@ ChromeActor.prototype._detach = function () {
   Services.obs.removeObserver(this, "chrome-webnavigation-destroy");
 
   // Iterate over all top-level windows.
-  let docShells = [];
   let e = Services.ww.getWindowEnumerator();
   while (e.hasMoreElements()) {
     let window = e.getNext();
@@ -150,6 +162,7 @@ ChromeActor.prototype._detach = function () {
   }
 
   TabActor.prototype._detach.call(this);
+  return undefined;
 };
 
 /* ThreadActor hooks. */
@@ -172,7 +185,7 @@ ChromeActor.prototype.preNest = function () {
 /**
  * Prepare to exit a nested event loop by enabling debuggee events.
  */
-ChromeActor.prototype.postNest = function (aNestData) {
+ChromeActor.prototype.postNest = function (nestData) {
   // Enable events in all open windows.
   let e = Services.wm.getEnumerator(null);
   while (e.hasMoreElements()) {

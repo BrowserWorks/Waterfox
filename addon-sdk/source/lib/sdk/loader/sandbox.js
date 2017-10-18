@@ -15,10 +15,6 @@ const self = require('sdk/self');
 const { getTabId } = require('../tabs/utils');
 const { getInnerId } = require('../window/utils');
 
-const { devtools } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const { require: devtoolsRequire } = devtools;
-const { addContentGlobal, removeContentGlobal } = devtoolsRequire("devtools/server/content-globals");
-
 /**
  * Make a new sandbox that inherits given `source`'s principals. Source can be
  * URI string, DOMWindow or `null` for system principals.
@@ -31,13 +27,6 @@ function sandbox(target, options) {
 
   let sandbox = Cu.Sandbox(target || systemPrincipal, options);
   Cu.setSandboxMetadata(sandbox, options.metadata);
-  let innerWindowID = options.metadata['inner-window-id']
-  if (innerWindowID) {
-    addContentGlobal({
-      global: sandbox,
-      'inner-window-id': innerWindowID
-    });
-  }
   return sandbox;
 }
 exports.sandbox = sandbox;
@@ -63,7 +52,9 @@ function load(sandbox, uri) {
 
     return evaluate(sandbox, decodeURIComponent(source), '1.8', uri, 0);
   } else {
-    return scriptLoader.loadSubScript(uri, sandbox, 'UTF-8');
+    return scriptLoader.loadSubScriptWithOptions(uri, {target: sandbox,
+                                                       charset: 'UTF-8',
+                                                       wantReturnValue: true});
   }
 }
 exports.load = load;

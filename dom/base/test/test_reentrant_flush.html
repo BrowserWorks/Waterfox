@@ -12,7 +12,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=709256
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=709256">Mozilla Bug 709256</a>
 <p id="display">
 <iframe id="test"
-        style="width: 100px" src="data:text/html,<body style='width: 100%'>">
+        style="width: 100px" srcdoc="<body style='width: 100%'>">
 </iframe>
 </p>
 <div id="content" style="display: none">
@@ -40,7 +40,7 @@ addLoadEvent(function() {
 
   var win = ifr.contentWindow;
 
-  win.addEventListener("resize", handleResize, false);
+  win.addEventListener("resize", handleResize);
   SpecialPowers.setFullZoom(win, 2);
 
   is(resizeHandlerRan, false,
@@ -51,7 +51,7 @@ addLoadEvent(function() {
 
   is(resizeHandlerRan, true, "Resize handler should have run");
 
-  win.removeEventListener("resize", handleResize, false);
+  win.removeEventListener("resize", handleResize);
 
   SimpleTest.finish();
 });

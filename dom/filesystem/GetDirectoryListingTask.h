@@ -15,6 +15,8 @@ namespace mozilla {
 namespace dom {
 
 class BlobImpl;
+class FileSystemGetDirectoryListingParams;
+class OwningFileOrDirectory;
 
 class GetDirectoryListingTaskChild final : public FileSystemTaskChildBase
 {
@@ -32,12 +34,10 @@ public:
   already_AddRefed<Promise>
   GetPromise();
 
-  virtual void
-  GetPermissionAccessType(nsCString& aAccess) const override;
-
 private:
   // If aDirectoryOnly is set, we should ensure that the target is a directory.
-  GetDirectoryListingTaskChild(FileSystemBase* aFileSystem,
+  GetDirectoryListingTaskChild(nsIGlobalObject* aGlobalObject,
+                               FileSystemBase* aFileSystem,
                                Directory* aDirectory,
                                nsIFile* aTargetPath,
                                const nsAString& aFilters);
@@ -58,9 +58,7 @@ private:
   nsCOMPtr<nsIFile> mTargetPath;
   nsString mFilters;
 
-  // We cannot store File or Directory objects bacause this object is created
-  // on a different thread and File and Directory are not thread-safe.
-  FallibleTArray<Directory::FileOrDirectoryPath> mTargetData;
+  FallibleTArray<OwningFileOrDirectory> mTargetData;
 };
 
 class GetDirectoryListingTaskParent final : public FileSystemTaskParentBase
@@ -72,8 +70,8 @@ public:
          FileSystemRequestParent* aParent,
          ErrorResult& aRv);
 
-  virtual void
-  GetPermissionAccessType(nsCString& aAccess) const override;
+  nsresult
+  GetTargetPath(nsAString& aPath) const override;
 
 private:
   GetDirectoryListingTaskParent(FileSystemBase* aFileSystem,
@@ -87,11 +85,20 @@ private:
   IOWork() override;
 
   nsCOMPtr<nsIFile> mTargetPath;
+  nsString mDOMPath;
   nsString mFilters;
 
-  // We cannot store File or Directory objects bacause this object is created
-  // on a different thread and File and Directory are not thread-safe.
-  FallibleTArray<Directory::FileOrDirectoryPath> mTargetData;
+  struct FileOrDirectoryPath
+  {
+    nsString mPath;
+
+    enum {
+      eFilePath,
+      eDirectoryPath
+    } mType;
+  };
+
+  FallibleTArray<FileOrDirectoryPath> mTargetData;
 };
 
 } // namespace dom

@@ -17,7 +17,7 @@ class owned_critical_section
 {
 public:
   owned_critical_section()
-#ifdef DEBUG
+#ifndef NDEBUG
     : owner(0)
 #endif
   {
@@ -29,18 +29,18 @@ public:
     DeleteCriticalSection(&critical_section);
   }
 
-  void enter()
+  void lock()
   {
     EnterCriticalSection(&critical_section);
-#ifdef DEBUG
+#ifndef NDEBUG
     XASSERT(owner != GetCurrentThreadId() && "recursive locking");
     owner = GetCurrentThreadId();
 #endif
   }
 
-  void leave()
+  void unlock()
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     /* GetCurrentThreadId cannot return 0: it is not a the valid thread id */
     owner = 0;
 #endif
@@ -51,7 +51,7 @@ public:
      is undefined otherwise. */
   void assert_current_thread_owns()
   {
-#ifdef DEBUG
+#ifndef NDEBUG
     /* This implies owner != 0, because GetCurrentThreadId cannot return 0. */
     XASSERT(owner == GetCurrentThreadId());
 #endif
@@ -59,7 +59,7 @@ public:
 
 private:
   CRITICAL_SECTION critical_section;
-#ifdef DEBUG
+#ifndef NDEBUG
   DWORD owner;
 #endif
 

@@ -28,10 +28,10 @@ function test() {
       .then(attachAddonThread)
       .then(testDebugger)
       .then(testSources)
-      .then(closeConnection)
+      .then(() => gClient.close())
       .then(uninstallAddon)
       .then(finish)
-      .then(null, aError => {
+      .catch(aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
   });
@@ -64,7 +64,7 @@ function testDebugger() {
     gThreadClient.resume(deferred.resolve);
   });
 
-  Services.obs.notifyObservers(null, "debuggerAttached", null);
+  Services.obs.notifyObservers(null, "debuggerAttached");
 
   return deferred.promise;
 }
@@ -86,12 +86,6 @@ function testSources() {
 
 function uninstallAddon() {
   return removeAddon(gAddon);
-}
-
-function closeConnection() {
-  let deferred = promise.defer();
-  gClient.close(deferred.resolve);
-  return deferred.promise;
 }
 
 registerCleanupFunction(function () {

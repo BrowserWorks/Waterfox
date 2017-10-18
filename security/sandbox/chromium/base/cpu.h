@@ -26,6 +26,7 @@ class BASE_EXPORT CPU {
     SSE41,
     SSE42,
     AVX,
+    AVX2,
     MAX_INTEL_MICRO_ARCHITECTURE
   };
 
@@ -45,21 +46,13 @@ class BASE_EXPORT CPU {
   bool has_ssse3() const { return has_ssse3_; }
   bool has_sse41() const { return has_sse41_; }
   bool has_sse42() const { return has_sse42_; }
+  bool has_popcnt() const { return has_popcnt_; }
   bool has_avx() const { return has_avx_; }
-  // has_avx_hardware returns true when AVX is present in the CPU. This might
-  // differ from the value of |has_avx()| because |has_avx()| also tests for
-  // operating system support needed to actually call AVX instuctions.
-  // Note: you should never need to call this function. It was added in order
-  // to workaround a bug in NSS but |has_avx()| is what you want.
-  bool has_avx_hardware() const { return has_avx_hardware_; }
+  bool has_avx2() const { return has_avx2_; }
   bool has_aesni() const { return has_aesni_; }
   bool has_non_stop_time_stamp_counter() const {
     return has_non_stop_time_stamp_counter_;
   }
-  // has_broken_neon is only valid on ARM chips. If true, it indicates that we
-  // believe that the NEON unit on the current CPU is flawed and cannot execute
-  // some code. See https://code.google.com/p/chromium/issues/detail?id=341598
-  bool has_broken_neon() const { return has_broken_neon_; }
 
   IntelMicroArchitecture GetIntelMicroArchitecture() const;
   const std::string& cpu_brand() const { return cpu_brand_; }
@@ -82,11 +75,11 @@ class BASE_EXPORT CPU {
   bool has_ssse3_;
   bool has_sse41_;
   bool has_sse42_;
+  bool has_popcnt_;
   bool has_avx_;
-  bool has_avx_hardware_;
+  bool has_avx2_;
   bool has_aesni_;
   bool has_non_stop_time_stamp_counter_;
-  bool has_broken_neon_;
   std::string cpu_vendor_;
   std::string cpu_brand_;
 };

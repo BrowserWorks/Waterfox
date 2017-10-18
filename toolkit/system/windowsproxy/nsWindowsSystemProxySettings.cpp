@@ -16,7 +16,9 @@
 #include "nsNetCID.h"
 #include "nsISupportsPrimitives.h"
 #include "nsIURI.h"
+#include "nsThreadUtils.h"
 #include "GeckoProfiler.h"
+#include "prnetdb.h"
 #include "ProxyUtils.h"
 
 class nsWindowsSystemProxySettings final : public nsISystemProxySettings
@@ -40,6 +42,9 @@ NS_IMPL_ISUPPORTS(nsWindowsSystemProxySettings, nsISystemProxySettings)
 NS_IMETHODIMP
 nsWindowsSystemProxySettings::GetMainThreadOnly(bool *aMainThreadOnly)
 {
+  // bug 1366133: if you change this to main thread only, please handle
+  // nsProtocolProxyService::Resolve_Internal carefully to avoid hang on main
+  // thread.
   *aMainThreadOnly = false;
   return NS_OK;
 }
@@ -68,6 +73,9 @@ static void SetProxyResultDirect(nsACString& aResult)
 static nsresult ReadInternetOption(uint32_t aOption, uint32_t& aFlags,
                                    nsAString& aValue)
 {
+    // Bug 1366133: InternetGetConnectedStateExW() may cause hangs
+    MOZ_ASSERT(!NS_IsMainThread());
+
     DWORD connFlags = 0;
     WCHAR connName[RAS_MaxEntryName + 1];
     MOZ_SEH_TRY {
@@ -92,20 +100,7 @@ static nsresult ReadInternetOption(uint32_t aOption, uint32_t& aFlags,
     unsigned long size = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
     if (!InternetQueryOptionW(nullptr, INTERNET_OPTION_PER_CONNECTION_OPTION,
                               &list, &size)) {
-        if (GetLastError() != ERROR_INVALID_PARAMETER) {
-            return NS_ERROR_FAILURE;
-        }
-        options[0].dwOption = INTERNET_PER_CONN_FLAGS;
-        size = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
-        MOZ_SEH_TRY {
-            if (!InternetQueryOptionW(nullptr,
-                                      INTERNET_OPTION_PER_CONNECTION_OPTION,
-                                      &list, &size)) {
-                return NS_ERROR_FAILURE;
-            }
-        } MOZ_SEH_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
-            return NS_ERROR_FAILURE;
-        }
+        return NS_ERROR_FAILURE;
     }
 
     aFlags = options[0].Value.dwValue;
@@ -148,10 +143,18 @@ nsWindowsSystemProxySettings::MatchOverride(const nsACString& aHost)
             const nsAutoCString override(Substring(cbuf, start,
                                                    delimiter - start));
             if (override.EqualsLiteral("<local>")) {
-                // This override matches local addresses.
-                if (host.EqualsLiteral("localhost") ||
-                    host.EqualsLiteral("127.0.0.1"))
+                PRNetAddr addr;
+                bool isIpAddr = (PR_StringToNetAddr(host.get(), &addr) == PR_SUCCESS);
+
+                // Don't use proxy for local hosts (plain hostname, no dots)
+                if (!isIpAddr && !host.Contains('.')) {
                     return true;
+                }
+
+                if (host.EqualsLiteral("127.0.0.1") ||
+                    host.EqualsLiteral("::1")) {
+                    return true;
+                }
             } else if (PatternMatch(host, override)) {
                 return true;
             }
@@ -175,7 +178,7 @@ nsWindowsSystemProxySettings::PatternMatch(const nsACString& aHost,
 nsresult
 nsWindowsSystemProxySettings::GetPACURI(nsACString& aResult)
 {
-    PROFILER_LABEL_FUNC(js::ProfileEntry::Category::STORAGE);
+    AUTO_PROFILER_LABEL("nsWindowsSystemProxySettings::GetPACURI", OTHER);
     nsresult rv;
     uint32_t flags = 0;
     nsAutoString buf;
@@ -215,6 +218,7 @@ nsWindowsSystemProxySettings::GetProxyForURI(const nsACString & aSpec,
 
     NS_ConvertUTF16toUTF8 cbuf(buf);
 
+    NS_NAMED_LITERAL_CSTRING(kSocksPrefix, "socks=");
     nsAutoCString prefix;
     ToLowerCase(aScheme, prefix);
 
@@ -246,9 +250,9 @@ nsWindowsSystemProxySettings::GetProxyForURI(const nsACString & aSpec,
                 // (http://msdn.microsoft.com/en-us/library/aa383996%28VS.85%29.aspx)
                 specificProxy = Substring(proxy, prefix.Length());
                 break;
-            } else if (proxy.Find("socks=") == 0) {
+            } else if (proxy.Find(kSocksPrefix) == 0) {
                 // SOCKS proxy.
-                socksProxy = Substring(proxy, 5); // "socks=" length.
+                socksProxy = Substring(proxy, kSocksPrefix.Length()); // "socks=" length.
             }
         }
 

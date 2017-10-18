@@ -1,13 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 // Test the LayoutChangesObserver
 
 var {
   getLayoutChangesObserver,
   releaseLayoutChangesObserver,
   LayoutChangesObserver
-} = require("devtools/server/actors/layout");
+} = require("devtools/server/actors/reflow");
 
 // Override set/clearTimeout on LayoutChangesObserver to avoid depending on
 // time in this unit test. This means that LayoutChangesObserver.eventLoopTimer

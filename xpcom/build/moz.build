@@ -8,7 +8,6 @@ EXPORTS += [
     'nsXPCOM.h',
     'nsXPCOMCID.h',
     'nsXPCOMCIDInternal.h',
-    'nsXREAppData.h',
     'nsXULAppAPI.h',
     'XREChildData.h',
     'xrecore.h',
@@ -23,7 +22,9 @@ EXPORTS.mozilla += [
     'PoisonIOInterposer.h',
     'ServiceList.h',
     'Services.h',
+    'TlsAllocationTracker.h',
     'XPCOM.h',
+    'XREAppData.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -33,6 +34,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'perfprobe.cpp',
         'PoisonIOInterposerBase.cpp',
         'PoisonIOInterposerWin.cpp',
+        'TlsAllocationTracker.cpp',
     ]
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     UNIFIED_SOURCES += [
@@ -50,11 +52,11 @@ UNIFIED_SOURCES += xpcom_gluens_src_cppsrcs
 UNIFIED_SOURCES += xpcom_glue_src_cppsrcs
 
 UNIFIED_SOURCES += [
-    'FrozenFunctions.cpp',
+    'FileLocation.cpp',
     'IOInterposer.cpp',
     'LateWriteChecks.cpp',
     'MainThreadIOLogger.cpp',
-    'nsXPCOMStrings.cpp',
+    'Omnijar.cpp',
     'Services.cpp',
     'XPCOMInit.cpp',
 ]
@@ -63,13 +65,6 @@ if CONFIG['OS_ARCH'] != 'WINNT':
     SOURCES += [
         'NSPRInterposer.cpp',
     ]
-
-# FileLocation.cpp and Omnijar.cpp cannot be built in unified mode because they
-# use plarena.h.
-SOURCES += [
-    'FileLocation.cpp',
-    'Omnijar.cpp',
-]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

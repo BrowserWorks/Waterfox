@@ -2,9 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals XPCOMUtils, aboutNewTabService*/
-/* exported NewTabURL */
-
 "use strict";
 
 const {utils: Cu} = Components;
@@ -18,7 +15,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
 
 this.NewTabURL = {
 
-  get: function() {
+  get() {
     return aboutNewTabService.newTabURL;
   },
 
@@ -26,11 +23,11 @@ this.NewTabURL = {
     return aboutNewTabService.overridden;
   },
 
-  override: function(newURL) {
+  override(newURL) {
     aboutNewTabService.newTabURL = newURL;
   },
 
-  reset: function() {
+  reset() {
     aboutNewTabService.resetNewTabURL();
   }
 };

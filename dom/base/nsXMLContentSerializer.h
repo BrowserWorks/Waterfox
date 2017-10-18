@@ -26,15 +26,22 @@
 class nsIAtom;
 class nsINode;
 
+namespace mozilla {
+class Encoding;
+}
+
 class nsXMLContentSerializer : public nsIContentSerializer {
  public:
   nsXMLContentSerializer();
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD Init(uint32_t flags, uint32_t aWrapColumn,
-                  const char* aCharSet, bool aIsCopying,
-                  bool aRewriteEncodingDeclaration) override;
+  NS_IMETHOD Init(uint32_t flags,
+                  uint32_t aWrapColumn,
+                  const mozilla::Encoding* aEncoding,
+                  bool aIsCopying,
+                  bool aRewriteEncodingDeclaration,
+                  bool* aNeedsPreformatScanning) override;
 
   NS_IMETHOD AppendText(nsIContent* aText, int32_t aStartOffset,
                         int32_t aEndOffset, nsAString& aStr) override;
@@ -50,7 +57,7 @@ class nsXMLContentSerializer : public nsIContentSerializer {
 
   NS_IMETHOD AppendComment(nsIContent* aComment, int32_t aStartOffset,
                            int32_t aEndOffset, nsAString& aStr) override;
-  
+
   NS_IMETHOD AppendDoctype(nsIContent *aDoctype,
                            nsAString& aStr) override;
 
@@ -65,6 +72,15 @@ class nsXMLContentSerializer : public nsIContentSerializer {
 
   NS_IMETHOD AppendDocumentStart(nsIDocument *aDocument,
                                  nsAString& aStr) override;
+
+  NS_IMETHOD ScanElementForPreformat(mozilla::dom::Element* aElement) override
+  {
+    return NS_OK;
+  }
+  NS_IMETHOD ForgetElementForPreformat(mozilla::dom::Element* aElement) override
+  {
+    return NS_OK;
+  }
 
  protected:
   virtual ~nsXMLContentSerializer();
@@ -97,7 +113,7 @@ class nsXMLContentSerializer : public nsIContentSerializer {
    * It updates the column position.
    */
   MOZ_MUST_USE
-  bool AppendToStringWrapped(const nsASingleFragmentString& aStr,
+  bool AppendToStringWrapped(const nsAString& aStr,
                              nsAString& aOutputStr);
 
   /**
@@ -105,32 +121,32 @@ class nsXMLContentSerializer : public nsIContentSerializer {
    * It updates the column position.
    */
   MOZ_MUST_USE
-  bool AppendToStringFormatedWrapped(const nsASingleFragmentString& aStr,
+  bool AppendToStringFormatedWrapped(const nsAString& aStr,
                                      nsAString& aOutputStr);
 
   // used by AppendToStringWrapped
   MOZ_MUST_USE
   bool AppendWrapped_WhitespaceSequence(
-          nsASingleFragmentString::const_char_iterator &aPos,
-          const nsASingleFragmentString::const_char_iterator aEnd,
-          const nsASingleFragmentString::const_char_iterator aSequenceStart,
+          nsAString::const_char_iterator &aPos,
+          const nsAString::const_char_iterator aEnd,
+          const nsAString::const_char_iterator aSequenceStart,
           nsAString &aOutputStr);
 
   // used by AppendToStringFormatedWrapped
   MOZ_MUST_USE
   bool AppendFormatedWrapped_WhitespaceSequence(
-          nsASingleFragmentString::const_char_iterator &aPos,
-          const nsASingleFragmentString::const_char_iterator aEnd,
-          const nsASingleFragmentString::const_char_iterator aSequenceStart,
+          nsAString::const_char_iterator &aPos,
+          const nsAString::const_char_iterator aEnd,
+          const nsAString::const_char_iterator aSequenceStart,
           bool &aMayIgnoreStartOfLineWhitespaceSequence,
           nsAString &aOutputStr);
 
   // used by AppendToStringWrapped and AppendToStringFormatedWrapped
   MOZ_MUST_USE
   bool AppendWrapped_NonWhitespaceSequence(
-          nsASingleFragmentString::const_char_iterator &aPos,
-          const nsASingleFragmentString::const_char_iterator aEnd,
-          const nsASingleFragmentString::const_char_iterator aSequenceStart,
+          nsAString::const_char_iterator &aPos,
+          const nsAString::const_char_iterator aEnd,
+          const nsAString::const_char_iterator aSequenceStart,
           bool &aMayIgnoreStartOfLineWhitespaceSequence,
           bool &aSequenceStartAfterAWhiteSpace,
           nsAString &aOutputStr);
@@ -221,7 +237,7 @@ class nsXMLContentSerializer : public nsIContentSerializer {
 
   /**
    * This method can be redefined to check if the element can be serialized.
-   * It is called when the serialization of the start tag is asked 
+   * It is called when the serialization of the start tag is asked
    * (AppendElementStart)
    * In this method you can also force the formating
    * by setting aForceFormat to true.
@@ -256,7 +272,7 @@ class nsXMLContentSerializer : public nsIContentSerializer {
 
   /**
    * This method can be redefined to check if the element can be serialized.
-   * It is called when the serialization of the end tag is asked 
+   * It is called when the serialization of the end tag is asked
    * (AppendElementEnd)
    * In this method you can also force the formating
    * by setting aForceFormat to true.
@@ -336,32 +352,32 @@ class nsXMLContentSerializer : public nsIContentSerializer {
   nsTArray<NameSpaceDecl> mNameSpaceStack;
 
   // nsIDocumentEncoder flags
-  uint32_t  mFlags;
+  MOZ_INIT_OUTSIDE_CTOR uint32_t  mFlags;
 
   // characters to use for line break
   nsString  mLineBreak;
 
   // The charset that was passed to Init()
   nsCString mCharset;
-  
+
   // current column position on the current line
   uint32_t   mColPos;
 
   // true = pretty formating should be done (OutputFormated flag)
-  bool mDoFormat;
+  MOZ_INIT_OUTSIDE_CTOR bool mDoFormat;
 
   // true = no formatting,(OutputRaw flag)
   // no newline convertion and no rewrap long lines even if OutputWrap is set.
-  bool mDoRaw;
+  MOZ_INIT_OUTSIDE_CTOR bool mDoRaw;
 
   // true = wrapping should be done (OutputWrap flag)
-  bool mDoWrap;
+  MOZ_INIT_OUTSIDE_CTOR bool mDoWrap;
 
   // true = we can break lines (OutputDisallowLineBreaking flag)
-  bool mAllowLineBreaking;
+  MOZ_INIT_OUTSIDE_CTOR bool mAllowLineBreaking;
 
   // number of maximum column in a line, in the wrap mode
-  uint32_t   mMaxColumn;
+  MOZ_INIT_OUTSIDE_CTOR uint32_t   mMaxColumn;
 
   // current indent value
   nsString   mIndent;
@@ -397,10 +413,10 @@ class nsXMLContentSerializer : public nsIContentSerializer {
 
 private:
   // number of nested elements which have preformated content
-  int32_t       mPreLevel;
+  MOZ_INIT_OUTSIDE_CTOR int32_t mPreLevel;
 };
 
 nsresult
 NS_NewXMLContentSerializer(nsIContentSerializer** aSerializer);
 
-#endif 
+#endif

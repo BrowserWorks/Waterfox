@@ -12,9 +12,9 @@
 #define WEBRTC_COMMON_AUDIO_REAL_FOURIER_H_
 
 #include <complex>
+#include <memory>
 
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/system_wrappers/interface/aligned_malloc.h"
+#include "webrtc/system_wrappers/include/aligned_malloc.h"
 
 // Uniform interface class for the real DFT and its inverse, for power-of-2
 // input lengths. Also contains helper functions for buffer allocation, taking
@@ -25,28 +25,28 @@ namespace webrtc {
 class RealFourier {
  public:
   // Shorthand typenames for the scopers used by the buffer allocation helpers.
-  typedef rtc::scoped_ptr<float[], AlignedFreeDeleter> fft_real_scoper;
-  typedef rtc::scoped_ptr<std::complex<float>[], AlignedFreeDeleter>
+  typedef std::unique_ptr<float[], AlignedFreeDeleter> fft_real_scoper;
+  typedef std::unique_ptr<std::complex<float>[], AlignedFreeDeleter>
       fft_cplx_scoper;
 
   // The alignment required for all input and output buffers, in bytes.
-  static const int kFftBufferAlignment;
+  static const size_t kFftBufferAlignment;
 
   // Construct a wrapper instance for the given input order, which must be
   // between 1 and kMaxFftOrder, inclusively.
-  static rtc::scoped_ptr<RealFourier> Create(int fft_order);
+  static std::unique_ptr<RealFourier> Create(int fft_order);
   virtual ~RealFourier() {};
 
   // Helper to compute the smallest FFT order (a power of 2) which will contain
   // the given input length.
-  static int FftOrder(int length);
+  static int FftOrder(size_t length);
 
   // Helper to compute the input length from the FFT order.
-  static int FftLength(int order);
+  static size_t FftLength(int order);
 
   // Helper to compute the exact length, in complex floats, of the transform
   // output (i.e. |2^order / 2 + 1|).
-  static int ComplexLength(int order);
+  static size_t ComplexLength(int order);
 
   // Buffer allocation helpers. The buffers are large enough to hold |count|
   // floats/complexes and suitably aligned for use by the implementation.

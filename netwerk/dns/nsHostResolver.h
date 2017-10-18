@@ -39,6 +39,7 @@ struct nsHostKey
     uint16_t    flags;
     uint16_t    af;
     const char *netInterface;
+    const char *originSuffix;
 };
 
 /**
@@ -169,11 +170,11 @@ class NS_NO_VTABLE nsResolveHostCallback : public PRCList
 public:
     /**
      * OnLookupComplete
-     * 
+     *
      * this function is called to complete a host lookup initiated by
      * nsHostResolver::ResolveHost.  it may be invoked recursively from
      * ResolveHost or on an unspecified background thread.
-     * 
+     *
      * NOTE: it is the responsibility of the implementor of this method
      * to handle the callback in a thread safe manner.
      *
@@ -226,7 +227,7 @@ public:
                            uint32_t defaultCacheEntryLifetime, // seconds
                            uint32_t defaultGracePeriod, // seconds
                            nsHostResolver **resolver);
-    
+
     /**
      * puts the resolver in the shutdown state, which will cause any pending
      * callbacks to be detached.  any future calls to ResolveHost will fail.
@@ -234,44 +235,47 @@ public:
     void Shutdown();
 
     /**
-     * resolve the given hostname asynchronously.  the caller can synthesize
-     * a synchronous host lookup using a lock and a cvar.  as noted above
-     * the callback will occur re-entrantly from an unspecified thread.  the
-     * host lookup cannot be canceled (cancelation can be layered above this
-     * by having the callback implementation return without doing anything).
+     * resolve the given hostname and originAttributes asynchronously.  the caller
+     * can synthesize a synchronous host lookup using a lock and a cvar.  as noted
+     * above the callback will occur re-entrantly from an unspecified thread.  the
+     * host lookup cannot be canceled (cancelation can be layered above this by
+     * having the callback implementation return without doing anything).
      */
-    nsresult ResolveHost(const char            *hostname,
-                         uint16_t               flags,
-                         uint16_t               af,
-                         const char            *netInterface,
-                         nsResolveHostCallback *callback);
+    nsresult ResolveHost(const char                      *hostname,
+                         const mozilla::OriginAttributes &aOriginAttributes,
+                         uint16_t                         flags,
+                         uint16_t                         af,
+                         const char                      *netInterface,
+                         nsResolveHostCallback           *callback);
 
     /**
      * removes the specified callback from the nsHostRecord for the given
-     * hostname, flags, and address family.  these parameters should correspond
-     * to the parameters passed to ResolveHost.  this function executes the
-     * callback if the callback is still pending with the given status.
+     * hostname, originAttributes, flags, and address family.  these parameters
+     * should correspond to the parameters passed to ResolveHost.  this function
+     * executes the callback if the callback is still pending with the given status.
      */
-    void DetachCallback(const char            *hostname,
-                        uint16_t               flags,
-                        uint16_t               af,
-                        const char            *netInterface,
-                        nsResolveHostCallback *callback,
-                        nsresult               status);
+    void DetachCallback(const char                      *hostname,
+                        const mozilla::OriginAttributes &aOriginAttributes,
+                        uint16_t                         flags,
+                        uint16_t                         af,
+                        const char                      *netInterface,
+                        nsResolveHostCallback           *callback,
+                        nsresult                         status);
 
     /**
-     * Cancels an async request associated with the hostname, flags,
+     * Cancels an async request associated with the hostname, originAttributes, flags,
      * address family and listener.  Cancels first callback found which matches
      * these criteria.  These parameters should correspond to the parameters
      * passed to ResolveHost.  If this is the last callback associated with the
-     * host record, it is removed from any request queues it might be on. 
+     * host record, it is removed from any request queues it might be on.
      */
-    void CancelAsyncRequest(const char            *host,
-                            uint16_t               flags,
-                            uint16_t               af,
-                            const char            *netInterface,
-                            nsIDNSListener        *aListener,
-                            nsresult               status);
+    void CancelAsyncRequest(const char                      *host,
+                            const mozilla::OriginAttributes &aOriginAttributes,
+                            uint16_t                         flags,
+                            uint16_t                         af,
+                            const char                      *netInterface,
+                            nsIDNSListener                  *aListener,
+                            nsresult                         status);
     /**
      * values for the flags parameter passed to ResolveHost and DetachCallback
      * that may be bitwise OR'd together.
@@ -325,7 +329,7 @@ private:
     nsresult ConditionallyRefreshRecord(nsHostRecord *rec, const char *host);
 
     static void  MoveQueue(nsHostRecord *aRec, PRCList &aDestQ);
-    
+
     static void ThreadFunc(void *);
 
     enum {

@@ -8,6 +8,8 @@
 #include "nsIServiceManager.h"
 #include "nsPrintOptionsX.h"
 #include "nsPrintSettingsX.h"
+#include "nsIWebBrowserPrint.h"
+#include "nsCocoaUtils.h"
 
 using namespace mozilla::embedding;
 
@@ -37,15 +39,17 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
     char16_t** docTitles;
     uint32_t titleCount;
     rv = aWBP->EnumerateDocumentNames(&titleCount, &docTitles);
-    if (NS_SUCCEEDED(rv) && titleCount > 0) {
-      data->printJobName().Assign(docTitles[0]);
-    }
+    if (NS_SUCCEEDED(rv)) {
+      if (titleCount > 0) {
+        data->printJobName().Assign(docTitles[0]);
+      }
 
-    for (int32_t i = titleCount - 1; i >= 0; i--) {
-      free(docTitles[i]);
+      for (int32_t i = titleCount - 1; i >= 0; i--) {
+        free(docTitles[i]);
+      }
+      free(docTitles);
+      docTitles = nullptr;
     }
-    free(docTitles);
-    docTitles = nullptr;
   }
 
   RefPtr<nsPrintSettingsX> settingsX(do_QueryObject(aSettings));
@@ -57,6 +61,11 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
   if (NS_WARN_IF(!printInfo)) {
     return NS_ERROR_FAILURE;
   }
+
+  double adjustedWidth, adjustedHeight;
+  settingsX->GetAdjustedPaperSize(&adjustedWidth, &adjustedHeight);
+  data->adjustedPaperWidth() = adjustedWidth;
+  data->adjustedPaperHeight() = adjustedHeight;
 
   NSDictionary* dict = [printInfo dictionary];
   if (NS_WARN_IF(!dict)) {
@@ -88,6 +97,38 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
   NSString* disposition = [dict objectForKey: NSPrintJobDisposition];
   if (disposition) {
     nsCocoaUtils::GetStringForNSString(disposition, data->disposition());
+  }
+
+  NSString* paperName = [dict objectForKey: NSPrintPaperName];
+  if (paperName) {
+    nsCocoaUtils::GetStringForNSString(paperName, data->paperName());
+  }
+
+  float scalingFactor = [[dict objectForKey: NSPrintScalingFactor] floatValue];
+  data->scalingFactor() = scalingFactor;
+
+  int32_t orientation;
+  if ([printInfo orientation] == NS_PAPER_ORIENTATION_PORTRAIT) {
+    orientation = nsIPrintSettings::kPortraitOrientation;
+  } else {
+    orientation = nsIPrintSettings::kLandscapeOrientation;
+  }
+  data->orientation() = orientation;
+
+  NSSize paperSize = [printInfo paperSize];
+  float widthScale, heightScale;
+  settingsX->GetInchesScale(&widthScale, &heightScale);
+  if (orientation == nsIPrintSettings::kLandscapeOrientation) {
+    // switch widths and heights
+    data->widthScale() = heightScale;
+    data->heightScale() = widthScale;
+    data->paperWidth() = paperSize.height / heightScale;
+    data->paperHeight() = paperSize.width / widthScale;
+  } else {
+    data->widthScale() = widthScale;
+    data->heightScale() = heightScale;
+    data->paperWidth() = paperSize.width / widthScale;
+    data->paperHeight() = paperSize.height / heightScale;
   }
 
   data->numCopies() = [[dict objectForKey: NSPrintCopies] intValue];
@@ -168,6 +209,28 @@ nsPrintOptionsX::DeserializeToPrintSettings(const PrintData& data,
   [newPrintInfoDict setObject: nsCocoaUtils::ToNSString(data.disposition())
                     forKey: NSPrintJobDisposition];
 
+  [newPrintInfoDict setObject: nsCocoaUtils::ToNSString(data.paperName())
+                    forKey: NSPrintPaperName];
+
+  [newPrintInfoDict setObject: [NSNumber numberWithFloat: data.scalingFactor()]
+                    forKey: NSPrintScalingFactor];
+
+  CGFloat width = data.paperWidth() * data.widthScale();
+  CGFloat height = data.paperHeight() * data.heightScale();
+  [newPrintInfoDict setObject: [NSValue valueWithSize:NSMakeSize(width,height)]
+                    forKey: NSPrintPaperSize];
+
+  int paperOrientation;
+  if (data.orientation() == nsIPrintSettings::kPortraitOrientation) {
+    paperOrientation = NS_PAPER_ORIENTATION_PORTRAIT;
+    settings->SetOrientation(nsIPrintSettings::kPortraitOrientation);
+  } else {
+    paperOrientation = NS_PAPER_ORIENTATION_LANDSCAPE;
+    settings->SetOrientation(nsIPrintSettings::kLandscapeOrientation);
+  }
+  [newPrintInfoDict setObject: [NSNumber numberWithInt:paperOrientation]
+                    forKey: NSPrintOrientation];
+
   [newPrintInfoDict setObject: [NSNumber numberWithShort: data.pagesAcross()]
                     forKey: NSPrintPagesAcross];
   [newPrintInfoDict setObject: [NSNumber numberWithShort: data.pagesDown()]
@@ -217,6 +280,9 @@ nsPrintOptionsX::DeserializeToPrintSettings(const PrintData& data,
   // And now swap in the new NSPrintInfo we've just populated.
   settingsX->SetCocoaPrintInfo(newPrintInfo);
   [newPrintInfo release];
+
+  settingsX->SetAdjustedPaperSize(data.adjustedPaperWidth(),
+                                  data.adjustedPaperHeight());
 
   return NS_OK;
 }

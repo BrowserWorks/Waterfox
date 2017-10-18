@@ -24,7 +24,7 @@ const TEST_DATA = [
     options: {},
     checkHighlighter: function* (testActor) {
       let hidden = yield testActor.getHighlighterNodeAttribute(
-        "box-model-nodeinfobar-container", "hidden");
+        "box-model-infobar-container", "hidden");
       ok(!hidden, "Node infobar is visible");
 
       hidden = yield testActor.getHighlighterNodeAttribute(
@@ -64,8 +64,8 @@ const TEST_DATA = [
     options: {hideInfoBar: true},
     checkHighlighter: function* (testActor) {
       let hidden = yield testActor.getHighlighterNodeAttribute(
-        "box-model-nodeinfobar-container", "hidden");
-      is(hidden, "true", "nodeinfobar has been hidden");
+        "box-model-infobar-container", "hidden");
+      is(hidden, "true", "infobar has been hidden");
     }
   },
   {
@@ -118,10 +118,10 @@ const TEST_DATA = [
       let {points} = yield testActor.getHighlighterRegionPath("padding");
       points = points[0];
 
-      is(Math.ceil(topY1), points[0][1], "Top guide's y1 is correct");
-      is(Math.floor(rightX1), points[1][0], "Right guide's x1 is correct");
-      is(Math.floor(bottomY1), points[2][1], "Bottom guide's y1 is correct");
-      is(Math.ceil(leftX1), points[3][0], "Left guide's x1 is correct");
+      is(topY1, points[0][1], "Top guide's y1 is correct");
+      is(rightX1, points[1][0] - 1, "Right guide's x1 is correct");
+      is(bottomY1, points[2][1] - 1, "Bottom guide's y1 is correct");
+      is(leftX1, points[3][0], "Left guide's x1 is correct");
     }
   },
   {
@@ -140,10 +140,10 @@ const TEST_DATA = [
       let {points} = yield testActor.getHighlighterRegionPath("margin");
       points = points[0];
 
-      is(Math.ceil(topY1), points[0][1], "Top guide's y1 is correct");
-      is(Math.floor(rightX1), points[1][0], "Right guide's x1 is correct");
-      is(Math.floor(bottomY1), points[2][1], "Bottom guide's y1 is correct");
-      is(Math.ceil(leftX1), points[3][0], "Left guide's x1 is correct");
+      is(topY1, points[0][1], "Top guide's y1 is correct");
+      is(rightX1, points[1][0] - 1, "Right guide's x1 is correct");
+      is(bottomY1, points[2][1] - 1, "Bottom guide's y1 is correct");
+      is(leftX1, points[3][0], "Left guide's x1 is correct");
     }
   },
   {
@@ -185,7 +185,7 @@ const TEST_DATA = [
 ];
 
 add_task(function* () {
-  let {inspector, toolbox, testActor} = yield openInspectorForURL(
+  let {inspector, testActor} = yield openInspectorForURL(
     "data:text/html;charset=utf-8," + encodeURI(TEST_URL));
 
   let divFront = yield getNodeFront("div", inspector);
@@ -194,11 +194,11 @@ add_task(function* () {
     info("Running test: " + desc);
 
     info("Show the box-model highlighter with options " + options);
-    yield toolbox.highlighter.showBoxModel(divFront, options);
+    yield inspector.highlighter.showBoxModel(divFront, options);
 
     yield checkHighlighter(testActor);
 
     info("Hide the box-model highlighter");
-    yield toolbox.highlighter.hideBoxModel();
+    yield inspector.highlighter.hideBoxModel();
   }
 });

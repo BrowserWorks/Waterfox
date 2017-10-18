@@ -33,7 +33,10 @@
 
 #include "hb-font-private.hh"
 
+#include "hb-cache-private.hh" // Maybe use in the future?
+
 #include FT_ADVANCES_H
+#include FT_MULTIPLE_MASTERS_H
 #include FT_TRUETYPE_TABLES_H
 
 
@@ -70,11 +73,12 @@ struct hb_ft_font_t
 {
   FT_Face ft_face;
   int load_flags;
+  bool symbol; /* Whether selected cmap is symbol cmap. */
   bool unref; /* Whether to destroy ft_face when done. */
 };
 
 static hb_ft_font_t *
-_hb_ft_font_create (FT_Face ft_face, bool unref)
+_hb_ft_font_create (FT_Face ft_face, bool symbol, bool unref)
 {
   hb_ft_font_t *ft_font = (hb_ft_font_t *) calloc (1, sizeof (hb_ft_font_t));
 
@@ -82,6 +86,7 @@ _hb_ft_font_create (FT_Face ft_face, bool unref)
     return NULL;
 
   ft_font->ft_face = ft_face;
+  ft_font->symbol = symbol;
   ft_font->unref = unref;
 
   ft_font->load_flags = FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING;
@@ -90,10 +95,16 @@ _hb_ft_font_create (FT_Face ft_face, bool unref)
 }
 
 static void
+_hb_ft_face_destroy (FT_Face ft_face)
+{
+  FT_Done_Face (ft_face);
+}
+
+static void
 _hb_ft_font_destroy (hb_ft_font_t *ft_font)
 {
   if (ft_font->unref)
-    FT_Done_Face (ft_font->ft_face);
+    _hb_ft_face_destroy (ft_font->ft_face);
 
   free (ft_font);
 }
@@ -165,7 +176,21 @@ hb_ft_get_nominal_glyph (hb_font_t *font HB_UNUSED,
   unsigned int g = FT_Get_Char_Index (ft_font->ft_face, unicode);
 
   if (unlikely (!g))
-    return false;
+  {
+    if (unlikely (ft_font->symbol) && unicode <= 0x00FFu)
+    {
+      /* For symbol-encoded OpenType fonts, we duplicate the
+       * U+F000..F0FF range at U+0000..U+00FF.  That's what
+       * Windows seems to do, and that's hinted about at:
+       * http://www.microsoft.com/typography/otspec/recom.htm
+       * under "Non-Standard (Symbol) Fonts". */
+      g = FT_Get_Char_Index (ft_font->ft_face, 0xF000u + unicode);
+      if (!g)
+	return false;
+    }
+    else
+      return false;
+  }
 
   *glyph = g;
   return true;
@@ -444,9 +469,11 @@ retry:
 #endif
   };
 
+  bool symbol = ft_face->charmap && ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL;
+
   hb_font_set_funcs (font,
 		     funcs,
-		     _hb_ft_font_create (ft_face, unref),
+		     _hb_ft_font_create (ft_face, symbol, unref),
 		     (hb_destroy_func_t) _hb_ft_font_destroy);
 }
 
@@ -526,7 +553,7 @@ hb_face_t *
 hb_ft_face_create_referenced (FT_Face ft_face)
 {
   FT_Reference_Face (ft_face);
-  return hb_ft_face_create (ft_face, (hb_destroy_func_t) FT_Done_Face);
+  return hb_ft_face_create (ft_face, (hb_destroy_func_t) _hb_ft_face_destroy);
 }
 
 static void
@@ -582,12 +609,34 @@ hb_ft_font_create (FT_Face           ft_face,
   hb_face_destroy (face);
   _hb_ft_font_set_funcs (font, ft_face, false);
   hb_font_set_scale (font,
-		     (int) (((uint64_t) ft_face->size->metrics.x_scale * (uint64_t) ft_face->units_per_EM + (1<<15)) >> 16),
-		     (int) (((uint64_t) ft_face->size->metrics.y_scale * (uint64_t) ft_face->units_per_EM + (1<<15)) >> 16));
+		     (int) (((uint64_t) ft_face->size->metrics.x_scale * (uint64_t) ft_face->units_per_EM + (1u<<15)) >> 16),
+		     (int) (((uint64_t) ft_face->size->metrics.y_scale * (uint64_t) ft_face->units_per_EM + (1u<<15)) >> 16));
 #if 0 /* hb-ft works in no-hinting model */
   hb_font_set_ppem (font,
 		    ft_face->size->metrics.x_ppem,
 		    ft_face->size->metrics.y_ppem);
+#endif
+
+#ifdef HAVE_FT_GET_VAR_BLEND_COORDINATES
+  FT_MM_Var *mm_var = NULL;
+  if (!FT_Get_MM_Var (ft_face, &mm_var))
+  {
+    FT_Fixed *ft_coords = (FT_Fixed *) calloc (mm_var->num_axis, sizeof (FT_Fixed));
+    int *coords = (int *) calloc (mm_var->num_axis, sizeof (int));
+    if (coords && ft_coords)
+    {
+      if (!FT_Get_Var_Blend_Coordinates (ft_face, mm_var->num_axis, ft_coords))
+      {
+	for (unsigned int i = 0; i < mm_var->num_axis; ++i)
+	  coords[i] = ft_coords[i] >>= 2;
+
+	hb_font_set_var_coords_normalized (font, coords, mm_var->num_axis);
+      }
+      free (coords);
+      free (ft_coords);
+    }
+    free (mm_var);
+  }
 #endif
 
   return font;
@@ -606,7 +655,7 @@ hb_font_t *
 hb_ft_font_create_referenced (FT_Face ft_face)
 {
   FT_Reference_Face (ft_face);
-  return hb_ft_font_create (ft_face, (hb_destroy_func_t) FT_Done_Face);
+  return hb_ft_font_create (ft_face, (hb_destroy_func_t) _hb_ft_face_destroy);
 }
 
 
@@ -675,7 +724,8 @@ hb_ft_font_set_funcs (hb_font_t *font)
     return;
   }
 
-  FT_Select_Charmap (ft_face, FT_ENCODING_UNICODE);
+  if (FT_Select_Charmap (ft_face, FT_ENCODING_UNICODE))
+    FT_Select_Charmap (ft_face, FT_ENCODING_MS_SYMBOL);
 
   FT_Set_Char_Size (ft_face,
 		    abs (font->x_scale), abs (font->y_scale),
@@ -689,6 +739,20 @@ hb_ft_font_set_funcs (hb_font_t *font)
     FT_Matrix matrix = { font->x_scale < 0 ? -1 : +1, 0,
 			  0, font->y_scale < 0 ? -1 : +1};
     FT_Set_Transform (ft_face, &matrix, NULL);
+  }
+
+  unsigned int num_coords;
+  const int *coords = hb_font_get_var_coords_normalized (font, &num_coords);
+  if (num_coords)
+  {
+    FT_Fixed *ft_coords = (FT_Fixed *) calloc (num_coords, sizeof (FT_Fixed));
+    if (ft_coords)
+    {
+      for (unsigned int i = 0; i < num_coords; i++)
+	ft_coords[i] = coords[i] << 2;
+      FT_Set_Var_Blend_Coordinates (ft_face, num_coords, ft_coords);
+      free (ft_coords);
+    }
   }
 
   ft_face->generic.data = blob;

@@ -10,7 +10,7 @@ This currently supports nightly and release single locale repacks for
 Android.  This also creates nightly updates.
 """
 
-from copy import deepcopy
+import glob
 import os
 import re
 import subprocess
@@ -106,6 +106,19 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
          "type": "int",
          "help": "Specify the total number of chunks of locales"
          }
+    ], [
+        ["--disable-mock"],
+        {"dest": "disable_mock",
+         "action": "store_true",
+         "help": "do not run under mock despite what gecko-config says",
+        }
+    ], [
+        ['--revision', ],
+        {"action": "store",
+         "dest": "revision",
+         "type": "string",
+         "help": "Override the gecko revision to use (otherwise use buildbot supplied"
+                 " value, or en-US revision) "}
     ]]
 
     def __init__(self, require_config_file=True):
@@ -113,9 +126,11 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             'all_actions': [
                 "clobber",
                 "pull",
+                "clone-locales",
                 "list-locales",
                 "setup",
                 "repack",
+                "validate-repacks-signed",
                 "upload-repacks",
                 "create-virtualenv",
                 "taskcluster-upload",
@@ -143,6 +158,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.buildid = None
         self.make_ident_output = None
         self.repack_env = None
+        self.enUS_revision = None
         self.revision = None
         self.upload_env = None
         self.version = None
@@ -186,7 +202,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
 
         # Android l10n builds use a non-standard location for l10n files.  Other
         # builds go to 'mozilla-central-l10n', while android builds add part of
-        # the platform name as well, like 'mozilla-central-android-api-15-l10n'.
+        # the platform name as well, like 'mozilla-central-android-api-16-l10n'.
         # So we override the branch with something that contains the platform
         # name.
         replace_dict['branch'] = c['upload_branch']
@@ -196,7 +212,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                     replace_dict=replace_dict)
         if 'MOZ_SIGNING_SERVERS' in os.environ:
             upload_env['MOZ_SIGN_CMD'] = subprocess.list2cmdline(self.query_moz_sign_cmd())
-        if self.query_is_release():
+        if self.query_is_release_or_beta():
             upload_env['MOZ_PKG_VERSION'] = '%(version)s' % replace_dict
         self.upload_env = upload_env
         return self.upload_env
@@ -235,18 +251,51 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         return self.buildid
 
     def query_revision(self):
-        """Get revision from the objdir.
-        Only valid after setup is run.
+        """ Get the gecko revision in this order of precedence
+              * cached value
+              * command line arg --revision   (development, taskcluster)
+              * buildbot properties           (try with buildbot forced build)
+              * buildbot change               (try with buildbot scheduler)
+              * from the en-US build          (m-c & m-a)
+
+        This will fail the last case if the build hasn't been pulled yet.
         """
         if self.revision:
             return self.revision
-        r = re.compile(r"gecko_revision ([0-9a-f]+\+?)")
+
+        self.read_buildbot_config()
+        config = self.config
+        revision = None
+        if config.get("revision"):
+            revision = config["revision"]
+        elif 'revision' in self.buildbot_properties:
+            revision = self.buildbot_properties['revision']
+        elif (self.buildbot_config and
+                  self.buildbot_config.get('sourcestamp', {}).get('revision')):
+            revision = self.buildbot_config['sourcestamp']['revision']
+        elif self.buildbot_config and self.buildbot_config.get('revision'):
+            revision = self.buildbot_config['revision']
+        elif config.get("update_gecko_source_to_enUS", True):
+            revision = self._query_enUS_revision()
+
+        if not revision:
+            self.fatal("Can't determine revision!")
+        self.revision = str(revision)
+        return self.revision
+
+    def _query_enUS_revision(self):
+        """Get revision from the objdir.
+        Only valid after setup is run.
+       """
+        if self.enUS_revision:
+            return self.enUS_revision
+        r = re.compile(r"^gecko_revision ([0-9a-f]+\+?)$")
         output = self._query_make_ident_output()
         for line in output.splitlines():
-            m = r.match(line)
-            if m:
-                self.revision = m.groups()[0]
-        return self.revision
+            match = r.match(line)
+            if match:
+                self.enUS_revision = match.groups()[0]
+        return self.enUS_revision
 
     def _query_make_variable(self, variable, make_args=None):
         make = self.query_exe('make')
@@ -348,14 +397,27 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         replace_dict = {}
         if c.get("user_repo_override"):
             replace_dict['user_repo_override'] = c['user_repo_override']
-            # deepcopy() needed because of self.config lock bug :(
-            for repo_dict in deepcopy(c['repos']):
-                repo_dict['repo'] = repo_dict['repo'] % replace_dict
-                repos.append(repo_dict)
-        else:
-            repos = c['repos']
+        # this is OK so early because we get it from buildbot, or
+        # the command line for local dev
+        replace_dict['revision'] = self.query_revision()
+
+        for repository in c['repos']:
+            current_repo = {}
+            for key, value in repository.iteritems():
+                try:
+                    current_repo[key] = value % replace_dict
+                except TypeError:
+                    # pass through non-interpolables, like booleans
+                    current_repo[key] = value
+                except KeyError:
+                    self.error('not all the values in "{0}" can be replaced. Check your configuration'.format(value))
+                    raise
+            repos.append(current_repo)
+        self.info("repositories: %s" % repos)
         self.vcs_checkout_repos(repos, parent_dir=dirs['abs_work_dir'],
                                 tag_override=c.get('tag_override'))
+
+    def clone_locales(self):
         self.pull_locale_source()
 
     # list_locales() is defined in LocalesMixin.
@@ -396,7 +458,6 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                       mozconfig_path)
         # TODO stop using cat
         cat = self.query_exe("cat")
-        hg = self.query_exe("hg")
         make = self.query_exe("make")
         self.run_command_m([cat, mozconfig_path])
         env = self.query_repack_env()
@@ -416,29 +477,31 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                            env=env,
                            error_list=MakefileErrorList,
                            halt_on_failure=True)
-        revision = self.query_revision()
-        if not revision:
-            self.fatal("Can't determine revision!")
-        # TODO do this through VCSMixin instead of hardcoding hg
-        self.run_command_m([hg, "update", "-r", revision],
-                           cwd=dirs["abs_mozilla_dir"],
-                           env=env,
-                           error_list=BaseErrorList,
-                           halt_on_failure=True)
-        self.set_buildbot_property('revision', revision, write_to_file=True)
-        # Configure again since the hg update may have invalidated it.
-        buildid = self.query_buildid()
-        self._setup_configure(buildid=buildid)
+
+        # on try we want the source we already have, otherwise update to the
+        # same as the en-US binary
+        if self.config.get("update_gecko_source_to_enUS", True):
+            revision = self._query_enUS_revision()
+            if not revision:
+                self.fatal("Can't determine revision!")
+            hg = self.query_exe("hg")
+            # TODO do this through VCSMixin instead of hardcoding hg
+            self.run_command_m([hg, "update", "-r", revision],
+                               cwd=dirs["abs_mozilla_dir"],
+                               env=env,
+                               error_list=BaseErrorList,
+                               halt_on_failure=True)
+            self.set_buildbot_property('revision', revision, write_to_file=True)
+            # Configure again since the hg update may have invalidated it.
+            buildid = self.query_buildid()
+            self._setup_configure(buildid=buildid)
 
     def repack(self):
         # TODO per-locale logs and reporting.
-        c = self.config
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
         make = self.query_exe("make")
         repack_env = self.query_repack_env()
-        base_package_name = self.query_base_package_name()
-        base_package_dir = os.path.join(dirs['abs_objdir'], 'dist')
         success_count = total_count = 0
         for locale in locales:
             total_count += 1
@@ -455,6 +518,20 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                                   halt_on_failure=False):
                 self.add_failure(locale, message="%s failed in make installers-%s!" % (locale, locale))
                 continue
+            success_count += 1
+        self.summarize_success_count(success_count, total_count,
+                                     message="Repacked %d of %d binaries successfully.")
+
+    def validate_repacks_signed(self):
+        c = self.config
+        dirs = self.query_abs_dirs()
+        locales = self.query_locales()
+        base_package_name = self.query_base_package_name()
+        base_package_dir = os.path.join(dirs['abs_objdir'], 'dist')
+        repack_env = self.query_repack_env()
+        success_count = total_count = 0
+        for locale in locales:
+            total_count += 1
             signed_path = os.path.join(base_package_dir,
                                        base_package_name % {'locale': locale})
             # We need to wrap what this function does with mock, since
@@ -473,7 +550,7 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 continue
             success_count += 1
         self.summarize_success_count(success_count, total_count,
-                                     message="Repacked %d of %d binaries successfully.")
+                                     message="Validated signatures on %d of %d binaries successfully.")
 
     def taskcluster_upload(self):
         auth = os.path.join(os.getcwd(), self.config['taskcluster_credentials_file'])
@@ -495,10 +572,10 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         branch = self.config['branch']
         revision = self.query_revision()
         repo = self.query_l10n_repo()
-        pushinfo = self.vcs_query_pushinfo(repo, revision, vcs='hgtool')
+        pushinfo = self.vcs_query_pushinfo(repo, revision, vcs='hg')
         pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(pushinfo.pushdate))
         routes_json = os.path.join(self.query_abs_dirs()['abs_mozilla_dir'],
-                                   'taskcluster/ci/legacy/routes.json')
+                                   'testing/mozharness/configs/routes.json')
         with open(routes_json) as routes_file:
             contents = json.load(routes_file)
             templates = contents['l10n']
@@ -579,20 +656,28 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
                 continue
             package_name = base_package_name % {'locale': locale}
             r = re.compile("(http.*%s)" % package_name)
-            success = False
             for line in output.splitlines():
                 m = r.match(line)
                 if m:
                     self.upload_urls[locale] = m.groups()[0]
                     self.info("Found upload url %s" % self.upload_urls[locale])
-                    success = True
-            if not success:
-                self.add_failure(locale, message="Failed to detect %s url in make upload!" % (locale))
-                print output
-                continue
+
+            # XXX Move the files to a SIMPLE_NAME format until we can enable
+            #     Simple names in the build system
+            if self.config.get("simple_name_move"):
+                # Assume an UPLOAD PATH
+                upload_target = self.config["upload_env"]["UPLOAD_PATH"]
+                target_path = os.path.join(upload_target, locale)
+                self.mkdir_p(target_path)
+                glob_name = "*.%s.android-arm.*" % locale
+                for f in glob.glob(os.path.join(upload_target, glob_name)):
+                    glob_extension = f[f.rfind('.'):]
+                    self.move(os.path.join(f),
+                              os.path.join(target_path, "target%s" % glob_extension))
+                self.log("Converted uploads for %s to simple names" % locale)
             success_count += 1
         self.summarize_success_count(success_count, total_count,
-                                     message="Uploaded %d of %d binaries successfully.")
+                                     message="Make Upload for %d of %d locales successful.")
 
     def checkout_tools(self):
         dirs = self.query_abs_dirs()
@@ -601,7 +686,8 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
         self.info("Checking out tools")
         repos = [{
             'repo': self.config['tools_repo'],
-            'vcs': "hg",  # May not have hgtool yet
+            'vcs': "hg",
+            'branch': "default",
             'dest': dirs['abs_tools_dir'],
         }]
         rev = self.vcs_checkout(**repos[0])
@@ -622,27 +708,49 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
 
         return os.path.join(apkdir, apks[0])
 
-    def query_is_release(self):
+    def query_is_release_or_beta(self):
 
-        return bool(self.config.get("is_release"))
+        return bool(self.config.get("is_release_or_beta"))
 
     def submit_to_balrog(self):
 
-        if not self.query_is_nightly() and not self.query_is_release():
+        if not self.query_is_nightly() and not self.query_is_release_or_beta():
             self.info("Not a nightly or release build, skipping balrog submission.")
-            return
-
-        if not self.config.get("balrog_servers"):
-            self.info("balrog_servers not set; skipping balrog submission.")
             return
 
         self.checkout_tools()
 
         dirs = self.query_abs_dirs()
         locales = self.query_locales()
+        if not self.config.get('taskcluster_nightly'):
+            balrogReady = True
+            for locale in locales:
+                apk_url = self.query_upload_url(locale)
+                if not apk_url:
+                    self.add_failure(locale, message="Failed to detect %s url in make upload!" % (locale))
+                    balrogReady = False
+                    continue
+            if not balrogReady:
+                return self.fatal(message="Not all repacks successful, abort without submitting to balrog")
+
+        env = self.query_upload_env()
         for locale in locales:
             apkfile = self.query_apkfile_path(locale)
-            apk_url = self.query_upload_url(locale)
+            if self.config.get('taskcluster_nightly'):
+                # Taskcluster needs stage_platform
+                self.set_buildbot_property("stage_platform",
+                                           self.config.get("stage_platform"))
+                self.set_buildbot_property("branch", self.config.get("branch"))
+            else:
+                apk_url = self.query_upload_url(locale)
+                self.set_buildbot_property("completeMarUrl", apk_url)
+
+                # The Balrog submitter translates this platform into a build target
+                # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
+                self.set_buildbot_property(
+                    "platform",
+                    self.buildbot_config["properties"]["platform"])
+                #TODO: Is there a better way to get this?
 
             # Set other necessary properties for Balrog submission. None need to
             # be passed back to buildbot, so we won't write them to the properties
@@ -650,26 +758,31 @@ class MobileSingleLocale(MockMixin, LocalesMixin, ReleaseMixin,
             self.set_buildbot_property("locale", locale)
 
             self.set_buildbot_property("appVersion", self.query_version())
-            # The Balrog submitter translates this platform into a build target
-            # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
-            self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
-            #TODO: Is there a better way to get this?
 
             self.set_buildbot_property("appName", "Fennec")
             # TODO: don't hardcode
             self.set_buildbot_property("hashType", "sha512")
             self.set_buildbot_property("completeMarSize", self.query_filesize(apkfile))
             self.set_buildbot_property("completeMarHash", self.query_sha512sum(apkfile))
-            self.set_buildbot_property("completeMarUrl", apk_url)
             self.set_buildbot_property("isOSUpdate", False)
             self.set_buildbot_property("buildid", self.query_buildid())
 
-            if self.query_is_nightly():
-                self.submit_balrog_updates(release_type="nightly")
+            if self.config.get('taskcluster_nightly'):
+                props_path = os.path.join(env["UPLOAD_PATH"], locale,
+                                          'balrog_props.json')
+                self.generate_balrog_props(props_path)
             else:
-                self.submit_balrog_updates(release_type="release")
-        if not self.query_is_nightly():
-            self.submit_balrog_release_pusher(dirs)
+                if not self.config.get("balrog_servers"):
+                    self.info("balrog_servers not set; skipping balrog submission.")
+                    return
+
+                if self.query_is_nightly():
+                    self.submit_balrog_updates(release_type="nightly")
+                else:
+                    self.submit_balrog_updates(release_type="release")
+
+                if not self.query_is_nightly():
+                    self.submit_balrog_release_pusher(dirs)
 
 # main {{{1
 if __name__ == '__main__':

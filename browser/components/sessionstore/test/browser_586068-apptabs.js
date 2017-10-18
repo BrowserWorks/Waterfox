@@ -6,25 +6,25 @@ requestLongerTimeout(2);
 
 const PREF_RESTORE_ON_DEMAND = "browser.sessionstore.restore_on_demand";
 
-add_task(function* test() {
+add_task(async function test() {
   Services.prefs.setBoolPref(PREF_RESTORE_ON_DEMAND, true);
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(PREF_RESTORE_ON_DEMAND);
   });
 
   let state = { windows: [{ tabs: [
-    { entries: [{ url: "http://example.org/#1" }], extData: { "uniq": r() }, pinned: true },
-    { entries: [{ url: "http://example.org/#2" }], extData: { "uniq": r() }, pinned: true },
-    { entries: [{ url: "http://example.org/#3" }], extData: { "uniq": r() }, pinned: true },
-    { entries: [{ url: "http://example.org/#4" }], extData: { "uniq": r() } },
-    { entries: [{ url: "http://example.org/#5" }], extData: { "uniq": r() } },
-    { entries: [{ url: "http://example.org/#6" }], extData: { "uniq": r() } },
-    { entries: [{ url: "http://example.org/#7" }], extData: { "uniq": r() } },
+    { entries: [{ url: "http://example.org/#1", triggeringPrincipal_base64 }], extData: { "uniq": r() }, pinned: true },
+    { entries: [{ url: "http://example.org/#2", triggeringPrincipal_base64 }], extData: { "uniq": r() }, pinned: true },
+    { entries: [{ url: "http://example.org/#3", triggeringPrincipal_base64 }], extData: { "uniq": r() }, pinned: true },
+    { entries: [{ url: "http://example.org/#4", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+    { entries: [{ url: "http://example.org/#5", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+    { entries: [{ url: "http://example.org/#6", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
+    { entries: [{ url: "http://example.org/#7", triggeringPrincipal_base64 }], extData: { "uniq": r() } },
   ], selected: 5 }] };
 
   let loadCount = 0;
   let promiseRestoringTabs = new Promise(resolve => {
-    gProgressListener.setCallback(function (aBrowser, aNeedRestore, aRestoring, aRestored) {
+    gProgressListener.setCallback(function(aBrowser, aNeedRestore, aRestoring, aRestored) {
       loadCount++;
 
       // We'll make sure that the loads we get come from pinned tabs or the
@@ -51,8 +51,8 @@ add_task(function* test() {
 
   let backupState = ss.getBrowserState();
   ss.setBrowserState(JSON.stringify(state));
-  yield promiseRestoringTabs;
+  await promiseRestoringTabs;
 
   // Cleanup.
-  yield promiseBrowserState(backupState);
+  await promiseBrowserState(backupState);
 });

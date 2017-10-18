@@ -29,20 +29,20 @@ struct cubeb {
 
 struct cubeb_stream {
   cubeb * context;
-  pthread_t th;			  /* to run real-time audio i/o */
-  pthread_mutex_t mtx;		  /* protects hdl and pos */
-  struct sio_hdl *hdl;		  /* link us to sndio */
-  int active;			  /* cubec_start() called */
-  int conv;			  /* need float->s16 conversion */
-  unsigned char *buf;		  /* data is prepared here */
-  unsigned int nfr;		  /* number of frames in buf */
-  unsigned int bpf;		  /* bytes per frame */
-  unsigned int pchan;		  /* number of play channels */
-  uint64_t rdpos;		  /* frame number Joe hears right now */
-  uint64_t wrpos;		  /* number of written frames */
+  pthread_t th;                   /* to run real-time audio i/o */
+  pthread_mutex_t mtx;            /* protects hdl and pos */
+  struct sio_hdl *hdl;            /* link us to sndio */
+  int active;                     /* cubec_start() called */
+  int conv;                       /* need float->s16 conversion */
+  unsigned char *buf;             /* data is prepared here */
+  unsigned int nfr;               /* number of frames in buf */
+  unsigned int bpf;               /* bytes per frame */
+  unsigned int pchan;             /* number of play channels */
+  uint64_t rdpos;                 /* frame number Joe hears right now */
+  uint64_t wrpos;                 /* number of written frames */
   cubeb_data_callback data_cb;    /* cb to preapare data */
   cubeb_state_callback state_cb;  /* cb to notify about state changes */
-  void *arg;			  /* user arg to {data,state}_cb */
+  void *arg;                      /* user arg to {data,state}_cb */
 };
 
 static void
@@ -217,6 +217,8 @@ sndio_stream_init(cubeb * context,
     wpar.le = SIO_LE_NATIVE;
     break;
   default:
+    sio_close(s->hdl);
+    free(s);
     DPR("sndio_stream_init() unsupported format\n");
     return CUBEB_ERROR_INVALID_FORMAT;
   }
@@ -245,7 +247,7 @@ sndio_stream_init(cubeb * context,
   s->data_cb = data_callback;
   s->state_cb = state_callback;
   s->arg = user_ptr;
-  s->mtx = PTHREAD_MUTEX_INITIALIZER;
+  s->mtx = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   s->rdpos = s->wrpos = 0;
   if (output_stream_params->format == CUBEB_SAMPLE_FLOAT32LE) {
     s->conv = 1;
@@ -366,12 +368,15 @@ static struct cubeb_ops const sndio_ops = {
   .get_max_channel_count = sndio_get_max_channel_count,
   .get_min_latency = sndio_get_min_latency,
   .get_preferred_sample_rate = sndio_get_preferred_sample_rate,
+  .get_preferred_channel_layout = NULL,
   .enumerate_devices = NULL,
+  .device_collection_destroy = NULL,
   .destroy = sndio_destroy,
   .stream_init = sndio_stream_init,
   .stream_destroy = sndio_stream_destroy,
   .stream_start = sndio_stream_start,
   .stream_stop = sndio_stream_stop,
+  .stream_reset_default_device = NULL,
   .stream_get_position = sndio_stream_get_position,
   .stream_get_latency = sndio_stream_get_latency,
   .stream_set_volume = sndio_stream_set_volume,

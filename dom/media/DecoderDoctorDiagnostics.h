@@ -7,11 +7,19 @@
 #ifndef DecoderDoctorDiagnostics_h_
 #define DecoderDoctorDiagnostics_h_
 
+#include "MediaResult.h"
 #include "nsString.h"
 
 class nsIDocument;
 
 namespace mozilla {
+
+struct DecoderDoctorEvent {
+  enum Domain {
+    eAudioSinkStartup,
+  } mDomain;
+  nsresult mResult;
+};
 
 // DecoderDoctorDiagnostics class, used to gather data from PDMs/DecoderTraits,
 // and then notify the user about issues preventing (or worsening) playback.
@@ -46,10 +54,28 @@ public:
                                  bool aIsSupported,
                                  const char* aCallSite);
 
-  enum DiagnosticsType {
+  void StoreEvent(nsIDocument* aDocument,
+                  const DecoderDoctorEvent& aEvent,
+                  const char* aCallSite);
+
+  void StoreDecodeError(nsIDocument* aDocument,
+                        const MediaResult& aError,
+                        const nsString& aMediaSrc,
+                        const char* aCallSite);
+
+  void StoreDecodeWarning(nsIDocument* aDocument,
+                          const MediaResult& aWarning,
+                          const nsString& aMediaSrc,
+                          const char* aCallSite);
+
+  enum DiagnosticsType
+  {
     eUnsaved,
     eFormatSupportCheck,
-    eMediaKeySystemAccessRequest
+    eMediaKeySystemAccessRequest,
+    eEvent,
+    eDecodeError,
+    eDecodeWarning
   };
   DiagnosticsType Type() const { return mDiagnosticsType; }
 
@@ -69,6 +95,10 @@ public:
 
   void SetGMPPDMFailedToStartup() { mGMPPDMFailedToStartup = true; }
   bool DidGMPPDMFailToStartup() const { return mGMPPDMFailedToStartup; }
+
+  void SetVideoNotSupported() { mVideoNotSupported = true; }
+  void SetAudioNotSupported() { mAudioNotSupported = true; }
+
   void SetGMP(const nsACString& aGMP) { mGMP = aGMP; }
   const nsACString& GMP() const { return mGMP; }
 
@@ -87,6 +117,17 @@ public:
     return mKeySystemIssue;
   }
 
+  DecoderDoctorEvent event() const
+  {
+    return mEvent;
+  }
+
+  const MediaResult& DecodeIssue() const { return mDecodeIssue; }
+  const nsString& DecodeIssueMediaSrc() const
+  {
+    return mDecodeIssueMediaSrc;
+  }
+
 private:
   // Currently-known type of diagnostics. Set from one of the 'Store...' methods.
   // This helps ensure diagnostics are only stored once,
@@ -100,11 +141,18 @@ private:
   bool mWMFFailedToLoad = false;
   bool mFFmpegFailedToLoad = false;
   bool mGMPPDMFailedToStartup = false;
+  bool mVideoNotSupported = false;
+  bool mAudioNotSupported = false;
   nsCString mGMP;
 
   nsString mKeySystem;
   bool mIsKeySystemSupported = false;
   KeySystemIssue mKeySystemIssue = eUnset;
+
+  DecoderDoctorEvent mEvent;
+
+  MediaResult mDecodeIssue = NS_OK;
+  nsString mDecodeIssueMediaSrc;
 };
 
 } // namespace mozilla

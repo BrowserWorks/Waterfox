@@ -2,13 +2,16 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+Cu.import("resource://gre/modules/Services.jsm");
 
 const PREF_TEST_WHITELIST = "browser.uitour.testingOrigins";
 const UITOUR_PERMISSION   = "uitour";
 
 var UITourListener = {
-  handleEvent: function (event) {
+  handleEvent(event) {
     if (!Services.prefs.getBoolPref("browser.uitour.enabled")) {
       return;
     }
@@ -24,7 +27,7 @@ var UITourListener = {
     });
   },
 
-  isTestingOrigin: function(aURI) {
+  isTestingOrigin(aURI) {
     if (Services.prefs.getPrefType(PREF_TEST_WHITELIST) != Services.prefs.PREF_STRING) {
       return false;
     }
@@ -32,7 +35,7 @@ var UITourListener = {
     // Add any testing origins (comma-seperated) to the whitelist for the session.
     for (let origin of Services.prefs.getCharPref(PREF_TEST_WHITELIST).split(",")) {
       try {
-        let testingURI = Services.io.newURI(origin, null, null);
+        let testingURI = Services.io.newURI(origin);
         if (aURI.prePath == testingURI.prePath) {
           return true;
         }
@@ -44,7 +47,7 @@ var UITourListener = {
   },
 
   // This function is copied from UITour.jsm.
-  isSafeScheme: function(aURI) {
+  isSafeScheme(aURI) {
     let allowedSchemes = new Set(["https", "about"]);
     if (!Services.prefs.getBoolPref("browser.uitour.requireSecure"))
       allowedSchemes.add("http");
@@ -55,7 +58,7 @@ var UITourListener = {
     return true;
   },
 
-  ensureTrustedOrigin: function() {
+  ensureTrustedOrigin() {
     if (content.top != content)
       return false;
 
@@ -74,7 +77,7 @@ var UITourListener = {
     return this.isTestingOrigin(uri);
   },
 
-  receiveMessage: function(aMessage) {
+  receiveMessage(aMessage) {
     switch (aMessage.name) {
       case "UITour:SendPageCallback":
         this.sendPageEvent("Response", aMessage.data);
@@ -85,7 +88,7 @@ var UITourListener = {
       }
   },
 
-  sendPageEvent: function (type, detail) {
+  sendPageEvent(type, detail) {
     if (!this.ensureTrustedOrigin()) {
       return;
     }

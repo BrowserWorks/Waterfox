@@ -7,7 +7,7 @@ const URL = "http://mochi.test:8888/browser/browser/base/content/test/general/te
 
 registerCleanupFunction(function() {
   // Clean up after ourself
-  let uri = Services.io.newURI(URL, null, null);
+  let uri = Services.io.newURI(URL);
   let principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
   Services.perms.removeFromPrincipal(principal, "offline-app");
   Services.prefs.clearUserPref("offline-apps.allow_by_default");
@@ -16,7 +16,7 @@ registerCleanupFunction(function() {
 var cacheCount = 0;
 var intervalID = 0;
 
-////
+//
 // Handle "message" events which are posted from the iframe upon
 // offline cache events.
 //
@@ -39,9 +39,8 @@ function handleMessageEvents(event) {
         // it will throw an exception, so handle this case.
         try {
           var bodyInnerHTML = event.source.document.body.innerHTML;
-        }
-        catch (e) {
-          var bodyInnerHTML = "";
+        } catch (e) {
+          bodyInnerHTML = "";
         }
         if (cacheCount == 2 || bodyInnerHTML.includes("error")) {
           clearInterval(intervalID);
@@ -69,12 +68,12 @@ function test() {
   Services.prefs.setBoolPref("offline-apps.allow_by_default", true);
 
   // Open a new tab.
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
   registerCleanupFunction(() => gBrowser.removeCurrentTab());
 
   BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
     let window = gBrowser.selectedBrowser.contentWindow;
 
-    window.addEventListener("message", handleMessageEvents, false);
+    window.addEventListener("message", handleMessageEvents);
   });
 }

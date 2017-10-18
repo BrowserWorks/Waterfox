@@ -30,18 +30,6 @@ private:
     }
 
     /**
-     * Is the resource object wrapping an externally allocated GPU resource that Skia has not taken
-     * ownership of.
-     */
-    bool isBorrowed() const { return GrGpuResource::kBorrowed_LifeCycle == fResource->fLifeCycle; }
-
-    /**
-     * Is the resource object wrapping an externally allocated GPU resource that Skia has taken
-     * ownership of.
-     */
-    bool isAdopted() const { return GrGpuResource::kAdopted_LifeCycle == fResource->fLifeCycle; }
-
-    /**
      * Called by the cache to delete the resource under normal circumstances.
      */
     void release() {
@@ -69,6 +57,32 @@ private:
 
     uint32_t timestamp() const { return fResource->fTimestamp; }
     void setTimestamp(uint32_t ts) { fResource->fTimestamp = ts; }
+
+    /** Called by the cache to record when this became purgeable. */
+    void setFlushCntWhenResourceBecamePurgeable(uint32_t cnt) {
+        SkASSERT(fResource->isPurgeable());
+        fResource->fExternalFlushCntWhenBecamePurgeable = cnt;
+    }
+    void setTimeWhenResourceBecomePurgeable() {
+        SkASSERT(fResource->isPurgeable());
+        fResource->fTimeWhenBecamePurgeable = GrStdSteadyClock::now();
+    }
+    /**
+     * Called by the cache to determine whether this resource has been puregable for more than
+     * a threshold number of external flushes.
+     */
+    uint32_t flushCntWhenResourceBecamePurgeable() {
+        SkASSERT(fResource->isPurgeable());
+        return fResource->fExternalFlushCntWhenBecamePurgeable;
+    }
+    /**
+     * Called by the cache to determine whether this resource should be purged based on the length
+     * of time it has been available for purging.
+     */
+    GrStdSteadyClock::time_point timeWhenResourceBecamePurgeable() {
+        SkASSERT(fResource->isPurgeable());
+        return fResource->fTimeWhenBecamePurgeable;
+    }
 
     int* accessCacheIndex() const { return &fResource->fCacheArrayIndex; }
 

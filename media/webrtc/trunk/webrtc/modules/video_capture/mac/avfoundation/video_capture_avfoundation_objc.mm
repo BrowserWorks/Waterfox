@@ -17,7 +17,7 @@
 
 #import "webrtc/modules/video_capture/mac/avfoundation/video_capture_avfoundation_objc.h"
 
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/system_wrappers/include/trace.h"
 
 using namespace webrtc;
 using namespace videocapturemodule;
@@ -144,10 +144,15 @@ using namespace videocapturemodule;
 
     _captureVideoDataOutput.videoSettings = newSettings;
 
-    if ([_captureDevice lockForConfiguration:NULL] == YES) {
-      _captureDevice.activeFormat = bestFormat;
-      _captureDevice.activeVideoMinFrameDuration = bestFrameRateRange.minFrameDuration;
-      [_captureDevice unlockForConfiguration];
+    AVCaptureConnection* captureConnection =
+      [_captureVideoDataOutput connectionWithMediaType:AVMediaTypeVideo];
+
+    if ([captureConnection isVideoMinFrameDurationSupported]) {
+      [captureConnection setVideoMinFrameDuration:bestFrameRateRange.minFrameDuration];
+    }
+
+    if ([captureConnection isVideoMaxFrameDurationSupported]) {
+      [captureConnection setVideoMaxFrameDuration:bestFrameRateRange.maxFrameDuration];
     }
   }
 }
@@ -238,32 +243,36 @@ using namespace videocapturemodule;
     return;
   }
 
+  CMFormatDescriptionRef formatDescription =
+      CMSampleBufferGetFormatDescription(sampleBuffer);
+  webrtc::RawVideoType rawType =
+      [VideoCaptureMacAVFoundationUtility fourCCToRawVideoType:CMFormatDescriptionGetMediaSubType(formatDescription)];
+  CMVideoDimensions dimensions =
+      CMVideoFormatDescriptionGetDimensions(formatDescription);
+
   VideoCaptureCapability tempCaptureCapability;
-  tempCaptureCapability.width = _frameWidth;
-  tempCaptureCapability.height = _frameHeight;
+  tempCaptureCapability.width = dimensions.width;
+  tempCaptureCapability.height = dimensions.height;
   tempCaptureCapability.maxFPS = _frameRate;
-  tempCaptureCapability.rawType = _rawType;
+  tempCaptureCapability.rawType = rawType;
 
-  if (webrtc::kVideoMJPEG == _rawType) {
-    CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
+  CMBlockBufferRef blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer);
 
-    if (blockBuffer) {
-      char* baseAddress;
-      size_t frameSize;
-      size_t lengthAtOffset;
-      CMBlockBufferGetDataPointer(blockBuffer, 0, &lengthAtOffset, &frameSize, &baseAddress);
+  if (blockBuffer) {
+    char* baseAddress;
+    size_t frameSize;
+    size_t lengthAtOffset;
+    CMBlockBufferGetDataPointer(blockBuffer, 0, &lengthAtOffset, &frameSize, &baseAddress);
 
-      NSAssert(lengthAtOffset == frameSize, @"lengthAtOffset != frameSize)");
+    NSAssert(lengthAtOffset == frameSize, @"lengthAtOffset != frameSize)");
 
-      _owner->IncomingFrame((unsigned char*)baseAddress, frameSize,
+    _owner->IncomingFrame((unsigned char*)baseAddress, frameSize,
                             tempCaptureCapability, 0);
-    }
   } else {
     // Get a CMSampleBuffer's Core Video image buffer for the media data
     CVImageBufferRef videoFrame = CMSampleBufferGetImageBuffer(sampleBuffer);
 
-    const int kFlags = 0;
-    if (CVPixelBufferLockBaseAddress(videoFrame, kFlags) == kCVReturnSuccess) {
+    if (CVPixelBufferLockBaseAddress(videoFrame, kCVPixelBufferLock_ReadOnly) == kCVReturnSuccess) {
       void* baseAddress = CVPixelBufferGetBaseAddress(videoFrame);
       size_t bytesPerRow = CVPixelBufferGetBytesPerRow(videoFrame);
       size_t frameHeight = CVPixelBufferGetHeight(videoFrame);
@@ -271,7 +280,7 @@ using namespace videocapturemodule;
 
       _owner->IncomingFrame((unsigned char*)baseAddress, frameSize,
                             tempCaptureCapability, 0);
-      CVPixelBufferUnlockBaseAddress(videoFrame, kFlags);
+      CVPixelBufferUnlockBaseAddress(videoFrame, kCVPixelBufferLock_ReadOnly);
     }
   }
   [_lock unlock];

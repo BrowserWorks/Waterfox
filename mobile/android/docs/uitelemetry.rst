@@ -54,6 +54,38 @@ To stop a session, call ``Telemetry.stopUISession(String sessionName, String rea
     ``exit``
       The user left for an entirely different element.
 
+Experiments
+===========
+
+**Experiment** is a special type of a session. Experiments denote an "experiment scope".
+Just like sessions, multiple experiments might be active at the same time. Experiments are recorded
+by tagging events with an ``experiment.1:varying_experiment_name`` session. However, on the data
+pipeline side, experiment's name is parsed and stored separately (in the ``experiments`` column).
+Original ``experiment.1`` substring of the session name is stripped away.
+
+For example, the following telemetry data:
+
+.. code-block:: js
+
+    ...
+    sessions: ["awesomebar.1", "experiment.1:onboarding_a"]
+    ...
+
+Will be stored as:
+
+.. code-block:: js
+
+    ...
+    experiments: ["onboarding_a"],
+    sessions: ["awesomebar.1"]
+    ...
+
+Consider a case of A/B testing different variations of Activity Stream. We might want to run two
+experimental cohorts, each of them seeing a unique variation of the functionality. Depending on which
+cohort the user is in, their events while interacting with the experiments will be tagged accordingly
+with a current experiment name, while also retaining session information.
+On the analytics side it's then possible to compare performance of various metrics between cohorts.
+
 Events
 ======
 
@@ -66,7 +98,7 @@ Events capture key occurrences. They should be brief and simple, and should not 
   Used for user actions that can be performed in many ways. This field specifies the method by which the action was performed. For example, users can add an item to their reading list either by long-tapping the reader icon in the address bar, or from within reader mode. We would use the same event name for both user actions but specify two methods: ``addressbar`` and ``readermode``.
 
 ``extras`` (Optional)
-  For extra information that may be useful in understanding the event. Make an effort to keep this brief.
+  For extra information that may be useful in understanding the event (such as a short string, a json blob, etc).
 
 ``timestamp`` (Optional)
   The time at which the event occurred. If not specified, this field defaults to the current value of the realtime clock.
@@ -82,7 +114,7 @@ Clock
 
 Times are relative to either elapsed realtime (an arbitrary monotonically increasing clock that continues to tick when the device is asleep), or elapsed uptime (which doesn't tick when the device is in deep sleep). We default to elapsed realtime.
 
-See the documentation in `the source <http://mxr.mozilla.org/mozilla-central/source/mobile/android/base/Telemetry.java>`_ for more details.
+See the documentation in `the source <http://dxr.mozilla.org/mozilla-central/source/mobile/android/base/Telemetry.java>`_ for more details.
 
 Dictionary
 ==========
@@ -246,8 +278,15 @@ Methods
 
 Sessions
 --------
+``activitystream.1``
+  Activity Stream is active.
+
 ``awesomescreen.1``
   Awesomescreen (including frecency search) is active.
+
+``experiment.1``
+  Special, non-recorded session which is used to denote experiments. See ``Experiments`` section above.
+  Must be used in conjunction with an experiment's name, e.g. ``experiment.1:varying_experiment_name``.
 
 ``firstrun.1``
   Started the very first time we believe the application has been launched.

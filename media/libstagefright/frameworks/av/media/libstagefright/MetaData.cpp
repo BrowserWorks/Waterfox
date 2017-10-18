@@ -27,6 +27,10 @@
 #include <media/stagefright/foundation/hexdump.h>
 #include <media/stagefright/MetaData.h>
 
+#include "mozilla/Assertions.h"
+
+#include <cinttypes>
+
 namespace stagefright {
 
 MetaData::MetaData() {
@@ -192,7 +196,10 @@ bool MetaData::setData(
     ssize_t i = mItems.indexOfKey(key);
     if (i < 0) {
         typed_data item;
+        // TODO: "i" will be negative value when OOM,
+        // we should consider handling this case instead of asserting.
         i = mItems.add(key, item);
+        MOZ_RELEASE_ASSERT(i >= 0, "Item cannot be added due to OOM.");
 
         overwrote_existing = false;
     }
@@ -306,7 +313,7 @@ String8 MetaData::typed_data::asString() const {
     const void *data = storage();
     switch(mType) {
         case TYPE_NONE:
-            out = String8::format("no type, size %d)", mSize);
+            out = String8::format("no type, size %zu)", mSize);
             break;
         case TYPE_C_STRING:
             out = String8::format("(char*) %s", (const char *)data);
@@ -315,7 +322,7 @@ String8 MetaData::typed_data::asString() const {
             out = String8::format("(int32_t) %d", *(int32_t *)data);
             break;
         case TYPE_INT64:
-            out = String8::format("(int64_t) %lld", *(int64_t *)data);
+            out = String8::format("(int64_t) %" PRId64, *(int64_t *)data);
             break;
         case TYPE_FLOAT:
             out = String8::format("(float) %f", *(float *)data);
@@ -332,7 +339,8 @@ String8 MetaData::typed_data::asString() const {
         }
 
         default:
-            out = String8::format("(unknown type %d, size %d)", mType, mSize);
+            out = String8::format("(unknown type %" PRIu32 ", size %zu)",
+                                  mType, mSize);
             if (mSize <= 48) { // if it's less than three lines of hex data, dump it
                 AString foo;
                 hexdump(data, mSize, 0, &foo);

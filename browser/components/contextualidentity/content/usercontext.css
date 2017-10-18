@@ -1,3 +1,63 @@
+[data-identity-color="blue"] {
+  --identity-tab-color: #0996f8;
+  --identity-icon-color: #00a7e0;
+}
+
+[data-identity-color="turquoise"] {
+  --identity-tab-color: #01bdad;
+  --identity-icon-color: #01bdad;
+}
+
+[data-identity-color="green"] {
+  --identity-tab-color: #57bd35;
+  --identity-icon-color:  #7dc14c;
+}
+
+[data-identity-color="yellow"] {
+  --identity-tab-color: #ffcb00;
+  --identity-icon-color: #ffcb00;
+}
+
+[data-identity-color="orange"] {
+  --identity-tab-color: #ff9216;
+  --identity-icon-color: #ff9216;
+}
+
+[data-identity-color="red"] {
+  --identity-tab-color: #d92215;
+  --identity-icon-color: #d92215;
+}
+
+[data-identity-color="pink"] {
+  --identity-tab-color: #ea385e;
+  --identity-icon-color: #ee5195;
+}
+
+[data-identity-color="purple"] {
+  --identity-tab-color: #7a2f7a;
+  --identity-icon-color: #7a2f7a;
+}
+
+[data-identity-icon="fingerprint"] {
+  --identity-icon: url("chrome://browser/content/usercontext-fingerprint.svg");
+}
+
+[data-identity-icon="briefcase"] {
+  --identity-icon: url("chrome://browser/content/usercontext-briefcase.svg");
+}
+
+[data-identity-icon="dollar"] {
+  --identity-icon: url("chrome://browser/content/usercontext-dollar.svg");
+}
+
+[data-identity-icon="cart"] {
+  --identity-icon: url("chrome://browser/content/usercontext-cart.svg");
+}
+
+[data-identity-icon="circle"] {
+  --identity-icon: url("chrome://browser/content/usercontext-circle.svg");
+}
+
 #userContext-indicator {
   height: 16px;
   width: 16px;
@@ -5,9 +65,60 @@
 
 #userContext-label {
   margin-inline-end: 3px;
-  color: #909090;
+  color: var(--identity-tab-color);
 }
 
 #userContext-icons {
   -moz-box-align: center;
+}
+
+/* Special styles run through a pseudo-class off of these elements so they need
+   to be relatively positioned.
+   These styles address both regular and compact themes, special cases are
+   addressed below. */
+.tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-background-middle {
+  position: relative;
+}
+
+.tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-background-middle::after,
+.tabbrowser-tab[usercontextid]:-moz-lwtheme > .tab-stack > .tab-content::after {
+  background-color: var(--identity-tab-color);
+  bottom: 0;
+  content: '';
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  width: 100%;
+}
+
+.tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-background-middle::after {
+  background-color: var(--identity-tab-color);
+  border-radius: 2px 2px 0 0;
+  bottom: 1px;
+  height: 3px;
+}
+
+.tabbrowser-tab[usercontextid]:not([visuallyselected="true"]) > .tab-stack > .tab-background > .tab-background-middle::after {
+  bottom: 2px;
+  height: 2px;
+}
+
+/* Width of normal pinned middle is 4px so the element becomes 16px.
+   Changing the position to -150% makes the larger middle element centered below the favicon. */
+.tabbrowser-tab[usercontextid][pinned="true"] > .tab-stack > .tab-background > .tab-background-middle::after {
+  left: -150%;
+  width: 400%;
+}
+
+.userContext-icon,
+.menuitem-iconic[data-usercontextid] > .menu-iconic-left > .menu-iconic-icon,
+.subviewbutton[usercontextid] > .toolbarbutton-icon,
+#userContext-indicator {
+  background-image: var(--identity-icon);
+  -moz-context-properties: fill;
+  fill: var(--identity-icon-color);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
 }

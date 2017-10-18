@@ -5,26 +5,34 @@
 
 // Services = object with smart getters for common XPCOM services
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
-Components.utils.import("resource://gre/modules/ContextualIdentityService.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Components.utils.import("resource:///modules/RecentWindow.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
+                                  "resource:///modules/RecentWindow.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
                                   "resource:///modules/ShellService.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource://gre/modules/ContextualIdentityService.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
                                    "nsIAboutNewTabService");
 
-this.__defineGetter__("BROWSER_NEW_TAB_URL", () => {
-  if (PrivateBrowsingUtils.isWindowPrivate(window) &&
-      !PrivateBrowsingUtils.permanentPrivateBrowsing &&
-      !aboutNewTabService.overridden) {
-    return "about:privatebrowsing";
-  }
-  return aboutNewTabService.newTabURL;
+Object.defineProperty(this, "BROWSER_NEW_TAB_URL", {
+  configurable: true,
+  enumerable: true,
+  get() {
+    if (PrivateBrowsingUtils.isWindowPrivate(window) &&
+        !PrivateBrowsingUtils.permanentPrivateBrowsing &&
+        !aboutNewTabService.overridden) {
+      return "about:privatebrowsing";
+    }
+    return aboutNewTabService.newTabURL;
+  },
 });
 
 var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -38,8 +46,7 @@ function isBlankPageURL(aURL) {
   return aURL == "about:blank" || aURL == BROWSER_NEW_TAB_URL;
 }
 
-function getBrowserURL()
-{
+function getBrowserURL() {
   return "chrome://browser/content/browser.xul";
 }
 
@@ -61,14 +68,20 @@ function openTopWin(url) {
   openUILinkIn(url, "current");
 }
 
-function getBoolPref(prefname, def)
-{
+function getBoolPref(prefname, def) {
   try {
     return Services.prefs.getBoolPref(prefname);
-  }
-  catch(er) {
+  } catch (er) {
     return def;
   }
+}
+
+function doGetProtocolFlags(aURI) {
+  let handler = Services.io.getProtocolHandler(aURI.scheme);
+  // see DoGetProtocolFlags in nsIProtocolHandler.idl
+  return handler instanceof Ci.nsIProtocolHandlerWithDynamicFlags ?
+         handler.QueryInterface(Ci.nsIProtocolHandlerWithDynamicFlags).getFlagsForURI(aURI) :
+         handler.protocolFlags;
 }
 
 /* openUILink handles clicks on UI elements that cause URLs to load.
@@ -93,7 +106,7 @@ function openUILink(url, event, aIgnoreButton, aIgnoreAlt, aAllowThirdPartyFixup
       allowThirdPartyFixup: aAllowThirdPartyFixup,
       postData: aPostData,
       referrerURI: aReferrerURI,
-      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET,
       initiatingDoc: event ? event.target.ownerDocument : null,
     };
   }
@@ -122,8 +135,7 @@ function openUILink(url, event, aIgnoreButton, aIgnoreAlt, aAllowThirdPartyFixup
  * - Alt can't be used on the bookmarks toolbar because Alt is used for "treat this as something draggable".
  * - The button is ignored for the middle-click-paste-URL feature, since it's always a middle-click.
  */
-function whereToOpenLink( e, ignoreButton, ignoreAlt )
-{
+function whereToOpenLink(e, ignoreButton, ignoreAlt) {
   // This method must treat a null event like a left click without modifier keys (i.e.
   // e = { shiftKey:false, ctrlKey:false, metaKey:false, altKey:false, button:0 })
   // for compatibility purposes.
@@ -177,6 +189,7 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
  *   allowPinnedTabHostChange (boolean)
  *   allowPopups          (boolean)
  *   userContextId        (unsigned int)
+ *   targetBrowser        (XUL browser)
  */
 function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI) {
   var params;
@@ -188,7 +201,7 @@ function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI
       allowThirdPartyFixup: aAllowThirdPartyFixup,
       postData: aPostData,
       referrerURI: aReferrerURI,
-      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+      referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET,
     };
   }
 
@@ -208,8 +221,8 @@ function openLinkIn(url, where, params) {
   var aPostData             = params.postData;
   var aCharset              = params.charset;
   var aReferrerURI          = params.referrerURI;
-  var aReferrerPolicy       = ('referrerPolicy' in params ?
-      params.referrerPolicy : Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT);
+  var aReferrerPolicy       = ("referrerPolicy" in params ?
+      params.referrerPolicy : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET);
   var aRelatedToCurrent     = params.relatedToCurrent;
   var aAllowMixedContent    = params.allowMixedContent;
   var aInBackground         = params.inBackground;
@@ -222,29 +235,65 @@ function openLinkIn(url, where, params) {
   var aAllowPopups          = !!params.allowPopups;
   var aUserContextId        = params.userContextId;
   var aIndicateErrorPageLoad = params.indicateErrorPageLoad;
+  var aPrincipal            = params.originPrincipal;
+  var aTriggeringPrincipal  = params.triggeringPrincipal;
+  var aForceAboutBlankViewerInCurrent =
+      params.forceAboutBlankViewerInCurrent;
 
   if (where == "save") {
-    if (!aInitiatingDoc) {
-      Components.utils.reportError("openUILink/openLinkIn was called with " +
-        "where == 'save' but without initiatingDoc.  See bug 814264.");
-      return;
-    }
     // TODO(1073187): propagate referrerPolicy.
-    saveURL(url, null, null, true, null, aNoReferrer ? null : aReferrerURI, aInitiatingDoc);
+
+    // ContentClick.jsm passes isContentWindowPrivate for saveURL instead of passing a CPOW initiatingDoc
+    if ("isContentWindowPrivate" in params) {
+      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, null, params.isContentWindowPrivate);
+    } else {
+      if (!aInitiatingDoc) {
+        Components.utils.reportError("openUILink/openLinkIn was called with " +
+          "where == 'save' but without initiatingDoc.  See bug 814264.");
+        return;
+      }
+      saveURL(url, null, null, true, true, aNoReferrer ? null : aReferrerURI, aInitiatingDoc);
+    }
     return;
   }
 
-  var w = getTopWin();
+  // Establish which window we'll load the link in.
+  let w;
+  if (where == "current" && params.targetBrowser) {
+    w = params.targetBrowser.ownerGlobal;
+  } else {
+    w = getTopWin();
+  }
+  // We don't want to open tabs in popups, so try to find a non-popup window in
+  // that case.
   if ((where == "tab" || where == "tabshifted") &&
       w && !w.toolbar.visible) {
     w = getTopWin(true);
     aRelatedToCurrent = false;
   }
 
+  // Teach the principal about the right OA to use, e.g. in case when
+  // opening a link in a new private window, or in a new container tab.
+  // Please note we do not have to do that for SystemPrincipals and we
+  // can not do it for NullPrincipals since NullPrincipals are only
+  // identical if they actually are the same object (See Bug: 1346759)
+  function useOAForPrincipal(principal) {
+    if (principal && principal.isCodebasePrincipal) {
+      let attrs = {
+        userContextId: aUserContextId,
+        privateBrowsingId: aIsPrivate || (w && PrivateBrowsingUtils.isWindowPrivate(w)),
+      };
+      return Services.scriptSecurityManager.createCodebasePrincipal(principal.URI, attrs);
+    }
+    return principal;
+  }
+  aPrincipal = useOAForPrincipal(aPrincipal);
+  aTriggeringPrincipal = useOAForPrincipal(aTriggeringPrincipal);
+
   if (!w || where == "window") {
     // This propagates to window.arguments.
-    var sa = Cc["@mozilla.org/supports-array;1"].
-             createInstance(Ci.nsISupportsArray);
+    var sa = Cc["@mozilla.org/array;1"].
+             createInstance(Ci.nsIMutableArray);
 
     var wuri = Cc["@mozilla.org/supports-string;1"].
                createInstance(Ci.nsISupportsString);
@@ -276,55 +325,90 @@ function openLinkIn(url, where, params) {
                                  createInstance(Ci.nsISupportsPRUint32);
     userContextIdSupports.data = aUserContextId;
 
-    sa.AppendElement(wuri);
-    sa.AppendElement(charset);
-    sa.AppendElement(referrerURISupports);
-    sa.AppendElement(aPostData);
-    sa.AppendElement(allowThirdPartyFixupSupports);
-    sa.AppendElement(referrerPolicySupports);
-    sa.AppendElement(userContextIdSupports);
+    sa.appendElement(wuri);
+    sa.appendElement(charset);
+    sa.appendElement(referrerURISupports);
+    sa.appendElement(aPostData);
+    sa.appendElement(allowThirdPartyFixupSupports);
+    sa.appendElement(referrerPolicySupports);
+    sa.appendElement(userContextIdSupports);
+    sa.appendElement(aPrincipal);
+    sa.appendElement(aTriggeringPrincipal);
 
     let features = "chrome,dialog=no,all";
     if (aIsPrivate) {
       features += ",private";
     }
 
-    Services.ww.openWindow(w || window, getBrowserURL(), null, features, sa);
+    const sourceWindow = (w || window);
+    let win;
+    if (params.frameOuterWindowID != undefined && sourceWindow) {
+      // Only notify it as a WebExtensions' webNavigation.onCreatedNavigationTarget
+      // event if it contains the expected frameOuterWindowID params.
+      // (e.g. we should not notify it as a onCreatedNavigationTarget if the user is
+      // opening a new window using the keyboard shortcut).
+      const sourceTabBrowser = sourceWindow.gBrowser.selectedBrowser;
+      let delayedStartupObserver = aSubject => {
+        if (aSubject == win) {
+          Services.obs.removeObserver(delayedStartupObserver, "browser-delayed-startup-finished");
+          Services.obs.notifyObservers({
+            wrappedJSObject: {
+              url,
+              createdTabBrowser: win.gBrowser.selectedBrowser,
+              sourceTabBrowser,
+              sourceFrameOuterWindowID: params.frameOuterWindowID,
+            },
+          }, "webNavigation-createdNavigationTarget");
+        }
+      };
+      Services.obs.addObserver(delayedStartupObserver, "browser-delayed-startup-finished");
+    }
+    win = Services.ww.openWindow(sourceWindow, getBrowserURL(), null, features, sa);
     return;
   }
 
-  let loadInBackground = where == "current" ? false : aInBackground;
-  if (loadInBackground == null) {
-    loadInBackground = aFromChrome ?
-                         false :
-                         getBoolPref("browser.tabs.loadInBackground");
-  }
-
-  let uriObj;
-  if (where == "current") {
-    try {
-      uriObj = Services.io.newURI(url, null, null);
-    } catch (e) {}
-  }
-
-  if (where == "current" && w.gBrowser.selectedTab.pinned &&
-      !aAllowPinnedTabHostChange) {
-    try {
-      // nsIURI.host can throw for non-nsStandardURL nsIURIs.
-      if (!uriObj || (!uriObj.schemeIs("javascript") &&
-                      w.gBrowser.currentURI.host != uriObj.host)) {
-        where = "tab";
-        loadInBackground = false;
-      }
-    } catch (err) {
-      where = "tab";
-      loadInBackground = false;
-    }
-  }
+  // We're now committed to loading the link in an existing browser window.
 
   // Raise the target window before loading the URI, since loading it may
   // result in a new frontmost window (e.g. "javascript:window.open('');").
   w.focus();
+
+  let targetBrowser;
+  let loadInBackground;
+  let uriObj;
+
+  if (where == "current") {
+    targetBrowser = params.targetBrowser || w.gBrowser.selectedBrowser;
+    loadInBackground = false;
+
+    try {
+      uriObj = Services.io.newURI(url);
+    } catch (e) {}
+
+    if (w.gBrowser.getTabForBrowser(targetBrowser).pinned &&
+        !aAllowPinnedTabHostChange) {
+      try {
+        // nsIURI.host can throw for non-nsStandardURL nsIURIs.
+        if (!uriObj || (!uriObj.schemeIs("javascript") &&
+                        targetBrowser.currentURI.host != uriObj.host)) {
+          where = "tab";
+          loadInBackground = false;
+        }
+      } catch (err) {
+        where = "tab";
+        loadInBackground = false;
+      }
+    }
+  } else {
+    // 'where' is "tab" or "tabshifted", so we'll load the link in a new tab.
+    loadInBackground = aInBackground;
+    if (loadInBackground == null) {
+      loadInBackground =
+        aFromChrome ? false : getBoolPref("browser.tabs.loadInBackground");
+    }
+  }
+
+  let focusUrlBar = false;
 
   switch (where) {
   case "current":
@@ -350,8 +434,18 @@ function openLinkIn(url, where, params) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ERROR_LOAD_CHANGES_RV;
     }
 
-    w.gBrowser.loadURIWithFlags(url, {
-      flags: flags,
+    let {URI_INHERITS_SECURITY_CONTEXT} = Ci.nsIProtocolHandler;
+    if (aForceAboutBlankViewerInCurrent &&
+        (!uriObj ||
+         (doGetProtocolFlags(uriObj) & URI_INHERITS_SECURITY_CONTEXT))) {
+      // Unless we know for sure we're not inheriting principals,
+      // force the about:blank viewer to have the right principal:
+      targetBrowser.createAboutBlankContentViewer(aPrincipal);
+    }
+
+    targetBrowser.loadURIWithFlags(url, {
+      triggeringPrincipal: aTriggeringPrincipal,
+      flags,
       referrerURI: aNoReferrer ? null : aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       postData: aPostData,
@@ -362,7 +456,9 @@ function openLinkIn(url, where, params) {
     loadInBackground = !loadInBackground;
     // fall through
   case "tab":
-    w.gBrowser.loadOneTab(url, {
+    focusUrlBar = !loadInBackground && w.isBlankPageURL(url);
+
+    let tabUsedForLoad = w.gBrowser.loadOneTab(url, {
       referrerURI: aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       charset: aCharset,
@@ -373,15 +469,33 @@ function openLinkIn(url, where, params) {
       skipAnimation: aSkipTabAnimation,
       allowMixedContent: aAllowMixedContent,
       noReferrer: aNoReferrer,
-      userContextId: aUserContextId
+      userContextId: aUserContextId,
+      originPrincipal: aPrincipal,
+      triggeringPrincipal: aTriggeringPrincipal,
+      focusUrlBar,
     });
+    targetBrowser = tabUsedForLoad.linkedBrowser;
+
+    if (params.frameOuterWindowID != undefined && w) {
+      // Only notify it as a WebExtensions' webNavigation.onCreatedNavigationTarget
+      // event if it contains the expected frameOuterWindowID params.
+      // (e.g. we should not notify it as a onCreatedNavigationTarget if the user is
+      // opening a new tab using the keyboard shortcut).
+      Services.obs.notifyObservers({
+        wrappedJSObject: {
+          url,
+          createdTabBrowser: targetBrowser,
+          sourceTabBrowser: w.gBrowser.selectedBrowser,
+          sourceFrameOuterWindowID: params.frameOuterWindowID,
+        },
+      }, "webNavigation-createdNavigationTarget");
+    }
     break;
   }
 
-  w.gBrowser.selectedBrowser.focus();
-
-  if (!loadInBackground && w.isBlankPageURL(url)) {
-    w.focusAndSelectUrlBar();
+  if (!focusUrlBar && targetBrowser == w.gBrowser.selectedBrowser) {
+    // Focus the content, but only if the browser used for the load is selected.
+    targetBrowser.focus();
   }
 }
 
@@ -411,11 +525,14 @@ function checkForMiddleClick(node, event) {
 }
 
 // Populate a menu with user-context menu items. This method should be called
-// by onpopupshowing passing the event as first argument. addCommandAttribute
-// param is used to set the 'command' attribute in the new menuitem elements.
-function createUserContextMenu(event, addCommandAttribute = true, excludeUserContextId = 0) {
+// by onpopupshowing passing the event as first argument.
+function createUserContextMenu(event, {
+                                        isContextMenu = false,
+                                        excludeUserContextId = 0,
+                                        useAccessKeys = true
+                                      } = {}) {
   while (event.target.hasChildNodes()) {
-    event.target.removeChild(event.target.firstChild);
+    event.target.firstChild.remove();
   }
 
   let bundle = document.getElementById("bundle_browser");
@@ -424,13 +541,13 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
   // If we are excluding a userContextId, we want to add a 'no-container' item.
   if (excludeUserContextId) {
     let menuitem = document.createElement("menuitem");
-    menuitem.setAttribute("usercontextid", "0");
+    menuitem.setAttribute("data-usercontextid", "0");
     menuitem.setAttribute("label", bundle.getString("userContextNone.label"));
     menuitem.setAttribute("accesskey", bundle.getString("userContextNone.accesskey"));
 
-    // We don't set an oncommand/command attribute attribute because if we have
+    // We don't set an oncommand/command attribute because if we have
     // to exclude a userContextId we are generating the contextMenu and
-    // addCommandAttribute will be false.
+    // isContextMenu will be true.
 
     docfrag.appendChild(menuitem);
 
@@ -438,37 +555,51 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
     docfrag.appendChild(menuseparator);
   }
 
-  ContextualIdentityService.getIdentities().forEach(identity => {
+  ContextualIdentityService.getPublicIdentities().forEach(identity => {
     if (identity.userContextId == excludeUserContextId) {
       return;
     }
 
     let menuitem = document.createElement("menuitem");
-    menuitem.setAttribute("usercontextid", identity.userContextId);
+    menuitem.setAttribute("data-usercontextid", identity.userContextId);
     menuitem.setAttribute("label", ContextualIdentityService.getUserContextLabel(identity.userContextId));
 
-    if (identity.accessKey) {
+    if (identity.accessKey && useAccessKeys) {
       menuitem.setAttribute("accesskey", bundle.getString(identity.accessKey));
     }
 
     menuitem.classList.add("menuitem-iconic");
+    menuitem.setAttribute("data-identity-color", identity.color);
 
-    if (addCommandAttribute) {
+    if (!isContextMenu) {
       menuitem.setAttribute("command", "Browser:NewUserContextTab");
     }
 
-    menuitem.setAttribute("image", identity.icon);
+    menuitem.setAttribute("data-identity-icon", identity.icon);
 
     docfrag.appendChild(menuitem);
   });
+
+  if (!isContextMenu) {
+    docfrag.appendChild(document.createElement("menuseparator"));
+
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("label",
+                          bundle.getString("userContext.aboutPage.label"));
+    if (useAccessKeys) {
+      menuitem.setAttribute("accesskey",
+                            bundle.getString("userContext.aboutPage.accesskey"));
+    }
+    menuitem.setAttribute("command", "Browser:OpenAboutContainers");
+    docfrag.appendChild(menuitem);
+  }
 
   event.target.appendChild(docfrag);
   return true;
 }
 
 // Closes all popups that are ancestors of the node.
-function closeMenus(node)
-{
+function closeMenus(node) {
   if ("tagName" in node) {
     if (node.namespaceURI == "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     && (node.tagName == "menupopup" || node.tagName == "popup"))
@@ -478,9 +609,47 @@ function closeMenus(node)
   }
 }
 
+/** This function takes in a key element and compares it to the keys pressed during an event.
+ *
+ * @param aEvent
+ *        The KeyboardEvent event you want to compare against your key.
+ *
+ * @param aKey
+ *        The <key> element checked to see if it was called in aEvent.
+ *        For example, aKey can be a variable set to document.getElementById("key_close")
+ *        to check if the close command key was pressed in aEvent.
+*/
+function eventMatchesKey(aEvent, aKey) {
+  let keyPressed = aKey.getAttribute("key").toLowerCase();
+  let keyModifiers = aKey.getAttribute("modifiers");
+  let modifiers = ["Alt", "Control", "Meta", "Shift"];
+
+  if (aEvent.key != keyPressed) {
+    return false;
+  }
+  let eventModifiers = modifiers.filter(modifier => aEvent.getModifierState(modifier));
+  // Check if aEvent has a modifier and aKey doesn't
+  if (eventModifiers.length > 0 && keyModifiers.length == 0) {
+     return false;
+  }
+  // Check whether aKey's modifiers match aEvent's modifiers
+  if (keyModifiers) {
+    keyModifiers = keyModifiers.split(/[\s,]+/);
+    // Capitalize first letter of aKey's modifers to compare to aEvent's modifier
+    keyModifiers.forEach(function(modifier, index) {
+      if (modifier == "accel") {
+        keyModifiers[index] = AppConstants.platform == "macosx" ? "Meta" : "Control";
+      } else {
+        keyModifiers[index] = modifier[0].toUpperCase() + modifier.slice(1);
+      }
+    });
+    return modifiers.every(modifier => keyModifiers.includes(modifier) == aEvent.getModifierState(modifier));
+  }
+  return true;
+}
+
 // Gather all descendent text under given document node.
-function gatherTextUnder ( root )
-{
+function gatherTextUnder(root) {
   var text = "";
   var node = root.firstChild;
   var depth = 1;
@@ -521,8 +690,7 @@ function gatherTextUnder ( root )
 }
 
 // This function exists for legacy reasons.
-function getShellService()
-{
+function getShellService() {
   return ShellService;
 }
 
@@ -531,33 +699,13 @@ function isBidiEnabled() {
   if (getBoolPref("bidi.browser.ui", false))
     return true;
 
-  // then check intl.uidirection.<locale>
-  var chromeReg = Components.classes["@mozilla.org/chrome/chrome-registry;1"].
-                  getService(Components.interfaces.nsIXULChromeRegistry);
-  if (chromeReg.isLocaleRTL("global"))
-    return true;
+  // now see if the app locale is an RTL one.
+  const isRTL = Services.locale.isAppLocaleRTL;
 
-  // now see if the system locale is an RTL one.
-  var rv = false;
-
-  try {
-    var localeService = Components.classes["@mozilla.org/intl/nslocaleservice;1"]
-                                  .getService(Components.interfaces.nsILocaleService);
-    var systemLocale = localeService.getSystemLocale().getCategory("NSILOCALE_CTYPE").substr(0,3);
-
-    switch (systemLocale) {
-      case "ar-":
-      case "he-":
-      case "fa-":
-      case "ug-":
-      case "ur-":
-      case "syr":
-        rv = true;
-        Services.prefs.setBoolPref("bidi.browser.ui", true);
-    }
-  } catch (e) {}
-
-  return rv;
+  if (isRTL) {
+    Services.prefs.setBoolPref("bidi.browser.ui", true);
+  }
+  return isRTL;
 }
 
 function openAboutDialog() {
@@ -584,12 +732,22 @@ function openAboutDialog() {
   window.openDialog("chrome://browser/content/aboutDialog.xul", "", features);
 }
 
-function openPreferences(paneID, extraArgs)
-{
+function openPreferences(paneID, extraArgs) {
+  let histogram = Services.telemetry.getHistogramById("FX_PREFERENCES_OPENED_VIA");
+  if (extraArgs && extraArgs.origin) {
+    histogram.add(extraArgs.origin);
+  } else {
+    histogram.add("other");
+  }
   function switchToAdvancedSubPane(doc) {
     if (extraArgs && extraArgs["advancedTab"]) {
+      // After the Preferences reorg works in Bug 1335907, no more advancedPrefs element.
+      // The old Preference is pref-off behind `browser.preferences.useOldOrganization` on Nightly.
+      // During the transition between the old and new Preferences, should do checking before proceeding.
       let advancedPaneTabs = doc.getElementById("advancedPrefs");
-      advancedPaneTabs.selectedTab = doc.getElementById(extraArgs["advancedTab"]);
+      if (advancedPaneTabs) {
+        advancedPaneTabs.selectedTab = doc.getElementById(extraArgs["advancedTab"]);
+      }
     }
   }
 
@@ -617,17 +775,22 @@ function openPreferences(paneID, extraArgs)
   if (!win) {
     const Cc = Components.classes;
     const Ci = Components.interfaces;
-    let windowArguments = Cc["@mozilla.org/supports-array;1"]
-                            .createInstance(Ci.nsISupportsArray);
+    let windowArguments = Cc["@mozilla.org/array;1"]
+                            .createInstance(Ci.nsIMutableArray);
     let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
                                   .createInstance(Ci.nsISupportsString);
     supportsStringPrefURL.data = preferencesURL;
-    windowArguments.AppendElement(supportsStringPrefURL);
+    windowArguments.appendElement(supportsStringPrefURL);
 
     win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
                                  "_blank", "chrome,dialog=no,all", windowArguments);
   } else {
-    newLoad = !win.switchToTabHavingURI(preferencesURL, true, { ignoreFragment: true, replaceQueryString: true });
+    let shouldReplaceFragment = friendlyCategoryName ? "whenComparingAndReplace" : "whenComparing";
+    newLoad = !win.switchToTabHavingURI(preferencesURL, true, {
+      ignoreFragment: shouldReplaceFragment,
+      replaceQueryString: true,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
     browser = win.gBrowser.selectedBrowser;
   }
 
@@ -641,7 +804,7 @@ function openPreferences(paneID, extraArgs)
       }
       Services.obs.removeObserver(advancedPaneLoadedObs, "advanced-pane-loaded");
       switchToAdvancedSubPane(browser.contentDocument);
-    }, "advanced-pane-loaded", false);
+    }, "advanced-pane-loaded");
   } else {
     if (paneID) {
       browser.contentWindow.gotoPref(paneID);
@@ -650,17 +813,15 @@ function openPreferences(paneID, extraArgs)
   }
 }
 
-function openAdvancedPreferences(tabID)
-{
-  openPreferences("paneAdvanced", { "advancedTab" : tabID });
+function openAdvancedPreferences(tabID, origin) {
+  openPreferences("paneAdvanced", { "advancedTab": tabID, origin });
 }
 
 /**
  * Opens the troubleshooting information (about:support) page for this version
  * of the application.
  */
-function openTroubleshootingPage()
-{
+function openTroubleshootingPage() {
   openUILinkIn("about:support", "tab");
 }
 
@@ -668,38 +829,34 @@ function openTroubleshootingPage()
  * Opens the troubleshooting information (about:support) page for this version
  * of the application.
  */
-function openHealthReport()
-{
+function openHealthReport() {
   openUILinkIn("about:healthreport", "tab");
 }
 
 /**
  * Opens the feedback page for this version of the application.
  */
-function openFeedbackPage()
-{
+function openFeedbackPage() {
   var url = Components.classes["@mozilla.org/toolkit/URLFormatterService;1"]
                       .getService(Components.interfaces.nsIURLFormatter)
                       .formatURLPref("app.feedback.baseURL");
   openUILinkIn(url, "tab");
 }
 
-function openTourPage()
-{
+function openTourPage() {
   let scope = {}
   Components.utils.import("resource:///modules/UITour.jsm", scope);
   openUILinkIn(scope.UITour.url, "tab");
 }
 
-function buildHelpMenu()
-{
+function buildHelpMenu() {
   // Enable/disable the "Report Web Forgery" menu item.
-  if (typeof gSafeBrowsing != "undefined" && AppConstants.MOZ_SAFE_BROWSING)
+  if (typeof gSafeBrowsing != "undefined") {
     gSafeBrowsing.setReportPhishingMenu();
+  }
 }
 
-function isElementVisible(aElement)
-{
+function isElementVisible(aElement) {
   if (!aElement)
     return false;
 
@@ -709,8 +866,7 @@ function isElementVisible(aElement)
   return (bo.height > 0 && bo.width > 0);
 }
 
-function makeURLAbsolute(aBase, aUrl)
-{
+function makeURLAbsolute(aBase, aUrl) {
   // Note:  makeURI() will throw if aUri is not a valid URI
   return makeURI(aUrl, null, makeURI(aBase)).spec;
 }
@@ -776,13 +932,16 @@ function openNewWindowWith(aURL, aDocument, aPostData, aAllowThirdPartyFixup,
              });
 }
 
-// aCalledFromModal is optional
-function openHelpLink(aHelpTopic, aCalledFromModal, aWhere) {
+function getHelpLinkURL(aHelpTopic) {
   var url = Components.classes["@mozilla.org/toolkit/URLFormatterService;1"]
                       .getService(Components.interfaces.nsIURLFormatter)
                       .formatURLPref("app.support.baseURL");
-  url += aHelpTopic;
+  return url + aHelpTopic;
+}
 
+// aCalledFromModal is optional
+function openHelpLink(aHelpTopic, aCalledFromModal, aWhere) {
+  var url = getHelpLinkURL(aHelpTopic);
   var where = aWhere;
   if (!aWhere)
     where = aCalledFromModal ? "window" : "tab";

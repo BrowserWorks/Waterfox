@@ -219,7 +219,6 @@ class WebGLImageConverter
         }
 
         mSuccess = true;
-        return;
     }
 
     template<WebGLTexelFormat SrcFormat,
@@ -399,7 +398,11 @@ ConvertImage(size_t width, size_t height,
         // needed, we still might have to flip vertically and/or to adjust to a different
         // stride.
 
-        MOZ_ASSERT(shouldYFlip || srcStride != dstStride,
+        // We ignore canSkipPremult for this perf trap, since it's an avoidable perf cliff
+        // under the WebGL API user's control.
+        MOZ_ASSERT((srcPremultiplied != dstPremultiplied ||
+                    shouldYFlip ||
+                    srcStride != dstStride),
                    "Performance trap -- should handle this case earlier to avoid memcpy");
 
         const auto bytesPerPixel = TexelBytesForFormat(srcFormat);
@@ -422,7 +425,7 @@ ConvertImage(size_t width, size_t height,
         // the dst image may be left uninitialized, so we better not try to
         // continue even in release builds. This should never happen anyway,
         // and would be a bug in our code.
-        NS_RUNTIMEABORT("programming mistake in WebGL texture conversions");
+        MOZ_CRASH("programming mistake in WebGL texture conversions");
     }
 
     return true;

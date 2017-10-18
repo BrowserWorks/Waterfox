@@ -9,8 +9,10 @@
 #ifndef BASE_THREADING_PLATFORM_THREAD_H_
 #define BASE_THREADING_PLATFORM_THREAD_H_
 
+#include <stddef.h>
+
 #include "base/base_export.h"
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/time/time.h"
 #include "build/build_config.h"
 
@@ -73,21 +75,9 @@ class PlatformThreadHandle {
   typedef pthread_t Handle;
 #endif
 
-  PlatformThreadHandle()
-      : handle_(0),
-        id_(0) {
-  }
+  PlatformThreadHandle() : handle_(0) {}
 
-  explicit PlatformThreadHandle(Handle handle)
-      : handle_(handle),
-        id_(0) {
-  }
-
-  PlatformThreadHandle(Handle handle,
-                       PlatformThreadId id)
-      : handle_(handle),
-        id_(id) {
-  }
+  explicit PlatformThreadHandle(Handle handle) : handle_(handle) {}
 
   bool is_equal(const PlatformThreadHandle& other) const {
     return handle_ == other.handle_;
@@ -102,23 +92,22 @@ class PlatformThreadHandle {
   }
 
  private:
-  friend class PlatformThread;
-
   Handle handle_;
-  PlatformThreadId id_;
 };
 
 const PlatformThreadId kInvalidThreadId(0);
 
-// Valid values for SetThreadPriority()
-enum ThreadPriority{
-  kThreadPriority_Normal,
-  // Suitable for low-latency, glitch-resistant audio.
-  kThreadPriority_RealtimeAudio,
-  // Suitable for threads which generate data for the display (at ~60Hz).
-  kThreadPriority_Display,
+// Valid values for priority of Thread::Options and SimpleThread::Options, and
+// SetCurrentThreadPriority(), listed in increasing order of importance.
+enum class ThreadPriority : int {
   // Suitable for threads that shouldn't disrupt high priority work.
-  kThreadPriority_Background
+  BACKGROUND,
+  // Default priority level.
+  NORMAL,
+  // Suitable for threads which generate data for the display (at ~60Hz).
+  DISPLAY,
+  // Suitable for low-latency, glitch-resistant audio.
+  REALTIME_AUDIO,
 };
 
 // A namespace for low-level thread functions.
@@ -141,7 +130,10 @@ class BASE_EXPORT PlatformThread {
   // we're on the right thread quickly.
   static PlatformThreadRef CurrentRef();
 
-  // Get the current handle.
+  // Get the handle representing the current thread. On Windows, this is a
+  // pseudo handle constant which will always represent the thread using it and
+  // hence should not be shared with other threads nor be used to differentiate
+  // the current thread from another.
   static PlatformThreadHandle CurrentHandle();
 
   // Yield the current thread so another thread can be scheduled.
@@ -150,10 +142,9 @@ class BASE_EXPORT PlatformThread {
   // Sleeps for the specified duration.
   static void Sleep(base::TimeDelta duration);
 
-  // Sets the thread name visible to debuggers/tools. This has no effect
-  // otherwise. This name pointer is not copied internally. Thus, it must stay
-  // valid until the thread ends.
-  static void SetName(const char* name);
+  // Sets the thread name visible to debuggers/tools. This will try to
+  // initialize the context for current thread unless it's a WorkerThread.
+  static void SetName(const std::string& name);
 
   // Gets the thread name, if previously set by SetName.
   static const char* GetName();
@@ -166,14 +157,15 @@ class BASE_EXPORT PlatformThread {
   // NOTE: When you are done with the thread handle, you must call Join to
   // release system resources associated with the thread.  You must ensure that
   // the Delegate object outlives the thread.
-  static bool Create(size_t stack_size, Delegate* delegate,
-                     PlatformThreadHandle* thread_handle);
+  static bool Create(size_t stack_size,
+                     Delegate* delegate,
+                     PlatformThreadHandle* thread_handle) {
+    return CreateWithPriority(stack_size, delegate, thread_handle,
+                              ThreadPriority::NORMAL);
+  }
 
   // CreateWithPriority() does the same thing as Create() except the priority of
-  // the thread is set based on |priority|.  Can be used in place of Create()
-  // followed by SetThreadPriority().  SetThreadPriority() has not been
-  // implemented on the Linux platform yet, this is the only way to get a high
-  // priority thread on Linux.
+  // the thread is set based on |priority|.
   static bool CreateWithPriority(size_t stack_size, Delegate* delegate,
                                  PlatformThreadHandle* thread_handle,
                                  ThreadPriority priority);
@@ -183,13 +175,49 @@ class BASE_EXPORT PlatformThread {
   // PlatformThreadHandle.
   static bool CreateNonJoinable(size_t stack_size, Delegate* delegate);
 
+  // CreateNonJoinableWithPriority() does the same thing as CreateNonJoinable()
+  // except the priority of the thread is set based on |priority|.
+  static bool CreateNonJoinableWithPriority(size_t stack_size,
+                                            Delegate* delegate,
+                                            ThreadPriority priority);
+
   // Joins with a thread created via the Create function.  This function blocks
   // the caller until the designated thread exits.  This will invalidate
   // |thread_handle|.
   static void Join(PlatformThreadHandle thread_handle);
 
-  static void SetThreadPriority(PlatformThreadHandle handle,
+  // Detaches and releases the thread handle. The thread is no longer joinable
+  // and |thread_handle| is invalidated after this call.
+  static void Detach(PlatformThreadHandle thread_handle);
+
+  // Returns true if SetCurrentThreadPriority() can be used to increase the
+  // priority of the current thread.
+  static bool CanIncreaseCurrentThreadPriority();
+
+  // Toggles the current thread's priority at runtime. A thread may not be able
+  // to raise its priority back up after lowering it if the process does not
+  // have a proper permission, e.g. CAP_SYS_NICE on Linux. A thread may not be
+  // able to lower its priority back down after raising it to REALTIME_AUDIO.
+  // Since changing other threads' priority is not permitted in favor of
+  // security, this interface is restricted to change only the current thread
+  // priority (https://crbug.com/399473).
+  static void SetCurrentThreadPriority(ThreadPriority priority);
+
+  static ThreadPriority GetCurrentThreadPriority();
+
+#if defined(OS_LINUX)
+  // Toggles a specific thread's priority at runtime. This can be used to
+  // change the priority of a thread in a different process and will fail
+  // if the calling process does not have proper permissions. The
+  // SetCurrentThreadPriority() function above is preferred in favor of
+  // security but on platforms where sandboxed processes are not allowed to
+  // change priority this function exists to allow a non-sandboxed process
+  // to change the priority of sandboxed threads for improved performance.
+  // Warning: Don't use this for a main thread because that will change the
+  // whole thread group's (i.e. process) priority.
+  static void SetThreadPriority(PlatformThreadId thread_id,
                                 ThreadPriority priority);
+#endif
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(PlatformThread);

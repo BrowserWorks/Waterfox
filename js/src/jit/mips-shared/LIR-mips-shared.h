@@ -11,23 +11,23 @@ namespace js {
 namespace jit {
 
 // Convert a 32-bit unsigned integer to a double.
-class LAsmJSUInt32ToDouble : public LInstructionHelper<1, 1, 0>
+class LWasmUint32ToDouble : public LInstructionHelper<1, 1, 0>
 {
   public:
-    LIR_HEADER(AsmJSUInt32ToDouble)
+    LIR_HEADER(WasmUint32ToDouble)
 
-    LAsmJSUInt32ToDouble(const LAllocation& input) {
+    LWasmUint32ToDouble(const LAllocation& input) {
         setOperand(0, input);
     }
 };
 
 // Convert a 32-bit unsigned integer to a float32.
-class LAsmJSUInt32ToFloat32 : public LInstructionHelper<1, 1, 0>
+class LWasmUint32ToFloat32 : public LInstructionHelper<1, 1, 0>
 {
   public:
-    LIR_HEADER(AsmJSUInt32ToFloat32)
+    LIR_HEADER(WasmUint32ToFloat32)
 
-    LAsmJSUInt32ToFloat32(const LAllocation& input) {
+    LWasmUint32ToFloat32(const LAllocation& input) {
         setOperand(0, input);
     }
 };
@@ -274,6 +274,131 @@ class LUDivOrMod : public LBinaryMath<0>
         if (mir_->isMod())
             return mir_->toMod()->trapOnError();
         return mir_->toDiv()->trapOnError();
+    }
+
+    wasm::TrapOffset trapOffset() const {
+        MOZ_ASSERT(mir_->isDiv() || mir_->isMod());
+        if (mir_->isMod())
+            return mir_->toMod()->trapOffset();
+        return mir_->toDiv()->trapOffset();
+    }
+};
+
+class LInt64ToFloatingPoint : public LInstructionHelper<1, INT64_PIECES, 0>
+{
+  public:
+    LIR_HEADER(Int64ToFloatingPoint);
+
+    explicit LInt64ToFloatingPoint(const LInt64Allocation& in) {
+        setInt64Operand(0, in);
+    }
+
+    MInt64ToFloatingPoint* mir() const {
+        return mir_->toInt64ToFloatingPoint();
+    }
+};
+
+namespace details {
+
+// Base class for the int64 and non-int64 variants.
+template<size_t NumDefs>
+class LWasmUnalignedLoadBase : public details::LWasmLoadBase<NumDefs, 2>
+{
+  public:
+    typedef LWasmLoadBase<NumDefs, 2> Base;
+
+    explicit LWasmUnalignedLoadBase(const LAllocation& ptr, const LDefinition& valueHelper)
+      : Base(ptr)
+    {
+        Base::setTemp(0, LDefinition::BogusTemp());
+        Base::setTemp(1, valueHelper);
+    }
+    const LAllocation* ptr() {
+        return Base::getOperand(0);
+    }
+    const LDefinition* ptrCopy() {
+        return Base::getTemp(0);
+    }
+};
+
+} // namespace details
+
+class LWasmUnalignedLoad : public details::LWasmUnalignedLoadBase<1>
+{
+  public:
+    explicit LWasmUnalignedLoad(const LAllocation& ptr, const LDefinition& valueHelper)
+      : LWasmUnalignedLoadBase(ptr, valueHelper)
+    {}
+    LIR_HEADER(WasmUnalignedLoad);
+};
+
+class LWasmUnalignedLoadI64 : public details::LWasmUnalignedLoadBase<INT64_PIECES>
+{
+  public:
+    explicit LWasmUnalignedLoadI64(const LAllocation& ptr, const LDefinition& valueHelper)
+      : LWasmUnalignedLoadBase(ptr, valueHelper)
+    {}
+    LIR_HEADER(WasmUnalignedLoadI64);
+};
+
+namespace details {
+
+// Base class for the int64 and non-int64 variants.
+template<size_t NumOps>
+class LWasmUnalignedStoreBase : public LInstructionHelper<0, NumOps, 2>
+{
+  public:
+    typedef LInstructionHelper<0, NumOps, 2> Base;
+
+    static const size_t PtrIndex = 0;
+    static const size_t ValueIndex = 1;
+
+    LWasmUnalignedStoreBase(const LAllocation& ptr, const LDefinition& valueHelper)
+    {
+        Base::setOperand(0, ptr);
+        Base::setTemp(0, LDefinition::BogusTemp());
+        Base::setTemp(1, valueHelper);
+    }
+    MWasmStore* mir() const {
+        return Base::mir_->toWasmStore();
+    }
+    const LAllocation* ptr() {
+        return Base::getOperand(PtrIndex);
+    }
+    const LDefinition* ptrCopy() {
+        return Base::getTemp(0);
+    }
+};
+
+} // namespace details
+
+class LWasmUnalignedStore : public details::LWasmUnalignedStoreBase<2>
+{
+  public:
+    LIR_HEADER(WasmUnalignedStore);
+    LWasmUnalignedStore(const LAllocation& ptr, const LAllocation& value,
+                        const LDefinition& valueHelper)
+      : LWasmUnalignedStoreBase(ptr, valueHelper)
+    {
+        setOperand(1, value);
+    }
+    const LAllocation* value() {
+        return Base::getOperand(ValueIndex);
+    }
+};
+
+class LWasmUnalignedStoreI64 : public details::LWasmUnalignedStoreBase<1 + INT64_PIECES>
+{
+  public:
+    LIR_HEADER(WasmUnalignedStoreI64);
+    LWasmUnalignedStoreI64(const LAllocation& ptr, const LInt64Allocation& value,
+                           const LDefinition& valueHelper)
+      : LWasmUnalignedStoreBase(ptr, valueHelper)
+    {
+        setInt64Operand(1, value);
+    }
+    const LInt64Allocation value() {
+        return getInt64Operand(ValueIndex);
     }
 };
 

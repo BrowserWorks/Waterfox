@@ -6,16 +6,16 @@
 #include "mozilla/ChangeStyleTransaction.h"
 
 #include "mozilla/dom/Element.h"        // for Element
-#include "nsAString.h"                  // for nsAString_internal::Append, etc.
+#include "nsAString.h"                  // for nsAString::Append, etc.
 #include "nsCRT.h"                      // for nsCRT::IsAsciiSpace
 #include "nsDebug.h"                    // for NS_ENSURE_SUCCESS, etc.
 #include "nsError.h"                    // for NS_ERROR_NULL_POINTER, etc.
 #include "nsGkAtoms.h"                  // for nsGkAtoms, etc.
-#include "nsIDOMCSSStyleDeclaration.h"  // for nsIDOMCSSStyleDeclaration
-#include "nsIDOMElementCSSInlineStyle.h" // for nsIDOMElementCSSInlineStyle
+#include "nsICSSDeclaration.h"          // for nsICSSDeclaration.
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING, etc.
 #include "nsReadableUtils.h"            // for ToNewUnicode
 #include "nsString.h"                   // for nsAutoString, nsString, etc.
+#include "nsStyledElement.h"            // for nsStyledElement.
 #include "nsUnicharUtils.h"             // for nsCaseInsensitiveStringComparator
 
 namespace mozilla {
@@ -138,15 +138,11 @@ ChangeStyleTransaction::ChangeStyleTransaction(Element& aElement,
 NS_IMETHODIMP
 ChangeStyleTransaction::DoTransaction()
 {
-  nsCOMPtr<nsIDOMElementCSSInlineStyle> inlineStyles =
-    do_QueryInterface(mElement);
+  nsCOMPtr<nsStyledElement> inlineStyles = do_QueryInterface(mElement);
   NS_ENSURE_TRUE(inlineStyles, NS_ERROR_NULL_POINTER);
 
-  nsCOMPtr<nsIDOMCSSStyleDeclaration> cssDecl;
-  nsresult result = inlineStyles->GetStyle(getter_AddRefs(cssDecl));
-  NS_ENSURE_SUCCESS(result, result);
-  NS_ENSURE_TRUE(cssDecl, NS_ERROR_NULL_POINTER);
-
+  nsCOMPtr<nsICSSDeclaration> cssDecl = inlineStyles->Style();
+ 
   nsAutoString propertyNameString;
   mProperty->ToString(propertyNameString);
 
@@ -154,8 +150,8 @@ ChangeStyleTransaction::DoTransaction()
                                            nsGkAtoms::style);
 
   nsAutoString values;
-  result = cssDecl->GetPropertyValue(propertyNameString, values);
-  NS_ENSURE_SUCCESS(result, result);
+  nsresult rv = cssDecl->GetPropertyValue(propertyNameString, values);
+  NS_ENSURE_SUCCESS(rv, rv);
   mUndoValue.Assign(values);
 
   // Does this property accept more than one value? (bug 62682)
@@ -172,24 +168,21 @@ ChangeStyleTransaction::DoTransaction()
       RemoveValueFromListOfValues(values, NS_LITERAL_STRING("none"));
       RemoveValueFromListOfValues(values, mValue);
       if (values.IsEmpty()) {
-        result = cssDecl->RemoveProperty(propertyNameString, returnString);
-        NS_ENSURE_SUCCESS(result, result);
+        rv = cssDecl->RemoveProperty(propertyNameString, returnString);
+        NS_ENSURE_SUCCESS(rv, rv);
       } else {
         nsAutoString priority;
-        result = cssDecl->GetPropertyPriority(propertyNameString, priority);
-        NS_ENSURE_SUCCESS(result, result);
-        result = cssDecl->SetProperty(propertyNameString, values,
-                                      priority);
-        NS_ENSURE_SUCCESS(result, result);
+        cssDecl->GetPropertyPriority(propertyNameString, priority);
+        rv = cssDecl->SetProperty(propertyNameString, values, priority);
+        NS_ENSURE_SUCCESS(rv, rv);
       }
     } else {
-      result = cssDecl->RemoveProperty(propertyNameString, returnString);
-      NS_ENSURE_SUCCESS(result, result);
+      rv = cssDecl->RemoveProperty(propertyNameString, returnString);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
   } else {
     nsAutoString priority;
-    result = cssDecl->GetPropertyPriority(propertyNameString, priority);
-    NS_ENSURE_SUCCESS(result, result);
+    cssDecl->GetPropertyPriority(propertyNameString, priority);
     if (multiple) {
       // Let's add the value we have to add to the others
 
@@ -200,18 +193,17 @@ ChangeStyleTransaction::DoTransaction()
     } else {
       values.Assign(mValue);
     }
-    result = cssDecl->SetProperty(propertyNameString, values,
-                                  priority);
-    NS_ENSURE_SUCCESS(result, result);
+    rv = cssDecl->SetProperty(propertyNameString, values, priority);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
 
   // Let's be sure we don't keep an empty style attribute
   uint32_t length;
-  result = cssDecl->GetLength(&length);
-  NS_ENSURE_SUCCESS(result, result);
+  rv = cssDecl->GetLength(&length);
+  NS_ENSURE_SUCCESS(rv, rv);
   if (!length) {
-    result = mElement->UnsetAttr(kNameSpaceID_None, nsGkAtoms::style, true);
-    NS_ENSURE_SUCCESS(result, result);
+    rv = mElement->UnsetAttr(kNameSpaceID_None, nsGkAtoms::style, true);
+    NS_ENSURE_SUCCESS(rv, rv);
   } else {
     mRedoAttributeWasSet = true;
   }
@@ -223,36 +215,26 @@ nsresult
 ChangeStyleTransaction::SetStyle(bool aAttributeWasSet,
                                  nsAString& aValue)
 {
-  nsresult result = NS_OK;
   if (aAttributeWasSet) {
     // The style attribute was not empty, let's recreate the declaration
     nsAutoString propertyNameString;
     mProperty->ToString(propertyNameString);
 
-    nsCOMPtr<nsIDOMElementCSSInlineStyle> inlineStyles =
-      do_QueryInterface(mElement);
+    nsCOMPtr<nsStyledElement> inlineStyles = do_QueryInterface(mElement);
     NS_ENSURE_TRUE(inlineStyles, NS_ERROR_NULL_POINTER);
-    nsCOMPtr<nsIDOMCSSStyleDeclaration> cssDecl;
-    result = inlineStyles->GetStyle(getter_AddRefs(cssDecl));
-    NS_ENSURE_SUCCESS(result, result);
-    NS_ENSURE_TRUE(cssDecl, NS_ERROR_NULL_POINTER);
+    nsCOMPtr<nsICSSDeclaration> cssDecl = inlineStyles->Style();
 
     if (aValue.IsEmpty()) {
       // An empty value means we have to remove the property
       nsAutoString returnString;
-      result = cssDecl->RemoveProperty(propertyNameString, returnString);
-    } else {
-      // Let's recreate the declaration as it was
-      nsAutoString priority;
-      result = cssDecl->GetPropertyPriority(propertyNameString, priority);
-      NS_ENSURE_SUCCESS(result, result);
-      result = cssDecl->SetProperty(propertyNameString, aValue, priority);
+      return cssDecl->RemoveProperty(propertyNameString, returnString);
     }
-  } else {
-    result = mElement->UnsetAttr(kNameSpaceID_None, nsGkAtoms::style, true);
+    // Let's recreate the declaration as it was
+    nsAutoString priority;
+    cssDecl->GetPropertyPriority(propertyNameString, priority);
+    return cssDecl->SetProperty(propertyNameString, aValue, priority);
   }
-
-  return result;
+  return mElement->UnsetAttr(kNameSpaceID_None, nsGkAtoms::style, true);
 }
 
 NS_IMETHODIMP

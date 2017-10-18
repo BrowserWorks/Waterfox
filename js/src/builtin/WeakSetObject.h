@@ -16,7 +16,7 @@ class WeakSetObject : public NativeObject
   public:
     static const unsigned RESERVED_SLOTS = 1;
 
-    static JSObject* initClass(JSContext* cx, JSObject* obj);
+    static JSObject* initClass(JSContext* cx, HandleObject obj);
     static const Class class_;
 
   private:
@@ -25,6 +25,8 @@ class WeakSetObject : public NativeObject
 
     static WeakSetObject* create(JSContext* cx, HandleObject proto = nullptr);
     static MOZ_MUST_USE bool construct(JSContext* cx, unsigned argc, Value* vp);
+
+    static bool isBuiltinAdd(HandleValue add, JSContext* cx);
 };
 
 extern JSObject*

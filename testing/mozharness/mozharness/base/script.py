@@ -15,8 +15,11 @@ import codecs
 from contextlib import contextmanager
 import datetime
 import errno
+import fnmatch
+import functools
 import gzip
 import inspect
+import itertools
 import os
 import platform
 import pprint
@@ -25,12 +28,15 @@ import shutil
 import socket
 import subprocess
 import sys
+import tarfile
 import time
 import traceback
 import urllib2
+import zipfile
 import httplib
 import urlparse
 import hashlib
+import zlib
 if os.name == 'nt':
     try:
         import win32file
@@ -45,11 +51,17 @@ try:
 except ImportError:
     import json
 
+from io import BytesIO
+
 from mozprocess import ProcessHandler
 from mozharness.base.config import BaseConfig
-from mozharness.base.errors import ZipErrorList
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
+
+
+class ContentLengthMismatch(Exception):
+    pass
+
 
 def platform_name():
     pm = PlatformMixin()
@@ -110,7 +122,9 @@ class PlatformMixin(object):
             # osx is a special snowflake and to ensure the arch, it is better to use the following
             return sys.maxsize > 2**32  # context: https://docs.python.org/2/library/platform.html
         else:
-            return '64' in platform.architecture()[0]  # architecture() returns (bits, linkage)
+            # Using machine() gives you the architecture of the host rather
+            # than the build type of the Python binary
+            return '64' in platform.machine()
 
 
 # ScriptMixin {{{1
@@ -334,8 +348,87 @@ class ScriptMixin(PlatformMixin):
         url_quoted = urllib2.quote(url, safe='%/:=&?~#+!$,;\'@()*[]|')
         return urllib2.urlopen(url_quoted, **kwargs)
 
+
+
+    def fetch_url_into_memory(self, url):
+        ''' Downloads a file from a url into memory instead of disk.
+
+        Args:
+            url (str): URL path where the file to be downloaded is located.
+
+        Raises:
+            IOError: When the url points to a file on disk and cannot be found
+            ContentLengthMismatch: When the length of the retrieved content does not match the
+                                   Content-Length response header.
+            ValueError: When the scheme of a url is not what is expected.
+
+        Returns:
+            BytesIO: contents of url
+        '''
+        self.info('Fetch {} into memory'.format(url))
+        parsed_url = urlparse.urlparse(url)
+
+        if parsed_url.scheme in ('', 'file'):
+            path = parsed_url.path
+            if not os.path.isfile(path):
+                raise IOError('Could not find file to extract: {}'.format(url))
+
+            content_length = os.stat(path).st_size
+
+            # In case we're referrencing a file without file://
+            if parsed_url.scheme == '':
+                url = 'file://%s' % os.path.abspath(url)
+                parsed_url = urlparse.urlparse(url)
+
+        request = urllib2.Request(url)
+        # When calling fetch_url_into_memory() you should retry when we raise one of these exceptions:
+        # * Bug 1300663 - HTTPError: HTTP Error 404: Not Found
+        # * Bug 1300413 - HTTPError: HTTP Error 500: Internal Server Error
+        # * Bug 1300943 - HTTPError: HTTP Error 503: Service Unavailable
+        # * Bug 1300953 - URLError: <urlopen error [Errno -2] Name or service not known>
+        # * Bug 1301594 - URLError: <urlopen error [Errno 10054] An existing connection was ...
+        # * Bug 1301597 - URLError: <urlopen error [Errno 8] _ssl.c:504: EOF occurred in ...
+        # * Bug 1301855 - URLError: <urlopen error [Errno 60] Operation timed out>
+        # * Bug 1302237 - URLError: <urlopen error [Errno 104] Connection reset by peer>
+        # * Bug 1301807 - BadStatusLine: ''
+        #
+        # Bug 1309912 - Adding timeout in hopes to solve blocking on response.read() (bug 1300413)
+        response = urllib2.urlopen(request, timeout=30)
+
+        if parsed_url.scheme in ('http', 'https'):
+            content_length = int(response.headers.get('Content-Length'))
+
+        response_body = response.read()
+        response_body_size = len(response_body)
+
+        self.info('Content-Length response header: {}'.format(content_length))
+        self.info('Bytes received: {}'.format(response_body_size))
+
+        if response_body_size != content_length:
+            raise ContentLengthMismatch(
+                'The retrieved Content-Length header declares a body length of {} bytes, while we actually retrieved {} bytes'.format(
+                    content_length, response_body_size)
+            )
+
+        if response.info().get('Content-Encoding') == 'gzip':
+            self.info('Content-Encoding is "gzip", so decompressing response body')
+            # See http://www.zlib.net/manual.html#Advanced
+            # section "ZEXTERN int ZEXPORT inflateInit2 OF....":
+            #   Add 32 to windowBits to enable zlib and gzip decoding with automatic
+            #   header detection, or add 16 to decode only the gzip format (the zlib
+            #   format will return a Z_DATA_ERROR).
+            # Adding 16 since we only wish to support gzip encoding.
+            file_contents = zlib.decompress(response_body, zlib.MAX_WBITS|16)
+        else:
+            file_contents = response_body
+
+        # Use BytesIO instead of StringIO
+        # http://stackoverflow.com/questions/34162017/unzip-buffer-with-python/34162395#34162395
+        return BytesIO(file_contents)
+
+
     def _download_file(self, url, file_name):
-        """ Helper script for download_file()
+        """ Helper function for download_file()
         Additionaly this function logs all exceptions as warnings before
         re-raising them
 
@@ -367,7 +460,14 @@ class ScriptMixin(PlatformMixin):
             if f.info().get('content-length') is not None:
                 f_length = int(f.info()['content-length'])
                 got_length = 0
-            local_file = open(file_name, 'wb')
+            if f.info().get('Content-Encoding') == 'gzip':
+                # Note, we'll download the full compressed content into its own
+                # file, since that allows the gzip library to seek through it.
+                # Once downloaded, we'll decompress it into the real target
+                # file, and delete the compressed version.
+                local_file = open(file_name + '.gz', 'wb')
+            else:
+                local_file = open(file_name, 'wb')
             while True:
                 block = f.read(1024 ** 2)
                 if not block:
@@ -378,6 +478,18 @@ class ScriptMixin(PlatformMixin):
                 if f_length is not None:
                     got_length += len(block)
             local_file.close()
+            if f.info().get('Content-Encoding') == 'gzip':
+                # Decompress file into target location, then remove compressed version
+                with open(file_name, 'wb') as f_out:
+                    # On some execution paths, this could be called with python 2.6
+                    # whereby gzip.open(...) cannot be used with a 'with' statement.
+                    # So let's do this the python 2.6 way...
+                    try:
+                        f_in = gzip.open(file_name + '.gz', 'rb')
+                        shutil.copyfileobj(f_in, f_out)
+                    finally:
+                        f_in.close()
+                os.remove(file_name + '.gz')
             return file_name
         except urllib2.HTTPError, e:
             self.warning("Server returned status %s %s for %s" % (str(e.code), str(e), url))
@@ -409,8 +521,7 @@ class ScriptMixin(PlatformMixin):
             raise
 
     def _retry_download(self, url, error_level, file_name=None, retry_config=None):
-        """ Helper method to retry download methods
-        Split out so we can alter the retry logic in mozharness.mozilla.testing.gaia_test.
+        """ Helper method to retry download methods.
 
         This method calls `self.retry` on `self._download_file` using the passed
         parameters if a file_name is specified. If no file is specified, we will
@@ -453,39 +564,166 @@ class ScriptMixin(PlatformMixin):
             **retry_args
         )
 
-    def download_unzip(self, url, parent_dir, target_unzip_dirs=None, halt_on_failure=True):
-        """Generic method to download and extract a zip file.
 
-        The downloaded file will always be saved to the working directory and is not getting
-        deleted after extracting.
+    def _filter_entries(self, namelist, extract_dirs):
+        """Filter entries of the archive based on the specified list of to extract dirs."""
+        filter_partial = functools.partial(fnmatch.filter, namelist)
+        entries = itertools.chain(*map(filter_partial, extract_dirs or ['*']))
+
+        for entry in entries:
+            yield entry
+
+
+    def unzip(self, compressed_file, extract_to, extract_dirs='*', verbose=False):
+        """This method allows to extract a zip file without writing to disk first.
+
+        Args:
+            compressed_file (object): File-like object with the contents of a compressed zip file.
+            extract_to (str): where to extract the compressed file.
+            extract_dirs (list, optional): directories inside the archive file to extract.
+                                           Defaults to '*'.
+            verbose (bool, optional): whether or not extracted content should be displayed.
+                                      Defaults to False.
+
+        Raises:
+            zipfile.BadZipfile: on contents of zipfile being invalid
+        """
+        with zipfile.ZipFile(compressed_file) as bundle:
+            entries = self._filter_entries(bundle.namelist(), extract_dirs)
+
+            for entry in entries:
+                if verbose:
+                    self.info(' {}'.format(entry))
+
+                # Exception to be retried:
+                # Bug 1301645 - BadZipfile: Bad CRC-32 for file ...
+                #    http://stackoverflow.com/questions/5624669/strange-badzipfile-bad-crc-32-problem/5626098#5626098
+                # Bug 1301802 - error: Error -3 while decompressing: invalid stored block lengths
+                bundle.extract(entry, path=extract_to)
+
+                # ZipFile doesn't preserve permissions during extraction:
+                # http://bugs.python.org/issue15795
+                fname = os.path.realpath(os.path.join(extract_to, entry))
+                try:
+                    # getinfo() can raise KeyError
+                    mode = bundle.getinfo(entry).external_attr >> 16 & 0x1FF
+                    # Only set permissions if attributes are available. Otherwise all
+                    # permissions will be removed eg. on Windows.
+                    if mode:
+                        os.chmod(fname, mode)
+
+                except KeyError:
+                    self.warning('{} was not found in the zip file'.format(entry))
+
+
+    def deflate(self, compressed_file, mode, extract_to='.', *args, **kwargs):
+        """This method allows to extract a compressed file from a tar, tar.bz2 and tar.gz files.
+
+        Args:
+            compressed_file (object): File-like object with the contents of a compressed file.
+            mode (str): string of the form 'filemode[:compression]' (e.g. 'r:gz' or 'r:bz2')
+            extract_to (str, optional): where to extract the compressed file.
+        """
+        t = tarfile.open(fileobj=compressed_file, mode=mode)
+        t.extractall(path=extract_to)
+
+
+    def download_unpack(self, url, extract_to='.', extract_dirs='*', verbose=False):
+        """Generic method to download and extract a compressed file without writing it to disk first.
 
         Args:
             url (str): URL where the file to be downloaded is located.
-            parent_dir (str): directory where the downloaded file will
-                              be extracted to.
-            target_unzip_dirs (list, optional): directories inside the zip file to extract.
-                                                Defaults to `None`.
-            halt_on_failure (bool, optional): whether or not to redefine the
-                                              log level as `FATAL` on errors. Defaults to True.
+            extract_to (str, optional): directory where the downloaded file will
+                                        be extracted to.
+            extract_dirs (list, optional): directories inside the archive to extract.
+                                           Defaults to `*`. It currently only applies to zip files.
+            verbose (bool, optional): whether or not extracted content should be displayed.
+                                      Defaults to False.
 
         """
-        dirs = self.query_abs_dirs()
-        zipfile = self.download_file(url, parent_dir=dirs['abs_work_dir'],
-                                     error_level=FATAL)
+        def _determine_extraction_method_and_kwargs(url):
+            EXTENSION_TO_MIMETYPE = {
+                'bz2': 'application/x-bzip2',
+                'gz':  'application/x-gzip',
+                'tar': 'application/x-tar',
+                'zip': 'application/zip',
+            }
+            MIMETYPES = {
+                'application/x-bzip2': {
+                    'function': self.deflate,
+                    'kwargs': {'mode': 'r:bz2'},
+                },
+                'application/x-gzip': {
+                    'function': self.deflate,
+                    'kwargs': {'mode': 'r:gz'},
+                },
+                'application/x-tar': {
+                    'function': self.deflate,
+                    'kwargs': {'mode': 'r'},
+                },
+                'application/zip': {
+                    'function': self.unzip,
+                },
+                'application/x-zip-compressed': {
+                    'function': self.unzip,
+                },
+            }
 
-        command = self.query_exe('unzip', return_type='list')
-        # Always overwrite to not get an input in a hidden pipe if files already exist
-        command.extend(['-q', '-o', zipfile, '-d', parent_dir])
-        if target_unzip_dirs:
-            command.extend(target_unzip_dirs)
-        # TODO error_list: http://www.info-zip.org/mans/unzip.html#DIAGNOSTICS
-        # unzip return code 11 is 'no matching files were found'
-        self.run_command(command,
-                         error_list=ZipErrorList,
-                         halt_on_failure=halt_on_failure,
-                         fatal_exit_code=3,
-                         success_codes=[0, 11],
-                         )
+            filename = url.split('/')[-1]
+            # XXX: bz2/gz instead of tar.{bz2/gz}
+            extension = filename[filename.rfind('.')+1:]
+            mimetype = EXTENSION_TO_MIMETYPE[extension]
+            self.debug('Mimetype: {}'.format(mimetype))
+
+            function = MIMETYPES[mimetype]['function']
+            kwargs = {
+                'compressed_file': compressed_file,
+                'extract_to': extract_to,
+                'extract_dirs': extract_dirs,
+                'verbose': verbose,
+            }
+            kwargs.update(MIMETYPES[mimetype].get('kwargs', {}))
+
+            return function, kwargs
+
+        # Many scripts overwrite this method and set extract_dirs to None
+        extract_dirs = '*' if extract_dirs is None else extract_dirs
+        self.info('Downloading and extracting to {} these dirs {} from {}'.format(
+            extract_to,
+            ', '.join(extract_dirs),
+            url,
+        ))
+
+        # 1) Let's fetch the file
+        retry_args = dict(
+            retry_exceptions=(
+                urllib2.HTTPError,
+                urllib2.URLError,
+                httplib.BadStatusLine,
+                socket.timeout,
+                socket.error,
+                ContentLengthMismatch,
+            ),
+            sleeptime=30,
+            attempts=5,
+            error_message="Can't download from {}".format(url),
+            error_level=FATAL,
+        )
+        compressed_file = self.retry(
+            self.fetch_url_into_memory,
+            kwargs={'url': url},
+            **retry_args
+        )
+
+        # 2) We're guaranteed to have download the file with error_level=FATAL
+        #    Let's unpack the file
+        function, kwargs = _determine_extraction_method_and_kwargs(url)
+        try:
+            function(**kwargs)
+        except zipfile.BadZipfile:
+            # Dump the exception and exit
+            self.exception(level=FATAL)
+
 
     def load_json_url(self, url, error_level=None, *args, **kwargs):
         """ Returns a json object from a url (it retries). """
@@ -908,7 +1146,8 @@ class ScriptMixin(PlatformMixin):
             except retry_exceptions, e:
                 retry = True
                 error_message = "%s\nCaught exception: %s" % (error_message, str(e))
-                self.log('retry: attempt #%d caught exception: %s' % (n, str(e)), level=INFO)
+                self.log('retry: attempt #%d caught %s exception: %s' %
+                         (n, type(e).__name__, str(e)), level=INFO)
 
             if not retry:
                 return status
@@ -1105,7 +1344,7 @@ class ScriptMixin(PlatformMixin):
             output_timeout (int): amount of seconds to wait for output before
               the process is killed.
             fatal_exit_code (int, optional): call `self.fatal` if the return value
-              of the command is not on in `success_codes`. Defaults to 2.
+              of the command is not in `success_codes`. Defaults to 2.
             error_level (str, optional): log level name to use on error. Defaults
               to `ERROR`.
             **kwargs: Arbitrary keyword arguments.
@@ -1171,7 +1410,8 @@ class ScriptMixin(PlatformMixin):
                 returncode = int(p.proc.returncode)
             else:
                 p = subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE,
-                                     cwd=cwd, stderr=subprocess.STDOUT, env=env)
+                                     cwd=cwd, stderr=subprocess.STDOUT, env=env,
+                                     bufsize=0)
                 loop = True
                 while loop:
                     if p.poll() is not None:
@@ -1330,18 +1570,19 @@ class ScriptMixin(PlatformMixin):
         tmp_stderr.close()
         return_level = DEBUG
         output = None
-        if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
-            output = self.read_from_file(tmp_stdout_filename,
-                                         verbose=False)
-            if not silent:
-                self.log("Output received:", level=log_level)
-                output_lines = output.rstrip().splitlines()
-                for line in output_lines:
-                    if not line or line.isspace():
-                        continue
-                    line = line.decode("utf-8")
-                    self.log(' %s' % line, level=log_level)
-                output = '\n'.join(output_lines)
+        if return_type == 'output' or not silent:
+            if os.path.exists(tmp_stdout_filename) and os.path.getsize(tmp_stdout_filename):
+                output = self.read_from_file(tmp_stdout_filename,
+                                             verbose=False)
+                if not silent:
+                    self.log("Output received:", level=log_level)
+                    output_lines = output.rstrip().splitlines()
+                    for line in output_lines:
+                        if not line or line.isspace():
+                            continue
+                        line = line.decode("utf-8")
+                        self.log(' %s' % line, level=log_level)
+                    output = '\n'.join(output_lines)
         if os.path.exists(tmp_stderr_filename) and os.path.getsize(tmp_stderr_filename):
             if not ignore_errors:
                 return_level = ERROR
@@ -1397,26 +1638,68 @@ class ScriptMixin(PlatformMixin):
                 self.log(msg, error_level=error_level)
         os.utime(file_name, times)
 
-    def unpack(self, filename, extract_to):
-        '''
-        This method allows us to extract a file regardless of its extension
+    def unpack(self, filename, extract_to, extract_dirs=None,
+               error_level=ERROR, fatal_exit_code=2, verbose=False):
+        """The method allows to extract a file regardless of its extension.
 
         Args:
             filename (str): filename of the compressed file.
             extract_to (str): where to extract the compressed file.
-        '''
-        # XXX: Make sure that filename has a extension of one of our supported file formats
-        m = re.search('\.tar\.(bz2|gz)$', filename)
-        if m:
-            command = self.query_exe('tar', return_type='list')
-            tar_cmd = "jxfv"
-            if m.group(1) == "gz":
-                tar_cmd = "zxfv"
-            command.extend([tar_cmd, filename, "-C", extract_to])
-            self.run_command(command, halt_on_failure=True)
+            extract_dirs (list, optional): directories inside the archive file to extract.
+                                           Defaults to `None`.
+            fatal_exit_code (int, optional): call `self.fatal` if the return value
+              of the command is not in `success_codes`. Defaults to 2.
+            verbose (bool, optional): whether or not extracted content should be displayed.
+                                      Defaults to False.
+
+        Raises:
+            IOError: on `filename` file not found.
+
+        """
+        if not os.path.isfile(filename):
+            raise IOError('Could not find file to extract: %s' % filename)
+
+        if zipfile.is_zipfile(filename):
+            try:
+                self.info('Using ZipFile to extract {} to {}'.format(filename, extract_to))
+                with zipfile.ZipFile(filename) as bundle:
+                    for entry in self._filter_entries(bundle.namelist(), extract_dirs):
+                        if verbose:
+                            self.info(' %s' % entry)
+                        bundle.extract(entry, path=extract_to)
+
+                        # ZipFile doesn't preserve permissions during extraction:
+                        # http://bugs.python.org/issue15795
+                        fname = os.path.realpath(os.path.join(extract_to, entry))
+                        mode = bundle.getinfo(entry).external_attr >> 16 & 0x1FF
+                        # Only set permissions if attributes are available. Otherwise all
+                        # permissions will be removed eg. on Windows.
+                        if mode:
+                            os.chmod(fname, mode)
+            except zipfile.BadZipfile as e:
+                self.log('%s (%s)' % (e.message, filename),
+                         level=error_level, exit_code=fatal_exit_code)
+
+        # Bug 1211882 - is_tarfile cannot be trusted for dmg files
+        elif tarfile.is_tarfile(filename) and not filename.lower().endswith('.dmg'):
+            try:
+                self.info('Using TarFile to extract {} to {}'.format(filename, extract_to))
+                with tarfile.open(filename) as bundle:
+                    for entry in self._filter_entries(bundle.getnames(), extract_dirs):
+                        if verbose:
+                            self.info(' %s' % entry)
+                        bundle.extract(entry, path=extract_to)
+            except tarfile.TarError as e:
+                self.log('%s (%s)' % (e.message, filename),
+                         level=error_level, exit_code=fatal_exit_code)
         else:
-            # XXX implement
-            pass
+            self.log('No extraction method found for: %s' % filename,
+                     level=error_level, exit_code=fatal_exit_code)
+
+    def is_taskcluster(self):
+        """Returns boolean indicating if we're running in TaskCluster."""
+        # This may need expanding in the future to work on
+        return 'TASKCLUSTER_WORKER_TYPE' in os.environ
 
 
 def PreScriptRun(func):
@@ -1551,6 +1834,21 @@ class BaseScript(ScriptMixin, LogMixin, object):
         self.new_log_obj(default_log_level=default_log_level)
         self.script_obj = self
 
+        # Indicate we're a source checkout if VCS directory is present at the
+        # appropriate place. This code will break if this file is ever moved
+        # to another directory.
+        self.topsrcdir = None
+
+        srcreldir = 'testing/mozharness/mozharness/base'
+        here = os.path.normpath(os.path.dirname(__file__))
+        if here.replace('\\', '/').endswith(srcreldir):
+            topsrcdir = os.path.normpath(os.path.join(here, '..', '..',
+                                                      '..', '..'))
+            hg_dir = os.path.join(topsrcdir, '.hg')
+            git_dir = os.path.join(topsrcdir, '.git')
+            if os.path.isdir(hg_dir) or os.path.isdir(git_dir):
+                self.topsrcdir = topsrcdir
+
         # Set self.config to read-only.
         #
         # We can create intermediate config info programmatically from
@@ -1559,7 +1857,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
         # easy-to-write-hard-to-debug writable config.
         #
         # To allow for other, script-specific configurations
-        # (e.g., hgtool's buildbot props json parsing), before locking,
+        # (e.g., buildbot props json parsing), before locking,
         # call self._pre_config_lock().  If needed, this method can
         # alter self.config.
         self._pre_config_lock(rw_config)
@@ -1983,9 +2281,9 @@ class BaseScript(ScriptMixin, LogMixin, object):
             self.log("%s doesn't exist after copy!" % dest, level=error_level)
             return None
 
-    def file_sha512sum(self, file_path):
+    def get_hash_for_file(self, file_path, hash_type="sha512"):
         bs = 65536
-        hasher = hashlib.sha512()
+        hasher = hashlib.new(hash_type)
         with open(file_path, 'rb') as fh:
             buf = fh.read(bs)
             while len(buf) > 0:

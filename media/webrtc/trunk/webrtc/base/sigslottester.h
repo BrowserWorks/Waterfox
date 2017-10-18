@@ -44,7 +44,24 @@
 
 namespace rtc {
 
-// For all the templates below:
+// Base version for testing signals that passes no arguments.
+class SigslotTester0 : public sigslot::has_slots<> {
+ public:
+  explicit SigslotTester0(sigslot::signal0<>* signal) : callback_count_(0) {
+    signal->connect(this, &SigslotTester0::OnSignalCallback);
+  }
+
+  int callback_count() const { return callback_count_; }
+
+ private:
+  void OnSignalCallback() { callback_count_++; }
+  int callback_count_;
+
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester0);
+};
+
+// Versions below are for testing signals that pass arguments. For all the
+// templates below:
 // - A1-A5 is the type of the argument i in the callback. Signals may and often
 //   do use const-references here for efficiency.
 // - C1-C5 is the type of the variable to capture argument i. These should be
@@ -71,7 +88,7 @@ class SigslotTester1 : public sigslot::has_slots<> {
   int callback_count_;
   C1* capture1_;
 
-  DISALLOW_COPY_AND_ASSIGN(SigslotTester1);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester1);
 };
 
 template <class A1, class A2, class C1, class C2>
@@ -97,7 +114,7 @@ class SigslotTester2 : public sigslot::has_slots<> {
   C1* capture1_;
   C2* capture2_;
 
-  DISALLOW_COPY_AND_ASSIGN(SigslotTester2);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester2);
 };
 
 template <class A1, class A2, class A3, class C1, class C2, class C3>
@@ -125,7 +142,7 @@ class SigslotTester3 : public sigslot::has_slots<> {
   C2* capture2_;
   C3* capture3_;
 
-  DISALLOW_COPY_AND_ASSIGN(SigslotTester3);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester3);
 };
 
 template <class A1, class A2, class A3, class A4, class C1, class C2, class C3,
@@ -157,7 +174,7 @@ class SigslotTester4 : public sigslot::has_slots<> {
   C3* capture3_;
   C4* capture4_;
 
-  DISALLOW_COPY_AND_ASSIGN(SigslotTester4);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester4);
 };
 
 template <class A1, class A2, class A3, class A4, class A5, class C1, class C2,
@@ -192,7 +209,7 @@ class SigslotTester5 : public sigslot::has_slots<> {
   C4* capture4_;
   C5* capture5_;
 
-  DISALLOW_COPY_AND_ASSIGN(SigslotTester5);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SigslotTester5);
 };
 }  // namespace rtc
 

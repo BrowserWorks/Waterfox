@@ -6,6 +6,7 @@
 #ifndef GFX_IMFYCBCRIMAGE_H
 #define GFX_IMFYCBCRIMAGE_H
 
+#include "mozilla/layers/TextureD3D11.h"
 #include "mozilla/RefPtr.h"
 #include "ImageContainer.h"
 #include "mfidl.h"
@@ -20,11 +21,12 @@ public:
 
   virtual bool IsValid() { return true; }
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
 
+  static DXGIYCbCrTextureData* GetD3D11TextureData(Data aData,
+                                                  gfx::IntSize aSize);
 protected:
-
-  TextureClient* GetD3D9TextureClient(CompositableClient* aClient);
+  TextureClient* GetD3D11TextureClient(KnowsCompositor* aForwarder);
 
   ~IMFYCbCrImage();
 

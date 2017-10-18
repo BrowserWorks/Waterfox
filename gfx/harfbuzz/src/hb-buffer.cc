@@ -52,7 +52,7 @@
  *
  * Checks the equality of two #hb_segment_properties_t's.
  *
- * Return value: (transfer full):
+ * Return value:
  * %true if all properties of @a equal those of @b, false otherwise.
  *
  * Since: 0.9.7
@@ -183,6 +183,12 @@ hb_buffer_t::shift_forward (unsigned int count)
   if (unlikely (!ensure (len + count))) return false;
 
   memmove (info + idx + count, info + idx, (len - idx) * sizeof (info[0]));
+  if (idx + count > len)
+  {
+    /* Under memory failure we might expose this area.  At least
+     * clean it up.  Oh well... */
+    memset (info + len, 0, (idx + count - len) * sizeof (info[0]));
+  }
   len += count;
   idx += count;
 
@@ -426,6 +432,8 @@ hb_buffer_t::move_to (unsigned int i)
     /* Tricky part: rewinding... */
     unsigned int count = out_len - i;
 
+    /* This will blow in our face if memory allocation fails later
+     * in this same lookup... */
     if (unlikely (idx < count && !shift_forward (count + 32))) return false;
 
     assert (idx >= count);
@@ -544,7 +552,7 @@ hb_buffer_t::merge_clusters_impl (unsigned int start,
   if (cluster_level == HB_BUFFER_CLUSTER_LEVEL_CHARACTERS)
     return;
 
-  unsigned int cluster = info[start].cluster;
+  uint32_t cluster = info[start].cluster;
 
   for (unsigned int i = start + 1; i < end; i++)
     cluster = MIN (cluster, info[i].cluster);
@@ -575,7 +583,7 @@ hb_buffer_t::merge_out_clusters (unsigned int start,
   if (unlikely (end - start < 2))
     return;
 
-  unsigned int cluster = out_info[start].cluster;
+  uint32_t cluster = out_info[start].cluster;
 
   for (unsigned int i = start + 1; i < end; i++)
     cluster = MIN (cluster, out_info[i].cluster);

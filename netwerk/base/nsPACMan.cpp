@@ -5,8 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsPACMan.h"
-#include "mozIApplication.h"
-#include "nsIAppsService.h"
 #include "nsThreadUtils.h"
 #include "nsIAuthPrompt.h"
 #include "nsIPromptFactory.h"
@@ -17,9 +15,7 @@
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsISystemProxySettings.h"
 #include "nsContentUtils.h"
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-#endif
+#include "mozilla/Preferences.h"
 
 //-----------------------------------------------------------------------------
 
@@ -46,11 +42,39 @@ HttpRequestSucceeded(nsIStreamLoader *loader)
   bool result = true;  // default to assuming success
 
   nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(request);
-  if (httpChannel)
-    httpChannel->GetRequestSucceeded(&result);
+  if (httpChannel) {
+    // failsafe
+    Unused << httpChannel->GetRequestSucceeded(&result);
+  }
 
   return result;
 }
+
+// Read preference setting of extra JavaScript context heap size.
+// PrefService tends to be run on main thread, where ProxyAutoConfig runs on
+// ProxyResolution thread, so it's read here and passed to ProxyAutoConfig.
+static uint32_t
+GetExtraJSContextHeapSize()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  static int32_t extraSize = -1;
+
+  if (extraSize < 0) {
+    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+    int32_t value;
+
+    if (prefs && NS_SUCCEEDED(prefs->GetIntPref(
+        "network.proxy.autoconfig_extra_jscontext_heap_size", &value))) {
+      LOG(("autoconfig_extra_jscontext_heap_size: %d\n", value));
+
+      extraSize = value;
+    }
+  }
+
+  return extraSize < 0 ? 0 : extraSize;
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -61,9 +85,9 @@ HttpRequestSucceeded(nsIStreamLoader *loader)
 class ExecuteCallback final : public Runnable
 {
 public:
-  ExecuteCallback(nsPACManCallback *aCallback,
-                  nsresult status)
-    : mCallback(aCallback)
+  ExecuteCallback(nsPACManCallback* aCallback, nsresult status)
+    : Runnable("net::ExecuteCallback")
+    , mCallback(aCallback)
     , mStatus(status)
   {
   }
@@ -78,7 +102,7 @@ public:
     mPACURL = pacURL;
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     mCallback->OnQueryComplete(mStatus, mPACString, mPACURL);
     mCallback = nullptr;
@@ -101,12 +125,13 @@ private:
 class ShutdownThread final : public Runnable
 {
 public:
-  explicit ShutdownThread(nsIThread *thread)
-    : mThread(thread)
+  explicit ShutdownThread(nsIThread* thread)
+    : Runnable("net::ShutdownThread")
+    , mThread(thread)
   {
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "wrong thread");
     mThread->Shutdown();
@@ -122,12 +147,13 @@ private:
 class WaitForThreadShutdown final : public Runnable
 {
 public:
-  explicit WaitForThreadShutdown(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit WaitForThreadShutdown(nsPACMan* aPACMan)
+    : Runnable("net::WaitForThreadShutdown")
+    , mPACMan(aPACMan)
   {
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "wrong thread");
     if (mPACMan->mPACThread) {
@@ -150,12 +176,13 @@ private:
 class PACLoadComplete final : public Runnable
 {
 public:
-  explicit PACLoadComplete(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit PACLoadComplete(nsPACMan* aPACMan)
+    : Runnable("net::PACLoadComplete")
+    , mPACMan(aPACMan)
   {
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread(), "wrong thread");
     mPACMan->mLoader = nullptr;
@@ -177,11 +204,13 @@ class ExecutePACThreadAction final : public Runnable
 {
 public:
   // by default we just process the queue
-  explicit ExecutePACThreadAction(nsPACMan *aPACMan)
-    : mPACMan(aPACMan)
+  explicit ExecutePACThreadAction(nsPACMan* aPACMan)
+    : Runnable("net::ExecutePACThreadAction")
+    , mPACMan(aPACMan)
     , mCancel(false)
     , mCancelStatus(NS_OK)
     , mSetupPAC(false)
+    , mExtraHeapSize(0)
   { }
 
   void CancelQueue (nsresult status)
@@ -190,14 +219,18 @@ public:
     mCancelStatus = status;
   }
 
-  void SetupPAC (const char *text, uint32_t datalen, nsCString &pacURI)
+  void SetupPAC (const char *text,
+                 uint32_t datalen,
+                 nsCString &pacURI,
+                 uint32_t extraHeapSize)
   {
     mSetupPAC = true;
     mSetupPACData.Assign(text, datalen);
     mSetupPACURI = pacURI;
+    mExtraHeapSize = extraHeapSize;
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(!NS_IsMainThread(), "wrong thread");
     if (mCancel) {
@@ -209,11 +242,15 @@ public:
     if (mSetupPAC) {
       mSetupPAC = false;
 
+      nsCOMPtr<nsIEventTarget> target = mPACMan->GetNeckoTarget();
       mPACMan->mPAC.Init(mSetupPACURI,
-                         mSetupPACData);
+                         mSetupPACData,
+                         mPACMan->mIncludePath,
+                         mExtraHeapSize,
+                         target);
 
       RefPtr<PACLoadComplete> runnable = new PACLoadComplete(mPACMan);
-      NS_DispatchToMainThread(runnable);
+      mPACMan->Dispatch(runnable.forget());
       return NS_OK;
     }
 
@@ -228,19 +265,19 @@ private:
   nsresult  mCancelStatus;
 
   bool                 mSetupPAC;
+  uint32_t             mExtraHeapSize;
   nsCString            mSetupPACData;
   nsCString            mSetupPACURI;
 };
 
 //-----------------------------------------------------------------------------
 
-PendingPACQuery::PendingPACQuery(nsPACMan *pacMan, nsIURI *uri,
-                                 uint32_t appId, bool isInIsolatedMozBrowser,
-                                 nsPACManCallback *callback,
+PendingPACQuery::PendingPACQuery(nsPACMan* pacMan,
+                                 nsIURI* uri,
+                                 nsPACManCallback* callback,
                                  bool mainThreadResponse)
-  : mPACMan(pacMan)
-  , mAppId(appId)
-  , mIsInIsolatedMozBrowser(isInIsolatedMozBrowser)
+  : Runnable("net::PendingPACQuery")
+  , mPACMan(pacMan)
   , mCallback(callback)
   , mOnMainThreadOnly(mainThreadResponse)
 {
@@ -248,18 +285,6 @@ PendingPACQuery::PendingPACQuery(nsPACMan *pacMan, nsIURI *uri,
   uri->GetAsciiHost(mHost);
   uri->GetScheme(mScheme);
   uri->GetPort(&mPort);
-
-  nsCOMPtr<nsIAppsService> appsService =
-      do_GetService(APPS_SERVICE_CONTRACTID);
-  if (!appsService) {
-    return;
-  }
-  nsCOMPtr<mozIApplication> mozApp;
-  nsresult rv = appsService->GetAppByLocalId(appId, getter_AddRefs(mozApp));
-  if (NS_FAILED(rv) || !mozApp) {
-      return;
-  }
-  mozApp->GetOrigin(mAppOrigin);
 }
 
 void
@@ -270,7 +295,7 @@ PendingPACQuery::Complete(nsresult status, const nsCString &pacString)
   RefPtr<ExecuteCallback> runnable = new ExecuteCallback(mCallback, status);
   runnable->SetPACString(pacString);
   if (mOnMainThreadOnly)
-    NS_DispatchToMainThread(runnable);
+    mPACMan->Dispatch(runnable.forget());
   else
     runnable->Run();
 }
@@ -284,7 +309,7 @@ PendingPACQuery::UseAlternatePACFile(const nsCString &pacURL)
   RefPtr<ExecuteCallback> runnable = new ExecuteCallback(mCallback, NS_OK);
   runnable->SetPACURL(pacURL);
   if (mOnMainThreadOnly)
-    NS_DispatchToMainThread(runnable);
+    mPACMan->Dispatch(runnable.forget());
   else
     runnable->Run();
 }
@@ -302,8 +327,12 @@ PendingPACQuery::Run()
 static bool sThreadLocalSetup = false;
 static uint32_t sThreadLocalIndex = 0xdeadbeef; // out of range
 
-nsPACMan::nsPACMan()
-  : mLoadPending(false)
+static const char *kPACIncludePath =
+  "network.proxy.autoconfig_url.include_path";
+
+nsPACMan::nsPACMan(nsIEventTarget *mainThreadEventTarget)
+  : NeckoTargetHolder(mainThreadEventTarget)
+  , mLoadPending(false)
   , mShutdown(false)
   , mLoadFailureCount(0)
   , mInProgress(false)
@@ -314,6 +343,7 @@ nsPACMan::nsPACMan()
     PR_NewThreadPrivateIndex(&sThreadLocalIndex, nullptr);
   }
   mPAC.SetThreadLocalIndex(sThreadLocalIndex);
+  mIncludePath = Preferences::GetBool(kPACIncludePath, false);
 }
 
 nsPACMan::~nsPACMan()
@@ -324,7 +354,7 @@ nsPACMan::~nsPACMan()
     }
     else {
       RefPtr<ShutdownThread> runnable = new ShutdownThread(mPACThread);
-      NS_DispatchToMainThread(runnable);
+      Dispatch(runnable.forget());
     }
   }
 
@@ -344,12 +374,11 @@ nsPACMan::Shutdown()
   PostCancelPendingQ(NS_ERROR_ABORT);
 
   RefPtr<WaitForThreadShutdown> runnable = new WaitForThreadShutdown(this);
-  NS_DispatchToMainThread(runnable);
+  Dispatch(runnable.forget());
 }
 
 nsresult
-nsPACMan::AsyncGetProxyForURI(nsIURI *uri, uint32_t appId,
-                              bool isInIsolatedMozBrowser,
+nsPACMan::AsyncGetProxyForURI(nsIURI *uri,
                               nsPACManCallback *callback,
                               bool mainThreadResponse)
 {
@@ -366,8 +395,7 @@ nsPACMan::AsyncGetProxyForURI(nsIURI *uri, uint32_t appId,
   }
 
   RefPtr<PendingPACQuery> query =
-    new PendingPACQuery(this, uri, appId, isInIsolatedMozBrowser, callback,
-                        mainThreadResponse);
+    new PendingPACQuery(this, uri, callback, mainThreadResponse);
 
   if (IsPACURI(uri)) {
     // deal with this directly instead of queueing it
@@ -413,8 +441,12 @@ nsPACMan::LoadPACFromURI(const nsCString &spec)
   // queries the enter between now and when we actually load the PAC file.
 
   if (!mLoadPending) {
-    nsresult rv;
-    if (NS_FAILED(rv = NS_DispatchToCurrentThread(NewRunnableMethod(this, &nsPACMan::StartLoading))))
+    nsCOMPtr<nsIRunnable> runnable =
+      NewRunnableMethod("nsPACMan::StartLoading", this, &nsPACMan::StartLoading);
+    nsresult rv = NS_IsMainThread()
+      ? Dispatch(runnable.forget())
+      : GetCurrentThreadEventTarget()->Dispatch(runnable.forget());
+    if (NS_FAILED(rv))
       return rv;
     mLoadPending = true;
   }
@@ -456,7 +488,8 @@ nsPACMan::StartLoading()
 
       // NOTE: This results in GetProxyForURI being called
       if (pacURI) {
-        pacURI->GetSpec(mNormalPACURISpec);
+        nsresult rv = pacURI->GetSpec(mNormalPACURISpec);
+        MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
         NS_NewChannel(getter_AddRefs(channel),
                       pacURI,
                       nsContentUtils::GetSystemPrincipal(),
@@ -625,8 +658,6 @@ nsPACMan::ProcessPending()
   // the systemproxysettings didn't complete the resolution. try via PAC
   if (!completed) {
     nsresult status = mPAC.GetProxyForURI(query->mSpec, query->mHost,
-                                          query->mAppId, query->mAppOrigin,
-                                          query->mIsInIsolatedMozBrowser,
                                           pacString);
     LOG(("Use proxy from PAC: %s\n", pacString.get()));
     query->Complete(status, pacString);
@@ -686,7 +717,7 @@ nsPACMan::OnStreamComplete(nsIStreamLoader *loader,
 
     RefPtr<ExecutePACThreadAction> pending =
       new ExecutePACThreadAction(this);
-    pending->SetupPAC(text, dataLen, pacURI);
+    pending->SetupPAC(text, dataLen, pacURI, GetExtraJSContextHeapSize());
     if (mPACThread)
       mPACThread->Dispatch(pending, nsIEventTarget::DISPATCH_NORMAL);
 
@@ -759,32 +790,15 @@ nsPACMan::AsyncOnChannelRedirect(nsIChannel *oldChannel, nsIChannel *newChannel,
   return NS_OK;
 }
 
-void
-nsPACMan::NamePACThread()
-{
-  MOZ_ASSERT(!NS_IsMainThread(), "wrong thread");
-  PR_SetCurrentThreadName("Proxy Resolution");
-#ifdef MOZ_NUWA_PROCESS
-  if (IsNuwaProcess()) {
-    NuwaMarkCurrentThread(nullptr, nullptr);
-  }
-#endif
-}
-
 nsresult
 nsPACMan::Init(nsISystemProxySettings *systemProxySettings)
 {
   mSystemProxySettings = systemProxySettings;
 
-  nsresult rv = NS_NewThread(getter_AddRefs(mPACThread), nullptr);
-  if (NS_FAILED(rv))
-    return rv;
+  nsresult rv =
+    NS_NewNamedThread("ProxyResolution", getter_AddRefs(mPACThread));
 
-  // don't check return value as it is not a big deal for this to fail.
-  mPACThread->Dispatch(NewRunnableMethod(this, &nsPACMan::NamePACThread),
-                       nsIEventTarget::DISPATCH_NORMAL);
-
-  return NS_OK;
+  return rv;
 }
 
 } // namespace net

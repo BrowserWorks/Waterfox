@@ -218,6 +218,15 @@ MacroAssemblerCompat::handleFailureWithHandlerTail(void* handler)
 }
 
 void
+MacroAssemblerCompat::profilerEnterFrame(Register framePtr, Register scratch)
+{
+    asMasm().loadJSContext(scratch);
+    loadPtr(Address(scratch, offsetof(JSContext, profilingActivation_)), scratch);
+    storePtr(framePtr, Address(scratch, JitActivation::offsetOfLastProfilingFrame()));
+    storePtr(ImmPtr(nullptr), Address(scratch, JitActivation::offsetOfLastProfilingCallSite()));
+}
+
+void
 MacroAssemblerCompat::breakpoint()
 {
     static int code = 0xA77;
@@ -307,6 +316,15 @@ template void
 MacroAssemblerCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const BaseIndex& mem,
                                                     Register value, Register temp, AnyRegister output);
 
+void
+MacroAssembler::reserveStack(uint32_t amount)
+{
+    // TODO: This bumps |sp| every time we reserve using a second register.
+    // It would save some instructions if we had a fixed frame size.
+    vixl::MacroAssembler::Claim(Operand(amount));
+    adjustFrame(amount);
+}
+
 //{{{ check_macroassembler_style
 // ===============================================================
 // MacroAssembler high-level usage.
@@ -344,6 +362,12 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
         }
         vixl::MacroAssembler::Push(src[0], src[1], src[2], src[3]);
     }
+}
+
+void
+MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest, Register scratch)
+{
+    MOZ_CRASH("NYI: storeRegsInMask");
 }
 
 void
@@ -471,12 +495,9 @@ MacroAssembler::Pop(const ValueOperand& val)
 }
 
 void
-MacroAssembler::reserveStack(uint32_t amount)
+MacroAssembler::PopStackPtr()
 {
-    // TODO: This bumps |sp| every time we reserve using a second register.
-    // It would save some instructions if we had a fixed frame size.
-    vixl::MacroAssembler::Claim(Operand(amount));
-    adjustFrame(amount);
+    MOZ_CRASH("NYI");
 }
 
 // ===============================================================
@@ -523,6 +544,16 @@ MacroAssembler::call(wasm::SymbolicAddress imm)
 }
 
 void
+MacroAssembler::call(const Address& addr)
+{
+    vixl::UseScratchRegisterScope temps(this);
+    const Register scratch = temps.AcquireX().asUnsized();
+    syncStackPtr();
+    loadPtr(addr, scratch);
+    call(scratch);
+}
+
+void
 MacroAssembler::call(JitCode* c)
 {
     vixl::UseScratchRegisterScope temps(this);
@@ -546,19 +577,19 @@ MacroAssembler::patchCall(uint32_t callerOffset, uint32_t calleeOffset)
 }
 
 CodeOffset
-MacroAssembler::thunkWithPatch()
+MacroAssembler::farJumpWithPatch()
 {
     MOZ_CRASH("NYI");
 }
 
 void
-MacroAssembler::patchThunk(uint32_t thunkOffset, uint32_t targetOffset)
+MacroAssembler::patchFarJump(CodeOffset farJump, uint32_t targetOffset)
 {
     MOZ_CRASH("NYI");
 }
 
 void
-MacroAssembler::repatchThunk(uint8_t* code, uint32_t thunkOffset, uint32_t targetOffset)
+MacroAssembler::repatchFarJump(uint8_t* code, uint32_t farJumpOffset, uint32_t targetOffset)
 {
     MOZ_CRASH("NYI");
 }
@@ -577,6 +608,25 @@ MacroAssembler::patchNopToNearJump(uint8_t* jump, uint8_t* target)
 
 void
 MacroAssembler::patchNearJumpToNop(uint8_t* jump)
+{
+    MOZ_CRASH("NYI");
+}
+
+CodeOffset
+MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc)
+{
+    MOZ_CRASH("NYI");
+    return CodeOffset();
+}
+
+void
+MacroAssembler::patchNopToCall(uint8_t* call, uint8_t* target)
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::patchCallToNop(uint8_t* call)
 {
     MOZ_CRASH("NYI");
 }
@@ -626,7 +676,7 @@ MacroAssembler::setupUnalignedABICall(Register scratch)
 }
 
 void
-MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
+MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromWasm)
 {
     MOZ_ASSERT(inCall_);
     uint32_t stackForCall = abiArgs_.stackBytesConsumedSoFar();
@@ -638,7 +688,9 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
     *stackAdjust = stackForCall;
     reserveStack(*stackAdjust);
     {
-        moveResolver_.resolve();
+        enoughMemory_ &= moveResolver_.resolve();
+        if (!enoughMemory_)
+            return;
         MoveEmitter emitter(*this);
         emitter.emit(moveResolver_);
         emitter.finish();
@@ -649,7 +701,7 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
 }
 
 void
-MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result)
+MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result, bool callFromWasm)
 {
     // Call boundaries communicate stack via sp.
     if (!GetStackPointer64().Is(sp))
@@ -722,10 +774,58 @@ MacroAssembler::pushFakeReturnAddress(Register scratch)
 }
 
 // ===============================================================
+// Move instructions
+
+void
+MacroAssembler::moveValue(const TypedOrValueRegister& src, const ValueOperand& dest)
+{
+    if (src.hasValue()) {
+        moveValue(src.valueReg(), dest);
+        return;
+    }
+
+    MIRType type = src.type();
+    AnyRegister reg = src.typedReg();
+
+    if (!IsFloatingPointType(type)) {
+        boxNonDouble(ValueTypeFromMIRType(type), reg.gpr(), dest);
+        return;
+    }
+
+    FloatRegister scratch = ScratchDoubleReg;
+    FloatRegister freg = reg.fpu();
+    if (type == MIRType::Float32) {
+        convertFloat32ToDouble(freg, scratch);
+        freg = scratch;
+    }
+    boxDouble(freg, dest, scratch);
+}
+
+void
+MacroAssembler::moveValue(const ValueOperand& src, const ValueOperand& dest)
+{
+    if (src == dest)
+        return;
+    movePtr(src.valueReg(), dest.valueReg());
+}
+
+void
+MacroAssembler::moveValue(const Value& src, const ValueOperand& dest)
+{
+    if (!src.isGCThing()) {
+        movePtr(ImmWord(src.asRawBits()), dest.valueReg());
+        return;
+    }
+
+    BufferOffset load = movePatchablePtr(ImmPtr(src.bitsAsPunboxPointer()), dest.valueReg());
+    writeDataRelocation(src, load);
+}
+
+// ===============================================================
 // Branch functions
 
 void
-MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
+MacroAssembler::branchPtrInNurseryChunk(Condition cond, Register ptr, Register temp,
                                         Label* label)
 {
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
@@ -733,11 +833,10 @@ MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register t
     MOZ_ASSERT(ptr != ScratchReg && ptr != ScratchReg2); // Both may be used internally.
     MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2);
 
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-    movePtr(ImmWord(-ptrdiff_t(nursery.start())), temp);
-    addPtr(ptr, temp);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              temp, ImmWord(nursery.nurserySize()), label);
+    movePtr(ptr, temp);
+    orPtr(Imm32(gc::ChunkMask), temp);
+    branch32(cond, Address(temp, gc::ChunkLocationOffsetFromLastByte),
+             Imm32(int32_t(gc::ChunkLocation::Nursery)), label);
 }
 
 void
@@ -751,7 +850,7 @@ void
 MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
                                            Label* label)
 {
-    branchValueIsNurseryObjectImpl(cond, value.valueReg(), temp, label);
+    branchValueIsNurseryObjectImpl(cond, value, temp, label);
 }
 
 template <typename T>
@@ -759,22 +858,18 @@ void
 MacroAssembler::branchValueIsNurseryObjectImpl(Condition cond, const T& value, Register temp,
                                                Label* label)
 {
-   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
     MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2); // Both may be used internally.
 
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+    Label done;
+    branchTestObject(Assembler::NotEqual, value, cond == Assembler::Equal ? &done : label);
 
-    // Avoid creating a bogus ObjectValue below.
-    if (!nursery.exists())
-        return;
+    extractObject(value, temp);
+    orPtr(Imm32(gc::ChunkMask), temp);
+    branch32(cond, Address(temp, gc::ChunkLocationOffsetFromLastByte),
+             Imm32(int32_t(gc::ChunkLocation::Nursery)), label);
 
-    // 'Value' representing the start of the nursery tagged as a JSObject
-    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
-
-    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), temp);
-    addPtr(value, temp);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              temp, ImmWord(nursery.nurserySize()), label);
+    bind(&done);
 }
 
 void
@@ -794,8 +889,8 @@ MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
 // Memory access primitives.
 template <typename T>
 void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
-                                  MIRType slotType)
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
+                                  const T& dest, MIRType slotType)
 {
     if (valueType == MIRType::Double) {
         storeDouble(value.reg().typedReg().fpu(), dest);
@@ -825,11 +920,17 @@ MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, c
 }
 
 template void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType,
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
                                   const Address& dest, MIRType slotType);
 template void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType,
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
                                   const BaseIndex& dest, MIRType slotType);
+
+void
+MacroAssembler::comment(const char* msg)
+{
+    Assembler::comment(msg);
+}
 
 //}}} check_macroassembler_style
 

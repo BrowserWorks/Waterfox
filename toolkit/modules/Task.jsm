@@ -6,6 +6,8 @@
 
 "use strict";
 
+/* eslint-disable mozilla/no-task */
+
 this.EXPORTED_SYMBOLS = [
   "Task"
 ];
@@ -83,8 +85,7 @@ this.EXPORTED_SYMBOLS = [
  *   function lists where some items have been converted to tasks and some not.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -94,8 +95,6 @@ const Cr = Components.results;
 // For now, we're worried about add-ons using Tasks with CPOWs, so we'll
 // permit them in this scope, but this support will go away soon.
 Cu.permitCPOWsInScope(this);
-
-Cu.import("resource://gre/modules/Promise.jsm");
 
 // The following error types are considered programmer errors, which should be
 // reported (possibly redundantly) so as to let programmers fix their code.
@@ -137,8 +136,7 @@ function isGenerator(aValue) {
   return Object.prototype.toString.call(aValue) == "[object Generator]";
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Task
+// Task
 
 /**
  * This object provides the public module functions.
@@ -165,7 +163,7 @@ this.Task = {
    *         called when the task terminates.
    */
   spawn: function Task_spawn(aTask) {
-    return createAsyncFunction(aTask).call(undefined);
+    return createAsyncFunction(aTask)();
   },
 
   /**
@@ -227,7 +225,7 @@ this.Task = {
 };
 
 function createAsyncFunction(aTask) {
-  let asyncFunction = function () {
+  let asyncFunction = function() {
     let result = aTask;
     if (aTask && typeof(aTask) == "function") {
       if (aTask.isAsyncFunction) {
@@ -251,7 +249,7 @@ function createAsyncFunction(aTask) {
 
     if (isGenerator(result)) {
       // This is an iterator resulting from calling a generator function.
-      return new TaskImpl(result).deferred.promise;
+      return new TaskImpl(result).promise;
     }
 
     // Just propagate the given value to the caller as a resolved promise.
@@ -263,8 +261,7 @@ function createAsyncFunction(aTask) {
   return asyncFunction;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// TaskImpl
+// TaskImpl
 
 /**
  * Executes the specified iterator as a task, and gives access to the promise
@@ -274,7 +271,10 @@ function TaskImpl(iterator) {
   if (gMaintainStack) {
     this._stack = (new Error()).stack;
   }
-  this.deferred = Promise.defer();
+  this.promise = new Promise((resolve, reject) => {
+    this._resolve = resolve;
+    this._reject = reject;
+  });
   this._iterator = iterator;
   this._isStarGenerator = !("send" in iterator);
   this._run(true);
@@ -282,10 +282,19 @@ function TaskImpl(iterator) {
 
 TaskImpl.prototype = {
   /**
-   * Includes the promise object where task completion callbacks are registered,
-   * and methods to resolve or reject the promise at task completion.
+   * The promise object where task completion callbacks are registered.
    */
-  deferred: null,
+  promise: null,
+
+  /**
+   * The method to resolve the promise at task completion.
+   */
+  _resolve: null,
+
+  /**
+   * The method to reject the promise at task completion.
+   */
+  _reject: null,
 
   /**
    * The iterator returned by the generator function associated with this task.
@@ -303,7 +312,7 @@ TaskImpl.prototype = {
    * @param aSendResolved
    *        If true, indicates that we should continue into the generator
    *        function regularly (if we were waiting on a promise, it was
-   *        resolved). If true, indicates that we should cause an exception to
+   *        resolved). If false, indicates that we should cause an exception to
    *        be thrown into the generator function (if we were waiting on a
    *        promise, it was rejected).
    * @param aSendValue
@@ -315,20 +324,24 @@ TaskImpl.prototype = {
       gCurrentTask = this;
 
       if (this._isStarGenerator) {
-        try {
-          let result = aSendResolved ? this._iterator.next(aSendValue)
-                                     : this._iterator.throw(aSendValue);
+        if (Cu.isDeadWrapper(this._iterator)) {
+          this._resolve(undefined);
+        } else {
+          try {
+            let result = aSendResolved ? this._iterator.next(aSendValue)
+                                       : this._iterator.throw(aSendValue);
 
-          if (result.done) {
-            // The generator function returned.
-            this.deferred.resolve(result.value);
-          } else {
-            // The generator function yielded.
-            this._handleResultValue(result.value);
+            if (result.done) {
+              // The generator function returned.
+              this._resolve(result.value);
+            } else {
+              // The generator function yielded.
+              this._handleResultValue(result.value);
+            }
+          } catch (ex) {
+            // The generator function failed with an uncaught exception.
+            this._handleException(ex);
           }
-        } catch (ex) {
-          // The generator function failed with an uncaught exception.
-          this._handleException(ex);
         }
       } else {
         try {
@@ -339,10 +352,10 @@ TaskImpl.prototype = {
           if (ex instanceof Task.Result) {
             // The generator function threw the special exception that allows it to
             // return a specific value on resolution.
-            this.deferred.resolve(ex.value);
+            this._resolve(ex.value);
           } else if (ex instanceof StopIteration) {
             // The generator function terminated with no specific result.
-            this.deferred.resolve(undefined);
+            this._resolve(undefined);
           } else {
             // The generator function failed with an uncaught exception.
             this._handleException(ex);
@@ -422,7 +435,6 @@ TaskImpl.prototype = {
         // Rewrite the stack for more readability.
 
         let bottomStack = this._stack;
-        let topStack = stack;
 
         stack = Task.Debugging.generateReadableStack(stack);
 
@@ -452,7 +464,7 @@ TaskImpl.prototype = {
       }
     }
 
-    this.deferred.reject(aException);
+    this._reject(aException);
   },
 
   get callerStack() {
@@ -500,7 +512,7 @@ Task.Debugging = {
    * @param {string} topStack The stack provided by the error.
    * @param {string=} prefix Optionally, a prefix for each line.
    */
-  generateReadableStack: function(topStack, prefix = "") {
+  generateReadableStack(topStack, prefix = "") {
     if (!gCurrentTask) {
       return topStack;
     }

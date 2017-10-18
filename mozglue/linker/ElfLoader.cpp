@@ -282,12 +282,6 @@ LibHandle::MappableMMap(void *addr, size_t length, off_t offset) const
   if (!mappable)
     return MAP_FAILED;
   void* mapped = mappable->mmap(addr, length, PROT_READ, MAP_PRIVATE, offset);
-  if (mapped != MAP_FAILED) {
-    /* Ensure the availability of all pages within the mapping */
-    for (size_t off = 0; off < length; off += PageSize()) {
-      mappable->ensure(reinterpret_cast<char *>(mapped) + off);
-    }
-  }
   return mapped;
 }
 
@@ -404,12 +398,14 @@ ElfLoader::Load(const char *path, int flags, LibHandle *parent)
   /* Search the list of handles we already have for a match. When the given
    * path is not absolute, compare file names, otherwise compare full paths. */
   if (name == path) {
+    AutoLock lock(&handlesMutex);
     for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it)
       if ((*it)->GetName() && (strcmp((*it)->GetName(), name) == 0)) {
         handle = *it;
         return handle.forget();
       }
   } else {
+    AutoLock lock(&handlesMutex);
     for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it)
       if ((*it)->GetPath() && (strcmp((*it)->GetPath(), path) == 0)) {
         handle = *it;
@@ -458,6 +454,7 @@ ElfLoader::Load(const char *path, int flags, LibHandle *parent)
 already_AddRefed<LibHandle>
 ElfLoader::GetHandleByPtr(void *addr)
 {
+  AutoLock lock(&handlesMutex);
   /* Scan the list of handles we already have for a match */
   for (LibHandleList::iterator it = handles.begin(); it < handles.end(); ++it) {
     if ((*it)->Contains(addr)) {
@@ -479,6 +476,7 @@ ElfLoader::GetMappableFromPath(const char *path)
     char *zip_path = strndup(path, subpath - path);
     while (*(++subpath) == '/') { }
     zip = ZipCollection::GetZip(zip_path);
+    free(zip_path);
     Zip::Stream s;
     if (zip && zip->GetStream(subpath, &s)) {
       /* When the MOZ_LINKER_EXTRACT environment variable is set to "1",
@@ -491,8 +489,6 @@ ElfLoader::GetMappableFromPath(const char *path)
       if (!mappable) {
         if (s.GetType() == Zip::Stream::DEFLATE) {
           mappable = MappableDeflate::Create(name, zip, &s);
-        } else if (s.GetType() == Zip::Stream::STORE) {
-          mappable = MappableSeekableZStream::Create(name, zip, &s);
         }
       }
     }
@@ -507,6 +503,7 @@ ElfLoader::GetMappableFromPath(const char *path)
 void
 ElfLoader::Register(LibHandle *handle)
 {
+  AutoLock lock(&handlesMutex);
   handles.push_back(handle);
 }
 
@@ -525,6 +522,7 @@ ElfLoader::Forget(LibHandle *handle)
   /* Ensure logging is initialized or refresh if environment changed. */
   Logging::Init();
 
+  AutoLock lock(&handlesMutex);
   LibHandleList::iterator it = std::find(handles.begin(), handles.end(), handle);
   if (it != handles.end()) {
     DEBUG_LOG("ElfLoader::Forget(%p [\"%s\"])", reinterpret_cast<void *>(handle),
@@ -576,6 +574,7 @@ ElfLoader::~ElfLoader()
   libc = nullptr;
 #endif
 
+  AutoLock lock(&handlesMutex);
   /* Build up a list of all library handles with direct (external) references.
    * We actually skip system library handles because we want to keep at least
    * some of these open. Most notably, Mozilla codebase keeps a few libgnome
@@ -602,29 +601,19 @@ ElfLoader::~ElfLoader()
          it < list.rend(); ++it) {
       if ((*it)->AsSystemElf()) {
         DEBUG_LOG("ElfLoader::~ElfLoader(): Remaining handle for \"%s\" "
-                  "[%d direct refs, %d refs total]", (*it)->GetPath(),
-                  (*it)->DirectRefCount(), (*it)->refCount());
+                  "[%" PRIdPTR " direct refs, %" PRIdPTR " refs total]",
+                  (*it)->GetPath(), (*it)->DirectRefCount(), (*it)->refCount());
       } else {
         DEBUG_LOG("ElfLoader::~ElfLoader(): Unexpected remaining handle for \"%s\" "
-                  "[%d direct refs, %d refs total]", (*it)->GetPath(),
-                  (*it)->DirectRefCount(), (*it)->refCount());
+                  "[%" PRIdPTR " direct refs, %" PRIdPTR " refs total]",
+                  (*it)->GetPath(), (*it)->DirectRefCount(), (*it)->refCount());
         /* Not removing, since it could have references to other libraries,
          * destroying them as a side effect, and possibly leaving dangling
          * pointers in the handle list we're scanning */
       }
     }
   }
-}
-
-void
-ElfLoader::stats(const char *when)
-{
-  if (MOZ_LIKELY(!Logging::isVerbose()))
-    return;
-
-  for (LibHandleList::iterator it = Singleton.handles.begin();
-       it < Singleton.handles.end(); ++it)
-    (*it)->stats(when);
+  pthread_mutex_destroy(&handlesMutex);
 }
 
 #ifdef __ARM_EABI__
@@ -961,7 +950,7 @@ ElfLoader::DebuggerHelper::Remove(ElfLoader::link_map *map)
   dbg->r_brk();
 }
 
-#if defined(ANDROID)
+#if defined(ANDROID) && defined(__NR_sigaction)
 /* As some system libraries may be calling signal() or sigaction() to
  * set a SIGSEGV handler, effectively breaking MappableSeekableZStream,
  * or worse, restore our SIGSEGV handler with wrong flags (which using
@@ -1007,8 +996,9 @@ Divert(T func, T new_func)
   *reinterpret_cast<intptr_t *>(addr + 1) =
     reinterpret_cast<uintptr_t>(new_func) - addr - 5; // target displacement
   return true;
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__aarch64__)
   const unsigned char trampoline[] = {
+# ifdef __arm__
                             // .thumb
     0x46, 0x04,             // nop
     0x78, 0x47,             // bx pc
@@ -1016,8 +1006,15 @@ Divert(T func, T new_func)
                             // .arm
     0x04, 0xf0, 0x1f, 0xe5, // ldr pc, [pc, #-4]
                             // .word <new_func>
+# else // __aarch64__
+    0x50, 0x00, 0x00, 0x58, // ldr x16, [pc, #8]   ; x16 (aka ip0) is the first
+    0x00, 0x02, 0x1f, 0xd6, // br x16              ; intra-procedure-call
+                            // .word <new_func.lo> ; scratch register.
+                            // .word <new_func.hi>
+# endif
   };
   const unsigned char *start;
+# ifdef __arm__
   if (addr & 0x01) {
     /* Function is thumb, the actual address of the code is without the
      * least significant bit. */
@@ -1031,12 +1028,16 @@ Divert(T func, T new_func)
     /* Function is arm, we only need the arm part of the trampoline */
     start = trampoline + 6;
   }
+# else // __aarch64__
+  start = trampoline;
+#endif
 
   size_t len = sizeof(trampoline) - (start - trampoline);
   EnsureWritable w(reinterpret_cast<void *>(addr), len + sizeof(void *));
   memcpy(reinterpret_cast<void *>(addr), start, len);
   *reinterpret_cast<void **>(addr + len) = FunctionPtr(new_func);
-  cacheflush(addr, addr + len + sizeof(void *), 0);
+  __builtin___clear_cache(reinterpret_cast<char*>(addr),
+                          reinterpret_cast<char*>(addr + len + sizeof(void *)));
   return true;
 #else
   return false;
@@ -1254,20 +1255,6 @@ void SEGVHandler::handler(int signum, siginfo_t *info, void *context)
 {
   //ASSERT(signum == SIGSEGV);
   DEBUG_LOG("Caught segmentation fault @%p", info->si_addr);
-
-  /* Check whether we segfaulted in the address space of a CustomElf. We're
-   * only expecting that to happen as an access error. */
-  if (info->si_code == SEGV_ACCERR) {
-    RefPtr<LibHandle> handle =
-      ElfLoader::Singleton.GetHandleByPtr(info->si_addr);
-    BaseElf *elf;
-    if (handle && (elf = handle->AsBaseElf())) {
-      DEBUG_LOG("Within the address space of %s", handle->GetPath());
-      if (elf->mappable && elf->mappable->ensure(info->si_addr)) {
-        return;
-      }
-    }
-  }
 
   /* Redispatch to the registered handler */
   SEGVHandler &that = ElfLoader::Singleton;

@@ -30,13 +30,14 @@ public:
     : nsSVGElement(aNodeInfo) {}
   virtual ~SVGTransformableElement() {}
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override = 0;
 
   // WebIDL
   already_AddRefed<SVGAnimatedTransformList> Transform();
   nsSVGElement* GetNearestViewportElement();
   nsSVGElement* GetFarthestViewportElement();
-  already_AddRefed<SVGIRect> GetBBox(const SVGBoundingBoxOptions& aOptions, 
+  already_AddRefed<SVGIRect> GetBBox(const SVGBoundingBoxOptions& aOptions,
                                      ErrorResult& rv);
   already_AddRefed<SVGMatrix> GetCTM();
   already_AddRefed<SVGMatrix> GetScreenCTM();
@@ -51,7 +52,7 @@ public:
 
 
   // nsSVGElement overrides
-  virtual bool IsEventAttributeName(nsIAtom* aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom* aName) override;
 
 
   virtual gfxMatrix PrependLocalTransformsTo(
@@ -69,6 +70,17 @@ public:
   virtual bool IsTransformable() override { return true; }
 
 protected:
+  /**
+   * Helper for overrides of PrependLocalTransformsTo.  If both arguments are
+   * provided they are multiplied in the order in which the arguments appear,
+   * and the result is returned.  If neither argument is provided, the identity
+   * matrix is returned.  If only one argument is provided its transform is
+   * returned.
+   */
+  static gfxMatrix GetUserToParentTransform(
+                     const gfx::Matrix* aAnimateMotionTransform,
+                     const nsSVGAnimatedTransformList* aTransforms);
+
   nsAutoPtr<nsSVGAnimatedTransformList> mTransforms;
 
   // XXX maybe move this to property table, to save space on un-animated elems?

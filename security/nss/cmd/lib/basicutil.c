@@ -687,13 +687,7 @@ static unsigned char
 nibble(char c)
 {
     c = PORT_Tolower(c);
-    return (c >= '0' && c <= '9') ? c - '0' :
-                                  (c >=
-                                       'a' &&
-                                   c <=
-                                       'f')
-                                      ? c - 'a' + 10
-                                      : -1;
+    return (c >= '0' && c <= '9') ? c - '0' : (c >= 'a' && c <= 'f') ? c - 'a' + 10 : -1;
 }
 
 SECStatus
@@ -735,5 +729,138 @@ SECU_SECItemHexStringToBinary(SECItem *srcdest)
     /* adjust length */
     srcdest->len -= 2;
     srcdest->len /= 2;
+    return SECSuccess;
+}
+
+SECItem *
+SECU_HexString2SECItem(PLArenaPool *arena, SECItem *item, const char *str)
+{
+    int i = 0;
+    int byteval = 0;
+    int tmp = PORT_Strlen(str);
+
+    PORT_Assert(arena);
+    PORT_Assert(item);
+
+    if ((tmp % 2) != 0) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return NULL;
+    }
+
+    item = SECITEM_AllocItem(arena, item, tmp / 2);
+    if (item == NULL) {
+        return NULL;
+    }
+
+    while (str[i]) {
+        if ((str[i] >= '0') && (str[i] <= '9')) {
+            tmp = str[i] - '0';
+        } else if ((str[i] >= 'a') && (str[i] <= 'f')) {
+            tmp = str[i] - 'a' + 10;
+        } else if ((str[i] >= 'A') && (str[i] <= 'F')) {
+            tmp = str[i] - 'A' + 10;
+        } else {
+            /* item is in arena and gets freed by the caller */
+            return NULL;
+        }
+
+        byteval = byteval * 16 + tmp;
+        if ((i % 2) != 0) {
+            item->data[i / 2] = byteval;
+            byteval = 0;
+        }
+        i++;
+    }
+
+    return item;
+}
+
+/* mapping between ECCurveName enum and SECOidTags */
+static SECOidTag ecCurve_oid_map[] = {
+    SEC_OID_UNKNOWN,                /* ECCurve_noName */
+    SEC_OID_ANSIX962_EC_PRIME192V1, /* ECCurve_NIST_P192 */
+    SEC_OID_SECG_EC_SECP224R1,      /* ECCurve_NIST_P224 */
+    SEC_OID_ANSIX962_EC_PRIME256V1, /* ECCurve_NIST_P256 */
+    SEC_OID_SECG_EC_SECP384R1,      /* ECCurve_NIST_P384 */
+    SEC_OID_SECG_EC_SECP521R1,      /* ECCurve_NIST_P521 */
+    SEC_OID_SECG_EC_SECT163K1,      /* ECCurve_NIST_K163 */
+    SEC_OID_SECG_EC_SECT163R1,      /* ECCurve_NIST_B163 */
+    SEC_OID_SECG_EC_SECT233K1,      /* ECCurve_NIST_K233 */
+    SEC_OID_SECG_EC_SECT233R1,      /* ECCurve_NIST_B233 */
+    SEC_OID_SECG_EC_SECT283K1,      /* ECCurve_NIST_K283 */
+    SEC_OID_SECG_EC_SECT283R1,      /* ECCurve_NIST_B283 */
+    SEC_OID_SECG_EC_SECT409K1,      /* ECCurve_NIST_K409 */
+    SEC_OID_SECG_EC_SECT409R1,      /* ECCurve_NIST_B409 */
+    SEC_OID_SECG_EC_SECT571K1,      /* ECCurve_NIST_K571 */
+    SEC_OID_SECG_EC_SECT571R1,      /* ECCurve_NIST_B571 */
+    SEC_OID_ANSIX962_EC_PRIME192V2,
+    SEC_OID_ANSIX962_EC_PRIME192V3,
+    SEC_OID_ANSIX962_EC_PRIME239V1,
+    SEC_OID_ANSIX962_EC_PRIME239V2,
+    SEC_OID_ANSIX962_EC_PRIME239V3,
+    SEC_OID_ANSIX962_EC_C2PNB163V1,
+    SEC_OID_ANSIX962_EC_C2PNB163V2,
+    SEC_OID_ANSIX962_EC_C2PNB163V3,
+    SEC_OID_ANSIX962_EC_C2PNB176V1,
+    SEC_OID_ANSIX962_EC_C2TNB191V1,
+    SEC_OID_ANSIX962_EC_C2TNB191V2,
+    SEC_OID_ANSIX962_EC_C2TNB191V3,
+    SEC_OID_ANSIX962_EC_C2PNB208W1,
+    SEC_OID_ANSIX962_EC_C2TNB239V1,
+    SEC_OID_ANSIX962_EC_C2TNB239V2,
+    SEC_OID_ANSIX962_EC_C2TNB239V3,
+    SEC_OID_ANSIX962_EC_C2PNB272W1,
+    SEC_OID_ANSIX962_EC_C2PNB304W1,
+    SEC_OID_ANSIX962_EC_C2TNB359V1,
+    SEC_OID_ANSIX962_EC_C2PNB368W1,
+    SEC_OID_ANSIX962_EC_C2TNB431R1,
+    SEC_OID_SECG_EC_SECP112R1,
+    SEC_OID_SECG_EC_SECP112R2,
+    SEC_OID_SECG_EC_SECP128R1,
+    SEC_OID_SECG_EC_SECP128R2,
+    SEC_OID_SECG_EC_SECP160K1,
+    SEC_OID_SECG_EC_SECP160R1,
+    SEC_OID_SECG_EC_SECP160R2,
+    SEC_OID_SECG_EC_SECP192K1,
+    SEC_OID_SECG_EC_SECP224K1,
+    SEC_OID_SECG_EC_SECP256K1,
+    SEC_OID_SECG_EC_SECT113R1,
+    SEC_OID_SECG_EC_SECT113R2,
+    SEC_OID_SECG_EC_SECT131R1,
+    SEC_OID_SECG_EC_SECT131R2,
+    SEC_OID_SECG_EC_SECT163R1,
+    SEC_OID_SECG_EC_SECT193R1,
+    SEC_OID_SECG_EC_SECT193R2,
+    SEC_OID_SECG_EC_SECT239K1,
+    SEC_OID_UNKNOWN, /* ECCurve_WTLS_1 */
+    SEC_OID_UNKNOWN, /* ECCurve_WTLS_8 */
+    SEC_OID_UNKNOWN, /* ECCurve_WTLS_9 */
+    SEC_OID_CURVE25519,
+    SEC_OID_UNKNOWN /* ECCurve_pastLastCurve */
+};
+
+SECStatus
+SECU_ecName2params(ECCurveName curve, SECItem *params)
+{
+    SECOidData *oidData = NULL;
+
+    if ((curve < ECCurve_noName) || (curve > ECCurve_pastLastCurve) ||
+        ((oidData = SECOID_FindOIDByTag(ecCurve_oid_map[curve])) == NULL)) {
+        PORT_SetError(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+        return SECFailure;
+    }
+
+    if (SECITEM_AllocItem(NULL, params, (2 + oidData->oid.len)) == NULL) {
+        return SECFailure;
+    }
+    /*
+     * params->data needs to contain the ASN encoding of an object ID (OID)
+     * representing the named curve. The actual OID is in
+     * oidData->oid.data so we simply prepend 0x06 and OID length
+     */
+    params->data[0] = SEC_ASN1_OBJECT_ID;
+    params->data[1] = oidData->oid.len;
+    memcpy(params->data + 2, oidData->oid.data, oidData->oid.len);
+
     return SECSuccess;
 }

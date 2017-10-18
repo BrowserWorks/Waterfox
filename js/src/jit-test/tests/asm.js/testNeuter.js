@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 load(libdir + "asm.js");
 load(libdir + "asserts.js");
 
@@ -23,10 +22,7 @@ var buffer = new ArrayBuffer(BUF_MIN);
 var {get, set} = asmLink(m, this, null, buffer);
 set(4, 42);
 assertEq(get(4), 42);
-assertThrowsInstanceOf(() => detachArrayBuffer(buffer, "change-data"),
-                       InternalError);
-assertThrowsInstanceOf(() => detachArrayBuffer(buffer, "same-data"),
-                       InternalError);
+assertThrowsInstanceOf(() => detachArrayBuffer(buffer), Error);
 
 var m = asmCompile('stdlib', 'foreign', 'buffer',
                   `"use asm";
@@ -42,8 +38,7 @@ var m = asmCompile('stdlib', 'foreign', 'buffer',
 var buffer = new ArrayBuffer(BUF_MIN);
 function ffi1()
 {
-    assertThrowsInstanceOf(() => detachArrayBuffer(buffer, "change-data"),
-                           InternalError);
+    assertThrowsInstanceOf(() => detachArrayBuffer(buffer), Error);
 }
 
 var inner = asmLink(m, this, {ffi: ffi1}, buffer);

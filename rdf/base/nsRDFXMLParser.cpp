@@ -6,6 +6,7 @@
 
 #include "nsRDFXMLParser.h"
 
+#include "mozilla/Encoding.h"
 #include "nsIComponentManager.h"
 #include "nsIParser.h"
 #include "nsCharsetSource.h"
@@ -13,7 +14,7 @@
 #include "nsParserCIID.h"
 #include "nsStringStream.h"
 #include "nsNetUtil.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 
 static NS_DEFINE_CID(kParserCID, NS_PARSER_CID);
 
@@ -38,12 +39,10 @@ nsRDFXMLParser::Create(nsISupports* aOuter, REFNSIID aIID, void** aResult)
 
 nsRDFXMLParser::nsRDFXMLParser()
 {
-    MOZ_COUNT_CTOR(nsRDFXMLParser);
 }
 
 nsRDFXMLParser::~nsRDFXMLParser()
 {
-    MOZ_COUNT_DTOR(nsRDFXMLParser);
 }
 
 NS_IMETHODIMP
@@ -67,7 +66,7 @@ nsRDFXMLParser::ParseAsync(nsIRDFDataSource* aSink, nsIURI* aBaseURI, nsIStreamL
     nsCOMPtr<nsIParser> parser = do_CreateInstance(kParserCID, &rv);
     if (NS_FAILED(rv)) return rv;
 
-    parser->SetDocumentCharset(NS_LITERAL_CSTRING("UTF-8"),
+    parser->SetDocumentCharset(UTF_8_ENCODING,
                                kCharsetFromDocTypeDefault);
     parser->SetContentSink(sink);
 
@@ -98,7 +97,7 @@ nsRDFXMLParser::ParseString(nsIRDFDataSource* aSink, nsIURI* aBaseURI, const nsA
     nsCOMPtr<nsIParser> parser = do_CreateInstance(kParserCID, &rv);
     if (NS_FAILED(rv)) return rv;
 
-    parser->SetDocumentCharset(NS_LITERAL_CSTRING("UTF-8"),
+    parser->SetDocumentCharset(UTF_8_ENCODING,
                                kCharsetFromOtherComponent);
     parser->SetContentSink(sink);
 
@@ -115,7 +114,7 @@ nsRDFXMLParser::ParseString(nsIRDFDataSource* aSink, nsIURI* aBaseURI, const nsA
     rv = NS_NewCStringInputStream(getter_AddRefs(stream), aString);
     if (NS_FAILED(rv)) return rv;
 
-    nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+    nsCOMPtr<nsIPrincipal> nullPrincipal = NullPrincipal::Create();
 
     // The following channel is never openend, so it does not matter what
     // securityFlags we pass; let's follow the principle of least privilege.

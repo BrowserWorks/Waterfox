@@ -8,11 +8,10 @@
 #ifndef GrGLProgramDataManager_DEFINED
 #define GrGLProgramDataManager_DEFINED
 
-#include "glsl/GrGLSLProgramDataManager.h"
-
 #include "GrAllocator.h"
+#include "GrShaderVar.h"
 #include "gl/GrGLTypes.h"
-#include "glsl/GrGLSLShaderVar.h"
+#include "glsl/GrGLSLProgramDataManager.h"
 
 #include "SkTArray.h"
 
@@ -27,17 +26,17 @@ class GrGLProgram;
 class GrGLProgramDataManager : public GrGLSLProgramDataManager {
 public:
     struct UniformInfo {
-        GrGLSLShaderVar fVariable;
+        GrShaderVar fVariable;
         uint32_t        fVisibility;
         GrGLint         fLocation;
     };
 
     struct VaryingInfo {
-        GrGLSLShaderVar fVariable;
+        GrShaderVar fVariable;
         GrGLint         fLocation;
     };
 
-    // This uses an allocator rather than array so that the GrGLSLShaderVars don't move in memory
+    // This uses an allocator rather than array so that the GrShaderVars don't move in memory
     // after they are inserted. Users of GrGLShaderBuilder get refs to the vars and ptrs to their
     // name strings. Otherwise, we'd have to hand out copies.
     typedef GrTAllocator<UniformInfo> UniformInfoArray;
@@ -46,11 +45,15 @@ public:
     GrGLProgramDataManager(GrGLGpu*, GrGLuint programID, const UniformInfoArray&,
                            const VaryingInfoArray&);
 
-    /** Functions for uploading uniform values. The varities ending in v can be used to upload to an
-     *  array of uniforms. arrayCount must be <= the array count of the uniform.
-     */
-    void setSampler(UniformHandle, int texUnit) const;
 
+    void setSamplers(const UniformInfoArray& samplers) const;
+    void setImageStorages(const UniformInfoArray &images) const;
+
+    /** Functions for uploading uniform values. The varities ending in v can be used to upload to an
+    *  array of uniforms. arrayCount must be <= the array count of the uniform.
+    */
+    void set1i(UniformHandle, int32_t) const override;
+    void set1iv(UniformHandle, int arrayCount, const int v[]) const override;
     void set1f(UniformHandle, float v0) const override;
     void set1fv(UniformHandle, int arrayCount, const float v[]) const override;
     void set2f(UniformHandle, float, float) const override;
@@ -78,12 +81,11 @@ private:
     };
 
     struct Uniform {
-        GrGLint     fVSLocation;
-        GrGLint     fFSLocation;
-        SkDEBUGCODE(
-            GrSLType    fType;
-            int         fArrayCount;
-        );
+        GrGLint     fLocation;
+#ifdef SK_DEBUG
+        GrSLType    fType;
+        int         fArrayCount;
+#endif
     };
 
     enum {
@@ -96,8 +98,6 @@ private:
             int         fArrayCount;
         );
     };
-
-    SkDEBUGCODE(void printUnused(const Uniform&) const;)
 
     template<int N> inline void setMatrices(UniformHandle, int arrayCount,
                                             const float matrices[]) const;

@@ -12,6 +12,7 @@ import subprocess
 
 # Don't forgot to add new mozboot modules to the bootstrap download
 # list in bin/bootstrap.py!
+from mozboot.base import MODERN_RUST_VERSION
 from mozboot.centosfedora import CentOSFedoraBootstrapper
 from mozboot.debian import DebianBootstrapper
 from mozboot.freebsd import FreeBSDBootstrapper
@@ -29,30 +30,36 @@ APPLICATION_CHOICE = '''
 Please choose the version of Firefox you want to build:
 %s
 
-Note: (For Firefox for Android)
+Note on Artifact Mode:
 
-The Firefox for Android front-end is built using Java, the Android
-Platform SDK, JavaScript, HTML, and CSS. If you want to work on the
-look-and-feel of Firefox for Android, you want "Firefox for Android
-Artifact Mode".
+Firefox for Desktop and Android supports a fast build mode called
+artifact mode. Artifact mode downloads pre-built C++ components rather
+than building them locally, trading bandwidth for time.
 
-Firefox for Android is built on top of the Gecko technology
-platform. Gecko is Mozilla's web rendering engine, similar to Edge,
+Artifact builds will be useful to many developers who are not working
+with compiled code. If you want to work on look-and-feel of Firefox,
+you want "Firefox for Desktop Artifact Mode".
+
+Similarly, if you want to work on the look-and-feel of Firefox for Android,
+you want "Firefox for Android Artifact Mode".
+
+To work on the Gecko technology platform, you would need to opt to full,
+non-artifact mode. Gecko is Mozilla's web rendering engine, similar to Edge,
 Blink, and WebKit. Gecko is implemented in C++ and JavaScript. If you
-want to work on web rendering, you want "Firefox for Android".
+want to work on web rendering, you want "Firefox for Desktop", or
+"Firefox for Android".
 
-If you don't know what you want, start with just "Firefox for Android
-Artifact Mode". Your builds will be much shorter than if you build
-Gecko as well. But don't worry! You can always switch configurations
-later.
+If you don't know what you want, start with just Artifact Mode of the desired
+platform. Your builds will be much shorter than if you build Gecko as well.
+But don't worry! You can always switch configurations later.
 
 You can learn more about Artifact mode builds at
 https://developer.mozilla.org/en-US/docs/Artifact_builds.
 
-Your choice:
-'''
+Your choice: '''
 
 APPLICATIONS_LIST=[
+    ('Firefox for Desktop Artifact Mode', 'browser_artifact_mode'),
     ('Firefox for Desktop', 'browser'),
     ('Firefox for Android Artifact Mode', 'mobile_android_artifact_mode'),
     ('Firefox for Android', 'mobile_android'),
@@ -61,9 +68,10 @@ APPLICATIONS_LIST=[
 # This is a workaround for the fact that we must support python2.6 (which has
 # no OrderedDict)
 APPLICATIONS = dict(
-    browser=APPLICATIONS_LIST[0],
-    mobile_android_artifact_mode=APPLICATIONS_LIST[1],
-    mobile_android=APPLICATIONS_LIST[2],
+    browser_artifact_mode=APPLICATIONS_LIST[0],
+    browser=APPLICATIONS_LIST[1],
+    mobile_android_artifact_mode=APPLICATIONS_LIST[2],
+    mobile_android=APPLICATIONS_LIST[3],
 )
 
 STATE_DIR_INFO = '''
@@ -82,7 +90,21 @@ Would you like to create this directory?
   1. Yes
   2. No
 
-Your choice:
+Your choice: '''
+
+STYLO_DIRECTORY_MESSAGE = '''
+Stylo packages require a directory to store shared, persistent state.
+On this machine, that directory is:
+
+  {statedir}
+
+Please restart bootstrap and create that directory when prompted.
+'''
+
+STYLO_REQUIRES_CLONE = '''
+Installing Stylo packages requires a checkout of mozilla-central. Once you
+have such a checkout, please re-run `./mach bootstrap` from the checkout
+directory.
 '''
 
 FINISHED = '''
@@ -101,7 +123,7 @@ instruction here to clone from the Mercurial repository:
 
 Or, if you really prefer vanilla flavor Git:
 
-    git clone https://git.mozilla.org/integration/gecko-dev.git
+    git clone https://github.com/mozilla/gecko-dev.git
 '''
 
 CONFIGURE_MERCURIAL = '''
@@ -114,7 +136,7 @@ optimally configured?
   1. Yes
   2. No
 
-Please enter your reply: '''.lstrip()
+Please enter your reply: '''
 
 CLONE_MERCURIAL = '''
 If you would like to clone the canonical Mercurial repository, please
@@ -138,6 +160,7 @@ DEBIAN_DISTROS = (
     'Elementary OS',
     'Elementary',
     '"elementary OS"',
+    '"elementary"'
 )
 
 
@@ -221,6 +244,7 @@ class Bootstrapper(object):
 
         hg_installed, hg_modern = self.instance.ensure_mercurial_modern()
         self.instance.ensure_python_modern()
+        self.instance.ensure_rust_modern()
 
         # The state directory code is largely duplicated from mach_bootstrap.py.
         # We can't easily import mach_bootstrap.py because the bootstrapper may
@@ -242,9 +266,13 @@ class Bootstrapper(object):
 
         state_dir_available = os.path.exists(state_dir)
 
-        # Possibly configure Mercurial if the user wants to.
+        r = current_firefox_checkout(check_output=self.instance.check_output,
+                                     hg=self.instance.which('hg'))
+        (checkout_type, checkout_root) = r
+
+        # Possibly configure Mercurial, but not if the current checkout is Git.
         # TODO offer to configure Git.
-        if hg_installed and state_dir_available:
+        if hg_installed and state_dir_available and checkout_type != 'git':
             configure_hg = False
             if not self.instance.no_interactive:
                 choice = self.instance.prompt_int(prompt=CONFIGURE_MERCURIAL,
@@ -258,8 +286,6 @@ class Bootstrapper(object):
                 configure_mercurial(self.instance.which('hg'), state_dir)
 
         # Offer to clone if we're not inside a clone.
-        checkout_type = current_firefox_checkout(check_output=self.instance.check_output,
-                                                 hg=self.instance.which('hg'))
         have_clone = False
 
         if checkout_type:
@@ -270,11 +296,33 @@ class Bootstrapper(object):
             if dest:
                 dest = os.path.expanduser(dest)
                 have_clone = clone_firefox(self.instance.which('hg'), dest)
+                checkout_root = dest
 
         if not have_clone:
             print(SOURCE_ADVERTISE)
 
+        # Install the clang packages needed for developing stylo.
+        if not self.instance.no_interactive:
+            # The best place to install our packages is in the state directory
+            # we have.  If the user doesn't have one, we need them to re-run
+            # bootstrap and create the directory.
+            #
+            # XXX Android bootstrap just assumes the existence of the state
+            # directory and writes the NDK into it.  Should we do the same?
+            if not state_dir_available:
+                print(STYLO_DIRECTORY_MESSAGE.format(statedir=state_dir))
+                sys.exit(1)
+
+            if not have_clone:
+                print(STYLO_REQUIRES_CLONE)
+                sys.exit(1)
+
+            self.instance.state_dir = state_dir
+            self.instance.ensure_stylo_packages(state_dir, checkout_root)
+
         print(self.finished % name)
+        if not (self.instance.which('rustc') and self.instance._parse_version('rustc') >= MODERN_RUST_VERSION):
+            print("To build %s, please restart the shell (Start a new terminal window)" % name)
 
         # Like 'suggest_browser_mozconfig' or 'suggest_mobile_android_mozconfig'.
         getattr(self.instance, 'suggest_%s_mozconfig' % application)()
@@ -409,21 +457,24 @@ def current_firefox_checkout(check_output, hg=None):
         if hg and os.path.exists(hg_dir):
             # Verify the hg repo is a Firefox repo by looking at rev 0.
             try:
-                node = check_output([hg, 'log', '-r', '0', '-T', '{node}'], cwd=path)
+                node = check_output([hg, 'log', '-r', '0', '--template', '{node}'], cwd=path)
                 if node in HG_ROOT_REVISIONS:
-                    return 'hg'
+                    return ('hg', path)
                 # Else the root revision is different. There could be nested
                 # repos. So keep traversing the parents.
             except subprocess.CalledProcessError:
                 pass
 
-        # TODO check git remotes or `git rev-parse -q --verify $sha1^{commit}`
-        # for signs of Firefox.
+        # Just check for known-good files in the checkout, to prevent attempted
+        # foot-shootings.  Determining a canonical git checkout of mozilla-central
+        # is...complicated
         elif os.path.exists(git_dir):
-            return 'git'
+            moz_configure = os.path.join(path, 'moz.configure')
+            if os.path.exists(moz_configure):
+                return ('git', path)
 
         path, child = os.path.split(path)
         if child == '':
             break
 
-    return None
+    return (None, None)

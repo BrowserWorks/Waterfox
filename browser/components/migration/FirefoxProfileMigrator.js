@@ -39,7 +39,7 @@ function FirefoxProfileMigrator() {
 
 FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-FirefoxProfileMigrator.prototype._getAllProfiles = function () {
+FirefoxProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
   let profiles =
     Components.classes["@mozilla.org/toolkit/profile-service;1"]
@@ -62,7 +62,7 @@ function sorter(a, b) {
 }
 
 Object.defineProperty(FirefoxProfileMigrator.prototype, "sourceProfiles", {
-  get: function() {
+  get() {
     return [...this._getAllProfiles().keys()].map(x => ({id: x, name: x})).sort(sorter);
   }
 });
@@ -94,7 +94,7 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   if (sourceProfileDir.equals(currentProfileDir))
     return null;
 
-  return this._getResourcesInternal(sourceProfileDir, currentProfileDir, aProfile);
+  return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
 
 FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
@@ -104,8 +104,8 @@ FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
   return Promise.resolve(new Date(0));
 };
 
-FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileDir, currentProfileDir, aProfile) {
-  let getFileResource = function(aMigrationType, aFileNames) {
+FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileDir, currentProfileDir) {
+  let getFileResource = (aMigrationType, aFileNames) => {
     let files = [];
     for (let fileName of aFileNames) {
       let file = this._getFileObject(sourceProfileDir, fileName);
@@ -117,57 +117,69 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
     }
     return {
       type: aMigrationType,
-      migrate: function(aCallback) {
+      migrate(aCallback) {
         for (let file of files) {
           file.copyTo(currentProfileDir, "");
         }
         aCallback(true);
       }
     };
-  }.bind(this);
+  };
 
   let types = MigrationUtils.resourceTypes;
-  let places = getFileResource(types.HISTORY, ["places.sqlite"]);
-  let cookies = getFileResource(types.COOKIES, ["cookies.sqlite"]);
+  let places = getFileResource(types.HISTORY, ["places.sqlite", "places.sqlite-wal"]);
+  let favicons = getFileResource(types.HISTORY, ["favicons.sqlite", "favicons.sqlite-wal"]);
+  let cookies = getFileResource(types.COOKIES, ["cookies.sqlite", "cookies.sqlite-wal"]);
   let passwords = getFileResource(types.PASSWORDS,
-                                  ["signons.sqlite", "logins.json", "key3.db",
-                                   "signedInUser.json"]);
-  let formData = getFileResource(types.FORMDATA, ["formhistory.sqlite"]);
+    ["signons.sqlite", "logins.json", "key3.db",
+     "signedInUser.json"]);
+  let formData = getFileResource(types.FORMDATA, [
+    "formhistory.sqlite",
+    "autofill-profiles.json",
+  ]);
   let bookmarksBackups = getFileResource(types.OTHERDATA,
     [PlacesBackups.profileRelativeFolderPath]);
   let dictionary = getFileResource(types.OTHERDATA, ["persdict.dat"]);
 
-  let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
-  let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.js");
   let session;
-  if (sessionFile) {
-    session = {
-      type: types.SESSION,
-      migrate: function(aCallback) {
-        sessionCheckpoints.copyTo(currentProfileDir, "sessionCheckpoints.json");
-        let newSessionFile = currentProfileDir.clone();
-        newSessionFile.append("sessionstore.js");
-        let migrationPromise = SessionMigration.migrate(sessionFile.path, newSessionFile.path);
-        migrationPromise.then(function() {
-          let buildID = Services.appinfo.platformBuildID;
-          let mstone = Services.appinfo.platformVersion;
-          // Force the browser to one-off resume the session that we give it:
-          Services.prefs.setBoolPref("browser.sessionstore.resume_session_once", true);
-          // Reset the homepage_override prefs so that the browser doesn't override our
-          // session with the "what's new" page:
-          Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
-          Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
-          // It's too early in startup for the pref service to have a profile directory,
-          // so we have to manually tell it where to save the prefs file.
-          let newPrefsFile = currentProfileDir.clone();
-          newPrefsFile.append("prefs.js");
-          Services.prefs.savePrefFile(newPrefsFile);
-          aCallback(true);
-        }, function() {
-          aCallback(false);
-        });
-      }
-    };
+  let env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
+  if (env.get("MOZ_RESET_PROFILE_MIGRATE_SESSION")) {
+    // We only want to restore the previous firefox session if the profile refresh was
+    // triggered by user. The MOZ_RESET_PROFILE_MIGRATE_SESSION would be set when a user-triggered
+    // profile refresh happened in nsAppRunner.cpp. Hence, we detect the MOZ_RESET_PROFILE_MIGRATE_SESSION
+    // to see if session data migration is required.
+    env.set("MOZ_RESET_PROFILE_MIGRATE_SESSION", "");
+    let sessionCheckpoints = this._getFileObject(sourceProfileDir, "sessionCheckpoints.json");
+    let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.jsonlz4");
+    if (sessionFile) {
+      session = {
+        type: types.SESSION,
+        migrate(aCallback) {
+          sessionCheckpoints.copyTo(currentProfileDir, "sessionCheckpoints.json");
+          let newSessionFile = currentProfileDir.clone();
+          newSessionFile.append("sessionstore.jsonlz4");
+          let migrationPromise = SessionMigration.migrate(sessionFile.path, newSessionFile.path);
+          migrationPromise.then(function() {
+            let buildID = Services.appinfo.platformBuildID;
+            let mstone = Services.appinfo.platformVersion;
+            // Force the browser to one-off resume the session that we give it:
+            Services.prefs.setBoolPref("browser.sessionstore.resume_session_once", true);
+            // Reset the homepage_override prefs so that the browser doesn't override our
+            // session with the "what's new" page:
+            Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
+            Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
+            // It's too early in startup for the pref service to have a profile directory,
+            // so we have to manually tell it where to save the prefs file.
+            let newPrefsFile = currentProfileDir.clone();
+            newPrefsFile.append("prefs.js");
+            Services.prefs.savePrefFile(newPrefsFile);
+            aCallback(true);
+          }, function() {
+            aCallback(false);
+          });
+        }
+      };
+    }
   }
 
   // Telemetry related migrations.
@@ -200,13 +212,13 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
 
       // If the 'datareporting' directory exists we migrate files from it.
       let haveStateFile = false;
-      let subdir = this._getFileObject(sourceProfileDir, "datareporting");
-      if (subdir && subdir.isDirectory()) {
+      let dataReportingDir = this._getFileObject(sourceProfileDir, "datareporting");
+      if (dataReportingDir && dataReportingDir.isDirectory()) {
         // Copy only specific files.
         let toCopy = ["state.json", "session-state.json"];
 
         let dest = createSubDir("datareporting");
-        let enumerator = subdir.directoryEntries;
+        let enumerator = dataReportingDir.directoryEntries;
         while (enumerator.hasMoreElements()) {
           let file = enumerator.getNext().QueryInterface(Ci.nsIFile);
           if (file.isDirectory() || toCopy.indexOf(file.leafName) == -1) {
@@ -225,9 +237,9 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
         // We first moved the client id management from the FHR implementation to the datareporting
         // service.
         // Consequently, we try to migrate an existing FHR state file here as a fallback.
-        let subdir = this._getFileObject(sourceProfileDir, "healthreport");
-        if (subdir && subdir.isDirectory()) {
-          let stateFile = this._getFileObject(subdir, "state.json");
+        let healthReportDir = this._getFileObject(sourceProfileDir, "healthreport");
+        if (healthReportDir && healthReportDir.isDirectory()) {
+          let stateFile = this._getFileObject(healthReportDir, "state.json");
           if (stateFile) {
             let dest = createSubDir("healthreport");
             stateFile.copyTo(dest, "");
@@ -237,10 +249,10 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
 
       aCallback(true);
     }
-  }
+  };
 
   return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
-          session, times, telemetry].filter(r => r);
+          session, times, telemetry, favicons].filter(r => r);
 };
 
 Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {

@@ -33,6 +33,17 @@ public class ExpectSuccessRepositorySessionStoreDelegate extends
   }
 
   @Override
+  public void onStoreFailed(Exception e) {
+    log("Store failed.", e);
+    performNotify(new AssertionFailedError("onStoreFailed: store should not have failed."));
+  }
+
+  @Override
+  public void onRecordStoreReconciled(String guid) {
+    log("Store reconciled record " + guid);
+  }
+
+  @Override
   public RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService executor) {
     return this;
   }

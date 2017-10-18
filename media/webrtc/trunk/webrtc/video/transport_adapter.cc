@@ -10,32 +10,30 @@
 
 #include "webrtc/video/transport_adapter.h"
 
+#include "webrtc/base/checks.h"
+
 namespace webrtc {
 namespace internal {
 
-TransportAdapter::TransportAdapter(newapi::Transport* transport)
-    : transport_(transport), enabled_(0) {}
-
-int TransportAdapter::SendPacket(int /*channel*/,
-                                 const void* packet,
-                                 size_t length) {
-  if (enabled_.Value() == 0)
-    return false;
-
-  bool success = transport_->SendRtp(static_cast<const uint8_t*>(packet),
-                                     length);
-  return success ? static_cast<int>(length) : -1;
+TransportAdapter::TransportAdapter(Transport* transport)
+    : transport_(transport), enabled_(0) {
+  RTC_DCHECK(nullptr != transport);
 }
 
-int TransportAdapter::SendRTCPPacket(int /*channel*/,
-                                     const void* packet,
-                                     size_t length) {
+bool TransportAdapter::SendRtp(const uint8_t* packet,
+                               size_t length,
+                               const PacketOptions& options) {
   if (enabled_.Value() == 0)
     return false;
 
-  bool success = transport_->SendRtcp(static_cast<const uint8_t*>(packet),
-                                      length);
-  return success ? static_cast<int>(length) : -1;
+  return transport_->SendRtp(packet, length, options);
+}
+
+bool TransportAdapter::SendRtcp(const uint8_t* packet, size_t length) {
+  if (enabled_.Value() == 0)
+    return false;
+
+  return transport_->SendRtcp(packet, length);
 }
 
 void TransportAdapter::Enable() {

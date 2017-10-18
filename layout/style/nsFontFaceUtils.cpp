@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gfxUserFontSet.h"
 #include "nsFontFaceUtils.h"
+
+#include "gfxUserFontSet.h"
 #include "nsFontMetrics.h"
 #include "nsIFrame.h"
 #include "nsLayoutUtils.h"
@@ -70,7 +71,7 @@ static void
 ScheduleReflow(nsIPresShell* aShell, nsIFrame* aFrame)
 {
   nsIFrame* f = aFrame;
-  if (f->IsFrameOfType(nsIFrame::eSVG) || f->IsSVGText()) {
+  if (f->IsFrameOfType(nsIFrame::eSVG) || nsSVGUtils::IsInSVGTextSubtree(f)) {
     // SVG frames (and the non-SVG descendants of an SVGTextFrame) need special
     // reflow handling.  We need to search upwards for the first displayed
     // nsSVGOuterSVGFrame or non-SVG frame, which is the frame we can call
@@ -87,7 +88,8 @@ ScheduleReflow(nsIPresShell* aShell, nsIFrame* aFrame)
             return;
           }
           if (f->GetStateBits() & NS_STATE_IS_OUTER_SVG ||
-              !(f->IsFrameOfType(nsIFrame::eSVG) || f->IsSVGText())) {
+              !(f->IsFrameOfType(nsIFrame::eSVG) ||
+                nsSVGUtils::IsInSVGTextSubtree(f))) {
             break;
           }
           f->AddStateBits(NS_FRAME_HAS_DIRTY_CHILDREN);
@@ -129,7 +131,7 @@ nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
       if (FrameUsesFont(f, aFont)) {
         ScheduleReflow(ps, f);
       } else {
-        if (f->GetType() == nsGkAtoms::placeholderFrame) {
+        if (f->IsPlaceholderFrame()) {
           nsIFrame* oof = nsPlaceholderFrame::GetRealFrameForPlaceholder(f);
           if (!nsLayoutUtils::IsProperAncestorFrame(subtreeRoot, oof)) {
             // We have another distinct subtree we need to mark.

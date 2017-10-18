@@ -8,14 +8,7 @@
 #include "MediaStreamListener.h"
 #include "mozilla/Logging.h"
 #include "VideoUtils.h"
-
-#undef LOG
-#ifdef MOZ_WIDGET_GONK
-#include <android/log.h>
-#define LOG(args...) __android_log_print(ANDROID_LOG_INFO, "MediaEncoder", ## args);
-#else
-#define LOG(args, ...)
-#endif
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
@@ -57,6 +50,8 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
                                             uint32_t aTrackEvents,
                                             const MediaSegment& aQueuedMedia)
 {
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
   if (mCanceled) {
     return;
   }
@@ -76,7 +71,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
       if (!chunk.IsNull()) {
         nsresult rv = Init(chunk.mChannelData.Length(), aGraph->GraphRate());
         if (NS_FAILED(rv)) {
-          LOG("[AudioTrackEncoder]: Fail to initialize the encoder!");
+          TRACK_LOG(LogLevel::Error, ("[AudioTrackEncoder]: Fail to initialize the encoder!"));
           NotifyCancel();
         }
         break;
@@ -89,7 +84,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
     if (!mInitialized &&
         (mNotInitDuration / aGraph->GraphRate() > INIT_FAILED_DURATION) &&
         mInitCounter > 1) {
-      LOG("[AudioTrackEncoder]: Initialize failed for 30s.");
+      TRACK_LOG(LogLevel::Warning, ("[AudioTrackEncoder]: Initialize failed for 30s."));
       NotifyEndOfStream();
       return;
     }
@@ -101,7 +96,7 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
 
   // The stream has stopped and reached the end of track.
   if (aTrackEvents == TrackEventCommand::TRACK_EVENT_ENDED) {
-    LOG("[AudioTrackEncoder]: Receive TRACK_EVENT_ENDED .");
+    TRACK_LOG(LogLevel::Info, ("[AudioTrackEncoder]: Receive TRACK_EVENT_ENDED ."));
     NotifyEndOfStream();
   }
 }
@@ -109,13 +104,14 @@ AudioTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
 void
 AudioTrackEncoder::NotifyEndOfStream()
 {
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
   // If source audio track is completely silent till the end of encoding,
   // initialize the encoder with default channel counts and sampling rate.
   if (!mCanceled && !mInitialized) {
     Init(DEFAULT_CHANNELS, DEFAULT_SAMPLING_RATE);
   }
 
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
   mEndOfStream = true;
   mReentrantMonitor.NotifyAll();
 }
@@ -147,10 +143,12 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
                                        uint32_t aOutputChannels,
                                        AudioDataValue* aOutput)
 {
+  uint32_t numChannelsToCopy = std::min(aOutputChannels,
+                                        static_cast<uint32_t>(aChunk.mChannelData.Length()));
   switch(aChunk.mBufferFormat) {
     case AUDIO_FORMAT_S16: {
       AutoTArray<const int16_t*, 2> array;
-      array.SetLength(aOutputChannels);
+      array.SetLength(numChannelsToCopy);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const int16_t*>(aChunk.mChannelData[i]);
       }
@@ -159,7 +157,7 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
     }
     case AUDIO_FORMAT_FLOAT32: {
       AutoTArray<const float*, 2> array;
-      array.SetLength(aOutputChannels);
+      array.SetLength(numChannelsToCopy);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const float*>(aChunk.mChannelData[i]);
       }
@@ -193,56 +191,85 @@ AudioTrackEncoder::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) cons
 }
 
 void
+VideoTrackEncoder::Init(const VideoSegment& aSegment)
+{
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
+  if (mInitialized) {
+    return;
+  }
+
+  mInitCounter++;
+  TRACK_LOG(LogLevel::Debug, ("Init the video encoder %d times", mInitCounter));
+  VideoSegment::ConstChunkIterator iter(aSegment);
+  while (!iter.IsEnded()) {
+   VideoChunk chunk = *iter;
+   if (!chunk.IsNull()) {
+     gfx::IntSize imgsize = chunk.mFrame.GetImage()->GetSize();
+     gfx::IntSize intrinsicSize = chunk.mFrame.GetIntrinsicSize();
+     nsresult rv = Init(imgsize.width, imgsize.height,
+                        intrinsicSize.width, intrinsicSize.height);
+
+     if (NS_FAILED(rv)) {
+       TRACK_LOG(LogLevel::Error, ("[VideoTrackEncoder]: Fail to initialize the encoder!"));
+       NotifyCancel();
+     }
+     break;
+   }
+
+   iter.Next();
+  }
+
+  mNotInitDuration += aSegment.GetDuration();
+  if ((mNotInitDuration / mTrackRate > INIT_FAILED_DURATION) &&
+      mInitCounter > 1) {
+    TRACK_LOG(LogLevel::Debug, ("[VideoTrackEncoder]: Initialize failed for %ds.", INIT_FAILED_DURATION));
+    NotifyEndOfStream();
+    return;
+  }
+}
+
+void
+VideoTrackEncoder::SetCurrentFrames(const VideoSegment& aSegment)
+{
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
+  if (mCanceled) {
+    return;
+  }
+
+  Init(aSegment);
+  AppendVideoSegment(aSegment);
+}
+
+void
 VideoTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
                                             TrackID aID,
                                             StreamTime aTrackOffset,
                                             uint32_t aTrackEvents,
                                             const MediaSegment& aQueuedMedia)
 {
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
   if (mCanceled) {
+    return;
+  }
+
+  if (!(aTrackEvents == TRACK_EVENT_CREATED ||
+       aTrackEvents == TRACK_EVENT_ENDED)) {
     return;
   }
 
   const VideoSegment& video = static_cast<const VideoSegment&>(aQueuedMedia);
 
    // Check and initialize parameters for codec encoder.
-  if (!mInitialized) {
-    mInitCounter++;
-    TRACK_LOG(LogLevel::Debug, ("Init the video encoder %d times", mInitCounter));
-    VideoSegment::ChunkIterator iter(const_cast<VideoSegment&>(video));
-    while (!iter.IsEnded()) {
-      VideoChunk chunk = *iter;
-      if (!chunk.IsNull()) {
-        gfx::IntSize imgsize = chunk.mFrame.GetImage()->GetSize();
-        gfx::IntSize intrinsicSize = chunk.mFrame.GetIntrinsicSize();
-        nsresult rv = Init(imgsize.width, imgsize.height,
-                           intrinsicSize.width, intrinsicSize.height,
-                           aGraph->GraphRate());
-        if (NS_FAILED(rv)) {
-          LOG("[VideoTrackEncoder]: Fail to initialize the encoder!");
-          NotifyCancel();
-        }
-        break;
-      }
-
-      iter.Next();
-    }
-
-    mNotInitDuration += aQueuedMedia.GetDuration();
-    if (!mInitialized &&
-        (mNotInitDuration / aGraph->GraphRate() > INIT_FAILED_DURATION) &&
-        mInitCounter > 1) {
-      LOG("[VideoTrackEncoder]: Initialize failed for 30s.");
-      NotifyEndOfStream();
-      return;
-    }
-  }
+  Init(video);
 
   AppendVideoSegment(video);
 
   // The stream has stopped and reached the end of track.
   if (aTrackEvents == TrackEventCommand::TRACK_EVENT_ENDED) {
-    LOG("[VideoTrackEncoder]: Receive TRACK_EVENT_ENDED .");
+    TRACK_LOG(LogLevel::Info, ("[VideoTrackEncoder]: Receive TRACK_EVENT_ENDED ."));
     NotifyEndOfStream();
   }
 
@@ -253,36 +280,125 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
 {
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
 
+  if (mEndOfStream) {
+    MOZ_ASSERT(false);
+    return NS_OK;
+  }
+
   // Append all video segments from MediaStreamGraph, including null an
   // non-null frames.
-  VideoSegment::ChunkIterator iter(const_cast<VideoSegment&>(aSegment));
-  while (!iter.IsEnded()) {
+  VideoSegment::ConstChunkIterator iter(aSegment);
+  for (; !iter.IsEnded(); iter.Next()) {
     VideoChunk chunk = *iter;
-    mTotalFrameDuration += chunk.GetDuration();
-    mLastFrameDuration += chunk.GetDuration();
-    // Send only the unique video frames for encoding.
-    // Or if we got the same video chunks more than 1 seconds,
-    // force to send into encoder.
-    if ((mLastFrame != chunk.mFrame) ||
-        (mLastFrameDuration >= mTrackRate)) {
-      RefPtr<layers::Image> image = chunk.mFrame.GetImage();
-      // Because we may get chunks with a null image (due to input blocking),
-      // accumulate duration and give it to the next frame that arrives.
-      // Canonically incorrect - the duration should go to the previous frame
-      // - but that would require delaying until the next frame arrives.
-      // Best would be to do like OMXEncoder and pass an effective timestamp
-      // in with each frame.
-      if (image) {
-        mRawSegment.AppendFrame(image.forget(),
-                                mLastFrameDuration,
-                                chunk.mFrame.GetIntrinsicSize(),
-                                PRINCIPAL_HANDLE_NONE,
-                                chunk.mFrame.GetForceBlack());
-        mLastFrameDuration = 0;
+
+    if (mLastChunk.mTimeStamp.IsNull()) {
+      if (chunk.IsNull()) {
+        // The start of this track is frameless. We need to track the time
+        // it takes to get the first frame.
+        mLastChunk.mDuration += chunk.mDuration;
+        continue;
+      }
+
+      // This is the first real chunk in the track. Use its timestamp as the
+      // starting point for this track.
+      MOZ_ASSERT(!chunk.mTimeStamp.IsNull());
+      const StreamTime nullDuration = mLastChunk.mDuration;
+      mLastChunk = chunk;
+      chunk.mDuration = 0;
+
+      TRACK_LOG(LogLevel::Verbose,
+                ("[VideoTrackEncoder]: Got first video chunk after %" PRId64 " ticks.",
+                 nullDuration));
+      // Adapt to the time before the first frame. This extends the first frame
+      // from [start, end] to [0, end], but it'll do for now.
+      auto diff = FramesToTimeUnit(nullDuration, mTrackRate);
+      if (!diff.IsValid()) {
+        NS_ERROR("null duration overflow");
+        return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+      }
+
+      mLastChunk.mTimeStamp -= diff.ToTimeDuration();
+      mLastChunk.mDuration += nullDuration;
+    }
+
+    MOZ_ASSERT(!mLastChunk.IsNull());
+    if (mLastChunk.CanCombineWithFollowing(chunk) || chunk.IsNull()) {
+      TRACK_LOG(LogLevel::Verbose,
+                ("[VideoTrackEncoder]: Got dupe or null chunk."));
+      // This is the same frame as before (or null). We extend the last chunk
+      // with its duration.
+      mLastChunk.mDuration += chunk.mDuration;
+
+      if (mLastChunk.mDuration < mTrackRate) {
+        TRACK_LOG(LogLevel::Verbose,
+                  ("[VideoTrackEncoder]: Ignoring dupe/null chunk of duration %" PRId64,
+                   chunk.mDuration));
+        continue;
+      }
+
+      TRACK_LOG(LogLevel::Verbose,
+                ("[VideoTrackEncoder]: Chunk >1 second. duration=%" PRId64 ", "
+                 "trackRate=%" PRId32, mLastChunk.mDuration, mTrackRate));
+
+      // If we have gotten dupes for over a second, we force send one
+      // to the encoder to make sure there is some output.
+      chunk.mTimeStamp = mLastChunk.mTimeStamp + TimeDuration::FromSeconds(1);
+
+      // chunk's duration has already been accounted for.
+      chunk.mDuration = 0;
+
+      if (chunk.IsNull()) {
+        // Ensure that we don't pass null to the encoder by making mLastChunk
+        // null later on.
+        chunk.mFrame = mLastChunk.mFrame;
       }
     }
-    mLastFrame.TakeFrom(&chunk.mFrame);
-    iter.Next();
+
+    if (mStartOffset.IsNull()) {
+      mStartOffset = mLastChunk.mTimeStamp;
+    }
+
+    TimeDuration relativeTime = chunk.mTimeStamp - mStartOffset;
+    RefPtr<layers::Image> lastImage = mLastChunk.mFrame.GetImage();
+    TRACK_LOG(LogLevel::Verbose,
+              ("[VideoTrackEncoder]: Appending video frame %p, at pos %.5fs",
+               lastImage.get(), relativeTime.ToSeconds()));
+    CheckedInt64 totalDuration =
+      UsecsToFrames(relativeTime.ToMicroseconds(), mTrackRate);
+    if (!totalDuration.isValid()) {
+      NS_ERROR("Duration overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+    }
+
+    CheckedInt64 duration = totalDuration - mEncodedTicks;
+    if (!duration.isValid()) {
+      NS_ERROR("Duration overflow");
+      return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
+    }
+
+    if (duration.isValid()) {
+      if (duration.value() <= 0) {
+        // The timestamp for mLastChunk is newer than for chunk.
+        // This means the durations reported from MediaStreamGraph for
+        // mLastChunk were larger than the timestamp diff - and durations were
+        // used to trigger the 1-second frame above. This could happen due to
+        // drift or underruns in the graph.
+        TRACK_LOG(LogLevel::Warning,
+                  ("[VideoTrackEncoder]: Underrun detected. Diff=%" PRId64,
+                   duration.value()));
+        chunk.mTimeStamp = mLastChunk.mTimeStamp;
+      } else {
+        mEncodedTicks += duration.value();
+        mRawSegment.AppendFrame(lastImage.forget(),
+                                duration.value(),
+                                mLastChunk.mFrame.GetIntrinsicSize(),
+                                PRINCIPAL_HANDLE_NONE,
+                                mLastChunk.mFrame.GetForceBlack(),
+                                mLastChunk.mTimeStamp);
+      }
+    }
+
+    mLastChunk = chunk;
   }
 
   if (mRawSegment.GetDuration() > 0) {
@@ -295,15 +411,36 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
 void
 VideoTrackEncoder::NotifyEndOfStream()
 {
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
   // If source video track is muted till the end of encoding, initialize the
   // encoder with default frame width, frame height, and track rate.
   if (!mCanceled && !mInitialized) {
     Init(DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT,
-         DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT, DEFAULT_TRACK_RATE);
+         DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT);
   }
 
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  if (mEndOfStream) {
+    // We have already been notified.
+    return;
+  }
+
   mEndOfStream = true;
+  TRACK_LOG(LogLevel::Info, ("[VideoTrackEncoder]: Reached end of stream"));
+
+  if (!mLastChunk.IsNull() && mLastChunk.mDuration > 0) {
+    RefPtr<layers::Image> lastImage = mLastChunk.mFrame.GetImage();
+    TRACK_LOG(LogLevel::Debug,
+              ("[VideoTrackEncoder]: Appending last video frame %p, "
+               "duration=%.5f", lastImage.get(),
+               FramesToTimeUnit(mLastChunk.mDuration, mTrackRate).ToSeconds()));
+    mRawSegment.AppendFrame(lastImage.forget(),
+                            mLastChunk.mDuration,
+                            mLastChunk.mFrame.GetIntrinsicSize(),
+                            PRINCIPAL_HANDLE_NONE,
+                            mLastChunk.mFrame.GetForceBlack(),
+                            mLastChunk.mTimeStamp);
+  }
   mReentrantMonitor.NotifyAll();
 }
 

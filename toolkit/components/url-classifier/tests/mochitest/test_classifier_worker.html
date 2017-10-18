@@ -56,14 +56,15 @@ SpecialPowers.pushPrefEnv(
   {"set" : [["urlclassifier.malwareTable", "test-malware-simple,test-unwanted-simple"],
             ["urlclassifier.phishTable", "test-phish-simple"]]},
   function() {
-    classifierHelper.addUrlToDB(testData)
+    classifierHelper.waitForInit()
+      .then(() => classifierHelper.addUrlToDB(testData))
       .then(updateSuccess)
       .catch(err => {
         updateError(err);
       });
   });
 
-window.addEventListener("message", onmessage, false);
+window.addEventListener("message", onmessage);
 
 SimpleTest.waitForExplicitFinish();
 

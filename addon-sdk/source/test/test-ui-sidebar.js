@@ -176,10 +176,10 @@ exports.testSideBarIsShowingInNewWindows = function*(assert) {
       end();
     }
     else {
-      sb.addEventListener('DOMWindowCreated', end, false);
+      sb.addEventListener('DOMWindowCreated', end);
     }
     function end () {
-      sb.removeEventListener('DOMWindowCreated', end, false);
+      sb.removeEventListener('DOMWindowCreated', end);
       resolve();
     }
   })
@@ -1050,7 +1050,7 @@ exports.testSidebarGettersAndSettersAfterDestroy = function(assert) {
   assert.equal(sidebar.id, undefined, 'sidebar after destroy has no id');
 
   assert.throws(() => sidebar.id = 'foo-tang',
-    /^setting a property that has only a getter/,
+    /^setting getter-only property/,
     'id cannot be set at runtime');
 
   assert.equal(sidebar.id, undefined, 'sidebar after destroy has no id');
@@ -1095,10 +1095,9 @@ exports.testSidebarLeakCheckDestroyAfterAttach = function*(assert) {
 
   yield new Promise(resolve => {
     let panelBrowser = window.document.getElementById('sidebar').contentDocument.getElementById('web-panels-browser');
-    panelBrowser.contentWindow.addEventListener('unload', function onUnload() {
-      panelBrowser.contentWindow.removeEventListener('unload', onUnload, false);
+    panelBrowser.contentWindow.addEventListener('unload', function() {
       resolve();
-    }, false);
+    }, {once: true});
     sidebar.destroy();
   });
 
@@ -1137,10 +1136,9 @@ exports.testSidebarLeakCheckUnloadAfterAttach = function*(assert) {
 
   let panelBrowser = window.document.getElementById('sidebar').contentDocument.getElementById('web-panels-browser');
   yield new Promise(resolve => {
-    panelBrowser.contentWindow.addEventListener('unload', function onUnload() {
-      panelBrowser.contentWindow.removeEventListener('unload', onUnload, false);
+    panelBrowser.contentWindow.addEventListener('unload', function() {
       resolve();
-    }, false);
+    }, {once: true});
     loader.unload();
   });
 
@@ -1246,7 +1244,7 @@ exports.testShowToOpenXToClose = function*(assert) {
 
   assert.ok(isChecked(menuitem), 'menuitem is checked');
 
-  let closeButton = window.document.querySelector('#sidebar-header > toolbarbutton.close-icon');
+  let closeButton = window.document.querySelector('#sidebar-close');
   simulateCommand(closeButton);
 
   yield hidden.promise;

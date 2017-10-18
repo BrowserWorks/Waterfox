@@ -36,9 +36,11 @@ class nsInputStreamReadyEvent final
 public:
   NS_DECL_ISUPPORTS_INHERITED
 
-  nsInputStreamReadyEvent(nsIInputStreamCallback* aCallback,
-                          nsIEventTarget* aTarget)
-    : mCallback(aCallback)
+    nsInputStreamReadyEvent(const char* aName,
+                            nsIInputStreamCallback* aCallback,
+                            nsIEventTarget* aTarget)
+    : CancelableRunnable(aName)
+    , mCallback(aCallback)
     , mTarget(aTarget)
   {
   }
@@ -60,7 +62,7 @@ private:
     nsresult rv = mTarget->IsOnCurrentThread(&val);
     if (NS_FAILED(rv) || !val) {
       nsCOMPtr<nsIInputStreamCallback> event =
-        NS_NewInputStreamReadyEvent(mCallback, mTarget);
+        NS_NewInputStreamReadyEvent("~nsInputStreamReadyEvent", mCallback, mTarget);
       mCallback = nullptr;
       if (event) {
         rv = event->OnInputStreamReady(nullptr);
@@ -128,7 +130,8 @@ public:
 
   nsOutputStreamReadyEvent(nsIOutputStreamCallback* aCallback,
                            nsIEventTarget* aTarget)
-    : mCallback(aCallback)
+    : CancelableRunnable("nsOutputStreamReadyEvent")
+    , mCallback(aCallback)
     , mTarget(aTarget)
   {
   }
@@ -207,13 +210,14 @@ NS_IMPL_ISUPPORTS_INHERITED(nsOutputStreamReadyEvent, CancelableRunnable,
 //-----------------------------------------------------------------------------
 
 already_AddRefed<nsIInputStreamCallback>
-NS_NewInputStreamReadyEvent(nsIInputStreamCallback* aCallback,
+NS_NewInputStreamReadyEvent(const char* aName,
+                            nsIInputStreamCallback* aCallback,
                             nsIEventTarget* aTarget)
 {
   NS_ASSERTION(aCallback, "null callback");
   NS_ASSERTION(aTarget, "null target");
   RefPtr<nsInputStreamReadyEvent> ev =
-    new nsInputStreamReadyEvent(aCallback, aTarget);
+    new nsInputStreamReadyEvent(aName, aCallback, aTarget);
   return ev.forget();
 }
 
@@ -241,7 +245,8 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   nsAStreamCopier()
-    : mLock("nsAStreamCopier.mLock")
+    : CancelableRunnable("nsAStreamCopier")
+    , mLock("nsAStreamCopier.mLock")
     , mCallback(nullptr)
     , mProgressCallback(nullptr)
     , mClosure(nullptr)
@@ -529,12 +534,12 @@ public:
     nsresult         mSinkCondition;
   };
 
-  static NS_METHOD ConsumeInputBuffer(nsIInputStream* aInStr,
-                                      void* aClosure,
-                                      const char* aBuffer,
-                                      uint32_t aOffset,
-                                      uint32_t aCount,
-                                      uint32_t* aCountWritten)
+  static nsresult ConsumeInputBuffer(nsIInputStream* aInStr,
+                                     void* aClosure,
+                                     const char* aBuffer,
+                                     uint32_t aOffset,
+                                     uint32_t aCount,
+                                     uint32_t* aCountWritten)
   {
     ReadSegmentsState* state = (ReadSegmentsState*)aClosure;
 
@@ -585,12 +590,12 @@ public:
     nsresult        mSourceCondition;
   };
 
-  static NS_METHOD FillOutputBuffer(nsIOutputStream* aOutStr,
-                                    void* aClosure,
-                                    char* aBuffer,
-                                    uint32_t aOffset,
-                                    uint32_t aCount,
-                                    uint32_t* aCountRead)
+  static nsresult FillOutputBuffer(nsIOutputStream* aOutStr,
+                                   void* aClosure,
+                                   char* aBuffer,
+                                   uint32_t aOffset,
+                                   uint32_t aCount,
+                                   uint32_t* aCountRead)
   {
     WriteSegmentsState* state = (WriteSegmentsState*)aClosure;
 
@@ -729,7 +734,7 @@ NS_ConsumeStream(nsIInputStream* aStream, uint32_t aMaxCount,
 
 //-----------------------------------------------------------------------------
 
-static NS_METHOD
+static nsresult
 TestInputStream(nsIInputStream* aInStr,
                 void* aClosure,
                 const char* aBuffer,
@@ -756,7 +761,7 @@ NS_InputStreamIsBuffered(nsIInputStream* aStream)
   return result || NS_SUCCEEDED(rv);
 }
 
-static NS_METHOD
+static nsresult
 TestOutputStream(nsIOutputStream* aOutStr,
                  void* aClosure,
                  char* aBuffer,
@@ -785,7 +790,7 @@ NS_OutputStreamIsBuffered(nsIOutputStream* aStream)
 
 //-----------------------------------------------------------------------------
 
-NS_METHOD
+nsresult
 NS_CopySegmentToStream(nsIInputStream* aInStr,
                        void* aClosure,
                        const char* aBuffer,
@@ -808,7 +813,7 @@ NS_CopySegmentToStream(nsIInputStream* aInStr,
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 NS_CopySegmentToBuffer(nsIInputStream* aInStr,
                        void* aClosure,
                        const char* aBuffer,
@@ -822,7 +827,7 @@ NS_CopySegmentToBuffer(nsIInputStream* aInStr,
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 NS_CopySegmentToBuffer(nsIOutputStream* aOutStr,
                        void* aClosure,
                        char* aBuffer,
@@ -836,7 +841,7 @@ NS_CopySegmentToBuffer(nsIOutputStream* aOutStr,
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 NS_DiscardSegment(nsIInputStream* aInStr,
                   void* aClosure,
                   const char* aBuffer,
@@ -850,7 +855,7 @@ NS_DiscardSegment(nsIInputStream* aInStr,
 
 //-----------------------------------------------------------------------------
 
-NS_METHOD
+nsresult
 NS_WriteSegmentThunk(nsIInputStream* aInStr,
                      void* aClosure,
                      const char* aBuffer,
@@ -863,7 +868,7 @@ NS_WriteSegmentThunk(nsIInputStream* aInStr,
                      aCountWritten);
 }
 
-NS_METHOD
+nsresult
 NS_FillArray(FallibleTArray<char>& aDest, nsIInputStream* aInput,
              uint32_t aKeep, uint32_t* aNewBytes)
 {

@@ -113,7 +113,6 @@ public:
   virtual void UnbindFromTree(bool aDeep, bool aNullParent) override
   {
     NS_ASSERTION(false, "Trying to unbind a fragment from a tree");
-    return;
   }
 
   virtual Element* GetNameSpaceElement() override
@@ -144,7 +143,8 @@ protected:
   {
   }
 
-  nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                 bool aPreallocateChildren) const override;
   nsIContent* mHost; // Weak
 };
 

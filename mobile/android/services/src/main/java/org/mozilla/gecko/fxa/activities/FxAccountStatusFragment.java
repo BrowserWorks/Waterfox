@@ -471,10 +471,6 @@ public class FxAccountStatusFragment
     accountProfileInformationReceiver = new FxAccountProfileInformationReceiver();
     LocalBroadcastManager.getInstance(getActivity()).registerReceiver(accountProfileInformationReceiver, intentFilter);
 
-    // profilePreference is set during onCreate, so it's definitely not null here.
-    final float cornerRadius = getResources().getDimension(R.dimen.fxaccount_profile_image_width) / 2;
-    profileAvatarTarget = new PicassoPreferenceIconTarget(getResources(), profilePreference, cornerRadius);
-
     refresh();
   }
 
@@ -517,6 +513,10 @@ public class FxAccountStatusFragment
     if (fxAccount == null) {
       throw new IllegalArgumentException("fxAccount must not be null");
     }
+
+    // profilePreference is set during onCreate, so it's definitely not null here.
+    final float cornerRadius = getResources().getDimension(R.dimen.fxaccount_profile_image_width) / 2;
+    profileAvatarTarget = new PicassoPreferenceIconTarget(getResources(), profilePreference, cornerRadius);
 
     updateProfileInformation();
     updateAuthServerPreference();
@@ -621,12 +621,6 @@ public class FxAccountStatusFragment
       profilePreference.setSummary(fxAccount.getEmail());
     } else {
       profilePreference.setTitle(fxAccount.getEmail());
-    }
-
-    // Icon update from java is not supported prior to API 11, skip the avatar image fetch and update for older device.
-    if (!AppConstants.Versions.feature11Plus) {
-      Logger.info(LOG_TAG, "Skipping profile image fetch for older pre-API 11 devices.");
-      return;
     }
 
     // Avatar URI empty, skip profile image fetch.

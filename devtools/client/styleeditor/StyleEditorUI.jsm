@@ -10,7 +10,7 @@ this.EXPORTED_SYMBOLS = ["StyleEditorUI"];
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const {require, loader} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Services = require("Services");
 const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
 const {OS} = require("resource://gre/modules/osfile.jsm");
@@ -25,15 +25,13 @@ const {
 } = require("resource://devtools/client/styleeditor/StyleEditorUtil.jsm");
 const {SplitView} = require("resource://devtools/client/shared/SplitView.jsm");
 const {StyleSheetEditor} = require("resource://devtools/client/styleeditor/StyleSheetEditor.jsm");
-loader.lazyImporter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
-const {PrefObserver, PREF_ORIG_SOURCES} =
-      require("devtools/client/styleeditor/utils");
+const {PluralForm} = require("devtools/shared/plural-form");
+const {PrefObserver} = require("devtools/client/shared/prefs");
 const csscoverage = require("devtools/shared/fronts/csscoverage");
 const {console} = require("resource://gre/modules/Console.jsm");
-const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const {ResponsiveUIManager} =
   require("resource://devtools/client/responsivedesign/responsivedesign.jsm");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 const LOAD_ERROR = "error-load";
 const STYLE_EDITOR_TEMPLATE = "stylesheet";
@@ -41,6 +39,7 @@ const SELECTOR_HIGHLIGHTER_TYPE = "SelectorHighlighter";
 const PREF_MEDIA_SIDEBAR = "devtools.styleeditor.showMediaSidebar";
 const PREF_SIDEBAR_WIDTH = "devtools.styleeditor.mediaSidebarWidth";
 const PREF_NAV_WIDTH = "devtools.styleeditor.navSidebarWidth";
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 /**
  * StyleEditorUI is controls and builds the UI of the Style Editor, including
@@ -57,13 +56,15 @@ const PREF_NAV_WIDTH = "devtools.styleeditor.navSidebarWidth";
  *        Interface for the page we're debugging
  * @param {Document} panelDoc
  *        Document of the toolbox panel to populate UI in.
+ * @param {CssProperties} A css properties database.
  */
-function StyleEditorUI(debuggee, target, panelDoc) {
+function StyleEditorUI(debuggee, target, panelDoc, cssProperties) {
   EventEmitter.decorate(this);
 
   this._debuggee = debuggee;
   this._target = target;
   this._panelDoc = panelDoc;
+  this._cssProperties = cssProperties;
   this._window = this._panelDoc.defaultView;
   this._root = this._panelDoc.getElementById("style-editor-chrome");
 
@@ -233,7 +234,7 @@ StyleEditorUI.prototype = {
   _onNewDocument: function () {
     this._debuggee.getStyleSheets().then((styleSheets) => {
       return this._resetStyleSheetList(styleSheets);
-    }).then(null, e => console.error(e));
+    }).catch(e => console.error(e));
   },
 
   /**
@@ -517,7 +518,7 @@ StyleEditorUI.prototype = {
       },
       disableAnimations: this._alwaysDisableAnimations,
       ordinal: ordinal,
-      onCreate: function (summary, details, data) {
+      onCreate: (summary, details, data) => {
         let createdEditor = data.editor;
         createdEditor.summary = summary;
         createdEditor.details = details;
@@ -532,7 +533,7 @@ StyleEditorUI.prototype = {
         wire(summary, ".stylesheet-name", {
           events: {
             "keypress": (event) => {
-              if (event.keyCode == event.DOM_VK_RETURN) {
+              if (event.keyCode == KeyCodes.DOM_VK_RETURN) {
                 this._view.activeSummary = summary;
               }
             }
@@ -550,14 +551,14 @@ StyleEditorUI.prototype = {
 
         summary.addEventListener("contextmenu", () => {
           this._contextMenuStyleSheet = createdEditor.styleSheet;
-        }, false);
+        });
 
         summary.addEventListener("focus", function onSummaryFocus(event) {
           if (event.target == summary) {
             // autofocus the stylesheet name
             summary.querySelector(".stylesheet-name").focus();
           }
-        }, false);
+        });
 
         let sidebar = details.querySelector(".stylesheet-sidebar");
         sidebar.setAttribute("width",
@@ -592,9 +593,9 @@ StyleEditorUI.prototype = {
           this._selectEditor(createdEditor);
         }
         this.emit("editor-added", createdEditor);
-      }.bind(this),
+      },
 
-      onShow: function (summary, details, data) {
+      onShow: (summary, details, data) => {
         let showEditor = data.editor;
         this.selectedEditor = showEditor;
 
@@ -603,7 +604,7 @@ StyleEditorUI.prototype = {
             // only initialize source editor when we switch to this view
             let inputElement =
                 details.querySelector(".stylesheet-editor-input");
-            yield showEditor.load(inputElement);
+            yield showEditor.load(inputElement, this._cssProperties);
           }
 
           showEditor.onShow();
@@ -633,8 +634,8 @@ StyleEditorUI.prototype = {
               this.emit("error", { key: "error-compressed", level: "info" });
             }
           }
-        }.bind(this)).then(null, e => console.error(e));
-      }.bind(this)
+        }.bind(this)).catch(e => console.error(e));
+      }
     });
   },
 
@@ -659,7 +660,7 @@ StyleEditorUI.prototype = {
       }
     }
 
-    return promise.resolve();
+    return Promise.resolve();
   },
 
   /**
@@ -707,43 +708,41 @@ StyleEditorUI.prototype = {
       this._view.activeSummary = summary;
     });
 
-    return promise.all([editorPromise, summaryPromise]);
+    return Promise.all([editorPromise, summaryPromise]);
   },
 
   getEditorSummary: function (editor) {
-    if (editor.summary) {
-      return promise.resolve(editor.summary);
-    }
-
-    let deferred = defer();
     let self = this;
 
-    this.on("editor-added", function onAdd(e, selected) {
-      if (selected == editor) {
-        self.off("editor-added", onAdd);
-        deferred.resolve(editor.summary);
-      }
-    });
+    if (editor.summary) {
+      return Promise.resolve(editor.summary);
+    }
 
-    return deferred.promise;
+    return new Promise(resolve => {
+      this.on("editor-added", function onAdd(e, selected) {
+        if (selected == editor) {
+          self.off("editor-added", onAdd);
+          resolve(editor.summary);
+        }
+      });
+    });
   },
 
   getEditorDetails: function (editor) {
-    if (editor.details) {
-      return promise.resolve(editor.details);
-    }
-
-    let deferred = defer();
     let self = this;
 
-    this.on("editor-added", function onAdd(e, selected) {
-      if (selected == editor) {
-        self.off("editor-added", onAdd);
-        deferred.resolve(editor.details);
-      }
-    });
+    if (editor.details) {
+      return Promise.resolve(editor.details);
+    }
 
-    return deferred.promise;
+    return new Promise(resolve => {
+      this.on("editor-added", function onAdd(e, selected) {
+        if (selected == editor) {
+          self.off("editor-added", onAdd);
+          resolve(editor.details);
+        }
+      });
+    });
   },
 
   /**
@@ -862,7 +861,7 @@ StyleEditorUI.prototype = {
       let list = details.querySelector(".stylesheet-media-list");
 
       while (list.firstChild) {
-        list.removeChild(list.firstChild);
+        list.firstChild.remove();
       }
 
       let rules = editor.mediaRules;
@@ -896,19 +895,14 @@ StyleEditorUI.prototype = {
                              this._jumpToLocation.bind(this, location));
 
         let cond = this._panelDoc.createElement("div");
-        cond.textContent = rule.conditionText;
         cond.className = "media-rule-condition";
         if (!rule.matches) {
           cond.classList.add("media-condition-unmatched");
         }
-        if (this._target.tab.tagName == "tab") {
-          const minMaxPattern = /(min\-|max\-)(width|height):\s\d+(px)/ig;
-          const replacement =
-                "<a href='#' class='media-responsive-mode-toggle'>$&</a>";
-
-          cond.innerHTML = cond.textContent.replace(minMaxPattern, replacement);
-          cond.addEventListener("click",
-                                this._onMediaConditionClick.bind(this));
+        if (this._target.isLocalTab) {
+          this._setConditionContents(cond, rule.conditionText);
+        } else {
+          cond.textContent = rule.conditionText;
         }
         div.appendChild(cond);
 
@@ -925,20 +919,54 @@ StyleEditorUI.prototype = {
       sidebar.hidden = !showSidebar || !inSource;
 
       this.emit("media-list-changed", editor);
-    }.bind(this)).then(null, e => console.error(e));
+    }.bind(this)).catch(e => console.error(e));
   },
 
   /**
-    * Called when a media condition is clicked
-    * If a responsive mode link is clicked, it will launch it.
-    *
-    * @param {object} e
-    *        Event object
-    */
-  _onMediaConditionClick: function (e) {
-    if (!e.target.matches(".media-responsive-mode-toggle")) {
-      return;
+   * Used to safely inject media query links
+   *
+   * @param {HTMLElement} element
+   *        The element corresponding to the media sidebar condition
+   * @param {String} rawText
+   *        The raw condition text to parse
+   */
+  _setConditionContents(element, rawText) {
+    const minMaxPattern = /(min\-|max\-)(width|height):\s\d+(px)/ig;
+
+    let match = minMaxPattern.exec(rawText);
+    let lastParsed = 0;
+    while (match && match.index != minMaxPattern.lastIndex) {
+      let matchEnd = match.index + match[0].length;
+      let node = this._panelDoc.createTextNode(
+        rawText.substring(lastParsed, match.index)
+      );
+      element.appendChild(node);
+
+      let link = this._panelDoc.createElement("a");
+      link.href = "#";
+      link.className = "media-responsive-mode-toggle";
+      link.textContent = rawText.substring(match.index, matchEnd);
+      link.addEventListener("click", this._onMediaConditionClick.bind(this));
+      element.appendChild(link);
+
+      match = minMaxPattern.exec(rawText);
+      lastParsed = matchEnd;
     }
+
+    let node = this._panelDoc.createTextNode(
+      rawText.substring(lastParsed, rawText.length)
+    );
+    element.appendChild(node);
+  },
+
+  /**
+   * Called when a media condition is clicked
+   * If a responsive mode link is clicked, it will launch it.
+   *
+   * @param {object} e
+   *        Event object
+   */
+  _onMediaConditionClick: function (e) {
     let conditionText = e.target.textContent;
     let isWidthCond = conditionText.toLowerCase().indexOf("width") > -1;
     let mediaVal = parseInt(/\d+/.exec(conditionText), 10);
@@ -959,15 +987,8 @@ StyleEditorUI.prototype = {
     let tab = this._target.tab;
     let win = this._target.tab.ownerDocument.defaultView;
 
-    yield ResponsiveUIManager.runIfNeeded(win, tab);
-    if (options.width && options.height) {
-      ResponsiveUIManager.getResponsiveUIForTab(tab).setSize(options.width,
-                                                             options.height);
-    } else if (options.width) {
-      ResponsiveUIManager.getResponsiveUIForTab(tab).setWidth(options.width);
-    } else if (options.height) {
-      ResponsiveUIManager.getResponsiveUIForTab(tab).setHeight(options.height);
-    }
+    yield ResponsiveUIManager.openIfNeeded(win, tab);
+    ResponsiveUIManager.getResponsiveUIForTab(tab).setViewportSize(options);
   }),
 
   /**

@@ -13,7 +13,11 @@
 
 extern mozilla::LogModule* GetMediaSourceLog();
 
-#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("MediaSourceResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUG(arg, ...)                                                    \
+  MOZ_LOG(                                                                     \
+    GetMediaSourceLog(),                                                       \
+    mozilla::LogLevel::Debug,                                                  \
+    ("MediaSourceResource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 #define UNIMPLEMENTED() MSE_DEBUG("UNIMPLEMENTED FUNCTION at %s:%d", __FILE__, __LINE__)
 
@@ -31,11 +35,10 @@ public:
   nsresult Close() override { return NS_OK; }
   void Suspend(bool aCloseImmediately) override { UNIMPLEMENTED(); }
   void Resume() override { UNIMPLEMENTED(); }
-  bool CanClone() override { UNIMPLEMENTED(); return false; }
-  already_AddRefed<MediaResource> CloneData(MediaResourceCallback*) override { UNIMPLEMENTED(); return nullptr; }
   void SetReadMode(MediaCacheStream::ReadMode aMode) override { UNIMPLEMENTED(); }
   void SetPlaybackRate(uint32_t aBytesPerSecond) override  { UNIMPLEMENTED(); }
   nsresult ReadAt(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes) override { UNIMPLEMENTED(); return NS_ERROR_FAILURE; }
+  bool ShouldCacheReads() override { UNIMPLEMENTED(); return false; }
   int64_t Tell() override { UNIMPLEMENTED(); return -1; }
   void Pin() override { UNIMPLEMENTED(); }
   void Unpin() override { UNIMPLEMENTED(); }
@@ -62,7 +65,6 @@ public:
   }
 
   bool IsTransportSeekable() override { return true; }
-  const nsCString& GetContentType() const override { return mType; }
 
   bool IsLiveStream() override
   {
@@ -85,8 +87,6 @@ private:
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
-    size += mType.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
-
     return size;
   }
 
@@ -96,7 +96,6 @@ private:
   }
 
   RefPtr<nsIPrincipal> mPrincipal;
-  const nsCString mType;
   Monitor mMonitor;
   bool mEnded; // protected by mMonitor
 };

@@ -5,15 +5,19 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PBackground;
-include protocol PBlob;
+include protocol PIPCBlobInputStream;
+include protocol PChildToParentStream;
+include protocol PParentToChildStream;
+include protocol PFileDescriptorSet;
+
+include IPCBlob;
 
 namespace mozilla {
 namespace dom {
 
 struct FileSystemFileResponse
 {
-  nsString realPath;
-  nsString domPath;
+  IPCBlob blob;
 };
 
 struct FileSystemDirectoryResponse
@@ -23,8 +27,7 @@ struct FileSystemDirectoryResponse
 
 struct FileSystemDirectoryListingResponseFile
 {
-  // This is the full real path for the file that we are sending via IPC.
-  nsString fileRealPath;
+  IPCBlob blob;
 };
 
 struct FileSystemDirectoryListingResponseDirectory
@@ -54,14 +57,8 @@ struct FileSystemErrorResponse
   nsresult error;
 };
 
-struct FileSystemBooleanResponse
-{
-  bool success;
-};
-
 union FileSystemResponseValue
 {
-  FileSystemBooleanResponse;
   FileSystemDirectoryResponse;
   FileSystemDirectoryListingResponse;
   FileSystemFileResponse;

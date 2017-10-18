@@ -12,10 +12,14 @@
 #define WEBRTC_P2P_BASE_TRANSPORTCHANNELIMPL_H_
 
 #include <string>
-#include "webrtc/p2p/base/transport.h"
+
+#include "webrtc/base/constructormagic.h"
+#include "webrtc/p2p/base/icetransportinternal.h"
 #include "webrtc/p2p/base/transportchannel.h"
 
-namespace buzz { class XmlElement; }
+namespace webrtc {
+class MetricsObserverInterface;
+}
 
 namespace cricket {
 
@@ -26,43 +30,51 @@ class Candidate;
 // client.
 class TransportChannelImpl : public TransportChannel {
  public:
-  explicit TransportChannelImpl(const std::string& content_name, int component)
-      : TransportChannel(content_name, component) {}
-
-  // Returns the transport that created this channel.
-  virtual Transport* GetTransport() = 0;
+  explicit TransportChannelImpl(const std::string& transport_name,
+                                int component)
+      : TransportChannel(transport_name, component) {}
 
   // For ICE channels.
   virtual IceRole GetIceRole() const = 0;
   virtual void SetIceRole(IceRole role) = 0;
-  virtual void SetIceTiebreaker(uint64 tiebreaker) = 0;
-  // To toggle G-ICE/ICE.
-  virtual bool GetIceProtocolType(IceProtocolType* type) const = 0;
-  virtual void SetIceProtocolType(IceProtocolType type) = 0;
-  // SetIceCredentials only need to be implemented by the ICE
-  // transport channels. Non-ICE transport channels can just ignore.
-  // The ufrag and pwd should be set before the Connect() is called.
+  virtual void SetIceTiebreaker(uint64_t tiebreaker) = 0;
+  // TODO(pthatcher): Remove this once it's no longer called in
+  // remoting/protocol/libjingle_transport_factory.cc
+  virtual void SetIceProtocolType(IceProtocolType type) {}
+  // TODO(honghaiz): Remove this once the call in chromoting is removed.
   virtual void SetIceCredentials(const std::string& ice_ufrag,
-                                 const std::string& ice_pwd)  = 0;
-  // SetRemoteIceCredentials only need to be implemented by the ICE
-  // transport channels. Non-ICE transport channels can just ignore.
+                                 const std::string& ice_pwd) {
+    SetIceParameters(IceParameters(ice_ufrag, ice_pwd, false));
+  }
+  // TODO(honghaiz): Remove this once the call in chromoting is removed.
   virtual void SetRemoteIceCredentials(const std::string& ice_ufrag,
-                                       const std::string& ice_pwd) = 0;
+                                       const std::string& ice_pwd) {
+    SetRemoteIceParameters(IceParameters(ice_ufrag, ice_pwd, false));
+  }
+
+  // SetIceParameters only needs to be implemented by the ICE transport
+  // channels. Non-ICE transport channels should pass them down to the inner
+  // ICE transport channel. The ufrag and pwd in |ice_params| must be set
+  // before candidate gathering can start.
+  virtual void SetIceParameters(const IceParameters& ice_params) = 0;
+  // SetRemoteIceParameters only needs to be implemented by the ICE transport
+  // channels. Non-ICE transport channels should pass them down to the inner
+  // ICE transport channel.
+  virtual void SetRemoteIceParameters(const IceParameters& ice_params) = 0;
 
   // SetRemoteIceMode must be implemented only by the ICE transport channels.
   virtual void SetRemoteIceMode(IceMode mode) = 0;
 
-  // Begins the process of attempting to make a connection to the other client.
-  virtual void Connect() = 0;
+  virtual void SetIceConfig(const IceConfig& config) = 0;
 
-  // Resets this channel back to the initial state (i.e., not connecting).
-  virtual void Reset() = 0;
+  // Start gathering candidates if not already started, or if an ICE restart
+  // occurred.
+  virtual void MaybeStartGathering() = 0;
 
-  // Allows an individual channel to request signaling and be notified when it
-  // is ready.  This is useful if the individual named channels have need to
-  // send their own transport-info stanzas.
-  sigslot::signal1<TransportChannelImpl*> SignalRequestSignaling;
-  virtual void OnSignalingReady() = 0;
+  virtual void SetMetricsObserver(
+      webrtc::MetricsObserverInterface* observer) = 0;
+
+  sigslot::signal1<TransportChannelImpl*> SignalGatheringState;
 
   // Handles sending and receiving of candidates.  The Transport
   // receives the candidates and may forward them to the relevant
@@ -72,37 +84,38 @@ class TransportChannelImpl : public TransportChannel {
   // channel, they cannot return an error if the message is invalid.
   // It is assumed that the Transport will have checked validity
   // before forwarding.
-  sigslot::signal2<TransportChannelImpl*,
-                   const Candidate&> SignalCandidateReady;
-  virtual void OnCandidate(const Candidate& candidate) = 0;
+  sigslot::signal2<TransportChannelImpl*, const Candidate&>
+      SignalCandidateGathered;
+  sigslot::signal2<TransportChannelImpl*, const Candidates&>
+      SignalCandidatesRemoved;
+  virtual void AddRemoteCandidate(const Candidate& candidate) = 0;
+  virtual void RemoveRemoteCandidate(const Candidate& candidate) = 0;
+
+  virtual IceGatheringState gathering_state() const = 0;
 
   // DTLS methods
-  // Set DTLS local identity.  The identity object is not copied, but the caller
-  // retains ownership and must delete it after this TransportChannelImpl is
-  // destroyed.
-  // TODO(bemasc): Fix the ownership semantics of this method.
-  virtual bool SetLocalIdentity(rtc::SSLIdentity* identity) = 0;
+  virtual bool SetLocalCertificate(
+      const rtc::scoped_refptr<rtc::RTCCertificate>& certificate) = 0;
 
   // Set DTLS Remote fingerprint. Must be after local identity set.
   virtual bool SetRemoteFingerprint(const std::string& digest_alg,
-    const uint8* digest,
-    size_t digest_len) = 0;
+                                    const uint8_t* digest,
+                                    size_t digest_len) = 0;
 
   virtual bool SetSslRole(rtc::SSLRole role) = 0;
-
-  // TransportChannel is forwarding this signal from PortAllocatorSession.
-  sigslot::signal1<TransportChannelImpl*> SignalCandidatesAllocationDone;
 
   // Invoked when there is conflict in the ICE role between local and remote
   // agents.
   sigslot::signal1<TransportChannelImpl*> SignalRoleConflict;
 
-  // Emitted whenever the number of connections available to the transport
-  // channel decreases.
-  sigslot::signal1<TransportChannelImpl*> SignalConnectionRemoved;
+  // Emitted whenever the transport channel state changed.
+  sigslot::signal1<TransportChannelImpl*> SignalStateChanged;
+
+  // Emitted whenever the Dtls handshake failed on some transport channel.
+  sigslot::signal1<rtc::SSLHandshakeError> SignalDtlsHandshakeError;
 
  private:
-  DISALLOW_EVIL_CONSTRUCTORS(TransportChannelImpl);
+  RTC_DISALLOW_COPY_AND_ASSIGN(TransportChannelImpl);
 };
 
 }  // namespace cricket

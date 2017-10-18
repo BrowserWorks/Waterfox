@@ -18,13 +18,13 @@ function Prompter() {
 }
 
 Prompter.prototype = {
-    classID          : Components.ID("{1c978d25-b37f-43a8-a2d6-0c7a239ead87}"),
-    QueryInterface   : XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+    classID: Components.ID("{1c978d25-b37f-43a8-a2d6-0c7a239ead87}"),
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
 
 
     /* ----------  private members  ---------- */
 
-    pickPrompter : function (domWin) {
+    pickPrompter(domWin) {
         return new ModalPrompter(domWin);
     },
 
@@ -32,7 +32,7 @@ Prompter.prototype = {
     /* ----------  nsIPromptFactory  ---------- */
 
 
-    getPrompt : function (domWin, iid) {
+    getPrompt(domWin, iid) {
         // This is still kind of dumb; the C++ code delegated to login manager
         // here, which in turn calls back into us via nsIPromptService2.
         if (iid.equals(Ci.nsIAuthPrompt2) || iid.equals(Ci.nsIAuthPrompt)) {
@@ -54,47 +54,47 @@ Prompter.prototype = {
     /* ----------  nsIPromptService  ---------- */
 
 
-    alert : function (domWin, title, text) {
+    alert(domWin, title, text) {
         let p = this.pickPrompter(domWin);
         p.alert(title, text);
     },
 
-    alertCheck : function (domWin, title, text, checkLabel, checkValue) {
+    alertCheck(domWin, title, text, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         p.alertCheck(title, text, checkLabel, checkValue);
     },
 
-    confirm : function (domWin, title, text) {
+    confirm(domWin, title, text) {
         let p = this.pickPrompter(domWin);
         return p.confirm(title, text);
     },
 
-    confirmCheck : function (domWin, title, text, checkLabel, checkValue) {
+    confirmCheck(domWin, title, text, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.confirmCheck(title, text, checkLabel, checkValue);
     },
 
-    confirmEx : function (domWin, title, text, flags, button0, button1, button2, checkLabel, checkValue) {
+    confirmEx(domWin, title, text, flags, button0, button1, button2, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
-        return p.confirmEx(title, text,  flags, button0, button1, button2, checkLabel, checkValue);
+        return p.confirmEx(title, text, flags, button0, button1, button2, checkLabel, checkValue);
     },
 
-    prompt : function (domWin, title, text, value, checkLabel, checkValue) {
+    prompt(domWin, title, text, value, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.nsIPrompt_prompt(title, text, value, checkLabel, checkValue);
     },
 
-    promptUsernameAndPassword : function (domWin, title, text, user, pass, checkLabel, checkValue) {
+    promptUsernameAndPassword(domWin, title, text, user, pass, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.nsIPrompt_promptUsernameAndPassword(title, text, user, pass, checkLabel, checkValue);
     },
 
-    promptPassword : function (domWin, title, text, pass, checkLabel, checkValue) {
+    promptPassword(domWin, title, text, pass, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.nsIPrompt_promptPassword(title, text, pass, checkLabel, checkValue);
     },
 
-    select : function (domWin, title, text, count, list, selected) {
+    select(domWin, title, text, count, list, selected) {
         let p = this.pickPrompter(domWin);
         return p.select(title, text, count, list, selected);
     },
@@ -103,12 +103,12 @@ Prompter.prototype = {
     /* ----------  nsIPromptService2  ---------- */
 
 
-    promptAuth : function (domWin, channel, level, authInfo, checkLabel, checkValue) {
+    promptAuth(domWin, channel, level, authInfo, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.promptAuth(channel, level, authInfo, checkLabel, checkValue);
     },
 
-    asyncPromptAuth : function (domWin, channel, callback, context, level, authInfo, checkLabel, checkValue) {
+    asyncPromptAuth(domWin, channel, callback, context, level, authInfo, checkLabel, checkValue) {
         let p = this.pickPrompter(domWin);
         return p.asyncPromptAuth(channel, callback, context, level, authInfo, checkLabel, checkValue);
     },
@@ -118,16 +118,15 @@ Prompter.prototype = {
 
 // Common utils not specific to a particular prompter style.
 var PromptUtilsTemp = {
-    __proto__ : PromptUtils,
+    __proto__: PromptUtils,
 
-    getLocalizedString : function (key, formatArgs) {
+    getLocalizedString(key, formatArgs) {
         if (formatArgs)
             return this.strBundle.formatStringFromName(key, formatArgs, formatArgs.length);
-        else
-            return this.strBundle.GetStringFromName(key);
+        return this.strBundle.GetStringFromName(key);
     },
 
-    confirmExHelper : function (flags, button0, button1, button2) {
+    confirmExHelper(flags, button0, button1, button2) {
         const BUTTON_DEFAULT_MASK = 0x03000000;
         let defaultButtonNum = (flags & BUTTON_DEFAULT_MASK) >> 24;
         let isDelayEnabled = (flags & Ci.nsIPrompt.BUTTON_DELAY_ENABLE);
@@ -173,7 +172,7 @@ var PromptUtilsTemp = {
         return [buttonLabels[0], buttonLabels[1], buttonLabels[2], defaultButtonNum, isDelayEnabled];
     },
 
-    getAuthInfo : function (authInfo) {
+    getAuthInfo(authInfo) {
         let username, password;
 
         let flags = authInfo.flags;
@@ -187,7 +186,7 @@ var PromptUtilsTemp = {
         return [username, password];
     },
 
-    setAuthInfo : function (authInfo, username, password) {
+    setAuthInfo(authInfo, username, password) {
         let flags = authInfo.flags;
         if (flags & Ci.nsIAuthInformation.NEED_DOMAIN) {
             // Domain is separated from username by a backslash
@@ -196,7 +195,7 @@ var PromptUtilsTemp = {
                 authInfo.username = username;
             } else {
                 authInfo.domain   =  username.substring(0, idx);
-                authInfo.username =  username.substring(idx+1);
+                authInfo.username =  username.substring(idx + 1);
             }
         } else {
             authInfo.username = username;
@@ -207,12 +206,12 @@ var PromptUtilsTemp = {
     /**
      * Strip out things like userPass and path for display.
      */
-    getFormattedHostname : function (uri) {
+    getFormattedHostname(uri) {
         return uri.scheme + "://" + uri.hostPort;
     },
 
     // Copied from login manager
-    getAuthTarget : function (aChannel, aAuthInfo) {
+    getAuthTarget(aChannel, aAuthInfo) {
         let hostname, realm;
 
         // If our proxy is demanding authentication, don't use the
@@ -252,7 +251,7 @@ var PromptUtilsTemp = {
     },
 
 
-    makeAuthMessage : function (channel, authInfo) {
+    makeAuthMessage(channel, authInfo) {
         let isProxy    = (authInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY);
         let isPassOnly = (authInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD);
         let isCrossOrig = (authInfo.flags &
@@ -274,21 +273,21 @@ var PromptUtilsTemp = {
 
         let text;
         if (isProxy) {
-            text = PromptUtils.getLocalizedString("EnterLoginForProxy2", [realm, displayHost]);
+            text = PromptUtils.getLocalizedString("EnterLoginForProxy3", [realm, displayHost]);
         } else if (isPassOnly) {
             text = PromptUtils.getLocalizedString("EnterPasswordFor", [username, displayHost]);
         } else if (isCrossOrig) {
-            text = PromptUtils.getLocalizedString("EnterUserPasswordForCrossOrigin", [displayHost]);
+            text = PromptUtils.getLocalizedString("EnterUserPasswordForCrossOrigin2", [displayHost]);
         } else if (!realm) {
             text = PromptUtils.getLocalizedString("EnterUserPasswordFor2", [displayHost]);
         } else {
-            text = PromptUtils.getLocalizedString("EnterLoginForRealm2", [realm, displayHost]);
+            text = PromptUtils.getLocalizedString("EnterLoginForRealm3", [realm, displayHost]);
         }
 
-        return text.replace(/\n{1,}/g,' ');
+        return text;
     },
 
-    getTabModalPrompt : function (domWin) {
+    getTabModalPrompt(domWin) {
         var promptBox = null;
 
         try {
@@ -300,8 +299,7 @@ var PromptUtilsTemp = {
             var chromeWin = promptWin.QueryInterface(Ci.nsIInterfaceRequestor)
                                      .getInterface(Ci.nsIWebNavigation)
                                      .QueryInterface(Ci.nsIDocShell)
-                                     .chromeEventHandler.ownerDocument
-                                     .defaultView.wrappedJSObject;
+                                     .chromeEventHandler.ownerGlobal.wrappedJSObject;
 
             if (chromeWin.getTabModalPromptBox)
                 promptBox = chromeWin.getTabModalPromptBox(promptWin);
@@ -315,7 +313,7 @@ var PromptUtilsTemp = {
 
 PromptUtils = PromptUtilsTemp;
 
-XPCOMUtils.defineLazyGetter(PromptUtils, "strBundle", function () {
+XPCOMUtils.defineLazyGetter(PromptUtils, "strBundle", function() {
     let bunService = Cc["@mozilla.org/intl/stringbundle;1"].
                      getService(Ci.nsIStringBundleService);
     let bundle = bunService.createBundle("chrome://global/locale/commonDialogs.properties");
@@ -324,7 +322,7 @@ XPCOMUtils.defineLazyGetter(PromptUtils, "strBundle", function () {
     return bundle;
 });
 
-XPCOMUtils.defineLazyGetter(PromptUtils, "ellipsis", function () {
+XPCOMUtils.defineLazyGetter(PromptUtils, "ellipsis", function() {
     let ellipsis = "\u2026";
     try {
         ellipsis = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
@@ -376,6 +374,10 @@ function openTabPrompt(domWin, tabPrompt, args) {
                          .getInterface(Ci.nsIDOMWindowUtils);
     winUtils.enterModalState();
 
+    let frameMM = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIContentFrameMessageManager);
+    frameMM.QueryInterface(Ci.nsIDOMEventTarget);
+
     // We provide a callback so the prompt can close itself. We don't want to
     // wait for this event loop to return... Otherwise the presence of other
     // prompts on the call stack would in this dialog appearing unresponsive
@@ -389,16 +391,25 @@ function openTabPrompt(domWin, tabPrompt, args) {
         if (newPrompt)
             tabPrompt.removePrompt(newPrompt);
 
-        domWin.removeEventListener("pagehide", pagehide);
+        frameMM.removeEventListener("pagehide", pagehide, true);
 
         winUtils.leaveModalState();
 
         PromptUtils.fireDialogEvent(domWin, "DOMModalDialogClosed");
     }
 
-    domWin.addEventListener("pagehide", pagehide);
-    function pagehide() {
-        domWin.removeEventListener("pagehide", pagehide);
+    frameMM.addEventListener("pagehide", pagehide, true);
+    function pagehide(e) {
+        // Check whether the event relates to our window or its ancestors
+        let window = domWin;
+        let eventWindow = e.target.defaultView;
+        while (window != eventWindow && window.parent != window) {
+          window = window.parent;
+        }
+        if (window != eventWindow) {
+          return;
+        }
+        frameMM.removeEventListener("pagehide", pagehide, true);
 
         if (newPrompt) {
             newPrompt.abortPrompt();
@@ -417,9 +428,7 @@ function openTabPrompt(domWin, tabPrompt, args) {
         // there's other stuff in nsWindowWatcher::OpenWindowInternal
         // that we might need to do here as well.
 
-        let thread = Services.tm.currentThread;
-        while (args.promptActive)
-            thread.processNextEvent(true);
+        Services.tm.spinEventLoopUntil(() => !args.promptActive);
         delete args.promptActive;
 
         if (args.promptAborted)
@@ -447,6 +456,9 @@ function openRemotePrompt(domWin, args, tabPrompt) {
     winUtils.enterModalState();
     let closed = false;
 
+    let frameMM = docShell.getInterface(Ci.nsIContentFrameMessageManager);
+    frameMM.QueryInterface(Ci.nsIDOMEventTarget);
+
     // It should be hard or impossible to cause a window to create multiple
     // prompts, but just in case, give our prompt an ID.
     let id = "id" + Cc["@mozilla.org/uuid-generator;1"]
@@ -458,7 +470,7 @@ function openRemotePrompt(domWin, args, tabPrompt) {
         }
 
         messageManager.removeMessageListener("Prompt:Close", listener);
-        domWin.removeEventListener("pagehide", pagehide);
+        frameMM.removeEventListener("pagehide", pagehide, true);
 
         winUtils.leaveModalState();
         PromptUtils.fireDialogEvent(domWin, "DOMModalDialogClosed");
@@ -475,9 +487,18 @@ function openRemotePrompt(domWin, args, tabPrompt) {
         closed = true;
     });
 
-    domWin.addEventListener("pagehide", pagehide);
-    function pagehide() {
-        domWin.removeEventListener("pagehide", pagehide);
+    frameMM.addEventListener("pagehide", pagehide, true);
+    function pagehide(e) {
+        // Check whether the event relates to our window or its ancestors
+        let window = domWin;
+        let eventWindow = e.target.defaultView;
+        while (window != eventWindow && window.parent != window) {
+          window = window.parent;
+        }
+        if (window != eventWindow) {
+          return;
+        }
+        frameMM.removeEventListener("pagehide", pagehide, true);
         messageManager.sendAsyncMessage("Prompt:ForceClose", { _remoteId: id });
     }
 
@@ -491,25 +512,22 @@ function openRemotePrompt(domWin, args, tabPrompt) {
 
     messageManager.sendAsyncMessage("Prompt:Open", args, {});
 
-    let thread = Services.tm.currentThread;
-    while (!closed) {
-        thread.processNextEvent(true);
-    }
+    Services.tm.spinEventLoopUntil(() => closed);
 }
 
 function ModalPrompter(domWin) {
     this.domWin = domWin;
 }
 ModalPrompter.prototype = {
-    domWin : null,
+    domWin: null,
     /*
      * Default to not using a tab-modal prompt, unless the caller opts in by
      * QIing to nsIWritablePropertyBag and setting the value of this property
      * to true.
      */
-    allowTabModal : false,
+    allowTabModal: false,
 
-    QueryInterface : XPCOMUtils.generateQI([Ci.nsIPrompt, Ci.nsIAuthPrompt,
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIPrompt, Ci.nsIAuthPrompt,
                                             Ci.nsIAuthPrompt2,
                                             Ci.nsIWritablePropertyBag2]),
 
@@ -517,7 +535,7 @@ ModalPrompter.prototype = {
     /* ---------- internal methods ---------- */
 
 
-    openPrompt : function (args) {
+    openPrompt(args) {
         // Check pref, if false/missing do not ever allow tab-modal prompts.
         const prefName = "prompts.tab_modal.enabled";
         let prefValue = false;
@@ -566,56 +584,53 @@ ModalPrompter.prototype = {
      * arguments, so look at the arg types to figure out how we're being
      * called. :-(
      */
-    prompt : function() {
+    prompt() {
         // also, the nsIPrompt flavor has 5 args instead of 6.
         if (typeof arguments[2] == "object")
             return this.nsIPrompt_prompt.apply(this, arguments);
-        else
-            return this.nsIAuthPrompt_prompt.apply(this, arguments);
+        return this.nsIAuthPrompt_prompt.apply(this, arguments);
     },
 
-    promptUsernameAndPassword : function() {
+    promptUsernameAndPassword() {
         // Both have 6 args, so use types.
         if (typeof arguments[2] == "object")
             return this.nsIPrompt_promptUsernameAndPassword.apply(this, arguments);
-        else
-            return this.nsIAuthPrompt_promptUsernameAndPassword.apply(this, arguments);
+        return this.nsIAuthPrompt_promptUsernameAndPassword.apply(this, arguments);
     },
 
-    promptPassword : function() {
+    promptPassword() {
         // Both have 5 args, so use types.
         if (typeof arguments[2] == "object")
             return this.nsIPrompt_promptPassword.apply(this, arguments);
-        else
-            return this.nsIAuthPrompt_promptPassword.apply(this, arguments);
+        return this.nsIAuthPrompt_promptPassword.apply(this, arguments);
     },
 
 
     /* ----------  nsIPrompt  ---------- */
 
 
-    alert : function (title, text) {
+    alert(title, text) {
         if (!title)
             title = PromptUtils.getLocalizedString("Alert");
 
         let args = {
             promptType: "alert",
-            title:      title,
-            text:       text,
+            title,
+            text,
         };
 
         this.openPrompt(args);
     },
 
-    alertCheck : function (title, text, checkLabel, checkValue) {
+    alertCheck(title, text, checkLabel, checkValue) {
         if (!title)
             title = PromptUtils.getLocalizedString("Alert");
 
         let args = {
             promptType: "alertCheck",
-            title:      title,
-            text:       text,
-            checkLabel: checkLabel,
+            title,
+            text,
+            checkLabel,
             checked:    checkValue.value,
         };
 
@@ -625,14 +640,14 @@ ModalPrompter.prototype = {
         checkValue.value = args.checked;
     },
 
-    confirm : function (title, text) {
+    confirm(title, text) {
         if (!title)
             title = PromptUtils.getLocalizedString("Confirm");
 
         let args = {
             promptType: "confirm",
-            title:      title,
-            text:       text,
+            title,
+            text,
             ok:         false,
         };
 
@@ -642,15 +657,15 @@ ModalPrompter.prototype = {
         return args.ok;
     },
 
-    confirmCheck : function (title, text, checkLabel, checkValue) {
+    confirmCheck(title, text, checkLabel, checkValue) {
         if (!title)
             title = PromptUtils.getLocalizedString("ConfirmCheck");
 
         let args = {
             promptType: "confirmCheck",
-            title:      title,
-            text:       text,
-            checkLabel: checkLabel,
+            title,
+            text,
+            checkLabel,
             checked:    checkValue.value,
             ok:         false,
         };
@@ -664,17 +679,17 @@ ModalPrompter.prototype = {
         return args.ok;
     },
 
-    confirmEx : function (title, text, flags, button0, button1, button2,
-                          checkLabel, checkValue) {
+    confirmEx(title, text, flags, button0, button1, button2,
+                         checkLabel, checkValue) {
 
         if (!title)
             title = PromptUtils.getLocalizedString("Confirm");
 
         let args = {
             promptType:  "confirmEx",
-            title:       title,
-            text:        text,
-            checkLabel:  checkLabel,
+            title,
+            text,
+            checkLabel,
             checked:     checkValue.value,
             ok:          false,
             buttonNumClicked: 1,
@@ -705,16 +720,16 @@ ModalPrompter.prototype = {
         return args.buttonNumClicked;
     },
 
-    nsIPrompt_prompt : function (title, text, value, checkLabel, checkValue) {
+    nsIPrompt_prompt(title, text, value, checkLabel, checkValue) {
         if (!title)
             title = PromptUtils.getLocalizedString("Prompt");
 
         let args = {
             promptType: "prompt",
-            title:      title,
-            text:       text,
+            title,
+            text,
             value:      value.value,
-            checkLabel: checkLabel,
+            checkLabel,
             checked:    checkValue.value,
             ok:         false,
         };
@@ -731,17 +746,17 @@ ModalPrompter.prototype = {
         return ok;
     },
 
-    nsIPrompt_promptUsernameAndPassword : function (title, text, user, pass, checkLabel, checkValue) {
+    nsIPrompt_promptUsernameAndPassword(title, text, user, pass, checkLabel, checkValue) {
         if (!title)
             title = PromptUtils.getLocalizedString("PromptUsernameAndPassword2");
 
         let args = {
             promptType: "promptUserAndPass",
-            title:      title,
-            text:       text,
+            title,
+            text,
             user:       user.value,
             pass:       pass.value,
-            checkLabel: checkLabel,
+            checkLabel,
             checked:    checkValue.value,
             ok:         false,
         };
@@ -759,16 +774,16 @@ ModalPrompter.prototype = {
         return ok;
     },
 
-    nsIPrompt_promptPassword : function (title, text, pass, checkLabel, checkValue) {
+    nsIPrompt_promptPassword(title, text, pass, checkLabel, checkValue) {
         if (!title)
             title = PromptUtils.getLocalizedString("PromptPassword2");
 
         let args = {
             promptType: "promptPassword",
-            title:      title,
-            text:       text,
+            title,
+            text,
             pass:       pass.value,
-            checkLabel: checkLabel,
+            checkLabel,
             checked:    checkValue.value,
             ok:         false,
         }
@@ -785,15 +800,15 @@ ModalPrompter.prototype = {
         return ok;
     },
 
-    select : function (title, text, count, list, selected) {
+    select(title, text, count, list, selected) {
         if (!title)
             title = PromptUtils.getLocalizedString("Select");
 
         let args = {
             promptType: "select",
-            title:      title,
-            text:       text,
-            list:       list,
+            title,
+            text,
+            list,
             selected:   -1,
             ok:         false,
         };
@@ -812,19 +827,19 @@ ModalPrompter.prototype = {
     /* ----------  nsIAuthPrompt  ---------- */
 
 
-    nsIAuthPrompt_prompt : function (title, text, passwordRealm, savePassword, defaultText, result) {
+    nsIAuthPrompt_prompt(title, text, passwordRealm, savePassword, defaultText, result) {
         // The passwordRealm and savePassword args were ignored by nsPrompt.cpp
         if (defaultText)
             result.value = defaultText;
         return this.nsIPrompt_prompt(title, text, result, null, {});
     },
 
-    nsIAuthPrompt_promptUsernameAndPassword : function (title, text, passwordRealm, savePassword, user, pass) {
+    nsIAuthPrompt_promptUsernameAndPassword(title, text, passwordRealm, savePassword, user, pass) {
         // The passwordRealm and savePassword args were ignored by nsPrompt.cpp
         return this.nsIPrompt_promptUsernameAndPassword(title, text, user, pass, null, {});
     },
 
-    nsIAuthPrompt_promptPassword : function (title, text, passwordRealm, savePassword, pass) {
+    nsIAuthPrompt_promptPassword(title, text, passwordRealm, savePassword, pass) {
         // The passwordRealm and savePassword args were ignored by nsPrompt.cpp
         return this.nsIPrompt_promptPassword(title, text, pass, null, {});
     },
@@ -833,7 +848,7 @@ ModalPrompter.prototype = {
     /* ----------  nsIAuthPrompt2  ---------- */
 
 
-    promptAuth : function (channel, level, authInfo, checkLabel, checkValue) {
+    promptAuth(channel, level, authInfo, checkLabel, checkValue) {
         let message = PromptUtils.makeAuthMessage(channel, authInfo);
 
         let [username, password] = PromptUtils.getAuthInfo(authInfo);
@@ -852,7 +867,7 @@ ModalPrompter.prototype = {
         return ok;
     },
 
-    asyncPromptAuth : function (channel, callback, context, level, authInfo, checkLabel, checkValue) {
+    asyncPromptAuth(channel, callback, context, level, authInfo, checkLabel, checkValue) {
         // Nothing calls this directly; netwerk ends up going through
         // nsIPromptService::GetPrompt, which delegates to login manager.
         // Login manger handles the async bits itself, and only calls out
@@ -866,7 +881,7 @@ ModalPrompter.prototype = {
 
     // Only a partial implementation, for one specific use case...
 
-    setPropertyAsBool : function(name, value) {
+    setPropertyAsBool(name, value) {
         if (name == "allowTabModal")
             this.allowTabModal = value;
         else
@@ -878,12 +893,12 @@ ModalPrompter.prototype = {
 function AuthPromptAdapterFactory() {
 }
 AuthPromptAdapterFactory.prototype = {
-    classID          : Components.ID("{6e134924-6c3a-4d86-81ac-69432dd971dc}"),
-    QueryInterface   : XPCOMUtils.generateQI([Ci.nsIAuthPromptAdapterFactory]),
+    classID: Components.ID("{6e134924-6c3a-4d86-81ac-69432dd971dc}"),
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAuthPromptAdapterFactory]),
 
     /* ----------  nsIAuthPromptAdapterFactory ---------- */
 
-    createAdapter : function (oldPrompter) {
+    createAdapter(oldPrompter) {
         return new AuthPromptAdapter(oldPrompter);
     }
 };
@@ -894,12 +909,12 @@ function AuthPromptAdapter(oldPrompter) {
     this.oldPrompter = oldPrompter;
 }
 AuthPromptAdapter.prototype = {
-    QueryInterface : XPCOMUtils.generateQI([Ci.nsIAuthPrompt2]),
-    oldPrompter    : null,
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIAuthPrompt2]),
+    oldPrompter: null,
 
     /* ----------  nsIAuthPrompt2 ---------- */
 
-    promptAuth : function (channel, level, authInfo, checkLabel, checkValue) {
+    promptAuth(channel, level, authInfo, checkLabel, checkValue) {
         let message = PromptUtils.makeAuthMessage(channel, authInfo);
 
         let [username, password] = PromptUtils.getAuthInfo(authInfo);
@@ -920,7 +935,7 @@ AuthPromptAdapter.prototype = {
         return ok;
     },
 
-    asyncPromptAuth : function (channel, callback, context, level, authInfo, checkLabel, checkValue) {
+    asyncPromptAuth(channel, callback, context, level, authInfo, checkLabel, checkValue) {
         throw Cr.NS_ERROR_NOT_IMPLEMENTED;
     }
 };

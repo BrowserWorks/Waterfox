@@ -11,7 +11,6 @@
 #include <stdint.h>                     // for uint32_t
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/ProtocolUtils.h"
-#include "mozilla/layers/AsyncTransactionTracker.h" // for AsyncTransactionTracker
 #include "mozilla/layers/PLayerTransactionChild.h"
 #include "mozilla/RefPtr.h"
 
@@ -40,6 +39,7 @@ public:
   void Destroy();
 
   bool IPCOpen() const { return mIPCOpen && !mDestroyed; }
+  bool IsDestroyed() const { return mDestroyed; }
 
   void SetForwarder(ShadowLayerForwarder* aForwarder)
   {
@@ -47,6 +47,10 @@ public:
   }
 
   uint64_t GetId() const { return mId; }
+
+  void MarkDestroyed() {
+    mDestroyed = true;
+  }
 
 protected:
   explicit LayerTransactionChild(const uint64_t& aId)
@@ -56,12 +60,6 @@ protected:
     , mId(aId)
   {}
   ~LayerTransactionChild() { }
-
-  virtual PLayerChild* AllocPLayerChild() override;
-  virtual bool DeallocPLayerChild(PLayerChild* actor) override;
-
-  virtual PCompositableChild* AllocPCompositableChild(const TextureInfo& aInfo) override;
-  virtual bool DeallocPCompositableChild(PCompositableChild* actor) override;
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
 

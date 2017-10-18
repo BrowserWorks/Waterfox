@@ -35,12 +35,12 @@ interface nsIBrowserElementAPI : nsISupports
   const long FIND_FORWARD = 0;
   const long FIND_BACKWARD = 1;
 
-  void setFrameLoader(in nsIFrameLoader frameLoader);
+  /**
+   * Notify frame scripts that support the API to destroy.
+   */
+  void destroyFrameScripts();
 
-  void setVisible(in boolean visible);
-  nsIDOMDOMRequest getVisible();
-  void setActive(in boolean active);
-  boolean getActive();
+  void setFrameLoader(in nsIFrameLoader frameLoader);
 
   void sendMouseEvent(in DOMString type,
                       in uint32_t x,
@@ -77,27 +77,8 @@ interface nsIBrowserElementAPI : nsISupports
   void findNext(in long direction);
   void clearMatch();
 
-  void mute();
-  void unmute();
-  nsIDOMDOMRequest getMuted();
-
-  void setVolume(in float volume);
-  nsIDOMDOMRequest getVolume();
-
   void addNextPaintListener(in nsIBrowserElementNextPaintListener listener);
   void removeNextPaintListener(in nsIBrowserElementNextPaintListener listener);
-
-  nsIDOMDOMRequest setInputMethodActive(in boolean isActive);
-
-  nsIDOMDOMRequest getAudioChannelVolume(in uint32_t audioChannel);
-  nsIDOMDOMRequest setAudioChannelVolume(in uint32_t audioChannel, in float volume);
-
-  nsIDOMDOMRequest getAudioChannelMuted(in uint32_t audioChannel);
-  nsIDOMDOMRequest setAudioChannelMuted(in uint32_t audioChannel, in bool muted);
-
-  nsIDOMDOMRequest isAudioChannelActive(in uint32_t audioChannel);
-
-  void setNFCFocus(in boolean isFocus);
 
   nsIDOMDOMRequest executeScript(in DOMString script, in jsval options);
 

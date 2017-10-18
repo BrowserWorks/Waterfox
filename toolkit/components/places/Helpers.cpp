@@ -5,10 +5,10 @@
 
 #include "Helpers.h"
 #include "mozIStorageError.h"
-#include "plbase64.h"
 #include "prio.h"
 #include "nsString.h"
 #include "nsNavHistory.h"
+#include "mozilla/Base64.h"
 #include "mozilla/Services.h"
 
 // The length of guids that are used by history and bookmarks.
@@ -26,20 +26,20 @@ NS_IMPL_ISUPPORTS(
 )
 
 NS_IMETHODIMP
-AsyncStatementCallback::HandleResult(mozIStorageResultSet *aResultSet)
+WeakAsyncStatementCallback::HandleResult(mozIStorageResultSet *aResultSet)
 {
   MOZ_ASSERT(false, "Was not expecting a resultset, but got it.");
   return NS_OK;
 }
 
 NS_IMETHODIMP
-AsyncStatementCallback::HandleCompletion(uint16_t aReason)
+WeakAsyncStatementCallback::HandleCompletion(uint16_t aReason)
 {
   return NS_OK;
 }
 
 NS_IMETHODIMP
-AsyncStatementCallback::HandleError(mozIStorageError *aError)
+WeakAsyncStatementCallback::HandleError(mozIStorageError *aError)
 {
 #ifdef DEBUG
   int32_t result;
@@ -201,30 +201,6 @@ ReverseString(const nsString& aInput, nsString& aReversed)
   }
 }
 
-static
-nsresult
-Base64urlEncode(const uint8_t* aBytes,
-                uint32_t aNumBytes,
-                nsCString& _result)
-{
-  // SetLength does not set aside space for null termination.  PL_Base64Encode
-  // will not null terminate, however, nsCStrings must be null terminated.  As a
-  // result, we set the capacity to be one greater than what we need, and the
-  // length to our desired length.
-  uint32_t length = (aNumBytes + 2) / 3 * 4; // +2 due to integer math.
-  NS_ENSURE_TRUE(_result.SetCapacity(length + 1, fallible),
-                 NS_ERROR_OUT_OF_MEMORY);
-  _result.SetLength(length);
-  (void)PL_Base64Encode(reinterpret_cast<const char*>(aBytes), aNumBytes,
-                        _result.BeginWriting());
-
-  // base64url encoding is defined in RFC 4648.  It replaces the last two
-  // alphabet characters of base64 encoding with '-' and '_' respectively.
-  _result.ReplaceChar('+', '-');
-  _result.ReplaceChar('/', '_');
-  return NS_OK;
-}
-
 #ifdef XP_WIN
 } // namespace places
 } // namespace mozilla
@@ -271,7 +247,7 @@ GenerateRandomBytes(uint32_t aSize,
 }
 
 nsresult
-GenerateGUID(nsCString& _guid)
+GenerateGUID(nsACString& _guid)
 {
   _guid.Truncate();
 
@@ -284,7 +260,8 @@ GenerateGUID(nsCString& _guid)
   nsresult rv = GenerateRandomBytes(kRequiredBytesLength, buffer);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = Base64urlEncode(buffer, kRequiredBytesLength, _guid);
+  rv = Base64URLEncode(kRequiredBytesLength, buffer,
+                       Base64URLEncodePaddingPolicy::Omit, _guid);
   NS_ENSURE_SUCCESS(rv, rv);
 
   NS_ASSERTION(_guid.Length() == GUID_LENGTH, "GUID is not the right size!");
@@ -315,6 +292,9 @@ IsValidGUID(const nsACString& aGUID)
 void
 TruncateTitle(const nsACString& aTitle, nsACString& aTrimmed)
 {
+  if (aTitle.IsVoid()) {
+    return;
+  }
   aTrimmed = aTitle;
   if (aTitle.Length() > TITLE_LENGTH_MAX) {
     aTrimmed = StringHead(aTitle, TITLE_LENGTH_MAX);
@@ -331,21 +311,6 @@ RoundedPRNow() {
   return RoundToMilliseconds(PR_Now());
 }
 
-void
-ForceWALCheckpoint()
-{
-  RefPtr<Database> DB = Database::GetDatabase();
-  if (DB) {
-    nsCOMPtr<mozIStorageAsyncStatement> stmt = DB->GetAsyncStatement(
-      "pragma wal_checkpoint "
-    );
-    if (stmt) {
-      nsCOMPtr<mozIStoragePendingStatement> handle;
-      (void)stmt->ExecuteAsync(nullptr, getter_AddRefs(handle));
-    }
-  }
-}
-
 bool
 GetHiddenState(bool aIsRedirect,
                uint32_t aTransitionType)
@@ -354,36 +319,6 @@ GetHiddenState(bool aIsRedirect,
          aTransitionType == nsINavHistoryService::TRANSITION_EMBED ||
          aIsRedirect;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-//// PlacesEvent
-
-PlacesEvent::PlacesEvent(const char* aTopic)
-: mTopic(aTopic)
-{
-}
-
-NS_IMETHODIMP
-PlacesEvent::Run()
-{
-  Notify();
-  return NS_OK;
-}
-
-void
-PlacesEvent::Notify()
-{
-  NS_ASSERTION(NS_IsMainThread(), "Must only be used on the main thread!");
-  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-  if (obs) {
-    (void)obs->NotifyObservers(nullptr, mTopic, nullptr);
-  }
-}
-
-NS_IMPL_ISUPPORTS_INHERITED0(
-  PlacesEvent
-, Runnable
-)
 
 ////////////////////////////////////////////////////////////////////////////////
 //// AsyncStatementCallbackNotifier

@@ -28,11 +28,14 @@ public:
     const SkPoint& offset() const;
     void applyFontToPaint(SkPaint*) const;
     SkTextBlob::GlyphPositioning positioning() const;
+    uint32_t* clusters() const;
+    uint32_t textSize() const;
+    char* text() const;
+
     bool isLCD() const;
 
 private:
     const SkTextBlob::RunRecord* fCurrentRun;
-    int fRemainingRuns;
 
     SkDEBUGCODE(uint8_t* fStorageTop;)
 };

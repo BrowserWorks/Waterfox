@@ -14,17 +14,13 @@
 #include "nsIAsyncOutputStream.h"
 #include "nsITimer.h"
 #include "nsIDNSListener.h"
+#include "nsINamed.h"
 #include "nsIObserver.h"
 #include "nsIProtocolProxyCallback.h"
 #include "nsIChannelEventSink.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIStringStream.h"
 #include "BaseWebSocketChannel.h"
-
-#ifdef MOZ_WIDGET_GONK
-#include "nsINetworkInterface.h"
-#include "nsProxyRelease.h"
-#endif
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
@@ -52,7 +48,7 @@ class CallOnServerClose;
 class CallAcknowledge;
 class WebSocketEventService;
 
-extern nsresult
+extern MOZ_MUST_USE nsresult
 CalculateWebSocketHashedSecret(const nsACString& aKey, nsACString& aHash);
 extern void
 ProcessServerWebSocketExtensions(const nsACString& aExtensions,
@@ -76,7 +72,8 @@ class WebSocketChannel : public BaseWebSocketChannel,
                          public nsIObserver,
                          public nsIProtocolProxyCallback,
                          public nsIInterfaceRequestor,
-                         public nsIChannelEventSink
+                         public nsIChannelEventSink,
+                         public nsINamed
 {
   friend class WebSocketFrame;
 
@@ -93,6 +90,7 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICHANNELEVENTSINK
   NS_DECL_NSIOBSERVER
+  NS_DECL_NSINAMED
 
   // nsIWebSocketChannel methods BaseWebSocketChannel didn't implement for us
   //
@@ -142,8 +140,9 @@ private:
   friend class CallAcknowledge;
 
   // Common send code for binary + text msgs
-  nsresult SendMsgCommon(const nsACString *aMsg, bool isBinary,
-                         uint32_t length, nsIInputStream *aStream = nullptr);
+  MOZ_MUST_USE nsresult SendMsgCommon(const nsACString *aMsg, bool isBinary,
+                                      uint32_t length,
+                                      nsIInputStream *aStream = nullptr);
 
   void EnqueueOutgoingMessage(nsDeque &aQueue, OutboundMessage *aMsg);
 
@@ -152,16 +151,16 @@ private:
   void GeneratePong(uint8_t *payload, uint32_t len);
   void GeneratePing();
 
-  nsresult OnNetworkChanged();
-  nsresult StartPinging();
+  MOZ_MUST_USE nsresult OnNetworkChanged();
+  MOZ_MUST_USE nsresult StartPinging();
 
   void     BeginOpen(bool aCalledFromAdmissionManager);
   void     BeginOpenInternal();
-  nsresult HandleExtensions();
-  nsresult SetupRequest();
-  nsresult ApplyForAdmission();
-  nsresult DoAdmissionDNS();
-  nsresult StartWebsocketData();
+  MOZ_MUST_USE nsresult HandleExtensions();
+  MOZ_MUST_USE nsresult SetupRequest();
+  MOZ_MUST_USE nsresult ApplyForAdmission();
+  MOZ_MUST_USE nsresult DoAdmissionDNS();
+  MOZ_MUST_USE nsresult StartWebsocketData();
   uint16_t ResultToCloseCode(nsresult resultCode);
   void     ReportConnectionTelemetry();
 
@@ -177,10 +176,10 @@ private:
   static void ApplyMask(uint32_t mask, uint8_t *data, uint64_t len);
 
   bool     IsPersistentFramePtr();
-  nsresult ProcessInput(uint8_t *buffer, uint32_t count);
-  bool UpdateReadBuffer(uint8_t *buffer, uint32_t count,
-                        uint32_t accumulatedFragments,
-                        uint32_t *available);
+  MOZ_MUST_USE nsresult ProcessInput(uint8_t *buffer, uint32_t count);
+  MOZ_MUST_USE bool UpdateReadBuffer(uint8_t *buffer, uint32_t count,
+                                     uint32_t accumulatedFragments,
+                                     uint32_t *available);
 
   inline void ResetPingTimer()
   {
@@ -300,27 +299,6 @@ private:
   bool                            mPrivateBrowsing;
 
   nsCOMPtr<nsIDashboardEventNotifier> mConnectionLogService;
-
-// These members are used for network per-app metering (bug 855949)
-// Currently, they are only available on gonk.
-  Atomic<uint64_t, Relaxed>       mCountRecv;
-  Atomic<uint64_t, Relaxed>       mCountSent;
-  uint32_t                        mAppId;
-  bool                            mIsInIsolatedMozBrowser;
-#ifdef MOZ_WIDGET_GONK
-  nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
-#endif
-  nsresult                        SaveNetworkStats(bool);
-  void                            CountRecvBytes(uint64_t recvBytes)
-  {
-    mCountRecv += recvBytes;
-    SaveNetworkStats(false);
-  }
-  void                            CountSentBytes(uint64_t sentBytes)
-  {
-    mCountSent += sentBytes;
-    SaveNetworkStats(false);
-  }
 };
 
 class WebSocketSSLChannel : public WebSocketChannel

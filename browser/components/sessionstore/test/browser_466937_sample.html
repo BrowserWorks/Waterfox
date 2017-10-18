@@ -10,13 +10,11 @@
 
 <script>
   window.addEventListener("DOMContentLoaded", function() {
-    window.removeEventListener("DOMContentLoaded", arguments.callee, false);
     if (!document.location.hash) {
       document.location.hash = "#ready";
-    }
-    else {
+    } else {
       document.getElementById("thief").type = "file";
       document.getElementById("reverse_thief").type = "text";
     }
-  }, false);
+  }, {once: true});
 </script>

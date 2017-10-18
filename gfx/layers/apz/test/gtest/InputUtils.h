@@ -13,6 +13,7 @@
  */
 
 #include "APZTestCommon.h"
+#include "gfxPrefs.h"
 
 /* The InputReceiver template parameter used in the helper functions below needs
  * to be a class that implements functions with the signatures:
@@ -51,9 +52,10 @@ CreatePinchGestureInput(PinchGestureInput::PinchGestureType aType,
                         const ScreenIntPoint& aFocus,
                         float aCurrentSpan, float aPreviousSpan)
 {
-  PinchGestureInput result(aType, 0, TimeStamp(), aFocus,
+  ParentLayerPoint localFocus(aFocus.x, aFocus.y);
+  PinchGestureInput result(aType, 0, TimeStamp(), localFocus,
                            aCurrentSpan, aPreviousSpan, 0);
-  result.mLocalFocusPoint = ParentLayerPoint(aFocus.x, aFocus.y);
+  result.mFocusPoint = aFocus;
   return result;
 }
 
@@ -136,7 +138,7 @@ PinchWithPinchInput(const RefPtr<InputReceiver>& aTarget,
       CreatePinchGestureInput(PinchGestureInput::PINCHGESTURE_END,
                               // note: negative values here tell APZC
                               //       not to turn the pinch into a pan
-                              aFocus, -1.0, -1.0),
+                              ScreenIntPoint(-1, -1), 10.0 * aScale, 10.0 * aScale),
       nullptr);
   if (aOutEventStatuses) {
     (*aOutEventStatuses)[2] = actualStatus;
@@ -261,5 +263,36 @@ SmoothWheel(const RefPtr<InputReceiver>& aTarget, const ScreenIntPoint& aPoint,
       aPoint, aDelta.x, aDelta.y, false);
   return aTarget->ReceiveInputEvent(input, nullptr, aOutInputBlockId);
 }
+
+template<class InputReceiver>
+nsEventStatus
+MouseDown(const RefPtr<InputReceiver>& aTarget, const ScreenIntPoint& aPoint,
+          TimeStamp aTime, uint64_t* aOutInputBlockId = nullptr)
+{
+  MouseInput input(MouseInput::MOUSE_DOWN, MouseInput::ButtonType::LEFT_BUTTON,
+        0, 0, aPoint, MillisecondsSinceStartup(aTime), aTime, 0);
+  return aTarget->ReceiveInputEvent(input, nullptr, aOutInputBlockId);
+}
+
+template<class InputReceiver>
+nsEventStatus
+MouseMove(const RefPtr<InputReceiver>& aTarget, const ScreenIntPoint& aPoint,
+          TimeStamp aTime, uint64_t* aOutInputBlockId = nullptr)
+{
+  MouseInput input(MouseInput::MOUSE_MOVE, MouseInput::ButtonType::LEFT_BUTTON,
+        0, 0, aPoint, MillisecondsSinceStartup(aTime), aTime, 0);
+  return aTarget->ReceiveInputEvent(input, nullptr, aOutInputBlockId);
+}
+
+template<class InputReceiver>
+nsEventStatus
+MouseUp(const RefPtr<InputReceiver>& aTarget, const ScreenIntPoint& aPoint,
+        TimeStamp aTime, uint64_t* aOutInputBlockId = nullptr)
+{
+  MouseInput input(MouseInput::MOUSE_UP, MouseInput::ButtonType::LEFT_BUTTON,
+        0, 0, aPoint, MillisecondsSinceStartup(aTime), aTime, 0);
+  return aTarget->ReceiveInputEvent(input, nullptr, aOutInputBlockId);
+}
+
 
 #endif // mozilla_layers_InputUtils_h

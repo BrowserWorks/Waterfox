@@ -9,8 +9,10 @@
 #include "nsIDNSListener.h"
 #include "nsIDNSRecord.h"
 #include "nsIDNSService.h"
+#include "nsINamed.h"
 #include "nsThreadUtils.h"
 #include "nsIConsoleService.h"
+#include "nsIURLParser.h"
 #include "nsJSUtils.h"
 #include "jsfriendapi.h"
 #include "prnetdb.h"
@@ -37,6 +39,17 @@ static const char *sPacUtils =
   "    return host.split('.').length - 1;\n"
   "}\n"
   ""
+  "function isValidIpAddress(ipchars) {\n"
+  "    var matches = /^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/.exec(ipchars);\n"
+  "    if (matches == null) {\n"
+  "        return false;\n"
+  "    } else if (matches[1] > 255 || matches[2] > 255 || \n"
+  "               matches[3] > 255 || matches[4] > 255) {\n"
+  "        return false;\n"
+  "    }\n"
+  "    return true;\n"
+  "}\n"
+  ""
   "function convert_addr(ipchars) {\n"
   "    var bytes = ipchars.split('.');\n"
   "    var result = ((bytes[0] & 0xff) << 24) |\n"
@@ -47,14 +60,14 @@ static const char *sPacUtils =
   "}\n"
   ""
   "function isInNet(ipaddr, pattern, maskstr) {\n"
-  "    var test = /^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/.exec(ipaddr);\n"
-  "    if (test == null) {\n"
+  "    if (!isValidIpAddress(pattern) || !isValidIpAddress(maskstr)) {\n"
+  "        return false;\n"
+  "    }\n"
+  "    if (!isValidIpAddress(ipaddr)) {\n"
   "        ipaddr = dnsResolve(ipaddr);\n"
-  "        if (ipaddr == null)\n"
+  "        if (ipaddr == null) {\n"
   "            return false;\n"
-  "    } else if (test[1] > 255 || test[2] > 255 || \n"
-  "               test[3] > 255 || test[4] > 255) {\n"
-  "        return false;    // not an IP address\n"
+  "        }\n"
   "    }\n"
   "    var host = convert_addr(ipaddr);\n"
   "    var pat  = convert_addr(pattern);\n"
@@ -264,19 +277,21 @@ static void SetRunning(ProxyAutoConfig *arg)
 // The PACResolver is used for dnsResolve()
 class PACResolver final : public nsIDNSListener
                         , public nsITimerCallback
+                        , public nsINamed
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  PACResolver()
+  explicit PACResolver(nsIEventTarget *aTarget)
     : mStatus(NS_ERROR_FAILURE)
+    , mMainThreadEventTarget(aTarget)
   {
   }
 
   // nsIDNSListener
-  NS_IMETHODIMP OnLookupComplete(nsICancelable *request,
-                                 nsIDNSRecord *record,
-                                 nsresult status) override
+  NS_IMETHOD OnLookupComplete(nsICancelable *request,
+                              nsIDNSRecord *record,
+                              nsresult status) override
   {
     if (mTimer) {
       mTimer->Cancel();
@@ -290,7 +305,7 @@ public:
   }
 
   // nsITimerCallback
-  NS_IMETHODIMP Notify(nsITimer *timer) override
+  NS_IMETHOD Notify(nsITimer *timer) override
   {
     if (mRequest)
       mRequest->Cancel(NS_ERROR_NET_TIMEOUT);
@@ -298,15 +313,23 @@ public:
     return NS_OK;
   }
 
-  nsresult                mStatus;
-  nsCOMPtr<nsICancelable> mRequest;
-  nsCOMPtr<nsIDNSRecord>  mResponse;
-  nsCOMPtr<nsITimer>      mTimer;
+  // nsINamed
+  NS_IMETHOD GetName(nsACString& aName) override
+  {
+    aName.AssignLiteral("PACResolver");
+    return NS_OK;
+  }
+
+  nsresult                 mStatus;
+  nsCOMPtr<nsICancelable>  mRequest;
+  nsCOMPtr<nsIDNSRecord>   mResponse;
+  nsCOMPtr<nsITimer>       mTimer;
+  nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
 
 private:
   ~PACResolver() {}
 };
-NS_IMPL_ISUPPORTS(PACResolver, nsIDNSListener, nsITimerCallback)
+NS_IMPL_ISUPPORTS(PACResolver, nsIDNSListener, nsITimerCallback, nsINamed)
 
 static
 void PACLogToConsole(nsString &aMessage)
@@ -326,7 +349,8 @@ PACLogErrorOrWarning(const nsAString& aKind, JSErrorReport* aReport)
   nsString formattedMessage(NS_LITERAL_STRING("PAC Execution "));
   formattedMessage += aKind;
   formattedMessage += NS_LITERAL_STRING(": ");
-  formattedMessage += aReport->ucmessage;
+  if (aReport->message())
+    formattedMessage.Append(NS_ConvertUTF8toUTF16(aReport->message().c_str()));
   formattedMessage += NS_LITERAL_STRING(" [");
   formattedMessage.Append(aReport->linebuf(), aReport->linebufLength());
   formattedMessage += NS_LITERAL_STRING("]");
@@ -334,7 +358,7 @@ PACLogErrorOrWarning(const nsAString& aKind, JSErrorReport* aReport)
 }
 
 static void
-PACWarningReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aReport)
+PACWarningReporter(JSContext* aCx, JSErrorReport* aReport)
 {
   MOZ_ASSERT(aReport);
   MOZ_ASSERT(JSREPORT_IS_WARNING(aReport->flags));
@@ -388,6 +412,8 @@ ProxyAutoConfig::ProxyAutoConfig()
   : mJSContext(nullptr)
   , mJSNeedsSetup(false)
   , mShutdown(false)
+  , mIncludePath(false)
+  , mExtraHeapSize(0)
 {
   MOZ_COUNT_CTOR(ProxyAutoConfig);
 }
@@ -401,19 +427,22 @@ ProxyAutoConfig::ResolveAddress(const nsCString &aHostName,
   if (!dns)
     return false;
 
-  RefPtr<PACResolver> helper = new PACResolver();
+  RefPtr<PACResolver> helper = new PACResolver(mMainThreadEventTarget);
+  OriginAttributes attrs;
 
-  if (NS_FAILED(dns->AsyncResolve(aHostName,
-                                  nsIDNSService::RESOLVE_PRIORITY_MEDIUM,
-                                  helper,
-                                  NS_GetCurrentThread(),
-                                  getter_AddRefs(helper->mRequest))))
+  if (NS_FAILED(dns->AsyncResolveNative(aHostName,
+                                        nsIDNSService::RESOLVE_PRIORITY_MEDIUM,
+                                        helper,
+                                        GetCurrentThreadEventTarget(),
+                                        attrs,
+                                        getter_AddRefs(helper->mRequest))))
     return false;
 
   if (aTimeout && helper->mRequest) {
     if (!mTimer)
       mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     if (mTimer) {
+      mTimer->SetTarget(mMainThreadEventTarget);
       mTimer->InitWithCallback(helper, aTimeout, nsITimer::TYPE_ONE_SHOT);
       helper->mTimer = mTimer;
     }
@@ -422,8 +451,7 @@ ProxyAutoConfig::ResolveAddress(const nsCString &aHostName,
   // Spin the event loop of the pac thread until lookup is complete.
   // nsPACman is responsible for keeping a queue and only allowing
   // one PAC execution at a time even when it is called re-entrantly.
-  while (helper->mRequest)
-    NS_ProcessNextEvent(NS_GetCurrentThread());
+  SpinEventLoopUntil([&, helper]() { return !helper->mRequest; });
 
   if (NS_FAILED(helper->mStatus) ||
       NS_FAILED(helper->mResponse->GetNextAddr(0, aNetAddr)))
@@ -505,64 +533,6 @@ bool PACMyIpAddress(JSContext *cx, unsigned int argc, JS::Value *vp)
   return GetRunning()->MyIPAddress(args);
 }
 
-// myAppId() javascript implementation
-static
-bool PACMyAppId(JSContext *cx, unsigned int argc, JS::Value *vp)
-{
-  JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-
-  if (NS_IsMainThread()) {
-    NS_WARNING("PACMyAppId on Main Thread. How did that happen?");
-    return false;
-  }
-
-  if (!GetRunning()) {
-    NS_WARNING("PACMyAppId without a running ProxyAutoConfig object");
-    return false;
-  }
-
-  return GetRunning()->MyAppId(args);
-}
-
-// myAppOrigin() javascript implementation
-static
-bool PACMyAppOrigin(JSContext *cx, unsigned int argc, JS::Value *vp)
-{
-  JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-
-  if (NS_IsMainThread()) {
-    NS_WARNING("PACMyAppOrigin on Main Thread. How did that happen?");
-    return false;
-  }
-
-  if (!GetRunning()) {
-    NS_WARNING("PACMyAppOrigin without a running ProxyAutoConfig object");
-    return false;
-  }
-
-  return GetRunning()->MyAppOrigin(args);
-}
-
-// IsInIsolatedMozBrowser() javascript implementation
-static
-bool PACIsInIsolatedMozBrowser(JSContext *cx, unsigned int argc, JS::Value *vp)
-{
-  JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-
-  if (NS_IsMainThread()) {
-    NS_WARNING("PACIsInIsolatedMozBrowser on Main Thread. How did that happen?");
-    return false;
-  }
-
-  if (!GetRunning()) {
-    NS_WARNING("PACIsInIsolatedMozBrowser without a running ProxyAutoConfig"
-               "object");
-    return false;
-  }
-
-  return GetRunning()->IsInIsolatedMozBrowser(args);
-}
-
 // proxyAlert(msg) javascript implementation
 static
 bool PACProxyAlert(JSContext *cx, unsigned int argc, JS::Value *vp)
@@ -596,9 +566,6 @@ static const JSFunctionSpec PACGlobalFunctions[] = {
   // a global "var pacUseMultihomedDNS = true;" will change behavior
   // of myIpAddress to actively use DNS
   JS_FS("myIpAddress", PACMyIpAddress, 0, 0),
-  JS_FS("myAppId", PACMyAppId, 0, 0),
-  JS_FS("myAppOrigin", PACMyAppOrigin, 0, 0),
-  JS_FS("isInIsolatedMozBrowser", PACIsInIsolatedMozBrowser, 0, 0),
   JS_FS("alert", PACProxyAlert, 1, 0),
   JS_FS_END
 };
@@ -608,9 +575,9 @@ static const JSFunctionSpec PACGlobalFunctions[] = {
 class JSContextWrapper
 {
  public:
-  static JSContextWrapper *Create()
+  static JSContextWrapper *Create(uint32_t aExtraHeapSize)
   {
-    JSContext* cx = JS_NewContext(sContextHeapSize);
+    JSContext* cx = JS_NewContext(sContextHeapSize + aExtraHeapSize);
     if (NS_WARN_IF(!cx))
       return nullptr;
 
@@ -655,7 +622,7 @@ class JSContextWrapper
   }
 
 private:
-  static const unsigned sContextHeapSize = 4 << 20; // 4 MB
+  static const uint32_t sContextHeapSize = 4 << 20; // 4 MB
 
   JSContext *mContext;
   JS::PersistentRooted<JSObject*> mGlobal;
@@ -686,7 +653,7 @@ private:
     JSAutoRequest ar(mContext);
 
     JS::CompartmentOptions options;
-    options.creationOptions().setZone(JS::SystemZone);
+    options.creationOptions().setSystemZone();
     options.behaviors().setVersion(JSVERSION_LATEST);
     mGlobal = JS_NewGlobalObject(mContext, &sGlobalClass, nullptr,
                                  JS::DontFireOnNewGlobalHook, options);
@@ -714,7 +681,7 @@ private:
 static const JSClassOps sJSContextWrapperGlobalClassOps = {
   nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   JS_GlobalObjectTraceHook
 };
 
@@ -732,11 +699,17 @@ ProxyAutoConfig::SetThreadLocalIndex(uint32_t index)
 
 nsresult
 ProxyAutoConfig::Init(const nsCString &aPACURI,
-                      const nsCString &aPACScript)
+                      const nsCString &aPACScript,
+                      bool aIncludePath,
+                      uint32_t aExtraHeapSize,
+                      nsIEventTarget *aEventTarget)
 {
   mPACURI = aPACURI;
   mPACScript = sPacUtils;
   mPACScript.Append(aPACScript);
+  mIncludePath = aIncludePath;
+  mExtraHeapSize = aExtraHeapSize;
+  mMainThreadEventTarget = aEventTarget;
 
   if (!GetRunning())
     return SetupJS();
@@ -757,7 +730,9 @@ ProxyAutoConfig::SetupJS()
   if (mPACScript.IsEmpty())
     return NS_ERROR_FAILURE;
 
-  mJSContext = JSContextWrapper::Create();
+  NS_GetCurrentThread()->SetCanInvokeJS(true);
+
+  mJSContext = JSContextWrapper::Create(mExtraHeapSize);
   if (!mJSContext)
     return NS_ERROR_FAILURE;
 
@@ -768,7 +743,7 @@ ProxyAutoConfig::SetupJS()
 
   // check if this is a data: uri so that we don't spam the js console with
   // huge meaningless strings. this is not on the main thread, so it can't
-  // use nsIRUI scheme methods
+  // use nsIURI scheme methods
   bool isDataURI = nsDependentCSubstring(mPACURI, 0, 5).LowerCaseEqualsASCII("data:", 5);
 
   SetRunning(this);
@@ -813,9 +788,6 @@ ProxyAutoConfig::SetupJS()
 nsresult
 ProxyAutoConfig::GetProxyForURI(const nsCString &aTestURI,
                                 const nsCString &aTestHost,
-                                uint32_t aAppId,
-                                const nsString &aAppOrigin,
-                                bool aIsInIsolatedMozBrowser,
                                 nsACString &result)
 {
   if (mJSNeedsSetup)
@@ -833,12 +805,35 @@ ProxyAutoConfig::GetProxyForURI(const nsCString &aTestURI,
   // while the event loop is spinning on a DNS function. Don't early return.
   SetRunning(this);
   mRunningHost = aTestHost;
-  mRunningAppId = aAppId;
-  mRunningAppOrigin = aAppOrigin;
-  mRunningIsInIsolatedMozBrowser = aIsInIsolatedMozBrowser;
 
   nsresult rv = NS_ERROR_FAILURE;
-  JS::RootedString uriString(cx, JS_NewStringCopyZ(cx, aTestURI.get()));
+  nsCString clensedURI = aTestURI;
+
+  if (!mIncludePath) {
+    nsCOMPtr<nsIURLParser> urlParser =
+      do_GetService(NS_STDURLPARSER_CONTRACTID);
+    int32_t pathLen = 0;
+    if (urlParser) {
+      uint32_t schemePos;
+      int32_t schemeLen;
+      uint32_t authorityPos;
+      int32_t authorityLen;
+      uint32_t pathPos;
+      rv = urlParser->ParseURL(aTestURI.get(), aTestURI.Length(),
+                               &schemePos, &schemeLen,
+                               &authorityPos, &authorityLen,
+                               &pathPos, &pathLen);
+    }
+    if (NS_SUCCEEDED(rv)) {
+      if (pathLen) {
+        // cut off the path but leave the initial slash
+        pathLen--;
+      }
+      aTestURI.Left(clensedURI, aTestURI.Length() - pathLen);
+    }
+  }
+
+  JS::RootedString uriString(cx, JS_NewStringCopyZ(cx, clensedURI.get()));
   JS::RootedString hostString(cx, JS_NewStringCopyZ(cx, aTestHost.get()));
 
   if (uriString && hostString) {
@@ -1042,34 +1037,6 @@ ProxyAutoConfig::MyIPAddress(const JS::CallArgs &aArgs)
   }
 
   aArgs.rval().setString(dottedDecimalString);
-  return true;
-}
-
-bool
-ProxyAutoConfig::MyAppId(const JS::CallArgs &aArgs)
-{
-  aArgs.rval().setNumber(mRunningAppId);
-  return true;
-}
-
-bool
-ProxyAutoConfig::MyAppOrigin(const JS::CallArgs &aArgs)
-{
-  JSContext *cx = mJSContext->Context();
-  JSString *origin =
-    JS_NewStringCopyZ(cx, NS_ConvertUTF16toUTF8(mRunningAppOrigin).get());
-  if (!origin) {
-    return false;
-  }
-
-  aArgs.rval().setString(origin);
-  return true;
-}
-
-bool
-ProxyAutoConfig::IsInIsolatedMozBrowser(const JS::CallArgs &aArgs)
-{
-  aArgs.rval().setBoolean(mRunningIsInIsolatedMozBrowser);
   return true;
 }
 

@@ -10,7 +10,7 @@
 #include "nsIFile.h"
 #include "nsNativeCharsetUtils.h"
 
-nsresult 
+nsresult
 net_GetURLSpecFromActualFile(nsIFile *aFile, nsACString &result)
 {
     nsresult rv;
@@ -29,17 +29,17 @@ net_GetURLSpecFromActualFile(nsIFile *aFile, nsACString &result)
         CopyUTF16toUTF8(path, ePath);
     else
         ePath = nativePath;
-    
+
     nsAutoCString escPath;
     NS_NAMED_LITERAL_CSTRING(prefix, "file://");
-        
+
     // Escape the path with the directory mask
     if (NS_EscapeURL(ePath.get(), -1, esc_Directory+esc_Forced, escPath))
         escPath.Insert(prefix, 0);
     else
         escPath.Assign(prefix + ePath);
 
-    // esc_Directory does not escape the semicolons, so if a filename 
+    // esc_Directory does not escape the semicolons, so if a filename
     // contains semicolons we need to manually escape them.
     // This replacement should be removed in bug #473280
     escPath.ReplaceSubstring(";", "%3b");
@@ -59,21 +59,32 @@ net_GetFileFromURLSpec(const nsACString &aURL, nsIFile **result)
     rv = NS_NewNativeLocalFile(EmptyCString(), true, getter_AddRefs(localFile));
     if (NS_FAILED(rv))
       return rv;
-    
+
     nsAutoCString directory, fileBaseName, fileExtension, path;
 
     rv = net_ParseFileURL(aURL, directory, fileBaseName, fileExtension);
     if (NS_FAILED(rv)) return rv;
 
-    if (!directory.IsEmpty())
-        NS_EscapeURL(directory, esc_Directory|esc_AlwaysCopy, path);
-    if (!fileBaseName.IsEmpty())
-        NS_EscapeURL(fileBaseName, esc_FileBaseName|esc_AlwaysCopy, path);
+    if (!directory.IsEmpty()) {
+        rv = NS_EscapeURL(directory, esc_Directory|esc_AlwaysCopy, path,
+                         mozilla::fallible);
+        if (NS_FAILED(rv))
+          return rv;
+    }
+    if (!fileBaseName.IsEmpty()) {
+        rv = NS_EscapeURL(fileBaseName, esc_FileBaseName|esc_AlwaysCopy, path,
+                          mozilla::fallible);
+        if (NS_FAILED(rv))
+          return rv;
+    }
     if (!fileExtension.IsEmpty()) {
         path += '.';
-        NS_EscapeURL(fileExtension, esc_FileExtension|esc_AlwaysCopy, path);
+        rv = NS_EscapeURL(fileExtension, esc_FileExtension|esc_AlwaysCopy, path,
+                          mozilla::fallible);
+        if (NS_FAILED(rv))
+          return rv;
     }
-    
+
     NS_UnescapeURL(path);
     if (path.Length() != strlen(path.get()))
         return NS_ERROR_FILE_INVALID_PATH;
@@ -85,12 +96,12 @@ net_GetFileFromURLSpec(const nsACString &aURL, nsIFile **result)
             rv = localFile->InitWithNativePath(path);
         else
             rv = localFile->InitWithPath(NS_ConvertUTF8toUTF16(path));
-            // XXX In rare cases, a valid UTF-8 string can be valid as a native 
+            // XXX In rare cases, a valid UTF-8 string can be valid as a native
             // encoding (e.g. 0xC5 0x83 is valid both as UTF-8 and Windows-125x).
             // However, the chance is very low that a meaningful word in a legacy
             // encoding is valid as UTF-8.
     }
-    else 
+    else
         // if path is not in UTF-8, assume it is encoded in the native charset
         rv = localFile->InitWithNativePath(path);
 

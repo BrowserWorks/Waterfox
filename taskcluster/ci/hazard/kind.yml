@@ -1,0 +1,71 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+loader: taskgraph.loader.transform:loader
+
+kind-dependencies:
+   - toolchain
+
+transforms:
+   - taskgraph.transforms.build_attrs:transforms
+   - taskgraph.transforms.toolchain:transforms
+   - taskgraph.transforms.job:transforms
+   - taskgraph.transforms.task:transforms
+
+job-defaults:
+    treeherder:
+        kind: build
+        tier: 1
+    worker-type: aws-provisioner-v1/gecko-{level}-b-linux
+    worker:
+        max-run-time: 36000
+        docker-image: {in-tree: desktop-build}
+
+jobs:
+    linux64-shell-haz/debug:
+        description: "JS Shell Hazard Analysis Linux"
+        index:
+            product: firefox
+            job-name: shell-haz-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: SM-tc(H)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/hazard.manifest"
+        run:
+            using: hazard
+            command: >
+                cd /home/worker/checkouts/gecko/taskcluster/scripts/builder
+                && ./build-haz-linux.sh --project shell $HOME/workspace
+        when:
+            files-changed:
+                - js/public/**
+                - js/src/**
+        toolchains:
+            - linux64-clang
+            - linux64-gcc
+            - linux64-sccache
+
+    linux64-haz/debug:
+        description: "Browser Hazard Analysis Linux"
+        index:
+            product: firefox
+            job-name: browser-haz-debug
+        treeherder:
+            platform: linux64/debug
+            symbol: tc(H)
+        worker:
+            env:
+                TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/linux64/hazard.manifest"
+        run:
+            using: hazard
+            mozconfig: "browser/config/mozconfigs/linux64/hazards"
+            command: >
+                cd /home/worker/checkouts/gecko/taskcluster/scripts/builder
+                && ./build-haz-linux.sh --project browser $HOME/workspace
+        toolchains:
+            - linux64-clang
+            - linux64-gcc
+            - linux64-sccache

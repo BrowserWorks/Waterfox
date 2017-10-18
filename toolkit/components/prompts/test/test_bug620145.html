@@ -24,6 +24,8 @@
 <button id="button" onmouseup="openAlert()">Button</button>
 
 <script class="testbody" type="text/javascript">
+/* import-globals-from ../../../../testing/mochitest/tests/SimpleTest/EventUtils.js */
+/* import-globals-from prompt_common.js */
 var selectionTest = false;
 
 function openAlert() {
@@ -32,7 +34,7 @@ function openAlert() {
   info("...alert done.");
 }
 
-add_task(function* runTest() {
+add_task(async function runTest() {
   var state, action;
   // The <button> in this test's HTML opens a prompt when clicked.
   // Here we send the events to simulate clicking it.
@@ -40,31 +42,31 @@ add_task(function* runTest() {
   selectionTest = isTabModal;
 
   state = {
-    msg         : "hello!",
-    iconClass   : "alert-icon",
-    titleHidden : true,
-    textHidden  : true,
-    passHidden  : true,
-    checkHidden : true,
-    textValue   : "",
-    passValue   : "",
-    checkMsg    : "",
-    checked     : false,
-    focused     : "button0",
-    defButton   : "button0",
+    msg: "hello!",
+    iconClass: "alert-icon",
+    titleHidden: true,
+    textHidden: true,
+    passHidden: true,
+    checkHidden: true,
+    textValue: "",
+    passValue: "",
+    checkMsg: "",
+    checked: false,
+    focused: "button0",
+    defButton: "button0",
   };
   action = {
     buttonClick: "ok",
   };
 
-  promptDone = handlePrompt(state, action);
+  let promptDone = handlePrompt(state, action);
 
   var button = $("button");
   dispatchMouseEvent(button, "mousedown");
   dispatchMouseEvent(button, "mouseup");
   // alert appears at this point, to be closed by the chrome script.
 
-  yield promptDone;
+  await promptDone;
   checkSelection();
 
   // using same state and action.
@@ -75,14 +77,13 @@ add_task(function* runTest() {
   dispatchMouseEvent(text, "mouseup");
   // alert appears at this point, to be closed by the chrome script.
 
-  yield promptDone;
+  await promptDone;
   checkSelection();
 });
 
-function dispatchMouseEvent(target, type)
-{
+function dispatchMouseEvent(target, type) {
   var win = target.ownerDocument.defaultView;
-  e = document.createEvent("MouseEvent");
+  let e = document.createEvent("MouseEvent");
   e.initEvent(type, false, false, win, 0, 1, 1, 1, 1,
               false, false, false, false, 0, null);
   var utils = SpecialPowers.getDOMWindowUtils(win);
@@ -90,8 +91,7 @@ function dispatchMouseEvent(target, type)
   ok(true, type + " sent to " + target.id);
 }
 
-function checkSelection()
-{
+function checkSelection() {
   if (!selectionTest) {
     todo(false, "Selection test is disabled when tab modal prompts are not enabled.");
   } else {

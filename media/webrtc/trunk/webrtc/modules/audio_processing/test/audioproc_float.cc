@@ -8,206 +8,456 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include <stdio.h>
-#include <sstream>
-#include <string>
+#include <iostream>
+#include <memory>
+
+#include <string.h>
 
 #include "gflags/gflags.h"
-#include "webrtc/base/checks.h"
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/common_audio/channel_buffer.h"
-#include "webrtc/common_audio/wav_file.h"
 #include "webrtc/modules/audio_processing/include/audio_processing.h"
-#include "webrtc/modules/audio_processing/test/test_utils.h"
-
-DEFINE_string(dump, "", "The name of the debug dump file to read from.");
-DEFINE_string(c, "", "The name of the capture input file to read from.");
-DEFINE_string(o, "out.wav", "Name of the capture output file to write to.");
-DEFINE_int32(o_channels, 0, "Number of output channels. Defaults to input.");
-DEFINE_int32(o_sample_rate, 0, "Output sample rate in Hz. Defaults to input.");
-DEFINE_double(mic_spacing, 0.0,
-    "Alternate way to specify mic_positions. "
-    "Assumes uniform linear array with specified spacings.");
-DEFINE_string(mic_positions, "",
-    "Space delimited cartesian coordinates of microphones in meters. "
-    "The coordinates of each point are contiguous. "
-    "For a two element array: \"x1 y1 z1 x2 y2 z2\"");
-
-DEFINE_bool(aec, false, "Enable echo cancellation.");
-DEFINE_bool(agc, false, "Enable automatic gain control.");
-DEFINE_bool(hpf, false, "Enable high-pass filtering.");
-DEFINE_bool(ns, false, "Enable noise suppression.");
-DEFINE_bool(ts, false, "Enable transient suppression.");
-DEFINE_bool(bf, false, "Enable beamforming.");
-DEFINE_bool(all, false, "Enable all components.");
-
-DEFINE_int32(ns_level, -1, "Noise suppression level [0 - 3].");
-
-static const int kChunksPerSecond = 100;
-static const char kUsage[] =
-    "Command-line tool to run audio processing on WAV files. Accepts either\n"
-    "an input capture WAV file or protobuf debug dump and writes to an output\n"
-    "WAV file.\n"
-    "\n"
-    "All components are disabled by default. If any bi-directional components\n"
-    "are enabled, only debug dump files are permitted.";
+#include "webrtc/modules/audio_processing/test/aec_dump_based_simulator.h"
+#include "webrtc/modules/audio_processing/test/audio_processing_simulator.h"
+#include "webrtc/modules/audio_processing/test/wav_based_simulator.h"
 
 namespace webrtc {
-
+namespace test {
 namespace {
 
-// Returns a vector<T> parsed from whitespace delimited values in to_parse,
-// or an empty vector if the string could not be parsed.
-template<typename T>
-std::vector<T> parse_list(std::string to_parse) {
-  std::vector<T> values;
+const int kParameterNotSpecifiedValue = -10000;
 
-  std::istringstream str(to_parse);
-  std::copy(
-      std::istream_iterator<T>(str),
-      std::istream_iterator<T>(),
-      std::back_inserter(values));
+const char kUsageDescription[] =
+    "Usage: audioproc_f [options] -i <input.wav>\n"
+    "                   or\n"
+    "       audioproc_f [options] -dump_input <aec_dump>\n"
+    "\n\n"
+    "Command-line tool to simulate a call using the audio "
+    "processing module, either based on wav files or "
+    "protobuf debug dump recordings.";
 
-  return values;
+DEFINE_string(dump_input, "", "Aec dump input filename");
+DEFINE_string(dump_output, "", "Aec dump output filename");
+DEFINE_string(i, "", "Forward stream input wav filename");
+DEFINE_string(o, "", "Forward stream output wav filename");
+DEFINE_string(ri, "", "Reverse stream input wav filename");
+DEFINE_string(ro, "", "Reverse stream output wav filename");
+DEFINE_string(artificial_nearend, "", "Artificial nearend wav filename");
+DEFINE_int32(output_num_channels,
+             kParameterNotSpecifiedValue,
+             "Number of forward stream output channels");
+DEFINE_int32(reverse_output_num_channels,
+             kParameterNotSpecifiedValue,
+             "Number of Reverse stream output channels");
+DEFINE_int32(output_sample_rate_hz,
+             kParameterNotSpecifiedValue,
+             "Forward stream output sample rate in Hz");
+DEFINE_int32(reverse_output_sample_rate_hz,
+             kParameterNotSpecifiedValue,
+             "Reverse stream output sample rate in Hz");
+DEFINE_string(mic_positions,
+              "",
+              "Space delimited cartesian coordinates of microphones in "
+              "meters. The coordinates of each point are contiguous. For a "
+              "two element array: \"x1 y1 z1 x2 y2 z2\"");
+DEFINE_int32(target_angle_degrees,
+             90,
+             "The azimuth of the target in degrees (0-359). Only applies to "
+             "beamforming.");
+DEFINE_bool(fixed_interface,
+            false,
+            "Use the fixed interface when operating on wav files");
+DEFINE_int32(aec,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the echo canceller");
+DEFINE_int32(aecm,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the mobile echo controller");
+DEFINE_int32(ed,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate (0) the residual echo detector");
+DEFINE_string(ed_graph, "", "Output filename for graph of echo likelihood");
+DEFINE_int32(agc,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the AGC");
+DEFINE_int32(hpf,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the high-pass filter");
+DEFINE_int32(ns,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the noise suppressor");
+DEFINE_int32(ts,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the transient suppressor");
+DEFINE_int32(bf,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the beamformer");
+DEFINE_int32(ie,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the intelligibility enhancer");
+DEFINE_int32(vad,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the voice activity detector");
+DEFINE_int32(le,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the level estimator");
+DEFINE_bool(all_default,
+            false,
+            "Activate all of the default components (will be overridden by any "
+            "other settings)");
+DEFINE_int32(aec_suppression_level,
+             kParameterNotSpecifiedValue,
+             "Set the aec suppression level (0-2)");
+DEFINE_int32(delay_agnostic,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the AEC delay agnostic mode");
+DEFINE_int32(extended_filter,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the AEC extended filter mode");
+DEFINE_int32(drift_compensation,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the drift compensation");
+DEFINE_int32(aec3,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the experimental AEC mode AEC3");
+DEFINE_int32(lc,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the level control");
+DEFINE_int32(
+    refined_adaptive_filter,
+    kParameterNotSpecifiedValue,
+    "Activate (1) or deactivate(0) the refined adaptive filter functionality");
+DEFINE_int32(aecm_routing_mode,
+             kParameterNotSpecifiedValue,
+             "Specify the AECM routing mode (0-4)");
+DEFINE_int32(aecm_comfort_noise,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the AECM comfort noise");
+DEFINE_int32(agc_mode,
+             kParameterNotSpecifiedValue,
+             "Specify the AGC mode (0-2)");
+DEFINE_int32(agc_target_level,
+             kParameterNotSpecifiedValue,
+             "Specify the AGC target level (0-31)");
+DEFINE_int32(agc_limiter,
+             kParameterNotSpecifiedValue,
+             "Activate (1) or deactivate(0) the level estimator");
+DEFINE_int32(agc_compression_gain,
+             kParameterNotSpecifiedValue,
+             "Specify the AGC compression gain (0-90)");
+DEFINE_int32(vad_likelihood,
+             kParameterNotSpecifiedValue,
+             "Specify the VAD likelihood (0-3)");
+DEFINE_int32(ns_level,
+             kParameterNotSpecifiedValue,
+             "Specify the NS level (0-3)");
+DEFINE_int32(stream_delay,
+             kParameterNotSpecifiedValue,
+             "Specify the stream delay in ms to use");
+DEFINE_int32(stream_drift_samples,
+             kParameterNotSpecifiedValue,
+             "Specify the number of stream drift samples to use");
+DEFINE_bool(performance_report, false, "Report the APM performance ");
+DEFINE_bool(verbose, false, "Produce verbose output");
+DEFINE_bool(bitexactness_report,
+            false,
+            "Report bitexactness for aec dump result reproduction");
+DEFINE_bool(discard_settings_in_aecdump,
+            false,
+            "Discard any config settings specified in the aec dump");
+DEFINE_bool(store_intermediate_output,
+            false,
+            "Creates new output files after each init");
+DEFINE_string(custom_call_order_file, "", "Custom process API call order file");
+
+void SetSettingIfSpecified(const std::string value,
+                           rtc::Optional<std::string>* parameter) {
+  if (value.compare("") != 0) {
+    *parameter = rtc::Optional<std::string>(value);
+  }
 }
 
-// Parses the array geometry from the command line.
-//
-// If a vector with size != num_mics is returned, an error has occurred and an
-// appropriate error message has been printed to stdout.
-std::vector<Point> get_array_geometry(size_t num_mics) {
-  std::vector<Point> result;
-  result.reserve(num_mics);
+void SetSettingIfSpecified(int value, rtc::Optional<int>* parameter) {
+  if (value != kParameterNotSpecifiedValue) {
+    *parameter = rtc::Optional<int>(value);
+  }
+}
 
-  if (FLAGS_mic_positions.length()) {
-    CHECK(FLAGS_mic_spacing == 0.0 &&
-        "mic_positions and mic_spacing should not both be specified");
+void SetSettingIfFlagSet(int32_t flag, rtc::Optional<bool>* parameter) {
+  if (flag == 0) {
+    *parameter = rtc::Optional<bool>(false);
+  } else if (flag == 1) {
+    *parameter = rtc::Optional<bool>(true);
+  }
+}
 
-    const std::vector<float> values = parse_list<float>(FLAGS_mic_positions);
-    if (values.size() != 3 * num_mics) {
-      fprintf(stderr,
-          "Could not parse mic_positions or incorrect number of points.\n");
-    } else {
-      for (size_t i = 0; i < values.size(); i += 3) {
-        double x = values[i + 0];
-        double y = values[i + 1];
-        double z = values[i + 2];
-        result.push_back(Point(x, y, z));
-      }
-    }
+SimulationSettings CreateSettings() {
+  SimulationSettings settings;
+  if (FLAGS_all_default) {
+    settings.use_le = rtc::Optional<bool>(true);
+    settings.use_vad = rtc::Optional<bool>(true);
+    settings.use_ie = rtc::Optional<bool>(false);
+    settings.use_bf = rtc::Optional<bool>(false);
+    settings.use_ts = rtc::Optional<bool>(true);
+    settings.use_ns = rtc::Optional<bool>(true);
+    settings.use_hpf = rtc::Optional<bool>(true);
+    settings.use_agc = rtc::Optional<bool>(true);
+    settings.use_aec = rtc::Optional<bool>(true);
+    settings.use_aecm = rtc::Optional<bool>(false);
+    settings.use_ed = rtc::Optional<bool>(false);
+  }
+  SetSettingIfSpecified(FLAGS_dump_input, &settings.aec_dump_input_filename);
+  SetSettingIfSpecified(FLAGS_dump_output, &settings.aec_dump_output_filename);
+  SetSettingIfSpecified(FLAGS_i, &settings.input_filename);
+  SetSettingIfSpecified(FLAGS_o, &settings.output_filename);
+  SetSettingIfSpecified(FLAGS_ri, &settings.reverse_input_filename);
+  SetSettingIfSpecified(FLAGS_ro, &settings.reverse_output_filename);
+  SetSettingIfSpecified(FLAGS_artificial_nearend,
+                        &settings.artificial_nearend_filename);
+  SetSettingIfSpecified(FLAGS_output_num_channels,
+                        &settings.output_num_channels);
+  SetSettingIfSpecified(FLAGS_reverse_output_num_channels,
+                        &settings.reverse_output_num_channels);
+  SetSettingIfSpecified(FLAGS_output_sample_rate_hz,
+                        &settings.output_sample_rate_hz);
+  SetSettingIfSpecified(FLAGS_reverse_output_sample_rate_hz,
+                        &settings.reverse_output_sample_rate_hz);
+  SetSettingIfSpecified(FLAGS_mic_positions, &settings.microphone_positions);
+  settings.target_angle_degrees = FLAGS_target_angle_degrees;
+  SetSettingIfFlagSet(FLAGS_aec, &settings.use_aec);
+  SetSettingIfFlagSet(FLAGS_aecm, &settings.use_aecm);
+  SetSettingIfFlagSet(FLAGS_ed, &settings.use_ed);
+  SetSettingIfSpecified(FLAGS_ed_graph, &settings.ed_graph_output_filename);
+  SetSettingIfFlagSet(FLAGS_agc, &settings.use_agc);
+  SetSettingIfFlagSet(FLAGS_hpf, &settings.use_hpf);
+  SetSettingIfFlagSet(FLAGS_ns, &settings.use_ns);
+  SetSettingIfFlagSet(FLAGS_ts, &settings.use_ts);
+  SetSettingIfFlagSet(FLAGS_bf, &settings.use_bf);
+  SetSettingIfFlagSet(FLAGS_ie, &settings.use_ie);
+  SetSettingIfFlagSet(FLAGS_vad, &settings.use_vad);
+  SetSettingIfFlagSet(FLAGS_le, &settings.use_le);
+  SetSettingIfSpecified(FLAGS_aec_suppression_level,
+                        &settings.aec_suppression_level);
+  SetSettingIfFlagSet(FLAGS_delay_agnostic, &settings.use_delay_agnostic);
+  SetSettingIfFlagSet(FLAGS_extended_filter, &settings.use_extended_filter);
+  SetSettingIfFlagSet(FLAGS_drift_compensation,
+                      &settings.use_drift_compensation);
+  SetSettingIfFlagSet(FLAGS_refined_adaptive_filter,
+                      &settings.use_refined_adaptive_filter);
+
+  SetSettingIfFlagSet(FLAGS_aec3, &settings.use_aec3);
+  SetSettingIfFlagSet(FLAGS_lc, &settings.use_lc);
+  SetSettingIfSpecified(FLAGS_aecm_routing_mode, &settings.aecm_routing_mode);
+  SetSettingIfFlagSet(FLAGS_aecm_comfort_noise,
+                      &settings.use_aecm_comfort_noise);
+  SetSettingIfSpecified(FLAGS_agc_mode, &settings.agc_mode);
+  SetSettingIfSpecified(FLAGS_agc_target_level, &settings.agc_target_level);
+  SetSettingIfFlagSet(FLAGS_agc_limiter, &settings.use_agc_limiter);
+  SetSettingIfSpecified(FLAGS_agc_compression_gain,
+                        &settings.agc_compression_gain);
+  SetSettingIfSpecified(FLAGS_vad_likelihood, &settings.vad_likelihood);
+  SetSettingIfSpecified(FLAGS_ns_level, &settings.ns_level);
+  SetSettingIfSpecified(FLAGS_stream_delay, &settings.stream_delay);
+  SetSettingIfSpecified(FLAGS_stream_drift_samples,
+                        &settings.stream_drift_samples);
+  SetSettingIfSpecified(FLAGS_custom_call_order_file,
+                        &settings.custom_call_order_filename);
+  settings.report_performance = FLAGS_performance_report;
+  settings.use_verbose_logging = FLAGS_verbose;
+  settings.report_bitexactness = FLAGS_bitexactness_report;
+  settings.discard_all_settings_in_aecdump = FLAGS_discard_settings_in_aecdump;
+  settings.fixed_interface = FLAGS_fixed_interface;
+  settings.store_intermediate_output = FLAGS_store_intermediate_output;
+
+  return settings;
+}
+
+void ReportConditionalErrorAndExit(bool condition, std::string message) {
+  if (condition) {
+    std::cerr << message << std::endl;
+    exit(1);
+  }
+}
+
+void PerformBasicParameterSanityChecks(const SimulationSettings& settings) {
+  if (settings.input_filename || settings.reverse_input_filename) {
+    ReportConditionalErrorAndExit(!!settings.aec_dump_input_filename,
+                                  "Error: The aec dump cannot be specified "
+                                  "together with input wav files!\n");
+
+    ReportConditionalErrorAndExit(!!settings.artificial_nearend_filename,
+                                  "Error: The artificial nearend cannot be "
+                                  "specified together with input wav files!\n");
+
+    ReportConditionalErrorAndExit(!settings.input_filename,
+                                  "Error: When operating at wav files, the "
+                                  "input wav filename must be "
+                                  "specified!\n");
+
+    ReportConditionalErrorAndExit(
+        settings.reverse_output_filename && !settings.reverse_input_filename,
+        "Error: When operating at wav files, the reverse input wav filename "
+        "must be specified if the reverse output wav filename is specified!\n");
   } else {
-    if (FLAGS_mic_spacing <= 0) {
-      fprintf(stderr,
-          "mic_spacing must a positive value when beamforming is enabled.\n");
-    } else {
-      for (size_t i = 0; i < num_mics; ++i) {
-        result.push_back(Point(i * FLAGS_mic_spacing, 0.f, 0.f));
-      }
-    }
+    ReportConditionalErrorAndExit(!settings.aec_dump_input_filename,
+                                  "Error: Either the aec dump or the wav "
+                                  "input files must be specified!\n");
   }
 
-  return result;
+  ReportConditionalErrorAndExit(
+      settings.use_aec && *settings.use_aec && settings.use_aecm &&
+          *settings.use_aecm,
+      "Error: The AEC and the AECM cannot be activated at the same time!\n");
+
+  ReportConditionalErrorAndExit(
+      settings.output_sample_rate_hz && *settings.output_sample_rate_hz <= 0,
+      "Error: --output_sample_rate_hz must be positive!\n");
+
+  ReportConditionalErrorAndExit(
+      settings.reverse_output_sample_rate_hz &&
+          settings.output_sample_rate_hz &&
+          *settings.output_sample_rate_hz <= 0,
+      "Error: --reverse_output_sample_rate_hz must be positive!\n");
+
+  ReportConditionalErrorAndExit(
+      settings.output_num_channels && *settings.output_num_channels <= 0,
+      "Error: --output_num_channels must be positive!\n");
+
+  ReportConditionalErrorAndExit(
+      settings.reverse_output_num_channels &&
+          *settings.reverse_output_num_channels <= 0,
+      "Error: --reverse_output_num_channels must be positive!\n");
+
+  ReportConditionalErrorAndExit(
+      settings.use_bf && *settings.use_bf && !settings.microphone_positions,
+      "Error: --mic_positions must be specified when the beamformer is "
+      "activated.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.target_angle_degrees < 0 || settings.target_angle_degrees > 359,
+      "Error: -target_angle_degrees must be specified between 0 and 359.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.aec_suppression_level &&
+          ((*settings.aec_suppression_level) < 0 ||
+           (*settings.aec_suppression_level) > 2),
+      "Error: --aec_suppression_level must be specified between 0 and 2.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.aecm_routing_mode && ((*settings.aecm_routing_mode) < 0 ||
+                                     (*settings.aecm_routing_mode) > 4),
+      "Error: --aecm_routing_mode must be specified between 0 and 4.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.agc_target_level && ((*settings.agc_target_level) < 0 ||
+                                    (*settings.agc_target_level) > 31),
+      "Error: --agc_target_level must be specified between 0 and 31.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.agc_compression_gain && ((*settings.agc_compression_gain) < 0 ||
+                                        (*settings.agc_compression_gain) > 90),
+      "Error: --agc_compression_gain must be specified between 0 and 90.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.vad_likelihood &&
+          ((*settings.vad_likelihood) < 0 || (*settings.vad_likelihood) > 3),
+      "Error: --vad_likelihood must be specified between 0 and 3.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.ns_level &&
+          ((*settings.ns_level) < 0 || (*settings.ns_level) > 3),
+      "Error: --ns_level must be specified between 0 and 3.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.report_bitexactness && !settings.aec_dump_input_filename,
+      "Error: --bitexactness_report can only be used when operating on an "
+      "aecdump\n");
+
+  ReportConditionalErrorAndExit(
+      settings.custom_call_order_filename && settings.aec_dump_input_filename,
+      "Error: --custom_call_order_file cannot be used when operating on an "
+      "aecdump\n");
+
+  auto valid_wav_name = [](const std::string& wav_file_name) {
+    if (wav_file_name.size() < 5) {
+      return false;
+    }
+    if ((wav_file_name.compare(wav_file_name.size() - 4, 4, ".wav") == 0) ||
+        (wav_file_name.compare(wav_file_name.size() - 4, 4, ".WAV") == 0)) {
+      return true;
+    }
+    return false;
+  };
+
+  ReportConditionalErrorAndExit(
+      settings.input_filename && (!valid_wav_name(*settings.input_filename)),
+      "Error: --i must be a valid .wav file name.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.output_filename && (!valid_wav_name(*settings.output_filename)),
+      "Error: --o must be a valid .wav file name.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.reverse_input_filename &&
+          (!valid_wav_name(*settings.reverse_input_filename)),
+      "Error: --ri must be a valid .wav file name.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.reverse_output_filename &&
+          (!valid_wav_name(*settings.reverse_output_filename)),
+      "Error: --ro must be a valid .wav file name.\n");
+
+  ReportConditionalErrorAndExit(
+      settings.artificial_nearend_filename &&
+          !valid_wav_name(*settings.artificial_nearend_filename),
+      "Error: --artifical_nearend must be a valid .wav file name.\n");
 }
 
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  {
-    const std::string program_name = argv[0];
-    const std::string usage = kUsage;
-    google::SetUsageMessage(usage);
-  }
+  google::SetUsageMessage(kUsageDescription);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  if (!((FLAGS_c == "") ^ (FLAGS_dump == ""))) {
-    fprintf(stderr,
-            "An input file must be specified with either -c or -dump.\n");
-    return 1;
+  SimulationSettings settings = CreateSettings();
+  PerformBasicParameterSanityChecks(settings);
+  std::unique_ptr<AudioProcessingSimulator> processor;
+
+  if (settings.aec_dump_input_filename) {
+    processor.reset(new AecDumpBasedSimulator(settings));
+  } else {
+    processor.reset(new WavBasedSimulator(settings));
   }
-  if (FLAGS_dump != "") {
-    fprintf(stderr, "FIXME: the -dump option is not yet implemented.\n");
-    return 1;
+
+  processor->Process();
+
+  if (settings.report_performance) {
+    const auto& proc_time = processor->proc_time();
+    int64_t exec_time_us = proc_time.sum / rtc::kNumNanosecsPerMicrosec;
+    std::cout << std::endl
+              << "Execution time: " << exec_time_us * 1e-6 << " s, File time: "
+              << processor->get_num_process_stream_calls() * 1.f /
+                     AudioProcessingSimulator::kChunksPerSecond
+              << std::endl
+              << "Time per fwd stream chunk (mean, max, min): " << std::endl
+              << exec_time_us * 1.f / processor->get_num_process_stream_calls()
+              << " us, " << 1.f * proc_time.max / rtc::kNumNanosecsPerMicrosec
+              << " us, " << 1.f * proc_time.min / rtc::kNumNanosecsPerMicrosec
+              << " us" << std::endl;
   }
 
-  WavReader c_file(FLAGS_c);
-  // If the output format is uninitialized, use the input format.
-  int o_channels = FLAGS_o_channels;
-  if (!o_channels)
-    o_channels = c_file.num_channels();
-  int o_sample_rate = FLAGS_o_sample_rate;
-  if (!o_sample_rate)
-    o_sample_rate = c_file.sample_rate();
-  WavWriter o_file(FLAGS_o, o_sample_rate, o_channels);
-
-  Config config;
-  config.Set<ExperimentalNs>(new ExperimentalNs(FLAGS_ts || FLAGS_all));
-
-  if (FLAGS_bf || FLAGS_all) {
-    const size_t num_mics = c_file.num_channels();
-    const std::vector<Point> array_geometry = get_array_geometry(num_mics);
-    if (array_geometry.size() != num_mics) {
-      return 1;
+  if (settings.report_bitexactness && settings.aec_dump_input_filename) {
+    if (processor->OutputWasBitexact()) {
+      std::cout << "The processing was bitexact.";
+    } else {
+      std::cout << "The processing was not bitexact.";
     }
-
-    config.Set<Beamforming>(new Beamforming(true, array_geometry));
-  }
-
-  rtc::scoped_ptr<AudioProcessing> ap(AudioProcessing::Create(config));
-  if (FLAGS_dump != "") {
-    CHECK_EQ(kNoErr, ap->echo_cancellation()->Enable(FLAGS_aec || FLAGS_all));
-  } else if (FLAGS_aec) {
-    fprintf(stderr, "-aec requires a -dump file.\n");
-    return -1;
-  }
-  CHECK_EQ(kNoErr, ap->gain_control()->Enable(FLAGS_agc || FLAGS_all));
-  CHECK_EQ(kNoErr, ap->gain_control()->set_mode(GainControl::kFixedDigital));
-  CHECK_EQ(kNoErr, ap->high_pass_filter()->Enable(FLAGS_hpf || FLAGS_all));
-  CHECK_EQ(kNoErr, ap->noise_suppression()->Enable(FLAGS_ns || FLAGS_all));
-  if (FLAGS_ns_level != -1)
-    CHECK_EQ(kNoErr, ap->noise_suppression()->set_level(
-        static_cast<NoiseSuppression::Level>(FLAGS_ns_level)));
-
-  printf("Input file: %s\nChannels: %d, Sample rate: %d Hz\n\n",
-         FLAGS_c.c_str(), c_file.num_channels(), c_file.sample_rate());
-  printf("Output file: %s\nChannels: %d, Sample rate: %d Hz\n\n",
-         FLAGS_o.c_str(), o_file.num_channels(), o_file.sample_rate());
-
-  ChannelBuffer<float> c_buf(c_file.sample_rate() / kChunksPerSecond,
-                             c_file.num_channels());
-  ChannelBuffer<float> o_buf(o_file.sample_rate() / kChunksPerSecond,
-                             o_file.num_channels());
-
-  const size_t c_length =
-      static_cast<size_t>(c_buf.num_channels() * c_buf.num_frames());
-  const size_t o_length =
-      static_cast<size_t>(o_buf.num_channels() * o_buf.num_frames());
-  rtc::scoped_ptr<float[]> c_interleaved(new float[c_length]);
-  rtc::scoped_ptr<float[]> o_interleaved(new float[o_length]);
-  while (c_file.ReadSamples(c_length, c_interleaved.get()) == c_length) {
-    FloatS16ToFloat(c_interleaved.get(), c_length, c_interleaved.get());
-    Deinterleave(c_interleaved.get(), c_buf.num_frames(),
-                 c_buf.num_channels(), c_buf.channels());
-
-    CHECK_EQ(kNoErr,
-        ap->ProcessStream(c_buf.channels(),
-                          c_buf.num_frames(),
-                          c_file.sample_rate(),
-                          LayoutFromChannels(c_buf.num_channels()),
-                          o_file.sample_rate(),
-                          LayoutFromChannels(o_buf.num_channels()),
-                          o_buf.channels()));
-
-    Interleave(o_buf.channels(), o_buf.num_frames(),
-               o_buf.num_channels(), o_interleaved.get());
-    FloatToFloatS16(o_interleaved.get(), o_length, o_interleaved.get());
-    o_file.WriteSamples(o_interleaved.get(), o_length);
   }
 
   return 0;
 }
 
+}  // namespace test
 }  // namespace webrtc
 
 int main(int argc, char* argv[]) {
-  return webrtc::main(argc, argv);
+  return webrtc::test::main(argc, argv);
 }

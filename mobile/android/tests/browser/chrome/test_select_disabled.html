@@ -11,14 +11,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1263589
     <link rel="stylesheet" type="text/css" href="chrome://global/skin"/>
     <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
     <script type="application/javascript" src="head.js"></script>
-    <script type="application/javascript;version=1.7">
+    <script type="application/javascript">
     "use strict";
 
     const VISIBLE_OPTION_COUNT = 5;
     const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
     Cu.import("resource://gre/modules/Services.jsm");
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
-    let SelectHelper = win.SelectHelper;
+
+    let sandbox = {};
+    Services.scriptloader.loadSubScript("chrome://browser/content/SelectHelper.js", sandbox);
+    let SelectHelper = sandbox.SelectHelper;
 
     // Wait until the page has loaded so that we can access the DOM.
     SimpleTest.waitForExplicitFinish();

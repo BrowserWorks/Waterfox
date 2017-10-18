@@ -8,68 +8,61 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "webrtc/system_wrappers/interface/cpu_info.h"
+#include "webrtc/system_wrappers/include/cpu_info.h"
 
-#if defined(_WIN32)
-#include <Windows.h>
-#elif defined(WEBRTC_BSD) || defined(WEBRTC_MAC)
-#include <sys/types.h>
+#if defined(WEBRTC_WIN)
+#include <winsock2.h>
+#include <windows.h>
+#ifndef EXCLUDE_D3D9
+#include <d3d9.h>
+#endif
+#elif defined(WEBRTC_MAC)
 #include <sys/sysctl.h>
-#elif defined(WEBRTC_LINUX) || defined(WEBRTC_ANDROID)
-#include <unistd.h>
-#else // defined(_SC_NPROCESSORS_ONLN)
+#else // WEBRTC_POSIX
 #include <unistd.h>
 #endif
 
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/base/logging.h"
+
+namespace internal {
+static int DetectNumberOfCores() {
+  // We fall back on assuming a single core in case of errors.
+  int number_of_cores = 1;
+
+#if defined(WEBRTC_WIN)
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  number_of_cores = static_cast<int>(si.dwNumberOfProcessors);
+#elif defined(WEBRTC_MAC)
+  int name[] = {CTL_HW, HW_AVAILCPU};
+  size_t size = sizeof(number_of_cores);
+  if (0 != sysctl(name, 2, &number_of_cores, &size, NULL, 0)) {
+    LOG(LS_ERROR) << "Failed to get number of cores";
+    number_of_cores = 1;
+  }
+#elif defined(_SC_NPROCESSORS_ONLN)
+  number_of_cores = static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
+#else
+  LOG(LS_ERROR) << "No function to get number of cores";
+#endif
+
+  LOG(LS_INFO) << "Available number of cores: " << number_of_cores;
+
+  return number_of_cores;
+}
+}
 
 namespace webrtc {
 
-uint32_t CpuInfo::number_of_cores_ = 0;
-
 uint32_t CpuInfo::DetectNumberOfCores() {
-  if (!number_of_cores_) {
-#if defined(_WIN32)
-    SYSTEM_INFO si;
-    GetSystemInfo(&si);
-    number_of_cores_ = static_cast<uint32_t>(si.dwNumberOfProcessors);
-    WEBRTC_TRACE(kTraceStateInfo, kTraceUtility, -1,
-                 "Available number of cores:%d", number_of_cores_);
-
-#elif defined(WEBRTC_LINUX) && !defined(WEBRTC_ANDROID) && !defined(WEBRTC_GONK)
-    number_of_cores_ = static_cast<uint32_t>(sysconf(_SC_NPROCESSORS_ONLN));
-    WEBRTC_TRACE(kTraceStateInfo, kTraceUtility, -1,
-                 "Available number of cores:%d", number_of_cores_);
-
-#elif defined(WEBRTC_BSD) || defined(WEBRTC_MAC)
-    int name[] = {
-      CTL_HW,
-#ifdef HW_AVAILCPU
-      HW_AVAILCPU,
-#else
-      HW_NCPU,
-#endif
-    };
-    int ncpu;
-    size_t size = sizeof(ncpu);
-    if (0 == sysctl(name, 2, &ncpu, &size, NULL, 0)) {
-      number_of_cores_ = static_cast<uint32_t>(ncpu);
-      WEBRTC_TRACE(kTraceStateInfo, kTraceUtility, -1,
-                   "Available number of cores:%d", number_of_cores_);
-    } else {
-      WEBRTC_TRACE(kTraceError, kTraceUtility, -1,
-                   "Failed to get number of cores");
-      number_of_cores_ = 1;
-    }
-#elif defined(_SC_NPROCESSORS_ONLN)
-    number_of_cores_ = sysconf(_SC_NPROCESSORS_ONLN);
-#else
-    WEBRTC_TRACE(kTraceWarning, kTraceUtility, -1,
-                 "No function to get number of cores");
-    number_of_cores_ = 1;
-#endif
-  }
-  return number_of_cores_;
+  // Statically cache the number of system cores available since if the process
+  // is running in a sandbox, we may only be able to read the value once (before
+  // the sandbox is initialized) and not thereafter.
+  // For more information see crbug.com/176522.
+  static uint32_t logical_cpus = 0;
+  if (!logical_cpus)
+    logical_cpus = static_cast<uint32_t>(internal::DetectNumberOfCores());
+  return logical_cpus;
 }
 
 }  // namespace webrtc

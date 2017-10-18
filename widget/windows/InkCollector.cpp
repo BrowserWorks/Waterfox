@@ -114,6 +114,10 @@ void InkCollector::OnInitialize()
   // VARIANT_FALSE to not have the ink appear on the display as strokes are made.
   // https://msdn.microsoft.com/en-us/library/windows/desktop/dd314598.aspx
   mInkCollector->put_DynamicRendering(VARIANT_FALSE);
+
+  // Set AutoRedraw to false to prevent repainting the ink when the window is
+  // invalidated.
+  mInkCollector->put_AutoRedraw(VARIANT_FALSE);
 }
 
 // Sets a value that specifies whether the InkCollector object collects pen input.
@@ -167,6 +171,21 @@ void InkCollector::ClearTarget()
       NS_WARNING("InkCollector did not clear window property successfully");
     }
   }
+}
+
+uint16_t InkCollector::GetPointerId()
+{
+  return mPointerId;
+}
+
+void InkCollector::SetPointerId(uint16_t aPointerId)
+{
+  mPointerId = aPointerId;
+}
+
+void InkCollector::ClearPointerId()
+{
+  mPointerId = 0;
 }
 
 // The display and the digitizer have quite different properties.

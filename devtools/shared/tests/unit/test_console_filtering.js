@@ -4,37 +4,56 @@
 "use strict";
 
 const { console, ConsoleAPI } = require("resource://gre/modules/Console.jsm");
-const { ConsoleAPIListener } = require("devtools/shared/webconsole/utils");
+const { ConsoleAPIListener } = require("devtools/server/actors/utils/webconsole-listeners");
 const Services = require("Services");
 
 var seenMessages = 0;
 var seenTypes = 0;
 
 var callback = {
-  onConsoleAPICall: function (aMessage) {
-    if (aMessage.consoleID && aMessage.consoleID == "addon/foo") {
-      do_check_eq(aMessage.level, "warn");
-      do_check_eq(aMessage.arguments[0], "Warning from foo");
+  onConsoleAPICall: function (message) {
+    if (message.consoleID && message.consoleID == "addon/foo") {
+      do_check_eq(message.level, "warn");
+      do_check_eq(message.arguments[0], "Warning from foo");
       seenTypes |= 1;
-    } else if (aMessage.originAttributes &&
-              aMessage.originAttributes.addonId == "bar") {
-      do_check_eq(aMessage.level, "error");
-      do_check_eq(aMessage.arguments[0], "Error from bar");
+    } else if (message.addonId == "bar") {
+      do_check_eq(message.level, "error");
+      do_check_eq(message.arguments[0], "Error from bar");
       seenTypes |= 2;
     } else {
-      do_check_eq(aMessage.level, "log");
-      do_check_eq(aMessage.arguments[0], "Hello from default console");
+      do_check_eq(message.level, "log");
+      do_check_eq(message.arguments[0], "Hello from default console");
       seenTypes |= 4;
     }
     seenMessages++;
   }
 };
 
+let policy;
+do_register_cleanup(() => {
+  policy.active = false;
+});
+
 function createFakeAddonWindow({addonId} = {}) {
-  let baseURI = Services.io.newURI("about:blank", null, null);
-  let originAttributes = {addonId};
+  const uuidGen = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+  const uuid = uuidGen.generateUUID().number.slice(1, -1);
+
+  if (policy) {
+    policy.active = false;
+  }
+  /* globals MatchPatternSet, WebExtensionPolicy */
+  policy = new WebExtensionPolicy({
+    id: addonId,
+    mozExtensionHostname: uuid,
+    baseURL: "file:///",
+    allowedOrigins: new MatchPatternSet([]),
+    localizeCallback() {},
+  });
+  policy.active = true;
+
+  let baseURI = Services.io.newURI(`moz-extension://${uuid}/`);
   let principal = Services.scriptSecurityManager
-        .createCodebasePrincipal(baseURI, originAttributes);
+        .createCodebasePrincipal(baseURI, {});
   let chromeWebNav = Services.appShell.createWindowlessBrowser(true);
   let docShell = chromeWebNav.QueryInterface(Ci.nsIInterfaceRequestor)
                              .getInterface(Ci.nsIDocShell);

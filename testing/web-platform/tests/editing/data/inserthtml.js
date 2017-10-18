@@ -1,3 +1,4 @@
+// For documentation of the format, see README in this directory.
 var browserTests = [
 ["foo[]bar",
     [["stylewithcss","true"],["inserthtml","ab<b>c</b>d"]],
@@ -138,7 +139,7 @@ var browserTests = [
     [["defaultparagraphseparator","div"],["inserthtml","<p>abc"]],
     "<p>foo</p><p>abc</p>{}<p>baz</p>",
     [true,true],
-    {"defaultparagraphseparator":[false,false,"p",false,false,"div"],"inserthtml":[false,false,"",false,false,""]}],
+    {"defaultparagraphseparator":[false,false,"div",false,false,"div"],"inserthtml":[false,false,"",false,false,""]}],
 ["<p>foo[bar]baz",
     [["defaultparagraphseparator","p"],["inserthtml","<p>abc"]],
     "<p>foo</p><p>abc</p>{}<p>baz</p>",

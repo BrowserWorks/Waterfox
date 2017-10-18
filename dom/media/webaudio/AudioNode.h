@@ -20,6 +20,8 @@
 
 namespace mozilla {
 
+class AbstractThread;
+
 namespace dom {
 
 class AudioContext;
@@ -94,7 +96,17 @@ public:
   virtual void Connect(AudioParam& aDestination, uint32_t aOutput,
                        ErrorResult& aRv);
 
+  virtual void Disconnect(ErrorResult& aRv);
   virtual void Disconnect(uint32_t aOutput, ErrorResult& aRv);
+  virtual void Disconnect(AudioNode& aDestination, ErrorResult& aRv);
+  virtual void Disconnect(AudioNode& aDestination, uint32_t aOutput,
+                          ErrorResult& aRv);
+  virtual void Disconnect(AudioNode& aDestination,
+                          uint32_t aOutput, uint32_t aInput,
+                          ErrorResult& aRv);
+  virtual void Disconnect(AudioParam& aDestination, ErrorResult& aRv);
+  virtual void Disconnect(AudioParam& aDestination, uint32_t aOutput,
+                          ErrorResult& aRv);
 
   // Called after input nodes have been explicitly added or removed through
   // the Connect() or Disconnect() methods.
@@ -165,8 +177,8 @@ public:
       return amount;
     }
 
-    // Weak reference.
-    AudioNode* mInputNode;
+    // The InputNode is destroyed when mInputNode is disconnected.
+    AudioNode* MOZ_NON_OWNING_REF mInputNode;
     RefPtr<MediaInputPort> mStreamPort;
     // The index of the input port this node feeds into.
     // This is not used for connections to AudioParams.
@@ -191,6 +203,10 @@ public:
     return mOutputParams;
   }
 
+  template<typename T>
+  const nsTArray<InputNode>&
+  InputsForDestination(uint32_t aOutputIndex) const;
+
   void RemoveOutputParam(AudioParam* aParam);
 
   // MarkActive() asks the context to keep the AudioNode alive until the
@@ -211,7 +227,21 @@ public:
   // type.
   virtual const char* NodeType() const = 0;
 
+  AbstractThread* AbstractMainThread() const { return mAbstractMainThread; }
+
 private:
+  // Given:
+  //
+  // - a DestinationType, that can be an AudioNode or an AudioParam ;
+  // - a Predicate, a function that takes an InputNode& and returns a bool ;
+  //
+  // This method iterates on the InputNodes() of the node at the index
+  // aDestinationIndex, and calls `DisconnectFromOutputIfConnected` with this
+  // input node, if aPredicate returns true.
+  template<typename DestinationType, typename Predicate>
+  bool DisconnectMatchingDestinationInputs(uint32_t aDestinationIndex,
+                                           Predicate aPredicate);
+
   virtual void LastRelease() override
   {
     // We are about to be deleted, disconnect the object from the graph before
@@ -221,7 +251,13 @@ private:
   // Callers must hold a reference to 'this'.
   void DisconnectFromGraph();
 
+  template<typename DestinationType>
+  bool DisconnectFromOutputIfConnected(uint32_t aOutputIndex, uint32_t aInputIndex);
+
 protected:
+  // Helper for the Constructors for nodes.
+  void Initialize(const AudioNodeOptions& aOptions, ErrorResult& aRv);
+
   // Helpers for sending different value types to streams
   void SendDoubleParameterToStream(uint32_t aIndex, double aValue);
   void SendInt32ParameterToStream(uint32_t aIndex, int32_t aValue);
@@ -257,6 +293,8 @@ private:
   // Whether the node just passes through its input.  This is a devtools API that
   // only works for some node types.
   bool mPassThrough;
+  // DocGroup-specifc AbstractThread::MainThread() for MediaStreamGraph operations.
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 } // namespace dom

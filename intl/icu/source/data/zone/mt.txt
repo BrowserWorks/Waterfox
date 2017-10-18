@@ -1,23 +1,8 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/mt.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 mt{
-    Version{"2.1.19.94"}
+    Version{"2.1.32.59"}
     zoneStrings{
-        "Etc:Unknown"{
-            ec{"Belt Mhux Magħruf"}
-        }
-        "Europe:London"{
-            ec{"Londra"}
-        }
-        "Europe:Malta"{
-            ec{"Valletta"}
-        }
         "meta:Europe_Central"{
             ld{"Ħin Ċentrali Ewropew tas-Sajf"}
             lg{"Ħin Ċentrali Ewropew"}
@@ -44,6 +29,7 @@ mt{
         gmtZeroFormat{"GMT"}
         hourFormat{"+HH:mm;-HH:mm"}
         regionFormat{"Ħin ta’ {0}"}
+        regionFormatDaylight{"{0} (+1)"}
         regionFormatStandard{"{0} Ħin Standard"}
     }
 }

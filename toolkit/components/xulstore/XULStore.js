@@ -19,10 +19,8 @@ const XULSTORE_CID = Components.ID("{6f46b6f4-c8b1-4bd4-a4fa-9ebbed0753ea}");
 const STOREDB_FILENAME = "xulstore.json";
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
 function XULStore() {
@@ -60,20 +58,16 @@ XULStore.prototype = {
   _saveAllowed: true,
   _writeTimer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
 
-  load: function () {
+  load() {
     Services.obs.addObserver(this, "profile-before-change", true);
 
     this._storeFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
     this._storeFile.append(STOREDB_FILENAME);
 
-    if (!this._storeFile.exists()) {
-      this.import();
-    } else {
-      this.readFile();
-    }
+    this.readFile();
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     this.writeFile();
     if (topic == "profile-before-change") {
       this._saveAllowed = false;
@@ -83,66 +77,14 @@ XULStore.prototype = {
   /*
    * Internal function for logging debug messages to the Error Console window
    */
-  log: function (message) {
+  log(message) {
     if (!debugMode)
       return;
     dump("XULStore: " + message + "\n");
     Services.console.logStringMessage("XULStore: " + message);
   },
 
-  import: function() {
-    let localStoreFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
-
-    localStoreFile.append("localstore.rdf");
-    if (!localStoreFile.exists()) {
-      return;
-    }
-
-    const RDF = Cc["@mozilla.org/rdf/rdf-service;1"].getService(Ci.nsIRDFService);
-    const persistKey = RDF.GetResource("http://home.netscape.com/NC-rdf#persist");
-
-    this.log("Import localstore from " + localStoreFile.path);
-
-    let localStoreURI = Services.io.newFileURI(localStoreFile).spec;
-    let localStore = RDF.GetDataSourceBlocking(localStoreURI);
-    let resources = localStore.GetAllResources();
-
-    while (resources.hasMoreElements()) {
-      let resource = resources.getNext().QueryInterface(Ci.nsIRDFResource);
-      let uri;
-
-      try {
-        uri = NetUtil.newURI(resource.ValueUTF8);
-      } catch(ex) {
-        continue; // skip invalid uris
-      }
-
-      // If this has a ref, then this is an attribute reference. Otherwise,
-      // this is a document reference.
-      if (!uri.hasRef)
-          continue;
-
-      // Verify that there the persist key is connected up.
-      let docURI = uri.specIgnoringRef;
-
-      if (!localStore.HasAssertion(RDF.GetResource(docURI), persistKey, resource, true))
-          continue;
-
-      let id = uri.ref;
-      let attrs = localStore.ArcLabelsOut(resource);
-
-      while (attrs.hasMoreElements()) {
-        let attr = attrs.getNext().QueryInterface(Ci.nsIRDFResource);
-        let value = localStore.GetTarget(resource, attr, true);
-
-        if (value instanceof Ci.nsIRDFLiteral) {
-          this.setValue(docURI, id, attr.ValueUTF8, value.Value);
-        }
-      }
-    }
-  },
-
-  readFile: function() {
+  readFile() {
     const MODE_RDONLY = 0x01;
     const FILE_PERMS  = 0o600;
 
@@ -152,15 +94,16 @@ XULStore.prototype = {
     try {
       stream.init(this._storeFile, MODE_RDONLY, FILE_PERMS, 0);
       this._data = json.decodeFromStream(stream, stream.available());
-    } catch(e) {
+    } catch (e) {
       this.log("Error reading JSON: " + e);
-      // Ignore problem, we'll just continue on with an empty dataset.
+      // This exception could mean that the file didn't exist.
+      // We'll just ignore the error and start with a blank slate.
     } finally {
       stream.close();
     }
   },
 
-  writeFile: Task.async(function* () {
+  async writeFile() {
     if (!this._needsSaving)
       return;
 
@@ -173,15 +116,15 @@ XULStore.prototype = {
       let encoder = new TextEncoder();
 
       data = encoder.encode(data);
-      yield OS.File.writeAtomic(this._storeFile.path, data,
+      await OS.File.writeAtomic(this._storeFile.path, data,
                               { tmpPath: this._storeFile.path + ".tmp" });
     } catch (e) {
       this.log("Failed to write xulstore.json: " + e);
       throw e;
     }
-  }),
+  },
 
-  markAsChanged: function() {
+  markAsChanged() {
     if (this._needsSaving || !this._storeFile)
       return;
 
@@ -192,7 +135,7 @@ XULStore.prototype = {
 
   /* ---------- interface implementation ---------- */
 
-  setValue: function (docURI, id, attr, value) {
+  setValue(docURI, id, attr, value) {
     this.log("Saving " + attr + "=" + value + " for id=" + id + ", doc=" + docURI);
 
     if (!this._saveAllowed) {
@@ -224,12 +167,12 @@ XULStore.prototype = {
     if (attr in obj && obj[attr] == value)
       return;
 
-    obj[attr] = value; //IE, this._data[docURI][id][attr] = value;
+    obj[attr] = value; // IE, this._data[docURI][id][attr] = value;
 
     this.markAsChanged();
   },
 
-  hasValue: function (docURI, id, attr) {
+  hasValue(docURI, id, attr) {
     this.log("has store value for id=" + id + ", attr=" + attr + ", doc=" + docURI);
 
     let ids = this._data[docURI];
@@ -243,7 +186,7 @@ XULStore.prototype = {
     return false;
   },
 
-  getValue: function (docURI, id, attr) {
+  getValue(docURI, id, attr) {
     this.log("get store value for id=" + id + ", attr=" + attr + ", doc=" + docURI);
 
     let ids = this._data[docURI];
@@ -257,7 +200,7 @@ XULStore.prototype = {
     return "";
   },
 
-  removeValue: function (docURI, id, attr) {
+  removeValue(docURI, id, attr) {
     this.log("remove store value for id=" + id + ", attr=" + attr + ", doc=" + docURI);
 
     if (!this._saveAllowed) {
@@ -284,7 +227,7 @@ XULStore.prototype = {
     }
   },
 
-  getIDsEnumerator: function (docURI) {
+  getIDsEnumerator(docURI) {
     this.log("Getting ID enumerator for doc=" + docURI);
 
     if (!(docURI in this._data))
@@ -301,7 +244,7 @@ XULStore.prototype = {
     return new nsStringEnumerator(result);
   },
 
-  getAttributeEnumerator: function (docURI, id) {
+  getAttributeEnumerator(docURI, id) {
     this.log("Getting attribute enumerator for id=" + id + ", doc=" + docURI);
 
     if (!(docURI in this._data) || !(id in this._data[docURI]))
@@ -321,12 +264,12 @@ function nsStringEnumerator(items) {
 }
 
 nsStringEnumerator.prototype = {
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIStringEnumerator]),
-  _nextIndex : 0,
-  hasMore: function() {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIStringEnumerator]),
+  _nextIndex: 0,
+  hasMore() {
     return this._nextIndex < this._items.length;
   },
-  getNext : function() {
+  getNext() {
     if (!this.hasMore())
       throw Cr.NS_ERROR_NOT_AVAILABLE;
     return this._items[this._nextIndex++];

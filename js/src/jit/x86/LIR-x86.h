@@ -80,12 +80,12 @@ class LUnboxFloatingPoint : public LInstructionHelper<1, 2, 0>
 };
 
 // Convert a 32-bit unsigned integer to a double.
-class LAsmJSUInt32ToDouble : public LInstructionHelper<1, 1, 1>
+class LWasmUint32ToDouble : public LInstructionHelper<1, 1, 1>
 {
   public:
-    LIR_HEADER(AsmJSUInt32ToDouble)
+    LIR_HEADER(WasmUint32ToDouble)
 
-    LAsmJSUInt32ToDouble(const LAllocation& input, const LDefinition& temp) {
+    LWasmUint32ToDouble(const LAllocation& input, const LDefinition& temp) {
         setOperand(0, input);
         setTemp(0, temp);
     }
@@ -95,12 +95,12 @@ class LAsmJSUInt32ToDouble : public LInstructionHelper<1, 1, 1>
 };
 
 // Convert a 32-bit unsigned integer to a float32.
-class LAsmJSUInt32ToFloat32: public LInstructionHelper<1, 1, 1>
+class LWasmUint32ToFloat32: public LInstructionHelper<1, 1, 1>
 {
   public:
-    LIR_HEADER(AsmJSUInt32ToFloat32)
+    LIR_HEADER(WasmUint32ToFloat32)
 
-    LAsmJSUInt32ToFloat32(const LAllocation& input, const LDefinition& temp) {
+    LWasmUint32ToFloat32(const LAllocation& input, const LDefinition& temp) {
         setOperand(0, input);
         setTemp(0, temp);
     }
@@ -109,7 +109,7 @@ class LAsmJSUInt32ToFloat32: public LInstructionHelper<1, 1, 1>
     }
 };
 
-class LDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2, 0>
+class LDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2, 1>
 {
   public:
     LIR_HEADER(DivOrModI64)
@@ -117,10 +117,11 @@ class LDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2,
     static const size_t Lhs = 0;
     static const size_t Rhs = INT64_PIECES;
 
-    LDivOrModI64(const LInt64Allocation& lhs, const LInt64Allocation& rhs)
+    LDivOrModI64(const LInt64Allocation& lhs, const LInt64Allocation& rhs, const LDefinition& temp)
     {
         setInt64Operand(Lhs, lhs);
         setInt64Operand(Rhs, rhs);
+        setTemp(0, temp);
     }
 
     MBinaryArithInstruction* mir() const {
@@ -137,9 +138,18 @@ class LDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2,
             return mir_->toMod()->canBeNegativeDividend();
         return mir_->toDiv()->canBeNegativeOverflow();
     }
+    wasm::BytecodeOffset bytecodeOffset() const {
+        MOZ_ASSERT(mir_->isDiv() || mir_->isMod());
+        if (mir_->isMod())
+            return mir_->toMod()->bytecodeOffset();
+        return mir_->toDiv()->bytecodeOffset();
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
 };
 
-class LUDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2, 0>
+class LUDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2, 1>
 {
   public:
     LIR_HEADER(UDivOrModI64)
@@ -147,10 +157,11 @@ class LUDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2
     static const size_t Lhs = 0;
     static const size_t Rhs = INT64_PIECES;
 
-    LUDivOrModI64(const LInt64Allocation& lhs, const LInt64Allocation& rhs)
+    LUDivOrModI64(const LInt64Allocation& lhs, const LInt64Allocation& rhs, const LDefinition& temp)
     {
         setInt64Operand(Lhs, lhs);
         setInt64Operand(Rhs, rhs);
+        setTemp(0, temp);
     }
 
     MBinaryArithInstruction* mir() const {
@@ -167,35 +178,34 @@ class LUDivOrModI64 : public LCallInstructionHelper<INT64_PIECES, INT64_PIECES*2
             return mir_->toMod()->canBeNegativeDividend();
         return mir_->toDiv()->canBeNegativeOverflow();
     }
+    wasm::BytecodeOffset bytecodeOffset() const {
+        MOZ_ASSERT(mir_->isDiv() || mir_->isMod());
+        if (mir_->isMod())
+            return mir_->toMod()->bytecodeOffset();
+        return mir_->toDiv()->bytecodeOffset();
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
 };
 
-class LWasmTruncateToInt64 : public LInstructionHelper<INT64_PIECES, 1, 3>
+class LWasmTruncateToInt64 : public LInstructionHelper<INT64_PIECES, 1, 1>
 {
   public:
     LIR_HEADER(WasmTruncateToInt64);
 
-    LWasmTruncateToInt64(const LAllocation& in, const LDefinition& temp1, const LDefinition& temp2,
-                         const LDefinition& temp3)
+    LWasmTruncateToInt64(const LAllocation& in, const LDefinition& temp)
     {
         setOperand(0, in);
-        setTemp(0, temp1);
-        setTemp(1, temp2);
-        setTemp(2, temp3);
+        setTemp(0, temp);
     }
 
     MWasmTruncateToInt64* mir() const {
         return mir_->toWasmTruncateToInt64();
     }
 
-    const LDefinition* temp1() {
+    const LDefinition* temp() {
         return getTemp(0);
-    }
-    const LDefinition* temp2() {
-        return getTemp(1);
-    }
-    const LDefinition* temp3() {
-        MOZ_ASSERT(mir()->isUnsigned());
-        return getTemp(2);
     }
 };
 

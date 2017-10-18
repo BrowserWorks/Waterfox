@@ -34,7 +34,8 @@ public:
   // (no public constructor - use ImageFactory)
 
   // Methods inherited from Image
-  virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf)
+  nsresult GetNativeSizes(nsTArray<gfx::IntSize>& aNativeSizes) const override;
+  virtual size_t SizeOfSourceWithComputedFallback(SizeOfState& aState)
     const override;
   virtual void CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
                                      MallocSizeOf aMallocSizeOf) const override;
@@ -49,7 +50,7 @@ public:
                                        nsresult aResult,
                                        bool aLastPart) override;
 
-  virtual void OnSurfaceDiscarded() override;
+  virtual void OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey) override;
 
   /**
    * Callback for SVGRootRenderingObserver.
@@ -78,10 +79,15 @@ protected:
   virtual nsresult StopAnimation() override;
   virtual bool     ShouldAnimate() override;
 
-  void CreateSurfaceAndShow(const SVGDrawingParameters& aParams);
+private:
+  /// Attempt to find a cached surface matching @aParams in the SurfaceCache.
+  already_AddRefed<gfxDrawable>
+    LookupCachedSurface(const SVGDrawingParameters& aParams);
+
+  void CreateSurfaceAndShow(const SVGDrawingParameters& aParams,
+                            gfx::BackendType aBackend);
   void Show(gfxDrawable* aDrawable, const SVGDrawingParameters& aParams);
 
-private:
   nsresult Init(const char* aMimeType, uint32_t aFlags);
 
   /**

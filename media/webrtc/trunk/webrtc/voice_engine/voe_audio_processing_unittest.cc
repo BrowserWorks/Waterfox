@@ -10,7 +10,7 @@
 
 #include "webrtc/voice_engine/include/voe_audio_processing.h"
 
-#include "testing/gtest/include/gtest/gtest.h"
+#include "webrtc/test/gtest.h"
 #include "webrtc/voice_engine/include/voe_base.h"
 
 namespace webrtc {
@@ -22,8 +22,7 @@ class VoEAudioProcessingTest : public ::testing::Test {
   VoEAudioProcessingTest()
       : voe_(VoiceEngine::Create()),
         base_(VoEBase::GetInterface(voe_)),
-        audioproc_(VoEAudioProcessing::GetInterface(voe_)) {
-  }
+        audioproc_(VoEAudioProcessing::GetInterface(voe_)) {}
 
   virtual ~VoEAudioProcessingTest() {
     base_->Terminate();

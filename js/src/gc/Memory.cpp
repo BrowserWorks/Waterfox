@@ -14,6 +14,7 @@
 
 #if defined(XP_WIN)
 
+#include "mozilla/Sprintf.h"
 #include "jswin.h"
 #include <psapi.h>
 
@@ -121,9 +122,11 @@ void*
 MapAlignedPages(size_t size, size_t alignment)
 {
     MOZ_ASSERT(size >= alignment);
+    MOZ_ASSERT(size >= allocGranularity);
     MOZ_ASSERT(size % alignment == 0);
     MOZ_ASSERT(size % pageSize == 0);
-    MOZ_ASSERT(alignment % allocGranularity == 0);
+    MOZ_ASSERT_IF(alignment < allocGranularity, allocGranularity % alignment == 0);
+    MOZ_ASSERT_IF(alignment > allocGranularity, alignment % allocGranularity == 0);
 
     void* p = MapMemory(size, MEM_COMMIT | MEM_RESERVE);
 
@@ -280,45 +283,50 @@ GetPageFaultCount()
     return pmc.PageFaultCount;
 }
 
-// On Windows the minimum size for a mapping is the allocation granularity
-// (64KiB in practice), so mapping very small buffers is potentially wasteful.
 void*
 AllocateMappedContent(int fd, size_t offset, size_t length, size_t alignment)
 {
-    // The allocation granularity must be a whole multiple of the alignment and
-    // the caller must request an aligned offset to satisfy Windows' and the
-    // caller's alignment requirements.
+    MOZ_ASSERT(length && alignment);
+
+    // The allocation granularity and the requested offset
+    // must both be divisible by the requested alignment.
+    // Alignments larger than the allocation granularity are not supported.
     if (allocGranularity % alignment != 0 || offset % alignment != 0)
         return nullptr;
 
-    // Make sure file exists and do sanity check for offset and size.
     HANDLE hFile = reinterpret_cast<HANDLE>(intptr_t(fd));
-    MOZ_ASSERT(hFile != INVALID_HANDLE_VALUE);
 
-    uint32_t fSizeHgh;
-    uint32_t fSizeLow = GetFileSize(hFile, LPDWORD(&fSizeHgh));
-    if (fSizeLow == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
-        return nullptr;
-
-    uint64_t fSize = (uint64_t(fSizeHgh) << 32) + fSizeLow;
-    if (offset >= size_t(fSize) || length == 0 || length > fSize - offset)
-        return nullptr;
-
-    uint64_t mapSize = length + offset;
-    HANDLE hMap = CreateFileMapping(hFile, nullptr, PAGE_READONLY, mapSize >> 32, mapSize, nullptr);
+    // This call will fail if the file does not exist, which is what we want.
+    HANDLE hMap = CreateFileMapping(hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
     if (!hMap)
         return nullptr;
 
-    // MapViewOfFile requires the offset to be a whole multiple of the
-    // allocation granularity.
-    size_t alignOffset = offset - (offset % allocGranularity);
-    size_t alignLength = length + (offset % allocGranularity);
-    void* map = MapViewOfFile(hMap, FILE_MAP_COPY, 0, alignOffset, alignLength);
+    size_t alignedOffset = offset - (offset % allocGranularity);
+    size_t alignedLength = length + (offset % allocGranularity);
+
+    DWORD offsetH = uint32_t(uint64_t(alignedOffset) >> 32);
+    DWORD offsetL = uint32_t(alignedOffset);
+
+    // If the offset or length are out of bounds, this call will fail.
+    uint8_t* map = static_cast<uint8_t*>(MapViewOfFile(hMap, FILE_MAP_COPY, offsetH,
+                                                       offsetL, alignedLength));
+
+    // This just decreases the file mapping object's internal reference count;
+    // it won't actually be destroyed until we unmap the associated view.
     CloseHandle(hMap);
+
     if (!map)
         return nullptr;
 
-    return reinterpret_cast<void*>(uintptr_t(map) + (offset - alignOffset));
+#ifdef DEBUG
+    // Zero out data before and after the desired mapping to catch errors early.
+    if (offset != alignedOffset)
+        memset(map, 0, offset - alignedOffset);
+    if (alignedLength % pageSize)
+        memset(map + alignedLength, 0, pageSize - (alignedLength % pageSize));
+#endif
+
+    return map + (offset - alignedOffset);
 }
 
 void
@@ -328,9 +336,9 @@ DeallocateMappedContent(void* p, size_t /*length*/)
         return;
 
     // Calculate the address originally returned by MapViewOfFile.
-    // This is required because AllocateMappedContent returns a pointer that
-    // might be offset into the view, necessitated by the requirement that the
-    // beginning of a view must be aligned with the allocation granularity.
+    // This is needed because AllocateMappedContent returns a pointer
+    // that might be offset from the view, as the beginning of a
+    // view must be aligned with the allocation granularity.
     uintptr_t map = uintptr_t(p) - (uintptr_t(p) % allocGranularity);
     MOZ_ALWAYS_TRUE(UnmapViewOfFile(reinterpret_cast<void*>(map)));
 }
@@ -341,9 +349,11 @@ void*
 MapAlignedPages(size_t size, size_t alignment)
 {
     MOZ_ASSERT(size >= alignment);
+    MOZ_ASSERT(size >= allocGranularity);
     MOZ_ASSERT(size % alignment == 0);
     MOZ_ASSERT(size % pageSize == 0);
-    MOZ_ASSERT(alignment % allocGranularity == 0);
+    MOZ_ASSERT_IF(alignment < allocGranularity, allocGranularity % alignment == 0);
+    MOZ_ASSERT_IF(alignment > allocGranularity, alignment % allocGranularity == 0);
 
     void* p = _aligned_malloc(size, alignment);
 
@@ -416,9 +426,11 @@ void*
 MapAlignedPages(size_t size, size_t alignment)
 {
     MOZ_ASSERT(size >= alignment);
+    MOZ_ASSERT(size >= allocGranularity);
     MOZ_ASSERT(size % alignment == 0);
     MOZ_ASSERT(size % pageSize == 0);
-    MOZ_ASSERT(alignment % allocGranularity == 0);
+    MOZ_ASSERT_IF(alignment < allocGranularity, allocGranularity % alignment == 0);
+    MOZ_ASSERT_IF(alignment > allocGranularity, alignment % allocGranularity == 0);
 
     int prot = PROT_READ | PROT_WRITE;
     int flags = MAP_PRIVATE | MAP_ANON | MAP_ALIGN | MAP_NOSYNC;
@@ -490,7 +502,9 @@ static inline void*
 MapMemoryAt(void* desired, size_t length, int prot = PROT_READ | PROT_WRITE,
             int flags = MAP_PRIVATE | MAP_ANON, int fd = -1, off_t offset = 0)
 {
-#if defined(__ia64__) || (defined(__sparc64__) && defined(__NetBSD__)) || defined(__aarch64__)
+
+#if defined(__ia64__) || defined(__aarch64__) || \
+    (defined(__sparc__) && defined(__arch64__) && (defined(__NetBSD__) || defined(__linux__)))
     MOZ_ASSERT((0xffff800000000000ULL & (uintptr_t(desired) + length - 1)) == 0);
 #endif
     void* region = mmap(desired, length, prot, flags, fd, offset);
@@ -513,7 +527,7 @@ static inline void*
 MapMemory(size_t length, int prot = PROT_READ | PROT_WRITE,
           int flags = MAP_PRIVATE | MAP_ANON, int fd = -1, off_t offset = 0)
 {
-#if defined(__ia64__) || (defined(__sparc64__) && defined(__NetBSD__))
+#if defined(__ia64__) || (defined(__sparc__) && defined(__arch64__) && defined(__NetBSD__))
     /*
      * The JS engine assumes that all allocated pointers have their high 17 bits clear,
      * which ia64's mmap doesn't support directly. However, we can emulate it by passing
@@ -540,7 +554,7 @@ MapMemory(size_t length, int prot = PROT_READ | PROT_WRITE,
         return nullptr;
     }
     return region;
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || (defined(__sparc__) && defined(__arch64__) && defined(__linux__))
    /*
     * There might be similar virtual address issue on arm64 which depends on
     * hardware and kernel configurations. But the work around is slightly
@@ -587,9 +601,11 @@ void*
 MapAlignedPages(size_t size, size_t alignment)
 {
     MOZ_ASSERT(size >= alignment);
+    MOZ_ASSERT(size >= allocGranularity);
     MOZ_ASSERT(size % alignment == 0);
     MOZ_ASSERT(size % pageSize == 0);
-    MOZ_ASSERT(alignment % allocGranularity == 0);
+    MOZ_ASSERT_IF(alignment < allocGranularity, allocGranularity % alignment == 0);
+    MOZ_ASSERT_IF(alignment > allocGranularity, alignment % allocGranularity == 0);
 
     void* p = MapMemory(size);
 
@@ -750,7 +766,11 @@ MarkPagesUnused(void* p, size_t size)
         return false;
 
     MOZ_ASSERT(OffsetFromAligned(p, pageSize) == 0);
+#if defined(XP_SOLARIS)
+    int result = posix_madvise(p, size, POSIX_MADV_DONTNEED);
+#else
     int result = madvise(p, size, MADV_DONTNEED);
+#endif
     return result != -1;
 }
 
@@ -776,61 +796,51 @@ GetPageFaultCount()
 void*
 AllocateMappedContent(int fd, size_t offset, size_t length, size_t alignment)
 {
-#define NEED_PAGE_ALIGNED 0
-    size_t pa_start; // Page aligned starting
-    size_t pa_end; // Page aligned ending
-    size_t pa_size; // Total page aligned size
+    MOZ_ASSERT(length && alignment);
+
+    // The allocation granularity and the requested offset
+    // must both be divisible by the requested alignment.
+    // Alignments larger than the allocation granularity are not supported.
+    if (allocGranularity % alignment != 0 || offset % alignment != 0)
+        return nullptr;
+
+    // Sanity check the offset and size, as mmap does not do this for us.
     struct stat st;
-    uint8_t* buf;
-
-    // Make sure file exists and do sanity check for offset and size.
-    if (fstat(fd, &st) < 0 || offset >= (size_t) st.st_size ||
-        length == 0 || length > (size_t) st.st_size - offset)
+    if (fstat(fd, &st) || offset >= uint64_t(st.st_size) || length > uint64_t(st.st_size) - offset)
         return nullptr;
 
-    // Check for minimal alignment requirement.
-#if NEED_PAGE_ALIGNED
-    alignment = std::max(alignment, pageSize);
+    size_t alignedOffset = offset - (offset % allocGranularity);
+    size_t alignedLength = length + (offset % allocGranularity);
+
+    uint8_t* map = static_cast<uint8_t*>(MapMemory(alignedLength, PROT_READ | PROT_WRITE,
+                                                   MAP_PRIVATE, fd, alignedOffset));
+    if (!map)
+        return nullptr;
+
+#ifdef DEBUG
+    // Zero out data before and after the desired mapping to catch errors early.
+    if (offset != alignedOffset)
+        memset(map, 0, offset - alignedOffset);
+    if (alignedLength % pageSize)
+        memset(map + alignedLength, 0, pageSize - (alignedLength % pageSize));
 #endif
-    if (offset & (alignment - 1))
-        return nullptr;
 
-    // Page aligned starting of the offset.
-    pa_start = offset & ~(pageSize - 1);
-    // Calculate page aligned ending by adding one page to the page aligned
-    // starting of data end position(offset + length - 1).
-    pa_end = ((offset + length - 1) & ~(pageSize - 1)) + pageSize;
-    pa_size = pa_end - pa_start;
-
-    // Ask for a continuous memory location.
-    buf = (uint8_t*) MapMemory(pa_size);
-    if (!buf)
-        return nullptr;
-
-    buf = (uint8_t*) MapMemoryAt(buf, pa_size, PROT_READ | PROT_WRITE,
-                                  MAP_PRIVATE | MAP_FIXED, fd, pa_start);
-    if (!buf)
-        return nullptr;
-
-    // Reset the data before target file, which we don't need to see.
-    memset(buf, 0, offset - pa_start);
-
-    // Reset the data after target file, which we don't need to see.
-    memset(buf + (offset - pa_start) + length, 0, pa_end - (offset + length));
-
-    return buf + (offset - pa_start);
+    return map + (offset - alignedOffset);
 }
 
 void
 DeallocateMappedContent(void* p, size_t length)
 {
-    void* pa_start; // Page aligned starting
-    size_t total_size; // Total allocated size
+    if (!p)
+        return;
 
-    pa_start = (void*)(uintptr_t(p) & ~(pageSize - 1));
-    total_size = ((uintptr_t(p) + length) & ~(pageSize - 1)) + pageSize - uintptr_t(pa_start);
-    if (munmap(pa_start, total_size))
-        MOZ_ASSERT(errno == ENOMEM);
+    // Calculate the address originally returned by mmap.
+    // This is needed because AllocateMappedContent returns a pointer
+    // that might be offset from the mapping, as the beginning of a
+    // mapping must be aligned with the allocation granularity.
+    uintptr_t map = uintptr_t(p) - (uintptr_t(p) % allocGranularity);
+    size_t alignedLength = length + (uintptr_t(p) % allocGranularity);
+    UnmapPages(reinterpret_cast<void*>(map), alignedLength);
 }
 
 #else
@@ -841,10 +851,14 @@ void
 ProtectPages(void* p, size_t size)
 {
     MOZ_ASSERT(size % pageSize == 0);
+    MOZ_RELEASE_ASSERT(size > 0);
+    MOZ_RELEASE_ASSERT(p);
 #if defined(XP_WIN)
     DWORD oldProtect;
-    if (!VirtualProtect(p, size, PAGE_NOACCESS, &oldProtect))
-        MOZ_CRASH("VirtualProtect(PAGE_NOACCESS) failed");
+    if (!VirtualProtect(p, size, PAGE_NOACCESS, &oldProtect)) {
+        MOZ_CRASH_UNSAFE_PRINTF("VirtualProtect(PAGE_NOACCESS) failed! Error code: %lu",
+                                GetLastError());
+    }
     MOZ_ASSERT(oldProtect == PAGE_READWRITE);
 #else  // assume Unix
     if (mprotect(p, size, PROT_NONE))
@@ -856,10 +870,14 @@ void
 MakePagesReadOnly(void* p, size_t size)
 {
     MOZ_ASSERT(size % pageSize == 0);
+    MOZ_RELEASE_ASSERT(size > 0);
+    MOZ_RELEASE_ASSERT(p);
 #if defined(XP_WIN)
     DWORD oldProtect;
-    if (!VirtualProtect(p, size, PAGE_READONLY, &oldProtect))
-        MOZ_CRASH("VirtualProtect(PAGE_READONLY) failed");
+    if (!VirtualProtect(p, size, PAGE_READONLY, &oldProtect)) {
+        MOZ_CRASH_UNSAFE_PRINTF("VirtualProtect(PAGE_READONLY) failed! Error code: %lu",
+                                GetLastError());
+    }
     MOZ_ASSERT(oldProtect == PAGE_READWRITE);
 #else  // assume Unix
     if (mprotect(p, size, PROT_READ))
@@ -871,10 +889,14 @@ void
 UnprotectPages(void* p, size_t size)
 {
     MOZ_ASSERT(size % pageSize == 0);
+    MOZ_RELEASE_ASSERT(size > 0);
+    MOZ_RELEASE_ASSERT(p);
 #if defined(XP_WIN)
     DWORD oldProtect;
-    if (!VirtualProtect(p, size, PAGE_READWRITE, &oldProtect))
-        MOZ_CRASH("VirtualProtect(PAGE_READWRITE) failed");
+    if (!VirtualProtect(p, size, PAGE_READWRITE, &oldProtect)) {
+        MOZ_CRASH_UNSAFE_PRINTF("VirtualProtect(PAGE_READWRITE) failed! Error code: %lu",
+                                GetLastError());
+    }
     MOZ_ASSERT(oldProtect == PAGE_NOACCESS || oldProtect == PAGE_READONLY);
 #else  // assume Unix
     if (mprotect(p, size, PROT_READ | PROT_WRITE))

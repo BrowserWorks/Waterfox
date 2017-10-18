@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Networking: JAR')
+
 if CONFIG['MOZ_ZIPWRITER']:
     DIRS += ['zipwriter']
 
@@ -29,19 +32,19 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
-    'nsJARProtocolHandler.cpp',
-    'nsJARURI.cpp',
-]
-
-# These files cannot be built in unified mode because they rely on plarena.h.
-SOURCES += [
     'nsJAR.cpp',
     'nsJARChannel.cpp',
     'nsJARFactory.cpp',
     'nsJARInputStream.cpp',
+    'nsJARProtocolHandler.cpp',
+    'nsJARURI.cpp',
     'nsZipArchive.cpp',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+LOCAL_INCLUDES += [
+    '/modules/brotli/dec',
+]

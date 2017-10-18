@@ -16,6 +16,7 @@
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for Point
+#include "mozilla/gfx/Polygon.h"        // for Polygon
 #include "mozilla/gfx/Rect.h"           // for Rect
 #include "mozilla/gfx/Types.h"          // for SamplingFilter
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
@@ -53,8 +54,7 @@ class ContentHost : public CompositableHost
 public:
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack) = 0;
+                            const nsIntRegion& aOldValidRegionBack) = 0;
 
   virtual void SetPaintWillResample(bool aResample) { mPaintWillResample = aResample; }
   bool PaintWillResample() { return mPaintWillResample; }
@@ -62,6 +62,11 @@ public:
   // We use this to allow TiledContentHost to invalidate regions where
   // tiles are fading in.
   virtual void AddAnimationInvalidation(nsIntRegion& aRegion) { }
+
+  virtual gfx::IntRect GetBufferRect() {
+    MOZ_ASSERT_UNREACHABLE("Must be implemented in derived class");
+    return gfx::IntRect();
+  }
 
 protected:
   explicit ContentHost(const TextureInfo& aTextureInfo)
@@ -92,13 +97,19 @@ public:
   explicit ContentHostBase(const TextureInfo& aTextureInfo);
   virtual ~ContentHostBase();
 
-protected:
+  virtual gfx::IntRect GetBufferRect() override { return mBufferRect; }
+
   virtual nsIntPoint GetOriginOffset()
   {
     return mBufferRect.TopLeft() - mBufferRotation;
   }
 
+  gfx::IntPoint GetBufferRotation()
+  {
+    return mBufferRotation.ToUnknownPoint();
+  }
 
+protected:
   gfx::IntRect mBufferRect;
   nsIntPoint mBufferRotation;
   bool mInitialised;
@@ -117,15 +128,17 @@ public:
     , mReceivedNewHost(false)
   { }
 
-  virtual void Composite(LayerComposite* aLayer,
+  virtual void Composite(Compositor* aCompositor,
+                         LayerComposite* aLayer,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
                          const gfx::SamplingFilter aSamplingFilter,
                          const gfx::IntRect& aClipRect,
-                         const nsIntRegion* aVisibleRegion = nullptr) override;
+                         const nsIntRegion* aVisibleRegion = nullptr,
+                         const Maybe<gfx::Polygon>& aGeometry = Nothing()) override;
 
-  virtual void SetCompositor(Compositor* aCompositor) override;
+  virtual void SetTextureSourceProvider(TextureSourceProvider* aProvider) override;
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
@@ -164,7 +177,14 @@ public:
     mLocked = false;
   }
 
-  LayerRenderState GetRenderState() override;
+  bool HasComponentAlpha() const {
+    return !!mTextureHostOnWhite;
+  }
+
+  RefPtr<TextureSource> AcquireTextureSource();
+  RefPtr<TextureSource> AcquireTextureSourceOnWhite();
+
+  ContentHostTexture* AsContentHostTexture() override { return this; }
 
   virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::SamplingFilter aSamplingFilter) override;
 
@@ -195,8 +215,7 @@ public:
 
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack);
+                            const nsIntRegion& aOldValidRegionBack);
 
 protected:
   nsIntRegion mValidRegionForNextBackBuffer;
@@ -218,8 +237,7 @@ public:
 
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack);
+                            const nsIntRegion& aOldValidRegionBack);
 };
 
 } // namespace layers

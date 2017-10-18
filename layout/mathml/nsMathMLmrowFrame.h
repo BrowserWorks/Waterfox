@@ -10,14 +10,14 @@
 #include "nsMathMLContainerFrame.h"
 
 //
-// <mrow> -- horizontally group any number of subexpressions 
+// <mrow> -- horizontally group any number of subexpressions
 // <mphantom> -- make content invisible but preserve its size
 // <mstyle> -- make style changes that affect the rendering of its contents
 //
 
 class nsMathMLmrowFrame : public nsMathMLContainerFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMathMLmrowFrame)
 
   friend nsIFrame* NS_NewMathMLmrowFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
@@ -35,7 +35,7 @@ public:
   }
 
   virtual eMathMLFrameType
-  GetMathMLFrameType() override; 
+  GetMathMLFrameType() override;
 
   bool
   IsMrowLike() override {
@@ -47,7 +47,8 @@ public:
   }
 
 protected:
-  explicit nsMathMLmrowFrame(nsStyleContext* aContext) : nsMathMLContainerFrame(aContext) {}
+  explicit nsMathMLmrowFrame(nsStyleContext* aContext)
+    : nsMathMLContainerFrame(aContext, kClassID) {}
   virtual ~nsMathMLmrowFrame();
 };
 

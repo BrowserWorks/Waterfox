@@ -7,17 +7,10 @@ Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
-function run_test() {
+add_task(async function test_clients_escape() {
   _("Set up test fixtures.");
 
-  ensureLegacyIdentityManager();
-  Service.identity.username = "john@example.com";
-  Service.clusterURL = "http://fakebase/";
-  let baseUri = "http://fakebase/1.1/foo/storage/";
-  let pubUri = baseUri + "keys/pubkey";
-  let privUri = baseUri + "keys/privkey";
-
-  Service.identity.syncKey = "abcdeabcdeabcdeabcdeabcdea";
+  await configureIdentity();
   let keyBundle = Service.identity.syncKeyBundle;
 
   let engine = Service.clientsEngine;
@@ -28,7 +21,7 @@ function run_test() {
     engine.localName = "wéävê";
 
     _("Make sure we have the expected record");
-    let record = engine._createRecord("ascii");
+    let record = await engine._createRecord("ascii");
     do_check_eq(record.id, "ascii");
     do_check_eq(record.name, "wéävê");
 
@@ -55,10 +48,10 @@ function run_test() {
     do_check_eq(record.name, "wéävê");
 
     _("Sanity check that creating the record also gives the same");
-    record = engine._createRecord("ascii");
+    record = await engine._createRecord("ascii");
     do_check_eq(record.id, "ascii");
     do_check_eq(record.name, "wéävê");
   } finally {
     Svc.Prefs.resetBranch("");
   }
-}
+});

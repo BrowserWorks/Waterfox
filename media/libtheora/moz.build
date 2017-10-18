@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('*'):
-    BUG_COMPONENT = ('Core', 'Video/Audio')
+    BUG_COMPONENT = ('Core', 'Audio/Video')
 
 EXPORTS.theora += [
     'include/theora/codec.h',
@@ -52,12 +52,18 @@ LOCAL_INCLUDES += ['include']
 
 if '86' in CONFIG['OS_TEST']:
     if CONFIG['OS_ARCH'] != 'SunOS':
-        if CONFIG['OS_ARCH'] != 'WINNT' or CONFIG['OS_TEST'] != 'x86_64':
+        if CONFIG['CLANG_CL']:
+            # clang-cl can't handle libtheora's inline asm.
+            pass
+        elif CONFIG['OS_ARCH'] != 'WINNT' or CONFIG['OS_TEST'] != 'x86_64':
             DEFINES['OC_X86_ASM'] = True
             if '64' in CONFIG['OS_TEST']:
                 DEFINES['OC_X86_64_ASM'] = True
     if CONFIG['_MSC_VER']:
-        if '64' not in CONFIG['OS_TEST']:
+        if CONFIG['CLANG_CL']:
+            # clang-cl can't handle libtheora's inline asm.
+            pass
+        elif '64' not in CONFIG['OS_TEST']:
             SOURCES += [
                 'lib/x86_vc/mmxfrag.c',
                 'lib/x86_vc/mmxidct.c',
@@ -102,8 +108,8 @@ if CONFIG['GNU_AS']:
         # opcodes; actual arch detection is done at runtime.
         ASFLAGS += [
             '-march=armv7-a',
-            '-mfpu=neon',
         ]
+        ASFLAGS += CONFIG['NEON_FLAGS']
 
         if CONFIG['CLANG_CXX']:
             ASFLAGS += [

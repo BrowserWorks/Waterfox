@@ -31,33 +31,50 @@ const TEST_TABLE_DATA_LIST = [
   }
 ];
 
-// This table has a different update URL.
-const TEST_TABLE_DATA_ANOTHER = {
-  tableName: "test-listmanageranother-digest256",
-  providerName: "google",
-  updateUrl: "http://localhost:5555/safebrowsing/update",
-  gethashUrl: "http://localhost:5555/safebrowsing/gethash-another",
+// These tables have a different update URL (for v4).
+const TEST_TABLE_DATA_V4 = {
+  tableName: "test-phish-proto",
+  providerName: "google4",
+  updateUrl: "http://localhost:5555/safebrowsing/update?",
+  gethashUrl: "http://localhost:5555/safebrowsing/gethash-v4",
+};
+const TEST_TABLE_DATA_V4_DISABLED = {
+  tableName: "test-unwanted-proto",
+  providerName: "google4",
+  updateUrl: "http://localhost:5555/safebrowsing/update?",
+  gethashUrl: "http://localhost:5555/safebrowsing/gethash-v4",
 };
 
 const PREF_NEXTUPDATETIME = "browser.safebrowsing.provider.google.nextupdatetime";
+const PREF_NEXTUPDATETIME_V4 = "browser.safebrowsing.provider.google4.nextupdatetime";
 
 let gListManager = Cc["@mozilla.org/url-classifier/listmanager;1"]
                      .getService(Ci.nsIUrlListManager);
+
+let gUrlUtils = Cc["@mozilla.org/url-classifier/utils;1"]
+                   .getService(Ci.nsIUrlClassifierUtils);
 
 // Global test server for serving safebrowsing updates.
 let gHttpServ = null;
 let gUpdateResponse = "";
 let gExpectedUpdateRequest = "";
+let gExpectedQueryV4 = "";
 
-// Handles request for TEST_TABLE_DATA_ANOTHER.
-let gHttpServAnother = null;
+// Handles request for TEST_TABLE_DATA_V4.
+let gHttpServV4 = null;
 
 // These two variables are used to synchronize the last two racing updates
 // (in terms of "update URL") in test_update_all_tables().
 let gUpdatedCntForTableData = 0; // For TEST_TABLE_DATA_LIST.
-let gIsAnotherUpdated = false;   // For TEST_TABLE_DATA_ANOTHER.
+let gIsV4Updated = false;   // For TEST_TABLE_DATA_V4.
+
+const NEW_CLIENT_STATE = 'sta\0te';
+const CHECKSUM = '\x30\x67\xc7\x2c\x5e\x50\x1c\x31\xe3\xfe\xca\x73\xf0\x47\xdc\x34\x1a\x95\x63\x99\xec\x70\x5e\x0a\xee\x9e\xfb\x17\xa1\x55\x35\x78';
 
 prefBranch.setBoolPref("browser.safebrowsing.debug", true);
+
+// The "\xFF\xFF" is to generate a base64 string with "/".
+prefBranch.setCharPref("browser.safebrowsing.id", "Firefox\xFF\xFF");
 
 // Register tables.
 TEST_TABLE_DATA_LIST.forEach(function(t) {
@@ -66,10 +83,17 @@ TEST_TABLE_DATA_LIST.forEach(function(t) {
                              t.updateUrl,
                              t.gethashUrl);
 });
-gListManager.registerTable(TEST_TABLE_DATA_ANOTHER.tableName,
-                           TEST_TABLE_DATA_ANOTHER.providerName,
-                           TEST_TABLE_DATA_ANOTHER.updateUrl,
-                           TEST_TABLE_DATA_ANOTHER.gethashUrl);
+
+gListManager.registerTable(TEST_TABLE_DATA_V4.tableName,
+                           TEST_TABLE_DATA_V4.providerName,
+                           TEST_TABLE_DATA_V4.updateUrl,
+                           TEST_TABLE_DATA_V4.gethashUrl);
+
+// To test Bug 1302044.
+gListManager.registerTable(TEST_TABLE_DATA_V4_DISABLED.tableName,
+                           TEST_TABLE_DATA_V4_DISABLED.providerName,
+                           TEST_TABLE_DATA_V4_DISABLED.updateUrl,
+                           TEST_TABLE_DATA_V4_DISABLED.gethashUrl);
 
 const SERVER_INVOLVED_TEST_CASE_LIST = [
   // - Do table0 update.
@@ -110,16 +134,30 @@ const SERVER_INVOLVED_TEST_CASE_LIST = [
   function test_update_all_tables() {
     disableAllUpdates();
 
-    // Enable all tables including TEST_TABLE_DATA_ANOTHER!
+    // Enable all tables including TEST_TABLE_DATA_V4!
     TEST_TABLE_DATA_LIST.forEach(function(t) {
       gListManager.enableUpdate(t.tableName);
     });
-    gListManager.enableUpdate(TEST_TABLE_DATA_ANOTHER.tableName);
 
+    // We register two v4 tables but only enable one of them
+    // to verify that the disabled tables are not updated.
+    // See Bug 1302044.
+    gListManager.enableUpdate(TEST_TABLE_DATA_V4.tableName);
+    gListManager.disableUpdate(TEST_TABLE_DATA_V4_DISABLED.tableName);
+
+    // Expected results for v2.
     gExpectedUpdateRequest = TEST_TABLE_DATA_LIST[0].tableName + ";a:5:s:2-12\n" +
                              TEST_TABLE_DATA_LIST[1].tableName + ";\n" +
                              TEST_TABLE_DATA_LIST[2].tableName + ";\n";
     gUpdateResponse = "n:1000\n";
+
+    // We test the request against the query string since v4 request
+    // would be appened to the query string. The request is generated
+    // by protobuf API (binary) then encoded to base64 format.
+    let requestV4 = gUrlUtils.makeUpdateRequestV4([TEST_TABLE_DATA_V4.tableName],
+                                                  [""],
+                                                  1);
+    gExpectedQueryV4 = "&$req=" + requestV4;
 
     forceTableUpdate();
   },
@@ -128,13 +166,29 @@ const SERVER_INVOLVED_TEST_CASE_LIST = [
 
 SERVER_INVOLVED_TEST_CASE_LIST.forEach(t => add_test(t));
 
+add_test(function test_partialUpdateV4() {
+  disableAllUpdates();
+
+  gListManager.enableUpdate(TEST_TABLE_DATA_V4.tableName);
+
+  // Since the new client state has been responded and saved in
+  // test_update_all_tables, this update request should send
+  // a partial update to the server.
+  let requestV4 = gUrlUtils.makeUpdateRequestV4([TEST_TABLE_DATA_V4.tableName],
+                                                [btoa(NEW_CLIENT_STATE)],
+                                                1);
+  gExpectedQueryV4 = "&$req=" + requestV4;
+
+  forceTableUpdate();
+});
+
 // Tests nsIUrlListManager.getGethashUrl.
 add_test(function test_getGethashUrl() {
   TEST_TABLE_DATA_LIST.forEach(function (t) {
     equal(gListManager.getGethashUrl(t.tableName), t.gethashUrl);
   });
-  equal(gListManager.getGethashUrl(TEST_TABLE_DATA_ANOTHER.tableName),
-        TEST_TABLE_DATA_ANOTHER.gethashUrl);
+  equal(gListManager.getGethashUrl(TEST_TABLE_DATA_V4.tableName),
+        TEST_TABLE_DATA_V4.gethashUrl);
   run_next_test();
 });
 
@@ -165,47 +219,83 @@ function run_test() {
       return;
     }
 
-    if (gIsAnotherUpdated) {
+    if (gIsV4Updated) {
       run_next_test();  // All tests are done. Just finish.
       return;
     }
 
-    do_print("Waiting for TEST_TABLE_DATA_ANOTHER to be tested ...");
+    do_print("Waiting for TEST_TABLE_DATA_V4 to be tested ...");
   });
 
   gHttpServ.start(4444);
 
-  // Setup another testing server for the different update URL.
-  gHttpServAnother = new HttpServer();
-  gHttpServAnother.registerDirectory("/", do_get_cwd());
+  // Setup v4 testing server for the different update URL.
+  gHttpServV4 = new HttpServer();
+  gHttpServV4.registerDirectory("/", do_get_cwd());
 
-  gHttpServAnother.registerPathHandler("/safebrowsing/update", function(request, response) {
-    let body = NetUtil.readInputStreamToString(request.bodyInputStream,
-                                               request.bodyInputStream.available());
+  gHttpServV4.registerPathHandler("/safebrowsing/update", function(request, response) {
+    // V4 update request body should be empty.
+    equal(request.bodyInputStream.available(), 0);
 
-    // Verify if the request is as expected.
-    equal(body, TEST_TABLE_DATA_ANOTHER.tableName + ";\n");
+    // Not on the spec. Found in Chromium source code...
+    equal(request.getHeader("X-HTTP-Method-Override"), "POST");
 
-    // Respond with no chunk control.
+    // V4 update request uses GET.
+    equal(request.method, "GET");
+
+    // V4 append the base64 encoded request to the query string.
+    equal(request.queryString, gExpectedQueryV4);
+    equal(request.queryString.indexOf('+'), -1);
+    equal(request.queryString.indexOf('/'), -1);
+
+    // Respond a V2 compatible content for now. In the future we can
+    // send a meaningful response to test Bug 1284178 to see if the
+    // update is successfully stored to database.
     response.setHeader("Content-Type",
                        "application/vnd.google.safebrowsing-update", false);
     response.setStatusLine(request.httpVersion, 200, "OK");
 
-    let content = "n:1000\n";
+    // The protobuf binary represention of response:
+    //
+    // [
+    //   {
+    //     'threat_type': 2, // SOCIAL_ENGINEERING_PUBLIC
+    //     'response_type': 2, // FULL_UPDATE
+    //     'new_client_state': 'sta\x00te', // NEW_CLIENT_STATE
+    //     'checksum': { "sha256": CHECKSUM }, // CHECKSUM
+    //     'additions': { 'compression_type': RAW,
+    //                    'prefix_size': 4,
+    //                    'raw_hashes': "00000001000000020000000300000004"}
+    //   }
+    // ]
+    //
+    let content = "\x0A\x4A\x08\x02\x20\x02\x2A\x18\x08\x01\x12\x14\x08\x04\x12\x10\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x3A\x06\x73\x74\x61\x00\x74\x65\x42\x22\x0A\x20\x30\x67\xC7\x2C\x5E\x50\x1C\x31\xE3\xFE\xCA\x73\xF0\x47\xDC\x34\x1A\x95\x63\x99\xEC\x70\x5E\x0A\xEE\x9E\xFB\x17\xA1\x55\x35\x78\x12\x08\x08\x08\x10\x80\x94\xEB\xDC\x03";
+
     response.bodyOutputStream.write(content, content.length);
 
-    gIsAnotherUpdated = true;
-
-    if (gUpdatedCntForTableData === SERVER_INVOLVED_TEST_CASE_LIST.length) {
-      // All tests are done!
+    if (gIsV4Updated) {
+      // This falls to the case where test_partialUpdateV4 is running.
+      // We are supposed to have verified the update request contains
+      // the state we set in the previous request.
       run_next_test();
       return;
     }
 
-    do_print("Wait for all sever-involved tests to be done ...");
+    waitUntilMetaDataSaved(NEW_CLIENT_STATE, CHECKSUM, () => {
+      gIsV4Updated = true;
+
+      if (gUpdatedCntForTableData === SERVER_INVOLVED_TEST_CASE_LIST.length) {
+        // All tests are done!
+        run_next_test();
+        return;
+      }
+
+      do_print("Wait for all sever-involved tests to be done ...");
+    });
+
   });
 
-  gHttpServAnother.start(5555);
+  gHttpServV4.start(5555);
 
   run_next_test();
 }
@@ -214,12 +304,13 @@ function run_test() {
 // call disableAllUpdates() first to clean up the updateCheckers in listmanager.
 function forceTableUpdate() {
   prefBranch.setCharPref(PREF_NEXTUPDATETIME, "1");
+  prefBranch.setCharPref(PREF_NEXTUPDATETIME_V4, "1");
   gListManager.maybeToggleUpdateChecking();
 }
 
 function disableAllUpdates() {
   TEST_TABLE_DATA_LIST.forEach(t => gListManager.disableUpdate(t.tableName));
-  gListManager.disableUpdate(TEST_TABLE_DATA_ANOTHER.tableName);
+  gListManager.disableUpdate(TEST_TABLE_DATA_V4.tableName);
 }
 
 // Since there's no public interface on listmanager to know the update success,

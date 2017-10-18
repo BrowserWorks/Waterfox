@@ -35,6 +35,8 @@ Distance(const nsReadingIterator<char>& aStart,
 
 void LossyCopyUTF16toASCII(const nsAString& aSource, nsACString& aDest);
 void CopyASCIItoUTF16(const nsACString& aSource, nsAString& aDest);
+MOZ_MUST_USE bool CopyASCIItoUTF16(const nsACString& aSource, nsAString& aDest,
+                                   const mozilla::fallible_t&);
 
 void LossyCopyUTF16toASCII(const char16ptr_t aSource, nsACString& aDest);
 void CopyASCIItoUTF16(const char* aSource, nsAString& aDest);
@@ -296,9 +298,9 @@ void ToUpperCase(nsACString&);
 
 void ToLowerCase(nsACString&);
 
-void ToUpperCase(nsCSubstring&);
+void ToUpperCase(nsACString&);
 
-void ToLowerCase(nsCSubstring&);
+void ToLowerCase(nsACString&);
 
 /**
  * Converts case from string aSource to aDest.
@@ -398,11 +400,11 @@ bool StringEndsWith(const nsACString& aSource, const nsACString& aSubstring);
 bool StringEndsWith(const nsACString& aSource, const nsACString& aSubstring,
                     const nsCStringComparator& aComparator);
 
-const nsAFlatString& EmptyString();
-const nsAFlatCString& EmptyCString();
+const nsString& EmptyString();
+const nsCString& EmptyCString();
 
-const nsAFlatString& NullString();
-const nsAFlatCString& NullCString();
+const nsString& NullString();
+const nsCString& NullCString();
 
 /**
 * Compare a UTF-8 string to an UTF-16 string.
@@ -412,8 +414,8 @@ const nsAFlatCString& NullCString();
 * error (eg the strings are not valid UTF8 and UTF16 respectively),
 * this method will return INT32_MIN.
 */
-int32_t CompareUTF8toUTF16(const nsASingleFragmentCString& aUTF8String,
-                           const nsASingleFragmentString& aUTF16String);
+int32_t CompareUTF8toUTF16(const nsACString& aUTF8String,
+                           const nsAString& aUTF16String);
 
 void AppendUCS4ToUTF16(const uint32_t aSource, nsAString& aDest);
 

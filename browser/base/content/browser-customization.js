@@ -3,14 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// This file is loaded into the browser window scope.
+/* eslint-env mozilla/browser-window */
+
 /**
  * Customization handler prepares this browser window for entering and exiting
  * customization mode by handling customizationstarting and customizationending
  * events.
  */
 var CustomizationHandler = {
-  handleEvent: function(aEvent) {
-    switch(aEvent.type) {
+  handleEvent(aEvent) {
+    switch (aEvent.type) {
       case "customizationstarting":
         this._customizationStarting();
         break;
@@ -23,11 +26,11 @@ var CustomizationHandler = {
     }
   },
 
-  isCustomizing: function() {
+  isCustomizing() {
     return document.documentElement.hasAttribute("customizing");
   },
 
-  _customizationStarting: function() {
+  _customizationStarting() {
     // Disable the toolbar context menu items
     let menubar = document.getElementById("main-menubar");
     for (let childNode of menubar.childNodes)
@@ -51,11 +54,11 @@ var CustomizationHandler = {
     }
   },
 
-  _customizationChange: function() {
+  _customizationChange() {
     PlacesToolbarHelper.customizeChange();
   },
 
-  _customizationEnding: function(aDetails) {
+  _customizationEnding(aDetails) {
     // Update global UI elements that may have been added or removed
     if (aDetails.changed) {
       gURLBar = document.getElementById("urlbar");

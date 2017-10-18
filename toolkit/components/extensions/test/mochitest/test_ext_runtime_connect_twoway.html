@@ -13,8 +13,8 @@
 <script>
 "use strict";
 
-add_task(function* test_connect_bidirectionally_and_postMessage() {
-  function backgroundScript() {
+add_task(async function test_connect_bidirectionally_and_postMessage() {
+  function background() {
     let onConnectCount = 0;
     browser.runtime.onConnect.addListener(port => {
       // 3. onConnect by connect() from CS.
@@ -98,7 +98,7 @@ add_task(function* test_connect_bidirectionally_and_postMessage() {
   }
 
   let extensionData = {
-    background: `(${backgroundScript})();`,
+    background,
     manifest: {
       content_scripts: [{
         js: ["contentscript.js"],
@@ -106,21 +106,21 @@ add_task(function* test_connect_bidirectionally_and_postMessage() {
       }],
     },
     files: {
-      "contentscript.js": `(${contentScript})();`,
+      "contentscript.js": contentScript,
     },
   };
 
   let extension = ExtensionTestUtils.loadExtension(extensionData);
-  yield extension.startup();
+  await extension.startup();
   info("extension loaded");
 
-  yield extension.awaitMessage("ready");
+  await extension.awaitMessage("ready");
 
   let win = window.open("file_sample.html");
-  yield extension.awaitFinish("ping pong done");
+  await extension.awaitFinish("ping pong done");
   win.close();
 
-  yield extension.unload();
+  await extension.unload();
   info("extension unloaded");
 });
 </script>

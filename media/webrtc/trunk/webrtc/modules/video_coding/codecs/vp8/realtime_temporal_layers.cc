@@ -12,7 +12,9 @@
 
 #include "vpx/vpx_encoder.h"
 #include "vpx/vp8cx.h"
-#include "webrtc/modules/video_coding/codecs/interface/video_codec_interface.h"
+#include "webrtc/base/checks.h"
+#include "webrtc/base/optional.h"
+#include "webrtc/modules/video_coding/include/video_codec_interface.h"
 #include "webrtc/modules/video_coding/codecs/vp8/include/vp8_common_types.h"
 #include "webrtc/modules/video_coding/codecs/vp8/temporal_layers.h"
 
@@ -23,7 +25,8 @@ namespace webrtc {
 namespace {
 enum {
   kTemporalUpdateLast = VP8_EFLAG_NO_UPD_GF | VP8_EFLAG_NO_UPD_ARF |
-                        VP8_EFLAG_NO_REF_GF | VP8_EFLAG_NO_REF_ARF,
+                        VP8_EFLAG_NO_REF_GF |
+                        VP8_EFLAG_NO_REF_ARF,
 
   kTemporalUpdateGolden =
       VP8_EFLAG_NO_REF_ARF | VP8_EFLAG_NO_UPD_ARF | VP8_EFLAG_NO_UPD_LAST,
@@ -37,13 +40,15 @@ enum {
       kTemporalUpdateAltref | VP8_EFLAG_NO_REF_ARF | VP8_EFLAG_NO_REF_GF,
 
   kTemporalUpdateNone = VP8_EFLAG_NO_UPD_GF | VP8_EFLAG_NO_UPD_ARF |
-                        VP8_EFLAG_NO_UPD_LAST | VP8_EFLAG_NO_UPD_ENTROPY,
+                        VP8_EFLAG_NO_UPD_LAST |
+                        VP8_EFLAG_NO_UPD_ENTROPY,
 
   kTemporalUpdateNoneNoRefAltref = kTemporalUpdateNone | VP8_EFLAG_NO_REF_ARF,
 
   kTemporalUpdateNoneNoRefGoldenRefAltRef =
       VP8_EFLAG_NO_REF_GF | VP8_EFLAG_NO_UPD_GF | VP8_EFLAG_NO_UPD_ARF |
-      VP8_EFLAG_NO_UPD_LAST | VP8_EFLAG_NO_UPD_ENTROPY,
+      VP8_EFLAG_NO_UPD_LAST |
+      VP8_EFLAG_NO_UPD_ENTROPY,
 
   kTemporalUpdateGoldenWithoutDependencyRefAltRef =
       VP8_EFLAG_NO_REF_GF | VP8_EFLAG_NO_UPD_ARF | VP8_EFLAG_NO_UPD_LAST,
@@ -89,29 +94,23 @@ class RealTimeTemporalLayers : public TemporalLayers {
         timestamp_(0),
         last_base_layer_sync_(0),
         layer_ids_length_(0),
-        layer_ids_(NULL),
+        layer_ids_(nullptr),
         encode_flags_length_(0),
-        encode_flags_(NULL) {
-    assert(max_temporal_layers_ >= 1);
-    assert(max_temporal_layers_ <= 3);
+        encode_flags_(nullptr) {
+    RTC_CHECK_GE(max_temporal_layers_, 1);
+    RTC_CHECK_LE(max_temporal_layers_, 3);
   }
 
   virtual ~RealTimeTemporalLayers() {}
 
-  virtual bool ConfigureBitrates(int bitrate_kbit,
-                                 int max_bitrate_kbit,
-                                 int framerate,
-                                 vpx_codec_enc_cfg_t* cfg) {
+  std::vector<uint32_t> OnRatesUpdated(int bitrate_kbps,
+                                       int max_bitrate_kbps,
+                                       int framerate) override {
     temporal_layers_ =
         CalculateNumberOfTemporalLayers(temporal_layers_, framerate);
     temporal_layers_ = std::min(temporal_layers_, max_temporal_layers_);
-    assert(temporal_layers_ >= 1 && temporal_layers_ <= 3);
-
-    cfg->ts_number_layers = temporal_layers_;
-    for (int tl = 0; tl < temporal_layers_; ++tl) {
-      cfg->ts_target_bitrate[tl] =
-          bitrate_kbit * kVp8LayerRateAlloction[temporal_layers_ - 1][tl];
-    }
+    RTC_CHECK_GE(temporal_layers_, 1);
+    RTC_CHECK_LE(temporal_layers_, 3);
 
     switch (temporal_layers_) {
       case 1: {
@@ -122,9 +121,6 @@ class RealTimeTemporalLayers : public TemporalLayers {
         static const int encode_flags[] = {kTemporalUpdateLastRefAll};
         encode_flags_length_ = sizeof(encode_flags) / sizeof(*layer_ids);
         encode_flags_ = encode_flags;
-
-        cfg->ts_rate_decimator[0] = 1;
-        cfg->ts_periodicity = layer_ids_length_;
       } break;
 
       case 2: {
@@ -133,18 +129,16 @@ class RealTimeTemporalLayers : public TemporalLayers {
         layer_ids_length_ = sizeof(layer_ids) / sizeof(*layer_ids);
 
         static const int encode_flags[] = {
-          kTemporalUpdateLastAndGoldenRefAltRef,
-          kTemporalUpdateGoldenWithoutDependencyRefAltRef,
-          kTemporalUpdateLastRefAltRef, kTemporalUpdateGoldenRefAltRef,
-          kTemporalUpdateLastRefAltRef, kTemporalUpdateGoldenRefAltRef,
-          kTemporalUpdateLastRefAltRef, kTemporalUpdateNone
-        };
+            kTemporalUpdateLastAndGoldenRefAltRef,
+            kTemporalUpdateGoldenWithoutDependencyRefAltRef,
+            kTemporalUpdateLastRefAltRef,
+            kTemporalUpdateGoldenRefAltRef,
+            kTemporalUpdateLastRefAltRef,
+            kTemporalUpdateGoldenRefAltRef,
+            kTemporalUpdateLastRefAltRef,
+            kTemporalUpdateNone};
         encode_flags_length_ = sizeof(encode_flags) / sizeof(*layer_ids);
         encode_flags_ = encode_flags;
-
-        cfg->ts_rate_decimator[0] = 2;
-        cfg->ts_rate_decimator[1] = 1;
-        cfg->ts_periodicity = layer_ids_length_;
       } break;
 
       case 3: {
@@ -153,31 +147,73 @@ class RealTimeTemporalLayers : public TemporalLayers {
         layer_ids_length_ = sizeof(layer_ids) / sizeof(*layer_ids);
 
         static const int encode_flags[] = {
-          kTemporalUpdateLastAndGoldenRefAltRef,
-          kTemporalUpdateNoneNoRefGoldenRefAltRef,
-          kTemporalUpdateGoldenWithoutDependencyRefAltRef, kTemporalUpdateNone,
-          kTemporalUpdateLastRefAltRef, kTemporalUpdateNone,
-          kTemporalUpdateGoldenRefAltRef, kTemporalUpdateNone
-        };
+            kTemporalUpdateLastAndGoldenRefAltRef,
+            kTemporalUpdateNoneNoRefGoldenRefAltRef,
+            kTemporalUpdateGoldenWithoutDependencyRefAltRef,
+            kTemporalUpdateNone,
+            kTemporalUpdateLastRefAltRef,
+            kTemporalUpdateNone,
+            kTemporalUpdateGoldenRefAltRef,
+            kTemporalUpdateNone};
         encode_flags_length_ = sizeof(encode_flags) / sizeof(*layer_ids);
         encode_flags_ = encode_flags;
-
-        cfg->ts_rate_decimator[0] = 4;
-        cfg->ts_rate_decimator[1] = 2;
-        cfg->ts_rate_decimator[2] = 1;
-        cfg->ts_periodicity = layer_ids_length_;
       } break;
 
       default:
-        assert(false);
-        return false;
+        RTC_NOTREACHED();
+        return std::vector<uint32_t>();
     }
-    memcpy(
-        cfg->ts_layer_id, layer_ids_, sizeof(unsigned int) * layer_ids_length_);
+
+    std::vector<uint32_t> bitrates;
+    const int num_layers = std::max(1, temporal_layers_);
+    for (int i = 0; i < num_layers; ++i) {
+      float layer_bitrate =
+          bitrate_kbps * kVp8LayerRateAlloction[num_layers - 1][i];
+      bitrates.push_back(static_cast<uint32_t>(layer_bitrate + 0.5));
+    }
+    new_bitrates_kbps_ = rtc::Optional<std::vector<uint32_t>>(bitrates);
+
+    // Allocation table is of aggregates, transform to individual rates.
+    uint32_t sum = 0;
+    for (int i = 0; i < num_layers; ++i) {
+      uint32_t layer_bitrate = bitrates[i];
+      RTC_DCHECK_LE(sum, bitrates[i]);
+      bitrates[i] -= sum;
+      sum = layer_bitrate;
+
+      if (sum >= static_cast<uint32_t>(bitrate_kbps)) {
+        // Sum adds up; any subsequent layers will be 0.
+        bitrates.resize(i + 1);
+        break;
+      }
+    }
+
+    return bitrates;
+  }
+
+  bool UpdateConfiguration(vpx_codec_enc_cfg_t* cfg) override {
+    if (!new_bitrates_kbps_)
+      return false;
+
+    cfg->ts_number_layers = temporal_layers_;
+    for (int tl = 0; tl < temporal_layers_; ++tl) {
+      cfg->ts_target_bitrate[tl] = (*new_bitrates_kbps_)[tl];
+    }
+    new_bitrates_kbps_ = rtc::Optional<std::vector<uint32_t>>();
+
+    cfg->ts_periodicity = layer_ids_length_;
+    int decimator = 1;
+    for (int i = temporal_layers_ - 1; i >= 0; --i, decimator *= 2) {
+      cfg->ts_rate_decimator[i] = decimator;
+    }
+
+    memcpy(cfg->ts_layer_id, layer_ids_,
+           sizeof(unsigned int) * layer_ids_length_);
+
     return true;
   }
 
-  virtual int EncodeFlags(uint32_t timestamp) {
+  int EncodeFlags(uint32_t timestamp) override {
     frame_counter_++;
     return CurrentEncodeFlags();
   }
@@ -189,16 +225,16 @@ class RealTimeTemporalLayers : public TemporalLayers {
     return encode_flags_[index];
   }
 
-  virtual int CurrentLayerId() const {
+  int CurrentLayerId() const override {
     assert(layer_ids_length_ > 0 && layer_ids_ != NULL);
     int index = frame_counter_ % layer_ids_length_;
     assert(index >= 0 && index < layer_ids_length_);
     return layer_ids_[index];
   }
 
-  virtual void PopulateCodecSpecific(bool base_layer_sync,
-                                     CodecSpecificInfoVP8* vp8_info,
-                                     uint32_t timestamp) {
+  void PopulateCodecSpecific(bool base_layer_sync,
+                             CodecSpecificInfoVP8* vp8_info,
+                             uint32_t timestamp) override {
     assert(temporal_layers_ > 0);
 
     if (temporal_layers_ == 1) {
@@ -239,7 +275,7 @@ class RealTimeTemporalLayers : public TemporalLayers {
     }
   }
 
-  void FrameEncoded(unsigned int size, uint32_t timestamp) {}
+  void FrameEncoded(unsigned int size, uint32_t timestamp, int qp) override {}
 
  private:
   int temporal_layers_;
@@ -257,12 +293,19 @@ class RealTimeTemporalLayers : public TemporalLayers {
   // Pattern of encode flags.
   int encode_flags_length_;
   const int* encode_flags_;
+
+  rtc::Optional<std::vector<uint32_t>> new_bitrates_kbps_;
 };
 }  // namespace
 
 TemporalLayers* RealTimeTemporalLayersFactory::Create(
+    int simulcast_id,
     int max_temporal_layers,
     uint8_t initial_tl0_pic_idx) const {
-  return new RealTimeTemporalLayers(max_temporal_layers, initial_tl0_pic_idx);
+  TemporalLayers* tl =
+      new RealTimeTemporalLayers(max_temporal_layers, initial_tl0_pic_idx);
+  if (listener_)
+    listener_->OnTemporalLayersCreated(simulcast_id, tl);
+  return tl;
 }
 }  // namespace webrtc

@@ -20,12 +20,14 @@ this.push(myTest);
 */
 
 tests.push({
-  excludeItemsFromRestore: [],
+  // Initialise something to avoid undefined property warnings in validate.
+  _litterTitle: "",
+
   populate: function populate() {
     // check initial size
     var rootNode = PlacesUtils.getFolderContents(PlacesUtils.placesRootId,
                                                  false, false).root;
-    do_check_eq(rootNode.childCount, 4);
+    do_check_eq(rootNode.childCount, 5);
 
     // create a test root
     this._folderTitle = "test folder";
@@ -33,7 +35,7 @@ tests.push({
       PlacesUtils.bookmarks.createFolder(PlacesUtils.placesRootId,
                                          this._folderTitle,
                                          PlacesUtils.bookmarks.DEFAULT_INDEX);
-    do_check_eq(rootNode.childCount, 5);
+    do_check_eq(rootNode.childCount, 6);
 
     // add a tag
     this._testURI = PlacesUtils._uri("http://test");
@@ -42,7 +44,8 @@ tests.push({
 
     // add a child to each root, including our test root
     this._roots = [PlacesUtils.bookmarksMenuFolderId, PlacesUtils.toolbarFolderId,
-                   PlacesUtils.unfiledBookmarksFolderId, this._folderId];
+                   PlacesUtils.unfiledBookmarksFolderId, PlacesUtils.mobileFolderId,
+                   this._folderId];
     this._roots.forEach(function(aRootId) {
       // clean slate
       PlacesUtils.bookmarks.removeFolderChildren(aRootId);
@@ -57,8 +60,7 @@ tests.push({
       PlacesUtils.bookmarks.createFolder(PlacesUtils.placesRootId,
                                          "excluded",
                                          PlacesUtils.bookmarks.DEFAULT_INDEX);
-    do_check_eq(rootNode.childCount, 6);
-    this.excludeItemsFromRestore.push(excludedFolderId);
+    do_check_eq(rootNode.childCount, 7);
 
     // add a test bookmark to it
     PlacesUtils.bookmarks.insertBookmark(excludedFolderId, this._testURI,
@@ -90,7 +92,7 @@ tests.push({
     do_check_neq(rootNode.getChild(0).title, this._litterTitle);
 
     // test root count is the same
-    do_check_eq(rootNode.childCount, 6);
+    do_check_eq(rootNode.childCount, 7);
 
     var foundTestFolder = 0;
     for (var i = 0; i < rootNode.childCount; i++) {
@@ -120,35 +122,25 @@ tests.push({
   }
 });
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* () {
+add_task(async function() {
   // make json file
   let jsonFile = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.json");
-
-  // array of ids not to delete when restoring
-  var excludedItemsFromRestore = [];
 
   // populate db
   tests.forEach(function(aTest) {
     aTest.populate();
     // sanity
     aTest.validate();
-
-    if (aTest.excludedItemsFromRestore)
-      excludedItemsFromRestore = excludedItems.concat(aTest.excludedItemsFromRestore);
   });
 
-  yield BookmarkJSONUtils.exportToFile(jsonFile);
+  await BookmarkJSONUtils.exportToFile(jsonFile);
 
   tests.forEach(function(aTest) {
     aTest.inbetween();
   });
 
   // restore json file
-  yield BookmarkJSONUtils.importFromFile(jsonFile, true);
+  await BookmarkJSONUtils.importFromFile(jsonFile, true);
 
   // validate
   tests.forEach(function(aTest) {
@@ -156,5 +148,5 @@ add_task(function* () {
   });
 
   // clean up
-  yield OS.File.remove(jsonFile);
+  await OS.File.remove(jsonFile);
 });

@@ -4,6 +4,33 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Document Navigation')
+
+with Files('crashtests/430628*'):
+    BUG_COMPONENT = ('Core', 'Editor')
+
+with Files('crashtests/432114*'):
+    BUG_COMPONENT = ('Core', 'Editor')
+
+with Files('crashtests/500328*'):
+    BUG_COMPONENT = ('Firefox', 'Bookmarks & History')
+
+with Files('IHistory.h'):
+    BUG_COMPONENT = ('Toolkit', 'Places')
+
+with Files('*LoadContext.*'):
+    BUG_COMPONENT = ('Core', 'Networking')
+
+with Files('nsAboutRedirector.*'):
+    BUG_COMPONENT = ('Core', 'General')
+
+with Files('nsILinkHandler.*'):
+    BUG_COMPONENT = ('Core', 'DOM: Core & HTML')
+
+with Files('nsIScrollObserver.*'):
+    BUG_COMPONENT = ('Core', 'Panning and Zooming')
+
 DIRS += [
     'timeline',
 ]
@@ -15,6 +42,8 @@ XPIDL_SOURCES += [
     'nsIContentViewerContainer.idl',
     'nsIContentViewerEdit.idl',
     'nsIContentViewerFile.idl',
+    'nsIContextMenuListener.idl',
+    'nsIContextMenuListener2.idl',
     'nsIDocCharset.idl',
     'nsIDocShell.idl',
     'nsIDocShellLoadInfo.idl',
@@ -29,6 +58,8 @@ XPIDL_SOURCES += [
     'nsIRefreshURI.idl',
     'nsIScrollable.idl',
     'nsITextScroll.idl',
+    'nsITooltipListener.idl',
+    'nsITooltipTextProvider.idl',
     'nsIURIFixup.idl',
     'nsIWebNavigation.idl',
     'nsIWebNavigationInfo.idl',
@@ -38,7 +69,9 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'docshell'
 
 EXPORTS += [
+    'nsCTooltipTextProvider.h',
     'nsDocShellLoadTypes.h',
+    'nsDocShellTreeOwner.h',
     'nsILinkHandler.h',
     'nsIScrollObserver.h',
     'nsIWebShellServices.h',
@@ -50,18 +83,25 @@ EXPORTS.mozilla += [
     'LoadContext.h',
 ]
 
+EXPORTS.mozilla.dom += [
+    'PendingGlobalHistoryEntry.h',
+]
+
 UNIFIED_SOURCES += [
     'LoadContext.cpp',
     'nsAboutRedirector.cpp',
+    'nsContextMenuInfo.cpp',
     'nsDefaultURIFixup.cpp',
     'nsDocShell.cpp',
     'nsDocShellEditorData.cpp',
     'nsDocShellEnumerator.cpp',
     'nsDocShellLoadInfo.cpp',
     'nsDocShellTransferableHooks.cpp',
+    'nsDocShellTreeOwner.cpp',
     'nsDownloadHistory.cpp',
     'nsDSURIContentListener.cpp',
     'nsWebNavigationInfo.cpp',
+    'PendingGlobalHistoryEntry.cpp',
     'SerializedLoadContext.cpp',
 ]
 
@@ -73,16 +113,16 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/layout/base',
     '/layout/generic',
+    '/layout/style',
     '/layout/xul',
+    '/netwerk/base',
     '/netwerk/protocol/viewsource',
+    '/toolkit/components/browser',
     '/tools/profiler',
 ]
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:
     DEFINES['MOZ_TOOLKIT_SEARCH'] = True
-
-if CONFIG['MOZ_DEVTOOLS'] == 'all':
-    DEFINES['MOZ_DEVTOOLS_ALL'] = True
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']

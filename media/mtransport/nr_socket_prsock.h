@@ -121,8 +121,7 @@ public:
   virtual int cancel(int how);
 
   // nsISupport reference counted interface
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) = 0;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
   uint32_t poll_flags() {
     return poll_flags_;
@@ -281,8 +280,7 @@ private:
   void sendto_i(const net::NetAddr &addr, nsAutoPtr<DataBuffer> buf);
   void close_i();
 #if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
-  static void release_child_i(nsIUDPSocketChild* aChild, nsCOMPtr<nsIEventTarget> ststhread);
-  static void release_use_s();
+  static void release_child_i(nsIUDPSocketChild* aChild);
 #endif
   // STS thread executor
   void recv_callback_s(RefPtr<nr_udp_message> msg);
@@ -370,12 +368,13 @@ private:
   void connect_i(const nsACString &remote_addr,
                  uint16_t remote_port,
                  const nsACString &local_addr,
-                 uint16_t local_port);
+                 uint16_t local_port,
+                 const nsACString &tls_host);
   void write_i(nsAutoPtr<InfallibleTArray<uint8_t>> buf,
                uint32_t tracking_number);
   void close_i();
 
-  static void release_child_i(dom::TCPSocketChild* aChild, nsCOMPtr<nsIEventTarget> ststhread);
+  static void release_child_i(dom::TCPSocketChild* aChild);
 
   // STS thread executor
   void message_sent_s(uint32_t bufferedAmount, uint32_t tracking_number);

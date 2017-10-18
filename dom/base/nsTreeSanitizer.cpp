@@ -7,19 +7,19 @@
 #include "nsTreeSanitizer.h"
 
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 #include "mozilla/css/Declaration.h"
 #include "mozilla/css/StyleRule.h"
 #include "mozilla/css/Rule.h"
 #include "nsCSSParser.h"
-#include "nsCSSProperty.h"
+#include "nsCSSPropertyID.h"
 #include "nsUnicharInputStream.h"
 #include "nsIDOMCSSRule.h"
 #include "nsAttrName.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsNetUtil.h"
 #include "nsComponentManagerUtils.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsContentUtils.h"
 #include "nsIParserUtils.h"
 #include "nsIDocument.h"
@@ -152,6 +152,7 @@ nsIAtom** const kAttributesHTML[] = {
   &nsGkAtoms::accesskey,
   &nsGkAtoms::action,
   &nsGkAtoms::alt,
+  &nsGkAtoms::as,
   &nsGkAtoms::autocomplete,
   &nsGkAtoms::autofocus,
   &nsGkAtoms::autoplay,
@@ -203,6 +204,7 @@ nsIAtom** const kAttributesHTML[] = {
   &nsGkAtoms::media,
   &nsGkAtoms::method,
   &nsGkAtoms::min,
+  &nsGkAtoms::minlength,
   &nsGkAtoms::multiple,
   &nsGkAtoms::muted,
   &nsGkAtoms::name,
@@ -592,6 +594,7 @@ nsIAtom** const kAttributesSVG[] = {
 };
 
 nsIAtom** const kURLAttributesSVG[] = {
+  &nsGkAtoms::href,
   nullptr
 };
 
@@ -1065,8 +1068,8 @@ bool
 nsTreeSanitizer::SanitizeStyleDeclaration(mozilla::css::Declaration* aDeclaration,
                                           nsAutoString& aRuleText)
 {
-  bool didSanitize = aDeclaration->HasProperty(eCSSProperty_binding);
-  aDeclaration->RemoveProperty(eCSSProperty_binding);
+  bool didSanitize = aDeclaration->HasProperty(eCSSProperty__moz_binding);
+  aDeclaration->RemovePropertyByID(eCSSProperty__moz_binding);
   aDeclaration->ToString(aRuleText);
   return didSanitize;
 }
@@ -1083,14 +1086,15 @@ nsTreeSanitizer::SanitizeStyleSheet(const nsAString& aOriginal,
   // -moz-binding is blacklisted.
   bool didSanitize = false;
   // Create a sheet to hold the parsed CSS
-  RefPtr<CSSStyleSheet> sheet = new CSSStyleSheet(CORS_NONE, aDocument->GetReferrerPolicy());
+  RefPtr<CSSStyleSheet> sheet =
+    new CSSStyleSheet(mozilla::css::eAuthorSheetFeatures,
+                      CORS_NONE, aDocument->GetReferrerPolicy());
   sheet->SetURIs(aDocument->GetDocumentURI(), nullptr, aBaseURI);
   sheet->SetPrincipal(aDocument->NodePrincipal());
   // Create the CSS parser, and parse the CSS text.
   nsCSSParser parser(nullptr, sheet);
   rv = parser.ParseSheet(aOriginal, aDocument->GetDocumentURI(), aBaseURI,
-                         aDocument->NodePrincipal(), 0,
-                         mozilla::css::eAuthorSheetFeatures);
+                         aDocument->NodePrincipal(), 0);
   NS_ENSURE_SUCCESS(rv, true);
   // Mark the sheet as complete.
   MOZ_ASSERT(!sheet->IsModified(),
@@ -1278,6 +1282,10 @@ nsTreeSanitizer::SanitizeURL(mozilla::dom::Element* aElement,
   static const char* kWhitespace = "\n\r\t\b";
   const nsAString& v =
     nsContentUtils::TrimCharsInSet(kWhitespace, value);
+  // Fragment-only url cannot be harmful.
+  if (!v.IsEmpty() && v.First() == u'#') {
+    return false;
+  }
 
   nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
   uint32_t flags = nsIScriptSecurityManager::DISALLOW_INHERIT_PRINCIPAL;
@@ -1285,7 +1293,7 @@ nsTreeSanitizer::SanitizeURL(mozilla::dom::Element* aElement,
   nsCOMPtr<nsIURI> baseURI = aElement->GetBaseURI();
   nsCOMPtr<nsIURI> attrURI;
   nsresult rv = NS_NewURI(getter_AddRefs(attrURI), v, nullptr, baseURI);
-  if (NS_SUCCEEDED(rv)) { 
+  if (NS_SUCCEEDED(rv)) {
     if (mCidEmbedsOnly &&
         kNameSpaceID_None == aNamespace) {
       if (nsGkAtoms::src == aLocalName || nsGkAtoms::background == aLocalName) {
@@ -1515,7 +1523,7 @@ nsTreeSanitizer::InitializeStatics()
     sAttributesMathML->PutEntry(*kAttributesMathML[i]);
   }
 
-  nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+  nsCOMPtr<nsIPrincipal> principal = NullPrincipal::Create();
   principal.forget(&sNullPrincipal);
 }
 

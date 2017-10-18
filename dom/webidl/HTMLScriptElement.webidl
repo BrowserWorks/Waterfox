@@ -8,33 +8,36 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
  */
 
+[HTMLConstructor]
 interface HTMLScriptElement : HTMLElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString src;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString type;
-  [SetterThrows]
+  [CEReactions, SetterThrows, Pref="dom.moduleScripts.enabled"]
+  attribute boolean noModule;
+  [CEReactions, SetterThrows]
   attribute DOMString charset;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute boolean async;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute boolean defer;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString? crossOrigin;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString text;
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLScriptElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString event;
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString htmlFor;
 };
 
 // https://w3c.github.io/webappsec/specs/subresourceintegrity/#htmlscriptelement-1
 partial interface HTMLScriptElement {
-  [SetterThrows]
+  [CEReactions, SetterThrows]
   attribute DOMString integrity;
 };

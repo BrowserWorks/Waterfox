@@ -8,8 +8,9 @@
 
 #include "nsIStyleSheetLinkingElement.h"
 #include "nsStyleLinkElement.h"
-#include "nsScriptLoader.h"
 #include "nsIHTMLDocument.h"
+#include "nsNameSpaceManager.h"
+#include "mozilla/dom/ScriptLoader.h"
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(nsHtml5DocumentBuilder, nsContentSink,
                                    mOwnedElements)
@@ -21,6 +22,8 @@ NS_IMPL_ADDREF_INHERITED(nsHtml5DocumentBuilder, nsContentSink)
 NS_IMPL_RELEASE_INHERITED(nsHtml5DocumentBuilder, nsContentSink)
 
 nsHtml5DocumentBuilder::nsHtml5DocumentBuilder(bool aRunsToCompletion)
+  : mBroken(NS_OK)
+  , mFlushState(eHtml5FlushState::eNotFlushing)
 {
   mRunsToCompletion = aRunsToCompletion;
 }
@@ -46,17 +49,24 @@ nsHtml5DocumentBuilder::MarkAsBroken(nsresult aReason)
 }
 
 void
-nsHtml5DocumentBuilder::SetDocumentCharsetAndSource(nsACString& aCharset, int32_t aCharsetSource)
+nsHtml5DocumentBuilder::SetDocumentCharsetAndSource(NotNull<const Encoding*> aEncoding,
+                                                    int32_t aCharsetSource)
 {
   if (mDocument) {
     mDocument->SetDocumentCharacterSetSource(aCharsetSource);
-    mDocument->SetDocumentCharacterSet(aCharset);
+    mDocument->SetDocumentCharacterSet(aEncoding);
   }
 }
 
 void
 nsHtml5DocumentBuilder::UpdateStyleSheet(nsIContent* aElement)
 {
+  nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(aElement));
+  if (!ssle) {
+    MOZ_ASSERT(nsNameSpaceManager::GetInstance()->mSVGDisabled, "Node didn't QI to style, but SVG wasn't disabled.");
+    return;
+  }
+
   // Break out of the doc update created by Flush() to zap a runnable
   // waiting to call UpdateStyleSheet without the right observer
   EndDocUpdate();
@@ -65,9 +75,6 @@ nsHtml5DocumentBuilder::UpdateStyleSheet(nsIContent* aElement)
     // EndDocUpdate ran stuff that called nsIParser::Terminate()
     return;
   }
-
-  nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(aElement));
-  NS_ASSERTION(ssle, "Node didn't QI to style.");
 
   ssle->SetEnableUpdates(true);
 

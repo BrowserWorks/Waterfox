@@ -4,11 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import logging
 import posixpath
 import sys, os
 import subprocess
 import runxpcshelltests as xpcshell
 import tempfile
+import time
 from zipfile import ZipFile
 from mozlog import commandline
 import shutil
@@ -86,11 +88,10 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
         self.log.info("%s | current directory: %r" % (name, self.remoteHere))
         self.log.info("%s | environment: %s" % (name, self.env))
 
-    def getHeadAndTailFiles(self, test):
+    def getHeadFiles(self, test):
         """Override parent method to find files on remote device.
 
-        Obtains lists of head- and tail files.  Returns a tuple containing
-        a list of head files and a list of tail files.
+        Obtains lists of head- files.  Returns a list of head files.
         """
         def sanitize_list(s, kind):
             for f in s.strip().split(' '):
@@ -108,9 +109,7 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
         self.remoteHere = self.remoteForLocal(test['here'])
 
         headlist = test.get('head', '')
-        taillist = test.get('tail', '')
-        return (list(sanitize_list(headlist, 'head')),
-                list(sanitize_list(taillist, 'tail')))
+        return list(sanitize_list(headlist, 'head'))
 
     def buildXpcsCmd(self):
         # change base class' paths to remote paths and use base class to build command
@@ -146,9 +145,9 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
                 self.shellReturnCode = self.device.shell(cmd, f, timeout=timeout+10)
             except mozdevice.DMError as e:
                 if self.timedout:
-                    # If the test timed out, there is a good chance the SUTagent also
-                    # timed out and failed to return a return code, generating a
-                    # DMError. Ignore the DMError to simplify the error report.
+                    # If the test timed out, there is a good chance the device
+                    # manager also timed out and raised DMError.
+                    # Ignore the DMError to simplify the error report.
                     self.shellReturnCode = None
                     pass
                 else:
@@ -203,7 +202,17 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
         self.device.removeDir(dirname)
 
     def clearRemoteDir(self, remoteDir):
-        self.device.shellCheckOutput([self.remoteClearDirScript, remoteDir])
+        out = ""
+        try:
+            out = self.device.shellCheckOutput([self.remoteClearDirScript, remoteDir])
+        except mozdevice.DMError:
+            self.log.info("unable to delete %s: '%s'" % (remoteDir, str(out)))
+            self.log.info("retrying after 10 seconds...")
+            time.sleep(10)
+            try:
+                out = self.device.shellCheckOutput([self.remoteClearDirScript, remoteDir])
+            except mozdevice.DMError:
+                self.log.error("failed to delete %s: '%s'" % (remoteDir, str(out)))
 
     #TODO: consider creating a separate log dir.  We don't have the test file structure,
     #      so we use filename.log.  Would rather see ./logs/filename.log
@@ -432,17 +441,6 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
         self.pushLibs()
 
     def pushLibs(self):
-        if self.localBin is not None:
-            szip = os.path.join(self.localBin, '..', 'host', 'bin', 'szip')
-            if not os.path.exists(szip):
-                # Tinderbox builds must run szip from the test package
-                szip = os.path.join(self.localBin, 'host', 'szip')
-            if not os.path.exists(szip):
-                # If the test package doesn't contain szip, it means files
-                # are not szipped in the test package.
-                szip = None
-        else:
-            szip = None
         pushed_libs_count = 0
         if self.options.localAPK:
             try:
@@ -453,13 +451,13 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
                         remoteFile = remoteJoin(self.remoteBinDir, os.path.basename(info.filename))
                         self.localAPKContents.extract(info, dir)
                         localFile = os.path.join(dir, info.filename)
-                        if szip:
-                            try:
-                                out = subprocess.check_output([szip, '-d', localFile], stderr=subprocess.STDOUT)
-                            except CalledProcessError:
-                                print >> sys.stderr, "Error calling %s on %s.." % (szip, localFile)
-                                if out:
-                                    print >> sys.stderr, out
+                        with open(localFile) as f:
+                            # Decompress xz-compressed file.
+                            if f.read(5)[1:] == '7zXZ':
+                                cmd = ['xz', '-df', '--suffix', '.so', localFile]
+                                subprocess.check_output(cmd)
+                                # xz strips the ".so" file suffix.
+                                os.rename(localFile[:-3], localFile)
                         self.device.pushFile(localFile, remoteFile)
                         pushed_libs_count += 1
             finally:
@@ -473,13 +471,6 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
                     print >> sys.stderr, "This is a big file, it could take a while."
                 localFile = os.path.join(self.localLib, file)
                 remoteFile = remoteJoin(self.remoteBinDir, file)
-                if szip:
-                    try:
-                        out = subprocess.check_output([szip, '-d', localFile], stderr=subprocess.STDOUT)
-                    except CalledProcessError:
-                        print >> sys.stderr, "Error calling %s on %s.." % (szip, localFile)
-                        if out:
-                            print >> sys.stderr, out
                 self.device.pushFile(localFile, remoteFile)
                 pushed_libs_count += 1
 
@@ -492,13 +483,6 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
                         print >> sys.stderr, "Pushing %s.." % file
                         localFile = os.path.join(root, file)
                         remoteFile = remoteJoin(self.remoteBinDir, file)
-                        if szip:
-                            try:
-                                out = subprocess.check_output([szip, '-d', localFile], stderr=subprocess.STDOUT)
-                            except CalledProcessError:
-                                print >> sys.stderr, "Error calling %s on %s.." % (szip, localFile)
-                                if out:
-                                    print >> sys.stderr, out
                         self.device.pushFile(localFile, remoteFile)
                         pushed_libs_count += 1
 
@@ -595,16 +579,13 @@ def main():
                                     options,
                                     {"tbpl": sys.stdout})
 
-    if options.dm_trans == "adb":
-        if options.deviceIP:
-            dm = mozdevice.DroidADB(options.deviceIP, options.devicePort, packageName=None, deviceRoot=options.remoteTestRoot)
-        else:
-            dm = mozdevice.DroidADB(packageName=None, deviceRoot=options.remoteTestRoot)
-    else:
-        if not options.deviceIP:
-            print "Error: you must provide a device IP to connect to via the --device option"
-            sys.exit(1)
-        dm = mozdevice.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
+    dm_args = {'deviceRoot': options.remoteTestRoot}
+    if options.deviceIP:
+        dm_args['host'] = options.deviceIP
+        dm_args['port'] = options.devicePort
+    if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
+        dm_args['logLevel'] = logging.DEBUG
+    dm = mozdevice.DroidADB(**dm_args)
 
     if options.interactive and not options.testPath:
         print >>sys.stderr, "Error: You must specify a test filename in interactive mode!"

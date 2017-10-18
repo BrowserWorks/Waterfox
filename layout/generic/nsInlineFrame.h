@@ -22,9 +22,8 @@ class nsLineLayout;
 class nsInlineFrame : public nsContainerFrame
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsInlineFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsInlineFrame)
 
   friend nsInlineFrame* NS_NewInlineFrame(nsIPresShell* aPresShell,
                                           nsStyleContext* aContext);
@@ -41,7 +40,6 @@ public:
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -58,19 +56,21 @@ public:
   virtual bool IsEmpty() override;
   virtual bool IsSelfEmpty() override;
 
-  virtual FrameSearchResult PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                     bool aRespectClusters = true) override;
-  
+  virtual FrameSearchResult
+  PeekOffsetCharacter(bool aForward, int32_t* aOffset,
+                      PeekOffsetCharacterOptions aOptions =
+                        PeekOffsetCharacterOptions()) override;
+
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
   virtual nsresult StealFrame(nsIFrame* aChild) override;
 
   // nsIHTMLReflow overrides
-  virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlineMinISize(gfxContext *aRenderingContext,
                                  InlineMinISizeData *aData) override;
-  virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlinePrefISize(gfxContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
   virtual mozilla::LogicalSize
-  ComputeSize(nsRenderingContext *aRenderingContext,
+  ComputeSize(gfxContext *aRenderingContext,
               mozilla::WritingMode aWritingMode,
               const mozilla::LogicalSize& aCBSize,
               nscoord aAvailableISize,
@@ -116,6 +116,11 @@ public:
              : (!GetNextInFlow());
   }
 
+  // Restyles the block wrappers around our non-inline-outside kids.
+  // This will only be called when such wrappers in fact exist.
+  void UpdateStyleOfOwnedAnonBoxesForIBSplit(
+    mozilla::ServoRestyleState& aRestyleState);
+
 protected:
   // Additional reflow state used during our reflow methods
   struct InlineReflowInput {
@@ -135,7 +140,10 @@ protected:
     }
   };
 
-  explicit nsInlineFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+  nsInlineFrame(nsStyleContext* aContext, ClassID aID)
+    : nsContainerFrame(aContext, aID)
+    , mBaseline(NS_INTRINSIC_WIDTH_UNKNOWN)
+  {}
 
   virtual LogicalSides GetLogicalSkipSides(const ReflowInput* aReflowInput = nullptr) const override;
 
@@ -170,6 +178,10 @@ protected:
                           InlineReflowInput& aState);
 
 private:
+  explicit nsInlineFrame(nsStyleContext* aContext)
+    : nsInlineFrame(aContext, kClassID)
+  {}
+
   // Helper method for DrainSelfOverflowList() to deal with lazy parenting
   // (which we only do for nsInlineFrame, not nsFirstLineFrame).
   enum DrainFlags {
@@ -199,7 +211,7 @@ protected:
  */
 class nsFirstLineFrame final : public nsInlineFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsFirstLineFrame)
 
   friend nsFirstLineFrame* NS_NewFirstLineFrame(nsIPresShell* aPresShell,
                                                 nsStyleContext* aContext);
@@ -207,7 +219,6 @@ public:
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
-  virtual nsIAtom* GetType() const override;
   virtual void Reflow(nsPresContext* aPresContext,
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,
@@ -220,7 +231,9 @@ public:
   virtual bool DrainSelfOverflowList() override;
 
 protected:
-  explicit nsFirstLineFrame(nsStyleContext* aContext) : nsInlineFrame(aContext) {}
+  explicit nsFirstLineFrame(nsStyleContext* aContext)
+    : nsInlineFrame(aContext, kClassID)
+  {}
 
   virtual nsIFrame* PullOneFrame(nsPresContext* aPresContext,
                                  InlineReflowInput& rs,

@@ -12,7 +12,6 @@
 #include "nsIDOMNodeList.h"
 #include "nsGkAtoms.h"
 #include "nsNameSpaceManager.h"
-#include "nsIDOMElementCSSInlineStyle.h"
 #include "nsIDOMCSSStyleDeclaration.h"
 
 #include "nsPresContext.h"
@@ -27,6 +26,8 @@
 #include "nsIScreenManager.h"
 #include "mozilla/dom/Element.h"
 #include "nsError.h"
+#include "nsICSSDeclaration.h"
+#include "nsStyledElement.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -45,7 +46,7 @@ NS_NewResizerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 NS_IMPL_FRAMEARENA_HELPERS(nsResizerFrame)
 
 nsResizerFrame::nsResizerFrame(nsStyleContext* aContext)
-:nsTitleBarFrame(aContext)
+  : nsTitleBarFrame(aContext, kClassID)
 {
 }
 
@@ -59,7 +60,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  nsWeakFrame weakFrame(this);
+  AutoWeakFrame weakFrame(this);
   bool doDefault = true;
 
   switch (aEvent->mMessage) {
@@ -103,7 +104,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
           // for native drags, don't set the fields below
           if (rv != NS_ERROR_NOT_IMPLEMENTED)
              break;
-             
+
           // if there's no native resize support, we need to do window
           // resizing ourselves
           window->GetPositionAndSize(&mMouseDownRect.x, &mMouseDownRect.y,
@@ -172,8 +173,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
       if (window || menuPopupFrame) {
         if (menuPopupFrame) {
           menuPopupFrame->CanAdjustEdges(
-            (direction.mHorizontal == -1) ? NS_SIDE_LEFT : NS_SIDE_RIGHT,
-            (direction.mVertical == -1) ? NS_SIDE_TOP : NS_SIDE_BOTTOM, mouseMove);
+            (direction.mHorizontal == -1) ? eSideLeft : eSideRight,
+            (direction.mVertical == -1) ? eSideTop : eSideBottom, mouseMove);
         }
       }
       else if (!contentToResize) {
@@ -201,7 +202,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         nsCOMPtr<nsIScreen> screen;
         nsCOMPtr<nsIScreenManager> sm(do_GetService("@mozilla.org/gfx/screenmanager;1"));
         if (sm) {
-          nsIntRect frameRect = GetScreenRect();
+          CSSIntRect frameRect = GetScreenRect();
           // ScreenForRect requires display pixels, so scale from device pix
           double scale;
           window->GetUnscaledDevicePixelsPerCSSPixel(&scale);
@@ -246,11 +247,11 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         nsIntRect cssRect = appUnitsRect.ToInsidePixels(nsPresContext::AppUnitsPerCSSPixel());
 
         LayoutDeviceIntRect oldRect;
-        nsWeakFrame weakFrame(menuPopupFrame);
+        AutoWeakFrame weakFrame(menuPopupFrame);
         if (menuPopupFrame) {
           nsCOMPtr<nsIWidget> widget = menuPopupFrame->GetWidget();
           if (widget)
-            widget->GetScreenBounds(oldRect);
+            oldRect = widget->GetScreenBounds();
 
           // convert the new rectangle into outer window coordinates
           LayoutDeviceIntPoint clientOffset = widget->GetClientOffset();
@@ -421,11 +422,10 @@ nsResizerFrame::ResizeContent(nsIContent* aContent, const Direction& aDirection,
     }
   }
   else {
-    nsCOMPtr<nsIDOMElementCSSInlineStyle> inlineStyleContent =
+    nsCOMPtr<nsStyledElement> inlineStyleContent =
       do_QueryInterface(aContent);
     if (inlineStyleContent) {
-      nsCOMPtr<nsIDOMCSSStyleDeclaration> decl;
-      inlineStyleContent->GetStyle(getter_AddRefs(decl));
+      nsICSSDeclaration* decl = inlineStyleContent->Style();
 
       if (aOriginalSizeInfo) {
         decl->GetPropertyValue(NS_LITERAL_STRING("width"),
@@ -533,6 +533,23 @@ nsResizerFrame::GetDirection()
 void
 nsResizerFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
+  bool isTrusted = false;
+  bool isShift = false;
+  bool isControl = false;
+  bool isAlt = false;
+  bool isMeta = false;
+  uint16_t inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
+
+  if(aEvent) {
+    isShift = aEvent->IsShift();
+    isControl = aEvent->IsControl();
+    isAlt = aEvent->IsAlt();
+    isMeta = aEvent->IsMeta();
+    inputSource = aEvent->inputSource;
+  }
+
   // Execute the oncommand event handler.
-  nsContentUtils::DispatchXULCommand(mContent, aEvent && aEvent->IsTrusted());
+  nsContentUtils::DispatchXULCommand(mContent, isTrusted, nullptr,
+                                     nullptr, isControl, isAlt,
+                                     isShift, isMeta, inputSource);
 }

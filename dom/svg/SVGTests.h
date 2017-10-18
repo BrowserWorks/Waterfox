@@ -46,7 +46,7 @@ public:
    * or -1 if no indices match.
    * XXX This algorithm is O(M*N).
    */
-  int32_t GetBestLanguagePreferenceRank(const nsSubstring& aAcceptLangs) const;
+  int32_t GetBestLanguagePreferenceRank(const nsAString& aAcceptLangs) const;
 
   /**
    * Special value to pass to PassesConditionalProcessingTests to ignore systemLanguage
@@ -94,6 +94,8 @@ public:
   already_AddRefed<DOMSVGStringList> RequiredExtensions();
   already_AddRefed<DOMSVGStringList> SystemLanguage();
   bool HasExtension(const nsAString& aExtension);
+
+  virtual bool IsInChromeDoc() const = 0;
 
 protected:
   virtual ~SVGTests() {}

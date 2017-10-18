@@ -1,4 +1,6 @@
-add_task(function* () {
+"use strict";
+
+add_task(async function() {
   registerFakePath("ULibDir", do_get_file("Library/"));
 
   let migrator = MigrationUtils.getMigrator("safari");
@@ -11,15 +13,21 @@ add_task(function* () {
   let label = MigrationUtils.getLocalizedString("importedBookmarksFolder", [source]);
 
   let expectedParents = [ PlacesUtils.toolbarFolderId ];
+  let itemCount = 0;
 
-  PlacesUtils.bookmarks.addObserver({
+  let gotFolder = false;
+  let bmObserver = {
     onItemAdded(aItemId, aParentId, aIndex, aItemType, aURI, aTitle) {
-      if (aTitle == label) {
+      if (aTitle != label) {
+        itemCount++;
+      }
+      if (aItemType == PlacesUtils.bookmarks.TYPE_FOLDER && aTitle == "Stuff") {
+        gotFolder = true;
+      }
+      if (expectedParents.length > 0 && aTitle == label) {
         let index = expectedParents.indexOf(aParentId);
-        Assert.notEqual(index, -1);
+        Assert.ok(index != -1, "Found expected parent");
         expectedParents.splice(index, 1);
-        if (expectedParents.length == 0)
-          PlacesUtils.bookmarks.removeObserver(this);
       }
     },
     onBeginUpdateBatch() {},
@@ -28,10 +36,16 @@ add_task(function* () {
     onItemChanged() {},
     onItemVisited() {},
     onItemMoved() {},
-  }, false);
+  };
+  PlacesUtils.bookmarks.addObserver(bmObserver);
 
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.BOOKMARKS);
+  PlacesUtils.bookmarks.removeObserver(bmObserver);
 
   // Check the bookmarks have been imported to all the expected parents.
-  Assert.equal(expectedParents.length, 0);
+  Assert.ok(!expectedParents.length, "No more expected parents");
+  Assert.ok(gotFolder, "Should have seen the folder get imported");
+  Assert.equal(itemCount, 13, "Should import all 13 items.");
+  // Check that the telemetry matches:
+  Assert.equal(MigrationUtils._importQuantities.bookmarks, itemCount, "Telemetry reporting correct.");
 });

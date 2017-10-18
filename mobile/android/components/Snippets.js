@@ -140,7 +140,7 @@ function updateSnippets() {
 function cacheSnippets(response) {
   let data = gEncoder.encode(response);
   let promise = OS.File.writeAtomic(gSnippetsPath, data, { tmpPath: gSnippetsPath + ".tmp" });
-  promise.then(null, e => Cu.reportError("Error caching snippets: " + e));
+  promise.catch(e => Cu.reportError("Error caching snippets: " + e));
 }
 
 /**
@@ -257,7 +257,7 @@ function removeSnippet(messageId, snippetId) {
 function writeStat(snippetId, timestamp) {
   let data = gEncoder.encode(snippetId + "," + timestamp + ";");
 
-  Task.spawn(function() {
+  Task.spawn(function*() {
     try {
       let file = yield OS.File.open(gStatsPath, { append: true, write: true });
       try {
@@ -269,7 +269,7 @@ function writeStat(snippetId, timestamp) {
       // If the file doesn't exist yet, create it.
       yield OS.File.writeAtomic(gStatsPath, data, { tmpPath: gStatsPath + ".tmp" });
     }
-  }).then(null, e => Cu.reportError("Error writing snippets stats: " + e));
+  }).catch(e => Cu.reportError("Error writing snippets stats: " + e));
 }
 
 /**
@@ -315,7 +315,7 @@ function sendStatsRequest(data) {
  */
 function removeStats() {
   let promise = OS.File.remove(gStatsPath);
-  promise.then(null, e => Cu.reportError("Error removing snippets stats: " + e));
+  promise.catch(e => Cu.reportError("Error removing snippets stats: " + e));
 }
 
 /**

@@ -9,9 +9,11 @@
 interface mozIDOMWindowProxy;
 interface nsIDOMElement;
 
+[ref] native OriginAttributes(mozilla::OriginAttributes);
+
 %{C++
 #ifdef MOZILLA_INTERNAL_API
-#include "mozilla/BasePrincipal.h" // for DocShellOriginAttributes
+#include "mozilla/BasePrincipal.h" // for OriginAttributes
 #endif
 %}
 
@@ -20,7 +22,7 @@ interface nsIDOMElement;
  * can be queried for various information about where the load is
  * happening.
  */
-[scriptable, uuid(2813a7a3-d084-4d00-acd0-f76620315c02)]
+[builtinclass, scriptable, uuid(2813a7a3-d084-4d00-acd0-f76620315c02)]
 interface nsILoadContext : nsISupports
 {
   /**
@@ -61,17 +63,6 @@ interface nsILoadContext : nsISupports
   readonly attribute unsigned long long nestedFrameId;
 
   /**
-   * Check whether the load is happening in a particular type of application.
-   *
-   * @param an application type.  For now, the constants to be passed here are
-   *        the nsIDocShell APP_TYPE_* constants.
-   *
-   * @return whether there is some ancestor of the associatedWindow that is of
-   *         the given app type.
-   */
-  boolean isAppOfType(in unsigned long appType);
-
-  /**
    * True if the load context is content (as opposed to chrome).  This is
    * determined based on the type of window the load is performed in, NOT based
    * on any URIs that might be around.
@@ -79,7 +70,8 @@ interface nsILoadContext : nsISupports
   readonly attribute boolean isContent;
 
   /*
-   * Attribute that determines if private browsing should be used.
+   * Attribute that determines if private browsing should be used. May not be
+   * changed after a document has been loaded in this context.
    */
   attribute boolean usePrivateBrowsing;
 
@@ -88,20 +80,35 @@ interface nsILoadContext : nsISupports
    */
   readonly attribute boolean useRemoteTabs;
 
+  /*
+   * Attribute that determines if tracking protection should be used. May not be
+   * changed after a document has been loaded in this context.
+   */
+  attribute boolean useTrackingProtection;
+
 %{C++
   /**
    * De-XPCOMed getter to make call-sites cleaner.
    */
-  bool UsePrivateBrowsing() {
-    bool usingPB;
+  bool UsePrivateBrowsing()
+  {
+    bool usingPB = false;
     GetUsePrivateBrowsing(&usingPB);
     return usingPB;
   }
 
-  bool UseRemoteTabs() {
-    bool usingRT;
+  bool UseRemoteTabs()
+  {
+    bool usingRT = false;
     GetUseRemoteTabs(&usingRT);
     return usingRT;
+  }
+
+  bool UseTrackingProtection()
+  {
+    bool usingTP = false;
+    GetUseTrackingProtection(&usingTP);
+    return usingTP;
   }
 %}
 
@@ -117,49 +124,22 @@ interface nsILoadContext : nsISupports
 
   /**
    * Returns true iff the load is occurring inside an isolated mozbrowser
-   * element. <iframe mozbrowser mozapp> and <xul:browser> are not considered to
-   * be mozbrowser elements.  <iframe mozbrowser noisolation> does not count as
-   * isolated since isolation is disabled.  Isolation can only be disabled if
-   * the containing document is chrome.
+   * element. <xul:browser> is not considered to be a mozbrowser element.
+   * <iframe mozbrowser noisolation> does not count as isolated since
+   * isolation is disabled.  Isolation can only be disabled if the
+   * containing document is chrome.
    */
   readonly attribute boolean isInIsolatedMozBrowserElement;
-
-  /**
-   * Returns the app id of the app the load is occurring is in. Returns
-   * nsIScriptSecurityManager::NO_APP_ID if the load is not part of an app.
-   */
-  readonly attribute unsigned long appId;
 
   /**
    * A dictionary of the non-default origin attributes associated with this
    * nsILoadContext.
    */
+  [binaryname(ScriptableOriginAttributes)]
   readonly attribute jsval originAttributes;
 
-%{C++
-#ifdef MOZILLA_INTERNAL_API
   /**
    * The C++ getter for origin attributes.
-   *
-   * Defined in LoadContext.cpp
    */
-  bool GetOriginAttributes(mozilla::DocShellOriginAttributes& aAttrs);
-#endif
-%}
-
-  /**
-   * Returns true if tracking protection is enabled for the load context.
-   */
-  boolean IsTrackingProtectionOn();
-
-%{C++
-  /**
-   * De-XPCOMed getter to make call-sites cleaner.
-   */
-  bool UseTrackingProtection() {
-    bool usingTP;
-    IsTrackingProtectionOn(&usingTP);
-    return usingTP;
-  }
-%}
+  [noscript, notxpcom] void GetOriginAttributes(out OriginAttributes aAttrs);
 };

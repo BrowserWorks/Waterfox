@@ -53,8 +53,7 @@
       hidden="true"
       data-category="paneSecurity">
   <label class="header-name" flex="1">&paneSecurity.title;</label>
-  <button class="help-button"
-          aria-label="&helpButton.label;"/>
+  <html:a class="help-button" target="_blank" aria-label="&helpButton.label;"></html:a>
 </hbox>
 
 <!-- addons, forgery (phishing) UI -->
@@ -63,8 +62,8 @@
 
   <hbox id="addonInstallBox">
     <checkbox id="warnAddonInstall"
-              label="&warnAddonInstall.label;"
-              accesskey="&warnAddonInstall.accesskey;"
+              label="&warnOnAddonInstall2.label;"
+              accesskey="&warnOnAddonInstall2.accesskey;"
               preference="xpinstall.whitelist.required"
               onsyncfrompreference="return gSecurityPane.readWarnAddonInstall();"/>
     <spacer flex="1"/>
@@ -79,12 +78,14 @@
               label="&enableSafeBrowsing.label;"
               accesskey="&enableSafeBrowsing.accesskey;" />
     <vbox class="indent">
+#ifdef MOZILLA_OFFICIAL
       <checkbox id="blockDownloads"
                 label="&blockDownloads.label;"
                 accesskey="&blockDownloads.accesskey;" />
+#endif
       <checkbox id="blockUncommonUnwanted"
-                label="&blockUncommonUnwanted.label;"
-                accesskey="&blockUncommonUnwanted.accesskey;" />
+                label="&blockUncommonAndUnwanted.label;"
+                accesskey="&blockUncommonAndUnwanted.accesskey;" />
     </vbox>
   </vbox>
 </groupbox>
@@ -93,33 +94,21 @@
 <groupbox id="passwordsGroup" orient="vertical" data-category="paneSecurity" hidden="true">
   <caption><label>&logins.label;</label></caption>
 
-  <hbox id="savePasswordsBox">
-    <checkbox id="savePasswords"
-              label="&rememberLogins.label;" accesskey="&rememberLogins.accesskey;"
-              preference="signon.rememberSignons"
-              onsyncfrompreference="return gSecurityPane.readSavePasswords();"/>
-    <spacer flex="1"/>
-    <button id="passwordExceptions"
-            label="&passwordExceptions.label;"
-            accesskey="&passwordExceptions.accesskey;"
-            preference="pref.privacy.disable_button.view_passwords_exceptions"/>
-  </hbox>
   <grid id="passwordGrid">
     <columns>
       <column flex="1"/>
       <column/>
     </columns>
     <rows id="passwordRows">
-      <row id="masterPasswordRow">
-        <hbox id="masterPasswordBox">
-          <checkbox id="useMasterPassword"
-                    label="&useMasterPassword.label;"
-                    accesskey="&useMasterPassword.accesskey;"/>
-          <spacer flex="1"/>
-        </hbox>
-        <button id="changeMasterPassword"
-                label="&changeMasterPassword.label;"
-                accesskey="&changeMasterPassword.accesskey;"/>
+      <row id="savePasswordsBox">
+        <checkbox id="savePasswords"
+                  label="&rememberLogins2.label;" accesskey="&rememberLogins2.accesskey;"
+                  preference="signon.rememberSignons"
+                  onsyncfrompreference="return gSecurityPane.readSavePasswords();"/>
+        <button id="passwordExceptions"
+                label="&passwordExceptions.label;"
+                accesskey="&passwordExceptions.accesskey;"
+                preference="pref.privacy.disable_button.view_passwords_exceptions"/>
       </row>
       <row id="showPasswordRow">
         <hbox id="showPasswordsBox"/>
@@ -129,4 +118,13 @@
       </row>
     </rows>
   </grid>
+  <hbox id="masterPasswordRow">
+    <checkbox id="useMasterPassword"
+              label="&useMasterPassword.label;"
+              accesskey="&useMasterPassword.accesskey;"/>
+    <spacer flex="1"/>
+    <button id="changeMasterPassword"
+            label="&changeMasterPassword.label;"
+            accesskey="&changeMasterPassword.accesskey;"/>
+  </hbox>
 </groupbox>

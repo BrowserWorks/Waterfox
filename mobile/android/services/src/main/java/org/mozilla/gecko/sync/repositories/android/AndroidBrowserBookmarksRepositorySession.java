@@ -614,7 +614,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     try {
       Uri recordURI = dbHelper.insert(toStore);
       if (recordURI == null) {
-        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."), record.guid);
+        storeDelegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."), record.guid);
         return false;
       }
       toStore.androidID = ContentUris.parseId(recordURI);
@@ -622,11 +622,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
       updateBookkeeping(toStore);
     } catch (Exception e) {
-      delegate.onRecordStoreFailed(e, record.guid);
+      storeDelegate.onRecordStoreFailed(e, record.guid);
       return false;
     }
     trackRecord(toStore);
-    delegate.onRecordStoreSucceeded(record.guid);
+    storeDelegate.onRecordStoreSucceeded(record.guid);
     return true;
   }
 
@@ -649,13 +649,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         // Something failed; most pessimistic action is to declare that all insertions failed.
         // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
         for (Record failed : toStores) {
-          delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."), failed.guid);
+          storeDelegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."), failed.guid);
         }
         return;
       }
     } catch (NullCursorException e) {
       for (Record failed : toStores) {
-        delegate.onRecordStoreFailed(e, failed.guid);
+        storeDelegate.onRecordStoreFailed(e, failed.guid);
       }
       return;
     }
@@ -668,7 +668,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
       }
       trackRecord(succeeded);
-      delegate.onRecordStoreSucceeded(succeeded.guid);
+      storeDelegate.onRecordStoreSucceeded(succeeded.guid);
     }
   }
 
@@ -699,6 +699,34 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
+  /**
+   * Incoming bookmark records might be missing dateAdded field, because clients started to sync it
+   * only in version 55. However, record's lastModified value is a good upper bound. In order to
+   * encourage modern clients to re-upload the record with an earlier local dateAdded value,
+   * we bump record's lastModified value if we perform any substitutions.
+   *
+   * This function is only called while inserting a record which doesn't exist locally.
+   */
+  @Override
+  protected Record processBeforeInsertion(Record toProcess) {
+    // If incoming record is missing dateAdded, use its lastModified value instead.
+    if (((BookmarkRecord) toProcess).dateAdded == null) {
+      ((BookmarkRecord) toProcess).dateAdded = toProcess.lastModified;
+      toProcess.lastModified = now();
+      return toProcess;
+    }
+
+    // If both are present, use the lowest value. We trust server's monotonously increasing timestamps
+    // more than clients' potentially bogus ones.
+    if (toProcess.lastModified < ((BookmarkRecord) toProcess).dateAdded) {
+      ((BookmarkRecord) toProcess).dateAdded = toProcess.lastModified;
+      toProcess.lastModified = now();
+      return toProcess;
+    }
+
+    return toProcess;
+  }
+
   @Override
   protected Record reconcileRecords(Record remoteRecord, Record localRecord,
                                     long lastRemoteRetrieval,
@@ -708,15 +736,40 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
                                                                         lastRemoteRetrieval,
                                                                         lastLocalRetrieval);
 
+    final BookmarkRecord remote = (BookmarkRecord) remoteRecord;
+    final BookmarkRecord local = (BookmarkRecord) localRecord;
+
     // For now we *always* use the remote record's children array as a starting point.
     // We won't write it into the database yet; we'll record it and process as we go.
-    reconciled.children = ((BookmarkRecord) remoteRecord).children;
+    reconciled.children = remote.children;
 
     // *Always* track folders, though: if we decide we need to reposition items, we'll
     // untrack later.
     if (reconciled.isFolder()) {
       trackRecord(reconciled);
     }
+
+    // We should always have:
+    // - local dateAdded
+    // - lastModified values for both records
+    // We might not have the remote dateAdded.
+    // We always pick the lowest value out of what is available.
+    long lowest = remote.lastModified;
+
+    // During a similar operation, desktop clients consider dates before Jan 23, 1993 to be invalid.
+    // We do the same here out of a desire to be consistent.
+    final long releaseOfNCSAMosaicMillis = 727747200000L;
+
+    if (local.dateAdded != null && local.dateAdded < lowest && local.dateAdded > releaseOfNCSAMosaicMillis) {
+      lowest = local.dateAdded;
+    }
+
+    if (remote.dateAdded != null && remote.dateAdded < lowest && remote.dateAdded > releaseOfNCSAMosaicMillis) {
+      lowest = remote.dateAdded;
+    }
+
+    reconciled.dateAdded = lowest;
+
     return reconciled;
   }
 
@@ -902,46 +955,42 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @SuppressWarnings("unchecked")
   private void finishUp() {
-    try {
-      flushQueues();
-      Logger.debug(LOG_TAG, "Have " + parentToChildArray.size() + " folders whose children might need repositioning.");
-      for (Entry<String, JSONArray> entry : parentToChildArray.entrySet()) {
-        String guid = entry.getKey();
-        JSONArray onServer = entry.getValue();
-        try {
-          final long folderID = getIDForGUID(guid);
-          final JSONArray inDB = new JSONArray();
-          final boolean clean = getChildrenArray(folderID, false, inDB);
-          final boolean sameArrays = Utils.sameArrays(onServer, inDB);
+    flushQueues();
+    Logger.debug(LOG_TAG, "Have " + parentToChildArray.size() + " folders whose children might need repositioning.");
+    for (Entry<String, JSONArray> entry : parentToChildArray.entrySet()) {
+      String guid = entry.getKey();
+      JSONArray onServer = entry.getValue();
+      try {
+        final long folderID = getIDForGUID(guid);
+        final JSONArray inDB = new JSONArray();
+        final boolean clean = getChildrenArray(folderID, false, inDB);
+        final boolean sameArrays = Utils.sameArrays(onServer, inDB);
 
-          // If the local children and the remote children are already
-          // the same, then we don't need to bump the modified time of the
-          // parent: we wouldn't upload a different record, so avoid the cycle.
-          if (!sameArrays) {
-            int added = 0;
-            for (Object o : inDB) {
-              if (!onServer.contains(o)) {
-                onServer.add(o);
-                added++;
-              }
+        // If the local children and the remote children are already
+        // the same, then we don't need to bump the modified time of the
+        // parent: we wouldn't upload a different record, so avoid the cycle.
+        if (!sameArrays) {
+          int added = 0;
+          for (Object o : inDB) {
+            if (!onServer.contains(o)) {
+              onServer.add(o);
+              added++;
             }
-            Logger.debug(LOG_TAG, "Added " + added + " items locally.");
-            Logger.debug(LOG_TAG, "Untracking and bumping " + guid + "(" + folderID + ")");
-            dataAccessor.bumpModified(folderID, now());
-            untrackGUID(guid);
           }
-
-          // If the arrays are different, or they're the same but not flushed to disk,
-          // write them out now.
-          if (!sameArrays || !clean) {
-            dataAccessor.updatePositions(new ArrayList<String>(onServer));
-          }
-        } catch (Exception e) {
-          Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
+          Logger.debug(LOG_TAG, "Added " + added + " items locally.");
+          Logger.debug(LOG_TAG, "Untracking and bumping " + guid + "(" + folderID + ")");
+          dataAccessor.bumpModified(folderID, now());
+          untrackGUID(guid);
         }
+
+        // If the arrays are different, or they're the same but not flushed to disk,
+        // write them out now.
+        if (!sameArrays || !clean) {
+          dataAccessor.updatePositions(new ArrayList<String>(onServer));
+        }
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
       }
-    } finally {
-      super.storeDone();
     }
   }
 
@@ -977,7 +1026,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Runnable command = new Runnable() {
       @Override
       public void run() {
-        finishUp();
+        try {
+          finishUp();
+        } finally {
+          storeDelegate.deferredStoreDelegate(storeWorkQueue).onStoreCompleted(now());
+        }
       }
     };
     storeWorkQueue.execute(command);
@@ -1089,6 +1142,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     rec.description = RepoUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.DESCRIPTION);
     rec.tags = RepoUtils.getJSONArrayFromCursor(cur, BrowserContract.Bookmarks.TAGS);
     rec.keyword = RepoUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.KEYWORD);
+    rec.dateAdded = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_CREATED);
 
     rec.androidID = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
     rec.androidPosition = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);

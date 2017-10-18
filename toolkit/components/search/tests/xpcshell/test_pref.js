@@ -7,25 +7,23 @@
 "use strict";
 
 function run_test() {
-  updateAppInfo();
-
   // The test engines used in this test need to be recognized as 'default'
   // engines, or their MozParams will be ignored.
   let url = "resource://test/data/";
   let resProt = Services.io.getProtocolHandler("resource")
                         .QueryInterface(Ci.nsIResProtocolHandler);
   resProt.setSubstitution("search-plugins",
-                          Services.io.newURI(url, null, null));
+                          Services.io.newURI(url));
 
   run_next_test();
 }
 
-add_task(function* test_pref() {
+add_task(async function test_pref() {
   let defaultBranch = Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF);
   defaultBranch.setCharPref("param.code", "good&id=unique");
   Services.prefs.setCharPref(BROWSER_SEARCH_PREF + "param.code", "bad");
 
-  yield asyncInit();
+  await asyncInit();
 
   let engine = Services.search.getEngineByName("engine-pref");
   let base = "http://www.google.com/search?q=foo&code=";

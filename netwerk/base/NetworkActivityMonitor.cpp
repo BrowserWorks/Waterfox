@@ -152,9 +152,10 @@ nsNetMon_AcceptRead(PRFileDesc *listenSock,
 class NotifyNetworkActivity : public mozilla::Runnable {
 public:
   explicit NotifyNetworkActivity(NetworkActivityMonitor::Direction aDirection)
-    : mDirection(aDirection)
+    : mozilla::Runnable("NotifyNetworkActivity")
+    , mDirection(aDirection)
   {}
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -268,7 +269,7 @@ NetworkActivityMonitor::AttachIOLayer(PRFileDesc *fd)
   status = PR_PushIOLayer(fd, PR_NSPR_IO_LAYER, layer);
 
   if (status == PR_FAILURE) {
-    PR_DELETE(layer);
+    PR_Free(layer); // PR_CreateIOLayerStub() uses PR_Malloc().
     return NS_ERROR_FAILURE;
   }
 
@@ -278,7 +279,7 @@ NetworkActivityMonitor::AttachIOLayer(PRFileDesc *fd)
 nsresult
 NetworkActivityMonitor::DataInOut(Direction direction)
 {
-  NS_ASSERTION(PR_GetCurrentThread() == gSocketThread, "wrong thread");
+  MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
   if (gInstance) {
     PRIntervalTime now = PR_IntervalNow();

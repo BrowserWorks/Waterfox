@@ -23,8 +23,6 @@ const SEARCH_VARIABLE_FLAG = "*";
 const SEARCH_AUTOFILL = [SEARCH_GLOBAL_FLAG, SEARCH_FUNCTION_FLAG, SEARCH_TOKEN_FLAG];
 const TOOLBAR_ORDER_POPUP_POSITION = "topcenter bottomleft";
 const RESIZE_REFRESH_RATE = 50; // ms
-const PROMISE_DEBUGGER_URL =
-  "chrome://devtools/content/promisedebugger/promise-debugger.xhtml";
 
 const EventListenersView = require("./content/views/event-listeners-view");
 const SourcesView = require("./content/views/sources-view");
@@ -101,8 +99,8 @@ var DebuggerView = {
 
         if (selectedSource &&
            selectedSource.actor === location.actor) {
-          this.editor.moveBreakpoint(prevLocation.line - 1,
-                                     location.line - 1);
+          this.editor.moveBreakpoint(this.toEditorLine(prevLocation.line),
+                                     this.toEditorLine(location.line));
         }
       }
     }, this);
@@ -122,7 +120,7 @@ var DebuggerView = {
     }
     this._hasShutdown = true;
 
-    window.removeEventListener("resize", this._onResize, false);
+    window.removeEventListener("resize", this._onResize);
     this.editor.off("cursorActivity", this.Sources._onEditorCursorActivity);
 
     this.Toolbar.destroy();
@@ -135,7 +133,6 @@ var DebuggerView = {
     this.WatchExpressions.destroy();
     this.EventListeners.destroy();
     this.GlobalSearch.destroy();
-    this._destroyPromiseDebugger();
     this._destroyPanes();
 
     this.editor.destroy();
@@ -155,7 +152,6 @@ var DebuggerView = {
     this._workersAndSourcesPane = document.getElementById("workers-and-sources-pane");
     this._instrumentsPane = document.getElementById("instruments-pane");
     this._instrumentsPaneToggleButton = document.getElementById("instruments-pane-toggle");
-    this._promisePane = document.getElementById("promise-debugger-pane");
 
     this.showEditor = this.showEditor.bind(this);
     this.showBlackBoxMessage = this.showBlackBoxMessage.bind(this);
@@ -174,7 +170,7 @@ var DebuggerView = {
     this.updateLayoutMode();
 
     this._onResize = this._onResize.bind(this);
-    window.addEventListener("resize", this._onResize, false);
+    window.addEventListener("resize", this._onResize);
   },
 
   /**
@@ -191,7 +187,6 @@ var DebuggerView = {
     this._workersAndSourcesPane = null;
     this._instrumentsPane = null;
     this._instrumentsPaneToggleButton = null;
-    this._promisePane = null;
   },
 
   /**
@@ -236,41 +231,6 @@ var DebuggerView = {
           break;
       }
     });
-  },
-
-  /**
-   * Initialie the Promise Debugger instance.
-   */
-  _initializePromiseDebugger: function () {
-    let iframe = this._promiseDebuggerIframe = document.createElement("iframe");
-    iframe.setAttribute("flex", 1);
-
-    let onLoad = (event) => {
-      iframe.removeEventListener("load", onLoad, true);
-
-      let doc = event.target;
-      let win = doc.defaultView;
-
-      win.setPanel(DebuggerController._toolbox);
-    };
-
-    iframe.addEventListener("load", onLoad, true);
-    iframe.setAttribute("src", PROMISE_DEBUGGER_URL);
-    this._promisePane.appendChild(iframe);
-  },
-
-  /**
-   * Destroy the Promise Debugger instance.
-   */
-  _destroyPromiseDebugger: function () {
-    if (this._promiseDebuggerIframe) {
-      this._promiseDebuggerIframe.contentWindow.destroy();
-
-      this._promiseDebuggerIframe.parentNode.removeChild(
-        this._promiseDebuggerIframe);
-
-      this._promiseDebuggerIframe = null;
-    }
   },
 
   /**
@@ -323,7 +283,7 @@ var DebuggerView = {
       else {
         const source = queries.getSelectedSource(this.controller.getState());
         if (source) {
-          const location = { actor: source.actor, line: line + 1 };
+          const location = { actor: source.actor, line: this.toSourceLine(line) };
           if (this.editor.hasBreakpoint(line)) {
             this.controller.dispatch(actions.removeBreakpoint(location));
           } else {
@@ -336,6 +296,14 @@ var DebuggerView = {
     this.editor.on("cursorActivity", () => {
       this.clickedLine = null;
     });
+  },
+
+  toEditorLine: function (line) {
+    return this.editor.isWasm ? line : line - 1;
+  },
+
+  toSourceLine: function (line) {
+    return this.editor.isWasm ? line : line + 1;
   },
 
   updateEditorBreakpoints: function (source) {
@@ -359,7 +327,7 @@ var DebuggerView = {
     if (source &&
        source.actor === location.actor &&
        !breakpoint.disabled) {
-      this.editor.addBreakpoint(location.line - 1, condition);
+      this.editor.addBreakpoint(this.toEditorLine(location.line), condition);
     }
   },
 
@@ -368,8 +336,9 @@ var DebuggerView = {
     const source = queries.getSelectedSource(this.controller.getState());
 
     if (source && source.actor === location.actor) {
-      this.editor.removeBreakpoint(location.line - 1);
-      this.editor.removeBreakpointCondition(location.line - 1);
+      let line = this.toEditorLine(location.line);
+      this.editor.removeBreakpoint(line);
+      this.editor.removeBreakpointCondition(line);
     }
   },
 
@@ -378,10 +347,11 @@ var DebuggerView = {
     const source = queries.getSelectedSource(this.controller.getState());
 
     if (source && source.actor === location.actor && !disabled) {
+      let line = this.toEditorLine(location.line);
       if (condition) {
-        this.editor.setBreakpointCondition(location.line - 1);
+        this.editor.setBreakpointCondition(line);
       } else {
-        this.editor.removeBreakpointCondition(location.line - 1);
+        this.editor.removeBreakpointCondition(line);
       }
     }
   },
@@ -452,12 +422,12 @@ var DebuggerView = {
     }
 
     if (aContentType === "text/wasm") {
-      return void this.editor.setMode(Editor.modes.wasm);
+      return void this.editor.setMode(Editor.modes.text);
     }
 
     // Use HTML mode for files in which the first non whitespace character is
     // &lt;, regardless of extension.
-    if (aTextContent.match(/^\s*</)) {
+    if (typeof aTextContent === 'string' && aTextContent.match(/^\s*</)) {
       return void this.editor.setMode(Editor.modes.html);
     }
 
@@ -586,6 +556,9 @@ var DebuggerView = {
 
   updateEditorPosition: function (opts) {
     let line = opts.line || 0;
+    if (this.editor.isWasm && line > 0) {
+      line = this.toSourceLine(this.editor.wasmOffsetToLine(line));
+    }
 
     // Line numbers in the source editor should start from 1. If
     // invalid or not specified, then don't do anything.
@@ -600,12 +573,13 @@ var DebuggerView = {
     if (opts.lineOffset) {
       line += opts.lineOffset;
     }
+    line = this.toEditorLine(line);
     if (opts.moveCursor) {
-      let location = { line: line - 1, ch: opts.columnOffset || 0 };
+      let location = { line: line, ch: opts.columnOffset || 0 };
       this.editor.setCursor(location);
     }
     if (!opts.noDebug) {
-      this.editor.setDebugLocation(line - 1);
+      this.editor.setDebugLocation(line);
     }
     window.emit(EVENTS.EDITOR_LOCATION_SET);
   },

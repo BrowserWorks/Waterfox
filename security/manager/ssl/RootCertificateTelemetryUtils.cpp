@@ -26,7 +26,7 @@ public:
   explicit BinaryHashSearchArrayComparator(const uint8_t* aTarget, size_t len)
     : mTarget(aTarget)
   {
-    NS_ASSERTION(len == HASH_LEN, "Hashes should be of the same length.");
+    MOZ_ASSERT(len == HASH_LEN, "Hashes should be of the same length.");
   }
 
   int operator()(const CertAuthorityHash val) const {
@@ -54,7 +54,7 @@ RootCABinNumber(const SECItem* cert)
   size_t idx;
 
   MOZ_LOG(gPublicKeyPinningTelemetryLog, LogLevel::Debug,
-           ("pkpinTelem: First bytes %02hx %02hx %02hx %02hx\n",
+           ("pkpinTelem: First bytes %02x %02x %02x %02x\n",
             digest.get().data[0], digest.get().data[1], digest.get().data[2], digest.get().data[3]));
 
   if (mozilla::BinarySearchIf(ROOT_TABLE, 0, ArrayLength(ROOT_TABLE),
@@ -63,7 +63,7 @@ RootCABinNumber(const SECItem* cert)
         &idx)) {
 
     MOZ_LOG(gPublicKeyPinningTelemetryLog, LogLevel::Debug,
-          ("pkpinTelem: Telemetry index was %lu, bin is %d\n",
+          ("pkpinTelem: Telemetry index was %zu, bin is %d\n",
            idx, ROOT_TABLE[idx].binNumber));
     return (int32_t) ROOT_TABLE[idx].binNumber;
   }
@@ -76,7 +76,7 @@ RootCABinNumber(const SECItem* cert)
 // Attempt to increment the appropriate bin in the provided Telemetry probe ID. If
 // there was a hash failure, we do nothing.
 void
-AccumulateTelemetryForRootCA(mozilla::Telemetry::ID probe, 
+AccumulateTelemetryForRootCA(mozilla::Telemetry::HistogramID probe,
   const CERTCertificate* cert)
 {
   int32_t binId = RootCABinNumber(&cert->derCert);

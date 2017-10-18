@@ -11,8 +11,7 @@
 #include "mozilla/Attributes.h"
 
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/css/Rule.h"
-#include "nsIDOMCSSImportRule.h"
+#include "mozilla/dom/CSSImportRule.h"
 
 class nsMediaList;
 class nsString;
@@ -20,11 +19,15 @@ class nsString;
 namespace mozilla {
 
 class CSSStyleSheet;
+class StyleSheet;
+
+namespace dom {
+class MediaList;
+}
 
 namespace css {
 
-class ImportRule final : public Rule,
-                         public nsIDOMCSSImportRule
+class ImportRule final : public dom::CSSImportRule
 {
 public:
   ImportRule(nsMediaList* aMedia, const nsString& aURLSpec,
@@ -34,31 +37,30 @@ private:
   ImportRule(const ImportRule& aCopy);
   ~ImportRule();
 public:
-  NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(ImportRule, mozilla::css::Rule)
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ImportRule, Rule)
+  NS_DECL_ISUPPORTS_INHERITED
 
-  DECL_STYLE_RULE_INHERIT
-
-#ifdef HAVE_CPP_AMBIGUITY_RESOLVING_USING
-  using Rule::GetStyleSheet; // unhide since nsIDOMCSSImportRule has its own GetStyleSheet
-#endif
+  // unhide since nsIDOMCSSImportRule has its own GetStyleSheet and GetMedia
+  using dom::CSSImportRule::GetStyleSheet;
+  using dom::CSSImportRule::GetMedia;
 
   // Rule methods
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
-  virtual int32_t GetType() const override;
   virtual already_AddRefed<Rule> Clone() const override;
 
   void SetSheet(CSSStyleSheet*);
 
   virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
-  // nsIDOMCSSRule interface
-  NS_DECL_NSIDOMCSSRULE
-
   // nsIDOMCSSImportRule interface
-  NS_DECL_NSIDOMCSSIMPORTRULE
+  NS_IMETHOD GetHref(nsAString& aHref) final;
+
+  // WebIDL interface
+  void GetCssTextImpl(nsAString& aCssText) const override;
+  dom::MediaList* GetMedia() const final;
+  StyleSheet* GetStyleSheet() const final;
 
 private:
   nsString  mURLSpec;

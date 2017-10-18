@@ -5,9 +5,11 @@
 
 #include "nsMathMLmunderoverFrame.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsMathMLmmultiscriptsFrame.h"
+#include "nsMathMLElement.h"
 #include <algorithm>
+#include "gfxContext.h"
+#include "gfxMathTable.h"
 
 //
 // <munderover> -- attach an underscript-overscript pair to a base - implementation
@@ -70,6 +72,15 @@ nsMathMLmunderoverFrame::InheritAutomaticData(nsIFrame* aParent)
   return NS_OK;
 }
 
+void
+nsMathMLmunderoverFrame::DestroyFrom(nsIFrame* aDestroyRoot)
+{
+  if (!mPostReflowIncrementScriptLevelCommands.IsEmpty()) {
+    PresContext()->PresShell()->CancelReflowCallback(this);
+  }
+  nsMathMLContainerFrame::DestroyFrom(aDestroyRoot);
+}
+
 uint8_t
 nsMathMLmunderoverFrame::ScriptIncrement(nsIFrame* aFrame)
 {
@@ -91,6 +102,62 @@ nsMathMLmunderoverFrame::ScriptIncrement(nsIFrame* aFrame)
   return 0;  // frame not found
 }
 
+void
+nsMathMLmunderoverFrame::SetIncrementScriptLevel(uint32_t aChildIndex,
+                                                 bool aIncrement)
+{
+  nsIFrame* child = PrincipalChildList().FrameAt(aChildIndex);
+  if (!child || !child->GetContent()->IsMathMLElement() ||
+      child->GetContent()->GetPrimaryFrame() != child) {
+    return;
+  }
+
+  auto element = static_cast<nsMathMLElement*>(child->GetContent());
+  if (element->GetIncrementScriptLevel() == aIncrement) {
+    return;
+  }
+
+  if (mPostReflowIncrementScriptLevelCommands.IsEmpty()) {
+    PresContext()->PresShell()->PostReflowCallback(this);
+  }
+
+  mPostReflowIncrementScriptLevelCommands.AppendElement(
+      SetIncrementScriptLevelCommand { aChildIndex, aIncrement });
+}
+
+bool
+nsMathMLmunderoverFrame::ReflowFinished()
+{
+  SetPendingPostReflowIncrementScriptLevel();
+  return true;
+}
+
+void
+nsMathMLmunderoverFrame::ReflowCallbackCanceled()
+{
+  // Do nothing, at this point our work will just be useless.
+  mPostReflowIncrementScriptLevelCommands.Clear();
+}
+
+void
+nsMathMLmunderoverFrame::SetPendingPostReflowIncrementScriptLevel()
+{
+  MOZ_ASSERT(!mPostReflowIncrementScriptLevelCommands.IsEmpty());
+
+  nsTArray<SetIncrementScriptLevelCommand> commands;
+  commands.SwapElements(mPostReflowIncrementScriptLevelCommands);
+
+  for (const auto& command : commands) {
+    nsIFrame* child = PrincipalChildList().FrameAt(command.mChildIndex);
+    if (!child || !child->GetContent()->IsMathMLElement()) {
+      continue;
+    }
+
+    auto element = static_cast<nsMathMLElement*>(child->GetContent());
+    element->SetIncrementScriptLevel(command.mDoIncrement, true);
+  }
+}
+
 NS_IMETHODIMP
 nsMathMLmunderoverFrame::TransmitAutomaticData()
 {
@@ -98,12 +165,12 @@ nsMathMLmunderoverFrame::TransmitAutomaticData()
   // resolve our own mEmbellishData struct
   //---------------------------------------------------------------------
 
-  /* 
+  /*
   The REC says:
 
   As regards munder (respectively mover) :
   The default value of accentunder is false, unless underscript
-  is an <mo> element or an embellished operator.  If underscript is 
+  is an <mo> element or an embellished operator.  If underscript is
   an <mo> element, the value of its accent attribute is used as the
   default value of accentunder. If underscript is an embellished
   operator, the accent attribute of the <mo> element at its
@@ -118,8 +185,8 @@ XXX The winner is the outermost setting in conflicting settings like these:
 
   As regards munderover:
   The accent and accentunder attributes have the same effect as
-  the attributes with the same names on <mover>  and <munder>, 
-  respectively. Their default values are also computed in the 
+  the attributes with the same names on <mover>  and <munder>,
+  respectively. Their default values are also computed in the
   same manner as described for those elements, with the default
   value of accent depending on overscript and the default value
   of accentunder depending on underscript.
@@ -162,7 +229,7 @@ XXX The winner is the outermost setting in conflicting settings like these:
       mEmbellishData.flags |= NS_MATHML_EMBELLISH_ACCENTUNDER;
     } else {
       mEmbellishData.flags &= ~NS_MATHML_EMBELLISH_ACCENTUNDER;
-    }    
+    }
 
     // if we have an accentunder attribute, it overrides what the underscript said
     if (mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::accentunder_, value)) {
@@ -210,13 +277,13 @@ XXX The winner is the outermost setting in conflicting settings like these:
 
   /* The REC says:
      Within underscript, <munderover> always sets displaystyle to "false",
-     but increments scriptlevel by 1 only when accentunder is "false". 
+     but increments scriptlevel by 1 only when accentunder is "false".
 
-     Within overscript, <munderover> always sets displaystyle to "false", 
+     Within overscript, <munderover> always sets displaystyle to "false",
      but increments scriptlevel by 1 only when accent is "false".
- 
-     Within subscript and superscript it increments scriptlevel by 1, and 
-     sets displaystyle to "false", but leaves both attributes unchanged within 
+
+     Within subscript and superscript it increments scriptlevel by 1, and
+     sets displaystyle to "false", but leaves both attributes unchanged within
      base.
 
      The TeXBook treats 'over' like a superscript, so p.141 or Rule 13a
@@ -231,7 +298,8 @@ XXX The winner is the outermost setting in conflicting settings like these:
     mIncrementOver =
       !NS_MATHML_EMBELLISH_IS_ACCENTOVER(mEmbellishData.flags) ||
       subsupDisplay;
-    SetIncrementScriptLevel(mContent->IsMathMLElement(nsGkAtoms::mover_) ? 1 : 2, mIncrementOver);
+    SetIncrementScriptLevel(
+        mContent->IsMathMLElement(nsGkAtoms::mover_) ? 1 : 2, mIncrementOver);
     if (mIncrementOver) {
       PropagateFrameFlagFor(overscriptFrame,
                             NS_FRAME_MATHML_SCRIPT_DESCENDANT);
@@ -239,7 +307,7 @@ XXX The winner is the outermost setting in conflicting settings like these:
     PropagatePresentationDataFor(overscriptFrame, compress, compress);
   }
   /*
-     The TeXBook treats 'under' like a subscript, so p.141 or Rule 13a 
+     The TeXBook treats 'under' like a subscript, so p.141 or Rule 13a
      say it should be compressed
   */
   if (mContent->IsAnyOfMathMLElements(nsGkAtoms::munder_,
@@ -286,7 +354,7 @@ The REC says:
 *  If the base is an operator with movablelimits="true" (or an embellished
    operator whose <mo> element core has movablelimits="true"), and
    displaystyle="false", then underscript and overscript are drawn in
-   a subscript and superscript position, respectively. In this case, 
+   a subscript and superscript position, respectively. In this case,
    the accent and accentunder attributes are ignored. This is often
    used for limits on symbols such as &sum;.
 
@@ -333,7 +401,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
                                                           this, 0, 0,
                                                           fontSizeInflation);
     }
-    
+
   }
 
   ////////////////////////////////////
@@ -360,7 +428,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
   if (underFrame && mContent->IsMathMLElement(nsGkAtoms::munderover_)) {
     overFrame = underFrame->GetNextSibling();
   }
-  
+
   if (mContent->IsMathMLElement(nsGkAtoms::munder_)) {
     if (!baseFrame || !underFrame || underFrame->GetNextSibling()) {
       // report an error, encourage people to get their markups in order
@@ -411,7 +479,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
   nscoord correction = 0;
   GetItalicCorrection (bmBase, correction);
 
-  // there are 2 different types of placement depending on 
+  // there are 2 different types of placement depending on
   // whether we want an accented under or not
 
   nscoord underDelta1 = 0; // gap between base and underscript
@@ -419,21 +487,21 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
 
   if (!NS_MATHML_EMBELLISH_IS_ACCENTUNDER(mEmbellishData.flags)) {
     // Rule 13a, App. G, TeXbook
-    nscoord bigOpSpacing2, bigOpSpacing4, bigOpSpacing5, dummy; 
-    GetBigOpSpacings (fm, 
-                      dummy, bigOpSpacing2, 
-                      dummy, bigOpSpacing4, 
+    nscoord bigOpSpacing2, bigOpSpacing4, bigOpSpacing5, dummy;
+    GetBigOpSpacings (fm,
+                      dummy, bigOpSpacing2,
+                      dummy, bigOpSpacing4,
                       bigOpSpacing5);
     if (mathFont) {
       // XXXfredw The Open Type MATH table has some StretchStack* parameters
       // that we may use when the base is a stretchy horizontal operator. See
       // bug 963131.
       bigOpSpacing2 =
-        mathFont->GetMathConstant(gfxFontEntry::LowerLimitGapMin,
-                                  oneDevPixel);
+        mathFont->MathTable()->Constant(gfxMathTable::LowerLimitGapMin,
+                                        oneDevPixel);
       bigOpSpacing4 =
-        mathFont->GetMathConstant(gfxFontEntry::LowerLimitBaselineDropMin,
-                                  oneDevPixel);
+        mathFont->MathTable()->Constant(gfxMathTable::LowerLimitBaselineDropMin,
+                                        oneDevPixel);
       bigOpSpacing5 = 0;
     }
     underDelta1 = std::max(bigOpSpacing2, (bigOpSpacing4 - bmUnder.ascent));
@@ -441,7 +509,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
   }
   else {
     // No corresponding rule in TeXbook - we are on our own here
-    // XXX tune the gap delta between base and underscript 
+    // XXX tune the gap delta between base and underscript
     // XXX Should we use Rule 10 like \underline does?
     // XXXfredw Perhaps use the Underbar* parameters of the MATH table. See
     // bug 963125.
@@ -457,35 +525,35 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
   nscoord overDelta1 = 0; // gap between base and overscript
   nscoord overDelta2 = 0; // extra space above overscript
 
-  if (!NS_MATHML_EMBELLISH_IS_ACCENTOVER(mEmbellishData.flags)) {    
+  if (!NS_MATHML_EMBELLISH_IS_ACCENTOVER(mEmbellishData.flags)) {
     // Rule 13a, App. G, TeXbook
     // XXXfredw The Open Type MATH table has some StretchStack* parameters
     // that we may use when the base is a stretchy horizontal operator. See
     // bug 963131.
-    nscoord bigOpSpacing1, bigOpSpacing3, bigOpSpacing5, dummy; 
-    GetBigOpSpacings (fm, 
-                      bigOpSpacing1, dummy, 
-                      bigOpSpacing3, dummy, 
+    nscoord bigOpSpacing1, bigOpSpacing3, bigOpSpacing5, dummy;
+    GetBigOpSpacings (fm,
+                      bigOpSpacing1, dummy,
+                      bigOpSpacing3, dummy,
                       bigOpSpacing5);
     if (mathFont) {
       // XXXfredw The Open Type MATH table has some StretchStack* parameters
       // that we may use when the base is a stretchy horizontal operator. See
       // bug 963131.
       bigOpSpacing1 =
-        mathFont->GetMathConstant(gfxFontEntry::UpperLimitGapMin,
-                                  oneDevPixel);
+        mathFont->MathTable()->Constant(gfxMathTable::UpperLimitGapMin,
+                                        oneDevPixel);
       bigOpSpacing3 =
-        mathFont->GetMathConstant(gfxFontEntry::UpperLimitBaselineRiseMin,
-                                  oneDevPixel);
+        mathFont->MathTable()->Constant(gfxMathTable::UpperLimitBaselineRiseMin,
+                                        oneDevPixel);
       bigOpSpacing5 = 0;
     }
     overDelta1 = std::max(bigOpSpacing1, (bigOpSpacing3 - bmOver.descent));
     overDelta2 = bigOpSpacing5;
 
-    // XXX This is not a TeX rule... 
+    // XXX This is not a TeX rule...
     // delta1 (as computed abvove) can become really big when bmOver.descent is
     // negative,  e.g., if the content is &OverBar. In such case, we use the height
-    if (bmOver.descent < 0)    
+    if (bmOver.descent < 0)
       overDelta1 = std::max(bigOpSpacing1, (bigOpSpacing3 - (bmOver.ascent + bmOver.descent)));
   }
   else {
@@ -493,17 +561,17 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
     // We are going to modify this rule to make it more general.
     // The idea behind Rule 12 in the TeXBook is to keep the accent
     // as close to the base as possible, while ensuring that the
-    // distance between the *baseline* of the accent char and 
-    // the *baseline* of the base is atleast x-height. 
+    // distance between the *baseline* of the accent char and
+    // the *baseline* of the base is atleast x-height.
     // The idea is that for normal use, we would like all the accents
-    // on a line to line up atleast x-height above the baseline 
-    // if possible. 
-    // When the ascent of the base is >= x-height, 
+    // on a line to line up atleast x-height above the baseline
+    // if possible.
+    // When the ascent of the base is >= x-height,
     // the baseline of the accent char is placed just above the base
-    // (specifically, the baseline of the accent char is placed 
+    // (specifically, the baseline of the accent char is placed
     // above the baseline of the base by the ascent of the base).
-    // For ease of implementation, 
-    // this assumes that the font-designer designs accents 
+    // For ease of implementation,
+    // this assumes that the font-designer designs accents
     // in such a way that the bottom of the accent is atleast x-height
     // above its baseline, otherwise there will be collisions
     // with the base. Also there should be proper padding between
@@ -511,19 +579,19 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
     // The above rule may not be obvious from a first
     // reading of rule 12 in the TeXBook !!!
     // The mathml <mover> tag can use accent chars that
-    // do not follow this convention. So we modify TeX's rule 
-    // so that TeX's rule gets subsumed for accents that follow 
+    // do not follow this convention. So we modify TeX's rule
+    // so that TeX's rule gets subsumed for accents that follow
     // TeX's convention,
     // while also allowing accents that do not follow the convention :
-    // we try to keep the *bottom* of the accent char atleast x-height 
+    // we try to keep the *bottom* of the accent char atleast x-height
     // from the baseline of the base char. we also slap on an extra
     // padding between the accent and base chars.
     overDelta1 = ruleThickness + onePixel/2;
     nscoord accentBaseHeight = xHeight;
     if (mathFont) {
       accentBaseHeight =
-        mathFont->GetMathConstant(gfxFontEntry::AccentBaseHeight,
-                                  oneDevPixel);
+        mathFont->MathTable()->Constant(gfxMathTable::AccentBaseHeight,
+                                        oneDevPixel);
     }
     if (bmBase.ascent < accentBaseHeight) {
       // also ensure at least accentBaseHeight above the baseline of the base
@@ -566,7 +634,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
   }
 
   if (NS_MATHML_EMBELLISH_IS_ACCENTOVER(mEmbellishData.flags)) {
-    mBoundingMetrics.width = bmBase.width; 
+    mBoundingMetrics.width = bmBase.width;
     if (alignPosition == center) {
       dxOver += correction;
     }
@@ -577,7 +645,7 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
       dxOver += correction/2;
     }
   }
-  
+
   if (alignPosition == center) {
     dxOver += (mBoundingMetrics.width - overWidth)/2;
     dxBase = (mBoundingMetrics.width - bmBase.width)/2;
@@ -586,17 +654,17 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
     dxBase = mBoundingMetrics.width - bmBase.width;
   }
 
-  mBoundingMetrics.ascent = 
+  mBoundingMetrics.ascent =
     bmBase.ascent + overDelta1 + bmOver.ascent + bmOver.descent;
   mBoundingMetrics.descent = bmBase.descent;
-  mBoundingMetrics.leftBearing = 
+  mBoundingMetrics.leftBearing =
     std::min(dxBase + bmBase.leftBearing, dxOver + bmOver.leftBearing);
-  mBoundingMetrics.rightBearing = 
+  mBoundingMetrics.rightBearing =
     std::max(dxBase + bmBase.rightBearing, dxOver + bmOver.rightBearing);
 
   //////////
   // pass 2, do what <munder> does: attach the underscript on the previous
-  // result. We conceptually view the previous result as an "anynomous base" 
+  // result. We conceptually view the previous result as an "anynomous base"
   // from where to attach the underscript. Hence if the underscript is empty,
   // we should end up like <mover>. If the overscript is empty, we should
   // end up like <munder>.
@@ -638,12 +706,12 @@ nsMathMLmunderoverFrame::Place(DrawTarget*          aDrawTarget,
 
   mBoundingMetrics.width =
     std::max(dxAnonymousBase + bmAnonymousBase.width, dxUnder + bmUnder.width);
-  // At this point, mBoundingMetrics.ascent = bmAnonymousBase.ascent 
-  mBoundingMetrics.descent = 
+  // At this point, mBoundingMetrics.ascent = bmAnonymousBase.ascent
+  mBoundingMetrics.descent =
     bmAnonymousBase.descent + underDelta1 + bmUnder.ascent + bmUnder.descent;
   mBoundingMetrics.leftBearing =
     std::min(dxAnonymousBase + bmAnonymousBase.leftBearing, dxUnder + bmUnder.leftBearing);
-  mBoundingMetrics.rightBearing = 
+  mBoundingMetrics.rightBearing =
     std::max(dxAnonymousBase + bmAnonymousBase.rightBearing, dxUnder + bmUnder.rightBearing);
 
   aDesiredSize.SetBlockStartAscent(ascentAnonymousBase);

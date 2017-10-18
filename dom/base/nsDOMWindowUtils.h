@@ -24,6 +24,7 @@ struct nsPoint;
 namespace mozilla {
   namespace layers {
     class LayerTransactionChild;
+    class WebRenderBridgeChild;
   } // namespace layers
 } // namespace mozilla
 
@@ -81,6 +82,7 @@ protected:
   nsPresContext* GetPresContext();
   nsIDocument* GetDocument();
   mozilla::layers::LayerTransactionChild* GetLayerTransaction();
+  mozilla::layers::WebRenderBridgeChild* GetWebRenderBridge();
 
   NS_IMETHOD SendMouseEventCommon(const nsAString& aType,
                                   float aX,
@@ -91,9 +93,12 @@ protected:
                                   bool aIgnoreRootScrollFrame,
                                   float aPressure,
                                   unsigned short aInputSourceArg,
+                                  uint32_t aIdentifier,
                                   bool aToWindow,
                                   bool *aPreventDefault,
-                                  bool aIsSynthesized);
+                                  bool aIsDOMEventSynthesized,
+                                  bool aIsWidgetEventSynthesized,
+                                  int32_t aButtons);
 
   NS_IMETHOD SendPointerEventCommon(const nsAString& aType,
                                     float aX,

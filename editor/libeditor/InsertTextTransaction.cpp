@@ -6,6 +6,7 @@
 #include "InsertTextTransaction.h"
 
 #include "mozilla/EditorBase.h"         // mEditorBase
+#include "mozilla/SelectionState.h"     // RangeUpdater
 #include "mozilla/dom/Selection.h"      // Selection local var
 #include "mozilla/dom/Text.h"           // mTextNode
 #include "nsAString.h"                  // nsAString parameter
@@ -20,11 +21,13 @@ using namespace dom;
 InsertTextTransaction::InsertTextTransaction(Text& aTextNode,
                                              uint32_t aOffset,
                                              const nsAString& aStringToInsert,
-                                             EditorBase& aEditorBase)
+                                             EditorBase& aEditorBase,
+                                             RangeUpdater* aRangeUpdater)
   : mTextNode(&aTextNode)
   , mOffset(aOffset)
   , mStringToInsert(aStringToInsert)
-  , mEditorBase(aEditorBase)
+  , mEditorBase(&aEditorBase)
+  , mRangeUpdater(aRangeUpdater)
 {
 }
 
@@ -33,6 +36,7 @@ InsertTextTransaction::~InsertTextTransaction()
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(InsertTextTransaction, EditTransactionBase,
+                                   mEditorBase,
                                    mTextNode)
 
 NS_IMPL_ADDREF_INHERITED(InsertTextTransaction, EditTransactionBase)
@@ -47,20 +51,25 @@ NS_INTERFACE_MAP_END_INHERITING(EditTransactionBase)
 NS_IMETHODIMP
 InsertTextTransaction::DoTransaction()
 {
-  nsresult res = mTextNode->InsertData(mOffset, mStringToInsert);
-  NS_ENSURE_SUCCESS(res, res);
+  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mTextNode)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsresult rv = mTextNode->InsertData(mOffset, mStringToInsert);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Only set selection to insertion point if editor gives permission
-  if (mEditorBase.GetShouldTxnSetSelection()) {
-    RefPtr<Selection> selection = mEditorBase.GetSelection();
+  if (mEditorBase->GetShouldTxnSetSelection()) {
+    RefPtr<Selection> selection = mEditorBase->GetSelection();
     NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
-    res = selection->Collapse(mTextNode,
-                              mOffset + mStringToInsert.Length());
-    NS_ASSERTION(NS_SUCCEEDED(res),
+    DebugOnly<nsresult> rv =
+      selection->Collapse(mTextNode, mOffset + mStringToInsert.Length());
+    NS_ASSERTION(NS_SUCCEEDED(rv),
                  "Selection could not be collapsed after insert");
   } else {
     // Do nothing - DOM Range gravity will adjust selection
   }
+  mRangeUpdater->SelAdjInsertText(*mTextNode, mOffset, mStringToInsert);
 
   return NS_OK;
 }

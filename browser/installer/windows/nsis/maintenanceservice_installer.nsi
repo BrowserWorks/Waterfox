@@ -13,13 +13,9 @@ CRCCheck on
 
 RequestExecutionLevel admin
 
-; The commands inside this ifdef require NSIS 3.0a2 or greater so the ifdef can
-; be removed after we require NSIS 3.0a2 or greater.
-!ifdef NSIS_PACKEDVERSION
-  Unicode true
-  ManifestSupportedOS all
-  ManifestDPIAware true
-!endif
+Unicode true
+ManifestSupportedOS all
+ManifestDPIAware true
 
 !addplugindir ./
 
@@ -120,10 +116,7 @@ Function .onInit
 
   SetSilent silent
 
-  ; On Windows 2000 we do not install the maintenance service.
-  ; We won't run this installer from the parent installer, but just in case 
-  ; someone tries to execute it on Windows 2000...
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
     Abort
   ${EndUnless}
 FunctionEnd
@@ -132,14 +125,6 @@ Function un.onInit
   ; Remove the current exe directory from the search order.
   ; This only effects LoadLibrary calls and not implicitly loaded DLLs.
   System::Call 'kernel32::SetDllDirectoryW(w "")'
-
-; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
-; removed after we require NSIS 3.0a2 or greater.
-!ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
-    System::Call 'user32::SetProcessDPIAware()'
-  ${EndIf}
-!endif
 
   StrCpy $BrandFullNameDA "${MaintFullName}"
   StrCpy $BrandFullName "${MaintFullName}"
@@ -164,14 +149,14 @@ Section "MaintenanceService"
 
   ; We always write out a copy and then decide whether to install it or 
   ; not via calling its 'install' cmdline which works by version comparison.
-  CopyFiles "$EXEDIR\maintenanceservice.exe" "$INSTDIR\$TempMaintServiceName"
+  CopyFiles /SILENT "$EXEDIR\maintenanceservice.exe" "$INSTDIR\$TempMaintServiceName"
 
   ; The updater.ini file is only used when performing an install or upgrade,
   ; and only if that install or upgrade is successful.  If an old updater.ini
   ; happened to be copied into the maintenance service installation directory
   ; but the service was not newer, the updater.ini file would be unused.
   ; It is used to fill the description of the service on success.
-  CopyFiles "$EXEDIR\updater.ini" "$INSTDIR\updater.ini"
+  CopyFiles /SILENT "$EXEDIR\updater.ini" "$INSTDIR\updater.ini"
 
   ; Install the application maintenance service.
   ; If a service already exists, the command line parameter will stop the
@@ -190,6 +175,20 @@ Section "MaintenanceService"
   ${EndIf}
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  ; Since the Maintenance service can be installed either x86 or x64,
+  ; always use the 64-bit registry.
+  ${If} ${RunningX64}
+    ; Previous versions always created the uninstall key in the 32-bit registry.
+    ; Clean those old entries out if they still exist.
+    SetRegView 32
+    DeleteRegKey HKLM "${MaintUninstallKey}"
+    ; Preserve the lastused value before we switch to 64.
+    SetRegView lastused
+
+    SetRegView 64
+  ${EndIf}
+
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayName" "${MaintFullName}"
   WriteRegStr HKLM "${MaintUninstallKey}" "UninstallString" \
                    '"$INSTDIR\uninstall.exe"'
@@ -207,11 +206,6 @@ Section "MaintenanceService"
   ; want to install once on the first upgrade to maintenance service.
   ; Also write out that we are currently installed, preferences will check
   ; this value to determine if we should show the service update pref.
-  ; Since the Maintenance service can be installed either x86 or x64,
-  ; always use the 64-bit registry for checking if an attempt was made.
-  ${If} ${RunningX64}
-    SetRegView 64
-  ${EndIf}
   WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Attempted" 1
   WriteRegDWORD HKLM "Software\Mozilla\MaintenanceService" "Installed" 1
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
@@ -321,11 +315,10 @@ Section "Uninstall"
   RMDir /REBOOTOK "$INSTDIR\update"
   RMDir /REBOOTOK "$INSTDIR"
 
-  DeleteRegKey HKLM "${MaintUninstallKey}"
-
   ${If} ${RunningX64}
     SetRegView 64
   ${EndIf}
+  DeleteRegKey HKLM "${MaintUninstallKey}"
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "Installed"
   DeleteRegValue HKLM "Software\Mozilla\MaintenanceService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"

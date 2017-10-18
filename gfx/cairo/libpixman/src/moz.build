@@ -73,9 +73,6 @@ LOCAL_INCLUDES += [
 if CONFIG['MOZ_USE_PTHREADS']:
     DEFINES['HAVE_PTHREAD_SETSPECIFIC'] = True
 
-if CONFIG['_MSC_VER']:
-    DEFINES['PIXMAN_USE_XP_DLL_TLS_WORKAROUND'] = True
-
 DEFINES['PACKAGE'] = 'mozpixman'
 
 DEFINES['_USE_MATH_DEFINES'] = True
@@ -137,7 +134,7 @@ if use_arm_simd_gcc:
 if use_arm_neon_gcc:
     DEFINES['USE_ARM_NEON'] = True
     SOURCES += ['pixman-arm-neon.c']
-    SOURCES['pixman-arm-neon.c'].flags += ['-mfpu=neon']
+    SOURCES['pixman-arm-neon.c'].flags += CONFIG['NEON_FLAGS']
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
@@ -156,6 +153,14 @@ if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
 if CONFIG['CLANG_CL']:
     CFLAGS += [
         '-Wno-unused-variable',
+    ]
+if CONFIG['_MSC_VER'] and not CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-wd4047', # different levels of indirection
+        '-wd4101', # unreferenced local variable
+        '-wd4133', # 'function' : incompatible types
+        '-wd4146', # unary minus operator applied to unsigned type
+        '-wd4311', # 'variable' : pointer truncation from 'type' to 'type'
     ]
 
 # See bug 386897.

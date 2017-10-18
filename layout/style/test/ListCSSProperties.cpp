@@ -106,6 +106,7 @@ const char *gInaccessibleProperties[] = {
     "-x-span",
     "-x-system-font",
     "-x-text-zoom",
+    "-moz-context-properties",
     "-moz-control-character-visibility",
     "-moz-script-level", // parsed by UA sheets only
     "-moz-script-size-multiplier",
@@ -114,6 +115,9 @@ const char *gInaccessibleProperties[] = {
     "-moz-math-display", // parsed by UA sheets only
     "-moz-top-layer", // parsed by UA sheets only
     "-moz-min-font-size-ratio", // parsed by UA sheets only
+    "-moz-window-opacity", // chrome-only internal properties
+    "-moz-window-transform", // chrome-only internal properties
+    "-moz-window-transform-origin", // chrome-only internal properties
     "-moz-window-shadow" // chrome-only internal properties
 };
 

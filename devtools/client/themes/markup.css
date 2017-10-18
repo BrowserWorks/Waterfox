@@ -139,17 +139,24 @@ ul.children + .tag-line::before {
   padding-left: 2px;
 }
 
-.tag-line[selected] + .children {
+.tag-line[selected] + .children,
+.tag-line[selected] ~ .tag-line {
   background-image: linear-gradient(to top, var(--markup-outline), var(--markup-outline));
+  background-position-x: -6px;
   background-repeat: no-repeat;
-  /* Shorten the outline height by 4px to account for the 2px top padding and
-   * allow for a 2px bottom padding */
-  background-size: 1.5px calc(100% - 4px);
-  /* Align the outline to under the expander arrow and provide 2px top
-   * padding */
-  background-position: -6px 2px;
+  background-size: 1.5px 100%;
   border-left: 6px solid transparent;
   margin-left: -6px;
+}
+
+.tag-line[selected] + .children {
+  background-position-y: 2px;
+}
+
+.tag-line[selected] ~ .tag-line {
+  background-position-y: -2px;
+  /* Unset transition-property to prevent the markup outline from horizontal shifting */
+  transition-property: none;
 }
 
 .html-editor-container {
@@ -195,6 +202,22 @@ ul.children + .tag-line::before {
 
 .child.collapsed .close {
   display: inline;
+}
+
+.expandable.collapsed .close::before {
+  /* Display an ellipsis character in collapsed nodes that can be expanded. */
+  content: "\2026";
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  margin: 0 2px;
+  line-height: 3px;
+  color: var(--theme-body-color-inactive);
+  border-radius: 3px;
+  border-style: solid;
+  border-width: 1px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 /* Hide HTML void elements (img, hr, br, …) closing tag when the element is not
@@ -247,6 +270,33 @@ ul.children + .tag-line::before {
   font: inherit;
 }
 
+/* Whitespace only text nodes are sometimes shown in the markup-view, and when they do
+   they get a greyed-out whitespace symbol so users know what they are */
+.editor.text .whitespace {
+  padding: 0 .5em;
+}
+
+.editor.text .whitespace::before {
+  /* black circle (full) character */
+  content: "\25cf";
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  margin: 0 2px;
+  line-height: 7px;
+  font-size: 0.6em;
+  color: var(--theme-body-color-inactive);
+  border-radius: 3px;
+  border-style: solid;
+  border-width: 1px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.tag-line[selected] .editor.text .whitespace::before {
+  color: white;
+}
+
 .more-nodes {
   padding-left: 16px;
 }
@@ -273,6 +323,7 @@ ul.children + .tag-line::before {
 
 .theme-firebug .theme-fg-color3 {
   color: var(--theme-graphs-full-blue);
+  font-weight: normal;
 }
 
 .theme-firebug .open,
@@ -299,7 +350,8 @@ ul.children + .tag-line::before {
 .theme-selected ~ .editor .theme-fg-color4,
 .theme-selected ~ .editor .theme-fg-color5,
 .theme-selected ~ .editor .theme-fg-color6,
-.theme-selected ~ .editor .theme-fg-color7 {
+.theme-selected ~ .editor .theme-fg-color7,
+.theme-selected ~ .editor .close::before {
   color: var(--theme-selection-color);
 }
 
@@ -309,10 +361,19 @@ ul.children + .tag-line::before {
   color: var(--theme-selection-color);
 }
 
+/* Applicable to the DOCTYPE */
+.doctype {
+  font-style: italic;
+}
+
+.theme-firebug .doctype {
+  color: #787878;
+}
+
 /* In case a node isn't displayed in the page, we fade the syntax highlighting */
 .not-displayed .open,
 .not-displayed .close {
-  opacity: .7;
+  opacity: .5;
 }
 
 /* Events */

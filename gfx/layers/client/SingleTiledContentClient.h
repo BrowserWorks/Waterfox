@@ -27,8 +27,8 @@ class ClientSingleTiledLayerBuffer
 {
   virtual ~ClientSingleTiledLayerBuffer() {}
 public:
-  ClientSingleTiledLayerBuffer(ClientTiledPaintedLayer* aPaintedLayer,
-                               CompositableClient* aCompositableClient,
+  ClientSingleTiledLayerBuffer(ClientTiledPaintedLayer& aPaintedLayer,
+                               CompositableClient& aCompositableClient,
                                ClientLayerManager* aManager);
 
   // TextureClientAllocator
@@ -45,9 +45,10 @@ public:
                    bool aIsProgressive = false) override;
  
   bool SupportsProgressiveUpdate() override { return false; }
-  bool ProgressiveUpdate(nsIntRegion& aValidRegion,
-                         nsIntRegion& aInvalidRegion,
+  bool ProgressiveUpdate(const nsIntRegion& aValidRegion,
+                         const nsIntRegion& aInvalidRegion,
                          const nsIntRegion& aOldValidRegion,
+                         nsIntRegion& aOutDrawnRegion,
                          BasicTiledLayerPaintData* aPaintData,
                          LayerManager::DrawPaintedLayerCallback aCallback,
                          void* aCallbackData) override
@@ -83,8 +84,6 @@ public:
 private:
   TileClient mTile;
 
-  ClientLayerManager* mManager;
-
   nsIntRegion mPaintedRegion;
   nsIntRegion mValidRegion;
   bool mWasLastPaintProgressive;
@@ -106,7 +105,7 @@ private:
 class SingleTiledContentClient : public TiledContentClient
 {
 public:
-  SingleTiledContentClient(ClientTiledPaintedLayer* aPaintedLayer,
+  SingleTiledContentClient(ClientTiledPaintedLayer& aPaintedLayer,
                            ClientLayerManager* aManager);
 
 protected:

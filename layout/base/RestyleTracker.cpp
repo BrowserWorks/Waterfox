@@ -11,14 +11,13 @@
 #include "RestyleTracker.h"
 
 #include "GeckoProfiler.h"
-#include "nsDocShell.h"
 #include "nsFrameManager.h"
 #include "nsIDocument.h"
 #include "nsStyleChangeList.h"
-#include "mozilla/RestyleManager.h"
+#include "mozilla/GeckoRestyleManager.h"
 #include "RestyleTrackerInlines.h"
 #include "nsTransitionManager.h"
-#include "mozilla/RestyleTimelineMarker.h"
+#include "mozilla/AutoRestyleTimelineMarker.h"
 
 namespace mozilla {
 
@@ -27,9 +26,12 @@ static nsCString
 GetDocumentURI(nsIDocument* aDocument)
 {
   nsCString result;
-  nsString url;
-  aDocument->GetDocumentURI(url);
-  result.Append(NS_ConvertUTF16toUTF8(url).get());
+  nsAutoString url;
+  nsresult rv = aDocument->GetDocumentURI(url);
+  if (NS_SUCCEEDED(rv)) {
+    result.Append(NS_ConvertUTF16toUTF8(url).get());
+  }
+
   return result;
 }
 
@@ -58,9 +60,7 @@ RestyleTracker::Document() const {
 
 struct RestyleEnumerateData : RestyleTracker::Hints {
   RefPtr<dom::Element> mElement;
-#if defined(MOZ_ENABLE_PROFILER_SPS)
-  UniquePtr<ProfilerBacktrace> mBacktrace;
-#endif
+  UniqueProfilerBacktrace mBacktrace;
 };
 
 inline void
@@ -76,19 +76,19 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
                   "Element has unexpected document");
 
   LOG_RESTYLE("aRestyleHint = %s, aChangeHint = %s",
-              RestyleManager::RestyleHintToString(aRestyleHint).get(),
-              RestyleManager::ChangeHintToString(aChangeHint).get());
+              GeckoRestyleManager::RestyleHintToString(aRestyleHint).get(),
+              GeckoRestyleManager::ChangeHintToString(aChangeHint).get());
 
   nsIFrame* primaryFrame = aElement->GetPrimaryFrame();
 
   if (aRestyleHint & ~eRestyle_LaterSiblings) {
 #ifdef RESTYLE_LOGGING
     if (ShouldLogRestyle() && primaryFrame &&
-        RestyleManager::StructsToLog() != 0) {
+        GeckoRestyleManager::StructsToLog() != 0) {
       LOG_RESTYLE("style context tree before restyle:");
       LOG_RESTYLE_INDENT();
-      primaryFrame->StyleContext()->LogStyleContextTree(
-          LoggingDepth(), RestyleManager::StructsToLog());
+      primaryFrame->StyleContext()->AsGecko()->LogStyleContextTree(
+          LoggingDepth(), GeckoRestyleManager::StructsToLog());
     }
 #endif
     mRestyleManager->RestyleElement(aElement, primaryFrame, aChangeHint,
@@ -97,7 +97,7 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
              (primaryFrame ||
               (aChangeHint & nsChangeHint_ReconstructFrame))) {
     // Don't need to recompute style; just apply the hint
-    nsStyleChangeList changeList;
+    nsStyleChangeList changeList(StyleBackendType::Gecko);
     changeList.AppendChange(primaryFrame, aElement, aChangeHint);
     mRestyleManager->ProcessRestyledFrames(changeList);
   }
@@ -106,21 +106,15 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
 void
 RestyleTracker::DoProcessRestyles()
 {
-  nsAutoCString docURL;
+  nsAutoCString docURL("N/A");
   if (profiler_is_active()) {
     nsIURI *uri = Document()->GetDocumentURI();
     if (uri) {
-      uri->GetSpec(docURL);
-    } else {
-      docURL = "N/A";
+      docURL = uri->GetSpecOrDefault();
     }
   }
-  PROFILER_LABEL_PRINTF("RestyleTracker", "ProcessRestyles",
-                        js::ProfileEntry::Category::CSS, "(%s)", docURL.get());
-
-  nsDocShell* docShell = static_cast<nsDocShell*>(mRestyleManager->PresContext()->GetDocShell());
-  RefPtr<TimelineConsumers> timelines = TimelineConsumers::Get();
-  bool isTimelineRecording = timelines && timelines->HasConsumer(docShell);
+  AUTO_PROFILER_LABEL_DYNAMIC("RestyleTracker::DoProcessRestyles", CSS,
+                              docURL.get());
 
   // Create a AnimationsWithDestroyedFrame during restyling process to
   // stop animations and transitions on elements that have no frame at the end
@@ -147,7 +141,7 @@ RestyleTracker::DoProcessRestyles()
   // EndReconstruct so those style contexts go away before
   // EndReconstruct.
   {
-    RestyleManager::ReframingStyleContexts
+    GeckoRestyleManager::ReframingStyleContexts
       reframingStyleContexts(mRestyleManager);
 
     mRestyleManager->BeginProcessingRestyles(*this);
@@ -168,7 +162,8 @@ RestyleTracker::DoProcessRestyles()
         AutoTArray<RefPtr<Element>, RESTYLE_ARRAY_STACKSIZE> laterSiblingArr;
         for (auto iter = mPendingRestyles.Iter(); !iter.Done(); iter.Next()) {
           auto element = static_cast<dom::Element*>(iter.Key());
-          MOZ_ASSERT(!element->IsStyledByServo(), "Should not have Servo-styled elements here");
+          MOZ_ASSERT(!element->IsStyledByServo(),
+                     "Should not have Servo-styled elements here");
           // Only collect the entries that actually need restyling by us (and
           // haven't, for example, already been restyled).
           // It's important to not mess with the flags on entries not in our
@@ -249,26 +244,17 @@ RestyleTracker::DoProcessRestyles()
           continue;
         }
 
-        if (isTimelineRecording) {
-          timelines->AddMarkerForDocShell(docShell, Move(
-            MakeUnique<RestyleTimelineMarker>(
-              data->mRestyleHint, MarkerTracingType::START)));
-        }
-
-#if defined(MOZ_ENABLE_PROFILER_SPS)
-        Maybe<GeckoProfilerTracingRAII> profilerRAII;
-        if (profiler_feature_active("restyle")) {
-          profilerRAII.emplace("Paint", "Styles", Move(data->mBacktrace));
-        }
-#endif
-        ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint,
-                          data->mRestyleHintData);
-        AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
-
-        if (isTimelineRecording) {
-          timelines->AddMarkerForDocShell(docShell, Move(
-            MakeUnique<RestyleTimelineMarker>(
-              data->mRestyleHint, MarkerTracingType::END)));
+        {
+          AutoRestyleTimelineMarker marker(
+            mRestyleManager->PresContext()->GetDocShell(),
+            data->mRestyleHint & eRestyle_AllHintsWithAnimations);
+          Maybe<AutoProfilerTracing> tracing;
+          if (profiler_feature_active(ProfilerFeature::Restyle)) {
+            tracing.emplace("Paint", "Styles", Move(data->mBacktrace));
+          }
+          ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint,
+                            data->mRestyleHintData);
+          AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
         }
       }
 
@@ -335,9 +321,7 @@ RestyleTracker::DoProcessRestyles()
           // We can move data since we'll be clearing mPendingRestyles after
           // we finish enumerating it.
           restyle->mRestyleHintData = Move(data->mRestyleHintData);
-#if defined(MOZ_ENABLE_PROFILER_SPS)
           restyle->mBacktrace = Move(data->mBacktrace);
-#endif
 
 #ifdef RESTYLE_LOGGING
           count++;
@@ -363,27 +347,19 @@ RestyleTracker::DoProcessRestyles()
                       index++, count);
           LOG_RESTYLE_INDENT();
 
-#if defined(MOZ_ENABLE_PROFILER_SPS)
-          Maybe<GeckoProfilerTracingRAII> profilerRAII;
-          if (profiler_feature_active("restyle")) {
-            profilerRAII.emplace("Paint", "Styles", Move(currentRestyle->mBacktrace));
-          }
-#endif
-          if (isTimelineRecording) {
-            timelines->AddMarkerForDocShell(docShell, Move(
-              MakeUnique<RestyleTimelineMarker>(
-                currentRestyle->mRestyleHint, MarkerTracingType::START)));
+          Maybe<AutoProfilerTracing> tracing;
+          if (profiler_feature_active(ProfilerFeature::Restyle)) {
+            tracing.emplace("Paint", "Styles", Move(currentRestyle->mBacktrace));
           }
 
-          ProcessOneRestyle(currentRestyle->mElement,
-                            currentRestyle->mRestyleHint,
-                            currentRestyle->mChangeHint,
-                            currentRestyle->mRestyleHintData);
-
-          if (isTimelineRecording) {
-            timelines->AddMarkerForDocShell(docShell, Move(
-              MakeUnique<RestyleTimelineMarker>(
-                currentRestyle->mRestyleHint, MarkerTracingType::END)));
+          {
+            AutoRestyleTimelineMarker marker(
+              mRestyleManager->PresContext()->GetDocShell(),
+              currentRestyle->mRestyleHint & eRestyle_AllHintsWithAnimations);
+            ProcessOneRestyle(currentRestyle->mElement,
+                              currentRestyle->mRestyleHint,
+                              currentRestyle->mChangeHint,
+                              currentRestyle->mRestyleHintData);
           }
         }
       }
@@ -407,7 +383,7 @@ RestyleTracker::GetRestyleData(Element* aElement, nsAutoPtr<RestyleData>& aData)
     return false;
   }
 
-  mPendingRestyles.RemoveAndForget(aElement, aData);
+  mPendingRestyles.Remove(aElement, &aData);
   NS_ASSERTION(aData.get(), "Must have data if restyle bit is set");
 
   if (aData->mRestyleHint & eRestyle_LaterSiblings) {

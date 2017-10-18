@@ -10,13 +10,14 @@
 #ifndef _nsIStatefulFrame_h
 #define _nsIStatefulFrame_h
 
+#include "nsContentUtils.h"
 #include "nsQueryFrame.h"
 
 class nsPresState;
 
 class nsIStatefulFrame
 {
- public: 
+ public:
   NS_DECL_QUERYFRAME_TARGET(nsIStatefulFrame)
 
   // Save the state for this frame.  If this method succeeds, the caller is

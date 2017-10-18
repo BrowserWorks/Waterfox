@@ -5,9 +5,11 @@
 
 import base
 
+
 class UnittestFormatter(base.BaseFormatter):
     """Formatter designed to produce output in a format like that used by
     the ``unittest`` module in the standard library."""
+
     def __init__(self):
         self.fails = []
         self.errors = []
@@ -36,6 +38,21 @@ class UnittestFormatter(base.BaseFormatter):
 
         elif data["status"] == "SKIP":
             char = "S"
+        return char
+
+    def assertion_count(self, data):
+        if data["count"] < data["min_expected"]:
+            char = "X"
+        elif data["count"] > data["max_expected"]:
+            char = "F"
+            self.fails.append({"test": data["test"],
+                               "message": ("assertion count %i is greated than %i" %
+                                           (data["count"], data["max_expected"]))})
+        elif data["count"] > 0:
+            char = "."
+        else:
+            char = "."
+
         return char
 
     def suite_end(self, data):

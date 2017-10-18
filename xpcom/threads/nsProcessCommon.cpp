@@ -23,12 +23,13 @@
 #include "nsCRT.h"
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
+#include "nsXULAppAPI.h"
 #include "mozilla/Services.h"
+#include "GeckoProfiler.h"
 
 #include <stdlib.h>
 
 #if defined(PROCESSMODEL_WINAPI)
-#include "prmem.h"
 #include "nsString.h"
 #include "nsLiteralString.h"
 #include "nsReadableUtils.h"
@@ -70,6 +71,7 @@ nsProcess::nsProcess()
   , mLock("nsProcess.mLock")
   , mShutdown(false)
   , mBlocking(false)
+  , mStartHidden(false)
   , mPid(-1)
   , mObserver(nullptr)
   , mWeakObserver(nullptr)
@@ -149,7 +151,7 @@ assembleCmdLine(char* const* aArgv, wchar_t** aWideCmdLine, UINT aCodePage)
                    + 2               /* we quote every argument */
                    + 1;              /* space in between, or final null */
   }
-  p = cmdLine = (char*)PR_MALLOC(cmdLineSize * sizeof(char));
+  p = cmdLine = (char*) malloc(cmdLineSize * sizeof(char));
   if (!p) {
     return -1;
   }
@@ -224,9 +226,9 @@ assembleCmdLine(char* const* aArgv, wchar_t** aWideCmdLine, UINT aCodePage)
 
   *p = '\0';
   int32_t numChars = MultiByteToWideChar(aCodePage, 0, cmdLine, -1, nullptr, 0);
-  *aWideCmdLine = (wchar_t*)PR_MALLOC(numChars * sizeof(wchar_t));
+  *aWideCmdLine = (wchar_t*) malloc(numChars * sizeof(wchar_t));
   MultiByteToWideChar(aCodePage, 0, cmdLine, -1, *aWideCmdLine, numChars);
-  PR_Free(cmdLine);
+  free(cmdLine);
   return 0;
 }
 #endif
@@ -234,10 +236,13 @@ assembleCmdLine(char* const* aArgv, wchar_t** aWideCmdLine, UINT aCodePage)
 void
 nsProcess::Monitor(void* aArg)
 {
+  char stackBaseGuess;
+
   RefPtr<nsProcess> process = dont_AddRef(static_cast<nsProcess*>(aArg));
 
   if (!process->mBlocking) {
-    PR_SetCurrentThreadName("RunProcess");
+    NS_SetCurrentThreadName("RunProcess");
+    profiler_register_thread("RunProcess", &stackBaseGuess);
   }
 
 #if defined(PROCESSMODEL_WINAPI)
@@ -301,7 +306,12 @@ nsProcess::Monitor(void* aArg)
   if (NS_IsMainThread()) {
     process->ProcessComplete();
   } else {
-    NS_DispatchToMainThread(NewRunnableMethod(process, &nsProcess::ProcessComplete));
+    NS_DispatchToMainThread(NewRunnableMethod(
+      "nsProcess::ProcessComplete", process, &nsProcess::ProcessComplete));
+  }
+
+  if (!process->mBlocking) {
+    profiler_unregister_thread();
   }
 }
 
@@ -430,6 +440,9 @@ nsresult
 nsProcess::RunProcess(bool aBlocking, char** aMyArgv, nsIObserver* aObserver,
                       bool aHoldWeak, bool aArgsUTF8)
 {
+  NS_WARNING_ASSERTION(!XRE_IsContentProcess(),
+                       "No launching of new processes in the content process");
+
   if (NS_WARN_IF(!mExecutable)) {
     return NS_ERROR_NOT_INITIALIZED;
   }
@@ -475,7 +488,7 @@ nsProcess::RunProcess(bool aBlocking, char** aMyArgv, nsIObserver* aObserver,
   sinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
   sinfo.hwnd   = nullptr;
   sinfo.lpFile = wideFile.get();
-  sinfo.nShow  = SW_SHOWNORMAL;
+  sinfo.nShow  = mStartHidden ? SW_HIDE : SW_SHOWNORMAL;
   sinfo.fMask  = SEE_MASK_FLAG_DDEWAIT |
                  SEE_MASK_NO_CONSOLE |
                  SEE_MASK_NOCLOSEPROCESS;
@@ -492,7 +505,7 @@ nsProcess::RunProcess(bool aBlocking, char** aMyArgv, nsIObserver* aObserver,
   mProcess = sinfo.hProcess;
 
   if (cmdLine) {
-    PR_Free(cmdLine);
+    free(cmdLine);
   }
 
   mPid = GetProcessId(mProcess);
@@ -573,6 +586,20 @@ nsProcess::GetIsRunning(bool* aIsRunning)
     *aIsRunning = false;
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsProcess::GetStartHidden(bool* aStartHidden)
+{
+  *aStartHidden = mStartHidden;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsProcess::SetStartHidden(bool aStartHidden)
+{
+  mStartHidden = aStartHidden;
   return NS_OK;
 }
 

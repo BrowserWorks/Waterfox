@@ -16,7 +16,7 @@ class AboutRedirector : public nsIAboutModule
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIABOUTMODULE
- 
+
   AboutRedirector() {}
 
   static nsresult
@@ -24,6 +24,10 @@ public:
 
 protected:
   virtual ~AboutRedirector() {}
+
+private:
+  static bool sUseOldPreferences;
+  static bool sActivityStreamEnabled;
 };
 
 } // namespace browser

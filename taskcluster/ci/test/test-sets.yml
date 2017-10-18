@@ -1,0 +1,259 @@
+# Each key in this file specifies a set of tests to run.  Different test sets
+# may, for example, be bound to different test platforms.
+#
+# Note that set does not depend on the tree; tree-dependent job selection
+# should be performed in the target task selection phase of task-graph
+# generation.
+#
+# A test set has a name, and a list of tests that it contains.
+#
+# Test names given here reference tests.yml.
+
+##
+# Universal tests
+#
+# Tests that run just about everywhere; common-tests is the shared core, with
+# a few add-on test sets that are included or omitted on some platforms.
+
+common-tests:
+    - cppunit
+    - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
+    - gtest
+    - jittest
+    - jsreftest
+    - marionette
+    - marionette-headless
+    - mochitest
+    - mochitest-a11y
+    - mochitest-browser-chrome
+    - mochitest-chrome
+    - mochitest-clipboard
+    - mochitest-devtools-chrome
+    - mochitest-gpu
+    - mochitest-jetpack
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
+    - reftest-no-accel
+    - telemetry-tests-client
+    - xpcshell
+
+web-platform-tests:
+    - web-platform-tests
+    - web-platform-tests-reftests
+    - web-platform-tests-wdspec
+
+opt-only-tests:
+    - mochitest-valgrind
+
+talos:
+    - talos-chrome
+    - talos-dromaeojs
+    - talos-g1
+    - talos-g2
+    - talos-g3
+    - talos-g4
+    - talos-g5
+    - talos-other
+    - talos-svgr
+    - talos-tp5o
+    - talos-perf-reftest
+    - talos-perf-reftest-singletons
+
+awsy:
+    - awsy
+
+##
+# Limited test sets for specific platforms
+
+stylo-tests:
+    - cppunit
+    - crashtest
+    - reftest
+    - reftest-stylo
+    - mochitest-style
+    - mochitest-chrome-style
+    - web-platform-tests
+    - web-platform-tests-reftests
+
+stylo-sequential-tests:
+    - crashtest
+    - reftest-stylo
+    - mochitest-style
+
+qr-tests:
+    - cppunit
+    - crashtest
+    - gtest
+    - jittest
+    - jsreftest
+    - mochitest-a11y
+    - mochitest-gpu
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
+    - reftest-no-accel
+    - xpcshell
+
+jsdcov-code-coverage-tests:
+    - mochitest
+    - mochitest-browser-chrome
+    - mochitest-devtools-chrome
+    - xpcshell
+
+windows-tests:
+    - cppunit
+    - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
+    - gtest
+    - jittest
+    - jsreftest
+    - marionette
+    - marionette-headless
+    - mochitest
+    - mochitest-a11y
+    - mochitest-browser-chrome
+    - mochitest-chrome
+    - mochitest-clipboard
+    - mochitest-devtools-chrome
+    - mochitest-gpu
+    - mochitest-jetpack
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
+    - reftest-gpu
+    - reftest-no-accel
+    - web-platform-tests
+    - web-platform-tests-reftests
+    - xpcshell
+
+windows-talos:
+    - talos-chrome
+    - talos-dromaeojs
+    - talos-g1
+    - talos-g2
+    - talos-g4
+    - talos-g5
+    - talos-other
+    - talos-perf-reftest
+    - talos-perf-reftest-singletons
+    - talos-svgr
+    - talos-tp5o
+    - talos-xperf
+    - talos-quantum-pageload
+    - talos-quantum-pageload-stylo
+
+macosx64-tests:
+    - cppunit
+    - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
+    - gtest
+    - jittest
+    - jsreftest
+    - marionette
+    - marionette-headless
+    - mochitest
+    - mochitest-a11y
+    - mochitest-browser-chrome
+    - mochitest-chrome
+    - mochitest-clipboard
+    - mochitest-devtools-chrome
+    - mochitest-gpu
+    - mochitest-jetpack
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
+    - web-platform-tests
+    - web-platform-tests-reftests
+    - xpcshell
+
+macosx64-tests-talos:
+    - talos-chrome
+    - talos-dromaeojs
+    - talos-g1
+    - talos-g2
+    - talos-g4
+    - talos-g5
+    - talos-other
+    - talos-svgr
+    - talos-tp5o
+    - talos-perf-reftest
+    - talos-perf-reftest-singletons
+
+linux32-tests:
+    - cppunit
+    - crashtest
+    - firefox-ui-functional-local
+    - firefox-ui-functional-remote
+    - gtest
+    - jittest
+    - jsreftest
+    - marionette
+    - mochitest
+    - mochitest-a11y
+    - mochitest-browser-chrome
+    - mochitest-chrome
+    - mochitest-clipboard
+    - mochitest-gpu
+    - mochitest-jetpack
+    - mochitest-media
+    - mochitest-webgl
+    - reftest
+    - reftest-no-accel
+    - web-platform-tests
+    - web-platform-tests-reftests
+    - xpcshell
+
+linux32-opt-tests:
+    # mochitest-dt is too slow on linux32/debug
+    - mochitest-devtools-chrome
+
+desktop-screenshot-capture:
+    - mochitest-browser-screenshots
+
+android-common-tests:
+    - cppunit
+    - crashtest
+    - jsreftest
+    - mochitest
+    - mochitest-chrome
+    - mochitest-clipboard
+    - mochitest-gpu
+    - mochitest-media
+    - reftest
+    - xpcshell
+
+android-debug-tests:
+    # Marionette only available on Fennec debug builds as a security precaution
+    - marionette
+
+android-opt-tests:
+    - robocop
+
+android-gradle-tests:
+    - mochitest-chrome
+    - robocop
+    - geckoview
+
+android-x86-tests:
+    - mochitest-chrome
+    - xpcshell
+
+windows8-tests:
+    - crashtest
+    - mochitest
+    - mochitest-browser-chrome
+    - mochitest-devtools-chrome
+    - mochitest-media
+    - jsreftest
+    - reftest
+    - reftest-no-accel
+    - mochitest-gpu
+    - mochitest-webgl
+    - mochitest-clipboard
+    - mochitest-chrome
+    - xpcshell

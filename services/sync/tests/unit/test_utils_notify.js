@@ -1,44 +1,44 @@
 _("Make sure notify sends out the right notifications");
 Cu.import("resource://services-sync/util.js");
 
-function run_test() {
+add_task(async function run_test() {
   let ret, rightThis, didCall;
   let obj = {
     notify: Utils.notify("foo:"),
     _log: {
-      trace: function() {}
+      trace() {}
     },
 
-    func: function() {
-      return this.notify("bar", "baz", function() {
+    func() {
+      return this.notify("bar", "baz", async function() {
         rightThis = this == obj;
         didCall = true;
         return 5;
       })();
     },
 
-    throwy: function() {
-      return this.notify("bad", "one", function() {
+    throwy() {
+      return this.notify("bad", "one", async function() {
         rightThis = this == obj;
         didCall = true;
-        throw 10;
+        throw new Error("covfefe");
       })();
     }
   };
 
   let state = 0;
   let makeObs = function(topic) {
-    let obj = {
-      observe: function(subject, topic, data) {
+    let obj2 = {
+      observe(subject, obsTopic, data) {
         this.state = ++state;
         this.subject = subject;
-        this.topic = topic;
+        this.topic = obsTopic;
         this.data = data;
       }
     };
 
-    Svc.Obs.add(topic, obj);
-    return obj;
+    Svc.Obs.add(topic, obj2);
+    return obj2;
   };
 
   _("Make sure a normal call will call and return with notifications");
@@ -46,7 +46,7 @@ function run_test() {
   let fs = makeObs("foo:bar:start");
   let ff = makeObs("foo:bar:finish");
   let fe = makeObs("foo:bar:error");
-  ret = obj.func();
+  ret = await obj.func();
   do_check_eq(ret, 5);
   do_check_true(rightThis);
   do_check_true(didCall);
@@ -73,11 +73,10 @@ function run_test() {
   let tf = makeObs("foo:bad:finish");
   let te = makeObs("foo:bad:error");
   try {
-    ret = obj.throwy();
+    ret = await obj.throwy();
     do_throw("throwy should have thrown!");
-  }
-  catch(ex) {
-    do_check_eq(ex, 10);
+  } catch (ex) {
+    do_check_eq(ex.message, "covfefe");
   }
   do_check_eq(ret, null);
   do_check_true(rightThis);
@@ -94,7 +93,7 @@ function run_test() {
   do_check_eq(tf.data, undefined);
 
   do_check_eq(te.state, 4);
-  do_check_eq(te.subject, 10);
+  do_check_eq(te.subject.message, "covfefe");
   do_check_eq(te.topic, "foo:bad:error");
   do_check_eq(te.data, "one");
-}
+});

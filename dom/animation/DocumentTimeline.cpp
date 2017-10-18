@@ -49,7 +49,7 @@ DocumentTimeline::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 
 /* static */ already_AddRefed<DocumentTimeline>
 DocumentTimeline::Constructor(const GlobalObject& aGlobal,
-                              const DOMHighResTimeStamp& aOriginTime,
+                              const DocumentTimelineOptions& aOptions,
                               ErrorResult& aRv)
 {
   nsIDocument* doc = AnimationUtils::GetCurrentRealmDocument(aGlobal.Context());
@@ -57,12 +57,11 @@ DocumentTimeline::Constructor(const GlobalObject& aGlobal,
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
+  TimeDuration originTime =
+    TimeDuration::FromMilliseconds(aOptions.mOriginTime);
 
-  TimeDuration originTime = TimeDuration::FromMilliseconds(aOriginTime);
   if (originTime == TimeDuration::Forever() ||
       originTime == -TimeDuration::Forever()) {
-    nsAutoString inputOriginTime;
-    inputOriginTime.AppendFloat(aOriginTime);
     aRv.ThrowTypeError<dom::MSG_TIME_VALUE_OUT_OF_RANGE>(
       NS_LITERAL_STRING("Origin time"));
     return nullptr;
@@ -94,7 +93,7 @@ DocumentTimeline::GetCurrentTimeStamp() const
   // If we don't have a refresh driver and we've never had one use the
   // timeline's zero time.
   if (result.IsNull()) {
-    RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
+    nsDOMNavigationTiming* timing = mDocument->GetNavigationTiming();
     if (timing) {
       result = timing->GetNavigationStartTimeStamp();
       // Also, let this time represent the current refresh time. This way
@@ -119,7 +118,7 @@ DocumentTimeline::ToTimelineTime(const TimeStamp& aTimeStamp) const
     return result;
   }
 
-  RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
+  nsDOMNavigationTiming* timing = mDocument->GetNavigationTiming();
   if (MOZ_UNLIKELY(!timing)) {
     return result;
   }
@@ -141,7 +140,7 @@ DocumentTimeline::NotifyAnimationUpdated(Animation& aAnimation)
       MOZ_ASSERT(isInList(),
                 "We should not register with the refresh driver if we are not"
                 " in the document's list of timelines");
-      refreshDriver->AddRefreshObserver(this, Flush_Style);
+      refreshDriver->AddRefreshObserver(this, FlushType::Style);
       mIsObservingRefreshDriver = true;
     }
   }
@@ -208,7 +207,7 @@ DocumentTimeline::NotifyRefreshDriverCreated(nsRefreshDriver* aDriver)
     MOZ_ASSERT(isInList(),
                "We should not register with the refresh driver if we are not"
                " in the document's list of timelines");
-    aDriver->AddRefreshObserver(this, Flush_Style);
+    aDriver->AddRefreshObserver(this, FlushType::Style);
     mIsObservingRefreshDriver = true;
   }
 }
@@ -220,7 +219,7 @@ DocumentTimeline::NotifyRefreshDriverDestroying(nsRefreshDriver* aDriver)
     return;
   }
 
-  aDriver->RemoveRefreshObserver(this, Flush_Style);
+  aDriver->RemoveRefreshObserver(this, FlushType::Style);
   mIsObservingRefreshDriver = false;
 }
 
@@ -276,7 +275,7 @@ DocumentTimeline::UnregisterFromRefreshDriver()
     return;
   }
 
-  refreshDriver->RemoveRefreshObserver(this, Flush_Style);
+  refreshDriver->RemoveRefreshObserver(this, FlushType::Style);
   mIsObservingRefreshDriver = false;
 }
 

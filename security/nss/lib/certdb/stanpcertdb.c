@@ -91,7 +91,7 @@ CERT_GetCertTrust(const CERTCertificate *cert, CERTCertTrust *trust)
 {
     SECStatus rv;
     CERT_LockCertTrust(cert);
-    if (cert->trust == NULL) {
+    if (!cert || cert->trust == NULL) {
         rv = SECFailure;
     } else {
         *trust = *cert->trust;
@@ -142,7 +142,7 @@ extern const NSSError NSS_ERROR_ALREADY_INITIALIZED;
 extern const NSSError NSS_ERROR_PKCS11;
 
 /* Look at the stan error stack and map it to NSS 3 errors */
-#define STAN_MAP_ERROR(x, y)                                                   \
+#define STAN_MAP_ERROR(x, y) \
     else if (error == (x)) { secError = y; }
 
 /*
@@ -157,8 +157,6 @@ CERT_MapStanError()
     NSSError error, prevError;
     int secError;
     int i;
-
-    error = 0;
 
     errorStack = NSS_GetErrorStack();
     if (errorStack == 0) {
@@ -306,8 +304,10 @@ __CERT_AddTempCertToPerm(CERTCertificate *cert, char *nickname,
         CERT_MapStanError();
         return SECFailure;
     }
+    CERT_LockCertTempPerm(cert);
     cert->istemp = PR_FALSE;
     cert->isperm = PR_TRUE;
+    CERT_UnlockCertTempPerm(cert);
     if (!trust) {
         return SECSuccess;
     }
@@ -438,8 +438,10 @@ CERT_NewTempCertificate(CERTCertDBHandle *handle, SECItem *derCert,
         return NULL;
     }
 
+    CERT_LockCertTempPerm(cc);
     cc->istemp = PR_TRUE;
     cc->isperm = PR_FALSE;
+    CERT_UnlockCertTempPerm(cc);
     return cc;
 loser:
     /* Perhaps this should be nssCertificate_Destroy(c) */
@@ -517,28 +519,25 @@ CERT_FindCertByKeyID(CERTCertDBHandle *handle, SECItem *name, SECItem *keyID)
 {
     CERTCertList *list;
     CERTCertificate *cert = NULL;
-    CERTCertListNode *node, *head;
+    CERTCertListNode *node;
 
     list = CERT_CreateSubjectCertList(NULL, handle, name, 0, PR_FALSE);
     if (list == NULL)
         return NULL;
 
-    node = head = CERT_LIST_HEAD(list);
-    if (head) {
-        do {
-            if (node->cert &&
-                SECITEM_ItemsAreEqual(&node->cert->subjectKeyID, keyID)) {
-                cert = CERT_DupCertificate(node->cert);
-                goto done;
-            }
-            node = CERT_LIST_NEXT(node);
-        } while (node && head != node);
+    node = CERT_LIST_HEAD(list);
+    while (!CERT_LIST_END(node, list)) {
+        if (node->cert &&
+            SECITEM_ItemsAreEqual(&node->cert->subjectKeyID, keyID)) {
+            cert = CERT_DupCertificate(node->cert);
+            goto done;
+        }
+        node = CERT_LIST_NEXT(node);
     }
     PORT_SetError(SEC_ERROR_UNKNOWN_ISSUER);
+
 done:
-    if (list) {
-        CERT_DestroyCertList(list);
-    }
+    CERT_DestroyCertList(list);
     return cert;
 }
 
@@ -637,8 +636,7 @@ common_FindCertByNicknameOrEmailAddrForUsage(CERTCertDBHandle *handle,
         if (certlist) {
             SECStatus rv =
                 CERT_FilterCertListByUsage(certlist, lookingForUsage, PR_FALSE);
-            if (SECSuccess == rv &&
-                !CERT_LIST_END(CERT_LIST_HEAD(certlist), certlist)) {
+            if (SECSuccess == rv && !CERT_LIST_EMPTY(certlist)) {
                 cert = CERT_DupCertificate(CERT_LIST_HEAD(certlist)->cert);
             }
             CERT_DestroyCertList(certlist);
@@ -859,7 +857,7 @@ certdb_SaveSingleProfile(CERTCertificate *cert, const char *emailAddr,
 
     if (saveit) {
         if (cc) {
-            if (stanProfile) {
+            if (stanProfile && profileTime && emailProfile) {
                 /* stanProfile is already stored in the crypto context,
                  * overwrite the data
                  */
@@ -917,6 +915,7 @@ CERT_SaveSMimeProfile(CERTCertificate *cert, SECItem *emailProfile,
 {
     const char *emailAddr;
     SECStatus rv;
+    PRBool isperm = PR_FALSE;
 
     if (!cert) {
         return SECFailure;
@@ -938,7 +937,11 @@ CERT_SaveSMimeProfile(CERTCertificate *cert, SECItem *emailProfile,
         }
     }
 
-    if (cert->slot && cert->isperm && CERT_IsUserCert(cert) &&
+    rv = CERT_GetCertIsPerm(cert, &isperm);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+    if (cert->slot && isperm && CERT_IsUserCert(cert) &&
         (!emailProfile || !emailProfile->len)) {
         /* Don't clobber emailProfile for user certs. */
         return SECSuccess;
@@ -990,6 +993,32 @@ CERT_FindSMimeProfile(CERTCertificate *cert)
         PK11_FreeSlot(slot);
     }
     return rvItem;
+}
+
+SECStatus
+CERT_GetCertIsPerm(const CERTCertificate *cert, PRBool *isperm)
+{
+    if (cert == NULL) {
+        return SECFailure;
+    }
+
+    CERT_LockCertTempPerm(cert);
+    *isperm = cert->isperm;
+    CERT_UnlockCertTempPerm(cert);
+    return SECSuccess;
+}
+
+SECStatus
+CERT_GetCertIsTemp(const CERTCertificate *cert, PRBool *istemp)
+{
+    if (cert == NULL) {
+        return SECFailure;
+    }
+
+    CERT_LockCertTempPerm(cert);
+    *istemp = cert->istemp;
+    CERT_UnlockCertTempPerm(cert);
+    return SECSuccess;
 }
 
 /*

@@ -53,9 +53,6 @@ IDBKeyRange::IDBKeyRange(nsISupports* aGlobal,
   , mHaveCachedUpperVal(false)
   , mRooted(false)
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 }
 
@@ -70,9 +67,6 @@ IDBLocaleAwareKeyRange::IDBLocaleAwareKeyRange(nsISupports* aGlobal,
                                                bool aIsOnly)
   : IDBKeyRange(aGlobal, aLowerOpen, aUpperOpen, aIsOnly)
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 }
 
@@ -80,17 +74,6 @@ IDBLocaleAwareKeyRange::~IDBLocaleAwareKeyRange()
 {
   DropJSObjects();
 }
-
-#ifdef DEBUG
-
-void
-IDBKeyRange::AssertIsOnOwningThread() const
-{
-  MOZ_ASSERT(mOwningThread);
-  MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
-}
-
-#endif // DEBUG
 
 // static
 nsresult
@@ -239,7 +222,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(IDBKeyRange)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBKeyRange)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBKeyRange)
@@ -307,7 +289,6 @@ IDBKeyRange::GetLower(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
     mHaveCachedLowerVal = true;
   }
 
-  JS::ExposeValueToActiveJS(mCachedLowerVal);
   aResult.set(mCachedLowerVal);
 }
 
@@ -331,7 +312,6 @@ IDBKeyRange::GetUpper(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
     mHaveCachedUpperVal = true;
   }
 
-  JS::ExposeValueToActiveJS(mCachedUpperVal);
   aResult.set(mCachedUpperVal);
 }
 

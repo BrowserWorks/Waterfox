@@ -1,0 +1,14 @@
+{
+  "name": "mozillaeslintsetup",
+  "description": "This package file is for setup of ESLint only for editor integration.",
+  "repository": {},
+  "license": "MPL-2.0",
+  "dependencies": {
+    "eslint": "3.19.0",
+    "eslint-plugin-html": "2.0.3",
+    "eslint-plugin-mozilla": "file:tools/lint/eslint/eslint-plugin-mozilla",
+    "eslint-plugin-no-unsanitized": "2.0.1",
+    "eslint-plugin-react": "7.1.0",
+    "eslint-plugin-spidermonkey-js": "file:tools/lint/eslint/eslint-plugin-spidermonkey-js"
+  }
+}

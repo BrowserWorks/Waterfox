@@ -6,8 +6,11 @@ import json
 
 from base import BaseFormatter
 
+
 class ErrorSummaryFormatter(BaseFormatter):
+
     def __init__(self):
+        self.groups = None
         self.line_count = 0
 
     def __call__(self, data):
@@ -23,11 +26,16 @@ class ErrorSummaryFormatter(BaseFormatter):
     def _output_test(self, test, subtest, item):
         data = {"test": test,
                 "subtest": subtest,
+                "group": self.groups.get(test, ''),
                 "status": item["status"],
                 "expected": item["expected"],
                 "message": item.get("message"),
                 "stack": item.get("stack")}
         return self._output("test_result", data)
+
+    def suite_start(self, item):
+        self.groups = {v: k for k in item["tests"] for v in item["tests"][k]}
+        return self._output("test_groups", {"groups": item["tests"].keys()})
 
     def test_status(self, item):
         if "expected" not in item:
@@ -53,3 +61,15 @@ class ErrorSummaryFormatter(BaseFormatter):
                 "stackwalk_stdout": item.get("stackwalk_stdout"),
                 "stackwalk_stderr": item.get("stackwalk_stderr")}
         return self._output("crash", data)
+
+    def lint(self, item):
+        data = {
+            "level": item["level"],
+            "path": item["path"],
+            "message": item["message"],
+            "lineno": item["lineno"],
+            "column": item.get("column"),
+            "rule": item.get("rule"),
+            "linter": item.get("linter")
+        }
+        self._output("lint", data)

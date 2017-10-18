@@ -25,20 +25,20 @@ class nsAString;
 
 nsIFrame* NS_NewHTMLCanvasFrame (nsIPresShell* aPresShell, nsStyleContext* aContext);
 
-class nsHTMLCanvasFrame : public nsContainerFrame
+class nsHTMLCanvasFrame final : public nsContainerFrame
 {
 public:
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
   typedef mozilla::ContainerLayerParameters ContainerLayerParameters;
 
-  NS_DECL_QUERYFRAME_TARGET(nsHTMLCanvasFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLCanvasFrame)
 
   explicit nsHTMLCanvasFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
-    , mBorderPadding(GetWritingMode()) {}
+    : nsContainerFrame(aContext, kClassID)
+    , mBorderPadding(GetWritingMode())
+  {}
 
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -56,13 +56,13 @@ public:
   /* get the size of the canvas's image */
   nsIntSize GetCanvasSize();
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
   virtual mozilla::IntrinsicSize GetIntrinsicSize() override;
   virtual nsSize GetIntrinsicRatio() override;
 
   virtual mozilla::LogicalSize
-  ComputeSize(nsRenderingContext *aRenderingContext,
+  ComputeSize(gfxContext *aRenderingContext,
               mozilla::WritingMode aWritingMode,
               const mozilla::LogicalSize& aCBSize,
               nscoord aAvailableISize,
@@ -82,8 +82,6 @@ public:
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nsIAtom* GetType() const override;
-
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsSplittableFrame::IsFrameOfType(aFlags &
@@ -98,6 +96,9 @@ public:
   virtual nsContainerFrame* GetContentInsertionFrame() override {
     return PrincipalChildList().FirstChild()->GetContentInsertionFrame();
   }
+
+  // Return the ::-moz-html-canvas-content anonymous box.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
 protected:
   virtual ~nsHTMLCanvasFrame();

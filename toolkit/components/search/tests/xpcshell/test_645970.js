@@ -8,8 +8,6 @@
  * Test nsSearchService with nested jar: uris, without async initialization
  */
 function run_test() {
-  updateAppInfo();
-
   do_load_manifest("data/chrome.manifest");
 
   configureToLoadJarEngines();
@@ -18,5 +16,5 @@ function run_test() {
   // set in order to initiate it correctly
   let engine = Services.search.getEngineByName("bug645970");
   do_check_neq(engine, null);
-  Services.obs.notifyObservers(null, "quit-application", null);
+  Services.obs.notifyObservers(null, "quit-application");
 }

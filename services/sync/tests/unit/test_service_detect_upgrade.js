@@ -11,13 +11,11 @@ Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
-Service.engineManager.register(TabEngine);
-
-add_test(function v4_upgrade() {
-  let passphrase = "abcdeabcdeabcdeabcdeabcdea";
+add_task(async function v4_upgrade() {
+  enableValidationPrefs();
 
   let clients = new ServerCollection();
-  let meta_global = new ServerWBO('global');
+  let meta_global = new ServerWBO("global");
 
   // Tracking info/collections.
   let collectionsHelper = track_collections_helper();
@@ -43,37 +41,20 @@ add_test(function v4_upgrade() {
     "/1.1/johndoe/storage/prefs": new ServerCollection().handler()
   });
 
-  ensureLegacyIdentityManager();
-
   try {
-
-    _("Set up some tabs.");
-    let myTabs =
-      {windows: [{tabs: [{index: 1,
-                          entries: [{
-                            url: "http://foo.com/",
-                            title: "Title"
-                          }],
-                          attributes: {
-                            image: "image"
-                          }
-                          }]}]};
-    delete Svc.Session;
-    Svc.Session = {
-      getBrowserState: () => JSON.stringify(myTabs)
-    };
 
     Service.status.resetSync();
 
     _("Logging in.");
-    Service.serverURL = server.baseURI;
 
-    Service.login("johndoe", "ilovejane", passphrase);
+    await configureIdentity({ "username": "johndoe" }, server);
+
+    await Service.login();
     do_check_true(Service.isLoggedIn);
-    Service.verifyAndFetchSymmetricKeys();
-    do_check_true(Service._remoteSetup());
+    await Service.verifyAndFetchSymmetricKeys();
+    do_check_true((await Service._remoteSetup()));
 
-    function test_out_of_date() {
+    async function test_out_of_date() {
       _("Old meta/global: " + JSON.stringify(meta_global));
       meta_global.payload = JSON.stringify({"syncID": "foooooooooooooooooooooooooo",
                                             "storageVersion": STORAGE_VERSION + 1});
@@ -81,34 +62,32 @@ add_test(function v4_upgrade() {
       _("New meta/global: " + JSON.stringify(meta_global));
       Service.recordManager.set(Service.metaURL, meta_global);
       try {
-        Service.sync();
-      }
-      catch (ex) {
+        await Service.sync();
+      } catch (ex) {
       }
       do_check_eq(Service.status.sync, VERSION_OUT_OF_DATE);
     }
 
     // See what happens when we bump the storage version.
     _("Syncing after server has been upgraded.");
-    test_out_of_date();
+    await test_out_of_date();
 
     // Same should happen after a wipe.
     _("Syncing after server has been upgraded and wiped.");
-    Service.wipeServer();
-    test_out_of_date();
+    await Service.wipeServer();
+    await test_out_of_date();
 
     // Now's a great time to test what happens when keys get replaced.
     _("Syncing afresh...");
     Service.logout();
     Service.collectionKeys.clear();
-    Service.serverURL = server.baseURI;
     meta_global.payload = JSON.stringify({"syncID": "foooooooooooooobbbbbbbbbbbb",
                                           "storageVersion": STORAGE_VERSION});
     collections.meta = Date.now() / 1000;
     Service.recordManager.set(Service.metaURL, meta_global);
-    Service.login("johndoe", "ilovejane", passphrase);
+    await Service.login();
     do_check_true(Service.isLoggedIn);
-    Service.sync();
+    await Service.sync();
     do_check_true(Service.isLoggedIn);
 
     let serverDecrypted;
@@ -116,11 +95,11 @@ add_test(function v4_upgrade() {
     let serverResp;
 
 
-    function retrieve_server_default() {
+    async function retrieve_server_default() {
       serverKeys = serverResp = serverDecrypted = null;
 
       serverKeys = new CryptoWrapper("crypto", "keys");
-      serverResp = serverKeys.fetch(Service.resource(Service.cryptoKeysURL)).response;
+      serverResp = (await serverKeys.fetch(Service.resource(Service.cryptoKeysURL))).response;
       do_check_true(serverResp.success);
 
       serverDecrypted = serverKeys.decrypt(Service.identity.syncKeyBundle);
@@ -130,8 +109,8 @@ add_test(function v4_upgrade() {
       return serverDecrypted.default;
     }
 
-    function retrieve_and_compare_default(should_succeed) {
-      let serverDefault = retrieve_server_default();
+    async function retrieve_and_compare_default(should_succeed) {
+      let serverDefault = await retrieve_server_default();
       let localDefault = Service.collectionKeys.keyForCollection().keyPairB64;
 
       _("Retrieved keyBundle: " + JSON.stringify(serverDefault));
@@ -144,63 +123,62 @@ add_test(function v4_upgrade() {
     }
 
     // Uses the objects set above.
-    function set_server_keys(pair) {
+    async function set_server_keys(pair) {
       serverDecrypted.default = pair;
       serverKeys.cleartext = serverDecrypted;
       serverKeys.encrypt(Service.identity.syncKeyBundle);
-      serverKeys.upload(Service.resource(Service.cryptoKeysURL));
+      await serverKeys.upload(Service.resource(Service.cryptoKeysURL));
     }
 
     _("Checking we have the latest keys.");
-    retrieve_and_compare_default(true);
+    await retrieve_and_compare_default(true);
 
     _("Update keys on server.");
-    set_server_keys(["KaaaaaaaaaaaHAtfmuRY0XEJ7LXfFuqvF7opFdBD/MY=",
-                     "aaaaaaaaaaaapxMO6TEWtLIOv9dj6kBAJdzhWDkkkis="]);
+    await set_server_keys(["KaaaaaaaaaaaHAtfmuRY0XEJ7LXfFuqvF7opFdBD/MY=",
+                           "aaaaaaaaaaaapxMO6TEWtLIOv9dj6kBAJdzhWDkkkis="]);
 
     _("Checking that we no longer have the latest keys.");
-    retrieve_and_compare_default(false);
+    await retrieve_and_compare_default(false);
 
     _("Indeed, they're what we set them to...");
     do_check_eq("KaaaaaaaaaaaHAtfmuRY0XEJ7LXfFuqvF7opFdBD/MY=",
-                retrieve_server_default()[0]);
+                (await retrieve_server_default())[0]);
 
     _("Sync. Should download changed keys automatically.");
     let oldClientsModified = collections.clients;
     let oldTabsModified = collections.tabs;
 
-    Service.login("johndoe", "ilovejane", passphrase);
-    Service.sync();
+    await Service.login();
+    await Service.sync();
     _("New key should have forced upload of data.");
     _("Tabs: " + oldTabsModified + " < " + collections.tabs);
     _("Clients: " + oldClientsModified + " < " + collections.clients);
     do_check_true(collections.clients > oldClientsModified);
-    do_check_true(collections.tabs    > oldTabsModified);
+    do_check_true(collections.tabs > oldTabsModified);
 
     _("... and keys will now match.");
-    retrieve_and_compare_default(true);
+    await retrieve_and_compare_default(true);
 
     // Clean up.
-    Service.startOver();
+    await Service.startOver();
 
   } finally {
     Svc.Prefs.resetBranch("");
-    server.stop(run_next_test);
+    await promiseStopServer(server);
   }
 });
 
-add_test(function v5_upgrade() {
-  let passphrase = "abcdeabcdeabcdeabcdeabcdea";
+add_task(async function v5_upgrade() {
+  enableValidationPrefs();
 
   // Tracking info/collections.
   let collectionsHelper = track_collections_helper();
   let upd = collectionsHelper.with_updated_collection;
-  let collections = collectionsHelper.collections;
 
   let keysWBO = new ServerWBO("keys");
   let bulkWBO = new ServerWBO("bulk");
   let clients = new ServerCollection();
-  let meta_global = new ServerWBO('global');
+  let meta_global = new ServerWBO("global");
 
   let server = httpd_setup({
     // Special.
@@ -215,38 +193,21 @@ add_test(function v5_upgrade() {
   });
 
   try {
-
-    _("Set up some tabs.");
-    let myTabs =
-      {windows: [{tabs: [{index: 1,
-                          entries: [{
-                            url: "http://foo.com/",
-                            title: "Title"
-                          }],
-                          attributes: {
-                            image: "image"
-                          }
-                          }]}]};
-    delete Svc.Session;
-    Svc.Session = {
-      getBrowserState: () => JSON.stringify(myTabs)
-    };
-
     Service.status.resetSync();
 
-    setBasicCredentials("johndoe", "ilovejane", passphrase);
-    Service.serverURL = server.baseURI + "/";
     Service.clusterURL = server.baseURI + "/";
+
+    await configureIdentity({ "username": "johndoe" }, server);
 
     // Test an upgrade where the contents of the server would cause us to error
     // -- keys decrypted with a different sync key, for example.
     _("Testing v4 -> v5 (or similar) upgrade.");
-    function update_server_keys(syncKeyBundle, wboName, collWBO) {
+    async function update_server_keys(syncKeyBundle, wboName, collWBO) {
       generateNewKeys(Service.collectionKeys);
-      serverKeys = Service.collectionKeys.asWBO("crypto", wboName);
+      let serverKeys = Service.collectionKeys.asWBO("crypto", wboName);
       serverKeys.encrypt(syncKeyBundle);
       let res = Service.resource(Service.storageURL + collWBO);
-      do_check_true(serverKeys.upload(res).success);
+      do_check_true((await serverKeys.upload(res)).success);
     }
 
     _("Bumping version.");
@@ -254,14 +215,15 @@ add_test(function v5_upgrade() {
     let m = new WBORecord("meta", "global");
     m.payload = {"syncID": "foooooooooooooooooooooooooo",
                  "storageVersion": STORAGE_VERSION + 1};
-    m.upload(Service.resource(Service.metaURL));
+    await m.upload(Service.resource(Service.metaURL));
 
     _("New meta/global: " + JSON.stringify(meta_global));
 
     // Fill the keys with bad data.
-    let badKeys = new SyncKeyBundle("foobar", "aaaaaaaaaaaaaaaaaaaaaaaaaa");
-    update_server_keys(badKeys, "keys", "crypto/keys");  // v4
-    update_server_keys(badKeys, "bulk", "crypto/bulk");  // v5
+    let badKeys = new BulkKeyBundle("crypto");
+    badKeys.generateRandom();
+    await update_server_keys(badKeys, "keys", "crypto/keys");  // v4
+    await update_server_keys(badKeys, "bulk", "crypto/bulk");  // v5
 
     _("Generating new keys.");
     generateNewKeys(Service.collectionKeys);
@@ -271,9 +233,8 @@ add_test(function v5_upgrade() {
 
     _("Logging in.");
     try {
-      Service.login("johndoe", "ilovejane", passphrase);
-    }
-    catch (e) {
+      await Service.login();
+    } catch (e) {
       _("Exception: " + e);
     }
     _("Status: " + Service.status);
@@ -281,16 +242,15 @@ add_test(function v5_upgrade() {
     do_check_eq(VERSION_OUT_OF_DATE, Service.status.sync);
 
     // Clean up.
-    Service.startOver();
+    await Service.startOver();
 
   } finally {
     Svc.Prefs.resetBranch("");
-    server.stop(run_next_test);
+    await promiseStopServer(server);
   }
 });
 
 function run_test() {
-  let logger = Log.repository.rootLogger;
   Log.repository.rootLogger.addAppender(new Log.DumpAppender());
 
   run_next_test();

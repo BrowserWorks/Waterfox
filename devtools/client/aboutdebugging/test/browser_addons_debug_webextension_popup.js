@@ -44,8 +44,7 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
   let onReadyForOpenPopup = new Promise(done => {
     Services.obs.addObserver(function listener(message, topic) {
       let apiMessage = message.wrappedJSObject;
-      if (!apiMessage.originAttributes ||
-          apiMessage.originAttributes.addonId != ADDON_ID) {
+      if (apiMessage.addonId != ADDON_ID) {
         return;
       }
 
@@ -53,7 +52,7 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
         Services.obs.removeObserver(listener, "console-api-log-event");
         done();
       }
-    }, "console-api-log-event", false);
+    }, "console-api-log-event");
   });
 
   // Be careful, this JS function is going to be executed in the addon toolbox,
@@ -64,12 +63,23 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
     /* eslint-disable no-undef */
 
     let jsterm;
+    let popupFramePromise;
 
     toolbox.selectTool("webconsole")
       .then(console => {
         dump(`Clicking the noautohide button\n`);
         toolbox.doc.getElementById("command-button-noautohide").click();
         dump(`Clicked the noautohide button\n`);
+
+        popupFramePromise = new Promise(resolve => {
+          let listener = (event, data) => {
+            if (data.frames.some(({url}) => url && url.endsWith("popup.html"))) {
+              toolbox.target.off("frame-update", listener);
+              resolve();
+            }
+          };
+          toolbox.target.on("frame-update", listener);
+        });
 
         let waitForFrameListUpdate = new Promise((done) => {
           toolbox.target.once("frame-update", () => {
@@ -85,9 +95,7 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
       })
       .then((console) => {
         // Wait the new frame update (once the extension popup has been opened).
-        return new Promise((done) => {
-          toolbox.target.once("frame-update", done);
-        });
+        return popupFramePromise;
       })
       .then(() => {
         dump(`Clicking the frame list button\n`);
@@ -140,8 +148,7 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
   let onPopupCustomMessage = new Promise(done => {
     Services.obs.addObserver(function listener(message, topic) {
       let apiMessage = message.wrappedJSObject;
-      if (!apiMessage.originAttributes ||
-          apiMessage.originAttributes.addonId != ADDON_ID) {
+      if (apiMessage.addonId != ADDON_ID) {
         return;
       }
 
@@ -149,7 +156,7 @@ add_task(function* testWebExtensionsToolboxSwitchToPopup() {
         Services.obs.removeObserver(listener, "console-api-log-event");
         done(apiMessage.arguments);
       }
-    }, "console-api-log-event", false);
+    }, "console-api-log-event");
   });
 
   let onToolboxClose = BrowserToolboxProcess.once("close");

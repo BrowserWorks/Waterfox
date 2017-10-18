@@ -65,14 +65,13 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsDOMAttributeMap)
   for (auto iter = tmp->mAttributeCache.Iter(); !iter.Done(); iter.Next()) {
     cb.NoteXPCOMChild(static_cast<nsINode*>(iter.Data().get()));
   }
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContent)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(nsDOMAttributeMap)
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsDOMAttributeMap)
-  if (tmp->IsBlack()) {
+  if (tmp->HasKnownLiveWrapper()) {
     if (tmp->mContent) {
       // The map owns the element so we can mark it when the
       // map itself is certainly alive.
@@ -87,11 +86,11 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsDOMAttributeMap)
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(nsDOMAttributeMap)
-  return tmp->IsBlackAndDoesNotNeedTracing(tmp);
+  return tmp->HasKnownLiveWrapperAndDoesNotNeedTracing(tmp);
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(nsDOMAttributeMap)
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 
 // QueryInterface implementation for nsDOMAttributeMap
@@ -119,13 +118,9 @@ void
 nsDOMAttributeMap::DropAttribute(int32_t aNamespaceID, nsIAtom* aLocalName)
 {
   nsAttrKey attr(aNamespaceID, aLocalName);
-  Attr *node = mAttributeCache.GetWeak(attr);
-  if (node) {
-    // Break link to map
-    node->SetMap(nullptr);
-
-    // Remove from cache
-    mAttributeCache.Remove(attr);
+  if (auto entry = mAttributeCache.Lookup(attr)) {
+    entry.Data()->SetMap(nullptr); // break link to map
+    entry.Remove();
   }
 }
 
@@ -136,13 +131,13 @@ nsDOMAttributeMap::GetAttribute(mozilla::dom::NodeInfo* aNodeInfo)
 
   nsAttrKey attr(aNodeInfo->NamespaceID(), aNodeInfo->NameAtom());
 
-  Attr* node = mAttributeCache.GetWeak(attr);
+  RefPtr<Attr>& entryValue = mAttributeCache.GetOrInsert(attr);
+  Attr* node = entryValue;
   if (!node) {
+    // Newly inserted entry!
     RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
-    RefPtr<Attr> newAttr =
-      new Attr(this, ni.forget(), EmptyString());
-    mAttributeCache.Put(attr, newAttr);
-    node = newAttr;
+    entryValue = new Attr(this, ni.forget(), EmptyString());
+    node = entryValue;
   }
 
   return node;
@@ -320,8 +315,9 @@ nsDOMAttributeMap::SetNamedItemNS(Attr& aAttr, ErrorResult& aError)
   rv = mContent->SetAttr(ni->NamespaceID(), ni->NameAtom(),
                          ni->GetPrefixAtom(), value, true);
   if (NS_FAILED(rv)) {
-    aError.Throw(rv);
     DropAttribute(ni->NamespaceID(), ni->NameAtom());
+    aError.Throw(rv);
+    return nullptr;
   }
 
   return oldAttr.forget();
@@ -446,7 +442,8 @@ nsDOMAttributeMap::GetAttrNodeInfo(const nsAString& aNamespaceURI,
 
   if (!aNamespaceURI.IsEmpty()) {
     nameSpaceID =
-      nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNamespaceURI);
+      nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNamespaceURI,
+                                                         nsContentUtils::IsChromeDoc(mContent->OwnerDoc()));
 
     if (nameSpaceID == kNameSpaceID_Unknown) {
       return nullptr;

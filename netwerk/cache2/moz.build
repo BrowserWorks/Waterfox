@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Networking: Cache')
+
 XPIDL_SOURCES += [
     'nsICacheEntry.idl',
     'nsICacheEntryDoomCallback.idl',
@@ -20,6 +23,12 @@ EXPORTS += [
     'CacheObserver.h',
     'CacheStorageService.h',
 ]
+
+SOURCES += [
+    'AppCacheStorage.cpp',
+    'CacheStorage.cpp',
+]
+
 
 UNIFIED_SOURCES += [
     'CacheEntry.cpp',
@@ -38,14 +47,8 @@ UNIFIED_SOURCES += [
     'CacheIOThread.cpp',
     'CacheLog.cpp',
     'CacheObserver.cpp',
-    'CacheStorage.cpp',
     'CacheStorageService.cpp',
     'OldWrappers.cpp',
-]
-
-# AppCacheStorage.cpp cannot be built in unified mode because it uses plarena.h.
-SOURCES += [
-    'AppCacheStorage.cpp',
 ]
 
 LOCAL_INCLUDES += [

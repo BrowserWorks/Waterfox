@@ -11,11 +11,6 @@
  * on machines with several LSPs.
  */
 
-#if _WIN32_WINNT < 0x0600
-// Redefining _WIN32_WINNT for some Vista APIs that we call
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
-#endif
 #include "nsICrashReporter.h"
 #include "nsISupportsImpl.h"
 #include "nsServiceManagerUtils.h"
@@ -34,15 +29,13 @@ class LSPAnnotationGatherer : public Runnable
   ~LSPAnnotationGatherer() {}
 
 public:
-  NS_DECL_THREADSAFE_ISUPPORTS
+  LSPAnnotationGatherer() : Runnable("crashreporter::LSPAnnotationGatherer") {}
   NS_DECL_NSIRUNNABLE
 
   void Annotate();
   nsCString mString;
   nsCOMPtr<nsIThread> mThread;
 };
-
-NS_IMPL_ISUPPORTS(LSPAnnotationGatherer, nsIRunnable)
 
 void
 LSPAnnotationGatherer::Annotate()
@@ -59,7 +52,7 @@ LSPAnnotationGatherer::Annotate()
 NS_IMETHODIMP
 LSPAnnotationGatherer::Run()
 {
-  PR_SetCurrentThreadName("LSP Annotator");
+  NS_SetCurrentThreadName("LSP Annotator");
 
   mThread = NS_GetCurrentThread();
 
@@ -145,7 +138,8 @@ LSPAnnotationGatherer::Run()
   }
 
   mString = str;
-  NS_DispatchToMainThread(NewRunnableMethod(this, &LSPAnnotationGatherer::Annotate));
+  NS_DispatchToMainThread(NewRunnableMethod("crashreporter::LSPAnnotationGatherer::Annotate",
+                                            this, &LSPAnnotationGatherer::Annotate));
   return NS_OK;
 }
 
@@ -154,7 +148,7 @@ void LSPAnnotate()
   nsCOMPtr<nsIThread> thread;
   nsCOMPtr<nsIRunnable> runnable =
     do_QueryObject(new LSPAnnotationGatherer());
-  NS_NewThread(getter_AddRefs(thread), runnable);
+  NS_NewNamedThread("LSP Annotate", getter_AddRefs(thread), runnable);
 }
 
 } // namespace crashreporter

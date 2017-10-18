@@ -31,14 +31,18 @@
 
 #ifdef JS_SIMULATOR_ARM
 
-#include "jslock.h"
+#include "mozilla/Atomics.h"
 
 #include "jit/arm/Architecture-arm.h"
 #include "jit/arm/disasm/Disasm-arm.h"
 #include "jit/IonTypes.h"
-#include "threading/Mutex.h"
+#include "threading/Thread.h"
+#include "vm/MutexIDs.h"
 
 namespace js {
+
+class WasmActivation;
+
 namespace jit {
 
 class Simulator;
@@ -70,11 +74,9 @@ const uint32_t kVFPRoundingModeMask = 3 << 22;
 typedef int32_t Instr;
 class SimInstruction;
 
+// Per thread simulator state.
 class Simulator
 {
-    friend class Redirection;
-    friend class AutoLockSimulatorCache;
-
   public:
     friend class ArmDebugger;
     enum Register {
@@ -82,6 +84,8 @@ class Simulator
         r0 = 0, r1, r2, r3, r4, r5, r6, r7,
         r8, r9, r10, r11, r12, r13, r14, r15,
         num_registers,
+        fp = 11,
+        ip = 12,
         sp = 13,
         lr = 14,
         pc = 15,
@@ -101,12 +105,12 @@ class Simulator
     };
 
     // Returns nullptr on OOM.
-    static Simulator* Create();
+    static Simulator* Create(JSContext* cx);
 
     static void Destroy(Simulator* simulator);
 
     // Constructor/destructor are for internal use only; use the static methods above.
-    Simulator();
+    explicit Simulator(JSContext* cx);
     ~Simulator();
 
     // The currently executing Simulator instance. Potentially there can be one
@@ -116,6 +120,29 @@ class Simulator
     static inline uintptr_t StackLimit() {
         return Simulator::Current()->stackLimit();
     }
+
+    // Disassemble some instructions starting at instr and print them
+    // on stdout.  Useful for working within GDB after a MOZ_CRASH(),
+    // among other things.
+    //
+    // Typical use within a crashed instruction decoding method is simply:
+    //
+    //   call Simulator::disassemble(instr, 1)
+    //
+    // or use one of the more convenient inline methods below.
+    static void disassemble(SimInstruction* instr, size_t n);
+
+    // Disassemble one instruction.
+    // "call disasm(instr)"
+    void disasm(SimInstruction* instr);
+
+    // Disassemble n instructions starting at instr.
+    // "call disasm(instr, 3)"
+    void disasm(SimInstruction* instr, size_t n);
+
+    // Skip backwards m instructions before starting, then disassemble n instructions.
+    // "call disasm(instr, 3, 7)"
+    void disasm(SimInstruction* instr, size_t m, size_t n);
 
     uintptr_t* addressOfStackLimit();
 
@@ -143,20 +170,22 @@ class Simulator
     void set_d_register_from_double(int dreg, const double& dbl) {
         setVFPRegister<double, 2>(dreg, dbl);
     }
-    double get_double_from_d_register(int dreg) {
-        return getFromVFPRegister<double, 2>(dreg);
+    void get_double_from_d_register(int dreg, double* out) {
+        getFromVFPRegister<double, 2>(dreg, out);
     }
     void set_s_register_from_float(int sreg, const float flt) {
         setVFPRegister<float, 1>(sreg, flt);
     }
-    float get_float_from_s_register(int sreg) {
-        return getFromVFPRegister<float, 1>(sreg);
+    void get_float_from_s_register(int sreg, float* out) {
+        getFromVFPRegister<float, 1>(sreg, out);
     }
     void set_s_register_from_sinteger(int sreg, const int sint) {
         setVFPRegister<int, 1>(sreg, sint);
     }
     int get_sinteger_from_s_register(int sreg) {
-        return getFromVFPRegister<int, 1>(sreg);
+        int ret;
+        getFromVFPRegister<int, 1>(sreg, &ret);
+        return ret;
     }
 
     // Special case of set_register and get_register to access the raw PC value.
@@ -166,8 +195,11 @@ class Simulator
     template <typename T>
     T get_pc_as() const { return reinterpret_cast<T>(get_pc()); }
 
-    void set_resume_pc(void* value) {
-        resume_pc_ = int32_t(value);
+    void trigger_wasm_interrupt() {
+        // This can be called several times if a single interrupt isn't caught
+        // and handled by the simulator, but this is fine; once the current
+        // instruction is done executing, the interrupt will be handled anyhow.
+        wasm_interrupt_ = true;
     }
 
     void enable_single_stepping(SingleStepCallback cb, void* arg);
@@ -237,7 +269,8 @@ class Simulator
     // Support for VFP.
     void compute_FPSCR_Flags(double val1, double val2);
     void copy_FPSCR_to_APSR();
-    inline double canonicalizeNaN(double value);
+    inline void canonicalizeNaN(double* value);
+    inline void canonicalizeNaN(float* value);
 
     // Helper functions to decode common "addressing" modes
     int32_t getShiftRm(SimInstruction* instr, bool* carry_out);
@@ -256,6 +289,13 @@ class Simulator
     inline void disableStop(uint32_t bkpt_code);
     inline void increaseStopCounter(uint32_t bkpt_code);
     void printStopInfo(uint32_t code);
+
+    // Handle a wasm interrupt triggered by an async signal handler.
+    void handleWasmInterrupt();
+    void startInterrupt(WasmActivation* act);
+
+    // Handle any wasm faults, returning true if the fault was handled.
+    bool handleWasmFault(int32_t addr, unsigned numBytes);
 
     // Read and write memory.
     inline uint8_t readBU(int32_t addr);
@@ -277,6 +317,9 @@ class Simulator
 
     inline int readW(int32_t addr, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
     inline void writeW(int32_t addr, int value, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
+
+    inline uint64_t readQ(int32_t addr, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
+    inline void writeQ(int32_t addr, uint64_t value, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
 
     inline int readExW(int32_t addr, SimInstruction* instr);
     inline int writeExW(int32_t addr, int value, SimInstruction* instr);
@@ -315,9 +358,6 @@ class Simulator
     void instructionDecode(SimInstruction* instr);
 
   public:
-    static bool ICacheCheckingEnabled;
-    static void FlushICache(void* start, size_t size);
-
     static int64_t StopSimAt;
 
     // For testing the MoveResolver code, a MoveResolver is set up, and
@@ -340,12 +380,14 @@ class Simulator
     void scratchVolatileRegisters(bool scratchFloat = true);
 
     template<class ReturnType, int register_size>
-    ReturnType getFromVFPRegister(int reg_index);
+    void getFromVFPRegister(int reg_index, ReturnType* out);
 
     template<class InputType, int register_size>
     void setVFPRegister(int reg_index, const InputType& value);
 
     void callInternal(uint8_t* entry);
+
+    JSContext* const cx_;
 
     // Architecture state.
     // Saturating instructions require a Q flag to indicate saturation.
@@ -381,7 +423,8 @@ class Simulator
     bool pc_modified_;
     int64_t icount_;
 
-    int32_t resume_pc_;
+    // wasm async interrupt support
+    bool wasm_interrupt_;
 
     // Debugger input.
     char* lastDebuggerInput_;
@@ -418,6 +461,22 @@ class Simulator
     }
 
   private:
+    // Exclusive access monitor
+    void exclusiveMonitorSet(uint64_t value);
+    uint64_t exclusiveMonitorGetAndClear(bool* held);
+    void exclusiveMonitorClear();
+
+    bool exclusiveMonitorHeld_;
+    uint64_t exclusiveMonitor_;
+};
+
+// Process wide simulator state.
+class SimulatorProcess
+{
+    friend class Redirection;
+    friend class AutoLockSimulatorCache;
+
+  private:
     // ICache checking.
     struct ICacheHasher {
         typedef void* Key;
@@ -429,54 +488,61 @@ class Simulator
   public:
     typedef HashMap<void*, CachePage*, ICacheHasher, SystemAllocPolicy> ICacheMap;
 
+    static mozilla::Atomic<size_t, mozilla::ReleaseAcquire> ICacheCheckingDisableCount;
+    static void FlushICache(void* start, size_t size);
+
+    // Jitcode may be rewritten from a signal handler, but is prevented from
+    // calling FlushICache() because the signal may arrive within the critical
+    // area of an AutoLockSimulatorCache. This flag instructs the Simulator
+    // to remove all cache entries the next time it checks, avoiding false negatives.
+    static mozilla::Atomic<bool, mozilla::ReleaseAcquire> cacheInvalidatedBySignalHandler_;
+
+    static void checkICacheLocked(SimInstruction* instr);
+
+    static bool initialize() {
+        singleton_ = js_new<SimulatorProcess>();
+        return singleton_ && singleton_->init();
+    }
+    static void destroy() {
+        js_delete(singleton_);
+        singleton_ = nullptr;
+    }
+
+    SimulatorProcess();
+    ~SimulatorProcess();
+
   private:
+    bool init();
+
+    static SimulatorProcess* singleton_;
+
     // This lock creates a critical section around 'redirection_' and
     // 'icache_', which are referenced both by the execution engine
     // and by the off-thread compiler (see Redirection::Get in the cpp file).
     Mutex cacheLock_;
-#ifdef DEBUG
-    PRThread* cacheLockHolder_;
-#endif
 
     Redirection* redirection_;
     ICacheMap icache_;
 
   public:
-    ICacheMap& icache() {
+    static ICacheMap& icache() {
         // Technically we need the lock to access the innards of the
         // icache, not to take its address, but the latter condition
         // serves as a useful complement to the former.
-        MOZ_ASSERT(cacheLockHolder_);
-        return icache_;
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        return singleton_->icache_;
     }
 
-    Redirection* redirection() const {
-        MOZ_ASSERT(cacheLockHolder_);
-        return redirection_;
+    static Redirection* redirection() {
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        return singleton_->redirection_;
     }
 
-    void setRedirection(js::jit::Redirection* redirection) {
-        MOZ_ASSERT(cacheLockHolder_);
-        redirection_ = redirection;
+    static void setRedirection(js::jit::Redirection* redirection) {
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        singleton_->redirection_ = redirection;
     }
-
-  private:
-    // Exclusive access monitor
-    void exclusiveMonitorSet(uint64_t value);
-    uint64_t exclusiveMonitorGetAndClear(bool* held);
-    void exclusiveMonitorClear();
-
-    bool exclusiveMonitorHeld_;
-    uint64_t exclusiveMonitor_;
 };
-
-#define JS_CHECK_SIMULATOR_RECURSION_WITH_EXTRA(cx, extra, onerror)             \
-    JS_BEGIN_MACRO                                                              \
-        if (cx->runtime()->simulator()->overRecursedWithExtra(extra)) {         \
-            js::ReportOverRecursed(cx);                                         \
-            onerror;                                                            \
-        }                                                                       \
-    JS_END_MACRO
 
 } // namespace jit
 } // namespace js

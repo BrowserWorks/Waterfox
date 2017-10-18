@@ -45,7 +45,7 @@ test(function(t) {
 }, 'The current time is unresolved when the start time is unresolved ' +
    '(and no hold time is set)');
 
-promise_test(function(t) {
+test(function(t) {
   var animation =
     new Animation(new KeyframeEffect(createDiv(t), null, 100 * MS_PER_SEC),
                   document.timeline);
@@ -61,5 +61,17 @@ promise_test(function(t) {
                      'Animation has a unresolved start time');
 }, 'The current time is calculated from the timeline time, start time and ' +
    'playback rate');
+
+promise_test(function(t) {
+  var animation = createDiv(t).animate(null, 100 * MS_PER_SEC);
+  animation.playbackRate = 0;
+
+  return animation.ready.then(function() {
+    return waitForAnimationFrames(1);
+  }).then(function() {
+    assert_times_equal(animation.currentTime, 0);
+  });
+}, 'The current time does not progress if playback rate is 0');
+
 </script>
 </body>

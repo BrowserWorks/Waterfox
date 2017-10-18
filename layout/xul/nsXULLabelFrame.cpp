@@ -16,15 +16,13 @@ nsIFrame*
 NS_NewXULLabelFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 {
   nsXULLabelFrame* it = new (aPresShell) nsXULLabelFrame(aContext);
-  
-  it->SetFlags(NS_BLOCK_FLOAT_MGR | NS_BLOCK_MARGIN_ROOT);
-
+  it->AddStateBits(NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS);
   return it;
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsXULLabelFrame)
 
-// If you make changes to this function, check its counterparts 
+// If you make changes to this function, check its counterparts
 // in nsBoxFrame and nsTextBoxFrame
 nsresult
 nsXULLabelFrame::RegUnregAccessKey(bool aDoReg)
@@ -47,7 +45,7 @@ nsXULLabelFrame::RegUnregAccessKey(bool aDoReg)
   if (accessKey.IsEmpty())
     return NS_OK;
 
-  // With a valid PresContext we can get the ESM 
+  // With a valid PresContext we can get the ESM
   // and register the access key
   EventStateManager* esm = PresContext()->EventStateManager();
 
@@ -80,14 +78,14 @@ nsXULLabelFrame::DestroyFrom(nsIFrame* aDestructRoot)
   // unregister access key
   RegUnregAccessKey(false);
   nsBlockFrame::DestroyFrom(aDestructRoot);
-} 
+}
 
 nsresult
 nsXULLabelFrame::AttributeChanged(int32_t aNameSpaceID,
                                   nsIAtom* aAttribute,
                                   int32_t aModType)
 {
-  nsresult rv = nsBlockFrame::AttributeChanged(aNameSpaceID, 
+  nsresult rv = nsBlockFrame::AttributeChanged(aNameSpaceID,
                                                aAttribute, aModType);
 
   // If the accesskey changed, register for the new value
@@ -96,12 +94,6 @@ nsXULLabelFrame::AttributeChanged(int32_t aNameSpaceID,
     RegUnregAccessKey(true);
 
   return rv;
-}
-
-nsIAtom*
-nsXULLabelFrame::GetType() const
-{
-  return nsGkAtoms::XULLabelFrame;
 }
 
 /////////////////////////////////////////////////////////////////////////////

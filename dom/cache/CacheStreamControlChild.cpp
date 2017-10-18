@@ -6,8 +6,7 @@
 
 #include "mozilla/dom/cache/CacheStreamControlChild.h"
 
-#include "mozilla/DebugOnly.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/dom/cache/ReadStream.h"
@@ -89,6 +88,7 @@ void
 CacheStreamControlChild::SerializeControl(CacheReadStream* aReadStreamOut)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
   aReadStreamOut->controlParent() = nullptr;
   aReadStreamOut->controlChild() = this;
 }
@@ -99,8 +99,8 @@ CacheStreamControlChild::SerializeStream(CacheReadStream* aReadStreamOut,
                                          nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
-  MOZ_ASSERT(aReadStreamOut);
-  MOZ_ASSERT(aStream);
+  MOZ_DIAGNOSTIC_ASSERT(aReadStreamOut);
+  MOZ_DIAGNOSTIC_ASSERT(aStream);
   UniquePtr<AutoIPCStream> autoStream(new AutoIPCStream(aReadStreamOut->stream()));
   autoStream->Serialize(aStream, Manager());
   aStreamCleanupList.AppendElement(Move(autoStream));
@@ -138,20 +138,20 @@ CacheStreamControlChild::ActorDestroy(ActorDestroyReason aReason)
   RemoveWorkerHolder();
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheStreamControlChild::RecvClose(const nsID& aId)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
   CloseReadStreams(aId);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheStreamControlChild::RecvCloseAll()
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
   CloseAllReadStreams();
-  return true;
+  return IPC_OK();
 }
 
 } // namespace cache

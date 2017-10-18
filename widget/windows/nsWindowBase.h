@@ -86,6 +86,11 @@ public:
   virtual bool DispatchPluginEvent(const MSG& aMsg);
 
   /*
+   * Returns true if this should dispatch a plugin event.
+   */
+  bool ShouldDispatchPluginEvent();
+
+  /*
    * Touch input injection apis
    */
   virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
@@ -129,6 +134,10 @@ protected:
   static bool sTouchInjectInitialized;
   static InjectTouchInputPtr sInjectTouchFuncPtr;
 
+  // This is used by SynthesizeNativeTouchPoint to maintain state between
+  // multiple synthesized points, in the case where we can't call InjectTouch
+  // directly.
+  mozilla::UniquePtr<mozilla::MultiTouchInput> mSynthesizedTouchInput;
 protected:
   InputContext mInputContext;
 };

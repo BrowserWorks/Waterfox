@@ -151,6 +151,11 @@ StackWalkInitCriticalAddress()
   // restore the previous malloc logger
   malloc_logger = old_malloc_logger;
 
+  // XXX: the critical address machinery appears to have been unnecessary since
+  // Mac OS 10.7 (the minimum version we currently support is 10.9). See bug
+  // 1384814 for details.
+  MOZ_DIAGNOSTIC_ASSERT(!gCriticalAddress.mAddr);
+
   MOZ_ASSERT(r == ETIMEDOUT);
   r = pthread_mutex_unlock(&mutex);
   MOZ_ASSERT(r == 0);
@@ -188,6 +193,9 @@ StackWalkInitCriticalAddress()
 #include <stdio.h>
 #include <malloc.h>
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Atomics.h"
+#include "mozilla/StackWalk_windows.h"
+#include "mozilla/WindowsVersion.h"
 
 #include <imagehlp.h>
 // We need a way to know if we are building for WXP (or later), as if we are, we
@@ -220,6 +228,65 @@ struct WalkStackData
 DWORD gStackWalkThread;
 CRITICAL_SECTION gDbgHelpCS;
 
+#ifdef _M_AMD64
+// Because various Win64 APIs acquire function-table locks, we need a way of
+// preventing stack walking while those APIs are being called. Otherwise, the
+// stack walker may suspend a thread holding such a lock, and deadlock when the
+// stack unwind code attempts to wait for that lock.
+//
+// We're using an atomic counter rather than a critical section because we
+// don't require mutual exclusion with the stack walker. If the stack walker
+// determines that it's safe to start unwinding the suspended thread (i.e.
+// there are no suppressions when the unwind begins), then it's safe to
+// continue unwinding that thread even if other threads request suppressions
+// in the meantime, because we can't deadlock with those other threads.
+//
+// XXX: This global variable is a larger-than-necessary hammer. A more scoped
+// solution would be to maintain a counter per thread, but then it would be
+// more difficult for WalkStackMain64 to read the suspended thread's counter.
+static Atomic<size_t> sStackWalkSuppressions;
+
+MFBT_API
+AutoSuppressStackWalking::AutoSuppressStackWalking()
+{
+  ++sStackWalkSuppressions;
+}
+
+MFBT_API
+AutoSuppressStackWalking::~AutoSuppressStackWalking()
+{
+  --sStackWalkSuppressions;
+}
+
+static uint8_t* sJitCodeRegionStart;
+static size_t sJitCodeRegionSize;
+uint8_t* sMsMpegJitCodeRegionStart;
+size_t sMsMpegJitCodeRegionSize;
+
+MFBT_API void
+RegisterJitCodeRegion(uint8_t* aStart, size_t aSize)
+{
+  // Currently we can only handle one JIT code region at a time
+  MOZ_RELEASE_ASSERT(!sJitCodeRegionStart);
+
+  sJitCodeRegionStart = aStart;
+  sJitCodeRegionSize = aSize;
+}
+
+MFBT_API void
+UnregisterJitCodeRegion(uint8_t* aStart, size_t aSize)
+{
+  // Currently we can only handle one JIT code region at a time
+  MOZ_RELEASE_ASSERT(sJitCodeRegionStart &&
+                     sJitCodeRegionStart == aStart &&
+                     sJitCodeRegionSize == aSize);
+
+  sJitCodeRegionStart = nullptr;
+  sJitCodeRegionSize = 0;
+}
+
+#endif // _M_AMD64
+
 // Routine to print an error message to standard error.
 static void
 PrintError(const char* aPrefix)
@@ -239,6 +306,17 @@ PrintError(const char* aPrefix)
           aPrefix, lpMsgBuf ? lpMsgBuf : "(null)\n");
   fflush(stderr);
   LocalFree(lpMsgBuf);
+}
+
+static void
+InitializeDbgHelpCriticalSection()
+{
+  static bool initialized = false;
+  if (initialized) {
+    return;
+  }
+  ::InitializeCriticalSection(&gDbgHelpCS);
+  initialized = true;
 }
 
 static unsigned int WINAPI WalkStackThread(void* aData);
@@ -293,9 +371,6 @@ EnsureWalkThreadReady()
   stackWalkThread = nullptr;
   readyEvent = nullptr;
 
-
-  ::InitializeCriticalSection(&gDbgHelpCS);
-
   return walkThreadReady = true;
 }
 
@@ -334,6 +409,26 @@ WalkStackMain64(struct WalkStackData* aData)
   frame64.AddrStack.Mode   = AddrModeFlat;
   frame64.AddrFrame.Mode   = AddrModeFlat;
   frame64.AddrReturn.Mode  = AddrModeFlat;
+#endif
+
+#ifdef _WIN64
+  // If there are any active suppressions, then at least one thread (we don't
+  // know which) is holding a lock that can deadlock RtlVirtualUnwind. Since
+  // that thread may be the one that we're trying to unwind, we can't proceed.
+  //
+  // But if there are no suppressions, then our target thread can't be holding
+  // a lock, and it's safe to proceed. By virtue of being suspended, the target
+  // thread can't acquire any new locks during the unwind process, so we only
+  // need to do this check once. After that, sStackWalkSuppressions can be
+  // changed by other threads while we're unwinding, and that's fine because
+  // we can't deadlock with those threads.
+  if (sStackWalkSuppressions) {
+    return;
+  }
+#endif
+
+#ifdef _M_AMD64
+  bool firstFrame = true;
 #endif
 
   // Skip our own stack walking frames.
@@ -381,32 +476,52 @@ WalkStackMain64(struct WalkStackData* aData)
     }
 
 #elif defined(_M_AMD64)
+    // If we reach a frame in JIT code, we don't have enough information to
+    // unwind, so we have to give up.
+    if (sJitCodeRegionStart &&
+        (uint8_t*)context.Rip >= sJitCodeRegionStart &&
+        (uint8_t*)context.Rip < sJitCodeRegionStart + sJitCodeRegionSize) {
+      break;
+    }
+
+    // We must also avoid msmpeg2vdec.dll's JIT region: they don't generate
+    // unwind data, so their JIT unwind callback just throws up its hands and
+    // terminates the process.
+    if (sMsMpegJitCodeRegionStart &&
+        (uint8_t*)context.Rip >= sMsMpegJitCodeRegionStart &&
+        (uint8_t*)context.Rip < sMsMpegJitCodeRegionStart + sMsMpegJitCodeRegionSize) {
+      break;
+    }
+
     // 64-bit frame unwinding.
     // Try to look up unwind metadata for the current function.
     ULONG64 imageBase;
     PRUNTIME_FUNCTION runtimeFunction =
       RtlLookupFunctionEntry(context.Rip, &imageBase, NULL);
 
-    if (!runtimeFunction) {
-      // Alas, this is probably a JIT frame, for which we don't generate unwind
-      // info and so we have to give up.
+    if (runtimeFunction) {
+      PVOID dummyHandlerData;
+      ULONG64 dummyEstablisherFrame;
+      RtlVirtualUnwind(UNW_FLAG_NHANDLER,
+                       imageBase,
+                       context.Rip,
+                       runtimeFunction,
+                       &context,
+                       &dummyHandlerData,
+                       &dummyEstablisherFrame,
+                       nullptr);
+    } else if (firstFrame) {
+      // Leaf functions can be unwound by hand.
+      context.Rip = *reinterpret_cast<DWORD64*>(context.Rsp);
+      context.Rsp += sizeof(void*);
+    } else {
+      // Something went wrong.
       break;
     }
 
-    PVOID dummyHandlerData;
-    ULONG64 dummyEstablisherFrame;
-    RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                     imageBase,
-                     context.Rip,
-                     runtimeFunction,
-                     &context,
-                     &dummyHandlerData,
-                     &dummyEstablisherFrame,
-                     nullptr);
-
     addr = context.Rip;
     spaddr = context.Rsp;
-
+    firstFrame = false;
 #else
 #error "unknown platform"
 #endif
@@ -476,13 +591,13 @@ WalkStackThread(void* aData)
       // Suspend the calling thread, dump his stack, and then resume him.
       // He's currently waiting for us to finish so now should be a good time.
       ret = ::SuspendThread(data->thread);
-      if (ret == -1) {
+      if (ret == (DWORD)-1) {
         PrintError("ThreadSuspend");
       } else {
         WalkStackMain64(data);
 
         ret = ::ResumeThread(data->thread);
-        if (ret == -1) {
+        if (ret == (DWORD)-1) {
           PrintError("ThreadResume");
         }
       }
@@ -513,7 +628,11 @@ MozStackWalk(MozWalkStackCallback aCallback, uint32_t aSkipFrames,
   DWORD walkerReturn;
   struct WalkStackData data;
 
-  if (!EnsureWalkThreadReady()) {
+  InitializeDbgHelpCriticalSection();
+
+  // EnsureWalkThreadReady's _beginthreadex takes a heap lock and must be
+  // avoided if we're walking another (i.e. suspended) thread.
+  if (!aThread && !EnsureWalkThreadReady()) {
     return false;
   }
 
@@ -745,9 +864,7 @@ EnsureSymInitialized()
     return gInitialized;
   }
 
-  if (!EnsureWalkThreadReady()) {
-    return false;
-  }
+  InitializeDbgHelpCriticalSection();
 
   SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
   retStat = SymInitialize(GetCurrentProcess(), nullptr, TRUE);

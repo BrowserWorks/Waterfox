@@ -34,7 +34,7 @@ function run_test() {
 
 add_test(function test_cancel1() {
 
-  var uri = ios.newURI("http://localhost/1", null, null);
+  var uri = ios.newURI("http://localhost/1");
   prefetch.prefetchURI(uri, uri, node1, true);
 
   do_check_true(prefetch.hasMoreElements(), 'There is a request in the queue');
@@ -54,7 +54,7 @@ add_test(function test_cancel1() {
   do_check_true(prefetch.hasMoreElements(), 'There is still request in ' +
                                             'the queue');
 
-  prefetch.cancelPrefetchURI(uri, node1);
+  prefetch.cancelPrefetchPreloadURI(uri, node1);
 
   do_check_false(prefetch.hasMoreElements(), 'There is no request in the ' +
                                              'queue');
@@ -65,18 +65,18 @@ add_test(function test_cancel2() {
   // Prefetch a uri with 2 different nodes. There should be 2 request
   // in the queue and canceling one will not cancel the other.
 
-  var uri = ios.newURI("http://localhost/1", null, null);
+  var uri = ios.newURI("http://localhost/1");
   prefetch.prefetchURI(uri, uri, node1, true);
   prefetch.prefetchURI(uri, uri, node2, true);
 
   do_check_true(prefetch.hasMoreElements(), 'There are requests in the queue');
 
-  prefetch.cancelPrefetchURI(uri, node1);
+  prefetch.cancelPrefetchPreloadURI(uri, node1);
 
   do_check_true(prefetch.hasMoreElements(), 'There is still one more request ' +
                                             'in the queue');
 
-  prefetch.cancelPrefetchURI(uri, node2);
+  prefetch.cancelPrefetchPreloadURI(uri, node2);
 
   do_check_false(prefetch.hasMoreElements(), 'There is no request in the queue');
   run_next_test();
@@ -85,7 +85,7 @@ add_test(function test_cancel2() {
 add_test(function test_cancel3() {
   // Request a prefetch of a uri. Trying to cancel a prefetch for the same uri
   // with a different node will fail.
-  var uri = ios.newURI("http://localhost/1", null, null);
+  var uri = ios.newURI("http://localhost/1");
   prefetch.prefetchURI(uri, uri, node1, true);
 
   do_check_true(prefetch.hasMoreElements(), 'There is a request in the queue');
@@ -93,7 +93,7 @@ add_test(function test_cancel3() {
   var didFail = 0;
 
   try {
-    prefetch.cancelPrefetchURI(uri, node2);
+    prefetch.cancelPrefetchPreloadURI(uri, node2, true);
   } catch(e) {
     didFail = 1;
   }
@@ -102,7 +102,7 @@ add_test(function test_cancel3() {
   do_check_true(prefetch.hasMoreElements(), 'There is still a request ' +
                                             'in the queue');
 
-  prefetch.cancelPrefetchURI(uri, node1);
+  prefetch.cancelPrefetchPreloadURI(uri, node1);
   do_check_false(prefetch.hasMoreElements(), 'There is no request in the queue');
   run_next_test();
 });
@@ -110,8 +110,8 @@ add_test(function test_cancel3() {
 add_test(function test_cancel4() {
   // Request a prefetch of a uri. Trying to cancel a prefetch for a different uri
   // with the same node will fail.
-  var uri1 = ios.newURI("http://localhost/1", null, null);
-  var uri2 = ios.newURI("http://localhost/2", null, null);
+  var uri1 = ios.newURI("http://localhost/1");
+  var uri2 = ios.newURI("http://localhost/2");
   prefetch.prefetchURI(uri1, uri1, node1, true);
 
   do_check_true(prefetch.hasMoreElements(), 'There is a request in the queue');
@@ -119,7 +119,7 @@ add_test(function test_cancel4() {
   var didFail = 0;
 
   try {
-    prefetch.cancelPrefetchURI(uri2, node1);
+    prefetch.cancelPrefetchPreloadURI(uri2, node1);
   } catch(e) {
     didFail = 1;
   }
@@ -128,7 +128,7 @@ add_test(function test_cancel4() {
   do_check_true(prefetch.hasMoreElements(), 'There is still a request ' +
                                             'in the queue');
 
-  prefetch.cancelPrefetchURI(uri1, node1);
+  prefetch.cancelPrefetchPreloadURI(uri1, node1);
   do_check_false(prefetch.hasMoreElements(), 'There is no request in the queue');
   run_next_test();
 });

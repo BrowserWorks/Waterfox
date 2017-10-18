@@ -1,22 +1,19 @@
-add_task(function *()
-{
+add_task(async function() {
   let keyUps = 0;
 
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser, "data:text/html,<body>");
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, "data:text/html,<body>");
 
   gURLBar.focus();
 
-  window.addEventListener("keyup", function countKeyUps(event) {
-    window.removeEventListener("keyup", countKeyUps, true);
+  window.addEventListener("keyup", function(event) {
     if (event.originalTarget == gURLBar.inputField) {
       keyUps++;
     }
-  }, true);
+  }, {capture: true, once: true});
 
-  gURLBar.addEventListener("keydown", function redirectFocus(event) {
-    gURLBar.removeEventListener("keydown", redirectFocus, true);
+  gURLBar.addEventListener("keydown", function(event) {
     gBrowser.selectedBrowser.focus();
-  }, true);
+  }, {capture: true, once: true});
 
   EventUtils.synthesizeKey("v", { });
 

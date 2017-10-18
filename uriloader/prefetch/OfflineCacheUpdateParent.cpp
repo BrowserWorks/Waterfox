@@ -9,7 +9,7 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/ipc/URIUtils.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsContentUtils.h"
 #include "nsOfflineCacheUpdate.h"
 #include "nsIApplicationCache.h"
@@ -18,8 +18,7 @@
 
 using namespace mozilla::ipc;
 using mozilla::BasePrincipal;
-using mozilla::DocShellOriginAttributes;
-using mozilla::PrincipalOriginAttributes;
+using mozilla::OriginAttributes;
 using mozilla::dom::TabParent;
 
 //
@@ -150,7 +149,7 @@ OfflineCacheUpdateParent::Schedule(const URIParams& aManifestURI,
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::UpdateStateChanged(nsIOfflineCacheUpdate *aUpdate, uint32_t state)
+OfflineCacheUpdateParent::UpdateStateChanged(nsIOfflineCacheUpdate* aUpdate, uint32_t state)
 {
     if (mIPCClosed)
         return NS_ERROR_UNEXPECTED;
@@ -177,7 +176,7 @@ OfflineCacheUpdateParent::UpdateStateChanged(nsIOfflineCacheUpdate *aUpdate, uin
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::ApplicationCacheAvailable(nsIApplicationCache *aApplicationCache)
+OfflineCacheUpdateParent::ApplicationCacheAvailable(nsIApplicationCache* aApplicationCache)
 {
     if (mIPCClosed)
         return NS_ERROR_UNEXPECTED;
@@ -222,19 +221,13 @@ OfflineCacheUpdateParent::GetNestedFrameId(uint64_t* aId)
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::IsAppOfType(uint32_t appType, bool *_retval)
+OfflineCacheUpdateParent::GetIsContent(bool* aIsContent)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::GetIsContent(bool *aIsContent)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-OfflineCacheUpdateParent::GetUsePrivateBrowsing(bool *aUsePrivateBrowsing)
+OfflineCacheUpdateParent::GetUsePrivateBrowsing(bool* aUsePrivateBrowsing)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -251,7 +244,7 @@ OfflineCacheUpdateParent::SetPrivateBrowsing(bool aUsePrivateBrowsing)
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::GetUseRemoteTabs(bool *aUseRemoteTabs)
+OfflineCacheUpdateParent::GetUseRemoteTabs(bool* aUseRemoteTabs)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -263,21 +256,14 @@ OfflineCacheUpdateParent::SetRemoteTabs(bool aUseRemoteTabs)
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::GetIsInIsolatedMozBrowserElement(bool *aIsInIsolatedMozBrowserElement)
+OfflineCacheUpdateParent::GetIsInIsolatedMozBrowserElement(bool* aIsInIsolatedMozBrowserElement)
 {
     NS_ENSURE_TRUE(mLoadingPrincipal, NS_ERROR_UNEXPECTED);
     return mLoadingPrincipal->GetIsInIsolatedMozBrowserElement(aIsInIsolatedMozBrowserElement);
 }
 
 NS_IMETHODIMP
-OfflineCacheUpdateParent::GetAppId(uint32_t *aAppId)
-{
-    NS_ENSURE_TRUE(mLoadingPrincipal, NS_ERROR_UNEXPECTED);
-    return mLoadingPrincipal->GetAppId(aAppId);
-}
-
-NS_IMETHODIMP
-OfflineCacheUpdateParent::GetOriginAttributes(JS::MutableHandleValue aAttrs)
+OfflineCacheUpdateParent::GetScriptableOriginAttributes(JS::MutableHandleValue aAttrs)
 {
     NS_ENSURE_TRUE(mLoadingPrincipal, NS_ERROR_UNEXPECTED);
 
@@ -290,8 +276,22 @@ OfflineCacheUpdateParent::GetOriginAttributes(JS::MutableHandleValue aAttrs)
     return NS_OK;
 }
 
+NS_IMETHODIMP_(void)
+OfflineCacheUpdateParent::GetOriginAttributes(mozilla::OriginAttributes& aAttrs)
+{
+    if (mLoadingPrincipal) {
+        aAttrs = mLoadingPrincipal->OriginAttributesRef();
+    }
+}
+
 NS_IMETHODIMP
-OfflineCacheUpdateParent::IsTrackingProtectionOn(bool* aIsTrackingProtectionOn)
+OfflineCacheUpdateParent::GetUseTrackingProtection(bool* aUseTrackingProtection)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+OfflineCacheUpdateParent::SetUseTrackingProtection(bool aUseTrackingProtection)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

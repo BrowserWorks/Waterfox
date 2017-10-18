@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.background.common.log;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -16,6 +17,7 @@ import org.mozilla.gecko.background.common.log.writers.LogWriter;
 import org.mozilla.gecko.background.common.log.writers.PrintLogWriter;
 import org.mozilla.gecko.background.common.log.writers.SimpleTagLogWriter;
 import org.mozilla.gecko.background.common.log.writers.ThreadLocalTagLogWriter;
+import org.mozilla.gecko.util.StringUtils;
 
 import android.util.Log;
 
@@ -27,7 +29,7 @@ public class Logger {
   public static final String DEFAULT_LOG_TAG = "GeckoLogger";
 
   // For extra debugging.
-  public static boolean LOG_PERSONAL_INFORMATION = false;
+  public static final boolean LOG_PERSONAL_INFORMATION = false;
 
   /**
    * Allow each thread to use its own global log tag. This allows
@@ -126,7 +128,8 @@ public class Logger {
    */
   public static synchronized void startLoggingToConsole() {
     setThreadLogTag("Test");
-    startLoggingTo(new PrintLogWriter(new PrintWriter(System.out, true)));
+    startLoggingTo(new PrintLogWriter(new PrintWriter(
+            new OutputStreamWriter(System.out, StringUtils.UTF_8), true)));
   }
 
   // Synchronized version for other classes to use.

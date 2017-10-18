@@ -10,18 +10,17 @@
 
 function run_test() {
   removeMetadata();
-  updateAppInfo();
   useHttpServer();
 
   run_next_test();
 }
 
-add_task(function* test_defaultEngine() {
+add_task(async function test_defaultEngine() {
   let search = Services.search;
 
   let originalDefault = search.defaultEngine;
 
-  let [engine1, engine2] = yield addTestEngines([
+  let [engine1, engine2] = await addTestEngines([
     { name: "Test search engine", xmlFileName: "engine.xml" },
     { name: "A second test engine", xmlFileName: "engine2.xml" },
   ]);

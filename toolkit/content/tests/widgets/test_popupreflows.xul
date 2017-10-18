@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin" type="text/css"?>
-<?xml-stylesheet href="/tests/SimpleTest/test.css" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
 
 <window title="Popup Reflow Tests"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -17,7 +17,6 @@
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 
 let panel, anchor, arrow;
 
@@ -49,32 +48,32 @@ let observer = {
 // count of reflows isn't what is expected, it causes a test failure and logs
 // the stack trace of all seen reflows.
 function countReflows(testfn, expected) {
-  let deferred = Promise.defer();
-  observer.reflows = [];
-  let docShell = panel.ownerDocument.defaultView
-                  .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                  .getInterface(Components.interfaces.nsIWebNavigation)
-                  .QueryInterface(Components.interfaces.nsIDocShell);
-  docShell.addWeakReflowObserver(observer);
-  testfn().then(() => {
-    docShell.removeWeakReflowObserver(observer);
-    SimpleTest.is(observer.reflows.length, expected, "correct number of reflows");
-    if (observer.reflows.length != expected) {
-      SimpleTest.info("stack traces of reflows:\n" + observer.reflows.join("\n") + "\n");
-    }
-    deferred.resolve();
+  return new Promise(resolve => {
+    observer.reflows = [];
+    let docShell = panel.ownerGlobal
+                    .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                    .getInterface(Components.interfaces.nsIWebNavigation)
+                    .QueryInterface(Components.interfaces.nsIDocShell);
+    docShell.addWeakReflowObserver(observer);
+    testfn().then(() => {
+      docShell.removeWeakReflowObserver(observer);
+      SimpleTest.is(observer.reflows.length, expected, "correct number of reflows");
+      if (observer.reflows.length != expected) {
+        SimpleTest.info("stack traces of reflows:\n" + observer.reflows.join("\n") + "\n");
+      }
+      resolve();
+    });
   });
-  return deferred.promise
 }
 
 function openPopup() {
-  let deferred = Promise.defer();
-  panel.addEventListener("popupshown", function popupshown() {
-    panel.removeEventListener("popupshown", popupshown);
-    deferred.resolve();
+  return new Promise(resolve => {
+    panel.addEventListener("popupshown", function popupshown() {
+      panel.removeEventListener("popupshown", popupshown);
+      resolve();
+    });
+    panel.openPopup(anchor, "before_start");
   });
-  panel.openPopup(anchor, "before_start");
-  return deferred.promise
 }
 
 // ********************

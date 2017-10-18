@@ -23,8 +23,22 @@ using namespace mozilla;
 
 using namespace mozilla;
 
-nsTableColFrame::nsTableColFrame(nsStyleContext* aContext) :
-  nsSplittableFrame(aContext)
+nsTableColFrame::nsTableColFrame(nsStyleContext* aContext)
+  : nsSplittableFrame(aContext, kClassID)
+  , mMinCoord(0)
+  , mPrefCoord(0)
+  , mSpanMinCoord(0)
+  , mSpanPrefCoord(0)
+  , mPrefPercent(0.0f)
+  , mSpanPrefPercent(0.0f)
+  , mFinalISize(0)
+  , mColIndex(0)
+  , mIStartBorderWidth(0)
+  , mIEndBorderWidth(0)
+  , mBStartContBorderWidth(0)
+  , mIEndContBorderWidth(0)
+  , mBEndContBorderWidth(0)
+  , mHasSpecifiedCoord(false)
 {
   SetColType(eColContent);
   ResetIntrinsics();
@@ -104,8 +118,16 @@ nsTableColFrame::Reflow(nsPresContext*          aPresContext,
   if (collapseCol) {
     GetTableFrame()->SetNeedToCollapse(true);
   }
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
+}
+
+void
+nsTableColFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                  const nsRect&           aDirtyRect,
+                                  const nsDisplayListSet& aLists)
+{
+  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect, aLists);
 }
 
 int32_t nsTableColFrame::GetSpan()
@@ -165,18 +187,12 @@ nsTableColFrame::GetNextCol() const
 {
   nsIFrame* childFrame = GetNextSibling();
   while (childFrame) {
-    if (nsGkAtoms::tableColFrame == childFrame->GetType()) {
+    if (childFrame->IsTableColFrame()) {
       return (nsTableColFrame*)childFrame;
     }
     childFrame = childFrame->GetNextSibling();
   }
   return nullptr;
-}
-
-nsIAtom*
-nsTableColFrame::GetType() const
-{
-  return nsGkAtoms::tableColFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP

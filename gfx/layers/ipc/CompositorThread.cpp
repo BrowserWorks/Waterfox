@@ -7,6 +7,7 @@
 #include "MainThreadUtils.h"
 #include "nsThreadUtils.h"
 #include "CompositorBridgeParent.h"
+#include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/media/MediaSystemResourceService.h"
 
 namespace mozilla {
@@ -53,14 +54,11 @@ CompositorThreadHolder::CompositorThreadHolder()
   : mCompositorThread(CreateCompositorThread())
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_COUNT_CTOR(CompositorThreadHolder);
 }
 
 CompositorThreadHolder::~CompositorThreadHolder()
 {
   MOZ_ASSERT(NS_IsMainThread());
-
-  MOZ_COUNT_DTOR(CompositorThreadHolder);
 
   DestroyCompositorThread(mCompositorThread);
 }
@@ -108,6 +106,7 @@ CompositorThreadHolder::CreateCompositorThread()
   }
 
   CompositorBridgeParent::Setup();
+  ImageBridgeParent::Setup();
 
   return compositorThread;
 }
@@ -130,14 +129,13 @@ CompositorThreadHolder::Shutdown()
   ReleaseImageBridgeParentSingleton();
   gfx::ReleaseVRManagerParentSingleton();
   MediaSystemResourceService::Shutdown();
+  CompositorManagerParent::Shutdown();
 
   sCompositorThreadHolder = nullptr;
 
   // No locking is needed around sFinishedCompositorShutDown because it is only
   // ever accessed on the main thread.
-  while (!sFinishedCompositorShutDown) {
-    NS_ProcessNextEvent(nullptr, true);
-  }
+  SpinEventLoopUntil([&]() { return sFinishedCompositorShutDown; });
 
   CompositorBridgeParent::FinishShutdown();
 }
@@ -151,3 +149,9 @@ CompositorThreadHolder::IsInCompositorThread()
 
 } // namespace mozilla
 } // namespace layers
+
+bool
+NS_IsInCompositorThread()
+{
+  return mozilla::layers::CompositorThreadHolder::IsInCompositorThread();
+}

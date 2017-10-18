@@ -11,7 +11,7 @@ add_task(function* () {
   let {panel} = yield openAnimationInspector();
   let timelineComponent = panel.animationsTimelineComponent;
   let timeBlockComponents = timelineComponent.timeBlocks;
-  let detailsComponents = timelineComponent.details;
+  let detailsComponent = timelineComponent.details;
 
   for (let i = 0; i < timeBlockComponents.length; i++) {
     info(`Expand time block ${i} so its keyframes are visible`);
@@ -21,12 +21,12 @@ add_task(function* () {
     let {containerEl, animation: {state}} = timeBlockComponents[i];
 
     checkAnimationTooltip(containerEl, state);
-    checkIterationBackground(containerEl, state);
+    checkProgressAtStartingTime(containerEl, state);
 
     // Get the first set of keyframes (there's only one animated property
     // anyway), and the first frame element from there, we're only interested in
     // its offset.
-    let keyframeComponent = detailsComponents[i].keyframeComponents[0];
+    let keyframeComponent = detailsComponent.keyframeComponents[0];
     let frameEl = keyframeComponent.keyframesEl.querySelector(".frame");
     checkKeyframeOffset(containerEl, frameEl, state);
   }
@@ -48,37 +48,26 @@ function checkAnimationTooltip(el, {iterationStart, duration}) {
   ok(title.match(regex), "The tooltip shows the expected iteration start");
 }
 
-function checkIterationBackground(el, {iterationCount, iterationStart}) {
-  info("Check the background-image used to display iterations is offset " +
-       "correctly to represent the iterationStart");
-
-  let iterationsEl = el.querySelector(".iterations");
-  let start = getIterationStartFromBackground(iterationsEl, iterationCount);
-  is(start, iterationStart % 1,
-     "The right background-position for iteration start");
-}
-
-function getIterationStartFromBackground(el, iterationCount) {
-  if (iterationCount == 1) {
-    let size = parseFloat(/([.\d]+)%/.exec(el.style.backgroundSize)[1]);
-    return 1 - size / 100;
-  }
-
-  let size = parseFloat(/([.\d]+)%/.exec(el.style.backgroundSize)[1]);
-  let position = parseFloat(/([-\d]+)%/.exec(el.style.backgroundPosition)[1]);
-  let iterationStartW = -position / size * (100 - size);
-  let rounded = Math.round(iterationStartW * 100);
-  return rounded / 10000;
+function checkProgressAtStartingTime(el, { iterationStart }) {
+  info("Check the progress of starting time");
+  const groupEls = el.querySelectorAll("svg g");
+  groupEls.forEach(groupEl => {
+    const pathEl = groupEl.querySelector(".iteration-path");
+    const pathSegList = pathEl.pathSegList;
+    const pathSeg = pathSegList.getItem(1);
+    const progress = pathSeg.y;
+    is(progress, iterationStart % 1,
+       `The progress at starting point should be ${ iterationStart % 1 }`);
+  });
 }
 
 function checkKeyframeOffset(timeBlockEl, frameEl, {iterationStart}) {
   info("Check that the first keyframe is offset correctly");
 
-  let start = getIterationStartFromLeft(frameEl);
-  is(start, iterationStart % 1, "The frame offset for iteration start");
+  let start = getKeyframeOffset(frameEl);
+  is(start, 0, "The frame offset for iteration start");
 }
 
-function getIterationStartFromLeft(el) {
-  let left = 100 - parseFloat(/(\d+)%/.exec(el.style.left)[1]);
-  return left / 100;
+function getKeyframeOffset(el) {
+  return parseFloat(/(\d+)%/.exec(el.style.left)[1]);
 }

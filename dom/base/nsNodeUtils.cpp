@@ -29,7 +29,7 @@
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/dom/HTMLMediaElement.h"
-#include "mozilla/dom/KeyframeEffect.h"
+#include "mozilla/dom/KeyframeEffectReadOnly.h"
 #include "nsWrapperCacheInlines.h"
 #include "nsObjectLoadingContent.h"
 #include "nsDOMMutationObserver.h"
@@ -59,8 +59,8 @@ using mozilla::AutoJSContext;
     if (slots && !slots->mMutationObservers.IsEmpty()) {          \
       /* No need to explicitly notify the first observer first    \
          since that'll happen anyway. */                          \
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS(                         \
-        slots->mMutationObservers, nsIMutationObserver,           \
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS(                    \
+        slots->mMutationObservers, nsIMutationObserver, 1,        \
         func_, params_);                                          \
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
@@ -87,8 +87,8 @@ using mozilla::AutoJSContext;
     if (slots && !slots->mMutationObservers.IsEmpty()) {          \
       /* No need to explicitly notify the first observer first    \
          since that'll happen anyway. */                          \
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS_WITH_QI(                 \
-        slots->mMutationObservers, nsIMutationObserver,           \
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS_WITH_QI(            \
+        slots->mMutationObservers, nsIMutationObserver, 1,        \
         nsIAnimationObserver, func_, params_);                    \
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
@@ -231,8 +231,11 @@ nsNodeUtils::ContentRemoved(nsINode* aContainer,
 Maybe<NonOwningAnimationTarget>
 nsNodeUtils::GetTargetForAnimation(const Animation* aAnimation)
 {
-  KeyframeEffectReadOnly* effect = aAnimation->GetEffect();
-  return effect ? effect->GetTarget() : Nothing();
+  AnimationEffectReadOnly* effect = aAnimation->GetEffect();
+  if (!effect || !effect->AsKeyframeEffect()) {
+    return Nothing();
+  }
+  return effect->AsKeyframeEffect()->GetTarget();
 }
 
 void
@@ -289,9 +292,22 @@ nsNodeUtils::LastRelease(nsINode* aNode)
   nsINode::nsSlots* slots = aNode->GetExistingSlots();
   if (slots) {
     if (!slots->mMutationObservers.IsEmpty()) {
-      NS_OBSERVER_ARRAY_NOTIFY_OBSERVERS(slots->mMutationObservers,
-                                         nsIMutationObserver,
-                                         NodeWillBeDestroyed, (aNode));
+      NS_OBSERVER_AUTO_ARRAY_NOTIFY_OBSERVERS(slots->mMutationObservers,
+                                              nsIMutationObserver, 1,
+                                              NodeWillBeDestroyed, (aNode));
+    }
+
+    if (aNode->IsElement()) {
+      Element* elem = aNode->AsElement();
+      FragmentOrElement::nsDOMSlots* domSlots =
+        static_cast<FragmentOrElement::nsDOMSlots*>(slots);
+      if (domSlots->mExtendedSlots) {
+        for (auto iter = domSlots->mExtendedSlots->mRegisteredIntersectionObservers.Iter();
+             !iter.Done(); iter.Next()) {
+          DOMIntersectionObserver* observer = iter.Key();
+          observer->UnlinkTarget(*elem);
+        }
+      }
     }
 
     delete slots;
@@ -319,7 +335,7 @@ nsNodeUtils::LastRelease(nsINode* aNode)
         aNode->HasFlag(ADDED_TO_FORM)) {
       // Tell the form (if any) this node is going away.  Don't
       // notify, since we're being destroyed in any case.
-      static_cast<nsGenericHTMLFormElement*>(aNode)->ClearForm(true);
+      static_cast<nsGenericHTMLFormElement*>(aNode)->ClearForm(true, true);
     }
 
     if (aNode->IsHTMLElement(nsGkAtoms::img) &&
@@ -395,9 +411,7 @@ nsNodeUtils::CloneNodeImpl(nsINode *aNode, bool aDeep, nsINode **aResult)
   *aResult = nullptr;
 
   nsCOMPtr<nsINode> newNode;
-  nsCOMArray<nsINode> nodesWithProperties;
-  nsresult rv = Clone(aNode, aDeep, nullptr, nodesWithProperties,
-                      getter_AddRefs(newNode));
+  nsresult rv = Clone(aNode, aDeep, nullptr, nullptr, getter_AddRefs(newNode));
   NS_ENSURE_SUCCESS(rv, rv);
 
   newNode.forget(aResult);
@@ -409,7 +423,7 @@ nsresult
 nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
                            nsNodeInfoManager *aNewNodeInfoManager,
                            JS::Handle<JSObject*> aReparentScope,
-                           nsCOMArray<nsINode> &aNodesWithProperties,
+                           nsCOMArray<nsINode> *aNodesWithProperties,
                            nsINode *aParent, nsINode **aResult)
 {
   NS_PRECONDITION((!aClone && aNewNodeInfoManager) || !aReparentScope,
@@ -460,7 +474,7 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
 
   nsCOMPtr<nsINode> clone;
   if (aClone) {
-    rv = aNode->Clone(nodeInfo, getter_AddRefs(clone));
+    rv = aNode->Clone(nodeInfo, getter_AddRefs(clone), aDeep);
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (clone->IsElement()) {
@@ -468,15 +482,14 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
       // enqueing created callback and prototype swizzling.
       Element* elem = clone->AsElement();
       if (nsContentUtils::IsCustomElementName(nodeInfo->NameAtom())) {
-        elem->OwnerDoc()->SetupCustomElement(elem, nodeInfo->NamespaceID());
+        nsContentUtils::SetupCustomElement(elem);
       } else {
         // Check if node may be custom element by type extension.
         // ex. <button is="x-button">
         nsAutoString extension;
         if (elem->GetAttr(kNameSpaceID_None, nsGkAtoms::is, extension) &&
             !extension.IsEmpty()) {
-          elem->OwnerDoc()->SetupCustomElement(elem, nodeInfo->NamespaceID(),
-                                               &extension);
+          nsContentUtils::SetupCustomElement(elem, &extension);
         }
       }
     }
@@ -506,7 +519,7 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
 
     aNode->mNodeInfo.swap(newNodeInfo);
     if (elem) {
-      elem->NodeInfoChanged();
+      elem->NodeInfoChanged(oldDoc);
     }
 
     nsIDocument* newDoc = aNode->OwnerDoc();
@@ -532,6 +545,9 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
           }
           if (elm->MayHavePointerEnterLeaveEventListener()) {
             window->SetHasPointerEnterLeaveEventListeners();
+          }
+          if (elm->MayHaveSelectionChangeEventListener()) {
+            window->SetHasSelectionChangeEventListeners();
           }
         }
       }
@@ -638,10 +654,10 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
   }
 #endif
 
-  if (aNode->HasProperties()) {
-    bool ok = aNodesWithProperties.AppendObject(aNode);
+  if (aNodesWithProperties && aNode->HasProperties()) {
+    bool ok = aNodesWithProperties->AppendObject(aNode);
     if (aClone) {
-      ok = ok && aNodesWithProperties.AppendObject(clone);
+      ok = ok && aNodesWithProperties->AppendObject(clone);
     }
 
     NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);

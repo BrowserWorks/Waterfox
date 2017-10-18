@@ -19,6 +19,7 @@ BEGIN_TEST(testResolveRecursion)
         nullptr, // get
         nullptr, // set
         nullptr, // enumerate
+        nullptr, // newEnumerate
         my_resolve
     };
 
@@ -160,6 +161,7 @@ const JSClass* getGlobalClass() override {
         nullptr, // get
         nullptr, // set
         nullptr, // enumerate
+        nullptr, // newEnumerate
         my_resolve,
         nullptr, // mayResolve
         nullptr, // finalize
@@ -182,7 +184,7 @@ static bool
 my_resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* resolvedp)
 {
     MOZ_ASSERT_UNREACHABLE("resolve hook should not be called from InitStandardClasses");
-    JS_ReportError(cx, "FAIL");
+    JS_ReportErrorASCII(cx, "FAIL");
     return false;
 }
 END_TEST(testResolveRecursion_InitStandardClasses)

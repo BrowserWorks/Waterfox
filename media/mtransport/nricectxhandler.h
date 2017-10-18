@@ -9,11 +9,9 @@ class NrIceCtxHandler {
 public:
   // TODO(ekr@rtfm.com): Too many bools here. Bug 1193437.
   static RefPtr<NrIceCtxHandler> Create(const std::string& name,
-                                        bool offerer,
                                         bool allow_loopback = false,
                                         bool tcp_enabled = true,
                                         bool allow_link_local = false,
-                                        bool hide_non_default = false,
                                         NrIceCtx::Policy policy =
                                           NrIceCtx::ICE_POLICY_ALL);
 
@@ -21,10 +19,9 @@ public:
                                         int components);
   // CreateCtx is necessary so we can create and initialize the context
   // on main thread, but begin the ice restart mechanics on STS thread
-  RefPtr<NrIceCtx> CreateCtx(bool hide_non_default = false) const; // for test
+  RefPtr<NrIceCtx> CreateCtx() const; // for test
   RefPtr<NrIceCtx> CreateCtx(const std::string& ufrag,
-                             const std::string& pwd,
-                             bool hide_non_default) const;
+                             const std::string& pwd) const;
 
   RefPtr<NrIceCtx> ctx() { return current_ctx; }
 
@@ -33,15 +30,14 @@ public:
   void FinalizeIceRestart();
   void RollbackIceRestart();
 
+  NrIceStats Destroy();
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NrIceCtxHandler)
 
 private:
-  NrIceCtxHandler(const std::string& name,
-                  bool offerer,
-                  NrIceCtx::Policy policy);
+  NrIceCtxHandler(const std::string& name, NrIceCtx::Policy policy);
   NrIceCtxHandler() = delete;
-  ~NrIceCtxHandler() {}
+  ~NrIceCtxHandler();
   DISALLOW_COPY_ASSIGN(NrIceCtxHandler);
 
   RefPtr<NrIceCtx> current_ctx;

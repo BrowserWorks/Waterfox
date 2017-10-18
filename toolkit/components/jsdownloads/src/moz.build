@@ -15,16 +15,17 @@ EXTRA_COMPONENTS += [
 
 EXTRA_JS_MODULES += [
     'DownloadCore.jsm',
-    'DownloadImport.jsm',
+    'DownloadIntegration.jsm',
     'DownloadList.jsm',
     'Downloads.jsm',
     'DownloadStore.jsm',
     'DownloadUIHelper.jsm',
 ]
 
-EXTRA_PP_JS_MODULES += [
-    'DownloadIntegration.jsm',
-]
+if CONFIG['MOZ_PLACES']:
+    EXTRA_JS_MODULES += [
+        'DownloadHistory.jsm',
+    ]
 
 FINAL_LIBRARY = 'xul'
 

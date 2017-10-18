@@ -32,6 +32,8 @@
 #define OS_NETBSD 1
 #elif defined(__OpenBSD__)
 #define OS_OPENBSD 1
+#elif defined(__sun__)
+#define OS_SOLARIS 1
 #elif defined(_WIN32)
 #define OS_WIN 1
 #else
@@ -47,7 +49,7 @@
 
 // For access to standard POSIX features, use OS_POSIX instead of a more
 // specific macro.
-#if defined(OS_MACOSX) || defined(OS_LINUX) || defined(OS_BSD)
+#if defined(OS_MACOSX) || defined(OS_LINUX) || defined(OS_BSD) || defined(OS_SOLARIS)
 #define OS_POSIX 1
 #endif
 
@@ -83,7 +85,7 @@
 #elif defined(__ppc__) || defined(__powerpc__)
 #define ARCH_CPU_PPC 1
 #define ARCH_CPU_32_BITS 1
-#elif defined(__sparc64__)
+#elif defined(__sparc__) && defined(__arch64__)
 #define ARCH_CPU_SPARC 1
 #define ARCH_CPU_64_BITS 1
 #elif defined(__sparc__)
@@ -106,6 +108,9 @@
 #define ARCH_CPU_64_BITS 1
 #elif defined(__s390__)
 #define ARCH_CPU_S390 1
+#define ARCH_CPU_32_BITS 1
+#elif defined(__sh__)
+#define ARCH_CPU_SH 1
 #define ARCH_CPU_32_BITS 1
 #elif defined(__alpha__)
 #define ARCH_CPU_ALPHA 1

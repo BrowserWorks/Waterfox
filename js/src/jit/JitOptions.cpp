@@ -62,7 +62,7 @@ DefaultJitOptions::DefaultJitOptions()
 {
     // Whether to perform expensive graph-consistency DEBUG-only assertions.
     // It can be useful to disable this to reduce DEBUG-compile time of large
-    // asm.js programs.
+    // wasm programs.
     SET_DEFAULT(checkGraphConsistency, true);
 
 #ifdef CHECK_OSIPOINT_REGISTERS
@@ -74,6 +74,9 @@ DefaultJitOptions::DefaultJitOptions()
     // Whether to enable extra code to perform dynamic validation of
     // RangeAnalysis results.
     SET_DEFAULT(checkRangeAnalysis, false);
+
+    // Toggles whether IonBuilder fallbacks to a call if we fail to inline.
+    SET_DEFAULT(disableInlineBacktracking, false);
 
     // Toggles whether Alignment Mask Analysis is globally disabled.
     SET_DEFAULT(disableAma, false);
@@ -102,6 +105,9 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether Loop Unrolling is globally disabled.
     SET_DEFAULT(disableLoopUnrolling, true);
 
+    // Toggles wheter optimization tracking is globally disabled.
+    SET_DEFAULT(disableOptimizationTracking, true);
+
     // Toggle whether Profile Guided Optimization is globally disabled.
     SET_DEFAULT(disablePgo, false);
 
@@ -116,6 +122,9 @@ DefaultJitOptions::DefaultJitOptions()
 
     // Toggle whether eager scalar replacement is globally disabled.
     SET_DEFAULT(disableScalarReplacement, false);
+
+    // Toggles whether CacheIR stubs are used.
+    SET_DEFAULT(disableCacheIR, false);
 
     // Toggles whether shared stubs are used in Ionmonkey.
     SET_DEFAULT(disableSharedStubs, false);
@@ -158,6 +167,10 @@ DefaultJitOptions::DefaultJitOptions()
     // JSScript::hadFrequentBailouts and invalidate.
     SET_DEFAULT(frequentBailoutThreshold, 10);
 
+    // Whether to run all debug checks in debug builds.
+    // Disabling might make it more enjoyable to run JS in debug builds.
+    SET_DEFAULT(fullDebugChecks, true);
+
     // How many actual arguments are accepted on the C stack.
     SET_DEFAULT(maxStackArgs, 4096);
 
@@ -171,6 +184,10 @@ DefaultJitOptions::DefaultJitOptions()
     // An artificial testing limit for the maximum supported offset of
     // pc-relative jump and call instructions.
     SET_DEFAULT(jumpThreshold, UINT32_MAX);
+
+    // Whether the (ARM) simulators should always interrupt before executing any
+    // instruction.
+    SET_DEFAULT(simulatorAlwaysInterrupt, false);
 
     // Branch pruning heuristic is based on a scoring system, which is look at
     // different metrics and provide a score. The score is computed as a
@@ -218,12 +235,28 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether unboxed plain objects can be created by the VM.
     SET_DEFAULT(disableUnboxedObjects, false);
 
+    // Test whether Atomics are allowed in asm.js code.
+    SET_DEFAULT(asmJSAtomicsEnable, false);
+
     // Test whether wasm int64 / double NaN bits testing is enabled.
     SET_DEFAULT(wasmTestMode, false);
 
-    // Determines whether explicit bounds check will be used for OOB
-    // instead of signals (even when signals are available).
-    SET_DEFAULT(wasmExplicitBoundsChecks, false);
+    // Test whether wasm bounds check should always be generated.
+    SET_DEFAULT(wasmAlwaysCheckBounds, false);
+
+    // Toggles the optimization whereby offsets are folded into loads and not
+    // included in the bounds check.
+    SET_DEFAULT(wasmFoldOffsets, true);
+
+    // Until which wasm bytecode size should we accumulate functions, in order
+    // to compile efficiently on helper threads. Baseline code compiles much
+    // faster than Ion code so use scaled thresholds (see also bug 1320374).
+    SET_DEFAULT(wasmBatchBaselineThreshold, 10000);
+    SET_DEFAULT(wasmBatchIonThreshold, 1100);
+
+    // Determines whether we suppress using signal handlers
+    // for interrupting jit-ed code. This is used only for testing.
+    SET_DEFAULT(ionInterruptWithoutSignals, false);
 }
 
 bool

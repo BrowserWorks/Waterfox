@@ -85,7 +85,7 @@ public:
   // (such as for the intial check of everything).
   //
   // For mOp == eOpNavigation, this is the NEW position of the cursor
-  nsCOMPtr<nsIDOMRange> mAnchorRange;
+  RefPtr<nsRange> mAnchorRange;
 
   // -----
   // The following members are only for navigation events and are only
@@ -93,7 +93,7 @@ public:
   // -----
 
   // this is the OLD position of the cursor
-  nsCOMPtr<nsIDOMRange> mOldNavigationAnchorRange;
+  RefPtr<nsRange> mOldNavigationAnchorRange;
 
   // Set when we should force checking the current word. See
   // mozInlineSpellChecker::HandleNavigationEvent for a description of why we
@@ -111,7 +111,7 @@ protected:
   nsresult GetDocument(nsIDOMDocument** aDocument);
   nsresult PositionToCollapsedRange(nsIDOMDocument* aDocument,
                                     nsIDOMNode* aNode, int32_t aOffset,
-                                    nsIDOMRange** aRange);
+                                    nsRange** aRange);
 };
 
 class mozInlineSpellChecker final : public nsIInlineSpellChecker,
@@ -132,7 +132,7 @@ private:
                             SpellCheck_Available = 1};
   static SpellCheckingState gCanEnableSpellChecking;
 
-  nsWeakPtr mEditor; 
+  nsWeakPtr mEditor;
   nsCOMPtr<nsIEditorSpellCheck> mSpellCheck;
   nsCOMPtr<nsIEditorSpellCheck> mPendingSpellCheck;
   nsCOMPtr<nsIDOMTreeWalker> mTreeWalker;
@@ -218,14 +218,13 @@ public:
 
   // spell check the text contained within aRange, potentially scheduling
   // another check in the future if the time threshold is reached
-  nsresult ScheduleSpellCheck(const mozInlineSpellStatus& aStatus);
+  nsresult ScheduleSpellCheck(mozilla::UniquePtr<mozInlineSpellStatus>&& aStatus);
 
   nsresult DoSpellCheckSelection(mozInlineSpellWordUtil& aWordUtil,
-                                 mozilla::dom::Selection* aSpellCheckSelection,
-                                 mozInlineSpellStatus* aStatus);
+                                 mozilla::dom::Selection* aSpellCheckSelection);
   nsresult DoSpellCheck(mozInlineSpellWordUtil& aWordUtil,
                         mozilla::dom::Selection *aSpellCheckSelection,
-                        mozInlineSpellStatus* aStatus,
+                        const mozilla::UniquePtr<mozInlineSpellStatus>& aStatus,
                         bool* aDoneChecking);
 
   // helper routine to determine if a point is inside of the passed in selection.
@@ -253,7 +252,7 @@ public:
   nsresult GetSpellCheckSelection(nsISelection ** aSpellCheckSelection);
   nsresult SaveCurrentSelectionPosition();
 
-  nsresult ResumeCheck(mozInlineSpellStatus* aStatus);
+  nsresult ResumeCheck(mozilla::UniquePtr<mozInlineSpellStatus>&& aStatus);
 
 protected:
   virtual ~mozInlineSpellChecker();

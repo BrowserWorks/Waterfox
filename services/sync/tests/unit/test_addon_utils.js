@@ -19,11 +19,9 @@ prefs.set("extensions.getAddons.get.url",
 loadAddonTestFunctions();
 startupManager();
 
-function createAndStartHTTPServer(port=HTTP_PORT) {
+function createAndStartHTTPServer(port = HTTP_PORT) {
   try {
     let server = new HttpServer();
-
-    let bootstrap1XPI = ExtensionsTestPath("/addons/test_bootstrap1_1.xpi");
 
     server.registerFile("/search/guid:missing-sourceuri%40tests.mozilla.org",
                         do_get_file("missing-sourceuri.xml"));
@@ -39,6 +37,7 @@ function createAndStartHTTPServer(port=HTTP_PORT) {
     _("Error: " + Log.exceptionStr(ex));
     do_throw(ex);
   }
+  return null; /* not hit, but keeps eslint happy! */
 }
 
 function run_test() {
@@ -80,16 +79,16 @@ add_test(function test_ignore_untrusted_source_uris() {
   const good = ["https://example.com/foo.xpi"];
 
   for (let s of bad) {
-    let sourceURI = ioService.newURI(s, null, null);
-    let addon = {sourceURI: sourceURI, name: "bad", id: "bad"};
+    let sourceURI = ioService.newURI(s);
+    let addon = {sourceURI, name: "bad", id: "bad"};
 
     let canInstall = AddonUtils.canInstallAddon(addon);
     do_check_false(canInstall, "Correctly rejected a bad URL");
   }
 
   for (let s of good) {
-    let sourceURI = ioService.newURI(s, null, null);
-    let addon = {sourceURI: sourceURI, name: "good", id: "good"};
+    let sourceURI = ioService.newURI(s);
+    let addon = {sourceURI, name: "good", id: "good"};
 
     let canInstall = AddonUtils.canInstallAddon(addon);
     do_check_true(canInstall, "Correctly accepted a good URL");
@@ -115,12 +114,12 @@ add_test(function test_source_uri_rewrite() {
 
     installCalled = true;
 
-    AddonUtils.getInstallFromSearchResult(addon, function (error, install) {
+    AddonUtils.getInstallFromSearchResult(addon, function(error, install) {
       do_check_null(error);
       do_check_eq(SERVER_ADDRESS + "/require.xpi?src=sync",
                   install.sourceURI.spec);
 
-      cb(null, {id: addon.id, addon: addon, install: install});
+      cb(null, {id: addon.id, addon, install});
     }, false);
   };
 

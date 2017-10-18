@@ -1,3 +1,4 @@
+// For documentation of the format, see README in this directory.
 var browserTests = [
 ["foo[]",
     [["forwarddelete",""]],
@@ -88,7 +89,7 @@ var browserTests = [
     [["defaultparagraphseparator","div"],["forwarddelete",""]],
     "<p>foo{}bar</p>",
     [true,true],
-    {"defaultparagraphseparator":[false,false,"p",false,false,"div"],"forwarddelete":[false,false,"",false,false,""]}],
+    {"defaultparagraphseparator":[false,false,"div",false,false,"div"],"forwarddelete":[false,false,"",false,false,""]}],
 ["<p>foo[]</p><p>bar</p>",
     [["defaultparagraphseparator","p"],["forwarddelete",""]],
     "<p>foo{}bar</p>",

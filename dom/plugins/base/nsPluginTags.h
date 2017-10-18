@@ -130,13 +130,12 @@ public:
               nsTArray<nsCString> aMimeTypes,
               nsTArray<nsCString> aMimeDescriptions,
               nsTArray<nsCString> aExtensions,
-              bool aIsJavaPlugin,
               bool aIsFlashPlugin,
-              bool aSupportsAsyncInit,
               bool aSupportsAsyncRender,
               int64_t aLastModifiedTime,
               bool aFromExtension,
-              int32_t aSandboxLevel);
+              int32_t aSandboxLevel,
+              uint16_t aBlocklistState);
 
   void TryUnloadPlugin(bool inShutdown);
 
@@ -150,9 +149,7 @@ public:
 
   PluginState GetPluginState();
   void SetPluginState(PluginState state);
-
-  // import legacy flags from plugin registry into the preferences
-  void ImportFlagsToPrefs(uint32_t flag);
+  void SetBlocklistState(uint16_t aBlocklistState);
 
   bool HasSameNameAndMimes(const nsPluginTag *aPluginTag) const;
   const nsCString& GetNiceFileName() override;
@@ -170,9 +167,7 @@ public:
 
   PRLibrary     *mLibrary;
   RefPtr<nsNPAPIPlugin> mPlugin;
-  bool          mIsJavaPlugin;
   bool          mIsFlashPlugin;
-  bool          mSupportsAsyncInit;
   bool          mSupportsAsyncRender;
   nsCString     mFullPath; // UTF-8
   int64_t       mLastModifiedTime;
@@ -214,6 +209,15 @@ public:
 
   static nsresult Create(const mozilla::dom::FakePluginTagInit& aInitDictionary,
                          nsFakePluginTag** aPluginTag);
+  nsFakePluginTag(uint32_t aId,
+                  already_AddRefed<nsIURI>&& aHandlerURI,
+                  const char* aName,
+                  const char* aDescription,
+                  const nsTArray<nsCString>& aMimeTypes,
+                  const nsTArray<nsCString>& aMimeDescriptions,
+                  const nsTArray<nsCString>& aExtensions,
+                  const nsCString& aNiceName,
+                  const nsString& aSandboxScript);
 
   bool IsEnabled() override;
   const nsCString& GetNiceFileName() override;
@@ -222,9 +226,22 @@ public:
 
   nsIURI* HandlerURI() const { return mHandlerURI; }
 
+  uint32_t Id() const { return mId; }
+
+  const nsString& SandboxScript() const { return mSandboxScript; }
+
+  static const int32_t NOT_JSPLUGIN = -1;
+
 private:
   nsFakePluginTag();
   virtual ~nsFakePluginTag();
+
+  // A unique id for this JS-implemented plugin. Registering a plugin through
+  // nsPluginHost::RegisterFakePlugin assigns a new id. The id is transferred
+  // through IPC when getting the list of JS-implemented plugins from child
+  // processes, so it should be consistent across processes.
+  // 0 is a valid id.
+  uint32_t      mId;
 
   // The URI of the handler for our fake plugin.
   // FIXME-jsplugins do we need to sanity check these?
@@ -233,7 +250,13 @@ private:
   nsCString     mFullPath;
   nsCString     mNiceName;
 
+  nsString      mSandboxScript;
+
   nsPluginTag::PluginState mState;
+
+  // Stores the id to use for the JS-implemented plugin that gets registered
+  // next through nsPluginHost::RegisterFakePlugin.
+  static uint32_t sNextId;
 };
 
 #endif // nsPluginTags_h_

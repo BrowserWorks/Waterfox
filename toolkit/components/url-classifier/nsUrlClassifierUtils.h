@@ -7,45 +7,22 @@
 
 #include "nsAutoPtr.h"
 #include "nsIUrlClassifierUtils.h"
+#include "nsClassHashtable.h"
+#include "nsIObserver.h"
 
-class nsUrlClassifierUtils final : public nsIUrlClassifierUtils
+#define TESTING_TABLE_PROVIDER_NAME "test"
+
+class nsUrlClassifierUtils final : public nsIUrlClassifierUtils,
+                                   public nsIObserver
 {
-private:
-  /**
-   * A fast, bit-vector map for ascii characters.
-   *
-   * Internally stores 256 bits in an array of 8 ints.
-   * Does quick bit-flicking to lookup needed characters.
-   */
-  class Charmap
-  {
-  public:
-    Charmap(uint32_t b0, uint32_t b1, uint32_t b2, uint32_t b3,
-            uint32_t b4, uint32_t b5, uint32_t b6, uint32_t b7)
-    {
-      mMap[0] = b0; mMap[1] = b1; mMap[2] = b2; mMap[3] = b3;
-      mMap[4] = b4; mMap[5] = b5; mMap[6] = b6; mMap[7] = b7;
-    }
-
-    /**
-     * Do a quick lookup to see if the letter is in the map.
-     */
-    bool Contains(unsigned char c) const
-    {
-      return mMap[c >> 5] & (1 << (c & 31));
-    }
-
-  private:
-    // Store the 256 bits in an 8 byte array.
-    uint32_t mMap[8];
-  };
-
-
 public:
+  typedef nsClassHashtable<nsCStringHashKey, nsCString> ProviderDictType;
+
   nsUrlClassifierUtils();
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIURLCLASSIFIERUTILS
+  NS_DECL_NSIOBSERVER
 
   nsresult Init();
 
@@ -80,7 +57,11 @@ private:
 
   void CleanupHostname(const nsACString & host, nsACString & _retval);
 
-  nsAutoPtr<Charmap> mEscapeCharmap;
+  nsresult ReadProvidersFromPrefs(ProviderDictType& aDict);
+
+  // The provider lookup table and its mutex.
+  ProviderDictType mProviderDict;
+  mozilla::Mutex mProviderDictLock;
 };
 
 #endif // nsUrlClassifierUtils_h_

@@ -43,7 +43,7 @@
   }
 
   function waitForActiveServiceWorker(ctx) {
-    return navigator.serviceWorker.ready.then(function(result) {
+    return waitForActive(ctx.registration).then(function(result) {
       ok(ctx.registration.active, "Service Worker is active");
       return ctx;
     });
@@ -120,7 +120,7 @@
   }
 
   function closeIframe(ctx) {
-    ctx.iframe.parentNode.removeChild(ctx.iframe);
+    ctx.iframe.remove();
     return new Promise(function(res, rej) {
       // XXXcatalinb: give the worker more time to "notice" it stopped
       // controlling documents
@@ -194,7 +194,7 @@
             res(ctx);
           }
         }
-        SpecialPowers.addObserver(ctx.observer, "service-worker-shutdown", false);
+        SpecialPowers.addObserver(ctx.observer, "service-worker-shutdown");
       });
 
       return ctx;

@@ -10,6 +10,7 @@
 #include <stdint.h>                     // for int32_t, uint64_t
 #include "gfxTypes.h"
 #include "mozilla/Attributes.h"         // for override
+#include "mozilla/UniquePtr.h"
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
@@ -18,7 +19,6 @@
 #include "mozilla/layers/TextureForwarder.h"  // for TextureForwarder
 #include "nsRegion.h"                   // for nsIntRegion
 #include "mozilla/gfx/Rect.h"
-#include "nsExpirationTracker.h"
 #include "nsHashKeys.h"
 #include "nsTHashtable.h"
 
@@ -26,43 +26,11 @@ namespace mozilla {
 namespace layers {
 
 class CompositableClient;
-class AsyncTransactionTracker;
 class ImageContainer;
-struct TextureFactoryIdentifier;
 class SurfaceDescriptor;
 class SurfaceDescriptorTiles;
 class ThebesBufferData;
 class PTextureChild;
-
-/**
- * See ActiveResourceTracker below.
- */
-class ActiveResource
-{
-public:
- virtual void NotifyInactive() = 0;
-  nsExpirationState* GetExpirationState() { return &mExpirationState; }
-  bool IsActivityTracked() { return mExpirationState.IsTracked(); }
-private:
-  nsExpirationState mExpirationState;
-};
-
-/**
- * A convenience class on top of nsExpirationTracker
- */
-class ActiveResourceTracker : public nsExpirationTracker<ActiveResource, 3>
-{
-public:
-  ActiveResourceTracker(uint32_t aExpirationCycle, const char* aName)
-  : nsExpirationTracker(aExpirationCycle, aName)
-  {}
-
-  virtual void NotifyExpired(ActiveResource* aResource) override
-  {
-    RemoveObject(aResource);
-    aResource->NotifyInactive();
-  }
-};
 
 /**
  * A transaction is a set of changes that happenned on the content side, that
@@ -73,16 +41,14 @@ public:
  * ShadowLayerForwarder is an example of a CompositableForwarder (that can
  * additionally forward modifications of the Layer tree).
  * ImageBridgeChild is another CompositableForwarder.
+ *
+ * CompositableForwarder implements KnowsCompositor for simplicity as all
+ * implementations of CompositableForwarder currently also implement KnowsCompositor.
+ * This dependency could be split if we add new use cases.
  */
-class CompositableForwarder : public TextureForwarder
+class CompositableForwarder : public KnowsCompositor
 {
 public:
-
-  CompositableForwarder()
-    : mActiveResourceTracker(1000, "CompositableForwarder")
-    , mSerial(++sSerialCounter)
-  {}
-
   /**
    * Setup the IPDL actor for aCompositable to be part of layers
    * transactions.
@@ -105,14 +71,8 @@ public:
                                    const ThebesBufferData& aThebesBufferData,
                                    const nsIntRegion& aUpdatedRegion) = 0;
 
-#ifdef MOZ_WIDGET_GONK
-  virtual void UseOverlaySource(CompositableClient* aCompositabl,
-                                const OverlaySource& aOverlay,
-                                const gfx::IntRect& aPictureRect) = 0;
-#endif
-
-  virtual bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) = 0;
-  virtual bool DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously) = 0;
+  virtual void ReleaseCompositable(const CompositableHandle& aHandle) = 0;
+  virtual bool DestroyInTransaction(PTextureChild* aTexture) = 0;
 
   /**
    * Tell the CompositableHost on the compositor side to remove the texture
@@ -125,29 +85,15 @@ public:
   virtual void RemoveTextureFromCompositable(CompositableClient* aCompositable,
                                              TextureClient* aTexture) = 0;
 
-  /**
-   * Tell the CompositableHost on the compositor side to remove the texture
-   * from the CompositableHost. The compositor side sends back transaction
-   * complete message.
-   * This function does not delete the TextureHost corresponding to the
-   * TextureClient passed in parameter.
-   * It is used when the TextureClient recycled.
-   * Only ImageBridge implements it.
-   */
-  virtual void RemoveTextureFromCompositableAsync(AsyncTransactionTracker* aAsyncTransactionTracker,
-                                                  CompositableClient* aCompositable,
-                                                  TextureClient* aTexture) {}
-
   struct TimedTextureClient {
     TimedTextureClient()
-        : mTextureClient(nullptr), mFrameID(0), mProducerID(0), mInputFrameID(0) {}
+        : mTextureClient(nullptr), mFrameID(0), mProducerID(0) {}
 
     TextureClient* mTextureClient;
     TimeStamp mTimeStamp;
     nsIntRect mPictureRect;
     int32_t mFrameID;
     int32_t mProducerID;
-    int32_t mInputFrameID;
   };
   /**
    * Tell the CompositableHost on the compositor side what textures to use for
@@ -159,60 +105,22 @@ public:
                                          TextureClient* aClientOnBlack,
                                          TextureClient* aClientOnWhite) = 0;
 
-  void IdentifyTextureHost(const TextureFactoryIdentifier& aIdentifier);
-
   virtual void UpdateFwdTransactionId() = 0;
   virtual uint64_t GetFwdTransactionId() = 0;
 
-  int32_t GetSerial() { return mSerial; }
+  virtual bool InForwarderThread() = 0;
 
-  SyncObject* GetSyncObject() { return mSyncObject; }
-
-  virtual CompositableForwarder* AsCompositableForwarder() override { return this; }
-
-  virtual int32_t GetMaxTextureSize() const override
-  {
-    return mTextureFactoryIdentifier.mMaxTextureSize;
+  void AssertInForwarderThread() {
+    MOZ_ASSERT(InForwarderThread());
   }
 
-  /**
-   * Returns the type of backend that is used off the main thread.
-   * We only don't allow changing the backend type at runtime so this value can
-   * be queried once and will not change until Gecko is restarted.
-   */
-  LayersBackend GetCompositorBackendType() const
-  {
-    return mTextureFactoryIdentifier.mParentBackend;
-  }
+  static uint32_t GetMaxFileDescriptorsPerMessage();
 
-  bool SupportsTextureBlitting() const
-  {
-    return mTextureFactoryIdentifier.mSupportsTextureBlitting;
-  }
-
-  bool SupportsPartialUploads() const
-  {
-    return mTextureFactoryIdentifier.mSupportsPartialUploads;
-  }
-
-  const TextureFactoryIdentifier& GetTextureFactoryIdentifier() const
-  {
-    return mTextureFactoryIdentifier;
-  }
-
-  ActiveResourceTracker& GetActiveResourceTracker() { return mActiveResourceTracker; }
+  virtual ShadowLayerForwarder* AsLayerForwarder() { return nullptr; }
 
 protected:
-  TextureFactoryIdentifier mTextureFactoryIdentifier;
-
   nsTArray<RefPtr<TextureClient> > mTexturesToRemove;
   nsTArray<RefPtr<CompositableClient>> mCompositableClientsToRemove;
-  RefPtr<SyncObject> mSyncObject;
-
-  ActiveResourceTracker mActiveResourceTracker;
-
-  const int32_t mSerial;
-  static mozilla::Atomic<int32_t> sSerialCounter;
 };
 
 } // namespace layers

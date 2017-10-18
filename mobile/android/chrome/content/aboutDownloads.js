@@ -9,7 +9,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadUtils", "resource://gre/modules/DownloadUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
@@ -19,8 +19,8 @@ XPCOMUtils.defineLazyGetter(this, "strings",
                             () => Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties"));
 
 function deleteDownload(download) {
-  download.finalize(true).then(null, Cu.reportError);
-  OS.File.remove(download.target.path).then(null, ex => {
+  download.finalize(true).catch(Cu.reportError);
+  OS.File.remove(download.target.path).catch(ex => {
     if (!(ex instanceof OS.File.Error && ex.becauseNoSuchFile)) {
       Cu.reportError(ex);
     }
@@ -39,31 +39,31 @@ var contextMenu = {
     this._items = [
       new ContextMenuItem("open",
                           download => download.succeeded,
-                          download => download.launch().then(null, Cu.reportError)),
+                          download => download.launch().catch(Cu.reportError)),
       new ContextMenuItem("retry",
                           download => download.error ||
                                       (download.canceled && !download.hasPartialData),
-                          download => download.start().then(null, Cu.reportError)),
+                          download => download.start().catch(Cu.reportError)),
       new ContextMenuItem("remove",
                           download => download.stopped,
                           download => {
                             Downloads.getList(Downloads.ALL)
                                      .then(list => list.remove(download))
-                                     .then(null, Cu.reportError);
+                                     .catch(Cu.reportError);
                             deleteDownload(download);
                           }),
       new ContextMenuItem("pause",
                           download => !download.stopped && download.hasPartialData,
-                          download => download.cancel().then(null, Cu.reportError)),
+                          download => download.cancel().catch(Cu.reportError)),
       new ContextMenuItem("resume",
                           download => download.canceled && download.hasPartialData,
-                          download => download.start().then(null, Cu.reportError)),
+                          download => download.start().catch(Cu.reportError)),
       new ContextMenuItem("cancel",
                           download => !download.stopped ||
                                       (download.canceled && download.hasPartialData),
                           download => {
-                            download.cancel().then(null, Cu.reportError);
-                            download.removePartialData().then(null, Cu.reportError);
+                            download.cancel().catch(Cu.reportError);
+                            download.removePartialData().catch(Cu.reportError);
                           }),
       // following menu item is a global action
       new ContextMenuItem("removeall",
@@ -116,12 +116,12 @@ function DownloadListView(type, listElementId) {
 
   Downloads.getList(type)
            .then(list => list.addView(this))
-           .then(null, Cu.reportError);
+           .catch(Cu.reportError);
 
   window.addEventListener("unload", event => {
     Downloads.getList(type)
              .then(list => list.removeView(this))
-             .then(null, Cu.reportError);
+             .catch(Cu.reportError);
   });
 }
 
@@ -184,7 +184,7 @@ DownloadListView.prototype = {
     this.items.delete(download);
     this.listElement.removeChild(item.element);
 
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       type: "Download:Remove",
       path: download.target.path
     });
@@ -215,7 +215,7 @@ var downloadLists = {
       Downloads.getList(Downloads.ALL)
                .then(list => {
                  for (let download of finished) {
-                   list.remove(download).then(null, Cu.reportError);
+                   list.remove(download).catch(Cu.reportError);
                    deleteDownload(download);
                  }
                }, Cu.reportError);
@@ -306,7 +306,7 @@ DownloadItem.prototype = {
 
   onClick: function (event) {
     if (this.download.succeeded) {
-      this.download.launch().then(null, Cu.reportError);
+      this.download.launch().catch(Cu.reportError);
     }
   },
 

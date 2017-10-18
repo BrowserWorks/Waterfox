@@ -109,6 +109,7 @@ private:
   bool mCreating;
   bool mRegistered;
   bool mAbortedByScript;
+  bool mNotedActiveTransaction;
 
 #ifdef DEBUG
   bool mSentCommitOrAbort;
@@ -152,6 +153,10 @@ public:
     } else {
       mBackgroundActor.mNormalBackgroundActor = nullptr;
     }
+
+    // Note inactive transaction here if we didn't receive the Complete message
+    // from the parent.
+    MaybeNoteInactiveTransaction();
   }
 
   indexedDB::BackgroundRequestChild*
@@ -314,7 +319,7 @@ public:
 
   // nsIDOMEventTarget
   virtual nsresult
-  PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  GetEventTargetParent(EventChainPreVisitor& aVisitor) override;
 
 private:
   IDBTransaction(IDBDatabase* aDatabase,
@@ -330,6 +335,12 @@ private:
 
   void
   SendAbort(nsresult aResultCode);
+
+  void
+  NoteActiveTransaction();
+
+  void
+  MaybeNoteInactiveTransaction();
 
   void
   OnNewRequest();

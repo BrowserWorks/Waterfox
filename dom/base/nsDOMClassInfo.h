@@ -11,6 +11,7 @@
 #include "nsDOMClassInfoID.h"
 #include "nsIXPCScriptable.h"
 #include "nsIScriptGlobalObject.h"
+#include "js/Class.h"
 #include "js/Id.h"
 #include "nsIXPConnect.h"
 
@@ -30,8 +31,10 @@ typedef nsresult (*nsDOMConstructorFunc)(nsISupports** aNewObject);
 
 struct nsDOMClassInfoData
 {
-  const char *mName;
+  // The ASCII name is available as mClass.name.
   const char16_t *mNameUTF16;
+  const js::ClassOps mClassOps;
+  const js::Class mClass;
   nsDOMClassInfoConstructorFnc mConstructorFptr;
 
   nsIClassInfo *mCachedClassInfo;
@@ -140,25 +143,6 @@ do_QueryWrappedNative(nsIXPConnectWrappedNative *wrapper, JSObject *obj,
                                    aError);
 }
 
-inline
-nsQueryInterface
-do_QueryWrapper(JSContext *cx, JSObject *obj)
-{
-  nsISupports *native =
-    nsDOMClassInfo::XPConnect()->GetNativeOfWrapper(cx, obj);
-  return nsQueryInterface(native);
-}
-
-inline
-nsQueryInterfaceWithError
-do_QueryWrapper(JSContext *cx, JSObject *obj, nsresult* error)
-{
-  nsISupports *native =
-    nsDOMClassInfo::XPConnect()->GetNativeOfWrapper(cx, obj);
-  return nsQueryInterfaceWithError(native, error);
-}
-
-
 typedef nsDOMClassInfo nsDOMGenericSH;
 
 // Makes sure that the wrapper is preserved if new properties are added.
@@ -175,16 +159,8 @@ protected:
 public:
   NS_IMETHOD PreCreate(nsISupports *nativeObj, JSContext *cx,
                        JSObject *globalObj, JSObject **parentObj) override;
-  NS_IMETHOD AddProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                         JSObject *obj, jsid id, JS::Handle<JS::Value> val,
-                         bool *_retval) override;
 
   virtual void PreserveWrapper(nsISupports *aNative) override;
-
-  static nsIClassInfo *doCreate(nsDOMClassInfoData* aData)
-  {
-    return new nsEventTargetSH(aData);
-  }
 };
 
 // A place to hang some static methods that we should really consider
@@ -259,26 +235,6 @@ public:
   static nsIClassInfo *doCreate(nsDOMClassInfoData* aData)
   {
     return new nsDOMConstructorSH(aData);
-  }
-};
-
-class nsNonDOMObjectSH : public nsDOMGenericSH
-{
-protected:
-  explicit nsNonDOMObjectSH(nsDOMClassInfoData* aData) : nsDOMGenericSH(aData)
-  {
-  }
-
-  virtual ~nsNonDOMObjectSH()
-  {
-  }
-
-public:
-  NS_IMETHOD GetFlags(uint32_t *aFlags) override;
-
-  static nsIClassInfo *doCreate(nsDOMClassInfoData* aData)
-  {
-    return new nsNonDOMObjectSH(aData);
   }
 };
 

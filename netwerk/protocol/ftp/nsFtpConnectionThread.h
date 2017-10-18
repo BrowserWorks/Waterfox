@@ -17,11 +17,6 @@
 #include "nsFtpControlConnection.h"
 #include "nsIProtocolProxyCallback.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include "nsINetworkInterface.h"
-#include "nsProxyRelease.h"
-#endif
-
 // ftp server types
 #define FTP_GENERIC_TYPE     0
 #define FTP_UNIX_TYPE        1
@@ -137,7 +132,7 @@ private:
     void KillControlConnection();
     nsresult StopProcessing();
     nsresult EstablishControlConnection();
-    nsresult SendFTPCommand(const nsCSubstring& command);
+    nsresult SendFTPCommand(const nsACString& command);
     void ConvertFilespecToVMS(nsCString& fileSpec);
     void ConvertDirspecToVMS(nsCString& fileSpec);
     void ConvertDirspecFromVMS(nsCString& fileSpec);
@@ -162,9 +157,9 @@ private:
     int32_t             mResponseCode;      // the last command response code
     nsCString           mResponseMsg;       // the last command response text
 
-        // ****** channel/transport/stream vars 
+        // ****** channel/transport/stream vars
     RefPtr<nsFtpControlConnection> mControlConnection;       // cacheable control connection (owns mCPipe)
-    bool                            mReceivedControlData;  
+    bool                            mReceivedControlData;
     bool                            mTryingCachedControl;     // retrying the password
     bool                            mRETRFailed;              // Did we already try a RETR and it failed?
     uint64_t                        mFileSize;
@@ -213,19 +208,6 @@ private:
 
     nsCOMPtr<nsICancelable>  mProxyRequest;
     bool                     mDeferredCallbackPending;
-
-// These members are used for network per-app metering (bug 855948)
-// Currently, they are only available on gonk.
-    uint64_t                           mCountRecv;
-#ifdef MOZ_WIDGET_GONK
-    nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
-#endif
-    nsresult                           SaveNetworkStats(bool);
-    void                               CountRecvBytes(uint64_t recvBytes)
-    {
-        mCountRecv += recvBytes;
-        SaveNetworkStats(false);
-    }
 };
 
 #endif //__nsFtpConnectionThread__h_

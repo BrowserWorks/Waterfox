@@ -23,7 +23,7 @@ using mozilla::dom::DOMRequestService;
 using mozilla::dom::DOMCursor;
 using mozilla::dom::Promise;
 using mozilla::dom::AutoJSAPI;
-using mozilla::dom::GetJSRuntime;
+using mozilla::dom::RootingCx;
 
 DOMRequest::DOMRequest(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
@@ -299,10 +299,10 @@ DOMRequestService::FireDetailedError(nsIDOMDOMRequest* aRequest,
 class FireSuccessAsyncTask : public mozilla::Runnable
 {
 
-  FireSuccessAsyncTask(DOMRequest* aRequest,
-                       const JS::Value& aResult) :
-    mReq(aRequest),
-    mResult(GetJSRuntime(), aResult)
+  FireSuccessAsyncTask(DOMRequest* aRequest, const JS::Value& aResult)
+    : mozilla::Runnable("FireSuccessAsyncTask")
+    , mReq(aRequest)
+    , mResult(RootingCx(), aResult)
   {
   }
 
@@ -321,8 +321,8 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHODIMP
-  Run()
+  NS_IMETHOD
+  Run() override
   {
     mReq->FireSuccess(JS::Handle<JS::Value>::fromMarkedLocation(mResult.address()));
     return NS_OK;
@@ -336,15 +336,15 @@ private:
 class FireErrorAsyncTask : public mozilla::Runnable
 {
 public:
-  FireErrorAsyncTask(DOMRequest* aRequest,
-                     const nsAString& aError) :
-    mReq(aRequest),
-    mError(aError)
+  FireErrorAsyncTask(DOMRequest* aRequest, const nsAString& aError)
+    : mozilla::Runnable("FireErrorAsyncTask")
+    , mReq(aRequest)
+    , mError(aError)
   {
   }
 
-  NS_IMETHODIMP
-  Run()
+  NS_IMETHOD
+  Run() override
   {
     mReq->FireError(mError);
     return NS_OK;

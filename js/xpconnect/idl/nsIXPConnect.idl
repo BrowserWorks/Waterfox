@@ -17,7 +17,6 @@
 struct JSFreeOp;
 
 class nsWrapperCache;
-class nsAXPCNativeCallContext;
 %}
 
 /***************************************************************************/
@@ -32,7 +31,6 @@ class nsAXPCNativeCallContext;
       native JSEqualityOp(JSEqualityOp);
 [ptr] native JSScriptPtr(JSScript);
 [ptr] native voidPtrPtr(void*);
-[ptr] native nsAXPCNativeCallContextPtr(nsAXPCNativeCallContext);
 [ptr] native nsWrapperCachePtr(nsWrapperCache);
 [ref] native JSCompartmentOptions(JS::CompartmentOptions);
 [ref] native JSCallArgsRef(const JS::CallArgs);
@@ -413,13 +411,8 @@ interface nsIXPConnect : nsISupports
     getWrappedNativeOfJSObject(in JSContextPtr aJSContext,
                                in JSObjectPtr  aJSObj);
 
-    [noscript, notxpcom] nsISupports
-    getNativeOfWrapper(in JSContextPtr aJSContext,
-                       in JSObjectPtr  aJSObj);
-
     // Will return null if there is no JS stack right now.
     readonly attribute nsIStackFrame                CurrentJSStack;
-    readonly attribute nsAXPCNativeCallContextPtr   CurrentNativeCallContext;
 
     void debugDump(in short depth);
     void debugDumpObject(in nsISupports aCOMObj, in short depth);
@@ -492,8 +485,6 @@ interface nsIXPConnect : nsISupports
      *           the script. The actual evaluation will happen on a new
      *           temporary context.
      * @param sandbox The sandbox object to evaluate the script in.
-     * @param version The JavaScript version to use for evaluating the script.
-     *                Should be a valid JSVersion from jspubtd.h.
      * @return The result of the evaluation as a jsval. If the caller
      *         intends to use the return value from this call the caller
      *         is responsible for rooting the jsval before making a call
@@ -501,8 +492,7 @@ interface nsIXPConnect : nsISupports
      */
     [noscript] jsval evalInSandboxObject(in AString source, in string filename,
                                          in JSContextPtr cx,
-                                         in JSObjectPtr sandbox,
-                                         in int32_t version);
+                                         in JSObjectPtr sandbox);
 
     /**
      * Trigger a JS garbage collection.

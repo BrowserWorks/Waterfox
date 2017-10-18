@@ -16,19 +16,17 @@
  */
 
 #include <string>
+#include <memory>
 
-#include "webrtc/common_video/interface/i420_video_frame.h"
+#include "webrtc/video_frame.h"
+#include "webrtc/base/scoped_ref_ptr.h"
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
-#include "webrtc/modules/desktop_capture/screen_capturer.h"
-#include "webrtc/system_wrappers/interface/tick_util.h"
 #include "webrtc/modules/video_capture/video_capture_config.h"
 #include "webrtc/modules/desktop_capture/shared_memory.h"
-#include "webrtc/system_wrappers/interface/thread_wrapper.h"
-#include "webrtc/system_wrappers/interface/event_wrapper.h"
-#include "webrtc/modules/desktop_capture/mouse_cursor_shape.h"
+#include "webrtc/base/platform_thread.h"
+#include "webrtc/system_wrappers/include/event_wrapper.h"
 #include "webrtc/modules/desktop_capture/desktop_device_info.h"
 #include "webrtc/modules/desktop_capture/desktop_and_cursor_composer.h"
-#include "webrtc/video_engine/include/vie_capture.h"
 
 using namespace webrtc::videocapturemodule;
 
@@ -55,7 +53,8 @@ public:
                                 char* deviceUniqueIdUTF8,
                                 uint32_t deviceUniqueIdUTF8Length,
                                 char* productUniqueIdUTF8,
-                                uint32_t productUniqueIdUTF8Length);
+                                uint32_t productUniqueIdUTF8Length,
+                                pid_t* pid);
 
   virtual int32_t DisplayCaptureSettingsDialogBox(const char* deviceUniqueIdUTF8,
                                                   const char* dialogTitleUTF8,
@@ -74,7 +73,7 @@ public:
                                  VideoRotation& orientation);
 protected:
   int32_t _id;
-  rtc::scoped_ptr<DesktopDeviceInfo> desktop_device_info_;
+  std::unique_ptr<DesktopDeviceInfo> desktop_device_info_;
 
 };
 
@@ -93,7 +92,8 @@ public:
                                 char* deviceUniqueIdUTF8,
                                 uint32_t deviceUniqueIdUTF8Length,
                                 char* productUniqueIdUTF8,
-                                uint32_t productUniqueIdUTF8Length);
+                                uint32_t productUniqueIdUTF8Length,
+                                pid_t* pid);
 
   virtual int32_t DisplayCaptureSettingsDialogBox(const char* deviceUniqueIdUTF8,
                                                   const char* dialogTitleUTF8,
@@ -112,7 +112,7 @@ public:
                                  VideoRotation& orientation);
 protected:
   int32_t _id;
-  rtc::scoped_ptr<DesktopDeviceInfo> desktop_device_info_;
+  std::unique_ptr<DesktopDeviceInfo> desktop_device_info_;
 };
 
 class WindowDeviceInfoImpl : public VideoCaptureModule::DeviceInfo {
@@ -130,7 +130,8 @@ public:
                                 char* deviceUniqueIdUTF8,
                                 uint32_t deviceUniqueIdUTF8Length,
                                 char* productUniqueIdUTF8,
-                                uint32_t productUniqueIdUTF8Length);
+                                uint32_t productUniqueIdUTF8Length,
+                                pid_t* pid);
 
   virtual int32_t DisplayCaptureSettingsDialogBox(const char* deviceUniqueIdUTF8,
                                                   const char* dialogTitleUTF8,
@@ -149,17 +150,16 @@ public:
                                  VideoRotation& orientation);
 protected:
   int32_t _id;
-  rtc::scoped_ptr<DesktopDeviceInfo> desktop_device_info_;
+  std::unique_ptr<DesktopDeviceInfo> desktop_device_info_;
 
 };
 
 // Reuses the video engine pipeline for screen sharing.
 // As with video, DesktopCaptureImpl is a proxy for screen sharing
 // and follows the video pipeline design
-class DesktopCaptureImpl: public VideoCaptureModule,
-                          public VideoCaptureExternal,
-                          public ScreenCapturer::Callback,
-                          public ScreenCapturer::MouseShapeObserver
+class DesktopCaptureImpl: public DesktopCapturer::Callback,
+                          public VideoCaptureModule,
+                          public VideoCaptureExternal
 {
 public:
   /* Create a screen capture modules object
@@ -168,27 +168,18 @@ public:
   static VideoCaptureModule::DeviceInfo* CreateDeviceInfo(const int32_t id, const CaptureDeviceType type);
 
   int32_t Init(const char* uniqueId, const CaptureDeviceType type);
-
+  //RefCounting for RefCountedModule
+  virtual int32_t AddRef() const override;
+  virtual int32_t Release() const override;
   //Call backs
-  virtual void RegisterCaptureDataCallback(VideoCaptureDataCallback& dataCallback) override;
+  virtual void RegisterCaptureDataCallback(rtc::VideoSinkInterface<VideoFrame> *dataCallback) override;
   virtual void DeRegisterCaptureDataCallback() override;
-  virtual void RegisterCaptureCallback(VideoCaptureFeedBack& callBack) override;
-  virtual void DeRegisterCaptureCallback() override;
 
-  virtual void SetCaptureDelay(int32_t delayMS) override;
-  virtual int32_t CaptureDelay() override;
   virtual int32_t SetCaptureRotation(VideoRotation rotation) override;
   virtual bool SetApplyRotation(bool enable) override;
-  virtual bool GetApplyRotation() { return true; }
-
-  virtual void EnableFrameRateCallback(const bool enable) override;
-  virtual void EnableNoPictureAlarm(const bool enable) override;
+  virtual bool GetApplyRotation() override { return true; }
 
   virtual const char* CurrentDeviceName() const override;
-
-  // Module handling
-  virtual int64_t TimeUntilNextProcess() override;
-  virtual int32_t Process() override;
 
   // Implement VideoCaptureExternal
   // |capture_time| must be specified in the NTP time format in milliseconds.
@@ -202,16 +193,11 @@ public:
   virtual int32_t StopCapture() override;
   virtual bool CaptureStarted() override;
   virtual int32_t CaptureSettings(VideoCaptureCapability& settings) override;
-  VideoCaptureEncodeInterface* GetEncodeInterface(const VideoCodec& codec) override { return NULL; }
-
-  //ScreenCapturer::Callback
-  virtual SharedMemory* CreateSharedMemory(size_t size) override;
-  virtual void OnCaptureCompleted(DesktopFrame* frame) override;
 
 protected:
   DesktopCaptureImpl(const int32_t id);
   virtual ~DesktopCaptureImpl();
-  int32_t DeliverCapturedFrame(I420VideoFrame& captureFrame,
+  int32_t DeliverCapturedFrame(webrtc::VideoFrame& captureFrame,
                                int64_t capture_time);
 
   static const uint32_t kMaxDesktopCaptureCpuUsage = 50; // maximum CPU usage in %
@@ -219,36 +205,28 @@ protected:
   int32_t _id; // Module ID
   std::string _deviceUniqueId; // current Device unique name;
   CriticalSectionWrapper& _apiCs;
-  int32_t _captureDelay; // Current capture delay. May be changed of platform dependent parts.
   VideoCaptureCapability _requestedCapability; // Should be set by platform dependent code in StartCapture.
 
 private:
   void UpdateFrameCount();
-  uint32_t CalculateFrameRate(const TickTime& now);
+  uint32_t CalculateFrameRate(int64_t now_ns);
 
   CriticalSectionWrapper& _callBackCs;
 
-  TickTime _lastProcessTime; // last time the module process function was called.
-  TickTime _lastFrameRateCallbackTime; // last time the frame rate callback function was called.
-  bool _frameRateCallBack; // true if EnableFrameRateCallback
-  bool _noPictureAlarmCallBack; // true if EnableNoPictureAlarm
-  VideoCaptureAlarm _captureAlarm; // current value of the noPictureAlarm
+  rtc::VideoSinkInterface<VideoFrame>* _dataCallBack;
 
-  int32_t _setCaptureDelay; // The currently used capture delay
-  VideoCaptureDataCallback* _dataCallBack;
-  VideoCaptureFeedBack* _captureCallBack;
-
-  TickTime _lastProcessFrameCount;
-  TickTime _incomingFrameTimes[kFrameRateCountHistorySize];// timestamp for local captured frames
+  int64_t _incomingFrameTimesNanos[kFrameRateCountHistorySize];// timestamp for local captured frames
   VideoRotation _rotateFrame; //Set if the frame should be rotated by the capture module.
-
-  I420VideoFrame _captureFrame;
 
   // Used to make sure incoming timestamp is increasing for every frame.
   int64_t last_capture_time_;
 
   // Delta used for translating between NTP and internal timestamps.
   const int64_t delta_ntp_internal_ms_;
+
+  // DesktopCapturer::Callback interface.
+  void OnCaptureResult(DesktopCapturer::Result result,
+                       std::unique_ptr<DesktopFrame> frame) override;
 
 public:
   static bool Run(void*obj) {
@@ -258,9 +236,15 @@ public:
   void process();
 
 private:
-  rtc::scoped_ptr<DesktopAndCursorComposer> desktop_capturer_cursor_composer_;
-  rtc::scoped_ptr<EventWrapper> time_event_;
-  rtc::scoped_ptr<ThreadWrapper> capturer_thread_;
+  std::unique_ptr<DesktopAndCursorComposer> desktop_capturer_cursor_composer_;
+  std::unique_ptr<EventWrapper> time_event_;
+#if defined(_WIN32)
+  std::unique_ptr<rtc::PlatformUIThread> capturer_thread_;
+#else
+  std::unique_ptr<rtc::PlatformThread> capturer_thread_;
+#endif
+  mutable uint32_t mRefCount;
+  bool started_;
 };
 
 }  // namespace webrtc

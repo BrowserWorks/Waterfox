@@ -187,16 +187,18 @@ namespace WebAudioUtils {
     if (mozilla::IsNaN(f)) {
       // It is the responsibility of the caller to deal with NaN values.
       // If we ever get to this point, we have a serious bug to fix.
-      NS_RUNTIMEABORT("We should never see a NaN here");
+      MOZ_CRASH("We should never see a NaN here");
     }
 
-    if (f > FloatType(numeric_limits<IntType>::max())) {
-      // If the floating point value is outside of the range of maximum
-      // integral value for this type, just clamp to the maximum value.
+    // If the floating point value is outside of the range of maximum
+    // integral value for this type, just clamp to the maximum value.
+    // The equality case must also return max() due to loss of precision when
+    // converting max() to float.
+    if (f >= FloatType(numeric_limits<IntType>::max())) {
       return numeric_limits<IntType>::max();
     }
 
-    if (f < FloatType(numeric_limits<IntType>::min())) {
+    if (f <= FloatType(numeric_limits<IntType>::min())) {
       // If the floating point value is outside of the range of minimum
       // integral value for this type, just clamp to the minimum value.
       return numeric_limits<IntType>::min();

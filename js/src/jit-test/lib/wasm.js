@@ -4,10 +4,30 @@ if (!wasmIsSupported())
 load(libdir + "asserts.js");
 
 function wasmEvalText(str, imports) {
-    var exports = Wasm.instantiateModule(wasmTextToBinary(str), imports).exports;
-    if (Object.keys(exports).length == 1 && exports[""])
-        return exports[""];
-    return exports;
+    let binary = wasmTextToBinary(str);
+    let valid = WebAssembly.validate(binary);
+
+    let m;
+    try {
+        m = new WebAssembly.Module(binary);
+        assertEq(valid, true);
+    } catch(e) {
+        if (!e.toString().match(/out of memory/))
+            assertEq(valid, false);
+        throw e;
+    }
+
+    return new WebAssembly.Instance(m, imports);
+}
+
+function wasmValidateText(str) {
+    assertEq(WebAssembly.validate(wasmTextToBinary(str)), true);
+}
+
+function wasmFailValidateText(str, pattern) {
+    let binary = wasmTextToBinary(str);
+    assertEq(WebAssembly.validate(binary), false);
+    assertErrorMessage(() => new WebAssembly.Module(binary), WebAssembly.CompileError, pattern);
 }
 
 function mismatchError(actual, expect) {
@@ -15,9 +35,8 @@ function mismatchError(actual, expect) {
     return RegExp(str);
 }
 
-function hasI64() {
-    return wasmInt64IsSupported();
-}
+const emptyStackError = /from empty stack/;
+const unusedValuesError = /unused values not explicitly dropped by end of block/;
 
 function jsify(wasmVal) {
     if (wasmVal === 'nan')
@@ -32,7 +51,7 @@ function jsify(wasmVal) {
 }
 
 // Assert that the expected value is equal to the int64 value, as passed by
-// Baldr with --wasm-extra-tests {low: int32, high: int32}.
+// Baldr: {low: int32, high: int32}.
 // - if the expected value is in the int32 range, it can be just a number.
 // - otherwise, an object with the properties "high" and "low".
 function assertEqI64(observed, expect) {
@@ -53,6 +72,32 @@ function assertEqI64(observed, expect) {
     }
 }
 
+// Asserts in Baldr test mode that NaN payloads match.
+function assertEqNaN(x, y) {
+    if (typeof x === 'number') {
+        assertEq(Number.isNaN(x), Number.isNaN(y));
+        return;
+    }
+
+    assertEq(typeof x === 'object' &&
+             typeof x.nan_low === 'number',
+             true,
+             "assertEqNaN args must have shape {nan_high, nan_low}");
+
+    assertEq(typeof y === 'object' &&
+             typeof y.nan_low === 'number',
+             true,
+             "assertEqNaN args must have shape {nan_high, nan_low}");
+
+    assertEq(typeof x.nan_high,
+             typeof y.nan_high,
+             "both args must have nan_high, or none");
+
+    assertEq(x.nan_high, y.nan_high, "assertEqNaN nan_high don't match");
+    if (typeof x.nan_low !== 'undefined')
+        assertEq(x.nan_low, y.nan_low, "assertEqNaN nan_low don't match");
+}
+
 function createI64(val) {
     let ret;
     if (typeof val === 'number') {
@@ -71,4 +116,70 @@ function createI64(val) {
         };
     }
     return ret;
+}
+
+function _wasmFullPassInternal(assertValueFunc, text, expected, maybeImports, ...args) {
+    let binary = wasmTextToBinary(text);
+    assertEq(WebAssembly.validate(binary), true, "Must validate.");
+
+    let module = new WebAssembly.Module(binary);
+    let instance = new WebAssembly.Instance(module, maybeImports);
+    assertEq(typeof instance.exports.run, 'function', "A 'run' function must be exported.");
+    assertValueFunc(instance.exports.run(...args), expected, "Initial module must return the expected result.");
+
+    let retext = wasmBinaryToText(binary);
+    let rebinary = wasmTextToBinary(retext);
+
+    assertEq(WebAssembly.validate(rebinary), true, "Recreated binary must validate.");
+    let remodule = new WebAssembly.Module(rebinary);
+    let reinstance = new WebAssembly.Instance(remodule, maybeImports);
+    assertValueFunc(reinstance.exports.run(...args), expected, "Reformed module must return the expected result");
+}
+
+// Fully test a module:
+// - ensure it validates.
+// - ensure it compiles and produces the expected result.
+// - ensure textToBinary(binaryToText(binary)) = binary
+// Preconditions:
+// - the binary module must export a function called "run".
+function wasmFullPass(text, expected, maybeImports, ...args) {
+    _wasmFullPassInternal(assertEq, text, expected, maybeImports, ...args);
+}
+
+function wasmFullPassI64(text, expected, maybeImports, ...args) {
+    _wasmFullPassInternal(assertEqI64, text, expected, maybeImports, ...args);
+}
+
+function wasmRunWithDebugger(wast, lib, init, done) {
+    let g = newGlobal('');
+    let dbg = new Debugger(g);
+
+    g.eval(`
+var wasm = wasmTextToBinary('${wast}');
+var lib = ${lib || 'undefined'};
+var m = new WebAssembly.Instance(new WebAssembly.Module(wasm), lib);`);
+
+    var wasmScript = dbg.findScripts().filter(s => s.format == 'wasm')[0];
+
+    init({dbg, wasmScript, g,});
+    let result = undefined, error = undefined;
+    try {
+        result = g.eval("m.exports.test()");
+    } catch (ex) {
+        error = ex;
+    }
+    done({dbg, result, error, wasmScript, g,});
+}
+
+function wasmGetScriptBreakpoints(wasmScript) {
+    var result = [];
+    var sourceText = wasmScript.source.text;
+    sourceText.split('\n').forEach(function (line, i) {
+        var lineOffsets = wasmScript.getLineOffsets(i + 1);
+        if (lineOffsets.length === 0)
+            return;
+        assertEq(lineOffsets.length, 1);
+        result.push({str: line.trim(), line: i + 1, offset: lineOffsets[0]});
+    });
+    return result;
 }

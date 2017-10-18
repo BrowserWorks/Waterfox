@@ -11,11 +11,20 @@
 #endif
 
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <memory>
-#include <time.h>
-#include <stdlib.h>
-#include <string.h>
+#include <ctime>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#ifdef XP_LINUX
+#include <dlfcn.h>
+#endif
+
+#include "nss.h"
+#include "sechash.h"
 
 using std::string;
 using std::istream;
@@ -32,6 +41,7 @@ namespace CrashReporter {
 StringTable  gStrings;
 string       gSettingsPath;
 string       gEventsPath;
+string       gPingPath;
 int          gArgc;
 char**       gArgv;
 
@@ -196,6 +206,27 @@ static string GetDumpLocalID()
   return localId.substr(0, dot);
 }
 
+// This appends the aKey/aValue entry to the main crash event so that it can
+// be picked up by Firefox once it restarts
+static void AppendToEventFile(const string& aKey, const string& aValue)
+{
+  if (gEventsPath.empty()) {
+    // If there is no path for finding the crash event, skip this step.
+    return;
+  }
+
+  string localId = GetDumpLocalID();
+  string path = gEventsPath + UI_DIR_SEPARATOR + localId;
+  ofstream* f = UIOpenWrite(path.c_str(), true);
+
+  if (f->is_open()) {
+    *f << aKey << "=" << aValue << std::endl;
+    f->close();
+  }
+
+  delete f;
+}
+
 static void WriteSubmissionEvent(SubmissionResult result,
                                  const string& remoteId)
 {
@@ -244,8 +275,9 @@ static void OpenLogFile()
 static bool ReadConfig()
 {
   string iniPath;
-  if (!UIGetIniPath(iniPath))
+  if (!UIGetIniPath(iniPath)) {
     return false;
+  }
 
   if (!ReadStringsFromFile(iniPath, gStrings, true))
     return false;
@@ -407,10 +439,115 @@ void SendCompleted(bool success, const string& serverResponse)
   }
 }
 
-bool ShouldEnableSending()
-{
-  srand(time(0));
-  return ((rand() % 100) < MOZ_CRASHREPORTER_ENABLE_PERCENT);
+static string ComputeDumpHash() {
+#ifdef XP_LINUX
+  // On Linux we rely on the system-provided libcurl which uses nss so we have
+  // to also use the system-provided nss instead of the ones we have bundled.
+  const char* libnssNames[] = {
+    "libnss3.so",
+#ifndef HAVE_64BIT_BUILD
+    // 32-bit versions on 64-bit hosts
+    "/usr/lib32/libnss3.so",
+#endif
+  };
+  void* lib = nullptr;
+
+  for (const char* libname : libnssNames) {
+    lib = dlopen(libname, RTLD_NOW);
+
+    if (lib) {
+      break;
+    }
+  }
+
+  if (!lib) {
+    return "";
+  }
+
+  SECStatus (*NSS_Initialize)(const char*, const char*, const char*,
+                              const char*, PRUint32);
+  HASHContext* (*HASH_Create)(HASH_HashType);
+  void (*HASH_Destroy)(HASHContext*);
+  void (*HASH_Begin)(HASHContext*);
+  void (*HASH_Update)(HASHContext*, const unsigned char*, unsigned int);
+  void (*HASH_End)(HASHContext*, unsigned char*, unsigned int*, unsigned int);
+
+  *(void**) (&NSS_Initialize) = dlsym(lib, "NSS_Initialize");
+  *(void**) (&HASH_Create) = dlsym(lib, "HASH_Create");
+  *(void**) (&HASH_Destroy) = dlsym(lib, "HASH_Destroy");
+  *(void**) (&HASH_Begin) = dlsym(lib, "HASH_Begin");
+  *(void**) (&HASH_Update) = dlsym(lib, "HASH_Update");
+  *(void**) (&HASH_End) = dlsym(lib, "HASH_End");
+
+  if (!HASH_Create || !HASH_Destroy || !HASH_Begin || !HASH_Update ||
+      !HASH_End) {
+    return "";
+  }
+#endif
+  // Minimal NSS initialization so we can use the hash functions
+  const PRUint32 kNssFlags = NSS_INIT_READONLY | NSS_INIT_NOROOTINIT |
+                             NSS_INIT_NOMODDB | NSS_INIT_NOCERTDB;
+  if (NSS_Initialize(nullptr, "", "", "", kNssFlags) != SECSuccess) {
+    return "";
+  }
+
+  HASHContext* hashContext = HASH_Create(HASH_AlgSHA256);
+
+  if (!hashContext) {
+    return "";
+  }
+
+  HASH_Begin(hashContext);
+
+  ifstream* f = UIOpenRead(gReporterDumpFile, /* binary */ true);
+  bool error = false;
+
+  // Read the minidump contents
+  if (f->is_open()) {
+    uint8_t buff[4096];
+
+    do {
+      f->read((char*) buff, sizeof(buff));
+
+      if (f->bad()) {
+        error = true;
+        break;
+      }
+
+      HASH_Update(hashContext, buff, f->gcount());
+    } while (!f->eof());
+
+    f->close();
+  } else {
+    error = true;
+  }
+
+  delete f;
+
+  // Finalize the hash computation
+  uint8_t result[SHA256_LENGTH];
+  uint32_t resultLen = 0;
+
+  HASH_End(hashContext, result, &resultLen, SHA256_LENGTH);
+
+  if (resultLen != SHA256_LENGTH) {
+    error = true;
+  }
+
+  HASH_Destroy(hashContext);
+
+  if (!error) {
+    ostringstream hash;
+
+    for (size_t i = 0; i < SHA256_LENGTH; i++) {
+      hash << std::setw(2) << std::setfill('0') << std::hex
+           << static_cast<unsigned int>(result[i]);
+    }
+
+    return hash.str();
+  } else {
+    return ""; // If we encountered an error, return an empty hash
+  }
 }
 
 } // namespace CrashReporter
@@ -492,6 +629,17 @@ bool CheckEndOfLifed(string version)
   return UIFileExists(reportPath);
 }
 
+static string
+GetProgramPath(const string& exename)
+{
+  string path = gArgv[0];
+  size_t pos = path.rfind(UI_CRASH_REPORTER_FILENAME BIN_SUFFIX);
+  path.erase(pos);
+  path.append(exename + BIN_SUFFIX);
+
+  return path;
+}
+
 int main(int argc, char** argv)
 {
   gArgc = argc;
@@ -513,6 +661,13 @@ int main(int argc, char** argv)
     // no dump file specified, run the default UI
     UIShowDefaultUI();
   } else {
+    // Start by running minidump analyzer to gather stack traces.
+    string reporterDumpFile = gReporterDumpFile;
+    vector<string> args = { reporterDumpFile };
+    UIRunProgram(GetProgramPath(UI_MINIDUMP_ANALYZER_FILENAME),
+                 args, /* wait */ true);
+
+    // go ahead with the crash reporter
     gExtraFile = GetAdditionalFilename(gReporterDumpFile, kExtraDataExtension);
     if (gExtraFile.empty()) {
       UIError(gStrings[ST_ERROR_BADARGUMENTS]);
@@ -552,20 +707,8 @@ int main(int argc, char** argv)
 
     // Hopefully the settings path exists in the environment. Try that before
     // asking the platform-specific code to guess.
-#ifdef XP_WIN32
-    static const wchar_t kDataDirKey[] = L"MOZ_CRASHREPORTER_DATA_DIRECTORY";
-    const wchar_t *settingsPath = _wgetenv(kDataDirKey);
-    if (settingsPath && *settingsPath) {
-      gSettingsPath = WideToUTF8(settingsPath);
-    }
-#else
-    static const char kDataDirKey[] = "MOZ_CRASHREPORTER_DATA_DIRECTORY";
-    const char *settingsPath = getenv(kDataDirKey);
-    if (settingsPath && *settingsPath) {
-      gSettingsPath = settingsPath;
-    }
-#endif
-    else {
+    gSettingsPath = UIGetEnv("MOZ_CRASHREPORTER_DATA_DIRECTORY");
+    if (gSettingsPath.empty()) {
       string product = queryParameters["ProductName"];
       string vendor = queryParameters["Vendor"];
       if (!UIGetSettingsPath(vendor, product, gSettingsPath)) {
@@ -580,21 +723,26 @@ int main(int argc, char** argv)
 
     OpenLogFile();
 
-#ifdef XP_WIN32
-    static const wchar_t kEventsDirKey[] = L"MOZ_CRASHREPORTER_EVENTS_DIRECTORY";
-    const wchar_t *eventsPath = _wgetenv(kEventsDirKey);
-    if (eventsPath && *eventsPath) {
-      gEventsPath = WideToUTF8(eventsPath);
+    gEventsPath = UIGetEnv("MOZ_CRASHREPORTER_EVENTS_DIRECTORY");
+    gPingPath = UIGetEnv("MOZ_CRASHREPORTER_PING_DIRECTORY");
+
+    // Assemble and send the crash ping
+    string hash;
+    string pingUuid;
+
+    hash = ComputeDumpHash();
+    if (!hash.empty()) {
+      AppendToEventFile("MinidumpSha256Hash", hash);
     }
-#else
-    static const char kEventsDirKey[] = "MOZ_CRASHREPORTER_EVENTS_DIRECTORY";
-    const char *eventsPath = getenv(kEventsDirKey);
-    if (eventsPath && *eventsPath) {
-      gEventsPath = eventsPath;
+
+    if (SendCrashPing(queryParameters, hash, pingUuid, gPingPath)) {
+      AppendToEventFile("CrashPingUUID", pingUuid);
     }
-#endif
-    else {
-      gEventsPath.clear();
+
+    // Update the crash event with stacks if they are present
+    auto stackTracesItr = queryParameters.find("StackTraces");
+    if (stackTracesItr != queryParameters.end()) {
+      AppendToEventFile(stackTracesItr->first, stackTracesItr->second);
     }
 
     if (!UIFileExists(gReporterDumpFile)) {

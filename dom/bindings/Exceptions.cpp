@@ -10,7 +10,7 @@
 #include "js/TypeDecls.h"
 #include "jsapi.h"
 #include "jsprf.h"
-#include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -25,36 +25,73 @@
 namespace mozilla {
 namespace dom {
 
-bool
+// Throw the given exception value if it's safe.  If it's not safe, then
+// synthesize and throw a new exception value for NS_ERROR_UNEXPECTED.  The
+// incoming value must be in the compartment of aCx.  This function guarantees
+// that an exception is pending on aCx when it returns.
+static void
+ThrowExceptionValueIfSafe(JSContext* aCx, JS::Handle<JS::Value> exnVal,
+                          nsIException* aOriginalException)
+{
+  MOZ_ASSERT(aOriginalException);
+
+  if (!exnVal.isObject()) {
+    JS_SetPendingException(aCx, exnVal);
+    return;
+  }
+
+  JS::Rooted<JSObject*> exnObj(aCx, &exnVal.toObject());
+  MOZ_ASSERT(js::IsObjectInContextCompartment(exnObj, aCx),
+             "exnObj needs to be in the right compartment for the "
+             "CheckedUnwrap thing to make sense");
+
+  if (js::CheckedUnwrap(exnObj)) {
+    // This is an object we're allowed to work with, so just go ahead and throw
+    // it.
+    JS_SetPendingException(aCx, exnVal);
+    return;
+  }
+
+  // We could probably Throw(aCx, NS_ERROR_UNEXPECTED) here, and it would do the
+  // right thing due to there not being an existing exception on the runtime at
+  // this point, but it's clearer to explicitly do the thing we want done.  This
+  // is also why we don't just call ThrowExceptionObject on the Exception we
+  // create: it would do the right thing, but that fact is not obvious.
+  RefPtr<Exception> syntheticException =
+    CreateException(NS_ERROR_UNEXPECTED);
+  JS::Rooted<JS::Value> syntheticVal(aCx);
+  if (!GetOrCreateDOMReflector(aCx, syntheticException, &syntheticVal)) {
+    return;
+  }
+  MOZ_ASSERT(syntheticVal.isObject() &&
+             !js::IsWrapper(&syntheticVal.toObject()),
+             "Must have a reflector here, not a wrapper");
+  JS_SetPendingException(aCx, syntheticVal);
+}
+
+void
 ThrowExceptionObject(JSContext* aCx, nsIException* aException)
 {
   // See if we really have an Exception.
   nsCOMPtr<Exception> exception = do_QueryInterface(aException);
   if (exception) {
-    return ThrowExceptionObject(aCx, exception);
+    ThrowExceptionObject(aCx, exception);
+    return;
   }
 
   // We only have an nsIException (probably an XPCWrappedJS).  Fall back on old
   // wrapping.
   MOZ_ASSERT(NS_IsMainThread());
 
-  JS::Rooted<JSObject*> glob(aCx, JS::CurrentGlobalOrNull(aCx));
-  if (!glob) {
-    // XXXbz Can this really be null here?
-    return false;
-  }
-
   JS::Rooted<JS::Value> val(aCx);
   if (!WrapObject(aCx, aException, &NS_GET_IID(nsIException), &val)) {
-    return false;
+    return;
   }
 
-  JS_SetPendingException(aCx, val);
-
-  return true;
+  ThrowExceptionValueIfSafe(aCx, val, aException);
 }
 
-bool
+void
 ThrowExceptionObject(JSContext* aCx, Exception* aException)
 {
   JS::Rooted<JS::Value> thrown(aCx);
@@ -76,33 +113,22 @@ ThrowExceptionObject(JSContext* aCx, Exception* aException)
       nsresult exceptionResult;
       if (NS_SUCCEEDED(aException->GetResult(&exceptionResult)) &&
           double(exceptionResult) == thrown.toNumber()) {
-        // The return value semantics here are a bit weird.  Throw() always
-        // returns false.  But we want to return true if we managed to throw an
-        // exception (otherwise our caller will assume OOM)... which Throw()
-        // always will.  So we just return true unconditionally.
         Throw(aCx, exceptionResult);
-        return true;
+        return;
       }
     }
     if (!JS_WrapValue(aCx, &thrown)) {
-      return false;
+      return;
     }
-    JS_SetPendingException(aCx, thrown);
-    return true;
-  }
-
-  JS::Rooted<JSObject*> glob(aCx, JS::CurrentGlobalOrNull(aCx));
-  if (!glob) {
-    // XXXbz Can this actually be null here?
-    return false;
+    ThrowExceptionValueIfSafe(aCx, thrown, aException);
+    return;
   }
 
   if (!GetOrCreateDOMReflector(aCx, aException, &thrown)) {
-    return false;
+    return;
   }
 
-  JS_SetPendingException(aCx, thrown);
-  return true;
+  ThrowExceptionValueIfSafe(aCx, thrown, aException);
 }
 
 bool
@@ -119,12 +145,12 @@ Throw(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
     return false;
   }
 
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
-  nsCOMPtr<nsIException> existingException = runtime->GetPendingException();
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
+  nsCOMPtr<nsIException> existingException = context->GetPendingException();
   // Make sure to clear the pending exception now.  Either we're going to reuse
   // it (and we already grabbed it), or we plan to throw something else and this
   // pending exception is no longer relevant.
-  runtime->SetPendingException(nullptr);
+  context->SetPendingException(nullptr);
 
   // Ignore the pending exception if we have a non-default message passed in.
   if (aMessage.IsEmpty() && existingException) {
@@ -132,24 +158,15 @@ Throw(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
     if (NS_SUCCEEDED(existingException->GetResult(&nr)) &&
         aRv == nr) {
       // Reuse the existing exception.
-      if (!ThrowExceptionObject(aCx, existingException)) {
-        // If we weren't able to throw an exception we're
-        // most likely out of memory
-        JS_ReportOutOfMemory(aCx);
-      }
+      ThrowExceptionObject(aCx, existingException);
       return false;
     }
   }
 
-  RefPtr<Exception> finalException = CreateException(aCx, aRv, aMessage);
-
+  RefPtr<Exception> finalException = CreateException(aRv, aMessage);
   MOZ_ASSERT(finalException);
-  if (!ThrowExceptionObject(aCx, finalException)) {
-    // If we weren't able to throw an exception we're
-    // most likely out of memory
-    JS_ReportOutOfMemory(aCx);
-  }
 
+  ThrowExceptionObject(aCx, finalException);
   return false;
 }
 
@@ -167,7 +184,7 @@ ThrowAndReport(nsPIDOMWindowInner* aWindow, nsresult aRv)
 }
 
 already_AddRefed<Exception>
-CreateException(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
+CreateException(nsresult aRv, const nsACString& aMessage)
 {
   // Do we use DOM exceptions for this error code?
   switch (NS_ERROR_GET_MODULE(aRv)) {
@@ -176,9 +193,9 @@ CreateException(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
   case NS_ERROR_MODULE_DOM_XPATH:
   case NS_ERROR_MODULE_DOM_INDEXEDDB:
   case NS_ERROR_MODULE_DOM_FILEHANDLE:
-  case NS_ERROR_MODULE_DOM_BLUETOOTH:
   case NS_ERROR_MODULE_DOM_ANIM:
   case NS_ERROR_MODULE_DOM_PUSH:
+  case NS_ERROR_MODULE_DOM_MEDIA:
     if (aMessage.IsEmpty()) {
       return DOMException::Create(aRv);
     }
@@ -288,7 +305,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(JSStackFrame)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCaller)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAsyncCaller)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(JSStackFrame)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mStack)
@@ -327,7 +343,7 @@ NS_IMETHODIMP JSStackFrame::GetLanguageName(nsACString& aLanguageName)
 // @argument [out] aValue the value we got from the stack.
 template<typename ReturnType, typename GetterOutParamType>
 static void
-GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
+GetValueIfNotCached(JSContext* aCx, const JS::Heap<JSObject*>& aStack,
                     JS::SavedFrameResult (*aPropGetter)(JSContext*,
                                                         JS::Handle<JSObject*>,
                                                         GetterOutParamType,
@@ -347,7 +363,6 @@ GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
   }
 
   *aUseCachedValue = false;
-  JS::ExposeObjectToActiveJS(stack);
 
   aPropGetter(aCx, stack, aValue, JS::SavedFrameSelfHosted::Exclude);
 }
@@ -610,7 +625,6 @@ NS_IMETHODIMP JSStackFrame::GetFormattedStack(JSContext* aCx, nsAString& aStack)
     return NS_OK;
   }
 
-  JS::ExposeObjectToActiveJS(mStack);
   JS::Rooted<JSObject*> stack(aCx, mStack);
 
   JS::Rooted<JSString*> formattedStack(aCx);
@@ -639,9 +653,6 @@ NS_IMETHODIMP JSStackFrame::GetFormattedStack(JSContext* aCx, nsAString& aStack)
 
 NS_IMETHODIMP JSStackFrame::GetNativeSavedFrame(JS::MutableHandle<JS::Value> aSavedFrame)
 {
-  if (mStack) {
-    JS::ExposeObjectToActiveJS(mStack);
-  }
   aSavedFrame.setObjectOrNull(mStack);
   return NS_OK;
 }

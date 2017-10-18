@@ -43,10 +43,6 @@ addLoadEvent(function() {
   }
 
   expectException(function() {
-    ctx.createMediaStreamDestination();
-  }, DOMException.NOT_SUPPORTED_ERR);
-
-  expectException(function() {
     new OfflineAudioContext(2, 100, 0);
   }, DOMException.NOT_SUPPORTED_ERR);
   expectException(function() {
@@ -84,7 +80,7 @@ addLoadEvent(function() {
     compareBuffers(e.renderedBuffer, buf);
     setOrCompareRenderedBuffer(e.renderedBuffer);
 
-  }, false);
+  });
 
   expectNoException(function() {
     ctx.startRendering().then(function(b) {

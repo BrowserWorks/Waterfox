@@ -1,6 +1,8 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
+ * Copyright (C) 2002-2017 Németh László
+ *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +13,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Hunspell, based on MySpell.
- *
- * The Initial Developers of the Original Code are
- * Kevin Hendricks (MySpell) and Németh László (Hunspell).
- * Portions created by the Initial Developers are Copyright (C) 2002-2005
- * the Initial Developers. All Rights Reserved.
+ * Hunspell is based on MySpell which is Copyright (C) 2002 Kevin Hendricks.
  *
  * Contributor(s): David Einstein, Davide Prina, Giuseppe Modugno,
  * Gianluca Turconi, Simon Brouwer, Noll János, Bíró Árpád,
@@ -86,33 +83,33 @@ int FileMgr::fail(const char* err, const char* par) {
 FileMgr::FileMgr(const char* file, const char* key) : hin(NULL), linenum(0) {
   in[0] = '\0';
 
-  fin = myfopen(file, "r");
-  if (!fin) {
+  myopen(fin, file, std::ios_base::in);
+  if (!fin.is_open()) {
     // check hzipped file
     std::string st(file);
     st.append(HZIP_EXTENSION);
     hin = new Hunzip(st.c_str(), key);
   }
-  if (!fin && !hin)
+  if (!fin.is_open() && !hin->is_open())
     fail(MSG_OPEN, file);
 }
 
 FileMgr::~FileMgr() {
-  if (fin)
-    fclose(fin);
-  if (hin)
-    delete hin;
+  delete hin;
 }
 
-char* FileMgr::getline() {
-  const char* l;
-  linenum++;
-  if (fin)
-    return fgets(in, BUFSIZE - 1, fin);
-  if (hin && ((l = hin->getline()) != NULL))
-    return strcpy(in, l);
-  linenum--;
-  return NULL;
+bool FileMgr::getline(std::string& dest) {
+  bool ret = false;
+  ++linenum;
+  if (fin.is_open()) {
+    ret = static_cast<bool>(std::getline(fin, dest));
+  } else if (hin->is_open()) {
+    ret = hin->getline(dest);
+  }
+  if (!ret) {
+    --linenum;
+  }
+  return ret;
 }
 
 int FileMgr::getlinenum() {

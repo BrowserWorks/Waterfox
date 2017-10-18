@@ -83,12 +83,12 @@ var PLUGINS = [{
 
 // A fake plugin host to return the plugins defined above
 var PluginHost = {
-  getPluginTags: function(countRef) {
+  getPluginTags(countRef) {
     countRef.value = PLUGINS.length;
     return PLUGINS;
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Components.interfaces.nsIPluginHost)
      || iid.equals(Components.interfaces.nsISupports))
       return this;
@@ -125,24 +125,20 @@ function run_test_1() {
       if (aAddon.name == "Duplicate Plugin 1") {
         found_plugin(0, aAddon.id);
         do_check_eq(aAddon.description, "A duplicate plugin");
-      }
-      else if (aAddon.name == "Duplicate Plugin 2") {
+      } else if (aAddon.name == "Duplicate Plugin 2") {
         found_plugin(1, aAddon.id);
         do_check_eq(aAddon.description, "Another duplicate plugin");
-      }
-      else if (aAddon.name == "Another Non-duplicate Plugin") {
+      } else if (aAddon.name == "Another Non-duplicate Plugin") {
         found_plugin(5, aAddon.id);
         do_check_eq(aAddon.description, "Not a duplicate plugin");
-      }
-      else if (aAddon.name == "Non-duplicate Plugin") {
+      } else if (aAddon.name == "Non-duplicate Plugin") {
         if (aAddon.description == "Not a duplicate plugin")
           found_plugin(3, aAddon.id);
         else if (aAddon.description == "Not a duplicate because the descriptions are different")
           found_plugin(4, aAddon.id);
         else
           do_throw("Found unexpected plugin with description " + aAddon.description);
-      }
-      else {
+      } else {
         do_throw("Found unexpected plugin " + aAddon.name);
       }
     });
@@ -176,10 +172,10 @@ function run_test_3() {
     [PLUGINS[0], PLUGINS[1]] = [PLUGINS[1], PLUGINS[0]];
     restartManager();
 
-    AddonManager.getAddonByID(gPluginIDs[0], function(p) {
-      do_check_neq(p, null);
-      do_check_eq(p.name, "Duplicate Plugin 1");
-      do_check_eq(p.description, "A duplicate plugin");
+    AddonManager.getAddonByID(gPluginIDs[0], function(p_2) {
+      do_check_neq(p_2, null);
+      do_check_eq(p_2.name, "Duplicate Plugin 1");
+      do_check_eq(p_2.description, "A duplicate plugin");
 
       do_execute_soon(do_test_finished);
     });

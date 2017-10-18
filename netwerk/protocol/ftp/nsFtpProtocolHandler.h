@@ -24,9 +24,9 @@ public:
     NS_DECL_NSIPROTOCOLHANDLER
     NS_DECL_NSIPROXIEDPROTOCOLHANDLER
     NS_DECL_NSIOBSERVER
-    
+
     nsFtpProtocolHandler();
-    
+
     nsresult Init();
 
     // FTP Connection list access
@@ -42,12 +42,12 @@ private:
 
     // Stuff for the timer callback function
     struct timerStruct {
-        nsCOMPtr<nsITimer>      timer;
-        nsFtpControlConnection *conn;
-        char                   *key;
-        
-        timerStruct() : conn(nullptr), key(nullptr) {}
-        
+        nsCOMPtr<nsITimer> timer;
+        RefPtr<nsFtpControlConnection> conn;
+        char *key;
+
+        timerStruct() : key(nullptr) {}
+
         ~timerStruct() {
             if (timer)
                 timer->Cancel();
@@ -55,7 +55,6 @@ private:
                 free(key);
             if (conn) {
                 conn->Disconnect(NS_ERROR_ABORT);
-                NS_RELEASE(conn);
             }
         }
     };

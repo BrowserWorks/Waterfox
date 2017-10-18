@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 // Import common head.
 {
+  /* import-globals-from ../head_common.js */
   let commonFile = do_get_file("../head_common.js", false);
   let uri = Services.io.newFileURI(commonFile);
   Services.scriptloader.loadSubScript(uri.spec, this);
@@ -19,11 +20,12 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 // Put any other stuff relative to this test folder below.
 
+const systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
 
 // This error icon must stay in sync with FAVICON_ERRORPAGE_URL in
 // nsIFaviconService.idl, aboutCertError.xhtml and netError.xhtml.
 const FAVICON_ERRORPAGE_URI =
-  NetUtil.newURI("chrome://global/skin/icons/warning-16.png");
+  Services.io.newURI("chrome://global/skin/icons/warning-16.png");
 
 /**
  * Waits for the first OnPageChanged notification for ATTRIBUTE_FAVICON, and
@@ -54,7 +56,7 @@ function waitForFaviconChanged(aExpectedPageURI, aExpectedFaviconURI,
       aCallback();
     }
   };
-  PlacesUtils.history.addObserver(historyObserver, false);
+  PlacesUtils.history.addObserver(historyObserver);
 }
 
 /**
@@ -72,7 +74,7 @@ function waitForFaviconChanged(aExpectedPageURI, aExpectedFaviconURI,
 function checkFaviconDataForPage(aPageURI, aExpectedMimeType, aExpectedData,
                                  aCallback) {
   PlacesUtils.favicons.getFaviconDataForPage(aPageURI,
-    function (aURI, aDataLen, aData, aMimeType) {
+    function(aURI, aDataLen, aData, aMimeType) {
       do_check_eq(aExpectedMimeType, aMimeType);
       do_check_true(compareArrays(aExpectedData, aData));
       do_check_guid_for_uri(aPageURI);
@@ -90,7 +92,7 @@ function checkFaviconDataForPage(aPageURI, aExpectedMimeType, aExpectedData,
  */
 function checkFaviconMissingForPage(aPageURI, aCallback) {
   PlacesUtils.favicons.getFaviconURLForPage(aPageURI,
-    function (aURI, aDataLen, aData, aMimeType) {
+    function(aURI, aDataLen, aData, aMimeType) {
       do_check_true(aURI === null);
       aCallback();
     });

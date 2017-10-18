@@ -11,13 +11,11 @@
 #define SkTDArray_DEFINED
 
 #include "SkTypes.h"
+#include "SkMalloc.h"
 
 template <typename T> class SkTDArray {
 public:
-    SkTDArray() {
-        fReserve = fCount = 0;
-        fArray = NULL;
-    }
+    SkTDArray() : fArray(nullptr), fReserve(0), fCount(0) {}
     SkTDArray(const T src[], int count) {
         SkASSERT(src || count == 0);
 
@@ -29,11 +27,12 @@ public:
             fReserve = fCount = count;
         }
     }
-    SkTDArray(const SkTDArray<T>& src) {
-        fReserve = fCount = 0;
-        fArray = NULL;
+    SkTDArray(const SkTDArray<T>& src) : fArray(nullptr), fReserve(0), fCount(0) {
         SkTDArray<T> tmp(src.fArray, src.fCount);
         this->swap(tmp);
+    }
+    SkTDArray(SkTDArray<T>&& src) : fArray(nullptr), fReserve(0), fCount(0) {
+        this->swap(src);
     }
     ~SkTDArray() {
         sk_free(fArray);
@@ -48,6 +47,13 @@ public:
                 sk_careful_memcpy(fArray, src.fArray, sizeof(T) * src.fCount);
                 fCount = src.fCount;
             }
+        }
+        return *this;
+    }
+    SkTDArray<T>& operator=(SkTDArray<T>&& src) {
+        if (this != &src) {
+            this->swap(src);
+            src.reset();
         }
         return *this;
     }
@@ -66,6 +72,12 @@ public:
         SkTSwap(fReserve, other.fReserve);
         SkTSwap(fCount, other.fCount);
     }
+
+    // The deleter that ought to be used for a std:: smart pointer that takes ownership from
+    // release().
+    struct Deleter {
+        void operator()(const void* p) { sk_free((void*)p); }
+    };
 
     /** Return a ptr to the array of data, to be freed with sk_free. This also
         resets the SkTDArray to be empty.
@@ -210,6 +222,18 @@ public:
         if (index != newCount) {
             memcpy(fArray + index, fArray + newCount, sizeof(T));
         }
+    }
+
+    template <typename S> int select(S&& selector) const {
+        const T* iter = fArray;
+        const T* stop = fArray + fCount;
+
+        for (; iter < stop; iter++) {
+            if (selector(*iter)) {
+                return SkToInt(iter - fArray);
+            }
+        }
+        return -1;
     }
 
     int find(const T& elem) const {

@@ -40,8 +40,8 @@ this.Debugging = {
   fake: false
 }
 
-this.GetBattery = function () {
-  return new Services.appShell.hiddenDOMWindow.Promise(function (resolve, reject) {
+this.GetBattery = function() {
+  return new Services.appShell.hiddenDOMWindow.Promise(function(resolve, reject) {
     // Return fake values if spoofing is enabled, otherwise fetch the real values from the BatteryManager API
     if (Debugging.fake) {
       resolve(gFakeBattery);
@@ -56,14 +56,14 @@ this.Battery = {};
 for (let k of ["charging", "chargingTime", "dischargingTime", "level"]) {
   let prop = k;
   Object.defineProperty(this.Battery, prop, {
-    get: function() {
+    get() {
       // Return fake value if spoofing is enabled, otherwise fetch the real value from the BatteryManager API
       if (Debugging.fake) {
         return gFakeBattery[prop];
       }
       return Services.appShell.hiddenDOMWindow.navigator.battery[prop];
     },
-    set: function(fakeSetting) {
+    set(fakeSetting) {
       if (!Debugging.fake) {
         throw new Error("Tried to set fake battery value when battery spoofing was disabled");
       }

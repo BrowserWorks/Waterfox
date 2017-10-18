@@ -29,7 +29,7 @@ NS_IMPL_CI_INTERFACE_GETTER(XPCVariant, XPCVariant, nsIVariant)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(XPCVariant)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(XPCVariant)
 
-XPCVariant::XPCVariant(JSContext* cx, Value aJSVal)
+XPCVariant::XPCVariant(JSContext* cx, const Value& aJSVal)
     : mJSVal(aJSVal), mCCGeneration(0)
 {
     if (!mJSVal.isPrimitive()) {
@@ -55,7 +55,7 @@ XPCTraceableVariant::~XPCTraceableVariant()
 {
     Value val = GetJSValPreserveColor();
 
-    MOZ_ASSERT(val.isGCThing(), "Must be traceable or unlinked");
+    MOZ_ASSERT(val.isGCThing() || val.isNull(), "Must be traceable or unlinked");
 
     mData.Cleanup();
 
@@ -65,7 +65,7 @@ XPCTraceableVariant::~XPCTraceableVariant()
 
 void XPCTraceableVariant::TraceJS(JSTracer* trc)
 {
-    MOZ_ASSERT(mJSVal.isMarkable());
+    MOZ_ASSERT(GetJSValPreserveColor().isGCThing());
     JS::TraceEdge(trc, &mJSVal, "XPCTraceableVariant::mJSVal");
 }
 
@@ -75,7 +75,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(XPCVariant)
     JS::Value val = tmp->GetJSValPreserveColor();
     if (val.isObject()) {
         NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mJSVal");
-        cb.NoteJSObject(&val.toObject());
+        cb.NoteJSChild(JS::GCCellPtr(val));
     }
 
     tmp->mData.Traverse(cb);
@@ -86,7 +86,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(XPCVariant)
 
     tmp->mData.Cleanup();
 
-    if (val.isMarkable()) {
+    if (val.isGCThing()) {
         XPCTraceableVariant* v = static_cast<XPCTraceableVariant*>(tmp);
         v->RemoveFromRootSet();
     }
@@ -95,11 +95,11 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 // static
 already_AddRefed<XPCVariant>
-XPCVariant::newVariant(JSContext* cx, Value aJSVal)
+XPCVariant::newVariant(JSContext* cx, const Value& aJSVal)
 {
     RefPtr<XPCVariant> variant;
 
-    if (!aJSVal.isMarkable())
+    if (!aJSVal.isGCThing())
         variant = new XPCVariant(cx, aJSVal);
     else
         variant = new XPCTraceableVariant(cx, aJSVal);
@@ -258,7 +258,8 @@ XPCArrayHomogenizer::GetTypeForArray(JSContext* cx, HandleObject array,
 
 bool XPCVariant::InitializeData(JSContext* cx)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!js::CheckRecursionLimit(cx))
+        return false;
 
     RootedValue val(cx, GetJSVal());
 

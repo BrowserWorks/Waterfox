@@ -33,12 +33,12 @@ EXPORTS += [
     'nsRect.h',
     'nsRegion.h',
     'nsRegionFwd.h',
-    'nsRenderingContext.h',
     'nsSize.h',
     'nsThemeConstants.h',
     'nsTransform2D.h',
     'PingPongRegion.h',
     'RegionBuilder.h',
+    'X11UndefineNone.h'
 ]
 
 EXPORTS.mozilla += [

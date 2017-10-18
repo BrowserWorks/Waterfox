@@ -11,8 +11,8 @@ import tarfile
 import tempfile
 import unittest
 
-from ..util import docker
-from mozunit import MockedOpen
+from taskgraph.util import docker
+from mozunit import main, MockedOpen
 
 
 MODE_STANDARD = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
@@ -26,31 +26,55 @@ class TestDocker(unittest.TestCase):
         docker.GECKO = tmpdir
         try:
             os.makedirs(os.path.join(tmpdir, 'docker', 'my-image'))
-            with open(os.path.join(tmpdir, 'docker', 'my-image', 'Dockerfile'), "w") as f:
+            p = os.path.join(tmpdir, 'docker', 'my-image', 'Dockerfile')
+            with open(p, 'w') as f:
                 f.write("FROM node\nADD a-file\n")
-            with open(os.path.join(tmpdir, 'docker', 'my-image', 'a-file'), "w") as f:
+            os.chmod(p, MODE_STANDARD)
+            p = os.path.join(tmpdir, 'docker', 'my-image', 'a-file')
+            with open(p, 'w') as f:
                 f.write("data\n")
+            os.chmod(p, MODE_STANDARD)
             self.assertEqual(
-                docker.generate_context_hash(docker.GECKO, 'docker/my-image', 'my-image'),
-                '872d76a656f47ea17c043023ecc9ae6a222ba6d2a8df67b75498bba382e4fb07'
-                )
+                docker.generate_context_hash(docker.GECKO,
+                                             os.path.join(docker.GECKO, 'docker/my-image'),
+                                             'my-image'),
+                'e61e675ce05e8c11424437db3f1004079374c1a5fe6ad6800346cebe137b0797'
+            )
         finally:
             docker.GECKO = old_GECKO
             shutil.rmtree(tmpdir)
 
     def test_docker_image_explicit_registry(self):
         files = {}
-        files["{}/myimage/REGISTRY".format(docker.DOCKER_ROOT)] = "cool-images"
-        files["{}/myimage/VERSION".format(docker.DOCKER_ROOT)] = "1.2.3"
+        files["{}/myimage/REGISTRY".format(docker.IMAGE_DIR)] = "cool-images"
+        files["{}/myimage/VERSION".format(docker.IMAGE_DIR)] = "1.2.3"
+        files["{}/myimage/HASH".format(docker.IMAGE_DIR)] = "sha256:434..."
         with MockedOpen(files):
-            self.assertEqual(docker.docker_image('myimage'), "cool-images/myimage:1.2.3")
+            self.assertEqual(docker.docker_image('myimage'), "cool-images/myimage@sha256:434...")
+
+    def test_docker_image_explicit_registry_by_tag(self):
+        files = {}
+        files["{}/myimage/REGISTRY".format(docker.IMAGE_DIR)] = "myreg"
+        files["{}/myimage/VERSION".format(docker.IMAGE_DIR)] = "1.2.3"
+        files["{}/myimage/HASH".format(docker.IMAGE_DIR)] = "sha256:434..."
+        with MockedOpen(files):
+            self.assertEqual(docker.docker_image('myimage', by_tag=True), "myreg/myimage:1.2.3")
 
     def test_docker_image_default_registry(self):
         files = {}
-        files["{}/REGISTRY".format(docker.DOCKER_ROOT)] = "mozilla"
-        files["{}/myimage/VERSION".format(docker.DOCKER_ROOT)] = "1.2.3"
+        files["{}/REGISTRY".format(docker.IMAGE_DIR)] = "mozilla"
+        files["{}/myimage/VERSION".format(docker.IMAGE_DIR)] = "1.2.3"
+        files["{}/myimage/HASH".format(docker.IMAGE_DIR)] = "sha256:434..."
         with MockedOpen(files):
-            self.assertEqual(docker.docker_image('myimage'), "mozilla/myimage:1.2.3")
+            self.assertEqual(docker.docker_image('myimage'), "mozilla/myimage@sha256:434...")
+
+    def test_docker_image_default_registry_by_tag(self):
+        files = {}
+        files["{}/REGISTRY".format(docker.IMAGE_DIR)] = "mozilla"
+        files["{}/myimage/VERSION".format(docker.IMAGE_DIR)] = "1.2.3"
+        files["{}/myimage/HASH".format(docker.IMAGE_DIR)] = "sha256:434..."
+        with MockedOpen(files):
+            self.assertEqual(docker.docker_image('myimage', by_tag=True), "mozilla/myimage:1.2.3")
 
     def test_create_context_tar_basic(self):
         tmp = tempfile.mkdtemp()
@@ -186,3 +210,7 @@ class TestDocker(unittest.TestCase):
                 ])
         finally:
             shutil.rmtree(tmp)
+
+
+if __name__ == '__main__':
+    main()

@@ -21,11 +21,13 @@ This file is originally from: https://bitbucket.org/hpk42/py, specifically:
 https://bitbucket.org/hpk42/py/src/980c8d526463958ee7cae678a7e4e9b054f36b94/py/_xmlgen.py?at=default
 by holger krekel, holger at merlinux eu. 2009
 """
-import sys, re
+import sys
+import re
 
-if sys.version_info >= (3,0):
+if sys.version_info >= (3, 0):
     def u(s):
         return s
+
     def unicode(x):
         if hasattr(x, '__unicode__'):
             return x.__unicode__()
@@ -37,6 +39,7 @@ else:
 
 
 class NamespaceMetaclass(type):
+
     def __getattr__(self, name):
         if name[:1] == '_':
             raise AttributeError(name)
@@ -52,8 +55,11 @@ class NamespaceMetaclass(type):
         setattr(self, name, cls)
         return cls
 
+
 class Tag(list):
+
     class Attr(object):
+
         def __init__(self, **kwargs):
             self.__dict__.update(kwargs)
 
@@ -74,23 +80,28 @@ class Tag(list):
         name = self.__class__.__name__
         return "<%r tag object %d>" % (name, id(self))
 
+
 Namespace = NamespaceMetaclass('Namespace', (object, ), {
     '__tagspec__': None,
     '__tagclass__': Tag,
     '__stickyname__': False,
 })
 
+
 class HtmlTag(Tag):
+
     def unicode(self, indent=2):
         l = []
         HtmlVisitor(l.append, indent, shortempty=False).visit(self)
         return u("").join(l)
 
 # exported plain html namespace
+
+
 class html(Namespace):
     __tagclass__ = HtmlTag
     __stickyname__ = True
-    __tagspec__ = dict([(x,1) for x in (
+    __tagspec__ = dict([(x, 1) for x in (
         'a,abbr,acronym,address,applet,area,b,bdo,big,blink,'
         'blockquote,body,br,button,caption,center,cite,code,col,'
         'colgroup,comment,dd,del,dfn,dir,div,dl,dt,em,embed,'
@@ -104,6 +115,7 @@ class html(Namespace):
     ).split(',') if x])
 
     class Style(object):
+
         def __init__(self, **kw):
             for x, y in kw.items():
                 x = x.replace('_', '-')
@@ -113,15 +125,18 @@ class html(Namespace):
 class raw(object):
     """just a box that can contain a unicode string that will be
     included directly in the output"""
+
     def __init__(self, uniobj):
         self.uniobj = uniobj
 
+
 class SimpleUnicodeVisitor(object):
     """ recursive visitor to write unicode. """
+
     def __init__(self, write, indent=0, curindent=0, shortempty=True):
         self.write = write
         self.cache = {}
-        self.visited = {} # for detection of recursion
+        self.visited = {}  # for detection of recursion
         self.indent = indent
         self.curindent = curindent
         self.parents = []
@@ -145,7 +160,7 @@ class SimpleUnicodeVisitor(object):
     # the default fallback handler is marked private
     # to avoid clashes with the tag name object
     def __object(self, obj):
-        #self.write(obj)
+        # self.write(obj)
         self.write(escape(unicode(obj)))
 
     def raw(self, obj):
@@ -177,7 +192,7 @@ class SimpleUnicodeVisitor(object):
             self.write(u('</%s>') % tagname)
             self.curindent -= self.indent
         else:
-            nameattr = tagname+self.attributes(tag)
+            nameattr = tagname + self.attributes(tag)
             if self._issingleton(tagname):
                 self.write(u('<%s/>') % (nameattr,))
             else:
@@ -213,7 +228,7 @@ class SimpleUnicodeVisitor(object):
         except AttributeError:
             return []
         else:
-            stylelist = [x+': ' + y for x,y in styledict.items()]
+            stylelist = [x + ': ' + y for x, y in styledict.items()]
             return [u(' style="%s"') % u('; ').join(stylelist)]
 
     def _issingleton(self, tagname):
@@ -224,15 +239,16 @@ class SimpleUnicodeVisitor(object):
         """can (and will) be overridden in subclasses"""
         return False
 
+
 class HtmlVisitor(SimpleUnicodeVisitor):
 
     single = dict([(x, 1) for x in
-                ('br,img,area,param,col,hr,meta,link,base,'
+                   ('br,img,area,param,col,hr,meta,link,base,'
                     'input,frame').split(',')])
     inline = dict([(x, 1) for x in
-                ('a abbr acronym b basefont bdo big br cite code dfn em font '
-                 'i img input kbd label q s samp select small span strike '
-                 'strong sub sup textarea tt u var'.split(' '))])
+                   ('a abbr acronym b basefont bdo big br cite code dfn em font '
+                    'i img input kbd label q s samp select small span strike '
+                    'strong sub sup textarea tt u var'.split(' '))])
 
     def repr_attribute(self, attrs, name):
         if name == 'class_':
@@ -249,11 +265,12 @@ class HtmlVisitor(SimpleUnicodeVisitor):
 
 
 class _escape:
+
     def __init__(self):
         self.escape = {
-            u('"') : u('&quot;'), u('<') : u('&lt;'), u('>') : u('&gt;'),
-            u('&') : u('&amp;'), u("'") : u('&apos;'),
-            }
+            u('"'): u('&quot;'), u('<'): u('&lt;'), u('>'): u('&gt;'),
+            u('&'): u('&amp;'), u("'"): u('&apos;'),
+        }
         self.charef_rex = re.compile(u("|").join(self.escape.keys()))
 
     def _replacer(self, match):
@@ -263,5 +280,6 @@ class _escape:
         """ xml-escape the given unicode string. """
         ustring = unicode(ustring)
         return self.charef_rex.sub(self._replacer, ustring)
+
 
 escape = _escape()

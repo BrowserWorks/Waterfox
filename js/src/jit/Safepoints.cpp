@@ -31,7 +31,7 @@ SafepointWriter::init(TempAllocator& alloc)
 uint32_t
 SafepointWriter::startEntry()
 {
-    JitSpew(JitSpew_Safepoints, "Encoding safepoint (position %d):", stream_.length());
+    JitSpew(JitSpew_Safepoints, "Encoding safepoint (position %zu):", stream_.length());
     return uint32_t(stream_.length());
 }
 

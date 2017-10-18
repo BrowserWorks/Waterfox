@@ -1,4 +1,10 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+"use strict";
+
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
 
 var gIoService = Components.classes["@mozilla.org/network/io-service;1"]
@@ -92,18 +98,6 @@ var gTests = [
     ref:     "",
     relativeURI: "data/text/plain,2",
     nsIURL:  true, nsINestedURI: false },
-  { spec:    "ftp://",
-    scheme:  "ftp",
-    prePath: "ftp://",
-    path:    "/",
-    ref:     "",
-    nsIURL:  true, nsINestedURI: false },
-  { spec:    "ftp:///",
-    scheme:  "ftp",
-    prePath: "ftp://",
-    path:    "/",
-    ref:     "",
-    nsIURL:  true, nsINestedURI: false },
   { spec:    "ftp://ftp.mozilla.org/pub/mozilla.org/README",
     scheme:  "ftp",
     prePath: "ftp://ftp.mozilla.org",
@@ -121,7 +115,7 @@ var gTests = [
     nsIURL:  true, nsINestedURI: false },
   { spec:    "ftp://foo:@ftp.mozilla.org:100/pub/mozilla.org/README",
     scheme:  "ftp",
-    prePath: "ftp://foo:@ftp.mozilla.org:100",
+    prePath: "ftp://foo@ftp.mozilla.org:100",
     port:    100,
     username: "foo",
     password: "",
@@ -129,32 +123,12 @@ var gTests = [
     ref:     "",
     nsIURL:  true, nsINestedURI: false },
   //Bug 706249
-  { spec:    "http:x:@",
-    scheme:  "http",
-    prePath: "http://x:@",
-    username: "x",
-    password: "",
-    path:    "",
-    ref:     "",
-    nsIURL:  true, nsINestedURI: false },
   { spec:    "gopher://mozilla.org/",
     scheme:  "gopher",
     prePath: "gopher:",
     path:    "//mozilla.org/",
     ref:     "",
     nsIURL:  false, nsINestedURI: false },
-  { spec:    "http://",
-    scheme:  "http",
-    prePath: "http://",
-    path:    "/",
-    ref:     "",
-    nsIURL:  true, nsINestedURI: false },
-  { spec:    "http:///",
-    scheme:  "http",
-    prePath: "http://",
-    path:    "/",
-    ref:     "",
-    nsIURL:  true, nsINestedURI: false },
   { spec:    "http://www.example.com/",
     scheme:  "http",
     prePath: "http://www.example.com",
@@ -176,8 +150,8 @@ var gTests = [
     nsIURL:  true, nsINestedURI: false },
   { spec:    "http://[::192.9.5.5]/ipng",
     scheme:  "http",
-    prePath: "http://[::192.9.5.5]",
-    host:    "::192.9.5.5",
+    prePath: "http://[::c009:505]",
+    host:    "::c009:505",
     path:    "/ipng",
     ref:     "",
     nsIURL:  true, nsINestedURI: false },
@@ -332,7 +306,8 @@ function do_check_property(aTest, aURI, aPropertyName, aTestFunctor) {
 function do_test_uri_basic(aTest) {
   var URI;
 
-  do_info("Basic tests for " + aTest.spec + " relative URI: " + aTest.relativeURI);
+  do_info("Basic tests for " + aTest.spec +
+          " relative URI: " + (aTest.relativeURI === undefined ? "(none)" : aTest.relativeURI) );
 
   try {
     URI = NetUtil.newURI(aTest.spec);
@@ -577,19 +552,17 @@ function run_test()
 {
   // UTF-8 check - From bug 622981
   // ASCII
-  let base = gIoService.newURI("http://example.org/xenia?", null, null);
+  let base = gIoService.newURI("http://example.org/xenia?");
   let resolved = gIoService.newURI("?x", null, base);
-  let expected = gIoService.newURI("http://example.org/xenia?x",
-                                  null, null);
+  let expected = gIoService.newURI("http://example.org/xenia?x");
   do_info("Bug 662981: ACSII - comparing " + resolved.spec + " and " + expected.spec);
   do_check_true(resolved.equals(expected));
 
   // UTF-8 character "è"
   // Bug 622981 was triggered by an empty query string
-  base = gIoService.newURI("http://example.org/xènia?", null, null);
+  base = gIoService.newURI("http://example.org/xènia?");
   resolved = gIoService.newURI("?x", null, base);
-  expected = gIoService.newURI("http://example.org/xènia?x",
-                              null, null);
+  expected = gIoService.newURI("http://example.org/xènia?x");
   do_info("Bug 662981: UTF8 - comparing " + resolved.spec + " and " + expected.spec);
   do_check_true(resolved.equals(expected));
 

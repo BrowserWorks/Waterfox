@@ -19,7 +19,8 @@ nsBaseContentStream::DispatchCallback(bool async)
 
   nsCOMPtr<nsIInputStreamCallback> callback;
   if (async) {
-    callback = NS_NewInputStreamReadyEvent(mCallback, mCallbackTarget);
+      callback = NS_NewInputStreamReadyEvent("nsBaseContentStream::DispatchCallback",
+                                             mCallback, mCallbackTarget);
     mCallback = nullptr;
   } else {
     callback.swap(mCallback);
@@ -61,7 +62,7 @@ nsBaseContentStream::Available(uint64_t *result)
 NS_IMETHODIMP
 nsBaseContentStream::Read(char *buf, uint32_t count, uint32_t *result)
 {
-  return ReadSegments(NS_CopySegmentToBuffer, buf, count, result); 
+  return ReadSegments(NS_CopySegmentToBuffer, buf, count, result);
 }
 
 NS_IMETHODIMP

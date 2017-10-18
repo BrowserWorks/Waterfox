@@ -44,7 +44,7 @@ UIEvent::UIEvent(EventTarget* aOwner,
     mEventIsInternal = true;
     mEvent->mTime = PR_Now();
   }
-  
+
   // Fill mDetail and mView according to the mEvent (widget-generated
   // event) we've got
   switch(mEvent->mClass) {
@@ -90,6 +90,7 @@ UIEvent::Constructor(const GlobalObject& aGlobal,
   e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
                  aParam.mDetail);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 
@@ -114,6 +115,10 @@ DevPixelsToCSSPixels(const LayoutDeviceIntPoint& aPoint,
 nsIntPoint
 UIEvent::GetMovementPoint()
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return nsIntPoint(0, 0);
+  }
+
   if (mPrivateDataDuplicated || mEventIsInternal) {
     return mMovementPoint;
   }
@@ -168,6 +173,8 @@ UIEvent::InitUIEvent(const nsAString& typeArg,
                      mozIDOMWindow* viewArg,
                      int32_t detailArg)
 {
+  NS_ENSURE_TRUE(!mEvent->mFlags.mIsBeingDispatched, NS_OK);
+
   Event::InitEvent(typeArg, canBubbleArg, cancelableArg);
 
   mDetail = detailArg;
@@ -188,6 +195,10 @@ UIEvent::GetPageX(int32_t* aPageX)
 int32_t
 UIEvent::PageX() const
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
   if (mPrivateDataDuplicated) {
     return mPagePoint.x;
   }
@@ -207,6 +218,10 @@ UIEvent::GetPageY(int32_t* aPageY)
 int32_t
 UIEvent::PageY() const
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return 0;
+  }
+
   if (mPrivateDataDuplicated) {
     return mPagePoint.y;
   }
@@ -229,7 +244,11 @@ UIEvent::GetRangeParent()
   nsIFrame* targetFrame = nullptr;
 
   if (mPresContext) {
-    targetFrame = mPresContext->EventStateManager()->GetEventTarget();
+    nsCOMPtr<nsIPresShell> shell = mPresContext->GetPresShell();
+    if (shell) {
+      shell->FlushPendingNotifications(FlushType::Layout);
+      targetFrame = mPresContext->EventStateManager()->GetEventTarget();
+    }
   }
 
   if (targetFrame) {
@@ -275,6 +294,13 @@ UIEvent::RangeOffset() const
     return 0;
   }
 
+  nsCOMPtr<nsIPresShell> shell = mPresContext->GetPresShell();
+  if (!shell) {
+    return 0;
+  }
+
+  shell->FlushPendingNotifications(FlushType::Layout);
+
   nsIFrame* targetFrame = mPresContext->EventStateManager()->GetEventTarget();
   if (!targetFrame) {
     return 0;
@@ -285,24 +311,13 @@ UIEvent::RangeOffset() const
   return targetFrame->GetContentOffsetsFromPoint(pt).offset;
 }
 
-NS_IMETHODIMP
-UIEvent::GetCancelBubble(bool* aCancelBubble)
-{
-  NS_ENSURE_ARG_POINTER(aCancelBubble);
-  *aCancelBubble = CancelBubble();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UIEvent::SetCancelBubble(bool aCancelBubble)
-{
-  mEvent->mFlags.mPropagationStopped = aCancelBubble;
-  return NS_OK;
-}
-
 nsIntPoint
 UIEvent::GetLayerPoint() const
 {
+  if (mEvent->mFlags.mIsPositionless) {
+    return nsIntPoint(0, 0);
+  }
+
   if (!mEvent ||
       (mEvent->mClass != eMouseEventClass &&
        mEvent->mClass != eMouseScrollEventClass &&
@@ -339,20 +354,6 @@ UIEvent::GetLayerY(int32_t* aLayerY)
   NS_ENSURE_ARG_POINTER(aLayerY);
   *aLayerY = GetLayerPoint().y;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-UIEvent::GetIsChar(bool* aIsChar)
-{
-  *aIsChar = IsChar();
-  return NS_OK;
-}
-
-bool
-UIEvent::IsChar() const
-{
-  WidgetKeyboardEvent* keyEvent = mEvent->AsKeyboardEvent();
-  return keyEvent ? keyEvent->mIsChar : false;
 }
 
 mozilla::dom::Event*
@@ -517,7 +518,7 @@ using namespace mozilla::dom;
 already_AddRefed<UIEvent>
 NS_NewDOMUIEvent(EventTarget* aOwner,
                  nsPresContext* aPresContext,
-                 WidgetGUIEvent* aEvent) 
+                 WidgetGUIEvent* aEvent)
 {
   RefPtr<UIEvent> it = new UIEvent(aOwner, aPresContext, aEvent);
   return it.forget();

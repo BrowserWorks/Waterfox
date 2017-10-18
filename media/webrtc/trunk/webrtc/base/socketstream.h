@@ -13,6 +13,7 @@
 
 #include "webrtc/base/asyncsocket.h"
 #include "webrtc/base/common.h"
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/base/stream.h"
 
 namespace rtc {
@@ -51,7 +52,7 @@ class SocketStream : public StreamInterface, public sigslot::has_slots<> {
 
   AsyncSocket* socket_;
 
-  DISALLOW_EVIL_CONSTRUCTORS(SocketStream);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SocketStream);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

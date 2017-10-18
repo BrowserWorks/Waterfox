@@ -38,12 +38,11 @@
 
       <div id="manage">
         <header>
-          <h1>&aboutAccounts.connected;</h1>
           <div id="email"></div>
         </header>
 
         <section>
-            <div class="graphic graphic-sync-intro"> </div>
+            <img class="graphic graphic-sync-intro" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
 
             <div class="button-row">
               <button id="buttonOpenPrefs" class="button" href="#" tabindex="0">&aboutAccountsConfig.syncPreferences.label;</button>
@@ -57,16 +56,11 @@
         </header>
 
         <section>
-            <div class="graphic graphic-sync-intro"> </div>
-
+            <img class="graphic graphic-sync-intro" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <div class="description">&aboutAccountsConfig.description;</div>
 
             <div class="button-row">
               <button id="buttonGetStarted" class="button" tabindex="1">&aboutAccountsConfig.startButton.label;</button>
-            </div>
-
-            <div class="links">
-              <button id="oldsync" tabindex="2">&aboutAccountsConfig.useOldSync.label;</button>
             </div>
         </section>
       </div>
@@ -77,8 +71,7 @@
         </header>
 
         <section>
-            <div class="graphic graphic-sync-intro"> </div>
-
+            <img class="graphic graphic-sync-intro" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
             <div class="description">&aboutAccounts.noConnection.description;</div>
 
             <div class="button-row">
@@ -87,13 +80,25 @@
         </section>
       </div>
 
+      <div id="configError">
+        <header>
+          <h1>&aboutAccounts.badConfig.title;</h1>
+        </header>
+
+        <section>
+            <img class="graphic graphic-sync-intro" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
+            <div class="description">&aboutAccounts.badConfig.description;</div>
+
+        </section>
+      </div>
+
     </div>
 
     <iframe mozframetype="content" id="remote" />
 
-    <script type="application/javascript;version=1.8"
+    <script type="application/javascript"
       src="chrome://browser/content/utilityOverlay.js"/>
-    <script type="text/javascript;version=1.8"
+    <script type="text/javascript"
       src="chrome://browser/content/aboutaccounts/aboutaccounts.js" />
   </body>
 </html>

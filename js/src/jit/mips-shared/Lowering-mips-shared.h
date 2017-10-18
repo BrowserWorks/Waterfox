@@ -23,11 +23,9 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
     // x86 has constraints on what registers can be formatted for 1-byte
     // stores and loads; on MIPS all registers are okay.
     LAllocation useByteOpRegister(MDefinition* mir);
+    LAllocation useByteOpRegisterAtStart(MDefinition* mir);
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition* mir);
     LDefinition tempByteOpRegister();
-
-    void lowerInt64PhiInput(MPhi*, uint32_t, LBlock*, size_t) { MOZ_CRASH("NYI"); }
-    void defineInt64Phi(MPhi*, size_t) { MOZ_CRASH("NYI"); }
 
     bool needTempForPostBarrier() { return false; }
 
@@ -68,17 +66,14 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
                                  MDefinition* lhs, MDefinition* rhs);
     void lowerDivI(MDiv* div);
     void lowerModI(MMod* mod);
-    void lowerDivI64(MDiv* div);
-    void lowerModI64(MMod* mod);
     void lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs);
     void lowerUDiv(MDiv* div);
     void lowerUMod(MMod* mod);
     void visitPowHalf(MPowHalf* ins);
-    void visitAsmJSNeg(MAsmJSNeg* ins);
-    void visitWasmBoundsCheck(MWasmBoundsCheck* ins);
+    void visitWasmNeg(MWasmNeg* ins);
     void visitWasmLoad(MWasmLoad* ins);
     void visitWasmStore(MWasmStore* ins);
-    void visitAsmSelect(MAsmSelect* ins);
+    void visitWasmSelect(MWasmSelect* ins);
 
     LTableSwitch* newLTableSwitch(const LAllocation& in, const LDefinition& inputCopy,
                                   MTableSwitch* ins);
@@ -88,8 +83,8 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
     void lowerPhi(MPhi* phi);
     void visitGuardShape(MGuardShape* ins);
     void visitGuardObjectGroup(MGuardObjectGroup* ins);
-    void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins);
-    void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins);
+    void visitWasmUnsignedToDouble(MWasmUnsignedToDouble* ins);
+    void visitWasmUnsignedToFloat32(MWasmUnsignedToFloat32* ins);
     void visitAsmJSLoadHeap(MAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(MAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins);

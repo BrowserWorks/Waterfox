@@ -29,9 +29,8 @@
 
     var body = frames[0].document.body;
     body.addEventListener("DOMNodeInserted", function() {
-      body.removeEventListener("DOMNodeInserted", arguments.callee, true);
       xss();
-    }, true);
+    }, {capture: true, once: true});
   }
 
   function xss() {
@@ -48,7 +47,7 @@
     }
     document.getElementById("state").textContent = "done";
 
-    var event = new MessageEvent('464620_b', { bubbles: true, cancelable: false,
+    var event = new MessageEvent("464620_b", { bubbles: true, cancelable: false,
                                                data: "done", origin: location.href,
                                                source: window });
     document.dispatchEvent(event);

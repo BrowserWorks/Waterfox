@@ -11,6 +11,7 @@ const { SIMPLE_URL } = require("devtools/client/performance/test/helpers/urls");
 const { initPerformanceInNewTab, teardownToolboxAndRemoveTab } = require("devtools/client/performance/test/helpers/panel-utils");
 const { startRecording, stopRecording } = require("devtools/client/performance/test/helpers/actions");
 const { once } = require("devtools/client/performance/test/helpers/event-utils");
+const { setSelectedRecording, getSelectedRecordingIndex } = require("devtools/client/performance/test/helpers/recording-utils");
 
 add_task(function* () {
   let { panel } = yield initPerformanceInNewTab({
@@ -18,7 +19,12 @@ add_task(function* () {
     win: window
   });
 
-  let { EVENTS, $, PerformanceController, RecordingsView, WaterfallView } = panel.panelWin;
+  let {
+    EVENTS,
+    $,
+    PerformanceController,
+    WaterfallView
+  } = panel.panelWin;
 
   let waterfallBtn = $("toolbarbutton[data-view='waterfall']");
   let jsFlameBtn = $("toolbarbutton[data-view='js-flamegraph']");
@@ -78,11 +84,12 @@ add_task(function* () {
 
   let selected = once(PerformanceController, EVENTS.RECORDING_SELECTED);
   let rendered = once(WaterfallView, EVENTS.UI_WATERFALL_RENDERED);
-  RecordingsView.selectedIndex = 0;
+  setSelectedRecording(panel, 0);
   yield selected;
   yield rendered;
 
-  is(RecordingsView.selectedIndex, 0,
+  let selectedIndex = getSelectedRecordingIndex(panel);
+  is(selectedIndex, 0,
     "The first recording was selected again.");
 
   is(waterfallBtn.hidden, false,
@@ -97,10 +104,11 @@ add_task(function* () {
     "The `memory-calltree` button is hidden when first recording selected.");
 
   selected = once(PerformanceController, EVENTS.RECORDING_SELECTED);
-  RecordingsView.selectedIndex = 1;
+  setSelectedRecording(panel, 1);
   yield selected;
 
-  is(RecordingsView.selectedIndex, 1,
+  selectedIndex = getSelectedRecordingIndex(panel);
+  is(selectedIndex, 1,
     "The second recording was selected again.");
 
   is(waterfallBtn.hidden, true,
@@ -118,7 +126,8 @@ add_task(function* () {
   yield stopRecording(panel);
   yield rendered;
 
-  is(RecordingsView.selectedIndex, 1,
+  selectedIndex = getSelectedRecordingIndex(panel);
+  is(selectedIndex, 1,
     "The second recording is still selected.");
 
   is(waterfallBtn.hidden, false,

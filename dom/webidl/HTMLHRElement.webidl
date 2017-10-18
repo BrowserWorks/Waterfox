@@ -12,19 +12,20 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-hr-element
+[HTMLConstructor]
 interface HTMLHRElement : HTMLElement {
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLHRElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString align;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString color;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute boolean noShade;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString size;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString width;
 };

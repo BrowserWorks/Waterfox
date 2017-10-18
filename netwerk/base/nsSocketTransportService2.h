@@ -93,11 +93,10 @@ public:
     NS_DECL_NSPISOCKETTRANSPORTSERVICE
     NS_DECL_NSISOCKETTRANSPORTSERVICE
     NS_DECL_NSIROUTEDSOCKETTRANSPORTSERVICE
-    NS_DECL_NSIEVENTTARGET
+    NS_DECL_NSIEVENTTARGET_FULL
     NS_DECL_NSITHREADOBSERVER
     NS_DECL_NSIRUNNABLE
-    NS_DECL_NSIOBSERVER 
-    using nsIEventTarget::Dispatch;
+    NS_DECL_NSIOBSERVER
 
     nsSocketTransportService();
 
@@ -151,6 +150,8 @@ private:
 
     // Detaches all sockets.
     void Reset(bool aGuardLocals);
+
+    nsresult ShutdownThread();
 
     //-------------------------------------------------------------------------
     // socket lists (socket thread only)
@@ -272,7 +273,7 @@ private:
 };
 
 extern nsSocketTransportService *gSocketTransportService;
-extern Atomic<PRThread*, Relaxed> gSocketThread;
+bool OnSocketThread();
 
 } // namespace net
 } // namespace mozilla

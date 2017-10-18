@@ -7,14 +7,11 @@
  * Tests whether the profiler responds to "getFeatures" adequately.
  */
 
-const Profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
-
-function run_test()
-{
+function run_test() {
   get_chrome_actors((client, form) => {
     let actor = form.profilerActor;
     test_getfeatures(client, actor, () => {
-      client.close(() => {
+      client.close().then(() => {
         do_test_finished();
       });
     });
@@ -23,8 +20,7 @@ function run_test()
   do_test_pending();
 }
 
-function test_getfeatures(client, actor, callback)
-{
+function test_getfeatures(client, actor, callback) {
   client.request({ to: actor, type: "getFeatures" }, response => {
     do_check_eq(typeof response.features, "object");
     do_check_true(response.features.length >= 1);

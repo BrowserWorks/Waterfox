@@ -39,14 +39,16 @@ TestNestedLoopsParent::Main()
     Close();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestNestedLoopsParent::RecvNonce()
 {
     // if we have an OnMaybeDequeueOne waiting for us (we may not, due
     // to the inherent race condition in this test, then this event
     // must be ordered after it in the queue
-    MessageLoop::current()->PostTask(
-        NewNonOwningRunnableMethod(this, &TestNestedLoopsParent::BreakNestedLoop));
+    MessageLoop::current()->PostTask(NewNonOwningRunnableMethod(
+      "_ipdltest::TestNestedLoopsParent::BreakNestedLoop",
+      this,
+      &TestNestedLoopsParent::BreakNestedLoop));
 
     // sigh ... spin for a while to let the reply to R arrive
     puts(" (sleeping to wait for reply to R ... sorry)");
@@ -58,7 +60,7 @@ TestNestedLoopsParent::RecvNonce()
             fail("expected at least one pending event");
     } while (!mBreakNestedLoop);
 
-    return true;
+    return IPC_OK();
 }
 
 void
@@ -80,18 +82,18 @@ TestNestedLoopsChild::~TestNestedLoopsChild()
     MOZ_COUNT_DTOR(TestNestedLoopsChild);
 }
 
-bool
+mozilla::ipc::IPCResult
 TestNestedLoopsChild::RecvStart()
 {
     if (!SendNonce())
         fail("sending Nonce");
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestNestedLoopsChild::AnswerR()
 {
-    return true;
+    return IPC_OK();
 }
 
 } // namespace _ipdltest

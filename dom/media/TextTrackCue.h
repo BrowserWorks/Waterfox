@@ -16,6 +16,7 @@
 #include "nsIDocument.h"
 #include "mozilla/dom/HTMLDivElement.h"
 #include "mozilla/dom/TextTrack.h"
+#include "mozilla/StateWatching.h"
 
 namespace mozilla {
 namespace dom {
@@ -323,6 +324,13 @@ public:
   void SetTrack(TextTrack* aTextTrack)
   {
     mTrack = aTextTrack;
+    if (!mHaveStartedWatcher && aTextTrack) {
+      mHaveStartedWatcher = true;
+      mWatchManager.Watch(mReset, &TextTrackCue::NotifyDisplayStatesChanged);
+    } else if (mHaveStartedWatcher && !aTextTrack) {
+      mHaveStartedWatcher = false;
+      mWatchManager.Unwatch(mReset, &TextTrackCue::NotifyDisplayStatesChanged);
+    }
   }
 
   /**
@@ -360,6 +368,9 @@ private:
       mTrack->NotifyCueUpdated(aCue);
     }
   }
+
+  void NotifyDisplayStatesChanged();
+
   void SetDefaultCueSettings();
   nsresult StashDocument();
 
@@ -371,7 +382,7 @@ private:
   RefPtr<TextTrack> mTrack;
   RefPtr<HTMLTrackElement> mTrackElement;
   nsString mId;
-  double mPosition;
+  MOZ_INIT_OUTSIDE_CTOR double mPosition;
   bool mPositionIsAutoKeyword;
   PositionAlignSetting mPositionAlign;
   double mSize;
@@ -380,7 +391,7 @@ private:
   RefPtr<TextTrackRegion> mRegion;
   DirectionSetting mVertical;
   bool mLineIsAutoKeyword;
-  double mLine;
+  MOZ_INIT_OUTSIDE_CTOR double mLine;
   AlignSetting mAlign;
   LineAlignSetting mLineAlign;
 
@@ -390,11 +401,15 @@ private:
   // Tells whether or not we need to recompute mDisplayState. This is set
   // anytime a property that relates to the display of the TextTrackCue is
   // changed.
-  bool mReset;
+  Watchable<bool> mReset;
 
   bool mActive;
 
   static StaticRefPtr<nsIWebVTTParserWrapper> sParserWrapper;
+
+  // Only start watcher after the cue has text track.
+  bool mHaveStartedWatcher;
+  WatchManager<TextTrackCue> mWatchManager;
 };
 
 } // namespace dom

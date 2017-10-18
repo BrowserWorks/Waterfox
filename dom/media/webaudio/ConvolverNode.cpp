@@ -125,8 +125,8 @@ public:
           aStream->ScheduleCheckForInactive();
           RefPtr<PlayingRefChanged> refchanged =
             new PlayingRefChanged(aStream, PlayingRefChanged::RELEASE);
-          aStream->Graph()->
-            DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+          aStream->Graph()->DispatchToMainThreadAfterStreamStateUpdate(
+            refchanged.forget());
         }
         aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
         return;
@@ -146,8 +146,8 @@ public:
       if (mLeftOverData <= 0) {
         RefPtr<PlayingRefChanged> refchanged =
           new PlayingRefChanged(aStream, PlayingRefChanged::ADDREF);
-        aStream->Graph()->
-          DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+        aStream->Graph()->DispatchToMainThreadAfterStreamStateUpdate(
+          refchanged.forget());
       }
       mLeftOverData = mBufferLength;
       MOZ_ASSERT(mLeftOverData > 0);
@@ -200,11 +200,38 @@ ConvolverNode::ConvolverNode(AudioContext* aContext)
 {
   ConvolverNodeEngine* engine = new ConvolverNodeEngine(this, mNormalize);
   mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+                                    AudioNodeStream::NO_STREAM_FLAGS,
+                                    aContext->Graph());
 }
 
-ConvolverNode::~ConvolverNode()
+/* static */ already_AddRefed<ConvolverNode>
+ConvolverNode::Create(JSContext* aCx, AudioContext& aAudioContext,
+                      const ConvolverOptions& aOptions,
+                      ErrorResult& aRv)
 {
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<ConvolverNode> audioNode = new ConvolverNode(&aAudioContext);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  // This must be done before setting the buffer.
+  audioNode->SetNormalize(!aOptions.mDisableNormalization);
+
+  if (aOptions.mBuffer.WasPassed()) {
+    MOZ_ASSERT(aCx);
+    audioNode->SetBuffer(aCx, aOptions.mBuffer.Value(), aRv);
+    if (NS_WARN_IF(aRv.Failed())) {
+      return nullptr;
+    }
+  }
+
+  return audioNode.forget();
 }
 
 size_t
@@ -291,4 +318,3 @@ ConvolverNode::SetNormalize(bool aNormalize)
 
 } // namespace dom
 } // namespace mozilla
-

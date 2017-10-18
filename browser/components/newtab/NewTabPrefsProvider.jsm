@@ -1,33 +1,25 @@
-/* global Services, Preferences, EventEmitter, XPCOMUtils */
-/* exported NewTabPrefsProvider */
-
 "use strict";
 
 this.EXPORTED_SYMBOLS = ["NewTabPrefsProvider"];
 
 const {interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function() {
-  const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
+  const {EventEmitter} = Cu.import("resource://gre/modules/EventEmitter.jsm", {});
   return EventEmitter;
 });
 
 // Supported prefs and data type
 const gPrefsMap = new Map([
-  ["browser.newtabpage.remote", "bool"],
-  ["browser.newtabpage.remote.mode", "str"],
-  ["browser.newtabpage.remote.version", "str"],
+  ["browser.newtabpage.activity-stream.enabled", "bool"],
   ["browser.newtabpage.enabled", "bool"],
   ["browser.newtabpage.enhanced", "bool"],
   ["browser.newtabpage.introShown", "bool"],
   ["browser.newtabpage.updateIntroShown", "bool"],
   ["browser.newtabpage.pinned", "str"],
   ["browser.newtabpage.blocked", "str"],
-  ["intl.locale.matchOS", "bool"],
-  ["general.useragent.locale", "localized"],
   ["browser.search.hiddenOneOffs", "str"],
 ]);
 
@@ -53,16 +45,20 @@ PrefsProvider.prototype = {
       if (gPrefsMap.has(data)) {
         switch (gPrefsMap.get(data)) {
           case "bool":
-            this.emit(data, Preferences.get(data, false));
+            this.emit(data, Services.prefs.getBoolPref(data, false));
             break;
           case "str":
-            this.emit(data, Preferences.get(data, ""));
+            this.emit(data, Services.prefs.getStringPref(data, ""));
             break;
           case "localized":
-            try {
-              this.emit(data, Preferences.get(data, "", Ci.nsIPrefLocalizedString));
-            } catch (e) {
-              this.emit(data, Preferences.get(data, ""));
+            if (Services.prefs.getPrefType(data) == Ci.nsIPrefBranch.PREF_INVALID) {
+              this.emit(data, "");
+            } else {
+              try {
+                this.emit(data, Services.prefs.getComplexValue(data, Ci.nsIPrefLocalizedString));
+              } catch (e) {
+                this.emit(data, Services.prefs.getStringPref(data));
+              }
             }
             break;
           default:
@@ -81,7 +77,25 @@ PrefsProvider.prototype = {
   get newtabPagePrefs() {
     let results = {};
     for (let pref of gNewtabPagePrefs) {
-      results[pref] = Preferences.get(pref, null);
+      results[pref] = null;
+
+      if (Services.prefs.getPrefType(pref) != Ci.nsIPrefBranch.PREF_INVALID) {
+        switch (gPrefsMap.get(pref)) {
+          case "bool":
+            results[pref] = Services.prefs.getBoolPref(pref);
+            break;
+          case "str":
+            results[pref] = Services.prefs.getStringPref(pref);
+            break;
+          case "localized":
+            try {
+              results[pref] = Services.prefs.getComplexValue(pref, Ci.nsIPrefLocalizedString);
+            } catch (e) {
+              results[pref] = Services.prefs.getStringPref(pref);
+            }
+            break;
+        }
+      }
     }
     return results;
   },
@@ -92,13 +106,13 @@ PrefsProvider.prototype = {
 
   init() {
     for (let pref of gPrefsMap.keys()) {
-      Services.prefs.addObserver(pref, this, false);
+      Services.prefs.addObserver(pref, this);
     }
   },
 
   uninit() {
     for (let pref of gPrefsMap.keys()) {
-      Services.prefs.removeObserver(pref, this, false);
+      Services.prefs.removeObserver(pref, this);
     }
   }
 };

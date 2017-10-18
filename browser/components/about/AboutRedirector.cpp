@@ -13,7 +13,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIProtocolHandler.h"
 #include "mozilla/ArrayUtils.h"
-#include "nsDOMString.h"
+#include "mozilla/Preferences.h"
 #include "nsServiceManagerUtils.h"
 
 namespace mozilla {
@@ -21,11 +21,13 @@ namespace browser {
 
 NS_IMPL_ISUPPORTS(AboutRedirector, nsIAboutModule)
 
+bool AboutRedirector::sUseOldPreferences = false;
+bool AboutRedirector::sActivityStreamEnabled = false;
+
 struct RedirEntry {
   const char* id;
   const char* url;
   uint32_t flags;
-  const char* idbOriginPostfix;
 };
 
 /*
@@ -36,14 +38,12 @@ struct RedirEntry {
   required before adding new map entries without
   URI_SAFE_FOR_UNTRUSTED_CONTENT.
 */
-static RedirEntry kRedirMap[] = {
-#ifdef MOZ_SAFE_BROWSING
+static const RedirEntry kRedirMap[] = {
   { "blocked", "chrome://browser/content/blockedSite.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
     nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
     nsIAboutModule::ALLOW_SCRIPT |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT },
-#endif
   { "certerror", "chrome://browser/content/aboutNetError.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
     nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
@@ -81,8 +81,6 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT },
   { "welcomeback", "chrome://browser/content/aboutWelcomeBack.xhtml",
     nsIAboutModule::ALLOW_SCRIPT },
-  { "sync-tabs", "chrome://browser/content/sync/aboutSyncTabs.xul",
-    nsIAboutModule::ALLOW_SCRIPT },
   // Linkable because of indexeddb use (bug 1228118)
   { "home", "chrome://browser/content/abouthome/aboutHome.xhtml",
     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
@@ -109,7 +107,6 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT },
 };
-static const int kRedirTotal = ArrayLength(kRedirMap);
 
 static nsAutoCString
 GetAboutModuleName(nsIURI *aURI)
@@ -135,6 +132,8 @@ AboutRedirector::NewChannel(nsIURI* aURI,
                             nsIChannel** result)
 {
   NS_ENSURE_ARG_POINTER(aURI);
+  NS_ENSURE_ARG_POINTER(aLoadInfo);
+
   NS_ASSERTION(result, "must not be null");
 
   nsAutoCString path = GetAboutModuleName(aURI);
@@ -143,10 +142,16 @@ AboutRedirector::NewChannel(nsIURI* aURI,
   nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (!strcmp(path.get(), kRedirMap[i].id)) {
+  static bool sPrefCacheInited = false;
+  if (!sPrefCacheInited) {
+    Preferences::AddBoolVarCache(&sUseOldPreferences,
+                                 "browser.preferences.useOldOrganization");
+    sPrefCacheInited = true;
+  }
+
+  for (auto & redir : kRedirMap) {
+    if (!strcmp(path.get(), redir.id)) {
       nsAutoCString url;
-      nsLoadFlags loadFlags = static_cast<nsLoadFlags>(nsIChannel::LOAD_NORMAL);
 
       if (path.EqualsLiteral("newtab")) {
         // let the aboutNewTabService decide where to redirect
@@ -155,21 +160,12 @@ AboutRedirector::NewChannel(nsIURI* aURI,
         NS_ENSURE_SUCCESS(rv, rv);
         rv = aboutNewTabService->GetDefaultURL(url);
         NS_ENSURE_SUCCESS(rv, rv);
-
-        // if about:newtab points to an external resource we have to make sure
-        // the content is signed and trusted
-        bool remoteEnabled = false;
-        rv = aboutNewTabService->GetRemoteEnabled(&remoteEnabled);
-        NS_ENSURE_SUCCESS(rv, rv);
-        if (remoteEnabled) {
-          NS_ENSURE_ARG_POINTER(aLoadInfo);
-          aLoadInfo->SetVerifySignedContent(true);
-          loadFlags = static_cast<nsLoadFlags>(nsIChannel::LOAD_REPLACE);
-        }
+      } else if (path.EqualsLiteral("preferences") && !sUseOldPreferences) {
+        url.AssignASCII("chrome://browser/content/preferences/in-content-new/preferences.xul");
       }
       // fall back to the specified url in the map
       if (url.IsEmpty()) {
-        url.AssignASCII(kRedirMap[i].url);
+        url.AssignASCII(redir.url);
       }
 
       nsCOMPtr<nsIChannel> tempChannel;
@@ -178,26 +174,22 @@ AboutRedirector::NewChannel(nsIURI* aURI,
       NS_ENSURE_SUCCESS(rv, rv);
 
       // If tempURI links to an external URI (i.e. something other than
-      // chrome:// or resource://) then set the LOAD_REPLACE flag on the
-      // channel which forces the channel owner to reflect the displayed
+      // chrome:// or resource://) then set the result principal URI on the
+      // load info which forces the channel prncipal to reflect the displayed
       // URL rather then being the systemPrincipal.
       bool isUIResource = false;
       rv = NS_URIChainHasFlags(tempURI, nsIProtocolHandler::URI_IS_UI_RESOURCE,
                                &isUIResource);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      loadFlags = isUIResource
-                    ? static_cast<nsLoadFlags>(nsIChannel::LOAD_NORMAL)
-                    : static_cast<nsLoadFlags>(nsIChannel::LOAD_REPLACE);
-
       rv = NS_NewChannelInternal(getter_AddRefs(tempChannel),
                                  tempURI,
-                                 aLoadInfo,
-                                 nullptr, // aLoadGroup
-                                 nullptr, // aCallbacks
-                                 loadFlags);
+                                 aLoadInfo);
       NS_ENSURE_SUCCESS(rv, rv);
 
+      if (!isUIResource) {
+        aLoadInfo->SetResultPrincipalURI(tempURI);
+      }
       tempChannel->SetOriginalURI(aURI);
 
       NS_ADDREF(*result = tempChannel);
@@ -215,36 +207,34 @@ AboutRedirector::GetURIFlags(nsIURI *aURI, uint32_t *result)
 
   nsAutoCString name = GetAboutModuleName(aURI);
 
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (name.Equals(kRedirMap[i].id)) {
-      *result = kRedirMap[i].flags;
-      return NS_OK;
-    }
+  static bool sASEnabledCacheInited = false;
+  if (!sASEnabledCacheInited) {
+    Preferences::AddBoolVarCache(&sActivityStreamEnabled,
+                                 "browser.newtabpage.activity-stream.enabled");
+    sASEnabledCacheInited = true;
   }
 
-  return NS_ERROR_ILLEGAL_VALUE;
-}
+  for (auto & redir : kRedirMap) {
+    if (name.Equals(redir.id)) {
 
-NS_IMETHODIMP
-AboutRedirector::GetIndexedDBOriginPostfix(nsIURI *aURI, nsAString &result)
-{
-  NS_ENSURE_ARG_POINTER(aURI);
-
-  nsAutoCString name = GetAboutModuleName(aURI);
-
-  for (int i = 0; i < kRedirTotal; i++) {
-    if (name.Equals(kRedirMap[i].id)) {
-      const char* postfix = kRedirMap[i].idbOriginPostfix;
-      if (!postfix) {
-        break;
+      // Once ActivityStream is fully rolled out and we've removed Tiles,
+      // this special case can go away and the flag can just become part
+      // of the normal about:newtab entry in kRedirMap.
+      if (name.EqualsLiteral("newtab")) {
+        if (sActivityStreamEnabled) {
+          *result = redir.flags |
+            nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
+            nsIAboutModule::ENABLE_INDEXED_DB |
+            nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT;
+          return NS_OK;
+        }
       }
 
-      result.AssignASCII(postfix);
+      *result = redir.flags;
       return NS_OK;
     }
   }
 
-  SetDOMStringToNull(result);
   return NS_ERROR_ILLEGAL_VALUE;
 }
 

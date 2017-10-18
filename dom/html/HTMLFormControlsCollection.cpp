@@ -6,7 +6,7 @@
 
 #include "mozilla/dom/HTMLFormControlsCollection.h"
 
-#include "mozFlushType.h"
+#include "mozilla/FlushType.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLFormControlsCollectionBinding.h"
@@ -29,7 +29,7 @@ HTMLFormControlsCollection::ShouldBeInElements(nsIFormControl* aFormControl)
   // <input type=image> elements to the list of form controls in a
   // form.
 
-  switch (aFormControl->GetType()) {
+  switch (aFormControl->ControlType()) {
   case NS_FORM_BUTTON_BUTTON :
   case NS_FORM_BUTTON_RESET :
   case NS_FORM_BUTTON_SUBMIT :
@@ -47,11 +47,13 @@ HTMLFormControlsCollection::ShouldBeInElements(nsIFormControl* aFormControl)
   case NS_FORM_INPUT_TEXT :
   case NS_FORM_INPUT_TEL :
   case NS_FORM_INPUT_URL :
-  case NS_FORM_INPUT_MONTH :
   case NS_FORM_INPUT_NUMBER :
   case NS_FORM_INPUT_RANGE :
   case NS_FORM_INPUT_DATE :
   case NS_FORM_INPUT_TIME :
+  case NS_FORM_INPUT_MONTH :
+  case NS_FORM_INPUT_WEEK :
+  case NS_FORM_INPUT_DATETIME_LOCAL :
   case NS_FORM_SELECT :
   case NS_FORM_TEXTAREA :
   case NS_FORM_FIELDSET :
@@ -98,12 +100,12 @@ HTMLFormControlsCollection::Clear()
 {
   // Null out childrens' pointer to me.  No refcounting here
   for (int32_t i = mElements.Length() - 1; i >= 0; i--) {
-    mElements[i]->ClearForm(false);
+    mElements[i]->ClearForm(false, false);
   }
   mElements.Clear();
 
   for (int32_t i = mNotInElements.Length() - 1; i >= 0; i--) {
-    mNotInElements[i]->ClearForm(false);
+    mNotInElements[i]->ClearForm(false, false);
   }
   mNotInElements.Clear();
 
@@ -116,7 +118,7 @@ HTMLFormControlsCollection::FlushPendingNotifications()
   if (mForm) {
     nsIDocument* doc = mForm->GetUncomposedDoc();
     if (doc) {
-      doc->FlushPendingNotifications(Flush_Content);
+      doc->FlushPendingNotifications(FlushType::Content);
     }
   }
 }
@@ -132,7 +134,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(HTMLFormControlsCollection)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(HTMLFormControlsCollection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNameLookupTable)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(HTMLFormControlsCollection)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
@@ -175,7 +176,7 @@ HTMLFormControlsCollection::Item(uint32_t aIndex, nsIDOMNode** aReturn)
   return CallQueryInterface(item, aReturn);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 HTMLFormControlsCollection::NamedItem(const nsAString& aName,
                                       nsIDOMNode** aReturn)
 {
@@ -239,7 +240,7 @@ HTMLFormControlsCollection::IndexOfControl(nsIFormControl* aControl,
                                            int32_t* aIndex)
 {
   // Note -- not a DOM method; callers should handle flushing themselves
-  
+
   NS_ENSURE_ARG_POINTER(aIndex);
 
   *aIndex = mElements.IndexOf(aControl);
@@ -260,7 +261,7 @@ HTMLFormControlsCollection::RemoveElementFromTable(
 
 nsresult
 HTMLFormControlsCollection::GetSortedControls(
-  nsTArray<nsGenericHTMLFormElement*>& aControls) const
+  nsTArray<RefPtr<nsGenericHTMLFormElement>>& aControls) const
 {
 #ifdef DEBUG
   HTMLFormElement::AssertDocumentOrder(mElements, mForm);

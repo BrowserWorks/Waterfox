@@ -23,6 +23,10 @@ namespace mozilla {
 
 class ContentCacheInParent;
 
+namespace dom {
+class TabParent;
+} // namespace dom
+
 /**
  * ContentCache stores various information of the child content.
  * This class has members which are necessary both in parent process and
@@ -44,6 +48,12 @@ protected:
   // Start offset of the composition string.
   uint32_t mCompositionStart;
 
+  enum
+  {
+    ePrevCharRect = 1,
+    eNextCharRect = 0
+  };
+
   struct Selection final
   {
     // Following values are offset in "flat text".
@@ -52,9 +62,13 @@ protected:
 
     WritingMode mWritingMode;
 
-    // Character rects at next character of mAnchor and mFocus.
-    LayoutDeviceIntRect mAnchorCharRect;
-    LayoutDeviceIntRect mFocusCharRect;
+    // Character rects at previous and next character of mAnchor and mFocus.
+    // The reason why ContentCache needs to store each previous character of
+    // them is IME may query character rect of the last character of a line
+    // when caret is at the end of the line.
+    // Note that use ePrevCharRect and eNextCharRect for accessing each item.
+    LayoutDeviceIntRect mAnchorCharRects[2];
+    LayoutDeviceIntRect mFocusCharRects[2];
 
     // Whole rect of selected text. This is empty if the selection is collapsed.
     LayoutDeviceIntRect mRect;
@@ -69,9 +83,22 @@ protected:
     {
       mAnchor = mFocus = UINT32_MAX;
       mWritingMode = WritingMode();
-      mAnchorCharRect.SetEmpty();
-      mFocusCharRect.SetEmpty();
+      ClearAnchorCharRects();
+      ClearFocusCharRects();
       mRect.SetEmpty();
+    }
+
+    void ClearAnchorCharRects()
+    {
+      for (size_t i = 0; i < ArrayLength(mAnchorCharRects); i++) {
+        mAnchorCharRects[i].SetEmpty();
+      }
+    }
+    void ClearFocusCharRects()
+    {
+      for (size_t i = 0; i < ArrayLength(mFocusCharRects); i++) {
+        mFocusCharRects[i].SetEmpty();
+      }
     }
 
     bool IsValid() const
@@ -112,13 +139,15 @@ protected:
     {
       NS_ASSERTION(IsValid(),
                    "The caller should check if the selection is valid");
-      return Reversed() ? mFocusCharRect : mAnchorCharRect;
+      return Reversed() ? mFocusCharRects[eNextCharRect] :
+                          mAnchorCharRects[eNextCharRect];
     }
     LayoutDeviceIntRect EndCharRect() const
     {
       NS_ASSERTION(IsValid(),
                    "The caller should check if the selection is valid");
-      return Reversed() ? mAnchorCharRect : mFocusCharRect;
+      return Reversed() ? mAnchorCharRects[eNextCharRect] :
+                          mFocusCharRects[eNextCharRect];
     }
   } mSelection;
 
@@ -280,6 +309,10 @@ private:
   bool QueryCharRect(nsIWidget* aWidget,
                      uint32_t aOffset,
                      LayoutDeviceIntRect& aCharRect) const;
+  bool QueryCharRectArray(nsIWidget* aWidget,
+                          uint32_t aOffset,
+                          uint32_t aLength,
+                          RectArray& aCharRectArray) const;
   bool CacheCaret(nsIWidget* aWidget,
                   const IMENotification* aNotification = nullptr);
   bool CacheTextRects(nsIWidget* aWidget,
@@ -289,7 +322,7 @@ private:
 class ContentCacheInParent final : public ContentCache
 {
 public:
-  ContentCacheInParent();
+  explicit ContentCacheInParent(dom::TabParent& aTabParent);
 
   /**
    * AssignContent() is called when TabParent receives ContentCache from
@@ -377,6 +410,11 @@ private:
   IMENotification mPendingLayoutChange;
   IMENotification mPendingCompositionUpdate;
 
+  // mTabParent is owner of the instance.
+  dom::TabParent& MOZ_NON_OWNING_REF mTabParent;
+  // mCompositionString is composition string which were sent to the remote
+  // process but not yet committed in the remote process.
+  nsString mCompositionString;
   // This is not nullptr only while the instance is requesting IME to
   // composition.  Then, data value of dispatched composition events should
   // be stored into the instance.
@@ -385,8 +423,29 @@ private:
   // a selection event and decreased after they are received in the child
   // process.
   uint32_t mPendingEventsNeedingAck;
+  // mCompositionStartInChild stores current composition start offset in the
+  // remote process.
+  uint32_t mCompositionStartInChild;
+  // mPendingCommitLength is commit string length of the first pending
+  // composition.  This is used by relative offset query events when querying
+  // new composition start offset.
+  // Note that when mPendingCompositionCount is not 0, i.e., there are 2 or
+  // more pending compositions, this cache won't be used because in such case,
+  // anyway ContentCacheInParent cannot return proper character rect.
+  uint32_t mPendingCommitLength;
+  // mPendingCompositionCount is number of compositions which started in widget
+  // but not yet handled in the child process.
+  uint8_t mPendingCompositionCount;
+  // mWidgetHasComposition is true when the widget in this process thinks that
+  // IME has composition.  So, this is set to true when eCompositionStart is
+  // dispatched and set to false when eCompositionCommit(AsIs) is dispatched.
+  bool mWidgetHasComposition;
+  // mIsPendingLastCommitEvent is true only when this sends
+  // eCompositionCommit(AsIs) event to the remote process but it's not handled
+  // in the remote process yet.
+  bool mIsPendingLastCommitEvent;
 
-  bool mIsComposing;
+  ContentCacheInParent() = delete;
 
   /**
    * When following methods' aRoundToExistingOffset is true, even if specified

@@ -90,7 +90,7 @@ public:
   ~TISInputSourceWrapper() { Clear(); }
 
   void InitByInputSourceID(const char* aID);
-  void InitByInputSourceID(const nsAFlatString &aID);
+  void InitByInputSourceID(const nsString& aID);
   void InitByInputSourceID(const CFStringRef aID);
   /**
    * InitByLayoutID() initializes the keyboard layout by the layout ID.
@@ -277,8 +277,11 @@ public:
    * ComputeGeckoCodeNameIndex() returns Gecko code name index for the key.
    *
    * @param aNativeKeyCode        A native keycode.
+   * @param aKbType               A native Keyboard Type value.  Typically,
+   *                              this is a result of ::LMGetKbdType().
    */
-  static CodeNameIndex ComputeGeckoCodeNameIndex(UInt32 aNativeKeyCode);
+  static CodeNameIndex ComputeGeckoCodeNameIndex(UInt32 aNativeKeyCode,
+                                                 UInt32 aKbType);
 
 protected:
   /**
@@ -311,6 +314,19 @@ protected:
    *                              returns 0.
    */
   uint32_t TranslateToChar(UInt32 aKeyCode, UInt32 aModifiers, UInt32 aKbType);
+
+  /**
+   * TranslateToChar() checks if aKeyCode with aModifiers is a dead key.
+   *
+   * @param aKeyCode              A native keyCode.
+   * @param aModifiers            Combination of native modifier flags.
+   * @param aKbType               A native Keyboard Type value.  Typically,
+   *                              this is a result of ::LMGetKbdType().
+   * @return                      Returns true if the key with specified
+   *                              modifier state isa dead key.  Otherwise,
+   *                              false.
+   */
+  bool IsDeadKey(UInt32 aKeyCode, UInt32 aModifiers, UInt32 aKbType);
 
   /**
    * ComputeInsertString() computes string to be inserted with the key event.
@@ -513,6 +529,9 @@ protected:
     // String which are included in [mKeyEvent characters] and already handled
     // by InsertText() call(s).
     nsString mInsertedString;
+    // Unique id associated with a keydown / keypress event. It's ok if this
+    // wraps over long periods.
+    uint32_t mUniqueId;
     // Whether keydown event was consumed by web contents or chrome contents.
     bool mKeyDownHandled;
     // Whether keypress event was dispatched for mKeyEvent.
@@ -526,15 +545,19 @@ protected:
     // if it dispatches keypress event.
     bool mCompositionDispatched;
 
-    KeyEventState() : mKeyEvent(nullptr)
+    KeyEventState()
+      : mKeyEvent(nullptr)
+      , mUniqueId(0)
     {
       Clear();
-    }    
+    }
 
-    explicit KeyEventState(NSEvent* aNativeKeyEvent) : mKeyEvent(nullptr)
+    explicit KeyEventState(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
+      : mKeyEvent(nullptr)
+      , mUniqueId(0)
     {
       Clear();
-      Set(aNativeKeyEvent);
+      Set(aNativeKeyEvent, aUniqueId);
     }
 
     KeyEventState(const KeyEventState &aOther) = delete;
@@ -544,11 +567,12 @@ protected:
       Clear();
     }
 
-    void Set(NSEvent* aNativeKeyEvent)
+    void Set(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
     {
       NS_PRECONDITION(aNativeKeyEvent, "aNativeKeyEvent must not be NULL");
       Clear();
       mKeyEvent = [aNativeKeyEvent retain];
+      mUniqueId = aUniqueId;
     }
 
     void Clear()
@@ -556,6 +580,7 @@ protected:
       if (mKeyEvent) {
         [mKeyEvent release];
         mKeyEvent = nullptr;
+        mUniqueId = 0;
       }
       mInsertString = nullptr;
       mInsertedString.Truncate();
@@ -575,6 +600,21 @@ protected:
     bool CanDispatchKeyPressEvent() const
     {
       return !mKeyPressDispatched && !IsDefaultPrevented();
+    }
+
+    bool CanHandleCommand() const
+    {
+      return !mKeyDownHandled && !mKeyPressHandled;
+    }
+
+    bool IsEnterKeyEvent() const
+    {
+      if (NS_WARN_IF(!mKeyEvent)) {
+        return false;
+      }
+      KeyNameIndex keyNameIndex =
+        TISInputSourceWrapper::ComputeGeckoKeyNameIndex([mKeyEvent keyCode]);
+      return keyNameIndex == KEY_NAME_INDEX_Enter;
     }
 
     void InitKeyEvent(TextInputHandlerBase* aHandler,
@@ -639,7 +679,7 @@ protected:
   /**
    * PushKeyEvent() adds the current key event to mCurrentKeyEvents.
    */
-  KeyEventState* PushKeyEvent(NSEvent* aNativeKeyEvent)
+  KeyEventState* PushKeyEvent(NSEvent* aNativeKeyEvent, uint32_t aUniqueId = 0)
   {
     uint32_t nestCount = mCurrentKeyEvents.Length();
     for (uint32_t i = 0; i < nestCount; i++) {
@@ -650,10 +690,10 @@ protected:
 
     KeyEventState* keyEvent = nullptr;
     if (nestCount == 0) {
-      mFirstKeyEvent.Set(aNativeKeyEvent);
+      mFirstKeyEvent.Set(aNativeKeyEvent, aUniqueId);
       keyEvent = &mFirstKeyEvent;
     } else {
-      keyEvent = new KeyEventState(aNativeKeyEvent);
+      keyEvent = new KeyEventState(aNativeKeyEvent, aUniqueId);
     }
     return *mCurrentKeyEvents.AppendElement(keyEvent);
   }
@@ -758,6 +798,7 @@ public:
   // TextEventDispatcherListener methods
   NS_IMETHOD NotifyIME(TextEventDispatcher* aTextEventDispatcher,
                        const IMENotification& aNotification) override;
+  NS_IMETHOD_(IMENotificationRequests) GetIMENotificationRequests() override;
   NS_IMETHOD_(void) OnRemovedFrom(
                       TextEventDispatcher* aTextEventDispatcher) override;
   NS_IMETHOD_(void) WillDispatchKeyboardEvent(
@@ -772,6 +813,7 @@ public:
   virtual void OnFocusChangeInGecko(bool aFocus);
 
   void OnSelectionChange(const IMENotification& aIMENotification);
+  void OnLayoutChange();
 
   /**
    * Call [NSTextInputContext handleEvent] for mouse event support of IME
@@ -875,14 +917,6 @@ public:
   bool IsASCIICapableOnly() { return mIsASCIICapableOnly; }
   bool IgnoreIMECommit() { return mIgnoreIMECommit; }
 
-  bool IgnoreIMEComposition()
-  {
-    // Ignore the IME composition events when we're pending to discard the
-    // composition and we are not to handle the IME composition now.
-    return (mPendingMethods & kDiscardIMEComposition) &&
-           (mIsInFocusProcessing || !IsFocused());
-  }
-
   void CommitIMEComposition();
   void CancelIMEComposition();
 
@@ -909,8 +943,7 @@ protected:
   nsCOMPtr<nsITimer> mTimer;
   enum {
     kNotifyIMEOfFocusChangeInGecko = 1,
-    kDiscardIMEComposition         = 2,
-    kSyncASCIICapableOnly          = 4
+    kSyncASCIICapableOnly          = 2
   };
   uint32_t mPendingMethods;
 
@@ -948,11 +981,6 @@ private:
   bool mIsIMEEnabled;
   bool mIsASCIICapableOnly;
   bool mIgnoreIMECommit;
-  // This flag is enabled by OnFocusChangeInGecko, and will be cleared by
-  // ExecutePendingMethods.  When this is true, IsFocus() returns TRUE.  At
-  // that time, the focus processing in Gecko might not be finished yet.  So,
-  // you cannot use WidgetQueryContentEvent or something.
-  bool mIsInFocusProcessing;
   bool mIMEHasFocus;
 
   void KillIMEComposition();
@@ -961,7 +989,6 @@ private:
 
   // Pending methods
   void NotifyIMEOfFocusChangeInGecko();
-  void DiscardIMEComposition();
   void SyncASCIICapableOnly();
 
   static bool sStaticMembersInitialized;
@@ -1079,10 +1106,11 @@ public:
    * KeyDown event handler.
    *
    * @param aNativeEvent          A native NSKeyDown event.
-   * @return                      TRUE if the event is consumed by web contents
-   *                              or chrome contents.  Otherwise, FALSE.
+   * @param aUniqueId             A unique ID for the event.
+   * @return                      TRUE if the event is dispatched to web
+   *                              contents or chrome contents. Otherwise, FALSE.
    */
-  bool HandleKeyDownEvent(NSEvent* aNativeEvent);
+  bool HandleKeyDownEvent(NSEvent* aNativeEvent, uint32_t aUniqueId);
 
   /**
    * KeyUp event handler.
@@ -1110,6 +1138,15 @@ public:
    */
   void InsertText(NSAttributedString *aAttrString,
                   NSRange* aReplacementRange = nullptr);
+
+  /**
+   * Handles "insertNewline:" command.  Due to bug 1350541, this always
+   * dispatches a keypress event of Enter key unless there is composition.
+   * If it's handling Enter key event, this dispatches "actual" Enter
+   * keypress event.  Otherwise, dispatches "fake" Enter keypress event
+   * whose code value is unidentified.
+   */
+  void InsertNewline();
 
   /**
    * doCommandBySelector event handler.

@@ -13,6 +13,10 @@
 #include "SharedMemory.h"
 #include <mach/port.h>
 
+#ifdef FUZZING
+#include "SharedMemoryFuzzer.h"
+#endif
+
 //
 // This is a low-level wrapper around platform shared memory.  Don't
 // use it directly; use Shmem allocated through IPDL interfaces.
@@ -40,7 +44,7 @@ public:
 
   SharedMemoryBasic();
 
-  virtual bool SetHandle(const Handle& aHandle) override;
+  virtual bool SetHandle(const Handle& aHandle, OpenRights aRights) override;
 
   virtual bool Create(size_t aNbytes) override;
 
@@ -50,7 +54,11 @@ public:
 
   virtual void* memory() const override
   {
+#ifdef FUZZING
+    return SharedMemoryFuzzer::MutateSharedMemory(mMemory, mAllocSize);
+#else
     return mMemory;
+#endif
   }
 
   virtual SharedMemoryType Type() const override
@@ -76,6 +84,8 @@ private:
   mach_port_t mPort;
   // Pointer to mapped region, null if unmapped.
   void *mMemory;
+  // Access rights to map an existing region with.
+  OpenRights mOpenRights;
 };
 
 } // namespace ipc

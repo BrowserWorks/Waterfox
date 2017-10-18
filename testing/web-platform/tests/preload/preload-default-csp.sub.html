@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; default-src 'none'">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/preload/resources/preload_helper.js"></script>
+<script>
+    var t = async_test('Makes sure that preload requests respect CSP');
+</script>
+<link rel=preload href="{{host}}:{{ports[http][1]}}/preload/resources/dummy.js" as=style>
+<link rel=preload href="resources/dummy.css" as=style>
+<link rel=preload href="resources/square.png" as=image>
+<link rel=preload href="resources/CanvasTest.ttf" as=font crossorigin>
+<link rel=preload href="resources/white.mp4" as=video>
+<link rel=preload href="resources/sound_5.oga" as=audio>
+<link rel=preload href="resources/foo.vtt" as=track>
+<link rel=preload href="resources/dummy.xml?foo=bar" as=foobarxmlthing>
+<link rel=preload href="resources/dummy.xml">
+<body>
+<script src="resources/dummy.js?pipe=trickle(d5)&preload-default-csp"></script>
+<script>
+    window.onload = t.step_func(function() {
+        verifyPreloadAndRTSupport();
+        verifyNumberOfDownloads("{{host}}:{{ports[http][1]}}/preload/resources/dummy.js", 0);
+        verifyNumberOfDownloads("resources/dummy.css", 0);
+        verifyNumberOfDownloads("resources/square.png", 0);
+        verifyNumberOfDownloads("resources/CanvasTest.ttf", 0);
+        verifyNumberOfDownloads("resources/white.mp4", 0);
+        verifyNumberOfDownloads("resources/sound_5.oga", 0);
+        verifyNumberOfDownloads("resources/foo.vtt", 0);
+        verifyNumberOfDownloads("resources/dummy.xml", 0);
+        t.done();
+    });
+</script>
+

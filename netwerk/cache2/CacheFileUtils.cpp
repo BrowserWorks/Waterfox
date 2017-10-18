@@ -12,11 +12,17 @@
 #include "nsAutoPtr.h"
 #include "nsString.h"
 #include <algorithm>
+#include "mozilla/Unused.h"
 
 
 namespace mozilla {
 namespace net {
 namespace CacheFileUtils {
+
+// This designates the format for the "alt-data" metadata.
+// When the format changes we need to update the version.
+static uint32_t const kAltDataVersion = 1;
+const char *kAltDataKey = "alt-data";
 
 namespace {
 
@@ -28,9 +34,6 @@ class KeyParser : protected Tokenizer
 public:
   explicit KeyParser(nsACString const& aInput)
     : Tokenizer(aInput)
-    // Initialize attributes to their default values
-    , originAttribs(0, false)
-    , isPrivate(false)
     , isAnonymous(false)
     // Initialize the cache key to a zero length by default
     , lastTag(0)
@@ -39,8 +42,7 @@ public:
 
 private:
   // Results
-  NeckoOriginAttributes originAttribs;
-  bool isPrivate;
+  OriginAttributes originAttribs;
   bool isAnonymous;
   nsCString idEnhance;
   nsDependentCSubstring cacheKey;
@@ -86,7 +88,7 @@ private:
       break;
     }
     case 'p':
-      isPrivate = true;
+      originAttribs.SyncAttributesWithPrivateBrowsing(true);
       break;
     case 'b':
       // Leaving to be able to read and understand oldformatted entries
@@ -160,7 +162,7 @@ public:
   {
     RefPtr<LoadContextInfo> info;
     if (ParseTags()) {
-      info = GetLoadContextInfo(isPrivate, isAnonymous, originAttribs);
+      info = GetLoadContextInfo(isAnonymous, originAttribs);
     }
 
     return info.forget();
@@ -180,9 +182,9 @@ public:
 } // namespace
 
 already_AddRefed<nsILoadContextInfo>
-ParseKey(const nsCSubstring &aKey,
-         nsCSubstring *aIdEnhance,
-         nsCSubstring *aURISpec)
+ParseKey(const nsACString& aKey,
+         nsACString* aIdEnhance,
+         nsACString* aURISpec)
 {
   KeyParser parser(aKey);
   RefPtr<LoadContextInfo> info = parser.Parse();
@@ -208,7 +210,7 @@ AppendKeyPrefix(nsILoadContextInfo* aInfo, nsACString &_retval)
    * Keep the attributes list sorted according their ASCII code.
    */
 
-  NeckoOriginAttributes const *oa = aInfo->OriginAttributesPtr();
+  OriginAttributes const *oa = aInfo->OriginAttributesPtr();
   nsAutoCString suffix;
   oa->CreateSuffix(suffix);
   if (!suffix.IsEmpty()) {
@@ -225,7 +227,7 @@ AppendKeyPrefix(nsILoadContextInfo* aInfo, nsACString &_retval)
 }
 
 void
-AppendTagWithValue(nsACString & aTarget, char const aTag, nsCSubstring const & aValue)
+AppendTagWithValue(nsACString& aTarget, char const aTag, const nsACString& aValue)
 {
   aTarget.Append(aTag);
 
@@ -316,7 +318,7 @@ ValidityPair::Merge(const ValidityPair& aOther)
 void
 ValidityMap::Log() const
 {
-  LOG(("ValidityMap::Log() - number of pairs: %u", mMap.Length()));
+  LOG(("ValidityMap::Log() - number of pairs: %zu", mMap.Length()));
   for (uint32_t i=0; i<mMap.Length(); i++) {
     LOG(("    (%u, %u)", mMap[i].Offset() + 0, mMap[i].Len() + 0));
   }
@@ -508,6 +510,187 @@ DetailedCacheHitTelemetry::AddRecord(ERecType aType, TimeStamp aLoadStart)
   }
 }
 
+StaticMutex CachePerfStats::sLock;
+CachePerfStats::PerfData CachePerfStats::sData[CachePerfStats::LAST];
+uint32_t CachePerfStats::sCacheSlowCnt = 0;
+uint32_t CachePerfStats::sCacheNotSlowCnt = 0;
+
+CachePerfStats::MMA::MMA(uint32_t aTotalWeight, bool aFilter)
+  : mSum(0)
+  , mSumSq(0)
+  , mCnt(0)
+  , mWeight(aTotalWeight)
+  , mFilter(aFilter)
+{
+}
+
+void
+CachePerfStats::MMA::AddValue(uint32_t aValue)
+{
+  if (mFilter) {
+    // Filter high spikes
+    uint32_t avg = GetAverage();
+    uint32_t stddev = GetStdDev();
+    uint32_t maxdiff = avg + (3 * stddev);
+    if (avg && aValue > avg + maxdiff) {
+      return;
+    }
+  }
+
+  if (mCnt < mWeight) {
+    // Compute arithmetic average until we have at least mWeight values
+    CheckedInt<uint64_t> newSumSq = CheckedInt<uint64_t>(aValue) * aValue;
+    newSumSq += mSumSq;
+    if (!newSumSq.isValid()) {
+      return; // ignore this value
+    }
+    mSumSq = newSumSq.value();
+    mSum += aValue;
+    ++mCnt;
+  } else {
+    CheckedInt<uint64_t> newSumSq = mSumSq - mSumSq / mCnt;
+    newSumSq += static_cast<uint64_t>(aValue) * aValue;
+    if (!newSumSq.isValid()) {
+      return; // ignore this value
+    }
+    mSumSq = newSumSq.value();
+
+    // Compute modified moving average for more values:
+    // newAvg = ((weight - 1) * oldAvg + newValue) / weight
+    mSum -= GetAverage();
+    mSum += aValue;
+  }
+}
+
+uint32_t
+CachePerfStats::MMA::GetAverage()
+{
+  if (mCnt == 0) {
+    return 0;
+  }
+
+  return mSum / mCnt;
+}
+
+uint32_t
+CachePerfStats::MMA::GetStdDev()
+{
+  if (mCnt == 0) {
+    return 0;
+  }
+
+  uint32_t avg = GetAverage();
+  uint64_t avgSq = static_cast<uint64_t>(avg) * avg;
+  uint64_t variance = mSumSq / mCnt;
+  if (variance < avgSq) {
+    // Due to rounding error when using integer data type, it can happen that
+    // average of squares of the values is smaller than square of the average
+    // of the values. In this case fix mSumSq.
+    variance = avgSq;
+    mSumSq = variance * mCnt;
+  }
+
+  variance -= avgSq;
+  return sqrt(static_cast<double>(variance));
+}
+
+CachePerfStats::PerfData::PerfData()
+  : mFilteredAvg(50, true)
+  , mShortAvg(3, false)
+{
+}
+
+void
+CachePerfStats::PerfData::AddValue(uint32_t aValue, bool aShortOnly)
+{
+  if (!aShortOnly) {
+    mFilteredAvg.AddValue(aValue);
+  }
+  mShortAvg.AddValue(aValue);
+}
+
+uint32_t
+CachePerfStats::PerfData::GetAverage(bool aFiltered)
+{
+  return aFiltered ? mFilteredAvg.GetAverage() : mShortAvg.GetAverage();
+}
+
+uint32_t
+CachePerfStats::PerfData::GetStdDev(bool aFiltered)
+{
+  return aFiltered ? mFilteredAvg.GetStdDev() : mShortAvg.GetStdDev();
+}
+
+// static
+void
+CachePerfStats::AddValue(EDataType aType, uint32_t aValue, bool aShortOnly)
+{
+  StaticMutexAutoLock lock(sLock);
+  sData[aType].AddValue(aValue, aShortOnly);
+}
+
+// static
+uint32_t
+CachePerfStats::GetAverage(EDataType aType, bool aFiltered)
+{
+  StaticMutexAutoLock lock(sLock);
+  return sData[aType].GetAverage(aFiltered);
+}
+
+// static
+uint32_t
+CachePerfStats::GetStdDev(EDataType aType, bool aFiltered)
+{
+  StaticMutexAutoLock lock(sLock);
+  return sData[aType].GetStdDev(aFiltered);
+}
+
+//static
+bool
+CachePerfStats::IsCacheSlow()
+{
+  // Compare mShortAvg with mFilteredAvg to find out whether cache is getting
+  // slower. Use only data about single IO operations because ENTRY_OPEN can be
+  // affected by more factors than a slow disk.
+  for (uint32_t i = 0; i < ENTRY_OPEN; ++i) {
+    if (i == IO_WRITE) {
+      // Skip this data type. IsCacheSlow is used for determining cache slowness
+      // when opening entries. Writes have low priority and it's normal that
+      // they are delayed a lot, but this doesn't necessarily affect opening
+      // cache entries.
+      continue;
+    }
+
+    uint32_t avgLong = sData[i].GetAverage(true);
+    if (avgLong == 0) {
+      // We have no perf data yet, skip this data type.
+      continue;
+    }
+    uint32_t avgShort = sData[i].GetAverage(false);
+    uint32_t stddevLong = sData[i].GetStdDev(true);
+    uint32_t maxdiff = avgLong + (3 * stddevLong);
+
+    if (avgShort > avgLong + maxdiff) {
+      LOG(("CachePerfStats::IsCacheSlow() - result is slow based on perf "
+           "type %u [avgShort=%u, avgLong=%u, stddevLong=%u]", i, avgShort,
+           avgLong, stddevLong));
+      ++sCacheSlowCnt;
+      return true;
+    }
+  }
+
+  ++sCacheNotSlowCnt;
+  return false;
+}
+
+//static
+void
+CachePerfStats::GetSlowStats(uint32_t *aSlow, uint32_t *aNotSlow)
+{
+  *aSlow = sCacheSlowCnt;
+  *aNotSlow = sCacheNotSlowCnt;
+}
+
 void
 FreeBuffer(void *aBuf) {
 #ifndef NS_FREE_PERMANENT_DATA
@@ -517,6 +700,56 @@ FreeBuffer(void *aBuf) {
 #endif
 
   free(aBuf);
+}
+
+nsresult
+ParseAlternativeDataInfo(const char *aInfo, int64_t *_offset, nsACString *_type)
+{
+  // The format is: "1;12345,javascript/binary"
+  //         <version>;<offset>,<type>
+  mozilla::Tokenizer p(aInfo, nullptr, "/");
+  uint32_t altDataVersion = 0;
+  int64_t altDataOffset = -1;
+
+  // The metadata format has a wrong version number.
+  if (!p.ReadInteger(&altDataVersion) ||
+      altDataVersion != kAltDataVersion) {
+    LOG(("ParseAlternativeDataInfo() - altDataVersion=%u, "
+         "expectedVersion=%u", altDataVersion, kAltDataVersion));
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  if (!p.CheckChar(';') ||
+      !p.ReadInteger(&altDataOffset) ||
+      !p.CheckChar(',')) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // The requested alt-data representation is not available
+  if (altDataOffset < 0) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  if (_offset) {
+    *_offset = altDataOffset;
+  }
+
+  if (_type) {
+    mozilla::Unused << p.ReadUntil(Tokenizer::Token::EndOfFile(), *_type);
+  }
+
+  return NS_OK;
+}
+
+void
+BuildAlternativeDataInfo(const char *aInfo, int64_t aOffset, nsACString &_retval)
+{
+  _retval.Truncate();
+  _retval.AppendInt(kAltDataVersion);
+  _retval.Append(';');
+  _retval.AppendInt(aOffset);
+  _retval.Append(',');
+  _retval.Append(aInfo);
 }
 
 } // namespace CacheFileUtils

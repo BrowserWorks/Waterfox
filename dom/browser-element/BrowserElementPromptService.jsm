@@ -54,7 +54,7 @@ BrowserElementPrompt.prototype = {
   // Each button is described by an object with the following schema
   // {
   //   string messageType,  // 'builtin' or 'custom'
-  //   string message, // 'ok', 'cancel', 'yes', 'no', 'save', 'dontsave', 
+  //   string message, // 'ok', 'cancel', 'yes', 'no', 'save', 'dontsave',
   //                   // 'revert' or a string from caller if messageType was 'custom'.
   // }
   //
@@ -369,7 +369,7 @@ BrowserElementAuthPrompt.prototype = {
       }
     }
 
-    Services.tm.currentThread.dispatch(runnable, Ci.nsIThread.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(runnable);
   },
 
   _getFrameFromChannel: function(channel) {
@@ -630,6 +630,9 @@ this.BrowserElementPromptService = {
   _browserElementChildMap: {},
   mapWindowToBrowserElementChild: function(win, browserElementChild) {
     this._browserElementChildMap[this._getOuterWindowID(win)] = browserElementChild;
+  },
+  unmapWindowToBrowserElementChild: function(win) {
+    delete this._browserElementChildMap[this._getOuterWindowID(win)];
   },
 
   getBrowserElementChildForWindow: function(win) {

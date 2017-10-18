@@ -1,5 +1,6 @@
-/* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
 
 "use strict";
@@ -16,14 +17,15 @@ var Services = require("Services");
 var { DebuggerServer } = require("devtools/server/main");
 var { DebuggerClient } = require("devtools/shared/client/main");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var flags = require("devtools/shared/flags");
 var { Task } = require("devtools/shared/task");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 var { require: browserRequire } = BrowserLoader({
   baseURI: "resource://devtools/client/shared/",
-  window: this
+  window
 });
 
 let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
@@ -47,15 +49,9 @@ function onNextAnimationFrame(fn) {
 }
 
 function setState(component, newState) {
-  var deferred = defer();
-  component.setState(newState, onNextAnimationFrame(deferred.resolve));
-  return deferred.promise;
-}
-
-function setProps(component, newState) {
-  var deferred = defer();
-  component.setProps(newState, onNextAnimationFrame(deferred.resolve));
-  return deferred.promise;
+  return new Promise(resolve => {
+    component.setState(newState, onNextAnimationFrame(resolve));
+  });
 }
 
 function dumpn(msg) {
@@ -69,7 +65,7 @@ function dumpn(msg) {
 var TEST_TREE_INTERFACE = {
   getParent: x => TEST_TREE.parent[x],
   getChildren: x => TEST_TREE.children[x],
-  renderItem: (x, depth, focused, arrow) => "-".repeat(depth) + x + ":" + focused + "\n",
+  renderItem: (x, depth, focused) => "-".repeat(depth) + x + ":" + focused + "\n",
   getRoots: () => ["A", "M"],
   getKey: x => "key-" + x,
   itemHeight: 1,
@@ -83,6 +79,23 @@ function isRenderedTree(actual, expectedDescription, msg) {
   dumpn(`Expected tree:\n${expected}`);
   dumpn(`Actual tree:\n${actual}`);
   is(actual, expected, msg);
+}
+
+function isAccessibleTree(tree, options = {}) {
+  const treeNode = tree.refs.tree;
+  is(treeNode.getAttribute("tabindex"), "0", "Tab index is set");
+  is(treeNode.getAttribute("role"), "tree", "Tree semantics is present");
+  if (options.hasActiveDescendant) {
+    ok(treeNode.hasAttribute("aria-activedescendant"),
+       "Tree has an active descendant set");
+  }
+
+  const treeNodes = [...treeNode.querySelectorAll(".tree-node")];
+  for (let node of treeNodes) {
+    ok(node.id, "TreeNode has an id");
+    is(node.getAttribute("role"), "treeitem", "Tree item semantics is present");
+    ok(node.hasAttribute("aria-level"), "Aria level attribute is set");
+  }
 }
 
 // Encoding of the following tree/forest:
@@ -143,7 +156,9 @@ var TEST_TREE = {
 /**
  * Frame
  */
-function checkFrameString({ el, file, line, column, source, functionName, shouldLink, tooltip }) {
+function checkFrameString({
+  el, file, line, column, source, functionName, shouldLink, tooltip
+}) {
   let $ = selector => el.querySelector(selector);
 
   let $func = $(".frame-link-function-display-name");
@@ -154,7 +169,8 @@ function checkFrameString({ el, file, line, column, source, functionName, should
 
   is($filename.textContent, file, "Correct filename");
   is(el.getAttribute("data-line"), line ? `${line}` : null, "Expected `data-line` found");
-  is(el.getAttribute("data-column"), column ? `${column}` : null, "Expected `data-column` found");
+  is(el.getAttribute("data-column"),
+     column ? `${column}` : null, "Expected `data-column` found");
   is($sourceInner.getAttribute("title"), tooltip, "Correct tooltip");
   is($source.tagName, shouldLink ? "A" : "SPAN", "Correct linkable status");
   if (shouldLink) {
@@ -197,16 +213,23 @@ function shallowRenderComponent(component, props) {
 }
 
 /**
- * Test that a rep renders correctly across different modes.
+ * Creates a React Component for testing
+ *
+ * @param {string} factory - factory object of the component to be created
+ * @param {object} props - React props for the component
+ * @returns {object} - container Node, Object with React component
+ * and querySelector function with $ as name.
  */
-function testRepRenderModes(modeTests, testName, componentUnderTest, gripStub) {
-  modeTests.forEach(({mode, expectedOutput, message}) => {
-    const modeString = typeof mode === "undefined" ? "no mode" : mode;
-    if (!message) {
-      message = `${testName}: ${modeString} renders correctly.`;
-    }
+async function createComponentTest(factory, props) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
 
-    const rendered = renderComponent(componentUnderTest.rep, { object: gripStub, mode });
-    is(rendered.textContent, expectedOutput, message);
-  });
+  const component = ReactDOM.render(factory(props), container);
+  await forceRender(component);
+
+  return {
+    container,
+    component,
+    $: (s) => container.querySelector(s),
+  };
 }

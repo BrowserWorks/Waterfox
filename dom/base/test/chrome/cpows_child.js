@@ -1,6 +1,7 @@
 dump('loaded child cpow test\n');
 
 var Cu = Components.utils;
+var Ci = Components.interfaces;
 
 (function start() {
   [is_remote] = sendRpcMessage("cpows:is_remote");
@@ -20,6 +21,7 @@ var Cu = Components.utils;
     lifetime_test,
     cancel_test,
     cancel_test2,
+    dead_test,
     unsafe_test,
   ];
 
@@ -354,4 +356,27 @@ function unsafe_test(finish)
     sendRpcMessage("cpows:safe", null, {f});
     addMessageListener("cpows:safe_done", finish);
   });
+}
+
+function dead_test(finish)
+{
+  if (!is_remote) {
+    // Only run this test when running out-of-process.
+    finish();
+    return;
+  }
+
+  let gcTrigger = function() {
+    // Force the GC to dead-ify the thing.
+    content.QueryInterface(Ci.nsIInterfaceRequestor)
+           .getInterface(Ci.nsIDOMWindowUtils)
+           .garbageCollect();
+  }
+
+  {
+    let thing = { value: "Gonna croak" };
+    sendAsyncMessage("cpows:dead", null, { thing, gcTrigger });
+  }
+
+  addMessageListener("cpows:dead_done", finish);
 }

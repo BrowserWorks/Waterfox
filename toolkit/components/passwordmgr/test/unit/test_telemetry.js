@@ -9,8 +9,7 @@
 
 "use strict";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -102,8 +101,7 @@ function testHistogram(histogramId, expectedNonZeroRanges) {
               JSON.stringify(expectedNonZeroRanges));
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 /**
  * Enable local telemetry recording for the duration of the tests, and prepare
@@ -112,7 +110,7 @@ function testHistogram(histogramId, expectedNonZeroRanges) {
 add_task(function test_initialize() {
   let oldCanRecord = Services.telemetry.canRecordExtended;
   Services.telemetry.canRecordExtended = true;
-  do_register_cleanup(function () {
+  do_register_cleanup(function() {
     Services.telemetry.canRecordExtended = oldCanRecord;
   });
 
@@ -172,7 +170,7 @@ add_task(function test_disabledHosts_statistics() {
  */
 add_task(function test_settings_statistics() {
   let oldRememberSignons = Services.prefs.getBoolPref("signon.rememberSignons");
-  do_register_cleanup(function () {
+  do_register_cleanup(function() {
     Services.prefs.setBoolPref("signon.rememberSignons", oldRememberSignons);
   });
 

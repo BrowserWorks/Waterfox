@@ -7,18 +7,22 @@
 #include "AccessCheck.h"
 
 #include "nsJSPrincipals.h"
+#include "BasePrincipal.h"
 #include "nsGlobalWindow.h"
 
 #include "XPCWrapper.h"
 #include "XrayWrapper.h"
+#include "FilteringWrapper.h"
 
 #include "jsfriendapi.h"
+#include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/LocationBinding.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsIDOMWindowCollection.h"
 #include "nsJSUtils.h"
+#include "xpcprivate.h"
 
 using namespace mozilla;
 using namespace JS;
@@ -44,7 +48,7 @@ AccessCheck::subsumes(JSCompartment* a, JSCompartment* b)
 {
     nsIPrincipal* aprin = GetCompartmentPrincipal(a);
     nsIPrincipal* bprin = GetCompartmentPrincipal(b);
-    return aprin->Subsumes(bprin);
+    return BasePrincipal::Cast(aprin)->FastSubsumes(bprin);
 }
 
 bool
@@ -57,9 +61,20 @@ AccessCheck::subsumes(JSObject* a, JSObject* b)
 bool
 AccessCheck::subsumesConsideringDomain(JSCompartment* a, JSCompartment* b)
 {
+    MOZ_ASSERT(OriginAttributes::IsRestrictOpenerAccessForFPI());
     nsIPrincipal* aprin = GetCompartmentPrincipal(a);
     nsIPrincipal* bprin = GetCompartmentPrincipal(b);
-    return aprin->SubsumesConsideringDomain(bprin);
+    return BasePrincipal::Cast(aprin)->FastSubsumesConsideringDomain(bprin);
+}
+
+bool
+AccessCheck::subsumesConsideringDomainIgnoringFPD(JSCompartment* a,
+                                                  JSCompartment* b)
+{
+    MOZ_ASSERT(!OriginAttributes::IsRestrictOpenerAccessForFPI());
+    nsIPrincipal* aprin = GetCompartmentPrincipal(a);
+    nsIPrincipal* bprin = GetCompartmentPrincipal(b);
+    return BasePrincipal::Cast(aprin)->FastSubsumesConsideringDomainIgnoringFPD(bprin);
 }
 
 // Does the compartment of the wrapper subsumes the compartment of the wrappee?
@@ -75,9 +90,8 @@ AccessCheck::wrapperSubsumes(JSObject* wrapper)
 bool
 AccessCheck::isChrome(JSCompartment* compartment)
 {
-    bool privileged;
     nsIPrincipal* principal = GetCompartmentPrincipal(compartment);
-    return NS_SUCCEEDED(nsXPConnect::SecurityManager()->IsSystemPrincipal(principal, &privileged)) && privileged;
+    return nsXPConnect::SystemPrincipal() == principal;
 }
 
 bool
@@ -176,6 +190,12 @@ AccessCheck::isCrossOriginAccessPermitted(JSContext* cx, HandleObject wrapper, H
     if (JSID_IS_STRING(id)) {
         if (IsPermitted(type, JSID_TO_FLAT_STRING(id), act == Wrapper::SET))
             return true;
+    } else if (type != CrossOriginOpaque &&
+               IsCrossOriginWhitelistedSymbol(cx, id)) {
+        // We always allow access to @@toStringTag, @@hasInstance, and
+        // @@isConcatSpreadable.  But then we nerf them to be a value descriptor
+        // with value undefined in CrossOriginXrayWrapper.
+        return true;
     }
 
     if (act != Wrapper::GET)
@@ -238,7 +258,7 @@ AccessCheck::checkPassToPrivilegedCode(JSContext* cx, HandleObject wrapper, Hand
     if (AccessCheck::isChrome(js::UncheckedUnwrap(wrapper)) && WrapperFactory::IsCOW(obj)) {
         RootedObject target(cx, js::UncheckedUnwrap(obj));
         JSAutoCompartment ac(cx, target);
-        RootedId id(cx, GetRTIdByIndex(cx, XPCJSRuntime::IDX_EXPOSEDPROPS));
+        RootedId id(cx, GetJSIDByIndex(cx, XPCJSContext::IDX_EXPOSEDPROPS));
         bool found = false;
         if (!JS_HasPropertyById(cx, target, id, &found))
             return false;
@@ -251,7 +271,7 @@ AccessCheck::checkPassToPrivilegedCode(JSContext* cx, HandleObject wrapper, Hand
         return true;
 
     // Badness.
-    JS_ReportError(cx, "Permission denied to pass object to privileged code");
+    JS_ReportErrorASCII(cx, "Permission denied to pass object to privileged code");
     return false;
 }
 
@@ -267,13 +287,49 @@ AccessCheck::checkPassToPrivilegedCode(JSContext* cx, HandleObject wrapper, cons
     return true;
 }
 
+void
+AccessCheck::reportCrossOriginDenial(JSContext* cx, JS::HandleId id,
+                                     const nsACString& accessType)
+{
+    // This function exists because we want to report DOM SecurityErrors, not JS
+    // Errors, when denying access on cross-origin DOM objects.  It's
+    // conceptually pretty similar to
+    // AutoEnterPolicy::reportErrorIfExceptionIsNotPending.
+    if (JS_IsExceptionPending(cx)) {
+        return;
+    }
+
+    nsAutoCString message;
+    if (JSID_IS_VOID(id)) {
+        message = NS_LITERAL_CSTRING("Permission denied to access object");
+    } else {
+        // We want to use JS_ValueToSource here, because that most closely
+        // matches what AutoEnterPolicy::reportErrorIfExceptionIsNotPending
+        // does.
+        JS::RootedValue idVal(cx, js::IdToValue(id));
+        nsAutoJSString propName;
+        JS::RootedString idStr(cx, JS_ValueToSource(cx, idVal));
+        if (!idStr || !propName.init(cx, idStr)) {
+            return;
+        }
+        message = NS_LITERAL_CSTRING("Permission denied to ") +
+                  accessType +
+                  NS_LITERAL_CSTRING(" property ") +
+                  NS_ConvertUTF16toUTF8(propName) +
+                  NS_LITERAL_CSTRING(" on cross-origin object");
+    }
+    ErrorResult rv;
+    rv.ThrowDOMException(NS_ERROR_DOM_SECURITY_ERR, message);
+    MOZ_ALWAYS_TRUE(rv.MaybeSetPendingException(cx));
+}
+
 enum Access { READ = (1<<0), WRITE = (1<<1), NO_ACCESS = 0 };
 
 static void
-EnterAndThrow(JSContext* cx, JSObject* wrapper, const char* msg)
+EnterAndThrowASCII(JSContext* cx, JSObject* wrapper, const char* msg)
 {
     JSAutoCompartment ac(cx, wrapper);
-    JS_ReportError(cx, msg);
+    JS_ReportErrorASCII(cx, "%s", msg);
 }
 
 bool
@@ -291,7 +347,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
                check(cx, wrapper, id, Wrapper::SET);
     }
 
-    RootedId exposedPropsId(cx, GetRTIdByIndex(cx, XPCJSRuntime::IDX_EXPOSEDPROPS));
+    RootedId exposedPropsId(cx, GetJSIDByIndex(cx, XPCJSContext::IDX_EXPOSEDPROPS));
 
     // We need to enter the wrappee's compartment to look at __exposedProps__,
     // but we want to be in the wrapper's compartment if we call Deny().
@@ -336,7 +392,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
         return false;
 
     if (desc.hasGetterOrSetter()) {
-        EnterAndThrow(cx, wrapper, "__exposedProps__ must be a value property");
+        EnterAndThrowASCII(cx, wrapper, "__exposedProps__ must be a value property");
         return false;
     }
 
@@ -345,14 +401,14 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
         return false;
 
     if (!exposedProps.isObject()) {
-        EnterAndThrow(cx, wrapper, "__exposedProps__ must be undefined, null, or an Object");
+        EnterAndThrowASCII(cx, wrapper, "__exposedProps__ must be undefined, null, or an Object");
         return false;
     }
 
     RootedObject hallpass(cx, &exposedProps.toObject());
 
     if (!AccessCheck::subsumes(js::UncheckedUnwrap(hallpass), wrappedObject)) {
-        EnterAndThrow(cx, wrapper, "Invalid __exposedProps__");
+        EnterAndThrowASCII(cx, wrapper, "Invalid __exposedProps__");
         return false;
     }
 
@@ -365,7 +421,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
         return false;
 
     if (!desc.value().isString()) {
-        EnterAndThrow(cx, wrapper, "property must be a string");
+        EnterAndThrowASCII(cx, wrapper, "property must be a string");
         return false;
     }
 
@@ -380,7 +436,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
         switch (ch) {
         case 'r':
             if (access & READ) {
-                EnterAndThrow(cx, wrapper, "duplicate 'readable' property flag");
+                EnterAndThrowASCII(cx, wrapper, "duplicate 'readable' property flag");
                 return false;
             }
             access = Access(access | READ);
@@ -388,20 +444,20 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
 
         case 'w':
             if (access & WRITE) {
-                EnterAndThrow(cx, wrapper, "duplicate 'writable' property flag");
+                EnterAndThrowASCII(cx, wrapper, "duplicate 'writable' property flag");
                 return false;
             }
             access = Access(access | WRITE);
             break;
 
         default:
-            EnterAndThrow(cx, wrapper, "properties can only be readable or read and writable");
+            EnterAndThrowASCII(cx, wrapper, "properties can only be readable or read and writable");
             return false;
         }
     }
 
     if (access == NO_ACCESS) {
-        EnterAndThrow(cx, wrapper, "specified properties must have a permission bit set");
+        EnterAndThrowASCII(cx, wrapper, "specified properties must have a permission bit set");
         return false;
     }
 
@@ -416,7 +472,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
 
     // Reject accessor properties.
     if (desc.hasGetterOrSetter()) {
-        EnterAndThrow(cx, wrapper, "Exposing privileged accessor properties is prohibited");
+        EnterAndThrowASCII(cx, wrapper, "Exposing privileged accessor properties is prohibited");
         return false;
     }
 
@@ -424,7 +480,7 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
     if (desc.value().isObject()) {
         RootedObject maybeCallable(cx, js::UncheckedUnwrap(&desc.value().toObject()));
         if (JS::IsCallable(maybeCallable) && !AccessCheck::subsumes(wrapper, maybeCallable)) {
-            EnterAndThrow(cx, wrapper, "Exposing privileged or cross-origin callable is prohibited");
+            EnterAndThrowASCII(cx, wrapper, "Exposing privileged or cross-origin callable is prohibited");
             return false;
         }
     }
@@ -433,13 +489,15 @@ ExposedPropertiesOnly::check(JSContext* cx, HandleObject wrapper, HandleId id, W
 }
 
 bool
-ExposedPropertiesOnly::deny(js::Wrapper::Action act, HandleId id)
+ExposedPropertiesOnly::deny(JSContext* cx, js::Wrapper::Action act, HandleId id,
+                            bool mayThrow)
 {
     // Fail silently for GET, ENUMERATE, and GET_PROPERTY_DESCRIPTOR.
     if (act == js::Wrapper::GET || act == js::Wrapper::ENUMERATE ||
         act == js::Wrapper::GET_PROPERTY_DESCRIPTOR)
     {
-        AutoJSContext cx;
+        // Note that ReportWrapperDenial doesn't do any _exception_ reporting,
+        // so we want to do this regardless of the value of mayThrow.
         return ReportWrapperDenial(cx, id, WrapperDenialForCOW,
                                    "Access to privileged JS object not permitted");
     }

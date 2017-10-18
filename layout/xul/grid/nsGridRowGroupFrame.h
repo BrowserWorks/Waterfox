@@ -8,7 +8,7 @@
   Eric D Vaughan
   A frame that can have multiple children. Only one child may be displayed at one time. So the
   can be flipped though like a deck of cards.
- 
+
 **/
 
 #ifndef nsGridRowGroupFrame_h___
@@ -23,10 +23,10 @@
  * all the columns).  However, multiple levels of groups are allowed, so
  * the parent or child could instead be another group.
  */
-class nsGridRowGroupFrame : public nsBoxFrame
+class nsGridRowGroupFrame final : public nsBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsGridRowGroupFrame)
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -37,7 +37,7 @@ public:
 
   nsGridRowGroupFrame(nsStyleContext* aContext,
                       nsBoxLayout* aLayoutManager):
-    nsBoxFrame(aContext, false, aLayoutManager) {}
+    nsBoxFrame(aContext, kClassID, false, aLayoutManager) {}
 
   virtual nscoord GetXULFlex() override;
 

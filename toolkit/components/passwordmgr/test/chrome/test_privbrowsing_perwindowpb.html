@@ -46,7 +46,7 @@ var observer;
 var testNum = 0;
 function loadNextTest() {
   // run the initialization code for each test
-  switch (++ testNum) {
+  switch (++testNum) {
     case 1:
       popupNotifications = normalWindowPopupNotifications;
       iframe = normalWindowIframe;
@@ -101,11 +101,11 @@ function loadNextTest() {
     observer = SpecialPowers.wrapCallback(function(subject, topic, data) {
       SimpleTest.executeSoon(() => { iframe.contentWindow.postMessage("go", "*"); });
     });
-    SpecialPowers.addObserver(observer, "passwordmgr-processed-form", false);
+    SpecialPowers.addObserver(observer, "passwordmgr-processed-form");
   }
 
   ok(true, "Starting test #" + testNum);
-  iframe.src = prefix + subtests[testNum-1];
+  iframe.src = prefix + subtests[testNum - 1];
 }
 
 function checkTest() {
@@ -204,18 +204,17 @@ var contentPage = "http://mochi.test:8888/chrome/toolkit/components/passwordmgr/
 var testWindows = [];
 
 function whenDelayedStartupFinished(aWindow, aCallback) {
-  Services.obs.addObserver(function observer(aSubject, aTopic) {
+  Services.obs.addObserver(function obs(aSubject, aTopic) {
     if (aWindow == aSubject) {
-      Services.obs.removeObserver(observer, aTopic);
+      Services.obs.removeObserver(obs, aTopic);
       setTimeout(aCallback, 0);
     }
-  }, "browser-delayed-startup-finished", false);
+  }, "browser-delayed-startup-finished");
 }
 
 function testOnWindow(aIsPrivate, aCallback) {
   var win = mainWindow.OpenBrowserWindow({private: aIsPrivate});
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
+  win.addEventListener("load", function() {
     whenDelayedStartupFinished(win, function() {
       win.addEventListener("DOMContentLoaded", function onInnerLoad() {
         if (win.content.location.href != contentPage) {
@@ -224,15 +223,15 @@ function testOnWindow(aIsPrivate, aCallback) {
         }
         win.removeEventListener("DOMContentLoaded", onInnerLoad, true);
 
-        win.content.addEventListener('load', function innerLoad2() {
-          win.content.removeEventListener('load', innerLoad2, false);
+        win.content.addEventListener("load", function innerLoad2() {
+          win.content.removeEventListener("load", innerLoad2);
           testWindows.push(win);
           SimpleTest.executeSoon(function() { aCallback(win); });
         }, false, true);
       }, true);
       SimpleTest.executeSoon(function() { win.gBrowser.loadURI(contentPage); });
     });
-  }, true);
+  }, {capture: true, once: true});
 }
 
 var ignoreLoad = false;

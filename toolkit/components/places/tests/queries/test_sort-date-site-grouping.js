@@ -60,18 +60,17 @@ var testData = [
   {
     isVisit: true,
     uri: "http://example.net/1",
-    lastVisit: olderthansixmonths + 1,
+    lastVisit: olderthansixmonths + 1000,
     title: "test visit",
     isInQuery: true
   }
 ];
-var domainsInRange = [2, 3];
 var leveledTestData = [// Today
                        [[0],    // Today, local files
-                        [1,2]], // Today, example.com
+                        [1, 2]], // Today, example.com
                        // Older than six months
                        [[3],    // Older than six months, local files
-                        [4,5],  // Older than six months, example.com
+                        [4, 5],  // Older than six months, example.com
                         [6]     // Older than six months, example.net
                         ]];
 
@@ -84,7 +83,7 @@ var testDataAddedLater = [
     lastVisit: olderthansixmonths,
     title: "test visit",
     isInQuery: true,
-    levels: [1,1]
+    levels: [1, 1]
   },
   {
     isVisit: true,
@@ -92,7 +91,7 @@ var testDataAddedLater = [
     lastVisit: olderthansixmonths,
     title: "test visit",
     isInQuery: true,
-    levels: [1,1]
+    levels: [1, 1]
   },
   {
     isVisit: true,
@@ -100,7 +99,7 @@ var testDataAddedLater = [
     lastVisit: today,
     title: "test visit",
     isInQuery: true,
-    levels: [0,1]
+    levels: [0, 1]
   },
   {
     isVisit: true,
@@ -108,18 +107,12 @@ var testDataAddedLater = [
     lastVisit: today,
     title: "test visit",
     isInQuery: true,
-    levels: [0,0]
+    levels: [0, 0]
   }
 ];
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_sort_date_site_grouping()
-{
-  yield task_populateDB(testData);
+add_task(async function test_sort_date_site_grouping() {
+  await task_populateDB(testData);
 
   // On Linux, the (local files) folder is shown after sites unlike Mac/Windows.
   // Thus, we avoid running this test on Linux but this should be re-enabled
@@ -155,7 +148,7 @@ add_task(function* test_sort_date_site_grouping()
 
   // Test live updating.
   for (let visit of testDataAddedLater) {
-    yield task_populateDB([visit]);
+    await task_populateDB([visit]);
     let oldLength = testData.length;
     let i = visit.levels[0];
     let j = visit.levels[1];

@@ -1,0 +1,17 @@
+[package]
+name = "msg"
+version = "0.0.1"
+authors = ["The Servo Project Developers"]
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "msg"
+path = "lib.rs"
+
+[dependencies]
+bitflags = "0.7"
+heapsize = "0.4"
+heapsize_derive = "0.1"
+serde = "1.0"
+webrender_api = {git = "https://github.com/servo/webrender", features = ["ipc"]}

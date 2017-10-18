@@ -9,7 +9,6 @@
  */
 const GRID_BOTTOM_EXTRA = 7; // title's line-height extends 7px past the margin
 const GRID_WIDTH_EXTRA = 1; // provide 1px buffer to allow for rounding error
-const SPONSORED_TAG_BUFFER = 2; // 2px buffer to clip off top of sponsored tag
 
 /**
  * This singleton represents the grid that contains all sites.
@@ -19,6 +18,7 @@ var gGrid = {
    * The DOM node of the grid.
    */
   _node: null,
+  _gridDefaultContent: null,
   get node() { return this._node; },
 
   /**
@@ -49,6 +49,7 @@ var gGrid = {
    */
   init: function Grid_init() {
     this._node = document.getElementById("newtab-grid");
+    this._gridDefaultContent = this._node.lastChild;
     this._createSiteFragment();
 
     gLinks.populateCache(() => {
@@ -140,15 +141,24 @@ var gGrid = {
 
     // Create sites.
     let numLinks = Math.min(links.length, cells.length);
+    let hasHistoryTiles = false;
     for (let i = 0; i < numLinks; i++) {
       if (links[i]) {
         this.createSite(links[i], cells[i]);
+        if (links[i].type == "history") {
+          hasHistoryTiles = true;
+        }
       }
     }
 
     this._cells = cells;
-    this._node.innerHTML = "";
+    while (this._gridDefaultContent.nextSibling) {
+      this._gridDefaultContent.nextSibling.remove();
+    }
     this._node.appendChild(fragment);
+
+    document.getElementById("topsites-heading").textContent =
+      newTabString(hasHistoryTiles ? "userTopSites.heading" : "defaultTopSites.heading");
   },
 
   /**
@@ -171,17 +181,16 @@ var gGrid = {
 
     // Create the site's inner HTML code.
     site.innerHTML =
-      '<span class="newtab-sponsored">' + newTabString("sponsored.button") + '</span>' +
       '<a class="newtab-link">' +
-      '  <span class="newtab-thumbnail"/>' +
+      '  <span class="newtab-thumbnail placeholder"/>' +
+      '  <span class="newtab-thumbnail thumbnail"/>' +
       '  <span class="newtab-thumbnail enhanced-content"/>' +
       '  <span class="newtab-title"/>' +
       '</a>' +
       '<input type="button" title="' + newTabString("pin") + '"' +
       '       class="newtab-control newtab-control-pin"/>' +
       '<input type="button" title="' + newTabString("block") + '"' +
-      '       class="newtab-control newtab-control-block"/>' +
-      '<span class="newtab-suggested"/>';
+      '       class="newtab-control newtab-control-block"/>';
 
     this._siteFragment = document.createDocumentFragment();
     this._siteFragment.appendChild(site);
@@ -209,23 +218,25 @@ var gGrid = {
     }
 
     // Save the cell's computed height/width including margin and border
-    if (this._cellMargin === undefined) {
+    if (this._cellHeight === undefined) {
       let refCell = document.querySelector(".newtab-cell");
-      this._cellMargin = parseFloat(getComputedStyle(refCell).marginTop);
-      this._cellHeight = refCell.offsetHeight + this._cellMargin +
-        parseFloat(getComputedStyle(refCell).marginBottom);
-      this._cellWidth = refCell.offsetWidth + this._cellMargin;
+      let style = getComputedStyle(refCell);
+      this._cellHeight = refCell.offsetHeight +
+        parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+      this._cellWidth = refCell.offsetWidth +
+        parseFloat(style.marginLeft) + parseFloat(style.marginRight);
     }
 
     let searchContainer = document.querySelector("#newtab-search-container");
     // Save search-container margin height
-    if (this._searchContainerMargin  === undefined) {
-      this._searchContainerMargin = parseFloat(getComputedStyle(searchContainer).marginBottom) +
-                                    parseFloat(getComputedStyle(searchContainer).marginTop);
+    if (this._searchContainerMargin === undefined) {
+      let style = getComputedStyle(searchContainer);
+      this._searchContainerMargin = parseFloat(style.marginBottom) +
+                                    parseFloat(style.marginTop);
     }
 
     // Find the number of rows we can place into view port
-    let availHeight = document.documentElement.clientHeight - this._cellMargin -
+    let availHeight = document.documentElement.clientHeight -
                       searchContainer.offsetHeight - this._searchContainerMargin;
     let visibleRows = Math.floor(availHeight / this._cellHeight);
 
@@ -235,14 +246,14 @@ var gGrid = {
     let availWidth = Math.min(document.querySelector("#newtab-grid").clientWidth,
                               maxGridWidth);
     // finally get the number of columns we can fit into view port
-    let gridColumns =  Math.floor(availWidth / this._cellWidth);
+    let gridColumns = Math.floor(availWidth / this._cellWidth);
     // walk sites backwords until a pinned or history tile is found or visibleRows reached
     let tileIndex = Math.min(gGridPrefs.gridRows * gridColumns, this.sites.length) - 1;
     while (tileIndex >= visibleRows * gridColumns) {
       if (this._isHistoricalTile(tileIndex)) {
         break;
       }
-      tileIndex --;
+      tileIndex--;
     }
 
     // Compute the actual number of grid rows we will display (potentially
@@ -260,6 +271,6 @@ var gGrid = {
     this._node.style.maxWidth = gGridPrefs.gridColumns * this._cellWidth +
                                 GRID_WIDTH_EXTRA + "px";
     this._node.style.height = this._computeHeight() + "px";
-    this._node.style.maxHeight = this._computeHeight(gridRows) - SPONSORED_TAG_BUFFER + "px";
+    this._node.style.maxHeight = this._computeHeight(gridRows) + "px";
   }
 };

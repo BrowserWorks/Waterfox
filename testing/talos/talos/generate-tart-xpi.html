@@ -11,6 +11,7 @@
   <script src="scripts/xpigen.js"></script>
 
   <script>
+    /* import-globals-from scripts/xpigen.js */
     var base = "tests/tart/addon/";
     var files = [
       "chrome.manifest",
@@ -28,18 +29,24 @@
     function triggerBuildXpi() {
       function $(id) { return document.getElementById(id); }
 
+      // eslint-disable-next-line no-unsanitized/property
       $("status-text").innerHTML = "Preparing ...";
       $("result").style.display = "none";
       $("status").style.display = "inline";
 
       createXpiDataUri(base, files, {
-        onprogress: function(p) { $("status-text").innerHTML = "Preparing ... " + p.toFixed(0) + "%"; },
 
-        onerror   : function(e) { $("status-text").innerHTML = "Oops, couldn't generate XPI. Reload to retry.<br/>" + e; },
+        // eslint-disable-next-line no-unsanitized/property
+        onprogress(p) { $("status-text").innerHTML = "Preparing ... " + p.toFixed(0) + "%"; },
 
-        onsuccess : function(u) { $("xpi-link").href = u;
-                                  $("status").style.display = "none";
-                                  $("result").style.display = "inline"; }
+        // eslint-disable-next-line no-unsanitized/property
+        onerror(e) { $("status-text").innerHTML = "Oops, couldn't generate XPI. Reload to retry.<br/>" + e; },
+
+        onsuccess(u) {
+ $("xpi-link").href = u;
+                              $("status").style.display = "none";
+                              $("result").style.display = "inline";
+}
       });
     }
   </script>

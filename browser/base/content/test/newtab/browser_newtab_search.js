@@ -4,7 +4,6 @@
 // See browser/components/search/test/browser_*_behavior.js for tests of actual
 // searches.
 
-Cu.import("resource://gre/modules/Task.jsm");
 
 const ENGINE_NO_LOGO = {
   name: "searchEngineNoLogo.xml",
@@ -53,23 +52,23 @@ let gExpectedSearchEventResolver = null;
 
 let gNewEngines = [];
 
-add_task(function* () {
+add_task(async function() {
   let oldCurrentEngine = Services.search.currentEngine;
 
-  yield* addNewTabPageTab();
+  await addNewTabPageTab();
 
   // The tab is removed at the end of the test, so there's no need to remove
   // this listener at the end of the test.
   info("Adding search event listener");
-  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
     const SERVICE_EVENT_NAME = "ContentSearchService";
-    content.addEventListener(SERVICE_EVENT_NAME, function (event) {
+    content.addEventListener(SERVICE_EVENT_NAME, function(event) {
       sendAsyncMessage("test:search-event", { eventType: event.detail.type });
     });
   });
 
   let mm = gBrowser.selectedBrowser.messageManager;
-  mm.addMessageListener("test:search-event", function (message) {
+  mm.addMessageListener("test:search-event", function(message) {
     let eventType = message.data.eventType;
     if (!gExpectedSearchEventResolver) {
       ok(false, "Got search event " + eventType + " with no promise assigned");
@@ -84,51 +83,46 @@ add_task(function* () {
   });
 
   // Add the engine without any logos and switch to it.
-  let noLogoEngine = yield promiseNewSearchEngine(ENGINE_NO_LOGO);
+  let noLogoEngine = await promiseNewSearchEngine(ENGINE_NO_LOGO);
   let searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = noLogoEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_NO_LOGO);
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_NO_LOGO);
 
   // Add the engine with favicon and switch to it.
-  let faviconEngine = yield promiseNewSearchEngine(ENGINE_FAVICON);
+  let faviconEngine = await promiseNewSearchEngine(ENGINE_FAVICON);
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = faviconEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_FAVICON);
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_FAVICON);
 
   // Add the engine with a 1x-DPI logo and switch to it.
-  let logo1xEngine = yield promiseNewSearchEngine(ENGINE_1X_LOGO);
+  let logo1xEngine = await promiseNewSearchEngine(ENGINE_1X_LOGO);
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = logo1xEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_1X_LOGO);
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_1X_LOGO);
 
   // Add the engine with a 2x-DPI logo and switch to it.
-  let logo2xEngine = yield promiseNewSearchEngine(ENGINE_2X_LOGO);
+  let logo2xEngine = await promiseNewSearchEngine(ENGINE_2X_LOGO);
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = logo2xEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_2X_LOGO);
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_2X_LOGO);
 
   // Add the engine with 1x- and 2x-DPI logos and switch to it.
-  let logo1x2xEngine = yield promiseNewSearchEngine(ENGINE_1X_2X_LOGO);
+  let logo1x2xEngine = await promiseNewSearchEngine(ENGINE_1X_2X_LOGO);
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = logo1x2xEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_1X_2X_LOGO);
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_1X_2X_LOGO);
 
   // Add the engine that provides search suggestions and switch to it.
-  let suggestionEngine = yield promiseNewSearchEngine(ENGINE_SUGGESTIONS);
+  let suggestionEngine = await promiseNewSearchEngine(ENGINE_SUGGESTIONS);
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = suggestionEngine;
-  yield searchEventsPromise;
-  yield* checkCurrentEngine(ENGINE_SUGGESTIONS);
-
-  // Avoid intermittent failures.
-  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
-    content.gSearch._contentSearchController.remoteTimeout = 5000;
-  });
+  await searchEventsPromise;
+  await checkCurrentEngine(ENGINE_SUGGESTIONS);
 
   // Type an X in the search input.  This is only a smoke test.  See
   // browser_searchSuggestionUI.js for comprehensive content search suggestion
@@ -140,7 +134,7 @@ add_task(function* () {
     });
   });
 
-  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
     let table = content.document.getElementById("searchSuggestionTable");
 
     let input = content.document.getElementById("newtab-search-text");
@@ -166,81 +160,22 @@ add_task(function* () {
 
   // Wait for the search suggestions to become visible and for the Suggestions
   // message.
-  yield suggestionsOpenPromise;
-  yield suggestionsPromise;
+  await suggestionsOpenPromise;
+  await suggestionsPromise;
 
   // Empty the search input, causing the suggestions to be hidden.
   EventUtils.synthesizeKey("a", { accelKey: true });
   EventUtils.synthesizeKey("VK_DELETE", {});
 
-  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
     Assert.ok(content.document.getElementById("searchSuggestionTable").hidden,
       "Search suggestion table hidden");
   });
 
-  // Remove the search bar from toolbar
-  CustomizableUI.removeWidgetFromArea("search-container");
-  // Focus a different element than the search input from the page.
-  yield BrowserTestUtils.synthesizeMouseAtCenter("#newtab-customize-button", { }, gBrowser.selectedBrowser);
-
-  yield ContentTask.spawn(gBrowser.selectedBrowser, { }, function* () {
-    let input = content.document.getElementById("newtab-search-text");
-    Assert.notEqual(input, content.document.activeElement, "Search input should not be focused");
-  });
-
-  // Test that Ctrl/Cmd + K will focus the input field from the page.
-  let focusPromise = promiseSearchEvents(["FocusInput"]);
-  EventUtils.synthesizeKey("k", { accelKey: true });
-  yield focusPromise;
-
-  yield ContentTask.spawn(gBrowser.selectedBrowser, { }, function* () {
-    let input = content.document.getElementById("newtab-search-text");
-    Assert.equal(input, content.document.activeElement, "Search input should be focused");
-  });
-
-  // Reset changes made to toolbar
-  CustomizableUI.reset();
-
-  // Test that Ctrl/Cmd + K will focus the search bar from toolbar.
-  EventUtils.synthesizeKey("k", { accelKey: true });
-  let searchBar = document.getElementById("searchbar");
-  is(searchBar.textbox.inputField, document.activeElement, "Toolbar's search bar should be focused");
-
-  // Test that Ctrl/Cmd + K will focus the search bar from a new about:home page if
-  // the newtab is disabled from `NewTabUtils.allPages.enabled`.
-  let tab = yield* addNewTabPageTab();
-  // Remove the search bar from toolbar
-  CustomizableUI.removeWidgetFromArea("search-container");
-  NewTabUtils.allPages.enabled = false;
-  EventUtils.synthesizeKey("k", { accelKey: true });
-
-  
-  let aboutHomeLoaded = new Promise(resolve => {
-    tab.linkedBrowser.addEventListener("AboutHomeLoadSnippetsCompleted", function loadListener(event) {
-      tab.linkedBrowser.removeEventListener("AboutHomeLoadSnippetsCompleted", loadListener, true);
-      resolve();
-    }, true, true);
-  });
-
-  tab.linkedBrowser.loadURI("about:home");
-  yield aboutHomeLoaded;
-
-  yield ContentTask.spawn(gBrowser.selectedBrowser, { }, function* () {
-    Assert.equal(content.document.documentURI.toLowerCase(), "about:home",
-      "New tab's uri should be about:home");
-    let searchInput = content.document.getElementById("searchText");
-    Assert.equal(searchInput, content.document.activeElement,
-      "Search input must be the selected element");
-  });
-
-  NewTabUtils.allPages.enabled = true;
-  CustomizableUI.reset();
-  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
-
   // Done.  Revert the current engine and remove the new engines.
   searchEventsPromise = promiseSearchEvents(["CurrentEngine"]);
   Services.search.currentEngine = oldCurrentEngine;
-  yield searchEventsPromise;
+  await searchEventsPromise;
 
   let events = Array(gNewEngines.length).fill("CurrentState", 0, gNewEngines.length);
   searchEventsPromise = promiseSearchEvents(events);
@@ -248,7 +183,7 @@ add_task(function* () {
   for (let engine of gNewEngines) {
     Services.search.removeEngine(engine);
   }
-  yield searchEventsPromise;
+  await searchEventsPromise;
 });
 
 function promiseSearchEvents(events) {
@@ -275,12 +210,12 @@ function promiseNewSearchEngine({name: basename, numLogos}) {
   let addEnginePromise = new Promise((resolve, reject) => {
     let url = getRootDirectory(gTestPath) + basename;
     Services.search.addEngine(url, null, "", false, {
-      onSuccess: function (engine) {
+      onSuccess(engine) {
         info("Search engine added: " + basename);
         gNewEngines.push(engine);
         resolve(engine);
       },
-      onError: function (errCode) {
+      onError(errCode) {
         ok(false, "addEngine failed with error code " + errCode);
         reject();
       },
@@ -292,14 +227,13 @@ function promiseNewSearchEngine({name: basename, numLogos}) {
   });
 }
 
-function* checkCurrentEngine(engineInfo)
-{
+async function checkCurrentEngine(engineInfo) {
   let engine = Services.search.currentEngine;
   ok(engine.name.includes(engineInfo.name),
      "Sanity check: current engine: engine.name=" + engine.name +
      " basename=" + engineInfo.name);
 
-  yield ContentTask.spawn(gBrowser.selectedBrowser, { name: engine.name }, function* (args) {
+  await ContentTask.spawn(gBrowser.selectedBrowser, { name: engine.name }, async function(args) {
     Assert.equal(content.gSearch._contentSearchController.defaultEngine.name,
       args.name, "currentEngineName: " + args.name);
   });

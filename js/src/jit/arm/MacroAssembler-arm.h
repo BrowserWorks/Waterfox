@@ -44,6 +44,11 @@ class MacroAssemblerARM : public Assembler
     Register secondScratchReg_;
 
   public:
+    Register getSecondScratchReg() const {
+        return secondScratchReg_;
+    }
+
+  public:
     // Higher level tag testing code.
     // TODO: Can probably remove the Operand versions.
     Operand ToPayload(Operand base) const {
@@ -95,6 +100,12 @@ class MacroAssemblerARM : public Assembler
     void convertInt32ToFloat32(Register src, FloatRegister dest);
     void convertInt32ToFloat32(const Address& src, FloatRegister dest);
 
+    void wasmTruncateToInt32(FloatRegister input, Register output, MIRType fromType,
+                             bool isUnsigned, Label* oolEntry);
+    void outOfLineWasmTruncateToIntCheck(FloatRegister input, MIRType fromType,
+                                         MIRType toType, bool isUnsigned, Label* rejoin,
+                                         wasm::BytecodeOffset trapOffset);
+
     // Somewhat direct wrappers for the low-level assembler funcitons
     // bitops. Attempt to encode a virtual alu instruction using two real
     // instructions.
@@ -103,12 +114,10 @@ class MacroAssemblerARM : public Assembler
                  SBit s, Condition c);
 
   public:
+    void ma_alu(Register src1, Imm32 imm, Register dest, AutoRegisterScope& scratch,
+                ALUOp op, SBit s = LeaveCC, Condition c = Always);
     void ma_alu(Register src1, Operand2 op2, Register dest, ALUOp op,
                 SBit s = LeaveCC, Condition c = Always);
-    void ma_alu(Register src1, Imm32 imm, Register dest,
-                ALUOp op,
-                SBit s =  LeaveCC, Condition c = Always);
-
     void ma_alu(Register src1, Operand op2, Register dest, ALUOp op,
                 SBit s = LeaveCC, Condition c = Always);
     void ma_nop();
@@ -116,10 +125,10 @@ class MacroAssemblerARM : public Assembler
     void ma_movPatchable(Imm32 imm, Register dest, Assembler::Condition c);
     void ma_movPatchable(ImmPtr imm, Register dest, Assembler::Condition c);
 
+    // To be used with Iter := InstructionIterator or BufferInstructionIterator.
+    template<class Iter>
     static void ma_mov_patch(Imm32 imm, Register dest, Assembler::Condition c,
-                             RelocStyle rs, Instruction* i);
-    static void ma_mov_patch(ImmPtr imm, Register dest, Assembler::Condition c,
-                             RelocStyle rs, Instruction* i);
+                             RelocStyle rs, Iter iter);
 
     // ALU based ops
     // mov
@@ -141,7 +150,7 @@ class MacroAssemblerARM : public Assembler
     void ma_lsr(Register shift, Register src, Register dst);
     void ma_asr(Register shift, Register src, Register dst);
     void ma_ror(Register shift, Register src, Register dst);
-    void ma_rol(Register shift, Register src, Register dst);
+    void ma_rol(Register shift, Register src, Register dst, AutoRegisterScope& scratch);
 
     // Move not (dest <- ~src)
     void ma_mvn(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
@@ -157,14 +166,14 @@ class MacroAssemblerARM : public Assembler
     void ma_and(Register src1, Register src2, Register dest,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_and(Imm32 imm, Register dest,
+    void ma_and(Imm32 imm, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_and(Imm32 imm, Register src1, Register dest,
+    void ma_and(Imm32 imm, Register src1, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
     // Bit clear (dest <- dest & ~imm) or (dest <- src1 & ~src2)
-    void ma_bic(Imm32 imm, Register dest,
+    void ma_bic(Imm32 imm, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
     // Exclusive or
@@ -174,12 +183,11 @@ class MacroAssemblerARM : public Assembler
     void ma_eor(Register src1, Register src2, Register dest,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_eor(Imm32 imm, Register dest,
+    void ma_eor(Imm32 imm, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_eor(Imm32 imm, Register src1, Register dest,
+    void ma_eor(Imm32 imm, Register src1, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
-
 
     // Or
     void ma_orr(Register src, Register dest,
@@ -188,135 +196,148 @@ class MacroAssemblerARM : public Assembler
     void ma_orr(Register src1, Register src2, Register dest,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_orr(Imm32 imm, Register dest,
+    void ma_orr(Imm32 imm, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
-    void ma_orr(Imm32 imm, Register src1, Register dest,
+    void ma_orr(Imm32 imm, Register src1, Register dest, AutoRegisterScope& scratch,
                 SBit s = LeaveCC, Condition c = Always);
 
 
     // Arithmetic based ops.
     // Add with carry:
-    void ma_adc(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_adc(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_adc(Register src, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_adc(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
 
     // Add:
-    void ma_add(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_add(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_add(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_add(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_add(Register src1, Operand op, Register dest, SBit s = LeaveCC, Condition c = Always);
-    void ma_add(Register src1, Imm32 op, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_add(Register src1, Imm32 op, Register dest, AutoRegisterScope& scratch,
+                SBit s = LeaveCC, Condition c = Always);
 
     // Subtract with carry:
-    void ma_sbc(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_sbc(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_sbc(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_sbc(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
 
     // Subtract:
-    void ma_sub(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_sub(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_sub(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_sub(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_sub(Register src1, Operand op, Register dest, SBit s = LeaveCC, Condition c = Always);
-    void ma_sub(Register src1, Imm32 op, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_sub(Register src1, Imm32 op, Register dest, AutoRegisterScope& scratch,
+                SBit s = LeaveCC, Condition c = Always);
 
     // Reverse subtract:
-    void ma_rsb(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_rsb(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_rsb(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_rsb(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
-    void ma_rsb(Register src1, Imm32 op2, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_rsb(Register src1, Imm32 op2, Register dest, AutoRegisterScope& scratch,
+                SBit s = LeaveCC, Condition c = Always);
 
     // Reverse subtract with carry:
-    void ma_rsc(Imm32 imm, Register dest, SBit s = LeaveCC, Condition c = Always);
+    void ma_rsc(Imm32 imm, Register dest, AutoRegisterScope& scratch, SBit s = LeaveCC, Condition c = Always);
     void ma_rsc(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
     void ma_rsc(Register src1, Register src2, Register dest, SBit s = LeaveCC, Condition c = Always);
 
     // Compares/tests.
     // Compare negative (sets condition codes as src1 + src2 would):
-    void ma_cmn(Register src1, Imm32 imm, Condition c = Always);
+    void ma_cmn(Register src1, Imm32 imm, AutoRegisterScope& scratch, Condition c = Always);
     void ma_cmn(Register src1, Register src2, Condition c = Always);
     void ma_cmn(Register src1, Operand op, Condition c = Always);
 
     // Compare (src - src2):
-    void ma_cmp(Register src1, Imm32 imm, Condition c = Always);
-    void ma_cmp(Register src1, ImmWord ptr, Condition c = Always);
-    void ma_cmp(Register src1, ImmGCPtr ptr, Condition c = Always);
-    void ma_cmp(Register src1, Operand op, Condition c = Always);
+    void ma_cmp(Register src1, Imm32 imm, AutoRegisterScope& scratch, Condition c = Always);
+    void ma_cmp(Register src1, ImmTag tag, Condition c = Always);
+    void ma_cmp(Register src1, ImmWord ptr, AutoRegisterScope& scratch, Condition c = Always);
+    void ma_cmp(Register src1, ImmGCPtr ptr, AutoRegisterScope& scratch, Condition c = Always);
+    void ma_cmp(Register src1, Operand op, AutoRegisterScope& scratch, AutoRegisterScope& scratch2,
+                Condition c = Always);
     void ma_cmp(Register src1, Register src2, Condition c = Always);
 
-
     // Test for equality, (src1 ^ src2):
-    void ma_teq(Register src1, Imm32 imm, Condition c = Always);
+    void ma_teq(Register src1, Imm32 imm, AutoRegisterScope& scratch, Condition c = Always);
     void ma_teq(Register src1, Register src2, Condition c = Always);
     void ma_teq(Register src1, Operand op, Condition c = Always);
 
-
     // Test (src1 & src2):
-    void ma_tst(Register src1, Imm32 imm, Condition c = Always);
+    void ma_tst(Register src1, Imm32 imm, AutoRegisterScope& scratch, Condition c = Always);
     void ma_tst(Register src1, Register src2, Condition c = Always);
     void ma_tst(Register src1, Operand op, Condition c = Always);
 
     // Multiplies. For now, there are only two that we care about.
     void ma_mul(Register src1, Register src2, Register dest);
-    void ma_mul(Register src1, Imm32 imm, Register dest);
-    Condition ma_check_mul(Register src1, Register src2, Register dest, Condition cond);
-    Condition ma_check_mul(Register src1, Imm32 imm, Register dest, Condition cond);
+    void ma_mul(Register src1, Imm32 imm, Register dest, AutoRegisterScope& scratch);
+    Condition ma_check_mul(Register src1, Register src2, Register dest,
+                           AutoRegisterScope& scratch, Condition cond);
+    Condition ma_check_mul(Register src1, Imm32 imm, Register dest,
+                           AutoRegisterScope& scratch, Condition cond);
 
+    void ma_umull(Register src1, Imm32 imm, Register destHigh, Register destLow, AutoRegisterScope& scratch);
     void ma_umull(Register src1, Register src2, Register destHigh, Register destLow);
-    void ma_umull(Register src1, Imm32 imm, Register destHigh, Register destLow);
 
     // Fast mod, uses scratch registers, and thus needs to be in the assembler
     // implicitly assumes that we can overwrite dest at the beginning of the
     // sequence.
     void ma_mod_mask(Register src, Register dest, Register hold, Register tmp,
-                     int32_t shift);
+                     AutoRegisterScope& scratch, AutoRegisterScope& scratch2, int32_t shift);
 
     // Mod - depends on integer divide instructions being supported.
-    void ma_smod(Register num, Register div, Register dest);
-    void ma_umod(Register num, Register div, Register dest);
+    void ma_smod(Register num, Register div, Register dest, AutoRegisterScope& scratch);
+    void ma_umod(Register num, Register div, Register dest, AutoRegisterScope& scratch);
 
     // Division - depends on integer divide instructions being supported.
     void ma_sdiv(Register num, Register div, Register dest, Condition cond = Always);
     void ma_udiv(Register num, Register div, Register dest, Condition cond = Always);
     // Misc operations
     void ma_clz(Register src, Register dest, Condition cond = Always);
-    void ma_ctz(Register src, Register dest);
+    void ma_ctz(Register src, Register dest, AutoRegisterScope& scratch);
     // Memory:
     // Shortcut for when we know we're transferring 32 bits of data.
-    void ma_dtr(LoadStore ls, Register rn, Imm32 offset, Register rt,
+    void ma_dtr(LoadStore ls, Register rn, Imm32 offset, Register rt, AutoRegisterScope& scratch,
                 Index mode = Offset, Condition cc = Always);
-
-    void ma_dtr(LoadStore ls, Register rn, Register rm, Register rt,
-                Index mode = Offset, Condition cc = Always);
-
+    void ma_dtr(LoadStore ls, Register rt, const Address& addr, AutoRegisterScope& scratch,
+                Index mode, Condition cc);
 
     void ma_str(Register rt, DTRAddr addr, Index mode = Offset, Condition cc = Always);
-    void ma_str(Register rt, const Address& addr, Index mode = Offset, Condition cc = Always);
-    void ma_dtr(LoadStore ls, Register rt, const Address& addr, Index mode, Condition cc);
+    void ma_str(Register rt, const Address& addr, AutoRegisterScope& scratch,
+                Index mode = Offset, Condition cc = Always);
 
     void ma_ldr(DTRAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
-    void ma_ldr(const Address& addr, Register rt, Index mode = Offset, Condition cc = Always);
+    void ma_ldr(const Address& addr, Register rt, AutoRegisterScope& scratch,
+                Index mode = Offset, Condition cc = Always);
 
     void ma_ldrb(DTRAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
     void ma_ldrh(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
     void ma_ldrsh(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
     void ma_ldrsb(EDtrAddr addr, Register rt, Index mode = Offset, Condition cc = Always);
-    void ma_ldrd(EDtrAddr addr, Register rt, DebugOnly<Register> rt2, Index mode = Offset, Condition cc = Always);
+    void ma_ldrd(EDtrAddr addr, Register rt, DebugOnly<Register> rt2, Index mode = Offset,
+                 Condition cc = Always);
     void ma_strb(Register rt, DTRAddr addr, Index mode = Offset, Condition cc = Always);
     void ma_strh(Register rt, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
-    void ma_strd(Register rt, DebugOnly<Register> rt2, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
+    void ma_strd(Register rt, DebugOnly<Register> rt2, EDtrAddr addr, Index mode = Offset,
+                 Condition cc = Always);
 
     // Specialty for moving N bits of data, where n == 8,16,32,64.
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
-                                  Register rn, Register rm, Register rt,
-                                  Index mode = Offset, Condition cc = Always, unsigned scale = TimesOne);
+                                  Register rn, Register rm, Register rt, AutoRegisterScope& scratch,
+                                  Index mode = Offset, Condition cc = Always,
+                                  Scale scale = TimesOne);
 
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
-                                  Register rn, Imm32 offset, Register rt,
+                                  Register rn, Register rm, Register rt,
+                                  Index mode = Offset, Condition cc = Always);
+
+    BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
+                                  Register rn, Imm32 offset, Register rt, AutoRegisterScope& scratch,
                                   Index mode = Offset, Condition cc = Always);
 
     void ma_pop(Register r);
+    void ma_popn_pc(Imm32 n, AutoRegisterScope& scratch, AutoRegisterScope& scratch2);
     void ma_push(Register r);
+    void ma_push_sp(Register r, AutoRegisterScope& scratch);
 
     void ma_vpop(VFPRegister r);
     void ma_vpush(VFPRegister r);
@@ -327,7 +348,7 @@ class MacroAssemblerARM : public Assembler
 
     // Branches when done from within arm-specific code.
     BufferOffset ma_b(Label* dest, Condition c = Always);
-    BufferOffset ma_b(wasm::JumpTarget target, Condition c = Always);
+    BufferOffset ma_b(wasm::TrapDesc target, Condition c = Always);
     void ma_b(void* target, Condition c = Always);
     void ma_bx(Register dest, Condition c = Always);
 
@@ -396,17 +417,20 @@ class MacroAssemblerARM : public Assembler
     // Transfer (do not coerce) a couple of gpr into a double
     void ma_vxfer(Register src1, Register src2, FloatRegister dest, Condition cc = Always);
 
-    BufferOffset ma_vdtr(LoadStore ls, const Address& addr, VFPRegister dest, Condition cc = Always);
+    BufferOffset ma_vdtr(LoadStore ls, const Address& addr, VFPRegister dest, AutoRegisterScope& scratch,
+                         Condition cc = Always);
 
     BufferOffset ma_vldr(VFPAddr addr, VFPRegister dest, Condition cc = Always);
-    BufferOffset ma_vldr(const Address& addr, VFPRegister dest, Condition cc = Always);
-    BufferOffset ma_vldr(VFPRegister src, Register base, Register index,
+    BufferOffset ma_vldr(const Address& addr, VFPRegister dest, AutoRegisterScope& scratch, Condition cc = Always);
+    BufferOffset ma_vldr(VFPRegister src, Register base, Register index, AutoRegisterScope& scratch,
                          int32_t shift = defaultShift, Condition cc = Always);
 
     BufferOffset ma_vstr(VFPRegister src, VFPAddr addr, Condition cc = Always);
-    BufferOffset ma_vstr(VFPRegister src, const Address& addr, Condition cc = Always);
-    BufferOffset ma_vstr(VFPRegister src, Register base, Register index, int32_t shift,
-                         int32_t offset, Condition cc = Always);
+    BufferOffset ma_vstr(VFPRegister src, const Address& addr, AutoRegisterScope& scratch, Condition cc = Always);
+    BufferOffset ma_vstr(VFPRegister src, Register base, Register index, AutoRegisterScope& scratch,
+                         AutoRegisterScope& scratch2, int32_t shift, int32_t offset, Condition cc = Always);
+    BufferOffset ma_vstr(VFPRegister src, Register base, Register index, AutoRegisterScope& scratch,
+                         int32_t shift, Condition cc = Always);
 
     void ma_call(ImmPtr dest);
 
@@ -429,7 +453,42 @@ class MacroAssemblerARM : public Assembler
         MOZ_CRASH("Invalid data transfer addressing mode");
     }
 
-private:
+    // `outAny` is valid if and only if `out64` == Register64::Invalid().
+    void wasmLoadImpl(const wasm::MemoryAccessDesc& access, Register memoryBase, Register ptr,
+                      Register ptrScratch, AnyRegister outAny, Register64 out64);
+
+    // `valAny` is valid if and only if `val64` == Register64::Invalid().
+    void wasmStoreImpl(const wasm::MemoryAccessDesc& access, AnyRegister valAny, Register64 val64,
+                       Register memoryBase, Register ptr, Register ptrScratch);
+
+  protected:
+    // `outAny` is valid if and only if `out64` == Register64::Invalid().
+    void wasmUnalignedLoadImpl(const wasm::MemoryAccessDesc& access, Register memoryBase,
+                               Register ptr, Register ptrScratch, AnyRegister outAny,
+                               Register64 out64, Register tmp1, Register tmp2, Register tmp3);
+
+    // The value to be stored is in `floatValue` (if not invalid), `val64` (if not invalid),
+    // or in `valOrTmp` (if `floatValue` and `val64` are both invalid).  Note `valOrTmp` must
+    // always be valid.
+    void wasmUnalignedStoreImpl(const wasm::MemoryAccessDesc& access, FloatRegister floatValue,
+                                Register64 val64, Register memoryBase, Register ptr,
+                                Register ptrScratch, Register valOrTmp);
+
+  private:
+    // Loads `byteSize` bytes, byte by byte, by reading from ptr[offset],
+    // applying the indicated signedness (defined by isSigned).
+    // - all three registers must be different.
+    // - tmp and dest will get clobbered, ptr will remain intact.
+    // - byteSize can be up to 4 bytes and no more (GPR are 32 bits on ARM).
+    void emitUnalignedLoad(bool isSigned, unsigned byteSize, Register ptr, Register tmp,
+                           Register dest, unsigned offset = 0);
+
+    // Ditto, for a store. Note stores don't care about signedness.
+    // - the two registers must be different.
+    // - val will get clobbered, ptr will remain intact.
+    // - byteSize can be up to 4 bytes and no more (GPR are 32 bits on ARM).
+    void emitUnalignedStore(unsigned byteSize, Register ptr, Register val, unsigned offset = 0);
+
     // Implementation for transferMultipleByRuns so we can use different
     // iterators for forward/backward traversals. The sign argument should be 1
     // if we traverse forwards, -1 if we traverse backwards.
@@ -497,12 +556,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void mov(ImmPtr imm, Register dest) {
         mov(ImmWord(uintptr_t(imm.value)), dest);
     }
-    void mov(Register src, Address dest) {
-        MOZ_CRASH("NYI-IC");
-    }
-    void mov(Address src, Register dest) {
-        MOZ_CRASH("NYI-IC");
-    }
 
     void branch(JitCode* c) {
         BufferOffset bo = m_buffer.nextOffset();
@@ -524,8 +577,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_pop(pc);
     }
     void retn(Imm32 n) {
-        // pc <- [sp]; sp += n
-        ma_dtr(IsLoad, sp, n, pc, PostIndex);
+        ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
+        ma_popn_pc(n, scratch, scratch2);
     }
     void push(Imm32 imm) {
         ScratchRegisterScope scratch(asMasm());
@@ -542,26 +596,32 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
     void push(const Address& addr) {
         ScratchRegisterScope scratch(asMasm());
-        ma_ldr(addr, scratch);
+        SecondScratchRegisterScope scratch2(asMasm());
+        ma_ldr(addr, scratch, scratch2);
         ma_push(scratch);
     }
     void push(Register reg) {
-        ma_push(reg);
+        if (reg == sp) {
+            ScratchRegisterScope scratch(asMasm());
+            ma_push_sp(reg, scratch);
+        } else {
+            ma_push(reg);
+        }
     }
     void push(FloatRegister reg) {
         ma_vpush(VFPRegister(reg));
     }
     void pushWithPadding(Register reg, const Imm32 extraSpace) {
+        ScratchRegisterScope scratch(asMasm());
         Imm32 totSpace = Imm32(extraSpace.value + 4);
-        ma_dtr(IsStore, sp, totSpace, reg, PreIndex);
+        ma_dtr(IsStore, sp, totSpace, reg, scratch, PreIndex);
     }
     void pushWithPadding(Imm32 imm, const Imm32 extraSpace) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
+        ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
         Imm32 totSpace = Imm32(extraSpace.value + 4);
-        // ma_dtr may need the scratch register to adjust the stack, so use the
-        // second scratch register.
-        ma_mov(imm, scratch2);
-        ma_dtr(IsStore, sp, totSpace, scratch2, PreIndex);
+        ma_mov(imm, scratch);
+        ma_dtr(IsStore, sp, totSpace, scratch, scratch2, PreIndex);
     }
 
     void pop(Register reg) {
@@ -572,8 +632,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
 
     void popN(Register reg, Imm32 extraSpace) {
+        ScratchRegisterScope scratch(asMasm());
         Imm32 totSpace = Imm32(extraSpace.value + 4);
-        ma_dtr(IsLoad, sp, totSpace, reg, PostIndex);
+        ma_dtr(IsLoad, sp, totSpace, reg, scratch, PostIndex);
     }
 
     CodeOffset toggledJump(Label* label);
@@ -609,10 +670,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
     void jump(const Address& addr) {
         ScratchRegisterScope scratch(asMasm());
-        ma_ldr(addr, scratch);
+        SecondScratchRegisterScope scratch2(asMasm());
+        ma_ldr(addr, scratch, scratch2);
         ma_bx(scratch);
     }
-    void jump(wasm::JumpTarget target) {
+    void jump(wasm::TrapDesc target) {
         as_b(target);
     }
 
@@ -623,12 +685,14 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_tst(lhs, rhs);
     }
     void test32(Register lhs, Imm32 imm) {
-        ma_tst(lhs, imm);
+        ScratchRegisterScope scratch(asMasm());
+        ma_tst(lhs, imm, scratch);
     }
     void test32(const Address& addr, Imm32 imm) {
         ScratchRegisterScope scratch(asMasm());
-        ma_ldr(addr, scratch);
-        ma_tst(scratch, imm);
+        SecondScratchRegisterScope scratch2(asMasm());
+        ma_ldr(addr, scratch, scratch2);
+        ma_tst(scratch, imm, scratch2);
     }
     void testPtr(Register lhs, Register rhs) {
         test32(lhs, rhs);
@@ -710,11 +774,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void unboxPrivate(const ValueOperand& src, Register dest);
 
     void notBoolean(const ValueOperand& val) {
-        ma_eor(Imm32(1), val.payloadReg());
+        as_eor(val.payloadReg(), val.payloadReg(), Imm8(1));
     }
 
     // Boxing code.
-    void boxDouble(FloatRegister src, const ValueOperand& dest);
+    void boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister);
     void boxNonDouble(JSValueType type, Register src, const ValueOperand& dest);
 
     // Extended unboxing API. If the payload is already in a register, returns
@@ -742,6 +806,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadInt32OrDouble(Register base, Register index,
                            FloatRegister dest, int32_t shift = defaultShift);
     void loadConstantDouble(double dp, FloatRegister dest);
+
     // Treat the value as a boolean, and set condition codes accordingly.
     Condition testInt32Truthy(bool truthy, const ValueOperand& operand);
     Condition testBooleanTruthy(bool truthy, const ValueOperand& operand);
@@ -752,8 +817,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void int32ValueToFloat32(const ValueOperand& operand, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
 
-    void moveValue(const Value& val, Register type, Register data);
-
     CodeOffsetJump jumpWithPatch(RepatchLabel* label, Condition cond = Always,
                                  Label* documentation = nullptr);
     CodeOffsetJump backedgeJump(RepatchLabel* label, Label* documentation) {
@@ -761,10 +824,12 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
 
     void loadUnboxedValue(Address address, MIRType type, AnyRegister dest) {
-        if (dest.isFloat())
+        if (dest.isFloat()) {
             loadInt32OrDouble(address, dest.fpu());
-        else
-            ma_ldr(address, dest.gpr());
+        } else {
+            ScratchRegisterScope scratch(asMasm());
+            ma_ldr(address, dest.gpr(), scratch);
+        }
     }
 
     void loadUnboxedValue(BaseIndex address, MIRType type, AnyRegister dest) {
@@ -787,64 +852,92 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         }
     }
 
-    void moveValue(const Value& val, const ValueOperand& dest);
-
-    void moveValue(const ValueOperand& src, const ValueOperand& dest) {
-        Register s0 = src.typeReg(), d0 = dest.typeReg(),
-                 s1 = src.payloadReg(), d1 = dest.payloadReg();
-
-        // Either one or both of the source registers could be the same as a
-        // destination register.
-        if (s1 == d0) {
-            if (s0 == d1) {
-                // If both are, this is just a swap of two registers.
-                ScratchRegisterScope scratch(asMasm());
-                MOZ_ASSERT(d1 != scratch);
-                MOZ_ASSERT(d0 != scratch);
-                ma_mov(d1, scratch);
-                ma_mov(d0, d1);
-                ma_mov(scratch, d0);
-                return;
-            }
-            // If only one is, copy that source first.
-            mozilla::Swap(s0, s1);
-            mozilla::Swap(d0, d1);
-        }
-
-        if (s0 != d0)
-            ma_mov(s0, d0);
-        if (s1 != d1)
-            ma_mov(s1, d1);
-    }
-
     void storeValue(ValueOperand val, const Address& dst);
     void storeValue(ValueOperand val, const BaseIndex& dest);
     void storeValue(JSValueType type, Register reg, BaseIndex dest) {
         ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
+
+        int32_t payloadoffset = dest.offset + NUNBOX32_PAYLOAD_OFFSET;
+        int32_t typeoffset = dest.offset + NUNBOX32_TYPE_OFFSET;
+
         ma_alu(dest.base, lsl(dest.index, dest.scale), scratch, OpAdd);
-        storeValue(type, reg, Address(scratch, dest.offset));
+
+        // Store the payload.
+        if (payloadoffset < 4096 && payloadoffset > -4096)
+            ma_str(reg, DTRAddr(scratch, DtrOffImm(payloadoffset)));
+        else
+            ma_str(reg, Address(scratch, payloadoffset), scratch2);
+
+        // Store the type.
+        if (typeoffset < 4096 && typeoffset > -4096) {
+            // Encodable as DTRAddr, so only two instructions needed.
+            ma_mov(ImmTag(JSVAL_TYPE_TO_TAG(type)), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(typeoffset)));
+        } else {
+            // Since there are only two scratch registers, the offset must be
+            // applied early using a third instruction to be safe.
+            ma_add(Imm32(typeoffset), scratch, scratch2);
+            ma_mov(ImmTag(JSVAL_TYPE_TO_TAG(type)), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(0)));
+        }
     }
     void storeValue(JSValueType type, Register reg, Address dest) {
-        ma_str(reg, dest);
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        ma_mov(ImmTag(JSVAL_TYPE_TO_TAG(type)), scratch2);
-        ma_str(scratch2, Address(dest.base, dest.offset + 4));
+        ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
+
+        ma_str(reg, dest, scratch2);
+        ma_mov(ImmTag(JSVAL_TYPE_TO_TAG(type)), scratch);
+        ma_str(scratch, Address(dest.base, dest.offset + NUNBOX32_TYPE_OFFSET), scratch2);
     }
     void storeValue(const Value& val, const Address& dest) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        ma_mov(Imm32(jv.s.tag), scratch2);
-        ma_str(scratch2, ToType(dest));
-        if (val.isMarkable())
-            ma_mov(ImmGCPtr(reinterpret_cast<gc::Cell*>(val.toGCThing())), scratch2);
+        ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
+
+        ma_mov(Imm32(val.toNunboxTag()), scratch);
+        ma_str(scratch, ToType(dest), scratch2);
+        if (val.isGCThing())
+            ma_mov(ImmGCPtr(val.toGCThing()), scratch);
         else
-            ma_mov(Imm32(jv.s.payload.i32), scratch2);
-        ma_str(scratch2, ToPayload(dest));
+            ma_mov(Imm32(val.toNunboxPayload()), scratch);
+        ma_str(scratch, ToPayload(dest), scratch2);
     }
     void storeValue(const Value& val, BaseIndex dest) {
         ScratchRegisterScope scratch(asMasm());
+        SecondScratchRegisterScope scratch2(asMasm());
+
+        int32_t typeoffset = dest.offset + NUNBOX32_TYPE_OFFSET;
+        int32_t payloadoffset = dest.offset + NUNBOX32_PAYLOAD_OFFSET;
+
         ma_alu(dest.base, lsl(dest.index, dest.scale), scratch, OpAdd);
-        storeValue(val, Address(scratch, dest.offset));
+
+        // Store the type.
+        if (typeoffset < 4096 && typeoffset > -4096) {
+            ma_mov(Imm32(val.toNunboxTag()), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(typeoffset)));
+        } else {
+            ma_add(Imm32(typeoffset), scratch, scratch2);
+            ma_mov(Imm32(val.toNunboxTag()), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(0)));
+            // Restore scratch for the payload store.
+            ma_alu(dest.base, lsl(dest.index, dest.scale), scratch, OpAdd);
+        }
+
+        // Store the payload, marking if necessary.
+        if (payloadoffset < 4096 && payloadoffset > -4096) {
+            if (val.isGCThing())
+                ma_mov(ImmGCPtr(val.toGCThing()), scratch2);
+            else
+                ma_mov(Imm32(val.toNunboxPayload()), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(payloadoffset)));
+        } else {
+            ma_add(Imm32(payloadoffset), scratch, scratch2);
+            if (val.isGCThing())
+                ma_mov(ImmGCPtr(val.toGCThing()), scratch2);
+            else
+                ma_mov(Imm32(val.toNunboxPayload()), scratch2);
+            ma_str(scratch2, DTRAddr(scratch, DtrOffImm(0)));
+        }
     }
     void storeValue(const Address& src, const Address& dest, Register temp) {
         load32(ToType(src), temp);
@@ -864,12 +957,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void pushValue(ValueOperand val);
     void popValue(ValueOperand val);
     void pushValue(const Value& val) {
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        push(Imm32(jv.s.tag));
-        if (val.isMarkable())
-            push(ImmGCPtr(reinterpret_cast<gc::Cell*>(val.toGCThing())));
+        push(Imm32(val.toNunboxTag()));
+        if (val.isGCThing())
+            push(ImmGCPtr(val.toGCThing()));
         else
-            push(Imm32(jv.s.payload.i32));
+            push(Imm32(val.toNunboxPayload()));
     }
     void pushValue(JSValueType type, Register reg) {
         push(ImmTag(JSVAL_TYPE_TO_TAG(type)));
@@ -917,8 +1009,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void load32(const BaseIndex& address, Register dest);
     void load32(AbsoluteAddress address, Register dest);
     void load64(const Address& address, Register64 dest) {
-        load32(address, dest.low);
-        load32(Address(address.base, address.offset + 4), dest.high);
+        load32(Address(address.base, address.offset + INT64LOW_OFFSET), dest.low);
+        int32_t highOffset = (address.offset < 0) ? -int32_t(INT64HIGH_OFFSET) : INT64HIGH_OFFSET;
+        load32(Address(address.base, address.offset + highOffset), dest.high);
     }
 
     void loadPtr(const Address& address, Register dest);
@@ -934,12 +1027,14 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadInt32x2(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadInt32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadInt32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeInt32x1(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x1(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x2(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x2(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x3(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x3(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x4(FloatRegister src, const Address& addr) { MOZ_CRASH("NYI"); }
     void loadAlignedSimd128Int(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedSimd128Int(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedSimd128Int(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
@@ -949,6 +1044,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
 
     void loadFloat32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadFloat32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadFloat32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeFloat32x4(FloatRegister src, const Address& addr) { MOZ_CRASH("NYI"); }
+
     void loadAlignedSimd128Float(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedSimd128Float(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedSimd128Float(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
@@ -965,11 +1063,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
 
     void loadFloat32(const Address& addr, FloatRegister dest);
     void loadFloat32(const BaseIndex& src, FloatRegister dest);
-
-    void ma_loadHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
-                          FloatRegister output);
-    void ma_loadHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
-                          bool faultOnOOB, Register output);
 
     void store8(Register src, const Address& address);
     void store8(Imm32 imm, const Address& address);
@@ -997,20 +1090,19 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         store32(imm.hi(), Address(address.base, address.offset + INT64HIGH_OFFSET));
     }
 
-    template <typename T> void storePtr(ImmWord imm, T address);
-    template <typename T> void storePtr(ImmPtr imm, T address);
-    template <typename T> void storePtr(ImmGCPtr imm, T address);
+    void storePtr(ImmWord imm, const Address& address);
+    void storePtr(ImmWord imm, const BaseIndex& address);
+    void storePtr(ImmPtr imm, const Address& address);
+    void storePtr(ImmPtr imm, const BaseIndex& address);
+    void storePtr(ImmGCPtr imm, const Address& address);
+    void storePtr(ImmGCPtr imm, const BaseIndex& address);
     void storePtr(Register src, const Address& address);
     void storePtr(Register src, const BaseIndex& address);
     void storePtr(Register src, AbsoluteAddress dest);
+
     void moveDouble(FloatRegister src, FloatRegister dest, Condition cc = Always) {
         ma_vmov(src, dest, cc);
     }
-
-    void ma_storeHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
-                           FloatRegister value);
-    void ma_storeHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
-                           bool faultOnOOB, Register value);
 
   private:
     template<typename T>
@@ -1299,15 +1391,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void atomicExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem, Register value,
                                        Register temp, AnyRegister output);
 
-    void clampIntToUint8(Register reg) {
-        // Look at (reg >> 8) if it is 0, then reg shouldn't be clamped if it is
-        // <0, then we want to clamp to 0, otherwise, we wish to clamp to 255
-        ScratchRegisterScope scratch(asMasm());
-        as_mov(scratch, asr(reg, 8), SetCC);
-        ma_mov(Imm32(0xff), reg, NotEqual);
-        ma_mov(Imm32(0), reg, Signed);
-    }
-
     inline void incrementInt32Value(const Address& addr);
 
     void cmp32(Register lhs, Imm32 rhs);
@@ -1330,7 +1413,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void cmpPtr(const Address& lhs, ImmGCPtr rhs);
     void cmpPtr(const Address& lhs, Imm32 rhs);
 
-    void convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest);
+    static bool convertUInt64ToDoubleNeedsTemp();
+    void convertUInt64ToDouble(Register64 src, FloatRegister dest, Register temp);
 
     void setStackArg(Register reg, uint32_t arg);
 
@@ -1344,9 +1428,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void simulatorStop(const char* msg);
 
     // Evaluate srcDest = minmax<isMax>{Float32,Double}(srcDest, other).
-    // Handle NaN specially if handleNaN is true.
-    void minMaxDouble(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
-    void minMaxFloat32(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
+    // Checks for NaN if canBeNaN is true.
+    void minMaxDouble(FloatRegister srcDest, FloatRegister other, bool canBeNaN, bool isMax);
+    void minMaxFloat32(FloatRegister srcDest, FloatRegister other, bool canBeNaN, bool isMax);
 
     void compareDouble(FloatRegister lhs, FloatRegister rhs);
 
@@ -1363,19 +1447,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     {
         ma_mov(Imm32(0), dest);
         ma_mov(Imm32(1), dest, cond);
-    }
-
-    template <typename T1, typename T2>
-    void cmpPtrSet(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
-    {
-        cmpPtr(lhs, rhs);
-        emitSet(cond, dest);
-    }
-    template <typename T1, typename T2>
-    void cmp32Set(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
-    {
-        cmp32(lhs, rhs);
-        emitSet(cond, dest);
     }
 
     void testNullSet(Condition cond, const ValueOperand& value, Register dest) {
@@ -1402,12 +1473,14 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
 
     void computeEffectiveAddress(const Address& address, Register dest) {
-        ma_add(address.base, Imm32(address.offset), dest, LeaveCC);
+        ScratchRegisterScope scratch(asMasm());
+        ma_add(address.base, Imm32(address.offset), dest, scratch, LeaveCC);
     }
     void computeEffectiveAddress(const BaseIndex& address, Register dest) {
+        ScratchRegisterScope scratch(asMasm());
         ma_alu(address.base, lsl(address.index, address.scale), dest, OpAdd, LeaveCC);
         if (address.offset)
-            ma_add(dest, Imm32(address.offset), dest, LeaveCC);
+            ma_add(dest, Imm32(address.offset), dest, scratch, LeaveCC);
     }
     void floor(FloatRegister input, Register output, Label* handleNotAnInt);
     void floorf(FloatRegister input, Register output, Label* handleNotAnInt);
@@ -1421,25 +1494,19 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         // This is the instruction sequence that gcc generated for this
         // operation.
         ScratchRegisterScope scratch(asMasm());
-        ma_sub(r, Imm32(0x80000001), scratch);
-        ma_cmn(scratch, Imm32(3));
+        SecondScratchRegisterScope scratch2(asMasm());
+        ma_sub(r, Imm32(0x80000001), scratch, scratch2);
+        as_cmn(scratch, Imm8(3));
         ma_b(handleNotAnInt, Above);
     }
 
     void lea(Operand addr, Register dest) {
-        ma_add(addr.baseReg(), Imm32(addr.disp()), dest);
+        ScratchRegisterScope scratch(asMasm());
+        ma_add(addr.baseReg(), Imm32(addr.disp()), dest, scratch);
     }
 
     void abiret() {
         as_bx(lr);
-    }
-
-    void ma_storeImm(Imm32 c, const Address& dest) {
-        ma_mov(c, lr);
-        ma_str(lr, dest);
-    }
-    BufferOffset ma_BoundsCheck(Register bounded) {
-        return as_cmp(bounded, Imm8(0));
     }
 
     void moveFloat32(FloatRegister src, FloatRegister dest, Condition cc = Always) {
@@ -1447,10 +1514,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     }
 
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalArea) + globalDataOffset), dest);
     }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
+    void loadWasmPinnedRegsFromTls() {
+        ScratchRegisterScope scratch(asMasm());
+        ma_ldr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg, scratch);
     }
 
     // Instrumentation for entering and leaving the profiler.

@@ -48,10 +48,12 @@ public:
 
   Box Next() const;
   Box FirstChild() const;
-  bool Read(nsTArray<uint8_t>* aDest);
-  bool Read(nsTArray<uint8_t>* aDest, const MediaByteRange& aRange);
+  nsTArray<uint8_t> Read() const;
+  bool Read(nsTArray<uint8_t>* aDest, const MediaByteRange& aRange) const;
 
   static const uint64_t kMAX_BOX_READ;
+
+  const nsTArray<uint8_t>& Header() const { return mHeader; }
 
 private:
   bool Contains(MediaByteRange aRange) const;
@@ -60,22 +62,24 @@ private:
   uint64_t mBodyOffset;
   uint64_t mChildOffset;
   AtomType mType;
+  nsTArray<uint8_t> mHeader;
   const Box* mParent;
 };
 
-class BoxReader
+// BoxReader takes a copy of a box contents and serves through an AutoByteReader.
+class MOZ_RAII BoxReader
 {
 public:
   explicit BoxReader(Box& aBox)
+    : mBuffer(aBox.Read())
+    , mReader(mBuffer.Elements(), mBuffer.Length())
   {
-    aBox.Read(&mBuffer);
-    mReader.SetData(mBuffer);
   }
   ByteReader* operator->() { return &mReader; }
-  ByteReader mReader;
 
 private:
   nsTArray<uint8_t> mBuffer;
+  ByteReader mReader;
 };
 }
 

@@ -12,11 +12,12 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-p-element
+[HTMLConstructor]
 interface HTMLParagraphElement : HTMLElement {
 };
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLParagraphElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString align;
 };

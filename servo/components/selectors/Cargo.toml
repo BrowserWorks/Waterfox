@@ -1,0 +1,40 @@
+[package]
+
+name = "selectors"
+version = "0.19.0" # Not yet published
+authors = ["Simon Sapin <simon.sapin@exyr.org>", "Alan Jeffrey <ajeffrey@mozilla.com>"]
+documentation = "https://docs.rs/selectors/"
+
+description = "CSS Selectors matching for Rust"
+repository = "https://github.com/servo/servo"
+readme = "README.md"
+keywords = ["css", "selectors"]
+license = "MPL-2.0"
+build = "build.rs"
+
+[lib]
+name = "selectors"
+path = "lib.rs"
+# https://github.com/servo/servo/issues/16710
+doctest = false
+
+[features]
+gecko_like_types = []
+unstable = []
+
+[dependencies]
+bitflags = "0.7"
+matches = "0.1"
+cssparser = "0.18"
+log = "0.3"
+fnv = "1.0"
+phf = "0.7.18"
+precomputed-hash = "0.1"
+servo_arc = { path = "../servo_arc" }
+smallvec = "0.4"
+
+[dev-dependencies]
+size_of_test = {path = "../size_of_test"}
+
+[build-dependencies]
+phf_codegen = "0.7.18"

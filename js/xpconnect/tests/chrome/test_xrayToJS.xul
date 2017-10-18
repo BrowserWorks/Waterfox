@@ -146,6 +146,14 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
     testPromise();
 
+    testArrayBuffer();
+
+    testMap();
+
+    testSet();
+
+    testDataView();
+
     // We could also test DataView and Iterator here for completeness, but it's
     // more trouble than it's worth.
 
@@ -159,7 +167,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   // DO NOT CHANGE WTIHOUT REVIEW FROM AN XPCONNECT PEER.
   var version = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo).version;
   var isNightlyBuild = version.endsWith("a1");
-  var isReleaseBuild = !version.includes("a");
+  var isReleaseOrBeta = !version.includes("a");
   var gPrototypeProperties = {};
   var gConstructorProperties = {};
   function constructorProps(arr) {
@@ -218,11 +226,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   // There is no TypedArray constructor, looks like.
   is(window.TypedArray, undefined, "If this ever changes, add to this test!");
   for (var c of errorObjectClasses) {
-      gPrototypeProperties[c] = ["constructor", "name",
-                                 // We don't actually resolve these empty data properties
-                                 // onto the Xray prototypes, but we list them here to make
-                                 // the test happy.
-                                 "lineNumber", "columnNumber", "fileName", "message", "stack"];
+      gPrototypeProperties[c] = ["constructor", "name", "message", "stack"];
       gConstructorProperties[c] = constructorProps([]);
   }
   // toString and toSource only live on the parent proto (Error.prototype).
@@ -237,8 +241,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['RegExp'] =
     ["constructor", "toSource", "toString", "compile", "exec", "test",
      Symbol.match, Symbol.replace, Symbol.search, Symbol.split,
-     "flags", "global", "ignoreCase", "multiline", "source", "sticky", "unicode",
-     "lastIndex"];
+     "flags", "global", "ignoreCase", "multiline", "source", "sticky", "unicode"];
   gConstructorProperties['RegExp'] =
     constructorProps(["input", "lastMatch", "lastParen",
                       "leftContext", "rightContext", "$1", "$2", "$3", "$4",
@@ -246,9 +249,37 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
                       "$`", "$'", Symbol.species])
 
   gPrototypeProperties['Promise'] =
-    ["constructor", "catch", "then"];
+    ["constructor", "catch", "then", Symbol.toStringTag];
   gConstructorProperties['Promise'] =
     constructorProps(["resolve", "reject", "all", "race", Symbol.species]);
+
+  gPrototypeProperties['ArrayBuffer'] =
+    ["constructor", "byteLength", "slice", Symbol.toStringTag];
+  gConstructorProperties['ArrayBuffer'] =
+    constructorProps(["isView", Symbol.species]);
+
+  gPrototypeProperties['SharedArrayBuffer'] = ["constructor", "slice", "byteLength", Symbol.toStringTag];
+  gConstructorProperties['SharedArrayBuffer'] = constructorProps([Symbol.species]);
+
+  gPrototypeProperties['Map'] =
+    ["constructor", "size", Symbol.toStringTag, "get", "has", "set", "delete",
+     "keys", "values", "clear", "forEach", "entries", Symbol.iterator];
+  gConstructorProperties['Map'] =
+    constructorProps([Symbol.species]);
+
+  gPrototypeProperties['Set'] =
+    ["constructor", "size", Symbol.toStringTag, "has", "add", "delete",
+     "keys", "values", "clear", "forEach", "entries", Symbol.iterator];
+  gConstructorProperties['Set'] =
+    constructorProps([Symbol.species]);
+
+  gPrototypeProperties['DataView'] =
+    ["constructor", "buffer", "byteLength", "byteOffset", Symbol.toStringTag,
+     "getInt8", "getUint8", "getInt16", "getUint16",
+     "getInt32", "getUint32", "getFloat32", "getFloat64",
+     "setInt8", "setUint8", "setInt16", "setUint16",
+     "setInt32", "setUint32", "setFloat32", "setFloat64"];
+  gConstructorProperties['DataView'] = constructorProps([]);
 
   // Sort an array that may contain symbols as well as strings.
   function sortProperties(arr) {
@@ -304,9 +335,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
            "Xray and local method results stringify identically");
 
         // If invoking this method returns something non-Xrayable, the
-        // stringification is going to return [object Opaque]. This happens for
-        // xrayedTypedArray.buffer, for instance, since we don't have Xrays
-        // to ArrayBuffers. Just check for that case.
+        // stringification is going to return [object Opaque].
+        // This happens for set[@@iterator] and other Iterator objects.
         if (!/Opaque/.test(method.call(xray))) {
           is(method.call(xray) + "",
              lookupCallable(xray.wrappedJSObject).call(xray.wrappedJSObject) + "",
@@ -753,6 +783,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
       is(t.length, 10, "Length accessor works over Xrays")
       is(t.byteLength, t.length * window[c].prototype.BYTES_PER_ELEMENT, "byteLength accessor works over Xrays")
 
+      // Can create TypedArray from content ArrayBuffer
+      var buffer = new iwin.ArrayBuffer(8);
+      eval(`new ${c}(buffer);`);
+
       var xray = new iwin[c](0);
       var xrayTypedArrayProto = Object.getPrototypeOf(Object.getPrototypeOf(xray));
       testProtoCallables(inheritedCallables, new iwin[c](0), xrayTypedArrayProto, typedArrayProto);
@@ -776,8 +810,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     // We only invoke testXray with Error, because that function isn't set up
     // to deal with dependent classes and fixing it up is more trouble than
     // it's worth.
-    testXray('Error', new iwin.Error('some error message'), new iwin.Error(),
-             ['fileName', 'lineNumber', 'columnNumber', 'message']);
+    testXray('Error', new iwin.Error('some error message'), new iwin.Error());
 
     // Make sure that the dependent classes have their prototypes set up correctly.
     for (let c of errorObjectClasses.filter(x => x != "Error")) {
@@ -791,7 +824,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
         e.wrappedJSObject[name] = goodReplacement;
         is(e[name], goodReplacement, name + " property ok after replacement: " + goodReplacement);
         e.wrappedJSObject[name] = faultyReplacement;
-        is(e[name], undefined, name + " property censored after suspicious replacement");
+        is(e[name], name == 'message' ? "" : undefined, name + " property skipped after suspicious replacement");
       }
       testProperty('message', x => x == 'some message', 'some other message', 42);
       testProperty('fileName', x => x == '', 'otherFilename.html', new iwin.Object());
@@ -882,6 +915,107 @@ for (var prop of props) {
     isnot(pr.then, Cu.unwaiveXrays(pr.wrappedJSObject.then), "Different function identities");
     is(Cu.getGlobalForObject(pr.then), window, "Xray global is correct");
     is(Cu.getGlobalForObject(pr.wrappedJSObject.then), iwin, "Underlying global is correct");
+  }
+
+  function testArrayBuffer() {
+    let constructors = ['ArrayBuffer', 'SharedArrayBuffer'];
+
+    for (const c of constructors) {
+      testXray(c, new iwin[c](0), new iwin[c](12));
+
+      var t = new iwin[c](12);
+      is(t.byteLength, 12, `${c} byteLength is correct`);
+
+      is(t.slice(4).byteLength, 8, `${c} byteLength is correct after slicing`);
+      is(Cu.getGlobalForObject(t.slice(4)), iwin, "Slice results lives in the target compartment");
+      is(Object.getPrototypeOf(t.slice(4)), iwin[c].prototype, "Slice results proto lives in target compartment")
+
+      var i32Array = new Int32Array(t);
+      // i32Array is going to be created in the buffer's target compartment,
+      // but usually this is unobservable, because the proto is set to
+      // the current compartment's prototype.
+      // However Xrays ignore the object's proto and claim its proto is
+      // the default proto for that class in the relevant compartment,
+      // so see through this proto hack.
+      todo_is(Object.getPrototypeOf(i32Array), Int32Array.prototype, "Int32Array has correct proto");
+      is(i32Array.length, 3, `Int32Array created from Xray ${c} has the correct length`);
+      is(i32Array.buffer, t, "Int32Array has the correct buffer that we passed in");
+
+      i32Array = new iwin.Int32Array(t);
+      is(Object.getPrototypeOf(i32Array), iwin.Int32Array.prototype, "Xray Int32Array has correct proto");
+      is(i32Array.length, 3, `Xray Int32Array created from Xray ${c} has the correct length`);
+      is(i32Array.buffer, t, "Xray Int32Array has the correct buffer that we passed in");
+
+      t = (new iwin.Int32Array(2)).buffer;
+      is(t.byteLength, 8, `Can access ${c} returned by buffer property`);
+    }
+  }
+
+  function testMap() {
+    testXray('Map', new iwin.Map(), new iwin.Map());
+
+    var t = iwin.eval(`new Map([[1, "a"], [null, "b"]])`);
+    is(t.size, 2, "Map size is correct");
+    is(t.get(1), "a", "Key 1 has the correct value");
+    is(t.get(null), "b", "Key null has the correct value");
+    is(t.has(1), true, "Has Key 1");
+    is(t.set(3, 5).get(3), 5, "Correctly sets key");
+    is(t.delete(null), true, "Key null can be deleted");
+
+    let values = [];
+    t.forEach((value, key) => values.push(value));
+    is(values.toString(), "a,5", "forEach enumerates values correctly");
+
+    t.clear();
+    is(t.size, 0, "Map is empty after calling clear");
+  }
+
+  function testSet() {
+    testXray('Set', new iwin.Set(), new iwin.Set());
+
+    var t = iwin.eval(`new Set([1, null])`);
+    is(t.size, 2, "Set size is correct");
+    is(t.has(1), true, "Contains 1");
+    is(t.has(null), true, "Contains null");
+    is(t.add(5).has(5), true, "Can add value to set");
+    is(t.delete(null), true, "Value null can be deleted");
+
+    let values = [];
+    t.forEach(value => values.push(value));
+    is(values.toString(), "1,5", "forEach enumerates values correctly");
+
+    t.clear();
+    is(t.size, 0, "Set is empty after calling clear");
+  }
+
+  function testDataView() {
+    testXray('DataView', new iwin.DataView(new iwin.ArrayBuffer(4)),
+             new iwin.DataView(new iwin.ArrayBuffer(8)));
+
+    const versions = [() => iwin.eval(`new DataView(new ArrayBuffer(8))`),
+                      () => new DataView(new iwin.ArrayBuffer(8))];
+
+    for (const constructor of versions) {
+      let t = constructor();
+      is(t.byteLength, 8, `byteLength correct for "${constructor}"`);
+      is(t.byteOffset, 0, `byteOffset correct for "${constructor}"`);
+      is(t.buffer.byteLength, 8, `buffer works for "${constructor}"`);
+
+      const get = ["getInt8", "getUint8", "getInt16", "getUint16",
+                   "getInt32", "getUint32", "getFloat32", "getFloat64"];
+
+      const set = ["setInt8", "setUint8", "setInt16", "setUint16",
+                   "setInt32", "setUint32", "setFloat32", "setFloat64"];
+
+      for (const f of get) {
+        is(t[f](0), 0, `${f} is 0 for "${constructor}"`);
+      }
+
+      for (let i = 0; i < set.length; i++) {
+        t[set[i]](0, 13);
+        is(t[get[i]](0), 13, `${get[i]}(0) afer ${set[i]}(0, 13) is 13 for "${constructor}"`);
+      }
+    }
   }
 
   ]]>

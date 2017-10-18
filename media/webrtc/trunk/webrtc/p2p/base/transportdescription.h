@@ -12,12 +12,11 @@
 #define WEBRTC_P2P_BASE_TRANSPORTDESCRIPTION_H_
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "webrtc/p2p/base/candidate.h"
-#include "webrtc/p2p/base/constants.h"
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/p2p/base/p2pconstants.h"
 #include "webrtc/base/sslfingerprint.h"
 
 namespace cricket {
@@ -29,21 +28,13 @@ namespace cricket {
 // SEC_ENABLED:  Crypto in outgoing offer and answer (if supplied in offer).
 // SEC_REQUIRED: Crypto in outgoing offer and answer. Fail any offer with absent
 //               or unsupported crypto.
+// TODO(deadbeef): Remove this or rename it to something more appropriate, like
+// SdesPolicy.
 enum SecurePolicy {
   SEC_DISABLED,
   SEC_ENABLED,
   SEC_REQUIRED
 };
-
-// The transport protocol we've elected to use.
-enum TransportProtocol {
-  ICEPROTO_GOOGLE,  // Google version of ICE protocol.
-  ICEPROTO_HYBRID,  // ICE, but can fall back to the Google version.
-  ICEPROTO_RFC5245  // Standard RFC 5245 version of ICE.
-};
-// The old name for TransportProtocol.
-// TODO(juberti): remove this.
-typedef TransportProtocol IceProtocolType;
 
 // Whether our side of the call is driving the negotiation, or the other side.
 enum IceRole {
@@ -71,61 +62,73 @@ enum ConnectionRole {
   CONNECTIONROLE_HOLDCONN,
 };
 
+struct IceParameters {
+  // TODO(honghaiz): Include ICE mode in this structure to match the ORTC
+  // struct:
+  // http://ortc.org/wp-content/uploads/2016/03/ortc.html#idl-def-RTCIceParameters
+  std::string ufrag;
+  std::string pwd;
+  bool renomination = false;
+  IceParameters() = default;
+  IceParameters(const std::string& ice_ufrag,
+                const std::string& ice_pwd,
+                bool ice_renomination)
+      : ufrag(ice_ufrag), pwd(ice_pwd), renomination(ice_renomination) {}
+
+  bool operator==(const IceParameters& other) {
+    return ufrag == other.ufrag && pwd == other.pwd &&
+           renomination == other.renomination;
+  }
+  bool operator!=(const IceParameters& other) { return !(*this == other); }
+};
+
 extern const char CONNECTIONROLE_ACTIVE_STR[];
 extern const char CONNECTIONROLE_PASSIVE_STR[];
 extern const char CONNECTIONROLE_ACTPASS_STR[];
 extern const char CONNECTIONROLE_HOLDCONN_STR[];
 
+constexpr auto ICE_RENOMINATION_STR = "renomination";
+
 bool StringToConnectionRole(const std::string& role_str, ConnectionRole* role);
 bool ConnectionRoleToString(const ConnectionRole& role, std::string* role_str);
-
-typedef std::vector<Candidate> Candidates;
 
 struct TransportDescription {
   TransportDescription()
       : ice_mode(ICEMODE_FULL),
         connection_role(CONNECTIONROLE_NONE) {}
 
-  TransportDescription(const std::string& transport_type,
-                       const std::vector<std::string>& transport_options,
+  TransportDescription(const std::vector<std::string>& transport_options,
                        const std::string& ice_ufrag,
                        const std::string& ice_pwd,
                        IceMode ice_mode,
                        ConnectionRole role,
-                       const rtc::SSLFingerprint* identity_fingerprint,
-                       const Candidates& candidates)
-      : transport_type(transport_type),
-        transport_options(transport_options),
+                       const rtc::SSLFingerprint* identity_fingerprint)
+      : transport_options(transport_options),
         ice_ufrag(ice_ufrag),
         ice_pwd(ice_pwd),
         ice_mode(ice_mode),
         connection_role(role),
-        identity_fingerprint(CopyFingerprint(identity_fingerprint)),
-        candidates(candidates) {}
-  TransportDescription(const std::string& transport_type,
-                       const std::string& ice_ufrag,
+        identity_fingerprint(CopyFingerprint(identity_fingerprint)) {}
+  TransportDescription(const std::string& ice_ufrag,
                        const std::string& ice_pwd)
-      : transport_type(transport_type),
-        ice_ufrag(ice_ufrag),
+      : ice_ufrag(ice_ufrag),
         ice_pwd(ice_pwd),
         ice_mode(ICEMODE_FULL),
         connection_role(CONNECTIONROLE_NONE) {}
   TransportDescription(const TransportDescription& from)
-      : transport_type(from.transport_type),
-        transport_options(from.transport_options),
+      : transport_options(from.transport_options),
         ice_ufrag(from.ice_ufrag),
         ice_pwd(from.ice_pwd),
         ice_mode(from.ice_mode),
         connection_role(from.connection_role),
-        identity_fingerprint(CopyFingerprint(from.identity_fingerprint.get())),
-        candidates(from.candidates) {}
+        identity_fingerprint(CopyFingerprint(from.identity_fingerprint.get())) {
+  }
 
   TransportDescription& operator=(const TransportDescription& from) {
     // Self-assignment
     if (this == &from)
       return *this;
 
-    transport_type = from.transport_type;
     transport_options = from.transport_options;
     ice_ufrag = from.ice_ufrag;
     ice_pwd = from.ice_pwd;
@@ -134,7 +137,6 @@ struct TransportDescription {
 
     identity_fingerprint.reset(CopyFingerprint(
         from.identity_fingerprint.get()));
-    candidates = from.candidates;
     return *this;
   }
 
@@ -147,6 +149,10 @@ struct TransportDescription {
   }
   bool secure() const { return identity_fingerprint != NULL; }
 
+  IceParameters GetIceParameters() {
+    return IceParameters(ice_ufrag, ice_pwd, HasOption(ICE_RENOMINATION_STR));
+  }
+
   static rtc::SSLFingerprint* CopyFingerprint(
       const rtc::SSLFingerprint* from) {
     if (!from)
@@ -155,15 +161,13 @@ struct TransportDescription {
     return new rtc::SSLFingerprint(*from);
   }
 
-  std::string transport_type;  // xmlns of <transport>
   std::vector<std::string> transport_options;
   std::string ice_ufrag;
   std::string ice_pwd;
   IceMode ice_mode;
   ConnectionRole connection_role;
 
-  rtc::scoped_ptr<rtc::SSLFingerprint> identity_fingerprint;
-  Candidates candidates;
+  std::unique_ptr<rtc::SSLFingerprint> identity_fingerprint;
 };
 
 }  // namespace cricket

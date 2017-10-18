@@ -3,34 +3,99 @@
 
 /*
  * Test Google search plugin URLs
+ * TODO: This test is a near duplicate of browser_searchEngine_behaviors.js but
+ * specific to Google. This is required due to bug 1315953.
  */
 
 "use strict";
 
-function test() {
-  let engine = Services.search.getEngineByName("Google");
-  ok(engine, "Google is installed");
+const SEARCH_ENGINE_DETAILS = [{
+  alias: "g",
+  baseURL: "https://www.google.com/search?q=foo&ie=utf-8&oe=utf-8",
+  codes: {
+    context: "",
+    keyword: "",
+    newTab: "",
+    submission: "",
+  },
+  name: "Google",
+}];
 
-  let previouslySelectedEngine = Services.search.currentEngine;
+function promiseStateChangeURI() {
+  return new Promise(resolve => {
+    let listener = {
+      onStateChange: function onStateChange(webProgress, req, flags, status) {
+        info("onStateChange");
+        // Only care about top-level document starts
+        let docStart = Ci.nsIWebProgressListener.STATE_IS_DOCUMENT |
+                       Ci.nsIWebProgressListener.STATE_START;
+        if (!(flags & docStart) || !webProgress.isTopLevel)
+          return;
+
+        if (req.originalURI.spec == "about:blank")
+          return;
+
+        gBrowser.removeProgressListener(listener);
+
+        info("received document start");
+
+        Assert.ok(req instanceof Ci.nsIChannel, "req is a channel");
+
+        req.cancel(Components.results.NS_ERROR_FAILURE);
+
+        executeSoon(() => {
+          resolve(req.originalURI.spec);
+        });
+      }
+    }
+
+    gBrowser.addProgressListener(listener);
+  });
+}
+
+function promiseContentSearchReady(browser) {
+  return ContentTask.spawn(browser, {}, async function(args) {
+    return new Promise(resolve => {
+      content.addEventListener("ContentSearchService", function listener(aEvent) {
+        if (aEvent.detail.type == "State") {
+          content.removeEventListener("ContentSearchService", listener);
+          resolve();
+        }
+      });
+    });
+  });
+}
+
+for (let engine of SEARCH_ENGINE_DETAILS) {
+  add_task(async function() {
+    let previouslySelectedEngine = Services.search.currentEngine;
+
+    registerCleanupFunction(function() {
+      Services.search.currentEngine = previouslySelectedEngine;
+    });
+
+    await testSearchEngine(engine);
+  });
+}
+
+async function testSearchEngine(engineDetails) {
+  let engine = Services.search.getEngineByName(engineDetails.name);
+  Assert.ok(engine, `${engineDetails.name} is installed`);
+
   Services.search.currentEngine = engine;
-  engine.alias = "g";
+  engine.alias = engineDetails.alias;
 
-  let base = "https://www.google.com/search?q=foo&ie=utf-8&oe=utf-8";
-
-  let url;
+  let base = engineDetails.baseURL;
 
   // Test search URLs (including purposes).
-  url = engine.getSubmission("foo").uri.spec;
-  is(url, base, "Check search URL for 'foo'");
+  let url = engine.getSubmission("foo").uri.spec;
+  Assert.equal(url, base + engineDetails.codes.submission, "Check search URL for 'foo'");
 
-  waitForExplicitFinish();
-
-  var gCurrTest;
-  var gTests = [
+  let engineTests = [
     {
       name: "context menu search",
-      searchURL: base,
-      run: function () {
+      searchURL: base + engineDetails.codes.context,
+      run() {
         // Simulate a contextmenu search
         // FIXME: This is a bit "low-level"...
         BrowserSearch.loadSearch("foo", false, "contextmenu");
@@ -38,30 +103,30 @@ function test() {
     },
     {
       name: "keyword search",
-      searchURL: base,
-      run: function () {
+      searchURL: base + engineDetails.codes.keyword,
+      run() {
         gURLBar.value = "? foo";
         gURLBar.focus();
         EventUtils.synthesizeKey("VK_RETURN", {});
       }
     },
     {
-      name: "keyword search",
-      searchURL: base,
-      run: function () {
-        gURLBar.value = "g foo";
+      name: "keyword search with alias",
+      searchURL: base + engineDetails.codes.keyword,
+      run() {
+        gURLBar.value = `${engineDetails.alias} foo`;
         gURLBar.focus();
         EventUtils.synthesizeKey("VK_RETURN", {});
       }
     },
     {
       name: "search bar search",
-      searchURL: base,
-      run: function () {
+      searchURL: base + engineDetails.codes.submission,
+      run() {
         let sb = BrowserSearch.searchBar;
         sb.focus();
         sb.value = "foo";
-        registerCleanupFunction(function () {
+        registerCleanupFunction(function() {
           sb.value = "";
         });
         EventUtils.synthesizeKey("VK_RETURN", {});
@@ -69,96 +134,43 @@ function test() {
     },
     {
       name: "new tab search",
-      searchURL: base,
-      run: function () {
-        function doSearch(doc) {
-          // Re-add the listener, and perform a search
-          gBrowser.addProgressListener(listener);
-          doc.getElementById("newtab-search-text").value = "foo";
-          doc.getElementById("newtab-search-submit").click();
-        }
+      searchURL: base + engineDetails.codes.newTab,
+      async preTest(tab) {
+        let browser = tab.linkedBrowser
+        await BrowserTestUtils.loadURI(browser, "about:newtab");
+        await BrowserTestUtils.browserLoaded(browser);
 
-        // load about:newtab, but remove the listener first so it doesn't
-        // get in the way
-        gBrowser.removeProgressListener(listener);
-        gBrowser.loadURI("about:newtab");
-        info("Waiting for about:newtab load");
-        tab.linkedBrowser.addEventListener("load", function load(event) {
-          if (event.originalTarget != tab.linkedBrowser.contentDocument ||
-              event.target.location.href == "about:blank") {
-            info("skipping spurious load event");
-            return;
-          }
-          tab.linkedBrowser.removeEventListener("load", load, true);
-
-          // Observe page setup
-          let win = gBrowser.contentWindow;
-          if (win.gSearch.currentEngineName ==
-              Services.search.currentEngine.name) {
-            doSearch(win.document);
-          }
-          else {
-            info("Waiting for newtab search init");
-            win.addEventListener("ContentSearchService", function done(event) {
-              info("Got newtab search event " + event.detail.type);
-              if (event.detail.type == "State") {
-                win.removeEventListener("ContentSearchService", done);
-                // Let gSearch respond to the event before continuing.
-                executeSoon(() => doSearch(win.document));
-              }
-            });
-          }
-        }, true);
+        await promiseContentSearchReady(browser);
+      },
+      async run(tab) {
+        await ContentTask.spawn(tab.linkedBrowser, {}, async function(args) {
+          let input = content.document.querySelector("input[id*=search-]");
+          input.focus();
+          input.value = "foo";
+        });
+        EventUtils.synthesizeKey("VK_RETURN", {});
       }
     }
   ];
 
-  function nextTest() {
-    if (gTests.length) {
-      gCurrTest = gTests.shift();
-      info("Running : " + gCurrTest.name);
-      executeSoon(gCurrTest.run);
-    } else {
-      finish();
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+
+  for (let test of engineTests) {
+    info(`Running: ${test.name}`);
+
+    if (test.preTest) {
+      await test.preTest(tab);
     }
+
+    let stateChangePromise = promiseStateChangeURI();
+
+    await test.run(tab);
+
+    let receivedURI = await stateChangePromise;
+
+    Assert.equal(receivedURI, test.searchURL);
   }
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
-
-  let listener = {
-    onStateChange: function onStateChange(webProgress, req, flags, status) {
-      info("onStateChange");
-      // Only care about top-level document starts
-      let docStart = Ci.nsIWebProgressListener.STATE_IS_DOCUMENT |
-                     Ci.nsIWebProgressListener.STATE_START;
-      if (!(flags & docStart) || !webProgress.isTopLevel)
-        return;
-
-      if (req.originalURI.spec == "about:blank")
-        return;
-
-      info("received document start");
-
-      ok(req instanceof Ci.nsIChannel, "req is a channel");
-      is(req.originalURI.spec, gCurrTest.searchURL, "search URL was loaded");
-      info("Actual URI: " + req.URI.spec);
-
-      req.cancel(Components.results.NS_ERROR_FAILURE);
-
-      executeSoon(nextTest);
-    }
-  }
-
-  registerCleanupFunction(function () {
-    engine.alias = undefined;
-    gBrowser.removeProgressListener(listener);
-    gBrowser.removeTab(tab);
-    Services.search.currentEngine = previouslySelectedEngine;
-  });
-
-  tab.linkedBrowser.addEventListener("load", function load() {
-    tab.linkedBrowser.removeEventListener("load", load, true);
-    gBrowser.addProgressListener(listener);
-    nextTest();
-  }, true);
+  engine.alias = undefined;
+  await BrowserTestUtils.removeTab(tab);
 }

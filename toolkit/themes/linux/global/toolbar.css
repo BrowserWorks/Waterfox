@@ -45,9 +45,8 @@ toolbaritem > menubar {
 /* ::::: toolbar decorations ::::: */
 
 toolbarseparator {
-  -moz-appearance: separator !important;
+  -moz-appearance: separator;
   margin : 0;
-  border: 0;
   min-width: 2px;
 }
 

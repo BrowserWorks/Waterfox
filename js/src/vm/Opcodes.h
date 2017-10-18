@@ -62,6 +62,7 @@
  *     This
  *     Super
  *     Arguments
+ *     Var Scope
  *   [Operators]
  *     Comparison Operators
  *     Arithmetic Operators
@@ -109,7 +110,7 @@
     macro(JSOP_GETRVAL,   2,  "getrval",    NULL,         1,  0,  1, JOF_BYTE) \
     /*
      * Pops the top of stack value, converts it to an object, and adds a
-     * 'DynamicWithObject' wrapping that object to the scope chain.
+     * 'WithEnvironmentObject' wrapping that object to the environment chain.
      *
      * There is a matching JSOP_LEAVEWITH instruction later. All name
      * lookups between the two that may need to consult the With object
@@ -119,9 +120,9 @@
      *   Operands: uint32_t staticWithIndex
      *   Stack: val =>
      */ \
-    macro(JSOP_ENTERWITH, 3,  "enterwith",  NULL,         5,  1,  0, JOF_OBJECT) \
+    macro(JSOP_ENTERWITH, 3,  "enterwith",  NULL,         5,  1,  0, JOF_SCOPE) \
     /*
-     * Pops the scope chain object pushed by JSOP_ENTERWITH.
+     * Pops the environment chain object pushed by JSOP_ENTERWITH.
      *   Category: Statements
      *   Type: With Statement
      *   Operands:
@@ -220,7 +221,16 @@
      */ \
     macro(JSOP_DUP2,      13, "dup2",       NULL,         1,  2,  4, JOF_BYTE) \
     \
-    macro(JSOP_UNUSED14,  14, "unused14",   NULL,         1,  0,  0, JOF_BYTE) \
+    /*
+     * Checks that the top value on the stack is an object, and throws a
+     * TypeError if not. The operand 'kind' is used only to generate an
+     * appropriate error message.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands: uint8_t kind
+     *   Stack: result => result
+     */ \
+    macro(JSOP_CHECKISOBJ,14, "checkisobj", NULL,         2,  1,  1, JOF_UINT8) \
     \
     /*
      * Pops the top two values 'lval' and 'rval' from the stack, then pushes
@@ -322,9 +332,9 @@
      */ \
     macro(JSOP_POS,       35, "pos",        "+ ",         1,  1,  1, JOF_BYTE|JOF_ARITH) \
     /*
-     * Looks up name on the scope chain and deletes it, pushes 'true' onto the
-     * stack if succeeded (if the property was present and deleted or if the
-     * property wasn't present in the first place), 'false' if not.
+     * Looks up name on the environment chain and deletes it, pushes 'true'
+     * onto the stack if succeeded (if the property was present and deleted or
+     * if the property wasn't present in the first place), 'false' if not.
      *
      * Strict mode code should never contain this opcode.
      *   Category: Variables and Scopes
@@ -421,7 +431,7 @@
      * Push a well-known symbol onto the operand stack.
      *   Category: Literals
      *   Type: Constants
-     *   Operands: uint8_t n, the JS::SymbolCode of the symbol to use
+     *   Operands: uint8_t symbol (the JS::SymbolCode of the symbol to use)
      *   Stack: => symbol
      */ \
     macro(JSOP_SYMBOL,    45, "symbol",     NULL,         2,  0,  1,  JOF_UINT8) \
@@ -456,17 +466,17 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => val
      */ \
-    macro(JSOP_STRICTSETPROP,   48, "strict-setprop",    NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETPROP,   48, "strict-setprop",    NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSTRICT) \
     /*
-     * Pops a scope and value from the stack, assigns value to the given name,
-     * and pushes the value back on the stack. If the set failed, then throw
-     * a TypeError, per usual strict mode semantics.
+     * Pops a environment and value from the stack, assigns value to the given
+     * name, and pushes the value back on the stack. If the set failed, then
+     * throw a TypeError, per usual strict mode semantics.
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
-     *   Stack: scope, val => val
+     *   Stack: env, val => val
      */ \
-    macro(JSOP_STRICTSETNAME,   49, "strict-setname",    NULL,         5,  2,  1,  JOF_ATOM|JOF_NAME|JOF_SET|JOF_DETECTING|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETNAME,   49, "strict-setname",    NULL,         5,  2,  1,  JOF_ATOM|JOF_NAME|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSTRICT) \
     /*
      * spreadcall variant of JSOP_EVAL
      *
@@ -481,14 +491,13 @@
      */ \
     macro(JSOP_STRICTSPREADEVAL,      50, "strict-spreadeval", NULL,         1,  3,  1, JOF_BYTE|JOF_INVOKE|JOF_TYPESET|JOF_CHECKSTRICT) \
     /*
-     * Writes the [[Prototype]] objects for both a class and its .prototype to
-     * the stack, given the result of a heritage expression.
+     * Ensures the result of a class's heritage expression is either null or a constructor.
      *   Category: Literals
      *   Type: Object
      *   Operands:
-     *   Stack: heritage => funcProto, objProto
+     *   Stack: heritage => heritage
      */ \
-    macro(JSOP_CLASSHERITAGE,  51, "classheritage",   NULL,         1,  1,  2,  JOF_BYTE) \
+    macro(JSOP_CHECKCLASSHERITAGE,  51, "checkclassheritage",   NULL, 1,  1,  1,  JOF_BYTE) \
     /*
      * Pushes a clone of a function with a given [[Prototype]] onto the stack.
      *   Category: Statements
@@ -514,7 +523,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => val
      */ \
-    macro(JSOP_SETPROP,   54, "setprop",    NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETPROP,   54, "setprop",    NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSLOPPY) \
     /*
      * Pops the top two values on the stack as 'propval' and 'obj', pushes
      * 'propval' property of 'obj' onto the stack.
@@ -533,7 +542,7 @@
      *   Operands:
      *   Stack: obj, propval, val => val
      */ \
-    macro(JSOP_SETELEM,   56, "setelem",    NULL,         1,  3,  1, JOF_BYTE |JOF_ELEM|JOF_SET|JOF_DETECTING|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETELEM,   56, "setelem",    NULL,         1,  3,  1, JOF_BYTE |JOF_ELEM|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSLOPPY) \
     /*
      * Pops the top three values on the stack as 'val', 'propval' and 'obj',
      * sets 'propval' property of 'obj' as 'val', pushes 'obj' onto the
@@ -544,7 +553,7 @@
      *   Operands:
      *   Stack: obj, propval, val => val
      */ \
-    macro(JSOP_STRICTSETELEM,   57, "strict-setelem",    NULL,         1,  3,  1, JOF_BYTE |JOF_ELEM|JOF_SET|JOF_DETECTING|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETELEM,   57, "strict-setelem",    NULL,         1,  3,  1, JOF_BYTE |JOF_ELEM|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSTRICT) \
     /*
      * Invokes 'callee' with 'this' and 'args', pushes return value onto the
      * stack.
@@ -556,7 +565,7 @@
      */ \
     macro(JSOP_CALL,      58, "call",       NULL,         3, -1,  1, JOF_UINT16|JOF_INVOKE|JOF_TYPESET) \
     /*
-     * Looks up name on the scope chain and pushes its value onto the stack.
+     * Looks up name on the environment chain and pushes its value onto the stack.
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
@@ -576,7 +585,7 @@
      *   Category: Literals
      *   Type: Constants
      *   Operands: uint32_t atomIndex
-     *   Stack: => string
+     *   Stack: => atom
      */ \
     macro(JSOP_STRING,    61, "string",     NULL,         5,  0,  1, JOF_ATOM) \
     /*
@@ -798,12 +807,12 @@
      *   Operands: uint16_t argno
      *   Stack: v => v
      */ \
-    macro(JSOP_SETARG,    85, "setarg",     NULL,         3,  1,  1,  JOF_QARG |JOF_NAME|JOF_SET) \
+    macro(JSOP_SETARG,    85, "setarg",     NULL,         3,  1,  1,  JOF_QARG |JOF_NAME) \
     /*
      * Pushes the value of local variable onto the stack.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: => val
      */ \
     macro(JSOP_GETLOCAL,  86,"getlocal",    NULL,         4,  0,  1,  JOF_LOCAL|JOF_NAME) \
@@ -811,10 +820,10 @@
      * Stores the top stack value to the given local.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: v => v
      */ \
-    macro(JSOP_SETLOCAL,  87,"setlocal",    NULL,         4,  1,  1,  JOF_LOCAL|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_SETLOCAL,  87,"setlocal",    NULL,         4,  1,  1,  JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
     \
     /*
      * Pushes unsigned 16-bit int immediate integer operand onto the stack.
@@ -884,7 +893,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITPROP,  93, "initprop",   NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITPROP,  93, "initprop",   NULL,         5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     \
     /*
      * Initialize a numeric property in an object literal, like '{1: x}'.
@@ -896,7 +905,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITELEM,  94, "initelem",   NULL,         1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITELEM,  94, "initelem",   NULL,         1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     \
     /*
      * Pops the top three values on the stack as 'val', 'index' and 'obj', sets
@@ -910,7 +919,7 @@
      *   Operands:
      *   Stack: obj, index, val => obj, (index + 1)
      */ \
-    macro(JSOP_INITELEM_INC,95, "initelem_inc", NULL,     1,  3,  2, JOF_BYTE|JOF_ELEM|JOF_SET) \
+    macro(JSOP_INITELEM_INC,95, "initelem_inc", NULL,     1,  3,  2, JOF_BYTE|JOF_ELEM|JOF_PROPINIT) \
     \
     /*
      * Initialize an array element.
@@ -922,7 +931,7 @@
      *   Operands: uint32_t index
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITELEM_ARRAY,96, "initelem_array", NULL, 5,  2,  1,  JOF_UINT32|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITELEM_ARRAY,96, "initelem_array", NULL, 5,  2,  1,  JOF_UINT32|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     \
     /*
      * Initialize a getter in an object literal.
@@ -934,7 +943,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITPROP_GETTER,  97, "initprop_getter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITPROP_GETTER,  97, "initprop_getter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a setter in an object literal.
      *
@@ -945,7 +954,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITPROP_SETTER,  98, "initprop_setter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITPROP_SETTER,  98, "initprop_setter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a numeric getter in an object literal like
      * '{get 2() {}}'.
@@ -957,7 +966,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITELEM_GETTER,  99, "initelem_getter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITELEM_GETTER,  99, "initelem_getter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a numeric setter in an object literal like
      * '{set 2(v) {}}'.
@@ -969,7 +978,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITELEM_SETTER, 100, "initelem_setter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITELEM_SETTER, 100, "initelem_setter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Pushes the call site object specified by objectIndex onto the stack. Defines the raw
      * property specified by objectIndex + 1 on the call site object and freezes both the call site
@@ -1007,9 +1016,9 @@
      *   Category: Literals
      *   Type: Object
      *   Operands: uint32_t nameIndex
-     *   Stack: receiver obj => obj[name]
+     *   Stack: receiver, obj => obj[name]
      */ \
-    macro(JSOP_GETPROP_SUPER,   104, "getprop-super", NULL, 5,  2,  1, JOF_ATOM|JOF_PROP) \
+    macro(JSOP_GETPROP_SUPER,   104, "getprop-super", NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_TYPESET) \
     /*
      * Pops the top three values on the stack as 'val' and 'obj', and 'receiver',
      * and performs 'obj.prop = val', pushing 'val' back onto the stack.
@@ -1019,7 +1028,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: receiver, obj, val => val
      */ \
-    macro(JSOP_STRICTSETPROP_SUPER,   105, "strictsetprop-super",    NULL,         5,  3,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETPROP_SUPER,   105, "strictsetprop-super",    NULL,         5,  3,  1, JOF_ATOM|JOF_PROP|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSTRICT) \
     \
     /*
      * This opcode precedes every labeled statement. It's a no-op.
@@ -1041,7 +1050,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: receiver, obj, val => val
      */ \
-    macro(JSOP_SETPROP_SUPER,   107, "setprop-super",    NULL,         5,  3,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETPROP_SUPER,   107, "setprop-super",    NULL,         5,  3,  1, JOF_ATOM|JOF_PROP|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSLOPPY) \
     \
     /*
      * Invokes 'callee' with 'this' and 'args', pushes return value onto the
@@ -1074,24 +1083,24 @@
     \
     /* ECMA-compliant assignment ops. */ \
     /*
-     * Looks up name on the scope chain and pushes the scope which contains
-     * the name onto the stack. If not found, pushes global scope onto the
-     * stack.
+     * Looks up name on the environment chain and pushes the environment which
+     * contains the name onto the stack. If not found, pushes global
+     * lexical environment onto the stack.
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
-     *   Stack: => scope
+     *   Stack: => env
      */ \
-    macro(JSOP_BINDNAME,  110,"bindname",   NULL,         5,  0,  1,  JOF_ATOM|JOF_NAME|JOF_SET) \
+    macro(JSOP_BINDNAME,  110,"bindname",   NULL,         5,  0,  1,  JOF_ATOM|JOF_NAME) \
     /*
-     * Pops a scope and value from the stack, assigns value to the given name,
-     * and pushes the value back on the stack
+     * Pops an environment and value from the stack, assigns value to the
+     * given name, and pushes the value back on the stack
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
-     *   Stack: scope, val => val
+     *   Stack: env, val => val
      */ \
-    macro(JSOP_SETNAME,   111,"setname",    NULL,         5,  2,  1,  JOF_ATOM|JOF_NAME|JOF_SET|JOF_DETECTING|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETNAME,   111,"setname",    NULL,         5,  2,  1,  JOF_ATOM|JOF_NAME|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSLOPPY) \
     \
     /* Exception handling ops. */ \
     /*
@@ -1140,10 +1149,12 @@
      * a 32-bit offset from the current bytecode.
      *
      * This opcode is used for entering 'finally' block.
+     * When the execution resumes from 'finally' block, those stack values are
+     * popped.
      *   Category: Statements
      *   Type: Exception Handling
      *   Operands: int32_t offset
-     *   Stack: => false, (next bytecode's PC)
+     *   Stack: =>
      */ \
     macro(JSOP_GOSUB,     116,"gosub",      NULL,         5,  0,  0,  JOF_JUMP) \
     /*
@@ -1268,9 +1279,9 @@
      *   Category: Literals
      *   Type: Object
      *   Operands:
-     *   Stack: receiver, obj, propval => obj[propval]
+     *   Stack: propval, receiver, obj => obj[propval]
      */ \
-    macro(JSOP_GETELEM_SUPER, 125, "getelem-super", NULL, 1,  3,  1, JOF_BYTE |JOF_ELEM|JOF_LEFTASSOC) \
+    macro(JSOP_GETELEM_SUPER, 125, "getelem-super", NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_TYPESET|JOF_LEFTASSOC) \
     /*
      * Pushes newly created array for a spread call onto the stack. This has
      * the same semantics as JSOP_NEWARRAY, but is distinguished to avoid
@@ -1290,14 +1301,15 @@
      * scripts where use of dynamic scoping inhibits optimization.
      *   Category: Variables and Scopes
      *   Type: Variables
-     *   Operands: uint32_t funcIndex
-     *   Stack: =>
+     *   Operands:
+     *   Stack: fun =>
      */ \
-    macro(JSOP_DEFFUN,    127,"deffun",     NULL,         5,  0,  0,  JOF_OBJECT) \
-    /* Defines the new constant binding on global lexical scope.
+    macro(JSOP_DEFFUN,    127,"deffun",     NULL,         1,  1,  0,  JOF_BYTE) \
+    /* Defines the new constant binding on global lexical environment.
      *
-     * Throws if a binding with the same name already exists on the scope, or
-     * if a var binding with the same name exists on the global.
+     * Throws if a binding with the same name already exists on the
+     * environment, or if a var binding with the same name exists on the
+     * global.
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
@@ -1306,10 +1318,11 @@
     macro(JSOP_DEFCONST,  128,"defconst",   NULL,         5,  0,  0,  JOF_ATOM) \
     /*
      * Defines the new binding on the frame's current variables-object (the
-     * scope object on the scope chain designated to receive new variables).
+     * environment on the environment chain designated to receive new
+     * variables).
      *
      * Throws if the current variables-object is the global object and a
-     * binding with the same name exists on the global lexical scope.
+     * binding with the same name exists on the global lexical environment.
      *
      * This is used for global scripts and also in some cases for function
      * scripts where use of dynamic scoping inhibits optimization.
@@ -1391,16 +1404,16 @@
      * CallObject to own the aliased variable.
      *
      * An ALIASEDVAR opcode contains the following immediates:
-     *  uint8 hops:  the number of scope objects to skip to find the ScopeObject
-     *               containing the variable being accessed
-     *  uint24 slot: the slot containing the variable in the ScopeObject (this
-     *               'slot' does not include RESERVED_SLOTS).
+     *  uint8 hops: the number of environment objects to skip to find the
+     *               EnvironmentObject containing the variable being accessed
+     *  uint24 slot: the slot containing the variable in the EnvironmentObject
+     *               (this 'slot' does not include RESERVED_SLOTS).
      *   Category: Variables and Scopes
      *   Type: Aliased Variables
      *   Operands: uint8_t hops, uint24_t slot
      *   Stack: => aliasedVar
      */ \
-    macro(JSOP_GETALIASEDVAR, 136,"getaliasedvar",NULL,      5,  0,  1,  JOF_SCOPECOORD|JOF_NAME|JOF_TYPESET) \
+    macro(JSOP_GETALIASEDVAR, 136,"getaliasedvar",NULL,      5,  0,  1,  JOF_ENVCOORD|JOF_NAME|JOF_TYPESET) \
     /*
      * Sets aliased variable as the top of stack value.
      *   Category: Variables and Scopes
@@ -1408,14 +1421,14 @@
      *   Operands: uint8_t hops, uint24_t slot
      *   Stack: v => v
      */ \
-    macro(JSOP_SETALIASEDVAR, 137,"setaliasedvar",NULL,      5,  1,  1,  JOF_SCOPECOORD|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_SETALIASEDVAR, 137,"setaliasedvar",NULL,      5,  1,  1,  JOF_ENVCOORD|JOF_NAME|JOF_PROPSET|JOF_DETECTING) \
     \
     /*
      * Checks if the value of the local variable is the
      * JS_UNINITIALIZED_LEXICAL magic, throwing an error if so.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: =>
      */ \
     macro(JSOP_CHECKLEXICAL,  138, "checklexical", NULL,     4,  0,  0, JOF_LOCAL|JOF_NAME) \
@@ -1424,10 +1437,10 @@
      * value.
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
+     *   Operands: uint24_t localno
      *   Stack: v => v
      */ \
-    macro(JSOP_INITLEXICAL,   139, "initlexical",  NULL,      4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITLEXICAL,   139, "initlexical",  NULL,      4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
     /*
      * Checks if the value of the aliased variable is the
      * JS_UNINITIALIZED_LEXICAL magic, throwing an error if so.
@@ -1436,7 +1449,7 @@
      *   Operands: uint8_t hops, uint24_t slot
      *   Stack: =>
      */ \
-    macro(JSOP_CHECKALIASEDLEXICAL, 140, "checkaliasedlexical", NULL, 5,  0,  0, JOF_SCOPECOORD|JOF_NAME) \
+    macro(JSOP_CHECKALIASEDLEXICAL, 140, "checkaliasedlexical", NULL, 5,  0,  0, JOF_ENVCOORD|JOF_NAME) \
     /*
      * Initializes an uninitialized aliased lexical binding with the top of
      * stack value.
@@ -1445,7 +1458,7 @@
      *   Operands: uint8_t hops, uint24_t slot
      *   Stack: v => v
      */ \
-    macro(JSOP_INITALIASEDLEXICAL,  141, "initaliasedlexical",  NULL, 5,  1,  1, JOF_SCOPECOORD|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITALIASEDLEXICAL,  141, "initaliasedlexical",  NULL, 5,  1,  1, JOF_ENVCOORD|JOF_NAME|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Pushes a JS_UNINITIALIZED_LEXICAL value onto the stack, representing an
      * uninitialized lexical binding.
@@ -1477,7 +1490,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: val => val
      */ \
-    macro(JSOP_SETINTRINSIC,  144, "setintrinsic",  NULL, 5,  1,  1, JOF_ATOM|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_SETINTRINSIC,  144, "setintrinsic",  NULL, 5,  1,  1, JOF_ATOM|JOF_NAME|JOF_DETECTING) \
     /*
      * Like JSOP_CALL, but used as part of for-of and destructuring bytecode
      * to provide better error messages.
@@ -1498,7 +1511,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITLOCKEDPROP, 146, "initlockedprop", NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITLOCKEDPROP, 146, "initlockedprop", NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable data-property on an object.
      *
@@ -1509,7 +1522,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITHIDDENPROP, 147,"inithiddenprop", NULL, 5,  2,  1,  JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENPROP, 147,"inithiddenprop", NULL, 5,  2,  1,  JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Push "new.target"
      *
@@ -1519,7 +1532,15 @@
      *   Stack: => new.target
      */ \
     macro(JSOP_NEWTARGET,  148, "newtarget", NULL,      1,  0,  1,  JOF_BYTE) \
-    macro(JSOP_UNUSED149,  149, "unused149", NULL,      1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top of stack value as 'unwrapped', converts it to async
+     * function 'wrapped', and pushes 'wrapped' back on the stack.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands:
+     *   Stack: unwrapped => wrapped
+     */ \
+    macro(JSOP_TOASYNC,       149, "toasync", NULL,       1,  1,  1, JOF_BYTE) \
     /*
      * Pops the top two values 'lval' and 'rval' from the stack, then pushes
      * the result of 'Math.pow(lval, rval)'.
@@ -1565,7 +1586,7 @@
     macro(JSOP_RETRVAL,       153,"retrval",    NULL,       1,  0,  0,  JOF_BYTE) \
     \
     /*
-     * Looks up name on global scope and pushes its value onto the stack,
+     * Looks up name on global environment and pushes its value onto the stack,
      * unless the script has a non-syntactic global scope, in which case it
      * acts just like JSOP_NAME.
      *
@@ -1578,31 +1599,31 @@
      */ \
     macro(JSOP_GETGNAME,      154,"getgname",  NULL,       5,  0,  1, JOF_ATOM|JOF_NAME|JOF_TYPESET|JOF_GNAME) \
     /*
-     * Pops the top two values on the stack as 'val' and 'scope', sets property
-     * of 'scope' as 'val' and pushes 'val' back on the stack.
+     * Pops the top two values on the stack as 'val' and 'env', sets property
+     * of 'env' as 'val' and pushes 'val' back on the stack.
      *
-     * 'scope' should be the global scope unless the script has a non-syntactic
-     * global scope, in which case acts like JSOP_SETNAME.
+     * 'env' should be the global lexical environment unless the script has a
+     * non-syntactic global scope, in which case acts like JSOP_SETNAME.
      *   Category: Variables and Scopes
      *   Type: Free Variables
      *   Operands: uint32_t nameIndex
-     *   Stack: scope, val => val
+     *   Stack: env, val => val
      */ \
-    macro(JSOP_SETGNAME,      155,"setgname",  NULL,       5,  2,  1, JOF_ATOM|JOF_NAME|JOF_SET|JOF_DETECTING|JOF_GNAME|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETGNAME,      155,"setgname",  NULL,       5,  2,  1, JOF_ATOM|JOF_NAME|JOF_PROPSET|JOF_DETECTING|JOF_GNAME|JOF_CHECKSLOPPY) \
     \
     /*
-     * Pops the top two values on the stack as 'val' and 'scope', sets property
-     * of 'scope' as 'val' and pushes 'val' back on the stack. Throws a
+     * Pops the top two values on the stack as 'val' and 'env', sets property
+     * of 'env' as 'val' and pushes 'val' back on the stack. Throws a
      * TypeError if the set fails, per strict mode semantics.
      *
-     * 'scope' should be the global scope unless the script has a non-syntactic
-     * global scope, in which case acts like JSOP_STRICTSETNAME.
+     * 'env' should be the global lexical environment unless the script has a
+     * non-syntactic global scope, in which case acts like JSOP_STRICTSETNAME.
      *   Category: Variables and Scopes
      *   Type: Free Variables
      *   Operands: uint32_t nameIndex
-     *   Stack: scope, val => val
+     *   Stack: env, val => val
      */ \
-    macro(JSOP_STRICTSETGNAME, 156, "strict-setgname",  NULL,       5,  2,  1, JOF_ATOM|JOF_NAME|JOF_SET|JOF_DETECTING|JOF_GNAME|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETGNAME, 156, "strict-setgname",  NULL,       5,  2,  1, JOF_ATOM|JOF_NAME|JOF_PROPSET|JOF_DETECTING|JOF_GNAME|JOF_CHECKSTRICT) \
     /*
      * Pushes the implicit 'this' value for calls to the associated name onto
      * the stack; only used when we know this implicit this will be our first
@@ -1622,7 +1643,7 @@
      *   Operands:
      *   Stack: propval, receiver, obj, val => val
      */ \
-    macro(JSOP_SETELEM_SUPER,   158, "setelem-super", NULL, 1,  4,  1, JOF_BYTE |JOF_ELEM|JOF_SET|JOF_DETECTING|JOF_CHECKSLOPPY) \
+    macro(JSOP_SETELEM_SUPER,   158, "setelem-super", NULL, 1,  4,  1, JOF_BYTE |JOF_ELEM|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSLOPPY) \
     /*
      * LIKE JSOP_STRICTSETELEM, but takes receiver on the stack, and the
      * propval is evaluated before the base.
@@ -1631,7 +1652,7 @@
      *   Operands:
      *   Stack: propval, receiver, obj, val => val
      */ \
-    macro(JSOP_STRICTSETELEM_SUPER, 159, "strict-setelem-super", NULL, 1,  4, 1, JOF_BYTE |JOF_ELEM|JOF_SET|JOF_DETECTING|JOF_CHECKSTRICT) \
+    macro(JSOP_STRICTSETELEM_SUPER, 159, "strict-setelem-super", NULL, 1,  4, 1, JOF_BYTE |JOF_ELEM|JOF_PROPSET|JOF_DETECTING|JOF_CHECKSTRICT) \
     \
     /*
      * Pushes a regular expression literal onto the stack.
@@ -1651,12 +1672,13 @@
      *   Operands: uint32_t nameIndex
      *   Stack: val => val
      */ \
-    macro(JSOP_INITGLEXICAL,  161,"initglexical", NULL,   5,  1,  1,  JOF_ATOM|JOF_NAME|JOF_SET|JOF_GNAME) \
+    macro(JSOP_INITGLEXICAL,  161,"initglexical", NULL,   5,  1,  1,  JOF_ATOM|JOF_NAME|JOF_PROPINIT|JOF_GNAME) \
     \
-    /* Defines the new mutable binding on global lexical scope.
+    /* Defines the new mutable binding on global lexical environment.
      *
-     * Throws if a binding with the same name already exists on the scope, or
-     * if a var binding with the same name exists on the global.
+     * Throws if a binding with the same name already exists on the
+     * environment, or if a var binding with the same name exists on the
+     * global.
      *   Category: Variables and Scopes
      *   Type: Variables
      *   Operands: uint32_t nameIndex
@@ -1672,7 +1694,7 @@
      */ \
     macro(JSOP_CHECKOBJCOERCIBLE, 163, "checkobjcoercible", NULL, 1,  1,  1, JOF_BYTE) \
     /*
-     * Find the function to invoke with |super()| on the scope chain.
+     * Find the function to invoke with |super()| on the environment chain.
      *
      *   Category: Variables and Scopes
      *   Type: Super
@@ -1716,7 +1738,7 @@
      *   Category: Literals
      *   Type: Class
      *   Operands: atom className
-     *   Stack: => constructor
+     *   Stack: proto => constructor
      */ \
     macro(JSOP_DERIVEDCONSTRUCTOR, 168,"derivedconstructor", NULL, 5,  1,  1,  JOF_ATOM) \
     /*
@@ -1725,20 +1747,20 @@
      *
      *   Category: Variables and Scopes
      *   Type: Local Variables
-     *   Operands: uint32_t localno
-     *   Stack: =>
+     *   Operands: uint24_t localno
+     *   Stack: v => v
      */ \
-    macro(JSOP_THROWSETCONST,        169, "throwsetconst",        NULL, 4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_THROWSETCONST,        169, "throwsetconst",        NULL, 4,  1,  1, JOF_LOCAL|JOF_NAME|JOF_DETECTING) \
     /*
      * Throws a runtime TypeError for invalid assignment to 'const'. The
-     * scope coordinate is used for better error messages.
+     * environment coordinate is used for better error messages.
      *
      *   Category: Variables and Scopes
      *   Type: Aliased Variables
      *   Operands: uint8_t hops, uint24_t slot
-     *   Stack: =>
+     *   Stack: v => v
      */ \
-    macro(JSOP_THROWSETALIASEDCONST, 170, "throwsetaliasedconst", NULL, 5,  1,  1, JOF_SCOPECOORD|JOF_NAME|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_THROWSETALIASEDCONST, 170, "throwsetaliasedconst", NULL, 5,  1,  1, JOF_ENVCOORD|JOF_NAME|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable getter in an object literal.
      *
@@ -1749,7 +1771,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITHIDDENPROP_GETTER,  171, "inithiddenprop_getter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENPROP_GETTER,  171, "inithiddenprop_getter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable setter in an object literal.
      *
@@ -1760,7 +1782,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: obj, val => obj
      */ \
-    macro(JSOP_INITHIDDENPROP_SETTER,  172, "inithiddenprop_setter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENPROP_SETTER,  172, "inithiddenprop_setter",   NULL, 5,  2,  1, JOF_ATOM|JOF_PROP|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable numeric getter in an object literal like
      * '{get 2() {}}'.
@@ -1772,7 +1794,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITHIDDENELEM_GETTER,  173, "inithiddenelem_getter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENELEM_GETTER,  173, "inithiddenelem_getter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable numeric setter in an object literal like
      * '{set 2(v) {}}'.
@@ -1784,7 +1806,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITHIDDENELEM_SETTER, 174, "inithiddenelem_setter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENELEM_SETTER, 174, "inithiddenelem_setter",   NULL, 1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Initialize a non-enumerable numeric property in an object literal, like '{1: x}'.
      *
@@ -1795,7 +1817,7 @@
      *   Operands:
      *   Stack: obj, id, val => obj
      */ \
-    macro(JSOP_INITHIDDENELEM,  175, "inithiddenelem",   NULL,         1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_SET|JOF_DETECTING) \
+    macro(JSOP_INITHIDDENELEM,  175, "inithiddenelem",   NULL,         1,  3,  1, JOF_BYTE|JOF_ELEM|JOF_PROPINIT|JOF_DETECTING) \
     /*
      * Gets the value of a module import by name and pushes it onto the stack.
      *   Category: Variables and Scopes
@@ -1820,15 +1842,56 @@
      *   Category: Statements
      *   Type: Function
      *   Operands:
-     *   Stack: arr => arr optimized
+     *   Stack: arr => arr, optimized
      */ \
     macro(JSOP_OPTIMIZE_SPREADCALL,178,"optimize-spreadcall", NULL, 1,  1,  2,  JOF_BYTE) \
-    macro(JSOP_UNUSED179,     179,"unused179",  NULL,     1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED180,     180,"unused180",  NULL,     1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED181,     181,"unused181",  NULL,     1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED182,     182,"unused182",  NULL,     1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED183,     183,"unused183",  NULL,     1,  0,  0,  JOF_BYTE) \
-    \
+    /*
+     * Throws a runtime TypeError for invalid assignment to the callee in a
+     * named lambda, which is always a 'const' binding. This is a different
+     * bytecode than JSOP_SETCONST because the named lambda callee, if not
+     * closed over, does not have a frame slot to look up the name with for
+     * the error message.
+     *
+     *   Category: Variables and Scopes
+     *   Type: Local Variables
+     *   Operands:
+     *   Stack: v => v
+     */ \
+    macro(JSOP_THROWSETCALLEE,     179, "throwsetcallee",        NULL, 1,  1,  1, JOF_BYTE) \
+    /*
+     * Pushes a var environment onto the env chain.
+     *   Category: Variables and Scopes
+     *   Type: Var Scope
+     *   Operands: uint32_t scopeIndex
+     *   Stack: =>
+     */ \
+    macro(JSOP_PUSHVARENV,         180, "pushvarenv",           NULL, 5,  0,  0,  JOF_SCOPE) \
+    /*
+     * Pops a var environment from the env chain.
+     *   Category: Variables and Scopes
+     *   Type: Var Scope
+     *   Operands:
+     *   Stack: =>
+     */ \
+    macro(JSOP_POPVARENV,          181, "popvarenv",            NULL,  1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top two values on the stack as 'name' and 'fun', defines the
+     * name of 'fun' to 'name' with prefix if any, and pushes 'fun' back onto
+     * the stack.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands: uint8_t prefixKind
+     *   Stack: fun, name => fun
+     */ \
+    macro(JSOP_SETFUNNAME,    182,"setfunname", NULL,     2,  2,  1,  JOF_UINT8) \
+    /*
+     * Moves the top of the stack value under the nth element of the stack.
+     *   Category: Operators
+     *   Type: Stack Operations
+     *   Operands: uint8_t n
+     *   Stack: v[n], v[n-1], ..., v[1], v[0] => v[0], v[n], v[n-1], ..., v[1]
+     */ \
+    macro(JSOP_UNPICK,        183,"unpick",     NULL,     2,  0,  0,  JOF_UINT8) \
     /*
      * Pops the top of stack value, pushes property of it onto the stack.
      *
@@ -1857,8 +1920,16 @@
      *   Stack: => this
      */ \
     macro(JSOP_GLOBALTHIS,    186,"globalthis", NULL,     1,  0,  1,  JOF_BYTE) \
-    macro(JSOP_UNUSED187,     187,"unused187",  NULL,     1,  0,  0,  JOF_BYTE) \
-    \
+    /*
+     * Pushes a boolean indicating whether the top of the stack is
+     * MagicValue(JS_GENERATOR_CLOSING).
+     *
+     *   Category: Statements
+     *   Type: For-In Statement
+     *   Operands:
+     *   Stack: val => val, res
+     */ \
+    macro(JSOP_ISGENCLOSING,  187, "isgenclosing",   NULL,         1,  1,  2,  JOF_BYTE) \
     /*
      * Pushes unsigned 24-bit int immediate integer operand onto the stack.
      *   Category: Literals
@@ -1895,7 +1966,15 @@
      *   Stack: this => this
      */ \
     macro(JSOP_CHECKTHISREINIT,191,"checkthisreinit",NULL,1,  1,  1,  JOF_BYTE) \
-    macro(JSOP_UNUSED192,     192,"unused192",   NULL,    1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the top of stack value as 'unwrapped', converts it to async
+     * generator 'wrapped', and pushes 'wrapped' back on the stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands:
+     *   Stack: unwrapped => wrapped
+     */ \
+    macro(JSOP_TOASYNCGEN,    192, "toasyncgen", NULL,    1,  1,  1, JOF_BYTE) \
     \
     /*
      * Pops the top two values on the stack as 'propval' and 'obj', pushes
@@ -1923,14 +2002,15 @@
     macro(JSOP_MUTATEPROTO,   194, "mutateproto",NULL,    1,  2,  1, JOF_BYTE) \
     \
     /*
-     * Pops the top of stack value, gets an extant property value of it,
-     * throwing ReferenceError if the identified property does not exist.
+     * Pops an environment, gets the value of a bound name on it. If the name
+     * is not bound to the environment, throw a ReferenceError. Used in
+     * conjunction with BINDNAME.
      *   Category: Literals
      *   Type: Object
      *   Operands: uint32_t nameIndex
-     *   Stack: obj => obj[name]
+     *   Stack: env => v
      */ \
-    macro(JSOP_GETXPROP,      195,"getxprop",    NULL,    5,  1,  1, JOF_ATOM|JOF_PROP|JOF_TYPESET) \
+    macro(JSOP_GETBOUNDNAME,  195,"getboundname",NULL,    5,  1,  1, JOF_ATOM|JOF_NAME|JOF_TYPESET) \
     \
     /*
      * Pops the top stack value as 'val' and pushes 'typeof val'.  Note that
@@ -1944,11 +2024,11 @@
      */ \
     macro(JSOP_TYPEOFEXPR,    196,"typeofexpr",  NULL,    1,  1,  1, JOF_BYTE|JOF_DETECTING) \
     \
-    /* Block-local scope support. */ \
+    /* Lexical environment support. */ \
     /*
-     * Replaces the current block on the scope chain with a fresh block
+     * Replaces the current block on the env chain with a fresh block
      * that copies all the bindings in the bock.  This operation implements the
-     * behavior of inducing a fresh block scope for every iteration of a
+     * behavior of inducing a fresh lexical environment for every iteration of a
      * for(let ...; ...; ...) loop, if any declarations induced by such a loop
      * are captured within the loop.
      *   Category: Variables and Scopes
@@ -1956,23 +2036,34 @@
      *   Operands:
      *   Stack: =>
      */ \
-    macro(JSOP_FRESHENBLOCKSCOPE,197,"freshenblockscope", NULL, 1, 0, 0, JOF_BYTE) \
+    macro(JSOP_FRESHENLEXICALENV,197,"freshenlexicalenv", NULL, 1, 0, 0, JOF_BYTE) \
     /*
-     * Pushes block onto the scope chain.
-     *   Category: Variables and Scopes
-     *   Type: Block-local Scope
-     *   Operands: uint32_t staticBlockObjectIndex
-     *   Stack: =>
-     */ \
-    macro(JSOP_PUSHBLOCKSCOPE,198,"pushblockscope", NULL, 5,  0,  0,  JOF_OBJECT) \
-    /*
-     * Pops block from the scope chain.
+     * Recreates the current block on the env chain with a fresh block
+     * with uninitialized bindings.  This operation implements the behavior of
+     * inducing a fresh lexical environment for every iteration of a for-in/of loop
+     * whose loop-head has a (captured) lexical declaration.
      *   Category: Variables and Scopes
      *   Type: Block-local Scope
      *   Operands:
      *   Stack: =>
      */ \
-    macro(JSOP_POPBLOCKSCOPE, 199,"popblockscope", NULL,  1,  0,  0,  JOF_BYTE) \
+    macro(JSOP_RECREATELEXICALENV,198,"recreatelexicalenv",NULL,1,0,0,JOF_BYTE) \
+    /*
+     * Pushes lexical environment onto the env chain.
+     *   Category: Variables and Scopes
+     *   Type: Block-local Scope
+     *   Operands: uint32_t scopeIndex
+     *   Stack: =>
+     */ \
+    macro(JSOP_PUSHLEXICALENV,199,"pushlexicalenv", NULL, 5,  0,  0,  JOF_SCOPE) \
+    /*
+     * Pops lexical environment from the env chain.
+     *   Category: Variables and Scopes
+     *   Type: Block-local Scope
+     *   Operands:
+     *   Stack: =>
+     */ \
+    macro(JSOP_POPLEXICALENV, 200,"poplexicalenv", NULL,  1,  0,  0,  JOF_BYTE) \
     /*
      * The opcode to assist the debugger.
      *   Category: Statements
@@ -1980,24 +2071,15 @@
      *   Operands:
      *   Stack: =>
      */ \
-    macro(JSOP_DEBUGLEAVEBLOCK, 200,"debugleaveblock", NULL, 1,  0,  0,  JOF_BYTE) \
+    macro(JSOP_DEBUGLEAVELEXICALENV, 201,"debugleavelexicalenv", NULL, 1,  0,  0,  JOF_BYTE) \
     \
-    /*
-     * Initializes generator frame, creates a generator and pushes it on the
-     * stack.
-     *   Category: Statements
-     *   Type: Generator
-     *   Operands:
-     *   Stack: => generator
-     */ \
-    macro(JSOP_GENERATOR,     201,"generator",   NULL,    1,  0,  1,  JOF_BYTE) \
     /*
      * Pops the generator from the top of the stack, suspends it and stops
      * interpretation.
      *   Category: Statements
      *   Type: Generator
-     *   Operands: uint24_t yieldIndex
-     *   Stack: generator =>
+     *   Operands: uint24_t yieldAndAwaitIndex
+     *   Stack: generator => generator
      */ \
     macro(JSOP_INITIALYIELD,  202,"initialyield", NULL,   4,  1,  1,  JOF_UINT24) \
     /*
@@ -2005,7 +2087,7 @@
      * returns 'rval1'. Pushes sent value from 'send()' onto the stack.
      *   Category: Statements
      *   Type: Generator
-     *   Operands: uint24_t yieldIndex
+     *   Operands: uint24_t yieldAndAwaitIndex
      *   Stack: rval1, gen => rval2
      */ \
     macro(JSOP_YIELD,         203,"yield",       NULL,    4,  2,  1,  JOF_UINT24) \
@@ -2060,21 +2142,55 @@
      *   Stack: =>
      */ \
     macro(JSOP_DEBUGAFTERYIELD,  208, "debugafteryield",  NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED209,     209, "unused209",    NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED210,     210, "unused210",    NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED211,     211, "unused211",    NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED212,     212, "unused212",    NULL,  1,  0,  0,  JOF_BYTE) \
+    /*
+     * Pops the generator and the return value 'promise', stops interpretation
+     * and returns 'promise'. Pushes resolved value onto the stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands: uint24_t yieldAndAwaitIndex
+     *   Stack: promise, gen => resolved
+     */ \
+    macro(JSOP_AWAIT,         209, "await",        NULL,  4,  2,  1,  JOF_UINT24) \
+    /*
+     * Pops the iterator from the top of the stack, and create async iterator
+     * from it and push the async iterator back onto the stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands:
+     *   Stack: iter => asynciter
+     */ \
+    macro(JSOP_TOASYNCITER,   210, "toasynciter",  NULL,  1,  1,  1,  JOF_BYTE) \
+    /*
+     * Pops the top two values 'id' and 'obj' from the stack, then pushes
+     * obj.hasOwnProperty(id)
+     *
+     * Note that 'obj' is the top value.
+     *   Category: Other
+     *   Type:
+     *   Operands:
+     *   Stack: id, obj => (obj.hasOwnProperty(id))
+     */ \
+    macro(JSOP_HASOWN,        211, "hasown",     NULL,    1,  2,  1, JOF_BYTE) \
+    /*
+     * Initializes generator frame, creates a generator and pushes it on the
+     * stack.
+     *   Category: Statements
+     *   Type: Generator
+     *   Operands:
+     *   Stack: => generator
+     */ \
+    macro(JSOP_GENERATOR,     212,"generator",   NULL,    1,  0,  1,  JOF_BYTE) \
     /*
      * Pushes the nearest 'var' environment.
      *
      *   Category: Variables and Scopes
      *   Type: Free Variables
      *   Operands:
-     *   Stack: => scope
+     *   Stack: => env
      */ \
     macro(JSOP_BINDVAR,       213, "bindvar",      NULL,  1,  0,  1,  JOF_BYTE) \
     /*
-     * Pushes the global scope onto the stack if the script doesn't have a
+     * Pushes the global environment onto the stack if the script doesn't have a
      * non-syntactic global scope.  Otherwise will act like JSOP_BINDNAME.
      *
      * 'nameIndex' is only used when acting like JSOP_BINDNAME.
@@ -2083,7 +2199,7 @@
      *   Operands: uint32_t nameIndex
      *   Stack: => global
      */ \
-    macro(JSOP_BINDGNAME,     214, "bindgname",    NULL,  5,  0,  1,  JOF_ATOM|JOF_NAME|JOF_SET|JOF_GNAME) \
+    macro(JSOP_BINDGNAME,     214, "bindgname",    NULL,  5,  0,  1,  JOF_ATOM|JOF_NAME|JOF_GNAME) \
     \
     /*
      * Pushes 8-bit int immediate integer operand onto the stack.
@@ -2124,9 +2240,35 @@
      */ \
     macro(JSOP_HOLE,          218, "hole",         NULL,  1,  0,  1,  JOF_BYTE) \
     \
-    macro(JSOP_UNUSED219,     219,"unused219",     NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED220,     220,"unused220",     NULL,  1,  0,  0,  JOF_BYTE) \
-    macro(JSOP_UNUSED221,     221,"unused221",     NULL,  1,  0,  0,  JOF_BYTE) \
+    /*
+     * Checks that the top value on the stack is callable, and throws a
+     * TypeError if not. The operand 'kind' is used only to generate an
+     * appropriate error message.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands: uint8_t kind
+     *   Stack: obj => obj
+     */ \
+    macro(JSOP_CHECKISCALLABLE, 219, "checkiscallable", NULL, 2, 1, 1, JOF_UINT8) \
+    \
+    /*
+     * No-op used by the exception unwinder to determine the correct
+     * environment to unwind to when performing IteratorClose due to
+     * destructuring.
+     *   Category: Other
+     *   Operands:
+     *   Stack: =>
+     */ \
+    macro(JSOP_TRY_DESTRUCTURING_ITERCLOSE, 220, "try-destructuring-iterclose", NULL, 1, 0, 0, JOF_BYTE) \
+    \
+    /*
+     * Pushes the current global's builtin prototype for a given proto key
+     *   Category: Literals
+     *   Type: Constants
+     *   Operands: uint8_t kind
+     *   Stack: => %BuiltinPrototype%
+     */ \
+    macro(JSOP_BUILTINPROTO, 221, "builtinproto", NULL, 2,  0,  1,  JOF_UINT8) \
     macro(JSOP_UNUSED222,     222,"unused222",     NULL,  1,  0,  0,  JOF_BYTE) \
     macro(JSOP_UNUSED223,     223,"unused223",     NULL,  1,  0,  0,  JOF_BYTE) \
     \
@@ -2197,14 +2339,23 @@
      *   Operands:
      *   Stack: =>
      */ \
-    macro(JSOP_JUMPTARGET,  230, "jumptarget",     NULL,  1,  0,  0,  JOF_BYTE)
+    macro(JSOP_JUMPTARGET,  230, "jumptarget",     NULL,  1,  0,  0,  JOF_BYTE)\
+    /*
+     * Like JSOP_CALL, but tells the function that the return value is ignored.
+     * stack.
+     *   Category: Statements
+     *   Type: Function
+     *   Operands: uint16_t argc
+     *   Stack: callee, this, args[0], ..., args[argc-1] => rval
+     *   nuses: (argc+2)
+     */ \
+    macro(JSOP_CALL_IGNORES_RV, 231, "call-ignores-rv", NULL, 3, -1, 1, JOF_UINT16|JOF_INVOKE|JOF_TYPESET)
 
 /*
  * In certain circumstances it may be useful to "pad out" the opcode space to
  * a power of two.  Use this macro to do so.
  */
 #define FOR_EACH_TRAILING_UNUSED_OPCODE(macro) \
-    macro(231) \
     macro(232) \
     macro(233) \
     macro(234) \

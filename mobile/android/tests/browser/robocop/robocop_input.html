@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Robocop Input</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robocop Input</title>
   </head>
   <body>
     <p>Input: <input id="input" type="text"></p>
@@ -11,17 +12,24 @@
     <p>Design mode: <iframe id="design-mode" src="data:text/html;charset=utf-8,<html><body></body></html>"></iframe></p>
     <p>Resetting input: <input id="resetting-input" type="text"></p>
     <p>Hiding input: <input id="hiding-input" type="text"></p>
-    <script type="application/javascript;version=1.8" src="robocop_head.js"></script>
-    <script type="application/javascript;version=1.8">
+    <script type="application/javascript" src="robocop_head.js"></script>
+    <script type="application/javascript">
       let input = document.getElementById("input");
       let textArea = document.getElementById("text-area");
       let contentEditable = document.getElementById("content-editable");
 
       let designMode = document.getElementById("design-mode");
-      designMode.contentDocument.designMode = "on";
+      try {
+        designMode.contentDocument.designMode = "on";
+      } catch (e) {
+        // Setting designMode above sometimes fails, so try again later.
+        setTimeout(function() { designMode.contentDocument.designMode = "on" }, 0);
+      }
 
       // Spatial navigation interferes with design-mode key event tests.
       SpecialPowers.setBoolPref("snav.enabled", false);
+      // Enable "selectionchange" events for input/textarea.
+      SpecialPowers.setBoolPref("dom.select_events.textcontrols.enabled", true);
 
       // An input that resets the editor on every input by resetting the value property.
       let resetting_input = document.getElementById("resetting-input");
@@ -40,8 +48,40 @@
 
       let getEditor, setValue, setSelection;
 
+      let events_log;
+      function log_event(event) {
+        switch (event.type) {
+          case "compositionstart":
+            events_log += "<";
+            break;
+          case "compositionupdate":
+            events_log += "=";
+            break;
+          case "compositionend":
+            events_log += ">";
+            break;
+          case "selectionchange":
+            events_log += "|";
+            break;
+          default:
+            events_log += "?";
+            break;
+        }
+      }
+
+      function get_event_target() {
+        var editor = getEditor();
+        var parent = SpecialPowers.unwrap(editor.rootElement.parentElement);
+        if (parent instanceof HTMLInputElement || parent instanceof HTMLTextAreaElement) {
+          // "selectionchange" is only dispatched to the element itself,
+          // so use the element as the target instead of using the document.
+          return parent;
+        }
+        return editor.document;
+      }
+
       let test = {
-        focus_input: function(val) {
+        focus_input: function(value) {
           getEditor = function() {
             return SpecialPowers.wrap(input).QueryInterface(
                 SpecialPowers.Ci.nsIDOMNSEditableElement).editor;
@@ -52,11 +92,11 @@
           setSelection = function(pos) {
             input.setSelectionRange(pos, pos);
           };
-          setValue(val);
+          setValue(value);
           input.focus();
         },
 
-        focus_text_area: function(val) {
+        focus_text_area: function(value) {
           getEditor = function() {
             return SpecialPowers.wrap(textArea).QueryInterface(
                 SpecialPowers.Ci.nsIDOMNSEditableElement).editor;
@@ -67,11 +107,11 @@
           setSelection = function(pos) {
             textArea.setSelectionRange(pos, pos);
           };
-          setValue(val);
+          setValue(value);
           textArea.focus();
         },
 
-        focus_content_editable: function(val) {
+        focus_content_editable: function(value) {
           getEditor = function() {
             return SpecialPowers.wrap(window).QueryInterface(
                 SpecialPowers.Ci.nsIInterfaceRequestor).getInterface(
@@ -79,16 +119,17 @@
                 SpecialPowers.Ci.nsIDocShell).editor;
           };
           setValue = function(val) {
+            // eslint-disable-next-line no-unsanitized/property
             contentEditable.innerHTML = val;
           };
           setSelection = function(pos) {
             window.getSelection().collapse(contentEditable.firstChild, pos);
           };
-          setValue(val);
+          setValue(value);
           contentEditable.focus();
         },
 
-        focus_design_mode: function(val) {
+        focus_design_mode: function(value) {
           getEditor = function() {
             return SpecialPowers.wrap(designMode.contentWindow).QueryInterface(
                 SpecialPowers.Ci.nsIInterfaceRequestor).getInterface(
@@ -96,34 +137,63 @@
                 SpecialPowers.Ci.nsIDocShell).editor;
           };
           setValue = function(val) {
+          // eslint-disable-next-line no-unsanitized/property
             designMode.contentDocument.body.innerHTML = val;
           };
           setSelection = function(pos) {
             designMode.contentWindow.getSelection().collapse(
                 designMode.contentDocument.body.firstChild, pos);
           };
-          setValue(val);
+          setValue(value);
           designMode.contentWindow.focus();
           designMode.contentDocument.body.focus();
         },
 
         test_reflush_changes: function() {
-          let inputIme = getEditor().QueryInterface(SpecialPowers.Ci.nsIEditorIMESupport);
-          do_check_true(inputIme.composing);
+          do_check_true(getEditor().composing);
 
           // Ending the composition then setting the input value triggers the bug.
-          inputIme.forceCompositionEnd();
+          getEditor().forceCompositionEnd();
           setValue("good"); // Value that testInputConnection.java expects.
           setSelection(4);
         },
 
         test_set_selection: function() {
-          let inputIme = getEditor().QueryInterface(SpecialPowers.Ci.nsIEditorIMESupport);
-          do_check_true(inputIme.composing);
+          do_check_true(getEditor().composing);
 
           // Ending the composition then setting the selection triggers the bug.
-          inputIme.forceCompositionEnd();
+          getEditor().forceCompositionEnd();
           setSelection(3); // Offsets that testInputConnection.java expects.
+        },
+
+        start_events_log: function() {
+          // Reset the log
+          events_log = "";
+
+          let target = get_event_target();
+          target.addEventListener("compositionstart", log_event);
+          target.addEventListener("compositionupdate", log_event);
+          target.addEventListener("compositionend", log_event);
+          target.addEventListener("selectionchange", log_event);
+        },
+
+        end_events_log: function() {
+          java.asyncCall("setEventsLog", events_log);
+
+          let target = get_event_target();
+          target.removeEventListener("compositionstart", log_event);
+          target.removeEventListener("compositionupdate", log_event);
+          target.removeEventListener("compositionend", log_event);
+          target.removeEventListener("selectionchange", log_event);
+        },
+
+        test_bug1123514: function() {
+          document.activeElement.addEventListener('input', function() {
+            // Only works on input and textarea.
+            if (this.value === 'b') {
+              this.value = 'abc';
+            }
+          }, {once: true});
         },
 
         focus_resetting_input: function(val) {

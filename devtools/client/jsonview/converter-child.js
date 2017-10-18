@@ -6,35 +6,26 @@
 
 "use strict";
 
-const {Cu, Cc, Ci, components} = require("chrome");
+const {Cc, Ci, Cu} = require("chrome");
+const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 const Services = require("Services");
-const {Class} = require("sdk/core/heritage");
-const {Unknown} = require("sdk/platform/xpcom");
-const xpcom = require("sdk/platform/xpcom");
-const Events = require("sdk/dom/events");
-const Clipboard = require("sdk/clipboard");
 
 loader.lazyRequireGetter(this, "NetworkHelper",
                                "devtools/shared/webconsole/network-helper");
-loader.lazyRequireGetter(this, "JsonViewUtils",
-                               "devtools/client/jsonview/utils");
+loader.lazyGetter(this, "debug", function () {
+  let {AppConstants} = require("resource://gre/modules/AppConstants.jsm");
+  return !!(AppConstants.DEBUG || AppConstants.DEBUG_JS_MODULES);
+});
 
 const childProcessMessageManager =
   Cc["@mozilla.org/childprocessmessagemanager;1"]
     .getService(Ci.nsISyncMessageSender);
 
-// Amount of space that will be allocated for the stream's backing-store.
-// Must be power of 2. Used to copy the data stream in onStopRequest.
-const SEGMENT_SIZE = Math.pow(2, 17);
-
-const JSON_VIEW_MIME_TYPE = "application/vnd.mozilla.json.view";
-const CONTRACT_ID = "@mozilla.org/streamconv;1?from=" +
-  JSON_VIEW_MIME_TYPE + "&to=*/*";
-const CLASS_ID = "{d8c9acee-dec5-11e4-8c75-1681e6b88ec1}";
-
 // Localization
-let jsonViewStrings = Services.strings.createBundle(
-  "chrome://devtools/locale/jsonview.properties");
+loader.lazyGetter(this, "jsonViewStrings", () => {
+  return Services.strings.createBundle(
+    "chrome://devtools/locale/jsonview.properties");
+});
 
 /**
  * This object detects 'application/vnd.mozilla.json.view' content type
@@ -43,14 +34,14 @@ let jsonViewStrings = Services.strings.createBundle(
  *
  * Inspired by JSON View: https://github.com/bhollis/jsonview/
  */
-let Converter = Class({
-  extends: Unknown,
+function Converter() {}
 
-  interfaces: [
-    "nsIStreamConverter",
-    "nsIStreamListener",
-    "nsIRequestObserver"
-  ],
+Converter.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([
+    Ci.nsIStreamConverter,
+    Ci.nsIStreamListener,
+    Ci.nsIRequestObserver
+  ]),
 
   get wrappedJSObject() {
     return this;
@@ -61,9 +52,8 @@ let Converter = Class({
    * 1. asyncConvertData captures the listener
    * 2. onStartRequest fires, initializes stuff, modifies the listener
    *    to match our output type
-   * 3. onDataAvailable transcodes the data into a UTF-8 string
-   * 4. onStopRequest gets the collected data and converts it,
-   *    spits it to the listener
+   * 3. onDataAvailable spits it back to the listener
+   * 4. onStopRequest spits it back to the listener
    * 5. convert does nothing, it's just the synchronous version
    *    of asyncConvertData
    */
@@ -76,249 +66,236 @@ let Converter = Class({
   },
 
   onDataAvailable: function (request, context, inputStream, offset, count) {
-    // From https://developer.mozilla.org/en/Reading_textual_data
-    let is = Cc["@mozilla.org/intl/converter-input-stream;1"]
-      .createInstance(Ci.nsIConverterInputStream);
-    is.init(inputStream, this.charset, -1,
-      Ci.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
-
-    // Seed it with something positive
-    while (count) {
-      let str = {};
-      let bytesRead = is.readString(count, str);
-      if (!bytesRead) {
-        break;
-      }
-      count -= bytesRead;
-      this.data += str.value;
-    }
+    this.listener.onDataAvailable(...arguments);
   },
 
   onStartRequest: function (request, context) {
-    this.data = "";
-    this.uri = request.QueryInterface(Ci.nsIChannel).URI.spec;
+    // Set the content type to HTML in order to parse the doctype, styles
+    // and scripts, but later a <plaintext> element will switch the tokenizer
+    // to the plaintext state in order to parse the JSON.
+    request.QueryInterface(Ci.nsIChannel);
+    request.contentType = "text/html";
 
-    // Sets the charset if it is available. (For documents loaded from the
-    // filesystem, this is not set.)
-    this.charset =
-      request.QueryInterface(Ci.nsIChannel).contentCharset || "UTF-8";
+    // JSON enforces UTF-8 charset (see bug 741776).
+    request.contentCharset = "UTF-8";
 
-    this.channel = request;
-    this.channel.contentType = "text/html";
-    this.channel.contentCharset = "UTF-8";
+    // Changing the content type breaks saving functionality. Fix it.
+    fixSave(request);
 
-    this.listener.onStartRequest(this.channel, context);
-  },
+    // Because content might still have a reference to this window,
+    // force setting it to a null principal to avoid it being same-
+    // origin with (other) content.
+    request.loadInfo.resetPrincipalToInheritToNullPrincipal();
 
-  /**
-   * This should go something like this:
-   * 1. Make sure we have a unicode string.
-   * 2. Convert it to a Javascript object.
-   * 2.1 Removes the callback
-   * 3. Convert that to HTML? Or XUL?
-   * 4. Spit it back out at the listener
-   */
-  onStopRequest: function (request, context, statusCode) {
-    let headers = {
-      response: [],
-      request: []
-    };
+    // Start the request.
+    this.listener.onStartRequest(request, context);
 
+    // Initialize stuff.
     let win = NetworkHelper.getWindowForRequest(request);
+    exportData(win, request);
+    win.addEventListener("DOMContentLoaded", event => {
+      win.addEventListener("contentMessage", onContentMessage, false, true);
+    }, {once: true});
 
-    let Locale = {
-      $STR: key => {
-        try {
-          return jsonViewStrings.GetStringFromName(key);
-        } catch (err) {
-          console.error(err);
-          return undefined;
-        }
-      }
-    };
+    // Insert the initial HTML code.
+    let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                      .createInstance(Ci.nsIScriptableUnicodeConverter);
+    converter.charset = "UTF-8";
+    let stream = converter.convertToInputStream(initialHTML(win.document));
+    this.listener.onDataAvailable(request, context, stream, 0, stream.available());
+  },
 
-    JsonViewUtils.exportIntoContentScope(win, Locale, "Locale");
-
-    Events.once(win, "DOMContentLoaded", event => {
-      Cu.exportFunction(this.postChromeMessage.bind(this), win, {
-        defineAs: "postChromeMessage"
-      });
-    });
-
-    // The request doesn't have to be always nsIHttpChannel
-    // (e.g. in case of data: URLs)
-    if (request instanceof Ci.nsIHttpChannel) {
-      request.visitResponseHeaders({
-        visitHeader: function (name, value) {
-          headers.response.push({name: name, value: value});
-        }
-      });
-
-      request.visitRequestHeaders({
-        visitHeader: function (name, value) {
-          headers.request.push({name: name, value: value});
-        }
-      });
-    }
-
-    let outputDoc = "";
-
-    try {
-      headers = JSON.stringify(headers);
-      outputDoc = this.toHTML(this.data, headers, this.uri);
-    } catch (e) {
-      console.error("JSON Viewer ERROR " + e);
-      outputDoc = this.toErrorPage(e, this.data, this.uri);
-    }
-
-    let storage = Cc["@mozilla.org/storagestream;1"]
-      .createInstance(Ci.nsIStorageStream);
-
-    storage.init(SEGMENT_SIZE, 0xffffffff, null);
-    let out = storage.getOutputStream(0);
-
-    let binout = Cc["@mozilla.org/binaryoutputstream;1"]
-      .createInstance(Ci.nsIBinaryOutputStream);
-
-    binout.setOutputStream(out);
-    binout.writeUtf8Z(outputDoc);
-    binout.close();
-
-    // We need to trim 4 bytes off the front (this could be underlying bug).
-    let trunc = 4;
-    let instream = storage.newInputStream(trunc);
-
-    // Pass the data to the main content listener
-    this.listener.onDataAvailable(this.channel, context, instream, 0,
-      instream.available());
-
-    this.listener.onStopRequest(this.channel, context, statusCode);
-
+  onStopRequest: function (request, context, statusCode) {
+    this.listener.onStopRequest(request, context, statusCode);
     this.listener = null;
-  },
-
-  htmlEncode: function (t) {
-    return t !== null ? t.toString()
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;") : "";
-  },
-
-  toHTML: function (json, headers, title) {
-    let themeClassName = "theme-" + JsonViewUtils.getCurrentTheme();
-    let clientBaseUrl = "resource://devtools/client/";
-    let baseUrl = clientBaseUrl + "jsonview/";
-    let themeVarsUrl = clientBaseUrl + "themes/variables.css";
-    let commonUrl = clientBaseUrl + "themes/common.css";
-
-    return "<!DOCTYPE html>\n" +
-      "<html class=\"" + themeClassName + "\">" +
-      "<head><title>" + this.htmlEncode(title) + "</title>" +
-      "<base href=\"" + this.htmlEncode(baseUrl) + "\">" +
-      "<link rel=\"stylesheet\" type=\"text/css\" href=\"" +
-        themeVarsUrl + "\">" +
-      "<link rel=\"stylesheet\" type=\"text/css\" href=\"" +
-        commonUrl + "\">" +
-      "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/main.css\">" +
-      "<script data-main=\"viewer-config\" src=\"lib/require.js\"></script>" +
-      "</head><body>" +
-      "<div id=\"content\"></div>" +
-      "<div id=\"json\">" + this.htmlEncode(json) + "</div>" +
-      "<div id=\"headers\">" + this.htmlEncode(headers) + "</div>" +
-      "</body></html>";
-  },
-
-  toErrorPage: function (error, data, uri) {
-    // Escape unicode nulls
-    data = data.replace("\u0000", "\uFFFD");
-
-    let errorInfo = error + "";
-
-    let output = "<div id=\"error\">" + "error parsing";
-    if (errorInfo.message) {
-      output += "<div class=\"errormessage\">" + errorInfo.message + "</div>";
-    }
-
-    output += "</div><div id=\"json\">" + this.highlightError(data,
-      errorInfo.line, errorInfo.column) + "</div>";
-
-    return "<!DOCTYPE html>\n" +
-      "<html><head><title>" + this.htmlEncode(uri + " - Error") + "</title>" +
-      "<base href=\"" + this.htmlEncode(this.data.url()) + "\">" +
-      "</head><body>" +
-      output +
-      "</body></html>";
-  },
-
-  // Chrome <-> Content communication
-
-  postChromeMessage: function (type, args, objects) {
-    let value = args;
-
-    switch (type) {
-      case "copy":
-        Clipboard.set(value, "text");
-        break;
-
-      case "copy-headers":
-        this.copyHeaders(value);
-        break;
-
-      case "save":
-        childProcessMessageManager.sendAsyncMessage(
-          "devtools:jsonview:save", value);
-    }
-  },
-
-  copyHeaders: function (headers) {
-    let value = "";
-    let eol = (Services.appinfo.OS !== "WINNT") ? "\n" : "\r\n";
-
-    let responseHeaders = headers.response;
-    for (let i = 0; i < responseHeaders.length; i++) {
-      let header = responseHeaders[i];
-      value += header.name + ": " + header.value + eol;
-    }
-
-    value += eol;
-
-    let requestHeaders = headers.request;
-    for (let i = 0; i < requestHeaders.length; i++) {
-      let header = requestHeaders[i];
-      value += header.name + ": " + header.value + eol;
-    }
-
-    Clipboard.set(value, "text");
   }
-});
+};
 
-// Stream converter component definition
-let service = xpcom.Service({
-  id: components.ID(CLASS_ID),
-  contract: CONTRACT_ID,
-  Component: Converter,
-  register: false,
-  unregister: false
-});
-
-function register() {
-  if (!xpcom.isRegistered(service)) {
-    xpcom.register(service);
-    return true;
+// Lets "save as" save the original JSON, not the viewer.
+// To save with the proper extension we need the original content type,
+// which has been replaced by application/vnd.mozilla.json.view
+function fixSave(request) {
+  let originalType;
+  if (request instanceof Ci.nsIHttpChannel) {
+    try {
+      let header = request.getResponseHeader("Content-Type");
+      originalType = header.split(";")[0];
+    } catch (err) {
+      // Handled below
+    }
+  } else {
+    let uri = request.QueryInterface(Ci.nsIChannel).URI.spec;
+    let match = uri.match(/^data:(.*?)[,;]/);
+    if (match) {
+      originalType = match[1];
+    }
   }
-  return false;
+  const JSON_TYPES = ["application/json", "application/manifest+json"];
+  if (!JSON_TYPES.includes(originalType)) {
+    originalType = JSON_TYPES[0];
+  }
+  request.QueryInterface(Ci.nsIWritablePropertyBag);
+  request.setProperty("contentType", originalType);
 }
 
-function unregister() {
-  if (xpcom.isRegistered(service)) {
-    xpcom.unregister(service);
-    return true;
+// Exports variables that will be accessed by the non-privileged scripts.
+function exportData(win, request) {
+  let data = Cu.createObjectIn(win, {
+    defineAs: "JSONView"
+  });
+
+  data.debug = debug;
+
+  let Locale = {
+    $STR: key => {
+      try {
+        return jsonViewStrings.GetStringFromName(key);
+      } catch (err) {
+        console.error(err);
+        return undefined;
+      }
+    }
+  };
+  data.Locale = Cu.cloneInto(Locale, win, {cloneFunctions: true});
+
+  let headers = {
+    response: [],
+    request: []
+  };
+  // The request doesn't have to be always nsIHttpChannel
+  // (e.g. in case of data: URLs)
+  if (request instanceof Ci.nsIHttpChannel) {
+    request.visitResponseHeaders({
+      visitHeader: function (name, value) {
+        headers.response.push({name: name, value: value});
+      }
+    });
+    request.visitRequestHeaders({
+      visitHeader: function (name, value) {
+        headers.request.push({name: name, value: value});
+      }
+    });
   }
-  return false;
+  data.headers = Cu.cloneInto(headers, win);
+}
+
+// Serializes a qualifiedName and an optional set of attributes into an HTML
+// start tag. Be aware qualifiedName and attribute names are not validated.
+// Attribute values are escaped with escapingString algorithm in attribute mode
+// (https://html.spec.whatwg.org/multipage/syntax.html#escapingString).
+function startTag(qualifiedName, attributes = {}) {
+  return Object.entries(attributes).reduce(function (prev, [attr, value]) {
+    return prev + " " + attr + "=\"" +
+      value.replace(/&/g, "&amp;")
+           .replace(/\u00a0/g, "&nbsp;")
+           .replace(/"/g, "&quot;") +
+      "\"";
+  }, "<" + qualifiedName) + ">";
+}
+
+// Builds an HTML string that will be used to load stylesheets and scripts,
+// and switch the parser to plaintext state.
+function initialHTML(doc) {
+  let os;
+  let platform = Services.appinfo.OS;
+  if (platform.startsWith("WINNT")) {
+    os = "win";
+  } else if (platform.startsWith("Darwin")) {
+    os = "mac";
+  } else {
+    os = "linux";
+  }
+
+  // The base URI is prepended to all URIs instead of using a <base> element
+  // because the latter can be blocked by a CSP base-uri directive (bug 1316393)
+  let baseURI = "resource://devtools/client/jsonview/";
+
+  let style = doc.createElement("link");
+  style.rel = "stylesheet";
+  style.type = "text/css";
+  style.href = baseURI + "css/main.css";
+
+  let script = doc.createElement("script");
+  script.src = baseURI + "lib/require.js";
+  script.dataset.main = baseURI + "viewer-config.js";
+  script.defer = true;
+
+  let head = doc.createElement("head");
+  head.append(style, script);
+
+  return "<!DOCTYPE html>\n" +
+    startTag("html", {
+      "platform": os,
+      "class": "theme-" + Services.prefs.getCharPref("devtools.theme"),
+      "dir": Services.locale.isAppLocaleRTL ? "rtl" : "ltr"
+    }) +
+    head.outerHTML +
+    startTag("body") +
+    startTag("div", {"id": "content"}) +
+    startTag("plaintext", {"id": "json"});
+}
+
+// Chrome <-> Content communication
+function onContentMessage(e) {
+  // Do not handle events from different documents.
+  let win = this;
+  if (win != e.target) {
+    return;
+  }
+
+  let value = e.detail.value;
+  switch (e.detail.type) {
+    case "copy":
+      copyString(win, value);
+      break;
+
+    case "copy-headers":
+      copyHeaders(win, value);
+      break;
+
+    case "save":
+      // The window ID is needed when the JSON Viewer is inside an iframe.
+      let windowID = win.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
+      childProcessMessageManager.sendAsyncMessage(
+        "devtools:jsonview:save", {url: value, windowID: windowID});
+  }
+}
+
+function copyHeaders(win, headers) {
+  let value = "";
+  let eol = (Services.appinfo.OS !== "WINNT") ? "\n" : "\r\n";
+
+  let responseHeaders = headers.response;
+  for (let i = 0; i < responseHeaders.length; i++) {
+    let header = responseHeaders[i];
+    value += header.name + ": " + header.value + eol;
+  }
+
+  value += eol;
+
+  let requestHeaders = headers.request;
+  for (let i = 0; i < requestHeaders.length; i++) {
+    let header = requestHeaders[i];
+    value += header.name + ": " + header.value + eol;
+  }
+
+  copyString(win, value);
+}
+
+function copyString(win, string) {
+  win.document.addEventListener("copy", event => {
+    event.clipboardData.setData("text/plain", string);
+    event.preventDefault();
+  }, {once: true});
+
+  win.document.execCommand("copy", false, null);
+}
+
+function createInstance() {
+  return new Converter();
 }
 
 exports.JsonViewService = {
-  register: register,
-  unregister: unregister
+  createInstance: createInstance,
 };

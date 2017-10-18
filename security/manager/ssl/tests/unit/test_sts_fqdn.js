@@ -7,42 +7,30 @@
 function run_test() {
   let SSService = Cc["@mozilla.org/ssservice;1"]
                     .getService(Ci.nsISiteSecurityService);
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com", 0));
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com.", 0));
+  let uri = Services.io.newURI("https://example.com");
+  let uri1 = Services.io.newURI("https://example.com.");
+  let uri2 = Services.io.newURI("https://example.com..");
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0));
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri1, 0));
   // These cases are only relevant as long as bug 1118522 hasn't been fixed.
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com..", 0));
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri2, 0));
 
-  let uri = Services.io.newURI("https://example.com", null, null);
   let sslStatus = new FakeSSLStatus();
   SSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
-                          "max-age=1000;includeSubdomains", sslStatus, 0);
-  ok(SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                            "example.com", 0));
-  ok(SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                            "example.com.", 0));
-  ok(SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                            "example.com..", 0));
-
+                          "max-age=1000;includeSubdomains", sslStatus, 0,
+                          Ci.nsISiteSecurityService.SOURCE_ORGANIC_REQUEST);
   ok(SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0));
-  uri = Services.io.newURI("https://example.com.", null, null);
-  ok(SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0));
-  uri = Services.io.newURI("https://example.com..", null, null);
-  ok(SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0));
+  ok(SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri1, 0));
+  ok(SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri2, 0));
 
   SSService.removeState(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0);
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com", 0));
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com.", 0));
-  ok(!SSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "example.com..", 0));
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0));
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri1, 0));
+  ok(!SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri2, 0));
 
   // Somehow creating this malformed URI succeeds - we need to handle it
   // gracefully.
-  uri = Services.io.newURI("https://../foo", null, null);
+  uri = Services.io.newURI("https://../foo");
   equal(uri.host, "..");
   throws(() => {
     SSService.isSecureURI(Ci.nsISiteSecurityService.HEADER_HSTS, uri, 0);

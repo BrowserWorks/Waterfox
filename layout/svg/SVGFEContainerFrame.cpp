@@ -21,13 +21,13 @@ class SVGFEContainerFrame : public nsContainerFrame
   NS_NewSVGFEContainerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
   explicit SVGFEContainerFrame(nsStyleContext* aContext)
-    : nsContainerFrame(aContext)
+    : nsContainerFrame(aContext, kClassID)
   {
     AddStateBits(NS_FRAME_SVG_LAYOUT | NS_FRAME_IS_NONDISPLAY);
   }
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(SVGFEContainerFrame)
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -47,12 +47,6 @@ public:
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow) override;
 #endif
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgFEContainerFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual nsresult AttributeChanged(int32_t  aNameSpaceID,
                                     nsIAtom* aAttribute,
@@ -86,12 +80,6 @@ SVGFEContainerFrame::Init(nsIContent*       aContent,
 }
 #endif /* DEBUG */
 
-nsIAtom *
-SVGFEContainerFrame::GetType() const
-{
-  return nsGkAtoms::svgFEContainerFrame;
-}
-
 nsresult
 SVGFEContainerFrame::AttributeChanged(int32_t  aNameSpaceID,
                                       nsIAtom* aAttribute,
@@ -99,7 +87,7 @@ SVGFEContainerFrame::AttributeChanged(int32_t  aNameSpaceID,
 {
   nsSVGFE *element = static_cast<nsSVGFE*>(mContent);
   if (element->AttributeAffectsRendering(aNameSpaceID, aAttribute)) {
-    MOZ_ASSERT(GetParent()->GetType() == nsGkAtoms::svgFilterFrame,
+    MOZ_ASSERT(GetParent()->IsSVGFilterFrame(),
                "Observers observe the filter, so that's what we must invalidate");
     nsSVGEffects::InvalidateDirectRenderingObservers(GetParent());
   }

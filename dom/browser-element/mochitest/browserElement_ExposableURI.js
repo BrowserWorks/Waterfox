@@ -13,7 +13,7 @@ var iframe;
 
 function testPassword() {
   function locationchange(e) {
-    var uri = e.detail;
+    var uri = e.detail.url;
     is(uri, 'http://mochi.test:8888/tests/dom/browser-element/mochitest/file_empty.html',
        "Username and password shouldn't be exposed in uri.");
     SimpleTest.finish();
@@ -33,7 +33,7 @@ function testWyciwyg() {
     if (locationChangeCount == 0) {
       locationChangeCount ++;
     } else if (locationChangeCount == 1) {
-      var uri = e.detail;
+      var uri = e.detail.url;
       is(uri, 'http://mochi.test:8888/tests/dom/browser-element/mochitest/file_wyciwyg.html', "Scheme in string shouldn't be wyciwyg");
       iframe.removeEventListener('mozbrowserlocationchange', locationchange);
       SimpleTest.executeSoon(testPassword);
@@ -46,10 +46,12 @@ function testWyciwyg() {
 }
 
 function runTest() {
-  iframe = document.createElement('iframe');
-  iframe.setAttribute('mozbrowser', 'true');
-  document.body.appendChild(iframe);
-  testWyciwyg();
+  SpecialPowers.pushPrefEnv({set: [["network.http.rcwn.enabled", false]]}, _=>{
+    iframe = document.createElement('iframe');
+    iframe.setAttribute('mozbrowser', 'true');
+    document.body.appendChild(iframe);
+    testWyciwyg();
+  });
 }
 
 addEventListener('testready', runTest);

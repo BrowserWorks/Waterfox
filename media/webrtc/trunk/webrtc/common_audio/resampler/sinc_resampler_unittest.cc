@@ -16,15 +16,15 @@
 
 #include <math.h>
 
-#include "testing/gmock/include/gmock/gmock.h"
-#include "testing/gtest/include/gtest/gtest.h"
-#include "webrtc/base/scoped_ptr.h"
+#include <memory>
+
+#include "webrtc/base/timeutils.h"
 #include "webrtc/common_audio/resampler/sinc_resampler.h"
 #include "webrtc/common_audio/resampler/sinusoidal_linear_chirp_source.h"
-#include "webrtc/system_wrappers/interface/cpu_features_wrapper.h"
-#include "webrtc/system_wrappers/interface/stringize_macros.h"
-#include "webrtc/system_wrappers/interface/tick_util.h"
-#include "webrtc/test/test_suite.h"
+#include "webrtc/system_wrappers/include/cpu_features_wrapper.h"
+#include "webrtc/system_wrappers/include/stringize_macros.h"
+#include "webrtc/test/gmock.h"
+#include "webrtc/test/gtest.h"
 
 using testing::_;
 
@@ -36,7 +36,7 @@ static const double kKernelInterpolationFactor = 0.5;
 // Helper class to ensure ChunkedResample() functions properly.
 class MockSource : public SincResamplerCallback {
  public:
-  MOCK_METHOD2(Run, void(int frames, float* destination));
+  MOCK_METHOD2(Run, void(size_t frames, float* destination));
 };
 
 ACTION(ClearBuffer) {
@@ -61,8 +61,8 @@ TEST(SincResamplerTest, ChunkedResample) {
                           &mock_source);
 
   static const int kChunks = 2;
-  int max_chunk_size = resampler.ChunkSize() * kChunks;
-  rtc::scoped_ptr<float[]> resampled_destination(new float[max_chunk_size]);
+  size_t max_chunk_size = resampler.ChunkSize() * kChunks;
+  std::unique_ptr<float[]> resampled_destination(new float[max_chunk_size]);
 
   // Verify requesting ChunkSize() frames causes a single callback.
   EXPECT_CALL(mock_source, Run(_, _))
@@ -81,7 +81,7 @@ TEST(SincResamplerTest, Flush) {
   MockSource mock_source;
   SincResampler resampler(kSampleRateRatio, SincResampler::kDefaultRequestSize,
                           &mock_source);
-  rtc::scoped_ptr<float[]> resampled_destination(
+  std::unique_ptr<float[]> resampled_destination(
       new float[resampler.ChunkSize()]);
 
   // Fill the resampler with junk data.
@@ -96,7 +96,7 @@ TEST(SincResamplerTest, Flush) {
   EXPECT_CALL(mock_source, Run(_, _))
       .Times(1).WillOnce(ClearBuffer());
   resampler.Resample(resampler.ChunkSize() / 2, resampled_destination.get());
-  for (int i = 0; i < resampler.ChunkSize() / 2; ++i)
+  for (size_t i = 0; i < resampler.ChunkSize() / 2; ++i)
     ASSERT_FLOAT_EQ(resampled_destination[i], 0);
 }
 
@@ -106,10 +106,11 @@ TEST(SincResamplerTest, DISABLED_SetRatioBench) {
   SincResampler resampler(kSampleRateRatio, SincResampler::kDefaultRequestSize,
                           &mock_source);
 
-  TickTime start = TickTime::Now();
+  int64_t start = rtc::TimeNanos();
   for (int i = 1; i < 10000; ++i)
     resampler.SetRatio(1.0 / i);
-  double total_time_c_us = (TickTime::Now() - start).Microseconds();
+  double total_time_c_us =
+      (rtc::TimeNanos() - start) / rtc::kNumNanosecsPerMicrosec;
   printf("SetRatio() took %.2fms.\n", total_time_c_us / 1000);
 }
 
@@ -163,8 +164,8 @@ TEST(SincResamplerTest, Convolve) {
 #endif
 
 // Benchmark for the various Convolve() methods.  Make sure to build with
-// branding=Chrome so that DCHECKs are compiled out when benchmarking.  Original
-// benchmarks were run with --convolve-iterations=50000000.
+// branding=Chrome so that RTC_DCHECKs are compiled out when benchmarking.
+// Original benchmarks were run with --convolve-iterations=50000000.
 TEST(SincResamplerTest, ConvolveBenchmark) {
   // Initialize a dummy resampler.
   MockSource mock_source;
@@ -178,13 +179,14 @@ TEST(SincResamplerTest, ConvolveBenchmark) {
   printf("Benchmarking %d iterations:\n", kConvolveIterations);
 
   // Benchmark Convolve_C().
-  TickTime start = TickTime::Now();
+  int64_t start = rtc::TimeNanos();
   for (int i = 0; i < kConvolveIterations; ++i) {
     resampler.Convolve_C(
         resampler.kernel_storage_.get(), resampler.kernel_storage_.get(),
         resampler.kernel_storage_.get(), kKernelInterpolationFactor);
   }
-  double total_time_c_us = (TickTime::Now() - start).Microseconds();
+  double total_time_c_us =
+      (rtc::TimeNanos() - start) / rtc::kNumNanosecsPerMicrosec;
   printf("Convolve_C took %.2fms.\n", total_time_c_us / 1000);
 
 #if defined(CONVOLVE_FUNC)
@@ -195,27 +197,27 @@ TEST(SincResamplerTest, ConvolveBenchmark) {
 #endif
 
   // Benchmark with unaligned input pointer.
-  start = TickTime::Now();
+  start = rtc::TimeNanos();
   for (int j = 0; j < kConvolveIterations; ++j) {
     resampler.CONVOLVE_FUNC(
         resampler.kernel_storage_.get() + 1, resampler.kernel_storage_.get(),
         resampler.kernel_storage_.get(), kKernelInterpolationFactor);
   }
   double total_time_optimized_unaligned_us =
-      (TickTime::Now() - start).Microseconds();
+      (rtc::TimeNanos() - start) / rtc::kNumNanosecsPerMicrosec;
   printf(STRINGIZE(CONVOLVE_FUNC) "(unaligned) took %.2fms; which is %.2fx "
          "faster than Convolve_C.\n", total_time_optimized_unaligned_us / 1000,
          total_time_c_us / total_time_optimized_unaligned_us);
 
   // Benchmark with aligned input pointer.
-  start = TickTime::Now();
+  start = rtc::TimeNanos();
   for (int j = 0; j < kConvolveIterations; ++j) {
     resampler.CONVOLVE_FUNC(
         resampler.kernel_storage_.get(), resampler.kernel_storage_.get(),
         resampler.kernel_storage_.get(), kKernelInterpolationFactor);
   }
   double total_time_optimized_aligned_us =
-      (TickTime::Now() - start).Microseconds();
+      (rtc::TimeNanos() - start) / rtc::kNumNanosecsPerMicrosec;
   printf(STRINGIZE(CONVOLVE_FUNC) " (aligned) took %.2fms; which is %.2fx "
          "faster than Convolve_C and %.2fx faster than "
          STRINGIZE(CONVOLVE_FUNC) " (unaligned).\n",
@@ -251,8 +253,10 @@ class SincResamplerTest
 TEST_P(SincResamplerTest, Resample) {
   // Make comparisons using one second of data.
   static const double kTestDurationSecs = 1;
-  const int input_samples = kTestDurationSecs * input_rate_;
-  const int output_samples = kTestDurationSecs * output_rate_;
+  const size_t input_samples =
+      static_cast<size_t>(kTestDurationSecs * input_rate_);
+  const size_t output_samples =
+      static_cast<size_t>(kTestDurationSecs * output_rate_);
 
   // Nyquist frequency for the input sampling rate.
   const double input_nyquist_freq = 0.5 * input_rate_;
@@ -267,7 +271,7 @@ TEST_P(SincResamplerTest, Resample) {
 
   // Force an update to the sample rate ratio to ensure dyanmic sample rate
   // changes are working correctly.
-  rtc::scoped_ptr<float[]> kernel(new float[SincResampler::kKernelStorageSize]);
+  std::unique_ptr<float[]> kernel(new float[SincResampler::kKernelStorageSize]);
   memcpy(kernel.get(), resampler.get_kernel_for_testing(),
          SincResampler::kKernelStorageSize);
   resampler.SetRatio(M_PI);
@@ -279,8 +283,8 @@ TEST_P(SincResamplerTest, Resample) {
 
   // TODO(dalecurtis): If we switch to AVX/SSE optimization, we'll need to
   // allocate these on 32-byte boundaries and ensure they're sized % 32 bytes.
-  rtc::scoped_ptr<float[]> resampled_destination(new float[output_samples]);
-  rtc::scoped_ptr<float[]> pure_destination(new float[output_samples]);
+  std::unique_ptr<float[]> resampled_destination(new float[output_samples]);
+  std::unique_ptr<float[]> pure_destination(new float[output_samples]);
 
   // Generate resampled signal.
   resampler.Resample(output_samples, resampled_destination.get());
@@ -302,7 +306,7 @@ TEST_P(SincResamplerTest, Resample) {
   int minimum_rate = std::min(input_rate_, output_rate_);
   double low_frequency_range = kLowFrequencyNyquistRange * 0.5 * minimum_rate;
   double high_frequency_range = kHighFrequencyNyquistRange * 0.5 * minimum_rate;
-  for (int i = 0; i < output_samples; ++i) {
+  for (size_t i = 0; i < output_samples; ++i) {
     double error = fabs(resampled_destination[i] - pure_destination[i]);
 
     if (pure_source.Frequency(i) < low_frequency_range) {

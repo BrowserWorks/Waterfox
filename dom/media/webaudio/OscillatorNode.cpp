@@ -15,14 +15,14 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(OscillatorNode, AudioNode,
+NS_IMPL_CYCLE_COLLECTION_INHERITED(OscillatorNode, AudioScheduledSourceNode,
                                    mPeriodicWave, mFrequency, mDetune)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(OscillatorNode)
-NS_INTERFACE_MAP_END_INHERITING(AudioNode)
+NS_INTERFACE_MAP_END_INHERITING(AudioScheduledSourceNode)
 
-NS_IMPL_ADDREF_INHERITED(OscillatorNode, AudioNode)
-NS_IMPL_RELEASE_INHERITED(OscillatorNode, AudioNode)
+NS_IMPL_ADDREF_INHERITED(OscillatorNode, AudioScheduledSourceNode)
+NS_IMPL_RELEASE_INHERITED(OscillatorNode, AudioScheduledSourceNode)
 
 class OscillatorNodeEngine final : public AudioNodeEngine
 {
@@ -389,8 +389,9 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
-  AudioNodeStream* mSource;
-  AudioNodeStream* mDestination;
+  // mSource deletes this engine in its destructor
+  AudioNodeStream* MOZ_NON_OWNING_REF mSource;
+  RefPtr<AudioNodeStream> mDestination;
   StreamTime mStart;
   StreamTime mStop;
   AudioParamTimeline mFrequency;
@@ -408,25 +409,55 @@ public:
 };
 
 OscillatorNode::OscillatorNode(AudioContext* aContext)
-  : AudioNode(aContext,
-              2,
-              ChannelCountMode::Max,
-              ChannelInterpretation::Speakers)
+  : AudioScheduledSourceNode(aContext,
+                             2,
+                             ChannelCountMode::Max,
+                             ChannelInterpretation::Speakers)
   , mType(OscillatorType::Sine)
-  , mFrequency(new AudioParam(this, OscillatorNodeEngine::FREQUENCY,
-                              440.0f, "frequency"))
-  , mDetune(new AudioParam(this, OscillatorNodeEngine::DETUNE, 0.0f, "detune"))
+  , mFrequency(
+    new AudioParam(this, OscillatorNodeEngine::FREQUENCY, "frequency", 440.0f,
+                   -(aContext->SampleRate() / 2), aContext->SampleRate() / 2))
+  , mDetune(new AudioParam(this, OscillatorNodeEngine::DETUNE, "detune", 0.0f))
   , mStartCalled(false)
 {
+
   OscillatorNodeEngine* engine = new OscillatorNodeEngine(this, aContext->Destination());
   mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NEED_MAIN_THREAD_FINISHED);
+                                    AudioNodeStream::NEED_MAIN_THREAD_FINISHED,
+                                    aContext->Graph());
   engine->SetSourceStream(mStream);
   mStream->AddMainThreadListener(this);
 }
 
-OscillatorNode::~OscillatorNode()
+/* static */ already_AddRefed<OscillatorNode>
+OscillatorNode::Create(AudioContext& aAudioContext,
+                       const OscillatorOptions& aOptions,
+                       ErrorResult& aRv)
 {
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<OscillatorNode> audioNode = new OscillatorNode(&aAudioContext);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  audioNode->SetType(aOptions.mType, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  audioNode->Frequency()->SetValue(aOptions.mFrequency);
+  audioNode->Detune()->SetValue(aOptions.mDetune);
+
+  if (aOptions.mPeriodicWave.WasPassed()) {
+    audioNode->SetPeriodicWave(aOptions.mPeriodicWave.Value());
+  }
+
+  return audioNode.forget();
 }
 
 size_t
@@ -550,7 +581,10 @@ OscillatorNode::NotifyMainThreadStreamFinished()
   {
   public:
     explicit EndedEventDispatcher(OscillatorNode* aNode)
-      : mNode(aNode) {}
+      : mozilla::Runnable("EndedEventDispatcher")
+      , mNode(aNode)
+    {
+    }
     NS_IMETHOD Run() override
     {
       // If it's not safe to run scripts right now, schedule this to run later
@@ -568,7 +602,7 @@ OscillatorNode::NotifyMainThreadStreamFinished()
     RefPtr<OscillatorNode> mNode;
   };
 
-  NS_DispatchToMainThread(new EndedEventDispatcher(this));
+  Context()->Dispatch(do_AddRef(new EndedEventDispatcher(this)));
 
   // Drop the playing reference
   // Warning: The below line might delete this.

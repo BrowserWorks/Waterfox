@@ -3,10 +3,13 @@ load(libdir + "simd.js");
 load(libdir + "asserts.js");
 var heap = new ArrayBuffer(0x10000);
 
+// Avoid pathological --ion-eager compile times due to bails in loops
+setJitCompilerOption('ion.warmup.trigger', 1000000);
+
 // Set to true to see more JS debugging spew
 const DEBUG = false;
 
-if (!isSimdAvailable() || typeof SIMD === 'undefined') {
+if (!isSimdAvailable() || typeof SIMD === 'undefined' || !isAsmJSCompilationAvailable()) {
     DEBUG && print("won't run tests as simd extensions aren't activated yet");
     quit(0);
 }

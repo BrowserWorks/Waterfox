@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global Components, XPCOMUtils, Utils, PrefCache, States, Roles, Logger */
 /* exported UtteranceGenerator, BrailleGenerator */
 
 'use strict';
@@ -52,7 +51,7 @@ var OutputGenerator = {
       output.push.apply(output, self.genForObject(aAccessible, aContext));
     };
     let ignoreSubtree = function ignoreSubtree(aAccessible) {
-      let roleString = Utils.AccRetrieval.getStringRole(aAccessible.role);
+      let roleString = Utils.AccService.getStringRole(aAccessible.role);
       let nameRule = self.roleRuleMap[roleString] || 0;
       // Ignore subtree if the name is explicit and the role's name rule is the
       // NAME_FROM_SUBTREE_RULE.
@@ -108,7 +107,7 @@ var OutputGenerator = {
    *    determined by {@link roleRuleMap}.
    */
   genForObject: function genForObject(aAccessible, aContext) {
-    let roleString = Utils.AccRetrieval.getStringRole(aAccessible.role);
+    let roleString = Utils.AccService.getStringRole(aAccessible.role);
     let func = this.objectOutputFunctions[
       OutputGenerator._getOutputName(roleString)] ||
       this.objectOutputFunctions.defaultFunc;
@@ -215,7 +214,7 @@ var OutputGenerator = {
   _addMathRoles: function _addMathRoles(aOutput, aAccessible, aRoleStr) {
     // First, determine the actual role to use (e.g. mathmlfraction).
     let roleStr = aRoleStr;
-    switch(aAccessible.role) {
+    switch (aAccessible.role) {
       case Roles.MATHML_CELL:
       case Roles.MATHML_ENCLOSED:
       case Roles.MATHML_LABELED_ROW:
@@ -259,12 +258,12 @@ var OutputGenerator = {
     // (e.g. numerator for the first child of a mathmlfraction).
     let mathRole = Utils.getMathRole(aAccessible);
     if (mathRole) {
-      aOutput[this.outputOrder === OUTPUT_DESC_FIRST ? 'push' : 'unshift']
-        ({string: this._getOutputName(mathRole)});
+      aOutput[this.outputOrder === OUTPUT_DESC_FIRST ? 'push' : 'unshift']({
+        string: this._getOutputName(mathRole)});
     }
     if (roleStr) {
-      aOutput[this.outputOrder === OUTPUT_DESC_FIRST ? 'push' : 'unshift']
-        ({string: this._getOutputName(roleStr)});
+      aOutput[this.outputOrder === OUTPUT_DESC_FIRST ? 'push' : 'unshift']({
+        string: this._getOutputName(roleStr)});
     }
   },
 
@@ -685,14 +684,14 @@ this.UtteranceGenerator = {  // jshint ignore:line
     },
 
     list: function list(aAccessible, aRoleStr, aState, aFlags) {
-      return this._getListUtterance
-        (aAccessible, aRoleStr, aFlags, aAccessible.childCount);
+      return this._getListUtterance(aAccessible, aRoleStr, aFlags,
+        aAccessible.childCount);
     },
 
     definitionlist:
       function definitionlist(aAccessible, aRoleStr, aState, aFlags) {
-        return this._getListUtterance
-          (aAccessible, aRoleStr, aFlags, aAccessible.childCount / 2);
+        return this._getListUtterance(aAccessible, aRoleStr, aFlags,
+          aAccessible.childCount / 2);
       },
 
     application: function application(aAccessible, aRoleStr, aState, aFlags) {

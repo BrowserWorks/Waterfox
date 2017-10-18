@@ -12,11 +12,9 @@ XPIDL_SOURCES += [
 ]
 
 EXPORTS += [
-    'gmp-api/gmp-async-shutdown.h',
-    'gmp-api/gmp-audio-codec.h',
-    'gmp-api/gmp-audio-decode.h',
-    'gmp-api/gmp-audio-host.h',
-    'gmp-api/gmp-audio-samples.h',
+    'ChromiumCDMParent.h',
+    'ChromiumCDMProxy.h',
+    'DecryptJob.h',
     'gmp-api/gmp-decryption.h',
     'gmp-api/gmp-entrypoints.h',
     'gmp-api/gmp-errors.h',
@@ -30,14 +28,13 @@ EXPORTS += [
     'gmp-api/gmp-video-frame.h',
     'gmp-api/gmp-video-host.h',
     'gmp-api/gmp-video-plane.h',
-    'GMPAudioDecoderChild.h',
-    'GMPAudioDecoderParent.h',
-    'GMPAudioDecoderProxy.h',
-    'GMPAudioHost.h',
     'GMPCallbackBase.h',
+    'GMPCDMCallbackProxy.h',
+    'GMPCDMProxy.h',
     'GMPChild.h',
     'GMPContentChild.h',
     'GMPContentParent.h',
+    'GMPCrashHelper.h',
     'GMPCrashHelperHolder.h',
     'GMPDecryptorChild.h',
     'GMPDecryptorParent.h',
@@ -69,35 +66,29 @@ EXPORTS += [
     'GMPVideoHost.h',
     'GMPVideoi420FrameImpl.h',
     'GMPVideoPlaneImpl.h',
+    'widevine-adapter/content_decryption_module.h',
+    'widevine-adapter/content_decryption_module_export.h',
+    'widevine-adapter/content_decryption_module_ext.h',
 ]
 
-if CONFIG['MOZ_EME']:
-    EXPORTS += [
-        'GMPCDMCallbackProxy.h',
-        'GMPCDMProxy.h',
-    ]
-
-# We link GMPLoader into xul on B2G/Fennec as its code does not need to be
-# covered by a DRM vendor's voucher.
-if CONFIG['OS_TARGET'] == 'Android':
-    SOURCES += [
-      'GMPLoader.cpp',
-    ]
-    USE_LIBS += [
-        'rlz',
-    ]
-
 UNIFIED_SOURCES += [
-    'GMPAudioDecoderChild.cpp',
-    'GMPAudioDecoderParent.cpp',
-    'GMPAudioHost.cpp',
+    'ChromiumCDMAdapter.cpp',
+    'ChromiumCDMChild.cpp',
+    'ChromiumCDMParent.cpp',
+    'ChromiumCDMProxy.cpp',
+    'DecryptJob.cpp',
+    'GMPCDMCallbackProxy.cpp',
+    'GMPCDMProxy.cpp',
     'GMPChild.cpp',
     'GMPContentChild.cpp',
     'GMPContentParent.cpp',
+    'GMPCrashHelper.cpp',
+    'GMPCrashHelperHolder.cpp',
     'GMPDecryptorChild.cpp',
     'GMPDecryptorParent.cpp',
     'GMPDiskStorage.cpp',
     'GMPEncryptedBufferDataImpl.cpp',
+    'GMPLoader.cpp',
     'GMPMemoryStorage.cpp',
     'GMPParent.cpp',
     'GMPPlatform.cpp',
@@ -119,24 +110,17 @@ UNIFIED_SOURCES += [
     'GMPVideoEncoderParent.cpp',
     'GMPVideoHost.cpp',
     'GMPVideoi420FrameImpl.cpp',
-    'GMPVideoPlaneImpl.cpp',
+    'GMPVideoPlaneImpl.cpp'
 ]
 
-if CONFIG['MOZ_EME']:
-    UNIFIED_SOURCES += [
-        'GMPCDMCallbackProxy.cpp',
-        'GMPCDMProxy.cpp',
-    ]
-
 DIRS += [
-    'rlz',
     'widevine-adapter',
 ]
 
 IPDL_SOURCES += [
   'GMPTypes.ipdlh',
+  'PChromiumCDM.ipdl',
   'PGMP.ipdl',
-  'PGMPAudioDecoder.ipdl',
   'PGMPContent.ipdl',
   'PGMPDecryptor.ipdl',
   'PGMPService.ipdl',
@@ -150,6 +134,14 @@ IPDL_SOURCES += [
 DEFINES['GMP_SAFE_SHMEM'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['MOZ_SANDBOX']:
+    # For sandbox includes and the include dependencies those have
+    LOCAL_INCLUDES += [
+        '/security/sandbox/chromium',
+        '/security/sandbox/chromium-shim',
+    ]
+
 
 FINAL_LIBRARY = 'xul'
 # media/mtransport so we work with --disable-webrtc

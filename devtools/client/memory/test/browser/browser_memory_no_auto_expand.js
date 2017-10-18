@@ -27,11 +27,13 @@ this.test = makeMemoryTest(TEST_URL, function* ({ tab, panel }) {
   EventUtils.synthesizeMouseAtCenter(recordingCheckbox, {}, panel.panelWin);
   is(getState().allocations.recording, true);
 
-  const nameElems = [...doc.querySelectorAll(".heap-tree-item-field.heap-tree-item-name")];
+  const nameElems = [
+    ...doc.querySelectorAll(".heap-tree-item-field.heap-tree-item-name")
+  ];
 
   for (let el of nameElems) {
     dumpn(`Found ${el.textContent.trim()}`);
-    is(el.style.marginLeft, "0px",
+    is(el.style.marginInlineStart, "0px",
        "None of the elements should be an indented/expanded child");
   }
 });

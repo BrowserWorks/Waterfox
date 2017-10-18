@@ -4,6 +4,24 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
+// There are shutdown issues for which multiple rejections are left uncaught.
+// This bug should be fixed, but for the moment devtools are whitelisted.
+//
+// NOTE: Entire directory whitelisting should be kept to a minimum. Normally you
+//       should use "expectUncaughtRejection" to flag individual failures.
+const { PromiseTestUtils } = Cu.import("resource://testing-common/PromiseTestUtils.jsm", {});
+PromiseTestUtils.whitelistRejectionsGlobally(/Component not initialized/);
+PromiseTestUtils.whitelistRejectionsGlobally(/Connection closed/);
+PromiseTestUtils.whitelistRejectionsGlobally(/destroy/);
+PromiseTestUtils.whitelistRejectionsGlobally(/File closed/);
+PromiseTestUtils.whitelistRejectionsGlobally(/is no longer, usable/);
+PromiseTestUtils.whitelistRejectionsGlobally(/NS_ERROR_FAILURE/);
+PromiseTestUtils.whitelistRejectionsGlobally(/this\._urls is null/);
+PromiseTestUtils.whitelistRejectionsGlobally(/this\.tabTarget is null/);
+PromiseTestUtils.whitelistRejectionsGlobally(/this\.toolbox is null/);
+PromiseTestUtils.whitelistRejectionsGlobally(/this\.webConsoleClient is null/);
+PromiseTestUtils.whitelistRejectionsGlobally(/this\.worker is null/);
+
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var { Task } = require("devtools/shared/task");
 var Services = require("Services");
@@ -12,10 +30,10 @@ var { TargetFactory } = require("devtools/client/framework/target");
 var { DebuggerServer } = require("devtools/server/main");
 var { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 
-var Promise = require("promise");
 var Services = require("Services");
 var { WebAudioFront } = require("devtools/shared/fronts/webaudio");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var flags = require("devtools/shared/flags");
 var audioNodes = require("devtools/server/actors/utils/audionodes.json");
 var mm = null;
 
@@ -42,10 +60,10 @@ waitForExplicitFinish();
 
 var gToolEnabled = Services.prefs.getBoolPref("devtools.webaudioeditor.enabled");
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
   info("finish() was called, cleaning up...");
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
   Services.prefs.setBoolPref("devtools.webaudioeditor.enabled", gToolEnabled);
@@ -64,7 +82,6 @@ function loadFrameScripts() {
 function addTab(aUrl, aWindow) {
   info("Adding tab: " + aUrl);
 
-  let deferred = Promise.defer();
   let targetWindow = aWindow || window;
   let targetBrowser = targetWindow.gBrowser;
 
@@ -72,53 +89,50 @@ function addTab(aUrl, aWindow) {
   let tab = targetBrowser.selectedTab = targetBrowser.addTab(aUrl);
   let linkedBrowser = tab.linkedBrowser;
 
-  BrowserTestUtils.browserLoaded(linkedBrowser).then(function () {
-    info("Tab added and finished loading: " + aUrl);
-    deferred.resolve(tab);
+  return new Promise((resolve, reject) => {
+    BrowserTestUtils.browserLoaded(linkedBrowser).then(function () {
+      info("Tab added and finished loading: " + aUrl);
+      resolve(tab);
+    });
   });
-
-  return deferred.promise;
 }
 
 function removeTab(aTab, aWindow) {
   info("Removing tab.");
 
-  let deferred = Promise.defer();
   let targetWindow = aWindow || window;
   let targetBrowser = targetWindow.gBrowser;
   let tabContainer = targetBrowser.tabContainer;
 
-  tabContainer.addEventListener("TabClose", function onClose(aEvent) {
-    tabContainer.removeEventListener("TabClose", onClose, false);
-    info("Tab removed and finished closing.");
-    deferred.resolve();
-  }, false);
+  return new Promise((resolve, reject) => {
+    tabContainer.addEventListener("TabClose", function (aEvent) {
+      info("Tab removed and finished closing.");
+      resolve();
+    }, {once: true});
 
-  targetBrowser.removeTab(aTab);
-  return deferred.promise;
+    targetBrowser.removeTab(aTab);
+  });
 }
 
 function once(aTarget, aEventName, aUseCapture = false) {
   info("Waiting for event: '" + aEventName + "' on " + aTarget + ".");
 
-  let deferred = Promise.defer();
-
-  for (let [add, remove] of [
-    ["on", "off"], // Use event emitter before DOM events for consistency
-    ["addEventListener", "removeEventListener"],
-    ["addListener", "removeListener"]
-  ]) {
-    if ((add in aTarget) && (remove in aTarget)) {
-      aTarget[add](aEventName, function onEvent(...aArgs) {
-        aTarget[remove](aEventName, onEvent, aUseCapture);
-        info("Got event: '" + aEventName + "' on " + aTarget + ".");
-        deferred.resolve(...aArgs);
-      }, aUseCapture);
-      break;
+  return new Promise((resolve, reject) => {
+    for (let [add, remove] of [
+      ["on", "off"], // Use event emitter before DOM events for consistency
+      ["addEventListener", "removeEventListener"],
+      ["addListener", "removeListener"]
+    ]) {
+      if ((add in aTarget) && (remove in aTarget)) {
+        aTarget[add](aEventName, function onEvent(...aArgs) {
+          aTarget[remove](aEventName, onEvent, aUseCapture);
+          info("Got event: '" + aEventName + "' on " + aTarget + ".");
+          resolve(...aArgs);
+        }, aUseCapture);
+        break;
+      }
     }
-  }
-
-  return deferred.promise;
+  });
 }
 
 function reload(aTarget, aWaitForTargetEvent = "navigate") {
@@ -206,20 +220,21 @@ function teardown(aTarget) {
 // `onAdd` function that calls with the entire actors array on program link
 function getN(front, eventName, count, spread) {
   let actors = [];
-  let deferred = Promise.defer();
   info(`Waiting for ${count} ${eventName} events`);
-  front.on(eventName, function onEvent(...args) {
-    let actor = args[0];
-    if (actors.length !== count) {
-      actors.push(spread ? args : actor);
-    }
-    info(`Got ${actors.length} / ${count} ${eventName} events`);
-    if (actors.length === count) {
-      front.off(eventName, onEvent);
-      deferred.resolve(actors);
-    }
+
+  return new Promise((resolve, reject) => {
+    front.on(eventName, function onEvent(...args) {
+      let actor = args[0];
+      if (actors.length !== count) {
+        actors.push(spread ? args : actor);
+      }
+      info(`Got ${actors.length} / ${count} ${eventName} events`);
+      if (actors.length === count) {
+        front.off(eventName, onEvent);
+        resolve(actors);
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function get(front, eventName) { return getN(front, eventName, 1); }
@@ -236,19 +251,20 @@ function getNSpread(front, eventName, count) { return getN(front, eventName, cou
  * nodes and edges.
  */
 function waitForGraphRendered(front, nodeCount, edgeCount, paramEdgeCount) {
-  let deferred = Promise.defer();
   let eventName = front.EVENTS.UI_GRAPH_RENDERED;
   info(`Wait for graph rendered with ${nodeCount} nodes, ${edgeCount} edges`);
-  front.on(eventName, function onGraphRendered(_, nodes, edges, pEdges) {
-    let paramEdgesDone = paramEdgeCount != null ? paramEdgeCount === pEdges : true;
-    info(`Got graph rendered with ${nodes} / ${nodeCount} nodes, ` +
-         `${edges} / ${edgeCount} edges`);
-    if (nodes === nodeCount && edges === edgeCount && paramEdgesDone) {
-      front.off(eventName, onGraphRendered);
-      deferred.resolve();
-    }
+
+  return new Promise((resolve, reject) => {
+    front.on(eventName, function onGraphRendered(_, nodes, edges, pEdges) {
+      let paramEdgesDone = paramEdgeCount != null ? paramEdgeCount === pEdges : true;
+      info(`Got graph rendered with ${nodes} / ${nodeCount} nodes, ` +
+           `${edges} / ${edgeCount} edges`);
+      if (nodes === nodeCount && edges === edgeCount && paramEdgesDone) {
+        front.off(eventName, onGraphRendered);
+        resolve();
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function checkVariableView(view, index, hash, description = "") {
@@ -290,39 +306,38 @@ function checkVariableView(view, index, hash, description = "") {
 }
 
 function modifyVariableView(win, view, index, prop, value) {
-  let deferred = Promise.defer();
   let scope = view.getScopeAtIndex(index);
   let aVar = scope.get(prop);
   scope.expand();
 
-  win.on(win.EVENTS.UI_SET_PARAM, handleSetting);
-  win.on(win.EVENTS.UI_SET_PARAM_ERROR, handleSetting);
+  return new Promise((resolve, reject) => {
+    win.on(win.EVENTS.UI_SET_PARAM, handleSetting);
+    win.on(win.EVENTS.UI_SET_PARAM_ERROR, handleSetting);
 
-  // Focus and select the variable to begin editing
-  win.focus();
-  aVar.focus();
-  EventUtils.sendKey("RETURN", win);
-
-  // Must wait for the scope DOM to be available to receive
-  // events
-  executeSoon(() => {
-    info("Setting " + value + " for " + prop + "....");
-    for (let c of (value + "")) {
-      EventUtils.synthesizeKey(c, {}, win);
-    }
+    // Focus and select the variable to begin editing
+    win.focus();
+    aVar.focus();
     EventUtils.sendKey("RETURN", win);
+
+    // Must wait for the scope DOM to be available to receive
+    // events
+    executeSoon(() => {
+      info("Setting " + value + " for " + prop + "....");
+      for (let c of (value + "")) {
+        EventUtils.synthesizeKey(c, {}, win);
+      }
+      EventUtils.sendKey("RETURN", win);
+    });
+
+    function handleSetting(eventName) {
+      win.off(win.EVENTS.UI_SET_PARAM, handleSetting);
+      win.off(win.EVENTS.UI_SET_PARAM_ERROR, handleSetting);
+      if (eventName === win.EVENTS.UI_SET_PARAM)
+        resolve();
+      if (eventName === win.EVENTS.UI_SET_PARAM_ERROR)
+        reject();
+    }
   });
-
-  function handleSetting(eventName) {
-    win.off(win.EVENTS.UI_SET_PARAM, handleSetting);
-    win.off(win.EVENTS.UI_SET_PARAM_ERROR, handleSetting);
-    if (eventName === win.EVENTS.UI_SET_PARAM)
-      deferred.resolve();
-    if (eventName === win.EVENTS.UI_SET_PARAM_ERROR)
-      deferred.reject();
-  }
-
-  return deferred.promise;
 }
 
 function findGraphEdge(win, source, target, param) {
@@ -348,7 +363,7 @@ function mouseOver(win, element) {
 
 function command(button) {
   let ev = button.ownerDocument.createEvent("XULCommandEvent");
-  ev.initCommandEvent("command", true, true, button.ownerDocument.defaultView, 0, false, false, false, false, null);
+  ev.initCommandEvent("command", true, true, button.ownerDocument.defaultView, 0, false, false, false, false, null, 0);
   button.dispatchEvent(ev);
 }
 
@@ -360,10 +375,10 @@ function isVisible(element) {
  * Used in debugging, returns a promise that resolves in `n` milliseconds.
  */
 function wait(n) {
-  let { promise, resolve } = Promise.defer();
-  setTimeout(resolve, n);
-  info("Waiting " + n / 1000 + " seconds.");
-  return promise;
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, n);
+    info("Waiting " + n / 1000 + " seconds.");
+  });
 }
 
 /**
@@ -372,7 +387,6 @@ function wait(n) {
  * the tabs have rendered, completing all RDP requests for the node.
  */
 function clickGraphNode(panelWin, el, waitForToggle = false) {
-  let { promise, resolve } = Promise.defer();
   let promises = [
     once(panelWin, panelWin.EVENTS.UI_INSPECTOR_NODE_SET),
     once(panelWin, panelWin.EVENTS.UI_PROPERTIES_TAB_RENDERED),
@@ -482,26 +496,24 @@ function waitForInspectorRender(panelWin, EVENTS) {
  * in potentially a different process.
  */
 function evalInDebuggee(script) {
-  let deferred = Promise.defer();
-
   if (!mm) {
     throw new Error("`loadFrameScripts()` must be called when using MessageManager.");
   }
 
-  let id = generateUUID().toString();
-  mm.sendAsyncMessage("devtools:test:eval", { script: script, id: id });
-  mm.addMessageListener("devtools:test:eval:response", handler);
+  return new Promise((resolve, reject) => {
+    let id = generateUUID().toString();
+    mm.sendAsyncMessage("devtools:test:eval", { script: script, id: id });
+    mm.addMessageListener("devtools:test:eval:response", handler);
 
-  function handler({ data }) {
-    if (id !== data.id) {
-      return;
+    function handler({ data }) {
+      if (id !== data.id) {
+        return;
+      }
+
+      mm.removeMessageListener("devtools:test:eval:response", handler);
+      resolve(data.value);
     }
-
-    mm.removeMessageListener("devtools:test:eval:response", handler);
-    deferred.resolve(data.value);
-  }
-
-  return deferred.promise;
+  });
 }
 
 /**

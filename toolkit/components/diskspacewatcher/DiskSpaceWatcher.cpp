@@ -126,7 +126,6 @@ void DiskSpaceWatcher::UpdateState(bool aIsDiskFull, uint64_t aFreeSpace)
   observerService->NotifyObservers(subject,
                                    DISKSPACEWATCHER_OBSERVER_TOPIC,
                                    sIsDiskFull ? stateFull : stateFree);
-  return;
 }
 
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(DiskSpaceWatcher,
@@ -145,9 +144,6 @@ static const mozilla::Module::ContractIDEntry kDiskSpaceWatcherContracts[] = {
 };
 
 static const mozilla::Module::CategoryEntry kDiskSpaceWatcherCategories[] = {
-#ifdef MOZ_WIDGET_GONK
-  { "profile-after-change", "Disk Space Watcher Service", DISKSPACEWATCHER_CONTRACTID },
-#endif
   { nullptr }
 };
 

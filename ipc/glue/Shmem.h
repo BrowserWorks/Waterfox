@@ -236,7 +236,7 @@ private:
   void AssertAligned() const
   {
     if (0 != (mSize % sizeof(T)))
-      NS_RUNTIMEABORT("shmem is not T-aligned");
+      MOZ_CRASH("shmem is not T-aligned");
   }
 
 #if !defined(DEBUG)
@@ -255,7 +255,7 @@ private:
   void AssertInvariants() const;
 #endif
 
-  SharedMemory* MOZ_NON_OWNING_REF mSegment;
+  RefPtr<SharedMemory> mSegment;
   void* mData;
   size_t mSize;
   id_t mId;

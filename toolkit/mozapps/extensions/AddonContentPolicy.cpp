@@ -72,16 +72,15 @@ LogMessage(const nsAString &aMessage, nsIURI* aSourceURI, const nsAString &aSour
   nsCOMPtr<nsIScriptError> error = do_CreateInstance(NS_SCRIPTERROR_CONTRACTID);
   NS_ENSURE_TRUE(error, NS_ERROR_OUT_OF_MEMORY);
 
-  nsAutoCString sourceName;
-  nsresult rv = aSourceURI->GetSpec(sourceName);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCString sourceName = aSourceURI->GetSpecOrDefault();
 
   uint64_t windowID = 0;
   GetWindowIDFromContext(aContext, &windowID);
 
-  rv = error->InitWithWindowID(aMessage, NS_ConvertUTF8toUTF16(sourceName),
-                               aSourceSample, 0, 0, nsIScriptError::errorFlag,
-                               "JavaScript", windowID);
+  nsresult rv =
+    error->InitWithWindowID(aMessage, NS_ConvertUTF8toUTF16(sourceName),
+                            aSourceSample, 0, 0, nsIScriptError::errorFlag,
+                            "JavaScript", windowID);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIConsoleService> console = do_GetService(NS_CONSOLESERVICE_CONTRACTID);
@@ -132,7 +131,7 @@ AddonContentPolicy::ShouldLoad(uint32_t aContentType,
         NS_SUCCEEDED(mimeParser.GetParameter("version", version))) {
       *aShouldLoad = nsIContentPolicy::REJECT_REQUEST;
 
-      LogMessage(NS_MULTILINE_LITERAL_STRING(VERSIONED_JS_BLOCKED_MESSAGE),
+      LogMessage(NS_LITERAL_STRING(VERSIONED_JS_BLOCKED_MESSAGE),
                  aRequestOrigin, typeString, aContext);
       return NS_OK;
     }
@@ -369,9 +368,7 @@ class CSPValidator final : public nsCSPSrcVisitor {
       nsCOMPtr<nsIStringBundle> stringBundle = GetStringBundle();
 
       if (stringBundle) {
-        NS_ConvertASCIItoUTF16 name(aName);
-
-        rv = stringBundle->FormatStringFromName(name.get(), aParams, aLength,
+        rv = stringBundle->FormatStringFromName(aName, aParams, aLength,
                                                 getter_Copies(mError));
       }
 

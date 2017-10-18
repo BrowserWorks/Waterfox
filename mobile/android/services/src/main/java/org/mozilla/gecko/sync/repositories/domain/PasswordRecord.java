@@ -13,7 +13,7 @@ public class PasswordRecord extends Record {
   private static final String LOG_TAG = "PasswordRecord";
 
   public static final String COLLECTION_NAME = "passwords";
-  public static long PASSWORDS_TTL = -1; // Never expire passwords.
+  public static final long PASSWORDS_TTL = -1; // Never expire passwords.
 
   // Payload strings.
   public static final String PAYLOAD_HOSTNAME = "hostname";
@@ -189,7 +189,7 @@ public class PasswordRecord extends Record {
    * See toolkit/components/passwordmgr/storage-mozStorage.js for the
    * definitions:
    *
-   * http://hg.mozilla.org/mozilla-central/file/00955d61cc94/toolkit/components/passwordmgr/storage-mozStorage.js#l98
+   * https://hg.mozilla.org/mozilla-central/file/00955d61cc94/toolkit/components/passwordmgr/storage-mozStorage.js#l98
    */
     public boolean isValid() {
         if (this.deleted) {

@@ -14,7 +14,6 @@
 #include "nsRect.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "nsIObserver.h"
 #include "nsIAndroidBridge.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/dom/Touch.h"
@@ -29,185 +28,6 @@ class nsIAndroidDisplayport;
 class nsIWidget;
 
 namespace mozilla {
-
-class AutoLocalJNIFrame;
-
-void InitAndroidJavaWrappers(JNIEnv *jEnv);
-
-class RefCountedJavaObject {
-public:
-    RefCountedJavaObject(JNIEnv* env, jobject obj) : mRefCnt(0), mObject(env->NewGlobalRef(obj)) {}
-
-    ~RefCountedJavaObject();
-
-    int32_t AddRef() { return ++mRefCnt; }
-
-    int32_t Release() {
-        int32_t refcnt = --mRefCnt;
-        if (refcnt == 0)
-            delete this;
-        return refcnt;
-    }
-
-    jobject GetObject() { return mObject; }
-private:
-    int32_t mRefCnt;
-    jobject mObject;
-};
-
-/*
- * Note: do not store global refs to any WrappedJavaObject;
- * these are live only during a particular JNI method, as
- * NewGlobalRef is -not- called on the jobject.
- *
- * If this is needed, WrappedJavaObject can be extended to
- * handle it.
- */
-class WrappedJavaObject {
-public:
-    WrappedJavaObject() :
-        wrapped_obj(nullptr)
-    { }
-
-    WrappedJavaObject(jobject jobj) : wrapped_obj(nullptr) {
-        Init(jobj);
-    }
-
-    void Init(jobject jobj) {
-        wrapped_obj = jobj;
-    }
-
-    bool isNull() const {
-        return wrapped_obj == nullptr;
-    }
-
-    jobject wrappedObject() const {
-        return wrapped_obj;
-    }
-
-protected:
-    jobject wrapped_obj;
-};
-
-class AutoGlobalWrappedJavaObject : protected WrappedJavaObject{
-public:
-    AutoGlobalWrappedJavaObject() :
-        wrapped_obj(nullptr)
-    { }
-
-    AutoGlobalWrappedJavaObject(jobject jobj, JNIEnv* env) : wrapped_obj(nullptr) {
-        Init(jobj, env);
-    }
-
-    virtual ~AutoGlobalWrappedJavaObject();
-    void Dispose();
-
-    void Init(jobject jobj, JNIEnv* env) {
-        if (!isNull()) {
-            env->DeleteGlobalRef(wrapped_obj);
-        }
-        wrapped_obj = env->NewGlobalRef(jobj);
-    }
-
-    bool isNull() const {
-        return wrapped_obj == nullptr;
-    }
-
-    jobject wrappedObject() const {
-        return wrapped_obj;
-    }
-
-protected:
-    jobject wrapped_obj;
-};
-
-class AndroidPoint : public WrappedJavaObject
-{
-public:
-    static void InitPointClass(JNIEnv *jEnv);
-
-    AndroidPoint() { }
-    AndroidPoint(JNIEnv *jenv, jobject jobj) {
-        Init(jenv, jobj);
-    }
-
-    void Init(JNIEnv *jenv, jobject jobj);
-
-    int X() { return mX; }
-    int Y() { return mY; }
-
-protected:
-    int mX;
-    int mY;
-
-    static jclass jPointClass;
-    static jfieldID jXField;
-    static jfieldID jYField;
-};
-
-class AndroidRect : public WrappedJavaObject
-{
-public:
-    static void InitRectClass(JNIEnv *jEnv);
-
-    AndroidRect() { }
-    AndroidRect(JNIEnv *jenv, jobject jobj) {
-        Init(jenv, jobj);
-    }
-
-    void Init(JNIEnv *jenv, jobject jobj);
-
-    int Bottom() { return mBottom; }
-    int Left() { return mLeft; }
-    int Right() { return mRight; }
-    int Top() { return mTop; }
-    int Width() { return mRight - mLeft; }
-    int Height() { return mBottom - mTop; }
-
-protected:
-    int mBottom;
-    int mLeft;
-    int mRight;
-    int mTop;
-
-    static jclass jRectClass;
-    static jfieldID jBottomField;
-    static jfieldID jLeftField;
-    static jfieldID jRightField;
-    static jfieldID jTopField;
-};
-
-class AndroidRectF : public WrappedJavaObject
-{
-public:
-    static void InitRectFClass(JNIEnv *jEnv);
-
-    AndroidRectF() { }
-    AndroidRectF(JNIEnv *jenv, jobject jobj) {
-        Init(jenv, jobj);
-    }
-
-    void Init(JNIEnv *jenv, jobject jobj);
-
-    float Bottom() { return mBottom; }
-    float Left() { return mLeft; }
-    float Right() { return mRight; }
-    float Top() { return mTop; }
-    float Width() { return mRight - mLeft; }
-    float Height() { return mBottom - mTop; }
-
-protected:
-    float mBottom;
-    float mLeft;
-    float mRight;
-    float mTop;
-
-    static jclass jRectClass;
-    static jfieldID jBottomField;
-    static jfieldID jLeftField;
-    static jfieldID jRightField;
-    static jfieldID jTopField;
-};
 
 enum {
     // These keycode masks are not defined in android/keycodes.h:
@@ -328,6 +148,88 @@ enum {
     AKEYCODE_KANA               = 218,
     AKEYCODE_ASSIST             = 219,
 #endif
+#if __ANDROID_API__ < 18
+    AKEYCODE_BRIGHTNESS_DOWN    = 220,
+    AKEYCODE_BRIGHTNESS_UP      = 221,
+#endif
+#if __ANDROID_API__ < 19
+    AKEYCODE_MEDIA_AUDIO_TRACK  = 222,
+#endif
+#if __ANDROID_API__ < 20
+    AKEYCODE_SLEEP              = 223,
+    AKEYCODE_WAKEUP             = 224,
+#endif
+#if __ANDROID_API__ < 21
+    AKEYCODE_PAIRING                       = 225,
+    AKEYCODE_MEDIA_TOP_MENU                = 226,
+    AKEYCODE_11                            = 227,
+    AKEYCODE_12                            = 228,
+    AKEYCODE_LAST_CHANNEL                  = 229,
+    AKEYCODE_TV_DATA_SERVICE               = 230,
+    AKEYCODE_VOICE_ASSIST                  = 231,
+    AKEYCODE_TV_RADIO_SERVICE              = 232,
+    AKEYCODE_TV_TELETEXT                   = 233,
+    AKEYCODE_TV_NUMBER_ENTRY               = 234,
+    AKEYCODE_TV_TERRESTRIAL_ANALOG         = 235,
+    AKEYCODE_TV_TERRESTRIAL_DIGITAL        = 236,
+    AKEYCODE_TV_SATELLITE                  = 237,
+    AKEYCODE_TV_SATELLITE_BS               = 238,
+    AKEYCODE_TV_SATELLITE_CS               = 239,
+    AKEYCODE_TV_SATELLITE_SERVICE          = 240,
+    AKEYCODE_TV_NETWORK                    = 241,
+    AKEYCODE_TV_ANTENNA_CABLE              = 242,
+    AKEYCODE_TV_INPUT_HDMI_1               = 243,
+    AKEYCODE_TV_INPUT_HDMI_2               = 244,
+    AKEYCODE_TV_INPUT_HDMI_3               = 245,
+    AKEYCODE_TV_INPUT_HDMI_4               = 246,
+    AKEYCODE_TV_INPUT_COMPOSITE_1          = 247,
+    AKEYCODE_TV_INPUT_COMPOSITE_2          = 248,
+    AKEYCODE_TV_INPUT_COMPONENT_1          = 249,
+    AKEYCODE_TV_INPUT_COMPONENT_2          = 250,
+    AKEYCODE_TV_INPUT_VGA_1                = 251,
+    AKEYCODE_TV_AUDIO_DESCRIPTION          = 252,
+    AKEYCODE_TV_AUDIO_DESCRIPTION_MIX_UP   = 253,
+    AKEYCODE_TV_AUDIO_DESCRIPTION_MIX_DOWN = 254,
+    AKEYCODE_TV_ZOOM_MODE                  = 255,
+    AKEYCODE_TV_CONTENTS_MENU              = 256,
+    AKEYCODE_TV_MEDIA_CONTEXT_MENU         = 257,
+    AKEYCODE_TV_TIMER_PROGRAMMING          = 258,
+    AKEYCODE_HELP                          = 259,
+#endif
+#if __ANDROID_API__ < 23
+    AKEYCODE_NAVIGATE_PREVIOUS  = 260,
+    AKEYCODE_NAVIGATE_NEXT      = 261,
+    AKEYCODE_NAVIGATE_IN        = 262,
+    AKEYCODE_NAVIGATE_OUT       = 263,
+#endif
+#if __ANDROID_API__ < 24
+    AKEYCODE_STEM_PRIMARY       = 264,
+    AKEYCODE_STEM_1             = 265,
+    AKEYCODE_STEM_2             = 266,
+    AKEYCODE_STEM_3             = 267,
+    AKEYCODE_DPAD_UP_LEFT       = 268,
+    AKEYCODE_DPAD_DOWN_LEFT     = 269,
+    AKEYCODE_DPAD_UP_RIGHT      = 270,
+    AKEYCODE_DPAD_DOWN_RIGHT    = 271,
+#endif
+#if __ANDROID_API__ < 23
+    AKEYCODE_MEDIA_SKIP_FORWARD  = 272,
+    AKEYCODE_MEDIA_SKIP_BACKWARD = 273,
+    AKEYCODE_MEDIA_STEP_FORWARD  = 274,
+    AKEYCODE_MEDIA_STEP_BACKWARD = 275,
+#endif
+#if __ANDROID_API__ < 24
+    AKEYCODE_SOFT_SLEEP         = 276,
+    AKEYCODE_CUT                = 277,
+    AKEYCODE_COPY               = 278,
+    AKEYCODE_PASTE              = 279,
+#endif
+#if __ANDROID_API__ < 25
+    AKEYCODE_SYSTEM_NAVIGATION_UP    = 280,
+    AKEYCODE_SYSTEM_NAVIGATION_DOWN  = 281,
+    AKEYCODE_SYSTEM_NAVIGATION_LEFT  = 282,
+    AKEYCODE_SYSTEM_NAVIGATION_RIGHT = 283,
+#endif
 
     AMETA_FUNCTION_ON           = 0x00000008,
     AMETA_CTRL_ON               = 0x00001000,
@@ -344,29 +246,6 @@ enum {
     AMETA_CTRL_MASK             = AMETA_CTRL_LEFT_ON  | AMETA_CTRL_RIGHT_ON  | AMETA_CTRL_ON,
     AMETA_META_MASK             = AMETA_META_LEFT_ON  | AMETA_META_RIGHT_ON  | AMETA_META_ON,
     AMETA_SHIFT_MASK            = AMETA_SHIFT_LEFT_ON | AMETA_SHIFT_RIGHT_ON | AMETA_SHIFT_ON,
-};
-
-class nsAndroidDisplayport final : public nsIAndroidDisplayport
-{
-public:
-    NS_DECL_ISUPPORTS
-    virtual nsresult GetLeft(float *aLeft) override { *aLeft = mLeft; return NS_OK; }
-    virtual nsresult GetTop(float *aTop) override { *aTop = mTop; return NS_OK; }
-    virtual nsresult GetRight(float *aRight) override { *aRight = mRight; return NS_OK; }
-    virtual nsresult GetBottom(float *aBottom) override { *aBottom = mBottom; return NS_OK; }
-    virtual nsresult GetResolution(float *aResolution) override { *aResolution = mResolution; return NS_OK; }
-    virtual nsresult SetLeft(float aLeft) override { mLeft = aLeft; return NS_OK; }
-    virtual nsresult SetTop(float aTop) override { mTop = aTop; return NS_OK; }
-    virtual nsresult SetRight(float aRight) override { mRight = aRight; return NS_OK; }
-    virtual nsresult SetBottom(float aBottom) override { mBottom = aBottom; return NS_OK; }
-    virtual nsresult SetResolution(float aResolution) override { mResolution = aResolution; return NS_OK; }
-
-    nsAndroidDisplayport(AndroidRectF aRect, float aResolution):
-        mLeft(aRect.Left()), mTop(aRect.Top()), mRight(aRect.Right()), mBottom(aRect.Bottom()), mResolution(aResolution) {}
-
-private:
-    ~nsAndroidDisplayport() {}
-    float mLeft, mTop, mRight, mBottom, mResolution;
 };
 
 class AndroidMotionEvent
@@ -401,229 +280,6 @@ public:
         TOOL_TYPE_MOUSE = 3,
         TOOL_TYPE_ERASER = 4,
         dummy_java_enum_list_end
-    };
-};
-
-class AndroidGeckoEvent : public WrappedJavaObject
-{
-private:
-    AndroidGeckoEvent() {
-    }
-
-    void Init(JNIEnv *jenv, jobject jobj);
-    void Init(int aType);
-
-public:
-    static void InitGeckoEventClass(JNIEnv *jEnv);
-
-    static AndroidGeckoEvent* MakeNativePoke() {
-        AndroidGeckoEvent *event = new AndroidGeckoEvent();
-        event->Init(NATIVE_POKE);
-        return event;
-    }
-
-    static AndroidGeckoEvent* MakeFromJavaObject(JNIEnv *jenv, jobject jobj) {
-        AndroidGeckoEvent *event = new AndroidGeckoEvent();
-        event->Init(jenv, jobj);
-        return event;
-    }
-
-    static AndroidGeckoEvent* MakeAddObserver(const nsAString &key, nsIObserver *observer) {
-        AndroidGeckoEvent *event = new AndroidGeckoEvent();
-        event->Init(ADD_OBSERVER);
-        event->mCharacters.Assign(key);
-        event->mObserver = observer;
-        return event;
-    }
-
-    static AndroidGeckoEvent* MakeApzInputEvent(const MultiTouchInput& aInput, const mozilla::layers::ScrollableLayerGuid& aGuid, uint64_t aInputBlockId, nsEventStatus aEventStatus) {
-        AndroidGeckoEvent* event = new AndroidGeckoEvent();
-        event->Init(APZ_INPUT_EVENT);
-        event->mApzInput = aInput;
-        event->mApzGuid = aGuid;
-        event->mApzInputBlockId = aInputBlockId;
-        event->mApzEventStatus = aEventStatus;
-        return event;
-    }
-
-    bool IsInputEvent() const {
-        return mType == AndroidGeckoEvent::MOTION_EVENT ||
-            mType == AndroidGeckoEvent::NATIVE_GESTURE_EVENT ||
-            mType == AndroidGeckoEvent::LONG_PRESS ||
-            mType == AndroidGeckoEvent::APZ_INPUT_EVENT;
-    }
-
-    int Action() { return mAction; }
-    int Type() { return mType; }
-    int64_t Time() { return mTime; }
-    const nsTArray<nsIntPoint>& Points() { return mPoints; }
-    const nsTArray<int>& PointIndicies() { return mPointIndicies; }
-    const nsTArray<float>& Pressures() { return mPressures; }
-    const nsTArray<int>& ToolTypes() { return mToolTypes; }
-    const nsTArray<float>& Orientations() { return mOrientations; }
-    const nsTArray<nsIntPoint>& PointRadii() { return mPointRadii; }
-    double X() { return mX; }
-    double Y() { return mY; }
-    double Z() { return mZ; }
-    double W() { return mW; }
-    const nsIntRect& Rect() { return mRect; }
-    nsString& Characters() { return mCharacters; }
-    nsString& CharactersExtra() { return mCharactersExtra; }
-    nsString& Data() { return mData; }
-    int MetaState() { return mMetaState; }
-    Modifiers DOMModifiers() const;
-    bool IsAltPressed() const { return (mMetaState & AMETA_ALT_MASK) != 0; }
-    bool IsShiftPressed() const { return (mMetaState & AMETA_SHIFT_MASK) != 0; }
-    bool IsCtrlPressed() const { return (mMetaState & AMETA_CTRL_MASK) != 0; }
-    bool IsMetaPressed() const { return (mMetaState & AMETA_META_MASK) != 0; }
-    int Flags() { return mFlags; }
-    int Count() { return mCount; }
-    int PointerIndex() { return mPointerIndex; }
-    RefCountedJavaObject* ByteBuffer() { return mByteBuffer; }
-    int Width() { return mWidth; }
-    int Height() { return mHeight; }
-    int ID() { return mID; }
-    int GamepadButton() { return mGamepadButton; }
-    bool GamepadButtonPressed() { return mGamepadButtonPressed; }
-    float GamepadButtonValue() { return mGamepadButtonValue; }
-    const nsTArray<float>& GamepadValues() { return mGamepadValues; }
-    int RequestId() { return mCount; } // for convenience
-    bool CanCoalesceWith(AndroidGeckoEvent* ae);
-    WidgetTouchEvent MakeTouchEvent(nsIWidget* widget);
-    MultiTouchInput MakeMultiTouchInput(nsIWidget* widget);
-    WidgetMouseEvent MakeMouseEvent(nsIWidget* widget);
-    void UnionRect(nsIntRect const& aRect);
-    nsIObserver *Observer() { return mObserver; }
-    mozilla::layers::ScrollableLayerGuid ApzGuid();
-    uint64_t ApzInputBlockId();
-    nsEventStatus ApzEventStatus();
-
-protected:
-    int mAction;
-    int mType;
-    int64_t mTime;
-    nsTArray<nsIntPoint> mPoints;
-    nsTArray<nsIntPoint> mPointRadii;
-    nsTArray<int> mPointIndicies;
-    nsTArray<float> mOrientations;
-    nsTArray<float> mPressures;
-    nsTArray<int> mToolTypes;
-    nsIntRect mRect;
-    int mFlags, mMetaState;
-    int mCount;
-    double mX, mY, mZ, mW;
-    int mPointerIndex;
-    nsString mCharacters, mCharactersExtra, mData;
-    RefPtr<RefCountedJavaObject> mByteBuffer;
-    int mWidth, mHeight;
-    int mID;
-    int mGamepadButton;
-    bool mGamepadButtonPressed;
-    float mGamepadButtonValue;
-    nsTArray<float> mGamepadValues;
-    nsCOMPtr<nsIObserver> mObserver;
-    MultiTouchInput mApzInput;
-    mozilla::layers::ScrollableLayerGuid mApzGuid;
-    uint64_t mApzInputBlockId;
-    nsEventStatus mApzEventStatus;
-
-    void ReadIntArray(nsTArray<int> &aVals,
-                      JNIEnv *jenv,
-                      jfieldID field,
-                      int32_t count);
-    void ReadFloatArray(nsTArray<float> &aVals,
-                        JNIEnv *jenv,
-                        jfieldID field,
-                        int32_t count);
-    void ReadPointArray(nsTArray<nsIntPoint> &mPoints,
-                        JNIEnv *jenv,
-                        jfieldID field,
-                        int32_t count);
-    void ReadStringArray(nsTArray<nsString> &aStrings,
-                         JNIEnv *jenv,
-                         jfieldID field);
-    void ReadRectField(JNIEnv *jenv);
-    void ReadCharactersField(JNIEnv *jenv);
-    void ReadCharactersExtraField(JNIEnv *jenv);
-    void ReadDataField(JNIEnv *jenv);
-    void ReadStringFromJString(nsString &aString, JNIEnv *jenv, jstring s);
-
-    static jclass jGeckoEventClass;
-    static jfieldID jActionField;
-    static jfieldID jTypeField;
-    static jfieldID jTimeField;
-    static jfieldID jPoints;
-    static jfieldID jPointIndicies;
-    static jfieldID jOrientations;
-    static jfieldID jPressures;
-    static jfieldID jToolTypes;
-    static jfieldID jPointRadii;
-    static jfieldID jXField;
-    static jfieldID jYField;
-    static jfieldID jZField;
-    static jfieldID jWField;
-    static jfieldID jDistanceField;
-    static jfieldID jRectField;
-
-    static jfieldID jCharactersField;
-    static jfieldID jCharactersExtraField;
-    static jfieldID jDataField;
-    static jfieldID jMetaStateField;
-    static jfieldID jFlagsField;
-    static jfieldID jCountField;
-    static jfieldID jPointerIndexField;
-
-    static jfieldID jByteBufferField;
-
-    static jfieldID jWidthField;
-    static jfieldID jHeightField;
-
-    static jfieldID jIDField;
-    static jfieldID jGamepadButtonField;
-    static jfieldID jGamepadButtonPressedField;
-    static jfieldID jGamepadButtonValueField;
-    static jfieldID jGamepadValuesField;
-
-public:
-    enum {
-        NATIVE_POKE = 0,
-        MOTION_EVENT = 2,
-        NOOP = 15,
-        APZ_INPUT_EVENT = 17, // used internally in AndroidJNI/nsAppShell/nsWindow
-        VIEWPORT = 20,
-        NATIVE_GESTURE_EVENT = 31,
-        CALL_OBSERVER = 33,
-        REMOVE_OBSERVER = 34,
-        LOW_MEMORY = 35,
-        TELEMETRY_HISTOGRAM_ADD = 37,
-        ADD_OBSERVER = 38,
-        TELEMETRY_UI_SESSION_START = 42,
-        TELEMETRY_UI_SESSION_STOP = 43,
-        TELEMETRY_UI_EVENT = 44,
-        GAMEPAD_ADDREMOVE = 45,
-        GAMEPAD_DATA = 46,
-        LONG_PRESS = 47,
-        ZOOMEDVIEW = 48,
-        dummy_java_enum_list_end
-    };
-
-    enum {
-        // Memory pressure levels. Keep these in sync with those in MemoryMonitor.java.
-        MEMORY_PRESSURE_NONE = 0,
-        MEMORY_PRESSURE_CLEANUP = 1,
-        MEMORY_PRESSURE_LOW = 2,
-        MEMORY_PRESSURE_MEDIUM = 3,
-        MEMORY_PRESSURE_HIGH = 4
-    };
-
-    enum {
-        ACTION_GAMEPAD_ADDED = 1,
-        ACTION_GAMEPAD_REMOVED = 2
-    };
-
-    enum {
-        ACTION_GAMEPAD_BUTTON = 1,
-        ACTION_GAMEPAD_AXES = 2
     };
 };
 

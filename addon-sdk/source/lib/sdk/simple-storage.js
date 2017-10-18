@@ -9,12 +9,12 @@ module.metadata = {
 };
 
 const { Cc, Ci } = require("chrome");
-const file = require("./io/file");
-const prefs = require("./preferences/service");
 const jpSelf = require("./self");
-const timer = require("./timers");
+lazyRequireModule(this, "./timers", "timer");
+lazyRequireModule(this, "./io/file", "file");
+lazyRequireModule(this, "./preferences/service", "prefs");
 const unload = require("./system/unload");
-const { emit, on, off } = require("./event/core");
+lazyRequire(this, "./event/core", "emit", "on", "off");
 
 const WRITE_PERIOD_PREF = "extensions.addon-sdk.simple-storage.writePeriod";
 const WRITE_PERIOD_DEFAULT = 300000; // 5 minutes
@@ -162,12 +162,12 @@ JsonStore.prototype = {
     // Finally, write.
     let stream = file.open(this.filename, "w");
     try {
-      stream.writeAsync(JSON.stringify(this.root), function writeAsync(err) {
+      stream.writeAsync(JSON.stringify(this.root), err => {
         if (err)
           console.error("Error writing simple storage file: " + this.filename);
         else if (this.onWrite)
           this.onWrite(this);
-      }.bind(this));
+      });
     }
     catch (err) {
       // writeAsync closes the stream after it's done, so only close on error.

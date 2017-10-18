@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -71,7 +71,7 @@ function testSteps()
 
       request = index.openCursor();
       request.onerror = errorHandler;
-      request.onsuccess = function (event) {
+      request.onsuccess = function(event) {
         is(event.target.result.value.name, "Ben", "Good object");
         executeSoon(function() { testGenerator.next(); });
       }
@@ -80,6 +80,5 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }
 

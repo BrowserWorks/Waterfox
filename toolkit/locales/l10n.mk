@@ -8,10 +8,6 @@
 # of Mozilla applications.
 # This makefile should be included, and then assumes that the including
 # makefile defines the following targets:
-# clobber-zip
-#   This target should remove all language dependent-files from $(STAGEDIST),
-#   depending on $(AB_CD) set to the locale code.
-#   $(AB_CD) will be en-US on the initial unpacking of the package
 # libs-%
 #   This target should call into the various libs targets that this
 #   application depends on.
@@ -40,9 +36,7 @@ endif
 endif
 
 # These are defaulted to be compatible with the files the wget-en-US target
-# pulls. You may override them if you provide your own files. You _must_
-# override them when MOZ_PKG_PRETTYNAMES is defined - the defaults will not
-# work in that case.
+# pulls. You may override them if you provide your own files.
 ZIP_IN ?= $(ABS_DIST)/$(PACKAGE)
 WIN32_INSTALLER_IN ?= $(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
 
@@ -72,29 +66,36 @@ STAGEDIST = $(ABS_DIST)/l10n-stage/$(MOZ_PKG_DIR)/$(_APPNAME)/Contents/Resources
 else
 STAGEDIST = $(ABS_DIST)/l10n-stage/$(MOZ_PKG_DIR)
 endif
+UNPACKED_INSTALLER = $(ABS_DIST)/unpacked-installer
 
 include $(MOZILLA_DIR)/toolkit/mozapps/installer/signing.mk
 include $(MOZILLA_DIR)/toolkit/mozapps/installer/packager.mk
 
 PACKAGE_BASE_DIR = $(ABS_DIST)/l10n-stage
 
-$(STAGEDIST): AB_CD:=en-US
-$(STAGEDIST): UNPACKAGE=$(call ESCAPE_WILDCARD,$(ZIP_IN))
-$(STAGEDIST): $(call ESCAPE_WILDCARD,$(ZIP_IN))
+$(UNPACKED_INSTALLER): AB_CD:=en-US
+$(UNPACKED_INSTALLER): UNPACKAGE=$(call ESCAPE_WILDCARD,$(ZIP_IN))
+$(UNPACKED_INSTALLER): $(call ESCAPE_WILDCARD,$(ZIP_IN))
 # only mac needs to remove the parent of STAGEDIST...
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
-	$(RM) -r -v $(DIST)/l10n-stage
+	$(RM) -r -v $(UNPACKED_INSTALLER)
 else
 # ... and windows doesn't like removing STAGEDIST itself, remove all children
-	find $(STAGEDIST) -maxdepth 1 -print0 | xargs -0 $(RM) -r
+	find $(UNPACKED_INSTALLER) -maxdepth 1 -print0 | xargs -0 $(RM) -r
 endif
-	$(NSINSTALL) -D $(DIST)/l10n-stage
-	cd $(DIST)/l10n-stage && \
+	$(NSINSTALL) -D $(UNPACKED_INSTALLER)
+	cd $(UNPACKED_INSTALLER) && \
 	  $(INNER_UNMAKE_PACKAGE)
 
 
-unpack: $(STAGEDIST)
-	@echo done unpacking
+unpack: $(UNPACKED_INSTALLER)
+ifeq ($(OS_ARCH), WINNT)
+	$(RM) -r -f $(ABS_DIST)/l10n-stage
+	$(NSINSTALL) -D $(ABS_DIST)/l10n-stage
+	$(call copy_dir, $(UNPACKED_INSTALLER), $(ABS_DIST)/l10n-stage)
+else
+	rsync -rav --delete $(UNPACKED_INSTALLER)/ $(ABS_DIST)/l10n-stage
+endif
 
 # The path to the object dir for the mozilla-central build system,
 # may be overridden if necessary.
@@ -139,7 +140,6 @@ endif
 	  $(MAKE_PACKAGE)
 ifdef MAKE_COMPLETE_MAR
 	$(MAKE) -C $(MOZDEPTH)/tools/update-packaging full-update AB_CD=$(AB_CD) \
-	  MOZ_PKG_PRETTYNAMES=$(MOZ_PKG_PRETTYNAMES) \
 	  PACKAGE_BASE_DIR='$(ABS_DIST)/l10n-stage'
 endif
 # packaging done, undo l10n stuff
@@ -152,7 +152,7 @@ endif
 	mv -f '$(DIST)/l10n-stage/$(PACKAGE)' '$(ZIP_OUT)'
 	if test -f '$(DIST)/l10n-stage/$(PACKAGE).asc'; then mv -f '$(DIST)/l10n-stage/$(PACKAGE).asc' '$(ZIP_OUT).asc'; fi
 
-repackage-zip-%: $(STAGEDIST)
+repackage-zip-%: unpack
 	@$(MAKE) repackage-zip AB_CD=$* ZIP_IN='$(ZIP_IN)'
 
 APP_DEFINES = $(firstword $(wildcard $(LOCALE_SRCDIR)/defines.inc) \
@@ -181,6 +181,15 @@ langpack-%: libs-%
 ifndef EN_US_BINARY_URL 
 EN_US_BINARY_URL = $(error You must set EN_US_BINARY_URL)
 endif
+# In taskcluster the installer comes from another location
+ifndef EN_US_INSTALLER_BINARY_URL
+EN_US_INSTALLER_BINARY_URL = $(EN_US_BINARY_URL)
+endif
+
+# Allow the overriding of PACKAGE format so we can get an EN_US build with a different
+# PACKAGE format than we are creating l10n packages with.
+EN_US_PACKAGE_NAME ?= $(PACKAGE)
+EN_US_PKG_INST_BASENAME ?= $(PKG_INST_BASENAME)
 
 # This make target allows us to wget the latest en-US binary from a specified website
 # The make installers-% target needs the en-US binary in dist/
@@ -190,13 +199,15 @@ ifndef WGET
 	$(error Wget not installed)
 endif
 	$(NSINSTALL) -D $(ABS_DIST)/$(PKG_PATH)
-	(cd $(ABS_DIST)/$(PKG_PATH) && $(WGET) --no-cache -nv --no-iri -N  '$(EN_US_BINARY_URL)/$(PACKAGE)')
-	@echo 'Downloaded $(EN_US_BINARY_URL)/$(PACKAGE) to $(ABS_DIST)/$(PKG_PATH)/$(PACKAGE)'
+	(cd $(ABS_DIST)/$(PKG_PATH) && \
+        $(WGET) --no-cache -nv --no-iri -N -O $(PACKAGE) '$(EN_US_BINARY_URL)/$(EN_US_PACKAGE_NAME)')
+	@echo 'Downloaded $(EN_US_BINARY_URL)/$(EN_US_PACKAGE_NAME) to $(ABS_DIST)/$(PKG_PATH)/$(PACKAGE)'
 ifdef RETRIEVE_WINDOWS_INSTALLER
 ifeq ($(OS_ARCH), WINNT)
 	$(NSINSTALL) -D $(ABS_DIST)/$(PKG_INST_PATH)
-	(cd $(ABS_DIST)/$(PKG_INST_PATH) && $(WGET) --no-cache -nv --no-iri -N '$(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe')
-	@echo 'Downloaded $(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe to $(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe'
+	(cd $(ABS_DIST)/$(PKG_INST_PATH) && \
+        $(WGET) --no-cache -nv --no-iri -N -O $(PKG_INST_BASENAME).exe '$(EN_US_INSTALLER_BINARY_URL)/$(PKG_PATH)$(EN_US_PKG_INST_BASENAME).exe')
+	@echo 'Downloaded $(EN_US_INSTALLER_BINARY_URL)/$(PKG_PATH)$(EN_US_PKG_INST_BASENAME).exe to $(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe'
 endif
 endif
 

@@ -19,8 +19,10 @@
 #include "GrResourceProvider.h"
 #include "GrRenderTargetPriv.h"
 #include "GrStencilAttachment.h"
+#include "GrStencilSettings.h"
 #include "GrSurfacePriv.h"
-#include "SkTypes.h"
+#include "GrTexturePriv.h"
+#include "SkMathPriv.h"
 
 GrMesh& GrMesh::operator =(const GrMesh& di) {
     fPrimitiveType  = di.fPrimitiveType;
@@ -45,8 +47,8 @@ GrMesh& GrMesh::operator =(const GrMesh& di) {
 GrGpu::GrGpu(GrContext* context)
     : fResetTimestamp(kExpiredTimestamp+1)
     , fResetBits(kAll_GrBackendState)
-    , fMultisampleSpecsAllocator(1)
     , fContext(context) {
+    fMultisampleSpecs.emplace_back(0, 0, nullptr); // Index 0 is an invalid unique id.
 }
 
 GrGpu::~GrGpu() {}
@@ -55,21 +57,26 @@ void GrGpu::disconnect(DisconnectType) {}
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool GrGpu::makeCopyForTextureParams(int width, int height, const GrTextureParams& textureParams,
-                                     GrTextureProducer::CopyParams* copyParams) const {
+bool GrGpu::isACopyNeededForTextureParams(int width, int height,
+                                          const GrSamplerParams& textureParams,
+                                          GrTextureProducer::CopyParams* copyParams,
+                                          SkScalar scaleAdjust[2]) const {
     const GrCaps& caps = *this->caps();
     if (textureParams.isTiled() && !caps.npotTextureTileSupport() &&
         (!SkIsPow2(width) || !SkIsPow2(height))) {
+        SkASSERT(scaleAdjust);
         copyParams->fWidth = GrNextPow2(width);
         copyParams->fHeight = GrNextPow2(height);
+        scaleAdjust[0] = ((SkScalar) copyParams->fWidth) / width;
+        scaleAdjust[1] = ((SkScalar) copyParams->fHeight) / height;
         switch (textureParams.filterMode()) {
-            case GrTextureParams::kNone_FilterMode:
-                copyParams->fFilter = GrTextureParams::kNone_FilterMode;
+            case GrSamplerParams::kNone_FilterMode:
+                copyParams->fFilter = GrSamplerParams::kNone_FilterMode;
                 break;
-            case GrTextureParams::kBilerp_FilterMode:
-            case GrTextureParams::kMipMap_FilterMode:
+            case GrSamplerParams::kBilerp_FilterMode:
+            case GrSamplerParams::kMipMap_FilterMode:
                 // We are only ever scaling up so no reason to ever indicate kMipMap.
-                copyParams->fFilter = GrTextureParams::kBilerp_FilterMode;
+                copyParams->fFilter = GrSamplerParams::kBilerp_FilterMode;
                 break;
         }
         return true;
@@ -99,6 +106,10 @@ static GrSurfaceOrigin resolve_origin(GrSurfaceOrigin origin, bool renderTarget)
 static bool check_texture_creation_params(const GrCaps& caps, const GrSurfaceDesc& desc,
                                           bool* isRT, const SkTArray<GrMipLevel>& texels) {
     if (!caps.isConfigTexturable(desc.fConfig)) {
+        return false;
+    }
+
+    if (GrPixelConfigIsSint(desc.fConfig) && texels.count() > 1) {
         return false;
     }
 
@@ -150,9 +161,6 @@ GrTexture* GrGpu::createTexture(const GrSurfaceDesc& origDesc, SkBudgeted budget
     desc.fOrigin = resolve_origin(desc.fOrigin, isRT);
 
     GrTexture* tex = nullptr;
-    GrGpuResource::LifeCycle lifeCycle = SkBudgeted::kYes == budgeted ?
-                                            GrGpuResource::kCached_LifeCycle :
-                                            GrGpuResource::kUncached_LifeCycle;
 
     if (GrPixelConfigIsCompressed(desc.fConfig)) {
         // We shouldn't be rendering into this
@@ -165,10 +173,10 @@ GrTexture* GrGpu::createTexture(const GrSurfaceDesc& origDesc, SkBudgeted budget
         }
 
         this->handleDirtyContext();
-        tex = this->onCreateCompressedTexture(desc, lifeCycle, texels);
+        tex = this->onCreateCompressedTexture(desc, budgeted, texels);
     } else {
         this->handleDirtyContext();
-        tex = this->onCreateTexture(desc, lifeCycle, texels);
+        tex = this->onCreateTexture(desc, budgeted, texels);
     }
     if (tex) {
         if (!caps->reuseScratchTextures() && !isRT) {
@@ -184,7 +192,8 @@ GrTexture* GrGpu::createTexture(const GrSurfaceDesc& origDesc, SkBudgeted budget
     return tex;
 }
 
-GrTexture* GrGpu::wrapBackendTexture(const GrBackendTextureDesc& desc, GrWrapOwnership ownership) {
+sk_sp<GrTexture> GrGpu::wrapBackendTexture(const GrBackendTextureDesc& desc,
+                                           GrWrapOwnership ownership) {
     this->handleDirtyContext();
     if (!this->caps()->isConfigTexturable(desc.fConfig)) {
         return nullptr;
@@ -197,30 +206,27 @@ GrTexture* GrGpu::wrapBackendTexture(const GrBackendTextureDesc& desc, GrWrapOwn
     if (desc.fWidth > maxSize || desc.fHeight > maxSize) {
         return nullptr;
     }
-    GrTexture* tex = this->onWrapBackendTexture(desc, ownership);
-    if (nullptr == tex) {
+    sk_sp<GrTexture> tex = this->onWrapBackendTexture(desc, ownership);
+    if (!tex) {
         return nullptr;
     }
     // TODO: defer this and attach dynamically
     GrRenderTarget* tgt = tex->asRenderTarget();
     if (tgt && !fContext->resourceProvider()->attachStencilAttachment(tgt)) {
-        tex->unref();
         return nullptr;
-    } else {
-        return tex;
     }
+    return tex;
 }
 
-GrRenderTarget* GrGpu::wrapBackendRenderTarget(const GrBackendRenderTargetDesc& desc,
-                                               GrWrapOwnership ownership) {
+sk_sp<GrRenderTarget> GrGpu::wrapBackendRenderTarget(const GrBackendRenderTargetDesc& desc) {
     if (!this->caps()->isConfigRenderable(desc.fConfig, desc.fSampleCnt > 0)) {
         return nullptr;
     }
     this->handleDirtyContext();
-    return this->onWrapBackendRenderTarget(desc, ownership);
+    return this->onWrapBackendRenderTarget(desc);
 }
 
-GrRenderTarget* GrGpu::wrapBackendTextureAsRenderTarget(const GrBackendTextureDesc& desc) {
+sk_sp<GrRenderTarget> GrGpu::wrapBackendTextureAsRenderTarget(const GrBackendTextureDesc& desc) {
     this->handleDirtyContext();
     if (!(desc.fFlags & kRenderTarget_GrBackendTextureFlag)) {
       return nullptr;
@@ -236,30 +242,18 @@ GrRenderTarget* GrGpu::wrapBackendTextureAsRenderTarget(const GrBackendTextureDe
 }
 
 GrBuffer* GrGpu::createBuffer(size_t size, GrBufferType intendedType,
-                              GrAccessPattern accessPattern) {
+                              GrAccessPattern accessPattern, const void* data) {
     this->handleDirtyContext();
-    GrBuffer* buffer = this->onCreateBuffer(size, intendedType, accessPattern);
+    GrBuffer* buffer = this->onCreateBuffer(size, intendedType, accessPattern, data);
     if (!this->caps()->reuseScratchBuffers()) {
         buffer->resourcePriv().removeScratchKey();
     }
     return buffer;
 }
 
-void GrGpu::clear(const SkIRect& rect,
-                  GrColor color,
-                  GrRenderTarget* renderTarget) {
-    SkASSERT(renderTarget);
-    SkASSERT(SkIRect::MakeWH(renderTarget->width(), renderTarget->height()).contains(rect));
-    this->handleDirtyContext();
-    this->onClear(renderTarget, rect, color);
-}
-
-void GrGpu::clearStencilClip(const SkIRect& rect,
-                             bool insideClip,
-                             GrRenderTarget* renderTarget) {
-    SkASSERT(renderTarget);
-    this->handleDirtyContext();
-    this->onClearStencilClip(renderTarget, rect, insideClip);
+gr_instanced::InstancedRendering* GrGpu::createInstancedRendering() {
+    SkASSERT(GrCaps::InstancedSupport::kNone != this->caps()->instancedSupport());
+    return this->onCreateInstancedRendering();
 }
 
 bool GrGpu::copySurface(GrSurface* dst,
@@ -268,6 +262,13 @@ bool GrGpu::copySurface(GrSurface* dst,
                         const SkIPoint& dstPoint) {
     SkASSERT(dst && src);
     this->handleDirtyContext();
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(dst->config()) != GrPixelConfigIsSint(src->config())) {
+        return false;
+    }
+    if (GrPixelConfigIsCompressed(dst->config())) {
+        return false;
+    }
     return this->onCopySurface(dst, src, srcRect, dstPoint);
 }
 
@@ -276,10 +277,22 @@ bool GrGpu::getReadPixelsInfo(GrSurface* srcSurface, int width, int height, size
                               ReadPixelTempDrawInfo* tempDrawInfo) {
     SkASSERT(drawPreference);
     SkASSERT(tempDrawInfo);
+    SkASSERT(srcSurface);
     SkASSERT(kGpuPrefersDraw_DrawPreference != *drawPreference);
+
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(srcSurface->config()) != GrPixelConfigIsSint(readConfig)) {
+        return false;
+    }
 
     // We currently do not support reading into a compressed buffer
     if (GrPixelConfigIsCompressed(readConfig)) {
+        return false;
+    }
+
+    // We currently do not support reading into the packed formats 565 or 4444 as they are not
+    // required to have read back support on all devices and backends.
+    if (kRGB_565_GrPixelConfig == readConfig || kRGBA_4444_GrPixelConfig == readConfig) {
         return false;
     }
 
@@ -305,10 +318,16 @@ bool GrGpu::getWritePixelsInfo(GrSurface* dstSurface, int width, int height,
                                WritePixelTempDrawInfo* tempDrawInfo) {
     SkASSERT(drawPreference);
     SkASSERT(tempDrawInfo);
+    SkASSERT(dstSurface);
     SkASSERT(kGpuPrefersDraw_DrawPreference != *drawPreference);
 
     if (GrPixelConfigIsCompressed(dstSurface->desc().fConfig) &&
         dstSurface->desc().fConfig != srcConfig) {
+        return false;
+    }
+
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(dstSurface->config()) != GrPixelConfigIsSint(srcConfig)) {
         return false;
     }
 
@@ -343,7 +362,12 @@ bool GrGpu::readPixels(GrSurface* surface,
                        int left, int top, int width, int height,
                        GrPixelConfig config, void* buffer,
                        size_t rowBytes) {
-    this->handleDirtyContext();
+    SkASSERT(surface);
+
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(surface->config()) != GrPixelConfigIsSint(config)) {
+        return false;
+    }
 
     // We cannot read pixels into a compressed buffer
     if (GrPixelConfigIsCompressed(config)) {
@@ -358,6 +382,8 @@ bool GrGpu::readPixels(GrSurface* surface,
         return false;
     }
 
+    this->handleDirtyContext();
+
     return this->onReadPixels(surface,
                               left, top, width, height,
                               config, buffer,
@@ -367,17 +393,22 @@ bool GrGpu::readPixels(GrSurface* surface,
 bool GrGpu::writePixels(GrSurface* surface,
                         int left, int top, int width, int height,
                         GrPixelConfig config, const SkTArray<GrMipLevel>& texels) {
-    if (!surface) {
-        return false;
-    }
+    SkASSERT(surface);
     for (int currentMipLevel = 0; currentMipLevel < texels.count(); currentMipLevel++) {
         if (!texels[currentMipLevel].fPixels ) {
             return false;
         }
     }
 
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(surface->config()) != GrPixelConfigIsSint(config)) {
+        return false;
+    }
+
     this->handleDirtyContext();
     if (this->onWritePixels(surface, left, top, width, height, config, texels)) {
+        SkIRect rect = SkIRect::MakeXYWH(left, top, width, height);
+        this->didWriteToSurface(surface, &rect, texels.count());
         fStats.incTextureUploads();
         return true;
     }
@@ -400,13 +431,27 @@ bool GrGpu::writePixels(GrSurface* surface,
 bool GrGpu::transferPixels(GrSurface* surface,
                            int left, int top, int width, int height,
                            GrPixelConfig config, GrBuffer* transferBuffer,
-                           size_t offset, size_t rowBytes) {
+                           size_t offset, size_t rowBytes, GrFence* fence) {
     SkASSERT(transferBuffer);
+    SkASSERT(fence);
+
+    // We don't allow conversion between integer configs and float/fixed configs.
+    if (GrPixelConfigIsSint(surface->config()) != GrPixelConfigIsSint(config)) {
+        return false;
+    }
 
     this->handleDirtyContext();
     if (this->onTransferPixels(surface, left, top, width, height, config,
                                transferBuffer, offset, rowBytes)) {
+        SkIRect rect = SkIRect::MakeXYWH(left, top, width, height);
+        this->didWriteToSurface(surface, &rect);
         fStats.incTransfersToTexture();
+
+        if (*fence) {
+            this->deleteFence(*fence);
+        }
+        *fence = this->insertFence();
+
         return true;
     }
     return false;
@@ -418,73 +463,74 @@ void GrGpu::resolveRenderTarget(GrRenderTarget* target) {
     this->onResolveRenderTarget(target);
 }
 
-inline static uint8_t multisample_specs_id(uint8_t numSamples, GrSurfaceOrigin origin,
-                                           const GrCaps& caps) {
-    if (!caps.sampleLocationsSupport()) {
-        return numSamples;
+void GrGpu::didWriteToSurface(GrSurface* surface, const SkIRect* bounds, uint32_t mipLevels) const {
+    SkASSERT(surface);
+    // Mark any MIP chain and resolve buffer as dirty if and only if there is a non-empty bounds.
+    if (nullptr == bounds || !bounds->isEmpty()) {
+        if (GrRenderTarget* target = surface->asRenderTarget()) {
+            target->flagAsNeedingResolve(bounds);
+        }
+        GrTexture* texture = surface->asTexture();
+        if (texture && 1 == mipLevels) {
+            texture->texturePriv().dirtyMipMaps(true);
+        }
     }
-
-    SkASSERT(numSamples < 128);
-    SkASSERT(kTopLeft_GrSurfaceOrigin == origin || kBottomLeft_GrSurfaceOrigin == origin);
-    return (numSamples << 1) | (origin - 1);
-
-    GR_STATIC_ASSERT(1 == kTopLeft_GrSurfaceOrigin);
-    GR_STATIC_ASSERT(2 == kBottomLeft_GrSurfaceOrigin);
 }
 
-const GrGpu::MultisampleSpecs& GrGpu::getMultisampleSpecs(GrRenderTarget* rt,
-                                                          const GrStencilSettings& stencil) {
-    const GrSurfaceDesc& desc = rt->desc();
-    uint8_t surfDescKey = multisample_specs_id(desc.fSampleCnt, desc.fOrigin, *this->caps());
-    if (fMultisampleSpecsMap.count() > surfDescKey && fMultisampleSpecsMap[surfDescKey]) {
-#if !defined(SK_DEBUG)
-        // In debug mode we query the multisample info every time and verify the caching is correct.
-        return *fMultisampleSpecsMap[surfDescKey];
-#endif
+const GrGpu::MultisampleSpecs& GrGpu::queryMultisampleSpecs(const GrPipeline& pipeline) {
+    GrRenderTarget* rt = pipeline.getRenderTarget();
+    SkASSERT(rt->desc().fSampleCnt > 1);
+
+    GrStencilSettings stencil;
+    if (pipeline.isStencilEnabled()) {
+        // TODO: attach stencil and create settings during render target flush.
+        SkASSERT(rt->renderTargetPriv().getStencilAttachment());
+        stencil.reset(*pipeline.getUserStencil(), pipeline.hasStencilClip(),
+                      rt->renderTargetPriv().numStencilBits());
     }
+
     int effectiveSampleCnt;
-    SkAutoTDeleteArray<SkPoint> locations(nullptr);
-    this->onGetMultisampleSpecs(rt, stencil, &effectiveSampleCnt, &locations);
-    SkASSERT(effectiveSampleCnt && effectiveSampleCnt >= desc.fSampleCnt);
-    uint8_t effectiveKey = multisample_specs_id(effectiveSampleCnt, desc.fOrigin, *this->caps());
-    if (fMultisampleSpecsMap.count() > effectiveKey && fMultisampleSpecsMap[effectiveKey]) {
-        const MultisampleSpecs& specs = *fMultisampleSpecsMap[effectiveKey];
-        SkASSERT(effectiveKey == specs.fUniqueID);
-        SkASSERT(effectiveSampleCnt == specs.fEffectiveSampleCnt);
-        SkASSERT(!this->caps()->sampleLocationsSupport() ||
-                 !memcmp(locations.get(), specs.fSampleLocations.get(),
-                         effectiveSampleCnt * sizeof(SkPoint)));
-        SkASSERT(surfDescKey <= effectiveKey);
-        SkASSERT(!fMultisampleSpecsMap[surfDescKey] || fMultisampleSpecsMap[surfDescKey] == &specs);
-        fMultisampleSpecsMap[surfDescKey] = &specs;
-        return specs;
+    SkSTArray<16, SkPoint, true> pattern;
+    this->onQueryMultisampleSpecs(rt, stencil, &effectiveSampleCnt, &pattern);
+    SkASSERT(effectiveSampleCnt >= rt->desc().fSampleCnt);
+
+    uint8_t id;
+    if (this->caps()->sampleLocationsSupport()) {
+        SkASSERT(pattern.count() == effectiveSampleCnt);
+        const auto& insertResult = fMultisampleSpecsIdMap.insert(
+            MultisampleSpecsIdMap::value_type(pattern, SkTMin(fMultisampleSpecs.count(), 255)));
+        id = insertResult.first->second;
+        if (insertResult.second) {
+            // This means the insert did not find the pattern in the map already, and therefore an
+            // actual insertion took place. (We don't expect to see many unique sample patterns.)
+            const SkPoint* sampleLocations = insertResult.first->first.begin();
+            SkASSERT(id == fMultisampleSpecs.count());
+            fMultisampleSpecs.emplace_back(id, effectiveSampleCnt, sampleLocations);
+        }
+    } else {
+        id = effectiveSampleCnt;
+        for (int i = fMultisampleSpecs.count(); i <= id; ++i) {
+            fMultisampleSpecs.emplace_back(i, i, nullptr);
+        }
     }
-    const MultisampleSpecs& specs = *new (&fMultisampleSpecsAllocator)
-        MultisampleSpecs{effectiveKey, effectiveSampleCnt, locations.release()};
-    if (fMultisampleSpecsMap.count() <= effectiveKey) {
-        int n = 1 + effectiveKey - fMultisampleSpecsMap.count();
-        fMultisampleSpecsMap.push_back_n(n, (const MultisampleSpecs*) nullptr);
-    }
-    fMultisampleSpecsMap[effectiveKey] = &specs;
-    if (effectiveSampleCnt != desc.fSampleCnt) {
-        SkASSERT(surfDescKey < effectiveKey);
-        fMultisampleSpecsMap[surfDescKey] = &specs;
-    }
-    return specs;
+    SkASSERT(id > 0);
+
+    return fMultisampleSpecs[id];
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-bool GrGpu::draw(const GrPipeline& pipeline,
-                 const GrPrimitiveProcessor& primProc,
-                 const GrMesh* meshes,
-                 int meshCount) {
-    if (primProc.numAttribs() > this->caps()->maxVertexAttributes()) {
-        fStats.incNumFailedDraws();
-        return false;
+bool GrGpu::SamplePatternComparator::operator()(const SamplePattern& a,
+                                                const SamplePattern& b) const {
+    if (a.count() != b.count()) {
+        return a.count() < b.count();
     }
-    this->handleDirtyContext();
-
-    this->onDraw(pipeline, primProc, meshes, meshCount);
-    return true;
+    for (int i = 0; i < a.count(); ++i) {
+        // This doesn't have geometric meaning. We just need to define an ordering for std::map.
+        if (a[i].x() != b[i].x()) {
+            return a[i].x() < b[i].x();
+        }
+        if (a[i].y() != b[i].y()) {
+            return a[i].y() < b[i].y();
+        }
+    }
+    return false; // Equal.
 }

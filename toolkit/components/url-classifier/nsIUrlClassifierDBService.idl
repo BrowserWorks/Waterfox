@@ -81,14 +81,24 @@ interface nsIUrlClassifierDBService : nsISupports
               in nsIUrlClassifierCallback c);
 
   /**
-   * Lists the tables along with which chunks are available in each table.
-   * This list is in the format of the request body:
-   *   tablename;chunkdata\n
-   *   tablename2;chunkdata2\n
+   * Lists the tables along with their meta info in the following format:
    *
-   * For example:
-   *   goog-phish-regexp;a:10,14,30-40s:56,67
-   *   goog-white-regexp;a:1-3,5
+   *   tablename;[metadata]\n
+   *   tablename2;[metadata]\n
+   *
+   * For v2 tables, the metadata is the chunks info such as
+   *
+   *   goog-phish-shavar;a:10,14,30-40s:56,67
+   *   goog-unwanted-shavar;a:1-3,5
+   *
+   * For v4 tables, base64 encoded state is currently the only info in the
+   * metadata (can be extended whenever necessary). For exmaple,
+   *
+   *   goog-phish-proto;Cg0IARAGGAEiAzAwMTABEKqTARoCGAjT1gDD:oCGAjT1gDD\n
+   *   goog-malware-proto;Cg0IAhAGGAEiAzAwMTABENCQARoCGAjx5Yty:BENCQARoCGAj\n
+   *
+   * Note that the metadata is colon-separated.
+   *
    */
   void getTables(in nsIUrlClassifierCallback c);
 
@@ -99,13 +109,6 @@ interface nsIUrlClassifierDBService : nsISupports
    */
   void setHashCompleter(in ACString tableName,
                         in nsIUrlClassifierHashCompleter completer);
-
-  /**
-   * Set the last update time for the given table. We use this to
-   * remember freshness past restarts. Time is in milliseconds since epoch.
-   */
-  void setLastUpdateTime(in ACString tableName,
-                         in unsigned long long lastUpdateTime);
 
   /**
    * Forget the results that were used in the last DB update.
@@ -191,22 +194,18 @@ interface nsIUrlClassifierDBService : nsISupports
    * database, emptying all tables.  Mostly intended for use in unit tests.
    */
   void resetDatabase();
-};
 
-/**
- * Interface for the actual worker thread.  Implementations of this need not
- * be thread aware and just work on the database.
- */
-[scriptable, uuid(b7b505d0-bfa2-44db-abf8-6e2bfc25bbab)]
-interface nsIUrlClassifierDBServiceWorker : nsIUrlClassifierDBService
-{
-  // Open the DB connection
-  void openDb();
-  // Provide a way to forcibly close the db connection.
-  void closeDb();
+  /**
+   * Reload he url-classifier database. This will empty all cache for
+   * completions from gethash, and reload it from database. Mostly intended
+   * for use in tests.
+   */
+  void reloadDatabase();
 
-  [noscript]void cacheCompletions(in CacheCompletionArray completions);
-  [noscript]void cacheMisses(in PrefixArray misses);
+  /**
+   * Empty all the caches.
+   */
+  void clearCache();
 };
 
 /**
@@ -228,4 +227,21 @@ interface nsIUrlClassifierLookupCallback : nsISupports
    *        this array.
    */
   void lookupComplete(in ResultArray results);
+};
+
+/**
+ * This is an internal helper interface which is called after each
+ * classify completes to provide and handle a set of possible results,
+ * which the main thread may need to expand using an nsIURIClassifierCallback.
+ */
+[uuid(091adf98-28a5-473d-8dec-5b34b4e62496)]
+interface nsIUrlClassifierClassifyCallback : nsISupports
+{
+  /**
+   * The function is called each time the URL matches a Safe Browsing list
+   * The function could be called multiple times if URL matches multiple lists
+   *
+   */
+  void handleResult(in ACString aList,
+                    in ACString aPrefix);
 };

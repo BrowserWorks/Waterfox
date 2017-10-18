@@ -8,10 +8,12 @@
 #define FILE_BLOCK_CACHE_H_
 
 #include "mozilla/Attributes.h"
-#include "mozilla/Monitor.h"
+#include "mozilla/MozPromise.h"
+#include "mozilla/Mutex.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/AbstractThread.h"
 #include "nsTArray.h"
-#include "MediaCache.h"
+#include "MediaBlockCacheBase.h"
 #include "nsDeque.h"
 #include "nsThreadUtils.h"
 #include <deque>
@@ -50,29 +52,27 @@ namespace mozilla {
 // changes listed in mBlockChanges to file. Read() checks mBlockChanges and
 // determines the current data to return, reading from file or from
 // mBlockChanges as necessary.
-class FileBlockCache : public Runnable {
+class FileBlockCache : public MediaBlockCacheBase
+{
 public:
-  enum {
-    BLOCK_SIZE = MediaCacheStream::BLOCK_SIZE
-  };
-
   FileBlockCache();
 
 protected:
-  ~FileBlockCache();
+  virtual ~FileBlockCache();
 
 public:
-  // Assumes ownership of aFD.
-  nsresult Open(PRFileDesc* aFD);
+  // Launch thread and open temporary file.
+  // If re-initializing, just discard pending writes if any.
+  nsresult Init() override;
 
-  // Closes writer, shuts down thread.
-  void Close();
+  // Maximum number of blocks allowed in this block cache.
+  // Calculated from "media.cache_size" pref.
+  int32_t GetMaxBlocks() const override;
 
   // Can be called on any thread. This defers to a non-main thread.
-  nsresult WriteBlock(uint32_t aBlockIndex, const uint8_t* aData);
-
-  // Performs block writes and block moves on its own thread.
-  NS_IMETHOD Run() override;
+  nsresult WriteBlock(uint32_t aBlockIndex,
+                      Span<const uint8_t> aData1,
+                      Span<const uint8_t> aData2) override;
 
   // Synchronously reads data from file. May read from file or memory
   // depending on whether written blocks have been flushed to file yet.
@@ -80,11 +80,12 @@ public:
   nsresult Read(int64_t aOffset,
                 uint8_t* aData,
                 int32_t aLength,
-                int32_t* aBytes);
+                int32_t* aBytes) override;
 
   // Moves a block asynchronously. Can be called on any thread.
   // This defers file I/O to a non-main thread.
-  nsresult MoveBlock(int32_t aSourceBlockIndex, int32_t aDestBlockIndex);
+  nsresult MoveBlock(int32_t aSourceBlockIndex,
+                     int32_t aDestBlockIndex) override;
 
   // Represents a change yet to be made to a block in the file. The change
   // is either a write (and the data to be written is stored in this struct)
@@ -100,6 +101,15 @@ public:
     {
       mData = MakeUnique<uint8_t[]>(BLOCK_SIZE);
       memcpy(mData.get(), aData, BLOCK_SIZE);
+    }
+
+    BlockChange(Span<const uint8_t> aData1, Span<const uint8_t> aData2)
+      : mSourceBlockIndex(-1)
+    {
+      MOZ_ASSERT(aData1.Length() + aData2.Length() == BLOCK_SIZE);
+      mData = MakeUnique<uint8_t[]>(BLOCK_SIZE);
+      memcpy(mData.get(), aData1.Elements(), aData1.Length());
+      memcpy(mData.get() + aData1.Length(), aData2.Elements(), aData2.Length());
     }
 
     // This block's contents are located in another file
@@ -130,10 +140,18 @@ private:
     return static_cast<int64_t>(aBlockIndex) * BLOCK_SIZE;
   }
 
-  // Monitor which controls access to mFD and mFDCurrentPos. Don't hold
-  // mDataMonitor while holding mFileMonitor! mFileMonitor must be owned
+  void SetCacheFile(PRFileDesc* aFD);
+
+  // Close file in thread and terminate thread.
+  void Close();
+
+  // Performs block writes and block moves on its own thread.
+  void PerformBlockIOs();
+
+  // Mutex which controls access to mFD and mFDCurrentPos. Don't hold
+  // mDataMutex while holding mFileMutex! mFileMutex must be owned
   // while accessing any of the following data fields or methods.
-  Monitor mFileMonitor;
+  Mutex mFileMutex;
   // Moves a block already committed to file.
   nsresult MoveBlockInFile(int32_t aSourceBlockIndex,
                            int32_t aDestBlockIndex);
@@ -151,15 +169,16 @@ private:
   // The current file offset in the file.
   int64_t mFDCurrentPos;
 
-  // Monitor which controls access to all data in this class, except mFD
-  // and mFDCurrentPos. Don't hold mDataMonitor while holding mFileMonitor!
-  // mDataMonitor must be owned while accessing any of the following data
+  // Mutex which controls access to all data in this class, except mFD
+  // and mFDCurrentPos. Don't hold mDataMutex while holding mFileMutex!
+  // mDataMutex must be owned while accessing any of the following data
   // fields or methods.
-  Monitor mDataMonitor;
+  Mutex mDataMutex;
   // Ensures we either are running the event to preform IO, or an event
   // has been dispatched to preform the IO.
-  // mDataMonitor must be owned while calling this.
+  // mDataMutex must be owned while calling this.
   void EnsureWriteScheduled();
+
   // Array of block changes to made. If mBlockChanges[offset/BLOCK_SIZE] == nullptr,
   // then the block has no pending changes to be written, but if
   // mBlockChanges[offset/BLOCK_SIZE] != nullptr, then either there's a block
@@ -175,8 +194,13 @@ private:
   // True if we've dispatched an event to commit all pending block changes
   // to file on mThread.
   bool mIsWriteScheduled;
-  // True if the writer is ready to write data to file.
-  bool mIsOpen;
+  // True when a read is happening. Pending writes may be postponed, to give
+  // higher priority to reads (which may be blocking the caller).
+  bool mIsReading;
+  // True if we've got a temporary file descriptor. Note: we don't use mFD
+  // directly as that's synchronized via mFileMutex and we need to make
+  // decisions about whether we can write while holding mDataMutex.
+  bool mInitialized = false;
 };
 
 } // End namespace mozilla.

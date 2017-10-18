@@ -23,11 +23,7 @@ config = {
 
     # General local variable overwrite
     "exes": {
-        "hgtool.py": os.path.join(LOCAL_WORKDIR, "hgtool.py"),
         "gittool.py": os.path.join(LOCAL_WORKDIR, "gittool.py"),
-    },
-    "env": {
-        "PIP_TRUSTED_HOST": "pypi.pub.build.mozilla.org",
     },
 
     # Pip
@@ -44,9 +40,9 @@ config = {
     "download_tooltool": True,
     "tooltool_cache": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
     "tooltool_cache_path": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
+    "tooltool_authentication_file": os.path.join(LOCAL_WORKDIR, "relengapi.tok"),
 
     # VCS tools
-    "hgtool.py": 'http://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/hgtool.py',
     "gittool.py": 'http://hg.mozilla.org/build/puppet/raw-file/faaf5abd792e/modules/packages/files/gittool.py',
 
     # Android related

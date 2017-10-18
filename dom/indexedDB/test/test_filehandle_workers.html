@@ -9,8 +9,10 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 
-  <script type="text/javascript;version=1.7">
-  function testSteps()
+  <script type="text/javascript">
+  /* import-globals-from file.js */
+  /* import-globals-from helpers.js */
+  function* testSteps()
   {
     const name = window.location.pathname;
 
@@ -43,17 +45,18 @@
     let mutableFile = event.target.result;
 
     function dummyWorkerScript() {
+      /* eslint-env worker */
       onmessage = function(event) {
-        throw("Shouldn't be called!");
+        throw ("Shouldn't be called!");
       }
     }
 
     let url =
       URL.createObjectURL(new Blob(["(", dummyWorkerScript.toSource(), ")()"]));
 
-    let worker = new Worker(url);
+    let worker1 = new Worker(url);
     try {
-      worker.postMessage(mutableFile);
+      worker1.postMessage(mutableFile);
       ok(false, "Should have thrown!");
     }
     catch (e) {
@@ -61,7 +64,6 @@
       is(e.name, "DataCloneError", "Good error.");
       is(e.code, DOMException.DATA_CLONE_ERR, "Good error code.")
     }
-    worker.terminate();
 
     mutableFile.onerror = errorHandler;
 
@@ -77,10 +79,10 @@
 
     let file = event.target.result;
 
-    worker = new Worker(url);
+    let worker2 = new Worker(url);
     URL.revokeObjectURL(url);
     try {
-      worker.postMessage(file);
+      worker2.postMessage(file);
       ok(false, "Should have thrown!");
     }
     catch (e) {
@@ -88,7 +90,6 @@
       is(e.name, "DataCloneError", "Good error.");
       is(e.code, DOMException.DATA_CLONE_ERR, "Good error code.")
     }
-    worker.terminate();
 
     let objectStore =
       db.transaction("Foo", "readwrite").objectStore("Foo");
@@ -107,6 +108,7 @@
           request = objectStore.get(42);
           request.onsuccess = function(event) {
             try {
+              // eslint-disable-next-line no-unused-vars
               let result = request.result;
               postMessage("error");
             }
@@ -126,21 +128,24 @@
 
     url = URL.createObjectURL(new Blob(["(", workerScript.toSource(), ")()"]));
 
-    worker = new Worker(url);
+    let worker3 = new Worker(url);
     URL.revokeObjectURL(url);
-    worker.postMessage(name);
-    worker.onmessage = grabEventAndContinueHandler;
+    worker3.postMessage(name);
+    worker3.onmessage = grabEventAndContinueHandler;
     event = yield undefined;
 
     is(event.data, "success", "Good response.");
-    worker.terminate();
+
+    todo(false, "Terminate all workers at the end of the test to work around bug 1340941.");
+    worker1.terminate();
+    worker2.terminate();
+    worker3.terminate();
 
     finishTest();
-    yield undefined;
   }
   </script>
-  <script type="text/javascript;version=1.7" src="file.js"></script>
-  <script type="text/javascript;version=1.7" src="helpers.js"></script>
+  <script type="text/javascript" src="file.js"></script>
+  <script type="text/javascript" src="helpers.js"></script>
 
 </head>
 

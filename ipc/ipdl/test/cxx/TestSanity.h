@@ -22,14 +22,14 @@ public:
 
     void Main();
 
-protected:    
-    virtual bool RecvPong(const int& one, const float& zeroPtTwoFive,
+protected:
+    virtual mozilla::ipc::IPCResult RecvPong(const int& one, const float& zeroPtTwoFive,
                           const uint8_t& dummy) override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
         passed("ok");
         QuitParent();
     }
@@ -44,7 +44,7 @@ public:
     virtual ~TestSanityChild();
 
 protected:
-    virtual bool RecvPing(const int& zero, const float& zeroPtFive,
+    virtual mozilla::ipc::IPCResult RecvPing(const int& zero, const float& zeroPtFive,
                           const int8_t& dummy) override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override

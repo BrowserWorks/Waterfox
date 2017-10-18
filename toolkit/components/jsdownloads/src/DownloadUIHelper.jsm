@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,21 +12,13 @@ this.EXPORTED_SYMBOLS = [
   "DownloadUIHelper",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 
@@ -43,9 +33,6 @@ const kStringsRequiringFormatting = {
   offlineCancelDownloadsAlertMsgMultiple: true,
   leavePrivateBrowsingWindowsCancelDownloadsAlertMsgMultiple2: true
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadUIHelper
 
 /**
  * Provides functions to handle status and messages in the user interface.
@@ -65,8 +52,7 @@ this.DownloadUIHelper = {
    *
    * @return A DownloadPrompter object.
    */
-  getPrompter: function (aParent)
-  {
+  getPrompter(aParent) {
     return new DownloadPrompter(aParent || null);
   },
 };
@@ -76,7 +62,7 @@ this.DownloadUIHelper = {
  * bundle, and whose values are either the translated strings or functions
  * returning formatted strings.
  */
-XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function () {
+XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function() {
   let strings = {};
   let sb = Services.strings.createBundle(kStringBundleUrl);
   let enumerator = sb.getSimpleEnumeration();
@@ -84,7 +70,7 @@ XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function () {
     let string = enumerator.getNext().QueryInterface(Ci.nsIPropertyElement);
     let stringName = string.key;
     if (stringName in kStringsRequiringFormatting) {
-      strings[stringName] = function () {
+      strings[stringName] = function() {
         // Convert "arguments" to a real array before calling into XPCOM.
         return sb.formatStringFromName(stringName,
                                        Array.slice(arguments, 0),
@@ -97,9 +83,6 @@ XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function () {
   return strings;
 });
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadPrompter
-
 /**
  * Allows displaying prompts related to downloads.
  *
@@ -107,8 +90,7 @@ XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function () {
  *        The nsIDOMWindow to which prompts should be attached, or null to
  *        attach prompts to the most recently active window.
  */
-this.DownloadPrompter = function (aParent)
-{
+this.DownloadPrompter = function(aParent) {
   if (AppConstants.MOZ_B2G) {
     // On B2G there is no prompter implementation.
     this._prompter = null;
@@ -142,8 +124,7 @@ this.DownloadPrompter.prototype = {
    * @resolves Boolean indicating whether the launch operation can continue.
    * @rejects JavaScript exception.
    */
-  confirmLaunchExecutable: function (aPath)
-  {
+  confirmLaunchExecutable(aPath) {
     const kPrefAlertOnEXEOpen = "browser.download.manager.alertOnEXEOpen";
 
     try {
@@ -193,8 +174,7 @@ this.DownloadPrompter.prototype = {
    *         operation.
    */
   confirmCancelDownloads: function DP_confirmCancelDownload(aDownloadsCount,
-                                                            aPromptType)
-  {
+                                                            aPromptType) {
     // Always continue in case we have no prompter implementation, or if there
     // are no active downloads.
     if (!this._prompter || aDownloadsCount <= 0) {

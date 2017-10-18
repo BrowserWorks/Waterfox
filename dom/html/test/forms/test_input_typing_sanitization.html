@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=765772
 -->
 <head>
   <title>Test for Bug 765772</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
@@ -20,12 +19,13 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=765772
   </form>
 </div>
 <pre id="test">
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 /*
  * This test checks that when a user types in some input types, it will not be
  * in a state where the value will be un-sanitized and usable (by a script).
  */
+const isDesktop = !/Mobile|Tablet/.test(navigator.userAgent);
 
 var input = document.getElementById('i');
 var form = document.getElementById('f');
@@ -49,14 +49,9 @@ function urlify(aStr) {
 
 function runTestsForNextInputType()
 {
-  try {
-    testRunner.next();
-  } catch (e) {
-    if (e.toString() == '[object StopIteration]') {
-      SimpleTest.finish();
-    } else {
-      throw StopIteration;
-    }
+  let {done} = testRunner.next();
+  if (done) {
+    SimpleTest.finish();
   }
 }
 
@@ -116,9 +111,9 @@ var submitMethod = submitForm;
 
 SimpleTest.waitForExplicitFinish();
 
-function runTest()
+function* runTest()
 {
-  SimpleTest.requestLongerTimeout(2);
+  SimpleTest.requestLongerTimeout(4);
 
   var data = [
     {
@@ -143,6 +138,7 @@ function runTest()
       ]
     },
     {
+      mobileOnly: true,
       type: 'date',
       validData: [
         '0001-01-01',
@@ -161,6 +157,7 @@ function runTest()
       ]
     },
     {
+      mobileOnly: true,
       type: 'time',
       validData: [
         '00:00',
@@ -198,17 +195,48 @@ function runTest()
         '2012-1',
       ]
     },
-    { type: 'week', todo: true },
-    { type: 'datetime', todo: true },
-    { type: 'datetime-local', todo: true },
+    {
+      type: 'week',
+      validData: [
+        '0001-W01',
+        '1970-W53',
+        '100000-W52',
+        '2016-W30',
+      ],
+      invalidData: [
+        '1-W01',
+        'week',
+        '2016-30',
+        '2010-W80',
+        '2000/W30',
+        '1985-W00',
+        '1000-W'
+      ]
+    },
+    {
+      type: 'datetime-local',
+      validData: [
+        '0001-01-01T00:00',
+        '2016-11-07T16:45',
+        '2016-11-07T16:45:30',
+        '2016-11-07T16:45:30.10',
+        '2016-11-07T16:45:00.111',
+      ],
+      invalidData: [
+        '1-01-01T00:00',
+        '1970-01-01T9:30',
+        '2016/11/07T16:45',
+        '2016-11-07T16.45',
+        'T',
+        'datetime-local'
+      ]
+    },
   ];
 
   for (test of data) {
     gCurrentTest = test;
 
-    if (test.todo) {
-      input.type = test.type;
-      todo_is(input.type, test.type, test.type + " is not implemented");
+    if (gCurrentTest.mobileOnly && isDesktop) {
       continue;
     }
 

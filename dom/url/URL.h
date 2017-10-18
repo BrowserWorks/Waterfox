@@ -26,7 +26,6 @@ namespace dom {
 class Blob;
 class MediaSource;
 class GlobalObject;
-struct objectURLOptions;
 
 class URL : public URLSearchParamsObserver
           , public nsWrapperCache
@@ -50,10 +49,6 @@ public:
 
   static already_AddRefed<URL>
   Constructor(const GlobalObject& aGlobal, const nsAString& aURL,
-              URL& aBase, ErrorResult& aRv);
-
-  static already_AddRefed<URL>
-  Constructor(const GlobalObject& aGlobal, const nsAString& aURL,
               const Optional<nsAString>& aBase, ErrorResult& aRv);
 
   // Helper for Fetch API
@@ -64,18 +59,15 @@ public:
 
   static void
   CreateObjectURL(const GlobalObject& aGlobal, Blob& aBlob,
-                  const objectURLOptions& aOptions,
                   nsAString& aResult, ErrorResult& aRv);
 
   static void
   CreateObjectURL(const GlobalObject& aGlobal, DOMMediaStream& aStream,
-                  const objectURLOptions& aOptions, nsAString& aResult,
-                  ErrorResult& aRv);
+                  nsAString& aResult, ErrorResult& aRv);
 
   static void
   CreateObjectURL(const GlobalObject& aGlobal, MediaSource& aSource,
-                  const objectURLOptions& aOptions, nsAString& aResult,
-                  ErrorResult& aRv);
+                  nsAString& aResult, ErrorResult& aRv);
 
   static void
   RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aURL,
@@ -153,6 +145,12 @@ public:
   void Stringify(nsAString& aRetval, ErrorResult& aRv) const
   {
     GetHref(aRetval, aRv);
+  }
+
+  void
+  ToJSON(nsAString& aResult, ErrorResult& aRv) const
+  {
+    GetHref(aResult, aRv);
   }
 
   // URLSearchParamsObserver

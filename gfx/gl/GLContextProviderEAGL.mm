@@ -11,6 +11,7 @@
 #include "gfxFailure.h"
 #include "prenv.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/widget/CompositorWidget.h"
 #include "GeckoProfiler.h"
 
@@ -23,15 +24,13 @@ using namespace mozilla::widget;
 
 GLContextEAGL::GLContextEAGL(CreateContextFlags flags, const SurfaceCaps& caps,
                              EAGLContext* context, GLContext* sharedContext,
-                             bool isOffscreen, ContextProfile profile)
+                             bool isOffscreen)
     : GLContext(flags, caps, sharedContext, isOffscreen)
     , mContext(context)
     , mBackbufferRB(0)
     , mBackbufferFB(0)
     , mLayer(nil)
 {
-    SetProfileVersion(ContextProfile::OpenGLES,
-                      [context API] == kEAGLRenderingAPIOpenGLES3 ? 300 : 200);
 }
 
 GLContextEAGL::~GLContextEAGL()
@@ -148,13 +147,17 @@ GLContextEAGL::IsDoubleBuffered() const
 bool
 GLContextEAGL::SwapBuffers()
 {
-  PROFILER_LABEL("GLContextEAGL", "SwapBuffers",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("GLContextEAGL::SwapBuffers", GRAPHICS);
 
   [mContext presentRenderbuffer:LOCAL_GL_RENDERBUFFER];
   return true;
 }
 
+void
+GLContextEAGL::GetWSIInfo(nsCString* const out) const
+{
+    out->AppendLiteral("EAGL");
+}
 
 already_AddRefed<GLContext>
 GLContextProviderEAGL::CreateWrappingExisting(void*, void*)
@@ -192,13 +195,9 @@ CreateEAGLContext(CreateContextFlags flags, bool aOffscreen, GLContextEAGL* shar
         return nullptr;
     }
 
-    SurfaceCaps caps = SurfaceCaps::ForRGBA();
-    ContextProfile profile = ContextProfile::OpenGLES;
-    RefPtr<GLContextEAGL> glContext = new GLContextEAGL(flags, caps, context,
-                                                        sharedContext,
-                                                        aOffscreen,
-                                                        profile);
-
+    RefPtr<GLContextEAGL> glContext = new GLContextEAGL(flags, SurfaceCaps::ForRGBA(),
+                                                        context, sharedContext,
+                                                        aOffscreen);
     if (!glContext->Init()) {
         glContext = nullptr;
         return nullptr;
@@ -210,11 +209,15 @@ CreateEAGLContext(CreateContextFlags flags, bool aOffscreen, GLContextEAGL* shar
 already_AddRefed<GLContext>
 GLContextProviderEAGL::CreateForCompositorWidget(CompositorWidget* aCompositorWidget, bool aForceAccelerated)
 {
-    return CreateForWindow(aCompositorWidget->RealWidget(), aForceAccelerated);
+    return CreateForWindow(aCompositorWidget->RealWidget(),
+                           aCompositorWidget->GetCompositorOptions().UseWebRender(),
+                           aForceAccelerated);
 }
 
 already_AddRefed<GLContext>
-GLContextProviderEAGL::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated)
+GLContextProviderEAGL::CreateForWindow(nsIWidget* aWidget,
+                                       bool aWebRender,
+                                       bool aForceAccelerated)
 {
     RefPtr<GLContext> glContext = CreateEAGLContext(CreateContextFlags::NONE, false,
                                                     GetGlobalContextEAGL());

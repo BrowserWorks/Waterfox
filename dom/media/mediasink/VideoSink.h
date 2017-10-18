@@ -31,7 +31,7 @@ class VideoSink : public MediaSink
 public:
   VideoSink(AbstractThread* aThread,
             MediaSink* aAudioSink,
-            MediaQueue<MediaData>& aVideoQueue,
+            MediaQueue<VideoData>& aVideoQueue,
             VideoFrameContainer* aContainer,
             FrameStatistics& aFrameStats,
             uint32_t aVQueueSentToCompositerSize);
@@ -42,9 +42,9 @@ public:
 
   RefPtr<GenericPromise> OnEnded(TrackType aType) override;
 
-  int64_t GetEndTime(TrackType aType) const override;
+  TimeUnit GetEndTime(TrackType aType) const override;
 
-  int64_t GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
+  TimeUnit GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
 
   bool HasUnplayedFrames(TrackType aType) const override;
 
@@ -58,7 +58,7 @@ public:
 
   void Redraw(const VideoInfo& aInfo) override;
 
-  void Start(int64_t aStartTime, const MediaInfo& aInfo) override;
+  void Start(const TimeUnit& aStartTime, const MediaInfo& aInfo) override;
 
   void Stop() override;
 
@@ -68,11 +68,13 @@ public:
 
   void Shutdown() override;
 
+  nsCString GetDebugInfo() override;
+
 private:
   virtual ~VideoSink();
 
   // VideoQueue listener related.
-  void OnVideoQueuePushed(RefPtr<MediaData>&& aSample);
+  void OnVideoQueuePushed(RefPtr<VideoData>&& aSample);
   void OnVideoQueueFinished();
   void ConnectListener();
   void DisconnectListener();
@@ -97,18 +99,20 @@ private:
   void UpdateRenderedVideoFrames();
   void UpdateRenderedVideoFramesByTimer();
 
+  void MaybeResolveEndPromise();
+
   void AssertOwnerThread() const
   {
     MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
   }
 
-  MediaQueue<MediaData>& VideoQueue() const {
+  MediaQueue<VideoData>& VideoQueue() const {
     return mVideoQueue;
   }
 
   const RefPtr<AbstractThread> mOwnerThread;
   RefPtr<MediaSink> mAudioSink;
-  MediaQueue<MediaData>& mVideoQueue;
+  MediaQueue<VideoData>& mVideoQueue;
   VideoFrameContainer* mContainer;
 
   // Producer ID to help ImageContainer distinguish different streams of
@@ -122,9 +126,8 @@ private:
   MozPromiseHolder<GenericPromise> mEndPromiseHolder;
   MozPromiseRequestHolder<GenericPromise> mVideoSinkEndRequest;
 
-  // The presentation end time of the last video frame which has been displayed
-  // in microseconds.
-  int64_t mVideoFrameEndTime;
+  // The presentation end time of the last video frame which has been displayed.
+  TimeUnit mVideoFrameEndTime;
 
   // Event listeners for VideoQueue
   MediaEventListener mPushListener;

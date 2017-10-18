@@ -32,14 +32,11 @@
 #include "nsJSEnvironment.h"
 #include "nsLayoutUtils.h"
 #include "nsPIWindowRoot.h"
+#include "nsRFPService.h"
 #include "WorkerPrivate.h"
 
 namespace mozilla {
 namespace dom {
-
-namespace workers {
-extern bool IsCurrentThreadRunningChromeWorker();
-} // namespace workers
 
 static char *sPopupAllowedEvents;
 
@@ -86,10 +83,10 @@ Event::ConstructorInit(EventTarget* aOwner,
       A derived class might want to allocate its own type of aEvent
       (derived from WidgetEvent). To do this, it should take care to pass
       a non-nullptr aEvent to this ctor, e.g.:
-      
+
         FooEvent::FooEvent(..., WidgetEvent* aEvent)
           : Event(..., aEvent ? aEvent : new WidgetEvent())
-      
+
       Then, to override the mEventIsInternal assignments done by the
       base ctor, it should do this in its own ctor:
 
@@ -127,7 +124,7 @@ Event::InitPresContextData(nsPresContext* aPresContext)
   }
 }
 
-Event::~Event() 
+Event::~Event()
 {
   NS_ASSERT_OWNINGTHREAD(Event);
 
@@ -230,7 +227,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Event)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPresContext)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mExplicitOriginalTarget)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOwner)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 
@@ -246,52 +242,25 @@ Event::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return EventBinding::Wrap(aCx, this, aGivenProto);
 }
 
-bool
-Event::IsChrome(JSContext* aCx) const
-{
-  return mIsMainThreadEvent ?
-    xpc::AccessCheck::isChrome(js::GetContextCompartment(aCx)) :
-    mozilla::dom::workers::IsCurrentThreadRunningChromeWorker();
-}
-
 // nsIDOMEventInterface
-NS_METHOD
+NS_IMETHODIMP
 Event::GetType(nsAString& aType)
 {
-  if (!mIsMainThreadEvent || !mEvent->mSpecifiedEventTypeString.IsEmpty()) {
+  if (!mIsMainThreadEvent) {
     aType = mEvent->mSpecifiedEventTypeString;
     return NS_OK;
   }
-  const char* name = GetEventName(mEvent->mMessage);
-
-  if (name) {
-    CopyASCIItoUTF16(name, aType);
-    return NS_OK;
-  } else if (mEvent->mMessage == eUnidentifiedEvent &&
-             mEvent->mSpecifiedEventType) {
-    // Remove "on"
-    aType = Substring(nsDependentAtomString(mEvent->mSpecifiedEventType), 2);
-    mEvent->mSpecifiedEventTypeString = aType;
-    return NS_OK;
-  }
-
-  aType.Truncate();
+  GetWidgetEventType(mEvent, aType);
   return NS_OK;
-}
-
-static EventTarget*
-GetDOMEventTarget(nsIDOMEventTarget* aTarget)
-{
-  return aTarget ? aTarget->GetTargetForDOMEvent() : nullptr;
 }
 
 EventTarget*
 Event::GetTarget() const
 {
-  return GetDOMEventTarget(mEvent->mTarget);
+  return mEvent->GetDOMEventTarget();
 }
 
-NS_METHOD
+NS_IMETHODIMP
 Event::GetTarget(nsIDOMEventTarget** aTarget)
 {
   NS_IF_ADDREF(*aTarget = GetTarget());
@@ -301,7 +270,7 @@ Event::GetTarget(nsIDOMEventTarget** aTarget)
 EventTarget*
 Event::GetCurrentTarget() const
 {
-  return GetDOMEventTarget(mEvent->mCurrentTarget);
+  return mEvent->GetCurrentDOMEventTarget();
 }
 
 NS_IMETHODIMP
@@ -348,11 +317,7 @@ Event::GetExplicitOriginalTarget(nsIDOMEventTarget** aRealEventTarget)
 EventTarget*
 Event::GetOriginalTarget() const
 {
-  if (mEvent->mOriginalTarget) {
-    return GetDOMEventTarget(mEvent->mOriginalTarget);
-  }
-
-  return GetTarget();
+  return mEvent->GetOriginalDOMEventTarget();
 }
 
 NS_IMETHODIMP
@@ -386,7 +351,7 @@ bool
 Event::Init(mozilla::dom::EventTarget* aGlobal)
 {
   if (!mIsMainThreadEvent) {
-    return nsContentUtils::ThreadsafeIsCallerChrome();
+    return workers::IsCurrentThreadRunningChromeWorker();
   }
   bool trusted = false;
   nsCOMPtr<nsPIDOMWindowInner> w = do_QueryInterface(aGlobal);
@@ -411,10 +376,20 @@ Event::Constructor(const GlobalObject& aGlobal,
                    ErrorResult& aRv)
 {
   nsCOMPtr<mozilla::dom::EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  RefPtr<Event> e = new Event(t, nullptr, nullptr);
-  bool trusted = e->Init(t);
+  return Constructor(t, aType, aParam);
+}
+
+// static
+already_AddRefed<Event>
+Event::Constructor(EventTarget* aEventTarget,
+                   const nsAString& aType,
+                   const EventInit& aParam)
+{
+  RefPtr<Event> e = new Event(aEventTarget, nullptr, nullptr);
+  bool trusted = e->Init(aEventTarget);
   e->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 
@@ -503,15 +478,13 @@ Event::PreventDefault()
 }
 
 void
-Event::PreventDefault(JSContext* aCx)
+Event::PreventDefault(JSContext* aCx, CallerType aCallerType)
 {
-  MOZ_ASSERT(aCx, "JS context must be specified");
-
   // Note that at handling default action, another event may be dispatched.
   // Then, JS in content mey be call preventDefault()
   // even in the event is in system event group.  Therefore, don't refer
   // mInSystemGroup here.
-  PreventDefaultInternal(IsChrome(aCx));
+  PreventDefaultInternal(aCallerType == CallerType::System);
 }
 
 void
@@ -567,11 +540,42 @@ Event::SetEventType(const nsAString& aEventTypeArg)
     mEvent->mSpecifiedEventType =
       nsContentUtils::GetEventMessageAndAtom(aEventTypeArg, mEvent->mClass,
                                              &(mEvent->mMessage));
+    mEvent->SetDefaultComposed();
   } else {
     mEvent->mSpecifiedEventType = nullptr;
     mEvent->mMessage = eUnidentifiedEvent;
     mEvent->mSpecifiedEventTypeString = aEventTypeArg;
+    mEvent->SetComposed(aEventTypeArg);
   }
+  mEvent->SetDefaultComposedInNativeAnonymousContent();
+}
+
+already_AddRefed<EventTarget>
+Event::EnsureWebAccessibleRelatedTarget(EventTarget* aRelatedTarget)
+{
+  nsCOMPtr<EventTarget> relatedTarget = aRelatedTarget;
+  if (relatedTarget) {
+    nsCOMPtr<nsIContent> content = do_QueryInterface(relatedTarget);
+    nsCOMPtr<nsIContent> currentTarget =
+      do_QueryInterface(mEvent->mCurrentTarget);
+
+    if (content && content->ChromeOnlyAccess() &&
+        !nsContentUtils::CanAccessNativeAnon()) {
+      content = content->FindFirstNonChromeOnlyAccessContent();
+      relatedTarget = do_QueryInterface(content);
+    }
+
+    nsIContent* shadowRelatedTarget =
+      GetShadowRelatedTarget(currentTarget, content);
+    if (shadowRelatedTarget) {
+      relatedTarget = shadowRelatedTarget;
+    }
+
+    if (relatedTarget) {
+      relatedTarget = relatedTarget->GetTargetForDOMEvent();
+    }
+  }
+  return relatedTarget.forget();
 }
 
 void
@@ -597,6 +601,8 @@ Event::InitEvent(const nsAString& aEventTypeArg,
   mEvent->mFlags.mDefaultPrevented = false;
   mEvent->mFlags.mDefaultPreventedByContent = false;
   mEvent->mFlags.mDefaultPreventedByChrome = false;
+  mEvent->mFlags.mPropagationStopped = false;
+  mEvent->mFlags.mImmediatePropagationStopped = false;
 
   // Clearing the old targets, so that the event is targeted correctly when
   // re-dispatching it.
@@ -660,12 +666,12 @@ PopupAllowedForEvent(const char *eventName)
 
   nsDependentCString events(sPopupAllowedEvents);
 
-  nsAFlatCString::const_iterator start, end;
-  nsAFlatCString::const_iterator startiter(events.BeginReading(start));
+  nsCString::const_iterator start, end;
+  nsCString::const_iterator startiter(events.BeginReading(start));
   events.EndReading(end);
 
   while (startiter != end) {
-    nsAFlatCString::const_iterator enditer(end);
+    nsCString::const_iterator enditer(end);
 
     if (!FindInReadable(nsDependentCString(eventName), startiter, enditer))
       return false;
@@ -839,6 +845,25 @@ Event::GetEventPopupControlState(WidgetEvent* aEvent, nsIDOMEvent* aDOMEvent)
       }
     }
     break;
+  case ePointerEventClass:
+    if (aEvent->IsTrusted() &&
+        aEvent->AsPointerEvent()->button == WidgetMouseEvent::eLeftButton) {
+      switch(aEvent->mMessage) {
+      case ePointerUp:
+        if (PopupAllowedForEvent("pointerup")) {
+          abuse = openControlled;
+        }
+        break;
+      case ePointerDown:
+        if (PopupAllowedForEvent("pointerdown")) {
+          abuse = openControlled;
+        }
+        break;
+      default:
+        break;
+      }
+    }
+    break;
   case eFormEventClass:
     // For these following events only allow popups if they're
     // triggered while handling user input. See
@@ -875,7 +900,8 @@ Event::PopupAllowedEventsChanged()
     free(sPopupAllowedEvents);
   }
 
-  nsAdoptingCString str = Preferences::GetCString("dom.popup_allowed_events");
+  nsAutoCString str;
+  Preferences::GetCString("dom.popup_allowed_events", str);
 
   // We'll want to do this even if str is empty to avoid looking up
   // this pref all the time if it's not set.
@@ -897,12 +923,6 @@ Event::GetScreenCoords(nsPresContext* aPresContext,
                        WidgetEvent* aEvent,
                        LayoutDeviceIntPoint aPoint)
 {
-  if (!nsContentUtils::LegacyIsCallerChromeOrNativeCode() &&
-      nsContentUtils::ResistFingerprinting()) {
-    // When resisting fingerprinting, return client coordinates instead.
-    return GetClientCoords(aPresContext, aEvent, aPoint, CSSIntPoint(0, 0));
-  }
-
   if (EventStateManager::sIsPointerLocked) {
     return EventStateManager::sLastScreenPoint;
   }
@@ -1016,7 +1036,7 @@ Event::GetOffsetCoords(nsPresContext* aPresContext,
   if (!shell) {
     return CSSIntPoint(0, 0);
   }
-  shell->FlushPendingNotifications(Flush_Layout);
+  shell->FlushPendingNotifications(FlushType::Layout);
   nsIFrame* frame = content->GetPrimaryFrame();
   if (!frame) {
     return CSSIntPoint(0, 0);
@@ -1059,10 +1079,8 @@ Event::GetEventName(EventMessage aEventType)
 }
 
 bool
-Event::DefaultPrevented(JSContext* aCx) const
+Event::DefaultPrevented(CallerType aCallerType) const
 {
-  MOZ_ASSERT(aCx, "JS context must be specified");
-
   NS_ENSURE_TRUE(mEvent, false);
 
   // If preventDefault() has never been called, just return false.
@@ -1073,11 +1091,12 @@ Event::DefaultPrevented(JSContext* aCx) const
   // If preventDefault() has been called by content, return true.  Otherwise,
   // i.e., preventDefault() has been called by chrome, return true only when
   // this is called by chrome.
-  return mEvent->DefaultPreventedByContent() || IsChrome(aCx);
+  return mEvent->DefaultPreventedByContent() ||
+         aCallerType == CallerType::System;
 }
 
 double
-Event::TimeStamp() const
+Event::TimeStampImpl() const
 {
   if (!sReturnHighResTimeStamp) {
     return static_cast<double>(mEvent->mTime);
@@ -1105,16 +1124,17 @@ Event::TimeStamp() const
     return perf->GetDOMTiming()->TimeStampToDOMHighRes(mEvent->mTimeStamp);
   }
 
-  // For dedicated workers, we should make times relative to the navigation
-  // start of the document that created the worker, which is the same as the
-  // timebase for performance.now().
   workers::WorkerPrivate* workerPrivate =
     workers::GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
 
-  TimeDuration duration =
-    mEvent->mTimeStamp - workerPrivate->NowBaseTimeStamp();
-  return duration.ToMilliseconds();
+  return workerPrivate->TimeStampToDOMHighRes(mEvent->mTimeStamp);
+}
+
+double
+Event::TimeStamp() const
+{
+  return nsRFPService::ReduceTimePrecisionAsMSecs(TimeStampImpl());
 }
 
 bool
@@ -1165,6 +1185,7 @@ Event::Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType)
   IPC::WriteParam(aMsg, Bubbles());
   IPC::WriteParam(aMsg, Cancelable());
   IPC::WriteParam(aMsg, IsTrusted());
+  IPC::WriteParam(aMsg, Composed());
 
   // No timestamp serialization for now!
 }
@@ -1184,14 +1205,18 @@ Event::Deserialize(const IPC::Message* aMsg, PickleIterator* aIter)
   bool trusted = false;
   NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &trusted), false);
 
+  bool composed = false;
+  NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &composed), false);
+
   InitEvent(type, bubbles, cancelable);
   SetTrusted(trusted);
+  SetComposed(composed);
 
   return true;
 }
 
 NS_IMETHODIMP_(void)
-Event::SetOwner(mozilla::dom::EventTarget* aOwner)
+Event::SetOwner(EventTarget* aOwner)
 {
   mOwner = nullptr;
 
@@ -1261,6 +1286,47 @@ Event::GetShadowRelatedTarget(nsIContent* aCurrentTarget,
   return nullptr;
 }
 
+void
+Event::GetWidgetEventType(WidgetEvent* aEvent, nsAString& aType)
+{
+  if (!aEvent->mSpecifiedEventTypeString.IsEmpty()) {
+    aType = aEvent->mSpecifiedEventTypeString;
+    return;
+  }
+
+  const char* name = GetEventName(aEvent->mMessage);
+
+  if (name) {
+    CopyASCIItoUTF16(name, aType);
+    return;
+  } else if (aEvent->mMessage == eUnidentifiedEvent &&
+             aEvent->mSpecifiedEventType) {
+    // Remove "on"
+    aType = Substring(nsDependentAtomString(aEvent->mSpecifiedEventType), 2);
+    aEvent->mSpecifiedEventTypeString = aType;
+    return;
+  }
+
+  aType.Truncate();
+}
+
+NS_IMETHODIMP
+Event::GetCancelBubble(bool* aCancelBubble)
+{
+  NS_ENSURE_ARG_POINTER(aCancelBubble);
+  *aCancelBubble = CancelBubble();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+Event::SetCancelBubble(bool aCancelBubble)
+{
+  if (aCancelBubble) {
+    mEvent->StopPropagation();
+  }
+  return NS_OK;
+}
+
 } // namespace dom
 } // namespace mozilla
 
@@ -1270,7 +1336,7 @@ using namespace mozilla::dom;
 already_AddRefed<Event>
 NS_NewDOMEvent(EventTarget* aOwner,
                nsPresContext* aPresContext,
-               WidgetEvent* aEvent) 
+               WidgetEvent* aEvent)
 {
   RefPtr<Event> it = new Event(aOwner, aPresContext, aEvent);
   return it.forget();

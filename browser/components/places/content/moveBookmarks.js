@@ -14,7 +14,7 @@ var gMoveBookmarksDialog = {
     return this._foldersTree;
   },
 
-  init: function() {
+  init() {
     this._nodes = window.arguments[0];
 
     this.foldersTree.place =
@@ -28,7 +28,7 @@ var gMoveBookmarksDialog = {
 
     if (!PlacesUIUtils.useAsyncTransactions) {
       let transactions = [];
-      for (var i=0; i < this._nodes.length; i++) {
+      for (var i = 0; i < this._nodes.length; i++) {
         // Nothing to do if the node is already under the selected folder
         if (this._nodes[i].parent.itemId == selectedFolderId)
           continue;
@@ -45,16 +45,16 @@ var gMoveBookmarksDialog = {
       return;
     }
 
-    PlacesTransactions.batch(function* () {
-      let newParentGuid = yield PlacesUtils.promiseItemGuid(selectedFolderId);
+    PlacesTransactions.batch(async () => {
+      let newParentGuid = await PlacesUtils.promiseItemGuid(selectedFolderId);
       for (let node of this._nodes) {
         // Nothing to do if the node is already under the selected folder.
         if (node.parent.itemId == selectedFolderId)
           continue;
-        yield PlacesTransactions.Move({ guid: node.bookmarkGuid
-                                      , newParentGuid }).transact();
+        await PlacesTransactions.Move({ guid: node.bookmarkGuid,
+                                        newParentGuid }).transact();
       }
-    }.bind(this)).then(null, Components.utils.reportError);
+    }).catch(Components.utils.reportError);
   },
 
   newFolder: function MBD_newFolder() {

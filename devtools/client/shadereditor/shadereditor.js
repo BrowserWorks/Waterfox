@@ -11,9 +11,9 @@ const {SideMenuWidget} = require("resource://devtools/client/shared/widgets/Side
 const promise = require("promise");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
+const Tooltip = require("devtools/client/shared/widgets/tooltip/Tooltip");
 const Editor = require("devtools/client/sourceeditor/editor");
-const {LocalizationHelper} = require("devtools/client/shared/l10n");
+const {LocalizationHelper} = require("devtools/shared/l10n");
 const {Heritage, WidgetMethods, setNamedTimeout} =
   require("devtools/client/shared/widgets/view-helpers");
 const {Task} = require("devtools/shared/task");
@@ -38,7 +38,7 @@ const EVENTS = {
 };
 XPCOMUtils.defineConstant(this, "EVENTS", EVENTS);
 
-const STRINGS_URI = "chrome://devtools/locale/shadereditor.properties";
+const STRINGS_URI = "devtools/client/locales/shadereditor.properties";
 const HIGHLIGHT_TINT = [1, 0, 0.25, 1]; // rgba
 const TYPING_MAX_DELAY = 500; // ms
 const SHADERS_AUTOGROW_ITEMS = 4;
@@ -208,8 +208,8 @@ var ShadersListView = Heritage.extend(WidgetMethods, {
     this._onProgramMouseOver = this._onProgramMouseOver.bind(this);
     this._onProgramMouseOut = this._onProgramMouseOut.bind(this);
 
-    this.widget.addEventListener("select", this._onProgramSelect, false);
-    this.widget.addEventListener("check", this._onProgramCheck, false);
+    this.widget.addEventListener("select", this._onProgramSelect);
+    this.widget.addEventListener("check", this._onProgramCheck);
     this.widget.addEventListener("mouseover", this._onProgramMouseOver, true);
     this.widget.addEventListener("mouseout", this._onProgramMouseOut, true);
   },
@@ -218,8 +218,8 @@ var ShadersListView = Heritage.extend(WidgetMethods, {
    * Destruction function, called when the tool is closed.
    */
   destroy: function () {
-    this.widget.removeEventListener("select", this._onProgramSelect, false);
-    this.widget.removeEventListener("check", this._onProgramCheck, false);
+    this.widget.removeEventListener("select", this._onProgramSelect);
+    this.widget.removeEventListener("check", this._onProgramCheck);
     this.widget.removeEventListener("mouseover", this._onProgramMouseOver, true);
     this.widget.removeEventListener("mouseout", this._onProgramMouseOut, true);
   },
@@ -313,7 +313,7 @@ var ShadersListView = Heritage.extend(WidgetMethods, {
     getShaders()
       .then(getSources)
       .then(showSources)
-      .then(null, e => console.error(e));
+      .catch(e => console.error(e));
   },
 
   /**

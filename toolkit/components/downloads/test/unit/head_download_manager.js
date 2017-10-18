@@ -14,13 +14,10 @@ do_get_profile();
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://testing-common/httpd.js");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 
-function createURI(aObj)
-{
+function createURI(aObj) {
   var ios = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService);
   return (aObj instanceof Ci.nsIFile) ? ios.newFileURI(aObj) :
-                                        ios.newURI(aObj, null, null);
+                                        ios.newURI(aObj);
 }

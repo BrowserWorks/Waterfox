@@ -1,9 +1,9 @@
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
   "resource://testing-common/PlacesTestUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TestUtils",
+  "resource://testing-common/TestUtils.jsm");
 
 // We need to cache this before test runs...
 var cachedLeftPaneFolderIdGetter;
@@ -13,9 +13,9 @@ if (!cachedLeftPaneFolderIdGetter && typeof(getter) == "function") {
 }
 
 // ...And restore it when test ends.
-registerCleanupFunction(function(){
-  let getter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
-  if (cachedLeftPaneFolderIdGetter && typeof(getter) != "function") {
+registerCleanupFunction(function() {
+  let updatedGetter = PlacesUIUtils.__lookupGetter__("leftPaneFolderId");
+  if (cachedLeftPaneFolderIdGetter && typeof(updatedGetter) != "function") {
     PlacesUIUtils.__defineGetter__("leftPaneFolderId", cachedLeftPaneFolderIdGetter);
   }
 });
@@ -24,7 +24,7 @@ function openLibrary(callback, aLeftPaneRoot) {
   let library = window.openDialog("chrome://browser/content/places/places.xul",
                                   "", "chrome,toolbar=yes,dialog=no,resizable",
                                   aLeftPaneRoot);
-  waitForFocus(function () {
+  waitForFocus(function() {
     callback(library);
   }, library);
 
@@ -46,8 +46,7 @@ function promiseLibrary(aLeftPaneRoot) {
         library.PlacesOrganizer.selectLeftPaneContainerByHierarchy(aLeftPaneRoot);
       }
       resolve(library);
-    }
-    else {
+    } else {
       openLibrary(resolve, aLeftPaneRoot);
     }
   });
@@ -56,10 +55,9 @@ function promiseLibrary(aLeftPaneRoot) {
 function promiseLibraryClosed(organizer) {
   return new Promise(resolve => {
     // Wait for the Organizer window to actually be closed
-    organizer.addEventListener("unload", function onUnload() {
-      organizer.removeEventListener("unload", onUnload);
+    organizer.addEventListener("unload", function() {
       resolve();
-    });
+    }, {once: true});
 
     // Close Library window.
     organizer.close();
@@ -99,8 +97,7 @@ function promiseClipboard(aPopulateClipboardFn, aFlavor) {
  *       complete.  Note that WAL makes so that writers don't block readers, but
  *       this is a problem only across different connections.
  */
-function waitForAsyncUpdates(aCallback, aScope, aArguments)
-{
+function waitForAsyncUpdates(aCallback, aScope, aArguments) {
   let scope = aScope || this;
   let args = aArguments || [];
   let db = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
@@ -111,10 +108,9 @@ function waitForAsyncUpdates(aCallback, aScope, aArguments)
 
   let commit = db.createAsyncStatement("COMMIT");
   commit.executeAsync({
-    handleResult: function() {},
-    handleError: function() {},
-    handleCompletion: function(aReason)
-    {
+    handleResult() {},
+    handleError() {},
+    handleCompletion(aReason) {
       aCallback.apply(scope, args);
     }
   });
@@ -148,18 +144,18 @@ function synthesizeClickOnSelectedTreeCell(aTree, aOptions) {
  * @rejects JavaScript exception.
  */
 function promiseIsURIVisited(aURI) {
-  let deferred = Promise.defer();
+  return new Promise(resolve => {
 
-  PlacesUtils.asyncHistory.isURIVisited(aURI, function(aURI, aIsVisited) {
-    deferred.resolve(aIsVisited);
+    PlacesUtils.asyncHistory.isURIVisited(aURI, function(unused, aIsVisited) {
+      resolve(aIsVisited);
+    });
+
   });
-
-  return deferred.promise;
 }
 
 function promiseBookmarksNotification(notification, conditionFn) {
   info(`promiseBookmarksNotification: waiting for ${notification}`);
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let proxifiedObserver = new Proxy({}, {
       get: (target, name) => {
         if (name == "QueryInterface")
@@ -168,7 +164,6 @@ function promiseBookmarksNotification(notification, conditionFn) {
         if (name == notification)
           return (...args) => {
             if (conditionFn.apply(this, args)) {
-              clearTimeout(timeout);
               PlacesUtils.bookmarks.removeObserver(proxifiedObserver, false);
               executeSoon(resolve);
             } else {
@@ -178,17 +173,13 @@ function promiseBookmarksNotification(notification, conditionFn) {
         return () => {};
       }
     });
-    PlacesUtils.bookmarks.addObserver(proxifiedObserver, false);
-    let timeout = setTimeout(() => {
-      PlacesUtils.bookmarks.removeObserver(proxifiedObserver, false);
-      reject(new Error("Timed out while waiting for bookmarks notification"));
-    }, 2000);
+    PlacesUtils.bookmarks.addObserver(proxifiedObserver);
   });
 }
 
 function promiseHistoryNotification(notification, conditionFn) {
   info(`Waiting for ${notification}`);
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let proxifiedObserver = new Proxy({}, {
       get: (target, name) => {
         if (name == "QueryInterface")
@@ -196,7 +187,6 @@ function promiseHistoryNotification(notification, conditionFn) {
         if (name == notification)
           return (...args) => {
             if (conditionFn.apply(this, args)) {
-              clearTimeout(timeout);
               PlacesUtils.history.removeObserver(proxifiedObserver, false);
               executeSoon(resolve);
             }
@@ -204,11 +194,7 @@ function promiseHistoryNotification(notification, conditionFn) {
         return () => {};
       }
     });
-    PlacesUtils.history.addObserver(proxifiedObserver, false);
-    let timeout = setTimeout(() => {
-      PlacesUtils.history.removeObserver(proxifiedObserver, false);
-      reject(new Error("Timed out while waiting for history notification"));
-    }, 2000);
+    PlacesUtils.history.addObserver(proxifiedObserver);
   });
 }
 
@@ -285,24 +271,26 @@ function isToolbarVisible(aToolbar) {
  *        whether to automatically cancel the dialog at the end of the task
  * @param openFn
  *        generator function causing the dialog to open
- * @param task
+ * @param taskFn
  *        the task to execute once the dialog is open
+ * @param closeFn
+ *        A function to be used to wait for pending work when the dialog is
+ *        closing. It is passed the dialog window handle and should return a promise.
  */
-var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
+var withBookmarksDialog = async function(autoCancel, openFn, taskFn, closeFn) {
   let closed = false;
   let dialogPromise = new Promise(resolve => {
     Services.ww.registerNotification(function winObserver(subject, topic, data) {
       if (topic == "domwindowopened") {
         let win = subject.QueryInterface(Ci.nsIDOMWindow);
-        win.addEventListener("load", function load() {
-          win.removeEventListener("load", load);
+        win.addEventListener("load", function() {
           ok(win.location.href.startsWith("chrome://browser/content/places/bookmarkProperties"),
              "The bookmark properties dialog is open");
           // This is needed for the overlay.
           waitForFocus(() => {
             resolve(win);
           }, win);
-        });
+        }, {once: true});
       } else if (topic == "domwindowclosed") {
         Services.ww.unregisterNotification(winObserver);
         closed = true;
@@ -315,11 +303,11 @@ var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
   executeSoon(openFn);
 
   info("withBookmarksDialog: waiting for the dialog");
-  let dialogWin = yield dialogPromise;
+  let dialogWin = await dialogPromise;
 
   // Ensure overlay is loaded
   info("waiting for the overlay to be loaded");
-  yield waitForCondition(() => dialogWin.gEditItemOverlay.initialized,
+  await waitForCondition(() => dialogWin.gEditItemOverlay.initialized,
                          "EditItemOverlay should be initialized");
 
   // Check the first textbox is focused.
@@ -327,23 +315,32 @@ var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
   let elt = doc.querySelector("textbox:not([collapsed=true])");
   if (elt) {
     info("waiting for focus on the first textfield");
-    yield waitForCondition(() => doc.activeElement == elt.inputField,
+    await waitForCondition(() => doc.activeElement == elt.inputField,
                            "The first non collapsed textbox should have been focused");
   }
 
   info("withBookmarksDialog: executing the task");
+
+  let closePromise = () => Promise.resolve();
+  if (closeFn) {
+    closePromise = closeFn(dialogWin);
+  }
+
   try {
-    yield taskFn(dialogWin);
+    await taskFn(dialogWin);
   } finally {
     if (!closed) {
       if (!autoCancel) {
         ok(false, "The test should have closed the dialog!");
       }
       info("withBookmarksDialog: canceling the dialog");
+
       doc.documentElement.cancelDialog();
+
+      await closePromise;
     }
   }
-});
+};
 
 /**
  * Opens the contextual menu on the element pointed by the given selector.
@@ -354,11 +351,11 @@ var withBookmarksDialog = Task.async(function* (autoCancel, openFn, taskFn) {
  *         Returns a Promise that resolves once the context menu has been
  *         opened.
  */
-var openContextMenuForContentSelector = Task.async(function* (browser, selector) {
+var openContextMenuForContentSelector = async function(browser, selector) {
   info("wait for the context menu");
   let contextPromise = BrowserTestUtils.waitForEvent(document.getElementById("contentAreaContextMenu"),
                                                      "popupshown");
-  yield ContentTask.spawn(browser, { selector }, function* (args) {
+  await ContentTask.spawn(browser, { selector }, async function(args) {
     let doc = content.document;
     let elt = doc.querySelector(args.selector)
     dump(`openContextMenuForContentSelector: found ${elt}\n`);
@@ -373,8 +370,8 @@ var openContextMenuForContentSelector = Task.async(function* (browser, selector)
     domWindowUtils.sendMouseEvent("contextmenu", left, top, 2,
                                   1, 0, false, 0, 0, true);
   });
-  yield contextPromise;
-});
+  await contextPromise;
+};
 
 /**
  * Waits for a specified condition to happen.
@@ -386,11 +383,11 @@ var openContextMenuForContentSelector = Task.async(function* (browser, selector)
  *        Error message to use if the condition has not been satisfied after a
  *        meaningful amount of tries.
  */
-var waitForCondition = Task.async(function* (conditionFn, errorMsg) {
+var waitForCondition = async function(conditionFn, errorMsg) {
   for (let tries = 0; tries < 100; ++tries) {
-    if ((yield conditionFn()))
+    if ((await conditionFn()))
       return;
-    yield new Promise(resolve => {
+    await new Promise(resolve => {
       if (!waitForCondition._timers) {
         waitForCondition._timers = new Set();
         registerCleanupFunction(() => {
@@ -407,7 +404,7 @@ var waitForCondition = Task.async(function* (conditionFn, errorMsg) {
     });
   }
   ok(false, errorMsg);
-});
+};
 
 /**
  * Fills a bookmarks dialog text field ensuring to cause expected edit events.
@@ -442,19 +439,18 @@ function fillBookmarkTextField(id, text, win, blur = true) {
  *        The task to execute once the sidebar is ready. Will get the Places
  *        tree view as input.
  */
-var withSidebarTree = Task.async(function* (type, taskFn) {
+var withSidebarTree = async function(type, taskFn) {
   let sidebar = document.getElementById("sidebar");
   info("withSidebarTree: waiting sidebar load");
   let sidebarLoadedPromise = new Promise(resolve => {
-    sidebar.addEventListener("load", function load() {
-      sidebar.removeEventListener("load", load, true);
+    sidebar.addEventListener("load", function() {
       resolve();
-    }, true);
+    }, {capture: true, once: true});
   });
   let sidebarId = type == "bookmarks" ? "viewBookmarksSidebar"
                                       : "viewHistorySidebar";
   SidebarUI.show(sidebarId);
-  yield sidebarLoadedPromise;
+  await sidebarLoadedPromise;
 
   let treeId = type == "bookmarks" ? "bookmarks-view"
                                    : "historyTree";
@@ -463,8 +459,8 @@ var withSidebarTree = Task.async(function* (type, taskFn) {
   // Need to executeSoon since the tree is initialized on sidebar load.
   info("withSidebarTree: executing the task");
   try {
-    yield taskFn(tree);
+    await taskFn(tree);
   } finally {
     SidebarUI.hide();
   }
-});
+};

@@ -61,8 +61,8 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
 {
   LayersBackend backend = aForwarder->GetCompositorBackendType();
   if (backend != LayersBackend::LAYERS_OPENGL &&
-      backend != LayersBackend::LAYERS_D3D9 &&
       backend != LayersBackend::LAYERS_D3D11 &&
+      backend != LayersBackend::LAYERS_WR &&
       backend != LayersBackend::LAYERS_BASIC) {
     return nullptr;
   }
@@ -79,12 +79,10 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
   // Xrender support on Linux, as ContentHostDoubleBuffered is not
   // suited for direct uploads to the server.
   if (!gfxPlatformGtk::GetPlatform()->UseImageOffscreenSurfaces() ||
-      !gfxPlatformGtk::GetPlatform()->UseXRender())
+      !gfxVars::UseXRender())
 #endif
   {
-    useDoubleBuffering = (LayerManagerComposite::SupportsDirectTexturing() &&
-                         backend != LayersBackend::LAYERS_D3D9) ||
-                         backend == LayersBackend::LAYERS_BASIC;
+    useDoubleBuffering = backend == LayersBackend::LAYERS_BASIC;
   }
 
   if (useDoubleBuffering || gfxEnv::ForceDoubleBuffering()) {
@@ -94,8 +92,15 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
 }
 
 void
+ContentClient::BeginAsyncPaint()
+{
+  mInAsyncPaint = true;
+}
+
+void
 ContentClient::EndPaint(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates)
 {
+  mInAsyncPaint = false;
 }
 
 void
@@ -104,7 +109,7 @@ ContentClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   aStream << aPrefix;
   aStream << nsPrintfCString("ContentClient (0x%p)", this).get();
 
-  if (profiler_feature_active("displaylistdump")) {
+  if (profiler_feature_active(ProfilerFeature::DisplayListDump)) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 
@@ -114,9 +119,10 @@ ContentClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 
 // We pass a null pointer for the ContentClient Forwarder argument, which means
 // this client will not have a ContentHost on the other side.
-ContentClientBasic::ContentClientBasic()
+ContentClientBasic::ContentClientBasic(gfx::BackendType aBackend)
   : ContentClient(nullptr)
   , RotatedContentBuffer(ContainsVisibleBounds)
+  , mBackend(aBackend)
 {}
 
 void
@@ -131,8 +137,23 @@ ContentClientBasic::CreateBuffer(ContentType aType,
     gfxDevCrash(LogReason::AlphaWithBasicClient) << "Asking basic content client for component alpha";
   }
 
-  *aBlackDT = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
-    IntSize(aRect.width, aRect.height),
+  IntSize size(aRect.width, aRect.height);
+#ifdef XP_WIN
+  if (mBackend == BackendType::CAIRO && 
+      (aType == gfxContentType::COLOR || aType == gfxContentType::COLOR_ALPHA)) {
+    RefPtr<gfxASurface> surf =
+      new gfxWindowsSurface(size, aType == gfxContentType::COLOR ? gfxImageFormat::X8R8G8B8_UINT32 :
+                                                                   gfxImageFormat::A8R8G8B8_UINT32);
+    *aBlackDT = gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(surf, size);
+
+    if (*aBlackDT) {
+      return;
+    }
+  }
+#endif
+
+  *aBlackDT = gfxPlatform::GetPlatform()->CreateDrawTargetForBackend(
+    mBackend, size,
     gfxPlatform::GetPlatform()->Optimal2DFormatForContent(aType));
 }
 
@@ -225,6 +246,13 @@ ContentClientRemoteBuffer::BeginPaint()
 }
 
 void
+ContentClientRemoteBuffer::BeginAsyncPaint()
+{
+  BeginPaint();
+  mInAsyncPaint = true;
+}
+
+void
 ContentClientRemoteBuffer::EndPaint(nsTArray<ReadbackProcessor::Update>* aReadbackUpdates)
 {
   MOZ_ASSERT(!mTextureClientOnWhite || !aReadbackUpdates || aReadbackUpdates->Length() == 0);
@@ -241,7 +269,7 @@ ContentClientRemoteBuffer::EndPaint(nsTArray<ReadbackProcessor::Update>* aReadba
   mOldTextures.Clear();
 
   if (mTextureClient && mTextureClient->IsLocked()) {
-    if (aReadbackUpdates->Length() > 0) {
+    if (aReadbackUpdates && aReadbackUpdates->Length() > 0) {
       RefPtr<TextureReadbackSink> readbackSink = new RemoteBufferReadbackProcessor(aReadbackUpdates, mBufferRect, mBufferRotation);
 
       mTextureClient->SetReadbackSink(readbackSink);
@@ -305,9 +333,11 @@ ContentClientRemoteBuffer::CreateBackBuffer(const IntRect& aBufferRect)
     AbortTextureClientCreation();
     return;
   }
+  mTextureClient->EnableBlockingReadLock();
 
   if (mTextureFlags & TextureFlags::COMPONENT_ALPHA) {
     mTextureClientOnWhite = mTextureClient->CreateSimilar(
+      mForwarder->GetCompositorBackendType(),
       mTextureFlags | ExtraTextureFlags(),
       TextureAllocationFlags::ALLOC_CLEAR_BUFFER_WHITE
     );
@@ -315,6 +345,9 @@ ContentClientRemoteBuffer::CreateBackBuffer(const IntRect& aBufferRect)
       AbortTextureClientCreation();
       return;
     }
+    // We don't enable the readlock for the white buffer since we always
+    // use them together and waiting on the lock for the black
+    // should be sufficient.
   }
 }
 
@@ -330,14 +363,19 @@ ContentClientRemoteBuffer::CreateBuffer(ContentType aType,
     return;
   }
 
+  OpenMode mode = OpenMode::OPEN_READ_WRITE;
+  if (mInAsyncPaint) {
+    mode |= OpenMode::OPEN_ASYNC_WRITE;
+  }
+
   // We just created the textures and we are about to get their draw targets
   // so we have to lock them here.
-  DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
+  DebugOnly<bool> locked = mTextureClient->Lock(mode);
   MOZ_ASSERT(locked, "Could not lock the TextureClient");
 
   *aBlackDT = mTextureClient->BorrowDrawTarget();
   if (aFlags & BUFFER_COMPONENT_ALPHA) {
-    locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
+    locked = mTextureClientOnWhite->Lock(mode);
     MOZ_ASSERT(locked, "Could not lock the second TextureClient for component alpha");
 
     *aWhiteDT = mTextureClientOnWhite->BorrowDrawTarget();
@@ -392,16 +430,54 @@ ContentClientRemoteBuffer::Updated(const nsIntRegion& aRegionToDraw,
     t->mPictureRect = nsIntRect(0, 0, size.width, size.height);
     GetForwarder()->UseTextures(this, textures);
   }
+  // This forces a synchronous transaction, so we can swap buffers now
+  // and know that we'll have sole ownership of the old front buffer
+  // by the time we paint next.
   mForwarder->UpdateTextureRegion(this,
                                   ThebesBufferData(BufferRect(),
                                                    BufferRotation()),
                                   updatedRegion);
+  SwapBuffers(updatedRegion);
 }
 
 void
 ContentClientRemoteBuffer::SwapBuffers(const nsIntRegion& aFrontUpdatedRegion)
 {
   mFrontAndBackBufferDiffer = true;
+}
+
+bool
+ContentClientRemoteBuffer::LockBuffers()
+{
+  OpenMode mode = OpenMode::OPEN_READ_WRITE;
+  if (mInAsyncPaint) {
+    mode |= OpenMode::OPEN_ASYNC_WRITE;
+  }
+  if (mTextureClient) {
+    bool locked = mTextureClient->Lock(mode);
+    if (!locked) {
+      return false;
+    }
+  }
+  if (mTextureClientOnWhite) {
+    bool locked = mTextureClientOnWhite->Lock(mode);
+    if (!locked) {
+      UnlockBuffers();
+      return false;
+    }
+  }
+  return true;
+}
+
+void
+ContentClientRemoteBuffer::UnlockBuffers()
+{
+  if (mTextureClient && mTextureClient->IsLocked()) {
+    mTextureClient->Unlock();
+  }
+  if (mTextureClientOnWhite && mTextureClientOnWhite->IsLocked()) {
+    mTextureClientOnWhite->Unlock();
+  }
 }
 
 void
@@ -500,6 +576,13 @@ ContentClientDoubleBuffered::BeginPaint()
   mBufferRotation = mFrontBufferRotation;
 }
 
+void
+ContentClientDoubleBuffered::BeginAsyncPaint()
+{
+  BeginPaint();
+  mInAsyncPaint = true;
+}
+
 // Sync front/back buffers content
 // After executing, the new back buffer has the same (interesting) pixels as
 // the new front buffer, and mValidRegion et al. are correct wrt the new
@@ -507,15 +590,6 @@ ContentClientDoubleBuffered::BeginPaint()
 void
 ContentClientDoubleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
 {
-  if (mTextureClient) {
-    DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-  if (mTextureClientOnWhite) {
-    DebugOnly<bool> locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-
   if (!mFrontAndBackBufferDiffer) {
     MOZ_ASSERT(!mDidSelfCopy, "If we have to copy the world, then our buffers are different, right?");
     return;
@@ -631,19 +705,6 @@ ContentClientDoubleBuffered::UpdateDestinationFrom(const RotatedBuffer& aSource,
       destDT->Flush();
       ReturnDrawTargetToBuffer(destDT);
     }
-  }
-}
-
-void
-ContentClientSingleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
-{
-  if (mTextureClient) {
-    DebugOnly<bool> locked = mTextureClient->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
-  }
-  if (mTextureClientOnWhite) {
-    DebugOnly<bool> locked = mTextureClientOnWhite->Lock(OpenMode::OPEN_READ_WRITE);
-    MOZ_ASSERT(locked);
   }
 }
 

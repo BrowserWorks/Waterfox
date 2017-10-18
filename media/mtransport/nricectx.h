@@ -63,8 +63,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nsAutoPtr.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
+#include "nsTArray.h"
 
 #include "m_cpp_utils.h"
+#include "nricestunaddr.h"
 
 typedef struct nr_ice_ctx_ nr_ice_ctx;
 typedef struct nr_ice_peer_ctx_ nr_ice_peer_ctx;
@@ -91,6 +93,7 @@ class NrIceMediaStream;
 
 extern const char kNrIceTransportUdp[];
 extern const char kNrIceTransportTcp[];
+extern const char kNrIceTransportTls[];
 
 class NrIceStunServer {
  public:
@@ -191,13 +194,24 @@ class NrIceProxyServer {
 
 class TestNat;
 
+class NrIceStats {
+ public:
+  uint16_t stun_retransmits = 0;
+  uint16_t turn_401s = 0;
+  uint16_t turn_403s = 0;
+  uint16_t turn_438s = 0;
+};
+
 class NrIceCtx {
  friend class NrIceCtxHandler;
  public:
   enum ConnectionState { ICE_CTX_INIT,
                          ICE_CTX_CHECKING,
-                         ICE_CTX_OPEN,
-                         ICE_CTX_FAILED
+                         ICE_CTX_CONNECTED,
+                         ICE_CTX_COMPLETED,
+                         ICE_CTX_FAILED,
+                         ICE_CTX_DISCONNECTED,
+                         ICE_CTX_CLOSED
   };
 
   enum GatheringState { ICE_CTX_GATHER_INIT,
@@ -209,8 +223,8 @@ class NrIceCtx {
                      ICE_CONTROLLED
   };
 
-  enum Policy { ICE_POLICY_NONE,
-                ICE_POLICY_RELAY,
+  enum Policy { ICE_POLICY_RELAY,
+                ICE_POLICY_NO_HOST,
                 ICE_POLICY_ALL
   };
 
@@ -221,10 +235,13 @@ class NrIceCtx {
   static std::string GetNewUfrag();
   static std::string GetNewPwd();
 
-  bool Initialize(bool hide_non_default);
-  bool Initialize(bool hide_non_default,
-                  const std::string& ufrag,
-                  const std::string& pwd);
+  // static GetStunAddrs for use in parent process to support
+  // sandboxing restrictions
+  static nsTArray<NrIceStunAddr> GetStunAddrs();
+  void SetStunAddrs(const nsTArray<NrIceStunAddr>& addrs);
+
+  bool Initialize();
+  bool Initialize(const std::string& ufrag, const std::string& pwd);
 
   int SetNat(const RefPtr<TestNat>& aNat);
 
@@ -307,15 +324,23 @@ class NrIceCtx {
   // StartGathering.
   nsresult SetProxyServer(const NrIceProxyServer& proxy_server);
 
+  void SetCtxFlags(bool default_route_only, bool proxy_only);
+
   // Start ICE gathering
-  nsresult StartGathering();
+  nsresult StartGathering(bool default_route_only, bool proxy_only);
 
   // Start checking
-  nsresult StartChecks();
+  nsresult StartChecks(bool offerer);
+
+  // Notify that the network has gone online/offline
+  void UpdateNetworkState(bool online);
 
   // Finalize the ICE negotiation. I.e., there will be no
   // more forking.
   nsresult Finalize();
+
+  void AccumulateStats(const NrIceStats& stats);
+  NrIceStats Destroy();
 
   // Are we trickling?
   bool generating_trickle() const { return trickle_; }
@@ -333,9 +358,7 @@ class NrIceCtx {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NrIceCtx)
 
 private:
-  NrIceCtx(const std::string& name,
-           bool offerer,
-           Policy policy);
+  NrIceCtx(const std::string& name, Policy policy);
 
   virtual ~NrIceCtx();
 
@@ -351,7 +374,8 @@ private:
   static int stream_ready(void *obj, nr_ice_media_stream *stream);
   static int stream_failed(void *obj, nr_ice_media_stream *stream);
   static int ice_checking(void *obj, nr_ice_peer_ctx *pctx);
-  static int ice_completed(void *obj, nr_ice_peer_ctx *pctx);
+  static int ice_connected(void *obj, nr_ice_peer_ctx *pctx);
+  static int ice_disconnected(void *obj, nr_ice_peer_ctx *pctx);
   static int msg_recvd(void *obj, nr_ice_peer_ctx *pctx,
                        nr_ice_media_stream *stream, int component_id,
                        unsigned char *msg, int len);
@@ -371,6 +395,7 @@ private:
   GatheringState gathering_state_;
   const std::string name_;
   bool offerer_;
+  TimeStamp ice_start_time_;
   bool ice_controlling_set_;
   std::vector<RefPtr<NrIceMediaStream> > streams_;
   nr_ice_ctx *ctx_;

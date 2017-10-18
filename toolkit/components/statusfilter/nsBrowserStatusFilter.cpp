@@ -4,21 +4,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsBrowserStatusFilter.h"
+#include "mozilla/SystemGroup.h"
 #include "nsIChannel.h"
 #include "nsITimer.h"
 #include "nsIServiceManager.h"
 #include "nsString.h"
+#include "nsThreadUtils.h"
 
-// XXX
-// XXX  DO NOT TOUCH THIS CODE UNLESS YOU KNOW WHAT YOU'RE DOING !!!
-// XXX
+using namespace mozilla;
 
 //-----------------------------------------------------------------------------
 // nsBrowserStatusFilter <public>
 //-----------------------------------------------------------------------------
 
 nsBrowserStatusFilter::nsBrowserStatusFilter()
-    : mCurProgress(0)
+    : mTarget(GetMainThreadEventTarget())
+    , mCurProgress(0)
     , mMaxProgress(0)
     , mStatusIsDirty(true)
     , mCurrentPercentage(0)
@@ -83,6 +84,14 @@ nsBrowserStatusFilter::GetDOMWindowID(uint64_t *aResult)
 }
 
 NS_IMETHODIMP
+nsBrowserStatusFilter::GetInnerDOMWindowID(uint64_t *aResult)
+{
+    *aResult = 0;
+    NS_NOTREACHED("nsBrowserStatusFilter::GetInnerDOMWindowID");
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsBrowserStatusFilter::GetIsTopLevel(bool *aIsTopLevel)
 {
     *aIsTopLevel = false;
@@ -103,6 +112,21 @@ nsBrowserStatusFilter::GetLoadType(uint32_t *aLoadType)
     *aLoadType = 0;
     NS_NOTREACHED("nsBrowserStatusFilter::GetLoadType");
     return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsBrowserStatusFilter::GetTarget(nsIEventTarget** aTarget)
+{
+    nsCOMPtr<nsIEventTarget> target = mTarget;
+    target.forget(aTarget);
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsBrowserStatusFilter::SetTarget(nsIEventTarget* aTarget)
+{
+    mTarget = aTarget;
+    return NS_OK;
 }
 
 //-----------------------------------------------------------------------------
@@ -162,8 +186,8 @@ nsBrowserStatusFilter::OnStateChange(nsIWebProgress *aWebProgress,
     if ((aStateFlags & nsIWebProgressListener::STATE_IS_NETWORK ||
          (aStateFlags & nsIWebProgressListener::STATE_IS_REQUEST &&
           mFinishedRequests == mTotalRequests &&
-          (aWebProgress->GetIsLoadingDocument(&isLoadingDocument),
-           !isLoadingDocument)))) {
+          NS_SUCCEEDED(aWebProgress->GetIsLoadingDocument(&isLoadingDocument)) &&
+          !isLoadingDocument))) {
         if (mTimer && (aStateFlags & nsIWebProgressListener::STATE_STOP)) {
             mTimer->Cancel();
             ProcessTimeout();
@@ -318,9 +342,9 @@ nsBrowserStatusFilter::ResetMembers()
 }
 
 void
-nsBrowserStatusFilter::MaybeSendProgress() 
+nsBrowserStatusFilter::MaybeSendProgress()
 {
-    if (mCurProgress > mMaxProgress || mCurProgress <= 0) 
+    if (mCurProgress > mMaxProgress || mCurProgress <= 0)
         return;
 
     // check our percentage
@@ -355,6 +379,7 @@ nsBrowserStatusFilter::StartDelayTimer()
     if (!mTimer)
         return NS_ERROR_FAILURE;
 
+    mTimer->SetTarget(mTarget);
     return mTimer->InitWithNamedFuncCallback(
         TimeoutHandler, this, 160, nsITimer::TYPE_ONE_SHOT,
         "nsBrowserStatusFilter::TimeoutHandler");

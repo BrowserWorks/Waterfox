@@ -34,14 +34,13 @@ public:
   ~ContentProcess()
   { }
 
-  virtual bool Init() override;
+  virtual bool Init(int aArgc, char* aArgv[]) override;
   virtual void CleanUp() override;
-
-  void SetAppDir(const nsACString& aPath);
 
 private:
   ContentChild mContent;
   mozilla::ipc::ScopedXREEmbed mXREEmbed;
+
 #if defined(XP_WIN)
   // This object initializes and configures COM.
   mozilla::mscom::MainThreadRuntime mCOMRuntime;

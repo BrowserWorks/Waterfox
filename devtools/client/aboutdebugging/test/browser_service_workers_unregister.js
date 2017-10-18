@@ -15,14 +15,7 @@ const SERVICE_WORKER = SCOPE + "empty-sw.js";
 const TAB_URL = SCOPE + "empty-sw.html";
 
 add_task(function* () {
-  info("Turn on workers via mochitest http.");
-  yield new Promise(done => {
-    let options = { "set": [
-      // Accept workers from mochitest's http.
-      ["dom.serviceWorkers.testing.enabled", true],
-    ]};
-    SpecialPowers.pushPrefEnv(options, done);
-  });
+  yield enableServiceWorkerDebugging();
 
   let { tab, document } = yield openAboutDebugging("workers");
 
@@ -38,6 +31,8 @@ add_task(function* () {
 
   // Check that the service worker appears in the UI.
   assertHasTarget(true, document, "service-workers", SERVICE_WORKER);
+
+  yield waitForServiceWorkerActivation(SERVICE_WORKER, document);
 
   info("Ensure that the registration resolved before trying to interact with " +
     "the service worker.");

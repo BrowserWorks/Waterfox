@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// @see http://mxr.mozilla.org/mozilla-central/source/js/src/xpconnect/loader/mozJSComponentLoader.cpp
+// @see http://dxr.mozilla.org/mozilla-central/source/js/src/xpconnect/loader/mozJSComponentLoader.cpp
 
 'use strict';
 
@@ -106,7 +106,7 @@ function startup(data, reasonCode) {
       replace(uuidRe, '$1');
 
     let prefixURI = 'resource://' + domain + '/';
-    let resourcesURI = ioService.newURI(rootURI + '/resources/', null, null);
+    let resourcesURI = ioService.newURI(rootURI + '/resources/');
     resourceHandler.setSubstitution(domain, resourcesURI);
 
     // Create path to URLs mapping supported by loader.
@@ -169,7 +169,7 @@ function startup(data, reasonCode) {
 
       // Maps the given file:// URI to a resource:// in order to avoid various
       // failure that happens with file:// URI and be close to production env
-      let resourcesURI = ioService.newURI(fileURI, null, null);
+      let resourcesURI = ioService.newURI(fileURI);
       let resName = 'extensions.modules.' + domain + '.commonjs.path' + name;
       resourceHandler.setSubstitution(resName, resourcesURI);
 

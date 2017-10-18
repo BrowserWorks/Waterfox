@@ -10,7 +10,7 @@
 
 #include "webrtc/voice_engine/transmit_mixer.h"
 
-#include "testing/gtest/include/gtest/gtest.h"
+#include "webrtc/test/gtest.h"
 #include "webrtc/voice_engine/include/voe_external_media.h"
 
 namespace webrtc {
@@ -20,7 +20,7 @@ namespace {
 class MediaCallback : public VoEMediaProcess {
  public:
   virtual void Process(int channel, ProcessingTypes type,
-                       int16_t audio[], int samples_per_channel,
+                       int16_t audio[], size_t samples_per_channel,
                        int sample_rate_hz, bool is_stereo) {
   }
 };

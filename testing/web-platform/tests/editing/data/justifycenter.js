@@ -1,9 +1,10 @@
+// For documentation of the format, see README in this directory.
 var browserTests = [
 ["foo[]bar<p>extra",
     [["stylewithcss","true"],["defaultparagraphseparator","div"],["justifycenter",""]],
     "<div style=\"text-align:center\">foo[]bar</div><p>extra</p>",
     [true,true,true],
-    {"stylewithcss":[false,false,"",false,true,""],"defaultparagraphseparator":[false,false,"p",false,false,"div"],"justifycenter":[false,false,"left",false,true,"center"]}],
+    {"stylewithcss":[false,false,"",false,true,""],"defaultparagraphseparator":[false,false,"div",false,false,"div"],"justifycenter":[false,false,"left",false,true,"center"]}],
 ["foo[]bar<p>extra",
     [["stylewithcss","false"],["defaultparagraphseparator","div"],["justifycenter",""]],
     "<div style=\"text-align:center\">foo[]bar</div><p>extra</p>",

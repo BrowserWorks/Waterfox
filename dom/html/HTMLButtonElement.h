@@ -23,6 +23,7 @@ class HTMLButtonElement final : public nsGenericHTMLFormElementWithState,
 {
 public:
   using nsIConstraintValidation::GetValidationMessage;
+  using nsGenericHTMLFormElementWithState::GetFormAction;
 
   explicit HTMLButtonElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                              FromParser aFromParser = NOT_FROM_PARSER);
@@ -47,7 +48,6 @@ public:
   NS_DECL_NSIDOMHTMLBUTTONELEMENT
 
   // overriden nsIFormControl methods
-  NS_IMETHOD_(uint32_t) GetType() const override { return mType; }
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
@@ -57,12 +57,14 @@ public:
   virtual void FieldSetDisabledChanged(bool aNotify) override;
 
   // nsIDOMEventTarget
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
 
   // nsINode
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
@@ -80,13 +82,15 @@ public:
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 nsAttrValueOrString* aValue,
+                                 const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
-  nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                        const nsAttrValue* aValue, bool aNotify) override;
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
@@ -160,18 +164,13 @@ public:
     SetHTMLAttr(nsGkAtoms::value, aValue, aRv);
   }
 
-  // nsIConstraintValidation::WillValidate is fine.
-  // nsIConstraintValidation::Validity() is fine.
-  // nsIConstraintValidation::GetValidationMessage() is fine.
-  // nsIConstraintValidation::CheckValidity() is fine.
-  using nsIConstraintValidation::CheckValidity;
-  using nsIConstraintValidation::ReportValidity;
-  // nsIConstraintValidation::SetCustomValidity() is fine.
+  // Override SetCustomValidity so we update our state properly when it's called
+  // via bindings.
+  void SetCustomValidity(const nsAString& aError);
 
 protected:
   virtual ~HTMLButtonElement();
 
-  uint8_t mType;
   bool mDisabledChanged;
   bool mInInternalActivate;
   bool mInhibitStateRestoration;

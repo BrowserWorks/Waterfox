@@ -6,7 +6,7 @@
 #include "MediaStreamGraphImpl.h"
 #include "MediaStreamListener.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "AudioSegment.h"
 #include "VideoSegment.h"
@@ -46,8 +46,9 @@ namespace mozilla {
 LazyLogModule gTrackUnionStreamLog("TrackUnionStream");
 #define STREAM_LOG(type, msg) MOZ_LOG(gTrackUnionStreamLog, type, msg)
 
-TrackUnionStream::TrackUnionStream() :
-  ProcessedMediaStream(), mNextAvailableTrackID(1)
+TrackUnionStream::TrackUnionStream()
+  : ProcessedMediaStream()
+  , mNextAvailableTrackID(1)
 {
 }
 
@@ -57,6 +58,12 @@ TrackUnionStream::TrackUnionStream() :
     for (int32_t i = mTrackMap.Length() - 1; i >= 0; --i) {
       if (mTrackMap[i].mInputPort == aPort) {
         STREAM_LOG(LogLevel::Debug, ("TrackUnionStream %p removing trackmap entry %d", this, i));
+        nsTArray<RefPtr<DirectMediaStreamTrackListener>> listeners(
+          mTrackMap[i].mOwnedDirectListeners);
+        for (auto listener : listeners) {
+          // Remove listeners while the entry still exists.
+          RemoveDirectTrackListenerImpl(listener, mTrackMap[i].mOutputTrackID);
+        }
         EndTrack(i);
         mTrackMap.RemoveElementAt(i);
       }
@@ -74,10 +81,14 @@ TrackUnionStream::TrackUnionStream() :
       mappedTracksFinished.AppendElement(true);
       mappedTracksWithMatchingInputTracks.AppendElement(false);
     }
-    bool allFinished = !mInputs.IsEmpty();
-    bool allHaveCurrentData = !mInputs.IsEmpty();
-    for (uint32_t i = 0; i < mInputs.Length(); ++i) {
-      MediaStream* stream = mInputs[i]->GetSource();
+
+    AutoTArray<MediaInputPort*, 32> inputs(mInputs);
+    inputs.AppendElements(mSuspendedInputs);
+
+    bool allFinished = !inputs.IsEmpty();
+    bool allHaveCurrentData = !inputs.IsEmpty();
+    for (uint32_t i = 0; i < inputs.Length(); ++i) {
+      MediaStream* stream = inputs[i]->GetSource();
       if (!stream->IsFinishedOnGraphThread()) {
         // XXX we really should check whether 'stream' has finished within time aTo,
         // not just that it's finishing when all its queued data eventually runs
@@ -93,12 +104,12 @@ TrackUnionStream::TrackUnionStream() :
         bool found = false;
         for (uint32_t j = 0; j < mTrackMap.Length(); ++j) {
           TrackMapEntry* map = &mTrackMap[j];
-          if (map->mInputPort == mInputs[i] && map->mInputTrackID == tracks->GetID()) {
+          if (map->mInputPort == inputs[i] && map->mInputTrackID == tracks->GetID()) {
             bool trackFinished = false;
             StreamTracks::Track* outputTrack = mTracks.FindTrack(map->mOutputTrackID);
             found = true;
             if (!outputTrack || outputTrack->IsEnded() ||
-                !mInputs[i]->PassTrackThrough(tracks->GetID())) {
+                !inputs[i]->PassTrackThrough(tracks->GetID())) {
               trackFinished = true;
             } else {
               CopyTrackData(tracks.get(), j, aFrom, aTo, &trackFinished);
@@ -108,10 +119,10 @@ TrackUnionStream::TrackUnionStream() :
             break;
           }
         }
-        if (!found && mInputs[i]->AllowCreationOf(tracks->GetID())) {
+        if (!found && inputs[i]->AllowCreationOf(tracks->GetID())) {
           bool trackFinished = false;
           trackAdded = true;
-          uint32_t mapIndex = AddTrack(mInputs[i], tracks.get(), aFrom);
+          uint32_t mapIndex = AddTrack(inputs[i], tracks.get(), aFrom);
           CopyTrackData(tracks.get(), mapIndex, aFrom, aTo, &trackFinished);
           mappedTracksFinished.AppendElement(trackFinished);
           mappedTracksWithMatchingInputTracks.AppendElement(true);
@@ -130,6 +141,10 @@ TrackUnionStream::TrackUnionStream() :
         allFinished = false;
       }
       if (!mappedTracksWithMatchingInputTracks[i]) {
+        for (auto listener : mTrackMap[i].mOwnedDirectListeners) {
+          // Remove listeners while the entry still exists.
+          RemoveDirectTrackListenerImpl(listener, mTrackMap[i].mOutputTrackID);
+        }
         mTrackMap.RemoveElementAt(i);
       }
     }
@@ -164,8 +179,10 @@ TrackUnionStream::TrackUnionStream() :
                  "if you can assure its availability, or we may not be able "
                  "to bind to the correct DOM-side track.");
 #ifdef DEBUG
-      for (size_t i = 0; mInputs[i] != aPort; ++i) {
-        MOZ_ASSERT(mInputs[i]->GetSourceTrackId() != TRACK_ANY,
+      AutoTArray<MediaInputPort*, 32> inputs(mInputs);
+      inputs.AppendElements(mSuspendedInputs);
+      for (size_t i = 0; inputs[i] != aPort; ++i) {
+        MOZ_ASSERT(inputs[i]->GetSourceTrackId() != TRACK_ANY,
                    "You are adding a MediaInputPort with a track mapping "
                    "while there already exist generic MediaInputPorts for this "
                    "destination stream. This can lead to TrackID collisions!");
@@ -229,8 +246,9 @@ TrackUnionStream::TrackUnionStream() :
       }
       MediaStream* source = map->mInputPort->GetSource();
       map->mOwnedDirectListeners.AppendElement(bound.mListener);
-      if (mDisabledTrackIDs.Contains(bound.mTrackID)) {
-        bound.mListener->IncreaseDisabled();
+      DisabledTrackMode currentMode = GetDisabledTrackMode(bound.mTrackID);
+      if (currentMode != DisabledTrackMode::ENABLED) {
+        bound.mListener->IncreaseDisabled(currentMode);
       }
       STREAM_LOG(LogLevel::Debug, ("TrackUnionStream %p adding direct listener "
                                    "%p for track %d. Forwarding to input "
@@ -332,12 +350,6 @@ TrackUnionStream::TrackUnionStream() :
                                    *static_cast<AudioSegment*>(segment),
                                    map->mInputPort->GetSource(),
                                    map->mInputTrackID);
-        } else {
-          // This part will be removed in bug 1201363.
-          l->NotifyQueuedTrackChanges(Graph(), outputTrack->GetID(),
-                                      outputStart, TrackEventCommand::TRACK_EVENT_NONE, *segment,
-                                      map->mInputPort->GetSource(),
-                                      map->mInputTrackID);
         }
       }
       for (TrackBound<MediaStreamTrackListener>& b : mTrackListeners) {
@@ -351,28 +363,30 @@ TrackUnionStream::TrackUnionStream() :
   }
 
 void
-TrackUnionStream::SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) {
+TrackUnionStream::SetTrackEnabledImpl(TrackID aTrackID, DisabledTrackMode aMode) {
+  bool enabled = aMode == DisabledTrackMode::ENABLED;
   for (TrackMapEntry& entry : mTrackMap) {
     if (entry.mOutputTrackID == aTrackID) {
       STREAM_LOG(LogLevel::Info, ("TrackUnionStream %p track %d was explicitly %s",
-                                   this, aTrackID, aEnabled ? "enabled" : "disabled"));
+                                   this, aTrackID, enabled ? "enabled" : "disabled"));
       for (DirectMediaStreamTrackListener* listener : entry.mOwnedDirectListeners) {
-        bool oldEnabled = !mDisabledTrackIDs.Contains(aTrackID);
-        if (!oldEnabled && aEnabled) {
+        DisabledTrackMode oldMode = GetDisabledTrackMode(aTrackID);
+        bool oldEnabled = oldMode == DisabledTrackMode::ENABLED;
+        if (!oldEnabled && enabled) {
           STREAM_LOG(LogLevel::Debug, ("TrackUnionStream %p track %d setting "
                                        "direct listener enabled",
                                        this, aTrackID));
-          listener->DecreaseDisabled();
-        } else if (oldEnabled && !aEnabled) {
+          listener->DecreaseDisabled(oldMode);
+        } else if (oldEnabled && !enabled) {
           STREAM_LOG(LogLevel::Debug, ("TrackUnionStream %p track %d setting "
                                        "direct listener disabled",
                                        this, aTrackID));
-          listener->IncreaseDisabled();
+          listener->IncreaseDisabled(aMode);
         }
       }
     }
   }
-  MediaStream::SetTrackEnabledImpl(aTrackID, aEnabled);
+  MediaStream::SetTrackEnabledImpl(aTrackID, aMode);
 }
 
 MediaStream*
@@ -414,8 +428,9 @@ TrackUnionStream::AddDirectTrackListenerImpl(already_AddRefed<DirectMediaStreamT
                                    this, listener.get(), aTrackID, source,
                                    entry.mInputTrackID));
       entry.mOwnedDirectListeners.AppendElement(listener);
-      if (mDisabledTrackIDs.Contains(aTrackID)) {
-        listener->IncreaseDisabled();
+      DisabledTrackMode currentMode = GetDisabledTrackMode(aTrackID);
+      if (currentMode != DisabledTrackMode::ENABLED) {
+        listener->IncreaseDisabled(currentMode);
       }
       source->AddDirectTrackListenerImpl(listener.forget(),
                                          entry.mInputTrackID);
@@ -446,9 +461,10 @@ TrackUnionStream::RemoveDirectTrackListenerImpl(DirectMediaStreamTrackListener* 
                                      this, aListener, aTrackID,
                                      entry.mInputPort->GetSource(),
                                      entry.mInputTrackID));
-        if (mDisabledTrackIDs.Contains(aTrackID)) {
+        DisabledTrackMode currentMode = GetDisabledTrackMode(aTrackID);
+        if (currentMode != DisabledTrackMode::ENABLED) {
           // Reset the listener's state.
-          aListener->DecreaseDisabled();
+          aListener->DecreaseDisabled(currentMode);
         }
         entry.mOwnedDirectListeners.RemoveElementAt(i);
         break;

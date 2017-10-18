@@ -3,7 +3,7 @@ var tab;
 function test() {
   waitForExplicitFinish();
 
-  tab = gBrowser.addTab();
+  tab = BrowserTestUtils.addTab(gBrowser);
   isnot(tab.getAttribute("fadein"), "true", "newly opened tab is yet to fade in");
 
   // Try to remove the tab right before the opening animation's first frame
@@ -23,13 +23,13 @@ function checkAnimationState() {
 
   info("tab didn't close immediately, so the tab opening animation must have started moving");
   info("waiting for the tab to close asynchronously");
-  tab.addEventListener("transitionend", function (event) {
+  tab.addEventListener("transitionend", function(event) {
     if (event.propertyName == "max-width") {
-      tab.removeEventListener("transitionend", arguments.callee, false);
-      executeSoon(function () {
+      tab.removeEventListener("transitionend", arguments.callee);
+      executeSoon(function() {
         ok(!tab.parentNode, "tab removed asynchronously");
         finish();
       });
     }
-  }, false);
+  });
 }

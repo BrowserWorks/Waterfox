@@ -210,11 +210,7 @@ function sleep(milliseconds) {
   var timeup = false;
 
   hwindow.setTimeout(function () { timeup = true; }, milliseconds);
-  var thread = Services.tm.currentThread;
-
-  while (!timeup) {
-    thread.processNextEvent(true);
-  }
+  Services.tm.spinEventLoopUntil(() => timeup);
 
   broker.pass({'function':'utils.sleep()'});
 }
@@ -269,7 +265,7 @@ function waitFor(callback, message, timeout, interval, thisObject) {
  * Note this function will not work if the user has custom toolbars (via extension) at the bottom or left/right of the screen
  */
 function getChromeOffset(elem) {
-  var win = elem.ownerDocument.defaultView;
+  var win = elem.ownerGlobal;
   // Calculate x offset
   var chromeWidth = 0;
 
@@ -304,7 +300,7 @@ function takeScreenshot(node, highlights) {
   // node can be either a window or an arbitrary DOM node
   try {
     // node is an arbitrary DOM node
-    win = node.ownerDocument.defaultView;
+    win = node.ownerGlobal;
     rect = node.getBoundingClientRect();
     width = rect.width;
     height = rect.height;
@@ -386,7 +382,7 @@ function saveDataURL(aDataURL, aFilename) {
                  .createInstance(Ci.nsIFileOutputStream);
   foStream.init(file, 0x02 | 0x08 | 0x10, FILE_PERMISSIONS, foStream.DEFER_OPEN);
 
-  let dataURI = NetUtil.newURI(aDataURL, "UTF8", null);
+  let dataURI = NetUtil.newURI(aDataURL, "UTF8");
   if (!dataURI.schemeIs("data")) {
     throw TypeError("aDataURL parameter has to have 'data'" +
                     " scheme instead of '" + dataURI.scheme + "'");

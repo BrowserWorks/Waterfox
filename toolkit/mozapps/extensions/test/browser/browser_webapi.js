@@ -10,14 +10,14 @@ registerCleanupFunction(() => {
 });
 
 function testWithAPI(task) {
-  return function*() {
-    yield BrowserTestUtils.withNewTab(TESTPAGE, task);
+  return async function() {
+    await BrowserTestUtils.withNewTab(TESTPAGE, task);
   }
 }
 
 let gProvider = new MockProvider();
 
-gProvider.createAddons([{
+let addons = gProvider.createAddons([{
   id: "addon1@tests.mozilla.org",
   name: "Test add-on 1",
   version: "2.1",
@@ -41,11 +41,21 @@ gProvider.createAddons([{
   type: "extension",
   userDisabled: true,
   isActive: false,
+}, {
+  id: "addon4@tests.mozilla.org",
+  name: "Test add-on 4",
+  version: "1",
+  description: "Longer description",
+  type: "extension",
+  userDisabled: false,
+  isActive: true,
 }]);
 
+addons[3].permissions &= ~AddonManager.PERM_CAN_UNINSTALL;
+
 function API_getAddonByID(browser, id) {
-  return ContentTask.spawn(browser, id, function*(id) {
-    let addon = yield content.navigator.mozAddonManager.getAddonByID(id);
+  return ContentTask.spawn(browser, id, async function(id) {
+    let addon = await content.navigator.mozAddonManager.getAddonByID(id);
 
     // We can't send native objects back so clone its properties.
     let result = {};
@@ -57,7 +67,7 @@ function API_getAddonByID(browser, id) {
   });
 }
 
-add_task(testWithAPI(function*(browser) {
+add_task(testWithAPI(async function(browser) {
   function compareObjects(web, real) {
     for (let prop of Object.keys(web)) {
       let webVal = web[prop];
@@ -66,6 +76,10 @@ add_task(testWithAPI(function*(browser) {
       switch (prop) {
         case "isEnabled":
           realVal = !real.userDisabled;
+          break;
+
+        case "canUninstall":
+          realVal = Boolean(real.permissions & AddonManager.PERM_CAN_UNINSTALL);
           break;
       }
 
@@ -79,14 +93,32 @@ add_task(testWithAPI(function*(browser) {
     }
   }
 
-  let [a1, a2, a3] = yield promiseAddonsByIDs(["addon1@tests.mozilla.org",
+  let [a1, a2, a3] = await promiseAddonsByIDs(["addon1@tests.mozilla.org",
                                                "addon2@tests.mozilla.org",
                                                "addon3@tests.mozilla.org"]);
-  let w1 = yield API_getAddonByID(browser, "addon1@tests.mozilla.org");
-  let w2 = yield API_getAddonByID(browser, "addon2@tests.mozilla.org");
-  let w3 = yield API_getAddonByID(browser, "addon3@tests.mozilla.org");
+  let w1 = await API_getAddonByID(browser, "addon1@tests.mozilla.org");
+  let w2 = await API_getAddonByID(browser, "addon2@tests.mozilla.org");
+  let w3 = await API_getAddonByID(browser, "addon3@tests.mozilla.org");
 
   compareObjects(w1, a1);
   compareObjects(w2, a2);
   compareObjects(w3, a3);
+}));
+
+add_task(testWithAPI(async function(browser) {
+  async function check(value, message) {
+    let enabled = await ContentTask.spawn(browser, null, async function() {
+      return content.navigator.mozAddonManager.permissionPromptsEnabled;
+    });
+    is(enabled, value, message);
+  }
+
+  const PERM = "extensions.webextPermissionPrompts";
+  if (Services.prefs.getBoolPref(PERM, false) == false) {
+    await SpecialPowers.pushPrefEnv({clear: [[PERM]]});
+    await check(false, `mozAddonManager.permissionPromptsEnabled is false when ${PERM} is unset`);
+  }
+
+  await SpecialPowers.pushPrefEnv({set: [[PERM, true]]});
+  await check(true, `mozAddonManager.permissionPromptsEnabled is true when ${PERM} is set`);
 }));

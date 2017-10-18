@@ -1,116 +1,90 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
- * Test if the summary text displayed in the network requests menu footer
- * is correct.
+ * Test if the summary text displayed in the network requests menu footer is correct.
  */
 
-function test() {
+add_task(function* () {
+  const {
+    getFormattedSize,
+    getFormattedTime
+  } = require("devtools/client/netmonitor/src/utils/format-utils");
+
   requestLongerTimeout(2);
-  let { PluralForm } = Cu.import("resource://gre/modules/PluralForm.jsm", {});
 
-  initNetMonitor(FILTERING_URL).then(([aTab, aDebuggee, aMonitor]) => {
-    info("Starting test... ");
+  let { tab, monitor } = yield initNetMonitor(FILTERING_URL);
+  info("Starting test... ");
 
-    let { $, L10N, NetMonitorView } = aMonitor.panelWin;
-    let { RequestsMenu } = NetMonitorView;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { getDisplayedRequestsSummary } =
+    windowRequire("devtools/client/netmonitor/src/selectors/index");
+  let { L10N } = windowRequire("devtools/client/netmonitor/src/utils/l10n");
+  let { PluralForm } = windowRequire("devtools/shared/plural-form");
 
-    RequestsMenu.lazyUpdate = false;
+  store.dispatch(Actions.batchEnable(false));
+  testStatus();
+
+  for (let i = 0; i < 2; i++) {
+    info(`Performing requests in batch #${i}`);
+    let wait = waitForNetworkEvents(monitor, 8);
+    yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+      content.wrappedJSObject.performRequests('{ "getMedia": true, "getFlash": true }');
+    });
+    yield wait;
+
     testStatus();
 
-    waitForNetworkEvents(aMonitor, 8).then(() => {
+    let buttons = ["html", "css", "js", "xhr", "fonts", "images", "media", "flash"];
+    for (let button of buttons) {
+      let buttonEl = document.querySelector(`.requests-list-filter-${button}-button`);
+      EventUtils.sendMouseEvent({ type: "click" }, buttonEl);
       testStatus();
+    }
+  }
 
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
-      testStatus();
+  yield teardown(monitor);
 
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
-      testStatus();
+  function testStatus() {
+    let state = store.getState();
+    let totalRequestsCount = state.requests.requests.size;
+    let requestsSummary = getDisplayedRequestsSummary(state);
+    info(`Current requests: ${requestsSummary.count} of ${totalRequestsCount}.`);
 
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-js-button"));
-      testStatus();
+    let valueCount = document.querySelector(".requests-list-network-summary-count")
+                        .textContent;
+    info("Current summary count: " + valueCount);
+    let expectedCount = PluralForm.get(requestsSummary.count,
+      L10N.getFormatStrWithNumbers("networkMenu.summary.requestsCount",
+        requestsSummary.count));
 
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-xhr-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-fonts-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-images-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-media-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-flash-button"));
-      testStatus();
-
-      info("Performing more requests.");
-      aDebuggee.performRequests('{ "getMedia": true, "getFlash": true }');
-      return waitForNetworkEvents(aMonitor, 8);
-    })
-    .then(() => {
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-html-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-css-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-js-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-xhr-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-fonts-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-images-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-media-button"));
-      testStatus();
-
-      EventUtils.sendMouseEvent({ type: "click" }, $("#requests-menu-filter-flash-button"));
-      testStatus();
-
-      teardown(aMonitor).then(finish);
-    });
-
-    function testStatus() {
-      let summary = $("#requests-menu-network-summary-button");
-      let value = summary.getAttribute("label");
-      info("Current summary: " + value);
-
-      let visibleItems = RequestsMenu.visibleItems;
-      let visibleRequestsCount = visibleItems.length;
-      let totalRequestsCount = RequestsMenu.itemCount;
-      info("Current requests: " + visibleRequestsCount + " of " + totalRequestsCount + ".");
-
-      if (!totalRequestsCount || !visibleRequestsCount) {
-        is(value, L10N.getStr("networkMenu.empty"),
-          "The current summary text is incorrect, expected an 'empty' label.");
-        return;
-      }
-
-      let totalBytes = RequestsMenu._getTotalBytesOfRequests(visibleItems);
-      let totalMillis =
-        RequestsMenu._getNewestRequest(visibleItems).attachment.endedMillis -
-        RequestsMenu._getOldestRequest(visibleItems).attachment.startedMillis;
-
-      info("Computed total bytes: " + totalBytes);
-      info("Computed total millis: " + totalMillis);
-
-      is(value, PluralForm.get(visibleRequestsCount, L10N.getStr("networkMenu.summary"))
-        .replace("#1", visibleRequestsCount)
-        .replace("#2", L10N.numberWithDecimals((totalBytes || 0) / 1024, 2))
-        .replace("#3", L10N.numberWithDecimals((totalMillis || 0) / 1000, 2))
-      , "The current summary text is incorrect.");
+    if (!totalRequestsCount || !requestsSummary.count) {
+      is(valueCount, L10N.getStr("networkMenu.summary.requestsCountEmpty"),
+        "The current summary text is incorrect, expected an 'empty' label.");
+      return;
     }
 
-    aDebuggee.performRequests('{ "getMedia": true, "getFlash": true }');
-  });
-}
+    let valueTransfer = document.querySelector(".requests-list-network-summary-transfer")
+                        .textContent;
+    info("Current summary transfer: " + valueTransfer);
+    let expectedTransfer = L10N.getFormatStrWithNumbers("networkMenu.summary.transferred",
+      getFormattedSize(requestsSummary.contentSize),
+      getFormattedSize(requestsSummary.transferredSize));
+
+    let valueFinish = document.querySelector(".requests-list-network-summary-finish")
+                        .textContent;
+    info("Current summary finish: " + valueFinish);
+    let expectedFinish = L10N.getFormatStrWithNumbers("networkMenu.summary.finish",
+      getFormattedTime(requestsSummary.millis));
+
+    info(`Computed total bytes: ${requestsSummary.bytes}`);
+    info(`Computed total millis: ${requestsSummary.millis}`);
+
+    is(valueCount, expectedCount, "The current summary count is correct.");
+    is(valueTransfer, expectedTransfer, "The current summary transfer is correct.");
+    is(valueFinish, expectedFinish, "The current summary finish is correct.");
+  }
+});

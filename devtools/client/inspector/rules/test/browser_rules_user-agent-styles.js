@@ -8,7 +8,7 @@
 // it is preffed on.
 
 var PREF_UA_STYLES = "devtools.inspector.showUserAgentStyles";
-const { PrefObserver } = require("devtools/client/styleeditor/utils");
+const { PrefObserver } = require("devtools/client/shared/prefs");
 
 const TEST_URI = URL_ROOT + "doc_author-sheet.html";
 
@@ -58,7 +58,7 @@ const TEST_DATA = [
 ];
 
 add_task(function* () {
-  requestLongerTimeout(2);
+  requestLongerTimeout(4);
 
   info("Starting the test with the pref set to true before toolbox is opened");
   yield setUserAgentStylesPref(true);

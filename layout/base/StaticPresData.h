@@ -12,7 +12,7 @@
 #include "nsCOMPtr.h"
 #include "nsFont.h"
 #include "nsIAtom.h"
-#include "nsILanguageAtomService.h"
+#include "nsLanguageAtomService.h"
 
 namespace mozilla {
 
@@ -55,6 +55,9 @@ struct LangGroupFontPrefs {
     return n;
   }
 
+  // Initialize this with the data for a given language
+  void Initialize(nsIAtom* aLangGroupAtom);
+
   nsCOMPtr<nsIAtom> mLangGroup;
   nscoord mMinimumFontSize;
   nsFont mDefaultVariableFont;
@@ -91,6 +94,32 @@ public:
   const nscoord* GetBorderWidthTable() { return mBorderWidthTable; }
 
   /**
+   * Given a language, get the language group name, which can
+   * be used as an argument to LangGroupFontPrefs::Initialize()
+   *
+   * aNeedsToCache is used for two things.  If null, it indicates that
+   * the nsLanguageAtomService is safe to cache the result of the
+   * language group lookup, either because we're on the main thread,
+   * or because we're on a style worker thread but the font lock has
+   * been acquired.  If non-null, it indicates that it's not safe to
+   * cache the result of the language group lookup (because we're on
+   * a style worker thread without the lock acquired).  In this case,
+   * GetLanguageGroup will store true in *aNeedsToCache true if we
+   * would have cached the result of a new lookup, and false if we
+   * were able to use an existing cached result.  Thus, callers that
+   * get a true *aNeedsToCache outparam value should make an effort
+   * to re-call GetLanguageGroup when it is safe to cache, to avoid
+   * recomputing the language group again later.
+   */
+  nsIAtom* GetLangGroup(nsIAtom* aLanguage, bool* aNeedsToCache = nullptr) const;
+
+  /**
+   * Same as GetLangGroup, but will not cache the result
+   *
+   */
+  already_AddRefed<nsIAtom> GetUncachedLangGroup(nsIAtom* aLanguage) const;
+
+  /**
    * Fetch the user's font preferences for the given aLanguage's
    * langugage group.
    *
@@ -103,9 +132,12 @@ public:
    * be fine. But just to be on the safe side, we leave the old mechanism as-is,
    * with an additional per-session cache that new callers can use if they don't
    * have a PresContext.
+   *
+   * See comment on GetLangGroup for the usage of aNeedsToCache.
    */
   const LangGroupFontPrefs* GetFontPrefsForLangHelper(nsIAtom* aLanguage,
-                                                      const LangGroupFontPrefs* aPrefs) const;
+                                                      const LangGroupFontPrefs* aPrefs,
+                                                      bool* aNeedsToCache = nullptr) const;
   /**
    * Get the default font for the given language and generic font ID.
    * aLanguage may not be nullptr.
@@ -138,10 +170,10 @@ public:
     MOZ_ASSERT(aLanguage);
     return GetDefaultFontHelper(aFontID, aLanguage, GetFontPrefsForLang(aLanguage));
   }
-  const LangGroupFontPrefs* GetFontPrefsForLang(nsIAtom* aLanguage) const
+  const LangGroupFontPrefs* GetFontPrefsForLang(nsIAtom* aLanguage, bool* aNeedsToCache = nullptr) const
   {
     MOZ_ASSERT(aLanguage);
-    return GetFontPrefsForLangHelper(aLanguage, &mStaticLangGroupFontPrefs);
+    return GetFontPrefsForLangHelper(aLanguage, &mStaticLangGroupFontPrefs, aNeedsToCache);
   }
 
   void ResetCachedFontPrefs() { mStaticLangGroupFontPrefs.Reset(); }
@@ -150,7 +182,7 @@ private:
   StaticPresData();
   ~StaticPresData() {}
 
-  nsCOMPtr<nsILanguageAtomService> mLangService;
+  nsLanguageAtomService* mLangService;
   nscoord mBorderWidthTable[3];
   LangGroupFontPrefs mStaticLangGroupFontPrefs;
 };

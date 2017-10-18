@@ -15,6 +15,8 @@
 #define MOZ_WM_APP_QUIT                   (WM_APP+0x0300)
 // Used as a "tracer" event to probe event loop latency.
 #define MOZ_WM_TRACE                      (WM_APP+0x0301)
+// accessibility priming
+#define MOZ_WM_STARTA11Y                  (WM_APP+0x0302)
 // Our internal message for WM_MOUSEWHEEL, WM_MOUSEHWHEEL, WM_VSCROLL and
 // WM_HSCROLL
 #define MOZ_WM_MOUSEVWHEEL                (WM_APP+0x0310)
@@ -45,100 +47,13 @@
 #define MOZ_WM_DEADCHAR                   (WM_APP+0x031E)
 #define MOZ_WM_SYSDEADCHAR                (WM_APP+0x031F)
 
-// Internal message for ensuring the file picker is visible on multi monitor
-// systems, and when the screen resolution changes.
-#define MOZ_WM_ENSUREVISIBLE              (WM_APP+0x374F)
-
 // XXX Should rename them to MOZ_WM_* and use safer values!
 // Messages for fullscreen transition window
 #define WM_FULLSCREEN_TRANSITION_BEFORE   (WM_USER + 0)
 #define WM_FULLSCREEN_TRANSITION_AFTER    (WM_USER + 1)
 
-/*****************************************************************************
- * WM_* messages and related constants which may not be defined by
- * old Windows SDK
- ****************************************************************************/
-
-#ifndef SM_CXPADDEDBORDER
-#define SM_CXPADDEDBORDER                 92
-#endif
-
-// require WINVER >= 0x601
-#ifndef SM_MAXIMUMTOUCHES
-#define SM_MAXIMUMTOUCHES                 95
-#endif
-
-#ifndef WM_THEMECHANGED
-#define WM_THEMECHANGED                   0x031A
-#endif
-
-#ifndef WM_GETOBJECT
-#define WM_GETOBJECT                      0x03d
-#endif
-
-#ifndef PBT_APMRESUMEAUTOMATIC
-#define PBT_APMRESUMEAUTOMATIC            0x0012
-#endif
-
-#ifndef WM_MOUSEHWHEEL
-#define WM_MOUSEHWHEEL                    0x020E
-#endif
-
-#ifndef MOUSEEVENTF_HWHEEL
-#define MOUSEEVENTF_HWHEEL                0x01000
-#endif
-
-#ifndef WM_MOUSELEAVE
-#define WM_MOUSELEAVE                     0x02A3
-#endif
-
-#ifndef SPI_GETWHEELSCROLLCHARS
-#define SPI_GETWHEELSCROLLCHARS           0x006C
-#endif
-
-#ifndef SPI_SETWHEELSCROLLCHARS
-#define SPI_SETWHEELSCROLLCHARS           0x006D
-#endif
-
-#ifndef MAPVK_VSC_TO_VK
-#define MAPVK_VK_TO_VSC                   0
-#define MAPVK_VSC_TO_VK                   1
-#define MAPVK_VK_TO_CHAR                  2
-#define MAPVK_VSC_TO_VK_EX                3
-#define MAPVK_VK_TO_VSC_EX                4
-#endif
-
-#ifndef WM_DWMCOMPOSITIONCHANGED
-#define WM_DWMCOMPOSITIONCHANGED          0x031E
-#endif
-#ifndef WM_DWMNCRENDERINGCHANGED
-#define WM_DWMNCRENDERINGCHANGED          0x031F
-#endif
-#ifndef WM_DWMCOLORIZATIONCOLORCHANGED
-#define WM_DWMCOLORIZATIONCOLORCHANGED    0x0320
-#endif
-#ifndef WM_DWMWINDOWMAXIMIZEDCHANGE
-#define WM_DWMWINDOWMAXIMIZEDCHANGE       0x0321
-#endif
-
 // Drop shadow window style
 #define CS_XP_DROPSHADOW                  0x00020000
-
-// App Command messages for IntelliMouse and Natural Keyboard Pro
-// These messages are not included in Visual C++ 6.0, but are in 7.0+
-#ifndef WM_APPCOMMAND
-#define WM_APPCOMMAND                     0x0319
-#endif
-
-#define FAPPCOMMAND_MASK                  0xF000
-
-#ifndef WM_GETTITLEBARINFOEX
-#define WM_GETTITLEBARINFOEX              0x033F
-#endif
-
-#ifndef CCHILDREN_TITLEBAR
-#define CCHILDREN_TITLEBAR                5
-#endif
 
 #ifndef APPCOMMAND_BROWSER_BACKWARD
   #define APPCOMMAND_BROWSER_BACKWARD       1

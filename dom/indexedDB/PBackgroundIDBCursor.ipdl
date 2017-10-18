@@ -5,7 +5,10 @@
 include protocol PBackgroundIDBTransaction;
 include protocol PBackgroundIDBVersionChangeTransaction;
 include protocol PBackgroundMutableFile;
-include protocol PBlob;
+include protocol PChildToParentStream; // FIXME: bug 792908
+include protocol PFileDescriptorSet; // FIXME: bug 792908
+include protocol PIPCBlobInputStream; // FIXME: bug 792908
+include protocol PParentToChildStream; // FIXME: bug 792908
 
 include PBackgroundIDBSharedTypes;
 
@@ -26,6 +29,12 @@ struct ContinueParams
   Key key;
 };
 
+struct ContinuePrimaryKeyParams
+{
+  Key key;
+  Key primaryKey;
+};
+
 struct AdvanceParams
 {
   uint32_t count;
@@ -34,6 +43,7 @@ struct AdvanceParams
 union CursorRequestParams
 {
   ContinueParams;
+  ContinuePrimaryKeyParams;
   AdvanceParams;
 };
 
@@ -80,7 +90,7 @@ protocol PBackgroundIDBCursor
 parent:
   async DeleteMe();
 
-  async Continue(CursorRequestParams params, Key key);
+  async Continue(CursorRequestParams params);
 
 child:
   async __delete__();

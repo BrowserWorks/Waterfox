@@ -10,6 +10,10 @@ import org.mozilla.gecko.home.HomeConfig;
 import org.mozilla.gecko.home.HomeConfig.PanelType;
 import org.mozilla.gecko.util.StringUtils;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class AboutPages {
     // All of our special pages.
     public static final String ACCOUNTS        = "about:accounts";
@@ -72,22 +76,16 @@ public class AboutPages {
 
     }
 
-    private static final String[] DEFAULT_ICON_PAGES = new String[] {
-        ACCOUNTS,
-        ADDONS,
-        CONFIG,
-        DOWNLOADS,
-        FIREFOX,
-        HEALTHREPORT,
-        UPDATER
-    };
-
-    /**
-     * Callers must not modify the returned array.
-     */
-    public static String[] getDefaultIconPages() {
-        return DEFAULT_ICON_PAGES;
-    }
+    public static final List<String> DEFAULT_ICON_PAGES = Collections.unmodifiableList(Arrays.asList(
+            HOME,
+            ACCOUNTS,
+            ADDONS,
+            CONFIG,
+            DOWNLOADS,
+            FIREFOX,
+            HEALTHREPORT,
+            UPDATER
+    ));
 
     public static boolean isBuiltinIconPage(final String url) {
         if (url == null ||
@@ -101,8 +99,8 @@ public class AboutPages {
         }
 
         // TODO: it'd be quicker to not compare the "about:" part every time.
-        for (int i = 0; i < DEFAULT_ICON_PAGES.length; ++i) {
-            if (DEFAULT_ICON_PAGES[i].equals(url)) {
+        for (String page : DEFAULT_ICON_PAGES) {
+            if (page.equals(url)) {
                 return true;
             }
         }

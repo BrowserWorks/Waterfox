@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import os
 import sys
 
 import mozfile
@@ -12,7 +13,10 @@ from firefox_ui_harness.testcases import UpdateTestCase
 
 
 DEFAULT_PREFS = {
+    # Bug 1355026: Re-enable when support for the new simplified UI update is available
+    'app.update.doorhanger': False,
     'app.update.log': True,
+    'app.update.staging.enabled': True,
     'startup.homepage_override_url': 'about:blank',
 }
 
@@ -20,21 +24,25 @@ DEFAULT_PREFS = {
 class UpdateTestRunner(FirefoxUITestRunner):
 
     def __init__(self, **kwargs):
-        FirefoxUITestRunner.__init__(self, **kwargs)
+        super(UpdateTestRunner, self).__init__(**kwargs)
 
         self.original_bin = self.bin
 
         self.prefs.update(DEFAULT_PREFS)
 
-        # In case of overriding the update URL, set the appropriate preference
-        override_url = kwargs.pop('update_override_url', None)
-        if override_url:
-            self.prefs.update({'app.update.url.override': override_url})
-
         self.run_direct_update = not kwargs.pop('update_fallback_only', False)
         self.run_fallback_update = not kwargs.pop('update_direct_only', False)
 
         self.test_handlers = [UpdateTestCase]
+
+        # With bug 1355888 Marionette uses an environment variable to identify
+        # if it should be active. It's important especially for restarts of the
+        # application to set this, because if it is not present Marionette will
+        # not start. To allow updates from builds before this change, the
+        # environment variable has to be pre-emptively set.
+        # TODO: Can be removed once we no longer have to test updates from
+        # Firefox 55.0 and earlier.
+        os.environ['MOZ_MARIONETTE'] = '1'
 
     def run_tests(self, tests):
         # Used to store the last occurred exception because we execute
@@ -57,7 +65,7 @@ class UpdateTestRunner(FirefoxUITestRunner):
                 self.bin = mozinstall.get_binary(application_folder, 'Firefox')
 
                 self.test_tags = tags
-                FirefoxUITestRunner.run_tests(self, tests)
+                super(UpdateTestRunner, self).run_tests(tests)
 
             except Exception:
                 self.exc_info = sys.exc_info()

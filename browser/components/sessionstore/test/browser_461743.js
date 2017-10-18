@@ -11,14 +11,14 @@ function test() {
     "browser/components/sessionstore/test/browser_461743_sample.html";
 
   let frameCount = 0;
-  let tab = gBrowser.addTab(testURL);
+  let tab = BrowserTestUtils.addTab(gBrowser, testURL);
   tab.linkedBrowser.addEventListener("load", function(aEvent) {
     // Wait for all frames to load completely.
     if (frameCount++ < 2)
       return;
     tab.linkedBrowser.removeEventListener("load", arguments.callee, true);
     let tab2 = gBrowser.duplicateTab(tab);
-    tab2.linkedBrowser.addEventListener("461743", function(aEvent) {
+    tab2.linkedBrowser.addEventListener("461743", function(eventTab2) {
       tab2.linkedBrowser.removeEventListener("461743", arguments.callee, true);
       is(aEvent.data, "done", "XSS injection was attempted");
 

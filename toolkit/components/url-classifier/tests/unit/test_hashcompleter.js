@@ -296,6 +296,7 @@ function runNextCompletion() {
   finishedCompletions = 0;
   for (let completion of completionSets[currentCompletionSet]) {
     completer.complete(completion.hash.substring(0,4), gethashUrl,
+                       "test-phish-shavar", // Could be arbitrary v2 table name.
                        (new callback(completion)));
   }
 }
@@ -354,7 +355,7 @@ function callback(completion) {
 }
 
 callback.prototype = {
-  completion: function completion(hash, table, chunkId, trusted) {
+  completionV2: function completion(hash, table, chunkId, trusted) {
     do_check_true(this._completion.expectCompletion);
     if (this._completion.multipleCompletions) {
       for (let completion of this._completion.completions) {

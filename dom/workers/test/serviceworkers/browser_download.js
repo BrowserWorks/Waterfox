@@ -25,8 +25,7 @@ function windowObserver(win, topic) {
     return;
   }
 
-  win.addEventListener('load', function onLoadWindow() {
-    win.removeEventListener('load', onLoadWindow, false);
+  win.addEventListener('load', function() {
     if (win.document.documentURI ===
         'chrome://mozapps/content/downloads/unknownContentType.xul') {
       executeSoon(function() {
@@ -35,7 +34,7 @@ function windowObserver(win, topic) {
         win.document.documentElement.acceptDialog();
       });
     }
-  }, false);
+  }, {once: true});
 }
 
 function test() {
@@ -48,7 +47,7 @@ function test() {
                                      ['dom.serviceWorkers.testing.enabled', true]]},
                             function() {
     var url = gTestRoot + 'download/window.html';
-    var tab = gBrowser.addTab();
+    var tab = BrowserTestUtils.addTab(gBrowser);
     gBrowser.selectedTab = tab;
 
     Downloads.getList(Downloads.ALL).then(function(downloadList) {

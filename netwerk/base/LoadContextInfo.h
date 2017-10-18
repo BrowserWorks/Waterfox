@@ -19,15 +19,14 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSILOADCONTEXTINFO
 
-  LoadContextInfo(bool aIsPrivate, bool aIsAnonymous, NeckoOriginAttributes aOriginAttributes);
+  LoadContextInfo(bool aIsAnonymous, OriginAttributes aOriginAttributes);
 
 private:
   virtual ~LoadContextInfo();
 
 protected:
-  bool mIsPrivate : 1;
   bool mIsAnonymous : 1;
-  NeckoOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 };
 
 class LoadContextInfoFactory : public nsILoadContextInfoFactory
@@ -53,9 +52,8 @@ LoadContextInfo*
 GetLoadContextInfo(nsILoadContextInfo *aInfo);
 
 LoadContextInfo*
-GetLoadContextInfo(bool const aIsPrivate,
-                   bool const aIsAnonymous,
-                   NeckoOriginAttributes const &aOriginAttributes);
+GetLoadContextInfo(bool const aIsAnonymous,
+                   OriginAttributes const &aOriginAttributes);
 
 } // namespace net
 } // namespace mozilla

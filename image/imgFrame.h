@@ -11,10 +11,11 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Move.h"
-#include "mozilla/VolatileBuffer.h"
+#include "FrameTimeout.h"
 #include "gfxDrawable.h"
 #include "imgIContainer.h"
 #include "MainThreadUtils.h"
+#include "nsAutoPtr.h"
 
 namespace mozilla {
 namespace image {
@@ -44,106 +45,6 @@ enum class DisposalMethod : int8_t {
 enum class Opacity : uint8_t {
   FULLY_OPAQUE,
   SOME_TRANSPARENCY
-};
-
-/**
- * FrameTimeout wraps a frame timeout value (measured in milliseconds) after
- * first normalizing it. This normalization is necessary because some tools
- * generate incorrect frame timeout values which we nevertheless have to
- * support. For this reason, code that deals with frame timeouts should always
- * use a FrameTimeout value rather than the raw value from the image header.
- */
-struct FrameTimeout
-{
-  /**
-   * @return a FrameTimeout of zero. This should be used only for math
-   * involving FrameTimeout values. You can't obtain a zero FrameTimeout from
-   * FromRawMilliseconds().
-   */
-  static FrameTimeout Zero() { return FrameTimeout(0); }
-
-  /// @return an infinite FrameTimeout.
-  static FrameTimeout Forever() { return FrameTimeout(-1); }
-
-  /// @return a FrameTimeout obtained by normalizing a raw timeout value.
-  static FrameTimeout FromRawMilliseconds(int32_t aRawMilliseconds)
-  {
-    // Normalize all infinite timeouts to the same value.
-    if (aRawMilliseconds < 0) {
-      return FrameTimeout::Forever();
-    }
-
-    // Very small timeout values are problematic for two reasons: we don't want
-    // to burn energy redrawing animated images extremely fast, and broken tools
-    // generate these values when they actually want a "default" value, so such
-    // images won't play back right without normalization. For some context,
-    // see bug 890743, bug 125137, bug 139677, and bug 207059. The historical
-    // behavior of IE and Opera was:
-    //   IE 6/Win:
-    //     10 - 50ms is normalized to 100ms.
-    //     >50ms is used unnormalized.
-    //   Opera 7 final/Win:
-    //     10ms is normalized to 100ms.
-    //     >10ms is used unnormalized.
-    if (aRawMilliseconds >= 0 && aRawMilliseconds <= 10 ) {
-      return FrameTimeout(100);
-    }
-
-    // The provided timeout value is OK as-is.
-    return FrameTimeout(aRawMilliseconds);
-  }
-
-  bool operator==(const FrameTimeout& aOther) const
-  {
-    return mTimeout == aOther.mTimeout;
-  }
-
-  bool operator!=(const FrameTimeout& aOther) const { return !(*this == aOther); }
-
-  FrameTimeout operator+(const FrameTimeout& aOther)
-  {
-    if (*this == Forever() || aOther == Forever()) {
-      return Forever();
-    }
-
-    return FrameTimeout(mTimeout + aOther.mTimeout);
-  }
-
-  FrameTimeout& operator+=(const FrameTimeout& aOther)
-  {
-    *this = *this + aOther;
-    return *this;
-  }
-
-  /**
-   * @return this FrameTimeout's value in milliseconds. Illegal to call on a
-   * an infinite FrameTimeout value.
-   */
-  uint32_t AsMilliseconds() const
-  {
-    if (*this == Forever()) {
-      MOZ_ASSERT_UNREACHABLE("Calling AsMilliseconds() on an infinite FrameTimeout");
-      return 100;  // Fail to something sane.
-    }
-
-    return uint32_t(mTimeout);
-  }
-
-  /**
-   * @return this FrameTimeout value encoded so that non-negative values
-   * represent a timeout in milliseconds, and -1 represents an infinite
-   * timeout.
-   *
-   * XXX(seth): This is a backwards compatibility hack that should be removed.
-   */
-  int32_t AsEncodedValueDeprecated() const { return mTimeout; }
-
-private:
-  explicit FrameTimeout(int32_t aTimeout)
-    : mTimeout(aTimeout)
-  { }
-
-  int32_t mTimeout;
 };
 
 /**
@@ -210,14 +111,14 @@ public:
                           const nsIntRect& aRect,
                           SurfaceFormat aFormat,
                           uint8_t aPaletteDepth = 0,
-                          bool aNonPremult = false);
+                          bool aNonPremult = false,
+                          bool aIsAnimated = false);
 
-  nsresult InitForDecoder(const nsIntSize& aSize,
-                          SurfaceFormat aFormat,
-                          uint8_t aPaletteDepth = 0)
+  nsresult InitForAnimator(const nsIntSize& aSize,
+                           SurfaceFormat aFormat)
   {
     return InitForDecoder(aSize, nsIntRect(0, 0, aSize.width, aSize.height),
-                          aFormat, aPaletteDepth);
+                          aFormat, 0, false, true);
   }
 
 
@@ -230,12 +131,16 @@ public:
    * that the underlying surface may not be stored in a volatile buffer on all
    * platforms, and raw access to the surface (using RawAccessRef()) may be much
    * more expensive than in the InitForDecoder() case.
+   *
+   * aBackend specifies the DrawTarget backend type this imgFrame is supposed
+   *          to be drawn to.
    */
   nsresult InitWithDrawable(gfxDrawable* aDrawable,
                             const nsIntSize& aSize,
                             const SurfaceFormat aFormat,
                             SamplingFilter aSamplingFilter,
-                            uint32_t aImageFlags);
+                            uint32_t aImageFlags,
+                            gfx::BackendType aBackend);
 
   DrawableFrameRef DrawableRef();
   RawAccessFrameRef RawAccessRef();
@@ -253,7 +158,8 @@ public:
   void SetRawAccessOnly();
 
   bool Draw(gfxContext* aContext, const ImageRegion& aRegion,
-            SamplingFilter aSamplingFilter, uint32_t aImageFlags);
+            SamplingFilter aSamplingFilter, uint32_t aImageFlags,
+            float aOpacity);
 
   nsresult ImageUpdated(const nsIntRect& aUpdateRect);
 
@@ -274,12 +180,15 @@ public:
    * @param aBlendRect       For animation frames, if present, the subrect in
    *                         which @aBlendMethod applies. Outside of this
    *                         subrect, BlendMethod::OVER is always used.
+   * @param aFinalize        Finalize the underlying surface (e.g. so that it
+   *                         may be marked as read only if possible).
    */
   void Finish(Opacity aFrameOpacity = Opacity::SOME_TRANSPARENCY,
               DisposalMethod aDisposalMethod = DisposalMethod::KEEP,
               FrameTimeout aTimeout = FrameTimeout::FromRawMilliseconds(0),
               BlendMethod aBlendMethod = BlendMethod::OVER,
-              const Maybe<IntRect>& aBlendRect = Nothing());
+              const Maybe<IntRect>& aBlendRect = Nothing(),
+              bool aFinalize = true);
 
   /**
    * Mark this imgFrame as aborted. This informs the imgFrame that if it isn't
@@ -321,7 +230,6 @@ public:
   IntSize GetImageSize() const { return mImageSize; }
   IntRect GetRect() const { return mFrameRect; }
   IntSize GetSize() const { return mFrameRect.Size(); }
-  bool NeedsPadding() const { return mFrameRect.TopLeft() != IntPoint(0, 0); }
   void GetImageData(uint8_t** aData, uint32_t* length) const;
   uint8_t* GetImageData() const;
 
@@ -337,13 +245,12 @@ public:
 
   void SetOptimizable();
 
-  Color SinglePixelColor() const;
-  bool IsSinglePixel() const;
-
-  already_AddRefed<SourceSurface> GetSurface();
+  void FinalizeSurface();
+  already_AddRefed<SourceSurface> GetSourceSurface();
 
   void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf, size_t& aHeapSizeOut,
-                              size_t& aNonHeapSizeOut) const;
+                              size_t& aNonHeapSizeOut,
+                              size_t& aSharedHandlesOut) const;
 
 private: // methods
 
@@ -351,8 +258,7 @@ private: // methods
 
   nsresult LockImageData();
   nsresult UnlockImageData();
-  bool     CanOptimizeOpaqueImage();
-  nsresult Optimize();
+  nsresult Optimize(gfx::DrawTarget* aTarget);
 
   void AssertImageDataLocked() const;
 
@@ -361,7 +267,8 @@ private: // methods
   void GetImageDataInternal(uint8_t** aData, uint32_t* length) const;
   uint32_t GetImageBytesPerRow() const;
   uint32_t GetImageDataLength() const;
-  already_AddRefed<SourceSurface> GetSurfaceInternal();
+  void FinalizeSurfaceInternal();
+  already_AddRefed<SourceSurface> GetSourceSurfaceInternal();
 
   uint32_t PaletteDataLength() const
   {
@@ -379,12 +286,8 @@ private: // methods
     bool IsValid() { return !!mDrawable; }
   };
 
-  SurfaceWithFormat SurfaceForDrawing(bool               aDoPadding,
-                                      bool               aDoPartialDecode,
+  SurfaceWithFormat SurfaceForDrawing(bool               aDoPartialDecode,
                                       bool               aDoTile,
-                                      gfxContext*        aContext,
-                                      const nsIntMargin& aPadding,
-                                      gfxRect&           aImageRect,
                                       ImageRegion&       aRegion,
                                       SourceSurface*     aSurface);
 
@@ -399,11 +302,25 @@ private: // data
 
   mutable Monitor mMonitor;
 
-  RefPtr<DataSourceSurface> mImageSurface;
-  RefPtr<SourceSurface> mOptSurface;
+  /**
+   * Surface which contains either a weak or a strong reference to its
+   * underlying data buffer. If it is a weak reference, and there are no strong
+   * references, the buffer may be released due to events such as low memory.
+   */
+  RefPtr<DataSourceSurface> mRawSurface;
 
-  RefPtr<VolatileBuffer> mVBuf;
-  VolatileBufferPtr<uint8_t> mVBufPtr;
+  /**
+   * Refers to the same data as mRawSurface, but when set, it guarantees that
+   * we hold a strong reference to the underlying data buffer.
+   */
+  RefPtr<DataSourceSurface> mLockedSurface;
+
+  /**
+   * Optimized copy of mRawSurface for the DrawTarget that will render it. This
+   * is unused if the DrawTarget is able to render DataSourceSurface buffers
+   * directly.
+   */
+  RefPtr<SourceSurface> mOptSurface;
 
   nsIntRect mDecoded;
 
@@ -418,7 +335,6 @@ private: // data
   Maybe<IntRect> mBlendRect;
   SurfaceFormat  mFormat;
 
-  bool mHasNoAlpha;
   bool mAborted;
   bool mFinished;
   bool mOptimizable;
@@ -445,30 +361,40 @@ private: // data
   // Main-thread-only mutable data.
   //////////////////////////////////////////////////////////////////////////////
 
-  // Note that the data stored in gfx::Color is *non-alpha-premultiplied*.
-  Color        mSinglePixelColor;
-
-  bool mSinglePixel;
   bool mCompositingFailed;
 };
 
 /**
  * A reference to an imgFrame that holds the imgFrame's surface in memory,
  * allowing drawing. If you have a DrawableFrameRef |ref| and |if (ref)| returns
- * true, then calls to Draw() and GetSurface() are guaranteed to succeed.
+ * true, then calls to Draw() and GetSourceSurface() are guaranteed to succeed.
  */
 class DrawableFrameRef final
 {
+  typedef gfx::DataSourceSurface DataSourceSurface;
+
 public:
   DrawableFrameRef() { }
 
   explicit DrawableFrameRef(imgFrame* aFrame)
     : mFrame(aFrame)
-    , mRef(aFrame->mVBuf)
   {
-    if (mRef.WasBufferPurged()) {
-      mFrame = nullptr;
-      mRef = nullptr;
+    MOZ_ASSERT(aFrame);
+    MonitorAutoLock lock(aFrame->mMonitor);
+
+    // Paletted images won't have a surface so there is no strong reference
+    // to hold on to. Since Draw() and GetSourceSurface() calls will not work
+    // in that case, we should be using RawAccessFrameRef exclusively instead.
+    // See FrameAnimator::GetRawFrame for an example of this behaviour.
+    if (aFrame->mRawSurface) {
+      mRef = new DataSourceSurface::ScopedMap(aFrame->mRawSurface,
+                                              DataSourceSurface::READ_WRITE);
+      if (!mRef->IsMapped()) {
+        mFrame = nullptr;
+        mRef = nullptr;
+      }
+    } else {
+      MOZ_ASSERT(aFrame->mOptSurface || aFrame->GetIsPaletted());
     }
   }
 
@@ -512,7 +438,7 @@ private:
   DrawableFrameRef(const DrawableFrameRef& aOther) = delete;
 
   RefPtr<imgFrame> mFrame;
-  VolatileBufferPtr<uint8_t> mRef;
+  nsAutoPtr<DataSourceSurface::ScopedMap> mRef;
 };
 
 /**
@@ -600,6 +526,8 @@ private:
 
   RefPtr<imgFrame> mFrame;
 };
+
+void MarkSurfaceShared(gfx::SourceSurface* aSurface);
 
 } // namespace image
 } // namespace mozilla

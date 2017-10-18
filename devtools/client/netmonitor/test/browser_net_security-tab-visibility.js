@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -31,10 +31,13 @@ add_task(function* () {
     }
   ];
 
-  let [tab, debuggee, monitor] = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { getSelectedRequest } =
+    windowRequire("devtools/client/netmonitor/src/selectors/index");
+
+  store.dispatch(Actions.batchEnable(false));
 
   for (let testcase of TEST_DATA) {
     info("Testing Security tab visibility for " + testcase.desc);
@@ -44,53 +47,46 @@ add_task(function* () {
                        waitForSecurityBrokenNetworkEvent() :
                        waitForNetworkEvents(monitor, 1);
 
-    let tab = $("#security-tab");
-    let tabpanel = $("#security-tabpanel");
-
     info("Performing a request to " + testcase.uri);
-    debuggee.performRequests(1, testcase.uri);
+    yield ContentTask.spawn(tab.linkedBrowser, testcase.uri, function* (url) {
+      content.wrappedJSObject.performRequests(1, url);
+    });
 
     info("Waiting for new network event.");
     yield onNewItem;
 
     info("Selecting the request.");
-    RequestsMenu.selectedIndex = 0;
+    EventUtils.sendMouseEvent({ type: "mousedown" },
+      document.querySelectorAll(".request-list-item")[0]);
 
-    is(RequestsMenu.selectedItem.attachment.securityState, undefined,
+    is(getSelectedRequest(store.getState()).securityState, undefined,
        "Security state has not yet arrived.");
-    is(tab.hidden, !testcase.visibleOnNewEvent,
-       "Security tab is " +
-        (testcase.visibleOnNewEvent ? "visible" : "hidden") +
-       " after new request was added to the menu.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after new request was added to the menu.");
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnNewEvent,
+      "Security tab is " + (testcase.visibleOnNewEvent ? "visible" : "hidden") +
+      " after new request was added to the menu.");
 
     info("Waiting for security information to arrive.");
     yield onSecurityInfo;
 
-    ok(RequestsMenu.selectedItem.attachment.securityState,
+    yield waitUntil(() => !!getSelectedRequest(store.getState()).securityState);
+    ok(getSelectedRequest(store.getState()).securityState,
        "Security state arrived.");
-    is(tab.hidden, !testcase.visibleOnSecurityInfo,
-       "Security tab is " +
-        (testcase.visibleOnSecurityInfo ? "visible" : "hidden") +
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnSecurityInfo,
+       "Security tab is " + (testcase.visibleOnSecurityInfo ? "visible" : "hidden") +
        " after security information arrived.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after security information arrived.");
 
     info("Waiting for request to complete.");
     yield onComplete;
-    is(tab.hidden, !testcase.visibleOnceComplete,
-       "Security tab is " +
-        (testcase.visibleOnceComplete ? "visible" : "hidden") +
+
+    is(!!document.querySelector("#security-tab"), testcase.visibleOnceComplete,
+       "Security tab is " + (testcase.visibleOnceComplete ? "visible" : "hidden") +
        " after request has been completed.");
-    is(tabpanel.hidden, false,
-      "#security-tabpanel is visible after request is complete.");
 
     info("Clearing requests.");
-    RequestsMenu.clear();
+    store.dispatch(Actions.clearRequests());
   }
 
-  yield teardown(monitor);
+  return teardown(monitor);
 
   /**
    * Returns a promise that's resolved once a request with security issues is

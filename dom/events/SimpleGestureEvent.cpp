@@ -109,7 +109,7 @@ SimpleGestureEvent::InitSimpleGestureEvent(const nsAString& aTypeArg,
                                            bool aCancelableArg,
                                            nsGlobalWindow* aViewArg,
                                            int32_t aDetailArg,
-                                           int32_t aScreenX, 
+                                           int32_t aScreenX,
                                            int32_t aScreenY,
                                            int32_t aClientX,
                                            int32_t aClientY,
@@ -124,6 +124,8 @@ SimpleGestureEvent::InitSimpleGestureEvent(const nsAString& aTypeArg,
                                            double aDeltaArg,
                                            uint32_t aClickCountArg)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   MouseEvent::InitMouseEvent(aTypeArg, aCanBubbleArg, aCancelableArg,
                              aViewArg, aDetailArg,
                              aScreenX, aScreenY, aClientX, aClientY,

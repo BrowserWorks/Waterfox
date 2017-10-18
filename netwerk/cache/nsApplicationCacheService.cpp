@@ -7,7 +7,6 @@
 #include "nsCacheService.h"
 #include "nsApplicationCacheService.h"
 #include "nsCRT.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIObserverService.h"
@@ -189,7 +188,7 @@ nsApplicationCacheService::EvictMatchingOriginAttributes(nsAString const &aPatte
 
     mozilla::OriginAttributesPattern pattern;
     if (!pattern.Init(aPattern)) {
-        NS_ERROR("Could not parse OriginAttributesPattern JSON in clear-origin-data notification");
+        NS_ERROR("Could not parse OriginAttributesPattern JSON in clear-origin-attributes-data notification");
         return NS_ERROR_FAILURE;
     }
 
@@ -234,10 +233,10 @@ public:
     NS_DECL_ISUPPORTS
 
     // nsIObserver implementation.
-    NS_IMETHODIMP
+    NS_IMETHOD
     Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) override
     {
-        MOZ_ASSERT(!nsCRT::strcmp(aTopic, "clear-origin-data"));
+        MOZ_ASSERT(!nsCRT::strcmp(aTopic, "clear-origin-attributes-data"));
 
         nsresult rv;
 
@@ -263,6 +262,6 @@ nsApplicationCacheService::AppClearDataObserverInit()
   nsCOMPtr<nsIObserverService> observerService = services::GetObserverService();
   if (observerService) {
     RefPtr<AppCacheClearDataObserver> obs = new AppCacheClearDataObserver();
-    observerService->AddObserver(obs, "clear-origin-data", /*holdsWeak=*/ false);
+    observerService->AddObserver(obs, "clear-origin-attributes-data", /*ownsWeak=*/ false);
   }
 }

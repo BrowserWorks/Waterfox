@@ -77,7 +77,6 @@ nsJPEGDecoder::nsJPEGDecoder(RasterImage* aImage,
                                    SIZE_MAX),
           Transition::TerminateSuccess())
  , mDecodeStyle(aDecodeStyle)
- , mSampleSize(0)
 {
   mState = JPEG_HEADER;
   mReading = true;
@@ -110,7 +109,8 @@ nsJPEGDecoder::~nsJPEGDecoder()
   mInfo.src = nullptr;
   jpeg_destroy_decompress(&mInfo);
 
-  PR_FREEIF(mBackBuffer);
+  free(mBackBuffer);
+  mBackBuffer = nullptr;
   if (mTransform) {
     qcms_transform_release(mTransform);
   }
@@ -123,10 +123,10 @@ nsJPEGDecoder::~nsJPEGDecoder()
           this));
 }
 
-Telemetry::ID
-nsJPEGDecoder::SpeedHistogram()
+Maybe<Telemetry::HistogramID>
+nsJPEGDecoder::SpeedHistogram() const
 {
-  return Telemetry::IMAGE_DECODE_SPEED_JPEG;
+  return Some(Telemetry::IMAGE_DECODE_SPEED_JPEG);
 }
 
 nsresult
@@ -242,17 +242,8 @@ nsJPEGDecoder::ReadJPEGData(const char* aData, size_t aLength)
         return Transition::ContinueUnbuffered(State::JPEG_DATA); // I/O suspension
       }
 
-      // If we have a sample size specified for -moz-sample-size, use it.
-      if (mSampleSize > 0) {
-        mInfo.scale_num = 1;
-        mInfo.scale_denom = mSampleSize;
-      }
-
-      // Used to set up image size so arrays can be allocated
-      jpeg_calc_output_dimensions(&mInfo);
-
       // Post our size to the superclass
-      PostSize(mInfo.output_width, mInfo.output_height,
+      PostSize(mInfo.image_width, mInfo.image_height,
                ReadOrientationFromEXIF());
       if (HasError()) {
         // Setting the size led to an error.
@@ -387,11 +378,12 @@ nsJPEGDecoder::ReadJPEGData(const char* aData, size_t aLength)
     mInfo.buffered_image = mDecodeStyle == PROGRESSIVE &&
                            jpeg_has_multiple_scans(&mInfo);
 
+    /* Used to set up image size so arrays can be allocated */
+    jpeg_calc_output_dimensions(&mInfo);
+
     MOZ_ASSERT(!mImageData, "Already have a buffer allocated?");
-    nsIntSize targetSize = mDownscaler ? mDownscaler->TargetSize() : GetSize();
-    nsresult rv = AllocateFrame(0, targetSize,
-                                nsIntRect(nsIntPoint(), targetSize),
-                                gfx::SurfaceFormat::B8G8R8A8);
+    nsresult rv = AllocateFrame(/* aFrameNum = */ 0, OutputSize(),
+                                FullOutputFrame(), SurfaceFormat::B8G8R8X8);
     if (NS_FAILED(rv)) {
       mState = JPEG_ERROR;
       MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
@@ -402,7 +394,7 @@ nsJPEGDecoder::ReadJPEGData(const char* aData, size_t aLength)
     MOZ_ASSERT(mImageData, "Should have a buffer now");
 
     if (mDownscaler) {
-      nsresult rv = mDownscaler->BeginFrame(GetSize(), Nothing(),
+      nsresult rv = mDownscaler->BeginFrame(Size(), Nothing(),
                                             mImageData,
                                             /* aHasAlpha = */ false);
       if (NS_FAILED(rv)) {
@@ -414,7 +406,7 @@ nsJPEGDecoder::ReadJPEGData(const char* aData, size_t aLength)
     MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
            ("        JPEGDecoderAccounting: nsJPEGDecoder::"
             "Write -- created image frame with %ux%u pixels",
-            mInfo.output_width, mInfo.output_height));
+            mInfo.image_width, mInfo.image_height));
 
     mState = JPEG_START_DECOMPRESS;
     MOZ_FALLTHROUGH; // to start decompressing.
@@ -913,7 +905,7 @@ fill_input_buffer (j_decompress_ptr jd)
 
     // Round up to multiple of 256 bytes.
     const size_t roundup_buflen = ((new_backtrack_buflen + 255) >> 8) << 8;
-    JOCTET* buf = (JOCTET*)PR_REALLOC(decoder->mBackBuffer, roundup_buflen);
+    JOCTET* buf = (JOCTET*) realloc(decoder->mBackBuffer, roundup_buflen);
     // Check for OOM
     if (!buf) {
       decoder->mInfo.err->msg_code = JERR_OUT_OF_MEMORY;

@@ -9,6 +9,7 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'scale_yuv_argb.cpp',
     'ycbcr_to_rgb565.cpp',
     'YCbCrUtils.cpp',
     'yuv_convert.cpp',
@@ -59,6 +60,6 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['HAVE_ARM_NEON']:
         'yuv_convert_arm.cpp',
     ]
 
-LOCAL_INCLUDES += ['/media/libyuv/include']
+LOCAL_INCLUDES += ['/media/libyuv/libyuv/include']
 
 FINAL_LIBRARY = 'xul'

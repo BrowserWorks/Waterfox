@@ -30,19 +30,15 @@ class Proxxy(ScriptMixin, LogMixin):
             ('http://ftp.mozilla.org', 'ftp.mozilla.org'),
             ('https://ftp.mozilla.org', 'ftp.mozilla.org'),
             ('https://ftp-ssl.mozilla.org', 'ftp.mozilla.org'),
-            ('http://pvtbuilds.pvt.build.mozilla.org', 'pvtbuilds.mozilla.org'),
             # pypi
             ('http://pypi.pvt.build.mozilla.org', 'pypi.pvt.build.mozilla.org'),
             ('http://pypi.pub.build.mozilla.org', 'pypi.pub.build.mozilla.org'),
-            # taskcluster stuff
-            ('https://queue.taskcluster.net', 'queue.taskcluster.net'),
         ],
         "instances": [
             'proxxy1.srv.releng.use1.mozilla.com',
             'proxxy1.srv.releng.usw2.mozilla.com',
-            'proxxy1.srv.releng.scl3.mozilla.com',
         ],
-        "regions": [".use1.", ".usw2.", ".scl3"],
+        "regions": [".use1.", ".usw2."],
     }
 
     def __init__(self, config, log_obj):
@@ -50,7 +46,8 @@ class Proxxy(ScriptMixin, LogMixin):
         # just the 'proxxy' element
         # if configuration has no 'proxxy' section use the default
         # configuration instead
-        self.config = config.get('proxxy', self.PROXXY_CONFIG)
+        default_config = {} if self.is_taskcluster() else self.PROXXY_CONFIG
+        self.config = config.get('proxxy', default_config)
         self.log_obj = log_obj
 
     def get_proxies_for_url(self, url):
@@ -129,7 +126,7 @@ class Proxxy(ScriptMixin, LogMixin):
                               exit_code=3):
         """
         Wrapper around BaseScript.download_file that understands proxies
-        retry dict is set to 3 attempts, sleeping time 30 seconds.
+        retry dict is set to 5 attempts, initial sleeping time 30 seconds.
 
             Args:
                 url (string): url to fetch
@@ -158,8 +155,8 @@ class Proxxy(ScriptMixin, LogMixin):
                 create_parent_dir=create_parent_dir, error_level=ERROR,
                 exit_code=exit_code,
                 retry_config=dict(
-                    attempts=3,
                     sleeptime=30,
+                    attempts=5,
                     error_level=INFO,
                 ))
             if retval:

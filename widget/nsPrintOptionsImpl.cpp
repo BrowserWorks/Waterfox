@@ -8,19 +8,19 @@
 #include "mozilla/embedding/PPrinting.h"
 #include "mozilla/layout/RemotePrintJobChild.h"
 #include "mozilla/RefPtr.h"
+#include "nsIPrinterEnumerator.h"
 #include "nsPrintingProxy.h"
 #include "nsReadableUtils.h"
 #include "nsPrintSettingsImpl.h"
 #include "nsIPrintSession.h"
 #include "nsServiceManagerUtils.h"
 
+#include "nsArray.h"
 #include "nsIDOMWindow.h"
 #include "nsIDialogParamBlock.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
 #include "nsIWindowWatcher.h"
-#include "nsISupportsArray.h"
-#include "prprf.h"
 
 #include "nsIStringEnumerator.h"
 #include "nsISupportsPrimitives.h"
@@ -34,7 +34,7 @@ using namespace mozilla::embedding;
 
 typedef mozilla::layout::RemotePrintJobChild RemotePrintJobChild;
 
-NS_IMPL_ISUPPORTS(nsPrintOptions, nsIPrintOptions, nsIPrintSettingsService)
+NS_IMPL_ISUPPORTS(nsPrintOptions, nsIPrintSettingsService)
 
 // Pref Constants
 static const char kMarginTop[]       = "print_margin_top";
@@ -330,48 +330,6 @@ nsPrintOptions::DeserializeToPrintSettings(const PrintData& data,
 }
 
 
-NS_IMETHODIMP
-nsPrintOptions::ShowPrintSetupDialog(nsIPrintSettings *aPS)
-{
-  NS_ENSURE_ARG_POINTER(aPS);
-  nsresult rv;
-
-  // create a nsISupportsArray of the parameters
-  // being passed to the window
-  nsCOMPtr<nsISupportsArray> array;
-  rv = NS_NewISupportsArray(getter_AddRefs(array));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsISupports> psSupports = do_QueryInterface(aPS);
-  NS_ASSERTION(psSupports, "PrintSettings must be a supports");
-  array->AppendElement(psSupports);
-
-  nsCOMPtr<nsIDialogParamBlock> ioParamBlock =
-      do_CreateInstance(NS_DIALOGPARAMBLOCK_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  ioParamBlock->SetInt(0, 0);
-
-  nsCOMPtr<nsISupports> blkSupps = do_QueryInterface(ioParamBlock);
-  NS_ASSERTION(blkSupps, "IOBlk must be a supports");
-  array->AppendElement(blkSupps);
-
-  nsCOMPtr<nsIWindowWatcher> wwatch =
-      do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<mozIDOMWindowProxy> parent;
-  wwatch->GetActiveWindow(getter_AddRefs(parent));
-  // null |parent| is non-fatal
-
-  nsCOMPtr<mozIDOMWindowProxy> newWindow;
-
-  return wwatch->OpenWindow(parent,
-                            "chrome://global/content/printPageSetup.xul",
-                            "_blank","chrome,modal,centerscreen", array,
-                            getter_AddRefs(newWindow));
-}
-
 /** ---------------------------------------------------
  *  Helper function - Creates the "prefix" for the pref
  *  It is either "print."
@@ -534,27 +492,33 @@ nsPrintOptions::ReadPrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName,
     bool success = GETINTPREF(kPrintPaperSizeUnit, &sizeUnit)
                   && GETDBLPREF(kPrintPaperWidth, width)
                   && GETDBLPREF(kPrintPaperHeight, height)
-                  && GETSTRPREF(kPrintPaperName, &str);
+                  && GETSTRPREF(kPrintPaperName, str);
 
     // Bug 315687: Sanity check paper size to avoid paper size values in
     // mm when the size unit flag is inches. The value 100 is arbitrary
     // and can be changed.
+#if defined(XP_WIN)
+    bool saveSanitizedSizePrefs = false;
+#endif
     if (success) {
       success = (sizeUnit != nsIPrintSettings::kPaperSizeInches)
              || (width < 100.0)
              || (height < 100.0);
 #if defined(XP_WIN)
       // Work around legacy invalid prefs where the size unit gets set to
-      // millimeters, but the height and width remains as the default inches
-      // ones for letter. See bug 1276717.
+      // millimeters, but the height and width remains as the previous inches
+      // settings. See bug 1276717 and bug 1369386 for details.
       if (sizeUnit == nsIPrintSettings::kPaperSizeMillimeters &&
-          height == 11L && width == 8.5L) {
+          height >= 0L && height < 25L &&
+          width >= 0L && width < 25L) {
 
-        // As an extra precaution only override, when the resolution is also
-        // set to the legacy invalid, uninitialized value. We'll just broadly
-        // assume that anything outside of a million DPI is invalid.
-        if (GETINTPREF(kPrintResolution, &iVal) &&
-            (iVal < 0 || iVal > 1000000)) {
+        // As small pages sizes can be valid we only override when the old
+        // (now no longer set) pref print_paper_size_type exists. This will be
+        // removed when we save the prefs below.
+        const char* paperSizeTypePref =
+          GetPrefName("print_paper_size_type", aPrinterName);
+        if (Preferences::HasUserValue(paperSizeTypePref)) {
+          saveSanitizedSizePrefs = true;
           height = -1L;
           width = -1L;
         }
@@ -571,6 +535,12 @@ nsPrintOptions::ReadPrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName,
       DUMP_DBL(kReadStr, kPrintPaperHeight, height);
       aPS->SetPaperName(str.get());
       DUMP_STR(kReadStr, kPrintPaperName, str.get());
+#if defined(XP_WIN)
+      if (saveSanitizedSizePrefs) {
+        SavePrintSettingsToPrefs(aPS, !aPrinterName.IsEmpty(),
+                                 nsIPrintSettings::kInitSavePaperSize);
+      }
+#endif
     }
   }
 
@@ -589,42 +559,42 @@ nsPrintOptions::ReadPrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName,
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveHeaderLeft) {
-    if (GETSTRPREF(kPrintHeaderStrLeft, &str)) {
+    if (GETSTRPREF(kPrintHeaderStrLeft, str)) {
       aPS->SetHeaderStrLeft(str.get());
       DUMP_STR(kReadStr, kPrintHeaderStrLeft, str.get());
     }
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveHeaderCenter) {
-    if (GETSTRPREF(kPrintHeaderStrCenter, &str)) {
+    if (GETSTRPREF(kPrintHeaderStrCenter, str)) {
       aPS->SetHeaderStrCenter(str.get());
       DUMP_STR(kReadStr, kPrintHeaderStrCenter, str.get());
     }
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveHeaderRight) {
-    if (GETSTRPREF(kPrintHeaderStrRight, &str)) {
+    if (GETSTRPREF(kPrintHeaderStrRight, str)) {
       aPS->SetHeaderStrRight(str.get());
       DUMP_STR(kReadStr, kPrintHeaderStrRight, str.get());
     }
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveFooterLeft) {
-    if (GETSTRPREF(kPrintFooterStrLeft, &str)) {
+    if (GETSTRPREF(kPrintFooterStrLeft, str)) {
       aPS->SetFooterStrLeft(str.get());
       DUMP_STR(kReadStr, kPrintFooterStrLeft, str.get());
     }
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveFooterCenter) {
-    if (GETSTRPREF(kPrintFooterStrCenter, &str)) {
+    if (GETSTRPREF(kPrintFooterStrCenter, str)) {
       aPS->SetFooterStrCenter(str.get());
       DUMP_STR(kReadStr, kPrintFooterStrCenter, str.get());
     }
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveFooterRight) {
-    if (GETSTRPREF(kPrintFooterStrRight, &str)) {
+    if (GETSTRPREF(kPrintFooterStrRight, str)) {
       aPS->SetFooterStrRight(str.get());
       DUMP_STR(kReadStr, kPrintFooterStrRight, str.get());
     }
@@ -680,7 +650,7 @@ nsPrintOptions::ReadPrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName,
   }
 
   if (aFlags & nsIPrintSettings::kInitSaveToFileName) {
-    if (GETSTRPREF(kPrintToFileName, &str)) {
+    if (GETSTRPREF(kPrintToFileName, str)) {
       aPS->SetToFileName(str.get());
       DUMP_STR(kReadStr, kPrintToFileName, str.get());
     }
@@ -812,6 +782,20 @@ nsPrintOptions::WritePrefs(nsIPrintSettings *aPS, const nsAString& aPrinterName,
       WritePrefDouble(GetPrefName(kPrintPaperHeight, aPrinterName), height);
       DUMP_STR(kWriteStr, kPrintPaperName, name);
       Preferences::SetString(GetPrefName(kPrintPaperName, aPrinterName), name);
+#if defined(XP_WIN)
+      // If the height and width are -1 then this might be a save triggered by
+      // print pref sanitizing code. This is done as a one off and is partly
+      // triggered by the existence of an old (now no longer set) pref. We
+      // remove that pref if it exists here, so that we don't try and sanitize
+      // what might be valid prefs. See bug 1276717 and bug 1369386 for details.
+      if (height == -1L && width == -1L) {
+        const char* paperSizeTypePref =
+          GetPrefName("print_paper_size_type", aPrinterName);
+        if (Preferences::HasUserValue(paperSizeTypePref)) {
+          Preferences::ClearUser(paperSizeTypePref);
+        }
+      }
+#endif
     }
   }
 
@@ -1040,7 +1024,7 @@ nsPrintOptions::GetDefaultPrinterName(char16_t * *aDefaultPrinterName)
 
   // Look up the printer from the last print job
   nsAutoString lastPrinterName;
-  Preferences::GetString(kPrinterName, &lastPrinterName);
+  Preferences::GetString(kPrinterName, lastPrinterName);
   if (!lastPrinterName.IsEmpty()) {
     // Verify it's still a valid printer
     nsCOMPtr<nsIStringEnumerator> printers;
@@ -1071,6 +1055,12 @@ NS_IMETHODIMP
 nsPrintOptions::InitPrintSettingsFromPrinter(const char16_t *aPrinterName,
                                              nsIPrintSettings *aPrintSettings)
 {
+  // Don't get print settings from the printer in the child when printing via
+  // parent, these will be retrieved in the parent later in the print process.
+  if (XRE_IsContentProcess() && Preferences::GetBool("print.print_via_parent")) {
+    return NS_OK;
+  }
+
   NS_ENSURE_ARG_POINTER(aPrintSettings);
   NS_ENSURE_ARG_POINTER(aPrinterName);
 
@@ -1224,7 +1214,7 @@ nsPrintOptions::ReadPrefDouble(const char * aPrefId, double& aVal)
   NS_ENSURE_ARG_POINTER(aPrefId);
 
   nsAutoCString str;
-  nsresult rv = Preferences::GetCString(aPrefId, &str);
+  nsresult rv = Preferences::GetCString(aPrefId, str);
   if (NS_SUCCEEDED(rv) && !str.IsEmpty()) {
     aVal = atof(str.get());
   }
@@ -1247,9 +1237,9 @@ nsPrintOptions::ReadInchesToTwipsPref(const char * aPrefId, int32_t& aTwips,
                                       const char * aMarginPref)
 {
   nsAutoString str;
-  nsresult rv = Preferences::GetString(aPrefId, &str);
+  nsresult rv = Preferences::GetString(aPrefId, str);
   if (NS_FAILED(rv) || str.IsEmpty()) {
-    rv = Preferences::GetString(aMarginPref, &str);
+    rv = Preferences::GetString(aMarginPref, str);
   }
   if (NS_SUCCEEDED(rv) && !str.IsEmpty()) {
     nsresult errCode;
@@ -1301,7 +1291,7 @@ nsPrintOptions::ReadJustification(const char * aPrefId, int16_t& aJust,
 {
   aJust = aInitValue;
   nsAutoString justStr;
-  if (NS_SUCCEEDED(Preferences::GetString(aPrefId, &justStr))) {
+  if (NS_SUCCEEDED(Preferences::GetString(aPrefId, justStr))) {
     if (justStr.EqualsASCII(kJustRight)) {
       aJust = nsIPrintSettings::kJustRight;
     } else if (justStr.EqualsASCII(kJustCenter)) {

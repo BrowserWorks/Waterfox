@@ -7,7 +7,7 @@ function localStorageFlush(cb)
       cb();
     }
   };
-  os().addObserver(ob, "domstorage-test-flushed", false);
+  os().addObserver(ob, "domstorage-test-flushed");
   notify("domstorage-test-flush-force");
 }
 
@@ -41,5 +41,13 @@ function os()
 
 function notify(top)
 {
-  os().notifyObservers(null, top, null);
+  os().notifyObservers(null, top);
+}
+
+/**
+ * Enable testing observer notifications in DOMStorageObserver.cpp.
+ */
+function localStorageEnableTestingMode(cb)
+{
+  SpecialPowers.pushPrefEnv({ "set": [["dom.storage.testing", true]] }, cb);
 }

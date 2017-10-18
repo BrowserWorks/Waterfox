@@ -19,11 +19,15 @@ var {getInplaceEditorForSpan: inplaceEditor} =
 
 const ROOT_TEST_DIR = getRootDirectory(gTestPath);
 const FRAME_SCRIPT_URL = ROOT_TEST_DIR + "doc_frame_script.js";
-const _STRINGS = Services.strings.createBundle(
-  "chrome://devtools-shared/locale/styleinspector.properties");
+
+const STYLE_INSPECTOR_L10N
+      = new LocalizationHelper("devtools/shared/locales/styleinspector.properties");
+
+Services.prefs.setBoolPref("devtools.inspector.shapesHighlighter.enabled", true);
 
 registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.defaultColorUnit");
+  Services.prefs.clearUserPref("devtools.inspector.shapesHighlighter.enabled");
 });
 
 /**
@@ -44,76 +48,6 @@ addTab = function (url) {
 };
 
 /**
- * Wait for a content -> chrome message on the message manager (the window
- * messagemanager is used).
- *
- * @param {String} name
- *        The message name
- * @return {Promise} A promise that resolves to the response data when the
- * message has been received
- */
-function waitForContentMessage(name) {
-  info("Expecting message " + name + " from content");
-
-  let mm = gBrowser.selectedBrowser.messageManager;
-
-  let def = defer();
-  mm.addMessageListener(name, function onMessage(msg) {
-    mm.removeMessageListener(name, onMessage);
-    def.resolve(msg.data);
-  });
-  return def.promise;
-}
-
-/**
- * Send an async message to the frame script (chrome -> content) and wait for a
- * response message with the same name (content -> chrome).
- *
- * @param {String} name
- *        The message name. Should be one of the messages defined
- *        in doc_frame_script.js
- * @param {Object} data
- *        Optional data to send along
- * @param {Object} objects
- *        Optional CPOW objects to send along
- * @param {Boolean} expectResponse
- *        If set to false, don't wait for a response with the same name
- *        from the content script. Defaults to true.
- * @return {Promise} Resolves to the response data if a response is expected,
- * immediately resolves otherwise
- */
-function executeInContent(name, data = {}, objects = {},
-                          expectResponse = true) {
-  info("Sending message " + name + " to content");
-  let mm = gBrowser.selectedBrowser.messageManager;
-
-  mm.sendAsyncMessage(name, data, objects);
-  if (expectResponse) {
-    return waitForContentMessage(name);
-  }
-
-  return promise.resolve();
-}
-
-/**
- * Send an async message to the frame script and get back the requested
- * computed style property.
- *
- * @param {String} selector
- *        The selector used to obtain the element.
- * @param {String} pseudo
- *        pseudo id to query, or null.
- * @param {String} name
- *        name of the property.
- */
-function* getComputedStyleProperty(selector, pseudo, propName) {
-  return yield executeInContent("Test:GetComputedStylePropertyValue",
-                                {selector,
-                                pseudo,
-                                name: propName});
-}
-
-/**
  * Get an element's inline style property value.
  * @param {TestActor} testActor
  * @param {String} selector
@@ -129,61 +63,20 @@ function getStyle(testActor, selector, propName) {
 }
 
 /**
- * Send an async message to the frame script and wait until the requested
- * computed style property has the expected value.
- *
- * @param {String} selector
- *        The selector used to obtain the element.
- * @param {String} pseudo
- *        pseudo id to query, or null.
- * @param {String} prop
- *        name of the property.
- * @param {String} expected
- *        expected value of property
- * @param {String} name
- *        the name used in test message
- */
-function* waitForComputedStyleProperty(selector, pseudo, name, expected) {
-  return yield executeInContent("Test:WaitForComputedStylePropertyValue",
-                                {selector,
-                                pseudo,
-                                expected,
-                                name});
-}
-
-/**
- * Given an inplace editable element, click to switch it to edit mode, wait for
- * focus
- *
- * @return a promise that resolves to the inplace-editor element when ready
- */
-var focusEditableField = Task.async(function* (ruleView, editable, xOffset = 1,
-    yOffset = 1, options = {}) {
-  let onFocus = once(editable.parentNode, "focus", true);
-  info("Clicking on editable field to turn to edit mode");
-  EventUtils.synthesizeMouse(editable, xOffset, yOffset, options,
-    editable.ownerDocument.defaultView);
-  yield onFocus;
-
-  info("Editable field gained focus, returning the input field now");
-  let onEdit = inplaceEditor(editable.ownerDocument.activeElement);
-
-  return onEdit;
-});
-
-/**
  * When a tooltip is closed, this ends up "commiting" the value changed within
  * the tooltip (e.g. the color in case of a colorpicker) which, in turn, ends up
  * setting the value of the corresponding css property in the rule-view.
  * Use this function to close the tooltip and make sure the test waits for the
  * ruleview-changed event.
- * @param {Tooltip} tooltip
+ * @param {SwatchBasedEditorTooltip} editorTooltip
  * @param {CSSRuleView} view
  */
-function* hideTooltipAndWaitForRuleViewChanged(tooltip, view) {
+function* hideTooltipAndWaitForRuleViewChanged(editorTooltip, view) {
   let onModified = view.once("ruleview-changed");
-  tooltip.hide();
+  let onHidden = editorTooltip.tooltip.once("hidden");
+  editorTooltip.hide();
   yield onModified;
+  yield onHidden;
 }
 
 /**
@@ -215,109 +108,6 @@ var waitForSuccess = Task.async(function* (validatorFn, desc = "untitled") {
     yield new Promise(r => setTimeout(r, 200));
   }
 });
-
-/**
- * Get the DOMNode for a css rule in the rule-view that corresponds to the given
- * selector
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} selectorText
- *        The selector in the rule-view for which the rule
- *        object is wanted
- * @return {DOMNode}
- */
-function getRuleViewRule(view, selectorText) {
-  let rule;
-  for (let r of view.styleDocument.querySelectorAll(".ruleview-rule")) {
-    let selector = r.querySelector(".ruleview-selectorcontainer, " +
-                                   ".ruleview-selector-matched");
-    if (selector && selector.textContent === selectorText) {
-      rule = r;
-      break;
-    }
-  }
-
-  return rule;
-}
-
-/**
- * Get references to the name and value span nodes corresponding to a given
- * selector and property name in the rule-view
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} selectorText
- *        The selector in the rule-view to look for the property in
- * @param {String} propertyName
- *        The name of the property
- * @return {Object} An object like {nameSpan: DOMNode, valueSpan: DOMNode}
- */
-function getRuleViewProperty(view, selectorText, propertyName) {
-  let prop;
-
-  let rule = getRuleViewRule(view, selectorText);
-  if (rule) {
-    // Look for the propertyName in that rule element
-    for (let p of rule.querySelectorAll(".ruleview-property")) {
-      let nameSpan = p.querySelector(".ruleview-propertyname");
-      let valueSpan = p.querySelector(".ruleview-propertyvalue");
-
-      if (nameSpan.textContent === propertyName) {
-        prop = {nameSpan: nameSpan, valueSpan: valueSpan};
-        break;
-      }
-    }
-  }
-  return prop;
-}
-
-/**
- * Get the text value of the property corresponding to a given selector and name
- * in the rule-view
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} selectorText
- *        The selector in the rule-view to look for the property in
- * @param {String} propertyName
- *        The name of the property
- * @return {String} The property value
- */
-function getRuleViewPropertyValue(view, selectorText, propertyName) {
-  return getRuleViewProperty(view, selectorText, propertyName)
-    .valueSpan.textContent;
-}
-
-/**
- * Get a reference to the selector DOM element corresponding to a given selector
- * in the rule-view
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} selectorText
- *        The selector in the rule-view to look for
- * @return {DOMNode} The selector DOM element
- */
-function getRuleViewSelector(view, selectorText) {
-  let rule = getRuleViewRule(view, selectorText);
-  return rule.querySelector(".ruleview-selector, .ruleview-selector-matched");
-}
-
-/**
- * Get a reference to the selectorhighlighter icon DOM element corresponding to
- * a given selector in the rule-view
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} selectorText
- *        The selector in the rule-view to look for
- * @return {DOMNode} The selectorhighlighter icon DOM element
- */
-function getRuleViewSelectorHighlighterIcon(view, selectorText) {
-  let rule = getRuleViewRule(view, selectorText);
-  return rule.querySelector(".ruleview-selectorhighlighter");
-}
 
 /**
  * Simulate a color change in a given color picker tooltip, and optionally wait
@@ -388,12 +178,12 @@ var openColorPickerAndSelectColor = Task.async(function* (view, ruleIndex,
   let ruleEditor = getRuleViewRuleEditor(view, ruleIndex);
   let propEditor = ruleEditor.rule.textProps[propIndex].editor;
   let swatch = propEditor.valueSpan.querySelector(".ruleview-colorswatch");
-  let cPicker = view.tooltips.colorPicker;
+  let cPicker = view.tooltips.getTooltip("colorPicker");
 
   info("Opening the colorpicker by clicking the color swatch");
-  let onShown = cPicker.tooltip.once("shown");
+  let onColorPickerReady = cPicker.once("ready");
   swatch.click();
-  yield onShown;
+  yield onColorPickerReady;
 
   yield simulateColorPickerChange(view, cPicker, newRgba, expectedChange);
 
@@ -426,12 +216,12 @@ var openCubicBezierAndChangeCoords = Task.async(function* (view, ruleIndex,
   let ruleEditor = getRuleViewRuleEditor(view, ruleIndex);
   let propEditor = ruleEditor.rule.textProps[propIndex].editor;
   let swatch = propEditor.valueSpan.querySelector(".ruleview-bezierswatch");
-  let bezierTooltip = view.tooltips.cubicBezier;
+  let bezierTooltip = view.tooltips.getTooltip("cubicBezier");
 
   info("Opening the cubicBezier by clicking the swatch");
-  let onShown = bezierTooltip.tooltip.once("shown");
+  let onBezierWidgetReady = bezierTooltip.once("ready");
   swatch.click();
-  yield onShown;
+  yield onBezierWidgetReady;
 
   let widget = yield bezierTooltip.widget;
 
@@ -448,34 +238,6 @@ var openCubicBezierAndChangeCoords = Task.async(function* (view, ruleIndex,
 
   return {propEditor, swatch, bezierTooltip};
 });
-
-/**
- * Get a rule-link from the rule-view given its index
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {Number} index
- *        The index of the link to get
- * @return {DOMNode} The link if any at this index
- */
-function getRuleViewLinkByIndex(view, index) {
-  let links = view.styleDocument.querySelectorAll(".ruleview-rule-source");
-  return links[index];
-}
-
-/**
- * Get rule-link text from the rule-view given its index
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {Number} index
- *        The index of the link to get
- * @return {String} The string at this index
- */
-function getRuleViewLinkTextByIndex(view, index) {
-  let link = getRuleViewLinkByIndex(view, index);
-  return link.querySelector(".ruleview-rule-source-label").value;
-}
 
 /**
  * Simulate adding a new property in an existing rule in the rule-view.
@@ -530,6 +292,7 @@ var addProperty = Task.async(function* (view, ruleIndex, name, value,
   // triggers a ruleview-changed event (see bug 1209295).
   let onPreview = view.once("ruleview-changed");
   editor.input.value = value;
+  view.debounce.flush();
   yield onPreview;
 
   let onValueAdded = view.once("ruleview-changed");
@@ -568,6 +331,7 @@ var setProperty = Task.async(function* (view, textProp, value,
   } else {
     EventUtils.sendString(value, view.styleWindow);
   }
+  view.debounce.flush();
   yield onPreview;
 
   let onValueDone = view.once("ruleview-changed");
@@ -618,72 +382,6 @@ var togglePropStatus = Task.async(function* (view, textProp) {
   let onRuleViewRefreshed = view.once("ruleview-changed");
   textProp.editor.enable.click();
   yield onRuleViewRefreshed;
-});
-
-/**
- * Click on a rule-view's close brace to focus a new property name editor
- *
- * @param {RuleEditor} ruleEditor
- *        An instance of RuleEditor that will receive the new property
- * @return a promise that resolves to the newly created editor when ready and
- * focused
- */
-var focusNewRuleViewProperty = Task.async(function* (ruleEditor) {
-  info("Clicking on a close ruleEditor brace to start editing a new property");
-  ruleEditor.closeBrace.scrollIntoView();
-  let editor = yield focusEditableField(ruleEditor.ruleView,
-    ruleEditor.closeBrace);
-
-  is(inplaceEditor(ruleEditor.newPropSpan), editor,
-    "Focused editor is the new property editor.");
-
-  return editor;
-});
-
-/**
- * Create a new property name in the rule-view, focusing a new property editor
- * by clicking on the close brace, and then entering the given text.
- * Keep in mind that the rule-view knows how to handle strings with multiple
- * properties, so the input text may be like: "p1:v1;p2:v2;p3:v3".
- *
- * @param {RuleEditor} ruleEditor
- *        The instance of RuleEditor that will receive the new property(ies)
- * @param {String} inputValue
- *        The text to be entered in the new property name field
- * @return a promise that resolves when the new property name has been entered
- * and once the value field is focused
- */
-var createNewRuleViewProperty = Task.async(function* (ruleEditor, inputValue) {
-  info("Creating a new property editor");
-  let editor = yield focusNewRuleViewProperty(ruleEditor);
-
-  info("Entering the value " + inputValue);
-  editor.input.value = inputValue;
-
-  info("Submitting the new value and waiting for value field focus");
-  let onFocus = once(ruleEditor.element, "focus", true);
-  EventUtils.synthesizeKey("VK_RETURN", {},
-    ruleEditor.element.ownerDocument.defaultView);
-  yield onFocus;
-});
-
-/**
- * Set the search value for the rule-view filter styles search box.
- *
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @param {String} searchValue
- *        The filter search value
- * @return a promise that resolves when the rule-view is filtered for the
- * search term
- */
-var setSearchFilter = Task.async(function* (view, searchValue) {
-  info("Setting filter text to \"" + searchValue + "\"");
-  let win = view.styleWindow;
-  let searchField = view.searchField;
-  searchField.focus();
-  synthesizeKeys(searchValue, win);
-  yield view.inspector.once("ruleview-filtered");
 });
 
 /**
@@ -772,21 +470,69 @@ function* sendKeysAndWaitForFocus(view, element, keys) {
 }
 
 /**
- * Open the style editor context menu and return all of it's items in a flat array
- * @param {CssRuleView} view
- *        The instance of the rule-view panel
- * @return An array of MenuItems
+ * Wait for a markupmutation event on the inspector that is for a style modification.
+ * @param {InspectorPanel} inspector
+ * @return {Promise}
  */
-function openStyleContextMenuAndGetAllItems(view, target) {
-  let menu = view._contextmenu._openMenu({target: target});
-
-  // Flatten all menu items into a single array to make searching through it easier
-  let allItems = [].concat.apply([], menu.items.map(function addItem(item) {
-    if (item.submenu) {
-      return addItem(item.submenu.items);
+function waitForStyleModification(inspector) {
+  return new Promise(function (resolve) {
+    function checkForStyleModification(name, mutations) {
+      for (let mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "style") {
+          inspector.off("markupmutation", checkForStyleModification);
+          resolve();
+          return;
+        }
+      }
     }
-    return item;
-  }));
+    inspector.on("markupmutation", checkForStyleModification);
+  });
+}
 
-  return allItems;
+/**
+ * Click on the selector icon
+ * @param {DOMNode} icon
+ * @param {CSSRuleView} view
+ */
+function* clickSelectorIcon(icon, view) {
+  let onToggled = view.once("ruleview-selectorhighlighter-toggled");
+  EventUtils.synthesizeMouseAtCenter(icon, {}, view.styleWindow);
+  yield onToggled;
+}
+
+/**
+ * Toggle one of the checkboxes inside the class-panel. Resolved after the DOM mutation
+ * has been recorded.
+ * @param {CssRuleView} view The rule-view instance.
+ * @param {String} name The class name to find the checkbox.
+ */
+function* toggleClassPanelCheckBox(view, name) {
+  info(`Clicking on checkbox for class ${name}`);
+  const checkBox = [...view.classPanel.querySelectorAll("[type=checkbox]")].find(box => {
+    return box.dataset.name === name;
+  });
+
+  const onMutation = view.inspector.once("markupmutation");
+  checkBox.click();
+  info("Waiting for a markupmutation as a result of toggling this class");
+  yield onMutation;
+}
+
+/**
+ * Verify the content of the class-panel.
+ * @param {CssRuleView} view The rule-view isntance
+ * @param {Array} classes The list of expected classes. Each item in this array is an
+ * object with the following properties: {name: {String}, state: {Boolean}}
+ */
+function checkClassPanelContent(view, classes) {
+  const checkBoxNodeList = view.classPanel.querySelectorAll("[type=checkbox]");
+  is(checkBoxNodeList.length, classes.length,
+     "The panel contains the expected number of checkboxes");
+
+  for (let i = 0; i < classes.length; i++) {
+    is(checkBoxNodeList[i].dataset.name, classes[i].name,
+       `Checkbox ${i} has the right class name`);
+    is(checkBoxNodeList[i].checked, classes[i].state,
+       `Checkbox ${i} has the right state`);
+  }
 }

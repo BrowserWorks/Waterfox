@@ -10,7 +10,11 @@ import shutil
 import sqlite3
 import tempfile
 import unittest
+
+import mozunit
+
 from mozprofile.permissions import Permissions
+
 
 class PermissionsTest(unittest.TestCase):
 
@@ -143,7 +147,8 @@ http://127.0.0.1:8888           privileged
         self.assertEqual(user_prefs[0], ('network.proxy.type', 2))
         self.assertEqual(user_prefs[1][0], 'network.proxy.autoconfig_url')
 
-        origins_decl = "var knownOrigins = (function () {  return ['http://mochi.test:8888', 'http://127.0.0.1:80', 'http://127.0.0.1:8888'].reduce"
+        origins_decl = "var knownOrigins = (function () {  return ['http://mochi.test:8888', " \
+                       "'http://127.0.0.1:80', 'http://127.0.0.1:8888'].reduce"
         self.assertTrue(origins_decl in user_prefs[1][1])
 
         proxy_check = ("'http': 'PROXY mochi.test:8888'",
@@ -193,5 +198,6 @@ http://127.0.0.1:8888           privileged
     def test_existing_permissions_db_v5(self):
         self.verify_user_version(5)
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

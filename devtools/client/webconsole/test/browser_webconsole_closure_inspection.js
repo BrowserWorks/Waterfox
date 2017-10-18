@@ -13,6 +13,12 @@ const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
 
 var gWebConsole, gJSTerm, gVariablesView;
 
+// Force the old debugger UI since it's directly used (see Bug 1301705)
+Services.prefs.setBoolPref("devtools.debugger.new-debugger-frontend", false);
+registerCleanupFunction(function* () {
+  Services.prefs.clearUserPref("devtools.debugger.new-debugger-frontend");
+});
+
 function test() {
   registerCleanupFunction(() => {
     gWebConsole = gJSTerm = gVariablesView = null;
@@ -52,7 +58,7 @@ function consoleOpened(hud) {
   waitForMessages({
     webconsole: gWebConsole,
     messages: [{
-      text: "function _pfactory/<.getName()",
+      text: "getName()",
       category: CATEGORY_OUTPUT,
       objects: true,
     }],
@@ -90,5 +96,5 @@ function onExpandClosure(results) {
 
   gVariablesView.window.focus();
   gJSTerm.once("sidebar-closed", finishTest);
-  EventUtils.synthesizeKey("VK_ESCAPE", {});
+  EventUtils.synthesizeKey("VK_ESCAPE", {}, gVariablesView.window);
 }

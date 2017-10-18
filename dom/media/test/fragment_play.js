@@ -19,7 +19,7 @@ function onSeeked() {
     return;
 
   var s = start == null ? 0 : start;
-  ok(v.currentTime == s, "seeked currentTime is " + v.currentTime + " != " + s);
+  ok(v.currentTime - s < 0.1, "seeked currentTime is " + v.currentTime + " != " + s + " (fuzzy compare +-0.1)");
 
   seekedRaised = true;
 }
@@ -59,9 +59,9 @@ function onEnded() {
   finish();
 }
 
-v.addEventListener("ended", onEnded, false);
-v.addEventListener("loadedmetadata", onLoadedMetadata, false);
-v.addEventListener("seeked", onSeeked, false);
-v.addEventListener("pause", onPause, false);
-v.addEventListener("timeupdate", onTimeUpdate, false);
+v.addEventListener("ended", onEnded);
+v.addEventListener("loadedmetadata", onLoadedMetadata);
+v.addEventListener("seeked", onSeeked);
+v.addEventListener("pause", onPause);
+v.addEventListener("timeupdate", onTimeUpdate);
 }

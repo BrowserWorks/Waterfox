@@ -10,7 +10,7 @@ XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 DIRS += [
     'components',
     'redux',
-    'shim',
+    'source-map',
     'vendor',
     'widgets',
 ]
@@ -21,34 +21,45 @@ DevToolsModules(
     'browser-loader.js',
     'css-angle.js',
     'css-reload.js',
-    'Curl.jsm',
+    'curl.js',
     'demangle.js',
     'developer-toolbar.js',
     'devices.js',
     'devtools-file-watcher.js',
     'DOMHelpers.jsm',
     'doorhanger.js',
+    'enum.js',
+    'file-saver.js',
     'file-watcher-worker.js',
     'file-watcher.js',
-    'frame-script-utils.js',
     'getjson.js',
     'inplace-editor.js',
     'Jsbeautify.jsm',
     'key-shortcuts.js',
-    'l10n.js',
+    'keycodes.js',
+    'natural-sort.js',
+    'network-throttling-profiles.js',
     'node-attribute-parser.js',
     'options-view.js',
     'output-parser.js',
     'poller.js',
     'prefs.js',
+    'react-utils.js',
+    'scroll.js',
     'source-utils.js',
     'SplitView.jsm',
+    'stylesheet-utils.js',
     'suggestion-picker.js',
     'telemetry.js',
-    'theme-switching.js',
     'theme.js',
     'undo.js',
     'view-source.js',
     'webgl-utils.js',
     'zoom-keys.js',
 )
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools')
+
+with Files('components/**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools: Shared Components')

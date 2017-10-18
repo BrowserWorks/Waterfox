@@ -1,6 +1,3 @@
-// |jit-test| test-also-wasm-baseline
-load(libdir + "wasm.js");
-
 // Bug 1280926, extracted from binary
 
 wasmEvalText(

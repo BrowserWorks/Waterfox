@@ -23,19 +23,36 @@
 
 using namespace mozilla;
 
+static bool sShowPreviousPage = true;
+
 nsView::nsView(nsViewManager* aViewManager, nsViewVisibility aVisibility)
+  : mViewManager(aViewManager)
+  , mParent(nullptr)
+  , mNextSibling(nullptr)
+  , mFirstChild(nullptr)
+  , mFrame(nullptr)
+  , mDirtyRegion(nullptr)
+  , mZIndex(0)
+  , mVis(aVisibility)
+  , mPosX(0)
+  , mPosY(0)
+  , mVFlags(0)
+  , mWidgetIsTopLevel(false)
+  , mForcedRepaint(false)
+  , mNeedsWindowPropertiesSync(false)
 {
   MOZ_COUNT_CTOR(nsView);
 
-  mVis = aVisibility;
   // Views should be transparent by default. Not being transparent is
   // a promise that the view will paint all its pixels opaquely. Views
   // should make this promise explicitly by calling
   // SetViewContentTransparency.
-  mVFlags = 0;
-  mViewManager = aViewManager;
-  mDirtyRegion = nullptr;
-  mWidgetIsTopLevel = false;
+
+  static bool sShowPreviousPageInitialized = false;
+  if (!sShowPreviousPageInitialized) {
+    Preferences::AddBoolVarCache(&sShowPreviousPage, "layout.show_previous_page", true);
+    sShowPreviousPageInitialized = true;
+  }
 }
 
 void nsView::DropMouseGrabbing()
@@ -106,7 +123,11 @@ class DestroyWidgetRunnable : public Runnable {
 public:
   NS_DECL_NSIRUNNABLE
 
-  explicit DestroyWidgetRunnable(nsIWidget* aWidget) : mWidget(aWidget) {}
+  explicit DestroyWidgetRunnable(nsIWidget* aWidget)
+    : mozilla::Runnable("DestroyWidgetRunnable")
+    , mWidget(aWidget)
+  {
+  }
 
 private:
   nsCOMPtr<nsIWidget> mWidget;
@@ -304,8 +325,7 @@ void nsView::DoResetWidgetBounds(bool aMoveOnly,
 
   nsWindowType type = widget->WindowType();
 
-  LayoutDeviceIntRect curBounds;
-  widget->GetClientBounds(curBounds);
+  LayoutDeviceIntRect curBounds = widget->GetClientBounds();
   bool invisiblePopup = type == eWindowType_popup &&
                         ((curBounds.IsEmpty() && mDimBounds.IsEmpty()) ||
                          mVis == nsViewVisibility_kHide);
@@ -691,9 +711,7 @@ nsresult nsView::AttachToTopLevelWidget(nsIWidget* aWidget)
 
   // Note, the previous device context will be released. Detaching
   // will not restore the old one.
-  nsresult rv = aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets());
-  if (NS_FAILED(rv))
-    return rv;
+  aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets());
 
   mWindow = aWidget;
 
@@ -782,10 +800,9 @@ void nsView::List(FILE* out, int32_t aIndent) const
   fprintf(out, "%p ", (void*)this);
   if (nullptr != mWindow) {
     nscoord p2a = mViewManager->AppUnitsPerDevPixel();
-    LayoutDeviceIntRect rect;
-    mWindow->GetClientBounds(rect);
+    LayoutDeviceIntRect rect = mWindow->GetClientBounds();
     nsRect windowBounds = LayoutDeviceIntRect::ToAppUnits(rect, p2a);
-    mWindow->GetBounds(rect);
+    rect = mWindow->GetBounds();
     nsRect nonclientBounds = LayoutDeviceIntRect::ToAppUnits(rect, p2a);
     nsrefcnt widgetRefCnt = mWindow.get()->AddRef() - 1;
     mWindow.get()->Release();
@@ -1008,7 +1025,7 @@ nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight)
 
     return true;
   }
-  else if (IsPopupWidget(aWidget)) {
+  if (IsPopupWidget(aWidget)) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
       pm->PopupResized(mFrame, LayoutDeviceIntSize(aWidth, aHeight));
@@ -1022,8 +1039,7 @@ nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight)
 bool
 nsView::RequestWindowClose(nsIWidget* aWidget)
 {
-  if (mFrame && IsPopupWidget(aWidget) &&
-      mFrame->GetType() == nsGkAtoms::menuPopupFrame) {
+  if (mFrame && IsPopupWidget(aWidget) && mFrame->IsMenuPopupFrame()) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
       pm->HidePopup(mFrame->GetContent(), false, true, false, false);
@@ -1069,9 +1085,9 @@ nsView::DidCompositeWindow(uint64_t aTransactionId,
 
     nsPresContext* context = presShell->GetPresContext();
     nsRootPresContext* rootContext = context->GetRootPresContext();
-    MOZ_ASSERT(rootContext, "rootContext must be valid.");
-    rootContext->NotifyDidPaintForSubtree(nsIPresShell::PAINT_COMPOSITE, aTransactionId,
-                                          aCompositeEnd);
+    if (rootContext) {
+      rootContext->NotifyDidPaintForSubtree(aTransactionId, aCompositeEnd);
+    }
 
     // If the two timestamps are identical, this was likely a fake composite
     // event which wouldn't be terribly useful to display.
@@ -1127,5 +1143,5 @@ nsView::HandleEvent(WidgetGUIEvent* aEvent,
 bool
 nsView::IsPrimaryFramePaintSuppressed()
 {
-  return mFrame ? mFrame->PresContext()->PresShell()->IsPaintingSuppressed() : false;
+  return sShowPreviousPage && mFrame && mFrame->PresContext()->PresShell()->IsPaintingSuppressed();
 }

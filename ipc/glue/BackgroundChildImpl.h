@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace dom {
 
-class FileHandleBase;
+class IDBFileHandle;
 
 namespace indexedDB {
 
@@ -70,11 +70,24 @@ protected:
   DeallocPBackgroundIndexedDBUtilsChild(PBackgroundIndexedDBUtilsChild* aActor)
                                         override;
 
-  virtual PBlobChild*
-  AllocPBlobChild(const BlobConstructorParams& aParams) override;
+  virtual PBackgroundStorageChild*
+  AllocPBackgroundStorageChild(const nsString& aProfilePath) override;
 
   virtual bool
-  DeallocPBlobChild(PBlobChild* aActor) override;
+  DeallocPBackgroundStorageChild(PBackgroundStorageChild* aActor) override;
+
+  virtual PPendingIPCBlobChild*
+  AllocPPendingIPCBlobChild(const IPCBlob& aBlob) override;
+
+  virtual bool
+  DeallocPPendingIPCBlobChild(PPendingIPCBlobChild* aActor) override;
+
+  virtual PIPCBlobInputStreamChild*
+  AllocPIPCBlobInputStreamChild(const nsID& aID,
+                                const uint64_t& aSize) override;
+
+  virtual bool
+  DeallocPIPCBlobInputStreamChild(PIPCBlobInputStreamChild* aActor) override;
 
   virtual PFileDescriptorSetChild*
   AllocPFileDescriptorSetChild(const FileDescriptor& aFileDescriptor)
@@ -140,17 +153,17 @@ protected:
   virtual bool
   DeallocPMessagePortChild(PMessagePortChild* aActor) override;
 
-  virtual PNuwaChild*
-  AllocPNuwaChild() override;
+  virtual PChildToParentStreamChild*
+  AllocPChildToParentStreamChild() override;
 
   virtual bool
-  DeallocPNuwaChild(PNuwaChild* aActor) override;
+  DeallocPChildToParentStreamChild(PChildToParentStreamChild* aActor) override;
 
-  virtual PSendStreamChild*
-  AllocPSendStreamChild() override;
+  virtual PParentToChildStreamChild*
+  AllocPParentToChildStreamChild() override;
 
   virtual bool
-  DeallocPSendStreamChild(PSendStreamChild* aActor) override;
+  DeallocPParentToChildStreamChild(PParentToChildStreamChild* aActor) override;
 
   virtual PAsmJSCacheEntryChild*
   AllocPAsmJSCacheEntryChild(const dom::asmjscache::OpenMode& aOpenMode,
@@ -184,6 +197,31 @@ protected:
 
   virtual bool
   DeallocPGamepadTestChannelChild(PGamepadTestChannelChild* aActor) override;
+
+#ifdef EARLY_BETA_OR_EARLIER
+  virtual void
+  OnChannelReceivedMessage(const Message& aMsg) override;
+#endif
+
+  virtual PWebAuthnTransactionChild*
+  AllocPWebAuthnTransactionChild() override;
+
+  virtual bool
+  DeallocPWebAuthnTransactionChild(PWebAuthnTransactionChild* aActor) override;
+
+  virtual PHttpBackgroundChannelChild*
+  AllocPHttpBackgroundChannelChild(const uint64_t& aChannelId) override;
+
+  virtual bool
+  DeallocPHttpBackgroundChannelChild(PHttpBackgroundChannelChild* aActor) override;
+
+  virtual mozilla::ipc::IPCResult
+  RecvDispatchLocalStorageChange(const nsString& aDocumentURI,
+                                 const nsString& aKey,
+                                 const nsString& aOldValue,
+                                 const nsString& aNewValue,
+                                 const PrincipalInfo& aPrincipalInfo,
+                                 const bool& aIsPrivate) override;
 };
 
 class BackgroundChildImpl::ThreadLocal final
@@ -192,7 +230,7 @@ class BackgroundChildImpl::ThreadLocal final
 
 public:
   nsAutoPtr<mozilla::dom::indexedDB::ThreadLocal> mIndexedDBThreadLocal;
-  mozilla::dom::FileHandleBase* mCurrentFileHandle;
+  mozilla::dom::IDBFileHandle* mCurrentFileHandle;
 
 public:
   ThreadLocal();

@@ -7,27 +7,22 @@
 #define TheoraDecoder_h_
 
 #include "PlatformDecoderModule.h"
-
-#include <stdint.h>
 #include "ogg/ogg.h"
 #include "theora/theoradec.h"
+#include <stdint.h>
 
 namespace mozilla {
-
-  using namespace layers;
 
 class TheoraDecoder : public MediaDataDecoder
 {
 public:
   explicit TheoraDecoder(const CreateDecoderParams& aParams);
 
-  ~TheoraDecoder();
-
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<DecodePromise> Drain() override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
 
   // Return true if mimetype is a Theora codec
   static bool IsTheora(const nsACString& aMimeType);
@@ -38,16 +33,14 @@ public:
   }
 
 private:
+  ~TheoraDecoder();
   nsresult DoDecodeHeader(const unsigned char* aData, size_t aLength);
 
-  void ProcessDecode(MediaRawData* aSample);
-  int DoDecode(MediaRawData* aSample);
-  void ProcessDrain();
+  RefPtr<DecodePromise> ProcessDecode(MediaRawData* aSample);
 
-  RefPtr<ImageContainer> mImageContainer;
+  RefPtr<layers::KnowsCompositor> mImageAllocator;
+  RefPtr<layers::ImageContainer> mImageContainer;
   RefPtr<TaskQueue> mTaskQueue;
-  MediaDataDecoderCallback* mCallback;
-  Atomic<bool> mIsFlushing;
 
   // Theora header & decoder state
   th_info mTheoraInfo;

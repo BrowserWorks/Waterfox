@@ -2,22 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-this.EXPORTED_SYMBOLS = ["XPCOMUtils", "Services", "Utils", "Async", "Svc", "Str"];
+this.EXPORTED_SYMBOLS = ["Utils", "Svc"];
 
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
-Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
-Cu.import("resource://services-common/stringbundle.js");
 Cu.import("resource://services-common/utils.js");
-Cu.import("resource://services-common/async.js", this);
 Cu.import("resource://services-crypto/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Preferences.jsm");
-Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
-Cu.import("resource://gre/modules/osfile.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OS",
+                                  "resource://gre/modules/osfile.jsm");
 
 // FxAccountsCommon.js doesn't use a "namespace", so create one here.
 XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function() {
@@ -27,9 +24,25 @@ XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function() {
 });
 
 /*
+ * Custom exception types.
+ */
+class LockException extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "LockException";
+  }
+}
+
+class HMACMismatch extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "HMACMismatch";
+  }
+}
+
+/*
  * Utility functions
  */
-
 this.Utils = {
   // Alias in functions from CommonUtils. These previously were defined here.
   // In the ideal world, references to these would be removed.
@@ -52,11 +65,11 @@ this.Utils = {
   digestBytes: CryptoUtils.digestBytes,
   sha1: CryptoUtils.sha1,
   sha1Base32: CryptoUtils.sha1Base32,
+  sha256: CryptoUtils.sha256,
   makeHMACKey: CryptoUtils.makeHMACKey,
   makeHMACHasher: CryptoUtils.makeHMACHasher,
   hkdfExpand: CryptoUtils.hkdfExpand,
   pbkdf2Generate: CryptoUtils.pbkdf2Generate,
-  deriveKeyFromPassphrase: CryptoUtils.deriveKeyFromPassphrase,
   getHTTPMACSHA1Header: CryptoUtils.getHTTPMACSHA1Header,
 
   /**
@@ -79,7 +92,7 @@ this.Utils = {
   },
 
   /**
-   * Wrap a function to catch all exceptions and log them
+   * Wrap a [promise-returning] function to catch all exceptions and log them.
    *
    * @usage MyObj._catch = Utils.catch;
    *        MyObj.foo = function() { this._catch(func)(); }
@@ -87,14 +100,13 @@ this.Utils = {
    * Optionally pass a function which will be called if an
    * exception occurs.
    */
-  catch: function Utils_catch(func, exceptionCallback) {
+  catch(func, exceptionCallback) {
     let thisArg = this;
-    return function WrappedCatch() {
+    return async function WrappedCatch() {
       try {
-        return func.call(thisArg);
-      }
-      catch(ex) {
-        thisArg._log.debug("Exception", ex);
+        return await func.call(thisArg);
+      } catch (ex) {
+        thisArg._log.debug("Exception calling " + (func.name || "anonymous function"), ex);
         if (exceptionCallback) {
           return exceptionCallback.call(thisArg, ex);
         }
@@ -103,35 +115,39 @@ this.Utils = {
     };
   },
 
+  throwLockException(label) {
+    throw new LockException(`Could not acquire lock. Label: "${label}".`);
+  },
+
   /**
-   * Wrap a function to call lock before calling the function then unlock.
+   * Wrap a [promise-returning] function to call lock before calling the function
+   * then unlock when it finishes executing or if it threw an error.
    *
    * @usage MyObj._lock = Utils.lock;
-   *        MyObj.foo = function() { this._lock(func)(); }
+   *        MyObj.foo = async function() { await this._lock(func)(); }
    */
-  lock: function lock(label, func) {
+  lock(label, func) {
     let thisArg = this;
-    return function WrappedLock() {
+    return async function WrappedLock() {
       if (!thisArg.lock()) {
-        throw "Could not acquire lock. Label: \"" + label + "\".";
+        Utils.throwLockException(label);
       }
 
       try {
-        return func.call(thisArg);
-      }
-      finally {
+        return await func.call(thisArg);
+      } finally {
         thisArg.unlock();
       }
     };
   },
 
   isLockException: function isLockException(ex) {
-    return ex && ex.indexOf && ex.indexOf("Could not acquire lock.") == 0;
+    return ex instanceof LockException;
   },
 
   /**
-   * Wrap functions to notify when it starts and finishes executing or if it
-   * threw an error.
+   * Wrap [promise-returning] functions to notify when it starts and
+   * finishes executing or if it threw an error.
    *
    * The message is a combination of a provided prefix, the local name, and
    * the event. Possible events are: "start", "finish", "error". The subject
@@ -145,12 +161,12 @@ this.Utils = {
    *          this._notify = Utils.notify("obj:");
    *        }
    *        MyObj.prototype = {
-   *          foo: function() this._notify("func", "data-arg", function () {
+   *          foo: function() this._notify("func", "data-arg", async function () {
    *            //...
    *          }(),
    *        };
    */
-  notify: function Utils_notify(prefix) {
+  notify(prefix) {
     return function NotifyMaker(name, data, func) {
       let thisArg = this;
       let notify = function(state, subject) {
@@ -159,14 +175,13 @@ this.Utils = {
         Observers.notify(mesg, subject, data);
       };
 
-      return function WrappedNotify() {
+      return async function WrappedNotify() {
+        notify("start", null);
         try {
-          notify("start", null);
-          let ret = func.call(thisArg);
+          let ret = await func.call(thisArg);
           notify("finish", ret);
           return ret;
-        }
-        catch(ex) {
+        } catch (ex) {
           notify("error", ex);
           throw ex;
         }
@@ -206,22 +221,17 @@ this.Utils = {
 
     // Create a getter if it doesn't exist yet
     if (!prot.__lookupGetter__(prop)) {
-      prot.__defineGetter__(prop, function () {
+      prot.__defineGetter__(prop, function() {
         return this[defer][prop];
       });
     }
 
     // Create a setter if it doesn't exist yet
     if (!prot.__lookupSetter__(prop)) {
-      prot.__defineSetter__(prop, function (val) {
+      prot.__defineSetter__(prop, function(val) {
         this[defer][prop] = val;
       });
     }
-  },
-
-  lazyStrings: function Weave_lazyStrings(name) {
-    let bundle = "chrome://weave/locale/services/" + name + ".properties";
-    return () => new StringBundle(bundle);
   },
 
   deepEquals: function eq(a, b) {
@@ -254,12 +264,12 @@ this.Utils = {
   // Split these out in case we want to make them richer in future, and to
   // avoid inevitable confusion if the message changes.
   throwHMACMismatch: function throwHMACMismatch(shouldBe, is) {
-    throw "Record SHA256 HMAC mismatch: should be " + shouldBe + ", is " + is;
+    throw new HMACMismatch(
+        `Record SHA256 HMAC mismatch: should be ${shouldBe}, is ${is}`);
   },
 
   isHMACMismatch: function isHMACMismatch(ex) {
-    const hmacFail = "Record SHA256 HMAC mismatch: ";
-    return ex && ex.indexOf && (ex.indexOf(hmacFail) == 0);
+    return ex instanceof HMACMismatch;
   },
 
   /**
@@ -270,14 +280,14 @@ this.Utils = {
    */
   base32ToFriendly: function base32ToFriendly(input) {
     return input.toLowerCase()
-                .replace(/l/g, '8')
-                .replace(/o/g, '9');
+                .replace(/l/g, "8")
+                .replace(/o/g, "9");
   },
 
   base32FromFriendly: function base32FromFriendly(input) {
     return input.toUpperCase()
-                .replace(/8/g, 'L')
-                .replace(/9/g, 'O');
+                .replace(/8/g, "L")
+                .replace(/9/g, "O");
   },
 
   /**
@@ -298,37 +308,8 @@ this.Utils = {
            .slice(0, SYNC_KEY_DECODED_LENGTH);
   },
 
-  base64Key: function base64Key(keyData) {
-    return btoa(keyData);
-  },
-
-  /**
-   * N.B., salt should be base64 encoded, even though we have to decode
-   * it later!
-   */
-  derivePresentableKeyFromPassphrase : function derivePresentableKeyFromPassphrase(passphrase, salt, keyLength, forceJS) {
-    let k = CryptoUtils.deriveKeyFromPassphrase(passphrase, salt, keyLength,
-                                                forceJS);
-    return Utils.encodeKeyBase32(k);
-  },
-
-  /**
-   * N.B., salt should be base64 encoded, even though we have to decode
-   * it later!
-   */
-  deriveEncodedKeyFromPassphrase : function deriveEncodedKeyFromPassphrase(passphrase, salt, keyLength, forceJS) {
-    let k = CryptoUtils.deriveKeyFromPassphrase(passphrase, salt, keyLength,
-                                                forceJS);
-    return Utils.base64Key(k);
-  },
-
-  /**
-   * Take a base64-encoded 128-bit AES key, returning it as five groups of five
-   * uppercase alphanumeric characters, separated by hyphens.
-   * A.K.A. base64-to-base32 encoding.
-   */
-  presentEncodedKeyAsSyncKey : function presentEncodedKeyAsSyncKey(encodedKey) {
-    return Utils.encodeKeyBase32(atob(encodedKey));
+  jsonFilePath(filePath) {
+    return OS.Path.normalize(OS.Path.join(OS.Constants.Path.profileDir, "weave", filePath + ".json"));
   },
 
   /**
@@ -339,34 +320,29 @@ this.Utils = {
    *        <profile>/<filePath>.json. i.e. Do not specify the ".json"
    *        extension.
    * @param that
-   *        Object to use for logging and "this" for callback.
-   * @param callback
-   *        Function to process json object as its first argument. If the file
-   *        could not be loaded, the first argument will be undefined.
+   *        Object to use for logging.
+   *
+   * @return Promise<>
+   *        Promise resolved when the write has been performed.
    */
-  jsonLoad: Task.async(function*(filePath, that, callback) {
-    let path = OS.Path.join(OS.Constants.Path.profileDir, "weave", filePath + ".json");
+  async jsonLoad(filePath, that) {
+    let path = Utils.jsonFilePath(filePath);
 
-    if (that._log) {
+    if (that._log && that._log.trace) {
       that._log.trace("Loading json from disk: " + filePath);
     }
 
-    let json;
-
     try {
-      json = yield CommonUtils.readJSON(path);
+      return await CommonUtils.readJSON(path);
     } catch (e) {
-      if (e instanceof OS.File.Error && e.becauseNoSuchFile) {
-        // Ignore non-existent files.
-      } else {
+      if (!(e instanceof OS.File.Error && e.becauseNoSuchFile)) {
         if (that._log) {
           that._log.debug("Failed to load json", e);
         }
       }
+      return null;
     }
-
-    callback.call(that, json);
-  }),
+  },
 
   /**
    * Save a json-able object to disk in the profile directory.
@@ -374,58 +350,75 @@ this.Utils = {
    * @param filePath
    *        JSON file path save to <filePath>.json
    * @param that
-   *        Object to use for logging and "this" for callback
+   *        Object to use for logging.
    * @param obj
    *        Function to provide json-able object to save. If this isn't a
-   *        function, it'll be used as the object to make a json string.
-   * @param callback
+   *        function, it'll be used as the object to make a json string.*
    *        Function called when the write has been performed. Optional.
-   *        The first argument will be a Components.results error
-   *        constant on error or null if no error was encountered (and
-   *        the file saved successfully).
+   *
+   * @return Promise<>
+   *        Promise resolved when the write has been performed.
    */
-  jsonSave: Task.async(function*(filePath, that, obj, callback) {
+  async jsonSave(filePath, that, obj) {
     let path = OS.Path.join(OS.Constants.Path.profileDir, "weave",
                             ...(filePath + ".json").split("/"));
     let dir = OS.Path.dirname(path);
-    let error = null;
 
-    try {
-      yield OS.File.makeDir(dir, { from: OS.Constants.Path.profileDir });
+    await OS.File.makeDir(dir, { from: OS.Constants.Path.profileDir });
 
-      if (that._log) {
-        that._log.trace("Saving json to disk: " + path);
-      }
-
-      let json = typeof obj == "function" ? obj.call(that) : obj;
-
-      yield CommonUtils.writeJSON(json, path);
-    } catch (e) {
-      error = e
+    if (that._log) {
+      that._log.trace("Saving json to disk: " + path);
     }
 
-    if (typeof callback == "function") {
-      callback.call(that, error);
-    }
-  }),
+    let json = typeof obj == "function" ? obj.call(that) : obj;
 
-  getErrorString: function Utils_getErrorString(error, args) {
-    try {
-      return Str.errors.get(error, args || null);
-    } catch (e) {}
-
-    // basically returns "Unknown Error"
-    return Str.errors.get("error.reason.unknown");
+    return CommonUtils.writeJSON(json, path);
   },
 
   /**
-   * Generate 26 characters.
+   * Move a json file in the profile directory. Will fail if a file exists at the
+   * destination.
+   *
+   * @returns a promise that resolves to undefined on success, or rejects on failure
+   *
+   * @param aFrom
+   *        Current path to the JSON file saved on disk, relative to profileDir/weave
+   *        .json will be appended to the file name.
+   * @param aTo
+   *        New path to the JSON file saved on disk, relative to profileDir/weave
+   *        .json will be appended to the file name.
+   * @param that
+   *        Object to use for logging
    */
-  generatePassphrase: function generatePassphrase() {
-    // Note that this is a different base32 alphabet to the one we use for
-    // other tasks. It's lowercase, uses different letters, and needs to be
-    // decoded with decodeKeyBase32, not just decodeBase32.
-    return Utils.encodeKeyBase32(CryptoUtils.generateRandomBytes(16));
+  jsonMove(aFrom, aTo, that) {
+    let pathFrom = OS.Path.join(OS.Constants.Path.profileDir, "weave",
+                                ...(aFrom + ".json").split("/"));
+    let pathTo = OS.Path.join(OS.Constants.Path.profileDir, "weave",
+                              ...(aTo + ".json").split("/"));
+    if (that._log) {
+      that._log.trace("Moving " + pathFrom + " to " + pathTo);
+    }
+    return OS.File.move(pathFrom, pathTo, { noOverwrite: true });
+  },
+
+  /**
+   * Removes a json file in the profile directory.
+   *
+   * @returns a promise that resolves to undefined on success, or rejects on failure
+   *
+   * @param filePath
+   *        Current path to the JSON file saved on disk, relative to profileDir/weave
+   *        .json will be appended to the file name.
+   * @param that
+   *        Object to use for logging
+   */
+  jsonRemove(filePath, that) {
+    let path = OS.Path.join(OS.Constants.Path.profileDir, "weave",
+                            ...(filePath + ".json").split("/"));
+    if (that._log) {
+      that._log.trace("Deleting " + path);
+    }
+    return OS.File.remove(path, { ignoreAbsent: true });
   },
 
   /**
@@ -434,58 +427,17 @@ this.Utils = {
    * * isPassphrase:
    *     determines whether a string is either a normalized or presentable
    *     passphrase.
-   * * hyphenatePassphrase:
-   *     present a normalized passphrase for display. This might actually
-   *     perform work beyond just hyphenation; sorry.
-   * * hyphenatePartialPassphrase:
-   *     present a fragment of a normalized passphrase for display.
    * * normalizePassphrase:
    *     take a presentable passphrase and reduce it to a normalized
    *     representation for storage. normalizePassphrase can safely be called
    *     on normalized input.
-   * * normalizeAccount:
-   *     take user input for account/username, cleaning up appropriately.
    */
 
-  isPassphrase: function(s) {
+  isPassphrase(s) {
     if (s) {
       return /^[abcdefghijkmnpqrstuvwxyz23456789]{26}$/.test(Utils.normalizePassphrase(s));
     }
     return false;
-  },
-
-  /**
-   * Hyphenate a passphrase (26 characters) into groups.
-   * abbbbccccddddeeeeffffggggh
-   * =>
-   * a-bbbbc-cccdd-ddeee-effff-ggggh
-   */
-  hyphenatePassphrase: function hyphenatePassphrase(passphrase) {
-    // For now, these are the same.
-    return Utils.hyphenatePartialPassphrase(passphrase, true);
-  },
-
-  hyphenatePartialPassphrase: function hyphenatePartialPassphrase(passphrase, omitTrailingDash) {
-    if (!passphrase)
-      return null;
-
-    // Get the raw data input. Just base32.
-    let data = passphrase.toLowerCase().replace(/[^abcdefghijkmnpqrstuvwxyz23456789]/g, "");
-
-    // This is the neatest way to do this.
-    if ((data.length == 1) && !omitTrailingDash)
-      return data + "-";
-
-    // Hyphenate it.
-    let y = data.substr(0,1);
-    let z = data.substr(1).replace(/(.{1,5})/g, "-$1");
-
-    // Correct length? We're done.
-    if ((z.length == 30) || omitTrailingDash)
-      return y + z;
-
-    // Add a trailing dash if appropriate.
-    return (y + z.replace(/([^-]{5})$/, "$1-")).substr(0, SYNC_KEY_HYPHENATED_LENGTH);
   },
 
   normalizePassphrase: function normalizePassphrase(pp) {
@@ -495,7 +447,7 @@ this.Utils = {
 
     // 20-char sync key.
     if (pp.length == 23 &&
-        [5, 11, 17].every(i => pp[i] == '-')) {
+        [5, 11, 17].every(i => pp[i] == "-")) {
 
       return pp.slice(0, 5) + pp.slice(6, 11)
              + pp.slice(12, 17) + pp.slice(18, 23);
@@ -503,7 +455,7 @@ this.Utils = {
 
     // "Modern" 26-char key.
     if (pp.length == 31 &&
-        [1, 7, 13, 19, 25].every(i => pp[i] == '-')) {
+        [1, 7, 13, 19, 25].every(i => pp[i] == "-")) {
 
       return pp.slice(0, 1) + pp.slice(2, 7)
              + pp.slice(8, 13) + pp.slice(14, 19)
@@ -514,10 +466,6 @@ this.Utils = {
     return pp;
   },
 
-  normalizeAccount: function normalizeAccount(acc) {
-    return acc.trim();
-  },
-
   /**
    * Create an array like the first but without elements of the second. Reuse
    * arrays if possible.
@@ -525,7 +473,8 @@ this.Utils = {
   arraySub: function arraySub(minuend, subtrahend) {
     if (!minuend.length || !subtrahend.length)
       return minuend;
-    return minuend.filter(i => subtrahend.indexOf(i) == -1);
+    let setSubtrahend = new Set(subtrahend);
+    return minuend.filter(i => !setSubtrahend.has(i));
   },
 
   /**
@@ -547,34 +496,20 @@ this.Utils = {
    * Is there a master password configured, regardless of current lock state?
    */
   mpEnabled: function mpEnabled() {
-    let modules = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                    .getService(Ci.nsIPKCS11ModuleDB);
-    let sdrSlot = modules.findSlotByName("");
-    let status  = sdrSlot.status;
-    let slots = Ci.nsIPKCS11Slot;
-
-    return status != slots.SLOT_UNINITIALIZED && status != slots.SLOT_READY;
+    let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                    .getService(Ci.nsIPK11TokenDB);
+    let token = tokenDB.getInternalKeyToken();
+    return token.hasPassword;
   },
 
   /**
    * Is there a master password configured and currently locked?
    */
   mpLocked: function mpLocked() {
-    let modules = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                    .getService(Ci.nsIPKCS11ModuleDB);
-    let sdrSlot = modules.findSlotByName("");
-    let status  = sdrSlot.status;
-    let slots = Ci.nsIPKCS11Slot;
-
-    if (status == slots.SLOT_READY || status == slots.SLOT_LOGGED_IN
-                                   || status == slots.SLOT_UNINITIALIZED)
-      return false;
-
-    if (status == slots.SLOT_NOT_LOGGED_IN)
-      return true;
-
-    // something wacky happened, pretend MP is locked
-    return true;
+    let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
+                    .getService(Ci.nsIPK11TokenDB);
+    let token = tokenDB.getInternalKeyToken();
+    return token.hasPassword && !token.isLoggedIn();
   },
 
   // If Master Password is enabled and locked, present a dialog to unlock it.
@@ -588,7 +523,7 @@ this.Utils = {
     try {
       sdr.encryptString("bacon");
       return true;
-    } catch(e) {}
+    } catch (e) {}
     return false;
   },
 
@@ -613,7 +548,7 @@ this.Utils = {
    * In general, these hosts will not have their passwords synced, will be
    * reset when we drop sync credentials, etc.
    */
-  getSyncCredentialsHosts: function() {
+  getSyncCredentialsHosts() {
     let result = new Set(this.getSyncCredentialsHostsLegacy());
     for (let host of this.getSyncCredentialsHostsFxA()) {
       result.add(host);
@@ -624,7 +559,7 @@ this.Utils = {
   /*
    * Get the "legacy" identity hosts.
    */
-  getSyncCredentialsHostsLegacy: function() {
+  getSyncCredentialsHostsLegacy() {
     // the legacy sync host
     return new Set([PWDMGR_HOST]);
   },
@@ -632,7 +567,7 @@ this.Utils = {
   /*
    * Get the FxA identity hosts.
    */
-  getSyncCredentialsHostsFxA: function() {
+  getSyncCredentialsHostsFxA() {
     let result = new Set();
     // the FxA host
     result.add(FxAccountsCommon.FXA_PWDMGR_HOST);
@@ -653,25 +588,28 @@ this.Utils = {
       user = env.get("USERNAME");
     }
 
-    let brand = new StringBundle("chrome://branding/locale/brand.properties");
-    let brandName = brand.get("brandShortName");
+    let brand = Services.strings.createBundle(
+      "chrome://branding/locale/brand.properties");
+    let brandName = brand.GetStringFromName("brandShortName");
 
-    let appName;
+    // The DNS service may fail to provide a hostname in edge-cases we don't
+    // fully understand - bug 1391488.
+    let hostname;
     try {
-      let syncStrings = new StringBundle("chrome://browser/locale/sync.properties");
-      appName = syncStrings.getFormattedString("sync.defaultAccountApplication", [brandName]);
-    } catch (ex) {}
-    appName = appName || brandName;
-
+      // hostname of the system, usually assigned by the user or admin
+      hostname = Cc["@mozilla.org/network/dns-service;1"].getService(Ci.nsIDNSService).myHostName;
+    } catch (ex) {
+      Cu.reportError(ex);
+    }
     let system =
       // 'device' is defined on unix systems
       Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("device") ||
-      // hostname of the system, usually assigned by the user or admin
-      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("host") ||
+      hostname ||
       // fall back on ua info string
       Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler).oscpu;
 
-    return Str.sync.get("client.name2", [user, appName, system]);
+    let syncStrings = Services.strings.createBundle("chrome://weave/locale/sync.properties");
+    return syncStrings.formatStringFromName("client.name2", [user, brandName, system], 3);
   },
 
   getDeviceName() {
@@ -686,6 +624,18 @@ this.Utils = {
 
   getDeviceType() {
     return Svc.Prefs.get("client.type", DEVICE_TYPE_DESKTOP);
+  },
+
+  formatTimestamp(date) {
+    // Format timestamp as: "%Y-%m-%d %H:%M:%S"
+    let year = String(date.getFullYear());
+    let month = String(date.getMonth() + 1).padStart(2, "0");
+    let day = String(date.getDate()).padStart(2, "0");
+    let hours = String(date.getHours()).padStart(2, "0");
+    let minutes = String(date.getMinutes()).padStart(2, "0");
+    let seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 };
 
@@ -701,37 +651,9 @@ XPCOMUtils.defineLazyGetter(Utils, "_utf8Converter", function() {
  */
 this.Svc = {};
 Svc.Prefs = new Preferences(PREFS_BRANCH);
-Svc.DefaultPrefs = new Preferences({branch: PREFS_BRANCH, defaultBranch: true});
 Svc.Obs = Observers;
 
-var _sessionCID = Services.appinfo.ID == SEAMONKEY_ID ?
-  "@mozilla.org/suite/sessionstore;1" :
-  "@mozilla.org/browser/sessionstore;1";
-
-[
- ["Idle", "@mozilla.org/widget/idleservice;1", "nsIIdleService"],
- ["Session", _sessionCID, "nsISessionStore"]
-].forEach(function([name, contract, iface]) {
-  XPCOMUtils.defineLazyServiceGetter(Svc, name, contract, iface);
-});
-
-XPCOMUtils.defineLazyModuleGetter(Svc, "FormHistory", "resource://gre/modules/FormHistory.jsm");
-
-Svc.__defineGetter__("Crypto", function() {
-  let cryptoSvc;
-  let ns = {};
-  Cu.import("resource://services-crypto/WeaveCrypto.js", ns);
-  cryptoSvc = new ns.WeaveCrypto();
-  delete Svc.Crypto;
-  return Svc.Crypto = cryptoSvc;
-});
-
-this.Str = {};
-["errors", "sync"].forEach(function(lazy) {
-  XPCOMUtils.defineLazyGetter(Str, lazy, Utils.lazyStrings(lazy));
-});
-
-Svc.Obs.add("xpcom-shutdown", function () {
+Svc.Obs.add("xpcom-shutdown", function() {
   for (let name in Svc)
     delete Svc[name];
 });

@@ -135,8 +135,7 @@ DocAccessible::NotifyOfLoad(uint32_t aLoadEventType)
 inline void
 DocAccessible::MaybeNotifyOfValueChange(Accessible* aAccessible)
 {
-  a11y::role role = aAccessible->Role();
-  if (role == roles::ENTRY || role == roles::COMBOBOX)
+  if (aAccessible->IsCombobox() || aAccessible->Role() == roles::ENTRY)
     FireDelayedEvent(nsIAccessibleEvent::EVENT_TEXT_VALUE_CHANGE, aAccessible);
 }
 
@@ -156,6 +155,12 @@ DocAccessible::CreateSubtree(Accessible* aChild)
   // this node already then it will be suppressed by this one.
   Accessible* focusedAcc = nullptr;
   CacheChildrenInSubtree(aChild, &focusedAcc);
+
+#ifdef A11Y_LOG
+  if (logging::IsEnabled(logging::eVerbose)) {
+    logging::Tree("TREE", "Created subtree", aChild);
+  }
+#endif
 
   // Fire events for ARIA elements.
   if (aChild->HasARIARole()) {

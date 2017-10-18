@@ -5,7 +5,7 @@
 
 #include "mozilla/dom/TreeBoxObject.h"
 #include "nsCOMPtr.h"
-#include "nsIDOMXULElement.h"
+#include "nsXULElement.h"
 #include "nsIScriptableRegion.h"
 #include "nsIXULTemplateBuilder.h"
 #include "nsTreeContentView.h"
@@ -93,7 +93,7 @@ TreeBoxObject::GetTreeBodyFrame(bool aFlushLayout)
   // is true we need to make sure to flush no matter what.
   // XXXbz except that flushing style when we were not asked to flush
   // layout here breaks things.  See bug 585123.
-  nsIFrame* frame;
+  nsIFrame* frame = nullptr;
   if (aFlushLayout) {
     frame = GetFrame(aFlushLayout);
     if (!frame)
@@ -143,11 +143,10 @@ TreeBoxObject::GetView(nsITreeView * *aView)
       return mTreeBody->GetView(aView);
   }
   if (!mView) {
-    nsCOMPtr<nsIDOMXULElement> xulele = do_QueryInterface(mContent);
+    RefPtr<nsXULElement> xulele = nsXULElement::FromContentOrNull(mContent);
     if (xulele) {
       // See if there is a XUL tree builder associated with the element
-      nsCOMPtr<nsIXULTemplateBuilder> builder;
-      xulele->GetBuilder(getter_AddRefs(builder));
+      nsCOMPtr<nsIXULTemplateBuilder> builder = xulele->GetBuilder();
       mView = do_QueryInterface(builder);
 
       if (!mView) {
@@ -666,6 +665,24 @@ TreeBoxObject::ClearStyleAndImageCaches()
   if (body)
     return body->ClearStyleAndImageCaches();
   return NS_OK;
+}
+
+NS_IMETHODIMP
+TreeBoxObject::RemoveImageCacheEntry(int32_t aRowIndex, nsITreeColumn* aCol)
+{
+  NS_ENSURE_ARG(aCol);
+  NS_ENSURE_TRUE(aRowIndex >= 0, NS_ERROR_INVALID_ARG);
+  nsTreeBodyFrame* body = GetTreeBodyFrame();
+  if (body) {
+    return body->RemoveImageCacheEntry(aRowIndex, aCol);
+  }
+  return NS_OK;
+}
+
+void
+TreeBoxObject::RemoveImageCacheEntry(int32_t row, nsITreeColumn& col, ErrorResult& aRv)
+{
+  aRv = RemoveImageCacheEntry(row, &col);
 }
 
 void

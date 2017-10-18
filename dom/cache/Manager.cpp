@@ -10,7 +10,7 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/cache/Context.h"
 #include "mozilla/dom/cache/DBAction.h"
 #include "mozilla/dom/cache/DBSchema.h"
@@ -82,7 +82,7 @@ public:
         rv = db::DeleteCacheId(aConn, orphanedCacheIdList[i], deletedBodyIdList);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-        rv = BodyDeleteFiles(aDBDir, deletedBodyIdList);
+        rv = BodyDeleteFiles(aQuotaInfo, aDBDir, deletedBodyIdList);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
       }
 
@@ -90,7 +90,7 @@ public:
       AutoTArray<nsID, 64> knownBodyIdList;
       rv = db::GetKnownBodyIds(aConn, knownBodyIdList);
 
-      rv = BodyDeleteOrphanedFiles(aDBDir, knownBodyIdList);
+      rv = BodyDeleteOrphanedFiles(aQuotaInfo, aDBDir, knownBodyIdList);
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     }
 
@@ -117,8 +117,8 @@ public:
   virtual void
   RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo, Data*) override
   {
-    MOZ_ASSERT(aResolver);
-    MOZ_ASSERT(aQuotaInfo.mDir);
+    MOZ_DIAGNOSTIC_ASSERT(aResolver);
+    MOZ_DIAGNOSTIC_ASSERT(aQuotaInfo.mDir);
 
     // Note that since DeleteOrphanedBodyAction isn't used while the context is
     // being initialized, we don't need to check for cancellation here.
@@ -136,7 +136,7 @@ public:
       return;
     }
 
-    rv = BodyDeleteFiles(dbDir, mDeletedBodyIdList);
+    rv = BodyDeleteFiles(aQuotaInfo, dbDir, mDeletedBodyIdList);
     Unused << NS_WARN_IF(NS_FAILED(rv));
 
     aResolver->Resolve(rv);
@@ -231,8 +231,8 @@ public:
   Remove(Manager* aManager)
   {
     mozilla::ipc::AssertIsOnBackgroundThread();
-    MOZ_ASSERT(aManager);
-    MOZ_ASSERT(sFactory);
+    MOZ_DIAGNOSTIC_ASSERT(aManager);
+    MOZ_DIAGNOSTIC_ASSERT(sFactory);
 
     MOZ_ALWAYS_TRUE(sFactory->mManagerList.RemoveElement(aManager));
 
@@ -249,7 +249,7 @@ public:
       return;
     }
 
-    MOZ_ASSERT(!sFactory->mManagerList.IsEmpty());
+    MOZ_DIAGNOSTIC_ASSERT(!sFactory->mManagerList.IsEmpty());
 
     {
       ManagerList::ForwardIterator iter(sFactory->mManagerList);
@@ -272,7 +272,7 @@ public:
       return;
     }
 
-    MOZ_ASSERT(!sFactory->mManagerList.IsEmpty());
+    MOZ_DIAGNOSTIC_ASSERT(!sFactory->mManagerList.IsEmpty());
 
     {
       // Note that we are synchronously calling shutdown code here.  If any
@@ -308,8 +308,8 @@ private:
   ~Factory()
   {
     MOZ_COUNT_DTOR(cache::Manager::Factory);
-    MOZ_ASSERT(mManagerList.IsEmpty());
-    MOZ_ASSERT(!mInSyncShutdown);
+    MOZ_DIAGNOSTIC_ASSERT(mManagerList.IsEmpty());
+    MOZ_DIAGNOSTIC_ASSERT(!mInSyncShutdown);
   }
 
   static nsresult
@@ -348,7 +348,7 @@ private:
   MaybeDestroyInstance()
   {
     mozilla::ipc::AssertIsOnBackgroundThread();
-    MOZ_ASSERT(sFactory);
+    MOZ_DIAGNOSTIC_ASSERT(sFactory);
 
     // If the factory is is still in use then we cannot delete yet.  This
     // could be due to managers still existing or because we are in the
@@ -622,9 +622,9 @@ public:
     , mAsyncResult(NS_OK)
     , mMutex("cache::Manager::CachePutAllAction")
   {
-    MOZ_ASSERT(!aPutList.IsEmpty());
-    MOZ_ASSERT(aPutList.Length() == aRequestStreamList.Length());
-    MOZ_ASSERT(aPutList.Length() == aResponseStreamList.Length());
+    MOZ_DIAGNOSTIC_ASSERT(!aPutList.IsEmpty());
+    MOZ_DIAGNOSTIC_ASSERT(aPutList.Length() == aRequestStreamList.Length());
+    MOZ_DIAGNOSTIC_ASSERT(aPutList.Length() == aResponseStreamList.Length());
 
     for (uint32_t i = 0; i < aPutList.Length(); ++i) {
       Entry* entry = mList.AppendElement();
@@ -642,25 +642,26 @@ private:
   RunWithDBOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
                     nsIFile* aDBDir, mozIStorageConnection* aConn) override
   {
-    MOZ_ASSERT(aResolver);
-    MOZ_ASSERT(aDBDir);
-    MOZ_ASSERT(aConn);
-    MOZ_ASSERT(!mResolver);
-    MOZ_ASSERT(!mDBDir);
-    MOZ_ASSERT(!mConn);
+    MOZ_DIAGNOSTIC_ASSERT(aResolver);
+    MOZ_DIAGNOSTIC_ASSERT(aDBDir);
+    MOZ_DIAGNOSTIC_ASSERT(aConn);
+    MOZ_DIAGNOSTIC_ASSERT(!mResolver);
+    MOZ_DIAGNOSTIC_ASSERT(!mDBDir);
+    MOZ_DIAGNOSTIC_ASSERT(!mConn);
 
-    MOZ_ASSERT(!mTargetThread);
-    mTargetThread = NS_GetCurrentThread();
-    MOZ_ASSERT(mTargetThread);
+    MOZ_DIAGNOSTIC_ASSERT(!mTarget);
+    mTarget = GetCurrentThreadSerialEventTarget();
+    MOZ_DIAGNOSTIC_ASSERT(mTarget);
 
     // We should be pre-initialized to expect one async completion.  This is
     // the "manual" completion we call at the end of this method in all
     // cases.
-    MOZ_ASSERT(mExpectedAsyncCopyCompletions == 1);
+    MOZ_DIAGNOSTIC_ASSERT(mExpectedAsyncCopyCompletions == 1);
 
     mResolver = aResolver;
     mDBDir = aDBDir;
     mConn = aConn;
+    mQuotaInfo.emplace(aQuotaInfo);
 
     // File bodies are streamed to disk via asynchronous copying.  Start
     // this copying now.  Each copy will eventually result in a call
@@ -694,10 +695,10 @@ private:
   void
   OnAsyncCopyComplete(nsresult aRv)
   {
-    MOZ_ASSERT(mTargetThread == NS_GetCurrentThread());
-    MOZ_ASSERT(mConn);
-    MOZ_ASSERT(mResolver);
-    MOZ_ASSERT(mExpectedAsyncCopyCompletions > 0);
+    MOZ_ASSERT(mTarget->IsOnCurrentThread());
+    MOZ_DIAGNOSTIC_ASSERT(mConn);
+    MOZ_DIAGNOSTIC_ASSERT(mResolver);
+    MOZ_DIAGNOSTIC_ASSERT(mExpectedAsyncCopyCompletions > 0);
 
     // Explicitly check for cancellation here to catch a race condition.
     // Consider:
@@ -841,8 +842,8 @@ private:
   StartStreamCopy(const QuotaInfo& aQuotaInfo, Entry& aEntry,
                   StreamId aStreamId, uint32_t* aCopyCountOut)
   {
-    MOZ_ASSERT(mTargetThread == NS_GetCurrentThread());
-    MOZ_ASSERT(aCopyCountOut);
+    MOZ_ASSERT(mTarget->IsOnCurrentThread());
+    MOZ_DIAGNOSTIC_ASSERT(aCopyCountOut);
 
     if (IsCanceled()) {
       return NS_ERROR_ABORT;
@@ -855,7 +856,7 @@ private:
       source = aEntry.mRequestStream;
       bodyId = &aEntry.mRequestBodyId;
     } else {
-      MOZ_ASSERT(aStreamId == ResponseStream);
+      MOZ_DIAGNOSTIC_ASSERT(aStreamId == ResponseStream);
       source = aEntry.mResponseStream;
       bodyId = &aEntry.mResponseBodyId;
     }
@@ -898,7 +899,7 @@ private:
   AsyncCopyCompleteFunc(void* aClosure, nsresult aRv)
   {
     // May be on any thread, including STS event target.
-    MOZ_ASSERT(aClosure);
+    MOZ_DIAGNOSTIC_ASSERT(aClosure);
     // Weak ref as we are guaranteed to the action is alive until
     // CompleteOnInitiatingThread is called.
     CachePutAllAction* action = static_cast<CachePutAllAction*>(aClosure);
@@ -912,15 +913,18 @@ private:
     // here since we are guaranteed the Action will survive until
     // CompleteOnInitiatingThread is called.
     nsCOMPtr<nsIRunnable> runnable = NewNonOwningRunnableMethod<nsresult>(
-      this, &CachePutAllAction::OnAsyncCopyComplete, aRv);
+      "dom::cache::Manager::CachePutAllAction::OnAsyncCopyComplete",
+      this,
+      &CachePutAllAction::OnAsyncCopyComplete,
+      aRv);
     MOZ_ALWAYS_SUCCEEDS(
-      mTargetThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
+      mTarget->Dispatch(runnable.forget(), nsIThread::DISPATCH_NORMAL));
   }
 
   void
   DoResolve(nsresult aRv)
   {
-    MOZ_ASSERT(mTargetThread == NS_GetCurrentThread());
+    MOZ_ASSERT(mTarget->IsOnCurrentThread());
 
     // DoResolve() must not be called until all async copying has completed.
 #ifdef DEBUG
@@ -932,7 +936,7 @@ private:
 
     // Clean up any files we might have written before hitting the error.
     if (NS_FAILED(aRv)) {
-      BodyDeleteFiles(mDBDir, mBodyIdWrittenList);
+      BodyDeleteFiles(mQuotaInfo.ref(), mDBDir, mBodyIdWrittenList);
     }
 
     // Must be released on the target thread where it was opened.
@@ -941,7 +945,7 @@ private:
     // Drop our ref to the target thread as we are done with this thread.
     // Also makes our thread assertions catch any incorrect method calls
     // after resolve.
-    mTargetThread = nullptr;
+    mTarget = nullptr;
 
     // Make sure to de-ref the resolver per the Action API contract.
     RefPtr<Action::Resolver> resolver;
@@ -963,7 +967,7 @@ private:
   RefPtr<Resolver> mResolver;
   nsCOMPtr<nsIFile> mDBDir;
   nsCOMPtr<mozIStorageConnection> mConn;
-  nsCOMPtr<nsIThread> mTargetThread;
+  nsCOMPtr<nsISerialEventTarget> mTarget;
   nsresult mAsyncResult;
   nsTArray<nsID> mBodyIdWrittenList;
 
@@ -974,6 +978,8 @@ private:
   // accessed from any thread while mMutex locked
   Mutex mMutex;
   nsTArray<nsCOMPtr<nsISupports>> mCopyContextList;
+
+  Maybe<QuotaInfo> mQuotaInfo;
 };
 
 // ----------------------------------------------------------------------------
@@ -1215,6 +1221,7 @@ public:
                                         &cacheFound, &mCacheId);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
     if (cacheFound) {
+      MOZ_DIAGNOSTIC_ASSERT(mCacheId != INVALID_CACHE_ID);
       return rv;
     }
 
@@ -1227,12 +1234,14 @@ public:
     rv = trans.Commit();
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
+    MOZ_DIAGNOSTIC_ASSERT(mCacheId != INVALID_CACHE_ID);
     return rv;
   }
 
   virtual void
   Complete(Listener* aListener, ErrorResult&& aRv) override
   {
+    MOZ_DIAGNOSTIC_ASSERT(aRv.Failed() || mCacheId != INVALID_CACHE_ID);
     aListener->OnOpComplete(Move(aRv), StorageOpenResult(), mCacheId);
   }
 
@@ -1420,11 +1429,10 @@ Manager::ShutdownAll()
 
   Factory::ShutdownAll();
 
-  while (!Factory::IsShutdownAllComplete()) {
-    if (!NS_ProcessNextEvent()) {
-      NS_WARNING("Something bad happened!");
-      break;
-    }
+  if (!mozilla::SpinEventLoopUntil([]() {
+        return Factory::IsShutdownAllComplete();
+      })) {
+    NS_WARNING("Something bad happened!");
   }
 }
 
@@ -1453,13 +1461,13 @@ void
 Manager::RemoveContext(Context* aContext)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(mContext);
-  MOZ_ASSERT(mContext == aContext);
+  MOZ_DIAGNOSTIC_ASSERT(mContext);
+  MOZ_DIAGNOSTIC_ASSERT(mContext == aContext);
 
   // Whether the Context destruction was triggered from the Manager going
   // idle or the underlying storage being invalidated, we should know we
   // are closing before the Context is destroyed.
-  MOZ_ASSERT(mState == Closing);
+  MOZ_DIAGNOSTIC_ASSERT(mState == Closing);
 
   // Before forgetting the Context, check to see if we have any outstanding
   // cache or body objects waiting for deletion.  If so, note that we've
@@ -1523,9 +1531,11 @@ Manager::ReleaseCacheId(CacheId aCacheId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mCacheIdRefs.Length(); ++i) {
     if (mCacheIdRefs[i].mCacheId == aCacheId) {
-      DebugOnly<uint32_t> oldRef = mCacheIdRefs[i].mCount;
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+      uint32_t oldRef = mCacheIdRefs[i].mCount;
+#endif
       mCacheIdRefs[i].mCount -= 1;
-      MOZ_ASSERT(mCacheIdRefs[i].mCount < oldRef);
+      MOZ_DIAGNOSTIC_ASSERT(mCacheIdRefs[i].mCount < oldRef);
       if (mCacheIdRefs[i].mCount == 0) {
         bool orphaned = mCacheIdRefs[i].mOrphaned;
         mCacheIdRefs.RemoveElementAt(i);
@@ -1572,9 +1582,11 @@ Manager::ReleaseBodyId(const nsID& aBodyId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mBodyIdRefs.Length(); ++i) {
     if (mBodyIdRefs[i].mBodyId == aBodyId) {
-      DebugOnly<uint32_t> oldRef = mBodyIdRefs[i].mCount;
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+      uint32_t oldRef = mBodyIdRefs[i].mCount;
+#endif
       mBodyIdRefs[i].mCount -= 1;
-      MOZ_ASSERT(mBodyIdRefs[i].mCount < oldRef);
+      MOZ_DIAGNOSTIC_ASSERT(mBodyIdRefs[i].mCount < oldRef);
       if (mBodyIdRefs[i].mCount < 1) {
         bool orphaned = mBodyIdRefs[i].mOrphaned;
         mBodyIdRefs.RemoveElementAt(i);
@@ -1608,7 +1620,7 @@ void
 Manager::AddStreamList(StreamList* aStreamList)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(aStreamList);
+  MOZ_DIAGNOSTIC_ASSERT(aStreamList);
   mStreamLists.AppendElement(aStreamList);
 }
 
@@ -1616,7 +1628,7 @@ void
 Manager::RemoveStreamList(StreamList* aStreamList)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(aStreamList);
+  MOZ_DIAGNOSTIC_ASSERT(aStreamList);
   mStreamLists.RemoveElement(aStreamList);
 }
 
@@ -1625,8 +1637,8 @@ Manager::ExecuteCacheOp(Listener* aListener, CacheId aCacheId,
                         const CacheOpArgs& aOpArgs)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(aListener);
-  MOZ_ASSERT(aOpArgs.type() != CacheOpArgs::TCachePutAllArgs);
+  MOZ_DIAGNOSTIC_ASSERT(aListener);
+  MOZ_DIAGNOSTIC_ASSERT(aOpArgs.type() != CacheOpArgs::TCachePutAllArgs);
 
   if (NS_WARN_IF(mState == Closing)) {
     aListener->OnOpComplete(ErrorResult(NS_ERROR_FAILURE), void_t());
@@ -1634,7 +1646,7 @@ Manager::ExecuteCacheOp(Listener* aListener, CacheId aCacheId,
   }
 
   RefPtr<Context> context = mContext;
-  MOZ_ASSERT(!context->IsCanceled());
+  MOZ_DIAGNOSTIC_ASSERT(!context->IsCanceled());
 
   RefPtr<StreamList> streamList = new StreamList(this, context);
   ListenerId listenerId = SaveListener(aListener);
@@ -1670,7 +1682,7 @@ Manager::ExecuteStorageOp(Listener* aListener, Namespace aNamespace,
                           const CacheOpArgs& aOpArgs)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(aListener);
+  MOZ_DIAGNOSTIC_ASSERT(aListener);
 
   if (NS_WARN_IF(mState == Closing)) {
     aListener->OnOpComplete(ErrorResult(NS_ERROR_FAILURE), void_t());
@@ -1678,7 +1690,7 @@ Manager::ExecuteStorageOp(Listener* aListener, Namespace aNamespace,
   }
 
   RefPtr<Context> context = mContext;
-  MOZ_ASSERT(!context->IsCanceled());
+  MOZ_DIAGNOSTIC_ASSERT(!context->IsCanceled());
 
   RefPtr<StreamList> streamList = new StreamList(this, context);
   ListenerId listenerId = SaveListener(aListener);
@@ -1719,7 +1731,7 @@ Manager::ExecutePutAll(Listener* aListener, CacheId aCacheId,
                        const nsTArray<nsCOMPtr<nsIInputStream>>& aResponseStreamList)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(aListener);
+  MOZ_DIAGNOSTIC_ASSERT(aListener);
 
   if (NS_WARN_IF(mState == Closing)) {
     aListener->OnOpComplete(ErrorResult(NS_ERROR_FAILURE), CachePutAllResult());
@@ -1727,7 +1739,7 @@ Manager::ExecutePutAll(Listener* aListener, CacheId aCacheId,
   }
 
   RefPtr<Context> context = mContext;
-  MOZ_ASSERT(!context->IsCanceled());
+  MOZ_DIAGNOSTIC_ASSERT(!context->IsCanceled());
 
   ListenerId listenerId = SaveListener(aListener);
 
@@ -1745,22 +1757,23 @@ Manager::Manager(ManagerId* aManagerId, nsIThread* aIOThread)
   , mShuttingDown(false)
   , mState(Open)
 {
-  MOZ_ASSERT(mManagerId);
-  MOZ_ASSERT(mIOThread);
+  MOZ_DIAGNOSTIC_ASSERT(mManagerId);
+  MOZ_DIAGNOSTIC_ASSERT(mIOThread);
 }
 
 Manager::~Manager()
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(mState == Closing);
-  MOZ_ASSERT(!mContext);
+  MOZ_DIAGNOSTIC_ASSERT(mState == Closing);
+  MOZ_DIAGNOSTIC_ASSERT(!mContext);
 
   nsCOMPtr<nsIThread> ioThread;
   mIOThread.swap(ioThread);
 
   // Don't spin the event loop in the destructor waiting for the thread to
   // shutdown.  Defer this to the main thread, instead.
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(NewRunnableMethod(ioThread, &nsIThread::Shutdown)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(NewRunnableMethod("nsIThread::Shutdown",
+                                                                ioThread, &nsIThread::Shutdown)));
 }
 
 void
@@ -1777,8 +1790,8 @@ Manager::Init(Manager* aOldManager)
   // per Manager now, this lets us cleanly call Factory::Remove() once the
   // Context goes away.
   RefPtr<Action> setupAction = new SetupAction();
-  RefPtr<Context> ref = Context::Create(this, mIOThread, setupAction,
-                                          oldContext);
+  RefPtr<Context> ref = Context::Create(this, mIOThread->SerialEventTarget(), setupAction,
+                                        oldContext);
   mContext = ref;
 }
 
@@ -1814,7 +1827,7 @@ void
 Manager::Abort()
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
-  MOZ_ASSERT(mContext);
+  MOZ_DIAGNOSTIC_ASSERT(mContext);
 
   // Note that we are closing to prevent any new requests from coming in and
   // creating a new Context.  We must ensure all Contexts and IO operations are
@@ -1868,8 +1881,8 @@ Manager::SetCacheIdOrphanedIfRefed(CacheId aCacheId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mCacheIdRefs.Length(); ++i) {
     if (mCacheIdRefs[i].mCacheId == aCacheId) {
-      MOZ_ASSERT(mCacheIdRefs[i].mCount > 0);
-      MOZ_ASSERT(!mCacheIdRefs[i].mOrphaned);
+      MOZ_DIAGNOSTIC_ASSERT(mCacheIdRefs[i].mCount > 0);
+      MOZ_DIAGNOSTIC_ASSERT(!mCacheIdRefs[i].mOrphaned);
       mCacheIdRefs[i].mOrphaned = true;
       return true;
     }
@@ -1885,8 +1898,8 @@ Manager::SetBodyIdOrphanedIfRefed(const nsID& aBodyId)
   NS_ASSERT_OWNINGTHREAD(Manager);
   for (uint32_t i = 0; i < mBodyIdRefs.Length(); ++i) {
     if (mBodyIdRefs[i].mBodyId == aBodyId) {
-      MOZ_ASSERT(mBodyIdRefs[i].mCount > 0);
-      MOZ_ASSERT(!mBodyIdRefs[i].mOrphaned);
+      MOZ_DIAGNOSTIC_ASSERT(mBodyIdRefs[i].mCount > 0);
+      MOZ_DIAGNOSTIC_ASSERT(!mBodyIdRefs[i].mOrphaned);
       mBodyIdRefs[i].mOrphaned = true;
       return true;
     }

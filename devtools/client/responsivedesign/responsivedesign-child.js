@@ -17,7 +17,7 @@ var global = this;
 
   var Ci = Components.interfaces;
   const gDeviceSizeWasPageSize = docShell.deviceSizeIsPageSize;
-  const gFloatingScrollbarsStylesheet = Services.io.newURI("chrome://devtools/skin/floating-scrollbars-responsive-design.css", null, null);
+  const gFloatingScrollbarsStylesheet = Services.io.newURI("chrome://devtools/skin/floating-scrollbars-responsive-design.css");
   var gRequiresFloatingScrollbars;
 
   var active = false;
@@ -41,7 +41,8 @@ var global = this;
   function startResponsiveMode({data:data}) {
     debug("START");
     if (active) {
-      debug("ALREADY STARTED, ABORT");
+      debug("ALREADY STARTED");
+      sendAsyncMessage("ResponsiveMode:Start:Done");
       return;
     }
     addMessageListener("ResponsiveMode:RequestScreenshot", screenshot);
@@ -72,7 +73,7 @@ var global = this;
   }
 
   function bindOnResize() {
-    content.addEventListener("resize", onResize, false);
+    content.addEventListener("resize", onResize);
   }
 
   function startOnResize() {
@@ -91,7 +92,7 @@ var global = this;
       return;
     }
     resizeNotifications = false;
-    content.removeEventListener("resize", onResize, false);
+    content.removeEventListener("resize", onResize);
     removeEventListener("DOMWindowCreated", bindOnResize, false);
   }
 

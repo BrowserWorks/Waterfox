@@ -133,22 +133,22 @@ BatteryManager::UpdateFromBatteryInfo(const hal::BatteryInformation& aBatteryInf
 {
   mLevel = aBatteryInfo.level();
 
-  // Round to the nearest ten percent for non-chrome and non-certified apps
+  // Round to the nearest ten percent for non-chrome.
   nsIDocument* doc = GetOwner() ? GetOwner()->GetDoc() : nullptr;
-  uint16_t status = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
-  if (doc) {
-    doc->NodePrincipal()->GetAppStatus(&status);
-  }
 
   mCharging = aBatteryInfo.charging();
   mRemainingTime = aBatteryInfo.remainingTime();
 
-  if (!nsContentUtils::IsChromeDoc(doc) &&
-      status != nsIPrincipal::APP_STATUS_CERTIFIED)
+  if (!nsContentUtils::IsChromeDoc(doc))
   {
     mLevel = lround(mLevel * 10.0) / 10.0;
     if (mLevel == 1.0) {
       mRemainingTime = mCharging ? kDefaultRemainingTime : kUnknownRemainingTime;
+    } else if (mRemainingTime != kUnknownRemainingTime) {
+      // Round the remaining time to a multiple of 15 minutes and never zero
+      const double MINUTES_15 = 15.0 * 60.0;
+      mRemainingTime = fmax(lround(mRemainingTime / MINUTES_15) * MINUTES_15,
+                            MINUTES_15);
     }
   }
 

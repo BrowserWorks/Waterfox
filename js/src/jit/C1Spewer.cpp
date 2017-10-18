@@ -8,7 +8,6 @@
 
 #include "jit/C1Spewer.h"
 
-#include "mozilla/SizePrintfMacros.h"
 
 #include <time.h>
 
@@ -28,11 +27,11 @@ C1Spewer::beginFunction(MIRGraph* graph, JSScript* script)
 
     out_.printf("begin_compilation\n");
     if (script) {
-        out_.printf("  name \"%s:%" PRIuSIZE "\"\n", script->filename(), script->lineno());
-        out_.printf("  method \"%s:%" PRIuSIZE "\"\n", script->filename(), script->lineno());
+        out_.printf("  name \"%s:%zu\"\n", script->filename(), script->lineno());
+        out_.printf("  method \"%s:%zu\"\n", script->filename(), script->lineno());
     } else {
-        out_.printf("  name \"asm.js compilation\"\n");
-        out_.printf("  method \"asm.js compilation\"\n");
+        out_.printf("  name \"wasm compilation\"\n");
+        out_.printf("  method \"wasm compilation\"\n");
     }
     out_.printf("  date %d\n", (int)time(nullptr));
     out_.printf("end_compilation\n");
@@ -137,9 +136,11 @@ C1Spewer::spewPass(GenericPrinter& out, MBasicBlock* block)
     out.printf("\n");
 
     out.printf("    successors");
-    for (uint32_t i = 0; i < block->numSuccessors(); i++) {
-        MBasicBlock* successor = block->getSuccessor(i);
-        out.printf(" \"B%d\"", successor->id());
+    if (block->hasLastIns()) {
+        for (uint32_t i = 0; i < block->numSuccessors(); i++) {
+            MBasicBlock* successor = block->getSuccessor(i);
+            out.printf(" \"B%d\"", successor->id());
+        }
     }
     out.printf("\n");
 

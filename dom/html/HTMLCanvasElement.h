@@ -16,6 +16,7 @@
 #include "nsSize.h"
 #include "nsError.h"
 
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/CanvasRenderingContextHelper.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/layers/LayersTypes.h"
@@ -33,15 +34,17 @@ class CanvasLayer;
 class Image;
 class Layer;
 class LayerManager;
+class SharedSurfaceTextureClient;
 } // namespace layers
 namespace gfx {
 class SourceSurface;
+class VRLayerChild;
 } // namespace gfx
 
 namespace dom {
+class BlobCallback;
 class CanvasCaptureMediaStream;
 class File;
-class FileCallback;
 class HTMLCanvasPrintState;
 class OffscreenCanvas;
 class PrintCallback;
@@ -102,7 +105,8 @@ public:
    * Interface through which new video frames will be provided while
    * `mFrameCaptureRequested` is `true`.
    */
-  virtual void NewFrame(already_AddRefed<layers::Image> aImage) = 0;
+  virtual void NewFrame(already_AddRefed<layers::Image> aImage,
+                        const TimeStamp& aTime) = 0;
 
 protected:
   virtual ~FrameCaptureListener() {}
@@ -174,13 +178,11 @@ public:
 
   void ToDataURL(JSContext* aCx, const nsAString& aType,
                  JS::Handle<JS::Value> aParams,
-                 nsAString& aDataURL, ErrorResult& aRv)
-  {
-    aRv = ToDataURL(aType, aParams, aCx, aDataURL);
-  }
+                 nsAString& aDataURL,
+                 ErrorResult& aRv);
 
   void ToBlob(JSContext* aCx,
-              FileCallback& aCallback,
+              BlobCallback& aCallback,
               const nsAString& aType,
               JS::Handle<JS::Value> aParams,
               ErrorResult& aRv);
@@ -202,14 +204,10 @@ public:
   }
   already_AddRefed<File> MozGetAsFile(const nsAString& aName,
                                       const nsAString& aType,
+                                      CallerType aCallerType,
                                       ErrorResult& aRv);
   already_AddRefed<nsISupports> MozGetIPCContext(const nsAString& aContextId,
-                                                 ErrorResult& aRv)
-  {
-    nsCOMPtr<nsISupports> context;
-    aRv = MozGetIPCContext(aContextId, getter_AddRefs(context));
-    return context.forget();
-  }
+                                                 ErrorResult& aRv);
   PrintCallback* GetMozPrintCallback() const;
   void SetMozPrintCallback(PrintCallback* aCallback);
 
@@ -256,7 +254,8 @@ public:
   bool GetIsOpaque();
   virtual bool GetOpaqueAttr() override;
 
-  virtual already_AddRefed<gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr);
+  virtual already_AddRefed<gfx::SourceSurface>
+  GetSurfaceSnapshot(gfxAlphaType* aOutAlphaType = nullptr);
 
   /*
    * Register a FrameCaptureListener with this canvas.
@@ -275,11 +274,18 @@ public:
   bool IsFrameCaptureRequested() const;
 
   /*
+   * Processes destroyed FrameCaptureListeners and removes them if necessary.
+   * Should there be none left, the FrameRefreshObserver will be unregistered.
+   */
+  void ProcessDestroyedFrameListeners();
+
+  /*
    * Called by the RefreshDriver hook when a frame has been captured.
    * Makes a copy of the provided surface and hands it to all
    * FrameCaptureListeners having requested frame capture.
    */
-  void SetFrameCapture(already_AddRefed<gfx::SourceSurface> aSurface);
+  void SetFrameCapture(already_AddRefed<gfx::SourceSurface> aSurface,
+                       const TimeStamp& aTime);
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
@@ -287,24 +293,13 @@ public:
                                 nsAttrValue& aResult) override;
   nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute, int32_t aModType) const override;
 
-  // SetAttr override.  C++ is stupid, so have to override both
-  // overloaded methods.
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
+  nsresult CopyInnerTo(mozilla::dom::Element* aDest,
+                       bool aPreallocateChildren);
 
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                             bool aNotify) override;
-
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
-  nsresult CopyInnerTo(mozilla::dom::Element* aDest);
-
-  virtual nsresult PreHandleEvent(mozilla::EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     mozilla::EventChainPreVisitor& aVisitor) override;
 
   /*
    * Helpers called by various users of Canvas
@@ -342,6 +337,10 @@ public:
   static void SetAttrFromAsyncCanvasRenderer(AsyncCanvasRenderer *aRenderer);
   static void InvalidateFromAsyncCanvasRenderer(AsyncCanvasRenderer *aRenderer);
 
+  void StartVRPresentation();
+  void StopVRPresentation();
+  already_AddRefed<layers::SharedSurfaceTextureClient> GetVRFrame();
+
 protected:
   virtual ~HTMLCanvasElement();
 
@@ -359,10 +358,18 @@ protected:
                          const nsAString& aMimeType,
                          const JS::Value& aEncoderOptions,
                          nsAString& aDataURL);
-  nsresult MozGetAsBlobImpl(const nsAString& aName,
+  nsresult MozGetAsFileImpl(const nsAString& aName,
                             const nsAString& aType,
-                            nsISupports** aResult);
+                            File** aResult);
   void CallPrintCallback();
+
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
+  virtual nsresult OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
+                                          const nsAttrValueOrString& aValue,
+                                          bool aNotify) override;
 
   AsyncCanvasRenderer* GetAsyncCanvasRenderer();
 
@@ -375,6 +382,7 @@ protected:
   RefPtr<AsyncCanvasRenderer> mAsyncCanvasRenderer;
   RefPtr<OffscreenCanvas> mOffscreenCanvas;
   RefPtr<HTMLCanvasElementObserver> mContextObserver;
+  bool mVRPresentationActive;
 
 public:
   // Record whether this canvas should be write-only or not.
@@ -396,6 +404,18 @@ public:
   CanvasContextType GetCurrentContextType() {
     return mCurrentContextType;
   }
+
+private:
+  /**
+   * This function is called by AfterSetAttr and OnAttrSetButNotChanged.
+   * This function will be called by AfterSetAttr whether the attribute is being
+   * set or unset.
+   *
+   * @param aNamespaceID the namespace of the attr being set
+   * @param aName the localname of the attribute being set
+   * @param aNotify Whether we plan to notify document observers.
+   */
+  void AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName, bool aNotify);
 };
 
 class HTMLCanvasPrintState final : public nsWrapperCache

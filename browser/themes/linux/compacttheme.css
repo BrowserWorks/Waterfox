@@ -1,0 +1,62 @@
+% This Source Code Form is subject to the terms of the Mozilla Public
+% License, v. 2.0. If a copy of the MPL was not distributed with this
+% file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+%include ../shared/compacttheme.inc.css
+
+:root:-moz-lwtheme-darktext {
+  --urlbar-dropmarker-url: url("chrome://browser/skin/compacttheme/urlbar-history-dropmarker.svg");
+  --urlbar-dropmarker-region: rect(0px, 11px, 14px, 0px);
+  --urlbar-dropmarker-hover-region: rect(0, 22px, 14px, 11px);
+  --urlbar-dropmarker-active-region: rect(0px, 33px, 14px, 22px);
+  --urlbar-dropmarker-2x-url: url("chrome://browser/skin/compacttheme/urlbar-history-dropmarker.svg");
+  --urlbar-dropmarker-2x-region: rect(0px, 11px, 14px, 0px);
+  --urlbar-dropmarker-hover-2x-region: rect(0, 22px, 14px, 11px);
+  --urlbar-dropmarker-active-2x-region: rect(0px, 33px, 14px, 22px);
+}
+
+.findbar-closebutton:-moz-lwtheme-brighttext:not(:hover),
+#sidebar-header > .close-icon:-moz-lwtheme-brighttext:not(:hover),
+.tab-close-button[selected]:not(:hover) {
+  background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 80, 16, 64);
+}
+
+/* The menubar and tabs toolbar should match the devedition theme */
+#TabsToolbar,
+#toolbar-menubar {
+  -moz-appearance: none !important;
+}
+#main-menubar {
+  color: var(--chrome-color);
+}
+#main-menubar > menu:not([open]) {
+  color: inherit;
+}
+
+.urlbar-history-dropmarker {
+  -moz-appearance: none;
+  padding: 0 3px;
+  list-style-image: var(--urlbar-dropmarker-url);
+  -moz-image-region: var(--urlbar-dropmarker-region);
+}
+
+#new-tab-button:hover > .toolbarbutton-icon {
+  border-color: transparent !important;
+}
+
+/* Prevent double border below tabs toolbar */
+#TabsToolbar:not([collapsed="true"]) + #nav-bar {
+  border-top-width: 0 !important;
+}
+
+/* Fix the bad-looking text-shadow in the sidebar header: */
+.sidebar-header,
+#sidebar-header {
+  text-shadow: none;
+}
+
+.ac-type-icon {
+  /* Left-align the type icon in awesomebar popup results with the icon in the
+     urlbar. */
+  margin-inline-start: 11px;
+}

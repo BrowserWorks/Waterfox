@@ -5,11 +5,11 @@ config = {
             "product-name": "Fennec-%(version)s",
             "check_uptake": True,
             "alias": "fennec-latest",
-            "ssl-only": False,
+            "ssl-only": True,
             "add-locales": False,  # Do not add locales to let "multi" work
             "paths": {
-                "android-api-15": {
-                    "path": "/mobile/releases/%(version)s/android-api-15/:lang/fennec-%(version)s.:lang.android-arm.apk",
+                "android-api-16": {
+                    "path": "/mobile/releases/%(version)s/android-api-16/:lang/fennec-%(version)s.:lang.android-arm.apk",
                     "bouncer-platform": "android",
                 },
                 "android-x86": {

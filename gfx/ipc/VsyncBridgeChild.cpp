@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "VsyncBridgeChild.h"
 #include "VsyncIOThreadHolder.h"
+#include "mozilla/dom/ContentChild.h"
 
 namespace mozilla {
 namespace gfx {
@@ -28,7 +29,10 @@ VsyncBridgeChild::Create(RefPtr<VsyncIOThreadHolder> aThread,
   RefPtr<VsyncBridgeChild> child = new VsyncBridgeChild(aThread, aProcessToken);
 
   RefPtr<nsIRunnable> task = NewRunnableMethod<Endpoint<PVsyncBridgeChild>&&>(
-    child, &VsyncBridgeChild::Open, Move(aEndpoint));
+    "gfx::VsyncBridgeChild::Open",
+    child,
+    &VsyncBridgeChild::Open,
+    Move(aEndpoint));
   aThread->GetThread()->Dispatch(task.forget(), nsIThread::DISPATCH_NORMAL);
 
   return child;
@@ -37,7 +41,7 @@ VsyncBridgeChild::Create(RefPtr<VsyncIOThreadHolder> aThread,
 void
 VsyncBridgeChild::Open(Endpoint<PVsyncBridgeChild>&& aEndpoint)
 {
-  if (!aEndpoint.Bind(this, nullptr)) {
+  if (!aEndpoint.Bind(this)) {
     // The GPU Process Manager might be gone if we receive ActorDestroy very
     // late in shutdown.
     if (GPUProcessManager* gpm = GPUProcessManager::Get())
@@ -57,9 +61,10 @@ public:
   NotifyVsyncTask(RefPtr<VsyncBridgeChild> aVsyncBridge,
                   TimeStamp aTimeStamp,
                   const uint64_t& aLayersId)
-   : mVsyncBridge(aVsyncBridge),
-     mTimeStamp(aTimeStamp),
-     mLayersId(aLayersId)
+    : Runnable("gfx::NotifyVsyncTask")
+    , mVsyncBridge(aVsyncBridge)
+    , mTimeStamp(aTimeStamp)
+    , mLayersId(aLayersId)
   {}
 
   NS_IMETHOD Run() override {
@@ -105,7 +110,8 @@ void
 VsyncBridgeChild::Close()
 {
   if (!IsOnVsyncIOThread()) {
-    mLoop->PostTask(NewRunnableMethod(this, &VsyncBridgeChild::Close));
+    mLoop->PostTask(NewRunnableMethod(
+      "gfx::VsyncBridgeChild::Close", this, &VsyncBridgeChild::Close));
     return;
   }
 
@@ -113,8 +119,14 @@ VsyncBridgeChild::Close()
   if (!mProcessToken) {
     return;
   }
-  PVsyncBridgeChild::Close();
+
+  // Clear the process token so we don't notify the GPUProcessManager. It already
+  // knows we're closed since it manually called Close, and in fact the GPM could
+  // have already been destroyed during shutdown.
   mProcessToken = 0;
+
+  // Close the underlying IPC channel.
+  PVsyncBridgeChild::Close();
 }
 
 void
@@ -135,7 +147,13 @@ VsyncBridgeChild::DeallocPVsyncBridgeChild()
 void
 VsyncBridgeChild::ProcessingError(Result aCode, const char* aReason)
 {
-  MOZ_RELEASE_ASSERT(aCode != MsgDropped, "Processing error in VsyncBridgeChild");
+  MOZ_RELEASE_ASSERT(aCode == MsgDropped, "Processing error in VsyncBridgeChild");
+}
+
+void
+VsyncBridgeChild::HandleFatalError(const char* aName, const char* aMsg) const
+{
+  dom::ContentChild::FatalErrorIfNotUsingGPUProcess(aName, aMsg, OtherPid());
 }
 
 } // namespace gfx

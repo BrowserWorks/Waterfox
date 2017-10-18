@@ -7,19 +7,19 @@
 #if !defined(WMFAudioOutputSource_h_)
 #define WMFAudioOutputSource_h_
 
-#include "WMF.h"
 #include "MFTDecoder.h"
-#include "mozilla/RefPtr.h"
+#include "WMF.h"
 #include "WMFMediaDataDecoder.h"
+#include "mozilla/RefPtr.h"
 
-extern const GUID CLSID_WebmMfVp8Dec;
-extern const GUID CLSID_WebmMfVp9Dec;
+extern const GUID CLSID_WebmMfVpxDec;
 
 namespace mozilla {
 
-class WMFAudioMFTManager : public MFTManager {
+class WMFAudioMFTManager : public MFTManager
+{
 public:
-  WMFAudioMFTManager(const AudioInfo& aConfig);
+  explicit WMFAudioMFTManager(const AudioInfo& aConfig);
   ~WMFAudioMFTManager();
 
   bool Init();
@@ -29,12 +29,12 @@ public:
   // Note WMF's AAC decoder sometimes output negatively timestamped samples,
   // presumably they're the preroll samples, and we strip them. We may return
   // a null aOutput in this case.
-  HRESULT Output(int64_t aStreamOffset,
-                         RefPtr<MediaData>& aOutput) override;
+  HRESULT Output(int64_t aStreamOffset, RefPtr<MediaData>& aOutput) override;
 
   void Shutdown() override;
 
-  TrackInfo::TrackType GetType() override {
+  TrackInfo::TrackType GetType() override
+  {
     return TrackInfo::kAudioTrack;
   }
 
@@ -44,7 +44,6 @@ public:
   }
 
 private:
-
   HRESULT UpdateOutputType();
 
   uint32_t mAudioChannels;
@@ -56,9 +55,10 @@ private:
   media::TimeUnit mAudioTimeOffset;
   // The number of audio frames that we've played since the last
   // discontinuity.
-  int64_t mAudioFrameSum;
+  int64_t mAudioFrameSum = 0;
 
-  enum StreamType {
+  enum StreamType
+  {
     Unknown,
     AAC,
     MP3
@@ -71,7 +71,7 @@ private:
   // True if we need to re-initialize mAudioTimeOffset and mAudioFrameSum
   // from the next audio packet we decode. This happens after a seek, since
   // WMF doesn't mark a stream as having a discontinuity after a seek(0).
-  bool mMustRecaptureAudioPosition;
+  bool mMustRecaptureAudioPosition = true;
 };
 
 } // namespace mozilla

@@ -6,29 +6,34 @@
 /******************************************************************************/
 /* General */
 
+html, body, #content {
+  height: 100%;
+}
+
 body {
-  background-color: white;
+  color: var(--theme-body-color);
+  background-color: var(--theme-body-background);
   padding: 0;
   margin: 0;
-  overflow-x: hidden;
 }
 
 *:focus {
   outline: none !important;
 }
 
-#content {
-  height: 100%;
-}
-
 pre {
   background-color: white;
   border: none;
+  font-family: var(--monospace-font-family);
 }
 
-#json,
-#headers {
-  display: none;
+#content {
+  display: flow-root;
+}
+
+#json {
+  margin: 8px;
+  white-space: pre-wrap;
 }
 
 /******************************************************************************/

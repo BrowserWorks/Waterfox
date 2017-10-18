@@ -7,8 +7,9 @@
 requestLongerTimeout(2);
 
 // One orphaned item should have two placeholders next to it.
-add_task(function*() {
-  yield startCustomizing();
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
+  await startCustomizing();
 
   if (isInDevEdition()) {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_PANEL);
@@ -21,37 +22,37 @@ add_task(function*() {
   }
 
   // This test relies on an exact number of widgets being in the panel.
-  // Remove the sync-button to satisfy that. (bug 1229236)
-  CustomizableUI.removeWidgetFromArea("sync-button");
+  // Remove the buttons to satisfy that. (bug 1229236)
+  removeNonOriginalButtons();
   let panel = document.getElementById(CustomizableUI.AREA_PANEL);
   let placements = getAreaWidgetIds(CustomizableUI.AREA_PANEL);
 
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placements);
   is(getVisiblePlaceholderCount(panel), 2, "Should only have 2 visible placeholders before exiting");
 
-  yield endCustomizing();
-  yield startCustomizing();
+  await endCustomizing();
+  await startCustomizing();
   is(getVisiblePlaceholderCount(panel), 2, "Should only have 2 visible placeholders after re-entering");
 
   if (isInDevEdition()) {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_NAVBAR, 2);
   }
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  restoreNonOriginalButtons();
   ok(CustomizableUI.inDefaultState, "Should be in default state again.");
 });
 
 // Two orphaned items should have one placeholder next to them (case 1).
-add_task(function*() {
-  yield startCustomizing();
+add_task(async function() {
+  await startCustomizing();
 
   if (isInDevEdition()) {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_PANEL);
   }
 
   // This test relies on an exact number of widgets being in the panel.
-  // Remove the sync-button to satisfy that. (bug 1229236)
-  CustomizableUI.removeWidgetFromArea("sync-button");
+  // Remove the button to satisfy that. (bug 1229236)
+  removeNonOriginalButtons()
 
   let btn = document.getElementById("open-file-button");
   let panel = document.getElementById(CustomizableUI.AREA_PANEL);
@@ -67,8 +68,8 @@ add_task(function*() {
 
   is(getVisiblePlaceholderCount(panel), 1, "Should only have 1 visible placeholder before exiting");
 
-  yield endCustomizing();
-  yield startCustomizing();
+  await endCustomizing();
+  await startCustomizing();
   is(getVisiblePlaceholderCount(panel), 1, "Should only have 1 visible placeholder after re-entering");
 
   let palette = document.getElementById("customization-palette");
@@ -81,20 +82,20 @@ add_task(function*() {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_NAVBAR, 2);
   }
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  restoreNonOriginalButtons();
   ok(CustomizableUI.inDefaultState, "Should be in default state again.");
 });
 
 // Two orphaned items should have one placeholder next to them (case 2).
-add_task(function*() {
-  yield startCustomizing();
+add_task(async function() {
+  await startCustomizing();
 
   if (isInDevEdition()) {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_PANEL);
   }
   // This test relies on an exact number of widgets being in the panel.
-  // Remove the sync-button to satisfy that. (bug 1229236)
-  CustomizableUI.removeWidgetFromArea("sync-button");
+  // Remove the buttons to satisfy that. (bug 1229236)
+  removeNonOriginalButtons();
 
   let btn = document.getElementById("add-ons-button");
   let btn2 = document.getElementById("developer-button");
@@ -110,8 +111,8 @@ add_task(function*() {
   ok(!CustomizableUI.inDefaultState, "Should no longer be in default state.");
   is(getVisiblePlaceholderCount(panel), 1, "Should only have 1 visible placeholder before exiting");
 
-  yield endCustomizing();
-  yield startCustomizing();
+  await endCustomizing();
+  await startCustomizing();
   is(getVisiblePlaceholderCount(panel), 1, "Should only have 1 visible placeholder after re-entering");
 
   simulateItemDrag(btn, panel);
@@ -123,21 +124,21 @@ add_task(function*() {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_NAVBAR, 2);
   }
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  restoreNonOriginalButtons();
   ok(CustomizableUI.inDefaultState, "Should be in default state again.");
 });
 
 // A wide widget at the bottom of the panel should have three placeholders after it.
-add_task(function*() {
-  yield startCustomizing();
+add_task(async function() {
+  await startCustomizing();
 
   if (isInDevEdition()) {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_PANEL);
   }
 
   // This test relies on an exact number of widgets being in the panel.
-  // Remove the sync-button to satisfy that. (bug 1229236)
-  CustomizableUI.removeWidgetFromArea("sync-button");
+  // Remove the buttons to satisfy that. (bug 1229236)
+  removeNonOriginalButtons();
 
   let btn = document.getElementById("edit-controls");
   let btn2 = document.getElementById("developer-button");
@@ -154,8 +155,8 @@ add_task(function*() {
   ok(!CustomizableUI.inDefaultState, "Should no longer be in default state.");
   is(getVisiblePlaceholderCount(panel), 3, "Should have 3 visible placeholders before exiting");
 
-  yield endCustomizing();
-  yield startCustomizing();
+  await endCustomizing();
+  await startCustomizing();
   is(getVisiblePlaceholderCount(panel), 3, "Should have 3 visible placeholders after re-entering");
 
   simulateItemDrag(btn2, panel);
@@ -167,13 +168,13 @@ add_task(function*() {
     CustomizableUI.addWidgetToArea("developer-button", CustomizableUI.AREA_NAVBAR, 2);
   }
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  restoreNonOriginalButtons();
   ok(CustomizableUI.inDefaultState, "Should be in default state again.");
 });
 
 // The default placements should have two placeholders at the bottom (or 1 in win8).
-add_task(function*() {
-  yield startCustomizing();
+add_task(async function() {
+  await startCustomizing();
   let numPlaceholders = -1;
 
   if (isInDevEdition()) {
@@ -186,22 +187,22 @@ add_task(function*() {
   ok(CustomizableUI.inDefaultState, "Should be in default state.");
 
   // This test relies on an exact number of widgets being in the panel.
-  // Remove the sync-button to satisfy that. (bug 1229236)
-  CustomizableUI.removeWidgetFromArea("sync-button");
+  // Remove the buttons to satisfy that. (bug 1229236)
+  removeNonOriginalButtons();
 
   is(getVisiblePlaceholderCount(panel), numPlaceholders, "Should have " + numPlaceholders + " visible placeholders before exiting");
 
-  yield endCustomizing();
-  yield startCustomizing();
+  await endCustomizing();
+  await startCustomizing();
   is(getVisiblePlaceholderCount(panel), numPlaceholders, "Should have " + numPlaceholders + " visible placeholders after re-entering");
 
-  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+  restoreNonOriginalButtons();
   ok(CustomizableUI.inDefaultState, "Should still be in default state.");
 });
 
-add_task(function* asyncCleanup() {
-  yield endCustomizing();
-  yield resetCustomization();
+add_task(async function asyncCleanup() {
+  await endCustomizing();
+  await resetCustomization();
 });
 
 function getVisiblePlaceholderCount(aPanel) {

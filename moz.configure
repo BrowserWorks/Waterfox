@@ -18,7 +18,7 @@ include('build/moz.configure/init.configure')
 # To be removed in Bug 1003313
 @depends(milestone)
 def e10s_testing_only(milestone):
-    if not milestone.is_release:
+    if not milestone.is_release_or_beta:
         return True
 
 set_config('E10S_TESTING_ONLY', e10s_testing_only)
@@ -34,6 +34,16 @@ def artifact_builds(value):
         return True
 
 set_config('MOZ_ARTIFACT_BUILDS', artifact_builds)
+
+imply_option('--enable-artifact-build-symbols',
+             depends(artifact_builds)(lambda v: False if v is None else None),
+             reason='--disable-artifact-builds')
+
+option('--enable-artifact-build-symbols',
+       help='Download symbols when artifact builds are enabled.')
+
+set_config('MOZ_ARTIFACT_BUILD_SYMBOLS',
+           depends_if('--enable-artifact-build-symbols')(lambda _: True))
 
 @depends('--enable-artifact-builds')
 def imply_disable_compile_environment(value):
@@ -64,6 +74,18 @@ def enable_tests(value):
 set_config('ENABLE_TESTS', enable_tests)
 set_define('ENABLE_TESTS', enable_tests)
 
+js_option(env='MOZILLA_OFFICIAL',
+          help='Build an official release')
+
+@depends('MOZILLA_OFFICIAL')
+def mozilla_official(official):
+    if official:
+        return True
+
+set_config('MOZILLA_OFFICIAL', mozilla_official)
+set_define('MOZILLA_OFFICIAL', mozilla_official)
+add_old_configure_assignment('MOZILLA_OFFICIAL', mozilla_official)
+
 @depends(enable_tests)
 def gtest_has_rtti(value):
     if value:
@@ -79,11 +101,11 @@ def linux_gtest_defines(target, enable_tests):
                          has_clone='0')
 
 set_define('GTEST_OS_LINUX_ANDROID',
-           delayed_getattr(linux_gtest_defines, 'os_linux_android'))
+           linux_gtest_defines.os_linux_android)
 set_define('GTEST_USE_OWN_TR1_TUPLE',
-           delayed_getattr(linux_gtest_defines, 'use_own_tr1_tuple'))
+           linux_gtest_defines.use_own_tr1_tuple)
 set_define('GTEST_HAS_CLONE',
-           delayed_getattr(linux_gtest_defines, 'has_clone'))
+           linux_gtest_defines.has_clone)
 
 js_option('--enable-debug',
           nargs='?',
@@ -93,16 +115,118 @@ js_option('--enable-debug',
 add_old_configure_assignment('MOZ_DEBUG',
                              depends('--enable-debug')(lambda v: bool(v)))
 
-include_when('build/moz.configure/toolchain.configure',
-             when='--enable-compile-environment')
-include_when('build/moz.configure/memory.configure',
-             when='--enable-compile-environment')
-include_when('build/moz.configure/headers.configure',
-             when='--enable-compile-environment')
+js_option('--enable-rust-debug',
+          help='Build Rust code with debug assertions turned on.')
+
+@depends('--enable-rust-debug', '--enable-debug')
+def debug_rust(value, debug):
+    if value.origin == 'default':
+        return bool(debug) or None
+    elif bool(value):
+        return True
+
+set_config('MOZ_DEBUG_RUST', debug_rust)
+set_define('MOZ_DEBUG_RUST', debug_rust)
+
+include('build/moz.configure/pkg.configure')
+# Make this assignment here rather than in pkg.configure to avoid
+# requiring this file in unit tests.
+add_old_configure_assignment('PKG_CONFIG', pkg_config)
+
+include('build/moz.configure/toolchain.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/memory.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/headers.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/warnings.configure',
+        when='--enable-compile-environment')
+
+
+@depends(target, host)
+def is_openbsd(target, host):
+    return target.kernel == 'OpenBSD' or host.kernel == 'OpenBSD'
+
+option(env='SO_VERSION', nargs=1, default='1.0', when=is_openbsd,
+       help='Shared library version for OpenBSD systems')
+
+@depends('SO_VERSION', when=is_openbsd)
+def so_version(value):
+    return value
+
+@template
+def library_name_info_template(host_or_target):
+    assert host_or_target in (host, target)
+    compiler = {
+        host: host_c_compiler,
+        target: c_compiler,
+    }[host_or_target]
+
+    @depends(host_or_target, compiler, so_version)
+    def library_name_info_impl(host_or_target, compiler, so_version):
+        if host_or_target.kernel == 'WINNT':
+            # There aren't artifacts for mingw builds, so it's OK that the
+            # results are inaccurate in that case.
+            if compiler and compiler.type not in ('msvc', 'clang-cl'):
+                return namespace(
+                    dll=namespace(prefix='', suffix='.dll'),
+                    lib=namespace(prefix='lib', suffix='a'),
+                    import_lib=namespace(prefix='lib', suffix='a'),
+                    rust_lib=namespace(prefix='', suffix='lib'),
+                    obj=namespace(prefix='', suffix='o'),
+                )
+
+            return namespace(
+                dll=namespace(prefix='', suffix='.dll'),
+                lib=namespace(prefix='', suffix='lib'),
+                import_lib=namespace(prefix='', suffix='lib'),
+                rust_lib=namespace(prefix='', suffix='lib'),
+                obj=namespace(prefix='', suffix='obj'),
+            )
+
+        elif host_or_target.kernel == 'Darwin':
+            return namespace(
+                dll=namespace(prefix='lib', suffix='.dylib'),
+                lib=namespace(prefix='lib', suffix='a'),
+                import_lib=namespace(prefix=None, suffix=''),
+                rust_lib=namespace(prefix='lib', suffix='a'),
+                obj=namespace(prefix='', suffix='o'),
+            )
+        elif so_version:
+            so = '.so.%s' % so_version
+        else:
+            so = '.so'
+
+        return namespace(
+            dll=namespace(prefix='lib', suffix=so),
+            lib=namespace(prefix='lib', suffix='a'),
+            import_lib=namespace(prefix=None, suffix=''),
+            rust_lib=namespace(prefix='lib', suffix='a'),
+            obj=namespace(prefix='', suffix='o'),
+        )
+
+    return library_name_info_impl
+
+host_library_name_info = library_name_info_template(host)
+library_name_info = library_name_info_template(target)
+
+set_config('DLL_PREFIX', library_name_info.dll.prefix)
+set_config('DLL_SUFFIX', library_name_info.dll.suffix)
+set_config('LIB_PREFIX', library_name_info.lib.prefix)
+set_config('LIB_SUFFIX', library_name_info.lib.suffix)
+set_config('RUST_LIB_PREFIX', library_name_info.rust_lib.prefix)
+set_config('RUST_LIB_SUFFIX', library_name_info.rust_lib.suffix)
+set_config('OBJ_SUFFIX', library_name_info.obj.suffix)
+# Lots of compilation tests depend on this variable being present.
+add_old_configure_assignment('OBJ_SUFFIX', library_name_info.obj.suffix)
+set_config('IMPORT_LIB_SUFFIX', library_name_info.import_lib.suffix)
+set_define('MOZ_DLL_SUFFIX', depends(library_name_info.dll.suffix)(lambda s: '"%s"' % s))
+
+include(include_project_configure)
 
 @depends('--help')
 @imports(_from='mozbuild.backend', _import='backends')
-def build_backends_choices(help):
+def build_backends_choices(_):
     return tuple(backends)
 
 
@@ -138,6 +262,23 @@ def build_backends(backends):
 
 set_config('BUILD_BACKENDS', build_backends)
 
+option('--disable-gtest-in-build',
+       help='Force disable building the gtest libxul during the build.',
+       when='--enable-compile-environment')
+
+# Determine whether to build the gtest xul. This happens in automation
+# on Desktop platforms with the exception of Windows PGO, where linking
+# xul-gtest.dll takes too long.
+@depends('MOZ_PGO', build_project, target, 'MOZ_AUTOMATION', '--disable-gtest-in-build',
+         when='--enable-compile-environment')
+def build_gtest(pgo, build_project, target, automation, enabled):
+    if not enabled:
+        return None
+    if (automation and build_project == 'browser' and
+        not (pgo and target.os == 'WINNT')):
+        return True
+
+set_config('LINK_GTEST_DURING_COMPILE', build_gtest)
 
 # Awk detection
 # ==============================================================
@@ -194,6 +335,72 @@ def perl_version_check(min_version):
 perl_version_check('5.006')
 
 
+# GNU make detection
+# ==============================================================
+option(env='MAKE', nargs=1, help='Path to GNU make')
+
+@depends('MAKE', host)
+def possible_makes(make, host):
+    candidates = []
+    if host.kernel == 'WINNT':
+        candidates.append('mingw32-make')
+    if make:
+        candidates.append(make[0])
+    if host.kernel == 'WINNT':
+        candidates.extend(('make', 'gmake'))
+    else:
+        candidates.extend(('gmake', 'make'))
+    return candidates
+
+check_prog('GMAKE', possible_makes)
+
+# tup detection
+# ==============================================================
+@depends(build_backends)
+def tup_progs(build_backends):
+    for backend in build_backends:
+        if 'Tup' in backend:
+            return ['tup']
+    return None
+
+tup = check_prog('TUP', tup_progs)
+
+# watchman detection
+# ==============================================================
+
+watchman = check_prog('WATCHMAN', ('watchman',), allow_missing=True)
+
+@depends_if(watchman)
+@checking('for watchman version')
+@imports('json')
+def watchman_version(watchman):
+    out = check_cmd_output(watchman, 'version')
+    res = json.loads(out)
+    return Version(res['version'])
+
+@depends_all(hg_version, hg_config, watchman)
+@checking('for watchman Mercurial integration')
+@imports('os')
+def watchman_hg(hg_version, hg_config, watchman):
+    if hg_version < Version('3.8'):
+        return 'no (Mercurial 3.8+ required)'
+
+    ext_enabled = False
+    mode_disabled = False
+
+    for k in ('extensions.fsmonitor', 'extensions.hgext.fsmonitor'):
+        if k in hg_config and hg_config[k] != '!':
+            ext_enabled = True
+
+    mode_disabled = hg_config.get('fsmonitor.mode') == 'off'
+
+    if not ext_enabled:
+        return 'no (fsmonitor extension not enabled)'
+    if mode_disabled:
+        return 'no (fsmonitor.mode=off disables fsmonitor)'
+
+    return True
+
 # Miscellaneous programs
 # ==============================================================
 check_prog('DOXYGEN', ('doxygen',), allow_missing=True)
@@ -204,16 +411,19 @@ def extra_programs(target):
     if target.kernel == 'Darwin':
         return namespace(
             DSYMUTIL=('dsymutil', 'llvm-dsymutil'),
-            GENISOIMAGE=('genisoimage',),
+            MKFSHFS=('newfs_hfs', 'mkfs.hfsplus'),
+            HFS_TOOL=('hfsplus',)
         )
     if target.os == 'GNU' and target.kernel == 'Linux':
         return namespace(RPMBUILD=('rpmbuild',))
 
-check_prog('DSYMUTIL', delayed_getattr(extra_programs, 'DSYMUTIL'),
+check_prog('DSYMUTIL', extra_programs.DSYMUTIL,
            allow_missing=True)
-check_prog('GENISOIMAGE', delayed_getattr(extra_programs, 'GENISOIMAGE'),
+check_prog('MKFSHFS', extra_programs.MKFSHFS,
            allow_missing=True)
-check_prog('RPMBUILD', delayed_getattr(extra_programs, 'RPMBUILD'),
+check_prog('HFS_TOOL', extra_programs.HFS_TOOL,
+           allow_missing=True)
+check_prog('RPMBUILD', extra_programs.RPMBUILD,
            allow_missing=True)
 
 option('--enable-system-hunspell',
@@ -224,10 +434,83 @@ def check_for_hunspell(value, compile_env):
     return value and compile_env
 
 system_hunspell = pkg_check_modules('MOZ_HUNSPELL', 'hunspell',
-                                    check_for_hunspell)
+                                    when=check_for_hunspell)
 
-set_config('MOZ_SYSTEM_HUNSPELL', system_hunspell)
+set_config('MOZ_SYSTEM_HUNSPELL', depends_if(system_hunspell)(lambda _: True))
+
+
+@depends(target)
+@imports('os')
+def makensis_progs(target):
+    if target.kernel != 'WINNT':
+        return
+
+    candidates = [
+        'makensis-3.01',
+        'makensis-3.0b3',
+        'makensis-3.0b1',
+        'makensis',
+    ]
+
+    # Look for nsis installed by msys environment. But only the 32-bit version.
+    # We use an absolute path and insert as the first entry so it is preferred
+    # over a 64-bit exe that may be in PATH.
+    if 'MSYSTEM_PREFIX' in os.environ:
+        prefix = os.path.dirname(os.environ['MSYSTEM_PREFIX'])
+        candidates.insert(0, os.path.join(prefix, 'mingw32', 'bin', 'makensis.exe'))
+
+    return tuple(candidates)
+
+nsis = check_prog('MAKENSISU', makensis_progs, allow_missing=True)
+
+# Make sure the version of makensis is up to date.
+@depends_if(nsis)
+@checking('for NSIS version')
+@imports('re')
+def nsis_version(nsis):
+    nsis_min_version = '3.0b1'
+    out = check_cmd_output(nsis, '-version',
+                           onerror=lambda: die('Failed to get nsis version.'))
+    m = re.search(r'(?<=v)[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?', out)
+
+    if not m:
+        raise FatalCheckError('Unknown version of makensis')
+    ver = Version(m.group(0))
+
+    # Versions comparisons don't quite work well with beta versions, so ensure
+    # it works for the non-beta version.
+    if ver < nsis_min_version and (ver >= '3.0a' or ver < '3'):
+        raise FatalCheckError('To build the installer you must have NSIS'
+                              ' version %s or greater in your path'
+                              % nsis_min_version)
+
+    return ver
+
+# And that makensis is 32-bit (but only on Windows).
+@depends_if(nsis, when=depends(host)(lambda h: h.kernel == 'WINNT'))
+@checking('for 32-bit NSIS')
+def nsis_binary_type(nsis):
+    bin_type = windows_binary_type(nsis)
+    if bin_type != 'win32':
+        raise FatalCheckError('%s is not a 32-bit Windows application' % nsis)
+
+    return 'yes'
+
+# And any flags we have to give to makensis
+@depends(host)
+def nsis_flags(host):
+    if host.kernel != 'WINNT':
+        return '-nocd'
+    return ''
+
+set_config('MAKENSISU_FLAGS', nsis_flags)
 
 # Fallthrough to autoconf-based configure
 include('build/moz.configure/old.configure')
-# Please do not add anything after the include of old.configure.
+
+@imports('__sandbox__')
+def all_paths():
+    return __sandbox__._all_paths
+
+set_config('ALL_CONFIGURE_PATHS', all_paths())
+# Please do not add anything after setting ALL_CONFIGURE_PATHS.

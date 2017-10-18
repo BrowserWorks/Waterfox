@@ -7,10 +7,18 @@
 SOURCES += [
     'WidevineAdapter.cpp',
     'WidevineDecryptor.cpp',
+    'WidevineDummyDecoder.cpp',
     'WidevineFileIO.cpp',
     'WidevineUtils.cpp',
     'WidevineVideoDecoder.cpp',
     'WidevineVideoFrame.cpp',
+]
+
+EXPORTS += [
+    'WidevineDecryptor.h',
+    'WidevineFileIO.h',
+    'WidevineUtils.h',
+    'WidevineVideoFrame.h'
 ]
 
 FINAL_LIBRARY = 'xul'
@@ -21,3 +29,5 @@ LOCAL_INCLUDES += [
 
 if CONFIG['CLANG_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
+
+include('/ipc/chromium/chromium-config.mozbuild')

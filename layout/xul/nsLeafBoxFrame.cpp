@@ -40,11 +40,6 @@ NS_NewLeafBoxFrame (nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsLeafBoxFrame)
 
-nsLeafBoxFrame::nsLeafBoxFrame(nsStyleContext* aContext)
-    : nsLeafFrame(aContext)
-{
-}
-
 #ifdef DEBUG_LAYOUT
 void
 nsLeafBoxFrame::GetBoxName(nsAutoString& aName)
@@ -79,7 +74,7 @@ nsLeafBoxFrame::AttributeChanged(int32_t aNameSpaceID,
   nsresult rv = nsLeafFrame::AttributeChanged(aNameSpaceID, aAttribute,
                                               aModType);
 
-  if (aAttribute == nsGkAtoms::mousethrough) 
+  if (aAttribute == nsGkAtoms::mousethrough)
     UpdateMouseThrough();
 
   return rv;
@@ -124,7 +119,7 @@ nsLeafBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 }
 
 /* virtual */ nscoord
-nsLeafBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsLeafBoxFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -146,7 +141,7 @@ nsLeafBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsLeafBoxFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsLeafBoxFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -175,19 +170,19 @@ nsLeafBoxFrame::GetIntrinsicISize()
 }
 
 LogicalSize
-nsLeafBoxFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                                WritingMode aWM,
-                                const LogicalSize& aCBSize,
-                                nscoord aAvailableISize,
-                                const LogicalSize& aMargin,
-                                const LogicalSize& aBorder,
-                                const LogicalSize& aPadding,
-                                bool aShrinkWrap)
+nsLeafBoxFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                                WritingMode         aWM,
+                                const LogicalSize&  aCBSize,
+                                nscoord             aAvailableISize,
+                                const LogicalSize&  aMargin,
+                                const LogicalSize&  aBorder,
+                                const LogicalSize&  aPadding,
+                                ComputeSizeFlags    aFlags)
 {
   // Important: NOT calling our direct superclass here!
   return nsFrame::ComputeAutoSize(aRenderingContext, aWM,
                                   aCBSize, aAvailableISize,
-                                  aMargin, aBorder, aPadding, aShrinkWrap);
+                                  aMargin, aBorder, aPadding, aFlags);
 }
 
 void
@@ -225,7 +220,7 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
       break;
     default:printf("<unknown>%d", aReflowInput.reason);break;
   }
-  
+
   printSize("AW", aReflowInput.AvailableWidth());
   printSize("AH", aReflowInput.AvailableHeight());
   printSize("CW", aReflowInput.ComputedWidth());
@@ -235,7 +230,7 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
 
 #endif
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   // create the layout state
   nsBoxLayoutState state(aPresContext, aReflowInput.mRenderingContext);
@@ -299,10 +294,10 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
   nsRect r(mRect.x, mRect.y, computedSize.width, computedSize.height);
 
   SetXULBounds(state, r);
- 
+
   // layout our children
   XULLayout(state);
-  
+
   // ok our child could have gotten bigger. So lets get its bounds
   aDesiredSize.Width() = mRect.width;
   aDesiredSize.Height() = mRect.height;
@@ -316,9 +311,9 @@ nsLeafBoxFrame::Reflow(nsPresContext*   aPresContext,
     printf("%p ** nsLBF(done) W:%d H:%d  ", this, aDesiredSize.Width(), aDesiredSize.Height());
 
     if (maxElementWidth) {
-      printf("MW:%d\n", *maxElementWidth); 
+      printf("MW:%d\n", *maxElementWidth);
     } else {
-      printf("MW:?\n"); 
+      printf("MW:?\n");
     }
 
   }
@@ -332,12 +327,6 @@ nsLeafBoxFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("LeafBox"), aResult);
 }
 #endif
-
-nsIAtom*
-nsLeafBoxFrame::GetType() const
-{
-  return nsGkAtoms::leafBoxFrame;
-}
 
 nsresult
 nsLeafBoxFrame::CharacterDataChanged(CharacterDataChangeInfo* aInfo)

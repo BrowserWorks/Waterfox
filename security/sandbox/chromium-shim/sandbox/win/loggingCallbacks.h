@@ -10,18 +10,21 @@
 #include <sstream>
 #include <iostream>
 
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/sandboxing/loggingTypes.h"
 #include "nsContentUtils.h"
 
-#ifdef MOZ_STACKWALKING
 #include "mozilla/StackWalk.h"
-#endif
 
 namespace mozilla {
+
+static LazyLogModule sSandboxTargetLog("SandboxTarget");
+
+#define LOG_D(...) MOZ_LOG(sSandboxTargetLog, LogLevel::Debug, (__VA_ARGS__))
+
 namespace sandboxing {
 
-#ifdef MOZ_STACKWALKING
 static uint32_t sStackTraceDepth = 0;
 
 // NS_WalkStackCallback to write a formatted stack frame to an ostringstream.
@@ -37,7 +40,6 @@ StackFrameToOStringStream(uint32_t aFrameNumber, void* aPC, void* aSP,
   *stream << std::endl << "--" << buf;
   stream->flush();
 }
-#endif
 
 // Log to the browser console and, if DEBUG build, stderr.
 static void
@@ -53,7 +55,6 @@ Log(const char* aMessageType,
     msgStream << " for : " << aContext;
   }
 
-#ifdef MOZ_STACKWALKING
   if (aShouldLogStackTrace) {
     if (sStackTraceDepth) {
       msgStream << std::endl << "Stack Trace:";
@@ -61,7 +62,6 @@ Log(const char* aMessageType,
                    &msgStream, 0, nullptr);
     }
   }
-#endif
 
   std::string msg = msgStream.str();
 #if defined(DEBUG)
@@ -73,6 +73,9 @@ Log(const char* aMessageType,
   if (nsContentUtils::IsInitialized()) {
     nsContentUtils::LogMessageToConsole(msg.c_str());
   }
+
+  // As we don't always have the facility to log to console use MOZ_LOG as well.
+  LOG_D("%s", msg.c_str());
 }
 
 // Initialize sandbox logging if required.
@@ -83,11 +86,11 @@ InitLoggingIfRequired(ProvideLogFunctionCb aProvideLogFunctionCb)
     return;
   }
 
-  if (Preferences::GetBool("security.sandbox.windows.log") ||
-      PR_GetEnv("MOZ_WIN_SANDBOX_LOGGING")) {
+  if (Preferences::GetBool("security.sandbox.logging.enabled") ||
+      PR_GetEnv("MOZ_SANDBOX_LOGGING")) {
     aProvideLogFunctionCb(Log);
 
-#if defined(MOZ_CONTENT_SANDBOX) && defined(MOZ_STACKWALKING)
+#if defined(MOZ_CONTENT_SANDBOX)
     // We can only log the stack trace on process types where we know that the
     // sandbox won't prevent it.
     if (XRE_IsContentProcess()) {

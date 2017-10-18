@@ -11,11 +11,11 @@ this.EXPORTED_SYMBOLS = [
 const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm", this);
-Cu.import("resource://gre/modules/Preferences.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://services-common/observers.js", this);
+Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
                                   "resource://gre/modules/TelemetrySend.jsm");
@@ -30,23 +30,7 @@ const LOGGER_PREFIX = "TelemetryReportingPolicy::";
 const OLDEST_ALLOWED_ACCEPTANCE_YEAR = 2012;
 
 const PREF_BRANCH = "datareporting.policy.";
-// Indicates whether this is the first run or not. This is used to decide when to display
-// the policy.
-const PREF_FIRST_RUN = "toolkit.telemetry.reportingpolicy.firstRun";
-// Allows to skip the datachoices infobar. This should only be used in tests.
-const PREF_BYPASS_NOTIFICATION = PREF_BRANCH + "dataSubmissionPolicyBypassNotification";
-// The submission kill switch: if this preference is disable, no submission will ever take place.
-const PREF_DATA_SUBMISSION_ENABLED = PREF_BRANCH + "dataSubmissionEnabled";
-// This preference holds the current policy version, which overrides
-// DEFAULT_DATAREPORTING_POLICY_VERSION
-const PREF_CURRENT_POLICY_VERSION = PREF_BRANCH + "currentPolicyVersion";
-// This indicates the minimum required policy version. If the accepted policy version
-// is lower than this, the notification bar must be showed again.
-const PREF_MINIMUM_POLICY_VERSION = PREF_BRANCH + "minimumPolicyVersion";
-// The version of the accepted policy.
-const PREF_ACCEPTED_POLICY_VERSION = PREF_BRANCH + "dataSubmissionPolicyAcceptedVersion";
-// The date user accepted the policy.
-const PREF_ACCEPTED_POLICY_DATE = PREF_BRANCH + "dataSubmissionPolicyNotifiedTime";
+
 // The following preferences are deprecated and will be purged during the preferences
 // migration process.
 const DEPRECATED_FHR_PREFS = [
@@ -95,8 +79,8 @@ NotifyPolicyRequest.prototype = Object.freeze({
   /**
    * Called when the user is notified of the policy.
    */
-  onUserNotifyComplete: function () {
-    return TelemetryReportingPolicyImpl._infobarShownCallback();
+  onUserNotifyComplete() {
+    return TelemetryReportingPolicyImpl._userNotified();
    },
 
   /**
@@ -105,7 +89,7 @@ NotifyPolicyRequest.prototype = Object.freeze({
    * @param error
    *        (Error) Explains what went wrong.
    */
-  onUserNotifyFailed: function (error) {
+  onUserNotifyFailed(error) {
     this._log.error("onUserNotifyFailed - " + error);
   },
 });
@@ -119,14 +103,14 @@ this.TelemetryReportingPolicy = {
   /**
    * Setup the policy.
    */
-  setup: function() {
+  setup() {
     return TelemetryReportingPolicyImpl.setup();
   },
 
   /**
    * Shutdown and clear the policy.
    */
-  shutdown: function() {
+  shutdown() {
     return TelemetryReportingPolicyImpl.shutdown();
   },
 
@@ -138,29 +122,43 @@ this.TelemetryReportingPolicy = {
    *
    * @return {Boolean} True if we are allowed to upload data, false otherwise.
    */
-  canUpload: function() {
+  canUpload() {
     return TelemetryReportingPolicyImpl.canUpload();
+  },
+
+  /**
+   * Check if this is the first time the browser ran.
+   */
+  isFirstRun() {
+    return TelemetryReportingPolicyImpl.isFirstRun();
   },
 
   /**
    * Test only method, restarts the policy.
    */
-  reset: function() {
+  reset() {
     return TelemetryReportingPolicyImpl.reset();
   },
 
   /**
    * Test only method, used to check if user is notified of the policy in tests.
    */
-  testIsUserNotified: function() {
+  testIsUserNotified() {
     return TelemetryReportingPolicyImpl.isUserNotifiedOfCurrentPolicy;
   },
 
   /**
    * Test only method, used to simulate the infobar being shown in xpcshell tests.
    */
-  testInfobarShown: function() {
-    return TelemetryReportingPolicyImpl._infobarShownCallback();
+  testInfobarShown() {
+    return TelemetryReportingPolicyImpl._userNotified();
+  },
+
+  /**
+   * Test only method, used to trigger an update of the "first run" state.
+   */
+  testUpdateFirstRun() {
+    return TelemetryReportingPolicyImpl.observe(null, "sessionstore-windows-restored", null);
   },
 };
 
@@ -170,6 +168,9 @@ var TelemetryReportingPolicyImpl = {
   _notificationInProgress: false,
   // The timer used to show the datachoices notification at startup.
   _startupNotificationTimerId: null,
+  // Keep track of the first session state, as the related preference
+  // is flipped right after the browser starts.
+  _isFirstRun: true,
 
   get _log() {
     if (!this._logger) {
@@ -184,7 +185,7 @@ var TelemetryReportingPolicyImpl = {
    * @return {Object} A date object or null on errors.
    */
   get dataSubmissionPolicyNotifiedDate() {
-    let prefString = Preferences.get(PREF_ACCEPTED_POLICY_DATE, "0");
+    let prefString = Services.prefs.getStringPref(TelemetryUtils.Preferences.AcceptedPolicyDate, "0");
     let valueInteger = parseInt(prefString, 10);
 
     // Bail out if we didn't store any value yet.
@@ -221,7 +222,7 @@ var TelemetryReportingPolicyImpl = {
       return;
     }
 
-    Preferences.set(PREF_ACCEPTED_POLICY_DATE, aDate.getTime().toString());
+    Services.prefs.setStringPref(TelemetryUtils.Preferences.AcceptedPolicyDate, aDate.getTime().toString());
   },
 
   /**
@@ -232,12 +233,12 @@ var TelemetryReportingPolicyImpl = {
    */
   get dataSubmissionEnabled() {
     // Default is true because we are opt-out.
-    return Preferences.get(PREF_DATA_SUBMISSION_ENABLED, true);
+    return Services.prefs.getBoolPref(TelemetryUtils.Preferences.DataSubmissionEnabled, true);
   },
 
   get currentPolicyVersion() {
-    return Preferences.get(PREF_CURRENT_POLICY_VERSION,
-                           TelemetryReportingPolicy.DEFAULT_DATAREPORTING_POLICY_VERSION);
+    return Services.prefs.getIntPref(TelemetryUtils.Preferences.CurrentPolicyVersion,
+                                     TelemetryReportingPolicy.DEFAULT_DATAREPORTING_POLICY_VERSION);
   },
 
   /**
@@ -245,27 +246,27 @@ var TelemetryReportingPolicyImpl = {
    * to be valid.
    */
   get minimumPolicyVersion() {
-    const minPolicyVersion = Preferences.get(PREF_MINIMUM_POLICY_VERSION, 1);
+    const minPolicyVersion = Services.prefs.getIntPref(TelemetryUtils.Preferences.MinimumPolicyVersion, 1);
 
     // First check if the current channel has a specific minimum policy version. If not,
     // use the general minimum policy version.
     let channel = "";
     try {
       channel = UpdateUtils.getUpdateChannel(false);
-    } catch(e) {
+    } catch (e) {
       this._log.error("minimumPolicyVersion - Unable to retrieve the current channel.");
       return minPolicyVersion;
     }
-    const channelPref = PREF_MINIMUM_POLICY_VERSION + ".channel-" + channel;
-    return Preferences.get(channelPref, minPolicyVersion);
+    const channelPref = TelemetryUtils.Preferences.MinimumPolicyVersion + ".channel-" + channel;
+    return Services.prefs.getIntPref(channelPref, minPolicyVersion);
   },
 
   get dataSubmissionPolicyAcceptedVersion() {
-    return Preferences.get(PREF_ACCEPTED_POLICY_VERSION, 0);
+    return Services.prefs.getIntPref(TelemetryUtils.Preferences.AcceptedPolicyVersion, 0);
   },
 
   set dataSubmissionPolicyAcceptedVersion(value) {
-    Preferences.set(PREF_ACCEPTED_POLICY_VERSION, value);
+    Services.prefs.setIntPref(TelemetryUtils.Preferences.AcceptedPolicyVersion, value);
   },
 
   /**
@@ -292,7 +293,7 @@ var TelemetryReportingPolicyImpl = {
   /**
    * Test only method, restarts the policy.
    */
-  reset: function() {
+  reset() {
     this.shutdown();
     return this.setup();
   },
@@ -300,20 +301,20 @@ var TelemetryReportingPolicyImpl = {
   /**
    * Setup the policy.
    */
-  setup: function() {
+  setup() {
     this._log.trace("setup");
 
     // Migrate the data choices infobar, if needed.
     this._migratePreferences();
 
     // Add the event observers.
-    Services.obs.addObserver(this, "sessionstore-windows-restored", false);
+    Services.obs.addObserver(this, "sessionstore-windows-restored");
   },
 
   /**
    * Clean up the reporting policy.
    */
-  shutdown: function() {
+  shutdown() {
     this._log.trace("shutdown");
 
     this._detachObservers();
@@ -324,7 +325,7 @@ var TelemetryReportingPolicyImpl = {
   /**
    * Detach the observers that were attached during setup.
    */
-  _detachObservers: function() {
+  _detachObservers() {
     Services.obs.removeObserver(this, "sessionstore-windows-restored");
   },
 
@@ -336,7 +337,7 @@ var TelemetryReportingPolicyImpl = {
    *
    * @return {Boolean} True if we are allowed to upload data, false otherwise.
    */
-  canUpload: function() {
+  canUpload() {
     // If data submission is disabled, there's no point in showing the infobar. Just
     // forbid to upload.
     if (!this.dataSubmissionEnabled) {
@@ -345,38 +346,52 @@ var TelemetryReportingPolicyImpl = {
 
     // Submission is enabled. We enable upload if user is notified or we need to bypass
     // the policy.
-    const bypassNotification = Preferences.get(PREF_BYPASS_NOTIFICATION, false);
+    const bypassNotification = Services.prefs.getBoolPref(TelemetryUtils.Preferences.BypassNotification, false);
     return this.isUserNotifiedOfCurrentPolicy || bypassNotification;
+  },
+
+  isFirstRun() {
+    return this._isFirstRun;
   },
 
   /**
    * Migrate the data policy preferences, if needed.
    */
-  _migratePreferences: function() {
+  _migratePreferences() {
     // Current prefs are mostly the same than the old ones, except for some deprecated ones.
     for (let pref of DEPRECATED_FHR_PREFS) {
-      Preferences.reset(pref);
+      Services.prefs.clearUserPref(pref);
     }
   },
 
   /**
-   * Show the data choices infobar if the user wasn't already notified and data submission
-   * is enabled.
+   * Determine whether the user should be notified.
    */
-  _showInfobar: function() {
+  _shouldNotify() {
     if (!this.dataSubmissionEnabled) {
-      this._log.trace("_showInfobar - Data submission disabled by the policy.");
-      return;
+      this._log.trace("_shouldNotify - Data submission disabled by the policy.");
+      return false;
     }
 
-    const bypassNotification = Preferences.get(PREF_BYPASS_NOTIFICATION, false);
+    const bypassNotification = Services.prefs.getBoolPref(TelemetryUtils.Preferences.BypassNotification, false);
     if (this.isUserNotifiedOfCurrentPolicy || bypassNotification) {
-      this._log.trace("_showInfobar - User already notified or bypassing the policy.");
-      return;
+      this._log.trace("_shouldNotify - User already notified or bypassing the policy.");
+      return false;
     }
 
     if (this._notificationInProgress) {
-      this._log.trace("_showInfobar - User not notified, notification already in progress.");
+      this._log.trace("_shouldNotify - User not notified, notification already in progress.");
+      return false;
+    }
+
+    return true;
+  },
+
+  /**
+   * Show the data choices infobar if needed.
+   */
+  _showInfobar() {
+    if (!this._shouldNotify()) {
       return;
     }
 
@@ -387,10 +402,10 @@ var TelemetryReportingPolicyImpl = {
   },
 
   /**
-   * Called when the user is notified with the infobar.
+   * Called when the user is notified with the infobar or otherwise.
    */
-  _infobarShownCallback: function() {
-    this._log.trace("_infobarShownCallback");
+  _userNotified() {
+    this._log.trace("_userNotified");
     this._recordNotificationData();
     TelemetrySend.notifyCanUpload();
   },
@@ -398,7 +413,7 @@ var TelemetryReportingPolicyImpl = {
   /**
    * Record date and the version of the accepted policy.
    */
-  _recordNotificationData: function() {
+  _recordNotificationData() {
     this._log.trace("_recordNotificationData");
     this.dataSubmissionPolicyNotifiedDate = Policy.now();
     this.dataSubmissionPolicyAcceptedVersion = this.currentPolicyVersion;
@@ -407,19 +422,93 @@ var TelemetryReportingPolicyImpl = {
     this._notificationInProgress = false;
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  /**
+   * Try to open the privacy policy in a background tab instead of showing the infobar.
+   */
+  _openFirstRunPage() {
+    if (!this._shouldNotify()) {
+      return false;
+    }
+
+    let firstRunPolicyURL = Services.prefs.getStringPref(TelemetryUtils.Preferences.FirstRunURL, "");
+    if (!firstRunPolicyURL) {
+      return false;
+    }
+    firstRunPolicyURL = Services.urlFormatter.formatURL(firstRunPolicyURL);
+
+    let win;
+    try {
+      const { RecentWindow } = Cu.import("resource:///modules/RecentWindow.jsm", {});
+      win = RecentWindow.getMostRecentBrowserWindow();
+    } catch (e) {}
+
+    if (!win) {
+      this._log.info("Couldn't find browser window to open first-run page. Falling back to infobar.");
+      return false;
+    }
+
+    // We'll consider the user notified once the privacy policy has been loaded
+    // in a background tab even if that tab hasn't been selected.
+    let tab;
+    let progressListener = {};
+    progressListener.onStateChange =
+      (aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) => {
+        if (aWebProgress.isTopLevel &&
+            tab &&
+            tab.linkedBrowser == aBrowser &&
+            aStateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
+            aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK) {
+          let uri = aBrowser.documentURI;
+          if (uri && !/^about:(blank|neterror|certerror|blocked)/.test(uri.spec)) {
+            this._userNotified();
+          } else {
+            this._log.info("Failed to load first-run page. Falling back to infobar.");
+            this._showInfobar();
+          }
+          removeListeners();
+        }
+      };
+
+    let removeListeners = () => {
+      win.removeEventListener("unload", removeListeners);
+      win.gBrowser.removeTabsProgressListener(progressListener);
+    };
+
+    win.addEventListener("unload", removeListeners);
+    win.gBrowser.addTabsProgressListener(progressListener);
+
+    tab = win.gBrowser.loadOneTab(firstRunPolicyURL, {
+      inBackground: true,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
+    return true;
+  },
+
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "sessionstore-windows-restored") {
       return;
     }
 
-    const isFirstRun = Preferences.get(PREF_FIRST_RUN, true);
+    this._isFirstRun = Services.prefs.getBoolPref(TelemetryUtils.Preferences.FirstRun, true);
+    if (this._isFirstRun) {
+      // We're performing the first run, flip firstRun preference for subsequent runs.
+      Services.prefs.setBoolPref(TelemetryUtils.Preferences.FirstRun, false);
+
+      try {
+        if (this._openFirstRunPage()) {
+          return;
+        }
+      } catch (e) {
+        this._log.error("Failed to open privacy policy tab: " + e);
+      }
+    }
+
+    // Show the info bar.
     const delay =
-      isFirstRun ? NOTIFICATION_DELAY_FIRST_RUN_MSEC: NOTIFICATION_DELAY_NEXT_RUNS_MSEC;
+      this._isFirstRun ? NOTIFICATION_DELAY_FIRST_RUN_MSEC : NOTIFICATION_DELAY_NEXT_RUNS_MSEC;
 
     this._startupNotificationTimerId = Policy.setShowInfobarTimeout(
         // Calling |canUpload| eventually shows the infobar, if needed.
         () => this._showInfobar(), delay);
-    // We performed at least a run, flip the firstRun preference.
-    Preferences.set(PREF_FIRST_RUN, false);
   },
 };

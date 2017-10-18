@@ -20,7 +20,7 @@ class ErrorResult;
 
 namespace dom {
 
-template<typename T> class MozMap;
+template<typename K, typename V> class Record;
 class HeadersEntry;
 
 class InternalHeaders final
@@ -74,9 +74,8 @@ public:
   void Append(const nsACString& aName, const nsACString& aValue,
               ErrorResult& aRv);
   void Delete(const nsACString& aName, ErrorResult& aRv);
-  void Get(const nsACString& aName, nsCString& aValue, ErrorResult& aRv) const;
-  void GetAll(const nsACString& aName, nsTArray<nsCString>& aResults,
-              ErrorResult& aRv) const;
+  void Get(const nsACString& aName, nsACString& aValue, ErrorResult& aRv) const;
+  void GetFirst(const nsACString& aName, nsACString& aValue, ErrorResult& aRv) const;
   bool Has(const nsACString& aName, ErrorResult& aRv) const;
   void Set(const nsACString& aName, const nsACString& aValue, ErrorResult& aRv);
 
@@ -102,7 +101,8 @@ public:
 
   void Fill(const InternalHeaders& aInit, ErrorResult& aRv);
   void Fill(const Sequence<Sequence<nsCString>>& aInit, ErrorResult& aRv);
-  void Fill(const MozMap<nsCString>& aInit, ErrorResult& aRv);
+  void Fill(const Record<nsCString, nsCString>& aInit, ErrorResult& aRv);
+  void FillResponseHeaders(nsIRequest* aRequest);
 
   bool HasOnlySimpleHeaders() const;
 

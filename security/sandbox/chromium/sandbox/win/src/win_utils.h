@@ -6,10 +6,12 @@
 #define SANDBOX_SRC_WIN_UTILS_H_
 
 #include <windows.h>
+#include <stddef.h>
 #include <string>
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/strings/string16.h"
+#include "sandbox/win/src/nt_internals.h"
 
 namespace sandbox {
 
@@ -66,16 +68,15 @@ class SingletonBase {
 
 // Convert a short path (C:\path~1 or \\??\\c:\path~1) to the long version of
 // the path. If the path is not a valid filesystem path, the function returns
-// false and the output parameter is not modified.
-bool ConvertToLongPath(const base::string16& short_path,
-                       base::string16* long_path);
+// false and argument is not modified.
+bool ConvertToLongPath(base::string16* path);
 
-// Sets result to true if the path contains a reparse point. The return value
-// is ERROR_SUCCESS when the function succeeds or the appropriate error code
-// when the function fails.
+// Returns ERROR_SUCCESS if the path contains a reparse point,
+// ERROR_NOT_A_REPARSE_POINT if there's no reparse point in this path, or an
+// error code when the function fails.
 // This function is not smart. It looks for each element in the path and
 // returns true if any of them is a reparse point.
-DWORD IsReparsePoint(const base::string16& full_path, bool* result);
+DWORD IsReparsePoint(const base::string16& full_path);
 
 // Returns true if the handle corresponds to the object pointed by this path.
 bool SameObject(HANDLE handle, const wchar_t* full_path);
@@ -107,6 +108,14 @@ bool WriteProtectedChildMemory(HANDLE child_process, void* address,
 
 // Returns true if the provided path points to a pipe.
 bool IsPipe(const base::string16& path);
+
+// Converts a NTSTATUS code to a Win32 error code.
+DWORD GetLastErrorFromNtStatus(NTSTATUS status);
+
+// Returns the address of the main exe module in memory taking in account
+// address space layout randomization. This uses the process' PEB to extract
+// the base address. This should only be called on new, suspended processes.
+void* GetProcessBaseAddress(HANDLE process);
 
 }  // namespace sandbox
 

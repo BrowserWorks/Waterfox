@@ -1,7 +1,7 @@
 function waitForPdfJS(browser, url) {
-  // Runs tests after all 'load' event handlers have fired off
-  return ContentTask.spawn(browser, url, function* (url) {
-    yield new Promise((resolve) => {
+  // Runs tests after all "load" event handlers have fired off
+  return ContentTask.spawn(browser, url, async function(contentUrl) {
+    await new Promise((resolve) => {
       // NB: Add the listener to the global object so that we receive the
       // event fired from the new window.
       addEventListener("documentload", function listener() {
@@ -9,7 +9,7 @@ function waitForPdfJS(browser, url) {
         resolve();
       }, false, true);
 
-      content.location = url;
+      content.location = contentUrl;
     });
   });
 }

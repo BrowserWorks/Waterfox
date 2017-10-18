@@ -13,14 +13,14 @@ const { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-l
 // Module Loader
 const require = BrowserLoader({
   baseURI: "resource://devtools/client/dom/",
-  window: this
+  window
 }).require;
 
 XPCOMUtils.defineConstant(this, "require", require);
 
 // Localization
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
-this.l10n = new LocalizationHelper("chrome://devtools/locale/dom.properties");
+const { LocalizationHelper } = require("devtools/shared/l10n");
+this.l10n = new LocalizationHelper("devtools/client/locales/dom.properties");
 
 // Load DOM panel content
 require("./content/dom-view.js");

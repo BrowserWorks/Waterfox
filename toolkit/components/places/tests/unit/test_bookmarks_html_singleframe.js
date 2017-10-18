@@ -9,15 +9,9 @@
 // Get Services
 Cu.import("resource://gre/modules/BookmarkHTMLUtils.jsm");
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_bookmarks_html_singleframe()
-{
+add_task(async function test_bookmarks_html_singleframe() {
   let bookmarksFile = OS.Path.join(do_get_cwd().path, "bookmarks_html_singleframe.html");
-  yield BookmarkHTMLUtils.importFromFile(bookmarksFile, true);
+  await BookmarkHTMLUtils.importFromFile(bookmarksFile, true);
 
   let root = PlacesUtils.getFolderContents(PlacesUtils.bookmarksMenuFolderId).root;
   do_check_eq(root.childCount, 1);

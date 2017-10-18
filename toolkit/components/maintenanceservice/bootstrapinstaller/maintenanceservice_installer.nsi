@@ -13,13 +13,9 @@ CRCCheck on
 
 RequestExecutionLevel admin
 
-; The commands inside this ifdef require NSIS 3.0a2 or greater so the ifdef can
-; be removed after we require NSIS 3.0a2 or greater.
-!ifdef NSIS_PACKEDVERSION
-  Unicode true
-  ManifestSupportedOS all
-  ManifestDPIAware true
-!endif
+Unicode true
+ManifestSupportedOS all
+ManifestDPIAware true
 
 !addplugindir ./
 
@@ -117,10 +113,7 @@ Function .onInit
   System::Call 'kernel32::SetDllDirectoryW(w "")'
 
   SetSilent silent
-  ; On Windows 2000 we do not install the maintenance service.
-  ; We won't run this installer from the parent installer, but just in case 
-  ; someone tries to execute it on Windows 2000...
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
     Abort
   ${EndUnless}
 FunctionEnd
@@ -129,14 +122,6 @@ Function un.onInit
   ; Remove the current exe directory from the search order.
   ; This only effects LoadLibrary calls and not implicitly loaded DLLs.
   System::Call 'kernel32::SetDllDirectoryW(w "")'
-
-; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
-; removed after we require NSIS 3.0a2 or greater.
-!ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
-    System::Call 'user32::SetProcessDPIAware()'
-  ${EndIf}
-!endif
 
   StrCpy $BrandFullNameDA "${MaintFullName}"
   StrCpy $BrandFullName "${MaintFullName}"

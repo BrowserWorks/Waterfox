@@ -3,17 +3,19 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-#include "mozilla/ipc/Faulty.h"
+
 #include <cerrno>
+#include <climits>
+#include <cmath>
 #include <prinrval.h>
-#include "nsXULAppAPI.h"
+#include <unistd.h>
 #include "base/string_util.h"
 #include "chrome/common/ipc_message.h"
 #include "chrome/common/ipc_channel.h"
-#include "prenv.h"
+#include "mozilla/ipc/Faulty.h"
 #include "mozilla/TypeTraits.h"
-#include <cmath>
-#include <climits>
+#include "nsXULAppAPI.h"
+#include "prenv.h"
 
 namespace mozilla {
 namespace ipc {
@@ -104,12 +106,16 @@ void FuzzIntegralType(T* v, bool largeValues)
         break;
       }
       // Fall through
+      MOZ_FALLTHROUGH;
+
     case 1:
       if (largeValues) {
         (*v) = RandomNumericLimit<T>();
         break;
       }
       // Fall through
+      MOZ_FALLTHROUGH;
+
     case 2:
       if (largeValues) {
         (*v) = RandomIntegerRange<T>(std::numeric_limits<T>::min(),
@@ -117,6 +123,7 @@ void FuzzIntegralType(T* v, bool largeValues)
         break;
       }
       // Fall through
+      MOZ_FALLTHROUGH;
     default:
       switch(random() % 2) {
         case 0:
@@ -126,6 +133,7 @@ void FuzzIntegralType(T* v, bool largeValues)
             break;
           }
           // Fall through
+          MOZ_FALLTHROUGH;
         case 1:
           // Prevent overflow
           if (*v != std::numeric_limits<T>::max()) {
@@ -152,6 +160,7 @@ void FuzzFloatingPointType(T* v, bool largeValues)
         break;
     }
     // Fall through
+    MOZ_FALLTHROUGH;
     case 1:
       if (largeValues) {
         (*v) = RandomFloatingPointRange<T>(std::numeric_limits<T>::min(),
@@ -159,6 +168,7 @@ void FuzzFloatingPointType(T* v, bool largeValues)
         break;
       }
     // Fall through
+    MOZ_FALLTHROUGH;
     default:
       (*v) = RandomFloatingPoint<T>();
   }
@@ -174,9 +184,11 @@ void FuzzStringType(T& v, const T& literal1, const T& literal2)
     case 4:
       v = v + v;
       // Fall through
+      MOZ_FALLTHROUGH;
     case 3:
       v = v + v;
       // Fall through
+      MOZ_FALLTHROUGH;
     case 2:
       v = v + v;
       break;
@@ -520,7 +532,7 @@ Faulty::FuzzUInt64(uint64_t* aValue, unsigned int aProbability)
     if (mFuzzPickle && GetChance(aProbability)) {
       uint64_t oldValue = *aValue;
       MutateUInt64(aValue);
-      FAULTY_LOG("pickle field {UInt64} of value: %llu changed to: %llu",
+      FAULTY_LOG("pickle field {UInt64} of value: %" PRIu64 " changed to: %" PRIu64,
                  oldValue, *aValue);
     }
   }
@@ -539,7 +551,7 @@ Faulty::FuzzInt64(int64_t* aValue, unsigned int aProbability)
     if (mFuzzPickle && GetChance(aProbability)) {
       int64_t oldValue = *aValue;
       MutateInt64(aValue);
-      FAULTY_LOG("pickle field {Int64} of value: %lld changed to: %lld",
+      FAULTY_LOG("pickle field {UInt64} of value: %" PRIu64 " changed to: %" PRIu64,
                  oldValue, *aValue);
     }
   }

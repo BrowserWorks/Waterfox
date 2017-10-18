@@ -1,53 +1,8 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/nn.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 nn{
-    Version{"2.1.19.14"}
+    Version{"2.1.31.86"}
     zoneStrings{
-        "America:Belem"{
-            ec{"Belém"}
-        }
-        "America:Cancun"{
-            ec{"Cancún"}
-        }
-        "America:Godthab"{
-            ec{"Godthåb"}
-        }
-        "America:Mexico_City"{
-            ec{"Mexico by"}
-        }
-        "America:North_Dakota:Center"{
-            ec{"Center, Nord-Dakota"}
-        }
-        "Asia:Tashkent"{
-            ec{"Tasjkent"}
-        }
-        "Asia:Ulaanbaatar"{
-            ec{"Ulan Bator"}
-        }
-        "Atlantic:Azores"{
-            ec{"Azorane"}
-        }
-        "Atlantic:Canary"{
-            ec{"Kanariøyane"}
-        }
-        "Etc:Unknown"{
-            ec{"ukjend"}
-        }
-        "Europe:Lisbon"{
-            ec{"Lisboa"}
-        }
-        "Europe:Moscow"{
-            ec{"Moskva"}
-        }
-        "Pacific:Easter"{
-            ec{"Påskeøya"}
-        }
         "meta:Africa_Central"{
             ls{"sentralafrikansk tid"}
         }

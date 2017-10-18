@@ -14,6 +14,7 @@
 #include "nsContentUtils.h"
 #include "nsGkAtoms.h"
 #include "nsHTMLDNSPrefetch.h"
+#include "nsAttrValueOrString.h"
 #include "nsIDocument.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
@@ -42,6 +43,7 @@ ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 2);
 // static
 const DOMTokenListSupportedToken HTMLAnchorElement::sSupportedRelValues[] = {
   "noreferrer",
+  "noopener",
   nullptr
 };
 
@@ -171,13 +173,6 @@ HTMLAnchorElement::UnbindFromTree(bool aDeep, bool aNullParent)
   // be under a different xml:base, so forget the cached state now.
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  // Note, we need to use OwnerDoc() here, since GetComposedDoc() might
-  // return null.
-  nsIDocument* doc = OwnerDoc();
-  if (doc) {
-    doc->UnregisterPendingLinkUpdate(this);
-  }
-
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }
 
@@ -251,9 +246,9 @@ HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse,
 }
 
 nsresult
-HTMLAnchorElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+HTMLAnchorElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
-  return PreHandleEventForAnchors(aVisitor);
+  return GetEventTargetParentForAnchors(aVisitor);
 }
 
 nsresult
@@ -325,7 +320,7 @@ IMPL_URI_PART(Hash)
 
 #undef IMPL_URI_PART
 
-NS_IMETHODIMP    
+NS_IMETHODIMP
 HTMLAnchorElement::GetText(nsAString& aText)
 {
   if(!nsContentUtils::GetNodeTextContent(this, true, aText, fallible)) {
@@ -334,7 +329,7 @@ HTMLAnchorElement::GetText(nsAString& aText)
   return NS_OK;
 }
 
-NS_IMETHODIMP    
+NS_IMETHODIMP
 HTMLAnchorElement::SetText(const nsAString& aText)
 {
   return nsContentUtils::SetNodeTextContent(this, aText, false);
@@ -346,10 +341,11 @@ HTMLAnchorElement::ToString(nsAString& aSource)
   return GetHref(aSource);
 }
 
-NS_IMETHODIMP    
+NS_IMETHODIMP
 HTMLAnchorElement::GetPing(nsAString& aValue)
 {
-  return GetURIListAttr(nsGkAtoms::ping, aValue);
+  GetAttr(kNameSpaceID_None, nsGkAtoms::ping, aValue);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -370,84 +366,37 @@ HTMLAnchorElement::GetHrefURI() const
 }
 
 nsresult
-HTMLAnchorElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify)
+HTMLAnchorElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                 const nsAttrValueOrString* aValue,
+                                 bool aNotify)
 {
-  bool reset = false;
-  if (aName == nsGkAtoms::href && kNameSpaceID_None == aNameSpaceID) {
-    // If we do not have a cached URI, we have some value here so we must reset
-    // our link state after calling the parent.
-    if (!Link::HasCachedURI()) {
-      reset = true;
-    }
-    // However, if we have a cached URI, we'll want to see if the value changed.
-    else {
-      nsAutoString val;
-      GetHref(val);
-      if (!val.Equals(aValue)) {
-        reset = true;
-      }
-    }
-    if (reset) {
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::href) {
       CancelDNSPrefetch(HTML_ANCHOR_DNS_PREFETCH_DEFERRED,
                         HTML_ANCHOR_DNS_PREFETCH_REQUESTED);
     }
   }
 
-  nsresult rv = nsGenericHTMLElement::SetAttr(aNameSpaceID, aName, aPrefix,
-                                              aValue, aNotify);
-
-  // The ordering of the parent class's SetAttr call and Link::ResetLinkState
-  // is important here!  The attribute is not set until SetAttr returns, and
-  // we will need the updated attribute value because notifying the document
-  // that content states have changed will call IntrinsicState, which will try
-  // to get updated information about the visitedness from Link.
-  if (reset) {
-    Link::ResetLinkState(!!aNotify, true);
-    if (IsInComposedDoc()) {
-      TryDNSPrefetch();
-    }
-  }
-
-  return rv;
+  return nsGenericHTMLElement::BeforeSetAttr(aNamespaceID, aName, aValue,
+                                             aNotify);
 }
 
 nsresult
-HTMLAnchorElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify)
+HTMLAnchorElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
-  bool href =
-    (aAttribute == nsGkAtoms::href && kNameSpaceID_None == aNameSpaceID);
-
-  if (href) {
-    CancelDNSPrefetch(HTML_ANCHOR_DNS_PREFETCH_DEFERRED,
-                      HTML_ANCHOR_DNS_PREFETCH_REQUESTED);
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::href) {
+      Link::ResetLinkState(aNotify, !!aValue);
+      if (aValue && IsInComposedDoc()) {
+        TryDNSPrefetch();
+      }
+    }
   }
 
-  nsresult rv = nsGenericHTMLElement::UnsetAttr(aNameSpaceID, aAttribute,
-                                                aNotify);
-
-  // The ordering of the parent class's UnsetAttr call and Link::ResetLinkState
-  // is important here!  The attribute is not unset until UnsetAttr returns, and
-  // we will need the updated attribute value because notifying the document
-  // that content states have changed will call IntrinsicState, which will try
-  // to get updated information about the visitedness from Link.
-  if (href) {
-    Link::ResetLinkState(!!aNotify, false);
-  }
-
-  return rv;
-}
-
-bool
-HTMLAnchorElement::ParseAttribute(int32_t aNamespaceID,
-                                  nsIAtom* aAttribute,
-                                  const nsAString& aValue,
-                                  nsAttrValue& aResult)
-{
-  return nsGenericHTMLElement::ParseAttribute(aNamespaceID, aAttribute, aValue,
-                                              aResult);
+  return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName,
+                                            aValue, aOldValue, aNotify);
 }
 
 EventStates
@@ -457,10 +406,10 @@ HTMLAnchorElement::IntrinsicState() const
 }
 
 size_t
-HTMLAnchorElement::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+HTMLAnchorElement::SizeOfExcludingThis(mozilla::SizeOfState& aState) const
 {
-  return nsGenericHTMLElement::SizeOfExcludingThis(aMallocSizeOf) +
-         Link::SizeOfExcludingThis(aMallocSizeOf);
+  return nsGenericHTMLElement::SizeOfExcludingThis(aState) +
+         Link::SizeOfExcludingThis(aState);
 }
 
 } // namespace dom

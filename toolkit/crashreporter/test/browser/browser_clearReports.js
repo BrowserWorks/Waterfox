@@ -12,7 +12,7 @@ function clickClearReports(browser) {
     return Promise.resolve();
   }
 
-  let style = doc.defaultView.getComputedStyle(button, "");
+  let style = doc.defaultView.getComputedStyle(button);
 
   Assert.notEqual(style.display, "none", "Clear reports button visible");
 
@@ -43,17 +43,17 @@ var promptShown = false;
 
 var oldPrompt = Services.prompt;
 Services.prompt = {
-  confirm: function() {
+  confirm() {
     promptShown = true;
     return true;
   },
 };
 
-registerCleanupFunction(function () {
+registerCleanupFunction(function() {
   Services.prompt = oldPrompt;
 });
 
-add_task(function* test() {
+add_task(async function test() {
   let appD = make_fake_appdir();
   let crD = appD.clone();
   crD.append("Crash Reports");
@@ -93,17 +93,17 @@ add_task(function* test() {
   report4.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
   report4.lastModifiedTime = Date.now() - 63172000000;
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     cleanup_fake_appdir();
   });
 
-  yield BrowserTestUtils.withNewTab({ gBrowser, url: "about:crashes" },
-    function* (browser) {
+  await BrowserTestUtils.withNewTab({ gBrowser, url: "about:crashes" },
+    async function(browser) {
       let dirs = [ submitdir, pendingdir, crD ];
       let existing = [ file1.path, file2.path, report1.path, report2.path,
                        report3.path, submitdir.path, pendingdir.path ];
 
-      yield ContentTask.spawn(browser, null, clickClearReports);
+      await ContentTask.spawn(browser, null, clickClearReports);
 
       for (let dir of dirs) {
         let entries = dir.directoryEntries;

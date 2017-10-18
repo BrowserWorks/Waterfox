@@ -4,21 +4,24 @@
 
 "use strict";
 
-add_task(function*() {
+add_task(async function() {
+  await SpecialPowers.pushPrefEnv({set: [["browser.photon.structure.enabled", false]]});
   info("Check history button existence and functionality");
 
-  yield PanelUI.show();
+  await PanelUI.show();
   info("Menu panel was opened");
 
   let historyButton = document.getElementById("history-panelmenu");
   ok(historyButton, "History button appears in Panel Menu");
 
-  historyButton.click();
   let historyPanel = document.getElementById("PanelUI-history");
+  let promise = BrowserTestUtils.waitForEvent(historyPanel, "ViewShown");
+  historyButton.click();
+  await promise;
   ok(historyPanel.getAttribute("current"), "History Panel is in view");
 
   let panelHiddenPromise = promisePanelHidden(window);
   PanelUI.hide();
-  yield panelHiddenPromise
+  await panelHiddenPromise
   info("Menu panel was closed");
 });

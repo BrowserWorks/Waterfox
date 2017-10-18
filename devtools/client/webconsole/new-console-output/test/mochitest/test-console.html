@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Simple webconsole test page</title>
+  </head>
+  <body>
+    <p>Simple webconsole test page</p>
+    <script>
+      /* exported doLogs, stringLog */
+      "use strict";
+
+      function doLogs(num) {
+        num = num || 1;
+        for (let i = 0; i < num; i++) {
+          console.log(i);
+        }
+      }
+
+      function stringLog() {
+        console.log("stringLog");
+      }
+    </script>
+  </body>
+</html>

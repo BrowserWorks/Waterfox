@@ -1,4 +1,6 @@
 ## Makefile.in for ICU - tools/makeconv
+## Copyright (C) 2016 and later: Unicode, Inc. and others.
+## License & terms of use: http://www.unicode.org/copyright.html
 ## Copyright (c) 1999-2011, International Business Machines Corporation and
 ## others. All Rights Reserved.
 ## Stephen F. Booth
@@ -26,7 +28,7 @@ CLEANFILES = *~ $(DEPS) $(MAN_FILES)
 ## Target information
 TARGET = $(BINDIR)/$(TARGET_STUB_NAME)$(EXEEXT)
 
-CPPFLAGS += -I$(top_srcdir)/common -I$(srcdir)/../toolutil
+CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/common -I$(srcdir)/../toolutil
 LIBS = $(LIBICUTOOLUTIL) $(LIBICUI18N) $(LIBICUUC) $(DEFAULT_LIBS) $(LIB_M)
 
 OBJECTS = makeconv.o ucnvstat.o genmbcs.o gencnvex.o

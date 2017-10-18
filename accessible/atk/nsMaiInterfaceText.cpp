@@ -126,7 +126,7 @@ ConvertToAtkTextAttributeSet(nsIPersistentProperties* aAttributes)
 static void
 ConvertTexttoAsterisks(AccessibleWrap* accWrap, nsAString& aString)
 {
-  // convert each char to "*" when it's "password text" 
+  // convert each char to "*" when it's "password text"
   if (accWrap->NativeRole() == roles::PASSWORD_TEXT) {
     for (uint32_t i = 0; i < aString.Length(); i++)
       aString.Replace(i, 1, NS_LITERAL_STRING("*"));
@@ -500,7 +500,8 @@ getTextSelectionCB(AtkText *aText, gint aSelectionNum,
     *aEndOffset = endOffset;
 
     return getTextCB(aText, *aStartOffset, *aEndOffset);
-  } else if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
+  }
+  if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
     nsString data;
     proxy->SelectionBoundsAt(aSelectionNum, data, &startOffset, &endOffset);
     *aStartOffset = startOffset;
@@ -526,7 +527,8 @@ addTextSelectionCB(AtkText *aText,
     }
 
     return text->AddToSelection(aStartOffset, aEndOffset);
-  } else if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
+  }
+  if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
     return proxy->AddToSelection(aStartOffset, aEndOffset);
   }
 
@@ -545,7 +547,8 @@ removeTextSelectionCB(AtkText *aText,
     }
 
     return text->RemoveFromSelection(aSelectionNum);
-  } else if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
+  }
+  if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
     return proxy->RemoveFromSelection(aSelectionNum);
   }
 
@@ -564,7 +567,8 @@ setTextSelectionCB(AtkText *aText, gint aSelectionNum,
     }
 
     return text->SetSelectionBoundsAt(aSelectionNum, aStartOffset, aEndOffset);
-  } else if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
+  }
+  if (ProxyAccessible* proxy = GetProxy(ATK_OBJECT(aText))) {
     return proxy->SetSelectionBoundsAt(aSelectionNum, aStartOffset, aEndOffset);
   }
 

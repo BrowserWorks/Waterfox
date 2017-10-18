@@ -9,7 +9,7 @@
 #include "nsHttp.h"
 #include "nsHttpHeaderArray.h"
 #include "nsString.h"
-#include "mozilla/ReentrantMonitor.h"
+#include "mozilla/RecursiveMutex.h"
 
 class nsIHttpHeaderVisitor;
 
@@ -30,22 +30,23 @@ public:
     // copying headers. If you use it be careful to do it only under
     // nsHttpRequestHead lock!!!
     const nsHttpHeaderArray &Headers() const;
-    void Enter() { mReentrantMonitor.Enter(); }
-    void Exit() { mReentrantMonitor.Exit(); }
+    void Enter() { mRecursiveMutex.Lock(); }
+    void Exit() { mRecursiveMutex.Unlock(); }
 
     void SetHeaders(const nsHttpHeaderArray& aHeaders);
 
     void SetMethod(const nsACString &method);
     void SetVersion(nsHttpVersion version);
-    void SetRequestURI(const nsCSubstring &s);
-    void SetPath(const nsCSubstring &s);
+    void SetRequestURI(const nsACString& s);
+    void SetPath(const nsACString& s);
     uint32_t HeaderCount();
 
     // Using this function it is possible to itereate through all headers
     // automatically under one lock.
-    nsresult VisitHeaders(nsIHttpHeaderVisitor *visitor,
-                          nsHttpHeaderArray::VisitorFilter filter =
-                              nsHttpHeaderArray::eFilterAll);
+    MOZ_MUST_USE nsresult
+    VisitHeaders(nsIHttpHeaderVisitor *visitor,
+                 nsHttpHeaderArray::VisitorFilter filter =
+                     nsHttpHeaderArray::eFilterAll);
     void Method(nsACString &aMethod);
     nsHttpVersion Version();
     void RequestURI(nsACString &RequestURI);
@@ -57,13 +58,16 @@ public:
                    int32_t port);
     void Origin(nsACString &aOrigin);
 
-    nsresult SetHeader(nsHttpAtom h, const nsACString &v, bool m=false);
-    nsresult SetHeader(nsHttpAtom h, const nsACString &v, bool m,
-                       nsHttpHeaderArray::HeaderVariety variety);
-    nsresult SetEmptyHeader(nsHttpAtom h);
-    nsresult GetHeader(nsHttpAtom h, nsACString &v);
+    MOZ_MUST_USE nsresult SetHeader(const nsACString &h, const nsACString &v,
+                                    bool m=false);
+    MOZ_MUST_USE nsresult SetHeader(nsHttpAtom h, const nsACString &v,
+                                    bool m=false);
+    MOZ_MUST_USE nsresult SetHeader(nsHttpAtom h, const nsACString &v, bool m,
+                                    nsHttpHeaderArray::HeaderVariety variety);
+    MOZ_MUST_USE nsresult SetEmptyHeader(const nsACString &h);
+    MOZ_MUST_USE nsresult GetHeader(nsHttpAtom h, nsACString &v);
 
-    nsresult ClearHeader(nsHttpAtom h);
+    MOZ_MUST_USE nsresult ClearHeader(nsHttpAtom h);
     void ClearHeaders();
 
     bool HasHeaderValue(nsHttpAtom h, const char *v);
@@ -73,7 +77,8 @@ public:
     void Flatten(nsACString &, bool pruneProxyHeaders = false);
 
     // Don't allow duplicate values
-    nsresult SetHeaderOnce(nsHttpAtom h, const char *v, bool merge = false);
+    MOZ_MUST_USE nsresult SetHeaderOnce(nsHttpAtom h, const char *v,
+                                        bool merge = false);
 
     bool IsSafeMethod();
 
@@ -114,9 +119,9 @@ private:
     ParsedMethodType  mParsedMethod;
     bool              mHTTPS;
 
-    // We are using ReentrantMonitor instead of a Mutex because VisitHeader
+    // We are using RecursiveMutex instead of a Mutex because VisitHeader
     // function calls nsIHttpHeaderVisitor::VisitHeader while under lock.
-    ReentrantMonitor  mReentrantMonitor;
+    RecursiveMutex  mRecursiveMutex;
 
     // During VisitHeader we sould not allow cal to SetHeader.
     bool mInVisitHeaders;

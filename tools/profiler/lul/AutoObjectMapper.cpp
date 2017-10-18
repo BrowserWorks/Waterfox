@@ -11,11 +11,12 @@
 #include <fcntl.h>
 
 #include "mozilla/Assertions.h"
+#include "mozilla/Sprintf.h"
 
 #include "PlatformMacros.h"
 #include "AutoObjectMapper.h"
 
-#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+#if defined(GP_OS_android)
 # include <dlfcn.h>
 # include "mozilla/Types.h"
   // FIXME move these out of mozglue/linker/ElfLoader.h into their
@@ -43,8 +44,8 @@ failedToMessage(void(*aLog)(const char*),
                 const char* aHowFailed, std::string aFileName)
 {
   char buf[300];
-  snprintf(buf, sizeof(buf), "AutoObjectMapper::Map: Failed to %s \'%s\'",
-           aHowFailed, aFileName.c_str());
+  SprintfLiteral(buf, "AutoObjectMapper::Map: Failed to %s \'%s\'",
+                 aHowFailed, aFileName.c_str());
   buf[sizeof(buf)-1] = 0;
   aLog(buf);
 }
@@ -107,7 +108,7 @@ bool AutoObjectMapperPOSIX::Map(/*OUT*/void** start, /*OUT*/size_t* length,
 }
 
 
-#if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+#if defined(GP_OS_android)
 // A helper function for AutoObjectMapperFaultyLib::Map.  Finds out
 // where the installation's lib directory is, since we'll have to look
 // in there to get hold of libmozglue.so.  Returned C string is heap
@@ -203,4 +204,4 @@ bool AutoObjectMapperFaultyLib::Map(/*OUT*/void** start, /*OUT*/size_t* length,
   }
 }
 
-#endif // defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+#endif // defined(GP_OS_android)

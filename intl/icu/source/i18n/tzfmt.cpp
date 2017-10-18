@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 * Copyright (C) 2011-2015, International Business Machines Corporation and
@@ -12,8 +14,10 @@
 #include "unicode/calendar.h"
 #include "unicode/tzfmt.h"
 #include "unicode/numsys.h"
+#include "unicode/strenum.h"
 #include "unicode/uchar.h"
 #include "unicode/udat.h"
+#include "unicode/ustring.h"
 #include "tzgnames.h"
 #include "cmemory.h"
 #include "cstring.h"

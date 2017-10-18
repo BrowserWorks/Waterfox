@@ -1,91 +1,75 @@
 [
-{
-"version": "Android NDK r11c",
-"size": 138388708,
-"visibility": "internal",
-"digest": "2dc605644e84fadf399a4e5cb60dfb3b42518803f80de15ef310ead4d0084a01dce3052bbf7d9dfb8bbe027019250235afe0a1e4ffdc87babc0f2bdbf2403232",
-"algorithm": "sha512",
-"filename": "android-ndk.tar.bz2",
-"unpack": true
-},
-{
-"versions": [
-  "Android SDK 6.0 / API 23",
-  "Android tools r24.4",
-  "Android build tools 23.0.3",
-  "Android Support Repository (Support Library 23.0.1)",
-  "Google Support Repository (Google Play Services 8.1.0)"
-],
-"size": 573952124,
-"visibility": "internal", 
-"digest": "1d495d7a7386af3f27b14982e0ff7b0963fd1a63a08040b9b1db0e94c9681fa3704c195ba8be23b5f73e15101b2b767293bc8f96e0584e17867ef13b074e5038",
-"algorithm": "sha512",
-"filename": "android-sdk-linux.tar.xz",
-"unpack": true
-},
-{
-"size": 167175,
-"visibility": "public",
-"digest": "0b71a936edf5bd70cf274aaa5d7abc8f77fe8e7b5593a208f805cc9436fac646b9c4f0b43c2b10de63ff3da671497d35536077ecbc72dba7f8159a38b580f831",
-"algorithm": "sha512",
-"filename": "sccache.tar.bz2",
-"unpack": true
-},
-{
-"size": 4906080,
-"visibility": "public",
-"unpack": true,
-"digest": "d735544e039da89382c53b2302b7408d4610247b4f8b5cdc5a4d5a8ec5470947b19e8ea7f7a37e78222e661347e394e0030d81f41534138b527b14e9c4e55634",
-"algorithm": "sha512",
-"filename": "jsshell.tar.xz"
-},
-{
-"version": "gcc 4.8.5 + PR64905",
-"size": 80160264,
-"digest": "c1a9dc9da289b8528874d16300b9d13a997cec99195bb0bc46ff665216d8535d6d6cb5af6b4b1f2749af6815dab12e703fdb3849014e5c23a70eff351a0baf4e",
-"algorithm": "sha512",
-"filename": "gcc.tar.xz",
-"unpack": true
-},
-{
-"size": 30899096,
-"visibility": "public",
-"digest": "ac9f5f95d11580d3dbeff87e80a585fe4d324b270dabb91b1165686acab47d99fa6651074ab0be09420239a5d6af38bb2c539506962a7b44e0ed4d080bba2953",
-"algorithm": "sha512",
-"filename": "java_home-1.7.0-openjdk-1.7.0.85.x86_64.tar.xz",
-"unpack": true
-},
-{
-"algorithm": "sha512",
-"visibility": "public",
-"filename": "jcentral.tar.xz",
-"unpack": true,
-"digest": "43754910576cf6173f0dcb215ec7988f2a30dbfe32050f53ac7a9088b8b878c3ead80e02afc1dc31e229386116c82e88a403a309e5b5695f0b74f5defb13dec7",
-"size": 42832932
-},
-{
-"algorithm": "sha512",
-"visibility": "public",
-"filename": "gradle.tar.xz",
-"unpack": true,
-"digest": "5ebf4c34e43faba54d189156a1d590f1e99775d1004f18cb7619d9975a5c2bd252021e470abd82bceb28580c1a22dd5501320062a0d83b5588b84633ac30c494",
-"size": 51936348
-},
-{
-"version": "rustc 1.8.0 (db2939409 2016-04-11)",
-"size": 123218320,
-"digest": "7afcd7b39c4d5277db6b28951602aff4c698102ba45d3d811b353ca7446074beceebf03a2a529e323af19d73db4acbe96ec2bdad44def2e218ed36f55e82cab2",
-"algorithm": "sha512",
-"filename": "rustc.tar.xz",
-"unpack": true
-},
-{
-"version": "rust stdlib repack 1.8.0 (db2939409 2016-04-11)",
-"size": 17874585,
-"visibility": "public",
-"digest": "bea72d352a70411240d95c7ab33e97d85be9cf0548807968dc721b14d816c70f4fd77a0ca1b43b851772ec06c0c1395b474ad342d506f8987fdbb070393c81f6",
-"algorithm": "sha512",
-"filename": "rust-std-lib.tar.bz2",
-"unpack": true
-}
+  {
+    "version": "Android NDK r11c",
+    "size": 299040511,
+    "visibility": "internal",
+    "digest": "0f9ba6efbc5379225ebe13b956b9f19d055654f9b0ae999b1eb18ca836e1665be820bcc05193ba24c9a328a1bfea63fe814c1f364b28ae29266effaa04eedbee",
+    "algorithm": "sha512",
+    "filename": "android-ndk.tar.bz2",
+    "unpack": true
+  },
+  {
+    "size": 735632692,
+    "visibility": "internal",
+    "digest": "dc4329803b4f941d52d61a32c054e209890c2dd793ac2cbbeadb15e4bd23104f7ba99c113472326c7751dbe99e00238208432a05183d9a01bed13f38297b3b3c",
+    "algorithm": "sha512",
+    "filename": "android-sdk-linux.tar.xz",
+    "unpack": true
+  },
+  {
+    "size": 4906080,
+    "visibility": "public",
+    "unpack": true,
+    "digest": "d735544e039da89382c53b2302b7408d4610247b4f8b5cdc5a4d5a8ec5470947b19e8ea7f7a37e78222e661347e394e0030d81f41534138b527b14e9c4e55634",
+    "algorithm": "sha512",
+    "filename": "jsshell.tar.xz"
+  },
+  {
+    "size": 37130176,
+    "visibility": "internal",
+    "digest": "254eecc06eea407c098417c1dbedf89f59883cdde7e173b0473fa5b34719c967830afa11189c3a9f69dc3f3b9e5fb43469434340e1f8feb378609af965783b48",
+    "algorithm": "sha512",
+    "filename": "java_home.tar.xz",
+    "unpack": true
+  },
+  {
+    "size": 7797928,
+    "visibility": "public",
+    "digest": "7bb5c7b3586179a7805ae60b025b7856cb8dbed66da1b7962bc446d94ea6fa45ed55ebfe065d2d82690c68bf71bdab613e97f53da79b85e3185955461f751256",
+    "algorithm": "sha512",
+    "filename": "google.tar.xz",
+    "unpack": true
+  },
+  {
+    "size": 52693504,
+    "visibility": "public",
+    "digest": "d8c0d91ff4039dd8a22e34634c0f72b21b1c272d60987f20a709fbfd919ba62eab4c3bddbaf96af1c6caf85320b4bf0676589071fe3b31724c51782a55da83e0",
+    "algorithm": "sha512",
+    "filename": "jcenter.tar.xz",
+    "unpack": true
+  },
+  {
+    "algorithm": "sha512",
+    "visibility": "public",
+    "filename": "gradle-dist.tar.xz",
+    "unpack": true,
+    "digest": "e3cfe7f8259ad97722243d4e873d5a05c014bfc24d637427f89d804bf5073290229c778ea303142cf06c2dc79e0492f23521f57d3a73825f55b8db587317646f",
+    "size": 51753660
+  },
+  {
+    "version": "rustc 1.19.0 (0ade33941 2017-07-17) repack",
+    "size": 151322128,
+    "digest": "1d6d6e8bbf7535a4f1c8f1292562e30c868bfd3ac323992fc287be09f7fa3167c2f9e01dc98143967983e30488fe3ecaebff530ba4ec9113033d60af936c4f4d",
+    "algorithm": "sha512",
+    "filename": "rustc.tar.xz",
+    "unpack": true
+  },
+  {
+    "algorithm": "sha512",
+    "visibility": "public",
+    "filename": "dotgradle.tar.xz",
+    "unpack": true,
+    "digest": "9f082ccd71ad18991eb71fcad355c6990f50a72a09ab9b79696521485656083a72faf5a8d4714de9c4b901ee2319b6786a51964846bb7075061642a8505501c2",
+    "size": 512
+  }
 ]

@@ -10,8 +10,7 @@
 #define OK 0
 
 // Error codes that are no longer used should not be used again unless they
-// aren't used in client code (e.g. nsUpdateService.js, updates.js,
-// UpdatePrompt.js, etc.).
+// aren't used in client code (e.g. nsUpdateService.js, updates.js, etc.).
 
 #define MAR_ERROR_EMPTY_ACTION_LIST 1
 #define LOADSOURCE_ERROR_WRONG_SIZE 2
@@ -42,7 +41,7 @@
 #define MAR_CHANNEL_MISMATCH_ERROR 22
 #define VERSION_DOWNGRADE_ERROR 23
 
-// Error codes 24-33 and 49-51 are for the Windows maintenance service.
+// Error codes 24-33 and 49-57 are for the Windows maintenance service.
 #define SERVICE_UPDATER_COULD_NOT_BE_STARTED 24
 #define SERVICE_NOT_ENOUGH_COMMAND_LINE_ARGS 25
 #define SERVICE_UPDATER_SIGN_ERROR 26
@@ -58,19 +57,25 @@
 #define WRITE_ERROR_ACCESS_DENIED 35
 // #define WRITE_ERROR_SHARING_VIOLATION 36 // Replaced with errors 46-48
 #define WRITE_ERROR_CALLBACK_APP 37
-#define UNEXPECTED_BZIP_ERROR 39
+#define UNEXPECTED_XZ_ERROR 39
 #define UNEXPECTED_MAR_ERROR 40
 #define UNEXPECTED_BSPATCH_ERROR 41
 #define UNEXPECTED_FILE_OPERATION_ERROR 42
-#define FILESYSTEM_MOUNT_READWRITE_ERROR 43
+// #define FILESYSTEM_MOUNT_READWRITE_ERROR 43 // Removed support for gonk
 #define DELETE_ERROR_EXPECTED_DIR 46
 #define DELETE_ERROR_EXPECTED_FILE 47
 #define RENAME_ERROR_EXPECTED_FILE 48
 
-// Error codes 24-33 and 49-51 are for the Windows maintenance service.
+// Error codes 24-33 and 49-57 are for the Windows maintenance service.
 #define SERVICE_COULD_NOT_COPY_UPDATER 49
 #define SERVICE_STILL_APPLYING_TERMINATED 50
 #define SERVICE_STILL_APPLYING_NO_EXIT_CODE 51
+#define SERVICE_INVALID_APPLYTO_DIR_STAGED_ERROR 52
+#define SERVICE_CALC_REG_PATH_ERROR 53
+#define SERVICE_INVALID_APPLYTO_DIR_ERROR 54
+#define SERVICE_INVALID_INSTALL_DIR_PATH_ERROR 55
+#define SERVICE_INVALID_WORKING_DIR_PATH_ERROR 56
+#define SERVICE_INSTALL_DIR_REG_ERROR 57
 
 #define WRITE_ERROR_FILE_COPY 61
 #define WRITE_ERROR_DELETE_FILE 62
@@ -86,6 +91,10 @@
 #define INVALID_APPLYTO_DIR_STAGED_ERROR 72
 #define LOCK_ERROR_PATCH_FILE 73
 #define INVALID_APPLYTO_DIR_ERROR 74
+#define INVALID_INSTALL_DIR_PATH_ERROR 75
+#define INVALID_WORKING_DIR_PATH_ERROR 76
+#define INVALID_CALLBACK_PATH_ERROR 77
+#define INVALID_CALLBACK_DIR_ERROR 78
 
 // Error codes 80 through 99 are reserved for nsUpdateService.js
 

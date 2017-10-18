@@ -23,7 +23,7 @@ class nsIFrame;
 
 // Enumerated type to indicate the visibility of a layer.
 // hide - the layer is not shown.
-// show - the layer is shown irrespective of the visibility of 
+// show - the layer is shown irrespective of the visibility of
 //        the layer's parent.
 enum nsViewVisibility {
   nsViewVisibility_kHide = 0,
@@ -61,7 +61,9 @@ public:
   typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
   typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
+  void operator delete(void* ptr) {
+    ::operator delete(ptr);
+  }
 
   /**
    * Get the view manager which "owns" the view.
@@ -134,7 +136,7 @@ public:
    *
    * If aOther is null, this will return the offset of |this| from the
    * root of the viewmanager tree.
-   * 
+   *
    * This function is fastest when aOther is an ancestor of |this|.
    *
    * NOTE: this actually returns the offset from aOther to |this|, but
@@ -297,9 +299,9 @@ public:
    * Returns true if the view has a widget associated with it.
    */
   bool HasWidget() const { return mWindow != nullptr; }
-  
-  void SetForcedRepaint(bool aForceRepaint) { 
-    mForcedRepaint = aForceRepaint; 
+
+  void SetForcedRepaint(bool aForceRepaint) {
+    mForcedRepaint = aForceRepaint;
   }
 
   void SetNeedsWindowPropertiesSync();

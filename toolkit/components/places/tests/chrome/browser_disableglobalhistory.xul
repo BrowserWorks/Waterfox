@@ -15,7 +15,7 @@
   <browser id="remote_disabled" src="about:blank" type="content" disableglobalhistory="true" />
   <browser id="remote_enabled" src="about:blank" type="content" />
 
-  <script type="text/javascript;version=1.7">
+  <script type="text/javascript">
   const {interfaces: Ci, classes: Cc, results: Cr, utils: Cu} = Components;
 
   Cu.import("resource://testing-common/ContentTask.jsm");
@@ -23,7 +23,7 @@
 
   function expectUseGlobalHistory(id, expected) {
     let browser = document.getElementById(id);
-    return ContentTask.spawn(browser, {id, expected}, function*({id, expected}) {
+    return ContentTask.spawn(browser, {id, expected}, function({id, expected}) {
       Assert.equal(docShell.useGlobalHistory, expected,
                    "Got the right useGlobalHistory state in the docShell of " + id);
     });

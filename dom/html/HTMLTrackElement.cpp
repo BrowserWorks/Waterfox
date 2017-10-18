@@ -33,6 +33,7 @@
 #include "nsIObserver.h"
 #include "nsIStreamListener.h"
 #include "nsISupportsImpl.h"
+#include "nsISupportsPrimitives.h"
 #include "nsMappedAttributes.h"
 #include "nsNetUtil.h"
 #include "nsRuleData.h"
@@ -62,22 +63,85 @@ static constexpr nsAttrValue::EnumTable kKindTable[] = {
   { "descriptions", static_cast<int16_t>(TextTrackKind::Descriptions) },
   { "chapters", static_cast<int16_t>(TextTrackKind::Chapters) },
   { "metadata", static_cast<int16_t>(TextTrackKind::Metadata) },
-  { 0 }
+  { nullptr, 0 }
 };
 
 // Invalid values are treated as "metadata" in ParseAttribute, but if no value
 // at all is specified, it's treated as "subtitles" in GetKind
 static constexpr const nsAttrValue::EnumTable* kKindTableInvalidValueDefault = &kKindTable[4];
 
+class WindowDestroyObserver final : public nsIObserver
+{
+  NS_DECL_ISUPPORTS
+
+public:
+  explicit WindowDestroyObserver(HTMLTrackElement* aElement, uint64_t aWinID)
+    : mTrackElement(aElement)
+    , mInnerID(aWinID)
+  {
+    RegisterWindowDestroyObserver();
+  }
+  void RegisterWindowDestroyObserver()
+  {
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    if (obs) {
+      obs->AddObserver(this, "inner-window-destroyed", false);
+    }
+  }
+  void UnRegisterWindowDestroyObserver()
+  {
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    if (obs) {
+      obs->RemoveObserver(this, "inner-window-destroyed");
+    }
+    mTrackElement = nullptr;
+  }
+  NS_IMETHODIMP Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    if (strcmp(aTopic, "inner-window-destroyed") == 0) {
+      nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(aSubject);
+      NS_ENSURE_TRUE(wrapper, NS_ERROR_FAILURE);
+      uint64_t innerID;
+      nsresult rv = wrapper->GetData(&innerID);
+      NS_ENSURE_SUCCESS(rv, rv);
+      if (innerID == mInnerID) {
+        if (mTrackElement) {
+          mTrackElement->NotifyShutdown();
+        }
+        UnRegisterWindowDestroyObserver();
+      }
+    }
+    return NS_OK;
+  }
+
+private:
+  ~WindowDestroyObserver() {};
+  HTMLTrackElement* mTrackElement;
+  uint64_t mInnerID;
+};
+NS_IMPL_ISUPPORTS(WindowDestroyObserver, nsIObserver);
+
 /** HTMLTrackElement */
 HTMLTrackElement::HTMLTrackElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsGenericHTMLElement(aNodeInfo)
   , mLoadResourceDispatched(false)
+  , mWindowDestroyObserver(nullptr)
 {
+  nsISupports* parentObject = OwnerDoc()->GetParentObject();
+  NS_ENSURE_TRUE_VOID(parentObject);
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(parentObject);
+  if (window) {
+    mWindowDestroyObserver = new WindowDestroyObserver(this, window->WindowID());
+  }
 }
 
 HTMLTrackElement::~HTMLTrackElement()
 {
+  if (mWindowDestroyObserver) {
+    mWindowDestroyObserver->UnRegisterWindowDestroyObserver();
+  }
+  NotifyShutdown();
 }
 
 NS_IMPL_ELEMENT_CLONE(HTMLTrackElement)
@@ -201,7 +265,10 @@ void
 HTMLTrackElement::DispatchLoadResource()
 {
   if (!mLoadResourceDispatched) {
-    RefPtr<Runnable> r = NewRunnableMethod(this, &HTMLTrackElement::LoadResource);
+    RefPtr<Runnable> r =
+      NewRunnableMethod("dom::HTMLTrackElement::LoadResource",
+                        this,
+                        &HTMLTrackElement::LoadResource);
     nsContentUtils::RunInStableState(r.forget());
     mLoadResourceDispatched = true;
   }
@@ -229,12 +296,37 @@ HTMLTrackElement::LoadResource()
     mChannel = nullptr;
   }
 
+  // According to https://www.w3.org/TR/html5/embedded-content-0.html#sourcing-out-of-band-text-tracks
+  //
+  // "8: If the track element's parent is a media element then let CORS mode
+  // be the state of the parent media element's crossorigin content attribute.
+  // Otherwise, let CORS mode be No CORS."
+  //
+  CORSMode corsMode = mMediaParent ? mMediaParent->GetCORSMode() : CORS_NONE;
+
+  // Determine the security flag based on corsMode.
+  nsSecurityFlags secFlags;
+  if (CORS_NONE == corsMode) {
+    // Same-origin is required for track element.
+    secFlags = nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS;
+  } else {
+    secFlags = nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS;
+    if (CORS_ANONYMOUS == corsMode) {
+      secFlags |= nsILoadInfo::SEC_COOKIES_SAME_ORIGIN;
+    } else if (CORS_USE_CREDENTIALS == corsMode) {
+      secFlags |= nsILoadInfo::SEC_COOKIES_INCLUDE;
+    } else {
+      NS_WARNING("Unknown CORS mode.");
+      secFlags = nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS;
+    }
+  }
+
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsILoadGroup> loadGroup = OwnerDoc()->GetDocumentLoadGroup();
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      static_cast<Element*>(this),
-                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                     secFlags,
                      nsIContentPolicy::TYPE_INTERNAL_TRACK,
                      loadGroup,
                      nullptr,   // aCallbacks
@@ -249,7 +341,11 @@ HTMLTrackElement::LoadResource()
 
   LOG(LogLevel::Debug, ("opening webvtt channel"));
   rv = channel->AsyncOpen2(mListener);
-  NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(rv));
+
+  if (NS_FAILED(rv)) {
+    SetReadyState(TextTrackReadyState::FailedToLoad);
+    return;
+  }
 
   mChannel = channel;
 }
@@ -299,6 +395,7 @@ HTMLTrackElement::UnbindFromTree(bool aDeep, bool aNullParent)
     // called.
     if (mTrack) {
       mMediaParent->RemoveTextTrack(mTrack);
+      mMediaParent->UpdateReadyState();
     }
     mMediaParent = nullptr;
   }
@@ -319,6 +416,10 @@ HTMLTrackElement::ReadyState() const
 void
 HTMLTrackElement::SetReadyState(uint16_t aReadyState)
 {
+  if (ReadyState() == aReadyState) {
+    return;
+  }
+
   if (mTrack) {
     switch (aReadyState) {
       case TextTrackReadyState::Loaded:
@@ -335,12 +436,16 @@ HTMLTrackElement::SetReadyState(uint16_t aReadyState)
 void
 HTMLTrackElement::DispatchTrackRunnable(const nsString& aEventName)
 {
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod
-      <const nsString>(this,
-                       &HTMLTrackElement::DispatchTrustedEvent,
-                       aEventName);
-  NS_DispatchToMainThread(runnable);
+  nsIDocument* doc = OwnerDoc();
+  if (!doc) {
+    return;
+  }
+  nsCOMPtr<nsIRunnable> runnable = NewRunnableMethod<const nsString>(
+    "dom::HTMLTrackElement::DispatchTrustedEvent",
+    this,
+    &HTMLTrackElement::DispatchTrustedEvent,
+    aEventName);
+  doc->Dispatch(TaskCategory::Other, runnable.forget());
 }
 
 void
@@ -358,6 +463,16 @@ void
 HTMLTrackElement::DropChannel()
 {
   mChannel = nullptr;
+}
+
+void
+HTMLTrackElement::NotifyShutdown()
+{
+  if (mChannel) {
+    mChannel->Cancel(NS_BINDING_ABORTED);
+  }
+  mChannel = nullptr;
+  mListener = nullptr;
 }
 
 } // namespace dom

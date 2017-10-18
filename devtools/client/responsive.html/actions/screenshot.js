@@ -12,11 +12,12 @@ const {
 } = require("./index");
 
 const { getFormatStr } = require("../utils/l10n");
-const { getToplevelWindow } = require("sdk/window/utils");
+const { getToplevelWindow } = require("../utils/window");
 const { Task: { spawn } } = require("devtools/shared/task");
 const e10s = require("../utils/e10s");
+const Services = require("Services");
 
-const audioCamera = new window.Audio("resource://devtools/client/themes/audio/shutter.wav");
+const CAMERA_AUDIO_URL = "resource://devtools/client/themes/audio/shutter.wav";
 
 const animationFrame = () => new Promise(resolve => {
   window.requestAnimationFrame(resolve);
@@ -54,7 +55,10 @@ function saveToFile(data, filename) {
 }
 
 function simulateCameraEffects(node) {
-  audioCamera.play();
+  if (Services.prefs.getBoolPref("devtools.screenshot.audio.enabled")) {
+    let cameraAudio = new window.Audio(CAMERA_AUDIO_URL);
+    cameraAudio.play();
+  }
   node.animate({ opacity: [ 0, 1 ] }, 500);
 }
 

@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "jscntxt.h"
 #include "jsfriendapi.h"
 
 #include "vm/Runtime.h"
@@ -26,13 +27,13 @@ MemProfiler::GetGCHeapProfiler(JSRuntime* runtime)
     return runtime->gc.mMemProfiler.mGCHeapProfiler;
 }
 
-MemProfiler*
-MemProfiler::GetMemProfiler(JSRuntime* runtime)
+JS_FRIEND_API(MemProfiler*)
+MemProfiler::GetMemProfiler(JSContext* context)
 {
-    return &runtime->gc.mMemProfiler;
+    return &context->runtime()->gc.mMemProfiler;
 }
 
-void
+JS_FRIEND_API(void)
 MemProfiler::start(GCHeapProfiler* aGCHeapProfiler)
 {
     ReleaseAllJITCode(mRuntime->defaultFreeOp());
@@ -40,7 +41,7 @@ MemProfiler::start(GCHeapProfiler* aGCHeapProfiler)
     sActiveProfilerCount++;
 }
 
-void
+JS_FRIEND_API(void)
 MemProfiler::stop()
 {
     sActiveProfilerCount--;

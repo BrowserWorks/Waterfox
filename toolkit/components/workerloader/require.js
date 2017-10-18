@@ -66,7 +66,7 @@
      */
     Object.defineProperty(Error.prototype, "moduleStack",
     {
-      get: function() {
+      get() {
         return this.stack;
       }
     });
@@ -77,7 +77,7 @@
      */
     Object.defineProperty(Error.prototype, "moduleName",
     {
-      get: function() {
+      get() {
         let match = this.stack.match(/\@(.*):.*:/);
         if (match) {
           return match[1];
@@ -110,8 +110,8 @@
       // Identification of the module
       let module = {
         id: path,
-        uri: uri,
-        exports: exports
+        uri,
+        exports
       };
 
       // Make module available immediately
@@ -121,8 +121,6 @@
       }
       modules.set(path, module);
 
-      let name = ":" + path;
-      let objectURL;
       try {
         // Load source of module, synchronously
         let xhr = new XMLHttpRequest();
@@ -136,10 +134,13 @@
           // There doesn't seem to be a better way to detect that the file couldn't be found
           throw new Error("Could not find module " + path);
         }
+        // Use `Function` to leave this scope, use `eval` to start the line
+        // number from 1 that is observed by `source` and the error message
+        // thrown from the module, and also use `arguments` for accessing
+        // `source` and `uri` to avoid polluting the module's environment.
         let code = new Function("exports", "require", "module",
-          source + "\n//# sourceURL=" + uri + "\n"
-        );
-        code(exports, require, module);
+          `eval(arguments[3] + "\\n//# sourceURL=" + arguments[4] + "\\n")`);
+        code(exports, require, module, source, uri);
       } catch (ex) {
         // Module loading has failed, exports should not be made available
         // after all.

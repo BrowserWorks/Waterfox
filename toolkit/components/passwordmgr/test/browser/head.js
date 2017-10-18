@@ -1,9 +1,16 @@
 const DIRECTORY_PATH = "/browser/toolkit/components/passwordmgr/test/browser/";
 
+Cu.import("resource://gre/modules/LoginHelper.jsm", this);
 Cu.import("resource://testing-common/LoginTestUtils.jsm", this);
 Cu.import("resource://testing-common/ContentTaskUtils.jsm", this);
 
-registerCleanupFunction(function* cleanup_removeAllLoginsAndResetRecipes() {
+add_task(async function common_initialize() {
+  await SpecialPowers.pushPrefEnv({"set": [["signon.rememberSignons", true]]});
+});
+
+registerCleanupFunction(async function cleanup_removeAllLoginsAndResetRecipes() {
+  await SpecialPowers.popPrefEnv();
+
   Services.logins.removeAllLogins();
 
   let recipeParent = LoginTestUtils.recipes.getRecipeParent();
@@ -11,7 +18,7 @@ registerCleanupFunction(function* cleanup_removeAllLoginsAndResetRecipes() {
     // No need to reset the recipes if the recipe module wasn't even loaded.
     return;
   }
-  yield recipeParent.then(recipeParent => recipeParent.reset());
+  await recipeParent.then(recipeParentResult => recipeParentResult.reset());
 });
 
 /**
@@ -27,10 +34,10 @@ function testSubmittingLoginForm(aPageFile, aTaskFn, aOrigin = "http://example.c
   return BrowserTestUtils.withNewTab({
     gBrowser,
     url: aOrigin + DIRECTORY_PATH + aPageFile,
-  }, function*(browser) {
+  }, async function(browser) {
     ok(true, "loaded " + aPageFile);
-    let fieldValues = yield ContentTask.spawn(browser, undefined, function*() {
-      yield ContentTaskUtils.waitForCondition(() => {
+    let fieldValues = await ContentTask.spawn(browser, undefined, async function() {
+      await ContentTaskUtils.waitForCondition(() => {
         return content.location.pathname.endsWith("/formsubmit.sjs") &&
           content.document.readyState == "complete";
       }, "Wait for form submission load (formsubmit.sjs)");
@@ -43,7 +50,7 @@ function testSubmittingLoginForm(aPageFile, aTaskFn, aOrigin = "http://example.c
     });
     ok(true, "form submission loaded");
     if (aTaskFn) {
-      yield* aTaskFn(fieldValues);
+      await aTaskFn(fieldValues);
     }
     return fieldValues;
   });
@@ -67,7 +74,7 @@ function checkOnlyLoginWasUsedTwice({ justChanged }) {
 // Begin popup notification (doorhanger) functions //
 
 const REMEMBER_BUTTON = 0;
-const NEVER_BUTTON = 1;
+const NEVER_BUTTON = 2;
 
 const CHANGE_BUTTON = 0;
 const DONT_CHANGE_BUTTON = 1;
@@ -88,7 +95,7 @@ function getCaptureDoorhanger(aKind, popupNotifications = PopupNotifications) {
     if (aKind == "password-change") {
       is(notification.mainAction.label, "Update", "Main action label matches update doorhanger.");
     } else if (aKind == "password-save") {
-      is(notification.mainAction.label, "Remember", "Main action label matches save doorhanger.");
+      is(notification.mainAction.label, "Save", "Main action label matches save doorhanger.");
     }
   }
   return notification;
@@ -112,9 +119,12 @@ function clickDoorhangerButton(aPopup, aButtonIndex) {
   if (aButtonIndex == 0) {
     ok(true, "Triggering main action");
     notification.button.doCommand();
+  } else if (aButtonIndex == 1) {
+    ok(true, "Triggering secondary action");
+    notification.secondaryButton.doCommand();
   } else if (aButtonIndex <= aPopup.secondaryActions.length) {
     ok(true, "Triggering secondary action " + aButtonIndex);
-    notification.childNodes[aButtonIndex].doCommand();
+    notification.childNodes[aButtonIndex - 1].doCommand();
   }
 }
 
@@ -124,8 +134,8 @@ function clickDoorhangerButton(aPopup, aButtonIndex) {
  * @param {String} username The username.
  * @param {String} password The password.
  */
-function* checkDoorhangerUsernamePassword(username, password) {
-  yield BrowserTestUtils.waitForCondition(() => {
+async function checkDoorhangerUsernamePassword(username, password) {
+  await BrowserTestUtils.waitForCondition(() => {
     return document.getElementById("password-notification-username").value == username;
   }, "Wait for nsLoginManagerPrompter writeDataToUI()");
   is(document.getElementById("password-notification-username").value, username,

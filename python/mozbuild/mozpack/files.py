@@ -35,7 +35,10 @@ from tempfile import (
     mkstemp,
     NamedTemporaryFile,
 )
-
+from tarfile import (
+    TarFile,
+    TarInfo,
+)
 try:
     import hglib
 except ImportError:
@@ -136,6 +139,22 @@ class BaseFile(object):
                 return True
         return False
 
+    @staticmethod
+    def normalize_mode(mode):
+        # Normalize file mode:
+        # - keep file type (e.g. S_IFREG)
+        ret = stat.S_IFMT(mode)
+        # - expand user read and execute permissions to everyone
+        if mode & 0400:
+            ret |= 0444
+        if mode & 0100:
+            ret |= 0111
+        # - keep user write permissions
+        if mode & 0200:
+            ret |= 0200
+        # - leave away sticky bit, setuid, setgid
+        return ret
+
     def copy(self, dest, skip_if_older=True):
         '''
         Copy the BaseFile content to the destination given as a string or a
@@ -200,12 +219,26 @@ class BaseFile(object):
     def read(self):
         raise NotImplementedError('BaseFile.read() not implemented. Bug 1170329.')
 
+    def size(self):
+        """Returns size of the entry.
+
+        Derived classes are highly encouraged to override this with a more
+        optimal implementation.
+        """
+        return len(self.read())
+
     @property
     def mode(self):
         '''
         Return the file's unix mode, or None if it has no meaning.
         '''
         return None
+
+    def inputs(self):
+        '''
+        Return an iterable of the input file paths that impact this output file.
+        '''
+        raise NotImplementedError('BaseFile.inputs() not implemented.')
 
 
 class File(BaseFile):
@@ -224,24 +257,18 @@ class File(BaseFile):
             return None
         assert self.path is not None
         mode = os.stat(self.path).st_mode
-        # Normalize file mode:
-        # - keep file type (e.g. S_IFREG)
-        ret = stat.S_IFMT(mode)
-        # - expand user read and execute permissions to everyone
-        if mode & 0400:
-            ret |= 0444
-        if mode & 0100:
-            ret |= 0111
-        # - keep user write permissions
-        if mode & 0200:
-            ret |= 0200
-        # - leave away sticky bit, setuid, setgid
-        return ret
+        return self.normalize_mode(mode)
 
     def read(self):
         '''Return the contents of the file.'''
         with open(self.path, 'rb') as fh:
             return fh.read()
+
+    def size(self):
+        return os.stat(self.path).st_size
+
+    def inputs(self):
+        return (self.path,)
 
 
 class ExecutableFile(File):
@@ -373,6 +400,57 @@ class AbsoluteSymlinkFile(File):
         return True
 
 
+class HardlinkFile(File):
+    '''File class that is copied by hard linking (if available)
+
+    This is similar to the AbsoluteSymlinkFile, but with hard links. The symlink
+    implementation requires paths to be absolute, because they are resolved at
+    read time, which makes relative paths messy. Hard links resolve paths at
+    link-creation time, so relative paths are fine.
+    '''
+
+    def copy(self, dest, skip_if_older=True):
+        assert isinstance(dest, basestring)
+
+        if not hasattr(os, 'link'):
+            return super(HardlinkFile, self).copy(
+                dest, skip_if_older=skip_if_older
+            )
+
+        try:
+            path_st = os.stat(self.path)
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                raise ErrorMessage('Hard link target path does not exist: %s' % self.path)
+            else:
+                raise
+
+        st = None
+        try:
+            st = os.lstat(dest)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+        if st:
+            # The dest already points to the right place.
+            if st.st_dev == path_st.st_dev and st.st_ino == path_st.st_ino:
+                return False
+            # The dest exists and it points to the wrong place
+            os.remove(dest)
+
+        # At this point, either the dest used to exist and we just deleted it,
+        # or it never existed. We can now safely create the hard link.
+        try:
+            os.link(self.path, dest)
+        except OSError:
+            # If we can't hard link, fall back to copying
+            return super(HardlinkFile, self).copy(
+                dest, skip_if_older=skip_if_older
+            )
+        return True
+
+
 class ExistingFile(BaseFile):
     '''
     File class that represents a file that may exist but whose content comes
@@ -405,6 +483,9 @@ class ExistingFile(BaseFile):
             errors.fatal("Required existing file doesn't exist: %s" %
                 dest.path)
 
+    def inputs(self):
+        return ()
+
 
 class PreprocessedFile(BaseFile):
     '''
@@ -420,6 +501,17 @@ class PreprocessedFile(BaseFile):
         self.extra_depends = list(extra_depends or [])
         self.silence_missing_directive_warnings = \
             silence_missing_directive_warnings
+
+    def inputs(self):
+        pp = Preprocessor(defines=self.defines, marker=self.marker)
+        pp.setSilenceDirectiveWarnings(self.silence_missing_directive_warnings)
+
+        with open(self.path, 'rU') as input:
+            with open(os.devnull, 'w') as output:
+                pp.processFile(input=input, output=output)
+
+        # This always yields at least self.path.
+        return pp.includes
 
     def copy(self, dest, skip_if_older=True):
         '''
@@ -490,6 +582,15 @@ class GeneratedFile(BaseFile):
     def open(self):
         return BytesIO(self.content)
 
+    def read(self):
+        return self.content
+
+    def size(self):
+        return len(self.content)
+
+    def inputs(self):
+        return ()
+
 
 class DeflatedFile(BaseFile):
     '''
@@ -505,6 +606,23 @@ class DeflatedFile(BaseFile):
         self.file.seek(0)
         return self.file
 
+class ExtractedTarFile(GeneratedFile):
+    '''
+    File class for members of a tar archive. Contents of the underlying file
+    are extracted immediately and stored in memory.
+    '''
+    def __init__(self, tar, info):
+        assert isinstance(info, TarInfo)
+        assert isinstance(tar, TarFile)
+        GeneratedFile.__init__(self, tar.extractfile(info).read())
+        self._mode = self.normalize_mode(info.mode)
+
+    @property
+    def mode(self):
+        return self._mode
+
+    def read(self):
+        return self.content
 
 class XPTFile(GeneratedFile):
     '''
@@ -817,7 +935,7 @@ class FileFinder(BaseFinder):
     '''
     Helper to get appropriate BaseFile instances from the file system.
     '''
-    def __init__(self, base, find_executables=True, ignore=(),
+    def __init__(self, base, find_executables=False, ignore=(),
                  find_dotfiles=False, **kargs):
         '''
         Create a FileFinder for files under the given base directory.
@@ -948,6 +1066,30 @@ class JarFinder(BaseFinder):
         '''
         return self._find_helper(pattern, self._files,
                                  lambda x: DeflatedFile(self._files[x]))
+
+
+class TarFinder(BaseFinder):
+    '''
+    Helper to get files from a TarFile.
+    '''
+    def __init__(self, base, tar, **kargs):
+        '''
+        Create a TarFinder for files in the given TarFile. The base argument
+        is used as an indication of the Tar file location.
+        '''
+        assert isinstance(tar, TarFile)
+        self._tar = tar
+        BaseFinder.__init__(self, base, **kargs)
+        self._files = OrderedDict((f.name, f) for f in tar if f.isfile())
+
+    def _find(self, pattern):
+        '''
+        Actual implementation of TarFinder.find(), dispatching to specialized
+        member functions depending on what kind of pattern was given.
+        '''
+        return self._find_helper(pattern, self._files,
+                                 lambda x: ExtractedTarFile(self._tar,
+                                                            self._files[x]))
 
 
 class ComposedFinder(BaseFinder):

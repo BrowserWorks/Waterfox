@@ -16,21 +16,13 @@ loader.lazyRequireGetter(this, "events", "sdk/event/core");
  *
  * @see devtools/server/performance/profiler.js for documentation.
  */
-var ProfilerActor = exports.ProfilerActor = ActorClassWithSpec(profilerSpec, {
+exports.ProfilerActor = ActorClassWithSpec(profilerSpec, {
   initialize: function (conn) {
     Actor.prototype.initialize.call(this, conn);
     this._onProfilerEvent = this._onProfilerEvent.bind(this);
 
     this.bridge = new Profiler();
     events.on(this.bridge, "*", this._onProfilerEvent);
-  },
-
-  /**
-   * `disconnect` method required to call destroy, since this
-   * actor is not managed by a parent actor.
-   */
-  disconnect: function () {
-    this.destroy();
   },
 
   destroy: function () {
@@ -46,7 +38,7 @@ var ProfilerActor = exports.ProfilerActor = ActorClassWithSpec(profilerSpec, {
   getBufferInfo: actorBridgeWithSpec("getBufferInfo"),
   getStartOptions: actorBridgeWithSpec("getStartOptions"),
   isActive: actorBridgeWithSpec("isActive"),
-  getSharedLibraryInformation: actorBridgeWithSpec("getSharedLibraryInformation"),
+  sharedLibraries: actorBridgeWithSpec("sharedLibraries"),
   registerEventNotifications: actorBridgeWithSpec("registerEventNotifications"),
   unregisterEventNotifications: actorBridgeWithSpec("unregisterEventNotifications"),
   setProfilerStatusInterval: actorBridgeWithSpec("setProfilerStatusInterval"),

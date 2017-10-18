@@ -10,6 +10,7 @@
 #define nsRubyBaseContainerFrame_h___
 
 #include "nsContainerFrame.h"
+#include "RubyUtils.h"
 
 /**
  * Factory function.
@@ -18,27 +19,21 @@
 nsContainerFrame* NS_NewRubyBaseContainerFrame(nsIPresShell* aPresShell,
                                                nsStyleContext* aContext);
 
-namespace mozilla {
-struct RubyColumn;
-} // namespace mozilla
-
 class nsRubyBaseContainerFrame final : public nsContainerFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
-  NS_DECL_QUERYFRAME_TARGET(nsRubyBaseContainerFrame)
+  NS_DECL_FRAMEARENA_HELPERS(nsRubyBaseContainerFrame)
   NS_DECL_QUERYFRAME
 
   // nsIFrame overrides
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override;
   virtual bool CanContinueTextRun() const override;
-  virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlineMinISize(gfxContext *aRenderingContext,
                                  InlineMinISizeData *aData) override;
-  virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlinePrefISize(gfxContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
   virtual mozilla::LogicalSize
-    ComputeSize(nsRenderingContext *aRenderingContext,
+    ComputeSize(gfxContext *aRenderingContext,
                 mozilla::WritingMode aWritingMode,
                 const mozilla::LogicalSize& aCBSize,
                 nscoord aAvailableISize,
@@ -58,11 +53,21 @@ public:
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
+  void UpdateDescendantLeadings(const mozilla::RubyBlockLeadings& aLeadings) {
+    mDescendantLeadings.Update(aLeadings);
+  }
+  mozilla::RubyBlockLeadings GetDescendantLeadings() const {
+    return mDescendantLeadings;
+  }
+
 protected:
   friend nsContainerFrame*
     NS_NewRubyBaseContainerFrame(nsIPresShell* aPresShell,
                                  nsStyleContext* aContext);
-  explicit nsRubyBaseContainerFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+
+  explicit nsRubyBaseContainerFrame(nsStyleContext* aContext)
+    : nsContainerFrame(aContext, kClassID)
+  {}
 
   struct RubyReflowInput;
   nscoord ReflowColumns(const RubyReflowInput& aReflowInput,
@@ -83,6 +88,9 @@ protected:
                      bool& aIsComplete);
 
   nscoord mBaseline;
+
+  // Leading produced by descendant ruby annotations.
+  mozilla::RubyBlockLeadings mDescendantLeadings;
 };
 
 #endif /* nsRubyBaseContainerFrame_h___ */

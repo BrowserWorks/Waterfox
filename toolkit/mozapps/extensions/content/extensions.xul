@@ -69,6 +69,16 @@
                 accesskey="&cmd.about.accesskey;"/>
     </menupopup>
 
+    <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
+      <menupopup rolluponmousewheel="true"
+                 activateontab="true" position="after_start"
+                 level="parent"
+#ifdef XP_WIN
+                 consumeoutsideclicks="false" ignorekeys="shortcuts"
+#endif
+        />
+    </menulist>
+
     <tooltip id="addonitem-tooltip"/>
   </popupset>
 
@@ -148,6 +158,9 @@
                       class="category"
                       name="&view.discover.label;" priority="1000"
                       tooltiptext="&view.discover.label;"/>
+        <richlistitem id="category-legacy" value="addons://legacy/"
+                      class="category" priority="20000"
+                      disabled="true"/>
         <richlistitem id="category-availableUpdates" value="addons://updates/available"
                       class="category"
                       name="&view.availableUpdates.label;" priority="100000"
@@ -353,6 +366,27 @@
                   &disabledUnsigned.devInfo.start;<label class="text-link plain" id="signing-dev-manual-link">&disabledUnsigned.devInfo.linkToManual;</label>&disabledUnsigned.devInfo.end;
                 </description>
               </vbox>
+              <vbox id="legacy-extensions-notice" class="alert-container" hidden="true">
+                <hbox class="alert">
+                  <description>&legacyWarning.description;
+                    <label class="text-link plain" id="legacy-extensions-learnmore-link">&legacyWarning.showLegacy;</label>
+                  </description>
+                </hbox>
+              </vbox>
+              <vbox id="plugindeprecation-notice" class="alert-container">
+                <hbox class="alert">
+                  <description>&pluginDeprecation.description; &#160;
+                    <label class="text-link plain" id="plugindeprecation-learnmore-link">&pluginDeprecation.learnMore;</label>
+                  </description>
+                </hbox>
+              </vbox>
+              <vbox id="getthemes-container" class="alert-container">
+                <hbox class="alert">
+                  <description>&getThemes.description; &#160;
+                    <label class="text-link plain" id="getthemes-learnmore-link">&getThemes.learnMore;</label>
+                  </description>
+                </hbox>
+              </vbox>
               <hbox class="view-header global-warning-container">
                 <!-- global warnings -->
                 <hbox class="global-warning" flex="1">
@@ -415,6 +449,19 @@
               </vbox>
               <richlistbox id="addon-list" class="list" flex="1"/>
             </vbox>
+
+            <!-- legacy extensions view -->
+            <vbox id="legacy-view" flex="1" class="view-pane" align="stretch" tabindex="0">
+              <vbox id="legacy-extensions-info">
+                <label id="legacy-extensions-heading" value="&legacyExtensions.title;"/>
+                <description>
+                  &legacyExtensions.description;
+                  <label class="text-link plain" id="legacy-learnmore">&legacyExtensions.learnMore;</label>
+                </description>
+              </vbox>
+              <richlistbox id="legacy-list" class="list" flex="1"/>
+            </vbox>
+
             <!-- updates view -->
             <vbox id="updates-view" flex="1" class="view-pane" tabindex="0">
               <hbox class="view-header global-warning-container" align="center">
@@ -553,6 +600,7 @@
                               align="start">
                           <label id="detail-name" flex="1"/>
                           <label id="detail-version"/>
+                          <label id="detail-legacy-warning" class="legacy-warning text-link" value="&addon.legacy.label;"/>
                           <label class="disabled-postfix" value="&addon.disabled.postfix;"/>
                           <label class="update-postfix" value="&addon.update.postfix;"/>
                           <spacer flex="5000"/> <!-- Necessary to allow the name to wrap -->

@@ -99,7 +99,11 @@ class CodeGeneratorARM : public CodeGeneratorShared
     template <typename T>
     void emitWasmLoad(T* ins);
     template <typename T>
+    void emitWasmUnalignedLoad(T* ins);
+    template <typename T>
     void emitWasmStore(T* ins);
+    template <typename T>
+    void emitWasmUnalignedStore(T* ins);
 
   public:
     // Instruction visitors.
@@ -146,8 +150,8 @@ class CodeGeneratorARM : public CodeGeneratorShared
     virtual void visitCompareBitwise(LCompareBitwise* lir);
     virtual void visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir);
     virtual void visitBitAndAndBranch(LBitAndAndBranch* baab);
-    virtual void visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir);
-    virtual void visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir);
+    virtual void visitWasmUint32ToDouble(LWasmUint32ToDouble* lir);
+    virtual void visitWasmUint32ToFloat32(LWasmUint32ToFloat32* lir);
     virtual void visitNotI(LNotI* ins);
     virtual void visitNotD(LNotD* ins);
     virtual void visitNotF(LNotF* ins);
@@ -174,10 +178,10 @@ class CodeGeneratorARM : public CodeGeneratorShared
     virtual void visitCompareI64AndBranch(LCompareI64AndBranch* lir);
     virtual void visitBitOpI64(LBitOpI64* lir);
     virtual void visitRotateI64(LRotateI64* lir);
-    virtual void visitAsmJSPassStackArgI64(LAsmJSPassStackArgI64* lir);
-    virtual void visitAsmSelectI64(LAsmSelectI64* lir);
-    virtual void visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir);
-    virtual void visitAsmReinterpretToI64(LAsmReinterpretToI64* lir);
+    virtual void visitWasmStackArgI64(LWasmStackArgI64* lir);
+    virtual void visitWasmSelectI64(LWasmSelectI64* lir);
+    virtual void visitWasmReinterpretFromI64(LWasmReinterpretFromI64* lir);
+    virtual void visitWasmReinterpretToI64(LWasmReinterpretToI64* lir);
     virtual void visitPopcntI64(LPopcntI64* ins);
     virtual void visitClzI64(LClzI64* ins);
     virtual void visitCtzI64(LCtzI64* ins);
@@ -205,8 +209,6 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void modICommon(MMod* mir, Register lhs, Register rhs, Register output, LSnapshot* snapshot,
                     Label& done);
 
-    void memoryBarrier(MemoryBarrierBits barrier);
-
   public:
     CodeGeneratorARM(MIRGenerator* gen, LIRGraph* graph, MacroAssembler* masm);
 
@@ -231,20 +233,18 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void visitAtomicTypedArrayElementBinopForEffect(LAtomicTypedArrayElementBinopForEffect* lir);
     void visitCompareExchangeTypedArrayElement(LCompareExchangeTypedArrayElement* lir);
     void visitAtomicExchangeTypedArrayElement(LAtomicExchangeTypedArrayElement* lir);
-    void visitAsmSelect(LAsmSelect* ins);
-    void visitAsmReinterpret(LAsmReinterpret* ins);
-    void emitAsmJSCall(LAsmJSCallBase* ins);
-    void visitAsmJSCall(LAsmJSCall* ins);
-    void visitAsmJSCallI64(LAsmJSCallI64* ins);
-    void visitWasmBoundsCheck(LWasmBoundsCheck* ins);
+    void visitWasmSelect(LWasmSelect* ins);
+    void visitWasmReinterpret(LWasmReinterpret* ins);
+    void emitWasmCall(LWasmCallBase* ins);
     void visitWasmLoad(LWasmLoad* ins);
     void visitWasmLoadI64(LWasmLoadI64* ins);
+    void visitWasmUnalignedLoad(LWasmUnalignedLoad* ins);
+    void visitWasmUnalignedLoadI64(LWasmUnalignedLoadI64* ins);
+    void visitWasmAddOffset(LWasmAddOffset* ins);
     void visitWasmStore(LWasmStore* ins);
     void visitWasmStoreI64(LWasmStoreI64* ins);
-    void visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins);
-    void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
-    void visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins);
-    void visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins);
+    void visitWasmUnalignedStore(LWasmUnalignedStore* ins);
+    void visitWasmUnalignedStoreI64(LWasmUnalignedStoreI64* ins);
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(LAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins);
@@ -254,7 +254,7 @@ class CodeGeneratorARM : public CodeGeneratorShared
     void visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins);
     void visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins);
     void visitAsmJSAtomicBinopCallout(LAsmJSAtomicBinopCallout* ins);
-    void visitAsmJSPassStackArg(LAsmJSPassStackArg* ins);
+    void visitWasmStackArg(LWasmStackArg* ins);
     void visitWasmTruncateToInt32(LWasmTruncateToInt32* ins);
     void visitOutOfLineWasmTruncateCheck(OutOfLineWasmTruncateCheck* ool);
     void visitCopySignD(LCopySignD* ins);

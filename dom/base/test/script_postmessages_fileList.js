@@ -8,8 +8,8 @@ addMessageListener("file.open", function () {
                    .get("ProfD", Ci.nsIFile);
   testFile.append("prefs.js");
 
-  sendAsyncMessage("file.opened", {
-    file: new File(testFile)
+  File.createFromNsIFile(testFile).then(function(file) {
+    sendAsyncMessage("file.opened", { file });
   });
 });
 

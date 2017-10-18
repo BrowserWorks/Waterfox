@@ -14,8 +14,8 @@ const SERVER_PORT = 8888;
 
 function getOCSPResponder(expectedCertNames) {
   let expectedPaths = expectedCertNames.slice();
-  return startOCSPResponder(SERVER_PORT, "www.example.com", [],
-                            "test_keysize_ev/", expectedCertNames, expectedPaths);
+  return startOCSPResponder(SERVER_PORT, "www.example.com", "test_keysize_ev/",
+                            expectedCertNames, expectedPaths);
 }
 
 function loadCert(certName, trustString) {
@@ -41,8 +41,7 @@ function loadCert(certName, trustString) {
  */
 function addKeySizeTestForEV(expectedNamesForOCSP,
                              rootCertFileName, intCertFileNames,
-                             endEntityCertFileName, expectedResult)
-{
+                             endEntityCertFileName, expectedResult) {
   add_test(function() {
     clearOCSPCache();
     let ocspResponder = getOCSPResponder(expectedNamesForOCSP);

@@ -10,12 +10,13 @@
 
 #include "SkRefCnt.h"
 #include "GrPathRendering.h"
-#include "GrStencil.h"
+#include "GrStencilSettings.h"
 #include "gl/GrGLTypes.h"
 #include "glsl/GrGLSLUtil.h"
 
 class GrGLNameAllocator;
 class GrGLGpu;
+class GrStyle;
 
 /**
  * This class wraps the NV_path_rendering extension and manages its various
@@ -30,12 +31,12 @@ public:
      * Create a new GrGLPathRendering object from a given GrGLGpu.
      */
     GrGLPathRendering(GrGLGpu* gpu);
-    virtual ~GrGLPathRendering();
+    ~GrGLPathRendering() override;
 
     // GrPathRendering implementations.
-    GrPath* createPath(const SkPath&, const GrStrokeInfo&) override;
+    GrPath* createPath(const SkPath&, const GrStyle&) override;
     virtual GrPathRange* createPathRange(GrPathRange::PathGenerator*,
-                                         const GrStrokeInfo&) override;
+                                         const GrStyle&) override;
 
     /* Called when the 3D context state is unknown. */
     void resetContext();

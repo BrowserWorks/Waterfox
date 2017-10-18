@@ -10,6 +10,8 @@
 #include "nsISupports.h"
 #include "nsRect.h"
 
+class nsIEventTarget;
+
 namespace mozilla {
 namespace image {
 
@@ -32,8 +34,7 @@ public:
 
   // Subclasses may or may not be XPCOM classes, so we just require that they
   // implement AddRef and Release.
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) = 0;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
   // imgINotificationObserver methods:
   virtual void Notify(int32_t aType, const nsIntRect* aRect = nullptr) = 0;
@@ -47,6 +48,11 @@ public:
   virtual void SetHasImage() = 0;
   virtual bool NotificationsDeferred() const = 0;
   virtual void SetNotificationsDeferred(bool aDeferNotifications) = 0;
+
+  virtual already_AddRefed<nsIEventTarget> GetEventTarget() const
+  {
+    return nullptr;
+  }
 
 protected:
   virtual ~IProgressObserver() { }

@@ -297,9 +297,6 @@ needs to be prefixed with ``static:`` in ``USE_LIBS``
 Miscellaneous
 =============
 
-The ``SDK_LIBRARY`` boolean variable defines whether the library in the current
-directory is going to be installed in the SDK.
-
 The ``SONAME`` variable declares a "shared object name" for the library. It
 defaults to the ``Library`` name or the ``SHARED_LIBRARY_NAME`` if set. When
 linking to a library with a ``SONAME``, the resulting library or program will
@@ -340,9 +337,6 @@ essentially the same as the above mentioned templates, prefixed with "Gecko":
   - ``GeckoCppUnitTests``
   - ``GeckoSharedLibrary``
   - ``GeckoFramework``
-
-There is also ``XPCOMBinaryComponent`` for XPCOM components, which is a
-special kind of library.
 
 All the Gecko-prefixed templates take the same arguments as their
 non-Gecko-prefixed counterparts, and can take a few more arguments

@@ -1,17 +1,15 @@
 function test() {
   waitForExplicitFinish();
 
-  var tab = gBrowser.addTab();
+  var tab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = tab;
 
-  tab.linkedBrowser.addEventListener("load", function onload() {
-    tab.linkedBrowser.removeEventListener("load", onload);
-
+  tab.linkedBrowser.addEventListener("load", function() {
     tab.linkedBrowser.addEventListener("pagehide", function() {
       ok(true, "got page hide event");
       finish();
     });
 
     executeSoon(() => { gBrowser.removeTab(tab); });
-  }, true);
+  }, {capture: true, once: true});
 }

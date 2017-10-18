@@ -8,6 +8,7 @@
 #define __NS_SVGLENGTH2_H__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "nsCoord.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsError.h"
@@ -26,7 +27,7 @@ class DOMSVGLength;
 namespace dom {
 class SVGAnimatedLength;
 class SVGAnimationElement;
-class SVGSVGElement;
+class SVGViewportElement;
 } // namespace dom
 } // namespace mozilla
 
@@ -53,8 +54,10 @@ public:
 class SVGElementMetrics : public UserSpaceMetrics
 {
 public:
+  typedef mozilla::dom::SVGViewportElement SVGViewportElement;
+
   explicit SVGElementMetrics(nsSVGElement* aSVGElement,
-                             mozilla::dom::SVGSVGElement* aCtx = nullptr);
+                             SVGViewportElement* aCtx = nullptr);
 
   virtual float GetEmLength() const override;
   virtual float GetExLength() const override;
@@ -64,7 +67,7 @@ private:
   bool EnsureCtx() const;
 
   nsSVGElement* mSVGElement;
-  mutable mozilla::dom::SVGSVGElement* mCtx;
+  mutable SVGViewportElement* mCtx;
 };
 
 class NonSVGFrameUserSpaceMetrics : public UserSpaceMetricsWithSize
@@ -88,6 +91,8 @@ class nsSVGLength2
   friend class mozilla::dom::SVGAnimatedLength;
   friend class mozilla::DOMSVGLength;
   typedef mozilla::dom::UserSpaceMetrics UserSpaceMetrics;
+  typedef mozilla::dom::SVGViewportElement SVGViewportElement;
+
 public:
   void Init(uint8_t aCtxType = SVGContentUtils::XY,
             uint8_t aAttrEnum = 0xff,
@@ -123,7 +128,7 @@ public:
     { return mAnimVal / GetUnitScaleFactor(aSVGElement, mSpecifiedUnitType); }
   float GetAnimValue(nsIFrame* aFrame) const
     { return mAnimVal / GetUnitScaleFactor(aFrame, mSpecifiedUnitType); }
-  float GetAnimValue(mozilla::dom::SVGSVGElement* aCtx) const
+  float GetAnimValue(SVGViewportElement* aCtx) const
     { return mAnimVal / GetUnitScaleFactor(aCtx, mSpecifiedUnitType); }
   float GetAnimValue(const UserSpaceMetrics& aMetrics) const
     { return mAnimVal / GetUnitScaleFactor(aMetrics, mSpecifiedUnitType); }
@@ -135,7 +140,7 @@ public:
   float GetAnimValInSpecifiedUnits() const { return mAnimVal; }
   float GetBaseValInSpecifiedUnits() const { return mBaseVal; }
 
-  float GetBaseValue(mozilla::dom::SVGSVGElement* aCtx) const
+  float GetBaseValue(SVGViewportElement* aCtx) const
     { return mBaseVal / GetUnitScaleFactor(aCtx, mSpecifiedUnitType); }
 
   bool HasBaseVal() const {
@@ -152,11 +157,9 @@ public:
   already_AddRefed<mozilla::dom::SVGAnimatedLength>
   ToDOMAnimatedLength(nsSVGElement* aSVGElement);
 
-  // Returns a new nsISMILAttr object that the caller must delete
-  nsISMILAttr* ToSMILAttr(nsSVGElement* aSVGElement);
+  mozilla::UniquePtr<nsISMILAttr> ToSMILAttr(nsSVGElement* aSVGElement);
 
 private:
-  
   float mAnimVal;
   float mBaseVal;
   uint8_t mSpecifiedUnitType;
@@ -165,10 +168,10 @@ private:
   bool mIsAnimated:1;
   bool mIsBaseSet:1;
 
-  float GetUnitScaleFactor(nsIFrame *aFrame, uint8_t aUnitType) const;
+  float GetUnitScaleFactor(nsIFrame* aFrame, uint8_t aUnitType) const;
   float GetUnitScaleFactor(const UserSpaceMetrics& aMetrics, uint8_t aUnitType) const;
-  float GetUnitScaleFactor(nsSVGElement *aSVGElement, uint8_t aUnitType) const;
-  float GetUnitScaleFactor(mozilla::dom::SVGSVGElement *aCtx, uint8_t aUnitType) const;
+  float GetUnitScaleFactor(nsSVGElement* aSVGElement, uint8_t aUnitType) const;
+  float GetUnitScaleFactor(SVGViewportElement* aCtx, uint8_t aUnitType) const;
 
   // SetBaseValue and SetAnimValue set the value in user units
   void SetBaseValue(float aValue, nsSVGElement *aSVGElement, bool aDoSetAttr);

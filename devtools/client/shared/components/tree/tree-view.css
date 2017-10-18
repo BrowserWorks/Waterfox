@@ -18,7 +18,7 @@
 /* TreeView Table*/
 
 .treeTable .treeLabelCell {
-  padding: 2px 0 2px 0px;
+  padding: 2px 0;
   vertical-align: top;
   white-space: nowrap;
 }
@@ -29,20 +29,41 @@
 }
 
 .treeTable .treeValueCell {
-  padding: 2px 0 2px 5px;
+  padding: 2px 0;
+  padding-inline-start: 5px;
   overflow: hidden;
+}
+
+.treeTable .treeValueCell.inputEnabled {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.treeTable .treeValueCell input {
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  margin-inline-end: 2px;
+}
+
+.treeTable .treeValueCell input:focus {
+  outline: none;
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+  transition: all 0.2s ease-in-out;
 }
 
 .treeTable .treeLabel {
   cursor: default;
   overflow: hidden;
-  padding-left: 4px;
+  padding-inline-start: 4px;
   white-space: nowrap;
+  unicode-bidi: plaintext;
 }
 
 /* No paddding if there is actually no label */
 .treeTable .treeLabel:empty {
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
@@ -51,20 +72,48 @@
   text-decoration: underline;
 }
 
+.treeTable .treeRow.selected {
+  background-color: var(--theme-selection-background);
+}
+
+.treeTable .treeRow.selected:not(:hover) *,
+.treeTable .treeRow.selected:not(:hover) .treeLabelCell::after {
+  color: var(--theme-selection-color);
+}
+
 /* Filtering */
 .treeTable .treeRow.hidden {
   display: none;
+}
+
+.treeTable .treeValueCellDivider {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* Learn More link */
+.treeTable .treeValueCell .learn-more-link {
+  -moz-user-select: none;
+  color: var(--theme-highlight-blue);
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.treeTable .treeValueCell .learn-more-link:hover {
+  text-decoration: underline;
 }
 
 /******************************************************************************/
 /* Toggle Icon */
 
 .treeTable .treeRow .treeIcon {
-  height: 12px;
+  height: 14px;
   width: 14px;
+  font-size: 10px; /* Set the size of loading spinner */
   display: inline-block;
   vertical-align: bottom;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   padding-top: 1px;
 }
 
@@ -73,14 +122,6 @@
 .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
   cursor: pointer;
   background-repeat: no-repeat;
-}
-
-/* Spinner (used for async fetch). Needs to have higher priority than
-   theme toggle icons */
-.treeTable .treeRow.hasChildren.loading > .treeLabelCell > .treeIcon {
-  background-image: url(chrome://devtools/skin/images/firebug/spinner.png) !important;
-  background-position: 2px 1px !important;
-  background-size: 9px 9px !important;
 }
 
 /******************************************************************************/
@@ -106,7 +147,9 @@
 }
 
 .treeTable .treeHeaderCellBox {
-  padding: 2px 14px 2px 10px;
+  padding: 2px 0;
+  padding-inline-start: 10px;
+  padding-inline-end: 14px;
 }
 
 .treeTable .treeHeaderRow > .treeHeaderCell:first-child > .treeHeaderCellBox {
@@ -137,43 +180,9 @@
 /******************************************************************************/
 /* Themes */
 
-/* Light Theme: toggle icon */
-.theme-light .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
-  background-image: url(chrome://devtools/skin/images/controls.png);
-  background-size: 56px 28px;
-  background-position: 0 -14px;
-}
-
-.theme-light .treeTable .treeRow.hasChildren.opened > .treeLabelCell > .treeIcon {
-  background-image: url(chrome://devtools/skin/images/controls.png);
-  background-size: 56px 28px;
-  background-position: -14px -14px;
-}
-
-/* Dark Theme: toggle icon */
-.theme-dark .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
-  background-image: url(chrome://devtools/skin/images/controls.png);
-  background-size: 56px 28px;
-  background-position: -28px -14px;
-}
-
-.theme-dark .treeTable .treeRow.hasChildren.opened > .treeLabelCell > .treeIcon {
-  background-image: url(chrome://devtools/skin/images/controls.png);
-  background-size: 56px 28px;
-  background-position: -42px -14px;
-}
-
-/* Dark and Light Themes: Support for retina displays */
-@media (min-resolution: 1.1dppx) {
-  .theme-dark .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon,
-  .theme-light .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
-    background-image: url("chrome://devtools/skin/images/controls@2x.png");
-  }
-}
-
 .theme-light .treeTable .treeRow:hover,
 .theme-dark .treeTable .treeRow:hover {
-  background-color: var(--theme-selection-background) !important;
+  background-color: var(--theme-selection-background-semitransparent) !important;
 }
 
 .theme-firebug .treeTable .treeRow:hover {
@@ -185,7 +194,8 @@
   color: var(--theme-highlight-pink);
 }
 
-.theme-light .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
+.theme-light .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover,
+.theme-dark .treeTable .treeRow.hasChildren > .treeLabelCell > .treeLabel:hover {
   color: var(--theme-highlight-pink);
 }
 

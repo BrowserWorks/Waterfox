@@ -15,14 +15,16 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 
 import android.util.Log;
-import org.mozilla.gecko.AppConstants;
+
+import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.telemetry.TelemetryPing;
+import org.mozilla.gecko.telemetry.TelemetryOutgoingPing;
 import org.mozilla.gecko.util.DateUtil;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.util.StringUtils;
 
 import java.text.DateFormat;
@@ -32,7 +34,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Builds a {@link TelemetryPing} representing a core ping.
+ * Builds a {@link TelemetryOutgoingPing} representing a core ping.
  *
  * See https://gecko.readthedocs.org/en/latest/toolkit/components/telemetry/telemetry/core-ping.html
  * for details on the core ping.
@@ -44,10 +46,11 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String PREF_SEQ_COUNT = "telemetry-seqCount";
 
     private static final String NAME = "core";
-    private static final int VERSION_VALUE = 7; // For version history, see toolkit/components/telemetry/docs/core-ping.rst
+    private static final int VERSION_VALUE = 9; // For version history, see toolkit/components/telemetry/docs/core-ping.rst
     private static final String OS_VALUE = "Android";
 
     private static final String ARCHITECTURE = "arch";
+    private static final String CAMPAIGN_ID = "campaignId";
     private static final String CLIENT_ID = "clientId";
     private static final String DEFAULT_SEARCH_ENGINE = "defaultSearch";
     private static final String DEVICE = "device";
@@ -64,6 +67,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String SESSION_DURATION = "durations";
     private static final String TIMEZONE_OFFSET = "tz";
     private static final String VERSION_ATTR = "v";
+    private static final String FLASH_USAGE = "flashUsage";
 
     public TelemetryCorePingBuilder(final Context context) {
         initPayloadConstants(context);
@@ -82,13 +86,19 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         final Calendar nowCalendar = Calendar.getInstance();
         final DateFormat pingCreationDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
-        payload.put(ARCHITECTURE, AppConstants.ANDROID_CPU_ARCH);
+        payload.put(ARCHITECTURE, Build.CPU_ABI);
         payload.put(DEVICE, deviceDescriptor);
         payload.put(LOCALE, Locales.getLanguageTag(Locale.getDefault()));
         payload.put(OS_VERSION, Integer.toString(Build.VERSION.SDK_INT)); // A String for cross-platform reasons.
         payload.put(PING_CREATION_DATE, pingCreationDateFormat.format(nowCalendar.getTime()));
         payload.put(TIMEZONE_OFFSET, DateUtil.getTimezoneOffsetInMinutesForGivenDate(nowCalendar));
         payload.putArray(EXPERIMENTS, Experiments.getActiveExperiments(context));
+        synchronized (this) {
+            SharedPreferences prefs = GeckoSharedPrefs.forApp(context);
+            final int count = prefs.getInt(GeckoApp.PREFS_FLASH_USAGE, 0);
+            payload.put(FLASH_USAGE, count);
+            prefs.edit().putInt(GeckoApp.PREFS_FLASH_USAGE, 0).apply();
+        }
     }
 
     @Override
@@ -152,6 +162,14 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         }
 
         payload.put(SEARCH_COUNTS, searchCounts);
+        return this;
+    }
+
+    public TelemetryCorePingBuilder setOptCampaignId(final String campaignId) {
+        if (campaignId == null) {
+            throw new IllegalStateException("Expected non-null campaign ID.");
+        }
+        payload.put(CAMPAIGN_ID, campaignId);
         return this;
     }
 

@@ -25,13 +25,9 @@ SpeechSynthesisParent::ActorDestroy(ActorDestroyReason aWhy)
 }
 
 bool
-SpeechSynthesisParent::RecvReadVoicesAndState(InfallibleTArray<RemoteVoice>* aVoices,
-                                              InfallibleTArray<nsString>* aDefaults,
-                                              bool* aIsSpeaking)
+SpeechSynthesisParent::SendInit()
 {
-  nsSynthVoiceRegistry::GetInstance()->SendVoicesAndState(aVoices, aDefaults,
-                                                          aIsSpeaking);
-  return true;
+  return nsSynthVoiceRegistry::GetInstance()->SendInitialVoicesAndState(this);
 }
 
 PSpeechSynthesisRequestParent*
@@ -40,9 +36,10 @@ SpeechSynthesisParent::AllocPSpeechSynthesisRequestParent(const nsString& aText,
                                                           const nsString& aUri,
                                                           const float& aVolume,
                                                           const float& aRate,
-                                                          const float& aPitch)
+                                                          const float& aPitch,
+                                                          const bool& aIsChrome)
 {
-  RefPtr<SpeechTaskParent> task = new SpeechTaskParent(aVolume, aText);
+  RefPtr<SpeechTaskParent> task = new SpeechTaskParent(aVolume, aText, aIsChrome);
   SpeechSynthesisRequestParent* actor = new SpeechSynthesisRequestParent(task);
   return actor;
 }
@@ -54,21 +51,22 @@ SpeechSynthesisParent::DeallocPSpeechSynthesisRequestParent(PSpeechSynthesisRequ
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisParent::RecvPSpeechSynthesisRequestConstructor(PSpeechSynthesisRequestParent* aActor,
                                                               const nsString& aText,
                                                               const nsString& aLang,
                                                               const nsString& aUri,
                                                               const float& aVolume,
                                                               const float& aRate,
-                                                              const float& aPitch)
+                                                              const float& aPitch,
+                                                              const bool& aIsChrome)
 {
   MOZ_ASSERT(aActor);
   SpeechSynthesisRequestParent* actor =
     static_cast<SpeechSynthesisRequestParent*>(aActor);
   nsSynthVoiceRegistry::GetInstance()->Speak(aText, aLang, aUri, aVolume, aRate,
                                              aPitch, actor->mTask);
-  return true;
+  return IPC_OK();
 }
 
 // SpeechSynthesisRequestParent
@@ -96,53 +94,53 @@ SpeechSynthesisRequestParent::ActorDestroy(ActorDestroyReason aWhy)
   // Implement me! Bug 1005141
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::RecvPause()
 {
   MOZ_ASSERT(mTask);
   mTask->Pause();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::Recv__delete__()
 {
   MOZ_ASSERT(mTask);
   mTask->mActor = nullptr;
   mTask = nullptr;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::RecvResume()
 {
   MOZ_ASSERT(mTask);
   mTask->Resume();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::RecvCancel()
 {
   MOZ_ASSERT(mTask);
   mTask->Cancel();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::RecvForceEnd()
 {
   MOZ_ASSERT(mTask);
   mTask->ForceEnd();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 SpeechSynthesisRequestParent::RecvSetAudioOutputVolume(const float& aVolume)
 {
   MOZ_ASSERT(mTask);
   mTask->SetAudioOutputVolume(aVolume);
-  return true;
+  return IPC_OK();
 }
 
 // SpeechTaskParent
@@ -208,10 +206,12 @@ SpeechTaskParent::DispatchErrorImpl(float aElapsedTime, uint32_t aCharIndex)
 
 nsresult
 SpeechTaskParent::DispatchBoundaryImpl(const nsAString& aName,
-                                       float aElapsedTime, uint32_t aCharIndex)
+                                       float aElapsedTime, uint32_t aCharIndex,
+                                       uint32_t aCharLength, uint8_t argc)
 {
   MOZ_ASSERT(mActor);
-  if(NS_WARN_IF(!(mActor->SendOnBoundary(nsString(aName), aElapsedTime, aCharIndex)))) {
+  if(NS_WARN_IF(!(mActor->SendOnBoundary(nsString(aName), aElapsedTime,
+                                         aCharIndex, aCharLength, argc)))) {
     return NS_ERROR_FAILURE;
   }
 

@@ -13,20 +13,21 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
-#include "prclist.h"
+#include "mozilla/LinkedList.h"
 #include "mozilla/Attributes.h"
 #include "nsWrapperCache.h"
+#include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/MediaQueryListBinding.h"
 
 class nsIDocument;
-class nsMediaList;
 
 namespace mozilla {
 namespace dom {
 
-class MediaQueryList final : public nsISupports,
-                             public nsWrapperCache,
-                             public PRCList
+class MediaList;
+
+class MediaQueryList final : public DOMEventTargetHelper,
+                             public mozilla::LinkedListElement<MediaQueryList>
 {
 public:
   // The caller who constructs is responsible for calling Evaluate
@@ -37,30 +38,34 @@ private:
   ~MediaQueryList();
 
 public:
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(MediaQueryList)
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MediaQueryList, DOMEventTargetHelper)
 
   nsISupports* GetParentObject() const;
 
-  struct HandleChangeData {
-    RefPtr<MediaQueryList> mql;
-    RefPtr<mozilla::dom::MediaQueryListListener> callback;
-  };
-
-  // Appends listeners that need notification to aListenersToNotify
-  void MediumFeaturesChanged(nsTArray<HandleChangeData>& aListenersToNotify);
-
-  bool HasListeners() const { return !mCallbacks.IsEmpty(); }
-
-  void RemoveAllListeners();
+  void MaybeNotify();
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL methods
   void GetMedia(nsAString& aMedia);
   bool Matches();
-  void AddListener(mozilla::dom::MediaQueryListListener& aListener);
-  void RemoveListener(mozilla::dom::MediaQueryListListener& aListener);
+  void AddListener(EventListener* aListener, ErrorResult& aRv);
+  void RemoveListener(EventListener* aListener, ErrorResult& aRv);
+
+  using nsIDOMEventTarget::AddEventListener;
+
+  virtual void AddEventListener(const nsAString& aType,
+                                EventListener* aCallback,
+                                const AddEventListenerOptionsOrBoolean& aOptions,
+                                const Nullable<bool>& aWantsUntrusted,
+                                ErrorResult& aRv) override;
+
+  IMPL_EVENT_HANDLER(change)
+
+  bool HasListeners();
+
+  void Disconnect();
 
 private:
   void RecomputeMatches();
@@ -81,10 +86,9 @@ private:
   // linked list.
   nsCOMPtr<nsIDocument> mDocument;
 
-  RefPtr<nsMediaList> mMediaList;
+  RefPtr<MediaList> mMediaList;
   bool mMatches;
   bool mMatchesValid;
-  nsTArray<RefPtr<mozilla::dom::MediaQueryListListener>> mCallbacks;
 };
 
 } // namespace dom

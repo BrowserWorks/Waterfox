@@ -12,6 +12,7 @@
 #include "mozilla/Preferences.h"
 #include "mozJSComponentLoader.h"
 #include "nsZipArchive.h"
+#include "xpc_make_class.h"
 
 #define JSCTYPES_CONTRACTID \
   "@mozilla.org/jsctypes;1"
@@ -30,7 +31,7 @@ UnicodeToNative(JSContext *cx, const char16_t *source, size_t slen)
   nsDependentString unicode(reinterpret_cast<const char16_t*>(source), slen);
   nsresult rv = NS_CopyUnicodeToNative(unicode, native);
   if (NS_FAILED(rv)) {
-    JS_ReportError(cx, "could not convert string to native charset");
+    JS_ReportErrorASCII(cx, "could not convert string to native charset");
     return nullptr;
   }
 
@@ -50,18 +51,13 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(Module)
 
 NS_IMPL_ISUPPORTS(Module, nsIXPCScriptable)
 
-Module::Module()
-{
-}
+Module::Module() = default;
 
-Module::~Module()
-{
-}
+Module::~Module() = default;
 
 #define XPC_MAP_CLASSNAME Module
 #define XPC_MAP_QUOTED_CLASSNAME "Module"
-#define XPC_MAP_WANT_CALL
-#define XPC_MAP_FLAGS nsIXPCScriptable::WANT_CALL
+#define XPC_MAP_FLAGS XPC_SCRIPTABLE_WANT_CALL
 #include "xpc_map_end.h"
 
 static bool
@@ -107,9 +103,7 @@ InitAndSealCTypesClass(JSContext* cx, JS::Handle<JSObject*> global)
       !SealObjectAndPrototype(cx, global, "Error"))
     return false;
 
-  // Finally, seal the global object, for good measure. (But not recursively;
-  // this breaks things.)
-  return JS_FreezeObject(cx, global);
+  return true;
 }
 
 NS_IMETHODIMP
@@ -121,8 +115,7 @@ Module::Call(nsIXPConnectWrappedNative* wrapper,
 {
   mozJSComponentLoader* loader = mozJSComponentLoader::Get();
   JS::Rooted<JSObject*> targetObj(cx);
-  nsresult rv = loader->FindTargetObject(cx, &targetObj);
-  NS_ENSURE_SUCCESS(rv, rv);
+  loader->FindTargetObject(cx, &targetObj);
 
   *_retval = InitAndSealCTypesClass(cx, targetObj);
   return NS_OK;

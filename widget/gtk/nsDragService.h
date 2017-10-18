@@ -59,17 +59,17 @@ public:
     NS_DECL_NSIOBSERVER
 
     // nsBaseDragService
-    virtual nsresult InvokeDragSessionImpl(nsISupportsArray* anArrayTransferables,
+    virtual nsresult InvokeDragSessionImpl(nsIArray* anArrayTransferables,
                                            nsIScriptableRegion* aRegion,
                                            uint32_t aActionType) override;
     // nsIDragService
     NS_IMETHOD InvokeDragSession (nsIDOMNode *aDOMNode,
-                                  nsISupportsArray * anArrayTransferables,
+                                  nsIArray * anArrayTransferables,
                                   nsIScriptableRegion * aRegion,
                                   uint32_t aActionType,
                                   nsContentPolicyType aContentPolicyType) override;
     NS_IMETHOD StartDragSession() override;
-    NS_IMETHOD EndDragSession(bool aDoneDrag) override;
+    NS_IMETHOD EndDragSession(bool aDoneDrag, uint32_t aKeyModifiers) override;
 
     // nsIDragSession
     NS_IMETHOD SetCanDrop            (bool             aCanDrop) override;
@@ -85,7 +85,7 @@ public:
     // Methods called from nsWindow to handle responding to GTK drag
     // destination signals
 
-    static nsDragService* GetInstance();
+    static already_AddRefed<nsDragService> GetInstance();
 
     void TargetDataReceived          (GtkWidget         *aWidget,
                                       GdkDragContext    *aContext,
@@ -194,7 +194,7 @@ private:
     // the source of our drags
     GtkWidget     *mHiddenWidget;
     // our source data items
-    nsCOMPtr<nsISupportsArray> mSourceDataItems;
+    nsCOMPtr<nsIArray> mSourceDataItems;
 
     nsCOMPtr<nsIScriptableRegion> mSourceRegion;
 
@@ -207,7 +207,7 @@ private:
                         GdkDragContext  *aContext,
                         int32_t          aXOffset,
                         int32_t          aYOffset,
-                        const nsIntRect &dragRect);
+                        const mozilla::LayoutDeviceIntRect &dragRect);
 
     gboolean Schedule(DragTask aTask, nsWindow *aWindow,
                       GdkDragContext *aDragContext,
@@ -220,6 +220,7 @@ private:
     void DispatchMotionEvents();
     void ReplyToDragMotion(GdkDragContext* aDragContext);
     gboolean DispatchDropEvent();
+    static uint32_t GetCurrentModifiers();
 };
 
 #endif // nsDragService_h__

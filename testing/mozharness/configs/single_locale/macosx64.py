@@ -5,7 +5,7 @@ config = {
     "platform": "macosx64",
     "stage_product": "firefox",
     "update_platform": "Darwin_x86_64-gcc3",
-    "mozconfig": "%(branch)s/browser/config/mozconfigs/macosx-universal/l10n-mozconfig",
+    "mozconfig": "%(branch)s/browser/config/mozconfigs/macosx64/l10n-mozconfig",
     "bootstrap_env": {
         "SHELL": '/bin/bash',
         "MOZ_OBJDIR": "obj-l10n",
@@ -18,8 +18,7 @@ config = {
         "L10NBASEDIR": "../../l10n",
         "MOZ_MAKE_COMPLETE_MAR": "1",
         "LOCALE_MERGEDIR": "%(abs_merge_dir)s/",
-        'TOOLTOOL_CACHE': '/builds/tooltool_cache',
-        'TOOLTOOL_HOME': '/builds',
+        'EN_US_PACKAGE_NAME': 'target.dmg',
     },
     "ssh_key_dir": "~/.ssh",
     "log_name": "single_locale",
@@ -31,11 +30,6 @@ config = {
         "MOZ_PKG_PLATFORM": "mac",
     },
 
-    # tooltool
-    'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',
-    'tooltool_script': ["/builds/tooltool.py"],
-    'tooltool_bootstrap': "setup.sh",
-    'tooltool_manifest_src': 'browser/config/tooltool-manifests/macosx64/releng.manifest',
     # balrog credential file:
     'balrog_credentials_file': 'oauth.txt',
 
@@ -69,9 +63,4 @@ config = {
     "localized_mar": "firefox-%(version)s.%(locale)s.mac.complete.mar",
     "partial_mar": "firefox-%(version)s.%(locale)s.mac.partial.%(from_buildid)s-%(to_buildid)s.mar",
     'installer_file': "firefox-%(version)s.en-US.mac.dmg",
-    'exes': {
-        'hgtool.py': os.path.join(
-            os.getcwd(), 'build', 'tools', 'buildfarm', 'utils', 'hgtool.py'
-        ),
-    },
 }

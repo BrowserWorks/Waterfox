@@ -28,10 +28,6 @@
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nscore.h"                     // for nsACString
 
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-#include <ui/Fence.h>
-#endif
-
 namespace mozilla {
 
 namespace layers {
@@ -129,7 +125,7 @@ public:
   ~TiledLayerBufferComposite();
 
   bool UseTiles(const SurfaceDescriptorTiles& aTileDescriptors,
-                Compositor* aCompositor,
+                HostLayerManager* aLayerManager,
                 ISurfaceAllocator* aAllocator);
 
   void Clear();
@@ -140,7 +136,7 @@ public:
   // by the sum of the resolutions of all parent layers' FrameMetrics.
   const CSSToParentLayerScale2D& GetFrameResolution() { return mFrameResolution; }
 
-  void SetCompositor(Compositor* aCompositor);
+  void SetTextureSourceProvider(TextureSourceProvider* aProvider);
 
   void AddAnimationInvalidation(nsIntRegion& aRegion);
 protected:
@@ -177,37 +173,12 @@ protected:
   ~TiledContentHost();
 
 public:
-  virtual LayerRenderState GetRenderState() override
-  {
-    // If we have exactly one high precision tile, then we can support hwc.
-    if (mTiledBuffer.GetTileCount() == 1 &&
-        mLowPrecisionTiledBuffer.GetTileCount() == 0) {
-      TextureHost* host = mTiledBuffer.GetTile(0).mTextureHost;
-      if (host) {
-        MOZ_ASSERT(!mTiledBuffer.GetTile(0).mTextureHostOnWhite, "Component alpha not supported!");
-
-        gfx::IntPoint offset = mTiledBuffer.GetTileOffset(mTiledBuffer.GetPlacement().TilePosition(0));
-
-        // Don't try to use HWC if the content doesn't start at the top-left of the tile.
-        if (offset != GetValidRegion().GetBounds().TopLeft()) {
-          return LayerRenderState();
-        }
-
-        LayerRenderState state = host->GetRenderState();
-        state.SetOffset(offset);
-        return state;
-      }
-    }
-    return LayerRenderState();
-  }
-
   // Generate effect for layerscope when using hwc.
   virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::SamplingFilter aSamplingFilter) override;
 
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack) override
+                            const nsIntRegion& aOldValidRegionBack) override
   {
     NS_ERROR("N/A for tiled layers");
     return false;
@@ -223,31 +194,32 @@ public:
     return mTiledBuffer.GetValidRegion();
   }
 
-  virtual void SetCompositor(Compositor* aCompositor) override
+  virtual void SetTextureSourceProvider(TextureSourceProvider* aProvider) override
   {
-    MOZ_ASSERT(aCompositor);
-    CompositableHost::SetCompositor(aCompositor);
-    mTiledBuffer.SetCompositor(aCompositor);
-    mLowPrecisionTiledBuffer.SetCompositor(aCompositor);
+    CompositableHost::SetTextureSourceProvider(aProvider);
+    mTiledBuffer.SetTextureSourceProvider(aProvider);
+    mLowPrecisionTiledBuffer.SetTextureSourceProvider(aProvider);
   }
 
   bool UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
                            const SurfaceDescriptorTiles& aTiledDescriptor);
 
-  virtual void Composite(LayerComposite* aLayer,
+  virtual void Composite(Compositor* aCompositor,
+                         LayerComposite* aLayer,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
                          const gfx::SamplingFilter aSamplingFilter,
                          const gfx::IntRect& aClipRect,
-                         const nsIntRegion* aVisibleRegion = nullptr) override;
+                         const nsIntRegion* aVisibleRegion = nullptr,
+                         const Maybe<gfx::Polygon>& aGeometry = Nothing()) override;
 
   virtual CompositableType GetType() override { return CompositableType::CONTENT_TILED; }
 
   virtual TiledContentHost* AsTiledContentHost() override { return this; }
 
   virtual void Attach(Layer* aLayer,
-                      Compositor* aCompositor,
+                      TextureSourceProvider* aProvider,
                       AttachFlags aFlags = NO_FLAGS) override;
 
   virtual void Detach(Layer* aLayer = nullptr,
@@ -264,16 +236,19 @@ public:
 private:
 
   void RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
+                         Compositor* aCompositor,
                          const gfx::Color* aBackgroundColor,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::SamplingFilter aSamplingFilter,
                          const gfx::IntRect& aClipRect,
                          nsIntRegion aMaskRegion,
-                         gfx::Matrix4x4 aTransform);
+                         gfx::Matrix4x4 aTransform,
+                         const Maybe<gfx::Polygon>& aGeometry);
 
   // Renders a single given tile.
   void RenderTile(TileHost& aTile,
+                  Compositor* aCompositor,
                   EffectChain& aEffectChain,
                   float aOpacity,
                   const gfx::Matrix4x4& aTransform,
@@ -282,7 +257,8 @@ private:
                   const nsIntRegion& aScreenRegion,
                   const gfx::IntPoint& aTextureOffset,
                   const gfx::IntSize& aTextureBounds,
-                  const gfx::Rect& aVisibleRect);
+                  const gfx::Rect& aVisibleRect,
+                  const Maybe<gfx::Polygon>& aGeometry);
 
   void EnsureTileStore() {}
 

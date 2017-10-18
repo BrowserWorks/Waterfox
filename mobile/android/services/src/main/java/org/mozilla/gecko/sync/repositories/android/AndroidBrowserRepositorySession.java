@@ -209,7 +209,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     @Override
     public void run() {
       if (!isActive()) {
-        delegate.onGuidsSinceFailed(new InactiveSessionException(null));
+        delegate.onGuidsSinceFailed(new InactiveSessionException());
         return;
       }
 
@@ -280,10 +280,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           delegate.onFetchCompleted(end);
         } catch (NoGuidForIdException e) {
           Logger.warn(LOG_TAG, "No GUID for ID.", e);
-          delegate.onFetchFailed(e, null);
+          delegate.onFetchFailed(e);
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Exception in fetchFromCursor.", e);
-          delegate.onFetchFailed(e, null);
+          delegate.onFetchFailed(e);
           return;
         }
       } finally {
@@ -311,13 +311,13 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     @Override
     public void run() {
       if (!isActive()) {
-        delegate.onFetchFailed(new InactiveSessionException(null), null);
+        delegate.onFetchFailed(new InactiveSessionException());
         return;
       }
 
       if (guids == null || guids.length < 1) {
         Logger.error(LOG_TAG, "No guids sent to fetch");
-        delegate.onFetchFailed(new InvalidRequestException(null), null);
+        delegate.onFetchFailed(new InvalidRequestException());
         return;
       }
 
@@ -325,7 +325,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         Cursor cursor = dbHelper.fetch(guids);
         this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
-        delegate.onFetchFailed(e, null);
+        delegate.onFetchFailed(e);
       }
     }
   }
@@ -360,7 +360,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     @Override
     public void run() {
       if (!isActive()) {
-        delegate.onFetchFailed(new InactiveSessionException(null), null);
+        delegate.onFetchFailed(new InactiveSessionException());
         return;
       }
 
@@ -368,7 +368,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         Cursor cursor = dbHelper.fetchSince(since);
         this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
-        delegate.onFetchFailed(e, null);
+        delegate.onFetchFailed(e);
         return;
       }
     }
@@ -383,7 +383,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
-    if (delegate == null) {
+    if (storeDelegate == null) {
       throw new NoStoreDelegateException();
     }
     if (record == null) {
@@ -402,7 +402,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "AndroidBrowserRepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
+          storeDelegate.onRecordStoreFailed(new InactiveSessionException(), record.guid);
           return;
         }
 
@@ -463,6 +463,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
             trace("Both local and remote records have been modified.");
             if (record.lastModified > existingRecord.lastModified) {
               trace("Remote is newer, and deleted. Deleting local.");
+              // Note that while this counts as "reconciliation", we're probably over-counting.
+              // Currently, locallyModified above is _always_ true if a record exists locally,
+              // and so we'll consider any deletions of already present records as reconciliations.
+              storeDelegate.onRecordStoreReconciled(record.guid);
               storeRecordDeletion(record, existingRecord);
               return;
             }
@@ -484,7 +488,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           if (existingRecord == null) {
             // The record is new.
             trace("No match. Inserting.");
-            insert(record);
+            insert(processBeforeInsertion(record));
             return;
           }
 
@@ -517,20 +521,21 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // of reconcileRecords.
           Logger.debug(LOG_TAG, "Calling delegate callback with guid " + replaced.guid +
                                 "(" + replaced.androidID + ")");
-          delegate.onRecordStoreSucceeded(replaced.guid);
+          storeDelegate.onRecordStoreReconciled(replaced.guid);
+          storeDelegate.onRecordStoreSucceeded(replaced.guid);
           return;
 
         } catch (MultipleRecordsForGuidException e) {
           Logger.error(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
-          delegate.onRecordStoreFailed(e, record.guid);
+          storeDelegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (NoGuidForIdException e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e, record.guid);
+          storeDelegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e, record.guid);
+          storeDelegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }
@@ -549,7 +554,14 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     // TODO: we ought to mark the record as deleted rather than purging it,
     // in order to support syncing to multiple destinations. Bug 722607.
     dbHelper.purgeGuid(record.guid);
-    delegate.onRecordStoreSucceeded(record.guid);
+    storeDelegate.onRecordStoreSucceeded(record.guid);
+  }
+
+  /**
+   * Identity function by default. Override in subclasses if necessary.
+   */
+  protected Record processBeforeInsertion(Record toProcess) {
+    return toProcess;
   }
 
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
@@ -562,7 +574,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
     updateBookkeeping(toStore);
     trackRecord(toStore);
-    delegate.onRecordStoreSucceeded(toStore.guid);
+    storeDelegate.onRecordStoreSucceeded(toStore.guid);
 
     Logger.debug(LOG_TAG, "Inserted record with guid " + toStore.guid + " as androidID " + toStore.androidID);
   }
@@ -777,7 +789,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     @Override
     public void run() {
       if (!isActive()) {
-        delegate.onWipeFailed(new InactiveSessionException(null));
+        delegate.onWipeFailed(new InactiveSessionException());
         return;
       }
       dbHelper.wipe();

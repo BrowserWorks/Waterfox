@@ -4,6 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
+const { getRootBindingParent } = require("devtools/shared/layout/utils");
+const { getTabPrefs } = require("devtools/shared/indentation");
+
 /*
  * About the objects defined in this file:
  * - CssLogic contains style information about a view context. It provides
@@ -28,8 +33,6 @@
  *   reference to the selected element.
  */
 
-"use strict";
-
 /**
  * Provide access to the style information in a page.
  * CssLogic uses the standard DOM API, and the Gecko inIDOMUtils API to access
@@ -42,11 +45,12 @@
 
 const Services = require("Services");
 
-// This should be ok because none of the functions that use this should be used
-// on the worker thread, where Cu is not available.
-loader.lazyRequireGetter(this, "CSS", "CSS");
+loader.lazyImporter(this, "findCssSelector", "resource://gre/modules/css-selector.js");
 
-loader.lazyRequireGetter(this, "CSSLexer", "devtools/shared/css-lexer");
+const CSSLexer = require("devtools/shared/css/lexer");
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const styleInspectorL10N =
+  new LocalizationHelper("devtools/shared/locales/styleinspector.properties");
 
 /**
  * Special values for filter, in addition to an href these values can be used
@@ -75,16 +79,13 @@ exports.STATUS = {
 };
 
 /**
- * Memoized lookup of a l10n string from a string bundle.
- * @param {string} name The key to lookup.
- * @returns A localized version of the given key.
+ * Lookup a l10n string in the shared styleinspector string bundle.
+ *
+ * @param {String} name
+ *        The key to lookup.
+ * @returns {String} A localized version of the given key.
  */
-exports.l10n = function (name) {
-  return exports._strings.GetStringFromName(name);
-};
-
-exports._strings = Services.strings
-  .createBundle("chrome://devtools-shared/locale/styleinspector.properties");
+exports.l10n = name => styleInspectorL10N.getStr(name);
 
 /**
  * Is the given property sheet a content stylesheet?
@@ -133,6 +134,7 @@ exports.shortSource = function (sheet) {
 };
 
 const TAB_CHARS = "\t";
+const SPACE_CHARS = " ";
 
 /**
  * Prettify minified CSS text.
@@ -286,8 +288,20 @@ function prettifyCSS(text, ruleCount) {
       }
     }
 
+    // Get preference of the user regarding what to use for indentation,
+    // spaces or tabs.
+    let tabPrefs = getTabPrefs();
+
     if (isCloseBrace) {
-      indent = TAB_CHARS.repeat(--indentLevel);
+      // Even if the stylesheet contains extra closing braces, the indent level should
+      // remain > 0.
+      indentLevel = Math.max(0, indentLevel - 1);
+
+      if (tabPrefs.indentWithTabs) {
+        indent = TAB_CHARS.repeat(indentLevel);
+      } else {
+        indent = SPACE_CHARS.repeat(indentLevel);
+      }
       result = result + indent + "}";
     }
 
@@ -300,7 +314,11 @@ function prettifyCSS(text, ruleCount) {
         result += " ";
       }
       result += "{";
-      indent = TAB_CHARS.repeat(++indentLevel);
+      if (tabPrefs.indentWithTabs) {
+        indent = TAB_CHARS.repeat(++indentLevel);
+      } else {
+        indent = SPACE_CHARS.repeat(++indentLevel);
+      }
     }
 
     // Now it is time to insert a newline.  However first we want to
@@ -328,3 +346,120 @@ function prettifyCSS(text, ruleCount) {
 }
 
 exports.prettifyCSS = prettifyCSS;
+
+/**
+ * Find a unique CSS selector for a given element
+ * @returns a string such that ele.ownerDocument.querySelector(reply) === ele
+ * and ele.ownerDocument.querySelectorAll(reply).length === 1
+ */
+exports.findCssSelector = findCssSelector;
+
+/**
+ * Get the full CSS path for a given element.
+ * @returns a string that can be used as a CSS selector for the element. It might not
+ * match the element uniquely. It does however, represent the full path from the root
+ * node to the element.
+ */
+function getCssPath(ele) {
+  ele = getRootBindingParent(ele);
+  const document = ele.ownerDocument;
+  if (!document || !document.contains(ele)) {
+    throw new Error("getCssPath received element not inside document");
+  }
+
+  const getElementSelector = element => {
+    if (!element.localName) {
+      return "";
+    }
+
+    let label = element.nodeName == element.nodeName.toUpperCase()
+                ? element.localName.toLowerCase()
+                : element.localName;
+
+    if (element.id) {
+      label += "#" + element.id;
+    }
+
+    if (element.classList) {
+      for (let cl of element.classList) {
+        label += "." + cl;
+      }
+    }
+
+    return label;
+  };
+
+  let paths = [];
+
+  while (ele) {
+    if (!ele || ele.nodeType !== Node.ELEMENT_NODE) {
+      break;
+    }
+
+    paths.splice(0, 0, getElementSelector(ele));
+    ele = ele.parentNode;
+  }
+
+  return paths.length ? paths.join(" ") : "";
+}
+exports.getCssPath = getCssPath;
+
+/**
+ * Get the xpath for a given element.
+ * @param {DomNode} ele
+ * @returns a string that can be used as an XPath to find the element uniquely.
+ */
+function getXPath(ele) {
+  ele = getRootBindingParent(ele);
+  const document = ele.ownerDocument;
+  if (!document || !document.contains(ele)) {
+    throw new Error("getXPath received element not inside document");
+  }
+
+  // Create a short XPath for elements with IDs.
+  if (ele.id) {
+    return `//*[@id="${ele.id}"]`;
+  }
+
+  // Otherwise walk the DOM up and create a part for each ancestor.
+  const parts = [];
+
+  // Use nodeName (instead of localName) so namespace prefix is included (if any).
+  while (ele && ele.nodeType === Node.ELEMENT_NODE) {
+    let nbOfPreviousSiblings = 0;
+    let hasNextSiblings = false;
+
+    // Count how many previous same-name siblings the element has.
+    let sibling = ele.previousSibling;
+    while (sibling) {
+      // Ignore document type declaration.
+      if (sibling.nodeType !== Node.DOCUMENT_TYPE_NODE &&
+          sibling.nodeName == ele.nodeName) {
+        nbOfPreviousSiblings++;
+      }
+
+      sibling = sibling.previousSibling;
+    }
+
+    // Check if the element has at least 1 next same-name sibling.
+    sibling = ele.nextSibling;
+    while (sibling) {
+      if (sibling.nodeName == ele.nodeName) {
+        hasNextSiblings = true;
+        break;
+      }
+      sibling = sibling.nextSibling;
+    }
+
+    const prefix = ele.prefix ? ele.prefix + ":" : "";
+    const nth = nbOfPreviousSiblings || hasNextSiblings
+                ? `[${nbOfPreviousSiblings + 1}]` : "";
+
+    parts.push(prefix + ele.localName + nth);
+
+    ele = ele.parentNode;
+  }
+
+  return parts.length ? "/" + parts.reverse().join("/") : "";
+}
+exports.getXPath = getXPath;

@@ -27,11 +27,11 @@
     {
       this.eventSeq = [
         new invokerChecker(EVENT_HIDE, getNode("t1_button")),
-        new invokerChecker(EVENT_SHOW, getNode("t1_button")),
-        new invokerChecker(EVENT_SHOW, getNode("t1_subdiv")),
         // no hide for t1_subdiv because it is contained by hidden t1_checkbox
         new invokerChecker(EVENT_HIDE, getNode("t1_checkbox")),
         new invokerChecker(EVENT_SHOW, getNode("t1_checkbox")),
+        new invokerChecker(EVENT_SHOW, getNode("t1_button")),
+        new invokerChecker(EVENT_SHOW, getNode("t1_subdiv")),
         new invokerChecker(EVENT_REORDER, getNode("t1_container"))
       ];
 
@@ -73,11 +73,14 @@
     function removeARIAOwns()
     {
       this.eventSeq = [
-        new invokerChecker(EVENT_SHOW, getNode("t1_subdiv")),
         new invokerChecker(EVENT_HIDE, getNode("t1_button")),
-        new invokerChecker(EVENT_SHOW, getNode("t1_button")),
         new invokerChecker(EVENT_HIDE, getNode("t1_subdiv")),
-        new invokerChecker(EVENT_REORDER, getNode("t1_container"))
+        new orderChecker(),
+        new asyncInvokerChecker(EVENT_SHOW, getNode("t1_button")),
+        new asyncInvokerChecker(EVENT_SHOW, getNode("t1_subdiv")),
+        new orderChecker(),
+        new invokerChecker(EVENT_REORDER, getNode("t1_container")),
+        new unexpectedInvokerChecker(EVENT_REORDER, getNode("t1_checkbox"))
       ];
 
       this.invoke = function removeARIAOwns_invoke()
@@ -107,8 +110,8 @@
     function setARIAOwns()
     {
       this.eventSeq = [
-        new invokerChecker(EVENT_HIDE, getNode("t1_subdiv")),
         new invokerChecker(EVENT_HIDE, getNode("t1_button")),
+        new invokerChecker(EVENT_HIDE, getNode("t1_subdiv")),
         new invokerChecker(EVENT_SHOW, getNode("t1_button")),
         new invokerChecker(EVENT_SHOW, getNode("t1_subdiv")),
         new invokerChecker(EVENT_REORDER, getNode("t1_container"))
@@ -142,8 +145,8 @@
     function addIdToARIAOwns()
     {
       this.eventSeq = [
-        new invokerChecker(EVENT_SHOW, getNode("t1_group")),
         new invokerChecker(EVENT_HIDE, getNode("t1_group")),
+        new invokerChecker(EVENT_SHOW, getNode("t1_group")),
         new invokerChecker(EVENT_REORDER, document)
       ];
 
@@ -220,7 +223,7 @@
       this.invoke = function removeEl_invoke()
       {
         // remove a container of t1_subdiv
-        getNode("t1_span").parentNode.removeChild(getNode("t1_span"));
+        getNode("t1_span").remove();
       }
 
       this.finalCheck = function removeEl_finalCheck()
@@ -275,8 +278,8 @@
     function setId()
     {
       this.eventSeq = [
-        new invokerChecker(EVENT_SHOW, getNode("t1_grouptmp")),
         new invokerChecker(EVENT_HIDE, getNode("t1_grouptmp")),
+        new invokerChecker(EVENT_SHOW, getNode("t1_grouptmp")),
         new invokerChecker(EVENT_REORDER, document)
       ];
 
@@ -446,6 +449,9 @@
       this.eventSeq = [];
       for (var id of aIdList) {
         this.eventSeq.push(new invokerChecker(EVENT_HIDE, getNode(id)));
+      }
+
+      for (var id of aIdList) {
         this.eventSeq.push(new invokerChecker(EVENT_SHOW, getNode(id)));
       }
       this.eventSeq.push(new invokerChecker(EVENT_REORDER, getNode(aContainer)));
@@ -517,7 +523,7 @@
       {
         getNode(aChild).setAttribute("aria-owns", "no_id");
         getNode(aParent).removeChild(getNode(aChild));
-        getNode(aParent).parentNode.removeChild(getNode(aParent));
+        getNode(aParent).remove();
       }
 
       this.getID = function setARIAOwnsOnElToRemove_getID()
@@ -526,6 +532,202 @@
       }
     }
 
+    /**
+     * Set ARIA owns on inaccessible span element that contains
+     * accessible children. This will move children from the container for
+     * the span.
+     */
+    function test8()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_REORDER, "t8_container")
+      ];
+
+      this.invoke = function test8_invoke()
+      {
+        var tree =
+          { SECTION: [
+            { PUSHBUTTON: [] },
+            { ENTRY: [] },
+            { ENTRY: [] },
+            { ENTRY: [] }
+          ] };
+        testAccessibleTree("t8_container", tree);
+
+        getNode(t8_container).setAttribute("aria-owns", "t8_span t8_button");
+      }
+
+      this.finalCheck = function test8_finalCheck()
+      {
+        var tree =
+          { SECTION: [
+            { TEXT: [
+              { ENTRY: [] },
+              { ENTRY: [] },
+              { ENTRY: [] }
+            ] },
+            { PUSHBUTTON: [] }
+          ] };
+        testAccessibleTree("t8_container", tree);
+      }
+
+      this.getID = function test8_getID()
+      {
+        return `Set ARIA owns on inaccessible span element that contains accessible children`;
+      }
+    }
+
+    function test9_prepare()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_SHOW, () => {
+          let doc = getNode('t9_container').contentDocument;
+          return doc && doc.getElementById('container');
+        })
+      ];
+
+      this.invoke = () => {
+        // The \ before the final /script avoids the script from being terminated
+        // by the html parser.
+        getNode('t9_container').src = `data:text/html,
+          <html><body></body>
+          <script>
+            let el = document.createElement('div');
+            el.id = 'container';
+            el.innerHTML = "<input id='input'>";
+            document.documentElement.appendChild(el);
+          <\/script></html>`;
+      }
+
+      this.finalCheck = () => {
+        var tree =
+          { INTERNAL_FRAME: [
+            { DOCUMENT: [
+              { SECTION: [
+                { ENTRY: [] }
+              ] }
+            ] }
+          ] };
+        testAccessibleTree('t9_container', tree);
+      }
+
+      this.getID = () => {
+        return `Set ARIA owns on a document (part1)`;
+      }
+    }
+
+    function test9_setARIAOwns()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_SHOW, () => {
+          let doc = getNode('t9_container').contentDocument;
+          return doc && doc.getElementById('input');
+        })
+      ];
+
+      this.invoke = () => {
+        let doc = getNode('t9_container').contentDocument;
+        doc.body.setAttribute('aria-owns', 'input');
+      }
+
+      this.finalCheck = () => {
+        var tree =
+          { INTERNAL_FRAME: [
+            { DOCUMENT: [
+              { SECTION: [] },
+              { ENTRY: [] }
+            ] }
+          ] };
+        testAccessibleTree("t9_container", tree);
+      }
+
+      this.getID = () => {
+        return `Set ARIA owns on a document (part2)`;
+      }
+    }
+
+    function test9_finish()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_REORDER, () => {
+          return getNode('t9_container').contentDocument;
+        })
+      ];
+
+      this.invoke = () => {
+        // trigger a tree update.
+        let doc = getNode('t9_container').contentDocument;
+        doc.body.appendChild(document.createElement('p'));
+      }
+
+      this.finalCheck = () => {
+        var tree =
+          { INTERNAL_FRAME: [
+            { DOCUMENT: [
+              { PARAGRAPH: [] },
+              { SECTION: [] },
+              { ENTRY: [] }
+            ] }
+          ] };
+        testAccessibleTree("t9_container", tree);
+      }
+
+      this.getID = () => {
+        return `Set ARIA owns on a document (part3)`;
+      }
+    }
+
+    /**
+     * Put ARIA owned child back when ARIA owner removed.
+     */
+    function test10_removeARIAOwner()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_HIDE, getAccessible('t10_owner'))
+      ];
+
+      this.invoke = () => {
+        let tree =
+          { SECTION: [ // t10_container
+            { SECTION: [ // t10_owner
+              { ENTRY: [] } // t10_child
+            ] }
+          ] };
+        testAccessibleTree('t10_container', tree);
+
+        getNode('t10_owner').remove();
+      }
+
+      this.getID = () => {
+        return 'Put aria owned child back when aria owner removed';
+      }
+    }
+
+    function test10_finishTest()
+    {
+      this.eventSeq = [
+        new invokerChecker(EVENT_REORDER, 't10_container')
+      ];
+
+      this.invoke = () => {
+        // trigger a tree update.
+        getNode('t10_container').append(document.createElement('p'));
+      }
+
+      this.finalCheck = () => {
+        let tree =
+          { SECTION: [ // t10_container
+            // { ENTRY: [] }, // t10_child
+            { PARAGRAPH: [] }
+          ] };
+        testAccessibleTree('t10_container', tree);
+        todo(false, 'Input accessible has be moved back in the tree');
+      }
+
+      this.getID = () => {
+        return `Put aria owned child back when aria owner removed (finish test)`;
+      }
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Test
@@ -573,6 +775,14 @@
       gQueue.push(new removeNotARIAOwnedEl("t6_container", "t6_span"));
 
       gQueue.push(new setARIAOwnsOnElToRemove("t7_parent", "t7_child"));
+
+      gQueue.push(new test8());
+      gQueue.push(new test9_prepare());
+      gQueue.push(new test9_setARIAOwns());
+      gQueue.push(new test9_finish());
+
+      gQueue.push(new test10_removeARIAOwner());
+      gQueue.push(new test10_finishTest());
 
       gQueue.invoke(); // SimpleTest.finish() will be called in the end
     }
@@ -631,6 +841,17 @@
     <div id="t7_parent">
       <div id="t7_child"></div>
     </div>
+  </div>
+
+  <div id="t8_container">
+    <input id="t8_button" type="button"><span id="t8_span"><input><input><input></span>
+  </div>
+
+  <iframe id="t9_container"></iframe>
+
+  <div id="t10_container">
+    <div id="t10_owner" aria-owns="t10_child"></div>
+    <input id="t10_child">
   </div>
 </body>
 

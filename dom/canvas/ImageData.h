@@ -25,7 +25,6 @@ class ImageData final : public nsISupports
 {
   ~ImageData()
   {
-    MOZ_COUNT_DTOR(ImageData);
     DropData();
   }
 
@@ -35,7 +34,6 @@ public:
     , mHeight(aHeight)
     , mData(&aData)
   {
-    MOZ_COUNT_CTOR(ImageData);
     HoldData();
   }
 
@@ -69,7 +67,6 @@ public:
   }
   JSObject* GetDataObject() const
   {
-    JS::ExposeObjectToActiveJS(mData);
     return mData;
   }
 

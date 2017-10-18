@@ -6,8 +6,11 @@
 #define BASE_SYNCHRONIZATION_LOCK_H_
 
 #include "base/base_export.h"
+#include "base/logging.h"
+#include "base/macros.h"
 #include "base/synchronization/lock_impl.h"
 #include "base/threading/platform_thread.h"
+#include "build/build_config.h"
 
 namespace base {
 
@@ -16,7 +19,7 @@ namespace base {
 // AssertAcquired() method.
 class BASE_EXPORT Lock {
  public:
-#if defined(NDEBUG) && !defined(DCHECK_ALWAYS_ON)
+#if !DCHECK_IS_ON()
    // Optimized wrapper implementation
   Lock() : lock_() {}
   ~Lock() {}
@@ -35,9 +38,9 @@ class BASE_EXPORT Lock {
   Lock();
   ~Lock();
 
-  // NOTE: Although windows critical sections support recursive locks, we do not
-  // allow this, and we will commonly fire a DCHECK() if a thread attempts to
-  // acquire the lock a second time (while already holding it).
+  // NOTE: We do not permit recursive locks and will commonly fire a DCHECK() if
+  // a thread attempts to acquire the lock a second time (while already holding
+  // it).
   void Acquire() {
     lock_.Lock();
     CheckUnheldAndMark();
@@ -56,21 +59,34 @@ class BASE_EXPORT Lock {
   }
 
   void AssertAcquired() const;
-#endif  // NDEBUG && !DCHECK_ALWAYS_ON
+#endif  // DCHECK_IS_ON()
 
+  // Whether Lock mitigates priority inversion when used from different thread
+  // priorities.
+  static bool HandlesMultipleThreadPriorities() {
 #if defined(OS_POSIX)
-  // The posix implementation of ConditionVariable needs to be able
-  // to see our lock and tweak our debugging counters, as it releases
-  // and acquires locks inside of pthread_cond_{timed,}wait.
-  friend class ConditionVariable;
+    // POSIX mitigates priority inversion by setting the priority of a thread
+    // holding a Lock to the maximum priority of any other thread waiting on it.
+    return internal::LockImpl::PriorityInheritanceAvailable();
 #elif defined(OS_WIN)
-  // The Windows Vista implementation of ConditionVariable needs the
-  // native handle of the critical section.
-  friend class WinVistaCondVar;
+    // Windows mitigates priority inversion by randomly boosting the priority of
+    // ready threads.
+    // https://msdn.microsoft.com/library/windows/desktop/ms684831.aspx
+    return true;
+#else
+#error Unsupported platform
+#endif
+  }
+
+#if defined(OS_POSIX) || defined(OS_WIN)
+  // Both Windows and POSIX implementations of ConditionVariable need to be
+  // able to see our lock and tweak our debugging counters, as they release and
+  // acquire locks inside of their condition variable APIs.
+  friend class ConditionVariable;
 #endif
 
  private:
-#if !defined(NDEBUG) || defined(DCHECK_ALWAYS_ON)
+#if DCHECK_IS_ON()
   // Members and routines taking care of locks assertions.
   // Note that this checks for recursive locks and allows them
   // if the variable is set.  This is allowed by the underlying implementation
@@ -82,7 +98,7 @@ class BASE_EXPORT Lock {
   // All private data is implicitly protected by lock_.
   // Be VERY careful to only access members under that lock.
   base::PlatformThreadRef owning_thread_ref_;
-#endif  // !NDEBUG || DCHECK_ALWAYS_ON
+#endif  // DCHECK_IS_ON()
 
   // Platform specific underlying lock implementation.
   internal::LockImpl lock_;

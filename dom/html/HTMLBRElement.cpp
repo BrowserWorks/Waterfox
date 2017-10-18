@@ -6,11 +6,10 @@
 
 #include "mozilla/dom/HTMLBRElement.h"
 #include "mozilla/dom/HTMLBRElementBinding.h"
-
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsAttrValueInlines.h"
 #include "nsStyleConsts.h"
 #include "nsMappedAttributes.h"
-#include "nsRuleData.h"
 
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(BR)
@@ -30,11 +29,11 @@ HTMLBRElement::~HTMLBRElement()
 NS_IMPL_ELEMENT_CLONE(HTMLBRElement)
 
 static const nsAttrValue::EnumTable kClearTable[] = {
-  { "left", NS_STYLE_CLEAR_LEFT },
-  { "right", NS_STYLE_CLEAR_RIGHT },
-  { "all", NS_STYLE_CLEAR_BOTH },
-  { "both", NS_STYLE_CLEAR_BOTH },
-  { 0 }
+  { "left", StyleClear::Left },
+  { "right", StyleClear::Right },
+  { "all", StyleClear::Both },
+  { "both", StyleClear::Both },
+  { nullptr, 0 }
 };
 
 bool
@@ -53,14 +52,13 @@ HTMLBRElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLBRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                     nsRuleData* aData)
+                                     GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Display)) {
-    nsCSSValue* clear = aData->ValueForClear();
-    if (clear->GetUnit() == eCSSUnit_Null) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Display))) {
+    if (!aData->PropertyIsSet(eCSSProperty_clear)) {
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::clear);
       if (value && value->Type() == nsAttrValue::eEnum)
-        clear->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
+        aData->SetKeywordValue(eCSSProperty_clear, value->GetEnumValue());
     }
   }
 

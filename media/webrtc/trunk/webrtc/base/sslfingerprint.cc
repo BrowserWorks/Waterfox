@@ -14,6 +14,7 @@
 #include <string>
 
 #include "webrtc/base/helpers.h"
+#include "webrtc/base/logging.h"
 #include "webrtc/base/messagedigest.h"
 #include "webrtc/base/stringencode.h"
 
@@ -30,7 +31,7 @@ SSLFingerprint* SSLFingerprint::Create(
 
 SSLFingerprint* SSLFingerprint::Create(
     const std::string& algorithm, const rtc::SSLCertificate* cert) {
-  uint8 digest_val[64];
+  uint8_t digest_val[64];
   size_t digest_len;
   bool ret = cert->ComputeDigest(
       algorithm, digest_val, sizeof(digest_val), &digest_len);
@@ -58,13 +59,29 @@ SSLFingerprint* SSLFingerprint::CreateFromRfc4572(
   if (!value_len)
     return NULL;
 
-  return new SSLFingerprint(algorithm,
-                            reinterpret_cast<uint8*>(value),
+  return new SSLFingerprint(algorithm, reinterpret_cast<uint8_t*>(value),
                             value_len);
 }
 
-SSLFingerprint::SSLFingerprint(
-    const std::string& algorithm, const uint8* digest_in, size_t digest_len)
+SSLFingerprint* SSLFingerprint::CreateFromCertificate(
+    const RTCCertificate* cert) {
+  std::string digest_alg;
+  if (!cert->ssl_certificate().GetSignatureDigestAlgorithm(&digest_alg)) {
+    LOG(LS_ERROR) << "Failed to retrieve the certificate's digest algorithm";
+    return nullptr;
+  }
+
+  SSLFingerprint* fingerprint = Create(digest_alg, cert->identity());
+  if (!fingerprint) {
+    LOG(LS_ERROR) << "Failed to create identity fingerprint, alg="
+                  << digest_alg;
+  }
+  return fingerprint;
+}
+
+SSLFingerprint::SSLFingerprint(const std::string& algorithm,
+                               const uint8_t* digest_in,
+                               size_t digest_len)
     : algorithm(algorithm) {
   digest.SetData(digest_in, digest_len);
 }
@@ -79,13 +96,13 @@ bool SSLFingerprint::operator==(const SSLFingerprint& other) const {
 
 std::string SSLFingerprint::GetRfc4572Fingerprint() const {
   std::string fingerprint =
-      rtc::hex_encode_with_delimiter(digest.data(), digest.size(), ':');
+      rtc::hex_encode_with_delimiter(digest.data<char>(), digest.size(), ':');
   std::transform(fingerprint.begin(), fingerprint.end(),
                  fingerprint.begin(), ::toupper);
   return fingerprint;
 }
 
-std::string SSLFingerprint::ToString() {
+std::string SSLFingerprint::ToString() const {
   std::string fp_str = algorithm;
   fp_str.append(" ");
   fp_str.append(GetRfc4572Fingerprint());

@@ -23,10 +23,71 @@
 namespace mozilla {
 
 namespace Telemetry {
-  enum ID : uint32_t;
+  enum HistogramID : uint32_t;
 } // namespace Telemetry
 
 namespace image {
+
+struct DecoderFinalStatus final
+{
+  DecoderFinalStatus(bool aWasMetadataDecode,
+                     bool aFinished,
+                     bool aHadError,
+                     bool aShouldReportError)
+    : mWasMetadataDecode(aWasMetadataDecode)
+    , mFinished(aFinished)
+    , mHadError(aHadError)
+    , mShouldReportError(aShouldReportError)
+  { }
+
+  /// True if this was a metadata decode.
+  const bool mWasMetadataDecode : 1;
+
+  /// True if this decoder finished, whether successfully or due to failure.
+  const bool mFinished : 1;
+
+  /// True if this decoder encountered an error.
+  const bool mHadError : 1;
+
+  /// True if this decoder encountered the kind of error that should be reported
+  /// to the console.
+  const bool mShouldReportError : 1;
+};
+
+struct DecoderTelemetry final
+{
+  DecoderTelemetry(const Maybe<Telemetry::HistogramID>& aSpeedHistogram,
+                   size_t aBytesDecoded,
+                   uint32_t aChunkCount,
+                   TimeDuration aDecodeTime)
+    : mSpeedHistogram(aSpeedHistogram)
+    , mBytesDecoded(aBytesDecoded)
+    , mChunkCount(aChunkCount)
+    , mDecodeTime(aDecodeTime)
+  { }
+
+  /// @return our decoder's speed, in KBps.
+  int32_t Speed() const
+  {
+    return mBytesDecoded / (1024 * mDecodeTime.ToSeconds());
+  }
+
+  /// @return our decoder's decode time, in microseconds.
+  int32_t DecodeTimeMicros() { return mDecodeTime.ToMicroseconds(); }
+
+  /// The per-image-format telemetry ID for recording our decoder's speed, or
+  /// Nothing() if we don't record speed telemetry for this kind of decoder.
+  const Maybe<Telemetry::HistogramID> mSpeedHistogram;
+
+  /// The number of bytes of input our decoder processed.
+  const size_t mBytesDecoded;
+
+  /// The number of chunks our decoder's input was divided into.
+  const uint32_t mChunkCount;
+
+  /// The amount of time our decoder spent inside DoDecode().
+  const TimeDuration mDecodeTime;
+};
 
 class Decoder
 {
@@ -56,6 +117,17 @@ public:
    *     output (Yield::OUTPUT_AVAILABLE).
    */
   LexerResult Decode(IResumable* aOnResume = nullptr);
+
+  /**
+   * Terminate this decoder in a failure state, just as if the decoder
+   * implementation had returned TerminalState::FAILURE from DoDecode().
+   *
+   * XXX(seth): This method should be removed ASAP; it exists only because
+   * RasterImage::FinalizeDecoder() requires an actual Decoder object as an
+   * argument, so we can't simply tell RasterImage a decode failed except via an
+   * intervening decoder. We'll fix this in bug 1291071.
+   */
+  LexerResult TerminateFailure();
 
   /**
    * Given a maximum number of bytes we're willing to decode, @aByteLimit,
@@ -113,32 +185,52 @@ public:
   bool IsMetadataDecode() const { return mMetadataDecode; }
 
   /**
-   * If this decoder supports downscale-during-decode, sets the target size that
-   * this image should be decoded to.
+   * Sets the output size of this decoder. If this is smaller than the intrinsic
+   * size of the image, we'll downscale it while decoding. For memory usage
+   * reasons, upscaling is forbidden and will trigger assertions in debug
+   * builds.
    *
-   * If the provided size is unacceptable, an error is returned.
+   * Not calling SetOutputSize() means that we should just decode at the
+   * intrinsic size, whatever it is.
    *
-   * Returning NS_OK from this method is a promise that the decoder will decode
-   * the image to the requested target size unless it encounters an error.
+   * If SetOutputSize() was called, ExplicitOutputSize() can be used to
+   * determine the value that was passed to it.
    *
    * This must be called before Init() is called.
    */
-  nsresult SetTargetSize(const gfx::IntSize& aSize);
+  void SetOutputSize(const gfx::IntSize& aSize);
 
   /**
-   * If this decoder supports downscale-during-decode and is configured to
-   * downscale, returns the target size that the output size will be decoded to.
-   * Otherwise, returns Nothing().
-   */
-  Maybe<gfx::IntSize> GetTargetSize();
-
-  /**
-   * Set the requested sample size for this decoder. Used to implement the
-   * -moz-sample-size media fragment.
+   * @return the output size of this decoder. If this is smaller than the
+   * intrinsic size, then the image will be downscaled during the decoding
+   * process.
    *
-   *  XXX(seth): Support for -moz-sample-size will be removed in bug 1120056.
+   * Illegal to call if HasSize() returns false.
    */
-  virtual void SetSampleSize(int aSampleSize) { }
+  gfx::IntSize OutputSize() const { MOZ_ASSERT(HasSize()); return *mOutputSize; }
+
+  /**
+   * @return either the size passed to SetOutputSize() or Nothing(), indicating
+   * that SetOutputSize() was not explicitly called.
+   */
+  Maybe<gfx::IntSize> ExplicitOutputSize() const;
+
+  /**
+   * Sets the expected image size of this decoder. Decoding will fail if this
+   * does not match.
+   */
+  void SetExpectedSize(const gfx::IntSize& aSize)
+  {
+    mExpectedSize.emplace(aSize);
+  }
+
+  /**
+   * Is the image size what was expected, if specified?
+   */
+  bool IsExpectedSize() const
+  {
+    return mExpectedSize.isNothing() || *mExpectedSize == Size();
+  }
 
   /**
    * Set an iterator to the SourceBuffer which will feed data to this decoder.
@@ -169,22 +261,6 @@ public:
     return bool(mDecoderFlags & DecoderFlags::FIRST_FRAME_ONLY);
   }
 
-  size_t BytesDecoded() const
-  {
-    MOZ_ASSERT(mIterator);
-    return mIterator->ByteCount();
-  }
-
-  // The amount of time we've spent inside DoDecode() so far for this decoder.
-  TimeDuration DecodeTime() const { return mDecodeTime; }
-
-  // The number of chunks this decoder's input was divided into.
-  uint32_t ChunkCount() const
-  {
-    MOZ_ASSERT(mIterator);
-    return mIterator->ChunkCount();
-  }
-
   /**
    * @return the number of complete animation frames which have been decoded so
    * far, if it has changed since the last call to TakeCompleteFrameCount();
@@ -203,6 +279,10 @@ public:
   bool HasError() const { return mError; }
   bool ShouldReportError() const { return mShouldReportError; }
 
+  // Finalize frames
+  void SetFinalizeFrames(bool aFinalize) { mFinalizeFrames = aFinalize; }
+  bool GetFinalizeFrames() const { return mFinalizeFrames; }
+
   /// Did we finish decoding enough that calling Decode() again would be useless?
   bool GetDecodeDone() const
   {
@@ -213,19 +293,11 @@ public:
   /// Are we in the middle of a frame right now? Used for assertions only.
   bool InFrame() const { return mInFrame; }
 
-  /// Should we store surfaces created by this decoder in the SurfaceCache?
-  bool ShouldUseSurfaceCache() const { return bool(mImage); }
-
-  /**
-   * Returns true if this decoder was aborted.
-   *
-   * This may happen due to a low-memory condition, or because another decoder
-   * was racing with this one to decode the same frames with the same flags and
-   * this decoder lost the race. Either way, this is not a permanent situation
-   * and does not constitute an error, so we don't report any errors when this
-   * happens.
-   */
-  bool WasAborted() const { return mDecodeAborted; }
+  /// Is the image valid if embedded inside an ICO.
+  virtual bool IsValidICOResource() const
+  {
+    return false;
+  }
 
   enum DecodeStyle {
       PROGRESSIVE, // produce intermediate frames representing the partial
@@ -254,23 +326,63 @@ public:
   }
   SurfaceFlags GetSurfaceFlags() const { return mSurfaceFlags; }
 
+  /// @return true if we know the intrinsic size of the image we're decoding.
   bool HasSize() const { return mImageMetadata.HasSize(); }
 
-  nsIntSize GetSize() const
+  /**
+   * @return the intrinsic size of the image we're decoding.
+   *
+   * Illegal to call if HasSize() returns false.
+   */
+  gfx::IntSize Size() const
   {
     MOZ_ASSERT(HasSize());
     return mImageMetadata.GetSize();
   }
 
-  virtual Telemetry::ID SpeedHistogram();
+  /**
+   * @return an IntRect which covers the entire area of this image at its
+   * intrinsic size, appropriate for use as a frame rect when the image itself
+   * does not specify one.
+   *
+   * Illegal to call if HasSize() returns false.
+   */
+  gfx::IntRect FullFrame() const
+  {
+    return gfx::IntRect(gfx::IntPoint(), Size());
+  }
 
-  ImageMetadata& GetImageMetadata() { return mImageMetadata; }
+  /**
+   * @return an IntRect which covers the entire area of this image at its size
+   * after scaling - that is, at its output size.
+   *
+   * XXX(seth): This is only used for decoders which are using the old
+   * Downscaler code instead of SurfacePipe, since the old AllocateFrame() and
+   * Downscaler APIs required that the frame rect be specified in output space.
+   * We should remove this once all decoders use SurfacePipe.
+   *
+   * Illegal to call if HasSize() returns false.
+   */
+  gfx::IntRect FullOutputFrame() const
+  {
+    return gfx::IntRect(gfx::IntPoint(), OutputSize());
+  }
+
+  /// @return final status information about this decoder. Should be called
+  /// after we decide we're not going to run the decoder anymore.
+  DecoderFinalStatus FinalStatus() const;
+
+  /// @return the metadata we collected about this image while decoding.
+  const ImageMetadata& GetImageMetadata() { return mImageMetadata; }
+
+  /// @return performance telemetry we collected while decoding.
+  DecoderTelemetry Telemetry() const;
 
   /**
    * @return a weak pointer to the image associated with this decoder. Illegal
    * to call if this decoder is not associated with an image.
    */
-  RasterImage* GetImage() const { MOZ_ASSERT(mImage); return mImage.get(); }
+  NotNull<RasterImage*> GetImage() const { return WrapNotNull(mImage.get()); }
 
   /**
    * @return a possibly-null weak pointer to the image associated with this
@@ -308,6 +420,14 @@ protected:
   virtual nsresult BeforeFinishInternal();
   virtual nsresult FinishInternal();
   virtual nsresult FinishWithErrorInternal();
+
+  /**
+   * @return the per-image-format telemetry ID for recording this decoder's
+   * speed, or Nothing() if we don't record speed telemetry for this kind of
+   * decoder.
+   */
+  virtual Maybe<Telemetry::HistogramID> SpeedHistogram() const { return Nothing(); }
+
 
   /*
    * Progress notifications.
@@ -354,13 +474,13 @@ protected:
    *
    * @param aRect The invalidation rect in the coordinate system of the unscaled
    *              image (that is, the image at its intrinsic size).
-   * @param aRectAtTargetSize If not Nothing(), the invalidation rect in the
+   * @param aRectAtOutputSize If not Nothing(), the invalidation rect in the
    *                          coordinate system of the scaled image (that is,
-   *                          the image at our target decoding size). This must
+   *                          the image at our output size). This must
    *                          be supplied if we're downscaling during decode.
    */
-  void PostInvalidation(const nsIntRect& aRect,
-                        const Maybe<nsIntRect>& aRectAtTargetSize = Nothing());
+  void PostInvalidation(const gfx::IntRect& aRect,
+                        const Maybe<gfx::IntRect>& aRectAtOutputSize = Nothing());
 
   // Called by the decoders when they have successfully decoded the image. This
   // may occur as the result of the decoder getting to the appropriate point in
@@ -381,17 +501,10 @@ protected:
    * If a non-paletted frame is desired, pass 0 for aPaletteDepth.
    */
   nsresult AllocateFrame(uint32_t aFrameNum,
-                         const nsIntSize& aTargetSize,
-                         const nsIntRect& aFrameRect,
+                         const gfx::IntSize& aOutputSize,
+                         const gfx::IntRect& aFrameRect,
                          gfx::SurfaceFormat aFormat,
                          uint8_t aPaletteDepth = 0);
-
-  /// Helper method for decoders which only have 'basic' frame allocation needs.
-  nsresult AllocateBasicFrame() {
-    nsIntSize size = GetSize();
-    return AllocateFrame(0, size, nsIntRect(nsIntPoint(), size),
-                         gfx::SurfaceFormat::B8G8R8A8);
-  }
 
 private:
   /// Report that an error was encountered while decoding.
@@ -416,8 +529,8 @@ private:
   }
 
   RawAccessFrameRef AllocateFrameInternal(uint32_t aFrameNum,
-                                          const nsIntSize& aTargetSize,
-                                          const nsIntRect& aFrameRect,
+                                          const gfx::IntSize& aOutputSize,
+                                          const gfx::IntRect& aFrameRect,
                                           gfx::SurfaceFormat aFormat,
                                           uint8_t aPaletteDepth,
                                           imgFrame* aPreviousFrame);
@@ -435,7 +548,9 @@ private:
   Maybe<SourceBufferIterator> mIterator;
   RawAccessFrameRef mCurrentFrame;
   ImageMetadata mImageMetadata;
-  nsIntRect mInvalidRect; // Tracks an invalidation region in the current frame.
+  gfx::IntRect mInvalidRect; // Tracks an invalidation region in the current frame.
+  Maybe<gfx::IntSize> mOutputSize;  // The size of our output surface.
+  Maybe<gfx::IntSize> mExpectedSize; // The expected size of the image.
   Progress mProgress;
 
   uint32_t mFrameCount; // Number of frames, including anything in-progress
@@ -451,14 +566,15 @@ private:
 
   bool mInitialized : 1;
   bool mMetadataDecode : 1;
+  bool mHaveExplicitOutputSize : 1;
   bool mInFrame : 1;
   bool mFinishedNewFrame : 1;  // True if PostFrameStop() has been called since
                                // the last call to TakeCompleteFrameCount().
   bool mReachedTerminalState : 1;
   bool mDecodeDone : 1;
   bool mError : 1;
-  bool mDecodeAborted : 1;
   bool mShouldReportError : 1;
+  bool mFinalizeFrames : 1;
 };
 
 } // namespace image

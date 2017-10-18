@@ -27,8 +27,8 @@ function oneShotListener(aElem, aType, aCallback) {
 }
 
 function waitForPageshow(aBrowser, callback) {
-  return ContentTask.spawn(aBrowser, null, function* () {
-    yield ContentTaskUtils.waitForEvent(this, "pageshow");
+  return ContentTask.spawn(aBrowser, null, async function() {
+    await ContentTaskUtils.waitForEvent(this, "pageshow");
   }).then(callback);
 }
 
@@ -52,7 +52,7 @@ function step1() {
   ok(ctx.tab0Browser.docShellIsActive, "Tab 0 should be active at test start");
 
   // Open a New Tab
-  ctx.tab1 = gBrowser.addTab(testPath + "bug343515_pg1.html");
+  ctx.tab1 = BrowserTestUtils.addTab(gBrowser, testPath + "bug343515_pg1.html");
   ctx.tab1Browser = gBrowser.getBrowserForTab(ctx.tab1);
   oneShotListener(ctx.tab1Browser, "load", step2);
 }
@@ -72,7 +72,7 @@ function step2() {
     ok(ctx.tab1Browser.docShellIsActive, "Tab 1 should be active");
 
     // Open another tab
-    ctx.tab2 = gBrowser.addTab(testPath + "bug343515_pg2.html");
+    ctx.tab2 = BrowserTestUtils.addTab(gBrowser, testPath + "bug343515_pg2.html");
     ctx.tab2Browser = gBrowser.getBrowserForTab(ctx.tab2);
 
     // bug343515_pg2.html consists of a page with two iframes,
@@ -91,7 +91,7 @@ function step3() {
 
   // Tab 2's window _and_ its iframes should be inactive
   ok(!ctx.tab2Browser.docShellIsActive, "Tab 2 should be inactive");
-  ContentTask.spawn(ctx.tab2Browser, null, function* () {
+  ContentTask.spawn(ctx.tab2Browser, null, async function() {
     Assert.equal(content.frames.length, 2, "Tab 2 should have 2 iframes");
     for (var i = 0; i < content.frames.length; i++) {
       info("step 3, frame " + i + " info: " + content.frames[i].location);
@@ -113,7 +113,7 @@ function step3() {
 
 function step4() {
   function checkTab2Active(expected) {
-    return ContentTask.spawn(ctx.tab2Browser, expected, function* (expected) {
+    return ContentTask.spawn(ctx.tab2Browser, expected, async function(expected) {
       function isActive(aWindow) {
         var docshell = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebNavigation)
@@ -163,7 +163,7 @@ function step5() {
   ok(!ctx.tab0Browser.docShellIsActive, "Tab 0 should be inactive");
   ok(!ctx.tab1Browser.docShellIsActive, "Tab 1 should be inactive");
   ok(ctx.tab2Browser.docShellIsActive, "Tab 2 should be active");
-  ContentTask.spawn(ctx.tab2Browser, null, function* () {
+  ContentTask.spawn(ctx.tab2Browser, null, async function() {
     for (var i = 0; i < content.frames.length; i++) {
       let docshell = content.frames[i].QueryInterface(Ci.nsIInterfaceRequestor)
                                       .getInterface(Ci.nsIWebNavigation)
@@ -189,7 +189,7 @@ function step6() {
   // Check everything
   ok(!ctx.tab0Browser.docShellIsActive, "Tab 0 should be inactive");
   ok(ctx.tab1Browser.docShellIsActive, "Tab 1 should be active");
-  ContentTask.spawn(ctx.tab1Browser, null, function* () {
+  ContentTask.spawn(ctx.tab1Browser, null, async function() {
     function isActive(aWindow) {
       var docshell = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                             .getInterface(Ci.nsIWebNavigation)
@@ -202,7 +202,7 @@ function step6() {
     Assert.ok(isActive(content.frames[1]), "Tab1 iframe 1 should be active");
   }).then(() => {
     ok(!ctx.tab2Browser.docShellIsActive, "Tab 2 should be inactive");
-    return ContentTask.spawn(ctx.tab2Browser, null, function* () {
+    return ContentTask.spawn(ctx.tab2Browser, null, async function() {
       for (var i = 0; i < content.frames.length; i++) {
         let docshell = content.frames[i].QueryInterface(Ci.nsIInterfaceRequestor)
                                         .getInterface(Ci.nsIWebNavigation)
@@ -221,7 +221,7 @@ function step6() {
 function step7() {
   function checkBrowser(browser, tabNum, active) {
     return ContentTask.spawn(browser, { tabNum, active },
-                             function* ({ tabNum, active }) {
+                             async function({ tabNum, active }) {
              function isActive(aWindow) {
                var docshell = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                                      .getInterface(Ci.nsIWebNavigation)

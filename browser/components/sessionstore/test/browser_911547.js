@@ -5,39 +5,48 @@
 // security policy with the document.
 // The policy being tested disallows inline scripts
 
-add_task(function* test() {
+add_task(async function test() {
   // create a tab that has a CSP
   let testURL = "http://mochi.test:8888/browser/browser/components/sessionstore/test/browser_911547_sample.html";
-  let tab = gBrowser.selectedTab = gBrowser.addTab(testURL);
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, testURL);
   gBrowser.selectedTab = tab;
 
   let browser = tab.linkedBrowser;
-  yield promiseBrowserLoaded(browser);
+  await promiseBrowserLoaded(browser);
 
   // this is a baseline to ensure CSP is active
   // attempt to inject and run a script via inline (pre-restore, allowed)
-  injectInlineScript(browser,'document.getElementById("test_id").value = "fail";');
-  is(browser.contentDocument.getElementById("test_id").value, "ok",
-     "CSP should block the inline script that modifies test_id");
+  await injectInlineScript(browser, `document.getElementById("test_id").value = "fail";`);
 
-  // attempt to click a link to a data: URI (will inherit the CSP of the
-  // origin document) and navigate to the data URI in the link.
-  browser.contentDocument.getElementById("test_data_link").click();
-  yield promiseBrowserLoaded(browser);
+  let loadedPromise = promiseBrowserLoaded(browser);
+  await ContentTask.spawn(browser, null, function() {
+    is(content.document.getElementById("test_id").value, "ok",
+       "CSP should block the inline script that modifies test_id");
 
-  is(browser.contentDocument.getElementById("test_id2").value, "ok",
-     "CSP should block the script loaded by the clicked data URI");
+    // attempt to click a link to a data: URI (will inherit the CSP of the
+    // origin document) and navigate to the data URI in the link.
+    content.document.getElementById("test_data_link").click();
+  });
+
+  await loadedPromise;
+
+  await ContentTask.spawn(browser, null, function() {
+    is(content.document.getElementById("test_id2").value, "ok",
+       "CSP should block the script loaded by the clicked data URI");
+  });
 
   // close the tab
-  yield promiseRemoveTab(tab);
+  await promiseRemoveTab(tab);
 
   // open new tab and recover the state
   tab = ss.undoCloseTab(window, 0);
-  yield promiseTabRestored(tab);
+  await promiseTabRestored(tab);
   browser = tab.linkedBrowser;
 
-  is(browser.contentDocument.getElementById("test_id2").value, "ok",
-     "CSP should block the script loaded by the clicked data URI after restore");
+  await ContentTask.spawn(browser, null, function() {
+    is(content.document.getElementById("test_id2").value, "ok",
+       "CSP should block the script loaded by the clicked data URI after restore");
+  });
 
   // clean up
   gBrowser.removeTab(tab);
@@ -45,8 +54,10 @@ add_task(function* test() {
 
 // injects an inline script element (with a text body)
 function injectInlineScript(browser, scriptText) {
-  let scriptElt = browser.contentDocument.createElement("script");
-  scriptElt.type = 'text/javascript';
-  scriptElt.text = scriptText;
-  browser.contentDocument.body.appendChild(scriptElt);
+  return ContentTask.spawn(browser, scriptText, function(text) {
+    let scriptElt = content.document.createElement("script");
+    scriptElt.type = "text/javascript";
+    scriptElt.text = text;
+    content.document.body.appendChild(scriptElt);
+  });
 }

@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var AboutTabCrashed = {
   /**
    * This can be set to true once this page receives a message from the
@@ -60,9 +62,9 @@ var AboutTabCrashed = {
   },
 
   receiveMessage(message) {
-    switch(message.name) {
+    switch (message.name) {
       case "UpdateCount": {
-        this.showRestoreAll(message.data.count > 1);
+        this.setMultiple(message.data.count > 1);
         break;
       }
       case "SetCrashReportAvailable": {
@@ -86,6 +88,10 @@ var AboutTabCrashed = {
         this.onClick(event);
         break;
       }
+      case "input": {
+        this.onInput(event);
+        break;
+      }
     }
   },
 
@@ -95,15 +101,18 @@ var AboutTabCrashed = {
       el.addEventListener("click", this);
     });
 
+    // For setting "emailMe" checkbox automatically on email value change.
+    document.getElementById("email").addEventListener("input", this);
+
     // Error pages are loaded as LOAD_BACKGROUND, so they don't get load events.
-    let event = new CustomEvent("AboutTabCrashedLoad", {bubbles:true});
+    let event = new CustomEvent("AboutTabCrashedLoad", {bubbles: true});
     document.dispatchEvent(event);
 
     sendAsyncMessage("Load");
   },
 
   onClick(event) {
-    switch(event.target.id) {
+    switch (event.target.id) {
       case "closeTab": {
         this.sendMessage("closeTab");
         break;
@@ -126,6 +135,14 @@ var AboutTabCrashed = {
     }
   },
 
+  onInput(event) {
+    switch (event.target.id) {
+      case "email": {
+        document.getElementById("emailMe").checked = !!event.target.value;
+        break;
+      }
+    }
+  },
   /**
    * After this page tells the parent that it has loaded, the parent
    * will respond with whether or not a crash report is available. This
@@ -136,11 +153,11 @@ var AboutTabCrashed = {
    *        Object property with the following properties:
    *
    *        hasReport (bool):
-   *          Whether or not there is a crash report
+   *          Whether or not there is a crash report.
    *
    *        sendReport (bool):
    *          Whether or not the the user prefers to send the report
-   *          by default
+   *          by default.
    *
    *        includeURL (bool):
    *          Whether or not the user prefers to send the URL of
@@ -151,26 +168,41 @@ var AboutTabCrashed = {
    *          in the report.
    *
    *        email (String):
-   *          The email address of the user (empty if emailMe is false)
+   *          The email address of the user (empty if emailMe is false).
+   *
+   *        requestAutoSubmit (bool):
+   *          Whether or not we should ask the user to automatically
+   *          submit backlogged crash reports.
    *
    */
   onSetCrashReportAvailable(message) {
-    if (message.data.hasReport) {
+    let data = message.data;
+
+    if (data.hasReport) {
       this.hasReport = true;
       document.documentElement.classList.add("crashDumpAvailable");
 
-      let data = message.data;
       document.getElementById("sendReport").checked = data.sendReport;
       document.getElementById("includeURL").checked = data.includeURL;
-      document.getElementById("emailMe").checked = data.emailMe;
-      if (data.emailMe) {
-        document.getElementById("email").value = data.email;
+
+      if (data.requestEmail) {
+        document.getElementById("requestEmail").hidden = false;
+        document.getElementById("emailMe").checked = data.emailMe;
+        if (data.emailMe) {
+          document.getElementById("email").value = data.email;
+        }
       }
 
       this.showCrashReportUI(data.sendReport);
+    } else {
+      this.showCrashReportUI(false);
     }
 
-    let event = new CustomEvent("AboutTabCrashedReady", {bubbles:true});
+    if (data.requestAutoSubmit) {
+      document.getElementById("requestAutoSubmit").hidden = false;
+    }
+
+    let event = new CustomEvent("AboutTabCrashedReady", {bubbles: true});
     document.dispatchEvent(event);
   },
 
@@ -190,24 +222,29 @@ var AboutTabCrashed = {
    *        True if the crash report form should be shown
    */
   showCrashReportUI(shouldShow) {
-    let container = document.getElementById("crash-reporter-container");
-    container.hidden = !shouldShow;
+    let options = document.getElementById("options");
+    options.hidden = !shouldShow;
   },
 
   /**
-   * Toggles the display of the "Restore All" button.
+   * Toggles whether or not the page is one of several visible pages
+   * showing the crash reporter. This controls some of the language
+   * on the page, along with what the "primary" button is.
    *
-   * @param shouldShow (bool)
-   *        True if the "Restore All" button should be shown
+   * @param hasMultiple (bool)
+   *        True if there are multiple crash report pages being shown.
    */
-  showRestoreAll(shouldShow) {
-    let restoreAll = document.getElementById("restoreAll");
+  setMultiple(hasMultiple) {
+    let main = document.getElementById("main");
+    main.setAttribute("multiple", hasMultiple);
+
     let restoreTab = document.getElementById("restoreTab");
-    if (shouldShow) {
-      restoreAll.removeAttribute("hidden");
+
+    // The "Restore All" button has the "primary" class by default, so
+    // we only need to modify the "Restore Tab" button.
+    if (hasMultiple) {
       restoreTab.classList.remove("primary");
     } else {
-      restoreAll.setAttribute("hidden", true);
       restoreTab.classList.add("primary");
     }
   },
@@ -228,6 +265,7 @@ var AboutTabCrashed = {
     let sendReport = false;
     let emailMe = false;
     let includeURL = false;
+    let autoSubmit = false;
 
     if (this.hasReport) {
       sendReport = document.getElementById("sendReport").checked;
@@ -239,11 +277,22 @@ var AboutTabCrashed = {
           URL = this.pageData.URL.trim();
         }
 
-        emailMe = document.getElementById("emailMe").checked;
-        if (emailMe) {
-          email = document.getElementById("email").value.trim();
+        if (!document.getElementById("requestEmail").hidden) {
+          emailMe = document.getElementById("emailMe").checked;
+          if (emailMe) {
+            email = document.getElementById("email").value.trim();
+          }
         }
       }
+    }
+
+    let requestAutoSubmit = document.getElementById("requestAutoSubmit");
+    if (requestAutoSubmit.hidden) {
+      // The checkbox is hidden if the user has already opted in to sending
+      // backlogged crash reports.
+      autoSubmit = true;
+    } else {
+      autoSubmit = document.getElementById("autoSubmit").checked;
     }
 
     sendAsyncMessage(messageName, {
@@ -253,6 +302,7 @@ var AboutTabCrashed = {
       emailMe,
       includeURL,
       URL,
+      autoSubmit,
     });
   },
 };

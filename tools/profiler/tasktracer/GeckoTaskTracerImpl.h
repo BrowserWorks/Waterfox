@@ -14,63 +14,141 @@
 namespace mozilla {
 namespace tasktracer {
 
-typedef nsTArray<nsCString> TraceInfoLogsType;
+struct LogRecDispatch {
+  uint32_t mType;
+  uint32_t mSourceEventType;
+  uint64_t mTaskId;
+  uint64_t mTime;
+  uint64_t mSourceEventId;
+  uint64_t mParentTaskId;
+};
+
+struct LogRecBegin {
+  uint32_t mType;
+  uint64_t mTaskId;
+  uint64_t mTime;
+  uint32_t mPid;
+  uint32_t mTid;
+};
+
+struct LogRecEnd {
+  uint32_t mType;
+  uint64_t mTaskId;
+  uint64_t mTime;
+};
+
+struct LogRecVPtr {
+  uint32_t mType;
+  uint64_t mTaskId;
+  uintptr_t mVPtr;
+};
+
+struct LogRecLabel {
+  uint32_t mType;
+  uint32_t mStrIdx;
+  uint64_t mTaskId;
+  uint64_t mTime;
+};
+
+union TraceInfoLogType {
+  uint32_t mType;
+  LogRecDispatch mDispatch;
+  LogRecBegin mBegin;
+  LogRecEnd mEnd;
+  LogRecVPtr mVPtr;
+  LogRecLabel mLabel;
+};
+
+struct TraceInfoLogNode {
+  TraceInfoLogType mLog;
+  TraceInfoLogNode* mNext;
+};
 
 struct TraceInfo
 {
-  TraceInfo(uint32_t aThreadId)
+  explicit TraceInfo(uint32_t aThreadId)
     : mCurTraceSourceId(0)
     , mCurTaskId(0)
-    , mSavedCurTraceSourceId(0)
-    , mSavedCurTaskId(0)
     , mCurTraceSourceType(Unknown)
-    , mSavedCurTraceSourceType(Unknown)
     , mThreadId(aThreadId)
     , mLastUniqueTaskId(0)
     , mObsolete(false)
     , mLogsMutex("TraceInfoMutex")
+    , mLogsHead(nullptr)
+    , mLogsTail(nullptr)
+    , mLogsSize(0)
   {
     MOZ_COUNT_CTOR(TraceInfo);
   }
 
-  ~TraceInfo() { MOZ_COUNT_DTOR(TraceInfo); }
+  ~TraceInfo() {
+    MOZ_COUNT_DTOR(TraceInfo);
+    while (mLogsHead) {
+      auto node = mLogsHead;
+      mLogsHead = node->mNext;
+      delete node;
+    }
+  }
 
-  nsCString* AppendLog();
-  void MoveLogsInto(TraceInfoLogsType& aResult);
+  TraceInfoLogType* AppendLog();
 
   uint64_t mCurTraceSourceId;
   uint64_t mCurTaskId;
-  uint64_t mSavedCurTraceSourceId;
-  uint64_t mSavedCurTaskId;
   SourceEventType mCurTraceSourceType;
-  SourceEventType mSavedCurTraceSourceType;
   uint32_t mThreadId;
   uint32_t mLastUniqueTaskId;
   mozilla::Atomic<bool> mObsolete;
 
-  // This mutex protects the following log array because MoveLogsInto() might
-  // be called on another thread.
+  // This mutex protects the following log
   mozilla::Mutex mLogsMutex;
-  TraceInfoLogsType mLogs;
+  TraceInfoLogNode* mLogsHead;
+  TraceInfoLogNode* mLogsTail;
+  int mLogsSize;
+  nsTArray<nsCString> mStrs;
+};
+
+class TraceInfoHolder {
+public:
+  TraceInfoHolder() : mInfo(nullptr) {}
+  explicit TraceInfoHolder(TraceInfo* aInfo) : mInfo(aInfo) {
+    aInfo->mLogsMutex.AssertNotCurrentThreadOwns(); // in case of recursive
+    aInfo->mLogsMutex.Lock();
+    MOZ_ASSERT(aInfo);
+  }
+  TraceInfoHolder(const TraceInfoHolder& aOther) = delete;
+  TraceInfoHolder(TraceInfoHolder&& aOther) : mInfo(aOther.mInfo) {
+    if (!!aOther) {
+      aOther->mLogsMutex.AssertCurrentThreadOwns();
+    }
+    aOther.mInfo = nullptr;
+  }
+  ~TraceInfoHolder() { if (mInfo) mInfo->mLogsMutex.Unlock(); }
+  explicit operator bool() const { return !!mInfo; }
+  TraceInfo* operator ->() { return mInfo; }
+  bool operator ==(TraceInfo* aOther) const {
+    return mInfo == aOther;
+  }
+  bool operator ==(const TraceInfoHolder& aOther) const {
+    return mInfo == aOther.mInfo;
+  }
+  void Reset() {
+    if (mInfo) {
+      mInfo->mLogsMutex.Unlock();
+      mInfo = nullptr;
+    }
+  }
+
+private:
+  TraceInfo* mInfo;
 };
 
 // Return the TraceInfo of current thread, allocate a new one if not exit.
-TraceInfo* GetOrCreateTraceInfo();
+TraceInfoHolder GetOrCreateTraceInfo();
 
 uint64_t GenNewUniqueTaskId();
 
-class AutoSaveCurTraceInfo
-{
-public:
-  AutoSaveCurTraceInfo();
-  ~AutoSaveCurTraceInfo();
-};
-
 void SetCurTraceInfo(uint64_t aSourceEventId, uint64_t aParentTaskId,
                      SourceEventType aSourceEventType);
-
-void GetCurTraceInfo(uint64_t* aOutSourceEventId, uint64_t* aOutParentTaskId,
-                     SourceEventType* aOutSourceEventType);
 
 /**
  * Logging functions of different trace actions.

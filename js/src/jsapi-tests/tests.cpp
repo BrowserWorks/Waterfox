@@ -18,6 +18,7 @@ bool JSAPITest::init()
     cx = createContext();
     if (!cx)
         return false;
+    js::UseInternalJobQueues(cx);
     if (!JS::InitSelfHostedCode(cx))
         return false;
     JS_BeginRequest(cx);
@@ -82,6 +83,10 @@ JSObject* JSAPITest::createGlobal(JSPrincipals* principals)
     /* Create the global object. */
     JS::RootedObject newGlobal(cx);
     JS::CompartmentOptions options;
+#ifdef ENABLE_STREAMS
+    options.creationOptions().setStreamsEnabled(true);
+#endif
+    printf("enabled\n");
     options.behaviors().setVersion(JSVERSION_LATEST);
     newGlobal = JS_NewGlobalObject(cx, getGlobalClass(), principals, JS::FireOnNewGlobalHook,
                                    options);
@@ -138,6 +143,7 @@ int main(int argc, char* argv[])
         test->uninit();
     }
 
+    MOZ_RELEASE_ASSERT(!JSRuntime::hasLiveRuntimes());
     JS_ShutDown();
 
     if (failures) {

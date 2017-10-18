@@ -19,7 +19,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gContentSecurityManager",
                                    "@mozilla.org/contentsecuritymanager;1",
                                    "nsIContentSecurityManager");
 
-add_task(function* test_isOriginPotentiallyTrustworthy() {
+var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
+prefs.setCharPref("dom.securecontext.whitelist", "example.net,example.org");
+
+add_task(async function test_isOriginPotentiallyTrustworthy() {
   for (let [uriSpec, expectedResult] of [
     ["http://example.com/", false],
     ["https://example.com/", true],
@@ -28,8 +31,11 @@ add_task(function* test_isOriginPotentiallyTrustworthy() {
     ["file:///", true],
     ["resource:///", true],
     ["moz-extension://", true],
+    ["wss://example.com/", true],
     ["about:config", false],
-    ["urn:generic", false],
+    ["http://example.net/", true],
+    ["ws://example.org/", true],
+    ["chrome://example.net/content/messenger.xul", false],
   ]) {
     let uri = NetUtil.newURI(uriSpec);
     let principal = gScriptSecurityManager.getCodebasePrincipal(uri);

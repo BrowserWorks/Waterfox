@@ -2,15 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "pk11func.h"
+#include "PSMRunnable.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
-#include "PSMRunnable.h"
-#include "nsString.h"
-#include "nsReadableUtils.h"
+#include "GeckoProfiler.h"
 #include "nsPKCS11Slot.h"
 #include "nsProtectedAuthThread.h"
+#include "nsReadableUtils.h"
+#include "nsString.h"
+#include "nsThreadUtils.h"
+#include "pk11func.h"
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -19,7 +22,8 @@ NS_IMPL_ISUPPORTS(nsProtectedAuthThread, nsIProtectedAuthThread)
 
 static void nsProtectedAuthThreadRunner(void *arg)
 {
-    PR_SetCurrentThreadName("Protected Auth");
+    AutoProfilerRegisterThread registerThread("Protected Auth");
+    NS_SetCurrentThreadName("Protected Auth");
 
     nsProtectedAuthThread *self = static_cast<nsProtectedAuthThread *>(arg);
     self->Run();
@@ -42,13 +46,13 @@ nsProtectedAuthThread::~nsProtectedAuthThread()
 NS_IMETHODIMP nsProtectedAuthThread::Login(nsIObserver *aObserver)
 {
     NS_ENSURE_ARG(aObserver);
-    
+
     if (!mSlot)
         // We need pointer to the slot
         return NS_ERROR_FAILURE;
 
     MutexAutoLock lock(mMutex);
-    
+
     if (mIAmRunning || mLoginReady) {
         return NS_OK;
     }
@@ -61,14 +65,14 @@ NS_IMETHODIMP nsProtectedAuthThread::Login(nsIObserver *aObserver)
     }
 
     mIAmRunning = true;
-    
-    mThreadHandle = PR_CreateThread(PR_USER_THREAD, nsProtectedAuthThreadRunner, static_cast<void*>(this), 
+
+    mThreadHandle = PR_CreateThread(PR_USER_THREAD, nsProtectedAuthThreadRunner, static_cast<void*>(this),
         PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
-    
+
     // bool thread_started_ok = (threadHandle != nullptr);
     // we might want to return "thread started ok" to caller in the future
-    NS_ASSERTION(mThreadHandle, "Could not create nsProtectedAuthThreadRunner thread\n");
-    
+    MOZ_ASSERT(mThreadHandle,
+               "Could not create nsProtectedAuthThreadRunner thread");
     return NS_OK;
 }
 
@@ -108,7 +112,7 @@ SECStatus nsProtectedAuthThread::GetResult()
 
 void nsProtectedAuthThread::Run(void)
 {
-    // Login with null password. This call will also do C_Logout() but 
+    // Login with null password. This call will also do C_Logout() but
     // it is harmless here
     mLoginResult = PK11_CheckUserPassword(mSlot, 0);
 
@@ -128,11 +132,11 @@ void nsProtectedAuthThread::Run(void)
 
         notifyObserver.swap(mNotifyObserver);
     }
-    
+
     if (notifyObserver) {
         DebugOnly<nsresult> rv = NS_DispatchToMainThread(notifyObserver);
-	NS_ASSERTION(NS_SUCCEEDED(rv),
-		     "failed to dispatch protected auth observer to main thread");
+	MOZ_ASSERT(NS_SUCCEEDED(rv),
+		   "Failed to dispatch protected auth observer to main thread");
     }
 }
 
@@ -140,7 +144,7 @@ void nsProtectedAuthThread::Join()
 {
     if (!mThreadHandle)
         return;
-    
+
     PR_JoinThread(mThreadHandle);
     mThreadHandle = nullptr;
 }

@@ -74,7 +74,7 @@ convertResultCode(int aSQLiteResultCode)
   message.AppendLiteral("SQLite returned error code ");
   message.AppendInt(rc);
   message.AppendLiteral(" , Storage will convert it to NS_ERROR_FAILURE");
-  NS_WARN_IF_FALSE(rc == SQLITE_ERROR, message.get());
+  NS_WARNING_ASSERTION(rc == SQLITE_ERROR, message.get());
 #endif
   return NS_ERROR_FAILURE;
 }
@@ -117,7 +117,7 @@ checkAndLogStatementPerformance(sqlite3_stmt *aStatement)
 nsIVariant *
 convertJSValToVariant(
   JSContext *aCtx,
-  JS::Value aValue)
+  const JS::Value& aValue)
 {
   if (aValue.isInt32())
     return new IntegerVariant(aValue.toInt32());
@@ -251,12 +251,13 @@ namespace {
 class CallbackEvent : public Runnable
 {
 public:
-  explicit CallbackEvent(mozIStorageCompletionCallback *aCallback)
-  : mCallback(aCallback)
+  explicit CallbackEvent(mozIStorageCompletionCallback* aCallback)
+    : Runnable("storage::CallbackEvent")
+    , mCallback(aCallback)
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     (void)mCallback->Complete(NS_OK, nullptr);
     return NS_OK;

@@ -40,10 +40,28 @@
 #ifndef GCPolicyAPI_h
 #define GCPolicyAPI_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 
 #include "js/TraceKind.h"
 #include "js/TracingAPI.h"
+
+// Expand the given macro D for each public GC pointer.
+#define FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
+    D(JS::Symbol*) \
+    D(JSAtom*) \
+    D(JSFunction*) \
+    D(JSObject*) \
+    D(JSScript*) \
+    D(JSString*)
+
+// Expand the given macro D for each public tagged GC pointer type.
+#define FOR_EACH_PUBLIC_TAGGED_GC_POINTER_TYPE(D) \
+    D(JS::Value) \
+    D(jsid)
+
+#define FOR_EACH_PUBLIC_AGGREGATE_GC_POINTER_TYPE(D) \
+    D(JSPropertyDescriptor)
 
 class JSAtom;
 class JSFunction;
@@ -102,6 +120,11 @@ struct GCPointerPolicy
         if (*vp)
             js::UnsafeTraceManuallyBarrieredEdge(trc, vp, name);
     }
+    static bool needsSweep(T* vp) {
+        if (*vp)
+            return js::gc::IsAboutToBeFinalizedUnbarriered(vp);
+        return false;
+    }
 };
 template <> struct GCPolicy<JS::Symbol*> : public GCPointerPolicy<JS::Symbol*> {};
 template <> struct GCPolicy<JSAtom*> : public GCPointerPolicy<JSAtom*> {};
@@ -117,7 +140,7 @@ struct GCPolicy<JS::Heap<T>>
         TraceEdge(trc, thingp, name);
     }
     static bool needsSweep(JS::Heap<T>* thingp) {
-        return js::gc::EdgeNeedsSweep(thingp);
+        return *thingp && js::gc::EdgeNeedsSweep(thingp);
     }
 };
 
@@ -127,10 +150,30 @@ struct GCPolicy<mozilla::UniquePtr<T, D>>
 {
     static mozilla::UniquePtr<T,D> initial() { return mozilla::UniquePtr<T,D>(); }
     static void trace(JSTracer* trc, mozilla::UniquePtr<T,D>* tp, const char* name) {
-        GCPolicy<T>::trace(trc, tp->get(), name);
+        if (tp->get())
+            GCPolicy<T>::trace(trc, tp->get(), name);
     }
     static bool needsSweep(mozilla::UniquePtr<T,D>* tp) {
-        return GCPolicy<T>::needsSweep(tp->get());
+        if (tp->get())
+            return GCPolicy<T>::needsSweep(tp->get());
+        return false;
+    }
+};
+
+// GCPolicy<Maybe<T>> forwards tracing/sweeping to GCPolicy<T*> if
+// when the Maybe<T> is full.
+template <typename T>
+struct GCPolicy<mozilla::Maybe<T>>
+{
+    static mozilla::Maybe<T> initial() { return mozilla::Maybe<T>(); }
+    static void trace(JSTracer* trc, mozilla::Maybe<T>* tp, const char* name) {
+        if (tp->isSome())
+            GCPolicy<T>::trace(trc, tp->ptr(), name);
+    }
+    static bool needsSweep(mozilla::Maybe<T>* tp) {
+        if (tp->isSome())
+            return GCPolicy<T>::needsSweep(tp->ptr());
+        return false;
     }
 };
 

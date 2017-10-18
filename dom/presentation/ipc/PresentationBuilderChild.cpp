@@ -5,8 +5,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DCPresentationChannelDescription.h"
+#include "nsComponentManagerUtils.h"
+#include "nsGlobalWindow.h"
 #include "PresentationBuilderChild.h"
 #include "PresentationIPCService.h"
+#include "nsServiceManagerUtils.h"
+#include "mozilla/Unused.h"
 
 namespace mozilla {
 namespace dom {
@@ -36,7 +40,10 @@ nsresult PresentationBuilderChild::Init()
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  if (NS_WARN_IF(NS_FAILED(service->GetWindowIdBySessionId(mSessionId, &windowId)))) {
+  if (NS_WARN_IF(NS_FAILED(service->GetWindowIdBySessionId(
+                           mSessionId,
+                           mRole,
+                           &windowId)))) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -55,43 +62,43 @@ PresentationBuilderChild::ActorDestroy(ActorDestroyReason aWhy)
   mActorDestroyed = true;
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderChild::RecvOnOffer(const nsString& aSDP)
 {
   if (NS_WARN_IF(!mBuilder)) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
 
   if (NS_WARN_IF(NS_FAILED(mBuilder->OnOffer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderChild::RecvOnAnswer(const nsString& aSDP)
 {
   if (NS_WARN_IF(!mBuilder)) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
 
   if (NS_WARN_IF(NS_FAILED(mBuilder->OnAnswer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderChild::RecvOnIceCandidate(const nsString& aCandidate)
 {
   if (NS_WARN_IF(mBuilder && NS_FAILED(mBuilder->OnIceCandidate(aCandidate)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
 // nsPresentationSessionTransportBuilderListener
@@ -104,10 +111,10 @@ PresentationBuilderChild::OnSessionTransport(nsIPresentationSessionTransport* aT
 
   nsCOMPtr<nsIPresentationService> service =
     do_GetService(PRESENTATION_SERVICE_CONTRACTID);
-  NS_WARN_IF(!service);
+  NS_WARNING_ASSERTION(service, "no presentation service");
   if (service) {
-    NS_WARN_IF(NS_FAILED(static_cast<PresentationIPCService*>(service.get())->
-                           NotifySessionTransport(mSessionId, mRole, aTransport)));
+    Unused << NS_WARN_IF(NS_FAILED(static_cast<PresentationIPCService*>(service.get())->
+                                     NotifySessionTransport(mSessionId, mRole, aTransport)));
   }
   mBuilder = nullptr;
   return NS_OK;

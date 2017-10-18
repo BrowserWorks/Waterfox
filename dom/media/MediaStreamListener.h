@@ -7,25 +7,17 @@
 #ifndef MOZILLA_MEDIASTREAMLISTENER_h_
 #define MOZILLA_MEDIASTREAMLISTENER_h_
 
+#include "StreamTracks.h"
+
+#include "MediaStreamGraph.h"
+
 namespace mozilla {
 
+class AudioSegment;
 class MediaStream;
 class MediaStreamGraph;
-
-enum MediaStreamGraphEvent : uint32_t {
-  EVENT_FINISHED,
-  EVENT_REMOVED,
-  EVENT_HAS_DIRECT_LISTENERS, // transition from no direct listeners
-  EVENT_HAS_NO_DIRECT_LISTENERS,  // transition to no direct listeners
-};
-
-// maskable flags, not a simple enumerated value
-enum TrackEventCommand : uint32_t {
-  TRACK_EVENT_NONE = 0x00,
-  TRACK_EVENT_CREATED = 0x01,
-  TRACK_EVENT_ENDED = 0x02,
-  TRACK_EVENT_UNUSED = ~(TRACK_EVENT_ENDED | TRACK_EVENT_CREATED),
-};
+class MediaStreamVideoSink;
+class VideoSegment;
 
 /**
  * This is a base class for media graph thread listener callbacks.
@@ -241,6 +233,9 @@ public:
    * STREAM_NOT_SUPPORTED
    *    While looking for the data source of this track, we found a MediaStream
    *    that is not a SourceMediaStream or a TrackUnionStream.
+   * ALREADY_EXIST
+   *    This DirectMediaStreamTrackListener already exists in the
+   *    SourceMediaStream.
    * SUCCESS
    *    Installation was successful and this listener will start receiving
    *    NotifyRealtimeData on the next AppendToTrack().
@@ -249,34 +244,33 @@ public:
     TRACK_NOT_FOUND_AT_SOURCE,
     TRACK_TYPE_NOT_SUPPORTED,
     STREAM_NOT_SUPPORTED,
+    ALREADY_EXISTS,
     SUCCESS
   };
   virtual void NotifyDirectListenerInstalled(InstallationResult aResult) {}
   virtual void NotifyDirectListenerUninstalled() {}
 
+  virtual MediaStreamVideoSink* AsMediaStreamVideoSink() { return nullptr; }
+
 protected:
   virtual ~DirectMediaStreamTrackListener() {}
 
   void MirrorAndDisableSegment(AudioSegment& aFrom, AudioSegment& aTo);
-  void MirrorAndDisableSegment(VideoSegment& aFrom, VideoSegment& aTo);
+  void MirrorAndDisableSegment(VideoSegment& aFrom,
+                               VideoSegment& aTo,
+                               DisabledTrackMode aMode);
   void NotifyRealtimeTrackDataAndApplyTrackDisabling(MediaStreamGraph* aGraph,
                                                      StreamTime aTrackOffset,
                                                      MediaSegment& aMedia);
 
-  void IncreaseDisabled()
-  {
-    ++mDisabledCount;
-  }
-  void DecreaseDisabled()
-  {
-    --mDisabledCount;
-    MOZ_ASSERT(mDisabledCount >= 0, "Double decrease");
-  }
+  void IncreaseDisabled(DisabledTrackMode aMode);
+  void DecreaseDisabled(DisabledTrackMode aMode);
 
   // Matches the number of disabled streams to which this listener is attached.
   // The number of streams are those between the stream the listener was added
   // and the SourceMediaStream that is the input of the data.
-  Atomic<int32_t> mDisabledCount;
+  Atomic<int32_t> mDisabledFreezeCount;
+  Atomic<int32_t> mDisabledBlackCount;
 
   nsAutoPtr<MediaSegment> mMedia;
 };

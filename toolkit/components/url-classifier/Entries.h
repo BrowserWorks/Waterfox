@@ -15,10 +15,9 @@
 #include "nsICryptoHash.h"
 #include "nsNetUtil.h"
 #include "nsIOutputStream.h"
-
-#if DEBUG
+#include "nsClassHashtable.h"
+#include "nsDataHashtable.h"
 #include "plbase64.h"
-#endif
 
 namespace mozilla {
 namespace safebrowsing {
@@ -30,6 +29,8 @@ namespace safebrowsing {
 template <uint32_t S, class Comparator>
 struct SafebrowsingHash
 {
+  static_assert(S >= 4, "The SafebrowsingHash should be at least 4 bytes.");
+
   static const uint32_t sHashSize = S;
   typedef SafebrowsingHash<S, Comparator> self_type;
   uint8_t buf[S];
@@ -81,14 +82,16 @@ struct SafebrowsingHash
     return Comparator::Compare(buf, aOther.buf) < 0;
   }
 
-#ifdef DEBUG
   void ToString(nsACString& aStr) const {
     uint32_t len = ((sHashSize + 2) / 3) * 4;
+
+    // Capacity should be one greater than length, because PL_Base64Encode
+    // will not be null-terminated, while nsCString requires it.
     aStr.SetCapacity(len + 1);
     PL_Base64Encode((char*)buf, sHashSize, aStr.BeginWriting());
     aStr.BeginWriting()[len] = '\0';
+    aStr.SetLength(len);
   }
-#endif
 
   void ToHexString(nsACString& aStr) const {
     static const char* const lut = "0123456789ABCDEF";
@@ -104,18 +107,24 @@ struct SafebrowsingHash
   }
 
   uint32_t ToUint32() const {
-      return *((uint32_t*)buf);
+    uint32_t n;
+    memcpy(&n, buf, sizeof(n));
+    return n;
   }
   void FromUint32(uint32_t aHash) {
-      *((uint32_t*)buf) = aHash;
+    memcpy(buf, &aHash, sizeof(aHash));
   }
 };
 
 class PrefixComparator {
 public:
   static int Compare(const uint8_t* a, const uint8_t* b) {
-      uint32_t first = *((uint32_t*)a);
-      uint32_t second = *((uint32_t*)b);
+      uint32_t first;
+      memcpy(&first, a, sizeof(uint32_t));
+
+      uint32_t second;
+      memcpy(&second, b, sizeof(uint32_t));
+
       if (first > second) {
           return 1;
       } else if (first == second) {
@@ -253,6 +262,7 @@ typedef FallibleTArray<AddPrefix>   AddPrefixArray;
 typedef FallibleTArray<AddComplete> AddCompleteArray;
 typedef FallibleTArray<SubPrefix>   SubPrefixArray;
 typedef FallibleTArray<SubComplete> SubCompleteArray;
+typedef FallibleTArray<Prefix>      MissPrefixArray;
 
 /**
  * Compares chunks by their add chunk, then their prefix.
@@ -303,6 +313,57 @@ WriteTArray(nsIOutputStream* aStream, nsTArray_Impl<T, Alloc>& aArray)
   return aStream->Write(reinterpret_cast<char*>(aArray.Elements()),
                         aArray.Length() * sizeof(T),
                         &written);
+}
+
+typedef nsClassHashtable<nsUint32HashKey, nsCString> PrefixStringMap;
+
+typedef nsDataHashtable<nsCStringHashKey, int64_t> TableFreshnessMap;
+
+typedef nsCStringHashKey FullHashString;
+
+typedef nsDataHashtable<FullHashString, int64_t> FullHashExpiryCache;
+
+struct CachedFullHashResponse {
+  int64_t negativeCacheExpirySec;
+
+  // Map contains all matches found in Fullhash response, this field might be empty.
+  FullHashExpiryCache fullHashes;
+
+  CachedFullHashResponse& operator=(const CachedFullHashResponse& aOther) {
+    negativeCacheExpirySec = aOther.negativeCacheExpirySec;
+
+    fullHashes.Clear();
+    for (auto iter = aOther.fullHashes.ConstIter(); !iter.Done(); iter.Next()) {
+      fullHashes.Put(iter.Key(), iter.Data());
+    }
+
+    return *this;
+  }
+
+  bool operator==(const CachedFullHashResponse& aOther) const {
+    if (negativeCacheExpirySec != aOther.negativeCacheExpirySec ||
+        fullHashes.Count() != aOther.fullHashes.Count()) {
+      return false;
+    }
+    for (auto iter = fullHashes.ConstIter(); !iter.Done(); iter.Next()) {
+      if (iter.Data() != aOther.fullHashes.Get(iter.Key())) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+typedef nsClassHashtable<nsUint32HashKey, CachedFullHashResponse> FullHashResponseMap;
+
+template<class T>
+void
+CopyClassHashTable(const T& aSource, T& aDestination)
+{
+  for (auto iter = aSource.ConstIter(); !iter.Done(); iter.Next()) {
+    auto value = aDestination.LookupOrAdd(iter.Key());
+    *value = *(iter.Data());
+  }
 }
 
 } // namespace safebrowsing

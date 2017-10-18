@@ -24,6 +24,7 @@ typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindAttribLocationProc)(GrGLuint prog
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindBufferProc)(GrGLenum target, GrGLuint buffer);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindFramebufferProc)(GrGLenum target, GrGLuint framebuffer);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindRenderbufferProc)(GrGLenum target, GrGLuint renderbuffer);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindImageTextureProc)(GrGLuint unit, GrGLuint texture, GrGLint level, GrGLboolean layered, GrGLint layer, GrGLenum access, GrGLenum format);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindTextureProc)(GrGLenum target, GrGLuint texture);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindFragDataLocationProc)(GrGLuint program, GrGLuint colorNumber, const GrGLchar* name);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLBindFragDataLocationIndexedProc)(GrGLuint program, GrGLuint colorNumber, GrGLuint index, const GrGLchar * name);
@@ -60,12 +61,13 @@ typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDisableProc)(GrGLenum cap);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDisableVertexAttribArrayProc)(GrGLuint index);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawArraysProc)(GrGLenum mode, GrGLint first, GrGLsizei count);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawArraysInstancedProc)(GrGLenum mode, GrGLint first, GrGLsizei count, GrGLsizei primcount);
-typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawArraysIndirectProc)(GrGLenum mode, GrGLvoid* indirect);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawArraysIndirectProc)(GrGLenum mode, const GrGLvoid* indirect);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawBufferProc)(GrGLenum mode);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawBuffersProc)(GrGLsizei n, const GrGLenum* bufs);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawElementsProc)(GrGLenum mode, GrGLsizei count, GrGLenum type, const GrGLvoid* indices);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawElementsInstancedProc)(GrGLenum mode, GrGLsizei count, GrGLenum type, const GrGLvoid *indices, GrGLsizei primcount);
-typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawElementsIndirectProc)(GrGLenum mode, GrGLenum type, GrGLvoid* indirect);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawElementsIndirectProc)(GrGLenum mode, GrGLenum type, const GrGLvoid* indirect);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDrawRangeElementsProc)(GrGLenum mode, GrGLuint start, GrGLuint end, GrGLsizei count, GrGLenum type, const GrGLvoid* indices);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLEnableProc)(GrGLenum cap);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLEnableVertexAttribArrayProc)(GrGLuint index);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLEndQueryProc)(GrGLenum target);
@@ -117,7 +119,10 @@ typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMapBufferProc)(GrGLenum target, GrGL
 typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMapBufferRangeProc)(GrGLenum target, GrGLintptr offset, GrGLsizeiptr length, GrGLbitfield access);
 typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMapBufferSubDataProc)(GrGLuint target, GrGLintptr offset, GrGLsizeiptr size, GrGLenum access);
 typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMapTexSubImage2DProc)(GrGLenum target, GrGLint level, GrGLint xoffset, GrGLint yoffset, GrGLsizei width, GrGLsizei height, GrGLenum format, GrGLenum type, GrGLenum access);
+typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMemoryBarrierProc)(GrGLbitfield barriers);
+typedef GrGLvoid* (GR_GL_FUNCTION_TYPE* GrGLMemoryBarrierByRegionProc)(GrGLbitfield barriers);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPixelStoreiProc)(GrGLenum pname, GrGLint param);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPolygonModeProc)(GrGLenum face, GrGLenum mode);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPopGroupMarkerProc)();
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPushGroupMarkerProc)(GrGLsizei length, const char* marker);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLQueryCounterProc)(GrGLuint id, GrGLenum target);
@@ -143,6 +148,7 @@ typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLStencilMaskSeparateProc)(GrGLenum fac
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLStencilOpProc)(GrGLenum fail, GrGLenum zfail, GrGLenum zpass);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLStencilOpSeparateProc)(GrGLenum face, GrGLenum fail, GrGLenum zfail, GrGLenum zpass);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTexBufferProc)(GrGLenum target, GrGLenum internalformat, GrGLuint buffer);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTexBufferRangeProc)(GrGLenum target, GrGLenum internalformat, GrGLuint buffer, GrGLintptr offset, GrGLsizeiptr size);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTexImage2DProc)(GrGLenum target, GrGLint level, GrGLint internalformat, GrGLsizei width, GrGLsizei height, GrGLint border, GrGLenum format, GrGLenum type, const GrGLvoid* pixels);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTexParameteriProc)(GrGLenum target, GrGLenum pname, GrGLint param);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTexParameterivProc)(GrGLenum target, GrGLenum pname, const GrGLint* params);
@@ -343,6 +349,12 @@ typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLFlushMappedNamedBufferRangeProc)(GrGL
 // OpenGL 3.1
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLTextureBufferProc)(GrGLuint texture, GrGLenum target, GrGLenum internalformat, GrGLuint buffer);
 
+/* ARB_sync */
+typedef GrGLsync (GR_GL_FUNCTION_TYPE* GrGLFenceSyncProc)(GrGLenum condition, GrGLbitfield flags);
+typedef GrGLenum (GR_GL_FUNCTION_TYPE* GrGLClientWaitSyncProc)(GrGLsync sync, GrGLbitfield flags, GrGLuint64 timeout);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLWaitSyncProc)(GrGLsync sync, GrGLbitfield flags, GrGLuint64 timeout);
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDeleteSyncProc)(GrGLsync sync);
+
 /* KHR_debug */
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDebugMessageControlProc)(GrGLenum source, GrGLenum type, GrGLenum severity, GrGLsizei count, const GrGLuint* ids, GrGLboolean enabled);
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLDebugMessageInsertProc)(GrGLenum source, GrGLenum type, GrGLuint id, GrGLenum severity, GrGLsizei length,  const GrGLchar* buf);
@@ -352,6 +364,9 @@ typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPushDebugGroupProc)(GrGLenum source, 
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLPopDebugGroupProc)();
 typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLObjectLabelProc)(GrGLenum identifier, GrGLuint name, GrGLsizei length, const GrGLchar *label);
 
+/** EXT_window_rectangles */
+typedef GrGLvoid (GR_GL_FUNCTION_TYPE* GrGLWindowRectanglesProc)(GrGLenum mode, GrGLsizei count, const GrGLint box[]);
+
 /** EGL functions */
 typedef const char* (GR_GL_FUNCTION_TYPE* GrEGLQueryStringProc)(GrEGLDisplay dpy, GrEGLint name);
 typedef GrEGLDisplay (GR_GL_FUNCTION_TYPE* GrEGLGetCurrentDisplayProc)();
@@ -359,6 +374,6 @@ typedef GrEGLImage (GR_GL_FUNCTION_TYPE* GrEGLCreateImageProc)(GrEGLDisplay dpy,
 typedef GrEGLBoolean (GR_GL_FUNCTION_TYPE* GrEGLDestroyImageProc)(GrEGLDisplay dpy, GrEGLImage image);
 }  // extern "C"
 
-template <typename GLPTR> using GrGLFunction = std__function<skstd::remove_pointer_t<GLPTR>>;
+template <typename GLPTR> using GrGLFunction = std::function<skstd::remove_pointer_t<GLPTR>>;
 
 #endif

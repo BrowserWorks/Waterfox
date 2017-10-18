@@ -4,10 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('*'):
+    BUG_COMPONENT = ('Core', 'DOM: Security')
+
 TEST_DIRS += ['test']
 
 EXPORTS.mozilla.dom += [
     'ContentVerifier.h',
+    'FramingChecker.h',
     'nsContentSecurityManager.h',
     'nsCSPContext.h',
     'nsCSPService.h',
@@ -20,10 +24,12 @@ EXPORTS.mozilla.dom += [
 
 EXPORTS += [
     'nsContentSecurityManager.h',
+    'nsMixedContentBlocker.h',
 ]
 
 UNIFIED_SOURCES += [
     'ContentVerifier.cpp',
+    'FramingChecker.cpp',
     'nsContentSecurityManager.cpp',
     'nsCSPContext.cpp',
     'nsCSPParser.cpp',
@@ -39,6 +45,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/caps',
+    '/docshell/base',  # for nsDocShell.h
     '/netwerk/base',
 ]
 

@@ -7,6 +7,7 @@
 #define MOZILLA_GFX_SCALEDFONTWIN_H_
 
 #include "ScaledFontBase.h"
+#include <windows.h>
 
 namespace mozilla {
 namespace gfx {
@@ -14,17 +15,19 @@ namespace gfx {
 class ScaledFontWin : public ScaledFontBase
 {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontWin)
-  ScaledFontWin(LOGFONT* aFont, Float aSize);
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontWin, override)
+  ScaledFontWin(const LOGFONT* aFont,
+                const RefPtr<UnscaledFont>& aUnscaledFont,
+                Float aSize);
 
-  virtual FontType GetType() const { return FontType::GDI; }
+  FontType GetType() const override { return FontType::GDI; }
 
-  bool GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton) override;
+  bool GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton) override;
 
-  virtual bool GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton) override;
+  AntialiasMode GetDefaultAAMode() override;
 
 #ifdef USE_SKIA
-  virtual SkTypeface* GetSkTypeface();
+  SkTypeface* GetSkTypeface() override;
 #endif
 
 protected:

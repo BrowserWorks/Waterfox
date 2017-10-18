@@ -35,7 +35,7 @@ AboutFlyWeb.prototype = Object.freeze({
   },
 
   newChannel: function(aURI, aLoadInfo) {
-    let uri = Services.io.newURI("chrome://flyweb/content/aboutFlyWeb.xhtml", null, null);
+    let uri = Services.io.newURI("chrome://flyweb/content/aboutFlyWeb.xhtml");
     let channel = Services.io.newChannelFromURIWithLoadInfo(uri, aLoadInfo);
     channel.originalURI = aURI;
     return channel;
@@ -63,10 +63,9 @@ let windowListener = {
   onOpenWindow: function(aWindow) {
     // Wait for the window to finish loading
     let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
-    domWindow.addEventListener("UIReady", function onLoad() {
-      domWindow.removeEventListener("UIReady", onLoad, false);
+    domWindow.addEventListener("UIReady", function() {
       loadIntoWindow(domWindow);
-    }, false);
+    }, {once: true});
   },
 
   onCloseWindow: function(aWindow) {},
@@ -135,7 +134,7 @@ function uninstall(aData, aReason) {}
 
 function startup(aData, aReason) {
   // Observe pref changes and enable/disable as necessary.
-  Services.prefs.addObserver(FLYWEB_ENABLED_PREF, prefObserver, false);
+  Services.prefs.addObserver(FLYWEB_ENABLED_PREF, prefObserver);
 
   // Only initialize if pref is enabled.
   let enabled = Services.prefs.getBoolPref(FLYWEB_ENABLED_PREF);

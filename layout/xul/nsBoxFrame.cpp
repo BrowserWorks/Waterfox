@@ -17,10 +17,10 @@
 // 1) First thing a box does it goes out and askes each child for its min, max, and preferred sizes.
 // 2) It then adds them up to determine its size.
 // 3) If the box was asked to layout it self intrinically it will layout its children at their preferred size
-//    otherwise it will layout the child at the size it was told to. It will squeeze or stretch its children if 
+//    otherwise it will layout the child at the size it was told to. It will squeeze or stretch its children if
 //    Necessary.
 //
-// However there is a catch. Some html components like block frames can not determine their preferred size. 
+// However there is a catch. Some html components like block frames can not determine their preferred size.
 // this is their size if they were laid out intrinsically. So the box will flow the child to determine this can
 // cache the value.
 
@@ -29,7 +29,7 @@
 // Boxes layout out top down by adding up their children's min, max, and preferred sizes. Only problem is if a incremental
 // reflow occurs. The preferred size of a child deep in the hierarchy could change. And this could change
 // any number of syblings around the box. Basically any children in the reflow chain must have their caches cleared
-// so when asked for there current size they can relayout themselves. 
+// so when asked for there current size they can relayout themselves.
 
 #include "nsBoxFrame.h"
 
@@ -98,7 +98,8 @@ nsIFrame* nsBoxFrame::mDebugChild = nullptr;
 nsIFrame*
 NS_NewBoxFrame(nsIPresShell* aPresShell, nsStyleContext* aContext, bool aIsRoot, nsBoxLayout* aLayoutManager)
 {
-  return new (aPresShell) nsBoxFrame(aContext, aIsRoot, aLayoutManager);
+  return new (aPresShell) nsBoxFrame(aContext, nsBoxFrame::kClassID,
+                                     aIsRoot, aLayoutManager);
 }
 
 nsIFrame*
@@ -116,19 +117,22 @@ NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 #endif
 
 nsBoxFrame::nsBoxFrame(nsStyleContext* aContext,
+                       ClassID aID,
                        bool aIsRoot,
-                       nsBoxLayout* aLayoutManager) :
-  nsContainerFrame(aContext)
+                       nsBoxLayout* aLayoutManager)
+  : nsContainerFrame(aContext, aID)
+  , mFlex(0)
+  , mAscent(0)
 {
   mState |= NS_STATE_IS_HORIZONTAL;
   mState |= NS_STATE_AUTO_STRETCH;
 
-  if (aIsRoot) 
+  if (aIsRoot)
      mState |= NS_STATE_IS_ROOT;
 
   mValign = vAlign_Top;
   mHalign = hAlign_Left;
-  
+
   // if no layout manager specified us the static sprocket layout
   nsCOMPtr<nsBoxLayout> layout = aLayoutManager;
 
@@ -229,14 +233,14 @@ nsBoxFrame::CacheAttributes()
   mHalign = hAlign_Left;
 
   bool orient = false;
-  GetInitialOrientation(orient); 
+  GetInitialOrientation(orient);
   if (orient)
     mState |= NS_STATE_IS_HORIZONTAL;
   else
     mState &= ~NS_STATE_IS_HORIZONTAL;
 
   bool normal = true;
-  GetInitialDirection(normal); 
+  GetInitialDirection(normal);
   if (normal)
     mState |= NS_STATE_IS_DIRECTION_NORMAL;
   else
@@ -244,9 +248,9 @@ nsBoxFrame::CacheAttributes()
 
   GetInitialVAlignment(mValign);
   GetInitialHAlignment(mHalign);
-  
+
   bool equalSize = false;
-  GetInitialEqualSize(equalSize); 
+  GetInitialEqualSize(equalSize);
   if (equalSize)
         mState |= NS_STATE_EQUAL_SIZE;
     else
@@ -262,7 +266,7 @@ nsBoxFrame::CacheAttributes()
 
 #ifdef DEBUG_LAYOUT
   bool debug = mState & NS_STATE_SET_TO_DEBUG;
-  bool debugSet = GetInitialDebug(debug); 
+  bool debugSet = GetInitialDebug(debug);
   if (debugSet) {
         mState |= NS_STATE_DEBUG_WAS_SET;
         if (debug)
@@ -311,8 +315,8 @@ nsBoxFrame::GetInitialHAlignment(nsBoxFrame::Halignment& aHalign)
     aHalign = alignValues[index];
     return true;
   }
-      
-  // Now that the deprecated stuff is out of the way, we move on to check the appropriate 
+
+  // Now that the deprecated stuff is out of the way, we move on to check the appropriate
   // attribute.  For horizontal boxes, we are checking the PACK attribute.  For vertical boxes
   // we are checking the ALIGN attribute.
   nsIAtom* attrName = IsXULHorizontal() ? nsGkAtoms::pack : nsGkAtoms::align;
@@ -327,24 +331,24 @@ nsBoxFrame::GetInitialHAlignment(nsBoxFrame::Halignment& aHalign)
     // The attr was present but had a nonsensical value. Revert to the default.
     return false;
   }
-  if (index > 0) {    
+  if (index > 0) {
     aHalign = values[index];
     return true;
   }
 
-  // Now that we've checked for the attribute it's time to check CSS.  For 
+  // Now that we've checked for the attribute it's time to check CSS.  For
   // horizontal boxes we're checking PACK.  For vertical boxes we are checking
   // ALIGN.
   const nsStyleXUL* boxInfo = StyleXUL();
   if (IsXULHorizontal()) {
     switch (boxInfo->mBoxPack) {
-      case NS_STYLE_BOX_PACK_START:
+      case StyleBoxPack::Start:
         aHalign = nsBoxFrame::hAlign_Left;
         return true;
-      case NS_STYLE_BOX_PACK_CENTER:
+      case StyleBoxPack::Center:
         aHalign = nsBoxFrame::hAlign_Center;
         return true;
-      case NS_STYLE_BOX_PACK_END:
+      case StyleBoxPack::End:
         aHalign = nsBoxFrame::hAlign_Right;
         return true;
       default: // Nonsensical value. Just bail.
@@ -353,13 +357,13 @@ nsBoxFrame::GetInitialHAlignment(nsBoxFrame::Halignment& aHalign)
   }
   else {
     switch (boxInfo->mBoxAlign) {
-      case NS_STYLE_BOX_ALIGN_START:
+      case StyleBoxAlign::Start:
         aHalign = nsBoxFrame::hAlign_Left;
         return true;
-      case NS_STYLE_BOX_ALIGN_CENTER:
+      case StyleBoxAlign::Center:
         aHalign = nsBoxFrame::hAlign_Center;
         return true;
-      case NS_STYLE_BOX_ALIGN_END:
+      case StyleBoxAlign::End:
         aHalign = nsBoxFrame::hAlign_Right;
         return true;
       default: // Nonsensical value. Just bail.
@@ -387,7 +391,7 @@ nsBoxFrame::GetInitialVAlignment(nsBoxFrame::Valignment& aValign)
     return true;
   }
 
-  // Now that the deprecated stuff is out of the way, we move on to check the appropriate 
+  // Now that the deprecated stuff is out of the way, we move on to check the appropriate
   // attribute.  For horizontal boxes, we are checking the ALIGN attribute.  For vertical boxes
   // we are checking the PACK attribute.
   nsIAtom* attrName = IsXULHorizontal() ? nsGkAtoms::align : nsGkAtoms::pack;
@@ -407,22 +411,22 @@ nsBoxFrame::GetInitialVAlignment(nsBoxFrame::Valignment& aValign)
     return true;
   }
 
-  // Now that we've checked for the attribute it's time to check CSS.  For 
+  // Now that we've checked for the attribute it's time to check CSS.  For
   // horizontal boxes we're checking ALIGN.  For vertical boxes we are checking
   // PACK.
   const nsStyleXUL* boxInfo = StyleXUL();
   if (IsXULHorizontal()) {
     switch (boxInfo->mBoxAlign) {
-      case NS_STYLE_BOX_ALIGN_START:
+      case StyleBoxAlign::Start:
         aValign = nsBoxFrame::vAlign_Top;
         return true;
-      case NS_STYLE_BOX_ALIGN_CENTER:
+      case StyleBoxAlign::Center:
         aValign = nsBoxFrame::vAlign_Middle;
         return true;
-      case NS_STYLE_BOX_ALIGN_BASELINE:
+      case StyleBoxAlign::Baseline:
         aValign = nsBoxFrame::vAlign_BaseLine;
         return true;
-      case NS_STYLE_BOX_ALIGN_END:
+      case StyleBoxAlign::End:
         aValign = nsBoxFrame::vAlign_Bottom;
         return true;
       default: // Nonsensical value. Just bail.
@@ -431,13 +435,13 @@ nsBoxFrame::GetInitialVAlignment(nsBoxFrame::Valignment& aValign)
   }
   else {
     switch (boxInfo->mBoxPack) {
-      case NS_STYLE_BOX_PACK_START:
+      case StyleBoxPack::Start:
         aValign = nsBoxFrame::vAlign_Top;
         return true;
-      case NS_STYLE_BOX_PACK_CENTER:
+      case StyleBoxPack::Center:
         aValign = nsBoxFrame::vAlign_Middle;
         return true;
-      case NS_STYLE_BOX_PACK_END:
+      case StyleBoxPack::End:
         aValign = nsBoxFrame::vAlign_Bottom;
         return true;
       default: // Nonsensical value. Just bail.
@@ -457,10 +461,11 @@ nsBoxFrame::GetInitialOrientation(bool& aIsHorizontal)
 
   // Check the style system first.
   const nsStyleXUL* boxInfo = StyleXUL();
-  if (boxInfo->mBoxOrient == NS_STYLE_BOX_ORIENT_HORIZONTAL)
+  if (boxInfo->mBoxOrient == StyleBoxOrient::Horizontal) {
     aIsHorizontal = true;
-  else 
+  } else {
     aIsHorizontal = false;
+  }
 
   // Now see if we have an attribute.  The attribute overrides
   // the style system value.
@@ -489,9 +494,10 @@ nsBoxFrame::GetInitialDirection(bool& aIsNormal)
 
   // Now check the style system to see if we should invert aIsNormal.
   const nsStyleXUL* boxInfo = StyleXUL();
-  if (boxInfo->mBoxDirection == NS_STYLE_BOX_DIRECTION_REVERSE)
+  if (boxInfo->mBoxDirection == StyleBoxDirection::Reverse) {
     aIsNormal = !aIsNormal; // Invert our direction.
-  
+  }
+
   // Now see if we have an attribute.  The attribute overrides
   // the style system value.
   if (IsXULHorizontal()) {
@@ -534,7 +540,7 @@ nsBoxFrame::GetInitialAutoStretch(bool& aStretch)
 {
   if (!GetContent())
      return false;
-  
+
   // Check the align attribute.
   static nsIContent::AttrValuesArray strings[] =
     {&nsGkAtoms::_empty, &nsGkAtoms::stretch, nullptr};
@@ -547,7 +553,7 @@ nsBoxFrame::GetInitialAutoStretch(bool& aStretch)
 
   // Check the CSS box-align property.
   const nsStyleXUL* boxInfo = StyleXUL();
-  aStretch = (boxInfo->mBoxAlign == NS_STYLE_BOX_ALIGN_STRETCH);
+  aStretch = (boxInfo->mBoxAlign == StyleBoxAlign::Stretch);
 
   return true;
 }
@@ -572,7 +578,7 @@ nsBoxFrame::HonorPrintBackgroundSettings()
 
 #ifdef DO_NOISY_REFLOW
 static int myCounter = 0;
-static void printSize(char * aDesc, nscoord aSize) 
+static void printSize(char * aDesc, nscoord aSize)
 {
   printf(" %s: ", aDesc);
   if (aSize == NS_UNCONSTRAINEDSIZE) {
@@ -584,7 +590,7 @@ static void printSize(char * aDesc, nscoord aSize)
 #endif
 
 /* virtual */ nscoord
-nsBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsBoxFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -606,7 +612,7 @@ nsBoxFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsBoxFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsBoxFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -646,7 +652,7 @@ nsBoxFrame::Reflow(nsPresContext*          aPresContext,
 #ifdef DO_NOISY_REFLOW
   printf("\n-------------Starting BoxFrame Reflow ----------------------------\n");
   printf("%p ** nsBF::Reflow %d ", this, myCounter++);
-  
+
   printSize("AW", aReflowInput.AvailableWidth());
   printSize("AH", aReflowInput.AvailableHeight());
   printSize("CW", aReflowInput.ComputedWidth());
@@ -656,7 +662,7 @@ nsBoxFrame::Reflow(nsPresContext*          aPresContext,
 
 #endif
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   // create the layout state
   nsBoxLayoutState state(aPresContext, aReflowInput.mRenderingContext,
@@ -704,12 +710,12 @@ nsBoxFrame::Reflow(nsPresContext*          aPresContext,
   nsRect r(mRect.x, mRect.y, physicalSize.width, physicalSize.height);
 
   SetXULBounds(state, r);
- 
+
   // layout our children
   XULLayout(state);
-  
+
   // ok our child could have gotten bigger. So lets get its bounds
-  
+
   // get the ascent
   LogicalSize boxSize = GetLogicalSize(wm);
   nscoord ascent = boxSize.BSize(wm);
@@ -730,9 +736,9 @@ nsBoxFrame::Reflow(nsPresContext*          aPresContext,
     printf("%p ** nsBF(done) W:%d H:%d  ", this, aDesiredSize.Width(), aDesiredSize.Height());
 
     if (maxElementSize) {
-      printf("MW:%d\n", *maxElementWidth); 
+      printf("MW:%d\n", *maxElementWidth);
     } else {
-      printf("MW:?\n"); 
+      printf("MW:?\n");
     }
 
   }
@@ -781,7 +787,7 @@ nsBoxFrame::GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState)
   nsSize minSize = GetXULMinSize(aBoxLayoutState);
   nsSize maxSize = GetXULMaxSize(aBoxLayoutState);
   mPrefSize = BoundsCheck(minSize, size, maxSize);
- 
+
   return mPrefSize;
 }
 
@@ -840,7 +846,7 @@ nsBoxFrame::GetXULMinSize(nsBoxLayoutState& aBoxLayoutState)
       size = nsBox::GetXULMinSize(aBoxLayoutState);
     }
   }
-  
+
   mMinSize = size;
 
   return size;
@@ -898,7 +904,7 @@ nsBoxFrame::GetXULFlex()
 }
 
 /**
- * If subclassing please subclass this method not layout. 
+ * If subclassing please subclass this method not layout.
  * layout will call this method.
  */
 NS_IMETHODIMP
@@ -942,7 +948,7 @@ nsBoxFrame::DoXULLayout(nsBoxLayoutState& aState)
     AddStateBits(NS_FRAME_IN_REFLOW);
     // Set up a |reflowStatus| to pass into ReflowAbsoluteFrames
     // (just a dummy value; hopefully that's OK)
-    nsReflowStatus reflowStatus = NS_FRAME_COMPLETE;
+    nsReflowStatus reflowStatus;
     ReflowAbsoluteFrames(aState.PresContext(), desiredSize,
                          reflowInput, reflowStatus);
     RemoveStateBits(NS_FRAME_IN_REFLOW);
@@ -961,7 +967,7 @@ nsBoxFrame::DestroyFrom(nsIFrame* aDestructRoot)
   SetXULLayoutManager(nullptr);
 
   nsContainerFrame::DestroyFrom(aDestructRoot);
-} 
+}
 
 #ifdef DEBUG_LAYOUT
 nsresult
@@ -979,7 +985,7 @@ nsBoxFrame::SetXULDebug(nsBoxLayoutState& aState, bool aDebug)
      } else {
          mState &= ~NS_STATE_CURRENTLY_IN_DEBUG;
      }
- 
+
      SetDebugOnChildList(aState, mFirstChild, aDebug);
 
     MarkIntrinsicISizesDirty();
@@ -1167,7 +1173,7 @@ nsBoxFrame::AttributeChanged(int32_t aNameSpaceID,
       mHalign = nsBoxFrame::hAlign_Left;
 
       bool orient = true;
-      GetInitialOrientation(orient); 
+      GetInitialOrientation(orient);
       if (orient)
         mState |= NS_STATE_IS_HORIZONTAL;
       else
@@ -1184,7 +1190,7 @@ nsBoxFrame::AttributeChanged(int32_t aNameSpaceID,
       GetInitialHAlignment(mHalign);
 
       bool equalSize = false;
-      GetInitialEqualSize(equalSize); 
+      GetInitialEqualSize(equalSize);
       if (equalSize)
         mState |= NS_STATE_EQUAL_SIZE;
       else
@@ -1231,11 +1237,11 @@ nsBoxFrame::AttributeChanged(int32_t aNameSpaceID,
     nsIFrame* parent = GetParentXULBox(this);
     // If our parent is not a box, there's not much we can do... but in that
     // case our ordinal doesn't matter anyway, so that's ok.
-    // Also don't bother with popup frames since they are kept on the 
+    // Also don't bother with popup frames since they are kept on the
     // kPopupList and XULRelayoutChildAtOrdinal() only handles
     // principal children.
     if (parent && !(GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
-        StyleDisplay()->mDisplay != NS_STYLE_DISPLAY_POPUP) {
+        StyleDisplay()->mDisplay != mozilla::StyleDisplay::MozPopup) {
       parent->XULRelayoutChildAtOrdinal(this);
       // XXXldb Should this instead be a tree change on the child or parent?
       PresContext()->PresShell()->
@@ -1286,13 +1292,13 @@ public:
     aOutFrames->AppendElement(this);
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder
-                     nsRenderingContext* aCtx);
+                     gfxContext* aCtx);
   NS_DISPLAY_DECL_NAME("XULDebug", TYPE_XUL_DEBUG)
 };
 
 void
 nsDisplayXULDebug::Paint(nsDisplayListBuilder* aBuilder,
-                         nsRenderingContext* aCtx)
+                         gfxContext* aCtx)
 {
   static_cast<nsBoxFrame*>(mFrame)->
     PaintXULDebugOverlay(*aCtx->GetDrawTarget(), ToReferenceFrame());
@@ -1342,6 +1348,11 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   }
 #endif
 
+  Maybe<nsDisplayListBuilder::AutoContainerASRTracker> contASRTracker;
+  if (forceLayer) {
+    contASRTracker.emplace(aBuilder);
+  }
+
   BuildDisplayListForChildren(aBuilder, aDirtyRect, destination);
 
   // see if we have to draw a selection frame around this container
@@ -1360,9 +1371,14 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     masterList.AppendToTop(tempLists.PositionedDescendants());
     masterList.AppendToTop(tempLists.Outlines());
 
+    const ActiveScrolledRoot* ownLayerASR = contASRTracker->GetContainerASR();
+
+    DisplayListClipState::AutoSaveRestore ownLayerClipState(aBuilder);
+    ownLayerClipState.ClearUpToASR(ownLayerASR);
+
     // Wrap the list to make it its own layer
     aLists.Content()->AppendNewToTop(new (aBuilder)
-      nsDisplayOwnLayer(aBuilder, this, &masterList));
+      nsDisplayOwnLayer(aBuilder, this, &masterList, ownLayerASR));
   }
 }
 
@@ -1480,13 +1496,13 @@ nsBoxFrame::PaintXULDebugOverlay(DrawTarget& aDrawTarget, nsPoint aPt)
     bool isHorizontal = IsXULHorizontal();
 
     nscoord x, y, borderSize, spacerSize;
-    
+
     nsRect cr(kid->mRect);
     nsMargin margin;
     kid->GetXULMargin(margin);
     cr.Inflate(margin);
-    
-    if (isHorizontal) 
+
+    if (isHorizontal)
     {
         cr.y = inner.y;
         x = cr.x;
@@ -1502,9 +1518,9 @@ nsBoxFrame::PaintXULDebugOverlay(DrawTarget& aDrawTarget, nsPoint aPt)
     nscoord flex = kid->GetXULFlex();
 
     if (!kid->IsXULCollapsed()) {
-      if (isHorizontal) 
+      if (isHorizontal)
           borderSize = cr.width;
-      else 
+      else
           borderSize = cr.height;
 
       DrawSpacer(GetPresContext(), aDrawTarget, isHorizontal, flex, x, y, borderSize, spacerSize);
@@ -1530,12 +1546,6 @@ nsBoxFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("Box"), aResult);
 }
 #endif
-
-nsIAtom*
-nsBoxFrame::GetType() const
-{
-  return nsGkAtoms::boxFrame;
-}
 
 #ifdef DEBUG_LAYOUT
 nsresult
@@ -1573,7 +1583,7 @@ nsBoxFrame::GetXULDebug(bool& aDebug)
 // XBL binding, which in our tree is only used by Thunderbird SMIME Advanced
 // Preferences, and I can't figure out what that does, so I'll have to test it.
 // If it's broken I'll probably just change the binding to use it more sensibly.
-// This new behaviour is implemented in nsDisplayList::HitTest. 
+// This new behaviour is implemented in nsDisplayList::HitTest.
 // REVIEW: This debug-box stuff is annoying. I'm just going to put debug boxes
 // in the outline layer and avoid GetDebugBoxAt.
 
@@ -1606,11 +1616,11 @@ nsBoxFrame::FillRect(DrawTarget& aDrawTarget, bool aHorizontal, nscoord x, nscoo
     aDrawTarget.FillRect(rect, white);
 }
 
-void 
+void
 nsBoxFrame::DrawSpacer(nsPresContext* aPresContext, DrawTarget& aDrawTarget,
                        bool aHorizontal, int32_t flex, nscoord x, nscoord y,
                        nscoord size, nscoord spacerSize)
-{    
+{
          nscoord onePixel = aPresContext->IntScaledPixelsToTwips(1);
 
      // if we do draw the coils
@@ -1649,9 +1659,9 @@ nsBoxFrame::GetDebugBorder(nsMargin& aInset)
 {
     aInset.SizeTo(2,2,2,2);
 
-    if (IsXULHorizontal()) 
+    if (IsXULHorizontal())
        aInset.top = 10;
-    else 
+    else
        aInset.left = 10;
 }
 
@@ -1667,7 +1677,7 @@ nsBoxFrame::GetDebugPadding(nsMargin& aPadding)
     aPadding.SizeTo(2,2,2,2);
 }
 
-void 
+void
 nsBoxFrame::PixelMarginToTwips(nsMargin& aMarginPixels)
 {
   nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
@@ -1678,23 +1688,23 @@ nsBoxFrame::PixelMarginToTwips(nsMargin& aMarginPixels)
 }
 
 void
-nsBoxFrame::GetValue(nsPresContext* aPresContext, const nsSize& a, const nsSize& b, char* ch) 
+nsBoxFrame::GetValue(nsPresContext* aPresContext, const nsSize& a, const nsSize& b, char* ch)
 {
     float p2t = aPresContext->ScaledPixelsToTwips();
 
     char width[100];
     char height[100];
-    
+
     if (a.width == NS_INTRINSICSIZE)
         sprintf(width,"%s","INF");
     else
         sprintf(width,"%d", nscoord(a.width/*/p2t*/));
-    
+
     if (a.height == NS_INTRINSICSIZE)
         sprintf(height,"%s","INF");
-    else 
+    else
         sprintf(height,"%d", nscoord(a.height/*/p2t*/));
-    
+
 
     sprintf(ch, "(%s%s, %s%s)", width, (b.width != NS_INTRINSICSIZE ? "[SET]" : ""),
                     height, (b.height != NS_INTRINSICSIZE ? "[SET]" : ""));
@@ -1702,12 +1712,12 @@ nsBoxFrame::GetValue(nsPresContext* aPresContext, const nsSize& a, const nsSize&
 }
 
 void
-nsBoxFrame::GetValue(nsPresContext* aPresContext, int32_t a, int32_t b, char* ch) 
+nsBoxFrame::GetValue(nsPresContext* aPresContext, int32_t a, int32_t b, char* ch)
 {
     if (a == NS_INTRINSICSIZE)
-      sprintf(ch, "%d[SET]", b);             
+      sprintf(ch, "%d[SET]", b);
     else
-      sprintf(ch, "%d", a);             
+      sprintf(ch, "%d", a);
 }
 
 nsresult
@@ -1749,7 +1759,7 @@ nsBoxFrame::DisplayDebugInfoFor(nsIFrame*  aBox,
     if ((isHorizontal && y < insideBorder.y + m.top) ||
         (!isHorizontal && x < insideBorder.x + m.left)) {
         //printf("**** inside debug border *******\n");
-        while (child) 
+        while (child)
         {
             const nsRect& r = child->mRect;
 
@@ -1798,7 +1808,7 @@ nsBoxFrame::DisplayDebugInfoFor(nsIFrame*  aBox,
                     char calc[100];
                     char flex[100];
                     char ascent[100];
-                  
+
                     nsSize actualSize;
                     GetFrameSizeWithMargin(child, actualSize);
                     nsSize actualSizeCSS (NS_INTRINSICSIZE, NS_INTRINSICSIZE);
@@ -1811,7 +1821,7 @@ nsBoxFrame::DisplayDebugInfoFor(nsIFrame*  aBox,
                     GetValue(aPresContext, ascentSize,  NS_INTRINSICSIZE, ascent);
 
 
-                    printf("min%s, pref%s, max%s, actual%s, flex=%s, ascent=%s\n\n", 
+                    printf("min%s, pref%s, max%s, actual%s, flex=%s, ascent=%s\n\n",
                         min,
                         pref,
                         max,
@@ -1820,7 +1830,7 @@ nsBoxFrame::DisplayDebugInfoFor(nsIFrame*  aBox,
                         ascent
                     );
 
-                    return NS_OK;   
+                    return NS_OK;
             }
 
           child = GetNextXULBox(child);
@@ -1881,7 +1891,7 @@ nsBoxFrame::RegUnregAccessKey(bool aDoReg)
   if (accessKey.IsEmpty())
     return;
 
-  // With a valid PresContext we can get the ESM 
+  // With a valid PresContext we can get the ESM
   // and register the access key
   EventStateManager* esm = PresContext()->EventStateManager();
 
@@ -1910,7 +1920,7 @@ IsBoxOrdinalLEQ(nsIFrame* aFrame1,
   return aRealFrame1->GetXULOrdinal() <= aRealFrame2->GetXULOrdinal();
 }
 
-void 
+void
 nsBoxFrame::CheckBoxOrder()
 {
   if (SupportsOrdinalsInChildren() &&
@@ -1927,7 +1937,7 @@ nsBoxFrame::LayoutChildAt(nsBoxLayoutState& aState, nsIFrame* aBox, const nsRect
   aBox->SetXULBounds(aState, aRect);
 
   bool layout = NS_SUBTREE_DIRTY(aBox);
-  
+
   if (layout || (oldRect.width != aRect.width || oldRect.height != aRect.height))  {
     return aBox->XULLayout(aState);
   }
@@ -1942,7 +1952,7 @@ nsBoxFrame::XULRelayoutChildAtOrdinal(nsIFrame* aChild)
     return NS_OK;
 
   uint32_t ord = aChild->GetXULOrdinal();
-  
+
   nsIFrame* child = mFrames.FirstChild();
   nsIFrame* newPrevSib = nullptr;
 
@@ -1975,13 +1985,13 @@ nsBoxFrame::XULRelayoutChildAtOrdinal(nsIFrame* aChild)
 /**
  * This wrapper class lets us redirect mouse hits from descendant frames
  * of a menu to the menu itself, if they didn't specify 'allowevents'.
- * 
+ *
  * The wrapper simply turns a hit on a descendant element
  * into a hit on the menu itself, unless there is an element between the target
  * and the menu with the "allowevents" attribute.
- * 
+ *
  * This is used by nsMenuFrame and nsTreeColFrame.
- * 
+ *
  * Note that turning a hit on a descendant element into nullptr, so events
  * could fall through to the menu background, might be an appealing simplification
  * but it would mean slightly strange behaviour in some cases, because grabber
@@ -1994,7 +2004,8 @@ nsBoxFrame::XULRelayoutChildAtOrdinal(nsIFrame* aChild)
 // REVIEW: This is roughly of what nsMenuFrame::GetFrameForPoint used to do.
 // I've made 'allowevents' affect child elements because that seems the only
 // reasonable thing to do.
-class nsDisplayXULEventRedirector : public nsDisplayWrapList {
+class nsDisplayXULEventRedirector final : public nsDisplayWrapList
+{
 public:
   nsDisplayXULEventRedirector(nsDisplayListBuilder* aBuilder,
                               nsIFrame* aFrame, nsDisplayItem* aItem,
@@ -2046,7 +2057,7 @@ void nsDisplayXULEventRedirector::HitTest(nsDisplayListBuilder* aBuilder,
   }
 }
 
-class nsXULEventRedirectorWrapper : public nsDisplayWrapper
+class nsXULEventRedirectorWrapper final : public nsDisplayWrapper
 {
 public:
   explicit nsXULEventRedirectorWrapper(nsIFrame* aTargetFrame)

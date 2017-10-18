@@ -7,7 +7,8 @@
   <meta charset="utf-8">
 <title>Concurrent InstallTrigger tests</title>
 <script type="text/javascript">
-/*globals InstallTrigger*/
+/* globals InstallTrigger */
+/* exported startInstall */
 function installCallback(url, status) {
   document.getElementById("status").textContent = status;
 
@@ -23,8 +24,7 @@ function startInstall() {
   };
   try {
     document.getElementById("return").textContent = InstallTrigger.install(triggers, installCallback);
-  }
-  catch (e) {
+  } catch (e) {
     document.getElementById("return").textContent = "exception";
     throw e;
   }

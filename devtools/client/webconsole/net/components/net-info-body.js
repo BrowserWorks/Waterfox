@@ -4,7 +4,7 @@
 "use strict";
 
 const React = require("devtools/client/shared/vendor/react");
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
+const { createFactories } = require("devtools/client/shared/react-utils");
 const { Tabs, TabPanel } = createFactories(require("devtools/client/shared/components/tabs/tabs"));
 
 // Network
@@ -38,14 +38,16 @@ var NetInfoBody = React.createClass({
     data: PropTypes.shape({
       request: PropTypes.object.isRequired,
       response: PropTypes.object.isRequired
-    })
+    }),
+    // Service to enable the source map feature.
+    sourceMapService: PropTypes.object,
   },
 
   displayName: "NetInfoBody",
 
   getDefaultProps() {
     return {
-      tabActive: 1
+      tabActive: 0
     };
   },
 
@@ -65,8 +67,9 @@ var NetInfoBody = React.createClass({
 
   hasCookies() {
     let {request, response} = this.state.data;
-    return NetUtils.getHeaderValue(request.headers, "Cookie") ||
-      NetUtils.getHeaderValue(response.headers, "Cookie");
+    return this.state.hasCookies ||
+      NetUtils.getHeaderValue(request.headers, "Cookie") ||
+      NetUtils.getHeaderValue(response.headers, "Set-Cookie");
   },
 
   hasStackTrace() {
@@ -75,7 +78,7 @@ var NetInfoBody = React.createClass({
   },
 
   getTabPanels() {
-    let actions = this.props.actions;
+    let { actions, sourceMapService } = this.props;
     let data = this.state.data;
     let {request} = data;
 
@@ -152,7 +155,8 @@ var NetInfoBody = React.createClass({
           title: Locale.$STR("netRequest.callstack")},
           StackTraceTab({
             data: data,
-            actions: actions
+            actions: actions,
+            sourceMapService: sourceMapService,
           })
         )
       );

@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*  
 **********************************************************************
-*   Copyright (C) 2002-2015, International Business Machines
+*   Copyright (C) 2002-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  uconfig.h
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -286,7 +288,7 @@
  * This is not possible on EBCDIC platforms
  * because they need ibm-37 or ibm-1047 default converters.
  *
- * @draft ICU 55
+ * @stable ICU 55
  */
 #ifndef UCONFIG_ONLY_HTML_CONVERSION
 #   define UCONFIG_ONLY_HTML_CONVERSION 0

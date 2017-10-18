@@ -235,7 +235,7 @@ class DarwinGamepadServiceStartupRunnable final : public Runnable
   DarwinGamepadService MOZ_NON_OWNING_REF *mService;
  public:
   explicit DarwinGamepadServiceStartupRunnable(DarwinGamepadService *service)
-             : mService(service) {}
+    : Runnable("DarwinGamepadServiceStartupRunnable"), mService(service) {}
   NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mService);
@@ -284,8 +284,10 @@ DarwinGamepadService::DeviceAdded(IOHIDDeviceRef device)
   sprintf(buffer, "%x-%x-%s", vendorId, productId, product_name);
   uint32_t index = service->AddGamepad(buffer,
                                        mozilla::dom::GamepadMappingType::_empty,
+                                       mozilla::dom::GamepadHand::_empty,
                                        (int)mGamepads[slot].numButtons(),
-                                       (int)mGamepads[slot].numAxes());
+                                       (int)mGamepads[slot].numAxes(),
+                                       0); // TODO: Bug 680289, implement gamepad haptics for cocoa
   mGamepads[slot].mSuperIndex = index;
 }
 
@@ -541,8 +543,9 @@ DarwinGamepadService::StartupInternal()
 
 void DarwinGamepadService::Startup()
 {
-  Unused << NS_NewThread(getter_AddRefs(mMonitorThread),
-                         new DarwinGamepadServiceStartupRunnable(this));
+  Unused << NS_NewNamedThread("Gamepad",
+                              getter_AddRefs(mMonitorThread),
+                              new DarwinGamepadServiceStartupRunnable(this));
 }
 
 void DarwinGamepadService::Shutdown()

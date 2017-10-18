@@ -20,6 +20,7 @@ from mozbuild.util import (
 
 import mozpack.path as mozpath
 import mozinfo
+import pytoml
 
 from .data import (
     AndroidAssetsDirs,
@@ -46,6 +47,7 @@ from .data import (
     HostDefines,
     HostLibrary,
     HostProgram,
+    HostRustProgram,
     HostSimpleProgram,
     HostSources,
     InstallationTarget,
@@ -60,8 +62,9 @@ from .data import (
     PreprocessedTestWebIDLFile,
     PreprocessedWebIDLFile,
     Program,
-    RustRlibLibrary,
-    SdkFiles,
+    RustLibrary,
+    HostRustLibrary,
+    RustProgram,
     SharedLibrary,
     SimpleProgram,
     Sources,
@@ -75,7 +78,6 @@ from .data import (
     XPIDLFile,
 )
 from mozpack.chrome.manifest import (
-    ManifestBinaryComponent,
     Manifest,
 )
 
@@ -128,6 +130,8 @@ class TreeMetadataEmitter(LoggingMixin):
         self._binaries = OrderedDict()
         self._linkage = []
         self._static_linking_shared = set()
+        self._crate_verified_local = set()
+        self._crate_directories = dict()
 
         # Keep track of external paths (third party build systems), starting
         # from what we run a subconfigure in. We'll eliminate some directories
@@ -137,8 +141,6 @@ class TreeMetadataEmitter(LoggingMixin):
         if os.path.exists(subconfigures):
             paths = open(subconfigures).read().splitlines()
         self._external_paths = set(mozpath.normsep(d) for d in paths)
-        # Add security/nss manually, since it doesn't have a subconfigure.
-        self._external_paths.add('security/nss')
 
         self._emitter_time = 0.0
         self._object_count = 0
@@ -151,13 +153,14 @@ class TreeMetadataEmitter(LoggingMixin):
             execution_time=self._emitter_time,
             object_count=self._object_count)
 
-    def emit(self, output):
+    def emit(self, output, emitfn=None):
         """Convert the BuildReader output into data structures.
 
         The return value from BuildReader.read_topsrcdir() (a generator) is
         typically fed into this function.
         """
         contexts = {}
+        emitfn = emitfn or self.emit_from_context
 
         def emit_objs(objs):
             for o in objs:
@@ -176,7 +179,7 @@ class TreeMetadataEmitter(LoggingMixin):
 
                 start = time.time()
                 # We need to expand the generator for the timings to work.
-                objs = list(self.emit_from_context(out))
+                objs = list(emitfn(out))
                 self._emitter_time += time.time() - start
 
                 for o in emit_objs(objs): yield o
@@ -195,7 +198,7 @@ class TreeMetadataEmitter(LoggingMixin):
     def _emit_libs_derived(self, contexts):
         # First do FINAL_LIBRARY linkage.
         for lib in (l for libs in self._libs.values() for l in libs):
-            if not isinstance(lib, (StaticLibrary, RustRlibLibrary)) or not lib.link_into:
+            if not isinstance(lib, (StaticLibrary, RustLibrary)) or not lib.link_into:
                 continue
             if lib.link_into not in self._libs:
                 raise SandboxValidationError(
@@ -373,21 +376,188 @@ class TreeMetadataEmitter(LoggingMixin):
         else:
             return ExternalSharedLibrary(context, name)
 
-    def _handle_linkables(self, context, passthru, generated_files):
-        has_linkables = False
+    def _parse_cargo_file(self, context):
+        """Parse the Cargo.toml file in context and return a Python object
+        representation of it.  Raise a SandboxValidationError if the Cargo.toml
+        file does not exist.  Return a tuple of (config, cargo_file)."""
+        cargo_file = mozpath.join(context.srcdir, 'Cargo.toml')
+        if not os.path.exists(cargo_file):
+            raise SandboxValidationError(
+                'No Cargo.toml file found in %s' % cargo_file, context)
+        with open(cargo_file, 'r') as f:
+            return pytoml.load(f), cargo_file
 
+    def _verify_deps(self, context, crate_dir, crate_name, dependencies, description='Dependency'):
+        """Verify that a crate's dependencies all specify local paths."""
+        for dep_crate_name, values in dependencies.iteritems():
+            # A simple version number.
+            if isinstance(values, (str, unicode)):
+                raise SandboxValidationError(
+                    '%s %s of crate %s does not list a path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            dep_path = values.get('path', None)
+            if not dep_path:
+                raise SandboxValidationError(
+                    '%s %s of crate %s does not list a path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            # Try to catch the case where somebody listed a
+            # local path for development.
+            if os.path.isabs(dep_path):
+                raise SandboxValidationError(
+                    '%s %s of crate %s has a non-relative path' % (description, dep_crate_name, crate_name),
+                    context)
+
+            if not os.path.exists(mozpath.join(context.config.topsrcdir, crate_dir, dep_path)):
+                raise SandboxValidationError(
+                    '%s %s of crate %s refers to a non-existent path' % (description, dep_crate_name, crate_name),
+                    context)
+
+    def _rust_library(self, context, libname, static_args, cls=RustLibrary):
+        # We need to note any Rust library for linking purposes.
+        config, cargo_file = self._parse_cargo_file(context)
+        crate_name = config['package']['name']
+
+        if crate_name != libname:
+            raise SandboxValidationError(
+                'library %s does not match Cargo.toml-defined package %s' % (libname, crate_name),
+                context)
+
+        # Check that the [lib.crate-type] field is correct
+        lib_section = config.get('lib', None)
+        if not lib_section:
+            raise SandboxValidationError(
+                'Cargo.toml for %s has no [lib] section' % libname,
+                context)
+
+        crate_type = lib_section.get('crate-type', None)
+        if not crate_type:
+            raise SandboxValidationError(
+                'Can\'t determine a crate-type for %s from Cargo.toml' % libname,
+                context)
+
+        crate_type = crate_type[0]
+        if crate_type != 'staticlib':
+            raise SandboxValidationError(
+                'crate-type %s is not permitted for %s' % (crate_type, libname),
+                context)
+
+        # Check that the [profile.{dev,release}.panic] field is "abort"
+        profile_section = config.get('profile', None)
+        if not profile_section:
+            raise SandboxValidationError(
+                'Cargo.toml for %s has no [profile] section' % libname,
+                context)
+
+        for profile_name in ['dev', 'release']:
+            profile = profile_section.get(profile_name, None)
+            if not profile:
+                raise SandboxValidationError(
+                    'Cargo.toml for %s has no [profile.%s] section' % (libname, profile_name),
+                    context)
+
+            panic = profile.get('panic', None)
+            if panic != 'abort':
+                raise SandboxValidationError(
+                    ('Cargo.toml for %s does not specify `panic = "abort"`'
+                     ' in [profile.%s] section') % (libname, profile_name),
+                    context)
+
+            # gkrust and gkrust-gtest must have the exact same profile settings
+            # for our almost-workspaces configuration to work properly.
+            if libname in ('gkrust', 'gkrust-gtest'):
+                if profile_name == 'dev':
+                    expected_profile = {
+                        'opt-level': 1,
+                        'rpath': False,
+                        'lto': False,
+                        'debug-assertions': True,
+                        'codegen-units': 4,
+                        'panic': 'abort',
+                    }
+                else:
+                    expected_profile = {
+                        'opt-level': 2,
+                        'rpath': False,
+                        'lto': True,
+                        'debug-assertions': False,
+                        'panic': 'abort',
+                    }
+
+                if profile != expected_profile:
+                    raise SandboxValidationError(
+                        'Cargo profile.%s for %s is incorrect' % (profile_name, libname),
+                        context)
+
+        cargo_target_dir = context.get('RUST_LIBRARY_TARGET_DIR', '.')
+
+        dependencies = set(config.get('dependencies', {}).iterkeys())
+
+        features = context.get(cls.FEATURES_VAR, [])
+        unique_features = set(features)
+        if len(features) != len(unique_features):
+            raise SandboxValidationError(
+                'features for %s should not contain duplicates: %s' % (libname, features),
+                context)
+
+        return cls(context, libname, cargo_file, crate_type, dependencies,
+                   features, cargo_target_dir, **static_args)
+
+
+    def _handle_linkables(self, context, passthru, generated_files):
+        linkables = []
+        host_linkables = []
+        def add_program(prog, var):
+            if var.startswith('HOST_'):
+                host_linkables.append(prog)
+            else:
+                linkables.append(prog)
+
+        def check_unique_binary(program, kind):
+            if program in self._binaries:
+                raise SandboxValidationError(
+                    'Cannot use "%s" as %s name, '
+                    'because it is already used in %s' % (program, kind,
+                    self._binaries[program].relativedir), context)
         for kind, cls in [('PROGRAM', Program), ('HOST_PROGRAM', HostProgram)]:
             program = context.get(kind)
             if program:
-                if program in self._binaries:
-                    raise SandboxValidationError(
-                        'Cannot use "%s" as %s name, '
-                        'because it is already used in %s' % (program, kind,
-                        self._binaries[program].relativedir), context)
+                check_unique_binary(program, kind)
                 self._binaries[program] = cls(context, program)
                 self._linkage.append((context, self._binaries[program],
                     kind.replace('PROGRAM', 'USE_LIBS')))
-                has_linkables = True
+                add_program(self._binaries[program], kind)
+
+        all_rust_programs = []
+        for kind, cls in [('RUST_PROGRAMS', RustProgram),
+                          ('HOST_RUST_PROGRAMS', HostRustProgram)]:
+            programs = context[kind]
+            if not programs:
+                continue
+
+            all_rust_programs.append((programs, kind, cls))
+
+        # Verify Rust program definitions.
+        if all_rust_programs:
+            config, cargo_file = self._parse_cargo_file(context);
+            bin_section = config.get('bin', None)
+            if not bin_section:
+                raise SandboxValidationError(
+                    'Cargo.toml in %s has no [bin] section' % context.srcdir,
+                    context)
+
+            defined_binaries = {b['name'] for b in bin_section}
+
+            for programs, kind, cls in all_rust_programs:
+                for program in programs:
+                    if program not in defined_binaries:
+                        raise SandboxValidationError(
+                            'Cannot find Cargo.toml definition for %s' % program,
+                            context)
+
+                    check_unique_binary(program, kind)
+                    self._binaries[program] = cls(context, program, cargo_file)
 
         for kind, cls in [
                 ('SIMPLE_PROGRAMS', SimpleProgram),
@@ -404,7 +574,7 @@ class TreeMetadataEmitter(LoggingMixin):
                 self._linkage.append((context, self._binaries[program],
                     'HOST_USE_LIBS' if kind == 'HOST_SIMPLE_PROGRAMS'
                     else 'USE_LIBS'))
-                has_linkables = True
+                add_program(self._binaries[program], kind)
 
         host_libname = context.get('HOST_LIBRARY_NAME')
         libname = context.get('LIBRARY_NAME')
@@ -413,10 +583,15 @@ class TreeMetadataEmitter(LoggingMixin):
             if host_libname == libname:
                 raise SandboxValidationError('LIBRARY_NAME and '
                     'HOST_LIBRARY_NAME must have a different value', context)
-            lib = HostLibrary(context, host_libname)
+
+            is_rust_library = context.get('IS_RUST_LIBRARY')
+            if is_rust_library:
+                lib = self._rust_library(context, host_libname, {}, cls=HostRustLibrary)
+            else:
+                lib = HostLibrary(context, host_libname)
             self._libs[host_libname].append(lib)
             self._linkage.append((context, lib, 'HOST_USE_LIBS'))
-            has_linkables = True
+            host_linkables.append(lib)
 
         final_lib = context.get('FINAL_LIBRARY')
         if not libname and final_lib:
@@ -430,7 +605,6 @@ class TreeMetadataEmitter(LoggingMixin):
         shared_name = context.get('SHARED_LIBRARY_NAME')
 
         is_framework = context.get('IS_FRAMEWORK')
-        is_component = context.get('IS_COMPONENT')
 
         soname = context.get('SONAME')
 
@@ -452,22 +626,10 @@ class TreeMetadataEmitter(LoggingMixin):
                 raise SandboxValidationError(
                     'FINAL_LIBRARY conflicts with IS_FRAMEWORK. '
                     'Please remove one.', context)
-            if is_component:
-                raise SandboxValidationError(
-                    'FINAL_LIBRARY conflicts with IS_COMPONENT. '
-                    'Please remove one.', context)
             static_args['link_into'] = final_lib
             static_lib = True
 
         if libname:
-            if is_component:
-                if static_lib:
-                    raise SandboxValidationError(
-                        'IS_COMPONENT conflicts with FORCE_STATIC_LIB. '
-                        'Please remove one.', context)
-                shared_lib = True
-                shared_args['variant'] = SharedLibrary.COMPONENT
-
             if is_framework:
                 if soname:
                     raise SandboxValidationError(
@@ -498,14 +660,6 @@ class TreeMetadataEmitter(LoggingMixin):
                     raise SandboxValidationError(
                         'SONAME requires FORCE_SHARED_LIB', context)
                 shared_args['soname'] = soname
-
-            # If both a shared and a static library are created, only the
-            # shared library is meant to be a SDK library.
-            if context.get('SDK_LIBRARY'):
-                if shared_lib:
-                    shared_args['is_sdk'] = True
-                elif static_lib:
-                    static_args['is_sdk'] = True
 
             if context.get('NO_EXPAND_LIBS'):
                 if not static_lib:
@@ -552,24 +706,27 @@ class TreeMetadataEmitter(LoggingMixin):
                     raise SandboxValidationError(
                         'SYMBOLS_FILE cannot be used along DEFFILE or '
                         'LD_VERSION_SCRIPT.', context)
-                if not os.path.exists(symbols_file.full_path):
-                    raise SandboxValidationError(
-                        'Path specified in SYMBOLS_FILE does not exist: %s '
-                        '(resolved to %s)' % (symbols_file,
-                        symbols_file.full_path), context)
-                shared_args['symbols_file'] = True
+                if isinstance(symbols_file, SourcePath):
+                    if not os.path.exists(symbols_file.full_path):
+                        raise SandboxValidationError(
+                            'Path specified in SYMBOLS_FILE does not exist: %s '
+                            '(resolved to %s)' % (symbols_file,
+                            symbols_file.full_path), context)
+                    shared_args['symbols_file'] = True
+                else:
+                    if symbols_file.target_basename not in generated_files:
+                        raise SandboxValidationError(
+                            ('Objdir file specified in SYMBOLS_FILE not in ' +
+                             'GENERATED_FILES: %s') % (symbols_file,), context)
+                    shared_args['symbols_file'] = symbols_file.target_basename
 
             if shared_lib:
                 lib = SharedLibrary(context, libname, **shared_args)
                 self._libs[libname].append(lib)
                 self._linkage.append((context, lib, 'USE_LIBS'))
-                has_linkables = True
+                linkables.append(lib)
                 generated_files.add(lib.lib_name)
-                if is_component and not context['NO_COMPONENTS_MANIFEST']:
-                    yield ChromeManifestEntry(context,
-                        'components/components.manifest',
-                        ManifestBinaryComponent('components', lib.lib_name))
-                if symbols_file:
+                if symbols_file and isinstance(symbols_file, SourcePath):
                     script = mozpath.join(
                         mozpath.dirname(mozpath.dirname(__file__)),
                         'action', 'generate_symbols_file.py')
@@ -580,10 +737,14 @@ class TreeMetadataEmitter(LoggingMixin):
                         'generate_symbols_file', lib.symbols_file,
                         [symbols_file], defines)
             if static_lib:
-                lib = StaticLibrary(context, libname, **static_args)
+                is_rust_library = context.get('IS_RUST_LIBRARY')
+                if is_rust_library:
+                    lib = self._rust_library(context, libname, static_args)
+                else:
+                    lib = StaticLibrary(context, libname, **static_args)
                 self._libs[libname].append(lib)
                 self._linkage.append((context, lib, 'USE_LIBS'))
-                has_linkables = True
+                linkables.append(lib)
 
             if lib_defines:
                 if not libname:
@@ -594,10 +755,9 @@ class TreeMetadataEmitter(LoggingMixin):
         # Only emit sources if we have linkables defined in the same context.
         # Note the linkables are not emitted in this function, but much later,
         # after aggregation (because of e.g. USE_LIBS processing).
-        if not has_linkables:
+        if not (linkables or host_linkables):
             return
 
-        rust_sources = []
         sources = defaultdict(list)
         gen_sources = defaultdict(list)
         all_flags = {}
@@ -649,7 +809,6 @@ class TreeMetadataEmitter(LoggingMixin):
             '.m': set(),
             '.mm': set(),
             '.cpp': set(['.cc', '.cxx']),
-            '.rs': set(),
             '.S': set(),
         }
 
@@ -671,6 +830,10 @@ class TreeMetadataEmitter(LoggingMixin):
             HOST_SOURCES=(HostSources, None, ['.c', '.mm', '.cpp']),
             UNIFIED_SOURCES=(UnifiedSources, None, ['.c', '.mm', '.cpp']),
         )
+        # Track whether there are any C++ source files.
+        # Technically this won't do the right thing for SIMPLE_PROGRAMS in
+        # a directory with mixed C and C++ source, but it's not that important.
+        cxx_sources = defaultdict(bool)
 
         for variable, (klass, gen_klass, suffixes) in varmap.items():
             allowed_suffixes = set().union(*[suffix_map[s] for s in suffixes])
@@ -689,50 +852,29 @@ class TreeMetadataEmitter(LoggingMixin):
                 sorted_files = sorted(srcs, key=canonical_suffix_for_file)
                 for canonical_suffix, files in itertools.groupby(
                         sorted_files, canonical_suffix_for_file):
+                    if canonical_suffix in ('.cpp', '.mm'):
+                        cxx_sources[variable] = True
                     arglist = [context, list(files), canonical_suffix]
                     if (variable.startswith('UNIFIED_') and
                             'FILES_PER_UNIFIED_FILE' in context):
                         arglist.append(context['FILES_PER_UNIFIED_FILE'])
                     obj = cls(*arglist)
-
-                    # Rust is special.  Each Rust file that we compile
-                    # is a separate crate and gets compiled into its own
-                    # rlib file (Rust's equivalent of a .a file).  When
-                    # we go to link Rust sources into a library or
-                    # executable, we have a separate, single crate that
-                    # gets compiled as a staticlib (like a rlib, but
-                    # includes the actual Rust runtime).
-                    if canonical_suffix == '.rs':
-                        if not final_lib:
-                            raise SandboxValidationError(
-                                'Rust sources must be destined for a FINAL_LIBRARY')
-                        # If we're building a shared library, we're going to
-                        # auto-generate a module that includes all of the rlib
-                        # files.  This means we can't permit Rust files as
-                        # immediate inputs of the shared library.
-                        if libname and shared_lib:
-                            raise SandboxValidationError(
-                                'No Rust sources permitted as an immediate input of %s: %s' % (shlib, files))
-                        rust_sources.append(obj)
                     yield obj
-
-        # Rust sources get translated into rlibs, which are essentially static
-        # libraries.  We need to note all of them for linking, too.
-        if libname and static_lib:
-            for s in rust_sources:
-                for f in s.files:
-                    (base, _) = mozpath.splitext(mozpath.basename(f))
-                    crate_name = context.relsrcdir.replace('/', '_') + '_' + base
-                    rlib_filename = 'lib' + base + '.rlib'
-                    lib = RustRlibLibrary(context, libname, crate_name,
-                                          rlib_filename, final_lib)
-                    self._libs[libname].append(lib)
-                    self._linkage.append((context, lib, 'USE_LIBS'))
 
         for f, flags in all_flags.iteritems():
             if flags.flags:
                 ext = mozpath.splitext(f)[1]
                 yield PerSourceFlag(context, f, flags.flags)
+
+        # If there are any C++ sources, set all the linkables defined here
+        # to require the C++ linker.
+        for vars, linkable_items in ((('SOURCES', 'UNIFIED_SOURCES'), linkables),
+                                     (('HOST_SOURCES',), host_linkables)):
+            for var in vars:
+                if cxx_sources[var]:
+                    for l in linkable_items:
+                        l.cxx_link = True
+                    break
 
 
     def emit_from_context(self, context):
@@ -766,7 +908,6 @@ class TreeMetadataEmitter(LoggingMixin):
             'ANDROID_GENERATED_RESFILES',
             'DISABLE_STL_WRAPPING',
             'EXTRA_DSO_LDOPTS',
-            'PYTHON_UNIT_TESTS',
             'RCFILE',
             'RESFILE',
             'RCINCLUDE',
@@ -875,7 +1016,6 @@ class TreeMetadataEmitter(LoggingMixin):
             ('FINAL_TARGET_PP_FILES', FinalTargetPreprocessedFiles),
             ('OBJDIR_FILES', ObjdirFiles),
             ('OBJDIR_PP_FILES', ObjdirPreprocessedFiles),
-            ('SDK_FILES', SdkFiles),
             ('TEST_HARNESS_FILES', TestHarnessFiles),
         ):
             all_files = context.get(var)
@@ -964,9 +1104,6 @@ class TreeMetadataEmitter(LoggingMixin):
 
         for name, jar in context.get('JAVA_JAR_TARGETS', {}).items():
             yield ContextWrapped(context, jar)
-
-        for name, data in context.get('ANDROID_ECLIPSE_PROJECT_TARGETS', {}).items():
-            yield ContextWrapped(context, data)
 
         if context.get('USE_YASM') is True:
             yasm = context.config.substs.get('YASM')
@@ -1074,7 +1211,8 @@ class TreeMetadataEmitter(LoggingMixin):
             else:
                 script = None
                 method = None
-            yield GeneratedFile(context, script, method, outputs, inputs)
+            yield GeneratedFile(context, script, method, outputs, inputs,
+                                flags.flags)
 
     def _process_test_manifests(self, context):
         for prefix, info in TEST_MANIFESTS.items():
@@ -1092,11 +1230,6 @@ class TreeMetadataEmitter(LoggingMixin):
                 for obj in self._process_web_platform_tests_manifest(context, path, manifest):
                     yield obj
 
-        python_tests = context.get('PYTHON_UNIT_TESTS')
-        if python_tests:
-            for obj in self._process_python_tests(context, python_tests):
-                yield obj
-
     def _process_test_manifest(self, context, info, manifest_path, mpmanifest):
         flavor, install_root, install_subdir, package_tests = info
 
@@ -1104,20 +1237,21 @@ class TreeMetadataEmitter(LoggingMixin):
         manifest_dir = mozpath.dirname(path)
         manifest_reldir = mozpath.dirname(mozpath.relpath(path,
             context.config.topsrcdir))
+        manifest_sources = [mozpath.relpath(pth, context.config.topsrcdir)
+                            for pth in mpmanifest.source_files]
         install_prefix = mozpath.join(install_root, install_subdir)
 
         try:
-            defaults = mpmanifest.manifest_defaults[os.path.normpath(path)]
             if not mpmanifest.tests:
                 raise SandboxValidationError('Empty test manifest: %s'
                     % path, context)
 
+            defaults = mpmanifest.manifest_defaults[os.path.normpath(path)]
             obj = TestManifest(context, path, mpmanifest, flavor=flavor,
                 install_prefix=install_prefix,
                 relpath=mozpath.join(manifest_reldir, mozpath.basename(path)),
+                sources=manifest_sources,
                 dupe_manifest='dupe-manifest' in defaults)
-
-            obj.default_support_files = defaults.get('support-files')
 
             filtered = mpmanifest.tests
 
@@ -1170,6 +1304,9 @@ class TreeMetadataEmitter(LoggingMixin):
 
                 process_support_files(test)
 
+            for path, m_defaults in mpmanifest.manifest_defaults.items():
+                process_support_files(m_defaults)
+
             # We also copy manifests into the output directory,
             # including manifests from [include:foo] directives.
             for mpath in mpmanifest.manifests():
@@ -1188,8 +1325,8 @@ class TreeMetadataEmitter(LoggingMixin):
                     del obj.installs[mozpath.join(manifest_dir, f)]
                 except KeyError:
                     raise SandboxValidationError('Error processing test '
-                       'manifest %s: entry in generated-files not present '
-                       'elsewhere in manifest: %s' % (path, f), context)
+                        'manifest %s: entry in generated-files not present '
+                        'elsewhere in manifest: %s' % (path, f), context)
 
             yield obj
         except (AssertionError, Exception):
@@ -1219,7 +1356,6 @@ class TreeMetadataEmitter(LoggingMixin):
                 'manifest': source_manifest,
                 'name': mozpath.basename(test),
                 'head': '',
-                'tail': '',
                 'support-files': '',
                 'subsuite': '',
             })
@@ -1242,52 +1378,21 @@ class TreeMetadataEmitter(LoggingMixin):
                            install_prefix="web-platform/")
 
 
-        for path, tests in manifest:
+        for test_type, path, tests in manifest:
             path = mozpath.join(tests_root, path)
-            for test in tests:
-                if test.item_type not in ["testharness", "reftest"]:
-                    continue
+            if test_type not in ["testharness", "reftest", "wdspec"]:
+                continue
 
+            for test in tests:
                 obj.tests.append({
                     'path': path,
                     'here': mozpath.dirname(path),
                     'manifest': manifest_path,
                     'name': test.id,
                     'head': '',
-                    'tail': '',
                     'support-files': '',
                     'subsuite': '',
                 })
-
-        yield obj
-
-    def _process_python_tests(self, context, python_tests):
-        manifest_full_path = context.main_path
-        manifest_reldir = mozpath.dirname(mozpath.relpath(manifest_full_path,
-            context.config.topsrcdir))
-
-        obj = TestManifest(context, manifest_full_path,
-                mozpath.basename(manifest_full_path),
-                flavor='python', install_prefix='python/',
-                relpath=mozpath.join(manifest_reldir,
-                    mozpath.basename(manifest_full_path)))
-
-        for test in python_tests:
-            test = mozpath.normpath(mozpath.join(context.srcdir, test))
-            if not os.path.isfile(test):
-                raise SandboxValidationError('Path specified in '
-                   'PYTHON_UNIT_TESTS does not exist: %s' % test,
-                   context)
-            obj.tests.append({
-                'path': test,
-                'here': mozpath.dirname(test),
-                'manifest': manifest_full_path,
-                'name': mozpath.basename(test),
-                'head': '',
-                'tail': '',
-                'support-files': '',
-                'subsuite': '',
-            })
 
         yield obj
 

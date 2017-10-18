@@ -10,7 +10,7 @@
 </head>
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test default request for B2G Presentation API at sender side</a>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 'use strict';
 
@@ -19,15 +19,18 @@ var connection;
 
 function testSetup() {
   return new Promise(function(aResolve, aReject) {
-    navigator.presentation.defaultRequest = new PresentationRequest("http://example.com");
+    navigator.presentation.defaultRequest = new PresentationRequest("https://example.com");
 
     navigator.presentation.defaultRequest.getAvailability().then(
       function(aAvailability) {
+        is(aAvailability.value, false, "Sender: should have no available device after setup");
         aAvailability.onchange = function() {
           aAvailability.onchange = null;
           ok(aAvailability.value, "Device should be available.");
           aResolve();
         }
+
+        gScript.sendAsyncMessage('trigger-device-add');
       },
       function(aError) {
         ok(false, "Error occurred when getting availability: " + aError);
@@ -35,8 +38,6 @@ function testSetup() {
         aReject();
       }
     );
-
-    gScript.sendAsyncMessage('trigger-device-add');
   });
 }
 
@@ -81,7 +82,7 @@ function testStartConnection() {
       gScript.sendAsyncMessage('trigger-incoming-answer');
     });
 
-    ok(!navigator.presentation.receiver, "Sender shouldn't get a presentation receiver instance.");
+    is(navigator.presentation.receiver, undefined, "Sender shouldn't get a presentation receiver instance.");
 
     navigator.presentation.defaultRequest.onconnectionavailable = function(aEvent) {
       navigator.presentation.defaultRequest.onconnectionavailable = null;
@@ -140,6 +141,8 @@ function runTests() {
 
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
+                                    ["dom.presentation.controller.enabled", true],
+                                    ["dom.presentation.receiver.enabled", false],
                                     ["dom.presentation.session_transport.data_channel.enable", false]]},
                           runTests);
 

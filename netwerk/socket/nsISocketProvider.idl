@@ -7,6 +7,12 @@
 
 interface nsIProxyInfo;
 [ptr] native PRFileDescStar(struct PRFileDesc);
+native OriginAttributes(mozilla::OriginAttributes);
+[ref] native const_OriginAttributesRef(const mozilla::OriginAttributes);
+
+%{ C++
+#include "mozilla/BasePrincipal.h"
+%}
 
 /**
  * nsISocketProvider
@@ -36,13 +42,14 @@ interface nsISocketProvider : nsISupports
      *        object typically implements nsITransportSecurityInfo.
      */
     [noscript]
-    void newSocket(in long            aFamily,
-                   in string          aHost, 
-                   in long            aPort,
-                   in nsIProxyInfo    aProxy,
-                   in unsigned long   aFlags,
-                   out PRFileDescStar aFileDesc, 
-                   out nsISupports    aSecurityInfo);
+    void newSocket(in long                      aFamily,
+                   in string                    aHost, 
+                   in long                      aPort,
+                   in nsIProxyInfo              aProxy,
+                   in const_OriginAttributesRef aOriginAttributes,
+                   in unsigned long             aFlags,
+                   out PRFileDescStar           aFileDesc, 
+                   out nsISupports              aSecurityInfo);
 
     /**
      * addToSocket
@@ -55,13 +62,14 @@ interface nsISocketProvider : nsISupports
      * which is an in-param instead.
      */
     [noscript]
-    void addToSocket(in long           aFamily,
-                     in string         aHost, 
-                     in long           aPort,
-                     in nsIProxyInfo   aProxy,
-                     in unsigned long  aFlags,
-                     in PRFileDescStar aFileDesc, 
-                     out nsISupports   aSecurityInfo);
+    void addToSocket(in long                      aFamily,
+                     in string                    aHost, 
+                     in long                      aPort,
+                     in nsIProxyInfo              aProxy,
+                     in const_OriginAttributesRef aOriginAttributes,
+                     in unsigned long             aFlags,
+                     in PRFileDescStar            aFileDesc, 
+                     out nsISupports              aSecurityInfo);
 
     /**
      * PROXY_RESOLVES_HOST
@@ -97,6 +105,13 @@ interface nsISocketProvider : nsISupports
      * a TLS socket without authentication.
      */
     const unsigned long MITM_OK = 1 << 3;
+
+    /**
+     * If set, do not use newer protocol features that might have interop problems
+     * on the Internet. Intended only for use with critical infra like the updater.
+     * default is false.
+     */
+    const unsigned long BE_CONSERVATIVE = 1 << 4;
 };
 
 %{C++

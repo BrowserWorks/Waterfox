@@ -10,8 +10,7 @@
 #define nsRubyFrame_h___
 
 #include "nsInlineFrame.h"
-
-class nsRubyBaseContainerFrame;
+#include "RubyUtils.h"
 
 /**
  * Factory function.
@@ -23,16 +22,14 @@ nsContainerFrame* NS_NewRubyFrame(nsIPresShell* aPresShell,
 class nsRubyFrame final : public nsInlineFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
-  NS_DECL_QUERYFRAME_TARGET(nsRubyFrame)
+  NS_DECL_FRAMEARENA_HELPERS(nsRubyFrame)
   NS_DECL_QUERYFRAME
 
   // nsIFrame overrides
-  virtual nsIAtom* GetType() const override;
   virtual bool IsFrameOfType(uint32_t aFlags) const override;
-  virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlineMinISize(gfxContext *aRenderingContext,
                                  InlineMinISizeData *aData) override;
-  virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
+  virtual void AddInlinePrefISize(gfxContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
   virtual void Reflow(nsPresContext* aPresContext,
                       ReflowOutput& aDesiredSize,
@@ -43,17 +40,16 @@ public:
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
-  void GetBlockLeadings(nscoord& aStartLeading, nscoord& aEndLeading)
-  {
-    aStartLeading = mBStartLeading;
-    aEndLeading = mBEndLeading;
+  mozilla::RubyBlockLeadings GetBlockLeadings() const {
+    return mLeadings;
   }
 
 protected:
   friend nsContainerFrame* NS_NewRubyFrame(nsIPresShell* aPresShell,
                                            nsStyleContext* aContext);
   explicit nsRubyFrame(nsStyleContext* aContext)
-    : nsInlineFrame(aContext) {}
+    : nsInlineFrame(aContext, kClassID)
+  {}
 
   void ReflowSegment(nsPresContext* aPresContext,
                      const ReflowInput& aReflowInput,
@@ -63,10 +59,9 @@ protected:
   nsRubyBaseContainerFrame* PullOneSegment(const nsLineLayout* aLineLayout,
                                            ContinuationTraversingState& aState);
 
-  // The leading required to put the annotations.
-  // They are not initialized until the first reflow.
-  nscoord mBStartLeading;
-  nscoord mBEndLeading;
+  // The leadings required to put the annotations. They are dummy-
+  // initialized to 0, and get meaningful values at first reflow.
+  mozilla::RubyBlockLeadings mLeadings;
 };
 
 #endif /* nsRubyFrame_h___ */

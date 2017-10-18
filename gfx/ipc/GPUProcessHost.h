@@ -7,7 +7,6 @@
 #ifndef _include_mozilla_gfx_ipc_GPUProcessHost_h_
 #define _include_mozilla_gfx_ipc_GPUProcessHost_h_
 
-#include "mozilla/Function.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
@@ -28,7 +27,7 @@ class GPUChild;
 // GPUProcessHosts are allocated and managed by GPUProcessManager. For all
 // intents and purposes it is a singleton, though more than one may be allocated
 // at a time due to its shutdown being asynchronous.
-class GPUProcessHost final : public ipc::GeckoChildProcessHost
+class GPUProcessHost final : public mozilla::ipc::GeckoChildProcessHost
 {
   friend class GPUChild;
 
@@ -42,6 +41,9 @@ public:
     // severed. This is not called if an error occurs after calling
     // Shutdown().
     virtual void OnProcessUnexpectedShutdown(GPUProcessHost* aHost)
+    {}
+
+    virtual void OnRemoteProcessDeviceReset(GPUProcessHost* aHost)
     {}
   };
 
@@ -82,11 +84,22 @@ public:
     return !!mGPUChild;
   }
 
+  // Return the time stamp for when we tried to launch the GPU process. This is
+  // currently used for Telemetry so that we can determine how long GPU processes
+  // take to spin up. Note this doesn't denote a successful launch, just when we
+  // attempted launch.
+  TimeStamp GetLaunchTime() const {
+    return mLaunchTime;
+  }
+
   // Called on the IO thread.
   void OnChannelConnected(int32_t peer_pid) override;
   void OnChannelError() override;
 
   void SetListener(Listener* aListener);
+
+  // Used for tests and diagnostics
+  void KillProcess();
 
 private:
   // Called on the main thread.
@@ -108,7 +121,7 @@ private:
   DISALLOW_COPY_AND_ASSIGN(GPUProcessHost);
 
   Listener* mListener;
-  ipc::TaskFactory<GPUProcessHost> mTaskFactory;
+  mozilla::ipc::TaskFactory<GPUProcessHost> mTaskFactory;
 
   enum class LaunchPhase {
     Unlaunched,
@@ -122,6 +135,8 @@ private:
 
   bool mShutdownRequested;
   bool mChannelClosed;
+
+  TimeStamp mLaunchTime;
 };
 
 } // namespace gfx

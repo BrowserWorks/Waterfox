@@ -6,6 +6,7 @@
 
 #include "APZCBasicTester.h"
 #include "APZTestCommon.h"
+#include "gfxPrefs.h"
 
 class APZCGestureDetectorTester : public APZCBasicTester {
 public:
@@ -235,7 +236,7 @@ protected:
     uint64_t blockId = 0;
 
     // Start the fling down.
-    Pan(apzc, touchStart, touchEnd, false, nullptr, nullptr, &blockId);
+    Pan(apzc, touchStart, touchEnd, PanOptions::None, nullptr, nullptr, &blockId);
     apzc->ConfirmTarget(blockId);
     apzc->ContentReceivedInputBlock(blockId, false);
 
@@ -499,7 +500,8 @@ TEST_F(APZCGestureDetectorTester, DoubleTapNotZoomable) {
   MakeApzcWaitForMainThread();
   MakeApzcUnzoomable();
 
-  EXPECT_CALL(*mcc, HandleTap(TapType::eSingleTap, LayoutDevicePoint(10, 10), 0, apzc->GetGuid(), _)).Times(2);
+  EXPECT_CALL(*mcc, HandleTap(TapType::eSingleTap, LayoutDevicePoint(10, 10), 0, apzc->GetGuid(), _)).Times(1);
+  EXPECT_CALL(*mcc, HandleTap(TapType::eSecondTap, LayoutDevicePoint(10, 10), 0, apzc->GetGuid(), _)).Times(1);
   EXPECT_CALL(*mcc, HandleTap(TapType::eDoubleTap, LayoutDevicePoint(10, 10), 0, apzc->GetGuid(), _)).Times(0);
 
   uint64_t blockIds[2];
@@ -597,10 +599,11 @@ TEST_F(APZCGestureDetectorTester, TapFollowedByMultipleTouches) {
 }
 
 TEST_F(APZCGestureDetectorTester, LongPressInterruptedByWheel) {
-  // Since the wheel block interrupted the long-press, we don't expect
-  // any long-press notifications. However, this also shouldn't crash, which
-  // is what it used to do.
-  EXPECT_CALL(*mcc, HandleTap(TapType::eLongTap, _, _, _, _)).Times(0);
+  // Since we try to allow concurrent input blocks of different types to
+  // co-exist, the wheel block shouldn't interrupt the long-press detection.
+  // But more importantly, this shouldn't crash, which is what it did at one
+  // point in time.
+  EXPECT_CALL(*mcc, HandleTap(TapType::eLongTap, _, _, _, _)).Times(1);
 
   uint64_t touchBlockId = 0;
   uint64_t wheelBlockId = 0;

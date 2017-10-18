@@ -31,15 +31,15 @@ interface Node : EventTarget {
   [Pure]
   readonly attribute DOMString nodeName;
 
-  [Pure]
+  [Pure, Throws, NeedsCallerType, BinaryName="baseURIFromJS"]
   readonly attribute DOMString? baseURI;
 
   [Pure, BinaryName=getComposedDoc]
   readonly attribute boolean isConnected;
   [Pure]
   readonly attribute Document? ownerDocument;
-  [Pure, Pref="dom.node.rootNode.enabled"]
-  readonly attribute Node rootNode;
+  [Pure]
+  Node getRootNode(optional GetRootNodeOptions options);
   [Pure]
   readonly attribute Node? parentNode;
   [Pure]
@@ -57,21 +57,22 @@ interface Node : EventTarget {
   [Pure]
   readonly attribute Node? nextSibling;
 
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute DOMString? nodeValue;
-  [Throws, Pure]
+  [CEReactions, SetterThrows, GetterCanOOM, Pure]
            attribute DOMString? textContent;
-  [Throws]
+  [CEReactions, Throws]
   Node insertBefore(Node node, Node? child);
-  [Throws]
+  [CEReactions, Throws]
   Node appendChild(Node node);
-  [Throws]
+  [CEReactions, Throws]
   Node replaceChild(Node node, Node child);
-  [Throws]
+  [CEReactions, Throws]
   Node removeChild(Node child);
+  [CEReactions]
   void normalize();
 
-  [Throws]
+  [CEReactions, Throws]
   Node cloneNode(optional boolean deep = false);
   [Pure]
   boolean isSameNode(Node? node);
@@ -107,4 +108,15 @@ interface Node : EventTarget {
   readonly attribute URI? baseURIObject;
   [ChromeOnly]
   sequence<MutationObserver> getBoundMutationObservers();
+  [ChromeOnly]
+  DOMString generateXPath();
+
+#ifdef ACCESSIBILITY
+  [Pref="accessibility.AOM.enabled"]
+  readonly attribute AccessibleNode? accessibleNode;
+#endif
+};
+
+dictionary GetRootNodeOptions {
+  boolean composed = false;
 };

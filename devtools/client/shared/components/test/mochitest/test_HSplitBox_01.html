@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -9,7 +12,7 @@ Basic tests for the HSplitBox component.
   <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
   <script type="application/javascript "src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
   <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
-  <link rel="stylesheet" href="chrome://devtools/skin/splitters.css" type="text/css"/>
+  <link rel="stylesheet" href="resource://devtools/client/themes/splitters.css" type="text/css"/>
   <link rel="stylesheet" href="chrome://devtools/skin/components-h-split-box.css" type="text/css"/>
   <style>
     html {
@@ -19,8 +22,8 @@ Basic tests for the HSplitBox component.
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 const FUDGE_FACTOR = .1;
 function aboutEq(a, b) {
   dumpn(`Checking ${a} ~= ${b}`);
@@ -36,14 +39,20 @@ window.onload = Task.async(function* () {
     ok(HSplitBox, "Should get HSplitBox");
 
     const newSizes = [];
-    const box = ReactDOM.render(HSplitBox({
-      start: "hello!",
-      end: "world!",
-      startWidth: .5,
-      onResize(newSize) {
-        newSizes.push(newSize);
-      },
-    }), window.document.body);
+
+    function renderBox(props) {
+      const boxProps = Object.assign({
+        start: "hello!",
+        end: "world!",
+        startWidth: .5,
+        onResize(newSize) {
+          newSizes.push(newSize);
+        }
+      }, props);
+      return ReactDOM.render(HSplitBox(boxProps), window.document.body);
+    }
+
+    const box = renderBox();
 
     // Test that we properly rendered our two panes.
 
@@ -56,7 +65,7 @@ window.onload = Task.async(function* () {
 
     // Now change the left width and assert that the changes are reflected.
 
-    yield setProps(box, { startWidth: .25 });
+    renderBox({ startWidth: .25 });
     panes = document.querySelectorAll(".h-split-box-pane");
     is(panes.length, 2, "Should still have two panes");
     is(panes[0].style.flexGrow, "0.25", "First pane's width should be .25");

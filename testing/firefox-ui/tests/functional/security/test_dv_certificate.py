@@ -2,15 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestDVCertificate(FirefoxTestCase):
+class TestDVCertificate(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestDVCertificate, self).setUp()
 
         self.locationbar = self.browser.navbar.locationbar
         self.identity_popup = self.browser.navbar.locationbar.identity_popup
@@ -21,19 +21,15 @@ class TestDVCertificate(FirefoxTestCase):
         try:
             self.browser.switch_to()
             self.identity_popup.close(force=True)
-            self.windows.close_all([self.browser])
+            self.puppeteer.windows.close_all([self.browser])
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestDVCertificate, self).tearDown()
 
     def test_dv_cert(self):
         with self.marionette.using_context('content'):
             self.marionette.navigate(self.url)
 
-        # The lock icon should be shown
-        self.assertIn('identity-secure',
-                      self.locationbar.connection_icon.value_of_css_property('list-style-image'))
-
-        self.assertEqual(self.locationbar.identity_box.get_attribute('className'),
+        self.assertEqual(self.locationbar.identity_box.get_property('className'),
                          'verifiedDomain')
 
         # Open the identity popup
@@ -45,7 +41,7 @@ class TestDVCertificate(FirefoxTestCase):
         cert = self.browser.tabbar.selected_tab.certificate
 
         # The shown host equals to the certificate
-        self.assertEqual(self.identity_popup.view.main.host.get_attribute('textContent'),
+        self.assertEqual(self.identity_popup.view.main.host.get_property('textContent'),
                          cert['commonName'])
 
         # Only the secure label is visible in the main view
@@ -56,7 +52,9 @@ class TestDVCertificate(FirefoxTestCase):
         self.assertEqual(insecure_label.value_of_css_property('display'), 'none')
 
         self.identity_popup.view.main.expander.click()
-        Wait(self.marionette).until(lambda _: self.identity_popup.view.security.selected)
+        Wait(self.marionette).until(
+            lambda _: self.identity_popup.view.security.selected,
+            message='Security view of identity popup has not been selected.')
 
         # Only the secure label is visible in the security view
         secure_label = self.identity_popup.view.security.secure_connection_label
@@ -65,8 +63,8 @@ class TestDVCertificate(FirefoxTestCase):
         insecure_label = self.identity_popup.view.security.insecure_connection_label
         self.assertEqual(insecure_label.value_of_css_property('display'), 'none')
 
-        verifier_label = self.browser.get_property('identity.identified.verifier')
-        self.assertEqual(self.identity_popup.view.security.verifier.get_attribute('textContent'),
+        verifier_label = self.browser.localize_property('identity.identified.verifier')
+        self.assertEqual(self.identity_popup.view.security.verifier.get_property('textContent'),
                          verifier_label.replace("%S", cert['issuerOrganization']))
 
         def opener(mn):
@@ -77,11 +75,11 @@ class TestDVCertificate(FirefoxTestCase):
 
         self.assertEqual(deck.selected_panel, deck.security)
 
-        self.assertEqual(deck.security.domain.get_attribute('value'),
+        self.assertEqual(deck.security.domain.get_property('value'),
                          cert['commonName'])
 
-        self.assertEqual(deck.security.owner.get_attribute('value'),
-                         page_info_window.get_property('securityNoOwner'))
+        self.assertEqual(deck.security.owner.get_property('value'),
+                         page_info_window.localize_property('securityNoOwner'))
 
-        self.assertEqual(deck.security.verifier.get_attribute('value'),
+        self.assertEqual(deck.security.verifier.get_property('value'),
                          cert['issuerOrganization'])

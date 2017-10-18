@@ -7,22 +7,22 @@ function observeOneRestore(callback) {
   Services.obs.addObserver(function onRestore() {
     Services.obs.removeObserver(onRestore, topic);
     callback();
-  }, topic, false);
-};
+  }, topic);
+}
 
 function test() {
   waitForExplicitFinish();
 
   // There should be one tab when we start the test
   let [origTab] = gBrowser.visibleTabs;
-  let hiddenTab = gBrowser.addTab();
+  let hiddenTab = BrowserTestUtils.addTab(gBrowser);
 
   is(gBrowser.visibleTabs.length, 2, "should have 2 tabs before hiding");
   gBrowser.showOnlyTheseTabs([origTab]);
   is(gBrowser.visibleTabs.length, 1, "only 1 after hiding");
   ok(hiddenTab.hidden, "sanity check that it's hidden");
 
-  let extraTab = gBrowser.addTab();
+  BrowserTestUtils.addTab(gBrowser);
   let state = ss.getBrowserState();
   let stateObj = JSON.parse(state);
   let tabs = stateObj.windows[0].tabs;
@@ -35,16 +35,16 @@ function test() {
   tabs[2].hidden = true;
 
   observeOneRestore(function() {
-    let testWindow = Services.wm.getEnumerator("navigator:browser").getNext();
-    is(testWindow.gBrowser.visibleTabs.length, 1, "only restored 1 visible tab");
-    let tabs = testWindow.gBrowser.tabs;
-    ok(!tabs[0].hidden, "first is still visible");
-    ok(tabs[1].hidden, "second tab is still hidden");
-    ok(tabs[2].hidden, "third tab is now hidden");
+    is(gBrowser.visibleTabs.length, 1, "only restored 1 visible tab");
+    let restoredTabs = gBrowser.tabs;
+
+    ok(!restoredTabs[0].hidden, "first is still visible");
+    ok(restoredTabs[1].hidden, "second tab is still hidden");
+    ok(restoredTabs[2].hidden, "third tab is now hidden");
 
     // Restore the original state and clean up now that we're done
-    gBrowser.removeTab(hiddenTab);
-    gBrowser.removeTab(extraTab);
+    gBrowser.removeTab(gBrowser.tabs[1]);
+    gBrowser.removeTab(gBrowser.tabs[1]);
 
     finish();
   });

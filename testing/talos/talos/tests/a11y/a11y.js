@@ -1,4 +1,5 @@
-gAccRetrieval = 0;
+/* globals acc:true, gAccService:true, nsIAccessible:true, nsIDOMNode:true */
+gAccService = 0;
 
 // Make sure not to touch Components before potentially invoking enablePrivilege,
 // because otherwise it won't be there.
@@ -6,22 +7,20 @@ netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
 nsIAccessible = Components.interfaces.nsIAccessible;
 nsIDOMNode = Components.interfaces.nsIDOMNode;
 
-function initAccessibility()
-{
+function initAccessibility() {
   netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-  if (!gAccRetrieval) {
-    var retrieval = Components.classes["@mozilla.org/accessibleRetrieval;1"];
-    if (retrieval) { // fails if build lacks accessibility module
-      gAccRetrieval =
-      Components.classes["@mozilla.org/accessibleRetrieval;1"]
-                .getService(Components.interfaces.nsIAccessibleRetrieval);
+  if (!gAccService) {
+    var service = Components.classes["@mozilla.org/accessibilityService;1"];
+    if (service) { // fails if build lacks accessibility module
+      gAccService =
+      Components.classes["@mozilla.org/accessibilityService;1"]
+                .getService(Components.interfaces.nsIAccessibilityService);
     }
   }
-  return gAccRetrieval;
+  return gAccService;
 }
 
-function getAccessible(aAccOrElmOrID, aInterfaces)
-{
+function getAccessible(aAccOrElmOrID, aInterfaces) {
   if (!aAccOrElmOrID) {
     return null;
   }
@@ -41,7 +40,7 @@ function getAccessible(aAccOrElmOrID, aInterfaces)
   var acc = (aAccOrElmOrID instanceof nsIAccessible) ? aAccOrElmOrID : null;
   if (!acc) {
     try {
-      acc = gAccRetrieval.getAccessibleFor(elm);
+      acc = gAccService.getAccessibleFor(elm);
     } catch (e) {
     }
   }
@@ -59,18 +58,17 @@ function getAccessible(aAccOrElmOrID, aInterfaces)
     }
     return acc;
   }
-  
+
   try {
     acc.QueryInterface(aInterfaces);
   } catch (e) {
   }
-  
+
   return acc;
 }
 
 // Walk accessible tree of the given identifier to ensure tree creation
-function ensureAccessibleTree(aAccOrElmOrID)
-{
+function ensureAccessibleTree(aAccOrElmOrID) {
   acc = getAccessible(aAccOrElmOrID);
 
   var child = acc.firstChild;

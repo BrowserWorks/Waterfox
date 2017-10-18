@@ -17,6 +17,7 @@ typedef int64_t Microseconds;
 
 class Box;
 class BoxContext;
+class BoxReader;
 class Moof;
 
 class Mvhd : public Atom
@@ -147,7 +148,7 @@ public:
 
   AtomType mAuxInfoType;
   uint32_t mAuxInfoTypeParameter;
-  nsTArray<uint8_t> mSampleInfoSize;
+  FallibleTArray<uint8_t> mSampleInfoSize;
 };
 
 class Saio final : public Atom
@@ -157,7 +158,54 @@ public:
 
   AtomType mAuxInfoType;
   uint32_t mAuxInfoTypeParameter;
-  nsTArray<uint64_t> mOffsets;
+  FallibleTArray<uint64_t> mOffsets;
+};
+
+struct SampleToGroupEntry
+{
+public:
+  static const uint32_t kTrackGroupDescriptionIndexBase = 0;
+  static const uint32_t kFragmentGroupDescriptionIndexBase = 0x10000;
+
+  SampleToGroupEntry(uint32_t aSampleCount, uint32_t aGroupDescriptionIndex)
+    : mSampleCount(aSampleCount)
+    , mGroupDescriptionIndex(aGroupDescriptionIndex)
+    {
+    }
+
+  uint32_t mSampleCount;
+  uint32_t mGroupDescriptionIndex;
+};
+
+class Sbgp final : public Atom // SampleToGroup box.
+{
+public:
+  explicit Sbgp(Box& aBox);
+
+  AtomType mGroupingType;
+  uint32_t mGroupingTypeParam;
+  nsTArray<SampleToGroupEntry> mEntries;
+};
+
+struct CencSampleEncryptionInfoEntry final
+{
+public:
+  CencSampleEncryptionInfoEntry() { }
+
+  bool Init(BoxReader& aReader);
+
+  bool mIsEncrypted = false;
+  uint8_t mIVSize = 0;
+  nsTArray<uint8_t> mKeyId;
+};
+
+class Sgpd final : public Atom // SampleGroupDescription box.
+{
+public:
+  explicit Sgpd(Box& aBox);
+
+  AtomType mGroupingType;
+  nsTArray<CencSampleEncryptionInfoEntry> mEntries;
 };
 
 class AuxInfo {
@@ -182,8 +230,12 @@ public:
   Interval<Microseconds> mTimeRange;
   FallibleTArray<Sample> mIndex;
 
+  nsTArray<CencSampleEncryptionInfoEntry> mFragmentSampleEncryptionInfoEntries;
+  nsTArray<SampleToGroupEntry> mFragmentSampleToGroupEntries;
+
   nsTArray<Saiz> mSaizs;
   nsTArray<Saio> mSaios;
+  nsTArray<nsTArray<uint8_t>> mPsshes;
 
 private:
     // aDecodeTime is updated to the end of the parsed TRAF on return.
@@ -211,6 +263,11 @@ public:
   }
   bool RebuildFragmentedIndex(
     const mozilla::MediaByteRangeSet& aByteRanges);
+  // If *aCanEvict is set to true. then will remove all moofs already parsed
+  // from index then rebuild the index. *aCanEvict is set to true upon return if
+  // some moofs were removed.
+  bool RebuildFragmentedIndex(
+    const mozilla::MediaByteRangeSet& aByteRanges, bool* aCanEvict);
   bool RebuildFragmentedIndex(BoxContext& aContext);
   Interval<Microseconds> GetCompositionRange(
     const mozilla::MediaByteRangeSet& aByteRanges);
@@ -235,13 +292,16 @@ public:
   mozilla::MediaByteRange mInitRange;
   RefPtr<Stream> mSource;
   uint64_t mOffset;
-  nsTArray<uint64_t> mMoofOffsets;
   Mvhd mMvhd;
   Mdhd mMdhd;
   Trex mTrex;
   Tfdt mTfdt;
   Edts mEdts;
   Sinf mSinf;
+
+  nsTArray<CencSampleEncryptionInfoEntry> mTrackSampleEncryptionInfoEntries;
+  nsTArray<SampleToGroupEntry> mTrackSampleToGroupEntries;
+
   nsTArray<Moof>& Moofs() { return mMoofs; }
 private:
   void ScanForMetadata(mozilla::MediaByteRange& aFtyp,

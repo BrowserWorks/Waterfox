@@ -18,7 +18,6 @@ namespace mozilla {
 namespace layers {
 class Image;
 class PlanarYCbCrImage;
-class GrallocImage;
 class SurfaceTextureImage;
 class MacIOSurfaceImage;
 class EGLImageImage;
@@ -45,8 +44,6 @@ class GLBlitHelper final
      * The difference between BlitTex2D and BlitTexRect is the texture type, which affect
      * the fragment shader a bit.
      *
-     * ConvertGralloc is used to color convert copy blit the GrallocImage into a
-     * normal RGB texture by egl_image_external extension
      * ConvertPlnarYcbCr is used to color convert copy blit the PlanarYCbCrImage
      * into a normal RGB texture by create textures of each color channel, and
      * convert it in GPU.
@@ -56,7 +53,6 @@ class GLBlitHelper final
     {
         BlitTex2D,
         BlitTexRect,
-        ConvertGralloc,
         ConvertPlanarYCbCr,
         ConvertSurfaceTexture,
         ConvertEGLImage,
@@ -90,6 +86,7 @@ class GLBlitHelper final
     GLuint mSrcTexEGL;
     GLint mYTexScaleLoc;
     GLint mCbCrTexScaleLoc;
+    GLint mYuvColorMatrixLoc;
     int mTexWidth;
     int mTexHeight;
 
@@ -106,9 +103,6 @@ class GLBlitHelper final
     void BindAndUploadYUVTexture(Channel which, uint32_t width, uint32_t height, void* data, bool allocation);
     void BindAndUploadEGLImage(EGLImage image, GLuint target);
 
-#ifdef MOZ_WIDGET_GONK
-    bool BlitGrallocImage(layers::GrallocImage* grallocImage);
-#endif
     bool BlitPlanarYCbCrImage(layers::PlanarYCbCrImage* yuvImage);
 #ifdef MOZ_WIDGET_ANDROID
     // Blit onto the current FB.

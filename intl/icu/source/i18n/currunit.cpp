@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
 * Copyright (c) 2004-2014, International Business Machines
@@ -17,10 +19,10 @@
 
 U_NAMESPACE_BEGIN
 
-CurrencyUnit::CurrencyUnit(const UChar* _isoCode, UErrorCode& ec) {
+CurrencyUnit::CurrencyUnit(ConstChar16Ptr _isoCode, UErrorCode& ec) {
     *isoCode = 0;
     if (U_SUCCESS(ec)) {
-        if (_isoCode && u_strlen(_isoCode)==3) {
+        if (_isoCode != nullptr && u_strlen(_isoCode)==3) {
             u_strcpy(isoCode, _isoCode);
             char simpleIsoCode[4];
             u_UCharsToChars(isoCode, simpleIsoCode, 4);

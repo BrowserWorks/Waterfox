@@ -6,16 +6,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ContentCache.h"
+
 #include "mozilla/IMEStateManager.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Logging.h"
+#include "mozilla/Move.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
+#include "mozilla/dom/TabParent.h"
 #include "nsIWidget.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/Move.h"
 
 namespace mozilla {
 
+using namespace dom;
 using namespace widget;
 
 static const char*
@@ -298,6 +302,24 @@ ContentCacheInChild::QueryCharRect(nsIWidget* aWidget,
 }
 
 bool
+ContentCacheInChild::QueryCharRectArray(nsIWidget* aWidget,
+                                        uint32_t aOffset,
+                                        uint32_t aLength,
+                                        RectArray& aCharRectArray) const
+{
+  nsEventStatus status = nsEventStatus_eIgnore;
+  WidgetQueryContentEvent textRects(true, eQueryTextRectArray, aWidget);
+  textRects.InitForQueryTextRectArray(aOffset, aLength);
+  aWidget->DispatchEvent(&textRects, status);
+  if (NS_WARN_IF(!textRects.mSucceeded)) {
+    aCharRectArray.Clear();
+    return false;
+  }
+  aCharRectArray = Move(textRects.mReply.mRectArray);
+  return true;
+}
+
+bool
 ContentCacheInChild::CacheTextRects(nsIWidget* aWidget,
                                     const IMENotification* aNotification)
 {
@@ -309,8 +331,8 @@ ContentCacheInChild::CacheTextRects(nsIWidget* aWidget,
 
   mCompositionStart = UINT32_MAX;
   mTextRectArray.Clear();
-  mSelection.mAnchorCharRect.SetEmpty();
-  mSelection.mFocusCharRect.SetEmpty();
+  mSelection.ClearAnchorCharRects();
+  mSelection.ClearFocusCharRects();
   mSelection.mRect.SetEmpty();
   mFirstCharRect.SetEmpty();
 
@@ -328,43 +350,81 @@ ContentCacheInChild::CacheTextRects(nsIWidget* aWidget,
     // Note that TextComposition::String() may not be modified here because
     // it's modified after all edit action listeners are performed but this
     // is called while some of them are performed.
-    uint32_t length = textComposition->LastData().Length();
+    // FYI: For supporting IME which commits composition and restart new
+    //      composition immediately, we should cache next character of current
+    //      composition too.
+    uint32_t length = textComposition->LastData().Length() + 1;
     mTextRectArray.mStart = mCompositionStart;
-
-    nsEventStatus status = nsEventStatus_eIgnore;
-    WidgetQueryContentEvent textRects(true, eQueryTextRectArray, aWidget);
-    textRects.InitForQueryTextRectArray(mTextRectArray.mStart, length);
-    aWidget->DispatchEvent(&textRects, status);
-
-    mTextRectArray.mRects = Move(textRects.mReply.mRectArray);
-  }
-
-  if (mTextRectArray.InRange(mSelection.mAnchor)) {
-    mSelection.mAnchorCharRect = mTextRectArray.GetRect(mSelection.mAnchor);
-  } else {
-    LayoutDeviceIntRect charRect;
-    if (NS_WARN_IF(!QueryCharRect(aWidget, mSelection.mAnchor, charRect))) {
+    if (NS_WARN_IF(!QueryCharRectArray(aWidget, mTextRectArray.mStart, length,
+                                       mTextRectArray.mRects))) {
       MOZ_LOG(sContentCacheLog, LogLevel::Error,
         ("0x%p CacheTextRects(), FAILED, "
-         "couldn't retrieve text rect at anchor of selection (%u)",
-         this, mSelection.mAnchor));
+         "couldn't retrieve text rect array of the composition string", this));
     }
-    mSelection.mAnchorCharRect = charRect;
+  }
+
+  if (mTextRectArray.InRange(mSelection.mAnchor) &&
+      (!mSelection.mAnchor || mTextRectArray.InRange(mSelection.mAnchor - 1))) {
+    mSelection.mAnchorCharRects[eNextCharRect] =
+      mTextRectArray.GetRect(mSelection.mAnchor);
+    if (mSelection.mAnchor) {
+      mSelection.mAnchorCharRects[ePrevCharRect] =
+        mTextRectArray.GetRect(mSelection.mAnchor - 1);
+    }
+  } else {
+    RectArray rects;
+    uint32_t startOffset = mSelection.mAnchor ? mSelection.mAnchor - 1 : 0;
+    uint32_t length = mSelection.mAnchor ? 2 : 1;
+    if (NS_WARN_IF(!QueryCharRectArray(aWidget, startOffset, length, rects))) {
+      MOZ_LOG(sContentCacheLog, LogLevel::Error,
+        ("0x%p CacheTextRects(), FAILED, "
+         "couldn't retrieve text rect array around the selection anchor (%u)",
+         this, mSelection.mAnchor));
+      MOZ_ASSERT(mSelection.mAnchorCharRects[ePrevCharRect].IsEmpty());
+      MOZ_ASSERT(mSelection.mAnchorCharRects[eNextCharRect].IsEmpty());
+    } else {
+      if (rects.Length() > 1) {
+        mSelection.mAnchorCharRects[ePrevCharRect] = rects[0];
+        mSelection.mAnchorCharRects[eNextCharRect] = rects[1];
+      } else if (rects.Length()) {
+        mSelection.mAnchorCharRects[eNextCharRect] = rects[0];
+        MOZ_ASSERT(mSelection.mAnchorCharRects[ePrevCharRect].IsEmpty());
+      }
+    }
   }
 
   if (mSelection.Collapsed()) {
-    mSelection.mFocusCharRect = mSelection.mAnchorCharRect;
-  } else if (mTextRectArray.InRange(mSelection.mFocus)) {
-    mSelection.mFocusCharRect = mTextRectArray.GetRect(mSelection.mFocus);
+    mSelection.mFocusCharRects[0] = mSelection.mAnchorCharRects[0];
+    mSelection.mFocusCharRects[1] = mSelection.mAnchorCharRects[1];
+  } else if (mTextRectArray.InRange(mSelection.mFocus) &&
+             (!mSelection.mFocus ||
+              mTextRectArray.InRange(mSelection.mFocus - 1))) {
+    mSelection.mFocusCharRects[eNextCharRect] =
+      mTextRectArray.GetRect(mSelection.mFocus);
+    if (mSelection.mFocus) {
+      mSelection.mFocusCharRects[ePrevCharRect] =
+        mTextRectArray.GetRect(mSelection.mFocus - 1);
+    }
   } else {
-    LayoutDeviceIntRect charRect;
-    if (NS_WARN_IF(!QueryCharRect(aWidget, mSelection.mFocus, charRect))) {
+    RectArray rects;
+    uint32_t startOffset = mSelection.mFocus ? mSelection.mFocus - 1 : 0;
+    uint32_t length = mSelection.mFocus ? 2 : 1;
+    if (NS_WARN_IF(!QueryCharRectArray(aWidget, startOffset, length, rects))) {
       MOZ_LOG(sContentCacheLog, LogLevel::Error,
         ("0x%p CacheTextRects(), FAILED, "
-         "couldn't retrieve text rect at focus of selection (%u)",
+         "couldn't retrieve text rect array around the selection focus (%u)",
          this, mSelection.mFocus));
+      MOZ_ASSERT(mSelection.mFocusCharRects[ePrevCharRect].IsEmpty());
+      MOZ_ASSERT(mSelection.mFocusCharRects[eNextCharRect].IsEmpty());
+    } else {
+      if (rects.Length() > 1) {
+        mSelection.mFocusCharRects[ePrevCharRect] = rects[0];
+        mSelection.mFocusCharRects[eNextCharRect] = rects[1];
+      } else if (rects.Length()) {
+        mSelection.mFocusCharRects[eNextCharRect] = rects[0];
+        MOZ_ASSERT(mSelection.mFocusCharRects[ePrevCharRect].IsEmpty());
+      }
     }
-    mSelection.mFocusCharRect = charRect;
   }
 
   if (!mSelection.Collapsed()) {
@@ -383,9 +443,13 @@ ContentCacheInChild::CacheTextRects(nsIWidget* aWidget,
   }
 
   if (!mSelection.mFocus) {
-    mFirstCharRect = mSelection.mFocusCharRect;
+    mFirstCharRect = mSelection.mFocusCharRects[eNextCharRect];
+  } else if (mSelection.mFocus == 1) {
+    mFirstCharRect = mSelection.mFocusCharRects[ePrevCharRect];
   } else if (!mSelection.mAnchor) {
-    mFirstCharRect = mSelection.mAnchorCharRect;
+    mFirstCharRect = mSelection.mAnchorCharRects[eNextCharRect];
+  } else if (mSelection.mAnchor == 1) {
+    mFirstCharRect = mSelection.mFocusCharRects[ePrevCharRect];
   } else if (mTextRectArray.InRange(0)) {
     mFirstCharRect = mTextRectArray.GetRect(0);
   } else {
@@ -401,13 +465,18 @@ ContentCacheInChild::CacheTextRects(nsIWidget* aWidget,
 
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p CacheTextRects(), Succeeded, "
-     "mText.Length()=%u, mTextRectArray={ mStart=%u, mRects.Length()=%u }, "
-     "mSelection={ mAnchor=%u, mAnchorCharRect=%s, mFocus=%u, "
-     "mFocusCharRect=%s, mRect=%s }, mFirstCharRect=%s",
+     "mText.Length()=%x, mTextRectArray={ mStart=%u, mRects.Length()=%zu"
+     " }, mSelection={ mAnchor=%u, mAnchorCharRects[eNextCharRect]=%s, "
+     "mAnchorCharRects[ePrevCharRect]=%s, mFocus=%u, "
+     "mFocusCharRects[eNextCharRect]=%s, mFocusCharRects[ePrevCharRect]=%s, "
+     "mRect=%s }, mFirstCharRect=%s",
      this, mText.Length(), mTextRectArray.mStart,
      mTextRectArray.mRects.Length(), mSelection.mAnchor,
-     GetRectText(mSelection.mAnchorCharRect).get(), mSelection.mFocus,
-     GetRectText(mSelection.mFocusCharRect).get(),
+     GetRectText(mSelection.mAnchorCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mAnchorCharRects[ePrevCharRect]).get(),
+     mSelection.mFocus,
+     GetRectText(mSelection.mFocusCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mFocusCharRects[ePrevCharRect]).get(),
      GetRectText(mSelection.mRect).get(), GetRectText(mFirstCharRect).get()));
   return true;
 }
@@ -437,18 +506,22 @@ ContentCacheInChild::SetSelection(nsIWidget* aWidget,
   if (NS_WARN_IF(!CacheCaret(aWidget))) {
     return;
   }
-  NS_WARN_IF(!CacheTextRects(aWidget));
+  Unused << NS_WARN_IF(!CacheTextRects(aWidget));
 }
 
 /*****************************************************************************
  * mozilla::ContentCacheInParent
  *****************************************************************************/
 
-ContentCacheInParent::ContentCacheInParent()
+ContentCacheInParent::ContentCacheInParent(TabParent& aTabParent)
   : ContentCache()
+  , mTabParent(aTabParent)
   , mCommitStringByRequest(nullptr)
   , mPendingEventsNeedingAck(0)
-  , mIsComposing(false)
+  , mCompositionStartInChild(UINT32_MAX)
+  , mPendingCompositionCount(0)
+  , mWidgetHasComposition(false)
+  , mIsPendingLastCommitEvent(false)
 {
 }
 
@@ -457,7 +530,6 @@ ContentCacheInParent::AssignContent(const ContentCache& aOther,
                                     nsIWidget* aWidget,
                                     const IMENotification* aNotification)
 {
-  mCompositionStart = aOther.mCompositionStart;
   mText = aOther.mText;
   mSelection = aOther.mSelection;
   mFirstCharRect = aOther.mFirstCharRect;
@@ -465,29 +537,59 @@ ContentCacheInParent::AssignContent(const ContentCache& aOther,
   mTextRectArray = aOther.mTextRectArray;
   mEditorRect = aOther.mEditorRect;
 
-  if (mIsComposing) {
-    NS_WARN_IF(mCompositionStart == UINT32_MAX);
+  // Only when there is one composition, the TextComposition instance in this
+  // process is managing the composition in the remote process.  Therefore,
+  // we shouldn't update composition start offset of TextComposition with
+  // old composition which is still being handled by the child process.
+  if (mWidgetHasComposition && mPendingCompositionCount == 1) {
     IMEStateManager::MaybeStartOffsetUpdatedInChild(aWidget, mCompositionStart);
-  } else {
-    NS_WARN_IF(mCompositionStart != UINT32_MAX);
+  }
+
+  // When the widget has composition, we should set mCompositionStart to
+  // *current* composition start offset.  Note that, in strictly speaking,
+  // widget should not use WidgetQueryContentEvent if there are some pending
+  // compositions (i.e., when mPendingCompositionCount is 2 or more).
+  mCompositionStartInChild = aOther.mCompositionStart;
+  if (mWidgetHasComposition) {
+    if (aOther.mCompositionStart != UINT32_MAX) {
+      if (mCompositionStart != aOther.mCompositionStart) {
+        mCompositionStart = aOther.mCompositionStart;
+        mPendingCommitLength = 0;
+      }
+    } else if (mCompositionStart != mSelection.StartOffset()) {
+      mCompositionStart = mSelection.StartOffset();
+      mPendingCommitLength = 0;
+      NS_WARNING_ASSERTION(mCompositionStart != UINT32_MAX,
+                           "mCompositionStart shouldn't be invalid offset when "
+                           "the widget has composition");
+    }
+  } else if (mCompositionStart != UINT32_MAX) {
+    mCompositionStart = UINT32_MAX;
+    mPendingCommitLength = 0;
   }
 
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p AssignContent(aNotification=%s), "
      "Succeeded, mText.Length()=%u, mSelection={ mAnchor=%u, mFocus=%u, "
-     "mWritingMode=%s, mAnchorCharRect=%s, mFocusCharRect=%s, mRect=%s }, "
+     "mWritingMode=%s, mAnchorCharRects[eNextCharRect]=%s, "
+     "mAnchorCharRects[ePrevCharRect]=%s, mFocusCharRects[eNextCharRect]=%s, "
+     "mFocusCharRects[ePrevCharRect]=%s, mRect=%s }, "
      "mFirstCharRect=%s, mCaret={ mOffset=%u, mRect=%s }, mTextRectArray={ "
-     "mStart=%u, mRects.Length()=%u }, mIsComposing=%s, mCompositionStart=%u, "
-     "mEditorRect=%s",
+     "mStart=%u, mRects.Length()=%zu }, mWidgetHasComposition=%s, "
+     "mPendingCompositionCount=%u, mCompositionStart=%u, "
+     "mPendingCommitLength=%u, mEditorRect=%s",
      this, GetNotificationName(aNotification),
      mText.Length(), mSelection.mAnchor, mSelection.mFocus,
      GetWritingModeName(mSelection.mWritingMode).get(),
-     GetRectText(mSelection.mAnchorCharRect).get(),
-     GetRectText(mSelection.mFocusCharRect).get(),
+     GetRectText(mSelection.mAnchorCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mAnchorCharRects[ePrevCharRect]).get(),
+     GetRectText(mSelection.mFocusCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mFocusCharRects[ePrevCharRect]).get(),
      GetRectText(mSelection.mRect).get(), GetRectText(mFirstCharRect).get(),
      mCaret.mOffset, GetRectText(mCaret.mRect).get(), mTextRectArray.mStart,
-     mTextRectArray.mRects.Length(), GetBoolName(mIsComposing),
-     mCompositionStart, GetRectText(mEditorRect).get()));
+     mTextRectArray.mRects.Length(), GetBoolName(mWidgetHasComposition),
+     mPendingCompositionCount, mCompositionStart, mPendingCommitLength,
+     GetRectText(mEditorRect).get()));
 }
 
 bool
@@ -503,11 +605,23 @@ ContentCacheInParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent,
   // So, we don't support to query contents relative to composition start
   // offset with XP linebreaks.
   if (NS_WARN_IF(!aEvent.mUseNativeLineBreak)) {
+    MOZ_LOG(sContentCacheLog, LogLevel::Error,
+      ("0x%p HandleQueryContentEvent(), FAILED due to query with XP linebreaks",
+       this));
     return false;
   }
 
-  if (NS_WARN_IF(!aEvent.mInput.IsValidOffset()) ||
-      NS_WARN_IF(!aEvent.mInput.IsValidEventMessage(aEvent.mMessage))) {
+  if (NS_WARN_IF(!aEvent.mInput.IsValidOffset())) {
+    MOZ_LOG(sContentCacheLog, LogLevel::Error,
+      ("0x%p HandleQueryContentEvent(), FAILED due to invalid offset",
+       this));
+    return false;
+  }
+
+  if (NS_WARN_IF(!aEvent.mInput.IsValidEventMessage(aEvent.mMessage))) {
+    MOZ_LOG(sContentCacheLog, LogLevel::Error,
+      ("0x%p HandleQueryContentEvent(), FAILED due to invalid event message",
+       this));
     return false;
   }
 
@@ -515,15 +629,48 @@ ContentCacheInParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent,
   if (isRelativeToInsertionPoint) {
     if (aWidget->PluginHasFocus()) {
       if (NS_WARN_IF(!aEvent.mInput.MakeOffsetAbsolute(0))) {
+        MOZ_LOG(sContentCacheLog, LogLevel::Error,
+          ("0x%p HandleQueryContentEvent(), FAILED due to "
+           "aEvent.mInput.MakeOffsetAbsolute(0) failure, aEvent={ mMessage=%s, "
+           "mInput={ mOffset=%" PRId64 ", mLength=%" PRIu32 " } }",
+           this, ToChar(aEvent.mMessage), aEvent.mInput.mOffset,
+           aEvent.mInput.mLength));
         return false;
       }
-    } else if (mIsComposing) {
-      if (NS_WARN_IF(!aEvent.mInput.MakeOffsetAbsolute(mCompositionStart))) {
+    } else if (mWidgetHasComposition) {
+      if (NS_WARN_IF(!aEvent.mInput.MakeOffsetAbsolute(
+                                      mCompositionStart +
+                                        mPendingCommitLength))) {
+        MOZ_LOG(sContentCacheLog, LogLevel::Error,
+          ("0x%p HandleQueryContentEvent(), FAILED due to "
+           "aEvent.mInput.MakeOffsetAbsolute(mCompositionStart + "
+           "mPendingCommitLength) failure, "
+           "mCompositionStart=%" PRIu32 ", mPendingCommitLength=%" PRIu32 ", "
+           "aEvent={ mMessage=%s, mInput={ mOffset=%" PRId64
+           ", mLength=%" PRIu32 " } }",
+           this, mCompositionStart, mPendingCommitLength,
+           ToChar(aEvent.mMessage), aEvent.mInput.mOffset,
+           aEvent.mInput.mLength));
         return false;
       }
-    } else if (NS_WARN_IF(!mSelection.IsValid()) ||
-               NS_WARN_IF(!aEvent.mInput.MakeOffsetAbsolute(
-                                           mSelection.StartOffset()))) {
+    } else if (NS_WARN_IF(!mSelection.IsValid())) {
+      MOZ_LOG(sContentCacheLog, LogLevel::Error,
+        ("0x%p HandleQueryContentEvent(), FAILED due to mSelection is invalid",
+         this));
+      return false;
+    } else if (NS_WARN_IF(!aEvent.mInput.MakeOffsetAbsolute(
+                                           mSelection.StartOffset() +
+                                             mPendingCommitLength))) {
+      MOZ_LOG(sContentCacheLog, LogLevel::Error,
+        ("0x%p HandleQueryContentEvent(), FAILED due to "
+         "aEvent.mInput.MakeOffsetAbsolute(mSelection.StartOffset() + "
+         "mPendingCommitLength) failure, "
+         "mSelection={ StartOffset()=%d, Length()=%d }, "
+         "mPendingCommitLength=%" PRIu32 ", aEvent={ mMessage=%s, "
+         "mInput={ mOffset=%" PRId64 ", mLength=%" PRIu32 " } }",
+         this, mSelection.StartOffset(), mSelection.Length(),
+         mPendingCommitLength, ToChar(aEvent.mMessage),
+         aEvent.mInput.mOffset, aEvent.mInput.mLength));
       return false;
     }
   }
@@ -584,8 +731,8 @@ ContentCacheInParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent,
     case eQueryTextContent: {
       MOZ_LOG(sContentCacheLog, LogLevel::Info,
         ("0x%p HandleQueryContentEvent("
-         "aEvent={ mMessage=eQueryTextContent, mInput={ mOffset=%u, "
-         "mLength=%u } }, aWidget=0x%p), mText.Length()=%u",
+         "aEvent={ mMessage=eQueryTextContent, mInput={ mOffset=%" PRId64
+         ", mLength=%u } }, aWidget=0x%p), mText.Length()=%u",
          this, aEvent.mInput.mOffset,
          aEvent.mInput.mLength, aWidget, mText.Length()));
       uint32_t inputOffset = aEvent.mInput.mOffset;
@@ -610,8 +757,8 @@ ContentCacheInParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent,
     case eQueryTextRect:
       MOZ_LOG(sContentCacheLog, LogLevel::Info,
         ("0x%p HandleQueryContentEvent("
-         "aEvent={ mMessage=eQueryTextRect, mInput={ mOffset=%u, "
-         "mLength=%u } }, aWidget=0x%p), mText.Length()=%u",
+         "aEvent={ mMessage=eQueryTextRect, mInput={ mOffset=%" PRId64
+         ", mLength=%u } }, aWidget=0x%p), mText.Length()=%u",
          this, aEvent.mInput.mOffset, aEvent.mInput.mLength, aWidget,
          mText.Length()));
       if (NS_WARN_IF(!IsSelectionValid())) {
@@ -671,7 +818,7 @@ ContentCacheInParent::HandleQueryContentEvent(WidgetQueryContentEvent& aEvent,
     case eQueryCaretRect:
       MOZ_LOG(sContentCacheLog, LogLevel::Info,
         ("0x%p HandleQueryContentEvent("
-         "aEvent={ mMessage=eQueryCaretRect, mInput={ mOffset=%u } }, "
+         "aEvent={ mMessage=eQueryCaretRect, mInput={ mOffset=%" PRId64 " } }, "
          "aWidget=0x%p), mText.Length()=%u",
          this, aEvent.mInput.mOffset, aWidget, mText.Length()));
       if (NS_WARN_IF(!IsSelectionValid())) {
@@ -726,25 +873,39 @@ ContentCacheInParent::GetTextRect(uint32_t aOffset,
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p GetTextRect(aOffset=%u, "
      "aRoundToExistingOffset=%s), "
-     "mTextRectArray={ mStart=%u, mRects.Length()=%u }, "
+     "mTextRectArray={ mStart=%u, mRects.Length()=%zu }, "
      "mSelection={ mAnchor=%u, mFocus=%u }",
      this, aOffset, GetBoolName(aRoundToExistingOffset),
      mTextRectArray.mStart, mTextRectArray.mRects.Length(),
      mSelection.mAnchor, mSelection.mFocus));
 
   if (!aOffset) {
-    NS_WARN_IF(mFirstCharRect.IsEmpty());
+    NS_WARNING_ASSERTION(!mFirstCharRect.IsEmpty(), "empty rect");
     aTextRect = mFirstCharRect;
     return !aTextRect.IsEmpty();
   }
   if (aOffset == mSelection.mAnchor) {
-    NS_WARN_IF(mSelection.mAnchorCharRect.IsEmpty());
-    aTextRect = mSelection.mAnchorCharRect;
+    NS_WARNING_ASSERTION(!mSelection.mAnchorCharRects[eNextCharRect].IsEmpty(),
+                         "empty rect");
+    aTextRect = mSelection.mAnchorCharRects[eNextCharRect];
+    return !aTextRect.IsEmpty();
+  }
+  if (mSelection.mAnchor && aOffset == mSelection.mAnchor - 1) {
+    NS_WARNING_ASSERTION(!mSelection.mAnchorCharRects[ePrevCharRect].IsEmpty(),
+                         "empty rect");
+    aTextRect = mSelection.mAnchorCharRects[ePrevCharRect];
     return !aTextRect.IsEmpty();
   }
   if (aOffset == mSelection.mFocus) {
-    NS_WARN_IF(mSelection.mFocusCharRect.IsEmpty());
-    aTextRect = mSelection.mFocusCharRect;
+    NS_WARNING_ASSERTION(!mSelection.mFocusCharRects[eNextCharRect].IsEmpty(),
+                         "empty rect");
+    aTextRect = mSelection.mFocusCharRects[eNextCharRect];
+    return !aTextRect.IsEmpty();
+  }
+  if (mSelection.mFocus && aOffset == mSelection.mFocus - 1) {
+    NS_WARNING_ASSERTION(!mSelection.mFocusCharRects[ePrevCharRect].IsEmpty(),
+                         "empty rect");
+    aTextRect = mSelection.mFocusCharRects[ePrevCharRect];
     return !aTextRect.IsEmpty();
   }
 
@@ -781,7 +942,7 @@ ContentCacheInParent::GetUnionTextRects(
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p GetUnionTextRects(aOffset=%u, "
      "aLength=%u, aRoundToExistingOffset=%s), mTextRectArray={ "
-     "mStart=%u, mRects.Length()=%u }, "
+     "mStart=%u, mRects.Length()=%zu }, "
      "mSelection={ mAnchor=%u, mFocus=%u }",
      this, aOffset, aLength, GetBoolName(aRoundToExistingOffset),
      mTextRectArray.mStart, mTextRectArray.mRects.Length(),
@@ -795,25 +956,39 @@ ContentCacheInParent::GetUnionTextRects(
 
   if (!mSelection.Collapsed() &&
       aOffset == mSelection.StartOffset() && aLength == mSelection.Length()) {
-    NS_WARN_IF(mSelection.mRect.IsEmpty());
+    NS_WARNING_ASSERTION(!mSelection.mRect.IsEmpty(), "empty rect");
     aUnionTextRect = mSelection.mRect;
     return !aUnionTextRect.IsEmpty();
   }
 
   if (aLength == 1) {
     if (!aOffset) {
-      NS_WARN_IF(mFirstCharRect.IsEmpty());
+      NS_WARNING_ASSERTION(!mFirstCharRect.IsEmpty(), "empty rect");
       aUnionTextRect = mFirstCharRect;
       return !aUnionTextRect.IsEmpty();
     }
     if (aOffset == mSelection.mAnchor) {
-      NS_WARN_IF(mSelection.mAnchorCharRect.IsEmpty());
-      aUnionTextRect = mSelection.mAnchorCharRect;
+      NS_WARNING_ASSERTION(
+        !mSelection.mAnchorCharRects[eNextCharRect].IsEmpty(), "empty rect");
+      aUnionTextRect = mSelection.mAnchorCharRects[eNextCharRect];
+      return !aUnionTextRect.IsEmpty();
+    }
+    if (mSelection.mAnchor && aOffset == mSelection.mAnchor - 1) {
+      NS_WARNING_ASSERTION(
+        !mSelection.mAnchorCharRects[ePrevCharRect].IsEmpty(), "empty rect");
+      aUnionTextRect = mSelection.mAnchorCharRects[ePrevCharRect];
       return !aUnionTextRect.IsEmpty();
     }
     if (aOffset == mSelection.mFocus) {
-      NS_WARN_IF(mSelection.mFocusCharRect.IsEmpty());
-      aUnionTextRect = mSelection.mFocusCharRect;
+      NS_WARNING_ASSERTION(
+        !mSelection.mFocusCharRects[eNextCharRect].IsEmpty(), "empty rect");
+      aUnionTextRect = mSelection.mFocusCharRects[eNextCharRect];
+      return !aUnionTextRect.IsEmpty();
+    }
+    if (mSelection.mFocus && aOffset == mSelection.mFocus - 1) {
+      NS_WARNING_ASSERTION(
+        !mSelection.mFocusCharRects[ePrevCharRect].IsEmpty(), "empty rect");
+      aUnionTextRect = mSelection.mFocusCharRects[ePrevCharRect];
       return !aUnionTextRect.IsEmpty();
     }
   }
@@ -842,11 +1017,24 @@ ContentCacheInParent::GetUnionTextRects(
     aUnionTextRect = aUnionTextRect.Union(mFirstCharRect);
   }
   if (aOffset <= mSelection.mAnchor && mSelection.mAnchor < endOffset.value()) {
-    aUnionTextRect = aUnionTextRect.Union(mSelection.mAnchorCharRect);
+    aUnionTextRect =
+      aUnionTextRect.Union(mSelection.mAnchorCharRects[eNextCharRect]);
+  }
+  if (mSelection.mAnchor && aOffset <= mSelection.mAnchor - 1 &&
+      mSelection.mAnchor - 1 < endOffset.value()) {
+    aUnionTextRect =
+      aUnionTextRect.Union(mSelection.mAnchorCharRects[ePrevCharRect]);
   }
   if (aOffset <= mSelection.mFocus && mSelection.mFocus < endOffset.value()) {
-    aUnionTextRect = aUnionTextRect.Union(mSelection.mFocusCharRect);
+    aUnionTextRect =
+      aUnionTextRect.Union(mSelection.mFocusCharRects[eNextCharRect]);
   }
+  if (mSelection.mFocus && aOffset <= mSelection.mFocus - 1 &&
+      mSelection.mFocus - 1 < endOffset.value()) {
+    aUnionTextRect =
+      aUnionTextRect.Union(mSelection.mFocusCharRects[ePrevCharRect]);
+  }
+
   return !aUnionTextRect.IsEmpty();
 }
 
@@ -859,16 +1047,19 @@ ContentCacheInParent::GetCaretRect(uint32_t aOffset,
     ("0x%p GetCaretRect(aOffset=%u, "
      "aRoundToExistingOffset=%s), "
      "mCaret={ mOffset=%u, mRect=%s, IsValid()=%s }, mTextRectArray={ "
-     "mStart=%u, mRects.Length()=%u }, mSelection={ mAnchor=%u, mFocus=%u, "
-     "mWritingMode=%s, mAnchorCharRect=%s, mFocusCharRect=%s }, "
-     "mFirstCharRect=%s",
+     "mStart=%u, mRects.Length()=%zu }, mSelection={ mAnchor=%u, mFocus=%u, "
+     "mWritingMode=%s, mAnchorCharRects[eNextCharRect]=%s, "
+     "mAnchorCharRects[ePrevCharRect]=%s, mFocusCharRects[eNextCharRect]=%s, "
+     "mFocusCharRects[ePrevCharRect]=%s }, mFirstCharRect=%s",
      this, aOffset, GetBoolName(aRoundToExistingOffset),
      mCaret.mOffset, GetRectText(mCaret.mRect).get(),
      GetBoolName(mCaret.IsValid()), mTextRectArray.mStart,
      mTextRectArray.mRects.Length(), mSelection.mAnchor, mSelection.mFocus,
      GetWritingModeName(mSelection.mWritingMode).get(),
-     GetRectText(mSelection.mAnchorCharRect).get(),
-     GetRectText(mSelection.mFocusCharRect).get(),
+     GetRectText(mSelection.mAnchorCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mAnchorCharRects[ePrevCharRect]).get(),
+     GetRectText(mSelection.mFocusCharRects[eNextCharRect]).get(),
+     GetRectText(mSelection.mFocusCharRects[ePrevCharRect]).get(),
      GetRectText(mFirstCharRect).get()));
 
   if (mCaret.IsValid() && mCaret.mOffset == aOffset) {
@@ -910,29 +1101,45 @@ ContentCacheInParent::OnCompositionEvent(const WidgetCompositionEvent& aEvent)
 {
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p OnCompositionEvent(aEvent={ "
-     "mMessage=%s, mData=\"%s\" (Length()=%u), mRanges->Length()=%u }), "
-     "mPendingEventsNeedingAck=%u, mIsComposing=%s, "
-     "mCommitStringByRequest=0x%p",
+     "mMessage=%s, mData=\"%s\" (Length()=%u), mRanges->Length()=%zu }), "
+     "mPendingEventsNeedingAck=%u, mWidgetHasComposition=%s, "
+     "mPendingCompositionCount=%u, mCommitStringByRequest=0x%p",
      this, ToChar(aEvent.mMessage),
      GetEscapedUTF8String(aEvent.mData).get(), aEvent.mData.Length(),
      aEvent.mRanges ? aEvent.mRanges->Length() : 0, mPendingEventsNeedingAck,
-     GetBoolName(mIsComposing), mCommitStringByRequest));
+     GetBoolName(mWidgetHasComposition), mPendingCompositionCount,
+     mCommitStringByRequest));
 
   // We must be able to simulate the selection because
   // we might not receive selection updates in time
-  if (!mIsComposing) {
+  if (!mWidgetHasComposition) {
     if (aEvent.mWidget && aEvent.mWidget->PluginHasFocus()) {
       // If focus is on plugin, we cannot get selection range
       mCompositionStart = 0;
+    } else if (mCompositionStartInChild != UINT32_MAX) {
+      // If there is pending composition in the remote process, let's use
+      // its start offset temporarily because this stores a lot of information
+      // around it and the user must look around there, so, showing some UI
+      // around it must make sense.
+      mCompositionStart = mCompositionStartInChild;
     } else {
       mCompositionStart = mSelection.StartOffset();
     }
+    MOZ_ASSERT(aEvent.mMessage == eCompositionStart);
+    MOZ_RELEASE_ASSERT(mPendingCompositionCount < UINT8_MAX);
+    mPendingCompositionCount++;
   }
 
-  mIsComposing = !aEvent.CausesDOMCompositionEndEvent();
+  mWidgetHasComposition = !aEvent.CausesDOMCompositionEndEvent();
 
-  if (!mIsComposing) {
+  if (!mWidgetHasComposition) {
     mCompositionStart = UINT32_MAX;
+    if (mPendingCompositionCount == 1) {
+      mPendingCommitLength = aEvent.mData.Length();
+    }
+    mIsPendingLastCommitEvent = true;
+  } else if (aEvent.mMessage != eCompositionStart) {
+    mCompositionString = aEvent.mData;
   }
 
   // During REQUEST_TO_COMMIT_COMPOSITION or REQUEST_TO_CANCEL_COMPOSITION,
@@ -946,6 +1153,15 @@ ContentCacheInParent::OnCompositionEvent(const WidgetCompositionEvent& aEvent)
     MOZ_ASSERT(aEvent.mMessage == eCompositionChange ||
                aEvent.mMessage == eCompositionCommit);
     *mCommitStringByRequest = aEvent.mData;
+    // We need to wait eCompositionCommitRequestHandled from the remote process
+    // in this case.  Therefore, mPendingEventsNeedingAck needs to be
+    // incremented here.
+    if (!mWidgetHasComposition) {
+      mPendingEventsNeedingAck++;
+    }
+    // Cancel mIsPendingLastCommitEvent because we won't send the commit event
+    // to the remote process.
+    mIsPendingLastCommitEvent = false;
     return false;
   }
 
@@ -961,13 +1177,14 @@ ContentCacheInParent::OnSelectionEvent(
     ("0x%p OnSelectionEvent(aEvent={ "
      "mMessage=%s, mOffset=%u, mLength=%u, mReversed=%s, "
      "mExpandToClusterBoundary=%s, mUseNativeLineBreak=%s }), "
-     "mPendingEventsNeedingAck=%u, mIsComposing=%s",
+     "mPendingEventsNeedingAck=%u, mWidgetHasComposition=%s, "
+     "mPendingCompositionCount=%u",
      this, ToChar(aSelectionEvent.mMessage),
      aSelectionEvent.mOffset, aSelectionEvent.mLength,
      GetBoolName(aSelectionEvent.mReversed),
      GetBoolName(aSelectionEvent.mExpandToClusterBoundary),
      GetBoolName(aSelectionEvent.mUseNativeLineBreak), mPendingEventsNeedingAck,
-     GetBoolName(mIsComposing)));
+     GetBoolName(mWidgetHasComposition), mPendingCompositionCount));
 
   mPendingEventsNeedingAck++;
 }
@@ -981,8 +1198,26 @@ ContentCacheInParent::OnEventNeedingAckHandled(nsIWidget* aWidget,
 
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p OnEventNeedingAckHandled(aWidget=0x%p, "
-     "aMessage=%s), mPendingEventsNeedingAck=%u",
-     this, aWidget, ToChar(aMessage), mPendingEventsNeedingAck));
+     "aMessage=%s), mPendingEventsNeedingAck=%u, mPendingCompositionCount=%" PRIu8,
+     this, aWidget, ToChar(aMessage), mPendingEventsNeedingAck, mPendingCompositionCount));
+
+  if (WidgetCompositionEvent::IsFollowedByCompositionEnd(aMessage) ||
+      aMessage == eCompositionCommitRequestHandled) {
+    MOZ_RELEASE_ASSERT(mPendingCompositionCount > 0);
+    mPendingCompositionCount--;
+    // Forget composition string only when the latest composition string is
+    // handled in the remote process because if there is 2 or more pending
+    // composition, this value shouldn't be referred.
+    if (!mPendingCompositionCount) {
+      mCompositionString.Truncate();
+      mIsPendingLastCommitEvent = false;
+    }
+    // Forget pending commit string length if it's handled in the remote
+    // process.  Note that this doesn't care too old composition's commit
+    // string because in such case, we cannot return proper information
+    // to IME synchornously.
+    mPendingCommitLength = 0;
+  }
 
   MOZ_RELEASE_ASSERT(mPendingEventsNeedingAck > 0);
   if (--mPendingEventsNeedingAck) {
@@ -999,11 +1234,41 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
 {
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("0x%p RequestToCommitComposition(aWidget=%p, "
-     "aCancel=%s), mIsComposing=%s, mCommitStringByRequest=%p",
-     this, aWidget, GetBoolName(aCancel), GetBoolName(mIsComposing),
-     mCommitStringByRequest));
+     "aCancel=%s), mPendingCompositionCount=%u, "
+     "IMEStateManager::DoesTabParentHaveIMEFocus(&mTabParent)=%s, "
+     "mWidgetHasComposition=%s, mCommitStringByRequest=%p",
+     this, aWidget, GetBoolName(aCancel), mPendingCompositionCount,
+     GetBoolName(IMEStateManager::DoesTabParentHaveIMEFocus(&mTabParent)),
+     GetBoolName(mWidgetHasComposition), mCommitStringByRequest));
 
   MOZ_ASSERT(!mCommitStringByRequest);
+
+  // If there are 2 or more pending compositions, we already sent
+  // eCompositionCommit(AsIs) to the remote process.  So, this request is
+  // too late for IME.  The remote process should wait following
+  // composition events for cleaning up TextComposition and handle the
+  // request as it's handled asynchronously.
+  if (mPendingCompositionCount > 1) {
+    return false;
+  }
+
+  // If there is no pending composition, we may have already sent
+  // eCompositionCommit(AsIs) event for the active composition.  If so, the
+  // remote process will receive composition events which causes cleaning up
+  // TextComposition.  So, this shouldn't do nothing and TextComposition
+  // should handle the request as it's handled asynchronously.
+  if (mIsPendingLastCommitEvent) {
+    return false;
+  }
+
+  // If TabParent which has IME focus was already changed to different one, the
+  // request shouldn't be sent to IME because it's too late.
+  if (!IMEStateManager::DoesTabParentHaveIMEFocus(&mTabParent)) {
+    // Use the latest composition string which may not be handled in the
+    // remote process for avoiding data loss.
+    aCommittedString = mCompositionString;
+    return true;
+  }
 
   RefPtr<TextComposition> composition =
     IMEStateManager::GetTextCompositionFor(aWidget);
@@ -1023,8 +1288,8 @@ ContentCacheInParent::RequestIMEToCommitComposition(nsIWidget* aWidget,
 
   MOZ_LOG(sContentCacheLog, LogLevel::Info,
     ("  0x%p RequestToCommitComposition(), "
-     "mIsComposing=%s, the composition %s committed synchronously",
-     this, GetBoolName(mIsComposing),
+     "mWidgetHasComposition=%s, the composition %s committed synchronously",
+     this, GetBoolName(mWidgetHasComposition),
      composition->Destroyed() ? "WAS" : "has NOT been"));
 
   if (!composition->Destroyed()) {
@@ -1056,7 +1321,7 @@ ContentCacheInParent::MaybeNotifyIME(nsIWidget* aWidget,
                                      const IMENotification& aNotification)
 {
   if (!mPendingEventsNeedingAck) {
-    IMEStateManager::NotifyIME(aNotification, aWidget, true);
+    IMEStateManager::NotifyIME(aNotification, aWidget, &mTabParent);
     return;
   }
 
@@ -1084,28 +1349,34 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
 {
   MOZ_ASSERT(!mPendingEventsNeedingAck);
 
+  // If the TabParent's widget has already gone, this can do nothing since
+  // widget is necessary to notify IME of something.
+  if (!aWidget) {
+    return;
+  }
+
   // New notifications which are notified during flushing pending notifications
   // should be merged again.
   mPendingEventsNeedingAck++;
 
-  nsCOMPtr<nsIWidget> kungFuDeathGrip(aWidget);
+  nsCOMPtr<nsIWidget> widget = aWidget;
 
   // First, text change notification should be sent because selection change
   // notification notifies IME of current selection range in the latest content.
   // So, IME may need the latest content before that.
   if (mPendingTextChange.HasNotification()) {
     IMENotification notification(mPendingTextChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingTextChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, &mTabParent);
     }
   }
 
   if (mPendingSelectionChange.HasNotification()) {
     IMENotification notification(mPendingSelectionChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingSelectionChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, &mTabParent);
     }
   }
 
@@ -1113,9 +1384,9 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
   // notification because IME may want to query position of new caret position.
   if (mPendingLayoutChange.HasNotification()) {
     IMENotification notification(mPendingLayoutChange);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingLayoutChange.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, &mTabParent);
     }
   }
 
@@ -1123,18 +1394,18 @@ ContentCacheInParent::FlushPendingNotifications(nsIWidget* aWidget)
   // finishing handling whole sending events.
   if (mPendingCompositionUpdate.HasNotification()) {
     IMENotification notification(mPendingCompositionUpdate);
-    if (!aWidget->Destroyed()) {
+    if (!widget->Destroyed()) {
       mPendingCompositionUpdate.Clear();
-      IMEStateManager::NotifyIME(notification, aWidget, true);
+      IMEStateManager::NotifyIME(notification, widget, &mTabParent);
     }
   }
 
-  if (!--mPendingEventsNeedingAck && !aWidget->Destroyed() &&
+  if (!--mPendingEventsNeedingAck && !widget->Destroyed() &&
       (mPendingTextChange.HasNotification() ||
        mPendingSelectionChange.HasNotification() ||
        mPendingLayoutChange.HasNotification() ||
        mPendingCompositionUpdate.HasNotification())) {
-    FlushPendingNotifications(aWidget);
+    FlushPendingNotifications(widget);
   }
 }
 

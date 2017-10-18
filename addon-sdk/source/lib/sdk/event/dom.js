@@ -10,7 +10,7 @@ module.metadata = {
 
 const { Ci } = require("chrome");
 
-var { emit } = require("./core");
+lazyRequire(this, "./core", "emit");
 var { when: unload } = require("../system/unload");
 var listeners = new WeakMap();
 
@@ -21,7 +21,7 @@ const { ThreadSafeChromeUtils } = Cu.import("resource://gre/modules/Services.jsm
 var getWindowFrom = x =>
                     x instanceof Ci.nsIDOMWindow ? x :
                     x instanceof Ci.nsIDOMDocument ? x.defaultView :
-                    x instanceof Ci.nsIDOMNode ? x.ownerDocument.defaultView :
+                    x instanceof Ci.nsIDOMNode ? x.ownerGlobal :
                     null;
 
 function removeFromListeners() {

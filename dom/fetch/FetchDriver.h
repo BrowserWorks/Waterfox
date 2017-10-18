@@ -11,12 +11,17 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIStreamListener.h"
 #include "nsIThreadRetargetableStreamListener.h"
+#include "mozilla/ConsoleReportCollector.h"
+#include "mozilla/dom/FetchSignal.h"
+#include "mozilla/dom/SRIMetadata.h"
 #include "mozilla/RefPtr.h"
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/net/ReferrerPolicy.h"
 
+class nsIConsoleReportCollector;
 class nsIDocument;
+class nsIEventTarget;
 class nsIOutputStream;
 class nsILoadGroup;
 class nsIPrincipal;
@@ -35,7 +40,8 @@ class InternalResponse;
 class FetchDriverObserver
 {
 public:
-  FetchDriverObserver() : mGotResponseAvailable(false)
+  FetchDriverObserver() : mReporter(new ConsoleReportCollector())
+                        , mGotResponseAvailable(false)
   { }
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FetchDriverObserver);
@@ -45,8 +51,24 @@ public:
     mGotResponseAvailable = true;
     OnResponseAvailableInternal(aResponse);
   }
-  virtual void OnResponseEnd()
+
+  enum EndReason
+  {
+    eAborted,
+    eByNetworking,
+  };
+
+  virtual void OnResponseEnd(EndReason aReason)
   { };
+
+  nsIConsoleReportCollector* GetReporter() const
+  {
+    return mReporter;
+  }
+
+  virtual void FlushConsoleReport() = 0;
+
+  virtual void OnDataAvailable() = 0;
 
 protected:
   virtual ~FetchDriverObserver()
@@ -54,6 +76,7 @@ protected:
 
   virtual void OnResponseAvailableInternal(InternalResponse* aResponse) = 0;
 
+  nsCOMPtr<nsIConsoleReportCollector> mReporter;
 private:
   bool mGotResponseAvailable;
 };
@@ -61,7 +84,8 @@ private:
 class FetchDriver final : public nsIStreamListener,
                           public nsIChannelEventSink,
                           public nsIInterfaceRequestor,
-                          public nsIThreadRetargetableStreamListener
+                          public nsIThreadRetargetableStreamListener,
+                          public FetchSignal::Follower
 {
 public:
   NS_DECL_ISUPPORTS
@@ -71,12 +95,29 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
-  explicit FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
-                       nsILoadGroup* aLoadGroup);
-  NS_IMETHOD Fetch(FetchDriverObserver* aObserver);
+  FetchDriver(InternalRequest* aRequest,
+              nsIPrincipal* aPrincipal,
+              nsILoadGroup* aLoadGroup,
+              nsIEventTarget* aMainThreadEventTarget,
+              bool aIsTrackingFetch);
+
+  nsresult Fetch(FetchSignal* aSignal,
+                 FetchDriverObserver* aObserver);
 
   void
   SetDocument(nsIDocument* aDocument);
+
+  void
+  SetWorkerScript(const nsACString& aWorkerScirpt)
+  {
+    MOZ_ASSERT(!aWorkerScirpt.IsEmpty());
+    mWorkerScript = aWorkerScirpt;
+  }
+
+  // FetchSignal::Follower
+
+  void
+  Aborted() override;
 
 private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -86,6 +127,12 @@ private:
   nsCOMPtr<nsIOutputStream> mPipeOutputStream;
   RefPtr<FetchDriverObserver> mObserver;
   nsCOMPtr<nsIDocument> mDocument;
+  nsCOMPtr<nsIChannel> mChannel;
+  nsAutoPtr<SRICheckDataVerifier> mSRIDataVerifier;
+  nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
+  SRIMetadata mSRIMetadata;
+  nsCString mWorkerScript;
+  bool mIsTrackingFetch;
 
 #ifdef DEBUG
   bool mResponseAvailableCalled;

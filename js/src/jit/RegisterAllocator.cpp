@@ -511,11 +511,24 @@ RegisterAllocator::init()
 LMoveGroup*
 RegisterAllocator::getInputMoveGroup(LInstruction* ins)
 {
+    MOZ_ASSERT(!ins->fixReuseMoves());
     if (ins->inputMoves())
         return ins->inputMoves();
 
     LMoveGroup* moves = LMoveGroup::New(alloc());
     ins->setInputMoves(moves);
+    ins->block()->insertBefore(ins, moves);
+    return moves;
+}
+
+LMoveGroup*
+RegisterAllocator::getFixReuseMoveGroup(LInstruction* ins)
+{
+    if (ins->fixReuseMoves())
+        return ins->fixReuseMoves();
+
+    LMoveGroup* moves = LMoveGroup::New(alloc());
+    ins->setFixReuseMoves(moves);
     ins->block()->insertBefore(ins, moves);
     return moves;
 }
@@ -536,7 +549,7 @@ RegisterAllocator::getMoveGroupAfter(LInstruction* ins)
 void
 RegisterAllocator::dumpInstructions()
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     fprintf(stderr, "Instructions:\n");
 
     for (size_t blockIndex = 0; blockIndex < graph.numBlocks(); blockIndex++) {
@@ -597,5 +610,5 @@ RegisterAllocator::dumpInstructions()
         }
     }
     fprintf(stderr, "\n");
-#endif // DEBUG
+#endif // JS_JITSPEW
 }

@@ -22,7 +22,7 @@ namespace mozilla {
  */
 struct Module
 {
-  static const unsigned int kVersion = 50;
+  static const unsigned int kVersion = 56;
 
   struct CIDEntry;
 
@@ -38,13 +38,20 @@ struct Module
 
   /**
    * This selector allows CIDEntrys to be marked so that they're only loaded
-   * into certain kinds of processes.
+   * into certain kinds of processes. Selectors can be combined.
    */
   enum ProcessSelector
   {
-    ANY_PROCESS = 0,
-    MAIN_PROCESS_ONLY,
-    CONTENT_PROCESS_ONLY
+    ANY_PROCESS          = 0x0,
+    MAIN_PROCESS_ONLY    = 0x1,
+    CONTENT_PROCESS_ONLY = 0x2,
+
+    /**
+     * By default, modules are not loaded in the GPU process, even if
+     * ANY_PROCESS is specified. This flag enables a module in the
+     * GPU process.
+     */
+    ALLOW_IN_GPU_PROCESS = 0x4
   };
 
   /**
@@ -113,6 +120,12 @@ struct Module
    */
   LoadFuncPtr loadProc;
   UnloadFuncPtr unloadProc;
+
+  /**
+   * Optional flags which control whether the module loads on a process-type
+   * basis.
+   */
+  ProcessSelector selector;
 };
 
 } // namespace mozilla
@@ -125,7 +138,7 @@ struct Module
 #    define NSMODULE_SECTION __declspec(allocate(".kPStaticModules$M"), dllexport)
 #  elif defined(__GNUC__)
 #    if defined(__ELF__)
-#      define NSMODULE_SECTION __attribute__((section(".kPStaticModules"), visibility("protected")))
+#      define NSMODULE_SECTION __attribute__((section(".kPStaticModules"), visibility("default")))
 #    elif defined(__MACH__)
 #      define NSMODULE_SECTION __attribute__((section("__DATA, .kPStaticModules"), visibility("default")))
 #    elif defined (_WIN32)

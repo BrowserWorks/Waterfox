@@ -22,8 +22,9 @@ function* runTests() {
 }
 
 function createThumbnail(aURL) {
-  addTab(aURL, function () {
-    whenFileExists(aURL, function () {
+  addTab(aURL, function() {
+    gBrowserThumbnails.clearTopSiteURLCache();
+    whenFileExists(aURL, function() {
       gBrowser.removeTab(gBrowser.selectedTab);
       next();
     });

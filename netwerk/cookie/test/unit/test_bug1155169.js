@@ -2,7 +2,7 @@ var {utils: Cu, interfaces: Ci, classes: Cc} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-const URI = Services.io.newURI("http://example.org/", null, null);
+const URI = Services.io.newURI("http://example.org/");
 
 const cs = Cc["@mozilla.org/cookieService;1"]
              .getService(Ci.nsICookieService);
@@ -60,7 +60,7 @@ function setCookie(value, expected) {
       do_check_eq(cookie.isHttpOnly, expected.isHttpOnly);
     }
 
-    Services.obs.addObserver(observer, "cookie-changed", false);
+    Services.obs.addObserver(observer, "cookie-changed");
     cs.setCookieStringFromHttp(URI, null, null, value, null, null);
     Services.obs.removeObserver(observer, "cookie-changed");
   }

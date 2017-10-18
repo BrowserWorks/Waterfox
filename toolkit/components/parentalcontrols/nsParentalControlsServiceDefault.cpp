@@ -6,7 +6,7 @@
 #include "nsParentalControlsService.h"
 #include "nsString.h"
 #include "nsIFile.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 NS_IMPL_ISUPPORTS(nsParentalControlsService, nsIParentalControlsService)
 
@@ -16,9 +16,7 @@ nsParentalControlsService::nsParentalControlsService() :
   mozilla::Unused << mEnabled;
 }
 
-nsParentalControlsService::~nsParentalControlsService()
-{
-}
+nsParentalControlsService::~nsParentalControlsService() = default;
 
 NS_IMETHODIMP
 nsParentalControlsService::GetParentalControlsEnabled(bool *aResult)

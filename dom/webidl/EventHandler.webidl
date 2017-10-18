@@ -15,13 +15,11 @@ callback EventHandlerNonNull = any (Event event);
 typedef EventHandlerNonNull? EventHandler;
 
 [TreatNonObjectAsNull]
-// https://www.w3.org/Bugs/Public/show_bug.cgi?id=23489
-//callback OnBeforeUnloadEventHandlerNonNull = DOMString (Event event);
 callback OnBeforeUnloadEventHandlerNonNull = DOMString? (Event event);
 typedef OnBeforeUnloadEventHandlerNonNull? OnBeforeUnloadEventHandler;
 
 [TreatNonObjectAsNull]
-callback OnErrorEventHandlerNonNull = boolean ((Event or DOMString) event, optional DOMString source, optional unsigned long lineno, optional unsigned long column, optional any error);
+callback OnErrorEventHandlerNonNull = any ((Event or DOMString) event, optional DOMString source, optional unsigned long lineno, optional unsigned long column, optional any error);
 typedef OnErrorEventHandlerNonNull? OnErrorEventHandler;
 
 [NoInterfaceObject]
@@ -33,18 +31,19 @@ interface GlobalEventHandlers {
 //         attribute OnErrorEventHandler onerror;
            attribute EventHandler onfocus;
            //(Not implemented)attribute EventHandler oncancel;
+           attribute EventHandler onauxclick;
            attribute EventHandler oncanplay;
            attribute EventHandler oncanplaythrough;
            attribute EventHandler onchange;
            attribute EventHandler onclick;
-           //(Not implemented)attribute EventHandler onclose;
+           attribute EventHandler onclose;
            attribute EventHandler oncontextmenu;
            //(Not implemented)attribute EventHandler oncuechange;
            attribute EventHandler ondblclick;
            attribute EventHandler ondrag;
            attribute EventHandler ondragend;
            attribute EventHandler ondragenter;
-           //(Not implemented)attribute EventHandler ondragexit;
+           attribute EventHandler ondragexit;
            attribute EventHandler ondragleave;
            attribute EventHandler ondragover;
            attribute EventHandler ondragstart;
@@ -60,6 +59,7 @@ interface GlobalEventHandlers {
            attribute EventHandler onload;
            attribute EventHandler onloadeddata;
            attribute EventHandler onloadedmetadata;
+           attribute EventHandler onloadend;
            attribute EventHandler onloadstart;
            attribute EventHandler onmousedown;
   [LenientThis] attribute EventHandler onmouseenter;
@@ -68,7 +68,7 @@ interface GlobalEventHandlers {
            attribute EventHandler onmouseout;
            attribute EventHandler onmouseover;
            attribute EventHandler onmouseup;
-           //(Not implemented)attribute EventHandler onmousewheel;
+           attribute EventHandler onwheel;
            attribute EventHandler onpause;
            attribute EventHandler onplay;
            attribute EventHandler onplaying;
@@ -92,7 +92,6 @@ interface GlobalEventHandlers {
            [Pref="dom.select_events.enabled"]
            attribute EventHandler onselectstart;
 
-           [Pref="dom.details_element.enabled"]
            attribute EventHandler ontoggle;
 
            // Pointer events handlers
@@ -121,10 +120,23 @@ interface GlobalEventHandlers {
            // Document rather than here.
            attribute EventHandler onmozfullscreenchange;
            attribute EventHandler onmozfullscreenerror;
-           [Pref="pointer-lock-api.prefixed.enabled"]
-           attribute EventHandler onmozpointerlockchange;
-           [Pref="pointer-lock-api.prefixed.enabled"]
-           attribute EventHandler onmozpointerlockerror;
+
+           // CSS-Animation and CSS-Transition handlers.
+           attribute EventHandler onanimationcancel;
+           attribute EventHandler onanimationend;
+           attribute EventHandler onanimationiteration;
+           attribute EventHandler onanimationstart;
+           attribute EventHandler ontransitioncancel;
+           attribute EventHandler ontransitionend;
+           attribute EventHandler ontransitionrun;
+           attribute EventHandler ontransitionstart;
+
+           // CSS-Animation and CSS-Transition legacy handlers.
+           // This handler isn't standard.
+           attribute EventHandler onwebkitanimationend;
+           attribute EventHandler onwebkitanimationiteration;
+           attribute EventHandler onwebkitanimationstart;
+           attribute EventHandler onwebkittransitionend;
 };
 
 [NoInterfaceObject]
@@ -142,6 +154,13 @@ interface WindowEventHandlers {
            attribute EventHandler onpopstate;
            attribute EventHandler onstorage;
            attribute EventHandler onunload;
+};
+
+[NoInterfaceObject]
+interface DocumentAndElementEventHandlers {
+  attribute EventHandler oncopy;
+  attribute EventHandler oncut;
+  attribute EventHandler onpaste;
 };
 
 // The spec has |attribute OnErrorEventHandler onerror;| on

@@ -1,7 +1,9 @@
+"use strict";
+
 XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
                                   "resource://gre/modules/ctypes.jsm");
 
-add_task(function* () {
+add_task(async function() {
   let migrator = MigrationUtils.getMigrator("ie");
   // Sanity check for the source.
   Assert.ok(migrator.sourceExists);
@@ -20,8 +22,11 @@ add_task(function* () {
     _In_  LPCTSTR lpszCookieData
   );
   */
+  // NOTE: Even though MSDN documentation does not indicate a calling convention,
+  // InternetSetCookieW is declared in SDK headers as __stdcall but is exported
+  // from wininet.dll without name mangling, so it is effectively winapi_abi
   let setIECookie = wininet.declare("InternetSetCookieW",
-                                    ctypes.default_abi,
+                                    ctypes.winapi_abi,
                                     BOOL,
                                     LPCTSTR,
                                     LPCTSTR,
@@ -35,8 +40,11 @@ add_task(function* () {
     _Inout_ LPDWORD lpdwSize
   );
   */
+  // NOTE: Even though MSDN documentation does not indicate a calling convention,
+  // InternetGetCookieW is declared in SDK headers as __stdcall but is exported
+  // from wininet.dll without name mangling, so it is effectively winapi_abi
   let getIECookie = wininet.declare("InternetGetCookieW",
-                                    ctypes.default_abi,
+                                    ctypes.winapi_abi,
                                     BOOL,
                                     LPCTSTR,
                                     LPCTSTR,
@@ -92,7 +100,7 @@ add_task(function* () {
                "There are no cookies initially");
 
   // Migrate cookies.
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.COOKIES);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.COOKIES);
 
   Assert.equal(Services.cookies.countCookiesFromHost(COOKIE.host), 1,
                "Migrated the expected number of cookies");

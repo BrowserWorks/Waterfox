@@ -58,6 +58,7 @@ else:
 
 USE_LIBS += [
     'mar',
+    'xz-embedded',
 ]
 
 if CONFIG['MOZ_SYSTEM_BZ2']:
@@ -90,17 +91,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     LOCAL_INCLUDES += [
         '/toolkit/xre',
     ]
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    have_progressui = 1
-    srcs += [
-        'automounter_gonk.cpp',
-        'progressui_gonk.cpp',
-    ]
-    DISABLE_STL_WRAPPING = True
-    OS_LIBS += [
-        'cutils',
-        'sysutils',
-    ]
 
 if have_progressui == 0:
     srcs += [
@@ -116,7 +106,7 @@ for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):
 
 LOCAL_INCLUDES += [
     '/toolkit/mozapps/update/common',
-    '/xpcom/glue',
+    '/xpcom/base', # for nsVersionComparator.cpp
 ]
 
 DELAYLOAD_DLLS += [

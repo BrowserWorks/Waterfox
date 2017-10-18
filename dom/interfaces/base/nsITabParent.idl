@@ -5,20 +5,13 @@
 
 #include "domstubs.idl"
 
+interface nsIPrincipal;
+
+typedef unsigned long long nsViewID;
+
 [builtinclass, scriptable, uuid(8e49f7b0-1f98-4939-bf91-e9c39cd56434)]
 interface nsITabParent : nsISupports
 {
-  void injectTouchEvent(in AString aType,
-                        [array, size_is(count)] in uint32_t aIdentifiers,
-                        [array, size_is(count)] in int32_t aXs,
-                        [array, size_is(count)] in int32_t aYs,
-                        [array, size_is(count)] in uint32_t aRxs,
-                        [array, size_is(count)] in uint32_t aRys,
-                        [array, size_is(count)] in float aRotationAngles,
-                        [array, size_is(count)] in float aForces,
-                        in uint32_t count,
-                        in long aModifiers);
-
   void getChildProcessOffset(out int32_t aCssX, out int32_t aCssY);
 
   readonly attribute boolean useAsyncPanZoom;
@@ -36,13 +29,11 @@ interface nsITabParent : nsISupports
   /**
     * As an optimisation, setting the docshell's active state to
     * inactive also triggers a layer invalidation to free up some
-    * potentially unhelpful memory usage. This attribute should be
-    * used where callers would like to set the docshell's state
-    * without losing any layer data.
-    *
-    * Otherwise, this does the same as setting the attribute above.
+    * potentially unhelpful memory usage. Calling preserveLayers
+    * will cause the layers to be preserved even for inactive
+    * docshells.
     */
-  void setDocShellIsActiveAndForeground(in boolean aIsActive);
+  void preserveLayers(in boolean aPreserveLayers);
 
   /**
    * During interactions where painting performance
@@ -55,6 +46,11 @@ interface nsITabParent : nsISupports
   readonly attribute uint64_t tabId;
 
   /**
+   * The OS level process Id of the related child process.
+   */
+  readonly attribute int32_t osPid;
+
+  /**
    * Navigate by key. If aForDocumentNavigation is true, navigate by document.
    * If aForDocumentNavigation is false, navigate by element.
    *
@@ -64,4 +60,37 @@ interface nsITabParent : nsISupports
   void navigateByKey(in bool aForward, in bool aForDocumentNavigation);
 
   readonly attribute boolean hasContentOpener;
+  /**
+   * True if we've previously received layers for this tab when switching to
+   * it.
+   */
+  readonly attribute boolean hasPresented;
+
+  /**
+   * Ensures that the content process which has this tab parent has all of the
+   * permissions required to load a document with the given principal.
+   */
+  void transmitPermissionsForPrincipal(in nsIPrincipal aPrincipal);
+
+  /**
+   * True if any of the frames loaded in the TabChild have registered
+   * an onbeforeunload event handler.
+   */
+  readonly attribute boolean hasBeforeUnload;
+
+  /**
+   * Notify APZ to start autoscrolling.
+   * (aAnchorX, aAnchorY) are the coordinates of the autoscroll anchor,
+   * in CSS coordinates relative to the screen. aScrollId and 
+   * aPresShellId identify the scroll frame that content chose to scroll.
+   */
+  void startApzAutoscroll(in float aAnchorX, in float aAnchorY,
+                          in nsViewID aScrollId, in uint32_t aPresShellId);
+
+  /**
+   * Notify APZ to stop autoscrolling.
+   * aScrollId and aPresShellId identify the scroll frame that is being
+   * autoscrolled.
+   */
+  void stopApzAutoscroll(in nsViewID aScrollId, in uint32_t aPresShellId);
 };

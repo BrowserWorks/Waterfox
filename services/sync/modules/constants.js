@@ -1,18 +1,17 @@
-#filter substitution
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Process each item in the "constants hash" to add to "global" and give a name
 this.EXPORTED_SYMBOLS = [];
-for (let [key, val] in Iterator({
+for (let [key, val] of Object.entries({
 
-WEAVE_VERSION:                         "@weave_version@",
+// Don't manually modify this line, as it is automatically replaced on merge day
+// by the gecko_migration.py script.
+WEAVE_VERSION: "1.58.0",
 
 // Sync Server API version that the client supports.
-SYNC_API_VERSION:                      "1.1",
-USER_API_VERSION:                      "1.0",
-MISC_API_VERSION:                      "1.0",
+SYNC_API_VERSION:                      "1.5",
 
 // Version of the data format this client supports. The data format describes
 // how records are packaged; this is separate from the Server API version and
@@ -45,7 +44,7 @@ MAX_IGNORE_ERROR_COUNT:                5,
 
 // Backoff intervals
 MINIMUM_BACKOFF_INTERVAL:              15 * 60 * 1000,      // 15 minutes
-MAXIMUM_BACKOFF_INTERVAL:              8 * 60 * 60 * 1000,  // 8 hours 
+MAXIMUM_BACKOFF_INTERVAL:              8 * 60 * 60 * 1000,  // 8 hours
 
 // HMAC event handling timeout.
 // 10 minutes: a compromise between the multi-desktop sync interval
@@ -58,23 +57,27 @@ MASTER_PASSWORD_LOCKED_RETRY_INTERVAL: 15 * 60 * 1000,   // 15 minutes
 // The default for how long we "block" sync from running when doing a migration.
 DEFAULT_BLOCK_PERIOD:                  2 * 24 * 60 * 60 * 1000, // 2 days
 
-// Separate from the ID fetch batch size to allow tuning for mobile.
-MOBILE_BATCH_SIZE:                     50,
-
 // 50 is hardcoded here because of URL length restrictions.
 // (GUIDs can be up to 64 chars long.)
 // Individual engines can set different values for their limit if their
 // identifiers are shorter.
 DEFAULT_GUID_FETCH_BATCH_SIZE:         50,
-DEFAULT_MOBILE_GUID_FETCH_BATCH_SIZE:  50,
 
 // Default batch size for applying incoming records.
 DEFAULT_STORE_BATCH_SIZE:              1,
-HISTORY_STORE_BATCH_SIZE:              50,      // same as MOBILE_BATCH_SIZE
-FORMS_STORE_BATCH_SIZE:                50,      // same as MOBILE_BATCH_SIZE
-PASSWORDS_STORE_BATCH_SIZE:            50,      // same as MOBILE_BATCH_SIZE
+HISTORY_STORE_BATCH_SIZE:              50,
+FORMS_STORE_BATCH_SIZE:                50,
+PASSWORDS_STORE_BATCH_SIZE:            50,
 ADDONS_STORE_BATCH_SIZE:               1000000, // process all addons at once
-APPS_STORE_BATCH_SIZE:                 50,      // same as MOBILE_BATCH_SIZE
+APPS_STORE_BATCH_SIZE:                 50,
+
+// Default batch size for download batching
+// (how many records are fetched at a time from the server when batching is used).
+DEFAULT_DOWNLOAD_BATCH_SIZE:           1000,
+
+
+// Default maximum size for a record payload
+DEFAULT_MAX_RECORD_PAYLOAD_BYTES:      262144,  // 256KB
 
 // score thresholds for early syncs
 SINGLE_USER_THRESHOLD:                 1000,
@@ -101,6 +104,9 @@ MAX_UPLOAD_BYTES:                      1024 * 1023, // just under 1MB
 MAX_HISTORY_UPLOAD:                    5000,
 MAX_HISTORY_DOWNLOAD:                  5000,
 
+// TTL of the message sent to another device when sending a tab
+NOTIFY_TAB_SENT_TTL_SECS:              1 * 3600, // 1 hour
+
 // Top-level statuses:
 STATUS_OK:                             "success.status_ok",
 SYNC_FAILED:                           "error.sync.failed",
@@ -117,7 +123,6 @@ ENGINE_SUCCEEDED:                      "success.engine",
 
 // login failure status codes:
 LOGIN_FAILED_NO_USERNAME:              "error.login.reason.no_username",
-LOGIN_FAILED_NO_PASSWORD:              "error.login.reason.no_password2",
 LOGIN_FAILED_NO_PASSPHRASE:            "error.login.reason.no_recoverykey",
 LOGIN_FAILED_NETWORK_ERROR:            "error.login.reason.network",
 LOGIN_FAILED_SERVER_ERROR:             "error.login.reason.server",
@@ -145,18 +150,8 @@ ENGINE_UNKNOWN_FAIL:                   "error.engine.reason.unknown_fail",
 ENGINE_APPLY_FAIL:                     "error.engine.reason.apply_fail",
 ENGINE_METARECORD_DOWNLOAD_FAIL:       "error.engine.reason.metarecord_download_fail",
 ENGINE_METARECORD_UPLOAD_FAIL:         "error.engine.reason.metarecord_upload_fail",
-
-JPAKE_ERROR_CHANNEL:                   "jpake.error.channel",
-JPAKE_ERROR_NETWORK:                   "jpake.error.network",
-JPAKE_ERROR_SERVER:                    "jpake.error.server",
-JPAKE_ERROR_TIMEOUT:                   "jpake.error.timeout",
-JPAKE_ERROR_INTERNAL:                  "jpake.error.internal",
-JPAKE_ERROR_INVALID:                   "jpake.error.invalid",
-JPAKE_ERROR_NODATA:                    "jpake.error.nodata",
-JPAKE_ERROR_KEYMISMATCH:               "jpake.error.keymismatch",
-JPAKE_ERROR_WRONGMESSAGE:              "jpake.error.wrongmessage",
-JPAKE_ERROR_USERABORT:                 "jpake.error.userabort",
-JPAKE_ERROR_DELAYUNSUPPORTED:          "jpake.error.delayunsupported",
+// an upload failure where the batch was interrupted with a 412
+ENGINE_BATCH_INTERRUPTED:              "error.engine.reason.batch_interrupted",
 
 // info types for Service.getStorageInfo
 INFO_COLLECTIONS:                      "collections",
@@ -180,10 +175,10 @@ TEST_HARNESS_ID:                       "xuth@mozilla.org",
 MIN_PP_LENGTH:                         12,
 MIN_PASS_LENGTH:                       8,
 
-LOG_DATE_FORMAT:                       "%Y-%m-%d %H:%M:%S",
-
 DEVICE_TYPE_DESKTOP:                   "desktop",
 DEVICE_TYPE_MOBILE:                    "mobile",
+
+SQLITE_MAX_VARIABLE_NUMBER:            999,
 
 })) {
   this[key] = val;

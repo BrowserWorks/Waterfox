@@ -10,10 +10,10 @@
 const { SIMPLE_URL } = require("devtools/client/performance/test/helpers/urls");
 const { initPerformanceInTab, initConsoleInNewTab, teardownToolboxAndRemoveTab } = require("devtools/client/performance/test/helpers/panel-utils");
 const { waitUntil } = require("devtools/client/performance/test/helpers/wait-utils");
-const { once } = require("devtools/client/performance/test/helpers/event-utils");
+const { getSelectedRecording } = require("devtools/client/performance/test/helpers/recording-utils");
 
 add_task(function* () {
-  let { target, toolbox, console } = yield initConsoleInNewTab({
+  let { target, console } = yield initConsoleInNewTab({
     url: SIMPLE_URL,
     win: window
   });
@@ -22,7 +22,7 @@ add_task(function* () {
   yield console.profileEnd("rust");
 
   let { panel } = yield initPerformanceInTab({ tab: target.tab });
-  let { PerformanceController, RecordingsView, WaterfallView } = panel.panelWin;
+  let { PerformanceController, WaterfallView } = panel.panelWin;
 
   yield waitUntil(() => PerformanceController.getRecordings().length == 1);
   yield waitUntil(() => WaterfallView.wasRenderedAtLeastOnce);
@@ -32,9 +32,11 @@ add_task(function* () {
   is(recordings[0].isConsole(), true, "Recording came from console.profile.");
   is(recordings[0].getLabel(), "rust", "Correct label in the recording model.");
 
-  is(RecordingsView.selectedItem.attachment, recordings[0],
+  const selected = getSelectedRecording(panel);
+
+  is(selected, recordings[0],
     "The profile from console should be selected as it's the only one.");
-  is(RecordingsView.selectedItem.attachment.getLabel(), "rust",
+  is(selected.getLabel(), "rust",
     "The profile label for the first recording is correct.");
 
   yield teardownToolboxAndRemoveTab(panel);

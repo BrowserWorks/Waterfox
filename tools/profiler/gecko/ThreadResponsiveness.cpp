@@ -8,36 +8,58 @@
 #include "nsComponentManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "nsITimer.h"
-#include "mozilla/Monitor.h"
-#include "ProfileEntry.h"
-#include "ThreadProfile.h"
+#include "mozilla/Mutex.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/SystemGroup.h"
 
-using mozilla::Monitor;
-using mozilla::MonitorAutoLock;
+using mozilla::Mutex;
+using mozilla::MutexAutoLock;
+using mozilla::SystemGroup;
+using mozilla::TaskCategory;
 using mozilla::TimeStamp;
 
 class CheckResponsivenessTask : public mozilla::Runnable,
                                 public nsITimerCallback {
 public:
   CheckResponsivenessTask()
-    : mLastTracerTime(TimeStamp::Now())
-    , mMonitor("CheckResponsivenessTask")
+    : mozilla::Runnable("CheckResponsivenessTask")
+    , mLastTracerTime(TimeStamp::Now())
+    , mMutex("CheckResponsivenessTask")
     , mTimer(nullptr)
+    , mHasEverBeenSuccessfullyDispatched(false)
     , mStop(false)
   {
-    MOZ_COUNT_CTOR(CheckResponsivenessTask);
   }
 
 protected:
   ~CheckResponsivenessTask()
   {
-    MOZ_COUNT_DTOR(CheckResponsivenessTask);
   }
 
 public:
+
+  // Must be called from the same thread every time. Call that the "update"
+  // thread, because it's the thread that ThreadResponsiveness::Update() is
+  // called on. In reality it's the profiler's sampler thread.
+  void DoFirstDispatchIfNeeded()
+  {
+    if (mHasEverBeenSuccessfullyDispatched) {
+      return;
+    }
+
+    // Dispatching can fail during early startup, particularly when
+    // MOZ_PROFILER_STARTUP is used.
+    nsresult rv = SystemGroup::Dispatch(TaskCategory::Other,
+                                        do_AddRef(this));
+    if (NS_SUCCEEDED(rv)) {
+      mHasEverBeenSuccessfullyDispatched = true;
+    }
+  }
+
+  // Can only run on the main thread.
   NS_IMETHOD Run() override
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock mon(mMutex);
     if (mStop)
       return NS_OK;
 
@@ -49,20 +71,22 @@ public:
     mLastTracerTime = TimeStamp::Now();
     if (!mTimer) {
       mTimer = do_CreateInstance("@mozilla.org/timer;1");
+      mTimer->SetTarget(SystemGroup::EventTargetFor(TaskCategory::Other));
     }
     mTimer->InitWithCallback(this, 16, nsITimer::TYPE_ONE_SHOT);
 
     return NS_OK;
   }
 
-  NS_IMETHODIMP Notify(nsITimer* aTimer) final
+  NS_IMETHOD Notify(nsITimer* aTimer) final
   {
-    NS_DispatchToMainThread(this);
+    SystemGroup::Dispatch(TaskCategory::Other,
+                          do_AddRef(this));
     return NS_OK;
   }
 
   void Terminate() {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock mon(mMutex);
     mStop = true;
   }
 
@@ -74,17 +98,17 @@ public:
 
 private:
   TimeStamp mLastTracerTime;
-  Monitor mMonitor;
+  Mutex mMutex;
   nsCOMPtr<nsITimer> mTimer;
+  bool mHasEverBeenSuccessfullyDispatched; // only accessed on the "update" thread
   bool mStop;
 };
 
 NS_IMPL_ISUPPORTS_INHERITED(CheckResponsivenessTask, mozilla::Runnable,
                             nsITimerCallback)
 
-ThreadResponsiveness::ThreadResponsiveness(ThreadProfile *aThreadProfile)
-  : mThreadProfile(aThreadProfile)
-  , mActiveTracerEvent(nullptr)
+ThreadResponsiveness::ThreadResponsiveness()
+  : mActiveTracerEvent(new CheckResponsivenessTask())
 {
   MOZ_COUNT_CTOR(ThreadResponsiveness);
 }
@@ -92,27 +116,13 @@ ThreadResponsiveness::ThreadResponsiveness(ThreadProfile *aThreadProfile)
 ThreadResponsiveness::~ThreadResponsiveness()
 {
   MOZ_COUNT_DTOR(ThreadResponsiveness);
-  if (mActiveTracerEvent) {
-    mActiveTracerEvent->Terminate();
-  }
+  mActiveTracerEvent->Terminate();
 }
 
 void
 ThreadResponsiveness::Update()
 {
-  if (!mActiveTracerEvent) {
-    if (mThreadProfile->GetThreadInfo()->IsMainThread()) {
-      mActiveTracerEvent = new CheckResponsivenessTask();
-      NS_DispatchToMainThread(mActiveTracerEvent);
-    } else if (mThreadProfile->GetThreadInfo()->GetThread()) {
-      mActiveTracerEvent = new CheckResponsivenessTask();
-      mThreadProfile->GetThreadInfo()->
-        GetThread()->Dispatch(mActiveTracerEvent, NS_DISPATCH_NORMAL);
-    }
-  }
-
-  if (mActiveTracerEvent) {
-    mLastTracerTime = mActiveTracerEvent->GetLastTracerTime();
-  }
+  mActiveTracerEvent->DoFirstDispatchIfNeeded();
+  mLastTracerTime = mActiveTracerEvent->GetLastTracerTime();
 }
 

@@ -22,8 +22,8 @@ public:
 
     void Main();
 
-protected:    
-    virtual bool RecvError() override;
+protected:
+    virtual mozilla::ipc::IPCResult RecvError() override;
 
     virtual void ProcessingError(Result aCode, const char* aReason) override
     {
@@ -33,7 +33,7 @@ protected:
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
         passed("ok");
         QuitParent();
     }
@@ -48,7 +48,7 @@ public:
     virtual ~TestSyncErrorChild();
 
 protected:
-    virtual bool RecvStart() override;
+    virtual mozilla::ipc::IPCResult RecvStart() override;
 
     virtual void ProcessingError(Result aCode, const char* aReason) override
     {

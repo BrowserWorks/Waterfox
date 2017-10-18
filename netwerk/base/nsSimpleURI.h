@@ -26,12 +26,13 @@ namespace net {
     {0xb9, 0xb9, 0x9f, 0xd9, 0x46, 0x2b, 0x5e, 0x19} \
 }
 
-class nsSimpleURI : public nsIURI,
-                    public nsISerializable,
-                    public nsIClassInfo,
-                    public nsIMutable,
-                    public nsISizeOf,
-                    public nsIIPCSerializableURI
+class nsSimpleURI
+    : public nsIURI
+    , public nsISerializable
+    , public nsIClassInfo
+    , public nsIMutable
+    , public nsISizeOf
+    , public nsIIPCSerializableURI
 {
 protected:
     virtual ~nsSimpleURI();
@@ -44,9 +45,16 @@ public:
     NS_DECL_NSIMUTABLE
     NS_DECL_NSIIPCSERIALIZABLEURI
 
+    static already_AddRefed<nsSimpleURI> From(nsIURI* aURI);
+
     // nsSimpleURI methods:
 
     nsSimpleURI();
+
+    bool Equals(nsSimpleURI* aOther)
+    {
+      return EqualsInternal(aOther, eHonorRef);
+    }
 
     // nsISizeOf
     // Among the sub-classes that inherit (directly or indirectly) from
@@ -91,12 +99,14 @@ protected:
     virtual nsresult CloneInternal(RefHandlingEnum refHandlingMode,
                                    const nsACString &newRef,
                                    nsIURI** clone);
-    
+
     nsCString mScheme;
     nsCString mPath; // NOTE: mPath does not include ref, as an optimization
     nsCString mRef;  // so that URIs with different refs can share string data.
+    nsCString mQuery;  // so that URLs with different querys can share string data.
     bool mMutable;
     bool mIsRefValid; // To distinguish between empty-ref and no-ref.
+    bool mIsQueryValid; // To distinguish between empty-query and no-query.
 };
 
 } // namespace net

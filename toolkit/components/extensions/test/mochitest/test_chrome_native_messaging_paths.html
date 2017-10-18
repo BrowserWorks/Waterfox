@@ -7,7 +7,7 @@
   <script src="chrome://mochikit/content/tests/SimpleTest/ExtensionTestUtils.js"></script>
   <script type="text/javascript" src="chrome_head.js"></script>
   <script type="text/javascript" src="head.js"></script>
-  <link rel="stylesheet" href="chrome://mochikit/contents/tests/SimpleTest/test.css"/>
+  <link rel="stylesheet" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
 </head>
 <body>
 
@@ -21,7 +21,7 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 
 // Test that the default paths searched for native host manifests
 // are the ones we expect.
-add_task(function* test_default_paths() {
+add_task(async function test_default_paths() {
   let expectUser, expectGlobal;
   switch (AppConstants.platform) {
     case "macosx": {

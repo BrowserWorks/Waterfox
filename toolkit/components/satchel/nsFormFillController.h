@@ -86,6 +86,9 @@ protected:
 
   void RemoveForDocument(nsIDocument* aDoc);
   bool IsEventTrusted(nsIDOMEvent *aEvent);
+
+  bool IsTextControl(nsINode* aNode);
+
   // members //////////////////////////////////////////
 
   nsCOMPtr<nsIAutoCompleteController> mController;
@@ -110,10 +113,13 @@ protected:
   nsString mLastSearchString;
 
   nsDataHashtable<nsPtrHashKey<const nsINode>, bool> mPwmgrInputs;
+  nsDataHashtable<nsPtrHashKey<const nsINode>, bool> mAutofillInputs;
 
+  uint16_t mFocusAfterRightClickThreshold;
   uint32_t mTimeout;
   uint32_t mMinResultsForPopup;
   uint32_t mMaxRows;
+  mozilla::TimeStamp mLastRightClickTimeStamp;
   bool mDisableAutoComplete;
   bool mCompleteDefaultIndex;
   bool mCompleteSelectedIndex;

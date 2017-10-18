@@ -102,6 +102,7 @@ struct StringArrayAppender
 } // namespace dom
 
 class ErrorResult;
+class OOMReporter;
 
 namespace binding_danger {
 
@@ -162,10 +163,48 @@ public:
   }
 
   operator ErrorResult&();
+  operator OOMReporter&();
 
-  void Throw(nsresult rv) {
+  void MOZ_MUST_RETURN_FROM_CALLER Throw(nsresult rv) {
     MOZ_ASSERT(NS_FAILED(rv), "Please don't try throwing success");
     AssignErrorCode(rv);
+  }
+
+  // This method acts identically to the `Throw` method, however, it does not
+  // have the MOZ_MUST_RETURN_FROM_CALLER static analysis annotation. It is
+  // intended to be used in situations when additional work needs to be
+  // performed in the calling function after the Throw method is called.
+  //
+  // In general you should prefer using `Throw`, and returning after an error,
+  // for example:
+  //
+  //   if (condition) {
+  //     aRv.Throw(NS_ERROR_FAILURE);
+  //     return;
+  //   }
+  //
+  // or
+  //
+  //   if (condition) {
+  //     aRv.Throw(NS_ERROR_FAILURE);
+  //   }
+  //   return;
+  //
+  // However, if you need to do some other work after throwing, such as:
+  //
+  //   if (condition) {
+  //     aRv.ThrowWithCustomCleanup(NS_ERROR_FAILURE);
+  //   }
+  //   // Do some important clean-up work which couldn't happen earlier.
+  //   // We want to do this clean-up work in both the success and failure cases.
+  //   CleanUpImportantState();
+  //   return;
+  //
+  // Then you'll need to use ThrowWithCustomCleanup to get around the static
+  // analysis, which would complain that you are doing work after the call to
+  // `Throw()`.
+  void ThrowWithCustomCleanup(nsresult rv) {
+    Throw(rv);
   }
 
   // Duplicate our current state on the given TErrorResult object.  Any
@@ -184,6 +223,15 @@ public:
   nsresult StealNSResult() {
     nsresult rv = ErrorCode();
     SuppressException();
+    // Don't propagate out our internal error codes that have special meaning.
+    if (rv == NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR ||
+        rv == NS_ERROR_INTERNAL_ERRORRESULT_RANGEERROR ||
+        rv == NS_ERROR_INTERNAL_ERRORRESULT_JS_EXCEPTION ||
+        rv == NS_ERROR_INTERNAL_ERRORRESULT_DOMEXCEPTION) {
+      // What to pick here?
+      return NS_ERROR_DOM_INVALID_STATE_ERR;
+    }
+
     return rv;
   }
 
@@ -214,6 +262,7 @@ public:
   //
   // After this call, the TErrorResult will no longer return true from Failed(),
   // since the exception will have moved to the JSContext.
+  MOZ_MUST_USE
   bool MaybeSetPendingException(JSContext* cx)
   {
     WouldReportJSException();
@@ -240,18 +289,22 @@ public:
   template<dom::ErrNum errorNumber, typename... Ts>
   void ThrowTypeError(Ts&&... messageArgs)
   {
-    ThrowErrorWithMessage<errorNumber>(NS_ERROR_TYPE_ERR,
+    ThrowErrorWithMessage<errorNumber>(NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR,
                                        Forward<Ts>(messageArgs)...);
   }
 
   template<dom::ErrNum errorNumber, typename... Ts>
   void ThrowRangeError(Ts&&... messageArgs)
   {
-    ThrowErrorWithMessage<errorNumber>(NS_ERROR_RANGE_ERR,
+    ThrowErrorWithMessage<errorNumber>(NS_ERROR_INTERNAL_ERRORRESULT_RANGEERROR,
                                        Forward<Ts>(messageArgs)...);
   }
 
-  bool IsErrorWithMessage() const { return ErrorCode() == NS_ERROR_TYPE_ERR || ErrorCode() == NS_ERROR_RANGE_ERR; }
+  bool IsErrorWithMessage() const
+  {
+    return ErrorCode() == NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR ||
+           ErrorCode() == NS_ERROR_INTERNAL_ERRORRESULT_RANGEERROR;
+  }
 
   // Facilities for throwing a preexisting JS exception value via this
   // TErrorResult.  The contract is that any code which might end up calling
@@ -264,7 +317,10 @@ public:
   // not have to be in the compartment of cx.  If someone later uses it, they
   // will wrap it into whatever compartment they're working in, as needed.
   void ThrowJSException(JSContext* cx, JS::Handle<JS::Value> exn);
-  bool IsJSException() const { return ErrorCode() == NS_ERROR_DOM_JS_EXCEPTION; }
+  bool IsJSException() const
+  {
+    return ErrorCode() == NS_ERROR_INTERNAL_ERRORRESULT_JS_EXCEPTION;
+  }
 
   // Facilities for throwing a DOMException.  If an empty message string is
   // passed to ThrowDOMException, the default message string for the given
@@ -272,7 +328,10 @@ public:
   // passed in must be one we create DOMExceptions for; otherwise you may get an
   // XPConnect Exception.
   void ThrowDOMException(nsresult rv, const nsACString& message = EmptyCString());
-  bool IsDOMException() const { return ErrorCode() == NS_ERROR_DOM_DOMEXCEPTION; }
+  bool IsDOMException() const
+  {
+    return ErrorCode() == NS_ERROR_INTERNAL_ERRORRESULT_DOMEXCEPTION;
+  }
 
   // Flag on the TErrorResult that whatever needs throwing has been
   // thrown on the JSContext already and we should not mess with it.
@@ -282,11 +341,11 @@ public:
   // Check whether the TErrorResult says to just throw whatever is on
   // the JSContext already.
   bool IsJSContextException() {
-    return ErrorCode() == NS_ERROR_DOM_EXCEPTION_ON_JSCONTEXT;
+    return ErrorCode() == NS_ERROR_INTERNAL_ERRORRESULT_EXCEPTION_ON_JSCONTEXT;
   }
 
   // Support for uncatchable exceptions.
-  void ThrowUncatchableException() {
+  void MOZ_MUST_RETURN_FROM_CALLER ThrowUncatchableException() {
     Throw(NS_ERROR_UNCATCHABLE_EXCEPTION);
   }
   bool IsUncatchableException() const {
@@ -383,15 +442,19 @@ private:
   }
 
   void AssignErrorCode(nsresult aRv) {
-    MOZ_ASSERT(aRv != NS_ERROR_TYPE_ERR, "Use ThrowTypeError()");
-    MOZ_ASSERT(aRv != NS_ERROR_RANGE_ERR, "Use ThrowRangeError()");
+    MOZ_ASSERT(aRv != NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR,
+               "Use ThrowTypeError()");
+    MOZ_ASSERT(aRv != NS_ERROR_INTERNAL_ERRORRESULT_RANGEERROR,
+               "Use ThrowRangeError()");
     MOZ_ASSERT(!IsErrorWithMessage(), "Don't overwrite errors with message");
-    MOZ_ASSERT(aRv != NS_ERROR_DOM_JS_EXCEPTION, "Use ThrowJSException()");
+    MOZ_ASSERT(aRv != NS_ERROR_INTERNAL_ERRORRESULT_JS_EXCEPTION,
+               "Use ThrowJSException()");
     MOZ_ASSERT(!IsJSException(), "Don't overwrite JS exceptions");
-    MOZ_ASSERT(aRv != NS_ERROR_DOM_DOMEXCEPTION, "Use ThrowDOMException()");
+    MOZ_ASSERT(aRv != NS_ERROR_INTERNAL_ERRORRESULT_DOMEXCEPTION,
+               "Use ThrowDOMException()");
     MOZ_ASSERT(!IsDOMException(), "Don't overwrite DOM exceptions");
     MOZ_ASSERT(aRv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "May need to bring back ThrowNotEnoughArgsError");
-    MOZ_ASSERT(aRv != NS_ERROR_DOM_EXCEPTION_ON_JSCONTEXT,
+    MOZ_ASSERT(aRv != NS_ERROR_INTERNAL_ERRORRESULT_EXCEPTION_ON_JSCONTEXT,
                "Use NoteJSContextException");
     mResult = aRv;
   }
@@ -425,11 +488,13 @@ private:
   }
 
   // Special values of mResult:
-  // NS_ERROR_TYPE_ERR -- ThrowTypeError() called on us.
-  // NS_ERROR_RANGE_ERR -- ThrowRangeError() called on us.
-  // NS_ERROR_DOM_JS_EXCEPTION -- ThrowJSException() called on us.
+  // NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR -- ThrowTypeError() called on us.
+  // NS_ERROR_INTERNAL_ERRORRESULT_RANGEERROR -- ThrowRangeError() called on us.
+  // NS_ERROR_INTERNAL_ERRORRESULT_JS_EXCEPTION -- ThrowJSException() called
+  //                                               on us.
   // NS_ERROR_UNCATCHABLE_EXCEPTION -- ThrowUncatchableException called on us.
-  // NS_ERROR_DOM_DOMEXCEPTION -- ThrowDOMException() called on us.
+  // NS_ERROR_INTERNAL_ERRORRESULT_DOMEXCEPTION -- ThrowDOMException() called
+  //                                               on us.
   nsresult mResult;
 
   struct Message;
@@ -536,6 +601,82 @@ class IgnoredErrorResult :
     public binding_danger::TErrorResult<binding_danger::JustSuppressCleanupPolicy>
 {
 };
+
+namespace dom {
+namespace binding_detail {
+class FastErrorResult :
+    public mozilla::binding_danger::TErrorResult<
+      mozilla::binding_danger::JustAssertCleanupPolicy>
+{
+};
+} // namespace binding_detail
+} // namespace dom
+
+// This part is a bit annoying.  We want an OOMReporter class that has the
+// following properties:
+//
+// 1) Can be cast to from any ErrorResult-like type.
+// 2) Has a fast destructor (because we want to use it from bindings).
+// 3) Won't be randomly instantiated by non-binding code (because the fast
+//    destructor is not so safe.
+// 4) Doesn't look ugly on the callee side (e.g. isn't in the binding_detail or
+//    binding_danger namespace).
+//
+// We do this by having two classes: The class callees should use, which has the
+// things we want and a private constructor, and a friend subclass in the
+// binding_danger namespace that can be used to construct it.
+namespace binding_danger {
+class OOMReporterInstantiator;
+} // namespace binding_danger
+
+class OOMReporter : private dom::binding_detail::FastErrorResult
+{
+public:
+  void ReportOOM()
+  {
+    Throw(NS_ERROR_OUT_OF_MEMORY);
+  }
+
+private:
+  // OOMReporterInstantiator is a friend so it can call our constructor and
+  // MaybeSetPendingException.
+  friend class binding_danger::OOMReporterInstantiator;
+
+  // TErrorResult is a friend so its |operator OOMReporter&()| can work.
+  template<typename CleanupPolicy>
+  friend class binding_danger::TErrorResult;
+
+  OOMReporter()
+    : dom::binding_detail::FastErrorResult()
+  {
+  }
+};
+
+namespace binding_danger {
+class OOMReporterInstantiator : public OOMReporter
+{
+public:
+  OOMReporterInstantiator()
+    : OOMReporter()
+  {
+  }
+
+  // We want to be able to call MaybeSetPendingException from codegen.  The one
+  // on OOMReporter is not callable directly, because it comes from a private
+  // superclass.  But we're a friend, so _we_ can call it.
+  bool MaybeSetPendingException(JSContext* cx)
+  {
+    return OOMReporter::MaybeSetPendingException(cx);
+  }
+};
+} // namespace binding_danger
+
+template<typename CleanupPolicy>
+binding_danger::TErrorResult<CleanupPolicy>::operator OOMReporter&()
+{
+  return *static_cast<OOMReporter*>(
+     reinterpret_cast<TErrorResult<JustAssertCleanupPolicy>*>(this));
+}
 
 /******************************************************************************
  ** Macros for checking results

@@ -97,7 +97,7 @@ private:
     return Success;
   }
 
-  Result IsChainValid(const DERArray&, Time) override
+  Result IsChainValid(const DERArray&, Time, const CertPolicyId&) override
   {
     return Success;
   }
@@ -185,6 +185,17 @@ class pkixcert_IsValidChainForAlgorithm
   , public ::testing::WithParamInterface<ChainValidity>
 {
 };
+
+::std::ostream& operator<<(::std::ostream& os,
+                           const pkixcert_IsValidChainForAlgorithm&)
+{
+  return os << "TODO (bug 1318770)";
+}
+
+::std::ostream& operator<<(::std::ostream& os, const ChainValidity&)
+{
+  return os << "TODO (bug 1318770)";
+}
 
 TEST_P(pkixcert_IsValidChainForAlgorithm, IsValidChainForAlgorithm)
 {

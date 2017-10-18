@@ -5,27 +5,27 @@
 
 const CRASH_URL = "about:mozilla";
 const CRASH_FAVICON = "chrome://branding/content/icon32.png";
-const CRASH_SHENTRY = {url: CRASH_URL};
+const CRASH_SHENTRY = {url: CRASH_URL, triggeringPrincipal_base64};
 const CRASH_TAB = {entries: [CRASH_SHENTRY], image: CRASH_FAVICON};
 const CRASH_STATE = {windows: [{tabs: [CRASH_TAB]}]};
 
 const TAB_URL = "about:sessionrestore";
 const TAB_FORMDATA = {url: TAB_URL, id: {sessionData: CRASH_STATE}};
-const TAB_SHENTRY = {url: TAB_URL};
+const TAB_SHENTRY = {url: TAB_URL, triggeringPrincipal_base64};
 const TAB_STATE = {entries: [TAB_SHENTRY], formdata: TAB_FORMDATA};
 
 const FRAME_SCRIPT = "data:," +
                      "content.document.getElementById('errorTryAgain').click()";
 
-add_task(function* () {
+add_task(async function() {
   // Prepare a blank tab.
-  let tab = gBrowser.addTab("about:blank");
+  let tab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   let browser = tab.linkedBrowser;
-  yield promiseBrowserLoaded(browser);
+  await promiseBrowserLoaded(browser);
 
   // Fake a post-crash tab.
   ss.setTabState(tab, JSON.stringify(TAB_STATE));
-  yield promiseTabRestored(tab);
+  await promiseTabRestored(tab);
 
   ok(gBrowser.tabs.length > 1, "we have more than one tab");
 
@@ -37,8 +37,8 @@ add_task(function* () {
   browser.messageManager.loadFrameScript(FRAME_SCRIPT, true);
 
   // Wait until the new window was restored.
-  let win = yield waitForNewWindow();
-  yield BrowserTestUtils.closeWindow(win);
+  let win = await waitForNewWindow();
+  await BrowserTestUtils.closeWindow(win);
 
   let [{tabs: [{entries: [{url}]}]}] = JSON.parse(ss.getClosedWindowData());
   is(url, CRASH_URL, "session was restored correctly");
@@ -50,6 +50,6 @@ function waitForNewWindow() {
     Services.obs.addObserver(function observe(win, topic) {
       Services.obs.removeObserver(observe, topic);
       resolve(win);
-    }, "browser-delayed-startup-finished", false);
+    }, "browser-delayed-startup-finished");
   });
 }

@@ -35,25 +35,14 @@ class MediaSource;
 class MediaSourceDecoder : public MediaDecoder
 {
 public:
-  explicit MediaSourceDecoder(dom::HTMLMediaElement* aElement);
+  explicit MediaSourceDecoder(MediaDecoderInit& aInit);
 
-  MediaDecoder* Clone(MediaDecoderOwner* aOwner) override;
   MediaDecoderStateMachine* CreateStateMachine() override;
-  nsresult Load(nsIStreamListener**) override;
+  nsresult Load(nsIPrincipal* aPrincipal);
   media::TimeIntervals GetSeekable() override;
   media::TimeIntervals GetBuffered() override;
 
-  // We can't do this in the constructor because we don't know what type of
-  // media we're dealing with by that point.
-  void NotifyDormantSupported(bool aSupported)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    mDormantSupported = aSupported;
-  }
-
   void Shutdown() override;
-
-  static already_AddRefed<MediaResource> CreateResource(nsIPrincipal* aPrincipal = nullptr);
 
   void AttachMediaSource(dom::MediaSource* aMediaSource);
   void DetachMediaSource();
@@ -73,12 +62,16 @@ public:
 
   // Returns a string describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
-  void GetMozDebugReaderData(nsAString& aString) override;
+  void GetMozDebugReaderData(nsACString& aString) override;
 
   void AddSizeOfResources(ResourceSizes* aSizes) override;
 
   MediaDecoderOwner::NextFrameStatus NextFrameBufferedStatus() override;
   bool CanPlayThrough() override;
+
+  bool IsMSE() const override { return true; }
+
+  void NotifyInitDataArrived();
 
 private:
   void DoSetMediaSourceDuration(double aDuration);
@@ -89,7 +82,6 @@ private:
   // mMediaSource.
   dom::MediaSource* mMediaSource;
   RefPtr<MediaSourceDemuxer> mDemuxer;
-  RefPtr<MediaFormatReader> mReader;
 
   bool mEnded;
 };

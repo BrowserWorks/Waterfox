@@ -40,22 +40,10 @@ const IS_UNIX = true;
 const IS_UNIX = false;
 #endif
 
-#ifdef ANDROID
-const IS_ANDROID = true;
-#else
-const IS_ANDROID = false;
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-const IS_TOOLKIT_GONK = true;
-#else
-const IS_TOOLKIT_GONK = false;
-#endif
-
 #ifdef MOZ_VERIFY_MAR_SIGNATURE
-const IS_MAR_CHECKS_ENABLED = true;
+const MOZ_VERIFY_MAR_SIGNATURE = true;
 #else
-const IS_MAR_CHECKS_ENABLED = false;
+const MOZ_VERIFY_MAR_SIGNATURE = false;
 #endif
 
 #ifdef DISABLE_UPDATER_AUTHENTICODE_CHECK

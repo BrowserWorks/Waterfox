@@ -19,6 +19,8 @@
 
 #include "jsapi.h"
 
+#include "xpc_make_class.h"
+
 namespace mozilla {
 namespace storage {
 
@@ -41,7 +43,7 @@ stepFunc(JSContext *aCtx,
   nsresult rv =
     xpc->GetWrappedNativeOfJSObject(aCtx, obj, getter_AddRefs(wrapper));
   if (NS_FAILED(rv)) {
-    ::JS_ReportError(aCtx, "mozIStorageStatement::step() could not obtain native statement");
+    ::JS_ReportErrorASCII(aCtx, "mozIStorageStatement::step() could not obtain native statement");
     return false;
   }
 
@@ -67,7 +69,7 @@ stepFunc(JSContext *aCtx,
   }
 
   if (NS_FAILED(rv)) {
-    ::JS_ReportError(aCtx, "mozIStorageStatement::step() returned an error");
+    ::JS_ReportErrorASCII(aCtx, "mozIStorageStatement::step() returned an error");
     return false;
   }
 
@@ -111,7 +113,8 @@ StatementJSHelper::getRow(Statement *aStatement,
     NS_ENSURE_SUCCESS(rv, rv);
     RefPtr<StatementRowHolder> rowHolder = new StatementRowHolder(holder);
     aStatement->mStatementRowHolder =
-      new nsMainThreadPtrHolder<nsIXPConnectJSObjectHolder>(rowHolder);
+      new nsMainThreadPtrHolder<nsIXPConnectJSObjectHolder>(
+        "Statement::mStatementRowHolder", rowHolder);
   }
 
   JS::Rooted<JSObject*> obj(aCtx);
@@ -157,7 +160,8 @@ StatementJSHelper::getParams(Statement *aStatement,
     RefPtr<StatementParamsHolder> paramsHolder =
       new StatementParamsHolder(holder);
     aStatement->mStatementParamsHolder =
-      new nsMainThreadPtrHolder<nsIXPConnectJSObjectHolder>(paramsHolder);
+      new nsMainThreadPtrHolder<nsIXPConnectJSObjectHolder>(
+        "Statement::mStatementParamsHolder", paramsHolder);
   }
 
   JS::Rooted<JSObject*> obj(aCtx);
@@ -178,11 +182,11 @@ NS_INTERFACE_MAP_END
 ////////////////////////////////////////////////////////////////////////////////
 //// nsIXPCScriptable
 
-#define XPC_MAP_CLASSNAME StatementJSHelper
+#define XPC_MAP_CLASSNAME         StatementJSHelper
 #define XPC_MAP_QUOTED_CLASSNAME "StatementJSHelper"
-#define XPC_MAP_WANT_GETPROPERTY
-#define XPC_MAP_WANT_RESOLVE
-#define XPC_MAP_FLAGS nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_GETPROPERTY | \
+                       XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h"
 
 NS_IMETHODIMP

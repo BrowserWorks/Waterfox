@@ -9,10 +9,14 @@
 
 #include "HttpChannelParentListener.h"
 #include "mozilla/net/HttpChannelParent.h"
-#include "mozilla/unused.h"
-#include "nsIRedirectChannelRegistrar.h"
+#include "mozilla/Unused.h"
+#include "nsIAuthPrompt.h"
+#include "nsIAuthPrompt2.h"
 #include "nsIHttpEventSink.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsIRedirectChannelRegistrar.h"
+#include "nsIPromptFactory.h"
+#include "nsIWindowWatcher.h"
 #include "nsQueryObject.h"
 
 using mozilla::Unused;
@@ -27,6 +31,8 @@ HttpChannelParentListener::HttpChannelParentListener(HttpChannelParent* aInitial
   , mShouldIntercept(false)
   , mShouldSuspendIntercept(false)
 {
+  LOG(("HttpChannelParentListener::HttpChannelParentListener [this=%p, next=%p]",
+       this, aInitialChannel));
 }
 
 HttpChannelParentListener::~HttpChannelParentListener()
@@ -71,8 +77,8 @@ HttpChannelParentListener::OnStartRequest(nsIRequest *aRequest, nsISupports *aCo
 
 NS_IMETHODIMP
 HttpChannelParentListener::OnStopRequest(nsIRequest *aRequest,
-                                          nsISupports *aContext,
-                                          nsresult aStatusCode)
+                                         nsISupports *aContext,
+                                         nsresult aStatusCode)
 {
   MOZ_RELEASE_ASSERT(!mSuspendedForDiversion,
     "Cannot call OnStopRequest if suspended for diversion!");
@@ -80,8 +86,8 @@ HttpChannelParentListener::OnStopRequest(nsIRequest *aRequest,
   if (!mNextListener)
     return NS_ERROR_UNEXPECTED;
 
-  LOG(("HttpChannelParentListener::OnStopRequest: [this=%p status=%ul]\n",
-       this, aStatusCode));
+  LOG(("HttpChannelParentListener::OnStopRequest: [this=%p status=%" PRIu32 "]\n",
+       this, static_cast<uint32_t>(aStatusCode)));
   nsresult rv = mNextListener->OnStopRequest(aRequest, aContext, aStatusCode);
 
   mNextListener = nullptr;
@@ -94,10 +100,10 @@ HttpChannelParentListener::OnStopRequest(nsIRequest *aRequest,
 
 NS_IMETHODIMP
 HttpChannelParentListener::OnDataAvailable(nsIRequest *aRequest,
-                                            nsISupports *aContext,
-                                            nsIInputStream *aInputStream,
-                                            uint64_t aOffset,
-                                            uint32_t aCount)
+                                           nsISupports *aContext,
+                                           nsIInputStream *aInputStream,
+                                           uint64_t aOffset,
+                                           uint32_t aCount)
 {
   MOZ_RELEASE_ASSERT(!mSuspendedForDiversion,
     "Cannot call OnDataAvailable if suspended for diversion!");
@@ -132,6 +138,17 @@ HttpChannelParentListener::GetInterface(const nsIID& aIID, void **result)
     return ir->GetInterface(aIID, result);
   }
 
+  if (aIID.Equals(NS_GET_IID(nsIAuthPrompt)) ||
+      aIID.Equals(NS_GET_IID(nsIAuthPrompt2))) {
+    nsresult rv;
+    nsCOMPtr<nsIPromptFactory> wwatch =
+      do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return wwatch->GetPrompt(nullptr, aIID,
+                             reinterpret_cast<void**>(result));
+  }
+
   return NS_NOINTERFACE;
 }
 
@@ -146,6 +163,9 @@ HttpChannelParentListener::AsyncOnChannelRedirect(
                                     uint32_t redirectFlags,
                                     nsIAsyncVerifyRedirectCallback* callback)
 {
+  LOG(("HttpChannelParentListener::AsyncOnChannelRedirect [this=%p, old=%p, new=%p, flags=%u]",
+       this, oldChannel, newChannel, redirectFlags));
+
   nsresult rv;
 
   nsCOMPtr<nsIParentRedirectingChannel> activeRedirectingChannel =
@@ -179,6 +199,9 @@ HttpChannelParentListener::AsyncOnChannelRedirect(
 NS_IMETHODIMP
 HttpChannelParentListener::OnRedirectResult(bool succeeded)
 {
+  LOG(("HttpChannelParentListener::OnRedirectResult [this=%p, suc=%d]",
+       this, succeeded));
+
   nsresult rv;
 
   nsCOMPtr<nsIParentChannel> redirectChannel;
@@ -282,11 +305,12 @@ class FinishSynthesizedResponse : public Runnable
   nsCOMPtr<nsIInterceptedChannel> mChannel;
 public:
   explicit FinishSynthesizedResponse(nsIInterceptedChannel* aChannel)
-  : mChannel(aChannel)
+    : Runnable("net::FinishSynthesizedResponse")
+    , mChannel(aChannel)
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     // The URL passed as an argument here doesn't matter, since the child will
     // receive a redirection notification as a result of this synthesized response.
@@ -307,8 +331,10 @@ HttpChannelParentListener::ChannelIntercepted(nsIInterceptedChannel* aChannel)
   mSynthesizedResponseHead->StatusText(statusText);
   aChannel->SynthesizeStatus(mSynthesizedResponseHead->Status(), statusText);
   nsCOMPtr<nsIHttpHeaderVisitor> visitor = new HeaderVisitor(aChannel);
-  mSynthesizedResponseHead->VisitHeaders(visitor,
-                                         nsHttpHeaderArray::eFilterResponse);
+  DebugOnly<nsresult> rv =
+    mSynthesizedResponseHead->VisitHeaders(visitor,
+                                           nsHttpHeaderArray::eFilterResponse);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   nsCOMPtr<nsIRunnable> event = new FinishSynthesizedResponse(aChannel);
   NS_DispatchToCurrentThread(event);

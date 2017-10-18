@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
 # Due to duplicate file names, we compile libavutil/x86/cpu.c in its own
 # moz.build file.
 DIRS += ['libavutil/x86']
@@ -69,7 +72,7 @@ ALLOW_COMPILER_WARNINGS = True
 if CONFIG['MOZ_DEBUG']:
     # Enable all assertions in debug builds.
     DEFINES['ASSERT_LEVEL'] = 2
-elif not CONFIG['RELEASE_BUILD']:
+elif not CONFIG['RELEASE_OR_BETA']:
     # Enable fast assertions in opt builds of Nightly and Aurora.
     DEFINES['ASSERT_LEVEL'] = 1
 

@@ -92,6 +92,11 @@ void NetAddrToPRNetAddr(const NetAddr *addr, PRNetAddr *prAddr)
     prAddr->local.family = PR_AF_LOCAL;
     memcpy(prAddr->local.path, addr->local.path, sizeof(addr->local.path));
   }
+#elif defined(XP_WIN)
+  else if (addr->raw.family == AF_LOCAL) {
+    prAddr->local.family = PR_AF_LOCAL;
+    memcpy(prAddr->local.path, addr->local.path, sizeof(addr->local.path));
+  }
 #endif
 }
 
@@ -105,7 +110,7 @@ bool NetAddrToString(const NetAddr *addr, char *buf, uint32_t bufSize)
     nativeAddr.s_addr = addr->inet.ip;
     return !!inet_ntop_internal(AF_INET, &nativeAddr, buf, bufSize);
   }
-  else if (addr->raw.family == AF_INET6) {
+  if (addr->raw.family == AF_INET6) {
     if (bufSize < INET6_ADDRSTRLEN) {
       return false;
     }
@@ -141,11 +146,12 @@ bool IsLoopBackAddress(const NetAddr *addr)
   if (addr->raw.family == AF_INET) {
     return (addr->inet.ip == htonl(INADDR_LOOPBACK));
   }
-  else if (addr->raw.family == AF_INET6) {
+  if (addr->raw.family == AF_INET6) {
     if (IPv6ADDR_IS_LOOPBACK(&addr->inet6.ip)) {
       return true;
-    } else if (IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip) &&
-               IPv6ADDR_V4MAPPED_TO_IPADDR(&addr->inet6.ip) == htonl(INADDR_LOOPBACK)) {
+    }
+    if (IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip) &&
+             IPv6ADDR_V4MAPPED_TO_IPADDR(&addr->inet6.ip) == htonl(INADDR_LOOPBACK)) {
       return true;
     }
   }
@@ -162,7 +168,8 @@ bool IsIPAddrAny(const NetAddr *addr)
   else if (addr->raw.family == AF_INET6) {
     if (IPv6ADDR_IS_UNSPECIFIED(&addr->inet6.ip)) {
       return true;
-    } else if (IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip) &&
+    }
+    if (IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip) &&
                IPv6ADDR_V4MAPPED_TO_IPADDR(&addr->inet6.ip) == htonl(INADDR_ANY)) {
       return true;
     }
@@ -225,17 +232,20 @@ NetAddr::operator == (const NetAddr& other) const
 {
   if (this->raw.family != other.raw.family) {
     return false;
-  } else if (this->raw.family == AF_INET) {
+  }
+  if (this->raw.family == AF_INET) {
     return (this->inet.port == other.inet.port) &&
            (this->inet.ip == other.inet.ip);
-  } else if (this->raw.family == AF_INET6) {
+  }
+  if (this->raw.family == AF_INET6) {
     return (this->inet6.port == other.inet6.port) &&
            (this->inet6.flowinfo == other.inet6.flowinfo) &&
            (memcmp(&this->inet6.ip, &other.inet6.ip,
                    sizeof(this->inet6.ip)) == 0) &&
            (this->inet6.scope_id == other.inet6.scope_id);
 #if defined(XP_UNIX)
-  } else if (this->raw.family == AF_LOCAL) {
+  }
+  if (this->raw.family == AF_LOCAL) {
     return PL_strncmp(this->local.path, other.local.path,
                       ArrayLength(this->local.path));
 #endif
@@ -248,22 +258,23 @@ NetAddr::operator < (const NetAddr& other) const
 {
     if (this->raw.family != other.raw.family) {
         return this->raw.family < other.raw.family;
-    } else if (this->raw.family == AF_INET) {
+    }
+    if (this->raw.family == AF_INET) {
         if (this->inet.ip == other.inet.ip) {
             return this->inet.port < other.inet.port;
-        } else {
-            return this->inet.ip < other.inet.ip;
         }
-    } else if (this->raw.family == AF_INET6) {
+        return this->inet.ip < other.inet.ip;
+    }
+    if (this->raw.family == AF_INET6) {
         int cmpResult = memcmp(&this->inet6.ip, &other.inet6.ip,
                                sizeof(this->inet6.ip));
         if (cmpResult) {
             return cmpResult < 0;
-        } else if (this->inet6.port != other.inet6.port) {
-            return this->inet6.port < other.inet6.port;
-        } else {
-            return this->inet6.flowinfo < other.inet6.flowinfo;
         }
+        if (this->inet6.port != other.inet6.port) {
+            return this->inet6.port < other.inet6.port;
+        }
+        return this->inet6.flowinfo < other.inet6.flowinfo;
     }
     return false;
 }
@@ -278,9 +289,7 @@ NetAddrElement::NetAddrElement(const NetAddrElement& netAddr)
   mAddress = netAddr.mAddress;
 }
 
-NetAddrElement::~NetAddrElement()
-{
-}
+NetAddrElement::~NetAddrElement() = default;
 
 AddrInfo::AddrInfo(const char *host, const PRAddrInfo *prAddrInfo,
                    bool disableIPv4, bool filterNameCollision, const char *cname)
@@ -300,7 +309,7 @@ AddrInfo::AddrInfo(const char *host, const PRAddrInfo *prAddrInfo,
         (!disableIPv4 || tmpAddr.raw.family != PR_AF_INET) &&
         (!filterNameCollision || tmpAddr.raw.family != PR_AF_INET || (tmpAddr.inet.ip != nameCollisionAddr));
     if (addIt) {
-        NetAddrElement *addrElement = new NetAddrElement(&tmpAddr);
+        auto *addrElement = new NetAddrElement(&tmpAddr);
         mAddresses.insertBack(addrElement);
     }
   } while (iter);

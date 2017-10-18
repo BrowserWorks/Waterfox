@@ -45,7 +45,7 @@ function main() {
     var anim = createAnim();
     svg.setCurrentTime(0);
     tests[i](anim);
-    anim.parentNode.removeChild(anim);
+    anim.remove();
   }
   SimpleTest.finish();
 }
@@ -78,7 +78,7 @@ function testRemoveLater(anim) {
     "Fill not removed for retrospectively set fill mode");
 }
 
-window.addEventListener("load", main, false);
+window.addEventListener("load", main);
 ]]>
 </script>
 </pre>

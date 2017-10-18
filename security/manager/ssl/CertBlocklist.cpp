@@ -6,13 +6,15 @@
 
 #include "CertBlocklist.h"
 
+#include "mozilla/Assertions.h"
 #include "mozilla/Base64.h"
 #include "mozilla/Casting.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsAppDirectoryServiceDefs.h"
-#include "nsCRTGlue.h"
+#include "nsDependentString.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsICryptoHash.h"
 #include "nsIFileStreams.h"
@@ -21,6 +23,7 @@
 #include "nsIX509Cert.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
+#include "nsPromiseFlatString.h"
 #include "nsTHashtable.h"
 #include "nsThreadUtils.h"
 #include "pkix/Input.h"
@@ -310,31 +313,31 @@ CertBlocklist::EnsureBackingFileInitialized(MutexAutoLock& lock)
 }
 
 NS_IMETHODIMP
-CertBlocklist::RevokeCertBySubjectAndPubKey(const char* aSubject,
-                                            const char* aPubKeyHash)
+CertBlocklist::RevokeCertBySubjectAndPubKey(const nsACString& aSubject,
+                                            const nsACString& aPubKeyHash)
 {
   MOZ_LOG(gCertBlockPRLog, LogLevel::Debug,
          ("CertBlocklist::RevokeCertBySubjectAndPubKey - subject is: %s and pubKeyHash: %s",
-          aSubject, aPubKeyHash));
+          PromiseFlatCString(aSubject).get(),
+          PromiseFlatCString(aPubKeyHash).get()));
   MutexAutoLock lock(mMutex);
 
-  return AddRevokedCertInternal(nsDependentCString(aSubject),
-                                nsDependentCString(aPubKeyHash),
+  return AddRevokedCertInternal(aSubject, aPubKeyHash,
                                 BlockBySubjectAndPubKey,
                                 CertNewFromBlocklist, lock);
 }
 
 NS_IMETHODIMP
-CertBlocklist::RevokeCertByIssuerAndSerial(const char* aIssuer,
-                                           const char* aSerialNumber)
+CertBlocklist::RevokeCertByIssuerAndSerial(const nsACString& aIssuer,
+                                           const nsACString& aSerialNumber)
 {
   MOZ_LOG(gCertBlockPRLog, LogLevel::Debug,
          ("CertBlocklist::RevokeCertByIssuerAndSerial - issuer is: %s and serial: %s",
-          aIssuer, aSerialNumber));
+          PromiseFlatCString(aIssuer).get(),
+          PromiseFlatCString(aSerialNumber).get()));
   MutexAutoLock lock(mMutex);
 
-  return AddRevokedCertInternal(nsDependentCString(aIssuer),
-                                nsDependentCString(aSerialNumber),
+  return AddRevokedCertInternal(aIssuer, aSerialNumber,
                                 BlockByIssuerAndSerial,
                                 CertNewFromBlocklist, lock);
 }
@@ -492,7 +495,7 @@ CertBlocklist::SaveEntries()
   for (auto iter = issuers.Iter(); !iter.Done(); iter.Next()) {
     nsCStringHashKey* hashKey = iter.Get();
     nsAutoPtr<BlocklistStringSet> issuerSet;
-    issuerTable.RemoveAndForget(hashKey->GetKey(), issuerSet);
+    issuerTable.Remove(hashKey->GetKey(), &issuerSet);
 
     nsresult rv = WriteLine(outputStream, hashKey->GetKey());
     if (NS_FAILED(rv)) {
@@ -512,7 +515,7 @@ CertBlocklist::SaveEntries()
   }
 
   nsCOMPtr<nsISafeOutputStream> safeStream = do_QueryInterface(outputStream);
-  NS_ASSERTION(safeStream, "expected a safe output stream!");
+  MOZ_ASSERT(safeStream, "expected a safe output stream!");
   if (!safeStream) {
     return NS_ERROR_FAILURE;
   }
@@ -637,7 +640,7 @@ CertBlocklist::IsBlocklistFresh(bool* _retval)
     int64_t interval = now - lastUpdate;
     MOZ_LOG(gCertBlockPRLog, LogLevel::Warning,
            ("CertBlocklist::IsBlocklistFresh we're after the last BlocklistUpdate "
-            "interval is %i, staleness %u", interval, sMaxStaleness));
+            "interval is %" PRId64 ", staleness %u", interval, sMaxStaleness));
     *_retval = sMaxStaleness > interval;
   }
   MOZ_LOG(gCertBlockPRLog, LogLevel::Warning,

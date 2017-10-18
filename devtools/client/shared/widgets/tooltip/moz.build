@@ -7,6 +7,14 @@
 DevToolsModules(
     'CssDocsTooltip.js',
     'EventTooltipHelper.js',
+    'HTMLTooltip.js',
     'ImageTooltipHelper.js',
+    'InlineTooltip.js',
+    'SwatchBasedEditorTooltip.js',
+    'SwatchColorPickerTooltip.js',
+    'SwatchCubicBezierTooltip.js',
+    'SwatchFilterTooltip.js',
+    'Tooltip.js',
     'TooltipToggle.js',
+    'VariableContentHelper.js',
 )

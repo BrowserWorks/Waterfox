@@ -136,7 +136,7 @@ function isGenerator(value) {
 /**
  * This object provides the public module functions.
  */
-this.Task = {
+var Task = {
   /**
    * Creates and starts a new task.
    *
@@ -158,7 +158,7 @@ this.Task = {
    *         called when the task terminates.
    */
   spawn: function (task) {
-    return createAsyncFunction(task).call(undefined);
+    return createAsyncFunction(task)();
   },
 
   /**

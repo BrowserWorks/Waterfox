@@ -11,12 +11,12 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsIEditRules.h"
 #include "nsIEditor.h"
+#include "nsINamed.h"
 #include "nsISupportsImpl.h"
 #include "nsITimer.h"
 #include "nsString.h"
 #include "nscore.h"
 
-class nsIDOMElement;
 class nsIDOMNode;
 
 namespace mozilla {
@@ -41,6 +41,7 @@ class Selection;
  */
 class TextEditRules : public nsIEditRules
                     , public nsITimerCallback
+                    , public nsINamed
 {
 public:
   typedef dom::Element Element;
@@ -66,8 +67,11 @@ public:
                           bool* aCancel, bool* aHandled) override;
   NS_IMETHOD DidDoAction(Selection* aSelection, RulesInfo* aInfo,
                          nsresult aResult) override;
-  NS_IMETHOD DocumentIsEmpty(bool* aDocumentIsEmpty) override;
+  NS_IMETHOD_(bool) DocumentIsEmpty() override;
   NS_IMETHOD DocumentModified() override;
+
+  // nsINamed methods
+  NS_DECL_NSINAMED
 
 protected:
   virtual ~TextEditRules();
@@ -124,11 +128,17 @@ protected:
                           nsAString* outString,
                           int32_t aMaxLength);
   nsresult DidInsertText(Selection* aSelection, nsresult aResult);
-  nsresult GetTopEnclosingPre(nsIDOMNode* aNode, nsIDOMNode** aOutPreNode);
 
   nsresult WillInsertBreak(Selection* aSelection, bool* aCancel,
                            bool* aHandled, int32_t aMaxLength);
   nsresult DidInsertBreak(Selection* aSelection, nsresult aResult);
+
+  nsresult WillSetText(Selection& aSelection,
+                       bool* aCancel,
+                       bool* aHandled,
+                       const nsAString* inString,
+                       int32_t aMaxLength);
+  nsresult DidSetText(Selection& aSelection, nsresult aResult);
 
   void WillInsert(Selection& aSelection, bool* aCancel);
   nsresult DidInsert(Selection* aSelection, nsresult aResult);
@@ -166,6 +176,7 @@ protected:
   nsresult WillOutputText(Selection* aSelection,
                           const nsAString* aInFormat,
                           nsAString* aOutText,
+                          uint32_t aFlags,
                           bool* aOutCancel,
                           bool* aHandled);
 
@@ -199,7 +210,7 @@ protected:
   /**
    * Remove IME composition text from password buffer.
    */
-  void RemoveIMETextFromPWBuf(int32_t& aStart, nsAString* aIMEString);
+  void RemoveIMETextFromPWBuf(uint32_t& aStart, nsAString* aIMEString);
 
   nsresult CreateMozBR(nsIDOMNode* inParent, int32_t inOffset,
                        nsIDOMNode** outBRNode = nullptr);
@@ -224,17 +235,20 @@ protected:
   bool IsMailEditor() const;
   bool DontEchoPassword() const;
 
+private:
   // Note that we do not refcount the editor.
   TextEditor* mTextEditor;
+
+protected:
   // A buffer we use to store the real value of password editors.
   nsString mPasswordText;
   // A buffer we use to track the IME composition string.
   nsString mPasswordIMEText;
   uint32_t mPasswordIMEIndex;
   // Magic node acts as placeholder in empty doc.
-  nsCOMPtr<nsIDOMNode> mBogusNode;
+  nsCOMPtr<nsIContent> mBogusNode;
   // Cached selected node.
-  nsCOMPtr<nsIDOMNode> mCachedSelectionNode;
+  nsCOMPtr<nsINode> mCachedSelectionNode;
   // Cached selected offset.
   int32_t mCachedSelectionOffset;
   uint32_t mActionNesting;
@@ -253,6 +267,8 @@ protected:
   friend class AutoLockRulesSniffing;
 };
 
+// TODO: This class (almost struct, though) is ugly and its size isn't
+//       optimized.  Should be refined later.
 class TextRulesInfo final : public RulesInfo
 {
 public:
@@ -262,6 +278,7 @@ public:
     , outString(nullptr)
     , outputFormat(nullptr)
     , maxLength(-1)
+    , flags(0)
     , collapsedAction(nsIEditor::eNext)
     , stripWrappers(nsIEditor::eStrip)
     , bOrdered(false)
@@ -269,32 +286,33 @@ public:
     , bulletType(nullptr)
     , alignType(nullptr)
     , blockType(nullptr)
-    , insertElement(nullptr)
   {}
 
-  // kInsertText
+  // EditAction::insertText / EditAction::insertIMEText
   const nsAString* inString;
   nsAString* outString;
   const nsAString* outputFormat;
   int32_t maxLength;
 
-  // kDeleteSelection
+  // EditAction::outputText
+  uint32_t flags;
+
+  // EditAction::deleteSelection
   nsIEditor::EDirection collapsedAction;
   nsIEditor::EStripWrappers stripWrappers;
 
-  // kMakeList
+  // EditAction::removeList
   bool bOrdered;
+
+  // EditAction::makeList
   bool entireList;
   const nsAString* bulletType;
 
-  // kAlign
+  // EditAction::align
   const nsAString* alignType;
 
-  // kMakeBasicBlock
+  // EditAction::makeBasicBlock
   const nsAString* blockType;
-
-  // kInsertElement
-  const nsIDOMElement* insertElement;
 };
 
 /**

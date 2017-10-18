@@ -91,7 +91,7 @@ SVGEllipseElement::GetLengthInfo()
 }
 
 //----------------------------------------------------------------------
-// nsSVGPathGeometryElement methods
+// SVGGeometryElement methods
 
 bool
 SVGEllipseElement::GetGeometryBounds(Rect* aBounds,
@@ -104,7 +104,7 @@ SVGEllipseElement::GetGeometryBounds(Rect* aBounds,
 
   if (rx <= 0.f || ry <= 0.f) {
     // Rendering of the element is disabled
-    *aBounds = Rect(aToBoundsSpace * Point(x, y), Size());
+    *aBounds = Rect(aToBoundsSpace.TransformPoint(Point(x, y)), Size());
     return true;
   }
 

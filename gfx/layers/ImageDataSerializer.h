@@ -60,6 +60,8 @@ gfx::IntSize SizeFromBufferDescriptor(const BufferDescriptor& aDescriptor);
 
 Maybe<gfx::IntSize> CbCrSizeFromBufferDescriptor(const BufferDescriptor& aDescriptor);
 
+Maybe<YUVColorSpace> YUVColorSpaceFromBufferDescriptor(const BufferDescriptor& aDescriptor);
+
 Maybe<StereoMode> StereoModeFromBufferDescriptor(const BufferDescriptor& aDescriptor);
 
 uint8_t* GetYChannel(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor);
@@ -70,6 +72,13 @@ uint8_t* GetCrChannel(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor);
 
 already_AddRefed<gfx::DataSourceSurface>
 DataSourceSurfaceFromYCbCrDescriptor(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor, gfx::DataSourceSurface* aSurface = nullptr);
+
+void ConvertAndScaleFromYCbCrDescriptor(uint8_t* aBuffer,
+                                        const YCbCrDescriptor& aDescriptor,
+                                        const gfx::SurfaceFormat& aDestFormat,
+                                        const gfx::IntSize& aDestSize,
+                                        unsigned char* aDestBuffer,
+                                        int32_t aStride);
 
 } // ImageDataSerializer
 

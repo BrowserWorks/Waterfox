@@ -3,13 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from editBookmarkOverlay.js */
+// Via downloadsViewOverlay.xul -> allDownloadsViewOverlay.xul
+/* import-globals-from ../../../../toolkit/content/contentAreaUtils.js */
+
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/TelemetryStopwatch.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "MigrationUtils",
                                   "resource:///modules/MigrationUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BookmarkJSONUtils",
                                   "resource://gre/modules/BookmarkJSONUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
@@ -32,7 +35,7 @@ var PlacesOrganizer = {
     "editBMPanel_keywordRow",
   ],
 
-  _initFolderTree: function() {
+  _initFolderTree() {
     var leftPaneRoot = PlacesUIUtils.leftPaneFolderId;
     this._places.place = "place:excludeItems=1&expandQueries=0&folder=" + leftPaneRoot;
   },
@@ -79,7 +82,6 @@ var PlacesOrganizer = {
             break;
           default:
             throw new Error("Invalid container type found: " + container);
-            break;
         }
         PlacesUtils.asContainer(this._places.selectedNode).containerOpen = true;
       }
@@ -283,11 +285,9 @@ var PlacesOrganizer = {
     if (PlacesUtils.nodeIsHistoryContainer(aNode) ||
         itemId == PlacesUIUtils.leftPaneQueries["History"]) {
       PlacesQueryBuilder.setScope("history");
-    }
-    else if (itemId == PlacesUIUtils.leftPaneQueries["Downloads"]) {
+    } else if (itemId == PlacesUIUtils.leftPaneQueries["Downloads"]) {
       PlacesQueryBuilder.setScope("downloads");
-    }
-    else {
+    } else {
       // Default to All Bookmarks for all other nodes, per bug 469437.
       PlacesQueryBuilder.setScope("bookmarks");
     }
@@ -312,7 +312,7 @@ var PlacesOrganizer = {
         // The command execution function will take care of seeing if the
         // selection is a folder or a different container type, and will
         // load its contents in tabs.
-        PlacesUIUtils.openContainerNodeInTabs(selectedNode, aEvent, this._places);
+        PlacesUIUtils.openContainerNodeInTabs(node, aEvent, this._places);
       }
     }
   },
@@ -335,8 +335,7 @@ var PlacesOrganizer = {
     if (aContainer.itemId != -1) {
       PlacesUtils.asContainer(this._places.selectedNode).containerOpen = true;
       this._places.selectItems([aContainer.itemId], false);
-    }
-    else if (PlacesUtils.nodeIsQuery(aContainer)) {
+    } else if (PlacesUtils.nodeIsQuery(aContainer)) {
       this._places.selectPlaceURI(aContainer.uri);
     }
   },
@@ -375,7 +374,7 @@ var PlacesOrganizer = {
       if (aResult != Ci.nsIFilePicker.returnCancel && fp.fileURL) {
         Components.utils.import("resource://gre/modules/BookmarkHTMLUtils.jsm");
         BookmarkHTMLUtils.importFromURL(fp.fileURL.spec, false)
-                         .then(null, Components.utils.reportError);
+                         .catch(Components.utils.reportError);
       }
     };
 
@@ -394,7 +393,7 @@ var PlacesOrganizer = {
       if (aResult != Ci.nsIFilePicker.returnCancel) {
         Components.utils.import("resource://gre/modules/BookmarkHTMLUtils.jsm");
         BookmarkHTMLUtils.exportToFile(fp.file.path)
-                         .then(null, Components.utils.reportError);
+                         .catch(Components.utils.reportError);
       }
     };
 
@@ -411,21 +410,23 @@ var PlacesOrganizer = {
   populateRestoreMenu: function PO_populateRestoreMenu() {
     let restorePopup = document.getElementById("fileRestorePopup");
 
-    let dateSvc = Cc["@mozilla.org/intl/scriptabledateformat;1"].
-                  getService(Ci.nsIScriptableDateFormat);
+    const dtOptions = {
+      dateStyle: "long"
+    };
+    let dateFormatter = Services.intl.createDateTimeFormat(undefined, dtOptions);
 
     // Remove existing menu items.  Last item is the restoreFromFile item.
     while (restorePopup.childNodes.length > 1)
-      restorePopup.removeChild(restorePopup.firstChild);
+      restorePopup.firstChild.remove();
 
-    Task.spawn(function* () {
-      let backupFiles = yield PlacesBackups.getBackupFiles();
+    (async function() {
+      let backupFiles = await PlacesBackups.getBackupFiles();
       if (backupFiles.length == 0)
         return;
 
       // Populate menu with backups.
       for (let i = 0; i < backupFiles.length; i++) {
-        let fileSize = (yield OS.File.stat(backupFiles[i])).size;
+        let fileSize = (await OS.File.stat(backupFiles[i])).size;
         let [size, unit] = DownloadUtils.convertByteUnits(fileSize);
         let sizeString = PlacesUtils.getFormattedString("backupFileSizeText",
                                                         [size, unit]);
@@ -444,13 +445,7 @@ var PlacesOrganizer = {
         let backupDate = PlacesBackups.getDateForFile(backupFiles[i]);
         let m = restorePopup.insertBefore(document.createElement("menuitem"),
                                           document.getElementById("restoreFromFile"));
-        m.setAttribute("label",
-                       dateSvc.FormatDate("",
-                                          Ci.nsIScriptableDateFormat.dateFormatLong,
-                                          backupDate.getFullYear(),
-                                          backupDate.getMonth() + 1,
-                                          backupDate.getDate()) +
-                                          sizeInfo);
+        m.setAttribute("label", dateFormatter.format(backupDate) + sizeInfo);
         m.setAttribute("value", OS.Path.basename(backupFiles[i]));
         m.setAttribute("oncommand",
                        "PlacesOrganizer.onRestoreMenuItemClick(this);");
@@ -459,22 +454,22 @@ var PlacesOrganizer = {
       // Add the restoreFromFile item.
       restorePopup.insertBefore(document.createElement("menuseparator"),
                                 document.getElementById("restoreFromFile"));
-    });
+    })();
   },
 
   /**
    * Called when a menuitem is selected from the restore menu.
    */
-  onRestoreMenuItemClick: Task.async(function* (aMenuItem) {
+  async onRestoreMenuItemClick(aMenuItem) {
     let backupName = aMenuItem.getAttribute("value");
-    let backupFilePaths = yield PlacesBackups.getBackupFiles();
+    let backupFilePaths = await PlacesBackups.getBackupFiles();
     for (let backupFilePath of backupFilePaths) {
       if (OS.Path.basename(backupFilePath) == backupName) {
         PlacesOrganizer.restoreBookmarksFromFile(backupFilePath);
         break;
       }
     }
-  }),
+  },
 
   /**
    * Called when 'Choose File...' is selected from the restore menu.
@@ -485,11 +480,11 @@ var PlacesOrganizer = {
                  getService(Ci.nsIProperties);
     let backupsDir = dirSvc.get("Desk", Ci.nsILocalFile);
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
-    let fpCallback = function fpCallback_done(aResult) {
+    let fpCallback = aResult => {
       if (aResult != Ci.nsIFilePicker.returnCancel) {
         this.restoreBookmarksFromFile(fp.file.path);
       }
-    }.bind(this);
+    };
 
     fp.init(window, PlacesUIUtils.getString("bookmarksRestoreTitle"),
             Ci.nsIFilePicker.modeOpen);
@@ -506,7 +501,7 @@ var PlacesOrganizer = {
   restoreBookmarksFromFile: function PO_restoreBookmarksFromFile(aFilePath) {
     // check file extension
     if (!aFilePath.toLowerCase().endsWith("json") &&
-        !aFilePath.toLowerCase().endsWith("jsonlz4"))  {
+        !aFilePath.toLowerCase().endsWith("jsonlz4")) {
       this._showErrorAlert(PlacesUIUtils.getString("bookmarksRestoreFormatError"));
       return;
     }
@@ -519,13 +514,13 @@ var PlacesOrganizer = {
                          PlacesUIUtils.getString("bookmarksRestoreAlert")))
       return;
 
-    Task.spawn(function* () {
+    (async function() {
       try {
-        yield BookmarkJSONUtils.importFromFile(aFilePath, true);
-      } catch(ex) {
+        await BookmarkJSONUtils.importFromFile(aFilePath, true);
+      } catch (ex) {
         PlacesOrganizer._showErrorAlert(PlacesUIUtils.getString("bookmarksRestoreParseError"));
       }
-    });
+    })();
   },
 
   _showErrorAlert: function PO__showErrorAlert(aMsg) {
@@ -575,7 +570,6 @@ var PlacesOrganizer = {
      * state in a bookmark->folder->bookmark scenario.
      */
     var infoBox = document.getElementById("infoBox");
-    var infoBoxExpander = document.getElementById("infoBoxExpander");
     var infoBoxExpanderWrapper = document.getElementById("infoBoxExpanderWrapper");
     var additionalInfoBroadcaster = document.getElementById("additionalInfoBroadcaster");
 
@@ -589,8 +583,7 @@ var PlacesOrganizer = {
         infoBox.setAttribute("wasminimal", "true");
       infoBox.removeAttribute("minimal");
       infoBoxExpanderWrapper.hidden = true;
-    }
-    else {
+    } else {
       if (infoBox.getAttribute("wasminimal") == "true")
         infoBox.setAttribute("minimal", "true");
       infoBox.removeAttribute("wasminimal");
@@ -648,43 +641,24 @@ var PlacesOrganizer = {
 
     if (selectedNode && !PlacesUtils.nodeIsSeparator(selectedNode)) {
       detailsDeck.selectedIndex = 1;
-      // Using the concrete itemId is arguably wrong.  The bookmarks API
-      // does allow setting properties for folder shortcuts as well, but since
-      // the UI does not distinct between the couple, we better just show
-      // the concrete item properties for shortcuts to root nodes.
-      let concreteId = PlacesUtils.getConcreteItemId(selectedNode);
-      var isRootItem = concreteId != -1 && PlacesUtils.isRootItem(concreteId);
-      var readOnly = isRootItem ||
-                     selectedNode.parent.itemId == PlacesUIUtils.leftPaneFolderId;
-      var useConcreteId = isRootItem ||
-                          PlacesUtils.nodeIsTagQuery(selectedNode);
-      var itemId = -1;
-      if (concreteId != -1 && useConcreteId)
-        itemId = concreteId;
-      else if (selectedNode.itemId != -1)
-        itemId = selectedNode.itemId;
-      else
-        itemId = PlacesUtils._uri(selectedNode.uri);
 
-      gEditItemOverlay.initPanel({ node: selectedNode
-                                 , hiddenRows: ["folderPicker"] });
+      gEditItemOverlay.initPanel({ node: selectedNode,
+                                   hiddenRows: ["folderPicker"] });
 
       this._detectAndSetDetailsPaneMinimalState(selectedNode);
-    }
-    else if (!selectedNode && aNodeList[0]) {
+    } else if (!selectedNode && aNodeList[0]) {
       if (aNodeList.every(PlacesUtils.nodeIsURI)) {
         let uris = aNodeList.map(node => PlacesUtils._uri(node.uri));
         detailsDeck.selectedIndex = 1;
-        gEditItemOverlay.initPanel({ uris
-                                   , hiddenRows: ["folderPicker",
+        gEditItemOverlay.initPanel({ uris,
+                                     hiddenRows: ["folderPicker",
                                                   "loadInSidebar",
                                                   "location",
                                                   "keyword",
                                                   "description",
                                                   "name"]});
         this._detectAndSetDetailsPaneMinimalState(selectedNode);
-      }
-      else {
+      } else {
         detailsDeck.selectedIndex = 0;
         let selectItemDesc = document.getElementById("selectItemDescription");
         let itemsCountLabel = document.getElementById("itemsCountText");
@@ -694,8 +668,7 @@ var PlacesOrganizer = {
                                         aNodeList.length, [aNodeList.length]);
         infoBox.hidden = true;
       }
-    }
-    else {
+    } else {
       detailsDeck.selectedIndex = 0;
       infoBox.hidden = true;
       let selectItemDesc = document.getElementById("selectItemDescription");
@@ -709,8 +682,7 @@ var PlacesOrganizer = {
       if (itemsCount == 0) {
         selectItemDesc.hidden = true;
         itemsCountLabel.value = PlacesUIUtils.getString("detailsPane.noItems");
-      }
-      else {
+      } else {
         selectItemDesc.hidden = false;
         itemsCountLabel.value =
           PlacesUIUtils.getPluralString("detailsPane.itemsCountLabel",
@@ -726,17 +698,17 @@ var PlacesOrganizer = {
     var height = bo.height;
 
     var canvas = document.getElementById("itemThumbnail");
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext("2d");
     var notAvailableText = canvas.getAttribute("notavailabletext");
     ctx.save();
     ctx.fillStyle = "-moz-Dialog";
     ctx.fillRect(0, 0, width, height);
-    ctx.translate(width/2, height/2);
+    ctx.translate(width / 2, height / 2);
 
     ctx.fillStyle = "GrayText";
     ctx.mozTextStyle = "12pt sans serif";
     var len = ctx.mozMeasureText(notAvailableText);
-    ctx.translate(-len/2,0);
+    ctx.translate(-len / 2, 0);
     ctx.mozDrawText(notAvailableText);
     ctx.restore();
   },
@@ -753,8 +725,7 @@ var PlacesOrganizer = {
       infoBoxExpanderLabel.accessKey = infoBoxExpanderLabel.getAttribute("lessaccesskey");
       infoBoxExpander.className = "expander-up";
       additionalInfoBroadcaster.removeAttribute("hidden");
-    }
-    else {
+    } else {
       infoBox.setAttribute("minimal", "true");
       infoBoxExpanderLabel.value = infoBoxExpanderLabel.getAttribute("morelabel");
       infoBoxExpanderLabel.accessKey = infoBoxExpanderLabel.getAttribute("moreaccesskey");
@@ -784,7 +755,8 @@ var PlacesSearchBox = {
     if (this._folders.length == 0) {
       this._folders.push(PlacesUtils.bookmarksMenuFolderId,
                          PlacesUtils.unfiledBookmarksFolderId,
-                         PlacesUtils.toolbarFolderId);
+                         PlacesUtils.toolbarFolderId,
+                         PlacesUtils.mobileFolderId);
     }
     return this._folders;
   },
@@ -820,24 +792,24 @@ var PlacesSearchBox = {
       case "bookmarks":
         currentView.applyFilter(filterString, this.folders);
         break;
-      case "history":
+      case "history": {
         if (currentOptions.queryType != Ci.nsINavHistoryQueryOptions.QUERY_TYPE_HISTORY) {
-          var query = PlacesUtils.history.getNewQuery();
+          let query = PlacesUtils.history.getNewQuery();
           query.searchTerms = filterString;
-          var options = currentOptions.clone();
+          let options = currentOptions.clone();
           // Make sure we're getting uri results.
           options.resultType = currentOptions.RESULTS_AS_URI;
           options.queryType = Ci.nsINavHistoryQueryOptions.QUERY_TYPE_HISTORY;
           options.includeHidden = true;
           currentView.load([query], options);
-        }
-        else {
+        } else {
           TelemetryStopwatch.start(HISTORY_LIBRARY_SEARCH_TELEMETRY);
           currentView.applyFilter(filterString, null, true);
           TelemetryStopwatch.finish(HISTORY_LIBRARY_SEARCH_TELEMETRY);
         }
         break;
-      case "downloads":
+      }
+      case "downloads": {
         if (currentView == ContentTree.view) {
           let query = PlacesUtils.history.getNewQuery();
           query.searchTerms = filterString;
@@ -848,12 +820,12 @@ var PlacesSearchBox = {
           options.queryType = Ci.nsINavHistoryQueryOptions.QUERY_TYPE_HISTORY;
           options.includeHidden = true;
           currentView.load([query], options);
-        }
-        else {
+        } else {
           // The new downloads view doesn't use places for searching downloads.
           currentView.searchTerm = filterString;
         }
         break;
+      }
       default:
         throw "Invalid filterCollection on search";
     }
@@ -970,14 +942,14 @@ var PlacesQueryBuilder = {
         filterCollection = "bookmarks";
         folders.push(PlacesUtils.bookmarksMenuFolderId,
                      PlacesUtils.toolbarFolderId,
-                     PlacesUtils.unfiledBookmarksFolderId);
+                     PlacesUtils.unfiledBookmarksFolderId,
+                     PlacesUtils.mobileFolderId);
         break;
       case "downloads":
         filterCollection = "downloads";
         break;
       default:
         throw "Invalid search scope";
-        break;
     }
 
     // Update the search box.  Re-search if there's an active search.
@@ -1034,9 +1006,8 @@ var ViewMenu = {
         popup.removeChild(startElement.nextSibling);
       return endElement;
     }
-    else {
-      while(popup.hasChildNodes())
-        popup.removeChild(popup.firstChild);
+    while (popup.hasChildNodes()) {
+      popup.firstChild.remove();
     }
     return null;
   },
@@ -1066,9 +1037,6 @@ var ViewMenu = {
     var popup = event.target;
     var pivot = this._clean(popup, startID, endID);
 
-    // If no column is "sort-active", the "Unsorted" item needs to be checked,
-    // so track whether or not we find a column that is sort-active.
-    var isSorted = false;
     var content = document.getElementById("placeContent");
     var columns = content.columns;
     for (var i = 0; i < columns.count; ++i) {
@@ -1094,10 +1062,8 @@ var ViewMenu = {
         // This column is the sort key. Its item is checked.
         if (column.getAttribute("sortDirection") != "") {
           menuitem.setAttribute("checked", "true");
-          isSorted = true;
         }
-      }
-      else if (type == "checkbox") {
+      } else if (type == "checkbox") {
         menuitem.setAttribute("type", "checkbox");
         // Cannot uncheck the primary column.
         if (column.getAttribute("primary") == "true")
@@ -1130,13 +1096,11 @@ var ViewMenu = {
       viewSortAscending.removeAttribute("checked");
       viewSortDescending.removeAttribute("checked");
       viewUnsorted.setAttribute("checked", "true");
-    }
-    else if (sortColumn.getAttribute("sortDirection") == "ascending") {
+    } else if (sortColumn.getAttribute("sortDirection") == "ascending") {
       viewSortAscending.setAttribute("checked", "true");
       viewSortDescending.removeAttribute("checked");
       viewUnsorted.removeAttribute("checked");
-    }
-    else if (sortColumn.getAttribute("sortDirection") == "descending") {
+    } else if (sortColumn.getAttribute("sortDirection") == "descending") {
       viewSortDescending.setAttribute("checked", "true");
       viewSortAscending.removeAttribute("checked");
       viewUnsorted.removeAttribute("checked");
@@ -1159,8 +1123,7 @@ var ViewMenu = {
       column.setAttribute("hidden", "false");
       if (splitter)
         splitter.removeAttribute("hidden");
-    }
-    else {
+    } else {
       column.setAttribute("hidden", "true");
       if (splitter)
         splitter.setAttribute("hidden", "true");
@@ -1209,8 +1172,7 @@ var ViewMenu = {
         if (sortColumn)
           aDirection = sortColumn.getAttribute("sortDirection");
       }
-    }
-    else {
+    } else {
       let sortColumn = this._getSortColumn();
       columnId = sortColumn ? sortColumn.getAttribute("anonid") : "title";
     }
@@ -1237,7 +1199,7 @@ var ViewMenu = {
 
     // Make sure we have a valid column.
     if (!colLookupTable.hasOwnProperty(columnId))
-      throw("Invalid column");
+      throw new Error("Invalid column");
 
     // Use a default sort direction if none has been specified.  If aDirection
     // is invalid, result.sortingMode will be undefined, which has the effect
@@ -1276,12 +1238,11 @@ var ContentArea = {
         let { view, options } = this._specialViews.get(aQueryString);
         if (typeof view == "function") {
           view = view();
-          this._specialViews.set(aQueryString, { view: view, options: options });
+          this._specialViews.set(aQueryString, { view, options });
         }
         return view;
       }
-    }
-    catch(ex) {
+    } catch (ex) {
       Components.utils.reportError(ex);
     }
     return ContentTree.view;
@@ -1306,7 +1267,7 @@ var ContentArea = {
       throw new Error("Invalid arguments");
 
     this._specialViews.set(aQueryString, { view: aView,
-                                           options: aOptions || new Object() });
+                                           options: aOptions || {} });
   },
 
   get currentView() {
@@ -1358,8 +1319,7 @@ var ContentArea = {
         for (let menuElt of elt.childNodes) {
           menuElt.hidden = !options.toolbarSet.includes(menuElt.id);
         }
-      }
-      else {
+      } else {
         elt.hidden = !options.toolbarSet.includes(elt.id);
       }
     }
@@ -1374,7 +1334,7 @@ var ContentArea = {
     // Use ContentTree options as default.
     let viewOptions = ContentTree.viewOptions;
     if (this._specialViews.has(this.currentPlace)) {
-      let { view, options } = this._specialViews.get(this.currentPlace);
+      let { options } = this._specialViews.get(this.currentPlace);
       for (let option in options) {
         viewOptions[option] = options[option];
       }
@@ -1382,7 +1342,7 @@ var ContentArea = {
     return viewOptions;
   },
 
-  focus: function() {
+  focus() {
     this._deck.selectedPanel.focus();
   }
 };
@@ -1405,7 +1365,7 @@ var ContentTree = {
 
   openSelectedNode: function CT_openSelectedNode(aEvent) {
     let view = this.view;
-    PlacesUIUtils.openNodeWithEvent(view.selectedNode, aEvent, view);
+    PlacesUIUtils.openNodeWithEvent(view.selectedNode, aEvent);
   },
 
   onClick: function CT_onClick(aEvent) {
@@ -1416,8 +1376,7 @@ var ContentTree = {
       if (PlacesUtils.nodeIsURI(node) && (doubleClick || middleClick)) {
         // Open associated uri in the browser.
         this.openSelectedNode(aEvent);
-      }
-      else if (middleClick && PlacesUtils.nodeIsContainer(node)) {
+      } else if (middleClick && PlacesUtils.nodeIsContainer(node)) {
         // The command execution function will take care of seeing if the
         // selection is a folder or a different container type, and will
         // load its contents in tabs.

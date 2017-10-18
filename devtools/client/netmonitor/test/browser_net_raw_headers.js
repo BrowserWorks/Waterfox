@@ -1,72 +1,72 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var gPanelWin;
-var gPanelDoc;
+"use strict";
 
 /**
  * Tests if showing raw headers works.
  */
 
-function test() {
-  initNetMonitor(POST_DATA_URL).then(([aTab, aDebuggee, aMonitor]) => {
-    info("Starting test... ");
+add_task(function* () {
+  let { tab, monitor } = yield initNetMonitor(POST_DATA_URL);
+  info("Starting test... ");
 
-    gPanelWin = aMonitor.panelWin;
-    gPanelDoc = gPanelWin.document;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-    let { document, Editor, NetMonitorView } = gPanelWin;
-    let { RequestsMenu } = NetMonitorView;
-    let TAB_UPDATED = gPanelWin.EVENTS.TAB_UPDATED;
+  store.dispatch(Actions.batchEnable(false));
 
-    RequestsMenu.lazyUpdate = false;
-
-    waitForNetworkEvents(aMonitor, 0, 2).then(() => {
-      let origItem = RequestsMenu.getItemAtIndex(0);
-      RequestsMenu.selectedItem = origItem;
-
-      waitFor(aMonitor.panelWin, TAB_UPDATED).then(() => {
-        EventUtils.sendMouseEvent({ type: "click" }, document.getElementById("toggle-raw-headers"));
-        testShowRawHeaders(origItem.attachment);
-        EventUtils.sendMouseEvent({ type: "click" }, document.getElementById("toggle-raw-headers"));
-        testHideRawHeaders(document);
-        finishUp(aMonitor);
-      });
-    });
-
-    aDebuggee.performRequests();
+  let wait = waitForNetworkEvents(monitor, 0, 2);
+  yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+    content.wrappedJSObject.performRequests();
   });
-}
+  yield wait;
 
-/*
- * Tests that raw headers were displayed correctly
- */
-function testShowRawHeaders(aData) {
-  let requestHeaders = gPanelDoc.getElementById("raw-request-headers-textarea").value;
-  for (let header of aData.requestHeaders.headers) {
-    ok(requestHeaders.indexOf(header.name + ": " + header.value) >= 0, "textarea contains request headers");
+  wait = waitForDOM(document, ".headers-overview");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
+  yield wait;
+
+  wait = waitForDOM(document, ".raw-headers-container textarea", 2);
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelectorAll(".headers-summary .devtools-button")[1]);
+  yield wait;
+
+  testShowRawHeaders(getSortedRequests(store.getState()).get(0));
+
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelectorAll(".headers-summary .devtools-button")[1]);
+
+  testHideRawHeaders(document);
+
+  return teardown(monitor);
+
+  /*
+   * Tests that raw headers were displayed correctly
+   */
+  function testShowRawHeaders(data) {
+    let requestHeaders = document
+      .querySelectorAll(".raw-headers-container textarea")[0].value;
+    for (let header of data.requestHeaders.headers) {
+      ok(requestHeaders.includes(header.name + ": " + header.value),
+        "textarea contains request headers");
+    }
+    let responseHeaders = document
+      .querySelectorAll(".raw-headers-container textarea")[1].value;
+    for (let header of data.responseHeaders.headers) {
+      ok(responseHeaders.includes(header.name + ": " + header.value),
+        "textarea contains response headers");
+    }
   }
-  let responseHeaders = gPanelDoc.getElementById("raw-response-headers-textarea").value;
-  for (let header of aData.responseHeaders.headers) {
-    ok(responseHeaders.indexOf(header.name + ": " + header.value) >= 0, "textarea contains response headers");
+
+  /*
+   * Tests that raw headers textareas are hidden
+   */
+  function testHideRawHeaders() {
+    ok(!document.querySelector(".raw-headers-container"),
+      "raw request headers textarea is empty");
   }
-}
-
-/*
- * Tests that raw headers textareas are hidden and empty
- */
-function testHideRawHeaders(document) {
-  let rawHeadersHidden = document.getElementById("raw-headers").getAttribute("hidden");
-  let requestTextarea = document.getElementById("raw-request-headers-textarea");
-  let responseTextare = document.getElementById("raw-response-headers-textarea");
-  ok(rawHeadersHidden, "raw headers textareas are hidden");
-  ok(requestTextarea.value == "", "raw request headers textarea is empty");
-  ok(responseTextare.value == "", "raw response headers textarea is empty");
-}
-
-function finishUp(aMonitor) {
-  gPanelWin = null;
-  gPanelDoc = null;
-
-  teardown(aMonitor).then(finish);
-}
+});

@@ -39,7 +39,6 @@ config = {
 
     "download_minidump_stackwalk": True,
 
-    "tooltool_cache": "/builds/tooltool_cache",
-
+    "download_tooltool": True,
 }
 

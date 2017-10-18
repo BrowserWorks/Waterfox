@@ -12,9 +12,14 @@
 #include "SkImage.h"
 #include "SkSurface.h"
 
+#if SK_SUPPORT_GPU
+    #include "GrTexture.h"
+    #include "GrTextureProxy.h"
+#endif
+
 #include <new>
 
-class GrTextureParams;
+class GrSamplerParams;
 class SkImageCacherator;
 
 enum {
@@ -26,25 +31,45 @@ public:
     SkImage_Base(int width, int height, uint32_t uniqueID);
     virtual ~SkImage_Base();
 
+    // User: returns image info for this SkImage.
+    // Implementors: if you can not return the value, return an invalid ImageInfo with w=0 & h=0
+    // & unknown color space.
+    virtual SkImageInfo onImageInfo() const = 0;
+    virtual SkAlphaType onAlphaType() const = 0;
+
     virtual bool onPeekPixels(SkPixmap*) const { return false; }
 
-    // Default impl calls onDraw
-    virtual bool onReadPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRowBytes,
-                              int srcX, int srcY, CachingHint) const;
+    virtual const SkBitmap* onPeekBitmap() const { return nullptr; }
 
+    virtual bool onReadYUV8Planes(const SkISize sizes[3], void* const planes[3],
+                                  const size_t rowBytes[3], SkYUVColorSpace colorSpace) const;
+
+    virtual bool onReadPixels(const SkImageInfo& dstInfo, void* dstPixels, size_t dstRowBytes,
+                              int srcX, int srcY, CachingHint) const = 0;
+
+    // MDB TODO: this entry point needs to go away
     virtual GrTexture* peekTexture() const { return nullptr; }
+#if SK_SUPPORT_GPU
+    virtual GrTextureProxy* peekProxy() const { return nullptr; }
+    virtual sk_sp<GrTextureProxy> asTextureProxyRef() const { return nullptr; }
+    virtual sk_sp<GrTextureProxy> asTextureProxyRef(GrContext*, const GrSamplerParams&,
+                                                    SkColorSpace*, sk_sp<SkColorSpace>*,
+                                                    SkScalar scaleAdjust[2]) const = 0;
+    virtual sk_sp<GrTextureProxy> refPinnedTextureProxy(uint32_t* uniqueID) const {
+        return nullptr;
+    }
+    virtual GrBackendObject onGetTextureHandle(bool flushPendingGrContextIO,
+                                               GrSurfaceOrigin* origin) const {
+        return 0;
+    }
+    virtual GrTexture* onGetTexture() const { return nullptr; }
+#endif
     virtual SkImageCacherator* peekCacherator() const { return nullptr; }
 
     // return a read-only copy of the pixels. We promise to not modify them,
     // but only inspect them (or encode them).
-    virtual bool getROPixels(SkBitmap*, CachingHint = kAllow_CachingHint) const = 0;
-
-    virtual sk_sp<SkSurface> onNewSurface(const SkImageInfo& info) const {
-        return SkSurface::MakeRaster(info);
-    }
-
-    // Caller must call unref when they are done.
-    virtual GrTexture* asTextureRef(GrContext*, const GrTextureParams&) const = 0;
+    virtual bool getROPixels(SkBitmap*, SkColorSpace* dstColorSpace,
+                             CachingHint = kAllow_CachingHint) const = 0;
 
     virtual sk_sp<SkImage> onMakeSubset(const SkIRect&) const = 0;
 
@@ -55,17 +80,16 @@ public:
 
     virtual bool onIsLazyGenerated() const { return false; }
 
-    // Return a bitmap suitable for passing to image-filters
-    // For now, that means wrapping textures into SkGrPixelRefs...
-    virtual bool asBitmapForImageFilters(SkBitmap* bitmap) const {
-        return this->getROPixels(bitmap, kAllow_CachingHint);
-    }
-
     // Call when this image is part of the key to a resourcecache entry. This allows the cache
     // to know automatically those entries can be purged when this SkImage deleted.
     void notifyAddedToCache() const {
         fAddedToCache.store(true);
     }
+
+    virtual bool onPinAsTexture(GrContext*) const { return false; }
+    virtual void onUnpinAsTexture(GrContext*) const {}
+
+    virtual sk_sp<SkImage> onMakeColorSpace(sk_sp<SkColorSpace>) const = 0;
 
 private:
     // Set true by caches when they cache content that's derived from the current pixels.

@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var { utils: Cu, interfaces: Ci, classes: Cc } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
-  "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
   "resource://gre/modules/DeferredTask.jsm");
 
@@ -126,7 +126,7 @@ var ViewSourceContent = {
     }
     let data = msg.data;
     let objects = msg.objects;
-    switch(msg.name) {
+    switch (msg.name) {
       case "ViewSource:LoadSource":
         this.viewSource(data.URL, data.outerWindowID, data.lineNumber,
                         data.shouldWrap);
@@ -161,7 +161,7 @@ var ViewSourceContent = {
     if (!this.isViewSource) {
       return;
     }
-    switch(event.type) {
+    switch (event.type) {
       case "pagehide":
         this.onPageHide(event);
         break;
@@ -230,15 +230,15 @@ var ViewSourceContent = {
         let otherWebNav = requestor.getInterface(Ci.nsIWebNavigation);
         pageDescriptor = otherWebNav.QueryInterface(Ci.nsIWebPageDescriptor)
                                     .currentDescriptor;
-      } catch(e) {
+      } catch (e) {
         // We couldn't get the page descriptor, so we'll probably end up re-retrieving
         // this document off of the network.
       }
 
       let utils = requestor.getInterface(Ci.nsIDOMWindowUtils);
       let doc = contentWindow.document;
-      let forcedCharSet = utils.docCharsetIsForced ? doc.characterSet
-                                                   : null;
+      forcedCharSet = utils.docCharsetIsForced ? doc.characterSet
+                                               : null;
     }
 
     this.loadSource(URL, pageDescriptor, lineNumber, forcedCharSet);
@@ -289,10 +289,11 @@ var ViewSourceContent = {
    */
   loadSource(URL, pageDescriptor, lineNumber, forcedCharSet) {
     const viewSrcURL = "view-source:" + URL;
-    let loadFromURL = false;
 
     if (forcedCharSet) {
-      docShell.charset = forcedCharSet;
+      try {
+        docShell.charset = forcedCharSet;
+      } catch (e) { /* invalid charset */ }
     }
 
     if (lineNumber && lineNumber > 0) {
@@ -318,7 +319,7 @@ var ViewSourceContent = {
       let pageLoader = docShell.QueryInterface(Ci.nsIWebPageDescriptor);
       pageLoader.loadPage(pageDescriptor,
                           Ci.nsIWebPageDescriptor.DISPLAY_AS_SOURCE);
-    } catch(e) {
+    } catch (e) {
       // We were not able to load the source from the network cache.
       this.loadSourceFromURL(viewSrcURL);
       return;
@@ -327,8 +328,10 @@ var ViewSourceContent = {
     let shEntrySource = pageDescriptor.QueryInterface(Ci.nsISHEntry);
     let shEntry = Cc["@mozilla.org/browser/session-history-entry;1"]
                     .createInstance(Ci.nsISHEntry);
-    shEntry.setURI(BrowserUtils.makeURI(viewSrcURL, null, null));
+    shEntry.setURI(Services.io.newURI(viewSrcURL));
     shEntry.setTitle(viewSrcURL);
+    let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
+    shEntry.triggeringPrincipal = systemPrincipal;
     shEntry.loadType = Ci.nsIDocShellLoadInfo.loadHistory;
     shEntry.cacheKey = shEntrySource.cacheKey;
     docShell.QueryInterface(Ci.nsIWebNavigation)
@@ -390,7 +393,7 @@ var ViewSourceContent = {
         docShell.QueryInterface(Ci.nsIWebNavigation)
                 .loadURIWithOptions(content.location.href,
                                     Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CLASSIFIER,
-                                    null, Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+                                    null, Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
                                     null, null, null);
       }
     }
@@ -448,12 +451,12 @@ var ViewSourceContent = {
   onContextMenu(event) {
     let addonInfo = {};
     let subject = {
-      event: event,
-      addonInfo: addonInfo,
+      event,
+      addonInfo,
     };
 
     subject.wrappedJSObject = subject;
-    Services.obs.notifyObservers(subject, "content-contextmenu", null);
+    Services.obs.notifyObservers(subject, "content-contextmenu");
 
     let node = event.target;
 
@@ -541,8 +544,7 @@ var ViewSourceContent = {
       if (offset < node.data.length) {
         // The same text node spans across the "\n", just focus where we were.
         selection.extend(node, offset);
-      }
-      else {
+      } else {
         // There is another tag just after the "\n", hook there. We need
         // to focus a safe point because there are edgy cases such as
         // <span>...\n</span><span>...</span> vs.
@@ -648,21 +650,19 @@ var ViewSourceContent = {
             break;
           }
 
-        } else {
-          if (curLine == lineNumber && !("range" in result)) {
-            result.range = content.document.createRange();
-            result.range.setStart(textNode, curPos);
+        } else if (curLine == lineNumber && !("range" in result)) {
+          result.range = content.document.createRange();
+          result.range.setStart(textNode, curPos);
 
-            // This will always be overridden later, except when we look for
-            // the very last line in the file (this is the only line that does
-            // not end with \n).
-            result.range.setEndAfter(pre.lastChild);
+          // This will always be overridden later, except when we look for
+          // the very last line in the file (this is the only line that does
+          // not end with \n).
+          result.range.setEndAfter(pre.lastChild);
 
-          } else if (curLine == lineNumber + 1) {
-            result.range.setEnd(textNode, curPos - 1);
-            found = true;
-            break;
-          }
+        } else if (curLine == lineNumber + 1) {
+          result.range.setEnd(textNode, curPos - 1);
+          found = true;
+          break;
         }
       }
     }
@@ -716,7 +716,7 @@ var ViewSourceContent = {
     try {
       pageLoader.loadPage(pageLoader.currentDescriptor,
                           Ci.nsIWebPageDescriptor.DISPLAY_NORMAL);
-    } catch(e) {
+    } catch (e) {
       let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
       webNav.reload(Ci.nsIWebNavigation.LOAD_FLAGS_NONE);
     }
@@ -767,18 +767,17 @@ var ViewSourceContent = {
    * @param drawSelection true to highlight the selection
    * @param baseURI base URI of the original document
    */
-  viewSourceWithSelection(uri, drawSelection, baseURI)
-  {
+  viewSourceWithSelection(uri, drawSelection, baseURI) {
     this.needsDrawSelection = drawSelection;
 
     // all our content is held by the data:URI and URIs are internally stored as utf-8 (see nsIURI.idl)
     let loadFlags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
-    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
+    let referrerPolicy = Ci.nsIHttpChannel.REFERRER_POLICY_UNSET;
     let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
     webNav.loadURIWithOptions(uri, loadFlags,
                               null, referrerPolicy,  // referrer
                               null, null,  // postData, headers
-                              Services.io.newURI(baseURI, null, null));
+                              Services.io.newURI(baseURI));
   },
 
   /**
@@ -816,7 +815,7 @@ var ViewSourceContent = {
       // get the find service which stores the global find state
       findService = Cc["@mozilla.org/find/find_service;1"]
                     .getService(Ci.nsIFindService);
-    } catch(e) { }
+    } catch (e) { }
     if (!findService)
       return;
 
@@ -877,8 +876,7 @@ var ViewSourceContent = {
                                  Ci.nsISelectionController.SELECTION_NORMAL,
                                  Ci.nsISelectionController.SELECTION_ANCHOR_REGION,
                                  true);
-    }
-    catch(e) { }
+    } catch (e) { }
 
     // restore the current find state
     findService.matchCase     = matchCase;

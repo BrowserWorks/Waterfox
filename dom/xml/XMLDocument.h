@@ -8,6 +8,7 @@
 #define mozilla_dom_XMLDocument_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "nsDocument.h"
 #include "nsIDOMXMLDocument.h"
 #include "nsIScriptContext.h"
@@ -18,7 +19,8 @@ class nsIChannel;
 namespace mozilla {
 namespace dom {
 
-class XMLDocument : public nsDocument
+class XMLDocument : public nsDocument,
+                    public nsIDOMXMLDocument
 {
 public:
   explicit XMLDocument(const char* aContentType = "application/xml");
@@ -28,6 +30,12 @@ public:
   virtual void Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup) override;
   virtual void ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
                           nsIPrincipal* aPrincipal) override;
+
+  virtual void SetSuppressParserErrorElement(bool aSuppress) override;
+  virtual bool SuppressParserErrorElement() override;
+
+  virtual void SetSuppressParserErrorConsoleMessages(bool aSuppress) override;
+  virtual bool SuppressParserErrorConsoleMessages() override;
 
   virtual nsresult StartDocumentLoad(const char* aCommand, nsIChannel* channel,
                                      nsILoadGroup* aLoadGroup,
@@ -43,27 +51,28 @@ public:
 
   virtual nsresult Init() override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const override;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
 
 
   // WebIDL API
-  bool Load(const nsAString& aUrl, mozilla::ErrorResult& aRv);
+  bool Load(const nsAString& aUrl, CallerType aCallerType, ErrorResult& aRv);
   bool Async() const
   {
     return mAsync;
   }
-  // The XPCOM SetAsync is ok for us
+  void SetAsync(bool aAsync)
+  {
+    mAsync = aAsync;
+  }
 
   // .location is [Unforgeable], so we have to make it clear that the
   // nsIDocument version applies to us (it's shadowed by the XPCOM thing on
   // nsDocument).
   using nsIDocument::GetLocation;
-  // But then we need to also pull in the nsDocument XPCOM version
-  // because nsXULDocument tries to forward to it.
-  using nsDocument::GetLocation;
 
 protected:
   virtual ~XMLDocument();
@@ -85,6 +94,13 @@ protected:
 
   // If true. we're really a Document, not an XMLDocument
   bool mIsPlainDocument;
+
+  // If true, do not output <parsererror> elements. Per spec, XMLHttpRequest
+  // shouldn't output them, whereas DOMParser/others should (see bug 918703).
+  bool mSuppressParserErrorElement;
+
+  // If true, do not log parsing errors to the web console (see bug 884693).
+  bool mSuppressParserErrorConsoleMessages;
 };
 
 } // namespace dom

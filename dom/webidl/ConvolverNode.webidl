@@ -10,6 +10,13 @@
  * liability, trademark and document use rules apply.
  */
 
+dictionary ConvolverOptions : AudioNodeOptions {
+             AudioBuffer? buffer;
+             boolean      disableNormalization = false;
+};
+
+[Pref="dom.webaudio.enabled",
+ Constructor(BaseAudioContext context, optional ConvolverOptions options)]
 interface ConvolverNode : AudioNode {
 
       [SetterThrows]

@@ -72,7 +72,7 @@ var elements = [
   ["ins", "Mod"],
   ["isindex", "Unknown"],
   ["kbd", ""],
-  ["keygen", "Keygen"],
+  ["keygen", "Unknown"],
   ["label", "Label"],
   ["legend", "Legend"],
   ["li", "LI"],
@@ -83,7 +83,6 @@ var elements = [
   ["mark", ""],
   ["marquee", "Marquee"],
   ["menu", "Menu"],
-  ["menuitem", "MenuItem"],
   ["meta", "Meta"],
   ["meter", "Meter"],
   ["mod", "Unknown"],
@@ -146,5 +145,5 @@ var elements = [
   ["video", "Video"],
   ["wbr", ""],
   ["xmp", "Pre"],
-  ["å-bar", "Unknown"], // not a valid custom element name
+  ["\u00E5-bar", "Unknown"], // not a valid custom element name
 ];

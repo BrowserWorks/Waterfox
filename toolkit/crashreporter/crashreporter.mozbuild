@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 LOCAL_INCLUDES += [
+    '/toolkit/crashreporter/breakpad-client',
     '/toolkit/crashreporter/google-breakpad/src',
 ]
 
@@ -12,14 +13,27 @@ LOCAL_INCLUDES += [
 if CONFIG['_MSC_VER']:
     CXXFLAGS += [
         '-wd4005', # macro redefinition
+        '-wd4146', # negative unsigned
+        '-wd4334', # 32-bit shift to 64 bits
+        '-wd4804', # unsafe use of type 'bool'
+    ]
+    CFLAGS += [
+        '-wd4312', # conversion to greater size
     ]
 elif CONFIG['GNU_CXX']:
     CXXFLAGS += [
         '-Wno-unused-local-typedefs',
         '-Wno-shadow',
+        '-Wno-deprecated-declarations',
+        '-Wno-bool-compare',
+        '-Wno-unused-but-set-variable',
     ]
-    if CONFIG['CLANG_CXX']:
-        CXXFLAGS += ['-Wno-implicit-fallthrough']
+
+if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
+    CXXFLAGS += [
+        '-Wno-implicit-fallthrough',
+        '-Wno-c++11-narrowing',
+    ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     DEFINES['ELFSIZE'] = 32

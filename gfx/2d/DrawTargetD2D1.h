@@ -11,6 +11,7 @@
 #include <d2d1_1.h>
 #include "PathD2D.h"
 #include "HelpersD2D.h"
+#include "mozilla/StaticPtr.h"
 
 #include <vector>
 #include <sstream>
@@ -36,6 +37,8 @@ public:
   virtual DrawTargetType GetType() const override { return DrawTargetType::HARDWARE_RASTER; }
   virtual BackendType GetBackendType() const override { return BackendType::DIRECT2D1_1; }
   virtual already_AddRefed<SourceSurface> Snapshot() override;
+  virtual already_AddRefed<SourceSurface> IntoLuminanceSource(LuminanceType aLuminanceType,
+                                                              float aOpacity) override;
   virtual IntSize GetSize() override { return mSize; }
 
   virtual void Flush() override;
@@ -93,6 +96,8 @@ public:
                     const DrawOptions &aOptions = DrawOptions()) override;
   virtual void PushClip(const Path *aPath) override;
   virtual void PushClipRect(const Rect &aRect) override;
+  virtual void PushDeviceSpaceClipRects(const IntRect* aRects, uint32_t aCount) override;
+
   virtual void PopClip() override;
   virtual void PushLayer(bool aOpaque, Float aOpacity,
                          SourceSurface* aMask,
@@ -129,24 +134,28 @@ public:
 
   virtual void DetachAllSnapshots() override { MarkChanged(); }
 
+  virtual void GetGlyphRasterizationMetrics(ScaledFont *aScaledFont, const uint16_t* aGlyphIndices,
+                                            uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) override;
+
   bool Init(const IntSize &aSize, SurfaceFormat aFormat);
   bool Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat);
   uint32_t GetByteSize() const;
 
   // This function will get an image for a surface, it may adjust the source
   // transform for any transformation of the resulting image relative to the
-  // oritingal SourceSurface.
+  // oritingal SourceSurface. By default, the surface and its transform are
+  // interpreted in user-space, but may be specified in device-space instead.
   already_AddRefed<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, Matrix &aSourceTransform,
-                                              ExtendMode aExtendMode, const IntRect* aSourceRect = nullptr);
+                                              ExtendMode aExtendMode, const IntRect* aSourceRect = nullptr,
+                                              bool aUserSpace = true);
 
   already_AddRefed<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, ExtendMode aExtendMode) {
     Matrix mat;
     return GetImageForSurface(aSurface, mat, aExtendMode, nullptr);
   }
 
-  static ID2D1Factory1 *factory();
+  static RefPtr<ID2D1Factory1> factory();
   static void CleanupD2D();
-  static IDWriteFactory *GetDWriteFactory();
 
   operator std::string() const {
     std::stringstream stream;
@@ -181,7 +190,7 @@ private:
   void AddDependencyOnSource(SourceSurfaceD2D1* aSource);
 
   // Must be called with all clips popped and an identity matrix set.
-  already_AddRefed<ID2D1Image> GetImageForLayerContent();
+  already_AddRefed<ID2D1Image> GetImageForLayerContent(bool aShouldPreserveContent = true);
 
   ID2D1Image* CurrentTarget()
   {
@@ -212,13 +221,18 @@ private:
   already_AddRefed<ID2D1SolidColorBrush> GetSolidColorBrush(const D2D_COLOR_F& aColor);
   already_AddRefed<ID2D1Brush> CreateBrushForPattern(const Pattern &aPattern, Float aAlpha = 1.0f);
 
+  void PushClipGeometry(ID2D1Geometry* aGeometry, const D2D1_MATRIX_3X2_F& aTransform, bool aPixelAligned = false);
+
   void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform,
-                    bool aForceIgnoreAlpha = false, const D2D1_RECT_F& aLayerRect = D2D1::InfiniteRect());
+                    bool aPixelAligned = false, bool aForceIgnoreAlpha = false,
+                    const D2D1_RECT_F& aLayerRect = D2D1::InfiniteRect());
+
+  // This function is used to determine if the mDC is still valid; if it is
+  // stale, we should avoid using it to execute any draw commands.
+  bool IsDeviceContextValid();
 
   IntSize mSize;
 
-  RefPtr<ID3D11Device> mDevice;
-  RefPtr<ID3D11Texture2D> mTexture;
   RefPtr<ID2D1Geometry> mCurrentClippedGeometry;
   // This is only valid if mCurrentClippedGeometry is non-null. And will
   // only be the intersection of all pixel-aligned retangular clips. This is in
@@ -237,13 +251,12 @@ private:
   struct PushedClip
   {
     D2D1_RECT_F mBounds;
-    union {
-      // If mPath is non-null, the mTransform member will be used, otherwise
-      // the mIsPixelAligned member is valid.
-      D2D1_MATRIX_3X2_F mTransform;
-      bool mIsPixelAligned;
-    };
-    RefPtr<PathD2D> mPath;
+    // If mGeometry is non-null, the mTransform member will be used.
+    D2D1_MATRIX_3X2_F mTransform;
+    RefPtr<ID2D1Geometry> mGeometry;
+    // Indicates if mBounds, and when non-null, mGeometry with mTransform
+    // applied, are pixel-aligned.
+    bool mIsPixelAligned;
   };
 
   // List of pushed layers.
@@ -280,8 +293,13 @@ private:
   // we can avoid the subsequent hang. (See bug 1293586)
   bool mDidComplexBlendWithListInList;
 
-  static ID2D1Factory1 *mFactory;
-  static IDWriteFactory *mDWriteFactory;
+  static StaticRefPtr<ID2D1Factory1> mFactory;
+  // This value is uesed to verify if the DrawTarget is created by a stale device.
+  uint32_t mDeviceSeq;
+
+  // List of effects we use
+  bool EnsureLuminanceEffect();
+  RefPtr<ID2D1Effect> mLuminanceEffect;
 };
 
 }

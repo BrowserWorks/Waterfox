@@ -29,10 +29,9 @@
 #include "nsIVariant.h"
 #include "nsIFile.h"
 #include "mozilla/BasePrincipal.h"
-
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Maybe.h"
 
-using mozilla::NeckoOriginAttributes;
 using mozilla::OriginAttributes;
 
 class nsICookiePermission;
@@ -66,7 +65,7 @@ public:
   nsCookieKey()
   {}
 
-  nsCookieKey(const nsCString &baseDomain, const NeckoOriginAttributes &attrs)
+  nsCookieKey(const nsCString &baseDomain, const OriginAttributes &attrs)
     : mBaseDomain(baseDomain)
     , mOriginAttributes(attrs)
   {}
@@ -111,7 +110,7 @@ public:
   enum { ALLOW_MEMMOVE = true };
 
   nsCString        mBaseDomain;
-  NeckoOriginAttributes mOriginAttributes;
+  OriginAttributes mOriginAttributes;
 };
 
 // Inherit from nsCookieKey so this can be stored in nsTHashTable
@@ -274,6 +273,8 @@ class nsCookieService final : public nsICookieService
     void                          PrefChanged(nsIPrefBranch *aPrefBranch);
     void                          InitDBStates();
     OpenDBResult                  TryInitDB(bool aDeleteExistingDB);
+    nsresult                      CreateTableWorker(const char* aName);
+    nsresult                      CreateIndex();
     nsresult                      CreateTable();
     nsresult                      CreateTableForSchemaVersion6();
     nsresult                      CreateTableForSchemaVersion5();
@@ -293,42 +294,44 @@ class nsCookieService final : public nsICookieService
     nsresult                      GetBaseDomain(nsIURI *aHostURI, nsCString &aBaseDomain, bool &aRequireHostMatch);
     nsresult                      GetBaseDomainFromHost(const nsACString &aHost, nsCString &aBaseDomain);
     nsresult                      GetCookieStringCommon(nsIURI *aHostURI, nsIChannel *aChannel, bool aHttpBound, char** aCookie);
-  void                            GetCookieStringInternal(nsIURI *aHostURI, bool aIsForeign, bool aHttpBound, const NeckoOriginAttributes aOriginAttrs, bool aIsPrivate, nsCString &aCookie);
+    void                          GetCookieStringInternal(nsIURI *aHostURI, bool aIsForeign, bool aHttpBound, const OriginAttributes& aOriginAttrs, nsCString &aCookie);
     nsresult                      SetCookieStringCommon(nsIURI *aHostURI, const char *aCookieHeader, const char *aServerTime, nsIChannel *aChannel, bool aFromHttp);
-  void                            SetCookieStringInternal(nsIURI *aHostURI, bool aIsForeign, nsDependentCString &aCookieHeader, const nsCString &aServerTime, bool aFromHttp, const NeckoOriginAttributes &aOriginAttrs, bool aIsPrivate, nsIChannel* aChannel);
+    void                          SetCookieStringInternal(nsIURI *aHostURI, bool aIsForeign, nsDependentCString &aCookieHeader, const nsCString &aServerTime, bool aFromHttp, const OriginAttributes &aOriginAttrs, nsIChannel* aChannel);
     bool                          SetCookieInternal(nsIURI *aHostURI, const nsCookieKey& aKey, bool aRequireHostMatch, CookieStatus aStatus, nsDependentCString &aCookieHeader, int64_t aServerTime, bool aFromHttp, nsIChannel* aChannel);
     void                          AddInternal(const nsCookieKey& aKey, nsCookie *aCookie, int64_t aCurrentTimeInUsec, nsIURI *aHostURI, const char *aCookieHeader, bool aFromHttp);
     void                          RemoveCookieFromList(const nsListIter &aIter, mozIStorageBindingParamsArray *aParamsArray = nullptr);
     void                          AddCookieToList(const nsCookieKey& aKey, nsCookie *aCookie, DBState *aDBState, mozIStorageBindingParamsArray *aParamsArray, bool aWriteToDB = true);
     void                          UpdateCookieInList(nsCookie *aCookie, int64_t aLastAccessed, mozIStorageBindingParamsArray *aParamsArray);
-    static bool                   GetTokenValue(nsASingleFragmentCString::const_char_iterator &aIter, nsASingleFragmentCString::const_char_iterator &aEndIter, nsDependentCSubstring &aTokenString, nsDependentCSubstring &aTokenValue, bool &aEqualsFound);
+    static bool                   GetTokenValue(nsACString::const_char_iterator &aIter, nsACString::const_char_iterator &aEndIter, nsDependentCSubstring &aTokenString, nsDependentCSubstring &aTokenValue, bool &aEqualsFound);
     static bool                   ParseAttributes(nsDependentCString &aCookieHeader, nsCookieAttributes &aCookie);
     bool                          RequireThirdPartyCheck();
-    CookieStatus                  CheckPrefs(nsIURI *aHostURI, bool aIsForeign, bool aRequireHostMatch, const char *aCookieHeader);
+    CookieStatus                  CheckPrefs(nsIURI *aHostURI, bool aIsForeign, const char *aCookieHeader);
     bool                          CheckDomain(nsCookieAttributes &aCookie, nsIURI *aHostURI, const nsCString &aBaseDomain, bool aRequireHostMatch);
     static bool                   CheckPath(nsCookieAttributes &aCookie, nsIURI *aHostURI);
     static bool                   CheckPrefixes(nsCookieAttributes &aCookie, bool aSecureRequest);
     static bool                   GetExpiry(nsCookieAttributes &aCookie, int64_t aServerTime, int64_t aCurrentTime);
     void                          RemoveAllFromMemory();
     already_AddRefed<nsIArray>    PurgeCookies(int64_t aCurrentTimeInUsec);
-    bool                          FindCookie(const nsCookieKey& aKey, const nsAFlatCString &aHost, const nsAFlatCString &aName, const nsAFlatCString &aPath, nsListIter &aIter);
-    void                          FindStaleCookie(nsCookieEntry *aEntry, int64_t aCurrentTime, nsIURI* aSource, nsListIter &aIter);
+    bool                          FindCookie(const nsCookieKey& aKey, const nsCString& aHost, const nsCString& aName, const nsCString& aPath, nsListIter &aIter);
+    bool                          FindSecureCookie(const nsCookieKey& aKey, nsCookie* aCookie);
+    int64_t                       FindStaleCookie(nsCookieEntry *aEntry, int64_t aCurrentTime, nsIURI* aSource, const mozilla::Maybe<bool> &aIsSecure, nsListIter &aIter);
+    void                          TelemetryForEvictingStaleCookie(nsCookie* aEvicted, int64_t oldestCookieTime);
     void                          NotifyRejected(nsIURI *aHostURI);
     void                          NotifyThirdParty(nsIURI *aHostURI, bool aAccepted, nsIChannel *aChannel);
-    void                          NotifyChanged(nsISupports *aSubject, const char16_t *aData);
+    void                          NotifyChanged(nsISupports *aSubject, const char16_t *aData, bool aOldCookieIsSession = false);
     void                          NotifyPurged(nsICookie2* aCookie);
     already_AddRefed<nsIArray>    CreatePurgeList(nsICookie2* aCookie);
     void                          UpdateCookieOldestTime(DBState* aDBState, nsCookie* aCookie);
 
-    nsresult                      GetCookiesWithOriginAttributes(const mozilla::OriginAttributesPattern& aPattern, nsISimpleEnumerator **aEnumerator);
-    nsresult                      RemoveCookiesWithOriginAttributes(const mozilla::OriginAttributesPattern& aPattern);
+    nsresult                      GetCookiesWithOriginAttributes(const mozilla::OriginAttributesPattern& aPattern, const nsCString& aBaseDomain, nsISimpleEnumerator **aEnumerator);
+    nsresult                      RemoveCookiesWithOriginAttributes(const mozilla::OriginAttributesPattern& aPattern, const nsCString& aBaseDomain);
 
     /**
      * This method is a helper that allows calling nsICookieManager::Remove()
-     * with NeckoOriginAttributes parameter.
+     * with OriginAttributes parameter.
      * NOTE: this could be added to a public interface if we happen to need it.
      */
-    nsresult Remove(const nsACString& aHost, const NeckoOriginAttributes& aAttrs,
+    nsresult Remove(const nsACString& aHost, const OriginAttributes& aAttrs,
                     const nsACString& aName, const nsACString& aPath,
                     bool aBlocked);
 
@@ -352,6 +355,7 @@ class nsCookieService final : public nsICookieService
     // cached prefs
     uint8_t                       mCookieBehavior; // BEHAVIOR_{ACCEPT, REJECTFOREIGN, REJECT, LIMITFOREIGN}
     bool                          mThirdPartySession;
+    bool                          mLeaveSecureAlone;
     uint16_t                      mMaxNumberOfCookies;
     uint16_t                      mMaxCookiesPerHost;
     int64_t                       mCookiePurgeAge;

@@ -47,8 +47,19 @@ class TooltoolMixin(object):
     def tooltool_fetch(self, manifest,
                        output_dir=None, privileged=False, cache=None):
         """docstring for tooltool_fetch"""
-
-        if self.config.get("download_tooltool"):
+        for d in (output_dir, cache):
+            if d is not None and not os.path.exists(d):
+                self.mkdir_p(d)
+        # Use vendored tooltool.py if available.
+        if self.topsrcdir:
+            cmd = [
+                sys.executable, '-u',
+                os.path.join(self.topsrcdir, 'mach'),
+                'artifact',
+                'toolchain',
+                '-v',
+            ]
+        elif self.config.get("download_tooltool"):
             cmd = [sys.executable, self._fetch_tooltool_py()]
         else:
             cmd = self.query_exe('tooltool.py', return_type='list')
@@ -66,18 +77,26 @@ class TooltoolMixin(object):
         proxxy_urls = proxxy.get_proxies_and_urls(default_urls)
 
         for proxyied_url in proxxy_urls:
-            cmd.extend(['--url', proxyied_url])
+            cmd.extend(['--tooltool-url' if self.topsrcdir else '--url', proxyied_url])
 
         # handle authentication file, if given
         auth_file = self._get_auth_file()
         if auth_file and os.path.exists(auth_file):
             cmd.extend(['--authentication-file', auth_file])
 
-        cmd.extend(['fetch', '-m', manifest, '-o'])
+        if self.topsrcdir:
+            cmd.extend(['--tooltool-manifest', manifest])
+            cmd.extend(['--artifact-manifest',
+                        os.path.join(self.topsrcdir, 'toolchains.json')])
+        else:
+            cmd.extend(['fetch', '-m', manifest, '-o'])
 
         if cache:
-            cmd.extend(['-c', cache])
+            cmd.extend(['--cache-dir' if self.topsrcdir else '-c', cache])
 
+        toolchains = os.environ.get('MOZ_TOOLCHAINS')
+        if toolchains:
+            cmd.extend(toolchains.split())
         # when mock is enabled run tooltool in mock. We can't use
         # run_command_m in all cases because it won't exist unless
         # MockMixin is used on the parent class

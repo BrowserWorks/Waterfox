@@ -26,7 +26,7 @@ define(function (require, exports, module) {
    *      <li class='tabs-menu-item'>Tab #2</li>
    *    </ul>
    *  </nav>
-   *  <div class='tab-panel'>
+   *  <div class='panels'>
    *    The content of active panel here
    *  </div>
    * <div>
@@ -47,12 +47,21 @@ define(function (require, exports, module) {
       children: React.PropTypes.oneOfType([
         React.PropTypes.array,
         React.PropTypes.element
-      ]).isRequired
+      ]).isRequired,
+      showAllTabsMenu: React.PropTypes.bool,
+      onAllTabsMenuClick: React.PropTypes.func,
+
+      // Set true will only render selected panel on DOM. It's complete
+      // opposite of the created array, and it's useful if panels content
+      // is unpredictable and update frequently.
+      renderOnlySelected: React.PropTypes.bool,
     },
 
     getDefaultProps: function () {
       return {
-        tabActive: 0
+        tabActive: 0,
+        showAllTabsMenu: false,
+        renderOnlySelected: false,
       };
     },
 
@@ -69,12 +78,24 @@ define(function (require, exports, module) {
         // E.g. in case of an iframe being used as a tab-content
         // we want the iframe to stay in the DOM.
         created: [],
+
+        // True if tabs can't fit into available horizontal space.
+        overflow: false,
       };
     },
 
     componentDidMount: function () {
       let node = findDOMNode(this);
-      node.addEventListener("keydown", this.onKeyDown, false);
+      node.addEventListener("keydown", this.onKeyDown);
+
+      // Register overflow listeners to manage visibility
+      // of all-tabs-menu. This menu is displayed when there
+      // is not enough h-space to render all tabs.
+      // It allows the user to select a tab even if it's hidden.
+      if (this.props.showAllTabsMenu) {
+        node.addEventListener("overflow", this.onOverflow);
+        node.addEventListener("underflow", this.onUnderflow);
+      }
 
       let index = this.state.tabActive;
       if (this.props.onMount) {
@@ -82,24 +103,55 @@ define(function (require, exports, module) {
       }
     },
 
-    componentWillReceiveProps: function (newProps) {
-      if (newProps.tabActive) {
-        let created = [...this.state.created];
-        created[newProps.tabActive] = true;
+    componentWillReceiveProps: function (nextProps) {
+      let { children, tabActive } = nextProps;
 
-        this.setState(Object.assign({}, this.state, {
-          tabActive: newProps.tabActive,
-          created: created,
-        }));
+      // Check type of 'tabActive' props to see if it's valid
+      // (it's 0-based index).
+      if (typeof tabActive === "number") {
+        let panels = children.filter((panel) => panel);
+
+        // Reset to index 0 if index overflows the range of panel array
+        tabActive = (tabActive < panels.length && tabActive >= 0) ?
+          tabActive : 0;
+
+        let created = [...this.state.created];
+        created[tabActive] = true;
+
+        this.setState({
+          created,
+          tabActive,
+        });
       }
     },
 
     componentWillUnmount: function () {
       let node = findDOMNode(this);
-      node.removeEventListener("keydown", this.onKeyDown, false);
+      node.removeEventListener("keydown", this.onKeyDown);
+
+      if (this.props.showAllTabsMenu) {
+        node.removeEventListener("overflow", this.onOverflow);
+        node.removeEventListener("underflow", this.onUnderflow);
+      }
     },
 
     // DOM Events
+
+    onOverflow: function (event) {
+      if (event.target.classList.contains("tabs-menu")) {
+        this.setState({
+          overflow: true
+        });
+      }
+    },
+
+    onUnderflow: function (event) {
+      if (event.target.classList.contains("tabs-menu")) {
+        this.setState({
+          overflow: false
+        });
+      }
+    },
 
     onKeyDown: function (event) {
       // Bail out if the focus isn't on a tab.
@@ -126,7 +178,10 @@ define(function (require, exports, module) {
 
     onClickTab: function (index, event) {
       this.setActive(index);
-      event.preventDefault();
+
+      if (event) {
+        event.preventDefault();
+      }
     },
 
     // API
@@ -176,19 +231,24 @@ define(function (require, exports, module) {
       }
 
       let tabs = this.props.children
-        .map(tab => {
-          return typeof tab === "function" ? tab() : tab;
-        }).filter(tab => {
-          return tab;
-        }).map((tab, index) => {
-          let ref = ("tab-menu-" + index);
-          let title = tab.props.title;
-          let tabClassName = tab.props.className;
+        .map((tab) => typeof tab === "function" ? tab() : tab)
+        .filter((tab) => tab)
+        .map((tab, index) => {
+          let {
+            id,
+            className: tabClassName,
+            title,
+            badge,
+            showBadge,
+          } = tab.props;
 
-          let classes = [
+          let ref = "tab-menu-" + index;
+          let isTabSelected = this.state.tabActive === index;
+
+          let className = [
             "tabs-menu-item",
             tabClassName,
-            this.state.tabActive === index ? "is-active" : ""
+            isTabSelected ? "is-active" : "",
           ].join(" ");
 
           // Set tabindex to -1 (except the selected tab) so, it's focusable,
@@ -198,45 +258,71 @@ define(function (require, exports, module) {
           // See also `onKeyDown()` event handler.
           return (
             DOM.li({
-              ref: ref,
+              className,
               key: index,
-              className: classes},
+              ref,
+              role: "presentation",
+            },
               DOM.a({
-                tabIndex: this.state.tabActive === index ? 0 : -1,
-                onClick: this.onClickTab.bind(this, index)},
-                title
+                id: id ? id + "-tab" : "tab-" + index,
+                tabIndex: isTabSelected ? 0 : -1,
+                "aria-controls": id ? id + "-panel" : "panel-" + index,
+                "aria-selected": isTabSelected,
+                role: "tab",
+                onClick: this.onClickTab.bind(this, index),
+              },
+                title,
+                badge && !isTabSelected && showBadge() ?
+                  DOM.span({ className: "tab-badge" }, badge)
+                  :
+                  null
               )
             )
           );
         });
 
+      // Display the menu only if there is not enough horizontal
+      // space for all tabs (and overflow happened).
+      let allTabsMenu = this.state.overflow ? (
+        DOM.div({
+          className: "all-tabs-menu",
+          onClick: this.props.onAllTabsMenuClick,
+        })
+      ) : null;
+
       return (
         DOM.nav({className: "tabs-navigation"},
-          DOM.ul({className: "tabs-menu"},
+          DOM.ul({className: "tabs-menu", role: "tablist"},
             tabs
-          )
+          ),
+          allTabsMenu
         )
       );
     },
 
     renderPanels: function () {
-      if (!this.props.children) {
+      let { children, renderOnlySelected } = this.props;
+
+      if (!children) {
         throw new Error("There must be at least one Tab");
       }
 
-      if (!Array.isArray(this.props.children)) {
-        this.props.children = [this.props.children];
+      if (!Array.isArray(children)) {
+        children = [children];
       }
 
       let selectedIndex = this.state.tabActive;
 
-      let panels = this.props.children
-        .map(tab => {
-          return typeof tab === "function" ? tab() : tab;
-        }).filter(tab => {
-          return tab;
-        }).map((tab, index) => {
-          let selected = selectedIndex == index;
+      let panels = children
+        .map((tab) => typeof tab === "function" ? tab() : tab)
+        .filter((tab) => tab)
+        .map((tab, index) => {
+          let selected = selectedIndex === index;
+          if (renderOnlySelected && !selected) {
+            return null;
+          }
+
+          let id = tab.props.id;
 
           // Use 'visibility:hidden' + 'width/height:0' for hiding
           // content of non-selected tab. It's faster (not sure why)
@@ -249,9 +335,13 @@ define(function (require, exports, module) {
 
           return (
             DOM.div({
+              id: id ? id + "-panel" : "panel-" + index,
               key: index,
               style: style,
-              className: "tab-panel-box"},
+              className: selected ? "tab-panel-box" : "tab-panel-box hidden",
+              role: "tabpanel",
+              "aria-labelledby": id ? id + "-tab" : "tab-" + index,
+            },
               (selected || this.state.created[index]) ? tab : null
             )
           );
@@ -265,10 +355,8 @@ define(function (require, exports, module) {
     },
 
     render: function () {
-      let classNames = ["tabs", this.props.className].join(" ");
-
       return (
-        DOM.div({className: classNames},
+        DOM.div({ className: ["tabs", this.props.className].join(" ") },
           this.renderMenuItems(),
           this.renderPanels()
         )

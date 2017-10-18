@@ -32,11 +32,11 @@ MediaStreamPlayback.prototype = {
    * @param {Boolean} isResume specifies if this media element is being resumed
    *                           from a previous run
    */
-  playMediaWithMediaStreamTracksStop : function(isResume) {
+  playMedia : function(isResume) {
     this.startMedia(isResume);
     return this.verifyPlaying()
       .then(() => this.stopTracksForStreamInMediaPlayback())
-      .then(() => this.stopMediaElement());
+      .then(() => this.detachFromMediaElement());
   },
 
   /**
@@ -48,47 +48,23 @@ MediaStreamPlayback.prototype = {
    */
   stopTracksForStreamInMediaPlayback : function () {
     var elem = this.mediaElement;
-    var waitForEnded = () => new Promise(resolve => {
-      elem.addEventListener('ended', function ended() {
-        elem.removeEventListener('ended', ended);
-        resolve();
-      });
-    });
-
-    var noTrackEnded = Promise.all(this.mediaStream.getTracks().map(t => {
-      let onNextLoop = wait(0);
-      let p = Promise.race([
-        onNextLoop,
-        haveEvent(t, "ended", onNextLoop)
-          .then(() => Promise.reject("Unexpected ended event for track " + t.id),
-                () => Promise.resolve())
-      ]);
-      t.stop();
-      return p;
-    }));
-
-    // XXX (bug 1208316) When we implement MediaStream.active, do not stop
-    // the stream. We just do it now so the media element will raise 'ended'.
-    if (!this.mediaStream.stop) {
-      return;
-    }
-    this.mediaStream.stop();
-    return timeout(waitForEnded(), ENDED_TIMEOUT_LENGTH, "ended event never fired")
-             .then(() => ok(true, "ended event successfully fired"))
-             .then(() => noTrackEnded);
+    return Promise.all([
+      haveEvent(elem, "ended", wait(ENDED_TIMEOUT_LENGTH, new Error("Timeout"))),
+      ...this.mediaStream.getTracks().map(t => (t.stop(), haveNoEvent(t, "ended")))
+    ]);
   },
 
   /**
    * Starts media with a media stream, runs it until a canplaythrough and
-   * timeupdate event fires, and stops the media.
+   * timeupdate event fires, and detaches from the element without stopping media.
    *
    * @param {Boolean} isResume specifies if this media element is being resumed
    *                           from a previous run
    */
-  playMedia : function(isResume) {
+  playMediaWithoutStoppingTracks : function(isResume) {
     this.startMedia(isResume);
     return this.verifyPlaying()
-      .then(() => this.stopMediaElement());
+      .then(() => this.detachFromMediaElement());
   },
 
   /**
@@ -156,12 +132,12 @@ MediaStreamPlayback.prototype = {
   },
 
   /**
-   * Stops the media with the associated stream.
+   * Detaches from the element without stopping the media.
    *
    * Precondition: The media stream and element should both be actively
    *               being played.
    */
-  stopMediaElement : function() {
+  detachFromMediaElement : function() {
     this.mediaElement.pause();
     this.mediaElement.srcObject = null;
   }
@@ -198,7 +174,7 @@ LocalMediaStreamPlayback.prototype = Object.create(MediaStreamPlayback.prototype
       this.startMedia(isResume);
       return this.verifyPlaying()
         .then(() => this.deprecatedStopStreamInMediaPlayback())
-        .then(() => this.stopMediaElement());
+        .then(() => this.detachFromMediaElement());
     }
   },
 
@@ -220,12 +196,12 @@ LocalMediaStreamPlayback.prototype = Object.create(MediaStreamPlayback.prototype
          * stream.
          */
         var endedCallback = () => {
-          this.mediaElement.removeEventListener('ended', endedCallback, false);
+          this.mediaElement.removeEventListener('ended', endedCallback);
           ok(true, "ended event successfully fired");
           resolve();
         };
 
-        this.mediaElement.addEventListener('ended', endedCallback, false);
+        this.mediaElement.addEventListener('ended', endedCallback);
         this.mediaStream.stop();
 
         // If ended doesn't fire in enough time, then we fail the test
@@ -254,6 +230,23 @@ function createHTML(options) {
   return scriptsReady.then(() => realCreateHTML(options));
 }
 
+var pushPrefs = (...p) => SpecialPowers.pushPrefEnv({set: p});
+
+// noGum - Helper to detect whether active guM tracks still exist.
+//
+// It relies on the fact that, by spec, device labels from enumerateDevices are
+// only visible during active gum calls. They're also visible when persistent
+// permissions are granted, so turn off media.navigator.permission.disabled
+// (which is normally on otherwise in our tests). Lastly, we must turn on
+// media.navigator.permission.fake otherwise fake devices don't count as active.
+
+var noGum = () => pushPrefs(["media.navigator.permission.disabled", false],
+                            ["media.navigator.permission.fake", true])
+  .then(() => navigator.mediaDevices.enumerateDevices())
+  .then(([device]) => device &&
+      is(device.label, "", "Test must leave no active gUM streams behind."));
+
 var runTest = testFunction => scriptsReady
   .then(() => runTestWhenReady(testFunction))
+  .then(() => noGum())
   .then(() => finish());

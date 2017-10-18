@@ -23,9 +23,9 @@
     var Cc = Components.classes;
     var Ci = Components.interfaces;
     var Cr = Components.results;
+    var Cu = Components.utils;
 
     Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-    Components.utils.import("resource://gre/modules/Task.jsm");
     Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
     XPCOMUtils.defineLazyModuleGetter(window,
       "PlacesUIUtils", "resource:///modules/PlacesUIUtils.jsm");
@@ -42,7 +42,7 @@
            onpopupshowing="return window.top.BookmarksEventHandler.fillInBHTooltip(document, event)">
     <vbox id="bhTooltipTextBox" flex="1">
       <label id="bhtTitleText" class="tooltip-label" />
-      <label id="bhtUrlText" crop="center" class="tooltip-label" />
+      <label id="bhtUrlText" crop="center" class="tooltip-label uri-element" />
     </vbox>
   </tooltip>
 
@@ -65,7 +65,7 @@
              oncommand="goDoPlacesCommand('placesCmd_new:folder');"/>
     <command id="placesCmd_new:separator"
              oncommand="goDoPlacesCommand('placesCmd_new:separator');"/>
-    <command id="placesCmd_show:info" 
+    <command id="placesCmd_show:info"
              oncommand="goDoPlacesCommand('placesCmd_show:info');"/>
     <command id="placesCmd_rename"
              oncommand="goDoPlacesCommand('placesCmd_show:info');"
@@ -161,14 +161,12 @@
     <menuseparator id="placesContext_newSeparator"/>
     <menuitem id="placesContext_createBookmark"
               command="placesCmd_createBookmark"
-              label="&cmd.bookmarkLink.label;"
-              accesskey="&cmd.bookmarkLink.accesskey;"
               selection="link"
               forcehideselection="bookmark|tagChild"/>
     <menuitem id="placesContext_cut"
               command="placesCmd_cut"
               label="&cutCmd.label;"
-              accesskey="&cutCmd.accesskey;" 
+              accesskey="&cutCmd.accesskey;"
               closemenu="single"
               selection="bookmark|folder|separator|query"
               forcehideselection="tagChild|livemarkChild"/>
@@ -194,8 +192,6 @@
               selection="bookmark|tagChild|folder|query|dynamiccontainer|separator|host"/>
     <menuitem id="placesContext_delete_history"
               command="placesCmd_delete"
-              label="&cmd.delete.label;"
-              accesskey="&cmd.delete.accesskey;"
               closemenu="single"
               selection="link"
               forcehideselection="bookmark"/>
@@ -224,7 +220,7 @@
     <menuseparator id="placesContext_sortSeparator"/>
     <menuitem id="placesContext_show:info"
               command="placesCmd_show:info"
-              label="&cmd.properties.label;" 
+              label="&cmd.properties.label;"
               accesskey="&cmd.properties.accesskey;"
               selection="bookmark|folder|query"
               forcehideselection="livemarkChild"/>

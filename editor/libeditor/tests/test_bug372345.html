@@ -13,7 +13,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=372345
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=372345">Mozilla Bug 372345</a>
 <p id="display"></p>
 <div id="content">
-  <iframe src="data:text/html,<body>"></iframe>
+  <iframe srcdoc="<body>"></iframe>
 </div>
 <pre id="test">
 <script type="application/javascript">
@@ -32,7 +32,7 @@ addLoadEvent(function() {
       link.textContent = "link";
       link.style.cursor = "pointer";
       content.appendChild(link);
-      is(iframe.contentWindow.getComputedStyle(link, null).cursor, "pointer", "Make sure that the cursor is set to pointer");
+      is(iframe.contentWindow.getComputedStyle(link).cursor, "pointer", "Make sure that the cursor is set to pointer");
       setTimeout(post, 0);
     }, 0);
   }

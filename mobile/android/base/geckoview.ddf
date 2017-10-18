@@ -13,7 +13,6 @@ show allResults
   org.mozilla.gecko.util.* \
   org.mozilla.gecko.AndroidGamepadManager \
   org.mozilla.gecko.AppConstants \
-  org.mozilla.gecko.BaseGeckoInterface \
   org.mozilla.gecko.ContextGetter \
   org.mozilla.gecko.CrashHandler \
   org.mozilla.gecko.EventDispatcher \
@@ -38,7 +37,6 @@ show allResults
   org.mozilla.gecko.NotificationClient \
   org.mozilla.gecko.NotificationHandler \
   org.mozilla.gecko.PrefsHelper \
-  org.mozilla.gecko.SmsManager \
   org.mozilla.gecko.SysInfo \
   org.mozilla.gecko.TouchEventInterceptor \
   org.mozilla.gecko.ZoomConstraints
@@ -59,8 +57,7 @@ show allResults
   org.mozilla.gecko.db.BrowserDB \
   org.mozilla.gecko.db.LocalBrowserDB \
   org.mozilla.gecko.distribution.Distribution \
-  org.mozilla.gecko.favicons.Favicons \
-  org.mozilla.gecko.favicons.OnFaviconLoadedListener
+  org.mozilla.gecko.icons.*
 
 [main] = org.mozilla.gecko.* excluding [lib] [middle]
 

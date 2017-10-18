@@ -3,9 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { on, once, off, emit } = require("sdk/event/core");
-const { Class } = require("sdk/core/heritage");
-
 const WebGLPrimitivesType = {
   "POINTS": 0,
   "LINES": 1,
@@ -23,31 +20,30 @@ const WebGLPrimitivesType = {
 const WebGLDrawArrays = "drawArrays";
 const WebGLDrawElements = "drawElements";
 
-var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
-  initialize: function (tabActor) {
-    this.tabActor = tabActor;
-  },
+exports.WebGLPrimitiveCounter = class WebGLPrimitiveCounter {
 
-  destroy: function () {
-    this.stopRecording();
-  },
+  constructor(tabActor) {
+    this.tabActor = tabActor;
+  }
+
+  destroy() {}
 
   /**
    * Starts monitoring primitive draws, storing the primitives count per tick.
    */
-  resetCounts: function () {
+  resetCounts() {
     this._tris = 0;
     this._vertices = 0;
     this._points = 0;
     this._lines = 0;
     this._startTime = this.tabActor.docShell.now();
-  },
+  }
 
   /**
    * Stops monitoring primitive draws, returning the recorded values.
    */
-  getCounts: function () {
-    var result = {
+  getCounts() {
+    let result = {
       tris: this._tris,
       vertices: this._vertices,
       points: this._points,
@@ -59,12 +55,12 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
     this._points = 0;
     this._lines = 0;
     return result;
-  },
+  }
 
   /**
    * Handles WebGL draw primitive functions to catch primitive info.
    */
-  handleDrawPrimitive: function (functionCall) {
+  handleDrawPrimitive(functionCall) {
     let { name, args } = functionCall.details;
 
     if (name === WebGLDrawArrays) {
@@ -72,12 +68,12 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
     } else if (name === WebGLDrawElements) {
       this._processDrawElements(args);
     }
-  },
+  }
 
   /**
    * Processes WebGL drawArrays method to count primitve numbers
    */
-  _processDrawArrays: function (args) {
+  _processDrawArrays(args) {
     let mode = args[0];
     let count = args[2];
 
@@ -114,12 +110,12 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
         console.error("_processDrawArrays doesn't define this type.");
         break;
     }
-  },
+  }
 
   /**
    * Processes WebGL drawElements method to count primitve numbers
    */
-  _processDrawElements: function (args) {
+  _processDrawElements(args) {
     let mode = args[0];
     let count = args[1];
 
@@ -157,9 +153,10 @@ var WebGLPrimitiveCounter = exports.WebGLPrimitiveCounter = Class({
       case WebGLPrimitivesType.TRIANGLE_FAN:
         this._tris += (count - 2);
         this._vertices += count;
+        break;
       default:
         console.error("_processDrawElements doesn't define this type.");
         break;
     }
   }
-});
+};

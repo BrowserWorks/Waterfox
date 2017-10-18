@@ -16,6 +16,7 @@
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
 #include "nsIAtom.h"
+#include "nsCycleCollectionParticipant.h"
 #include "nsIContentSerializer.h"
 #include "nsIDocumentEncoder.h"
 #include "nsILineBreaker.h"
@@ -37,12 +38,16 @@ class nsPlainTextSerializer final : public nsIContentSerializer
 public:
   nsPlainTextSerializer();
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_CLASS(nsPlainTextSerializer)
 
   // nsIContentSerializer
-  NS_IMETHOD Init(uint32_t flags, uint32_t aWrapColumn,
-                  const char* aCharSet, bool aIsCopying,
-                  bool aIsWholeDocument) override;
+  NS_IMETHOD Init(uint32_t flags,
+                  uint32_t aWrapColumn,
+                  const mozilla::Encoding* aEncoding,
+                  bool aIsCopying,
+                  bool aIsWholeDocument,
+                  bool* aNeedsPreformatScanning) override;
 
   NS_IMETHOD AppendText(nsIContent* aText, int32_t aStartOffset,
                         int32_t aEndOffset, nsAString& aStr) override;
@@ -59,13 +64,16 @@ public:
                            nsAString& aStr) override  { return NS_OK; }
   NS_IMETHOD AppendElementStart(mozilla::dom::Element* aElement,
                                 mozilla::dom::Element* aOriginalElement,
-                                nsAString& aStr) override; 
+                                nsAString& aStr) override;
   NS_IMETHOD AppendElementEnd(mozilla::dom::Element* aElement,
                               nsAString& aStr) override;
   NS_IMETHOD Flush(nsAString& aStr) override;
 
   NS_IMETHOD AppendDocumentStart(nsIDocument *aDocument,
                                  nsAString& aStr) override;
+
+  NS_IMETHOD ScanElementForPreformat(mozilla::dom::Element* aElement) override;
+  NS_IMETHOD ForgetElementForPreformat(mozilla::dom::Element* aElement) override;
 
 private:
   ~nsPlainTextSerializer();
@@ -110,6 +118,11 @@ private:
     return mHeadLevel == 0;
   }
 
+  inline bool IsQuotedLine(const nsAString& aLine)
+  {
+    return !aLine.IsEmpty() && aLine.First() == char16_t('>');
+  }
+
   // Stack handling functions
   bool GetLastBool(const nsTArray<bool>& aStack);
   void SetLastBool(nsTArray<bool>& aStack, bool aValue);
@@ -147,8 +160,8 @@ private:
   // are wider than latin chars of more if the chars are more narrow.
   uint32_t         mWrapColumn;
 
-  // The width of the line as it will appear on the screen (approx.) 
-  uint32_t         mCurrentLineWidth; 
+  // The width of the line as it will appear on the screen (approx.)
+  uint32_t         mCurrentLineWidth;
 
   // Treat quoted text as though it's preformatted -- don't wrap it.
   // Having it on a pref is a temporary measure, See bug 69638.
@@ -190,7 +203,7 @@ private:
 
   // For handling table rows
   AutoTArray<bool, 8> mHasWrittenCellsForRow;
-  
+
   // Values gotten in OpenContainer that is (also) needed in CloseContainer
   AutoTArray<bool, 8> mIsInCiteBlockquote;
 

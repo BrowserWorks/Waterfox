@@ -8,6 +8,8 @@ installer:
 	@$(MAKE) -C mobile/android/installer installer
 
 package:
+	# Setting MOZ_GECKOVIEW_JAR makes the installer generate a separate GeckoView JAR
+	@$(MAKE) MOZ_GECKOVIEW_JAR=1 -C mobile/android/installer stage-package
 	@$(MAKE) -C mobile/android/installer
 
 ifeq ($(OS_TARGET),Android)
@@ -53,7 +55,7 @@ ifdef ENABLE_TESTS
 # Implemented in testing/testsuite-targets.mk
 
 mochitest-browser-chrome:
-	$(RUN_MOCHITEST) --browser-chrome
+	$(RUN_MOCHITEST) --flavor=browser
 	$(CHECK_TEST_ERROR)
 
 mochitest:: mochitest-browser-chrome

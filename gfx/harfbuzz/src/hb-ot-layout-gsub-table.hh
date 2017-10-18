@@ -41,7 +41,10 @@ struct SingleSubstFormat1
   {
     TRACE_CLOSURE (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      /* TODO Switch to range-based API to work around malicious fonts.
+       * https://github.com/behdad/harfbuzz/issues/363 */
       hb_codepoint_t glyph_id = iter.get_glyph ();
       if (c->glyphs->has (glyph_id))
 	c->glyphs->add ((glyph_id + deltaGlyphID) & 0xFFFFu);
@@ -52,7 +55,10 @@ struct SingleSubstFormat1
   {
     TRACE_COLLECT_GLYPHS (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      /* TODO Switch to range-based API to work around malicious fonts.
+       * https://github.com/behdad/harfbuzz/issues/363 */
       hb_codepoint_t glyph_id = iter.get_glyph ();
       c->input->add (glyph_id);
       c->output->add ((glyph_id + deltaGlyphID) & 0xFFFFu);
@@ -120,7 +126,11 @@ struct SingleSubstFormat2
   {
     TRACE_CLOSURE (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = substitute.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       if (c->glyphs->has (iter.get_glyph ()))
 	c->glyphs->add (substitute[iter.get_coverage ()]);
     }
@@ -130,7 +140,11 @@ struct SingleSubstFormat2
   {
     TRACE_COLLECT_GLYPHS (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = substitute.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       c->input->add (iter.get_glyph ());
       c->output->add (substitute[iter.get_coverage ()]);
     }
@@ -265,21 +279,18 @@ struct Sequence
     TRACE_APPLY (this);
     unsigned int count = substitute.len;
 
-    /* TODO:
-     * Testing shows that Uniscribe actually allows zero-len susbstitute,
-     * which essentially deletes a glyph.  We don't allow for now.  It
-     * can be confusing to the client since the cluster from the deleted
-     * glyph won't be merged with any output cluster...  Also, currently
-     * buffer->move_to() makes assumptions about this too.  Perhaps fix
-     * in the future after figuring out what to do with the clusters.
-     */
-    if (unlikely (!count)) return_trace (false);
-
     /* Special-case to make it in-place and not consider this
      * as a "multiplied" substitution. */
     if (unlikely (count == 1))
     {
       c->replace_glyph (substitute.array[0]);
+      return_trace (true);
+    }
+    /* Spec disallows this, but Uniscribe allows it.
+     * https://github.com/behdad/harfbuzz/issues/253 */
+    else if (unlikely (count == 0))
+    {
+      c->buffer->delete_glyph ();
       return_trace (true);
     }
 
@@ -324,7 +335,11 @@ struct MultipleSubstFormat1
   {
     TRACE_CLOSURE (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = sequence.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       if (c->glyphs->has (iter.get_glyph ()))
 	(this+sequence[iter.get_coverage ()]).closure (c);
     }
@@ -442,7 +457,11 @@ struct AlternateSubstFormat1
   {
     TRACE_CLOSURE (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = alternateSet.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       if (c->glyphs->has (iter.get_glyph ())) {
 	const AlternateSet &alt_set = this+alternateSet[iter.get_coverage ()];
 	unsigned int count = alt_set.len;
@@ -456,7 +475,11 @@ struct AlternateSubstFormat1
   {
     TRACE_COLLECT_GLYPHS (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = alternateSet.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       c->input->add (iter.get_glyph ());
       const AlternateSet &alt_set = this+alternateSet[iter.get_coverage ()];
       unsigned int count = alt_set.len;
@@ -765,7 +788,11 @@ struct LigatureSubstFormat1
   {
     TRACE_CLOSURE (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = ligatureSet.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       if (c->glyphs->has (iter.get_glyph ()))
 	(this+ligatureSet[iter.get_coverage ()]).closure (c);
     }
@@ -775,7 +802,11 @@ struct LigatureSubstFormat1
   {
     TRACE_COLLECT_GLYPHS (this);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    unsigned int count = ligatureSet.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       c->input->add (iter.get_glyph ());
       (this+ligatureSet[iter.get_coverage ()]).collect_glyphs (c);
     }
@@ -926,7 +957,11 @@ struct ReverseChainSingleSubstFormat1
 
     const ArrayOf<GlyphID> &substitute = StructAfter<ArrayOf<GlyphID> > (lookahead);
     Coverage::Iter iter;
-    for (iter.init (this+coverage); iter.more (); iter.next ()) {
+    count = substitute.len;
+    for (iter.init (this+coverage); iter.more (); iter.next ())
+    {
+      if (unlikely (iter.get_coverage () >= count))
+        break; /* Work around malicious fonts. https://github.com/behdad/harfbuzz/issues/363 */
       if (c->glyphs->has (iter.get_glyph ()))
 	c->glyphs->add (substitute[iter.get_coverage ()]);
     }
@@ -1276,8 +1311,6 @@ struct GSUB : GSUBGPOS
     const OffsetTo<SubstLookupList> &list = CastR<OffsetTo<SubstLookupList> > (lookupList);
     return_trace (list.sanitize (c, this));
   }
-  public:
-  DEFINE_SIZE_STATIC (10);
 };
 
 
@@ -1288,28 +1321,10 @@ GSUB::substitute_start (hb_font_t *font, hb_buffer_t *buffer)
 
   const GDEF &gdef = *hb_ot_layout_from_face (font->face)->gdef;
   unsigned int count = buffer->len;
-  hb_glyph_info_t *info = buffer->info;
   for (unsigned int i = 0; i < count; i++)
   {
-    unsigned int props = gdef.get_glyph_props (info[i].codepoint);
-    if (!props)
-    {
-      /* Never mark default-ignorables as marks.
-       * They won't get in the way of lookups anyway,
-       * but having them as mark will cause them to be skipped
-       * over if the lookup-flag says so, but at least for the
-       * Mongolian variation selectors, looks like Uniscribe
-       * marks them as non-mark.  Some Mongolian fonts without
-       * GDEF rely on this.  Another notable character that
-       * this applies to is COMBINING GRAPHEME JOINER. */
-      props = (_hb_glyph_info_get_general_category (&info[i]) !=
-	       HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK ||
-	       _hb_glyph_info_is_default_ignorable (&info[i])) ?
-	      HB_OT_LAYOUT_GLYPH_PROPS_BASE_GLYPH :
-	      HB_OT_LAYOUT_GLYPH_PROPS_MARK;
-    }
-    _hb_glyph_info_set_glyph_props (&info[i], props);
-    _hb_glyph_info_clear_lig_props (&info[i]);
+    _hb_glyph_info_set_glyph_props (&buffer->info[i], gdef.get_glyph_props (buffer->info[i].codepoint));
+    _hb_glyph_info_clear_lig_props (&buffer->info[i]);
     buffer->info[i].syllable() = 0;
   }
 }

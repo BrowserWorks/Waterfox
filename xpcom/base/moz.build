@@ -43,27 +43,46 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 XPIDL_MODULE = 'xpcom_base'
 
 EXPORTS += [
+    '!ErrorList.h',
+    '!ErrorNamesInternal.h',
     'CodeAddressService.h',
-    'ErrorList.h',
     'nsAgg.h',
     'nsAlgorithm.h',
     'nsAutoPtr.h',
     'nsAutoRef.h',
     'nsCom.h',
+    'nsCOMPtr.h',
     'nscore.h',
+    'nsCRTGlue.h',
+    'nsCycleCollectionNoteChild.h',
+    'nsCycleCollectionNoteRootCallback.h',
+    'nsCycleCollectionParticipant.h',
+    'nsCycleCollectionTraversalCallback.h',
     'nsCycleCollector.h',
+    'nsDebug.h',
     'nsDebugImpl.h',
     'nsDumpUtils.h',
     'nsError.h',
     'nsGZFileWriter.h',
+    'nsIClassInfoImpl.h',
+    'nsID.h',
     'nsIID.h',
+    'nsIInterfaceRequestorUtils.h',
+    'nsINIParser.h',
     'nsInterfaceRequestorAgg.h',
     'nsISizeOf.h',
     'nsISupportsBase.h',
+    'nsISupportsImpl.h',
+    'nsISupportsUtils.h',
+    'nsIWeakReferenceUtils.h',
+    'nsMemory.h',
     'nsObjCExceptions.h',
     'nsQueryObject.h',
     'nsTraceRefcnt.h',
+    'nsTWeakRef.h',
+    'nsVersionComparator.h',
     'nsWeakPtr.h',
+    'nsWeakReference.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -72,20 +91,27 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 EXPORTS.mozilla += [
+    'AutoRestore.h',
     'AvailableMemoryTracker.h',
     'ClearOnShutdown.h',
     'CountingAllocatorBase.h',
+    'CycleCollectedJSContext.h',
     'CycleCollectedJSRuntime.h',
     'Debug.h',
     'DebuggerOnGCRunnable.h',
     'DeferredFinalize.h',
+    'EnumeratedArrayCycleCollection.h',
     'ErrorNames.h',
     'HoldDropJSObjects.h',
+    'IntentionalCrash.h',
     'JSObjectHolder.h',
     'LinuxUtils.h',
     'Logging.h',
+    'MemoryReportingProcess.h',
     'nsMemoryInfoDumper.h',
+    'NSPRLogModulesParser.h',
     'OwningNonNull.h',
+    'SizeOfState.h',
     'StaticMutex.h',
     'StaticPtr.h',
     'SystemMemoryReporter.h',
@@ -101,6 +127,7 @@ SOURCES['nsDebugImpl.cpp'].no_pgo = True
 UNIFIED_SOURCES += [
     'AvailableMemoryTracker.cpp',
     'ClearOnShutdown.cpp',
+    'CycleCollectedJSContext.cpp',
     'CycleCollectedJSRuntime.cpp',
     'Debug.cpp',
     'DebuggerOnGCRunnable.cpp',
@@ -110,14 +137,23 @@ UNIFIED_SOURCES += [
     'JSObjectHolder.cpp',
     'Logging.cpp',
     'LogModulePrefWatcher.cpp',
+    'nsClassInfoImpl.cpp',
+    'nsCOMPtr.cpp',
     'nsConsoleMessage.cpp',
     'nsConsoleService.cpp',
+    'nsCRTGlue.cpp',
+    'nsCycleCollectionParticipant.cpp',
     'nsCycleCollector.cpp',
     'nsCycleCollectorTraceJSHelpers.cpp',
     'nsDumpUtils.cpp',
     'nsErrorService.cpp',
     'nsGZFileWriter.cpp',
+    'nsID.cpp',
+    'nsIInterfaceRequestorUtils.cpp',
+    'nsINIParser.cpp',
     'nsInterfaceRequestorAgg.cpp',
+    'nsISupportsImpl.cpp',
+    'nsMemory.cpp',
     'nsMemoryImpl.cpp',
     'nsMemoryInfoDumper.cpp',
     'nsMemoryReporterManager.cpp',
@@ -128,8 +164,20 @@ UNIFIED_SOURCES += [
     'nsSystemInfo.cpp',
     'nsTraceRefcnt.cpp',
     'nsUUIDGenerator.cpp',
+    'nsVersionComparator.cpp',
     'nsVersionComparatorImpl.cpp',
+    'nsWeakReference.cpp',
 ]
+
+GENERATED_FILES += [
+    "error_list.rs",
+    "ErrorList.h",
+    "ErrorNamesInternal.h",
+]
+
+GENERATED_FILES["ErrorList.h"].script = "ErrorList.py:error_list_h"
+GENERATED_FILES["ErrorNamesInternal.h"].script = "ErrorList.py:error_names_internal_h"
+GENERATED_FILES["error_list.rs"].script = "ErrorList.py:error_list_rs"
 
 if CONFIG['OS_ARCH'] == 'Linux':
     SOURCES += [

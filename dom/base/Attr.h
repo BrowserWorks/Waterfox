@@ -44,7 +44,7 @@ public:
   // nsIDOMNode interface
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
   virtual void GetTextContentInternal(nsAString& aTextContent,
-                                      ErrorResult& aError) override;
+                                      OOMReporter& aError) override;
   virtual void SetTextContentInternal(const nsAString& aTextContent,
                                       ErrorResult& aError) override;
   virtual void GetNodeValueInternal(nsAString& aNodeValue) override;
@@ -54,7 +54,7 @@ public:
   // nsIDOMAttr interface
   NS_DECL_NSIDOMATTR
 
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(EventChainPreVisitor& aVisitor) override;
 
   // nsIAttribute interface
   void SetMap(nsDOMAttributeMap *aMap) override;
@@ -70,7 +70,8 @@ public:
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
                                  bool aNotify) override;
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
   virtual already_AddRefed<nsIURI> GetBaseURI(bool aTryUseXHRDocBaseURI = false) const override;
 
   static void Initialize();

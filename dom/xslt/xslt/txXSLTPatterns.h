@@ -26,8 +26,9 @@ public:
     /*
      * Determines whether this Pattern matches the given node.
      */
-    virtual bool matches(const txXPathNode& aNode,
-                          txIMatchContext* aContext) = 0;
+    virtual nsresult matches(const txXPathNode& aNode,
+                             txIMatchContext* aContext,
+                             bool& aMatched) = 0;
 
     /*
      * Returns the default priority of this Pattern.
@@ -86,7 +87,8 @@ public:
 };
 
 #define TX_DECL_PATTERN_BASE \
-    bool matches(const txXPathNode& aNode, txIMatchContext* aContext) override; \
+    nsresult matches(const txXPathNode& aNode, txIMatchContext* aContext, \
+                     bool& aMatched) override; \
     double getDefaultPriority() override; \
     virtual Expr* getSubExprAt(uint32_t aPos) override; \
     virtual void setSubExprAt(uint32_t aPos, Expr* aExpr) override; \
@@ -130,7 +132,7 @@ class txUnionPattern : public txPattern
 public:
     nsresult addPattern(txPattern* aPattern)
     {
-        return mLocPathPatterns.AppendElement(aPattern) ? 
+        return mLocPathPatterns.AppendElement(aPattern) ?
             NS_OK : NS_ERROR_OUT_OF_MEMORY;
     }
 
@@ -186,7 +188,7 @@ private:
 class txIdPattern : public txPattern
 {
 public:
-    explicit txIdPattern(const nsSubstring& aString);
+    explicit txIdPattern(const nsAString& aString);
 
     TX_DECL_PATTERN;
 

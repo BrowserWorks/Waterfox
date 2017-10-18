@@ -5,12 +5,12 @@
 "use strict";
 
 var { Cr } = require("chrome");
-var { TabActor } = require("devtools/server/actors/webbrowser");
+var { TabActor } = require("devtools/server/actors/tab");
 
 /**
  * Tab actor for documents living in a child process.
  *
- * Depends on TabActor, defined in webbrowser.js.
+ * Depends on TabActor, defined in tab.js.
  */
 
 /**
@@ -26,8 +26,7 @@ var { TabActor } = require("devtools/server/actors/webbrowser");
  *        the prefix used in protocol to create IDs for each actor.
  *        Used as ID identifying this particular TabActor from the parent process.
  */
-function ContentActor(connection, chromeGlobal, prefix)
-{
+function ContentActor(connection, chromeGlobal, prefix) {
   this._chromeGlobal = chromeGlobal;
   this._prefix = prefix;
   TabActor.call(this, connection, chromeGlobal);
@@ -80,3 +79,5 @@ ContentActor.prototype.exit = function () {
 ContentActor.prototype._sendForm = function () {
   this._chromeGlobal.sendAsyncMessage("debug:form", this.form());
 };
+
+exports.ContentActor = ContentActor;

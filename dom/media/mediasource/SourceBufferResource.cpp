@@ -11,6 +11,7 @@
 #include "nsISeekableStream.h"
 #include "nsISupports.h"
 #include "mozilla/Logging.h"
+#include "mozilla/TaskQueue.h"
 #include "MediaData.h"
 
 mozilla::LogModule* GetSourceBufferResourceLog()
@@ -19,56 +20,52 @@ mozilla::LogModule* GetSourceBufferResourceLog()
   return sLogModule;
 }
 
-#define SBR_DEBUG(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Debug, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define SBR_DEBUGV(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Verbose, ("SourceBufferResource(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define SBR_DEBUG(arg, ...)                                                    \
+  MOZ_LOG(                                                                     \
+    GetSourceBufferResourceLog(),                                              \
+    mozilla::LogLevel::Debug,                                                  \
+    ("SourceBufferResource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define SBR_DEBUGV(arg, ...)                                                   \
+  MOZ_LOG(                                                                     \
+    GetSourceBufferResourceLog(),                                              \
+    mozilla::LogLevel::Verbose,                                                \
+    ("SourceBufferResource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
 nsresult
 SourceBufferResource::Close()
 {
-  ReentrantMonitorAutoEnter mon(mMonitor);
+  MOZ_ASSERT(OnTaskQueue());
   SBR_DEBUG("Close");
-  //MOZ_ASSERT(!mClosed);
   mClosed = true;
-  mon.NotifyAll();
   return NS_OK;
 }
 
 nsresult
-SourceBufferResource::ReadAt(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes)
+SourceBufferResource::ReadAt(int64_t aOffset,
+                             char* aBuffer,
+                             uint32_t aCount,
+                             uint32_t* aBytes)
 {
-  SBR_DEBUG("ReadAt(aOffset=%lld, aBuffer=%p, aCount=%u, aBytes=%p)",
+  SBR_DEBUG("ReadAt(aOffset=%" PRId64 ", aBuffer=%p, aCount=%u, aBytes=%p)",
             aOffset, aBytes, aCount, aBytes);
-  ReentrantMonitorAutoEnter mon(mMonitor);
-  return ReadAtInternal(aOffset, aBuffer, aCount, aBytes, /* aMayBlock = */ true);
+  return ReadAtInternal(aOffset, aBuffer, aCount, aBytes);
 }
 
 nsresult
-SourceBufferResource::ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes,
-                                     bool aMayBlock)
+SourceBufferResource::ReadAtInternal(int64_t aOffset,
+                                     char* aBuffer,
+                                     uint32_t aCount,
+                                     uint32_t* aBytes)
 {
-  mMonitor.AssertCurrentThreadIn();
-
-  MOZ_ASSERT_IF(!aMayBlock, aBytes);
+  MOZ_ASSERT(OnTaskQueue());
 
   if (mClosed ||
       aOffset < 0 ||
       uint64_t(aOffset) < mInputBuffer.GetOffset() ||
       aOffset > GetLength()) {
     return NS_ERROR_FAILURE;
-  }
-
-  while (aMayBlock &&
-         !mEnded &&
-         aOffset + aCount > GetLength()) {
-    SBR_DEBUGV("waiting for data");
-    mMonitor.Wait();
-    // The callers of this function should have checked this, but it's
-    // possible that we had an eviction while waiting on the monitor.
-    if (uint64_t(aOffset) < mInputBuffer.GetOffset()) {
-      return NS_ERROR_FAILURE;
-    }
   }
 
   uint32_t available = GetLength() - aOffset;
@@ -78,8 +75,13 @@ SourceBufferResource::ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aC
   // the position we're up to in the stream.
   mOffset = aOffset + count;
 
-  SBR_DEBUGV("offset=%llu GetLength()=%u available=%u count=%u mEnded=%d",
-             aOffset, GetLength(), available, count, mEnded);
+  SBR_DEBUGV("offset=%" PRId64 " GetLength()=%" PRId64
+             " available=%u count=%u mEnded=%d",
+             aOffset,
+             GetLength(),
+             available,
+             count,
+             mEnded);
   if (available == 0) {
     SBR_DEBUGV("reached EOF");
     *aBytes = 0;
@@ -93,13 +95,14 @@ SourceBufferResource::ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aC
 }
 
 nsresult
-SourceBufferResource::ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount)
+SourceBufferResource::ReadFromCache(char* aBuffer,
+                                    int64_t aOffset,
+                                    uint32_t aCount)
 {
-  SBR_DEBUG("ReadFromCache(aBuffer=%p, aOffset=%lld, aCount=%u)",
+  SBR_DEBUG("ReadFromCache(aBuffer=%p, aOffset=%" PRId64 ", aCount=%u)",
             aBuffer, aOffset, aCount);
-  ReentrantMonitorAutoEnter mon(mMonitor);
   uint32_t bytesRead;
-  nsresult rv = ReadAtInternal(aOffset, aBuffer, aCount, &bytesRead, /* aMayBlock = */ false);
+  nsresult rv = ReadAtInternal(aOffset, aBuffer, aCount, &bytesRead);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // ReadFromCache return failure if not all the data is cached.
@@ -107,78 +110,82 @@ SourceBufferResource::ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCo
 }
 
 uint32_t
-SourceBufferResource::EvictData(uint64_t aPlaybackOffset, int64_t aThreshold,
+SourceBufferResource::EvictData(uint64_t aPlaybackOffset,
+                                int64_t aThreshold,
                                 ErrorResult& aRv)
 {
-  SBR_DEBUG("EvictData(aPlaybackOffset=%llu,"
-            "aThreshold=%u)", aPlaybackOffset, aThreshold);
-  ReentrantMonitorAutoEnter mon(mMonitor);
+  MOZ_ASSERT(OnTaskQueue());
+  SBR_DEBUG("EvictData(aPlaybackOffset=%" PRIu64 ","
+            "aThreshold=%" PRId64 ")", aPlaybackOffset, aThreshold);
   uint32_t result = mInputBuffer.Evict(aPlaybackOffset, aThreshold, aRv);
-  if (result > 0) {
-    // Wake up any waiting threads in case a ReadInternal call
-    // is now invalid.
-    mon.NotifyAll();
-  }
   return result;
 }
 
 void
 SourceBufferResource::EvictBefore(uint64_t aOffset, ErrorResult& aRv)
 {
-  SBR_DEBUG("EvictBefore(aOffset=%llu)", aOffset);
-  ReentrantMonitorAutoEnter mon(mMonitor);
+  MOZ_ASSERT(OnTaskQueue());
+  SBR_DEBUG("EvictBefore(aOffset=%" PRIu64 ")", aOffset);
 
   mInputBuffer.EvictBefore(aOffset, aRv);
-
-  // Wake up any waiting threads in case a ReadInternal call
-  // is now invalid.
-  mon.NotifyAll();
 }
 
 uint32_t
 SourceBufferResource::EvictAll()
 {
+  MOZ_ASSERT(OnTaskQueue());
   SBR_DEBUG("EvictAll()");
-  ReentrantMonitorAutoEnter mon(mMonitor);
   return mInputBuffer.EvictAll();
 }
 
 void
 SourceBufferResource::AppendData(MediaByteBuffer* aData)
 {
-  SBR_DEBUG("AppendData(aData=%p, aLength=%u)",
+  MOZ_ASSERT(OnTaskQueue());
+  SBR_DEBUG("AppendData(aData=%p, aLength=%zu)",
             aData->Elements(), aData->Length());
-  ReentrantMonitorAutoEnter mon(mMonitor);
   mInputBuffer.AppendItem(aData);
   mEnded = false;
-  mon.NotifyAll();
 }
 
 void
 SourceBufferResource::Ended()
 {
+  MOZ_ASSERT(OnTaskQueue());
   SBR_DEBUG("");
-  ReentrantMonitorAutoEnter mon(mMonitor);
   mEnded = true;
-  mon.NotifyAll();
 }
 
 SourceBufferResource::~SourceBufferResource()
 {
   SBR_DEBUG("");
-  MOZ_COUNT_DTOR(SourceBufferResource);
 }
 
-SourceBufferResource::SourceBufferResource(const nsACString& aType)
-  : mType(aType)
-  , mMonitor("mozilla::SourceBufferResource::mMonitor")
+SourceBufferResource::SourceBufferResource()
+#if defined(DEBUG)
+  : mTaskQueue(AbstractThread::GetCurrent()->AsTaskQueue())
   , mOffset(0)
+#else
+  : mOffset(0)
+#endif
   , mClosed(false)
   , mEnded(false)
 {
   SBR_DEBUG("");
-  MOZ_COUNT_CTOR(SourceBufferResource);
 }
+
+#if defined(DEBUG)
+AbstractThread*
+SourceBufferResource::GetTaskQueue() const
+{
+  return mTaskQueue;
+}
+bool
+SourceBufferResource::OnTaskQueue() const
+{
+  return !GetTaskQueue() || GetTaskQueue()->IsCurrentThreadIn();
+}
+#endif
 
 #undef SBR_DEBUG
 #undef SBR_DEBUGV

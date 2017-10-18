@@ -8,9 +8,6 @@
 
 #include "mozilla/Logging.h"
 
-#include "nsServiceManagerUtils.h"
-#include "nsILanguageAtomService.h"
-
 #include "gfxFontEntry.h"
 #include "gfxTextRun.h"
 #include "gfxPlatform.h"
@@ -35,7 +32,6 @@
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
 #include "gfxSVGGlyphs.h"
-#include "gfxMathTable.h"
 #include "gfx2DGlue.h"
 
 #include "cairo.h"
@@ -73,7 +69,6 @@ gfxFontEntry::gfxFontEntry() :
     mIgnoreGDEF(false),
     mIgnoreGSUB(false),
     mSVGInitialized(false),
-    mMathInitialized(false),
     mHasSpaceFeaturesInitialized(false),
     mHasSpaceFeatures(false),
     mHasSpaceFeaturesKerning(false),
@@ -113,7 +108,6 @@ gfxFontEntry::gfxFontEntry(const nsAString& aName, bool aIsStandardFace) :
     mIgnoreGDEF(false),
     mIgnoreGSUB(false),
     mSVGInitialized(false),
-    mMathInitialized(false),
     mHasSpaceFeaturesInitialized(false),
     mHasSpaceFeatures(false),
     mHasSpaceFeaturesKerning(false),
@@ -144,6 +138,8 @@ gfxFontEntry::gfxFontEntry(const nsAString& aName, bool aIsStandardFace) :
 
 gfxFontEntry::~gfxFontEntry()
 {
+    // Should not be dropped by stylo
+    MOZ_ASSERT(NS_IsMainThread());
     if (mCOLR) {
         hb_blob_destroy(mCOLR);
     }
@@ -274,19 +270,20 @@ gfxFontEntry::RealFaceName()
     return Name();
 }
 
-already_AddRefed<gfxFont>
+gfxFont*
 gfxFontEntry::FindOrMakeFont(const gfxFontStyle *aStyle,
                              bool aNeedsBold,
                              gfxCharacterMap* aUnicodeRangeMap)
 {
     // the font entry name is the psname, not the family name
-    RefPtr<gfxFont> font =
+    gfxFont* font =
         gfxFontCache::GetCache()->Lookup(this, aStyle, aUnicodeRangeMap);
 
     if (!font) {
         gfxFont *newFont = CreateFontInstance(aStyle, aNeedsBold);
-        if (!newFont)
+        if (!newFont) {
             return nullptr;
+        }
         if (!newFont->Valid()) {
             delete newFont;
             return nullptr;
@@ -295,7 +292,7 @@ gfxFontEntry::FindOrMakeFont(const gfxFontStyle *aStyle,
         font->SetUnicodeRangeMap(aUnicodeRangeMap);
         gfxFontCache::GetCache()->AddNew(font);
     }
-    return font.forget();
+    return font;
 }
 
 uint16_t
@@ -344,17 +341,17 @@ gfxFontEntry::GetSVGGlyphExtents(DrawTarget* aDrawTarget, uint32_t aGlyphId,
     gfxMatrix svgToAppSpace(fontMatrix.xx, fontMatrix.yx,
                             fontMatrix.xy, fontMatrix.yy,
                             fontMatrix.x0, fontMatrix.y0);
-    svgToAppSpace.Scale(1.0f / mUnitsPerEm, 1.0f / mUnitsPerEm);
+    svgToAppSpace.PreScale(1.0f / mUnitsPerEm, 1.0f / mUnitsPerEm);
 
     return mSVGGlyphs->GetGlyphExtents(aGlyphId, svgToAppSpace, aResult);
 }
 
-bool
+void
 gfxFontEntry::RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
-                             gfxTextContextPaint *aContextPaint)
+                             SVGContextPaint* aContextPaint)
 {
     NS_ASSERTION(mSVGInitialized, "SVG data has not yet been loaded. TryGetSVGData() first.");
-    return mSVGGlyphs->RenderGlyph(aContext, aGlyphId, aContextPaint);
+    mSVGGlyphs->RenderGlyph(aContext, aGlyphId, aContextPaint);
 }
 
 bool
@@ -404,78 +401,6 @@ gfxFontEntry::NotifyGlyphsChanged()
         gfxFont* font = mFontsUsingSVGGlyphs[i];
         font->NotifyGlyphsChanged();
     }
-}
-
-bool
-gfxFontEntry::TryGetMathTable()
-{
-    if (!mMathInitialized) {
-        mMathInitialized = true;
-
-        // If UnitsPerEm is not known/valid, we can't use MATH table
-        if (UnitsPerEm() == kInvalidUPEM) {
-            return false;
-        }
-
-        // We don't use AutoTable here because we'll pass ownership of this
-        // blob to the gfxMathTable, once we've confirmed the table exists
-        hb_blob_t *mathTable = GetFontTable(TRUETYPE_TAG('M','A','T','H'));
-        if (!mathTable) {
-            return false;
-        }
-
-        // gfxMathTable will hb_blob_destroy() the table when it is finished
-        // with it.
-        mMathTable = MakeUnique<gfxMathTable>(mathTable);
-        if (!mMathTable->HasValidHeaders()) {
-            mMathTable.reset(nullptr);
-            return false;
-        }
-    }
-
-    return !!mMathTable;
-}
-
-gfxFloat
-gfxFontEntry::GetMathConstant(gfxFontEntry::MathConstant aConstant)
-{
-    NS_ASSERTION(mMathTable, "Math data has not yet been loaded. TryGetMathData() first.");
-    gfxFloat value = mMathTable->GetMathConstant(aConstant);
-    if (aConstant == gfxFontEntry::ScriptPercentScaleDown ||
-        aConstant == gfxFontEntry::ScriptScriptPercentScaleDown ||
-        aConstant == gfxFontEntry::RadicalDegreeBottomRaisePercent) {
-        return value / 100.0;
-    }
-    return value / mUnitsPerEm;
-}
-
-bool
-gfxFontEntry::GetMathItalicsCorrection(uint32_t aGlyphID,
-                                       gfxFloat* aItalicCorrection)
-{
-    NS_ASSERTION(mMathTable, "Math data has not yet been loaded. TryGetMathData() first.");
-    int16_t italicCorrection;
-    if (!mMathTable->GetMathItalicsCorrection(aGlyphID, &italicCorrection)) {
-        return false;
-    }
-    *aItalicCorrection = gfxFloat(italicCorrection) / mUnitsPerEm;
-    return true;
-}
-
-uint32_t
-gfxFontEntry::GetMathVariantsSize(uint32_t aGlyphID, bool aVertical,
-                                  uint16_t aSize)
-{
-    NS_ASSERTION(mMathTable, "Math data has not yet been loaded. TryGetMathData() first.");
-    return mMathTable->GetMathVariantsSize(aGlyphID, aVertical, aSize);
-}
-
-bool
-gfxFontEntry::GetMathVariantsParts(uint32_t aGlyphID, bool aVertical,
-                                   uint32_t aGlyphs[4])
-{
-    NS_ASSERTION(mMathTable, "Math data has not yet been loaded. TryGetMathData() first.");
-    return mMathTable->GetMathVariantsParts(aGlyphID, aVertical, aGlyphs);
 }
 
 bool
@@ -773,10 +698,9 @@ gfxFontEntry::GrReleaseTable(const void *aAppFaceHandle,
 {
     gfxFontEntry *fontEntry =
         static_cast<gfxFontEntry*>(const_cast<void*>(aAppFaceHandle));
-    void *data;
-    if (fontEntry->mGrTableMap->Get(aTableBuffer, &data)) {
-        fontEntry->mGrTableMap->Remove(aTableBuffer);
-        hb_blob_destroy(static_cast<hb_blob_t*>(data));
+    void* value;
+    if (fontEntry->mGrTableMap->Remove(aTableBuffer, &value)) {
+        hb_blob_destroy(static_cast<hb_blob_t*>(value));
     }
 }
 
@@ -851,8 +775,7 @@ gfxFontEntry::HasGraphiteSpaceContextuals()
 
 #define FEATURE_SCRIPT_MASK 0x000000ff // script index replaces low byte of tag
 
-// check for too many script codes
-PR_STATIC_ASSERT(int(Script::NUM_SCRIPT_CODES) <= FEATURE_SCRIPT_MASK);
+static_assert(int(Script::NUM_SCRIPT_CODES) <= FEATURE_SCRIPT_MASK, "Too many script codes");
 
 // high-order three bytes of tag with script in low-order byte
 #define SCRIPT_FEATURE(s,tag) (((~FEATURE_SCRIPT_MASK) & (tag)) | \
@@ -1087,10 +1010,6 @@ gfxFontEntry::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
     if (mSVGGlyphs) {
         aSizes->mFontTableCacheSize +=
             mSVGGlyphs->SizeOfIncludingThis(aMallocSizeOf);
-    }
-    if (mMathTable) {
-        aSizes->mFontTableCacheSize +=
-            mMathTable->SizeOfIncludingThis(aMallocSizeOf);
     }
     if (mSupportedFeatures) {
         aSizes->mFontTableCacheSize +=
@@ -1614,6 +1533,13 @@ gfxFontFamily::SearchAllFontsForChar(GlobalFontMatch *aMatchData)
             }
         }
     }
+}
+
+/*virtual*/
+gfxFontFamily::~gfxFontFamily()
+{
+    // Should not be dropped by stylo
+    MOZ_ASSERT(NS_IsMainThread());
 }
 
 /*static*/ void

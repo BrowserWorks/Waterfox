@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,9 @@ private:
   bool CreateImage(const mozilla::gfx::IntSize& aSize);
   void DestroyImage();
 
+  void WaitIfPendingReply();
+
+  Display*                     mDisplay;
   xcb_connection_t*            mConnection;
   Window                       mWindow;
   Visual*                      mVisual;
@@ -55,10 +58,12 @@ private:
 
   mozilla::gfx::SurfaceFormat  mFormat;
   mozilla::gfx::IntSize        mSize;
+  int                          mStride;
 
   xcb_pixmap_t                 mPixmap;
   xcb_gcontext_t               mGC;
-  xcb_void_cookie_t            mLastRequest;
+  xcb_get_input_focus_cookie_t mSyncRequest;
+  bool                         mRequestPending;
 
   xcb_shm_seg_t                mShmSeg;
   int                          mShmId;

@@ -92,7 +92,7 @@ AddonUtilsInternal.prototype = {
     function installAddonFromSearchResult(addon, options, cb) {
     this._log.info("Trying to install add-on from search result: " + addon.id);
 
-    this.getInstallFromSearchResult(addon, function onResult(error, install) {
+    this.getInstallFromSearchResult(addon, (error, install) => {
       if (error) {
         cb(error, null);
         return;
@@ -114,7 +114,7 @@ AddonUtilsInternal.prototype = {
             }
 
             if (options.syncGUID) {
-              log.info("Setting syncGUID of " + install.name  +": " +
+              log.info("Setting syncGUID of " + install.name + ": " +
                        options.syncGUID);
               install.addon.syncGUID = options.syncGUID;
             }
@@ -127,17 +127,17 @@ AddonUtilsInternal.prototype = {
               install.addon.userDisabled = true;
             }
           },
-          onInstallEnded: function(install, addon) {
+          onInstallEnded(install, addon) {
             install.removeListener(listener);
 
-            cb(null, {id: addon.id, install: install, addon: addon});
+            cb(null, {id: addon.id, install, addon});
           },
-          onInstallFailed: function(install) {
+          onInstallFailed(install) {
             install.removeListener(listener);
 
             cb(new Error("Install failed: " + install.error), null);
           },
-          onDownloadFailed: function(install) {
+          onDownloadFailed(install) {
             install.removeListener(listener);
 
             cb(new Error("Download failed: " + install.error), null);
@@ -145,52 +145,50 @@ AddonUtilsInternal.prototype = {
         };
         install.addListener(listener);
         install.install();
-      }
-      catch (ex) {
+      } catch (ex) {
         this._log.error("Error installing add-on", ex);
         cb(ex, null);
       }
-    }.bind(this));
+    });
   },
 
   /**
-   * Uninstalls the Addon instance and invoke a callback when it is done.
+   * Uninstalls the addon instance.
    *
    * @param addon
    *        Addon instance to uninstall.
-   * @param cb
-   *        Function to be invoked when uninstall has finished. It receives a
-   *        truthy value signifying error and the add-on which was uninstalled.
    */
-  uninstallAddon: function uninstallAddon(addon, cb) {
-    let listener = {
-      onUninstalling: function(uninstalling, needsRestart) {
-        if (addon.id != uninstalling.id) {
-          return;
-        }
+  async uninstallAddon(addon) {
+    return new Promise(res => {
+      let listener = {
+        onUninstalling(uninstalling, needsRestart) {
+          if (addon.id != uninstalling.id) {
+            return;
+          }
 
-        // We assume restartless add-ons will send the onUninstalled event
-        // soon.
-        if (!needsRestart) {
-          return;
-        }
+          // We assume restartless add-ons will send the onUninstalled event
+          // soon.
+          if (!needsRestart) {
+            return;
+          }
 
-        // For non-restartless add-ons, we issue the callback on uninstalling
-        // because we will likely never see the uninstalled event.
-        AddonManager.removeAddonListener(listener);
-        cb(null, addon);
-      },
-      onUninstalled: function(uninstalled) {
-        if (addon.id != uninstalled.id) {
-          return;
-        }
+          // For non-restartless add-ons, we issue the callback on uninstalling
+          // because we will likely never see the uninstalled event.
+          AddonManager.removeAddonListener(listener);
+          res(addon);
+        },
+        onUninstalled(uninstalled) {
+          if (addon.id != uninstalled.id) {
+            return;
+          }
 
-        AddonManager.removeAddonListener(listener);
-        cb(null, addon);
-      }
-    };
-    AddonManager.addAddonListener(listener);
-    addon.uninstall();
+          AddonManager.removeAddonListener(listener);
+          res(addon);
+        }
+      };
+      AddonManager.addAddonListener(listener);
+      addon.uninstall();
+    });
   },
 
   /**
@@ -236,7 +234,7 @@ AddonUtilsInternal.prototype = {
     }
 
     AddonRepository.getAddonsByIDs(ids, {
-      searchSucceeded: function searchSucceeded(addons, addonsLength, total) {
+      searchSucceeded: (addons, addonsLength, total) => {
         this._log.info("Found " + addonsLength + "/" + ids.length +
                        " add-ons during repository search.");
 
@@ -273,7 +271,7 @@ AddonUtilsInternal.prototype = {
               cb(null, ourResult);
             }
           }
-        }.bind(this);
+        };
 
         let toInstall = [];
 
@@ -315,9 +313,8 @@ AddonUtilsInternal.prototype = {
 
             if (param.indexOf("src=") == 0) {
               return "src=sync";
-            } else {
-              return param;
             }
+            return param;
           });
 
           addon.sourceURI.query = params.join("&");
@@ -344,7 +341,7 @@ AddonUtilsInternal.prototype = {
           this.installAddonFromSearchResult(addon, options, installCallback);
         }
 
-      }.bind(this),
+      },
 
       searchFailed: function searchFailed() {
         cb(new Error("AddonRepository search failed"), null);
@@ -397,106 +394,21 @@ AddonUtilsInternal.prototype = {
   /**
    * Update the user disabled flag for an add-on.
    *
-   * The supplied callback will be called when the operation is
-   * complete. If the new flag matches the existing or if the add-on
-   * isn't currently active, the function will fire the callback
-   * immediately. Else, the callback is invoked when the AddonManager
-   * reports the change has taken effect or has been registered.
-   *
-   * The callback receives as arguments:
-   *
-   *   (Error) Encountered error during operation or null on success.
-   *   (Addon) The add-on instance being operated on.
+   * If the new flag matches the existing or if the add-on
+   * isn't currently active, the function will return immediately.
    *
    * @param addon
    *        (Addon) Add-on instance to operate on.
    * @param value
    *        (bool) New value for add-on's userDisabled property.
-   * @param cb
-   *        (function) Callback to be invoked on completion.
    */
-  updateUserDisabled: function updateUserDisabled(addon, value, cb) {
+  updateUserDisabled(addon, value) {
     if (addon.userDisabled == value) {
-      cb(null, addon);
       return;
-    }
-
-    let listener = {
-      onEnabling: function onEnabling(wrapper, needsRestart) {
-        this._log.debug("onEnabling: " + wrapper.id);
-        if (wrapper.id != addon.id) {
-          return;
-        }
-
-        // We ignore the restartless case because we'll get onEnabled shortly.
-        if (!needsRestart) {
-          return;
-        }
-
-        AddonManager.removeAddonListener(listener);
-        cb(null, wrapper);
-      }.bind(this),
-
-      onEnabled: function onEnabled(wrapper) {
-        this._log.debug("onEnabled: " + wrapper.id);
-        if (wrapper.id != addon.id) {
-          return;
-        }
-
-        AddonManager.removeAddonListener(listener);
-        cb(null, wrapper);
-      }.bind(this),
-
-      onDisabling: function onDisabling(wrapper, needsRestart) {
-        this._log.debug("onDisabling: " + wrapper.id);
-        if (wrapper.id != addon.id) {
-          return;
-        }
-
-        if (!needsRestart) {
-          return;
-        }
-
-        AddonManager.removeAddonListener(listener);
-        cb(null, wrapper);
-      }.bind(this),
-
-      onDisabled: function onDisabled(wrapper) {
-        this._log.debug("onDisabled: " + wrapper.id);
-        if (wrapper.id != addon.id) {
-          return;
-        }
-
-        AddonManager.removeAddonListener(listener);
-        cb(null, wrapper);
-      }.bind(this),
-
-      onOperationCancelled: function onOperationCancelled(wrapper) {
-        this._log.debug("onOperationCancelled: " + wrapper.id);
-        if (wrapper.id != addon.id) {
-          return;
-        }
-
-        AddonManager.removeAddonListener(listener);
-        cb(new Error("Operation cancelled"), wrapper);
-      }.bind(this)
-    };
-
-    // The add-on listeners are only fired if the add-on is active. If not, the
-    // change is silently updated and made active when/if the add-on is active.
-
-    if (!addon.appDisabled) {
-      AddonManager.addAddonListener(listener);
     }
 
     this._log.info("Updating userDisabled flag: " + addon.id + " -> " + value);
     addon.userDisabled = !!value;
-
-    if (!addon.appDisabled) {
-      cb(null, addon);
-      return;
-    }
-    // Else the listener will handle invoking the callback.
   },
 
 };

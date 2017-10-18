@@ -64,14 +64,16 @@ public:
     }
 
     RefPtr<NullHttpChannel> channel = new NullHttpChannel();
-    channel->Init(uri, 0, nullptr, 0, nullptr);
-    mActivityDistributor->ObserveActivity(
+    rv = channel->Init(uri, 0, nullptr, 0, nullptr);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    rv = mActivityDistributor->ObserveActivity(
       nsCOMPtr<nsISupports>(do_QueryObject(channel)),
       mActivityType,
       mActivitySubtype,
       mTimestamp,
       mExtraSizeData,
       mExtraStringData);
+    NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
   }
@@ -140,6 +142,12 @@ NullHttpTransaction::Claim()
 }
 
 void
+NullHttpTransaction::Unclaim()
+{
+  mClaimed = false;
+}
+
+void
 NullHttpTransaction::SetConnection(nsAHttpConnection *conn)
 {
   mConnection = conn;
@@ -162,6 +170,30 @@ void
 NullHttpTransaction::OnTransportStatus(nsITransport* transport,
                                        nsresult status, int64_t progress)
 {
+  if (status == NS_NET_STATUS_RESOLVING_HOST) {
+    if (mTimings.domainLookupStart.IsNull()) {
+      mTimings.domainLookupStart = TimeStamp::Now();
+    }
+  } else if (status == NS_NET_STATUS_RESOLVED_HOST) {
+    if (mTimings.domainLookupEnd.IsNull()) {
+      mTimings.domainLookupEnd = TimeStamp::Now();
+    }
+  } else if (status == NS_NET_STATUS_CONNECTING_TO) {
+    if (mTimings.connectStart.IsNull()) {
+      mTimings.connectStart = TimeStamp::Now();
+    }
+  } else if (status == NS_NET_STATUS_CONNECTED_TO) {
+    if (mTimings.connectEnd.IsNull()) {
+      mTimings.connectEnd = TimeStamp::Now();
+    }
+  } else if (status == NS_NET_STATUS_TLS_HANDSHAKE_ENDED) {
+    if (mTimings.secureConnectionStart.IsNull() &&
+        !mTimings.connectEnd.IsNull()) {
+      mTimings.secureConnectionStart = mTimings.connectEnd;
+    }
+    mTimings.connectEnd = TimeStamp::Now();;
+  }
+
   if (mActivityDistributor) {
     NS_DispatchToMainThread(new CallObserveActivity(mActivityDistributor,
                                   mConnectionInfo->GetOrigin(),
@@ -198,12 +230,6 @@ NullHttpTransaction::SetDNSWasRefreshed()
 {
   MOZ_ASSERT(NS_IsMainThread(), "SetDNSWasRefreshed on main thread only!");
   mCapsToClear |= NS_HTTP_REFRESH_DNS;
-}
-
-uint64_t
-NullHttpTransaction::Available()
-{
-  return 0;
 }
 
 nsresult
@@ -244,7 +270,8 @@ NullHttpTransaction::RequestHead()
                                                   mConnectionInfo->OriginPort(),
                                                   hostHeader);
     if (NS_SUCCEEDED(rv)) {
-      mRequestHead->SetHeader(nsHttp::Host, hostHeader);
+      rv = mRequestHead->SetHeader(nsHttp::Host, hostHeader);
+      MOZ_ASSERT(NS_SUCCEEDED(rv));
       if (mActivityDistributor) {
         // Report request headers.
         nsCString reqHeaderBuf;
@@ -302,30 +329,6 @@ nsHttpConnectionInfo *
 NullHttpTransaction::ConnectionInfo()
 {
   return mConnectionInfo;
-}
-
-nsresult
-NullHttpTransaction::AddTransaction(nsAHttpTransaction *trans)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-uint32_t
-NullHttpTransaction::PipelineDepth()
-{
-  return 0;
-}
-
-nsresult
-NullHttpTransaction::SetPipelinePosition(int32_t position)
-{
-    return NS_OK;
-}
-
-int32_t
-NullHttpTransaction::PipelinePosition()
-{
-  return 1;
 }
 
 } // namespace net

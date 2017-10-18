@@ -28,6 +28,23 @@ class PChannelDiverterParent;
 
 namespace dom {
 
+#define NS_IEXTERNALHELPERAPPPARENT_IID \
+{ 0x127a01bc, 0x2a49, 0x46a8, \
+  { 0x8c, 0x63, 0x4b, 0x5d, 0x3c, 0xa4, 0x07, 0x9c } }
+
+class nsIExternalHelperAppParent : public nsISupports
+{
+public:
+  NS_DECLARE_STATIC_IID_ACCESSOR(NS_IEXTERNALHELPERAPPPARENT_IID)
+
+  /**
+   * Returns true if this fake channel represented a file channel in the child.
+   */
+  virtual bool WasFileChannel() = 0;
+};
+
+NS_DEFINE_STATIC_IID_ACCESSOR(nsIExternalHelperAppParent, NS_IEXTERNALHELPERAPPPARENT_IID)
+
 class ContentParent;
 class PBrowserParent;
 
@@ -38,6 +55,7 @@ class ExternalHelperAppParent : public PExternalHelperAppParent
                               , public nsIResumableChannel
                               , public nsIStreamListener
                               , public net::PrivateBrowsingChannel<ExternalHelperAppParent>
+                              , public nsIExternalHelperAppParent
 {
     typedef mozilla::ipc::OptionalURIParams OptionalURIParams;
 
@@ -50,15 +68,22 @@ public:
     NS_DECL_NSISTREAMLISTENER
     NS_DECL_NSIREQUESTOBSERVER
 
-    bool RecvOnStartRequest(const nsCString& entityID) override;
-    bool RecvOnDataAvailable(const nsCString& data,
-                             const uint64_t& offset,
-                             const uint32_t& count) override;
-    bool RecvOnStopRequest(const nsresult& code) override;
+    mozilla::ipc::IPCResult RecvOnStartRequest(const nsCString& entityID,
+                                               PBrowserParent* aBrowser) override;
+    mozilla::ipc::IPCResult RecvOnDataAvailable(const nsCString& data,
+                                                const uint64_t& offset,
+                                                const uint32_t& count) override;
+    mozilla::ipc::IPCResult RecvOnStopRequest(const nsresult& code) override;
 
-    bool RecvDivertToParentUsing(PChannelDiverterParent* diverter) override;
+    mozilla::ipc::IPCResult RecvDivertToParentUsing(PChannelDiverterParent* diverter,
+                                                    PBrowserParent* aBrowser) override;
 
-    ExternalHelperAppParent(const OptionalURIParams& uri, const int64_t& contentLength);
+    bool WasFileChannel() override {
+      return mWasFileChannel;
+    }
+
+    ExternalHelperAppParent(const OptionalURIParams& uri, const int64_t& contentLength,
+                            const bool& wasFileChannel);
     void Init(ContentParent *parent,
               const nsCString& aMimeContentType,
               const nsCString& aContentDisposition,
@@ -85,6 +110,7 @@ private:
   nsLoadFlags mLoadFlags;
   nsresult mStatus;
   int64_t mContentLength;
+  bool mWasFileChannel;
   uint32_t mContentDisposition;
   nsString mContentDispositionFilename;
   nsCString mContentDispositionHeader;

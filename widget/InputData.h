@@ -12,9 +12,11 @@
 #include "nsPoint.h"
 #include "nsTArray.h"
 #include "Units.h"
+#include "mozilla/DefineEnum.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/gfx/MatrixFwd.h"
+#include "mozilla/layers/KeyboardScrollAction.h"
 
 template<class E> struct already_AddRefed;
 class nsIWidget;
@@ -30,20 +32,16 @@ namespace dom {
 class Touch;
 } // namespace dom
 
-enum InputType
-{
-  // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-  // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-  MULTITOUCH_INPUT,
-  MOUSE_INPUT,
-  PANGESTURE_INPUT,
-  PINCHGESTURE_INPUT,
-  TAPGESTURE_INPUT,
-  SCROLLWHEEL_INPUT,
-
-  // Used as an upper bound for ContiguousEnumSerializer
-  SENTINEL_INPUT,
-};
+MOZ_DEFINE_ENUM(
+  InputType, (
+    MULTITOUCH_INPUT,
+    MOUSE_INPUT,
+    PANGESTURE_INPUT,
+    PINCHGESTURE_INPUT,
+    TAPGESTURE_INPUT,
+    SCROLLWHEEL_INPUT,
+    KEYBOARD_INPUT
+));
 
 class MultiTouchInput;
 class MouseInput;
@@ -51,6 +49,7 @@ class PanGestureInput;
 class PinchGestureInput;
 class TapGestureInput;
 class ScrollWheelInput;
+class KeyboardInput;
 
 // This looks unnecessary now, but as we add more and more classes that derive
 // from InputType (eventually probably almost as many as *Events.h has), it
@@ -84,6 +83,10 @@ public:
   // Set in parallel to mTime until we determine it is safe to drop
   // platform-specific event times (see bug 77992).
   TimeStamp mTimeStamp;
+  // The sequence number of the last potentially focus changing event handled
+  // by APZ. This is used to track when that event has been processed by content,
+  // and focus can be reconfirmed for async keyboard scrolling.
+  uint64_t mFocusSequenceNumber;
 
   Modifiers modifiers;
 
@@ -93,25 +96,14 @@ public:
   INPUTDATA_AS_CHILD_TYPE(PinchGestureInput, PINCHGESTURE_INPUT)
   INPUTDATA_AS_CHILD_TYPE(TapGestureInput, TAPGESTURE_INPUT)
   INPUTDATA_AS_CHILD_TYPE(ScrollWheelInput, SCROLLWHEEL_INPUT)
+  INPUTDATA_AS_CHILD_TYPE(KeyboardInput, KEYBOARD_INPUT)
 
-  explicit InputData(InputType aInputType)
-    : mInputType(aInputType),
-      mTime(0),
-      modifiers(0)
-  {
-  }
+  virtual ~InputData();
+  explicit InputData(InputType aInputType);
 
 protected:
   InputData(InputType aInputType, uint32_t aTime, TimeStamp aTimeStamp,
-            Modifiers aModifiers)
-    : mInputType(aInputType),
-      mTime(aTime),
-      mTimeStamp(aTimeStamp),
-      modifiers(aModifiers)
-  {
-
-
-  }
+            Modifiers aModifiers);
 };
 
 /**
@@ -138,14 +130,7 @@ public:
                   ScreenIntPoint aScreenPoint,
                   ScreenSize aRadius,
                   float aRotationAngle,
-                  float aForce)
-    : mIdentifier(aIdentifier),
-      mScreenPoint(aScreenPoint),
-      mRadius(aRadius),
-      mRotationAngle(aRotationAngle),
-      mForce(aForce)
-  {
-  }
+                  float aForce);
 
   // Construct a SingleTouchData from a ParentLayer point.
   // mScreenPoint remains (0,0) unless it's set later.
@@ -155,18 +140,9 @@ public:
                   ParentLayerPoint aLocalScreenPoint,
                   ScreenSize aRadius,
                   float aRotationAngle,
-                  float aForce)
-    : mIdentifier(aIdentifier),
-      mLocalScreenPoint(aLocalScreenPoint),
-      mRadius(aRadius),
-      mRotationAngle(aRotationAngle),
-      mForce(aForce)
-  {
-  }
+                  float aForce);
 
-  SingleTouchData()
-  {
-  }
+  SingleTouchData();
 
   already_AddRefed<dom::Touch> ToNewDOMTouch() const;
 
@@ -211,50 +187,19 @@ public:
 class MultiTouchInput : public InputData
 {
 public:
-  enum MultiTouchType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-    MULTITOUCH_START,
-    MULTITOUCH_MOVE,
-    MULTITOUCH_END,
-    MULTITOUCH_CANCEL,
-
-    // Used as an upper bound for ContiguousEnumSerializer
-    MULTITOUCH_SENTINEL,
-  };
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    MultiTouchType, (
+      MULTITOUCH_START,
+      MULTITOUCH_MOVE,
+      MULTITOUCH_END,
+      MULTITOUCH_CANCEL
+  ));
 
   MultiTouchInput(MultiTouchType aType, uint32_t aTime, TimeStamp aTimeStamp,
-                  Modifiers aModifiers)
-    : InputData(MULTITOUCH_INPUT, aTime, aTimeStamp, aModifiers)
-    , mType(aType)
-    , mHandledByAPZ(false)
-  {
-  }
-
-  MultiTouchInput()
-    : InputData(MULTITOUCH_INPUT)
-    , mHandledByAPZ(false)
-  {
-  }
-
-  MultiTouchInput(const MultiTouchInput& aOther)
-    : InputData(MULTITOUCH_INPUT, aOther.mTime,
-                aOther.mTimeStamp, aOther.modifiers)
-    , mType(aOther.mType)
-    , mHandledByAPZ(aOther.mHandledByAPZ)
-  {
-    mTouches.AppendElements(aOther.mTouches);
-  }
-
+                  Modifiers aModifiers);
+  MultiTouchInput();
+  MultiTouchInput(const MultiTouchInput& aOther);
   explicit MultiTouchInput(const WidgetTouchEvent& aTouchEvent);
-  WidgetTouchEvent ToWidgetTouchEvent(nsIWidget* aWidget) const;
-  WidgetMouseEvent ToWidgetMouseEvent(nsIWidget* aWidget) const;
-
-  // Return the index into mTouches of the SingleTouchData with the given
-  // identifier, or -1 if there is no such SingleTouchData.
-  int32_t IndexOfTouch(int32_t aTouchIdentifier);
-
   // This conversion from WidgetMouseEvent to MultiTouchInput is needed because
   // on the B2G emulator we can only receive mouse events, but we need to be
   // able to pan correctly. To do this, we convert the events into a format that
@@ -262,6 +207,14 @@ public:
   // SingleTouchData. It also sends garbage for the identifier, radius, force
   // and rotation angle.
   explicit MultiTouchInput(const WidgetMouseEvent& aMouseEvent);
+  void Translate(const ScreenPoint& aTranslation);
+
+  WidgetTouchEvent ToWidgetTouchEvent(nsIWidget* aWidget) const;
+  WidgetMouseEvent ToWidgetMouseEvent(nsIWidget* aWidget) const;
+
+  // Return the index into mTouches of the SingleTouchData with the given
+  // identifier, or -1 if there is no such SingleTouchData.
+  int32_t IndexOfTouch(int32_t aTouchIdentifier);
 
   bool TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform);
 
@@ -278,60 +231,36 @@ protected:
   friend mozilla::layers::PAPZCTreeManagerParent;
   friend mozilla::layers::APZCTreeManagerChild;
 
-  MouseInput()
-    : InputData(MOUSE_INPUT)
-    , mType(MOUSE_NONE)
-    , mButtonType(NONE)
-    , mInputSource(0)
-    , mButtons(0)
-    , mHandledByAPZ(false)
-  {}
+  MouseInput();
 
 public:
-  enum MouseType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-    MOUSE_NONE,
-    MOUSE_MOVE,
-    MOUSE_DOWN,
-    MOUSE_UP,
-    MOUSE_DRAG_START,
-    MOUSE_DRAG_END,
-    MOUSE_WIDGET_ENTER,
-    MOUSE_WIDGET_EXIT,
 
-    // Used as an upper bound for ContiguousEnumSerializer
-    MOUSE_SENTINEL,
-  };
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    MouseType, (
+      MOUSE_NONE,
+      MOUSE_MOVE,
+      MOUSE_DOWN,
+      MOUSE_UP,
+      MOUSE_DRAG_START,
+      MOUSE_DRAG_END,
+      MOUSE_WIDGET_ENTER,
+      MOUSE_WIDGET_EXIT
+  ));
 
-  enum ButtonType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-    LEFT_BUTTON,
-    MIDDLE_BUTTON,
-    RIGHT_BUTTON,
-    NONE,
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    ButtonType, (
+      LEFT_BUTTON,
+      MIDDLE_BUTTON,
+      RIGHT_BUTTON,
+      NONE
+  ));
 
-    // Used as an upper bound for ContiguousEnumSerializer
-    BUTTON_SENTINEL,
-  };
-
-  MouseInput(MouseType aType, ButtonType aButtonType, uint16_t aInputSource, int16_t aButtons, const ScreenPoint& aPoint,
-             uint32_t aTime, TimeStamp aTimeStamp, Modifiers aModifiers)
-    : InputData(MOUSE_INPUT, aTime, aTimeStamp, aModifiers)
-    , mType(aType)
-    , mButtonType(aButtonType)
-    , mInputSource(aInputSource)
-    , mButtons(aButtons)
-    , mOrigin(aPoint)
-    , mHandledByAPZ(false)
-  {}
-
+  MouseInput(MouseType aType, ButtonType aButtonType, uint16_t aInputSource,
+             int16_t aButtons, const ScreenPoint& aPoint, uint32_t aTime,
+             TimeStamp aTimeStamp, Modifiers aModifiers);
   explicit MouseInput(const WidgetMouseEventBase& aMouseEvent);
 
-  bool IsLeftButton() const { return mButtonType == LEFT_BUTTON; }
+  bool IsLeftButton() const;
 
   bool TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform);
   WidgetMouseEvent ToWidgetMouseEvent(nsIWidget* aWidget) const;
@@ -357,90 +286,61 @@ protected:
   friend mozilla::layers::PAPZCTreeManagerParent;
   friend mozilla::layers::APZCTreeManagerChild;
 
-  PanGestureInput()
-    : InputData(PANGESTURE_INPUT),
-      mLineOrPageDeltaX(0),
-      mLineOrPageDeltaY(0),
-      mUserDeltaMultiplierX(1.0),
-      mUserDeltaMultiplierY(1.0),
-      mHandledByAPZ(false),
-      mFollowedByMomentum(false),
-      mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection(false)
-  {
-  }
+  PanGestureInput();
 
 public:
-  enum PanGestureType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    PanGestureType, (
+      // MayStart: Dispatched before any actual panning has occurred but when a
+      // pan gesture is probably about to start, for example when the user
+      // starts touching the touchpad. Should interrupt any ongoing APZ
+      // animation and can be used to trigger scrollability indicators (e.g.
+      // flashing overlay scrollbars).
+      PANGESTURE_MAYSTART,
 
-    // MayStart: Dispatched before any actual panning has occurred but when a
-    // pan gesture is probably about to start, for example when the user
-    // starts touching the touchpad. Should interrupt any ongoing APZ
-    // animation and can be used to trigger scrollability indicators (e.g.
-    // flashing overlay scrollbars).
-    PANGESTURE_MAYSTART,
+      // Cancelled: Dispatched after MayStart when no pan gesture is going to
+      // happen after all, for example when the user lifts their fingers from a
+      // touchpad without having done any scrolling.
+      PANGESTURE_CANCELLED,
 
-    // Cancelled: Dispatched after MayStart when no pan gesture is going to
-    // happen after all, for example when the user lifts their fingers from a
-    // touchpad without having done any scrolling.
-    PANGESTURE_CANCELLED,
+      // Start: A pan gesture is starting.
+      // For devices that do not support the MayStart event type, this event can
+      // be used to interrupt ongoing APZ animations.
+      PANGESTURE_START,
 
-    // Start: A pan gesture is starting.
-    // For devices that do not support the MayStart event type, this event can
-    // be used to interrupt ongoing APZ animations.
-    PANGESTURE_START,
+      // Pan: The actual pan motion by mPanDisplacement.
+      PANGESTURE_PAN,
 
-    // Pan: The actual pan motion by mPanDisplacement.
-    PANGESTURE_PAN,
+      // End: The pan gesture has ended, for example because the user has lifted
+      // their fingers from a touchpad after scrolling.
+      // Any potential momentum events fire after this event.
+      PANGESTURE_END,
 
-    // End: The pan gesture has ended, for example because the user has lifted
-    // their fingers from a touchpad after scrolling.
-    // Any potential momentum events fire after this event.
-    PANGESTURE_END,
+      // The following momentum event types are used in order to control the pan
+      // momentum animation. Using these instead of our own animation ensures
+      // that the animation curve is OS native and that the animation stops
+      // reliably if it is cancelled by the user.
 
-    // The following momentum event types are used in order to control the pan
-    // momentum animation. Using these instead of our own animation ensures
-    // that the animation curve is OS native and that the animation stops
-    // reliably if it is cancelled by the user.
+      // MomentumStart: Dispatched between the End event of the actual
+      // user-controlled pan, and the first MomentumPan event of the momentum
+      // animation.
+      PANGESTURE_MOMENTUMSTART,
 
-    // MomentumStart: Dispatched between the End event of the actual
-    // user-controlled pan, and the first MomentumPan event of the momentum
-    // animation.
-    PANGESTURE_MOMENTUMSTART,
+      // MomentumPan: The actual momentum motion by mPanDisplacement.
+      PANGESTURE_MOMENTUMPAN,
 
-    // MomentumPan: The actual momentum motion by mPanDisplacement.
-    PANGESTURE_MOMENTUMPAN,
-
-    // MomentumEnd: The momentum animation has ended, for example because the
-    // momentum velocity has gone below the stopping threshold, or because the
-    // user has stopped the animation by putting their fingers on a touchpad.
-    PANGESTURE_MOMENTUMEND,
-
-    // Used as an upper bound for ContiguousEnumSerializer
-    PANGESTURE_SENTINEL,
-  };
+      // MomentumEnd: The momentum animation has ended, for example because the
+      // momentum velocity has gone below the stopping threshold, or because the
+      // user has stopped the animation by putting their fingers on a touchpad.
+      PANGESTURE_MOMENTUMEND
+  ));
 
   PanGestureInput(PanGestureType aType,
                   uint32_t aTime,
                   TimeStamp aTimeStamp,
                   const ScreenPoint& aPanStartPoint,
                   const ScreenPoint& aPanDisplacement,
-                  Modifiers aModifiers)
-    : InputData(PANGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
-      mType(aType),
-      mPanStartPoint(aPanStartPoint),
-      mPanDisplacement(aPanDisplacement),
-      mLineOrPageDeltaX(0),
-      mLineOrPageDeltaY(0),
-      mUserDeltaMultiplierX(1.0),
-      mUserDeltaMultiplierY(1.0),
-      mHandledByAPZ(false),
-      mFollowedByMomentum(false),
-      mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection(false)
-  {
-  }
+                  Modifiers aModifiers);
 
   bool IsMomentum() const;
 
@@ -498,57 +398,22 @@ protected:
   friend mozilla::layers::PAPZCTreeManagerParent;
   friend mozilla::layers::APZCTreeManagerChild;
 
-  PinchGestureInput()
-    : InputData(PINCHGESTURE_INPUT)
-  {
-  }
+  PinchGestureInput();
 
 public:
-  enum PinchGestureType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-    PINCHGESTURE_START,
-    PINCHGESTURE_SCALE,
-    PINCHGESTURE_END,
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    PinchGestureType, (
+      PINCHGESTURE_START,
+      PINCHGESTURE_SCALE,
+      PINCHGESTURE_END
+  ));
 
-    // Used as an upper bound for ContiguousEnumSerializer
-    PINCHGESTURE_SENTINEL,
-  };
-
-  // Construct a tap gesture from a Screen point.
-  // mLocalFocusPoint remains (0,0) unless it's set later.
-  PinchGestureInput(PinchGestureType aType,
-                    uint32_t aTime,
-                    TimeStamp aTimeStamp,
-                    const ScreenPoint& aFocusPoint,
-                    float aCurrentSpan,
-                    float aPreviousSpan,
-                    Modifiers aModifiers)
-    : InputData(PINCHGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
-      mType(aType),
-      mFocusPoint(aFocusPoint),
-      mCurrentSpan(aCurrentSpan),
-      mPreviousSpan(aPreviousSpan)
-  {
-  }
-
-  // Construct a tap gesture from a ParentLayer point.
+  // Construct a pinch gesture from a ParentLayer point.
   // mFocusPoint remains (0,0) unless it's set later.
-  PinchGestureInput(PinchGestureType aType,
-                    uint32_t aTime,
-                    TimeStamp aTimeStamp,
+  PinchGestureInput(PinchGestureType aType, uint32_t aTime, TimeStamp aTimeStamp,
                     const ParentLayerPoint& aLocalFocusPoint,
-                    float aCurrentSpan,
-                    float aPreviousSpan,
-                    Modifiers aModifiers)
-    : InputData(PINCHGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
-      mType(aType),
-      mLocalFocusPoint(aLocalFocusPoint),
-      mCurrentSpan(aCurrentSpan),
-      mPreviousSpan(aPreviousSpan)
-  {
-  }
+                    ParentLayerCoord aCurrentSpan,
+                    ParentLayerCoord aPreviousSpan, Modifiers aModifiers);
 
   bool TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform);
 
@@ -570,15 +435,13 @@ public:
   // by the hit. This is set and used by APZ.
   ParentLayerPoint mLocalFocusPoint;
 
-  // The distance in device pixels (though as a float for increased precision
-  // and because it is the distance along both the x and y axis) between the
-  // touches responsible for the pinch gesture.
-  float mCurrentSpan;
+  // The distance between the touches responsible for the pinch gesture.
+  ParentLayerCoord mCurrentSpan;
 
   // The previous |mCurrentSpan| in the PinchGestureInput preceding this one.
   // This is only really relevant during a PINCHGESTURE_SCALE because when it is
   // of this type then there must have been a history of spans.
-  float mPreviousSpan;
+  ParentLayerCoord mPreviousSpan;
 };
 
 /**
@@ -592,52 +455,29 @@ protected:
   friend mozilla::layers::PAPZCTreeManagerParent;
   friend mozilla::layers::APZCTreeManagerChild;
 
-  TapGestureInput()
-    : InputData(TAPGESTURE_INPUT)
-  {
-  }
+  TapGestureInput();
 
 public:
-  enum TapGestureType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-    TAPGESTURE_LONG,
-    TAPGESTURE_LONG_UP,
-    TAPGESTURE_UP,
-    TAPGESTURE_CONFIRMED,
-    TAPGESTURE_DOUBLE,
-    TAPGESTURE_CANCEL,
-
-    // Used as an upper bound for ContiguousEnumSerializer
-    TAPGESTURE_SENTINEL,
-  };
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    TapGestureType, (
+      TAPGESTURE_LONG,
+      TAPGESTURE_LONG_UP,
+      TAPGESTURE_UP,
+      TAPGESTURE_CONFIRMED,
+      TAPGESTURE_DOUBLE,
+      TAPGESTURE_SECOND, // See GeckoContentController::TapType::eSecondTap
+      TAPGESTURE_CANCEL
+  ));
 
   // Construct a tap gesture from a Screen point.
   // mLocalPoint remains (0,0) unless it's set later.
-  TapGestureInput(TapGestureType aType,
-                  uint32_t aTime,
-                  TimeStamp aTimeStamp,
-                  const ScreenIntPoint& aPoint,
-                  Modifiers aModifiers)
-    : InputData(TAPGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
-      mType(aType),
-      mPoint(aPoint)
-  {
-  }
+  TapGestureInput(TapGestureType aType, uint32_t aTime, TimeStamp aTimeStamp,
+                  const ScreenIntPoint& aPoint, Modifiers aModifiers);
 
   // Construct a tap gesture from a ParentLayer point.
   // mPoint remains (0,0) unless it's set later.
-  TapGestureInput(TapGestureType aType,
-                  uint32_t aTime,
-                  TimeStamp aTimeStamp,
-                  const ParentLayerPoint& aLocalPoint,
-                  Modifiers aModifiers)
-    : InputData(TAPGESTURE_INPUT, aTime, aTimeStamp, aModifiers),
-      mType(aType),
-      mLocalPoint(aLocalPoint)
-  {
-  }
+  TapGestureInput(TapGestureType aType, uint32_t aTime, TimeStamp aTimeStamp,
+                  const ParentLayerPoint& aLocalPoint, Modifiers aModifiers);
 
   bool TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform);
 
@@ -662,105 +502,34 @@ protected:
   friend mozilla::layers::PAPZCTreeManagerParent;
   friend mozilla::layers::APZCTreeManagerChild;
 
-  ScrollWheelInput()
-    : InputData(SCROLLWHEEL_INPUT)
-    , mHandledByAPZ(false)
-    , mLineOrPageDeltaX(0)
-    , mLineOrPageDeltaY(0)
-    , mScrollSeriesNumber(0)
-    , mUserDeltaMultiplierX(1.0)
-    , mUserDeltaMultiplierY(1.0)
-    , mMayHaveMomentum(false)
-    , mIsMomentum(false)
-  {}
+  ScrollWheelInput();
 
 public:
-  enum ScrollDeltaType
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    ScrollDeltaType, (
+      // There are three kinds of scroll delta modes in Gecko: "page", "line" and
+      // "pixel".
+      SCROLLDELTA_LINE,
+      SCROLLDELTA_PAGE,
+      SCROLLDELTA_PIXEL
+  ));
 
-    // There are three kinds of scroll delta modes in Gecko: "page", "line" and
-    // "pixel".
-    SCROLLDELTA_LINE,
-    SCROLLDELTA_PAGE,
-    SCROLLDELTA_PIXEL,
+  MOZ_DEFINE_ENUM_AT_CLASS_SCOPE(
+    ScrollMode, (
+      SCROLLMODE_INSTANT,
+      SCROLLMODE_SMOOTH
+    )
+  );
 
-    // Used as an upper bound for ContiguousEnumSerializer
-    SCROLLDELTA_SENTINEL,
-  };
-
-  static ScrollDeltaType
-  DeltaTypeForDeltaMode(uint32_t aDeltaMode)
-  {
-    switch (aDeltaMode) {
-      case nsIDOMWheelEvent::DOM_DELTA_LINE:
-        return SCROLLDELTA_LINE;
-      case nsIDOMWheelEvent::DOM_DELTA_PAGE:
-        return SCROLLDELTA_PAGE;
-      case nsIDOMWheelEvent::DOM_DELTA_PIXEL:
-        return SCROLLDELTA_PIXEL;
-      default:
-        MOZ_CRASH();
-    }
-    return SCROLLDELTA_LINE;
-  }
-
-  static nsIScrollableFrame::ScrollUnit
-  ScrollUnitForDeltaType(ScrollDeltaType aDeltaType)
-  {
-    switch (aDeltaType) {
-    case SCROLLDELTA_LINE:
-      return nsIScrollableFrame::LINES;
-    case SCROLLDELTA_PAGE:
-      return nsIScrollableFrame::PAGES;
-    case SCROLLDELTA_PIXEL:
-      return nsIScrollableFrame::DEVICE_PIXELS;
-    default:
-      MOZ_CRASH();
-    }
-    return nsIScrollableFrame::LINES;
-  }
-
-  enum ScrollMode
-  {
-    // Warning, this enum is serialized and sent over IPC. If you reorder, add,
-    // or remove a value, you need to update its ParamTraits<> in nsGUIEventIPC.h
-
-    SCROLLMODE_INSTANT,
-    SCROLLMODE_SMOOTH,
-
-    // Used as an upper bound for ContiguousEnumSerializer
-    SCROLLMODE_SENTINEL,
-  };
-
-  ScrollWheelInput(uint32_t aTime,
-                   TimeStamp aTimeStamp,
-                   Modifiers aModifiers,
-                   ScrollMode aScrollMode,
-                   ScrollDeltaType aDeltaType,
-                   const ScreenPoint& aOrigin,
-                   double aDeltaX,
-                   double aDeltaY,
-                   bool aAllowToOverrideSystemScrollSpeed)
-    : InputData(SCROLLWHEEL_INPUT, aTime, aTimeStamp, aModifiers)
-    , mDeltaType(aDeltaType)
-    , mScrollMode(aScrollMode)
-    , mOrigin(aOrigin)
-    , mHandledByAPZ(false)
-    , mDeltaX(aDeltaX)
-    , mDeltaY(aDeltaY)
-    , mLineOrPageDeltaX(0)
-    , mLineOrPageDeltaY(0)
-    , mScrollSeriesNumber(0)
-    , mUserDeltaMultiplierX(1.0)
-    , mUserDeltaMultiplierY(1.0)
-    , mMayHaveMomentum(false)
-    , mIsMomentum(false)
-    , mAllowToOverrideSystemScrollSpeed(aAllowToOverrideSystemScrollSpeed)
-  {}
-
+  ScrollWheelInput(uint32_t aTime, TimeStamp aTimeStamp, Modifiers aModifiers,
+                   ScrollMode aScrollMode, ScrollDeltaType aDeltaType,
+                   const ScreenPoint& aOrigin, double aDeltaX, double aDeltaY,
+                   bool aAllowToOverrideSystemScrollSpeed);
   explicit ScrollWheelInput(const WidgetWheelEvent& aEvent);
+
+  static ScrollDeltaType DeltaTypeForDeltaMode(uint32_t aDeltaMode);
+  static uint32_t DeltaModeForDeltaType(ScrollDeltaType aDeltaType);
+  static nsIScrollableFrame::ScrollUnit ScrollUnitForDeltaType(ScrollDeltaType aDeltaType);
 
   WidgetWheelEvent ToWidgetWheelEvent(nsIWidget* aWidget) const;
   bool TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform);
@@ -805,6 +574,46 @@ public:
   bool mMayHaveMomentum;
   bool mIsMomentum;
   bool mAllowToOverrideSystemScrollSpeed;
+};
+
+class KeyboardInput : public InputData
+{
+public:
+  typedef mozilla::layers::KeyboardScrollAction KeyboardScrollAction;
+
+  enum KeyboardEventType
+  {
+    KEY_DOWN,
+    KEY_PRESS,
+    KEY_UP,
+    // Any other key event such as eKeyDownOnPlugin
+    KEY_OTHER,
+
+    // Used as an upper bound for ContiguousEnumSerializer
+    KEY_SENTINEL,
+  };
+
+  explicit KeyboardInput(const WidgetKeyboardEvent& aEvent);
+
+  // Warning, this class is serialized and sent over IPC. Any change to its
+  // fields must be reflected in its ParamTraits<>, in nsGUIEventIPC.h
+
+  KeyboardEventType mType;
+  uint32_t mKeyCode;
+  uint32_t mCharCode;
+  nsTArray<ShortcutKeyCandidate> mShortcutCandidates;
+
+  bool mHandledByAPZ;
+
+  // The scroll action to perform on a layer for this keyboard input. This is
+  // only used in APZ and is NOT serialized over IPC.
+  KeyboardScrollAction mAction;
+
+protected:
+  friend mozilla::layers::PAPZCTreeManagerParent;
+  friend mozilla::layers::APZCTreeManagerChild;
+
+  KeyboardInput();
 };
 
 } // namespace mozilla

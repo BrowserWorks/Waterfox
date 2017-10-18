@@ -32,8 +32,10 @@
 
 #include "hb-ot-font.h"
 #include "hb-ot-layout.h"
+#include "hb-ot-math.h"
 #include "hb-ot-tag.h"
 #include "hb-ot-shape.h"
+#include "hb-ot-var.h"
 
 HB_BEGIN_DECLS
 

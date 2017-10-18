@@ -5,89 +5,60 @@
 
 package org.mozilla.gecko.home;
 
-import java.lang.ref.WeakReference;
-
-import org.mozilla.gecko.AboutPages;
-import org.mozilla.gecko.R;
-import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.distribution.PartnerBookmarksProviderProxy;
-import org.mozilla.gecko.favicons.LoadFaviconTask;
-import org.mozilla.gecko.reader.SavedReaderViewHelper;
-import org.mozilla.gecko.reader.ReaderModeUtils;
-import org.mozilla.gecko.Tab;
-import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.db.BrowserContract.Combined;
-import org.mozilla.gecko.db.BrowserContract.URLColumns;
-import org.mozilla.gecko.favicons.Favicons;
-import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
-import org.mozilla.gecko.widget.FaviconView;
+import java.util.concurrent.Future;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.widget.TextViewCompat;
+import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.widget.ImageView;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.ImageView;
 
-public class TwoLinePageRow extends LinearLayout
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserContract.Combined;
+import org.mozilla.gecko.db.BrowserContract.URLColumns;
+import org.mozilla.gecko.distribution.PartnerBookmarksProviderProxy;
+import org.mozilla.gecko.icons.IconDescriptor;
+import org.mozilla.gecko.icons.IconResponse;
+import org.mozilla.gecko.icons.Icons;
+import org.mozilla.gecko.reader.ReaderModeUtils;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
+import org.mozilla.gecko.widget.FaviconView;
+import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
+import org.mozilla.gecko.widget.themed.ThemedTextView;
+
+public class TwoLinePageRow extends ThemedLinearLayout
                             implements Tabs.OnTabsChangedListener {
 
     protected static final int NO_ICON = 0;
 
-    private final TextView mTitle;
-    private final TextView mUrl;
+    private final ThemedTextView mTitle;
+    private final ThemedTextView mUrl;
     private final ImageView mStatusIcon;
 
     private int mSwitchToTabIconId;
 
     private final FaviconView mFavicon;
+    private Future<IconResponse> mOngoingIconLoad;
 
     private boolean mShowIcons;
-    private int mLoadFaviconJobId = Favicons.NOT_LOADING;
-
-    // Only holds a reference to the FaviconView itself, so if the row gets
-    // discarded while a task is outstanding, we'll leak less memory.
-    private static class UpdateViewFaviconLoadedListener implements OnFaviconLoadedListener {
-        private final WeakReference<FaviconView> view;
-        public UpdateViewFaviconLoadedListener(FaviconView view) {
-            this.view = new WeakReference<FaviconView>(view);
-        }
-
-        /**
-         * Update this row's favicon.
-         * <p>
-         * This method is always invoked on the UI thread.
-         */
-        @Override
-        public void onFaviconLoaded(String url, String faviconURL, Bitmap favicon) {
-            FaviconView v = view.get();
-            if (v == null) {
-                // Guess we stuck around after the TwoLinePageRow went away.
-                return;
-            }
-
-            if (favicon == null) {
-                v.showDefaultFavicon(url);
-                return;
-            }
-
-            v.updateImage(favicon, faviconURL);
-        }
-    }
-
-    // Listener for handling Favicon loads.
-    private final OnFaviconLoadedListener mFaviconListener;
 
     // The URL for the page corresponding to this view.
     private String mPageUrl;
 
     private boolean mHasReaderCacheItem;
+
+    private TitleFormatter mTitleFormatter;
 
     public TwoLinePageRow(Context context) {
         this(context, null);
@@ -100,17 +71,16 @@ public class TwoLinePageRow extends LinearLayout
 
         LayoutInflater.from(context).inflate(R.layout.two_line_page_row, this);
         // Merge layouts lose their padding, so set it dynamically.
-        setPadding(0, 0, (int) getResources().getDimension(R.dimen.page_row_edge_padding), 0);
+        ViewCompat.setPaddingRelative(this, 0, 0, (int) getResources().getDimension(R.dimen.page_row_edge_padding), 0);
 
-        mTitle = (TextView) findViewById(R.id.title);
-        mUrl = (TextView) findViewById(R.id.url);
+        mTitle = (ThemedTextView) findViewById(R.id.title);
+        mUrl = (ThemedTextView) findViewById(R.id.url);
         mStatusIcon = (ImageView) findViewById(R.id.status_icon_bookmark);
 
         mSwitchToTabIconId = NO_ICON;
         mShowIcons = true;
 
         mFavicon = (FaviconView) findViewById(R.id.icon);
-        mFaviconListener = new UpdateViewFaviconLoadedListener(mFavicon);
     }
 
     @Override
@@ -176,7 +146,7 @@ public class TwoLinePageRow extends LinearLayout
         }
     }
 
-    private void setTitle(String text) {
+    private void setTitle(CharSequence text) {
         mTitle.setText(text);
     }
 
@@ -198,7 +168,7 @@ public class TwoLinePageRow extends LinearLayout
         }
 
         mSwitchToTabIconId = iconId;
-        mUrl.setCompoundDrawablesWithIntrinsicBounds(mSwitchToTabIconId, 0, 0, 0);
+        TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(mUrl, mSwitchToTabIconId, 0, 0, 0);
     }
 
     private void updateStatusIcon(boolean isBookmark, boolean isReaderItem) {
@@ -236,7 +206,8 @@ public class TwoLinePageRow extends LinearLayout
      * selected tab.
      */
     protected void updateDisplayedUrl() {
-        boolean isPrivate = Tabs.getInstance().getSelectedTab().isPrivate();
+        final Tab selectedTab = Tabs.getInstance().getSelectedTab();
+        final boolean isPrivate = (selectedTab != null) && (selectedTab.isPrivate());
 
         // We always want to display the underlying page url, however for readermode pages
         // we navigate to the about:reader equivalent, hence we need to use that url when finding
@@ -283,7 +254,12 @@ public class TwoLinePageRow extends LinearLayout
 
         // Use the URL instead of an empty title for consistency with the normal URL
         // bar view - this is the equivalent of getDisplayTitle() in Tab.java
-        setTitle(TextUtils.isEmpty(title) ? url : title);
+        final String titleToShow = TextUtils.isEmpty(title) ? url : title;
+        if (mTitleFormatter != null) {
+            setTitle(mTitleFormatter.format(titleToShow));
+        } else {
+            setTitle(titleToShow);
+        }
 
         // No point updating the below things if URL has not changed. Prevents evil Favicon flicker.
         if (url.equals(mPageUrl)) {
@@ -292,29 +268,44 @@ public class TwoLinePageRow extends LinearLayout
 
         // Blank the Favicon, so we don't show the wrong Favicon if we scroll and miss DB.
         mFavicon.clearImage();
-        Favicons.cancelFaviconLoad(mLoadFaviconJobId);
+
+        if (mOngoingIconLoad != null) {
+            mOngoingIconLoad.cancel(true);
+        }
 
         // Displayed RecentTabsPanel URLs may refer to pages opened in reader mode, so we
         // remove the about:reader prefix to ensure the Favicon loads properly.
         final String pageURL = ReaderModeUtils.stripAboutReaderUrl(url);
 
-        if (bookmarkId < BrowserContract.Bookmarks.FAKE_PARTNER_BOOKMARKS_START) {
-            mLoadFaviconJobId = Favicons.getSizedFavicon(
-                    getContext(),
-                    pageURL,
-                    PartnerBookmarksProviderProxy.getUriForIcon(getContext(), bookmarkId).toString(),
-                    Favicons.LoadType.PRIVILEGED,
-                    Favicons.defaultFaviconSize,
-                    // We want to load the favicon from the content provider but we do not want the
-                    // favicon loader to fallback to loading a favicon from the web using a guessed
-                    // default URL.
-                    LoadFaviconTask.FLAG_NO_DOWNLOAD_FROM_GUESSED_DEFAULT_URL,
-                    mFaviconListener);
+        if (TextUtils.isEmpty(pageURL)) {
+            // If url is empty, display the item as-is but do not load an icon if we do not have a page URL (bug 1310622)
+        } else if (bookmarkId < BrowserContract.Bookmarks.FAKE_PARTNER_BOOKMARKS_START) {
+            mOngoingIconLoad = Icons.with(getContext())
+                    .pageUrl(pageURL)
+                    .skipNetwork()
+                    .privileged(true)
+                    .icon(IconDescriptor.createGenericIcon(
+                            PartnerBookmarksProviderProxy.getUriForIcon(getContext(), bookmarkId).toString()))
+                    .build()
+                    .execute(mFavicon.createIconCallback());
         } else {
-            mLoadFaviconJobId = Favicons.getSizedFaviconForPageFromLocal(getContext(), pageURL, mFaviconListener);
+            mOngoingIconLoad = Icons.with(getContext())
+                    .pageUrl(pageURL)
+                    .skipNetwork()
+                    .build()
+                    .execute(mFavicon.createIconCallback());
+
         }
 
         updateDisplayedUrl(url, hasReaderCacheItem);
+    }
+
+    @Override
+    public void setPrivateMode(boolean isPrivate) {
+        super.setPrivateMode(isPrivate);
+
+        mTitle.setPrivateMode(isPrivate);
+        mUrl.setPrivateMode(isPrivate);
     }
 
     /**
@@ -347,5 +338,14 @@ public class TwoLinePageRow extends LinearLayout
         final boolean hasReaderCacheItem = rch.isURLCached(url);
 
         update(title, url, bookmarkId, hasReaderCacheItem);
+    }
+
+    public void setTitleFormatter(TitleFormatter formatter) {
+        mTitleFormatter = formatter;
+    }
+
+    // Use this interface to decorate content in title view.
+    interface TitleFormatter {
+        CharSequence format(@NonNull CharSequence title);
     }
 }

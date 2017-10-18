@@ -17,7 +17,6 @@
 #include "mozilla/RefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsString.h"                   // for nsAutoCString
-#include "gfxVR.h"
 
 namespace mozilla {
 namespace layers {
@@ -60,26 +59,18 @@ CanvasLayerComposite::GetLayer()
 }
 
 void
-CanvasLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+CanvasLayerComposite::SetLayerManager(HostLayerManager* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
   if (mCompositableHost && mCompositor) {
-    mCompositableHost->SetCompositor(mCompositor);
+    mCompositableHost->SetTextureSourceProvider(mCompositor);
   }
-}
-
-LayerRenderState
-CanvasLayerComposite::GetRenderState()
-{
-  if (mDestroyed || !mCompositableHost || !mCompositableHost->IsAttached()) {
-    return LayerRenderState();
-  }
-  return mCompositableHost->GetRenderState();
 }
 
 void
-CanvasLayerComposite::RenderLayer(const IntRect& aClipRect)
+CanvasLayerComposite::RenderLayer(const IntRect& aClipRect,
+                                  const Maybe<gfx::Polygon>& aGeometry)
 {
   if (!mCompositableHost || !mCompositableHost->IsAttached()) {
     return;
@@ -90,13 +81,15 @@ CanvasLayerComposite::RenderLayer(const IntRect& aClipRect)
 #ifdef MOZ_DUMP_PAINTING
   if (gfxEnv::DumpCompositorTextures()) {
     RefPtr<gfx::DataSourceSurface> surf = mCompositableHost->GetAsSurface();
-    WriteSnapshotToDumpFile(this, surf);
+    if (surf) {
+      WriteSnapshotToDumpFile(this, surf);
+    }
   }
 #endif
 
   RenderWithAllMasks(this, mCompositor, aClipRect,
                      [&](EffectChain& effectChain, const IntRect& clipRect) {
-    mCompositableHost->Composite(this, effectChain,
+    mCompositableHost->Composite(mCompositor, this, effectChain,
                           GetEffectiveOpacity(),
                           GetEffectiveTransform(),
                           GetSamplingFilter(),

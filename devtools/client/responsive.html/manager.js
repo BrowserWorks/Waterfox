@@ -4,16 +4,24 @@
 
 "use strict";
 
+const { Ci } = require("chrome");
 const promise = require("promise");
 const { Task } = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
-const { TouchEventSimulator } = require("devtools/shared/touch/simulator");
-const { getOwnerWindow } = require("sdk/tabs/utils");
-const { startup } = require("sdk/window/helpers");
+const { startup } = require("./utils/window");
 const message = require("./utils/message");
 const { swapToInnerBrowser } = require("./browser/swap");
+const { EmulationFront } = require("devtools/shared/fronts/emulation");
+const { getStr } = require("./utils/l10n");
 
 const TOOL_URL = "chrome://devtools/content/responsive.html/index.xhtml";
+
+loader.lazyRequireGetter(this, "DebuggerClient", "devtools/shared/client/main", true);
+loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
+loader.lazyRequireGetter(this, "TargetFactory", "devtools/client/framework/target", true);
+loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
+loader.lazyRequireGetter(this, "throttlingProfiles",
+  "devtools/client/shared/network-throttling-profiles");
 
 /**
  * ResponsiveUIManager is the external API for the browser UI, etc. to use when
@@ -33,14 +41,17 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    *        The main browser chrome window.
    * @param tab
    *        The browser tab.
+   * @param options
+   *        Other options associated with toggling.  Currently includes:
+   *        - `command`: Whether initiated via GCLI command bar or toolbox button
    * @return Promise
    *         Resolved when the toggling has completed.  If the UI has opened,
    *         it is resolved to the ResponsiveUI instance for this tab.  If the
    *         the UI has closed, there is no resolution value.
    */
-  toggle(window, tab) {
+  toggle(window, tab, options) {
     let action = this.isActiveForTab(tab) ? "close" : "open";
-    let completed = this[action + "IfNeeded"](window, tab);
+    let completed = this[action + "IfNeeded"](window, tab, options);
     completed.catch(console.error);
     return completed;
   },
@@ -52,13 +63,22 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    *        The main browser chrome window.
    * @param tab
    *        The browser tab.
+   * @param options
+   *        Other options associated with opening.  Currently includes:
+   *        - `command`: Whether initiated via GCLI command bar or toolbox button
    * @return Promise
    *         Resolved to the ResponsiveUI instance for this tab when opening is
    *         complete.
    */
-  openIfNeeded: Task.async(function* (window, tab) {
+  openIfNeeded: Task.async(function* (window, tab, options) {
     if (!tab.linkedBrowser.isRemoteBrowser) {
+      this.showRemoteOnlyNotification(window, tab, options);
       return promise.reject(new Error("RDM only available for remote tabs."));
+    }
+    // Remove this once we support this case in bug 1306975.
+    if (tab.linkedBrowser.hasAttribute("usercontextid")) {
+      this.showNoContainerTabsNotification(window, tab, options);
+      return promise.reject(new Error("RDM not available for container tabs."));
     }
     if (!this.isActiveForTab(tab)) {
       this.initMenuCheckListenerFor(window);
@@ -80,8 +100,10 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    *        The main browser chrome window.
    * @param tab
    *        The browser tab.
-   * @param object
-   *        Close options, which currently includes a `reason` string.
+   * @param options
+   *        Other options associated with closing.  Currently includes:
+   *        - `command`: Whether initiated via GCLI command bar or toolbox button
+   *        - `reason`: String detailing the specific cause for closing
    * @return Promise
    *         Resolved (with no value) when closing is complete.
    */
@@ -122,7 +144,7 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    * @return boolean
    */
   isActiveForWindow(window) {
-    return [...this.activeTabs.keys()].some(t => getOwnerWindow(t) === window);
+    return [...this.activeTabs.keys()].some(t => t.ownerGlobal === window);
   },
 
   /**
@@ -153,17 +175,17 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
     let completed;
     switch (command) {
       case "resize to":
-        completed = this.openIfNeeded(window, tab);
-        this.activeTabs.get(tab).setViewportSize(args.width, args.height);
+        completed = this.openIfNeeded(window, tab, { command: true });
+        this.activeTabs.get(tab).setViewportSize(args);
         break;
       case "resize on":
-        completed = this.openIfNeeded(window, tab);
+        completed = this.openIfNeeded(window, tab, { command: true });
         break;
       case "resize off":
-        completed = this.closeIfNeeded(window, tab);
+        completed = this.closeIfNeeded(window, tab, { command: true });
         break;
       case "resize toggle":
-        completed = this.toggle(window, tab);
+        completed = this.toggle(window, tab, { command: true });
         break;
       default:
     }
@@ -186,14 +208,52 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
     }
   },
 
-  setMenuCheckFor: Task.async(function* (tab, window = getOwnerWindow(tab)) {
+  setMenuCheckFor: Task.async(function* (tab, window = tab.ownerGlobal) {
     yield startup(window);
 
     let menu = window.document.getElementById("menu_responsiveUI");
     if (menu) {
       menu.setAttribute("checked", this.isActiveForTab(tab));
     }
-  })
+  }),
+
+  showRemoteOnlyNotification(window, tab, options) {
+    this.showErrorNotification(window, tab, options, getStr("responsive.remoteOnly"));
+  },
+
+  showNoContainerTabsNotification(window, tab, options) {
+    this.showErrorNotification(window, tab, options,
+                               getStr("responsive.noContainerTabs"));
+  },
+
+  showErrorNotification(window, tab, { command } = {}, msg) {
+    // Default to using the browser's per-tab notification box
+    let nbox = window.gBrowser.getNotificationBox(tab.linkedBrowser);
+
+    // If opening was initiated by GCLI command bar or toolbox button, check for an open
+    // toolbox for the tab.  If one exists, use the toolbox's notification box so that the
+    // message is placed closer to the action taken by the user.
+    if (command) {
+      let target = TargetFactory.forTab(tab);
+      let toolbox = gDevTools.getToolbox(target);
+      if (toolbox) {
+        nbox = toolbox.notificationBox;
+      }
+    }
+
+    let value = "devtools-responsive-error";
+    if (nbox.getNotificationWithValue(value)) {
+      // Notification already displayed
+      return;
+    }
+
+    nbox.appendNotification(
+       msg,
+       value,
+       null,
+       nbox.PRIORITY_CRITICAL_MEDIUM,
+       []);
+  },
 };
 
 // GCLI commands in ../responsivedesign/resize-commands.js listen for events
@@ -249,11 +309,6 @@ ResponsiveUI.prototype = {
   toolWindow: null,
 
   /**
-   * Touch event simulator.
-   */
-  touchEventSimulator: null,
-
-  /**
    * Open RDM while preserving the state of the page.  We use `swapFrameLoaders`
    * to ensure all in-page state is preserved, just like when you move a tab to
    * a new window.
@@ -263,8 +318,9 @@ ResponsiveUI.prototype = {
   init: Task.async(function* () {
     let ui = this;
 
-    // Watch for tab close so we can clean up RDM synchronously
+    // Watch for tab close and window close so we can clean up RDM synchronously
     this.tab.addEventListener("TabClose", this);
+    this.browserWindow.addEventListener("unload", this);
 
     // Swap page content from the current tab into a viewport within RDM
     this.swap = swapToInnerBrowser({
@@ -281,10 +337,16 @@ ResponsiveUI.prototype = {
     });
     yield this.swap.start();
 
+    this.tab.addEventListener("BeforeTabRemotenessChange", this);
+
     // Notify the inner browser to start the frame script
     yield message.request(this.toolWindow, "start-frame-script");
 
-    this.touchEventSimulator = new TouchEventSimulator(this.getViewportBrowser());
+    // Get the protocol ready to speak with emulation actor
+    yield this.connectToServer();
+
+    // Non-blocking message to tool UI to start any delayed init activities
+    message.post(this.toolWindow, "post-init");
   }),
 
   /**
@@ -305,23 +367,23 @@ ResponsiveUI.prototype = {
     // If our tab is about to be closed, there's not enough time to exit
     // gracefully, but that shouldn't be a problem since the tab will go away.
     // So, skip any yielding when we're about to close the tab.
-    let isTabClosing = options && options.reason == "TabClose";
+    let isWindowClosing = options && options.reason === "unload";
+    let isTabContentDestroying =
+      isWindowClosing || (options && (options.reason === "TabClose" ||
+                                      options.reason === "BeforeTabRemotenessChange"));
 
     // Ensure init has finished before starting destroy
-    if (!isTabClosing) {
+    if (!isTabContentDestroying) {
       yield this.inited;
     }
 
     this.tab.removeEventListener("TabClose", this);
+    this.tab.removeEventListener("BeforeTabRemotenessChange", this);
+    this.browserWindow.removeEventListener("unload", this);
     this.toolWindow.removeEventListener("message", this);
 
-    // Stop the touch event simulator if it was running
-    if (!isTabClosing) {
-      yield this.touchEventSimulator.stop();
-    }
-
-    // Notify the inner browser to stop the frame script
-    if (!isTabClosing) {
+    if (!isTabContentDestroying) {
+      // Notify the inner browser to stop the frame script
       yield message.request(this.toolWindow, "stop-frame-script");
     }
 
@@ -331,15 +393,36 @@ ResponsiveUI.prototype = {
     this.tab = null;
     this.inited = null;
     this.toolWindow = null;
-    this.touchEventSimulator = null;
     this.swap = null;
 
-    // Undo the swap and return the content back to a normal tab
-    swap.stop();
+    // Close the debugger client used to speak with emulation actor.
+    // The actor handles clearing any overrides itself, so it's not necessary to clear
+    // anything on shutdown client side.
+    let clientClosed = this.client.close();
+    if (!isTabContentDestroying) {
+      yield clientClosed;
+    }
+    this.client = this.emulationFront = null;
+
+    if (!isWindowClosing) {
+      // Undo the swap and return the content back to a normal tab
+      swap.stop();
+    }
 
     this.destroyed = true;
 
     return true;
+  }),
+
+  connectToServer: Task.async(function* () {
+    if (!DebuggerServer.initialized) {
+      DebuggerServer.init();
+      DebuggerServer.addBrowserActors();
+    }
+    this.client = new DebuggerClient(DebuggerServer.connectPipe());
+    yield this.client.connect();
+    let { tab } = yield this.client.getTab();
+    this.emulationFront = EmulationFront(this.client, tab);
   }),
 
   handleEvent(event) {
@@ -349,7 +432,9 @@ ResponsiveUI.prototype = {
       case "message":
         this.handleMessage(event);
         break;
+      case "BeforeTabRemotenessChange":
       case "TabClose":
+      case "unload":
         ResponsiveUIManager.closeIfNeeded(browserWindow, tab, {
           reason: event.type,
         });
@@ -358,38 +443,122 @@ ResponsiveUI.prototype = {
   },
 
   handleMessage(event) {
-    let { browserWindow, tab } = this;
-
     if (event.origin !== "chrome://devtools") {
       return;
     }
 
     switch (event.data.type) {
+      case "change-device":
+        this.onChangeDevice(event);
+        break;
+      case "change-network-throtting":
+        this.onChangeNetworkThrottling(event);
+        break;
+      case "change-pixel-ratio":
+        this.onChangePixelRatio(event);
+        break;
+      case "change-touch-simulation":
+        this.onChangeTouchSimulation(event);
+        break;
       case "content-resize":
-        let { width, height } = event.data;
-        this.emit("content-resize", {
-          width,
-          height,
-        });
+        this.onContentResize(event);
         break;
       case "exit":
-        ResponsiveUIManager.closeIfNeeded(browserWindow, tab);
+        this.onExit();
         break;
-      case "update-touch-simulation":
-        let { enabled } = event.data;
-        this.updateTouchSimulation(enabled);
+      case "remove-device-association":
+        this.onRemoveDeviceAssociation(event);
         break;
     }
   },
 
+  onChangeDevice: Task.async(function* (event) {
+    let { userAgent, pixelRatio, touch } = event.data.device;
+    yield this.updateUserAgent(userAgent);
+    yield this.updateDPPX(pixelRatio);
+    yield this.updateTouchSimulation(touch);
+    // Used by tests
+    this.emit("device-changed");
+  }),
+
+  onChangeNetworkThrottling: Task.async(function* (event) {
+    let { enabled, profile } = event.data;
+    yield this.updateNetworkThrottling(enabled, profile);
+    // Used by tests
+    this.emit("network-throttling-changed");
+  }),
+
+  onChangePixelRatio(event) {
+    let { pixelRatio } = event.data;
+    this.updateDPPX(pixelRatio);
+  },
+
+  onChangeTouchSimulation(event) {
+    let { enabled } = event.data;
+    this.updateTouchSimulation(enabled);
+  },
+
+  onContentResize(event) {
+    let { width, height } = event.data;
+    this.emit("content-resize", {
+      width,
+      height,
+    });
+  },
+
+  onExit() {
+    let { browserWindow, tab } = this;
+    ResponsiveUIManager.closeIfNeeded(browserWindow, tab);
+  },
+
+  onRemoveDeviceAssociation: Task.async(function* (event) {
+    yield this.updateUserAgent();
+    yield this.updateDPPX();
+    yield this.updateTouchSimulation();
+    // Used by tests
+    this.emit("device-removed");
+  }),
+
+  updateDPPX: Task.async(function* (dppx) {
+    if (!dppx) {
+      yield this.emulationFront.clearDPPXOverride();
+      return;
+    }
+    yield this.emulationFront.setDPPXOverride(dppx);
+  }),
+
+  updateNetworkThrottling: Task.async(function* (enabled, profile) {
+    if (!enabled) {
+      yield this.emulationFront.clearNetworkThrottling();
+      return;
+    }
+    let data = throttlingProfiles.find(({ id }) => id == profile);
+    let { download, upload, latency } = data;
+    yield this.emulationFront.setNetworkThrottling({
+      downloadThroughput: download,
+      uploadThroughput: upload,
+      latency,
+    });
+  }),
+
+  updateUserAgent: Task.async(function* (userAgent) {
+    if (!userAgent) {
+      yield this.emulationFront.clearUserAgentOverride();
+      return;
+    }
+    yield this.emulationFront.setUserAgentOverride(userAgent);
+  }),
+
   updateTouchSimulation: Task.async(function* (enabled) {
-    if (enabled) {
-      let reloadNeeded = yield this.touchEventSimulator.start();
-      if (reloadNeeded) {
-        this.getViewportBrowser().reload();
-      }
-    } else {
-      this.touchEventSimulator.stop();
+    if (!enabled) {
+      yield this.emulationFront.clearTouchEventsOverride();
+      return;
+    }
+    let reloadNeeded = yield this.emulationFront.setTouchEventsOverride(
+      Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED
+    );
+    if (reloadNeeded) {
+      this.getViewportBrowser().reload();
     }
   }),
 
@@ -401,11 +570,11 @@ ResponsiveUI.prototype = {
   },
 
   /**
-   * Helper for tests. Assumes a single viewport for now.
+   * Helper for tests, GCLI, etc. Assumes a single viewport for now.
    */
-  setViewportSize: Task.async(function* (width, height) {
+  setViewportSize: Task.async(function* (size) {
     yield this.inited;
-    this.toolWindow.setViewportSize(width, height);
+    this.toolWindow.setViewportSize(size);
   }),
 
   /**

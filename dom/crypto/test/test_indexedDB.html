@@ -7,7 +7,7 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"?>
 </head>
 <body>
-  <script type="application/javascript;version=1.8">
+  <script type="application/javascript">
     /*
      * Bug 1188750 - The WebCrypto API must ensure that NSS was initialized
      * for the current process before trying to deserialize objects like
@@ -25,10 +25,9 @@
       SpecialPowers.wrap(frame).mozbrowser = true;
       frame.src = TEST_URI;
 
-      frame.addEventListener("mozbrowsershowmodalprompt", function onPrompt(e) {
-        frame.removeEventListener("mozbrowsershowmodalprompt", onPrompt);
+      frame.addEventListener("mozbrowsershowmodalprompt", function(e) {
         cb(frame, e.detail.message);
-      });
+      }, {once: true});
 
       document.body.appendChild(frame);
     }
@@ -52,7 +51,8 @@
       SpecialPowers.addPermission("browser", true, document);
       SpecialPowers.pushPrefEnv({set: [
         ["dom.ipc.browser_frames.oop_by_default", true],
-        ["dom.mozBrowserFramesEnabled", true]
+        ["dom.mozBrowserFramesEnabled", true],
+        ["network.disable.ipc.security", true]
       ]}, runTest);
     });
   </script>

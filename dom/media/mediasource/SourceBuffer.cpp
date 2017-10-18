@@ -23,15 +23,21 @@
 #include <time.h>
 #include "TimeUnits.h"
 
+// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
+// GetTickCount() and conflicts with MediaDecoder::GetCurrentTime implementation.
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
 struct JSContext;
 class JSObject;
 
 extern mozilla::LogModule* GetMediaSourceLog();
 extern mozilla::LogModule* GetMediaSourceAPILog();
 
-#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
-#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
+#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.OriginalString().Data(), __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
@@ -44,7 +50,7 @@ void
 SourceBuffer::SetMode(SourceBufferAppendMode aMode, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SetMode(aMode=%d)", aMode);
+  MSE_API("SetMode(aMode=%" PRIu32 ")", static_cast<uint32_t>(aMode));
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -206,6 +212,7 @@ void
 SourceBuffer::AbortBufferAppend()
 {
   if (mUpdating) {
+    mCompletionPromise.DisconnectIfExists();
     if (mPendingAppend.Exists()) {
       mPendingAppend.Disconnect();
       mTrackBuffersManager->AbortAppendData();
@@ -252,15 +259,15 @@ SourceBuffer::RangeRemoval(double aStart, double aEnd)
   StartUpdating();
 
   RefPtr<SourceBuffer> self = this;
-  mPendingRemoval.Begin(
     mTrackBuffersManager->RangeRemoval(TimeUnit::FromSeconds(aStart),
                                        TimeUnit::FromSeconds(aEnd))
-      ->Then(AbstractThread::MainThread(), __func__,
+      ->Then(mAbstractMainThread, __func__,
              [self] (bool) {
                self->mPendingRemoval.Complete();
                self->StopUpdating();
              },
-             []() { MOZ_ASSERT(false); }));
+             []() { MOZ_ASSERT(false); })
+      ->Track(mPendingRemoval);
 }
 
 void
@@ -291,11 +298,13 @@ SourceBuffer::Ended()
   mTrackBuffersManager->Ended();
 }
 
-SourceBuffer::SourceBuffer(MediaSource* aMediaSource, const nsACString& aType)
+SourceBuffer::SourceBuffer(MediaSource* aMediaSource,
+                           const MediaContainerType& aType)
   : DOMEventTargetHelper(aMediaSource->GetParentObject())
   , mMediaSource(aMediaSource)
-  , mCurrentAttributes(aType.LowerCaseEqualsLiteral("audio/mpeg") ||
-                       aType.LowerCaseEqualsLiteral("audio/aac"))
+  , mAbstractMainThread(aMediaSource->AbstractMainThread())
+  , mCurrentAttributes(aType.Type() == MEDIAMIMETYPE("audio/mpeg") ||
+                       aType.Type() == MEDIAMIMETYPE("audio/aac"))
   , mUpdating(false)
   , mActive(false)
   , mType(aType)
@@ -305,9 +314,6 @@ SourceBuffer::SourceBuffer(MediaSource* aMediaSource, const nsACString& aType)
 
   mTrackBuffersManager =
     new TrackBuffersManager(aMediaSource->GetDecoder(), aType);
-
-  // Now that we know what type we're dealing with, enable dormant as needed.
-  aMediaSource->GetDecoder()->NotifyDormantSupported(Preferences::GetBool("media.decoder.heuristic.dormant.enabled", false));
 
   MSE_DEBUG("Create mTrackBuffersManager=%p",
             mTrackBuffersManager.get());
@@ -354,7 +360,7 @@ SourceBuffer::QueueAsyncSimpleEvent(const char* aName)
 {
   MSE_DEBUG("Queuing event '%s'", aName);
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<SourceBuffer>(this, aName);
-  NS_DispatchToMainThread(event, NS_DISPATCH_NORMAL);
+  mAbstractMainThread->Dispatch(event.forget());
 }
 
 void
@@ -412,14 +418,15 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
   }
   StartUpdating();
 
-  mPendingAppend.Begin(mTrackBuffersManager->AppendData(data, mCurrentAttributes)
-                       ->Then(AbstractThread::MainThread(), __func__, this,
-                              &SourceBuffer::AppendDataCompletedWithSuccess,
-                              &SourceBuffer::AppendDataErrored));
+  mTrackBuffersManager->AppendData(data.forget(), mCurrentAttributes)
+    ->Then(mAbstractMainThread, __func__, this,
+           &SourceBuffer::AppendDataCompletedWithSuccess,
+           &SourceBuffer::AppendDataErrored)
+    ->Track(mPendingAppend);
 }
 
 void
-SourceBuffer::AppendDataCompletedWithSuccess(SourceBufferTask::AppendBufferResult aResult)
+SourceBuffer::AppendDataCompletedWithSuccess(const SourceBufferTask::AppendBufferResult& aResult)
 {
   MOZ_ASSERT(mUpdating);
   mPendingAppend.Complete();
@@ -427,42 +434,52 @@ SourceBuffer::AppendDataCompletedWithSuccess(SourceBufferTask::AppendBufferResul
   if (aResult.first()) {
     if (!mActive) {
       mActive = true;
-      mMediaSource->SourceBufferIsActive(this);
+      MSE_DEBUG("Init segment received");
+      RefPtr<SourceBuffer> self = this;
+      mMediaSource->SourceBufferIsActive(this)
+        ->Then(mAbstractMainThread, __func__,
+               [self, this]() {
+                 MSE_DEBUG("Complete AppendBuffer operation");
+                 mCompletionPromise.Complete();
+                 StopUpdating();
+               })
+        ->Track(mCompletionPromise);
     }
   }
   if (mActive) {
-    // Tell our parent decoder that we have received new data.
+    // Tell our parent decoder that we have received new data
+    // and send progress event.
     mMediaSource->GetDecoder()->NotifyDataArrived();
-    // Send progress event.
-    mMediaSource->GetDecoder()->NotifyBytesDownloaded();
   }
 
   mCurrentAttributes = aResult.second();
 
   CheckEndTime();
 
-  StopUpdating();
+  if (!mCompletionPromise.Exists()) {
+    StopUpdating();
+  }
 }
 
 void
-SourceBuffer::AppendDataErrored(nsresult aError)
+SourceBuffer::AppendDataErrored(const MediaResult& aError)
 {
   MOZ_ASSERT(mUpdating);
   mPendingAppend.Complete();
 
-  switch (aError) {
-    case NS_ERROR_ABORT:
+  switch (aError.Code()) {
+    case NS_ERROR_DOM_MEDIA_CANCELED:
       // Nothing further to do as the trackbuffer has been shutdown.
       // or append was aborted and abort() has handled all the events.
       break;
     default:
-      AppendError(true);
+      AppendError(aError);
       break;
   }
 }
 
 void
-SourceBuffer::AppendError(bool aDecoderError)
+SourceBuffer::AppendError(const MediaResult& aDecodeError)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -473,12 +490,9 @@ SourceBuffer::AppendError(bool aDecoderError)
   QueueAsyncSimpleEvent("error");
   QueueAsyncSimpleEvent("updateend");
 
-  if (aDecoderError) {
-    Optional<MediaSourceEndOfStreamError> decodeError(
-      MediaSourceEndOfStreamError::Decode);
-    ErrorResult dummy;
-    mMediaSource->EndOfStream(decodeError, dummy);
-  }
+  MOZ_ASSERT(NS_FAILED(aDecodeError));
+
+  mMediaSource->EndOfStream(aDecodeError);
 }
 
 already_AddRefed<MediaByteBuffer>
@@ -551,6 +565,15 @@ SourceBuffer::HighestStartTime()
   MOZ_ASSERT(NS_IsMainThread());
   return mTrackBuffersManager
          ? mTrackBuffersManager->HighestStartTime().ToSeconds()
+         : 0.0;
+}
+
+double
+SourceBuffer::HighestEndTime()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  return mTrackBuffersManager
+         ? mTrackBuffersManager->HighestEndTime().ToSeconds()
          : 0.0;
 }
 

@@ -9,8 +9,9 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 
-  <script type="text/javascript;version=1.7">
-  function testSteps()
+  <script type="text/javascript">
+  /* import-globals-from helpers.js */
+  function* testSteps()
   {
     is("open" in indexedDB, true, "open() defined");
     is("openForPrincipal" in indexedDB, false, "openForPrincipal() not defined");
@@ -19,10 +20,9 @@
     is("deleteForPrincipal" in indexedDB, false, "deleteForPrincipal() not defined");
 
     finishTest();
-    yield undefined;
   }
   </script>
-  <script type="text/javascript;version=1.7" src="helpers.js"></script>
+  <script type="text/javascript" src="helpers.js"></script>
 
 </head>
 

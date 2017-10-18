@@ -16,7 +16,7 @@
  *  synthesizeNativeKey
  *  synthesizeMouseExpectEvent
  *  synthesizeKeyExpectEvent
- *  synthesizeNativeClick
+ *  synthesizeNativeOSXClick
  *
  *  When adding methods to this file, please add a performance test for it.
  */
@@ -360,18 +360,41 @@ function synthesizeMouseAtPoint(left, top, aEvent, aWindow = window)
     var clickCount = aEvent.clickCount || 1;
     var modifiers = _parseModifiers(aEvent, aWindow);
     var pressure = ("pressure" in aEvent) ? aEvent.pressure : 0;
-    var inputSource = ("inputSource" in aEvent) ? aEvent.inputSource : 0;
-    var synthesized = ("isSynthesized" in aEvent) ? aEvent.isSynthesized : true;
 
+    // Default source to mouse.
+    var inputSource = ("inputSource" in aEvent) ? aEvent.inputSource :
+                                                  _EU_Ci.nsIDOMMouseEvent.MOZ_SOURCE_MOUSE;
+    // Compute a pointerId if needed.
+    var id;
+    if ("id" in aEvent) {
+      id = aEvent.id;
+    } else {
+      var isFromPen = inputSource === _EU_Ci.nsIDOMMouseEvent.MOZ_SOURCE_PEN;
+      id = isFromPen ? utils.DEFAULT_PEN_POINTER_ID :
+                       utils.DEFAULT_MOUSE_POINTER_ID;
+    }
+
+    var isDOMEventSynthesized =
+      ("isSynthesized" in aEvent) ? aEvent.isSynthesized : true;
+    var isWidgetEventSynthesized =
+      ("isWidgetEventSynthesized" in aEvent) ? aEvent.isWidgetEventSynthesized : false;
+    var buttons = ("buttons" in aEvent) ? aEvent.buttons :
+                                          utils.MOUSE_BUTTONS_NOT_SPECIFIED;
     if (("type" in aEvent) && aEvent.type) {
       defaultPrevented = utils.sendMouseEvent(aEvent.type, left, top, button,
                                               clickCount, modifiers, false,
                                               pressure, inputSource,
-                                              synthesized);
+                                              isDOMEventSynthesized,
+                                              isWidgetEventSynthesized,
+                                              buttons, id);
     }
     else {
-      utils.sendMouseEvent("mousedown", left, top, button, clickCount, modifiers, false, pressure, inputSource);
-      utils.sendMouseEvent("mouseup", left, top, button, clickCount, modifiers, false, pressure, inputSource);
+      utils.sendMouseEvent("mousedown", left, top, button, clickCount, modifiers,
+                           false, pressure, inputSource, isDOMEventSynthesized,
+                           isWidgetEventSynthesized, buttons, id);
+      utils.sendMouseEvent("mouseup", left, top, button, clickCount, modifiers,
+                           false, pressure, inputSource, isDOMEventSynthesized,
+                           isWidgetEventSynthesized, buttons, id);
     }
   }
 
@@ -383,7 +406,7 @@ function synthesizeTouchAtPoint(left, top, aEvent, aWindow = window)
   var utils = _getDOMWindowUtils(aWindow);
 
   if (utils) {
-    var id = aEvent.id || 0;
+    var id = aEvent.id || utils.DEFAULT_TOUCH_POINTER_ID;
     var rx = aEvent.rx || 1;
     var ry = aEvent.rx || 1;
     var angle = aEvent.angle || 0;
@@ -590,14 +613,14 @@ function sendWheelAndPaint(aTarget, aOffsetX, aOffsetY, aEvent, aCallback, aWind
       }
 
       var waitForPaints = function () {
-        SpecialPowers.Services.obs.removeObserver(waitForPaints, "apz-repaints-flushed", false);
+        SpecialPowers.Services.obs.removeObserver(waitForPaints, "apz-repaints-flushed");
         aWindow.waitForAllPaintsFlushed(function() {
           utils.restoreNormalRefresh();
           aCallback();
         });
       }
 
-      SpecialPowers.Services.obs.addObserver(waitForPaints, "apz-repaints-flushed", false);
+      SpecialPowers.Services.obs.addObserver(waitForPaints, "apz-repaints-flushed");
       if (!utils.flushApzRepaints(aWindow)) {
         waitForPaints();
       }
@@ -608,6 +631,31 @@ function sendWheelAndPaint(aTarget, aOffsetX, aOffsetY, aEvent, aCallback, aWind
   // the other wheel events, including legacy events.
   SpecialPowers.addSystemEventListener(aWindow, "wheel", onwheel);
   synthesizeWheel(aTarget, aOffsetX, aOffsetY, aEvent, aWindow);
+}
+
+function synthesizeNativeTapAtCenter(aTarget, aLongTap = false, aCallback = null, aWindow = window) {
+  let rect = aTarget.getBoundingClientRect();
+  return synthesizeNativeTap(aTarget, rect.width / 2, rect.height / 2, aLongTap, aCallback, aWindow);
+}
+
+function synthesizeNativeTap(aTarget, aOffsetX, aOffsetY, aLongTap = false, aCallback = null, aWindow = window) {
+  let utils = _getDOMWindowUtils(aWindow);
+  if (!utils)
+    return;
+
+  let scale = utils.screenPixelsPerCSSPixel;
+  let rect = aTarget.getBoundingClientRect();
+  let x = (aWindow.mozInnerScreenX + rect.left + aOffsetX) * scale;
+  let y = (aWindow.mozInnerScreenY + rect.top + aOffsetY) * scale;
+
+  let observer = {
+    observe: (subject, topic, data) => {
+      if (aCallback && topic == "mouseevent") {
+        aCallback(data);
+      }
+    }
+  };
+  utils.sendNativeTouchTap(x, y, aLongTap, observer);
 }
 
 function synthesizeNativeMouseMove(aTarget, aOffsetX, aOffsetY, aCallback, aWindow = window) {
@@ -745,10 +793,11 @@ function _computeKeyCodeFromChar(aChar)
  *             .keyCode value is initialized with this value.
  *
  * aWindow is optional, and defaults to the current window object.
+ * aCallback is optional, use the callback for receiving notifications of TIP.
  */
-function synthesizeKey(aKey, aEvent, aWindow = window)
+function synthesizeKey(aKey, aEvent, aWindow = window, aCallback)
 {
-  var TIP = _getTIP(aWindow);
+  var TIP = _getTIP(aWindow, aCallback);
   if (!TIP) {
     return;
   }
@@ -862,10 +911,14 @@ const KEYBOARD_LAYOUT_HEBREW =
   { name: "Hebrew",             Mac: 9,    Win: 0x0000040D };
 const KEYBOARD_LAYOUT_JAPANESE =
   { name: "Japanese",           Mac: null, Win: 0x00000411 };
+const KEYBOARD_LAYOUT_KHMER =
+  { name: "Khmer",              Mac: null, Win: 0x00000453 }; // available on Win7 or later.
 const KEYBOARD_LAYOUT_LITHUANIAN =
   { name: "Lithuanian",         Mac: 10,   Win: 0x00010427 };
 const KEYBOARD_LAYOUT_NORWEGIAN =
   { name: "Norwegian",          Mac: 11,   Win: 0x00000414 };
+const KEYBOARD_LAYOUT_RUSSIAN_MNEMONIC =
+  { name: "Russian - Mnemonic", Mac: null, Win: 0x00020419 }; // available on Win8 or later.
 const KEYBOARD_LAYOUT_SPANISH =
   { name: "Spanish",            Mac: 12,   Win: 0x0000040A };
 const KEYBOARD_LAYOUT_SWEDISH =
@@ -953,7 +1006,7 @@ function _expectEvent(aExpectedTarget, aExpectedEvent, aTestName)
     _gSeenEvent = true;
   };
 
-  aExpectedTarget.addEventListener(type, eventHandler, false);
+  aExpectedTarget.addEventListener(type, eventHandler);
   return eventHandler;
 }
 
@@ -966,7 +1019,7 @@ function _checkExpectedEvent(aExpectedTarget, aExpectedEvent, aEventHandler, aTe
   if (aEventHandler) {
     var expectEvent = (aExpectedEvent.charAt(0) != "!");
     var type = expectEvent ? aExpectedEvent : aExpectedEvent.substring(1);
-    aExpectedTarget.removeEventListener(type, aEventHandler, false);
+    aExpectedTarget.removeEventListener(type, aEventHandler);
     var desc = type + " event";
     if (!expectEvent)
       desc += " not";
@@ -1801,7 +1854,10 @@ function synthesizeDragStart(element, expectedDragData, aWindow, x, y)
   var result = "trapDrag was not called";
   var trapDrag = function(event) {
     try {
-      var dataTransfer = event.dataTransfer;
+      // We must wrap only in plain mochitests, not chrome
+      var c = Object.getOwnPropertyDescriptor(window, 'Components');
+      var dataTransfer = c.value && !c.writable
+        ? event.dataTransfer : SpecialPowers.wrap(event.dataTransfer);
       result = null;
       if (!dataTransfer)
         throw "no dataTransfer";
@@ -1830,13 +1886,297 @@ function synthesizeDragStart(element, expectedDragData, aWindow, x, y)
     event.preventDefault();
     event.stopPropagation();
   }
-  aWindow.addEventListener("dragstart", trapDrag, false);
+  aWindow.addEventListener("dragstart", trapDrag);
   synthesizeMouse(element, x, y, { type: "mousedown" }, aWindow);
   x += step; y += step;
   synthesizeMouse(element, x, y, { type: "mousemove" }, aWindow);
   x += step; y += step;
   synthesizeMouse(element, x, y, { type: "mousemove" }, aWindow);
-  aWindow.removeEventListener("dragstart", trapDrag, false);
+  aWindow.removeEventListener("dragstart", trapDrag);
   synthesizeMouse(element, x, y, { type: "mouseup" }, aWindow);
   return result;
 }
+
+/**
+ * Synthesize a query text rect event.
+ *
+ * @param aOffset  The character offset.  0 means the first character in the
+ *                 selection root.
+ * @param aLength  The length of the text.  If the length is too long,
+ *                 the extra length is ignored.
+ * @param aWindow  Optional (If null, current |window| will be used)
+ * @return         An nsIQueryContentEventResult object.  If this failed,
+ *                 the result might be null.
+ */
+function synthesizeQueryTextRect(aOffset, aLength, aWindow)
+{
+  var utils = _getDOMWindowUtils(aWindow);
+  if (!utils) {
+    return nullptr;
+  }
+  return utils.sendQueryContentEvent(utils.QUERY_TEXT_RECT,
+                                     aOffset, aLength, 0, 0,
+                                     QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK);
+}
+
+/**
+ * Synthesize a query text rect array event.
+ *
+ * @param aOffset  The character offset.  0 means the first character in the
+ *                 selection root.
+ * @param aLength  The length of the text.  If the length is too long,
+ *                 the extra length is ignored.
+ * @param aWindow  Optional (If null, current |window| will be used)
+ * @return         An nsIQueryContentEventResult object.  If this failed,
+ *                 the result might be null.
+ */
+function synthesizeQueryTextRectArray(aOffset, aLength, aWindow)
+{
+  var utils = _getDOMWindowUtils(aWindow);
+  if (!utils) {
+    return nullptr;
+  }
+  return utils.sendQueryContentEvent(utils.QUERY_TEXT_RECT_ARRAY,
+                                     aOffset, aLength, 0, 0,
+                                     QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK);
+}
+
+/**
+ * Synthesize a query editor rect event.
+ *
+ * @param aWindow  Optional (If null, current |window| will be used)
+ * @return         An nsIQueryContentEventResult object.  If this failed,
+ *                 the result might be null.
+ */
+function synthesizeQueryEditorRect(aWindow)
+{
+  var utils = _getDOMWindowUtils(aWindow);
+  if (!utils) {
+    return nullptr;
+  }
+  return utils.sendQueryContentEvent(utils.QUERY_EDITOR_RECT, 0, 0, 0, 0,
+                                     QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK);
+}
+
+/**
+ * Synthesize a character at point event.
+ *
+ * @param aX, aY   The offset in the client area of the DOM window.
+ * @param aWindow  Optional (If null, current |window| will be used)
+ * @return         An nsIQueryContentEventResult object.  If this failed,
+ *                 the result might be null.
+ */
+function synthesizeCharAtPoint(aX, aY, aWindow)
+{
+  var utils = _getDOMWindowUtils(aWindow);
+  if (!utils) {
+    return nullptr;
+  }
+  return utils.sendQueryContentEvent(utils.QUERY_CHARACTER_AT_POINT,
+                                     0, 0, aX, aY,
+                                     QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK);
+}
+
+/**
+ * INTERNAL USE ONLY
+ * Create an event object to pass to sendDragEvent.
+ *
+ * @param aType          The string represents drag event type.
+ * @param aDestElement   The element to fire the drag event, used to calculate
+ *                       screenX/Y and clientX/Y.
+ * @param aDestWindow    Optional; Defaults to the current window object.
+ * @param aDataTransfer  dataTransfer for current drag session.
+ * @param aDragEvent     The object contains properties to override the event
+ *                       object
+ * @return               An object to pass to sendDragEvent.
+ */
+function createDragEventObject(aType, aDestElement, aDestWindow, aDataTransfer,
+                               aDragEvent)
+{
+  var destRect = aDestElement.getBoundingClientRect();
+  var destClientX = destRect.left + destRect.width / 2;
+  var destClientY = destRect.top + destRect.height / 2;
+  var destScreenX = aDestWindow.mozInnerScreenX + destClientX;
+  var destScreenY = aDestWindow.mozInnerScreenY + destClientY;
+  if ("clientX" in aDragEvent && !("screenX" in aDragEvent)) {
+    aDragEvent.screenX = aDestWindow.mozInnerScreenX + aDragEvent.clientX;
+  }
+  if ("clientY" in aDragEvent && !("screenY" in aDragEvent)) {
+    aDragEvent.screenY = aDestWindow.mozInnerScreenY + aDragEvent.clientY;
+  }
+  return Object.assign({ type: aType,
+                         screenX: destScreenX, screenY: destScreenY,
+                         clientX: destClientX, clientY: destClientY,
+                         dataTransfer: aDataTransfer }, aDragEvent);
+}
+
+/**
+ * Emulate a event sequence of dragstart, dragenter, and dragover.
+ *
+ * @param aSrcElement   The element to use to start the drag.
+ * @param aDestElement  The element to fire the dragover, dragenter events
+ * @param aDragData     The data to supply for the data transfer.
+ *                      This data is in the format:
+ *                        [ [ {type: value, data: value}, ...], ... ]
+ *                      Pass null to avoid modifying dataTransfer.
+ * @param aDropEffect   The drop effect to set during the dragstart event, or
+ *                      'move' if null.
+ * @param aWindow       Optional; Defaults to the current window object.
+ * @param aDestWindow   Optional; Defaults to aWindow.
+ *                      Used when aDestElement is in a different window than
+ *                      aSrcElement.
+ * @param aDragEvent    Optional; Defaults to empty object. Overwrites an object
+ *                      passed to sendDragEvent.
+ * @return              A two element array, where the first element is the
+ *                      value returned from sendDragEvent for
+ *                      dragover event, and the second element is the
+ *                      dataTransfer for the current drag session.
+ */
+function synthesizeDragOver(aSrcElement, aDestElement, aDragData, aDropEffect, aWindow, aDestWindow, aDragEvent={})
+{
+  if (!aWindow) {
+    aWindow = window;
+  }
+  if (!aDestWindow) {
+    aDestWindow = aWindow;
+  }
+
+  var dataTransfer;
+  var trapDrag = function(event) {
+    dataTransfer = event.dataTransfer;
+    if (aDragData) {
+      for (var i = 0; i < aDragData.length; i++) {
+        var item = aDragData[i];
+        for (var j = 0; j < item.length; j++) {
+          dataTransfer.mozSetDataAt(item[j].type, item[j].data, i);
+        }
+      }
+    }
+    dataTransfer.dropEffect = aDropEffect || "move";
+    event.preventDefault();
+  };
+
+  // need to use real mouse action
+  aWindow.addEventListener("dragstart", trapDrag, true);
+  synthesizeMouseAtCenter(aSrcElement, { type: "mousedown" }, aWindow);
+
+  var rect = aSrcElement.getBoundingClientRect();
+  var x = rect.width / 2;
+  var y = rect.height / 2;
+  synthesizeMouse(aSrcElement, x, y, { type: "mousemove" }, aWindow);
+  synthesizeMouse(aSrcElement, x+10, y+10, { type: "mousemove" }, aWindow);
+  aWindow.removeEventListener("dragstart", trapDrag, true);
+
+  var event = createDragEventObject("dragenter", aDestElement, aDestWindow,
+                                    dataTransfer, aDragEvent);
+  sendDragEvent(event, aDestElement, aDestWindow);
+
+  event = createDragEventObject("dragover", aDestElement, aDestWindow,
+                                dataTransfer, aDragEvent);
+  var result = sendDragEvent(event, aDestElement, aDestWindow);
+
+  return [result, dataTransfer];
+}
+
+/**
+ * Emulate the drop event and mouseup event.
+ * This should be called after synthesizeDragOver.
+ *
+ * @param aResult        The first element of the array returned from
+ *                       synthesizeDragOver.
+ * @param aDataTransfer  The second element of the array returned from
+ *                       synthesizeDragOver.
+ * @param aDestElement   The element to fire the drop event.
+ * @param aDestWindow    Optional; Defaults to the current window object.
+ * @param aDragEvent     Optional; Defaults to empty object. Overwrites an
+ *                       object passed to sendDragEvent.
+ * @return               "none" if aResult is true,
+ *                       aDataTransfer.dropEffect otherwise.
+ */
+function synthesizeDropAfterDragOver(aResult, aDataTransfer, aDestElement, aDestWindow, aDragEvent={})
+{
+  if (!aDestWindow) {
+    aDestWindow = window;
+  }
+
+  var effect = aDataTransfer.dropEffect;
+  var event;
+
+  if (aResult) {
+    effect = "none";
+  } else if (effect != "none") {
+    event = createDragEventObject("drop", aDestElement, aDestWindow,
+                                  aDataTransfer, aDragEvent);
+    sendDragEvent(event, aDestElement, aDestWindow);
+  }
+
+  synthesizeMouseAtCenter(aDestElement, { type: "mouseup" }, aDestWindow);
+
+  return effect;
+}
+
+/**
+ * Emulate a drag and drop by emulating a dragstart and firing events dragenter,
+ * dragover, and drop.
+ *
+ * @param aSrcElement   The element to use to start the drag.
+ * @param aDestElement  The element to fire the dragover, dragenter events
+ * @param aDragData     The data to supply for the data transfer.
+ *                      This data is in the format:
+ *                        [ [ {type: value, data: value}, ...], ... ]
+ *                      Pass null to avoid modifying dataTransfer.
+ * @param aDropEffect   The drop effect to set during the dragstart event, or
+ *                      'move' if null.
+ * @param aWindow       Optional; Defaults to the current window object.
+ * @param aDestWindow   Optional; Defaults to aWindow.
+ *                      Used when aDestElement is in a different window than
+ *                      aSrcElement.
+ * @param aDragEvent    Optional; Defaults to empty object. Overwrites an object
+ *                      passed to sendDragEvent.
+ * @return              The drop effect that was desired.
+ */
+function synthesizeDrop(aSrcElement, aDestElement, aDragData, aDropEffect, aWindow, aDestWindow, aDragEvent={})
+{
+  if (!aWindow) {
+    aWindow = window;
+  }
+  if (!aDestWindow) {
+    aDestWindow = aWindow;
+  }
+
+  var ds = _EU_Cc["@mozilla.org/widget/dragservice;1"]
+           .getService(_EU_Ci.nsIDragService);
+
+  ds.startDragSession();
+
+  try {
+    var [result, dataTransfer] = synthesizeDragOver(aSrcElement, aDestElement,
+                                                    aDragData, aDropEffect,
+                                                    aWindow, aDestWindow,
+                                                    aDragEvent);
+    return synthesizeDropAfterDragOver(result, dataTransfer, aDestElement,
+                                       aDestWindow, aDragEvent);
+  } finally {
+    ds.endDragSession(true, _parseModifiers(aDragEvent));
+  }
+}
+
+var PluginUtils =
+{
+  withTestPlugin : function(callback)
+  {
+    var ph = _EU_Cc["@mozilla.org/plugin/host;1"]
+             .getService(_EU_Ci.nsIPluginHost);
+    var tags = ph.getPluginTags();
+
+    // Find the test plugin
+    for (var i = 0; i < tags.length; i++) {
+      if (tags[i].name == "Test Plug-in") {
+        callback(tags[i]);
+        return true;
+      }
+    }
+    todo(false, "Need a test plugin on this platform");
+    return false;
+  }
+};

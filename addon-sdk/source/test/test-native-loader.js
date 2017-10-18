@@ -9,7 +9,6 @@ var {
 var { readURI } = require('sdk/net/url');
 var { all } = require('sdk/core/promise');
 var { before, after } = require('sdk/test/utils');
-var prefs = require('preferences/service');
 var testOptions = require('@test/options');
 
 var root = module.uri.substr(0, module.uri.lastIndexOf('/'))
@@ -51,10 +50,6 @@ let variants = [
     },
   },
 ];
-
-if (prefs.get("extensions.sdk.loader.useFallback.50", false))
-  // This actually fails with the old loader code.
-  variants.pop();
 
 let fixtures = [
   'native-addon-test',
@@ -114,35 +109,6 @@ for (let variant of variants) {
     loadAddon('/native-addons/native-addon-test/')
   };
   */
-
-  exports[`test native Loader with mappings (${variant.description})`] = function (assert, done) {
-    all([
-      getJSON('/fixtures/native-addon-test/expectedmap.json'),
-      getJSON('/fixtures/native-addon-test/package.json')
-    ]).then(([expectedMap, manifest]) => {
-
-      // Override dummy module and point it to `test-math` to see if the
-      // require is pulling from the mapping
-      expectedMap['./index.js']['./dir/dummy'] = './dir/a.js';
-
-      let rootURI = variant.getRootURI('native-addon-test');
-      let loader = Loader({
-        paths: makePaths(rootURI),
-        rootURI: rootURI,
-        manifest: manifest,
-        requireMap: expectedMap,
-        isNative: true
-      });
-
-      let program = main(loader);
-      assert.equal(program.dummyModule, 'dir/a',
-        'The lookup uses the information given in the mapping');
-
-      testLoader(program, assert);
-      unload(loader);
-      done();
-    }).then(null, (reason) => console.error(reason));
-  };
 
   exports[`test native Loader overrides (${variant.description})`] = function*(assert) {
     const expectedKeys = Object.keys(require("sdk/io/fs")).join(", ");
@@ -271,7 +237,7 @@ for (let variant of variants) {
       testLoader(program, assert);
       unload(loader);
       done();
-    }).then(null, (reason) => console.error(reason));
+    }).catch((reason) => console.error(reason));
   };
 
   exports[`test require#resolve with relative, dependencies (${variant.description})`] = function(assert, done) {
@@ -299,7 +265,7 @@ for (let variant of variants) {
 
       unload(loader);
       done();
-    }).then(null, (reason) => console.error(reason));
+    }).catch((reason) => console.error(reason));
   };
 }
 
@@ -343,7 +309,7 @@ exports['test JSM loading'] = function (assert, done) {
       assert.equal(jsabsolute, 30, 'JS files resolved from full resource:// work');
     }).then(done, console.error);
 
-  }).then(null, console.error);
+  }).catch(console.error);
 };
 
 function testLoader (program, assert) {
@@ -422,7 +388,7 @@ function loadAddon (uri, map) {
       }
     });
     let program = main(loader);
-  }).then(null, console.error);
+  }).catch(console.error);
 }
 
 require('sdk/test').run(exports);

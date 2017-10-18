@@ -37,8 +37,6 @@ mozilla::LazyLogModule gMediaParentLog("MediaParent");
 namespace mozilla {
 namespace media {
 
-static Parent<PMediaParent>* sIPCServingParent;
-
 static OriginKeyStore* sOriginKeyStore = nullptr;
 
 class OriginKeyStore : public nsISupports
@@ -64,17 +62,21 @@ class OriginKeyStore : public nsISupports
     OriginKeysTable() : mPersistCount(0) {}
 
     nsresult
-    GetOriginKey(const nsACString& aOrigin, nsCString& aResult, bool aPersist = false)
+    GetPrincipalKey(const ipc::PrincipalInfo& aPrincipalInfo,
+                    nsCString& aResult, bool aPersist = false)
     {
+      nsAutoCString principalString;
+      PrincipalInfoToString(aPrincipalInfo, principalString);
+
       OriginKey* key;
-      if (!mKeys.Get(aOrigin, &key)) {
+      if (!mKeys.Get(principalString, &key)) {
         nsCString salt; // Make a new one
         nsresult rv = GenerateRandomName(salt, key->EncodedLength);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return rv;
         }
         key = new OriginKey(salt);
-        mKeys.Put(aOrigin, key);
+        mKeys.Put(principalString, key);
       }
       if (aPersist && !key->mSecondsStamp) {
         key->mSecondsStamp = PR_Now() / PR_USEC_PER_SEC;
@@ -91,8 +93,8 @@ class OriginKeyStore : public nsISupports
       for (auto iter = mKeys.Iter(); !iter.Done(); iter.Next()) {
         nsAutoPtr<OriginKey>& originKey = iter.Data();
         LOG((((originKey->mSecondsStamp >= since.mSecondsStamp)?
-              "%s: REMOVE %lld >= %lld" :
-              "%s: KEEP   %lld < %lld"),
+              "%s: REMOVE %" PRId64 " >= %" PRId64 :
+              "%s: KEEP   %" PRId64 " < %" PRId64),
               __FUNCTION__, originKey->mSecondsStamp, since.mSecondsStamp));
 
         if (originKey->mSecondsStamp >= since.mSecondsStamp) {
@@ -100,6 +102,60 @@ class OriginKeyStore : public nsISupports
         }
       }
       mPersistCount = 0;
+    }
+
+  private:
+    void
+    PrincipalInfoToString(const ipc::PrincipalInfo& aPrincipalInfo,
+                          nsACString& aString)
+    {
+      switch (aPrincipalInfo.type()) {
+        case ipc::PrincipalInfo::TSystemPrincipalInfo:
+          aString.Assign("[System Principal]");
+          return;
+
+        case ipc::PrincipalInfo::TNullPrincipalInfo: {
+          const ipc::NullPrincipalInfo& info =
+            aPrincipalInfo.get_NullPrincipalInfo();
+          aString.Assign(info.spec());
+          return;
+        }
+
+        case ipc::PrincipalInfo::TContentPrincipalInfo: {
+          const ipc::ContentPrincipalInfo& info =
+            aPrincipalInfo.get_ContentPrincipalInfo();
+          aString.Assign(info.originNoSuffix());
+
+          nsAutoCString suffix;
+          info.attrs().CreateSuffix(suffix);
+          aString.Append(suffix);
+          return;
+        }
+
+        case ipc::PrincipalInfo::TExpandedPrincipalInfo: {
+          const ipc::ExpandedPrincipalInfo& info =
+            aPrincipalInfo.get_ExpandedPrincipalInfo();
+
+          aString.Assign("[Expanded Principal [");
+
+          for (uint32_t i = 0; i < info.whitelist().Length(); i++) {
+            nsAutoCString str;
+            PrincipalInfoToString(info.whitelist()[i], str);
+
+            if (i != 0) {
+              aString.Append(", ");
+            }
+
+            aString.Append(str);
+          }
+
+          aString.Append("]]");
+          return;
+        }
+
+        default:
+          MOZ_CRASH("Unknown PrincipalInfo type!");
+      }
     }
 
   protected:
@@ -113,10 +169,16 @@ class OriginKeyStore : public nsISupports
     OriginKeysLoader() {}
 
     nsresult
-    GetOriginKey(const nsACString& aOrigin, nsCString& aResult, bool aPersist)
+    GetPrincipalKey(const ipc::PrincipalInfo& aPrincipalInfo,
+                    nsCString& aResult, bool aPersist = false)
     {
       auto before = mPersistCount;
-      OriginKeysTable::GetOriginKey(aOrigin, aResult, aPersist);
+      nsresult rv = OriginKeysTable::GetPrincipalKey(aPrincipalInfo, aResult,
+                                                     aPersist);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return rv;
+      }
+
       if (mPersistCount != before) {
         Save();
       }
@@ -355,34 +417,23 @@ public:
 
 NS_IMPL_ISUPPORTS0(OriginKeyStore)
 
-template<> /* static */
-Parent<PMediaParent>* Parent<PMediaParent>::GetSingleton()
-{
-  return sIPCServingParent;
-}
-
-template<> /* static */
-Parent<NonE10s>* Parent<NonE10s>::GetSingleton()
-{
-  RefPtr<MediaManager> mgr = MediaManager::GetInstance();
+bool NonE10s::SendGetPrincipalKeyResponse(const uint32_t& aRequestId,
+                                          nsCString aKey) {
+  MediaManager* mgr = MediaManager::GetIfExists();
   if (!mgr) {
-    return nullptr;
+    return false;
   }
-  return mgr->GetNonE10sParent();
+  RefPtr<Pledge<nsCString>> pledge = mgr->mGetPrincipalKeyPledges.Remove(aRequestId);
+  if (pledge) {
+    pledge->Resolve(aKey);
+  }
+  return true;
 }
 
-// TODO: Remove once upgraded to GCC 4.8+ on linux. Bogus error on static func:
-// error: 'this' was not captured for this lambda function
-
-template<class Super> static
-Parent<Super>* GccGetSingleton() { return Parent<Super>::GetSingleton(); };
-
-
-template<class Super> bool
-Parent<Super>::RecvGetOriginKey(const uint32_t& aRequestId,
-                                const nsCString& aOrigin,
-                                const bool& aPrivateBrowsing,
-                                const bool& aPersist)
+template<class Super> mozilla::ipc::IPCResult
+Parent<Super>::RecvGetPrincipalKey(const uint32_t& aRequestId,
+                                   const ipc::PrincipalInfo& aPrincipalInfo,
+                                   const bool& aPersist)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -393,7 +444,7 @@ Parent<Super>::RecvGetOriginKey(const uint32_t& aRequestId,
   nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
                                        getter_AddRefs(profileDir));
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
+    return IPCResult(this, false);
   }
 
   // Then over to stream-transport thread to do the actual file io.
@@ -404,29 +455,32 @@ Parent<Super>::RecvGetOriginKey(const uint32_t& aRequestId,
 
   nsCOMPtr<nsIEventTarget> sts = do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
   MOZ_ASSERT(sts);
-  RefPtr<OriginKeyStore> store(mOriginKeyStore);
-  bool sameProcess = mSameProcess;
+  RefPtr<Parent<Super>> that(this);
 
-  rv = sts->Dispatch(NewRunnableFrom([id, profileDir, store, sameProcess, aOrigin,
-                                      aPrivateBrowsing, aPersist]() -> nsresult {
+  rv = sts->Dispatch(NewRunnableFrom([this, that, id, profileDir,
+                                      aPrincipalInfo, aPersist]() -> nsresult {
     MOZ_ASSERT(!NS_IsMainThread());
-    store->mOriginKeys.SetProfileDir(profileDir);
-    nsCString result;
-    if (aPrivateBrowsing) {
-      store->mPrivateBrowsingOriginKeys.GetOriginKey(aOrigin, result);
+    mOriginKeyStore->mOriginKeys.SetProfileDir(profileDir);
+
+    nsresult rv;
+    nsAutoCString result;
+    if (IsPincipalInfoPrivate(aPrincipalInfo)) {
+      rv = mOriginKeyStore->mPrivateBrowsingOriginKeys.GetPrincipalKey(aPrincipalInfo, result);
     } else {
-      store->mOriginKeys.GetOriginKey(aOrigin, result, aPersist);
+      rv = mOriginKeyStore->mOriginKeys.GetPrincipalKey(aPrincipalInfo, result, aPersist);
+    }
+
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
 
     // Pass result back to main thread.
-    nsresult rv;
-    rv = NS_DispatchToMainThread(NewRunnableFrom([id, store, sameProcess,
+    rv = NS_DispatchToMainThread(NewRunnableFrom([this, that, id,
                                                   result]() -> nsresult {
-      Parent* parent = GccGetSingleton<Super>(); // GetSingleton();
-      if (!parent) {
+      if (mDestroyed) {
         return NS_OK;
       }
-      RefPtr<Pledge<nsCString>> p = parent->mOutstandingPledges.Remove(id);
+      RefPtr<Pledge<nsCString>> p = mOutstandingPledges.Remove(id);
       if (!p) {
         return NS_ERROR_UNEXPECTED;
       }
@@ -441,32 +495,19 @@ Parent<Super>::RecvGetOriginKey(const uint32_t& aRequestId,
   }), NS_DISPATCH_NORMAL);
 
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
+    return IPCResult(this, false);
   }
-
-  p->Then([aRequestId, sameProcess](const nsCString& aKey) mutable {
-    if (!sameProcess) {
-      if (!sIPCServingParent) {
-        return NS_OK;
-      }
-      Unused << sIPCServingParent->SendGetOriginKeyResponse(aRequestId, aKey);
-    } else {
-      RefPtr<MediaManager> mgr = MediaManager::GetInstance();
-      if (!mgr) {
-        return NS_OK;
-      }
-      RefPtr<Pledge<nsCString>> pledge =
-          mgr->mGetOriginKeyPledges.Remove(aRequestId);
-      if (pledge) {
-        pledge->Resolve(aKey);
-      }
+  p->Then([this, that, aRequestId](const nsCString& aKey) mutable {
+    if (mDestroyed) {
+      return NS_OK;
     }
+    Unused << this->SendGetPrincipalKeyResponse(aRequestId, aKey);
     return NS_OK;
   });
-  return true;
+  return IPC_OK();
 }
 
-template<class Super> bool
+template<class Super> mozilla::ipc::IPCResult
 Parent<Super>::RecvSanitizeOriginKeys(const uint64_t& aSinceWhen,
                                       const bool& aOnlyPrivateBrowsing)
 {
@@ -475,7 +516,7 @@ Parent<Super>::RecvSanitizeOriginKeys(const uint64_t& aSinceWhen,
   nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
                                          getter_AddRefs(profileDir));
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
+    return IPCResult(this, false);
   }
   // Over to stream-transport thread to do the file io.
 
@@ -494,9 +535,9 @@ Parent<Super>::RecvSanitizeOriginKeys(const uint64_t& aSinceWhen,
     return NS_OK;
   }), NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
+    return IPCResult(this, false);
   }
-  return true;
+  return IPC_OK();
 }
 
 template<class Super> void
@@ -508,10 +549,9 @@ Parent<Super>::ActorDestroy(ActorDestroyReason aWhy)
 }
 
 template<class Super>
-Parent<Super>::Parent(bool aSameProcess)
+Parent<Super>::Parent()
   : mOriginKeyStore(OriginKeyStore::Get())
   , mDestroyed(false)
-  , mSameProcess(aSameProcess)
 {
   LOG(("media::Parent: %p", this));
 }
@@ -525,17 +565,15 @@ Parent<Super>::~Parent()
 PMediaParent*
 AllocPMediaParent()
 {
-  MOZ_ASSERT(!sIPCServingParent);
-  sIPCServingParent = new Parent<PMediaParent>();
-  return sIPCServingParent;
+  Parent<PMediaParent>* obj = new Parent<PMediaParent>();
+  obj->AddRef();
+  return obj;
 }
 
 bool
 DeallocPMediaParent(media::PMediaParent *aActor)
 {
-  MOZ_ASSERT(sIPCServingParent == static_cast<Parent<PMediaParent>*>(aActor));
-  delete sIPCServingParent;
-  sIPCServingParent = nullptr;
+  static_cast<Parent<PMediaParent>*>(aActor)->Release();
   return true;
 }
 

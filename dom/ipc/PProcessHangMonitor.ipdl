@@ -14,7 +14,6 @@ struct SlowScriptData
 {
   TabId tabId;
   nsCString filename;
-  uint32_t lineno;
 };
 
 struct PluginHangData
@@ -40,6 +39,8 @@ child:
 
   async BeginStartingDebugger();
   async EndStartingDebugger();
+
+  async ForcePaint(TabId tabId, uint64_t aLayerObserverEpoch);
 };
 
 } // namespace mozilla

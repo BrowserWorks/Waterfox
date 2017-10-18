@@ -9,7 +9,7 @@
 </head>
 <body>
 
-  <script type="application/javascript;version=1.8">
+  <script type="application/javascript">
     "use strict";
 
     SimpleTest.waitForExplicitFinish();
@@ -25,7 +25,7 @@
 
       function parentReady(message) {
         MockFilePicker.init(content);
-        MockFilePicker.returnFiles = [message.data.file];
+        MockFilePicker.setFiles([message.data.file]);
         MockFilePicker.returnValue = MockFilePicker.returnOK;
 
         let input = content.document.getElementById("f");
@@ -97,6 +97,7 @@
         "set": [
           ["dom.ipc.browser_frames.oop_by_default", true],
           ["dom.mozBrowserFramesEnabled", true],
+          ["network.disable.ipc.security", true],
           ["browser.pagethumbnails.capturing_disabled", true]
         ]
       }, runTests);

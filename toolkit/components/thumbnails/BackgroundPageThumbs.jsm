@@ -15,12 +15,13 @@ const TELEMETRY_HISTOGRAM_ID_PREFIX = "FX_THUMBNAILS_BG_";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 
+const ABOUT_NEWTAB_SEGREGATION_PREF = "privacy.usercontext.about_newtab_segregation.enabled";
+
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/PageThumbs.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 // possible FX_THUMBNAILS_BG_CAPTURE_DONE_REASON_2 telemetry values
 const TEL_CAPTURE_DONE_OK = 0;
@@ -35,6 +36,8 @@ XPCOMUtils.defineConstant(this, "TEL_CAPTURE_DONE_TIMEOUT", TEL_CAPTURE_DONE_TIM
 XPCOMUtils.defineConstant(this, "TEL_CAPTURE_DONE_CRASHED", TEL_CAPTURE_DONE_CRASHED);
 XPCOMUtils.defineConstant(this, "TEL_CAPTURE_DONE_BAD_URI", TEL_CAPTURE_DONE_BAD_URI);
 
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource://gre/modules/ContextualIdentityService.jsm");
 const global = this;
 
 const BackgroundPageThumbs = {
@@ -55,7 +58,7 @@ const BackgroundPageThumbs = {
    *                 elapsed after the capture has progressed to the head of
    *                 the queue and started.  Defaults to 30000 (30 seconds).
    */
-  capture: function (url, options={}) {
+  capture(url, options = {}) {
     if (!PageThumbs._prefEnabled()) {
       if (options.onDone)
         schedule(() => options.onDone(url));
@@ -90,38 +93,44 @@ const BackgroundPageThumbs = {
    *                 capture() for description.
    * @return {Promise} A Promise that resolves when this task completes
    */
-  captureIfMissing: Task.async(function* (url, options={}) {
+  async captureIfMissing(url, options = {}) {
     // The fileExistsForURL call is an optimization, potentially but unlikely
     // incorrect, and no big deal when it is.  After the capture is done, we
     // atomically test whether the file exists before writing it.
-    let exists = yield PageThumbsStorage.fileExistsForURL(url);
+    let exists = await PageThumbsStorage.fileExistsForURL(url);
     if (exists) {
-      if(options.onDone){
+      if (options.onDone) {
         options.onDone(url);
       }
       return url;
     }
     let thumbPromise = new Promise((resolve, reject) => {
-      function observe(subject, topic, data) { // jshint ignore:line
-        if (data === url) {
-          switch(topic) {
-            case "page-thumbnail:create":
-              resolve();
-              break;
-            case "page-thumbnail:error":
-              reject(new Error("page-thumbnail:error"));
-              break;
+      let observer = {
+        observe(subject, topic, data) { // jshint ignore:line
+          if (data === url) {
+            switch (topic) {
+              case "page-thumbnail:create":
+                resolve();
+                break;
+              case "page-thumbnail:error":
+                reject(new Error("page-thumbnail:error"));
+                break;
+            }
+            Services.obs.removeObserver(observer, "page-thumbnail:create");
+            Services.obs.removeObserver(observer, "page-thumbnail:error");
           }
-          Services.obs.removeObserver(observe, "page-thumbnail:create");
-          Services.obs.removeObserver(observe, "page-thumbnail:error");
-        }
-      }
-      Services.obs.addObserver(observe, "page-thumbnail:create", false);
-      Services.obs.addObserver(observe, "page-thumbnail:error", false);
+        },
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                               Ci.nsISupportsWeakReference])
+      };
+      // Use weak references to avoid leaking in tests where the promise we
+      // return is GC'ed before it has resolved.
+      Services.obs.addObserver(observer, "page-thumbnail:create", true);
+      Services.obs.addObserver(observer, "page-thumbnail:error", true);
     });
-    try{
+    try {
       this.capture(url, options);
-      yield thumbPromise;
+      await thumbPromise;
     } catch (err) {
       if (options.onDone) {
         options.onDone(url);
@@ -129,7 +138,15 @@ const BackgroundPageThumbs = {
       throw err;
     }
     return url;
-  }),
+  },
+
+  /**
+   * Tell the service that the thumbnail browser should be recreated at next
+   * call of _ensureBrowser().
+   */
+  renewThumbnailBrowser() {
+    this._renewThumbBrowser = true;
+  },
 
   /**
    * Ensures that initialization of the thumbnail browser's parent window has
@@ -138,7 +155,7 @@ const BackgroundPageThumbs = {
    * @return  True if the parent window is completely initialized and can be
    *          used, and false if initialization has started but not completed.
    */
-  _ensureParentWindowReady: function () {
+  _ensureParentWindowReady() {
     if (this._parentWin)
       // Already fully initialized.
       return true;
@@ -148,20 +165,32 @@ const BackgroundPageThumbs = {
 
     this._startedParentWinInit = true;
 
-    // Create an html:iframe, stick it in the parent document, and
-    // use it to host the browser.  about:blank will not have the system
-    // principal, so it can't host, but a document with a chrome URI will.
-    let hostWindow = Services.appShell.hiddenDOMWindow;
-    let iframe = hostWindow.document.createElementNS(HTML_NS, "iframe");
-    iframe.setAttribute("src", "chrome://global/content/mozilla.xhtml");
-    let onLoad = function onLoadFn() {
-      iframe.removeEventListener("load", onLoad, true);
-      this._parentWin = iframe.contentWindow;
-      this._processCaptureQueue();
-    }.bind(this);
-    iframe.addEventListener("load", onLoad, true);
-    hostWindow.document.documentElement.appendChild(iframe);
-    this._hostIframe = iframe;
+    // Create a windowless browser and load our hosting
+    // (privileged) document in it.
+    let wlBrowser = Services.appShell.createWindowlessBrowser(true);
+    wlBrowser.QueryInterface(Ci.nsIInterfaceRequestor);
+    let webProgress = wlBrowser.getInterface(Ci.nsIWebProgress);
+    this._listener = {
+      QueryInterface: XPCOMUtils.generateQI([
+        Ci.nsIWebProgressListener, Ci.nsIWebProgressListener2,
+        Ci.nsISupportsWeakReference]),
+    };
+    this._listener.onStateChange = (wbp, request, stateFlags, status) => {
+      if (!request) {
+        return;
+      }
+      if (stateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
+          stateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK) {
+        webProgress.removeProgressListener(this._listener);
+        delete this._listener;
+        // Get the window reference via the document.
+        this._parentWin = wlBrowser.document.defaultView;
+        this._processCaptureQueue();
+      }
+    };
+    webProgress.addProgressListener(this._listener, Ci.nsIWebProgress.NOTIFY_STATE_ALL);
+    wlBrowser.loadURI("chrome://global/content/backgroundPageThumbs.xhtml", 0, null, null, null);
+    this._windowlessContainer = wlBrowser;
 
     return false;
   },
@@ -170,29 +199,40 @@ const BackgroundPageThumbs = {
    * Destroys the service.  Queued and pending captures will never complete, and
    * their consumer callbacks will never be called.
    */
-  _destroy: function () {
+  _destroy() {
     if (this._captureQueue)
       this._captureQueue.forEach(cap => cap.destroy());
     this._destroyBrowser();
-    if (this._hostIframe)
-      this._hostIframe.remove();
+    if (this._windowlessContainer)
+      this._windowlessContainer.close();
     delete this._captureQueue;
-    delete this._hostIframe;
+    delete this._windowlessContainer;
     delete this._startedParentWinInit;
     delete this._parentWin;
+    delete this._listener;
   },
 
   /**
    * Creates the thumbnail browser if it doesn't already exist.
    */
-  _ensureBrowser: function () {
-    if (this._thumbBrowser)
+  _ensureBrowser() {
+    if (this._thumbBrowser && !this._renewThumbBrowser)
       return;
+
+    this._destroyBrowser();
+    this._renewThumbBrowser = false;
 
     let browser = this._parentWin.document.createElementNS(XUL_NS, "browser");
     browser.setAttribute("type", "content");
     browser.setAttribute("remote", "true");
     browser.setAttribute("disableglobalhistory", "true");
+
+    if (Services.prefs.getBoolPref(ABOUT_NEWTAB_SEGREGATION_PREF)) {
+      // Use the private container for thumbnails.
+      let privateIdentity =
+        ContextualIdentityService.getPrivateIdentity("userContextIdInternal.thumbnail");
+      browser.setAttribute("usercontextid", privateIdentity.userContextId);
+    }
 
     // Size the browser.  Make its aspect ratio the same as the canvases' that
     // the thumbnails are drawn into; the canvases' aspect ratio is the same as
@@ -222,8 +262,16 @@ const BackgroundPageThumbs = {
       // "resetting" the capture requires more work - so for now, we just
       // discard it.
       if (curCapture && curCapture.pending) {
-        curCapture._done(null, TEL_CAPTURE_DONE_CRASHED);
-        // _done automatically continues queue processing.
+        // Continue queue processing by calling curCapture._done().  Do it after
+        // this crashed listener returns, though.  A new browser will be created
+        // immediately (on the same stack as the _done call stack) if there are
+        // any more queued-up captures, and that seems to mess up the new
+        // browser's message manager if it happens on the same stack as the
+        // listener.  Trying to send a message to the manager in that case
+        // throws NS_ERROR_NOT_INITIALIZED.
+        Services.tm.dispatchToMainThread(() => {
+          curCapture._done(null, TEL_CAPTURE_DONE_CRASHED);
+        });
       }
       // else: we must have been idle and not currently doing a capture (eg,
       // maybe a GC or similar crashed) - so there's no need to attempt a
@@ -234,7 +282,7 @@ const BackgroundPageThumbs = {
     this._thumbBrowser = browser;
   },
 
-  _destroyBrowser: function () {
+  _destroyBrowser() {
     if (!this._thumbBrowser)
       return;
     this._thumbBrowser.remove();
@@ -245,7 +293,7 @@ const BackgroundPageThumbs = {
    * Starts the next capture if the queue is not empty and the service is fully
    * initialized.
    */
-  _processCaptureQueue: function () {
+  _processCaptureQueue() {
     if (!this._captureQueue.length ||
         this._captureQueue[0].pending ||
         !this._ensureParentWindowReady())
@@ -264,7 +312,7 @@ const BackgroundPageThumbs = {
    * Called when the current capture completes or fails (eg, times out, remote
    * process crashes.)
    */
-  _onCaptureOrTimeout: function (capture) {
+  _onCaptureOrTimeout(capture) {
     // Since timeouts start as an item is being processed, only the first
     // item in the queue can be passed to this method.
     if (capture !== this._captureQueue[0])
@@ -287,6 +335,13 @@ const BackgroundPageThumbs = {
 
   _destroyBrowserTimeout: DESTROY_BROWSER_TIMEOUT,
 };
+
+Services.prefs.addObserver(ABOUT_NEWTAB_SEGREGATION_PREF,
+  function(aSubject, aTopic, aData) {
+    if (aTopic == "nsPref:changed" && aData == ABOUT_NEWTAB_SEGREGATION_PREF) {
+      BackgroundPageThumbs.renewThumbnailBrowser();
+    }
+  });
 
 Object.defineProperty(this, "BackgroundPageThumbs", {
   value: BackgroundPageThumbs,
@@ -325,7 +380,7 @@ Capture.prototype = {
    *
    * @param messageManager  The nsIMessageSender of the thumbnail browser.
    */
-  start: function (messageManager) {
+  start(messageManager) {
     this.startDate = new Date();
     tel("CAPTURE_QUEUE_TIME_MS", this.startDate - this.creationDate);
 
@@ -349,7 +404,7 @@ Capture.prototype = {
    * uninitializing and doing things like destroying the thumbnail browser.  In
    * that case the consumer's completion callback will never be called.
    */
-  destroy: function () {
+  destroy() {
     // This method may be called for captures that haven't started yet, so
     // guard against not yet having _timeoutTimer, _msgMan etc properties...
     if (this._timeoutTimer) {
@@ -367,7 +422,7 @@ Capture.prototype = {
   },
 
   // Called when the didCapture message is received.
-  receiveMessage: function (msg) {
+  receiveMessage(msg) {
     if (msg.data.imageData)
       tel("CAPTURE_SERVICE_TIME_MS", new Date() - this.startDate);
 
@@ -386,11 +441,11 @@ Capture.prototype = {
   },
 
   // Called when the timeout timer fires.
-  notify: function () {
+  notify() {
     this._done(null, TEL_CAPTURE_DONE_TIMEOUT);
   },
 
-  _done: function (data, reason) {
+  _done(data, reason) {
     // Note that _done will be called only once, by either receiveMessage or
     // notify, since it calls destroy here, which cancels the timeout timer and
     // removes the didCapture message listener.
@@ -414,10 +469,17 @@ Capture.prototype = {
       for (let callback of doneCallbacks) {
         try {
           callback.call(options, this.url);
-        }
-        catch (err) {
+        } catch (err) {
           Cu.reportError(err);
         }
+      }
+
+      if (Services.prefs.getBoolPref(ABOUT_NEWTAB_SEGREGATION_PREF)) {
+        // Clear the data in the private container for thumbnails.
+        let privateIdentity =
+          ContextualIdentityService.getPrivateIdentity("userContextIdInternal.thumbnail");
+        Services.obs.notifyObservers(null, "clear-origin-attributes-data",
+          JSON.stringify({ userContextId: privateIdentity.userContextId }));
       }
     };
 
@@ -445,5 +507,5 @@ function tel(histogramID, value) {
 }
 
 function schedule(callback) {
-  Services.tm.mainThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
+  Services.tm.dispatchToMainThread(callback);
 }

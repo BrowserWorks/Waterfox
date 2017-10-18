@@ -6,6 +6,7 @@
 #include "CompositionTransaction.h"
 
 #include "mozilla/EditorBase.h"         // mEditorBase
+#include "mozilla/SelectionState.h"     // RangeUpdater
 #include "mozilla/dom/Selection.h"      // local var
 #include "mozilla/dom/Text.h"           // mTextNode
 #include "nsAString.h"                  // params
@@ -25,15 +26,18 @@ CompositionTransaction::CompositionTransaction(
                           uint32_t aReplaceLength,
                           TextRangeArray* aTextRangeArray,
                           const nsAString& aStringToInsert,
-                          EditorBase& aEditorBase)
+                          EditorBase& aEditorBase,
+                          RangeUpdater* aRangeUpdater)
   : mTextNode(&aTextNode)
   , mOffset(aOffset)
   , mReplaceLength(aReplaceLength)
   , mRanges(aTextRangeArray)
   , mStringToInsert(aStringToInsert)
-  , mEditorBase(aEditorBase)
+  , mEditorBase(&aEditorBase)
+  , mRangeUpdater(aRangeUpdater)
   , mFixed(false)
 {
+  MOZ_ASSERT(mTextNode->TextLength() >= mOffset);
 }
 
 CompositionTransaction::~CompositionTransaction()
@@ -41,6 +45,7 @@ CompositionTransaction::~CompositionTransaction()
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(CompositionTransaction, EditTransactionBase,
+                                   mEditorBase,
                                    mTextNode)
 // mRangeList can't lead to cycles
 
@@ -56,22 +61,51 @@ NS_IMPL_RELEASE_INHERITED(CompositionTransaction, EditTransactionBase)
 NS_IMETHODIMP
 CompositionTransaction::DoTransaction()
 {
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
   // Fail before making any changes if there's no selection controller
   nsCOMPtr<nsISelectionController> selCon;
-  mEditorBase.GetSelectionController(getter_AddRefs(selCon));
+  mEditorBase->GetSelectionController(getter_AddRefs(selCon));
   NS_ENSURE_TRUE(selCon, NS_ERROR_NOT_INITIALIZED);
 
   // Advance caret: This requires the presentation shell to get the selection.
-  nsresult res;
   if (mReplaceLength == 0) {
-    res = mTextNode->InsertData(mOffset, mStringToInsert);
+    nsresult rv = mTextNode->InsertData(mOffset, mStringToInsert);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+    mRangeUpdater->SelAdjInsertText(*mTextNode, mOffset, mStringToInsert);
   } else {
-    res = mTextNode->ReplaceData(mOffset, mReplaceLength, mStringToInsert);
-  }
-  NS_ENSURE_SUCCESS(res, res);
+    uint32_t replaceableLength = mTextNode->TextLength() - mOffset;
+    nsresult rv =
+      mTextNode->ReplaceData(mOffset, mReplaceLength, mStringToInsert);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+    mRangeUpdater->SelAdjDeleteText(mTextNode, mOffset, mReplaceLength);
+    mRangeUpdater->SelAdjInsertText(*mTextNode, mOffset, mStringToInsert);
 
-  res = SetSelectionForRanges();
-  NS_ENSURE_SUCCESS(res, res);
+    // If IME text node is multiple node, ReplaceData doesn't remove all IME
+    // text.  So we need remove remained text into other text node.
+    if (replaceableLength < mReplaceLength) {
+      int32_t remainLength = mReplaceLength - replaceableLength;
+      nsCOMPtr<nsINode> node = mTextNode->GetNextSibling();
+      while (node && node->IsNodeOfType(nsINode::eTEXT) &&
+             remainLength > 0) {
+        Text* text = static_cast<Text*>(node.get());
+        uint32_t textLength = text->TextLength();
+        text->DeleteData(0, remainLength);
+        mRangeUpdater->SelAdjDeleteText(text, 0, remainLength);
+        remainLength -= textLength;
+        node = node->GetNextSibling();
+      }
+    }
+  }
+
+  nsresult rv = SetSelectionForRanges();
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -79,19 +113,23 @@ CompositionTransaction::DoTransaction()
 NS_IMETHODIMP
 CompositionTransaction::UndoTransaction()
 {
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
   // Get the selection first so we'll fail before making any changes if we
   // can't get it
-  RefPtr<Selection> selection = mEditorBase.GetSelection();
+  RefPtr<Selection> selection = mEditorBase->GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NOT_INITIALIZED);
 
-  nsresult res = mTextNode->DeleteData(mOffset, mStringToInsert.Length());
-  NS_ENSURE_SUCCESS(res, res);
+  nsresult rv = mTextNode->DeleteData(mOffset, mStringToInsert.Length());
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // set the selection to the insertion point where the string was removed
-  res = selection->Collapse(mTextNode, mOffset);
-  NS_ASSERTION(NS_SUCCEEDED(res),
+  rv = selection->Collapse(mTextNode, mOffset);
+  NS_ASSERTION(NS_SUCCEEDED(rv),
                "Selection could not be collapsed after undo of IME insert.");
-  NS_ENSURE_SUCCESS(res, res);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -142,7 +180,10 @@ CompositionTransaction::GetTxnDescription(nsAString& aString)
 nsresult
 CompositionTransaction::SetSelectionForRanges()
 {
-  return SetIMESelection(mEditorBase, mTextNode, mOffset,
+  if (NS_WARN_IF(!mEditorBase)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+  return SetIMESelection(*mEditorBase, mTextNode, mOffset,
                          mStringToInsert.Length(), mRanges);
 }
 
@@ -288,7 +329,10 @@ CompositionTransaction::SetIMESelection(EditorBase& aEditorBase,
 
     // If caret range isn't specified explicitly, we should hide the caret.
     // Hiding the caret benefits a Windows build (see bug 555642 comment #6).
-    aEditorBase.HideCaret(true);
+    // However, when there is no range, we should keep showing caret.
+    if (countOfRanges) {
+      aEditorBase.HideCaret(true);
+    }
   }
 
   rv = selection->EndBatchChangesInternal();

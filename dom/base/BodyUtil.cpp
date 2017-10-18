@@ -7,7 +7,7 @@
 #include "nsError.h"
 #include "nsString.h"
 #include "nsIGlobalObject.h"
-#include "nsIUnicodeDecoder.h"
+#include "mozilla/Encoding.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsDOMString.h"
@@ -17,7 +17,6 @@
 #include "nsStringStream.h"
 
 #include "mozilla/ErrorResult.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/FetchUtil.h"
 #include "mozilla/dom/File.h"
@@ -31,58 +30,12 @@ namespace dom {
 
 namespace {
 
-class StreamDecoder final
-{
-  nsCOMPtr<nsIUnicodeDecoder> mDecoder;
-  nsString mDecoded;
-
-public:
-  StreamDecoder()
-    : mDecoder(EncodingUtils::DecoderForEncoding("UTF-8"))
-  {
-    MOZ_ASSERT(mDecoder);
-  }
-
-  nsresult
-  AppendText(const char* aSrcBuffer, uint32_t aSrcBufferLen)
-  {
-    int32_t destBufferLen;
-    nsresult rv =
-      mDecoder->GetMaxLength(aSrcBuffer, aSrcBufferLen, &destBufferLen);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    if (!mDecoded.SetCapacity(mDecoded.Length() + destBufferLen, fallible)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-
-    char16_t* destBuffer = mDecoded.BeginWriting() + mDecoded.Length();
-    int32_t totalChars = mDecoded.Length();
-
-    int32_t srcLen = (int32_t) aSrcBufferLen;
-    int32_t outLen = destBufferLen;
-    rv = mDecoder->Convert(aSrcBuffer, &srcLen, destBuffer, &outLen);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-
-    totalChars += outLen;
-    mDecoded.SetLength(totalChars);
-
-    return NS_OK;
-  }
-
-  nsString&
-  GetText()
-  {
-    return mDecoded;
-  }
-};
-
 // Reads over a CRLF and positions start after it.
 static bool
-PushOverLine(nsACString::const_iterator& aStart)
+PushOverLine(nsACString::const_iterator& aStart,
+	     const nsACString::const_iterator& aEnd)
 {
-  if (*aStart == nsCRT::CR && (aStart.size_forward() > 1) && *(++aStart) == nsCRT::LF) {
+  if (*aStart == nsCRT::CR && (aEnd - aStart > 1) && *(++aStart) == nsCRT::LF) {
     ++aStart; // advance to after CRLF
     return true;
   }
@@ -394,7 +347,7 @@ public:
             return true;
           }
 
-          if (!PushOverLine(start)) {
+          if (!PushOverLine(start, end)) {
             return false;
           }
           mState = PARSE_HEADER;
@@ -406,7 +359,7 @@ public:
             return false;
           }
 
-          if (emptyHeader && !PushOverLine(start)) {
+          if (emptyHeader && !PushOverLine(start, end)) {
             return false;
           }
 
@@ -534,13 +487,11 @@ nsresult
 BodyUtil::ConsumeText(uint32_t aInputLength, uint8_t* aInput,
                        nsString& aText)
 {
-  StreamDecoder decoder;
-  nsresult rv = decoder.AppendText(reinterpret_cast<char*>(aInput),
-                                   aInputLength);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  nsresult rv =
+    UTF_8_ENCODING->DecodeWithBOMRemoval(MakeSpan(aInput, aInputLength), aText);
+  if (NS_FAILED(rv)) {
     return rv;
   }
-  aText = decoder.GetText();
   return NS_OK;
 }
 

@@ -8,17 +8,21 @@
 #include "MediaEngine.h"
 
 #include "nsDirectoryServiceDefs.h"
+#include "mozilla/Unused.h"
 
 // conflicts with #include of scoped_ptr.h
 #undef FF
-#include "webrtc/video_engine/include/vie_capture.h"
+// Avoid warnings about redefinition of WARN_UNUSED_RESULT
+#include "ipc/IPCMessageUtils.h"
+
+// WebRTC includes
+#include "webrtc/modules/video_capture/video_capture_defines.h"
+
+namespace webrtc {
+  using CaptureCapability = VideoCaptureCapability;
+}
 
 namespace mozilla {
-
-bool operator == (const webrtc::CaptureCapability& a,
-                  const webrtc::CaptureCapability& b);
-bool operator != (const webrtc::CaptureCapability& a,
-                  const webrtc::CaptureCapability& b);
 
 class MediaEngineCameraVideoSource : public MediaEngineVideoSource
 {
@@ -57,7 +61,14 @@ public:
       const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
       const nsString& aDeviceId) const override;
 
-  void Shutdown() override {};
+  void Shutdown() override
+  {
+    MonitorAutoLock lock(mMonitor);
+    // really Stop() *should* be called before it gets here
+    Unused << NS_WARN_IF(mImage);
+    mImage = nullptr;
+    mImageContainer = nullptr;
+  }
 
 protected:
   struct CapabilityCandidate {

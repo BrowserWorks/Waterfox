@@ -5,6 +5,7 @@
 
 #include "nsFeedSniffer.h"
 
+#include "mozilla/Unused.h"
 
 #include "nsNetCID.h"
 #include "nsXPCOM.h"
@@ -57,16 +58,16 @@ nsFeedSniffer::ConvertEncodedData(nsIRequest* request,
     return NS_ERROR_NO_INTERFACE;
 
   nsAutoCString contentEncoding;
-  httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Encoding"), 
-                                 contentEncoding);
+  mozilla::Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Encoding"),
+                                                    contentEncoding);
   if (!contentEncoding.IsEmpty()) {
     nsCOMPtr<nsIStreamConverterService> converterService(do_GetService(NS_STREAMCONVERTERSERVICE_CONTRACTID));
     if (converterService) {
       ToLowerCase(contentEncoding);
 
       nsCOMPtr<nsIStreamListener> converter;
-      rv = converterService->AsyncConvertData(contentEncoding.get(), 
-                                              "uncompressed", this, nullptr, 
+      rv = converterService->AsyncConvertData(contentEncoding.get(),
+                                              "uncompressed", this, nullptr,
                                               getter_AddRefs(converter));
       NS_ENSURE_SUCCESS(rv, rv);
 
@@ -135,19 +136,19 @@ FindChar(char c, const char *begin, const char *end)
  * it's possible that someone embedded one of these tags inside a document of
  * another type, e.g. a HTML document, and we don't want to show the preview
  * page if the document isn't actually a feed.
- * 
+ *
  * @param   start
  *          The beginning of the data being sniffed
  * @param   end
  *          The end of the data being sniffed, right before the substring that
  *          was found.
- * @returns true if the found substring is the documentElement, false 
+ * @returns true if the found substring is the documentElement, false
  *          otherwise.
  */
 static bool
 IsDocumentElement(const char *start, const char* end)
 {
-  // For every tag in the buffer, check to see if it's a PI, Doctype or 
+  // For every tag in the buffer, check to see if it's a PI, Doctype or
   // comment, our desired substring or something invalid.
   while ( (start = FindChar('<', start, end)) ) {
     ++start;
@@ -156,10 +157,10 @@ IsDocumentElement(const char *start, const char* end)
 
     // Check to see if the character following the '<' is either '?' or '!'
     // (processing instruction or doctype or comment)... these are valid nodes
-    // to have in the prologue. 
+    // to have in the prologue.
     if (*start != '?' && *start != '!')
       return false;
-    
+
     // Now advance the iterator until the '>' (We do this because we don't want
     // to sniff indicator substrings that are embedded within other nodes, e.g.
     // comments: <!-- <rdf:RDF .. > -->
@@ -183,11 +184,17 @@ IsDocumentElement(const char *start, const char* end)
  *          otherwise.
  */
 static bool
-ContainsTopLevelSubstring(nsACString& dataString, const char *substring) 
+ContainsTopLevelSubstring(nsACString& dataString, const char *substring)
 {
-  int32_t offset = dataString.Find(substring);
-  if (offset == -1)
+  nsACString::const_iterator start, end;
+  dataString.BeginReading(start);
+  dataString.EndReading(end);
+
+  if (!FindInReadable(nsCString(substring), start, end)){
     return false;
+  }
+
+  auto offset = start.get() - dataString.Data();
 
   const char *begin = dataString.BeginReading();
 
@@ -196,9 +203,9 @@ ContainsTopLevelSubstring(nsACString& dataString, const char *substring)
 }
 
 NS_IMETHODIMP
-nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request, 
-                                      const uint8_t* data, 
-                                      uint32_t length, 
+nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
+                                      const uint8_t* data,
+                                      uint32_t length,
                                       nsACString& sniffedType)
 {
   nsCOMPtr<nsIHttpChannel> channel(do_QueryInterface(request));
@@ -207,7 +214,7 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
 
   // Check that this is a GET request, since you can't subscribe to a POST...
   nsAutoCString method;
-  channel->GetRequestMethod(method);
+  mozilla::Unused << channel->GetRequestMethod(method);
   if (!method.EqualsLiteral("GET")) {
     sniffedType.Truncate();
     return NS_OK;
@@ -215,10 +222,10 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
 
   // We need to find out if this is a load of a view-source document. In this
   // case we do not want to override the content type, since the source display
-  // does not need to be converted from feed format to XUL. More importantly, 
-  // we don't want to change the content type from something 
-  // nsContentDLF::CreateInstance knows about (e.g. application/xml, text/html 
-  // etc) to something that only the application fe knows about (maybe.feed) 
+  // does not need to be converted from feed format to XUL. More importantly,
+  // we don't want to change the content type from something
+  // nsContentDLF::CreateInstance knows about (e.g. application/xml, text/html
+  // etc) to something that only the application fe knows about (maybe.feed)
   // thus deactivating syntax highlighting.
   nsCOMPtr<nsIURI> originalURI;
   channel->GetOriginalURI(getter_AddRefs(originalURI));
@@ -230,10 +237,10 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
     return NS_OK;
   }
 
-  // Check the Content-Type to see if it is set correctly. If it is set to 
+  // Check the Content-Type to see if it is set correctly. If it is set to
   // something specific that we think is a reliable indication of a feed, don't
-  // bother sniffing since we assume the site maintainer knows what they're 
-  // doing. 
+  // bother sniffing since we assume the site maintainer knows what they're
+  // doing.
   nsAutoCString contentType;
   channel->GetContentType(contentType);
   bool noSniff = contentType.EqualsLiteral(TYPE_RSS) ||
@@ -241,7 +248,7 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
 
   // Check to see if this was a feed request from the location bar or from
   // the feed: protocol. This is also a reliable indication.
-  // The value of the header doesn't matter.  
+  // The value of the header doesn't matter.
   if (!noSniff) {
     nsAutoCString sniffHeader;
     nsresult foundHeader =
@@ -259,8 +266,10 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
 
     // set the feed header as a response header, since we have good metadata
     // telling us that the feed is supposed to be RSS or Atom
-    channel->SetResponseHeader(NS_LITERAL_CSTRING("X-Moz-Is-Feed"),
-                               NS_LITERAL_CSTRING("1"), false);
+    mozilla::DebugOnly<nsresult> rv =
+      channel->SetResponseHeader(NS_LITERAL_CSTRING("X-Moz-Is-Feed"),
+                                 NS_LITERAL_CSTRING("1"), false);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
     sniffedType.AssignLiteral(TYPE_MAYBE_FEED);
     return NS_OK;
   }
@@ -276,13 +285,13 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
     return NS_OK;
   }
 
-  // Now we need to potentially decompress data served with 
+  // Now we need to potentially decompress data served with
   // Content-Encoding: gzip
   nsresult rv = ConvertEncodedData(request, data, length);
   if (NS_FAILED(rv))
     return rv;
 
-  // We cap the number of bytes to scan at MAX_BYTES to prevent picking up 
+  // We cap the number of bytes to scan at MAX_BYTES to prevent picking up
   // false positives by accidentally reading document content, e.g. a "how to
   // make a feed" page.
   const char* testData;
@@ -312,9 +321,10 @@ nsFeedSniffer::GetMIMETypeFromContent(nsIRequest* request,
 
   // RSS 1.0
   if (!isFeed) {
+    bool foundNS_RDF = FindInReadable(NS_LITERAL_CSTRING(NS_RDF), dataString);
+    bool foundNS_RSS = FindInReadable(NS_LITERAL_CSTRING(NS_RSS), dataString);
     isFeed = ContainsTopLevelSubstring(dataString, "<rdf:RDF") &&
-      dataString.Find(NS_RDF) != -1 &&
-      dataString.Find(NS_RSS) != -1;
+      foundNS_RDF && foundNS_RSS;
   }
 
   // If we sniffed a feed, coerce our internal type
@@ -331,7 +341,7 @@ nsFeedSniffer::OnStartRequest(nsIRequest* request, nsISupports* context)
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 nsFeedSniffer::AppendSegmentToString(nsIInputStream* inputStream,
                                      void* closure,
                                      const char* rawSegment,
@@ -347,17 +357,17 @@ nsFeedSniffer::AppendSegmentToString(nsIInputStream* inputStream,
 
 NS_IMETHODIMP
 nsFeedSniffer::OnDataAvailable(nsIRequest* request, nsISupports* context,
-                               nsIInputStream* stream, uint64_t offset, 
+                               nsIInputStream* stream, uint64_t offset,
                                uint32_t count)
 {
   uint32_t read;
-  return stream->ReadSegments(AppendSegmentToString, &mDecodedData, count, 
+  return stream->ReadSegments(AppendSegmentToString, &mDecodedData, count,
                               &read);
 }
 
 NS_IMETHODIMP
-nsFeedSniffer::OnStopRequest(nsIRequest* request, nsISupports* context, 
+nsFeedSniffer::OnStopRequest(nsIRequest* request, nsISupports* context,
                              nsresult status)
 {
-  return NS_OK; 
+  return NS_OK;
 }

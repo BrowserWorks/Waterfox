@@ -3,22 +3,19 @@ var conn = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase).DBConnectio
 /**
  * Gets a single column value from either the places or historyvisits table.
  */
-function getColumn(table, column, url)
-{
+function getColumn(table, column, url) {
   var stmt = conn.createStatement(
     `SELECT ${column} FROM ${table} WHERE url_hash = hash(:val) AND url = :val`);
   try {
     stmt.params.val = url;
     stmt.executeStep();
     return stmt.row[column];
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 }
 
-add_task(function* ()
-{
+add_task(async function() {
   // Make sure titles are correctly saved for a URI with the proper
   // notifications.
 
@@ -26,12 +23,12 @@ add_task(function* ()
   let titleChangedPromise = new Promise(resolve => {
     var historyObserver = {
       data: [],
-      onBeginUpdateBatch: function() {},
-      onEndUpdateBatch: function() {},
-      onVisit: function(aURI, aVisitID, aTime, aSessionID, aReferringID,
+      onBeginUpdateBatch() {},
+      onEndUpdateBatch() {},
+      onVisit(aURI, aVisitID, aTime, aSessionID, aReferringID,
                         aTransitionType) {
       },
-      onTitleChanged: function(aURI, aPageTitle, aGUID) {
+      onTitleChanged(aURI, aPageTitle, aGUID) {
         this.data.push({ uri: aURI, title: aPageTitle, guid: aGUID });
 
         // We only expect one title change.
@@ -43,24 +40,24 @@ add_task(function* ()
         PlacesUtils.history.removeObserver(this);
         resolve(this.data);
       },
-      onDeleteURI: function() {},
-      onClearHistory: function() {},
-      onPageChanged: function() {},
-      onDeleteVisits: function() {},
+      onDeleteURI() {},
+      onClearHistory() {},
+      onPageChanged() {},
+      onDeleteVisits() {},
       QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver])
     };
-    PlacesUtils.history.addObserver(historyObserver, false);
+    PlacesUtils.history.addObserver(historyObserver);
   });
 
   const url1 = "http://example.com/tests/toolkit/components/places/tests/browser/title1.html";
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser, url1);
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, url1);
 
   const url2 = "http://example.com/tests/toolkit/components/places/tests/browser/title2.html";
   let loadPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
   BrowserTestUtils.loadURI(gBrowser.selectedBrowser, url2);
-  yield loadPromise;
+  await loadPromise;
 
-  let data = yield titleChangedPromise;
+  let data = await titleChangedPromise;
   is(data[0].uri.spec, "http://example.com/tests/toolkit/components/places/tests/browser/title2.html");
   is(data[0].title, "Some title");
   is(data[0].guid, getColumn("moz_places", "guid", data[0].uri.spec));
@@ -71,6 +68,6 @@ add_task(function* ()
   });
 
   gBrowser.removeCurrentTab();
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });
 

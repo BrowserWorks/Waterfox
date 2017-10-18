@@ -14,7 +14,6 @@ const Cu = Components.utils;
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Editor = require("devtools/client/sourceeditor/editor");
 const promise = require("promise");
-const defer = require("devtools/shared/defer");
 const {shortSource, prettifyCSS} = require("devtools/shared/inspector/css-logic");
 const {console} = require("resource://gre/modules/Console.jsm");
 const Services = require("Services");
@@ -22,7 +21,7 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const {Task} = require("devtools/shared/task");
 const {FileUtils} = require("resource://gre/modules/FileUtils.jsm");
 const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
-const {TextDecoder, OS} = Cu.import("resource://gre/modules/osfile.jsm", {});
+const {OS} = Cu.import("resource://gre/modules/osfile.jsm", {});
 const {
   getString,
   showFilePicker,
@@ -291,7 +290,7 @@ StyleSheetEditor.prototype = {
     return this._getSourceTextAndPrettify().then((source) => {
       this.sourceLoaded = true;
       return source;
-    }).then(null, e => {
+    }).catch(e => {
       if (this._isDestroyed) {
         console.warn("Could not fetch the source for " +
                      this.styleSheet.href +
@@ -417,11 +416,13 @@ StyleSheetEditor.prototype = {
    * Create source editor and load state into it.
    * @param  {DOMElement} inputElement
    *         Element to load source editor in
+   * @param  {CssProperties} cssProperties
+   *         A css properties database.
    *
    * @return {Promise}
    *         Promise that will resolve when the style editor is loaded.
    */
-  load: function (inputElement) {
+  load: function (inputElement, cssProperties) {
     if (this._isDestroyed) {
       return promise.reject("Won't load source editor as the style sheet has " +
                             "already been removed from Style Editor.");
@@ -438,7 +439,8 @@ StyleSheetEditor.prototype = {
       extraKeys: this._getKeyBindings(),
       contextMenu: "sourceEditorContextMenu",
       autocomplete: Services.prefs.getBoolPref(AUTOCOMPLETION_PREF),
-      autocompleteOpts: { walker: this.walker }
+      autocompleteOpts: { walker: this.walker, cssProperties },
+      cssProperties
     };
     let sourceEditor = this._sourceEditor = new Editor(config);
 
@@ -476,15 +478,17 @@ StyleSheetEditor.prototype = {
    *         Promise that will resolve with the editor.
    */
   getSourceEditor: function () {
-    let deferred = defer();
+    let self = this;
 
     if (this.sourceEditor) {
-      return promise.resolve(this);
+      return Promise.resolve(this);
     }
-    this.on("source-editor-load", () => {
-      deferred.resolve(this);
+
+    return new Promise(resolve => {
+      this.on("source-editor-load", () => {
+        resolve(self);
+      });
     });
-    return deferred.promise;
   },
 
   /**
@@ -514,7 +518,7 @@ StyleSheetEditor.prototype = {
    * Toggled the disabled state of the underlying stylesheet.
    */
   toggleDisabled: function () {
-    this.styleSheet.toggleDisabled().then(null, e => console.error(e));
+    this.styleSheet.toggleDisabled().catch(e => console.error(e));
   },
 
   /**
@@ -556,7 +560,7 @@ StyleSheetEditor.prototype = {
 
     this._isUpdating = true;
     this.styleSheet.update(this._state.text, this.transitionsEnabled)
-      .then(null, e => console.error(e));
+      .catch(e => console.error(e));
   },
 
   /**

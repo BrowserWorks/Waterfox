@@ -21,16 +21,16 @@ this.CommonDialog = function CommonDialog(args, ui) {
 }
 
 CommonDialog.prototype = {
-    args : null,
-    ui   : null,
+    args: null,
+    ui: null,
 
-    hasInputField : true,
-    numButtons    : undefined,
-    iconClass     : undefined,
-    soundID       : undefined,
-    focusTimer    : null,
+    hasInputField: true,
+    numButtons: undefined,
+    iconClass: undefined,
+    soundID: undefined,
+    focusTimer: null,
 
-    onLoad : function(xulDialog) {
+    onLoad(xulDialog) {
         switch (this.args.promptType) {
           case "alert":
           case "alertCheck":
@@ -75,7 +75,7 @@ CommonDialog.prototype = {
             this.numButtons = 2;
             this.iconClass  = ["authentication-icon", "question-icon"];
             this.soundID    = Ci.nsISound.EVENT_PROMPT_DIALOG_OPEN;
-            this.initTextbox("login",     this.args.user);
+            this.initTextbox("login", this.args.user);
             this.initTextbox("password1", this.args.pass);
             break;
           case "promptPassword":
@@ -89,6 +89,10 @@ CommonDialog.prototype = {
           default:
             Cu.reportError("commonDialog opened for unknown type: " + this.args.promptType);
             throw "unknown dialog type";
+        }
+
+        if (xulDialog) {
+            xulDialog.setAttribute("windowtype", "prompt:" + this.args.promptType);
         }
 
         // set the document title
@@ -128,8 +132,11 @@ CommonDialog.prototype = {
             this.setLabelForNode(this.ui.button0, this.args.button0Label);
 
         // display the main text
-        // Bug 317334 - crop string length as a workaround.
-        let croppedMessage = this.args.text.substr(0, 10000);
+        let croppedMessage = "";
+        if (this.args.text) {
+            // Bug 317334 - crop string length as a workaround.
+            croppedMessage = this.args.text.substr(0, 10000);
+        }
         let infoBody = this.ui.infoBody;
         infoBody.appendChild(infoBody.ownerDocument.createTextNode(croppedMessage));
 
@@ -144,7 +151,7 @@ CommonDialog.prototype = {
         // set the icon
         let icon = this.ui.infoIcon;
         if (icon)
-            this.iconClass.forEach((el,idx,arr) => icon.classList.add(el));
+            this.iconClass.forEach((el, idx, arr) => icon.classList.add(el));
 
         // set default result to cancelled
         this.args.ok = false;
@@ -156,7 +163,7 @@ CommonDialog.prototype = {
         let button = this.ui["button" + b];
 
         if (xulDialog)
-            xulDialog.defaultButton = ['accept', 'cancel', 'extra1', 'extra2'][b];
+            xulDialog.defaultButton = ["accept", "cancel", "extra1", "extra2"][b];
         else
             button.setAttribute("default", "true");
 
@@ -185,10 +192,10 @@ CommonDialog.prototype = {
         let topic = "common-dialog-loaded";
         if (!xulDialog)
             topic = "tabmodal-dialog-loaded";
-        Services.obs.notifyObservers(this.ui.prompt, topic, null);
+        Services.obs.notifyObservers(this.ui.prompt, topic);
     },
 
-    setLabelForNode: function(aNode, aLabel) {
+    setLabelForNode(aNode, aLabel) {
         // This is for labels which may contain embedded access keys.
         // If we end in (&X) where X represents the access key, optionally preceded
         // by spaces and/or followed by the ':' character, store the access key and
@@ -218,20 +225,20 @@ CommonDialog.prototype = {
     },
 
 
-    initTextbox : function (aName, aValue) {
+    initTextbox(aName, aValue) {
         this.ui[aName + "Container"].hidden = false;
         this.ui[aName + "Textbox"].setAttribute("value",
                                                 aValue !== null ? aValue : "");
     },
 
-    setButtonsEnabledState : function(enabled) {
+    setButtonsEnabledState(enabled) {
         this.ui.button0.disabled = !enabled;
         // button1 (cancel) remains enabled.
         this.ui.button2.disabled = !enabled;
         this.ui.button3.disabled = !enabled;
     },
 
-    setDefaultFocus : function(isInitialLoad) {
+    setDefaultFocus(isInitialLoad) {
         let b = (this.args.defaultButtonNum || 0);
         let button = this.ui["button" + b];
 
@@ -241,28 +248,25 @@ CommonDialog.prototype = {
                 this.ui.infoBody.focus();
             else
                 button.focus();
-        } else {
+        } else if (this.args.promptType == "promptPassword") {
             // When the prompt is initialized, focus and select the textbox
             // contents. Afterwards, only focus the textbox.
-            if (this.args.promptType == "promptPassword") {
-                if (isInitialLoad)
-                    this.ui.password1Textbox.select();
-                else
-                    this.ui.password1Textbox.focus();
-            } else {
-                if (isInitialLoad)
-                    this.ui.loginTextbox.select();
-                else
-                    this.ui.loginTextbox.focus();
-            }
+            if (isInitialLoad)
+                this.ui.password1Textbox.select();
+            else
+                this.ui.password1Textbox.focus();
+        } else if (isInitialLoad) {
+                this.ui.loginTextbox.select();
+        } else {
+                this.ui.loginTextbox.focus();
         }
     },
 
-    onCheckbox : function() {
+    onCheckbox() {
         this.args.checked = this.ui.checkbox.checked;
     },
 
-    onButton0 : function() {
+    onButton0() {
         this.args.promptActive = false;
         this.args.ok = true;
         this.args.buttonNumClicked = 0;
@@ -285,22 +289,22 @@ CommonDialog.prototype = {
         }
     },
 
-    onButton1 : function() {
+    onButton1() {
         this.args.promptActive = false;
         this.args.buttonNumClicked = 1;
     },
 
-    onButton2 : function() {
+    onButton2() {
         this.args.promptActive = false;
         this.args.buttonNumClicked = 2;
     },
 
-    onButton3 : function() {
+    onButton3() {
         this.args.promptActive = false;
         this.args.buttonNumClicked = 3;
     },
 
-    abortPrompt : function() {
+    abortPrompt() {
         this.args.promptActive = false;
         this.args.promptAborted = true;
     },

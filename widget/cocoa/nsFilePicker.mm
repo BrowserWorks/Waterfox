@@ -120,7 +120,7 @@ NSView* nsFilePicker::GetAccessoryView()
   nsresult rv = sbs->CreateBundle("chrome://global/locale/filepicker.properties", getter_AddRefs(bundle));
   if (NS_SUCCEEDED(rv)) {
     nsXPIDLString locaLabel;
-    bundle->GetStringFromName(u"formatLabel", getter_Copies(locaLabel));
+    bundle->GetStringFromName("formatLabel", getter_Copies(locaLabel));
     if (locaLabel) {
       label = [NSString stringWithCharacters:reinterpret_cast<const unichar*>(locaLabel.get())
                                       length:locaLabel.Length()];
@@ -458,18 +458,35 @@ nsFilePicker::PutLocalFile(const nsString& inTitle, const nsString& inDefaultNam
   // set up default file name
   NSString* defaultFilename = [NSString stringWithCharacters:(const unichar*)inDefaultName.get() length:inDefaultName.Length()];
 
-  // set up allowed types; this prevents the extension from being selected
-  // use the UTI for the file type to allow alternate extensions (e.g., jpg vs. jpeg)
+  // Set up the allowed type. This prevents the extension from being selected.
   NSString* extension = defaultFilename.pathExtension;
   if (extension.length != 0) {
-    CFStringRef type = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (CFStringRef)extension, NULL);
+    thePanel.allowedFileTypes = @[extension];
+  }
+  // Allow users to change the extension.
+  thePanel.allowsOtherFileTypes = YES;
 
+  // If extensions are hidden and we’re saving a file with multiple extensions,
+  // only the last extension will be hidden in the panel (".tar.gz" will become
+  // ".tar"). If the remaining extension is known, the OS will think that we're
+  // trying to add a non-default extension. To avoid the confusion, we ensure
+  // that all extensions are shown in the panel if the remaining extension is
+  // known by the OS.
+  NSString* fileName =
+    [[defaultFilename lastPathComponent] stringByDeletingPathExtension];
+  NSString* otherExtension = fileName.pathExtension;
+  if (otherExtension.length != 0) {
+    // There's another extension here. Get the UTI.
+    CFStringRef type =
+      UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
+                                            (CFStringRef)otherExtension, NULL);
     if (type) {
-      thePanel.allowedFileTypes = @[(NSString*)type];
+      if (!CFStringHasPrefix(type, CFSTR("dyn."))) {
+        // We have a UTI, otherwise the type would have a "dyn." prefix. Ensure
+        // extensions are shown in the panel.
+        [thePanel setExtensionHidden:NO];
+      }
       CFRelease(type);
-    } else {
-      // if there's no UTI for the file extension, use the extension itself.
-      thePanel.allowedFileTypes = @[extension];
     }
   }
 

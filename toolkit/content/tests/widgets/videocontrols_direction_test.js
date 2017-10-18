@@ -1,3 +1,6 @@
+// This file expects `tests` to have been declared in the global scope.
+/* global tests */
+
 var RemoteCanvas = function(url, id) {
   this.url = url;
   this.id = id;
@@ -22,13 +25,12 @@ RemoteCanvas.prototype.load = function(callback) {
     info("iframe loaded");
     var m = iframe.contentDocument.getElementById("av");
     m.addEventListener("suspend", function(aEvent) {
-      m.removeEventListener("suspend", arguments.callee, false);
       setTimeout(function() {
         me.remotePageLoaded(callback);
       }, 0);
-    }, false);
+    }, {once: true});
     m.src = m.getAttribute("source");
-  }, false);
+  });
   window.document.body.appendChild(iframe);
 };
 
@@ -42,9 +44,9 @@ RemoteCanvas.prototype.remotePageLoaded = function(callback) {
 
 RemoteCanvas.prototype.cleanup = function() {
   var iframe = document.getElementById(this.id + "-iframe");
-  iframe.parentNode.removeChild(iframe);
+  iframe.remove();
   var canvas = document.getElementById(this.id + "-canvas");
-  canvas.parentNode.removeChild(canvas);
+  canvas.remove();
 };
 
 function runTest(index) {
@@ -61,8 +63,7 @@ function runTest(index) {
       if (result) {
         canvases[0].cleanup();
         canvases[1].cleanup();
-      }
-      else {
+      } else {
         info("Snapshot of canvas 1: " + canvases[0].snapshot.toDataURL());
         info("Snapshot of canvas 2: " + canvases[1].snapshot.toDataURL());
       }
@@ -86,5 +87,5 @@ SimpleTest.waitForExplicitFinish();
 SimpleTest.requestCompleteLog();
 
 window.addEventListener("load", function() {
-  SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, function(){ runTest(0); });
+  SpecialPowers.pushPrefEnv({"set": [["media.cache_size", 40000]]}, function() { runTest(0); });
 }, true);

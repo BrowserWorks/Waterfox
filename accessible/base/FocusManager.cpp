@@ -15,6 +15,7 @@
 #include "nsFocusManager.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/TabParent.h"
 
 namespace mozilla {
 namespace a11y {
@@ -35,7 +36,7 @@ FocusManager::FocusedAccessible() const
 
   nsINode* focusedNode = FocusedDOMNode();
   if (focusedNode) {
-    DocAccessible* doc = 
+    DocAccessible* doc =
       GetAccService()->GetDocAccessible(focusedNode->OwnerDoc());
     return doc ? doc->GetAccessibleEvenIfNotInMapOrContainer(focusedNode) : nullptr;
   }
@@ -58,7 +59,7 @@ FocusManager::IsFocused(const Accessible* aAccessible) const
     // FocusedAccessible() method call. Make sure this issue is fixed in
     // bug 638465.
     if (focusedNode->OwnerDoc() == aAccessible->GetNode()->OwnerDoc()) {
-      DocAccessible* doc = 
+      DocAccessible* doc =
         GetAccService()->GetDocAccessible(focusedNode->OwnerDoc());
       return aAccessible ==
         (doc ? doc->GetAccessibleEvenIfNotInMapOrContainer(focusedNode) : nullptr);
@@ -190,12 +191,32 @@ FocusManager::ActiveItemChanged(Accessible* aItem, bool aCheckIfActive)
   }
   mActiveItem = aItem;
 
+  // If mActiveItem is null we may need to shift a11y focus back to a tab
+  // document. For example, when combobox popup is closed, then
+  // the focus should be moved back to the combobox.
+  if (!mActiveItem && XRE_IsParentProcess()) {
+    nsFocusManager* domfm = nsFocusManager::GetFocusManager();
+    if (domfm) {
+      nsIContent* focusedElm = domfm->GetFocusedContent();
+      if (EventStateManager::IsRemoteTarget(focusedElm)) {
+        dom::TabParent* tab = dom::TabParent::GetFrom(focusedElm);
+        if (tab) {
+          a11y::DocAccessibleParent* dap = tab->GetTopLevelDocAccessible();
+          if (dap) {
+            Unused << dap->SendRestoreFocus();
+          }
+        }
+      }
+    }
+  }
+
   // If active item is changed then fire accessible focus event on it, otherwise
   // if there's no an active item then fire focus event to accessible having
   // DOM focus.
   Accessible* target = FocusedAccessible();
-  if (target)
+  if (target) {
     DispatchFocusEvent(target->Document(), target);
+  }
 }
 
 void

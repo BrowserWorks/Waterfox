@@ -5,19 +5,21 @@
 
 package org.mozilla.gecko.preferences;
 
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.mma.MmaDelegate;
+import org.mozilla.gecko.util.GeckoBundle;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.icons.storage.DiskStorage;
 
 import java.util.Set;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
+
+import static org.mozilla.gecko.mma.MmaDelegate.CLEARED_PRIVATE_DATA;
+
 
 class PrivateDataPreference extends MultiPrefMultiChoicePreference {
     private static final String LOGTAG = "GeckoPrivateDataPreference";
@@ -38,7 +40,7 @@ class PrivateDataPreference extends MultiPrefMultiChoicePreference {
         Telemetry.sendUIEvent(TelemetryContract.Event.SANITIZE, TelemetryContract.Method.DIALOG, "settings");
 
         final Set<String> values = getValues();
-        final JSONObject json = new JSONObject();
+        final GeckoBundle data = new GeckoBundle();
 
         for (String value : values) {
             // Privacy pref checkbox values are stored in Android prefs to
@@ -47,14 +49,16 @@ class PrivateDataPreference extends MultiPrefMultiChoicePreference {
             // removed here so we can send the values to Gecko, which then does
             // the sanitization for each key.
             final String key = value.substring(PREF_KEY_PREFIX.length());
-            try {
-                json.put(key, true);
-            } catch (JSONException e) {
-                Log.e(LOGTAG, "JSON error", e);
-            }
+            data.putBoolean(key, true);
+        }
+
+        if (values.contains("private.data.offlineApps")) {
+            // Remove all icons from storage if removing "Offline website data" was selected.
+            DiskStorage.get(getContext()).evictAll();
         }
 
         // clear private data in gecko
-        GeckoAppShell.notifyObservers("Sanitize:ClearData", json.toString());
+        EventDispatcher.getInstance().dispatch("Sanitize:ClearData", data);
+        MmaDelegate.track(CLEARED_PRIVATE_DATA);
     }
 }

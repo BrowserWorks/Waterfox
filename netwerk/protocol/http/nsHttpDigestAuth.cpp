@@ -7,6 +7,9 @@
 // HttpLog.h should generally be included first
 #include "HttpLog.h"
 
+#include "mozilla/Sprintf.h"
+#include "mozilla/Unused.h"
+
 #include "nsHttp.h"
 #include "nsHttpDigestAuth.h"
 #include "nsIHttpAuthenticableChannel.h"
@@ -15,7 +18,6 @@
 #include "nsString.h"
 #include "nsEscape.h"
 #include "nsNetCID.h"
-#include "prprf.h"
 #include "nsCRT.h"
 #include "nsICryptoHash.h"
 #include "nsComponentManagerUtils.h"
@@ -120,7 +122,10 @@ nsHttpDigestAuth::GetMethodAndPath(nsIHttpAuthenticableChannel *authChannel,
           // instead of regenerating it here.
           //
           nsAutoCString buf;
-          path = NS_EscapeURL(path, esc_OnlyNonASCII, buf);
+          rv = NS_EscapeURL(path, esc_OnlyNonASCII, buf, mozilla::fallible);
+          if (NS_SUCCEEDED(rv)) {
+            path = buf;
+          }
         }
       }
     }
@@ -200,7 +205,7 @@ nsHttpDigestAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChannel,
   bool requireExtraQuotes = false;
   {
     nsAutoCString serverVal;
-    authChannel->GetServerResponseHeader(serverVal);
+    Unused << authChannel->GetServerResponseHeader(serverVal);
     if (!serverVal.IsEmpty()) {
       requireExtraQuotes = !PL_strncasecmp(serverVal.get(), "Microsoft-IIS", 13);
     }
@@ -219,7 +224,8 @@ nsHttpDigestAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChannel,
   rv = ParseChallenge(challenge, realm, domain, nonce, opaque,
                       &stale, &algorithm, &qop);
   if (NS_FAILED(rv)) {
-    LOG(("nsHttpDigestAuth::GenerateCredentials [ParseChallenge failed rv=%x]\n", rv));
+    LOG(("nsHttpDigestAuth::GenerateCredentials [ParseChallenge failed rv=%" PRIx32 "]\n",
+         static_cast<uint32_t>(rv)));
     return rv;
   }
 
@@ -279,7 +285,7 @@ nsHttpDigestAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChannel,
     if (v) {
       uint32_t nc;
       v->GetData(&nc);
-      PR_snprintf(nonce_count, sizeof(nonce_count), "%08x", ++nc);
+      SprintfLiteral(nonce_count, "%08x", ++nc);
       v->SetData(nc);
     }
   }
@@ -400,10 +406,10 @@ nsHttpDigestAuth::GetAuthFlags(uint32_t *flags)
 nsresult
 nsHttpDigestAuth::CalculateResponse(const char * ha1_digest,
                                     const char * ha2_digest,
-                                    const nsAFlatCString & nonce,
+                                    const nsCString& nonce,
                                     uint16_t qop,
                                     const char * nonce_count,
-                                    const nsAFlatCString & cnonce,
+                                    const nsCString& cnonce,
                                     char * result)
 {
   uint32_t len = 2*EXPANDED_DIGEST_LENGTH + nonce.Length() + 2;
@@ -467,12 +473,12 @@ nsHttpDigestAuth::ExpandToHex(const char * digest, char * result)
 }
 
 nsresult
-nsHttpDigestAuth::CalculateHA1(const nsAFlatCString & username,
-                               const nsAFlatCString & password,
-                               const nsAFlatCString & realm,
+nsHttpDigestAuth::CalculateHA1(const nsCString& username,
+                               const nsCString& password,
+                               const nsCString& realm,
                                uint16_t algorithm,
-                               const nsAFlatCString & nonce,
-                               const nsAFlatCString & cnonce,
+                               const nsCString& nonce,
+                               const nsCString& cnonce,
                                char * result)
 {
   int16_t len = username.Length() + password.Length() + realm.Length() + 2;
@@ -498,7 +504,8 @@ nsHttpDigestAuth::CalculateHA1(const nsAFlatCString & username,
 
   if (algorithm & ALGO_MD5_SESS) {
     char part1[EXPANDED_DIGEST_LENGTH+1];
-    ExpandToHex(mHashBuf, part1);
+    rv = ExpandToHex(mHashBuf, part1);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
 
     contents.Assign(part1, EXPANDED_DIGEST_LENGTH);
     contents.Append(':');
@@ -515,8 +522,8 @@ nsHttpDigestAuth::CalculateHA1(const nsAFlatCString & username,
 }
 
 nsresult
-nsHttpDigestAuth::CalculateHA2(const nsAFlatCString & method,
-                               const nsAFlatCString & path,
+nsHttpDigestAuth::CalculateHA2(const nsCString& method,
+                               const nsCString& path,
                                uint16_t qop,
                                const char * bodyDigest,
                                char * result)
@@ -562,8 +569,8 @@ nsHttpDigestAuth::ParseChallenge(const char * challenge,
   if (strlen(challenge) > 16000000) {
     return NS_ERROR_INVALID_ARG;
   }
-  
-  const char *p = challenge + 7; // first 7 characters are "Digest "
+
+  const char *p = challenge + 6; // first 6 characters are "Digest"
 
   *stale = false;
   *algorithm = ALGO_MD5; // default is MD5

@@ -11,7 +11,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -19,22 +18,25 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.UrlAnnotations;
-import org.mozilla.gecko.favicons.Favicons;
-import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.icons.IconCallback;
+import org.mozilla.gecko.icons.IconResponse;
+import org.mozilla.gecko.icons.Icons;
+import org.mozilla.gecko.Experiments;
+import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 /**
  * Prompt to promote adding the current website to the home screen.
  */
-public class HomeScreenPrompt extends Locales.LocaleAwareActivity implements OnFaviconLoadedListener {
+public class HomeScreenPrompt extends Locales.LocaleAwareActivity implements IconCallback {
     private static final String EXTRA_TITLE = "title";
     private static final String EXTRA_URL = "url";
 
@@ -118,35 +120,27 @@ public class HomeScreenPrompt extends Locales.LocaleAwareActivity implements OnF
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                GeckoAppShell.createShortcut(title, url);
+                GeckoApplication.createShortcut(title, url);
 
                 Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, TELEMETRY_EXTRA);
 
-                goToHomeScreen();
+                ActivityUtils.goToHomeScreen(HomeScreenPrompt.this);
+
+                finish();
             }
         });
     }
 
-    /**
-     * Finish this activity and launch the default home screen activity.
-     */
-    private void goToHomeScreen() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
 
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-
-        finish();
-    }
 
     private void loadShortcutIcon() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                Favicons.getPreferredIconForHomeScreenShortcut(HomeScreenPrompt.this, url, HomeScreenPrompt.this);
-            }
-        });
+        Icons.with(this)
+                .pageUrl(url)
+                .skipNetwork()
+                .skipMemory()
+                .forLauncherIcon()
+                .build()
+                .execute(this);
     }
 
     private void slideIn() {
@@ -174,7 +168,7 @@ public class HomeScreenPrompt extends Locales.LocaleAwareActivity implements OnF
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                final UrlAnnotations urlAnnotations = GeckoProfile.get(HomeScreenPrompt.this).getDB().getUrlAnnotations();
+                final UrlAnnotations urlAnnotations = BrowserDB.from(HomeScreenPrompt.this).getUrlAnnotations();
                 urlAnnotations.insertHomeScreenShortcut(getContentResolver(), url, false);
             }
         });
@@ -237,16 +231,7 @@ public class HomeScreenPrompt extends Locales.LocaleAwareActivity implements OnF
     }
 
     @Override
-    public void onFaviconLoaded(String url, String faviconURL, final Bitmap favicon) {
-        if (favicon == null) {
-            return;
-        }
-
-        ThreadUtils.postToUiThread(new Runnable() {
-            @Override
-            public void run() {
-                iconView.setImageBitmap(favicon);
-            }
-        });
+    public void onIconResponse(IconResponse response) {
+        iconView.setImageBitmap(response.getBitmap());
     }
 }

@@ -18,7 +18,6 @@ enum MediaKeySessionType {
   // persistent-usage-record,
 };
 
-[Pref="media.eme.apiVisible"]
 interface MediaKeys {
   readonly attribute DOMString keySystem;
 
@@ -26,5 +25,5 @@ interface MediaKeys {
   MediaKeySession createSession(optional MediaKeySessionType sessionType = "temporary");
 
   [NewObject]
-  Promise<void> setServerCertificate((ArrayBufferView or ArrayBuffer) serverCertificate);
+  Promise<void> setServerCertificate(BufferSource serverCertificate);
 };

@@ -24,10 +24,15 @@ registerCleanupFunction(() => {
 
 /**
  * Add a new test tab in the browser and load the given url.
- * @param {String} url The url to be loaded in the new tab
- * @return a promise that resolves to the tab object when the url is loaded
+ * @param {String} url
+ *   The url to be loaded in the new tab.
+ * @param {Number} timeout [optional]
+ *   The maximum number of milliseconds allowed before the initialization of the
+ *   JSON Viewer once the tab has been loaded. If exceeded, the initialization
+ *   will be considered to have failed, and the returned promise will be rejected.
+ *   If this parameter is not passed or is negative, it will be ignored.
  */
-function addJsonViewTab(url) {
+function addJsonViewTab(url, timeout = -1) {
   info("Adding a new JSON tab with URL: '" + url + "'");
 
   let deferred = promise.defer();
@@ -44,11 +49,26 @@ function addJsonViewTab(url) {
 
     // Resolve if the JSONView is fully loaded or wait
     // for an initialization event.
-    if (content.window.wrappedJSObject.jsonViewInitialized) {
+    if (content.window.wrappedJSObject.JSONView.initialized) {
       deferred.resolve(tab);
     } else {
       waitForContentMessage("Test:JsonView:JSONViewInitialized").then(() => {
         deferred.resolve(tab);
+      });
+    }
+
+    // Add a timeout.
+    if (timeout >= 0) {
+      new Promise(resolve => {
+        if (content.window.document.readyState === "complete") {
+          resolve();
+        } else {
+          waitForContentMessage("Test:JsonView:load").then(resolve);
+        }
+      }).then(() => {
+        setTimeout(() => {
+          deferred.reject("JSON Viewer did not load.");
+        }, timeout);
       });
     }
   });
@@ -134,12 +154,6 @@ function waitForTime(delay) {
   let deferred = promise.defer();
   setTimeout(deferred.resolve, delay);
   return deferred.promise;
-}
-
-function waitForClipboardPromise(setup, expected) {
-  return new Promise((resolve, reject) => {
-    SimpleTest.waitForClipboard(expected, setup, resolve, reject);
-  });
 }
 
 function waitForFilter() {

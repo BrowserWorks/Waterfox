@@ -8,17 +8,27 @@
 #ifndef SkScalerContext_DEFINED
 #define SkScalerContext_DEFINED
 
+#include "SkGlyph.h"
 #include "SkMask.h"
 #include "SkMaskGamma.h"
 #include "SkMatrix.h"
 #include "SkPaint.h"
 #include "SkTypeface.h"
 
-class SkGlyph;
 class SkDescriptor;
 class SkMaskFilter;
 class SkPathEffect;
 class SkRasterizer;
+
+struct SkScalerContextEffects {
+    SkScalerContextEffects() : fPathEffect(nullptr), fMaskFilter(nullptr), fRasterizer(nullptr) {}
+    SkScalerContextEffects(SkPathEffect* pe, SkMaskFilter* mf, SkRasterizer* ra)
+        : fPathEffect(pe), fMaskFilter(mf), fRasterizer(ra) {}
+
+    SkPathEffect*   fPathEffect;
+    SkMaskFilter*   fMaskFilter;
+    SkRasterizer*   fRasterizer;
+};
 
 enum SkAxisAlignment {
     kNone_SkAxisAlignment,
@@ -68,13 +78,21 @@ struct SkScalerContextRec {
     }
 
     /**
+     *  Causes the luminance color to be ignored, and the paint and device
+     *  gamma to be effectively 1.0
+     */
+    void ignoreGamma() {
+        setLuminanceColor(SK_ColorTRANSPARENT);
+        setPaintGamma(SK_Scalar1);
+        setDeviceGamma(SK_Scalar1);
+    }
+
+    /**
      *  Causes the luminance color and contrast to be ignored, and the
      *  paint and device gamma to be effectively 1.0.
      */
     void ignorePreBlend() {
-        setLuminanceColor(SK_ColorTRANSPARENT);
-        setPaintGamma(SK_Scalar1);
-        setDeviceGamma(SK_Scalar1);
+        ignoreGamma();
         setContrast(0);
     }
 
@@ -128,8 +146,9 @@ struct SkScalerContextRec {
      *  @param remainingWithoutRotation apply after scale to apply the total matrix sans rotation.
      *  @param remainingRotation apply after remainingWithoutRotation to apply the total matrix.
      *  @param total the total matrix.
+     *  @return false if the matrix was singular. The output will be valid but not invertible.
      */
-    void computeMatrices(PreMatrixScale preMatrixScale,
+    bool computeMatrices(PreMatrixScale preMatrixScale,
                          SkVector* scale, SkMatrix* remaining,
                          SkMatrix* remainingWithoutRotation = nullptr,
                          SkMatrix* remainingRotation = nullptr,
@@ -192,8 +211,7 @@ public:
         kHinting_Mask   = kHintingBit1_Flag | kHintingBit2_Flag,
     };
 
-
-    SkScalerContext(SkTypeface*, const SkDescriptor*);
+    SkScalerContext(sk_sp<SkTypeface>, const SkScalerContextEffects&, const SkDescriptor*);
     virtual ~SkScalerContext();
 
     SkTypeface* getTypeface() const { return fTypeface.get(); }
@@ -230,7 +248,7 @@ public:
     void        getAdvance(SkGlyph*);
     void        getMetrics(SkGlyph*);
     void        getImage(const SkGlyph&);
-    void        getPath(const SkGlyph&, SkPath*);
+    void        getPath(SkPackedGlyphID, SkPath*);
     void        getFontMetrics(SkPaint::FontMetrics*);
 
     /** Return the size in bytes of the associated gamma lookup table
@@ -252,12 +270,15 @@ public:
 
     const Rec& getRec() const { return fRec; }
 
+    SkScalerContextEffects getEffects() const {
+        return { fPathEffect.get(), fMaskFilter.get(), fRasterizer.get() };
+    }
+
     /**
     *  Return the axis (if any) that the baseline for horizontal text should land on.
     *  As an example, the identity matrix will return kX_SkAxisAlignment
     */
     SkAxisAlignment computeAxisAlignmentForHText();
-
 
 protected:
     Rec         fRec;
@@ -288,11 +309,8 @@ protected:
     /** Sets the passed path to the glyph outline.
      *  If this cannot be done the path is set to empty;
      *  this is indistinguishable from a glyph with an empty path.
-     *  This does not set glyph.fPath.
-     *
-     *  TODO: path is always glyph.fPath, no reason to pass separately.
      */
-    virtual void generatePath(const SkGlyph& glyph, SkPath* path) = 0;
+    virtual void generatePath(SkGlyphID glyphId, SkPath* path) = 0;
 
     /** Retrieves font metrics. */
     virtual void generateFontMetrics(SkPaint::FontMetrics*) = 0;
@@ -318,24 +336,19 @@ private:
     friend class SkRandomScalerContext; // For debug purposes
 
     // never null
-    SkAutoTUnref<SkTypeface> fTypeface;
+    sk_sp<SkTypeface> fTypeface;
 
-    // optional object, which may be null
-    SkPathEffect*   fPathEffect;
-    SkMaskFilter*   fMaskFilter;
-    SkRasterizer*   fRasterizer;
+    // optional objects, which may be null
+    sk_sp<SkPathEffect> fPathEffect;
+    sk_sp<SkMaskFilter> fMaskFilter;
+    sk_sp<SkRasterizer> fRasterizer;
 
     // if this is set, we draw the image from a path, rather than
     // calling generateImage.
     bool fGenerateImageFromPath;
 
-    void internalGetPath(const SkGlyph& glyph, SkPath* fillPath,
+    void internalGetPath(SkPackedGlyphID id, SkPath* fillPath,
                          SkPath* devPath, SkMatrix* fillToDevMatrix);
-
-    // returns the right context from our link-list for this char. If no match
-    // is found it returns nullptr. If a match is found then the glyphID param is
-    // set to the glyphID that maps to the provided char.
-    SkScalerContext* getContextFromChar(SkUnichar uni, uint16_t* glyphID);
 
     // SkMaskGamma::PreBlend converts linear masks to gamma correcting masks.
 protected:

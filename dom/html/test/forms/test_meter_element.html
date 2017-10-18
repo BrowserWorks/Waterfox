@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=657938
 -->
 <head>
   <title>Test for <meter></title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -312,19 +311,12 @@ function checkNotResetableAndFormSubmission(aElement)
   aElement.max = 100.0;
 
   document.getElementsByName('submit_frame')[0].addEventListener("load", function() {
-    document.getElementsByName('submit_frame')[0].removeEventListener("load", arguments.callee, false);
-
-    /**
-     * All elements values have been set just before the submission.
-     * The input element value should be in the submit url but the meter
-     * element value should not appear.
-     */
     is(frames['submit_frame'].location.href,
       'http://mochi.test:8888/tests/dom/html/test/forms/foo?a=tulip',
        "The meter element value should not be submitted");
 
     checkNotResetable();
-  }, false);
+  }, {once: true});
 
   form.submit();
 }

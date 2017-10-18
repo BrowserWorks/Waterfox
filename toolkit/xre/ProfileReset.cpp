@@ -15,14 +15,17 @@
 #include "nsDirectoryServiceUtils.h"
 #include "nsPIDOMWindow.h"
 #include "nsPrintfCString.h"
+#include "nsString.h"
 #include "nsToolkitCompsCID.h"
 #include "nsXPCOMCIDInternal.h"
-#include "nsXREAppData.h"
+#include "mozilla/XREAppData.h"
 
 #include "mozilla/Services.h"
 #include "prtime.h"
 
-extern const nsXREAppData* gAppData;
+using namespace mozilla;
+
+extern const XREAppData* gAppData;
 
 static const char kProfileProperties[] =
   "chrome://mozapps/locale/profile/profileSelection.properties";
@@ -31,14 +34,20 @@ static const char kProfileProperties[] =
  * Creates a new profile with a timestamp in the name to use for profile reset.
  */
 nsresult
-CreateResetProfile(nsIToolkitProfileService* aProfileSvc, nsIToolkitProfile* *aNewProfile)
+CreateResetProfile(nsIToolkitProfileService* aProfileSvc, const nsACString& aOldProfileName, nsIToolkitProfile* *aNewProfile)
 {
   MOZ_ASSERT(aProfileSvc, "NULL profile service");
 
   nsCOMPtr<nsIToolkitProfile> newProfile;
-  // Make the new profile "default-" + the time in seconds since epoch for uniqueness.
-  nsAutoCString newProfileName("default-");
-  newProfileName.Append(nsPrintfCString("%lld", PR_Now() / 1000));
+  // Make the new profile the old profile (or "default-") + the time in seconds since epoch for uniqueness.
+  nsAutoCString newProfileName;
+  if (!aOldProfileName.IsEmpty()) {
+    newProfileName.Assign(aOldProfileName);
+    newProfileName.Append("-");
+  } else {
+    newProfileName.Assign("default-");
+  }
+  newProfileName.Append(nsPrintfCString("%" PRId64, PR_Now() / 1000));
   nsresult rv = aProfileSvc->CreateProfile(nullptr, // choose a default dir for us
                                            newProfileName,
                                            getter_AddRefs(newProfile));
@@ -80,7 +89,7 @@ ProfileResetCleanup(nsIToolkitProfile* aOldProfile)
 
   nsXPIDLString resetBackupDirectoryName;
 
-  static const char16_t* kResetBackupDirectory = u"resetBackupDirectory";
+  static const char* kResetBackupDirectory = "resetBackupDirectory";
   rv = sb->FormatStringFromName(kResetBackupDirectory, params, 2,
                                 getter_Copies(resetBackupDirectoryName));
 
@@ -153,11 +162,8 @@ ProfileResetCleanup(nsIToolkitProfile* aOldProfile)
     cleanupThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL);
     // The result callback will shut down the worker thread.
 
-    nsIThread *thread = NS_GetCurrentThread();
     // Wait for the cleanup thread to complete.
-    while(!gProfileResetCleanupCompleted) {
-      NS_ProcessNextEvent(thread);
-    }
+    SpinEventLoopUntil([&]() { return gProfileResetCleanupCompleted; });
   } else {
     gProfileResetCleanupCompleted = true;
     NS_WARNING("Cleanup thread creation failed");

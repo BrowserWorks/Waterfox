@@ -60,7 +60,7 @@ def checking(what, callback=None):
                     log.info('no')
                 else:
                     log.info(display_ret)
-                if error:
+                if error is not None:
                     die(error)
             return ret
         return wrapped
@@ -93,12 +93,11 @@ def checking(what, callback=None):
 # use that value instead.
 @template
 @imports(_from='mozbuild.shellutil', _import='quote')
-@imports(_from='mozbuild.configure', _import='DependsFunction')
 def check_prog(var, progs, what=None, input=None, allow_missing=False,
-               paths=None):
-    if input:
+               paths=None, when=None):
+    if input is not None:
         # Wrap input with type checking and normalization.
-        @depends(input)
+        @depends(input, when=when)
         def input(value):
             if not value:
                 return
@@ -109,18 +108,16 @@ def check_prog(var, progs, what=None, input=None, allow_missing=False,
             configure_error('input must resolve to a tuple or a list with a '
                             'single element, or a string')
     else:
-        option(env=var, nargs=1,
+        option(env=var, nargs=1, when=when,
                help='Path to %s' % (what or 'the %s program' % var.lower()))
         input = var
     what = what or var.lower()
 
     # Trick to make a @depends function out of an immediate value.
-    if not isinstance(progs, DependsFunction):
-        progs = depends('--help')(lambda h: progs)
-    if not isinstance(paths, DependsFunction):
-        paths = depends('--help')(lambda h: paths)
+    progs = dependable(progs)
+    paths = dependable(paths)
 
-    @depends_if(input, progs, paths)
+    @depends_if(input, progs, paths, when=when)
     @checking('for %s' % what, lambda x: quote(x) if x else 'not found')
     def check(value, progs, paths):
         if progs is None:
@@ -138,7 +135,7 @@ def check_prog(var, progs, what=None, input=None, allow_missing=False,
         if not allow_missing or value:
             raise FatalCheckError('Cannot find %s' % what)
 
-    @depends_if(check, progs)
+    @depends_if(check, progs, when=when)
     def normalized_for_config(value, progs):
         return ':' if value is None else value
 

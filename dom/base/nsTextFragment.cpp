@@ -203,7 +203,7 @@ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi
   if (aLength == 0) {
     return true;
   }
-  
+
   char16_t firstChar = *aBuffer;
   if (aLength == 1 && firstChar < 256) {
     m1b = sSingleCharSharedString + firstChar;
@@ -250,7 +250,7 @@ nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength, bool aUpdateBidi
       mState.mIs2b = false;
       mState.mLength = aLength;
 
-      return true;        
+      return true;
     }
   }
 
@@ -450,21 +450,8 @@ void
 nsTextFragment::UpdateBidiFlag(const char16_t* aBuffer, uint32_t aLength)
 {
   if (mState.mIs2b && !mState.mIsBidi) {
-    const char16_t* cp = aBuffer;
-    const char16_t* end = cp + aLength;
-    while (cp < end) {
-      char16_t ch1 = *cp++;
-      uint32_t utf32Char = ch1;
-      if (NS_IS_HIGH_SURROGATE(ch1) &&
-          cp < end &&
-          NS_IS_LOW_SURROGATE(*cp)) {
-        char16_t ch2 = *cp++;
-        utf32Char = SURROGATE_TO_UCS4(ch1, ch2);
-      }
-      if (UTF32_CHAR_IS_BIDI(utf32Char) || IsBidiControl(utf32Char)) {
-        mState.mIsBidi = true;
-        break;
-      }
+    if (HasRTLChars(aBuffer, aLength)) {
+      mState.mIsBidi = true;
     }
   }
 }

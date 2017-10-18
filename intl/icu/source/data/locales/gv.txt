@@ -1,11 +1,5 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/gv.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 gv{
     ExemplarCharacters{"[a b c ç d e f g h i j k l m n o p q r s t u v w x y z]"}
     NumberElements{
@@ -14,11 +8,24 @@ gv{
                 currencyFormat{"¤#,##0.00"}
             }
         }
+        minimalPairs{
+            plural{
+                few{"{0} thunnag/muc/ooyl"}
+                many{"{0} dy hunnagyn/dy vucyn/dy ooylyn"}
+                one{"{0} thunnag/vuc/ooyl"}
+                other{"{0} thunnagyn/mucyn/ooylyn"}
+                two{"{0} hunnag/vuc/ooyl"}
+            }
+        }
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.31.34"}
     calendar{
         gregorian{
             AmPmMarkers{
+                "a.m.",
+                "p.m.",
+            }
+            AmPmMarkersAbbr{
                 "a.m.",
                 "p.m.",
             }

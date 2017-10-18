@@ -5,6 +5,7 @@
 
 #include "TextureDIB.h"
 #include "gfx2DGlue.h"
+#include "mozilla/gfx/DataSurfaceHelpers.h" // For BufferSizeFromDimensions
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 
@@ -24,7 +25,8 @@ public:
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
 
   virtual TextureData*
-  CreateSimilar(ClientIPCAllocator* aAllocator,
+  CreateSimilar(LayersIPCChannel* aAllocator,
+                LayersBackend aLayersBackend,
                 TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override;
 
@@ -33,7 +35,7 @@ public:
   static
   DIBTextureData* Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat);
 
-  virtual void Deallocate(ClientIPCAllocator* aAllocator) override
+  virtual void Deallocate(LayersIPCChannel* aAllocator) override
   {
     mSurface = nullptr;
   }
@@ -61,7 +63,8 @@ public:
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
 
   virtual TextureData*
-  CreateSimilar(ClientIPCAllocator* aAllocator,
+  CreateSimilar(LayersIPCChannel* aAllocator,
+                LayersBackend aLayersBackend,
                 TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override;
 
@@ -69,7 +72,7 @@ public:
 
   static
   DIBTextureData* Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                         ClientIPCAllocator* aAllocator);
+                         LayersIPCChannel* aAllocator);
 
   void DeallocateData()
   {
@@ -84,7 +87,7 @@ public:
     }
   }
 
-  virtual void Deallocate(ClientIPCAllocator* aAllocator) override
+  virtual void Deallocate(LayersIPCChannel* aAllocator) override
   {
     DeallocateData();
   }
@@ -136,7 +139,7 @@ DIBTextureData::BorrowDrawTarget()
 
 DIBTextureData*
 DIBTextureData::Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                       ClientIPCAllocator* aAllocator)
+                       LayersIPCChannel* aAllocator)
 {
   if (!aAllocator) {
     return nullptr;
@@ -152,7 +155,8 @@ DIBTextureData::Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
 }
 
 TextureData*
-MemoryDIBTextureData::CreateSimilar(ClientIPCAllocator* aAllocator,
+MemoryDIBTextureData::CreateSimilar(LayersIPCChannel* aAllocator,
+                                    LayersBackend aLayersBackend,
                                     TextureFlags aFlags,
                                     TextureAllocationFlags aAllocFlags) const
 {
@@ -169,7 +173,7 @@ MemoryDIBTextureData::Serialize(SurfaceDescriptor& aOutDescriptor)
   // The host will release this ref when it receives the surface descriptor.
   // We AddRef in case we die before the host receives the pointer.
   aOutDescriptor = SurfaceDescriptorDIB(reinterpret_cast<uintptr_t>(mSurface.get()));
-  mSurface->AddRef();
+  mSurface.get()->AddRef();
   return true;
 }
 
@@ -215,7 +219,8 @@ MemoryDIBTextureData::UpdateFromSurface(gfx::SourceSurface* aSurface)
 }
 
 TextureData*
-ShmemDIBTextureData::CreateSimilar(ClientIPCAllocator* aAllocator,
+ShmemDIBTextureData::CreateSimilar(LayersIPCChannel* aAllocator,
+                                   LayersBackend aLayersBackend,
                                    TextureFlags aFlags,
                                    TextureAllocationFlags aAllocFlags) const
 {
@@ -279,7 +284,7 @@ ShmemDIBTextureData::Serialize(SurfaceDescriptor& aOutDescriptor)
 
 DIBTextureData*
 ShmemDIBTextureData::Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                            ClientIPCAllocator* aAllocator)
+                            LayersIPCChannel* aAllocator)
 {
   MOZ_ASSERT(aAllocator->GetParentPid() != base::ProcessId());
 
@@ -374,9 +379,9 @@ TextureHostDirectUpload::Unlock()
 }
 
 void
-TextureHostDirectUpload::SetCompositor(Compositor* aCompositor)
+TextureHostDirectUpload::SetTextureSourceProvider(TextureSourceProvider* aProvider)
 {
-  mCompositor = aCompositor;
+  mProvider = aProvider;
 }
 
 void
@@ -389,6 +394,12 @@ TextureHostDirectUpload::DeallocateDeviceData()
 
 bool
 TextureHostDirectUpload::BindTextureSource(CompositableTextureSourceRef& aTexture)
+{
+  return AcquireTextureSource(aTexture);
+}
+
+bool
+TextureHostDirectUpload::AcquireTextureSource(CompositableTextureSourceRef& aTexture)
 {
   if (!mTextureSource) {
     Updated();
@@ -414,14 +425,14 @@ DIBTextureHost::DIBTextureHost(TextureFlags aFlags,
 void
 DIBTextureHost::UpdatedInternal(const nsIntRegion* aRegion)
 {
-  if (!mCompositor) {
+  if (!mProvider) {
     // This can happen if we send textures to a compositable that isn't yet
     // attached to a layer.
     return;
   }
 
   if (!mTextureSource) {
-    mTextureSource = mCompositor->CreateDataTextureSource(mFlags);
+    mTextureSource = mProvider->CreateDataTextureSource(mFlags);
   }
 
   if (mSurface->CairoStatus()) {
@@ -433,7 +444,7 @@ DIBTextureHost::UpdatedInternal(const nsIntRegion* aRegion)
 
   RefPtr<DataSourceSurface> surf = Factory::CreateWrappingDataSourceSurface(imgSurf->Data(), imgSurf->Stride(), mSize, mFormat);
 
-  if (!mTextureSource->Update(surf, const_cast<nsIntRegion*>(aRegion))) {
+  if (!surf || !mTextureSource->Update(surf, const_cast<nsIntRegion*>(aRegion))) {
     mTextureSource = nullptr;
   }
 
@@ -463,24 +474,30 @@ static void UnmapFileData(void* aData)
 void
 TextureHostFileMapping::UpdatedInternal(const nsIntRegion* aRegion)
 {
-  if (!mCompositor) {
+  if (!mProvider) {
     // This can happen if we send textures to a compositable that isn't yet
     // attached to a layer.
     return;
   }
 
   if (!mTextureSource) {
-    mTextureSource = mCompositor->CreateDataTextureSource(mFlags);
+    mTextureSource = mProvider->CreateDataTextureSource(mFlags);
   }
 
-  uint8_t* data = (uint8_t*)::MapViewOfFile(mFileMapping, FILE_MAP_READ, 0, 0, mSize.width * mSize.height * BytesPerPixel(mFormat));
+  uint8_t* data = nullptr;
+  int32_t totalBytes = BufferSizeFromDimensions(mSize.width, mSize.height, BytesPerPixel(mFormat));
+  if (totalBytes > 0) {
+    data = (uint8_t*)::MapViewOfFile(mFileMapping, FILE_MAP_READ, 0, 0, totalBytes);
+  }
 
   if (data) {
     RefPtr<DataSourceSurface> surf = Factory::CreateWrappingDataSourceSurface(data, mSize.width * BytesPerPixel(mFormat), mSize, mFormat);
-
-    surf->AddUserData(&kFileMappingKey, data, UnmapFileData);
-
-    if (!mTextureSource->Update(surf, const_cast<nsIntRegion*>(aRegion))) {
+    if (surf) {
+        surf->AddUserData(&kFileMappingKey, data, UnmapFileData);
+        if (!mTextureSource->Update(surf, const_cast<nsIntRegion*>(aRegion))) {
+          mTextureSource = nullptr;
+        }
+    } else {
       mTextureSource = nullptr;
     }
   } else {

@@ -8,7 +8,8 @@
 <head>
 <title>InstallTrigger tests</title>
 <script type="text/javascript">
-/*globals InstallTrigger*/
+/* globals InstallTrigger */
+/* exported startInstall */
 function installCallback(url, status) {
   document.location = "#foo";
 
@@ -22,7 +23,7 @@ function startInstall() {
     "Unsigned XPI": {
       URL: "amosigned.xpi",
       IconURL: "icon.png",
-      toString: function() { return this.URL; }
+      toString() { return this.URL; }
     }
   }, installCallback);
 }

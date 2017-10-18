@@ -1,0 +1,7 @@
+commit 5c8f4db9d72385965ff8b4fa94536649279f1470
+Author: Rick Waldron <waldron.rick@gmail.com>
+Date:   Wed May 17 15:46:04 2017 -0400
+
+    Merge pull request #1040 from leobalter/remove-unnecessary-tests
+    
+    Remove unnecessary tests

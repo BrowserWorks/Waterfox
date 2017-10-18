@@ -62,11 +62,11 @@ class BaselineCompilerShared
     bool inCall_;
 #endif
 
-    CodeOffset spsPushToggleOffset_;
+    CodeOffset profilerPushToggleOffset_;
     CodeOffset profilerEnterFrameToggleOffset_;
     CodeOffset profilerExitFrameToggleOffset_;
-    CodeOffset traceLoggerEnterToggleOffset_;
-    CodeOffset traceLoggerExitToggleOffset_;
+
+    Vector<CodeOffset> traceLoggerToggleOffsets_;
     CodeOffset traceLoggerScriptTextIdOffset_;
 
     BaselineCompilerShared(JSContext* cx, TempAllocator& alloc, JSScript* script);

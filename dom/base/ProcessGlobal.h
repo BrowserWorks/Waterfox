@@ -36,6 +36,8 @@ class ProcessGlobal :
 public:
   explicit ProcessGlobal(nsFrameMessageManager* aMessageManager);
 
+  using mozilla::dom::ipc::MessageManagerCallback::GetProcessMessageManager;
+
   bool Init();
 
   static ProcessGlobal* Get();
@@ -53,11 +55,7 @@ public:
 
   virtual JSObject* GetGlobalJSObject() override
   {
-    if (!mGlobal) {
-      return nullptr;
-    }
-
-    return mGlobal->GetJSObject();
+    return mGlobal;
   }
   virtual nsIPrincipal* GetPrincipal() override { return mPrincipal; }
 

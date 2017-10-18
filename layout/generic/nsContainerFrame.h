@@ -24,9 +24,6 @@
 #define NS_FRAME_NO_DELETE_NEXT_IN_FLOW_CHILD 0x0010
 
 class nsOverflowContinuationTracker;
-namespace mozilla {
-class FramePropertyTable;
-} // namespace mozilla
 
 // Some macros for container classes to do sanity checking on
 // width/height/x/y values computed during reflow.
@@ -65,14 +62,19 @@ public:
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
   virtual void ChildIsDirty(nsIFrame* aChild) override;
 
-  virtual bool IsLeaf() const override;
   virtual FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) override;
-  virtual FrameSearchResult PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                     bool aRespectClusters = true) override;
-  
+  virtual FrameSearchResult
+  PeekOffsetCharacter(bool aForward, int32_t* aOffset,
+                      PeekOffsetCharacterOptions aOptions =
+                        PeekOffsetCharacterOptions()) override;
+
+  virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
+                                    nsIAtom*        aAttribute,
+                                    int32_t         aModType) override;
+
 #ifdef DEBUG_FRAME_DUMP
   void List(FILE* out = stderr, const char* aPrefix = "", uint32_t aFlags = 0) const override;
-#endif  
+#endif
 
   // nsContainerFrame methods
 
@@ -151,13 +153,6 @@ public:
   virtual void DeleteNextInFlowChild(nsIFrame* aNextInFlow,
                                      bool      aDeletingEmptyFrames);
 
-  /**
-   * Helper method to wrap views around frames. Used by containers
-   * under special circumstances (can be used by leaf frames as well)
-   */
-  static void CreateViewForFrame(nsIFrame* aFrame,
-                                 bool aForce);
-
   // Positions the frame's view based on the frame's origin
   static void PositionFrameView(nsIFrame* aKidFrame);
 
@@ -191,20 +186,8 @@ public:
   static void SyncWindowProperties(nsPresContext*       aPresContext,
                                    nsIFrame*            aFrame,
                                    nsView*              aView,
-                                   nsRenderingContext*  aRC,
+                                   gfxContext*          aRC,
                                    uint32_t             aFlags);
-
-  // Sets the view's attributes from the frame style.
-  // - visibility
-  // - clip
-  // Call this when one of these styles changes or when the view has just
-  // been created.
-  // @param aStyleContext can be null, in which case the frame's style context is used
-  static void SyncFrameViewProperties(nsPresContext*  aPresContext,
-                                      nsIFrame*        aFrame,
-                                      nsStyleContext*  aStyleContext,
-                                      nsView*         aView,
-                                      uint32_t         aFlags = 0);
 
   /**
    * Converts the minimum and maximum sizes given in inner window app units to
@@ -221,7 +204,7 @@ public:
                                  const nsSize& aMaxSize);
 
   // Used by both nsInlineFrame and nsFirstLetterFrame.
-  void DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
+  void DoInlineIntrinsicISize(gfxContext *aRenderingContext,
                               InlineIntrinsicISizeData *aData,
                               nsLayoutUtils::IntrinsicISizeType aType);
 
@@ -230,14 +213,14 @@ public:
    * classes derived from nsContainerFrame want.
    */
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
   /**
    * Positions aChildFrame and its view (if requested), and then calls Reflow().
@@ -323,9 +306,9 @@ public:
    * adding it directly or by putting it in its own excess overflow containers
    * list (to be drained by the next-in-flow when it calls
    * ReflowOverflowContainerChildren). The parent continues reflow as if
-   * the frame was complete once it ran out of computed height, but returns
-   * either an NS_FRAME_NOT_COMPLETE or NS_FRAME_OVERFLOW_INCOMPLETE reflow
-   * status to request a next-in-flow. The parent's next-in-flow is then
+   * the frame was complete once it ran out of computed height, but returns a
+   * reflow status with either IsIncomplete() or IsOverflowIncomplete() equal
+   * to true to request a next-in-flow. The parent's next-in-flow is then
    * responsible for calling ReflowOverflowContainerChildren to (drain and)
    * reflow these overflow continuations. Overflow containers do not affect
    * other frames' size or position during reflow (but do affect their
@@ -372,8 +355,8 @@ public:
    *      them to our overflow container list
    *   2. Reflows all our overflow container kids
    *   3. Expands aOverflowRect as necessary to accomodate these children.
-   *   4. Sets aStatus's NS_FRAME_OVERFLOW_IS_INCOMPLETE flag (along with
-   *      NS_FRAME_REFLOW_NEXTINFLOW as necessary) if any overflow children
+   *   4. Sets aStatus's mOverflowIncomplete flag (along with
+   *      mNextInFlowNeedsReflow as necessary) if any overflow children
    *      are incomplete and
    *   5. Prepends a list of their continuations to our excess overflow
    *      container list, to be drained into our next-in-flow when it is
@@ -401,7 +384,7 @@ public:
    */
   virtual bool DrainSelfOverflowList() override;
 
-  
+
   /**
    * Move all frames on our prev-in-flow's and our own ExcessOverflowContainers
    * lists to our OverflowContainers list.  If there are frames on multiple
@@ -460,6 +443,76 @@ public:
       nsContainerFrame::PositionChildViews(aFrame);
   }
 
+  static bool FrameStartsCounterScope(nsIFrame* aFrame);
+
+  /**
+   * Renumber the list of the counter scope started by this frame, if any.
+   * If this returns true, the frame it's called on should get the
+   * NS_FRAME_HAS_DIRTY_CHILDREN bit set on it by the caller; either directly
+   * if it's already in reflow, or via calling FrameNeedsReflow() to schedule
+   * a reflow.
+   */
+  bool RenumberList();
+
+  /**
+   * Renumber this frame if it's a list-item, then call RenumberChildFrames.
+   * @param aOrdinal Ordinal number to start counting at.
+   *        Modifies this number for each associated list
+   *        item. Changes in the numbering due to setting
+   *        the |value| attribute are included if |aForCounting|
+   *        is false. This value is both an input and output
+   *        of this function, with the output value being the
+   *        next ordinal number to be used.
+   * @param aDepth Current depth in frame tree from root list element.
+   * @param aIncrement Amount to increase by after visiting each associated
+   *        list item, unless overridden by |value|.
+   * @param aForCounting Whether we are counting the elements or actually
+   *        restyling them. When true, this simply visits all children,
+   *        ignoring |<li value="..">| changes, effectively counting them
+   *        and storing the result in |aOrdinal|. This is useful for
+   *        |<ol reversed>|, where we need to count the number of
+   *        applicable child list elements before numbering. When false,
+   *        this will restyle all applicable descendants, and the next
+   *        ordinal value will be stored in |aOrdinal|, taking into account
+   *        any changes from |<li value="..">|.
+   */
+  bool RenumberFrameAndDescendants(int32_t* aOrdinal,
+                                   int32_t aDepth,
+                                   int32_t aIncrement,
+                                   bool aForCounting) override;
+  /**
+   * Renumber the child frames using RenumberFrameAndDescendants.
+   * See RenumberFrameAndDescendants for description of parameters.
+   */
+  virtual bool RenumberChildFrames(int32_t* aOrdinal,
+                                   int32_t aDepth,
+                                   int32_t aIncrement,
+                                   bool aForCounting);
+
+  /**
+   * Returns a CSS Box Alignment constant which the caller can use to align
+   * the absolutely-positioned child (whose ReflowInput is aChildRI) within
+   * a CSS Box Alignment area associated with this container.
+   *
+   * The lower 8 bits of the returned value are guaranteed to form a valid
+   * argument for CSSAlignUtils::AlignJustifySelf(). (The upper 8 bits may
+   * encode an <overflow-position>.)
+   *
+   * NOTE: This default nsContainerFrame implementation is a stub, and isn't
+   * meant to be called.  Subclasses must provide their own implementations, if
+   * they use CSS Box Alignment to determine the static position of their
+   * absolutely-positioned children. (Though: if subclasses share enough code,
+   * maybe this nsContainerFrame impl should include some shared code.)
+   *
+   * @param aChildRI A ReflowInput for the positioned child frame that's being
+   *                 aligned.
+   * @param aLogicalAxis The axis (of this container frame) in which the caller
+   *                     would like to align the child frame.
+   */
+  virtual uint16_t CSSAlignmentForAbsPosChild(
+                     const ReflowInput& aChildRI,
+                     mozilla::LogicalAxis aLogicalAxis) const;
+
 #define NS_DECLARE_FRAME_PROPERTY_FRAMELIST(prop) \
   NS_DECLARE_FRAME_PROPERTY_WITH_DTOR_NEVER_CALLED(prop, nsFrameList)
 
@@ -470,16 +523,33 @@ public:
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(ExcessOverflowContainersProperty)
   NS_DECLARE_FRAME_PROPERTY_FRAMELIST(BackdropProperty)
 
+  // Only really used on nsBlockFrame instances, but the caller thinks it could
+  // have arbitrary nsContainerFrames.
+  NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(FirstLetterProperty, nsIFrame)
+
+  void SetHasFirstLetterChild()
+  {
+    mHasFirstLetterChild = true;
+  }
+
+  void ClearHasFirstLetterChild()
+  {
+    mHasFirstLetterChild = false;
+  }
+
 #ifdef DEBUG
   // Use this to suppress the CRAZY_SIZE assertions.
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(DebugReflowingWithInfiniteISize, bool)
   bool IsCrazySizeAssertSuppressed() const {
-    return Properties().Get(DebugReflowingWithInfiniteISize());
+    return GetProperty(DebugReflowingWithInfiniteISize());
   }
 #endif
 
 protected:
-  explicit nsContainerFrame(nsStyleContext* aContext) : nsSplittableFrame(aContext) {}
+  nsContainerFrame(nsStyleContext* aContext, ClassID aID)
+    : nsSplittableFrame(aContext, aID)
+  {}
+
   ~nsContainerFrame();
 
   /**
@@ -546,7 +616,7 @@ protected:
    * into an AutoFrameListPtr.
    */
   inline nsFrameList* StealOverflowFrames();
-  
+
   /**
    * Set the overflow list.  aOverflowFrames must not be an empty list.
    */
@@ -642,7 +712,6 @@ protected:
    */
   void SafelyDestroyFrameListProp(nsIFrame* aDestructRoot,
                                   nsIPresShell* aPresShell,
-                                  mozilla::FramePropertyTable* aPropTable,
                                   FrameListPropertyDescriptor aProp);
 
   // ==========================================================================
@@ -754,7 +823,7 @@ public:
     {
       if (mTracker) mTracker->BeginFinish(mChild);
     }
-    ~AutoFinish() 
+    ~AutoFinish()
     {
       if (mTracker) mTracker->EndFinish(mChild);
     }
@@ -765,7 +834,7 @@ public:
 
   /**
    * This function should be called for each child that isn't reflowed.
-   * It increments our walker and sets the NS_FRAME_OVERFLOW_INCOMPLETE
+   * It increments our walker and sets the mOverflowIncomplete
    * reflow flag if it encounters an overflow continuation so that our
    * next-in-flow doesn't get prematurely deleted. It MUST be called on
    * each unreflowed child that has an overflow container continuation;
@@ -777,7 +846,9 @@ public:
     NS_PRECONDITION(aChild, "null ptr");
     if (aChild == mSentry) {
       StepForward();
-      NS_MergeReflowStatusInto(&aReflowStatus, NS_FRAME_OVERFLOW_INCOMPLETE);
+      if (aReflowStatus.IsComplete()) {
+        aReflowStatus.SetOverflowIncomplete();
+      }
     }
   }
 
@@ -824,7 +895,7 @@ inline
 nsFrameList*
 nsContainerFrame::GetOverflowFrames() const
 {
-  nsFrameList* list = Properties().Get(OverflowProperty());
+  nsFrameList* list = GetProperty(OverflowProperty());
   NS_ASSERTION(!list || !list->IsEmpty(), "Unexpected empty overflow list");
   return list;
 }
@@ -833,7 +904,7 @@ inline
 nsFrameList*
 nsContainerFrame::StealOverflowFrames()
 {
-  nsFrameList* list = Properties().Remove(OverflowProperty());
+  nsFrameList* list = RemoveProperty(OverflowProperty());
   NS_ASSERTION(!list || !list->IsEmpty(), "Unexpected empty overflow list");
   return list;
 }

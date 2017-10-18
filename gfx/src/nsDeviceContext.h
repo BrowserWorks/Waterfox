@@ -55,6 +55,14 @@ public:
      */
     nsresult Init(nsIWidget *aWidget);
 
+    /*
+     * Initialize the font cache if it hasn't been initialized yet.
+     * (Needed for stylo)
+     */
+    void InitFontCache();
+
+    void UpdateFontCacheUserFonts(gfxUserFontSet* aUserFontSet);
+
     /**
      * Initialize the device context from a device context spec
      * @param aDevSpec the specification of the printing device
@@ -69,6 +77,14 @@ public:
      * @return the new rendering context (guaranteed to be non-null)
      */
     already_AddRefed<gfxContext> CreateRenderingContext();
+
+    /**
+     * Create a reference rendering context and initialize it.  Only call this
+     * method on device contexts that were initialized for printing.
+     *
+     * @return the new rendering context.
+     */
+    already_AddRefed<gfxContext> CreateReferenceRenderingContext();
 
     /**
      * Gets the number of app units in one CSS pixel; this number is global,
@@ -176,6 +192,12 @@ public:
     nsresult GetClientRect(nsRect& aRect);
 
     /**
+     * Returns true if we're currently between BeginDocument() and
+     * EndDocument() calls.
+     */
+    bool IsCurrentlyPrintingDocument() const { return mIsCurrentlyPrintingDoc; }
+
+    /**
      * Inform the output device that output of a document is beginning
      * Used for print related device contexts. Must be matched 1:1 with
      * EndDocument() or AbortDocument().
@@ -254,13 +276,20 @@ public:
     /**
      * True if this device context was created for printing.
      */
-    bool IsPrinterSurface();
+    bool IsPrinterContext();
 
     mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale();
 
 private:
     // Private destructor, to discourage deletion outside of Release():
     ~nsDeviceContext();
+
+    /**
+     * Implementation shared by CreateRenderingContext and
+     * CreateReferenceRenderingContext.
+     */
+    already_AddRefed<gfxContext>
+    CreateRenderingContextCommon(bool aWantReferenceContext);
 
     void SetDPI(double* aScale = nullptr);
     void ComputeClientRectUsingScreen(nsRect *outRect);
@@ -273,7 +302,6 @@ private:
 
     nscoord  mWidth;
     nscoord  mHeight;
-    uint32_t mDepth;
     int32_t  mAppUnitsPerDevPixel;
     int32_t  mAppUnitsPerDevPixelAtUnitFullZoom;
     int32_t  mAppUnitsPerPhysicalInch;
@@ -285,8 +313,9 @@ private:
     nsCOMPtr<nsIScreenManager>     mScreenManager;
     nsCOMPtr<nsIDeviceContextSpec> mDeviceContextSpec;
     RefPtr<PrintTarget>            mPrintTarget;
-#ifdef XP_MACOSX
-    RefPtr<PrintTarget>            mCachedPrintTarget;
+    bool                           mIsCurrentlyPrintingDoc;
+#ifdef DEBUG
+    bool mIsInitialized;
 #endif
 };
 

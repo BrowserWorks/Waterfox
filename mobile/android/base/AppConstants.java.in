@@ -6,11 +6,7 @@
 
 package org.mozilla.gecko;
 
-import android.content.Context;
 import android.os.Build;
-//#ifdef MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE
-import android.support.multidex.MultiDex;
-//#endif
 
 /**
  * A collection of constants that pertain to the build and runtime state of the
@@ -51,16 +47,13 @@ public class AppConstants {
          * If MIN_SDK_VERSION is greater than or equal to the number, there
          * is no need to do the runtime check.
          */
-        public static final boolean feature10Plus = MIN_SDK_VERSION >= 10 || (MAX_SDK_VERSION >= 10 && Build.VERSION.SDK_INT >= 10);
-        public static final boolean feature11Plus = MIN_SDK_VERSION >= 11 || (MAX_SDK_VERSION >= 11 && Build.VERSION.SDK_INT >= 11);
-        public static final boolean feature12Plus = MIN_SDK_VERSION >= 12 || (MAX_SDK_VERSION >= 12 && Build.VERSION.SDK_INT >= 12);
-        public static final boolean feature14Plus = MIN_SDK_VERSION >= 14 || (MAX_SDK_VERSION >= 14 && Build.VERSION.SDK_INT >= 14);
-        public static final boolean feature15Plus = MIN_SDK_VERSION >= 15 || (MAX_SDK_VERSION >= 15 && Build.VERSION.SDK_INT >= 15);
         public static final boolean feature16Plus = MIN_SDK_VERSION >= 16 || (MAX_SDK_VERSION >= 16 && Build.VERSION.SDK_INT >= 16);
         public static final boolean feature17Plus = MIN_SDK_VERSION >= 17 || (MAX_SDK_VERSION >= 17 && Build.VERSION.SDK_INT >= 17);
         public static final boolean feature19Plus = MIN_SDK_VERSION >= 19 || (MAX_SDK_VERSION >= 19 && Build.VERSION.SDK_INT >= 19);
         public static final boolean feature20Plus = MIN_SDK_VERSION >= 20 || (MAX_SDK_VERSION >= 20 && Build.VERSION.SDK_INT >= 20);
         public static final boolean feature21Plus = MIN_SDK_VERSION >= 21 || (MAX_SDK_VERSION >= 21 && Build.VERSION.SDK_INT >= 21);
+        public static final boolean feature24Plus = MIN_SDK_VERSION >= 24 || (MAX_SDK_VERSION >= 24 && Build.VERSION.SDK_INT >= 24);
+        public static final boolean feature26Plus = MIN_SDK_VERSION >= 26 || (MAX_SDK_VERSION >= 26 && Build.VERSION.SDK_INT >= 26);
 
         /*
          * If our MIN_SDK_VERSION is 14 or higher, we must be an ICS device.
@@ -68,6 +61,7 @@ public class AppConstants {
          * Otherwise, we need a range check.
          */
         public static final boolean preMarshmallow = MAX_SDK_VERSION < 23 || (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23);
+        public static final boolean preLollipopMR1 = MAX_SDK_VERSION < 22 || (MIN_SDK_VERSION < 22 && Build.VERSION.SDK_INT < 22);
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
@@ -102,8 +96,7 @@ public class AppConstants {
     public static final String MOZ_APP_VENDOR = "@MOZ_APP_VENDOR@";
     public static final String MOZ_APP_VERSION = "@MOZ_APP_VERSION@";
     public static final String MOZ_APP_DISPLAYNAME = "@MOZ_APP_DISPLAYNAME@";
-    // MOZ_APP_UA_NAME is already quoted when it gets substituted, like MOZILLA_VERSION.
-    public static final String MOZ_APP_UA_NAME = @MOZ_APP_UA_NAME@;
+    public static final String MOZ_APP_UA_NAME = "@MOZ_APP_UA_NAME@";
 
     // MOZILLA_VERSION is already quoted when it gets substituted in. If we
     // add additional quotes we end up with ""x.y"", which is a syntax error.
@@ -135,7 +128,7 @@ public class AppConstants {
     public static final String MOZ_UPDATE_CHANNEL = "@MOZ_UPDATE_CHANNEL@";
     public static final String OMNIJAR_NAME = "@OMNIJAR_NAME@";
     public static final String OS_TARGET = "@OS_TARGET@";
-    public static final String TARGET_XPCOM_ABI = @TARGET_XPCOM_ABI@;
+    public static final String TARGET_XPCOM_ABI = "@TARGET_XPCOM_ABI@";
 
     public static final String USER_AGENT_BOT_LIKE = "Redirector/" + AppConstants.MOZ_APP_VERSION +
         " (Android; rv:" + AppConstants.MOZ_APP_VERSION + ")";
@@ -200,7 +193,7 @@ public class AppConstants {
 //#endif
 
     public static final boolean MOZ_CRASHREPORTER =
-//#if MOZ_CRASHREPORTER
+//#ifdef MOZ_CRASHREPORTER
     true;
 //#else
     false;
@@ -213,22 +206,8 @@ public class AppConstants {
     false;
 //#endif
 
-    public static final boolean MOZ_LOCALE_SWITCHER =
-//#ifdef MOZ_LOCALE_SWITCHER
-    true;
-//#else
-    false;
-//#endif
-
     public static final boolean MOZ_UPDATER =
 //#ifdef MOZ_UPDATER
-    true;
-//#else
-    false;
-//#endif
-
-    public static final boolean MOZ_WEBSMS_BACKEND =
-//#ifdef MOZ_WEBSMS_BACKEND
     true;
 //#else
     false;
@@ -238,13 +217,6 @@ public class AppConstants {
     // it if this APK doesn't include API14 support.
     public static final boolean MOZ_ANDROID_BEAM =
 //#ifdef MOZ_ANDROID_BEAM
-    Versions.feature14Plus;
-//#else
-    false;
-//#endif
-
-    public static final boolean MOZ_ANDROID_APZ =
-//#ifdef MOZ_ANDROID_APZ
     true;
 //#else
     false;
@@ -252,8 +224,8 @@ public class AppConstants {
 
     // See this wiki page for more details about channel specific build defines:
     // https://wiki.mozilla.org/Platform/Channel-specific_build_defines
-    public static final boolean RELEASE_BUILD =
-//#ifdef RELEASE_BUILD
+    public static final boolean RELEASE_OR_BETA =
+//#ifdef RELEASE_OR_BETA
     true;
 //#else
     false;
@@ -292,13 +264,6 @@ public class AppConstants {
 
     public static final boolean ANDROID_DOWNLOADS_INTEGRATION =
 //#ifdef MOZ_ANDROID_DOWNLOADS_INTEGRATION
-    AppConstants.Versions.feature12Plus;
-//#else
-    false;
-//#endif
-
-    public static final boolean MOZ_LINKER_EXTRACT =
-//#ifdef MOZ_LINKER_EXTRACT
     true;
 //#else
     false;
@@ -321,7 +286,7 @@ public class AppConstants {
 //#endif
 
     /**
-     * Target CPU architecture: "armeabi-v7a", "x86, "mips", ..
+     * Target CPU architecture: "armeabi-v7a", "arm64-v8a", "x86", "mips", ..
      */
     public static final String ANDROID_CPU_ARCH = "@ANDROID_CPU_ARCH@";
 
@@ -346,28 +311,28 @@ public class AppConstants {
     false;
 //#endif
 
+    public static final boolean MOZ_ANDROID_PWA =
+//#ifdef MOZ_ANDROID_PWA
+    true;
+//#else
+    false;
+//#endif
+
     // (bug 1266820) Temporarily disabled since no one is working on it.
     public static final boolean SCREENSHOTS_IN_BOOKMARKS_ENABLED = false;
 
-    /**
-     * Enables multidex depending on build flags. For more information,
-     * see `multiDexEnabled true` in mobile/android/app/build.gradle.
-     *
-     * As a method, this shouldn't be in AppConstants, but it's
-     * the only semi-relevant Java file that we pre-process.
-     */
-    public static void maybeInstallMultiDex(final Context context) {
-//#ifdef MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE
-        if (BuildConfig.FLAVOR.equals("automation")) {
-            MultiDex.install(context);
-        }
-//#else
-        // Do nothing.
-//#endif
-    }
-
     public static final boolean MOZ_ANDROID_ACTIVITY_STREAM =
 //#ifdef MOZ_ANDROID_ACTIVITY_STREAM
+        true;
+//#else
+        false;
+//#endif
+    /**
+     * This flag is for enabling custom code used only in the
+     * MozillaOnline (Mozilla China) version of Fennec.
+     */
+    public static final boolean MOZ_ANDROID_MOZILLA_ONLINE =
+//#ifdef MOZ_ANDROID_MOZILLA_ONLINE
         true;
 //#else
         false;

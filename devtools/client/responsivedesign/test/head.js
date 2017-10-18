@@ -12,9 +12,12 @@ Services.scriptloader.loadSubScript(sharedHeadURI, this);
 let gcliHelpersURI = testDir + "../../../commandline/test/helpers.js";
 Services.scriptloader.loadSubScript(gcliHelpersURI, this);
 
-DevToolsUtils.testing = true;
+flags.testing = true;
+Services.prefs.setBoolPref("devtools.responsive.html.enabled", false);
+
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
+  Services.prefs.clearUserPref("devtools.responsive.html.enabled");
   Services.prefs.clearUserPref("devtools.responsiveUI.currentPreset");
   Services.prefs.clearUserPref("devtools.responsiveUI.customHeight");
   Services.prefs.clearUserPref("devtools.responsiveUI.customWidth");
@@ -37,11 +40,11 @@ var openRDM = Task.async(function* (tab = gBrowser.selectedTab,
   let manager = ResponsiveUIManager;
 
   let opened = once(manager, "on");
-  let resized = once(manager, "contentResize");
+  let resized = once(manager, "content-resize");
   if (method == "menu") {
     document.getElementById("menu_responsiveUI").doCommand();
   } else {
-    synthesizeKeyFromKeyTag(document.getElementById("key_responsiveUI"));
+    synthesizeKeyFromKeyTag(document.getElementById("key_responsiveDesignMode"));
   }
   yield opened;
 
@@ -68,7 +71,7 @@ var closeRDM = Task.async(function* (rdm) {
     rdm = manager.getResponsiveUIForTab(gBrowser.selectedTab);
   }
   let closed = once(manager, "off");
-  let resized = once(manager, "contentResize");
+  let resized = once(manager, "content-resize");
   rdm.close();
   yield resized;
   yield closed;
@@ -127,9 +130,9 @@ var closeToolbox = Task.async(function* () {
  */
 function waitForToolboxFrameFocus(toolbox) {
   info("Making sure that the toolbox's frame is focused");
-  let def = promise.defer();
-  waitForFocus(def.resolve, toolbox.win);
-  return def.promise;
+  return new Promise(resolve => {
+    waitForFocus(resolve, toolbox.win);
+  });
 }
 
 /**
@@ -147,7 +150,7 @@ var openInspectorSideBar = Task.async(function* (id) {
   return {
     toolbox: toolbox,
     inspector: inspector,
-    view: inspector[id].view || inspector[id].computedView
+    view: inspector.getPanel(id).view || inspector.getPanel(id).computedView
   };
 });
 
@@ -192,7 +195,7 @@ var addTab = Task.async(function* (url) {
 
   window.focus();
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url);
   let browser = tab.linkedBrowser;
 
   yield BrowserTestUtils.browserLoaded(browser);
@@ -207,27 +210,27 @@ var addTab = Task.async(function* (url) {
  * @return promise
  */
 function waitForDocLoadComplete(aBrowser = gBrowser) {
-  let deferred = promise.defer();
-  let progressListener = {
-    onStateChange: function (webProgress, req, flags, status) {
-      let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
-                    Ci.nsIWebProgressListener.STATE_STOP;
-      info(`Saw state ${flags.toString(16)} and status ${status.toString(16)}`);
+  return new Promise(resolve => {
+    let progressListener = {
+      onStateChange: function (webProgress, req, flags, status) {
+        let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
+                      Ci.nsIWebProgressListener.STATE_STOP;
+        info(`Saw state ${flags.toString(16)} and status ${status.toString(16)}`);
 
-      // When a load needs to be retargetted to a new process it is cancelled
-      // with NS_BINDING_ABORTED so ignore that case
-      if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
-        aBrowser.removeProgressListener(progressListener);
-        info("Browser loaded");
-        deferred.resolve();
-      }
-    },
-    QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
+        // When a load needs to be retargetted to a new process it is cancelled
+        // with NS_BINDING_ABORTED so ignore that case
+        if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
+          aBrowser.removeProgressListener(progressListener);
+          info("Browser loaded");
+          resolve();
+        }
+      },
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                            Ci.nsISupportsWeakReference])
-  };
-  aBrowser.addProgressListener(progressListener);
-  info("Waiting for browser load");
-  return deferred.promise;
+    };
+    aBrowser.addProgressListener(progressListener);
+    info("Waiting for browser load");
+  });
 }
 
 /**
@@ -269,19 +272,19 @@ function waitForResizeTo(manager, width, height) {
       if (data.width != width || data.height != height) {
         return;
       }
-      manager.off("contentResize", onResize);
-      info(`Got contentResize to ${width} x ${height}`);
+      manager.off("content-resize", onResize);
+      info(`Got content-resize to ${width} x ${height}`);
       resolve();
     };
-    info(`Waiting for contentResize to ${width} x ${height}`);
-    manager.on("contentResize", onResize);
+    info(`Waiting for content-resize to ${width} x ${height}`);
+    manager.on("content-resize", onResize);
   });
 }
 
 var setPresetIndex = Task.async(function* (rdm, manager, index) {
   info(`Current preset: ${rdm.menulist.selectedIndex}, change to: ${index}`);
   if (rdm.menulist.selectedIndex != index) {
-    let resized = once(manager, "contentResize");
+    let resized = once(manager, "content-resize");
     rdm.menulist.selectedIndex = index;
     yield resized;
   }
@@ -293,7 +296,7 @@ var setSize = Task.async(function* (rdm, manager, width, height) {
        `set to: ${width} x ${height}`);
   if (size.width != width || size.height != height) {
     let resized = waitForResizeTo(manager, width, height);
-    rdm.setSize(width, height);
+    rdm.setViewportSize({ width, height });
     yield resized;
   }
 });

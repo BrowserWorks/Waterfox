@@ -17,13 +17,14 @@
 #include "nsIDOMComment.h"
 #include "nsIDOMDocumentType.h"
 #include "nsIContent.h"
+#include "nsIContentInlines.h"
 #include "nsIDocument.h"
 #include "nsIDocumentEncoder.h"
 #include "nsIParserService.h"
 #include "nsNameSpaceManager.h"
 #include "nsTextFragment.h"
 #include "nsString.h"
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "nsUnicharUtils.h"
 #include "nsCRT.h"
 #include "nsContentUtils.h"
@@ -31,7 +32,9 @@
 #include "nsILineBreaker.h"
 #include "mozilla/dom/Element.h"
 #include "nsParserConstants.h"
+#include "mozilla/Encoding.h"
 
+using namespace mozilla;
 using namespace mozilla::dom;
 
 #define kXMLNS "xmlns"
@@ -74,10 +77,14 @@ nsXMLContentSerializer::~nsXMLContentSerializer()
 NS_IMPL_ISUPPORTS(nsXMLContentSerializer, nsIContentSerializer)
 
 NS_IMETHODIMP
-nsXMLContentSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
-                             const char* aCharSet, bool aIsCopying,
-                             bool aRewriteEncodingDeclaration)
+nsXMLContentSerializer::Init(uint32_t aFlags,
+                             uint32_t aWrapColumn,
+                             const Encoding* aEncoding,
+                             bool aIsCopying,
+                             bool aRewriteEncodingDeclaration,
+                             bool* aNeedsPreformatScanning)
 {
+  *aNeedsPreformatScanning = false;
   mPrefixIndex = 0;
   mColPos = 0;
   mIndentOverflow = 0;
@@ -89,7 +96,9 @@ nsXMLContentSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
   mBodyOnly = false;
   mInBody = 0;
 
-  mCharset = aCharSet;
+  if (aEncoding) {
+    aEncoding->Name(mCharset);
+  }
   mFlags = aFlags;
 
   // Set the line break character:
@@ -608,7 +617,7 @@ nsXMLContentSerializer::GenerateNewPrefix(nsAString& aPrefix)
 {
   aPrefix.Assign('a');
   char buf[128];
-  snprintf_literal(buf, "%d", mPrefixIndex++);
+  SprintfLiteral(buf, "%d", mPrefixIndex++);
   AppendASCIItoUTF16(buf, aPrefix);
 }
 
@@ -658,26 +667,20 @@ nsXMLContentSerializer::SerializeAttr(const nsAString& aPrefix,
     bool bIncludesSingle = false;
     bool bIncludesDouble = false;
     nsAString::const_iterator iCurr, iEnd;
-    uint32_t uiSize, i;
     aValue.BeginReading(iCurr);
     aValue.EndReading(iEnd);
-    for ( ; iCurr != iEnd; iCurr.advance(uiSize) ) {
-      const char16_t * buf = iCurr.get();
-      uiSize = iCurr.size_forward();
-      for ( i = 0; i < uiSize; i++, buf++ ) {
-        if ( *buf == char16_t('\'') )
-        {
-          bIncludesSingle = true;
-          if ( bIncludesDouble ) break;
+    for ( ; iCurr != iEnd; ++iCurr) {
+      if (*iCurr == char16_t('\'')) {
+        bIncludesSingle = true;
+        if (bIncludesDouble) {
+          break;
         }
-        else if ( *buf == char16_t('"') )
-        {
-          bIncludesDouble = true;
-          if ( bIncludesSingle ) break;
+      } else if (*iCurr == char16_t('"')) {
+        bIncludesDouble = true;
+        if (bIncludesSingle) {
+          break;
         }
       }
-      // if both have been found we don't need to search further
-      if ( bIncludesDouble && bIncludesSingle ) break;
     }
 
     // Delimiter and escaping is according to the following table
@@ -898,6 +901,10 @@ nsXMLContentSerializer::AppendElementStart(Element* aElement,
   bool forceFormat = false;
   nsresult rv = NS_OK;
   if (!CheckElementStart(content, forceFormat, aStr, rv)) {
+    // When we go to AppendElementEnd for this element, we're going to
+    // MaybeLeaveFromPreContent().  So make sure to MaybeEnterInPreContent()
+    // now, so our PreLevel() doesn't get confused.
+    MaybeEnterInPreContent(content);
     return rv;
   }
 
@@ -1046,8 +1053,11 @@ nsXMLContentSerializer::AppendElementEnd(Element* aElement,
   }
 
   if (!outputElementEnd) {
+    // Keep this in sync with the cleanup at the end of this method.
     PopNameSpaceDeclsFor(aElement);
+    MaybeLeaveFromPreContent(content);
     MaybeFlagNewlineForRootNode(aElement);
+    AfterElementEnd(content, aStr);
     return NS_OK;
   }
 
@@ -1091,6 +1101,7 @@ nsXMLContentSerializer::AppendElementEnd(Element* aElement,
   NS_ENSURE_TRUE(AppendToString(tagLocalName, aStr), NS_ERROR_OUT_OF_MEMORY);
   NS_ENSURE_TRUE(AppendToString(kGreaterThan, aStr), NS_ERROR_OUT_OF_MEMORY);
 
+  // Keep what follows in sync with the cleanup in the !outputElementEnd case.
   PopNameSpaceDeclsFor(aElement);
 
   MaybeLeaveFromPreContent(content);
@@ -1246,7 +1257,7 @@ nsXMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
   for (aStr.BeginReading(iter);
        iter != done_reading;
        iter.advance(int32_t(advanceLength))) {
-    uint32_t fragmentLength = iter.size_forward();
+    uint32_t fragmentLength = done_reading - iter;
     const char16_t* c = iter.get();
     const char16_t* fragmentStart = c;
     const char16_t* fragmentEnd = c + fragmentLength;
@@ -1427,9 +1438,9 @@ nsXMLContentSerializer::AppendToStringConvertLF(const nsAString& aStr,
 
 bool
 nsXMLContentSerializer::AppendFormatedWrapped_WhitespaceSequence(
-                        nsASingleFragmentString::const_char_iterator &aPos,
-                        const nsASingleFragmentString::const_char_iterator aEnd,
-                        const nsASingleFragmentString::const_char_iterator aSequenceStart,
+                        nsAString::const_char_iterator &aPos,
+                        const nsAString::const_char_iterator aEnd,
+                        const nsAString::const_char_iterator aSequenceStart,
                         bool &aMayIgnoreStartOfLineWhitespaceSequence,
                         nsAString &aOutputStr)
 {
@@ -1505,9 +1516,9 @@ nsXMLContentSerializer::AppendFormatedWrapped_WhitespaceSequence(
 
 bool
 nsXMLContentSerializer::AppendWrapped_NonWhitespaceSequence(
-                        nsASingleFragmentString::const_char_iterator &aPos,
-                        const nsASingleFragmentString::const_char_iterator aEnd,
-                        const nsASingleFragmentString::const_char_iterator aSequenceStart,
+                        nsAString::const_char_iterator &aPos,
+                        const nsAString::const_char_iterator aEnd,
+                        const nsAString::const_char_iterator aSequenceStart,
                         bool &aMayIgnoreStartOfLineWhitespaceSequence,
                         bool &aSequenceStartAfterAWhiteSpace,
                         nsAString& aOutputStr)
@@ -1670,14 +1681,14 @@ nsXMLContentSerializer::AppendWrapped_NonWhitespaceSequence(
 }
 
 bool
-nsXMLContentSerializer::AppendToStringFormatedWrapped(const nsASingleFragmentString& aStr,
+nsXMLContentSerializer::AppendToStringFormatedWrapped(const nsAString& aStr,
                                                       nsAString& aOutputStr)
 {
   if (mBodyOnly && !mInBody) {
     return true;
   }
 
-  nsASingleFragmentString::const_char_iterator pos, end, sequenceStart;
+  nsAString::const_char_iterator pos, end, sequenceStart;
 
   aStr.BeginReading(pos);
   aStr.EndReading(end);
@@ -1719,9 +1730,9 @@ nsXMLContentSerializer::AppendToStringFormatedWrapped(const nsASingleFragmentStr
 
 bool
 nsXMLContentSerializer::AppendWrapped_WhitespaceSequence(
-                        nsASingleFragmentString::const_char_iterator &aPos,
-                        const nsASingleFragmentString::const_char_iterator aEnd,
-                        const nsASingleFragmentString::const_char_iterator aSequenceStart,
+                        nsAString::const_char_iterator &aPos,
+                        const nsAString::const_char_iterator aEnd,
+                        const nsAString::const_char_iterator aSequenceStart,
                         nsAString &aOutputStr)
 {
   // Handle the complete sequence of whitespace.
@@ -1731,7 +1742,7 @@ nsXMLContentSerializer::AppendWrapped_WhitespaceSequence(
   mIsIndentationAddedOnCurrentLine = false;
 
   bool leaveLoop = false;
-  nsASingleFragmentString::const_char_iterator lastPos = aPos;
+  nsAString::const_char_iterator lastPos = aPos;
 
   do {
     switch (*aPos) {
@@ -1773,14 +1784,14 @@ nsXMLContentSerializer::AppendWrapped_WhitespaceSequence(
 }
 
 bool
-nsXMLContentSerializer::AppendToStringWrapped(const nsASingleFragmentString& aStr,
+nsXMLContentSerializer::AppendToStringWrapped(const nsAString& aStr,
                                               nsAString& aOutputStr)
 {
   if (mBodyOnly && !mInBody) {
     return true;
   }
 
-  nsASingleFragmentString::const_char_iterator pos, end, sequenceStart;
+  nsAString::const_char_iterator pos, end, sequenceStart;
 
   aStr.BeginReading(pos);
   aStr.EndReading(end);

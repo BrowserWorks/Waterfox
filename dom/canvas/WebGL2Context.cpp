@@ -163,6 +163,8 @@ WebGLContext::InitWebGL2(FailureReason* const out_failReason)
     mDefaultTransformFeedback = new WebGLTransformFeedback(this, 0);
     mBoundTransformFeedback = mDefaultTransformFeedback;
 
+    gl->fGenTransformFeedbacks(1, &mEmptyTFO);
+
     ////
 
     if (!gl->IsGLES()) {
@@ -175,7 +177,6 @@ WebGLContext::InitWebGL2(FailureReason* const out_failReason)
         gl->fEnable(LOCAL_GL_PRIMITIVE_RESTART_FIXED_INDEX);
     } else {
         MOZ_ASSERT(gl->IsSupported(gl::GLFeature::prim_restart));
-        gl->fEnable(LOCAL_GL_PRIMITIVE_RESTART);
     }
 
     //////

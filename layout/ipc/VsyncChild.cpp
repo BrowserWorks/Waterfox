@@ -5,6 +5,7 @@
 
 #include "VsyncChild.h"
 
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/VsyncDispatcher.h"
 #include "nsThreadUtils.h"
 
@@ -55,15 +56,17 @@ VsyncChild::ActorDestroy(ActorDestroyReason aActorDestroyReason)
   mObserver = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 VsyncChild::RecvNotify(const TimeStamp& aVsyncTimestamp)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mIsShutdown);
+
+  SchedulerGroup::MarkVsyncRan();
   if (mObservingVsync && mObserver) {
     mObserver->NotifyVsync(aVsyncTimestamp);
   }
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -83,11 +86,17 @@ VsyncChild::GetVsyncRate()
   return mVsyncRate;
 }
 
-bool
+TimeDuration
+VsyncChild::VsyncRate()
+{
+  return mVsyncRate;
+}
+
+mozilla::ipc::IPCResult
 VsyncChild::RecvVsyncRate(const float& aVsyncRate)
 {
   mVsyncRate = TimeDuration::FromMilliseconds(aVsyncRate);
-  return true;
+  return IPC_OK();
 }
 
 } // namespace layout

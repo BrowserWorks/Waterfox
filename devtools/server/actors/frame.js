@@ -44,9 +44,22 @@ let FrameActor = ActorClassWithSpec(frameSpec, {
    * Finalization handler that is called when the actor is being evicted from
    * the pool.
    */
-  disconnect: function () {
+  destroy: function () {
     this.conn.removeActorPool(this._frameLifetimePool);
     this._frameLifetimePool = null;
+  },
+
+  getEnvironment: function () {
+    if (!this.frame.environment) {
+      return {};
+    }
+
+    let envActor = this.threadActor.createEnvironmentActor(
+      this.frame.environment,
+      this.frameLifetimePool
+    );
+
+    return envActor.form();
   },
 
   /**
@@ -61,18 +74,23 @@ let FrameActor = ActorClassWithSpec(frameSpec, {
         threadActor.objectGrip);
     }
 
-    if (this.frame.environment) {
-      let envActor = threadActor.createEnvironmentActor(
-        this.frame.environment,
-        this.frameLifetimePool
-      );
-      form.environment = envActor.form();
+    // NOTE: ignoreFrameEnvironment lets the client explicitly avoid
+    // populating form environments on pause.
+    if (
+      !this.threadActor._options.ignoreFrameEnvironment &&
+      this.frame.environment
+    ) {
+      form.environment = this.getEnvironment();
     }
-    form.this = createValueGrip(this.frame.this, threadActor._pausePool,
-      threadActor.objectGrip);
+
+    if (this.frame.type != "wasmcall") {
+      form.this = createValueGrip(this.frame.this, threadActor._pausePool,
+        threadActor.objectGrip);
+    }
+
     form.arguments = this._args();
     if (this.frame.script) {
-      var generatedLocation = this.threadActor.sources.getFrameLocation(this.frame);
+      let generatedLocation = this.threadActor.sources.getFrameLocation(this.frame);
       form.where = {
         source: generatedLocation.generatedSourceActor.form(),
         line: generatedLocation.generatedLine,

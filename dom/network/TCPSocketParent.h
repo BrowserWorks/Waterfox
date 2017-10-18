@@ -13,7 +13,6 @@
 #include "nsCOMPtr.h"
 #include "nsISocketFilter.h"
 #include "js/TypeDecls.h"
-#include "mozilla/net/OfflineObserver.h"
 
 #define TCPSOCKETPARENT_CID \
   { 0x4e7246c6, 0xa8b3, 0x426d, { 0x9c, 0x17, 0x76, 0xda, 0xb1, 0xe1, 0xe1, 0x4a } }
@@ -24,7 +23,6 @@ namespace dom {
 class TCPSocket;
 
 class TCPSocketParentBase : public nsISupports
-                          , public mozilla::net::DisconnectableParent
 {
 public:
   NS_DECL_CYCLE_COLLECTION_CLASS(TCPSocketParentBase)
@@ -38,7 +36,6 @@ protected:
   virtual ~TCPSocketParentBase();
 
   RefPtr<TCPSocket> mSocket;
-  RefPtr<mozilla::net::OfflineObserver> mObserver;
   bool mIPCOpen;
 };
 
@@ -50,27 +47,25 @@ public:
 
   TCPSocketParent() {}
 
-  virtual bool RecvOpen(const nsString& aHost, const uint16_t& aPort,
-                        const bool& useSSL, const bool& aUseArrayBuffers) override;
+  virtual mozilla::ipc::IPCResult RecvOpen(const nsString& aHost, const uint16_t& aPort,
+                                           const bool& useSSL, const bool& aUseArrayBuffers) override;
 
-  virtual bool RecvOpenBind(const nsCString& aRemoteHost,
-                            const uint16_t& aRemotePort,
-                            const nsCString& aLocalAddr,
-                            const uint16_t& aLocalPort,
-                            const bool&     aUseSSL,
-                            const bool& aUseArrayBuffers,
-                            const nsCString& aFilter) override;
+  virtual mozilla::ipc::IPCResult RecvOpenBind(const nsCString& aRemoteHost,
+                                               const uint16_t& aRemotePort,
+                                               const nsCString& aLocalAddr,
+                                               const uint16_t& aLocalPort,
+                                               const bool&     aUseSSL,
+                                               const bool&     aReuseAddrPort,
+                                               const bool& aUseArrayBuffers,
+                                               const nsCString& aFilter) override;
 
-  virtual bool RecvStartTLS() override;
-  virtual bool RecvSuspend() override;
-  virtual bool RecvResume() override;
-  virtual bool RecvClose() override;
-  virtual bool RecvData(const SendableData& aData,
-                        const uint32_t& aTrackingNumber) override;
-  virtual bool RecvRequestDelete() override;
-  virtual nsresult OfflineNotification(nsISupports *) override;
-  virtual uint32_t GetAppId() override;
-  bool GetInIsolatedMozBrowser();
+  virtual mozilla::ipc::IPCResult RecvStartTLS() override;
+  virtual mozilla::ipc::IPCResult RecvSuspend() override;
+  virtual mozilla::ipc::IPCResult RecvResume() override;
+  virtual mozilla::ipc::IPCResult RecvClose() override;
+  virtual mozilla::ipc::IPCResult RecvData(const SendableData& aData,
+                                           const uint32_t& aTrackingNumber) override;
+  virtual mozilla::ipc::IPCResult RecvRequestDelete() override;
 
   void FireErrorEvent(const nsAString& aName, const nsAString& aType, TCPReadyState aReadyState);
   void FireEvent(const nsAString& aType, TCPReadyState aReadyState);

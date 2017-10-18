@@ -8,9 +8,15 @@
 #if !defined(CUBEB_UTILS)
 #define CUBEB_UTILS
 
+#include "cubeb/cubeb.h"
+
+#ifdef __cplusplus
+
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <mutex>
+#include <type_traits>
 #if defined(WIN32)
 #include "cubeb_utils_win.h"
 #else
@@ -21,6 +27,8 @@
 template<typename T>
 void PodCopy(T * destination, const T * source, size_t count)
 {
+  static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination && source);
   memcpy(destination, source, count * sizeof(T));
 }
 
@@ -28,6 +36,8 @@ void PodCopy(T * destination, const T * source, size_t count)
 template<typename T>
 void PodMove(T * destination, const T * source, size_t count)
 {
+  static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination && source);
   memmove(destination, source, count * sizeof(T));
 }
 
@@ -35,7 +45,66 @@ void PodMove(T * destination, const T * source, size_t count)
 template<typename T>
 void PodZero(T * destination, size_t count)
 {
+  static_assert(std::is_trivial<T>::value, "Requires trivial type");
+  assert(destination);
   memset(destination, 0,  count * sizeof(T));
+}
+
+namespace {
+template<typename T, typename Trait>
+void Copy(T * destination, const T * source, size_t count, Trait)
+{
+  for (size_t i = 0; i < count; i++) {
+    destination[i] = source[i];
+  }
+}
+
+template<typename T>
+void Copy(T * destination, const T * source, size_t count, std::true_type)
+{
+  PodCopy(destination, source, count);
+}
+}
+
+/**
+ * This allows copying a number of elements from a `source` pointer to a
+ * `destination` pointer, using `memcpy` if it is safe to do so, or a loop that
+ * calls the constructors and destructors otherwise.
+ */
+template<typename T>
+void Copy(T * destination, const T * source, size_t count)
+{
+  assert(destination && source);
+  Copy(destination, source, count, typename std::is_trivial<T>::type());
+}
+
+namespace {
+template<typename T, typename Trait>
+void ConstructDefault(T * destination, size_t count, Trait)
+{
+  for (size_t i = 0; i < count; i++) {
+    destination[i] = T();
+  }
+}
+
+template<typename T>
+void ConstructDefault(T * destination,
+                      size_t count, std::true_type)
+{
+  PodZero(destination, count);
+}
+}
+
+/**
+ * This allows zeroing (using memset) or default-constructing a number of
+ * elements calling the constructors and destructors if necessary.
+ */
+template<typename T>
+void ConstructDefault(T * destination, size_t count)
+{
+  assert(destination);
+  ConstructDefault(destination, count,
+                   typename std::is_arithmetic<T>::type());
 }
 
 template<typename T>
@@ -57,6 +126,11 @@ public:
   T * data() const
   {
     return data_;
+  }
+
+  T * end() const
+  {
+    return data_ + length_;
   }
 
   const T& at(size_t index) const
@@ -194,18 +268,85 @@ private:
   size_t length_;
 };
 
-struct auto_lock {
-  explicit auto_lock(owned_critical_section & lock)
-    : lock(lock)
-  {
-    lock.enter();
-  }
-  ~auto_lock()
-  {
-    lock.leave();
-  }
-private:
-  owned_critical_section & lock;
+struct auto_array_wrapper {
+  virtual void push(void * elements, size_t length) = 0;
+  virtual size_t length() = 0;
+  virtual void push_silence(size_t length) = 0;
+  virtual bool pop(size_t length) = 0;
+  virtual void * data() = 0;
+  virtual void * end() = 0;
+  virtual void clear() = 0;
+  virtual bool reserve(size_t capacity) = 0;
+  virtual void set_length(size_t length) = 0;
+  virtual ~auto_array_wrapper() {}
 };
+
+template <typename T>
+struct auto_array_wrapper_impl : public auto_array_wrapper {
+  auto_array_wrapper_impl() {}
+
+  explicit auto_array_wrapper_impl(uint32_t size)
+    : ar(size)
+  {}
+
+  void push(void * elements, size_t length) override {
+    ar.push(static_cast<T *>(elements), length);
+  }
+
+  size_t length() override {
+    return ar.length();
+  }
+
+  void push_silence(size_t length) override {
+    ar.push_silence(length);
+  }
+
+  bool pop(size_t length) override {
+    return ar.pop(nullptr, length);
+  }
+
+  void * data() override {
+    return ar.data();
+  }
+
+  void * end() override {
+    return ar.end();
+  }
+
+  void clear() override {
+    ar.clear();
+  }
+
+  bool reserve(size_t capacity) override {
+    return ar.reserve(capacity);
+  }
+
+  void set_length(size_t length) override {
+    ar.set_length(length);
+  }
+
+  ~auto_array_wrapper_impl() {
+    ar.clear();
+  }
+
+private:
+  auto_array<T> ar;
+};
+
+using auto_lock = std::lock_guard<owned_critical_section>;
+#endif // __cplusplus
+
+// C language helpers
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int cubeb_utils_default_device_collection_destroy(cubeb * context,
+                                                  cubeb_device_collection * collection);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CUBEB_UTILS */

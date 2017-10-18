@@ -104,6 +104,12 @@ static setLcdFilterFunc setLcdFilter;
  */
 #define MAX_FONT_SIZE 1000
 
+extern FT_Face mozilla_NewFTFace(FT_Library aFTLibrary, const char* aFileName, int aFaceIndex);
+extern FT_Face mozilla_NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData, size_t aDataSize, int aFaceIndex);
+extern void mozilla_ReleaseFTFace(FT_Face aFace);
+extern void mozilla_LockFTLibrary(FT_Library aFTLibrary);
+extern void mozilla_UnlockFTLibrary(FT_Library aFTLibrary);
+
 /**
  * SECTION:cairo-ft
  * @Title: FreeType Fonts
@@ -243,7 +249,7 @@ _font_map_release_face_lock_held (cairo_ft_unscaled_font_map_t *font_map,
 				  cairo_ft_unscaled_font_t *unscaled)
 {
     if (unscaled->face) {
-	FT_Done_Face (unscaled->face);
+	mozilla_ReleaseFTFace (unscaled->face);
 	unscaled->face = NULL;
 	unscaled->have_scale = FALSE;
 
@@ -669,10 +675,8 @@ _cairo_ft_unscaled_font_lock_face (cairo_ft_unscaled_font_t *unscaled)
     }
     _cairo_ft_unscaled_font_map_unlock ();
 
-    if (FT_New_Face (font_map->ft_library,
-		     unscaled->filename,
-		     unscaled->id,
-		     &face) != FT_Err_Ok)
+    face = mozilla_NewFTFace (font_map->ft_library, unscaled->filename, unscaled->id);
+    if (!face)
     {
 	unscaled->lock_count--;
 	CAIRO_MUTEX_UNLOCK (unscaled->mutex);
@@ -1451,13 +1455,21 @@ _render_glyph_outline (FT_Face                    face,
 #endif
         }
 
-	if (setLcdFilter)
-          setLcdFilter (library, lcd_filter);
+	if (setLcdFilter &&
+	    (render_mode == FT_RENDER_MODE_LCD ||
+	     render_mode == FT_RENDER_MODE_LCD_V)) {
+	    mozilla_LockFTLibrary (library);
+	    setLcdFilter (library, lcd_filter);
+	}
 
 	fterror = FT_Render_Glyph (face->glyph, render_mode);
 
-	if (setLcdFilter)
-          setLcdFilter (library, FT_LCD_FILTER_NONE);
+	if (setLcdFilter &&
+	    (render_mode == FT_RENDER_MODE_LCD ||
+	     render_mode == FT_RENDER_MODE_LCD_V)) {
+	    setLcdFilter (library, FT_LCD_FILTER_NONE);
+	    mozilla_UnlockFTLibrary (library);
+	}
 
 	if (fterror != 0)
 		return _cairo_error (CAIRO_STATUS_NO_MEMORY);
@@ -2216,7 +2228,7 @@ _cairo_ft_scaled_glyph_init (void			*abstract_font,
     cairo_ft_scaled_font_t *scaled_font = abstract_font;
     cairo_ft_unscaled_font_t *unscaled = scaled_font->unscaled;
     FT_GlyphSlot glyph;
-    FT_Face face;
+    FT_Face face = NULL;
     FT_Error error;
     int load_flags = scaled_font->ft_options.load_flags;
     FT_Glyph_Metrics *metrics;
@@ -3274,7 +3286,8 @@ cairo_ft_scaled_font_lock_face (cairo_scaled_font_t *abstract_font)
      * opportunity for creating deadlock. This is obviously unsafe,
      * but as documented, the user must add manual locking when using
      * this function. */
-     CAIRO_MUTEX_UNLOCK (scaled_font->unscaled->mutex);
+    // BEWARE: Mozilla's tree Cairo keeps the lock across calls for thread-safety.
+    // CAIRO_MUTEX_UNLOCK (scaled_font->unscaled->mutex);
 
     return face;
 }
@@ -3305,7 +3318,8 @@ cairo_ft_scaled_font_unlock_face (cairo_scaled_font_t *abstract_font)
      * cairo_ft_scaled_font_lock_face, so we have to acquire it again
      * as _cairo_ft_unscaled_font_unlock_face expects it to be held
      * when we call into it. */
-    CAIRO_MUTEX_LOCK (scaled_font->unscaled->mutex);
+    // BEWARE: Mozilla's tree Cairo keeps the lock across calls for thread-safety.
+    //CAIRO_MUTEX_LOCK (scaled_font->unscaled->mutex);
 
     _cairo_ft_unscaled_font_unlock_face (scaled_font->unscaled);
 }

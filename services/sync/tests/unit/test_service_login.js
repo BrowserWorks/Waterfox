@@ -8,10 +8,11 @@ Cu.import("resource://services-sync/policies.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
+Log.repository.rootLogger.addAppender(new Log.DumpAppender());
+
 function login_handling(handler) {
-  return function (request, response) {
-    if (basic_auth_matches(request, "johndoe", "ilovejane") ||
-        basic_auth_matches(request, "janedoe", "ilovejohn")) {
+  return function(request, response) {
+    if (has_hawk_header(request)) {
       handler(request, response);
     } else {
       let body = "Unauthorized";
@@ -22,33 +23,23 @@ function login_handling(handler) {
   };
 }
 
-function run_test() {
-  let logger = Log.repository.rootLogger;
-  Log.repository.rootLogger.addAppender(new Log.DumpAppender());
-
-  run_next_test();
-}
-
-add_test(function test_offline() {
+add_task(async function test_offline() {
   try {
     _("The right bits are set when we're offline.");
     Services.io.offline = true;
-    do_check_false(!!Service.login());
+    do_check_false(!!(await Service.login()));
     do_check_eq(Service.status.login, LOGIN_FAILED_NETWORK_ERROR);
     Services.io.offline = false;
   } finally {
     Svc.Prefs.resetBranch("");
-    run_next_test();
   }
 });
 
 function setup() {
   let janeHelper = track_collections_helper();
   let janeU      = janeHelper.with_updated_collection;
-  let janeColls  = janeHelper.collections;
   let johnHelper = track_collections_helper();
   let johnU      = johnHelper.with_updated_collection;
-  let johnColls  = johnHelper.collections;
 
   let server = httpd_setup({
     "/1.1/johndoe/info/collections": login_handling(johnHelper.handler),
@@ -58,66 +49,44 @@ function setup() {
     // is where keys are generated or fetched.
     // TODO: have Jane fetch her keys, not generate them...
     "/1.1/johndoe/storage/crypto/keys": johnU("crypto", new ServerWBO("keys").handler()),
-    "/1.1/johndoe/storage/meta/global": johnU("meta",   new ServerWBO("global").handler()),
+    "/1.1/johndoe/storage/meta/global": johnU("meta", new ServerWBO("global").handler()),
     "/1.1/janedoe/storage/crypto/keys": janeU("crypto", new ServerWBO("keys").handler()),
-    "/1.1/janedoe/storage/meta/global": janeU("meta",   new ServerWBO("global").handler())
+    "/1.1/janedoe/storage/meta/global": janeU("meta", new ServerWBO("global").handler())
   });
 
-  Service.serverURL = server.baseURI;
   return server;
 }
 
-add_test(function test_login_logout() {
+add_task(async function test_login_logout() {
+  enableValidationPrefs();
+
   let server = setup();
 
   try {
     _("Force the initial state.");
-    ensureLegacyIdentityManager();
     Service.status.service = STATUS_OK;
     do_check_eq(Service.status.service, STATUS_OK);
 
     _("Try logging in. It won't work because we're not configured yet.");
-    Service.login();
+    await Service.login();
     do_check_eq(Service.status.service, CLIENT_NOT_CONFIGURED);
     do_check_eq(Service.status.login, LOGIN_FAILED_NO_USERNAME);
     do_check_false(Service.isLoggedIn);
 
-    _("Try again with username and password set.");
-    Service.identity.account = "johndoe";
-    Service.identity.basicPassword = "ilovejane";
-    Service.login();
-    do_check_eq(Service.status.service, CLIENT_NOT_CONFIGURED);
-    do_check_eq(Service.status.login, LOGIN_FAILED_NO_PASSPHRASE);
-    do_check_false(Service.isLoggedIn);
-
-    _("Success if passphrase is set.");
-    Service.identity.syncKey = "foo";
-    Service.login();
+    _("Try again with a configured account");
+    await configureIdentity({ username: "johndoe" }, server);
+    await Service.login();
     do_check_eq(Service.status.service, STATUS_OK);
     do_check_eq(Service.status.login, LOGIN_SUCCEEDED);
     do_check_true(Service.isLoggedIn);
 
-    _("We can also pass username, password and passphrase to login().");
-    Service.login("janedoe", "incorrectpassword", "bar");
-    setBasicCredentials("janedoe", "incorrectpassword", "bar");
-    do_check_eq(Service.status.service, LOGIN_FAILED);
-    do_check_eq(Service.status.login, LOGIN_FAILED_LOGIN_REJECTED);
-    do_check_false(Service.isLoggedIn);
+    _("Profile refresh edge case: FxA configured but prefs reset");
+    await Service.startOver();
+    let config = makeIdentityConfig({ username: "johndoe" }, server);
+    config.fxaccount.token.endpoint = server.baseURI + "/1.1/" + config.username + "/";
+    configureFxAccountIdentity(Service.identity, config);
 
-    _("Try again with correct password.");
-    Service.login("janedoe", "ilovejohn");
-    do_check_eq(Service.status.service, STATUS_OK);
-    do_check_eq(Service.status.login, LOGIN_SUCCEEDED);
-    do_check_true(Service.isLoggedIn);
-
-    _("Calling login() with parameters when the client is unconfigured sends notification.");
-    let notified = false;
-    Svc.Obs.add("weave:service:setup-complete", function() {
-      notified = true;
-    });
-    setBasicCredentials(null, null, null);
-    Service.login("janedoe", "ilovejohn", "bar");
-    do_check_true(notified);
+    await Service.login();
     do_check_eq(Service.status.service, STATUS_OK);
     do_check_eq(Service.status.login, LOGIN_SUCCEEDED);
     do_check_true(Service.isLoggedIn);
@@ -132,32 +101,33 @@ add_test(function test_login_logout() {
 
   } finally {
     Svc.Prefs.resetBranch("");
-    server.stop(run_next_test);
+    await promiseStopServer(server);
   }
 });
 
-add_test(function test_login_on_sync() {
+add_task(async function test_login_on_sync() {
+  enableValidationPrefs();
+
   let server = setup();
-  setBasicCredentials("johndoe", "ilovejane", "bar");
+  await configureIdentity({ username: "johndoe" }, server);
 
   try {
     _("Sync calls login.");
     let oldLogin = Service.login;
     let loginCalled = false;
-    Service.login = function() {
+    Service.login = async function() {
       loginCalled = true;
       Service.status.login = LOGIN_SUCCEEDED;
       this._loggedIn = false;           // So that sync aborts.
       return true;
     };
 
-    Service.sync();
+    await Service.sync();
 
     do_check_true(loginCalled);
     Service.login = oldLogin;
 
     // Stub mpLocked.
-    let mpLockedF = Utils.mpLocked;
     let mpLocked = true;
     Utils.mpLocked = () => mpLocked;
 
@@ -201,25 +171,16 @@ add_test(function test_login_on_sync() {
 
     // Testing exception handling if master password dialog is canceled.
     // Do this by monkeypatching.
-    let oldGetter = Service.identity.__lookupGetter__("syncKey");
-    let oldSetter = Service.identity.__lookupSetter__("syncKey");
-    _("Old passphrase function is " + oldGetter);
-    Service.identity.__defineGetter__("syncKey",
-                           function() {
-                             throw "User canceled Master Password entry";
-                           });
-
-    let oldClearSyncTriggers = Service.scheduler.clearSyncTriggers;
-    let oldLockedSync = Service._lockedSync;
+    Service.identity.unlockAndVerifyAuthState = () => Promise.resolve(MASTER_PASSWORD_LOCKED);
 
     let cSTCalled = false;
     let lockedSyncCalled = false;
 
     Service.scheduler.clearSyncTriggers = function() { cSTCalled = true; };
-    Service._lockedSync = function() { lockedSyncCalled = true; };
+    Service._lockedSync = async function() { lockedSyncCalled = true; };
 
     _("If master password is canceled, login fails and we report lockage.");
-    do_check_false(!!Service.login());
+    do_check_false(!!(await Service.login()));
     do_check_eq(Service.status.login, MASTER_PASSWORD_LOCKED);
     do_check_eq(Service.status.service, LOGIN_FAILED);
     _("Locked? " + Utils.mpLocked());
@@ -227,19 +188,16 @@ add_test(function test_login_on_sync() {
     do_check_eq(Service._checkSync(), kSyncMasterPasswordLocked);
 
     _("Sync doesn't proceed and clears triggers if MP is still locked.");
-    Service.sync();
+    await Service.sync();
 
     do_check_true(cSTCalled);
     do_check_false(lockedSyncCalled);
-
-    Service.identity.__defineGetter__("syncKey", oldGetter);
-    Service.identity.__defineSetter__("syncKey", oldSetter);
 
     // N.B., a bunch of methods are stubbed at this point. Be careful putting
     // new tests after this point!
 
   } finally {
     Svc.Prefs.resetBranch("");
-    server.stop(run_next_test);
+    await promiseStopServer(server);
   }
 });

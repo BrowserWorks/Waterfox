@@ -12,34 +12,38 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLElement : Element {
   // metadata attributes
+  [CEReactions]
            attribute DOMString title;
+  [CEReactions]
            attribute DOMString lang;
   //         attribute boolean translate;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute DOMString dir;
   [Constant]
   readonly attribute DOMStringMap dataset;
 
-  [GetterThrows, Pure]
+  [CEReactions, GetterThrows, Pure, TreatNullAs=EmptyString]
            attribute DOMString innerText;
 
   // user interaction
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute boolean hidden;
+  [NeedsCallerType]
   void click();
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute long tabIndex;
   [Throws]
   void focus();
   [Throws]
   void blur();
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute DOMString accessKey;
   [Pure]
   readonly attribute DOMString accessKeyLabel;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute boolean draggable;
   //[PutForwards=value] readonly attribute DOMTokenList dropzone;
   [SetterThrows, Pure]
@@ -50,7 +54,7 @@ interface HTMLElement : Element {
   readonly attribute HTMLMenuElement? contextMenu;
   //[SetterThrows]
   //         attribute HTMLMenuElement? contextMenu;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
            attribute boolean spellcheck;
 
   // command API
@@ -64,11 +68,6 @@ interface HTMLElement : Element {
   // styling
   [PutForwards=cssText, Constant]
   readonly attribute CSSStyleDeclaration style;
-
-  // Mozilla specific stuff
-           attribute EventHandler oncopy;
-           attribute EventHandler oncut;
-           attribute EventHandler onpaste;
 };
 
 // http://dev.w3.org/csswg/cssom-view/#extensions-to-the-htmlelement-interface
@@ -79,13 +78,6 @@ partial interface HTMLElement {
   readonly attribute long offsetLeft;
   readonly attribute long offsetWidth;
   readonly attribute long offsetHeight;
-};
-
-// Extension for scroll-grabbing, used in the B2G dynamic toolbar.
-// This is likely to be revised.
-partial interface HTMLElement {
-  [Func="nsGenericHTMLElement::IsScrollGrabAllowed"]
-           attribute boolean scrollgrab;
 };
 
 [NoInterfaceObject]
@@ -101,6 +93,7 @@ interface TouchEventHandlers {
 };
 
 HTMLElement implements GlobalEventHandlers;
+HTMLElement implements DocumentAndElementEventHandlers;
 HTMLElement implements TouchEventHandlers;
 HTMLElement implements OnErrorEventHandlerForNodes;
 

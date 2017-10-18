@@ -45,7 +45,7 @@ public:
   typedef mozilla::layers::LayerManager LayerManager;
 
   friend class nsDisplayXULImage;
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsImageBoxFrame)
 
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
@@ -68,12 +68,11 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
-  virtual nsIAtom* GetType() const override;
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
-  /** 
+  /**
    * Update mUseSrcAttr from appropriate content attributes or from
    * style, throw away the current image, and load the appropriate
    * image.
@@ -92,11 +91,13 @@ public:
 
   virtual ~nsImageBoxFrame();
 
-  DrawResult PaintImage(nsRenderingContext& aRenderingContext,
+  DrawResult PaintImage(gfxContext& aRenderingContext,
                         const nsRect& aDirtyRect,
                         nsPoint aPt, uint32_t aFlags);
 
   bool CanOptimizeToImageLayer();
+
+  nsRect GetDestRect(const nsPoint& aOffset, Maybe<nsPoint>& aAnchorPoint);
 
 protected:
   explicit nsImageBoxFrame(nsStyleContext* aContext);
@@ -127,7 +128,8 @@ private:
   bool mSuppressStyleCheck;
 }; // class nsImageBoxFrame
 
-class nsDisplayXULImage : public nsDisplayImageContainer {
+class nsDisplayXULImage final : public nsDisplayImageContainer
+{
 public:
   nsDisplayXULImage(nsDisplayListBuilder* aBuilder,
                     nsImageBoxFrame* aFrame) :
@@ -156,7 +158,7 @@ public:
   // Doesn't handle HitTest because nsLeafBoxFrame already creates an
   // event receiver for us
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("XULImage", TYPE_XUL_IMAGE)
 };
 

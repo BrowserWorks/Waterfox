@@ -10,7 +10,8 @@
 enum PermissionName {
   "geolocation",
   "notifications",
-  "push"
+  "push",
+  "persistent-storage"
   // Unsupported: "midi"
 };
 
@@ -25,6 +26,6 @@ dictionary PermissionDescriptor {
 interface Permissions {
   [Throws]
   Promise<PermissionStatus> query(object permission);
-  [Throws]
+  [Throws, Pref="dom.permissions.revoke.enable"]
   Promise<PermissionStatus> revoke(object permission);
 };

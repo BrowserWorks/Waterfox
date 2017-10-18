@@ -11,10 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <memory>
 #include <string>
 
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
+#include "webrtc/tools/frame_editing/frame_editing_lib.h"
 #include "webrtc/typedefs.h"
 
 using std::string;
@@ -38,7 +39,7 @@ int EditFrames(const string& in_path, int width, int height,
   // Frame size of I420.
   size_t frame_length = CalcBufferSize(kI420, width, height);
 
-  rtc::scoped_ptr<uint8_t[]> temp_buffer(new uint8_t[frame_length]);
+  std::unique_ptr<uint8_t[]> temp_buffer(new uint8_t[frame_length]);
 
   FILE* out_fid = fopen(out_path.c_str(), "wb");
 

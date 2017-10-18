@@ -58,22 +58,16 @@ public:
     return task.forget();
   }
 
-  template <class Method>
-  inline already_AddRefed<Runnable> NewRunnableMethod(Method method) {
-    typedef TaskWrapper<RunnableMethod<Method, Tuple0> > TaskWrapper;
+  template <class Method, typename... Args>
+  inline already_AddRefed<Runnable>
+  NewRunnableMethod(Method method, Args&&... args) {
+    typedef decltype(base::MakeTuple(mozilla::Forward<Args>(args)...)) ArgTuple;
+    typedef RunnableMethod<Method, ArgTuple> RunnableMethod;
+    typedef TaskWrapper<RunnableMethod> TaskWrapper;
 
-    RefPtr<TaskWrapper> task = new TaskWrapper(this, object_, method,
-                                               base::MakeTuple());
-
-    return task.forget();
-  }
-
-  template <class Method, class A>
-  inline already_AddRefed<Runnable> NewRunnableMethod(Method method, const A& a) {
-    typedef TaskWrapper<RunnableMethod<Method, Tuple1<A> > > TaskWrapper;
-
-    RefPtr<TaskWrapper> task = new TaskWrapper(this, object_, method,
-                                               base::MakeTuple(a));
+    RefPtr<TaskWrapper> task =
+      new TaskWrapper(this, object_, method,
+                      base::MakeTuple(mozilla::Forward<Args>(args)...));
 
     return task.forget();
   }
@@ -82,11 +76,12 @@ protected:
   template <class Method, class Params>
   class RunnableMethod : public Runnable {
    public:
-    RunnableMethod(T* obj, Method meth, const Params& params)
-      : obj_(obj)
-      , meth_(meth)
-      , params_(params) {
-
+     RunnableMethod(T* obj, Method meth, const Params& params)
+       : Runnable("ipc::TaskFactory::RunnableMethod")
+       , obj_(obj)
+       , meth_(meth)
+       , params_(params)
+     {
     }
 
     NS_IMETHOD Run() override {

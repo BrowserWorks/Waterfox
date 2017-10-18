@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=436801
 -->
 <head>
   <title>Test feed preview subscribe UI</title>
-  <script type="text/javascript" src="/MochiKit/packed.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
@@ -19,11 +18,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=436801
 
 SimpleTest.waitForExplicitFinish();
 
-addLoadEvent(function () {
+addLoadEvent(function() {
   var doc = SpecialPowers.wrap($("testFrame")).contentDocument;
 
   checkNode(doc.getElementById("feedTitleText"), [
-    "ELEMENT", "h1", { "xml:base": "http://www.example.com/foo/bar/" }, [
+    "ELEMENT", "h1", [
       ["TEXT", "Example of a "],
       ["ELEMENT", "em", [
         ["TEXT", "special"],
@@ -35,7 +34,7 @@ addLoadEvent(function () {
   ]);
 
   checkNode(doc.getElementById("feedSubtitleText"), [
-    "ELEMENT", "h2", { "xml:base": "http://www.example.com/foo/bar/" }, [
+    "ELEMENT", "h2", [
       ["TEXT", "With a "],
       ["ELEMENT", "em", [
         ["TEXT", "special"],
@@ -47,7 +46,7 @@ addLoadEvent(function () {
   ]);
 
   checkNode(doc.querySelector(".entry").firstChild.firstChild.firstChild, [
-    "ELEMENT", "span", { "xml:base": "http://www.example.com/foo/bar/" }, [
+    "ELEMENT", "span", [
       ["TEXT", "Some "],
       ["ELEMENT", "abbr", { title: "Extensible Hyper-text Mark-up Language" }, [
         ["TEXT", "XHTML"],
@@ -59,7 +58,7 @@ addLoadEvent(function () {
   ]);
 
   checkNode(doc.querySelectorAll(".entry")[1].firstChild.firstChild.firstChild, [
-    "ELEMENT", "span", { "xml:base": "http://www.example.com/foo/bar/" }, [
+    "ELEMENT", "span", [
       ["TEXT", "Some "],
       ["ELEMENT", "abbr", { title: "Hyper-text Mark-up Language" }, [
         ["TEXT", "HTML"],
@@ -86,7 +85,7 @@ function checkNode(node, schema) {
   var tag = schema.shift();
   is(node.localName, tag, "Element should have expected tag");
   while (schema.length) {
-    var val = schema.shift();
+    let val = schema.shift();
     if (Array.isArray(val))
       var childSchema = val;
     else
@@ -98,7 +97,7 @@ function checkNode(node, schema) {
     };
     for (var name in attrSchema) {
       var [ns, nsName] = name.split(":");
-      var val = nsName ? node.getAttributeNS(nsTable[ns], nsName) :
+      let val = nsName ? node.getAttributeNS(nsTable[ns], nsName) :
                 node.getAttribute(name);
       is(val, attrSchema[name], "Attribute " + name + " should match");
     }

@@ -36,9 +36,9 @@ class ReadbackResultWriterD3D11 final : public nsIRunnable
   ~ReadbackResultWriterD3D11() {}
   NS_DECL_THREADSAFE_ISUPPORTS
 public:
-  ReadbackResultWriterD3D11(ReadbackTask *aTask) : mTask(aTask) {}
+  explicit ReadbackResultWriterD3D11(ReadbackTask *aTask) : mTask(aTask) {}
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     D3D10_TEXTURE2D_DESC desc;
     mTask->mReadbackTexture->GetDesc(&desc);

@@ -8,6 +8,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <memory>
 #include <string>
 
 #include "webrtc/base/gunit.h"
@@ -15,6 +16,7 @@
 #include "webrtc/base/socketstream.h"
 #include "webrtc/base/ssladapter.h"
 #include "webrtc/base/sslstreamadapter.h"
+#include "webrtc/base/sslidentity.h"
 #include "webrtc/base/stream.h"
 #include "webrtc/base/virtualsocketserver.h"
 
@@ -100,7 +102,7 @@ class SSLAdapterTestDummyClient : public sigslot::has_slots<> {
     char buffer[4096] = "";
 
     // Read data received from the server and store it in our internal buffer.
-    int read = socket->Recv(buffer, sizeof(buffer) - 1);
+    int read = socket->Recv(buffer, sizeof(buffer) - 1, nullptr);
     if (read != -1) {
       buffer[read] = '\0';
 
@@ -122,17 +124,18 @@ class SSLAdapterTestDummyClient : public sigslot::has_slots<> {
  private:
   const rtc::SSLMode ssl_mode_;
 
-  rtc::scoped_ptr<rtc::SSLAdapter> ssl_adapter_;
+  std::unique_ptr<rtc::SSLAdapter> ssl_adapter_;
 
   std::string data_;
 };
 
 class SSLAdapterTestDummyServer : public sigslot::has_slots<> {
  public:
-  explicit SSLAdapterTestDummyServer(const rtc::SSLMode& ssl_mode)
+  explicit SSLAdapterTestDummyServer(const rtc::SSLMode& ssl_mode,
+                                     const rtc::KeyParams& key_params)
       : ssl_mode_(ssl_mode) {
     // Generate a key pair and a certificate for this host.
-    ssl_identity_.reset(rtc::SSLIdentity::Generate(GetHostname()));
+    ssl_identity_.reset(rtc::SSLIdentity::Generate(GetHostname(), key_params));
 
     server_socket_.reset(CreateSocket(ssl_mode_));
 
@@ -249,7 +252,7 @@ class SSLAdapterTestDummyServer : public sigslot::has_slots<> {
     ssl_stream_adapter_->SetPeerCertificateDigest(rtc::DIGEST_SHA_1, digest,
         digest_len);
 
-    ssl_stream_adapter_->StartSSLWithPeer();
+    ssl_stream_adapter_->StartSSL();
 
     ssl_stream_adapter_->SignalEvent.connect(this,
         &SSLAdapterTestDummyServer::OnSSLStreamAdapterEvent);
@@ -257,10 +260,10 @@ class SSLAdapterTestDummyServer : public sigslot::has_slots<> {
 
   const rtc::SSLMode ssl_mode_;
 
-  rtc::scoped_ptr<rtc::AsyncSocket> server_socket_;
-  rtc::scoped_ptr<rtc::SSLStreamAdapter> ssl_stream_adapter_;
+  std::unique_ptr<rtc::AsyncSocket> server_socket_;
+  std::unique_ptr<rtc::SSLStreamAdapter> ssl_stream_adapter_;
 
-  rtc::scoped_ptr<rtc::SSLIdentity> ssl_identity_;
+  std::unique_ptr<rtc::SSLIdentity> ssl_identity_;
 
   std::string data_;
 };
@@ -268,13 +271,13 @@ class SSLAdapterTestDummyServer : public sigslot::has_slots<> {
 class SSLAdapterTestBase : public testing::Test,
                            public sigslot::has_slots<> {
  public:
-  explicit SSLAdapterTestBase(const rtc::SSLMode& ssl_mode)
+  explicit SSLAdapterTestBase(const rtc::SSLMode& ssl_mode,
+                              const rtc::KeyParams& key_params)
       : ssl_mode_(ssl_mode),
         ss_scope_(new rtc::VirtualSocketServer(NULL)),
-        server_(new SSLAdapterTestDummyServer(ssl_mode_)),
+        server_(new SSLAdapterTestDummyServer(ssl_mode_, key_params)),
         client_(new SSLAdapterTestDummyClient(ssl_mode_)),
-        handshake_wait_(kTimeout) {
-  }
+        handshake_wait_(kTimeout) {}
 
   void SetHandshakeWait(int wait) {
     handshake_wait_ = wait;
@@ -337,49 +340,84 @@ class SSLAdapterTestBase : public testing::Test,
 
   const rtc::SocketServerScope ss_scope_;
 
-  rtc::scoped_ptr<SSLAdapterTestDummyServer> server_;
-  rtc::scoped_ptr<SSLAdapterTestDummyClient> client_;
+  std::unique_ptr<SSLAdapterTestDummyServer> server_;
+  std::unique_ptr<SSLAdapterTestDummyClient> client_;
 
   int handshake_wait_;
 };
 
-class SSLAdapterTestTLS : public SSLAdapterTestBase {
+class SSLAdapterTestTLS_RSA : public SSLAdapterTestBase {
  public:
-  SSLAdapterTestTLS() : SSLAdapterTestBase(rtc::SSL_MODE_TLS) {}
+  SSLAdapterTestTLS_RSA()
+      : SSLAdapterTestBase(rtc::SSL_MODE_TLS, rtc::KeyParams::RSA()) {}
 };
 
-class SSLAdapterTestDTLS : public SSLAdapterTestBase {
+class SSLAdapterTestTLS_ECDSA : public SSLAdapterTestBase {
  public:
-  SSLAdapterTestDTLS() : SSLAdapterTestBase(rtc::SSL_MODE_DTLS) {}
+  SSLAdapterTestTLS_ECDSA()
+      : SSLAdapterTestBase(rtc::SSL_MODE_TLS, rtc::KeyParams::ECDSA()) {}
+};
+
+class SSLAdapterTestDTLS_RSA : public SSLAdapterTestBase {
+ public:
+  SSLAdapterTestDTLS_RSA()
+      : SSLAdapterTestBase(rtc::SSL_MODE_DTLS, rtc::KeyParams::RSA()) {}
+};
+
+class SSLAdapterTestDTLS_ECDSA : public SSLAdapterTestBase {
+ public:
+  SSLAdapterTestDTLS_ECDSA()
+      : SSLAdapterTestBase(rtc::SSL_MODE_DTLS, rtc::KeyParams::ECDSA()) {}
 };
 
 #if SSL_USE_OPENSSL
 
 // Basic tests: TLS
 
-// Test that handshake works
-TEST_F(SSLAdapterTestTLS, TestTLSConnect) {
+// Test that handshake works, using RSA
+TEST_F(SSLAdapterTestTLS_RSA, TestTLSConnect) {
   TestHandshake(true);
 }
 
-// Test transfer between client and server
-TEST_F(SSLAdapterTestTLS, TestTLSTransfer) {
+// Test that handshake works, using ECDSA
+TEST_F(SSLAdapterTestTLS_ECDSA, TestTLSConnect) {
+  TestHandshake(true);
+}
+
+// Test transfer between client and server, using RSA
+TEST_F(SSLAdapterTestTLS_RSA, TestTLSTransfer) {
+  TestHandshake(true);
+  TestTransfer("Hello, world!");
+}
+
+// Test transfer between client and server, using ECDSA
+TEST_F(SSLAdapterTestTLS_ECDSA, TestTLSTransfer) {
   TestHandshake(true);
   TestTransfer("Hello, world!");
 }
 
 // Basic tests: DTLS
 
-// Test that handshake works
-TEST_F(SSLAdapterTestDTLS, TestDTLSConnect) {
+// Test that handshake works, using RSA
+TEST_F(SSLAdapterTestDTLS_RSA, TestDTLSConnect) {
   TestHandshake(true);
 }
 
-// Test transfer between client and server
-TEST_F(SSLAdapterTestDTLS, TestDTLSTransfer) {
+// Test that handshake works, using ECDSA
+TEST_F(SSLAdapterTestDTLS_ECDSA, TestDTLSConnect) {
+  TestHandshake(true);
+}
+
+// Test transfer between client and server, using RSA
+TEST_F(SSLAdapterTestDTLS_RSA, TestDTLSTransfer) {
+  TestHandshake(true);
+  TestTransfer("Hello, world!");
+}
+
+// Test transfer between client and server, using ECDSA
+TEST_F(SSLAdapterTestDTLS_ECDSA, TestDTLSTransfer) {
   TestHandshake(true);
   TestTransfer("Hello, world!");
 }
 
 #endif  // SSL_USE_OPENSSL
-

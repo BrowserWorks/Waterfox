@@ -26,7 +26,7 @@
 
 namespace mozilla {
 
-class DOMHwMediaStream;
+class AbstractThread;
 class DOMLocalMediaStream;
 class DOMMediaStream;
 class MediaStream;
@@ -84,7 +84,6 @@ class MediaStreamTrackSourceGetter : public nsISupports
 public:
   MediaStreamTrackSourceGetter()
   {
-    MOZ_COUNT_CTOR(MediaStreamTrackSourceGetter);
   }
 
   virtual already_AddRefed<dom::MediaStreamTrackSource>
@@ -93,7 +92,6 @@ public:
 protected:
   virtual ~MediaStreamTrackSourceGetter()
   {
-    MOZ_COUNT_DTOR(MediaStreamTrackSourceGetter);
   }
 };
 
@@ -226,18 +224,30 @@ public:
     virtual ~TrackListener() {}
 
     /**
-     * Called when the DOMMediaStream has a new track added, either by
-     * JS (addTrack()) or the source creating one.
+     * Called when the DOMMediaStream has a live track added, either by
+     * script (addTrack()) or the source creating one.
      */
     virtual void
     NotifyTrackAdded(const RefPtr<MediaStreamTrack>& aTrack) {};
 
     /**
-     * Called when the DOMMediaStream removes a track, either by
-     * JS (removeTrack()) or the source ending it.
+     * Called when the DOMMediaStream removes a live track from playback, either
+     * by script (removeTrack(), track.stop()) or the source ending it.
      */
     virtual void
     NotifyTrackRemoved(const RefPtr<MediaStreamTrack>& aTrack) {};
+
+    /**
+     * Called when the DOMMediaStream has become active.
+     */
+    virtual void
+    NotifyActive() {};
+
+    /**
+     * Called when the DOMMediaStream has become inactive.
+     */
+    virtual void
+    NotifyInactive() {};
   };
 
   /**
@@ -363,6 +373,8 @@ public:
   /** Identical to CloneInternal(TrackForwardingOption::EXPLICIT) */
   already_AddRefed<DOMMediaStream> Clone();
 
+  bool Active() const;
+
   IMPL_EVENT_HANDLER(addtrack)
 
   // NON-WebIDL
@@ -442,10 +454,16 @@ public:
   bool AddDirectListener(DirectMediaStreamListener *aListener);
   void RemoveDirectListener(DirectMediaStreamListener *aListener);
 
-  virtual DOMLocalMediaStream* AsDOMLocalMediaStream() { return nullptr; }
-  virtual DOMHwMediaStream* AsDOMHwMediaStream() { return nullptr; }
+  /**
+   * Legacy method that returns true when the playback stream has finished.
+   */
+  bool IsFinished() const;
 
-  bool IsFinished();
+  /**
+   * Becomes inactive only when the playback stream has finished.
+   */
+  void SetInactiveOnFinish();
+
   /**
    * Returns a principal indicating who may access this stream. The stream contents
    * can only be accessed by principals subsuming this principal.
@@ -511,19 +529,25 @@ public:
   }
 
   /**
-   * Called for each track in our owned stream to indicate to JS that we
-   * are carrying that track.
-   *
-   * Creates a MediaStreamTrack, adds it to mTracks, raises "addtrack" and
-   * returns it.
+   * Adds a MediaStreamTrack to mTracks and raises "addtrack".
    *
    * Note that "addtrack" is raised synchronously and only has an effect if
    * this MediaStream is already exposed to script. For spec compliance this is
    * to be called from an async task.
    */
-  MediaStreamTrack* CreateDOMTrack(TrackID aTrackID, MediaSegment::Type aType,
-      MediaStreamTrackSource* aSource,
-      const MediaTrackConstraints& aConstraints = MediaTrackConstraints());
+  void AddTrackInternal(MediaStreamTrack* aTrack);
+
+  /**
+   * Called for each track in our owned stream to indicate to JS that we
+   * are carrying that track.
+   *
+   * Pre-creates a MediaStreamTrack and returns it.
+   * It is up to the caller to make sure it is added through AddTrackInternal.
+   */
+  already_AddRefed<MediaStreamTrack> CreateDOMTrack(TrackID aTrackID,
+                                                    MediaSegment::Type aType,
+                                                    MediaStreamTrackSource* aSource,
+                                                    const MediaTrackConstraints& aConstraints = MediaTrackConstraints());
 
   /**
    * Creates a MediaStreamTrack cloned from aTrack, adds it to mTracks and
@@ -593,6 +617,15 @@ protected:
   // created.
   void NotifyTracksCreated();
 
+  // Called when our playback stream has finished in the MediaStreamGraph.
+  void NotifyFinished();
+
+  // Dispatches NotifyActive() to all registered track listeners.
+  void NotifyActive();
+
+  // Dispatches NotifyInactive() to all registered track listeners.
+  void NotifyInactive();
+
   // Dispatches NotifyTrackAdded() to all registered track listeners.
   void NotifyTrackAdded(const RefPtr<MediaStreamTrack>& aTrack);
 
@@ -609,8 +642,8 @@ protected:
   class PlaybackStreamListener;
   friend class PlaybackStreamListener;
 
-  // XXX Bug 1124630. Remove with CameraPreviewMediaStream.
-  void CreateAndAddPlaybackStreamListener(MediaStream*);
+  class PlaybackTrackListener;
+  friend class PlaybackTrackListener;
 
   /**
    * Block a track in our playback stream. Calls NotifyPlaybackTrackBlocked()
@@ -681,6 +714,9 @@ protected:
   // in this DOMMediaStream and notifications to mTrackListeners.
   RefPtr<PlaybackStreamListener> mPlaybackListener;
 
+  // Listener tracking when live MediaStreamTracks in mTracks end.
+  RefPtr<PlaybackTrackListener> mPlaybackTrackListener;
+
   nsTArray<nsAutoPtr<OnTracksAvailableCallback> > mRunOnTracksAvailable;
 
   // Set to true after MediaStreamGraph has created tracks for mPlaybackStream.
@@ -695,6 +731,14 @@ protected:
 
   // The track listeners subscribe to changes in this stream's track set.
   nsTArray<TrackListener*> mTrackListeners;
+
+  // True if this stream has live tracks.
+  bool mActive;
+
+  // True if this stream only sets mActive to false when its playback stream
+  // finishes. This is a hack to maintain legacy functionality for playing a
+  // HTMLMediaElement::MozCaptureStream(). See bug 1302379.
+  bool mSetInactiveOnFinish;
 
 private:
   void NotifyPrincipalChanged();
@@ -778,40 +822,6 @@ private:
   // If this object wraps a stream owned by an AudioNode, we need to ensure that
   // the node isn't cycle-collected too early.
   RefPtr<AudioNode> mStreamNode;
-};
-
-class DOMHwMediaStream : public DOMLocalMediaStream
-{
-  typedef mozilla::gfx::IntSize IntSize;
-  typedef layers::OverlayImage OverlayImage;
-#ifdef MOZ_WIDGET_GONK
-  typedef layers::OverlayImage::Data Data;
-#endif
-
-public:
-  explicit DOMHwMediaStream(nsPIDOMWindowInner* aWindow);
-
-  static already_AddRefed<DOMHwMediaStream> CreateHwStream(nsPIDOMWindowInner* aWindow,
-                                                           OverlayImage* aImage = nullptr);
-  virtual DOMHwMediaStream* AsDOMHwMediaStream() override { return this; }
-  int32_t RequestOverlayId();
-  void SetOverlayId(int32_t aOverlayId);
-  void SetImageSize(uint32_t width, uint32_t height);
-  void SetOverlayImage(OverlayImage* aImage);
-
-protected:
-  ~DOMHwMediaStream();
-
-private:
-  void Init(MediaStream* aStream, OverlayImage* aImage);
-
-#ifdef MOZ_WIDGET_GONK
-  const int DEFAULT_IMAGE_ID = 0x01;
-  const int DEFAULT_IMAGE_WIDTH = 400;
-  const int DEFAULT_IMAGE_HEIGHT = 300;
-  RefPtr<OverlayImage> mOverlayImage;
-  PrincipalHandle mPrincipalHandle;
-#endif
 };
 
 } // namespace mozilla

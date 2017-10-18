@@ -167,29 +167,6 @@ int main(void)
   MOZ_RELEASE_ASSERT(iter.RemainingInSegment() == kLastSegmentSize);
   MOZ_RELEASE_ASSERT(unsigned(*iter.Data()) == (kTotalSize - kLastSegmentSize - kInitialSize - kSmallWrite) % 37);
 
-  // Flattening.
-
-  const size_t kFlattenSize = 1000;
-
-  const char* flat;
-  iter = bl.Iter();
-  MOZ_RELEASE_ASSERT(iter.AdvanceAcrossSegments(bl, kInitialSize));
-  MOZ_RELEASE_ASSERT(bl.FlattenBytes(iter, &flat, kFlattenSize));
-  MOZ_RELEASE_ASSERT(flat[0] == 0x0a);
-  MOZ_RELEASE_ASSERT(flat[kSmallWrite / 2] == 0x0a);
-  for (size_t i = kSmallWrite; i < kFlattenSize; i++) {
-    MOZ_RELEASE_ASSERT(unsigned(flat[i]) == (i - kSmallWrite) % 37);
-  }
-  MOZ_RELEASE_ASSERT(unsigned(*iter.Data()) == (kFlattenSize - kSmallWrite) % 37);
-
-  const size_t kSecondFlattenSize = 40;
-
-  MOZ_RELEASE_ASSERT(bl.FlattenBytes(iter, &flat, kSecondFlattenSize));
-  for (size_t i = 0; i < kSecondFlattenSize; i++) {
-    MOZ_RELEASE_ASSERT(unsigned(flat[i]) == (i + kFlattenSize - kInitialSize) % 37);
-  }
-  MOZ_RELEASE_ASSERT(iter.Done());
-
   // Clear.
 
   bl.Clear();
@@ -213,6 +190,21 @@ int main(void)
   MOZ_RELEASE_ASSERT(iter.AdvanceAcrossSegments(bl, kSmallWrite * 3));
   MOZ_RELEASE_ASSERT(iter.Done());
 
+  // MoveFallible
+
+  bool success;
+  bl2 = bl.MoveFallible<InfallibleAllocPolicy>(&success);
+  MOZ_RELEASE_ASSERT(success);
+  MOZ_RELEASE_ASSERT(bl.Size() == 0);
+  MOZ_RELEASE_ASSERT(bl.Iter().Done());
+  MOZ_RELEASE_ASSERT(bl2.Size() == kSmallWrite * 3);
+
+  iter = bl2.Iter();
+  MOZ_RELEASE_ASSERT(iter.AdvanceAcrossSegments(bl2, kSmallWrite * 3));
+  MOZ_RELEASE_ASSERT(iter.Done());
+
+  bl = bl2.MoveFallible<InfallibleAllocPolicy>(&success);
+
   // Borrowing.
 
   const size_t kBorrowStart = 4;
@@ -220,7 +212,6 @@ int main(void)
 
   iter = bl.Iter();
   iter.Advance(bl, kBorrowStart);
-  bool success;
   bl2 = bl.Borrow<InfallibleAllocPolicy>(iter, kBorrowSize, &success);
   MOZ_RELEASE_ASSERT(success);
   MOZ_RELEASE_ASSERT(bl2.Size() == kBorrowSize);
@@ -238,6 +229,28 @@ int main(void)
   MOZ_RELEASE_ASSERT(iter1.AdvanceAcrossSegments(bl, kBorrowSize - 5));
   MOZ_RELEASE_ASSERT(iter2.AdvanceAcrossSegments(bl2, kBorrowSize - 5));
   MOZ_RELEASE_ASSERT(iter1.Data() == iter2.Data());
+
+  // Extracting.
+
+  const size_t kExtractStart = 8;
+  const size_t kExtractSize = 24;
+  const size_t kExtractOverSize = 1000;
+
+  iter = bl.Iter();
+  iter.Advance(bl, kExtractStart);
+  bl2 = bl.Extract(iter, kExtractSize, &success);
+  MOZ_RELEASE_ASSERT(success);
+  MOZ_RELEASE_ASSERT(bl2.Size() == kExtractSize);
+
+  BufferList bl3 = bl.Extract(iter, kExtractOverSize, &success);
+  MOZ_RELEASE_ASSERT(!success);
+
+  MOZ_RELEASE_ASSERT(iter.AdvanceAcrossSegments(bl, kSmallWrite * 3 - kExtractSize - kExtractStart));
+  MOZ_RELEASE_ASSERT(iter.Done());
+
+  iter = bl2.Iter();
+  MOZ_RELEASE_ASSERT(iter.AdvanceAcrossSegments(bl2, kExtractSize));
+  MOZ_RELEASE_ASSERT(iter.Done());
 
   return 0;
 }

@@ -9,9 +9,9 @@
 #include "nsSystemInfo.h"
 #include "prsystem.h"
 #include "prio.h"
-#include "prprf.h"
 #include "mozilla/SSE.h"
 #include "mozilla/arm.h"
+#include "mozilla/Sprintf.h"
 
 #ifdef XP_WIN
 #include <time.h>
@@ -49,12 +49,6 @@
 #include "mozilla/dom/ContentChild.h"
 #endif
 
-#ifdef MOZ_WIDGET_GONK
-#include <sys/system_properties.h>
-#include "mozilla/Preferences.h"
-#include "nsPrintfCString.h"
-#endif
-
 #ifdef ANDROID
 extern "C" {
 NS_EXPORT int android_sdk_version;
@@ -75,6 +69,8 @@ NS_EXPORT int android_sdk_version;
 // so we must call it before going multithreaded, but nsSystemInfo::Init
 // only happens well after that point.
 uint32_t nsSystemInfo::gUserUmask = 0;
+
+using namespace mozilla::dom;
 
 #if defined (XP_LINUX) && !defined (ANDROID)
 static void
@@ -181,9 +177,7 @@ nsresult GetInstallYear(uint32_t& aYear)
 {
   HKEY hKey;
   LONG status = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-                              NS_LITERAL_STRING(
-                              "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"
-                              ).get(),
+                              L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
                               0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
   if (status != ERROR_SUCCESS) {
@@ -229,7 +223,7 @@ nsresult GetCountryCode(nsAString& aCountryCode)
   }
   // Now get the string for real
   aCountryCode.SetLength(numChars);
-  numChars = GetGeoInfoW(geoid, GEO_ISO2, wwc(aCountryCode.BeginWriting()),
+  numChars = GetGeoInfoW(geoid, GEO_ISO2, char16ptr_t(aCountryCode.BeginWriting()),
                          aCountryCode.Length(), 0);
   if (!numChars) {
     return NS_ERROR_FAILURE;
@@ -270,6 +264,7 @@ static const struct PropItems
   { "hasSSE4_2", mozilla::supports_sse4_2 },
   { "hasAVX", mozilla::supports_avx },
   { "hasAVX2", mozilla::supports_avx2 },
+  { "hasAES", mozilla::supports_aes },
   // ARM-specific bits.
   { "hasEDSP", mozilla::supports_edsp },
   { "hasARMv6", mozilla::supports_armv6 },
@@ -340,6 +335,10 @@ GetProcessorInformation(int* physical_cpus, int* cache_size_L2, int* cache_size_
 nsresult
 nsSystemInfo::Init()
 {
+  // This uses the observer service on Windows, so for simplicity
+  // check that it is called from the main thread on all platforms.
+  MOZ_ASSERT(NS_IsMainThread());
+
   nsresult rv;
 
   static const struct
@@ -348,7 +347,6 @@ nsSystemInfo::Init()
     const char* name;
   } items[] = {
     { PR_SI_SYSNAME, "name" },
-    { PR_SI_HOSTNAME, "host" },
     { PR_SI_ARCHITECTURE, "arch" },
     { PR_SI_RELEASE, "version" }
   };
@@ -625,7 +623,7 @@ nsSystemInfo::Init()
 #ifdef XP_WIN
   BOOL isWow64;
   BOOL gotWow64Value = IsWow64Process(GetCurrentProcess(), &isWow64);
-  NS_WARN_IF_FALSE(gotWow64Value, "IsWow64Process failed");
+  NS_WARNING_ASSERTION(gotWow64Value, "IsWow64Process failed");
   if (gotWow64Value) {
     rv = SetPropertyAsBool(NS_LITERAL_STRING("isWow64"), !!isWow64);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -703,9 +701,8 @@ nsSystemInfo::Init()
 #endif
 
   if (gtkver_len <= 0) {
-    gtkver_len = snprintf(gtkver, sizeof(gtkver), "GTK %u.%u.%u",
-                          gtk_major_version, gtk_minor_version,
-                          gtk_micro_version);
+    gtkver_len = SprintfLiteral(gtkver, "GTK %u.%u.%u", gtk_major_version,
+                                gtk_minor_version, gtk_micro_version);
   }
 
   nsAutoCString secondaryLibrary;
@@ -748,44 +745,6 @@ nsSystemInfo::Init()
   } else {
     GetAndroidSystemInfo(&info);
     SetupAndroidInfo(info);
-  }
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-  char sdk[PROP_VALUE_MAX];
-  if (__system_property_get("ro.build.version.sdk", sdk)) {
-    android_sdk_version = atoi(sdk);
-    SetPropertyAsInt32(NS_LITERAL_STRING("sdk_version"), android_sdk_version);
-
-    SetPropertyAsACString(NS_LITERAL_STRING("secondaryLibrary"),
-                          nsPrintfCString("SDK %u", android_sdk_version));
-  }
-
-  char characteristics[PROP_VALUE_MAX];
-  if (__system_property_get("ro.build.characteristics", characteristics)) {
-    if (!strcmp(characteristics, "tablet")) {
-      SetPropertyAsBool(NS_LITERAL_STRING("tablet"), true);
-    } else if (!strcmp(characteristics, "tv")) {
-      SetPropertyAsBool(NS_LITERAL_STRING("tv"), true);
-    }
-  }
-
-  nsAutoString str;
-  rv = GetPropertyAsAString(NS_LITERAL_STRING("version"), str);
-  if (NS_SUCCEEDED(rv)) {
-    SetPropertyAsAString(NS_LITERAL_STRING("kernel_version"), str);
-  }
-
-  const nsAdoptingString& b2g_os_name =
-    mozilla::Preferences::GetString("b2g.osName");
-  if (b2g_os_name) {
-    SetPropertyAsAString(NS_LITERAL_STRING("name"), b2g_os_name);
-  }
-
-  const nsAdoptingString& b2g_version =
-    mozilla::Preferences::GetString("b2g.version");
-  if (b2g_version) {
-    SetPropertyAsAString(NS_LITERAL_STRING("version"), b2g_version);
   }
 #endif
 
@@ -905,13 +864,13 @@ void
 nsSystemInfo::SetInt32Property(const nsAString& aPropertyName,
                                const int32_t aValue)
 {
-  NS_WARN_IF_FALSE(aValue > 0, "Unable to read system value");
+  NS_WARNING_ASSERTION(aValue > 0, "Unable to read system value");
   if (aValue > 0) {
 #ifdef DEBUG
     nsresult rv =
 #endif
       SetPropertyAsInt32(aPropertyName, aValue);
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to set property");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Unable to set property");
   }
 }
 
@@ -925,20 +884,20 @@ nsSystemInfo::SetUint32Property(const nsAString& aPropertyName,
   nsresult rv =
 #endif
     SetPropertyAsUint32(aPropertyName, aValue);
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to set property");
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Unable to set property");
 }
 
 void
 nsSystemInfo::SetUint64Property(const nsAString& aPropertyName,
                                 const uint64_t aValue)
 {
-  NS_WARN_IF_FALSE(aValue > 0, "Unable to read system value");
+  NS_WARNING_ASSERTION(aValue > 0, "Unable to read system value");
   if (aValue > 0) {
 #ifdef DEBUG
     nsresult rv =
 #endif
       SetPropertyAsUint64(aPropertyName, aValue);
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to set property");
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Unable to set property");
   }
 }
 

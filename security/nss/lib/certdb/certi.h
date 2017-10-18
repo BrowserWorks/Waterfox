@@ -55,14 +55,14 @@ struct CRLEntryCacheStr {
     CRLEntryCache *prev, *next;
 };
 
-#define CRL_CACHE_INVALID_CRLS 0x0001 /* this state will be set
-            if we have CRL objects with an invalid DER or signature. Can be
-            cleared if the invalid objects are deleted from the token */
-#define CRL_CACHE_LAST_FETCH_FAILED 0x0002 /* this state will be set
-            if the last CRL fetch encountered an error. Can be cleared if a
+#define CRL_CACHE_INVALID_CRLS 0x0001      /* this state will be set             \
+                 if we have CRL objects with an invalid DER or signature. Can be \
+                 cleared if the invalid objects are deleted from the token */
+#define CRL_CACHE_LAST_FETCH_FAILED 0x0002 /* this state will be set        \
+            if the last CRL fetch encountered an error. Can be cleared if a \
             new fetch succeeds */
 
-#define CRL_CACHE_OUT_OF_MEMORY 0x0004 /* this state will be set
+#define CRL_CACHE_OUT_OF_MEMORY 0x0004 /* this state will be set \
             if we don't have enough memory to build the hash table of entries */
 
 typedef enum {
@@ -377,5 +377,28 @@ PRUint32 cert_CountDNSPatterns(CERTGeneralName* firstName);
  */
 SECStatus cert_CheckLeafTrust(CERTCertificate* cert, SECCertUsage usage,
                               unsigned int* failedFlags, PRBool* isTrusted);
+
+/*
+ * Acquire the cert temp/perm lock
+ */
+void CERT_LockCertTempPerm(const CERTCertificate* cert);
+
+/*
+ * Release the temp/perm lock
+ */
+void CERT_UnlockCertTempPerm(const CERTCertificate* cert);
+
+/*
+ * Acquire the cert trust lock
+ * There is currently one global lock for all certs, but I'm putting a cert
+ * arg here so that it will be easy to make it per-cert in the future if
+ * that turns out to be necessary.
+ */
+void CERT_LockCertTrust(const CERTCertificate* cert);
+
+/*
+ * Release the cert trust lock
+ */
+void CERT_UnlockCertTrust(const CERTCertificate* cert);
 
 #endif /* _CERTI_H_ */

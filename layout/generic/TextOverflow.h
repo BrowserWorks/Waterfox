@@ -9,7 +9,9 @@
 
 #include "nsDisplayList.h"
 #include "nsTHashtable.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/Likely.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/WritingModes.h"
 #include <algorithm>
 
@@ -25,14 +27,24 @@ namespace css {
  *  1. allocate an object using WillProcessLines
  *  2. then call ProcessLine for each line you are building display lists for
  */
-class TextOverflow {
+class MOZ_HEAP_CLASS TextOverflow final {
  public:
   /**
    * Allocate an object for text-overflow processing.
    * @return nullptr if no processing is necessary.  The caller owns the object.
    */
-  static TextOverflow* WillProcessLines(nsDisplayListBuilder*   aBuilder,
-                                        nsIFrame*               aBlockFrame);
+  static UniquePtr<TextOverflow>
+  WillProcessLines(nsDisplayListBuilder* aBuilder,
+                   nsIFrame*             aBlockFrame);
+
+  /**
+   * Constructor, which client code SHOULD NOT use directly. Instead, clients
+   * should call WillProcessLines(), which is basically the factory function
+   * for TextOverflow instances.
+   */
+  TextOverflow(nsDisplayListBuilder* aBuilder,
+               nsIFrame* aBlockFrame);
+
   /**
    * Analyze the display lists for text overflow and what kind of item is at
    * the content edges.  Add display items for text-overflow markers as needed
@@ -53,15 +65,11 @@ class TextOverflow {
   /**
    * @return true if aBlockFrame needs analysis for text overflow.
    */
-  static bool CanHaveTextOverflow(nsDisplayListBuilder* aBuilder,
-                                  nsIFrame*             aBlockFrame);
+  static bool CanHaveTextOverflow(nsIFrame* aBlockFrame);
 
-  typedef nsTHashtable<nsPtrHashKey<nsIFrame> > FrameHashtable;
+  typedef nsTHashtable<nsPtrHashKey<nsIFrame>> FrameHashtable;
 
- protected:
-  TextOverflow(nsDisplayListBuilder* aBuilder,
-               nsIFrame* aBlockFrame);
-
+ private:
   typedef mozilla::WritingMode WritingMode;
   typedef mozilla::LogicalRect LogicalRect;
 
@@ -127,10 +135,12 @@ class TextOverflow {
    * @param aFramesToHide frames that should have their display items removed
    * @param aAlignmentEdges the outermost edges of all text and atomic
    *   inline-level frames that are inside the area between the markers
+   * @return the area inside which we should add any markers;
+   *   this is the block's content area narrowed by any floats on this line.
    */
-  void ExamineLineFrames(nsLineBox*      aLine,
-                         FrameHashtable* aFramesToHide,
-                         AlignmentEdges* aAlignmentEdges);
+  LogicalRect ExamineLineFrames(nsLineBox*      aLine,
+                                FrameHashtable* aFramesToHide,
+                                AlignmentEdges* aAlignmentEdges);
 
   /**
    * LineHasOverflowingText calls this to analyze edges, both the block's
@@ -173,12 +183,12 @@ class TextOverflow {
    * @param aClippedMarkerEdges the innermost edges of all text and atomic
    *   inline-level frames that are clipped by the current marker width
    */
-  void AnalyzeMarkerEdges(nsIFrame*       aFrame,
-                          const nsIAtom*  aFrameType,
+  void AnalyzeMarkerEdges(nsIFrame* aFrame,
+                          mozilla::LayoutFrameType aFrameType,
                           const LogicalRect& aInsideMarkersArea,
                           FrameHashtable* aFramesToHide,
                           AlignmentEdges* aAlignmentEdges,
-                          bool*           aFoundVisibleTextOrAtomic,
+                          bool* aFoundVisibleTextOrAtomic,
                           InnerClipEdges* aClippedMarkerEdges);
 
   /**
@@ -199,10 +209,13 @@ class TextOverflow {
    * @param aCreateIStart if true, create a marker on the inline start side
    * @param aCreateIEnd if true, create a marker on the inline end side
    * @param aInsideMarkersArea is the area inside the markers
+   * @param aContentArea is the area inside which we should add the markers;
+   *   this is the block's content area narrowed by any floats on this line.
    */
   void CreateMarkers(const nsLineBox* aLine,
                      bool aCreateIStart, bool aCreateIEnd,
-                     const LogicalRect& aInsideMarkersArea);
+                     const LogicalRect& aInsideMarkersArea,
+                     const LogicalRect& aContentArea);
 
   LogicalRect            mContentArea;
   nsDisplayListBuilder*  mBuilder;

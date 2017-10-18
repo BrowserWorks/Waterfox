@@ -55,17 +55,17 @@ var Reader = {
     return { handled: (listener ? listener() : false) };
   },
 
-  observe: function Reader_observe(aMessage, aTopic, aData) {
-    switch (aTopic) {
+  onEvent: function Reader_onEvent(event, data, callback) {
+    switch (event) {
       case "Reader:RemoveFromCache": {
-        ReaderMode.removeArticleFromCache(aData).catch(e => Cu.reportError("Error removing article from cache: " + e));
+        ReaderMode.removeArticleFromCache(data.url).catch(e => Cu.reportError("Error removing article from cache: " + e));
         break;
       }
 
       case "Reader:AddToCache": {
-        let tab = BrowserApp.getTabForId(aData);
+        let tab = BrowserApp.getTabForId(data.tabID);
         if (!tab) {
-          throw new Error("No tab for tabID = " + aData + " when trying to save reader view article");
+          throw new Error("No tab for tabID = " + data.tabID + " when trying to save reader view article");
         }
 
         // If the article is coming from reader mode, we must have fetched it already.
@@ -116,20 +116,17 @@ var Reader = {
       }
 
       case "Reader:FaviconRequest": {
-        Messaging.sendRequestForResult({
+        GlobalEventDispatcher.sendRequestForResult({
           type: "Reader:FaviconRequest",
           url: message.data.url
         }).then(data => {
-          message.target.messageManager.sendAsyncMessage("Reader:FaviconReturn", JSON.parse(data));
+          message.target.messageManager.sendAsyncMessage("Reader:FaviconReturn", data);
         });
         break;
       }
 
       case "Reader:SystemUIVisibility":
-        Messaging.sendRequest({
-          type: "SystemUI:Visibility",
-          visible: message.data.visible
-        });
+        this._showSystemUI(message.data.visible);
         break;
 
       case "Reader:ToolbarHidden":
@@ -182,22 +179,39 @@ var Reader = {
 
     let browser = tab.browser;
     if (browser.currentURI.spec.startsWith("about:reader")) {
-      showPageAction("drawable://reader_active", Strings.reader.GetStringFromName("readerView.close"));
+      showPageAction("drawable://ic_readermode_on", Strings.reader.GetStringFromName("readerView.close"));
       // Only start a reader session if the viewer is in the foreground. We do
       // not track background reader viewers.
       UITelemetry.startSession("reader.1", null);
       return;
     }
 
+    // not in ReaderMode, to make sure System UI is visible, not dimmed.
+    this._showSystemUI(true);
+
     // Only stop a reader session if the foreground viewer is not visible.
     UITelemetry.stopSession("reader.1", "", null);
 
     if (browser.isArticle) {
-      showPageAction("drawable://reader", Strings.reader.GetStringFromName("readerView.enter"));
+      showPageAction("drawable://ic_readermode", Strings.reader.GetStringFromName("readerView.enter"));
       UITelemetry.addEvent("show.1", "button", null, "reader_available");
+      this._sendMmaEvent("reader_available");
     } else {
       UITelemetry.addEvent("show.1", "button", null, "reader_unavailable");
     }
+  },
+
+  _sendMmaEvent: function(event) {
+      WindowEventDispatcher.sendRequest({
+          type: "Mma:"+event,
+      });
+  },
+
+  _showSystemUI: function(visibility) {
+      WindowEventDispatcher.sendRequest({
+          type: "SystemUI:Visibility",
+          visible: visibility
+      });
   },
 
   /**

@@ -30,18 +30,9 @@ mozilla_StartupTimeline_Event(PROFILE_BEFORE_CHANGE, "profileBeforeChange")
 
 #include "mozilla/TimeStamp.h"
 #include "nscore.h"
+
+#ifdef MOZILLA_INTERNAL_API
 #include "GeckoProfiler.h"
-
-#ifdef MOZ_LINKER
-extern "C" {
-/* This symbol is resolved by the custom linker. The function it resolves
- * to dumps some statistics about the linker at the key events recorded
- * by the startup timeline. */
-extern void __moz_linker_stats(const char *str)
-NS_VISIBILITY_DEFAULT __attribute__((weak));
-} /* extern "C" */
-#else
-
 #endif
 
 namespace mozilla {
@@ -66,31 +57,29 @@ public:
     return sStartupTimelineDesc[ev];
   }
 
+#ifdef MOZILLA_INTERNAL_API
   static void Record(Event ev) {
-    PROFILER_MARKER(Describe(ev));
+    profiler_add_marker(Describe(ev));
     Record(ev, TimeStamp::Now());
   }
 
   static void Record(Event ev, TimeStamp when) {
     sStartupTimeline[ev] = when;
-#ifdef MOZ_LINKER
-    if (__moz_linker_stats)
-      __moz_linker_stats(Describe(ev));
-#endif
   }
 
   static void RecordOnce(Event ev) {
     if (!HasRecord(ev))
       Record(ev);
   }
+#endif
 
   static bool HasRecord(Event ev) {
     return !sStartupTimeline[ev].IsNull();
   }
 
 private:
-  static NS_EXTERNAL_VIS_(TimeStamp) sStartupTimeline[MAX_EVENT_ID];
-  static NS_EXTERNAL_VIS_(const char *) sStartupTimelineDesc[MAX_EVENT_ID];
+  static TimeStamp sStartupTimeline[MAX_EVENT_ID];
+  static const char* sStartupTimelineDesc[MAX_EVENT_ID];
 };
 
 } // namespace mozilla

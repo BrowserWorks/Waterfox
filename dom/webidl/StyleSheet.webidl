@@ -7,8 +7,6 @@
  * http://dev.w3.org/csswg/cssom/
  */
 
-interface CSSRule;
-
 interface StyleSheet {
   [Constant]
   readonly attribute DOMString type;
@@ -26,4 +24,11 @@ interface StyleSheet {
   readonly attribute MediaList media;
   [Pure]
   attribute boolean disabled;
+  // If a SourceMap or X-SourceMap response header is seen, this is
+  // the value.  If both are seen, SourceMap is preferred.  If neither
+  // is seen, this will be an empty string.  Because this relies on
+  // the HTTP response, it can change if checked before the response
+  // is available -- which is why it is not [Constant].
+  [ChromeOnly, Pure]
+  readonly attribute DOMString sourceMapURL;
 };

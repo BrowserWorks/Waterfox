@@ -8,15 +8,11 @@ Cu.import("resource://gre/modules/Services.jsm");
 const {PushDB, PushService, PushServiceHttp2} = serviceExports;
 
 var prefs;
-var tlsProfile;
 
 var serverPort = -1;
 
 function run_test() {
-  var env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
-  serverPort = env.get("MOZHTTP2_PORT");
-  do_check_neq(serverPort, null);
-  dump("using port " + serverPort + "\n");
+  serverPort = getTestServerPort();
 
   do_get_profile();
   setPrefs({
@@ -24,12 +20,9 @@ function run_test() {
   });
   prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 
-  tlsProfile = prefs.getBoolPref("network.http.spdy.enforce-tls-profile");
-
   // Set to allow the cert presented by our H2 server
   var oldPref = prefs.getIntPref("network.http.speculative-parallel-limit");
   prefs.setIntPref("network.http.speculative-parallel-limit", 0);
-  prefs.setBoolPref("network.http.spdy.enforce-tls-profile", false);
   prefs.setBoolPref("dom.push.enabled", true);
   prefs.setBoolPref("dom.push.connection.enabled", true);
 
@@ -43,7 +36,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_pushNotifications() {
+add_task(async function test_pushNotifications() {
 
   // /pushNotifications/subscription1 will send a message with no rs and padding
   // length 1.
@@ -145,7 +138,7 @@ add_task(function* test_pushNotifications() {
   }];
 
   for (let record of records) {
-    yield db.put(record);
+    await db.put(record);
   }
 
   let notifyPromise = Promise.all([
@@ -184,9 +177,5 @@ add_task(function* test_pushNotifications() {
     db
   });
 
-  yield notifyPromise;
-});
-
-add_task(function* test_complete() {
-  prefs.setBoolPref("network.http.spdy.enforce-tls-profile", tlsProfile);
+  await notifyPromise;
 });

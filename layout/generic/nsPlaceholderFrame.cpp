@@ -10,14 +10,15 @@
 
 #include "nsPlaceholderFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "nsDisplayList.h"
 #include "nsFrameManager.h"
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
-#include "nsRenderingContext.h"
 #include "nsIFrameInlines.h"
+#include "nsIContentInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -62,7 +63,7 @@ nsPlaceholderFrame::GetXULMaxSize(nsBoxLayoutState& aBoxLayoutState)
 }
 
 /* virtual */ void
-nsPlaceholderFrame::AddInlineMinISize(nsRenderingContext* aRenderingContext,
+nsPlaceholderFrame::AddInlineMinISize(gfxContext* aRenderingContext,
                                       nsIFrame::InlineMinISizeData* aData)
 {
   // Override AddInlineMinWith so that *nothing* happens.  In
@@ -83,7 +84,7 @@ nsPlaceholderFrame::AddInlineMinISize(nsRenderingContext* aRenderingContext,
 }
 
 /* virtual */ void
-nsPlaceholderFrame::AddInlinePrefISize(nsRenderingContext* aRenderingContext,
+nsPlaceholderFrame::AddInlinePrefISize(gfxContext* aRenderingContext,
                                        nsIFrame::InlinePrefISizeData* aData)
 {
   // Override AddInlinePrefWith so that *nothing* happens.  In
@@ -109,6 +110,10 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
                            const ReflowInput& aReflowInput,
                            nsReflowStatus&          aStatus)
 {
+  // NOTE that the ReflowInput passed to this method is not fully initialized,
+  // on the grounds that reflowing a placeholder is a rather trivial operation.
+  // (See bug 1367711.)
+
 #ifdef DEBUG
   // We should be getting reflowed before our out-of-flow.
   // If this is our first reflow, and our out-of-flow has already received its
@@ -127,7 +132,7 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
     nsIFrame* ancestor = this;
     while ((ancestor = ancestor->GetParent())) {
       if (ancestor->GetPrevContinuation() ||
-          ancestor->Properties().Get(IBSplitPrevSibling())) {
+          ancestor->GetProperty(IBSplitPrevSibling())) {
         isInContinuationOrIBSplit = true;
         break;
       }
@@ -146,7 +151,7 @@ nsPlaceholderFrame::Reflow(nsPresContext*           aPresContext,
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
   aDesiredSize.ClearSize();
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
 
@@ -155,28 +160,21 @@ nsPlaceholderFrame::DestroyFrom(nsIFrame* aDestructRoot)
 {
   nsIFrame* oof = mOutOfFlowFrame;
   if (oof) {
-    // Unregister out-of-flow frame
-    nsFrameManager* fm = PresContext()->GetPresShell()->FrameManager();
-    fm->UnregisterPlaceholderFrame(this);
     mOutOfFlowFrame = nullptr;
+    oof->DeleteProperty(nsIFrame::PlaceholderFrameProperty());
     // If aDestructRoot is not an ancestor of the out-of-flow frame,
     // then call RemoveFrame on it here.
     // Also destroy it here if it's a popup frame. (Bug 96291)
     if ((GetStateBits() & PLACEHOLDER_FOR_POPUP) ||
         !nsLayoutUtils::IsProperAncestorFrame(aDestructRoot, oof)) {
       ChildListID listId = nsLayoutUtils::GetChildListNameFor(oof);
+      nsFrameManager* fm = PresContext()->GetPresShell()->FrameManager();
       fm->RemoveFrame(listId, oof);
     }
     // else oof will be destroyed by its parent
   }
 
   nsFrame::DestroyFrom(aDestructRoot);
-}
-
-nsIAtom*
-nsPlaceholderFrame::GetType() const
-{
-  return nsGkAtoms::placeholderFrame;
 }
 
 /* virtual */ bool
@@ -191,7 +189,7 @@ nsPlaceholderFrame::CanContinueTextRun() const
 }
 
 nsStyleContext*
-nsPlaceholderFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
+nsPlaceholderFrame::GetParentStyleContextForOutOfFlow(nsIFrame** aProviderFrame) const
 {
   NS_PRECONDITION(GetParent(), "How can we not have a parent here?");
 
@@ -205,10 +203,26 @@ nsPlaceholderFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
     }
   }
 
+  nsIFrame* parentFrame = GetParent();
+  // Placeholder of backdrop frame is a child of the corresponding top
+  // layer frame, and its style context inherits from that frame. In
+  // case of table, the top layer frame is the table wrapper frame.
+  // However, it will be skipped in CorrectStyleParentFrame below, so
+  // we need to handle it specially here.
+  if ((GetStateBits() & PLACEHOLDER_FOR_TOPLAYER) &&
+      parentFrame->IsTableWrapperFrame()) {
+    MOZ_ASSERT(mOutOfFlowFrame->IsBackdropFrame(),
+               "Only placeholder of backdrop frame can be put inside "
+               "a table wrapper frame");
+    *aProviderFrame = parentFrame;
+    return parentFrame->StyleContext();
+  }
+
   // Lie about our pseudo so we can step out of all anon boxes and
   // pseudo-elements.  The other option would be to reimplement the
   // {ib} split gunk here.
-  *aProviderFrame = CorrectStyleParentFrame(GetParent(), nsGkAtoms::placeholderFrame);
+  *aProviderFrame = CorrectStyleParentFrame(parentFrame,
+                                            nsGkAtoms::placeholderFrame);
   return *aProviderFrame ? (*aProviderFrame)->StyleContext() : nullptr;
 }
 
@@ -243,7 +257,7 @@ nsPlaceholderFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                      const nsDisplayListSet& aLists)
 {
   DO_GLOBAL_REFLOW_COUNT_DSP("nsPlaceholderFrame");
-  
+
 #ifdef DEBUG
   if (GetShowFrameBorders()) {
     aLists.Outlines()->AppendNewToTop(

@@ -80,21 +80,19 @@ function handleUsedCheck(event) {
         'bodyUsed: ' + lastResponseForUsedCheck.bodyUsed));
   }
 }
-
 function handleFragmentCheck(event) {
   var body;
   if (event.request.url.indexOf('#') === -1) {
     body = 'Fragment Not Found';
   } else {
-    body = 'Fragment Found';
+    body = 'Fragment Found :' +
+           event.request.url.substring(event.request.url.indexOf('#'));
   }
   event.respondWith(new Response(body));
 }
-
 function handleCache(event) {
   event.respondWith(new Response(event.request.cache));
 }
-
 function handleEventSource(event) {
   if (event.request.mode === 'navigate') {
     return;
@@ -109,6 +107,15 @@ function handleEventSource(event) {
       headers: { 'Content-Type': 'text/event-stream' }
     }
   ));
+}
+
+function handleIntegrity(event) {
+  event.respondWith(new Response(event.request.integrity));
+}
+
+function handleHeaders(event) {
+  const headers = Array.from(event.request.headers);
+  event.respondWith(new Response(JSON.stringify(headers)));
 }
 
 self.addEventListener('fetch', function(event) {
@@ -129,6 +136,8 @@ self.addEventListener('fetch', function(event) {
       { pattern: '?fragment-check', fn: handleFragmentCheck },
       { pattern: '?cache', fn: handleCache },
       { pattern: '?eventsource', fn: handleEventSource },
+      { pattern: '?integrity', fn: handleIntegrity },
+      { pattern: '?headers', fn: handleHeaders },
     ];
 
     var handler = null;

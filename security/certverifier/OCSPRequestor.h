@@ -8,13 +8,19 @@
 #define OCSPRequestor_h
 
 #include "CertVerifier.h"
+#include "mozilla/TimeStamp.h"
 #include "secmodt.h"
+
+namespace mozilla {
+class OriginAttributes;
+}
 
 namespace mozilla { namespace psm {
 
 // The memory returned via |encodedResponse| is owned by the given arena.
 Result DoOCSPRequest(const UniquePLArenaPool& arena, const char* url,
-                     const SECItem* encodedRequest, PRIntervalTime timeout,
+                     const OriginAttributes& originAttributes,
+                     const SECItem* encodedRequest, TimeDuration timeout,
                      bool useGET,
              /*out*/ SECItem*& encodedResponse);
 

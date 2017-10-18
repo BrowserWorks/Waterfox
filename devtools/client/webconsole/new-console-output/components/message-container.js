@@ -9,7 +9,6 @@
 // React & Redux
 const {
   createClass,
-  createFactory,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
 
@@ -19,24 +18,63 @@ const {
 } = require("devtools/client/webconsole/new-console-output/constants");
 
 const componentMap = new Map([
-  ["ConsoleApiCall", require("./message-types/console-api-call").ConsoleApiCall],
-  ["ConsoleCommand", require("./message-types/console-command").ConsoleCommand],
-  ["DefaultRenderer", require("./message-types/default-renderer").DefaultRenderer],
-  ["EvaluationResult", require("./message-types/evaluation-result").EvaluationResult],
-  ["PageError", require("./message-types/page-error").PageError]
+  ["ConsoleApiCall", require("./message-types/console-api-call")],
+  ["ConsoleCommand", require("./message-types/console-command")],
+  ["DefaultRenderer", require("./message-types/default-renderer")],
+  ["EvaluationResult", require("./message-types/evaluation-result")],
+  ["NetworkEventMessage", require("./message-types/network-event-message")],
+  ["PageError", require("./message-types/page-error")]
 ]);
 
 const MessageContainer = createClass({
   displayName: "MessageContainer",
 
   propTypes: {
-    message: PropTypes.object.isRequired
+    messageId: PropTypes.string.isRequired,
+    open: PropTypes.bool.isRequired,
+    serviceContainer: PropTypes.object.isRequired,
+    tableData: PropTypes.object,
+    timestampsVisible: PropTypes.bool.isRequired,
+    repeat: PropTypes.number,
+    networkMessageUpdate: PropTypes.object,
+    getMessage: PropTypes.func.isRequired,
+    loadedObjectProperties: PropTypes.object,
+    loadedObjectEntries: PropTypes.object,
+  },
+
+  getDefaultProps: function () {
+    return {
+      open: false,
+    };
+  },
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const repeatChanged = this.props.repeat !== nextProps.repeat;
+    const openChanged = this.props.open !== nextProps.open;
+    const tableDataChanged = this.props.tableData !== nextProps.tableData;
+    const timestampVisibleChanged =
+      this.props.timestampsVisible !== nextProps.timestampsVisible;
+    const networkMessageUpdateChanged =
+      this.props.networkMessageUpdate !== nextProps.networkMessageUpdate;
+    const loadedObjectPropertiesChanged =
+      this.props.loadedObjectProperties !== nextProps.loadedObjectProperties;
+    const loadedObjectEntriesChanged =
+      this.props.loadedObjectEntries !== nextProps.loadedObjectEntries;
+
+    return repeatChanged
+      || openChanged
+      || tableDataChanged
+      || timestampVisibleChanged
+      || networkMessageUpdateChanged
+      || loadedObjectPropertiesChanged
+      || loadedObjectEntriesChanged;
   },
 
   render() {
-    const { message } = this.props;
-    let MessageComponent = createFactory(getMessageComponent(message));
-    return MessageComponent({ message });
+    const message = this.props.getMessage();
+
+    let MessageComponent = getMessageComponent(message);
+    return MessageComponent(Object.assign({message}, this.props));
   }
 });
 
@@ -44,6 +82,9 @@ function getMessageComponent(message) {
   switch (message.source) {
     case MESSAGE_SOURCE.CONSOLE_API:
       return componentMap.get("ConsoleApiCall");
+    case MESSAGE_SOURCE.NETWORK:
+      return componentMap.get("NetworkEventMessage");
+    case MESSAGE_SOURCE.CSS:
     case MESSAGE_SOURCE.JAVASCRIPT:
       switch (message.type) {
         case MESSAGE_TYPE.COMMAND:
@@ -57,7 +98,7 @@ function getMessageComponent(message) {
         case MESSAGE_TYPE.LOG:
           return componentMap.get("PageError");
         default:
-          componentMap.get("DefaultRenderer");
+          return componentMap.get("DefaultRenderer");
       }
   }
 

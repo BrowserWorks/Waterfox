@@ -11,6 +11,7 @@ static bool gProfileResetCleanupCompleted = false;
 static const char kResetProgressURL[] = "chrome://global/content/resetProfileProgress.xul";
 
 nsresult CreateResetProfile(nsIToolkitProfileService* aProfileSvc,
+                            const nsACString& aOldProfileName,
                             nsIToolkitProfile* *aNewProfile);
 
 nsresult ProfileResetCleanup(nsIToolkitProfile* aOldProfile);
@@ -19,12 +20,13 @@ class ProfileResetCleanupResultTask : public mozilla::Runnable
 {
 public:
   ProfileResetCleanupResultTask()
-    : mWorkerThread(do_GetCurrentThread())
+    : mozilla::Runnable("ProfileResetCleanupResultTask")
+    , mWorkerThread(do_GetCurrentThread())
   {
     MOZ_ASSERT(!NS_IsMainThread());
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT(NS_IsMainThread());
     mWorkerThread->Shutdown();
     return NS_OK;
@@ -37,9 +39,12 @@ private:
 class ProfileResetCleanupAsyncTask : public mozilla::Runnable
 {
 public:
-  ProfileResetCleanupAsyncTask(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
-                               nsIFile* aTargetDir, const nsAString &aLeafName)
-    : mProfileDir(aProfileDir)
+  ProfileResetCleanupAsyncTask(nsIFile* aProfileDir,
+                               nsIFile* aProfileLocalDir,
+                               nsIFile* aTargetDir,
+                               const nsAString& aLeafName)
+    : mozilla::Runnable("ProfileResetCleanupAsyncTask")
+    , mProfileDir(aProfileDir)
     , mProfileLocalDir(aProfileLocalDir)
     , mTargetDir(aTargetDir)
     , mLeafName(aLeafName)
@@ -48,7 +53,7 @@ public:
 /**
  * Copy a root profile to a backup folder before deleting it.  Then delete the local profile dir.
  */
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     // Copy to the destination then delete the profile. A move doesn't follow links.
     nsresult rv = mProfileDir->CopyToFollowingLinks(mTargetDir, mLeafName);

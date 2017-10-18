@@ -13,6 +13,7 @@
 #include "nsCOMPtr.h"
 #include "nsCSSRendering.h"
 #include "nsIPresShell.h"
+#include "mozilla/GeckoStyleContext.h"
 
 using namespace mozilla;
 
@@ -20,13 +21,13 @@ using namespace mozilla;
                                       NS_FRAME_STATE_BIT(31))
 #define COL_GROUP_TYPE_OFFSET        30
 
-nsTableColGroupType 
-nsTableColGroupFrame::GetColType() const 
+nsTableColGroupType
+nsTableColGroupFrame::GetColType() const
 {
   return (nsTableColGroupType)((mState & COL_GROUP_TYPE_BITS) >> COL_GROUP_TYPE_OFFSET);
 }
 
-void nsTableColGroupFrame::SetColType(nsTableColGroupType aType) 
+void nsTableColGroupFrame::SetColType(nsTableColGroupType aType)
 {
   NS_ASSERTION(GetColType() == eColGroupContent,
                "should only call nsTableColGroupFrame::SetColType with aType "
@@ -43,7 +44,7 @@ void nsTableColGroupFrame::ResetColIndices(nsIFrame*       aFirstColGroup,
   nsTableColGroupFrame* colGroupFrame = (nsTableColGroupFrame*)aFirstColGroup;
   int32_t colIndex = aFirstColIndex;
   while (colGroupFrame) {
-    if (nsGkAtoms::tableColGroupFrame == colGroupFrame->GetType()) {
+    if (colGroupFrame->IsTableColGroupFrame()) {
       // reset the starting col index for the first cg only if we should reset
       // the whole colgroup (aStartColFrame defaults to nullptr) or if
       // aFirstColIndex is smaller than the existing starting col index
@@ -52,12 +53,12 @@ void nsTableColGroupFrame::ResetColIndices(nsIFrame*       aFirstColGroup,
           !aStartColFrame) {
         colGroupFrame->SetStartColumnIndex(colIndex);
       }
-      nsIFrame* colFrame = aStartColFrame; 
+      nsIFrame* colFrame = aStartColFrame;
       if (!colFrame || (colIndex != aFirstColIndex)) {
         colFrame = colGroupFrame->PrincipalChildList().FirstChild();
       }
       while (colFrame) {
-        if (nsGkAtoms::tableColFrame == colFrame->GetType()) {
+        if (colFrame->IsTableColFrame()) {
           ((nsTableColFrame*)colFrame)->SetColIndex(colIndex);
           colIndex++;
         }
@@ -122,13 +123,13 @@ nsTableColGroupFrame::GetLastRealColGroup(nsTableFrame* aTableFrame)
   if (!link.PrevFrame()) {
     return nullptr; // there are no col group frames
   }
- 
+
   nsTableColGroupType lastColGroupType =
     static_cast<nsTableColGroupFrame*>(link.PrevFrame())->GetColType();
   if (eColGroupAnonymousCell == lastColGroupType) {
     return static_cast<nsTableColGroupFrame*>(nextToLastColGroup);
   }
- 
+
   return static_cast<nsTableColGroupFrame*>(link.PrevFrame());
 }
 
@@ -140,10 +141,10 @@ nsTableColGroupFrame::SetInitialChildList(ChildListID     aListID,
   MOZ_ASSERT(mFrames.IsEmpty(),
              "unexpected second call to SetInitialChildList");
   MOZ_ASSERT(aListID == kPrincipalList, "unexpected child list");
-  if (aChildList.IsEmpty()) { 
+  if (aChildList.IsEmpty()) {
     GetTableFrame()->AppendAnonymousColFrames(this, GetSpan(),
                                               eColAnonymousColGroup, false);
-    return; 
+    return;
   }
 
   mFrames.AppendFrames(this, aChildList);
@@ -156,13 +157,13 @@ nsTableColGroupFrame::DidSetStyleContext(nsStyleContext* aOldStyleContext)
 
   if (!aOldStyleContext) //avoid this on init
     return;
-     
+
   nsTableFrame* tableFrame = GetTableFrame();
   if (tableFrame->IsBorderCollapse() &&
       tableFrame->BCRecalcNeeded(aOldStyleContext, StyleContext())) {
     int32_t colCount = GetColCount();
     if (!colCount)
-      return; // this is a degenerated colgroup 
+      return; // this is a degenerated colgroup
     TableArea damageArea(GetFirstColumn()->GetColIndex(), 0, colCount,
                          tableFrame->GetRowCount());
     tableFrame->AddBCDamageArea(damageArea);
@@ -228,8 +229,8 @@ nsTableColGroupFrame::InsertFrames(ChildListID     aListID,
 
   const nsFrameList::Slice& newFrames =
     mFrames.InsertFrames(this, aPrevFrame, aFrameList);
-  nsIFrame* prevFrame = nsTableFrame::GetFrameAtOrBefore(this, aPrevFrame,
-                                                         nsGkAtoms::tableColFrame);
+  nsIFrame* prevFrame = nsTableFrame::GetFrameAtOrBefore(
+    this, aPrevFrame, LayoutFrameType::TableCol);
 
   int32_t colIndex = (prevFrame) ? ((nsTableColFrame*)prevFrame)->GetColIndex() + 1 : GetStartColumnIndex();
   InsertColsReflow(colIndex, newFrames);
@@ -284,8 +285,8 @@ nsTableColGroupFrame::RemoveFrame(ChildListID     aListID,
     return;
   }
   bool contentRemoval = false;
-  
-  if (nsGkAtoms::tableColFrame == aOldFrame->GetType()) {
+
+  if (aOldFrame->IsTableColFrame()) {
     nsTableColFrame* colFrame = (nsTableColFrame*)aOldFrame;
     if (colFrame->GetColType() == eColContent) {
       contentRemoval = true;
@@ -296,29 +297,32 @@ nsTableColGroupFrame::RemoveFrame(ChildListID     aListID,
 #ifdef DEBUG
         nsIFrame* providerFrame;
         nsStyleContext* psc = colFrame->GetParentStyleContext(&providerFrame);
-        if (colFrame->StyleContext()->GetParent() == psc) {
-          NS_ASSERTION(col->StyleContext() == colFrame->StyleContext() &&
-                       col->GetContent() == colFrame->GetContent(),
-                       "How did that happen??");
+        if (psc->IsGecko()) {
+          // This check code is useful only in Gecko-backed style system.
+          if (colFrame->StyleContext()->AsGecko()->GetParent() == psc->AsGecko()) {
+            NS_ASSERTION(col->StyleContext() == colFrame->StyleContext() &&
+                         col->GetContent() == colFrame->GetContent(),
+                         "How did that happen??");
+          }
+          // else colFrame is being removed because of a frame
+          // reconstruct on it, and its style context is still the old
+          // one, so we can't assert anything about how it compares to
+          // col's style context.
         }
-        // else colFrame is being removed because of a frame
-        // reconstruct on it, and its style context is still the old
-        // one, so we can't assert anything about how it compares to
-        // col's style context.
 #endif
         nextCol = col->GetNextCol();
         RemoveFrame(kPrincipalList, col);
         col = nextCol;
       }
     }
-    
+
     int32_t colIndex = colFrame->GetColIndex();
     // The RemoveChild call handles calling FrameNeedsReflow on us.
     RemoveChild(*colFrame, true);
-    
+
     nsTableFrame* tableFrame = GetTableFrame();
     tableFrame->RemoveCol(this, colIndex, true, true);
-    if (mFrames.IsEmpty() && contentRemoval && 
+    if (mFrames.IsEmpty() && contentRemoval &&
         GetColType() == eColGroupContent) {
       tableFrame->AppendAnonymousColFrames(this, GetSpan(),
                                            eColAnonymousColGroup, true);
@@ -333,7 +337,7 @@ nsIFrame::LogicalSides
 nsTableColGroupFrame::GetLogicalSkipSides(const ReflowInput* aReflowInput) const
 {
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
-                     NS_STYLE_BOX_DECORATION_BREAK_CLONE)) {
+                     StyleBoxDecorationBreak::Clone)) {
     return LogicalSides();
   }
 
@@ -357,7 +361,7 @@ nsTableColGroupFrame::Reflow(nsPresContext*          aPresContext,
   DO_GLOBAL_REFLOW_COUNT("nsTableColGroupFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowInput, aDesiredSize, aStatus);
   NS_ASSERTION(nullptr!=mContent, "bad state -- null content for frame");
-  
+
   const nsStyleVisibility* groupVis = StyleVisibility();
   bool collapseGroup = (NS_STYLE_VISIBILITY_COLLAPSE == groupVis->mVisible);
   if (collapseGroup) {
@@ -365,7 +369,7 @@ nsTableColGroupFrame::Reflow(nsPresContext*          aPresContext,
   }
   // for every content child that (is a column thingy and does not already have a frame)
   // create a frame and adjust it's style
-  
+
   for (nsIFrame *kidFrame = mFrames.FirstChild(); kidFrame;
        kidFrame = kidFrame->GetNextSibling()) {
     // Give the child frame a chance to reflow, even though we know it'll have 0 size
@@ -379,8 +383,16 @@ nsTableColGroupFrame::Reflow(nsPresContext*          aPresContext,
   }
 
   aDesiredSize.ClearSize();
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
+}
+
+void
+nsTableColGroupFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                       const nsRect&           aDirtyRect,
+                                       const nsDisplayListSet& aLists)
+{
+  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aDirtyRect, aLists);
 }
 
 nsTableColFrame * nsTableColGroupFrame::GetFirstColumn()
@@ -400,7 +412,7 @@ nsTableColFrame * nsTableColGroupFrame::GetNextColumn(nsIFrame *aChildFrame)
   }
   while (childFrame)
   {
-    if (NS_STYLE_DISPLAY_TABLE_COLUMN ==
+    if (mozilla::StyleDisplay::TableColumn ==
         childFrame->StyleDisplay()->mDisplay)
     {
       result = (nsTableColFrame *)childFrame;
@@ -454,21 +466,16 @@ NS_NewTableColGroupFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsTableColGroupFrame)
 
-nsIAtom*
-nsTableColGroupFrame::GetType() const
-{
-  return nsGkAtoms::tableColGroupFrame;
-}
-  
-void 
+void
 nsTableColGroupFrame::InvalidateFrame(uint32_t aDisplayItemKey)
 {
   nsIFrame::InvalidateFrame(aDisplayItemKey);
   GetParent()->InvalidateFrameWithRect(GetVisualOverflowRect() + GetPosition(), aDisplayItemKey);
 }
 
-void 
-nsTableColGroupFrame::InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemKey)
+void
+nsTableColGroupFrame::InvalidateFrameWithRect(const nsRect& aRect,
+                                              uint32_t aDisplayItemKey)
 {
   nsIFrame::InvalidateFrameWithRect(aRect, aDisplayItemKey);
   // If we have filters applied that would affects our bounds, then
@@ -500,10 +507,10 @@ void nsTableColGroupFrame::Dump(int32_t aIndent)
   case eColGroupContent:
     printf(" content ");
     break;
-  case eColGroupAnonymousCol: 
+  case eColGroupAnonymousCol:
     printf(" anonymous-column  ");
     break;
-  case eColGroupAnonymousCell: 
+  case eColGroupAnonymousCell:
     printf(" anonymous-cell ");
     break;
   }

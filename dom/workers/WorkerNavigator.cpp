@@ -7,10 +7,13 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
+#include "mozilla/dom/StorageManager.h"
 #include "mozilla/dom/WorkerNavigator.h"
 #include "mozilla/dom/WorkerNavigatorBinding.h"
+#include "mozilla/dom/network/Connection.h"
 
 #include "nsProxyRelease.h"
+#include "nsRFPService.h"
 #include "RuntimeService.h"
 
 #include "nsIDocument.h"
@@ -26,10 +29,22 @@ namespace dom {
 
 using namespace mozilla::dom::workers;
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WorkerNavigator)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(WorkerNavigator, mStorageManager,
+                                      mConnection);
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WorkerNavigator, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WorkerNavigator, Release)
+
+WorkerNavigator::WorkerNavigator(const NavigatorProperties& aProperties,
+                                 bool aOnline)
+  : mProperties(aProperties)
+  , mOnline(aOnline)
+{
+}
+
+WorkerNavigator::~WorkerNavigator()
+{
+}
 
 /* static */ already_AddRefed<WorkerNavigator>
 WorkerNavigator::Create(bool aOnLine)
@@ -60,42 +75,56 @@ WorkerNavigator::SetLanguages(const nsTArray<nsString>& aLanguages)
 }
 
 void
-WorkerNavigator::GetAppName(nsString& aAppName) const
+WorkerNavigator::GetAppName(nsString& aAppName, CallerType aCallerType) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
 
-  if (!mProperties.mAppNameOverridden.IsEmpty() &&
+  if ((!mProperties.mAppNameOverridden.IsEmpty() ||
+       workerPrivate->ResistFingerprintingEnabled()) &&
       !workerPrivate->UsesSystemPrincipal()) {
-    aAppName = mProperties.mAppNameOverridden;
+    // We will spoof this value when 'privacy.resistFingerprinting' is true.
+    // See nsRFPService.h for spoofed value.
+    aAppName = workerPrivate->ResistFingerprintingEnabled() ?
+      NS_LITERAL_STRING(SPOOFED_APPNAME) : mProperties.mAppNameOverridden;
   } else {
     aAppName = mProperties.mAppName;
   }
 }
 
 void
-WorkerNavigator::GetAppVersion(nsString& aAppVersion) const
+WorkerNavigator::GetAppVersion(nsString& aAppVersion, CallerType aCallerType,
+                               ErrorResult& aRv) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
 
-  if (!mProperties.mAppVersionOverridden.IsEmpty() &&
+  if ((!mProperties.mAppVersionOverridden.IsEmpty() ||
+       workerPrivate->ResistFingerprintingEnabled()) &&
       !workerPrivate->UsesSystemPrincipal()) {
-    aAppVersion = mProperties.mAppVersionOverridden;
+    // We will spoof this value when 'privacy.resistFingerprinting' is true.
+    // See nsRFPService.h for spoofed value.
+    aAppVersion = workerPrivate->ResistFingerprintingEnabled() ?
+      NS_LITERAL_STRING(SPOOFED_APPVERSION) : mProperties.mAppVersionOverridden;
   } else {
     aAppVersion = mProperties.mAppVersion;
   }
 }
 
 void
-WorkerNavigator::GetPlatform(nsString& aPlatform) const
+WorkerNavigator::GetPlatform(nsString& aPlatform, CallerType aCallerType,
+                             ErrorResult& aRv) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
 
-  if (!mProperties.mPlatformOverridden.IsEmpty() &&
+  if ((!mProperties.mPlatformOverridden.IsEmpty() ||
+       workerPrivate->ResistFingerprintingEnabled()) &&
       !workerPrivate->UsesSystemPrincipal()) {
-    aPlatform = mProperties.mPlatformOverridden;
+    // We will spoof this value when 'privacy.resistFingerprinting' is true.
+    // See nsRFPService.h for spoofed value.
+    aPlatform = workerPrivate->ResistFingerprintingEnabled() ?
+      NS_LITERAL_STRING(SPOOFED_PLATFORM) : mProperties.mPlatformOverridden;
   } else {
     aPlatform = mProperties.mPlatform;
   }
@@ -122,17 +151,9 @@ public:
     AssertIsOnMainThread();
 
     nsCOMPtr<nsPIDOMWindowInner> window = mWorkerPrivate->GetWindow();
-    nsCOMPtr<nsIURI> uri;
-    if (window && window->GetDocShell()) {
-      nsIDocument* doc = window->GetExtantDoc();
-      if (doc) {
-        doc->NodePrincipal()->GetURI(getter_AddRefs(uri));
-      }
-    }
 
     bool isCallerChrome = mWorkerPrivate->UsesSystemPrincipal();
-    nsresult rv = dom::Navigator::GetUserAgent(window, uri,
-                                               isCallerChrome, mUA);
+    nsresult rv = dom::Navigator::GetUserAgent(window, isCallerChrome, mUA);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to retrieve user-agent from the worker thread.");
     }
@@ -144,7 +165,8 @@ public:
 } // namespace
 
 void
-WorkerNavigator::GetUserAgent(nsString& aUserAgent, ErrorResult& aRv) const
+WorkerNavigator::GetUserAgent(nsString& aUserAgent, CallerType aCallerType,
+                              ErrorResult& aRv) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
@@ -152,7 +174,7 @@ WorkerNavigator::GetUserAgent(nsString& aUserAgent, ErrorResult& aRv) const
   RefPtr<GetUserAgentRunnable> runnable =
     new GetUserAgentRunnable(workerPrivate, aUserAgent);
 
-  runnable->Dispatch(aRv);
+  runnable->Dispatch(Terminating, aRv);
 }
 
 uint64_t
@@ -163,6 +185,36 @@ WorkerNavigator::HardwareConcurrency() const
 
   return rts->ClampedHardwareConcurrency();
 }
+
+StorageManager*
+WorkerNavigator::Storage()
+{
+  if (!mStorageManager) {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+
+    RefPtr<nsIGlobalObject> global = workerPrivate->GlobalScope();
+    MOZ_ASSERT(global);
+
+    mStorageManager = new StorageManager(global);
+  }
+
+  return mStorageManager;
+}
+
+network::Connection*
+WorkerNavigator::GetConnection(ErrorResult& aRv)
+{
+  if (!mConnection) {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+
+    mConnection = network::Connection::CreateForWorker(workerPrivate, aRv);
+  }
+
+  return mConnection;
+}
+
 
 } // namespace dom
 } // namespace mozilla

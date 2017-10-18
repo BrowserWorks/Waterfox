@@ -24,7 +24,11 @@ from mozpack import path as mozpath
 
 
 class CompilerPreprocessor(Preprocessor):
-    VARSUBST = re.compile('(?P<VAR>\w+)', re.U)
+    # The C preprocessor only expands macros when they are not in C strings.
+    # For now, we don't look very hard for C strings because they don't matter
+    # that much for our unit tests, but we at least avoid expanding in the
+    # simple "FOO" case.
+    VARSUBST = re.compile('(?<!")(?P<VAR>\w+)(?!")', re.U)
     NON_WHITESPACE = re.compile('\S')
     HAS_FEATURE = re.compile('(__has_feature)\(([^\)]*)\)')
 
@@ -84,13 +88,14 @@ class TestCompilerPreprocessor(unittest.TestCase):
             'A': 1,
             'B': '2',
             'C': 'c',
+            'D': 'd'
         })
         pp.out = StringIO()
-        input = StringIO('A.B.C')
+        input = StringIO('A.B.C "D"')
         input.name = 'foo'
         pp.do_include(input)
 
-        self.assertEquals(pp.out.getvalue(), '1 . 2 . c')
+        self.assertEquals(pp.out.getvalue(), '1 . 2 . c "D"')
 
     def test_condition(self):
         pp = CompilerPreprocessor({
@@ -348,7 +353,7 @@ class CompilerResult(ReadOnlyNamespace):
     '''
 
     def __init__(self, wrapper=None, compiler='', version='', type='',
-                 flags=None):
+                 language='', flags=None):
         if flags is None:
             flags = []
         if wrapper is None:
@@ -359,6 +364,7 @@ class CompilerResult(ReadOnlyNamespace):
             type=type,
             compiler=mozpath.abspath(compiler),
             wrapper=wrapper,
+            language=language,
         )
 
     def __add__(self, other):
@@ -380,6 +386,7 @@ class TestCompilerResult(unittest.TestCase):
             'compiler': mozpath.abspath(''),
             'version': '',
             'type': '',
+            'language': '',
             'flags': [],
         })
 
@@ -387,6 +394,7 @@ class TestCompilerResult(unittest.TestCase):
             compiler='/usr/bin/gcc',
             version='4.2.1',
             type='gcc',
+            language='C',
             flags=['-std=gnu99'],
         )
         self.assertEquals(result.__dict__, {
@@ -394,6 +402,7 @@ class TestCompilerResult(unittest.TestCase):
             'compiler': mozpath.abspath('/usr/bin/gcc'),
             'version': '4.2.1',
             'type': 'gcc',
+            'language': 'C',
             'flags': ['-std=gnu99'],
         })
 
@@ -403,6 +412,7 @@ class TestCompilerResult(unittest.TestCase):
             'compiler': mozpath.abspath('/usr/bin/gcc'),
             'version': '4.2.1',
             'type': 'gcc',
+            'language': 'C',
             'flags': ['-std=gnu99', '-m32'],
         })
         # Original flags are untouched.
@@ -418,6 +428,7 @@ class TestCompilerResult(unittest.TestCase):
             'compiler': mozpath.abspath('/usr/bin/gcc-4.7'),
             'version': '4.7.3',
             'type': 'gcc',
+            'language': 'C',
             'flags': ['-std=gnu99', '-m32'],
         })
 

@@ -12,7 +12,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://services-common/utils.js");
@@ -34,7 +33,7 @@ this.FxAccountsStorageManager = function(options = {}) {
   this.plainStorage = new JSONStorage(this.options);
   // On b2g we have no loginManager for secure storage, and tests may want
   // to pretend secure storage isn't available.
-  let useSecure = 'useSecure' in options ? options.useSecure : haveLoginManager;
+  let useSecure = "useSecure" in options ? options.useSecure : haveLoginManager;
   if (useSecure) {
     this.secureStorage = new LoginManagerStorage();
   } else {
@@ -65,14 +64,14 @@ this.FxAccountsStorageManager.prototype = {
     this._promiseInitialized = this._initialize(accountData);
   },
 
-  _initialize: Task.async(function* (accountData) {
+  async _initialize(accountData) {
     log.trace("initializing new storage manager");
     try {
       if (accountData) {
         // If accountData is passed we don't need to read any storage.
         this._needToReadSecure = false;
         // split it into the 2 parts, write it and we are done.
-        for (let [name, val] of Iterator(accountData)) {
+        for (let [name, val] of Object.entries(accountData)) {
           if (FXA_PWDMGR_PLAINTEXT_FIELDS.has(name)) {
             this.cachedPlain[name] = val;
           } else if (FXA_PWDMGR_SECURE_FIELDS.has(name)) {
@@ -88,20 +87,20 @@ this.FxAccountsStorageManager.prototype = {
           }
         }
         // write it out and we are done.
-        yield this._write();
+        await this._write();
         return;
       }
       // So we were initialized without account data - that means we need to
       // read the state from storage. We try and read plain storage first and
       // only attempt to read secure storage if the plain storage had a user.
-      this._needToReadSecure = yield this._readPlainStorage();
+      this._needToReadSecure = await this._readPlainStorage();
       if (this._needToReadSecure && this.secureStorage) {
-        yield this._doReadAndUpdateSecure();
+        await this._doReadAndUpdateSecure();
       }
     } finally {
       log.trace("initializing of new storage manager done");
     }
-  }),
+  },
 
   finalize() {
     // We can't throw this instance away while it is still writing or we may
@@ -145,26 +144,26 @@ this.FxAccountsStorageManager.prototype = {
   // data is returned except for "in memory" fields. Note that not specifying
   // field names will soon be deprecated/removed - we want all callers to
   // specify the fields they care about.
-  getAccountData: Task.async(function* (fieldNames = null) {
-    yield this._promiseInitialized;
+  async getAccountData(fieldNames = null) {
+    await this._promiseInitialized;
     // We know we are initialized - this means our .cachedPlain is accurate
     // and doesn't need to be read (it was read if necessary by initialize).
     // So if there's no uid, there's no user signed in.
-    if (!('uid' in this.cachedPlain)) {
+    if (!("uid" in this.cachedPlain)) {
       return null;
     }
     let result = {};
     if (fieldNames === null) {
       // The "old" deprecated way of fetching a logged in user.
-      for (let [name, value] of Iterator(this.cachedPlain)) {
+      for (let [name, value] of Object.entries(this.cachedPlain)) {
         result[name] = value;
       }
       // But the secure data may not have been read, so try that now.
-      yield this._maybeReadAndUpdateSecure();
+      await this._maybeReadAndUpdateSecure();
       // .cachedSecure now has as much as it possibly can (which is possibly
       // nothing if (a) secure storage remains locked and (b) we've never updated
       // a field to be stored in secure storage.)
-      for (let [name, value] of Iterator(this.cachedSecure)) {
+      for (let [name, value] of Object.entries(this.cachedSecure)) {
         result[name] = value;
       }
       // Note we don't return cachedMemory fields here - they must be explicitly
@@ -188,7 +187,7 @@ this.FxAccountsStorageManager.prototype = {
       } else if (FXA_PWDMGR_SECURE_FIELDS.has(fieldName)) {
         // We may not have read secure storage yet.
         if (!checkedSecure) {
-          yield this._maybeReadAndUpdateSecure();
+          await this._maybeReadAndUpdateSecure();
           checkedSecure = true;
         }
         if (this.cachedSecure[fieldName] !== undefined) {
@@ -199,18 +198,18 @@ this.FxAccountsStorageManager.prototype = {
       }
     }
     return result;
-  }),
+  },
 
   // Update just the specified fields. This DOES NOT allow you to change to
   // a different user, nor to set the user as signed-out.
-  updateAccountData: Task.async(function* (newFields) {
-    yield this._promiseInitialized;
-    if (!('uid' in this.cachedPlain)) {
+  async updateAccountData(newFields) {
+    await this._promiseInitialized;
+    if (!("uid" in this.cachedPlain)) {
       // If this storage instance shows no logged in user, then you can't
       // update fields.
       throw new Error("No user is logged in");
     }
-    if (!newFields || 'uid' in newFields || 'email' in newFields) {
+    if (!newFields || "uid" in newFields || "email" in newFields) {
       // Once we support
       // user changing email address this may need to change, but it's not
       // clear how we would be told of such a change anyway...
@@ -218,7 +217,7 @@ this.FxAccountsStorageManager.prototype = {
     }
     log.debug("_updateAccountData with items", Object.keys(newFields));
     // work out what bucket.
-    for (let [name, value] of Iterator(newFields)) {
+    for (let [name, value] of Object.entries(newFields)) {
       if (FXA_PWDMGR_MEMORY_FIELDS.has(name)) {
         if (value == null) {
           delete this.cachedMemory[name];
@@ -244,12 +243,12 @@ this.FxAccountsStorageManager.prototype = {
     }
     // If we haven't yet read the secure data, do so now, else we may write
     // out partial data.
-    yield this._maybeReadAndUpdateSecure();
+    await this._maybeReadAndUpdateSecure();
     // Now save it - but don't wait on the _write promise - it's queued up as
     // a storage operation, so .finalize() will wait for completion, but no need
     // for us to.
     this._write();
-  }),
+  },
 
   _clearCachedData() {
     this.cachedMemory = {};
@@ -270,11 +269,11 @@ this.FxAccountsStorageManager.prototype = {
      Note: _readPlainStorage is only called during initialize, so isn't
      protected via _queueStorageOperation() nor _promiseInitialized.
   */
-  _readPlainStorage: Task.async(function* () {
+  async _readPlainStorage() {
     let got;
     try {
-      got = yield this.plainStorage.get();
-    } catch(err) {
+      got = await this.plainStorage.get();
+    } catch (err) {
       // File hasn't been created yet.  That will be done
       // when write is called.
       if (!(err instanceof OS.File.Error) || !err.becauseNoSuchFile) {
@@ -295,31 +294,32 @@ this.FxAccountsStorageManager.prototype = {
     if (Object.keys(this.cachedPlain).length != 0) {
       throw new Error("should be impossible to have cached data already.")
     }
-    for (let [name, value] of Iterator(got.accountData)) {
+    for (let [name, value] of Object.entries(got.accountData)) {
       this.cachedPlain[name] = value;
     }
     return true;
-  }),
+  },
 
   /* If we haven't managed to read the secure storage, try now, so
      we can merge our cached data with the data that's already been set.
   */
-  _maybeReadAndUpdateSecure: Task.async(function* () {
+  _maybeReadAndUpdateSecure() {
     if (this.secureStorage == null || !this._needToReadSecure) {
-      return;
+      return null;
     }
     return this._queueStorageOperation(() => {
       if (this._needToReadSecure) { // we might have read it by now!
         return this._doReadAndUpdateSecure();
       }
+      return null;
     });
-  }),
+  },
 
   /* Unconditionally read the secure storage and merge our cached data (ie, data
      which has already been set while the secure storage was locked) with
      the read data
   */
-  _doReadAndUpdateSecure: Task.async(function* () {
+  async _doReadAndUpdateSecure() {
     let { uid, email } = this.cachedPlain;
     try {
       log.debug("reading secure storage with existing", Object.keys(this.cachedSecure));
@@ -327,7 +327,7 @@ this.FxAccountsStorageManager.prototype = {
       // updated cachedSecure before we've read it. That means that after we do
       // manage to read we must write back the merged data.
       let needWrite = Object.keys(this.cachedSecure).length != 0;
-      let readSecure = yield this.secureStorage.get(uid, email);
+      let readSecure = await this.secureStorage.get(uid, email);
       // and update our cached data with it - anything already in .cachedSecure
       // wins (including the fact it may be null or undefined, the latter
       // which means it will be removed from storage.
@@ -337,14 +337,14 @@ this.FxAccountsStorageManager.prototype = {
       }
       if (readSecure && readSecure.accountData) {
         log.debug("secure read fetched items", Object.keys(readSecure.accountData));
-        for (let [name, value] of Iterator(readSecure.accountData)) {
+        for (let [name, value] of Object.entries(readSecure.accountData)) {
           if (!(name in this.cachedSecure)) {
             this.cachedSecure[name] = value;
           }
         }
         if (needWrite) {
           log.debug("successfully read secure data; writing updated data back")
-          yield this._doWriteSecure();
+          await this._doWriteSecure();
         }
       }
       this._needToReadSecure = false;
@@ -356,7 +356,7 @@ this.FxAccountsStorageManager.prototype = {
         throw ex;
       }
     }
-  }),
+  },
 
   _write() {
     // We don't want multiple writes happening concurrently, and we also need to
@@ -364,7 +364,7 @@ this.FxAccountsStorageManager.prototype = {
     return this._queueStorageOperation(() => this.__write());
   },
 
-  __write: Task.async(function* () {
+  async __write() {
     // Write everything back - later we could track what's actually dirty,
     // but for now we write it all.
     log.debug("writing plain storage", Object.keys(this.cachedPlain));
@@ -372,7 +372,7 @@ this.FxAccountsStorageManager.prototype = {
       version: DATA_FORMAT_VERSION,
       accountData: this.cachedPlain,
     }
-    yield this.plainStorage.set(toWritePlain);
+    await this.plainStorage.set(toWritePlain);
 
     // If we have no secure storage manager we are done.
     if (this.secureStorage == null) {
@@ -381,16 +381,16 @@ this.FxAccountsStorageManager.prototype = {
     // and only attempt to write to secure storage if we've managed to read it,
     // otherwise we might clobber data that's already there.
     if (!this._needToReadSecure) {
-      yield this._doWriteSecure();
+      await this._doWriteSecure();
     }
-  }),
+  },
 
   /* Do the actual write of secure data. Caller is expected to check if we actually
      need to write and to ensure we are in a queued storage operation.
   */
-  _doWriteSecure: Task.async(function* () {
+  async _doWriteSecure() {
     // We need to remove null items here.
-    for (let [name, value] of Iterator(this.cachedSecure)) {
+    for (let [name, value] of Object.entries(this.cachedSecure)) {
       if (value == null) {
         delete this.cachedSecure[name];
       }
@@ -401,9 +401,9 @@ this.FxAccountsStorageManager.prototype = {
       accountData: this.cachedSecure,
     }
     try {
-      yield this.secureStorage.set(this.cachedPlain.email, toWriteSecure);
+      await this.secureStorage.set(this.cachedPlain.uid, toWriteSecure);
     } catch (ex) {
-      if (!ex instanceof this.secureStorage.STORAGE_LOCKED) {
+      if (!(ex instanceof this.secureStorage.STORAGE_LOCKED)) {
         throw ex;
       }
       // This shouldn't be possible as once it is unlocked it can't be
@@ -411,23 +411,23 @@ this.FxAccountsStorageManager.prototype = {
       // read.
       log.error("setAccountData: secure storage is locked trying to write");
     }
-  }),
+  },
 
   // Delete the data for an account - ie, called on "sign out".
   deleteAccountData() {
     return this._queueStorageOperation(() => this._deleteAccountData());
   },
 
-  _deleteAccountData: Task.async(function* () {
+  async _deleteAccountData() {
     log.debug("removing account data");
-    yield this._promiseInitialized;
-    yield this.plainStorage.set(null);
+    await this._promiseInitialized;
+    await this.plainStorage.set(null);
     if (this.secureStorage) {
-      yield this.secureStorage.set(null);
+      await this.secureStorage.set(null);
     }
     this._clearCachedData();
     log.debug("account data reset");
-  }),
+  },
 }
 
 /**
@@ -444,25 +444,25 @@ this.FxAccountsStorageManager.prototype = {
 function JSONStorage(options) {
   this.baseDir = options.baseDir;
   this.path = OS.Path.join(options.baseDir, options.filename);
-};
+}
 
 JSONStorage.prototype = {
-  set: function(contents) {
+  set(contents) {
     log.trace("starting write of json user data", contents ? Object.keys(contents.accountData) : "null");
     let start = Date.now();
     return OS.File.makeDir(this.baseDir, {ignoreExisting: true})
       .then(CommonUtils.writeJSON.bind(null, contents, this.path))
       .then(result => {
-        log.trace("finished write of json user data - took", Date.now()-start);
+        log.trace("finished write of json user data - took", Date.now() - start);
         return result;
       });
   },
 
-  get: function() {
+  get() {
     log.trace("starting fetch of json user data");
     let start = Date.now();
     return CommonUtils.readJSON(this.path).then(result => {
-      log.trace("finished fetch of json user data - took", Date.now()-start);
+      log.trace("finished fetch of json user data - took", Date.now() - start);
       return result;
     });
   },
@@ -494,9 +494,9 @@ LoginManagerStorage.prototype = {
   // Clear any data from the login manager.  Returns true if the login manager
   // was unlocked (even if no existing logins existed) or false if it was
   // locked (meaning we don't even know if it existed or not.)
-  _clearLoginMgrData: Task.async(function* () {
+  async _clearLoginMgrData() {
     try { // Services.logins might be third-party and broken...
-      yield Services.logins.initializationPromise;
+      await Services.logins.initializationPromise;
       if (!this._isLoggedIn) {
         return false;
       }
@@ -509,12 +509,12 @@ LoginManagerStorage.prototype = {
       log.error("Failed to clear login data: ${}", ex);
       return false;
     }
-  }),
+  },
 
-  set: Task.async(function* (email, contents) {
+  async set(uid, contents) {
     if (!contents) {
       // Nuke it from the login manager.
-      let cleared = yield this._clearLoginMgrData();
+      let cleared = await this._clearLoginMgrData();
       if (!cleared) {
         // just log a message - we verify that the uid matches when
         // we reload it, so having a stale entry doesn't really hurt.
@@ -528,7 +528,7 @@ LoginManagerStorage.prototype = {
     log.trace("starting write of user data to the login manager");
     try { // Services.logins might be third-party and broken...
       // and the stuff into the login manager.
-      yield Services.logins.initializationPromise;
+      await Services.logins.initializationPromise;
       // If MP is locked we silently fail - the user may need to re-auth
       // next startup.
       if (!this._isLoggedIn) {
@@ -541,7 +541,7 @@ LoginManagerStorage.prototype = {
       let login = new loginInfo(FXA_PWDMGR_HOST,
                                 null, // aFormSubmitURL,
                                 FXA_PWDMGR_REALM, // aHttpRealm,
-                                email, // aUsername
+                                uid, // aUsername
                                 JSON.stringify(contents), // aPassword
                                 "", // aUsernameField
                                 "");// aPasswordField
@@ -562,14 +562,14 @@ LoginManagerStorage.prototype = {
       // manager replacement that's simply broken.
       log.error("Failed to save data to the login manager", ex);
     }
-  }),
+  },
 
-  get: Task.async(function* (uid, email) {
+  async get(uid, email) {
     log.trace("starting fetch of user data from the login manager");
 
     try { // Services.logins might be third-party and broken...
       // read the data from the login manager and merge it for return.
-      yield Services.logins.initializationPromise;
+      await Services.logins.initializationPromise;
 
       if (!this._isLoggedIn) {
         log.info("returning partial account data as the login manager is locked.");
@@ -583,14 +583,13 @@ LoginManagerStorage.prototype = {
         return null;
       }
       let login = logins[0];
-      // Support either the uid or the email as the username - we plan to move
-      // to storing the uid once Fx41 hits the release channel as the code below
-      // that handles either first landed in 41. Bug 1183951 is to store the uid.
+      // Support either the uid or the email as the username - as of bug 1183951
+      // we store the uid, but we support having either for b/w compat.
       if (login.username == uid || login.username == email) {
         return JSON.parse(login.password);
       }
       log.info("username in the login manager doesn't match - ignoring it");
-      yield this._clearLoginMgrData();
+      await this._clearLoginMgrData();
     } catch (ex) {
       if (ex instanceof this.STORAGE_LOCKED) {
         throw ex;
@@ -600,7 +599,7 @@ LoginManagerStorage.prototype = {
       log.error("Failed to get data from the login manager", ex);
     }
     return null;
-  }),
+  },
 }
 
 // A global variable to indicate if the login manager is available - it doesn't

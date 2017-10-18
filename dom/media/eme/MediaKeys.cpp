@@ -5,7 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/MediaKeys.h"
-#include "GMPService.h"
+#include "GMPCrashHelper.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/MediaKeysBinding.h"
 #include "mozilla/dom/MediaKeyMessageEvent.h"
@@ -15,6 +15,9 @@
 #include "mozilla/dom/UnionTypes.h"
 #include "mozilla/Telemetry.h"
 #include "GMPCDMProxy.h"
+#ifdef MOZ_WIDGET_ANDROID
+#include "mozilla/MediaDrmCDMProxy.h"
+#endif
 #include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -29,6 +32,7 @@
 #include "nsServiceManagerUtils.h"
 #include "mozilla/dom/MediaKeySystemAccess.h"
 #include "nsPrintfCString.h"
+#include "ChromiumCDMProxy.h"
 
 namespace mozilla {
 
@@ -49,15 +53,11 @@ NS_INTERFACE_MAP_END
 
 MediaKeys::MediaKeys(nsPIDOMWindowInner* aParent,
                      const nsAString& aKeySystem,
-                     const nsAString& aCDMVersion,
-                     bool aDistinctiveIdentifierRequired,
-                     bool aPersistentStateRequired)
+                     const MediaKeySystemConfiguration& aConfig)
   : mParent(aParent)
   , mKeySystem(aKeySystem)
-  , mCDMVersion(aCDMVersion)
   , mCreatePromiseId(0)
-  , mDistinctiveIdentifierRequired(aDistinctiveIdentifierRequired)
-  , mPersistentStateRequired(aPersistentStateRequired)
+  , mConfig(aConfig)
 {
   EME_LOG("MediaKeys[%p] constructed keySystem=%s",
           this, NS_ConvertUTF16toUTF8(mKeySystem).get());
@@ -89,7 +89,7 @@ MediaKeys::Terminated()
 
   // Notify the element about that CDM has terminated.
   if (mElement) {
-    mElement->DecodeError();
+    mElement->DecodeError(NS_ERROR_DOM_MEDIA_CDM_ERR);
   }
 
   Shutdown();
@@ -196,6 +196,15 @@ MediaKeys::StorePromise(DetailedPromise* aPromise)
   return id;
 }
 
+void
+MediaKeys::ConnectPendingPromiseIdWithToken(PromiseId aId, uint32_t aToken)
+{
+  // Should only be called from MediaKeySession::GenerateRequest.
+  mPromiseIdToken.Put(aId, aToken);
+  EME_LOG("MediaKeys[%p]::ConnectPendingPromiseIdWithToken() id=%u => token(%u)",
+          this, aId, aToken);
+}
+
 already_AddRefed<DetailedPromise>
 MediaKeys::RetrievePromise(PromiseId aId)
 {
@@ -213,18 +222,23 @@ void
 MediaKeys::RejectPromise(PromiseId aId, nsresult aExceptionCode,
                          const nsCString& aReason)
 {
-  EME_LOG("MediaKeys[%p]::RejectPromise(%d, 0x%x)", this, aId, aExceptionCode);
+  EME_LOG("MediaKeys[%p]::RejectPromise(%d, 0x%" PRIx32 ")",
+          this, aId, static_cast<uint32_t>(aExceptionCode));
 
   RefPtr<DetailedPromise> promise(RetrievePromise(aId));
   if (!promise) {
     return;
   }
-  if (mPendingSessions.Contains(aId)) {
-    // This promise could be a createSession or loadSession promise,
-    // so we might have a pending session waiting to be resolved into
-    // the promise on success. We've been directed to reject to promise,
-    // so we can throw away the corresponding session object.
-    mPendingSessions.Remove(aId);
+
+  // This promise could be a createSession or loadSession promise,
+  // so we might have a pending session waiting to be resolved into
+  // the promise on success. We've been directed to reject to promise,
+  // so we can throw away the corresponding session object.
+  uint32_t token = 0;
+  if (mPromiseIdToken.Get(aId, &token)) {
+    MOZ_ASSERT(mPendingSessions.Contains(token));
+    mPendingSessions.Remove(token);
+    mPromiseIdToken.Remove(aId);
   }
 
   MOZ_ASSERT(NS_FAILED(aExceptionCode));
@@ -264,29 +278,36 @@ MediaKeys::ResolvePromise(PromiseId aId)
   EME_LOG("MediaKeys[%p]::ResolvePromise(%d)", this, aId);
 
   RefPtr<DetailedPromise> promise(RetrievePromise(aId));
+  MOZ_ASSERT(!mPromises.Contains(aId));
   if (!promise) {
     return;
   }
-  if (mPendingSessions.Contains(aId)) {
-    // We should only resolve LoadSession calls via this path,
-    // not CreateSession() promises.
-    RefPtr<MediaKeySession> session;
-    if (!mPendingSessions.Get(aId, getter_AddRefs(session)) ||
-        !session ||
-        session->GetSessionId().IsEmpty()) {
-      NS_WARNING("Received activation for non-existent session!");
-      promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR,
-                           NS_LITERAL_CSTRING("CDM LoadSession() returned a different session ID than requested"));
-      mPendingSessions.Remove(aId);
-      return;
-    }
-    mPendingSessions.Remove(aId);
-    mKeySessions.Put(session->GetSessionId(), session);
-    promise->MaybeResolve(session);
-  } else {
-    promise->MaybeResolve(JS::UndefinedHandleValue);
+
+  uint32_t token = 0;
+  if (!mPromiseIdToken.Get(aId, &token)) {
+    promise->MaybeResolveWithUndefined();
+    return;
+  } else if (!mPendingSessions.Contains(token)) {
+    // Pending session for CreateSession() should be removed when sessionId
+    // is ready.
+    promise->MaybeResolveWithUndefined();
+    mPromiseIdToken.Remove(aId);
+    return;
   }
-  MOZ_ASSERT(!mPromises.Contains(aId));
+  mPromiseIdToken.Remove(aId);
+
+  // We should only resolve LoadSession calls via this path,
+  // not CreateSession() promises.
+  RefPtr<MediaKeySession> session;
+  mPendingSessions.Remove(token, getter_AddRefs(session));
+  if (!session || session->GetSessionId().IsEmpty()) {
+    NS_WARNING("Received activation for non-existent session!");
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR,
+                         NS_LITERAL_CSTRING("CDM LoadSession() returned a different session ID than requested"));
+    return;
+  }
+  mKeySessions.Put(session->GetSessionId(), session);
+  promise->MaybeResolve(session);
 }
 
 class MediaKeysGMPCrashHelper : public GMPCrashHelper
@@ -309,6 +330,41 @@ private:
   WeakPtr<MediaKeys> mMediaKeys;
 };
 
+already_AddRefed<CDMProxy>
+MediaKeys::CreateCDMProxy(nsIEventTarget* aMainThread)
+{
+  RefPtr<CDMProxy> proxy;
+#ifdef MOZ_WIDGET_ANDROID
+  if (IsWidevineKeySystem(mKeySystem)) {
+    proxy = new MediaDrmCDMProxy(this,
+                                 mKeySystem,
+                                 mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
+                                 mConfig.mPersistentState == MediaKeysRequirement::Required,
+                                 aMainThread);
+  } else
+#endif
+  {
+    if (MediaPrefs::EMEChromiumAPIEnabled()) {
+      proxy = new ChromiumCDMProxy(
+        this,
+        mKeySystem,
+        new MediaKeysGMPCrashHelper(this),
+        mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
+        mConfig.mPersistentState == MediaKeysRequirement::Required,
+        aMainThread);
+    } else {
+      proxy = new GMPCDMProxy(
+        this,
+        mKeySystem,
+        new MediaKeysGMPCrashHelper(this),
+        mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
+        mConfig.mPersistentState == MediaKeysRequirement::Required,
+        aMainThread);
+    }
+  }
+  return proxy.forget();
+}
+
 already_AddRefed<DetailedPromise>
 MediaKeys::Init(ErrorResult& aRv)
 {
@@ -317,12 +373,6 @@ MediaKeys::Init(ErrorResult& aRv)
   if (aRv.Failed()) {
     return nullptr;
   }
-
-  mProxy = new GMPCDMProxy(this,
-                           mKeySystem,
-                           new MediaKeysGMPCrashHelper(this),
-                           mDistinctiveIdentifierRequired,
-                           mPersistentStateRequired);
 
   // Determine principal (at creation time) of the MediaKeys object.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());
@@ -372,14 +422,12 @@ MediaKeys::Init(ErrorResult& aRv)
     return promise.forget();
   }
 
-  nsIDocument* doc = window->GetExtantDoc();
-  const bool inPrivateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
-
-  EME_LOG("MediaKeys[%p]::Create() (%s, %s), %s",
+  EME_LOG("MediaKeys[%p]::Create() (%s, %s)",
           this,
           origin.get(),
-          topLevelOrigin.get(),
-          (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
+          topLevelOrigin.get());
+
+  mProxy = CreateCDMProxy(top->GetExtantDoc()->EventTargetFor(TaskCategory::Other));
 
   // The CDMProxy's initialization is asynchronous. The MediaKeys is
   // refcounted, and its instance is returned to JS by promise once
@@ -395,20 +443,18 @@ MediaKeys::Init(ErrorResult& aRv)
   mProxy->Init(mCreatePromiseId,
                NS_ConvertUTF8toUTF16(origin),
                NS_ConvertUTF8toUTF16(topLevelOrigin),
-               KeySystemToGMPName(mKeySystem),
-               inPrivateBrowsing);
+               KeySystemToGMPName(mKeySystem));
 
   return promise.forget();
 }
 
 void
-MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId, const uint32_t aPluginId)
+MediaKeys::OnCDMCreated(PromiseId aId, const uint32_t aPluginId)
 {
   RefPtr<DetailedPromise> promise(RetrievePromise(aId));
   if (!promise) {
     return;
   }
-  mNodeId = aNodeId;
   RefPtr<MediaKeys> keys(this);
   EME_LOG("MediaKeys[%p]::OnCDMCreated() resolve promise id=%d", this, aId);
   promise->MaybeResolve(keys);
@@ -423,11 +469,32 @@ MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId, const uint32_t
   Telemetry::Accumulate(Telemetry::VIDEO_CDM_CREATED, ToCDMTypeTelemetryEnum(mKeySystem));
 }
 
+static bool
+IsSessionTypeSupported(const MediaKeySessionType aSessionType,
+                       const MediaKeySystemConfiguration& aConfig)
+{
+  if (aSessionType == MediaKeySessionType::Temporary) {
+    // Temporary is always supported.
+    return true;
+  }
+  if (!aConfig.mSessionTypes.WasPassed()) {
+    // No other session types supported.
+    return false;
+  }
+  return aConfig.mSessionTypes.Value().Contains(ToString(aSessionType));
+}
+
 already_AddRefed<MediaKeySession>
 MediaKeys::CreateSession(JSContext* aCx,
                          MediaKeySessionType aSessionType,
                          ErrorResult& aRv)
 {
+  if (!IsSessionTypeSupported(aSessionType, mConfig)) {
+    EME_LOG("MediaKeys[%p] CreateSession() failed, unsupported session type", this);
+    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return nullptr;
+  }
+
   if (!mProxy) {
     NS_WARNING("Tried to use a MediaKeys which lost its CDM");
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -437,12 +504,11 @@ MediaKeys::CreateSession(JSContext* aCx,
   EME_LOG("MediaKeys[%p] Creating session", this);
 
   RefPtr<MediaKeySession> session = new MediaKeySession(aCx,
-                                                          GetParentObject(),
-                                                          this,
-                                                          mKeySystem,
-                                                          mCDMVersion,
-                                                          aSessionType,
-                                                          aRv);
+                                                        GetParentObject(),
+                                                        this,
+                                                        mKeySystem,
+                                                        aSessionType,
+                                                        aRv);
 
   if (aRv.Failed()) {
     return nullptr;
@@ -491,13 +557,6 @@ MediaKeys::GetPendingSession(uint32_t aToken)
   return session.forget();
 }
 
-const nsCString&
-MediaKeys::GetNodeId() const
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  return mNodeId;
-}
-
 bool
 MediaKeys::IsBoundToMediaElement() const
 {
@@ -523,6 +582,34 @@ MediaKeys::Unbind()
 {
   MOZ_ASSERT(NS_IsMainThread());
   mElement = nullptr;
+}
+
+void
+MediaKeys::GetSessionsInfo(nsString& sessionsInfo)
+{
+  for (KeySessionHashMap::Iterator it = mKeySessions.Iter();
+       !it.Done();
+       it.Next()) {
+    MediaKeySession* keySession = it.Data();
+    nsString sessionID;
+    keySession->GetSessionId(sessionID);
+    sessionsInfo.AppendLiteral("(sid=");
+    sessionsInfo.Append(sessionID);
+    MediaKeyStatusMap* keyStatusMap = keySession->KeyStatuses();
+    for (uint32_t i = 0; i < keyStatusMap->GetIterableLength(); i++) {
+      nsString keyID = keyStatusMap->GetKeyIDAsHexString(i);
+      sessionsInfo.AppendLiteral("(kid=");
+      sessionsInfo.Append(keyID);
+      using IntegerType = typename std::underlying_type<MediaKeyStatus>::type;
+      auto idx = static_cast<IntegerType>(keyStatusMap->GetValueAtIndex(i));
+      const char* keyStatus = MediaKeyStatusValues::strings[idx].value;
+      sessionsInfo.AppendLiteral(" status=");
+      sessionsInfo.Append(
+        NS_ConvertUTF8toUTF16((nsDependentCString(keyStatus))));
+      sessionsInfo.AppendLiteral(")");
+    }
+    sessionsInfo.AppendLiteral(")");
+  }
 }
 
 } // namespace dom

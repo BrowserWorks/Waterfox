@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   let request = indexedDB.open(this.window ? window.location.pathname : "Splendid Test", 1);
   request.onerror = errorHandler;
@@ -19,7 +19,7 @@ function testSteps()
   for (let autoIncrement of [false, true]) {
     let objectStore =
       db.createObjectStore(autoIncrement, { keyPath: "id",
-                                            autoIncrement: autoIncrement });
+                                            autoIncrement });
     objectStore.createIndex("", "index", { unique: true });
 
     for (let i = 0; i < 10; i++) {
@@ -31,7 +31,7 @@ function testSteps()
   is(event.type, "success", "expect a success event");
 
   for (let autoIncrement of [false, true]) {
-    objectStore = db.transaction(autoIncrement, "readwrite")
+    let objectStore = db.transaction(autoIncrement, "readwrite")
                     .objectStore(autoIncrement);
 
     request = objectStore.put({ id: 5, index: 6 });
@@ -60,5 +60,4 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }

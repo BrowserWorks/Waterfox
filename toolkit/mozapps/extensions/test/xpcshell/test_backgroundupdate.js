@@ -42,7 +42,7 @@ function run_test_1() {
       Services.obs.removeObserver(arguments.callee, "addons-background-update-complete");
 
       do_execute_soon(run_test_2);
-    }, "addons-background-update-complete", false);
+    }, "addons-background-update-complete");
 
     // Trigger the background update timer handler
     gInternalManager.notify(null);
@@ -89,7 +89,7 @@ function run_test_2() {
 
   // Background update uses a different pref, if set
   Services.prefs.setCharPref("extensions.update.background.url",
-                             "http://localhost:" + gPort +"/data/test_backgroundupdate.rdf");
+                             "http://localhost:" + gPort + "/data/test_backgroundupdate.rdf");
   restartManager();
 
   // Do hotfix checks
@@ -105,14 +105,14 @@ function run_test_2() {
 
     do_check_eq(installCount, 3);
     sawCompleteNotification = true;
-  }, "addons-background-update-complete", false);
+  }, "addons-background-update-complete");
 
   AddonManager.addInstallListener({
-    onNewInstall: function(aInstall) {
+    onNewInstall(aInstall) {
       installCount++;
     },
 
-    onDownloadFailed: function(aInstall) {
+    onDownloadFailed(aInstall) {
       completeCount++;
       if (completeCount == 3) {
         do_check_true(sawCompleteNotification);

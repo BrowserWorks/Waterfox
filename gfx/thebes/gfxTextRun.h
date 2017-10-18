@@ -7,19 +7,25 @@
 #ifndef GFX_TEXTRUN_H
 #define GFX_TEXTRUN_H
 
+#include <stdint.h>
+
 #include "gfxTypes.h"
-#include "nsString.h"
 #include "gfxPoint.h"
 #include "gfxFont.h"
 #include "gfxFontConstants.h"
-#include "nsTArray.h"
 #include "gfxSkipChars.h"
 #include "gfxPlatform.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/RefPtr.h"
+#include "nsPoint.h"
+#include "nsString.h"
+#include "nsTArray.h"
+#include "nsTextFrameUtils.h"
 #include "DrawMode.h"
 #include "harfbuzz/hb.h"
 #include "nsUnicodeScriptCodes.h"
 #include "nsColor.h"
+#include "X11UndefineNone.h"
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -29,10 +35,14 @@ class gfxContext;
 class gfxFontGroup;
 class gfxUserFontEntry;
 class gfxUserFontSet;
-class gfxTextContextPaint;
 class nsIAtom;
-class nsILanguageAtomService;
+class nsLanguageAtomService;
 class gfxMissingFontRecorder;
+
+namespace mozilla {
+class SVGContextPaint;
+enum class StyleHyphens : uint8_t;
+};
 
 /**
  * Callback for Draw() to use when drawing text with mode
@@ -67,9 +77,7 @@ struct gfxTextRunDrawCallbacks {
  * of text. It stores runs of positioned glyph data, each run having a single
  * gfxFont. The glyphs are associated with a string of source text, and the
  * gfxTextRun APIs take parameters that are offsets into that source text.
- * 
- * gfxTextRuns are not refcounted. They should be deleted when no longer required.
- * 
+ *
  * gfxTextRuns are mostly immutable. The only things that can change are
  * inter-cluster spacing and line break placement. Spacing is always obtained
  * lazily by methods that need it, it is not cached. Line breaks are stored
@@ -77,12 +85,15 @@ struct gfxTextRunDrawCallbacks {
  * not actually do anything to explicitly account for line breaks). Initially
  * there are no line breaks. The textrun can record line breaks before or after
  * any given cluster. (Line breaks specified inside clusters are ignored.)
- * 
+ *
  * It is important that zero-length substrings are handled correctly. This will
  * be on the test!
  */
-class gfxTextRun : public gfxShapedText {
-public:
+class gfxTextRun : public gfxShapedText
+{
+    NS_INLINE_DECL_REFCOUNTING(gfxTextRun);
+
+protected:
     // Override operator delete to properly free the object that was
     // allocated via malloc.
     void operator delete(void* p) {
@@ -91,6 +102,7 @@ public:
 
     virtual ~gfxTextRun();
 
+public:
     typedef gfxFont::RunMetrics Metrics;
     typedef mozilla::gfx::DrawTarget DrawTarget;
 
@@ -158,22 +170,38 @@ public:
      * Set the potential linebreaks for a substring of the textrun. These are
      * the "allow break before" points. Initially, there are no potential
      * linebreaks.
-     * 
+     *
      * This can change glyphs and/or geometry! Some textruns' shapes
      * depend on potential line breaks (e.g., title-case-converting textruns).
      * This function is virtual so that those textruns can reshape themselves.
-     * 
+     *
      * @return true if this changed the linebreaks, false if the new line
      * breaks are the same as the old
      */
-    virtual bool SetPotentialLineBreaks(Range aRange, uint8_t *aBreakBefore);
+    virtual bool SetPotentialLineBreaks(Range aRange,
+                                        const uint8_t* aBreakBefore);
+
+    enum class HyphenType : uint8_t {
+      None,
+      Explicit,
+      Soft,
+      AutoWithManualInSameWord,
+      AutoWithoutManualInSameWord
+    };
+
+    struct HyphenationState {
+      uint32_t mostRecentBoundary = 0;
+      bool     hasManualHyphen = false;
+      bool     hasExplicitHyphen = false;
+      bool     hasAutoHyphen = false;
+    };
 
     /**
      * Layout provides PropertyProvider objects. These allow detection of
      * potential line break points and computation of spacing. We pass the data
      * this way to allow lazy data acquisition; for example BreakAndMeasureText
      * will want to only ask for properties of text it's actually looking at.
-     * 
+     *
      * NOTE that requested spacing may not actually be applied, if the textrun
      * is unable to apply it in some context. Exception: spacing around a
      * whitespace character MUST always be applied.
@@ -182,16 +210,17 @@ public:
     public:
         // Detect hyphenation break opportunities in the given range; breaks
         // not at cluster boundaries will be ignored.
-        virtual void GetHyphenationBreaks(Range aRange, bool *aBreakBefore) = 0;
+        virtual void GetHyphenationBreaks(Range aRange,
+                                          HyphenType *aBreakBefore) const = 0;
 
         // Returns the provider's hyphenation setting, so callers can decide
         // whether it is necessary to call GetHyphenationBreaks.
-        // Result is an NS_STYLE_HYPHENS_* value.
-        virtual int8_t GetHyphensOption() = 0;
+        // Result is an StyleHyphens value.
+        virtual mozilla::StyleHyphens GetHyphensOption() const = 0;
 
         // Returns the extra width that will be consumed by a hyphen. This should
         // be constant for a given textrun.
-        virtual gfxFloat GetHyphenWidth() = 0;
+        virtual gfxFloat GetHyphenWidth() const = 0;
 
         typedef gfxFont::Spacing Spacing;
 
@@ -201,36 +230,15 @@ public:
          * CLUSTER_START, then character i-1 must have zero after-spacing and
          * character i must have zero before-spacing.
          */
-        virtual void GetSpacing(Range aRange, Spacing *aSpacing) = 0;
+        virtual void GetSpacing(Range aRange, Spacing *aSpacing) const = 0;
 
         // Returns a gfxContext that can be used to measure the hyphen glyph.
         // Only called if the hyphen width is requested.
-        virtual already_AddRefed<DrawTarget> GetDrawTarget() = 0;
+        virtual already_AddRefed<DrawTarget> GetDrawTarget() const = 0;
 
         // Return the appUnitsPerDevUnit value to be used when measuring.
         // Only called if the hyphen width is requested.
-        virtual uint32_t GetAppUnitsPerDevUnit() = 0;
-    };
-
-    class ClusterIterator {
-    public:
-        explicit ClusterIterator(gfxTextRun *aTextRun);
-
-        void Reset();
-
-        bool NextCluster();
-
-        uint32_t Position() const {
-            return mCurrentChar;
-        }
-
-        Range ClusterRange() const;
-
-        gfxFloat ClusterAdvance(PropertyProvider *aProvider) const;
-
-    private:
-        gfxTextRun *mTextRun;
-        uint32_t    mCurrentChar;
+        virtual uint32_t GetAppUnitsPerDevUnit() const = 0;
     };
 
     struct DrawParams
@@ -244,7 +252,7 @@ public:
         PropertyProvider* provider = nullptr;
         // If non-null, the advance width of the substring is set.
         gfxFloat* advanceWidth = nullptr;
-        gfxTextContextPaint* contextPaint = nullptr;
+        mozilla::SVGContextPaint* contextPaint = nullptr;
         gfxTextRunDrawCallbacks* callbacks = nullptr;
         explicit DrawParams(gfxContext* aContext) : context(aContext) {}
     };
@@ -253,7 +261,7 @@ public:
      * Draws a substring. Uses only GetSpacing from aBreakProvider.
      * The provided point is the baseline origin on the left of the string
      * for LTR, on the right of the string for RTL.
-     * 
+     *
      * Drawing should respect advance widths in the sense that for LTR runs,
      *   Draw(Range(start, middle), pt, ...) followed by
      *   Draw(Range(middle, end), gfxPoint(pt.x + advance, pt.y), ...)
@@ -265,7 +273,7 @@ public:
      *   Draw(Range(start, middle), gfxPoint(pt.x + advance, pt.y), ...)
      * should have the same effect as
      *   Draw(Range(start, end), pt, ...)
-     * 
+     *
      * Glyphs should be drawn in logical content order, which can be significant
      * if they overlap (perhaps due to negative spacing).
      */
@@ -316,14 +324,14 @@ public:
      * Clear all stored line breaks for the given range (both before and after),
      * and then set the line-break state before aRange.start to aBreakBefore and
      * after the last cluster to aBreakAfter.
-     * 
+     *
      * We require that before and after line breaks be consistent. For clusters
      * i and i+1, we require that if there is a break after cluster i, a break
      * will be specified before cluster i+1. This may be temporarily violated
      * (e.g. after reflowing line L and before reflowing line L+1); to handle
      * these temporary violations, we say that there is a break betwen i and i+1
      * if a break is specified after i OR a break is specified before i+1.
-     * 
+     *
      * This can change textrun geometry! The existence of a linebreak can affect
      * the advance width of the cluster before the break (when kerning) or the
      * geometry of one cluster before the break or any number of clusters
@@ -331,11 +339,11 @@ public:
      * arbitrary; if some scripts require breaking it, then we need to
      * alter nsTextFrame::TrimTrailingWhitespace, perhaps drastically becase
      * it could affect the layout of frames before it...)
-     * 
+     *
      * We return true if glyphs or geometry changed, false otherwise. This
      * function is virtual so that gfxTextRun subclasses can reshape
      * properly.
-     * 
+     *
      * @param aAdvanceWidthDelta if non-null, returns the change in advance
      * width of the given range.
      */
@@ -350,6 +358,10 @@ public:
       // Measure the range of text as if it contains no break
       eSuppressAllBreaks
     };
+
+    void ClassifyAutoHyphenations(uint32_t aStart, Range aRange,
+                                  nsTArray<HyphenType>& aHyphenBuffer,
+                                  HyphenationState* aWordState);
 
     /**
      * Finds the longest substring that will fit into the given width.
@@ -402,7 +414,7 @@ public:
      * @param aBreakPriority in/out the priority of the break opportunity
      * saved in the line. If we are prioritizing break opportunities, we will
      * not set a break with a lower priority. @see gfxBreakPriority.
-     * 
+     *
      * Note that negative advance widths are possible especially if negative
      * spacing is provided.
      */
@@ -411,6 +423,7 @@ public:
                                  PropertyProvider *aProvider,
                                  SuppressBreak aSuppressBreak,
                                  gfxFloat *aTrimWhitespace,
+                                 bool aHangWhitespace,
                                  Metrics *aMetrics,
                                  gfxFont::BoundingBoxType aBoundingBoxType,
                                  DrawTarget* aDrawTargetForTightBoundingBox,
@@ -424,15 +437,11 @@ public:
     void *GetUserData() const { return mUserData; }
     void SetUserData(void *aUserData) { mUserData = aUserData; }
 
-    void SetFlagBits(uint32_t aFlags) {
-      NS_ASSERTION(!(aFlags & ~gfxTextRunFactory::SETTABLE_FLAGS),
-                   "Only user flags should be mutable");
-      mFlags |= aFlags;
+    void SetFlagBits(nsTextFrameUtils::Flags aFlags) {
+      mFlags2 |= aFlags;
     }
-    void ClearFlagBits(uint32_t aFlags) {
-      NS_ASSERTION(!(aFlags & ~gfxTextRunFactory::SETTABLE_FLAGS),
-                   "Only user flags should be mutable");
-      mFlags &= ~aFlags;
+    void ClearFlagBits(nsTextFrameUtils::Flags aFlags) {
+      mFlags2 &= ~aFlags;
     }
     const gfxSkipChars& GetSkipChars() const { return mSkipChars; }
     gfxFontGroup *GetFontGroup() const { return mFontGroup; }
@@ -440,17 +449,19 @@ public:
 
     // Call this, don't call "new gfxTextRun" directly. This does custom
     // allocation and initialization
-    static mozilla::UniquePtr<gfxTextRun>
+    static already_AddRefed<gfxTextRun>
     Create(const gfxTextRunFactory::Parameters *aParams,
            uint32_t aLength, gfxFontGroup *aFontGroup,
-           uint32_t aFlags);
+           mozilla::gfx::ShapedTextFlags aFlags,
+           nsTextFrameUtils::Flags aFlags2);
 
-    // The text is divided into GlyphRuns as necessary
+    // The text is divided into GlyphRuns as necessary. (In the vast majority
+    // of cases, a gfxTextRun contains just a single GlyphRun.)
     struct GlyphRun {
-        RefPtr<gfxFont> mFont;   // never null
-        uint32_t          mCharacterOffset; // into original UTF16 string
-        uint8_t           mMatchType;
-        uint16_t          mOrientation; // gfxTextRunFactory::TEXT_ORIENT_* value
+        RefPtr<gfxFont> mFont; // never null in a valid GlyphRun
+        uint32_t        mCharacterOffset; // into original UTF16 string
+        mozilla::gfx::ShapedTextFlags mOrientation; // gfxTextRunFactory::TEXT_ORIENT_* value
+        uint8_t         mMatchType;
     };
 
     class GlyphRunIterator {
@@ -510,8 +521,19 @@ public:
      */
     nsresult AddGlyphRun(gfxFont *aFont, uint8_t aMatchType,
                          uint32_t aStartCharIndex, bool aForceNewRun,
-                         uint16_t aOrientation);
-    void ResetGlyphRuns() { mGlyphRuns.Clear(); }
+                         mozilla::gfx::ShapedTextFlags aOrientation);
+    void ResetGlyphRuns()
+    {
+        if (mHasGlyphRunArray) {
+            MOZ_ASSERT(mGlyphRunArray.Length() > 1);
+            // Discard all but the first GlyphRun...
+            mGlyphRunArray.TruncateLength(1);
+            // ...and then convert to the single-run representation.
+            ConvertFromGlyphRunArray();
+        }
+        // Clear out the one remaining GlyphRun.
+        mSingleGlyphRun.mFont = nullptr;
+    }
     void SortGlyphRuns();
     void SanitizeGlyphRuns();
 
@@ -528,7 +550,8 @@ public:
     void ClearGlyphsAndCharacters();
 
     void SetSpaceGlyph(gfxFont* aFont, DrawTarget* aDrawTarget,
-                       uint32_t aCharIndex, uint16_t aOrientation);
+                       uint32_t aCharIndex,
+                       mozilla::gfx::ShapedTextFlags aOrientation);
 
     // Set the glyph data for the given character index to the font's
     // space glyph, IF this can be done as a "simple" glyph record
@@ -544,7 +567,8 @@ public:
     // if it returns false, the caller needs to fall back to some other
     // means to create the necessary (detailed) glyph data.
     bool SetSpaceGlyphIfSimple(gfxFont *aFont, uint32_t aCharIndex,
-                               char16_t aSpaceChar, uint16_t aOrientation);
+                               char16_t aSpaceChar, 
+                               mozilla::gfx::ShapedTextFlags aOrientation);
 
     // Record the positions of specific characters that layout may need to
     // detect in the textrun, even though it doesn't have an explicit copy
@@ -571,9 +595,16 @@ public:
     void FetchGlyphExtents(DrawTarget* aRefDrawTarget);
 
     uint32_t CountMissingGlyphs() const;
-    const GlyphRun *GetGlyphRuns(uint32_t *aNumGlyphRuns) {
-        *aNumGlyphRuns = mGlyphRuns.Length();
-        return mGlyphRuns.Elements();
+
+    const GlyphRun* GetGlyphRuns(uint32_t* aNumGlyphRuns) const
+    {
+        if (mHasGlyphRunArray) {
+            *aNumGlyphRuns = mGlyphRunArray.Length();
+            return mGlyphRunArray.Elements();
+        } else {
+            *aNumGlyphRuns = mSingleGlyphRun.mFont ? 1 : 0;
+            return &mSingleGlyphRun;
+        }
     }
     // Returns the index of the GlyphRun containing the given offset.
     // Returns mGlyphRuns.Length() when aOffset is mCharacterCount.
@@ -604,11 +635,11 @@ public:
         // when the part is at the start of the ligature, and after-spacing
         // when the part is as the end of the ligature
         gfxFloat mPartWidth;
-        
+
         bool mClipBeforePart;
         bool mClipAfterPart;
     };
-    
+
     // return storage used by this run, for memory reporter;
     // nsTransformedTextRun needs to override this as it holds additional data
     virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf)
@@ -616,23 +647,27 @@ public:
     virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
       MOZ_MUST_OVERRIDE;
 
+    nsTextFrameUtils::Flags GetFlags2() const {
+        return mFlags2;
+    }
+
     // Get the size, if it hasn't already been gotten, marking as it goes.
     size_t MaybeSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)  {
-        if (mFlags & gfxTextRunFactory::TEXT_RUN_SIZE_ACCOUNTED) {
+        if (mFlags2 & nsTextFrameUtils::Flags::TEXT_RUN_SIZE_ACCOUNTED) {
             return 0;
         }
-        mFlags |= gfxTextRunFactory::TEXT_RUN_SIZE_ACCOUNTED;
+        mFlags2 |= nsTextFrameUtils::Flags::TEXT_RUN_SIZE_ACCOUNTED;
         return SizeOfIncludingThis(aMallocSizeOf);
     }
     void ResetSizeOfAccountingFlags() {
-        mFlags &= ~gfxTextRunFactory::TEXT_RUN_SIZE_ACCOUNTED;
+        mFlags2 &= ~nsTextFrameUtils::Flags::TEXT_RUN_SIZE_ACCOUNTED;
     }
 
     // shaping state - for some font features, fallback is required that
     // affects the entire run. for example, fallback for one script/font
     // portion of a textrun requires fallback to be applied to the entire run
 
-    enum ShapingState {
+    enum ShapingState : uint8_t {
         eShapingState_Normal,                 // default state
         eShapingState_ShapingWithFeature,     // have shaped with feature
         eShapingState_ShapingWithFallback,    // have shaped with fallback
@@ -675,7 +710,9 @@ protected:
      * follow the base textrun object.
      */
     gfxTextRun(const gfxTextRunFactory::Parameters *aParams,
-               uint32_t aLength, gfxFontGroup *aFontGroup, uint32_t aFlags);
+               uint32_t aLength, gfxFontGroup *aFontGroup,
+               mozilla::gfx::ShapedTextFlags aFlags,
+               nsTextFrameUtils::Flags aFlags2);
 
     /**
      * Helper for the Create() factory method to allocate the required
@@ -689,7 +726,7 @@ protected:
     CompressedGlyph *mCharacterGlyphs;
 
 private:
-    // **** general helpers **** 
+    // **** general helpers ****
 
     // Get the total advance for a range of glyphs.
     int32_t GetAdvanceForGlyphs(Range aRange) const;
@@ -721,7 +758,7 @@ private:
     void DrawPartialLigature(gfxFont *aFont, Range aRange,
                              gfxPoint *aPt, PropertyProvider *aProvider,
                              TextRunDrawParams& aParams,
-                             uint16_t aOrientation) const;
+                             mozilla::gfx::ShapedTextFlags aOrientation) const;
     // Advance aRange.start to the start of the nearest ligature, back
     // up aRange.end to the nearest ligature end; may result in
     // aRange->start == aRange->end.
@@ -733,7 +770,7 @@ private:
                                           gfxFont::BoundingBoxType aBoundingBoxType,
                                           DrawTarget* aRefDrawTarget,
                                           PropertyProvider *aProvider,
-                                          uint16_t aOrientation,
+                                          mozilla::gfx::ShapedTextFlags aOrientation,
                                           Metrics *aMetrics) const;
 
     // **** measurement helper ****
@@ -742,35 +779,60 @@ private:
                                  DrawTarget* aRefDrawTarget,
                                  PropertyProvider *aProvider,
                                  Range aSpacingRange,
-                                 uint16_t aOrientation,
+                                 mozilla::gfx::ShapedTextFlags aOrientation,
                                  Metrics *aMetrics) const;
 
     // **** drawing helper ****
     void DrawGlyphs(gfxFont *aFont, Range aRange, gfxPoint *aPt,
                     PropertyProvider *aProvider, Range aSpacingRange,
-                    TextRunDrawParams& aParams, uint16_t aOrientation) const;
+                    TextRunDrawParams& aParams,
+                    mozilla::gfx::ShapedTextFlags aOrientation) const;
 
-    // XXX this should be changed to a GlyphRun plus a maybe-null GlyphRun*,
-    // for smaller size especially in the super-common one-glyphrun case
-    AutoTArray<GlyphRun,1>        mGlyphRuns;
+    // The textrun holds either a single GlyphRun -or- an array;
+    // the flag mHasGlyphRunArray tells us which is present.
+    union {
+        GlyphRun           mSingleGlyphRun;
+        nsTArray<GlyphRun> mGlyphRunArray;
+    };
+
+    void ConvertToGlyphRunArray() {
+        MOZ_ASSERT(!mHasGlyphRunArray && mSingleGlyphRun.mFont);
+        GlyphRun tmp = mozilla::Move(mSingleGlyphRun);
+        mSingleGlyphRun.~GlyphRun();
+        new (&mGlyphRunArray) nsTArray<GlyphRun>(2);
+        mGlyphRunArray.AppendElement(mozilla::Move(tmp));
+        mHasGlyphRunArray = true;
+    }
+
+    void ConvertFromGlyphRunArray() {
+        MOZ_ASSERT(mHasGlyphRunArray && mGlyphRunArray.Length() == 1);
+        GlyphRun tmp = mozilla::Move(mGlyphRunArray[0]);
+        mGlyphRunArray.~nsTArray<GlyphRun>();
+        new (&mSingleGlyphRun) GlyphRun(mozilla::Move(tmp));
+        mHasGlyphRunArray = false;
+    }
 
     void             *mUserData;
     gfxFontGroup     *mFontGroup; // addrefed on creation, but our reference
                                   // may be released by ReleaseFontGroup()
     gfxSkipChars      mSkipChars;
 
+    nsTextFrameUtils::Flags mFlags2; // additional flags (see also gfxShapedText::mFlags)
+
     bool              mSkipDrawing; // true if the font group we used had a user font
                                     // download that's in progress, so we should hide text
                                     // until the download completes (or timeout fires)
     bool              mReleasedFontGroup; // we already called NS_RELEASE on
                                           // mFontGroup, so don't do it again
+    bool              mHasGlyphRunArray; // whether we're using an array or
+                                         // just storing a single glyphrun
 
     // shaping state for handling variant fallback features
     // such as subscript/superscript variant glyphs
     ShapingState      mShapingState;
 };
 
-class gfxFontGroup : public gfxTextRunFactory {
+class gfxFontGroup final : public gfxTextRunFactory {
 public:
     typedef mozilla::unicode::Script Script;
 
@@ -786,7 +848,7 @@ public:
 
     // Returns first valid font in the fontlist or default font.
     // Initiates userfont loads if userfont not loaded
-    virtual gfxFont* GetFirstValidFont(uint32_t aCh = 0x20);
+    gfxFont* GetFirstValidFont(uint32_t aCh = 0x20);
 
     // Returns the first font in the font-group that has an OpenType MATH table,
     // or null if no such font is available. The GetMathConstant methods may be
@@ -795,7 +857,7 @@ public:
 
     const gfxFontStyle *GetStyle() const { return &mStyle; }
 
-    virtual gfxFontGroup *Copy(const gfxFontStyle *aStyle);
+    gfxFontGroup *Copy(const gfxFontStyle *aStyle);
 
     /**
      * The listed characters should be treated as invisible and zero-width
@@ -810,9 +872,11 @@ public:
      * textrun will copy it.
      * This calls FetchGlyphExtents on the textrun.
      */
-    virtual mozilla::UniquePtr<gfxTextRun>
+    already_AddRefed<gfxTextRun>
     MakeTextRun(const char16_t *aString, uint32_t aLength,
-                const Parameters *aParams, uint32_t aFlags,
+                const Parameters *aParams,
+                mozilla::gfx::ShapedTextFlags aFlags,
+                nsTextFrameUtils::Flags aFlags2,
                 gfxMissingFontRecorder *aMFR);
     /**
      * Make a textrun for a given string.
@@ -820,9 +884,11 @@ public:
      * textrun will copy it.
      * This calls FetchGlyphExtents on the textrun.
      */
-    virtual mozilla::UniquePtr<gfxTextRun>
+    already_AddRefed<gfxTextRun>
     MakeTextRun(const uint8_t *aString, uint32_t aLength,
-                const Parameters *aParams, uint32_t aFlags,
+                const Parameters *aParams,
+                mozilla::gfx::ShapedTextFlags aFlags,
+                nsTextFrameUtils::Flags aFlags2,
                 gfxMissingFontRecorder *aMFR);
 
     /**
@@ -830,26 +896,22 @@ public:
      * a full Parameters record.
      */
     template<typename T>
-    mozilla::UniquePtr<gfxTextRun>
+    already_AddRefed<gfxTextRun>
     MakeTextRun(const T* aString, uint32_t aLength,
                 DrawTarget* aRefDrawTarget,
                 int32_t aAppUnitsPerDevUnit,
-                uint32_t aFlags,
+                mozilla::gfx::ShapedTextFlags aFlags,
+                nsTextFrameUtils::Flags aFlags2,
                 gfxMissingFontRecorder *aMFR)
     {
         gfxTextRunFactory::Parameters params = {
             aRefDrawTarget, nullptr, nullptr, nullptr, 0, aAppUnitsPerDevUnit
         };
-        return MakeTextRun(aString, aLength, &params, aFlags, aMFR);
+        return MakeTextRun(aString, aLength, &params, aFlags, aFlags2, aMFR);
     }
 
-    /**
-     * Get the (possibly-cached) width of the hyphen character.
-     * The aCtx and aAppUnitsPerDevUnit parameters will be used only if
-     * needed to initialize the cached hyphen width; otherwise they are
-     * ignored.
-     */
-    gfxFloat GetHyphenWidth(gfxTextRun::PropertyProvider* aProvider);
+    // Get the (possibly-cached) width of the hyphen character.
+    gfxFloat GetHyphenWidth(const gfxTextRun::PropertyProvider* aProvider);
 
     /**
      * Make a text run representing a single hyphen character.
@@ -858,7 +920,7 @@ public:
      * The caller is responsible for deleting the returned text run
      * when no longer required.
      */
-    mozilla::UniquePtr<gfxTextRun>
+    already_AddRefed<gfxTextRun>
     MakeHyphenTextRun(DrawTarget* aDrawTarget, uint32_t aAppUnitsPerDevUnit);
 
     /**
@@ -874,12 +936,11 @@ public:
     // first font's metrics and the bad font's metrics. Otherwise, this
     // returns from first font's metrics.
     enum { UNDERLINE_OFFSET_NOT_SET = INT16_MAX };
-    virtual gfxFloat GetUnderlineOffset();
+    gfxFloat GetUnderlineOffset();
 
-    virtual already_AddRefed<gfxFont>
-        FindFontForChar(uint32_t ch, uint32_t prevCh, uint32_t aNextCh,
-                        Script aRunScript, gfxFont *aPrevMatchedFont,
-                        uint8_t *aMatchType);
+    gfxFont* FindFontForChar(uint32_t ch, uint32_t prevCh, uint32_t aNextCh,
+                             Script aRunScript, gfxFont *aPrevMatchedFont,
+                             uint8_t *aMatchType);
 
     gfxUserFontSet* GetUserFontSet();
 
@@ -898,9 +959,17 @@ public:
     // This will call UpdateUserFonts() if the user font set is changed.
     void SetUserFontSet(gfxUserFontSet *aUserFontSet);
 
+    void ClearCachedData()
+    {
+        mUnderlineOffset = UNDERLINE_OFFSET_NOT_SET;
+        mSkipDrawing = false;
+        mHyphenWidth = -1;
+        mCachedEllipsisTextRun = nullptr;
+    }
+
     // If there is a user font set, check to see whether the font list or any
     // caches need updating.
-    virtual void UpdateUserFonts();
+    void UpdateUserFonts();
 
     // search for a specific userfont in the list of fonts
     bool ContainsUserFont(const gfxUserFontEntry* aUserFont);
@@ -918,21 +987,22 @@ public:
     // (which might use a different appUnitsPerDev value or flags) for the font
     // group, or until UpdateUserFonts is called, or the fontgroup is destroyed.
     // Get it/use it/forget it :) - don't keep a reference that might go stale.
-    gfxTextRun* GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel, uint32_t aFlags,
+    gfxTextRun* GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel,
+                                   mozilla::gfx::ShapedTextFlags aFlags,
                                    LazyReferenceDrawTargetGetter& aRefDrawTargetGetter);
 
 protected:
     // search through pref fonts for a character, return nullptr if no matching pref font
-    already_AddRefed<gfxFont> WhichPrefFontSupportsChar(uint32_t aCh);
+    gfxFont* WhichPrefFontSupportsChar(uint32_t aCh);
 
-    already_AddRefed<gfxFont>
-        WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
-                                    Script aRunScript);
+    gfxFont* WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
+                                         Script aRunScript);
 
     template<typename T>
     void ComputeRanges(nsTArray<gfxTextRange>& mRanges,
                        const T *aString, uint32_t aLength,
-                       Script aRunScript, uint16_t aOrientation);
+                       Script aRunScript,
+                       mozilla::gfx::ShapedTextFlags aOrientation);
 
     class FamilyFace {
     public:
@@ -1092,7 +1162,7 @@ protected:
 
     // Cache a textrun representing an ellipsis (useful for CSS text-overflow)
     // at a specific appUnitsPerDevPixel size and orientation
-    mozilla::UniquePtr<gfxTextRun>   mCachedEllipsisTextRun;
+    RefPtr<gfxTextRun>   mCachedEllipsisTextRun;
 
     // cache the most recent pref font to avoid general pref font lookup
     RefPtr<gfxFontFamily> mLastPrefFamily;
@@ -1105,22 +1175,24 @@ protected:
                                           // download to complete (or fallback
                                           // timer to fire)
 
-    // xxx - gfxPangoFontGroup skips UpdateUserFonts
-    bool                    mSkipUpdateUserFonts;
-
     /**
      * Textrun creation short-cuts for special cases where we don't need to
      * call a font shaper to generate glyphs.
      */
-    mozilla::UniquePtr<gfxTextRun>
-    MakeEmptyTextRun(const Parameters *aParams, uint32_t aFlags);
+    already_AddRefed<gfxTextRun>
+    MakeEmptyTextRun(const Parameters *aParams,
+                     mozilla::gfx::ShapedTextFlags aFlags,
+                     nsTextFrameUtils::Flags aFlags2);
 
-    mozilla::UniquePtr<gfxTextRun>
-    MakeSpaceTextRun(const Parameters *aParams, uint32_t aFlags);
+    already_AddRefed<gfxTextRun>
+    MakeSpaceTextRun(const Parameters *aParams,
+                     mozilla::gfx::ShapedTextFlags aFlags,
+                     nsTextFrameUtils::Flags aFlags2);
 
-    mozilla::UniquePtr<gfxTextRun>
+    already_AddRefed<gfxTextRun>
     MakeBlankTextRun(uint32_t aLength, const Parameters *aParams,
-                     uint32_t aFlags);
+                     mozilla::gfx::ShapedTextFlags aFlags,
+                     nsTextFrameUtils::Flags aFlags2);
 
     // Initialize the list of fonts
     void BuildFontList();
@@ -1128,7 +1200,7 @@ protected:
     // Get the font at index i within the fontlist.
     // Will initiate userfont load if not already loaded.
     // May return null if userfont not loaded or if font invalid
-    virtual gfxFont* GetFontAt(int32_t i, uint32_t aCh = 0x20);
+    gfxFont* GetFontAt(int32_t i, uint32_t aCh = 0x20);
 
     // Whether there's a font loading for a given family in the fontlist
     // for a given character
@@ -1165,7 +1237,7 @@ protected:
     // Helper for font-matching:
     // search all faces in a family for a fallback in cases where it's unclear
     // whether the family might have a font for a given character
-    already_AddRefed<gfxFont>
+    gfxFont*
     FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh,
                             Script aRunScript);
 
@@ -1177,8 +1249,6 @@ protected:
 
     // do style selection and add entries to list
     void AddFamilyToFontList(gfxFontFamily* aFamily);
-
-    static nsILanguageAtomService* gLangService;
 };
 
 // A "missing font recorder" is to be used during text-run creation to keep

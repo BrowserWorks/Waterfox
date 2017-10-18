@@ -16,7 +16,7 @@
 
 using mozilla::OriginAttributes;
 
-/** 
+/**
  * The nsCookie class is the main cookie storage medium for use within cookie
  * code. It implements nsICookie2, which extends nsICookie, a frozen interface
  * for xpcom access of cookie objects.
@@ -57,13 +57,22 @@ class nsCookie : public nsICookie2
      , mExpiry(aExpiry)
      , mLastAccessed(aLastAccessed)
      , mCreationTime(aCreationTime)
-       // Defaults to 60s
-     , mCookieStaleThreshold(mozilla::Preferences::GetInt("network.cookie.staleThreshold", 60))
      , mIsSession(aIsSession)
      , mIsSecure(aIsSecure)
      , mIsHttpOnly(aIsHttpOnly)
      , mOriginAttributes(aOriginAttributes)
     {
+    }
+
+    static int CookieStaleThreshold()
+    {
+      static bool initialized = false;
+      static int value = 60;
+      if (!initialized) {
+        mozilla::Preferences::AddIntVarCache(&value, "network.cookie.staleThreshold", 60);
+        initialized = true;
+      }
+      return value;
     }
 
   public:
@@ -100,6 +109,7 @@ class nsCookie : public nsICookie2
     inline bool IsDomain()                const { return *mHost == '.'; }
     inline bool IsSecure()                const { return mIsSecure; }
     inline bool IsHttpOnly()              const { return mIsHttpOnly; }
+    inline const OriginAttributes& OriginAttributesRef() const { return mOriginAttributes; }
 
     // setters
     inline void SetExpiry(int64_t aExpiry)        { mExpiry = aExpiry; }
@@ -119,7 +129,7 @@ class nsCookie : public nsICookie2
     // we use char* ptrs to store the strings in a contiguous block,
     // so we save on the overhead of using nsCStrings. However, we
     // store a terminating null for each string, so we can hand them
-    // out as nsAFlatCStrings.
+    // out as nsCStrings.
     //
     // Please update SizeOfIncludingThis if this strategy changes.
     const char  *mName;
@@ -130,7 +140,6 @@ class nsCookie : public nsICookie2
     int64_t      mExpiry;
     int64_t      mLastAccessed;
     int64_t      mCreationTime;
-    int64_t      mCookieStaleThreshold;
     bool mIsSession;
     bool mIsSecure;
     bool mIsHttpOnly;

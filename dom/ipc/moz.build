@@ -4,48 +4,45 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: Content Processes")
+
 XPIDL_SOURCES += [
     'nsIHangReport.idl',
 ]
 
 XPIDL_MODULE = 'dom'
 
-EXPORTS += [
-    'nsICachedFileDescriptorListener.h',
-]
-
 EXPORTS.mozilla.dom.ipc += [
-    'BlobChild.h',
-    'BlobParent.h',
     'IdType.h',
-    'nsIRemoteBlob.h',
     'StructuredCloneData.h',
 ]
 
 EXPORTS.mozilla.dom += [
+    'CoalescedWheelData.h',
     'ContentBridgeChild.h',
     'ContentBridgeParent.h',
     'ContentChild.h',
     'ContentParent.h',
+    'ContentPrefs.h',
     'ContentProcess.h',
     'ContentProcessManager.h',
     'CPOWManagerGetter.h',
-    'CrashReporterChild.h',
-    'CrashReporterParent.h',
     'FilePickerParent.h',
+    'MemoryReportRequest.h',
     'nsIContentChild.h',
     'nsIContentParent.h',
-    'NuwaChild.h',
-    'NuwaParent.h',
     'PermissionMessageUtils.h',
     'TabChild.h',
     'TabContext.h',
     'TabMessageUtils.h',
     'TabParent.h',
+    'TelemetryScrollProbe.h',
+    'URLClassifierChild.h',
+    'URLClassifierParent.h',
 ]
 
 EXPORTS.mozilla += [
-    'AppProcessChecker.h',
     'PreallocatedProcessManager.h',
     'ProcessHangMonitor.h',
     'ProcessHangMonitorIPC.h',
@@ -53,47 +50,39 @@ EXPORTS.mozilla += [
 ]
 
 UNIFIED_SOURCES += [
-    'AppProcessChecker.cpp',
+    'CoalescedWheelData.cpp',
     'ColorPickerParent.cpp',
     'ContentBridgeChild.cpp',
     'ContentBridgeParent.cpp',
     'ContentParent.cpp',
+    'ContentPrefs.cpp',
     'ContentProcess.cpp',
     'ContentProcessManager.cpp',
-    'CrashReporterParent.cpp',
-    'DatePickerParent.cpp',
     'FilePickerParent.cpp',
+    'MemoryReportRequest.cpp',
     'nsIContentChild.cpp',
     'nsIContentParent.cpp',
-    'NuwaChild.cpp',
-    'NuwaParent.cpp',
     'PermissionMessageUtils.cpp',
     'PreallocatedProcessManager.cpp',
     'ProcessPriorityManager.cpp',
-    'ScreenManagerParent.cpp',
     'StructuredCloneData.cpp',
     'TabChild.cpp',
     'TabContext.cpp',
     'TabMessageUtils.cpp',
     'TabParent.cpp',
+    'TelemetryScrollProbe.cpp',
+    'URLClassifierParent.cpp',
 ]
 
-# Blob.cpp cannot be compiled in unified mode because it triggers a fatal gcc warning.
-# CrashReporterChild.cpp cannot be compiled in unified mode because of name clashes
-# in OS X headers.
 # ContentChild.cpp cannot be compiled in unified mode on  linux due to Time conflict
 SOURCES += [
-    'Blob.cpp',
     'ContentChild.cpp',
-    'CrashReporterChild.cpp',
     'ProcessHangMonitor.cpp',
 ]
 
 IPDL_SOURCES += [
-    'BlobTypes.ipdlh',
     'DOMTypes.ipdlh',
-    'PBlob.ipdl',
-    'PBlobStream.ipdl',
+    'MemoryReportTypes.ipdlh',
     'PBrowser.ipdl',
     'PBrowserOrId.ipdlh',
     'PColorPicker.ipdl',
@@ -101,17 +90,15 @@ IPDL_SOURCES += [
     'PContentBridge.ipdl',
     'PContentPermission.ipdlh',
     'PContentPermissionRequest.ipdl',
-    'PCrashReporter.ipdl',
     'PCycleCollectWithLogs.ipdl',
-    'PDatePicker.ipdl',
     'PDocumentRenderer.ipdl',
     'PFilePicker.ipdl',
-    'PMemoryReportRequest.ipdl',
-    'PNuwa.ipdl',
     'PPluginWidget.ipdl',
     'PProcessHangMonitor.ipdl',
-    'PScreenManager.ipdl',
     'PTabContext.ipdlh',
+    'PURLClassifier.ipdl',
+    'PURLClassifierInfo.ipdlh',
+    'PURLClassifierLocal.ipdl',
     'ServiceWorkerConfiguration.ipdlh',
 ]
 
@@ -124,24 +111,22 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Darwin':
         'mozsandbox',
     ]
 
+if CONFIG['MOZ_CONTENT_SANDBOX'] and CONFIG['OS_ARCH'] == 'Linux':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
+
 LOCAL_INCLUDES += [
     '/caps',
     '/chrome',
     '/docshell/base',
     '/dom/base',
-    '/dom/bluetooth/common',
-    '/dom/bluetooth/ipc',
-    '/dom/devicestorage',
     '/dom/events',
     '/dom/filesystem',
-    '/dom/fmradio/ipc',
     '/dom/geolocation',
     '/dom/media/webspeech/synth/ipc',
-    '/dom/mobilemessage/ipc',
     '/dom/security',
-    '/dom/storage',
     '/dom/workers',
-    '/embedding/components/printingui/ipc',
     '/extensions/cookie',
     '/extensions/spellcheck/src',
     '/gfx/2d',
@@ -149,6 +134,8 @@ LOCAL_INCLUDES += [
     '/layout/base',
     '/media/webrtc',
     '/netwerk/base',
+    '/toolkit/components/printingui/ipc',
+    '/toolkit/crashreporter',
     '/toolkit/xre',
     '/uriloader/exthandler',
     '/widget',
@@ -169,7 +156,7 @@ if CONFIG['OS_ARCH'] != 'WINNT':
 
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:

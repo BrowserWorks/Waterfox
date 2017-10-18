@@ -10,6 +10,7 @@
 #include "ARefBase.h"
 #include "nsCOMPtr.h"
 #include "nsDeque.h"
+#include "nsINamed.h"
 #include "nsITimer.h"
 
 #include "mozilla/TimeStamp.h"
@@ -25,7 +26,7 @@ namespace net {
    the eating of a 8 piece cake over 8 days even if you tried to eat the
    whole thing up front. In a practical sense it 'costs' 1 token to execute
    an event and tokens are 'earned' at a particular rate as time goes by.
-   
+
    The token bucket can be perfectly smooth or allow a configurable amount of
    burstiness. A bursty token bucket allows you to save up unused credits, while
    a perfectly smooth one would not. A smooth "1 per day" cake token bucket
@@ -45,7 +46,7 @@ namespace net {
   + The burst size controls the limit of 'credits' that a token bucket can accumulate
     when idle. For our (20,5) example each event requires 50ms of credit (again, 20hz = 50ms
     per event). a burst size of 5 means that the token bucket can accumulate a
-    maximum of 250ms (5 * 50ms) for this bucket. If no events have been admitted for the 
+    maximum of 250ms (5 * 50ms) for this bucket. If no events have been admitted for the
     last full second the bucket can still only accumulate 250ms of credit - but that credit
     means that 5 events can be admitted without delay. A burst size of 1 is the minimum.
     The EventTokenBucket is created with maximum credits already applied, but they
@@ -68,11 +69,14 @@ public:
 
 class TokenBucketCancelable;
 
-class EventTokenBucket : public nsITimerCallback, public ARefBase
+class EventTokenBucket : public nsITimerCallback
+                       , public nsINamed
+                       , public ARefBase
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
   // This should be constructed on the main thread
   EventTokenBucket(uint32_t eventsPerSecond, uint32_t burstSize);

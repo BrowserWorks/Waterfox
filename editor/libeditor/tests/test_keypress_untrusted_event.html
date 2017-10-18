@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=622245
 -->
 <head>
   <title>Test for untrusted keypress events</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -33,7 +32,6 @@ addLoadEvent(function() {
   SimpleTest.executeSoon(function() {
     input.addEventListener("keypress",
       function(aEvent) {
-        input.removeEventListener("keypress", arguments.callee, false);
         is(aEvent.target, input,
            "The keypress event target isn't the input element");
 
@@ -43,7 +41,7 @@ addLoadEvent(function() {
           textarea.focus();
           SimpleTest.executeSoon(runTextareaTest);
         });
-      }, false);
+      }, {once: true});
     var keypress = document.createEvent("KeyboardEvent");
     keypress.initKeyEvent("keypress", true, true, document.defaultView,
                           false, false, false, false, 0, "a".charCodeAt(0));
@@ -55,7 +53,6 @@ function runTextareaTest()
 {
   textarea.addEventListener("keypress",
     function(aEvent) {
-      textarea.removeEventListener("keypress", arguments.callee, false);
       is(aEvent.target, textarea,
          "The keypress event target isn't the textarea element");
 
@@ -65,7 +62,7 @@ function runTextareaTest()
         div.focus();
         SimpleTest.executeSoon(runContentediableTest);
       });
-    }, false);
+    }, {once: true});
   var keypress = document.createEvent("KeyboardEvent");
   keypress.initKeyEvent("keypress", true, true, document.defaultView,
                         false, false, false, false, 0, "b".charCodeAt(0));
@@ -76,7 +73,6 @@ function runContentediableTest()
 {
   div.addEventListener("keypress",
     function(aEvent) {
-      div.removeEventListener("keypress", arguments.callee, false);
       is(aEvent.target, div,
          "The keypress event target isn't the div element");
 
@@ -86,7 +82,7 @@ function runContentediableTest()
 
         SimpleTest.finish();
       });
-    }, false);
+    }, {once: true});
   var keypress = document.createEvent("KeyboardEvent");
   keypress.initKeyEvent("keypress", true, true, document.defaultView,
                         false, false, false, false, 0, "c".charCodeAt(0));

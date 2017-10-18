@@ -14,7 +14,6 @@
 #define NS_NSINDEXEDTOHTMLCONVERTER_CID \
 { 0xcf0f71fd, 0xfafd, 0x4e2b, {0x9f, 0xdc, 0x13, 0x4d, 0x97, 0x2e, 0x16, 0xe2} }
 
-class nsIDateTimeFormat;
 class nsIStringBundle;
 class nsITextToSubURI;
 
@@ -36,7 +35,7 @@ public:
     Create(nsISupports *aOuter, REFNSIID aIID, void **aResult);
 
 protected:
-    
+
     void FormatSizeString(int64_t inSize, nsCString& outSizeString);
     nsresult SendToListener(nsIRequest* aRequest, nsISupports *aContext, const nsACString &aBuffer);
     // Helper to properly implement OnStartRequest
@@ -47,7 +46,6 @@ protected:
     nsCOMPtr<nsIDirIndexParser>     mParser;
     nsCOMPtr<nsIStreamListener>     mListener; // final listener (consumer)
 
-    nsCOMPtr<nsIDateTimeFormat> mDateTime;
     nsCOMPtr<nsIStringBundle> mBundle;
 
     nsCOMPtr<nsITextToSubURI> mTextToSubURI;

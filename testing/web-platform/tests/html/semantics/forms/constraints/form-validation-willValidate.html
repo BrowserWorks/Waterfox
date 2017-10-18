@@ -22,25 +22,20 @@
       types: ["button", "reset"],
       testData: [{conditions: {}, expected: false, name: "[target] Must be barred from the constraint validation"}]
     },
-    //FIELDSET, OUTPUT elements should not be barred from the constraint validation
+    // FIELDSET and OUTPUT elements are not "submittable elements" and therefore never validate.
     {
       tag: "fieldset",
       types: [],
-      testData: [{conditions: {}, expected: true, name: "[target] Must not be barred from the constraint validation"}]
+      testData: [{conditions: {}, expected: false, name: "[target] The willValidate attribute must be false since FIELDSET is not a submittable element"}]
     },
     {
       tag: "output",
       types: [],
-      testData: [{conditions: {}, expected: true, name: "[target] Must not be barred from the constraint validation"}]
+      testData: [{conditions: {}, expected: false, name: "[target] The willValidate attribute must be false since OUTPUT is not a submittable element"}]
     },
     //OBJECT, KEYGEN, elements must be barred from the constraint validation
     {
       tag: "object",
-      types: [],
-      testData: [{conditions: {}, expected: false, name: "[target] Must be barred from the constraint validation"}]
-    },
-    {
-      tag: "keygen",
       types: [],
       testData: [{conditions: {}, expected: false, name: "[target] Must be barred from the constraint validation"}]
     },
@@ -49,7 +44,7 @@
     //If the readonly attribute is specified on an INPUT element, the element is barred from constraint validation.
     {
       tag: "input",
-      types: ["text", "search", "tel", "url", "email", "password", "datetime", "date", "month", "week", "time", "color", "file", "submit"],
+      types: ["text", "search", "tel", "url", "email", "password", "datetime-local", "date", "month", "week", "time", "color", "file", "submit"],
       testData: [
         {conditions: {disabled: true}, expected: false, name: "[target] Must be barred from the constraint validation if it is disabled"},
         {conditions: {disabled: false, readOnly: false}, expected: true, name: "[target] The willValidate attribute must be true if an element is mutable"},

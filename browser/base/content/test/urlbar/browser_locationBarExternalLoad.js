@@ -1,11 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const url = "data:text/html,<body>hi";
-
-add_task(function*() {
-  yield* testURL(url, urlEnter);
-  yield* testURL(url, urlClick);
+add_task(async function() {
+  const url = "data:text/html,<body>hi";
+  await testURL(url, urlEnter);
+  await testURL(url, urlClick);
 });
 
 function urlEnter(url) {
@@ -17,36 +16,34 @@ function urlEnter(url) {
 function urlClick(url) {
   gURLBar.value = url;
   gURLBar.focus();
-  let goButton = document.getElementById("urlbar-go-button");
-  EventUtils.synthesizeMouseAtCenter(goButton, {});
+  EventUtils.synthesizeMouseAtCenter(gURLBar.goButton, {});
 }
 
 function promiseNewTabSwitched() {
   return new Promise(resolve => {
-    gBrowser.addEventListener("TabSwitchDone", function onSwitch() {
-      gBrowser.removeEventListener("TabSwitchDone", onSwitch);
+    gBrowser.addEventListener("TabSwitchDone", function() {
       executeSoon(resolve);
-    });
+    }, {once: true});
   });
 }
 
-function testURL(url, loadFunc, endFunc) {
+async function testURL(url, loadFunc, endFunc) {
   let tabSwitchedPromise = promiseNewTabSwitched();
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   let browser = gBrowser.selectedBrowser;
 
-  let pageshowPromise = promiseWaitForEvent(browser, "pageshow");
+  let pageshowPromise = BrowserTestUtils.waitForContentEvent(browser, "pageshow");
 
-  yield tabSwitchedPromise;
-  yield pageshowPromise;
+  await tabSwitchedPromise;
+  await pageshowPromise;
 
   let pagePrincipal = gBrowser.contentPrincipal;
   loadFunc(url);
 
-  yield promiseWaitForEvent(browser, "pageshow");
+  await BrowserTestUtils.waitForContentEvent(browser, "pageshow");
 
-  yield ContentTask.spawn(browser, { isRemote: gMultiProcessBrowser },
-    function* (arg) {
+  await ContentTask.spawn(browser, { isRemote: gMultiProcessBrowser },
+    async function(arg) {
       const fm = Components.classes["@mozilla.org/focus-manager;1"].
                             getService(Components.interfaces.nsIFocusManager);
       Assert.equal(fm.focusedElement, null, "focusedElement not null");

@@ -8,20 +8,20 @@
 
 #include "imgIContainer.h"
 #include "nsMargin.h"
+#include "nsCSSRenderingBorders.h"
 
+class gfxContext;
 class nsIFrame;
 class nsFrame;
 class nsDisplayList;
 class nsDisplayListBuilder;
 class nsPresContext;
-class nsRenderingContext;
 struct nsRect;
 class nsStyleContext;
 
 
 #define NS_BUTTON_RENDERER_FOCUS_INNER_CONTEXT_INDEX  0
-#define NS_BUTTON_RENDERER_FOCUS_OUTER_CONTEXT_INDEX  1
-#define NS_BUTTON_RENDERER_LAST_CONTEXT_INDEX   NS_BUTTON_RENDERER_FOCUS_OUTER_CONTEXT_INDEX
+#define NS_BUTTON_RENDERER_LAST_CONTEXT_INDEX   NS_BUTTON_RENDERER_FOCUS_INNER_CONTEXT_INDEX
 
 class nsButtonFrameRenderer {
   typedef mozilla::image::DrawResult DrawResult;
@@ -38,33 +38,32 @@ public:
                          nsDisplayList* aBackground, nsDisplayList* aForeground);
 
 
-  DrawResult PaintOutlineAndFocusBorders(nsDisplayListBuilder* aBuilder,
-                                         nsPresContext* aPresContext,
-                                         nsRenderingContext& aRenderingContext,
-                                         const nsRect& aDirtyRect,
-                                         const nsRect& aRect);
+  DrawResult PaintInnerFocusBorder(nsDisplayListBuilder* aBuilder,
+                                   nsPresContext* aPresContext,
+                                   gfxContext& aRenderingContext,
+                                   const nsRect& aDirtyRect,
+                                   const nsRect& aRect);
+
+  mozilla::Maybe<nsCSSBorderRenderer> CreateInnerFocusBorderRenderer(nsDisplayListBuilder* aBuilder,
+                                                                     nsPresContext* aPresContext,
+                                                                     gfxContext* aRenderingContext,
+                                                                     const nsRect& aDirtyRect,
+                                                                     const nsRect& aRect);
 
   DrawResult PaintBorder(nsDisplayListBuilder* aBuilder,
                          nsPresContext* aPresContext,
-                         nsRenderingContext& aRenderingContext,
+                         gfxContext& aRenderingContext,
                          const nsRect& aDirtyRect,
                          const nsRect& aRect);
 
   void SetFrame(nsFrame* aFrame, nsPresContext* aPresContext);
- 
+
   void SetDisabled(bool aDisabled, bool notify);
 
   bool isActive();
   bool isDisabled();
 
-  void GetButtonOuterFocusRect(const nsRect& aRect, nsRect& aResult);
-  void GetButtonRect(const nsRect& aRect, nsRect& aResult);
   void GetButtonInnerFocusRect(const nsRect& aRect, nsRect& aResult);
-  nsMargin GetButtonOuterFocusBorderAndPadding();
-  nsMargin GetButtonBorderAndPadding();
-  nsMargin GetButtonInnerFocusMargin();
-  nsMargin GetButtonInnerFocusBorderAndPadding();
-  nsMargin GetAddedButtonBorderAndPadding();
 
   nsStyleContext* GetStyleContext(int32_t aIndex) const;
   void SetStyleContext(int32_t aIndex, nsStyleContext* aStyleContext);
@@ -76,9 +75,8 @@ protected:
 
 private:
 
-  // cached styles for focus and outline.
+  // cached style for optional inner focus outline (used on Windows).
   RefPtr<nsStyleContext> mInnerFocusStyle;
-  RefPtr<nsStyleContext> mOuterFocusStyle;
 
   nsFrame* mFrame;
 };

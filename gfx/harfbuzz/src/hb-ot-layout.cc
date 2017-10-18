@@ -34,15 +34,10 @@
 #include "hb-ot-layout-gdef-table.hh"
 #include "hb-ot-layout-gsub-table.hh"
 #include "hb-ot-layout-gpos-table.hh"
-#include "hb-ot-layout-jstf-table.hh"
+#include "hb-ot-layout-jstf-table.hh" // Just so we compile it; unused otherwise.
 
 #include "hb-ot-map-private.hh"
 
-#include <stdlib.h>
-#include <string.h>
-
-
-HB_SHAPER_DATA_ENSURE_DECLARE(ot, face)
 
 hb_ot_layout_t *
 _hb_ot_layout_create (hb_face_t *face)
@@ -60,6 +55,10 @@ _hb_ot_layout_create (hb_face_t *face)
   layout->gpos_blob = OT::Sanitizer<OT::GPOS>::sanitize (face->reference_table (HB_OT_TAG_GPOS));
   layout->gpos = OT::Sanitizer<OT::GPOS>::lock_instance (layout->gpos_blob);
 
+  layout->math.init (face);
+  layout->fvar.init (face);
+  layout->avar.init (face);
+
   {
     /*
      * The ugly business of blacklisting individual fonts' tables happen here!
@@ -70,12 +69,18 @@ _hb_ot_layout_create (hb_face_t *face)
     unsigned int gsub_len = hb_blob_get_length (layout->gsub_blob);
     unsigned int gpos_len = hb_blob_get_length (layout->gpos_blob);
     if (0
-      || (442 == gdef_len && 42038 == gpos_len && 2874 == gsub_len) /* Windows 7 timesi.ttf */
-      || (430 == gdef_len && 40662 == gpos_len && 2874 == gsub_len) /* Windows 7 timesbi.ttf */
-      || (442 == gdef_len && 39116 == gpos_len && 2874 == gsub_len) /* Windows ??? timesi.ttf */
-      || (430 == gdef_len && 39374 == gpos_len && 2874 == gsub_len) /* Windows ??? timesbi.ttf */
-      || (490 == gdef_len && 41638 == gpos_len && 3046 == gsub_len) /* OS X 10.11.3 Times New Roman Italic.ttf */
-      || (478 == gdef_len && 41902 == gpos_len && 3046 == gsub_len) /* OS X 10.11.3 Times New Roman Bold Italic.ttf */
+      /* sha1sum:c5ee92f0bca4bfb7d06c4d03e8cf9f9cf75d2e8a Windows 7? timesi.ttf */
+      || (442 == gdef_len && 42038 == gpos_len && 2874 == gsub_len)
+      /* sha1sum:37fc8c16a0894ab7b749e35579856c73c840867b Windows 7? timesbi.ttf */
+      || (430 == gdef_len && 40662 == gpos_len && 2874 == gsub_len)
+      /* sha1sum:19fc45110ea6cd3cdd0a5faca256a3797a069a80 Windows 7 timesi.ttf */
+      || (442 == gdef_len && 39116 == gpos_len && 2874 == gsub_len)
+      /* sha1sum:6d2d3c9ed5b7de87bc84eae0df95ee5232ecde26 Windows 7 timesbi.ttf */
+      || (430 == gdef_len && 39374 == gpos_len && 2874 == gsub_len)
+      /* sha1sum:8583225a8b49667c077b3525333f84af08c6bcd8 OS X 10.11.3 Times New Roman Italic.ttf */
+      || (490 == gdef_len && 41638 == gpos_len && 3046 == gsub_len)
+      /* sha1sum:ec0f5a8751845355b7c3271d11f9918a966cb8c9 OS X 10.11.3 Times New Roman Bold Italic.ttf */
+      || (478 == gdef_len && 41902 == gpos_len && 3046 == gsub_len)
     )
     {
       /* In certain versions of Times New Roman Italic and Bold Italic,
@@ -86,6 +91,78 @@ _hb_ot_layout_create (hb_face_t *face)
        */
      if (3 == layout->gdef->get_glyph_class (5))
        layout->gdef = &OT::Null(OT::GDEF);
+    }
+    else if (0
+      /* sha1sum:96eda93f7d33e79962451c6c39a6b51ee893ce8c  tahoma.ttf from Windows 8 */
+      || (898 == gdef_len && 46470 == gpos_len && 12554 == gsub_len)
+      /* sha1sum:20928dc06014e0cd120b6fc942d0c3b1a46ac2bc  tahomabd.ttf from Windows 8 */
+      || (910 == gdef_len && 47732 == gpos_len && 12566 == gsub_len)
+      /* sha1sum:4f95b7e4878f60fa3a39ca269618dfde9721a79e  tahoma.ttf from Windows 8.1 */
+      || (928 == gdef_len && 59332 == gpos_len && 23298 == gsub_len)
+      /* sha1sum:6d400781948517c3c0441ba42acb309584b73033  tahomabd.ttf from Windows 8.1 */
+      || (940 == gdef_len && 60732 == gpos_len && 23310 == gsub_len)
+      /* tahoma.ttf v6.04 from Windows 8.1 x64, see https://bugzilla.mozilla.org/show_bug.cgi?id=1279925 */
+      || (964 == gdef_len && 60072 == gpos_len && 23836 == gsub_len)
+      /* tahomabd.ttf v6.04 from Windows 8.1 x64, see https://bugzilla.mozilla.org/show_bug.cgi?id=1279925 */
+      || (976 == gdef_len && 61456 == gpos_len && 23832 == gsub_len)
+      /* sha1sum:e55fa2dfe957a9f7ec26be516a0e30b0c925f846  tahoma.ttf from Windows 10 */
+      || (994 == gdef_len && 60336 == gpos_len && 24474 == gsub_len)
+      /* sha1sum:7199385abb4c2cc81c83a151a7599b6368e92343  tahomabd.ttf from Windows 10 */
+      || (1006 == gdef_len && 61740 == gpos_len && 24470 == gsub_len)
+      /* tahoma.ttf v6.91 from Windows 10 x64, see https://bugzilla.mozilla.org/show_bug.cgi?id=1279925 */
+      || (1006 == gdef_len && 61346 == gpos_len && 24576 == gsub_len)
+      /* tahomabd.ttf v6.91 from Windows 10 x64, see https://bugzilla.mozilla.org/show_bug.cgi?id=1279925 */
+      || (1018 == gdef_len && 62828 == gpos_len && 24572 == gsub_len)
+      /* sha1sum:b9c84d820c49850d3d27ec498be93955b82772b5  tahoma.ttf from Windows 10 AU */
+      || (1006 == gdef_len && 61352 == gpos_len && 24576 == gsub_len)
+      /* sha1sum:2bdfaab28174bdadd2f3d4200a30a7ae31db79d2  tahomabd.ttf from Windows 10 AU */
+      || (1018 == gdef_len && 62834 == gpos_len && 24572 == gsub_len)
+      /* sha1sum:b0d36cf5a2fbe746a3dd277bffc6756a820807a7  Tahoma.ttf from Mac OS X 10.9 */
+      || (832 == gdef_len && 47162 == gpos_len && 7324 == gsub_len)
+      /* sha1sum:12fc4538e84d461771b30c18b5eb6bd434e30fba  Tahoma Bold.ttf from Mac OS X 10.9 */
+      || (844 == gdef_len && 45474 == gpos_len && 7302 == gsub_len)
+      /* sha1sum:eb8afadd28e9cf963e886b23a30b44ab4fd83acc  himalaya.ttf from Windows 7 */
+      || (180 == gdef_len && 7254 == gpos_len && 13054 == gsub_len)
+      /* sha1sum:73da7f025b238a3f737aa1fde22577a6370f77b0  himalaya.ttf from Windows 8 */
+      || (192 == gdef_len && 7254 == gpos_len && 12638 == gsub_len)
+      /* sha1sum:6e80fd1c0b059bbee49272401583160dc1e6a427  himalaya.ttf from Windows 8.1 */
+      || (192 == gdef_len && 7254 == gpos_len && 12690 == gsub_len)
+      /* 8d9267aea9cd2c852ecfb9f12a6e834bfaeafe44  cantarell-fonts-0.0.21/otf/Cantarell-Regular.otf */
+      /* 983988ff7b47439ab79aeaf9a45bd4a2c5b9d371  cantarell-fonts-0.0.21/otf/Cantarell-Oblique.otf */
+      || (188 == gdef_len && 3852 == gpos_len && 248 == gsub_len)
+      /* 2c0c90c6f6087ffbfea76589c93113a9cbb0e75f  cantarell-fonts-0.0.21/otf/Cantarell-Bold.otf */
+      /* 55461f5b853c6da88069ffcdf7f4dd3f8d7e3e6b  cantarell-fonts-0.0.21/otf/Cantarell-Bold-Oblique.otf */
+      || (188 == gdef_len && 3426 == gpos_len && 264 == gsub_len)
+      /* d125afa82a77a6475ac0e74e7c207914af84b37a padauk-2.80/Padauk.ttf RHEL 7.2 */
+      || (1058 == gdef_len && 11818 == gpos_len && 47032 == gsub_len)
+      /* 0f7b80437227b90a577cc078c0216160ae61b031 padauk-2.80/Padauk-Bold.ttf RHEL 7.2*/
+      || (1046 == gdef_len && 12600 == gpos_len && 47030 == gsub_len)
+      /* d3dde9aa0a6b7f8f6a89ef1002e9aaa11b882290 padauk-2.80/Padauk.ttf Ubuntu 16.04 */
+      || (1058 == gdef_len && 16770 == gpos_len && 71796 == gsub_len)
+      /* 5f3c98ccccae8a953be2d122c1b3a77fd805093f padauk-2.80/Padauk-Bold.ttf Ubuntu 16.04 */
+      || (1046 == gdef_len && 17862 == gpos_len && 71790 == gsub_len)
+      /* 6c93b63b64e8b2c93f5e824e78caca555dc887c7 padauk-2.80/Padauk-book.ttf */
+      || (1046 == gdef_len && 17112 == gpos_len && 71788 == gsub_len)
+      /* d89b1664058359b8ec82e35d3531931125991fb9 padauk-2.80/Padauk-bookbold.ttf */
+      || (1058 == gdef_len && 17514 == gpos_len && 71794 == gsub_len)
+      /* 824cfd193aaf6234b2b4dc0cf3c6ef576c0d00ef padauk-3.0/Padauk-book.ttf */
+      || (1330 == gdef_len && 57938 == gpos_len && 109904 == gsub_len)
+      /* 91fcc10cf15e012d27571e075b3b4dfe31754a8a padauk-3.0/Padauk-bookbold.ttf */
+      || (1330 == gdef_len && 58972 == gpos_len && 109904 == gsub_len)
+      /* sha1sum: c26e41d567ed821bed997e937bc0c41435689e85  Padauk.ttf
+       *  "Padauk Regular" "Version 2.5", see https://crbug.com/681813 */
+      || (1004 == gdef_len && 14836 == gpos_len && 59092 == gsub_len)
+    )
+    {
+      /* Many versions of Tahoma have bad GDEF tables that incorrectly classify some spacing marks
+       * such as certain IPA symbols as glyph class 3. So do older versions of Microsoft Himalaya,
+       * and the version of Cantarell shipped by Ubuntu 16.04.
+       * Nuke the GDEF tables of these fonts to avoid unwanted width-zeroing.
+       * See https://bugzilla.mozilla.org/show_bug.cgi?id=1279925
+       *     https://bugzilla.mozilla.org/show_bug.cgi?id=1279693
+       *     https://bugzilla.mozilla.org/show_bug.cgi?id=1279875
+       */
+      layout->gdef = &OT::Null(OT::GDEF);
     }
   }
 
@@ -125,6 +202,10 @@ _hb_ot_layout_destroy (hb_ot_layout_t *layout)
   hb_blob_destroy (layout->gsub_blob);
   hb_blob_destroy (layout->gpos_blob);
 
+  layout->math.fini ();
+  layout->fvar.fini ();
+  layout->avar.fini ();
+
   free (layout);
 }
 
@@ -146,7 +227,6 @@ _get_gpos (hb_face_t *face)
   if (unlikely (!hb_ot_shaper_face_data_ensure (face))) return OT::Null(OT::GPOS);
   return *hb_ot_layout_from_face (face)->gpos;
 }
-
 
 /*
  * GDEF
@@ -199,7 +279,7 @@ hb_ot_layout_get_ligature_carets (hb_font_t      *font,
 				  hb_codepoint_t  glyph,
 				  unsigned int    start_offset,
 				  unsigned int   *caret_count /* IN/OUT */,
-				  int            *caret_array /* OUT */)
+				  hb_position_t  *caret_array /* OUT */)
 {
   return _get_gdef (font->face).get_lig_carets (font, direction, glyph, start_offset, caret_count, caret_array);
 }
@@ -499,10 +579,13 @@ hb_ot_layout_feature_get_lookups (hb_face_t    *face,
 				  unsigned int *lookup_count /* IN/OUT */,
 				  unsigned int *lookup_indexes /* OUT */)
 {
-  const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
-  const OT::Feature &f = g.get_feature (feature_index);
-
-  return f.get_lookup_indexes (start_offset, lookup_count, lookup_indexes);
+  return hb_ot_layout_feature_with_variations_get_lookups (face,
+							   table_tag,
+							   feature_index,
+							   HB_OT_LAYOUT_NO_VARIATIONS_INDEX,
+							   start_offset,
+							   lookup_count,
+							   lookup_indexes);
 }
 
 /**
@@ -750,6 +833,38 @@ hb_ot_layout_lookup_collect_glyphs (hb_face_t    *face,
       return;
     }
   }
+}
+
+
+/* Variations support */
+
+hb_bool_t
+hb_ot_layout_table_find_feature_variations (hb_face_t    *face,
+					    hb_tag_t      table_tag,
+					    const int    *coords,
+					    unsigned int  num_coords,
+					    unsigned int *variations_index /* out */)
+{
+  const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
+
+  return g.find_variations_index (coords, num_coords, variations_index);
+}
+
+unsigned int
+hb_ot_layout_feature_with_variations_get_lookups (hb_face_t    *face,
+						  hb_tag_t      table_tag,
+						  unsigned int  feature_index,
+						  unsigned int  variations_index,
+						  unsigned int  start_offset,
+						  unsigned int *lookup_count /* IN/OUT */,
+						  unsigned int *lookup_indexes /* OUT */)
+{
+  ASSERT_STATIC (OT::FeatureVariations::NOT_FOUND_INDEX == HB_OT_LAYOUT_NO_VARIATIONS_INDEX);
+  const OT::GSUBGPOS &g = get_gsubgpos_table (face, table_tag);
+
+  const OT::Feature &f = g.get_feature_variation (feature_index, variations_index);
+
+  return f.get_lookup_indexes (start_offset, lookup_count, lookup_indexes);
 }
 
 
@@ -1104,6 +1219,7 @@ inline void hb_ot_map_t::apply (const Proxy &proxy,
       c.set_lookup_index (lookup_index);
       c.set_lookup_mask (lookups[table_index][i].mask);
       c.set_auto_zwj (lookups[table_index][i].auto_zwj);
+      c.set_auto_zwnj (lookups[table_index][i].auto_zwnj);
       apply_string<Proxy> (&c,
 			   proxy.table.get_lookup (lookup_index),
 			   proxy.accels[lookup_index]);

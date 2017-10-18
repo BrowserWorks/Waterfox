@@ -36,7 +36,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(PushSubscriptionOptions)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(PushSubscriptionOptions)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(PushSubscriptionOptions)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
@@ -71,7 +70,6 @@ PushSubscriptionOptions::GetApplicationServerKey(JSContext* aCx,
     }
     MOZ_ASSERT(appServerKey);
     mAppServerKey = appServerKey;
-    JS::ExposeObjectToActiveJS(mAppServerKey);
   }
   aKey.set(mAppServerKey);
 }

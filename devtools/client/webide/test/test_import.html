@@ -8,12 +8,12 @@
 
     <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
     <script type="application/javascript" src="chrome://mochikit/content/chrome-harness.js"></script>
-    <script type="application/javascript;version=1.8" src="head.js"></script>
+    <script type="application/javascript" src="head.js"></script>
     <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
   </head>
 
   <body>
-    <script type="application/javascript;version=1.8">
+    <script type="application/javascript">
       window.onload = function() {
         SimpleTest.waitForExplicitFinish();
 
@@ -29,8 +29,11 @@
           info("to call importPackagedApp(" + packagedAppLocation + ")");
           ok(!win.UI._busyPromise, "UI is not busy");
 
+          let onValidated = waitForUpdate(win, "project-validated");
+          let onDetails = waitForUpdate(win, "details");
           yield winProject.projectList.importPackagedApp(packagedAppLocation);
-          yield waitForUpdate(win, "project-validated");
+          yield onValidated;
+          yield onDetails;
 
           let project = win.AppManager.selectedProject;
           is(project.location, packagedAppLocation, "Location is valid");
@@ -69,7 +72,7 @@
           yield removeAllProjects();
 
           SimpleTest.finish();
-        }).then(null, e => {
+        }).catch(e => {
           ok(false, "Exception: " + e);
           SimpleTest.finish();
         });

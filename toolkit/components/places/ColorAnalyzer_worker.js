@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/chrome-worker */
+
 "use strict";
 
 importScripts("ClusterLib.js", "ColorConversion.js");
@@ -199,7 +201,7 @@ function mergeColors(colorFrequencies, numPixels, threshold) {
                     color & 0xff),
       // the canonical color of the cluster
       // (one w/ highest freq or closest to mean)
-      color: color,
+      color,
       colors: [color],
       highFreq: freq,
       highRatio: freq / numPixels,
@@ -207,7 +209,7 @@ function mergeColors(colorFrequencies, numPixels, threshold) {
       highColor: color,
       // ratio of image taken up by colors in this cluster
       ratio: freq / numPixels,
-      freq: freq,
+      freq,
     };
   });
 
@@ -317,14 +319,14 @@ function merge(item1, item2) {
   const higherItem = item1.highFreq > item2.highFreq ? item1 : item2;
 
   return {
-    mean: mean,
-    color: color,
+    mean,
+    color,
     highFreq: higherItem.highFreq,
     highColor: higherItem.highColor,
     highRatio: higherItem.highRatio,
     ratio: item1.ratio + item2.ratio,
     freq: item1.freq + item2.freq,
-    colors: colors,
+    colors,
   };
 }
 

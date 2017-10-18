@@ -10,6 +10,10 @@ var gSSService = null;
 var gProfileDir = null;
 
 function do_state_written(aSubject, aTopic, aData) {
+  if (aData == PRELOAD_STATE_FILE_NAME) {
+    return;
+  }
+
   equal(aData, SSS_STATE_FILE_NAME);
 
   let stateFile = gProfileDir.clone();
@@ -17,7 +21,7 @@ function do_state_written(aSubject, aTopic, aData) {
   ok(stateFile.exists());
   let stateFileContents = readFile(stateFile);
   // the last part is removed because it's the empty string after the final \n
-  let lines = stateFileContents.split('\n').slice(0, -1);
+  let lines = stateFileContents.split("\n").slice(0, -1);
   // We can receive multiple data-storage-written events. In particular, we
   // may receive one where DataStorage wrote out data before we were done
   // processing all of our headers. In this case, the data may not be
@@ -41,18 +45,24 @@ function do_state_written(aSubject, aTopic, aData) {
 }
 
 function do_state_read(aSubject, aTopic, aData) {
+  if (aData == PRELOAD_STATE_FILE_NAME) {
+    return;
+  }
+
   equal(aData, SSS_STATE_FILE_NAME);
 
-  ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
-                             "frequentlyused.example.com", 0));
+  ok(gSSService.isSecureURI(
+       Ci.nsISiteSecurityService.HEADER_HSTS,
+       Services.io.newURI("https://frequentlyused.example.com"), 0));
   let sslStatus = new FakeSSLStatus();
   for (let i = 0; i < 2000; i++) {
-    let uri = Services.io.newURI("http://bad" + i + ".example.com", null, null);
+    let uri = Services.io.newURI("http://bad" + i + ".example.com");
     gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
-                            "max-age=1000", sslStatus, 0);
+                            "max-age=1000", sslStatus, 0,
+                            Ci.nsISiteSecurityService.SOURCE_ORGANIC_REQUEST);
   }
   do_test_pending();
-  Services.obs.addObserver(do_state_written, "data-storage-written", false);
+  Services.obs.addObserver(do_state_written, "data-storage-written");
   do_test_finished();
 }
 
@@ -69,7 +79,7 @@ function run_test() {
   let line = "frequentlyused.example.com:HSTS\t4\t0\t" + (now + 100000) + ",1,0\n";
   outputStream.write(line, line.length);
   outputStream.close();
-  Services.obs.addObserver(do_state_read, "data-storage-ready", false);
+  Services.obs.addObserver(do_state_read, "data-storage-ready");
   do_test_pending();
   gSSService = Cc["@mozilla.org/ssservice;1"]
                  .getService(Ci.nsISiteSecurityService);

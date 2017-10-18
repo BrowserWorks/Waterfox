@@ -12,9 +12,9 @@ module.metadata = {
 
 
 const { Ci, Cu } = require('chrome');
-const { defer } = require("../lang/functional");
-const { windows, isBrowser } = require('../window/utils');
-const { isPrivateBrowsingSupported } = require('../self');
+lazyRequire(this, "../lang/functional", "defer");
+lazyRequire(this, '../window/utils', "windows", "isBrowser");
+lazyRequire(this, '../self', "isPrivateBrowsingSupported");
 const { ShimWaiver } = Cu.import("resource://gre/modules/ShimWaiver.jsm");
 
 // Bug 834961: ignore private windows when they are not supported
@@ -106,7 +106,7 @@ exports.getActiveTab = getActiveTab;
 function getOwnerWindow(tab) {
   // normal case
   if (tab.ownerDocument)
-    return tab.ownerDocument.defaultView;
+    return tab.ownerGlobal;
 
   // try fennec case
   return getWindowHoldingTab(tab);
@@ -207,7 +207,7 @@ function getTabId(tab) {
   if (tab.browser) // fennec
     return tab.id
 
-  return String.split(tab.linkedPanel, 'panel').pop();
+  return String(tab.linkedPanel).split('panel').pop();
 }
 exports.getTabId = getTabId;
 

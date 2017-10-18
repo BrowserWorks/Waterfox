@@ -2,8 +2,8 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* () {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
+add_task(async function() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://mochi.test:8888/");
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -20,8 +20,9 @@ add_task(function* () {
         ports_received++;
         browser.test.assertEq(1, ports_received, "1 port received");
 
-        port.onMessage.addListener((msg, sender) => {
+        port.onMessage.addListener((msg, msgPort) => {
           browser.test.assertEq("port message", msg, "listener1 port message received");
+          browser.test.assertEq(port, msgPort, "onMessage should receive port as second argument");
 
           port_messages_received++;
           browser.test.assertEq(1, port_messages_received, "1 port message received");
@@ -33,8 +34,9 @@ add_task(function* () {
         ports_received++;
         browser.test.assertEq(2, ports_received, "2 ports received");
 
-        port.onMessage.addListener((msg, sender) => {
+        port.onMessage.addListener((msg, msgPort) => {
           browser.test.assertEq("port message", msg, "listener2 port message received");
+          browser.test.assertEq(port, msgPort, "onMessage should receive port as second argument");
 
           port_messages_received++;
           browser.test.assertEq(2, port_messages_received, "2 port messages received");
@@ -57,9 +59,9 @@ add_task(function* () {
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("contentscript_connect.pass");
-  yield extension.unload();
+  await extension.startup();
+  await extension.awaitFinish("contentscript_connect.pass");
+  await extension.unload();
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

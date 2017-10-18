@@ -62,7 +62,8 @@ ProgramImpl *ContextGL::createProgram(const gl::ProgramState &data)
 
 FramebufferImpl *ContextGL::createFramebuffer(const gl::FramebufferState &data)
 {
-    return new FramebufferGL(data, getFunctions(), getStateManager(), getWorkaroundsGL(), false);
+    return new FramebufferGL(data, getFunctions(), getStateManager(), getWorkaroundsGL(),
+                             mRenderer->getBlitter(), false);
 }
 
 TextureImpl *ContextGL::createTexture(const gl::TextureState &state)
@@ -77,9 +78,9 @@ RenderbufferImpl *ContextGL::createRenderbuffer()
                               getNativeTextureCaps());
 }
 
-BufferImpl *ContextGL::createBuffer()
+BufferImpl *ContextGL::createBuffer(const gl::BufferState &state)
 {
-    return new BufferGL(getFunctions(), getStateManager());
+    return new BufferGL(state, getFunctions(), getStateManager());
 }
 
 VertexArrayImpl *ContextGL::createVertexArray(const gl::VertexArrayState &data)
@@ -89,7 +90,14 @@ VertexArrayImpl *ContextGL::createVertexArray(const gl::VertexArrayState &data)
 
 QueryImpl *ContextGL::createQuery(GLenum type)
 {
-    return new QueryGL(type, getFunctions(), getStateManager());
+    switch (type)
+    {
+        case GL_COMMANDS_COMPLETED_CHROMIUM:
+            return new SyncQueryGL(type, getFunctions(), getStateManager());
+
+        default:
+            return new StandardQueryGL(type, getFunctions(), getStateManager());
+    }
 }
 
 FenceNVImpl *ContextGL::createFenceNV()

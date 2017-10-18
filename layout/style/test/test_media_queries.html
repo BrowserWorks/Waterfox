@@ -36,7 +36,7 @@ function run() {
   var subwin = iframe.contentWindow;
   var style = subdoc.getElementById("style");
   var iframe_style = iframe.style;
-  var body_cs = subdoc.defaultView.getComputedStyle(subdoc.body, "");
+  var body_cs = subdoc.defaultView.getComputedStyle(subdoc.body);
 
   function query_applies(q) {
     style.setAttribute("media", q);
@@ -158,20 +158,21 @@ function run() {
     var htmldoc = "<!DOCTYPE HTML>" + link + link  + "<body>";
     var docurl = "data:text/html," + escape(htmldoc);
     post_clone_test(docurl, function() {
-      var clonedoc = iframe.contentDocument;
-      var clonewin = iframe.contentWindow;
+      var wrappedFrame = SpecialPowers.wrap(iframe);
+      var clonedoc = wrappedFrame.contentDocument;
+      var clonewin = wrappedFrame.contentWindow;
       var links = clonedoc.getElementsByTagName("link");
       // cause a clone
       var clonedsheet = links[1].sheet;
       clonedsheet.insertRule("#nonexistent { color: purple}", 1);
       // remove the uncloned sheet
-      links[0].parentNode.removeChild(links[0]);
+      links[0].remove();
 
       var ser3 = clonedsheet.cssRules[0].media.mediaText;
       is(ser3, ser1, "cloning query '" + q + "' should not change " +
                      "serialization");
       if (test_application) {
-        var applies = clonewin.getComputedStyle(clonedoc.body, "").
+        var applies = clonewin.getComputedStyle(clonedoc.body).
                         textDecoration == "underline";
         is(applies, should_apply,
            "Media query '" + q + "' should " + (should_apply ? "" : "NOT ") +
@@ -624,13 +625,11 @@ function run() {
   expression_should_be_parseable("-moz-scrollbar-end-backward");
   expression_should_be_parseable("-moz-scrollbar-end-forward");
   expression_should_be_parseable("-moz-scrollbar-thumb-proportional");
-  expression_should_be_parseable("-moz-images-in-menus");
-  expression_should_be_parseable("-moz-images-in-buttons");
   expression_should_be_parseable("-moz-overlay-scrollbars");
   expression_should_be_parseable("-moz-windows-default-theme");
   expression_should_be_parseable("-moz-mac-graphite-theme");
-  expression_should_be_parseable("-moz-mac-lion-theme");
   expression_should_be_parseable("-moz-mac-yosemite-theme");
+  expression_should_be_parseable("-moz-windows-accent-color-in-titlebar");
   expression_should_be_parseable("-moz-windows-compositor");
   expression_should_be_parseable("-moz-windows-classic");
   expression_should_be_parseable("-moz-windows-glass");
@@ -642,13 +641,11 @@ function run() {
   expression_should_be_parseable("-moz-scrollbar-end-backward: 0");
   expression_should_be_parseable("-moz-scrollbar-end-forward: 0");
   expression_should_be_parseable("-moz-scrollbar-thumb-proportional: 0");
-  expression_should_be_parseable("-moz-images-in-menus: 0");
-  expression_should_be_parseable("-moz-images-in-buttons: 0");
   expression_should_be_parseable("-moz-overlay-scrollbars: 0");
   expression_should_be_parseable("-moz-windows-default-theme: 0");
   expression_should_be_parseable("-moz-mac-graphite-theme: 0");
-  expression_should_be_parseable("-moz-mac-lion-theme: 0");
   expression_should_be_parseable("-moz-mac-yosemite-theme: 0");
+  expression_should_be_parseable("-moz-windows-accent-color-in-titlebar: 0");
   expression_should_be_parseable("-moz-windows-compositor: 0");
   expression_should_be_parseable("-moz-windows-classic: 0");
   expression_should_be_parseable("-moz-windows-glass: 0");
@@ -660,13 +657,11 @@ function run() {
   expression_should_be_parseable("-moz-scrollbar-end-backward: 1");
   expression_should_be_parseable("-moz-scrollbar-end-forward: 1");
   expression_should_be_parseable("-moz-scrollbar-thumb-proportional: 1");
-  expression_should_be_parseable("-moz-images-in-menus: 1");
-  expression_should_be_parseable("-moz-images-in-buttons: 1");
   expression_should_be_parseable("-moz-overlay-scrollbars: 1");
   expression_should_be_parseable("-moz-windows-default-theme: 1");
   expression_should_be_parseable("-moz-mac-graphite-theme: 1");
-  expression_should_be_parseable("-moz-mac-lion-theme: 1");
   expression_should_be_parseable("-moz-mac-yosemite-theme: 1");
+  expression_should_be_parseable("-moz-windows-accent-color-in-titlebar: 1");
   expression_should_be_parseable("-moz-windows-compositor: 1");
   expression_should_be_parseable("-moz-windows-classic: 1");
   expression_should_be_parseable("-moz-windows-glass: 1");
@@ -678,13 +673,11 @@ function run() {
   expression_should_not_be_parseable("-moz-scrollbar-end-backward: -1");
   expression_should_not_be_parseable("-moz-scrollbar-end-forward: -1");
   expression_should_not_be_parseable("-moz-scrollbar-thumb-proportional: -1");
-  expression_should_not_be_parseable("-moz-images-in-menus: -1");
-  expression_should_not_be_parseable("-moz-images-in-buttons: -1");
   expression_should_not_be_parseable("-moz-overlay-scrollbars: -1");
   expression_should_not_be_parseable("-moz-windows-default-theme: -1");
   expression_should_not_be_parseable("-moz-mac-graphite-theme: -1");
-  expression_should_not_be_parseable("-moz-mac-lion-theme: -1");
   expression_should_not_be_parseable("-moz-mac-yosemite-theme: -1");
+  expression_should_not_be_parseable("-moz-windows-accent-color-in-titlebar: -1");
   expression_should_not_be_parseable("-moz-windows-compositor: -1");
   expression_should_not_be_parseable("-moz-windows-classic: -1");
   expression_should_not_be_parseable("-moz-windows-glass: -1");
@@ -696,13 +689,11 @@ function run() {
   expression_should_not_be_parseable("-moz-scrollbar-end-backward: true");
   expression_should_not_be_parseable("-moz-scrollbar-end-forward: true");
   expression_should_not_be_parseable("-moz-scrollbar-thumb-proportional: true");
-  expression_should_not_be_parseable("-moz-images-in-menus: true");
-  expression_should_not_be_parseable("-moz-images-in-buttons: true");
   expression_should_not_be_parseable("-moz-overlay-scrollbars: true");
   expression_should_not_be_parseable("-moz-windows-default-theme: true");
   expression_should_not_be_parseable("-moz-mac-graphite-theme: true");
-  expression_should_not_be_parseable("-moz-mac-lion-theme: true");
   expression_should_not_be_parseable("-moz-mac-yosemite-theme: true");
+  expression_should_not_be_parseable("-moz-windows-accent-color-in-titlebar: true");
   expression_should_not_be_parseable("-moz-windows-compositor: true");
   expression_should_not_be_parseable("-moz-windows-classic: true");
   expression_should_not_be_parseable("-moz-windows-glass: true");
@@ -723,8 +714,6 @@ function run() {
   expression_should_not_be_parseable("-moz-windows-theme: ");
 
   // os version media queries (currently windows only)
-  expression_should_be_parseable("-moz-os-version: windows-xp");
-  expression_should_be_parseable("-moz-os-version: windows-vista");
   expression_should_be_parseable("-moz-os-version: windows-win7");
   expression_should_be_parseable("-moz-os-version: windows-win8");
   expression_should_be_parseable("-moz-os-version: windows-win10");

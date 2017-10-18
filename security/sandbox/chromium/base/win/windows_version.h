@@ -5,10 +5,12 @@
 #ifndef BASE_WIN_WINDOWS_VERSION_H_
 #define BASE_WIN_WINDOWS_VERSION_H_
 
+#include <stddef.h>
+
 #include <string>
 
 #include "base/base_export.h"
-#include "base/basictypes.h"
+#include "base/macros.h"
 
 typedef void* HANDLE;
 
@@ -19,16 +21,20 @@ namespace win {
 // syntactic sugar reasons; see the declaration of GetVersion() below.
 // NOTE: Keep these in order so callers can do things like
 // "if (base::win::GetVersion() >= base::win::VERSION_VISTA) ...".
+//
+// This enum is used in metrics histograms, so they shouldn't be reordered or
+// removed. New values can be added before VERSION_WIN_LAST.
 enum Version {
   VERSION_PRE_XP = 0,  // Not supported.
-  VERSION_XP,
-  VERSION_SERVER_2003, // Also includes XP Pro x64 and Server 2003 R2.
-  VERSION_VISTA,       // Also includes Windows Server 2008.
-  VERSION_WIN7,        // Also includes Windows Server 2008 R2.
-  VERSION_WIN8,        // Also includes Windows Server 2012.
-  VERSION_WIN8_1,      // Also includes Windows Server 2012 R2.
-  VERSION_WIN10,       // Also includes Windows 10 Server.
-  VERSION_WIN_LAST,    // Indicates error condition.
+  VERSION_XP = 1,
+  VERSION_SERVER_2003 = 2,  // Also includes XP Pro x64 and Server 2003 R2.
+  VERSION_VISTA = 3,        // Also includes Windows Server 2008.
+  VERSION_WIN7 = 4,         // Also includes Windows Server 2008 R2.
+  VERSION_WIN8 = 5,         // Also includes Windows Server 2012.
+  VERSION_WIN8_1 = 6,       // Also includes Windows Server 2012 R2.
+  VERSION_WIN10 = 7,        // Also includes Windows 10 Server.
+  VERSION_WIN10_TH2 = 8,    // Threshold 2: Version 1511, Build 10586.
+  VERSION_WIN_LAST,         // Indicates error condition.
 };
 
 // A rough bucketing of the available types of versions of Windows. This is used
@@ -50,6 +56,7 @@ class BASE_EXPORT OSInfo {
     int major;
     int minor;
     int build;
+    int patch;
   };
 
   struct ServicePack {
@@ -83,10 +90,12 @@ class BASE_EXPORT OSInfo {
   static OSInfo* GetInstance();
 
   Version version() const { return version_; }
+  Version Kernel32Version() const;
   // The next two functions return arrays of values, [major, minor(, build)].
   VersionNumber version_number() const { return version_number_; }
   VersionType version_type() const { return version_type_; }
   ServicePack service_pack() const { return service_pack_; }
+  std::string service_pack_str() const { return service_pack_str_; }
   WindowsArchitecture architecture() const { return architecture_; }
   int processors() const { return processors_; }
   size_t allocation_granularity() const { return allocation_granularity_; }
@@ -102,9 +111,16 @@ class BASE_EXPORT OSInfo {
   ~OSInfo();
 
   Version version_;
+  mutable Version kernel32_version_;
+  mutable bool got_kernel32_version_;
   VersionNumber version_number_;
   VersionType version_type_;
   ServicePack service_pack_;
+
+  // A string, such as "Service Pack 3", that indicates the latest Service Pack
+  // installed on the system. If no Service Pack has been installed, the string
+  // is empty.
+  std::string service_pack_str_;
   WindowsArchitecture architecture_;
   int processors_;
   size_t allocation_granularity_;

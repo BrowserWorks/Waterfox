@@ -35,12 +35,13 @@ namespace dom {
 class ExplicitChildIterator
 {
 public:
-  explicit ExplicitChildIterator(nsIContent* aParent, bool aStartAtBeginning = true)
+  explicit ExplicitChildIterator(const nsIContent* aParent,
+                                 bool aStartAtBeginning = true)
     : mParent(aParent),
       mChild(nullptr),
       mDefaultChild(nullptr),
-      mIndexInInserted(0),
-      mIsFirst(aStartAtBeginning)
+      mIsFirst(aStartAtBeginning),
+      mIndexInInserted(0)
   {
   }
 
@@ -50,13 +51,15 @@ public:
       mShadowIterator(aOther.mShadowIterator ?
                       new ExplicitChildIterator(*aOther.mShadowIterator) :
                       nullptr),
-      mIndexInInserted(aOther.mIndexInInserted), mIsFirst(aOther.mIsFirst) {}
+      mIsFirst(aOther.mIsFirst),
+      mIndexInInserted(aOther.mIndexInInserted) {}
 
   ExplicitChildIterator(ExplicitChildIterator&& aOther)
     : mParent(aOther.mParent), mChild(aOther.mChild),
       mDefaultChild(aOther.mDefaultChild),
       mShadowIterator(Move(aOther.mShadowIterator)),
-      mIndexInInserted(aOther.mIndexInInserted), mIsFirst(aOther.mIsFirst) {}
+      mIsFirst(aOther.mIsFirst),
+      mIndexInInserted(aOther.mIndexInInserted) {}
 
   nsIContent* GetNextChild();
 
@@ -99,7 +102,7 @@ protected:
   // The parent of the children being iterated. For the FlattenedChildIterator,
   // if there is a binding attached to the original parent, mParent points to
   // the <xbl:content> element for the binding.
-  nsIContent* mParent;
+  const nsIContent* mParent;
 
   // The current child. When we encounter an insertion point,
   // mChild remains as the insertion point whose content we're iterating (and
@@ -118,14 +121,14 @@ protected:
   // iterating.
   nsAutoPtr<ExplicitChildIterator> mShadowIterator;
 
+  // A flag to let us know that we haven't started iterating yet.
+  bool mIsFirst;
+
   // If not zero, we're iterating inserted children for an insertion point. This
   // is an index into mChild's inserted children array (mChild must be an
   // nsXBLChildrenElement). The index is one past the "current" child (as
   // opposed to mChild which represents the "current" child).
   uint32_t mIndexInInserted;
-
-  // A flag to let us know that we haven't started iterating yet.
-  bool mIsFirst;
 };
 
 // Iterates over the flattened children of a node, which accounts for anonymous
@@ -136,7 +139,8 @@ protected:
 class FlattenedChildIterator : public ExplicitChildIterator
 {
 public:
-  explicit FlattenedChildIterator(nsIContent* aParent, bool aStartAtBeginning = true)
+  explicit FlattenedChildIterator(const nsIContent* aParent,
+                                  bool aStartAtBeginning = true)
     : ExplicitChildIterator(aParent, aStartAtBeginning), mXBLInvolved(false)
   {
     Init(false);
@@ -155,7 +159,8 @@ protected:
    * This constructor is a hack to help AllChildrenIterator which sometimes
    * doesn't want to consider XBL.
    */
-  FlattenedChildIterator(nsIContent* aParent, uint32_t aFlags, bool aStartAtBeginning = true)
+  FlattenedChildIterator(const nsIContent* aParent, uint32_t aFlags,
+                         bool aStartAtBeginning = true)
     : ExplicitChildIterator(aParent, aStartAtBeginning), mXBLInvolved(false)
   {
     bool ignoreXBL = aFlags & nsIContent::eAllButXBL;
@@ -181,7 +186,8 @@ protected:
 class AllChildrenIterator : private FlattenedChildIterator
 {
 public:
-  AllChildrenIterator(nsIContent* aNode, uint32_t aFlags, bool aStartAtBeginning = true) :
+  AllChildrenIterator(const nsIContent* aNode, uint32_t aFlags,
+                      bool aStartAtBeginning = true) :
     FlattenedChildIterator(aNode, aFlags, aStartAtBeginning),
     mOriginalContent(aNode), mAnonKidsIdx(aStartAtBeginning ? UINT32_MAX : 0),
     mFlags(aFlags), mPhase(aStartAtBeginning ? eAtBegin : eAtEnd) { }
@@ -211,7 +217,7 @@ public:
 
   nsIContent* GetNextChild();
   nsIContent* GetPreviousChild();
-  nsIContent* Parent() const { return mOriginalContent; }
+  const nsIContent* Parent() const { return mOriginalContent; }
 
   enum IteratorPhase
   {
@@ -225,7 +231,9 @@ public:
   IteratorPhase Phase() const { return mPhase; }
 
 private:
-  nsIContent* mOriginalContent;
+  // Helpers.
+  void AppendNativeAnonymousChildren();
+  const nsIContent* mOriginalContent;
 
   // mAnonKids is an array of native anonymous children, mAnonKidsIdx is index
   // in the array. If mAnonKidsIdx < mAnonKids.Length() and mPhase is
@@ -243,6 +251,38 @@ private:
   // there's no easy way to do that.
   nsMutationGuard mMutationGuard;
 #endif
+};
+
+/**
+ * StyleChildrenIterator traverses the children of the element from the
+ * perspective of the style system, particularly the children we need to
+ * traverse during restyle.
+ *
+ * At present, this is identical to AllChildrenIterator with
+ * (eAllChildren | eSkipDocumentLevelNativeAnonymousContent). We used to have
+ * detect and skip any native anonymous children that are used to implement some
+ * special magic in here that went away, but we keep the separate class so
+ * we can reintroduce special magic back if needed.
+ *
+ * Note: it assumes that no mutation of the DOM or frame tree takes place during
+ * iteration, and will break horribly if that is not true.
+ *
+ * We require this to be memmovable since Rust code can create and move
+ * StyleChildrenIterators.
+ */
+class MOZ_NEEDS_MEMMOVABLE_MEMBERS StyleChildrenIterator : private AllChildrenIterator
+{
+public:
+  explicit StyleChildrenIterator(const nsIContent* aContent)
+    : AllChildrenIterator(aContent,
+                          nsIContent::eAllChildren |
+                          nsIContent::eSkipDocumentLevelNativeAnonymousContent)
+  {
+    MOZ_COUNT_CTOR(StyleChildrenIterator);
+  }
+  ~StyleChildrenIterator() { MOZ_COUNT_DTOR(StyleChildrenIterator); }
+
+  nsIContent* GetNextChild();
 };
 
 } // namespace dom

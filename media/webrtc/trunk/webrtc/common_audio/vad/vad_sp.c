@@ -10,8 +10,7 @@
 
 #include "webrtc/common_audio/vad/vad_sp.h"
 
-#include <assert.h>
-
+#include "webrtc/base/checks.h"
 #include "webrtc/common_audio/signal_processing/include/signal_processing_library.h"
 #include "webrtc/common_audio/vad/vad_core.h"
 #include "webrtc/typedefs.h"
@@ -27,12 +26,13 @@ static const int16_t kSmoothingUp = 32439;  // 0.99 in Q15.
 void WebRtcVad_Downsampling(const int16_t* signal_in,
                             int16_t* signal_out,
                             int32_t* filter_state,
-                            int in_length) {
+                            size_t in_length) {
   int16_t tmp16_1 = 0, tmp16_2 = 0;
   int32_t tmp32_1 = filter_state[0];
   int32_t tmp32_2 = filter_state[1];
-  int n = 0;
-  int half_length = (in_length >> 1);  // Downsampling by 2 gives half length.
+  size_t n = 0;
+  // Downsampling by 2 gives half length.
+  size_t half_length = (in_length >> 1);
 
   // Filter coefficients in Q13, filter state in Q0.
   for (n = 0; n < half_length; n++) {
@@ -71,7 +71,7 @@ int16_t WebRtcVad_FindMinimum(VadInstT* self,
   int16_t* age = &self->index_vector[offset];
   int16_t* smallest_values = &self->low_value_vector[offset];
 
-  assert(channel < kNumChannels);
+  RTC_DCHECK_LT(channel, kNumChannels);
 
   // Each value in |smallest_values| is getting 1 loop older. Update |age|, and
   // remove old values.

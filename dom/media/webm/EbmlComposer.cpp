@@ -10,6 +10,7 @@
 #include "libmkv/EbmlWriter.h"
 #include "libmkv/WebMElement.h"
 #include "prtime.h"
+#include "limits.h"
 
 namespace mozilla {
 
@@ -45,7 +46,7 @@ void EbmlComposer::GenerateHeader()
           if (mWidth > 0 && mHeight > 0) {
             writeVideoTrack(&ebml, 0x1, 0, "V_VP8",
                             mWidth, mHeight,
-                            mDisplayWidth, mDisplayHeight, mFrameRate);
+                            mDisplayWidth, mDisplayHeight);
           }
           // Audio
           if (mCodecPrivateData.Length() > 0) {
@@ -124,33 +125,47 @@ EbmlComposer::WriteSimpleBlock(EncodedFrame* aFrame)
   ebml.offset = 0;
 
   auto frameType = aFrame->GetFrameType();
+  bool flush = false;
   bool isVP8IFrame = (frameType == EncodedFrame::FrameType::VP8_I_FRAME);
   if (isVP8IFrame) {
     FinishCluster();
+    flush = true;
+  } else {
+    // Force it to calculate timecode using signed math via cast
+    int64_t timeCode = (aFrame->GetTimeStamp() / ((int) PR_USEC_PER_MSEC) - mClusterTimecode) +
+                       (mCodecDelay / PR_NSEC_PER_MSEC);
+    if (timeCode < SHRT_MIN || timeCode > SHRT_MAX ) {
+      // We're probably going to overflow (or underflow) the timeCode value later!
+      FinishCluster();
+      flush = true;
+    }
   }
 
   auto block = mClusterBuffs.AppendElement();
   block->SetLength(aFrame->GetFrameData().Length() + DEFAULT_HEADER_SIZE);
   ebml.buf = block->Elements();
 
-  if (isVP8IFrame) {
+  if (flush) {
     EbmlLoc ebmlLoc;
     Ebml_StartSubElement(&ebml, &ebmlLoc, Cluster);
     MOZ_ASSERT(mClusterBuffs.Length() > 0);
     // current cluster header array index
     mClusterHeaderIndex = mClusterBuffs.Length() - 1;
     mClusterLengthLoc = ebmlLoc.offset;
+    // if timeCode didn't under/overflow before, it shouldn't after this
     mClusterTimecode = aFrame->GetTimeStamp() / PR_USEC_PER_MSEC;
     Ebml_SerializeUnsigned(&ebml, Timecode, mClusterTimecode);
     mFlushState |= FLUSH_CLUSTER;
   }
 
   bool isOpus = (frameType == EncodedFrame::FrameType::OPUS_AUDIO_FRAME);
-  short timeCode = aFrame->GetTimeStamp() / PR_USEC_PER_MSEC - mClusterTimecode;
+  // Can't underflow/overflow now
+  int64_t timeCode = aFrame->GetTimeStamp() / ((int) PR_USEC_PER_MSEC) - mClusterTimecode;
   if (isOpus) {
     timeCode += mCodecDelay / PR_NSEC_PER_MSEC;
   }
-  writeSimpleBlock(&ebml, isOpus ? 0x2 : 0x1, timeCode, isVP8IFrame,
+  MOZ_ASSERT(timeCode >= SHRT_MIN && timeCode <= SHRT_MAX);
+  writeSimpleBlock(&ebml, isOpus ? 0x2 : 0x1, static_cast<short>(timeCode), isVP8IFrame,
                    0, 0, (unsigned char*)aFrame->GetFrameData().Elements(),
                    aFrame->GetFrameData().Length());
   MOZ_ASSERT(ebml.offset <= DEFAULT_HEADER_SIZE +
@@ -161,19 +176,16 @@ EbmlComposer::WriteSimpleBlock(EncodedFrame* aFrame)
 
 void
 EbmlComposer::SetVideoConfig(uint32_t aWidth, uint32_t aHeight,
-                             uint32_t aDisplayWidth, uint32_t aDisplayHeight,
-                             float aFrameRate)
+                             uint32_t aDisplayWidth, uint32_t aDisplayHeight)
 {
   MOZ_ASSERT(aWidth > 0, "Width should > 0");
   MOZ_ASSERT(aHeight > 0, "Height should > 0");
   MOZ_ASSERT(aDisplayWidth > 0, "DisplayWidth should > 0");
   MOZ_ASSERT(aDisplayHeight > 0, "DisplayHeight should > 0");
-  MOZ_ASSERT(aFrameRate > 0, "FrameRate should > 0");
   mWidth = aWidth;
   mHeight = aHeight;
   mDisplayWidth = aDisplayWidth;
   mDisplayHeight = aDisplayHeight;
-  mFrameRate = aFrameRate;
 }
 
 void
@@ -213,7 +225,6 @@ EbmlComposer::EbmlComposer()
   , mClusterTimecode(0)
   , mWidth(0)
   , mHeight(0)
-  , mFrameRate(0)
   , mSampleFreq(0)
   , mChannels(0)
 {}

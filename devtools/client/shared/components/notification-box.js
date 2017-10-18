@@ -6,6 +6,8 @@
 
 const React = require("devtools/client/shared/vendor/react");
 const Immutable = require("devtools/client/shared/vendor/immutable");
+const { LocalizationHelper } = require("devtools/shared/l10n");
+const l10n = new LocalizationHelper("devtools/client/locales/components.properties");
 
 // Shortcuts
 const { PropTypes, createClass, DOM } = React;
@@ -27,7 +29,7 @@ const PriorityLevels = {
 
 /**
  * This component represents Notification Box - HTML alternative for
- * <xul:notifictionbox> binding.
+ * <xul:notificationbox> binding.
  *
  * See also MDN for more info about <xul:notificationbox>:
  * https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XUL/notificationbox
@@ -74,6 +76,15 @@ var NotificationBox = createClass({
       // with the notification box.
       eventCallback: PropTypes.func,
     })),
+
+    // Message that should be shown when hovering over the close button
+    closeButtonTooltip: PropTypes.string
+  },
+
+  getDefaultProps() {
+    return {
+      closeButtonTooltip: l10n.getStr("notificationBox.closeTooltip")
+    };
   },
 
   getInitialState() {
@@ -224,6 +235,7 @@ var NotificationBox = createClass({
           ),
           div({
             className: "messageCloseButton",
+            title: this.props.closeButtonTooltip,
             onClick: this.close.bind(this, notification)}
           )
         )

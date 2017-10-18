@@ -43,9 +43,10 @@ public:
     void  init();
 
     /*
-     * Recommend a color type based on the encoded format
+     * Returns true if it successfully sets outColor to the encoded color,
+     * and false otherwise.
      */
-    SkColorType getColorType();
+    bool getEncodedColor(SkEncodedInfo::Color* outColor);
 
     /*
      * Free memory used by the decode manager
@@ -67,6 +68,7 @@ private:
     jpeg_decompress_struct fDInfo;
     skjpeg_source_mgr      fSrcMgr;
     skjpeg_error_mgr       fErrorMgr;
+    jpeg_progress_mgr      fProgressMgr;
     bool                   fInit;
 };
 

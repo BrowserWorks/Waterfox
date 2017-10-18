@@ -1,4 +1,4 @@
-/*-*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
  *vim: sw=2 ts=2 et lcs=trail\:.,tab\:>~ :
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,7 @@
  * SQLITE_SECURE_DELETE=1.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Helper Methods
+// Helper Methods
 
 /**
  * Reads the contents of a file and returns it as a string.
@@ -19,8 +18,7 @@
  *        The file to return from.
  * @return the contents of the file in the form of a string.
  */
-function getFileContents(aFile)
-{
+function getFileContents(aFile) {
   let fstream = Cc["@mozilla.org/network/file-input-stream;1"].
                 createInstance(Ci.nsIFileInputStream);
   fstream.init(aFile, -1, 0, 0);
@@ -31,8 +29,7 @@ function getFileContents(aFile)
   return bstream.readBytes(bstream.available());
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 add_test(function test_delete_removes_data() {
   const TEST_STRING = "SomeRandomStringToFind";
@@ -46,8 +43,7 @@ add_test(function test_delete_removes_data() {
   stmt.params.data = TEST_STRING;
   try {
     stmt.execute();
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
 
@@ -62,8 +58,7 @@ add_test(function test_delete_removes_data() {
   stmt.params.data = TEST_STRING;
   try {
     stmt.execute();
-  }
-  finally {
+  } finally {
     stmt.finalize();
   }
   db.close();
@@ -75,8 +70,7 @@ add_test(function test_delete_removes_data() {
   run_next_test();
 });
 
-function run_test()
-{
+function run_test() {
   cleanup();
   run_next_test();
 }

@@ -37,11 +37,10 @@ protected:
   virtual ~nsSliderMediator() {}
 };
 
-class nsSliderFrame : public nsBoxFrame
+class nsSliderFrame final : public nsBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
-  NS_DECL_QUERYFRAME_TARGET(nsSliderFrame)
+  NS_DECL_FRAMEARENA_HELPERS(nsSliderFrame)
   NS_DECL_QUERYFRAME
 
   friend class nsSliderMediator;
@@ -70,7 +69,7 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
- 
+
   virtual nsresult AttributeChanged(int32_t aNameSpaceID,
                                     nsIAtom* aAttribute,
                                     int32_t aModType) override;
@@ -83,8 +82,6 @@ public:
   virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
-
-  virtual nsIAtom* GetType() const override;
 
   // nsContainerFrame overrides
   virtual void SetInitialChildList(ChildListID     aListID,
@@ -100,7 +97,7 @@ public:
   nsresult StartDrag(nsIDOMEvent* aEvent);
   nsresult StopDrag();
 
-  bool StartAPZDrag();
+  void StartAPZDrag(mozilla::WidgetGUIEvent* aEvent);
 
   static int32_t GetCurrentPosition(nsIContent* content);
   static int32_t GetMinPosition(nsIContent* content);
@@ -137,6 +134,13 @@ public:
   // scrolled frame.
   float GetThumbRatio() const;
 
+  // Notify the slider frame than an async scrollbar drag requested in
+  // StartAPZDrag() was rejected by APZ, and the slider frame should
+  // fall back to main-thread dragging.
+  void AsyncScrollbarDragRejected();
+
+  bool OnlySystemGroupDispatch(mozilla::EventMessage aMessage) const override;
+
 private:
 
   bool GetScrollToClick();
@@ -158,8 +162,13 @@ private:
   void RemoveListener();
   bool isDraggingThumb();
 
+  void SuppressDisplayport();
+  void UnsuppressDisplayport();
+
   void StartRepeat() {
-    nsRepeatService::GetInstance()->Start(Notify, this);
+    nsRepeatService::GetInstance()->Start(Notify, this,
+                                          mContent->OwnerDoc(),
+                                          NS_LITERAL_CSTRING("nsSliderFrame"));
   }
   void StopRepeat() {
     nsRepeatService::GetInstance()->Stop(Notify, this);
@@ -169,7 +178,7 @@ private:
     (static_cast<nsSliderFrame*>(aData))->Notify();
   }
   void PageScroll(nscoord aChange);
- 
+
   nsPoint mDestinationPoint;
   RefPtr<nsSliderMediator> mMediator;
 

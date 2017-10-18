@@ -60,15 +60,15 @@ private:
   }
 
   virtual void
-  GetPath(nsAString& aPath) const override
+  GetDOMPath(nsAString& aPath) const override
   {
-    mBlobImpl->GetPath(aPath);
+    mBlobImpl->GetDOMPath(aPath);
   }
 
   virtual void
-  SetPath(const nsAString& aPath) override
+  SetDOMPath(const nsAString& aPath) override
   {
-    mBlobImpl->SetPath(aPath);
+    mBlobImpl->SetDOMPath(aPath);
   }
 
   virtual int64_t
@@ -84,9 +84,10 @@ private:
   }
 
   virtual void
-  GetMozFullPath(nsAString& aName, ErrorResult& aRv) const override
+  GetMozFullPath(nsAString& aName, SystemCallerGuarantee aGuarantee,
+                 ErrorResult& aRv) const override
   {
-    mBlobImpl->GetMozFullPath(aName, aRv);
+    mBlobImpl->GetMozFullPath(aName, aGuarantee, aRv);
   }
 
   virtual void

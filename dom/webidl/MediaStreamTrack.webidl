@@ -55,6 +55,11 @@ dictionary MediaTrackConstraintSet {
     ConstrainLong viewportWidth;
     ConstrainLong viewportHeight;
     ConstrainBoolean echoCancellation;
+    ConstrainBoolean noiseSuppression;
+    ConstrainBoolean autoGainControl;
+    ConstrainLong channelCount;
+
+    // Deprecated with warnings:
     ConstrainBoolean mozNoiseSuppression;
     ConstrainBoolean mozAutoGainControl;
 };
@@ -87,7 +92,7 @@ interface MediaStreamTrack : EventTarget {
     MediaTrackConstraints  getConstraints ();
     MediaTrackSettings     getSettings ();
 
-    [Throws]
+    [Throws, NeedsCallerType]
     Promise<void>          applyConstraints (optional MediaTrackConstraints constraints);
 //              attribute EventHandler          onoverconstrained;
 };

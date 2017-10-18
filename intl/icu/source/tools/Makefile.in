@@ -1,4 +1,6 @@
 ## Makefile.in for ICU tools
+## Copyright (C) 2016 and later: Unicode, Inc. and others.
+## License & terms of use: http://www.unicode.org/copyright.html
 ## Copyright (c) 1999-2012, International Business Machines Corporation and
 ## others. All Rights Reserved.
 
@@ -16,6 +18,10 @@ subdir = tools
 SUBDIRS = toolutil ctestfw makeconv genrb genbrk \
 gencnval gensprep icuinfo genccode gencmn icupkg pkgdata \
 gentest gennorm2 gencfu gendict
+
+ifneq (@platform_make_fragment_name@,mh-cygwin-msvc)
+SUBDIRS += escapesrc
+endif
 
 ## List of phony targets
 .PHONY : all all-local all-recursive install install-local	\

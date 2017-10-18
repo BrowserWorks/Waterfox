@@ -22,7 +22,7 @@
 
         this.addEventListener("keypress", function(event) {
           event.stopPropagation();
-        }, false);
+        });
 
         if (this.usePref)
           Services.prefs.addObserver(this.pref, this._observer, true);
@@ -31,7 +31,7 @@
       <field name="_observer"><![CDATA[({
         _self: this,
 
-        QueryInterface: function(aIID) {
+        QueryInterface(aIID) {
           const Ci = Components.interfaces;
           if (aIID.equals(Ci.nsIObserver) ||
               aIID.equals(Ci.nsISupportsWeakReference) ||
@@ -41,7 +41,7 @@
           throw Components.Exception("No interface", Components.results.NS_ERROR_NO_INTERFACE);
         },
 
-        observe: function(aSubject, aTopic, aPrefName) {
+        observe(aSubject, aTopic, aPrefName) {
           if (aTopic != "nsPref:changed")
             return;
 
@@ -65,8 +65,7 @@
               event.initEvent(eventName, true, true);
               let f = new Function("event", body);
               f.call(this, event);
-            }
-            catch (e) {
+            } catch (e) {
               Cu.reportError(e);
             }
           ]]>
@@ -206,7 +205,7 @@
         <body>
         <![CDATA[
           let val = Services.prefs.getComplexValue(this.pref, Components.interfaces.nsIPrefLocalizedString).data;
-          if(this.inverted) val = !val;
+          if (this.inverted) val = !val;
           this.value = (val == "true");
          ]]>
         </body>
@@ -216,7 +215,7 @@
         <body>
         <![CDATA[
           let val = this.value;
-          if(this.inverted) val = !val;
+          if (this.inverted) val = !val;
           let pref = Components.classes["@mozilla.org/pref-localizedstring;1"].createInstance(Components.interfaces.nsIPrefLocalizedString);
           pref.data = this.inverted ? (!val).toString() : val.toString();
           Services.prefs.setComplexValue(this.pref, Components.interfaces.nsIPrefLocalizedString, pref);
@@ -375,10 +374,12 @@
               }
             } catch (e) {}
           }
-          if (filePicker.show() != Ci.nsIFilePicker.returnCancel) {
-            this.value = filePicker.file.path;
-            this.inputChanged();
-          }
+          filePicker.open(rv => {
+            if (rv != Ci.nsIFilePicker.returnCancel && filePicker.file) {
+              this.value = filePicker.file.path;
+              this.inputChanged();
+            }
+          });
         ]]>
         </body>
       </method>
@@ -442,7 +443,7 @@
     <implementation>
       <constructor>
       <![CDATA[
-        this.control.addEventListener("command", this.inputChanged.bind(this), false);
+        this.control.addEventListener("command", this.inputChanged.bind(this));
       ]]>
       </constructor>
 

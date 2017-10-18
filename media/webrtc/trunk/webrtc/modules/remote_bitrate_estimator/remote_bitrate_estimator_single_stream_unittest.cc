@@ -9,6 +9,7 @@
  */
 
 #include "webrtc/base/constructormagic.h"
+#include "webrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_single_stream.h"
 #include "webrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_unittest_helper.h"
 
 namespace webrtc {
@@ -16,18 +17,13 @@ namespace webrtc {
 class RemoteBitrateEstimatorSingleTest :
     public RemoteBitrateEstimatorTest {
  public:
-  static const uint32_t kRemoteBitrateEstimatorMinBitrateBps = 30000;
-
   RemoteBitrateEstimatorSingleTest() {}
   virtual void SetUp() {
-    bitrate_estimator_.reset(RemoteBitrateEstimatorFactory().Create(
-        bitrate_observer_.get(),
-        &clock_,
-        kMimdControl,
-        kRemoteBitrateEstimatorMinBitrateBps));
+    bitrate_estimator_.reset(new RemoteBitrateEstimatorSingleStream(
+        bitrate_observer_.get(), &clock_));
   }
  protected:
-  DISALLOW_COPY_AND_ASSIGN(RemoteBitrateEstimatorSingleTest);
+  RTC_DISALLOW_COPY_AND_ASSIGN(RemoteBitrateEstimatorSingleTest);
 };
 
 TEST_F(RemoteBitrateEstimatorSingleTest, InitialBehavior) {
@@ -39,35 +35,35 @@ TEST_F(RemoteBitrateEstimatorSingleTest, RateIncreaseReordering) {
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, RateIncreaseRtpTimestamps) {
-  RateIncreaseRtpTimestampsTestHelper(1621);
+  RateIncreaseRtpTimestampsTestHelper(1267);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropOneStream) {
-  CapacityDropTestHelper(1, false, 733);
+  CapacityDropTestHelper(1, false, 633, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropOneStreamWrap) {
-  CapacityDropTestHelper(1, true, 733);
+  CapacityDropTestHelper(1, true, 633, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropTwoStreamsWrap) {
-  CapacityDropTestHelper(2, true, 700);
+  CapacityDropTestHelper(2, true, 767, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropThreeStreamsWrap) {
-  CapacityDropTestHelper(3, true, 733);
+  CapacityDropTestHelper(3, true, 567, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropThirteenStreamsWrap) {
-  CapacityDropTestHelper(13, true, 733);
+  CapacityDropTestHelper(13, true, 733, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropNineteenStreamsWrap) {
-  CapacityDropTestHelper(19, true, 733);
+  CapacityDropTestHelper(19, true, 700, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, CapacityDropThirtyStreamsWrap) {
-  CapacityDropTestHelper(30, true, 733);
+  CapacityDropTestHelper(30, true, 733, 0);
 }
 
 TEST_F(RemoteBitrateEstimatorSingleTest, TestTimestampGrouping) {

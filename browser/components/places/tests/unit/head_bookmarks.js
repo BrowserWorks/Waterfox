@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/LoadContextInfo.jsm");
 
 // Import common head.
+/* import-globals-from ../../../../../toolkit/components/places/tests/head_common.js */
 var commonFile = do_get_file("../../../../../toolkit/components/places/tests/head_common.js", false);
 if (commonFile) {
   let uri = Services.io.newFileURI(commonFile);
@@ -55,18 +56,18 @@ function checkItemHasAnnotation(guid, name) {
   });
 }
 
-var createCorruptDB = Task.async(function* () {
+var createCorruptDB = async function() {
   let dbPath = OS.Path.join(OS.Constants.Path.profileDir, "places.sqlite");
-  yield OS.File.remove(dbPath);
+  await OS.File.remove(dbPath);
 
   // Create a corrupt database.
-  let dir = yield OS.File.getCurrentDirectory();
+  let dir = await OS.File.getCurrentDirectory();
   let src = OS.Path.join(dir, "corruptDB.sqlite");
-  yield OS.File.copy(src, dbPath);
+  await OS.File.copy(src, dbPath);
 
   // Check there's a DB now.
-  Assert.ok((yield OS.File.exists(dbPath)), "should have a DB now");
-});
+  Assert.ok((await OS.File.exists(dbPath)), "should have a DB now");
+};
 
 /**
  * Rebuilds smart bookmarks listening to console output to report any message or
@@ -78,6 +79,10 @@ var createCorruptDB = Task.async(function* () {
 function rebuildSmartBookmarks() {
   let consoleListener = {
     observe(aMsg) {
+      if (aMsg.message.startsWith("[JavaScript Warning:")) {
+        // TODO (Bug 1300416): Ignore spurious strict warnings.
+        return;
+      }
       do_throw("Got console message: " + aMsg.message);
     },
     QueryInterface: XPCOMUtils.generateQI([ Ci.nsIConsoleListener ]),
@@ -116,14 +121,14 @@ const NUMBER_OF_TRIES = 30;
  * @resolves to the asynchronous value being polled.
  * @rejects if the asynchronous value is not available after tryCount attempts.
  */
-var waitForResolvedPromise = Task.async(function* (promiseFn, timeoutMsg, tryCount=NUMBER_OF_TRIES) {
+var waitForResolvedPromise = async function(promiseFn, timeoutMsg, tryCount = NUMBER_OF_TRIES) {
   let tries = 0;
   do {
     try {
-      let value = yield promiseFn();
+      let value = await promiseFn();
       return value;
     } catch (ex) {}
-    yield new Promise(resolve => do_timeout(SINGLE_TRY_TIMEOUT, resolve));
+    await new Promise(resolve => do_timeout(SINGLE_TRY_TIMEOUT, resolve));
   } while (++tries <= tryCount);
-  throw(timeoutMsg);
-});
+  throw new Error(timeoutMsg);
+};

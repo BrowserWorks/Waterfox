@@ -18,11 +18,11 @@
 #include "nsISupports.h"                // for NS_INLINE_DECL_REFCOUNTING
 #include "nscore.h"                     // for char16_t
 
+class gfxContext;
 class gfxUserFontSet;
 class gfxTextPerfMetrics;
 class nsDeviceContext;
 class nsIAtom;
-class nsRenderingContext;
 struct nsBoundingMetrics;
 
 /**
@@ -61,7 +61,8 @@ public:
     nsFontMetrics(const nsFont& aFont, const Params& aParams,
                   nsDeviceContext *aContext);
 
-    NS_INLINE_DECL_REFCOUNTING(nsFontMetrics)
+    // Used by stylo
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(nsFontMetrics)
 
     /**
      * Destroy this font metrics. This breaks the association between
@@ -73,6 +74,11 @@ public:
      * Return the font's x-height.
      */
     nscoord XHeight();
+
+    /**
+     * Return the font's cap-height.
+     */
+    nscoord CapHeight();
 
     /**
      * Return the font's superscript offset (the distance from the
@@ -194,10 +200,10 @@ public:
     // Draw a string using this font handle on the surface passed in.
     void DrawString(const char *aString, uint32_t aLength,
                     nscoord aX, nscoord aY,
-                    nsRenderingContext *aContext);
+                    gfxContext *aContext);
     void DrawString(const char16_t* aString, uint32_t aLength,
                     nscoord aX, nscoord aY,
-                    nsRenderingContext *aContext,
+                    gfxContext *aContext,
                     DrawTarget* aTextRunConstructionDrawTarget);
 
     nsBoundingMetrics GetBoundingMetrics(const char16_t *aString,

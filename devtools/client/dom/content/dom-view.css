@@ -9,7 +9,18 @@
 body {
   padding: 0;
   margin: 0;
-  height: 100%;
+  overflow: hidden;
+}
+
+.mainFrame {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.mainFrame > .treeTableBox {
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 /******************************************************************************/
@@ -21,7 +32,12 @@ body {
 
 /* Space for read only properties icon */
 .treeTable td.treeValueCell {
-  padding-left: 16px;
+  padding-inline-start: 16px;
+}
+
+.treeTable .treeLabel,
+.treeTable td.treeValueCell .objectBox {
+  direction: ltr; /* Don't change the direction of english labels */
 }
 
 /* Read only properties have a padlock icon */
@@ -29,6 +45,10 @@ body {
   background: url("chrome://devtools/skin/images/firebug/read-only.svg") no-repeat;
   background-position: 1px 5px;
   background-size: 10px 10px;
+}
+
+.treeTable tr:not(.writable) td.treeValueCell:dir(rtl) {
+  background-position-x: right 1px;
 }
 
 /* Non-enumerable properties are grayed out */
@@ -77,26 +97,10 @@ body {
 }
 
 /******************************************************************************/
-/* Selection */
-
-.treeTable .treeRow:hover a,
-.treeTable .treeRow:hover span {
-  color: var(--theme-selection-color) !important;
-}
-
-/******************************************************************************/
-/* Toolbar */
-
-.toolbar {
-  position: fixed;
-  width: 100%;
-  top: 0;
-  z-index: 2;
-}
-
-.treeTable {
-  z-index: 1;
-  margin-top: 25px;
+/* Search box */
+.devtools-searchbox {
+  margin-inline-start: auto; /* Align to the right */
+  flex: none; /* Don't flex */
 }
 
 /******************************************************************************/

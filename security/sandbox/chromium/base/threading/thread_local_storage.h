@@ -5,8 +5,12 @@
 #ifndef BASE_THREADING_THREAD_LOCAL_STORAGE_H_
 #define BASE_THREADING_THREAD_LOCAL_STORAGE_H_
 
+#include <stdint.h>
+
+#include "base/atomicops.h"
 #include "base/base_export.h"
-#include "base/basictypes.h"
+#include "base/macros.h"
+#include "build/build_config.h"
 
 #if defined(OS_WIN)
 #include <windows.h>
@@ -18,15 +22,18 @@ namespace base {
 
 namespace internal {
 
-// WARNING: You should *NOT* be using this class directly.
-// PlatformThreadLocalStorage is low-level abstraction to the OS's TLS
-// interface, you should instead be using ThreadLocalStorage::StaticSlot/Slot.
+// WARNING: You should *NOT* use this class directly.
+// PlatformThreadLocalStorage is a low-level abstraction of the OS's TLS
+// interface. Instead, you should use one of the following:
+// * ThreadLocalBoolean (from thread_local.h) for booleans.
+// * ThreadLocalPointer (from thread_local.h) for pointers.
+// * ThreadLocalStorage::StaticSlot/Slot for more direct control of the slot.
 class BASE_EXPORT PlatformThreadLocalStorage {
  public:
 
 #if defined(OS_WIN)
   typedef unsigned long TLSKey;
-  enum { TLS_KEY_OUT_OF_INDEXES = TLS_OUT_OF_INDEXES };
+  enum : unsigned { TLS_KEY_OUT_OF_INDEXES = TLS_OUT_OF_INDEXES };
 #elif defined(OS_POSIX)
   typedef pthread_key_t TLSKey;
   // The following is a "reserved key" which is used in our generic Chromium
@@ -98,8 +105,7 @@ class BASE_EXPORT ThreadLocalStorage {
     // Set up the TLS slot.  Called by the constructor.
     // 'destructor' is a pointer to a function to perform per-thread cleanup of
     // this object.  If set to NULL, no cleanup is done for this TLS slot.
-    // Returns false on error.
-    bool Initialize(TLSDestructorFunc destructor);
+    void Initialize(TLSDestructorFunc destructor);
 
     // Free a previously allocated TLS 'slot'.
     // If a destructor was set for this slot, removes
@@ -115,27 +121,37 @@ class BASE_EXPORT ThreadLocalStorage {
     // value 'value'.
     void Set(void* value);
 
-    bool initialized() const { return initialized_; }
+    bool initialized() const {
+      return base::subtle::Acquire_Load(&initialized_) != 0;
+    }
 
     // The internals of this struct should be considered private.
-    bool initialized_;
+    base::subtle::Atomic32 initialized_;
     int slot_;
+    uint32_t version_;
   };
 
   // A convenience wrapper around StaticSlot with a constructor. Can be used
   // as a member variable.
-  class BASE_EXPORT Slot : public StaticSlot {
+  class BASE_EXPORT Slot {
    public:
-    // Calls StaticSlot::Initialize().
     explicit Slot(TLSDestructorFunc destructor = NULL);
+    ~Slot();
+
+    // Get the thread-local value stored in this slot.
+    // Values are guaranteed to initially be zero.
+    void* Get() const;
+
+    // Set the slot's thread-local value to |value|.
+    void Set(void* value);
 
    private:
-    using StaticSlot::initialized_;
-    using StaticSlot::slot_;
+    StaticSlot tls_slot_;
 
     DISALLOW_COPY_AND_ASSIGN(Slot);
   };
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(ThreadLocalStorage);
 };
 

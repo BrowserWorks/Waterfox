@@ -33,6 +33,7 @@ from collections import (
     OrderedDict,
 )
 from io import StringIO
+from multiprocessing import cpu_count
 
 from mozbuild.util import (
     EmptyValue,
@@ -53,7 +54,6 @@ from mozpack.files import FileFinder
 import mozpack.path as mozpath
 
 from .data import (
-    AndroidEclipseProjectData,
     JavaJarData,
 )
 
@@ -80,6 +80,8 @@ from .context import (
 )
 
 from mozbuild.base import ExecutionSummary
+from concurrent.futures.process import ProcessPoolExecutor
+
 
 
 if sys.version_info.major == 2:
@@ -110,21 +112,23 @@ class EmptyConfig(object):
         def get(self, key, default=None):
             return self[key]
 
-    def __init__(self, topsrcdir):
+    default_substs = {
+        # These 2 variables are used semi-frequently and it isn't worth
+        # changing all the instances.
+        b'MOZ_APP_NAME': b'empty',
+        b'MOZ_CHILD_PROCESS_NAME': b'empty',
+        # Set manipulations are performed within the moz.build files. But
+        # set() is not an exposed symbol, so we can't create an empty set.
+        b'NECKO_PROTOCOLS': set(),
+        # Needed to prevent js/src's config.status from loading.
+        b'JS_STANDALONE': b'1',
+    }
+
+    def __init__(self, topsrcdir, substs=None):
         self.topsrcdir = topsrcdir
         self.topobjdir = ''
 
-        self.substs = self.PopulateOnGetDict(EmptyValue, {
-            # These 2 variables are used semi-frequently and it isn't worth
-            # changing all the instances.
-            b'MOZ_APP_NAME': b'empty',
-            b'MOZ_CHILD_PROCESS_NAME': b'empty',
-            # Set manipulations are performed within the moz.build files. But
-            # set() is not an exposed symbol, so we can't create an empty set.
-            b'NECKO_PROTOCOLS': set(),
-            # Needed to prevent js/src's config.status from loading.
-            b'JS_STANDALONE': b'1',
-        })
+        self.substs = self.PopulateOnGetDict(EmptyValue, substs or self.default_substs)
         udict = {}
         for k, v in self.substs.items():
             if isinstance(v, str):
@@ -262,34 +266,6 @@ class MozbuildSandbox(Sandbox):
         jar = JavaJarData(name)
         self['JAVA_JAR_TARGETS'][name] = jar
         return jar
-
-    # Not exposed to the sandbox.
-    def add_android_eclipse_project_helper(self, name):
-        """Add an Android Eclipse project target."""
-        if not name:
-            raise Exception('Android Eclipse project cannot be registered without a name')
-
-        if name in self['ANDROID_ECLIPSE_PROJECT_TARGETS']:
-            raise Exception('Android Eclipse project has already been registered: %s' % name)
-
-        data = AndroidEclipseProjectData(name)
-        self['ANDROID_ECLIPSE_PROJECT_TARGETS'][name] = data
-        return data
-
-    def _add_android_eclipse_project(self, name, manifest):
-        if not manifest:
-            raise Exception('Android Eclipse project must specify a manifest')
-
-        data = self.add_android_eclipse_project_helper(name)
-        data.manifest = manifest
-        data.is_library = False
-        return data
-
-    def _add_android_eclipse_library_project(self, name):
-        data = self.add_android_eclipse_project_helper(name)
-        data.manifest = None
-        data.is_library = True
-        return data
 
     def _export(self, varname):
         """Export the variable to all subdirectories of the current path."""
@@ -879,8 +855,13 @@ class BuildReader(object):
         self._execution_stack = []
         self._finder = finder
 
+        max_workers = cpu_count()
+        self._gyp_worker_pool = ProcessPoolExecutor(max_workers=max_workers)
+        self._gyp_processors = []
         self._execution_time = 0.0
         self._file_count = 0
+        self._gyp_execution_time = 0.0
+        self._gyp_file_count = 0
 
     def summary(self):
         return ExecutionSummary(
@@ -888,6 +869,13 @@ class BuildReader(object):
             '{execution_time:.2f}s',
             file_count=self._file_count,
             execution_time=self._execution_time)
+
+    def gyp_summary(self):
+        return ExecutionSummary(
+            'Read {file_count:d} gyp files in parallel contributing '
+            '{execution_time:.2f}s to total wall time',
+            file_count=self._gyp_file_count,
+            execution_time=self._gyp_execution_time)
 
     def read_topsrcdir(self):
         """Read the tree of linked moz.build files.
@@ -899,7 +887,16 @@ class BuildReader(object):
         read, a new Context is created and emitted.
         """
         path = mozpath.join(self.config.topsrcdir, 'moz.build')
-        return self.read_mozbuild(path, self.config)
+        for r in self.read_mozbuild(path, self.config):
+            yield r
+        all_gyp_paths = set()
+        for g in self._gyp_processors:
+            for gyp_context in g.results:
+                all_gyp_paths |= gyp_context.all_paths
+                yield gyp_context
+            self._gyp_execution_time += g.execution_time
+        self._gyp_file_count += len(all_gyp_paths)
+        self._gyp_worker_pool.shutdown()
 
     def all_mozbuild_paths(self):
         """Iterator over all available moz.build files.
@@ -918,8 +915,7 @@ class BuildReader(object):
             'obj*',
         }
 
-        finder = FileFinder(self.config.topsrcdir, find_executables=False,
-            ignore=ignore)
+        finder = FileFinder(self.config.topsrcdir, ignore=ignore)
 
         # The root doesn't get picked up by FileFinder.
         yield 'moz.build'
@@ -1136,7 +1132,6 @@ class BuildReader(object):
 
         curdir = mozpath.dirname(path)
 
-        gyp_contexts = []
         for target_dir in context.get('GYP_DIRS', []):
             gyp_dir = context['GYP_DIRS'][target_dir]
             for v in ('input', 'variables'):
@@ -1149,7 +1144,7 @@ class BuildReader(object):
             # We could emit the parent context before processing gyp
             # configuration, but we need to add the gyp objdirs to that context
             # first.
-            from .gyp_reader import read_from_gyp
+            from .gyp_reader import GypProcessor
             non_unified_sources = set()
             for s in gyp_dir.non_unified_sources:
                 source = SourcePath(context, s)
@@ -1157,21 +1152,19 @@ class BuildReader(object):
                     raise SandboxValidationError('Cannot find %s.' % source,
                         context)
                 non_unified_sources.add(source)
-            time_start = time.time()
-            for gyp_context in read_from_gyp(context.config,
-                                             mozpath.join(curdir, gyp_dir.input),
-                                             mozpath.join(context.objdir,
-                                                          target_dir),
-                                             gyp_dir.variables,
-                                             non_unified_sources = non_unified_sources):
-                gyp_context.update(gyp_dir.sandbox_vars)
-                gyp_contexts.append(gyp_context)
-                self._file_count += len(gyp_context.all_paths)
-            self._execution_time += time.time() - time_start
+            action_overrides = {}
+            for action, script in gyp_dir.action_overrides.iteritems():
+                action_overrides[action] = SourcePath(context, script)
 
-        for gyp_context in gyp_contexts:
-            context['DIRS'].append(mozpath.relpath(gyp_context.objdir, context.objdir))
-            sandbox.subcontexts.append(gyp_context)
+            gyp_processor = GypProcessor(context.config,
+                                         gyp_dir,
+                                         mozpath.join(curdir, gyp_dir.input),
+                                         mozpath.join(context.objdir,
+                                                      target_dir),
+                                         self._gyp_worker_pool,
+                                         action_overrides,
+                                         non_unified_sources)
+            self._gyp_processors.append(gyp_processor)
 
         for subcontext in sandbox.subcontexts:
             yield subcontext
@@ -1350,16 +1343,43 @@ class BuildReader(object):
         """
         paths, _ = self.read_relevant_mozbuilds(paths)
 
+        # For thousands of inputs (say every file in a sub-tree),
+        # test_defaults_for_path() gets called with the same contexts multiple
+        # times (once for every path in a directory that doesn't have any
+        # test metadata). So, we cache the function call.
+        defaults_cache = {}
+        def test_defaults_for_path(ctxs):
+            key = tuple(ctx.current_path or ctx.main_path for ctx in ctxs)
+
+            if key not in defaults_cache:
+                defaults_cache[key] = self.test_defaults_for_path(ctxs)
+
+            return defaults_cache[key]
+
         r = {}
 
         for path, ctxs in paths.items():
+            # Should be normalized by read_relevant_mozbuilds.
+            assert '\\' not in path
+
             flags = Files(Context())
 
             for ctx in ctxs:
                 if not isinstance(ctx, Files):
                     continue
 
-                relpath = mozpath.relpath(path, ctx.relsrcdir)
+                # read_relevant_mozbuilds() normalizes paths and ensures that
+                # the contexts have paths in the ancestry of the path. When
+                # iterating over tens of thousands of paths, mozpath.relpath()
+                # can be very expensive. So, given our assumptions about paths,
+                # we implement an optimized version.
+                ctx_rel_dir = ctx.relsrcdir
+                if ctx_rel_dir:
+                    assert path.startswith(ctx_rel_dir)
+                    relpath = path[len(ctx_rel_dir) + 1:]
+                else:
+                    relpath = path
+
                 pattern = ctx.pattern
 
                 # Only do wildcard matching if the '*' character is present.
@@ -1370,7 +1390,7 @@ class BuildReader(object):
                     flags += ctx
 
             if not any([flags.test_tags, flags.test_files, flags.test_flavors]):
-                flags += self.test_defaults_for_path(ctxs)
+                flags += test_defaults_for_path(ctxs)
 
             r[path] = flags
 
@@ -1394,7 +1414,7 @@ class BuildReader(object):
                     if isinstance(paths, tuple):
                         path, tests_root = paths
                         tests_root = mozpath.join(ctx.relsrcdir, tests_root)
-                        for t in (mozpath.join(tests_root, path) for path, _ in obj):
+                        for t in (mozpath.join(tests_root, it[0]) for it in obj):
                             result_context.test_files.add(mozpath.dirname(t) + '/**')
                     else:
                         for t in obj.tests:

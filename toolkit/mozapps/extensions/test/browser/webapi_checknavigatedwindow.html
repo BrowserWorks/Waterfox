@@ -3,6 +3,7 @@
 <html>
 <body>
 <script type="text/javascript">
+/* exported openWindow, navigate, check */
 var nav, win;
 
 function openWindow() {
@@ -12,7 +13,7 @@ function openWindow() {
     win.addEventListener("load", function listener() {
       nav = win.navigator;
       resolve();
-    }, false);
+    });
   });
 }
 

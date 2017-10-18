@@ -16,7 +16,6 @@ Cu.import("resource://testing-common/httpd.js");
 
 var testserver;
 var gInstallDate;
-var gInstall = null;
 
 // The test extension uses an insecure update url.
 Services.prefs.setBoolPref(PREF_EM_CHECK_UPDATE_SECURITY, false);
@@ -65,7 +64,6 @@ function run_test_1() {
     ensure_test_completed();
 
     do_check_neq(install, null);
-    do_check_eq(install.linkedInstalls, null);
     do_check_eq(install.type, "extension");
     do_check_eq(install.version, "1.0");
     do_check_eq(install.name, "Test 1");
@@ -116,7 +114,7 @@ function check_test_1() {
   AddonManager.getAddonByID("addon1@tests.mozilla.org", function(olda1) {
     do_check_eq(olda1, null);
 
-    AddonManager.getAddonsWithOperationsByTypes(null, callback_soon(function(pendingAddons) {
+    AddonManager.getAddonsWithOperationsByTypes(null, callback_soon(async function(pendingAddons) {
       do_check_eq(pendingAddons.length, 1);
       do_check_eq(pendingAddons[0].id, "addon1@tests.mozilla.org");
       let uri = NetUtil.newURI(pendingAddons[0].iconURL);
@@ -129,12 +127,10 @@ function check_test_1() {
         try {
           zipReader.open(archiveFile);
           do_check_true(zipReader.hasEntry(jarURI.JAREntry));
-        }
-        finally {
+        } finally {
           zipReader.close();
         }
-      }
-      else {
+      } else {
         let iconFile = uri.QueryInterface(AM_Ci.nsIFileURL).file;
         do_check_true(iconFile.exists());
       }
@@ -149,7 +145,7 @@ function check_test_1() {
       do_check_false(hasFlag(pendingAddons[0].permissions, AddonManager.PERM_CAN_ENABLE));
       do_check_false(hasFlag(pendingAddons[0].permissions, AddonManager.PERM_CAN_DISABLE));
 
-      restartManager();
+      await promiseRestartManager();
 
       AddonManager.getAllInstalls(function(activeInstalls) {
         do_check_eq(activeInstalls, 0);
@@ -177,13 +173,13 @@ function check_test_1() {
           do_check_true(a1.hasResource("install.rdf"));
           do_check_false(a1.hasResource("foo.bar"));
 
-          let uri = do_get_addon_root_uri(profileDir, "addon1@tests.mozilla.org");
-          do_check_eq(a1.getResourceURI("install.rdf").spec, uri + "install.rdf");
-          do_check_eq(a1.iconURL, uri + "icon.png");
-          do_check_eq(a1.icon64URL, uri + "icon64.png");
+          let root_uri = do_get_addon_root_uri(profileDir, "addon1@tests.mozilla.org");
+          do_check_eq(a1.getResourceURI("install.rdf").spec, root_uri + "install.rdf");
+          do_check_eq(a1.iconURL, root_uri + "icon.png");
+          do_check_eq(a1.icon64URL, root_uri + "icon64.png");
 
           a1.uninstall();
-          do_execute_soon(function(){run_test_2(a1)});
+          do_execute_soon(function() { run_test_2(a1) });
         });
       });
     }));
@@ -199,7 +195,6 @@ function run_test_2(aAddon) {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(install) {
     do_check_neq(install, null);
-    do_check_eq(install.linkedInstalls, null);
     do_check_eq(install.version, "1.0");
     do_check_eq(install.name, "Test 2");
     do_check_eq(install.state, AddonManager.STATE_AVAILABLE);
@@ -216,7 +211,7 @@ function run_test_2(aAddon) {
       ], check_test_2);
 
       install.addListener({
-        onDownloadProgress: function(install) {
+        onDownloadProgress() {
           do_execute_soon(function() {
             Components.utils.forceGC();
           });
@@ -264,9 +259,9 @@ function check_test_3(aInstall) {
   setExtensionModifiedTime(ext, updateDate);
 
   ensure_test_completed();
-  AddonManager.getAddonByID("addon2@tests.mozilla.org", callback_soon(function(olda2) {
+  AddonManager.getAddonByID("addon2@tests.mozilla.org", callback_soon(async function(olda2) {
     do_check_eq(olda2, null);
-    restartManager();
+    await promiseRestartManager();
 
     AddonManager.getAllInstalls(function(installs) {
       do_check_eq(installs, 0);
@@ -364,13 +359,13 @@ function check_test_5(install) {
     do_check_neq(olda2, null);
     do_check_true(hasFlag(olda2.pendingOperations, AddonManager.PENDING_UPGRADE));
 
-    AddonManager.getInstallsByTypes(null, callback_soon(function(installs) {
+    AddonManager.getInstallsByTypes(null, callback_soon(async function(installs) {
       do_check_eq(installs.length, 1);
       do_check_eq(installs[0].addon, olda2.pendingUpgrade);
-      restartManager();
+      await promiseRestartManager();
 
-      AddonManager.getInstallsByTypes(null, function(installs) {
-        do_check_eq(installs.length, 0);
+      AddonManager.getInstallsByTypes(null, function(installs2) {
+        do_check_eq(installs2.length, 0);
 
         AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2) {
           do_check_neq(a2, null);
@@ -451,9 +446,9 @@ function run_test_7() {
 
 function check_test_7() {
   ensure_test_completed();
-  AddonManager.getAddonByID("addon3@tests.mozilla.org", callback_soon(function(olda3) {
+  AddonManager.getAddonByID("addon3@tests.mozilla.org", callback_soon(async function(olda3) {
     do_check_eq(olda3, null);
-    restartManager();
+    await promiseRestartManager();
 
     AddonManager.getAllInstalls(function(installs) {
       do_check_eq(installs, 0);
@@ -499,8 +494,8 @@ function run_test_8() {
   });
 }
 
-function check_test_8() {
-  restartManager();
+async function check_test_8() {
+  await promiseRestartManager();
 
   AddonManager.getAddonByID("addon3@tests.mozilla.org", function(a3) {
     do_check_neq(a3, null);
@@ -628,305 +623,10 @@ function check_test_10(install) {
   }));
 }
 
-// Tests that a multi-package install shows up as multiple installs with the
-// correct sourceURI.
 function run_test_11() {
-  prepare_test({ }, [
-    "onNewInstall",
-    "onNewInstall",
-    "onNewInstall",
-    "onNewInstall",
-    "onNewInstall",
-    "onNewInstall"
-  ]);
-
-  AddonManager.getInstallForFile(do_get_addon("test_install4"), function(install) {
-    ensure_test_completed();
-    do_check_neq(install, null);
-    do_check_neq(install.linkedInstalls, null);
-    do_check_eq(install.linkedInstalls.length, 5);
-
-    // Might be in any order so sort them based on ID
-    let installs = [install].concat(install.linkedInstalls);
-    installs.sort(function(a, b) {
-      if (a.state != b.state) {
-        if (a.state == AddonManager.STATE_DOWNLOAD_FAILED)
-          return 1;
-        else if (b.state == AddonManager.STATE_DOWNLOAD_FAILED)
-          return -1;
-      }
-
-      // Don't care what order the failed installs show up in
-      if (a.state == AddonManager.STATE_DOWNLOAD_FAILED)
-        return 0;
-
-      if (a.addon.id < b.addon.id)
-        return -1;
-      if (a.addon.id > b.addon.id)
-        return 1;
-      return 0;
-    });
-
-    // Comes from addon4.xpi and is made compatible by an update check
-    do_check_eq(installs[0].sourceURI, install.sourceURI);
-    do_check_eq(installs[0].addon.id, "addon4@tests.mozilla.org");
-    do_check_false(installs[0].addon.appDisabled);
-    do_check_eq(installs[0].version, "1.0");
-    do_check_eq(installs[0].name, "Multi Test 1");
-    do_check_eq(installs[0].state, AddonManager.STATE_DOWNLOADED);
-    do_check_true(hasFlag(installs[0].addon.operationsRequiringRestart,
-                          AddonManager.OP_NEEDS_RESTART_INSTALL));
-
-    // Comes from addon5.jar and is compatible by default
-    do_check_eq(installs[1].sourceURI, install.sourceURI);
-    do_check_eq(installs[1].addon.id, "addon5@tests.mozilla.org");
-    do_check_false(installs[1].addon.appDisabled);
-    do_check_eq(installs[1].version, "3.0");
-    do_check_eq(installs[1].name, "Multi Test 2");
-    do_check_eq(installs[1].state, AddonManager.STATE_DOWNLOADED);
-    do_check_true(hasFlag(installs[1].addon.operationsRequiringRestart,
-                          AddonManager.OP_NEEDS_RESTART_INSTALL));
-
-    // Comes from addon6.xpi and is incompatible
-    do_check_eq(installs[2].sourceURI, install.sourceURI);
-    do_check_eq(installs[2].addon.id, "addon6@tests.mozilla.org");
-    do_check_true(installs[2].addon.appDisabled);
-    do_check_eq(installs[2].version, "2.0");
-    do_check_eq(installs[2].name, "Multi Test 3");
-    do_check_eq(installs[2].state, AddonManager.STATE_DOWNLOADED);
-    do_check_false(hasFlag(installs[2].addon.operationsRequiringRestart,
-                           AddonManager.OP_NEEDS_RESTART_INSTALL));
-
-    // Comes from addon7.jar and is made compatible by an update check
-    do_check_eq(installs[3].sourceURI, install.sourceURI);
-    do_check_eq(installs[3].addon.id, "addon7@tests.mozilla.org");
-    do_check_false(installs[3].addon.appDisabled);
-    do_check_eq(installs[3].version, "5.0");
-    do_check_eq(installs[3].name, "Multi Test 4");
-    do_check_eq(installs[3].state, AddonManager.STATE_DOWNLOADED);
-    do_check_true(hasFlag(installs[3].addon.operationsRequiringRestart,
-                          AddonManager.OP_NEEDS_RESTART_INSTALL));
-
-    do_check_eq(installs[4].state, AddonManager.STATE_DOWNLOAD_FAILED);
-    do_check_eq(installs[4].error, AddonManager.ERROR_CORRUPT_FILE);
-
-    do_check_eq(installs[5].state, AddonManager.STATE_DOWNLOAD_FAILED);
-    do_check_eq(installs[5].error, AddonManager.ERROR_CORRUPT_FILE);
-
-    AddonManager.getAllInstalls(function(aInstalls) {
-      do_check_eq(aInstalls.length, 4);
-
-      prepare_test({
-        "addon4@tests.mozilla.org": [
-          "onInstalling"
-        ],
-        "addon5@tests.mozilla.org": [
-          "onInstalling"
-        ],
-        "addon6@tests.mozilla.org": [
-          ["onInstalling", false],
-          "onInstalled"
-        ],
-        "addon7@tests.mozilla.org": [
-          "onInstalling"
-        ]
-      }, {
-        "addon4@tests.mozilla.org": [
-          "onInstallStarted",
-          "onInstallEnded"
-        ],
-        "addon5@tests.mozilla.org": [
-          "onInstallStarted",
-          "onInstallEnded"
-        ],
-        "addon6@tests.mozilla.org": [
-          "onInstallStarted",
-          "onInstallEnded"
-        ],
-        "addon7@tests.mozilla.org": [
-          "onInstallStarted",
-          "onInstallEnded"
-        ]
-      }, callback_soon(check_test_11));
-
-      installs[0].install();
-      installs[1].install();
-      installs[3].install();
-
-      // Note that we install addon6 last. Since it doesn't need a restart to
-      // install it completes asynchronously which would otherwise make the
-      // onInstallStarted/onInstallEnded events go out of sequence unless this
-      // is the last install operation
-      installs[2].install();
-    });
-  });
-}
-
-function check_test_11() {
-  restartManager();
-
-  AddonManager.getAddonsByIDs(["addon4@tests.mozilla.org",
-                               "addon5@tests.mozilla.org",
-                               "addon6@tests.mozilla.org",
-                               "addon7@tests.mozilla.org"],
-                               function([a4, a5, a6, a7]) {
-    do_check_neq(a4, null);
-    do_check_neq(a5, null);
-    do_check_neq(a6, null);
-    do_check_neq(a7, null);
-
-    a4.uninstall();
-    a5.uninstall();
-    a6.uninstall();
-    a7.uninstall();
-
-    do_execute_soon(run_test_12);
-  });
-}
-
-// Same as test 11 but for a remote XPI
-function run_test_12() {
-  restartManager();
-
-  prepare_test({ }, [
-    "onNewInstall",
-  ]);
-
-  let url = "http://localhost:4444/addons/test_install4.xpi";
-  AddonManager.getInstallForURL(url, function(install) {
-    gInstall = install;
-
-    ensure_test_completed();
-    do_check_neq(install, null);
-    do_check_eq(install.linkedInstalls, null);
-    do_check_eq(install.state, AddonManager.STATE_AVAILABLE);
-
-    prepare_test({
-      "addon4@tests.mozilla.org": [
-        "onInstalling"
-      ],
-      "addon5@tests.mozilla.org": [
-        "onInstalling"
-      ],
-      "addon6@tests.mozilla.org": [
-        ["onInstalling", false],
-        "onInstalled"
-      ],
-      "addon7@tests.mozilla.org": [
-        "onInstalling"
-      ]
-    }, {
-      "NO_ID": [
-        "onDownloadStarted",
-        "onNewInstall",
-        "onNewInstall",
-        "onNewInstall",
-        "onNewInstall",
-        "onNewInstall",
-        "onDownloadEnded"
-      ],
-      "addon4@tests.mozilla.org": [
-        "onInstallStarted",
-        "onInstallEnded"
-      ],
-      "addon5@tests.mozilla.org": [
-        "onInstallStarted",
-        "onInstallEnded"
-      ],
-      "addon6@tests.mozilla.org": [
-        "onInstallStarted",
-        "onInstallEnded"
-      ],
-      "addon7@tests.mozilla.org": [
-        "onInstallStarted",
-        "onInstallEnded"
-      ]
-    }, callback_soon(check_test_12));
-    install.install();
-  }, "application/x-xpinstall", null, "Multi Test 4");
-}
-
-function check_test_12() {
-  do_check_eq(gInstall.linkedInstalls.length, 5);
-
-  // Might be in any order so sort them based on ID
-  let installs = [gInstall].concat(gInstall.linkedInstalls);
-  installs.sort(function(a, b) {
-    if (a.state != b.state) {
-      if (a.state == AddonManager.STATE_DOWNLOAD_FAILED)
-        return 1;
-      else if (b.state == AddonManager.STATE_DOWNLOAD_FAILED)
-        return -1;
-    }
-
-    // Don't care what order the failed installs show up in
-    if (a.state == AddonManager.STATE_DOWNLOAD_FAILED)
-      return 0;
-
-    if (a.addon.id < b.addon.id)
-      return -1;
-    if (a.addon.id > b.addon.id)
-      return 1;
-    return 0;
-  });
-
-  // Comes from addon4.xpi and is made compatible by an update check
-  do_check_eq(installs[0].sourceURI, gInstall.sourceURI);
-  do_check_eq(installs[0].addon.id, "addon4@tests.mozilla.org");
-  do_check_false(installs[0].addon.appDisabled);
-  do_check_eq(installs[0].version, "1.0");
-  do_check_eq(installs[0].name, "Multi Test 1");
-  do_check_eq(installs[0].state, AddonManager.STATE_INSTALLED);
-
-  // Comes from addon5.jar and is compatible by default
-  do_check_eq(installs[1].sourceURI, gInstall.sourceURI);
-  do_check_eq(installs[1].addon.id, "addon5@tests.mozilla.org");
-  do_check_false(installs[1].addon.appDisabled);
-  do_check_eq(installs[1].version, "3.0");
-  do_check_eq(installs[1].name, "Multi Test 2");
-  do_check_eq(installs[1].state, AddonManager.STATE_INSTALLED);
-
-  // Comes from addon6.xpi and is incompatible
-  do_check_eq(installs[2].sourceURI, gInstall.sourceURI);
-  do_check_eq(installs[2].addon.id, "addon6@tests.mozilla.org");
-  do_check_true(installs[2].addon.appDisabled);
-  do_check_eq(installs[2].version, "2.0");
-  do_check_eq(installs[2].name, "Multi Test 3");
-  do_check_eq(installs[2].state, AddonManager.STATE_INSTALLED);
-
-  // Comes from addon7.jar and is made compatible by an update check
-  do_check_eq(installs[3].sourceURI, gInstall.sourceURI);
-  do_check_eq(installs[3].addon.id, "addon7@tests.mozilla.org");
-  do_check_false(installs[3].addon.appDisabled);
-  do_check_eq(installs[3].version, "5.0");
-  do_check_eq(installs[3].name, "Multi Test 4");
-  do_check_eq(installs[3].state, AddonManager.STATE_INSTALLED);
-
-  do_check_eq(installs[4].state, AddonManager.STATE_DOWNLOAD_FAILED);
-  do_check_eq(installs[4].error, AddonManager.ERROR_CORRUPT_FILE);
-
-  do_check_eq(installs[5].state, AddonManager.STATE_DOWNLOAD_FAILED);
-  do_check_eq(installs[5].error, AddonManager.ERROR_CORRUPT_FILE);
-
-  restartManager();
-
-  AddonManager.getAddonsByIDs(["addon4@tests.mozilla.org",
-                               "addon5@tests.mozilla.org",
-                               "addon6@tests.mozilla.org",
-                               "addon7@tests.mozilla.org"],
-                               function([a4, a5, a6, a7]) {
-    do_check_neq(a4, null);
-    do_check_neq(a5, null);
-    do_check_neq(a6, null);
-    do_check_neq(a7, null);
-
-    a4.uninstall();
-    a5.uninstall();
-    a6.uninstall();
-    a7.uninstall();
-
-    do_execute_soon(run_test_13);
-  });
+  // Tests 11 and 12 were removed, to avoid churn of renumbering,
+  // just jump ahead to 13 here
+  run_test_13();
 }
 
 
@@ -1046,10 +746,10 @@ function check_test_14(install) {
     let file = install.file;
 
     install.addListener({
-      onDownloadProgress: function() {
+      onDownloadProgress() {
         do_throw("Download should not have continued");
       },
-      onDownloadEnded: function() {
+      onDownloadEnded() {
         do_throw("Download should not have continued");
       }
     });
@@ -1100,7 +800,7 @@ function check_test_15(install) {
   ensure_test_completed();
 
   install.addListener({
-    onInstallStarted: function() {
+    onInstallStarted() {
       do_throw("Install should not have continued");
     }
   });
@@ -1116,12 +816,12 @@ function run_test_16() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallStarted: function() {
+      onInstallStarted() {
         do_check_false(aInstall.addon.userDisabled);
         aInstall.addon.userDisabled = true;
       },
 
-      onInstallEnded: function() {
+      onInstallEnded() {
        do_execute_soon(function test16_install1() {
         restartManager();
 
@@ -1129,26 +829,26 @@ function run_test_16() {
           do_check_true(a2.userDisabled);
           do_check_false(a2.isActive);
 
-          let url = "http://localhost:4444/addons/test_install2_2.xpi";
-          AddonManager.getInstallForURL(url, function(aInstall) {
-            aInstall.addListener({
-              onInstallEnded: function() {
+          let url_2 = "http://localhost:4444/addons/test_install2_2.xpi";
+          AddonManager.getInstallForURL(url_2, function(aInstall_2) {
+            aInstall_2.addListener({
+              onInstallEnded() {
                do_execute_soon(function test16_install2() {
-                do_check_true(aInstall.addon.userDisabled);
+                do_check_true(aInstall_2.addon.userDisabled);
 
                 restartManager();
 
-                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2) {
-                  do_check_true(a2.userDisabled);
-                  do_check_false(a2.isActive);
+                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2_2) {
+                  do_check_true(a2_2.userDisabled);
+                  do_check_false(a2_2.isActive);
 
-                  a2.uninstall();
+                  a2_2.uninstall();
                   do_execute_soon(run_test_17);
                 });
                });
               }
             });
-            aInstall.install();
+            aInstall_2.install();
           }, "application/x-xpinstall");
         });
        });
@@ -1165,8 +865,8 @@ function run_test_17() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function() {
-       do_execute_soon(function test17_install1() {
+      onInstallEnded() {
+       do_execute_soon(function() {
         do_check_false(aInstall.addon.userDisabled);
 
         restartManager();
@@ -1175,29 +875,29 @@ function run_test_17() {
           do_check_false(a2.userDisabled);
           do_check_true(a2.isActive);
 
-          let url = "http://localhost:4444/addons/test_install2_2.xpi";
-          AddonManager.getInstallForURL(url, function(aInstall) {
-            aInstall.addListener({
-              onInstallStarted: function() {
-                do_check_false(aInstall.addon.userDisabled);
-                aInstall.addon.userDisabled = true;
+          let url_2 = "http://localhost:4444/addons/test_install2_2.xpi";
+          AddonManager.getInstallForURL(url_2, function(aInstall_2) {
+            aInstall_2.addListener({
+              onInstallStarted() {
+                do_check_false(aInstall_2.addon.userDisabled);
+                aInstall_2.addon.userDisabled = true;
               },
 
-              onInstallEnded: function() {
-               do_execute_soon(function test17_install1() {
+              onInstallEnded() {
+               do_execute_soon(function() {
                 restartManager();
 
-                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2) {
-                  do_check_true(a2.userDisabled);
-                  do_check_false(a2.isActive);
+                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2_2) {
+                  do_check_true(a2_2.userDisabled);
+                  do_check_false(a2_2.isActive);
 
-                  a2.uninstall();
+                  a2_2.uninstall();
                   do_execute_soon(run_test_18);
                 });
                });
               }
             });
-            aInstall.install();
+            aInstall_2.install();
           }, "application/x-xpinstall");
         });
        });
@@ -1214,12 +914,12 @@ function run_test_18() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallStarted: function() {
+      onInstallStarted() {
         do_check_false(aInstall.addon.userDisabled);
         aInstall.addon.userDisabled = true;
       },
 
-      onInstallEnded: function() {
+      onInstallEnded() {
        do_execute_soon(function test18_install1() {
         restartManager();
 
@@ -1227,29 +927,29 @@ function run_test_18() {
           do_check_true(a2.userDisabled);
           do_check_false(a2.isActive);
 
-          let url = "http://localhost:4444/addons/test_install2_2.xpi";
-          AddonManager.getInstallForURL(url, function(aInstall) {
-            aInstall.addListener({
-              onInstallStarted: function() {
-                do_check_true(aInstall.addon.userDisabled);
-                aInstall.addon.userDisabled = false;
+          let url_2 = "http://localhost:4444/addons/test_install2_2.xpi";
+          AddonManager.getInstallForURL(url_2, function(aInstall_2) {
+            aInstall_2.addListener({
+              onInstallStarted() {
+                do_check_true(aInstall_2.addon.userDisabled);
+                aInstall_2.addon.userDisabled = false;
               },
 
-              onInstallEnded: function() {
+              onInstallEnded() {
                do_execute_soon(function test18_install2() {
                 restartManager();
 
-                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2) {
-                  do_check_false(a2.userDisabled);
-                  do_check_true(a2.isActive);
+                AddonManager.getAddonByID("addon2@tests.mozilla.org", function(a2_2) {
+                  do_check_false(a2_2.userDisabled);
+                  do_check_true(a2_2.isActive);
 
-                  a2.uninstall();
+                  a2_2.uninstall();
                   do_execute_soon(run_test_18_1);
                 });
                });
               }
             });
-            aInstall.install();
+            aInstall_2.install();
           }, "application/x-xpinstall");
         });
        });
@@ -1273,7 +973,7 @@ function run_test_18_1() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function(aInstall, aAddon) {
+      onInstallEnded(unused, aAddon) {
        do_execute_soon(function test18_install() {
         do_check_neq(aAddon.fullDescription, "Repository description");
 
@@ -1301,7 +1001,7 @@ function run_test_19() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function(aInstall, aAddon) {
+      onInstallEnded(unused, aAddon) {
        do_execute_soon(function test19_install() {
         do_check_eq(aAddon.fullDescription, "Repository description");
 
@@ -1327,7 +1027,7 @@ function run_test_20() {
   let url = "http://localhost:4444/addons/test_install2_1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function(aInstall, aAddon) {
+      onInstallEnded(unused, aAddon) {
        do_execute_soon(function test20_install() {
         do_check_eq(aAddon.fullDescription, "Repository description");
 
@@ -1593,7 +1293,7 @@ function run_test_26() {
   let observerService = AM_Cc["@mozilla.org/network/http-activity-distributor;1"].
                         getService(AM_Ci.nsIHttpActivityDistributor);
   observerService.addObserver({
-    observeActivity: function(aChannel, aType, aSubtype, aTimestamp, aSizeData,
+    observeActivity(aChannel, aType, aSubtype, aTimestamp, aSizeData,
                               aStringData) {
       aChannel.QueryInterface(AM_Ci.nsIChannel);
       // Wait for the final event for the redirected URL
@@ -1614,8 +1314,8 @@ function run_test_26() {
   let url = "http://localhost:4444/redirect?/addons/test_install1.xpi";
   AddonManager.getInstallForURL(url, function(aInstall) {
     aInstall.addListener({
-      onDownloadProgress: function(aInstall) {
-        aInstall.cancel();
+      onDownloadProgress(aDownloadProgressInstall) {
+        aDownloadProgressInstall.cancel();
       }
     });
 
@@ -1639,7 +1339,7 @@ function run_test_27() {
     do_check_eq(aInstall.state, AddonManager.STATE_AVAILABLE);
 
     aInstall.addListener({
-      onDownloadProgress: function() {
+      onDownloadProgress() {
         aInstall.removeListener(this);
         aInstall.cancel();
       }
@@ -1700,7 +1400,6 @@ function run_test_30() {
     do_check_neq(install, null);
     do_check_eq(install.state, AddonManager.STATE_DOWNLOAD_FAILED);
     do_check_eq(install.error, AddonManager.ERROR_CORRUPT_FILE);
-    do_check_eq(install.linkedInstalls, null);
 
     run_test_31();
   });
@@ -1719,7 +1418,6 @@ function run_test_31() {
     do_check_neq(install, null);
     do_check_eq(install.state, AddonManager.STATE_DOWNLOAD_FAILED);
     do_check_eq(install.error, AddonManager.ERROR_CORRUPT_FILE);
-    do_check_eq(install.linkedInstalls, null);
 
     end_test();
   });

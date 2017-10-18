@@ -8,14 +8,12 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource:///modules/experiments/Experiments.jsm");
 
-var gProfileDir = null;
 var gHttpServer = null;
 var gHttpRoot   = null;
 var gPolicy     = new Experiments.Policy();
 
 function run_test() {
   loadAddonManager();
-  gProfileDir = do_get_profile();
 
   gHttpServer = new HttpServer();
   gHttpServer.start(-1);
@@ -35,37 +33,36 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_fetchAndCache() {
+add_task(async function test_fetchAndCache() {
   Services.prefs.setCharPref(PREF_MANIFEST_URI, gHttpRoot + "experiments_1.manifest");
   let ex = new Experiments.Experiments(gPolicy);
 
   Assert.equal(ex._experiments, null, "There should be no cached experiments yet.");
-  yield ex.updateManifest();
+  await ex.updateManifest();
   Assert.notEqual(ex._experiments.size, 0, "There should be cached experiments now.");
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 });
 
-add_task(function* test_checkCache() {
+add_task(async function test_checkCache() {
   let ex = new Experiments.Experiments(gPolicy);
-  yield ex.notify();
+  await ex.notify();
   Assert.notEqual(ex._experiments.size, 0, "There should be cached experiments now.");
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 });
 
-add_task(function* test_fetchInvalid() {
-  yield removeCacheFile();
+add_task(async function test_fetchInvalid() {
+  await removeCacheFile();
 
   Services.prefs.setCharPref(PREF_MANIFEST_URI, gHttpRoot + "experiments_1.manifest");
   let ex = new Experiments.Experiments(gPolicy);
-  yield ex.updateManifest();
+  await ex.updateManifest();
   Assert.notEqual(ex._experiments.size, 0, "There should be experiments");
 
   Services.prefs.setCharPref(PREF_MANIFEST_URI, gHttpRoot + "invalid.manifest");
-  yield ex.updateManifest()
+  await ex.updateManifest()
   Assert.notEqual(ex._experiments.size, 0, "There should still be experiments: fetch failure shouldn't remove them.");
 
-  yield promiseRestartManager();
+  await promiseRestartManager();
 });
-

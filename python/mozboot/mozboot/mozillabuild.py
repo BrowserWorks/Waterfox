@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import errno
 import os
 import sys
 import subprocess
@@ -35,18 +36,27 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
             with open(mozillabuild_dir + 'msys/etc/profile.d/profile-rustup.sh', 'wb') as f:
                 f.write('#!/bash/sh\n')
                 f.write('if test -n "$MOZILLABUILD"; then\n')
-                f.write('    WIN_HOME=$(cd "$HOME" && pwd)\n')
+                f.write('    WIN_HOME=$(command cd "$HOME" && pwd)\n')
                 f.write('    PATH="$WIN_HOME/.cargo/bin:$PATH"\n')
                 f.write('    export PATH\n')
                 f.write('fi')
+            _, cargo_bin = self.cargo_home()
+            rustup = os.path.join(cargo_bin, 'rustup')
+            self.run([rustup, 'target', 'add', 'i686-pc-windows-msvc'])
         finally:
             try:
                 os.remove(rustup_init)
-            except FileNotFoundError:
-                pass
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    pass
+                else:
+                    raise
 
-    def upgrade_mercurial(self, current):
-        self.pip_install('mercurial')
+    def ensure_mercurial_modern(self):
+        # Overrides default implementation to always run pip because.
+        print('Running pip to ensure Mercurial is up-to-date...')
+        self.run([self.which('pip'), 'install', '--upgrade', 'Mercurial'])
+        return True, True
 
     def upgrade_python(self, current):
         pass
@@ -54,11 +64,18 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
     def install_browser_packages(self):
         pass
 
+    def install_browser_artifact_mode_packages(self):
+        pass
+
     def install_mobile_android_packages(self):
         pass
 
     def install_mobile_android_artifact_mode_packages(self):
         pass
+
+    def ensure_stylo_packages(self, state_dir, checkout_root):
+        import stylo
+        self.install_tooltool_clang_package(state_dir, checkout_root, stylo.WINDOWS)
 
     def _update_package_manager(self):
         pass

@@ -78,7 +78,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/CanvasRenderingContext2D.h"
 #include "mozilla/dom/Element.h"
@@ -93,7 +93,13 @@ using namespace mozilla::a11y;
 ////////////////////////////////////////////////////////////////////////////////
 // Accessible: nsISupports and cycle collection
 
-NS_IMPL_CYCLE_COLLECTION(Accessible, mContent)
+NS_IMPL_CYCLE_COLLECTION_CLASS(Accessible)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Accessible)
+  tmp->Shutdown();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Accessible)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContent, mDoc)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Accessible)
   if (aIID.Equals(NS_GET_IID(Accessible)))
@@ -109,7 +115,8 @@ Accessible::Accessible(nsIContent* aContent, DocAccessible* aDoc) :
   mContent(aContent), mDoc(aDoc),
   mParent(nullptr), mIndexInParent(-1),
   mRoleMapEntryIndex(aria::NO_ROLE_MAP_ENTRY_INDEX),
-  mStateFlags(0), mContextFlags(0), mType(0), mGenericTypes(0)
+  mStateFlags(0), mContextFlags(0), mType(0), mGenericTypes(0),
+  mReorderEventTarget(false), mShowEventTarget(false), mHideEventTarget(false)
 {
   mBits.groupInfo = nullptr;
   mInt.mIndexOfEmbeddedChild = -1;
@@ -311,7 +318,9 @@ Accessible::TranslateString(const nsString& aKey, nsAString& aStringOut)
     return;
 
   nsXPIDLString xsValue;
-  nsresult rv = stringBundle->GetStringFromName(aKey.get(), getter_Copies(xsValue));
+  nsresult rv =
+    stringBundle->GetStringFromName(NS_ConvertUTF16toUTF8(aKey).get(),
+                                    getter_Copies(xsValue));
   if (NS_SUCCEEDED(rv))
     aStringOut.Assign(xsValue);
 }
@@ -327,6 +336,10 @@ Accessible::VisibilityState()
   // is in background tab.
   if (!frame->StyleVisibility()->IsVisible())
     return states::INVISIBLE;
+
+  // Offscreen state if the document's visibility state is not visible.
+  if (Document()->IsHidden())
+    return states::OFFSCREEN;
 
   nsIFrame* curFrame = frame;
   do {
@@ -378,7 +391,7 @@ Accessible::VisibilityState()
   // marked invisible.
   // XXX Can we just remove this check? Why do we need to mark empty
   // text invisible?
-  if (frame->GetType() == nsGkAtoms::textFrame &&
+  if (frame->IsTextFrame() &&
       !(frame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
       frame->GetRect().IsEmpty()) {
     nsIFrame::RenderedText text = frame->GetRenderedText(0,
@@ -428,7 +441,7 @@ Accessible::NativeState()
       const nsStyleXUL* xulStyle = frame->StyleXUL();
       if (xulStyle && frame->IsXULBoxFrame()) {
         // In XUL all boxes are either vertical or horizontal
-        if (xulStyle->mBoxOrient == NS_STYLE_BOX_ORIENT_VERTICAL)
+        if (xulStyle->mBoxOrient == StyleBoxOrient::Vertical)
           state |= states::VERTICAL;
         else
           state |= states::HORIZONTAL;
@@ -525,8 +538,7 @@ Accessible::ChildAtPoint(int32_t aX, int32_t aY,
   nsIWidget* rootWidget = rootFrame->GetView()->GetNearestWidget(nullptr);
   NS_ENSURE_TRUE(rootWidget, nullptr);
 
-  LayoutDeviceIntRect rootRect;
-  rootWidget->GetScreenBounds(rootRect);
+  LayoutDeviceIntRect rootRect = rootWidget->GetScreenBounds();
 
   WidgetMouseEvent dummyEvent(true, eMouseMove, rootWidget,
                               WidgetMouseEvent::eSynthesized);
@@ -630,7 +642,8 @@ Accessible::RelativeBounds(nsIFrame** aBoundingFrame) const
       // Find a canvas frame the found hit region is relative to.
       nsIFrame* canvasFrame = frame->GetParent();
       if (canvasFrame) {
-        canvasFrame = nsLayoutUtils::GetClosestFrameOfType(canvasFrame, nsGkAtoms::HTMLCanvasFrame);
+        canvasFrame = nsLayoutUtils::GetClosestFrameOfType(
+          canvasFrame, LayoutFrameType::HTMLCanvas);
       }
 
       // make the canvas the bounding frame
@@ -855,11 +868,11 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
             ipcDoc->SendEvent(id, aEvent->GetEventType());
           break;
         case nsIAccessibleEvent::EVENT_STATE_CHANGE: {
-                                                       AccStateChangeEvent* event = downcast_accEvent(aEvent);
-                                                       ipcDoc->SendStateChangeEvent(id, event->GetState(),
-                                                                                    event->IsStateEnabled());
-                                                       break;
-                                                     }
+          AccStateChangeEvent* event = downcast_accEvent(aEvent);
+          ipcDoc->SendStateChangeEvent(id, event->GetState(),
+                                       event->IsStateEnabled());
+          break;
+        }
         case nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED: {
           AccCaretMoveEvent* event = downcast_accEvent(aEvent);
           ipcDoc->SendCaretMoveEvent(id, event->GetCaretOffset());
@@ -874,7 +887,7 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
                                       event->IsTextInserted(),
                                       event->IsFromUserInput());
           break;
-                                                     }
+        }
         case nsIAccessibleEvent::EVENT_SELECTION:
         case nsIAccessibleEvent::EVENT_SELECTION_ADD:
         case nsIAccessibleEvent::EVENT_SELECTION_REMOVE: {
@@ -883,9 +896,15 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
             reinterpret_cast<uintptr_t>(selEvent->Widget());
           ipcDoc->SendSelectionEvent(id, widgetID, aEvent->GetEventType());
           break;
-                                                         }
+        }
+#if defined(XP_WIN)
+        case nsIAccessibleEvent::EVENT_FOCUS: {
+          ipcDoc->SendFocusEvent(id);
+          break;
+        }
+#endif
         default:
-                                                         ipcDoc->SendEvent(id, aEvent->GetEventType());
+          ipcDoc->SendEvent(id, aEvent->GetEventType());
       }
     }
   }
@@ -927,6 +946,10 @@ Accessible::Attributes()
     nsAccUtils::SetAccAttr(attributes, nsGkAtoms::hidden,
                            NS_LITERAL_STRING("true"));
   }
+
+  // XXX: In ARIA 1.1, the value of aria-haspopup became a token (bug 1355449).
+  if (aria::UniversalStatesFor(mContent->AsElement()) & states::HASPOPUP)
+    nsAccUtils::SetAccAttr(attributes, nsGkAtoms::haspopup, NS_LITERAL_STRING("true"));
 
   // If there is no aria-live attribute then expose default value of 'live'
   // object attribute used for ARIA role of this accessible.
@@ -1393,6 +1416,22 @@ Accessible::SetCurValue(double aValue)
 role
 Accessible::ARIATransformRole(role aRole)
 {
+  // Beginning with ARIA 1.1, user agents are expected to use the native host
+  // language role of the element when the region role is used without a name.
+  // https://rawgit.com/w3c/aria/master/core-aam/core-aam.html#role-map-region
+  //
+  // XXX: While the name computation algorithm can be non-trivial in the general
+  // case, it should not be especially bad here: If the author hasn't used the
+  // region role, this calculation won't occur. And the region role's name
+  // calculation rule excludes name from content. That said, this use case is
+  // another example of why we should consider caching the accessible name. See:
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1378235.
+  if (aRole == roles::REGION) {
+    nsAutoString name;
+    Name(name);
+    return name.IsEmpty() ? NativeRole() : aRole;
+  }
+
   // XXX: these unfortunate exceptions don't fit into the ARIA table. This is
   // where the accessible role depends on both the role and ARIA state.
   if (aRole == roles::PUSHBUTTON) {
@@ -1413,14 +1452,14 @@ Accessible::ARIATransformRole(role aRole)
   } else if (aRole == roles::LISTBOX) {
     // A listbox inside of a combobox needs a special role because of ATK
     // mapping to menu.
-    if (mParent && mParent->Role() == roles::COMBOBOX) {
+    if (mParent && mParent->IsCombobox()) {
       return roles::COMBOBOX_LIST;
     } else {
       // Listbox is owned by a combobox
       Relation rel = RelationByType(RelationType::NODE_CHILD_OF);
       Accessible* targetAcc = nullptr;
       while ((targetAcc = rel.Next()))
-        if (targetAcc->Role() == roles::COMBOBOX)
+        if (targetAcc->IsCombobox())
           return roles::COMBOBOX_LIST;
     }
 
@@ -1748,11 +1787,23 @@ Accessible::RelationByType(RelationType aType)
           }
         }
       }
-      return  Relation();
+      return Relation();
     }
 
     case RelationType::CONTAINING_APPLICATION:
       return Relation(ApplicationAcc());
+
+    case RelationType::DETAILS:
+      return Relation(new IDRefsIterator(mDoc, mContent, nsGkAtoms::aria_details));
+
+    case RelationType::DETAILS_FOR:
+      return Relation(new RelatedAccIterator(mDoc, mContent, nsGkAtoms::aria_details));
+
+    case RelationType::ERRORMSG:
+      return Relation(new IDRefsIterator(mDoc, mContent, nsGkAtoms::aria_errormessage));
+
+    case RelationType::ERRORMSG_FOR:
+      return Relation(new RelatedAccIterator(mDoc, mContent, nsGkAtoms::aria_errormessage));
 
     default:
       return Relation();
@@ -1770,8 +1821,13 @@ Accessible::DoCommand(nsIContent *aContent, uint32_t aActionIndex)
   class Runnable final : public mozilla::Runnable
   {
   public:
-    Runnable(Accessible* aAcc, nsIContent* aContent, uint32_t aIdx) :
-      mAcc(aAcc), mContent(aContent), mIdx(aIdx) { }
+    Runnable(Accessible* aAcc, nsIContent* aContent, uint32_t aIdx)
+      : mozilla::Runnable("Runnable")
+      , mAcc(aAcc)
+      , mContent(aContent)
+      , mIdx(aIdx)
+    {
+    }
 
     NS_IMETHOD Run() override
     {
@@ -1812,7 +1868,7 @@ Accessible::DispatchClickEvent(nsIContent *aContent, uint32_t aActionIndex)
                                    nsIPresShell::ScrollAxis(),
                                    nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
 
-  nsWeakFrame frame = aContent->GetPrimaryFrame();
+  AutoWeakFrame frame = aContent->GetPrimaryFrame();
   if (!frame)
     return;
 
@@ -1870,7 +1926,7 @@ Accessible::AppendTextTo(nsAString& aText, uint32_t aStartOffset,
   NS_ASSERTION(mParent,
                "Called on accessible unbound from tree. Result can be wrong.");
 
-  if (frame->GetType() == nsGkAtoms::brFrame) {
+  if (frame->IsBrFrame()) {
     aText += kForcedNewLineChar;
   } else if (mParent && nsAccUtils::MustPrune(mParent)) {
     // Expose the embedded object accessible as imaginary embedded object
@@ -2113,18 +2169,23 @@ Accessible::InsertChildAt(uint32_t aIndex, Accessible* aChild)
 bool
 Accessible::RemoveChild(Accessible* aChild)
 {
-  if (!aChild)
-    return false;
-
-  if (aChild->mParent != this || aChild->mIndexInParent == -1)
-    return false;
-
-  MOZ_ASSERT((mStateFlags & eKidsMutating) || aChild->IsDefunct() || aChild->IsDoc(),
-             "Illicit children change");
+  MOZ_DIAGNOSTIC_ASSERT(aChild, "No child was given");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent, "No parent");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent == this, "Wrong parent");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mIndexInParent != -1, "Unbound child was given");
+  MOZ_DIAGNOSTIC_ASSERT((mStateFlags & eKidsMutating) || aChild->IsDefunct() ||
+                        aChild->IsDoc() || IsApplication(),
+                        "Illicit children change");
 
   int32_t index = static_cast<uint32_t>(aChild->mIndexInParent);
-  MOZ_ASSERT(mChildren.SafeElementAt(index) == aChild,
-             "A wrong child index");
+  if (mChildren.SafeElementAt(index) != aChild) {
+    MOZ_ASSERT_UNREACHABLE("A wrong child index");
+    index = mChildren.IndexOf(aChild);
+    if (index == -1) {
+      MOZ_ASSERT_UNREACHABLE("No child was found");
+      return false;
+    }
+  }
 
   aChild->UnbindFromParent();
   mChildren.RemoveElementAt(index);
@@ -2139,16 +2200,17 @@ Accessible::RemoveChild(Accessible* aChild)
 void
 Accessible::MoveChild(uint32_t aNewIndex, Accessible* aChild)
 {
-  MOZ_ASSERT(aChild, "No child was given");
-  MOZ_ASSERT(aChild->mParent == this, "A child from different subtree was given");
-  MOZ_ASSERT(aChild->mIndexInParent != -1, "Unbound child was given");
-  MOZ_ASSERT(static_cast<uint32_t>(aChild->mIndexInParent) != aNewIndex,
+  MOZ_DIAGNOSTIC_ASSERT(aChild, "No child was given");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent == this, "A child from different subtree was given");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mIndexInParent != -1, "Unbound child was given");
+  MOZ_DIAGNOSTIC_ASSERT(aChild->mParent->GetChildAt(aChild->mIndexInParent) == aChild, "Wrong index in parent");
+  MOZ_DIAGNOSTIC_ASSERT(static_cast<uint32_t>(aChild->mIndexInParent) != aNewIndex,
              "No move, same index");
-  MOZ_ASSERT(aNewIndex <= mChildren.Length(), "Wrong new index was given");
+  MOZ_DIAGNOSTIC_ASSERT(aNewIndex <= mChildren.Length(), "Wrong new index was given");
 
-  EventTree* eventTree = mDoc->Controller()->QueueMutation(this);
-  if (eventTree) {
-    eventTree->Hidden(aChild, false);
+  RefPtr<AccHideEvent> hideEvent = new AccHideEvent(aChild, false);
+  if (mDoc->Controller()->QueueMutationEvent(hideEvent)) {
+    aChild->SetHideEventTarget(true);
   }
 
   mEmbeddedObjCollector = nullptr;
@@ -2180,10 +2242,10 @@ Accessible::MoveChild(uint32_t aNewIndex, Accessible* aChild)
     mChildren[idx]->mInt.mIndexOfEmbeddedChild = -1;
   }
 
-  if (eventTree) {
-    eventTree->Shown(aChild);
-    mDoc->Controller()->QueueNameChange(aChild);
-  }
+  RefPtr<AccShowEvent> showEvent = new AccShowEvent(aChild);
+  DebugOnly<bool> added = mDoc->Controller()->QueueMutationEvent(showEvent);
+  MOZ_ASSERT(added);
+  aChild->SetShowEventTarget(true);
 }
 
 Accessible*
@@ -2773,12 +2835,12 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
     return;
 
   nsAutoString separator;
-  keyStringBundle->GetStringFromName(u"MODIFIER_SEPARATOR",
+  keyStringBundle->GetStringFromName("MODIFIER_SEPARATOR",
                                      getter_Copies(separator));
 
   nsAutoString modifierName;
   if (mModifierMask & kControl) {
-    keyStringBundle->GetStringFromName(u"VK_CONTROL",
+    keyStringBundle->GetStringFromName("VK_CONTROL",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2786,7 +2848,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kAlt) {
-    keyStringBundle->GetStringFromName(u"VK_ALT",
+    keyStringBundle->GetStringFromName("VK_ALT",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2794,7 +2856,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kShift) {
-    keyStringBundle->GetStringFromName(u"VK_SHIFT",
+    keyStringBundle->GetStringFromName("VK_SHIFT",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);
@@ -2802,7 +2864,7 @@ KeyBinding::ToPlatformFormat(nsAString& aValue) const
   }
 
   if (mModifierMask & kMeta) {
-    keyStringBundle->GetStringFromName(u"VK_META",
+    keyStringBundle->GetStringFromName("VK_META",
                                        getter_Copies(modifierName));
 
     aValue.Append(modifierName);

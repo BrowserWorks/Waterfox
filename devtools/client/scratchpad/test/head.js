@@ -11,14 +11,15 @@ const {ScratchpadManager} = Cu.import("resource://devtools/client/scratchpad/scr
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Services = require("Services");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 const promise = require("promise");
 
 
 var gScratchpadWindow; // Reference to the Scratchpad chrome window object
 
-DevToolsUtils.testing = true;
-SimpleTest.registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+flags.testing = true;
+registerCleanupFunction(() => {
+  flags.testing = false;
 });
 
 /**
@@ -51,7 +52,7 @@ function openScratchpad(aReadyCallback, aOptions = {})
   }
 
   let onLoad = function () {
-    win.removeEventListener("load", onLoad, false);
+    win.removeEventListener("load", onLoad);
 
     win.Scratchpad.addObserver({
       onReady: function (aScratchpad) {
@@ -67,7 +68,7 @@ function openScratchpad(aReadyCallback, aOptions = {})
   };
 
   if (aReadyCallback) {
-    win.addEventListener("load", onLoad, false);
+    win.addEventListener("load", onLoad);
   }
 
   gScratchpadWindow = win;
@@ -88,12 +89,11 @@ function openTabAndScratchpad(aOptions = {})
 {
   waitForExplicitFinish();
   return new promise(resolve => {
-    gBrowser.selectedTab = gBrowser.addTab();
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
     let {selectedBrowser} = gBrowser;
-    selectedBrowser.addEventListener("load", function onLoad() {
-      selectedBrowser.removeEventListener("load", onLoad, true);
+    selectedBrowser.addEventListener("load", function () {
       openScratchpad((win, sp) => resolve([win, sp]), aOptions);
-    }, true);
+    }, {capture: true, once: true});
     content.location = "data:text/html;charset=utf8," + (aOptions.tabContent || "");
   });
 }

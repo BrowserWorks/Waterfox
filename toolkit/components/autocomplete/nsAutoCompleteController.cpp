@@ -13,14 +13,32 @@
 #include "nsIServiceManager.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
+#include "nsIScriptSecurityManager.h"
 #include "nsITreeBoxObject.h"
 #include "nsITreeColumns.h"
 #include "nsIObserverService.h"
 #include "nsIDOMKeyEvent.h"
 #include "mozilla/Services.h"
 #include "mozilla/ModuleUtils.h"
+#include "mozilla/Unused.h"
 
 static const char *kAutoCompleteSearchCID = "@mozilla.org/autocomplete/search;1?name=";
+
+using namespace mozilla;
+
+namespace {
+
+void
+SetTextValue(nsIAutoCompleteInput* aInput,
+             const nsString& aValue,
+             uint16_t aReason) {
+  nsresult rv = aInput->SetTextValueWithReason(aValue, aReason);
+  if (NS_FAILED(rv)) {
+    aInput->SetTextValue(aValue);
+  }
+}
+
+} // anon namespace
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsAutoCompleteController)
 
@@ -37,7 +55,8 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(nsAutoCompleteController)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsAutoCompleteController)
 NS_INTERFACE_TABLE_HEAD(nsAutoCompleteController)
   NS_INTERFACE_TABLE(nsAutoCompleteController, nsIAutoCompleteController,
-                     nsIAutoCompleteObserver, nsITimerCallback, nsITreeView)
+                     nsIAutoCompleteObserver, nsITimerCallback, nsITreeView,
+                     nsINamed)
   NS_INTERFACE_TABLE_TO_MAP_SEGUE_CYCLE_COLLECTION(nsAutoCompleteController)
 NS_INTERFACE_MAP_END
 
@@ -89,46 +108,55 @@ nsAutoCompleteController::GetInput(nsIAutoCompleteInput **aInput)
 }
 
 NS_IMETHODIMP
+nsAutoCompleteController::SetInitiallySelectedIndex(int32_t aSelectedIndex)
+{
+  // First forward to the popup.
+  nsCOMPtr<nsIAutoCompleteInput> input(mInput);
+  NS_ENSURE_STATE(input);
+  nsCOMPtr<nsIAutoCompletePopup> popup;
+  input->GetPopup(getter_AddRefs(popup));
+  NS_ENSURE_STATE(popup);
+  popup->SetSelectedIndex(aSelectedIndex);
+
+  // Now take care of internal stuff.
+  bool completeSelection;
+  if (NS_SUCCEEDED(input->GetCompleteSelectedIndex(&completeSelection)) &&
+      completeSelection) {
+    mCompletedSelectionIndex = aSelectedIndex;
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsAutoCompleteController::SetInput(nsIAutoCompleteInput *aInput)
 {
   // Don't do anything if the input isn't changing.
   if (mInput == aInput)
     return NS_OK;
 
-  // Clear out the current search context
+  Unused << ResetInternalState();
   if (mInput) {
-    // Stop all searches in case they are async.
-    StopSearch();
-    ClearResults();
-    ClosePopup();
     mSearches.Clear();
+    ClosePopup();
   }
 
   mInput = aInput;
 
   // Nothing more to do if the input was just being set to null.
-  if (!aInput)
+  if (!mInput) {
     return NS_OK;
+  }
+  nsCOMPtr<nsIAutoCompleteInput> input(mInput);
 
-  nsAutoString newValue;
-  aInput->GetTextValue(newValue);
+  // Reset the current search string.
+  input->GetTextValue(mSearchString);
 
   // Clear out this reference in case the new input's popup has no tree
   mTree = nullptr;
 
-  // Reset all search state members to default values
-  mSearchString = newValue;
-  mPlaceholderCompletionString.Truncate();
-  mDefaultIndexCompleted = false;
-  mProhibitAutoFill = false;
-  mSearchStatus = nsIAutoCompleteController::STATUS_NONE;
-  mRowCount = 0;
-  mSearchesOngoing = 0;
-  mCompletedSelectionIndex = -1;
-
   // Initialize our list of search objects
   uint32_t searchCount;
-  aInput->GetSearchCount(&searchCount);
+  input->GetSearchCount(&searchCount);
   mResults.SetCapacity(searchCount);
   mSearches.SetCapacity(searchCount);
   mImmediateSearchesCount = 0;
@@ -141,7 +169,7 @@ nsAutoCompleteController::SetInput(nsIAutoCompleteInput *aInput)
   for (uint32_t i = 0; i < searchCount; ++i) {
     // Use the search name to create the contract id string for the search service
     nsAutoCString searchName;
-    aInput->GetSearchAt(i, searchName);
+    input->GetSearchAt(i, searchName);
     nsAutoCString cid(searchCID);
     cid.Append(searchName);
 
@@ -166,6 +194,29 @@ nsAutoCompleteController::SetInput(nsIAutoCompleteInput *aInput)
       }
     }
   }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsAutoCompleteController::ResetInternalState()
+{
+  // Clear out the current search context
+  if (mInput) {
+    nsAutoString value;
+    mInput->GetTextValue(value);
+    // Stop all searches in case they are async.
+    Unused << StopSearch();
+    Unused << ClearResults();
+    mSearchString = value;
+  }
+
+  mPlaceholderCompletionString.Truncate();
+  mDefaultIndexCompleted = false;
+  mProhibitAutoFill = false;
+  mSearchStatus = nsIAutoCompleteController::STATUS_NONE;
+  mRowCount = 0;
+  mCompletedSelectionIndex = -1;
 
   return NS_OK;
 }
@@ -462,16 +513,21 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool *_retval)
                              nsCaseInsensitiveStringComparator())) {
               start = mSearchString.Length();
               value = mPlaceholderCompletionString;
+              SetTextValue(input, value,
+                           nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
             } else {
               start = value.Length();
+              SetTextValue(input, value,
+                           nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETESELECTED);
             }
-            input->SetTextValue(value);
+
             input->SelectTextRange(start, value.Length());
           }
           mCompletedSelectionIndex = selectedIndex;
         } else {
           // Nothing is selected, so fill in the last typed value
-          input->SetTextValue(mSearchString);
+          SetTextValue(input, mSearchString,
+                       nsIAutoCompleteInput::TEXTVALUE_REASON_REVERT);
           input->SelectTextRange(mSearchString.Length(), mSearchString.Length());
           mCompletedSelectionIndex = -1;
         }
@@ -566,7 +622,8 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool *_retval)
         // The pop-up is open and has a selection, take its value
         nsAutoString value;
         if (NS_SUCCEEDED(GetResultValueAt(selectedIndex, false, value))) {
-          input->SetTextValue(value);
+          SetTextValue(input, value,
+                       nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETESELECTED);
           input->SelectTextRange(value.Length(), value.Length());
         }
       }
@@ -591,7 +648,8 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool *_retval)
           }
 
           if (value.Equals(suggestedValue, nsCaseInsensitiveStringComparator())) {
-            input->SetTextValue(value);
+            SetTextValue(input, value,
+                         nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
             input->SelectTextRange(value.Length(), value.Length());
           }
         }
@@ -622,7 +680,7 @@ nsAutoCompleteController::HandleDelete(bool *_retval)
   nsCOMPtr<nsIAutoCompleteInput> input(mInput);
   bool isOpen = false;
   input->GetPopupOpen(&isOpen);
-  if (!isOpen || mRowCount <= 0) {
+  if (!isOpen || mRowCount == 0) {
     // Nothing left to delete, proceed as normal
     bool unused = false;
     HandleText(&unused);
@@ -665,7 +723,8 @@ nsAutoCompleteController::HandleDelete(bool *_retval)
     mTree->RowCountChanged(mRowCount, -1);
 
   // Adjust index, if needed.
-  if (index >= (int32_t)mRowCount)
+  MOZ_ASSERT(index >= 0); // We verified this above, after RowIndexToSearch.
+  if (static_cast<uint32_t>(index) >= mRowCount)
     index = mRowCount - 1;
 
   if (mRowCount > 0) {
@@ -698,7 +757,7 @@ nsAutoCompleteController::HandleDelete(bool *_retval)
   return NS_OK;
 }
 
-nsresult 
+nsresult
 nsAutoCompleteController::GetResultAt(int32_t aIndex, nsIAutoCompleteResult** aResult,
                                       int32_t* aRowIndex)
 {
@@ -862,6 +921,16 @@ nsAutoCompleteController::Notify(nsITimer *timer)
   }
   StartSearch(nsIAutoCompleteSearchDescriptor::SEARCH_TYPE_DELAYED);
   AfterSearches();
+  return NS_OK;
+}
+
+////////////////////////////////////////////////////////////////////////
+//// nsINamed
+
+NS_IMETHODIMP
+nsAutoCompleteController::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("nsAutoCompleteController");
   return NS_OK;
 }
 
@@ -1205,6 +1274,14 @@ nsAutoCompleteController::StartSearch(uint16_t aSearchType)
       searchParam.AppendLiteral(" prohibit-autofill");
     }
 
+    uint32_t userContextId;
+    rv = input->GetUserContextId(&userContextId);
+    if (NS_SUCCEEDED(rv) &&
+        userContextId != nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID) {
+      searchParam.AppendLiteral(" user-context-id:");
+      searchParam.AppendInt(userContextId, 10);
+    }
+
     rv = search->StartSearch(mSearchString, searchParam, result, static_cast<nsIAutoCompleteObserver *>(this));
     if (NS_FAILED(rv)) {
       ++mSearchesFailed;
@@ -1416,9 +1493,7 @@ nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
         // differs from the user-facing value.
         nsAutoString finalValue;
         GetResultValueAt(mCompletedSelectionIndex, true, finalValue);
-        nsAutoString completedValue;
-        GetResultValueAt(mCompletedSelectionIndex, false, completedValue);
-        if (completedValue.Equals(inputValue) && !finalValue.Equals(inputValue)) {
+        if (!inputValue.Equals(finalValue)) {
           value = finalValue;
         }
         // Note that if the user opens the popup, mouses over entries without
@@ -1494,13 +1569,12 @@ nsAutoCompleteController::EnterMatch(bool aIsPopupSelection,
     }
   }
 
-  nsCOMPtr<nsIObserverService> obsSvc =
-    mozilla::services::GetObserverService();
+  nsCOMPtr<nsIObserverService> obsSvc = services::GetObserverService();
   NS_ENSURE_STATE(obsSvc);
   obsSvc->NotifyObservers(input, "autocomplete-will-enter-text", nullptr);
 
   if (!value.IsEmpty()) {
-    input->SetTextValue(value);
+    SetTextValue(input, value, nsIAutoCompleteInput::TEXTVALUE_REASON_ENTERMATCH);
     input->SelectTextRange(value.Length(), value.Length());
     mSearchString = value;
   }
@@ -1530,8 +1604,7 @@ nsAutoCompleteController::RevertTextValue()
   input->OnTextReverted(&cancel);
 
   if (!cancel) {
-    nsCOMPtr<nsIObserverService> obsSvc =
-      mozilla::services::GetObserverService();
+    nsCOMPtr<nsIObserverService> obsSvc = services::GetObserverService();
     NS_ENSURE_STATE(obsSvc);
     obsSvc->NotifyObservers(input, "autocomplete-will-revert-text", nullptr);
 
@@ -1540,7 +1613,7 @@ nsAutoCompleteController::RevertTextValue()
     // Don't change the value if it is the same to prevent sending useless events.
     // NOTE: how can |RevertTextValue| be called with inputValue != oldValue?
     if (!oldValue.Equals(inputValue)) {
-      input->SetTextValue(oldValue);
+      SetTextValue(input, oldValue, nsIAutoCompleteInput::TEXTVALUE_REASON_REVERT);
     }
 
     obsSvc->NotifyObservers(input, "autocomplete-did-revert-text", nullptr);
@@ -1589,72 +1662,58 @@ nsAutoCompleteController::ProcessResult(int32_t aSearchIndex, nsIAutoCompleteRes
   MOZ_ASSERT(mResults.Count() >= aSearchIndex + 1,
              "aSearchIndex should always be valid for mResults");
 
-  bool isTypeAheadResult = false;
-  aResult->GetTypeAheadResult(&isTypeAheadResult);
-
-  if (!isTypeAheadResult) {
-    uint32_t oldRowCount = mRowCount;
-    // If the search failed, increase the match count to include the error
-    // description.
-    if (searchResult == nsIAutoCompleteResult::RESULT_FAILURE) {
-      nsAutoString error;
-      aResult->GetErrorDescription(error);
-      if (!error.IsEmpty()) {
-        ++mRowCount;
-        if (mTree) {
-          mTree->RowCountChanged(oldRowCount, 1);
-        }
-      }
-    } else if (searchResult == nsIAutoCompleteResult::RESULT_SUCCESS ||
-               searchResult == nsIAutoCompleteResult::RESULT_SUCCESS_ONGOING) {
-      // Increase the match count for all matches in this result.
-      uint32_t totalMatchCount = 0;
-      for (uint32_t i = 0; i < mResults.Length(); i++) {
-        nsIAutoCompleteResult* result = mResults.SafeObjectAt(i);
-        if (result) {
-          // not all results implement this, so it can likely fail.
-          bool typeAhead = false;
-          result->GetTypeAheadResult(&typeAhead);
-          if (!typeAhead) {
-            uint32_t matchCount = 0;
-            result->GetMatchCount(&matchCount);
-            totalMatchCount += matchCount;
-          }
-        }
-      }
-      uint32_t delta = totalMatchCount - oldRowCount;
-
-      mRowCount += delta;
+  uint32_t oldRowCount = mRowCount;
+  // If the search failed, increase the match count to include the error
+  // description.
+  if (searchResult == nsIAutoCompleteResult::RESULT_FAILURE) {
+    nsAutoString error;
+    aResult->GetErrorDescription(error);
+    if (!error.IsEmpty()) {
+      ++mRowCount;
       if (mTree) {
-        mTree->RowCountChanged(oldRowCount, delta);
+        mTree->RowCountChanged(oldRowCount, 1);
       }
-    }
-
-    // Try to autocomplete the default index for this search.
-    // Do this before invalidating so the binding knows about it.
-    CompleteDefaultIndex(aSearchIndex);
-
-    // Refresh the popup view to display the new search results
-    nsCOMPtr<nsIAutoCompletePopup> popup;
-    input->GetPopup(getter_AddRefs(popup));
-    NS_ENSURE_TRUE(popup != nullptr, NS_ERROR_FAILURE);
-    popup->Invalidate(nsIAutoCompletePopup::INVALIDATE_REASON_NEW_RESULT);
-
-    uint32_t minResults;
-    input->GetMinResultsForPopup(&minResults);
-
-    // Make sure the popup is open, if necessary, since we now have at least one
-    // search result ready to display. Don't force the popup closed if we might
-    // get results in the future to avoid unnecessarily canceling searches.
-    if (mRowCount || !minResults) {
-      OpenPopup();
-    } else if (mSearchesOngoing == 0) {
-      ClosePopup();
     }
   } else if (searchResult == nsIAutoCompleteResult::RESULT_SUCCESS ||
              searchResult == nsIAutoCompleteResult::RESULT_SUCCESS_ONGOING) {
-    // Try to autocomplete the default index for this search.
-    CompleteDefaultIndex(aSearchIndex);
+    // Increase the match count for all matches in this result.
+    uint32_t totalMatchCount = 0;
+    for (uint32_t i = 0; i < mResults.Length(); i++) {
+      nsIAutoCompleteResult* result = mResults.SafeObjectAt(i);
+      if (result) {
+        uint32_t matchCount = 0;
+        result->GetMatchCount(&matchCount);
+        totalMatchCount += matchCount;
+      }
+    }
+    uint32_t delta = totalMatchCount - oldRowCount;
+
+    mRowCount += delta;
+    if (mTree) {
+      mTree->RowCountChanged(oldRowCount, delta);
+    }
+  }
+
+  // Try to autocomplete the default index for this search.
+  // Do this before invalidating so the binding knows about it.
+  CompleteDefaultIndex(aSearchIndex);
+
+  // Refresh the popup view to display the new search results
+  nsCOMPtr<nsIAutoCompletePopup> popup;
+  input->GetPopup(getter_AddRefs(popup));
+  NS_ENSURE_TRUE(popup != nullptr, NS_ERROR_FAILURE);
+  popup->Invalidate(nsIAutoCompletePopup::INVALIDATE_REASON_NEW_RESULT);
+
+  uint32_t minResults;
+  input->GetMinResultsForPopup(&minResults);
+
+  // Make sure the popup is open, if necessary, since we now have at least one
+  // search result ready to display. Don't force the popup closed if we might
+  // get results in the future to avoid unnecessarily canceling searches.
+  if (mRowCount || !minResults) {
+    OpenPopup();
+  } else if (mSearchesOngoing == 0) {
+    ClosePopup();
   }
 
   return NS_OK;
@@ -1880,7 +1939,8 @@ nsAutoCompleteController::CompleteValue(nsString &aValue)
     // matches the beginning of aValue.  In either case we can simply
     // autocomplete to aValue.
     mPlaceholderCompletionString = aValue;
-    input->SetTextValue(aValue);
+    SetTextValue(input, aValue,
+                 nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
   } else {
     nsresult rv;
     nsCOMPtr<nsIIOService> ios = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
@@ -1902,14 +1962,16 @@ nsAutoCompleteController::CompleteValue(nsString &aValue)
 
       mPlaceholderCompletionString = mSearchString +
         Substring(aValue, mSearchStringLength + findIndex, endSelect);
-      input->SetTextValue(mPlaceholderCompletionString);
+      SetTextValue(input, mPlaceholderCompletionString,
+                   nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
 
       endSelect -= findIndex; // We're skipping this many characters of aValue.
     } else {
       // Autocompleting something other than a URI from the middle.
       // Use the format "searchstring >> full string" to indicate to the user
       // what we are going to replace their search string with.
-      input->SetTextValue(mSearchString + NS_LITERAL_STRING(" >> ") + aValue);
+      SetTextValue(input, mSearchString + NS_LITERAL_STRING(" >> ") + aValue,
+                   nsIAutoCompleteInput::TEXTVALUE_REASON_COMPLETEDEFAULT);
 
       endSelect = mSearchString.Length() + 4 + aValue.Length();
 
@@ -1942,7 +2004,7 @@ nsAutoCompleteController::GetResultValueLabelAt(int32_t aIndex,
                                                 bool aGetValue,
                                                 nsAString & _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && (uint32_t) aIndex < mRowCount, NS_ERROR_ILLEGAL_VALUE);
+  NS_ENSURE_TRUE(aIndex >= 0 && static_cast<uint32_t>(aIndex) < mRowCount, NS_ERROR_ILLEGAL_VALUE);
 
   int32_t rowIndex;
   nsIAutoCompleteResult *result;
@@ -1996,20 +2058,14 @@ nsAutoCompleteController::RowIndexToSearch(int32_t aRowIndex, int32_t *aSearchIn
 
     uint32_t rowCount = 0;
 
-    // Skip past the result completely if it is marked as hidden
-    bool isTypeAheadResult = false;
-    result->GetTypeAheadResult(&isTypeAheadResult);
+    uint16_t searchResult;
+    result->GetSearchResult(&searchResult);
 
-    if (!isTypeAheadResult) {
-      uint16_t searchResult;
-      result->GetSearchResult(&searchResult);
-
-      // Find out how many results were provided by the
-      // current nsIAutoCompleteSearch.
-      if (searchResult == nsIAutoCompleteResult::RESULT_SUCCESS ||
-          searchResult == nsIAutoCompleteResult::RESULT_SUCCESS_ONGOING) {
-        result->GetMatchCount(&rowCount);
-      }
+    // Find out how many results were provided by the
+    // current nsIAutoCompleteSearch.
+    if (searchResult == nsIAutoCompleteResult::RESULT_SUCCESS ||
+        searchResult == nsIAutoCompleteResult::RESULT_SUCCESS_ONGOING) {
+      result->GetMatchCount(&rowCount);
     }
 
     // If the given row index is within the results range

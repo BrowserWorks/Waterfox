@@ -61,7 +61,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.importGlobalProperties(['File', 'FileReader']);
+Cu.importGlobalProperties(["File", "FileReader"]);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
@@ -90,38 +90,43 @@ this.PropertyListUtils = Object.freeze({
 
     // We guarantee not to throw directly for any other exceptions, and always
     // call aCallback.
-    Services.tm.mainThread.dispatch(function() {
-      let file = aFile;
-      try {
-        if (file instanceof Ci.nsILocalFile) {
-          if (!file.exists())
-            throw new Error("The file pointed by aFile does not exist");
-
-          file = new File(file);
-        }
-
+    Services.tm.dispatchToMainThread(() => {
+      let self = this;
+      function readDOMFile(aFile) {
         let fileReader = new FileReader();
         let onLoadEnd = function() {
           let root = null;
           try {
-            fileReader.removeEventListener("loadend", onLoadEnd, false);
+            fileReader.removeEventListener("loadend", onLoadEnd);
             if (fileReader.readyState != fileReader.DONE)
               throw new Error("Could not read file contents: " + fileReader.error);
 
-            root = this._readFromArrayBufferSync(fileReader.result);
-          }
-          finally {
+            root = self._readFromArrayBufferSync(fileReader.result);
+          } finally {
             aCallback(root);
           }
-        }.bind(this);
-        fileReader.addEventListener("loadend", onLoadEnd, false);
-        fileReader.readAsArrayBuffer(file);
+        }
+        fileReader.addEventListener("loadend", onLoadEnd);
+        fileReader.readAsArrayBuffer(aFile);
       }
-      catch(ex) {
+
+      try {
+        if (aFile instanceof Ci.nsILocalFile) {
+          if (!aFile.exists()) {
+            throw new Error("The file pointed by aFile does not exist");
+          }
+
+          File.createFromNsIFile(aFile).then(function(aFile) {
+            readDOMFile(aFile);
+          });
+          return;
+        }
+        readDOMFile(aFile);
+      } catch (ex) {
         aCallback(null);
         throw ex;
       }
-    }.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
+    });
   },
 
   /**
@@ -141,11 +146,9 @@ this.PropertyListUtils = Object.freeze({
       let doc = domParser.parseFromBuffer(bytesView, bytesView.length,
                                           "application/xml");
       return new XMLPropertyListReader(doc).root;
-    }
-    catch(ex) {
+    } catch (ex) {
       throw new Error("aBuffer cannot be parsed as a DOM document: " + ex);
     }
-    return null;
   },
 
   TYPE_PRIMITIVE:    0,
@@ -238,7 +241,7 @@ this.PropertyListUtils = Object.freeze({
 function BinaryPropertyListReader(aBuffer) {
   this._dataView = new DataView(aBuffer);
 
-  const JS_MAX_INT = Math.pow(2,53);
+  const JS_MAX_INT = Math.pow(2, 53);
   this._JS_MAX_INT_SIGNED = ctypes.Int64(JS_MAX_INT);
   this._JS_MAX_INT_UNSIGNED = ctypes.UInt64(JS_MAX_INT);
   this._JS_MIN_INT = ctypes.Int64(-JS_MAX_INT);
@@ -246,8 +249,7 @@ function BinaryPropertyListReader(aBuffer) {
   try {
     this._readTrailerInfo();
     this._readObjectsOffsets();
-  }
-  catch(ex) {
+  } catch (ex) {
     throw new Error("Could not read aBuffer as a binary property list");
   }
   this._objects = [];
@@ -405,22 +407,18 @@ BinaryPropertyListReader.prototype = {
          offset += aIntSize) {
       if (aIntSize == 1) {
         uints.push(this._dataView.getUint8(offset));
-      }
-      else if (aIntSize == 2) {
+      } else if (aIntSize == 2) {
         uints.push(this._dataView.getUint16(offset));
-      }
-      else if (aIntSize == 3) {
+      } else if (aIntSize == 3) {
         let int24 = Uint8Array(4);
         int24[3] = 0;
         int24[2] = this._dataView.getUint8(offset);
         int24[1] = this._dataView.getUint8(offset + 1);
         int24[0] = this._dataView.getUint8(offset + 2);
         uints.push(Uint32Array(int24.buffer)[0]);
-      }
-      else if (aIntSize == 4) {
+      } else if (aIntSize == 4) {
         uints.push(this._dataView.getUint32(offset));
-      }
-      else if (aIntSize == 8) {
+      } else if (aIntSize == 8) {
         let lo = this._dataView.getUint32(offset + 4);
         let hi = this._dataView.getUint32(offset);
         let uint64 = ctypes.UInt64.join(hi, lo);
@@ -429,12 +427,10 @@ BinaryPropertyListReader.prototype = {
             uints.push(PropertyListUtils.wrapInt64(uint64.toString()));
           else
             throw new Error("Integer too big to be read as float 64");
-        }
-        else {
+        } else {
           uints.push(parseInt(uint64, 10));
         }
-      }
-      else {
+      } else {
         throw new Error("Unsupported size: " + aIntSize);
       }
     }
@@ -490,7 +486,7 @@ BinaryPropertyListReader.prototype = {
     // Each index in the returned array is a lazy getter for its object.
     Array.prototype.forEach.call(refs, function(ref, objIndex) {
       Object.defineProperty(array, objIndex, {
-        get: function() {
+        get() {
           delete array[objIndex];
           return array[objIndex] = readObjectBound(ref);
         },
@@ -509,7 +505,7 @@ BinaryPropertyListReader.prototype = {
    *        the number of keys in the dictionary
    * @return Map-style dictionary.
    */
-  _wrapDictionary: function(aObjectOffset, aNumberOfObjects) {
+  _wrapDictionary(aObjectOffset, aNumberOfObjects) {
     // A dictionary in the binary format is stored as a list of references to
     // key-objects, followed by a list of references to the value-objects for
     // those keys. The size of each list is aNumberOfObjects * this._objectRefSize.
@@ -755,7 +751,7 @@ XMLPropertyListReader.prototype = {
     let readObjectBound = this._readObject.bind(this);
     Array.prototype.forEach.call(aDOMElt.children, function(elem, elemIndex) {
       Object.defineProperty(array, elemIndex, {
-        get: function() {
+        get() {
           delete array[elemIndex];
           return array[elemIndex] = readObjectBound(elem);
         },
@@ -786,10 +782,10 @@ XMLPropertyListReader.prototype = {
    * @return Returns value of "name" property of target by default. Otherwise returns
    *         updated target.
    */
-function LazyMapProxyHandler () {
+function LazyMapProxyHandler() {
   return {
     _lazyGetters: new Set(),
-    get: function(target, name) {
+    get(target, name) {
       switch (name) {
         case "setAsLazyGetter":
           return (key, value) => {

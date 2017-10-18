@@ -41,9 +41,9 @@ NSSErrorsService::Init()
 {
   nsresult rv;
   nsCOMPtr<nsIStringBundleService> bundleService(do_GetService(NS_STRINGBUNDLE_CONTRACTID, &rv));
-  if (NS_FAILED(rv) || !bundleService) 
+  if (NS_FAILED(rv) || !bundleService)
     return NS_ERROR_FAILURE;
-  
+
   bundleService->CreateBundle(PIPNSS_STRBUNDLE_URL,
                               getter_AddRefs(mPIPNSSBundle));
   if (!mPIPNSSBundle)
@@ -124,7 +124,7 @@ NSSErrorsService::GetErrorClass(nsresult aXPCOMErrorCode, uint32_t *aErrorClass)
       NS_ERROR_GET_SEVERITY(aXPCOMErrorCode) != NS_ERROR_SEVERITY_ERROR) {
     return NS_ERROR_FAILURE;
   }
-  
+
   int32_t aNSPRCode = -1 * NS_ERROR_GET_CODE(aXPCOMErrorCode);
 
   if (!mozilla::psm::IsNSSErrorCode(aNSPRCode)) {
@@ -147,6 +147,7 @@ ErrorIsOverridable(PRErrorCode code)
   {
     // Overridable errors.
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_EMPTY_ISSUER_NAME:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_ISSUER_CERTIFICATE:
@@ -172,7 +173,7 @@ NSSErrorsService::GetErrorMessage(nsresult aXPCOMErrorCode, nsAString &aErrorMes
       NS_ERROR_GET_SEVERITY(aXPCOMErrorCode) != NS_ERROR_SEVERITY_ERROR) {
     return NS_ERROR_FAILURE;
   }
-  
+
   int32_t aNSPRCode = -1 * NS_ERROR_GET_CODE(aXPCOMErrorCode);
 
   if (!mozilla::psm::IsNSSErrorCode(aNSPRCode)) {
@@ -192,9 +193,7 @@ NSSErrorsService::GetErrorMessage(nsresult aXPCOMErrorCode, nsAString &aErrorMes
   }
 
   nsAutoString msg;
-  nsresult rv =
-    theBundle->GetStringFromName(NS_ConvertASCIItoUTF16(id_str).get(),
-                                 getter_Copies(msg));
+  nsresult rv = theBundle->GetStringFromName(id_str, getter_Copies(msg));
   if (NS_SUCCEEDED(rv)) {
     aErrorMessage = msg;
   }

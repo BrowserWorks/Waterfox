@@ -7,7 +7,7 @@
 #include "GamepadServiceTest.h"
 
 #include "mozilla/ErrorResult.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/dom/GamepadManager.h"
 #include "mozilla/dom/GamepadPlatformService.h"
@@ -17,7 +17,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
@@ -35,7 +35,6 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(GamepadServiceTest)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(GamepadServiceTest,
                                                   DOMEventTargetHelper)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -113,18 +112,23 @@ GamepadServiceTest::DestroyPBackgroundActor()
 
 already_AddRefed<Promise>
 GamepadServiceTest::AddGamepad(const nsAString& aID,
-                               uint32_t aMapping,
+                               GamepadMappingType aMapping,
+                               GamepadHand aHand,
                                uint32_t aNumButtons,
                                uint32_t aNumAxes,
+                               uint32_t aNumHaptics,
                                ErrorResult& aRv)
 {
   if (mShuttingDown) {
     return nullptr;
   }
 
-  GamepadAdded a(nsString(aID), 0,
-                (uint32_t)aMapping, aNumButtons, aNumAxes);
-  GamepadChangeEvent e(a);
+  // Only VR controllers has displayID, we give 0 to the general gamepads.
+  GamepadAdded a(nsString(aID),
+                 aMapping, aHand, 0,
+                 aNumButtons, aNumAxes, aNumHaptics);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(0, GamepadServiceType::Standard, body);
   nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
 
   RefPtr<Promise> p = Promise::Create(go, aRv);
@@ -150,8 +154,9 @@ GamepadServiceTest::RemoveGamepad(uint32_t aIndex)
     return;
   }
 
-  GamepadRemoved a(aIndex);
-  GamepadChangeEvent e(a);
+  GamepadRemoved a;
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -165,14 +170,16 @@ GamepadServiceTest::RemoveGamepad(uint32_t aIndex)
 void
 GamepadServiceTest::NewButtonEvent(uint32_t aIndex,
                                    uint32_t aButton,
+                                   bool aTouched,
                                    bool aPressed)
 {
   if (mShuttingDown) {
     return;
   }
 
-  GamepadButtonInformation a(aIndex, aButton, aPressed, aPressed ? 1.0 : 0);
-  GamepadChangeEvent e(a);
+  GamepadButtonInformation a(aButton, aPressed ? 1.0 : 0, aPressed, aTouched);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -187,14 +194,16 @@ void
 GamepadServiceTest::NewButtonValueEvent(uint32_t aIndex,
                                         uint32_t aButton,
                                         bool aPressed,
+                                        bool aTouched,
                                         double aValue)
 {
   if (mShuttingDown) {
     return;
   }
 
-  GamepadButtonInformation a(aIndex, aButton, aPressed, aValue);
-  GamepadChangeEvent e(a);
+  GamepadButtonInformation a(aButton, aValue, aPressed, aTouched);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {
@@ -214,8 +223,92 @@ GamepadServiceTest::NewAxisMoveEvent(uint32_t aIndex,
     return;
   }
 
-  GamepadAxisInformation a(aIndex, aAxis, aValue);
-  GamepadChangeEvent e(a);
+  GamepadAxisInformation a(aAxis, aValue);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
+
+  uint32_t id = ++mEventNumber;
+  if (mChild) {
+    mChild->SendGamepadTestEvent(id, e);
+  } else {
+    PendingOperation op(id, e);
+    mPendingOperations.AppendElement(op);
+  }
+}
+
+void
+GamepadServiceTest::NewPoseMove(uint32_t aIndex,
+                                const Nullable<Float32Array>& aOrient,
+                                const Nullable<Float32Array>& aPos,
+                                const Nullable<Float32Array>& aAngVelocity,
+                                const Nullable<Float32Array>& aAngAcceleration,
+                                const Nullable<Float32Array>& aLinVelocity,
+                                const Nullable<Float32Array>& aLinAcceleration)
+{
+  if (mShuttingDown) {
+    return;
+  }
+
+  GamepadPoseState poseState;
+  poseState.flags = GamepadCapabilityFlags::Cap_Orientation |
+                    GamepadCapabilityFlags::Cap_Position |
+                    GamepadCapabilityFlags::Cap_AngularAcceleration |
+                    GamepadCapabilityFlags::Cap_LinearAcceleration;
+  if (!aOrient.IsNull()) {
+    const Float32Array& value = aOrient.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 4);
+    poseState.orientation[0] = value.Data()[0];
+    poseState.orientation[1] = value.Data()[1];
+    poseState.orientation[2] = value.Data()[2];
+    poseState.orientation[3] = value.Data()[3];
+    poseState.isOrientationValid = true;
+  }
+  if (!aPos.IsNull()) {
+    const Float32Array& value = aPos.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 3);
+    poseState.position[0] = value.Data()[0];
+    poseState.position[1] = value.Data()[1];
+    poseState.position[2] = value.Data()[2];
+    poseState.isPositionValid = true;
+  }
+  if (!aAngVelocity.IsNull()) {
+    const Float32Array& value = aAngVelocity.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 3);
+    poseState.angularVelocity[0] = value.Data()[0];
+    poseState.angularVelocity[1] = value.Data()[1];
+    poseState.angularVelocity[2] = value.Data()[2];
+  }
+  if (!aAngAcceleration.IsNull()) {
+    const Float32Array& value = aAngAcceleration.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 3);
+    poseState.angularAcceleration[0] = value.Data()[0];
+    poseState.angularAcceleration[1] = value.Data()[1];
+    poseState.angularAcceleration[2] = value.Data()[2];
+  }
+  if (!aLinVelocity.IsNull()) {
+    const Float32Array& value = aLinVelocity.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 3);
+    poseState.linearVelocity[0] = value.Data()[0];
+    poseState.linearVelocity[1] = value.Data()[1];
+    poseState.linearVelocity[2] = value.Data()[2];
+  }
+  if (!aLinAcceleration.IsNull()) {
+    const Float32Array& value = aLinAcceleration.Value();
+    value.ComputeLengthAndData();
+    MOZ_ASSERT(value.Length() == 3);
+    poseState.linearAcceleration[0] = value.Data()[0];
+    poseState.linearAcceleration[1] = value.Data()[1];
+    poseState.linearAcceleration[2] = value.Data()[2];
+  }
+
+  GamepadPoseInformation a(poseState);
+  GamepadChangeEventBody body(a);
+  GamepadChangeEvent e(aIndex, GamepadServiceType::Standard, body);
 
   uint32_t id = ++mEventNumber;
   if (mChild) {

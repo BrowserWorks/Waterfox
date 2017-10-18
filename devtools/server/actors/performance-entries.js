@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 /**
  * The performanceEntries actor emits events corresponding to performance
  * entries. It receives `performanceentry` events containing the performance
@@ -9,24 +11,12 @@
  * epoch of the performance entry.
  */
 
-const {
-  method, Arg, Option, RetVal, Front, FrontClass, Actor, ActorClass
-} = require("devtools/shared/protocol");
+const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
+const performanceSpec = require("devtools/shared/specs/performance-entries");
 const events = require("sdk/event/core");
 
-var PerformanceEntriesActor = exports.PerformanceEntriesActor = ActorClass({
-
-  typeName: "performanceEntries",
-
+var PerformanceEntriesActor = ActorClassWithSpec(performanceSpec, {
   listenerAdded: false,
-
-  events: {
-    "entry" : {
-      type: "entry",
-      detail: Arg(0, "json") // object containing performance entry name, type,
-                             // origin, and epoch.
-    }
-  },
 
   initialize: function (conn, tabActor) {
     Actor.prototype.initialize.call(this, conn);
@@ -36,26 +26,22 @@ var PerformanceEntriesActor = exports.PerformanceEntriesActor = ActorClass({
   /**
    * Start tracking the user timings.
    */
-  start: method(function () {
+  start: function () {
     if (!this.listenerAdded) {
       this.onPerformanceEntry = this.onPerformanceEntry.bind(this);
       this.window.addEventListener("performanceentry", this.onPerformanceEntry, true);
       this.listenerAdded = true;
     }
-  }),
+  },
 
   /**
    * Stop tracking the user timings.
    */
-  stop: method(function () {
+  stop: function () {
     if (this.listenerAdded) {
       this.window.removeEventListener("performanceentry", this.onPerformanceEntry, true);
       this.listenerAdded = false;
     }
-  }),
-
-  disconnect: function () {
-    this.destroy();
   },
 
   destroy: function () {
@@ -74,10 +60,4 @@ var PerformanceEntriesActor = exports.PerformanceEntriesActor = ActorClass({
   }
 });
 
-exports.PerformanceEntriesFront = FrontClass(PerformanceEntriesActor, {
-  initialize: function (client, form) {
-    Front.prototype.initialize.call(this, client);
-    this.actorID = form.performanceEntriesActor;
-    this.manage(this);
-  },
-});
+exports.PerformanceEntriesActor = PerformanceEntriesActor;

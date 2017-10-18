@@ -10,19 +10,16 @@ function test()
 {
   waitForExplicitFinish();
 
-  tab1 = gBrowser.addTab();
+  tab1 = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = tab1;
-  gBrowser.selectedBrowser.addEventListener("load", function onLoad1() {
-    gBrowser.selectedBrowser.removeEventListener("load", onLoad1, true);
-
-    tab2 = gBrowser.addTab();
+  gBrowser.selectedBrowser.addEventListener("load", function () {
+    tab2 = BrowserTestUtils.addTab(gBrowser);
     gBrowser.selectedTab = tab2;
-    gBrowser.selectedBrowser.addEventListener("load", function onLoad2() {
-      gBrowser.selectedBrowser.removeEventListener("load", onLoad2, true);
+    gBrowser.selectedBrowser.addEventListener("load", function () {
       openScratchpad(runTests);
-    }, true);
+    }, {capture: true, once: true});
     content.location = "data:text/html,test context switch in Scratchpad tab 2";
-  }, true);
+  }, {capture: true, once: true});
 
   content.location = "data:text/html,test context switch in Scratchpad tab 1";
 }

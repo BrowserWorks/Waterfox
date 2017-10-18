@@ -50,40 +50,49 @@ const JSFunctionSpec SymbolObject::staticMethods[] = {
 };
 
 JSObject*
-SymbolObject::initClass(JSContext* cx, HandleObject obj)
+SymbolObject::initClass(JSContext* cx, HandleObject obj, bool defineMembers)
 {
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
 
     // This uses &JSObject::class_ because: "The Symbol prototype object is an
     // ordinary object. It is not a Symbol instance and does not have a
     // [[SymbolData]] internal slot." (ES6 rev 24, 19.4.3)
-    RootedObject proto(cx, global->createBlankPrototype<PlainObject>(cx));
+    RootedObject proto(cx, GlobalObject::createBlankPrototype<PlainObject>(cx, global));
     if (!proto)
         return nullptr;
 
-    RootedFunction ctor(cx, global->createConstructor(cx, construct,
-                                                      ClassName(JSProto_Symbol, cx), 0));
+    RootedFunction ctor(cx, GlobalObject::createConstructor(cx, construct,
+                                                            ClassName(JSProto_Symbol, cx), 0));
     if (!ctor)
         return nullptr;
 
-    // Define the well-known symbol properties, such as Symbol.iterator.
-    ImmutablePropertyNamePtr* names = cx->names().wellKnownSymbolNames();
-    RootedValue value(cx);
-    unsigned attrs = JSPROP_READONLY | JSPROP_PERMANENT;
-    WellKnownSymbols* wks = cx->runtime()->wellKnownSymbols;
-    for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
-        value.setSymbol(wks->get(i));
-        if (!NativeDefineProperty(cx, ctor, names[i], value, nullptr, nullptr, attrs))
-            return nullptr;
+    if (defineMembers) {
+        // Define the well-known symbol properties, such as Symbol.iterator.
+        ImmutablePropertyNamePtr* names = cx->names().wellKnownSymbolNames();
+        RootedValue value(cx);
+        unsigned attrs = JSPROP_READONLY | JSPROP_PERMANENT;
+        WellKnownSymbols* wks = cx->runtime()->wellKnownSymbols;
+        for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
+            value.setSymbol(wks->get(i));
+            if (!NativeDefineProperty(cx, ctor, names[i], value, nullptr, nullptr, attrs))
+                return nullptr;
+        }
     }
 
-    if (!LinkConstructorAndPrototype(cx, ctor, proto) ||
-        !DefinePropertiesAndFunctions(cx, proto, properties, methods) ||
-        !DefinePropertiesAndFunctions(cx, ctor, nullptr, staticMethods) ||
-        !GlobalObject::initBuiltinConstructor(cx, global, JSProto_Symbol, ctor, proto))
-    {
+    if (!LinkConstructorAndPrototype(cx, ctor, proto))
         return nullptr;
+
+    if (defineMembers) {
+        if (!DefinePropertiesAndFunctions(cx, proto, properties, methods) ||
+            !DefineToStringTag(cx, proto, cx->names().Symbol) ||
+            !DefinePropertiesAndFunctions(cx, ctor, nullptr, staticMethods))
+        {
+            return nullptr;
+        }
     }
+
+    if (!GlobalObject::initBuiltinConstructor(cx, global, JSProto_Symbol, ctor, proto))
+        return nullptr;
     return proto;
 }
 
@@ -97,7 +106,7 @@ SymbolObject::construct(JSContext* cx, unsigned argc, Value* vp)
     // yet, so just throw a TypeError.
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.isConstructing()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_CONSTRUCTOR, "Symbol");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_NOT_CONSTRUCTOR, "Symbol");
         return false;
     }
 
@@ -229,5 +238,11 @@ SymbolObject::toPrimitive(JSContext* cx, unsigned argc, Value* vp)
 JSObject*
 js::InitSymbolClass(JSContext* cx, HandleObject obj)
 {
-    return SymbolObject::initClass(cx, obj);
+    return SymbolObject::initClass(cx, obj, true);
+}
+
+JSObject*
+js::InitBareSymbolCtor(JSContext* cx, HandleObject obj)
+{
+    return SymbolObject::initClass(cx, obj, false);
 }

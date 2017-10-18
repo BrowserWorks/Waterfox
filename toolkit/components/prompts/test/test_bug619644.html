@@ -15,10 +15,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=619644
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=619644">Mozilla Bug 619644</a>
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from prompt_common.js */
 // This is a little yucky, but it works
 // The contents of bug619644_inner.html
 const expectedFinalDoc =
-"<head><\/head><body><p>Original content<\/p>\n<script>\n    window.opener.postMessage(\"\", \"*\");\n    confirm (\"Message\");\n    document.write (\"Extra content\");\n    window.opener.postMessage(document.documentElement.innerHTML, \"*\");\n<\/script>Extra content<\/body>";
+"<head><\/head><body><p>Original content<\/p>\n<script>\n    window.opener.postMessage(\"\", \"*\");\n    confirm(\"Message\");\n    document.write(\"Extra content\");\n    window.opener.postMessage(document.documentElement.innerHTML, \"*\");\n<\/script>Extra content<\/body>";
 
 if (!isTabModal) {
   todo(false, "Test disabled when tab modal prompts are not enabled.");
@@ -29,29 +30,29 @@ if (!isTabModal) {
 var promptDone;
 
 function inittest() {
-  window.addEventListener("message", runtest, false);
+  window.addEventListener("message", runtest);
   window.open("bug619644_inner.html", "619644");
 
   SimpleTest.waitForExplicitFinish();
 }
 
 function runtest(e) {
-  window.removeEventListener("message", runtest, false);
-  window.addEventListener("message", checktest, false);
+  window.removeEventListener("message", runtest);
+  window.addEventListener("message", checktest);
 
   let state = {
-      msg         : "Message",
-      iconClass   : "question-icon",
-      titleHidden : true,
-      textHidden  : true,
-      passHidden  : true,
-      checkHidden : true,
-      textValue   : "",
-      passValue   : "",
-      checkMsg    : "",
-      checked     : false,
-      focused     : "button0",
-      defButton   : "button0",
+      msg: "Message",
+      iconClass: "question-icon",
+      titleHidden: true,
+      textHidden: true,
+      passHidden: true,
+      checkHidden: true,
+      textValue: "",
+      passValue: "",
+      checkMsg: "",
+      checked: false,
+      focused: "button0",
+      defButton: "button0",
   };
   let action = {
       buttonClick: "ESC",

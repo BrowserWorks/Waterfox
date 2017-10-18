@@ -2,13 +2,13 @@ const URL = "http://mochi.test:8888/browser/browser/base/content/test/general/fe
 
 /** Test for Bug 377611 **/
 
-add_task(function* () {
+add_task(async function() {
   // Open a new tab.
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
   registerCleanupFunction(() => gBrowser.removeCurrentTab());
 
   let browser = gBrowser.selectedBrowser;
-  yield BrowserTestUtils.browserLoaded(browser);
+  await BrowserTestUtils.browserLoaded(browser);
 
   let discovered = browser.feeds;
   ok(discovered.length > 0, "some feeds should be discovered");
@@ -18,14 +18,14 @@ add_task(function* () {
     feeds[aFeed.href] = true;
   }
 
-  yield ContentTask.spawn(browser, feeds, function* (feeds) {
+  await ContentTask.spawn(browser, feeds, async function(contentFeeds) {
     for (let aLink of content.document.getElementsByTagName("link")) {
       // ignore real stylesheets, and anything without an href property
       if (aLink.type != "text/css" && aLink.href) {
         if (/bogus/i.test(aLink.title)) {
-          ok(!feeds[aLink.href], "don't discover " + aLink.href);
+          ok(!contentFeeds[aLink.href], "don't discover " + aLink.href);
         } else {
-          ok(feeds[aLink.href], "should discover " + aLink.href);
+          ok(contentFeeds[aLink.href], "should discover " + aLink.href);
         }
       }
     }

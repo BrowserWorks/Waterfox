@@ -10,6 +10,7 @@
 #include "nsIStreamListener.h"
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 
 class nsIWebVTTParserWrapper;
@@ -50,9 +51,9 @@ private:
   enum ErrorCodes {
     BadSignature = 0
   };
-  static NS_METHOD ParseChunk(nsIInputStream* aInStream, void* aClosure,
-                              const char* aFromSegment, uint32_t aToOffset,
-                              uint32_t aCount, uint32_t* aWriteCount);
+  static nsresult ParseChunk(nsIInputStream* aInStream, void* aClosure,
+                             const char* aFromSegment, uint32_t aToOffset,
+                             uint32_t aCount, uint32_t* aWriteCount);
 
   RefPtr<HTMLTrackElement> mElement;
   nsCOMPtr<nsIWebVTTParserWrapper> mParserWrapper;

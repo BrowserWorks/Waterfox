@@ -21,10 +21,9 @@ SimpleTest.registerCleanupFunction(() => gChromeScript.destroy());
 function onloadPromiseFor(id) {
   var iframe = document.getElementById(id);
   return new Promise(resolve => {
-    iframe.addEventListener("load", function onload(e) {
-      iframe.removeEventListener("load", onload);
+    iframe.addEventListener("load", function(e) {
       resolve(true);
-    });
+    }, {once: true});
   });
 }
 
@@ -35,22 +34,22 @@ function handlePrompt(state, action) {
       checkPromptState(msg.promptState, state);
       resolve(true);
     });
-    gChromeScript.sendAsyncMessage("handlePrompt", { action: action, isTabModal: isTabModal});
+    gChromeScript.sendAsyncMessage("handlePrompt", { action, isTabModal});
   });
 }
 
 function checkPromptState(promptState, expectedState) {
     // XXX check title? OS X has title in content
-    is(promptState.msg,         expectedState.msg,         "Checking expected message");
+    is(promptState.msg, expectedState.msg, "Checking expected message");
     if (isOSX && !isTabModal)
       ok(!promptState.titleHidden, "Checking title always visible on OS X");
     else
       is(promptState.titleHidden, expectedState.titleHidden, "Checking title visibility");
-    is(promptState.textHidden,  expectedState.textHidden,  "Checking textbox visibility");
-    is(promptState.passHidden,  expectedState.passHidden,  "Checking passbox visibility");
+    is(promptState.textHidden, expectedState.textHidden, "Checking textbox visibility");
+    is(promptState.passHidden, expectedState.passHidden, "Checking passbox visibility");
     is(promptState.checkHidden, expectedState.checkHidden, "Checking checkbox visibility");
-    is(promptState.checkMsg,    expectedState.checkMsg,    "Checking checkbox label");
-    is(promptState.checked,     expectedState.checked,     "Checking checkbox checked");
+    is(promptState.checkMsg, expectedState.checkMsg, "Checking checkbox label");
+    is(promptState.checked, expectedState.checked, "Checking checkbox checked");
     if (!isTabModal)
       is(promptState.iconClass, "spaced " + expectedState.iconClass, "Checking expected icon CSS class");
     is(promptState.textValue, expectedState.textValue, "Checking textbox value");
@@ -68,7 +67,7 @@ function checkPromptState(promptState, expectedState) {
 
     // For prompts with a time-delay button.
     if (expectedState.butt0Disabled) {
-        is(promptState.butt0Disabled, true,  "Checking accept-button is disabled");
+        is(promptState.butt0Disabled, true, "Checking accept-button is disabled");
         is(promptState.butt1Disabled, false, "Checking cancel-button isn't disabled");
     }
 
@@ -92,4 +91,67 @@ function checkEchoedAuthInfo(expectedState, doc) {
     is(authok, "PASS", "Checking for successful authentication");
     is(username, expectedState.user, "Checking for echoed username");
     is(password, expectedState.pass, "Checking for echoed password");
+}
+
+/**
+ * Create a Proxy to relay method calls on an nsIAuthPrompt[2] prompter to a chrome script which can
+ * perform the calls in the parent. Out and inout params will be copied back from the parent to
+ * content.
+ *
+ * @param chromeScript The reference to the chrome script that will listen to `proxyPrompter`
+ *                     messages in the parent and call the `methodName` method.
+ *                     The return value from the message handler should be an object with properties:
+ * `rv` - containing the return value of the method call.
+ * `args` - containing the array of arguments passed to the method since out or inout ones could have
+ *          been modified.
+ */
+function PrompterProxy(chromeScript) {
+  return new Proxy({}, {
+    get(target, prop, receiver) {
+      return (...args) => {
+        // Array of indices of out/inout params to copy from the parent back to the caller.
+        let outParams = [];
+
+        switch (prop) {
+          case "prompt": {
+            outParams = [/* result */ 5];
+            break;
+          }
+          case "promptAuth": {
+            outParams = [];
+            break;
+          }
+          case "promptPassword": {
+            outParams = [/* pwd */ 4];
+            break;
+          }
+          case "promptUsernameAndPassword": {
+            outParams = [/* user */ 4, /* pwd */ 5];
+            break;
+          }
+          default: {
+            throw new Error("Unknown nsIAuthPrompt method");
+          }
+        }
+
+        let result = chromeScript.sendSyncMessage("proxyPrompter", {
+          args,
+          methodName: prop,
+        })[0][0];
+
+        for (let outParam of outParams) {
+          // Copy the out or inout param value over the original
+          args[outParam].value = result.args[outParam].value;
+        }
+
+        if (prop == "promptAuth") {
+          args[2].username = result.args[2].username;
+          args[2].password = result.args[2].password;
+          args[2].domain = result.args[2].domain;
+        }
+
+        return result.rv;
+      };
+    },
+  });
 }

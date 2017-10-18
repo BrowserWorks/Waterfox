@@ -63,14 +63,9 @@ protected:
 
   bool mRecursiveFlag;
 
-  // We populate this array in the I/O thread with the paths of the Files that
-  // we want to send as result to the promise objects.
-  struct FileData {
-    nsString mDomPath;
-    nsString mRealPath;
-  };
-  FallibleTArray<FileData> mTargetPathArray;
-  nsTHashtable<nsCStringHashKey> mExploredDirectories;
+  // We populate this array in the I/O thread with the BlobImpl.
+  FallibleTArray<RefPtr<BlobImpl>> mTargetBlobImplArray;
+  nsTHashtable<nsStringHashKey> mExploredDirectories;
 };
 
 // Retrieving the list of files can be very time/IO consuming. We use this

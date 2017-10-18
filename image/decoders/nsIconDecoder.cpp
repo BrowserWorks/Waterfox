@@ -69,12 +69,9 @@ nsIconDecoder::ReadHeader(const char* aData)
   }
 
   MOZ_ASSERT(!mImageData, "Already have a buffer allocated?");
-  IntSize targetSize = mDownscaler ? mDownscaler->TargetSize() : GetSize();
-  IntRect frameRect(IntPoint(0, 0), GetSize());
-
   Maybe<SurfacePipe> pipe =
-    SurfacePipeFactory::CreateSurfacePipe(this, 0, GetSize(), targetSize,
-                                          frameRect, SurfaceFormat::B8G8R8A8,
+    SurfacePipeFactory::CreateSurfacePipe(this, 0, Size(), OutputSize(),
+                                          FullFrame(), SurfaceFormat::B8G8R8A8,
                                           SurfacePipeFlags());
   if (!pipe) {
     return Transition::TerminateFailure();
@@ -97,7 +94,8 @@ nsIconDecoder::ReadRowOfPixels(const char* aData, size_t aLength)
       return AsVariant(WriteState::NEED_MORE_DATA);  // Done with this row.
     }
 
-    uint32_t pixel = *reinterpret_cast<const uint32_t*>(aData);
+    uint32_t pixel;
+    memcpy(&pixel, aData, 4);
     aData += 4;
     aLength -= 4;
 

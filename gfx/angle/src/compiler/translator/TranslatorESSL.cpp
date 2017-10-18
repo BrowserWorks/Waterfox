@@ -6,26 +6,20 @@
 
 #include "compiler/translator/TranslatorESSL.h"
 
-#include "compiler/translator/BuiltInFunctionEmulatorGLSL.h"
 #include "compiler/translator/EmulatePrecision.h"
 #include "compiler/translator/RecordConstantPrecision.h"
 #include "compiler/translator/OutputESSL.h"
 #include "angle_gl.h"
+
+namespace sh
+{
 
 TranslatorESSL::TranslatorESSL(sh::GLenum type, ShShaderSpec spec)
     : TCompiler(type, spec, SH_ESSL_OUTPUT)
 {
 }
 
-void TranslatorESSL::initBuiltInFunctionEmulator(BuiltInFunctionEmulator *emu, int compileOptions)
-{
-    if (compileOptions & SH_EMULATE_BUILT_IN_FUNCTIONS)
-    {
-        InitBuiltInFunctionEmulatorForGLSLWorkarounds(emu, getShaderType());
-    }
-}
-
-void TranslatorESSL::translate(TIntermNode *root, int compileOptions)
+void TranslatorESSL::translate(TIntermNode *root, ShCompileOptions compileOptions)
 {
     TInfoSinkBase& sink = getInfoSink().obj;
 
@@ -87,7 +81,8 @@ void TranslatorESSL::translate(TIntermNode *root, int compileOptions)
 
     // Write translated shader.
     TOutputESSL outputESSL(sink, getArrayIndexClampingStrategy(), getHashFunction(), getNameMap(),
-                           getSymbolTable(), shaderVer, precisionEmulation);
+                           getSymbolTable(), getShaderType(), shaderVer, precisionEmulation,
+                           compileOptions);
     root->traverse(&outputESSL);
 }
 
@@ -116,3 +111,5 @@ void TranslatorESSL::writeExtensionBehavior() {
         }
     }
 }
+
+}  // namespace sh

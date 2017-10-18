@@ -5,14 +5,14 @@
 #ifndef mozilla_plugins_PluginWidgetParent_h
 #define mozilla_plugins_PluginWidgetParent_h
 
+#ifndef XP_WIN
+#error "This header should be Windows-only."
+#endif
+
 #include "mozilla/plugins/PPluginWidgetParent.h"
 #include "nsAutoPtr.h"
 #include "nsIWidget.h"
 #include "nsCOMPtr.h"
-
-#if defined(MOZ_WIDGET_GTK)
-class nsPluginNativeWindowGtk;
-#endif
 
 namespace mozilla {
 
@@ -29,11 +29,11 @@ public:
   virtual ~PluginWidgetParent();
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
-  virtual bool RecvCreate(nsresult* aResult, uint64_t* aScrollCaptureId,
-                          uintptr_t* aPluginInstanceId) override;
-  virtual bool RecvSetFocus(const bool& aRaise) override;
-  virtual bool RecvGetNativePluginPort(uintptr_t* value) override;
-  bool RecvSetNativeChildWindow(const uintptr_t& aChildWindow) override;
+  virtual mozilla::ipc::IPCResult RecvCreate(nsresult* aResult, uint64_t* aScrollCaptureId,
+                                          uintptr_t* aPluginInstanceId) override;
+  virtual mozilla::ipc::IPCResult RecvSetFocus(const bool& aRaise) override;
+  virtual mozilla::ipc::IPCResult RecvGetNativePluginPort(uintptr_t* value) override;
+  mozilla::ipc::IPCResult RecvSetNativeChildWindow(const uintptr_t& aChildWindow) override;
 
   // Helper for compositor checks on the channel
   bool ActorDestroyed() { return !mWidget; }
@@ -53,9 +53,6 @@ private:
 
   // The chrome side native widget.
   nsCOMPtr<nsIWidget> mWidget;
-#if defined(MOZ_WIDGET_GTK)
-  nsAutoPtr<nsPluginNativeWindowGtk> mWrapper;
-#endif
 };
 
 } // namespace plugins

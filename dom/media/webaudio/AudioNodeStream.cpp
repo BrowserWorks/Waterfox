@@ -30,15 +30,15 @@ namespace mozilla {
 AudioNodeStream::AudioNodeStream(AudioNodeEngine* aEngine,
                                  Flags aFlags,
                                  TrackRate aSampleRate)
-  : ProcessedMediaStream(),
-    mEngine(aEngine),
-    mSampleRate(aSampleRate),
-    mFlags(aFlags),
-    mNumberOfInputChannels(2),
-    mIsActive(aEngine->IsActive()),
-    mMarkAsFinishedAfterThisBlock(false),
-    mAudioParamStream(false),
-    mPassThrough(false)
+  : ProcessedMediaStream()
+  , mEngine(aEngine)
+  , mSampleRate(aSampleRate)
+  , mFlags(aFlags)
+  , mNumberOfInputChannels(2)
+  , mIsActive(aEngine->IsActive())
+  , mMarkAsFinishedAfterThisBlock(false)
+  , mAudioParamStream(false)
+  , mPassThrough(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   mSuspendedCount = !(mIsActive || mFlags & EXTERNAL_OUTPUT);
@@ -71,20 +71,20 @@ AudioNodeStream::Create(AudioContext* aCtx, AudioNodeEngine* aEngine,
                         Flags aFlags, MediaStreamGraph* aGraph)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_RELEASE_ASSERT(aGraph);
 
   // MediaRecorders use an AudioNodeStream, but no AudioNode
   AudioNode* node = aEngine->NodeMainThread();
-  MediaStreamGraph* graph = aGraph ? aGraph : aCtx->Graph();
 
   RefPtr<AudioNodeStream> stream =
-    new AudioNodeStream(aEngine, aFlags, graph->GraphRate());
+    new AudioNodeStream(aEngine, aFlags, aGraph->GraphRate());
   stream->mSuspendedCount += aCtx->ShouldSuspendNewStream();
   if (node) {
     stream->SetChannelMixingParametersImpl(node->ChannelCount(),
                                            node->ChannelCountModeValue(),
                                            node->ChannelInterpretationValue());
   }
-  graph->AddStream(stream);
+  aGraph->AddStream(stream);
   return stream.forget();
 }
 
@@ -144,7 +144,9 @@ AudioNodeStream::SetStreamTimeParameter(uint32_t aIndex, AudioContext* aContext,
           SetStreamTimeParameterImpl(mIndex, mRelativeToStream, mStreamTime);
     }
     double mStreamTime;
-    MediaStream* mRelativeToStream;
+    MediaStream* MOZ_UNSAFE_REF("ControlMessages are processed in order.  This \
+destination stream is not yet destroyed.  Its (future) destroy message will be \
+processed after this message.") mRelativeToStream;
     uint32_t mIndex;
   };
 
@@ -350,11 +352,6 @@ AudioNodeStream::SetChannelMixingParametersImpl(uint32_t aNumberOfChannels,
                                                 ChannelCountMode aChannelCountMode,
                                                 ChannelInterpretation aChannelInterpretation)
 {
-  // Make sure that we're not clobbering any significant bits by fitting these
-  // values in 16 bits.
-  MOZ_ASSERT(int(aChannelCountMode) < INT16_MAX);
-  MOZ_ASSERT(int(aChannelInterpretation) < INT16_MAX);
-
   mNumberOfInputChannels = aNumberOfChannels;
   mChannelCountMode = aChannelCountMode;
   mChannelInterpretation = aChannelInterpretation;
@@ -582,7 +579,7 @@ AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
       }
     }
 
-    if (mDisabledTrackIDs.Contains(static_cast<TrackID>(AUDIO_TRACK))) {
+    if (GetDisabledTrackMode(static_cast<TrackID>(AUDIO_TRACK)) != DisabledTrackMode::ENABLED) {
       for (uint32_t i = 0; i < outputCount; ++i) {
         mLastChunks[i].SetNull(WEBAUDIO_BLOCK_SIZE);
       }
@@ -621,7 +618,7 @@ AudioNodeStream::ProduceOutputBeforeInput(GraphTime aFrom)
     mEngine->ProduceBlockBeforeInput(this, aFrom, &mLastChunks[0]);
     NS_ASSERTION(mLastChunks[0].GetDuration() == WEBAUDIO_BLOCK_SIZE,
                  "Invalid WebAudio chunk size");
-    if (mDisabledTrackIDs.Contains(static_cast<TrackID>(AUDIO_TRACK))) {
+    if (GetDisabledTrackMode(static_cast<TrackID>(AUDIO_TRACK)) != DisabledTrackMode::ENABLED) {
       mLastChunks[0].SetNull(WEBAUDIO_BLOCK_SIZE);
     }
   }

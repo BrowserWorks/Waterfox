@@ -36,13 +36,12 @@ function whenDelayedStartupFinished(aWindow, aCallback) {
       Services.obs.removeObserver(observer, aTopic);
       setTimeout(aCallback, 0);
     }
-  }, "browser-delayed-startup-finished", false);
+  }, "browser-delayed-startup-finished");
 }
 
 function testOnWindow(aPrivate, aCallback) {
   var win = mainWindow.OpenBrowserWindow({private: aPrivate});
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
+  win.addEventListener("load", function() {
     whenDelayedStartupFinished(win, function() {
       win.addEventListener("DOMContentLoaded", function onInnerLoad() {
         if (win.content.location.href != contentPage) {
@@ -52,13 +51,13 @@ function testOnWindow(aPrivate, aCallback) {
         win.removeEventListener("DOMContentLoaded", onInnerLoad, true);
 
         win.content.addEventListener('load', function innerLoad2() {
-          win.content.removeEventListener('load', innerLoad2, false);
+          win.content.removeEventListener('load', innerLoad2);
           SimpleTest.executeSoon(function() { aCallback(win); });
         }, false, true);
       }, true);
       SimpleTest.executeSoon(function() { win.gBrowser.loadURI(contentPage); });
     });
-  }, true);
+  }, {capture: true, once: true});
 }
 
 var badids = [
@@ -74,7 +73,7 @@ function checkLoads(aWindow, aBlocked) {
   is(win.document.getElementById("goodscript").dataset.touched, "yes", "Should load whitelisted tracking javascript");
 
   var elt = win.document.getElementById("styleCheck");
-  var style = win.document.defaultView.getComputedStyle(elt, "");
+  var style = win.document.defaultView.getComputedStyle(elt);
   isnot(style.visibility, aBlocked ? "hidden" : "", "Should not load tracking css");
 
   is(win.document.blockedTrackingNodeCount, aBlocked ? badids.length : 0, "Should identify all tracking elements");

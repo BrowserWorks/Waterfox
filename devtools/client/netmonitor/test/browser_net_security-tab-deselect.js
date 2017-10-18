@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -9,30 +9,41 @@
  */
 
 add_task(function* () {
-  let [tab, debuggee, monitor] = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+
+  store.dispatch(Actions.batchEnable(false));
 
   info("Performing requests.");
-  debuggee.performRequests(1, "https://example.com" + CORS_SJS_PATH);
-  debuggee.performRequests(1, "http://example.com" + CORS_SJS_PATH);
-  yield waitForNetworkEvents(monitor, 2);
+  let wait = waitForNetworkEvents(monitor, 2);
+  const REQUEST_URLS = [
+    "https://example.com" + CORS_SJS_PATH,
+    "http://example.com" + CORS_SJS_PATH,
+  ];
+  yield ContentTask.spawn(tab.linkedBrowser, REQUEST_URLS, function* (urls) {
+    for (let url of urls) {
+      content.wrappedJSObject.performRequests(1, url);
+    }
+  });
+  yield wait;
 
   info("Selecting secure request.");
-  RequestsMenu.selectedIndex = 0;
+  wait = waitForDOM(document, ".tabs");
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
+  yield wait;
 
   info("Selecting security tab.");
-  NetworkDetails.widget.selectedIndex = 5;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelector("#security-tab"));
 
   info("Selecting insecure request.");
-  RequestsMenu.selectedIndex = 1;
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[1]);
 
-  info("Waiting for security tab to be updated.");
-  yield monitor.panelWin.once(EVENTS.NETWORKDETAILSVIEW_POPULATED);
-
-  is(NetworkDetails.widget.selectedIndex, 0,
+  ok(document.querySelector("#headers-tab[aria-selected=true]"),
     "Selected tab was reset when selected security tab was hidden.");
 
-  yield teardown(monitor);
+  return teardown(monitor);
 });

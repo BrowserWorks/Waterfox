@@ -10,18 +10,18 @@
  * provides accessors to set and query the most basic components of an URI.
  * Subclasses, including nsIURL, impose greater structure on the URI.
  *
- * This interface follows Tim Berners-Lee's URI spec (RFC2396) [1], where the
+ * This interface follows Tim Berners-Lee's URI spec (RFC3986) [1], where the
  * basic URI components are defined as such:
  * <pre>
- *      ftp://username:password@hostname:portnumber/pathname#ref
- *      \ /   \               / \      / \        /\         \ /
- *       -     ---------------   ------   --------  |         -
- *       |            |             |        |      |         |
- *       |            |             |        |      |        Ref
- *       |            |             |       Port    \        /
- *       |            |            Host      /       --------
- *       |         UserPass                 /	         |
- *     Scheme                              /	        Path
+ *      ftp://username:password@hostname:portnumber/pathname?query#ref
+ *      \ /   \               / \      / \        /\       / \   / \ /
+ *       -     ---------------   ------   --------  -------   ---   -
+ *       |            |             |        |         |       |    |
+ *       |            |             |        |      FilePath Query Ref
+ *       |            |             |       Port       \            /
+ *       |            |            Host      /          ------------
+ *       |         UserPass                 /	              |
+ *     Scheme                              /	             Path
  *       \                                /
  *        --------------------------------
  *                       |
@@ -30,16 +30,14 @@
  * The definition of the URI components has been extended to allow for
  * internationalized domain names [2] and the more generic IRI structure [3].
  *
- * Note also that the RFC defines #-separated fragment identifiers as being
- * "not part of the URI".  Despite this, we bundle them as part of the URI, for
- * convenience.
- *
- * [1] http://www.ietf.org/rfc/rfc2396.txt
- * [2] http://www.ietf.org/internet-drafts/draft-ietf-idn-idna-06.txt
- * [3] http://www.ietf.org/internet-drafts/draft-masinter-url-i18n-08.txt
+ * [1] https://tools.ietf.org/html/rfc3986
+ * [2] https://tools.ietf.org/html/rfc5890
+ * [3] https://tools.ietf.org/html/rfc3987
  */
 
 %{C++
+#include "nsStringGlue.h"
+
 #undef GetPort  // XXX Windows!
 #undef SetPort  // XXX Windows!
 %}
@@ -65,7 +63,7 @@
  * old (pre-gecko6) nsIURI IID and swap in the current IID instead, in order
  * for sessionstore to work after an upgrade.  If this IID is revved further,
  * we will need to add additional checks there for all intermediate IIDs, until
- * nsPrincipal is fixed to serialize its URIs as nsISupports (bug 662693).
+ * ContentPrincipal is fixed to serialize its URIs as nsISupports (bug 662693).
  */
 [scriptable, uuid(92073a54-6d78-4f30-913a-b871813208c6)]
 interface nsIURI : nsISupports
@@ -88,6 +86,22 @@ interface nsIURI : nsISupports
      */
     attribute AUTF8String spec;
 
+%{ C++
+    // An infallible wrapper for GetSpec() that returns a failure indication
+    // string if GetSpec() fails. It is most useful for creating
+    // logging/warning/error messages produced for human consumption, and when
+    // matching a URI spec against a fixed spec such as about:blank.
+    nsCString GetSpecOrDefault()
+    {
+        nsCString spec;
+        nsresult rv = GetSpec(spec);
+        if (NS_FAILED(rv)) {
+            spec.Assign("[nsIURI::GetSpec failed]");
+        }
+        return spec;
+    }
+%}
+
     /**
      * The prePath (eg. scheme://user:password@host:port) returns the string
      * before the path.  This is useful for authentication or managing sessions.
@@ -98,7 +112,7 @@ interface nsIURI : nsISupports
 
     /**
      * The Scheme is the protocol to which this URI refers.  The scheme is
-     * restricted to the US-ASCII charset per RFC2396.  Setting this is
+     * restricted to the US-ASCII charset per RFC3986.  Setting this is
      * highly discouraged outside of a protocol handler implementation, since
      * that will generally lead to incorrect results.
      */
@@ -123,16 +137,21 @@ interface nsIURI : nsISupports
     /**
      * The host:port (or simply the host, if port == -1).
      *
-     * Characters are NOT escaped.
+     * If this attribute is set to a value that only has a host part, the port
+     * will not be reset. To reset the port as well use setHostAndPort.
      */
     attribute AUTF8String hostPort;
 
     /**
+     * This function will always set a host and a port. If the port part is
+     * empty, the value of the port will be set to the default value.
+     */
+    void setHostAndPort(in AUTF8String hostport);
+
+    /**
      * The host is the internet domain name to which this URI refers.  It could
-     * be an IPv4 (or IPv6) address literal.  If supported, it could be a
-     * non-ASCII internationalized domain name.
-     *
-     * Characters are NOT escaped.
+     * be an IPv4 (or IPv6) address literal. Otherwise it is an ASCII or punycode
+     * encoded string.
      */
     attribute AUTF8String host;
 
@@ -147,6 +166,9 @@ interface nsIURI : nsISupports
      * empty, depending on the protocol).
      *
      * Some characters may be escaped.
+     *
+     * This attribute contains query and ref parts for historical reasons.
+     * Use the 'filePath' attribute if you do not want those parts included.
      */
     attribute AUTF8String path;
 
@@ -254,10 +276,51 @@ interface nsIURI : nsISupports
     /**
      * returns a string for the current URI with the ref element cleared.
      */
-   readonly attribute AUTF8String specIgnoringRef;
+    readonly attribute AUTF8String specIgnoringRef;
 
     /**
      * Returns if there is a reference portion (the part after the "#") of the URI.
      */
-   readonly attribute boolean hasRef;
+    readonly attribute boolean hasRef;
+
+    /************************************************************************
+     * Additional attributes added for .query support:
+     */
+
+    /**
+     * Returns a path including the directory and file portions of a
+     * URL.  For example, the filePath of "http://host/foo/bar.html#baz"
+     * is "/foo/bar.html".
+     *
+     * Some characters may be escaped.
+     */
+    attribute AUTF8String filePath;
+
+    /**
+     * Returns the query portion (the part after the "?") of the URL.
+     * If there isn't one, an empty string is returned.
+     *
+     * Some characters may be escaped.
+     */
+    attribute AUTF8String query;
+
+    /**
+     * If the URI has a punycode encoded hostname, this will hold the UTF8
+     * representation of that hostname (if that representation doesn't contain
+     * blacklisted characters, and the network.IDN_show_punycode pref is false)
+     * Otherwise, if the hostname is ASCII, it will return the same as .asciiHost
+     */
+    readonly attribute AUTF8String displayHost;
+
+    /**
+     * The displayHost:port (or simply the displayHost, if port == -1).
+     */
+    readonly attribute AUTF8String displayHostPort;
+
+    /**
+     * Returns the same as calling .spec, only with a UTF8 encoded hostname
+     * (if that hostname doesn't contain blacklisted characters, and
+     * the network.IDN_show_punycode pref is false)
+     */
+    readonly attribute AUTF8String displaySpec;
 };

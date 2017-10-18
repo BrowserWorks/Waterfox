@@ -319,7 +319,7 @@ struct hb_apply_context_t :
       if (!c->check_glyph_property (&info, lookup_props))
 	return SKIP_YES;
 
-      if (unlikely (_hb_glyph_info_is_default_ignorable (&info) &&
+      if (unlikely (_hb_glyph_info_is_default_ignorable_and_not_hidden (&info) &&
 		    (ignore_zwnj || !_hb_glyph_info_is_zwnj (&info)) &&
 		    (ignore_zwj || !_hb_glyph_info_is_zwj (&info))))
 	return SKIP_MAYBE;
@@ -342,13 +342,13 @@ struct hb_apply_context_t :
     inline void init (hb_apply_context_t *c_, bool context_match = false)
     {
       c = c_;
-      match_glyph_data = NULL,
+      match_glyph_data = NULL;
       matcher.set_match_func (NULL, NULL);
       matcher.set_lookup_props (c->lookup_props);
       /* Ignore ZWNJ if we are matching GSUB context, or matching GPOS. */
-      matcher.set_ignore_zwnj (context_match || c->table_index == 1);
+      matcher.set_ignore_zwnj (c->table_index == 1 || (context_match && c->auto_zwnj));
       /* Ignore ZWJ if we are matching GSUB context, or matching GPOS, or if asked to. */
-      matcher.set_ignore_zwj (context_match || c->table_index == 1 || c->auto_zwj);
+      matcher.set_ignore_zwj  (c->table_index == 1 || (context_match || c->auto_zwj));
       matcher.set_mask (context_match ? -1 : c->lookup_mask);
     }
     inline void set_lookup_props (unsigned int lookup_props)
@@ -457,43 +457,50 @@ struct hb_apply_context_t :
     return ret;
   }
 
-  unsigned int table_index; /* GSUB/GPOS */
+  skipping_iterator_t iter_input, iter_context;
+
   hb_font_t *font;
   hb_face_t *face;
   hb_buffer_t *buffer;
+  recurse_func_t recurse_func;
+  const GDEF &gdef;
+  const VariationStore &var_store;
+
   hb_direction_t direction;
   hb_mask_t lookup_mask;
-  bool auto_zwj;
-  recurse_func_t recurse_func;
-  unsigned int nesting_level_left;
-  unsigned int lookup_props;
-  const GDEF &gdef;
-  bool has_glyph_classes;
-  skipping_iterator_t iter_input, iter_context;
+  unsigned int table_index; /* GSUB/GPOS */
   unsigned int lookup_index;
+  unsigned int lookup_props;
+  unsigned int nesting_level_left;
   unsigned int debug_depth;
+
+  bool auto_zwnj;
+  bool auto_zwj;
+  bool has_glyph_classes;
 
 
   hb_apply_context_t (unsigned int table_index_,
 		      hb_font_t *font_,
 		      hb_buffer_t *buffer_) :
-			table_index (table_index_),
+			iter_input (), iter_context (),
 			font (font_), face (font->face), buffer (buffer_),
+			recurse_func (NULL),
+			gdef (*hb_ot_layout_from_face (face)->gdef),
+			var_store (gdef.get_var_store ()),
 			direction (buffer_->props.direction),
 			lookup_mask (1),
-			auto_zwj (true),
-			recurse_func (NULL),
-			nesting_level_left (HB_MAX_NESTING_LEVEL),
-			lookup_props (0),
-			gdef (*hb_ot_layout_from_face (face)->gdef),
-			has_glyph_classes (gdef.has_glyph_classes ()),
-			iter_input (),
-			iter_context (),
+			table_index (table_index_),
 			lookup_index ((unsigned int) -1),
-			debug_depth (0) {}
+			lookup_props (0),
+			nesting_level_left (HB_MAX_NESTING_LEVEL),
+			debug_depth (0),
+			auto_zwnj (true),
+			auto_zwj (true),
+			has_glyph_classes (gdef.has_glyph_classes ()) {}
 
   inline void set_lookup_mask (hb_mask_t mask) { lookup_mask = mask; }
   inline void set_auto_zwj (bool auto_zwj_) { auto_zwj = auto_zwj_; }
+  inline void set_auto_zwnj (bool auto_zwnj_) { auto_zwnj = auto_zwnj_; }
   inline void set_recurse_func (recurse_func_t func) { recurse_func = func; }
   inline void set_lookup_index (unsigned int lookup_index_) { lookup_index = lookup_index_; }
   inline void set_lookup_props (unsigned int lookup_props_)
@@ -957,7 +964,7 @@ static inline bool apply_lookup (hb_apply_context_t *c,
   TRACE_APPLY (NULL);
 
   hb_buffer_t *buffer = c->buffer;
-  unsigned int end;
+  int end;
 
   /* All positions are distance from beginning of *output* buffer.
    * Adjust. */
@@ -994,12 +1001,41 @@ static inline bool apply_lookup (hb_apply_context_t *c,
     if (!delta)
         continue;
 
-    /* Recursed lookup changed buffer len.  Adjust. */
+    /* Recursed lookup changed buffer len.  Adjust.
+     *
+     * TODO:
+     *
+     * Right now, if buffer length increased by n, we assume n new glyphs
+     * were added right after the current position, and if buffer length
+     * was decreased by n, we assume n match positions after the current
+     * one where removed.  The former (buffer length increased) case is
+     * fine, but the decrease case can be improved in at least two ways,
+     * both of which are significant:
+     *
+     *   - If recursed-to lookup is MultipleSubst and buffer length
+     *     decreased, then it's current match position that was deleted,
+     *     NOT the one after it.
+     *
+     *   - If buffer length was decreased by n, it does not necessarily
+     *     mean that n match positions where removed, as there might
+     *     have been marks and default-ignorables in the sequence.  We
+     *     should instead drop match positions between current-position
+     *     and current-position + n instead.
+     *
+     * It should be possible to construct tests for both of these cases.
+     */
 
-    /* end can't go back past the current match position.
-     * Note: this is only true because we do NOT allow MultipleSubst
-     * with zero sequence len. */
-    end = MAX (MIN((int) match_positions[idx] + 1, (int) new_len), int (end) + delta);
+    end += delta;
+    if (end <= int (match_positions[idx]))
+    {
+      /* End might end up being smaller than match_positions[idx] if the recursed
+       * lookup ended up removing many items, more than we have had matched.
+       * Just never rewind end back and get out of here.
+       * https://bugs.chromium.org/p/chromium/issues/detail?id=659496 */
+      end = match_positions[idx];
+      /* There can't be any further changes. */
+      break;
+    }
 
     unsigned int next = idx + 1; /* next now is the position after the recursed lookup. */
 
@@ -2266,6 +2302,24 @@ struct GSUBGPOS
   inline const Lookup& get_lookup (unsigned int i) const
   { return (this+lookupList)[i]; }
 
+  inline bool find_variations_index (const int *coords, unsigned int num_coords,
+				     unsigned int *index) const
+  { return (version.to_int () >= 0x00010001u ? this+featureVars : Null(FeatureVariations))
+	   .find_index (coords, num_coords, index); }
+  inline const Feature& get_feature_variation (unsigned int feature_index,
+					       unsigned int variations_index) const
+  {
+    if (FeatureVariations::NOT_FOUND_INDEX != variations_index &&
+	version.to_int () >= 0x00010001u)
+    {
+      const Feature *feature = (this+featureVars).find_substitute (variations_index,
+								   feature_index);
+      if (feature)
+        return *feature;
+    }
+    return get_feature (feature_index);
+  }
+
   inline bool sanitize (hb_sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
@@ -2273,7 +2327,8 @@ struct GSUBGPOS
 		  likely (version.major == 1) &&
 		  scriptList.sanitize (c, this) &&
 		  featureList.sanitize (c, this) &&
-		  lookupList.sanitize (c, this));
+		  lookupList.sanitize (c, this) &&
+		  (version.to_int () < 0x00010001u || featureVars.sanitize (c, this)));
   }
 
   protected:
@@ -2285,8 +2340,13 @@ struct GSUBGPOS
 		featureList; 	/* FeatureList table */
   OffsetTo<LookupList>
 		lookupList; 	/* LookupList table */
+  LOffsetTo<FeatureVariations>
+		featureVars;	/* Offset to Feature Variations
+				   table--from beginning of table
+				 * (may be NULL).  Introduced
+				 * in version 0x00010001. */
   public:
-  DEFINE_SIZE_STATIC (10);
+  DEFINE_SIZE_MIN (10);
 };
 
 

@@ -16,7 +16,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=509055
 <div id="content">
 </div>
 <pre id="test">
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 /** Test for Bug 509055 **/
 
@@ -40,7 +40,7 @@ function onChildLoad(e) {
     gGen.next();
 }
 
-function runTest() {
+function* runTest() {
   var popup = window.open("file_bug509055.html", "popup 0",
                            "height=200,width=200,location=yes," +
                            "menubar=yes,status=yes,toolbar=yes,dependent=yes");
@@ -82,14 +82,12 @@ function runTest() {
   popup.close();
 
   SimpleTest.executeSoon(SimpleTest.finish);
-  dump('Final yield.\n');
-  yield undefined;
 }
 
 window.addEventListener('load', function() {
   gGen = runTest();
   gGen.next();
-}, false);
+});
 
 </script>
 

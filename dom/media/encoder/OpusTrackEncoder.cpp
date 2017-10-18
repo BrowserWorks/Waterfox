@@ -5,16 +5,12 @@
 #include "OpusTrackEncoder.h"
 #include "nsString.h"
 #include "GeckoProfiler.h"
+#include "mozilla/CheckedInt.h"
 
 #include <opus/opus.h>
 
 #undef LOG
-#ifdef MOZ_WIDGET_GONK
-#include <android/log.h>
-#define LOG(args...) __android_log_print(ANDROID_LOG_INFO, "MediaEncoder", ## args);
-#else
 #define LOG(args, ...)
-#endif
 
 namespace mozilla {
 
@@ -215,8 +211,7 @@ OpusTrackEncoder::GetPacketDuration()
 already_AddRefed<TrackMetadataBase>
 OpusTrackEncoder::GetMetadata()
 {
-  PROFILER_LABEL("OpusTrackEncoder", "GetMetadata",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("OpusTrackEncoder::GetMetadata", OTHER);
   {
     // Wait if mEncoder is not initialized.
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
@@ -259,8 +254,7 @@ OpusTrackEncoder::GetMetadata()
 nsresult
 OpusTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
 {
-  PROFILER_LABEL("OpusTrackEncoder", "GetEncodedTrack",
-    js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("OpusTrackEncoder::GetEncodedTrack", OTHER);
   {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     // Wait until initialized or cancelled.
@@ -334,23 +328,41 @@ OpusTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
       AudioChunk chunk = *iter;
 
       // Chunk to the required frame size.
-      int frameToCopy = chunk.GetDuration();
-      if (frameCopied + frameToCopy > framesToFetch) {
+      StreamTime frameToCopy = chunk.GetDuration();
+      if (frameToCopy > framesToFetch - frameCopied) {
         frameToCopy = framesToFetch - frameCopied;
       }
+      // Possible greatest value of framesToFetch = 3844: see
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1349421#c8. frameToCopy
+      // should not be able to exceed this value.
+      MOZ_ASSERT(frameToCopy <= 3844, "frameToCopy exceeded expected range");
 
       if (!chunk.IsNull()) {
         // Append the interleaved data to the end of pcm buffer.
         AudioTrackEncoder::InterleaveTrackData(chunk, frameToCopy, mChannels,
                                                pcm.Elements() + frameCopied * mChannels);
       } else {
+        CheckedInt<int> memsetLength = CheckedInt<int>(frameToCopy) *
+                                       mChannels *
+                                       sizeof(AudioDataValue);
+        if (!memsetLength.isValid()) {
+          // This should never happen, but we use a defensive check because
+          // we really don't want a bad memset
+          MOZ_ASSERT_UNREACHABLE("memsetLength invalid!");
+          return NS_ERROR_FAILURE;
+        }
         memset(pcm.Elements() + frameCopied * mChannels, 0,
-               frameToCopy * mChannels * sizeof(AudioDataValue));
+               memsetLength.value());
       }
 
       frameCopied += frameToCopy;
       iter.Next();
     }
+
+    // Possible greatest value of framesToFetch = 3844: see
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1349421#c8. frameCopied
+    // should not be able to exceed this value.
+    MOZ_ASSERT(frameCopied <= 3844, "frameCopied exceeded expected range");
 
     RefPtr<EncodedFrame> audiodata = new EncodedFrame();
     audiodata->SetFrameType(EncodedFrame::OPUS_AUDIO_FRAME);

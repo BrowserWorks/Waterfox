@@ -16,7 +16,7 @@
 
 "use strict";
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 var Cc = Components.classes;
 var Ci = Components.interfaces;
@@ -54,32 +54,30 @@ XPCOMUtils.defineLazyGetter(this, "nsGzipConverter",
 var gMgr = Cc["@mozilla.org/memory-reporter-manager;1"]
              .getService(Ci.nsIMemoryReporterManager);
 
-const gPageName = 'about:memory';
+const gPageName = "about:memory";
 document.title = gPageName;
 
 const gUnnamedProcessStr = "Main Process";
 
 var gIsDiff = false;
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // Forward slashes in URLs in paths are represented with backslashes to avoid
 // being mistaken for path separators.  Paths/names where this hasn't been
 // undone are prefixed with "unsafe"; the rest are prefixed with "safe".
-function flipBackslashes(aUnsafeStr)
-{
+function flipBackslashes(aUnsafeStr) {
   // Save memory by only doing the replacement if it's necessary.
-  return (aUnsafeStr.indexOf('\\') === -1)
+  return (aUnsafeStr.indexOf("\\") === -1)
          ? aUnsafeStr
-         : aUnsafeStr.replace(/\\/g, '/');
+         : aUnsafeStr.replace(/\\/g, "/");
 }
 
 const gAssertionFailureMsgPrefix = "aboutMemory.js assertion failed: ";
 
 // This is used for things that should never fail, and indicate a defect in
 // this file if they do.
-function assert(aCond, aMsg)
-{
+function assert(aCond, aMsg) {
   if (!aCond) {
     reportAssertionFailure(aMsg)
     throw new Error(gAssertionFailureMsgPrefix + aMsg);
@@ -87,46 +85,41 @@ function assert(aCond, aMsg)
 }
 
 // This is used for malformed input from memory reporters.
-function assertInput(aCond, aMsg)
-{
+function assertInput(aCond, aMsg) {
   if (!aCond) {
     throw new Error("Invalid memory report(s): " + aMsg);
   }
 }
 
-function handleException(ex)
-{
+function handleException(ex) {
   let str = "" + ex;
   if (str.startsWith(gAssertionFailureMsgPrefix)) {
     // Argh, assertion failure within this file!  Give up.
     throw ex;
   } else {
     // File or memory reporter problem.  Print a message.
-    updateMainAndFooter(str, HIDE_FOOTER, "badInputWarning");
+    updateMainAndFooter(str, NO_TIMESTAMP, HIDE_FOOTER, "badInputWarning");
   }
 }
 
-function reportAssertionFailure(aMsg)
-{
+function reportAssertionFailure(aMsg) {
   let debug = Cc["@mozilla.org/xpcom/debug;1"].getService(Ci.nsIDebug2);
   if (debug.isDebugBuild) {
     debug.assertion(aMsg, "false", "aboutMemory.js", 0);
   }
 }
 
-function debug(x)
-{
-  let section = appendElement(document.body, 'div', 'section');
+function debug(x) {
+  let section = appendElement(document.body, "div", "section");
   appendElementWithText(section, "div", "debug", JSON.stringify(x));
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-function onUnload()
-{
+function onUnload() {
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // The <div> holding everything but the header and footer (if they're present).
 // It's what is updated each time the page changes.
@@ -142,11 +135,15 @@ var gVerbose;
 var gAnonymize;
 
 // Values for the |aFooterAction| argument to updateTitleMainAndFooter.
-var HIDE_FOOTER = 0;
-var SHOW_FOOTER = 1;
+const HIDE_FOOTER = 0;
+const SHOW_FOOTER = 1;
 
-function updateTitleMainAndFooter(aTitleNote, aMsg, aFooterAction, aClassName)
-{
+// Values for the |aShowTimestamp| argument to updateTitleMainAndFooter.
+const NO_TIMESTAMP = 0;
+const SHOW_TIMESTAMP = 1;
+
+function updateTitleMainAndFooter(aTitleNote, aMsg, aShowTimestamp,
+                                  aFooterAction, aClassName) {
   document.title = gPageName;
   if (aTitleNote) {
     document.title += " (" + aTitleNote + ")";
@@ -157,11 +154,11 @@ function updateTitleMainAndFooter(aTitleNote, aMsg, aFooterAction, aClassName)
   gMain.parentNode.replaceChild(tmp, gMain);
   gMain = tmp;
 
-  gMain.classList.remove('hidden');
-  gMain.classList.remove('verbose');
-  gMain.classList.remove('non-verbose');
+  gMain.classList.remove("hidden");
+  gMain.classList.remove("verbose");
+  gMain.classList.remove("non-verbose");
   if (gVerbose) {
-    gMain.classList.add(gVerbose.checked ? 'verbose' : 'non-verbose');
+    gMain.classList.add(gVerbose.checked ? "verbose" : "non-verbose");
   }
 
   let msgElement;
@@ -170,31 +167,35 @@ function updateTitleMainAndFooter(aTitleNote, aMsg, aFooterAction, aClassName)
     if (aClassName) {
       className = className + " " + aClassName;
     }
-    msgElement = appendElementWithText(gMain, 'div', className, aMsg);
+    if (aShowTimestamp == SHOW_TIMESTAMP) {
+      // JS has many options for pretty-printing timestamps. We use
+      // toISOString() because it has sub-second granularity, which is useful
+      // if you quickly and repeatedly click one of the buttons.
+      aMsg += " (" + (new Date()).toISOString() + ")";
+    }
+    msgElement = appendElementWithText(gMain, "div", className, aMsg);
   }
 
   switch (aFooterAction) {
-   case HIDE_FOOTER:   gFooter.classList.add('hidden');    break;
-   case SHOW_FOOTER:   gFooter.classList.remove('hidden'); break;
-   default: assertInput(false, "bad footer action in updateTitleMainAndFooter");
+   case HIDE_FOOTER: gFooter.classList.add("hidden"); break;
+   case SHOW_FOOTER: gFooter.classList.remove("hidden"); break;
+   default: assert(false, "bad footer action in updateTitleMainAndFooter");
   }
   return msgElement;
 }
 
-function updateMainAndFooter(aMsg, aFooterAction, aClassName)
-{
-  return updateTitleMainAndFooter("", aMsg, aFooterAction, aClassName);
+function updateMainAndFooter(aMsg, aShowTimestamp, aFooterAction, aClassName) {
+  return updateTitleMainAndFooter("", aMsg, aShowTimestamp, aFooterAction,
+                                  aClassName);
 }
 
-function appendTextNode(aP, aText)
-{
+function appendTextNode(aP, aText) {
   let e = document.createTextNode(aText);
   aP.appendChild(e);
   return e;
 }
 
-function appendElement(aP, aTagName, aClassName)
-{
+function appendElement(aP, aTagName, aClassName) {
   let e = document.createElement(aTagName);
   if (aClassName) {
     e.className = aClassName;
@@ -203,8 +204,7 @@ function appendElement(aP, aTagName, aClassName)
   return e;
 }
 
-function appendElementWithText(aP, aTagName, aClassName, aText)
-{
+function appendElementWithText(aP, aTagName, aClassName, aText) {
   let e = appendElement(aP, aTagName, aClassName);
   // Setting textContent clobbers existing children, but there are none.  More
   // importantly, it avoids creating a JS-land object for the node, saving
@@ -213,7 +213,7 @@ function appendElementWithText(aP, aTagName, aClassName, aText)
   return e;
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 const explicitTreeDescription =
 "This tree covers explicit memory allocations by the application.  It includes \
@@ -234,10 +234,9 @@ and thread stacks. \
 most (including the entire heap), and therefore it is the single best number to \
 focus on when trying to reduce memory usage.";
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-function appendButton(aP, aTitle, aOnClick, aText, aId)
-{
+function appendButton(aP, aTitle, aOnClick, aText, aId) {
   let b = appendElementWithText(aP, "button", "", aText);
   b.title = aTitle;
   b.onclick = aOnClick;
@@ -247,8 +246,7 @@ function appendButton(aP, aTitle, aOnClick, aText, aId)
   return b;
 }
 
-function appendHiddenFileInput(aP, aId, aChangeListener)
-{
+function appendHiddenFileInput(aP, aId, aChangeListener) {
   let input = appendElementWithText(aP, "input", "hidden", "");
   input.type = "file";
   input.id = aId;      // used in testing
@@ -256,8 +254,7 @@ function appendHiddenFileInput(aP, aId, aChangeListener)
   return input;
 }
 
-function onLoad()
-{
+function onLoad() {
   // Generate the header.
 
   let header = appendElement(document.body, "div", "ancillary");
@@ -355,17 +352,17 @@ function onLoad()
   let row3 = appendElement(ops, "div", "opsRow");
 
   appendElementWithText(row3, "div", "opsRowLabel", "Free memory");
-  appendButton(row3, GCDesc, doGC,  "GC");
-  appendButton(row3, CCDesc, doCC,  "CC");
+  appendButton(row3, GCDesc, doGC, "GC");
+  appendButton(row3, CCDesc, doCC, "CC");
   appendButton(row3, MMDesc, doMMU, "Minimize memory usage");
 
   let row4 = appendElement(ops, "div", "opsRow");
 
   appendElementWithText(row4, "div", "opsRowLabel", "Save GC & CC logs");
   appendButton(row4, GCAndCCLogDesc,
-               saveGCLogAndConciseCCLog, "Save concise", 'saveLogsConcise');
+               saveGCLogAndConciseCCLog, "Save concise", "saveLogsConcise");
   appendButton(row4, GCAndCCAllLogDesc,
-               saveGCLogAndVerboseCCLog, "Save verbose", 'saveLogsVerbose');
+               saveGCLogAndVerboseCCLog, "Save verbose", "saveLogsVerbose");
 
   // Three cases here:
   // - DMD is disabled (i.e. not built): don't show the button.
@@ -386,12 +383,12 @@ function onLoad()
   // Generate the main div, where content ("section" divs) will go.  It's
   // hidden at first.
 
-  gMain = appendElement(document.body, 'div', '');
-  gMain.id = 'mainDiv';
+  gMain = appendElement(document.body, "div", "");
+  gMain.id = "mainDiv";
 
   // Generate the footer.  It's hidden at first.
 
-  gFooter = appendElement(document.body, 'div', 'ancillary hidden');
+  gFooter = appendElement(document.body, "div", "ancillary hidden");
 
   let a = appendElementWithText(gFooter, "a", "option",
                                 "Troubleshooting information");
@@ -408,12 +405,12 @@ function onLoad()
   // See if we're loading from a file.  (Because about:memory is a non-standard
   // URL, location.search is undefined, so we have to use location.href
   // instead.)
-  let search = location.href.split('?')[1];
+  let search = location.href.split("?")[1];
   if (search) {
-    let searchSplit = search.split('&');
+    let searchSplit = search.split("&");
     for (let i = 0; i < searchSplit.length; i++) {
-      if (searchSplit[i].toLowerCase().startsWith('file=')) {
-        let filename = searchSplit[i].substring('file='.length);
+      if (searchSplit[i].toLowerCase().startsWith("file=")) {
+        let filename = searchSplit[i].substring("file=".length);
         updateAboutMemoryFromFile(decodeURIComponent(filename));
         return;
       }
@@ -421,49 +418,46 @@ function onLoad()
   }
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-function doGC()
-{
-  Services.obs.notifyObservers(null, "child-gc-request", null);
+function doGC() {
+  Services.obs.notifyObservers(null, "child-gc-request");
   Cu.forceGC();
-  updateMainAndFooter("Garbage collection completed", HIDE_FOOTER);
+  updateMainAndFooter("Garbage collection completed", SHOW_TIMESTAMP,
+                      HIDE_FOOTER);
 }
 
-function doCC()
-{
-  Services.obs.notifyObservers(null, "child-cc-request", null);
+function doCC() {
+  Services.obs.notifyObservers(null, "child-cc-request");
   window.QueryInterface(Ci.nsIInterfaceRequestor)
         .getInterface(Ci.nsIDOMWindowUtils)
         .cycleCollect();
-  updateMainAndFooter("Cycle collection completed", HIDE_FOOTER);
+  updateMainAndFooter("Cycle collection completed", SHOW_TIMESTAMP,
+                      HIDE_FOOTER);
 }
 
-function doMMU()
-{
-  Services.obs.notifyObservers(null, "child-mmu-request", null);
+function doMMU() {
+  Services.obs.notifyObservers(null, "child-mmu-request");
   gMgr.minimizeMemoryUsage(
-    () => updateMainAndFooter("Memory minimization completed", HIDE_FOOTER));
+    () => updateMainAndFooter("Memory minimization completed",
+                              SHOW_TIMESTAMP, HIDE_FOOTER));
 }
 
-function doMeasure()
-{
+function doMeasure() {
   updateAboutMemoryFromReporters();
 }
 
-function saveGCLogAndConciseCCLog()
-{
+function saveGCLogAndConciseCCLog() {
   dumpGCLogAndCCLog(false);
 }
 
-function saveGCLogAndVerboseCCLog()
-{
+function saveGCLogAndVerboseCCLog() {
   dumpGCLogAndCCLog(true);
 }
 
-function doDMD()
-{
-  updateMainAndFooter("Saving memory reports and DMD output...", HIDE_FOOTER);
+function doDMD() {
+  updateMainAndFooter("Saving memory reports and DMD output...",
+                      NO_TIMESTAMP, HIDE_FOOTER);
   try {
     let dumper = Cc["@mozilla.org/memory-info-dumper;1"]
                    .getService(Ci.nsIMemoryInfoDumper);
@@ -473,32 +467,32 @@ function doDMD()
                                    /* minimize = */ false);
     updateMainAndFooter("Saved memory reports and DMD reports analysis " +
                         "to the temp directory",
-                        HIDE_FOOTER);
+                        SHOW_TIMESTAMP, HIDE_FOOTER);
   } catch (ex) {
-    updateMainAndFooter(ex.toString(), HIDE_FOOTER);
+    updateMainAndFooter(ex.toString(), NO_TIMESTAMP, HIDE_FOOTER);
   }
 }
 
-function dumpGCLogAndCCLog(aVerbose)
-{
+function dumpGCLogAndCCLog(aVerbose) {
   let dumper = Cc["@mozilla.org/memory-info-dumper;1"]
                 .getService(Ci.nsIMemoryInfoDumper);
 
-  let inProgress = updateMainAndFooter("Saving logs...", HIDE_FOOTER);
-  let section = appendElement(gMain, 'div', "section");
+  let inProgress = updateMainAndFooter("Saving logs...",
+                                       NO_TIMESTAMP, HIDE_FOOTER);
+  let section = appendElement(gMain, "div", "section");
 
   function displayInfo(gcLog, ccLog, isParent) {
-    appendElementWithText(section, 'div', "",
+    appendElementWithText(section, "div", "",
                           "Saved GC log to " + gcLog.path);
 
     let ccLogType = aVerbose ? "verbose" : "concise";
-    appendElementWithText(section, 'div', "",
+    appendElementWithText(section, "div", "",
                           "Saved " + ccLogType + " CC log to " + ccLog.path);
   }
 
   dumper.dumpGCAndCCLogsToFile("", aVerbose, /* dumpChildProcesses = */ true,
                                { onDump: displayInfo,
-                                 onFinish: function() {
+                                 onFinish() {
                                    inProgress.remove();
                                  }
                                });
@@ -508,9 +502,8 @@ function dumpGCLogAndCCLog(aVerbose)
  * Top-level function that does the work of generating the page from the memory
  * reporters.
  */
-function updateAboutMemoryFromReporters()
-{
-  updateMainAndFooter("Measuring...", HIDE_FOOTER);
+function updateAboutMemoryFromReporters() {
+  updateMainAndFooter("Measuring...", NO_TIMESTAMP, HIDE_FOOTER);
 
   try {
     let processLiveMemoryReports =
@@ -522,7 +515,8 @@ function updateAboutMemoryFromReporters()
       }
 
       let displayReportsAndFooter = function() {
-        updateTitleMainAndFooter("live measurement", "", SHOW_FOOTER);
+        updateTitleMainAndFooter("live measurement", "", NO_TIMESTAMP,
+                                 SHOW_FOOTER);
         aDisplayReports();
       }
 
@@ -569,8 +563,7 @@ function parseAndUnwrapIfCrashDump(aStr) {
  *        An object that (hopefully!) conforms to the JSON schema used by
  *        nsIMemoryInfoDumper.
  */
-function updateAboutMemoryFromJSONObject(aObj)
-{
+function updateAboutMemoryFromJSONObject(aObj) {
   try {
     assertInput(aObj.version === gCurrentFileFormatVersion,
                 "data version number missing or doesn't match");
@@ -583,19 +576,8 @@ function updateAboutMemoryFromJSONObject(aObj)
         function(aHandleReport, aDisplayReports) {
       for (let i = 0; i < aObj.reports.length; i++) {
         let r = aObj.reports[i];
-
-        // A hack: for a brief time (late in the FF26 and early in the FF27
-        // cycle) we were dumping memory report files that contained reports
-        // whose path began with "redundant/".  Such reports were ignored by
-        // about:memory.  These reports are no longer produced, but some older
-        // builds are still floating around and producing files that contain
-        // them, so we need to still handle them (i.e. ignore them).  This hack
-        // can be removed once FF26 and associated products (e.g. B2G 1.2) are
-        // no longer in common use.
-        if (!r.path.startsWith("redundant/")) {
-          aHandleReport(r.process, r.path, r.kind, r.units, r.amount,
-                        r.description, r._presence);
-        }
+        aHandleReport(r.process, r.path, r.kind, r.units, r.amount,
+                      r.description, r._presence);
       }
       aDisplayReports();
     }
@@ -613,8 +595,7 @@ function updateAboutMemoryFromJSONObject(aObj)
  *        A string containing JSON data conforming to the schema used by
  *        nsIMemoryReporterManager::dumpReports.
  */
-function updateAboutMemoryFromJSONString(aStr)
-{
+function updateAboutMemoryFromJSONString(aStr) {
   try {
     let obj = parseAndUnwrapIfCrashDump(aStr);
     updateAboutMemoryFromJSONObject(obj);
@@ -633,9 +614,8 @@ function updateAboutMemoryFromJSONString(aStr)
  * @param aFn
  *        The function to call and pass the read string to upon completion.
  */
-function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn)
-{
-  updateMainAndFooter("Loading...", HIDE_FOOTER);
+function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn) {
+  updateMainAndFooter("Loading...", NO_TIMESTAMP, HIDE_FOOTER);
 
   try {
     let reader = new FileReader();
@@ -643,13 +623,15 @@ function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn)
     reader.onabort = () => { throw new Error("FileReader.onabort"); };
     reader.onload = (aEvent) => {
       // Clear "Loading..." from above.
-      updateTitleMainAndFooter(aTitleNote, "", SHOW_FOOTER);
+      updateTitleMainAndFooter(aTitleNote, "", NO_TIMESTAMP, SHOW_FOOTER);
       aFn(aEvent.target.result);
     };
 
     // If it doesn't have a .gz suffix, read it as a (legacy) ungzipped file.
     if (!aFilename.endsWith(".gz")) {
-      reader.readAsText(new File(aFilename));
+      File.createFromFileName(aFilename).then(file => {
+        reader.readAsText(file);
+      });
       return;
     }
 
@@ -657,12 +639,12 @@ function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn)
     let converter = new nsGzipConverter();
     converter.asyncConvertData("gzip", "uncompressed", {
       data: [],
-      onStartRequest: function(aR, aC) {},
-      onDataAvailable: function(aR, aC, aStream, aO, aCount) {
+      onStartRequest(aR, aC) {},
+      onDataAvailable(aR, aC, aStream, aO, aCount) {
         let bi = new nsBinaryStream(aStream);
         this.data.push(bi.readBytes(aCount));
       },
-      onStopRequest: function(aR, aC, aStatusCode) {
+      onStopRequest(aR, aC, aStatusCode) {
         try {
           if (!Components.isSuccessCode(aStatusCode)) {
             throw new Components.Exception("Error while reading gzip file", aStatusCode);
@@ -694,8 +676,7 @@ function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn)
  *        The name of the file being read from.  The expected format of the
  *        file's contents is described in a comment in nsIMemoryInfoDumper.idl.
  */
-function updateAboutMemoryFromFile(aFilename)
-{
+function updateAboutMemoryFromFile(aFilename) {
   loadMemoryReportsFromFile(aFilename, /* title note */ aFilename,
                             updateAboutMemoryFromJSONString);
 }
@@ -709,8 +690,7 @@ function updateAboutMemoryFromFile(aFilename)
  * @param aFilename2
  *        The name of the first file being read from.
  */
-function updateAboutMemoryFromTwoFiles(aFilename1, aFilename2)
-{
+function updateAboutMemoryFromTwoFiles(aFilename1, aFilename2) {
   let titleNote = "diff of " + aFilename1 + " and " + aFilename2;
   loadMemoryReportsFromFile(aFilename1, titleNote, function(aStr1) {
     loadMemoryReportsFromFile(aFilename2, titleNote, function(aStr2) {
@@ -727,14 +707,13 @@ function updateAboutMemoryFromTwoFiles(aFilename1, aFilename2)
   });
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // Something unlikely to appear in a process name.
 var kProcessPathSep = "^:^:^";
 
 // Short for "diff report".
-function DReport(aKind, aUnits, aAmount, aDescription, aNMerged, aPresence)
-{
+function DReport(aKind, aUnits, aAmount, aDescription, aNMerged, aPresence) {
   this._kind = aKind;
   this._units = aUnits;
   this._amount = aAmount;
@@ -746,9 +725,8 @@ function DReport(aKind, aUnits, aAmount, aDescription, aNMerged, aPresence)
 }
 
 DReport.prototype = {
-  assertCompatible: function(aKind, aUnits)
-  {
-    assert(this._kind  == aKind,  "Mismatched kinds");
+  assertCompatible(aKind, aUnits) {
+    assert(this._kind == aKind, "Mismatched kinds");
     assert(this._units == aUnits, "Mismatched units");
 
     // We don't check that the "description" properties match.  This is because
@@ -767,13 +745,13 @@ DReport.prototype = {
     // the descriptions to differ seems reasonable.)
   },
 
-  merge: function(aJr) {
+  merge(aJr) {
     this.assertCompatible(aJr.kind, aJr.units);
     this._amount += aJr.amount;
     this._nMerged++;
   },
 
-  toJSON: function(aProcess, aPath, aAmount) {
+  toJSON(aProcess, aPath, aAmount) {
     return {
       process:     aProcess,
       path:        aPath,
@@ -800,17 +778,16 @@ DReport.ADDED_FOR_BALANCE = 3;
  *        The |reports| field of a JSON object.
  * @return The constructed report map.
  */
-function makeDReportMap(aJSONReports)
-{
+function makeDReportMap(aJSONReports) {
   let dreportMap = {};
   for (let i = 0; i < aJSONReports.length; i++) {
     let jr = aJSONReports[i];
 
-    assert(jr.process     !== undefined, "Missing process");
-    assert(jr.path        !== undefined, "Missing path");
-    assert(jr.kind        !== undefined, "Missing kind");
-    assert(jr.units       !== undefined, "Missing units");
-    assert(jr.amount      !== undefined, "Missing amount");
+    assert(jr.process !== undefined, "Missing process");
+    assert(jr.path !== undefined, "Missing path");
+    assert(jr.kind !== undefined, "Missing kind");
+    assert(jr.units !== undefined, "Missing units");
+    assert(jr.amount !== undefined, "Missing amount");
     assert(jr.description !== undefined, "Missing description");
 
     // Strip out some non-deterministic stuff that prevents clean diffs.
@@ -851,6 +828,10 @@ function makeDReportMap(aJSONReports)
     path = path.replace(/jar:file:\\\\\\(.+)\\omni.ja!/,
                         "jar:file:\\\\\\...\\omni.ja!");
 
+    // Normalize script source counts.
+    path = path.replace(/source\(scripts=(\d+), /,
+                        "source\(scripts=NNN, ");
+
     let processPath = process + kProcessPathSep + path;
     let rOld = dreportMap[processPath];
     if (rOld === undefined) {
@@ -865,8 +846,7 @@ function makeDReportMap(aJSONReports)
 
 // Return a new dreportMap which is the diff of two dreportMaps.  Empties
 // aDReportMap2 along the way.
-function diffDReportMaps(aDReportMap1, aDReportMap2)
-{
+function diffDReportMaps(aDReportMap1, aDReportMap2) {
   let result = {};
 
   for (let processPath in aDReportMap1) {
@@ -900,8 +880,7 @@ function diffDReportMaps(aDReportMap1, aDReportMap2)
   return result;
 }
 
-function makeJSONReports(aDReportMap)
-{
+function makeJSONReports(aDReportMap) {
   let reports = [];
   for (let processPath in aDReportMap) {
     let r = aDReportMap[processPath];
@@ -925,10 +904,8 @@ function makeJSONReports(aDReportMap)
 }
 
 // Diff two JSON objects holding memory reports.
-function diffJSONObjects(aJson1, aJson2)
-{
-  function simpleProp(aProp)
-  {
+function diffJSONObjects(aJson1, aJson2) {
+  function simpleProp(aProp) {
     assert(aJson1[aProp] !== undefined && aJson1[aProp] === aJson2[aProp],
            aProp + " properties don't match");
     return aJson1[aProp];
@@ -944,11 +921,10 @@ function diffJSONObjects(aJson1, aJson2)
   };
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // |PColl| is short for "process collection".
-function PColl()
-{
+function PColl() {
   this._trees = {};
   this._degenerates = {};
   this._heapTotal = 0;
@@ -964,13 +940,11 @@ function PColl()
  * @param aHasMozMallocUsableSize
  *        Boolean indicating if moz_malloc_usable_size works.
  */
-function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
-{
+function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize) {
   let pcollsByProcess = {};
 
   function handleReport(aProcess, aUnsafePath, aKind, aUnits, aAmount,
-                        aDescription, aPresence)
-  {
+                        aDescription, aPresence) {
     if (aUnsafePath.startsWith("explicit/")) {
       assertInput(aKind === KIND_HEAP || aKind === KIND_NONHEAP,
                   "bad explicit kind");
@@ -983,7 +957,7 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
            "bad presence");
 
     let process = aProcess === "" ? gUnnamedProcessStr : aProcess;
-    let unsafeNames = aUnsafePath.split('/');
+    let unsafeNames = aUnsafePath.split("/");
     let unsafeName0 = unsafeNames[0];
     let isDegenerate = unsafeNames.length === 1;
 
@@ -1038,8 +1012,7 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
     }
   }
 
-  function displayReports()
-  {
+  function displayReports() {
     // Sort the processes.
     let processes = Object.keys(pcollsByProcess);
     processes.sort(function(aProcessA, aProcessB) {
@@ -1056,8 +1029,8 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
       }
 
       // Then sort by resident size.
-      let nodeA = pcollsByProcess[aProcessA]._degenerates['resident'];
-      let nodeB = pcollsByProcess[aProcessB]._degenerates['resident'];
+      let nodeA = pcollsByProcess[aProcessA]._degenerates["resident"];
+      let nodeB = pcollsByProcess[aProcessB]._degenerates["resident"];
       let residentA = nodeA ? nodeA._amount : -1;
       let residentB = nodeB ? nodeB._amount : -1;
 
@@ -1082,7 +1055,7 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
     // Generate output for each process.
     for (let i = 0; i < processes.length; i++) {
       let process = processes[i];
-      let section = appendElement(gMain, 'div', 'section');
+      let section = appendElement(gMain, "div", "section");
 
       appendProcessAboutMemoryElements(section, i, process,
                                        pcollsByProcess[process]._trees,
@@ -1095,7 +1068,7 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
   aProcessReports(handleReport, displayReports);
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 // There are two kinds of TreeNode.
 // - Leaf TreeNodes correspond to reports.
@@ -1103,8 +1076,7 @@ function appendAboutMemoryMain(aProcessReports, aHasMozMallocUsableSize)
 //   are derived from their children.
 // Some trees are "degenerate", i.e. they contain a single node, i.e. they
 // correspond to a report whose path has no '/' separators.
-function TreeNode(aUnsafeName, aUnits, aIsDegenerate)
-{
+function TreeNode(aUnsafeName, aUnits, aIsDegenerate) {
   this._units = aUnits;
   this._unsafeName = aUnsafeName;
   if (aIsDegenerate) {
@@ -1126,7 +1098,7 @@ function TreeNode(aUnsafeName, aUnits, aIsDegenerate)
 }
 
 TreeNode.prototype = {
-  findKid: function(aUnsafeName) {
+  findKid(aUnsafeName) {
     if (this._kids) {
       for (let i = 0; i < this._kids.length; i++) {
         if (this._kids[i]._unsafeName === aUnsafeName) {
@@ -1143,13 +1115,13 @@ TreeNode.prototype = {
   // things. So for a non-leaf node, instead of just looking at _amount, we
   // instead look at the maximum absolute value of the node and all of its
   // descendants.
-  maxAbsDescendant: function() {
+  maxAbsDescendant() {
     if (!this._kids) {
       // No kids? Just return the absolute value of the amount.
       return Math.abs(this._amount);
     }
 
-    if ('_maxAbsDescendant' in this) {
+    if ("_maxAbsDescendant" in this) {
       // We've computed this before? Return the saved value.
       return this._maxAbsDescendant;
     }
@@ -1163,12 +1135,12 @@ TreeNode.prototype = {
     return max;
   },
 
-  toString: function() {
+  toString() {
     switch (this._units) {
-      case UNITS_BYTES:            return formatBytes(this._amount);
+      case UNITS_BYTES: return formatBytes(this._amount);
       case UNITS_COUNT:
       case UNITS_COUNT_CUMULATIVE: return formatInt(this._amount);
-      case UNITS_PERCENTAGE:       return formatPercentage(this._amount);
+      case UNITS_PERCENTAGE: return formatPercentage(this._amount);
       default:
         throw "Invalid memory report(s): bad units in TreeNode.toString";
     }
@@ -1208,11 +1180,9 @@ TreeNode.compareUnsafeNames = function(aA, aB) {
  * @param aRoot
  *        The tree root.
  */
-function fillInTree(aRoot)
-{
+function fillInTree(aRoot) {
   // Fill in the remaining properties bottom-up.
-  function fillInNonLeafNodes(aT)
-  {
+  function fillInNonLeafNodes(aT) {
     if (!aT._kids) {
       // Leaf node.  Has already been filled in.
 
@@ -1221,13 +1191,13 @@ function fillInTree(aRoot)
       // to avoid redundant entries.
       let kid = aT._kids[0];
       let kidBytes = fillInNonLeafNodes(kid);
-      aT._unsafeName += '/' + kid._unsafeName;
+      aT._unsafeName += "/" + kid._unsafeName;
       if (kid._kids) {
         aT._kids = kid._kids;
       } else {
         delete aT._kids;
       }
-      aT._amount = kid._amount;
+      aT._amount = kidBytes;
       aT._description = kid._description;
       if (kid._nMerged !== undefined) {
         aT._nMerged = kid._nMerged
@@ -1251,7 +1221,7 @@ function fillInTree(aRoot)
           (aT._presence === DReport.PRESENT_IN_FIRST_ONLY ||
            aT._presence === DReport.PRESENT_IN_SECOND_ONLY)) {
         aT._amount += kidsBytes;
-        let fake = new TreeNode('(fake child)', aT._units);
+        let fake = new TreeNode("(fake child)", aT._units);
         fake._presence = DReport.ADDED_FOR_BALANCE;
         fake._amount = aT._amount - kidsBytes;
         aT._kids.push(fake);
@@ -1282,8 +1252,7 @@ function fillInTree(aRoot)
  *        The sum of all explicit HEAP reports for this process.
  * @return A boolean indicating if "heap-allocated" is known for the process.
  */
-function addHeapUnclassifiedNode(aT, aHeapAllocatedNode, aHeapTotal)
-{
+function addHeapUnclassifiedNode(aT, aHeapAllocatedNode, aHeapTotal) {
   if (aHeapAllocatedNode === undefined)
     return false;
 
@@ -1315,12 +1284,10 @@ function addHeapUnclassifiedNode(aT, aHeapAllocatedNode, aHeapTotal)
  * @param aT
  *        The tree.
  */
-function sortTreeAndInsertAggregateNodes(aTotalBytes, aT)
-{
+function sortTreeAndInsertAggregateNodes(aTotalBytes, aT) {
   const kSignificanceThresholdPerc = 1;
 
-  function isInsignificant(aT)
-  {
+  function isInsignificant(aT) {
     if (gVerbose.checked)
       return false;
 
@@ -1394,8 +1361,7 @@ function sortTreeAndInsertAggregateNodes(aTotalBytes, aT)
 var gUnsafePathsWithInvalidValuesForThisProcess = [];
 
 function appendWarningElements(aP, aHasKnownHeapAllocated,
-                               aHasMozMallocUsableSize)
-{
+                               aHasMozMallocUsableSize) {
   if (!aHasKnownHeapAllocated && !aHasMozMallocUsableSize) {
     appendElementWithText(aP, "p", "",
       "WARNING: the 'heap-allocated' memory reporter and the " +
@@ -1425,8 +1391,7 @@ function appendWarningElements(aP, aHasKnownHeapAllocated,
     let ul = appendElement(div, "ul");
     for (let i = 0;
          i < gUnsafePathsWithInvalidValuesForThisProcess.length;
-         i++)
-    {
+         i++) {
       appendTextNode(ul, " ");
       appendElementWithText(ul, "li", "",
         flipBackslashes(gUnsafePathsWithInvalidValuesForThisProcess[i]) + "\n");
@@ -1458,8 +1423,7 @@ function appendWarningElements(aP, aHasKnownHeapAllocated,
  */
 function appendProcessAboutMemoryElements(aP, aN, aProcess, aTrees,
                                           aDegenerates, aHeapTotal,
-                                          aHasMozMallocUsableSize)
-{
+                                          aHasMozMallocUsableSize) {
   const kUpwardsArrow   = "\u2191",
         kDownwardsArrow = "\u2193";
 
@@ -1476,7 +1440,7 @@ function appendProcessAboutMemoryElements(aP, aN, aProcess, aTrees,
       document.documentElement.scrollTop =
         document.querySelector(event.target.href).offsetTop;
       event.preventDefault();
-    }, false);
+    });
 
     // This gives nice spacing when we copy and paste.
     appendElementWithText(aP, "span", "", "\n");
@@ -1549,7 +1513,7 @@ function appendProcessAboutMemoryElements(aP, aN, aProcess, aTrees,
   }
   for (let i = 0; i < otherDegenerates.length; i++) {
     let t = otherDegenerates[i];
-    let padText = pad("", maxStringLength - t.toString().length, ' ');
+    let padText = pad("", maxStringLength - t.toString().length, " ");
     appendTreeElements(pre, t, aProcess, padText);
   }
   appendTextNode(aP, "\n");  // gives nice spacing when we copy and paste
@@ -1574,8 +1538,7 @@ function appendProcessAboutMemoryElements(aP, aN, aProcess, aTrees,
  *        The number.
  * @return A boolean.
  */
-function hasNegativeSign(aN)
-{
+function hasNegativeSign(aN) {
   if (aN === 0) {                   // this succeeds for 0 and -0
     return 1 / aN === -Infinity;    // this succeeds for -0
   }
@@ -1595,8 +1558,7 @@ function hasNegativeSign(aN)
  * Array.join at the end is more memory efficient than using string
  * concatenation.  See bug 722972 for details.
  */
-function formatInt(aN, aExtra)
-{
+function formatInt(aN, aExtra) {
   let neg = false;
   if (hasNegativeSign(aN)) {
     neg = true;
@@ -1635,8 +1597,7 @@ function formatInt(aN, aExtra)
  *        The byte count.
  * @return The string representation.
  */
-function formatBytes(aBytes)
-{
+function formatBytes(aBytes) {
   let unit = gVerbose.checked ? " B" : " MB";
 
   let s;
@@ -1658,8 +1619,7 @@ function formatBytes(aBytes)
  *        The percentage, multiplied by 100 (see nsIMemoryReporter).
  * @return The string representation
  */
-function formatPercentage(aPerc100x)
-{
+function formatPercentage(aPerc100x) {
   return (aPerc100x / 100).toFixed(2) + "%";
 }
 
@@ -1674,8 +1634,7 @@ function formatPercentage(aPerc100x)
  *        The char used to pad.
  * @return The string representation.
  */
-function pad(aS, aN, aC)
-{
+function pad(aS, aN, aC) {
   let padding = "";
   let n2 = aN - aS.length;
   for (let i = 0; i < n2; i++) {
@@ -1701,8 +1660,7 @@ const kNoKidsSep                    = " \u2500\u2500 ",
       kShowKidsSep                  = " -- ";
 
 function appendMrNameSpan(aP, aDescription, aUnsafeName, aIsInvalid, aNMerged,
-                          aPresence)
-{
+                          aPresence) {
   let safeName = flipBackslashes(aUnsafeName);
   if (!aIsInvalid && !aNMerged && !aPresence) {
     safeName += "\n";
@@ -1736,15 +1694,15 @@ function appendMrNameSpan(aP, aDescription, aUnsafeName, aIsInvalid, aNMerged,
     let c, title;
     switch (aPresence) {
      case DReport.PRESENT_IN_FIRST_ONLY:
-      c = '-';
+      c = "-";
       title = "This value was only present in the first set of memory reports.";
       break;
      case DReport.PRESENT_IN_SECOND_ONLY:
-      c = '+';
+      c = "+";
       title = "This value was only present in the second set of memory reports.";
       break;
      case DReport.ADDED_FOR_BALANCE:
-      c = '!';
+      c = "!";
       title = "One of the sets of memory reports lacked children for this " +
               "node's parent. This is a fake child node added to make the " +
               "two memory sets comparable.";
@@ -1772,8 +1730,7 @@ function assertClassListContains(e, className) {
   assert(e.classList.contains(className), "classname isn't " + className);
 }
 
-function toggle(aEvent)
-{
+function toggle(aEvent) {
   // This relies on each line being a span that contains at least four spans:
   // mrValue, mrPerc, mrSep, mrName, and then zero or more mrNotes.  All
   // whitespace must be within one of these spans for this function to find the
@@ -1812,8 +1769,7 @@ function toggle(aEvent)
   }
 }
 
-function expandPathToThisElement(aElement)
-{
+function expandPathToThisElement(aElement) {
   if (aElement.classList.contains("kids")) {
     // Unhide the kids.
     aElement.classList.remove("hidden");
@@ -1843,8 +1799,7 @@ function expandPathToThisElement(aElement)
  * @param aPadText
  *        A string to pad the start of each entry.
  */
-function appendTreeElements(aP, aRoot, aProcess, aPadText)
-{
+function appendTreeElements(aP, aRoot, aProcess, aPadText) {
   /**
    * Appends the elements for a particular tree, without a heading.
    *
@@ -1870,10 +1825,8 @@ function appendTreeElements(aP, aRoot, aProcess, aPadText)
    */
   function appendTreeElements2(aP, aProcess, aUnsafeNames, aRoot, aT,
                                aTreelineText1, aTreelineText2a,
-                               aTreelineText2b, aParentStringLength)
-  {
-    function appendN(aS, aC, aN)
-    {
+                               aTreelineText2b, aParentStringLength) {
+    function appendN(aS, aC, aN) {
       for (let i = 0; i < aN; i++) {
         aS += aC;
       }
@@ -1888,7 +1841,7 @@ function appendTreeElements(aP, aRoot, aProcess, aPadText)
       aTreelineText2a =
         appendN(aTreelineText2a, kHorizontal, extraTreelineLength);
       aTreelineText2b =
-        appendN(aTreelineText2b, " ",         extraTreelineLength);
+        appendN(aTreelineText2b, " ", extraTreelineLength);
     }
     let treelineText = aTreelineText1 + aTreelineText2a;
     appendElementWithText(aP, "span", "treeline", treelineText);
@@ -1989,18 +1942,16 @@ function appendTreeElements(aP, aRoot, aProcess, aPadText)
                       aPadText, "", "", rootStringLength);
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-function appendSectionHeader(aP, aText)
-{
+function appendSectionHeader(aP, aText) {
   appendElementWithText(aP, "h2", "", aText + "\n");
   return appendElement(aP, "pre", "entries");
 }
 
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-function saveReportsToFile()
-{
+function saveReportsToFile() {
   let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
   fp.appendFilter("Zipped JSON files", "*.json.gz");
   fp.appendFilters(Ci.nsIFilePicker.filterAll);
@@ -2012,7 +1963,8 @@ function saveReportsToFile()
     let dumper = Cc["@mozilla.org/memory-info-dumper;1"]
                    .getService(Ci.nsIMemoryInfoDumper);
     let finishDumping = () => {
-      updateMainAndFooter("Saved memory reports to " + file.path, HIDE_FOOTER);
+      updateMainAndFooter("Saved memory reports to " + file.path,
+                          SHOW_TIMESTAMP, HIDE_FOOTER);
     }
     dumper.dumpMemoryReportsToNamedFile(file.path, finishDumping, null,
                                         gAnonymize.checked);
@@ -2027,7 +1979,7 @@ function saveReportsToFile()
 
   try {
     fp.init(window, "Save Memory Reports", Ci.nsIFilePicker.modeSave);
-  } catch(ex) {
+  } catch (ex) {
     // This will fail on Android, since there is no Save as file picker there.
     // Just save to the default downloads dir if it does.
     Downloads.getSystemDownloadsDirectory().then(function(dirPath) {

@@ -5,6 +5,7 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="../../testcommon.js"></script>
+<script src="../../resources/easing-tests.js"></script>
 <script src="../../resources/keyframe-utils.js"></script>
 <body>
 <div id="log"></div>
@@ -66,7 +67,25 @@ test(function(t) {
                   "resulting easing for '" + easing + "'");
   });
 }, "easing values are parsed correctly when passed to the " +
-   "KeyframeEffectReadOnly constructor in KeyframeTimingOptions");
+   "KeyframeEffectReadOnly constructor in KeyframeEffectOptions");
+
+test(function(t) {
+  gInvalidEasings.forEach(invalidEasing => {
+    assert_throws(new TypeError, () => {
+      new KeyframeEffectReadOnly(target, { easing: invalidEasing });
+    }, `TypeError is thrown for easing '${invalidEasing}'`);
+  });
+}, 'invalid easing values are correctly rejected when passed to the ' +
+   'KeyframeEffectReadOnly constructor in regular keyframes');
+
+test(function(t) {
+  gInvalidEasings.forEach(invalidEasing => {
+    assert_throws(new TypeError, () => {
+      new KeyframeEffectReadOnly(target, null, { easing: invalidEasing });
+    }, `TypeError is thrown for easing '${invalidEasing}'`);
+  });
+}, 'invalid easing values are correctly rejected when passed to the ' +
+   'KeyframeEffectReadOnly constructor in KeyframeEffectOptions');
 
 test(function(t) {
   var getKeyframe = function(composite) {
@@ -110,7 +129,7 @@ test(function(t) {
     var effect = new KeyframeEffectReadOnly(target, {
       left: ["10px", "20px"]
     }, { composite: composite });
-    assert_equals(effect.getKeyframes()[0].composite, composite,
+    assert_equals(effect.getKeyframes()[0].composite, undefined,
                   "resulting composite for '" + composite + "'");
   });
   gBadCompositeValueTests.forEach(function(composite) {
@@ -120,8 +139,8 @@ test(function(t) {
       }, { composite: composite });
     });
   });
-}, "composite values are parsed correctly when passed to the " +
-   "KeyframeEffectReadOnly constructor in KeyframeTimingOptions");
+}, "composite value is absent if the composite operation specified on the " +
+   "keyframe effect is being used");
 
 gPropertyIndexedKeyframesTests.forEach(function(subtest) {
   test(function(t) {
@@ -209,8 +228,6 @@ test(function(t) {
   assert_equals(effect.composite, "replace", "default composite");
   assert_equals(effect.iterationComposite, "replace",
                 "default iterationComposite");
-  assert_equals(effect.spacing, "distribute",
-                "default spacing");
 }, "a KeyframeEffectReadOnly constructed without any " +
    "KeyframeEffectOptions object");
 

@@ -18,7 +18,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
  * from the probes.
  *
  * Data is collected by "Performance Group". Typically, a Performance Group
- * is an add-on, or a frame, or the internals of the application.
+ * is a frame, or the internals of the application.
  *
  * Generally, if you have the choice between PerformanceStats and PerformanceWatcher,
  * you should favor PerformanceWatcher.
@@ -26,7 +26,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/ObjectUtils.jsm", this);
 XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
   "resource://gre/modules/PromiseUtils.jsm");
@@ -52,7 +51,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "finalizer",
 // and that we can release/close the probes it holds.
 const FINALIZATION_TOPIC = "performancemonitor-finalize";
 
-const PROPERTIES_META_IMMUTABLE = ["addonId", "isSystem", "isChildProcess", "groupId", "processId"];
+const PROPERTIES_META_IMMUTABLE = ["isSystem", "isChildProcess", "groupId", "processId"];
 const PROPERTIES_META = [...PROPERTIES_META_IMMUTABLE, "windowId", "title", "name"];
 
 // How long we wait for children processes to respond.
@@ -79,7 +78,7 @@ Probe.prototype = {
    * If the probe was inactive, activate it. Note that activating a probe
    * can incur a memory or performance cost.
    */
-  acquire: function() {
+  acquire() {
     if (this._counter == 0) {
       this._impl.isActive = true;
       Process.broadcast("acquire", [this._name]);
@@ -92,7 +91,7 @@ Probe.prototype = {
    *
    * If this was the last client for this probe, deactivate it.
    */
-  release: function() {
+  release() {
     this._counter--;
     if (this._counter == 0) {
       try {
@@ -117,7 +116,7 @@ Probe.prototype = {
    * @return {object} An object containing the data extracted from this
    * probe. Actual format depends on the probe.
    */
-  extract: function(xpcom) {
+  extract(xpcom) {
     if (!this._impl.isActive) {
       throw new Error(`Probe is inactive: ${this._name}`);
     }
@@ -130,7 +129,7 @@ Probe.prototype = {
    *
    * @return {true} If `a` and `b` hold identical values.
    */
-  isEqual: function(a, b) {
+  isEqual(a, b) {
     if (a == null && b == null) {
       return true;
     }
@@ -149,7 +148,7 @@ Probe.prototype = {
    * @return {object} An object representing `a - b`. If `b` is
    * `null`, this is `a`.
    */
-  subtract: function(a, b) {
+  subtract(a, b) {
     if (a == null) {
       throw new TypeError();
     }
@@ -159,7 +158,7 @@ Probe.prototype = {
     return this._impl.subtract(a, b);
   },
 
-  importChildCompartments: function(parent, children) {
+  importChildCompartments(parent, children) {
     if (!Array.isArray(children)) {
       throw new TypeError();
     }
@@ -176,7 +175,7 @@ Probe.prototype = {
     return this._name;
   },
 
-  compose: function(stats) {
+  compose(stats) {
     if (!Array.isArray(stats)) {
       throw new TypeError();
     }
@@ -221,17 +220,17 @@ var Probes = {
     get isActive() {
       return performanceStatsService.isMonitoringJank;
     },
-    extract: function(xpcom) {
+    extract(xpcom) {
       let durations = xpcom.getDurations();
       return {
         totalUserTime: xpcom.totalUserTime,
         totalSystemTime: xpcom.totalSystemTime,
         totalCPUTime: xpcom.totalUserTime + xpcom.totalSystemTime,
-        durations: durations,
+        durations,
         longestDuration: lastNonZero(durations)
       }
     },
-    isEqual: function(a, b) {
+    isEqual(a, b) {
       // invariant: `a` and `b` are both non-null
       if (a.totalUserTime != b.totalUserTime) {
         return false;
@@ -246,7 +245,7 @@ var Probes = {
       }
       return true;
     },
-    subtract: function(a, b) {
+    subtract(a, b) {
       // invariant: `a` and `b` are both non-null
       let result = {
         totalUserTime: a.totalUserTime - b.totalUserTime,
@@ -261,8 +260,8 @@ var Probes = {
       result.longestDuration = lastNonZero(result.durations);
       return result;
     },
-    importChildCompartments: function() { /* nothing to do */ },
-    compose: function(stats) {
+    importChildCompartments() { /* nothing to do */ },
+    compose(stats) {
       let result = {
         totalUserTime: 0,
         totalSystemTime: 0,
@@ -298,21 +297,21 @@ var Probes = {
     get isActive() {
       return performanceStatsService.isMonitoringCPOW;
     },
-    extract: function(xpcom) {
+    extract(xpcom) {
       return {
         totalCPOWTime: xpcom.totalCPOWTime
       };
     },
-    isEqual: function(a, b) {
+    isEqual(a, b) {
       return a.totalCPOWTime == b.totalCPOWTime;
     },
-    subtract: function(a, b) {
+    subtract(a, b) {
       return {
         totalCPOWTime: a.totalCPOWTime - b.totalCPOWTime
       };
     },
-    importChildCompartments: function() { /* nothing to do */ },
-    compose: function(stats) {
+    importChildCompartments() { /* nothing to do */ },
+    compose(stats) {
       let totalCPOWTime = 0;
       for (let stat of stats) {
         totalCPOWTime += stat.totalCPOWTime;
@@ -335,21 +334,21 @@ var Probes = {
   ticks: new Probe("ticks", {
     set isActive(x) { /* this probe cannot be deactivated */ },
     get isActive() { return true; },
-    extract: function(xpcom) {
+    extract(xpcom) {
       return {
         ticks: xpcom.ticks
       };
     },
-    isEqual: function(a, b) {
+    isEqual(a, b) {
       return a.ticks == b.ticks;
     },
-    subtract: function(a, b) {
+    subtract(a, b) {
       return {
         ticks: a.ticks - b.ticks
       };
     },
-    importChildCompartments: function() { /* nothing to do */ },
-    compose: function(stats) {
+    importChildCompartments() { /* nothing to do */ },
+    compose(stats) {
       let ticks = 0;
       for (let stat of stats) {
         ticks += stat.ticks;
@@ -365,19 +364,19 @@ var Probes = {
     get isActive() {
       return performanceStatsService.isMonitoringPerCompartment;
     },
-    extract: function(xpcom) {
+    extract(xpcom) {
       return null;
     },
-    isEqual: function(a, b) {
+    isEqual(a, b) {
       return true;
     },
-    subtract: function(a, b) {
+    subtract(a, b) {
       return true;
     },
-    importChildCompartments: function(parent, children) {
+    importChildCompartments(parent, children) {
       parent.children = children;
     },
-    compose: function(stats) {
+    compose(stats) {
       return null;
     },
   }),
@@ -447,7 +446,7 @@ PerformanceMonitor.prototype = {
    * @return {Promise}
    * @resolve {Snapshot}
    */
-  _checkBeforeSnapshot: function(options) {
+  _checkBeforeSnapshot(options) {
     if (!this._finalizer) {
       throw new Error("dispose() has already been called, this PerformanceMonitor is not usable anymore");
     }
@@ -472,14 +471,14 @@ PerformanceMonitor.prototype = {
     }
     return probes;
   },
-  promiseContentSnapshot: function(options = null) {
+  promiseContentSnapshot(options = null) {
     this._checkBeforeSnapshot(options);
     return (new ProcessSnapshot(performanceStatsService.getSnapshot()));
   },
-  promiseSnapshot: function(options = null) {
+  promiseSnapshot(options = null) {
     let probes = this._checkBeforeSnapshot(options);
-    return Task.spawn(function*() {
-      let childProcesses = yield Process.broadcastAndCollect("collect", {probeNames: probes.map(p => p.name)});
+    return (async function() {
+      let childProcesses = await Process.broadcastAndCollect("collect", {probeNames: probes.map(p => p.name)});
       let xpcom = performanceStatsService.getSnapshot();
       return new ApplicationSnapshot({
         xpcom,
@@ -487,7 +486,7 @@ PerformanceMonitor.prototype = {
         probes,
         date: Cu.now()
       });
-    });
+    })();
   },
 
   /**
@@ -496,7 +495,7 @@ PerformanceMonitor.prototype = {
    * Releasing probes as soon as they are unused is a good idea, as some probes
    * cost CPU and/or memory.
    */
-  dispose: function() {
+  dispose() {
     if (!this._finalizer) {
       return;
     }
@@ -566,14 +565,14 @@ PerformanceMonitor.makeId = function() {
 // release the probes unless `dispose()` has already been called.
 Services.obs.addObserver(function(subject, topic, value) {
   PerformanceMonitor.dispose(value);
-}, FINALIZATION_TOPIC, false);
+}, FINALIZATION_TOPIC);
 
 // Public API
 this.PerformanceStats = {
   /**
    * Create a monitor for observing a set of performance probes.
    */
-  getMonitor: function(probes) {
+  getMonitor(probes) {
     return PerformanceMonitor.make(probes);
   }
 };
@@ -587,10 +586,7 @@ this.PerformanceStats = {
  * @field {string} name The name of the performance group:
  * - for the process itself, "<process>";
  * - for platform code, "<platform>";
- * - for an add-on, the identifier of the addon (e.g. "myaddon@foo.bar");
  * - for a webpage, the url of the page.
- *
- * @field {string} addonId The identifier of the addon (e.g. "myaddon@foo.bar").
  *
  * @field {string|null} title The title of the webpage to which this code
  *  belongs. Note that this is the title of the entire webpage (i.e. the tab),
@@ -640,7 +636,7 @@ PerformanceDataLeaf.prototype = {
    *
    * @return `true` if `this` and `to` have equal values in all fields.
    */
-  equals: function(to) {
+  equals(to) {
     if (!(to instanceof PerformanceDataLeaf)) {
       throw new TypeError();
     }
@@ -661,7 +657,7 @@ PerformanceDataLeaf.prototype = {
    *
    * @return {PerformanceDiff} The performance usage between `to` and `this`.
    */
-  subtract: function(to = null) {
+  subtract(to = null) {
     return (new PerformanceDiffLeaf(this, to));
   }
 };
@@ -673,7 +669,7 @@ function PerformanceData(timestamp) {
   this._timestamp = timestamp;
 }
 PerformanceData.prototype = {
-  addChild: function(stat) {
+  addChild(stat) {
     if (!(stat instanceof PerformanceDataLeaf)) {
       throw new TypeError(); // FIXME
     }
@@ -684,7 +680,7 @@ PerformanceData.prototype = {
     this._all.push(stat);
     stat.owner = this;
   },
-  setParent: function(stat) {
+  setParent(stat) {
     if (!(stat instanceof PerformanceDataLeaf)) {
       throw new TypeError(); // FIXME
     }
@@ -695,7 +691,7 @@ PerformanceData.prototype = {
     this._all.push(stat);
     stat.owner = this;
   },
-  equals: function(to) {
+  equals(to) {
     if (this._parent && !to._parent) {
       return false;
     }
@@ -719,11 +715,8 @@ PerformanceData.prototype = {
     }
     return true;
   },
-  subtract: function(to = null) {
+  subtract(to = null) {
     return (new PerformanceDiff(this, to));
-  },
-  get addonId() {
-    return this._all[0].addonId;
   },
   get title() {
     return this._all[0].title;
@@ -731,7 +724,6 @@ PerformanceData.prototype = {
 };
 
 function PerformanceDiff(current, old = null) {
-  this.addonId = current.addonId;
   this.title = current.title;
   this.windowId = current.windowId;
   this.deltaT = old ? current._timestamp - old._timestamp : Infinity;
@@ -739,7 +731,7 @@ function PerformanceDiff(current, old = null) {
 
   // Handle the parent, if any.
   if (current._parent) {
-    this._parent = old?current._parent.subtract(old._parent):current._parent;
+    this._parent = old ? current._parent.subtract(old._parent) : current._parent;
     this._all.push(this._parent);
     this._parent.owner = this;
   } else {
@@ -767,7 +759,7 @@ function PerformanceDiff(current, old = null) {
   }
 }
 PerformanceDiff.prototype = {
-  toString: function() {
+  toString() {
     return `[PerformanceDiff] ${this.key}`;
   },
   get windowIds() {
@@ -777,9 +769,6 @@ PerformanceDiff.prototype = {
     return this._all.map(item => item.groupId);
   },
   get key() {
-    if (this.addonId) {
-      return this.addonId;
-    }
     if (this._parent) {
       return this._parent.windowId;
     }
@@ -857,7 +846,6 @@ function ProcessSnapshot({xpcom, probes}) {
 function ApplicationSnapshot({xpcom, childProcesses, probes, date}) {
   ProcessSnapshot.call(this, {xpcom, probes});
 
-  this.addons = new Map();
   this.webpages = new Map();
   this.date = date;
 
@@ -872,10 +860,7 @@ function ApplicationSnapshot({xpcom, childProcesses, probes, date}) {
 
   for (let leaf of this.componentsData) {
     let key, map;
-    if (leaf.addonId) {
-      key = leaf.addonId;
-      map = this.addons;
-    } else if (leaf.windowId) {
+    if (leaf.windowId) {
       key = leaf.windowId;
       map = this.webpages;
     } else {
@@ -915,7 +900,7 @@ var Process = {
       return this._loader;
     }
     Services.ppmm.loadProcessScript("resource://gre/modules/PerformanceStats-content.js",
-      true/*including future processes*/);
+      true/* including future processes*/);
     return this._loader = Services.ppmm;
   },
 
@@ -924,7 +909,7 @@ var Process = {
    *
    * NOOP if we are in a child process.
    */
-  broadcast: function(topic, payload) {
+  broadcast(topic, payload) {
     if (!this.loader) {
       return;
     }
@@ -943,7 +928,7 @@ var Process = {
    * array of objects with a structure similar to PerformanceData. Note
    * that the array may be empty if no child process responded.
    */
-  broadcastAndCollect: Task.async(function*(topic, payload) {
+  async broadcastAndCollect(topic, payload) {
     if (!this.loader || this.loader.childCount == 1) {
       return undefined;
     }
@@ -992,9 +977,9 @@ var Process = {
       clearTimeout(timeout);
     });
 
-    yield deferred.promise;
+    await deferred.promise;
     this.loader.removeMessageListener(TOPIC, observer);
 
     return collected;
-  })
+  }
 };

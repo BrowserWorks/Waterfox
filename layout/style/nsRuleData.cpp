@@ -5,8 +5,12 @@
 
 #include "nsRuleData.h"
 
+#include "nsAttrValueInlines.h"
+#include "nsCSSParser.h"
 #include "mozilla/Poison.h"
 #include <stdint.h>
+
+using namespace mozilla;
 
 inline size_t
 nsRuleData::GetPoisonOffset()
@@ -18,19 +22,19 @@ nsRuleData::GetPoisonOffset()
                 "expect uintptr_t and size_t to be the same size");
   static_assert(uintptr_t(-1) > uintptr_t(0),
                 "expect uintptr_t to be unsigned");
-  static_assert(size_t(-1) > size_t(0),
-                "expect size_t to be unsigned");
+  static_assert(size_t(-1) > size_t(0), "expect size_t to be unsigned");
   uintptr_t framePoisonValue = mozPoisonValue();
   return size_t(framePoisonValue - uintptr_t(mValueStorage)) /
          sizeof(nsCSSValue);
 }
 
-nsRuleData::nsRuleData(uint32_t aSIDs, nsCSSValue* aValueStorage,
-                       nsPresContext* aContext, nsStyleContext* aStyleContext)
-  : mSIDs(aSIDs),
-    mPresContext(aContext),
-    mStyleContext(aStyleContext),
-    mValueStorage(aValueStorage)
+nsRuleData::nsRuleData(uint32_t aSIDs,
+                       nsCSSValue* aValueStorage,
+                       nsPresContext* aContext,
+                       GeckoStyleContext* aStyleContext)
+  : GenericSpecifiedValues(StyleBackendType::Gecko, aContext, aSIDs)
+  , mStyleContext(aStyleContext)
+  , mValueStorage(aValueStorage)
 {
 #ifndef MOZ_VALGRIND
   size_t framePoisonOffset = GetPoisonOffset();
@@ -38,6 +42,40 @@ nsRuleData::nsRuleData(uint32_t aSIDs, nsCSSValue* aValueStorage,
     mValueOffsets[i] = framePoisonOffset;
   }
 #endif
+}
+
+void
+nsRuleData::SetFontFamily(const nsString& aValue)
+{
+  nsCSSValue* family = ValueForFontFamily();
+  nsCSSParser parser;
+  parser.ParseFontFamilyListString(aValue, nullptr, 0, *family);
+}
+
+void
+nsRuleData::SetTextDecorationColorOverride()
+{
+  nsCSSValue* decoration = ValueForTextDecorationLine();
+  int32_t newValue = NS_STYLE_TEXT_DECORATION_LINE_OVERRIDE_ALL;
+  if (decoration->GetUnit() == eCSSUnit_Enumerated) {
+    newValue |= decoration->GetIntValue();
+  }
+  decoration->SetIntValue(newValue, eCSSUnit_Enumerated);
+}
+
+void
+nsRuleData::SetBackgroundImage(nsAttrValue& aValue)
+{
+  nsCSSValue* backImage = ValueForBackgroundImage();
+  // If the value is an image, or it is a URL and we attempted a load,
+  // put it in the style tree.
+  if (aValue.Type() == nsAttrValue::eURL) {
+    aValue.LoadImage(mPresContext->Document());
+  }
+  if (aValue.Type() == nsAttrValue::eImage) {
+    nsCSSValueList* list = backImage->SetListValue();
+    list->mValue.SetImageValue(aValue.GetImageValue());
+  }
 }
 
 #ifdef DEBUG

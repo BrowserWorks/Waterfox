@@ -46,13 +46,16 @@ fuzzy-if(skiaContent,1,580) == anim-css-fill-3-from-by-ident-ident.svg  anim-css
 fuzzy-if(skiaContent,1,580) == anim-css-fill-3-from-by-rgb-ident.svg    anim-css-fill-3-ref.svg
 
 # check handling of overflowing color values
-# NOTE: The second test fails because we compute "from + by" as the animation
-# end-point, and we clamp that final color value (due to bug 515919) and use
-# the clamped value for interpolation.  That's earlier than the SVG spec wants
-# us to clamp -- we're only supposed to clamp *final presentation values*.
+# NOTE: Some of the tests below fail in Gecko because we compute
+# "from + by" as the animation end-point, and we clamp that final color value
+# (due to bug 515919) and use the clamped value for interpolation.
+# That's earlier than the SVG spec wants us to clamp -- we're only supposed to
+# clamp *final presentation values*.
 # (Reference: SVG 1.1 Appendix F.4)
 == anim-css-fill-overflow-1-by.svg       anim-css-fill-overflow-1-ref.svg
-fails == anim-css-fill-overflow-1-from-by.svg anim-css-fill-overflow-1-ref.svg
+fails-if(!stylo) == anim-css-fill-overflow-1-from-by.svg anim-css-fill-overflow-1-ref.svg # bug 515919
+fails-if(!stylo) == anim-css-stopcolor-overflow-1-from-by.svg anim-css-stopcolor-overflow-1-ref.svg # bug 515919
+fails-if(!stylo) == anim-css-floodcolor-overflow-1-from-by.svg anim-css-floodcolor-overflow-1-ref.svg # bug 515919
 
 # 'fill-opacity' property
 fuzzy-if(skiaContent,1,885) == anim-css-fillopacity-1-by.svg            anim-css-fillopacity-1-ref.svg
@@ -94,7 +97,7 @@ fuzzy-if(skiaContent,1,365) == anim-css-fillopacity-3-clamp-small.svg   anim-css
 == anim-css-fontsize-2-from-by-em-em.svg    anim-css-fontsize-2-ref.svg
 
 # 'stroke-dasharray' property, from/to with pixel values only
-fails == anim-css-strokedasharray-1.svg anim-css-strokedasharray-1-ref.svg
+skip-if(!styloVsGecko) == anim-css-strokedasharray-1.svg anim-css-strokedasharray-1-ref.svg
 
 # 'stroke-width' property, from/by/to with pixel values only
 == anim-css-strokewidth-1-by-px-px.svg        anim-css-strokewidth-1-ref.svg
@@ -155,3 +158,6 @@ fuzzy-if(skiaContent,1,170) == anim-css-strokewidth-4-from-by-no-no.svg   anim-c
 # check correct handling of "!important" values
 == important-set-1.svg  anim-standard-ref.svg
 == important-set-2.svg  anim-standard-ref.svg
+
+# check namespaced attribute
+== namespaced-property-1.svg  anim-standard-ref.svg

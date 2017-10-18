@@ -4,7 +4,10 @@
 
 #include "sandbox/win/src/service_resolver.h"
 
-#include "base/memory/scoped_ptr.h"
+#include <stddef.h>
+
+#include <memory>
+
 #include "sandbox/win/src/sandbox_nt_util.h"
 #include "sandbox/win/src/win_utils.h"
 
@@ -139,19 +142,19 @@ NTSTATUS ServiceResolverThunk::Setup(const void* target_module,
                                      void* thunk_storage,
                                      size_t storage_bytes,
                                      size_t* storage_used) {
-  NTSTATUS ret = Init(target_module, interceptor_module, target_name,
-                      interceptor_name, interceptor_entry_point,
-                      thunk_storage, storage_bytes);
+  NTSTATUS ret =
+      Init(target_module, interceptor_module, target_name, interceptor_name,
+           interceptor_entry_point, thunk_storage, storage_bytes);
   if (!NT_SUCCESS(ret))
     return ret;
 
   size_t thunk_bytes = GetThunkSize();
-  scoped_ptr<char[]> thunk_buffer(new char[thunk_bytes]);
+  std::unique_ptr<char[]> thunk_buffer(new char[thunk_bytes]);
   ServiceFullThunk* thunk = reinterpret_cast<ServiceFullThunk*>(
                                 thunk_buffer.get());
 
   if (!IsFunctionAService(&thunk->original))
-    return STATUS_UNSUCCESSFUL;
+    return STATUS_OBJECT_NAME_COLLISION;
 
   ret = PerformPatch(thunk, thunk_storage);
 
@@ -181,7 +184,7 @@ NTSTATUS ServiceResolverThunk::CopyThunk(const void* target_module,
   ServiceFullThunk* thunk = reinterpret_cast<ServiceFullThunk*>(thunk_storage);
 
   if (!IsFunctionAService(&thunk->original))
-    return STATUS_UNSUCCESSFUL;
+    return STATUS_OBJECT_NAME_COLLISION;
 
   if (NULL != storage_used)
     *storage_used = thunk_bytes;
@@ -213,7 +216,7 @@ NTSTATUS ServiceResolverThunk::PerformPatch(void* local_thunk,
                                             void* remote_thunk) {
   // Patch the original code.
   ServiceEntry local_service;
-  DCHECK_NT(GetInternalThunkSize() >= sizeof(local_service));
+  DCHECK_NT(GetInternalThunkSize() <= sizeof(local_service));
   if (!SetInternalThunk(&local_service, sizeof(local_service), NULL,
                         interceptor_))
     return STATUS_UNSUCCESSFUL;

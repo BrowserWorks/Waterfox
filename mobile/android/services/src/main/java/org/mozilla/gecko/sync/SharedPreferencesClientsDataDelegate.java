@@ -6,7 +6,6 @@ package org.mozilla.gecko.sync;
 
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
-import org.mozilla.gecko.fxa.FxAccountDeviceRegistrator;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.util.HardwareUtils;
@@ -63,6 +62,7 @@ public class SharedPreferencesClientsDataDelegate implements ClientsDataDelegate
     if (account != null) {
       final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
       fxAccount.resetDeviceRegistrationVersion();
+      fxAccount.setDeviceRegistrationTimestamp(0L);
     }
   }
 

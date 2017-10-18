@@ -12,14 +12,14 @@
  * License.
  *
  * The Initial Developers of the Original Code are Kevin Hendricks (MySpell)
- * and László Németh (Hunspell). Portions created by the Initial Developers
+ * and LÃ¡szlÃ³ NÃ©meth (Hunspell). Portions created by the Initial Developers
  * are Copyright (C) 2002-2005 the Initial Developers. All Rights Reserved.
  *
  * Contributor(s): Kevin Hendricks (kevin.hendricks@sympatico.ca)
  *                 David Einstein (deinst@world.std.com)
  *                 Michiel van Leeuwen (mvl@exedo.nl)
  *                 Caolan McNamara (cmc@openoffice.org)
- *                 László Németh (nemethl@gyorsposta.hu)
+ *                 LÃ¡szlÃ³ NÃ©meth (nemethl@gyorsposta.hu)
  *                 Davide Prina
  *                 Giuseppe Modugno
  *                 Gianluca Turconi
@@ -67,7 +67,6 @@
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
 #include "mozISpellI18NManager.h"
-#include "nsUnicharUtilCIID.h"
 #include "nsUnicharUtils.h"
 #include "nsCRT.h"
 #include "mozInlineSpellChecker.h"
@@ -75,11 +74,10 @@
 #include <stdlib.h>
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
-#include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/ContentParent.h"
 
 using mozilla::dom::ContentParent;
-using mozilla::dom::EncodingUtils;
+using namespace mozilla;
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(mozHunspell)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(mozHunspell)
@@ -93,10 +91,7 @@ NS_INTERFACE_MAP_BEGIN(mozHunspell)
   NS_INTERFACE_MAP_ENTRIES_CYCLE_COLLECTION(mozHunspell)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION(mozHunspell,
-                         mPersonalDictionary,
-                         mEncoder,
-                         mDecoder)
+NS_IMPL_CYCLE_COLLECTION(mozHunspell, mPersonalDictionary)
 
 template<> mozilla::Atomic<size_t> mozilla::CountingAllocatorBase<HunspellAllocator>::sAmount(0);
 
@@ -200,16 +195,13 @@ NS_IMETHODIMP mozHunspell::SetDictionary(const char16_t *aDictionary)
   if (!mHunspell)
     return NS_ERROR_OUT_OF_MEMORY;
 
-  nsDependentCString label(mHunspell->get_dic_encoding());
-  nsAutoCString encoding;
-  if (!EncodingUtils::FindEncodingForLabelNoReplacement(label, encoding)) {
+  auto encoding =
+    Encoding::ForLabelNoReplacement(mHunspell->get_dict_encoding());
+  if (!encoding) {
     return NS_ERROR_UCONV_NOCONV;
   }
-  mEncoder = EncodingUtils::EncoderForEncoding(encoding);
-  mDecoder = EncodingUtils::DecoderForEncoding(encoding);
-
-  if (mEncoder)
-    mEncoder->SetOutputErrorBehavior(mEncoder->kOnError_Signal, nullptr, '?');
+  mEncoder = encoding->NewEncoder();
+  mDecoder = encoding->NewDecoderWithoutBOMHandling();
 
   int32_t pos = mDictionary.FindChar('-');
   if (pos == -1)
@@ -358,6 +350,29 @@ mozHunspell::LoadDictionaryList(bool aNotifyChildProcesses)
     }
   }
 
+  // find dictionaries in DICPATH
+  char* dicEnv = PR_GetEnv("DICPATH");
+  if (dicEnv) {
+    // do a two-pass dance so dictionaries are loaded right-to-left as preference
+    nsTArray<nsCOMPtr<nsIFile>> dirs;
+    nsAutoCString env(dicEnv); // assume dicEnv is UTF-8
+
+    char* currPath = nullptr;
+    char* nextPaths = env.BeginWriting();
+    while ((currPath = NS_strtok(":", &nextPaths))) {
+      nsCOMPtr<nsIFile> dir;
+      rv = NS_NewNativeLocalFile(nsCString(currPath), true, getter_AddRefs(dir));
+      if (NS_SUCCEEDED(rv)) {
+        dirs.AppendElement(dir);
+      }
+    }
+
+    // load them in reverse order so they override each other properly
+    for (int32_t i = dirs.Length() - 1; i >= 0; i--) {
+      LoadDictionariesFromDir(dirs[i]);
+    }
+  }
+
   // find dictionaries from extensions requiring restart
   nsCOMPtr<nsISimpleEnumerator> dictDirs;
   rv = dirSvc->Get(DICTIONARY_SEARCH_DIRECTORY_LIST,
@@ -457,33 +472,49 @@ mozHunspell::LoadDictionariesFromDir(nsIFile* aDir)
   return NS_OK;
 }
 
-nsresult mozHunspell::ConvertCharset(const char16_t* aStr, char ** aDst)
+nsresult
+mozHunspell::ConvertCharset(const char16_t* aStr, std::string* aDst)
 {
   NS_ENSURE_ARG_POINTER(aDst);
   NS_ENSURE_TRUE(mEncoder, NS_ERROR_NULL_POINTER);
 
-  int32_t outLength;
-  int32_t inLength = NS_strlen(aStr);
-  nsresult rv = mEncoder->GetMaxLength(aStr, inLength, &outLength);
-  NS_ENSURE_SUCCESS(rv, rv);
+  auto src = MakeStringSpan(aStr);
+  CheckedInt<size_t> needed =
+    mEncoder->MaxBufferLengthFromUTF16WithoutReplacement(src.Length());
+  if (!needed.isValid()) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
-  *aDst = (char *) moz_xmalloc(sizeof(char) * (outLength+1));
-  NS_ENSURE_TRUE(*aDst, NS_ERROR_OUT_OF_MEMORY);
+  aDst->resize(needed.value());
 
-  rv = mEncoder->Convert(aStr, &inLength, *aDst, &outLength);
-  if (NS_SUCCEEDED(rv))
-    (*aDst)[outLength] = '\0';
+  char* dstPtr = &aDst->operator[](0);
+  auto dst = MakeSpan(reinterpret_cast<uint8_t*>(dstPtr), needed.value());
 
-  return rv;
+  uint32_t result;
+  size_t read;
+  size_t written;
+  Tie(result, read, written) =
+    mEncoder->EncodeFromUTF16WithoutReplacement(src, dst, true);
+  Unused << read;
+  MOZ_ASSERT(result != kOutputFull);
+  if (result != kInputEmpty) {
+    return NS_ERROR_UENC_NOMAPPING;
+  }
+  aDst->resize(written);
+  mEncoder->Encoding()->NewEncoderInto(*mEncoder);
+  return NS_OK;
 }
 
 NS_IMETHODIMP
 mozHunspell::CollectReports(nsIHandleReportCallback* aHandleReport,
                             nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT("explicit/spell-check", KIND_HEAP, UNITS_BYTES,
-                            HunspellAllocator::MemoryAllocated(),
-                            "Memory used by the spell-checking engine.");
+  MOZ_COLLECT_REPORT(
+    "explicit/spell-check", KIND_HEAP, UNITS_BYTES,
+    HunspellAllocator::MemoryAllocated(),
+    "Memory used by the spell-checking engine.");
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP mozHunspell::Check(const char16_t *aWord, bool *aResult)
@@ -492,12 +523,11 @@ NS_IMETHODIMP mozHunspell::Check(const char16_t *aWord, bool *aResult)
   NS_ENSURE_ARG_POINTER(aResult);
   NS_ENSURE_TRUE(mHunspell, NS_ERROR_FAILURE);
 
-  nsXPIDLCString charsetWord;
-  nsresult rv = ConvertCharset(aWord, getter_Copies(charsetWord));
+  std::string charsetWord;
+  nsresult rv = ConvertCharset(aWord, &charsetWord);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  *aResult = !!mHunspell->spell(charsetWord);
-
+  *aResult = mHunspell->spell(charsetWord);
 
   if (!*aResult && mPersonalDictionary)
     rv = mPersonalDictionary->Check(aWord, mLanguage.get(), aResult);
@@ -514,34 +544,54 @@ NS_IMETHODIMP mozHunspell::Suggest(const char16_t *aWord, char16_t ***aSuggestio
   nsresult rv;
   *aSuggestionCount = 0;
 
-  nsXPIDLCString charsetWord;
-  rv = ConvertCharset(aWord, getter_Copies(charsetWord));
+  std::string charsetWord;
+  rv = ConvertCharset(aWord, &charsetWord);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  char ** wlst;
-  *aSuggestionCount = mHunspell->suggest(&wlst, charsetWord);
+  std::vector<std::string> suggestions = mHunspell->suggest(charsetWord);
+  *aSuggestionCount = static_cast<uint32_t>(suggestions.size());
 
   if (*aSuggestionCount) {
     *aSuggestions  = (char16_t **)moz_xmalloc(*aSuggestionCount * sizeof(char16_t *));
     if (*aSuggestions) {
       uint32_t index = 0;
       for (index = 0; index < *aSuggestionCount && NS_SUCCEEDED(rv); ++index) {
+        // If the IDL used an array of AString, we could use
+        // Encoding::DecodeWithoutBOMHandling() here.
         // Convert the suggestion to utf16
-        int32_t inLength = strlen(wlst[index]);
-        int32_t outLength;
-        rv = mDecoder->GetMaxLength(wlst[index], inLength, &outLength);
-        if (NS_SUCCEEDED(rv))
-        {
-          (*aSuggestions)[index] = (char16_t *) moz_xmalloc(sizeof(char16_t) * (outLength+1));
-          if ((*aSuggestions)[index])
-          {
-            rv = mDecoder->Convert(wlst[index], &inLength, (*aSuggestions)[index], &outLength);
-            if (NS_SUCCEEDED(rv))
-              (*aSuggestions)[index][outLength] = 0;
-          }
-          else
-            rv = NS_ERROR_OUT_OF_MEMORY;
+        Span<const char> charSrc(suggestions[index]);
+        auto src = AsBytes(charSrc);
+        CheckedInt<size_t> needed =
+          mDecoder->MaxUTF16BufferLength(src.Length());
+        if (!needed.isValid()) {
+          rv = NS_ERROR_OUT_OF_MEMORY;
+          break;
         }
+        size_t dstLen = needed.value();
+        needed += 1;
+        needed *= sizeof(char16_t);
+        if (!needed.isValid()) {
+          rv = NS_ERROR_OUT_OF_MEMORY;
+          break;
+        }
+        (*aSuggestions)[index] = (char16_t*)moz_xmalloc(needed.value());
+        if (!((*aSuggestions)[index])) {
+          rv = NS_ERROR_OUT_OF_MEMORY;
+          break;
+        }
+        auto dst = MakeSpan((*aSuggestions)[index], dstLen);
+        uint32_t result;
+        size_t read;
+        size_t written;
+        bool hadErrors;
+        Tie(result, read, written, hadErrors) =
+          mDecoder->DecodeToUTF16(src, dst, true);
+        MOZ_ASSERT(result == kInputEmpty);
+        MOZ_ASSERT(read == src.Length());
+        MOZ_ASSERT(written <= dstLen);
+        Unused << hadErrors;
+        (*aSuggestions)[index][written] = 0;
+        mDecoder->Encoding()->NewDecoderWithoutBOMHandlingInto(*mDecoder);
       }
 
       if (NS_FAILED(rv))
@@ -551,7 +601,6 @@ NS_IMETHODIMP mozHunspell::Suggest(const char16_t *aWord, char16_t ***aSuggestio
       rv = NS_ERROR_OUT_OF_MEMORY;
   }
 
-  NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(*aSuggestionCount, wlst);
   return rv;
 }
 

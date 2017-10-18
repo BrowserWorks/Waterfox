@@ -16,6 +16,7 @@
 #include "TunnelUtils.h"
 #include "mozilla/Mutex.h"
 #include "ARefBase.h"
+#include "TimingStruct.h"
 
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
@@ -30,6 +31,10 @@ namespace net {
 
 class nsHttpHandler;
 class ASpdySession;
+
+// 1dcc863e-db90-4652-a1fe-13fea0b54e46
+#define NS_HTTPCONNECTION_IID \
+{ 0x1dcc863e, 0xdb90, 0x4652, {0xa1, 0xfe, 0x13, 0xfe, 0xa0, 0xb5, 0x4e, 0x46 }}
 
 //-----------------------------------------------------------------------------
 // nsHttpConnection - represents a connection to a HTTP server (or proxy)
@@ -46,10 +51,12 @@ class nsHttpConnection final : public nsAHttpSegmentReader
                              , public nsIInterfaceRequestor
                              , public NudgeTunnelCallback
                              , public ARefBase
+                             , public nsSupportsWeakReference
 {
     virtual ~nsHttpConnection();
 
 public:
+    NS_DECLARE_STATIC_IID_ACCESSOR(NS_HTTPCONNECTION_IID)
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSAHTTPSEGMENTREADER
     NS_DECL_NSAHTTPSEGMENTWRITER
@@ -66,15 +73,22 @@ public:
     //  maxHangTime - limits the amount of time this connection can spend on a
     //                single transaction before it should no longer be kept
     //                alive.  a value of 0xffff indicates no limit.
-    nsresult Init(nsHttpConnectionInfo *info, uint16_t maxHangTime,
-                  nsISocketTransport *, nsIAsyncInputStream *,
-                  nsIAsyncOutputStream *, bool connectedTransport,
-                  nsIInterfaceRequestor *, PRIntervalTime);
+    MOZ_MUST_USE nsresult Init(nsHttpConnectionInfo *info, uint16_t maxHangTime,
+                               nsISocketTransport *, nsIAsyncInputStream *,
+                               nsIAsyncOutputStream *, bool connectedTransport,
+                               nsIInterfaceRequestor *, PRIntervalTime);
 
     // Activate causes the given transaction to be processed on this
     // connection.  It fails if there is already an existing transaction unless
     // a multiplexing protocol such as SPDY is being used
-    nsresult Activate(nsAHttpTransaction *, uint32_t caps, int32_t pri);
+    MOZ_MUST_USE nsresult Activate(nsAHttpTransaction *, uint32_t caps,
+                                   int32_t pri);
+
+    void SetFastOpen(bool aFastOpen);
+    // Close this connection and return the transaction. The transaction is
+    // restarted as well. This will only happened before connection is
+    // connected.
+    nsAHttpTransaction * CloseConnectionFastOpenTakesTooLongOrError(bool aCloseocketTransport);
 
     // Close the underlying socket transport.
     void Close(nsresult reason, bool aIsShutdown = false);
@@ -82,7 +96,6 @@ public:
     //-------------------------------------------------------------------------
     // XXX document when these are ok to call
 
-    bool SupportsPipelining();
     bool IsKeepAlive()
     {
         return mUsingSpdyVersion || (mKeepAliveMask && mKeepAlive);
@@ -127,28 +140,32 @@ public:
     nsHttpConnectionInfo *ConnectionInfo() { return mConnInfo; }
 
     // nsAHttpConnection compatible methods (non-virtual):
-    nsresult OnHeadersAvailable(nsAHttpTransaction *, nsHttpRequestHead *, nsHttpResponseHead *, bool *reset);
-    void     CloseTransaction(nsAHttpTransaction *, nsresult reason);
+    MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction *,
+                                             nsHttpRequestHead *,
+                                             nsHttpResponseHead *, bool *reset);
+    void     CloseTransaction(nsAHttpTransaction *, nsresult reason,
+                              bool aIsShutdown = false);
     void     GetConnectionInfo(nsHttpConnectionInfo **ci) { NS_IF_ADDREF(*ci = mConnInfo); }
-    nsresult TakeTransport(nsISocketTransport **,
-                           nsIAsyncInputStream **,
-                           nsIAsyncOutputStream **);
+    MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport **,
+                                        nsIAsyncInputStream **,
+                                        nsIAsyncOutputStream **);
     void     GetSecurityInfo(nsISupports **);
     bool     IsPersistent() { return IsKeepAlive() && !mDontReuse; }
     bool     IsReused();
     void     SetIsReusedAfter(uint32_t afterMilliseconds);
-    nsresult PushBack(const char *data, uint32_t length);
-    nsresult ResumeSend();
-    nsresult ResumeRecv();
+    MOZ_MUST_USE nsresult PushBack(const char *data, uint32_t length);
+    MOZ_MUST_USE nsresult ResumeSend();
+    MOZ_MUST_USE nsresult ResumeRecv();
     int64_t  MaxBytesRead() {return mMaxBytesRead;}
     uint8_t GetLastHttpResponseVersion() { return mLastHttpResponseVersion; }
 
     friend class HttpConnectionForceIO;
-    nsresult ForceSend();
-    nsresult ForceRecv();
+    MOZ_MUST_USE nsresult ForceSend();
+    MOZ_MUST_USE nsresult ForceRecv();
 
-    static NS_METHOD ReadFromStream(nsIInputStream *, void *, const char *,
-                                    uint32_t, uint32_t, uint32_t *);
+    static MOZ_MUST_USE nsresult ReadFromStream(nsIInputStream *, void *,
+                                                const char *, uint32_t,
+                                                uint32_t, uint32_t *);
 
     // When a persistent connection is in the connection manager idle
     // connection pool, the nsHttpConnection still reads errors and hangups
@@ -177,12 +194,6 @@ public:
     // should move from short-lived (fast-detect) to long-lived.
     static void UpdateTCPKeepalive(nsITimer *aTimer, void *aClosure);
 
-    nsAHttpTransaction::Classifier Classification() { return mClassification; }
-    void Classify(nsAHttpTransaction::Classifier newclass)
-    {
-        mClassification = newclass;
-    }
-
     // When the connection is active this is called every second
     void  ReadTimeoutTick();
 
@@ -198,9 +209,9 @@ public:
     // non null HTTP transaction of any version.
     bool    IsExperienced() { return mExperienced; }
 
-    static nsresult MakeConnectString(nsAHttpTransaction *trans,
-                                      nsHttpRequestHead *request,
-                                      nsACString &result);
+    static MOZ_MUST_USE nsresult MakeConnectString(nsAHttpTransaction *trans,
+                                                   nsHttpRequestHead *request,
+                                                   nsACString &result);
     void    SetupSecondaryTLS();
     void    SetInSpdyTunnel(bool arg);
 
@@ -213,10 +224,18 @@ public:
     // connection since CheckForTraffic() was called.
     bool NoTraffic() {
         return mTrafficStamp &&
-            (mTrafficCount == (mTotalBytesWritten + mTotalBytesRead));
+            (mTrafficCount == (mTotalBytesWritten + mTotalBytesRead)) &&
+            !mFastOpen;
     }
     // override of nsAHttpConnection
     virtual uint32_t Version();
+
+    bool TestJoinConnection(const nsACString &hostname, int32_t port);
+    bool JoinConnection(const nsACString &hostname, int32_t port);
+
+    void SetFastOpenStatus(uint8_t tfoStatus) {
+        mFastOpenStatus = tfoStatus;
+    }
 
 private:
     // Value (set in mTCPKeepaliveConfig) indicates which set of prefs to use.
@@ -227,35 +246,43 @@ private:
     };
 
     // called to cause the underlying socket to start speaking SSL
-    nsresult InitSSLParams(bool connectingToProxy, bool ProxyStartSSL);
-    nsresult SetupNPNList(nsISSLSocketControl *ssl, uint32_t caps);
+    MOZ_MUST_USE nsresult InitSSLParams(bool connectingToProxy,
+                                        bool ProxyStartSSL);
+    MOZ_MUST_USE nsresult SetupNPNList(nsISSLSocketControl *ssl, uint32_t caps);
 
-    nsresult OnTransactionDone(nsresult reason);
-    nsresult OnSocketWritable();
-    nsresult OnSocketReadable();
+    MOZ_MUST_USE nsresult OnTransactionDone(nsresult reason);
+    MOZ_MUST_USE nsresult OnSocketWritable();
+    MOZ_MUST_USE nsresult OnSocketReadable();
 
-    nsresult SetupProxyConnect();
+    MOZ_MUST_USE nsresult SetupProxyConnect();
 
     PRIntervalTime IdleTime();
     bool     IsAlive();
-    bool     SupportsPipelining(nsHttpResponseHead *);
 
     // Makes certain the SSL handshake is complete and NPN negotiation
     // has had a chance to happen
-    bool     EnsureNPNComplete();
+    MOZ_MUST_USE bool EnsureNPNComplete(nsresult &aOut0RTTWriteHandshakeValue,
+                                        uint32_t &aOut0RTTBytesWritten);
     void     SetupSSL();
 
     // Start the Spdy transaction handler when NPN indicates spdy/*
     void     StartSpdy(uint8_t versionLevel);
+    // Like the above, but do the bare minimum to do 0RTT data, so we can back
+    // it out, if necessary
+    void     Start0RTTSpdy(uint8_t versionLevel);
+
+    // Helpers for Start*Spdy
+    nsresult TryTakeSubTransactions(nsTArray<RefPtr<nsAHttpTransaction> > &list);
+    nsresult MoveTransactionsToSpdy(nsresult status, nsTArray<RefPtr<nsAHttpTransaction> > &list);
 
     // Directly Add a transaction to an active connection for SPDY
-    nsresult AddTransaction(nsAHttpTransaction *, int32_t);
+    MOZ_MUST_USE nsresult AddTransaction(nsAHttpTransaction *, int32_t);
 
     // Used to set TCP keepalives for fast detection of dead connections during
     // an initial period, and slower detection for long-lived connections.
-    nsresult StartShortLivedTCPKeepalives();
-    nsresult StartLongLivedTCPKeepalives();
-    nsresult DisableTCPKeepalives();
+    MOZ_MUST_USE nsresult StartShortLivedTCPKeepalives();
+    MOZ_MUST_USE nsresult StartLongLivedTCPKeepalives();
+    MOZ_MUST_USE nsresult DisableTCPKeepalives();
 
 private:
     nsCOMPtr<nsISocketTransport>    mSocketTransport;
@@ -300,7 +327,6 @@ private:
     bool                            mKeepAlive;
     bool                            mKeepAliveMask;
     bool                            mDontReuse;
-    bool                            mSupportsPipelining;
     bool                            mIsReused;
     bool                            mCompletedProxyConnect;
     bool                            mLastTransactionExpectedNoContent;
@@ -323,8 +349,6 @@ private:
     // on this persistent connection.
     uint32_t                        mRemainingConnectionUses;
 
-    nsAHttpTransaction::Classifier  mClassification;
-
     // SPDY related
     bool                            mNPNComplete;
     bool                            mSetupSSLCalled;
@@ -332,7 +356,7 @@ private:
     // version level in use, 0 if unused
     uint8_t                         mUsingSpdyVersion;
 
-    RefPtr<ASpdySession>          mSpdySession;
+    RefPtr<ASpdySession>            mSpdySession;
     int32_t                         mPriority;
     bool                            mReportedSpdy;
 
@@ -354,10 +378,37 @@ private:
 private:
     // For ForceSend()
     static void                     ForceSendIO(nsITimer *aTimer, void *aClosure);
-    nsresult                        MaybeForceSendIO();
+    MOZ_MUST_USE nsresult           MaybeForceSendIO();
     bool                            mForceSendPending;
     nsCOMPtr<nsITimer>              mForceSendTimer;
+
+    // Helper variable for 0RTT handshake;
+    bool                            m0RTTChecked; // Possible 0RTT has been
+                                                  // checked.
+    bool                            mWaitingFor0RTTResponse; // We have are
+                                                             // sending 0RTT
+                                                             // data and we
+                                                             // are waiting
+                                                             // for the end of
+                                                             // the handsake.
+    int64_t                        mContentBytesWritten0RTT;
+    bool                           mEarlyDataNegotiated; //Only used for telemetry
+    nsCString                      mEarlyNegotiatedALPN;
+    bool                           mDid0RTTSpdy;
+
+    bool                           mFastOpen;
+    uint8_t                        mFastOpenStatus;
+
+    bool                           mForceSendDuringFastOpenPending;
+    bool                           mReceivedSocketWouldBlockDuringFastOpen;
+
+public:
+    void BootstrapTimings(TimingStruct times);
+private:
+    TimingStruct    mBootstrappedTimings;
 };
+
+NS_DEFINE_STATIC_IID_ACCESSOR(nsHttpConnection, NS_HTTPCONNECTION_IID)
 
 } // namespace net
 } // namespace mozilla

@@ -4,7 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PBlob;
+include IPCBlob;
+include IPCStream;
 include ProtocolTypes;
 
 using struct mozilla::void_t
@@ -13,14 +14,19 @@ using struct mozilla::void_t
 using struct mozilla::SerializedStructuredCloneBuffer
   from "ipc/IPCMessageUtils.h";
 
+using LayoutDeviceIntRect from "Units.h";
+using DesktopIntRect from "Units.h";
+using DesktopToLayoutDeviceScale from "Units.h";
+using CSSToLayoutDeviceScale from "Units.h";
+using CSSRect from "Units.h";
+using CSSSize from "Units.h";
+using mozilla::LayoutDeviceIntPoint from "Units.h";
+using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
+using mozilla::layers::CompositorOptions from "mozilla/layers/CompositorOptions.h";
+
 namespace mozilla {
 namespace dom {
-
-union OptionalID
-{
-  nsID;
-  void_t;
-};
 
 struct MessagePortIdentifier
 {
@@ -30,122 +36,25 @@ struct MessagePortIdentifier
   bool neutered;
 };
 
+/**
+ * Cross-process representation for postMessage() style payloads where Blobs may
+ * be referenced/"cloned" and (optionally) messageports transferred.  Use
+ * StructuredCloneData in your code to convert between this wire representation
+ * and the StructuredCloneData StructuredCloneHolder-subclass.
+ */
 struct ClonedMessageData
 {
   SerializedStructuredCloneBuffer data;
-  PBlob[] blobs;
+  IPCBlob[] blobs;
+  IPCStream[] inputStreams;
   MessagePortIdentifier[] identfiers;
-};
-
-union BlobData
-{
-  // For remote blobs.
-  nsID;
-
-  // For memory-backed blobs.
-  uint8_t[];
-
-  // For multiplex blobs.
-  BlobData[];
-};
-
-union OptionalBlobData
-{
-  BlobData;
-  void_t;
-};
-
-struct NormalBlobConstructorParams
-{
-  nsString contentType;
-  uint64_t length;
-
-  // This must be of type BlobData in a child->parent message, and will always
-  // be of type void_t in a parent->child message.
-  OptionalBlobData optionalBlobData;
-};
-
-struct FileBlobConstructorParams
-{
-  nsString name;
-  nsString contentType;
-  nsString path;
-  uint64_t length;
-  int64_t modDate;
-  bool isDirectory;
-
-  // This must be of type BlobData in a child->parent message, and will always
-  // be of type void_t in a parent->child message.
-  OptionalBlobData optionalBlobData;
-};
-
-struct SlicedBlobConstructorParams
-{
-  PBlob source;
-  nsID id;
-  uint64_t begin;
-  uint64_t end;
-  nsString contentType;
-};
-
-struct MysteryBlobConstructorParams
-{
-  // Nothing is known about this type of blob.
-};
-
-struct KnownBlobConstructorParams
-{
-  nsID id;
-};
-
-// This may only be used for same-process inter-thread communication!
-struct SameProcessBlobConstructorParams
-{
-  // This member should be reinterpret_cast'd to mozilla::dom::BlobImpl. It
-  // carries a reference.
-  intptr_t addRefedBlobImpl;
-};
-
-union AnyBlobConstructorParams
-{
-  // These types may be sent to/from parent and child.
-  NormalBlobConstructorParams;
-  FileBlobConstructorParams;
-  SameProcessBlobConstructorParams;
-
-  // This type may only be sent from parent to child.
-  MysteryBlobConstructorParams;
-
-  // These types may only be sent from child to parent.
-  SlicedBlobConstructorParams;
-  KnownBlobConstructorParams;
-};
-
-struct ChildBlobConstructorParams
-{
-  nsID id;
-
-  // May not be SlicedBlobConstructorParams or KnownBlobConstructorParams.
-  AnyBlobConstructorParams blobParams;
-};
-
-struct ParentBlobConstructorParams
-{
-  // May not be MysteryBlobConstructorParams.
-  AnyBlobConstructorParams blobParams;
-};
-
-union BlobConstructorParams
-{
-  ChildBlobConstructorParams;
-  ParentBlobConstructorParams;
 };
 
 union IPCDataTransferData
 {
   nsString;  // text
   Shmem;     // images using Shmem
-  PBlob;     // files
+  IPCBlob;   // files
 };
 
 struct IPCDataTransferImage
@@ -167,6 +76,49 @@ struct IPCDataTransferItem
 struct IPCDataTransfer
 {
   IPCDataTransferItem[] items;
+};
+
+struct ScreenDetails {
+  LayoutDeviceIntRect rect;
+  DesktopIntRect rectDisplayPix;
+  LayoutDeviceIntRect availRect;
+  DesktopIntRect availRectDisplayPix;
+  int32_t pixelDepth;
+  int32_t colorDepth;
+  DesktopToLayoutDeviceScale contentsScaleFactor;
+  CSSToLayoutDeviceScale defaultCSSScaleFactor;
+  float dpi;
+};
+
+struct DimensionInfo
+{
+  CSSRect rect;
+  CSSSize size;
+  ScreenOrientationInternal orientation;
+  LayoutDeviceIntPoint clientOffset;
+  LayoutDeviceIntPoint chromeDisp;
+};
+
+struct FrameScriptInfo
+{
+  nsString url;
+  bool runInGlobalScope;
+};
+
+/**
+ * The information required to complete a window creation request.
+ */
+struct CreatedWindowInfo
+{
+  nsresult rv;
+  bool windowOpened;
+  FrameScriptInfo[] frameScripts;
+  nsCString urlToLoad;
+  TextureFactoryIdentifier textureFactoryIdentifier;
+  uint64_t layersId;
+  CompositorOptions compositorOptions;
+  uint32_t maxTouchPoints;
+  DimensionInfo dimensions;
 };
 
 } // namespace dom

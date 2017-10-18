@@ -15,7 +15,7 @@ tree {
 /* ::::: tree focusring ::::: */
 
 .focusring > .tree-stack > .tree-rows > .tree-bodybox {
-  border: 1px solid transparent;  
+  border: 1px solid transparent;
 }
 
 .focusring:focus > .tree-stack > .tree-rows > .tree-bodybox {
@@ -155,11 +155,6 @@ treechildren::-moz-tree-progressmeter {
   -moz-border-left-colors: #AAAAAA #000000;
 }
 
-/*
-treechildren::-moz-tree-progressmeter(progressUndetermined) {
-}
-*/
-
 treechildren::-moz-tree-cell-text(progressmeter) {
   margin: 2px 4px;
   -moz-appearance: progressbar;
@@ -168,7 +163,7 @@ treechildren::-moz-tree-cell-text(progressmeter) {
 /* ::::: tree columns ::::: */
 
 treecol,
-treecolpicker { 
+treecolpicker {
   -moz-appearance: treeheadercell;
   -moz-box-align: center;
   -moz-box-pack: center;
@@ -283,8 +278,19 @@ treechildren.gridlines::-moz-tree-row {
 .tree-input {
   -moz-appearance: none;
   border-width: 0;
-  box-shadow: @focusRingShadow@;
+  box-shadow: var(--focus-ring-box-shadow);
   margin: 0;
   margin-inline-start: -2px;
   padding: 2px 1px 1px;
+}
+
+treechildren::-moz-tree-cell(active, selected, focus, editing),
+tree[seltype="cell"] > treechildren::-moz-tree-cell(active, selected, focus, editing),
+tree[seltype="text"] > treechildren::-moz-tree-cell(active, selected, focus, editing) {
+  background-color: transparent;
+  border: none;
+}
+
+treechildren::-moz-tree-cell-text(active, selected, editing) {
+  opacity: 0;
 }

@@ -23,9 +23,18 @@ class SkWStream;
 
     The SkPath class encapsulates compound (multiple contour) geometric paths
     consisting of straight line segments, quadratic curves, and cubic curves.
+
+    SkPath is not thread safe unless you've first called SkPath::updateBoundsCache().
 */
 class SK_API SkPath {
 public:
+    enum Direction {
+        /** clockwise direction for adding closed contours */
+        kCW_Direction,
+        /** counter-clockwise direction for adding closed contours */
+        kCCW_Direction,
+    };
+
     SkPath();
     SkPath(const SkPath&);
     ~SkPath();
@@ -166,24 +175,45 @@ public:
      *
      * @param rect      returns the bounding rect of this oval. It's a circle
      *                  if the height and width are the same.
-     *
+     * @param dir       is the oval CCW (or CW if false).
+     * @param start     indicates where the contour starts on the oval (see
+     *                  SkPath::addOval for intepretation of the index).
      * @return true if this path is an oval.
      *              Tracking whether a path is an oval is considered an
      *              optimization for performance and so some paths that are in
      *              fact ovals can report false.
      */
-    bool isOval(SkRect* rect) const { return fPathRef->isOval(rect); }
+    bool isOval(SkRect* rect, Direction* dir = nullptr,
+                unsigned* start = nullptr) const {
+        bool isCCW = false;
+        bool result = fPathRef->isOval(rect, &isCCW, start);
+        if (dir && result) {
+            *dir = isCCW ? kCCW_Direction : kCW_Direction;
+        }
+        return result;
+    }
 
     /** Returns true if the path is a round rect.
      *
      * @param rrect  Returns the bounding rect and radii of this round rect.
+     * @param dir    is the rrect CCW (or CW if false).
+     * @param start  indicates where the contour starts on the rrect (see
+     *               SkPath::addRRect for intepretation of the index).
      *
      * @return true if this path is a round rect.
      *              Tracking whether a path is a round rect is considered an
      *              optimization for performance and so some paths that are in
      *              fact round rects can report false.
      */
-    bool isRRect(SkRRect* rrect) const { return fPathRef->isRRect(rrect); }
+    bool isRRect(SkRRect* rrect, Direction* dir = nullptr,
+                 unsigned* start = nullptr) const {
+        bool isCCW = false;
+        bool result = fPathRef->isRRect(rrect, &isCCW, start);
+        if (dir && result) {
+            *dir = isCCW ? kCCW_Direction : kCW_Direction;
+        }
+        return result;
+    }
 
     /** Clear any lines and curves from the path, making it empty. This frees up
         internal storage associated with those segments.
@@ -328,6 +358,19 @@ public:
         // for now, just calling getBounds() is sufficient
         this->getBounds();
     }
+
+    /**
+     *  Computes a bounds that is conservatively "snug" around the path. This assumes that the
+     *  path will be filled. It does not attempt to collapse away contours that are logically
+     *  empty (e.g. moveTo(x, y) + lineTo(x, y)) but will include them in the calculation.
+     *
+     *  It differs from getBounds() in that it will look at the snug bounds of curves, whereas
+     *  getBounds() just returns the bounds of the control-points. Thus computing this may be
+     *  slower than just calling getBounds().
+     *
+     *  If the path is empty (i.e. no points or verbs), it will return SkRect::MakeEmpty().
+     */
+    SkRect computeTightBounds() const;
 
     /**
      * Does a conservative test to see whether a rectangle is inside a path. Currently it only
@@ -526,13 +569,6 @@ public:
         kLarge_ArcSize,
     };
 
-    enum Direction {
-        /** clockwise direction for adding closed contours */
-        kCW_Direction,
-        /** counter-clockwise direction for adding closed contours */
-        kCCW_Direction,
-    };
-
     /**
      *  Append an elliptical arc from the current point in the format used by SVG.
      *  The center of the ellipse is computed to satisfy the constraints below.
@@ -717,7 +753,8 @@ public:
     void addOval(const SkRect& oval, Direction dir, unsigned start);
 
     /**
-     *  Add a closed circle contour to the path
+     *  Add a closed circle contour to the path. The circle contour begins at
+     *  the right-most point (as though 1 were passed to addOval's 'start' param).
      *
      *  @param x        The x-coordinate of the center of a circle to add as a
      *                  closed contour to the path
@@ -1099,12 +1136,12 @@ private:
         kCurrent_Version = 2
     };
 
-    SkAutoTUnref<SkPathRef>                            fPathRef;
+    sk_sp<SkPathRef>                                   fPathRef;
     int                                                fLastMoveToIndex;
     uint8_t                                            fFillType;
     mutable uint8_t                                    fConvexity;
     mutable SkAtomic<uint8_t, sk_memory_order_relaxed> fFirstDirection;// SkPathPriv::FirstDirection
-    mutable SkBool8                                    fIsVolatile;
+    SkBool8                                            fIsVolatile;
 
     /** Resets all fields other than fPathRef to their initial 'empty' values.
      *  Assumes the caller has already emptied fPathRef.
@@ -1168,6 +1205,8 @@ private:
     friend class SkAutoPathBoundsUpdate;
     friend class SkAutoDisableOvalCheck;
     friend class SkAutoDisableDirectionCheck;
+    friend class SkPathWriter;
+    friend class SkOpBuilder;
     friend class SkBench_AddPathTest; // perf test reversePathTo
     friend class PathTest_Private; // unit test reversePathTo
     friend class ForceIsRRect_Private; // unit test isRRect

@@ -6,8 +6,8 @@
 
 #include "EffectSet.h"
 #include "mozilla/dom/Element.h" // For Element
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 #include "nsCSSPseudoElements.h" // For CSSPseudoElementType
 #include "nsCycleCollectionNoteChild.h" // For CycleCollectionNoteChild
 #include "nsPresContext.h"
@@ -39,9 +39,13 @@ EffectSet::Traverse(nsCycleCollectionTraversalCallback& aCallback)
 }
 
 /* static */ EffectSet*
-EffectSet::GetEffectSet(dom::Element* aElement,
+EffectSet::GetEffectSet(const dom::Element* aElement,
                         CSSPseudoElementType aPseudoType)
 {
+  if (!aElement->MayHaveAnimations()) {
+    return nullptr;
+  }
+
   nsIAtom* propName = GetEffectSetPropertyAtom(aPseudoType);
   return static_cast<EffectSet*>(aElement->GetProperty(propName));
 }
@@ -53,10 +57,6 @@ EffectSet::GetEffectSet(const nsIFrame* aFrame)
     EffectCompositor::GetAnimationElementAndPseudoForFrame(aFrame);
 
   if (!target) {
-    return nullptr;
-  }
-
-  if (!target->mElement->MayHaveAnimations()) {
     return nullptr;
   }
 
@@ -111,11 +111,8 @@ EffectSet::DestroyEffectSet(dom::Element* aElement,
 void
 EffectSet::UpdateAnimationGeneration(nsPresContext* aPresContext)
 {
-  MOZ_ASSERT(aPresContext->RestyleManager()->IsGecko(),
-             "stylo: Servo-backed style system should not be using "
-             "EffectSet");
   mAnimationGeneration =
-    aPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration();
+    aPresContext->RestyleManager()->GetAnimationGeneration();
 }
 
 /* static */ nsIAtom**

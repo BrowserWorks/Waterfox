@@ -5,10 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/FlyWebService.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/FlyWebPublishedServerIPC.h"
+#include "mozilla/AddonPathService.h"
 #include "nsISocketTransportService.h"
 #include "mdns/libmdns/nsDNSServiceInfo.h"
 #include "nsIUUIDGenerator.h"
@@ -18,10 +20,12 @@
 #include "mozilla/dom/FlyWebDiscoveryManagerBinding.h"
 #include "prnetdb.h"
 #include "DNS.h"
+#include "nsContentPermissionHelper.h"
 #include "nsSocketTransportService2.h"
 #include "nsSocketTransport2.h"
 #include "nsHashPropertyBag.h"
 #include "nsNetUtil.h"
+#include "nsINamed.h"
 #include "nsISimpleEnumerator.h"
 #include "nsIProperty.h"
 #include "nsICertOverrideService.h"
@@ -34,16 +38,129 @@ struct FlyWebPublishOptions;
 static LazyLogModule gFlyWebServiceLog("FlyWebService");
 #undef LOG_I
 #define LOG_I(...) MOZ_LOG(mozilla::dom::gFlyWebServiceLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
+
 #undef LOG_E
 #define LOG_E(...) MOZ_LOG(mozilla::dom::gFlyWebServiceLog, mozilla::LogLevel::Error, (__VA_ARGS__))
+
 #undef LOG_TEST_I
 #define LOG_TEST_I(...) MOZ_LOG_TEST(mozilla::dom::gFlyWebServiceLog, mozilla::LogLevel::Debug)
+
+class FlyWebPublishServerPermissionCheck final
+  : public nsIContentPermissionRequest
+  , public nsIRunnable
+{
+public:
+  NS_DECL_ISUPPORTS
+
+  FlyWebPublishServerPermissionCheck(const nsCString& aServiceName, uint64_t aWindowID,
+                                     FlyWebPublishedServer* aServer)
+    : mServiceName(aServiceName)
+    , mWindowID(aWindowID)
+    , mServer(aServer)
+  {}
+
+  uint64_t WindowID() const
+  {
+    return mWindowID;
+  }
+
+  NS_IMETHOD Run() override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    nsGlobalWindow* globalWindow = nsGlobalWindow::GetInnerWindowWithId(mWindowID);
+    if (!globalWindow) {
+      return Cancel();
+    }
+    mWindow = globalWindow->AsInner();
+    if (NS_WARN_IF(!mWindow)) {
+      return Cancel();
+    }
+
+    nsCOMPtr<nsIDocument> doc = mWindow->GetDoc();
+    if (NS_WARN_IF(!doc)) {
+      return Cancel();
+    }
+
+    mPrincipal = doc->NodePrincipal();
+    MOZ_ASSERT(mPrincipal);
+
+    mRequester = new nsContentPermissionRequester(mWindow);
+    return nsContentPermissionUtils::AskPermission(this, mWindow);
+  }
+
+  NS_IMETHOD Cancel() override
+  {
+    Resolve(false);
+    return NS_OK;
+  }
+
+  NS_IMETHOD Allow(JS::HandleValue aChoices) override
+  {
+    MOZ_ASSERT(aChoices.isUndefined());
+    Resolve(true);
+    return NS_OK;
+  }
+
+  NS_IMETHOD GetTypes(nsIArray** aTypes) override
+  {
+    nsTArray<nsString> emptyOptions;
+    return nsContentPermissionUtils::CreatePermissionArray(NS_LITERAL_CSTRING("flyweb-publish-server"),
+                                                           NS_LITERAL_CSTRING("unused"), emptyOptions, aTypes);
+  }
+
+  NS_IMETHOD GetRequester(nsIContentPermissionRequester** aRequester) override
+  {
+    NS_ENSURE_ARG_POINTER(aRequester);
+    nsCOMPtr<nsIContentPermissionRequester> requester = mRequester;
+    requester.forget(aRequester);
+    return NS_OK;
+  }
+
+  NS_IMETHOD GetPrincipal(nsIPrincipal** aRequestingPrincipal) override
+  {
+    NS_IF_ADDREF(*aRequestingPrincipal = mPrincipal);
+    return NS_OK;
+  }
+
+  NS_IMETHOD GetWindow(mozIDOMWindow** aRequestingWindow) override
+  {
+    NS_IF_ADDREF(*aRequestingWindow = mWindow);
+    return NS_OK;
+  }
+
+  NS_IMETHOD GetElement(nsIDOMElement** aRequestingElement) override
+  {
+    *aRequestingElement = nullptr;
+    return NS_OK;
+  }
+
+private:
+  void Resolve(bool aResolve)
+  {
+    mServer->PermissionGranted(aResolve);
+  }
+
+  virtual ~FlyWebPublishServerPermissionCheck() = default;
+
+  nsCString mServiceName;
+  uint64_t mWindowID;
+  RefPtr<FlyWebPublishedServer> mServer;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
+  nsCOMPtr<nsIPrincipal> mPrincipal;
+  nsCOMPtr<nsIContentPermissionRequester> mRequester;
+};
+
+NS_IMPL_ISUPPORTS(FlyWebPublishServerPermissionCheck,
+                  nsIContentPermissionRequest,
+                  nsIRunnable)
 
 class FlyWebMDNSService final
   : public nsIDNSServiceDiscoveryListener
   , public nsIDNSServiceResolveListener
   , public nsIDNSRegistrationListener
   , public nsITimerCallback
+  , public nsINamed
 {
   friend class FlyWebService;
 
@@ -64,6 +181,12 @@ public:
 
   explicit FlyWebMDNSService(FlyWebService* aService,
                              const nsACString& aServiceType);
+
+  NS_IMETHOD GetName(nsACString& aName) override
+  {
+    aName.AssignLiteral("FlyWebMDNSService");
+    return NS_OK;
+  }
 
 private:
   virtual ~FlyWebMDNSService() = default;
@@ -181,7 +304,8 @@ NS_IMPL_ISUPPORTS(FlyWebMDNSService,
                   nsIDNSServiceDiscoveryListener,
                   nsIDNSServiceResolveListener,
                   nsIDNSRegistrationListener,
-                  nsITimerCallback)
+                  nsITimerCallback,
+                  nsINamed)
 
 FlyWebMDNSService::FlyWebMDNSService(
         FlyWebService* aService,
@@ -210,12 +334,12 @@ FlyWebMDNSService::OnDiscoveryStarted(const nsACString& aServiceType)
   // If service discovery is inactive, then stop network discovery immediately.
   if (!mDiscoveryActive) {
     // Set the stop timer to fire immediately.
-    NS_WARN_IF(NS_FAILED(mDiscoveryStopTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
+    Unused << NS_WARN_IF(NS_FAILED(mDiscoveryStopTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
     return NS_OK;
   }
 
   // Otherwise, set the stop timer to fire in 5 seconds.
-  NS_WARN_IF(NS_FAILED(mDiscoveryStopTimer->InitWithCallback(this, 5 * 1000, nsITimer::TYPE_ONE_SHOT)));
+  Unused << NS_WARN_IF(NS_FAILED(mDiscoveryStopTimer->InitWithCallback(this, 5 * 1000, nsITimer::TYPE_ONE_SHOT)));
 
   return NS_OK;
 }
@@ -249,7 +373,7 @@ FlyWebMDNSService::OnDiscoveryStopped(const nsACString& aServiceType)
   mService->NotifyDiscoveredServicesChanged();
 
   // Start discovery again immediately.
-  NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
+  Unused << NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
 
   return NS_OK;
 }
@@ -291,7 +415,7 @@ FlyWebMDNSService::OnStartDiscoveryFailed(const nsACString& aServiceType, int32_
 
   // If discovery is active, and the number of consecutive failures is < 3, try starting again.
   if (mDiscoveryActive && mNumConsecutiveStartDiscoveryFailures < 3) {
-    NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
+    Unused << NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
   }
 
   return NS_OK;
@@ -306,7 +430,7 @@ FlyWebMDNSService::OnStopDiscoveryFailed(const nsACString& aServiceType, int32_t
 
   // If discovery is active, start discovery again immediately.
   if (mDiscoveryActive) {
-    NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
+    Unused << NS_WARN_IF(NS_FAILED(mDiscoveryStartTimer->InitWithCallback(this, 0, nsITimer::TYPE_ONE_SHOT)));
   }
 
   return NS_OK;
@@ -675,14 +799,18 @@ FlyWebMDNSService::PairWithService(const nsAString& aServiceId,
   } else {
     url.AssignLiteral("https://");
   }
-  url.Append(aInfo->mService.mHostname + NS_LITERAL_STRING("/"));
+  url.Append(aInfo->mService.mHostname);
+  if (!discInfo->mService.mPath.IsEmpty()) {
+    if (discInfo->mService.mPath.Find("/") != 0) {
+      url.Append(NS_LITERAL_STRING("/"));
+    }
+    url.Append(discInfo->mService.mPath);
+  } else {
+    url.Append(NS_LITERAL_STRING("/"));
+  }
   nsCOMPtr<nsIURI> uiURL;
   NS_NewURI(getter_AddRefs(uiURL), url);
   MOZ_ASSERT(uiURL);
-  if (!discInfo->mService.mPath.IsEmpty()) {
-    nsCOMPtr<nsIURI> tmp = uiURL.forget();
-    NS_NewURI(getter_AddRefs(uiURL), discInfo->mService.mPath, nullptr, tmp);
-  }
   if (uiURL) {
     nsAutoCString spec;
     uiURL->GetSpec(spec);
@@ -793,6 +921,7 @@ FlyWebService::GetOrCreate()
 {
   if (!gFlyWebService) {
     gFlyWebService = new FlyWebService();
+    ClearOnShutdown(&gFlyWebService);
     ErrorResult rv = gFlyWebService->Init();
     if (rv.Failed()) {
       gFlyWebService = nullptr;
@@ -841,6 +970,42 @@ FlyWebService::Init()
   return ErrorResult(NS_OK);
 }
 
+static already_AddRefed<FlyWebPublishPromise>
+MakeRejectionPromise(const char* name)
+{
+    MozPromiseHolder<FlyWebPublishPromise> holder;
+    RefPtr<FlyWebPublishPromise> promise = holder.Ensure(name);
+    holder.Reject(NS_ERROR_FAILURE, name);
+    return promise.forget();
+}
+
+static bool
+CheckForFlyWebAddon(const nsACString& uriString)
+{
+  // Before proceeding, ensure that the FlyWeb system addon exists.
+  nsresult rv;
+  nsCOMPtr<nsIURI> uri;
+  rv = NS_NewURI(getter_AddRefs(uri), uriString);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+
+  JSAddonId *addonId = MapURIToAddonID(uri);
+  if (!addonId) {
+    return false;
+  }
+
+  JSFlatString* flat = JS_ASSERT_STRING_IS_FLAT(JS::StringOfAddonId(addonId));
+  nsAutoString addonIdString;
+  AssignJSFlatString(addonIdString, flat);
+  if (!addonIdString.EqualsLiteral("flyweb@mozilla.org")) {
+    nsCString addonIdCString = NS_ConvertUTF16toUTF8(addonIdString);
+    return false;
+  }
+
+  return true;
+}
+
 already_AddRefed<FlyWebPublishPromise>
 FlyWebService::PublishServer(const nsAString& aName,
                              const FlyWebPublishOptions& aOptions,
@@ -853,10 +1018,7 @@ FlyWebService::PublishServer(const nsAString& aName,
   if (existingServer) {
     LOG_I("PublishServer: Trying to publish server with already-existing name %s.",
           NS_ConvertUTF16toUTF8(aName).get());
-    MozPromiseHolder<FlyWebPublishPromise> holder;
-    RefPtr<FlyWebPublishPromise> promise = holder.Ensure(__func__);
-    holder.Reject(NS_ERROR_FAILURE, __func__);
-    return promise.forget();
+    return MakeRejectionPromise(__func__);
   }
 
   RefPtr<FlyWebPublishedServer> server;
@@ -864,6 +1026,34 @@ FlyWebService::PublishServer(const nsAString& aName,
     server = new FlyWebPublishedServerChild(aWindow, aName, aOptions);
   } else {
     server = new FlyWebPublishedServerImpl(aWindow, aName, aOptions);
+
+    // Before proceeding, ensure that the FlyWeb system addon exists.
+    if (!CheckForFlyWebAddon(NS_LITERAL_CSTRING("chrome://flyweb/skin/icon-64.png")) &&
+        !CheckForFlyWebAddon(NS_LITERAL_CSTRING("chrome://flyweb/content/icon-64.png")))
+    {
+      LOG_E("PublishServer: Failed to find FlyWeb system addon.");
+      return MakeRejectionPromise(__func__);
+    }
+  }
+
+  if (aWindow) {
+    nsresult rv;
+
+    MOZ_ASSERT(NS_IsMainThread());
+    rv = NS_DispatchToCurrentThread(
+      MakeAndAddRef<FlyWebPublishServerPermissionCheck>(
+        NS_ConvertUTF16toUTF8(aName), aWindow->WindowID(), server));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      LOG_E("PublishServer: Failed to dispatch permission check runnable for %s",
+            NS_ConvertUTF16toUTF8(aName).get());
+      return MakeRejectionPromise(__func__);
+    }
+  } else {
+    // If aWindow is null, we're definitely in the e10s parent process.
+    // In this case, we know that permission has already been granted
+    // by the user because of content-process prompt.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+    server->PermissionGranted(true);
   }
 
   mServers.AppendElement(server);
@@ -929,7 +1119,14 @@ FlyWebService::Observe(nsISupports* aSubject, const char* aTopic,
   nsresult rv = wrapper->GetData(&innerID);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Make a copy of mServers to iterate over, because closing a server
+  // can remove entries from mServers.
+  nsCOMArray<FlyWebPublishedServer> serversCopy;
   for (FlyWebPublishedServer* server : mServers) {
+    serversCopy.AppendElement(server);
+  }
+
+  for (FlyWebPublishedServer* server : serversCopy) {
     if (server->OwnerWindowID() == innerID) {
       server->Close();
     }
@@ -1016,7 +1213,7 @@ FlyWebService::PairWithService(const nsAString& aServiceId,
 
   if (NS_FAILED(rv)) {
     ErrorResult result;
-    result.Throw(rv);
+    result.ThrowWithCustomCleanup(rv);
     const nsAString& reason = NS_LITERAL_STRING("Error pairing.");
     aCallback.PairingFailed(reason, result);
     ENSURE_SUCCESS_VOID(result);

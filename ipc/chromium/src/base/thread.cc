@@ -22,6 +22,7 @@ namespace base {
 // This task is used to trigger the message loop to exit.
 class ThreadQuitTask : public mozilla::Runnable {
  public:
+  ThreadQuitTask() : mozilla::Runnable("ThreadQuitTask") {}
   NS_IMETHOD Run() override {
     MessageLoop::current()->Quit();
     Thread::SetThreadWasQuitProperly(true);
@@ -153,8 +154,7 @@ void Thread::StopSoon() {
 }
 
 void Thread::ThreadMain() {
-  char aLocal;
-  profiler_register_thread(name_.c_str(), &aLocal);
+  mozilla::AutoProfilerRegisterThread registerThread(name_.c_str());
   mozilla::IOInterposer::RegisterCurrentThread();
 
   // The message loop for this thread.
@@ -164,6 +164,7 @@ void Thread::ThreadMain() {
   // Complete the initialization of our Thread object.
   thread_id_ = PlatformThread::CurrentId();
   PlatformThread::SetName(name_.c_str());
+  NS_SetCurrentThreadName(name_.c_str());
   message_loop.set_thread_name(name_);
   message_loop.set_hang_timeouts(startup_data_->options.transient_hang_timeout,
                                  startup_data_->options.permanent_hang_timeout);
@@ -186,7 +187,6 @@ void Thread::ThreadMain() {
   DCHECK(GetThreadWasQuitProperly());
 
   mozilla::IOInterposer::UnregisterCurrentThread();
-  profiler_unregister_thread();
 
 #ifdef MOZ_TASK_TRACER
   mozilla::tasktracer::FreeTraceInfo();

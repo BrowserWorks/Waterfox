@@ -10,6 +10,12 @@
  * liability, trademark and document use rules apply.
  */
 
+dictionary MediaStreamAudioSourceOptions {
+    required MediaStream mediaStream;
+};
+
+[Pref="dom.webaudio.enabled",
+ Constructor(AudioContext context, MediaStreamAudioSourceOptions options)]
 interface MediaStreamAudioSourceNode : AudioNode {
 
 };

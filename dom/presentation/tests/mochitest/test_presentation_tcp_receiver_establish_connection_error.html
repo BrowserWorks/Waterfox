@@ -10,7 +10,7 @@
 </head>
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test for connection establishing errors of B2G Presentation API at receiver side</a>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 'use strict';
 
@@ -46,14 +46,14 @@ function setup() {
                                    receiverListener);
         teardown();
       }
-    }, false);
+    });
 
     var promise = new Promise(function(aResolve, aReject) {
       document.body.appendChild(iframe);
 
       aResolve(iframe);
     });
-    obs.notifyObservers(promise, 'setup-request-promise', null);
+    obs.notifyObservers(promise, 'setup-request-promise');
 
     gScript.addMessageListener('control-channel-closed', function controlChannelClosedHandler(aReason) {
       gScript.removeMessageListener('control-channel-closed', controlChannelClosedHandler);
@@ -95,12 +95,13 @@ function runTests() {
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPermissions([
   {type: 'presentation-device-manage', allow: false, context: document},
-  {type: 'presentation', allow: true, context: document},
   {type: "browser", allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
+                                      ["dom.presentation.receiver.enabled", true],
                                       ["dom.presentation.session_transport.data_channel.enable", false],
-                                      ["dom.mozBrowserFramesEnabled", true]]},
+                                      ["dom.mozBrowserFramesEnabled", true],
+                                      ["network.disable.ipc.security", true]]},
                             runTests);
 });
 

@@ -42,21 +42,19 @@
           test.pcLocal.iceCheckingIceRollbackExpected = true;
         },
         function PC_LOCAL_ROLLBACK(test) {
-          return test.setLocalDescription(
-              test.pcLocal,
-              new RTCSessionDescription({ type: "rollback",
-                                          sdp: ""}),
-              STABLE);
+          return test.setLocalDescription(test.pcLocal,
+                                          { type: "rollback", sdp: ""},
+                                          STABLE);
         },
         // Rolling back should shut down gathering
         function PC_LOCAL_WAIT_FOR_END_OF_TRICKLE(test) {
           return test.pcLocal.endOfTrickleIce;
         },
         function PC_LOCAL_EXPECT_ICE_CHECKING(test) {
-          test.pcLocal.iceCheckingRestartExpected = true;
+          test.pcLocal.expectIceChecking();
         },
         function PC_REMOTE_EXPECT_ICE_CHECKING(test) {
-          test.pcRemote.iceCheckingRestartExpected = true;
+          test.pcRemote.expectIceChecking();
         }
       ]
     );

@@ -85,13 +85,13 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1162990
       child = document.getElementById("child");
       listener = document.getElementById("listener");
 
-      basket.addEventListener("pointerleave",       basketLeaveHandler,   false);
-      target.addEventListener("pointerdown",        targetDownHandler,    false);
-      target.addEventListener("gotpointercapture",  targetGotHandler,     false);
-      target.addEventListener("lostpointercapture", targetLostHandler,    false);
-      target.addEventListener("pointerleave",       targetLeaveHandler,   false);
-      child.addEventListener("pointerleave",        childLeaveHandler,    false);
-      listener.addEventListener("pointerleave",     listenerLeaveHandler, false);
+      basket.addEventListener("pointerleave",       basketLeaveHandler);
+      target.addEventListener("pointerdown",        targetDownHandler);
+      target.addEventListener("gotpointercapture",  targetGotHandler);
+      target.addEventListener("lostpointercapture", targetLostHandler);
+      target.addEventListener("pointerleave",       targetLeaveHandler);
+      child.addEventListener("pointerleave",        childLeaveHandler);
+      listener.addEventListener("pointerleave",     listenerLeaveHandler);
     }
 
     function executeTest()
@@ -116,7 +116,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1162990
       parent.is(test_targetDown,        1, "Part2: target should receive pointerdown event");
       parent.is(test_targetGotCapture,  1, "Part2: target should receive gotpointercapture event");
       parent.is(test_targetLostCapture, 1, "Part2: target should receive lostpointercapture event");
-      parent.is(test_targetLeave,       1, "Part2: target should receive pointerleave event");
+      parent.is(test_targetLeave,       0, "Part2: target should not receive pointerleave event");
       parent.is(test_childLeave,        0, "Part2: child should not receive pointerleave event after pointer capturing");
       parent.is(test_listenerLeave,     0, "Part2: listener should not receive pointerleave event after pointer capturing");
       logger("finishTest");

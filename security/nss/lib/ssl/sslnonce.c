@@ -1,3 +1,4 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file implements the CLIENT Session ID cache.
  *
@@ -18,7 +19,6 @@
 #include <time.h>
 #endif
 
-PRUint32 ssl_sid_timeout = 100;
 PRUint32 ssl3_sid_timeout = 86400L; /* 24 hours */
 
 static sslSessionID *cache = NULL;
@@ -440,6 +440,10 @@ SSL_ClearSessionCache(void)
 PRUint32
 ssl_Time(void)
 {
+#ifdef UNSAFE_FUZZER_MODE
+    return 1234;
+#endif
+
     PRUint32 myTime;
 #if defined(XP_UNIX) || defined(XP_WIN) || defined(_WINDOWS) || defined(XP_BEOS)
     myTime = time(NULL); /* accurate until the year 2038. */
@@ -454,6 +458,20 @@ ssl_Time(void)
     LL_L2UI(myTime, now);
 #endif
     return myTime;
+}
+
+PRBool
+ssl_TicketTimeValid(const NewSessionTicket *ticket)
+{
+    PRTime endTime;
+
+    if (ticket->ticket_lifetime_hint == 0) {
+        return PR_TRUE;
+    }
+
+    endTime = ticket->received_timestamp +
+              (PRTime)(ticket->ticket_lifetime_hint * PR_USEC_PER_SEC);
+    return endTime > PR_Now();
 }
 
 void

@@ -4,25 +4,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_execute()
-{
+add_task(async function test_execute() {
   try {
     var histsvc = Cc["@mozilla.org/browser/nav-history-service;1"].
                   getService(Ci.nsINavHistoryService);
-    var bmsvc = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
-              getService(Ci.nsINavBookmarksService);
-  } catch(ex) {
+  } catch (ex) {
     do_throw("Unable to initialize Places services");
   }
 
   // add a visit
   var testURI = uri("http://test");
-  yield PlacesTestUtils.addVisits(testURI);
+  await PlacesTestUtils.addVisits(testURI);
 
   // query for the visit
   var options = histsvc.getNewQueryOptions();
@@ -38,13 +30,16 @@ add_task(function* test_execute()
 
   // now check via the saved search path
   var queryURI = histsvc.queriesToQueryString([query], 1, options);
-  bmsvc.insertBookmark(bmsvc.toolbarFolder, uri(queryURI),
-                       0 /* first item */, "test query");
+  await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    title: "test query",
+    url: queryURI,
+  });
 
   // query for that query
   options = histsvc.getNewQueryOptions();
   query = histsvc.getNewQuery();
-  query.setFolders([bmsvc.toolbarFolder], 1);
+  query.setFolders([PlacesUtils.toolbarFolderId], 1);
   result = histsvc.executeQuery(query, options);
   root = result.root;
   root.containerOpen = true;

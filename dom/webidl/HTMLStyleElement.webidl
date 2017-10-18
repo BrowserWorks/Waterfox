@@ -8,14 +8,15 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
  */
 
+[HTMLConstructor]
 interface HTMLStyleElement : HTMLElement {
            [Pure]
            attribute boolean disabled;
-           [SetterThrows, Pure]
+           [CEReactions, SetterThrows, Pure]
            attribute DOMString media;
-           [SetterThrows, Pure]
+           [CEReactions, SetterThrows, Pure]
            attribute DOMString type;
-           [SetterThrows, Pure]
+           [SetterThrows, Pure, Pref="layout.css.scoped-style.enabled"]
            attribute boolean scoped;
 };
 HTMLStyleElement implements LinkStyle;

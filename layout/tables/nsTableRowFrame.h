@@ -8,7 +8,6 @@
 #include "mozilla/Attributes.h"
 #include "nscore.h"
 #include "nsContainerFrame.h"
-#include "nsTablePainter.h"
 #include "nsTableRowGroupFrame.h"
 #include "mozilla/WritingModes.h"
 
@@ -18,11 +17,11 @@ struct TableCellReflowInput;
 } // namespace mozilla
 
 /**
- * nsTableRowFrame is the frame that maps table rows 
+ * nsTableRowFrame is the frame that maps table rows
  * (HTML tag TR). This class cannot be reused
- * outside of an nsTableRowGroupFrame.  It assumes that its parent is an nsTableRowGroupFrame,  
+ * outside of an nsTableRowGroupFrame.  It assumes that its parent is an nsTableRowGroupFrame,
  * and its children are nsTableCellFrames.
- * 
+ *
  * @see nsTableFrame
  * @see nsTableRowGroupFrame
  * @see nsTableCellFrame
@@ -32,9 +31,8 @@ class nsTableRowFrame : public nsContainerFrame
   using TableCellReflowInput = mozilla::TableCellReflowInput;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTableRowFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTableRowFrame)
 
   virtual ~nsTableRowFrame();
 
@@ -46,7 +44,7 @@ public:
 
   /** @see nsIFrame::DidSetStyleContext */
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
-  
+
   virtual void AppendFrames(ChildListID     aListID,
                             nsFrameList&    aFrameList) override;
   virtual void InsertFrames(ChildListID     aListID,
@@ -66,7 +64,7 @@ public:
   nsTableRowGroupFrame* GetTableRowGroupFrame() const
   {
     nsIFrame* parent = GetParent();
-    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableRowGroupFrame);
+    MOZ_ASSERT(parent && parent->IsTableRowGroupFrame());
     return static_cast<nsTableRowGroupFrame*>(parent);
   }
 
@@ -88,10 +86,10 @@ public:
   /** calls Reflow for all of its child cells.
     * Cells with rowspan=1 are all set to the same height and stacked horizontally.
     * <P> Cells are not split unless absolutely necessary.
-    * <P> Cells are resized in nsTableFrame::BalanceColumnWidths 
+    * <P> Cells are resized in nsTableFrame::BalanceColumnWidths
     * and nsTableFrame::ShrinkWrapChildren
     *
-    * @param aDesiredSize width set to width of the sum of the cells, height set to 
+    * @param aDesiredSize width set to width of the sum of the cells, height set to
     *                     height of cells with rowspan=1.
     *
     * @see nsIFrame::Reflow
@@ -105,20 +103,10 @@ public:
 
   void DidResize();
 
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::tableRowFrame
-   */
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
-  virtual mozilla::WritingMode GetWritingMode() const override
-    { return GetTableFrame()->GetWritingMode(); }
- 
   void UpdateBSize(nscoord           aBSize,
                    nscoord           aAscent,
                    nscoord           aDescent,
@@ -127,14 +115,14 @@ public:
 
   void ResetBSize(nscoord aRowStyleBSize);
 
-  // calculate the bsize, considering content bsize of the 
+  // calculate the bsize, considering content bsize of the
   // cells and the style bsize of the row and cells, excluding pct bsizes
   nscoord CalcBSize(const ReflowInput& aReflowInput);
 
   // Support for cells with 'vertical-align: baseline'.
 
   /**
-   * returns the max-ascent amongst all the cells that have 
+   * returns the max-ascent amongst all the cells that have
    * 'vertical-align: baseline', *including* cells with rowspans.
    * returns 0 if we don't have any cell with 'vertical-align: baseline'
    */
@@ -143,12 +131,18 @@ public:
   /* return the row ascent
    */
   nscoord GetRowBaseline(mozilla::WritingMode aWritingMode);
- 
+
   /** returns the ordinal position of this row in its table */
   virtual int32_t GetRowIndex() const;
 
   /** set this row's starting row index */
   void SetRowIndex (int aRowIndex);
+
+  // See nsTableFrame.h
+  int32_t GetAdjustmentForStoredIndex(int32_t aStoredIndex) const;
+
+  // See nsTableFrame.h
+  void AddDeletedRowIndex();
 
   /** used by row group frame code */
   nscoord ReflowCellFrame(nsPresContext*           aPresContext,
@@ -221,7 +215,7 @@ public:
   void SetBStartBCBorderWidth(BCPixelSize aWidth) { mBStartBorderWidth = aWidth; }
   void SetBEndBCBorderWidth(BCPixelSize aWidth) { mBEndBorderWidth = aWidth; }
   mozilla::LogicalMargin GetBCBorderWidth(mozilla::WritingMode aWM);
-                             
+
   /**
    * Gets inner border widths before collapsing with cell borders
    * Caller must get block-end border from next row or from table
@@ -260,13 +254,13 @@ protected:
   /** protected constructor.
     * @see NewFrame
     */
-  explicit nsTableRowFrame(nsStyleContext *aContext);
+  explicit nsTableRowFrame(nsStyleContext* aContext, ClassID aID = kClassID);
 
   void InitChildReflowInput(nsPresContext&              aPresContext,
                             const mozilla::LogicalSize& aAvailSize,
                             bool                        aBorderCollapse,
                             TableCellReflowInput&     aReflowInput);
-  
+
   virtual LogicalSides GetLogicalSkipSides(const ReflowInput* aReflowInput = nullptr) const override;
 
   // row-specific methods
@@ -289,7 +283,7 @@ private:
     unsigned mRowIndex:29;
     unsigned mHasFixedBSize:1; // set if the dominating style bsize on the row or any cell is pixel based
     unsigned mHasPctBSize:1;   // set if the dominating style bsize on the row or any cell is pct based
-    unsigned mFirstInserted:1; // if true, then it was the bstart-most newly inserted row 
+    unsigned mFirstInserted:1; // if true, then it was the bstart-most newly inserted row
   } mBits;
 
   // the desired bsize based on the content of the tallest cell in the row
@@ -322,13 +316,34 @@ private:
 
 };
 
+inline int32_t
+nsTableRowFrame::GetAdjustmentForStoredIndex(int32_t aStoredIndex) const
+{
+  nsTableRowGroupFrame* parentFrame = GetTableRowGroupFrame();
+  return parentFrame->GetAdjustmentForStoredIndex(aStoredIndex);
+}
+
+inline void nsTableRowFrame::AddDeletedRowIndex()
+{
+  nsTableRowGroupFrame* parentFrame = GetTableRowGroupFrame();
+  parentFrame->AddDeletedRowIndex(int32_t(mBits.mRowIndex));
+}
+
 inline int32_t nsTableRowFrame::GetRowIndex() const
 {
-  return int32_t(mBits.mRowIndex);
+  int32_t storedRowIndex = int32_t(mBits.mRowIndex);
+  int32_t rowIndexAdjustment = GetAdjustmentForStoredIndex(storedRowIndex);
+  return (storedRowIndex - rowIndexAdjustment);
 }
 
 inline void nsTableRowFrame::SetRowIndex (int aRowIndex)
 {
+  // Note: Setting the index of a row (as in the case of adding new rows) should
+  // be preceded by a call to nsTableFrame::RecalculateRowIndices()
+  // so as to correctly clear mDeletedRowIndexRanges.
+  MOZ_ASSERT(GetTableRowGroupFrame()->
+               GetTableFrame()->IsDeletedRowIndexRangesEmpty(),
+             "mDeletedRowIndexRanges should be empty here!");
   mBits.mRowIndex = aRowIndex;
 }
 

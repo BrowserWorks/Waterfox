@@ -7,17 +7,18 @@ Set up a browser environment before running a test.
 """
 
 import os
-import re
 import tempfile
 import mozfile
-from mozprocess import ProcessHandler
-from mozprofile.profile import Profile
+import mozinfo
+import mozrunner
 
+from mozprocess import ProcessHandlerMixin
+from mozprofile.profile import Profile
 from mozlog import get_proxy_logger
 
 from talos import utils
 from talos.utils import TalosError
-from talos.sps_profile import SpsProfile
+from talos.gecko_profile import GeckoProfile
 
 
 LOG = get_proxy_logger()
@@ -32,8 +33,8 @@ class FFSetup(object):
        available via the instance member *env*.
      - the profile used to run the test, available via the
        instance member *profile_dir*.
-     - sps profiling, available via the instance member *sps_profile*
-       of type :class:`SpsProfile` or None if not used.
+     - Gecko profiling, available via the instance member *gecko_profile*
+       of type :class:`GeckoProfile` or None if not used.
 
     Note that the browser will be run once with the profile, to ensure
     this is basically working and negate any performance noise with the
@@ -47,9 +48,6 @@ class FFSetup(object):
       # here the profile is removed
     """
 
-    PROFILE_REGEX = re.compile('__metrics(.*)__metrics',
-                               re.DOTALL | re.MULTILINE)
-
     def __init__(self, browser_config, test_config):
         self.browser_config, self.test_config = browser_config, test_config
         self._tmp_dir = tempfile.mkdtemp()
@@ -57,16 +55,13 @@ class FFSetup(object):
         # The profile dir must be named 'profile' because of xperf analysis
         # (in etlparser.py). TODO fix that ?
         self.profile_dir = os.path.join(self._tmp_dir, 'profile')
-        self.sps_profile = None
+        self.gecko_profile = None
 
     def _init_env(self):
         self.env = dict(os.environ)
         for k, v in self.browser_config['env'].iteritems():
             self.env[k] = str(v)
         self.env['MOZ_CRASHREPORTER_NO_REPORT'] = '1'
-        # for winxp e10s logging:
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=1037445
-        self.env['MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA'] = '1'
         if self.browser_config['symbols_path']:
             self.env['MOZ_CRASHREPORTER'] = '1'
         else:
@@ -108,53 +103,74 @@ class FFSetup(object):
             restore=False)
 
         profile.set_preferences(preferences)
+
+        # installing addons
         profile.addon_manager.install_addons(extensions)
 
+        # installing webextensions
+        webextensions = self.test_config.get('webextensions', None)
+        if isinstance(webextensions, basestring):
+            webextensions = [webextensions]
+
+        if webextensions is not None:
+            for webext in webextensions:
+                filename = utils.interpolate(webext)
+                if mozinfo.os == 'win':
+                    filename = filename.replace('/', '\\')
+                if not filename.endswith('.xpi'):
+                    continue
+                if not os.path.exists(filename):
+                    continue
+
+                profile.addon_manager.install_from_path(filename)
+
     def _run_profile(self):
-        command_args = utils.GenerateBrowserCommandLine(
-            self.browser_config["browser_path"],
-            self.browser_config["extra_args"],
-            self.profile_dir,
-            self.browser_config["init_url"]
-        )
+        runner_cls = mozrunner.runners.get(
+            mozinfo.info.get(
+                'appname',
+                'firefox'),
+            mozrunner.Runner)
+        args = [self.browser_config["extra_args"], self.browser_config["init_url"]]
+        runner = runner_cls(profile=self.profile_dir,
+                            binary=self.browser_config["browser_path"],
+                            cmdargs=args,
+                            env=self.env,
+                            process_class=ProcessHandlerMixin,
+                            process_args={})
 
-        def browser_log(line):
-            LOG.process_output(browser.pid, line)
+        runner.start(outputTimeout=30)
+        proc = runner.process_handler
+        LOG.process_start(proc.pid, "%s %s" % (self.browser_config["browser_path"],
+                                               ' '.join(args)))
 
-        browser = ProcessHandler(command_args, env=self.env,
-                                 processOutputLine=browser_log)
-        browser.run()
-        LOG.process_start(browser.pid, ' '.join(command_args))
         try:
-            exit_code = browser.wait()
-        except KeyboardInterrupt:
-            browser.kill()
-            raise
+            exit_code = proc.wait()
+        except Exception:
+            proc.kill()
+            raise TalosError("Browser Failed to close properly during warmup")
 
-        LOG.process_exit(browser.pid, exit_code)
-        results_raw = '\n'.join(browser.output)
+        LOG.process_exit(proc.pid, exit_code)
 
-        if not self.PROFILE_REGEX.search(results_raw):
-            LOG.info("Could not find %s in browser output"
-                     % self.PROFILE_REGEX.pattern)
-            LOG.info("Raw results:%s" % results_raw)
-            raise TalosError("browser failed to close after being initialized")
-
-    def _init_sps_profile(self):
+    def _init_gecko_profile(self):
         upload_dir = os.getenv('MOZ_UPLOAD_DIR')
-        if self.test_config.get('sps_profile') and not upload_dir:
+        if self.test_config.get('gecko_profile') and not upload_dir:
             LOG.critical("Profiling ignored because MOZ_UPLOAD_DIR was not"
                          " set")
-        if upload_dir and self.test_config.get('sps_profile'):
-            self.sps_profile = SpsProfile(upload_dir,
-                                          self.browser_config,
-                                          self.test_config)
-            self.sps_profile.update_env(self.env)
+        if upload_dir and self.test_config.get('gecko_profile'):
+            self.gecko_profile = GeckoProfile(upload_dir,
+                                              self.browser_config,
+                                              self.test_config)
+            self.gecko_profile.update_env(self.env)
 
     def clean(self):
-        mozfile.remove(self._tmp_dir)
-        if self.sps_profile:
-            self.sps_profile.clean()
+        try:
+            mozfile.remove(self._tmp_dir)
+        except Exception, e:
+            print "Exception while removing profile directory: %s" % self._tmp_dir
+            print e
+
+        if self.gecko_profile:
+            self.gecko_profile.clean()
 
     def __enter__(self):
         LOG.info('Initialising browser for %s test...'
@@ -166,7 +182,7 @@ class FFSetup(object):
         except:
             self.clean()
             raise
-        self._init_sps_profile()
+        self._init_gecko_profile()
         LOG.info('Browser initialized.')
         return self
 

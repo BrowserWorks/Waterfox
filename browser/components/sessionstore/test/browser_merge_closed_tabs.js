@@ -5,15 +5,15 @@
  * This test ensures that closed tabs are merged when restoring
  * a window state without overwriting tabs.
  */
-add_task(function () {
+add_task(async function() {
   const initialState = {
     windows: [{
       tabs: [
-        { entries: [{ url: "about:blank" }] }
+        { entries: [{ url: "about:blank", triggeringPrincipal_base64 }] }
       ],
       _closedTabs: [
-        { state: { entries: [{ ID: 1000, url: "about:blank" }]} },
-        { state: { entries: [{ ID: 1001, url: "about:blank" }]} }
+        { state: { entries: [{ ID: 1000, url: "about:blank", triggeringPrincipal_base64 }]} },
+        { state: { entries: [{ ID: 1001, url: "about:blank", triggeringPrincipal_base64 }]} }
       ]
     }]
   }
@@ -21,12 +21,12 @@ add_task(function () {
   const restoreState = {
     windows: [{
       tabs: [
-        { entries: [{ url: "about:robots" }] }
+        { entries: [{ url: "about:robots", triggeringPrincipal_base64 }] }
       ],
       _closedTabs: [
-        { state: { entries: [{ ID: 1002, url: "about:robots" }]} },
-        { state: { entries: [{ ID: 1003, url: "about:robots" }]} },
-        { state: { entries: [{ ID: 1004, url: "about:robots" }]} }
+        { state: { entries: [{ ID: 1002, url: "about:robots", triggeringPrincipal_base64 }]} },
+        { state: { entries: [{ ID: 1003, url: "about:robots", triggeringPrincipal_base64 }]} },
+        { state: { entries: [{ ID: 1004, url: "about:robots", triggeringPrincipal_base64 }]} }
       ]
     }]
   }
@@ -35,7 +35,7 @@ add_task(function () {
   gPrefService.setIntPref("browser.sessionstore.max_tabs_undo", maxTabsUndo);
 
   // Open a new window and restore it to an initial state.
-  let win = yield promiseNewWindowLoaded({private: false});
+  let win = await promiseNewWindowLoaded({private: false});
   SessionStore.setWindowState(win, JSON.stringify(initialState), true);
   is(SessionStore.getClosedTabCount(win), 2, "2 closed tabs after restoring initial state");
 
@@ -65,7 +65,7 @@ add_task(function () {
 
   // Clean up.
   gPrefService.clearUserPref("browser.sessionstore.max_tabs_undo");
-  yield BrowserTestUtils.closeWindow(win);
+  await BrowserTestUtils.closeWindow(win);
 });
 
 

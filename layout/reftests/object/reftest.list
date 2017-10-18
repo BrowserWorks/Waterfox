@@ -6,7 +6,7 @@ HTTP == 404-data-with-type.html 404-data-with-type-ref.html
 == connection-refused.html connection-refused-ref.html
 == image.html image-ref.html
 == image-with-type.html image-with-type-ref.html
-skip-if(B2G||Mulet) fails-if(Android) == image-no-useful-extension-typesniff.html image-no-useful-extension-typesniff-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
+fails-if(Android) == image-no-useful-extension-typesniff.html image-no-useful-extension-typesniff-ref.html
 == image-no-useful-extension-with-type.html image-no-useful-extension-with-type-ref.html
 #
 # This test must be run on an HTTP server because it relies on the HTTP
@@ -35,8 +35,8 @@ HTTP == type-overridden-by-server.html type-overridden-by-server-ref.html
 #     need to require Flash on the test machine to run them
 #
 # XXX need to support <img src="foo.svg"> for these to pass
-fails == svg.html svg-ref.html
-fails == svg-with-type.html svg-with-type-ref.html
+fails-if(!styloVsGecko) == svg.html svg-ref.html
+fails-if(!styloVsGecko) == svg-with-type.html svg-with-type-ref.html
 #
 # XXX missing test 031 from http://biesi.damowmow.com/object/ here; need to
 #     first support the standby attribute on objects, then need to figure out

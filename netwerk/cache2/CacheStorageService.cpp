@@ -32,6 +32,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Services.h"
+#include "mozilla/IntegerPrintfMacros.h"
 
 namespace mozilla {
 namespace net {
@@ -106,7 +107,8 @@ NS_IMPL_ISUPPORTS(CacheStorageService,
                   nsICacheStorageService,
                   nsIMemoryReporter,
                   nsITimerCallback,
-                  nsICacheTesting)
+                  nsICacheTesting,
+                  nsINamed)
 
 CacheStorageService* CacheStorageService::sSelf = nullptr;
 
@@ -145,7 +147,9 @@ void CacheStorageService::Shutdown()
   mShutdown = true;
 
   nsCOMPtr<nsIRunnable> event =
-    NewRunnableMethod(this, &CacheStorageService::ShutdownBackground);
+    NewRunnableMethod("net::CacheStorageService::ShutdownBackground",
+                      this,
+                      &CacheStorageService::ShutdownBackground);
   Dispatch(event);
 
 #ifdef NS_FREE_PERMANENT_DATA
@@ -193,9 +197,9 @@ class WalkCacheRunnable : public Runnable
                         , public CacheStorageService::EntryInfoCallback
 {
 protected:
-  WalkCacheRunnable(nsICacheStorageVisitor* aVisitor,
-                    bool aVisitEntries)
-    : mService(CacheStorageService::Self())
+  WalkCacheRunnable(nsICacheStorageVisitor* aVisitor, bool aVisitEntries)
+    : Runnable("net::WalkCacheRunnable")
+    , mService(CacheStorageService::Self())
     , mCallback(aVisitor)
     , mSize(0)
     , mNotifyStorage(true)
@@ -208,7 +212,8 @@ protected:
   virtual ~WalkCacheRunnable()
   {
     if (mCallback) {
-      ProxyReleaseMainThread(mCallback);
+      ProxyReleaseMainThread(
+        "WalkCacheRunnable::mCallback", mCallback);
     }
   }
 
@@ -244,7 +249,7 @@ public:
   }
 
 private:
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     if (CacheStorageService::IsOnManagementThread()) {
       LOG(("WalkMemoryCacheRunnable::Run - collecting [this=%p]", this));
@@ -291,7 +296,7 @@ private:
         mNotifyStorage = false;
 
       } else {
-        LOG(("  entry [left=%d, canceled=%d]", mEntryArray.Length(), (bool)mCancel));
+        LOG(("  entry [left=%zu, canceled=%d]", mEntryArray.Length(), (bool)mCancel));
 
         // Third, notify each entry until depleted or canceled
         if (!mEntryArray.Length() || mCancel) {
@@ -319,13 +324,14 @@ private:
   virtual ~WalkMemoryCacheRunnable()
   {
     if (mCallback)
-      ProxyReleaseMainThread(mCallback);
+      ProxyReleaseMainThread(
+        "WalkMemoryCacheRunnable::mCallback", mCallback);
   }
 
   virtual void OnEntryInfo(const nsACString & aURISpec, const nsACString & aIdEnhance,
                            int64_t aDataSize, int32_t aFetchCount,
                            uint32_t aLastModifiedTime, uint32_t aExpirationTime,
-                           bool aPinned)
+                           bool aPinned, nsILoadContextInfo* aInfo) override
   {
     nsresult rv;
 
@@ -336,7 +342,8 @@ private:
     }
 
     rv = mCallback->OnCacheEntryInfo(uri, aIdEnhance, aDataSize, aFetchCount,
-                                     aLastModifiedTime, aExpirationTime, aPinned);
+                                     aLastModifiedTime, aExpirationTime,
+                                     aPinned, aInfo);
     if (NS_FAILED(rv)) {
       LOG(("  callback failed, canceling the walk"));
       mCancel = true;
@@ -385,11 +392,12 @@ private:
   {
   public:
     explicit OnCacheEntryInfoRunnable(WalkDiskCacheRunnable* aWalker)
-      : mWalker(aWalker)
+      : Runnable("net::WalkDiskCacheRunnable::OnCacheEntryInfoRunnable")
+      , mWalker(aWalker)
     {
     }
 
-    NS_IMETHODIMP Run()
+    NS_IMETHOD Run() override
     {
       MOZ_ASSERT(NS_IsMainThread());
 
@@ -403,7 +411,7 @@ private:
 
       rv = mWalker->mCallback->OnCacheEntryInfo(
         uri, mIdEnhance, mDataSize, mFetchCount,
-        mLastModifiedTime, mExpirationTime, mPinned);
+        mLastModifiedTime, mExpirationTime, mPinned, mInfo);
       if (NS_FAILED(rv)) {
         mWalker->mCancel = true;
       }
@@ -420,9 +428,10 @@ private:
     uint32_t mLastModifiedTime;
     uint32_t mExpirationTime;
     bool mPinned;
+    nsCOMPtr<nsILoadContextInfo> mInfo;
   };
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     // The main loop
     nsresult rv;
@@ -441,7 +450,7 @@ private:
           return NS_DispatchToMainThread(this);
         }
 
-        mSize = size << 10;
+        mSize = static_cast<uint64_t>(size) << 10;
 
         // Invoke onCacheStorageInfo with valid information.
         NS_DispatchToMainThread(this);
@@ -472,7 +481,7 @@ private:
           if (NS_FAILED(rv))
             break; // done (or error?)
 
-          // This synchronously invokes onCacheEntryInfo on this class where we
+          // This synchronously invokes OnEntryInfo on this class where we
           // redispatch to the main thread for the consumer callback.
           CacheFileIOManager::GetEntryInfo(&hash, this);
         }
@@ -500,7 +509,7 @@ private:
   virtual void OnEntryInfo(const nsACString & aURISpec, const nsACString & aIdEnhance,
                            int64_t aDataSize, int32_t aFetchCount,
                            uint32_t aLastModifiedTime, uint32_t aExpirationTime,
-                           bool aPinned)
+                           bool aPinned, nsILoadContextInfo* aInfo) override
   {
     // Called directly from CacheFileIOManager::GetEntryInfo.
 
@@ -513,6 +522,7 @@ private:
     info->mLastModifiedTime = aLastModifiedTime;
     info->mExpirationTime = aExpirationTime;
     info->mPinned = aPinned;
+    info->mInfo = aInfo;
 
     NS_DispatchToMainThread(info);
   }
@@ -565,7 +575,9 @@ public:
 
 private:
   CleaupCacheDirectoriesRunnable(uint32_t aVersion, uint32_t aActive)
-    : mVersion(aVersion), mActive(aActive)
+    : Runnable("net::CleaupCacheDirectoriesRunnable")
+    , mVersion(aVersion)
+    , mActive(aActive)
   {
     nsCacheService::GetDiskCacheDirectory(getter_AddRefs(mCache1Dir));
     CacheFileIOManager::GetCacheDirectory(getter_AddRefs(mCache2Dir));
@@ -586,7 +598,7 @@ private:
 bool CleaupCacheDirectoriesRunnable::Post(uint32_t aVersion, uint32_t aActive)
 {
   // CleaupCacheDirectories is called regardless what cache version is set up to use.
-  // To obtain the cache1 directory we must unfortunatelly instantiate the old cache
+  // To obtain the cache1 directory we must unfortunately instantiate the old cache
   // service despite it may not be used at all...  This also initialize nsDeleteDir.
   nsCOMPtr<nsICacheService> service = do_GetService(NS_CACHESERVICE_CONTRACTID);
   if (!service)
@@ -928,6 +940,21 @@ NS_IMETHODIMP CacheStorageService::GetIoTarget(nsIEventTarget** aEventTarget)
   return NS_OK;
 }
 
+NS_IMETHODIMP CacheStorageService::AsyncVisitAllStorages(
+  nsICacheStorageVisitor* aVisitor,
+  bool aVisitEntries)
+{
+  LOG(("CacheStorageService::AsyncVisitAllStorages [cb=%p]", aVisitor));
+  NS_ENSURE_FALSE(mShutdown, NS_ERROR_NOT_INITIALIZED);
+
+  // Walking the disk cache also walks the memory cache.
+  RefPtr<WalkDiskCacheRunnable> event =
+    new WalkDiskCacheRunnable(nullptr, aVisitEntries, aVisitor);
+  return event->Walk();
+
+  return NS_OK;
+}
+
 // Methods used by CacheEntry for management of in-memory structures.
 
 namespace {
@@ -1243,7 +1270,9 @@ CacheStorageService::OnMemoryConsumptionChange(CacheMemoryConsumer* aConsumer,
   // Dispatch as a priority task, we want to set the purge timer
   // ASAP to prevent vain redispatch of this event.
   nsCOMPtr<nsIRunnable> event =
-    NewRunnableMethod(this, &CacheStorageService::SchedulePurgeOverMemoryLimit);
+    NewRunnableMethod("net::CacheStorageService::SchedulePurgeOverMemoryLimit",
+                      this,
+                      &CacheStorageService::SchedulePurgeOverMemoryLimit);
   cacheIOTarget->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
 }
 
@@ -1284,7 +1313,7 @@ CacheStorageService::SchedulePurgeOverMemoryLimit()
   if (mPurgeTimer) {
     nsresult rv;
     rv = mPurgeTimer->InitWithCallback(this, 1000, nsITimer::TYPE_ONE_SHOT);
-    LOG(("  timer init rv=0x%08x", rv));
+    LOG(("  timer init rv=0x%08" PRIx32, static_cast<uint32_t>(rv)));
   }
 }
 
@@ -1299,10 +1328,19 @@ CacheStorageService::Notify(nsITimer* aTimer)
     mPurgeTimer = nullptr;
 
     nsCOMPtr<nsIRunnable> event =
-      NewRunnableMethod(this, &CacheStorageService::PurgeOverMemoryLimit);
+      NewRunnableMethod("net::CacheStorageService::PurgeOverMemoryLimit",
+                        this,
+                        &CacheStorageService::PurgeOverMemoryLimit);
     Dispatch(event);
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+CacheStorageService::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("CacheStorageService");
   return NS_OK;
 }
 
@@ -1471,7 +1509,7 @@ CacheStorageService::AddStorageEntry(CacheStorage const* aStorage,
 }
 
 nsresult
-CacheStorageService::AddStorageEntry(nsCSubstring const& aContextKey,
+CacheStorageService::AddStorageEntry(const nsACString& aContextKey,
                                      const nsACString & aURI,
                                      const nsACString & aIdExtension,
                                      bool aWriteToDisk,
@@ -1606,7 +1644,7 @@ CacheStorageService::CheckStorageEntry(CacheStorage const* aStorage,
   CacheIndex::EntryStatus status;
   rv = CacheIndex::HasEntry(fileKey, &status);
   if (NS_FAILED(rv) || status == CacheIndex::DO_NOT_KNOW) {
-    LOG(("  index doesn't know, rv=0x%08x", rv));
+    LOG(("  index doesn't know, rv=0x%08" PRIx32, static_cast<uint32_t>(rv)));
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -1614,6 +1652,48 @@ CacheStorageService::CheckStorageEntry(CacheStorage const* aStorage,
   LOG(("  %sfound in index", *aResult ? "" : "not "));
   return NS_OK;
 }
+
+nsresult
+CacheStorageService::GetCacheIndexEntryAttrs(CacheStorage const* aStorage,
+                                             const nsACString &aURI,
+                                             const nsACString &aIdExtension,
+                                             bool *aHasAltData,
+                                             uint32_t *aFileSizeKb)
+{
+  nsresult rv;
+
+  nsAutoCString contextKey;
+  CacheFileUtils::AppendKeyPrefix(aStorage->LoadInfo(), contextKey);
+
+  LOG(("CacheStorageService::GetCacheIndexEntryAttrs [uri=%s, eid=%s, contextKey=%s]",
+    aURI.BeginReading(), aIdExtension.BeginReading(), contextKey.get()));
+
+  nsAutoCString fileKey;
+  rv = CacheEntry::HashingKey(contextKey, aIdExtension, aURI, fileKey);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  *aHasAltData = false;
+  *aFileSizeKb = 0;
+  auto closure = [&aHasAltData, &aFileSizeKb](const CacheIndexEntry *entry) {
+    *aHasAltData = entry->GetHasAltData();
+    *aFileSizeKb = entry->GetFileSize();
+  };
+
+  CacheIndex::EntryStatus status;
+  rv = CacheIndex::HasEntry(fileKey, &status, closure);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  if (status != CacheIndex::EXISTS) {
+    return NS_ERROR_CACHE_KEY_NOT_FOUND;
+  }
+
+  return NS_OK;
+}
+
 
 namespace {
 
@@ -1644,7 +1724,8 @@ private:
 CacheEntryDoomByKeyCallback::~CacheEntryDoomByKeyCallback()
 {
   if (mCallback)
-    ProxyReleaseMainThread(mCallback);
+    ProxyReleaseMainThread(
+      "CacheEntryDoomByKeyCallback::mCallback", mCallback);
 }
 
 NS_IMETHODIMP CacheEntryDoomByKeyCallback::OnFileDoomed(CacheFileHandle *aHandle,
@@ -1747,8 +1828,12 @@ CacheStorageService::DoomStorageEntry(CacheStorage const* aStorage,
   class Callback : public Runnable
   {
   public:
-    explicit Callback(nsICacheEntryDoomCallback* aCallback) : mCallback(aCallback) { }
-    NS_IMETHODIMP Run()
+    explicit Callback(nsICacheEntryDoomCallback* aCallback)
+      : mozilla::Runnable("Callback")
+      , mCallback(aCallback)
+    {
+    }
+    NS_IMETHOD Run() override
     {
       mCallback->OnCacheEntryDoomed(NS_ERROR_NOT_AVAILABLE);
       return NS_OK;
@@ -1784,7 +1869,7 @@ CacheStorageService::DoomStorageEntries(CacheStorage const* aStorage,
 }
 
 nsresult
-CacheStorageService::DoomStorageEntries(nsCSubstring const& aContextKey,
+CacheStorageService::DoomStorageEntries(const nsACString& aContextKey,
                                         nsILoadContextInfo* aContext,
                                         bool aDiskStorage,
                                         bool aPinned,
@@ -1832,7 +1917,7 @@ CacheStorageService::DoomStorageEntries(nsCSubstring const& aContextKey,
     // we need to remove the memory entries from the disk table one
     // by one manually.
     nsAutoPtr<CacheEntryTable> memoryEntries;
-    sGlobalEntryTables->RemoveAndForget(memoryStorageID, memoryEntries);
+    sGlobalEntryTables->Remove(memoryStorageID, &memoryEntries);
 
     CacheEntryTable* diskEntries;
     if (memoryEntries && sGlobalEntryTables->Get(aContextKey, &diskEntries)) {
@@ -1871,8 +1956,12 @@ CacheStorageService::DoomStorageEntries(nsCSubstring const& aContextKey,
   class Callback : public Runnable
   {
   public:
-    explicit Callback(nsICacheEntryDoomCallback* aCallback) : mCallback(aCallback) { }
-    NS_IMETHODIMP Run()
+    explicit Callback(nsICacheEntryDoomCallback* aCallback)
+      : mozilla::Runnable("Callback")
+      , mCallback(aCallback)
+    {
+    }
+    NS_IMETHOD Run() override
     {
       mCallback->OnCacheEntryDoomed(NS_OK);
       return NS_OK;
@@ -1988,6 +2077,12 @@ CacheStorageService::GetCacheEntryInfo(CacheEntry* aEntry,
   nsCString const uriSpec = aEntry->GetURI();
   nsCString const enhanceId = aEntry->GetEnhanceID();
 
+  nsAutoCString entryKey;
+  aEntry->HashingKeyWithStorage(entryKey);
+
+  nsCOMPtr<nsILoadContextInfo> info =
+    CacheFileUtils::ParseKey(entryKey);
+
   uint32_t dataSize;
   if (NS_FAILED(aEntry->GetStorageDataSize(&dataSize))) {
     dataSize = 0;
@@ -2007,10 +2102,18 @@ CacheStorageService::GetCacheEntryInfo(CacheEntry* aEntry,
 
   aCallback->OnEntryInfo(uriSpec, enhanceId, dataSize,
                          fetchCount, lastModified, expirationTime,
-                         aEntry->IsPinned());
+                         aEntry->IsPinned(), info);
 }
 
-// Telementry collection
+// static
+uint32_t CacheStorageService::CacheQueueSize(bool highPriority)
+{
+  RefPtr<CacheIOThread> thread = CacheFileIOManager::IOThread();
+  MOZ_ASSERT(thread);
+  return thread->QueueSize(highPriority);
+}
+
+// Telemetry collection
 
 namespace {
 
@@ -2137,34 +2240,26 @@ CacheStorageService::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) con
 }
 
 NS_IMETHODIMP
-CacheStorageService::CollectReports(nsIMemoryReporterCallback* aHandleReport,
+CacheStorageService::CollectReports(nsIHandleReportCallback* aHandleReport,
                                     nsISupports* aData, bool aAnonymize)
 {
-  nsresult rv;
-
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/io", KIND_HEAP, UNITS_BYTES,
     CacheFileIOManager::SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache IO manager.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/index", KIND_HEAP, UNITS_BYTES,
     CacheIndex::SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache index.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
   MutexAutoLock lock(mLock);
 
   // Report the service instance, this doesn't report entries, done lower
-  rv = MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/cache2/service", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(MallocSizeOf),
     "Memory used by the cache storage service.");
-  if (NS_WARN_IF(NS_FAILED(rv)))
-    return rv;
 
   // Report all entries, each storage separately (by the context key)
   //
@@ -2206,9 +2301,7 @@ CacheStorageService::CollectReports(nsIMemoryReporterCallback* aHandleReport,
         nsPrintfCString("explicit/network/cache2/%s-storage(%s)",
           table->Type() == CacheEntryTable::MEMORY_ONLY ? "memory" : "disk",
           iter1.Key().BeginReading()),
-        nsIMemoryReporter::KIND_HEAP,
-        nsIMemoryReporter::UNITS_BYTES,
-        size,
+        nsIMemoryReporter::KIND_HEAP, nsIMemoryReporter::UNITS_BYTES, size,
         NS_LITERAL_CSTRING("Memory used by the cache storage."),
         aData);
     }
@@ -2259,6 +2352,33 @@ CacheStorageService::ResumeCacheIOThread()
   suspender.swap(mActiveIOSuspender);
   suspender->Notify();
   return NS_OK;
+}
+
+NS_IMETHODIMP
+CacheStorageService::Flush(nsIObserver* aObserver)
+{
+  RefPtr<CacheIOThread> thread = CacheFileIOManager::IOThread();
+  if (!thread) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
+  if (!observerService) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // Adding as weak, the consumer is responsible to keep the reference
+  // until notified.
+  observerService->AddObserver(aObserver, "cacheservice:purge-memory-pools", false);
+
+  // This runnable will do the purging and when done, notifies the above observer.
+  // We dispatch it to the CLOSE level, so all data writes scheduled up to this time
+  // will be done before this purging happens.
+  RefPtr<CacheStorageService::PurgeFromMemoryRunnable> r =
+    new CacheStorageService::PurgeFromMemoryRunnable(this, CacheEntry::PURGE_WHOLE);
+
+  return thread->Dispatch(r, CacheIOThread::WRITE);
 }
 
 } // namespace net

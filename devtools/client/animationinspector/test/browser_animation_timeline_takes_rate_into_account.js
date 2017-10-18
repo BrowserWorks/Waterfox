@@ -24,14 +24,30 @@ add_task(function* () {
   info("The first animation has its rate set to 1, let's measure it");
 
   let el = timeBlocks[0];
-  let duration = parseInt(el.querySelector(".iterations").style.width, 10);
   let delay = parseInt(el.querySelector(".delay").style.width, 10);
+  let duration = null;
+  el.querySelectorAll("svg g").forEach(groupEl => {
+    const dur = getDuration(groupEl.querySelector("path"));
+    if (!duration) {
+      duration = dur;
+      return;
+    }
+    is(duration, dur, "The durations shuld be same at all paths in one group");
+  });
 
   info("The second animation has its rate set to 2, so should be shorter");
 
   let el2 = timeBlocks[1];
-  let duration2 = parseInt(el2.querySelector(".iterations").style.width, 10);
   let delay2 = parseInt(el2.querySelector(".delay").style.width, 10);
+  let duration2 = null;
+  el2.querySelectorAll("svg g").forEach(groupEl => {
+    const dur = getDuration(groupEl.querySelector("path"));
+    if (!duration2) {
+      duration2 = dur;
+      return;
+    }
+    is(duration2, dur, "The durations shuld be same at all paths in one group");
+  });
 
   // The width are calculated by the animation-inspector dynamically depending
   // on the size of the panel, and therefore depends on the test machine/OS.
@@ -41,3 +57,41 @@ add_task(function* () {
   let delayDelta = (2 * delay2) - delay;
   ok(delayDelta <= 1, "The delay width is correct");
 });
+
+function getDuration(pathEl) {
+  const pathSegList = pathEl.pathSegList;
+  // Find the index of starting iterations.
+  let startingIterationIndex = 0;
+  const firstPathSeg = pathSegList.getItem(1);
+  for (let i = 2, n = pathSegList.numberOfItems - 2; i < n; i++) {
+    // Changing point of the progress acceleration is the time.
+    const pathSeg = pathSegList.getItem(i);
+    if (firstPathSeg.y != pathSeg.y) {
+      startingIterationIndex = i;
+      break;
+    }
+  }
+  // Find the index of ending iterations.
+  let endingIterationIndex = 0;
+  let previousPathSegment = pathSegList.getItem(startingIterationIndex);
+  for (let i = startingIterationIndex + 1, n = pathSegList.numberOfItems - 2;
+       i < n; i++) {
+    // Find forwards fill-mode.
+    const pathSeg = pathSegList.getItem(i);
+    if (previousPathSegment.y == pathSeg.y) {
+      endingIterationIndex = i;
+      break;
+    }
+    previousPathSegment = pathSeg;
+  }
+  if (endingIterationIndex) {
+    // Not forwards fill-mode
+    endingIterationIndex = pathSegList.numberOfItems - 2;
+  }
+  // Return the distance of starting and ending
+  const startingIterationPathSegment =
+    pathSegList.getItem(startingIterationIndex);
+  const endingIterationPathSegment =
+    pathSegList.getItem(startingIterationIndex);
+  return endingIterationPathSegment.x - startingIterationPathSegment.x;
+}

@@ -90,6 +90,8 @@ public:
    */
   bool IsCSSEditableProperty(nsINode* aNode, nsIAtom* aProperty,
                              const nsAString* aAttribute);
+  bool IsCSSEditableProperty(nsINode* aNode, nsIAtom* aProperty,
+                             nsIAtom* aAttribute);
 
   /**
    * Adds/remove a CSS declaration to the STYLE atrribute carried by a given
@@ -151,7 +153,7 @@ public:
    * @param aPropertyValue  [IN] The value of the property we have to remove
    *                             if the property accepts more than one value.
    */
-  nsresult RemoveCSSInlineStyle(nsIDOMNode* aNode, nsIAtom* aProperty,
+  nsresult RemoveCSSInlineStyle(nsINode& aNode, nsIAtom* aProperty,
                                 const nsAString& aPropertyValue);
 
   /**
@@ -188,14 +190,14 @@ public:
    *
    * @param aNode          [IN] A DOM node.
    * @param aHTMLProperty  [IN] An atom containing an HTML property.
-   * @param aAttribute     [IN] A pointer to an attribute name or nullptr if
+   * @param aAttribute     [IN] An atom of attribute name or nullptr if
    *                            irrelevant.
    * @param aValueString   [OUT] The list of CSS values.
    * @param aStyleType     [IN] eSpecified or eComputed.
    */
   nsresult GetCSSEquivalentToHTMLInlineStyleSet(nsINode* aNode,
                                                 nsIAtom* aHTMLProperty,
-                                                const nsAString* aAttribute,
+                                                nsIAtom* aAttribute,
                                                 nsAString& aValueString,
                                                 StyleType aStyleType);
 
@@ -205,16 +207,20 @@ public:
    *
    * @param aNode          [IN] A DOM node.
    * @param aHTMLProperty  [IN] An atom containing an HTML property.
-   * @param aAttribute     [IN] A pointer to an attribute name or nullptr if
-   *                            irrelevant.
-   * @param aIsSet         [OUT] A boolean being true if the css properties are
-   *                             set.
+   * @param aAttribute     [IN] A pointer/atom to an attribute name or nullptr
+   *                            if irrelevant.
    * @param aValueString   [IN/OUT] The attribute value (in) the list of CSS
    *                                values (out).
    * @param aStyleType     [IN] eSpecified or eComputed.
-   *
-   * The nsIContent variant returns aIsSet instead of using an out parameter.
+   * @return               A boolean being true if the css properties are
+   *                       not same as initial value.
    */
+  bool IsCSSEquivalentToHTMLInlineStyleSet(nsINode* aContent,
+                                           nsIAtom* aProperty,
+                                           nsIAtom* aAttribute,
+                                           nsAString& aValue,
+                                           StyleType aStyleType);
+
   bool IsCSSEquivalentToHTMLInlineStyleSet(nsINode* aContent,
                                            nsIAtom* aProperty,
                                            const nsAString* aAttribute,
@@ -227,12 +233,34 @@ public:
                                            nsAString& aValue,
                                            StyleType aStyleType);
 
-  nsresult IsCSSEquivalentToHTMLInlineStyleSet(nsIDOMNode* aNode,
-                                               nsIAtom* aHTMLProperty,
-                                               const nsAString* aAttribute,
-                                               bool& aIsSet,
-                                               nsAString& aValueString,
-                                               StyleType aStyleType);
+  bool IsCSSEquivalentToHTMLInlineStyleSet(nsIDOMNode* aNode,
+                                           nsIAtom* aProperty,
+                                           const nsAString* aAttribute,
+                                           nsAString& aValue,
+                                           StyleType aStyleType);
+
+  /**
+   * This is a kind of IsCSSEquivalentToHTMLInlineStyleSet.
+   * IsCSSEquivalentToHTMLInlineStyleSet returns whether the properties
+   * aren't same as initial value.  But this method returns whether the
+   * properties aren't set.
+   * If node is <span style="font-weight: normal"/>,
+   *  - IsCSSEquivalentToHTMLInlineStyleSet returns false.
+   *  - HaveCSSEquivalentStyles returns true.
+   *
+   * @param aNode          [IN] A DOM node.
+   * @param aHTMLProperty  [IN] An atom containing an HTML property.
+   * @param aAttribute     [IN] An atom to an attribute name or nullptr
+   *                            if irrelevant.
+   * @param aStyleType     [IN] eSpecified or eComputed.
+   * @return               A boolean being true if the css properties are
+   *                       not set.
+   */
+
+  bool HaveCSSEquivalentStyles(nsINode& aNode,
+                               nsIAtom* aProperty,
+                               nsIAtom* aAttribute,
+                               StyleType aStyleType);
 
   /**
    * Adds to the node the CSS inline styles equivalent to the HTML style
@@ -240,27 +268,29 @@ public:
    *
    * @param aNode          [IN] A DOM node.
    * @param aHTMLProperty  [IN] An atom containing an HTML property.
-   * @param aAttribute     [IN] A pointer to an attribute name or nullptr if
-   *                            irrelevant.
+   * @param aAttribute     [IN] A pointer/atom to an attribute name or nullptr
+   *                            if irrelevant.
    * @param aValue         [IN] The attribute value.
-   * @param aCount         [OUT] The number of CSS properties set by the call.
    * @param aSuppressTransaction [IN] A boolean indicating, when true,
    *                                  that no transaction should be recorded.
    *
-   * aCount is returned by the dom::Element variant instead of being an out
-   * parameter.
+   * @return               The number of CSS properties set by the call.
    */
+  int32_t SetCSSEquivalentToHTMLStyle(dom::Element* aElement,
+                                      nsIAtom* aProperty,
+                                      nsIAtom* aAttribute,
+                                      const nsAString* aValue,
+                                      bool aSuppressTransaction);
   int32_t SetCSSEquivalentToHTMLStyle(dom::Element* aElement,
                                       nsIAtom* aProperty,
                                       const nsAString* aAttribute,
                                       const nsAString* aValue,
                                       bool aSuppressTransaction);
-  nsresult SetCSSEquivalentToHTMLStyle(nsIDOMNode* aNode,
-                                       nsIAtom* aHTMLProperty,
-                                       const nsAString* aAttribute,
-                                       const nsAString* aValue,
-                                       int32_t* aCount,
-                                       bool aSuppressTransaction);
+  int32_t SetCSSEquivalentToHTMLStyle(nsIDOMNode* aNode,
+                                      nsIAtom* aHTMLProperty,
+                                      const nsAString* aAttribute,
+                                      const nsAString* aValue,
+                                      bool aSuppressTransaction);
 
   /**
    * Removes from the node the CSS inline styles equivalent to the HTML style.
@@ -284,7 +314,7 @@ public:
    *
    * @param aElement       [IN] A DOM Element (must not be null).
    * @param aHTMLProperty  [IN] An atom containing an HTML property.
-   * @param aAttribute     [IN] A pointer to an attribute name or nullptr if
+   * @param aAttribute     [IN] An atom to an attribute name or nullptr if
    *                            irrelevant.
    * @param aValue         [IN] The attribute value.
    * @param aSuppressTransaction [IN] A boolean indicating, when true,
@@ -292,7 +322,7 @@ public:
    */
   nsresult RemoveCSSEquivalentToHTMLStyle(dom::Element* aElement,
                                           nsIAtom* aHTMLProperty,
-                                          const nsAString* aAttribute,
+                                          nsIAtom* aAttribute,
                                           const nsAString* aValue,
                                           bool aSuppressTransaction);
 
@@ -409,7 +439,7 @@ private:
    *
    * @param aNode              [IN] The DOM node.
    * @param aHTMLProperty      [IN] An atom containing an HTML property.
-   * @param aAttribute         [IN] A pointer to an attribute name or nullptr
+   * @param aAttribute         [IN] An atom to an attribute name or nullptr
    *                                if irrelevant
    * @param aValue             [IN] The attribute value.
    * @param aPropertyArray     [OUT] The array of CSS properties.
@@ -422,7 +452,7 @@ private:
    */
   void GenerateCSSDeclarationsFromHTMLStyle(dom::Element* aNode,
                                             nsIAtom* aHTMLProperty,
-                                            const nsAString* aAttribute,
+                                            nsIAtom* aAttribute,
                                             const nsAString* aValue,
                                             nsTArray<nsIAtom*>& aPropertyArray,
                                             nsTArray<nsString>& aValueArray,

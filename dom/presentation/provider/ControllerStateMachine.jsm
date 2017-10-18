@@ -60,6 +60,9 @@ var handlers = [
       case CommandType.ICE_CANDIDATE:
         stateMachine._notifyChannelDescriptor(command);
         break;
+      case CommandType.RECONNECT_ACK:
+        stateMachine._notifyReconnect(command.presentationId);
+        break;
       default:
         debug("unexpected command: " + JSON.stringify(command));
         // ignore unexpected command.
@@ -67,8 +70,16 @@ var handlers = [
     }
   },
   function _closingHandler(stateMachine, command) {
-    // ignore every command in closing state.
-    DEBUG && debug("unexpected command: " + JSON.stringify(command)); // jshint ignore:line
+    switch (command.type) {
+      case CommandType.DISCONNECT:
+        stateMachine.state = State.CLOSED;
+        stateMachine._notifyDisconnected(command.reason);
+        break;
+      default:
+        debug("unexpected command: " + JSON.stringify(command));
+        // ignore unexpected command.
+        break;
+    }
   },
   function _closedHandler(stateMachine, command) {
     // ignore every command in closed state.
@@ -107,6 +118,16 @@ ControllerStateMachine.prototype = {
       this._sendCommand({
         type: CommandType.TERMINATE_ACK,
         presentationId: presentationId,
+      });
+    }
+  },
+
+  reconnect: function _reconnect(presentationId, url) {
+    if (this.state === State.CONNECTED) {
+      this._sendCommand({
+        type: CommandType.RECONNECT,
+        presentationId: presentationId,
+        url: url,
       });
     }
   },
@@ -198,6 +219,10 @@ ControllerStateMachine.prototype = {
 
   _notifyTerminate: function _notifyTerminate(presentationId) {
     this._channel.notifyTerminate(presentationId);
+  },
+
+  _notifyReconnect: function _notifyReconnect(presentationId) {
+    this._channel.notifyReconnect(presentationId);
   },
 
   _notifyChannelDescriptor: function _notifyChannelDescriptor(command) {

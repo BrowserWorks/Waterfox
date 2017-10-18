@@ -9,11 +9,12 @@
 
 #include "mozilla/dom/DocumentFragment.h"
 #include "mozilla/dom/StyleSheetList.h"
-#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheet.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsIContentInlines.h"
+#include "nsIdentifierMapEntry.h"
 #include "nsTHashtable.h"
-#include "nsDocument.h"
 
 class nsIAtom;
 class nsIContent;
@@ -46,8 +47,8 @@ public:
 
   void AddToIdTable(Element* aElement, nsIAtom* aId);
   void RemoveFromIdTable(Element* aElement, nsIAtom* aId);
-  void InsertSheet(StyleSheetHandle aSheet, nsIContent* aLinkingContent);
-  void RemoveSheet(StyleSheetHandle aSheet);
+  void InsertSheet(StyleSheet* aSheet, nsIContent* aLinkingContent);
+  void RemoveSheet(StyleSheet* aSheet);
   bool ApplyAuthorStyles();
   void SetApplyAuthorStyles(bool aApplyAuthorStyles);
   StyleSheetList* StyleSheets();
@@ -185,7 +186,8 @@ protected:
   // so instead we track it here.
   bool mIsComposedDocParticipant;
 
-  nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                 bool aPreallocateChildren) const override;
 };
 
 class ShadowRootStyleSheetList : public StyleSheetList
@@ -201,8 +203,8 @@ public:
     return mShadowRoot;
   }
 
-  virtual uint32_t Length() override;
-  virtual CSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) override;
+  uint32_t Length() override;
+  StyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) override;
 
 protected:
   virtual ~ShadowRootStyleSheetList();

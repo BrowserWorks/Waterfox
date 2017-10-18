@@ -15,7 +15,6 @@
 #include "nsILoadContext.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
-#include "OfflineObserver.h"
 
 class nsIAuthPromptProvider;
 
@@ -24,7 +23,6 @@ namespace net {
 
 class WebSocketChannelParent : public PWebSocketParent,
                                public nsIWebSocketListener,
-                               public DisconnectableParent,
                                public nsIInterfaceRequestor
 {
   ~WebSocketChannelParent();
@@ -39,30 +37,26 @@ class WebSocketChannelParent : public PWebSocketParent,
                          uint32_t aSerial);
 
  private:
-  bool RecvAsyncOpen(const OptionalURIParams& aURI,
-                     const nsCString& aOrigin,
-                     const uint64_t& aInnerWindowID,
-                     const nsCString& aProtocol,
-                     const bool& aSecure,
-                     const uint32_t& aPingInterval,
-                     const bool& aClientSetPingInterval,
-                     const uint32_t& aPingTimeout,
-                     const bool& aClientSetPingTimeout,
-                     const OptionalLoadInfoArgs& aLoadInfoArgs,
-                     const OptionalTransportProvider& aTransportProvider,
-                     const nsCString& aNegotiatedExtensions) override;
-  bool RecvClose(const uint16_t & code, const nsCString & reason) override;
-  bool RecvSendMsg(const nsCString& aMsg) override;
-  bool RecvSendBinaryMsg(const nsCString& aMsg) override;
-  bool RecvSendBinaryStream(const InputStreamParams& aStream,
-                            const uint32_t& aLength) override;
-  bool RecvDeleteSelf() override;
+  mozilla::ipc::IPCResult RecvAsyncOpen(const OptionalURIParams& aURI,
+                                        const nsCString& aOrigin,
+                                        const uint64_t& aInnerWindowID,
+                                        const nsCString& aProtocol,
+                                        const bool& aSecure,
+                                        const uint32_t& aPingInterval,
+                                        const bool& aClientSetPingInterval,
+                                        const uint32_t& aPingTimeout,
+                                        const bool& aClientSetPingTimeout,
+                                        const OptionalLoadInfoArgs& aLoadInfoArgs,
+                                        const OptionalTransportProvider& aTransportProvider,
+                                        const nsCString& aNegotiatedExtensions) override;
+  mozilla::ipc::IPCResult RecvClose(const uint16_t & code, const nsCString & reason) override;
+  mozilla::ipc::IPCResult RecvSendMsg(const nsCString& aMsg) override;
+  mozilla::ipc::IPCResult RecvSendBinaryMsg(const nsCString& aMsg) override;
+  mozilla::ipc::IPCResult RecvSendBinaryStream(const IPCStream& aStream,
+                                               const uint32_t& aLength) override;
+  mozilla::ipc::IPCResult RecvDeleteSelf() override;
 
   void ActorDestroy(ActorDestroyReason why) override;
-
-  void OfflineDisconnect() override;
-  uint32_t GetAppId() override;
-  RefPtr<OfflineObserver> mObserver;
 
   nsCOMPtr<nsIAuthPromptProvider> mAuthProvider;
   nsCOMPtr<nsIWebSocketChannel> mChannel;

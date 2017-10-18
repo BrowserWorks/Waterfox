@@ -19,8 +19,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesDBUtils",
 
 window.addEventListener("load", function onload(event) {
   try {
-  window.removeEventListener("load", onload, false);
-  Troubleshoot.snapshot(function (snapshot) {
+  window.removeEventListener("load", onload);
+  Troubleshoot.snapshot(function(snapshot) {
     for (let prop in snapshotFormatters)
       snapshotFormatters[prop](snapshot[prop]);
   });
@@ -29,7 +29,7 @@ window.addEventListener("load", function onload(event) {
   } catch (e) {
     Cu.reportError("stack of load error for about:support: " + e + ": " + e.stack);
   }
-}, false);
+});
 
 // Each property in this object corresponds to a property in Troubleshoot.jsm's
 // snapshot data.  Each function is passed its property's corresponding data,
@@ -37,6 +37,7 @@ window.addEventListener("load", function onload(event) {
 var snapshotFormatters = {
 
   application: function application(data) {
+    let strings = stringBundle();
     $("application-box").textContent = data.name;
     $("useragent-box").textContent = data.userAgent;
     $("os-box").textContent = data.osVersion;
@@ -49,7 +50,7 @@ var snapshotFormatters = {
     if (data.updateChannel)
       $("updatechannel-box").textContent = data.updateChannel;
 
-    let statusText = stringBundle().GetStringFromName("multiProcessStatus.unknown");
+    let statusText = strings.GetStringFromName("multiProcessStatus.unknown");
 
     // Whitelist of known values with string descriptions:
     switch (data.autoStartStatus) {
@@ -60,7 +61,7 @@ var snapshotFormatters = {
       case 6:
       case 7:
       case 8:
-        statusText = stringBundle().GetStringFromName("multiProcessStatus." + data.autoStartStatus);
+        statusText = strings.GetStringFromName("multiProcessStatus." + data.autoStartStatus);
         break;
 
       case 10:
@@ -68,8 +69,38 @@ var snapshotFormatters = {
         break;
     }
 
-    $("multiprocess-box").textContent = stringBundle().formatStringFromName("multiProcessWindows",
+    $("multiprocess-box").textContent = strings.formatStringFromName("multiProcessWindows",
       [data.numRemoteWindows, data.numTotalWindows, statusText], 3);
+
+    if (data.remoteAutoStart) {
+      $("contentprocesses-box").textContent = data.currentContentProcesses +
+                                              "/" +
+                                              data.maxContentProcesses;
+    } else {
+      $("contentprocesses-row").hidden = true;
+    }
+
+    let styloReason;
+    if (!data.styloBuild) {
+      styloReason = strings.GetStringFromName("disabledByBuild");
+    } else if (data.styloResult != data.styloDefault) {
+      if (data.styloResult) {
+        styloReason = strings.GetStringFromName("enabledByUser");
+      } else {
+        styloReason = strings.GetStringFromName("disabledByUser");
+      }
+    } else if (data.styloDefault) {
+      styloReason = strings.GetStringFromName("enabledByDefault");
+    } else {
+      styloReason = strings.GetStringFromName("disabledByDefault");
+    }
+    $("stylo-box").textContent = `${data.styloResult} (${styloReason})`;
+
+    let keyGoogleFound = data.keyGoogleFound ? "found" : "missing";
+    $("key-google-box").textContent = strings.GetStringFromName(keyGoogleFound);
+
+    let keyMozillaFound = data.keyMozillaFound ? "found" : "missing";
+    $("key-mozilla-box").textContent = strings.GetStringFromName(keyMozillaFound);
 
     $("safemode-box").textContent = data.safeMode;
   },
@@ -89,17 +120,14 @@ var snapshotFormatters = {
       // Ignore any non http/https urls
       if (!/^https?:/i.test(reportURL))
         reportURL = null;
-    }
-    catch (e) { }
+    } catch (e) { }
     if (!reportURL) {
       $("crashes-noConfig").style.display = "block";
       $("crashes-noConfig").classList.remove("no-copy");
       return;
     }
-    else {
-      $("crashes-allReports").style.display = "block";
-      $("crashes-allReports").classList.remove("no-copy");
-    }
+    $("crashes-allReports").style.display = "block";
+    $("crashes-allReports").classList.remove("no-copy");
 
     if (data.pending > 0) {
       $("crashes-allReportsWithPending").textContent =
@@ -108,26 +136,21 @@ var snapshotFormatters = {
     }
 
     let dateNow = new Date();
-    $.append($("crashes-tbody"), data.submitted.map(function (crash) {
+    $.append($("crashes-tbody"), data.submitted.map(function(crash) {
       let date = new Date(crash.date);
       let timePassed = dateNow - date;
       let formattedDate;
-      if (timePassed >= 24 * 60 * 60 * 1000)
-      {
+      if (timePassed >= 24 * 60 * 60 * 1000) {
         let daysPassed = Math.round(timePassed / (24 * 60 * 60 * 1000));
         let daysPassedString = strings.GetStringFromName("crashesTimeDays");
         formattedDate = PluralForm.get(daysPassed, daysPassedString)
                                   .replace("#1", daysPassed);
-      }
-      else if (timePassed >= 60 * 60 * 1000)
-      {
+      } else if (timePassed >= 60 * 60 * 1000) {
         let hoursPassed = Math.round(timePassed / (60 * 60 * 1000));
         let hoursPassedString = strings.GetStringFromName("crashesTimeHours");
         formattedDate = PluralForm.get(hoursPassed, hoursPassedString)
                                   .replace("#1", hoursPassed);
-      }
-      else
-      {
+      } else {
         let minutesPassed = Math.max(Math.round(timePassed / (60 * 1000)), 1);
         let minutesPassedString = strings.GetStringFromName("crashesTimeMinutes");
         formattedDate = PluralForm.get(minutesPassed, minutesPassedString)
@@ -135,7 +158,7 @@ var snapshotFormatters = {
       }
       return $.new("tr", [
         $.new("td", [
-          $.new("a", crash.id, null, {href : reportURL + crash.id})
+          $.new("a", crash.id, null, {href: reportURL + crash.id})
         ]),
         $.new("td", formattedDate)
       ]);
@@ -143,7 +166,7 @@ var snapshotFormatters = {
   },
 
   extensions: function extensions(data) {
-    $.append($("extensions-tbody"), data.map(function (extension) {
+    $.append($("extensions-tbody"), data.map(function(extension) {
       return $.new("tr", [
         $.new("td", extension.name),
         $.new("td", extension.version),
@@ -153,8 +176,18 @@ var snapshotFormatters = {
     }));
   },
 
+  features: function features(data) {
+    $.append($("features-tbody"), data.map(function(feature) {
+      return $.new("tr", [
+        $.new("td", feature.name),
+        $.new("td", feature.version),
+        $.new("td", feature.id),
+      ]);
+    }));
+  },
+
   experiments: function experiments(data) {
-    $.append($("experiments-tbody"), data.map(function (experiment) {
+    $.append($("experiments-tbody"), data.map(function(experiment) {
       return $.new("tr", [
         $.new("td", experiment.name),
         $.new("td", experiment.id),
@@ -162,7 +195,7 @@ var snapshotFormatters = {
         $.new("td", experiment.active),
         $.new("td", experiment.endDate),
         $.new("td", [
-          $.new("a", experiment.detailURL, null, {href : experiment.detailURL,})
+          $.new("a", experiment.detailURL, null, {href: experiment.detailURL, })
         ]),
         $.new("td", experiment.branch),
       ]);
@@ -171,7 +204,7 @@ var snapshotFormatters = {
 
   modifiedPreferences: function modifiedPreferences(data) {
     $.append($("prefs-tbody"), sortedArrayFromObject(data).map(
-      function ([name, value]) {
+      function([name, value]) {
         return $.new("tr", [
           $.new("td", name, "pref-name"),
           // Very long preference values can cause users problems when they
@@ -185,7 +218,7 @@ var snapshotFormatters = {
 
   lockedPreferences: function lockedPreferences(data) {
     $.append($("locked-prefs-tbody"), sortedArrayFromObject(data).map(
-      function ([name, value]) {
+      function([name, value]) {
         return $.new("tr", [
           $.new("td", name, "pref-name"),
           $.new("td", String(value).substr(0, 120), "pref-value"),
@@ -205,8 +238,7 @@ var snapshotFormatters = {
         try {
           return strings.formatStringFromName(nameOrMsg, msgArray,
                                               msgArray.length);
-        }
-        catch (err) {
+        } catch (err) {
           // Throws if nameOrMsg is not a name in the bundle.  This shouldn't
           // actually happen though, since msgArray.length > 1 => nameOrMsg is a
           // name in the bundle, not a message, and the remaining msgArray
@@ -216,8 +248,7 @@ var snapshotFormatters = {
       }
       try {
         return strings.GetStringFromName(nameOrMsg);
-      }
-      catch (err) {
+      } catch (err) {
         // Throws if nameOrMsg is not a name in the bundle.
       }
       return nameOrMsg;
@@ -225,17 +256,17 @@ var snapshotFormatters = {
 
     // Read APZ info out of data.info, stripping it out in the process.
     let apzInfo = [];
-    let formatApzInfo = function (info) {
+    let formatApzInfo = function(info) {
       let out = [];
-      for (let type of ['Wheel', 'Touch', 'Drag']) {
-        let key = 'Apz' + type + 'Input';
+      for (let type of ["Wheel", "Touch", "Drag", "Keyboard"]) {
+        let key = "Apz" + type + "Input";
 
         if (!(key in info))
           continue;
 
         delete info[key];
 
-        let message = localizedMsg([type.toLowerCase() + 'Enabled']);
+        let message = localizedMsg([type.toLowerCase() + "Enabled"]);
         out.push(message);
       }
 
@@ -257,9 +288,12 @@ var snapshotFormatters = {
           title = key;
         }
       }
+      let td = $.new("td", value);
+      td.style["white-space"] = "pre-wrap";
+
       return $.new("tr", [
         $.new("th", title, "column"),
-        $.new("td", value),
+        td,
       ]);
     }
 
@@ -281,7 +315,7 @@ var snapshotFormatters = {
     if ("info" in data) {
       apzInfo = formatApzInfo(data.info);
 
-      let trs = sortedArrayFromObject(data.info).map(function ([prop, val]) {
+      let trs = sortedArrayFromObject(data.info).map(function([prop, val]) {
         return $.new("tr", [
           $.new("th", prop, "column"),
           $.new("td", String(val)),
@@ -290,6 +324,39 @@ var snapshotFormatters = {
       addRows("diagnostics", trs);
 
       delete data.info;
+    }
+
+    let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                            .getInterface(Ci.nsIDOMWindowUtils);
+    let gpuProcessPid = windowUtils.gpuProcessPid;
+
+    if (gpuProcessPid != -1) {
+      let gpuProcessKillButton = null;
+      if (AppConstants.NIGHTLY_BUILD || AppConstants.MOZ_DEV_EDITION) {
+        gpuProcessKillButton = $.new("button");
+
+        gpuProcessKillButton.addEventListener("click", function() {
+          windowUtils.terminateGPUProcess();
+        });
+
+        gpuProcessKillButton.textContent = strings.GetStringFromName("gpuProcessKillButton");
+      }
+
+      addRow("diagnostics", "GPUProcessPid", gpuProcessPid);
+      if (gpuProcessKillButton) {
+        addRow("diagnostics", "GPUProcess", [gpuProcessKillButton]);
+      }
+    }
+
+    if ((AppConstants.NIGHTLY_BUILD || AppConstants.MOZ_DEV_EDITION) && AppConstants.platform != "macosx") {
+      let gpuDeviceResetButton = $.new("button");
+
+      gpuDeviceResetButton.addEventListener("click", function() {
+        windowUtils.triggerDeviceReset();
+      });
+
+      gpuDeviceResetButton.textContent = strings.GetStringFromName("gpuDeviceResetButton");
+      addRow("diagnostics", "Device Reset", [gpuDeviceResetButton]);
     }
 
     // graphics-failures-tbody tbody
@@ -302,10 +369,11 @@ var snapshotFormatters = {
           let assembled = assembleFromGraphicsFailure(i, data);
           combined.push(assembled);
         }
-        combined.sort(function(a,b) {
+        combined.sort(function(a, b) {
             if (a.index < b.index) return -1;
             if (a.index > b.index) return 1;
-            return 0;});
+            return 0;
+        });
         $.append($("graphics-failures-tbody"),
                  combined.map(function(val) {
                    return $.new("tr", [$.new("th", val.header, "column"),
@@ -315,7 +383,7 @@ var snapshotFormatters = {
       } else {
         $.append($("graphics-failures-tbody"),
           [$.new("tr", [$.new("th", "LogFailure", "column"),
-                        $.new("td", data.failures.map(function (val) {
+                        $.new("td", data.failures.map(function(val) {
                           return $.new("p", val);
                        }))])]);
       }
@@ -349,25 +417,38 @@ var snapshotFormatters = {
     }
 
     // graphics-features-tbody
-
-    let compositor = data.windowLayerManagerRemote
-                     ? data.windowLayerManagerType
-                     : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+    let compositor = "";
+    if (data.windowLayerManagerRemote) {
+      compositor = data.windowLayerManagerType;
+      if (data.windowUsingAdvancedLayers) {
+        compositor += " (Advanced Layers)";
+      }
+    } else {
+      compositor = "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+    }
     addRow("features", "compositing", compositor);
     delete data.windowLayerManagerRemote;
     delete data.windowLayerManagerType;
     delete data.numTotalWindows;
     delete data.numAcceleratedWindows;
     delete data.numAcceleratedWindowsMessage;
+    delete data.windowUsingAdvancedLayers;
 
     addRow("features", "asyncPanZoom",
            apzInfo.length
            ? apzInfo.join("; ")
            : localizedMsg(["apzNone"]));
-    addRowFromKey("features", "webglRenderer");
+    addRowFromKey("features", "webgl1WSIInfo");
+    addRowFromKey("features", "webgl1Renderer");
+    addRowFromKey("features", "webgl1Version");
+    addRowFromKey("features", "webgl1DriverExtensions");
+    addRowFromKey("features", "webgl1Extensions");
+    addRowFromKey("features", "webgl2WSIInfo");
     addRowFromKey("features", "webgl2Renderer");
+    addRowFromKey("features", "webgl2Version");
+    addRowFromKey("features", "webgl2DriverExtensions");
+    addRowFromKey("features", "webgl2Extensions");
     addRowFromKey("features", "supportsHardwareH264", "hardwareH264");
-    addRowFromKey("features", "currentAudioBackend", "audioBackend");
     addRowFromKey("features", "direct2DEnabled", "#Direct2D");
 
     if ("directWriteEnabled" in data) {
@@ -420,7 +501,7 @@ var snapshotFormatters = {
     showGpu("gpu-2", "2");
 
     // Remove adapter keys.
-    for (let [prop, key] of adapterKeys) {
+    for (let [prop, /* key */] of adapterKeys) {
       delete data[prop];
       delete data[prop + "2"];
     }
@@ -448,8 +529,8 @@ var snapshotFormatters = {
           let contents;
           if (entry.message.length > 0 && entry.message[0] == "#") {
             // This is a failure ID. See nsIGfxInfo.idl.
-            let m;
-            if (m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message)) {
+            let m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message);
+            if (m) {
               let bugSpan = $.new("span");
               bugSpan.textContent = strings.GetStringFromName("blocklistedBug") + "; ";
 
@@ -490,14 +571,11 @@ var snapshotFormatters = {
     if (crashGuards.length) {
       for (let guard of crashGuards) {
         let resetButton = $.new("button");
-        let onClickReset = (function (guard) {
-          // Note - need this wrapper until bug 449811 fixes |guard| scoping.
-          return function () {
-            Services.prefs.setIntPref(guard.prefName, 0);
-            resetButton.removeEventListener("click", onClickReset);
-            resetButton.disabled = true;
-          };
-        })(guard);
+        let onClickReset = function() {
+          Services.prefs.setIntPref(guard.prefName, 0);
+          resetButton.removeEventListener("click", onClickReset);
+          resetButton.disabled = true;
+        };
 
         resetButton.textContent = strings.GetStringFromName("resetOnNextRestart");
         resetButton.addEventListener("click", onClickReset);
@@ -519,6 +597,111 @@ var snapshotFormatters = {
     }
   },
 
+  media: function media(data) {
+    let strings = stringBundle();
+
+    function insertBasicInfo(key, value) {
+      function createRow(key, value) {
+        let th = $.new("th", strings.GetStringFromName(key), "column");
+        let td = $.new("td", value);
+        td.style["white-space"] = "pre-wrap";
+        return $.new("tr", [th, td]);
+      }
+      $.append($("media-info-tbody"), [createRow(key, value)]);
+    }
+
+    function createDeviceInfoRow(device) {
+      let deviceInfo = Ci.nsIAudioDeviceInfo;
+
+      let states = {};
+      states[deviceInfo.STATE_DISABLED] = "Disabled";
+      states[deviceInfo.STATE_UNPLUGGED] = "Unplugged";
+      states[deviceInfo.STATE_ENABLED] = "Enabled";
+
+      let preferreds = {};
+      preferreds[deviceInfo.PREF_NONE] = "None";
+      preferreds[deviceInfo.PREF_MULTIMEDIA] = "Multimedia";
+      preferreds[deviceInfo.PREF_VOICE] = "Voice";
+      preferreds[deviceInfo.PREF_NOTIFICATION] = "Notification";
+      preferreds[deviceInfo.PREF_ALL] = "All";
+
+      let formats = {};
+      formats[deviceInfo.FMT_S16LE] = "S16LE";
+      formats[deviceInfo.FMT_S16BE] = "S16BE";
+      formats[deviceInfo.FMT_F32LE] = "F32LE";
+      formats[deviceInfo.FMT_F32BE] = "F32BE";
+
+      function toPreferredString(preferred) {
+        if (preferred == deviceInfo.PREF_NONE) {
+          return preferreds[deviceInfo.PREF_NONE];
+        } else if (preferred & deviceInfo.PREF_ALL) {
+          return preferreds[deviceInfo.PREF_ALL];
+        }
+        let str = "";
+        for (let pref of [deviceInfo.PREF_MULTIMEDIA,
+                          deviceInfo.PREF_VOICE,
+                          deviceInfo.PREF_NOTIFICATION]) {
+          if (preferred & pref) {
+            str += " " + preferreds[pref];
+          }
+        }
+        return str;
+      }
+
+      function toFromatString(dev) {
+        let str = "default: " + formats[dev.defaultFormat] + ", support:";
+        for (let fmt of [deviceInfo.FMT_S16LE,
+                         deviceInfo.FMT_S16BE,
+                         deviceInfo.FMT_F32LE,
+                         deviceInfo.FMT_F32BE]) {
+          if (dev.supportedFormat & fmt) {
+            str += " " + formats[fmt];
+          }
+        }
+        return str;
+      }
+
+      function toRateString(dev) {
+        return "default: " + dev.defaultRate +
+               ", support: " + dev.minRate + " - " + dev.maxRate;
+      }
+
+      function toLatencyString(dev) {
+        return dev.minLatency + " - " + dev.maxLatency;
+      }
+
+      return $.new("tr", [$.new("td", device.name),
+                          $.new("td", device.groupId),
+                          $.new("td", device.vendor),
+                          $.new("td", states[device.state]),
+                          $.new("td", toPreferredString(device.preferred)),
+                          $.new("td", toFromatString(device)),
+                          $.new("td", device.maxChannels),
+                          $.new("td", toRateString(device)),
+                          $.new("td", toLatencyString(device))]);
+    }
+
+    function insertDeviceInfo(side, devices) {
+      let rows = [];
+      for (let dev of devices) {
+        rows.push(createDeviceInfoRow(dev));
+      }
+      $.append($("media-" + side + "-devices-tbody"), rows);
+    }
+
+    // Basic information
+    insertBasicInfo("audioBackend", data.currentAudioBackend);
+    insertBasicInfo("maxAudioChannels", data.currentMaxAudioChannels);
+    insertBasicInfo("channelLayout", data.currentPreferredChannelLayout);
+    insertBasicInfo("sampleRate", data.currentPreferredSampleRate);
+
+    // Output devices information
+    insertDeviceInfo("output", data.audioOutputDevices);
+
+    // Input devices information
+    insertDeviceInfo("input", data.audioInputDevices);
+  },
+
   javaScript: function javaScript(data) {
     $("javascript-incremental-gc").textContent = data.incrementalGCEnabled;
   },
@@ -526,6 +709,10 @@ var snapshotFormatters = {
   accessibility: function accessibility(data) {
     $("a11y-activated").textContent = data.isActive;
     $("a11y-force-disabled").textContent = data.forceDisabled || 0;
+    let a11yHandlerUsed = $("a11y-handler-used");
+    if (a11yHandlerUsed) {
+      a11yHandlerUsed.textContent = data.handlerUsed;
+    }
   },
 
   libraryVersions: function libraryVersions(data) {
@@ -538,7 +725,7 @@ var snapshotFormatters = {
       ])
     ];
     sortedArrayFromObject(data).forEach(
-      function ([name, val]) {
+      function([name, val]) {
         trs.push($.new("tr", [
           $.new("td", name),
           $.new("td", val.minVersion),
@@ -572,18 +759,37 @@ var snapshotFormatters = {
           data[key] === data["hasUserNamespaces"]) {
         continue;
       }
-      // Hard code content sandbox label on Fx50 to prevent noise in l10n tools.
-      if (key === "contentSandboxLevel") {
-        tbody.appendChild($.new("tr", [
-          $.new("th", "Content Process Sandbox Level", "column"),
-          $.new("td", data[key])
-        ]));
+      if (key === "syscallLog") {
+        // Not in this table.
         continue;
       }
       tbody.appendChild($.new("tr", [
         $.new("th", strings.GetStringFromName(key), "column"),
-        $.new("td", data[key])
+        $.new("td", data[key]),
       ]));
+    }
+
+    if ("syscallLog" in data) {
+      let syscallBody = $("sandbox-syscalls-tbody");
+      let argsHead = $("sandbox-syscalls-argshead");
+      for (let syscall of data.syscallLog) {
+        if (argsHead.colSpan < syscall.args.length) {
+          argsHead.colSpan = syscall.args.length;
+        }
+        let cells = [
+          $.new("td", syscall.index, "integer"),
+          $.new("td", syscall.msecAgo / 1000),
+          $.new("td", syscall.pid, "integer"),
+          $.new("td", syscall.tid, "integer"),
+          $.new("td", strings.GetStringFromName("sandboxProcType." +
+                                                syscall.procType)),
+          $.new("td", syscall.syscall, "integer"),
+        ];
+        for (let arg of syscall.args) {
+          cells.push($.new("td", arg, "integer"));
+        }
+        syscallBody.appendChild($.new("tr", cells));
+      }
     }
   },
 };
@@ -614,8 +820,7 @@ function stringBundle() {
            "chrome://global/locale/aboutSupport.properties");
 }
 
-function assembleFromGraphicsFailure(i, data)
-{
+function assembleFromGraphicsFailure(i, data) {
   // Only cover the cases we have today; for example, we do not have
   // log failures that assert and we assume the log level is 1/error.
   let message = data.failures[i];
@@ -634,9 +839,9 @@ function assembleFromGraphicsFailure(i, data)
     what = "Assert";
     message = message.substring(8);
   }
-  let assembled = {"index" : index,
-                   "header" : ("(#" + index + ") " + what),
-                   "message" : message};
+  let assembled = {"index": index,
+                   "header": ("(#" + index + ") " + what),
+                   "message": message};
   return assembled;
 }
 
@@ -652,7 +857,7 @@ function copyRawDataToClipboard(button) {
   if (button)
     button.disabled = true;
   try {
-    Troubleshoot.snapshot(function (snapshot) {
+    Troubleshoot.snapshot(function(snapshot) {
       if (button)
         button.disabled = false;
       let str = Cc["@mozilla.org/supports-string;1"].
@@ -676,8 +881,7 @@ function copyRawDataToClipboard(button) {
         Services.androidBridge.handleGeckoMessage(message);
       }
     });
-  }
-  catch (err) {
+  } catch (err) {
     if (button)
       button.disabled = false;
     throw err;
@@ -750,7 +954,7 @@ function Serializer() {
 
 Serializer.prototype = {
 
-  serialize: function (rootElem) {
+  serialize(rootElem) {
     this._lines = [];
     this._startNewLine();
     this._serializeElement(rootElem);
@@ -769,7 +973,7 @@ Serializer.prototype = {
     return this._lines[this._lines.length - 1] = val;
   },
 
-  _serializeElement: function (elem) {
+  _serializeElement(elem) {
     if (this._ignoreElement(elem))
       return;
 
@@ -787,8 +991,7 @@ Serializer.prototype = {
         let text = this._nodeText(child);
         this._appendText(text);
         hasText = hasText || !!text.trim();
-      }
-      else if (child.nodeType == Node.ELEMENT_NODE)
+      } else if (child.nodeType == Node.ELEMENT_NODE)
         this._serializeElement(child);
     }
 
@@ -811,7 +1014,7 @@ Serializer.prototype = {
     }
   },
 
-  _startNewLine: function (lines) {
+  _startNewLine(lines) {
     let currLine = this._currentLine;
     if (currLine) {
       // The current line is not empty.  Trim it.
@@ -823,15 +1026,15 @@ Serializer.prototype = {
     this._lines.push("");
   },
 
-  _appendText: function (text, lines) {
+  _appendText(text, lines) {
     this._currentLine += text;
   },
 
-  _isHiddenSubHeading: function (th) {
+  _isHiddenSubHeading(th) {
     return th.parentNode.parentNode.style.display == "none";
   },
 
-  _serializeTable: function (table) {
+  _serializeTable(table) {
     // Collect the table's column headings if in fact there are any.  First
     // check thead.  If there's no thead, check the first tr.
     let colHeadings = {};
@@ -911,11 +1114,11 @@ Serializer.prototype = {
     this._startNewLine();
   },
 
-  _ignoreElement: function (elem) {
+  _ignoreElement(elem) {
     return elem.classList.contains("no-copy");
   },
 
-  _nodeText: function (node) {
+  _nodeText(node) {
     return node.textContent.replace(/\s+/g, " ");
   },
 };
@@ -939,7 +1142,7 @@ function populateActionBox() {
     $("reset-box").style.display = "block";
     $("action-box").style.display = "block";
   }
-  if (!Services.appinfo.inSafeMode) {
+  if (!Services.appinfo.inSafeMode && AppConstants.platform !== "android") {
     $("safe-mode-box").style.display = "block";
     $("action-box").style.display = "block";
   }
@@ -958,37 +1161,39 @@ function safeModeRestart() {
 /**
  * Set up event listeners for buttons.
  */
-function setupEventListeners(){
-  $("show-update-history-button").addEventListener("click", function (event) {
-    var prompter = Cc["@mozilla.org/updates/update-prompt;1"].createInstance(Ci.nsIUpdatePrompt);
+function setupEventListeners() {
+  if (AppConstants.platform !== "android") {
+    $("show-update-history-button").addEventListener("click", function(event) {
+      var prompter = Cc["@mozilla.org/updates/update-prompt;1"].createInstance(Ci.nsIUpdatePrompt);
       prompter.showUpdateHistory(window);
-  });
-  $("reset-box-button").addEventListener("click", function (event){
-    ResetProfile.openConfirmationDialog(window);
-  });
-  $("copy-raw-data-to-clipboard").addEventListener("click", function (event){
+    });
+    $("reset-box-button").addEventListener("click", function(event) {
+      ResetProfile.openConfirmationDialog(window);
+    });
+    $("restart-in-safe-mode-button").addEventListener("click", function(event) {
+      if (Services.obs.enumerateObservers("restart-in-safe-mode").hasMoreElements()) {
+        Services.obs.notifyObservers(null, "restart-in-safe-mode");
+      } else {
+        safeModeRestart();
+      }
+    });
+    $("verify-place-integrity-button").addEventListener("click", function(event) {
+      PlacesDBUtils.checkAndFixDatabase().then((tasksStatusMap) => {
+        let msg = PlacesDBUtils.getLegacyLog(tasksStatusMap).join("\n");
+        $("verify-place-result").style.display = "block";
+        $("verify-place-result").classList.remove("no-copy");
+        $("verify-place-result").textContent = msg;
+      });
+    });
+  }
+
+  $("copy-raw-data-to-clipboard").addEventListener("click", function(event) {
     copyRawDataToClipboard(this);
   });
-  $("copy-to-clipboard").addEventListener("click", function (event){
+  $("copy-to-clipboard").addEventListener("click", function(event) {
     copyContentsToClipboard();
   });
-  $("profile-dir-button").addEventListener("click", function (event){
+  $("profile-dir-button").addEventListener("click", function(event) {
     openProfileDirectory();
-  });
-  $("restart-in-safe-mode-button").addEventListener("click", function (event) {
-    if (Services.obs.enumerateObservers("restart-in-safe-mode").hasMoreElements()) {
-      Services.obs.notifyObservers(null, "restart-in-safe-mode", "");
-    }
-    else {
-      safeModeRestart();
-    }
-  });
-  $("verify-place-integrity-button").addEventListener("click", function (event){
-    PlacesDBUtils.checkAndFixDatabase(function(aLog) {
-      let msg = aLog.join("\n");
-      $("verify-place-result").style.display = "block";
-      $("verify-place-result").classList.remove("no-copy");
-      $("verify-place-result").textContent = msg;
-    });
   });
 }

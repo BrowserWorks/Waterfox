@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <dlfcn.h>
-#include "android/log.h"
+#include <android/log.h>
 
 #include "cubeb/cubeb.h"
 #include "cubeb-internal.h"
@@ -421,12 +421,15 @@ static struct cubeb_ops const audiotrack_ops = {
   .get_max_channel_count = audiotrack_get_max_channel_count,
   .get_min_latency = audiotrack_get_min_latency,
   .get_preferred_sample_rate = audiotrack_get_preferred_sample_rate,
+  .get_preferred_channel_layout = NULL,
   .enumerate_devices = NULL,
+  .device_collection_destroy = NULL,
   .destroy = audiotrack_destroy,
   .stream_init = audiotrack_stream_init,
   .stream_destroy = audiotrack_stream_destroy,
   .stream_start = audiotrack_stream_start,
   .stream_stop = audiotrack_stream_stop,
+  .stream_reset_default_device = NULL,
   .stream_get_position = audiotrack_stream_get_position,
   .stream_get_latency = audiotrack_stream_get_latency,
   .stream_set_volume = audiotrack_stream_set_volume,

@@ -23,13 +23,10 @@ builtin(include, build/autoconf/expandlibs.m4)dnl
 builtin(include, build/autoconf/arch.m4)dnl
 builtin(include, build/autoconf/android.m4)dnl
 builtin(include, build/autoconf/zlib.m4)dnl
-builtin(include, build/autoconf/linux.m4)dnl
 builtin(include, build/autoconf/icu.m4)dnl
-builtin(include, build/autoconf/ffi.m4)dnl
 builtin(include, build/autoconf/clang-plugin.m4)dnl
 builtin(include, build/autoconf/alloc.m4)dnl
 builtin(include, build/autoconf/ios.m4)dnl
-builtin(include, build/autoconf/jemalloc.m4)dnl
 builtin(include, build/autoconf/sanitize.m4)dnl
 
 MOZ_PROG_CHECKMSYS()

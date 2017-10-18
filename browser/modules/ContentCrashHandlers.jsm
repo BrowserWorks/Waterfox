@@ -7,8 +7,11 @@
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
+var Cr = Components.results;
 
-this.EXPORTED_SYMBOLS = [ "TabCrashHandler", "PluginCrashReporter" ];
+this.EXPORTED_SYMBOLS = [ "TabCrashHandler",
+                          "PluginCrashReporter",
+                          "UnsubmittedCrashHandler" ];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -21,27 +24,73 @@ XPCOMUtils.defineLazyModuleGetter(this, "RemotePages",
   "resource://gre/modules/RemotePageManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
   "resource:///modules/sessionstore/SessionStore.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
+  "resource:///modules/RecentWindow.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
+  "resource://gre/modules/PluralForm.jsm");
+
+XPCOMUtils.defineLazyGetter(this, "gNavigatorBundle", function() {
+  const url = "chrome://browser/locale/browser.properties";
+  return Services.strings.createBundle(url);
+});
+
+// We don't process crash reports older than 28 days, so don't bother
+// submitting them
+const PENDING_CRASH_REPORT_DAYS = 28;
+const DAY = 24 * 60 * 60 * 1000; // milliseconds
+const DAYS_TO_SUPPRESS = 30;
+const MAX_UNSEEN_CRASHED_CHILD_IDS = 20;
+
+/**
+ * BrowserWeakMap is exactly like a WeakMap, but expects <xul:browser>
+ * objects only.
+ *
+ * Under the hood, BrowserWeakMap keys the map off of the <xul:browser>
+ * permanentKey. If, however, the browser has never gotten a permanentKey,
+ * it falls back to keying on the <xul:browser> element itself.
+ */
+class BrowserWeakMap extends WeakMap {
+  get(browser) {
+    if (browser.permanentKey) {
+      return super.get(browser.permanentKey);
+    }
+    return super.get(browser);
+  }
+
+  set(browser, value) {
+    if (browser.permanentKey) {
+      return super.set(browser.permanentKey, value);
+    }
+    return super.set(browser, value);
+  }
+
+  delete(browser) {
+    if (browser.permanentKey) {
+      return super.delete(browser.permanentKey);
+    }
+    return super.delete(browser);
+  }
+}
 
 this.TabCrashHandler = {
   _crashedTabCount: 0,
+  childMap: new Map(),
+  browserMap: new BrowserWeakMap(),
+  unseenCrashedChildIDs: [],
+  crashedBrowserQueues: new Map(),
 
   get prefs() {
     delete this.prefs;
     return this.prefs = Services.prefs.getBranch("browser.tabs.crashReporting.");
   },
 
-  init: function () {
+  init() {
     if (this.initialized)
       return;
     this.initialized = true;
 
-    if (AppConstants.MOZ_CRASHREPORTER) {
-      Services.obs.addObserver(this, "ipc:content-shutdown", false);
-      Services.obs.addObserver(this, "oop-frameloader-crashed", false);
-
-      this.childMap = new Map();
-      this.browserMap = new WeakMap();
-    }
+    Services.obs.addObserver(this, "ipc:content-shutdown");
+    Services.obs.addObserver(this, "oop-frameloader-crashed");
 
     this.pageListener = new RemotePages("about:tabcrashed");
     // LOAD_BACKGROUND pages don't fire load events, so the about:tabcrashed
@@ -54,35 +103,78 @@ this.TabCrashHandler = {
     this.pageListener.addMessageListener("restoreAll", this.receiveMessage.bind(this));
   },
 
-  observe: function (aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     switch (aTopic) {
-      case "ipc:content-shutdown":
+      case "ipc:content-shutdown": {
         aSubject.QueryInterface(Ci.nsIPropertyBag2);
 
-        if (!aSubject.get("abnormal"))
+        if (!aSubject.get("abnormal")) {
           return;
+        }
 
-        this.childMap.set(aSubject.get("childID"), aSubject.get("dumpID"));
+        let childID = aSubject.get("childID");
+        let dumpID = aSubject.get("dumpID");
+
+        if (!dumpID) {
+          Services.telemetry
+                  .getHistogramById("FX_CONTENT_CRASH_DUMP_UNAVAILABLE")
+                  .add(1);
+        } else if (AppConstants.MOZ_CRASHREPORTER) {
+          this.childMap.set(childID, dumpID);
+        }
+
+        if (!this.flushCrashedBrowserQueue(childID)) {
+          this.unseenCrashedChildIDs.push(childID);
+          // The elements in unseenCrashedChildIDs will only be removed if
+          // the tab crash page is shown. However, ipc:content-shutdown might
+          // be fired for processes for which we'll never show the tab crash
+          // page - for example, the thumbnailing process. Another case to
+          // consider is if the user is configured to submit backlogged crash
+          // reports automatically, and a background tab crashes. In that case,
+          // we will never show the tab crash page, and never remove the element
+          // from the list.
+          //
+          // Instead of trying to account for all of those cases, we prevent
+          // this list from getting too large by putting a reasonable upper
+          // limit on how many childIDs we track. It's unlikely that this
+          // array would ever get so large as to be unwieldy (that'd be a lot
+          // or crashes!), but a leak is a leak.
+          if (this.unseenCrashedChildIDs.length > MAX_UNSEEN_CRASHED_CHILD_IDS) {
+            this.unseenCrashedChildIDs.shift();
+          }
+        }
+
+        // check for environment affecting crash reporting
+        let env = Cc["@mozilla.org/process/environment;1"]
+                    .getService(Ci.nsIEnvironment);
+        let shutdown = env.exists("MOZ_CRASHREPORTER_SHUTDOWN");
+
+        if (shutdown) {
+          Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
+        }
+
         break;
-
-      case "oop-frameloader-crashed":
+      }
+      case "oop-frameloader-crashed": {
         aSubject.QueryInterface(Ci.nsIFrameLoader);
 
         let browser = aSubject.ownerElement;
-        if (!browser)
+        if (!browser) {
           return;
+        }
 
-        this.browserMap.set(browser.permanentKey, aSubject.childID);
+        this.browserMap.set(browser, aSubject.childID);
         break;
+      }
     }
   },
 
-  receiveMessage: function(message) {
+  receiveMessage(message) {
     let browser = message.target.browser;
     let gBrowser = browser.ownerGlobal.gBrowser;
     let tab = gBrowser.getTabForBrowser(browser);
 
-    switch(message.name) {
+    switch (message.name) {
       case "Load": {
         this.onAboutTabCrashedLoad(message);
         break;
@@ -111,6 +203,133 @@ this.TabCrashHandler = {
         break;
       }
     }
+  },
+
+  /**
+   * This should be called once a content process has finished
+   * shutting down abnormally. Any tabbrowser browsers that were
+   * selected at the time of the crash will then be sent to
+   * the crashed tab page.
+   *
+   * @param childID (int)
+   *        The childID of the content process that just crashed.
+   * @returns boolean
+   *        True if one or more browsers were sent to the tab crashed
+   *        page.
+   */
+  flushCrashedBrowserQueue(childID) {
+    let browserQueue = this.crashedBrowserQueues.get(childID);
+    if (!browserQueue) {
+      return false;
+    }
+
+    this.crashedBrowserQueues.delete(childID);
+
+    let sentBrowser = false;
+    for (let weakBrowser of browserQueue) {
+      let browser = weakBrowser.get();
+      if (browser) {
+        this.sendToTabCrashedPage(browser);
+        sentBrowser = true;
+      }
+    }
+
+    return sentBrowser;
+  },
+
+  /**
+   * Called by a tabbrowser when it notices that its selected browser
+   * has crashed. This will queue the browser to show the tab crash
+   * page once the content process has finished tearing down.
+   *
+   * @param browser (<xul:browser>)
+   *        The selected browser that just crashed.
+   */
+  onSelectedBrowserCrash(browser) {
+    if (!browser.isRemoteBrowser) {
+      Cu.reportError("Selected crashed browser is not remote.")
+      return;
+    }
+    if (!browser.frameLoader) {
+      Cu.reportError("Selected crashed browser has no frameloader.");
+      return;
+    }
+
+    let childID = browser.frameLoader.childID;
+    let browserQueue = this.crashedBrowserQueues.get(childID);
+    if (!browserQueue) {
+      browserQueue = [];
+      this.crashedBrowserQueues.set(childID, browserQueue);
+    }
+    // It's probably unnecessary to store this browser as a
+    // weak reference, since the content process should complete
+    // its teardown in the same tick of the event loop, and then
+    // this queue will be flushed. The weak reference is to avoid
+    // leaking browsers in case anything goes wrong during this
+    // teardown process.
+    browserQueue.push(Cu.getWeakReference(browser));
+  },
+
+  /**
+   * This method is exposed for SessionStore to call if the user selects
+   * a tab which will restore on demand. It's possible that the tab
+   * is in this state because it recently crashed. If that's the case, then
+   * it's also possible that the user has not seen the tab crash page for
+   * that particular crash, in which case, we might show it to them instead
+   * of restoring the tab.
+   *
+   * @param browser (<xul:browser>)
+   *        A browser from a browser tab that the user has just selected
+   *        to restore on demand.
+   * @returns (boolean)
+   *        True if TabCrashHandler will send the user to the tab crash
+   *        page instead.
+   */
+  willShowCrashedTab(browser) {
+    let childID = this.browserMap.get(browser);
+    // We will only show the tab crash page if:
+    // 1) We are aware that this browser crashed
+    // 2) We know we've never shown the tab crash page for the
+    //    crash yet
+    // 3) The user is not configured to automatically submit backlogged
+    //    crash reports. If they are, we'll send the crash report
+    //    immediately.
+    if (childID &&
+        this.unseenCrashedChildIDs.indexOf(childID) != -1) {
+      if (UnsubmittedCrashHandler.autoSubmit) {
+        let dumpID = this.childMap.get(childID);
+        if (dumpID) {
+          UnsubmittedCrashHandler.submitReports([dumpID]);
+        }
+      } else {
+        this.sendToTabCrashedPage(browser);
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * We show a special page to users when a normal browser tab has crashed.
+   * This method should be called to send a browser to that page once the
+   * process has completely closed.
+   *
+   * @param browser (<xul:browser>)
+   *        The browser that has recently crashed.
+   */
+  sendToTabCrashedPage(browser) {
+    let title = browser.contentTitle;
+    let uri = browser.currentURI;
+    let gBrowser = browser.ownerGlobal.gBrowser;
+    let tab = gBrowser.getTabForBrowser(browser);
+    // The tab crashed page is non-remote by default.
+    gBrowser.updateBrowserRemoteness(browser, false);
+
+    browser.setAttribute("crashedPageTitle", title);
+    browser.docShell.displayLoadError(Cr.NS_ERROR_CONTENT_CRASHED, uri, null);
+    browser.removeAttribute("crashedPageTitle");
+    tab.setAttribute("crashed", true);
   },
 
   /**
@@ -145,7 +364,13 @@ this.TabCrashHandler = {
 
     let browser = message.target.browser;
 
-    let childID = this.browserMap.get(browser.permanentKey);
+    if (message.data.autoSubmit) {
+      // The user has opted in to autosubmitted backlogged
+      // crash reports in the future.
+      UnsubmittedCrashHandler.autoSubmit = true;
+    }
+
+    let childID = this.browserMap.get(browser);
     let dumpID = this.childMap.get(childID);
     if (!dumpID)
       return
@@ -189,7 +414,7 @@ this.TabCrashHandler = {
     CrashSubmit.submit(dumpID, {
       recordSubmission: true,
       extraExtraKeyVals,
-    }).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
 
     this.prefs.setBoolPref("sendReport", true);
     this.prefs.setBoolPref("includeURL", includeURL);
@@ -204,7 +429,7 @@ this.TabCrashHandler = {
     this.removeSubmitCheckboxesForSameCrash(childID);
   },
 
-  removeSubmitCheckboxesForSameCrash: function(childID) {
+  removeSubmitCheckboxesForSameCrash(childID) {
     let enumerator = Services.wm.getEnumerator("navigator:browser");
     while (enumerator.hasMoreElements()) {
       let window = enumerator.getNext();
@@ -219,8 +444,8 @@ this.TabCrashHandler = {
         if (!doc.documentURI.startsWith("about:tabcrashed"))
           continue;
 
-        if (this.browserMap.get(browser.permanentKey) == childID) {
-          this.browserMap.delete(browser.permanentKey);
+        if (this.browserMap.get(browser) == childID) {
+          this.browserMap.delete(browser);
           let ports = this.pageListener.portsForBrowser(browser);
           if (ports.length) {
             // For about:tabcrashed, we don't expect subframes. We can
@@ -232,7 +457,7 @@ this.TabCrashHandler = {
     }
   },
 
-  onAboutTabCrashedLoad: function (message) {
+  onAboutTabCrashedLoad(message) {
     this._crashedTabCount++;
 
     // Broadcast to all about:tabcrashed pages a count of
@@ -245,27 +470,37 @@ this.TabCrashHandler = {
 
     let browser = message.target.browser;
 
+    let childID = this.browserMap.get(browser);
+    let index = this.unseenCrashedChildIDs.indexOf(childID);
+    if (index != -1) {
+      this.unseenCrashedChildIDs.splice(index, 1);
+    }
+
     let dumpID = this.getDumpID(browser);
     if (!dumpID) {
-      // Make sure to only count once even if there are multiple windows
-      // that will all show about:tabcrashed.
-      if (this._crashedTabCount == 1) {
-        Services.telemetry.getHistogramById("FX_CONTENT_CRASH_DUMP_UNAVAILABLE").add(1);
-      }
-
       message.target.sendAsyncMessage("SetCrashReportAvailable", {
         hasReport: false,
       });
       return;
     }
 
+    let requestAutoSubmit = !UnsubmittedCrashHandler.autoSubmit;
+    let requestEmail = this.prefs.getBoolPref("requestEmail");
     let sendReport = this.prefs.getBoolPref("sendReport");
     let includeURL = this.prefs.getBoolPref("includeURL");
     let emailMe = this.prefs.getBoolPref("emailMe");
 
-    let data = { hasReport: true, sendReport, includeURL, emailMe };
+    let data = {
+      hasReport: true,
+      sendReport,
+      includeURL,
+      emailMe,
+      requestAutoSubmit,
+      requestEmail,
+    };
+
     if (emailMe) {
-      data.email = this.prefs.getCharPref("email", "");
+      data.email = this.prefs.getCharPref("email");
     }
 
     // Make sure to only count once even if there are multiple windows
@@ -293,14 +528,14 @@ this.TabCrashHandler = {
     });
 
     let browser = message.target.browser;
-    let childID = this.browserMap.get(browser.permanentKey);
+    let childID = this.browserMap.get(browser);
 
     // Make sure to only count once even if there are multiple windows
     // that will all show about:tabcrashed.
     if (this._crashedTabCount == 0 && childID) {
       Services.telemetry.getHistogramById("FX_CONTENT_CRASH_NOT_SUBMITTED").add(1);
     }
-},
+  },
 
   /**
    * For some <xul:browser>, return a crash report dump ID for that browser
@@ -311,13 +546,364 @@ this.TabCrashHandler = {
    * @returns dumpID (String)
    */
   getDumpID(browser) {
-    if (!this.childMap) {
+    if (!AppConstants.MOZ_CRASHREPORTER) {
       return null;
     }
 
-    return this.childMap.get(this.browserMap.get(browser.permanentKey));
+    return this.childMap.get(this.browserMap.get(browser));
   },
 }
+
+/**
+ * This component is responsible for scanning the pending
+ * crash report directory for reports, and (if enabled), to
+ * prompt the user to submit those reports. It might also
+ * submit those reports automatically without prompting if
+ * the user has opted in.
+ */
+this.UnsubmittedCrashHandler = {
+  get prefs() {
+    delete this.prefs;
+    return this.prefs =
+      Services.prefs.getBranch("browser.crashReports.unsubmittedCheck.");
+  },
+
+  get enabled() {
+    return this.prefs.getBoolPref("enabled");
+  },
+
+  // showingNotification is set to true once a notification
+  // is successfully shown, and then set back to false if
+  // the notification is dismissed by an action by the user.
+  showingNotification: false,
+  // suppressed is true if we've determined that we've shown
+  // the notification too many times across too many days without
+  // user interaction, so we're suppressing the notification for
+  // some number of days. See the documentation for
+  // shouldShowPendingSubmissionsNotification().
+  suppressed: false,
+
+  init() {
+    if (this.initialized) {
+      return;
+    }
+
+    this.initialized = true;
+
+    // UnsubmittedCrashHandler can be initialized but still be disabled.
+    // This is intentional, as this makes simulating UnsubmittedCrashHandler's
+    // reactions to browser startup and shutdown easier in test automation.
+    //
+    // UnsubmittedCrashHandler, when initialized but not enabled, is inert.
+    if (this.enabled) {
+      if (this.prefs.prefHasUserValue("suppressUntilDate")) {
+        if (this.prefs.getCharPref("suppressUntilDate") > this.dateString()) {
+          // We'll be suppressing any notifications until after suppressedDate,
+          // so there's no need to do anything more.
+          this.suppressed = true;
+          return;
+        }
+
+        // We're done suppressing, so we don't need this pref anymore.
+        this.prefs.clearUserPref("suppressUntilDate");
+      }
+
+      Services.obs.addObserver(this, "profile-before-change");
+    }
+  },
+
+  uninit() {
+    if (!this.initialized) {
+      return;
+    }
+
+    this.initialized = false;
+
+    if (!this.enabled) {
+      return;
+    }
+
+    if (this.suppressed) {
+      this.suppressed = false;
+      // No need to do any more clean-up, since we were suppressed.
+      return;
+    }
+
+    if (this.showingNotification) {
+      this.prefs.setBoolPref("shutdownWhileShowing", true);
+      this.showingNotification = false;
+    }
+
+    Services.obs.removeObserver(this, "profile-before-change");
+  },
+
+  observe(subject, topic, data) {
+    switch (topic) {
+      case "profile-before-change": {
+        this.uninit();
+        break;
+      }
+    }
+  },
+
+  /**
+   * Scans the profile directory for unsubmitted crash reports
+   * within the past PENDING_CRASH_REPORT_DAYS days. If it
+   * finds any, it will, if necessary, attempt to open a notification
+   * bar to prompt the user to submit them.
+   *
+   * @returns Promise
+   *          Resolves with the <xul:notification> after it tries to
+   *          show a notification on the most recent browser window.
+   *          If a notification cannot be shown, will resolve with null.
+   */
+  async checkForUnsubmittedCrashReports() {
+    if (!this.enabled || this.suppressed) {
+      return null;
+    }
+
+    let dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - PENDING_CRASH_REPORT_DAYS);
+
+    let reportIDs = [];
+    try {
+      reportIDs = await CrashSubmit.pendingIDs(dateLimit);
+    } catch (e) {
+      Cu.reportError(e);
+      return null;
+    }
+
+    if (reportIDs.length) {
+      if (this.autoSubmit) {
+        this.submitReports(reportIDs);
+      } else if (this.shouldShowPendingSubmissionsNotification()) {
+        return this.showPendingSubmissionsNotification(reportIDs);
+      }
+    }
+    return null;
+  },
+
+  /**
+   * Returns true if the notification should be shown.
+   * shouldShowPendingSubmissionsNotification makes this decision
+   * by looking at whether or not the user has seen the notification
+   * over several days without ever interacting with it. If this occurs
+   * too many times, we suppress the notification for DAYS_TO_SUPPRESS
+   * days.
+   *
+   * @returns bool
+   */
+  shouldShowPendingSubmissionsNotification() {
+    if (!this.prefs.prefHasUserValue("shutdownWhileShowing")) {
+      return true;
+    }
+
+    let shutdownWhileShowing = this.prefs.getBoolPref("shutdownWhileShowing");
+    this.prefs.clearUserPref("shutdownWhileShowing");
+
+    if (!this.prefs.prefHasUserValue("lastShownDate")) {
+      // This isn't expected, but we're being defensive here. We'll
+      // opt for showing the notification in this case.
+      return true;
+    }
+
+    let lastShownDate = this.prefs.getCharPref("lastShownDate");
+    if (this.dateString() > lastShownDate && shutdownWhileShowing) {
+      // We're on a newer day then when we last showed the
+      // notification without closing it. We don't want to do
+      // this too many times, so we'll decrement a counter for
+      // this situation. Too many of these, and we'll assume the
+      // user doesn't know or care about unsubmitted notifications,
+      // and we'll suppress the notification for a while.
+      let chances = this.prefs.getIntPref("chancesUntilSuppress");
+      if (--chances < 0) {
+        // We're out of chances!
+        this.prefs.clearUserPref("chancesUntilSuppress");
+        // We'll suppress for DAYS_TO_SUPPRESS days.
+        let suppressUntil =
+          this.dateString(new Date(Date.now() + (DAY * DAYS_TO_SUPPRESS)));
+        this.prefs.setCharPref("suppressUntilDate", suppressUntil);
+        return false;
+      }
+      this.prefs.setIntPref("chancesUntilSuppress", chances);
+    }
+
+    return true;
+  },
+
+  /**
+   * Given an array of unsubmitted crash report IDs, try to open
+   * up a notification asking the user to submit them.
+   *
+   * @param reportIDs (Array<string>)
+   *        The Array of report IDs to offer the user to send.
+   * @returns The <xul:notification> if one is shown. null otherwise.
+   */
+  showPendingSubmissionsNotification(reportIDs) {
+    let count = reportIDs.length;
+    if (!count) {
+      return null;
+    }
+
+    let messageTemplate =
+      gNavigatorBundle.GetStringFromName("pendingCrashReports2.label");
+
+    let message = PluralForm.get(count, messageTemplate).replace("#1", count);
+
+    let notification = this.show({
+      notificationID: "pending-crash-reports",
+      message,
+      reportIDs,
+      onAction: () => {
+        this.showingNotification = false;
+      },
+    });
+
+    if (notification) {
+      this.showingNotification = true;
+      this.prefs.setCharPref("lastShownDate", this.dateString());
+    }
+
+    return notification;
+  },
+
+  /**
+   * Returns a string representation of a Date in the format
+   * YYYYMMDD.
+   *
+   * @param someDate (Date, optional)
+   *        The Date to convert to the string. If not provided,
+   *        defaults to today's date.
+   * @returns String
+   */
+  dateString(someDate = new Date()) {
+    let year = String(someDate.getFullYear()).padStart(4, "0");
+    let month = String(someDate.getMonth() + 1).padStart(2, "0");
+    let day = String(someDate.getDate()).padStart(2, "0");
+    return year + month + day;
+  },
+
+  /**
+   * Attempts to show a notification bar to the user in the most
+   * recent browser window asking them to submit some crash report
+   * IDs. If a notification cannot be shown (for example, there
+   * is no browser window), this method exits silently.
+   *
+   * The notification will allow the user to submit their crash
+   * reports. If the user dismissed the notification, the crash
+   * reports will be marked to be ignored (though they can
+   * still be manually submitted via about:crashes).
+   *
+   * @param JS Object
+   *        An Object with the following properties:
+   *
+   *        notificationID (string)
+   *          The ID for the notification to be opened.
+   *
+   *        message (string)
+   *          The message to be displayed in the notification.
+   *
+   *        reportIDs (Array<string>)
+   *          The array of report IDs to offer to the user.
+   *
+   *        onAction (function, optional)
+   *          A callback to fire once the user performs an
+   *          action on the notification bar (this includes
+   *          dismissing the notification).
+   *
+   * @returns The <xul:notification> if one is shown. null otherwise.
+   */
+  show({ notificationID, message, reportIDs, onAction }) {
+    let chromeWin = RecentWindow.getMostRecentBrowserWindow();
+    if (!chromeWin) {
+      // Can't show a notification in this case. We'll hopefully
+      // get another opportunity to have the user submit their
+      // crash reports later.
+      return null;
+    }
+
+    let nb =  chromeWin.document.getElementById("global-notificationbox");
+    let notification = nb.getNotificationWithValue(notificationID);
+    if (notification) {
+      return null;
+    }
+
+    let buttons = [{
+      label: gNavigatorBundle.GetStringFromName("pendingCrashReports.send"),
+      callback: () => {
+        this.submitReports(reportIDs);
+        if (onAction) {
+          onAction();
+        }
+      },
+    },
+    {
+      label: gNavigatorBundle.GetStringFromName("pendingCrashReports.alwaysSend"),
+      callback: () => {
+        this.autoSubmit = true;
+        this.submitReports(reportIDs);
+        if (onAction) {
+          onAction();
+        }
+      },
+    },
+    {
+      label: gNavigatorBundle.GetStringFromName("pendingCrashReports.viewAll"),
+      callback() {
+        chromeWin.openUILinkIn("about:crashes", "tab");
+        return true;
+      },
+    }];
+
+    let eventCallback = (eventType) => {
+      if (eventType == "dismissed") {
+        // The user intentionally dismissed the notification,
+        // which we interpret as meaning that they don't care
+        // to submit the reports. We'll ignore these particular
+        // reports going forward.
+        reportIDs.forEach(function(reportID) {
+          CrashSubmit.ignore(reportID);
+        });
+        if (onAction) {
+          onAction();
+        }
+      }
+    };
+
+    return nb.appendNotification(message, notificationID,
+                                 "chrome://browser/skin/tab-crashed.svg",
+                                 nb.PRIORITY_INFO_HIGH, buttons,
+                                 eventCallback);
+  },
+
+  get autoSubmit() {
+    return Services.prefs
+                   .getBoolPref("browser.crashReports.unsubmittedCheck.autoSubmit");
+  },
+
+  set autoSubmit(val) {
+    Services.prefs.setBoolPref("browser.crashReports.unsubmittedCheck.autoSubmit",
+                               val);
+  },
+
+  /**
+   * Attempt to submit reports to the crash report server. Each
+   * report will have the "SubmittedFromInfobar" extra key set
+   * to true.
+   *
+   * @param reportIDs (Array<string>)
+   *        The array of reportIDs to submit.
+   */
+  submitReports(reportIDs) {
+    for (let reportID of reportIDs) {
+      CrashSubmit.submit(reportID, {
+        extraExtraKeyVals: {
+          "SubmittedFromInfobar": true,
+        },
+      }).catch(Cu.reportError);
+    }
+  },
+};
 
 this.PluginCrashReporter = {
   /**
@@ -332,20 +918,20 @@ this.PluginCrashReporter = {
     this.initialized = true;
     this.crashReports = new Map();
 
-    Services.obs.addObserver(this, "plugin-crashed", false);
-    Services.obs.addObserver(this, "gmp-plugin-crash", false);
-    Services.obs.addObserver(this, "profile-after-change", false);
+    Services.obs.addObserver(this, "plugin-crashed");
+    Services.obs.addObserver(this, "gmp-plugin-crash");
+    Services.obs.addObserver(this, "profile-after-change");
   },
 
   uninit() {
-    Services.obs.removeObserver(this, "plugin-crashed", false);
-    Services.obs.removeObserver(this, "gmp-plugin-crash", false);
-    Services.obs.removeObserver(this, "profile-after-change", false);
+    Services.obs.removeObserver(this, "plugin-crashed");
+    Services.obs.removeObserver(this, "gmp-plugin-crash");
+    Services.obs.removeObserver(this, "profile-after-change");
     this.initialized = false;
   },
 
   observe(subject, topic, data) {
-    switch(topic) {
+    switch (topic) {
       case "plugin-crashed": {
         let propertyBag = subject;
         if (!(propertyBag instanceof Ci.nsIPropertyBag2) ||
@@ -428,7 +1014,7 @@ this.PluginCrashReporter = {
     });
 
     if (browserDumpID)
-      CrashSubmit.submit(browserDumpID);
+      CrashSubmit.submit(browserDumpID).catch(Cu.reportError);
 
     this.broadcastState(runID, "submitting");
 

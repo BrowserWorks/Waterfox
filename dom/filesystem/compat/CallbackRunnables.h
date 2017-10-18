@@ -7,7 +7,7 @@
 #ifndef mozilla_dom_ErrorCallbackRunnable_h
 #define mozilla_dom_ErrorCallbackRunnable_h
 
-#include "DirectoryEntry.h"
+#include "FileSystemDirectoryEntry.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 
@@ -16,18 +16,20 @@ class nsIGlobalObject;
 namespace mozilla {
 namespace dom {
 
+class FileSystemEntriesCallback;
+
 class EntryCallbackRunnable final : public Runnable
 {
 public:
-  EntryCallbackRunnable(EntryCallback* aCallback,
-                        Entry* aEntry);
+  EntryCallbackRunnable(FileSystemEntryCallback* aCallback,
+                        FileSystemEntry* aEntry);
 
   NS_IMETHOD
   Run() override;
 
 private:
-  RefPtr<EntryCallback> mCallback;
-  RefPtr<Entry> mEntry;
+  RefPtr<FileSystemEntryCallback> mCallback;
+  RefPtr<FileSystemEntry> mEntry;
 };
 
 class ErrorCallbackRunnable final : public Runnable
@@ -49,13 +51,13 @@ private:
 class EmptyEntriesCallbackRunnable final : public Runnable
 {
 public:
-  explicit EmptyEntriesCallbackRunnable(EntriesCallback* aCallback);
+  explicit EmptyEntriesCallbackRunnable(FileSystemEntriesCallback* aCallback);
 
   NS_IMETHOD
   Run() override;
 
 private:
-  RefPtr<EntriesCallback> mCallback;
+  RefPtr<FileSystemEntriesCallback> mCallback;
 };
 
 class GetEntryHelper final : public PromiseNativeHandler
@@ -63,11 +65,16 @@ class GetEntryHelper final : public PromiseNativeHandler
 public:
   NS_DECL_ISUPPORTS
 
-  GetEntryHelper(nsIGlobalObject* aGlobalObject,
-                 DOMFileSystem* aFileSystem,
-                 EntryCallback* aSuccessCallback,
+  GetEntryHelper(FileSystemDirectoryEntry* aParentEntry,
+                 Directory* aDirectory,
+                 nsTArray<nsString>& aParts,
+                 FileSystem* aFileSystem,
+                 FileSystemEntryCallback* aSuccessCallback,
                  ErrorCallback* aErrorCallback,
-                 DirectoryEntry::GetInternalType aType);
+                 FileSystemDirectoryEntry::GetInternalType aType);
+
+  void
+  Run();
 
   virtual void
   ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue) override;
@@ -81,11 +88,30 @@ private:
   void
   Error(nsresult aError);
 
-  nsCOMPtr<nsIGlobalObject> mGlobal;
-  RefPtr<DOMFileSystem> mFileSystem;
-  RefPtr<EntryCallback> mSuccessCallback;
+  void
+  ContinueRunning(JSObject* aObj);
+
+  void
+  CompleteOperation(JSObject* aObj);
+
+  RefPtr<FileSystemDirectoryEntry> mParentEntry;
+  RefPtr<Directory> mDirectory;
+  nsTArray<nsString> mParts;
+  RefPtr<FileSystem> mFileSystem;
+
+  RefPtr<FileSystemEntryCallback> mSuccessCallback;
   RefPtr<ErrorCallback> mErrorCallback;
-  DirectoryEntry::GetInternalType mType;
+
+  FileSystemDirectoryEntry::GetInternalType mType;
+};
+
+class FileSystemEntryCallbackHelper
+{
+public:
+  static void
+  Call(nsIGlobalObject* aGlobalObject,
+       const Optional<OwningNonNull<FileSystemEntryCallback>>& aEntryCallback,
+       FileSystemEntry* aEntry);
 };
 
 class ErrorCallbackHelper

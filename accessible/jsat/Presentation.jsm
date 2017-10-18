@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global Components, XPCOMUtils, Utils, Logger, BraillePresenter, Presentation,
-          UtteranceGenerator, BrailleGenerator, States, Roles, PivotContext */
 /* exported Presentation */
 
 'use strict';
@@ -315,7 +313,7 @@ AndroidPresenter.prototype.actionInvoked =
 
     // Checkable objects use TalkBack's text derived from the event state,
     // so we don't populate the text here.
-    let text = '';
+    let text = null;
     if (!state.contains(States.CHECKABLE)) {
       text = Utils.localize(UtteranceGenerator.genForAction(aObject,
         aActionName));
@@ -760,8 +758,7 @@ this.Presentation = { // jshint ignore:line
     aModifiedText) {
     let context;
     if (!aModifiedText) {
-      context = new PivotContext(aAccessible, null, -1, -1, true,
-        aIsHide ? true : false);
+      context = new PivotContext(aAccessible, null, -1, -1, true, !!aIsHide);
     }
     return this.presenters.map(p => p.liveRegion(context, aIsPolite, aIsHide,
                                                  aModifiedText));

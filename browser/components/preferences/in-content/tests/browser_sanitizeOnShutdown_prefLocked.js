@@ -16,22 +16,24 @@ function testPrefStateMatchesLockedState() {
   let preference = doc.getElementById("privacy.sanitize.sanitizeOnShutdown");
   is(checkbox.disabled, preference.locked, "Always Clear checkbox should be enabled when preference is not locked.");
 
+  Services.prefs.clearUserPref("privacy.history.custom");
   gBrowser.removeCurrentTab();
 }
 
 add_task(function setup() {
   registerCleanupFunction(function resetPreferences() {
     Services.prefs.unlockPref("privacy.sanitize.sanitizeOnShutdown");
+    Services.prefs.clearUserPref("privacy.history.custom");
   });
 });
 
-add_task(function test_preference_enabled_when_unlocked() {
-  yield openPreferencesViaOpenPreferencesAPI("panePrivacy", undefined, {leaveOpen: true});
+add_task(async function test_preference_enabled_when_unlocked() {
+  await openPreferencesViaOpenPreferencesAPI("panePrivacy", undefined, {leaveOpen: true});
   testPrefStateMatchesLockedState();
 });
 
-add_task(function test_preference_disabled_when_locked() {
+add_task(async function test_preference_disabled_when_locked() {
   Services.prefs.lockPref("privacy.sanitize.sanitizeOnShutdown");
-  yield openPreferencesViaOpenPreferencesAPI("panePrivacy", undefined, {leaveOpen: true});
+  await openPreferencesViaOpenPreferencesAPI("panePrivacy", undefined, {leaveOpen: true});
   testPrefStateMatchesLockedState();
 });

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -45,11 +46,23 @@ public class TabPanelBackButton extends ImageButton {
         super.onDraw(canvas);
         if (divider != null) {
             final ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) getLayoutParams();
-            final int left = getRight() - lp.rightMargin - dividerWidth;
 
-            divider.setBounds(left, getPaddingTop() + dividerPadding,
-                    left + dividerWidth, getHeight() - getPaddingBottom() - dividerPadding);
-            divider.draw(canvas);
+            if (ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+                final int start = getLeft() + lp.getMarginStart();
+                divider.setBounds(
+                        start,
+                        getPaddingTop() + dividerPadding,
+                        start + dividerWidth,
+                        getHeight() - getPaddingBottom() - dividerPadding
+                );
+                divider.draw(canvas);
+            } else {
+                final int left = getRight() - lp.rightMargin - dividerWidth;
+
+                divider.setBounds(left, getPaddingTop() + dividerPadding,
+                        left + dividerWidth, getHeight() - getPaddingBottom() - dividerPadding);
+                divider.draw(canvas);
+            }
         }
     }
 }

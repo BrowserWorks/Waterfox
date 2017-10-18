@@ -110,10 +110,12 @@ nrappkit copyright:
 #include "mozilla/SyncRunnable.h"
 #include "nsTArray.h"
 #include "mozilla/dom/TCPSocketBinding.h"
+#include "mozilla/SystemGroup.h"
 #include "nsITCPSocketCallback.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsISocketFilter.h"
+#include "nsDebug.h"
 
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
@@ -135,12 +137,6 @@ nrappkit copyright:
 #endif
 #undef strlcpy
 
-// TCPSocketChild.h doesn't include TypedArray.h
-namespace mozilla {
-namespace dom {
-class ArrayBuffer;
-}
-}
 #include "mozilla/dom/network/TCPSocketChild.h"
 
 #ifdef LOG_TEMP_INFO
@@ -184,8 +180,9 @@ private:
   ~SingletonThreadHolder()
   {
     r_log(LOG_GENERIC,LOG_DEBUG,"Deleting SingletonThreadHolder");
-    MOZ_ASSERT(!mThread, "SingletonThreads should be Released and shut down before exit!");
     if (mThread) {
+      // Likely a connection is somehow being held in CC or GC
+      NS_WARNING("SingletonThreads should be Released and shut down before exit!");
       mThread->Shutdown();
       mThread = nullptr;
     }
@@ -197,7 +194,7 @@ public:
   // Must be threadsafe for StaticRefPtr/ClearOnShutdown
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SingletonThreadHolder)
 
-  explicit SingletonThreadHolder(const nsCSubstring& aName)
+  explicit SingletonThreadHolder(const nsACString& aName)
     : mName(aName)
   {
     mParentThread = NS_GetCurrentThread();
@@ -211,30 +208,43 @@ public:
    * Keep track of how many instances are using a SingletonThreadHolder.
    * When no one is using it, shut it down
    */
-  MozExternalRefCountType AddUse()
+  void AddUse()
   {
-    MOZ_ASSERT(mParentThread == NS_GetCurrentThread());
+    RUN_ON_THREAD(mParentThread,
+                  mozilla::WrapRunnable(RefPtr<SingletonThreadHolder>(this),
+                                        &SingletonThreadHolder::AddUse_i),
+                  NS_DISPATCH_SYNC);
+  }
+
+  void AddUse_i()
+  {
     MOZ_ASSERT(int32_t(mUseCount) >= 0, "illegal refcnt");
     nsrefcnt count = ++mUseCount;
     if (count == 1) {
       // idle -> in-use
-      nsresult rv = NS_NewThread(getter_AddRefs(mThread));
+      nsresult rv = NS_NewNamedThread(mName, getter_AddRefs(mThread));
       MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv) && mThread,
                          "Should successfully create mtransport I/O thread");
-      NS_SetThreadName(mThread, mName);
       r_log(LOG_GENERIC,LOG_DEBUG,"Created wrapped SingletonThread %p",
             mThread.get());
     }
-    r_log(LOG_GENERIC,LOG_DEBUG,"AddUse: %lu", (unsigned long) count);
-    return count;
+    r_log(LOG_GENERIC,LOG_DEBUG,"AddUse_i: %lu", (unsigned long) count);
   }
 
-  MozExternalRefCountType ReleaseUse()
+  void ReleaseUse()
+  {
+    RUN_ON_THREAD(mParentThread,
+                  mozilla::WrapRunnable(RefPtr<SingletonThreadHolder>(this),
+                                        &SingletonThreadHolder::ReleaseUse_i),
+                  NS_DISPATCH_SYNC);
+  }
+
+  void ReleaseUse_i()
   {
     MOZ_ASSERT(mParentThread == NS_GetCurrentThread());
     nsrefcnt count = --mUseCount;
     MOZ_ASSERT(int32_t(mUseCount) >= 0, "illegal refcnt");
-    if (count == 0) {
+    if (mThread && count == 0) {
       // in-use -> idle -- no one forcing it to remain instantiated
       r_log(LOG_GENERIC,LOG_DEBUG,"Shutting down wrapped SingletonThread %p",
             mThread.get());
@@ -243,8 +253,7 @@ public:
       // It'd be nice to use a timer instead...  But be careful of
       // xpcom-shutdown-threads in that case
     }
-    r_log(LOG_GENERIC,LOG_DEBUG,"ReleaseUse: %lu", (unsigned long) count);
-    return count;
+    r_log(LOG_GENERIC,LOG_DEBUG,"ReleaseUse_i: %lu", (unsigned long) count);
   }
 
 private:
@@ -258,7 +267,7 @@ static StaticRefPtr<SingletonThreadHolder> sThread;
 
 static void ClearSingletonOnShutdown()
 {
-  ClearOnShutdown(&sThread);
+  ClearOnShutdown(&sThread, ShutdownPhase::ShutdownThreads);
 }
 #endif
 
@@ -364,7 +373,7 @@ void NrSocket::OnSocketReady(PRFileDesc *fd, int16_t outflags) {
     fire_callback(NR_ASYNC_WAIT_READ);
   if (outflags & PR_POLL_WRITE & poll_flags())
     fire_callback(NR_ASYNC_WAIT_WRITE);
-  if (outflags & (PR_POLL_ERR | PR_POLL_NVAL))
+  if (outflags & (PR_POLL_ERR | PR_POLL_NVAL | PR_POLL_HUP))
     // TODO: Bug 946423: how do we notify the upper layers about this?
     close();
 }
@@ -654,6 +663,10 @@ int NrSocket::create(nr_transport_addr *addr) {
 #endif
       break;
     case IPPROTO_TCP:
+      // TODO: Add TLS layer with nsISocketProviderService?
+      if (my_addr_.tls_host[0] != '\0')
+        ABORT(R_INTERNAL);
+
       if (!(fd_ = PR_OpenTCPSocket(naddr.raw.family))) {
         r_log(LOG_GENERIC,LOG_CRIT,"Couldn't create TCP socket, "
               "family=%d, err=%d", naddr.raw.family, PR_GetError());
@@ -749,6 +762,58 @@ abort:
   return(_status);
 }
 
+static int ShouldDrop(size_t len) {
+  // Global rate limiting for stun requests, to mitigate the ice hammer DoS
+  // (see http://tools.ietf.org/html/draft-thomson-mmusic-ice-webrtc)
+
+  // Tolerate rate of 8k/sec, for one second.
+  static SimpleTokenBucket burst(16384*1, 16384);
+  // Tolerate rate of 7.2k/sec over twenty seconds.
+  static SimpleTokenBucket sustained(7372*20, 7372);
+
+  // Check number of tokens in each bucket.
+  if (burst.getTokens(UINT32_MAX) < len) {
+    r_log(LOG_GENERIC, LOG_ERR,
+               "Short term global rate limit for STUN requests exceeded.");
+#ifdef MOZILLA_INTERNAL_API
+    nr_socket_short_term_violation_time = TimeStamp::Now();
+#endif
+
+// Bug 1013007
+#if !EARLY_BETA_OR_EARLIER
+    return R_WOULDBLOCK;
+#else
+    MOZ_ASSERT(false,
+               "Short term global rate limit for STUN requests exceeded. Go "
+               "bug bcampen@mozilla.com if you weren't intentionally "
+               "spamming ICE candidates, or don't know what that means.");
+#endif
+  }
+
+  if (sustained.getTokens(UINT32_MAX) < len) {
+    r_log(LOG_GENERIC, LOG_ERR,
+               "Long term global rate limit for STUN requests exceeded.");
+#ifdef MOZILLA_INTERNAL_API
+    nr_socket_long_term_violation_time = TimeStamp::Now();
+#endif
+// Bug 1013007
+#if !EARLY_BETA_OR_EARLIER
+    return R_WOULDBLOCK;
+#else
+    MOZ_ASSERT(false,
+               "Long term global rate limit for STUN requests exceeded. Go "
+               "bug bcampen@mozilla.com if you weren't intentionally "
+               "spamming ICE candidates, or don't know what that means.");
+#endif
+  }
+
+  // Take len tokens from both buckets.
+  // (not threadsafe, but no problem since this is only called from STS)
+  burst.getTokens(len);
+  sustained.getTokens(len);
+  return 0;
+}
+
 // This should be called on the STS thread.
 int NrSocket::sendto(const void *msg, size_t len,
                      int flags, nr_transport_addr *to) {
@@ -763,55 +828,8 @@ int NrSocket::sendto(const void *msg, size_t len,
   if(fd_==nullptr)
     ABORT(R_EOD);
 
-  if (nr_is_stun_request_message((UCHAR*)msg, len)) {
-    // Global rate limiting for stun requests, to mitigate the ice hammer DoS
-    // (see http://tools.ietf.org/html/draft-thomson-mmusic-ice-webrtc)
-
-    // Tolerate rate of 8k/sec, for one second.
-    static SimpleTokenBucket burst(16384*1, 16384);
-    // Tolerate rate of 7.2k/sec over twenty seconds.
-    static SimpleTokenBucket sustained(7372*20, 7372);
-
-    // Check number of tokens in each bucket.
-    if (burst.getTokens(UINT32_MAX) < len) {
-      r_log(LOG_GENERIC, LOG_ERR,
-                 "Short term global rate limit for STUN requests exceeded.");
-#ifdef MOZILLA_INTERNAL_API
-      nr_socket_short_term_violation_time = TimeStamp::Now();
-#endif
-
-// Bug 1013007
-#if !EARLY_BETA_OR_EARLIER
-      ABORT(R_WOULDBLOCK);
-#else
-      MOZ_ASSERT(false,
-                 "Short term global rate limit for STUN requests exceeded. Go "
-                 "bug bcampen@mozilla.com if you weren't intentionally "
-                 "spamming ICE candidates, or don't know what that means.");
-#endif
-    }
-
-    if (sustained.getTokens(UINT32_MAX) < len) {
-      r_log(LOG_GENERIC, LOG_ERR,
-                 "Long term global rate limit for STUN requests exceeded.");
-#ifdef MOZILLA_INTERNAL_API
-      nr_socket_long_term_violation_time = TimeStamp::Now();
-#endif
-// Bug 1013007
-#if !EARLY_BETA_OR_EARLIER
-      ABORT(R_WOULDBLOCK);
-#else
-      MOZ_ASSERT(false,
-                 "Long term global rate limit for STUN requests exceeded. Go "
-                 "bug bcampen@mozilla.com if you weren't intentionally "
-                 "spamming ICE candidates, or don't know what that means.");
-#endif
-    }
-
-    // Take len tokens from both buckets.
-    // (not threadsafe, but no problem since this is only called from STS)
-    burst.getTokens(len);
-    sustained.getTokens(len);
+  if (nr_is_stun_request_message((UCHAR*)msg, len) && ShouldDrop(len)) {
+    ABORT(R_WOULDBLOCK);
   }
 
   // TODO: Convert flags?
@@ -1133,9 +1151,11 @@ NrUdpSocketIpc::~NrUdpSocketIpc()
   // close(), but transfer the socket_child_ reference to die as well
   RUN_ON_THREAD(io_thread_,
                 mozilla::WrapRunnableNM(&NrUdpSocketIpc::release_child_i,
-                                        socket_child_.forget().take(),
-                                        sts_thread_),
+                                        socket_child_.forget().take()),
                 NS_DISPATCH_NORMAL);
+  // This may shut down the io_thread_, but it should spin the event loop so
+  // the above runnable happens.
+  sThread->ReleaseUse();
 #endif
 }
 
@@ -1337,6 +1357,7 @@ int NrUdpSocketIpc::create(nr_transport_addr *addr) {
   mon.Wait();
 
   if (err_) {
+    close();
     ABORT(R_INTERNAL);
   }
 
@@ -1366,6 +1387,10 @@ int NrUdpSocketIpc::sendto(const void *msg, size_t len, int flags,
   net::NetAddr addr;
   if ((r=nr_transport_addr_to_netaddr(to, &addr))) {
     return r;
+  }
+
+  if (nr_is_stun_request_message((UCHAR*)msg, len) && ShouldDrop(len)) {
+    return R_WOULDBLOCK;
   }
 
   nsAutoPtr<DataBuffer> buf(new DataBuffer(static_cast<const uint8_t*>(msg), len));
@@ -1555,7 +1580,8 @@ void NrUdpSocketIpc::create_i(const nsACString &host, const uint16_t port) {
                                     /* reuse = */ false,
                                     /* loopback = */ false,
                                     /* recv buffer size */ minBuffSize,
-                                    /* send buffer size */ minBuffSize))) {
+                                    /* send buffer size */ minBuffSize,
+                                    /* mainThreadEventTarget */ nullptr))) {
     err_ = true;
     MOZ_ASSERT(false, "Failed to create UDP socket");
     mon.NotifyAll();
@@ -1614,21 +1640,12 @@ void NrUdpSocketIpc::close_i() {
 #if defined(MOZILLA_INTERNAL_API)
 // close(), but transfer the socket_child_ reference to die as well
 // static
-void NrUdpSocketIpc::release_child_i(nsIUDPSocketChild* aChild,
-                                     nsCOMPtr<nsIEventTarget> sts_thread) {
+void NrUdpSocketIpc::release_child_i(nsIUDPSocketChild* aChild) {
   RefPtr<nsIUDPSocketChild> socket_child_ref =
     already_AddRefed<nsIUDPSocketChild>(aChild);
   if (socket_child_ref) {
     socket_child_ref->Close();
   }
-  // Tell SingletonThreadHolder we're done with it
-  RUN_ON_THREAD(sts_thread,
-                mozilla::WrapRunnableNM(&NrUdpSocketIpc::release_use_s),
-                NS_DISPATCH_NORMAL);
-}
-
-void NrUdpSocketIpc::release_use_s() {
-  sThread->ReleaseUse();
 }
 #endif
 
@@ -1656,9 +1673,9 @@ class NrTcpSocketIpc::TcpSocketReadyRunner: public Runnable
 {
 public:
   explicit TcpSocketReadyRunner(NrTcpSocketIpc *sck)
-    : socket_(sck) {}
+    : Runnable("NrTcpSocketIpc::TcpSocketReadyRunner"), socket_(sck) {}
 
-  NS_IMETHODIMP Run() {
+  NS_IMETHOD Run() override {
     socket_->maybe_post_socket_ready();
     return NS_OK;
   }
@@ -1686,8 +1703,7 @@ NrTcpSocketIpc::~NrTcpSocketIpc()
   // close(), but transfer the socket_child_ reference to die as well
   RUN_ON_THREAD(io_thread_,
                 mozilla::WrapRunnableNM(&NrTcpSocketIpc::release_child_i,
-                                        socket_child_.forget().take(),
-                                        sts_thread_),
+                                        socket_child_.forget().take()),
                 NS_DISPATCH_NORMAL);
 }
 
@@ -1875,7 +1891,8 @@ int NrTcpSocketIpc::connect(nr_transport_addr *addr) {
                              remote_addr,
                              static_cast<uint16_t>(remote_port),
                              local_addr,
-                             static_cast<uint16_t>(local_port)),
+                             static_cast<uint16_t>(local_port),
+                             nsCString(my_addr_.tls_host)),
                 NS_DISPATCH_NORMAL);
 
   // Make caller wait for ready to write.
@@ -1951,20 +1968,38 @@ int NrTcpSocketIpc::accept(nr_transport_addr *addrp, nr_socket **sockp) {
 void NrTcpSocketIpc::connect_i(const nsACString &remote_addr,
                                uint16_t remote_port,
                                const nsACString &local_addr,
-                               uint16_t local_port) {
+                               uint16_t local_port,
+                               const nsACString &tls_host) {
   ASSERT_ON_THREAD(io_thread_);
+  // io_thread_ was initialized as main thread at constructor,
+  // so the following assertion should be true.
+  MOZ_ASSERT(NS_IsMainThread());
+
   mirror_state_ = NR_CONNECTING;
 
-  dom::TCPSocketChild* child = new dom::TCPSocketChild(NS_ConvertUTF8toUTF16(remote_addr), remote_port);
+  dom::TCPSocketChild* child =
+    new dom::TCPSocketChild(NS_ConvertUTF8toUTF16(remote_addr),
+                            remote_port,
+                            SystemGroup::EventTargetFor(TaskCategory::Other));
   socket_child_ = child;
 
   // Bug 1285330: put filtering back in here
 
-  // XXX remove remote!
-  socket_child_->SendWindowlessOpenBind(this,
-                                        remote_addr, remote_port,
-                                        local_addr, local_port,
-                                        /* use ssl */ false);
+  if (tls_host.IsEmpty()) {
+    // XXX remove remote!
+    socket_child_->SendWindowlessOpenBind(this,
+                                          remote_addr, remote_port,
+                                          local_addr, local_port,
+                                          /* use ssl */ false,
+                                          /* reuse addr port */ true);
+  } else {
+    // XXX remove remote!
+    socket_child_->SendWindowlessOpenBind(this,
+                                          tls_host, remote_port,
+                                          local_addr, local_port,
+                                          /* use ssl */ true,
+                                          /* reuse addr port */ true);
+  }
 }
 
 void NrTcpSocketIpc::write_i(nsAutoPtr<InfallibleTArray<uint8_t>> arr,
@@ -1987,8 +2022,7 @@ void NrTcpSocketIpc::close_i() {
 
 // close(), but transfer the socket_child_ reference to die as well
 // static
-void NrTcpSocketIpc::release_child_i(dom::TCPSocketChild* aChild,
-                                     nsCOMPtr<nsIEventTarget> sts_thread) {
+void NrTcpSocketIpc::release_child_i(dom::TCPSocketChild* aChild) {
   RefPtr<dom::TCPSocketChild> socket_child_ref =
     already_AddRefed<dom::TCPSocketChild>(aChild);
   if (socket_child_ref) {
@@ -2069,8 +2103,10 @@ void NrTcpSocketIpc::maybe_post_socket_ready() {
     }
     if (poll_flags() & PR_POLL_READ) {
       if (msg_queue_.size()) {
-        r_log(LOG_GENERIC, LOG_INFO, "Firing read callback (%u)",
-              (uint32_t)msg_queue_.size());
+        if (msg_queue_.size() > 5) {
+          r_log(LOG_GENERIC, LOG_INFO, "Firing read callback (%u)",
+                (uint32_t)msg_queue_.size());
+        }
         fire_callback(NR_ASYNC_WAIT_READ);
         has_event = true;
       }
@@ -2197,7 +2233,7 @@ static int nr_socket_local_destroy(void **objp) {
     return 0;
 
   NrSocketBase *sock = static_cast<NrSocketBase *>(*objp);
-  *objp = 0;
+  *objp = nullptr;
 
   sock->close();  // Signal STS that we want not to listen
   sock->Release();  // Decrement the ref count
@@ -2245,33 +2281,33 @@ static int nr_socket_local_close(void *obj) {
 
 static int nr_socket_local_write(void *obj, const void *msg, size_t len,
                                  size_t *written) {
-  NrSocket *sock = static_cast<NrSocket *>(obj);
+  NrSocketBase *sock = static_cast<NrSocketBase *>(obj);
 
   return sock->write(msg, len, written);
 }
 
 static int nr_socket_local_read(void *obj, void * restrict buf, size_t maxlen,
                                 size_t *len) {
-  NrSocket *sock = static_cast<NrSocket *>(obj);
+  NrSocketBase *sock = static_cast<NrSocketBase *>(obj);
 
   return sock->read(buf, maxlen, len);
 }
 
 static int nr_socket_local_connect(void *obj, nr_transport_addr *addr) {
-  NrSocket *sock = static_cast<NrSocket *>(obj);
+  NrSocketBase *sock = static_cast<NrSocketBase *>(obj);
 
   return sock->connect(addr);
 }
 
 static int nr_socket_local_listen(void *obj, int backlog) {
-  NrSocket *sock = static_cast<NrSocket *>(obj);
+  NrSocketBase *sock = static_cast<NrSocketBase *>(obj);
 
   return sock->listen(backlog);
 }
 
 static int nr_socket_local_accept(void *obj, nr_transport_addr *addrp,
                                   nr_socket **sockp) {
-  NrSocket *sock = static_cast<NrSocket *>(obj);
+  NrSocketBase *sock = static_cast<NrSocketBase *>(obj);
 
   return sock->accept(addrp, sockp);
 }

@@ -19,6 +19,7 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/dom/CryptoKey.h"
+#include "mozilla/dom/RTCCertificateBinding.h"
 #include "mtransport/dtlsidentity.h"
 #include "js/StructuredClone.h"
 #include "js/TypeDecls.h"
@@ -39,7 +40,7 @@ public:
 
   // WebIDL method that implements RTCPeerConnection.generateCertificate.
   static already_AddRefed<Promise> GenerateCertificate(
-      const GlobalObject& global, const ObjectOrString& keygenAlgorithm,
+      const GlobalObject& aGlobal, const ObjectOrString& aOptions,
       ErrorResult& aRv, JSCompartment* aCompartment = nullptr);
 
   explicit RTCCertificate(nsIGlobalObject* aGlobal);
@@ -60,7 +61,7 @@ public:
 
   // Accessors for use by PeerConnectionImpl.
   RefPtr<DtlsIdentity> CreateDtlsIdentity() const;
-  CERTCertificate* Certificate() const { return mCertificate; }
+  const UniqueCERTCertificate& Certificate() const { return mCertificate; }
 
   // For nsNSSShutDownObject
   virtual void virtualDestroyNSSReference() override;
@@ -85,8 +86,8 @@ private:
                        const nsNSSShutDownPreventionLock& aLockProof) const;
 
   RefPtr<nsIGlobalObject> mGlobal;
-  ScopedSECKEYPrivateKey mPrivateKey;
-  ScopedCERTCertificate mCertificate;
+  UniqueSECKEYPrivateKey mPrivateKey;
+  UniqueCERTCertificate mCertificate;
   SSLKEAType mAuthType;
   PRTime mExpires;
 };

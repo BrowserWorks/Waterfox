@@ -9,45 +9,22 @@
  * https://developer.mozilla.org/en-US/docs/Tools/DevToolsColors
  */
 
-const { Cu } = require("chrome");
-const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 const Services = require("Services");
-const { gDevTools } = require("devtools/client/framework/devtools");
 
-const VARIABLES_URI = "chrome://devtools/skin/variables.css";
+const variableFileContents = require("raw!devtools/client/themes/variables.css");
+
 const THEME_SELECTOR_STRINGS = {
   light: ":root.theme-light {",
-  dark: ":root.theme-dark {"
+  dark: ":root.theme-dark {",
+  firebug: ":root.theme-firebug {"
 };
-
-let variableFileContents;
-
-/**
- * Returns a string of the file found at URI
- */
-function readURI(uri) {
-  let stream = NetUtil.newChannel({
-    uri: NetUtil.newURI(uri, "UTF-8"),
-    loadUsingSystemPrincipal: true}
-  ).open2();
-
-  let count = stream.available();
-  let data = NetUtil.readInputStreamToString(stream, count, {
-    charset: "UTF-8"
-  });
-  stream.close();
-  return data;
-}
+const THEME_PREF = "devtools.theme";
 
 /**
  * Takes a theme name and returns the contents of its variable rule block.
  * The first time this runs fetches the variables CSS file and caches it.
  */
 function getThemeFile(name) {
-  if (!variableFileContents) {
-    variableFileContents = readURI(VARIABLES_URI);
-  }
-
   // If there's no theme expected for this name, use `light` as default.
   let selector = THEME_SELECTOR_STRINGS[name] ||
                  THEME_SELECTOR_STRINGS.light;
@@ -70,7 +47,7 @@ function getThemeFile(name) {
  * like "dark" or "light".
  */
 const getTheme = exports.getTheme = () => {
-  return Services.prefs.getCharPref("devtools.theme");
+  return Services.prefs.getCharPref(THEME_PREF);
 };
 
 /**
@@ -90,18 +67,23 @@ const getColor = exports.getColor = (type, theme) => {
 };
 
 /**
- * Mimics selecting the theme selector in the toolbox;
- * sets the preference and emits an event on gDevTools to trigger
- * the themeing.
+ * Set the theme preference.
  */
 const setTheme = exports.setTheme = (newTheme) => {
-  let oldTheme = getTheme();
+  Services.prefs.setCharPref(THEME_PREF, newTheme);
+};
 
-  Services.prefs.setCharPref("devtools.theme", newTheme);
-  gDevTools.emit("pref-changed", {
-    pref: "devtools.theme",
-    newValue: newTheme,
-    oldValue: oldTheme
-  });
+/**
+ * Add an observer for theme changes.
+ */
+const addThemeObserver = exports.addThemeObserver = observer => {
+  Services.prefs.addObserver(THEME_PREF, observer);
+};
+
+/**
+ * Remove an observer for theme changes.
+ */
+const removeThemeObserver = exports.removeThemeObserver = observer => {
+  Services.prefs.removeObserver(THEME_PREF, observer);
 };
 /* eslint-enable */

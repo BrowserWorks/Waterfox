@@ -22,32 +22,13 @@
 #include "mozilla/UniquePtr.h"
 
 #include "prenv.h"
-#include "prmem.h"
 
-#ifdef MOZ_B2G_LOADER
-#include "ProcessUtils.h"
-
-using namespace mozilla::ipc;
-#endif	// MOZ_B2G_LOADER
-
-#ifdef MOZ_WIDGET_GONK
 /*
- * AID_APP is the first application UID used by Android. We're using
- * it as our unprivilegied UID.  This ensure the UID used is not
- * shared with any other processes than our own childs.
- */
-# include <private/android_filesystem_config.h>
-# define CHILD_UNPRIVILEGED_UID AID_APP
-# define CHILD_UNPRIVILEGED_GID AID_APP
-#else
-/*
- * On platforms that are not gonk based, we fall back to an arbitrary
- * UID. This is generally the UID for user `nobody', albeit it is not
- * always the case.
+ * We fall back to an arbitrary UID. This is generally the UID for user
+ * `nobody', albeit it is not always the case.
  */
 # define CHILD_UNPRIVILEGED_UID 65534
 # define CHILD_UNPRIVILEGED_GID 65534
-#endif
 
 namespace {
 
@@ -70,7 +51,7 @@ public:
 
   explicit EnvironmentEnvp(const environment_map &em)
   {
-    mEnvp = (char **)PR_Malloc(sizeof(char *) * (em.size() + 1));
+    mEnvp = (char**) malloc(sizeof(char *) * (em.size() + 1));
     if (!mEnvp) {
       return;
     }
@@ -81,7 +62,7 @@ public:
       str += "=";
       str += it->second;
       size_t len = str.length() + 1;
-      *e = static_cast<char*>(PR_Malloc(len));
+      *e = static_cast<char*>(malloc(len));
       memcpy(*e, str.c_str(), len);
     }
     *e = NULL;
@@ -93,9 +74,9 @@ public:
       return;
     }
     for (char **e = mEnvp; *e; ++e) {
-      PR_Free(*e);
+      free(*e);
     }
-    PR_Free(mEnvp);
+    free(mEnvp);
   }
 
   char * const *AsEnvp() { return mEnvp; }
@@ -160,71 +141,12 @@ bool LaunchApp(const std::vector<std::string>& argv,
                    wait, process_handle);
 }
 
-#ifdef MOZ_B2G_LOADER
-/**
- * Launch an app using B2g Loader.
- */
-static bool
-LaunchAppProcLoader(const std::vector<std::string>& argv,
-                    const file_handle_mapping_vector& fds_to_remap,
-                    const environment_map& env_vars_to_set,
-                    ChildPrivileges privs,
-                    ProcessHandle* process_handle) {
-  size_t i;
-  mozilla::UniquePtr<char*[]> argv_cstr(new char*[argv.size() + 1]);
-  for (i = 0; i < argv.size(); i++) {
-    argv_cstr[i] = const_cast<char*>(argv[i].c_str());
-  }
-  argv_cstr[argv.size()] = nullptr;
-
-  mozilla::UniquePtr<char*[]> env_cstr(new char*[env_vars_to_set.size() + 1]);
-  i = 0;
-  for (environment_map::const_iterator it = env_vars_to_set.begin();
-       it != env_vars_to_set.end(); ++it) {
-    env_cstr[i++] = strdup((it->first + "=" + it->second).c_str());
-  }
-  env_cstr[env_vars_to_set.size()] = nullptr;
-
-  bool ok = ProcLoaderLoad((const char **)argv_cstr.get(),
-                           (const char **)env_cstr.get(),
-                           fds_to_remap, privs,
-                           process_handle);
-  MOZ_ASSERT(ok, "ProcLoaderLoad() failed");
-
-  for (size_t i = 0; i < env_vars_to_set.size(); i++) {
-    free(env_cstr[i]);
-  }
-
-  return ok;
-}
-
-static bool
-IsLaunchingNuwa(const std::vector<std::string>& argv) {
-  std::vector<std::string>::const_iterator it;
-  for (it = argv.begin(); it != argv.end(); ++it) {
-    if (*it == std::string("-nuwa")) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif // MOZ_B2G_LOADER
-
 bool LaunchApp(const std::vector<std::string>& argv,
                const file_handle_mapping_vector& fds_to_remap,
                const environment_map& env_vars_to_set,
                ChildPrivileges privs,
                bool wait, ProcessHandle* process_handle,
                ProcessArchitecture arch) {
-#ifdef MOZ_B2G_LOADER
-  static bool beforeFirstNuwaLaunch = true;
-  if (!wait && beforeFirstNuwaLaunch && IsLaunchingNuwa(argv)) {
-    beforeFirstNuwaLaunch = false;
-    return LaunchAppProcLoader(argv, fds_to_remap, env_vars_to_set,
-                               privs, process_handle);
-  }
-#endif // MOZ_B2G_LOADER
-
   mozilla::UniquePtr<char*[]> argv_cstr(new char*[argv.size() + 1]);
   // Illegal to allocate memory after fork and before execvp
   InjectiveMultimap fd_shuffle1, fd_shuffle2;
@@ -294,36 +216,6 @@ void SetCurrentProcessPrivileges(ChildPrivileges privs) {
 
   gid_t gid = CHILD_UNPRIVILEGED_GID;
   uid_t uid = CHILD_UNPRIVILEGED_UID;
-#ifdef MOZ_WIDGET_GONK
-  {
-    static bool checked_pix_max, pix_max_ok;
-    if (!checked_pix_max) {
-      checked_pix_max = true;
-      int fd = open("/proc/sys/kernel/pid_max", O_CLOEXEC | O_RDONLY);
-      if (fd < 0) {
-        DLOG(ERROR) << "Failed to open pid_max";
-        _exit(127);
-      }
-      char buf[PATH_MAX];
-      ssize_t len = read(fd, buf, sizeof(buf) - 1);
-      close(fd);
-      if (len < 0) {
-        DLOG(ERROR) << "Failed to read pid_max";
-        _exit(127);
-      }
-      buf[len] = '\0';
-      int pid_max = atoi(buf);
-      pix_max_ok =
-        (pid_max + CHILD_UNPRIVILEGED_UID > CHILD_UNPRIVILEGED_UID);
-    }
-    if (!pix_max_ok) {
-      DLOG(ERROR) << "Can't safely get unique uid/gid";
-      _exit(127);
-    }
-    gid += getpid();
-    uid += getpid();
-  }
-#endif
   if (setgid(gid) != 0) {
     DLOG(ERROR) << "FAILED TO setgid() CHILD PROCESS";
     _exit(127);

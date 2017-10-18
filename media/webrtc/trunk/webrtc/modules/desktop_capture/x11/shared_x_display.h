@@ -14,13 +14,16 @@
 #include <map>
 #include <vector>
 
-#include <assert.h>
-#include <X11/Xlib.h>
-
 #include <string>
 
-#include "webrtc/system_wrappers/interface/atomic32.h"
-#include "webrtc/system_wrappers/interface/scoped_refptr.h"
+#include "webrtc/base/constructormagic.h"
+#include "webrtc/base/scoped_ref_ptr.h"
+#include "webrtc/system_wrappers/include/atomic32.h"
+
+// Including Xlib.h will involve evil defines (Bool, Status, True, False), which
+// easily conflict with other headers.
+typedef struct _XDisplay Display;
+typedef union _XEvent XEvent;
 
 namespace webrtc {
 
@@ -41,11 +44,12 @@ class SharedXDisplay {
   // Creates a new X11 Display for the |display_name|. NULL is returned if X11
   // connection failed. Equivalent to CreateDefault() when |display_name| is
   // empty.
-  static scoped_refptr<SharedXDisplay> Create(const std::string& display_name);
+  static rtc::scoped_refptr<SharedXDisplay> Create(
+      const std::string& display_name);
 
   // Creates X11 Display connection for the default display (e.g. specified in
   // DISPLAY). NULL is returned if X11 connection failed.
-  static scoped_refptr<SharedXDisplay> CreateDefault();
+  static rtc::scoped_refptr<SharedXDisplay> CreateDefault();
 
   void AddRef() { ++ref_count_; }
   void Release() {
@@ -75,7 +79,7 @@ class SharedXDisplay {
 
   EventHandlersMap event_handlers_;
 
-  DISALLOW_COPY_AND_ASSIGN(SharedXDisplay);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SharedXDisplay);
 };
 
 }  // namespace webrtc

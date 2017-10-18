@@ -39,7 +39,8 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SVGAnimationElement,
                                            SVGAnimationElementBase)
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override = 0;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override = 0;
 
   // nsIContent specializations
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
@@ -58,7 +59,9 @@ public:
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   const nsAttrValue* GetAnimAttr(nsIAtom* aName) const;
   bool GetAnimAttr(nsIAtom* aAttName, nsAString& aResult) const;
@@ -66,12 +69,11 @@ public:
   Element* GetTargetElementContent();
   virtual bool GetTargetAttributeName(int32_t* aNamespaceID,
                                       nsIAtom** aLocalName) const;
-  virtual nsSMILTargetAttrType GetTargetAttributeType() const;
   nsSMILTimedElement& TimedElement();
   nsSMILTimeContainer* GetTimeContainer();
   virtual nsSMILAnimationFunction& AnimationFunction() = 0;
 
-  virtual bool IsEventAttributeName(nsIAtom* aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom* aName) override;
 
   // Utility methods for within SVG
   void ActivateByHyperlink();
@@ -85,6 +87,10 @@ public:
   void BeginElementAt(float offset, ErrorResult& rv);
   void EndElement(ErrorResult& rv) { EndElementAt(0.f, rv); }
   void EndElementAt(float offset, ErrorResult& rv);
+
+  // SVGTests
+  virtual bool IsInChromeDoc() const override;
+
 
  protected:
   // nsSVGElement overrides

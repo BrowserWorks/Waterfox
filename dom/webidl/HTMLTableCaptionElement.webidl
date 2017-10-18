@@ -11,9 +11,10 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLTableCaptionElement : HTMLElement {};
 
 partial interface HTMLTableCaptionElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString align;
 };

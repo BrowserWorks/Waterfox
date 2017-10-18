@@ -1,6 +1,8 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
+ * Copyright (C) 2002-2017 Németh László
+ *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +13,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Hunspell, based on MySpell.
- *
- * The Initial Developers of the Original Code are
- * Kevin Hendricks (MySpell) and Németh László (Hunspell).
- * Portions created by the Initial Developers are Copyright (C) 2002-2005
- * the Initial Developers. All Rights Reserved.
+ * Hunspell is based on MySpell which is Copyright (C) 2002 Kevin Hendricks.
  *
  * Contributor(s): David Einstein, Davide Prina, Giuseppe Modugno,
  * Gianluca Turconi, Simon Brouwer, Noll János, Bíró Árpád,
@@ -71,10 +68,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _HASHMGR_HXX_
-#define _HASHMGR_HXX_
-
-#include "hunvisapi.h"
+#ifndef HASHMGR_HXX_
+#define HASHMGR_HXX_
 
 #include <stdio.h>
 #include <string>
@@ -86,7 +81,7 @@
 
 enum flag { FLAG_CHAR, FLAG_LONG, FLAG_NUM, FLAG_UNI };
 
-class LIBHUNSPELL_DLL_EXPORTED HashMgr {
+class HashMgr {
   int tablesize;
   struct hentry** tableptr;
   flag flag_mode;
@@ -94,10 +89,10 @@ class LIBHUNSPELL_DLL_EXPORTED HashMgr {
   int utf8;
   unsigned short forbiddenword;
   int langnum;
-  char* enc;
-  char* lang;
+  std::string enc;
+  std::string lang;
   struct cs_info* csconv;
-  char* ignorechars;
+  std::string ignorechars;
   std::vector<w_char> ignorechars_utf16;
   int numaliasf;  // flag vector `compression' with aliases
   unsigned short** aliasf;
@@ -114,35 +109,36 @@ class LIBHUNSPELL_DLL_EXPORTED HashMgr {
   struct hentry* walk_hashtable(int& col, struct hentry* hp) const;
 
   int add(const std::string& word);
-  int add_with_affix(const char* word, const char* pattern);
-  int remove(const char* word);
-  int decode_flags(unsigned short** result, char* flags, FileMgr* af);
-  unsigned short decode_flag(const char* flag);
-  char* encode_flag(unsigned short flag);
-  int is_aliasf();
-  int get_aliasf(int index, unsigned short** fvec, FileMgr* af);
-  int is_aliasm();
-  char* get_aliasm(int index);
+  int add_with_affix(const std::string& word, const std::string& pattern);
+  int remove(const std::string& word);
+  int decode_flags(unsigned short** result, const std::string& flags, FileMgr* af) const;
+  bool decode_flags(std::vector<unsigned short>& result, const std::string& flags, FileMgr* af) const;
+  unsigned short decode_flag(const char* flag) const;
+  char* encode_flag(unsigned short flag) const;
+  int is_aliasf() const;
+  int get_aliasf(int index, unsigned short** fvec, FileMgr* af) const;
+  int is_aliasm() const;
+  char* get_aliasm(int index) const;
 
  private:
   int get_clen_and_captype(const std::string& word, int* captype);
+  int get_clen_and_captype(const std::string& word, int* captype, std::vector<w_char> &workbuf);
   int load_tables(const char* tpath, const char* key);
-  int add_word(const char* word,
-               int wbl,
+  int add_word(const std::string& word,
                int wcl,
                unsigned short* ap,
                int al,
-               const char* desc,
+               const std::string* desc,
                bool onlyupcase);
   int load_config(const char* affpath, const char* key);
-  int parse_aliasf(char* line, FileMgr* af);
+  bool parse_aliasf(const std::string& line, FileMgr* af);
   int add_hidden_capitalized_word(const std::string& word,
                                   int wcl,
                                   unsigned short* flags,
                                   int al,
-                                  char* dp,
+                                  const std::string* dp,
                                   int captype);
-  int parse_aliasm(char* line, FileMgr* af);
+  bool parse_aliasm(const std::string& line, FileMgr* af);
   int remove_forbidden_flag(const std::string& word);
 };
 

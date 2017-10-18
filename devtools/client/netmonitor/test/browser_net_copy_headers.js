@@ -1,30 +1,36 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
  * Tests if copying a request's request/response headers works.
  */
 
 add_task(function* () {
-
-  let [ aTab, aDebuggee, aMonitor ] = yield initNetMonitor(SIMPLE_URL);
+  let { tab, monitor } = yield initNetMonitor(SIMPLE_URL);
   info("Starting test... ");
 
-  let { NetMonitorView } = aMonitor.panelWin;
-  let { RequestsMenu } = NetMonitorView;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let {
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
+  let wait = waitForNetworkEvents(monitor, 1);
+  tab.linkedBrowser.reload();
+  yield wait;
 
-  aDebuggee.location.reload();
-  yield waitForNetworkEvents(aMonitor, 1);
+  EventUtils.sendMouseEvent({ type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]);
 
-  let requestItem = RequestsMenu.getItemAtIndex(0);
-  RequestsMenu.selectedItem = requestItem;
+  let requestItem = getSortedRequests(store.getState()).get(0);
+  let { method, httpVersion, status, statusText } = requestItem;
 
-  let clipboard = null;
+  EventUtils.sendMouseEvent({ type: "contextmenu" },
+    document.querySelectorAll(".request-list-item")[0]);
 
   const EXPECTED_REQUEST_HEADERS = [
-    requestItem.attachment.method + " " + SIMPLE_URL + " " + requestItem.attachment.httpVersion,
+    `${method} ${SIMPLE_URL} ${httpVersion}`,
     "Host: example.com",
     "User-Agent: " + navigator.userAgent + "",
     "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -36,29 +42,40 @@ add_task(function* () {
     "Cache-Control: no-cache"
   ].join("\n");
 
-  RequestsMenu.copyRequestHeaders();
-  clipboard = SpecialPowers.getClipboardData("text/unicode");
-  // Sometimes, a "Cookie" header is left over from other tests. Remove it:
-  clipboard = clipboard.replace(/Cookie: [^\n]+\n/, "");
-  is(clipboard, EXPECTED_REQUEST_HEADERS, "Clipboard contains the currently selected item's request headers.");
+  yield waitForClipboardPromise(function setup() {
+    monitor.panelWin.parent.document
+      .querySelector("#request-list-context-copy-request-headers").click();
+  }, function validate(result) {
+    // Sometimes, a "Cookie" header is left over from other tests. Remove it:
+    result = String(result).replace(/Cookie: [^\n]+\n/, "");
+    return result === EXPECTED_REQUEST_HEADERS;
+  });
+  info("Clipboard contains the currently selected item's request headers.");
 
   const EXPECTED_RESPONSE_HEADERS = [
-    requestItem.attachment.httpVersion + " " + requestItem.attachment.status + " " + requestItem.attachment.statusText,
-    "Last-Modified: Sun, 3 May 2015 11:11:11 GMT",
-    "Content-Type: text/html",
-    "Content-Length: 465",
-    "Connection: close",
-    "Server: httpd.js",
-    "Date: Sun, 3 May 2015 11:11:11 GMT"
+    `${httpVersion} ${status} ${statusText}`,
+    "last-modified: Sun, 3 May 2015 11:11:11 GMT",
+    "content-type: text/html",
+    "content-length: 465",
+    "connection: close",
+    "server: httpd.js",
+    "date: Sun, 3 May 2015 11:11:11 GMT"
   ].join("\n");
 
-  RequestsMenu.copyResponseHeaders();
-  clipboard = SpecialPowers.getClipboardData("text/unicode");
-  // Fake the "Last-Modified" and "Date" headers because they will vary:
-  clipboard = clipboard
-    .replace(/Last-Modified: [^\n]+ GMT/, "Last-Modified: Sun, 3 May 2015 11:11:11 GMT")
-    .replace(/Date: [^\n]+ GMT/, "Date: Sun, 3 May 2015 11:11:11 GMT");
-  is(clipboard, EXPECTED_RESPONSE_HEADERS, "Clipboard contains the currently selected item's response headers.");
+  EventUtils.sendMouseEvent({ type: "contextmenu" },
+    document.querySelectorAll(".request-list-item")[0]);
 
-  teardown(aMonitor).then(finish);
+  yield waitForClipboardPromise(function setup() {
+    monitor.panelWin.parent.document
+      .querySelector("#response-list-context-copy-response-headers").click();
+  }, function validate(result) {
+    // Fake the "Last-Modified" and "Date" headers because they will vary:
+    result = String(result)
+      .replace(/last-modified: [^\n]+ GMT/, "last-modified: Sun, 3 May 2015 11:11:11 GMT")
+      .replace(/date: [^\n]+ GMT/, "date: Sun, 3 May 2015 11:11:11 GMT");
+    return result === EXPECTED_RESPONSE_HEADERS;
+  });
+  info("Clipboard contains the currently selected item's response headers.");
+
+  yield teardown(monitor);
 });

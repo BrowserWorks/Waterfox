@@ -11,8 +11,8 @@
 #   http://www.w3.org/TR/SVGMobile12/coords.html#IntrinsicSizing
 #   http://www.w3.org/TR/CSS21/visudet.html
 
-skip-if(B2G||Mulet||Android) != scrollbars-01.svg scrollbars-01-anti-ref.svg # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet||Android) != scrollbars-02.svg scrollbars-01-anti-ref.svg # Initial mulet triage: parity with B2G/B2G Desktop
+skip-if(Android) != scrollbars-01.svg scrollbars-01-anti-ref.svg
+skip-if(Android) != scrollbars-02.svg scrollbars-01-anti-ref.svg
 
 # Standalone tests
 #
@@ -307,6 +307,6 @@ random-if(Android) == object--auto-auto--px-px.html        object--auto-auto--px
 == dynamic--inline-css-width.xhtml              pass.svg
 skip == dynamic--inline-resize-window-height.xhtml  pass.svg # XXX breaks the reftest run as the window height somehow is not restored
 skip == dynamic--inline-resize-window-width.xhtml    pass.svg # Fails way too much
-fails random-if(Android) == dynamic--object-svg-unloaded.xhtml     pass.svg
+fails-if(!styloVsGecko) random-if(Android) == dynamic--object-svg-unloaded.xhtml     pass.svg
 # == dynamic--object--auto-auto--pct-px.html 
 

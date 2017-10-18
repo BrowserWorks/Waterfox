@@ -95,7 +95,7 @@ struct VideoChunk {
 
   StreamTime mDuration;
   VideoFrame mFrame;
-  mozilla::TimeStamp mTimeStamp;
+  TimeStamp mTimeStamp;
 };
 
 class VideoSegment : public MediaSegmentBase<VideoSegment, VideoChunk> {
@@ -110,7 +110,8 @@ public:
                    StreamTime aDuration,
                    const IntSize& aIntrinsicSize,
                    const PrincipalHandle& aPrincipalHandle,
-                   bool aForceBlack = false);
+                   bool aForceBlack = false,
+                   TimeStamp aTimeStamp = TimeStamp::Now());
   const VideoFrame* GetLastFrame(StreamTime* aStart = nullptr)
   {
     VideoChunk* c = GetLastChunk();
@@ -138,6 +139,12 @@ public:
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
+
+  bool IsEmpty() const
+  {
+    return mChunks.IsEmpty();
+  }
+
 };
 
 } // namespace mozilla

@@ -6,14 +6,12 @@
 
 const Cu = Components.utils;
 
-const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
-
 this.EXPORTED_SYMBOLS = [
   "UITelemetry",
 ];
 
 Cu.import("resource://gre/modules/Services.jsm", this);
+Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 
 /**
  * UITelemetry is a helper JSM used to record UI specific telemetry events.
@@ -32,31 +30,27 @@ this.UITelemetry = {
     }
 
     // Set an observer to watch for changes at runtime.
-    Services.prefs.addObserver(PREF_ENABLED, this, false);
-    Services.obs.addObserver(this, "profile-before-change", false);
+    Services.prefs.addObserver(TelemetryUtils.Preferences.TelemetryEnabled, this);
+    Services.obs.addObserver(this, "profile-before-change");
 
     // Pick up the current value.
-    try {
-      this._enabled = Services.prefs.getBoolPref(PREF_ENABLED);
-    } catch (e) {
-      this._enabled = false;
-    }
+    this._enabled = Services.prefs.getBoolPref(TelemetryUtils.Preferences.TelemetryEnabled, false);
 
     return this._enabled;
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == "profile-before-change") {
       Services.obs.removeObserver(this, "profile-before-change");
-      Services.prefs.removeObserver(PREF_ENABLED, this);
+      Services.prefs.removeObserver(TelemetryUtils.Preferences.TelemetryEnabled, this);
       this._enabled = undefined;
       return;
     }
 
     if (aTopic == "nsPref:changed") {
       switch (aData) {
-        case PREF_ENABLED:
-          let on = Services.prefs.getBoolPref(PREF_ENABLED);
+        case TelemetryUtils.Preferences.TelemetryEnabled:
+          let on = Services.prefs.getBoolPref(TelemetryUtils.Preferences.TelemetryEnabled);
           this._enabled = on;
 
           // Wipe ourselves if we were just disabled.
@@ -89,7 +83,7 @@ this.UITelemetry = {
    * access to the Java timer.
    * XXX: Bug 1007647 - Support realtime and/or uptime in JavaScript.
    */
-  uptimeMillis: function() {
+  uptimeMillis() {
     return Date.now() - Services.startup.getStartupInfo().process;
   },
 
@@ -102,7 +96,7 @@ this.UITelemetry = {
    *
    * All extant sessions will be recorded by name for each event.
    */
-  addEvent: function(aAction, aMethod, aTimestamp, aExtras) {
+  addEvent(aAction, aMethod, aTimestamp, aExtras) {
     if (!this.enabled) {
       return;
     }
@@ -112,7 +106,7 @@ this.UITelemetry = {
       type: "event",
       action: aAction,
       method: aMethod,
-      sessions: sessions,
+      sessions,
       timestamp: (aTimestamp == undefined) ? this.uptimeMillis() : aTimestamp,
     };
 
@@ -126,7 +120,7 @@ this.UITelemetry = {
   /**
    * Begins tracking a session by storing a timestamp for session start.
    */
-  startSession: function(aName, aTimestamp) {
+  startSession(aName, aTimestamp) {
     if (!this.enabled) {
       return;
     }
@@ -141,7 +135,7 @@ this.UITelemetry = {
   /**
    * Tracks the end of a session with a timestamp.
    */
-  stopSession: function(aName, aReason, aTimestamp) {
+  stopSession(aName, aReason, aTimestamp) {
     if (!this.enabled) {
       return;
     }
@@ -164,7 +158,7 @@ this.UITelemetry = {
     this._recordEvent(aEvent);
   },
 
-  _recordEvent: function(aEvent) {
+  _recordEvent(aEvent) {
     this._measurements.push(aEvent);
   },
 
@@ -174,7 +168,7 @@ this.UITelemetry = {
    * via addSimpleMeasureFunction and return an object with the
    * results of those functions.
    */
-  getSimpleMeasures: function() {
+  getSimpleMeasures() {
     if (!this.enabled) {
       return {};
     }
@@ -195,7 +189,7 @@ this.UITelemetry = {
    * This function throws an exception if aName already has a function
    * registered for it.
    */
-  addSimpleMeasureFunction: function(aName, aFunction) {
+  addSimpleMeasureFunction(aName, aFunction) {
     if (!this.enabled) {
       return;
     }
@@ -204,14 +198,14 @@ this.UITelemetry = {
       throw new Error("A simple measurement function is already registered for " + aName);
     }
 
-    if (!aFunction || typeof aFunction !== 'function') {
+    if (!aFunction || typeof aFunction !== "function") {
       throw new Error("addSimpleMeasureFunction called with non-function argument.");
     }
 
     this._simpleMeasureFunctions[aName] = aFunction;
   },
 
-  removeSimpleMeasureFunction: function(aName) {
+  removeSimpleMeasureFunction(aName) {
     delete this._simpleMeasureFunctions[aName];
   },
 
@@ -221,7 +215,7 @@ this.UITelemetry = {
    *
    * Optionally clears the set of measurements based on aClear.
    */
-  getUIMeasurements: function(aClear) {
+  getUIMeasurements(aClear) {
     if (!this.enabled) {
       return [];
     }

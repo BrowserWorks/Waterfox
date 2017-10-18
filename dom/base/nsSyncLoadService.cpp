@@ -143,15 +143,17 @@ nsSyncLoader::LoadDocument(nsIChannel* aChannel,
     mChannel = aChannel;
     nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(mChannel);
     if (http) {
-        http->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
-                               NS_LITERAL_CSTRING("text/xml,application/xml,application/xhtml+xml,*/*;q=0.1"),
-                               false);
+        rv = http->SetRequestHeader(NS_LITERAL_CSTRING("Accept"),
+                                    NS_LITERAL_CSTRING("text/xml,application/xml,application/xhtml+xml,*/*;q=0.1"),
+                                    false);
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
         nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
         if (loadInfo) {
             nsCOMPtr<nsIURI> loaderUri;
             loadInfo->TriggeringPrincipal()->GetURI(getter_AddRefs(loaderUri));
             if (loaderUri) {
-              http->SetReferrerWithPolicy(loaderUri, aReferrerPolicy);
+                rv = http->SetReferrerWithPolicy(loaderUri, aReferrerPolicy);
+                MOZ_ASSERT(NS_SUCCEEDED(rv));
             }
         }
     }
@@ -174,8 +176,8 @@ nsSyncLoader::LoadDocument(nsIChannel* aChannel,
     // Start the document load. Do this before we attach the load listener
     // since we reset the document which drops all observers.
     nsCOMPtr<nsIStreamListener> listener;
-    rv = document->StartDocumentLoad(kLoadAsData, mChannel, 
-                                     loadGroup, nullptr, 
+    rv = document->StartDocumentLoad(kLoadAsData, mChannel,
+                                     loadGroup, nullptr,
                                      getter_AddRefs(listener),
                                      true);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -225,7 +227,7 @@ nsSyncLoader::PushAsyncStream(nsIStreamListener* aListener)
         mLoading = true;
         nsIThread *thread = NS_GetCurrentThread();
         while (mLoading && NS_SUCCEEDED(rv)) {
-            bool processedEvent; 
+            bool processedEvent;
             rv = thread->ProcessNextEvent(true, &processedEvent);
             if (NS_SUCCEEDED(rv) && !processedEvent)
                 rv = NS_ERROR_UNEXPECTED;
@@ -252,7 +254,7 @@ nsSyncLoader::PushSyncStream(nsIStreamListener* aListener)
     mLoading = true;
     rv = nsSyncLoadService::PushSyncStreamToListener(in, aListener, mChannel);
     mLoading = false;
-    
+
     return rv;
 }
 

@@ -9,7 +9,7 @@
 #include "ProtocolUtils.h"
 #include "SharedMemoryBasic.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 
 namespace mozilla {
@@ -25,7 +25,7 @@ public:
                id_t aIPDLId,
                size_t aSize,
                SharedMemory::SharedMemoryType aType) :
-    IPC::Message(routingId, SHMEM_CREATED_MESSAGE_TYPE, PRIORITY_URGENT)
+    IPC::Message(routingId, SHMEM_CREATED_MESSAGE_TYPE, 0, NESTED_INSIDE_CPOW)
   {
     IPC::WriteParam(this, aIPDLId);
     IPC::WriteParam(this, aSize);
@@ -60,7 +60,7 @@ private:
 public:
   ShmemDestroyed(int32_t routingId,
                  id_t aIPDLId) :
-    IPC::Message(routingId, SHMEM_DESTROYED_MESSAGE_TYPE, PRIORITY_NORMAL)
+    IPC::Message(routingId, SHMEM_DESTROYED_MESSAGE_TYPE)
   {
     IPC::WriteParam(this, aIPDLId);
   }

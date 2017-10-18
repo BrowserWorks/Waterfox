@@ -1,7 +1,9 @@
+//error: field `i' of struct `S' has unknown type `Foobers'
+
 struct S {
     Foobers i;
 };
 
 protocol structUnknownField {
-child: __delete__(S s);
+child: async __delete__(S s);
 };

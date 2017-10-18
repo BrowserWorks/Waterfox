@@ -4,11 +4,13 @@
 
 "use strict";
 
-var {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 var Services = require("Services");
 var {Task} = require("devtools/shared/task");
 var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
+
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/client/locales/toolbox.properties");
 
 const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -130,7 +132,8 @@ ToolSidebar.prototype = {
     this._allTabsBtn.setAttribute("top", "0");
     this._allTabsBtn.setAttribute("width", "15");
     this._allTabsBtn.setAttribute("type", "menu");
-    this._allTabsBtn.setAttribute("tooltiptext", l10n("sidebar.showAllTabs.tooltip"));
+    this._allTabsBtn.setAttribute("tooltiptext",
+      L10N.getStr("sidebar.showAllTabs.tooltip"));
     this._allTabsBtn.setAttribute("hidden", "true");
     allTabsContainer.appendChild(this._allTabsBtn);
 
@@ -138,8 +141,8 @@ ToolSidebar.prototype = {
     this._allTabsBtn.appendChild(menuPopup);
 
     // Listening to tabs overflow event to toggle the alltabs button
-    tabs.addEventListener("overflow", this._onTabBoxOverflow, false);
-    tabs.addEventListener("underflow", this._onTabBoxUnderflow, false);
+    tabs.addEventListener("overflow", this._onTabBoxOverflow);
+    tabs.addEventListener("underflow", this._onTabBoxUnderflow);
 
     // Add menuitems to the alltabs menu if there are already tabs in the
     // sidebar
@@ -160,8 +163,8 @@ ToolSidebar.prototype = {
 
     let tabs = this._tabbox.tabs;
 
-    tabs.removeEventListener("overflow", this._onTabBoxOverflow, false);
-    tabs.removeEventListener("underflow", this._onTabBoxUnderflow, false);
+    tabs.removeEventListener("overflow", this._onTabBoxOverflow);
+    tabs.removeEventListener("underflow", this._onTabBoxUnderflow);
 
     // Moving back the tabs as a first child of the tabbox
     this._tabbox.insertBefore(tabs, this._tabbox.tabpanels);
@@ -208,7 +211,7 @@ ToolSidebar.prototype = {
 
     item.addEventListener("click", () => {
       this._tabbox.selectedTab = tab;
-    }, false);
+    });
 
     tab.allTabsMenuItem = item;
 
@@ -428,7 +431,8 @@ ToolSidebar.prototype = {
    * @return {DOMNode}
    */
   getTab: function (id) {
-    return this._tabs.get(id);
+    // FIXME: A workaround for broken browser_net_raw_headers.js failure only in non-e10s mode
+    return this._tabs && this._tabs.get(id);
   },
 
   /**
@@ -572,7 +576,7 @@ ToolSidebar.prototype = {
     }
 
     while (this._tabbox.tabs && this._tabbox.tabs.hasChildNodes()) {
-      this._tabbox.tabs.removeChild(this._tabbox.tabs.firstChild);
+      this._tabbox.tabs.firstChild.remove();
     }
 
     if (this._currentTool && this._telemetry) {
@@ -587,19 +591,3 @@ ToolSidebar.prototype = {
     this._toolPanel = null;
   })
 };
-
-XPCOMUtils.defineLazyGetter(this, "l10n", function () {
-  let bundle = Services.strings.createBundle("chrome://devtools/locale/toolbox.properties");
-  let l10n = function (aName, ...aArgs) {
-    try {
-      if (aArgs.length == 0) {
-        return bundle.GetStringFromName(aName);
-      } else {
-        return bundle.formatStringFromName(aName, aArgs, aArgs.length);
-      }
-    } catch (ex) {
-      console.log("Error reading '" + aName + "'");
-    }
-  };
-  return l10n;
-});

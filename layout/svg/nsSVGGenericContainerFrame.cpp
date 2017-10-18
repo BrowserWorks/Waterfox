@@ -36,12 +36,6 @@ nsSVGGenericContainerFrame::AttributeChanged(int32_t         aNameSpaceID,
   return NS_OK;
 }
 
-nsIAtom *
-nsSVGGenericContainerFrame::GetType() const
-{
-  return nsGkAtoms::svgGenericContainerFrame;
-}
-
 //----------------------------------------------------------------------
 // nsSVGContainerFrame methods:
 
@@ -49,6 +43,6 @@ gfxMatrix
 nsSVGGenericContainerFrame::GetCanvasTM()
 {
   NS_ASSERTION(GetParent(), "null parent");
-  
+
   return static_cast<nsSVGContainerFrame*>(GetParent())->GetCanvasTM();
 }

@@ -50,17 +50,16 @@ Throw(JSContext* cx, nsresult rv)
 bool
 XPCThrower::CheckForPendingException(nsresult result, JSContext* cx)
 {
-    nsCOMPtr<nsIException> e = XPCJSRuntime::Get()->GetPendingException();
+    nsCOMPtr<nsIException> e = XPCJSContext::Get()->GetPendingException();
     if (!e)
         return false;
-    XPCJSRuntime::Get()->SetPendingException(nullptr);
+    XPCJSContext::Get()->SetPendingException(nullptr);
 
     nsresult e_result;
     if (NS_FAILED(e->GetResult(&e_result)) || e_result != result)
         return false;
 
-    if (!ThrowExceptionObject(cx, e))
-        JS_ReportOutOfMemory(cx);
+    ThrowExceptionObject(cx, e);
     return true;
 }
 
@@ -86,7 +85,7 @@ XPCThrower::Throw(nsresult rv, XPCCallContext& ccx)
     dom::Throw(ccx, rv, nsDependentCString(sz));
 
     if (sz && sz != format)
-        JS_smprintf_free(sz);
+        js_free(sz);
 }
 
 
@@ -117,9 +116,9 @@ XPCThrower::ThrowBadResult(nsresult rv, nsresult result, XPCCallContext& ccx)
         format = "";
 
     if (nsXPCException::NameAndFormatForNSResult(result, &name, nullptr) && name)
-        sz = JS_smprintf("%s 0x%x (%s)", format, result, name);
+        sz = JS_smprintf("%s 0x%x (%s)", format, (unsigned) result, name).release();
     else
-        sz = JS_smprintf("%s 0x%x", format, result);
+        sz = JS_smprintf("%s 0x%x", format, (unsigned) result).release();
     NS_ENSURE_TRUE_VOID(sz);
 
     if (sz && sVerbose)
@@ -128,7 +127,7 @@ XPCThrower::ThrowBadResult(nsresult rv, nsresult result, XPCCallContext& ccx)
     dom::Throw(ccx, result, nsDependentCString(sz));
 
     if (sz)
-        JS_smprintf_free(sz);
+        js_free(sz);
 }
 
 // static
@@ -141,7 +140,7 @@ XPCThrower::ThrowBadParam(nsresult rv, unsigned paramNum, XPCCallContext& ccx)
     if (!nsXPCException::NameAndFormatForNSResult(rv, nullptr, &format))
         format = "";
 
-    sz = JS_smprintf("%s arg %d", format, paramNum);
+    sz = JS_smprintf("%s arg %d", format, paramNum).release();
     NS_ENSURE_TRUE_VOID(sz);
 
     if (sz && sVerbose)
@@ -150,7 +149,7 @@ XPCThrower::ThrowBadParam(nsresult rv, unsigned paramNum, XPCCallContext& ccx)
     dom::Throw(ccx, rv, nsDependentCString(sz));
 
     if (sz)
-        JS_smprintf_free(sz);
+        js_free(sz);
 }
 
 
@@ -169,12 +168,12 @@ XPCThrower::Verbosify(XPCCallContext& ccx,
         if (!name) {
             name = "";
         }
-        sz = JS_smprintf("%s [%s.%s]", *psz, iface->GetNameString(), name);
+        sz = JS_smprintf("%s [%s.%s]", *psz, iface->GetNameString(), name).release();
     }
 
     if (sz) {
         if (own)
-            JS_smprintf_free(*psz);
+            js_free(*psz);
         *psz = sz;
     }
 }

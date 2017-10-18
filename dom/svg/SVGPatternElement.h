@@ -43,7 +43,8 @@ public:
   // nsIContent interface
   NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* name) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // nsSVGSVGElement methods:
   virtual bool HasValidDimensions() const override;
@@ -84,9 +85,9 @@ protected:
 
   nsAutoPtr<mozilla::nsSVGAnimatedTransformList> mPatternTransform;
 
-  enum { HREF };
-  nsSVGString mStringAttributes[1];
-  static StringInfo sStringInfo[1];
+  enum { HREF, XLINK_HREF };
+  nsSVGString mStringAttributes[2];
+  static StringInfo sStringInfo[2];
 
   // SVGFitToViewbox properties
   nsSVGViewBox mViewBox;

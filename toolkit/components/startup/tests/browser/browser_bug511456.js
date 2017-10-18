@@ -12,23 +12,23 @@ function test() {
   waitForExplicitFinish();
   ignoreAllUncaughtExceptions();
 
+  // Create foreground window
   let win2 = window.openDialog(location, "", "chrome,all,dialog=no", "about:blank");
-  win2.addEventListener("load", function onLoad() {
-    win2.removeEventListener("load", onLoad);
+  win2.addEventListener("load", function() {
+    // Create background test tab
+    let browser = BrowserTestUtils.addTab(gBrowser, TEST_URL).linkedBrowser;
 
-    gBrowser.selectedTab = gBrowser.addTab(TEST_URL);
-    let browser = gBrowser.selectedBrowser;
-
-    whenBrowserLoaded(browser, function () {
+    whenBrowserLoaded(browser, function() {
       let seenDialog = false;
 
       // Cancel the prompt the first time.
       waitForOnBeforeUnloadDialog(browser, (btnLeave, btnStay) => {
-        seenDialog = true;
+        seenDialog = Services.focus.activeWindow == window &&
+                     gBrowser.selectedBrowser == browser;
         btnStay.click();
       });
 
-      let appStartup = Cc['@mozilla.org/toolkit/app-startup;1'].
+      let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].
                          getService(Ci.nsIAppStartup);
       appStartup.quit(Ci.nsIAppStartup.eAttemptQuit);
       ok(seenDialog, "Should have seen a prompt dialog");
@@ -43,5 +43,5 @@ function test() {
       gBrowser.removeTab(gBrowser.selectedTab);
       executeSoon(finish);
     });
-  });
+  }, {once: true});
 }

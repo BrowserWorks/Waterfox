@@ -15,7 +15,7 @@ txNameTest::txNameTest(nsIAtom* aPrefix, nsIAtom* aLocalName, int32_t aNSID,
      mNodeType(aNodeType)
 {
     if (aPrefix == nsGkAtoms::_empty)
-        mPrefix = 0;
+        mPrefix = nullptr;
     NS_ASSERTION(aLocalName, "txNameTest without a local name?");
     NS_ASSERTION(aNodeType == txXPathNodeType::DOCUMENT_NODE ||
                  aNodeType == txXPathNodeType::ELEMENT_NODE ||
@@ -23,7 +23,9 @@ txNameTest::txNameTest(nsIAtom* aPrefix, nsIAtom* aLocalName, int32_t aNSID,
                  "Go fix txNameTest::matches");
 }
 
-bool txNameTest::matches(const txXPathNode& aNode, txIMatchContext* aContext)
+nsresult
+txNameTest::matches(const txXPathNode& aNode, txIMatchContext* aContext,
+                    bool& aMatched)
 {
     if ((mNodeType == txXPathNodeType::ELEMENT_NODE &&
          !txXPathNodeUtils::isElement(aNode)) ||
@@ -31,26 +33,34 @@ bool txNameTest::matches(const txXPathNode& aNode, txIMatchContext* aContext)
          !txXPathNodeUtils::isAttribute(aNode)) ||
         (mNodeType == txXPathNodeType::DOCUMENT_NODE &&
          !txXPathNodeUtils::isRoot(aNode))) {
-        return false;
+        aMatched = false;
+        return NS_OK;
     }
 
     // Totally wild?
-    if (mLocalName == nsGkAtoms::_asterisk && !mPrefix)
-        return true;
+    if (mLocalName == nsGkAtoms::_asterisk && !mPrefix) {
+        aMatched = true;
+        return NS_OK;
+    }
 
     // Compare namespaces
-    if (mNamespace != txXPathNodeUtils::getNamespaceID(aNode) 
+    if (mNamespace != txXPathNodeUtils::getNamespaceID(aNode)
         && !(mNamespace == kNameSpaceID_None &&
              txXPathNodeUtils::isHTMLElementInHTMLDocument(aNode))
-       )
-        return false;
+       ) {
+        aMatched = false;
+        return NS_OK;
+    }
 
     // Name wild?
-    if (mLocalName == nsGkAtoms::_asterisk)
-        return true;
+    if (mLocalName == nsGkAtoms::_asterisk) {
+        aMatched = true;
+        return NS_OK;
+    }
 
     // Compare local-names
-    return txXPathNodeUtils::localNameEquals(aNode, mLocalName);
+    aMatched = txXPathNodeUtils::localNameEquals(aNode, mLocalName);
+    return NS_OK;
 }
 
 /*

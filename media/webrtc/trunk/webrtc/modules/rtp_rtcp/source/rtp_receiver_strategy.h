@@ -11,14 +11,15 @@
 #ifndef WEBRTC_MODULES_RTP_RTCP_SOURCE_RTP_RECEIVER_STRATEGY_H_
 #define WEBRTC_MODULES_RTP_RTCP_SOURCE_RTP_RECEIVER_STRATEGY_H_
 
-#include "webrtc/base/scoped_ptr.h"
-#include "webrtc/modules/rtp_rtcp/interface/rtp_rtcp.h"
-#include "webrtc/modules/rtp_rtcp/interface/rtp_rtcp_defines.h"
+#include "webrtc/base/criticalsection.h"
+#include "webrtc/modules/rtp_rtcp/include/rtp_rtcp.h"
+#include "webrtc/modules/rtp_rtcp/include/rtp_rtcp_defines.h"
 #include "webrtc/modules/rtp_rtcp/source/rtp_utility.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/typedefs.h"
 
 namespace webrtc {
+
+struct CodecInst;
 
 class TelephoneEventHandler;
 
@@ -27,9 +28,7 @@ class TelephoneEventHandler;
 class RTPReceiverStrategy {
  public:
   static RTPReceiverStrategy* CreateVideoStrategy(RtpData* data_callback);
-  static RTPReceiverStrategy* CreateAudioStrategy(
-      int32_t id, RtpData* data_callback,
-      RtpAudioFeedback* incoming_messages_callback);
+  static RTPReceiverStrategy* CreateAudioStrategy(RtpData* data_callback);
 
   virtual ~RTPReceiverStrategy() {}
 
@@ -49,9 +48,6 @@ class RTPReceiverStrategy {
 
   virtual TelephoneEventHandler* GetTelephoneEventHandler() = 0;
 
-  // Retrieves the last known applicable frequency.
-  virtual int GetPayloadTypeFrequency() const = 0;
-
   // Computes the current dead-or-alive state.
   virtual RTPAliveType ProcessDeadOrAlive(
       uint16_t last_payload_length) const = 0;
@@ -60,17 +56,13 @@ class RTPReceiverStrategy {
   // TODO(phoglund): should move out of here along with other payload stuff.
   virtual bool ShouldReportCsrcChanges(uint8_t payload_type) const = 0;
 
-  // Notifies the strategy that we have created a new non-RED payload type in
-  // the payload registry.
-  virtual int32_t OnNewPayloadTypeCreated(
-      const char payloadName[RTP_PAYLOAD_NAME_SIZE],
-      int8_t payloadType,
-      uint32_t frequency) = 0;
+  // Notifies the strategy that we have created a new non-RED audio payload type
+  // in the payload registry.
+  virtual int32_t OnNewPayloadTypeCreated(const CodecInst& audio_codec) = 0;
 
   // Invokes the OnInitializeDecoder callback in a media-specific way.
   virtual int32_t InvokeOnInitializeDecoder(
       RtpFeedback* callback,
-      int32_t id,
       int8_t payload_type,
       const char payload_name[RTP_PAYLOAD_NAME_SIZE],
       const PayloadUnion& specific_payload) const = 0;
@@ -79,7 +71,6 @@ class RTPReceiverStrategy {
   // reset statistics and/or discard this packet.
   virtual void CheckPayloadChanged(int8_t payload_type,
                                    PayloadUnion* specific_payload,
-                                   bool* should_reset_statistics,
                                    bool* should_discard_changes);
 
   virtual int Energy(uint8_t array_of_energy[kRtpCsrcSize]) const;
@@ -97,9 +88,9 @@ class RTPReceiverStrategy {
   // Note: Implementations may call the callback for other reasons than calls
   // to ParseRtpPacket, for instance if the implementation somehow recovers a
   // packet.
-  RTPReceiverStrategy(RtpData* data_callback);
+  explicit RTPReceiverStrategy(RtpData* data_callback);
 
-  rtc::scoped_ptr<CriticalSectionWrapper> crit_sect_;
+  rtc::CriticalSection crit_sect_;
   PayloadUnion last_payload_;
   RtpData* data_callback_;
 };

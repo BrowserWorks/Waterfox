@@ -12,33 +12,33 @@
   --viewport-color: #999797;
   --viewport-hover-color: var(--theme-body-color);
   --viewport-active-color: #3b3b3b;
-  --viewport-selection-arrow: url("./images/select-arrow.svg#light");
-  --viewport-selection-arrow-hovered:
-    url("./images/select-arrow.svg#light-hovered");
-  --viewport-selection-arrow-selected:
-    url("./images/select-arrow.svg#light-selected");
+  --viewport-selection-arrow: url("./images/select-arrow.svg");
 }
 
 .theme-dark {
   --rdm-box-shadow: 0 4px 4px 0 rgba(105, 105, 105, 0.26);
-  --submit-button-active-background-color: var(--toolbar-tab-hover-active);
+  --submit-button-active-background-color: var(--theme-toolbar-hover-active);
   --submit-button-active-color: var(--theme-selection-color);
   --viewport-color: #c6ccd0;
   --viewport-hover-color: #dde1e4;
   --viewport-active-color: #fcfcfc;
-  --viewport-selection-arrow: url("./images/select-arrow.svg#dark");
-  --viewport-selection-arrow-hovered:
-    url("./images/select-arrow.svg#dark-hovered");
-  --viewport-selection-arrow-selected:
-    url("./images/select-arrow.svg#dark-selected");
+  --viewport-selection-arrow: url("./images/select-arrow.svg");
 }
 
 * {
   box-sizing: border-box;
 }
 
-#root,
-html, body {
+:root,
+input,
+select,
+button {
+  font-size: 11px;
+}
+
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
 }
@@ -55,7 +55,7 @@ html, body {
 }
 
 /**
- * Common style for containers and toolbar buttons
+ * Common styles for shared components
  */
 
 .container {
@@ -64,17 +64,69 @@ html, body {
 }
 
 .toolbar-button {
-  margin: 1px 3px;
-  width: 16px;
-  height: 16px;
-  /* Reset styles from .devtools-button */
-  min-width: initial;
-  min-height: initial;
-  align-self: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.toolbar-button:empty:hover:not(:disabled),
+.toolbar-button:empty:-moz-any(:hover:active, .checked):not(:disabled) {
+  /* Reset background from .devtools-button */
+  background: none;
 }
 
 .toolbar-button:active::before {
-  filter: url("chrome://devtools/skin/images/filters.svg#checked-icon-state");
+  filter: var(--checked-icon-filter);
+}
+
+select {
+  -moz-appearance: none;
+  background-color: var(--theme-toolbar-background);
+  background-image: var(--viewport-selection-arrow);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  color: var(--viewport-color);
+  background-position: 100% 50%;
+  background-repeat: no-repeat;
+  background-size: 7px;
+  border: none;
+  height: 100%;
+  padding: 0 8px;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+select.selected {
+  color: var(--viewport-active-color);
+}
+
+select:not(:disabled):hover {
+  color: var(--viewport-hover-color);
+}
+
+/* This is (believed to be?) separate from the identical select.selected rule
+   set so that it overrides select:hover because of file ordering once the
+   select is focused.  It's unclear whether the visual effect that results here
+   is intentional and desired. */
+select:focus {
+  color: var(--viewport-active-color);
+}
+
+select > option {
+  text-align: left;
+  padding: 5px 10px;
+}
+
+select > option,
+select > option:hover {
+  color: var(--viewport-active-color);
+}
+
+select > option.divider {
+  border-top: 1px solid var(--theme-splitter-color);
+  height: 0px;
+  padding: 0;
+  font-size: 0px;
 }
 
 /**
@@ -96,41 +148,67 @@ html, body {
   padding: 1px 6px 0 2px;
 }
 
-#global-toolbar .toolbar-button {
-  margin: 0 0 0 5px;
-  padding: 0;
-}
-
-#global-toolbar .toolbar-button,
-#global-toolbar .toolbar-button::before {
+#global-toolbar > .toolbar-button::before {
   width: 12px;
   height: 12px;
 }
 
 #global-touch-simulation-button::before {
   background-image: url("./images/touch-events.svg");
-  margin: -6px 0 0 -6px;
-}
-
-#global-touch-simulation-button.active::before {
-  filter: url("chrome://devtools/skin/images/filters.svg#checked-icon-state");
 }
 
 #global-screenshot-button::before {
   background-image: url("./images/screenshot.svg");
-  margin: -6px 0 0 -6px;
 }
 
 #global-exit-button::before {
-  background-image: url("./images/close.svg");
-  margin: -6px 0 0 -6px;
+  background-image: url("chrome://devtools/skin/images/close.svg");
 }
 
 #global-screenshot-button:disabled {
-  filter: url("chrome://devtools/skin/images/filters.svg#checked-icon-state");
+  filter: var(--checked-icon-filter);
   opacity: 1 !important;
 }
 
+#global-network-throttling-selector {
+  height: 15px;
+  padding-left: 0;
+  width: 103px;
+}
+
+#global-dpr-selector > select {
+  padding: 0 8px 0 0;
+  margin-left: 2px;
+}
+
+#global-dpr-selector {
+  margin: 0 8px;
+  -moz-user-select: none;
+  color: var(--viewport-color);
+  height: 15px;
+}
+
+#global-dpr-selector.focused,
+#global-dpr-selector:not(.disabled):hover {
+  color: var(--viewport-hover-color);
+}
+
+#global-dpr-selector:not(.disabled):hover > select {
+  color: var(--viewport-hover-color);
+}
+
+#global-dpr-selector:focus > select {
+  color: var(--viewport-active-color);
+}
+
+#global-dpr-selector.selected,
+#global-dpr-selector.selected > select {
+  color: var(--viewport-active-color);
+}
+
+#global-dpr-selector > select > option {
+  padding: 5px;
+}
 
 #viewports {
   /* Make sure left-most viewport is visible when there's horizontal overflow.
@@ -169,51 +247,7 @@ html, body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  height: 18px;
-}
-
-.viewport-device-selector {
-  -moz-appearance: none;
-  background-color: var(--theme-toolbar-background);
-  background-image: var(--viewport-selection-arrow);
-  background-position: 100% 52%;
-  background-repeat: no-repeat;
-  background-size: 7px;
-  border: none;
-  color: var(--viewport-color);
-  height: 100%;
-  padding: 0 8px 0 8px;
-  text-align: center;
-  text-overflow: ellipsis;
-  width: 150px;
-  font-size: 11px;
-  width: -moz-fit-content;
-}
-
-.viewport-device-selector.selected {
-  background-image: var(--viewport-selection-arrow-selected);
-  color: var(--viewport-active-color);
-}
-
-.viewport-device-selector:hover {
-  background-image: var(--viewport-selection-arrow-hovered);
-  color: var(--viewport-hover-color);
-}
-
-.viewport-device-selector:focus {
-  background-image: var(--viewport-selection-arrow-selected);
-  color: var(--viewport-active-color);
-}
-
-.viewport-device-selector > option {
-  text-align: left;
-  padding: 5px 10px;
-}
-
-.viewport-device-selector > option,
-.viewport-device-selector > option:hover,
-.viewport-device-selector:hover > option:hover {
-  color: var(--viewport-active-color);
+  height: 16px;
 }
 
 .viewport-rotate-button {
@@ -245,6 +279,11 @@ html, body {
 .browser {
   display: block;
   border: 0;
+  -moz-user-select: none;
+}
+
+.browser:-moz-focusring {
+  outline: none;
 }
 
 /**
@@ -295,7 +334,7 @@ html, body {
   display: flex;
   justify-content: center;
   font: 10px sans-serif;
-  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .viewport-dimension-editable {
@@ -311,6 +350,7 @@ html, body {
 .viewport-dimension-editable.editing,
 .viewport-dimension-input.editing {
   color: var(--viewport-active-color);
+  outline: none;
 }
 
 .viewport-dimension-editable.editing {
@@ -369,7 +409,7 @@ html, body {
   left: 0;
   right: 0;
   width: 642px;
-  height: 612px;
+  height: 650px;
   z-index: 1;
 }
 
@@ -402,9 +442,9 @@ html, body {
   flex-direction: column;
   flex-wrap: wrap;
   overflow: auto;
-  height: 550px;
+  height: 515px;
   width: 600px;
-  margin: 20px;
+  margin: 20px 20px 0;
 }
 
 #device-close-button,
@@ -417,7 +457,7 @@ html, body {
 }
 
 #device-close-button::before {
-  background-image: url("./images/close.svg");
+  background-image: url("chrome://devtools/skin/images/close.svg");
   margin: -6px 0 0 -6px;
 }
 
@@ -428,21 +468,36 @@ html, body {
 }
 
 .device-header {
-  font-size: 11px;
   font-weight: bold;
   text-transform: capitalize;
   padding: 0 0 3px 23px;
 }
 
 .device-label {
-  font-size: 11px;
   padding-bottom: 3px;
   display: flex;
   align-items: center;
+  /* Largest size without horizontal scrollbars */
+  max-width: 181px;
 }
 
 .device-input-checkbox {
   margin-right: 5px;
+}
+
+.device-name {
+  flex: 1;
+}
+
+.device-remove-button,
+.device-remove-button:empty::before {
+  width: 12px;
+  height: 12px;
+}
+
+.device-remove-button:empty::before {
+  background-image: url("chrome://devtools/skin/images/close.svg");
+  margin: -6px 0 0 -6px;
 }
 
 #device-submit-button {
@@ -454,13 +509,82 @@ html, body {
   color: var(--theme-body-color);
   width: 100%;
   height: 20px;
+  position: absolute;
+  bottom: 0;
 }
 
 #device-submit-button:hover {
-  background-color: var(--toolbar-tab-hover);
+  background-color: var(--theme-toolbar-hover);
 }
 
 #device-submit-button:hover:active {
   background-color: var(--submit-button-active-background-color);
   color: var(--submit-button-active-color);
+}
+
+/**
+ * Device Adder
+ */
+
+#device-adder {
+  display: flex;
+  flex-direction: column;
+  margin: 0 20px;
+}
+
+#device-adder-content {
+  display: flex;
+}
+
+#device-adder-column-1 {
+  flex: 1;
+  margin-right: 10px;
+}
+
+#device-adder-column-2 {
+  flex: 2;
+}
+
+#device-adder button {
+  background-color: var(--theme-tab-toolbar-background);
+  border: 1px solid var(--theme-splitter-color);
+  border-radius: 2px;
+  color: var(--theme-body-color);
+  margin: 0 auto;
+}
+
+#device-adder label {
+  display: flex;
+  margin-bottom: 5px;
+  align-items: center;
+}
+
+#device-adder label > input,
+#device-adder label > .viewport-dimension {
+  flex: 1;
+  margin: 0;
+}
+
+#device-adder input {
+  background: transparent;
+  border: 1px solid transparent;
+  text-align: center;
+  color: var(--theme-body-color-inactive);
+  transition: all 0.25s ease;
+}
+
+#device-adder input:focus {
+  color: var(--viewport-active-color);
+}
+
+#device-adder label > input:focus,
+#device-adder label > .viewport-dimension:focus  {
+  border-bottom: 1px solid var(--theme-selection-background);
+  outline: none;
+}
+
+.device-adder-label {
+  display: inline-block;
+  margin-right: 5px;
+  min-width: 35px;
 }

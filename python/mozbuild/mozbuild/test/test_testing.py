@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 
+import cPickle as pickle
 import os
 import shutil
 import tempfile
@@ -21,8 +22,7 @@ from mozbuild.testing import (
 )
 
 
-ALL_TESTS_JSON = b'''
-[{
+ALL_TESTS = {
     "accessible/tests/mochitest/actions/test_anchors.html": [
         {
             "dir_relpath": "accessible/tests/mochitest/actions",
@@ -48,7 +48,6 @@ ALL_TESTS_JSON = b'''
             "name": "test_async_chain.js",
             "path": "/Users/gps/src/firefox/services/common/tests/unit/test_async_chain.js",
             "relpath": "test_async_chain.js",
-            "tail": ""
         }
     ],
     "services/common/tests/unit/test_async_querySpinningly.js": [
@@ -63,7 +62,6 @@ ALL_TESTS_JSON = b'''
             "name": "test_async_querySpinningly.js",
             "path": "/Users/gps/src/firefox/services/common/tests/unit/test_async_querySpinningly.js",
             "relpath": "test_async_querySpinningly.js",
-            "tail": ""
         }
     ],
    "toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js": [
@@ -80,8 +78,7 @@ ALL_TESTS_JSON = b'''
             "reason": "bug 820380",
             "relpath": "test_0201_app_launch_apply_update.js",
             "run-sequentially": "Launches application.",
-            "skip-if": "toolkit == 'gonk' || os == 'android'",
-            "tail": ""
+            "skip-if": "os == 'android'",
         },
         {
             "dir_relpath": "toolkit/mozapps/update/test/unit",
@@ -96,8 +93,7 @@ ALL_TESTS_JSON = b'''
             "reason": "bug 820380",
             "relpath": "test_0201_app_launch_apply_update.js",
             "run-sequentially": "Launches application.",
-            "skip-if": "toolkit == 'gonk' || os == 'android'",
-            "tail": ""
+            "skip-if": "os == 'android'",
         }
     ],
     "mobile/android/tests/background/junit3/src/common/TestAndroidLogWriters.java": [
@@ -154,9 +150,11 @@ ALL_TESTS_JSON = b'''
             "tags": "devtools"
         }
    ]
-}, {
-   "/Users/gps/src/firefox/toolkit/mozapps/update/test/unit/xpcshell_updater.ini": "\\ndata/**\\nxpcshell_updater.ini"
-}]'''.strip()
+}
+
+TEST_DEFAULTS = {
+    "/Users/gps/src/firefox/toolkit/mozapps/update/test/unit/xpcshell_updater.ini": {"support-files": "\ndata/**\nxpcshell_updater.ini"}
+}
 
 
 class Base(unittest.TestCase):
@@ -170,12 +168,17 @@ class Base(unittest.TestCase):
         self._temp_files = []
 
     def _get_test_metadata(self):
-        f = NamedTemporaryFile()
-        f.write(ALL_TESTS_JSON)
-        f.flush()
-        self._temp_files.append(f)
+        all_tests = NamedTemporaryFile(mode='wb')
+        pickle.dump(ALL_TESTS, all_tests)
+        all_tests.flush()
+        self._temp_files.append(all_tests)
 
-        return TestMetadata(filename=f.name)
+        test_defaults = NamedTemporaryFile(mode='wb')
+        pickle.dump(TEST_DEFAULTS, test_defaults)
+        test_defaults.flush()
+        self._temp_files.append(test_defaults)
+
+        return TestMetadata(all_tests.name, test_defaults=test_defaults.name)
 
 
 class TestTestMetadata(Base):
@@ -244,8 +247,10 @@ class TestTestResolver(Base):
         topobjdir = tempfile.mkdtemp()
         self._temp_dirs.append(topobjdir)
 
-        with open(os.path.join(topobjdir, 'all-tests.json'), 'wt') as fh:
-            fh.write(ALL_TESTS_JSON)
+        with open(os.path.join(topobjdir, 'all-tests.pkl'), 'wb') as fh:
+            pickle.dump(ALL_TESTS, fh)
+        with open(os.path.join(topobjdir, 'test-defaults.pkl'), 'wb') as fh:
+            pickle.dump(TEST_DEFAULTS, fh)
 
         o = MozbuildObject(self.FAKE_TOPSRCDIR, None, None, topobjdir=topobjdir)
 

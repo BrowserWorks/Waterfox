@@ -30,10 +30,6 @@ sync protocol PRenderFrame
 parent:
     async NotifyCompositorTransaction();
 
-    async UpdateHitRegion(nsRegion aRegion);
-
-    sync TakeFocusForClickFromTap();
-
     async __delete__();
 };
 

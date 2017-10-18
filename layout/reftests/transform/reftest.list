@@ -3,19 +3,20 @@
 # this test.
 == singular-1a.html about:blank
 # Multiple transforms should act identically to nested divs.
-== compound-1a.html compound-1-ref.html
+fuzzy-if(webrender,1,27) == compound-1a.html compound-1-ref.html
 != compound-1a.html compound-1-fail.html
 == dynamic-inherit-1.html dynamic-inherit-1-ref.html
 == dynamic-addremove-1a.html dynamic-addremove-1-ref.html
 == dynamic-addremove-1b.html dynamic-addremove-1-ref.html
 == dynamic-addremove-1c.html dynamic-addremove-1-ref.html
+== dynamic-addremove-2.html dynamic-addremove-2-ref.html
 # translatex should act like position: relative
-skip-if(B2G||Mulet) == translatex-1a.html translatex-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translatex-1b.html translatex-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translatex-1c.html translatex-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translatex-1d.html translatex-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translatex-1e.html translatex-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translatex-1a.html translatex-1-ref-2.html # Initial mulet triage: parity with B2G/B2G Desktop
+== translatex-1a.html translatex-1-ref.html
+== translatex-1b.html translatex-1-ref.html
+== translatex-1c.html translatex-1-ref.html
+== translatex-1d.html translatex-1-ref.html
+== translatex-1e.html translatex-1-ref.html
+== translatex-1a.html translatex-1-ref-2.html
 # translatey should act like position: relative
 == translatey-1a.html translatey-1-ref.html
 == translatey-1b.html translatey-1-ref.html
@@ -23,15 +24,16 @@ skip-if(B2G||Mulet) == translatex-1a.html translatex-1-ref-2.html # Initial mule
 == translatey-1d.html translatey-1-ref.html
 == translatey-1e.html translatey-1-ref.html
 # matrices defined to be translations should act like position: relative
-skip-if(B2G||Mulet) == translatex-2.html translatex-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
+== translatex-2.html translatex-1-ref.html
 == translatey-2.html translatey-1-ref.html
 # translate should act like position: relative
-skip-if(B2G||Mulet) != translate-1a.html translate-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translate-1b.html translate-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translate-1c.html translate-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translate-1d.html translate-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translate-1e.html translate-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == translate-2a.html translate-2-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+!= translate-1a.html translate-1-ref.html
+== translate-1b.html translate-1-ref.html
+== translate-1c.html translate-1-ref.html
+== translate-1d.html translate-1-ref.html
+== translate-1e.html translate-1-ref.html
+== translate-2a.html translate-2-ref.html
+== translate-3.html translate-3-ref.html
 # rotate: Several rotations of the same object should be idempotent.  These
 # tests are currently disabled because of subpixel (< 0.00001 gfx units)
 # rounding errors.
@@ -86,9 +88,9 @@ fuzzy-if(skiaContent,1,350) == origin-name-2c.html origin-name-2-ref.html
 fuzzy-if(skiaContent,2,500) == transform-svg-2a.xhtml transform-svg-2-ref.xhtml
 != transform-svg-2a.xhtml transform-svg-2-fail.xhtml
 # skew should allow a mix of one and two parameters.
-== skew-1a.html skew-1-ref.html
+fuzzy-if(webrender,1,20) == skew-1a.html skew-1-ref.html
 fuzzy-if(skiaContent,1,80) == skew-1b.html skew-1-ref.html
-== skew-2a.html skew-2-ref.html
+fuzzy-if(webrender,1,250) == skew-2a.html skew-2-ref.html
 # matrix with values equal to other transforms should behave indistinguishably
 == matrix-1a.html matrix-1-ref.html
 == matrix-2a.html matrix-2-ref.html
@@ -100,7 +102,7 @@ fuzzy-if(skiaContent,1,110) == matrix-6a.html matrix-6-ref.html
 # ensure matrix 3d does not break us - should do nothing
 == matrix3d-1.html matrix3d-1-ref.html
 # Test that complex transform can be reversed
-skip-if(B2G||Mulet) fuzzy-if(skiaContent,2,5) == stresstest-1.html stresstest-1-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
+fuzzy-if(skiaContent,2,5) == stresstest-1.html stresstest-1-ref.html
 # Test scale transforms
 == scalex-1.html scalex-1-ref.html
 == scaley-1.html scaley-1-ref.html
@@ -128,6 +130,7 @@ pref(svg.transform-box.enabled,true) == transform-box-svg-1a.svg transform-box-s
 pref(svg.transform-box.enabled,true) == transform-box-svg-1b.svg transform-box-svg-1-ref.svg
 pref(svg.transform-box.enabled,true) == transform-box-svg-2a.svg transform-box-svg-2-ref.svg
 pref(svg.transform-box.enabled,true) == transform-box-svg-2b.svg transform-box-svg-2-ref.svg
+pref(svg.transform-box.enabled,true) == transform-box-svg-3a.svg pass.svg
 == transform-origin-svg-1a.svg transform-origin-svg-1-ref.svg
 == transform-origin-svg-1b.svg transform-origin-svg-1-ref.svg
 == transform-origin-svg-2a.svg transform-origin-svg-2-ref.svg
@@ -136,3 +139,6 @@ pref(svg.transform-box.enabled,true) == transform-box-svg-2b.svg transform-box-s
 == animate-layer-scale-inherit-1.html animate-layer-scale-inherit-1-ref.html
 == animate-layer-scale-inherit-2.html animate-layer-scale-inherit-2-ref.html
 == animate-layer-scale-inherit-3.html animate-layer-scale-inherit-1-ref.html
+# Bug 1301500
+== dynamic-add-without-change-cb-1.html dynamic-add-without-change-cb-1-ref.html
+fuzzy-if(d2d,1,5) fuzzy-if(skiaContent,22,180) skip-if(styloVsGecko||stylo) == table-overflowed-by-animation.html table-overflowed-by-animation-ref.html

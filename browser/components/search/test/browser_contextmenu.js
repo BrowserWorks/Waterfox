@@ -4,13 +4,13 @@
  * Test searching for the selected text using the context menu
  */
 
-add_task(function* () {
+add_task(async function() {
   const ss = Services.search;
   const ENGINE_NAME = "Foo";
   var contextMenu;
 
   // We want select events to be fired.
-  yield new Promise(resolve => SpecialPowers.pushPrefEnv({"set": [["dom.select_events.enabled", true]]}, resolve));
+  await SpecialPowers.pushPrefEnv({set: [["dom.select_events.enabled", true]]});
 
   let envService = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
   let originalValue = envService.get("XPCSHELL_TEST_PROFILE_DIR");
@@ -21,10 +21,10 @@ add_task(function* () {
                         .QueryInterface(Ci.nsIResProtocolHandler);
   let originalSubstitution = resProt.getSubstitution("search-plugins");
   resProt.setSubstitution("search-plugins",
-                          Services.io.newURI(url, null, null));
+                          Services.io.newURI(url));
 
   let searchDonePromise;
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     function observer(aSub, aTopic, aData) {
       switch (aData) {
         case "engine-added":
@@ -47,7 +47,7 @@ add_task(function* () {
       }
     }
 
-    Services.obs.addObserver(observer, "browser-search-engine-modified", false);
+    Services.obs.addObserver(observer, "browser-search-engine-modified");
     ss.addEngine("resource://search-plugins/testEngine_mozsearch.xml",
                  null, "data:image/x-icon,%00", false);
   });
@@ -55,14 +55,13 @@ add_task(function* () {
   contextMenu = document.getElementById("contentAreaContextMenu");
   ok(contextMenu, "Got context menu XUL");
 
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "data:text/plain;charset=utf8,test%20search");
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "data:text/plain;charset=utf8,test%20search");
 
-  yield ContentTask.spawn(tab.linkedBrowser, "", function*() {
+  await ContentTask.spawn(tab.linkedBrowser, "", async function() {
     return new Promise(resolve => {
-      content.document.addEventListener("selectionchange", function selectionChanged() {
-        content.document.removeEventListener("selectionchange", selectionChanged);
+      content.document.addEventListener("selectionchange", function() {
         resolve();
-      });
+      }, {once: true});
       content.document.getSelection().selectAllChildren(content.document.body);
     });
   });
@@ -71,15 +70,15 @@ add_task(function* () {
 
   let popupPromise = BrowserTestUtils.waitForEvent(contextMenu, "popupshown");
   BrowserTestUtils.synthesizeMouseAtCenter("body", eventDetails, gBrowser.selectedBrowser);
-  yield popupPromise;
+  await popupPromise;
 
   info("checkContextMenu");
   var searchItem = contextMenu.getElementsByAttribute("id", "context-searchselect")[0];
   ok(searchItem, "Got search context menu item");
-  is(searchItem.label, 'Search ' + ENGINE_NAME + ' for \u201ctest search\u201d', "Check context menu label");
+  is(searchItem.label, "Search " + ENGINE_NAME + " for \u201ctest search\u201d", "Check context menu label");
   is(searchItem.disabled, false, "Check that search context menu item is enabled");
 
-  yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
     searchItem.click();
   });
 
@@ -92,7 +91,7 @@ add_task(function* () {
   // Remove the tab opened by the search
   gBrowser.removeCurrentTab();
 
-  yield new Promise(resolve => {
+  await new Promise(resolve => {
     searchDonePromise = resolve;
     ss.removeEngine(ss.currentEngine);
   });

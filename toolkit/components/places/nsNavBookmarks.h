@@ -36,6 +36,7 @@ namespace places {
     int64_t parentId;
     int64_t grandParentId;
     int32_t type;
+    int32_t syncStatus;
     nsCString serviceCID;
     PRTime dateAdded;
     PRTime lastModified;
@@ -56,6 +57,11 @@ namespace places {
     bool isAnnotation;
     nsCString newValue;
     nsCString oldValue;
+  };
+
+  struct TombstoneData {
+    nsCString guid;
+    PRTime dateRemoved;
   };
 
   typedef void (nsNavBookmarks::*ItemVisitMethod)(const ItemVisitData&);
@@ -166,6 +172,7 @@ public:
                                  bool aIsBookmarkFolder,
                                  int32_t* aIndex,
                                  const nsACString& aGUID,
+                                 uint16_t aSource,
                                  int64_t* aNewFolder);
 
   /**
@@ -214,6 +221,11 @@ public:
   static const int32_t kGetChildrenIndex_Position;
   static const int32_t kGetChildrenIndex_Type;
   static const int32_t kGetChildrenIndex_PlaceID;
+  static const int32_t kGetChildrenIndex_SyncStatus;
+
+  static mozilla::Atomic<int64_t> sLastInsertedItemId;
+  static void StoreLastInsertedId(const nsACString& aTable,
+                                  const int64_t aLastInsertedId);
 
 private:
   static nsNavBookmarks* gBookmarksService;
@@ -233,12 +245,16 @@ private:
    * Locates the root items in the bookmarks folder hierarchy assigning folder
    * ids to the root properties that are exposed through the service interface.
    */
-  nsresult ReadRoots();
+  nsresult EnsureRoots();
 
   nsresult AdjustIndices(int64_t aFolder,
                          int32_t aStartIndex,
                          int32_t aEndIndex,
                          int32_t aDelta);
+
+  nsresult AdjustSeparatorsSyncCounter(int64_t aFolderId,
+                                       int32_t aStartIndex,
+                                       int64_t aSyncChangeDelta);
 
   /**
    * Fetches properties of a folder.
@@ -261,6 +277,38 @@ private:
 
   nsresult GetLastChildId(int64_t aFolder, int64_t* aItemId);
 
+  nsresult AddSyncChangesForBookmarksWithURL(const nsACString& aURL,
+                                             int64_t aSyncChangeDelta);
+
+  // Bumps the change counter for all bookmarks with |aURI|. This is used to
+  // update tagged bookmarks when adding or changing a tag entry.
+  nsresult AddSyncChangesForBookmarksWithURI(nsIURI* aURI,
+                                             int64_t aSyncChangeDelta);
+
+  // Bumps the change counter for all bookmarked URLs within |aFolderId|. This
+  // is used to update tagged bookmarks when changing or removing a tag folder.
+  nsresult AddSyncChangesForBookmarksInFolder(int64_t aFolderId,
+                                              int64_t aSyncChangeDelta);
+
+  // Inserts a tombstone for a removed synced item.
+  nsresult InsertTombstone(const BookmarkData& aBookmark);
+
+  // Inserts tombstones for removed synced items.
+  nsresult InsertTombstones(const nsTArray<TombstoneData>& aTombstones);
+
+  // Removes a stale synced bookmark tombstone.
+  nsresult RemoveTombstone(const nsACString& aGUID);
+
+  // Removes the Sync orphan annotation from a synced item, so that Sync doesn't
+  // try to reparent the item once it sees the original parent. Only synced
+  // bookmarks should have this anno, but we do this for all bookmarks because
+  // the anno may be backed up and restored.
+  nsresult PreventSyncReparenting(const BookmarkData& aBookmark);
+
+  nsresult SetItemTitleInternal(BookmarkData& aBookmark,
+                                const nsACString& aTitle,
+                                int64_t aSyncChangeDelta);
+
   /**
    * This is an handle to the Places database.
    */
@@ -270,21 +318,31 @@ private:
 
   nsMaybeWeakPtrArray<nsINavBookmarkObserver> mObservers;
 
+  int64_t TagsRootId() {
+    nsresult rv = EnsureRoots();
+    NS_ENSURE_SUCCESS(rv, -1);
+    return mTagsRoot;
+  }
+
+  // These are lazy loaded, so never access them directly, always use the
+  // XPIDL getters or TagsRootId().
   int64_t mRoot;
   int64_t mMenuRoot;
   int64_t mTagsRoot;
   int64_t mUnfiledRoot;
   int64_t mToolbarRoot;
+  int64_t mMobileRoot;
 
   inline bool IsRoot(int64_t aFolderId) {
     return aFolderId == mRoot || aFolderId == mMenuRoot ||
            aFolderId == mTagsRoot || aFolderId == mUnfiledRoot ||
-           aFolderId == mToolbarRoot;
+           aFolderId == mToolbarRoot || aFolderId == mMobileRoot;
   }
 
   nsresult IsBookmarkedInDatabase(int64_t aBookmarkID, bool* aIsBookmarked);
 
   nsresult SetItemDateInternal(enum mozilla::places::BookmarkDate aDateType,
+                               int64_t aSyncChangeDelta,
                                int64_t aItemId,
                                PRTime aValue);
 
@@ -337,6 +395,7 @@ private:
                               const nsACString& aParentGuid,
                               int64_t aGrandParentId,
                               nsIURI* aURI,
+                              uint16_t aSource,
                               int64_t* _itemId,
                               nsACString& _guid);
 
@@ -349,12 +408,9 @@ private:
    *        URI to get bookmarks for.
    * @param aResult
    *        Array of bookmark ids.
-   * @param aSkipTags
-   *        If true ids of tags-as-bookmarks entries will be excluded.
    */
   nsresult GetBookmarkIdsForURITArray(nsIURI* aURI,
-                                      nsTArray<int64_t>& aResult,
-                                      bool aSkipTags);
+                                      nsTArray<int64_t>& aResult);
 
   nsresult GetBookmarksForURI(nsIURI* aURI,
                               nsTArray<BookmarkData>& _bookmarks);
@@ -363,7 +419,10 @@ private:
 
   class RemoveFolderTransaction final : public nsITransaction {
   public:
-    explicit RemoveFolderTransaction(int64_t aID) : mID(aID) {}
+    RemoveFolderTransaction(int64_t aID, uint16_t aSource)
+      : mID(aID)
+      , mSource(aSource)
+    {}
 
     NS_DECL_ISUPPORTS
 
@@ -379,7 +438,7 @@ private:
       rv = bookmarks->GetItemTitle(mID, mTitle);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      return bookmarks->RemoveItem(mID);
+      return bookmarks->RemoveItem(mID, mSource);
     }
 
     NS_IMETHOD UndoTransaction() override {
@@ -387,7 +446,8 @@ private:
       NS_ENSURE_TRUE(bookmarks, NS_ERROR_OUT_OF_MEMORY);
       int64_t newFolder;
       return bookmarks->CreateContainerWithID(mID, mParent, mTitle, true,
-                                              &mIndex, EmptyCString(), &newFolder);
+                                              &mIndex, EmptyCString(),
+                                              mSource, &newFolder);
     }
 
     NS_IMETHOD RedoTransaction() override {
@@ -408,9 +468,10 @@ private:
     ~RemoveFolderTransaction() {}
 
     int64_t mID;
-    int64_t mParent;
+    uint16_t mSource;
+    MOZ_INIT_OUTSIDE_CTOR int64_t mParent;
     nsCString mTitle;
-    int32_t mIndex;
+    MOZ_INIT_OUTSIDE_CTOR int32_t mIndex;
   };
 
   // Used to enable and disable the observer notifications.

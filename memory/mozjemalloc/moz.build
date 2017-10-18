@@ -5,45 +5,25 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
-    'jemalloc_types.h',
+    'mozjemalloc_types.h',
 ]
 
-if not CONFIG['MOZ_JEMALLOC4']:
-    SOURCES += [
-        'jemalloc.c',
-    ]
-    Library('mozjemalloc')
-    STATIC_LIBRARY_NAME = 'jemalloc'
-    FORCE_STATIC_LIB = True
-
-    # See bug 422055.
-    if CONFIG['OS_ARCH'] == 'SunOS' and not CONFIG['GNU_CC'] \
-            and CONFIG['MOZ_OPTIMIZE']:
-        CFLAGS += ['-xO5']
-
-# For non release/esr builds, enable (some) fatal jemalloc assertions.  This
-# helps us catch memory errors.
-if CONFIG['MOZ_UPDATE_CHANNEL'] not in ('release', 'esr'):
-    DEFINES['MOZ_JEMALLOC_HARD_ASSERTS'] = True
-
-DEFINES['abort'] = 'moz_abort'
+SOURCES += [
+    'mozjemalloc.cpp',
+]
+FINAL_LIBRARY = 'memory'
 
 DEFINES['MOZ_JEMALLOC_IMPL'] = True
-
-#XXX: PGO on Linux causes problems here
-# See bug 419470
-if CONFIG['OS_TARGET'] == 'Linux':
-    NO_PGO = True
-
-if CONFIG['MOZ_NUWA_PROCESS']:
-    DEFINES['pthread_mutex_lock'] = '__real_pthread_mutex_lock';
 
 LOCAL_INCLUDES += [
     '/memory/build',
 ]
 
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wno-unused'] # too many annoying warnings from mfbt/ headers
+if CONFIG['GNU_CXX']:
+    # too many warnings from functions generated through rb_wrab from rb.h.
+    CXXFLAGS += ['-Wno-unused-function']
 
 if CONFIG['_MSC_VER']:
-    CFLAGS += ['-wd4273'] # inconsistent dll linkage (bug 558163)
+    CXXFLAGS += ['-wd4273'] # inconsistent dll linkage (bug 558163)
+
+DISABLE_STL_WRAPPING = True

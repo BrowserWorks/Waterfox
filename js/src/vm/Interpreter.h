@@ -14,13 +14,11 @@
 #include "jsiter.h"
 #include "jspubtd.h"
 
-#include "frontend/ParseNode.h"
-
 #include "vm/Stack.h"
 
 namespace js {
 
-class ScopeIter;
+class EnvironmentIter;
 
 /*
  * Convert null/undefined |thisv| into the current global object for the
@@ -32,8 +30,8 @@ BoxNonStrictThis(JSContext* cx, HandleValue thisv, MutableHandleValue vp);
 extern bool
 GetFunctionThis(JSContext* cx, AbstractFramePtr frame, MutableHandleValue res);
 
-extern bool
-GetNonSyntacticGlobalThis(JSContext* cx, HandleObject scopeChain, MutableHandleValue res);
+extern void
+GetNonSyntacticGlobalThis(JSContext* cx, HandleObject envChain, MutableHandleValue res);
 
 /*
  * numToSkip is the number of stack values the expression decompiler should skip
@@ -201,7 +199,7 @@ Execute(JSContext* cx, HandleScript script, JSObject& scopeChain, Value* rval);
 class ExecuteState;
 class InvokeState;
 
-// RunState is passed to RunScript and RunScript then eiter passes it to the
+// RunState is passed to RunScript and RunScript then either passes it to the
 // interpreter or to the JITs. RunState contains all information we need to
 // construct an interpreter or JIT frame.
 class RunState
@@ -233,7 +231,7 @@ class RunState
     JS::HandleScript script() const { return script_; }
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx) = 0;
-    virtual void setReturnValue(Value v) = 0;
+    virtual void setReturnValue(const Value& v) = 0;
 
     bool maybeCreateThisForConstructor(JSContext* cx);
 
@@ -248,28 +246,28 @@ class RunState
 class ExecuteState : public RunState
 {
     RootedValue newTargetValue_;
-    RootedObject scopeChain_;
+    RootedObject envChain_;
 
     AbstractFramePtr evalInFrame_;
     Value* result_;
 
   public:
     ExecuteState(JSContext* cx, JSScript* script, const Value& newTargetValue,
-                 JSObject& scopeChain, AbstractFramePtr evalInFrame, Value* result)
+                 JSObject& envChain, AbstractFramePtr evalInFrame, Value* result)
       : RunState(cx, Execute, script),
         newTargetValue_(cx, newTargetValue),
-        scopeChain_(cx, &scopeChain),
+        envChain_(cx, &envChain),
         evalInFrame_(evalInFrame),
         result_(result)
     { }
 
     Value newTarget() { return newTargetValue_; }
-    JSObject* scopeChain() const { return scopeChain_; }
+    JSObject* environmentChain() const { return envChain_; }
     bool isDebuggerEval() const { return !!evalInFrame_; }
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx);
 
-    virtual void setReturnValue(Value v) {
+    virtual void setReturnValue(const Value& v) {
         if (result_)
             *result_ = v;
     }
@@ -298,7 +296,7 @@ class InvokeState final : public RunState
 
     virtual InterpreterFrame* pushInterpreterFrame(JSContext* cx);
 
-    virtual void setReturnValue(Value v) {
+    virtual void setReturnValue(const Value& v) {
         args_.rval().set(v);
     }
 };
@@ -323,24 +321,24 @@ extern JSType
 TypeOfValue(const Value& v);
 
 extern bool
-InstanceOfOperator(JSContext* cx, HandleObject obj, MutableHandleValue v, bool* bp);
+InstanceOfOperator(JSContext* cx, HandleObject obj, HandleValue v, bool* bp);
 
 extern bool
 HasInstance(JSContext* cx, HandleObject obj, HandleValue v, bool* bp);
 
-// Unwind scope chain and iterator to match the static scope corresponding to
+// Unwind environment chain and iterator to match the scope corresponding to
 // the given bytecode position.
 extern void
-UnwindScope(JSContext* cx, ScopeIter& si, jsbytecode* pc);
+UnwindEnvironment(JSContext* cx, EnvironmentIter& ei, jsbytecode* pc);
 
-// Unwind all scopes.
+// Unwind all environments.
 extern void
-UnwindAllScopesInFrame(JSContext* cx, ScopeIter& si);
+UnwindAllEnvironmentsInFrame(JSContext* cx, EnvironmentIter& ei);
 
 // Compute the pc needed to unwind the scope to the beginning of the block
 // pointed to by the try note.
 extern jsbytecode*
-UnwindScopeToTryPc(JSScript* script, JSTryNote* tn);
+UnwindEnvironmentToTryPc(JSScript* script, JSTryNote* tn);
 
 template <class StackDepthOp>
 class MOZ_STACK_CLASS TryNoteIter
@@ -420,13 +418,6 @@ ThrowingOperation(JSContext* cx, HandleValue v);
 bool
 GetProperty(JSContext* cx, HandleValue value, HandlePropertyName name, MutableHandleValue vp);
 
-bool
-GetScopeName(JSContext* cx, HandleObject obj, HandlePropertyName name, MutableHandleValue vp);
-
-bool
-GetScopeNameForTypeOf(JSContext* cx, HandleObject obj, HandlePropertyName name,
-                      MutableHandleValue vp);
-
 JSObject*
 Lambda(JSContext* cx, HandleFunction fun, HandleObject parent);
 
@@ -446,6 +437,9 @@ bool
 SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue value,
                  bool strict, HandleScript script, jsbytecode* pc);
 
+bool
+SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue value,
+                 HandleValue receiver, bool strict);
 bool
 SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleValue value,
                  HandleValue receiver, bool strict, HandleScript script, jsbytecode* pc);
@@ -484,7 +478,7 @@ bool
 DeleteElementJit(JSContext* cx, HandleValue val, HandleValue index, bool* bv);
 
 bool
-DefFunOperation(JSContext* cx, HandleScript script, HandleObject scopeChain, HandleFunction funArg);
+DefFunOperation(JSContext* cx, HandleScript script, HandleObject envChain, HandleFunction funArg);
 
 bool
 ThrowMsgOperation(JSContext* cx, const unsigned errorNum);
@@ -515,7 +509,8 @@ unsigned
 GetInitDataPropAttrs(JSOp op);
 
 bool
-EnterWithOperation(JSContext* cx, AbstractFramePtr frame, HandleValue val, HandleObject staticWith);
+EnterWithOperation(JSContext* cx, AbstractFramePtr frame, HandleValue val,
+                   Handle<WithScope*> scope);
 
 
 bool
@@ -556,17 +551,59 @@ ReportRuntimeLexicalError(JSContext* cx, unsigned errorNumber, HandleScript scri
 // script. Due to the extensibility of the global lexical scope, we also check
 // for redeclarations during runtime in JSOP_DEF{VAR,LET,CONST}.
 void
-ReportRuntimeRedeclaration(JSContext* cx, HandlePropertyName name,
-                           frontend::Definition::Kind declKind);
+ReportRuntimeRedeclaration(JSContext* cx, HandlePropertyName name, const char* redeclKind);
+
+enum class CheckIsObjectKind : uint8_t {
+    IteratorNext,
+    IteratorReturn,
+    IteratorThrow,
+    GetIterator,
+    GetAsyncIterator
+};
+
+bool
+ThrowCheckIsObject(JSContext* cx, CheckIsObjectKind kind);
+
+enum class CheckIsCallableKind : uint8_t {
+    IteratorReturn
+};
+
+bool
+ThrowCheckIsCallable(JSContext* cx, CheckIsCallableKind kind);
 
 bool
 ThrowUninitializedThis(JSContext* cx, AbstractFramePtr frame);
+
+bool
+ThrowInitializedThis(JSContext* cx, AbstractFramePtr frame);
 
 bool
 DefaultClassConstructor(JSContext* cx, unsigned argc, Value* vp);
 
 bool
 Debug_CheckSelfHosted(JSContext* cx, HandleValue v);
+
+bool
+CheckClassHeritageOperation(JSContext* cx, HandleValue heritage);
+
+JSObject*
+ObjectWithProtoOperation(JSContext* cx, HandleValue proto);
+
+JSObject*
+FunWithProtoOperation(JSContext* cx, HandleFunction fun, HandleObject parent, HandleObject proto);
+
+JSFunction*
+MakeDefaultConstructor(JSContext* cx, HandleScript script, jsbytecode* pc, HandleObject proto);
+
+JSObject*
+HomeObjectSuperBase(JSContext* cx, HandleObject homeObj);
+
+JSObject*
+SuperFunOperation(JSContext* cx, HandleObject callee);
+
+bool
+SetPropertySuper(JSContext* cx, HandleObject obj, HandleValue receiver,
+                 HandlePropertyName id, HandleValue rval, bool strict);
 
 }  /* namespace js */
 

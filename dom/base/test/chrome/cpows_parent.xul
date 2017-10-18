@@ -182,7 +182,7 @@
 
     function recvDoneMessage(message) {
       if (test_state == "remote") {
-        test_node.parentNode.removeChild(test_node);
+        test_node.remove();
         run_tests("inprocess");
         return;
       }
@@ -417,6 +417,21 @@
       msg.target.messageManager.sendAsyncMessage("cpows:safe_done");
     }
 
+    function recvDead(msg) {
+      // Need to do this in a separate turn of the event loop.
+      setTimeout(() => {
+        msg.objects.gcTrigger();
+        try {
+          msg.objects.thing.value;
+          ok(false, "Should have been a dead CPOW");
+        } catch(e if /dead CPOW/.test(String(e))) {
+          ok(true, "Got the expected dead CPOW");
+          ok(e.stack, "The exception has a stack");
+        }
+        msg.target.messageManager.sendAsyncMessage("cpows:dead_done");
+      }, 0);
+    }
+
     function run_tests(type) {
       info("Running tests: " + type);
       var node = document.getElementById('cpowbrowser_' + type);
@@ -458,6 +473,7 @@
       mm.addMessageListener("cpows:cancel_test2", recvCancelTest2);
       mm.addMessageListener("cpows:unsafe", recvUnsafe);
       mm.addMessageListener("cpows:safe", recvSafe);
+      mm.addMessageListener("cpows:dead", recvDead);
       mm.loadFrameScript("chrome://mochitests/content/chrome/dom/base/test/chrome/cpows_child.js", true);
     }
 

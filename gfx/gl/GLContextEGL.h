@@ -11,6 +11,9 @@
 #include "GLLibraryEGL.h"
 
 namespace mozilla {
+namespace widget {
+class CompositorWidget;
+} // namespace widget
 namespace gl {
 
 class GLContextEGL : public GLContext
@@ -20,7 +23,6 @@ class GLContextEGL : public GLContext
     static already_AddRefed<GLContextEGL>
     CreateGLContext(CreateContextFlags flags,
                     const SurfaceCaps& caps,
-                    GLContextEGL* shareContext,
                     bool isOffscreen,
                     EGLConfig config,
                     EGLSurface surface,
@@ -30,7 +32,6 @@ public:
     MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GLContextEGL, override)
     GLContextEGL(CreateContextFlags flags,
                  const SurfaceCaps& caps,
-                 GLContext* shareContext,
                  bool isOffscreen,
                  EGLConfig config,
                  EGLSurface surface,
@@ -45,10 +46,6 @@ public:
         return static_cast<GLContextEGL*>(gl);
     }
 
-    static EGLSurface CreateSurfaceForWindow(nsIWidget* aWidget);
-
-    static void DestroySurface(EGLSurface aSurface);
-
     bool Init() override;
 
     virtual bool IsDoubleBuffered() const override {
@@ -57,10 +54,6 @@ public:
 
     void SetIsDoubleBuffered(bool aIsDB) {
         mIsDoubleBuffered = aIsDB;
-    }
-
-    virtual bool SupportsRobustness() const override {
-        return sEGLLibrary.HasRobustness();
     }
 
     virtual bool IsANGLE() const override {
@@ -76,18 +69,23 @@ public:
     virtual bool ReleaseTexImage() override;
 
     void SetEGLSurfaceOverride(EGLSurface surf);
+    EGLSurface GetEGLSurfaceOverride() {
+        return mSurfaceOverride;
+    }
 
     virtual bool MakeCurrentImpl(bool aForce) override;
 
     virtual bool IsCurrent() override;
 
-    virtual bool RenewSurface(nsIWidget* aWidget) override;
+    virtual bool RenewSurface(widget::CompositorWidget* aWidget) override;
 
     virtual void ReleaseSurface() override;
 
     virtual bool SetupLookupFunction() override;
 
     virtual bool SwapBuffers() override;
+
+    virtual void GetWSIInfo(nsCString* const out) const override;
 
     // hold a reference to the given surface
     // for the lifetime of this context.
@@ -113,6 +111,7 @@ public:
 
 protected:
     friend class GLContextProviderEGL;
+    friend class GLContextEGLFactory;
 
 public:
     const EGLConfig  mConfig;

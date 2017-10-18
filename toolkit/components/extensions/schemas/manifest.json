@@ -1,6 +1,7 @@
 [
   {
     "namespace": "manifest",
+    "permissions": [],
     "types": [
       {
         "id": "WebExtensionManifest",
@@ -11,6 +12,11 @@
             "type": "integer",
             "minimum": 2,
             "maximum": 2
+          },
+
+          "minimum_chrome_version":{
+            "type": "string",
+            "optional": true
           },
 
           "applications": {
@@ -53,10 +59,11 @@
             "preprocess": "localize"
           },
 
-          "creator": {
+          "author": {
             "type": "string",
             "optional": true,
-            "preprocess": "localize"
+            "preprocess": "localize",
+            "onError": "warn"
           },
 
           "version": {
@@ -159,41 +166,105 @@
 
           "permissions": {
             "type": "array",
+            "default": [],
             "items": {
-              "choices": [
-                { "$ref": "Permission" },
-                {
-                  "type": "string",
-                  "deprecated": "Unknown permission ${value}"
-                }
-              ]
+              "$ref": "Permission",
+              "onError": "warn"
             },
             "optional": true
+          },
+
+          "optional_permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "OptionalPermission",
+              "onError": "warn"
+            },
+            "optional": true,
+            "default": []
           },
 
           "web_accessible_resources": {
             "type": "array",
             "items": { "type": "string" },
             "optional": true
+          },
+
+          "developer": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "optional": true,
+                "preprocess": "localize"
+              },
+              "url": {
+                "type": "string",
+                "optional": true,
+                "preprocess": "localize"
+              }
+            }
           }
+
         },
 
         "additionalProperties": { "$ref": "UnrecognizedProperty" }
       },
       {
-        "id": "Permission",
+        "id": "ThemeIcons",
+        "type": "object",
+        "properties": {
+          "light": {
+            "$ref": "ExtensionURL",
+            "description": "A light icon to use for dark themes"
+          },
+          "dark": {
+            "$ref": "ExtensionURL",
+            "description": "The dark icon to use for light themes"
+          },
+          "size": {
+            "type": "integer",
+            "description": "The size of the icons"
+          }
+        },
+        "additionalProperties": { "$ref": "UnrecognizedProperty" }
+      },
+      {
+        "id": "OptionalPermission",
         "choices": [
           {
             "type": "string",
             "enum": [
-              "alarms",
+              "clipboardRead",
+              "clipboardWrite",
+              "geolocation",
               "idle",
-              "notifications",
-              "storage"
+              "notifications"
             ]
           },
           { "$ref": "MatchPattern" }
         ]
+      },
+      {
+        "id": "Permission",
+        "choices": [
+          { "$ref": "OptionalPermission" },
+          {
+            "type": "string",
+            "enum": [
+              "alarms",
+              "storage",
+              "unlimitedStorage"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "HttpURL",
+        "type": "string",
+        "format": "url",
+        "pattern": "^https?://.*$"
       },
       {
         "id": "ExtensionURL",
@@ -248,7 +319,25 @@
           },
           {
             "type": "string",
-            "pattern": "^(https?|file|ftp|app|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+)/.*$"
+            "pattern": "^(https?|wss?|file|ftp|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+)/.*$"
+          },
+          {
+            "type": "string",
+            "pattern": "^file:///.*$"
+          }
+        ]
+      },
+      {
+        "id": "MatchPatternInternal",
+        "description": "Same as MatchPattern above, but includes moz-extension protocol",
+        "choices": [
+          {
+            "type": "string",
+            "enum": ["<all_urls>"]
+          },
+          {
+            "type": "string",
+            "pattern": "^(https?|wss?|file|ftp|moz-extension|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+)/.*$"
           },
           {
             "type": "string",
@@ -301,6 +390,7 @@
           "run_at": {
             "$ref": "extensionTypes.RunAt",
             "optional": true,
+            "default": "document_idle",
             "description": "The soonest that the JavaScript or CSS will be injected into the tab. Defaults to \"document_idle\"."
           }
         }
@@ -324,18 +414,18 @@
           {
             "type": "object",
             "patternProperties": {
-              "^[1-9]\\d*$": {
-                "type": "object",
-                "isInstanceOf": "ImageData"
-              }
+              "^[1-9]\\d*$": { "$ref": "ImageData" }
             },
             "additionalProperties": false
           },
-          {
-            "type": "object",
-            "isInstanceOf": "ImageData"
-          }
+          { "$ref": "ImageData" }
         ]
+      },
+      {
+        "id": "ImageData",
+        "type": "object",
+        "isInstanceOf": "ImageData",
+        "postprocess": "convertImageDataToURL"
       },
       {
         "id": "UnrecognizedProperty",

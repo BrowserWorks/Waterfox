@@ -19,7 +19,6 @@
   {0xe68901e5, 0x1d50, 0x4ee9, {0xaf, 0x49, 0x90, 0x99, 0x4a, 0xff, 0xc8, 0x39}}
 
 class nsPIDOMWindowInner;
-struct PRThread;
 
 namespace mozilla {
 
@@ -48,10 +47,6 @@ protected:
   RefPtr<IDBCursor> mSourceAsCursor;
 
   RefPtr<IDBTransaction> mTransaction;
-
-#ifdef DEBUG
-  PRThread* mOwningThread;
-#endif
 
   JS::Heap<JS::Value> mResultVal;
   RefPtr<DOMError> mError;
@@ -90,16 +85,13 @@ public:
 
   // nsIDOMEventTarget
   virtual nsresult
-  PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  GetEventTargetParent(EventChainPreVisitor& aVisitor) override;
 
   void
   GetSource(Nullable<OwningIDBObjectStoreOrIDBIndexOrIDBCursor>& aSource) const;
 
   void
   Reset();
-
-  void
-  DispatchNonTransactionError(nsresult aErrorCode);
 
   void
   SetResultCallback(ResultCallback* aCallback);
@@ -186,11 +178,9 @@ public:
 
   void
   AssertIsOnOwningThread() const
-#ifdef DEBUG
-  ;
-#else
-  { }
-#endif
+  {
+    NS_ASSERT_OWNINGTHREAD(IDBRequest);
+  }
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(IDBRequest,
@@ -234,6 +224,7 @@ class IDBOpenDBRequest final
   nsAutoPtr<WorkerHolder> mWorkerHolder;
 
   const bool mFileHandleDisabled;
+  bool mIncreasedActiveDatabaseCount;
 
 public:
   static already_AddRefed<IDBOpenDBRequest>
@@ -255,6 +246,9 @@ public:
 
   void
   SetTransaction(IDBTransaction* aTransaction);
+
+  void
+  DispatchNonTransactionError(nsresult aErrorCode);
 
   void
   NoteComplete();
@@ -285,6 +279,12 @@ private:
                    bool aFileHandleDisabled);
 
   ~IDBOpenDBRequest();
+
+  void
+  IncreaseActiveDatabaseCount();
+
+  void
+  MaybeDecreaseActiveDatabaseCount();
 };
 
 } // namespace dom

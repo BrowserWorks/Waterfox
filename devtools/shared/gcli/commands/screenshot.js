@@ -9,7 +9,6 @@ const l10n = require("gcli/l10n");
 const Services = require("Services");
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const { getRect } = require("devtools/shared/layout/utils");
-const promise = require("promise");
 const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
 
@@ -19,14 +18,10 @@ loader.lazyImporter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
 loader.lazyImporter(this, "PrivateBrowsingUtils",
                           "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
-const BRAND_SHORT_NAME = Cc["@mozilla.org/intl/stringbundle;1"]
-                           .getService(Ci.nsIStringBundleService)
-                           .createBundle("chrome://branding/locale/brand.properties")
-                           .GetStringFromName("brandShortName");
-
 // String used as an indication to generate default file name in the following
 // format: "Screen Shot yyyy-mm-dd at HH.MM.SS.png"
 const FILENAME_DEFAULT_VALUE = " ";
+const CONTAINER_FLASHING_DURATION = 500;
 
 /*
  * There are 2 commands and 1 converter here. The 2 commands are nearly
@@ -52,52 +47,66 @@ const filenameParam = {
 };
 
 /**
- * Both commands have the same set of standard optional parameters
+ * Both commands have almost the same set of standard optional parameters, except for the
+ * type of the --selector option, which can be a node only on the server.
  */
-const standardParams = {
-  group: l10n.lookup("screenshotGroupOptions"),
-  params: [
-    {
-      name: "clipboard",
-      type: "boolean",
-      description: l10n.lookup("screenshotClipboardDesc"),
-      manual: l10n.lookup("screenshotClipboardManual")
-    },
-    {
-      name: "imgur",
-      type: "boolean",
-      description: l10n.lookup("screenshotImgurDesc"),
-      manual: l10n.lookup("screenshotImgurManual")
-    },
-    {
-      name: "delay",
-      type: { name: "number", min: 0 },
-      defaultValue: 0,
-      description: l10n.lookup("screenshotDelayDesc"),
-      manual: l10n.lookup("screenshotDelayManual")
-    },
-    {
-      name: "dpr",
-      type: { name: "number", min: 0, allowFloat: true },
-      defaultValue: 0,
-      description: l10n.lookup("screenshotDPRDesc"),
-      manual: l10n.lookup("screenshotDPRManual")
-    },
-    {
-      name: "fullpage",
-      type: "boolean",
-      description: l10n.lookup("screenshotFullPageDesc"),
-      manual: l10n.lookup("screenshotFullPageManual")
-    },
-    {
-      name: "selector",
-      type: "node",
-      defaultValue: null,
-      description: l10n.lookup("inspectNodeDesc"),
-      manual: l10n.lookup("inspectNodeManual")
-    }
-  ]
+const getScreenshotCommandParams = function (isClient) {
+  return {
+    group: l10n.lookup("screenshotGroupOptions"),
+    params: [
+      {
+        name: "clipboard",
+        type: "boolean",
+        description: l10n.lookup("screenshotClipboardDesc"),
+        manual: l10n.lookup("screenshotClipboardManual")
+      },
+      {
+        name: "imgur",
+        type: "boolean",
+        description: l10n.lookup("screenshotImgurDesc"),
+        manual: l10n.lookup("screenshotImgurManual")
+      },
+      {
+        name: "delay",
+        type: { name: "number", min: 0 },
+        defaultValue: 0,
+        description: l10n.lookup("screenshotDelayDesc"),
+        manual: l10n.lookup("screenshotDelayManual")
+      },
+      {
+        name: "dpr",
+        type: { name: "number", min: 0, allowFloat: true },
+        defaultValue: 0,
+        description: l10n.lookup("screenshotDPRDesc"),
+        manual: l10n.lookup("screenshotDPRManual")
+      },
+      {
+        name: "fullpage",
+        type: "boolean",
+        description: l10n.lookup("screenshotFullPageDesc"),
+        manual: l10n.lookup("screenshotFullPageManual")
+      },
+      {
+        name: "selector",
+        // On the client side, don't try to parse the selector as a node as it will
+        // trigger an unsafe CPOW.
+        type: isClient ? "string" : "node",
+        defaultValue: null,
+        description: l10n.lookup("inspectNodeDesc"),
+        manual: l10n.lookup("inspectNodeManual")
+      },
+      {
+        name: "file",
+        type: "boolean",
+        description: l10n.lookup("screenshotFileDesc"),
+        manual: l10n.lookup("screenshotFileManual"),
+      },
+    ]
+  };
 };
+
+const clientScreenshotParams = getScreenshotCommandParams(true);
+const serverScreenshotParams = getScreenshotCommandParams(false);
 
 exports.items = [
   {
@@ -121,7 +130,7 @@ exports.items = [
     item: "converter",
     from: "imageSummary",
     to: "dom",
-    exec: function(imageSummary, context) {
+    exec: function (imageSummary, context) {
       const document = context.document;
       const root = document.createElement("div");
 
@@ -135,7 +144,8 @@ exports.items = [
       // Add the thumbnail image
       if (imageSummary.data != null) {
         const image = context.document.createElement("div");
-        const previewHeight = parseInt(256 * imageSummary.height / imageSummary.width);
+        const previewHeight = parseInt(256 * imageSummary.height / imageSummary.width,
+                                       10);
         const style = "" +
             "width: 256px;" +
             "height: " + previewHeight + "px;" +
@@ -178,7 +188,7 @@ exports.items = [
     tooltipText: l10n.lookup("screenshotTooltipPage"),
     params: [
       filenameParam,
-      standardParams,
+      clientScreenshotParams,
     ],
     exec: function (args, context) {
       // Re-execute the command on the server
@@ -197,7 +207,10 @@ exports.items = [
     name: "screenshot_server",
     hidden: true,
     returnType: "imageSummary",
-    params: [ filenameParam, standardParams ],
+    params: [
+      filenameParam,
+      serverScreenshotParams,
+    ],
     exec: function (args, context) {
       return captureScreenshot(args, context.environment.document);
     },
@@ -210,12 +223,14 @@ exports.items = [
 function simulateCameraEffect(document, effect) {
   let window = document.defaultView;
   if (effect === "shutter") {
-    const audioCamera = new window.Audio("resource://devtools/client/themes/audio/shutter.wav");
-    audioCamera.play();
+    if (Services.prefs.getBoolPref("devtools.screenshot.audio.enabled")) {
+      const audioCamera = new window.Audio("resource://devtools/client/themes/audio/shutter.wav");
+      audioCamera.play();
+    }
   }
   if (effect == "flash") {
     const frames = Cu.cloneInto({ opacity: [ 0, 1 ] }, window);
-    document.documentElement.animate(frames, 500);
+    document.documentElement.animate(frames, CONTAINER_FLASHING_DURATION);
   }
 }
 
@@ -231,9 +246,7 @@ function captureScreenshot(args, document) {
       }, args.delay * 1000);
     });
   }
-  else {
-    return createScreenshotData(document, args);
-  }
+  return createScreenshotData(document, args);
 }
 
 /**
@@ -247,12 +260,12 @@ const SKIP = Promise.resolve();
  */
 function saveScreenshot(args, context, reply) {
   const fileNeeded = args.filename != FILENAME_DEFAULT_VALUE ||
-                      (!args.imgur && !args.clipboard);
+    (!args.imgur && !args.clipboard) || args.file;
 
   return Promise.all([
     args.clipboard ? saveToClipboard(context, reply) : SKIP,
-    args.imgur     ? uploadToImgur(reply)            : SKIP,
-    fileNeeded     ? saveToFile(context, reply)      : SKIP,
+    args.imgur ? uploadToImgur(reply) : SKIP,
+    fileNeeded ? saveToFile(context, reply) : SKIP,
   ]).then(() => reply);
 }
 
@@ -274,15 +287,13 @@ function createScreenshotData(document, args) {
   if (args.fullpage) {
     // Bug 961832: GCLI screenshot shows fixed position element in wrong
     // position if we don't scroll to top
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
     width = window.innerWidth + window.scrollMaxX - window.scrollMinX;
     height = window.innerHeight + window.scrollMaxY - window.scrollMinY;
     filename = filename.replace(".png", "-fullpage.png");
-  }
-  else if (args.selector) {
+  } else if (args.selector) {
     ({ top, left, width, height } = getRect(window, args.selector, window));
-  }
-  else {
+  } else {
     left = window.scrollX;
     top = window.scrollY;
     width = window.innerWidth;
@@ -338,7 +349,7 @@ function getFilename(defaultName) {
   const date = new Date();
   let dateString = date.getFullYear() + "-" + (date.getMonth() + 1) +
                   "-" + date.getDate();
-  dateString = dateString.split("-").map(function(part) {
+  dateString = dateString.split("-").map(function (part) {
     if (part.length == 1) {
       part = "0" + part;
     }
@@ -390,8 +401,7 @@ function saveToClipboard(context, reply) {
     clip.setData(trans, null, Ci.nsIClipboard.kGlobalClipboard);
 
     reply.destinations.push(l10n.lookup("screenshotCopied"));
-  }
-  catch (ex) {
+  } catch (ex) {
     console.error(ex);
     reply.destinations.push(l10n.lookup("screenshotErrorCopying"));
   }
@@ -413,14 +423,15 @@ function uploadToImgur(reply) {
     fd.append("title", reply.filename);
 
     const postURL = Services.prefs.getCharPref("devtools.gcli.imgurUploadURL");
-    const clientID = "Client-ID " + Services.prefs.getCharPref("devtools.gcli.imgurClientID");
+    const clientID = "Client-ID " +
+                     Services.prefs.getCharPref("devtools.gcli.imgurClientID");
 
     xhr.open("POST", postURL);
     xhr.setRequestHeader("Authorization", clientID);
     xhr.send(fd);
     xhr.responseType = "json";
 
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
           reply.href = xhr.response.data.link;
@@ -468,7 +479,7 @@ function DownloadListener(win, transfer) {
 }
 
 DownloadListener.prototype = {
-  QueryInterface: function(iid) {
+  QueryInterface: function (iid) {
     if (iid.equals(Ci.nsIInterfaceRequestor) ||
         iid.equals(Ci.nsIWebProgressListener) ||
         iid.equals(Ci.nsIWebProgressListener2) ||
@@ -478,7 +489,7 @@ DownloadListener.prototype = {
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
 
-  getInterface: function(iid) {
+  getInterface: function (iid) {
     if (iid.equals(Ci.nsIAuthPrompt) ||
         iid.equals(Ci.nsIAuthPrompt2)) {
       let ww = Cc["@mozilla.org/embedcomp/window-watcher;1"]
@@ -489,7 +500,7 @@ DownloadListener.prototype = {
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
 
-  onStateChange: function(webProgress, request, state, status) {
+  onStateChange: function (webProgress, request, state, status) {
     // Check if the download has completed
     if ((state & Ci.nsIWebProgressListener.STATE_STOP) &&
         (state & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
@@ -508,7 +519,7 @@ DownloadListener.prototype = {
  * Save the screenshot data to disk, returning a promise which is resolved on
  * completion.
  */
-var saveToFile = Task.async(function*(context, reply) {
+var saveToFile = Task.async(function* (context, reply) {
   let document = context.environment.chromeDocument;
   let window = context.environment.chromeWindow;
 
@@ -525,7 +536,7 @@ var saveToFile = Task.async(function*(context, reply) {
     reply.filename = OS.Path.join(downloadsDir, reply.filename);
   }
 
-  let sourceURI = Services.io.newURI(reply.data, null, null);
+  let sourceURI = Services.io.newURI(reply.data);
   let targetFile = new FileUtils.File(reply.filename);
   let targetFileURI = Services.io.newFileURI(targetFile);
 
@@ -559,8 +570,7 @@ var saveToFile = Task.async(function*(context, reply) {
   persist.savePrivacyAwareURI(sourceURI,
                               null,
                               document.documentURIObject,
-                              Ci.nsIHttpChannel
-                                .REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE,
+                              Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
                               null,
                               null,
                               targetFileURI,

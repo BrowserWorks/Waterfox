@@ -1,25 +1,24 @@
-function test()
-{
+function test() {
   waitForExplicitFinish();
 
   let scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
                      getService(Ci.mozIJSSubScriptLoader);
-  let ChromeUtils = {};
-  scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js", ChromeUtils);
+  let EventUtils = {};
+  scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/EventUtils.js", EventUtils);
 
   // ---- Test dragging the proxy icon ---
   var value = content.location.href;
   var urlString = value + "\n" + content.document.title;
   var htmlString = "<a href=\"" + value + "\">" + value + "</a>";
   var expected = [ [
-    { type  : "text/x-moz-url",
-      data  : urlString },
-    { type  : "text/uri-list",
-      data  : value },
-    { type  : "text/plain",
-      data  : value },
-    { type  : "text/html",
-      data  : htmlString }
+    { type: "text/x-moz-url",
+      data: urlString },
+    { type: "text/uri-list",
+      data: value },
+    { type: "text/plain",
+      data: value },
+    { type: "text/html",
+      data: htmlString }
   ] ];
   // set the valid attribute so dropping is allowed
   var oldstate = gURLBar.getAttribute("pageproxystate");
@@ -32,14 +31,14 @@ function test()
   EventUtils.synthesizeKey("VK_ESCAPE", {}, window);
 
   // now test dragging onto a tab
-  var tab = gBrowser.addTab("about:blank", {skipAnimation: true});
+  var tab = BrowserTestUtils.addTab(gBrowser, "about:blank", {skipAnimation: true});
   var browser = gBrowser.getBrowserForTab(tab);
 
-  browser.addEventListener("load", function () {
+  browser.addEventListener("load", function() {
     is(browser.contentWindow.location, "http://mochi.test:8888/", "drop on tab");
     gBrowser.removeTab(tab);
     finish();
   }, true);
 
-  ChromeUtils.synthesizeDrop(tab, tab, [[{type: "text/uri-list", data: "http://mochi.test:8888/"}]], "copy", window);
+  EventUtils.synthesizeDrop(tab, tab, [[{type: "text/uri-list", data: "http://mochi.test:8888/"}]], "copy", window);
 }

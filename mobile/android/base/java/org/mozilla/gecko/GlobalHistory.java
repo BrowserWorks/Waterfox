@@ -11,8 +11,10 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.reader.ReaderModeUtils;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.ContentResolver;
@@ -24,6 +26,9 @@ import android.util.Log;
 
 class GlobalHistory {
     private static final String LOGTAG = "GeckoGlobalHistory";
+
+    public static final String EVENT_URI_AVAILABLE_IN_HISTORY = "URI_INSERTED_TO_HISTORY";
+    public static final String EVENT_PARAM_URI = "uri";
 
     private static final String TELEMETRY_HISTOGRAM_ADD = "FENNEC_GLOBALHISTORY_ADD_MS";
     private static final String TELEMETRY_HISTOGRAM_UPDATE = "FENNEC_GLOBALHISTORY_UPDATE_MS";
@@ -53,7 +58,7 @@ class GlobalHistory {
 
         public NotifierRunnable(final Context context) {
             mContentResolver = context.getContentResolver();
-            mDB = GeckoProfile.get(context).getDB();
+            mDB = BrowserDB.from(context);
         }
 
         @Override
@@ -128,6 +133,7 @@ class GlobalHistory {
         final long took = end - start;
         Telemetry.addToHistogram(TELEMETRY_HISTOGRAM_ADD, (int) Math.min(took, Integer.MAX_VALUE));
         addToGeckoOnly(uriToStore);
+        dispatchUriAvailableMessage(uri);
     }
 
     @SuppressWarnings("static-method")
@@ -144,10 +150,40 @@ class GlobalHistory {
         Telemetry.addToHistogram(TELEMETRY_HISTOGRAM_UPDATE, (int) Math.min(took, Integer.MAX_VALUE));
     }
 
-    public void checkUriVisited(final String uri) {
+    @WrapForJNI(stubName = "CheckURIVisited", calledFrom = "gecko")
+    private static void checkUriVisited(final String uri) {
+        getInstance().checkVisited(uri);
+    }
+
+    @WrapForJNI(stubName = "MarkURIVisited", calledFrom = "gecko")
+    private static void markUriVisited(final String uri) {
+        final Context context = GeckoAppShell.getApplicationContext();
+        final BrowserDB db = BrowserDB.from(context);
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                getInstance().add(context, db, uri);
+            }
+        });
+    }
+
+    @WrapForJNI(stubName = "SetURITitle", calledFrom = "gecko")
+    private static void setUriTitle(final String uri, final String title) {
+        final Context context = GeckoAppShell.getApplicationContext();
+        final BrowserDB db = BrowserDB.from(context);
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                getInstance().update(context.getContentResolver(), db, uri, title);
+            }
+        });
+    }
+
+    /* protected */ void checkVisited(final String uri) {
         final String storedURI = ReaderModeUtils.stripAboutReaderUrl(uri);
 
-        final NotifierRunnable runnable = new NotifierRunnable(GeckoAppShell.getContext());
+        final NotifierRunnable runnable =
+                new NotifierRunnable(GeckoAppShell.getApplicationContext());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -163,5 +199,11 @@ class GlobalHistory {
                 mHandler.postDelayed(runnable, BATCHING_DELAY_MS);
             }
         });
+    }
+
+    private void dispatchUriAvailableMessage(String uri) {
+        final GeckoBundle message = new GeckoBundle();
+        message.putString(EVENT_PARAM_URI, uri);
+        EventDispatcher.getInstance().dispatch(EVENT_URI_AVAILABLE_IN_HISTORY, message);
     }
 }

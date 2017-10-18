@@ -11,8 +11,10 @@
 #include "nsICSSDeclaration.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/URLExtraData.h"
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
+#include "nsCompatibility.h"
 
 class nsIPrincipal;
 class nsIDocument;
@@ -20,8 +22,8 @@ struct JSContext;
 class JSObject;
 
 namespace mozilla {
+class DeclarationBlock;
 namespace css {
-class Declaration;
 class Loader;
 class Rule;
 } // namespace css
@@ -119,8 +121,8 @@ protected:
     // AttributeWillChange.
     eOperation_RemoveProperty
   };
-  virtual mozilla::css::Declaration* GetCSSDeclaration(Operation aOperation) = 0;
-  virtual nsresult SetCSSDeclaration(mozilla::css::Declaration* aDecl) = 0;
+  virtual mozilla::DeclarationBlock* GetCSSDeclaration(Operation aOperation) = 0;
+  virtual nsresult SetCSSDeclaration(mozilla::DeclarationBlock* aDecl) = 0;
   // Document that we must call BeginUpdate/EndUpdate on around the
   // calls to SetCSSDeclaration and the style rule mutation that leads
   // to it.
@@ -146,32 +148,59 @@ protected:
                                          "performance overhead (see bug 649163)") mCSSLoader;
   };
 
+  // Information neded to parse a declaration for Servo side.
+  struct MOZ_STACK_CLASS ServoCSSParsingEnvironment
+  {
+    mozilla::URLExtraData* mUrlExtraData;
+    nsCompatibility mCompatMode;
+    mozilla::css::Loader* mLoader;
+
+    ServoCSSParsingEnvironment(mozilla::URLExtraData* aUrlData,
+                               nsCompatibility aCompatMode,
+                               mozilla::css::Loader* aLoader)
+      : mUrlExtraData(aUrlData)
+      , mCompatMode(aCompatMode)
+      , mLoader(aLoader)
+    {}
+  };
+
   // On failure, mPrincipal should be set to null in aCSSParseEnv.
   // If mPrincipal is null, the other members may not be set to
   // anything meaningful.
   virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) = 0;
+
+  // mUrlExtraData returns URL data for parsing url values in
+  // CSS. Returns nullptr on failure. If mUrlExtraData is nullptr,
+  // mCompatMode may not be set to anything meaningful.
+  virtual ServoCSSParsingEnvironment GetServoCSSParsingEnvironment() const = 0;
 
   // An implementation for GetCSSParsingEnvironment for callers wrapping
   // an css::Rule.
   static void GetCSSParsingEnvironmentForRule(mozilla::css::Rule* aRule,
                                               CSSParsingEnvironment& aCSSParseEnv);
 
-  nsresult ParsePropertyValue(const nsCSSProperty aPropID,
+  // An implementation for GetServoCSSParsingEnvironment for callers wrapping
+  // an css::Rule.
+  static ServoCSSParsingEnvironment
+    GetServoCSSParsingEnvironmentForRule(const mozilla::css::Rule* aRule);
+
+  nsresult ParsePropertyValue(const nsCSSPropertyID aPropID,
                               const nsAString& aPropValue,
                               bool aIsImportant);
 
-  // Prop-id based version of RemoveProperty.  Note that this does not
-  // return the old value; it just does a straight removal.
-  nsresult RemoveProperty(const nsCSSProperty aPropID);
-
-  void GetCustomPropertyValue(const nsAString& aPropertyName, nsAString& aValue);
-  nsresult RemoveCustomProperty(const nsAString& aPropertyName);
   nsresult ParseCustomPropertyValue(const nsAString& aPropertyName,
                                     const nsAString& aPropValue,
                                     bool aIsImportant);
 
+  nsresult RemovePropertyInternal(nsCSSPropertyID aPropID);
+  nsresult RemovePropertyInternal(const nsAString& aProperty);
+
 protected:
   virtual ~nsDOMCSSDeclaration();
+
+private:
+  template<typename GeckoFunc, typename ServoFunc>
+  inline nsresult ModifyDeclaration(GeckoFunc aGeckoFunc, ServoFunc aServoFunc);
 };
 
 #endif // nsDOMCSSDeclaration_h___

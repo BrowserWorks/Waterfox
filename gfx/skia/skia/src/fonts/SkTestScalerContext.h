@@ -26,13 +26,11 @@ struct SkTestFontData {
     const SkPaint::FontMetrics& fMetrics;
     const char* fName;
     SkTypeface::Style fStyle;
-    SkTestFont* fFontCache;
+    sk_sp<SkTestFont> fCachedFont;
 };
 
 class SkTestFont : public SkRefCnt {
 public:
-    
-
     SkTestFont(const SkTestFontData& );
     virtual ~SkTestFont();
     int codeToIndex(SkUnichar charCode) const;
@@ -41,7 +39,7 @@ public:
     mutable unsigned char fDebugBits[16];
     mutable SkUnichar fDebugOverage[8];
     const char* fDebugName;
-    SkTypeface::Style fDebugStyle;
+    SkFontStyle fDebugStyle;
     const char* debugFontName() const { return fName; }
 #endif
 private:
@@ -58,16 +56,14 @@ private:
 
 class SkTestTypeface : public SkTypeface {
 public:
-    SkTestTypeface(SkTestFont*, const SkFontStyle& style);
-    virtual ~SkTestTypeface() {
-        SkSafeUnref(fTestFont);
-    }
+    SkTestTypeface(sk_sp<SkTestFont>, const SkFontStyle& style);
     void getAdvance(SkGlyph* glyph);
     void getFontMetrics(SkPaint::FontMetrics* metrics);
     void getMetrics(SkGlyph* glyph);
-    void getPath(const SkGlyph& glyph, SkPath* path);
+    void getPath(SkGlyphID glyph, SkPath* path);
 protected:
-    SkScalerContext* onCreateScalerContext(const SkDescriptor* desc) const override;
+    SkScalerContext* onCreateScalerContext(const SkScalerContextEffects&,
+                                           const SkDescriptor* desc) const override;
     void onFilterRec(SkScalerContextRec* rec) const override;
     SkAdvancedTypefaceMetrics* onGetAdvancedTypefaceMetrics(
         PerGlyphInfo,
@@ -88,12 +84,17 @@ protected:
     }
 
     int onGetUPEM() const override {
-        SkASSERT(0);  // don't expect to get here
-        return 1;
+        return 2048;
     }
 
     void onGetFamilyName(SkString* familyName) const override;
     SkTypeface::LocalizedStrings* onCreateFamilyNameIterator() const override;
+
+    int onGetVariationDesignPosition(SkFontArguments::VariationPosition::Coordinate coordinates[],
+                                     int coordinateCount) const override
+    {
+        return 0;
+    }
 
     int onGetTableTags(SkFontTableTag tags[]) const override {
         return 0;
@@ -104,7 +105,7 @@ protected:
         return 0;
     }
 private:
-    SkTestFont* fTestFont;
+    sk_sp<SkTestFont> fTestFont;
     friend class SkTestScalerContext;
 };
 

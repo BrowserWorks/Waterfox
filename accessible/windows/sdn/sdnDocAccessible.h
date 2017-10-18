@@ -7,7 +7,7 @@
 #ifndef mozilla_a11y_sdnDocAccessible_h_
 #define mozilla_a11y_sdnDocAccessible_h_
 
-#include "ISimpleDOMDocument.h"
+#include "ISimpleDOM.h"
 #include "IUnknownImpl.h"
 
 #include "DocAccessibleWrap.h"
@@ -18,7 +18,7 @@ namespace a11y {
 class sdnDocAccessible final : public ISimpleDOMDocument
 {
 public:
-  sdnDocAccessible(DocAccessibleWrap* aAccessible) : mAccessible(aAccessible) {};
+  explicit sdnDocAccessible(DocAccessibleWrap* aAccessible) : mAccessible(aAccessible) {};
   ~sdnDocAccessible() { };
 
   DECL_IUNKNOWN

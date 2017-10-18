@@ -1,4 +1,4 @@
-// |reftest| skip-if(!xulRuntime.shell)
+// |reftest| slow skip-if(!xulRuntime.shell)
 // Classes
 function testClasses() {
     function methodFun(id, kind, generator, args, body = []) {
@@ -190,6 +190,20 @@ function testClasses() {
                         constructor() { }
                     })
                  }`, SyntaxError);
+
+    // No legacy generators for methods.
+    assertClassError(`class NAME {
+                          constructor() { yield 2; }
+                      }`, SyntaxError);
+    assertClassError(`class NAME {
+                          method() { yield 2; }
+                      }`, SyntaxError);
+    assertClassError(`class NAME {
+                          get method() { yield 2; }
+                      }`, SyntaxError);
+    assertClassError(`class NAME {
+                          set method() { yield 2; }
+                      }`, SyntaxError);
 
     // Methods may be generators, but not accessors
     assertClassError("class NAME { constructor() { } *get foo() { } }", SyntaxError);

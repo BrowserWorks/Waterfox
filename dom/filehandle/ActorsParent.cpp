@@ -7,13 +7,14 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/FileHandleCommon.h"
 #include "mozilla/dom/PBackgroundFileHandleParent.h"
 #include "mozilla/dom/PBackgroundFileRequestParent.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
-#include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/indexedDB/PBackgroundIDBDatabaseParent.h"
+#include "mozilla/dom/IPCBlobUtils.h"
+#include "mozilla/dom/ipc/PendingIPCBlobParent.h"
 #include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDebug.h"
@@ -199,7 +200,9 @@ class FileHandle
   bool mFinishedOrAborted;
   bool mForceAborted;
 
-  DEBUGONLY(nsCOMPtr<nsIEventTarget> mThreadPoolEventTarget;)
+#ifdef DEBUG
+  nsCOMPtr<nsIEventTarget> mThreadPoolEventTarget;
+#endif
 
 public:
   void
@@ -343,19 +346,19 @@ private:
   virtual void
   ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvDeleteMe() override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvFinish() override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvAbort() override;
 
   virtual PBackgroundFileRequestParent*
   AllocPBackgroundFileRequestParent(const FileRequestParams& aParams) override;
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvPBackgroundFileRequestConstructor(PBackgroundFileRequestParent* aActor,
                                         const FileRequestParams& aParams)
                                         override;
@@ -368,7 +371,7 @@ private:
 class FileHandleOp
 {
 protected:
-  nsCOMPtr<nsIEventTarget> mOwningThread;
+  nsCOMPtr<nsIEventTarget> mOwningEventTarget;
   RefPtr<FileHandle> mFileHandle;
 
 public:
@@ -378,16 +381,16 @@ public:
   AssertIsOnOwningThread() const
   {
     AssertIsOnBackgroundThread();
-    MOZ_ASSERT(mOwningThread);
+    MOZ_ASSERT(mOwningEventTarget);
     DebugOnly<bool> current;
-    MOZ_ASSERT(NS_SUCCEEDED(mOwningThread->IsOnCurrentThread(&current)));
+    MOZ_ASSERT(NS_SUCCEEDED(mOwningEventTarget->IsOnCurrentThread(&current)));
     MOZ_ASSERT(current);
   }
 
   nsIEventTarget*
   OwningThread() const
   {
-    return mOwningThread;
+    return mOwningEventTarget;
   }
 
   void
@@ -408,7 +411,7 @@ public:
 
 protected:
   FileHandleOp(FileHandle* aFileHandle)
-    : mOwningThread(NS_GetCurrentThread())
+    : mOwningEventTarget(GetCurrentThreadSerialEventTarget())
     , mFileHandle(aFileHandle)
   {
     AssertIsOnOwningThread();
@@ -455,7 +458,9 @@ class NormalFileHandleOp
   bool mActorDestroyed;
   const bool mFileHandleIsAborted;
 
-  DEBUGONLY(bool mResponseSent;)
+#ifdef DEBUG
+  bool mResponseSent;
+#endif
 
 protected:
   nsCOMPtr<nsISupports> mFileStream;
@@ -505,7 +510,9 @@ protected:
     , mOperationMayProceed(true)
     , mActorDestroyed(false)
     , mFileHandleIsAborted(aFileHandle->IsAborted())
-    DEBUGONLY(, mResponseSent(false))
+#ifdef DEBUG
+    , mResponseSent(false)
+#endif
   {
     MOZ_ASSERT(aFileHandle);
   }
@@ -581,7 +588,8 @@ public:
   ProgressRunnable(CopyFileHandleOp* aCopyFileHandleOp,
                    uint64_t aProgress,
                    uint64_t aProgressMax)
-    : mCopyFileHandleOp(aCopyFileHandleOp)
+    : Runnable("dom::CopyFileHandleOp::ProgressRunnable")
+    , mCopyFileHandleOp(aCopyFileHandleOp)
     , mProgress(aProgress)
     , mProgressMax(aProgressMax)
   { }
@@ -779,12 +787,12 @@ GetFileHandleThreadPoolFor(FileHandleStorage aStorage)
  ******************************************************************************/
 
 FileHandleThreadPool::FileHandleThreadPool()
-  : mOwningThread(NS_GetCurrentThread())
+  : mOwningEventTarget(GetCurrentThreadSerialEventTarget())
   , mShutdownRequested(false)
   , mShutdownComplete(false)
 {
   AssertIsOnBackgroundThread();
-  MOZ_ASSERT(mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget);
   AssertIsOnOwningThread();
 }
 
@@ -819,10 +827,10 @@ FileHandleThreadPool::Create()
 void
 FileHandleThreadPool::AssertIsOnOwningThread() const
 {
-  MOZ_ASSERT(mOwningThread);
+  MOZ_ASSERT(mOwningEventTarget);
 
   bool current;
-  MOZ_ALWAYS_SUCCEEDS(mOwningThread->IsOnCurrentThread(&current));
+  MOZ_ALWAYS_SUCCEEDS(mOwningEventTarget->IsOnCurrentThread(&current));
   MOZ_ASSERT(current);
 }
 
@@ -945,12 +953,7 @@ FileHandleThreadPool::Shutdown()
     return;
   }
 
-  nsIThread* currentThread = NS_GetCurrentThread();
-  MOZ_ASSERT(currentThread);
-
-  while (!mShutdownComplete) {
-    MOZ_ALWAYS_TRUE(NS_ProcessNextEvent(currentThread));
-  }
+  MOZ_ALWAYS_TRUE(SpinEventLoopUntil([&]() { return mShutdownComplete; }));
 }
 
 nsresult
@@ -1079,10 +1082,11 @@ FileHandleThreadPool::MaybeFireCallback(StoragesCompleteCallback* aCallback)
   return true;
 }
 
-FileHandleThreadPool::
-FileHandleQueue::FileHandleQueue(FileHandleThreadPool* aFileHandleThreadPool,
-                                 FileHandle* aFileHandle)
-  : mOwningFileHandleThreadPool(aFileHandleThreadPool)
+FileHandleThreadPool::FileHandleQueue::FileHandleQueue(
+  FileHandleThreadPool* aFileHandleThreadPool,
+  FileHandle* aFileHandle)
+  : Runnable("dom::FileHandleThreadPool::FileHandleQueue")
+  , mOwningFileHandleThreadPool(aFileHandleThreadPool)
   , mFileHandle(aFileHandle)
   , mShouldFinish(false)
 {
@@ -1472,7 +1476,7 @@ BackgroundMutableFileParentBase::AllocPBackgroundFileHandleParent(
   return fileHandle.forget().take();
 }
 
-bool
+mozilla::ipc::IPCResult
 BackgroundMutableFileParentBase::RecvPBackgroundFileHandleConstructor(
                                             PBackgroundFileHandleParent* aActor,
                                             const FileMode& aMode)
@@ -1494,10 +1498,10 @@ BackgroundMutableFileParentBase::RecvPBackgroundFileHandleConstructor(
 
   if (NS_WARN_IF(!RegisterFileHandle(fileHandle))) {
     fileHandle->Abort(/* aForce */ false);
-    return true;
+    return IPC_OK();
   }
 
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -1512,22 +1516,26 @@ BackgroundMutableFileParentBase::DeallocPBackgroundFileHandleParent(
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 BackgroundMutableFileParentBase::RecvDeleteMe()
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(!mActorDestroyed);
 
-  return PBackgroundMutableFileParent::Send__delete__(this);
+  IProtocol* mgr = Manager();
+  if (!PBackgroundMutableFileParent::Send__delete__(this)) {
+    return IPC_FAIL_NO_REASON(mgr);
+  }
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 BackgroundMutableFileParentBase::RecvGetFileId(int64_t* aFileId)
 {
   AssertIsOnBackgroundThread();
 
   *aFileId = -1;
-  return true;
+  return IPC_OK();
 }
 
 /*******************************************************************************
@@ -1772,19 +1780,6 @@ FileHandle::VerifyRequestData(const FileRequestData& aData) const
     }
 
     case FileRequestData::TFileRequestBlobData: {
-      const FileRequestBlobData& data =
-        aData.get_FileRequestBlobData();
-
-      if (NS_WARN_IF(data.blobChild())) {
-        ASSERT_UNLESS_FUZZING();
-        return false;
-      }
-
-      if (NS_WARN_IF(!data.blobParent())) {
-        ASSERT_UNLESS_FUZZING();
-        return false;
-      }
-
       break;
     }
 
@@ -1834,45 +1829,49 @@ FileHandle::ActorDestroy(ActorDestroyReason aWhy)
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 FileHandle::RecvDeleteMe()
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(!IsActorDestroyed());
 
-  return PBackgroundFileHandleParent::Send__delete__(this);
+  IProtocol* mgr = Manager();
+  if (!PBackgroundFileHandleParent::Send__delete__(this)) {
+    return IPC_FAIL_NO_REASON(mgr);
+  }
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 FileHandle::RecvFinish()
 {
   AssertIsOnBackgroundThread();
 
   if (NS_WARN_IF(mFinishOrAbortReceived)) {
     ASSERT_UNLESS_FUZZING();
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   mFinishOrAbortReceived = true;
 
   MaybeFinishOrAbort();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 FileHandle::RecvAbort()
 {
   AssertIsOnBackgroundThread();
 
   if (NS_WARN_IF(mFinishOrAbortReceived)) {
     ASSERT_UNLESS_FUZZING();
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   mFinishOrAbortReceived = true;
 
   Abort(/* aForce */ false);
-  return true;
+  return IPC_OK();
 }
 
 PBackgroundFileRequestParent*
@@ -1938,7 +1937,7 @@ FileHandle::AllocPBackgroundFileRequestParent(const FileRequestParams& aParams)
   return actor.forget().take();
 }
 
-bool
+mozilla::ipc::IPCResult
 FileHandle::RecvPBackgroundFileRequestConstructor(
                                            PBackgroundFileRequestParent* aActor,
                                            const FileRequestParams& aParams)
@@ -1951,11 +1950,11 @@ FileHandle::RecvPBackgroundFileRequestConstructor(
 
   if (NS_WARN_IF(!op->Init(this))) {
     op->Cleanup();
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   op->Enqueue();
-  return true;
+  return IPC_OK();
 }
 
 bool
@@ -2077,7 +2076,9 @@ NormalFileHandleOp::SendSuccessResult()
     }
   }
 
-  DEBUGONLY(mResponseSent = true;)
+#ifdef DEBUG
+  mResponseSent = true;
+#endif
 
   return NS_OK;
 }
@@ -2095,7 +2096,9 @@ NormalFileHandleOp::SendFailureResult(nsresult aResultCode)
       PBackgroundFileRequestParent::Send__delete__(this, aResultCode);
   }
 
-  DEBUGONLY(mResponseSent = true;)
+#ifdef DEBUG
+  mResponseSent = true;
+#endif
 
   return result;
 }
@@ -2251,7 +2254,7 @@ CopyFileHandleOp::DoFileWork(FileHandle* aFileHandle)
     nsCOMPtr<nsIRunnable> runnable =
       new ProgressRunnable(this, mOffset, mSize);
 
-    mOwningThread->Dispatch(runnable, NS_DISPATCH_NORMAL);
+    mOwningEventTarget->Dispatch(runnable, NS_DISPATCH_NORMAL);
   } while (true);
 
   MOZ_ASSERT(mOffset == mSize);
@@ -2529,14 +2532,14 @@ WriteOp::Init(FileHandle* aFileHandle)
       const FileRequestBlobData& blobData =
         data.get_FileRequestBlobData();
 
-      auto blobActor = static_cast<BlobParent*>(blobData.blobParent());
+      RefPtr<BlobImpl> blobImpl = IPCBlobUtils::Deserialize(blobData.blob());
+      if (NS_WARN_IF(!blobImpl)) {
+        return false;
+      }
 
-      RefPtr<BlobImpl> blobImpl = blobActor->GetBlobImpl();
-
-      ErrorResult rv;
+      IgnoredErrorResult rv;
       blobImpl->GetInternalStream(getter_AddRefs(inputStream), rv);
       if (NS_WARN_IF(rv.Failed())) {
-        rv.SuppressException();
         return false;
       }
 
@@ -2647,8 +2650,8 @@ GetFileOp::GetResponse(FileRequestResponse& aResponse)
   RefPtr<BlobImpl> blobImpl = mFileHandle->GetMutableFile()->CreateBlobImpl();
   MOZ_ASSERT(blobImpl);
 
-  PBlobParent* actor =
-    BackgroundParent::GetOrCreateActorForBlobImpl(mBackgroundParent, blobImpl);
+  PendingIPCBlobParent* actor =
+    PendingIPCBlobParent::Create(mBackgroundParent, blobImpl);
   if (NS_WARN_IF(!actor)) {
     // This can only fail if the child has crashed.
     aResponse = NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR;

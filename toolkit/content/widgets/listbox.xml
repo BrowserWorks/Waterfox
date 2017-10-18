@@ -4,6 +4,9 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- This files relies on these specific Chrome/XBL globals -->
+<!-- globals ChromeNodeList -->
+
 <bindings id="listboxBindings"
           xmlns="http://www.mozilla.org/xbl"
           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -100,7 +103,15 @@
         <setter>
         <![CDATA[
           if (val >= 0) {
-            this.selectItem(this.getItemAtIndex(val));
+            // This is a micro-optimization so that a call to getIndexOfItem or
+            // getItemAtIndex caused by _fireOnSelect (especially for derived
+            // widgets) won't loop the children.
+            this._selecting = {
+              item: this.getItemAtIndex(val),
+              index: val
+            };
+            this.selectItem(this._selecting.item);
+            delete this._selecting;
           } else {
             this.clearSelection();
             this.currentItem = null;
@@ -516,7 +527,7 @@
         <parameter name="aItem"/>
         <body>
         <![CDATA[
-          var style = document.defaultView.getComputedStyle(aItem, "");
+          var style = document.defaultView.getComputedStyle(aItem);
           return style.display != "none" && style.visibility == "visible";
         ]]>
         </body>
@@ -588,8 +599,7 @@
         if (this.getRowCount() > 0) {
           if (this.currentIndex == -1) {
             this.currentIndex = this.getIndexOfFirstVisibleRow();
-          }
-          else {
+          } else {
             this.currentItem._fireEvent("DOMMenuItemActive");
           }
         }
@@ -677,6 +687,8 @@
 
       <!-- ///////////////// private listbox members ///////////////// -->
 
+      <field name="_touchY">-1</field>
+
       <method name="_fireOnSelect">
         <body>
         <![CDATA[
@@ -744,13 +756,21 @@
       <method name="getIndexOfItem">
         <parameter name="item"/>
         <body>
-          return this.listBoxObject.getIndexOfItem(item);
+          <![CDATA[
+            if (this._selecting && this._selecting.item == item)
+              return this._selecting.index;
+            return this.listBoxObject.getIndexOfItem(item);
+          ]]>
         </body>
       </method>
       <method name="getItemAtIndex">
         <parameter name="index"/>
         <body>
-          return this.listBoxObject.getItemAtIndex(index);
+          <![CDATA[
+            if (this._selecting && this._selecting.index == index)
+              return this._selecting.item;
+            return this.listBoxObject.getItemAtIndex(index);
+          ]]>
         </body>
       </method>
       <method name="ensureIndexIsVisible">
@@ -822,11 +842,15 @@
       <handler event="keypress" key=" " phase="target">
         <![CDATA[
           if (this.currentItem) {
-            if (this.currentItem.getAttribute("type") != "checkbox")
+            if (this.currentItem.getAttribute("type") != "checkbox") {
               this.addItemToSelection(this.currentItem);
-            else if (!this.currentItem.disabled) {
+              // Prevent page from scrolling on the space key.
+              event.preventDefault();
+            } else if (!this.currentItem.disabled) {
               this.currentItem.checked = !this.currentItem.checked;
               this.currentItem.doCommand();
+              // Prevent page from scrolling on the space key.
+              event.preventDefault();
             }
           }
         ]]>
@@ -848,6 +872,42 @@
           }
         ]]>
       </handler>
+
+      <handler event="touchstart">
+        <![CDATA[
+          if (event.touches.length > 1) {
+            // Multiple touch points detected, abort. In particular this aborts
+            // the panning gesture when the user puts a second finger down after
+            // already panning with one finger. Aborting at this point prevents
+            // the pan gesture from being resumed until all fingers are lifted
+            // (as opposed to when the user is back down to one finger).
+            this._touchY = -1;
+          } else {
+            this._touchY = event.touches[0].screenY;
+          }
+        ]]>
+      </handler>
+      <handler event="touchmove">
+        <![CDATA[
+          if (event.touches.length == 1 &&
+              this._touchY >= 0) {
+            let deltaY = this._touchY - event.touches[0].screenY;
+            let lines = Math.trunc(deltaY / this.listBoxObject.getRowHeight());
+            if (Math.abs(lines) > 0) {
+              this.listBoxObject.scrollByLines(lines);
+              deltaY -= lines * this.listBoxObject.getRowHeight();
+              this._touchY = event.touches[0].screenY + deltaY;
+            }
+            event.preventDefault();
+          }
+        ]]>
+      </handler>
+      <handler event="touchend">
+        <![CDATA[
+          this._touchY = -1;
+        ]]>
+      </handler>
+
     </handlers>
   </binding>
 
@@ -966,9 +1026,7 @@
         var control = this.control;
         if (!control || control.disabled)
           return;
-        let { AppConstants } =
-            Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
-        if ((!event.ctrlKey || (AppConstants.platform == "macosx" && event.button == 2)) &&
+        if ((!event.ctrlKey || (/Mac/.test(navigator.platform) && event.button == 2)) &&
             !event.shiftKey && !event.metaKey) {
           if (!this.selected) {
             control.selectItem(this);
@@ -988,16 +1046,13 @@
         control._userSelecting = true;
         if (control.selType != "multiple") {
           control.selectItem(this);
-        }
-        else if (event.ctrlKey || event.metaKey) {
+        } else if (event.ctrlKey || event.metaKey) {
           control.toggleItemSelection(this);
           control.currentItem = this;
-        }
-        else if (event.shiftKey) {
+        } else if (event.shiftKey) {
           control.selectItemRange(null, this);
           control.currentItem = this;
-        }
-        else {
+        } else {
           /* We want to deselect all the selected items except what was
             clicked, UNLESS it was a right-click.  We have to do this
             in click rather than mousedown so that you can drag a
@@ -1035,11 +1090,11 @@
                 onget="return this.getAttribute('checked') == 'true';">
         <setter><![CDATA[
           if (val)
-            this.setAttribute('checked', 'true');
+            this.setAttribute("checked", "true");
           else
-            this.removeAttribute('checked');
-          var event = document.createEvent('Events');
-          event.initEvent('CheckboxStateChange', true, true);
+            this.removeAttribute("checked");
+          var event = document.createEvent("Events");
+          event.initEvent("CheckboxStateChange", true, true);
           this.dispatchEvent(event);
           return val;
         ]]></setter>

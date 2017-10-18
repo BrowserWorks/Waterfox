@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
-* Copyright (C) 2007-2015, International Business Machines Corporation and
+* Copyright (C) 2007-2016, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -15,6 +17,8 @@
 #include "unicode/plurrule.h"
 #include "unicode/upluralrules.h"
 #include "unicode/ures.h"
+#include "unicode/numfmt.h"
+#include "unicode/decimfmt.h"
 #include "charstr.h"
 #include "cmemory.h"
 #include "cstring.h"
@@ -34,12 +38,9 @@
 #include "digitinterval.h" 
 #include "visibledigits.h"
 
-
 #if !UCONFIG_NO_FORMATTING
 
 U_NAMESPACE_BEGIN
-
-#define ARRAY_SIZE(array) (int32_t)(sizeof array  / sizeof array[0])
 
 static const UChar PLURAL_KEYWORD_OTHER[]={LOW_O,LOW_T,LOW_H,LOW_E,LOW_R,0};
 static const UChar PLURAL_DEFAULT_RULE[]={LOW_O,LOW_T,LOW_H,LOW_E,LOW_R,COLON,SPACE,LOW_N,0};
@@ -244,6 +245,26 @@ PluralRules::select(int32_t number) const {
 UnicodeString
 PluralRules::select(double number) const {
     return select(FixedDecimal(number));
+}
+
+UnicodeString
+PluralRules::select(const Formattable& obj, const NumberFormat& fmt, UErrorCode& status) const {
+    if (U_SUCCESS(status)) {
+        const DecimalFormat *decFmt = dynamic_cast<const DecimalFormat *>(&fmt);
+        if (decFmt != NULL) {
+            VisibleDigitsWithExponent digits;
+            decFmt->initVisibleDigitsWithExponent(obj, digits, status);
+            if (U_SUCCESS(status)) {
+                return select(digits);
+            }
+        } else {
+            double number = obj.getDouble(status);
+            if (U_SUCCESS(status)) {
+                return select(number);
+            }
+        }
+    }
+    return UnicodeString();
 }
 
 UnicodeString
@@ -494,6 +515,7 @@ PluralRuleParser::parse(const UnicodeString& ruleData, PluralRules *prules, UErr
 
         case tNotEqual:
             curAndConstraint->negated=TRUE;
+            U_FALLTHROUGH;
         case tIn:
         case tWithin:
         case tEqual:
@@ -1059,7 +1081,7 @@ PluralRuleParser::getNumberValue(const UnicodeString& token) {
     int32_t i;
     char digits[128];
 
-    i = token.extract(0, token.length(), digits, ARRAY_SIZE(digits), US_INV);
+    i = token.extract(0, token.length(), digits, UPRV_LENGTHOF(digits), US_INV);
     digits[i]='\0';
 
     return((int32_t)atoi(digits));

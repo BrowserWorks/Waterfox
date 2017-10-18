@@ -16,6 +16,7 @@
 #identity-popup[connection=secure] [when-connection~=secure],
 #identity-popup[connection=chrome] [when-connection~=chrome],
 #identity-popup[connection=file] [when-connection~=file],
+#identity-popup[connection=extension] [when-connection~=extension],
 /* Show insecure login forms messages when needed. */
 #identity-popup[loginforms=insecure] [when-loginforms=insecure],
 /* Show weak cipher messages when needed. */
@@ -66,6 +67,10 @@
 
 #identity-popup > .panel-arrowcontainer > .panel-arrowcontent {
   padding: 0;
+  /* Set default fill for icons in the identity popup.
+     Individual icons can override this. */
+  fill: currentColor;
+  fill-opacity: .6;
 }
 
 .panel-mainview[panelid=identity-popup] {
@@ -82,7 +87,7 @@
 }
 
 #identity-popup-multiView > .panel-viewcontainer > .panel-viewstack > .panel-subviews {
-  background: var(--panel-arrowcontent-background);
+  background: var(--arrowpanel-background);
   padding: 0;
 }
 
@@ -103,7 +108,7 @@
 #identity-popup-permissions-content,
 #tracking-protection-content {
   padding: 0.5em 0 1em;
-  /* .identity-popup-headline.host depends on this width */
+  /* .identity-popup-host depends on this width */
   padding-inline-start: calc(2em + 24px);
   padding-inline-end: 1em;
 }
@@ -122,59 +127,62 @@
   padding: 4px 0;
   min-width: auto;
   width: var(--identity-popup-expander-width);
-  border: 0 none;
+  border-style: none;
   -moz-appearance: none;
-  background-image: url("chrome://browser/skin/controlcenter/arrow-subview.svg"),
-                    linear-gradient(rgba(255,255,255,0.3), transparent);
+  background: url("chrome://browser/skin/arrow-left.svg") center no-repeat;
   background-size: 16px, auto;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
-}
-
-.identity-popup-expander:-moz-locale-dir(rtl) {
-  transform: scaleX(-1);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  color: inherit;
 }
 
 .identity-popup-expander[panel-multiview-anchor] {
   transition: background-color 250ms ease-in;
   background-color: Highlight;
-  background-image: url("chrome://browser/skin/controlcenter/arrow-subview-back.svg"),
-                    linear-gradient(rgba(255,255,255,0.3), transparent);
+  background-image: url("chrome://browser/skin/arrow-left.svg");
+  color: HighlightText;
+}
+
+.identity-popup-expander[panel-multiview-anchor]:-moz-locale-dir(rtl),
+.identity-popup-expander:not([panel-multiview-anchor]):-moz-locale-dir(ltr) {
+  transform: scaleX(-1);
 }
 
 .identity-popup-expander > .button-box {
   padding: 0;
-  -moz-appearance: none;
-  border-style: none;
-  border-left: 1px solid var(--panel-separator-color);
 }
 
-.identity-popup-expander:-moz-focusring > .button-box,
-.identity-popup-expander[panel-multiview-anchor] > .button-box {
-  border-style: none;
+.identity-popup-expander:not([panel-multiview-anchor]) > .button-box {
+  border-right: 1px solid var(--panel-separator-color);
 }
 
 .identity-popup-expander:hover {
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
+  background-image: url("chrome://browser/skin/arrow-left.svg");
 }
 
 .identity-popup-expander:hover:active {
-  background-color: hsla(210,4%,10%,.12);
+  background-color: var(--arrowpanel-dimmed-further);
   box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
 }
 
 /* CONTENT */
 
+.identity-popup-permission-label,
+.identity-popup-permission-state-label,
 #identity-popup-security-content > description,
 #identity-popup-security-descriptions > description,
 #identity-popup-securityView-header > description,
 #identity-popup-securityView-body > description,
 #identity-popup-permissions-content > description,
-#tracking-protection-content > label {
-  white-space: pre-wrap;
+#tracking-protection-content > description {
   font-size: 110%;
   margin: 0;
+}
+
+/* This element needs the pre-wrap because we add newlines to it in the code. */
+#identity-popup-content-supplemental {
+  white-space: pre-wrap;
 }
 
 .identity-popup-headline {
@@ -182,7 +190,7 @@
   font-size: 150%;
 }
 
-.identity-popup-headline.host {
+.identity-popup-host {
   word-wrap: break-word;
   /* 1em + 2em + 24px is #identity-popup-security-content padding
    * 30em is .panel-mainview:not([panelid="PanelUI-popup"]) width */
@@ -203,17 +211,17 @@
 .identity-popup-warning-yellow:-moz-locale-dir(rtl) {
   background-position: 100% 50%;
 }
-
 /* SECURITY */
-
 .identity-popup-connection-secure {
+%ifdef MOZ_PHOTON_THEME
+  color: #058B00;
+%else
   color: #418220;
+%endif
 }
-
 .identity-popup-connection-not-secure {
   color: #d74345;
 }
-
 #identity-popup-securityView {
   overflow: hidden;
 }
@@ -227,23 +235,28 @@
 #identity-popup[connection=chrome] #identity-popup-security-content {
   background-image: url(chrome://branding/content/icon48.png);
 }
-
 #identity-popup[connection^=secure] #identity-popup-securityView,
 #identity-popup[connection^=secure] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/conn-secure.svg);
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-secure);
+  -moz-context-properties: fill;
+%ifdef MOZ_PHOTON_THEME
+  fill: #12BC00;
+%else
+  fill: #4d9a26;
+%endif
 }
-
 /* Use [isbroken] to make sure we don't show a lock on an http page. See Bug 1192162. */
 #identity-popup[ciphers=weak] #identity-popup-securityView,
 #identity-popup[ciphers=weak] #identity-popup-security-content,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=passive-loaded][isbroken] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/controlcenter/conn-degraded.svg);
+  background-image: url(chrome://browser/skin/controlcenter/connection.svg#connection-degraded);
 }
 
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-securityView,
 #identity-popup[connection=secure-cert-user-overridden] #identity-popup-security-content {
-  background-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
+  background-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg);
+  -moz-context-properties: fill, fill-opacity;
 }
 
 #identity-popup[loginforms=insecure] #identity-popup-securityView,
@@ -251,6 +264,13 @@
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-securityView,
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-security-content {
   background-image: url(chrome://browser/skin/controlcenter/mcb-disabled.svg);
+}
+
+#identity-popup[connection=extension] #identity-popup-securityView,
+#identity-popup[connection=extension] #identity-popup-security-content {
+  background-image: url(chrome://browser/skin/controlcenter/extension.svg);
+  -moz-context-properties: fill;
+  fill: #60bf4c;
 }
 
 #identity-popup-security-descriptions > description {
@@ -276,26 +296,26 @@
 
 #identity-popup-securityView-footer {
   margin-top: 1em;
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
 }
 
 #identity-popup-securityView-footer > button {
   -moz-appearance: none;
   margin: 0;
   border: none;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--panel-separator-color);
   padding: 8px 20px;
-  color: ButtonText;
+  color: inherit;
   background-color: transparent;
 }
 
 #identity-popup-securityView-footer > button:hover,
 #identity-popup-securityView-footer > button:focus {
-  background-color: hsla(210,4%,10%,.07);
+  background-color: var(--arrowpanel-dimmed);
 }
 
 #identity-popup-securityView-footer > button:hover:active {
-  background-color: hsla(210,4%,10%,.12);
+  background-color: var(--arrowpanel-dimmed-further);
 }
 
 #identity-popup-content-verifier ~ description {
@@ -318,11 +338,11 @@ description#identity-popup-content-verifier,
 /* TRACKING PROTECTION */
 
 #tracking-protection-content {
-  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg");
+  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg#enabled");
 }
 
 #tracking-protection-content[state="loaded-tracking-content"]  {
-  background-image: url("chrome://browser/skin/controlcenter/tracking-protection-disabled.svg");
+  background-image: url("chrome://browser/skin/controlcenter/tracking-protection.svg#disabled");
 }
 
 #tracking-action-block,
@@ -347,6 +367,7 @@ description#identity-popup-content-verifier,
 
 #identity-popup-permissions-content {
   background-image: url(chrome://browser/skin/controlcenter/permissions.svg);
+  padding-bottom: 1.5em;
 }
 
 #identity-popup-permissions-headline {
@@ -370,13 +391,29 @@ description#identity-popup-content-verifier,
   margin-top: 5px;
 }
 
-#identity-popup-permission-list:not(:empty) + description {
-  display: none;
-}
-
 .identity-popup-permission-icon {
   width: 16px;
   height: 16px;
+}
+
+.identity-popup-permission-icon.in-use {
+  -moz-context-properties: fill;
+  fill: rgb(224, 41, 29);
+  animation: 1.5s ease in-use-blink infinite;
+}
+
+@keyframes in-use-blink {
+  50% { opacity: 0; }
+}
+
+.identity-popup-permission-label,
+.identity-popup-permission-state-label {
+  /* We need to align the action buttons and permission icons with the text.
+     This is tricky because the icon height is defined in pixels, while the
+     font height can vary with platform and system settings, and at least on
+     Windows the default font metrics reserve more extra space for accents.
+     This value is a good compromise for different platforms and font sizes. */
+  margin-top: -0.1em;
 }
 
 .identity-popup-permission-label {
@@ -384,6 +421,7 @@ description#identity-popup-content-verifier,
 }
 
 .identity-popup-permission-state-label {
+  margin-inline-end: 5px;
   text-align: end;
   color: graytext;
 }
@@ -400,15 +438,14 @@ description#identity-popup-content-verifier,
 
 .identity-popup-permission-remove-button > .button-box {
   padding: 0;
-  -moz-appearance: none;
 }
 
 .identity-popup-permission-remove-button > .button-box > .button-icon {
   margin: 0;
   width: 16px;
   height: 16px;
-  list-style-image: url(chrome://browser/skin/panel-icons.svg#cancel);
-  filter: url(chrome://browser/skin/filters.svg#fill);
+  list-style-image: url(chrome://browser/skin/panel-icon-cancel.svg);
+  -moz-context-properties: fill;
   fill: graytext;
 }
 

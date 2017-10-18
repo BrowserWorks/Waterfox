@@ -40,7 +40,7 @@ public:
 
   ~SharedSurfaceTextureData();
 
-  virtual bool Lock(OpenMode, FenceHandle*) override { return false; }
+  virtual bool Lock(OpenMode) override { return false; }
 
   virtual void Unlock() override {}
 
@@ -48,7 +48,7 @@ public:
 
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
 
-  virtual void Deallocate(ClientIPCAllocator*) override;
+  virtual void Deallocate(LayersIPCChannel*) override;
 
   gl::SharedSurface* Surf() const { return mSurf.get(); }
 };
@@ -58,21 +58,13 @@ class SharedSurfaceTextureClient : public TextureClient
 public:
   SharedSurfaceTextureClient(SharedSurfaceTextureData* aData,
                              TextureFlags aFlags,
-                             ClientIPCAllocator* aAllocator);
+                             LayersIPCChannel* aAllocator);
 
   ~SharedSurfaceTextureClient();
 
   static already_AddRefed<SharedSurfaceTextureClient>
   Create(UniquePtr<gl::SharedSurface> surf, gl::SurfaceFactory* factory,
-         ClientIPCAllocator* aAllocator, TextureFlags aFlags);
-
-  virtual void SetReleaseFenceHandle(const FenceHandle& aReleaseFenceHandle) override;
-
-  virtual FenceHandle GetAndResetReleaseFenceHandle() override;
-
-  virtual void SetAcquireFenceHandle(const FenceHandle& aAcquireFenceHandle) override;
-
-  virtual const FenceHandle& GetAcquireFenceHandle() const override;
+         LayersIPCChannel* aAllocator, TextureFlags aFlags);
 
   gl::SharedSurface* Surf() const {
     return static_cast<const SharedSurfaceTextureData*>(GetInternalData())->Surf();

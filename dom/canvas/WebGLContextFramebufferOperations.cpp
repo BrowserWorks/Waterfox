@@ -36,20 +36,29 @@ WebGLContext::Clear(GLbitfield mask)
         if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(funcName))
             return;
 
-        gl->fClear(mask);
-        return;
-    } else {
-        ClearBackbufferIfNeeded();
+        if (mask & LOCAL_GL_COLOR_BUFFER_BIT) {
+            for (const auto& cur : mBoundDrawFramebuffer->ColorDrawBuffers()) {
+                if (!cur->IsDefined())
+                    continue;
+
+                switch (cur->Format()->format->componentType) {
+                case webgl::ComponentType::Float:
+                case webgl::ComponentType::NormInt:
+                case webgl::ComponentType::NormUInt:
+                    break;
+
+                default:
+                    ErrorInvalidOperation("%s: Color draw buffers must be floating-point"
+                                          " or fixed-point. (normalized (u)ints)",
+                                          funcName);
+                    return;
+                }
+            }
+        }
     }
 
-    // Ok, we're clearing the default framebuffer/screen.
-    {
-        ScopedMaskWorkaround autoMask(*this);
-        gl->fClear(mask);
-    }
-
-    Invalidate();
-    mShouldPresent = true;
+    ScopedDrawCallWrapper wrapper(*this);
+    gl->fClear(mask);
 }
 
 static GLfloat

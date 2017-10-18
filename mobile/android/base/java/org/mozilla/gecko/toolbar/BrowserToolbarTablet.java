@@ -8,9 +8,12 @@ package org.mozilla.gecko.toolbar;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.util.ViewUtil;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.support.v4.view.MarginLayoutParamsCompat;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 
 /**
@@ -41,7 +44,7 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         // The forward button is initially expanded (in the layout file)
         // so translate it for start of the expansion animation; future
         // iterations translate it to this position when hiding and will already be set up.
-        ViewHelper.setTranslationX(forwardButton, -forwardButtonTranslationWidth);
+        ViewHelper.setTranslationX(forwardButton, forwardButtonTranslationWidth * (isLayoutRtl() ? 1 : -1));
 
         // TODO: Move this to *TabletBase when old tablet is removed.
         // We don't want users clicking the forward button in transitions, but we don't want it to
@@ -50,6 +53,10 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
         forwardButton.setEnabled(true);
 
         updateForwardButtonState(ForwardButtonState.HIDDEN);
+    }
+
+    private boolean isLayoutRtl() {
+        return ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL;
     }
 
     private void updateForwardButtonState(final ForwardButtonState state) {
@@ -91,13 +98,12 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
                 if (!willShowForward) {
                     // Set the margin before the transition when hiding the forward button. We
                     // have to do this so that the favicon isn't clipped during the transition
-                    MarginLayoutParams layoutParams =
-                        (MarginLayoutParams) urlDisplayLayout.getLayoutParams();
-                    layoutParams.leftMargin = 0;
+                    MarginLayoutParams layoutParams = (MarginLayoutParams) urlDisplayLayout.getLayoutParams();
+                    ViewUtil.setMarginStart(layoutParams, 0, isLayoutRtl());
 
                     // Do the same on the URL edit container
                     layoutParams = (MarginLayoutParams) urlEditLayout.getLayoutParams();
-                    layoutParams.leftMargin = 0;
+                    ViewUtil.setMarginStart(layoutParams, 0, isLayoutRtl());
 
                     requestLayout();
                     // Note, we already translated the favicon, site security, and text field
@@ -111,12 +117,11 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
                 final ForwardButtonState newForwardButtonState;
                 if (willShowForward) {
                     // Increase the margins to ensure the text does not run outside the View.
-                    MarginLayoutParams layoutParams =
-                        (MarginLayoutParams) urlDisplayLayout.getLayoutParams();
-                    layoutParams.leftMargin = forwardButtonTranslationWidth;
+                    MarginLayoutParams layoutParams = (MarginLayoutParams) urlDisplayLayout.getLayoutParams();
+                    ViewUtil.setMarginStart(layoutParams, forwardButtonTranslationWidth, isLayoutRtl());
 
                     layoutParams = (MarginLayoutParams) urlEditLayout.getLayoutParams();
-                    layoutParams.leftMargin = forwardButtonTranslationWidth;
+                    ViewUtil.setMarginStart(layoutParams, forwardButtonTranslationWidth, isLayoutRtl());
 
                     newForwardButtonState = ForwardButtonState.DISPLAYED;
                 } else {
@@ -135,10 +140,11 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
     }
 
     private void prepareForwardAnimation(PropertyAnimator anim, ForwardButtonAnimation animation, int width) {
+        boolean isLayoutRtl = isLayoutRtl();
         if (animation == ForwardButtonAnimation.HIDE) {
             anim.attach(forwardButton,
                       PropertyAnimator.Property.TRANSLATION_X,
-                      -width);
+                      width * (isLayoutRtl ? 1 : -1));
             anim.attach(forwardButton,
                       PropertyAnimator.Property.ALPHA,
                       0);
@@ -159,12 +165,6 @@ class BrowserToolbarTablet extends BrowserToolbarTabletBase {
     public void triggerTabsPanelTransition(final PropertyAnimator animator, final boolean areTabsShown) {
         // Do nothing.
     }
-
-    @Override
-    public void setToolBarButtonsAlpha(float alpha) {
-        // Do nothing.
-    }
-
 
     @Override
     public void startEditing(final String url, final PropertyAnimator animator) {

@@ -21,7 +21,7 @@
 class nsXULWindow;
 
 class nsChromeTreeOwner : public nsIDocShellTreeOwner,
-                          public nsIBaseWindow, 
+                          public nsIBaseWindow,
                           public nsIInterfaceRequestor,
                           public nsIWebProgressListener,
                           public nsSupportsWeakReference
@@ -35,9 +35,6 @@ public:
    NS_DECL_NSIBASEWINDOW
    NS_DECL_NSIDOCSHELLTREEOWNER
    NS_DECL_NSIWEBPROGRESSLISTENER
-
-   static nsresult InitGlobals();
-   static void     FreeGlobals();
 
 protected:
    nsChromeTreeOwner();

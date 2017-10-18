@@ -41,8 +41,9 @@ nsSVGElement::EnumInfo SVGGradientElement::sEnumInfo[2] =
   }
 };
 
-nsSVGElement::StringInfo SVGGradientElement::sStringInfo[1] =
+nsSVGElement::StringInfo SVGGradientElement::sStringInfo[2] =
 {
+  { &nsGkAtoms::href, kNameSpaceID_None, true },
   { &nsGkAtoms::href, kNameSpaceID_XLink, true }
 };
 
@@ -95,7 +96,9 @@ SVGGradientElement::SpreadMethod()
 already_AddRefed<SVGAnimatedString>
 SVGGradientElement::Href()
 {
-  return mStringAttributes[HREF].ToDOMAnimatedString(this);
+  return mStringAttributes[HREF].IsExplicitlySet()
+         ? mStringAttributes[HREF].ToDOMAnimatedString(this)
+         : mStringAttributes[XLINK_HREF].ToDOMAnimatedString(this);
 }
 
 //----------------------------------------------------------------------
@@ -195,13 +198,14 @@ SVGRadialGradientElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenP
   return SVGRadialGradientElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
-nsSVGElement::LengthInfo SVGRadialGradientElement::sLengthInfo[5] =
+nsSVGElement::LengthInfo SVGRadialGradientElement::sLengthInfo[6] =
 {
   { &nsGkAtoms::cx, 50, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::X },
   { &nsGkAtoms::cy, 50, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::Y },
   { &nsGkAtoms::r, 50, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::XY },
   { &nsGkAtoms::fx, 50, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::X },
   { &nsGkAtoms::fy, 50, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::Y },
+  { &nsGkAtoms::fr, 0, nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE, SVGContentUtils::XY },
 };
 
 //----------------------------------------------------------------------
@@ -247,6 +251,12 @@ already_AddRefed<SVGAnimatedLength>
 SVGRadialGradientElement::Fy()
 {
   return mLengthAttributes[ATTR_FY].ToDOMAnimatedLength(this);
+}
+
+already_AddRefed<SVGAnimatedLength>
+SVGRadialGradientElement::Fr()
+{
+  return mLengthAttributes[ATTR_FR].ToDOMAnimatedLength(this);
 }
 
 //----------------------------------------------------------------------

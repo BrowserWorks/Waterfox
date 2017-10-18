@@ -37,6 +37,7 @@ const STATE_TRAVERSED = nsIAccessibleStates.STATE_TRAVERSED;
 const STATE_UNAVAILABLE = nsIAccessibleStates.STATE_UNAVAILABLE;
 
 const EXT_STATE_ACTIVE = nsIAccessibleStates.EXT_STATE_ACTIVE;
+const EXT_STATE_CURRENT = nsIAccessibleStates.EXT_STATE_CURRENT;
 const EXT_STATE_DEFUNCT = nsIAccessibleStates.EXT_STATE_DEFUNCT;
 const EXT_STATE_EDITABLE = nsIAccessibleStates.EXT_STATE_EDITABLE;
 const EXT_STATE_ENABLED = nsIAccessibleStates.EXT_STATE_ENABLED;
@@ -162,7 +163,7 @@ function testStates(aAccOrElmOrID, aState, aExtraState, aAbsentState,
 }
 
 /**
- * Tests an acessible and its sub tree for the passed in state bits.
+ * Tests an accessible and its sub tree for the passed in state bits.
  * Used to make sure that states are propagated to descendants, for example the
  * STATE_UNAVAILABLE from a container to its children.
  *
@@ -187,7 +188,7 @@ function testStatesInSubtree(aAccOrElmOrID, aState, aExtraState, aAbsentState)
   var children = null;
   try {
     children = acc.children;
-  } catch(e) {}
+  } catch (e) {}
   ok(children, "Could not get children for " + aAccOrElmOrID +"!");
 
   if (children) {
@@ -204,7 +205,7 @@ function testStatesInSubtree(aAccOrElmOrID, aState, aExtraState, aAbsentState)
 function testIsDefunct(aAccessible, aTestName)
 {
   var id = prettyName(aAccessible) + (aTestName ? " [" + aTestName + "]" : "");
-  var [state, extraState] = getStates(aAccessible);
+  var [/*state*/, extraState] = getStates(aAccessible);
   isState(extraState & EXT_STATE_DEFUNCT, EXT_STATE_DEFUNCT, true,
           "no defuct state for " + id + "!");
 }

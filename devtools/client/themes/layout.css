@@ -1,258 +1,209 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/ */
-
-#layout-wrapper {
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
-  border-color: var(--theme-splitter-color);
-}
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #layout-container {
-  /* The view will grow bigger as the window gets resized, until 400px */
-  max-width: 400px;
-  margin: 0px auto;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  min-width: 200px;
+}
+
+/**
+ * Common styles for shared components
+ */
+
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 auto;
+  align-items: center;
+  min-width: 140px;
+}
+
+.grid-container > span {
+  font-weight: 600;
+  margin-bottom: 5px;
+  pointer-events: none;
+}
+
+.grid-container > ul {
+  list-style: none;
+  margin: 0;
   padding: 0;
 }
 
-/* Header */
-
-#layout-header,
-#layout-info {
+.grid-container li {
   display: flex;
   align-items: center;
-  padding: 4px 17px;
+  padding: 4px 0;
 }
 
-#layout-geometry-editor {
-  visibility: hidden;
+.grid-container input {
+  margin: 0 5px;
 }
 
-#layout-geometry-editor::before {
-  background: url(images/geometry-editor.svg) no-repeat center center / 16px 16px;
+.grid-container label {
+  display: flex;
+  align-items: center;
 }
 
-/* Main: contains the box-model regions */
+/**
+ * Layout Promote Bar
+ */
 
-#layout-main {
-  position: relative;
-  box-sizing: border-box;
-  /* The regions are semi-transparent, so the white background is partly
-     visible */
-  background-color: white;
-  color: var(--theme-selection-color);
-  /* Make sure there is some space between the window's edges and the regions */
-  margin: 0 14px 4px 14px;
-  width: calc(100% - 2 * 14px);
+.layout-promote-bar {
+  align-items: center;
+  background-color: var(--theme-toolbar-background);
+  border-bottom: 1px solid var(--theme-splitter-color);
+  display: flex;
+  font-size: 11px;
+  padding: 5px;
+  transition: all 0.25s ease;
+  width: 100%;
+  -moz-user-select: none;
 }
 
-.layout-margin,
-.layout-size {
-  color: var(--theme-highlight-blue);
+.layout-promote-bar:hover {
+  background-color: var(--theme-toolbar-hover);
 }
 
-/* Regions are 3 nested elements with wide borders and outlines */
-
-#layout-content {
-  height: 18px;
+.layout-promote-info-icon {
+  display: inline-block;
+  background-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin: 6px;
+  background-image: url("chrome://browser/skin/info.svg");
 }
 
-#layout-margins,
-#layout-borders,
-#layout-padding {
-  border-color: hsla(210,100%,85%,0.2);
-  border-width: 18px;
-  border-style: solid;
-  outline: dotted 1px hsl(210,100%,85%);
-}
-
-#layout-margins {
-  /* This opacity applies to all of the regions, since they are nested */
-  opacity: .8;
-}
-
-/* Regions colors */
-
-#layout-margins {
-  border-color: #edff64;
-}
-
-#layout-borders {
-  border-color: #444444;
-}
-
-#layout-padding {
-  border-color: #6a5acd;
-}
-
-#layout-content {
-  background-color: #87ceeb;
-}
-
-.theme-firebug #layout-main,
-.theme-firebug #layout-borders,
-.theme-firebug #layout-content {
-  border-style: solid;
-}
-
-.theme-firebug #layout-main,
-.theme-firebug #layout-header {
-  font-family: var(--proportional-font-family);
-}
-
-.theme-firebug #layout-main {
-  color: var(--theme-body-color);
-  font-size: var(--theme-toolbar-font-size);
-}
-
-.theme-firebug #layout-header {
-  font-size: var(--theme-toolbar-font-size);
-}
-
-/* Editable region sizes are contained in absolutely positioned <p> */
-
-#layout-main > p {
-  position: absolute;
-  pointer-events: none;
-  margin: 0;
-  text-align: center;
-}
-
-#layout-main > p > span,
-#layout-main > p > input {
-  vertical-align: middle;
-  pointer-events: auto;
-}
-
-/* Coordinates for the region sizes */
-
-.layout-top,
-.layout-bottom {
-  width: calc(100% - 2px);
-  text-align: center;
-}
-
-.layout-padding.layout-top {
-  top: 37px;
-}
-
-.layout-padding.layout-bottom {
-  bottom: 38px;
-}
-
-.layout-border.layout-top {
-  top: 19px;
-}
-
-.layout-border.layout-bottom {
-  bottom: 20px;
-}
-
-.layout-margin.layout-top {
-  top: 1px;
-}
-
-.layout-margin.layout-bottom {
-  bottom: 2px;
-}
-
-.layout-size,
-.layout-margin.layout-left,
-.layout-margin.layout-right,
-.layout-border.layout-left,
-.layout-border.layout-right,
-.layout-padding.layout-left,
-.layout-padding.layout-right {
-  top: 22px;
-  line-height: 80px;
-}
-
-.layout-size {
-  width: calc(100% - 2px);
-}
-
-.layout-margin.layout-right,
-.layout-margin.layout-left,
-.layout-border.layout-left,
-.layout-border.layout-right,
-.layout-padding.layout-right,
-.layout-padding.layout-left {
-  width: 21px;
-}
-
-.layout-padding.layout-left {
-  left: 35px;
-}
-
-.layout-padding.layout-right {
-  right: 35px;
-}
-
-.layout-border.layout-left {
-  left: 16px;
-}
-
-.layout-border.layout-right {
-  right: 17px;
-}
-
-.layout-margin.layout-right {
-  right: 0;
-}
-
-.layout-margin.layout-left {
-  left: 0;
-}
-
-.layout-rotate.layout-left:not(.layout-editing) {
-  transform: rotate(-90deg);
-}
-
-.layout-rotate.layout-right:not(.layout-editing) {
-  transform: rotate(90deg);
-}
-
-/* Legend: displayed inside regions */
-
-.layout-legend {
-  position: absolute;
-  margin: 2px 6px;
-  z-index: 1;
-}
-
-.layout-legend[data-box="margin"] {
-  color: var(--theme-highlight-blue);
-}
-
-/* Editable fields */
-
-.layout-editable {
-  border: 1px dashed transparent;
-  -moz-user-select: text;
-}
-
-.layout-editable:hover {
-  border-bottom-color: hsl(0, 0%, 50%);
-}
-
-.styleinspector-propertyeditor {
-  border: 1px solid #ccc;
-  padding: 0;
-}
-
-/* Make sure the content size doesn't appear as editable like the other sizes */
-
-.layout-size > span {
-  cursor: default;
-}
-
-/* Layout info: contains the position and size of the element */
-
-#layout-element-size {
+.layout-promote-message {
   flex: 1;
 }
 
-#layout-position-group {
+.layout-promote-learn-more-link {
+  margin-inline-start: 5px;
+}
+
+.layout-promote-learn-more-link:hover {
+  text-decoration: underline;
+}
+
+.layout-promote-close-button {
+  margin: 6px;
+}
+
+.layout-promote-close-button::before {
+  background-image: url("chrome://devtools/skin/images/close.svg");
+  margin: -6px 0 0 -6px;
+}
+
+/**
+ * Grid Container
+ */
+
+#layout-grid-container {
+  display: flex;
+  flex-direction: column;
+  margin: 5px;
+}
+
+/**
+ * Grid Content
+ */
+
+.grid-content {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+  margin: 5px 0;
+}
+
+.grid-container:first-child {
+  margin-bottom: 10px;
+}
+
+/**
+ * Grid Outline
+ */
+
+.grid-outline-container {
+  margin: 5px 0;
+}
+
+.grid-outline-container svg {
+  overflow: visible;
+}
+
+.grid-outline-border {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.75;
+  vector-effect: non-scaling-stroke;
+}
+
+.grid-outline-cell {
+  pointer-events: all;
+  stroke: currentColor;
+  stroke-dasharray: 0.5, 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.grid-outline-cell:hover {
+  opacity: 0.45;
+  fill: currentColor;
+}
+
+.grid-outline-line {
+  opacity: 0;
+  stroke-width: 10;
+}
+
+.grid-outline-text {
   display: flex;
   align-items: center;
+  justify-content: center;
+  color: var(--theme-graphs-full-red);
+}
+
+.grid-outline-text-icon {
+  background: url("chrome://devtools/skin/images/sad-face.svg");
+  margin-inline-end: 5px;
+  width: 16px;
+  height: 16px;
+}
+
+/**
+ * Container when no grids are present
+ */
+
+.layout-no-grids {
+  font-style: italic;
+  text-align: center;
+  padding: 0.5em;
+}
+
+/**
+ * Grid Item
+ */
+
+.grid-color-swatch {
+  width: 12px;
+  height: 12px;
+  margin-left: 5px;
+  border: 1px solid var(--theme-highlight-gray);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.grid-color-value {
+  display: none;
+}
+
+/**
+ * Settings Item
+ */
+
+.grid-settings-item label {
+  line-height: 16px;
 }

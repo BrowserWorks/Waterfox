@@ -8,11 +8,15 @@ var Ci = Components.interfaces;
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/LightweightThemeManager.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
+                                  "resource://gre/modules/Messaging.jsm");
 
 function LightweightThemeConsumer(aDocument) {
   this._doc = aDocument;
-  Services.obs.addObserver(this, "lightweight-theme-styling-update", false);
-  Services.obs.addObserver(this, "lightweight-theme-apply", false);
+  Services.obs.addObserver(this, "lightweight-theme-styling-update");
+  Services.obs.addObserver(this, "lightweight-theme-apply");
 
   this._update(LightweightThemeManager.currentThemeForDisplay);
 }
@@ -39,6 +43,6 @@ LightweightThemeConsumer.prototype = {
 
     let msg = active ? { type: "LightweightTheme:Update", data: aData } :
                        { type: "LightweightTheme:Disable" };
-    Services.androidBridge.handleGeckoMessage(msg);
+    EventDispatcher.instance.sendRequest(msg);
   }
 }

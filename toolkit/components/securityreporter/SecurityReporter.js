@@ -5,7 +5,7 @@
 
 const { classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-Cu.importGlobalProperties(['fetch']);
+Cu.importGlobalProperties(["fetch"]);
 
 const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 const protocolHandler = Cc["@mozilla.org/network/protocol;1?name=http"]
@@ -20,11 +20,10 @@ const HISTOGRAM_ID = "TLS_ERROR_REPORT_UI";
 XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
                                   "resource://gre/modules/UpdateUtils.jsm");
 
-function getDERString(cert)
-{
+function getDERString(cert) {
   var length = {};
   var derArray = cert.getRawDER(length);
-  var derString = '';
+  var derString = "";
   for (var i = 0; i < derArray.length; i++) {
     derString += String.fromCharCode(derArray[i]);
   }
@@ -38,7 +37,7 @@ SecurityReporter.prototype = {
   classID:          Components.ID("{8a997c9a-bea1-11e5-a1fa-be6aBc8e7f8b}"),
   contractID:       "@mozilla.org/securityreporter;1",
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISecurityReporter]),
-  reportTLSError: function(transportSecurityInfo, hostname, port) {
+  reportTLSError(transportSecurityInfo, hostname, port) {
     // don't send if there's no transportSecurityInfo (since the report cannot
     // contain anything of interest)
     if (!transportSecurityInfo) {
@@ -54,7 +53,7 @@ SecurityReporter.prototype = {
     // server (otherwise we'll get loops when this fails)
     let endpoint =
       Services.prefs.getCharPref("security.ssl.errorReporting.url");
-    let reportURI = Services.io.newURI(endpoint, null, null);
+    let reportURI = Services.io.newURI(endpoint);
 
     if (reportURI.host == hostname) {
       return;
@@ -74,8 +73,8 @@ SecurityReporter.prototype = {
     }
 
     let report = {
-      hostname: hostname,
-      port: port,
+      hostname,
+      port,
       timestamp: Math.round(Date.now() / 1000),
       errorCode: transportSecurityInfo.errorCode,
       failedCertChain: asciiCertChain,
@@ -90,9 +89,9 @@ SecurityReporter.prototype = {
       method: "POST",
       body: JSON.stringify(report),
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
       }
-    }).then(function (aResponse) {
+    }).then(function(aResponse) {
       if (!aResponse.ok) {
         // request returned non-success status
         Services.telemetry.getHistogramById(HISTOGRAM_ID)
@@ -101,7 +100,7 @@ SecurityReporter.prototype = {
         Services.telemetry.getHistogramById(HISTOGRAM_ID)
           .add(TLS_ERROR_REPORT_TELEMETRY_SUCCESS);
       }
-    }).catch(function (e) {
+    }).catch(function(e) {
       // error making request to reportURL
       Services.telemetry.getHistogramById(HISTOGRAM_ID)
           .add(TLS_ERROR_REPORT_TELEMETRY_FAILURE);

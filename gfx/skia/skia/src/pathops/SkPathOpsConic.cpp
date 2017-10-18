@@ -34,7 +34,10 @@ int SkDConic::FindExtrema(const double src[], SkScalar w, double t[1]) {
 
     double tValues[2];
     int roots = SkDQuad::RootsValidT(coeff[0], coeff[1], coeff[2], tValues);
-    SkASSERT(0 == roots || 1 == roots);
+    // In extreme cases, the number of roots returned can be 2. Pathops
+    // will fail later on, so there's no advantage to plumbing in an error
+    // return here.
+    // SkASSERT(0 == roots || 1 == roots);
 
     if (1 == roots) {
         t[0] = tValues[0];
@@ -153,7 +156,8 @@ SkDConic SkDConic::subDivide(double t1, double t2) const {
     double bx = 2 * dx - (ax + cx) / 2;
     double by = 2 * dy - (ay + cy) / 2;
     double bz = 2 * dz - (az + cz) / 2;
-    SkDConic dst = {{{{ax / az, ay / az}, {bx / bz, by / bz}, {cx / cz, cy / cz}}},
+    SkDConic dst = {{{{ax / az, ay / az}, {bx / bz, by / bz}, {cx / cz, cy / cz}}
+            SkDEBUGPARAMS(fPts.fDebugGlobalState) },
             SkDoubleToScalar(bz / sqrt(az * cz)) };
     return dst;
 }

@@ -10,14 +10,18 @@ Cu.import("resource://gre/modules/narrate/VoiceSelect.jsm");
 Cu.import("resource://gre/modules/narrate/Narrator.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AsyncPrefs.jsm");
+Cu.import("resource://gre/modules/TelemetryStopwatch.jsm");
 
 this.EXPORTED_SYMBOLS = ["NarrateControls"];
 
 var gStrings = Services.strings.createBundle("chrome://global/locale/narrate.properties");
 
-function NarrateControls(mm, win) {
+function NarrateControls(mm, win, languagePromise) {
   this._mm = mm;
   this._winRef = Cu.getWeakReference(win);
+  this._languagePromise = languagePromise;
+
+  win.addEventListener("unload", this);
 
   // Append content style sheet in document head
   let style = win.document.createElement("link");
@@ -38,6 +42,7 @@ function NarrateControls(mm, win) {
   dropdown.id = "narrate-dropdown";
   // We need inline svg here for the animation to work (bug 908634 & 1190881).
   // The style animation can't be scoped (bug 830056).
+  // eslint-disable-next-line no-unsanitized/property
   dropdown.innerHTML =
     localize`<style scoped>
       @import url("chrome://global/skin/narrateControls.css");
@@ -101,13 +106,13 @@ function NarrateControls(mm, win) {
       </div>
       <div id="narrate-rate" class="narrate-row">
         <input id="narrate-rate-input" value="0" title="${"speed"}"
-               step="25" max="100" min="-100" type="range">
+               step="5" max="100" min="-100" type="range">
       </div>
       <div id="narrate-voices" class="narrate-row"></div>
       <div class="dropdown-arrow"></div>
     </li>`;
 
-  this.narrator = new Narrator(win);
+  this.narrator = new Narrator(win, languagePromise);
 
   let branch = Services.prefs.getBranch("narrate.");
   let selectLabel = gStrings.GetStringFromName("selectvoicelabel");
@@ -126,17 +131,14 @@ function NarrateControls(mm, win) {
   // The rate is stored as an integer.
   rateRange.value = branch.getIntPref("rate");
 
-  if (this._setupVoices(branch.getCharPref("voice"))) {
-    // We disable this entire feature if there are no synthesis voices.
-    dropdown.querySelector("#narrate-toggle").hidden = false;
-  }
+  this._setupVoices();
 
   let tb = win.document.getElementById("reader-toolbar");
   tb.appendChild(dropdown);
 }
 
 NarrateControls.prototype = {
-  handleEvent: function(evt) {
+  handleEvent(evt) {
     switch (evt.type) {
       case "change":
         if (evt.target.id == "narrate-rate-input") {
@@ -149,9 +151,12 @@ NarrateControls.prototype = {
         this._onButtonClick(evt);
         break;
       case "voiceschanged":
-        // We disable this entire feature if there are no synthesis voices.
-        this._doc.getElementById("narrate-toggle").hidden =
-          !this._setupVoices(Services.prefs.getCharPref("narrate.voice"));
+        this._setupVoices();
+        break;
+      case "unload":
+        if (this.narrator.speaking) {
+          TelemetryStopwatch.finish("NARRATE_CONTENT_SPEAKTIME_MS", this);
+        }
         break;
     }
   },
@@ -159,41 +164,81 @@ NarrateControls.prototype = {
   /**
    * Returns true if synth voices are available.
    */
-  _setupVoices: function(selectedVoice) {
-    this.voiceSelect.clear();
-    let win = this._win;
-    let comparer = win.Intl ?
-      (new Intl.Collator()).compare : (a, b) => a.localeCompare(b);
-    let options = win.speechSynthesis.getVoices().map(v => {
-      return {
-        label: this._createVoiceLabel(v),
-        value: v.voiceURI
-      };
-    }).sort((a, b) => comparer(a.label, b.label));
+  _setupVoices() {
+    return this._languagePromise.then(language => {
+      this.voiceSelect.clear();
+      let win = this._win;
+      let voicePrefs = this._getVoicePref();
+      let selectedVoice = voicePrefs[language || "default"];
+      let comparer = win.Intl ?
+        (new Intl.Collator()).compare : (a, b) => a.localeCompare(b);
+      let filter = !Services.prefs.getBoolPref("narrate.filter-voices");
+      let options = win.speechSynthesis.getVoices().filter(v => {
+        return filter || !language || v.lang.split("-")[0] == language;
+      }).map(v => {
+        return {
+          label: this._createVoiceLabel(v),
+          value: v.voiceURI,
+          selected: selectedVoice == v.voiceURI
+        };
+      }).sort((a, b) => comparer(a.label, b.label));
 
-    if (options.length) {
-      options.unshift({
-        label: gStrings.GetStringFromName("defaultvoice"),
-        value: "automatic"
-      });
-      this.voiceSelect.addOptions(options, selectedVoice);
-    }
+      if (options.length) {
+        options.unshift({
+          label: gStrings.GetStringFromName("defaultvoice"),
+          value: "automatic",
+          selected: selectedVoice == "automatic"
+        });
+        this.voiceSelect.addOptions(options);
+      }
 
-    return !!options.length;
+      let narrateToggle = win.document.getElementById("narrate-toggle");
+      let histogram = Services.telemetry.getKeyedHistogramById(
+        "NARRATE_CONTENT_BY_LANGUAGE_2");
+      let initial = !this._voicesInitialized;
+      this._voicesInitialized = true;
+
+      if (initial) {
+        histogram.add(language, 0);
+      }
+
+      if (options.length && narrateToggle.hidden) {
+        // About to show for the first time..
+        histogram.add(language, 1);
+      }
+
+      // We disable this entire feature if there are no available voices.
+      narrateToggle.hidden = !options.length;
+    });
   },
 
-  _onRateInput: function(evt) {
+  _getVoicePref() {
+    let voicePref = Services.prefs.getCharPref("narrate.voice");
+    try {
+      return JSON.parse(voicePref);
+    } catch (e) {
+      return { default: voicePref };
+    }
+  },
+
+  _onRateInput(evt) {
     AsyncPrefs.set("narrate.rate", parseInt(evt.target.value, 10));
     this.narrator.setRate(this._convertRate(evt.target.value));
   },
 
-  _onVoiceChange: function() {
+  _onVoiceChange() {
     let voice = this.voice;
-    AsyncPrefs.set("narrate.voice", voice);
     this.narrator.setVoice(voice);
+    this._languagePromise.then(language => {
+      if (language) {
+        let voicePref = this._getVoicePref();
+        voicePref[language || "default"] = voice;
+        AsyncPrefs.set("narrate.voice", JSON.stringify(voicePref));
+      }
+    });
   },
 
-  _onButtonClick: function(evt) {
+  _onButtonClick(evt) {
     switch (evt.target.id) {
       case "narrate-skip-previous":
         this.narrator.skipPrevious();
@@ -218,7 +263,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _updateSpeechControls: function(speaking) {
+  _updateSpeechControls(speaking) {
     let dropdown = this._doc.getElementById("narrate-dropdown");
     dropdown.classList.toggle("keep-open", speaking);
     dropdown.classList.toggle("speaking", speaking);
@@ -229,9 +274,15 @@ NarrateControls.prototype = {
 
     this._doc.getElementById("narrate-skip-previous").disabled = !speaking;
     this._doc.getElementById("narrate-skip-next").disabled = !speaking;
+
+    if (speaking) {
+      TelemetryStopwatch.start("NARRATE_CONTENT_SPEAKTIME_MS", this);
+    } else {
+      TelemetryStopwatch.finish("NARRATE_CONTENT_SPEAKTIME_MS", this);
+    }
   },
 
-  _createVoiceLabel: function(voice) {
+  _createVoiceLabel(voice) {
     // This is a highly imperfect method of making human-readable labels
     // for system voices. Because each platform has a different naming scheme
     // for voices, we use a different method for each platform.
@@ -254,7 +305,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _getLanguageName: function(lang) {
+  _getLanguageName(lang) {
     if (!this._langStrings) {
       this._langStrings = Services.strings.createBundle(
         "chrome://global/locale/languageNames.properties ");
@@ -268,7 +319,7 @@ NarrateControls.prototype = {
     }
   },
 
-  _convertRate: function(rate) {
+  _convertRate(rate) {
     // We need to convert a relative percentage value to a fraction rate value.
     // eg. -100 is half the speed, 100 is twice the speed in percentage,
     // 0.5 is half the speed and 2 is twice the speed in fractions.

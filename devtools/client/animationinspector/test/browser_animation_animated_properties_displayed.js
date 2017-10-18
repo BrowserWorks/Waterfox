@@ -4,18 +4,13 @@
 
 "use strict";
 
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
-const STRINGS_URI = "chrome://global/locale/layout_errors.properties";
-const L10N = new LocalizationHelper(STRINGS_URI);
+const LAYOUT_ERRORS_L10N =
+  new LocalizationHelper("toolkit/locales/layout_errors.properties");
 
 // Test that when an animation is selected, its list of animated properties is
 // displayed below it.
 
 const EXPECTED_PROPERTIES = [
-  "background-color",
-  "background-position-x",
-  "background-position-y",
-  "background-size",
   "border-bottom-left-radius",
   "border-bottom-right-radius",
   "border-top-left-radius",
@@ -23,7 +18,17 @@ const EXPECTED_PROPERTIES = [
   "filter",
   "height",
   "transform",
-  "width"
+  "width",
+  // Unchanged value properties
+  "background-attachment",
+  "background-clip",
+  "background-color",
+  "background-image",
+  "background-origin",
+  "background-position-x",
+  "background-position-y",
+  "background-repeat",
+  "background-size"
 ].sort();
 
 add_task(function* () {
@@ -33,27 +38,22 @@ add_task(function* () {
   let propertiesList = timeline.rootWrapperEl
                                .querySelector(".animated-properties");
 
-  ok(!isNodeVisible(propertiesList),
-     "The list of properties panel is hidden by default");
-
-  info("Click to select the animation");
-  yield clickOnAnimation(panel, 0);
-
+  // doc_keyframes.html has only one animation,
+  // so the propertiesList shoud be shown.
   ok(isNodeVisible(propertiesList),
-     "The list of properties panel is shown");
+     "The list of properties panel shoud be shown");
+
   ok(propertiesList.querySelectorAll(".property").length,
      "The list of properties panel actually contains properties");
   ok(hasExpectedProperties(propertiesList),
      "The list of properties panel contains the right properties");
-
   ok(hasExpectedWarnings(propertiesList),
      "The list of properties panel contains the right warnings");
 
-  info("Click to unselect the animation");
+  info("Click same animation again");
   yield clickOnAnimation(panel, 0, true);
-
-  ok(!isNodeVisible(propertiesList),
-     "The list of properties panel is hidden again");
+  ok(isNodeVisible(propertiesList),
+     "The list of properties panel keeps");
 });
 
 function hasExpectedProperties(containerEl) {
@@ -78,8 +78,8 @@ function hasExpectedWarnings(containerEl) {
   let warnings = [...containerEl.querySelectorAll(".warning")];
   for (let warning of warnings) {
     let warningID =
-      "CompositorAnimationWarningTransformWithGeometricProperties";
-    if (warning.getAttribute("title") == L10N.getStr(warningID)) {
+      "CompositorAnimationWarningTransformWithSyncGeometricAnimations";
+    if (warning.getAttribute("title") == LAYOUT_ERRORS_L10N.getStr(warningID)) {
       return true;
     }
   }

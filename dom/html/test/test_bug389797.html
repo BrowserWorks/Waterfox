@@ -30,9 +30,7 @@ function getClassName(tag) {
 function HTML_TAG(aTagName, aImplClass) {
   allTags.push(aTagName);
   classInfos[aTagName] = aImplClass;
-  interfaces[aTagName] =
-    [ "nsIDOMEventTarget",
-      "nsIDOMElementCSSInlineStyle" ];
+  interfaces[aTagName] = [ "nsIDOMEventTarget" ];
 
   // Some interfaces don't appear in classinfo because other interfaces that
   // inherit from them do.
@@ -81,7 +79,6 @@ objectIfaces2.push("nsIImageLoadingContent");
 /* List copy/pasted from nsHTMLTagList.h, with the second field modified to the
    correct classinfo (instead of the impl class) in the following cases:
 
-   applet
    base
    blockquote
    dir
@@ -101,7 +98,6 @@ HTML_TAG("a", "Anchor");
 HTML_TAG("abbr", "");
 HTML_TAG("acronym", "");
 HTML_TAG("address", "");
-HTML_TAG("applet", "Applet", [], objectIfaces);
 HTML_TAG("area", "Area");
 HTML_TAG("article", "");
 HTML_TAG("aside", "");

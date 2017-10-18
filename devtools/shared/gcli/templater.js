@@ -174,7 +174,7 @@ function processNode(state, node, data) {
                 /* jshint loopfunc:true */
                 replacement.then(function (newValue) {
                   node.setAttribute(name, newValue);
-                }).then(null, console.error);
+                }).catch(console.error);
               } else {
                 if (state.options.blankNullUndefined && replacement == null) {
                   replacement = "";
@@ -240,7 +240,7 @@ function processIf(state, node, data) {
       recurse = false;
     }
     if (!recurse) {
-      node.parentNode.removeChild(node);
+      node.remove();
     }
     node.removeAttribute("if");
     return recurse;
@@ -282,7 +282,7 @@ function processForEach(state, node, data) {
       handleAsync(evaled, node, function (reply, siblingNode) {
         processForEachLoop(cState, reply, node, siblingNode, data, paramName);
       });
-      node.parentNode.removeChild(node);
+      node.remove();
     } catch (ex) {
       handleError(state, "Error with " + value + "'", ex);
     }
@@ -419,7 +419,7 @@ function processTextNode(state, node, data) {
         }
       });
     });
-    node.parentNode.removeChild(node);
+    node.remove();
   }
 }
 
@@ -451,9 +451,9 @@ function handleAsync(thing, siblingNode, inserter) {
     thing.then(function (delayed) {
       inserter(delayed, tempNode);
       if (tempNode.parentNode != null) {
-        tempNode.parentNode.removeChild(tempNode);
+        tempNode.remove();
       }
-    }).then(null, function (error) {
+    }).catch(function (error) {
       console.error(error.stack);
     });
   } else {

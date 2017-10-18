@@ -34,7 +34,10 @@ ostream
 set
 stack
 string
+thread
 type_traits
+unordered_map
+unordered_set
 utility
 vector
 cassert

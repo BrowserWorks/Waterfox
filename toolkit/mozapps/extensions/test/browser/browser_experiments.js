@@ -4,7 +4,7 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
-var {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
+var {AddonManagerTesting} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
 var {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
 
 var gManagerWindow;
@@ -19,27 +19,11 @@ const SEC_IN_ONE_DAY = 24 * 60 * 60;
 const MS_IN_ONE_DAY  = SEC_IN_ONE_DAY * 1000;
 
 function getExperimentAddons() {
-  let deferred = Promise.defer();
-  AddonManager.getAddonsByTypes(["experiment"], (addons) => {
-    deferred.resolve(addons);
+  return new Promise(resolve => {
+    AddonManager.getAddonsByTypes(["experiment"], (addons) => {
+      resolve(addons);
+    });
   });
-  return deferred.promise;
-}
-
-function getInstallItem() {
-  let doc = gManagerWindow.document;
-  let view = get_current_view(gManagerWindow);
-  let list = doc.getElementById("addon-list");
-
-  let node = list.firstChild;
-  while (node) {
-    if (node.getAttribute("status") == "installing") {
-      return node;
-    }
-    node = node.nextSibling;
-  }
-
-  return null;
 }
 
 function patchPolicy(policy, data) {
@@ -63,9 +47,9 @@ function openDetailsView(aId) {
   EventUtils.synthesizeMouseAtCenter(item, { clickCount: 1 }, gManagerWindow);
   EventUtils.synthesizeMouseAtCenter(item, { clickCount: 2 }, gManagerWindow);
 
-  let deferred = Promise.defer();
-  wait_for_view_load(gManagerWindow, deferred.resolve);
-  return deferred.promise;
+  return new Promise(resolve => {
+    wait_for_view_load(gManagerWindow, resolve);
+  });
 }
 
 function clickRemoveButton(addonElement) {
@@ -92,8 +76,8 @@ function clickUndoButton(addonElement) {
   return deferred;
 }
 
-add_task(function* initializeState() {
-  gManagerWindow = yield open_manager();
+add_task(async function initializeState() {
+  gManagerWindow = await open_manager();
   gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 
   registerCleanupFunction(() => {
@@ -112,8 +96,7 @@ add_task(function* initializeState() {
     }
   });
 
-  let chrome = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry);
-  gIsEnUsLocale = chrome.getSelectedLocale("global") == "en-US";
+  gIsEnUsLocale = Services.locale.getAppLocaleAsLangTag() == "en-US";
 
   // The Experiments Manager will interfere with us by preventing installs
   // of experiments it doesn't know about. We remove it from the equation
@@ -126,117 +109,106 @@ add_task(function* initializeState() {
     // this test running. We have to initialize the instance first, then
     // uninitialize it to prevent this.
     gExperiments = tmp.Experiments.instance();
-    yield gExperiments._mainTask;
-    yield gExperiments.uninit();
+    await gExperiments._mainTask;
+    await gExperiments.uninit();
   }
 });
 
 // On an empty profile with no experiments, the experiment category
 // should be hidden.
-add_task(function* testInitialState() {
+add_task(async function testInitialState() {
   Assert.ok(gCategoryUtilities.get("experiment", false), "Experiment tab is defined.");
   Assert.ok(!gCategoryUtilities.isTypeVisible("experiment"), "Experiment tab hidden by default.");
 });
 
-add_task(function* testExperimentInfoNotVisible() {
-  yield gCategoryUtilities.openType("extension");
+add_task(async function testExperimentInfoNotVisible() {
+  await gCategoryUtilities.openType("extension");
   let el = gManagerWindow.document.getElementsByClassName("experiment-info-container")[0];
   is_element_hidden(el, "Experiment info not visible on other types.");
 });
 
 // If we have an active experiment, we should see the experiments tab
 // and that tab should have some messages.
-add_task(function* testActiveExperiment() {
-  let addon = yield install_addon("addons/browser_experiment1.xpi");
+add_task(async function testActiveExperiment() {
+  let addon = await install_addon("addons/browser_experiment1.xpi");
 
   Assert.ok(addon.userDisabled, "Add-on is disabled upon initial install.");
   Assert.equal(addon.isActive, false, "Add-on is not active.");
 
   Assert.ok(gCategoryUtilities.isTypeVisible("experiment"), "Experiment tab visible.");
 
-  yield gCategoryUtilities.openType("experiment");
+  await gCategoryUtilities.openType("experiment");
   let el = gManagerWindow.document.getElementsByClassName("experiment-info-container")[0];
   is_element_visible(el, "Experiment info is visible on experiment tab.");
 });
 
-add_task(function* testExperimentLearnMore() {
-  // Actual URL is irrelevant.
-  Services.prefs.setCharPref("toolkit.telemetry.infoURL",
-                             "http://mochi.test:8888/server.js");
-
-  yield gCategoryUtilities.openType("experiment");
+add_task(async function testExperimentLearnMore() {
+  await gCategoryUtilities.openType("experiment");
   let btn = gManagerWindow.document.getElementById("experiments-learn-more");
-
-  if (!gUseInContentUI) {
-    is_element_hidden(btn, "Learn more button hidden if not using in-content UI.");
-    Services.prefs.clearUserPref("toolkit.telemetry.infoURL");
-
-    return;
-  }
 
   is_element_visible(btn, "Learn more button visible.");
 
-  let deferred = Promise.defer();
-  window.addEventListener("DOMContentLoaded", function onLoad(event) {
-    info("Telemetry privacy policy window opened.");
-    window.removeEventListener("DOMContentLoaded", onLoad, false);
-
-    let browser = gBrowser.selectedBrowser;
-    let expected = Services.prefs.getCharPref("toolkit.telemetry.infoURL");
-    Assert.equal(browser.currentURI.spec, expected, "New tab should have loaded privacy policy.");
-    browser.contentWindow.close();
-
-    Services.prefs.clearUserPref("toolkit.telemetry.infoURL");
-
-    deferred.resolve();
-  }, false);
+  // Actual URL is irrelevant.
+  let expected = "http://mochi.test:8888/server.js";
+  Services.prefs.setCharPref("toolkit.telemetry.infoURL", expected);
 
   info("Opening telemetry privacy policy.");
+  let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, expected);
   EventUtils.synthesizeMouseAtCenter(btn, {}, gManagerWindow);
+  await loadPromise;
 
-  yield deferred.promise;
+  Services.prefs.clearUserPref("toolkit.telemetry.infoURL");
+  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
-add_task(function* testOpenPreferences() {
-  yield gCategoryUtilities.openType("experiment");
+add_task(async function testOpenPreferences() {
+  var useOldPrefs = Services.prefs.getBoolPref("browser.preferences.useOldOrganization");
+
+  await gCategoryUtilities.openType("experiment");
   let btn = gManagerWindow.document.getElementById("experiments-change-telemetry");
-  if (!gUseInContentUI) {
-    is_element_hidden(btn, "Change telemetry button not enabled in out of window UI.");
-    info("Skipping preferences open test because not using in-content UI.");
-    return;
-  }
 
   is_element_visible(btn, "Change telemetry button visible in in-content UI.");
 
   let deferred = Promise.defer();
-  Services.obs.addObserver(function observer(prefWin, topic, data) {
-    Services.obs.removeObserver(observer, "advanced-pane-loaded");
-    info("Advanced preference pane opened.");
-    executeSoon(function() {
-      // We want this test to fail if the preferences pane changes.
-      let el = prefWin.document.getElementById("dataChoicesPanel");
-      is_element_visible(el);
 
-      prefWin.close();
-      info("Closed preferences pane.");
+  function ensureElementIsVisible(preferencesPane, visibleElement) {
+    Services.obs.addObserver(function observer(prefWin, topic, data) {
+      Services.obs.removeObserver(observer, preferencesPane + "-pane-loaded");
+      info(preferencesPane + " preference pane opened.");
+      executeSoon(function() {
+        // We want this test to fail if the preferences pane changes,
+        // but we can't check if the data-choices button is visible
+        // since it is only in the DOM when MOZ_TELEMETRY_REPORTING=1.
+        let el = prefWin.document.getElementById(visibleElement);
+        is_element_visible(el);
 
-      deferred.resolve();
-    });
-  }, "advanced-pane-loaded", false);
+        prefWin.close();
+        info("Closed preferences pane.");
+
+        deferred.resolve();
+      });
+    }, preferencesPane + "-pane-loaded");
+  }
+
+  if (useOldPrefs) {
+    ensureElementIsVisible("advanced", "header-advanced");
+  } else {
+    ensureElementIsVisible("privacy", "dataCollectionGroup");
+  }
 
   info("Loading preferences pane.");
   // We need to focus before synthesizing the mouse event (bug 1240052) as
   // synthesizeMouseAtCenter currently only synthesizes the mouse in the child process.
   // This can cause some subtle differences if the child isn't focused.
-  yield SimpleTest.promiseFocus();
-  yield BrowserTestUtils.synthesizeMouseAtCenter("#experiments-change-telemetry", {},
+  await SimpleTest.promiseFocus();
+  await BrowserTestUtils.synthesizeMouseAtCenter("#experiments-change-telemetry", {},
                                                  gBrowser.selectedBrowser);
 
-  yield deferred.promise;
+  await deferred.promise;
 });
 
-add_task(function* testButtonPresence() {
-  yield gCategoryUtilities.openType("experiment");
+add_task(async function testButtonPresence() {
+  await gCategoryUtilities.openType("experiment");
   let item = get_addon_element(gManagerWindow, "test-experiment1@experiments.mozilla.org");
   Assert.ok(item, "Got add-on element.");
   item.parentNode.ensureElementIsVisible(item);
@@ -253,10 +225,10 @@ add_task(function* testButtonPresence() {
 });
 
 // Remove the add-on we've been testing with.
-add_task(function* testCleanup() {
-  yield AddonTestUtils.uninstallAddonByID("test-experiment1@experiments.mozilla.org");
+add_task(async function testCleanup() {
+  await AddonManagerTesting.uninstallAddonByID("test-experiment1@experiments.mozilla.org");
   // Verify some conditions, just in case.
-  let addons = yield getExperimentAddons();
+  let addons = await getExperimentAddons();
   Assert.equal(addons.length, 0, "No experiment add-ons are installed.");
 });
 
@@ -264,7 +236,7 @@ add_task(function* testCleanup() {
 // they rely on some of the helper functions from head.js, which can't easily
 // be consumed from other directories. So, they live here.
 
-add_task(function* testActivateExperiment() {
+add_task(async function testActivateExperiment() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
@@ -298,70 +270,70 @@ add_task(function* testActivateExperiment() {
   Services.prefs.setCharPref("experiments.manifest.uri", root + "manifest");
 
   // We need to remove the cache file to help ensure consistent state.
-  yield OS.File.remove(gExperiments._cacheFilePath);
+  await OS.File.remove(gExperiments._cacheFilePath);
 
   Services.prefs.setBoolPref("toolkit.telemetry.enabled", true);
   Services.prefs.setBoolPref("experiments.enabled", true);
 
   info("Initializing experiments service.");
-  yield gExperiments.init();
+  await gExperiments.init();
   info("Experiments service finished first run.");
 
   // Check conditions, just to be sure.
-  let experiments = yield gExperiments.getExperiments();
+  let experiments = await gExperiments.getExperiments();
   Assert.equal(experiments.length, 0, "No experiments known to the service.");
 
   // This makes testing easier.
   gExperiments._policy.ignoreHashes = true;
 
   info("Manually updating experiments manifest.");
-  yield gExperiments.updateManifest();
+  await gExperiments.updateManifest();
   info("Experiments update complete.");
 
-  let deferred = Promise.defer();
-  gHttpServer.stop(() => {
-    gHttpServer = null;
+  await new Promise(resolve => {
+    gHttpServer.stop(() => {
+      gHttpServer = null;
 
-    info("getting experiment by ID");
-    AddonManager.getAddonByID("test-experiment1@experiments.mozilla.org", (addon) => {
-      Assert.ok(addon, "Add-on installed via Experiments manager.");
+      info("getting experiment by ID");
+      AddonManager.getAddonByID("test-experiment1@experiments.mozilla.org", (addon) => {
+        Assert.ok(addon, "Add-on installed via Experiments manager.");
 
-      deferred.resolve();
+        resolve();
+      });
     });
+
   });
 
-  yield deferred.promise;
-
   Assert.ok(gCategoryUtilities.isTypeVisible, "experiment", "Experiment tab visible.");
-  yield gCategoryUtilities.openType("experiment");
+  await gCategoryUtilities.openType("experiment");
   let el = gManagerWindow.document.getElementsByClassName("experiment-info-container")[0];
   is_element_visible(el, "Experiment info is visible on experiment tab.");
 });
 
-add_task(function* testDeactivateExperiment() {
+add_task(async function testDeactivateExperiment() {
   if (!gExperiments) {
     return;
   }
 
   // Fake an empty manifest to purge data from previous manifest.
-  yield gExperiments._updateExperiments({
+  await gExperiments._updateExperiments({
     "version": 1,
     "experiments": [],
   });
 
-  yield gExperiments.disableExperiment("testing");
+  await gExperiments.disableExperiment("testing");
 
   // We should have a record of the previously-active experiment.
-  let experiments = yield gExperiments.getExperiments();
+  let experiments = await gExperiments.getExperiments();
   Assert.equal(experiments.length, 1, "1 experiment is known.");
   Assert.equal(experiments[0].active, false, "Experiment is not active.");
 
   // We should have a previous experiment in the add-ons manager.
-  let deferred = Promise.defer();
-  AddonManager.getAddonsByTypes(["experiment"], (addons) => {
-    deferred.resolve(addons);
+  let addons = await new Promise(resolve => {
+    AddonManager.getAddonsByTypes(["experiment"], (addons) => {
+      resolve(addons);
+    });
   });
-  let addons = yield deferred.promise;
   Assert.equal(addons.length, 1, "1 experiment add-on known.");
   Assert.ok(addons[0].appDisabled, "It is a previous experiment.");
   Assert.equal(addons[0].id, "experiment-1", "Add-on ID matches expected.");
@@ -386,13 +358,13 @@ add_task(function* testDeactivateExperiment() {
   is_element_hidden(el, "Preferences button is not visible.");
 });
 
-add_task(function* testActivateRealExperiments() {
+add_task(async function testActivateRealExperiments() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
   }
 
-  yield gExperiments._updateExperiments({
+  await gExperiments._updateExperiments({
     "version": 1,
     "experiments": [
       {
@@ -407,7 +379,7 @@ add_task(function* testActivateRealExperiments() {
       },
     ],
   });
-  yield gExperiments._run();
+  await gExperiments._run();
 
   // Check the active experiment.
 
@@ -433,7 +405,7 @@ add_task(function* testActivateRealExperiments() {
   is_element_hidden(el, "warning-container should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "pending-container");
   is_element_hidden(el, "pending-container should be hidden.");
-  let { version } = yield get_tooltip_info(item);
+  let { version } = await get_tooltip_info(item);
   Assert.equal(version, undefined, "version should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "disabled-postfix");
   is_element_hidden(el, "disabled-postfix should be hidden.");
@@ -466,7 +438,7 @@ add_task(function* testActivateRealExperiments() {
   is_element_hidden(el, "warning-container should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "pending-container");
   is_element_hidden(el, "pending-container should be hidden.");
-  ({ version } = yield get_tooltip_info(item));
+  ({ version } = await get_tooltip_info(item));
   Assert.equal(version, undefined, "version should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "disabled-postfix");
   is_element_hidden(el, "disabled-postfix should be hidden.");
@@ -477,13 +449,13 @@ add_task(function* testActivateRealExperiments() {
 
   // Install an "older" experiment.
 
-  yield gExperiments.disableExperiment("experiment-2");
+  await gExperiments.disableExperiment("experiment-2");
 
   let now = Date.now();
   let fakeNow = now - 5 * MS_IN_ONE_DAY;
   defineNow(gExperiments._policy, fakeNow);
 
-  yield gExperiments._updateExperiments({
+  await gExperiments._updateExperiments({
     "version": 1,
     "experiments": [
       {
@@ -498,7 +470,7 @@ add_task(function* testActivateRealExperiments() {
       },
     ],
   });
-  yield gExperiments._run();
+  await gExperiments._run();
 
   // Check the active experiment.
 
@@ -520,7 +492,7 @@ add_task(function* testActivateRealExperiments() {
 
   // Disable it and check it's previous experiment entry.
 
-  yield gExperiments.disableExperiment("experiment-3");
+  await gExperiments.disableExperiment("experiment-3");
 
   item = get_addon_element(gManagerWindow, "experiment-3");
   Assert.ok(item, "Got add-on element.");
@@ -539,14 +511,14 @@ add_task(function* testActivateRealExperiments() {
   }
 });
 
-add_task(function* testDetailView() {
+add_task(async function testDetailView() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
   }
 
   defineNow(gExperiments._policy, Date.now());
-  yield gExperiments._updateExperiments({
+  await gExperiments._updateExperiments({
     "version": 1,
     "experiments": [
       {
@@ -561,11 +533,11 @@ add_task(function* testDetailView() {
       },
     ],
   });
-  yield gExperiments._run();
+  await gExperiments._run();
 
   // Check active experiment.
 
-  yield openDetailsView("test-experiment1@experiments.mozilla.org");
+  await openDetailsView("test-experiment1@experiments.mozilla.org");
 
   let el = gManagerWindow.document.getElementById("detail-experiment-state");
   is_element_visible(el, "Experiment state label should be visible.");
@@ -588,8 +560,8 @@ add_task(function* testDetailView() {
 
   // Check previous experiment.
 
-  yield gCategoryUtilities.openType("experiment");
-  yield openDetailsView("experiment-3");
+  await gCategoryUtilities.openType("experiment");
+  await openDetailsView("experiment-3");
 
   el = gManagerWindow.document.getElementById("detail-experiment-state");
   is_element_visible(el, "Experiment state label should be visible.");
@@ -611,44 +583,44 @@ add_task(function* testDetailView() {
   is_element_visible(el, "experiment-bullet should be visible.");
 });
 
-add_task(function* testRemoveAndUndo() {
+add_task(async function testRemoveAndUndo() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
   }
 
-  yield gCategoryUtilities.openType("experiment");
+  await gCategoryUtilities.openType("experiment");
 
   let addon = get_addon_element(gManagerWindow, "test-experiment1@experiments.mozilla.org");
   Assert.ok(addon, "Got add-on element.");
 
-  yield clickRemoveButton(addon);
+  await clickRemoveButton(addon);
   addon.parentNode.ensureElementIsVisible(addon);
 
   let el = gManagerWindow.document.getAnonymousElementByAttribute(addon, "class", "pending");
   is_element_visible(el, "Uninstall undo information should be visible.");
 
-  yield clickUndoButton(addon);
+  await clickUndoButton(addon);
   addon = get_addon_element(gManagerWindow, "test-experiment1@experiments.mozilla.org");
   Assert.ok(addon, "Got add-on element.");
 });
 
-add_task(function* testCleanup() {
+add_task(async function testCleanup() {
   if (gExperiments) {
     Services.prefs.clearUserPref("experiments.enabled");
     Services.prefs.setCharPref("experiments.manifest.uri", gSavedManifestURI);
 
     // We perform the uninit/init cycle to purge any leftover state.
-    yield OS.File.remove(gExperiments._cacheFilePath);
-    yield gExperiments.uninit();
-    yield gExperiments.init();
+    await OS.File.remove(gExperiments._cacheFilePath);
+    await gExperiments.uninit();
+    await gExperiments.init();
 
     Services.prefs.clearUserPref("toolkit.telemetry.enabled");
   }
 
   // Check post-conditions.
-  let addons = yield getExperimentAddons();
+  let addons = await getExperimentAddons();
   Assert.equal(addons.length, 0, "No experiment add-ons are installed.");
 
-  yield close_manager(gManagerWindow);
+  await close_manager(gManagerWindow);
 });

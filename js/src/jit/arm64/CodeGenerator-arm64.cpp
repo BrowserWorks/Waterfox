@@ -518,15 +518,15 @@ CodeGeneratorARM64::visitBitAndAndBranch(LBitAndAndBranch* baab)
 }
 
 void
-CodeGeneratorARM64::visitAsmJSUInt32ToDouble(LAsmJSUInt32ToDouble* lir)
+CodeGeneratorARM64::visitWasmUint32ToDouble(LWasmUint32ToDouble* lir)
 {
-    MOZ_CRASH("visitAsmJSUInt32ToDouble");
+    MOZ_CRASH("visitWasmUint32ToDouble");
 }
 
 void
-CodeGeneratorARM64::visitAsmJSUInt32ToFloat32(LAsmJSUInt32ToFloat32* lir)
+CodeGeneratorARM64::visitWasmUint32ToFloat32(LWasmUint32ToFloat32* lir)
 {
-    MOZ_CRASH("visitAsmJSUInt32ToFloat32");
+    MOZ_CRASH("visitWasmUint32ToFloat32");
 }
 
 void
@@ -620,7 +620,6 @@ getBase(U* mir)
 {
     switch (mir->base()) {
       case U::Heap: return HeapReg;
-      case U::Global: return GlobalReg;
     }
     return InvalidReg;
 }
@@ -635,18 +634,6 @@ void
 CodeGeneratorARM64::visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic* ins)
 {
     MOZ_CRASH("CodeGeneratorARM64::visitStoreTypedArrayElementStatic");
-}
-
-void
-CodeGeneratorARM64::visitAsmJSCall(LAsmJSCall* ins)
-{
-    MOZ_CRASH("vistAsmJSCall");
-}
-
-void
-CodeGeneratorARM64::visitAsmJSCallI64(LAsmJSCallI64* ins)
-{
-    MOZ_CRASH("vistAsmJSCallI64");
 }
 
 void
@@ -674,9 +661,9 @@ CodeGeneratorARM64::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
 }
 
 void
-CodeGeneratorARM64::visitAsmJSPassStackArg(LAsmJSPassStackArg* ins)
+CodeGeneratorARM64::visitWasmStackArg(LWasmStackArg* ins)
 {
-    MOZ_CRASH("visitAsmJSPassStackArg");
+    MOZ_CRASH("visitWasmStackArg");
 }
 
 void
@@ -695,18 +682,6 @@ void
 CodeGeneratorARM64::visitEffectiveAddress(LEffectiveAddress* ins)
 {
     MOZ_CRASH("visitEffectiveAddress");
-}
-
-void
-CodeGeneratorARM64::visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins)
-{
-    MOZ_CRASH("visitWasmLoadGlobalVar");
-}
-
-void
-CodeGeneratorARM64::visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins)
-{
-    MOZ_CRASH("visitWasmStoreGlobalVar");
 }
 
 void

@@ -8,8 +8,7 @@
 #include <new.h>
 #include <process.h>
 
-#include <windows.h>
-
+#include "jswin.h"
 #include "threading/Thread.h"
 
 class js::Thread::Id::PlatformData
@@ -20,6 +19,12 @@ class js::Thread::Id::PlatformData
   HANDLE handle;
   unsigned id;
 };
+
+/* static */ js::HashNumber
+js::Thread::Hasher::hash(const Lookup& l)
+{
+  return mozilla::HashBytes(l.platformData_, sizeof(l.platformData_));
+}
 
 inline js::Thread::Id::PlatformData*
 js::Thread::Id::platformData()
@@ -44,7 +49,7 @@ js::Thread::Id::Id()
 }
 
 bool
-js::Thread::Id::operator==(const Id& aOther)
+js::Thread::Id::operator==(const Id& aOther) const
 {
   return platformData()->id == aOther.platformData()->id;
 }
@@ -53,6 +58,7 @@ js::Thread::Thread(Thread&& aOther)
 {
   id_ = aOther.id_;
   aOther.id_ = Id();
+  options_ = aOther.options_;
 }
 
 js::Thread&
@@ -61,6 +67,7 @@ js::Thread::operator=(Thread&& aOther)
   MOZ_RELEASE_ASSERT(!joinable());
   id_ = aOther.id_;
   aOther.id_ = Id();
+  options_ = aOther.options_;
   return *this;
 }
 
@@ -148,4 +155,11 @@ js::ThisThread::SetName(const char* name)
     // Do nothing.
   }
 #endif
+}
+
+void
+js::ThisThread::GetName(char* nameBuffer, size_t len)
+{
+  MOZ_RELEASE_ASSERT(len > 0);
+  *nameBuffer = '\0';
 }

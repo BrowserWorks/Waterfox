@@ -82,7 +82,7 @@ public:
     SetHTMLAttr(nsGkAtoms::rows, aRows, aError);
   }
 
-  virtual bool IsEventAttributeName(nsIAtom *aName) override;
+  virtual bool IsEventAttributeNameInternal(nsIAtom *aName) override;
 
   // Event listener stuff; we need to declare only the ones we need to
   // forward to window that don't come from nsIDOMHTMLFrameSetElement.
@@ -99,17 +99,6 @@ public:
 #undef WINDOW_EVENT
 #undef WINDOW_EVENT_HELPER
 #undef EVENT
-
-  // These override the SetAttr methods in nsGenericHTMLElement (need
-  // both here to silence compiler warnings).
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
 
    /**
     * GetRowSpec is used to get the "rows" spec.
@@ -136,12 +125,17 @@ public:
   virtual nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute,
                                               int32_t aModType) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
 protected:
   virtual ~HTMLFrameSetElement();
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                 const nsAttrValueOrString* aValue,
+                                 bool aNotify) override;
 
 private:
   nsresult ParseRowCol(const nsAString& aValue,

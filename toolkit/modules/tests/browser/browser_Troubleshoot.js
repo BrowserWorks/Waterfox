@@ -22,7 +22,7 @@ function test() {
   doNextTest();
 }
 
-registerCleanupFunction(function () {
+registerCleanupFunction(function() {
   // Troubleshoot.jsm is imported into the global scope -- the window -- above.
   // If it's not deleted, it outlives the test and is reported as a leak.
   delete window.Troubleshoot;
@@ -31,12 +31,11 @@ registerCleanupFunction(function () {
 var tests = [
 
   function snapshotSchema(done) {
-    Troubleshoot.snapshot(function (snapshot) {
+    Troubleshoot.snapshot(function(snapshot) {
       try {
         validateObject(snapshot, SNAPSHOT_SCHEMA);
         ok(true, "The snapshot should conform to the schema.");
-      }
-      catch (err) {
+      } catch (err) {
         ok(false, "Schema mismatch, " + err);
       }
       done();
@@ -50,11 +49,11 @@ var tests = [
       "javascript.print_to_filename",
       "network.proxy.troubleshoot",
     ];
-    prefs.forEach(function (p) {
+    prefs.forEach(function(p) {
       Services.prefs.setBoolPref(p, true);
       is(Services.prefs.getBoolPref(p), true, "The pref should be set: " + p);
     });
-    Troubleshoot.snapshot(function (snapshot) {
+    Troubleshoot.snapshot(function(snapshot) {
       let p = snapshot.modifiedPreferences;
       is(p["javascript.troubleshoot"], true,
          "The pref should be present because it's whitelisted " +
@@ -78,7 +77,7 @@ var tests = [
     // set/getCharPref work with 8bit strings (utf8)
     Services.prefs.setCharPref(name, utf8Value);
 
-    Troubleshoot.snapshot(function (snapshot) {
+    Troubleshoot.snapshot(function(snapshot) {
       let p = snapshot.modifiedPreferences;
       is(p[name], unicodeValue, "The pref should have correct Unicode value.");
       Services.prefs.deleteBranch(name);
@@ -138,6 +137,27 @@ const SNAPSHOT_SCHEMA = {
         },
         numRemoteWindows: {
           type: "number",
+        },
+        currentContentProcesses: {
+          type: "number",
+        },
+        maxContentProcesses: {
+          type: "number",
+        },
+        styloBuild: {
+          type: "boolean",
+        },
+        styloDefault: {
+          type: "boolean",
+        },
+        styloResult: {
+          type: "boolean",
+        },
+        keyGoogleFound: {
+          type: "boolean",
+        },
+        keyMozillaFound: {
+          type: "boolean",
         },
         safeMode: {
           type: "boolean",
@@ -200,6 +220,27 @@ const SNAPSHOT_SCHEMA = {
         },
       },
     },
+    features: {
+      required: true,
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: {
+            required: true,
+            type: "string",
+          },
+          version: {
+            required: true,
+            type: "string",
+          },
+          id: {
+            required: true,
+            type: "string",
+          },
+        },
+      },
+    },
     modifiedPreferences: {
       required: true,
       type: "object",
@@ -226,11 +267,8 @@ const SNAPSHOT_SCHEMA = {
         windowLayerManagerRemote: {
           type: "boolean",
         },
-        supportsHardwareH264: {
-          type: "string",
-        },
-        currentAudioBackend: {
-          type: "string",
+        windowUsingAdvancedLayers: {
+          type: "boolean",
         },
         numAcceleratedWindowsMessage: {
           type: "array",
@@ -298,10 +336,34 @@ const SNAPSHOT_SCHEMA = {
         clearTypeParameters: {
           type: "string",
         },
-        webglRenderer: {
+        webgl1Renderer: {
+          type: "string",
+        },
+        webgl1Version: {
+          type: "string",
+        },
+        webgl1DriverExtensions: {
+          type: "string",
+        },
+        webgl1Extensions: {
+          type: "string",
+        },
+        webgl1WSIInfo: {
           type: "string",
         },
         webgl2Renderer: {
+          type: "string",
+        },
+        webgl2Version: {
+          type: "string",
+        },
+        webgl2DriverExtensions: {
+          type: "string",
+        },
+        webgl2Extensions: {
+          type: "string",
+        },
+        webgl2WSIInfo: {
           type: "string",
         },
         info: {
@@ -313,6 +375,12 @@ const SNAPSHOT_SCHEMA = {
             type: "string",
           },
         },
+        indices: {
+          type: "array",
+          items: {
+            type: "number",
+          },
+        },
         featureLog: {
           type: "object",
         },
@@ -321,6 +389,158 @@ const SNAPSHOT_SCHEMA = {
         },
         direct2DEnabledMessage: {
           type: "array",
+        },
+      },
+    },
+    media: {
+      required: true,
+      type: "object",
+      properties: {
+        currentAudioBackend: {
+          required: true,
+          type: "string",
+        },
+        currentMaxAudioChannels: {
+          required: true,
+          type: "number",
+        },
+        currentPreferredChannelLayout: {
+          required: true,
+          type: "string",
+        },
+        currentPreferredSampleRate: {
+          required: true,
+          type: "number",
+        },
+        audioOutputDevices: {
+          required: true,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                required: true,
+                type: "string",
+              },
+              groupId: {
+                required: true,
+                type: "string",
+              },
+              vendor: {
+                required: true,
+                type: "string",
+              },
+              type: {
+                required: true,
+                type: "number",
+              },
+              state: {
+                required: true,
+                type: "number",
+              },
+              preferred: {
+                required: true,
+                type: "number",
+              },
+              supportedFormat: {
+                required: true,
+                type: "number",
+              },
+              defaultFormat: {
+                required: true,
+                type: "number",
+              },
+              maxChannels: {
+                required: true,
+                type: "number",
+              },
+              defaultRate: {
+                required: true,
+                type: "number",
+              },
+              maxRate: {
+                required: true,
+                type: "number",
+              },
+              minRate: {
+                required: true,
+                type: "number",
+              },
+              maxLatency: {
+                required: true,
+                type: "number",
+              },
+              minLatency: {
+                required: true,
+                type: "number",
+              }
+            },
+          },
+        },
+        audioInputDevices: {
+          required: true,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: {
+                required: true,
+                type: "string",
+              },
+              groupId: {
+                required: true,
+                type: "string",
+              },
+              vendor: {
+                required: true,
+                type: "string",
+              },
+              type: {
+                required: true,
+                type: "number",
+              },
+              state: {
+                required: true,
+                type: "number",
+              },
+              preferred: {
+                required: true,
+                type: "number",
+              },
+              supportedFormat: {
+                required: true,
+                type: "number",
+              },
+              defaultFormat: {
+                required: true,
+                type: "number",
+              },
+              maxChannels: {
+                required: true,
+                type: "number",
+              },
+              defaultRate: {
+                required: true,
+                type: "number",
+              },
+              maxRate: {
+                required: true,
+                type: "number",
+              },
+              minRate: {
+                required: true,
+                type: "number",
+              },
+              maxLatency: {
+                required: true,
+                type: "number",
+              },
+              minLatency: {
+                required: true,
+                type: "number",
+              }
+            },
+          },
         },
       },
     },
@@ -343,6 +563,9 @@ const SNAPSHOT_SCHEMA = {
         },
         forceDisabled: {
           type: "number",
+        },
+        handlerUsed: {
+          type: "boolean",
         },
       },
     },
@@ -467,6 +690,46 @@ const SNAPSHOT_SCHEMA = {
           required: AppConstants.MOZ_CONTENT_SANDBOX,
           type: "number"
         },
+        effectiveContentSandboxLevel: {
+          required: AppConstants.MOZ_CONTENT_SANDBOX,
+          type: "number"
+        },
+        syscallLog: {
+          required: AppConstants.platform == "linux",
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              index: {
+                required: true,
+                type: "number",
+              },
+              pid: {
+                required: true,
+                type: "number",
+              },
+              tid: {
+                required: true,
+                type: "number",
+              },
+              procType: {
+                required: true,
+                type: "string",
+              },
+              syscall: {
+                required: true,
+                type: "number",
+              },
+              args: {
+                required: true,
+                type: "array",
+                items: {
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
       },
     },
   },
@@ -504,7 +767,7 @@ function validateObject_object(obj, schema) {
   // Now check that the object doesn't have any properties not in the schema.
   for (let prop in obj)
     if (!(prop in schema.properties))
-      throw validationErr("Object has property not in schema", obj, schema);
+      throw validationErr("Object has property " + prop + " not in schema", obj, schema);
 }
 
 function validateObject_array(array, schema) {

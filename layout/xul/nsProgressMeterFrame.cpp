@@ -31,17 +31,19 @@ public:
 
   NS_DECL_NSIRUNNABLE
 
-  nsWeakFrame mWeakFrame;
+  WeakFrame mWeakFrame;
   nsIPresShell::IntrinsicDirty mIntrinsicDirty;
   nsFrameState mBitToAdd;
 };
 
-nsReflowFrameRunnable::nsReflowFrameRunnable(nsIFrame* aFrame,
-                          nsIPresShell::IntrinsicDirty aIntrinsicDirty,
-                          nsFrameState aBitToAdd)
-  : mWeakFrame(aFrame),
-    mIntrinsicDirty(aIntrinsicDirty),
-    mBitToAdd(aBitToAdd)
+nsReflowFrameRunnable::nsReflowFrameRunnable(
+  nsIFrame* aFrame,
+  nsIPresShell::IntrinsicDirty aIntrinsicDirty,
+  nsFrameState aBitToAdd)
+  : mozilla::Runnable("nsReflowFrameRunnable")
+  , mWeakFrame(aFrame)
+  , mIntrinsicDirty(aIntrinsicDirty)
+  , mBitToAdd(aBitToAdd)
 {
 }
 
@@ -100,7 +102,7 @@ public:
     delete this;
   }
 
-  nsWeakFrame mWeakFrame;
+  WeakFrame mWeakFrame;
 };
 
 NS_IMETHODIMP

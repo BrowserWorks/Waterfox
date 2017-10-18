@@ -10,8 +10,7 @@
 
 "use strict";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 XPCOMUtils.defineLazyServiceGetter(this, "gUUIDGenerator",
                                    "@mozilla.org/uuid-generator;1",
@@ -65,8 +64,7 @@ var gLoginMetaInfo1;
 var gLoginMetaInfo2;
 var gLoginMetaInfo3;
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 /**
  * Prepare the test objects that will be used by the following tests.
@@ -275,9 +273,9 @@ add_task(function test_searchLogins_metainfo()
  * Tests that the default nsILoginManagerStorage module attached to the Login
  * Manager service is able to save and reload nsILoginMetaInfo properties.
  */
-add_task(function* test_storage_metainfo()
+add_task(async function test_storage_metainfo()
 {
-  yield* LoginTestUtils.reloadData();
+  await LoginTestUtils.reloadData();
   LoginTestUtils.checkLogins([gLoginInfo1, gLoginInfo2, gLoginInfo3]);
 
   assertMetaInfoEqual(retrieveLoginMatching(gLoginInfo1), gLoginMetaInfo1);

@@ -46,7 +46,7 @@ EXEC			= exec
 # ELOG prints out failed command when building silently (gmake -s). Pymake
 # prints out failed commands anyway, so ELOG just makes things worse by
 # forcing shell invocations.
-ifneq (,$(findstring s, $(filter-out --%, $(MAKEFLAGS))))
+ifneq (,$(findstring -s, $(filter-out --%, $(MAKEFLAGS))))
   ELOG := $(EXEC) sh $(BUILD_TOOLS)/print-failed-commands.sh
 else
   ELOG :=
@@ -80,37 +80,15 @@ endif
 run-cppunittests::
 	@$(PYTHON) $(MOZILLA_DIR)/testing/runcppunittests.py --xre-path=$(DIST)/bin --symbols-path=$(DIST)/crashreporter-symbols $(CPP_UNIT_TESTS)
 
-cppunittests-remote: DM_TRANS?=adb
 cppunittests-remote:
-	@if [ '${TEST_DEVICE}' != '' -o '$(DM_TRANS)' = 'adb' ]; then \
-		$(PYTHON) -u $(MOZILLA_DIR)/testing/remotecppunittests.py \
-			--xre-path=$(DEPTH)/dist/bin \
-			--localLib=$(DEPTH)/dist/$(MOZ_APP_NAME) \
-			--dm_trans=$(DM_TRANS) \
-			--deviceIP=${TEST_DEVICE} \
-			$(CPP_UNIT_TESTS) $(EXTRA_TEST_ARGS); \
-	else \
-		echo 'please prepare your host with environment variables for TEST_DEVICE'; \
-	fi
+	$(PYTHON) -u $(MOZILLA_DIR)/testing/remotecppunittests.py \
+		--xre-path=$(DEPTH)/dist/bin \
+		--localLib=$(DEPTH)/dist/$(MOZ_APP_NAME) \
+		--deviceIP=${TEST_DEVICE} \
+		$(CPP_UNIT_TESTS) $(EXTRA_TEST_ARGS); \
 
 endif # COMPILE_ENVIRONMENT
 endif # CPP_UNIT_TESTS
-
-.PHONY: check
-
-ifdef PYTHON_UNIT_TESTS
-
-RUN_PYTHON_UNIT_TESTS := $(addsuffix -run,$(PYTHON_UNIT_TESTS))
-
-.PHONY: $(RUN_PYTHON_UNIT_TESTS)
-
-check:: $(RUN_PYTHON_UNIT_TESTS)
-
-$(RUN_PYTHON_UNIT_TESTS): %-run: %
-	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) $<
-
-endif # PYTHON_UNIT_TESTS
-
 endif # ENABLE_TESTS
 
 
@@ -132,8 +110,8 @@ else
 LIBRARY			:= $(REAL_LIBRARY).$(LIBS_DESC_SUFFIX)
 endif
 else
-# Only build actual library if it is installed in DIST/lib or SDK
-ifeq (,$(SDK_LIBRARY)$(DIST_INSTALL)$(NO_EXPAND_LIBS))
+# Only build actual library if it is installed in DIST/lib
+ifeq (,$(DIST_INSTALL)$(NO_EXPAND_LIBS))
 LIBRARY			:= $(REAL_LIBRARY).$(LIBS_DESC_SUFFIX)
 else
 ifdef NO_EXPAND_LIBS
@@ -152,7 +130,6 @@ HOST_LIBRARY		:= $(LIB_PREFIX)$(HOST_LIBRARY_NAME).$(LIB_SUFFIX)
 endif
 endif
 
-ifdef LIBRARY
 ifdef FORCE_SHARED_LIB
 ifdef MKSHLIB
 
@@ -164,7 +141,6 @@ EMBED_MANIFEST_AT=2
 
 endif # MKSHLIB
 endif # FORCE_SHARED_LIB
-endif # LIBRARY
 
 ifeq ($(OS_ARCH),WINNT)
 ifndef GNU_CC
@@ -183,7 +159,7 @@ ifndef GNU_CC
 ifdef SIMPLE_PROGRAMS
 COMPILE_PDB_FLAG ?= -Fd$(basename $(@F)).pdb
 else
-COMPILE_PDB_FLAG ?= -Fdgenerated.pdb
+COMPILE_PDB_FLAG ?= -Fdgenerated.pdb -FS
 endif
 COMPILE_CFLAGS += $(COMPILE_PDB_FLAG)
 COMPILE_CXXFLAGS += $(COMPILE_PDB_FLAG)
@@ -222,8 +198,11 @@ HOST_CFLAGS += $(HOST_PDB_FLAG)
 HOST_CXXFLAGS += $(HOST_PDB_FLAG)
 endif
 
-# Don't build SIMPLE_PROGRAMS during the MOZ_PROFILE_GENERATE pass
+# Don't build SIMPLE_PROGRAMS during the MOZ_PROFILE_GENERATE pass, and do not
+# attempt to install them
 ifdef MOZ_PROFILE_GENERATE
+$(foreach category,$(INSTALL_TARGETS),\
+  $(eval $(category)_FILES := $(foreach file,$($(category)_FILES),$(if $(filter $(SIMPLE_PROGRAMS),$(notdir $(file))),,$(file)))))
 SIMPLE_PROGRAMS :=
 endif
 
@@ -240,10 +219,9 @@ CMOBJS = $(notdir $(CMSRCS:.m=.$(OBJ_SUFFIX)))
 CMMOBJS = $(notdir $(CMMSRCS:.mm=.$(OBJ_SUFFIX)))
 # ASFILES can have different extensions (.s, .asm)
 ASOBJS = $(notdir $(addsuffix .$(OBJ_SUFFIX),$(basename $(ASFILES))))
-RSOBJS = $(addprefix lib,$(notdir $(RSSRCS:.rs=.rlib)))
 RS_STATICLIB_CRATE_OBJ = $(addprefix lib,$(notdir $(RS_STATICLIB_CRATE_SRC:.rs=.$(LIB_SUFFIX))))
 ifndef OBJS
-_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS) $(RSOBJS) $(RS_STATICLIB_CRATE_OBJ)
+_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS)
 OBJS = $(strip $(_OBJS))
 endif
 
@@ -266,7 +244,6 @@ SIMPLE_PROGRAMS :=
 HOST_LIBRARY :=
 HOST_PROGRAM :=
 HOST_SIMPLE_PROGRAMS :=
-SDK_LIBRARY :=
 endif
 
 ALL_TRASH = \
@@ -350,47 +327,17 @@ HOST_CPP_PROG_LINK	= 1
 endif
 
 #
-# This will strip out symbols that the component should not be
-# exporting from the .dynsym section.
-#
-ifdef IS_COMPONENT
-EXTRA_DSO_LDOPTS += $(MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS)
-endif # IS_COMPONENT
-
-#
 # MacOS X specific stuff
 #
 
 ifeq ($(OS_ARCH),Darwin)
 ifdef SHARED_LIBRARY
-ifdef IS_COMPONENT
-EXTRA_DSO_LDOPTS	+= -bundle
-else
 ifdef MOZ_IOS
 _LOADER_PATH := @rpath
 else
 _LOADER_PATH := @executable_path
 endif
 EXTRA_DSO_LDOPTS	+= -dynamiclib -install_name $(_LOADER_PATH)/$(SHARED_LIBRARY) -compatibility_version 1 -current_version 1 -single_module
-endif
-endif
-endif
-
-#
-# On NetBSD a.out systems, use -Bsymbolic.  This fixes what would otherwise be
-# fatal symbol name clashes between components.
-#
-ifeq ($(OS_ARCH),NetBSD)
-ifeq ($(DLL_SUFFIX),.so.1.0)
-ifdef IS_COMPONENT
-EXTRA_DSO_LDOPTS += -Wl,-Bsymbolic
-endif
-endif
-endif
-
-ifeq ($(OS_ARCH),FreeBSD)
-ifdef IS_COMPONENT
-EXTRA_DSO_LDOPTS += -Wl,-Bsymbolic
 endif
 endif
 
@@ -404,41 +351,9 @@ endif
 endif
 
 #
-# HP-UXBeOS specific section: for COMPONENTS only, add -Bsymbolic flag
-# which uses internal symbols first
-#
-ifeq ($(OS_ARCH),HP-UX)
-ifdef IS_COMPONENT
-ifeq ($(GNU_CC)$(GNU_CXX),)
-EXTRA_DSO_LDOPTS += -Wl,-Bsymbolic
-ifneq ($(HAS_EXTRAEXPORTS),1)
-MKSHLIB  += -Wl,+eNSGetModule -Wl,+eerrno
-MKCSHLIB += +eNSGetModule +eerrno
-ifneq ($(OS_TEST),ia64)
-MKSHLIB  += -Wl,+e_shlInit
-MKCSHLIB += +e_shlInit
-endif # !ia64
-endif # !HAS_EXTRAEXPORTS
-endif # non-gnu compilers
-endif # IS_COMPONENT
-endif # HP-UX
-
-ifeq ($(OS_ARCH),AIX)
-ifdef IS_COMPONENT
-ifneq ($(HAS_EXTRAEXPORTS),1)
-MKSHLIB += -bE:$(MOZILLA_DIR)/build/unix/aix.exp -bnoexpall
-MKCSHLIB += -bE:$(MOZILLA_DIR)/build/unix/aix.exp -bnoexpall
-endif # HAS_EXTRAEXPORTS
-endif # IS_COMPONENT
-endif # AIX
-
-#
 # Linux: add -Bsymbolic flag for components
 #
 ifeq ($(OS_ARCH),Linux)
-ifdef IS_COMPONENT
-EXTRA_DSO_LDOPTS += -Wl,-Bsymbolic
-endif
 ifdef LD_VERSION_SCRIPT
 EXTRA_DSO_LDOPTS += -Wl,--version-script,$(LD_VERSION_SCRIPT)
 EXTRA_DEPS += $(LD_VERSION_SCRIPT)
@@ -476,9 +391,7 @@ endif
 #
 ifeq ($(OS_ARCH),WINNT)
 ifdef GNU_CC
-ifndef IS_COMPONENT
 DSO_LDOPTS += -Wl,--out-implib -Wl,$(IMPORT_LIBRARY)
-endif
 endif
 endif
 
@@ -564,9 +477,11 @@ OBJ_TARGETS = $(OBJS) $(PROGOBJS) $(HOST_OBJS) $(HOST_PROGOBJS)
 
 compile:: host target
 
-host:: $(HOST_LIBRARY) $(HOST_PROGRAM) $(HOST_SIMPLE_PROGRAMS)
+host:: $(HOST_LIBRARY) $(HOST_PROGRAM) $(HOST_SIMPLE_PROGRAMS) $(HOST_RUST_PROGRAMS) $(HOST_RUST_LIBRARY_FILE)
 
-target:: $(LIBRARY) $(SHARED_LIBRARY) $(PROGRAM) $(SIMPLE_PROGRAMS)
+target:: $(LIBRARY) $(SHARED_LIBRARY) $(PROGRAM) $(SIMPLE_PROGRAMS) $(RUST_LIBRARY_FILE) $(RUST_PROGRAMS)
+
+syms::
 
 include $(MOZILLA_DIR)/config/makefiles/target_binaries.mk
 endif
@@ -616,10 +531,12 @@ endif
 endif
 
 ifneq (,$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
+ifneq (,$(filter target,$(MAKECMDGOALS)))
 ifdef GNU_CC
 # Force rebuilding libraries and programs in both passes because each
 # pass uses different object files.
 $(PROGRAM) $(SHARED_LIBRARY) $(LIBRARY): FORCE
+endif
 endif
 endif
 
@@ -657,7 +574,7 @@ $(PROGRAM): $(PROGOBJS) $(STATIC_LIBS_DEPS) $(EXTRA_DEPS) $(EXE_DEF_FILE) $(RESF
 	$(REPORT_BUILD)
 	@$(RM) $@.manifest
 ifeq (_WINNT,$(GNU_CC)_$(OS_ARCH))
-	$(EXPAND_LD) -NOLOGO -OUT:$@ -PDB:$(LINK_PDBFILE) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(MOZ_PROGRAM_LDFLAGS) $(PROGOBJS) $(RESFILE) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS)
+	$(EXPAND_LINK) -NOLOGO -OUT:$@ -PDB:$(LINK_PDBFILE) $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(MOZ_PROGRAM_LDFLAGS) $(PROGOBJS) $(RESFILE) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS)
 ifdef MSMANIFEST_TOOL
 	@if test -f $@.manifest; then \
 		if test -f '$(srcdir)/$@.manifest'; then \
@@ -692,7 +609,7 @@ endif
 $(HOST_PROGRAM): $(HOST_PROGOBJS) $(HOST_LIBS) $(HOST_EXTRA_DEPS) $(GLOBAL_DEPS)
 	$(REPORT_BUILD)
 ifeq (_WINNT,$(GNU_CC)_$(HOST_OS_ARCH))
-	$(EXPAND_LIBS_EXEC) -- $(HOST_LD) -NOLOGO -OUT:$@ -PDB:$(HOST_PDBFILE) $(HOST_OBJS) $(WIN32_EXE_LDFLAGS) $(HOST_LDFLAGS) $(HOST_LIBS) $(HOST_EXTRA_LIBS)
+	$(EXPAND_LIBS_EXEC) -- $(LINK) -NOLOGO -OUT:$@ -PDB:$(HOST_PDBFILE) $(HOST_OBJS) $(WIN32_EXE_LDFLAGS) $(HOST_LDFLAGS) $(HOST_LIBS) $(HOST_EXTRA_LIBS)
 ifdef MSMANIFEST_TOOL
 	@if test -f $@.manifest; then \
 		if test -f '$(srcdir)/$@.manifest'; then \
@@ -729,7 +646,7 @@ endif
 $(SIMPLE_PROGRAMS): %$(BIN_SUFFIX): %.$(OBJ_SUFFIX) $(STATIC_LIBS_DEPS) $(EXTRA_DEPS) $(GLOBAL_DEPS)
 	$(REPORT_BUILD)
 ifeq (_WINNT,$(GNU_CC)_$(OS_ARCH))
-	$(EXPAND_LD) -nologo -out:$@ -pdb:$(LINK_PDBFILE) $< $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(MOZ_PROGRAM_LDFLAGS) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS)
+	$(EXPAND_LINK) -nologo -out:$@ -pdb:$(LINK_PDBFILE) $< $(WIN32_EXE_LDFLAGS) $(LDFLAGS) $(MOZ_PROGRAM_LDFLAGS) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_LIBS) $(OS_LIBS)
 ifdef MSMANIFEST_TOOL
 	@if test -f $@.manifest; then \
 		$(MT) -NOLOGO -MANIFEST $@.manifest -OUTPUTRESOURCE:$@\;1; \
@@ -751,7 +668,7 @@ endif
 $(HOST_SIMPLE_PROGRAMS): host_%$(HOST_BIN_SUFFIX): host_%.$(OBJ_SUFFIX) $(HOST_LIBS) $(HOST_EXTRA_DEPS) $(GLOBAL_DEPS)
 	$(REPORT_BUILD)
 ifeq (WINNT_,$(HOST_OS_ARCH)_$(GNU_CC))
-	$(EXPAND_LIBS_EXEC) -- $(HOST_LD) -NOLOGO -OUT:$@ -PDB:$(HOST_PDBFILE) $< $(WIN32_EXE_LDFLAGS) $(HOST_LIBS) $(HOST_EXTRA_LIBS)
+	$(EXPAND_LIBS_EXEC) -- $(LINK) -NOLOGO -OUT:$@ -PDB:$(HOST_PDBFILE) $< $(WIN32_EXE_LDFLAGS) $(HOST_LIBS) $(HOST_EXTRA_LIBS)
 else
 ifneq (,$(HOST_CPPSRCS)$(USE_HOST_CXX))
 	$(EXPAND_LIBS_EXEC) -- $(HOST_CXX) $(HOST_OUTOPTION)$@ $(HOST_CXXFLAGS) $(INCLUDES) $< $(HOST_LIBS) $(HOST_EXTRA_LIBS)
@@ -761,11 +678,6 @@ endif
 endif
 ifndef CROSS_COMPILE
 	$(call CHECK_STDCXX,$@)
-endif
-
-ifdef DTRACE_PROBE_OBJ
-EXTRA_DEPS += $(DTRACE_PROBE_OBJ)
-OBJS += $(DTRACE_PROBE_OBJ)
 endif
 
 $(filter %.$(LIB_SUFFIX),$(LIBRARY)): $(OBJS) $(STATIC_LIBS_DEPS) $(filter %.$(LIB_SUFFIX),$(EXTRA_LIBS)) $(EXTRA_DEPS) $(GLOBAL_DEPS)
@@ -796,45 +708,33 @@ $(HOST_LIBRARY): $(HOST_OBJS) Makefile
 	$(RM) $@
 	$(EXPAND_LIBS_EXEC) --extract -- $(HOST_AR) $(HOST_AR_FLAGS) $(HOST_OBJS)
 
-ifdef HAVE_DTRACE
-ifndef XP_MACOSX
-ifdef DTRACE_PROBE_OBJ
-ifndef DTRACE_LIB_DEPENDENT
-NON_DTRACE_OBJS := $(filter-out $(DTRACE_PROBE_OBJ),$(OBJS))
-$(DTRACE_PROBE_OBJ): $(NON_DTRACE_OBJS)
-	dtrace -x nolibs -G -C -s $(MOZILLA_DTRACE_SRC) -o $(DTRACE_PROBE_OBJ) $(NON_DTRACE_OBJS)
-endif
-endif
-endif
-endif
-
 # On Darwin (Mac OS X), dwarf2 debugging uses debug info left in .o files,
 # so instead of deleting .o files after repacking them into a dylib, we make
 # symlinks back to the originals. The symlinks are a no-op for stabs debugging,
 # so no need to conditionalize on OS version or debugging format.
 
-$(SHARED_LIBRARY): $(OBJS) $(RESFILE) $(STATIC_LIBS_DEPS) $(EXTRA_DEPS) $(GLOBAL_DEPS)
+$(SHARED_LIBRARY): $(OBJS) $(RESFILE) $(RUST_STATIC_LIB_FOR_SHARED_LIB) $(STATIC_LIBS_DEPS) $(EXTRA_DEPS) $(GLOBAL_DEPS)
 	$(REPORT_BUILD)
 ifndef INCREMENTAL_LINKER
 	$(RM) $@
 endif
-ifdef DTRACE_LIB_DEPENDENT
-ifndef XP_MACOSX
-	dtrace -x nolibs -G -C -s $(MOZILLA_DTRACE_SRC) -o  $(DTRACE_PROBE_OBJ) $(shell $(EXPAND_LIBS) $(MOZILLA_PROBE_LIBS))
-endif
-	$(EXPAND_MKSHLIB) $(SHLIB_LDSTARTFILE) $(OBJS) $(SUB_SHLOBJS) $(DTRACE_PROBE_OBJ) $(MOZILLA_PROBE_LIBS) $(RESFILE) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_DSO_LDOPTS) $(MOZ_GLUE_LDFLAGS) $(EXTRA_LIBS) $(OS_LIBS) $(SHLIB_LDENDFILE)
-	@$(RM) $(DTRACE_PROBE_OBJ)
-else # ! DTRACE_LIB_DEPENDENT
-	$(EXPAND_MKSHLIB) $(SHLIB_LDSTARTFILE) $(OBJS) $(SUB_SHLOBJS) $(RESFILE) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(SHARED_LIBS) $(EXTRA_DSO_LDOPTS) $(MOZ_GLUE_LDFLAGS) $(EXTRA_LIBS) $(OS_LIBS) $(SHLIB_LDENDFILE)
-endif # DTRACE_LIB_DEPENDENT
+	$(EXPAND_MKSHLIB) $(SHLIB_LDSTARTFILE) $(OBJS) $(SUB_SHLOBJS) $(RESFILE) $(LDFLAGS) $(WRAP_LDFLAGS) $(STATIC_LIBS) $(RUST_STATIC_LIB_FOR_SHARED_LIB) $(SHARED_LIBS) $(EXTRA_DSO_LDOPTS) $(MOZ_GLUE_LDFLAGS) $(EXTRA_LIBS) $(OS_LIBS) $(SHLIB_LDENDFILE)
 	$(call CHECK_BINARY,$@)
 
 ifeq (_WINNT,$(GNU_CC)_$(OS_ARCH))
 ifdef MSMANIFEST_TOOL
 ifdef EMBED_MANIFEST_AT
 	@if test -f $@.manifest; then \
-		$(MT) -NOLOGO -MANIFEST $@.manifest -OUTPUTRESOURCE:$@\;$(EMBED_MANIFEST_AT); \
-		rm -f $@.manifest; \
+		if test -f '$(srcdir)/$@.manifest'; then \
+			echo 'Embedding manifest from $(srcdir)/$@.manifest and $@.manifest'; \
+			$(MT) -NOLOGO -MANIFEST '$(win_srcdir)/$@.manifest' $@.manifest -OUTPUTRESOURCE:$@\;$(EMBED_MANIFEST_AT); \
+		else \
+			echo 'Embedding manifest from $@.manifest'; \
+			$(MT) -NOLOGO -MANIFEST $@.manifest -OUTPUTRESOURCE:$@\;$(EMBED_MANIFEST_AT); \
+		fi; \
+	elif test -f '$(srcdir)/$@.manifest'; then \
+		echo 'Embedding manifest from $(srcdir)/$@.manifest'; \
+		$(MT) -NOLOGO -MANIFEST '$(win_srcdir)/$@.manifest' -OUTPUTRESOURCE:$@\;$(EMBED_MANIFEST_AT); \
 	fi
 endif   # EMBED_MANIFEST_AT
 endif	# MSVC with manifest tool
@@ -914,21 +814,237 @@ $(ASOBJS):
 	$(AS) $(ASOUTOPTION)$@ $(ASFLAGS) $($(notdir $<)_FLAGS) $(AS_DASH_C_FLAG) $(_VPATH_SRCS)
 endif
 
-ifdef MOZ_RUST
-# Assume any system libraries rustc links against are already
-# in the target's LIBS.
-$(RSOBJS):
-	$(REPORT_BUILD)
-	$(RUSTC) $(RUST_TARGET) $(RUSTFLAGS) --crate-type rlib --emit dep-info=$(MDDEPDIR)/$(call mk_libname,$<).pp,link=$(call mk_libname,$<) $(_VPATH_SRCS)
+define syms_template
+syms:: $(2)
+$(2): $(1)
+	$$(call py_action,dumpsymbols,$$(abspath $$<) $$(abspath $$@))
+endef
 
-$(RS_STATICLIB_CRATE_OBJ):
-	$(REPORT_BUILD)
-	$(RUSTC) $(RUST_TARGET) $(RUSTFLAGS) --crate-type staticlib $(RLIB_EXTERN_CRATE_OPTIONS) --emit dep-info=$(MDDEPDIR)/$(call mk_global_crate_libname,$(RS_STATICLIB_CRATE_SRC)).pp,link=$@ $(RS_STATICLIB_CRATE_SRC)
+ifndef MOZ_PROFILE_GENERATE
+ifneq (,$(filter $(DIST)/bin%,$(FINAL_TARGET)))
+DUMP_SYMS_TARGETS := $(SHARED_LIBRARY) $(PROGRAM) $(SIMPLE_PROGRAMS)
 endif
+endif
+
+ifdef MOZ_AUTOMATION
+ifeq (,$(filter 1,$(MOZ_AUTOMATION_BUILD_SYMBOLS)))
+DUMP_SYMS_TARGETS :=
+endif
+endif
+
+$(foreach file,$(DUMP_SYMS_TARGETS),$(eval $(call syms_template,$(file),$(file)_syms.track)))
+
+cargo_host_flag := --target=$(RUST_HOST_TARGET)
+cargo_target_flag := --target=$(RUST_TARGET)
+
+# Permit users to pass flags to cargo from their mozconfigs (e.g. --color=always).
+cargo_build_flags = $(CARGOFLAGS)
+ifndef MOZ_DEBUG_RUST
+cargo_build_flags += --release
+endif
+cargo_build_flags += --frozen
+
+cargo_build_flags += --manifest-path $(CARGO_FILE)
+ifdef BUILD_VERBOSE_LOG
+cargo_build_flags += --verbose
+else
+ifdef MOZ_AUTOMATION
+cargo_build_flags += --verbose
+endif # MOZ_AUTOMATION
+endif # BUILD_VERBOSE_LOG
+
+# Enable color output if original stdout was a TTY and color settings
+# aren't already present. This essentially restores the default behavior
+# of cargo when running via `mach`.
+ifdef MACH_STDOUT_ISATTY
+ifeq (,$(findstring --color,$(cargo_build_flags)))
+cargo_build_flags += --color=always
+endif
+endif
+
+# Cargo currently supports only two interesting profiles for building:
+# development and release.  Those map (roughly) to --enable-debug and
+# --disable-debug in Gecko, respectively, but there's another axis that we'd
+# like to support: --{disable,enable}-optimize.  Since that would be four
+# choices, and Cargo only supports two, we choose to enable various
+# optimization levels in our Cargo.toml files all the time, and override the
+# optimization level here, if necessary.  (The Cargo.toml files already
+# specify debug-assertions appropriately for --{disable,enable}-debug.)
+default_rustflags =
+ifndef MOZ_OPTIMIZE
+default_rustflags = -C opt-level=0
+# Unfortunately, -C opt-level=0 implies -C debug-assertions, so we need
+# to explicitly disable them when MOZ_DEBUG_RUST is not set.
+ifndef MOZ_DEBUG_RUST
+default_rustflags += -C debug-assertions=no
+endif
+endif
+rustflags_override = RUSTFLAGS='$(default_rustflags) $(RUSTFLAGS)'
+
+ifdef MOZ_MSVCBITS
+# If we are building a MozillaBuild shell, we want to clear out the
+# vcvars.bat environment variables for cargo builds. This is because
+# a 32-bit MozillaBuild shell on a 64-bit machine will try to use
+# the 32-bit compiler/linker for everything, while cargo/rustc wants
+# to use the 64-bit linker for build.rs scripts. This conflict results
+# in a build failure (see bug 1350001). So we clear out the environment
+# variables that are actually relevant to 32- vs 64-bit builds.
+environment_cleaner = -u VCINSTALLDIR PATH='' LIB='' LIBPATH=''
+# The servo build needs to know where python is, and we're removing the PATH
+# so we tell it explicitly via the PYTHON env var.
+environment_cleaner += PYTHON='$(shell which $(PYTHON))'
+else
+environment_cleaner =
+endif
+
+rust_unlock_unstable =
+ifdef MOZ_RUST_SIMD
+rust_unlock_unstable += RUSTC_BOOTSTRAP=1
+endif
+
+ifdef MOZ_USING_SCCACHE
+sccache_wrap := RUSTC_WRAPPER='$(CCACHE)'
+endif
+
+# XXX hack to work around dsymutil failing on cross-OSX builds (bug 1380381)
+ifeq ($(HOST_OS_ARCH)-$(OS_ARCH),Linux-Darwin)
+default_rustflags += -C debuginfo=1
+else
+default_rustflags += -C debuginfo=2
+endif
+
+# We use the + prefix to pass down the jobserver fds to cargo, but we
+# don't use the prefix when make -n is used, so that cargo doesn't run
+# in that case)
+define RUN_CARGO
+$(if $(findstring n,$(filter-out --%, $(MAKEFLAGS))),,+)env $(environment_cleaner) $(rust_unlock_unstable) $(rustflags_override) $(sccache_wrap) \
+	CARGO_TARGET_DIR=$(CARGO_TARGET_DIR) \
+	RUSTC=$(RUSTC) \
+	MOZ_SRC=$(topsrcdir) \
+	MOZ_DIST=$(ABS_DIST) \
+	LIBCLANG_PATH="$(MOZ_LIBCLANG_PATH)" \
+	CLANG_PATH="$(MOZ_CLANG_PATH)" \
+	PKG_CONFIG_ALLOW_CROSS=1 \
+	RUST_BACKTRACE=1 \
+	MOZ_TOPOBJDIR=$(topobjdir) \
+	$(2) \
+	$(CARGO) $(1) $(cargo_build_flags)
+endef
+
+# This function is intended to be called by:
+#
+#   $(call CARGO_BUILD,EXTRA_ENV_VAR1=X EXTRA_ENV_VAR2=Y ...)
+#
+# but, given the idiosyncracies of make, can also be called without arguments:
+#
+#   $(call CARGO_BUILD)
+define CARGO_BUILD
+$(call RUN_CARGO,build,$(1))
+endef
+
+define CARGO_CHECK
+$(call RUN_CARGO,check,$(1))
+endef
+
+cargo_linker_env_var := CARGO_TARGET_$(RUST_TARGET_ENV_NAME)_LINKER
+
+# Don't define a custom linker on Windows, as it's difficult to have a
+# non-binary file that will get executed correctly by Cargo.  We don't
+# have to worry about a cross-compiling (besides x86-64 -> x86, which
+# already works with the current setup) setup on Windows, and we don't
+# have to pass in any special linker options on Windows.
+ifneq (WINNT,$(OS_ARCH))
+
+# Defining all of this for ASan/TSan builds results in crashes while running
+# some crates's build scripts (!), so disable it for now.
+ifndef MOZ_ASAN
+ifndef MOZ_TSAN
+# Cargo needs the same linker flags as the C/C++ compiler,
+# but not the final libraries. Filter those out because they
+# cause problems on macOS 10.7; see bug 1365993 for details.
+target_cargo_env_vars := \
+	MOZ_CARGO_WRAP_LDFLAGS="$(filter-out -framework Cocoa -lobjc AudioToolbox ExceptionHandling,$(LDFLAGS))" \
+	MOZ_CARGO_WRAP_LD="$(CC)" \
+	$(cargo_linker_env_var)=$(topsrcdir)/build/cargo-linker
+endif # MOZ_TSAN
+endif # MOZ_ASAN
+
+endif # ifneq WINNT
+
+ifdef RUST_LIBRARY_FILE
+
+ifdef RUST_LIBRARY_FEATURES
+rust_features_flag := --features "$(RUST_LIBRARY_FEATURES)"
+endif
+
+# Assume any system libraries rustc links against are already in the target's LIBS.
+#
+# We need to run cargo unconditionally, because cargo is the only thing that
+# has full visibility into how changes in Rust sources might affect the final
+# build.
+force-cargo-library-build:
+	$(REPORT_BUILD)
+	$(call CARGO_BUILD,$(target_cargo_env_vars)) --lib $(cargo_target_flag) $(rust_features_flag)
+
+$(RUST_LIBRARY_FILE): force-cargo-library-build
+
+force-cargo-library-check:
+	$(call CARGO_CHECK,$(target_cargo_env_vars)) --lib $(cargo_target_flag) $(rust_features_flag)
+else
+force-cargo-library-check:
+	@true
+endif # RUST_LIBRARY_FILE
+
+ifdef HOST_RUST_LIBRARY_FILE
+
+ifdef HOST_RUST_LIBRARY_FEATURES
+host_rust_features_flag := --features "$(HOST_RUST_LIBRARY_FEATURES)"
+endif
+
+force-cargo-host-library-build:
+	$(REPORT_BUILD)
+	$(call CARGO_BUILD) --lib $(cargo_host_flag) $(host_rust_features_flag)
+
+$(HOST_RUST_LIBRARY_FILE): force-cargo-host-library-build
+
+force-cargo-host-library-check:
+	$(call CARGO_CHECK) --lib $(cargo_host_flag) $(host_rust_features_flag)
+else
+force-cargo-host-library-check:
+	@true
+endif # HOST_RUST_LIBRARY_FILE
+
+ifdef RUST_PROGRAMS
+force-cargo-program-build:
+	$(REPORT_BUILD)
+	$(call CARGO_BUILD,$(target_cargo_env_vars)) $(addprefix --bin ,$(RUST_CARGO_PROGRAMS)) $(cargo_target_flag)
+
+$(RUST_PROGRAMS): force-cargo-program-build
+
+force-cargo-program-check:
+	$(call CARGO_CHECK,$(target_cargo_env_vars)) $(addprefix --bin ,$(RUST_CARGO_PROGRAMS)) $(cargo_target_flag)
+else
+force-cargo-program-check:
+	@true
+endif # RUST_PROGRAMS
+ifdef HOST_RUST_PROGRAMS
+force-cargo-host-program-build:
+	$(REPORT_BUILD)
+	$(call CARGO_BUILD) $(addprefix --bin ,$(HOST_RUST_CARGO_PROGRAMS)) $(cargo_host_flag)
+
+$(HOST_RUST_PROGRAMS): force-cargo-host-program-build
+
+force-cargo-host-program-check:
+	$(REPORT_BUILD)
+	$(call CARGO_CHECK) $(addprefix --bin ,$(HOST_RUST_CARGO_PROGRAMS)) $(cargo_host_flag)
+else
+force-cargo-host-program-check:
+	@true
+endif # HOST_RUST_PROGRAMS
 
 $(SOBJS):
 	$(REPORT_BUILD)
-	$(AS) -o $@ $(ASFLAGS) $($(notdir $<)_FLAGS) $(LOCAL_INCLUDES) -c $<
+	$(AS) -o $@ $(DEFINES) $(ASFLAGS) $($(notdir $<)_FLAGS) $(LOCAL_INCLUDES) -c $<
 
 $(CPPOBJS):
 	$(REPORT_BUILD_VERBOSE)
@@ -968,44 +1084,31 @@ ifneq (,$(filter %.i,$(MAKECMDGOALS)))
 #
 # This way we can match both 'make sub/bar.i' and 'make bar.i'
 _group_srcs = $(sort $(patsubst %.$1,%.i,$(filter %.$1,$2 $(notdir $2))))
-_PREPROCESSED_CPP_FILES := $(call _group_srcs,cpp,$(CPPSRCS))
-_PREPROCESSED_CC_FILES := $(call _group_srcs,cc,$(CPPSRCS))
-_PREPROCESSED_CXX_FILES := $(call _group_srcs,cxx,$(CPPSRCS))
-_PREPROCESSED_C_FILES := $(call _group_srcs,c,$(CSRCS))
-_PREPROCESSED_CMM_FILES := $(call _group_srcs,mm,$(CMMSRCS))
+
+define PREPROCESS_RULES
+_PREPROCESSED_$1_FILES := $$(call _group_srcs,$1,$$($2))
+# Make preprocessed files PHONY so they are always executed, since they are
+# manual targets and we don't necessarily write to $@.
+.PHONY: $$(_PREPROCESSED_$1_FILES)
 
 # Hack up VPATH so we can reach the sources. Eg: 'make Parser.i' may need to
 # reach $(srcdir)/frontend/Parser.i
-VPATH += $(addprefix $(srcdir)/,$(sort $(dir $(CPPSRCS) $(CSRCS) $(CMMSRCS))))
+vpath %.$1 $$(addprefix $$(srcdir)/,$$(sort $$(dir $$($2))))
+vpath %.$1 $$(addprefix $$(CURDIR)/,$$(sort $$(dir $$($2))))
 
-# Make preprocessed files PHONY so they are always executed, since they are
-# manual targets and we don't necessarily write to $@.
-.PHONY: $(_PREPROCESSED_CPP_FILES) $(_PREPROCESSED_CC_FILES) $(_PREPROCESSED_CXX_FILES) $(_PREPROCESSED_C_FILES) $(_PREPROCESSED_CMM_FILES)
+$$(_PREPROCESSED_$1_FILES): _DEPEND_CFLAGS=
+$$(_PREPROCESSED_$1_FILES): %.i: %.$1
+	$$(REPORT_BUILD_VERBOSE)
+	$$(addprefix $$(MKDIR) -p ,$$(filter-out .,$$(@D)))
+	$$($3) -C $$(PREPROCESS_OPTION)$$@ $(foreach var,$4,$$($(var))) $$($$(notdir $$<)_FLAGS) $$(_VPATH_SRCS)
 
-$(_PREPROCESSED_CPP_FILES): %.i: %.cpp $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD_VERBOSE)
-	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
-	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(_VPATH_SRCS)
+endef
 
-$(_PREPROCESSED_CC_FILES): %.i: %.cc $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD_VERBOSE)
-	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
-	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(_VPATH_SRCS)
-
-$(_PREPROCESSED_CXX_FILES): %.i: %.cxx $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD_VERBOSE)
-	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
-	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(_VPATH_SRCS)
-
-$(_PREPROCESSED_C_FILES): %.i: %.c $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD_VERBOSE)
-	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
-	$(CC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CFLAGS) $($(notdir $<)_FLAGS) $(_VPATH_SRCS)
-
-$(_PREPROCESSED_CMM_FILES): %.i: %.mm $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD_VERBOSE)
-	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
-	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $(COMPILE_CMMFLAGS) $($(notdir $<)_FLAGS) $(_VPATH_SRCS)
+$(eval $(call PREPROCESS_RULES,cpp,CPPSRCS,CCC,COMPILE_CXXFLAGS))
+$(eval $(call PREPROCESS_RULES,cc,CPPSRCS,CCC,COMPILE_CXXFLAGS))
+$(eval $(call PREPROCESS_RULES,cxx,CPPSRCS,CCC,COMPILE_CXXFLAGS))
+$(eval $(call PREPROCESS_RULES,c,CSRCS,CC,COMPILE_CFLAGS))
+$(eval $(call PREPROCESS_RULES,mm,CMMSRCS,CCC,COMPILE_CXXFLAGS COMPILE_CMMFLAGS))
 
 # Default to pre-processing the actual unified file. This can be overridden
 # at the command-line to pre-process only the individual source file.
@@ -1124,18 +1227,6 @@ PREF_DIR = defaults/pref
 ifneq (,$(DIST_SUBDIR)$(XPI_NAME))
 PREF_DIR = defaults/preferences
 endif
-
-################################################################################
-# SDK
-
-ifneq (,$(SDK_LIBRARY))
-ifndef NO_DIST_INSTALL
-SDK_LIBRARY_FILES := $(SDK_LIBRARY)
-SDK_LIBRARY_DEST := $(SDK_LIB_DIR)
-SDK_LIBRARY_TARGET := target
-INSTALL_TARGETS += SDK_LIBRARY
-endif
-endif # SDK_LIBRARY
 
 ################################################################################
 # CHROME PACKAGING
@@ -1480,12 +1571,6 @@ endif #}
 documentation:
 	@cd $(DEPTH)
 	$(DOXYGEN) $(DEPTH)/config/doxygen.cfg
-
-ifdef ENABLE_TESTS
-check::
-	$(LOOP_OVER_DIRS)
-endif
-
 
 FREEZE_VARIABLES = \
   CSRCS \

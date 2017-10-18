@@ -136,8 +136,7 @@ add_test(function() {
 
 // Tests that clicking the buy button works from the list
 add_test(function() {
-  gBrowser.tabContainer.addEventListener("TabOpen", function listener(event) {
-    gBrowser.tabContainer.removeEventListener("TabOpen", listener, true);
+  gBrowser.tabContainer.addEventListener("TabOpen", function(event) {
     function wantLoad(url) {
       return url != "about:blank";
     }
@@ -146,15 +145,10 @@ add_test(function() {
 
       gBrowser.removeCurrentTab();
 
-      if (gUseInContentUI) {
-        is(gBrowser.currentURI.spec, "about:addons", "Should be back to the add-ons manager");
-        run_next_test();
-      }
-      else {
-        waitForFocus(run_next_test, gManagerWindow);
-      }
+      is(gBrowser.currentURI.spec, "about:addons", "Should be back to the add-ons manager");
+      run_next_test();
     });
-  }, true);
+  }, {capture: true, once: true});
 
   var list = gManagerWindow.document.getElementById("search-list");
   EventUtils.synthesizeMouseAtCenter(get_purchase_btn(list.firstChild), { }, gManagerWindow);
@@ -162,8 +156,7 @@ add_test(function() {
 
 // Tests that clicking the buy button from the details view works
 add_test(function() {
-  gBrowser.tabContainer.addEventListener("TabOpen", function listener(event) {
-    gBrowser.tabContainer.removeEventListener("TabOpen", listener, true);
+  gBrowser.tabContainer.addEventListener("TabOpen", function(event) {
     function wantLoad(url) {
       return url != "about:blank";
     }
@@ -172,15 +165,10 @@ add_test(function() {
 
       gBrowser.removeCurrentTab();
 
-      if (gUseInContentUI) {
-        is(gBrowser.currentURI.spec, "about:addons", "Should be back to the add-ons manager");
-        run_next_test();
-      }
-      else {
-        waitForFocus(run_next_test, gManagerWindow);
-      }
+      is(gBrowser.currentURI.spec, "about:addons", "Should be back to the add-ons manager");
+      run_next_test();
     });
-  }, true);
+  }, {capture: true, once: true});
 
   var list = gManagerWindow.document.getElementById("search-list");
   var item = list.firstChild.nextSibling;

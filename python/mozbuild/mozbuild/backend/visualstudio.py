@@ -38,13 +38,17 @@ def get_id(name):
     return str(uuid.uuid5(uuid.NAMESPACE_URL, name)).upper()
 
 def visual_studio_product_to_solution_version(version):
-    if version == '2015':
+    if version == '2017':
+        return '12.00', '15'
+    elif version == '2015':
         return '12.00', '14'
     else:
         raise Exception('Unknown version seen: %s' % version)
 
 def visual_studio_product_to_platform_toolset_version(version):
-    if version == '2015':
+    if version == '2017':
+        return 'v141'
+    elif version == '2015':
         return 'v140'
     else:
         raise Exception('Unknown version seen: %s' % version)
@@ -186,8 +190,7 @@ class VisualStudioBackend(CommonBackend):
             sources = set(os.path.join('$(TopSrcDir)', path, s) for s in sources)
             sources = set(os.path.normpath(s) for s in sources)
 
-            finder = FileFinder(os.path.join(self.environment.topsrcdir, path),
-                find_executables=False)
+            finder = FileFinder(os.path.join(self.environment.topsrcdir, path))
 
             headers = [t[0] for t in finder.find('*.h')]
             headers = [os.path.normpath(os.path.join('$(TopSrcDir)',

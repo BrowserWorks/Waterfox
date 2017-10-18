@@ -1,6 +1,6 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 /**
@@ -11,45 +11,47 @@ const TEST_CASES = [
   {
     desc: "no warnings",
     uri: "https://example.com" + CORS_SJS_PATH,
-    warnCipher: false,
+    warnCipher: null,
   },
 ];
 
 add_task(function* () {
-  let [tab, debuggee, monitor] = yield initNetMonitor(CUSTOM_GET_URL);
-  let { $, EVENTS, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
-  RequestsMenu.lazyUpdate = false;
+  let { tab, monitor } = yield initNetMonitor(CUSTOM_GET_URL);
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
-  let cipher = $("#security-warning-cipher");
+  store.dispatch(Actions.batchEnable(false));
 
   for (let test of TEST_CASES) {
     info("Testing site with " + test.desc);
 
     info("Performing request to " + test.uri);
-    debuggee.performRequests(1, test.uri);
-    yield waitForNetworkEvents(monitor, 1);
+    let wait = waitForNetworkEvents(monitor, 1);
+    yield ContentTask.spawn(tab.linkedBrowser, test.uri, function* (url) {
+      content.wrappedJSObject.performRequests(1, url);
+    });
+    yield wait;
 
     info("Selecting the request.");
-    RequestsMenu.selectedIndex = 0;
+    wait = waitForDOM(document, ".tabs");
+    EventUtils.sendMouseEvent({ type: "mousedown" },
+      document.querySelectorAll(".request-list-item")[0]);
+    yield wait;
 
-    info("Waiting for details pane to be updated.");
-    yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
-
-    if (NetworkDetails.widget.selectedIndex !== 5) {
+    if (!document.querySelector("#security-tab[aria-selected=true]")) {
       info("Selecting security tab.");
-      NetworkDetails.widget.selectedIndex = 5;
-
-      info("Waiting for details pane to be updated.");
-      yield monitor.panelWin.once(EVENTS.TAB_UPDATED);
+      wait = waitForDOM(document, "#security-panel .properties-view");
+      EventUtils.sendMouseEvent({ type: "click" },
+        document.querySelector("#security-tab"));
+      yield wait;
     }
 
-    is(cipher.hidden, !test.warnCipher, "Cipher suite warning is hidden.");
+    is(document.querySelector("#security-warning-cipher"),
+      test.warnCipher,
+      "Cipher suite warning is hidden.");
 
-    RequestsMenu.clear();
-
+    store.dispatch(Actions.clearRequests());
   }
 
-  yield teardown(monitor);
-
+  return teardown(monitor);
 });

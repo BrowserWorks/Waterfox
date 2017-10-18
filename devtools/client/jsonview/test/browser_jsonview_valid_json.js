@@ -10,22 +10,29 @@ const TEST_JSON_URL = URL_ROOT + "valid_json.json";
 add_task(function* () {
   info("Test valid JSON started");
 
-  yield addJsonViewTab(TEST_JSON_URL);
+  let tab = yield addJsonViewTab(TEST_JSON_URL);
 
-  let countBefore = yield getElementCount(".jsonPanelBox .treeTable .treeRow");
-  ok(countBefore == 3, "There must be three rows");
+  ok(tab.linkedBrowser.contentPrincipal.isNullPrincipal, "Should have null principal");
+
+  is(yield countRows(), 3, "There must be three rows");
 
   let objectCellCount = yield getElementCount(
     ".jsonPanelBox .treeTable .objectCell");
-  ok(objectCellCount == 1, "There must be one object cell");
+  is(objectCellCount, 1, "There must be one object cell");
 
   let objectCellText = yield getElementText(
     ".jsonPanelBox .treeTable .objectCell");
-  ok(objectCellText == "", "The summary is hidden when object is expanded");
+  is(objectCellText, "", "The summary is hidden when object is expanded");
 
-  // Collapsed auto-expanded node.
+  // Clicking the value does not collapse it (so that it can be selected and copied).
+  yield clickJsonNode(".jsonPanelBox .treeTable .treeValueCell");
+  is(yield countRows(), 3, "There must still be three rows");
+
+  // Clicking the label collapses the auto-expanded node.
   yield clickJsonNode(".jsonPanelBox .treeTable .treeLabel");
-
-  let countAfter = yield getElementCount(".jsonPanelBox .treeTable .treeRow");
-  ok(countAfter == 1, "There must be one row");
+  is(yield countRows(), 1, "There must be one row");
 });
+
+function countRows() {
+  return getElementCount(".jsonPanelBox .treeTable .treeRow");
+}

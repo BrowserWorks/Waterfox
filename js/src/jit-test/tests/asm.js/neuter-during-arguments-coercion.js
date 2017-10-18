@@ -1,4 +1,3 @@
-// |jit-test| test-also-noasmjs
 load(libdir + "asm.js");
 
 function f(stdlib, foreign, buffer)
@@ -23,6 +22,6 @@ if (isAsmJSCompilationAvailable())
 
 try
 {
-  set({ valueOf() { detachArrayBuffer(buffer, "same-data"); return 17; } });
+  set({ valueOf() { detachArrayBuffer(buffer); return 17; } });
 }
 catch (e) { /* if an exception thrown, swallow */ }

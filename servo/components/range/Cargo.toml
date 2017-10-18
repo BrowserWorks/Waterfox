@@ -1,0 +1,17 @@
+[package]
+
+name = "range"
+version = "0.0.1"
+authors = ["The Servo Project Developers"]
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "range"
+path = "lib.rs"
+
+[dependencies]
+heapsize = "0.4"
+heapsize_derive = "0.1"
+num-traits = "0.1.32"
+serde = "1.0"

@@ -52,9 +52,21 @@ enum class PixelCastJustification : uint8_t {
   // Used to treat the product of AsyncTransformComponentMatrix objects
   // as an AsyncTransformMatrix. See the definitions of these matrices in
   // LayersTypes.h for details.
-  MultipleAsyncTransforms
+  MultipleAsyncTransforms,
+  // We have reason to believe a layer doesn't have a local transform.
+  // Should only be used if we've already checked or asserted this.
+  NoTransformOnLayer,
+  // When building non-rasterized WebRender layers (e.g.
+  // WebRenderDisplayItemLayer, or anything else that doesn't deal in textures),
+  // there is no "resolution" and so the LayoutDevicePixel space is equal to the
+  // LayerPixel space.
+  WebRenderHasUnitResolution
 };
 
+template <class TargetUnits, class SourceUnits>
+gfx::CoordTyped<TargetUnits> ViewAs(const gfx::CoordTyped<SourceUnits>& aCoord, PixelCastJustification) {
+  return gfx::CoordTyped<TargetUnits>(aCoord.value);
+}
 template <class TargetUnits, class SourceUnits>
 gfx::SizeTyped<TargetUnits> ViewAs(const gfx::SizeTyped<SourceUnits>& aSize, PixelCastJustification) {
   return gfx::SizeTyped<TargetUnits>(aSize.width, aSize.height);
@@ -96,6 +108,13 @@ gfx::ScaleFactor<SourceUnits, NewTargetUnits> ViewTargetAs(
     const gfx::ScaleFactor<SourceUnits, OldTargetUnits>& aScaleFactor,
     PixelCastJustification) {
   return gfx::ScaleFactor<SourceUnits, NewTargetUnits>(aScaleFactor.scale);
+}
+template <class TargetUnits, class SourceUnits>
+Maybe<gfx::IntRectTyped<TargetUnits>> ViewAs(const Maybe<gfx::IntRectTyped<SourceUnits>>& aRect, PixelCastJustification aJustification) {
+  if (aRect.isSome()) {
+    return Some(ViewAs<TargetUnits>(aRect.value(), aJustification));
+  }
+  return Nothing();
 }
 // Unlike the other functions in this category, this function takes the
 // target matrix type, rather than its source and target unit types, as
@@ -161,7 +180,7 @@ static gfx::PointTyped<TargetUnits>
 TransformBy(const gfx::Matrix4x4Typed<SourceUnits, TargetUnits>& aTransform,
             const gfx::PointTyped<SourceUnits>& aPoint)
 {
-  return aTransform * aPoint;
+  return aTransform.TransformPoint(aPoint);
 }
 template <typename TargetUnits, typename SourceUnits>
 static gfx::IntPointTyped<TargetUnits>

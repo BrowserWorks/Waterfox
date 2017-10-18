@@ -12,13 +12,13 @@ const {Ci, Cc} = require("chrome");
 const {CanvasFrameAnonymousContentHelper, createNode} = require("./utils/markup");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
-const {rgbToHsl, rgbToColorName} = require("devtools/shared/css-color").colorUtils;
+const {rgbToHsl, rgbToColorName} = require("devtools/shared/css/color").colorUtils;
 const {getCurrentZoom, getFrameOffsets} = require("devtools/shared/layout/utils");
 
 loader.lazyGetter(this, "clipboardHelper",
   () => Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper));
 loader.lazyGetter(this, "l10n",
-  () => Services.strings.createBundle("chrome://devtools/locale/eyedropper.properties"));
+  () => Services.strings.createBundle("chrome://devtools-shared/locale/eyedropper.properties"));
 
 const ZOOM_LEVEL_PREF = "devtools.eyedropper.zoom";
 const FORMAT_PREF = "devtools.defaultColorUnit";
@@ -126,6 +126,10 @@ EyeDropper.prototype = {
    * - {Boolean} copyOnSelect Whether selecting a color should copy it to the clipboard.
    */
   show(node, options = {}) {
+    if (this.highlighterEnv.isXUL) {
+      return false;
+    }
+
     this.options = options;
 
     // Get the page's current zoom level.
@@ -150,7 +154,7 @@ EyeDropper.prototype = {
 
     // Prepare the canvas context on which we're drawing the magnified page portion.
     this.ctx = this.getElement("canvas").getCanvasContext();
-    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = false;
 
     this.magnifiedArea = {width: MAGNIFIER_WIDTH, height: MAGNIFIER_HEIGHT,
                           x: DEFAULT_START_POS_X, y: DEFAULT_START_POS_Y};
@@ -167,14 +171,21 @@ EyeDropper.prototype = {
    * Hide the eye-dropper highlighter.
    */
   hide() {
+    if (this.highlighterEnv.isXUL) {
+      return;
+    }
+
     this.pageImage = null;
 
     let {pageListenerTarget} = this.highlighterEnv;
-    pageListenerTarget.removeEventListener("mousemove", this);
-    pageListenerTarget.removeEventListener("click", this, true);
-    pageListenerTarget.removeEventListener("keydown", this);
-    pageListenerTarget.removeEventListener("DOMMouseScroll", this);
-    pageListenerTarget.removeEventListener("FullZoomChange", this);
+
+    if (pageListenerTarget) {
+      pageListenerTarget.removeEventListener("mousemove", this);
+      pageListenerTarget.removeEventListener("click", this, true);
+      pageListenerTarget.removeEventListener("keydown", this);
+      pageListenerTarget.removeEventListener("DOMMouseScroll", this);
+      pageListenerTarget.removeEventListener("FullZoomChange", this);
+    }
 
     this.getElement("root").setAttribute("hidden", "true");
     this.getElement("root").removeAttribute("drawn");
@@ -421,8 +432,10 @@ EyeDropper.prototype = {
     offsetX *= modifier;
 
     if (offsetX !== 0 || offsetY !== 0) {
-      this.magnifiedArea.x += offsetX;
-      this.magnifiedArea.y += offsetY;
+      this.magnifiedArea.x = cap(this.magnifiedArea.x + offsetX,
+                                 0, this.win.innerWidth * this.pageZoom);
+      this.magnifiedArea.y = cap(this.magnifiedArea.y + offsetY, 0,
+                                 this.win.innerHeight * this.pageZoom);
 
       this.draw();
 
@@ -497,12 +510,7 @@ function toColorString(rgb, format) {
       let [h, s, l] = rgbToHsl(rgb);
       return "hsl(" + h + ", " + s + "%, " + l + "%)";
     case "name":
-      let str;
-      try {
-        str = rgbToColorName(r, g, b);
-      } catch (e) {
-        str = hexString(rgb);
-      }
+      let str = rgbToColorName(r, g, b) || hexString(rgb);
       return str;
     default:
       return hexString(rgb);
@@ -517,4 +525,8 @@ function toColorString(rgb, format) {
 function hexString([r, g, b]) {
   let val = (1 << 24) + (r << 16) + (g << 8) + (b << 0);
   return "#" + val.toString(16).substr(-6).toUpperCase();
+}
+
+function cap(value, min, max) {
+  return Math.max(min, Math.min(value, max));
 }

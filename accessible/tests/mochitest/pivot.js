@@ -282,7 +282,7 @@ function setVCTextInvoker(aDocAcc, aPivotMoveMethod, aBoundary, aTextOffsets,
     VCChangedChecker.storePreviousPosAndOffset(aDocAcc.virtualCursor);
     SimpleTest.info(aDocAcc.virtualCursor.position);
     var moved = aDocAcc.virtualCursor[aPivotMoveMethod](aBoundary,
-      aIsFromUserInput === undefined ? true : false);
+      aIsFromUserInput === undefined);
     SimpleTest.is(!!moved, !!expectMove,
                   "moved pivot by text with " + aPivotMoveMethod +
                   " to " + aIdOrNameOrAcc);
@@ -476,7 +476,7 @@ function removeVCPositionInvoker(aDocAcc, aPosNode)
   this.invoke = function removeVCPositionInvoker_invoke()
   {
     aDocAcc.virtualCursor.position = this.accessible;
-    aPosNode.parentNode.removeChild(aPosNode);
+    aPosNode.remove();
   };
 
   this.getID = function removeVCPositionInvoker_getID()
@@ -519,11 +519,11 @@ function removeVCRootChecker(aPivot)
  */
 function removeVCRootInvoker(aRootNode)
 {
-  this.pivot = gAccRetrieval.createAccessiblePivot(getAccessible(aRootNode));
+  this.pivot = gAccService.createAccessiblePivot(getAccessible(aRootNode));
   this.invoke = function removeVCRootInvoker_invoke()
   {
     this.pivot.position = this.pivot.root.firstChild;
-    aRootNode.parentNode.removeChild(aRootNode);
+    aRootNode.remove();
   };
 
   this.getID = function removeVCRootInvoker_getID()

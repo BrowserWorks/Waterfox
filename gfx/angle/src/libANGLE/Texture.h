@@ -132,6 +132,8 @@ struct TextureState final : public angle::NonCopyable
     GLuint mBaseLevel;
     GLuint mMaxLevel;
 
+    GLenum mDepthStencilTextureMode;
+
     bool mImmutableFormat;
     GLuint mImmutableLevels;
 
@@ -217,6 +219,9 @@ class Texture final : public egl::ImageSibling,
     void setCompareFunc(GLenum compareFunc);
     GLenum getCompareFunc() const;
 
+    void setSRGBDecode(GLenum sRGBDecode);
+    GLenum getSRGBDecode() const;
+
     const SamplerState &getSamplerState() const;
 
     void setBaseLevel(GLuint baseLevel);
@@ -224,6 +229,9 @@ class Texture final : public egl::ImageSibling,
 
     void setMaxLevel(GLuint maxLevel);
     GLuint getMaxLevel() const;
+
+    void setDepthStencilTextureMode(GLenum mode);
+    GLenum getDepthStencilTextureMode() const;
 
     bool getImmutableFormat() const;
 
@@ -295,6 +303,7 @@ class Texture final : public egl::ImageSibling,
                          bool unpackPremultiplyAlpha,
                          bool unpackUnmultiplyAlpha,
                          const Texture *source);
+    Error copyCompressedTexture(const Texture *source);
 
     Error setStorage(GLenum target, GLsizei levels, GLenum internalFormat, const Extents &size);
 
@@ -305,8 +314,7 @@ class Texture final : public egl::ImageSibling,
     egl::Surface *getBoundSurface() const;
     egl::Stream *getBoundStream() const;
 
-    rx::TextureImpl *getImplementation() { return mTexture; }
-    const rx::TextureImpl *getImplementation() const { return mTexture; }
+    rx::TextureImpl *getImplementation() const { return mTexture; }
 
     // FramebufferAttachmentObject implementation
     Extents getAttachmentSize(const FramebufferAttachment::Target &target) const override;
@@ -316,6 +324,40 @@ class Texture final : public egl::ImageSibling,
     void onAttach() override;
     void onDetach() override;
     GLuint getId() const override;
+
+    enum DirtyBitType
+    {
+        // Sampler state
+        DIRTY_BIT_MIN_FILTER,
+        DIRTY_BIT_MAG_FILTER,
+        DIRTY_BIT_WRAP_S,
+        DIRTY_BIT_WRAP_T,
+        DIRTY_BIT_WRAP_R,
+        DIRTY_BIT_MAX_ANISOTROPY,
+        DIRTY_BIT_MIN_LOD,
+        DIRTY_BIT_MAX_LOD,
+        DIRTY_BIT_COMPARE_MODE,
+        DIRTY_BIT_COMPARE_FUNC,
+        DIRTY_BIT_SRGB_DECODE,
+
+        // Texture state
+        DIRTY_BIT_SWIZZLE_RED,
+        DIRTY_BIT_SWIZZLE_GREEN,
+        DIRTY_BIT_SWIZZLE_BLUE,
+        DIRTY_BIT_SWIZZLE_ALPHA,
+        DIRTY_BIT_BASE_LEVEL,
+        DIRTY_BIT_MAX_LEVEL,
+
+        // Misc
+        DIRTY_BIT_LABEL,
+        DIRTY_BIT_USAGE,
+
+        DIRTY_BIT_COUNT,
+    };
+    using DirtyBits = std::bitset<DIRTY_BIT_COUNT>;
+
+    void syncImplState();
+    bool hasAnyDirtyBit() const { return mDirtyBits.any(); }
 
   private:
     rx::FramebufferAttachmentObjectImpl *getAttachmentImpl() const override;
@@ -333,6 +375,7 @@ class Texture final : public egl::ImageSibling,
     void releaseImageFromStream();
 
     TextureState mState;
+    DirtyBits mDirtyBits;
     rx::TextureImpl *mTexture;
 
     std::string mLabel;

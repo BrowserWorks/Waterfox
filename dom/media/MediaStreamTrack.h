@@ -6,17 +6,17 @@
 #ifndef MEDIASTREAMTRACK_H_
 #define MEDIASTREAMTRACK_H_
 
-#include "mozilla/DOMEventTargetHelper.h"
-#include "nsError.h"
-#include "nsID.h"
-#include "nsIPrincipal.h"
-#include "StreamTracks.h"
 #include "MediaTrackConstraints.h"
-#include "mozilla/CORSMode.h"
 #include "PrincipalChangeObserver.h"
+#include "StreamTracks.h"
+#include "mozilla/CORSMode.h"
+#include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
 #include "mozilla/dom/MediaTrackSettingsBinding.h"
 #include "mozilla/media/MediaUtils.h"
+#include "nsError.h"
+#include "nsID.h"
+#include "nsIPrincipal.h"
 
 namespace mozilla {
 
@@ -40,6 +40,7 @@ namespace dom {
 class AudioStreamTrack;
 class VideoStreamTrack;
 class MediaStreamError;
+enum class CallerType : uint32_t;
 
 /**
  * Common interface through which a MediaStreamTrack can communicate with its
@@ -61,14 +62,11 @@ public:
   };
 
   MediaStreamTrackSource(nsIPrincipal* aPrincipal,
-                         const bool aIsRemote,
                          const nsString& aLabel)
     : mPrincipal(aPrincipal),
-      mIsRemote(aIsRemote),
       mLabel(aLabel),
       mStopped(false)
   {
-    MOZ_COUNT_CTOR(MediaStreamTrackSource);
   }
 
   /**
@@ -99,18 +97,12 @@ public:
    * This is used in WebRTC. A peerIdentity constrained MediaStreamTrack cannot
    * be sent across the network to anything other than a peer with the provided
    * identity. If this is set, then GetPrincipal() should return an instance of
-   * nsNullPrincipal.
+   * NullPrincipal.
    *
    * A track's PeerIdentity is immutable and will not change during the track's
    * lifetime.
    */
   virtual const PeerIdentity* GetPeerIdentity() const { return nullptr; }
-
-  /**
-   * Indicates whether the track is remote or not per the MediaCapture and
-   * Streams spec.
-   */
-  virtual bool IsRemote() const { return mIsRemote; }
 
   /**
    * MediaStreamTrack::GetLabel (see spec) calls through to here.
@@ -132,7 +124,8 @@ public:
    */
   virtual already_AddRefed<PledgeVoid>
   ApplyConstraints(nsPIDOMWindowInner* aWindow,
-                   const dom::MediaTrackConstraints& aConstraints);
+                   const dom::MediaTrackConstraints& aConstraints,
+                   CallerType aCallerType);
 
   /**
    * Same for GetSettings (no-op).
@@ -164,7 +157,8 @@ public:
   void UnregisterSink(Sink* aSink)
   {
     MOZ_ASSERT(NS_IsMainThread());
-    if (mSinks.RemoveElement(aSink) && mSinks.IsEmpty() && !IsRemote()) {
+    if (mSinks.RemoveElement(aSink) && mSinks.IsEmpty()) {
+      MOZ_ASSERT(!mStopped);
       Stop();
       mStopped = true;
     }
@@ -173,7 +167,6 @@ public:
 protected:
   virtual ~MediaStreamTrackSource()
   {
-    MOZ_COUNT_DTOR(MediaStreamTrackSource);
   }
 
   /**
@@ -193,41 +186,56 @@ protected:
   // Currently registered sinks.
   nsTArray<Sink*> mSinks;
 
-  // True if this is a remote track source, i.e., a PeerConnection.
-  const bool mIsRemote;
-
   // The label of the track we are the source of per the MediaStreamTrack spec.
   const nsString mLabel;
 
-  // True if this source is not remote, all MediaStreamTrack users have
-  // unregistered from this source and Stop() has been called.
+  // True if all MediaStreamTrack users have unregistered from this source and
+  // Stop() has been called.
   bool mStopped;
 };
 
 /**
- * Basic implementation of MediaStreamTrackSource that ignores Stop().
+ * Basic implementation of MediaStreamTrackSource that doesn't forward Stop().
  */
-class BasicUnstoppableTrackSource : public MediaStreamTrackSource
+class BasicTrackSource : public MediaStreamTrackSource
 {
 public:
-  explicit BasicUnstoppableTrackSource(nsIPrincipal* aPrincipal,
-                                       const MediaSourceEnum aMediaSource =
-                                         MediaSourceEnum::Other)
-    : MediaStreamTrackSource(aPrincipal, true, nsString())
+  explicit BasicTrackSource(nsIPrincipal* aPrincipal,
+                            const MediaSourceEnum aMediaSource =
+                            MediaSourceEnum::Other)
+    : MediaStreamTrackSource(aPrincipal, nsString())
     , mMediaSource(aMediaSource)
   {}
 
   MediaSourceEnum GetMediaSource() const override { return mMediaSource; }
 
-  void
-  GetSettings(dom::MediaTrackSettings& aResult) override {}
-
   void Stop() override {}
 
 protected:
-  ~BasicUnstoppableTrackSource() {}
+  ~BasicTrackSource() {}
 
   const MediaSourceEnum mMediaSource;
+};
+
+/**
+ * Base class that consumers of a MediaStreamTrack can use to get notifications
+ * about state changes in the track.
+ */
+class MediaStreamTrackConsumer : public nsISupports
+{
+public:
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_CLASS(MediaStreamTrackConsumer)
+
+  /**
+   * Called when the track's readyState transitions to "ended".
+   * Unlike the "ended" event exposed to script this is called for any reason,
+   * including MediaStreamTrack::Stop().
+   */
+  virtual void NotifyEnded(MediaStreamTrack* aTrack) {};
+
+protected:
+  virtual ~MediaStreamTrackConsumer() {}
 };
 
 /**
@@ -282,7 +290,8 @@ public:
   void GetSettings(dom::MediaTrackSettings& aResult);
 
   already_AddRefed<Promise>
-  ApplyConstraints(const dom::MediaTrackConstraints& aConstraints, ErrorResult &aRv);
+  ApplyConstraints(const dom::MediaTrackConstraints& aConstraints,
+                   CallerType aCallerType, ErrorResult &aRv);
   already_AddRefed<MediaStreamTrack> Clone();
   MediaStreamTrackState ReadyState() { return mReadyState; }
 
@@ -306,7 +315,7 @@ public:
    * Note that this sets the track to ended and raises the "ended" event
    * synchronously.
    */
-  void NotifyEnded();
+  void OverrideEnded();
 
   /**
    * Get this track's principal.
@@ -319,6 +328,12 @@ public:
    * principal we know that the principal change has propagated to consumers.
    */
   void NotifyPrincipalHandleChanged(const PrincipalHandle& aPrincipalHandle);
+
+  /**
+   * Called when this track's readyState transitions to "ended".
+   * Notifies all MediaStreamTrackConsumers that this track ended.
+   */
+  void NotifyEnded();
 
   /**
    * Get this track's CORS mode.
@@ -364,10 +379,22 @@ public:
   bool RemovePrincipalChangeObserver(PrincipalChangeObserver<MediaStreamTrack>* aObserver);
 
   /**
+   * Add a MediaStreamTrackConsumer to this track.
+   *
+   * Adding the same consumer multiple times is prohibited.
+   */
+  void AddConsumer(MediaStreamTrackConsumer* aConsumer);
+
+  /**
+   * Remove an added MediaStreamTrackConsumer from this track.
+   */
+  void RemoveConsumer(MediaStreamTrackConsumer* aConsumer);
+
+  /**
    * Adds a MediaStreamTrackListener to the MediaStreamGraph representation of
    * this track.
    */
-  void AddListener(MediaStreamTrackListener* aListener);
+  virtual void AddListener(MediaStreamTrackListener* aListener);
 
   /**
    * Removes a MediaStreamTrackListener from the MediaStreamGraph representation
@@ -381,14 +408,15 @@ public:
    * the listener succeeded (tracks originating from SourceMediaStreams) or
    * failed (e.g., WebAudio originated tracks).
    */
-  void AddDirectListener(DirectMediaStreamTrackListener *aListener);
+  virtual void AddDirectListener(DirectMediaStreamTrackListener *aListener);
   void RemoveDirectListener(DirectMediaStreamTrackListener  *aListener);
 
   /**
    * Sets up a MediaInputPort from the underlying track that this
    * MediaStreamTrack represents, to aStream, and returns it.
    */
-  already_AddRefed<MediaInputPort> ForwardTrackContentsTo(ProcessedMediaStream* aStream);
+  already_AddRefed<MediaInputPort> ForwardTrackContentsTo(ProcessedMediaStream* aStream,
+                                                          TrackID aDestinationTrackID = TRACK_ANY);
 
   /**
    * Returns true if this track is connected to aPort and forwarded to aPort's
@@ -428,6 +456,8 @@ protected:
 
   nsTArray<PrincipalChangeObserver<MediaStreamTrack>*> mPrincipalChangeObservers;
 
+  nsTArray<RefPtr<MediaStreamTrackConsumer>> mConsumers;
+
   RefPtr<DOMMediaStream> mOwningStream;
   TrackID mTrackID;
   TrackID mInputTrackID;
@@ -443,7 +473,6 @@ protected:
   nsString mID;
   MediaStreamTrackState mReadyState;
   bool mEnabled;
-  const bool mRemote;
   dom::MediaTrackConstraints mConstraints;
 };
 

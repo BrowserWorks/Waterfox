@@ -21,6 +21,17 @@ BUILD_TYPE_ALIASES = {
     'd': 'debug'
 }
 
+# consider anything in this whitelist of kinds to be governed by -b/-p
+BUILD_KINDS = set([
+    'build',
+    'artifact-build',
+    'hazard',
+    'l10n',
+    'valgrind',
+    'static-analysis',
+    'spidermonkey',
+])
+
 
 # mapping from shortcut name (usable with -u) to a boolean function identifying
 # matching test names
@@ -36,6 +47,7 @@ def alias_matches(pattern):
     pattern = re.compile(pattern)
     return lambda name: pattern.match(name)
 
+
 UNITTEST_ALIASES = {
     # Aliases specify shorthands that can be used in try syntax.  The shorthand
     # is the dictionary key, with the value representing a pattern for matching
@@ -50,7 +62,6 @@ UNITTEST_ALIASES = {
     'crashtest': alias_prefix('crashtest'),
     'crashtest-e10s': alias_prefix('crashtest-e10s'),
     'e10s': alias_contains('e10s'),
-    'external-media-tests': alias_prefix('external-media-tests'),
     'firefox-ui-functional': alias_prefix('firefox-ui-functional'),
     'firefox-ui-functional-e10s': alias_prefix('firefox-ui-functional-e10s'),
     'gaia-js-integration': alias_contains('gaia-js-integration'),
@@ -59,7 +70,6 @@ UNITTEST_ALIASES = {
     'jittests': alias_prefix('jittest'),
     'jsreftest': alias_prefix('jsreftest'),
     'jsreftest-e10s': alias_prefix('jsreftest-e10s'),
-    'luciddream': alias_prefix('luciddream'),
     'marionette': alias_prefix('marionette'),
     'marionette-e10s': alias_prefix('marionette-e10s'),
     'mochitest': alias_prefix('mochitest'),
@@ -69,12 +79,12 @@ UNITTEST_ALIASES = {
     'mochitest-debug': alias_prefix('mochitest-debug-'),
     'mochitest-a11y': alias_contains('mochitest-a11y'),
     'mochitest-bc': alias_prefix('mochitest-browser-chrome'),
-    'mochitest-bc-e10s': alias_prefix('mochitest-browser-chrome-e10s'),
+    'mochitest-e10s-bc': alias_prefix('mochitest-browser-chrome-e10s'),
     'mochitest-browser-chrome': alias_prefix('mochitest-browser-chrome'),
-    'mochitest-browser-chrome-e10s': alias_prefix('mochitest-browser-chrome-e10s'),
+    'mochitest-e10s-browser-chrome': alias_prefix('mochitest-browser-chrome-e10s'),
     'mochitest-chrome': alias_contains('mochitest-chrome'),
     'mochitest-dt': alias_prefix('mochitest-devtools-chrome'),
-    'mochitest-dt-e10s': alias_prefix('mochitest-devtools-chrome-e10s'),
+    'mochitest-e10s-dt': alias_prefix('mochitest-devtools-chrome-e10s'),
     'mochitest-gl': alias_prefix('mochitest-webgl'),
     'mochitest-gl-e10s': alias_prefix('mochitest-webgl-e10s'),
     'mochitest-gpu': alias_prefix('mochitest-gpu'),
@@ -89,6 +99,8 @@ UNITTEST_ALIASES = {
     'reftest-no-accel': alias_matches(r'^(plain-)?reftest-no-accel.*$'),
     'reftests': alias_matches(r'^(plain-)?reftest.*$'),
     'reftests-e10s': alias_matches(r'^(plain-)?reftest-e10s.*$'),
+    'reftest-stylo': alias_matches(r'^(plain-)?reftest-stylo.*$'),
+    'reftest-gpu': alias_matches(r'^(plain-)?reftest-gpu.*$'),
     'robocop': alias_prefix('robocop'),
     'web-platform-test': alias_prefix('web-platform-tests'),
     'web-platform-tests': alias_prefix('web-platform-tests'),
@@ -103,20 +115,22 @@ UNITTEST_ALIASES = {
 # [test_platforms]} translations, This includes only the most commonly-used
 # substrings.  This is intended only for backward-compatibility.  New test
 # platforms should have their `test_platform` spelled out fully in try syntax.
+# Note that the test platforms here are only the prefix up to the `/`.
 UNITTEST_PLATFORM_PRETTY_NAMES = {
-    'Ubuntu': ['linux', 'linux64'],
-    'x64': ['linux64'],
+    'Ubuntu': ['linux32', 'linux64', 'linux64-asan'],
+    'x64': ['linux64', 'linux64-asan'],
+    'Android 4.3': ['android-4.3-arm7-api-16'],
+    '10.10': ['macosx64'],
     # other commonly-used substrings for platforms not yet supported with
     # in-tree taskgraphs:
-    # '10.10': [..TODO..],
     # '10.10.5': [..TODO..],
     # '10.6': [..TODO..],
     # '10.8': [..TODO..],
     # 'Android 2.3 API9': [..TODO..],
-    # 'Android 4.3 API15+': [..TODO..],
-    # 'Windows 7':  [..TODO..],
-    # 'Windows 7 VM': [..TODO..],
-    # 'Windows 8':  [..TODO..],
+    'Windows 7':  ['windows7-32'],
+    'Windows 7 VM':  ['windows7-32-vm'],
+    'Windows 8':  ['windows8-64'],
+    'Windows 10':  ['windows10-64'],
     # 'Windows XP': [..TODO..],
     # 'win32': [..TODO..],
     # 'win64': [..TODO..],
@@ -124,8 +138,12 @@ UNITTEST_PLATFORM_PRETTY_NAMES = {
 
 # We have a few platforms for which we want to do some "extra" builds, or at
 # least build-ish things.  Sort of.  Anyway, these other things are implemented
-# as different "platforms".
+# as different "platforms".  These do *not* automatically ride along with "-p
+# all"
 RIDEALONG_BUILDS = {
+    'android-api-16': [
+        'android-api-16-l10n',
+    ],
     'linux': [
         'linux-l10n',
     ],
@@ -140,11 +158,89 @@ RIDEALONG_BUILDS = {
         'sm-package',
         'sm-tsan',
         'sm-asan',
+        'sm-mozjs-sys',
         'sm-msan',
+        'sm-fuzzing',
     ],
 }
 
 TEST_CHUNK_SUFFIX = re.compile('(.*)-([0-9]+)$')
+
+
+def escape_whitespace_in_brackets(input_str):
+    '''
+    In tests you may restrict them by platform [] inside of the brackets
+    whitespace may occur this is typically invalid shell syntax so we escape it
+    with backslash sequences    .
+    '''
+    result = ""
+    in_brackets = False
+    for char in input_str:
+        if char == '[':
+            in_brackets = True
+            result += char
+            continue
+
+        if char == ']':
+            in_brackets = False
+            result += char
+            continue
+
+        if char == ' ' and in_brackets:
+            result += '\ '
+            continue
+
+        result += char
+
+    return result
+
+
+def split_try_msg(message):
+    try:
+        try_idx = message.index('try:')
+    except ValueError:
+        return []
+    message = message[try_idx:].split('\n')[0]
+    # shlex used to ensure we split correctly when giving values to argparse.
+    return shlex.split(escape_whitespace_in_brackets(message))
+
+
+def parse_message(message):
+    parts = split_try_msg(message)
+
+    # Argument parser based on try flag flags
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--build', dest='build_types')
+    parser.add_argument('-p', '--platform', nargs='?',
+                        dest='platforms', const='all', default='all')
+    parser.add_argument('-u', '--unittests', nargs='?',
+                        dest='unittests', const='all', default='all')
+    parser.add_argument('-t', '--talos', nargs='?', dest='talos', const='all', default='none')
+    parser.add_argument('-i', '--interactive',
+                        dest='interactive', action='store_true', default=False)
+    parser.add_argument('-e', '--all-emails',
+                        dest='notifications', action='store_const', const='all')
+    parser.add_argument('-f', '--failure-emails',
+                        dest='notifications', action='store_const', const='failure')
+    parser.add_argument('-j', '--job', dest='jobs', action='append')
+    parser.add_argument('--rebuild-talos', dest='talos_trigger_tests', action='store',
+                        type=int, default=1)
+    parser.add_argument('--setenv', dest='env', action='append')
+    parser.add_argument('--geckoProfile', dest='profile', action='store_true')
+    parser.add_argument('--tag', dest='tag', action='store', default=None)
+    parser.add_argument('--no-retry', dest='no_retry', action='store_true')
+    parser.add_argument('--include-nightly', dest='include_nightly', action='store_true')
+
+    # While we are transitioning from BB to TC, we want to push jobs to tc-worker
+    # machines but not overload machines with every try push. Therefore, we add
+    # this temporary option to be able to push jobs to tc-worker.
+    parser.add_argument('-w', '--taskcluster-worker',
+                        dest='taskcluster_worker', action='store_true', default=False)
+
+    # In order to run test jobs multiple times
+    parser.add_argument('--rebuild', dest='trigger_tests', type=int, default=1)
+    args, _ = parser.parse_known_args(parts)
+    return args
 
 
 class TryOptionSyntax(object):
@@ -162,9 +258,13 @@ class TryOptionSyntax(object):
         - unittests: a list of tests, of the form given below, or None for all
         - jobs: a list of requested job names, or None for all
         - trigger_tests: the number of times tests should be triggered (--rebuild)
-        - interactive; true if --interactive
-
-        Note that -t is currently completely ignored.
+        - interactive: true if --interactive
+        - notifications: either None if no notifications or one of 'all' or 'failure'
+        - talos_trigger_tests: the number of time talos tests should be triggered (--rebuild-talos)
+        - env: additional environment variables (ENV=value)
+        - profile: run talos in profile mode
+        - tag: restrict tests to the specified tag
+        - no_retry: do not retry failed jobs
 
         The unittests and talos lists contain dictionaries of the form:
 
@@ -181,41 +281,35 @@ class TryOptionSyntax(object):
         self.talos = []
         self.trigger_tests = 0
         self.interactive = False
+        self.notifications = None
+        self.talos_trigger_tests = 0
+        self.env = []
+        self.profile = False
+        self.tag = None
+        self.no_retry = False
 
-        # shlex used to ensure we split correctly when giving values to argparse.
-        parts = shlex.split(self.escape_whitespace_in_brackets(message))
-        try_idx = None
-        for idx, part in enumerate(parts):
-            if part == TRY_DELIMITER:
-                try_idx = idx
-                break
+        parts = split_try_msg(message)
+        if not parts:
+            return None
 
-        if try_idx is None:
-            return
-
-        # Argument parser based on try flag flags
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-b', '--build', dest='build_types')
-        parser.add_argument('-p', '--platform', nargs='?',
-                            dest='platforms', const='all', default='all')
-        parser.add_argument('-u', '--unittests', nargs='?',
-                            dest='unittests', const='all', default='all')
-        parser.add_argument('-t', '--talos', nargs='?', dest='talos', const='all', default='all')
-        parser.add_argument('-i', '--interactive',
-                            dest='interactive', action='store_true', default=False)
-        parser.add_argument('-j', '--job', dest='jobs', action='append')
-        # In order to run test jobs multiple times
-        parser.add_argument('--rebuild', dest='trigger_tests', type=int, default=1)
-        args, _ = parser.parse_known_args(parts[try_idx:])
+        args = parse_message(message)
+        assert args is not None
 
         self.jobs = self.parse_jobs(args.jobs)
-        self.build_types = self.parse_build_types(args.build_types)
-        self.platforms = self.parse_platforms(args.platforms)
+        self.build_types = self.parse_build_types(args.build_types, full_task_graph)
+        self.platforms = self.parse_platforms(args.platforms, full_task_graph)
         self.unittests = self.parse_test_option(
             "unittest_try_name", args.unittests, full_task_graph)
         self.talos = self.parse_test_option("talos_try_name", args.talos, full_task_graph)
         self.trigger_tests = args.trigger_tests
         self.interactive = args.interactive
+        self.notifications = args.notifications
+        self.talos_trigger_tests = args.talos_trigger_tests
+        self.env = args.env
+        self.profile = args.profile
+        self.tag = args.tag
+        self.no_retry = args.no_retry
+        self.include_nightly = args.include_nightly
 
     def parse_jobs(self, jobs_arg):
         if not jobs_arg or jobs_arg == ['all']:
@@ -225,14 +319,23 @@ class TryOptionSyntax(object):
             expanded.extend(j.strip() for j in job.split(','))
         return expanded
 
-    def parse_build_types(self, build_types_arg):
+    def parse_build_types(self, build_types_arg, full_task_graph):
         if build_types_arg is None:
             build_types_arg = []
+
         build_types = filter(None, [BUILD_TYPE_ALIASES.get(build_type) for
                              build_type in build_types_arg])
+
+        all_types = set(t.attributes['build_type']
+                        for t in full_task_graph.tasks.itervalues()
+                        if 'build_type' in t.attributes)
+        bad_types = set(build_types) - all_types
+        if bad_types:
+            raise Exception("Unknown build type(s) [%s] specified for try" % ','.join(bad_types))
+
         return build_types
 
-    def parse_platforms(self, platform_arg):
+    def parse_platforms(self, platform_arg, full_task_graph):
         if platform_arg == 'all':
             return None
 
@@ -242,7 +345,18 @@ class TryOptionSyntax(object):
             if build in RIDEALONG_BUILDS:
                 results.extend(RIDEALONG_BUILDS[build])
                 logger.info("platform %s triggers ridealong builds %s" %
-                            (build, RIDEALONG_BUILDS[build]))
+                            (build, ', '.join(RIDEALONG_BUILDS[build])))
+
+        test_platforms = set(t.attributes['test_platform']
+                             for t in full_task_graph.tasks.itervalues()
+                             if 'test_platform' in t.attributes)
+        build_platforms = set(t.attributes['build_platform']
+                              for t in full_task_graph.tasks.itervalues()
+                              if 'build_platform' in t.attributes)
+        all_platforms = test_platforms | build_platforms
+        bad_platforms = set(results) - all_platforms
+        if bad_platforms:
+            raise Exception("Unknown platform(s) [%s] specified for try" % ','.join(bad_platforms))
 
         return results
 
@@ -262,7 +376,7 @@ class TryOptionSyntax(object):
         if test_arg is None or test_arg == 'none':
             return []
 
-        all_platforms = set(t.attributes['test_platform']
+        all_platforms = set(t.attributes['test_platform'].split('/')[0]
                             for t in full_task_graph.tasks.itervalues()
                             if 'test_platform' in t.attributes)
 
@@ -410,17 +524,9 @@ class TryOptionSyntax(object):
         seen_chunks = {}
         for test in tests:
             matches = TEST_CHUNK_SUFFIX.match(test['test'])
-
-            if not matches:
-                results.extend(self.handle_alias(test, all_tests))
-                continue
-
-            name = matches.group(1)
-            chunk = matches.group(2)
-            test['test'] = name
-
-            for test in self.handle_alias(test, all_tests):
-                name = test['test']
+            if matches:
+                name = matches.group(1)
+                chunk = matches.group(2)
                 if name in seen_chunks:
                     seen_chunks[name].add(chunk)
                 else:
@@ -428,6 +534,8 @@ class TryOptionSyntax(object):
                     test['test'] = name
                     test['only_chunks'] = seen_chunks[name]
                     results.append(test)
+            else:
+                results.extend(self.handle_alias(test, all_tests))
 
         # uniquify the results over the test names
         results = {test['test']: test for test in results}.values()
@@ -441,76 +549,74 @@ class TryOptionSyntax(object):
                     rv.add(a[len(prefix):])
         return sorted(rv)
 
-    def escape_whitespace_in_brackets(self, input_str):
-        '''
-        In tests you may restrict them by platform [] inside of the brackets
-        whitespace may occur this is typically invalid shell syntax so we escape it
-        with backslash sequences    .
-        '''
-        result = ""
-        in_brackets = False
-        for char in input_str:
-            if char == '[':
-                in_brackets = True
-                result += char
-                continue
+    def task_matches(self, task):
+        attr = task.attributes.get
 
-            if char == ']':
-                in_brackets = False
-                result += char
-                continue
-
-            if char == ' ' and in_brackets:
-                result += '\ '
-                continue
-
-            result += char
-
-        return result
-
-    def task_matches(self, attributes):
-        attr = attributes.get
+        def check_run_on_projects():
+            if attr('nightly') and not self.include_nightly:
+                return False
+            return set(['try', 'all']) & set(attr('run_on_projects', []))
 
         def match_test(try_spec, attr_name):
+            run_by_default = True
             if attr('build_type') not in self.build_types:
                 return False
             if self.platforms is not None:
                 if attr('build_platform') not in self.platforms:
                     return False
-            if try_spec is not None:
-                # TODO: optimize this search a bit
-                for test in try_spec:
-                    if attr(attr_name) == test['test']:
-                        break
-                else:
-                    return False
-                if 'platforms' in test and attr('test_platform') not in test['platforms']:
-                    return False
-                if 'only_chunks' in test and attr('test_chunk') not in test['only_chunks']:
-                    return False
-                return True
-            return True
+            else:
+                if not check_run_on_projects():
+                    run_by_default = False
+            if try_spec is None:
+                return run_by_default
+            # TODO: optimize this search a bit
+            for test in try_spec:
+                if attr(attr_name) == test['test']:
+                    break
+            else:
+                return False
+            if 'only_chunks' in test and attr('test_chunk') not in test['only_chunks']:
+                return False
+            if 'platforms' in test:
+                platform = attr('test_platform', '').split('/')[0]
+                # Platforms can be forced by syntax like "-u xpcshell[Windows 8]"
+                return platform in test['platforms']
+            elif run_by_default:
+                return check_run_on_projects()
+            else:
+                return False
 
-        if attr('kind') == 'legacy':
-            if attr('legacy_kind') in ('build', 'post_build'):
-                if attr('build_type') not in self.build_types:
+        job_try_name = attr('job_try_name')
+        if job_try_name:
+            # Beware the subtle distinction between [] and None for self.jobs and self.platforms.
+            # They will be [] if there was no try syntax, and None if try syntax was detected but
+            # they remained unspecified.
+            if self.jobs and job_try_name not in self.jobs:
+                return False
+            elif not self.jobs and 'build' in task.dependencies:
+                # We exclude tasks with build dependencies from the default set of jobs because
+                # they will schedule their builds even if they end up optimized away. This means
+                # to run these tasks on try, they'll need to be explicitly specified by -j until
+                # we find a better solution (see bug 1372510).
+                return False
+            elif not self.jobs and attr('build_platform'):
+                if self.platforms is None or attr('build_platform') in self.platforms:
+                    return True
+                return False
+            return True
+        elif attr('kind') == 'test':
+            return match_test(self.unittests, 'unittest_try_name') \
+                 or match_test(self.talos, 'talos_try_name')
+        elif attr('kind') in BUILD_KINDS:
+            if attr('build_type') not in self.build_types:
+                return False
+            elif self.platforms is None:
+                # for "-p all", look for try in the 'run_on_projects' attribute
+                return check_run_on_projects()
+            else:
+                if attr('build_platform') not in self.platforms:
                     return False
-                if self.platforms is not None:
-                    if attr('build_platform') not in self.platforms:
-                        return False
-                return True
-            elif attr('legacy_kind') == 'job':
-                if self.jobs is not None:
-                    if attr('job') not in self.jobs:
-                        return False
-                return True
-            elif attr('legacy_kind') == 'unittest':
-                return match_test(self.unittests, 'unittest_try_name')
-            elif attr('legacy_kind') == 'talos':
-                return match_test(self.talos, 'talos_try_name')
-            return False
-        elif attr('kind') in ('desktop-test', 'android-test'):
-            return match_test(self.unittests, 'unittest_try_name')
+            return True
         else:
             return False
 
@@ -524,7 +630,14 @@ class TryOptionSyntax(object):
             "build_types: " + ", ".join(self.build_types),
             "platforms: " + none_for_all(self.platforms),
             "unittests: " + none_for_all(self.unittests),
+            "talos: " + none_for_all(self.talos),
             "jobs: " + none_for_all(self.jobs),
             "trigger_tests: " + str(self.trigger_tests),
             "interactive: " + str(self.interactive),
+            "notifications: " + str(self.notifications),
+            "talos_trigger_tests: " + str(self.talos_trigger_tests),
+            "env: " + str(self.env),
+            "profile: " + str(self.profile),
+            "tag: " + str(self.tag),
+            "no_retry: " + str(self.no_retry),
         ])

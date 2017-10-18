@@ -315,8 +315,6 @@ seckey_UpdateCertPQGChain(CERTCertificate *subjectCert, int count)
     CERTSubjectPublicKeyInfo *issuerSpki = NULL;
     CERTCertificate *issuerCert = NULL;
 
-    rv = SECSuccess;
-
     /* increment cert chain length counter*/
     count++;
 
@@ -549,6 +547,23 @@ CERT_GetCertKeyType(const CERTSubjectPublicKeyInfo *spki)
     return seckey_GetKeyType(SECOID_GetAlgorithmTag(&spki->algorithm));
 }
 
+/* Ensure pubKey contains an OID */
+static SECStatus
+seckey_HasCurveOID(const SECKEYPublicKey *pubKey)
+{
+    SECItem oid;
+    SECStatus rv;
+    PORTCheapArenaPool tmpArena;
+
+    PORT_InitCheapArena(&tmpArena, DER_DEFAULT_CHUNKSIZE);
+    /* If we can decode it, an OID is available. */
+    rv = SEC_QuickDERDecodeItem(&tmpArena.arena, &oid,
+                                SEC_ASN1_GET(SEC_ObjectIDTemplate),
+                                &pubKey->u.ec.DEREncodedParams);
+    PORT_DestroyCheapArena(&tmpArena);
+    return rv;
+}
+
 static SECKEYPublicKey *
 seckey_ExtractPublicKey(const CERTSubjectPublicKeyInfo *spki)
 {
@@ -585,6 +600,7 @@ seckey_ExtractPublicKey(const CERTSubjectPublicKeyInfo *spki)
         switch (tag) {
             case SEC_OID_X500_RSA_ENCRYPTION:
             case SEC_OID_PKCS1_RSA_ENCRYPTION:
+            case SEC_OID_PKCS1_RSA_PSS_SIGNATURE:
                 pubk->keyType = rsaKey;
                 prepare_rsa_pub_key_for_asn1(pubk);
                 rv = SEC_QuickDERDecodeItem(arena, pubk, SECKEY_RSAPublicKeyTemplate, &newOs);
@@ -633,16 +649,22 @@ seckey_ExtractPublicKey(const CERTSubjectPublicKeyInfo *spki)
                  */
                 rv = SECITEM_CopyItem(arena, &pubk->u.ec.DEREncodedParams,
                                       &spki->algorithm.parameters);
-                if (rv != SECSuccess)
+                if (rv != SECSuccess) {
                     break;
+                }
                 rv = SECITEM_CopyItem(arena, &pubk->u.ec.publicValue, &newOs);
-                if (rv == SECSuccess)
+                if (rv != SECSuccess) {
+                    break;
+                }
+                pubk->u.ec.encoding = ECPoint_Undefined;
+                rv = seckey_HasCurveOID(pubk);
+                if (rv == SECSuccess) {
                     return pubk;
+                }
                 break;
 
             default:
                 PORT_SetError(SEC_ERROR_UNSUPPORTED_KEYALG);
-                rv = SECFailure;
                 break;
         }
 
@@ -785,6 +807,9 @@ SECKEY_ECParamsToKeySize(const SECItem *encodedParams)
         case SEC_OID_SECG_EC_SECT571K1:
         case SEC_OID_SECG_EC_SECT571R1:
             return 571;
+
+        case SEC_OID_CURVE25519:
+            return 255;
 
         default:
             PORT_SetError(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
@@ -932,6 +957,9 @@ SECKEY_ECParamsToBasePointOrderLen(const SECItem *encodedParams)
         case SEC_OID_SECG_EC_SECT571K1:
         case SEC_OID_SECG_EC_SECT571R1:
             return 570;
+
+        case SEC_OID_CURVE25519:
+            return 255;
 
         default:
             PORT_SetError(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
@@ -1152,10 +1180,16 @@ SECKEY_CopyPublicKey(const SECKEYPublicKey *pubk)
             break;
         case ecKey:
             copyk->u.ec.size = pubk->u.ec.size;
+            rv = seckey_HasCurveOID(pubk);
+            if (rv != SECSuccess) {
+                break;
+            }
             rv = SECITEM_CopyItem(arena, &copyk->u.ec.DEREncodedParams,
                                   &pubk->u.ec.DEREncodedParams);
-            if (rv != SECSuccess)
+            if (rv != SECSuccess) {
                 break;
+            }
+            copyk->u.ec.encoding = ECPoint_Undefined;
             rv = SECITEM_CopyItem(arena, &copyk->u.ec.publicValue,
                                   &pubk->u.ec.publicValue);
             break;
@@ -1226,6 +1260,19 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
                 break;
             return pubk;
             break;
+        case ecKey:
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
+                                    CKA_EC_PARAMS, arena, &pubk->u.ec.DEREncodedParams);
+            if (rv != SECSuccess) {
+                break;
+            }
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
+                                    CKA_EC_POINT, arena, &pubk->u.ec.publicValue);
+            if (rv != SECSuccess || pubk->u.ec.publicValue.len == 0) {
+                break;
+            }
+            pubk->u.ec.encoding = ECPoint_Undefined;
+            return pubk;
         default:
             break;
     }

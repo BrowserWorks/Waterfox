@@ -9,21 +9,15 @@ const { DebuggerServer } = require("devtools/server/main");
 const Services = require("Services");
 const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const protocol = require("devtools/shared/protocol");
-const { Arg, method, RetVal } = protocol;
 const {
   workerSpec,
   pushSubscriptionSpec,
   serviceWorkerRegistrationSpec,
+  serviceWorkerSpec,
 } = require("devtools/shared/specs/worker");
 
 loader.lazyRequireGetter(this, "ChromeUtils");
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
-
-XPCOMUtils.defineLazyServiceGetter(
-  this, "wdm",
-  "@mozilla.org/dom/workers/workerdebuggermanager;1",
-  "nsIWorkerDebuggerManager"
-);
 
 XPCOMUtils.defineLazyServiceGetter(
   this, "swm",
@@ -36,24 +30,6 @@ XPCOMUtils.defineLazyServiceGetter(
   "@mozilla.org/push/Service;1",
   "nsIPushService"
 );
-
-function matchWorkerDebugger(dbg, options) {
-  if ("type" in options && dbg.type !== options.type) {
-    return false;
-  }
-  if ("window" in options) {
-    let window = dbg.window;
-    while (window !== null && window.parent !== window) {
-      window = window.parent;
-    }
-
-    if (window !== options.window) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
   initialize(conn, dbg) {
@@ -77,6 +53,10 @@ let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
     if (this._dbg.type === Ci.nsIWorkerDebugger.TYPE_SERVICE) {
       let registration = this._getServiceWorkerRegistrationInfo();
       form.scope = registration.scope;
+      let newestWorker = (registration.activeWorker ||
+                          registration.waitingWorker ||
+                          registration.installingWorker);
+      form.fetch = newestWorker && newestWorker.handlesFetchEvents;
     }
     return form;
   },
@@ -120,10 +100,6 @@ let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
     if (this._attached) {
       this._detach();
     }
-  },
-
-  disconnect() {
-    this.destroy();
   },
 
   connect(options) {
@@ -199,7 +175,9 @@ let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
     let type;
     try {
       type = this._dbg.type;
-    } catch (e) {}
+    } catch (e) {
+      // nothing
+    }
 
     if (type == Ci.nsIWorkerDebugger.TYPE_SERVICE) {
       let worker = this._getServiceWorkerInfo();
@@ -214,104 +192,6 @@ let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
 });
 
 exports.WorkerActor = WorkerActor;
-
-function WorkerActorList(conn, options) {
-  this._conn = conn;
-  this._options = options;
-  this._actors = new Map();
-  this._onListChanged = null;
-  this._mustNotify = false;
-  this.onRegister = this.onRegister.bind(this);
-  this.onUnregister = this.onUnregister.bind(this);
-}
-
-WorkerActorList.prototype = {
-  getList() {
-    // Create a set of debuggers.
-    let dbgs = new Set();
-    let e = wdm.getWorkerDebuggerEnumerator();
-    while (e.hasMoreElements()) {
-      let dbg = e.getNext().QueryInterface(Ci.nsIWorkerDebugger);
-      if (matchWorkerDebugger(dbg, this._options)) {
-        dbgs.add(dbg);
-      }
-    }
-
-    // Delete each actor for which we don't have a debugger.
-    for (let [dbg, ] of this._actors) {
-      if (!dbgs.has(dbg)) {
-        this._actors.delete(dbg);
-      }
-    }
-
-    // Create an actor for each debugger for which we don't have one.
-    for (let dbg of dbgs) {
-      if (!this._actors.has(dbg)) {
-        this._actors.set(dbg, new WorkerActor(this._conn, dbg));
-      }
-    }
-
-    let actors = [];
-    for (let [, actor] of this._actors) {
-      actors.push(actor);
-    }
-
-    if (!this._mustNotify) {
-      if (this._onListChanged !== null) {
-        wdm.addListener(this);
-      }
-      this._mustNotify = true;
-    }
-
-    return Promise.resolve(actors);
-  },
-
-  get onListChanged() {
-    return this._onListChanged;
-  },
-
-  set onListChanged(onListChanged) {
-    if (typeof onListChanged !== "function" && onListChanged !== null) {
-      throw new Error("onListChanged must be either a function or null.");
-    }
-    if (onListChanged === this._onListChanged) {
-      return;
-    }
-
-    if (this._mustNotify) {
-      if (this._onListChanged === null && onListChanged !== null) {
-        wdm.addListener(this);
-      }
-      if (this._onListChanged !== null && onListChanged === null) {
-        wdm.removeListener(this);
-      }
-    }
-    this._onListChanged = onListChanged;
-  },
-
-  _notifyListChanged() {
-    this._onListChanged();
-
-    if (this._onListChanged !== null) {
-      wdm.removeListener(this);
-    }
-    this._mustNotify = false;
-  },
-
-  onRegister(dbg) {
-    if (matchWorkerDebugger(dbg, this._options)) {
-      this._notifyListChanged();
-    }
-  },
-
-  onUnregister(dbg) {
-    if (matchWorkerDebugger(dbg, this._options)) {
-      this._notifyListChanged();
-    }
-  }
-};
-
-exports.WorkerActorList = WorkerActorList;
 
 let PushSubscriptionActor = protocol.ActorClassWithSpec(pushSubscriptionSpec, {
   initialize(conn, subscription) {
@@ -339,6 +219,30 @@ let PushSubscriptionActor = protocol.ActorClassWithSpec(pushSubscriptionSpec, {
   },
 });
 
+let ServiceWorkerActor = protocol.ActorClassWithSpec(serviceWorkerSpec, {
+  initialize(conn, worker) {
+    protocol.Actor.prototype.initialize.call(this, conn);
+    this._worker = worker;
+  },
+
+  form() {
+    if (!this._worker) {
+      return null;
+    }
+
+    return {
+      url: this._worker.scriptSpec,
+      state: this._worker.state,
+      fetch: this._worker.handlesFetchEvents
+    };
+  },
+
+  destroy() {
+    protocol.Actor.prototype.destroy.call(this);
+    this._worker = null;
+  },
+});
+
 // Lazily load the service-worker-child.js process script only once.
 let _serviceWorkerProcessScriptLoaded = false;
 
@@ -356,7 +260,27 @@ protocol.ActorClassWithSpec(serviceWorkerRegistrationSpec, {
     this._conn = conn;
     this._registration = registration;
     this._pushSubscriptionActor = null;
-    Services.obs.addObserver(this, PushService.subscriptionModifiedTopic, false);
+    this._registration.addListener(this);
+
+    let {installingWorker, waitingWorker, activeWorker} = registration;
+    this._installingWorker = new ServiceWorkerActor(conn, installingWorker);
+    this._waitingWorker = new ServiceWorkerActor(conn, waitingWorker);
+    this._activeWorker = new ServiceWorkerActor(conn, activeWorker);
+
+    Services.obs.addObserver(this, PushService.subscriptionModifiedTopic);
+  },
+
+  onChange() {
+    this._installingWorker.destroy();
+    this._waitingWorker.destroy();
+    this._activeWorker.destroy();
+
+    let {installingWorker, waitingWorker, activeWorker} = this._registration;
+    this._installingWorker = new ServiceWorkerActor(this._conn, installingWorker);
+    this._waitingWorker = new ServiceWorkerActor(this._conn, waitingWorker);
+    this._activeWorker = new ServiceWorkerActor(this._conn, activeWorker);
+
+    events.emit(this, "registration-changed");
   },
 
   form(detail) {
@@ -364,25 +288,45 @@ protocol.ActorClassWithSpec(serviceWorkerRegistrationSpec, {
       return this.actorID;
     }
     let registration = this._registration;
+    let installingWorker = this._installingWorker.form();
+    let waitingWorker = this._waitingWorker.form();
+    let activeWorker = this._activeWorker.form();
+
+    let newestWorker = (activeWorker || waitingWorker || installingWorker);
+
+    let isE10s = Services.appinfo.browserTabsRemoteAutostart;
     return {
       actor: this.actorID,
       scope: registration.scope,
-      url: registration.scriptSpec
+      url: registration.scriptSpec,
+      installingWorker,
+      waitingWorker,
+      activeWorker,
+      fetch: newestWorker && newestWorker.fetch,
+      // - In e10s: only active registrations are available.
+      // - In non-e10s: registrations always have at least one worker, if the worker is
+      // active, the registration is active.
+      active: isE10s ? true : !!activeWorker
     };
   },
 
   destroy() {
     protocol.Actor.prototype.destroy.call(this);
-    Services.obs.removeObserver(this, PushService.subscriptionModifiedTopic, false);
+    Services.obs.removeObserver(this, PushService.subscriptionModifiedTopic);
+    this._registration.removeListener(this);
     this._registration = null;
     if (this._pushSubscriptionActor) {
       this._pushSubscriptionActor.destroy();
     }
     this._pushSubscriptionActor = null;
-  },
 
-  disconnect() {
-    this.destroy();
+    this._installingWorker.destroy();
+    this._waitingWorker.destroy();
+    this._activeWorker.destroy();
+
+    this._installingWorker = null;
+    this._waitingWorker = null;
+    this._activeWorker = null;
   },
 
   /**
@@ -411,6 +355,19 @@ protocol.ActorClassWithSpec(serviceWorkerRegistrationSpec, {
         "resource://devtools/server/service-worker-child.js", true);
       _serviceWorkerProcessScriptLoaded = true;
     }
+
+    // XXX: Send the permissions down to the content process before starting
+    // the service worker within the content process. As we don't know what
+    // content process we're starting the service worker in (as we're using a
+    // broadcast channel to talk to it), we just broadcast the permissions to
+    // everyone as well.
+    //
+    // This call should be replaced with a proper implementation when
+    // ServiceWorker debugging is improved to support multiple content processes
+    // correctly.
+    Services.perms.broadcastPermissionsForPrincipalToAllContentProcesses(
+      this._registration.principal);
+
     Services.ppmm.broadcastAsyncMessage("serviceWorkerRegistration:start", {
       scope: this._registration.scope
     });
@@ -456,91 +413,4 @@ protocol.ActorClassWithSpec(serviceWorkerRegistrationSpec, {
   },
 });
 
-function ServiceWorkerRegistrationActorList(conn) {
-  this._conn = conn;
-  this._actors = new Map();
-  this._onListChanged = null;
-  this._mustNotify = false;
-  this.onRegister = this.onRegister.bind(this);
-  this.onUnregister = this.onUnregister.bind(this);
-}
-
-ServiceWorkerRegistrationActorList.prototype = {
-  getList() {
-    // Create a set of registrations.
-    let registrations = new Set();
-    let array = swm.getAllRegistrations();
-    for (let index = 0; index < array.length; ++index) {
-      registrations.add(
-        array.queryElementAt(index, Ci.nsIServiceWorkerRegistrationInfo));
-    }
-
-    // Delete each actor for which we don't have a registration.
-    for (let [registration, ] of this._actors) {
-      if (!registrations.has(registration)) {
-        this._actors.delete(registration);
-      }
-    }
-
-    // Create an actor for each registration for which we don't have one.
-    for (let registration of registrations) {
-      if (!this._actors.has(registration)) {
-        this._actors.set(registration,
-          new ServiceWorkerRegistrationActor(this._conn, registration));
-      }
-    }
-
-    if (!this._mustNotify) {
-      if (this._onListChanged !== null) {
-        swm.addListener(this);
-      }
-      this._mustNotify = true;
-    }
-
-    let actors = [];
-    for (let [, actor] of this._actors) {
-      actors.push(actor);
-    }
-
-    return Promise.resolve(actors);
-  },
-
-  get onListchanged() {
-    return this._onListchanged;
-  },
-
-  set onListChanged(onListChanged) {
-    if (typeof onListChanged !== "function" && onListChanged !== null) {
-      throw new Error("onListChanged must be either a function or null.");
-    }
-
-    if (this._mustNotify) {
-      if (this._onListChanged === null && onListChanged !== null) {
-        swm.addListener(this);
-      }
-      if (this._onListChanged !== null && onListChanged === null) {
-        swm.removeListener(this);
-      }
-    }
-    this._onListChanged = onListChanged;
-  },
-
-  _notifyListChanged() {
-    this._onListChanged();
-
-    if (this._onListChanged !== null) {
-      swm.removeListener(this);
-    }
-    this._mustNotify = false;
-  },
-
-  onRegister(registration) {
-    this._notifyListChanged();
-  },
-
-  onUnregister(registration) {
-    this._notifyListChanged();
-  }
-};
-
-exports.ServiceWorkerRegistrationActorList = ServiceWorkerRegistrationActorList;
+exports.ServiceWorkerRegistrationActor = ServiceWorkerRegistrationActor;

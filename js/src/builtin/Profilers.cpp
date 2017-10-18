@@ -8,6 +8,8 @@
 
 #include "builtin/Profilers.h"
 
+#include "mozilla/Sprintf.h"
+
 #include <stdarg.h>
 
 #ifdef MOZ_CALLGRIND
@@ -39,17 +41,13 @@ static char gLastError[2000];
 
 #if defined(__APPLE__) || defined(__linux__) || defined(MOZ_CALLGRIND)
 static void
-#ifdef __GNUC__
-__attribute__((format(printf,1,2)))
-#endif
+MOZ_FORMAT_PRINTF(1, 2)
 UnsafeError(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    (void) vsnprintf(gLastError, sizeof(gLastError), format, args);
+    (void) VsprintfLiteral(gLastError, format, args);
     va_end(args);
-
-    gLastError[sizeof(gLastError) - 1] = '\0';
 }
 #endif
 
@@ -196,9 +194,9 @@ struct RequiredStringArg {
         : mCx(cx), mBytes(nullptr)
     {
         if (args.length() <= argi) {
-            JS_ReportError(cx, "%s: not enough arguments", caller);
+            JS_ReportErrorASCII(cx, "%s: not enough arguments", caller);
         } else if (!args[argi].isString()) {
-            JS_ReportError(cx, "%s: invalid arguments (string expected)", caller);
+            JS_ReportErrorASCII(cx, "%s: invalid arguments (string expected)", caller);
         } else {
             mBytes = JS_EncodeString(cx, args[argi].toString());
         }
@@ -230,7 +228,7 @@ StartProfiling(JSContext* cx, unsigned argc, Value* vp)
     }
 
     if (!args[1].isInt32()) {
-        JS_ReportError(cx, "startProfiling: invalid arguments (int expected)");
+        JS_ReportErrorASCII(cx, "startProfiling: invalid arguments (int expected)");
         return false;
     }
     pid_t pid = static_cast<pid_t>(args[1].toInt32());
@@ -318,7 +316,7 @@ static bool
 GetMaxGCPauseSinceClear(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    args.rval().setNumber(uint32_t(cx->runtime()->gc.stats.getMaxGCPauseSinceClear()));
+    args.rval().setNumber(cx->runtime()->gc.stats().getMaxGCPauseSinceClear().ToMicroseconds());
     return true;
 }
 
@@ -326,7 +324,7 @@ static bool
 ClearMaxGCPauseAccumulator(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    args.rval().setNumber(uint32_t(cx->runtime()->gc.stats.clearMaxGCPauseAccumulator()));
+    args.rval().setNumber(cx->runtime()->gc.stats().clearMaxGCPauseAccumulator().ToMicroseconds());
     return true;
 }
 
@@ -508,7 +506,7 @@ bool js_StartPerf()
         /* perf record --pid $mainPID --output=$outfile $MOZ_PROFILE_PERF_FLAGS */
 
         char mainPidStr[16];
-        snprintf(mainPidStr, sizeof(mainPidStr), "%d", mainPid);
+        SprintfLiteral(mainPidStr, "%d", mainPid);
         const char* defaultArgs[] = {"perf", "record", "--pid", mainPidStr, "--output", outfile};
 
         Vector<const char*, 0, SystemAllocPolicy> args;

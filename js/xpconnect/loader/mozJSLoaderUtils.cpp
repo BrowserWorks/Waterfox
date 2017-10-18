@@ -5,12 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
+#include "mozilla/scache/StartupCache.h"
+
 #include "jsapi.h"
 #include "jsfriendapi.h"
 
 #include "nsJSPrincipals.h"
-
-#include "mozilla/scache/StartupCache.h"
 
 using namespace JS;
 using namespace mozilla::scache;
@@ -21,7 +21,7 @@ using mozilla::UniquePtr;
 // principals to the system principals.
 nsresult
 ReadCachedScript(StartupCache* cache, nsACString& uri, JSContext* cx,
-                 nsIPrincipal* systemPrincipal, MutableHandleScript scriptp)
+                 MutableHandleScript scriptp)
 {
     UniquePtr<char[]> buf;
     uint32_t len;
@@ -29,70 +29,41 @@ ReadCachedScript(StartupCache* cache, nsACString& uri, JSContext* cx,
     if (NS_FAILED(rv))
         return rv; // don't warn since NOT_AVAILABLE is an ok error
 
-    scriptp.set(JS_DecodeScript(cx, buf.get(), len));
-    if (!scriptp)
-        return NS_ERROR_OUT_OF_MEMORY;
-    return NS_OK;
-}
+    JS::TranscodeBuffer buffer;
+    buffer.replaceRawBuffer(reinterpret_cast<uint8_t*>(buf.release()), len);
+    JS::TranscodeResult code = JS::DecodeScript(cx, buffer, scriptp);
+    if (code == JS::TranscodeResult_Ok)
+        return NS_OK;
 
-nsresult
-ReadCachedFunction(StartupCache* cache, nsACString& uri, JSContext* cx,
-                   nsIPrincipal* systemPrincipal, JSFunction** functionp)
-{
-    return NS_ERROR_FAILURE;
-/*  This doesn't actually work ...
-    nsAutoArrayPtr<char> buf;
-    uint32_t len;
-    nsresult rv = cache->GetBuffer(PromiseFlatCString(uri).get(),
-                                   getter_Transfers(buf), &len);
-    if (NS_FAILED(rv))
-        return rv; // don't warn since NOT_AVAILABLE is an ok error
+    if ((code & JS::TranscodeResult_Failure) != 0)
+        return NS_ERROR_FAILURE;
 
-    JSObject* obj = JS_DecodeInterpretedFunction(cx, buf, len, nsJSPrincipals::get(systemPrincipal), nullptr);
-    if (!obj)
-        return NS_ERROR_OUT_OF_MEMORY;
-    JSFunction* function = JS_ValueToFunction(cx, OBJECT_TO_JSVAL(obj));
-    *functionp = function;
-    return NS_OK;*/
+    MOZ_ASSERT((code & JS::TranscodeResult_Throw) != 0);
+    JS_ClearPendingException(cx);
+    return NS_ERROR_OUT_OF_MEMORY;
 }
 
 nsresult
 WriteCachedScript(StartupCache* cache, nsACString& uri, JSContext* cx,
-                  nsIPrincipal* systemPrincipal, HandleScript script)
+                  HandleScript script)
 {
-    MOZ_ASSERT(JS_GetScriptPrincipals(script) == nsJSPrincipals::get(systemPrincipal));
+    MOZ_ASSERT(nsJSPrincipals::get(JS_GetScriptPrincipals(script))->GetIsSystemPrincipal());
 
-    uint32_t size;
-    void* data = JS_EncodeScript(cx, script, &size);
-    if (!data) {
-        // JS_EncodeScript may have set a pending exception.
+    JS::TranscodeBuffer buffer;
+    JS::TranscodeResult code = JS::EncodeScript(cx, buffer, script);
+    if (code != JS::TranscodeResult_Ok) {
+        if ((code & JS::TranscodeResult_Failure) != 0)
+            return NS_ERROR_FAILURE;
+        MOZ_ASSERT((code & JS::TranscodeResult_Throw) != 0);
         JS_ClearPendingException(cx);
-        return NS_ERROR_FAILURE;
+        return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    MOZ_ASSERT(size);
-    nsresult rv = cache->PutBuffer(PromiseFlatCString(uri).get(), static_cast<char*>(data), size);
-    js_free(data);
+    size_t size = buffer.length();
+    if (size > UINT32_MAX)
+        return NS_ERROR_FAILURE;
+    nsresult rv = cache->PutBuffer(PromiseFlatCString(uri).get(),
+                                   reinterpret_cast<char*>(buffer.begin()),
+                                   size);
     return rv;
-}
-
-nsresult
-WriteCachedFunction(StartupCache* cache, nsACString& uri, JSContext* cx,
-                    nsIPrincipal* systemPrincipal, JSFunction* function)
-{
-    return NS_ERROR_FAILURE;
-/* This doesn't actually work ...
-    uint32_t size;
-    void* data =
-      JS_EncodeInterpretedFunction(cx, JS_GetFunctionObject(function), &size);
-    if (!data) {
-        // JS_EncodeInterpretedFunction may have set a pending exception.
-        JS_ClearPendingException(cx);
-        return NS_ERROR_FAILURE;
-    }
-
-    MOZ_ASSERT(size);
-    nsresult rv = cache->PutBuffer(PromiseFlatCString(uri).get(), static_cast<char*>(data), size);
-    js_free(data);
-    return rv;*/
 }

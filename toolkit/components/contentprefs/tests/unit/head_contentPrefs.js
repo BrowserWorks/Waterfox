@@ -9,14 +9,14 @@ var Ci = Components.interfaces;
 var Cr = Components.results;
 var Cu = Components.utils;
 
-Cu.import('resource://gre/modules/Services.jsm');
-Cu.import('resource://gre/modules/ContentPrefInstance.jsm');
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/ContentPrefInstance.jsm");
+Cu.import("resource://testing-common/TestUtils.jsm");
 
 const CONTENT_PREFS_DB_FILENAME = "content-prefs.sqlite";
 const CONTENT_PREFS_BACKUP_DB_FILENAME = "content-prefs.sqlite.corrupt";
 
 var ContentPrefTest = {
-  //**************************************************************************//
   // Convenience Getters
 
   __dirSvc: null,
@@ -44,7 +44,6 @@ var ContentPrefTest = {
   },
 
 
-  //**************************************************************************//
   // nsISupports
 
   interfaces: [Ci.nsIDirectoryServiceProvider, Ci.nsISupports],
@@ -56,7 +55,6 @@ var ContentPrefTest = {
   },
 
 
-  //**************************************************************************//
   // nsIDirectoryServiceProvider
 
   getFile: function ContentPrefTest_getFile(property, persistent) {
@@ -72,11 +70,10 @@ var ContentPrefTest = {
   },
 
 
-  //**************************************************************************//
   // Utilities
 
   getURI: function ContentPrefTest_getURI(spec) {
-    return this._ioSvc.newURI(spec, null, null);
+    return this._ioSvc.newURI(spec);
   },
 
   /**
@@ -108,7 +105,7 @@ var ContentPrefTest = {
     var file = this.getProfileDir();
     file.append(CONTENT_PREFS_DB_FILENAME);
     if (file.exists())
-      try { file.remove(false); } catch(e) { /* stupid windows box */ }
+      try { file.remove(false); } catch (e) { /* stupid windows box */ }
     return file;
   },
 
@@ -135,16 +132,24 @@ var ContentPrefTest = {
 
 };
 
-var gInPrivateBrowsing = false;
-function enterPBMode() {
-  gInPrivateBrowsing = true;
+let loadContext = Cc["@mozilla.org/loadcontext;1"].
+                    createInstance(Ci.nsILoadContext);
+let privateLoadContext = Cc["@mozilla.org/privateloadcontext;1"].
+                           createInstance(Ci.nsILoadContext);
+function enterPBMode(cps) {
+  cps.loadContext = privateLoadContext;
 }
-function exitPBMode() {
-  gInPrivateBrowsing = false;
-  Services.obs.notifyObservers(null, "last-pb-context-exited", null);
+function exitPBMode(cps) {
+  cps.loadContext = loadContext;
+  Services.obs.notifyObservers(null, "last-pb-context-exited");
 }
 
 ContentPrefTest.deleteDatabase();
+
+do_register_cleanup(function() {
+  ContentPrefTest.deleteDatabase();
+  ContentPrefTest.__dirSvc = null;
+});
 
 function inChildProcess() {
   var appInfo = Cc["@mozilla.org/xre/app-info;1"];
@@ -163,4 +168,3 @@ if (!inChildProcess()) {
                    getService(Ci.nsIPrefBranch);
   prefBranch.setBoolPref("browser.preferences.content.log", true);
 }
-

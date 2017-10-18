@@ -4,36 +4,53 @@
 
 "use strict";
 
-const { getStr } = require("../utils/l10n");
-const { DOM: dom, createClass, PropTypes, addons } =
+const { DOM: dom, createClass, createFactory, PropTypes, addons } =
   require("devtools/client/shared/vendor/react");
+
+const { getStr } = require("../utils/l10n");
 const Types = require("../types");
+const DPRSelector = createFactory(require("./dpr-selector"));
+const NetworkThrottlingSelector = createFactory(require("./network-throttling-selector"));
 
 module.exports = createClass({
   displayName: "GlobalToolbar",
 
   propTypes: {
+    devices: PropTypes.shape(Types.devices).isRequired,
+    displayPixelRatio: Types.pixelRatio.value.isRequired,
+    networkThrottling: PropTypes.shape(Types.networkThrottling).isRequired,
     screenshot: PropTypes.shape(Types.screenshot).isRequired,
+    selectedDevice: PropTypes.string.isRequired,
+    selectedPixelRatio: PropTypes.shape(Types.pixelRatio).isRequired,
     touchSimulation: PropTypes.shape(Types.touchSimulation).isRequired,
+    onChangeNetworkThrottling: PropTypes.func.isRequired,
+    onChangePixelRatio: PropTypes.func.isRequired,
+    onChangeTouchSimulation: PropTypes.func.isRequired,
     onExit: PropTypes.func.isRequired,
     onScreenshot: PropTypes.func.isRequired,
-    onUpdateTouchSimulation: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
 
   render() {
     let {
+      devices,
+      displayPixelRatio,
+      networkThrottling,
       screenshot,
+      selectedDevice,
+      selectedPixelRatio,
       touchSimulation,
+      onChangeNetworkThrottling,
+      onChangePixelRatio,
+      onChangeTouchSimulation,
       onExit,
       onScreenshot,
-      onUpdateTouchSimulation
     } = this.props;
 
     let touchButtonClass = "toolbar-button devtools-button";
     if (touchSimulation.enabled) {
-      touchButtonClass += " active";
+      touchButtonClass += " checked";
     }
 
     return dom.header(
@@ -45,13 +62,25 @@ module.exports = createClass({
         {
           className: "title",
         },
-        getStr("responsive.title")),
+        getStr("responsive.title")
+      ),
+      NetworkThrottlingSelector({
+        networkThrottling,
+        onChangeNetworkThrottling,
+      }),
+      DPRSelector({
+        devices,
+        displayPixelRatio,
+        selectedDevice,
+        selectedPixelRatio,
+        onChangePixelRatio,
+      }),
       dom.button({
         id: "global-touch-simulation-button",
         className: touchButtonClass,
         title: (touchSimulation.enabled ?
           getStr("responsive.disableTouch") : getStr("responsive.enableTouch")),
-        onClick: () => onUpdateTouchSimulation(!touchSimulation.enabled),
+        onClick: () => onChangeTouchSimulation(!touchSimulation.enabled),
       }),
       dom.button({
         id: "global-screenshot-button",

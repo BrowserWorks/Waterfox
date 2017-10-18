@@ -245,6 +245,7 @@ module.exports = createClass({
           dom.button({
             id: "clear-snapshots",
             className: "clear-snapshots devtools-button",
+            disabled: !snapshots.length,
             onClick: onClearSnapshotsClick,
             title: L10N.getStr("clear-snapshots.tooltip")
           }),
@@ -259,7 +260,8 @@ module.exports = createClass({
           dom.button(
             {
               id: "diff-snapshots",
-              className: "devtools-button devtools-monospace" + (!!diffing ? " checked" : ""),
+              className: "devtools-button devtools-monospace" +
+                         (diffing ? " checked" : ""),
               disabled: snapshots.length < 2,
               onClick: onToggleDiffing,
               title: L10N.getStr("diff-snapshots.tooltip"),
@@ -269,7 +271,7 @@ module.exports = createClass({
           dom.button(
             {
               id: "import-snapshot",
-              className: "devtools-toolbarbutton import-snapshot devtools-button",
+              className: "import-snapshot devtools-button",
               onClick: onImportClick,
               title: L10N.getStr("import-snapshot"),
             }

@@ -78,6 +78,33 @@ function check_mp4(v, enabled) {
   check("audio/x-m4a; codecs=mp4a.40.5", "probably");
   // HE-AAC v2
   check("audio/mp4; codecs=\"mp4a.40.29\"", "probably");
+
+  // Opus
+  check("audio/mp4; codecs=\"opus\"", "probably");
+  check("audio/mp4; codecs=opus", "probably");
+
+  // Flac.
+  // Not available on Android yet.
+  var expectedResult = IsSupportedAndroid() ? "" : "probably";
+  check("audio/mp4; codecs=\"flac\"", expectedResult);
+  check("audio/mp4; codecs=flac", expectedResult);
+
+  // VP9.
+  // Note: canPlayType assumes non-fragmented MP4. Once we support VP9 in
+  // non-fragmented MP4, we need to change this to report supported.
+  [ "video/mp4; codecs=vp9",
+    "video/mp4; codecs=\"vp9\"",
+    "video/mp4; codecs=\"vp9.0\""
+  ].forEach((codec) => {
+    // canPlayType should not support VP9 in MP4...
+    check(codec, "");
+    // But VP9 in MP4 is supported in MSE.
+    ok(MediaSource.isTypeSupported(codec), "VP9 in MP4 should be supported in MSE");
+  });
+
+  check("video/mp4; codecs=vp9", "");
+  check("video/mp4; codecs=\"vp9\"", "");
+  check("video/mp4; codecs=\"vp9.0\"", "");
 }
 
 function check_mp3(v, enabled) {
@@ -94,12 +121,6 @@ function check_mp3(v, enabled) {
 
   check("audio/mp3; codecs=\"mp3\"", "probably");
   check("audio/mp3; codecs=mp3", "probably");
-}
-
-function IsWindowsVistaOrLater() {
-  var re = /Windows NT (\d+\.\d)/;
-  var winver = navigator.userAgent.match(re);
-  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.0;
 }
 
 function IsMacOSSnowLeopardOrLater() {
@@ -133,17 +154,15 @@ function IsJellyBeanOrLater() {
   return getAndroidVersion() >= 16;
 }
 
-var haveMp4 = (getPref("media.wmf.enabled") && IsWindowsVistaOrLater()) ||
+var haveMp4 = getPref("media.wmf.enabled") ||
               IsMacOSSnowLeopardOrLater() ||
               (IsSupportedAndroid() &&
                (IsJellyBeanOrLater() || getPref("media.plugins.enabled"))) ||
-              getPref("media.omx.enabled") ||
               (IsLinux() && getPref("media.ffmpeg.enabled"));
 
 check_mp4(document.getElementById('v'), haveMp4);
 
-var haveMp3 = getPref("media.directshow.enabled") ||
-              (getPref("media.wmf.enabled") && IsWindowsVistaOrLater()) ||
+var haveMp3 = getPref("media.wmf.enabled") ||
               (IsLinux() && getPref("media.ffmpeg.enabled")) ||
               (IsSupportedAndroid() &&
                ((IsJellyBeanOrLater() && getPref("media.android-media-codec.enabled")) ||

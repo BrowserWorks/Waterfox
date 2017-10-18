@@ -6,19 +6,24 @@
 
 "use strict";
 
-const { DOM: dom, createClass, PropTypes, addons } =
+const { DOM: dom, createClass, createFactory, PropTypes, addons } =
   require("devtools/client/shared/vendor/react");
-const { getStr } = require("../utils/l10n");
+
+const { getStr, getFormatStr } = require("../utils/l10n");
 const Types = require("../types");
+const DeviceAdder = createFactory(require("./device-adder"));
 
 module.exports = createClass({
   displayName: "DeviceModal",
 
   propTypes: {
+    deviceAdderViewportTemplate: PropTypes.shape(Types.viewport).isRequired,
     devices: PropTypes.shape(Types.devices).isRequired,
+    onAddCustomDevice: PropTypes.func.isRequired,
     onDeviceListUpdate: PropTypes.func.isRequired,
+    onRemoveCustomDevice: PropTypes.func.isRequired,
     onUpdateDeviceDisplayed: PropTypes.func.isRequired,
-    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
+    onUpdateDeviceModal: PropTypes.func.isRequired,
   },
 
   mixins: [ addons.PureRenderMixin ],
@@ -33,14 +38,20 @@ module.exports = createClass({
 
   componentWillReceiveProps(nextProps) {
     let {
+      devices: oldDevices,
+    } = this.props;
+    let {
       devices,
     } = nextProps;
 
-    for (let type of devices.types) {
-      for (let device of devices[type]) {
-        this.setState({
-          [device.name]: device.displayed,
-        });
+    // Refresh component state only when model transitions from closed to open
+    if (!oldDevices.isModalOpen && devices.isModalOpen) {
+      for (let type of devices.types) {
+        for (let device of devices[type]) {
+          this.setState({
+            [device.name]: device.displayed,
+          });
+        }
       }
     }
   },
@@ -49,7 +60,18 @@ module.exports = createClass({
     window.removeEventListener("keydown", this.onKeyDown, true);
   },
 
-  onDeviceCheckboxClick({ target }) {
+  onAddCustomDevice(device) {
+    this.props.onAddCustomDevice(device);
+    // Default custom devices to enabled
+    this.setState({
+      [device.name]: true,
+    });
+  },
+
+  onDeviceCheckboxChange({ nativeEvent: { button }, target }) {
+    if (button !== 0) {
+      return;
+    }
     this.setState({
       [target.value]: !this.state[target.value]
     });
@@ -60,7 +82,7 @@ module.exports = createClass({
       devices,
       onDeviceListUpdate,
       onUpdateDeviceDisplayed,
-      onUpdateDeviceModalOpen,
+      onUpdateDeviceModal,
     } = this.props;
 
     let preferredDevices = {
@@ -85,7 +107,7 @@ module.exports = createClass({
     }
 
     onDeviceListUpdate(preferredDevices);
-    onUpdateDeviceModalOpen(false);
+    onUpdateDeviceModal(false);
   },
 
   onKeyDown(event) {
@@ -95,17 +117,23 @@ module.exports = createClass({
     // Escape keycode
     if (event.keyCode === 27) {
       let {
-        onUpdateDeviceModalOpen
+        onUpdateDeviceModal
       } = this.props;
-      onUpdateDeviceModalOpen(false);
+      onUpdateDeviceModal(false);
     }
   },
 
   render() {
     let {
+      deviceAdderViewportTemplate,
       devices,
-      onUpdateDeviceModalOpen,
+      onRemoveCustomDevice,
+      onUpdateDeviceModal,
     } = this.props;
+
+    let {
+      onAddCustomDevice,
+    } = this;
 
     const sortedDevices = {};
     for (let type of devices.types) {
@@ -125,7 +153,7 @@ module.exports = createClass({
         dom.button({
           id: "device-close-button",
           className: "toolbar-button devtools-button",
-          onClick: () => onUpdateDeviceModalOpen(false),
+          onClick: () => onUpdateDeviceModal(false),
         }),
         dom.div(
           {
@@ -144,24 +172,49 @@ module.exports = createClass({
                 type
               ),
               sortedDevices[type].map(device => {
+                let details = getFormatStr(
+                  "responsive.deviceDetails", device.width, device.height,
+                  device.pixelRatio, device.userAgent, device.touch
+                );
+
+                let removeDeviceButton;
+                if (type == "custom") {
+                  removeDeviceButton = dom.button({
+                    className: "device-remove-button toolbar-button devtools-button",
+                    onClick: () => onRemoveCustomDevice(device),
+                  });
+                }
+
                 return dom.label(
                   {
                     className: "device-label",
                     key: device.name,
+                    title: details,
                   },
                   dom.input({
                     className: "device-input-checkbox",
                     type: "checkbox",
                     value: device.name,
                     checked: this.state[device.name],
-                    onChange: this.onDeviceCheckboxClick,
+                    onChange: this.onDeviceCheckboxChange,
                   }),
-                  device.name
+                  dom.span(
+                    {
+                      className: "device-name",
+                    },
+                    device.name
+                  ),
+                  removeDeviceButton
                 );
               })
             );
           })
         ),
+        DeviceAdder({
+          devices,
+          viewportTemplate: deviceAdderViewportTemplate,
+          onAddCustomDevice,
+        }),
         dom.button(
           {
             id: "device-submit-button",
@@ -173,7 +226,7 @@ module.exports = createClass({
       dom.div(
         {
           className: "modal-overlay",
-          onClick: () => onUpdateDeviceModalOpen(false),
+          onClick: () => onUpdateDeviceModal(false),
         }
       )
     );

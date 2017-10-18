@@ -16,20 +16,22 @@ XPCOMUtils.defineLazyModuleGetter(this, "TabStateCache",
   "resource:///modules/sessionstore/TabStateCache.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TabAttributes",
   "resource:///modules/sessionstore/TabAttributes.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Utils",
+  "resource://gre/modules/sessionstore/Utils.jsm");
 
 /**
  * Module that contains tab state collection methods.
  */
 this.TabState = Object.freeze({
-  update: function (browser, data) {
+  update(browser, data) {
     TabStateInternal.update(browser, data);
   },
 
-  collect: function (tab) {
+  collect(tab) {
     return TabStateInternal.collect(tab);
   },
 
-  clone: function (tab) {
+  clone(tab) {
     return TabStateInternal.clone(tab);
   },
 
@@ -42,7 +44,7 @@ var TabStateInternal = {
   /**
    * Processes a data update sent by the content script.
    */
-  update: function (browser, {data}) {
+  update(browser, {data}) {
     TabStateCache.update(browser, data);
   },
 
@@ -56,7 +58,7 @@ var TabStateInternal = {
    * tab has not been invalidated since the last call to
    * collect(aTab), the same object is returned.
    */
-  collect: function (tab) {
+  collect(tab) {
     return this._collectBaseTabData(tab);
   },
 
@@ -71,7 +73,7 @@ var TabStateInternal = {
    *                   cached, it will always be read from the tab and thus be
    *                   up-to-date.
    */
-  clone: function (tab) {
+  clone(tab) {
     return this._collectBaseTabData(tab, {includePrivateData: true});
   },
 
@@ -85,7 +87,7 @@ var TabStateInternal = {
    *
    * @returns {object} An object with the basic data for this tab.
    */
-  _collectBaseTabData: function (tab, options) {
+  _collectBaseTabData(tab, options) {
     let tabData = { entries: [], lastAccessed: tab.lastAccessed };
     let browser = tab.linkedBrowser;
 
@@ -99,6 +101,8 @@ var TabStateInternal = {
       tabData.muted = true;
       tabData.muteReason = tab.muteReason;
     }
+
+    tabData.mediaBlocked = browser.mediaBlocked;
 
     // Save tab attributes.
     tabData.attributes = TabAttributes.get(tab);
@@ -120,6 +124,11 @@ var TabStateInternal = {
     if (!("image" in tabData)) {
       let tabbrowser = tab.ownerGlobal.gBrowser;
       tabData.image = tabbrowser.getIcon(tab);
+    }
+
+    // Store the serialized contentPrincipal of this tab to use for the icon.
+    if (!("iconLoadingPrincipal" in tabData)) {
+      tabData.iconLoadingPrincipal = Utils.serializePrincipal(browser.mIconLoadingPrincipal);
     }
 
     // If there is a userTypedValue set, then either the user has typed something
@@ -157,7 +166,6 @@ var TabStateInternal = {
 
     // The caller may explicitly request to omit privacy checks.
     let includePrivateData = options && options.includePrivateData;
-    let isPinned = !!tabData.pinned;
 
     for (let key of Object.keys(data)) {
       let value = data[key];
@@ -172,7 +180,10 @@ var TabStateInternal = {
       }
 
       if (key === "history") {
-        tabData.entries = value.entries;
+        // Make a shallow copy of the entries array. We (currently) don't update
+        // entries in place, so we don't have to worry about performing a deep
+        // copy.
+        tabData.entries = [...value.entries];
 
         if (value.hasOwnProperty("userContextId")) {
           tabData.userContextId = value.userContextId;

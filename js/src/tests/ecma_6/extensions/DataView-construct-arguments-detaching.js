@@ -1,4 +1,3 @@
-// |reftest| skip-if(!xulRuntime.shell) -- needs detachArrayBuffer()
 /*
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/licenses/publicdomain/
@@ -17,7 +16,7 @@ print(BUGNUMBER + ": " + summary);
  * BEGIN TEST *
  **************/
 
-function testByteOffset(dataType)
+function testByteOffset()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -25,7 +24,7 @@ function testByteOffset(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         gc();
         return 0x800;
       }
@@ -43,10 +42,9 @@ function testByteOffset(dataType)
   assertEq(ok, true, "byteOffset weirdness should have thrown");
   assertEq(ab.byteLength, 0, "detaching should work for byteOffset weirdness");
 }
-testByteOffset("change-data");
-testByteOffset("same-data");
+testByteOffset();
 
-function testByteLength(dataType)
+function testByteLength()
 {
   var ab = new ArrayBuffer(0x1000);
 
@@ -54,7 +52,7 @@ function testByteLength(dataType)
     {
       valueOf: function()
       {
-        detachArrayBuffer(ab, dataType);
+        detachArrayBuffer(ab);
         gc();
         return 0x800;
       }
@@ -72,8 +70,7 @@ function testByteLength(dataType)
   assertEq(ok, true, "byteLength weirdness should have thrown");
   assertEq(ab.byteLength, 0, "detaching should work for byteLength weirdness");
 }
-testByteLength("change-data");
-testByteLength("same-data");
+testByteLength();
 
 /******************************************************************************/
 

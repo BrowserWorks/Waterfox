@@ -31,23 +31,6 @@ char kLSanDefaultSuppressions[] =
 // Leaks in Nvidia's libGL.
 "leak:libGL.so\n"
 
-// TODO(earthdok): revisit NSS suppressions after the switch to BoringSSL
-// NSS leaks in CertDatabaseNSSTest tests. http://crbug.com/51988
-"leak:net::NSSCertDatabase::ImportFromPKCS12\n"
-"leak:net::NSSCertDatabase::ListCerts\n"
-"leak:net::NSSCertDatabase::DeleteCertAndKey\n"
-"leak:crypto::ScopedTestNSSDB::ScopedTestNSSDB\n"
-// Another leak due to not shutting down NSS properly. http://crbug.com/124445
-"leak:error_get_my_stack\n"
-// The NSS suppressions above will not fire when the fast stack unwinder is
-// used, because it can't unwind through NSS libraries. Apply blanket
-// suppressions for now.
-"leak:libnssutil3\n"
-"leak:libnspr4\n"
-"leak:libnss3\n"
-"leak:libplds4\n"
-"leak:libnssckbi\n"
-
 // XRandR has several one time leaks.
 "leak:libxrandr\n"
 
@@ -75,8 +58,6 @@ char kLSanDefaultSuppressions[] =
 // https://code.google.com/p/webrtc/issues/detail?id=4149 for details.
 "leak:StartDNSLookup\n"
 // https://code.google.com/p/webrtc/issues/detail?id=2527
-"leak:buzz::FakeXmppClient::SendStanza\n"
-"leak:buzz::XmppTask::XmppTask\n"
 "leak:HangoutPubSubClientTest::HangoutPubSubClientTest\n"
 "leak:MucRoomConfigTaskTest::SetUp\n"
 "leak:MucRoomDiscoveryTaskTest::SetUp\n"
@@ -87,7 +68,7 @@ char kLSanDefaultSuppressions[] =
 "leak:PubSubClientTest::PubSubClientTest\n"
 "leak:PubSubTasksTest::PubSubTasksTest\n"
 
-// libjingle_media_unittest
+// rtc_media_unittests
 "leak:cricket::FakeNetworkInterface::SetOption\n"
 "leak:CodecTest_TestCodecOperators_Test::TestBody\n"
 "leak:VideoEngineTest*::ConstrainNewCodecBody\n"
@@ -97,7 +78,7 @@ char kLSanDefaultSuppressions[] =
 "leak:WebRtcVideoEngineTestFake_SetBandwidthInConference_Test::TestBody\n"
 "leak:WebRtcVideoEngineTestFake_SetSendCodecsRejectBadFormat_Test::TestBody\n"
 
-// libjingle_peerconnection_unittest
+// peerconnection_unittests
 // https://code.google.com/p/webrtc/issues/detail?id=2528
 "leak:cricket::FakeVideoMediaChannel::~FakeVideoMediaChannel\n"
 "leak:cricket::MediaSessionDescriptionFactory::CreateAnswer\n"

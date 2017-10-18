@@ -12,6 +12,7 @@
 #include "nsIWidget.h"
 #include "nsPIDOMWindow.h"
 #include "nsView.h"
+#include "PuppetWidget.h"
 
 namespace mozilla {
 namespace widget {
@@ -27,6 +28,7 @@ TextEventDispatcher::TextEventDispatcher(nsIWidget* aWidget)
   , mDispatchingEvent(0)
   , mInputTransactionType(eNoInputTransaction)
   , mIsComposing(false)
+  , mHasFocus(false)
 {
   MOZ_RELEASE_ASSERT(mWidget, "aWidget must not be nullptr");
 
@@ -38,6 +40,8 @@ TextEventDispatcher::TextEventDispatcher(nsIWidget* aWidget)
       false);
     sInitialized = true;
   }
+
+  ClearNotificationRequests();
 }
 
 nsresult
@@ -83,6 +87,7 @@ TextEventDispatcher::BeginInputTransactionInternal(
   nsCOMPtr<TextEventDispatcherListener> listener = do_QueryReferent(mListener);
   if (listener) {
     if (listener == aListener && mInputTransactionType == aType) {
+      UpdateNotificationRequests();
       return NS_OK;
     }
     // If this has composition or is dispatching an event, any other listener
@@ -98,9 +103,84 @@ TextEventDispatcher::BeginInputTransactionInternal(
   if (listener && listener != aListener) {
     listener->OnRemovedFrom(this);
   }
+  UpdateNotificationRequests();
   return NS_OK;
 }
 
+nsresult
+TextEventDispatcher::BeginInputTransactionFor(const WidgetGUIEvent* aEvent,
+                                              PuppetWidget* aPuppetWidget)
+{
+  MOZ_ASSERT(XRE_IsContentProcess());
+  MOZ_ASSERT(!IsDispatchingEvent());
+
+  switch (aEvent->mMessage) {
+    case eKeyDown:
+    case eKeyPress:
+    case eKeyUp:
+      MOZ_ASSERT(aEvent->mClass == eKeyboardEventClass);
+      break;
+    case eCompositionStart:
+    case eCompositionChange:
+    case eCompositionCommit:
+    case eCompositionCommitAsIs:
+      MOZ_ASSERT(aEvent->mClass == eCompositionEventClass);
+      break;
+    default:
+      return NS_ERROR_INVALID_ARG;
+  }
+
+  if (aEvent->mFlags.mIsSynthesizedForTests) {
+    // If the event is for an automated test and this instance dispatched
+    // an event to the parent process, we can assume that this is already
+    // initialized properly.
+    if (mInputTransactionType == eAsyncTestInputTransaction) {
+      return NS_OK;
+    }
+    // Even if the event coming from the parent process is synthesized for
+    // tests, this process should treat it as "sync" test here because
+    // it won't be go back to the parent process.
+    nsresult rv =
+      BeginInputTransactionInternal(
+        static_cast<TextEventDispatcherListener*>(aPuppetWidget),
+        eSameProcessSyncTestInputTransaction);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  } else {
+    nsresult rv = BeginNativeInputTransaction();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  }
+
+  // Emulate modifying members which indicate the state of composition.
+  // If we need to manage more states and/or more complexly, we should create
+  // internal methods which are called by both here and each event dispatcher
+  // method of this class.
+  switch (aEvent->mMessage) {
+    case eKeyDown:
+    case eKeyPress:
+    case eKeyUp:
+      return NS_OK;
+    case eCompositionStart:
+      MOZ_ASSERT(!mIsComposing);
+      mIsComposing = true;
+      return NS_OK;
+    case eCompositionChange:
+      MOZ_ASSERT(mIsComposing);
+      mIsComposing = true;
+      return NS_OK;
+    case eCompositionCommit:
+    case eCompositionCommitAsIs:
+      MOZ_ASSERT(mIsComposing);
+      mIsComposing = false;
+      return NS_OK;
+    default:
+      MOZ_ASSERT_UNREACHABLE("You forgot to handle the event");
+      return NS_ERROR_UNEXPECTED;
+  }
+}
 void
 TextEventDispatcher::EndInputTransaction(TextEventDispatcherListener* aListener)
 {
@@ -121,12 +201,15 @@ TextEventDispatcher::EndInputTransaction(TextEventDispatcherListener* aListener)
 
   mListener = nullptr;
   listener->OnRemovedFrom(this);
+  UpdateNotificationRequests();
 }
 
 void
 TextEventDispatcher::OnDestroyWidget()
 {
   mWidget = nullptr;
+  mHasFocus = false;
+  ClearNotificationRequests();
   mPendingComposition.Clear();
   nsCOMPtr<TextEventDispatcherListener> listener = do_QueryReferent(mListener);
   mListener = nullptr;
@@ -227,6 +310,8 @@ TextEventDispatcher::StartComposition(nsEventStatus& aStatus,
     return NS_ERROR_FAILURE;
   }
 
+  // When you change some members from here, you may need same change in
+  // BeginInputTransactionFor().
   mIsComposing = true;
   WidgetCompositionEvent compositionStartEvent(true, eCompositionStart,
                                                mWidget);
@@ -307,6 +392,9 @@ TextEventDispatcher::CommitComposition(nsEventStatus& aStatus,
     return NS_OK;
   }
 
+  // When you change some members from here, you may need same change in
+  // BeginInputTransactionFor().
+
   // End current composition and make this free for other IMEs.
   mIsComposing = false;
 
@@ -319,8 +407,10 @@ TextEventDispatcher::CommitComposition(nsEventStatus& aStatus,
   }
   if (message == eCompositionCommit) {
     compositionCommitEvent.mData = *aCommitString;
-    // Don't send CRLF, replace it with LF here.
+    // Don't send CRLF nor CR, replace it with LF here.
     compositionCommitEvent.mData.ReplaceSubstring(NS_LITERAL_STRING("\r\n"),
+                                                  NS_LITERAL_STRING("\n"));
+    compositionCommitEvent.mData.ReplaceSubstring(NS_LITERAL_STRING("\r"),
                                                   NS_LITERAL_STRING("\n"));
   }
   rv = DispatchEvent(widget, compositionCommitEvent, aStatus);
@@ -336,13 +426,19 @@ TextEventDispatcher::NotifyIME(const IMENotification& aIMENotification)
 {
   nsresult rv = NS_ERROR_NOT_IMPLEMENTED;
 
+  if (aIMENotification.mMessage == NOTIFY_IME_OF_BLUR) {
+    mHasFocus = false;
+    ClearNotificationRequests();
+  }
+
+
   // First, send the notification to current input transaction's listener.
   nsCOMPtr<TextEventDispatcherListener> listener = do_QueryReferent(mListener);
   if (listener) {
     rv = listener->NotifyIME(this, aIMENotification);
   }
 
-  if (mInputTransactionType == eNativeInputTransaction || !mWidget) {
+  if (!mWidget) {
     return rv;
   }
 
@@ -358,24 +454,66 @@ TextEventDispatcher::NotifyIME(const IMENotification& aIMENotification)
   // focus move).
   nsCOMPtr<TextEventDispatcherListener> nativeListener =
     mWidget->GetNativeTextEventDispatcherListener();
-  if (!nativeListener) {
-    return rv;
+  if (listener != nativeListener && nativeListener) {
+    switch (aIMENotification.mMessage) {
+      case REQUEST_TO_COMMIT_COMPOSITION:
+      case REQUEST_TO_CANCEL_COMPOSITION:
+        // It's not necessary to notify native IME of requests.
+        break;
+      default: {
+        // Even if current input transaction's listener returns NS_OK or
+        // something, we need to notify native IME of notifications because
+        // when user typing after TIP does something, the changed information
+        // is necessary for them.
+        nsresult rv2 =
+          nativeListener->NotifyIME(this, aIMENotification);
+        // But return the result from current listener except when the
+        // notification isn't handled.
+        if (rv == NS_ERROR_NOT_IMPLEMENTED) {
+          rv = rv2;
+        }
+        break;
+      }
+    }
   }
-  switch (aIMENotification.mMessage) {
-    case REQUEST_TO_COMMIT_COMPOSITION:
-    case REQUEST_TO_CANCEL_COMPOSITION:
-      // It's not necessary to notify native IME of requests.
-      return rv;
-    default: {
-      // Even if current input transaction's listener returns NS_OK or
-      // something, we need to notify native IME of notifications because
-      // when user typing after TIP does something, the changed information
-      // is necessary for them.
-      nsresult rv2 =
-        nativeListener->NotifyIME(this, aIMENotification);
-      // But return the result from current listener except when the
-      // notification isn't handled.
-      return rv == NS_ERROR_NOT_IMPLEMENTED ? rv2 : rv;
+
+  if (aIMENotification.mMessage == NOTIFY_IME_OF_FOCUS) {
+    mHasFocus = true;
+    UpdateNotificationRequests();
+  }
+
+  return rv;
+}
+
+void
+TextEventDispatcher::ClearNotificationRequests()
+{
+  mIMENotificationRequests = IMENotificationRequests();
+}
+
+void
+TextEventDispatcher::UpdateNotificationRequests()
+{
+  ClearNotificationRequests();
+
+  // If it doesn't has focus, no notifications are available.
+  if (!mHasFocus || !mWidget) {
+    return;
+  }
+
+  // If there is a listener, its requests are necessary.
+  nsCOMPtr<TextEventDispatcherListener> listener = do_QueryReferent(mListener);
+  if (listener) {
+    mIMENotificationRequests = listener->GetIMENotificationRequests();
+  }
+
+  // Even if this is in non-native input transaction, native IME needs
+  // requests.  So, add native IME requests too.
+  if (!IsInNativeInputTransaction()) {
+    nsCOMPtr<TextEventDispatcherListener> nativeListener =
+      mWidget->GetNativeTextEventDispatcherListener();
+    if (nativeListener) {
+      mIMENotificationRequests |= nativeListener->GetIMENotificationRequests();
     }
   }
 }
@@ -397,7 +535,8 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
                        const WidgetKeyboardEvent& aKeyboardEvent,
                        nsEventStatus& aStatus,
                        void* aData,
-                       uint32_t aIndexOfKeypress)
+                       uint32_t aIndexOfKeypress,
+                       bool aNeedsCallback)
 {
   // Note that this method is also used for dispatching key events on a plugin
   // because key events on a plugin should be dispatched same as normal key
@@ -501,7 +640,7 @@ TextEventDispatcher::DispatchKeyboardEventInternal(
   keyEvent.mAlternativeCharCodes.Clear();
   if ((WidgetKeyboardEvent::IsKeyDownOrKeyDownOnPlugin(aMessage) ||
        aMessage == eKeyPress) &&
-      (keyEvent.IsControl() || keyEvent.IsAlt() ||
+      (aNeedsCallback || keyEvent.IsControl() || keyEvent.IsAlt() ||
        keyEvent.IsMeta() || keyEvent.IsOS())) {
     nsCOMPtr<TextEventDispatcherListener> listener =
       do_QueryReferent(mListener);
@@ -538,7 +677,8 @@ bool
 TextEventDispatcher::MaybeDispatchKeypressEvents(
                        const WidgetKeyboardEvent& aKeyboardEvent,
                        nsEventStatus& aStatus,
-                       void* aData)
+                       void* aData,
+                       bool aNeedsCallback)
 {
   // If the key event was consumed, keypress event shouldn't be fired.
   if (aStatus == nsEventStatus_eConsumeNoDefault) {
@@ -563,7 +703,7 @@ TextEventDispatcher::MaybeDispatchKeypressEvents(
   for (size_t i = 0; i < keypressCount; i++) {
     aStatus = nsEventStatus_eIgnore;
     if (!DispatchKeyboardEventInternal(eKeyPress, aKeyboardEvent,
-                                       aStatus, aData, i)) {
+                                       aStatus, aData, i, aNeedsCallback)) {
       // The widget must have been gone.
       break;
     }
@@ -596,6 +736,7 @@ TextEventDispatcher::PendingComposition::Clear()
   mString.Truncate();
   mClauses = nullptr;
   mCaret.mRangeType = TextRangeType::eUninitialized;
+  mReplacedNativeLineBreakers = false;
 }
 
 void
@@ -610,6 +751,7 @@ TextEventDispatcher::PendingComposition::EnsureClauseArray()
 nsresult
 TextEventDispatcher::PendingComposition::SetString(const nsAString& aString)
 {
+  MOZ_ASSERT(!mReplacedNativeLineBreakers);
   mString = aString;
   return NS_OK;
 }
@@ -619,6 +761,8 @@ TextEventDispatcher::PendingComposition::AppendClause(
                                            uint32_t aLength,
                                            TextRangeType aTextRangeType)
 {
+  MOZ_ASSERT(!mReplacedNativeLineBreakers);
+
   if (NS_WARN_IF(!aLength)) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -646,6 +790,8 @@ nsresult
 TextEventDispatcher::PendingComposition::SetCaret(uint32_t aOffset,
                                                   uint32_t aLength)
 {
+  MOZ_ASSERT(!mReplacedNativeLineBreakers);
+
   mCaret.mStartOffset = aOffset;
   mCaret.mEndOffset = mCaret.mStartOffset + aLength;
   mCaret.mRangeType = TextRangeType::eCaret;
@@ -658,47 +804,26 @@ TextEventDispatcher::PendingComposition::Set(const nsAString& aString,
 {
   Clear();
 
-  nsAutoString str(aString);
-  // Don't expose CRLF to web contents, instead, use LF.
-  str.ReplaceSubstring(NS_LITERAL_STRING("\r\n"), NS_LITERAL_STRING("\n"));
-  nsresult rv = SetString(str);
+  nsresult rv = SetString(aString);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
   if (!aRanges || aRanges->IsEmpty()) {
-    // Create dummy range if aString isn't empty.
-    if (!aString.IsEmpty()) {
-      rv = AppendClause(str.Length(), TextRangeType::eRawClause);
+    // Create dummy range if mString isn't empty.
+    if (!mString.IsEmpty()) {
+      rv = AppendClause(mString.Length(), TextRangeType::eRawClause);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
+      ReplaceNativeLineBreakers();
     }
     return NS_OK;
   }
 
   // Adjust offsets in the ranges for XP linefeed character (only \n).
-  // XXX Following code is the safest approach.  However, it wastes performance.
-  //     For ensuring the clauses do not overlap each other, we should redesign
-  //     TextRange later.
   for (uint32_t i = 0; i < aRanges->Length(); ++i) {
     TextRange range = aRanges->ElementAt(i);
-    TextRange nativeRange = range;
-    if (nativeRange.mStartOffset > 0) {
-      nsAutoString preText(Substring(aString, 0, nativeRange.mStartOffset));
-      preText.ReplaceSubstring(NS_LITERAL_STRING("\r\n"),
-                               NS_LITERAL_STRING("\n"));
-      range.mStartOffset = preText.Length();
-    }
-    if (nativeRange.Length() == 0) {
-      range.mEndOffset = range.mStartOffset;
-    } else {
-      nsAutoString clause(
-        Substring(aString, nativeRange.mStartOffset, nativeRange.Length()));
-      clause.ReplaceSubstring(NS_LITERAL_STRING("\r\n"),
-                              NS_LITERAL_STRING("\n"));
-      range.mEndOffset = range.mStartOffset + clause.Length();
-    }
     if (range.mRangeType == TextRangeType::eCaret) {
       mCaret = range;
     } else {
@@ -706,7 +831,69 @@ TextEventDispatcher::PendingComposition::Set(const nsAString& aString,
       mClauses->AppendElement(range);
     }
   }
+  ReplaceNativeLineBreakers();
   return NS_OK;
+}
+
+void
+TextEventDispatcher::PendingComposition::ReplaceNativeLineBreakers()
+{
+  mReplacedNativeLineBreakers = true;
+
+  // If the composition string is empty, we don't need to do anything.
+  if (mString.IsEmpty()) {
+    return;
+  }
+
+  nsAutoString nativeString(mString);
+  // Don't expose CRLF nor CR to web contents, instead, use LF.
+  mString.ReplaceSubstring(NS_LITERAL_STRING("\r\n"), NS_LITERAL_STRING("\n"));
+  mString.ReplaceSubstring(NS_LITERAL_STRING("\r"), NS_LITERAL_STRING("\n"));
+
+  // If the length isn't changed, we don't need to adjust any offset and length
+  // of mClauses nor mCaret.
+  if (nativeString.Length() == mString.Length()) {
+    return;
+  }
+
+  if (mClauses) {
+    for (TextRange& clause : *mClauses) {
+      AdjustRange(clause, nativeString);
+    }
+  }
+  if (mCaret.mRangeType == TextRangeType::eCaret) {
+    AdjustRange(mCaret, nativeString);
+  }
+}
+
+// static
+void
+TextEventDispatcher::PendingComposition::AdjustRange(
+                                           TextRange& aRange,
+                                           const nsAString& aNativeString)
+{
+  TextRange nativeRange = aRange;
+  // XXX Following code wastes runtime cost because this causes computing
+  //     mStartOffset for each clause from the start of composition string.
+  //     If we'd make TextRange have only its length, we don't need to do
+  //     this.  However, this must not be so serious problem because
+  //     composition string is usually short and separated as a few clauses.
+  if (nativeRange.mStartOffset > 0) {
+    nsAutoString preText(
+      Substring(aNativeString, 0, nativeRange.mStartOffset));
+    preText.ReplaceSubstring(NS_LITERAL_STRING("\r\n"),
+                             NS_LITERAL_STRING("\n"));
+    aRange.mStartOffset = preText.Length();
+  }
+  if (nativeRange.Length() == 0) {
+    aRange.mEndOffset = aRange.mStartOffset;
+  } else {
+    nsAutoString clause(
+      Substring(aNativeString, nativeRange.mStartOffset, nativeRange.Length()));
+    clause.ReplaceSubstring(NS_LITERAL_STRING("\r\n"),
+                            NS_LITERAL_STRING("\n"));
+    aRange.mEndOffset = aRange.mStartOffset + clause.Length();
+  }
 }
 
 nsresult
@@ -737,6 +924,12 @@ TextEventDispatcher::PendingComposition::Flush(
     }
     EnsureClauseArray();
     mClauses->AppendElement(mCaret);
+  }
+
+  // If the composition string is set without Set(), we need to replace native
+  // line breakers in the composition string with XP line breaker.
+  if (!mReplacedNativeLineBreakers) {
+    ReplaceNativeLineBreakers();
   }
 
   RefPtr<TextEventDispatcher> kungFuDeathGrip(aDispatcher);

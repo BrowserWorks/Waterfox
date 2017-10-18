@@ -33,23 +33,23 @@ function waitForCondition(condition, nextTest, errorMsg) {
 }
 
 var TranslationStub = {
-  translate: function(aFrom, aTo) {
+  translate(aFrom, aTo) {
     this.state = Translation.STATE_TRANSLATING;
     this.translatedFrom = aFrom;
     this.translatedTo = aTo;
   },
 
-  _reset: function() {
+  _reset() {
     this.translatedFrom = "";
     this.translatedTo = "";
   },
 
-  failTranslation: function() {
+  failTranslation() {
     this.state = Translation.STATE_ERROR;
     this._reset();
   },
 
-  finishTranslation: function() {
+  finishTranslation() {
     this.showTranslatedContent();
     this.state = Translation.STATE_TRANSLATED;
     this._reset();
@@ -75,19 +75,18 @@ function test() {
   waitForExplicitFinish();
 
   Services.prefs.setBoolPref(kShowUIPref, true);
-  let tab = gBrowser.addTab();
+  let tab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = tab;
-  tab.linkedBrowser.addEventListener("load", function onload() {
-    tab.linkedBrowser.removeEventListener("load", onload, true);
+  tab.linkedBrowser.addEventListener("load", function() {
     TranslationStub.browser = gBrowser.selectedBrowser;
-    registerCleanupFunction(function () {
+    registerCleanupFunction(function() {
       gBrowser.removeTab(tab);
       Services.prefs.clearUserPref(kShowUIPref);
     });
     run_tests(() => {
       finish();
     });
-  }, true);
+  }, {capture: true, once: true});
 
   content.location = "data:text/plain,test page";
 }
@@ -194,7 +193,6 @@ function run_tests(aFinishCallback) {
 
   info("Reopen to check the 'Not Now' button closes the notification.");
   notif = showTranslationUI("fr");
-  let notificationBox = gBrowser.getNotificationBox();
   is(hasTranslationInfoBar(), true, "there's a 'translate' notification");
   notif._getAnonElt("notNow").click();
   is(hasTranslationInfoBar(), false, "no 'translate' notification after clicking 'not now'");

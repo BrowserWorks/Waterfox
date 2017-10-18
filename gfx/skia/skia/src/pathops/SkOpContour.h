@@ -11,7 +11,6 @@
 #include "SkTDArray.h"
 #include "SkTSort.h"
 
-class SkChunkAlloc;
 enum class SkOpRayDir;
 struct SkOpRayHit;
 class SkPathWriter;
@@ -22,55 +21,32 @@ public:
         reset();
     }
 
-    ~SkOpContour() {
-        if (fNext) {
-            fNext->~SkOpContour();
-        }
-    }
-
     bool operator<(const SkOpContour& rh) const {
         return fBounds.fTop == rh.fBounds.fTop
-                ? fBounds.fLeft < rh.fBounds.fLeft
-                : fBounds.fTop < rh.fBounds.fTop;
+            ? fBounds.fLeft < rh.fBounds.fLeft
+            : fBounds.fTop < rh.fBounds.fTop;
     }
 
-    void addAlignIntersections(SkOpContourHead* contourList, SkChunkAlloc* allocator) {
-        SkASSERT(fCount > 0);
-        SkOpSegment* segment = &fHead;
-        do {
-            segment->addAlignIntersections(contourList, allocator);
-        } while ((segment = segment->next()));
+    void addConic(SkPoint pts[3], SkScalar weight) {
+        appendSegment().addConic(pts, weight, this);
     }
 
-    void addConic(SkPoint pts[3], SkScalar weight, SkChunkAlloc* allocator) {
-        appendSegment(allocator).addConic(pts, weight, this);
+    void addCubic(SkPoint pts[4]) {
+        appendSegment().addCubic(pts, this);
     }
 
-    void addCubic(SkPoint pts[4], SkChunkAlloc* allocator) {
-        appendSegment(allocator).addCubic(pts, this);
+    SkOpSegment* addLine(SkPoint pts[2]) {
+        SkASSERT(pts[0] != pts[1]);
+        return appendSegment().addLine(pts, this);
     }
 
-    SkOpSegment* addCurve(SkPath::Verb verb, const SkPoint pts[4], SkChunkAlloc* allocator);
-
-    void addLine(SkPoint pts[2], SkChunkAlloc* allocator) {
-        appendSegment(allocator).addLine(pts, this);
+    void addQuad(SkPoint pts[3]) {
+        appendSegment().addQuad(pts, this);
     }
 
-    void addQuad(SkPoint pts[3], SkChunkAlloc* allocator) {
-        appendSegment(allocator).addQuad(pts, this);
-    }
-
-    void align() {
-        SkASSERT(fCount > 0);
-        SkOpSegment* segment = &fHead;
-        do {
-            segment->align();
-        } while ((segment = segment->next()));
-    }
-
-    SkOpSegment& appendSegment(SkChunkAlloc* allocator) {
+    SkOpSegment& appendSegment() {
         SkOpSegment* result = fCount++
-                ? SkOpTAllocator<SkOpSegment>::Allocate(allocator) : &fHead;
+            ? SkOpTAllocator<SkOpSegment>::Allocate(this->globalState()->allocator()) : &fHead;
         result->setPrev(fTail);
         if (fTail) {
             fTail->setNext(result);
@@ -79,27 +55,15 @@ public:
         return *result;
     }
 
-    SkOpContour* appendContour(SkChunkAlloc* allocator) {
-        SkOpContour* contour = SkOpTAllocator<SkOpContour>::New(allocator);
-        contour->setNext(nullptr);
-        SkOpContour* prev = this;
-        SkOpContour* next;
-        while ((next = prev->next())) {
-            prev = next;
-        }
-        prev->setNext(contour);
-        return contour;
-    }
-    
     const SkPathOpsBounds& bounds() const {
         return fBounds;
     }
 
-    void calcAngles(SkChunkAlloc* allocator) {
+    void calcAngles() {
         SkASSERT(fCount > 0);
         SkOpSegment* segment = &fHead;
         do {
-            segment->calcAngles(allocator);
+            segment->calcAngles();
         } while ((segment = segment->next()));
     }
 
@@ -119,27 +83,28 @@ public:
         return SkDEBUGRELEASE(fDebugIndent, 0);
     }
 
-#if DEBUG_ACTIVE_SPANS
-    void debugShowActiveSpans() {
-        SkOpSegment* segment = &fHead;
-        do {
-            segment->debugShowActiveSpans();
-        } while ((segment = segment->next()));
-    }
-#endif
 
     const SkOpAngle* debugAngle(int id) const {
         return SkDEBUGRELEASE(this->globalState()->debugAngle(id), nullptr);
     }
 
-    void debugCheckHealth(const char* id, SkPathOpsDebug::GlitchLog* ) const;
+    const SkOpCoincidence* debugCoincidence() const {
+        return this->globalState()->coincidence();
+    }
 
-    SkOpContour* debugContour(int id) {
+#if DEBUG_COIN
+    void debugCheckHealth(SkPathOpsDebug::GlitchLog* ) const;
+#endif
+
+    SkOpContour* debugContour(int id) const {
         return SkDEBUGRELEASE(this->globalState()->debugContour(id), nullptr);
     }
 
-    void debugMissingCoincidence(const char* id, SkPathOpsDebug::GlitchLog* log,
-                                 const SkOpCoincidence* coincidence) const;
+#if DEBUG_COIN
+    void debugMissingCoincidence(SkPathOpsDebug::GlitchLog* log) const;
+    void debugMoveMultiples(SkPathOpsDebug::GlitchLog* ) const;
+    void debugMoveNearby(SkPathOpsDebug::GlitchLog* log) const;
+#endif
 
     const SkOpPtT* debugPtT(int id) const {
         return SkDEBUGRELEASE(this->globalState()->debugPtT(id), nullptr);
@@ -149,12 +114,21 @@ public:
         return SkDEBUGRELEASE(this->globalState()->debugSegment(id), nullptr);
     }
 
+#if DEBUG_ACTIVE_SPANS
+    void debugShowActiveSpans(SkString* str) {
+        SkOpSegment* segment = &fHead;
+        do {
+            segment->debugShowActiveSpans(str);
+        } while ((segment = segment->next()));
+    }
+#endif
+
     const SkOpSpanBase* debugSpan(int id) const {
         return SkDEBUGRELEASE(this->globalState()->debugSpan(id), nullptr);
     }
 
     SkOpGlobalState* globalState() const {
-        return fState; 
+        return fState;
     }
 
     void debugValidate() const {
@@ -197,15 +171,6 @@ public:
         return fTail->pts()[SkPathOpsVerbToPoints(fTail->verb())];
     }
 
-    bool findCollapsed() {
-        SkASSERT(fCount > 0);
-        SkOpSegment* segment = &fHead;
-        do {
-            segment->findCollapsed();
-        } while ((segment = segment->next()));
-        return true;
-    }
-
     SkOpSpan* findSortableTop(SkOpContour* );
 
     SkOpSegment* first() {
@@ -237,28 +202,30 @@ public:
         return fXor;
     }
 
-    void markDone() {
+    void joinSegments() {
+        SkOpSegment* segment = &fHead;
+        SkOpSegment* next;
+        do {
+            next = segment->next();
+            segment->joinEnds(next ? next : &fHead);
+        } while ((segment = next));
+    }
+
+    void markAllDone() {
         SkOpSegment* segment = &fHead;
         do {
             segment->markAllDone();
         } while ((segment = segment->next()));
     }
 
-    bool missingCoincidence(SkOpCoincidence* coincidences, SkChunkAlloc* allocator) {
+    // Please keep this aligned with debugMissingCoincidence()
+    bool missingCoincidence() {
         SkASSERT(fCount > 0);
         SkOpSegment* segment = &fHead;
         bool result = false;
         do {
-            if (fState->angleCoincidence()) {
-#if DEBUG_ANGLE
-                segment->debugCheckAngleCoin();
-#endif
-            } else if (segment->missingCoincidence(coincidences, allocator)) {
+            if (segment->missingCoincidence()) {
                 result = true;
-    // FIXME: trying again loops forever in issue3651_6
-    // The continue below is speculative -- once there's an actual case that requires it,
-    // add the plumbing necessary to look for another missing coincidence in the same segment
-         //       continue; // try again in case another missing coincidence is further along
             }
             segment = segment->next();
         } while (segment);
@@ -276,12 +243,15 @@ public:
         return true;
     }
 
-    void moveNearby() {
+    bool moveNearby() {
         SkASSERT(fCount > 0);
         SkOpSegment* segment = &fHead;
         do {
-            segment->moveNearby();
+            if (!segment->moveNearby()) {
+                return false;
+            }
         } while ((segment = segment->next()));
+        return true;
     }
 
     SkOpContour* next() {
@@ -304,23 +274,7 @@ public:
         SkDEBUGCODE(fDebugIndent -= 2);
     }
 
-    void rayCheck(const SkOpRayHit& base, SkOpRayDir dir, SkOpRayHit** hits, SkChunkAlloc* );
-
-    void remove(SkOpContour* contour) {
-        if (contour == this) {
-            SkASSERT(fCount == 0);
-            return;
-        }
-        SkASSERT(contour->fNext == nullptr);
-        SkOpContour* prev = this;
-        SkOpContour* next;
-        while ((next = prev->next()) != contour) {
-            SkASSERT(next);
-            prev = next;
-        }
-        SkASSERT(prev);
-        prev->setNext(nullptr);
-    }
+    void rayCheck(const SkOpRayHit& base, SkOpRayDir dir, SkOpRayHit** hits, SkArenaAlloc*);
 
     void reset() {
         fTail = nullptr;
@@ -335,6 +289,9 @@ public:
     void resetReverse() {
         SkOpContour* next = this;
         do {
+            if (!next->count()) {
+                continue;
+            }
             next->fCcw = -1;
             next->fReverse = false;
         } while ((next = next->next()));
@@ -382,14 +339,13 @@ public:
         fXor = isXor;
     }
 
-    SkPath::Verb simplifyCubic(SkPoint pts[4]);
-
-    void sortAngles() {
+    bool sortAngles() {
         SkASSERT(fCount > 0);
         SkOpSegment* segment = &fHead;
         do {
-            segment->sortAngles();
+            FAIL_IF(!segment->sortAngles());
         } while ((segment = segment->next()));
+        return true;
     }
 
     const SkPoint& start() const {
@@ -412,9 +368,9 @@ public:
 
     void toReversePath(SkPathWriter* path) const;
     void toPath(SkPathWriter* path) const;
-    SkOpSegment* undoneSegment(SkOpSpanBase** startPtr, SkOpSpanBase** endPtr);
+    SkOpSpan* undoneSpan();
 
-private:
+protected:
     SkOpGlobalState* fState;
     SkOpSegment fHead;
     SkOpSegment* fTail;
@@ -433,6 +389,66 @@ private:
 };
 
 class SkOpContourHead : public SkOpContour {
+public:
+    SkOpContour* appendContour() {
+        SkOpContour* contour = SkOpTAllocator<SkOpContour>::New(this->globalState()->allocator());
+        contour->setNext(nullptr);
+        SkOpContour* prev = this;
+        SkOpContour* next;
+        while ((next = prev->next())) {
+            prev = next;
+        }
+        prev->setNext(contour);
+        return contour;
+    }
+
+    void joinAllSegments() {
+        SkOpContour* next = this;
+        do {
+            if (!next->count()) {
+                continue;
+            }
+            next->joinSegments();
+        } while ((next = next->next()));
+    }
+
+    void remove(SkOpContour* contour) {
+        if (contour == this) {
+            SkASSERT(this->count() == 0);
+            return;
+        }
+        SkASSERT(contour->next() == nullptr);
+        SkOpContour* prev = this;
+        SkOpContour* next;
+        while ((next = prev->next()) != contour) {
+            SkASSERT(next);
+            prev = next;
+        }
+        SkASSERT(prev);
+        prev->setNext(nullptr);
+    }
+
+};
+
+class SkOpContourBuilder {
+public:
+    SkOpContourBuilder(SkOpContour* contour)
+        : fContour(contour)
+        , fLastIsLine(false) {
+    }
+
+    void addConic(SkPoint pts[3], SkScalar weight);
+    void addCubic(SkPoint pts[4]);
+    void addCurve(SkPath::Verb verb, const SkPoint pts[4], SkScalar weight = 1);
+    void addLine(const SkPoint pts[2]);
+    void addQuad(SkPoint pts[3]);
+    void flush();
+    SkOpContour* contour() { return fContour; }
+    void setContour(SkOpContour* contour) { flush(); fContour = contour; }
+protected:
+    SkOpContour* fContour;
+    SkPoint fLastLine[2];
+    bool fLastIsLine;
 };
 
 #endif

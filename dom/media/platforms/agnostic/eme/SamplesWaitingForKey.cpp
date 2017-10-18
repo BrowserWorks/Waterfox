@@ -5,43 +5,52 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "SamplesWaitingForKey.h"
-#include "mozilla/CDMProxy.h"
-#include "mozilla/CDMCaps.h"
 #include "MediaData.h"
+#include "MediaEventSource.h"
+#include "mozilla/CDMCaps.h"
+#include "mozilla/CDMProxy.h"
+#include "mozilla/TaskQueue.h"
 
 namespace mozilla {
 
-SamplesWaitingForKey::SamplesWaitingForKey(MediaDataDecoder* aDecoder,
-                                           TaskQueue* aTaskQueue,
-                                           CDMProxy* aProxy)
+SamplesWaitingForKey::SamplesWaitingForKey(
+  CDMProxy* aProxy, TrackInfo::TrackType aType,
+  MediaEventProducer<TrackInfo::TrackType>* aOnWaitingForKey)
   : mMutex("SamplesWaitingForKey")
-  , mDecoder(aDecoder)
-  , mTaskQueue(aTaskQueue)
   , mProxy(aProxy)
+  , mType(aType)
+  , mOnWaitingForKeyEvent(aOnWaitingForKey)
 {
 }
 
 SamplesWaitingForKey::~SamplesWaitingForKey()
 {
+  Flush();
 }
 
-bool
+RefPtr<SamplesWaitingForKey::WaitForKeyPromise>
 SamplesWaitingForKey::WaitIfKeyNotUsable(MediaRawData* aSample)
 {
   if (!aSample || !aSample->mCrypto.mValid || !mProxy) {
-    return false;
+    return WaitForKeyPromise::CreateAndResolve(aSample, __func__);
   }
   CDMCaps::AutoLock caps(mProxy->Capabilites());
   const auto& keyid = aSample->mCrypto.mKeyId;
-  if (!caps.IsKeyUsable(keyid)) {
-    {
-      MutexAutoLock lock(mMutex);
-      mSamples.AppendElement(aSample);
-    }
-    caps.NotifyWhenKeyIdUsable(aSample->mCrypto.mKeyId, this);
-    return true;
+  if (caps.IsKeyUsable(keyid)) {
+    return WaitForKeyPromise::CreateAndResolve(aSample, __func__);
   }
-  return false;
+  SampleEntry entry;
+  entry.mSample = aSample;
+  RefPtr<WaitForKeyPromise> p = entry.mPromise.Ensure(__func__);
+  {
+    MutexAutoLock lock(mMutex);
+    mSamples.AppendElement(Move(entry));
+  }
+  if (mOnWaitingForKeyEvent) {
+    mOnWaitingForKeyEvent->Notify(mType);
+  }
+  caps.NotifyWhenKeyIdUsable(aSample->mCrypto.mKeyId, this);
+  return p;
 }
 
 void
@@ -50,13 +59,10 @@ SamplesWaitingForKey::NotifyUsable(const CencKeyId& aKeyId)
   MutexAutoLock lock(mMutex);
   size_t i = 0;
   while (i < mSamples.Length()) {
-    if (aKeyId == mSamples[i]->mCrypto.mKeyId) {
-      RefPtr<nsIRunnable> task;
-      task = NewRunnableMethod<RefPtr<MediaRawData>>(mDecoder,
-                                                     &MediaDataDecoder::Input,
-                                                     RefPtr<MediaRawData>(mSamples[i]));
+    auto& entry = mSamples[i];
+    if (aKeyId == entry.mSample->mCrypto.mKeyId) {
+      entry.mPromise.Resolve(entry.mSample, __func__);
       mSamples.RemoveElementAt(i);
-      mTaskQueue->Dispatch(task.forget());
     } else {
       i++;
     }
@@ -67,16 +73,9 @@ void
 SamplesWaitingForKey::Flush()
 {
   MutexAutoLock lock(mMutex);
-  mSamples.Clear();
-}
-
-void
-SamplesWaitingForKey::BreakCycles()
-{
-  MutexAutoLock lock(mMutex);
-  mDecoder = nullptr;
-  mTaskQueue = nullptr;
-  mProxy = nullptr;
+  for (auto& sample : mSamples) {
+    sample.mPromise.Reject(true, __func__);
+  }
   mSamples.Clear();
 }
 

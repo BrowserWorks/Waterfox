@@ -13,8 +13,10 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Animation.h"
+#include "mozilla/AnimationTarget.h"
 #include "mozilla/Attributes.h" // For MOZ_NON_OWNING_REF
 #include "mozilla/Assertions.h"
+#include "mozilla/TimingParams.h"
 #include "nsContentUtils.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCycleCollectionParticipant.h"
@@ -23,6 +25,7 @@ class nsIFrame;
 class nsPresContext;
 
 namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
 
 namespace dom {
 class Element;
@@ -48,6 +51,26 @@ public:
     RemoveAllElementCollections();
 
     mPresContext = nullptr;
+  }
+
+  /**
+   * Stop animations on the element. This method takes the real element
+   * rather than the element for the generated content for animations on
+   * ::before and ::after.
+   */
+  void StopAnimationsForElement(dom::Element* aElement,
+                                CSSPseudoElementType aPseudoType)
+  {
+    MOZ_ASSERT(aElement);
+    AnimationCollection<AnimationType>* collection =
+      AnimationCollection<AnimationType>::GetAnimationCollection(aElement,
+                                                                 aPseudoType);
+    if (!collection) {
+      return;
+    }
+
+    nsAutoAnimationMutationBatch mb(aElement->OwnerDoc());
+    collection->Destroy();
   }
 
 protected:
@@ -89,50 +112,48 @@ protected:
 class OwningElementRef final
 {
 public:
-  OwningElementRef()
-    : mElement(nullptr)
-    , mPseudoType(CSSPseudoElementType::NotPseudo)
+  OwningElementRef() = default;
+
+  explicit OwningElementRef(const NonOwningAnimationTarget& aTarget)
+    : mTarget(aTarget)
   { }
 
   OwningElementRef(dom::Element& aElement,
                    CSSPseudoElementType aPseudoType)
-    : mElement(&aElement)
-    , mPseudoType(aPseudoType)
+    : mTarget(&aElement, aPseudoType)
   { }
 
   bool Equals(const OwningElementRef& aOther) const
   {
-    return mElement == aOther.mElement &&
-           mPseudoType == aOther.mPseudoType;
+    return mTarget == aOther.mTarget;
   }
 
   bool LessThan(const OwningElementRef& aOther) const
   {
-    MOZ_ASSERT(mElement && aOther.mElement,
+    MOZ_ASSERT(mTarget.mElement && aOther.mTarget.mElement,
                "Elements to compare should not be null");
 
-    if (mElement != aOther.mElement) {
-      return nsContentUtils::PositionIsBefore(mElement, aOther.mElement);
+    if (mTarget.mElement != aOther.mTarget.mElement) {
+      return nsContentUtils::PositionIsBefore(mTarget.mElement,
+                                              aOther.mTarget.mElement);
     }
 
-    return mPseudoType == CSSPseudoElementType::NotPseudo ||
-          (mPseudoType == CSSPseudoElementType::before &&
-           aOther.mPseudoType == CSSPseudoElementType::after);
+    return mTarget.mPseudoType == CSSPseudoElementType::NotPseudo ||
+          (mTarget.mPseudoType == CSSPseudoElementType::before &&
+           aOther.mTarget.mPseudoType == CSSPseudoElementType::after);
   }
 
-  bool IsSet() const { return !!mElement; }
+  bool IsSet() const { return !!mTarget.mElement; }
 
   void GetElement(dom::Element*& aElement,
-                  CSSPseudoElementType& aPseudoType) const {
-    aElement = mElement;
-    aPseudoType = mPseudoType;
+                  CSSPseudoElementType& aPseudoType) const
+  {
+    aElement = mTarget.mElement;
+    aPseudoType = mTarget.mPseudoType;
   }
 
-  nsPresContext* GetRenderedPresContext() const;
-
 private:
-  dom::Element* MOZ_NON_OWNING_REF mElement;
-  CSSPseudoElementType             mPseudoType;
+  NonOwningAnimationTarget mTarget;
 };
 
 template <class EventInfo>
@@ -249,6 +270,45 @@ ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
                             uint32_t aFlags = 0)
 {
   aField.Traverse(&aCallback, aName);
+}
+
+// Return the TransitionPhase or AnimationPhase to use when the animation
+// doesn't have a target effect.
+template <typename PhaseType>
+PhaseType GetAnimationPhaseWithoutEffect(const dom::Animation& aAnimation)
+{
+  MOZ_ASSERT(!aAnimation.GetEffect(),
+             "Should only be called when we do not have an effect");
+
+  Nullable<TimeDuration> currentTime = aAnimation.GetCurrentTime();
+  if (currentTime.IsNull()) {
+    return PhaseType::Idle;
+  }
+
+  // If we don't have a target effect, the duration will be zero so the phase is
+  // 'before' if the current time is less than zero.
+  return currentTime.Value() < TimeDuration()
+         ? PhaseType::Before
+         : PhaseType::After;
+};
+
+inline TimingParams
+TimingParamsFromCSSParams(float aDuration, float aDelay,
+                          float aIterationCount,
+                          dom::PlaybackDirection aDirection,
+                          dom::FillMode aFillMode)
+{
+  MOZ_ASSERT(aIterationCount >= 0.0 && !IsNaN(aIterationCount),
+             "aIterations should be nonnegative & finite, as ensured by "
+             "CSSParser");
+
+  return TimingParams {
+    aDuration,
+    aDelay,
+    aIterationCount,
+    aDirection,
+    aFillMode
+  };
 }
 
 } // namespace mozilla

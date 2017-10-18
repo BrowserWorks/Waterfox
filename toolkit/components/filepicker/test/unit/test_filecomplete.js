@@ -19,7 +19,7 @@ dir.append("test_dir");
 dir.create(dir.DIRECTORY_TYPE, -1);
 
 var gListener = {
-  onSearchResult: function(aSearch, aResult) {
+  onSearchResult(aSearch, aResult) {
     // Check that we got same search string back.
     do_check_eq(aResult.searchString, "test");
     // Check that the search succeeded.
@@ -37,8 +37,7 @@ var gListener = {
   }
 };
 
-function run_test()
-{
+function run_test() {
   Components.classes["@mozilla.org/autocomplete/search;1?name=file"]
             .getService(Components.interfaces.nsIAutoCompleteSearch)
             .startSearch("test", path, null, gListener);

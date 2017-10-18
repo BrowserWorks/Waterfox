@@ -59,7 +59,7 @@ HierarchicalClustering.prototype = {
         // a unique key for this cluster, stays constant unless merged itself
         key: index,
         // index of cluster in clusters array, can change during any merge
-        index: index,
+        index,
         // how many clusters have been merged into this one
         size: 1
       };
@@ -84,8 +84,7 @@ HierarchicalClustering.prototype = {
     }
 
     // merge the next two closest clusters until none of them are close enough
-    let next = null, i = 0;
-    for (; next = this.closestClusters(clusters, distances, neighbors); i++) {
+    for (let next = null, i = 0; (next = this.closestClusters(clusters, distances, neighbors)); i++) {
       if (snapshotCallback && (i % snapshotGap) == 0) {
         snapshotCallback(clusters);
       }

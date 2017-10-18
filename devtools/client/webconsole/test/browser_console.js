@@ -17,7 +17,7 @@ const TEST_XHR_ERROR_URI = `http://example.com/404.html?${Date.now()}`;
 const TEST_IMAGE = "http://example.com/browser/devtools/client/webconsole/" +
                    "test/test-image.png";
 
-"use strict";
+const {ObjectClient} = require("devtools/shared/client/main");
 
 add_task(function* () {
   yield loadTab(TEST_URI);
@@ -31,11 +31,11 @@ add_task(function* () {
 
   hud = yield opened;
   ok(hud, "browser console opened");
-
-  yield consoleOpened(hud);
+  yield testMessages(hud);
+  yield testCPOWInspection(hud);
 });
 
-function consoleOpened(hud) {
+function testMessages(hud) {
   hud.jsterm.clearOutput(true);
 
   expectUncaughtException();
@@ -50,11 +50,28 @@ function consoleOpened(hud) {
   // Use another js script to not depend on the test file line numbers.
   Services.scriptloader.loadSubScript(TEST_FILE, hud.iframeWindow);
 
+  // Bug 1348885: test that error from nuked globals do not throw
+  let sandbox = new Cu.Sandbox(null, {
+    wantComponents: false,
+    wantGlobalProperties: ["URL", "URLSearchParams"],
+  });
+  let error = Cu.evalInSandbox(`
+    new Error("1348885");
+  `, sandbox);
+  Cu.reportError(error);
+  Cu.nukeSandbox(sandbox);
+
   // Add a message from a content window.
   content.console.log("bug587757b");
 
   // Test eval.
   hud.jsterm.execute("document.location.href");
+
+  // Test eval frame script
+  hud.jsterm.execute(`
+    gBrowser.selectedBrowser.messageManager.loadFrameScript('data:application/javascript,console.log("framescript-message")', false);
+    "framescript-eval";
+  `);
 
   // Check for network requests.
   let xhr = new XMLHttpRequest();
@@ -100,6 +117,12 @@ function consoleOpened(hud) {
         ]
       },
       {
+        name: "Error from nuked global works",
+        text: "1348885",
+        category: CATEGORY_JS,
+        severity: SEVERITY_ERROR,
+      },
+      {
         name: "content window console.log() is displayed",
         text: "bug587757b",
         category: CATEGORY_WEBDEV,
@@ -109,6 +132,18 @@ function consoleOpened(hud) {
         name: "jsterm eval result",
         text: "browser.xul",
         category: CATEGORY_OUTPUT,
+        severity: SEVERITY_LOG,
+      },
+      {
+        name: "jsterm eval result 2",
+        text: "framescript-eval",
+        category: CATEGORY_OUTPUT,
+        severity: SEVERITY_LOG,
+      },
+      {
+        name: "frame script message",
+        text: "framescript-message",
+        category: CATEGORY_WEBDEV,
         severity: SEVERITY_LOG,
       },
       {
@@ -142,6 +177,28 @@ function consoleOpened(hud) {
   });
 }
 
+function* testCPOWInspection(hud) {
+  // Directly request evaluation to get an actor for the selected browser.
+  // Note that this doesn't actually render a message, and instead allows us
+  // us to assert that inspecting an object doesn't throw in the server.
+  // This would be done in a mochitest-chrome suite, but that doesn't run in
+  // e10s, so it's harder to get ahold of a CPOW.
+  let cpowEval = yield hud.jsterm.requestEvaluation("gBrowser.selectedBrowser");
+  info("Creating an ObjectClient with: " + cpowEval.result.actor);
+
+  let objectClient = new ObjectClient(hud.jsterm.hud.proxy.client, {
+    actor: cpowEval.result.actor,
+  });
+
+  // Before the fix for Bug 1382833, this wouldn't resolve due to a CPOW error
+  // in the ObjectActor.
+  let prototypeAndProperties = yield objectClient.getPrototypeAndProperties();
+
+  // Just a sanity check to make sure a valid packet came back
+  is(prototypeAndProperties.prototype.class, "XBL prototype JSClass",
+    "Looks like a valid response");
+}
+
 function waitForConsole() {
   let deferred = promise.defer();
 
@@ -154,7 +211,7 @@ function waitForConsole() {
     is(aSubject.data, hud.hudId, "notification hudId is correct");
 
     executeSoon(() => deferred.resolve(hud));
-  }, "web-console-created", false);
+  }, "web-console-created");
 
   return deferred.promise;
 }

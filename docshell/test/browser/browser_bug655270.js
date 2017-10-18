@@ -17,7 +17,7 @@ function test() {
 
   waitForExplicitFinish();
 
-  let tab = gBrowser.addTab(origURL);
+  let tab = BrowserTestUtils.addTab(gBrowser, origURL);
 
   // The page at origURL has a <link rel='icon'>, so we should get a call into
   // our observer below when it loads.  Once we verify that we have the right
@@ -31,7 +31,11 @@ function test() {
 
       if (aURI.spec == origURL) {
         is(aValue, faviconURL, 'FaviconURL for original URI');
-        tab.linkedBrowser.contentWindow.history.pushState('', '', '?new_page');
+        // Ignore the promise returned here and wait for the next
+        // onPageChanged notification.
+        ContentTask.spawn(tab.linkedBrowser, null, function() {
+          content.history.pushState('', '', '?new_page');
+        });
       }
 
       if (aURI.spec == newURL) {
@@ -52,5 +56,5 @@ function test() {
     QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver])
   };
 
-  PlacesUtils.history.addObserver(observer, false);
+  PlacesUtils.history.addObserver(observer);
 }

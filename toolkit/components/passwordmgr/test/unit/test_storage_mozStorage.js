@@ -6,14 +6,15 @@
 
 const ENCTYPE_BASE64 = 0;
 const ENCTYPE_SDR = 1;
+const PERMISSION_SAVE_LOGINS = "login-saving";
 
 // Current schema version used by storage-mozStorage.js. This will need to be
 // kept in sync with the version there (or else the tests fail).
-const CURRENT_SCHEMA = 5;
+const CURRENT_SCHEMA = 6;
 
-function* copyFile(aLeafName)
+async function copyFile(aLeafName)
 {
-  yield OS.File.copy(OS.Path.join(do_get_file("data").path, aLeafName),
+  await OS.File.copy(OS.Path.join(do_get_file("data").path, aLeafName),
                      OS.Path.join(OS.Constants.Path.profileDir, aLeafName));
 }
 
@@ -61,11 +62,35 @@ function reloadStorage(aInputPathName, aInputFileName)
 function checkStorageData(storage, ref_disabledHosts, ref_logins)
 {
   LoginTestUtils.assertLoginListsEqual(storage.getAllLogins(), ref_logins);
-  LoginTestUtils.assertDisabledHostsEqual(storage.getAllDisabledHosts(),
+  LoginTestUtils.assertDisabledHostsEqual(getAllDisabledHostsFromPermissionManager(),
                                           ref_disabledHosts);
 }
 
-add_task(function* test_execute()
+function getAllDisabledHostsFromPermissionManager() {
+  let disabledHosts = [];
+  let enumerator = Services.perms.enumerator;
+
+  while (enumerator.hasMoreElements()) {
+    let perm = enumerator.getNext();
+    if (perm.type == PERMISSION_SAVE_LOGINS && perm.capability == Services.perms.DENY_ACTION) {
+      disabledHosts.push(perm.principal.URI.prePath);
+    }
+  }
+
+  return disabledHosts;
+}
+
+function setLoginSavingEnabled(origin, enabled) {
+  let uri = Services.io.newURI(origin);
+
+  if (enabled) {
+    Services.perms.remove(uri, PERMISSION_SAVE_LOGINS);
+  } else {
+    Services.perms.add(uri, PERMISSION_SAVE_LOGINS, Services.perms.DENY_ACTION);
+  }
+}
+
+add_task(async function test_execute()
 {
 
 const OUTDIR = OS.Constants.Path.profileDir;
@@ -87,6 +112,17 @@ function getEncTypeForID(conn, id) {
     var encType = stmt.row.encType;
     stmt.finalize();
     return encType;
+}
+
+function getAllDisabledHostsFromMozStorage(conn) {
+    let disabledHosts = [];
+    let stmt = conn.createStatement("SELECT hostname from moz_disabledHosts");
+
+    while (stmt.executeStep()) {
+      disabledHosts.push(stmt.row.hostname);
+    }
+
+    return disabledHosts;
 }
 
 var storage;
@@ -120,15 +156,16 @@ testuser5.init("http://test.gov", "http://test.gov", null,
 
 /* ========== 1 ========== */
 testnum++;
-testdesc = "Test downgrade from v999 storage"
+testdesc = "Test downgrade from v999 storage";
 
-yield* copyFile("signons-v999.sqlite");
+await copyFile("signons-v999.sqlite");
 // Verify the schema version in the test file.
 dbConnection = openDB("signons-v999.sqlite");
 do_check_eq(999, dbConnection.schemaVersion);
 dbConnection.close();
 
 storage = reloadStorage(OUTDIR, "signons-v999.sqlite");
+setLoginSavingEnabled("https://disabled.net", false);
 checkStorageData(storage, ["https://disabled.net"], [testuser1]);
 
 // Check to make sure we downgraded the schema version.
@@ -140,30 +177,30 @@ deleteFile(OUTDIR, "signons-v999.sqlite");
 
 /* ========== 2 ========== */
 testnum++;
-testdesc = "Test downgrade from incompat v999 storage"
+testdesc = "Test downgrade from incompat v999 storage";
 // This file has a testuser999/testpass999, but is missing an expected column
 
 var origFile = OS.Path.join(OUTDIR, "signons-v999-2.sqlite");
 var failFile = OS.Path.join(OUTDIR, "signons-v999-2.sqlite.corrupt");
 
 // Make sure we always start clean in a clean state.
-yield* copyFile("signons-v999-2.sqlite");
-yield OS.File.remove(failFile);
+await copyFile("signons-v999-2.sqlite");
+await OS.File.remove(failFile);
 
 Assert.throws(() => reloadStorage(OUTDIR, "signons-v999-2.sqlite"),
               /Initialization failed/);
 
 // Check to ensure the DB file was renamed to .corrupt.
-do_check_false(yield OS.File.exists(origFile));
-do_check_true(yield OS.File.exists(failFile));
+do_check_false(await OS.File.exists(origFile));
+do_check_true(await OS.File.exists(failFile));
 
-yield OS.File.remove(failFile);
+await OS.File.remove(failFile);
 
 /* ========== 3 ========== */
 testnum++;
-testdesc = "Test upgrade from v1->v2 storage"
+testdesc = "Test upgrade from v1->v2 storage";
 
-yield* copyFile("signons-v1.sqlite");
+await copyFile("signons-v1.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v1.sqlite");
 do_check_eq(1, dbConnection.schemaVersion);
@@ -190,7 +227,7 @@ testdesc = "Test upgrade v2->v1 storage";
 // are upgrading it again. Any logins added by the v1 code must be properly
 // upgraded.
 
-yield* copyFile("signons-v1v2.sqlite");
+await copyFile("signons-v1v2.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v1v2.sqlite");
 do_check_eq(1, dbConnection.schemaVersion);
@@ -220,9 +257,9 @@ deleteFile(OUTDIR, "signons-v1v2.sqlite");
 
 /* ========== 5 ========== */
 testnum++;
-testdesc = "Test upgrade from v2->v3 storage"
+testdesc = "Test upgrade from v2->v3 storage";
 
-yield* copyFile("signons-v2.sqlite");
+await copyFile("signons-v2.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v2.sqlite");
 do_check_eq(2, dbConnection.schemaVersion);
@@ -250,7 +287,7 @@ testdesc = "Test upgrade v3->v2 storage";
 // are upgrading it again. Any logins added by the v2 code must be properly
 // upgraded.
 
-yield* copyFile("signons-v2v3.sqlite");
+await copyFile("signons-v2v3.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v2v3.sqlite");
 do_check_eq(2, dbConnection.schemaVersion);
@@ -280,15 +317,18 @@ deleteFile(OUTDIR, "signons-v2v3.sqlite");
 
 /* ========== 7 ========== */
 testnum++;
-testdesc = "Test upgrade from v3->v4 storage"
+testdesc = "Test upgrade from v3->v4 storage";
 
-yield* copyFile("signons-v3.sqlite");
+await copyFile("signons-v3.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v3.sqlite");
 do_check_eq(3, dbConnection.schemaVersion);
 
 storage = reloadStorage(OUTDIR, "signons-v3.sqlite");
 do_check_eq(CURRENT_SCHEMA, dbConnection.schemaVersion);
+
+// Remove old entry from permission manager.
+setLoginSavingEnabled("https://disabled.net", true);
 
 // Check that timestamps and counts were initialized correctly
 checkStorageData(storage, [], [testuser1, testuser2]);
@@ -304,9 +344,9 @@ for (var i = 0; i < 2; i++) {
 
 /* ========== 8 ========== */
 testnum++;
-testdesc = "Test upgrade from v3->v4->v3 storage"
+testdesc = "Test upgrade from v3->v4->v3 storage";
 
-yield* copyFile("signons-v3v4.sqlite");
+await copyFile("signons-v3v4.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v3v4.sqlite");
 do_check_eq(3, dbConnection.schemaVersion);
@@ -344,9 +384,9 @@ LoginTestUtils.assertTimeIsAboutNow(t2.timePasswordChanged);
 
 /* ========== 9 ========== */
 testnum++;
-testdesc = "Test upgrade from v4 storage"
+testdesc = "Test upgrade from v4 storage";
 
-yield* copyFile("signons-v4.sqlite");
+await copyFile("signons-v4.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v4.sqlite");
 do_check_eq(4, dbConnection.schemaVersion);
@@ -359,9 +399,9 @@ do_check_true(dbConnection.tableExists("moz_deleted_logins"));
 
 /* ========== 10 ========== */
 testnum++;
-testdesc = "Test upgrade from v4->v5->v4 storage"
+testdesc = "Test upgrade from v4->v5->v4 storage";
 
-yield copyFile("signons-v4v5.sqlite");
+await copyFile("signons-v4v5.sqlite");
 // Sanity check the test file.
 dbConnection = openDB("signons-v4v5.sqlite");
 do_check_eq(4, dbConnection.schemaVersion);
@@ -371,10 +411,47 @@ storage = reloadStorage(OUTDIR, "signons-v4v5.sqlite");
 do_check_eq(CURRENT_SCHEMA, dbConnection.schemaVersion);
 do_check_true(dbConnection.tableExists("moz_deleted_logins"));
 
-
 /* ========== 11 ========== */
 testnum++;
-testdesc = "Create nsILoginInfo instances for testing with"
+testdesc = "Test upgrade from v5->v6 storage";
+
+await copyFile("signons-v5v6.sqlite");
+
+// Sanity check the test file.
+dbConnection = openDB("signons-v5v6.sqlite");
+do_check_eq(5, dbConnection.schemaVersion);
+do_check_true(dbConnection.tableExists("moz_disabledHosts"));
+
+// Initial disabled hosts inside signons-v5v6.sqlite
+var disabledHosts = [
+  "http://disabled1.example.com",
+  "http://大.net",
+  "http://xn--19g.com"
+];
+
+LoginTestUtils.assertDisabledHostsEqual(disabledHosts, getAllDisabledHostsFromMozStorage(dbConnection));
+
+// Reload storage
+storage = reloadStorage(OUTDIR, "signons-v5v6.sqlite");
+do_check_eq(CURRENT_SCHEMA, dbConnection.schemaVersion);
+
+// moz_disabledHosts should now be empty after migration.
+LoginTestUtils.assertDisabledHostsEqual([], getAllDisabledHostsFromMozStorage(dbConnection));
+
+// Get all the other hosts currently saved in the permission manager.
+let hostsInPermissionManager = getAllDisabledHostsFromPermissionManager();
+
+// All disabledHosts should have migrated to the permission manager
+LoginTestUtils.assertDisabledHostsEqual(disabledHosts, hostsInPermissionManager);
+
+// Remove all disabled hosts from the permission manager before test ends
+for (let host of disabledHosts) {
+  setLoginSavingEnabled(host, true);
+}
+
+/* ========== 12 ========== */
+testnum++;
+testdesc = "Create nsILoginInfo instances for testing with";
 
 testuser1 = new nsLoginInfo;
 testuser1.init("http://dummyhost.mozilla.org", "", null,
@@ -387,14 +464,14 @@ testuser1.init("http://dummyhost.mozilla.org", "", null,
  * file, then upon next use create a new database file.
  */
 
-/* ========== 12 ========== */
+/* ========== 13 ========== */
 testnum++;
-testdesc = "Corrupt database and backup"
+testdesc = "Corrupt database and backup";
 
 const filename = "signons-c.sqlite";
 const filepath = OS.Path.join(OS.Constants.Path.profileDir, filename);
 
-yield OS.File.copy(do_get_file("data/corruptDB.sqlite").path, filepath);
+await OS.File.copy(do_get_file("data/corruptDB.sqlite").path, filepath);
 
 // will init mozStorage module with corrupt database, init should fail
 Assert.throws(
@@ -402,10 +479,10 @@ Assert.throws(
   /Initialization failed/);
 
 // check that the backup file exists
-do_check_true(yield OS.File.exists(filepath + ".corrupt"));
+do_check_true(await OS.File.exists(filepath + ".corrupt"));
 
 // check that the original corrupt file has been deleted
-do_check_false(yield OS.File.exists(filepath));
+do_check_false(await OS.File.exists(filepath));
 
 // initialize the storage module again
 storage = reloadStorage(OS.Constants.Path.profileDir, filename);

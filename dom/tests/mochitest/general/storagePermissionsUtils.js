@@ -26,9 +26,7 @@ if (inFrame) {
 }
 
 function setCookieBehavior(behavior) {
-    return new Promise((resolve, reject) => {
-        SpecialPowers.pushPrefEnv({"set": [[kPrefName, behavior]]}, resolve);
-    });
+  return SpecialPowers.pushPrefEnv({"set": [[kPrefName, behavior]]});
 }
 
 function runIFrame(url) {
@@ -42,7 +40,7 @@ function runIFrame(url) {
 
       ok(!e.data.match(/^FAILURE/), e.data + " (IFRAME = " + url + ")");
     }
-    window.addEventListener('message', onMessage, false);
+    window.addEventListener('message', onMessage);
 
     document.querySelector('iframe').src = url;
   });
@@ -231,7 +229,15 @@ function task(fn) {
     it.value.then(next_step, (e) => next_step(null, e));
   }
 
-  next_step();
+  if (!gen.then) {
+    next_step();
+  } else {
+    gen.then(finishTest, e => {
+      ok(false, "An error was thrown while stepping: " + e);
+      ok(false, "Stack: " + e.stack);
+      finishTest();
+    });
+  }
 }
 
 var thirdparty = "https://example.com/tests/dom/tests/mochitest/general/";

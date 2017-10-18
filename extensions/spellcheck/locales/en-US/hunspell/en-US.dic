@@ -1,4 +1,4 @@
-52342
+52358
 0/nm
 0th/pt
 1/n1
@@ -3028,6 +3028,7 @@ Cyrille/M
 Cyrillic/M
 Cyrus/M
 Czech/M
+Czechia/M
 Czechoslovak
 Czechoslovakia/M
 Czechoslovakian/SM
@@ -13747,6 +13748,7 @@ adolescence/SM
 adolescent/SM
 adopt/AGVDS
 adoptable
+adoptee/MS
 adopter/MS
 adoption/SM
 adorableness/M
@@ -14447,6 +14449,9 @@ analyze/ADSG
 analyzer/SM
 anapest/SM
 anapestic/MS
+anaphylactic
+anaphylaxes
+anaphylaxis
 anarchic
 anarchically
 anarchism/M
@@ -14498,7 +14503,7 @@ anesthesiologist/SM
 anesthesiology/M
 anesthetic/SM
 anesthetist/MS
-anesthetization/M
+anesthetization/SM
 anesthetize/GDS
 aneurysm/SM
 anew
@@ -17864,7 +17869,6 @@ burnous/MS
 burnout/MS
 burnt
 burp/MDGS
-burqa/SM
 burr/MDGS
 burrito/MS
 burro/SM
@@ -18235,6 +18239,8 @@ canoeist/SM
 canola/M
 canon/MS
 canonical/Y
+canonicalization/MS
+canonicalize/GDS
 canonization/SM
 canonize/DSG
 canoodle/DSG
@@ -20015,6 +20021,7 @@ combined/U
 combiner/MS
 combings/M
 combo/SM
+combust/DS
 combustibility/M
 combustible/MS
 combustion/M
@@ -22151,6 +22158,8 @@ decrepit
 decrepitude/M
 decriminalization/M
 decry/GDS
+decrypt/GDS
+decryptable
 decryption
 dedicate/AGDS
 dedication/SM
@@ -23895,8 +23904,12 @@ dyslexic/SM
 dyspepsia/M
 dyspeptic/MS
 dysphagia
+dysphoria
+dysphoric
 dysprosium/M
 dystonia
+dystopia/S
+dystopian/S
 dz
 débridement
 débutante/SM
@@ -26857,6 +26870,7 @@ foulmouthed
 foulness/M
 found/FSDG
 foundation/SM
+foundational
 founded/U
 founder/GMDS
 foundling/SM
@@ -29423,7 +29437,7 @@ hightail/DSG
 highway/MS
 highwayman/M
 highwaymen
-hijab/S
+hijab/SM
 hijack/SJZGMDR
 hijacker/M
 hijacking/M
@@ -31455,7 +31469,7 @@ inventiveness/M
 inventor/MS
 inventory/DSMG
 inverse/SMY
-invert/SMDG
+invert/SMDGR
 invest/ASDGL
 investigate/GNVDSX
 investigation/M
@@ -32530,7 +32544,6 @@ larynges
 laryngitis/M
 larynx/M
 lasagna/MS
-lasagne/MS
 lascivious/YP
 lasciviousness/M
 lase/ZGDRS
@@ -32677,6 +32690,7 @@ leaper/M
 leapfrog/MS
 leapfrogged
 leapfrogging
+leapt
 learn/AUGDS
 learnedly
 learner/MS
@@ -34125,11 +34139,9 @@ materiel/M
 maternal/Y
 maternity/M
 matey/S
-math/M
 mathematical/Y
 mathematician/SM
 mathematics/M
-maths
 matinee/SM
 mating/M
 matins/M
@@ -35611,7 +35623,7 @@ multivariate
 multiverse/SM
 multivitamin/MS
 multiyear
-mum/SM
+mum
 mumble/MZGDRS
 mumbler/M
 mumbletypeg/M
@@ -37398,7 +37410,7 @@ ostler/S
 ostracism/M
 ostracize/GDS
 ostrich/MS
-other/SP
+other/MSP
 otherwise
 otherworldly
 otiose
@@ -37483,6 +37495,7 @@ outlast/DSG
 outlaw/SGMD
 outlay/SGM
 outlet/SM
+outlier/MS
 outline/MGDS
 outlive/GDS
 outlook/MS
@@ -44829,7 +44842,6 @@ skier/M
 skiff/SM
 skiffle
 skiing/M
-skilfully
 skill's
 skill/CSD
 skilled/U
@@ -48195,6 +48207,8 @@ thankfulness/M
 thankless/PY
 thanklessness/M
 thanksgiving/SM
+that'd
+that'll
 that/M
 thatch/MDRSZG
 thatcher/M
@@ -48553,6 +48567,7 @@ timescale/S
 timeserver/SM
 timeserving/M
 timeshare/S
+timestamp/SMD
 timetable/DSMG
 timeworn
 timezone
@@ -50690,6 +50705,7 @@ vicissitude/SM
 victim/MS
 victimization/M
 victimize/GDS
+victimless
 victor/MS
 victorious/Y
 victory/SM

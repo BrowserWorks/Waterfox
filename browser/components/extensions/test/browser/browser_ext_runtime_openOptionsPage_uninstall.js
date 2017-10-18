@@ -2,9 +2,9 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-function* loadExtension(options) {
+async function loadExtension(options) {
   let extension = ExtensionTestUtils.loadExtension({
-    useAddonManager: true,
+    useAddonManager: "temporary",
 
     manifest: Object.assign({
       "permissions": ["tabs"],
@@ -32,22 +32,23 @@ function* loadExtension(options) {
     background: options.background,
   });
 
-  yield extension.startup();
+  await extension.startup();
 
   return extension;
 }
 
-add_task(function* test_inline_options_uninstall() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/");
+add_task(async function test_inline_options_uninstall() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/");
 
-  let extension = yield loadExtension({
+  let extension = await loadExtension({
     manifest: {
+      applications: {gecko: {id: "inline_options_uninstall@tests.mozilla.org"}},
       "options_ui": {
         "page": "options.html",
       },
     },
 
-    background: function() {
+    background: async function() {
       let _optionsPromise;
       let awaitOptions = () => {
         browser.test.assertFalse(_optionsPromise, "Should not be awaiting options already");
@@ -68,34 +69,33 @@ add_task(function* test_inline_options_uninstall() {
         }
       });
 
-      let firstTab;
-      browser.tabs.query({currentWindow: true, active: true}).then(tabs => {
-        firstTab = tabs[0].id;
+      try {
+        let [firstTab] = await browser.tabs.query({currentWindow: true, active: true});
 
         browser.test.log("Open options page. Expect fresh load.");
-        return Promise.all([
+        let [, tab] = await Promise.all([
           browser.runtime.openOptionsPage(),
           awaitOptions(),
         ]);
-      }).then(([, tab]) => {
+
         browser.test.assertEq("about:addons", tab.url, "Tab contains AddonManager");
         browser.test.assertTrue(tab.active, "Tab is active");
-        browser.test.assertTrue(tab.id != firstTab, "Tab is a new tab");
+        browser.test.assertTrue(tab.id != firstTab.id, "Tab is a new tab");
 
         browser.test.sendMessage("options-ui-open");
-      }).catch(error => {
+      } catch (error) {
         browser.test.fail(`Error: ${error} :: ${error.stack}`);
-      });
+      }
     },
   });
 
-  yield extension.awaitMessage("options-ui-open");
-  yield extension.unload();
+  await extension.awaitMessage("options-ui-open");
+  await extension.unload();
 
   is(gBrowser.selectedBrowser.currentURI.spec, "about:addons",
      "Add-on manager tab should still be open");
 
-  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Interfaces
 
-const nsIAccessibleRetrieval = Components.interfaces.nsIAccessibleRetrieval;
+const nsIAccessibilityService = Components.interfaces.nsIAccessibilityService;
 
 const nsIAccessibleEvent = Components.interfaces.nsIAccessibleEvent;
 const nsIAccessibleStateChangeEvent =
@@ -94,25 +94,25 @@ const MAX_TRIM_LENGTH = 100;
 Components.utils.import('resource://gre/modules/Services.jsm');
 
 /**
- * nsIAccessibleRetrieval service.
+ * nsIAccessibilityService service.
  */
-var gAccRetrieval = Components.classes["@mozilla.org/accessibleRetrieval;1"].
-  getService(nsIAccessibleRetrieval);
+var gAccService = Components.classes["@mozilla.org/accessibilityService;1"].
+  getService(nsIAccessibilityService);
 
 /**
  * Enable/disable logging.
  */
 function enableLogging(aModules)
 {
-  gAccRetrieval.setLogging(aModules);
+  gAccService.setLogging(aModules);
 }
 function disableLogging()
 {
-  gAccRetrieval.setLogging("");
+  gAccService.setLogging("");
 }
 function isLogged(aModule)
 {
-  return gAccRetrieval.isLogged(aModule);
+  return gAccService.isLogged(aModule);
 }
 
 /**
@@ -253,7 +253,7 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf)
   var elm = null;
 
   if (aAccOrElmOrID instanceof nsIAccessible) {
-    try { elm = aAccOrElmOrID.DOMNode; } catch(e) { }
+    try { elm = aAccOrElmOrID.DOMNode; } catch (e) { }
 
   } else if (aAccOrElmOrID instanceof nsIDOMNode) {
     elm = aAccOrElmOrID;
@@ -272,7 +272,7 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf)
   var acc = (aAccOrElmOrID instanceof nsIAccessible) ? aAccOrElmOrID : null;
   if (!acc) {
     try {
-      acc = gAccRetrieval.getAccessibleFor(elm);
+      acc = gAccService.getAccessibleFor(elm);
     } catch (e) {
     }
 
@@ -313,9 +313,8 @@ function getAccessible(aAccOrElmOrID, aInterfaces, aElmObj, aDoNotFailIf)
  */
 function isAccessible(aAccOrElmOrID, aInterfaces)
 {
-  return getAccessible(aAccOrElmOrID, aInterfaces, null,
-                       DONOTFAIL_IF_NO_ACC | DONOTFAIL_IF_NO_INTERFACE) ?
-    true : false;
+  return !!getAccessible(aAccOrElmOrID, aInterfaces, null,
+                         DONOTFAIL_IF_NO_ACC | DONOTFAIL_IF_NO_INTERFACE);
 }
 
 /**
@@ -363,7 +362,7 @@ function getTabDocAccessible(aAccOrElmOrID)
  */
 function getApplicationAccessible()
 {
-  return gAccRetrieval.getApplicationAccessible().
+  return gAccService.getApplicationAccessible().
     QueryInterface(nsIAccessibleApplication);
 }
 
@@ -551,7 +550,7 @@ function testAccessibleTree(aAccOrElmOrID, aAccTree, aFlags)
 
         // nsIAccessible::indexInParent
         var indexInParent = -1;
-        try { indexInParent = child.indexInParent; } catch(e) {}
+        try { indexInParent = child.indexInParent; } catch (e) {}
         is(indexInParent, i,
            "Wrong index in parent of " + prettyName(child));
 
@@ -584,7 +583,7 @@ function testAccessibleTree(aAccOrElmOrID, aAccTree, aFlags)
 function isAccessibleInCache(aNodeOrId)
 {
   var node = getNode(aNodeOrId);
-  return gAccRetrieval.getAccessibleFromCache(node) ? true : false;
+  return !!gAccService.getAccessibleFromCache(node);
 }
 
 /**
@@ -671,7 +670,7 @@ function testDefunctAccessible(aAcc, aNodeOrId)
  */
 function roleToString(aRole)
 {
-  return gAccRetrieval.getStringRole(aRole);
+  return gAccService.getStringRole(aRole);
 }
 
 /**
@@ -679,7 +678,7 @@ function roleToString(aRole)
  */
 function statesToString(aStates, aExtraStates)
 {
-  var list = gAccRetrieval.getStringStates(aStates, aExtraStates);
+  var list = gAccService.getStringStates(aStates, aExtraStates);
 
   var str = "";
   for (var index = 0; index < list.length - 1; index++)
@@ -696,7 +695,7 @@ function statesToString(aStates, aExtraStates)
  */
 function eventTypeToString(aEventType)
 {
-  return gAccRetrieval.getStringEventType(aEventType);
+  return gAccService.getStringEventType(aEventType);
 }
 
 /**
@@ -704,7 +703,7 @@ function eventTypeToString(aEventType)
  */
 function relationTypeToString(aRelationType)
 {
-  return gAccRetrieval.getStringRelationType(aRelationType);
+  return gAccService.getStringRelationType(aRelationType);
 }
 
 function getLoadContext() {

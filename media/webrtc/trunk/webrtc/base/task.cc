@@ -9,12 +9,13 @@
  */
 
 #include "webrtc/base/task.h"
+#include "webrtc/base/checks.h"
 #include "webrtc/base/common.h"
 #include "webrtc/base/taskrunner.h"
 
 namespace rtc {
 
-int32 Task::unique_id_seed_ = 0;
+int32_t Task::unique_id_seed_ = 0;
 
 Task::Task(TaskParent *parent)
     : TaskParent(this, parent),
@@ -31,14 +32,16 @@ Task::Task(TaskParent *parent)
   unique_id_ = unique_id_seed_++;
 
   // sanity check that we didn't roll-over our id seed
-  ASSERT(unique_id_ < unique_id_seed_);
+  RTC_DCHECK(unique_id_ < unique_id_seed_);
 }
 
 Task::~Task() {
   // Is this task being deleted in the correct manner?
-  ASSERT(!done_ || GetRunner()->is_ok_to_delete(this));
-  ASSERT(state_ == STATE_INIT || done_);
-  ASSERT(state_ == STATE_INIT || blocked_);
+#if RTC_DCHECK_IS_ON
+  RTC_DCHECK(!done_ || GetRunner()->is_ok_to_delete(this));
+#endif
+  RTC_DCHECK(state_ == STATE_INIT || done_);
+  RTC_DCHECK(state_ == STATE_INIT || blocked_);
 
   // If the task is being deleted without being done, it
   // means that it hasn't been removed from its parent.
@@ -48,11 +51,11 @@ Task::~Task() {
   }
 }
 
-int64 Task::CurrentTime() {
+int64_t Task::CurrentTime() {
   return GetRunner()->CurrentTime();
 }
 
-int64 Task::ElapsedTime() {
+int64_t Task::ElapsedTime() {
   return CurrentTime() - start_time_;
 }
 
@@ -68,11 +71,11 @@ void Task::Start() {
 
 void Task::Step() {
   if (done_) {
-#ifdef _DEBUG
+#if RTC_DCHECK_IS_ON
     // we do not know how !blocked_ happens when done_ - should be impossible.
     // But it causes problems, so in retail build, we force blocked_, and
     // under debug we assert.
-    ASSERT(blocked_);
+    RTC_DCHECK(blocked_);
 #else
     blocked_ = true;
 #endif
@@ -88,9 +91,9 @@ void Task::Step() {
 //   SignalDone();
 
     Stop();
-#ifdef _DEBUG
+#if RTC_DCHECK_IS_ON
     // verify that stop removed this from its parent
-    ASSERT(!parent()->IsChildTask(this));
+    RTC_DCHECK(!parent()->IsChildTask(this));
 #endif
     return;
   }
@@ -125,9 +128,9 @@ void Task::Step() {
 //    SignalDone();
 
     Stop();
-#if _DEBUG
+#if RTC_DCHECK_IS_ON
     // verify that stop removed this from its parent
-    ASSERT(!parent()->IsChildTask(this));
+    RTC_DCHECK(!parent()->IsChildTask(this));
 #endif
     blocked_ = true;
   }
@@ -150,9 +153,9 @@ void Task::Abort(bool nowake) {
     // "done_" is set before calling "Stop()" to ensure that this code 
     // doesn't execute more than once (recursively) for the same task.
     Stop();
-#ifdef _DEBUG
+#if RTC_DCHECK_IS_ON
     // verify that stop removed this from its parent
-    ASSERT(!parent()->IsChildTask(this));
+    RTC_DCHECK(!parent()->IsChildTask(this));
 #endif
     if (!nowake) {
       // WakeTasks to self-delete.
@@ -240,7 +243,7 @@ bool Task::TimedOut() {
 }
 
 void Task::ResetTimeout() {
-  int64 previous_timeout_time = timeout_time_;
+  int64_t previous_timeout_time = timeout_time_;
   bool timeout_allowed = (state_ != STATE_INIT)
                       && (state_ != STATE_DONE)
                       && (state_ != STATE_ERROR);
@@ -254,7 +257,7 @@ void Task::ResetTimeout() {
 }
 
 void Task::ClearTimeout() {
-  int64 previous_timeout_time = timeout_time_;
+  int64_t previous_timeout_time = timeout_time_;
   timeout_time_ = 0;
   GetRunner()->UpdateTaskTimeout(this, previous_timeout_time);
 }

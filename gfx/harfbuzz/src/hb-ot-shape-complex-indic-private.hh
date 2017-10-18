@@ -60,11 +60,10 @@ enum indic_category_t {
   OT_Repha = 15, /* Atomically-encoded logical or visual repha. */
   OT_Ra = 16,
   OT_CM = 17,  /* Consonant-Medial. */
-  OT_Symbol = 18, /* Avagraha, etc that take marks (SM,A,VD). */
-  OT_CM2 = 31 /* Consonant-Medial, second slot. */
+  OT_Symbol = 18 /* Avagraha, etc that take marks (SM,A,VD). */
 };
 
-#define MEDIAL_FLAGS (FLAG (OT_CM) | FLAG (OT_CM2))
+#define MEDIAL_FLAGS (FLAG (OT_CM))
 
 /* Note:
  *
@@ -133,7 +132,7 @@ enum indic_syllabic_category_t {
   INDIC_SYLLABIC_CATEGORY_NUMBER_JOINER			= OT_PLACEHOLDER, /* Don't care. */
   INDIC_SYLLABIC_CATEGORY_PURE_KILLER			= OT_M, /* Is like a vowel matra. */
   INDIC_SYLLABIC_CATEGORY_REGISTER_SHIFTER		= OT_RS,
-  INDIC_SYLLABIC_CATEGORY_SYLLABLE_MODIFIER		= OT_M, /* Misc Khmer signs. */
+  INDIC_SYLLABIC_CATEGORY_SYLLABLE_MODIFIER		= OT_SM,
   INDIC_SYLLABIC_CATEGORY_TONE_LETTER			= OT_X,
   INDIC_SYLLABIC_CATEGORY_TONE_MARK			= OT_N,
   INDIC_SYLLABIC_CATEGORY_VIRAMA			= OT_H,

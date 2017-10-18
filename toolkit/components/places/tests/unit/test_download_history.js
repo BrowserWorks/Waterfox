@@ -27,7 +27,7 @@ function waitForOnVisit(aCallback) {
       aCallback.apply(null, arguments);
     }
   };
-  PlacesUtils.history.addObserver(historyObserver, false);
+  PlacesUtils.history.addObserver(historyObserver);
 }
 
 /**
@@ -44,7 +44,7 @@ function waitForOnDeleteURI(aCallback) {
       aCallback.apply(null, arguments);
     }
   };
-  PlacesUtils.history.addObserver(historyObserver, false);
+  PlacesUtils.history.addObserver(historyObserver);
 }
 
 /**
@@ -61,32 +61,25 @@ function waitForOnDeleteVisits(aCallback) {
       aCallback.apply(null, arguments);
     }
   };
-  PlacesUtils.history.addObserver(historyObserver, false);
+  PlacesUtils.history.addObserver(historyObserver);
 }
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_test(function test_dh_is_from_places()
-{
+add_test(function test_dh_is_from_places() {
   // Test that this nsIDownloadHistory is the one places implements.
   do_check_true(gDownloadHistory instanceof Ci.mozIAsyncHistory);
 
   run_next_test();
 });
 
-add_test(function test_dh_addRemoveDownload()
-{
+add_test(function test_dh_addRemoveDownload() {
   waitForOnVisit(function DHAD_onVisit(aURI) {
     do_check_true(aURI.equals(DOWNLOAD_URI));
 
     // Verify that the URI is already available in results at this time.
     do_check_true(!!page_in_database(DOWNLOAD_URI));
 
-    waitForOnDeleteURI(function DHRAD_onDeleteURI(aURI) {
-      do_check_true(aURI.equals(DOWNLOAD_URI));
+    waitForOnDeleteURI(function DHRAD_onDeleteURI(aDeletedURI) {
+      do_check_true(aDeletedURI.equals(DOWNLOAD_URI));
 
       // Verify that the URI is already available in results at this time.
       do_check_false(!!page_in_database(DOWNLOAD_URI));
@@ -99,18 +92,17 @@ add_test(function test_dh_addRemoveDownload()
   gDownloadHistory.addDownload(DOWNLOAD_URI, null, Date.now() * 1000);
 });
 
-add_test(function test_dh_addMultiRemoveDownload()
-{
+add_test(function test_dh_addMultiRemoveDownload() {
   PlacesTestUtils.addVisits({
     uri: DOWNLOAD_URI,
     transition: TRANSITION_TYPED
-  }).then(function () {
+  }).then(function() {
     waitForOnVisit(function DHAD_onVisit(aURI) {
       do_check_true(aURI.equals(DOWNLOAD_URI));
       do_check_true(!!page_in_database(DOWNLOAD_URI));
 
-      waitForOnDeleteVisits(function DHRAD_onDeleteVisits(aURI) {
-        do_check_true(aURI.equals(DOWNLOAD_URI));
+      waitForOnDeleteVisits(function DHRAD_onDeleteVisits(aDeletedURI) {
+        do_check_true(aDeletedURI.equals(DOWNLOAD_URI));
         do_check_true(!!page_in_database(DOWNLOAD_URI));
 
         PlacesTestUtils.clearHistory().then(run_next_test);
@@ -122,37 +114,39 @@ add_test(function test_dh_addMultiRemoveDownload()
   });
 });
 
-add_test(function test_dh_addBookmarkRemoveDownload()
-{
-  PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
-                                       DOWNLOAD_URI,
-                                       PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                       "A bookmark");
-  waitForOnVisit(function DHAD_onVisit(aURI) {
-    do_check_true(aURI.equals(DOWNLOAD_URI));
-    do_check_true(!!page_in_database(DOWNLOAD_URI));
+add_task(async function test_dh_addBookmarkRemoveDownload() {
+  await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: DOWNLOAD_URI,
+    title: "A bookmark"
+  });
 
-    waitForOnDeleteVisits(function DHRAD_onDeleteVisits(aURI) {
+  await new Promise(resolve => {
+    waitForOnVisit(function DHAD_onVisit(aURI) {
       do_check_true(aURI.equals(DOWNLOAD_URI));
       do_check_true(!!page_in_database(DOWNLOAD_URI));
 
-      PlacesTestUtils.clearHistory().then(run_next_test);
-    });
-    gDownloadHistory.removeAllDownloads();
-  });
+      waitForOnDeleteVisits(function DHRAD_onDeleteVisits(aDeletedURI) {
+        do_check_true(aDeletedURI.equals(DOWNLOAD_URI));
+        do_check_true(!!page_in_database(DOWNLOAD_URI));
 
-  gDownloadHistory.addDownload(DOWNLOAD_URI, null, Date.now() * 1000);
+        PlacesTestUtils.clearHistory().then(resolve);
+      });
+      gDownloadHistory.removeAllDownloads();
+    });
+
+    gDownloadHistory.addDownload(DOWNLOAD_URI, null, Date.now() * 1000);
+  });
 });
 
-add_test(function test_dh_addDownload_referrer()
-{
+add_test(function test_dh_addDownload_referrer() {
   waitForOnVisit(function DHAD_prepareReferrer(aURI, aVisitID) {
     do_check_true(aURI.equals(REFERRER_URI));
     let referrerVisitId = aVisitID;
 
-    waitForOnVisit(function DHAD_onVisit(aURI, aVisitID, aTime, aSessionID,
-                                              aReferringID) {
-      do_check_true(aURI.equals(DOWNLOAD_URI));
+    waitForOnVisit(function DHAD_onVisit(aVisitedURI, unused, unused2, unused3,
+                                         aReferringID) {
+      do_check_true(aVisitedURI.equals(DOWNLOAD_URI));
       do_check_eq(aReferringID, referrerVisitId);
 
       // Verify that the URI is already available in results at this time.
@@ -175,8 +169,7 @@ add_test(function test_dh_addDownload_referrer()
   });
 });
 
-add_test(function test_dh_addDownload_disabledHistory()
-{
+add_test(function test_dh_addDownload_disabledHistory() {
   waitForOnVisit(function DHAD_onVisit(aURI) {
     // We should only receive the notification for the non-private URI.  This
     // test is based on the assumption that visit notifications are received in
@@ -204,8 +197,7 @@ add_test(function test_dh_addDownload_disabledHistory()
  * Tests that nsIDownloadHistory::AddDownload saves the additional download
  * details if the optional destination URL is specified.
  */
-add_test(function test_dh_details()
-{
+add_test(function test_dh_details() {
   const REMOTE_URI = NetUtil.newURI("http://localhost/");
   const SOURCE_URI = NetUtil.newURI("http://example.com/test_dh_details");
   const DEST_FILE_NAME = "dest.txt";
@@ -215,11 +207,9 @@ add_test(function test_dh_details()
 
   let titleSet = false;
   let destinationFileUriSet = false;
-  let destinationFileNameSet = false;
 
-  function checkFinished()
-  {
-    if (titleSet && destinationFileUriSet && destinationFileNameSet) {
+  function checkFinished() {
+    if (titleSet && destinationFileUriSet) {
       PlacesUtils.annotations.removeObserver(annoObserver);
       PlacesUtils.history.removeObserver(historyObserver);
 
@@ -228,49 +218,42 @@ add_test(function test_dh_details()
   }
 
   let annoObserver = {
-    onPageAnnotationSet: function AO_onPageAnnotationSet(aPage, aName)
-    {
+    onPageAnnotationSet: function AO_onPageAnnotationSet(aPage, aName) {
       if (aPage.equals(SOURCE_URI)) {
         let value = PlacesUtils.annotations.getPageAnnotation(aPage, aName);
-        switch (aName)
-        {
+        switch (aName) {
           case "downloads/destinationFileURI":
             destinationFileUriSet = true;
             do_check_eq(value, destFileUri.spec);
-            break;
-          case "downloads/destinationFileName":
-            destinationFileNameSet = true;
-            do_check_eq(value, DEST_FILE_NAME);
             break;
         }
         checkFinished();
       }
     },
-    onItemAnnotationSet: function() {},
-    onPageAnnotationRemoved: function() {},
-    onItemAnnotationRemoved: function() {}
+    onItemAnnotationSet() {},
+    onPageAnnotationRemoved() {},
+    onItemAnnotationRemoved() {}
   }
 
   let historyObserver = {
-    onBeginUpdateBatch: function() {},
-    onEndUpdateBatch: function() {},
-    onVisit: function() {},
-    onTitleChanged: function HO_onTitleChanged(aURI, aPageTitle)
-    {
+    onBeginUpdateBatch() {},
+    onEndUpdateBatch() {},
+    onVisit() {},
+    onTitleChanged: function HO_onTitleChanged(aURI, aPageTitle) {
       if (aURI.equals(SOURCE_URI)) {
         titleSet = true;
         do_check_eq(aPageTitle, DEST_FILE_NAME);
         checkFinished();
       }
     },
-    onDeleteURI: function() {},
-    onClearHistory: function() {},
-    onPageChanged: function() {},
-    onDeleteVisits: function() {}
+    onDeleteURI() {},
+    onClearHistory() {},
+    onPageChanged() {},
+    onDeleteVisits() {}
   };
 
-  PlacesUtils.annotations.addObserver(annoObserver, false);
-  PlacesUtils.history.addObserver(historyObserver, false);
+  PlacesUtils.annotations.addObserver(annoObserver);
+  PlacesUtils.history.addObserver(historyObserver);
 
   // Both null values and remote URIs should not cause errors.
   gDownloadHistory.addDownload(SOURCE_URI, null, Date.now() * 1000);

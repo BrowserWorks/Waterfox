@@ -125,10 +125,10 @@ AppendRoundedRectToPath(PathBuilder* aPathBuilder,
   Point pc, p0, p1, p2, p3;
 
   if (aDrawClockwise) {
-    aPathBuilder->MoveTo(Point(aRect.X() + aRadii[RectCorner::TopLeft].width,
+    aPathBuilder->MoveTo(Point(aRect.X() + aRadii[eCornerTopLeft].width,
                                aRect.Y()));
   } else {
-    aPathBuilder->MoveTo(Point(aRect.X() + aRect.Width() - aRadii[RectCorner::TopRight].width,
+    aPathBuilder->MoveTo(Point(aRect.X() + aRect.Width() - aRadii[eCornerTopRight].width,
                                aRect.Y()));
   }
 
@@ -270,6 +270,12 @@ MaxStrokeExtents(const StrokeOptions& aStrokeOptions,
 
   double dx = styleExpansionFactor * hypot(aTransform._11, aTransform._21);
   double dy = styleExpansionFactor * hypot(aTransform._22, aTransform._12);
+
+  // Even if the stroke only partially covers a pixel, it must still render to
+  // full pixels. Round up to compensate for this.
+  dx = ceil(dx);
+  dy = ceil(dy);
+
   return Margin(dy, dx, dy, dx);
 }
 

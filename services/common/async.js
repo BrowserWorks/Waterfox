@@ -91,12 +91,10 @@ this.Async = {
    */
   waitForSyncCallback: function waitForSyncCallback(callback) {
     // Grab the current thread so we can make it give up priority.
-    let thread = Cc["@mozilla.org/thread-manager;1"].getService().currentThread;
+    let tm = Cc["@mozilla.org/thread-manager;1"].getService();
 
     // Keep waiting until our callback is triggered (unless the app is quitting).
-    while (Async.checkAppReady() && callback.state == CB_READY) {
-      thread.processNextEvent(true);
-    }
+    tm.spinEventLoopUntil(() => !Async.checkAppReady || callback.state != CB_READY);
 
     // Reset the state of the callback to prepare for another call.
     let state = callback.state;
@@ -112,20 +110,36 @@ this.Async = {
   },
 
   /**
-   * Check if the app is still ready (not quitting).
+   * Check if the app is still ready (not quitting). Returns true, or throws an
+   * exception if not ready.
    */
   checkAppReady: function checkAppReady() {
     // Watch for app-quit notification to stop any sync calls
     Services.obs.addObserver(function onQuitApplication() {
       Services.obs.removeObserver(onQuitApplication, "quit-application");
-      Async.checkAppReady = function() {
+      Async.checkAppReady = Async.promiseYield = function() {
         let exception = Components.Exception("App. Quitting", Cr.NS_ERROR_ABORT);
         exception.appIsShuttingDown = true;
         throw exception;
       };
-    }, "quit-application", false);
+    }, "quit-application");
     // In the common case, checkAppReady just returns true
     return (Async.checkAppReady = function() { return true; })();
+  },
+
+  /**
+   * Check if the app is still ready (not quitting). Returns true if the app
+   * is ready, or false if it is being shut down.
+   */
+  isAppReady() {
+    try {
+      return Async.checkAppReady()
+    } catch (ex) {
+      if (!Async.isShutdownException(ex)) {
+        throw ex;
+      }
+    }
+    return false;
   },
 
   /**
@@ -210,11 +224,39 @@ this.Async = {
 
   promiseSpinningly(promise) {
     let cb = Async.makeSpinningCallback();
-    promise.then(result =>  {
+    promise.then(result => {
       cb(null, result);
     }, err => {
       cb(err || new Error("Promise rejected without explicit error"));
     });
     return cb.wait();
   },
+
+  /**
+   * A "tight loop" of promises can still lock up the browser for some time.
+   * Periodically waiting for a promise returned by this function will solve
+   * that.
+   * You should probably not use this method directly and instead use jankYielder
+   * below.
+   * Some reference here:
+   * - https://gist.github.com/jesstelford/bbb30b983bddaa6e5fef2eb867d37678
+   * - https://bugzilla.mozilla.org/show_bug.cgi?id=1094248
+   */
+  promiseYield() {
+    return new Promise(resolve => {
+      Services.tm.currentThread.dispatch(resolve, Ci.nsIThread.DISPATCH_NORMAL);
+    });
+  },
+
+  // Returns a method that yields every X calls.
+  // Common case is calling the returned method every iteration in a loop.
+  jankYielder(yieldEvery = 50) {
+    let iterations = 0;
+    return async () => {
+      Async.checkAppReady(); // Let it throw!
+      if (++iterations % yieldEvery === 0) {
+        await Async.promiseYield();
+      }
+    }
+  }
 };

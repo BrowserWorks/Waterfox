@@ -1,15 +1,23 @@
 "use strict";
 
-/* exported isPageActionShown clickPageAction */
+/* exported AppConstants */
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {AppConstants} = SpecialPowers.Cu.import("resource://gre/modules/AppConstants.jsm", {});
 
-Cu.import("resource://gre/modules/PageActions.jsm");
+{
+  let chromeScript = SpecialPowers.loadChromeScript(
+    SimpleTest.getTestFileURL("chrome_cleanup_script.js"));
 
-function isPageActionShown(uuid) {
-  return PageActions.isShown(uuid);
-}
+  SimpleTest.registerCleanupFunction(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
 
-function clickPageAction(uuid) {
-  PageActions.synthesizeClick(uuid);
+    chromeScript.sendAsyncMessage("check-cleanup");
+
+    let results = await chromeScript.promiseOneMessage("cleanup-results");
+    chromeScript.destroy();
+
+    if (results.extraWindows.length || results.extraTabs.length) {
+      ok(false, `Test left extra windows or tabs: ${JSON.stringify(results)}\n`);
+    }
+  });
 }

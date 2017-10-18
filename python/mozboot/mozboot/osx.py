@@ -21,7 +21,6 @@ from mozboot.base import BaseBootstrapper
 HOMEBREW_BOOTSTRAP = 'https://raw.githubusercontent.com/Homebrew/install/master/install'
 XCODE_APP_STORE = 'macappstore://itunes.apple.com/app/id497799835?mt=12'
 XCODE_LEGACY = 'https://developer.apple.com/downloads/download.action?path=Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg'
-HOMEBREW_AUTOCONF213 = 'https://raw.github.com/Homebrew/homebrew-versions/master/autoconf213.rb'
 
 MACPORTS_URL = {'11': 'https://distfiles.macports.org/MacPorts/MacPorts-2.3.4-10.11-ElCapitan.pkg',
                 '10': 'https://distfiles.macports.org/MacPorts/MacPorts-2.3.4-10.10-Yosemite.pkg',
@@ -190,6 +189,9 @@ class OSXBootstrapper(BaseBootstrapper):
     def install_browser_packages(self):
         getattr(self, 'ensure_%s_browser_packages' % self.package_manager)()
 
+    def install_browser_artifact_mode_packages(self):
+        getattr(self, 'ensure_%s_browser_packages' % self.package_manager)(artifact_mode=True)
+
     def install_mobile_android_packages(self):
         getattr(self, 'ensure_%s_mobile_android_packages' % self.package_manager)()
 
@@ -288,8 +290,8 @@ class OSXBootstrapper(BaseBootstrapper):
 
         printed = False
 
-        for name, package in packages:
-            if name in installed:
+        for package in packages:
+            if package in installed:
                 continue
 
             if not printed:
@@ -310,79 +312,54 @@ class OSXBootstrapper(BaseBootstrapper):
             # development headers which are missing from OS X (at least on
             # 10.8) and because the build system wants a version newer than
             # what Apple ships.
-            ('python', 'python'),
-            ('mercurial', 'mercurial'),
-            ('git', 'git'),
-            ('autoconf213', HOMEBREW_AUTOCONF213),
-            ('gnu-tar', 'gnu-tar'),
-            ('watchman', 'watchman',),
-            ('terminal-notifier', 'terminal-notifier')
+            'python',
+            'mercurial',
+            'git',
+            'autoconf@2.13',
+            'gnu-tar',
+            'watchman',
+            'terminal-notifier',
         ]
         self._ensure_homebrew_packages(packages)
 
-    def ensure_homebrew_browser_packages(self):
+    def ensure_homebrew_browser_packages(self, artifact_mode=False):
+        # TODO: Figure out what not to install for artifact mode
         packages = [
-            ('yasm', 'yasm'),
+            'llvm',
+            'yasm',
         ]
         self._ensure_homebrew_packages(packages)
-
-        installed = self.check_output([self.brew, 'list']).split()
-        if self.os_version < StrictVersion('10.7') and b'llvm' not in installed:
-            print(PACKAGE_MANAGER_OLD_CLANG % ('Homebrew',))
-
-            subprocess.check_call([self.brew, '-v', 'install', 'llvm',
-                                   '--with-clang', '--all-targets'])
 
     def ensure_homebrew_mobile_android_packages(self, artifact_mode=False):
         # Multi-part process:
         # 1. System packages.
-        # 2. Android SDK. Android NDK only if we are not in artifact mode.
-        # 3. Android packages.
-
-        import android
+        # 2. Android SDK. Android NDK only if we are not in artifact mode. Android packages.
 
         # 1. System packages.
         packages = [
-            ('brew-cask', 'caskroom/cask/brew-cask'),  # For installing Java later.
-            ('wget', 'wget'),
+            'wget',
         ]
         self._ensure_homebrew_packages(packages)
 
         casks = [
-            ('java', 'java'),
+            'java',
         ]
         installed = self._ensure_homebrew_casks(casks)
         if installed:
             print(JAVA_LICENSE_NOTICE)  # We accepted a license agreement for the user.
 
-        # 2. The user may have an external Android SDK (in which case we save
-        # them a lengthy download), or they may have already completed the
-        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r11b}.
-        mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH', os.path.expanduser(os.path.join('~', '.mozbuild')))
-        self.sdk_path = os.environ.get('ANDROID_SDK_HOME', os.path.join(mozbuild_path, 'android-sdk-macosx'))
-        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r11b'))
-        self.sdk_url = 'https://dl.google.com/android/android-sdk_r24.0.1-macosx.zip'
         is_64bits = sys.maxsize > 2**32
-        if is_64bits:
-            self.ndk_url = android.android_ndk_url('darwin')
-        else:
+        if not is_64bits:
             raise Exception('You need a 64-bit version of Mac OS X to build Firefox for Android.')
 
-        android.ensure_android_sdk_and_ndk(path=mozbuild_path,
-                                           sdk_path=self.sdk_path, sdk_url=self.sdk_url,
-                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url,
-                                           artifact_mode=artifact_mode)
-
-        # 3. We expect the |android| tool to at
-        # ~/.mozbuild/android-sdk-macosx/tools/android.
-        android_tool = os.path.join(self.sdk_path, 'tools', 'android')
-        android.ensure_android_packages(android_tool=android_tool)
+        # 2. Android pieces.
+        import android
+        android.ensure_android('macosx', artifact_mode=artifact_mode,
+                               no_interactive=self.no_interactive)
 
     def suggest_homebrew_mobile_android_mozconfig(self, artifact_mode=False):
         import android
-        android.suggest_mozconfig(sdk_path=self.sdk_path,
-                                  ndk_path=self.ndk_path,
-                                  artifact_mode=artifact_mode)
+        android.suggest_mozconfig('macosx', artifact_mode=artifact_mode)
 
     def _ensure_macports_packages(self, packages):
         self.port = self.which('port')
@@ -408,24 +385,20 @@ class OSXBootstrapper(BaseBootstrapper):
         self._ensure_macports_packages(packages)
         self.run_as_root([self.port, 'select', '--set', 'python', 'python27'])
 
-    def ensure_macports_browser_packages(self):
-        packages = ['yasm']
+    def ensure_macports_browser_packages(self, artifact_mode=False):
+        # TODO: Figure out what not to install for artifact mode
+        packages = [
+            'yasm',
+            'llvm-4.0',
+            'clang-4.0',
+        ]
 
         self._ensure_macports_packages(packages)
-
-        installed = set(self.check_output([self.port, 'installed']).split())
-        if self.os_version < StrictVersion('10.7') and MACPORTS_CLANG_PACKAGE not in installed:
-            print(PACKAGE_MANAGER_OLD_CLANG % ('MacPorts',))
-            self.run_as_root([self.port, '-v', 'install', MACPORTS_CLANG_PACKAGE])
-            self.run_as_root([self.port, 'select', '--set', 'clang', 'mp-' + MACPORTS_CLANG_PACKAGE])
 
     def ensure_macports_mobile_android_packages(self, artifact_mode=False):
         # Multi-part process:
         # 1. System packages.
-        # 2. Android SDK. Android NDK only if we are not in artifact mode.
-        # 3. Android packages.
-
-        import android
+        # 2. Android SDK. Android NDK only if we are not in artifact mode. Android packages.
 
         # 1. System packages.
         packages = [
@@ -435,36 +408,22 @@ class OSXBootstrapper(BaseBootstrapper):
 
         # Verify the presence of java and javac.
         if not self.which('java') or not self.which('javac'):
-            raise Exception('You need to have Java version 1.7 or later installed. Please visit http://www.java.com/en/download/mac_download.jsp to get the latest version.')
+            raise Exception('You need to have Java version 1.7 or later installed. '
+                            'Please visit http://www.java.com/en/download/mac_download.jsp '
+                            'to get the latest version.')
 
-        # 2. The user may have an external Android SDK (in which case we save
-        # them a lengthy download), or they may have already completed the
-        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r11b}.
-        mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH', os.path.expanduser(os.path.join('~', '.mozbuild')))
-        self.sdk_path = os.environ.get('ANDROID_SDK_HOME', os.path.join(mozbuild_path, 'android-sdk-macosx'))
-        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r11b'))
-        self.sdk_url = 'https://dl.google.com/android/android-sdk_r24.0.1-macosx.zip'
         is_64bits = sys.maxsize > 2**32
-        if is_64bits:
-            self.ndk_url = android.android_ndk_url('darwin')
-        else:
+        if not is_64bits:
             raise Exception('You need a 64-bit version of Mac OS X to build Firefox for Android.')
 
-        android.ensure_android_sdk_and_ndk(path=mozbuild_path,
-                                           sdk_path=self.sdk_path, sdk_url=self.sdk_url,
-                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url,
-                                           artifact_mode=artifact_mode)
-
-        # 3. We expect the |android| tool to at
-        # ~/.mozbuild/android-sdk-macosx/tools/android.
-        android_tool = os.path.join(self.sdk_path, 'tools', 'android')
-        android.ensure_android_packages(android_tool=android_tool)
+        # 2. Android pieces.
+        import android
+        android.ensure_android('macosx', artifact_mode=artifact_mode,
+                               no_interactive=self.no_interactive)
 
     def suggest_macports_mobile_android_mozconfig(self, artifact_mode=False):
         import android
-        android.suggest_mozconfig(sdk_path=self.sdk_path,
-                                  ndk_path=self.ndk_path,
-                                  artifact_mode=artifact_mode)
+        android.suggest_mozconfig('macosx', artifact_mode=artifact_mode)
 
     def ensure_package_manager(self):
         '''
@@ -516,6 +475,10 @@ class OSXBootstrapper(BaseBootstrapper):
                     sys.exit(1)
 
         return active_name.lower()
+
+    def ensure_stylo_packages(self, state_dir, checkout_root):
+        # We installed these via homebrew earlier.
+        pass
 
     def install_homebrew(self):
         print(PACKAGE_MANAGER_INSTALL % ('Homebrew', 'Homebrew', 'Homebrew', 'brew'))

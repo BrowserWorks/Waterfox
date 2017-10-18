@@ -48,8 +48,7 @@ public:
   nsrefcnt AddRef()
   {
     NS_PRECONDITION(int32_t(mRefCnt) >= 0, "illegal refcnt");
-    MOZ_ASSERT(_mOwningThread.GetThread() == PR_GetCurrentThread(),
-      "imgCacheEntry addref isn't thread-safe!");
+    NS_ASSERT_OWNINGTHREAD(imgCacheEntry);
     ++mRefCnt;
     NS_LOG_ADDREF(this, mRefCnt, "imgCacheEntry", sizeof(*this));
     return mRefCnt;
@@ -58,8 +57,7 @@ public:
   nsrefcnt Release()
   {
     NS_PRECONDITION(0 != mRefCnt, "dup release");
-    MOZ_ASSERT(_mOwningThread.GetThread() == PR_GetCurrentThread(),
-      "imgCacheEntry release isn't thread-safe!");
+    NS_ASSERT_OWNINGTHREAD(imgCacheEntry);
     --mRefCnt;
     NS_LOG_RELEASE(this, mRefCnt, "imgCacheEntry");
     if (mRefCnt == 0) {
@@ -255,9 +253,6 @@ public:
   /**
    * Get the Private Browsing image loader instance that is used by gecko code,
    * creating it if necessary.
-   *
-   * The nsIChannel objects that this instance creates are created with the
-   * nsILoadInfo::SEC_FORCE_PRIVATE_BROWSING flag.
    */
   static imgLoader* PrivateBrowsingLoader();
 
@@ -290,26 +285,28 @@ public:
   imgLoader();
   nsresult Init();
 
-  nsresult LoadImage(nsIURI* aURI,
-                     nsIURI* aInitialDocumentURI,
-                     nsIURI* aReferrerURI,
-                     ReferrerPolicy aReferrerPolicy,
-                     nsIPrincipal* aLoadingPrincipal,
-                     nsILoadGroup* aLoadGroup,
-                     imgINotificationObserver* aObserver,
-                     nsINode* aContext,
-                     nsIDocument* aLoadingDocument,
-                     nsLoadFlags aLoadFlags,
-                     nsISupports* aCacheKey,
-                     nsContentPolicyType aContentPolicyType,
-                     const nsAString& initiatorType,
-                     imgRequestProxy** _retval);
+  MOZ_MUST_USE nsresult LoadImage(nsIURI* aURI,
+                                  nsIURI* aInitialDocumentURI,
+                                  nsIURI* aReferrerURI,
+                                  ReferrerPolicy aReferrerPolicy,
+                                  nsIPrincipal* aLoadingPrincipal,
+                                  nsILoadGroup* aLoadGroup,
+                                  imgINotificationObserver* aObserver,
+                                  nsINode* aContext,
+                                  nsIDocument* aLoadingDocument,
+                                  nsLoadFlags aLoadFlags,
+                                  nsISupports* aCacheKey,
+                                  nsContentPolicyType aContentPolicyType,
+                                  const nsAString& initiatorType,
+                                  bool aUseUrgentStartForChannel,
+                                  imgRequestProxy** _retval);
 
-  nsresult LoadImageWithChannel(nsIChannel* channel,
-                                imgINotificationObserver* aObserver,
-                                nsISupports* aCX,
-                                nsIStreamListener** listener,
-                                imgRequestProxy** _retval);
+  MOZ_MUST_USE nsresult
+  LoadImageWithChannel(nsIChannel* channel,
+                       imgINotificationObserver* aObserver,
+                       nsISupports* aCX,
+                       nsIStreamListener** listener,
+                       imgRequestProxy** _retval);
 
   static nsresult GetMimeTypeFromContent(const char* aContents,
                                          uint32_t aLength,
@@ -327,13 +324,14 @@ public:
    * @param aMimeType The MIME type to evaluate.
    * @param aAcceptedMimeTypes Which kinds of MIME types to treat as images.
    */
-  static NS_EXPORT_(bool)
+  static bool
   SupportImageWithMimeType(const char* aMimeType,
                            AcceptedMimeTypes aAccept =
                              AcceptedMimeTypes::IMAGES);
 
   static void GlobalInit(); // for use by the factory
   static void Shutdown(); // for use by the factory
+  static void ShutdownMemoryReporter();
 
   nsresult ClearChromeImageCache();
   nsresult ClearImageCache();
@@ -400,6 +398,7 @@ private: // methods
                      ReferrerPolicy aReferrerPolicy,
                      nsILoadGroup* aLoadGroup,
                      imgINotificationObserver* aObserver, nsISupports* aCX,
+                     nsIDocument* aLoadingDocument,
                      nsLoadFlags aLoadFlags,
                      nsContentPolicyType aContentPolicyType,
                      bool aCanMakeNewChannel,
@@ -413,7 +412,9 @@ private: // methods
                                      ReferrerPolicy aReferrerPolicy,
                                      nsILoadGroup* aLoadGroup,
                                      imgINotificationObserver* aObserver,
-                                     nsISupports* aCX, nsLoadFlags aLoadFlags,
+                                     nsISupports* aCX,
+                                     nsIDocument* aLoadingDocument,
+                                     nsLoadFlags aLoadFlags,
                                      nsContentPolicyType aContentPolicyType,
                                      imgRequestProxy** aProxyRequest,
                                      nsIPrincipal* aLoadingPrincipal,
@@ -421,6 +422,7 @@ private: // methods
 
   nsresult CreateNewProxyForRequest(imgRequest* aRequest,
                                     nsILoadGroup* aLoadGroup,
+                                    nsIDocument* aLoadingDocument,
                                     imgINotificationObserver* aObserver,
                                     nsLoadFlags aLoadFlags,
                                     imgRequestProxy** _retval);
@@ -543,7 +545,7 @@ public:
 
   void AddProxy(imgRequestProxy* aProxy);
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER

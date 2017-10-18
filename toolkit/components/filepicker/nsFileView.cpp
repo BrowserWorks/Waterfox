@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "DateTimeFormat.h"
 #include "nsIFileView.h"
 #include "nsITreeView.h"
 #include "mozilla/ModuleUtils.h"
@@ -14,7 +15,6 @@
 #include "nsReadableUtils.h"
 #include "nsCRT.h"
 #include "nsPrintfCString.h"
-#include "nsIDateTimeFormat.h"
 #include "nsQuickSort.h"
 #include "nsIAtom.h"
 #include "nsIAutoCompleteResult.h"
@@ -28,7 +28,7 @@
 #include "nsWildCard.h"
 
 class nsIDOMDataTransfer;
- 
+
 #define NS_FILECOMPLETE_CID { 0xcb60980e, 0x18a5, 0x4a77, \
                             { 0x91, 0x10, 0x81, 0x46, 0x61, 0x4c, 0xa7, 0xf0 } }
 #define NS_FILECOMPLETE_CONTRACTID "@mozilla.org/autocomplete/search;1?name=file"
@@ -47,7 +47,7 @@ public:
   nsString mSearchString;
   uint16_t mSearchResult;
 private:
-  ~nsFileResult() {}
+  ~nsFileResult() = default;
 };
 
 NS_IMPL_ISUPPORTS(nsFileResult, nsIAutoCompleteResult)
@@ -133,13 +133,6 @@ NS_IMETHODIMP nsFileResult::GetMatchCount(uint32_t *aMatchCount)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsFileResult::GetTypeAheadResult(bool *aTypeAheadResult)
-{
-  NS_ENSURE_ARG_POINTER(aTypeAheadResult);
-  *aTypeAheadResult = false;
-  return NS_OK;
-}
-
 NS_IMETHODIMP nsFileResult::GetValueAt(int32_t index, nsAString & aValue)
 {
   aValue = mValues[index];
@@ -186,7 +179,7 @@ NS_IMETHODIMP nsFileResult::RemoveValueAt(int32_t rowIndex, bool removeFromDb)
 
 class nsFileComplete final : public nsIAutoCompleteSearch
 {
-  ~nsFileComplete() {}
+  ~nsFileComplete() = default;
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIAUTOCOMPLETESEARCH
@@ -225,10 +218,10 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIFILEVIEW
   NS_DECL_NSITREEVIEW
-  
+
 protected:
   virtual ~nsFileView();
-  
+
   void FilterFiles();
   void ReverseArray(nsTArray<nsCOMPtr<nsIFile> >& aArray);
   void SortArray(nsTArray<nsCOMPtr<nsIFile> >& aArray);
@@ -241,7 +234,6 @@ protected:
   nsCOMPtr<nsIFile> mDirectoryPath;
   nsCOMPtr<nsITreeBoxObject> mTree;
   nsCOMPtr<nsITreeSelection> mSelection;
-  nsCOMPtr<nsIDateTimeFormat> mDateFormatter;
 
   int16_t mSortType;
   int32_t mTotalRows;
@@ -298,10 +290,6 @@ nsFileView::~nsFileView()
 nsresult
 nsFileView::Init()
 {
-  mDateFormatter = nsIDateTimeFormat::Create();
-  if (!mDateFormatter)
-    return NS_ERROR_OUT_OF_MEMORY;
-
   return NS_OK;
 }
 
@@ -321,7 +309,7 @@ nsFileView::SetShowHiddenFiles(bool aShowHidden)
     // file functionality is not currently used, this will be fine.
     SetDirectory(mDirectoryPath);
   }
-    
+
   return NS_OK;
 }
 
@@ -673,7 +661,7 @@ nsFileView::GetParentIndex(int32_t aRowIndex, int32_t* aParentIndex)
 }
 
 NS_IMETHODIMP
-nsFileView::HasNextSibling(int32_t aRowIndex, int32_t aAfterIndex, 
+nsFileView::HasNextSibling(int32_t aRowIndex, int32_t aAfterIndex,
                            bool* aHasSibling)
 {
   *aHasSibling = (aAfterIndex < (mTotalRows - 1));
@@ -737,8 +725,8 @@ nsFileView::GetCellText(int32_t aRow, nsITreeColumn* aCol,
     curFile->GetLastModifiedTime(&lastModTime);
     // XXX FormatPRTime could take an nsAString&
     nsAutoString temp;
-    mDateFormatter->FormatPRTime(nullptr, kDateFormatShort, kTimeFormatSeconds,
-                                 lastModTime * 1000, temp);
+    mozilla::DateTimeFormat::FormatPRTime(kDateFormatShort, kTimeFormatSeconds,
+                                          lastModTime * 1000, temp);
     aCellText = temp;
   } else {
     // file size
@@ -747,7 +735,7 @@ nsFileView::GetCellText(int32_t aRow, nsITreeColumn* aCol,
     else {
       int64_t fileSize;
       curFile->GetFileSize(&fileSize);
-      CopyUTF8toUTF16(nsPrintfCString("%lld", fileSize), aCellText);
+      CopyUTF8toUTF16(nsPrintfCString("%" PRId64, fileSize), aCellText);
     }
   }
 
@@ -850,13 +838,13 @@ nsFileView::FilterFiles()
     bool isHidden = false;
     if (!mShowHiddenFiles)
       file->IsHidden(&isHidden);
-    
+
     nsAutoString ucsLeafName;
     if(NS_FAILED(file->GetLeafName(ucsLeafName))) {
       // need to check return value for GetLeafName()
       continue;
     }
-    
+
     if (!isHidden) {
       for (uint32_t j = 0; j < filterCount; ++j) {
         bool matched = false;
@@ -897,7 +885,7 @@ SortNameCallback(const void* aElement1, const void* aElement2, void* aContext)
 {
   nsIFile* file1 = *static_cast<nsIFile* const *>(aElement1);
   nsIFile* file2 = *static_cast<nsIFile* const *>(aElement2);
-  
+
   nsAutoString leafName1, leafName2;
   file1->GetLeafName(leafName1);
   file2->GetLeafName(leafName2);

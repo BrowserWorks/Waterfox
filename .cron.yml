@@ -1,0 +1,87 @@
+# Definitions for jobs that run periodically.  For details on the format, see
+# `taskcluster/taskgraph/cron/schema.py`.  For documentation, see
+# `taskcluster/docs/cron.rst`.
+
+jobs:
+    - name: nightly-desktop
+      job:
+          type: decision-task
+          treeherder-symbol: Nd
+          target-tasks-method: nightly_desktop
+      run-on-projects:
+          - mozilla-central
+          - date
+      when:
+          by-project:
+            # Match buildbot starts for now
+            date: [{hour: 15, minute: 0}]
+            mozilla-central: [{hour: 10, minute: 0}]
+            # No default
+
+    - name: nightly-desktop-linux
+      job:
+          type: decision-task
+          treeherder-symbol: Nd-Ln
+          target-tasks-method: nightly_linux
+      run-on-projects:
+          - mozilla-central
+          - date
+      when: [] # never (hook only)
+
+    - name: nightly-desktop-osx
+      job:
+          type: decision-task
+          treeherder-symbol: Nd-OSX
+          target-tasks-method: nightly_macosx
+      run-on-projects:
+          - mozilla-central
+          - date
+      when: [] # never (hook only)
+
+    - name: nightly-desktop-win
+      job:
+          type: decision-task
+          treeherder-symbol: Nd-Win
+          target-tasks-method: nightly_win
+      run-on-projects:
+          - mozilla-central
+          - date
+      when: [] # never (hook only)
+
+    - name: nightly-android
+      job:
+          type: decision-task
+          treeherder-symbol: Na
+          target-tasks-method: nightly_fennec
+      run-on-projects:
+          - mozilla-central
+          - date
+      when:
+        by-project:
+            # Match buildbot starts for now
+            date: [{hour: 15, minute: 0}]
+            mozilla-central: [{hour: 10, minute: 0}]
+            # No default
+
+    - name: nightly-mochitest-valgrind
+      job:
+          type: decision-task
+          treeherder-symbol: Vg
+          target-tasks-method: mochitest_valgrind
+      run-on-projects:
+          - mozilla-central
+      when:
+          - {hour: 16, minute: 0}
+          - {hour: 4, minute: 0}
+
+    - name: nightly-dmd
+      job:
+          type: decision-task
+          treeherder-symbol: Ndmd
+          target-tasks-method: nightly_dmd
+      run-on-projects:
+          - mozilla-central
+      when:
+          by-project:
+            mozilla-central: [{hour: 10, minute: 0}]
+            # No default

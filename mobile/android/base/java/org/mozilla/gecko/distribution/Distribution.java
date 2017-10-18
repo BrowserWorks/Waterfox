@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketException;
@@ -38,13 +39,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Telemetry;
-import org.mozilla.gecko.annotation.WrapForJNI;
+import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.util.FileUtils;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
@@ -62,6 +66,10 @@ import android.util.Log;
 @RobocopTarget
 public class Distribution {
     private static final String LOGTAG = "GeckoDistribution";
+
+    // We use "AndroidPreferences" for profile-scoped pref for backward compatibility(bug 1295675)
+    public static final String PREF_KEY_PROFILE_PREFERENCES = "AndroidPreferences";
+    public static final String PREF_KEY_APPLICATION_PREFERENCES = "ApplicationPreferences";
 
     private static final int STATE_UNKNOWN = 0;
     private static final int STATE_NONE = 1;
@@ -83,7 +91,10 @@ public class Distribution {
     private static final String HISTOGRAM_DOWNLOAD_TIME_MS = "FENNEC_DISTRIBUTION_DOWNLOAD_TIME_MS";
     private static final String HISTOGRAM_CODE_CATEGORY = "FENNEC_DISTRIBUTION_CODE_CATEGORY";
 
+    // This is the name of the system property used to discover a custom distribution directory.
+    private static final String SYSPROP_DISTRIBUTIONDIR = "ro.org.mozilla.distributiondir";
     /**
+     *
      * Success/failure codes. Don't exceed the maximum listed in Histograms.json.
      */
     private static final int CODE_CATEGORY_STATUS_OUT_OF_RANGE = 0;
@@ -224,14 +235,23 @@ public class Distribution {
             public void run() {
                 boolean distributionSet = distribution.doInit();
                 if (distributionSet) {
-                    String preferencesJSON = "";
+                    GeckoBundle data = null;
                     try {
                         final File descFile = distribution.getDistributionFile("preferences.json");
-                        preferencesJSON = FileUtils.readStringFromFile(descFile);
+                        if (descFile == null) {
+                            // This can happen if we have a distribution directory, but no
+                            // preferences.json file.
+                            throw new IOException("preferences.json not found");
+                        }
+
+                        final String preferencesJSON = FileUtils.readStringFromFile(descFile);
+                        data = new GeckoBundle(1);
+                        data.putString("preferences", preferencesJSON);
+
                     } catch (IOException e) {
                         Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
                     }
-                    GeckoAppShell.notifyObservers("Distribution:Set", preferencesJSON);
+                    EventDispatcher.getInstance().dispatch("Distribution:Set", data);
                 }
             }
         });
@@ -298,6 +318,14 @@ public class Distribution {
 
                 // This will bail if we aren't delayed, or we already have a distribution.
                 distribution.processDelayedReferrer(ref);
+
+                // On Android 5+ we might receive the referrer intent
+                // and never actually launch the browser, which is the usual signal
+                // for the distribution init process to complete.
+                // Attempt to init here to handle that case.
+                // Profile setup that relies on the distribution will occur
+                // when the browser is eventually launched, via `addOnDistributionReadyCallback`.
+                distribution.doInit();
             }
         });
     }
@@ -331,7 +359,7 @@ public class Distribution {
         runLateReadyQueue();
 
         // Make sure that changes to search defaults are applied immediately.
-        GeckoAppShell.notifyObservers("Distribution:Changed", "");
+        EventDispatcher.getInstance().dispatch("Distribution:Changed", null);
     }
 
     /**
@@ -392,10 +420,11 @@ public class Distribution {
     }
 
     /**
-     * Get the Android preferences from the preferences.json file, if any exist.
+     * Get the preferences from the preferences.json file, if any exist.
+     * There are two types of preferences : Application-scoped and profile-scoped (bug 1295675)
      * @return The preferences in a JSONObject, or an empty JSONObject if no preferences are defined.
      */
-    public JSONObject getAndroidPreferences() {
+    public JSONObject getPreferences(String key) {
         final File descFile = getDistributionFile("preferences.json");
         if (descFile == null) {
             // Logging and existence checks are handled in getDistributionFile.
@@ -405,11 +434,11 @@ public class Distribution {
         try {
             final JSONObject all = FileUtils.readJSONObjectFromFile(descFile);
 
-            if (!all.has("AndroidPreferences")) {
+            if (!all.has(key)) {
                 return new JSONObject();
             }
 
-            return all.getJSONObject("AndroidPreferences");
+            return all.getJSONObject(key);
 
         } catch (IOException e) {
             Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
@@ -515,19 +544,11 @@ public class Distribution {
         Log.v(LOGTAG, "Downloading referred distribution: " + uri);
 
         try {
-            final HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            final HttpURLConnection connection = (HttpURLConnection) ProxySelector.openConnectionWithProxy(uri);
 
             // If the Search Activity starts, and we handle the referrer intent, this'll return
             // null. Recover gracefully in this case.
-            final GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
-            final String ua;
-            if (geckoInterface == null) {
-                // Fall back to GeckoApp's default implementation.
-                ua = HardwareUtils.isTablet() ? AppConstants.USER_AGENT_FENNEC_TABLET :
-                                                AppConstants.USER_AGENT_FENNEC_MOBILE;
-            } else {
-                ua = geckoInterface.getDefaultUAString();
-            }
+            final String ua = GeckoApplication.getDefaultUAString();
 
             connection.setRequestProperty(HTTP.USER_AGENT, ua);
             connection.setRequestProperty("Accept", EXPECTED_CONTENT_TYPE);
@@ -622,7 +643,16 @@ public class Distribution {
             return null;
         }
 
-        return new JarInputStream(new BufferedInputStream(connection.getInputStream()), true);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(connection.getInputStream());
+        try {
+            return new JarInputStream(bufferedInputStream, true);
+        } catch (IOException e) {
+            // Thrown e.g. if JarInputStream can't parse the input as a valid Zip.
+            // In that case we need to ensure the bufferedInputStream gets closed since it won't
+            // be used anywhere (while still passing the Exception up the stack).
+            bufferedInputStream.close();
+            throw e;
+        }
     }
 
     private static void recordFetchTelemetry(final Exception exception) {
@@ -681,6 +711,28 @@ public class Distribution {
      */
     private boolean checkSystemDistribution() {
         return checkDirectories(getSystemDistributionDirectories(context));
+    }
+
+    /**
+     * @return true if we should wait for a system distribution to load.
+     * Not applicable to APK or OTA distributions.
+     */
+    public boolean shouldWaitForSystemDistribution() {
+        if (state == STATE_NONE) {
+            return false;
+        }
+        if (state == STATE_SET) {
+            return true;
+        }
+
+        final String[] directories = getSystemDistributionDirectories(context);
+        for (String path : directories) {
+            final File directory = new File(path);
+            if (directory.exists()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -829,7 +881,7 @@ public class Distribution {
 
         // We restrict here to avoid injection attacks. After all,
         // we're downloading a distribution payload based on intent input.
-        if (!content.matches("^[a-zA-Z0-9]+$")) {
+        if (!content.matches("^[a-zA-Z0-9_-]+$")) {
             Log.e(LOGTAG, "Invalid referrer content: " + content);
             Telemetry.addToHistogram(HISTOGRAM_REFERRER_INVALID, 1);
             return null;
@@ -874,7 +926,7 @@ public class Distribution {
         return context.getApplicationInfo().dataDir;
     }
 
-    @WrapForJNI
+    @JNITarget
     public static String[] getDistributionDirectories() {
         final Context context = GeckoAppShell.getApplicationContext();
 
@@ -890,6 +942,42 @@ public class Distribution {
     }
 
     /**
+     * This function checks to see if a custom distribution directory has
+     * been set as a system property and returns it if it exists. The path
+     * returned will always have a single trailing slash.
+     *
+     * The system property is readonly, so it can only be set by vendors or
+     * someone with a rooted device.
+     *
+     * The mechanism to obtain the property is necessary because retrieval
+     * methods are not exposed in the SDK.
+     */
+    private static String getDistributionDirectoryFromSystemProperty() {
+        try {
+            @SuppressWarnings("rawtypes")
+            Class clazz = Class.forName("android.os.SystemProperties");
+            @SuppressWarnings("unchecked")
+            Method method = clazz.getDeclaredMethod("get", String.class);
+            String distDirName = (String)method.invoke(null, SYSPROP_DISTRIBUTIONDIR);
+            if (!distDirName.isEmpty()) {
+                Log.d(LOGTAG, "System property " + SYSPROP_DISTRIBUTIONDIR + " found with value " + distDirName);
+                // Add a trailing slash if it isn't there
+                if (distDirName.charAt(distDirName.length() - 1) != '/') {
+                    distDirName += '/';
+                }
+                File distDir = new File(distDirName);
+                if (distDir.exists() && distDir.isDirectory()) {
+                    Log.d(LOGTAG, "Custom distribution directory found at " + distDirName);
+                    return distDirName;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Error getting system property " + SYSPROP_DISTRIBUTIONDIR, e);
+        }
+        Log.d(LOGTAG, "Custom distribution directory not found.");
+        return null;
+    }
+    /**
      * Get a list of system distribution folder candidates.
      *
      * /system/<package>/distribution/<mcc>/<mnc> - For bundled distributions for specific network providers
@@ -898,7 +986,13 @@ public class Distribution {
      * /system/<package>/distribution             - Default non-bundled system distribution
      */
     private static String[] getSystemDistributionDirectories(Context context) {
-        final String baseDirectory = "/system/" + context.getPackageName() + "/distribution";
+        final String systemPropertyBaseDirectory = getDistributionDirectoryFromSystemProperty();
+        final String baseDirectory;
+        if (systemPropertyBaseDirectory != null) {
+            baseDirectory = systemPropertyBaseDirectory + context.getPackageName() + "/distribution";
+        } else {
+            baseDirectory = "/system/" + context.getPackageName() + "/distribution";
+        }
         return getDistributionDirectoriesFromBaseDirectory(context, baseDirectory);
     }
 

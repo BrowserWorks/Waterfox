@@ -4,8 +4,7 @@
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["Social", "CreateSocialStatusWidget",
-                         "CreateSocialMarkWidget", "OpenGraphBuilder",
+this.EXPORTED_SYMBOLS = ["Social", "OpenGraphBuilder",
                          "DynamicResizeWatcher", "sizeSocialPanelToContent"];
 
 const Ci = Components.interfaces;
@@ -23,54 +22,14 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SocialService",
-  "resource://gre/modules/SocialService.jsm");
+  "resource:///modules/SocialService.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PageMetadata",
   "resource://gre/modules/PageMetadata.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+  "resource://gre/modules/PromiseUtils.jsm");
 
-
-function promiseSetAnnotation(aURI, providerList) {
-  let deferred = Promise.defer();
-
-  // Delaying to catch issues with asynchronous behavior while waiting
-  // to implement asynchronous annotations in bug 699844.
-  Services.tm.mainThread.dispatch(function() {
-    try {
-      if (providerList && providerList.length > 0) {
-        PlacesUtils.annotations.setPageAnnotation(
-          aURI, "social/mark", JSON.stringify(providerList), 0,
-          PlacesUtils.annotations.EXPIRE_WITH_HISTORY);
-      } else {
-        PlacesUtils.annotations.removePageAnnotation(aURI, "social/mark");
-      }
-    } catch(e) {
-      Cu.reportError("SocialAnnotation failed: " + e);
-    }
-    deferred.resolve();
-  }, Ci.nsIThread.DISPATCH_NORMAL);
-
-  return deferred.promise;
-}
-
-function promiseGetAnnotation(aURI) {
-  let deferred = Promise.defer();
-
-  // Delaying to catch issues with asynchronous behavior while waiting
-  // to implement asynchronous annotations in bug 699844.
-  Services.tm.mainThread.dispatch(function() {
-    let val = null;
-    try {
-      val = PlacesUtils.annotations.getPageAnnotation(aURI, "social/mark");
-    } catch (ex) { }
-
-    deferred.resolve(val);
-  }, Ci.nsIThread.DISPATCH_NORMAL);
-
-  return deferred.promise;
-}
 
 this.Social = {
   initialized: false,
@@ -80,7 +39,7 @@ this.Social = {
 
   init: function Social_init() {
     this._disabledForSafeMode = Services.appinfo.inSafeMode && this.enabled;
-    let deferred = Promise.defer();
+    let deferred = PromiseUtils.defer();
 
     if (this.initialized) {
       deferred.resolve(true);
@@ -91,7 +50,7 @@ this.Social = {
     // front-end can generate UI
     if (SocialService.hasEnabledProviders) {
       // Retrieve the current set of providers, and set the current provider.
-      SocialService.getOrderedProviderList(function (providers) {
+      SocialService.getOrderedProviderList(function(providers) {
         Social._updateProviderCache(providers);
         Social._updateEnabledState(SocialService.enabled);
         deferred.resolve(false);
@@ -133,28 +92,23 @@ this.Social = {
     return deferred.promise;
   },
 
-  _updateEnabledState: function(enable) {
+  _updateEnabledState(enable) {
     for (let p of Social.providers) {
       p.enabled = enable;
     }
   },
 
   // Called to update our cache of providers and set the current provider
-  _updateProviderCache: function (providers) {
+  _updateProviderCache(providers) {
     this.providers = providers;
-    Services.obs.notifyObservers(null, "social:providers-changed", null);
+    Services.obs.notifyObservers(null, "social:providers-changed");
   },
 
   get enabled() {
     return !this._disabledForSafeMode && this.providers.length > 0;
   },
 
-  toggleNotifications: function SocialNotifications_toggle() {
-    let prefValue = Services.prefs.getBoolPref("social.toast-notifications.enabled");
-    Services.prefs.setBoolPref("social.toast-notifications.enabled", !prefValue);
-  },
-
-  _getProviderFromOrigin: function (origin) {
+  _getProviderFromOrigin(origin) {
     for (let p of this.providers) {
       if (p.origin == origin) {
         return p;
@@ -163,155 +117,25 @@ this.Social = {
     return null;
   },
 
-  getManifestByOrigin: function(origin) {
+  getManifestByOrigin(origin) {
     return SocialService.getManifestByOrigin(origin);
   },
 
-  installProvider: function(data, installCallback, options={}) {
+  installProvider(data, installCallback, options = {}) {
     SocialService.installProvider(data, installCallback, options);
   },
 
-  uninstallProvider: function(origin, aCallback) {
+  uninstallProvider(origin, aCallback) {
     SocialService.uninstallProvider(origin, aCallback);
   },
 
   // Activation functionality
-  activateFromOrigin: function (origin, callback) {
+  activateFromOrigin(origin, callback) {
     // It's OK if the provider has already been activated - we still get called
     // back with it.
     SocialService.enableProvider(origin, callback);
-  },
-
-  // Page Marking functionality
-  isURIMarked: function(origin, aURI, aCallback) {
-    promiseGetAnnotation(aURI).then(function(val) {
-      if (val) {
-        let providerList = JSON.parse(val);
-        val = providerList.indexOf(origin) >= 0;
-      }
-      aCallback(!!val);
-    }).then(null, Cu.reportError);
-  },
-
-  markURI: function(origin, aURI, aCallback) {
-    // update or set our annotation
-    promiseGetAnnotation(aURI).then(function(val) {
-
-      let providerList = val ? JSON.parse(val) : [];
-      let marked = providerList.indexOf(origin) >= 0;
-      if (marked)
-        return;
-      providerList.push(origin);
-      // we allow marking links in a page that may not have been visited yet.
-      // make sure there is a history entry for the uri, then annotate it.
-      let place = {
-        uri: aURI,
-        visits: [{
-          visitDate: Date.now() + 1000,
-          transitionType: Ci.nsINavHistoryService.TRANSITION_LINK
-        }]
-      };
-      PlacesUtils.asyncHistory.updatePlaces(place, {
-        handleError: () => Cu.reportError("couldn't update history for socialmark annotation"),
-        handleResult: function () {},
-        handleCompletion: function () {
-          promiseSetAnnotation(aURI, providerList).then(function() {
-            if (aCallback)
-              schedule(function() { aCallback(true); } );
-          }).then(null, Cu.reportError);
-        }
-      });
-    }).then(null, Cu.reportError);
-  },
-
-  unmarkURI: function(origin, aURI, aCallback) {
-    // this should not be called if this.provider or the port is null
-    // set our annotation
-    promiseGetAnnotation(aURI).then(function(val) {
-      let providerList = val ? JSON.parse(val) : [];
-      let marked = providerList.indexOf(origin) >= 0;
-      if (marked) {
-        // remove the annotation
-        providerList.splice(providerList.indexOf(origin), 1);
-        promiseSetAnnotation(aURI, providerList).then(function() {
-          if (aCallback)
-            schedule(function() { aCallback(false); } );
-        }).then(null, Cu.reportError);
-      }
-    }).then(null, Cu.reportError);
   }
 };
-
-function schedule(callback) {
-  Services.tm.mainThread.dispatch(callback, Ci.nsIThread.DISPATCH_NORMAL);
-}
-
-function CreateSocialStatusWidget(aId, aProvider) {
-  if (!aProvider.statusURL)
-    return;
-  let widget = CustomizableUI.getWidget(aId);
-  // The widget is only null if we've created then destroyed the widget.
-  // Once we've actually called createWidget the provider will be set to
-  // PROVIDER_API.
-  if (widget && widget.provider == CustomizableUI.PROVIDER_API)
-    return;
-
-  CustomizableUI.createWidget({
-    id: aId,
-    type: "custom",
-    removable: true,
-    defaultArea: CustomizableUI.AREA_NAVBAR,
-    onBuild: function(aDocument) {
-      let node = aDocument.createElement("toolbarbutton");
-      node.id = this.id;
-      node.setAttribute("class", "toolbarbutton-1 chromeclass-toolbar-additional social-status-button badged-button");
-      node.style.listStyleImage = "url(" + (aProvider.icon32URL || aProvider.iconURL) + ")";
-      node.setAttribute("origin", aProvider.origin);
-      node.setAttribute("label", aProvider.name);
-      node.setAttribute("tooltiptext", aProvider.name);
-      node.setAttribute("oncommand", "SocialStatus.showPopup(this);");
-      node.setAttribute("constrain-size", "true");
-
-      return node;
-    }
-  });
-}
-
-function CreateSocialMarkWidget(aId, aProvider) {
-  if (!aProvider.markURL)
-    return;
-  let widget = CustomizableUI.getWidget(aId);
-  // The widget is only null if we've created then destroyed the widget.
-  // Once we've actually called createWidget the provider will be set to
-  // PROVIDER_API.
-  if (widget && widget.provider == CustomizableUI.PROVIDER_API)
-    return;
-
-  CustomizableUI.createWidget({
-    id: aId,
-    type: "custom",
-    removable: true,
-    defaultArea: CustomizableUI.AREA_NAVBAR,
-    onBuild: function(aDocument) {
-      let node = aDocument.createElement("toolbarbutton");
-      node.id = this.id;
-      node.setAttribute("class", "toolbarbutton-1 chromeclass-toolbar-additional social-mark-button");
-      node.setAttribute("type", "socialmark");
-      node.setAttribute("constrain-size", "true");
-      node.style.listStyleImage = "url(" + (aProvider.unmarkedIcon || aProvider.icon32URL || aProvider.iconURL) + ")";
-      node.setAttribute("origin", aProvider.origin);
-
-      let window = aDocument.defaultView;
-      let menuLabel = window.gNavigatorBundle.getFormattedString("social.markpageMenu.label", [aProvider.name]);
-      node.setAttribute("label", menuLabel);
-      node.setAttribute("tooltiptext", menuLabel);
-      node.setAttribute("observes", "Social:PageShareOrMark");
-
-      return node;
-    }
-  });
-}
-
 
 function sizeSocialPanelToContent(panel, iframe, requestedSize) {
   let doc = iframe.contentDocument;
@@ -401,7 +225,7 @@ DynamicResizeWatcher.prototype = {
 
 
 this.OpenGraphBuilder = {
-  generateEndpointURL: function(URLTemplate, pageData) {
+  generateEndpointURL(URLTemplate, pageData) {
     // support for existing oexchange style endpoints by supporting their
     // querystring arguments. parse the query string template and do
     // replacements where necessary the query names may be different than ours,
@@ -409,8 +233,8 @@ this.OpenGraphBuilder = {
     let [endpointURL, queryString] = URLTemplate.split("?");
     let query = {};
     if (queryString) {
-      queryString.split('&').forEach(function (val) {
-        let [name, value] = val.split('=');
+      queryString.split("&").forEach(function(val) {
+        let [name, value] = val.split("=");
         let p = /%\{(.+)\}/.exec(value);
         if (!p) {
           // preserve non-template query vars

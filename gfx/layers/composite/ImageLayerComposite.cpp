@@ -64,15 +64,6 @@ ImageLayerComposite::Disconnect()
   Destroy();
 }
 
-LayerRenderState
-ImageLayerComposite::GetRenderState()
-{
-  if (mImageHost && mImageHost->IsAttached()) {
-    return mImageHost->GetRenderState();
-  }
-  return LayerRenderState();
-}
-
 Layer*
 ImageLayerComposite::GetLayer()
 {
@@ -80,17 +71,18 @@ ImageLayerComposite::GetLayer()
 }
 
 void
-ImageLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+ImageLayerComposite::SetLayerManager(HostLayerManager* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
   if (mImageHost) {
-    mImageHost->SetCompositor(mCompositor);
+    mImageHost->SetTextureSourceProvider(mCompositor);
   }
 }
 
 void
-ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
+ImageLayerComposite::RenderLayer(const IntRect& aClipRect,
+                                 const Maybe<gfx::Polygon>& aGeometry)
 {
   if (!mImageHost || !mImageHost->IsAttached()) {
     return;
@@ -99,7 +91,9 @@ ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
 #ifdef MOZ_DUMP_PAINTING
   if (gfxEnv::DumpCompositorTextures()) {
     RefPtr<gfx::DataSourceSurface> surf = mImageHost->GetAsSurface();
-    WriteSnapshotToDumpFile(this, surf);
+    if (surf) {
+      WriteSnapshotToDumpFile(this, surf);
+    }
   }
 #endif
 
@@ -107,8 +101,8 @@ ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
 
   RenderWithAllMasks(this, mCompositor, aClipRect,
                      [&](EffectChain& effectChain, const IntRect& clipRect) {
-    mImageHost->SetCompositor(mCompositor);
-    mImageHost->Composite(this, effectChain,
+    mImageHost->SetTextureSourceProvider(mCompositor);
+    mImageHost->Composite(mCompositor, this, effectChain,
                           GetEffectiveOpacity(),
                           GetEffectiveTransformForBuffer(),
                           GetSamplingFilter(),

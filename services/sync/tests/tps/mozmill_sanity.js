@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import('resource://tps/tps.jsm');
+Components.utils.import("resource://tps/tps.jsm");
 
 var setupModule = function(module) {
   module.controller = mozmill.getBrowserController();
@@ -21,7 +21,7 @@ var testTestStep = function() {
   TPS.Sync(ACTIONS.ACTION_SYNC_WIPE_CLIENT);
 }
 
-var teardownTest = function () {
+var teardownTest = function() {
   assert.ok(true, "teardownTest passes");
 }
 

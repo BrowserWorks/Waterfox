@@ -25,7 +25,6 @@ function checkResponse(r, expectedBody) {
     }
   });
 }
-
 fetch(new Request(request)).then(function(r) {
   response = r;
   return response.text();
@@ -39,7 +38,6 @@ fetch(new Request(request)).then(function(r) {
 }).then(function() {
   testDone();
 });
-
 // The request argument can either be a URL string, or a Request object.
 function testRequest(request, unknownRequest, requestWithAlternateQueryString,
                      requestWithDifferentFragment) {
@@ -66,19 +64,18 @@ function testRequest(request, unknownRequest, requestWithAlternateQueryString,
   }).then(function() {
     return c.match(new Request(request, {method: "HEAD"}));
   }).then(function(r) {
-    return checkResponse(r, '');
-  }).then(function() {
+    is(typeof r, "undefined", "Searching for an HEAD request should not succeed");
     return c.match(new Request(request, {method: "HEAD"}), {ignoreMethod: true});
   }).then(function(r) {
     return checkResponse(r);
   }).then(function() {
     return Promise.all(
-      ["POST", "PUT", "DELETE", "OPTIONS"]
+      ["HEAD", "POST", "PUT", "DELETE", "OPTIONS"]
         .map(function(method) {
           var req = new Request(request, {method: method});
           return c.match(req)
             .then(function(r) {
-              is(typeof r, "undefined", "Searching for a request with a non-GET/HEAD method should not succeed");
+              is(typeof r, "undefined", "Searching for a request with a non-GET method should not succeed");
               return c.match(req, {ignoreMethod: true});
             }).then(function(r) {
               return checkResponse(r);

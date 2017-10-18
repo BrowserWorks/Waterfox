@@ -7,13 +7,19 @@
 
 %{ C++
 namespace mozilla {
-class NeckoOriginAttributes;
+class OriginAttributes;
 } // mozilla namespace
 %}
 
-[ptr] native NeckoOriginAttributesPtr(mozilla::NeckoOriginAttributes);
+[ptr] native OriginAttributesPtr(mozilla::OriginAttributes);
 
 interface nsISimpleEnumerator;
+
+[scriptable, function, uuid(20709db8-8dad-4e45-b33e-6e7c761dfc5d)]
+interface nsIPrivateModeCallback : nsISupports
+{
+  void callback();
+};
 
 /** 
  * An optional interface for accessing or removing the cookies
@@ -32,8 +38,18 @@ interface nsICookieManager : nsISupports
   /**
    * Called to enumerate through each cookie in the cookie list.
    * The objects enumerated over are of type nsICookie
+   * This enumerator should only be used for non-private browsing cookies.
+   * To retrieve an enumerator for private browsing cookies, use
+   * getCookiesWithOriginAttributes from nsICookieManager2.
    */
   readonly attribute nsISimpleEnumerator enumerator;
+
+  /**
+   * Called to enumerate through each session cookie in the cookie list.
+   * The objects enumerated over are of type nsICookie
+   * This enumerator should only be used for non-private browsing cookies.
+   */
+  readonly attribute nsISimpleEnumerator sessionEnumerator;
 
   /**
    * Called to remove an individual cookie from the cookie list, specified
@@ -66,5 +82,5 @@ interface nsICookieManager : nsISupports
                         in ACString      aName,
                         in AUTF8String   aPath,
                         in boolean       aBlocked,
-                        in NeckoOriginAttributesPtr aOriginAttributes);
+                        in OriginAttributesPtr aOriginAttributes);
 };

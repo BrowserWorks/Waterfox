@@ -26,8 +26,8 @@
 
 using namespace mozilla::dom;
 
-class nsDocElementBoxFrame : public nsBoxFrame,
-                             public nsIAnonymousContentCreator
+class nsDocElementBoxFrame final : public nsBoxFrame
+                                 , public nsIAnonymousContentCreator
 {
 public:
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
@@ -36,10 +36,10 @@ public:
                                   nsStyleContext* aContext);
 
   explicit nsDocElementBoxFrame(nsStyleContext* aContext)
-    :nsBoxFrame(aContext, true) {}
+    :nsBoxFrame(aContext, kClassID, true) {}
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsDocElementBoxFrame)
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;

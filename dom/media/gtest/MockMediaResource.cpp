@@ -10,10 +10,9 @@
 namespace mozilla
 {
 
-MockMediaResource::MockMediaResource(const char* aFileName, const nsACString& aContentType)
+MockMediaResource::MockMediaResource(const char* aFileName)
   : mFileHandle(nullptr)
   , mFileName(aFileName)
-  , mContentType(aContentType)
 {
 }
 
@@ -50,8 +49,7 @@ MockMediaResource::ReadAt(int64_t aOffset, char* aBuffer, uint32_t aCount,
   }
 
   fseek(mFileHandle, aOffset, SEEK_SET);
-  size_t objectsRead = fread(aBuffer, aCount, 1, mFileHandle);
-  *aBytes = objectsRead == 1 ? aCount : 0;
+  *aBytes = fread(aBuffer, 1, aCount, mFileHandle);
 
   mEntry--;
 
@@ -103,7 +101,7 @@ MockMediaResource::GetCachedDataEnd(int64_t aOffset)
       return mRanges[i].mEnd;
     }
   }
-  return -1;
+  return aOffset;
 }
 
 nsresult

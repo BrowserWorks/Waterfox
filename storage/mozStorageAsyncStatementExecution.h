@@ -82,6 +82,14 @@ public:
    */
   bool shouldNotify();
 
+  /**
+   * Used by notifyComplete(), notifyError() and notifyResults() to notify on
+   * the calling thread.
+   */
+  nsresult notifyCompleteOnCallingThread();
+  nsresult notifyErrorOnCallingThread(mozIStorageError *aError);
+  nsresult notifyResultsOnCallingThread(ResultSet *aResultSet);
+
 private:
   AsyncExecuteStatements(StatementDataArray &aStatements,
                          Connection *aConnection,
@@ -186,7 +194,10 @@ private:
   RefPtr<Connection> mConnection;
   sqlite3 *mNativeConnection;
   bool mHasTransaction;
-  mozIStorageStatementCallback *mCallback;
+  // Note, this may not be a threadsafe object - never addref/release off
+  // the calling thread.  We take a reference when this is created, and
+  // release it in the CompletionNotifier::Run() call back to this thread.
+  nsCOMPtr<mozIStorageStatementCallback> mCallback;
   nsCOMPtr<nsIThread> mCallingThread;
   RefPtr<ResultSet> mResultSet;
 
@@ -227,7 +238,7 @@ private:
    * about the error message, the user gets reliable error messages.
    */
   SQLiteMutex &mDBMutex;
-  
+
   /**
    * The instant at which the request was started.
    *

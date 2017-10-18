@@ -28,51 +28,36 @@ class ArrayBufferObjectMaybeShared;
 class ArrayBufferViewObject;
 class ArrayObject;
 class BaseShape;
-class ClonedBlockObject;
-class DebugScopeObject;
+class DebugEnvironmentProxy;
+class DebuggerFrame;
 class ExportEntryObject;
+class EnvironmentObject;
 class GlobalObject;
 class ImportEntryObject;
 class LazyScript;
+class LexicalEnvironmentObject;
 class ModuleEnvironmentObject;
 class ModuleNamespaceObject;
 class ModuleObject;
 class NativeObject;
-class NestedScopeObject;
 class ObjectGroup;
 class PlainObject;
 class PropertyName;
 class RegExpObject;
 class SavedFrame;
-class ScopeObject;
+class Scope;
+class EnvironmentObject;
 class ScriptSourceObject;
 class Shape;
 class SharedArrayBufferObject;
 class StructTypeDescr;
 class UnownedBaseShape;
-class WasmInstanceObject;
+class WasmFunctionScope;
 class WasmMemoryObject;
 namespace jit {
 class JitCode;
 } // namespace jit
 } // namespace js
-
-// Expand the given macro D for each public GC pointer.
-#define FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
-    D(JS::Symbol*) \
-    D(JSAtom*) \
-    D(JSFunction*) \
-    D(JSObject*) \
-    D(JSScript*) \
-    D(JSString*)
-
-// Expand the given macro D for each public tagged GC pointer type.
-#define FOR_EACH_PUBLIC_TAGGED_GC_POINTER_TYPE(D) \
-    D(JS::Value) \
-    D(jsid)
-
-#define FOR_EACH_PUBLIC_AGGREGATE_GC_POINTER_TYPE(D) \
-    D(JSPropertyDescriptor)
 
 // Expand the given macro D for each valid GC reference type.
 #define FOR_EACH_INTERNAL_GC_POINTER_TYPE(D) \
@@ -85,30 +70,34 @@ class JitCode;
     D(js::ArrayBufferViewObject*) \
     D(js::ArrayObject*) \
     D(js::BaseShape*) \
-    D(js::ClonedBlockObject*) \
-    D(js::DebugScopeObject*) \
+    D(js::DebugEnvironmentProxy*) \
+    D(js::DebuggerFrame*) \
     D(js::ExportEntryObject*) \
+    D(js::EnvironmentObject*) \
     D(js::GlobalObject*) \
     D(js::ImportEntryObject*) \
     D(js::LazyScript*) \
+    D(js::LexicalEnvironmentObject*) \
     D(js::ModuleEnvironmentObject*) \
     D(js::ModuleNamespaceObject*) \
     D(js::ModuleObject*) \
     D(js::NativeObject*) \
-    D(js::NestedScopeObject*) \
     D(js::ObjectGroup*) \
     D(js::PlainObject*) \
     D(js::PropertyName*) \
     D(js::RegExpObject*) \
+    D(js::RegExpShared*) \
     D(js::SavedFrame*) \
-    D(js::ScopeObject*) \
+    D(js::Scope*) \
     D(js::ScriptSourceObject*) \
     D(js::Shape*) \
     D(js::SharedArrayBufferObject*) \
     D(js::StructTypeDescr*) \
     D(js::UnownedBaseShape*) \
+    D(js::WasmFunctionScope*) \
     D(js::WasmInstanceObject*) \
     D(js::WasmMemoryObject*) \
+    D(js::WasmTableObject*) \
     D(js::jit::JitCode*)
 
 // Expand the given macro D for each internal tagged GC pointer type.

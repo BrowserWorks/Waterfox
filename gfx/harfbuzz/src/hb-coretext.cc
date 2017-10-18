@@ -69,8 +69,8 @@ hb_coretext_face_create (CGFontRef cg_font)
 }
 
 
-HB_SHAPER_DATA_ENSURE_DECLARE(coretext, face)
-HB_SHAPER_DATA_ENSURE_DECLARE(coretext, font)
+HB_SHAPER_DATA_ENSURE_DEFINE(coretext, face)
+HB_SHAPER_DATA_ENSURE_DEFINE(coretext, font)
 
 
 /*
@@ -146,6 +146,23 @@ create_ct_font (CGFontRef cg_font, CGFloat font_size)
     return NULL;
   }
 
+  /* crbug.com/576941 and crbug.com/625902 and the investigation in the latter
+   * bug indicate that the cascade list reconfiguration occasionally causes
+   * crashes in CoreText on OS X 10.9, thus let's skip this step on older
+   * operating system versions. Except for the emoji font, where _not_
+   * reconfiguring the cascade list causes CoreText crashes. For details, see
+   * crbug.com/549610 */
+  // 0x00070000 stands for "kCTVersionNumber10_10", see CoreText.h
+  if (&CTGetCoreTextVersion != NULL && CTGetCoreTextVersion() < 0x00070000) {
+    CFStringRef fontName = CTFontCopyPostScriptName (ct_font);
+    bool isEmojiFont = CFStringCompare (fontName, CFSTR("AppleColorEmoji"), 0) == kCFCompareEqualTo;
+    CFRelease (fontName);
+    if (!isEmojiFont)
+      return ct_font;
+  }
+
+  CFURLRef original_url = (CFURLRef)CTFontCopyAttribute(ct_font, kCTFontURLAttribute);
+
   /* Create font copy with cascade list that has LastResort first; this speeds up CoreText
    * font fallback which we don't need anyway. */
   {
@@ -154,14 +171,35 @@ create_ct_font (CGFontRef cg_font, CGFloat font_size)
     CFRelease (last_resort_font_desc);
     if (new_ct_font)
     {
-      CFRelease (ct_font);
-      ct_font = new_ct_font;
+      /* The CTFontCreateCopyWithAttributes call fails to stay on the same font
+       * when reconfiguring the cascade list and may switch to a different font
+       * when there are fonts that go by the same name, since the descriptor is
+       * just name and size.
+       *
+       * Avoid reconfiguring the cascade lists if the new font is outside the
+       * system locations that we cannot access from the sandboxed renderer
+       * process in Blink. This can be detected by the new file URL location
+       * that the newly found font points to. */
+      CFURLRef new_url = (CFURLRef) CTFontCopyAttribute (new_ct_font, kCTFontURLAttribute);
+      // Keep reconfigured font if URL cannot be retrieved (seems to be the case
+      // on Mac OS 10.12 Sierra), speculative fix for crbug.com/625606
+      if (!original_url || !new_url || CFEqual (original_url, new_url)) {
+        CFRelease (ct_font);
+        ct_font = new_ct_font;
+      } else {
+        CFRelease (new_ct_font);
+        DEBUG_MSG (CORETEXT, ct_font, "Discarding reconfigured CTFont, location changed.");
+      }
+      if (new_url)
+        CFRelease (new_url);
     }
     else
       DEBUG_MSG (CORETEXT, ct_font, "Font copy with empty cascade list failed");
   }
 
- return ct_font;
+  if (original_url)
+    CFRelease (original_url);
+  return ct_font;
 }
 
 struct hb_coretext_shaper_face_data_t {
@@ -250,7 +288,9 @@ struct hb_coretext_shaper_shape_plan_data_t {};
 hb_coretext_shaper_shape_plan_data_t *
 _hb_coretext_shaper_shape_plan_data_create (hb_shape_plan_t    *shape_plan HB_UNUSED,
 					     const hb_feature_t *user_features HB_UNUSED,
-					     unsigned int        num_user_features HB_UNUSED)
+					     unsigned int        num_user_features HB_UNUSED,
+					     const int          *coords HB_UNUSED,
+					     unsigned int        num_coords HB_UNUSED)
 {
   return (hb_coretext_shaper_shape_plan_data_t *) HB_SHAPER_DATA_SUCCEEDED;
 }
@@ -601,22 +641,23 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
 	  /* active_features.qsort (); */
 	  for (unsigned int j = 0; j < active_features.len; j++)
 	  {
-	    CFStringRef keys[2] = {
+	    CFStringRef keys[] = {
 	      kCTFontFeatureTypeIdentifierKey,
 	      kCTFontFeatureSelectorIdentifierKey
 	    };
-	    CFNumberRef values[2] = {
+	    CFNumberRef values[] = {
 	      CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &active_features[j].rec.feature),
 	      CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &active_features[j].rec.setting)
 	    };
+	    ASSERT_STATIC (ARRAY_LENGTH (keys) == ARRAY_LENGTH (values));
 	    CFDictionaryRef dict = CFDictionaryCreate (kCFAllocatorDefault,
 						       (const void **) keys,
 						       (const void **) values,
-						       2,
+						       ARRAY_LENGTH (keys),
 						       &kCFTypeDictionaryKeyCallBacks,
 						       &kCFTypeDictionaryValueCallBacks);
-	    CFRelease (values[0]);
-	    CFRelease (values[1]);
+	    for (unsigned int i = 0; i < ARRAY_LENGTH (values); i++)
+	      CFRelease (values[i]);
 
 	    CFArrayAppendValue (features_array, dict);
 	    CFRelease (dict);
@@ -659,9 +700,6 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
 	  active_features.remove (feature - active_features.array);
       }
     }
-
-    if (!range_records.len) /* No active feature found. */
-      goto fail_features;
   }
   else
   {
@@ -695,7 +733,7 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
       pchars[chars_len++] = 0xFFFDu;
     else {
       pchars[chars_len++] = 0xD800u + ((c - 0x10000u) >> 10);
-      pchars[chars_len++] = 0xDC00u + ((c - 0x10000u) & ((1 << 10) - 1));
+      pchars[chars_len++] = 0xDC00u + ((c - 0x10000u) & ((1u << 10) - 1));
     }
   }
 
@@ -793,7 +831,7 @@ resize_and_retry:
       CFAttributedStringSetAttribute (attr_string, CFRangeMake (0, chars_len),
 				      kCTFontAttributeName, face_data->ct_font);
 
-      if (num_features)
+      if (num_features && range_records.len)
       {
 	unsigned int start = 0;
 	range_record_t *last_range = &range_records[0];
@@ -819,6 +857,30 @@ resize_and_retry:
 	  CFAttributedStringSetAttribute (attr_string, CFRangeMake (start, chars_len - start),
 					  kCTFontAttributeName, last_range->font);
       }
+      /* Enable/disable kern if requested.
+       *
+       * Note: once kern is disabled, reenabling it doesn't currently seem to work in CoreText.
+       */
+      if (num_features)
+      {
+	unsigned int zeroint = 0;
+	CFNumberRef zero = CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &zeroint);
+	for (unsigned int i = 0; i < num_features; i++)
+	{
+	  const hb_feature_t &feature = features[i];
+	  if (feature.tag == HB_TAG('k','e','r','n') &&
+	      feature.start < chars_len && feature.start < feature.end)
+	  {
+	    CFRange feature_range = CFRangeMake (feature.start,
+	                                         MIN (feature.end, chars_len) - feature.start);
+	    if (feature.value)
+	      CFAttributedStringRemoveAttribute (attr_string, feature_range, kCTKernAttributeName);
+	    else
+	      CFAttributedStringSetAttribute (attr_string, feature_range, kCTKernAttributeName, zero);
+	  }
+	}
+	CFRelease (zero);
+      }
 
       int level = HB_DIRECTION_IS_FORWARD (buffer->props.direction) ? 0 : 1;
       CFNumberRef level_number = CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &level);
@@ -828,6 +890,7 @@ resize_and_retry:
 						    1,
 						    &kCFTypeDictionaryKeyCallBacks,
 						    &kCFTypeDictionaryValueCallBacks);
+      CFRelease (level_number);
       if (unlikely (!options))
         FAIL ("CFDictionaryCreate failed");
 
@@ -1182,6 +1245,9 @@ fail:
  * AAT shaper
  */
 
+HB_SHAPER_DATA_ENSURE_DEFINE(coretext_aat, face)
+HB_SHAPER_DATA_ENSURE_DEFINE(coretext_aat, font)
+
 /*
  * shaper face data
  */
@@ -1242,7 +1308,9 @@ struct hb_coretext_aat_shaper_shape_plan_data_t {};
 hb_coretext_aat_shaper_shape_plan_data_t *
 _hb_coretext_aat_shaper_shape_plan_data_create (hb_shape_plan_t    *shape_plan HB_UNUSED,
 					     const hb_feature_t *user_features HB_UNUSED,
-					     unsigned int        num_user_features HB_UNUSED)
+					     unsigned int        num_user_features HB_UNUSED,
+					     const int          *coords HB_UNUSED,
+					     unsigned int        num_coords HB_UNUSED)
 {
   return (hb_coretext_aat_shaper_shape_plan_data_t *) HB_SHAPER_DATA_SUCCEEDED;
 }

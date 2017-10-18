@@ -6,7 +6,7 @@
 </head>
 <body>
 <pre id="test">
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 createHTML({
   bug: "1032848",
   title: "Canvas(2D)::CaptureStream as video-only input to peerconnection",
@@ -25,12 +25,23 @@ runNetworkTest(() => {
 
   test.setMediaConstraints([{video: true}], []);
   test.chain.replace("PC_LOCAL_GUM", [
-    function PC_LOCAL_DRAW_INITIAL_LOCAL_GREEN(test) {
-      h.drawColor(canvas, h.green);
-    },
     function PC_LOCAL_CANVAS_CAPTURESTREAM(test) {
+      h.drawColor(canvas, h.green);
       stream = canvas.captureStream(0);
       test.pcLocal.attachLocalStream(stream);
+      stream.requestFrame();
+      var i = 0;
+      return setInterval(function() {
+        try {
+          info("draw " + i ? "green" : "red");
+          h.drawColor(canvas, i ? h.green : h.red);
+          i = 1 - i;
+          stream.requestFrame();
+        } catch (e) {
+          // ignore; stream might have shut down, and we don't bother clearing
+          // the setInterval.
+        }
+      }, 500);
     }
   ]);
   test.chain.append([

@@ -9,15 +9,14 @@
  * markers are visible in the "waterfall".
  */
 
-const { Cc, Ci, Cu, Cr } = require("chrome");
 const { Heritage } = require("devtools/client/shared/widgets/view-helpers");
 const { AbstractCanvasGraph } = require("devtools/client/shared/widgets/Graphs");
 
-const { colorUtils } = require("devtools/shared/css-color");
+const { colorUtils } = require("devtools/shared/css/color");
 const { getColor } = require("devtools/client/shared/theme");
 const ProfilerGlobal = require("devtools/client/performance/modules/global");
 const { MarkerBlueprintUtils } = require("devtools/client/performance/modules/marker-blueprint-utils");
-const { TickUtils } = require("devtools/client/performance/modules/widgets/waterfall-ticks");
+const { TickUtils } = require("devtools/client/performance/modules/waterfall-ticks");
 const { TIMELINE_BLUEPRINT } = require("devtools/client/performance/modules/markers");
 
 const OVERVIEW_HEADER_HEIGHT = 14; // px
@@ -121,7 +120,8 @@ MarkersOverview.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
         continue;
       }
 
-      let markerType = this._paintBatches.get(marker.name) || this._paintBatches.get("UNKNOWN");
+      let markerType = this._paintBatches.get(marker.name) ||
+                                              this._paintBatches.get("UNKNOWN");
       markerType.batch.push(marker);
     }
 
@@ -219,12 +219,15 @@ MarkersOverview.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
   setTheme: function (theme) {
     this.theme = theme = theme || "light";
     this.backgroundColor = getColor("body-background", theme);
-    this.selectionBackgroundColor = colorUtils.setAlpha(getColor("selection-background", theme), 0.25);
+    this.selectionBackgroundColor = colorUtils.setAlpha(
+      getColor("selection-background", theme), 0.25);
     this.selectionStripesColor = colorUtils.setAlpha("#fff", 0.1);
     this.headerBackgroundColor = getColor("body-background", theme);
     this.headerTextColor = getColor("body-color", theme);
-    this.headerTimelineStrokeColor = colorUtils.setAlpha(getColor("body-color-alt", theme), 0.25);
-    this.alternatingBackgroundColor = colorUtils.setAlpha(getColor("body-color", theme), 0.05);
+    this.headerTimelineStrokeColor = colorUtils.setAlpha(
+      getColor("body-color-alt", theme), 0.25);
+    this.alternatingBackgroundColor = colorUtils.setAlpha(
+      getColor("body-color", theme), 0.05);
   }
 });
 

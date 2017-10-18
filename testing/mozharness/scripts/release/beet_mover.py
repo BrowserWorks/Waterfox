@@ -76,6 +76,10 @@ CONFIG_OPTIONS = [
         "dest": "bucket",
         "help": "s3 bucket to move beets to.",
     }],
+    [["--product"], {
+        "dest": "product",
+        "help": "product for which artifacts are beetmoved",
+    }],
     [["--exclude"], {
         "dest": "excludes",
         "action": "append",
@@ -120,6 +124,8 @@ MIME_MAP = {
     '.xpi': 'application/x-xpinstall'
 }
 
+HASH_FORMATS = ["sha512", "sha256"]
+
 
 class BeetMover(BaseScript, VirtualenvMixin, object):
     def __init__(self, aws_creds):
@@ -146,10 +152,10 @@ class BeetMover(BaseScript, VirtualenvMixin, object):
                     "PyYAML",
                     "Jinja2",
                     "redo",
+                    "cryptography==2.0.3",
                     "mar",
                 ],
                 "virtualenv_path": "venv",
-                'product': 'firefox',
             },
         }
         #todo do excludes need to be configured via command line for specific builds?
@@ -291,10 +297,13 @@ class BeetMover(BaseScript, VirtualenvMixin, object):
                     prefix=self._get_template_vars()["s3_prefix"],
                     f=self._strip_prefix(s3_key)
                 )
-                beet_contents = '{hash} sha512 {size} {name}\n'.format(
-                    hash=self.file_sha512sum(downloaded_file),
-                    size=os.path.getsize(downloaded_file),
-                    name=self._strip_prefix(s3_key))
+                beet_contents = '\n'.join([
+                    '{hash} {fmt} {size} {name}'.format(
+                        hash=self.get_hash_for_file(downloaded_file, hash_type=fmt),
+                        fmt=fmt,
+                        size=os.path.getsize(downloaded_file),
+                        name=self._strip_prefix(s3_key)) for fmt in HASH_FORMATS
+                ])
                 self.write_to_file(beet_file_name, beet_contents)
                 self.upload_bit(source=downloaded_file, s3_key=s3_key,
                                 bucket=bucket)

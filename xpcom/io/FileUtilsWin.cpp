@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <psapi.h>
 
+#include "mozilla/Unused.h"
 #include "nsWindowsHelpers.h"
 #include "GeckoProfiler.h"
 
@@ -24,7 +25,9 @@ struct ScopedMappedViewTraits
   }
   static void release(void* aPtr)
   {
-    UnmapViewOfFile(aPtr);
+    if (aPtr) {
+      mozilla::Unused << UnmapViewOfFile(aPtr);
+    }
   }
 };
 typedef mozilla::Scoped<ScopedMappedViewTraits> ScopedMappedView;
@@ -37,7 +40,7 @@ bool
 HandleToFilename(HANDLE aHandle, const LARGE_INTEGER& aOffset,
                  nsAString& aFilename)
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::NETWORK);
+  AUTO_PROFILER_LABEL("HandletoFilename", NETWORK);
 
   aFilename.Truncate();
   // This implementation is nice because it uses fully documented APIs that
@@ -58,7 +61,7 @@ HandleToFilename(HANDLE aHandle, const LARGE_INTEGER& aOffset,
   do {
     mappedFilename.SetLength(mappedFilename.Length() + MAX_PATH);
     len = GetMappedFileNameW(GetCurrentProcess(), view,
-                             wwc(mappedFilename.BeginWriting()),
+                             mappedFilename.get(),
                              mappedFilename.Length());
   } while (!len && GetLastError() == ERROR_INSUFFICIENT_BUFFER);
   if (!len) {

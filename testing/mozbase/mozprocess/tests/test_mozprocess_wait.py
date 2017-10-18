@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import os
-import unittest
 import proctest
 import mozinfo
+
+import mozunit
+
 from mozprocess import processhandler
 
 here = os.path.dirname(os.path.abspath(__file__))
+
 
 class ProcTestWait(proctest.ProcTest):
     """ Class to test process waits and timeouts """
@@ -14,7 +17,8 @@ class ProcTestWait(proctest.ProcTest):
     def test_normal_finish(self):
         """Process is started, runs to completion while we wait for it"""
 
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_normal_finish_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_normal_finish_python.ini"],
                                           cwd=here)
         p.run()
         p.wait()
@@ -25,19 +29,19 @@ class ProcTestWait(proctest.ProcTest):
         """Process is started runs to completion while we wait indefinitely"""
 
         p = processhandler.ProcessHandler([self.python, self.proclaunch,
-                                          "process_waittimeout_10s_python.ini"],
+                                           "process_waittimeout_10s_python.ini"],
                                           cwd=here)
         p.run()
         p.wait()
 
         self.determine_status(p)
 
-
     def test_timeout(self):
         """ Process is started, runs but we time out waiting on it
             to complete
         """
-        p = processhandler.ProcessHandler([self.python, self.proclaunch, "process_waittimeout_python.ini"],
+        p = processhandler.ProcessHandler([self.python, self.proclaunch,
+                                           "process_waittimeout_python.ini"],
                                           cwd=here)
         p.run(timeout=10)
         p.wait()
@@ -54,7 +58,7 @@ class ProcTestWait(proctest.ProcTest):
         Process is still running and didn't timeout
         """
         p = processhandler.ProcessHandler([self.python, self.proclaunch,
-                                          "process_waittimeout_10s_python.ini"],
+                                           "process_waittimeout_10s_python.ini"],
                                           cwd=here)
 
         p.run()
@@ -66,7 +70,7 @@ class ProcTestWait(proctest.ProcTest):
         """ Process is started, runs to completion before our wait times out
         """
         p = processhandler.ProcessHandler([self.python, self.proclaunch,
-                                          "process_waittimeout_10s_python.ini"],
+                                           "process_waittimeout_10s_python.ini"],
                                           cwd=here)
         p.run(timeout=30)
         p.wait()
@@ -76,7 +80,7 @@ class ProcTestWait(proctest.ProcTest):
     def test_wait_twice_after_kill(self):
         """Bug 968718: Process is started and stopped. wait() twice afterward."""
         p = processhandler.ProcessHandler([self.python, self.proclaunch,
-                                          "process_waittimeout_python.ini"],
+                                           "process_waittimeout_python.ini"],
                                           cwd=here)
         p.run()
         p.kill()
@@ -90,5 +94,6 @@ class ProcTestWait(proctest.ProcTest):
         self.assertEqual(returncode1, returncode2,
                          'Expected both returncodes of wait() to be equal')
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

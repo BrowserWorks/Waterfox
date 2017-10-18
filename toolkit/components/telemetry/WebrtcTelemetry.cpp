@@ -12,12 +12,9 @@
 #include "nsPrintfCString.h"
 #include "nsTHashtable.h"
 
-using mozilla::Telemetry::Common::AutoHashtable;
-
 void
 WebrtcTelemetry::RecordIceCandidateMask(const uint32_t iceCandidateBitmask,
-                                        const bool success,
-                                        const bool loop)
+                                        const bool success)
 {
   WebrtcIceCandidateType *entry = mWebrtcIceCandidates.GetEntry(iceCandidateBitmask);
   if (!entry) {
@@ -26,18 +23,10 @@ WebrtcTelemetry::RecordIceCandidateMask(const uint32_t iceCandidateBitmask,
       return;
   }
 
-  if (loop) {
-    if (success) {
-      entry->mData.loop.successCount++;
-    } else {
-      entry->mData.loop.failureCount++;
-    }
+  if (success) {
+    entry->mData.webrtc.successCount++;
   } else {
-    if (success) {
-      entry->mData.webrtc.successCount++;
-    } else {
-      entry->mData.webrtc.failureCount++;
-    }
+    entry->mData.webrtc.failureCount++;
   }
 }
 
@@ -55,7 +44,7 @@ ReflectIceEntry(const WebrtcTelemetry::WebrtcIceCandidateType *entry,
   if (!statsObj)
     return false;
   if (!JS_DefineProperty(cx, obj,
-                         nsPrintfCString("%lu", bitmask).BeginReading(),
+                         nsPrintfCString("%" PRIu32, bitmask).BeginReading(),
                          statsObj, JSPROP_ENUMERATE)) {
     return false;
   }
@@ -80,27 +69,17 @@ ReflectIceWebrtc(WebrtcTelemetry::WebrtcIceCandidateType *entry, JSContext *cx,
 }
 
 bool
-ReflectIceLoop(WebrtcTelemetry::WebrtcIceCandidateType *entry, JSContext *cx,
-               JS::Handle<JSObject*> obj)
-{
-  return ReflectIceEntry(entry, &entry->mData.loop, cx, obj);
-}
-
-bool
-WebrtcTelemetry::AddIceInfo(JSContext *cx, JS::Handle<JSObject*> iceObj,
-                          const bool loop)
+WebrtcTelemetry::AddIceInfo(JSContext *cx, JS::Handle<JSObject*> iceObj)
 {
   JS::Rooted<JSObject*> statsObj(cx, JS_NewPlainObject(cx));
   if (!statsObj)
     return false;
 
-  AutoHashtable<WebrtcIceCandidateType>::ReflectEntryFunc reflectFunction =
-    loop ? ReflectIceLoop : ReflectIceWebrtc;
-  if (!mWebrtcIceCandidates.ReflectIntoJS(reflectFunction, cx, statsObj)) {
+  if (!mWebrtcIceCandidates.ReflectIntoJS(ReflectIceWebrtc, cx, statsObj)) {
     return false;
   }
 
-  return JS_DefineProperty(cx, iceObj, loop ? "loop" : "webrtc",
+  return JS_DefineProperty(cx, iceObj, "webrtc",
                            statsObj, JSPROP_ENUMERATE);
 }
 
@@ -118,9 +97,7 @@ WebrtcTelemetry::GetWebrtcStats(JSContext *cx, JS::MutableHandle<JS::Value> ret)
   JS_DefineProperty(cx, root_obj, "IceCandidatesStats", ice_obj,
                     JSPROP_ENUMERATE);
 
-  if (!AddIceInfo(cx, ice_obj, false))
-    return false;
-  if (!AddIceInfo(cx, ice_obj, true))
+  if (!AddIceInfo(cx, ice_obj))
     return false;
 
   return true;

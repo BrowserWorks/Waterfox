@@ -7,7 +7,7 @@
 /* The "Components" xpcom objects for JavaScript. */
 
 #include "xpcprivate.h"
-#include "xpcIJSModuleLoader.h"
+#include "xpc_make_class.h"
 #include "XPCJSWeakReference.h"
 #include "WrapperFactory.h"
 #include "nsJSUtils.h"
@@ -33,9 +33,12 @@
 #include "nsDOMClassInfo.h"
 #include "ShimInterfaceInfo.h"
 #include "nsIAddonInterposition.h"
+#include "nsIScriptError.h"
 #include "nsISimpleEnumerator.h"
 #include "nsPIDOMWindow.h"
 #include "nsGlobalWindow.h"
+#include "nsScriptError.h"
+#include "GeckoProfiler.h"
 
 using namespace mozilla;
 using namespace JS;
@@ -213,11 +216,11 @@ NS_IMPL_ADDREF(nsXPCComponents_Interfaces)
 NS_IMPL_RELEASE(nsXPCComponents_Interfaces)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Interfaces
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Interfaces"
-#define                             XPC_MAP_WANT_RESOLVE
-#define                             XPC_MAP_WANT_NEWENUMERATE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Interfaces
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Interfaces"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_WANT_NEWENUMERATE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
@@ -437,11 +440,11 @@ NS_IMPL_ADDREF(nsXPCComponents_InterfacesByID)
 NS_IMPL_RELEASE(nsXPCComponents_InterfacesByID)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_InterfacesByID
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_InterfacesByID"
-#define                             XPC_MAP_WANT_RESOLVE
-#define                             XPC_MAP_WANT_NEWENUMERATE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_InterfacesByID
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_InterfacesByID"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_WANT_NEWENUMERATE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP
@@ -662,11 +665,11 @@ NS_IMPL_ADDREF(nsXPCComponents_Classes)
 NS_IMPL_RELEASE(nsXPCComponents_Classes)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Classes
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Classes"
-#define                             XPC_MAP_WANT_RESOLVE
-#define                             XPC_MAP_WANT_NEWENUMERATE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Classes
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Classes"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_WANT_NEWENUMERATE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP
@@ -869,11 +872,11 @@ NS_IMPL_ADDREF(nsXPCComponents_ClassesByID)
 NS_IMPL_RELEASE(nsXPCComponents_ClassesByID)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_ClassesByID
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_ClassesByID"
-#define                             XPC_MAP_WANT_RESOLVE
-#define                             XPC_MAP_WANT_NEWENUMERATE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_ClassesByID
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_ClassesByID"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_WANT_NEWENUMERATE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP
@@ -1101,11 +1104,11 @@ NS_IMPL_ADDREF(nsXPCComponents_Results)
 NS_IMPL_RELEASE(nsXPCComponents_Results)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Results
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Results"
-#define                             XPC_MAP_WANT_RESOLVE
-#define                             XPC_MAP_WANT_NEWENUMERATE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Results
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Results"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_RESOLVE | \
+                       XPC_SCRIPTABLE_WANT_NEWENUMERATE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP
@@ -1289,12 +1292,12 @@ NS_IMPL_ADDREF(nsXPCComponents_ID)
 NS_IMPL_RELEASE(nsXPCComponents_ID)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_ID
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_ID"
-#define                             XPC_MAP_WANT_CALL
-#define                             XPC_MAP_WANT_CONSTRUCT
-#define                             XPC_MAP_WANT_HASINSTANCE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_ID
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_ID"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_CALL | \
+                       XPC_SCRIPTABLE_WANT_CONSTRUCT | \
+                       XPC_SCRIPTABLE_WANT_HASINSTANCE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
@@ -1486,12 +1489,12 @@ NS_IMPL_ADDREF(nsXPCComponents_Exception)
 NS_IMPL_RELEASE(nsXPCComponents_Exception)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Exception
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Exception"
-#define                             XPC_MAP_WANT_CALL
-#define                             XPC_MAP_WANT_CONSTRUCT
-#define                             XPC_MAP_WANT_HASINSTANCE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Exception
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Exception"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_CALL | \
+                       XPC_SCRIPTABLE_WANT_CONSTRUCT | \
+                       XPC_SCRIPTABLE_WANT_HASINSTANCE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
@@ -1704,11 +1707,10 @@ nsXPCComponents_Exception::HasInstance(nsIXPConnectWrappedNative* wrapper,
 {
     using namespace mozilla::dom;
 
-    RootedValue v(cx, val);
     if (bp) {
-        Exception* e;
-        *bp = NS_SUCCEEDED(UNWRAP_OBJECT(Exception, v.toObjectOrNull(), e)) ||
-              JSValIsInterfaceOfType(cx, v, NS_GET_IID(nsIException));
+        *bp = (val.isObject() &&
+               IS_INSTANCE_OF(Exception, &val.toObject())) ||
+              JSValIsInterfaceOfType(cx, val, NS_GET_IID(nsIException));
     }
     return NS_OK;
 }
@@ -1881,11 +1883,10 @@ NS_IMPL_ADDREF(nsXPCConstructor)
 NS_IMPL_RELEASE(nsXPCConstructor)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCConstructor
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCConstructor"
-#define                             XPC_MAP_WANT_CALL
-#define                             XPC_MAP_WANT_CONSTRUCT
-#define XPC_MAP_FLAGS               0
+#define XPC_MAP_CLASSNAME         nsXPCConstructor
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCConstructor"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_CALL | \
+                       XPC_SCRIPTABLE_WANT_CONSTRUCT)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
@@ -2076,12 +2077,12 @@ NS_IMPL_ADDREF(nsXPCComponents_Constructor)
 NS_IMPL_RELEASE(nsXPCComponents_Constructor)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Constructor
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Constructor"
-#define                             XPC_MAP_WANT_CALL
-#define                             XPC_MAP_WANT_CONSTRUCT
-#define                             XPC_MAP_WANT_HASINSTANCE
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Constructor
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Constructor"
+#define XPC_MAP_FLAGS (XPC_SCRIPTABLE_WANT_CALL | \
+                       XPC_SCRIPTABLE_WANT_CONSTRUCT | \
+                       XPC_SCRIPTABLE_WANT_HASINSTANCE | \
+                       XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
@@ -2272,9 +2273,9 @@ NS_IMPL_ADDREF(nsXPCComponents_Utils)
 NS_IMPL_RELEASE(nsXPCComponents_Utils)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us...
-#define XPC_MAP_CLASSNAME           nsXPCComponents_Utils
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents_Utils"
-#define XPC_MAP_FLAGS               nsIXPCScriptable::ALLOW_PROP_MODS_DURING_RESOLVE
+#define XPC_MAP_CLASSNAME         nsXPCComponents_Utils
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents_Utils"
+#define XPC_MAP_FLAGS XPC_SCRIPTABLE_ALLOW_PROP_MODS_DURING_RESOLVE
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP
@@ -2343,11 +2344,11 @@ nsXPCComponents_Utils::ReportError(HandleValue error, JSContext* cx)
 
         uint32_t column = err->tokenOffset();
 
-        const char16_t* ucmessage = err->ucmessage;
         const char16_t* linebuf = err->linebuf();
 
         nsresult rv = scripterr->InitWithWindowID(
-                ucmessage ? nsDependentString(ucmessage) : EmptyString(),
+                err->message() ? NS_ConvertUTF8toUTF16(err->message().c_str())
+                : EmptyString(),
                 fileUni,
                 linebuf ? nsDependentString(linebuf, err->linebufLength()) : EmptyString(),
                 err->lineno,
@@ -2494,30 +2495,29 @@ nsXPCComponents_Utils::Import(const nsACString& registryLocation,
                               uint8_t optionalArgc,
                               MutableHandleValue retval)
 {
-    nsCOMPtr<xpcIJSModuleLoader> moduleloader =
-        do_GetService(MOZJSCOMPONENTLOADER_CONTRACTID);
-    if (!moduleloader)
-        return NS_ERROR_FAILURE;
+    RefPtr<mozJSComponentLoader> moduleloader = mozJSComponentLoader::Get();
+    MOZ_ASSERT(moduleloader);
+
+    const nsCString& flatLocation = PromiseFlatCString(registryLocation);
+    AUTO_PROFILER_LABEL_DYNAMIC("nsXPCComponents_Utils::Import", OTHER,
+                                flatLocation.get());
+
     return moduleloader->Import(registryLocation, targetObj, cx, optionalArgc, retval);
 }
 
 NS_IMETHODIMP
 nsXPCComponents_Utils::IsModuleLoaded(const nsACString& registryLocation, bool* retval)
 {
-    nsCOMPtr<xpcIJSModuleLoader> moduleloader =
-        do_GetService(MOZJSCOMPONENTLOADER_CONTRACTID);
-    if (!moduleloader)
-        return NS_ERROR_FAILURE;
+    RefPtr<mozJSComponentLoader> moduleloader = mozJSComponentLoader::Get();
+    MOZ_ASSERT(moduleloader);
     return moduleloader->IsModuleLoaded(registryLocation, retval);
 }
 
 NS_IMETHODIMP
 nsXPCComponents_Utils::Unload(const nsACString & registryLocation)
 {
-    nsCOMPtr<xpcIJSModuleLoader> moduleloader =
-        do_GetService(MOZJSCOMPONENTLOADER_CONTRACTID);
-    if (!moduleloader)
-        return NS_ERROR_FAILURE;
+    RefPtr<mozJSComponentLoader> moduleloader = mozJSComponentLoader::Get();
+    MOZ_ASSERT(moduleloader);
     return moduleloader->Unload(registryLocation);
 }
 
@@ -2530,7 +2530,7 @@ nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
 
     // Don't allow doing this if the global is a Window
     nsGlobalWindow* win;
-    if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, win))) {
+    if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, &global, win))) {
         return NS_ERROR_NOT_AVAILABLE;
     }
 
@@ -2569,7 +2569,7 @@ nsXPCComponents_Utils::GetWeakReference(HandleValue object, JSContext* cx,
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceGC()
 {
-    JSContext* cx = nsXPConnect::GetRuntimeInstance()->Context();
+    JSContext* cx = XPCJSContext::Get()->Context();
     PrepareForFullGC(cx);
     GCForReason(cx, GC_NORMAL, gcreason::COMPONENT_UTILS);
     return NS_OK;
@@ -2613,7 +2613,7 @@ nsXPCComponents_Utils::ClearMaxCCTime()
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForceShrinkingGC()
 {
-    JSContext* cx = nsXPConnect::GetRuntimeInstance()->Context();
+    JSContext* cx = dom::danger::GetJSContext();
     PrepareForFullGC(cx);
     GCForReason(cx, GC_SHRINK, gcreason::COMPONENT_UTILS);
     return NS_OK;
@@ -2623,16 +2623,14 @@ class PreciseGCRunnable : public Runnable
 {
   public:
     PreciseGCRunnable(ScheduledGCCallback* aCallback, bool aShrinking)
-    : mCallback(aCallback), mShrinking(aShrinking) {}
-
-    NS_IMETHOD Run()
+      : mozilla::Runnable("PreciseGCRunnable")
+      , mCallback(aCallback)
+      , mShrinking(aShrinking)
     {
-        JSRuntime* rt = nsXPConnect::GetRuntimeInstance()->Runtime();
+    }
 
-        JSContext* cx = JS_GetContext(rt);
-        if (JS_IsRunning(cx))
-            return NS_DispatchToMainThread(this);
-
+    NS_IMETHOD Run() override
+    {
         nsJSContext::GarbageCollectNow(gcreason::COMPONENT_UTILS,
                                        nsJSContext::NonIncrementalGC,
                                        mShrinking ?
@@ -2702,7 +2700,7 @@ nsXPCComponents_Utils::CallFunctionWithAsyncStack(HandleValue function,
     if (NS_FAILED(rv))
         return rv;
     if (!asyncStack.isObject()) {
-        JS_ReportError(cx, "Must use a native JavaScript stack frame");
+        JS_ReportErrorASCII(cx, "Must use a native JavaScript stack frame");
         return NS_ERROR_INVALID_ARG;
     }
 
@@ -2844,10 +2842,11 @@ nsXPCComponents_Utils::IsDeadWrapper(HandleValue obj, bool* out)
     if (obj.isPrimitive())
         return NS_ERROR_INVALID_ARG;
 
-    // Make sure to unwrap first. Once a proxy is nuked, it ceases to be a
-    // wrapper, meaning that, if passed to another compartment, we'll generate
-    // a CCW for it. Make sure that IsDeadWrapper sees through the confusion.
-    *out = JS_IsDeadWrapper(js::CheckedUnwrap(&obj.toObject()));
+    // We should never have cross-compartment wrappers for dead wrappers.
+    MOZ_ASSERT_IF(js::IsCrossCompartmentWrapper(&obj.toObject()),
+                  !JS_IsDeadWrapper(js::UncheckedUnwrap(&obj.toObject())));
+
+    *out = JS_IsDeadWrapper(&obj.toObject());
     return NS_OK;
 }
 
@@ -2919,7 +2918,7 @@ nsXPCComponents_Utils::SetWantXrays(HandleValue vscope, JSContext* cx)
 NS_IMETHODIMP
 nsXPCComponents_Utils::ForcePermissiveCOWs(JSContext* cx)
 {
-    CrashIfNotInAutomation();
+    xpc::CrashIfNotInAutomation();
     CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->forcePermissiveCOWs = true;
     return NS_OK;
 }
@@ -2930,7 +2929,7 @@ nsXPCComponents_Utils::ForcePrivilegedComponentsForScope(HandleValue vscope,
 {
     if (!vscope.isObject())
         return NS_ERROR_INVALID_ARG;
-    CrashIfNotInAutomation();
+    xpc::CrashIfNotInAutomation();
     JSObject* scopeObj = js::UncheckedUnwrap(&vscope.toObject());
     XPCWrappedNativeScope* scope = ObjectScope(scopeObj);
     scope->ForcePrivilegedComponents();
@@ -3016,17 +3015,33 @@ nsXPCComponents_Utils::SetGCZeal(int32_t aValue, JSContext* cx)
 }
 
 NS_IMETHODIMP
+nsXPCComponents_Utils::GetIsInAutomation(bool* aResult)
+{
+    NS_ENSURE_ARG_POINTER(aResult);
+
+    *aResult = xpc::IsInAutomation();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::CrashIfNotInAutomation()
+{
+    xpc::CrashIfNotInAutomation();
+    return NS_OK;
+}
+
+NS_IMETHODIMP
 nsXPCComponents_Utils::NukeSandbox(HandleValue obj, JSContext* cx)
 {
-    PROFILER_LABEL_FUNC(js::ProfileEntry::Category::JS);
+    AUTO_PROFILER_LABEL("nsXPCComponents_Utils::NukeSandbox", JS);
     NS_ENSURE_TRUE(obj.isObject(), NS_ERROR_INVALID_ARG);
     JSObject* wrapper = &obj.toObject();
     NS_ENSURE_TRUE(IsWrapper(wrapper), NS_ERROR_INVALID_ARG);
-    JSObject* sb = UncheckedUnwrap(wrapper);
+    RootedObject sb(cx, UncheckedUnwrap(wrapper));
     NS_ENSURE_TRUE(IsSandbox(sb), NS_ERROR_INVALID_ARG);
-    NukeCrossCompartmentWrappers(cx, AllCompartments(),
-                                 SingleCompartment(GetObjectCompartment(sb)),
-                                 NukeWindowReferences);
+
+    xpc::NukeAllWrappersForCompartment(cx, GetObjectCompartment(sb));
+
     return NS_OK;
 }
 
@@ -3039,7 +3054,7 @@ nsXPCComponents_Utils::BlockScriptForGlobal(HandleValue globalArg,
                                             /* stopAtWindowProxy = */ false));
     NS_ENSURE_TRUE(JS_IsGlobalObject(global), NS_ERROR_INVALID_ARG);
     if (nsContentUtils::IsSystemPrincipal(xpc::GetObjectPrincipal(global))) {
-        JS_ReportError(cx, "Script may not be disabled for system globals");
+        JS_ReportErrorASCII(cx, "Script may not be disabled for system globals");
         return NS_ERROR_FAILURE;
     }
     Scriptability::Get(global).Block();
@@ -3055,7 +3070,7 @@ nsXPCComponents_Utils::UnblockScriptForGlobal(HandleValue globalArg,
                                             /* stopAtWindowProxy = */ false));
     NS_ENSURE_TRUE(JS_IsGlobalObject(global), NS_ERROR_INVALID_ARG);
     if (nsContentUtils::IsSystemPrincipal(xpc::GetObjectPrincipal(global))) {
-        JS_ReportError(cx, "Script may not be disabled for system globals");
+        JS_ReportErrorASCII(cx, "Script may not be disabled for system globals");
         return NS_ERROR_FAILURE;
     }
     Scriptability::Get(global).Unblock();
@@ -3189,8 +3204,8 @@ NS_IMETHODIMP
 nsXPCComponents_Utils::GetWatchdogTimestamp(const nsAString& aCategory, PRTime* aOut)
 {
     WatchdogTimestampCategory category;
-    if (aCategory.EqualsLiteral("RuntimeStateChange"))
-        category = TimestampRuntimeStateChange;
+    if (aCategory.EqualsLiteral("ContextStateChange"))
+        category = TimestampContextStateChange;
     else if (aCategory.EqualsLiteral("WatchdogWakeup"))
         category = TimestampWatchdogWakeup;
     else if (aCategory.EqualsLiteral("WatchdogHibernateStart"))
@@ -3199,7 +3214,7 @@ nsXPCComponents_Utils::GetWatchdogTimestamp(const nsAString& aCategory, PRTime* 
         category = TimestampWatchdogHibernateStop;
     else
         return NS_ERROR_INVALID_ARG;
-    *aOut = XPCJSRuntime::Get()->GetWatchdogTimestamp(category);
+    *aOut = XPCJSContext::Get()->GetWatchdogTimestamp(category);
     return NS_OK;
 }
 
@@ -3236,12 +3251,12 @@ xpc::CloneInto(JSContext* aCx, HandleValue aValue, HandleValue aScope,
     RootedObject scope(aCx, &aScope.toObject());
     scope = js::CheckedUnwrap(scope);
     if(!scope) {
-        JS_ReportError(aCx, "Permission denied to clone object into scope");
+        JS_ReportErrorASCII(aCx, "Permission denied to clone object into scope");
         return false;
     }
 
     if (!aOptions.isUndefined() && !aOptions.isObject()) {
-        JS_ReportError(aCx, "Invalid argument");
+        JS_ReportErrorASCII(aCx, "Invalid argument");
         return false;
     }
 
@@ -3359,8 +3374,7 @@ nsXPCComponents_Utils::AllowCPOWsInAddon(const nsACString& addonIdStr,
 NS_IMETHODIMP
 nsXPCComponents_Utils::Now(double* aRetval)
 {
-    bool isInconsistent = false;
-    TimeStamp start = TimeStamp::ProcessCreation(isInconsistent);
+    TimeStamp start = TimeStamp::ProcessCreation();
     *aRetval = (TimeStamp::Now() - start).ToMilliseconds();
     return NS_OK;
 }
@@ -3460,7 +3474,7 @@ nsXPCComponents::GetManager(nsIComponentManager * *aManager)
 NS_IMETHODIMP
 nsXPCComponents::GetReturnCode(JSContext* aCx, MutableHandleValue aOut)
 {
-    nsresult res = XPCJSRuntime::Get()->GetPendingResult();
+    nsresult res = XPCJSContext::Get()->GetPendingResult();
     aOut.setNumber(static_cast<uint32_t>(res));
     return NS_OK;
 }
@@ -3471,7 +3485,7 @@ nsXPCComponents::SetReturnCode(JSContext* aCx, HandleValue aCode)
     nsresult rv;
     if (!ToUint32(aCx, aCode, (uint32_t*)&rv))
         return NS_ERROR_FAILURE;
-    XPCJSRuntime::Get()->SetPendingResult(rv);
+    XPCJSContext::Get()->SetPendingResult(rv);
     return NS_OK;
 }
 
@@ -3502,10 +3516,7 @@ public:
     // having one.
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIXPCSCRIPTABLE
-    // The NS_IMETHODIMP isn't really accurate here, but NS_CALLBACK requires
-    // the referent to be declared __stdcall on Windows, and this is the only
-    // macro that does that.
-    static NS_IMETHODIMP Get(nsIXPCScriptable** helper)
+    static nsresult Get(nsIXPCScriptable** helper)
     {
         *helper = &singleton;
         return NS_OK;
@@ -3549,9 +3560,9 @@ NS_INTERFACE_MAP_END_INHERITING(nsXPCComponentsBase)
 NS_IMPL_CI_INTERFACE_GETTER(nsXPCComponents, nsIXPCComponents)
 
 // The nsIXPCScriptable map declaration that will generate stubs for us
-#define XPC_MAP_CLASSNAME           ComponentsSH
-#define XPC_MAP_QUOTED_CLASSNAME   "nsXPCComponents"
-#define                             XPC_MAP_WANT_PRECREATE
+#define XPC_MAP_CLASSNAME ComponentsSH
+#define XPC_MAP_QUOTED_CLASSNAME "nsXPCComponents"
+#define XPC_MAP_FLAGS XPC_SCRIPTABLE_WANT_PRECREATE
 #include "xpc_map_end.h" /* This will #undef the above */
 
 NS_IMETHODIMP

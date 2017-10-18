@@ -24,13 +24,14 @@ xul|checkbox {
   padding-inline-start: 0;
 }
 
-@media not all and (-moz-windows-default-theme) {
+@media (-moz-windows-default-theme: 0) {
   xul|*.checkbox-check {
-    background-image: none !important;
+    background-image: none;
   }
 
   xul|*.checkbox-check[checked] {
-    list-style-image: url("chrome://global/skin/in-content/check.svg#check-native");
+    fill: -moz-dialogText;
+    stroke: none;
     background-color: -moz-dialog;
   }
 }
@@ -40,14 +41,14 @@ xul|radio {
   padding-inline-start: 0;
 }
 
-@media not all and (-moz-windows-default-theme) {
+@media (-moz-windows-default-theme: 0) {
   xul|*.radio-check {
     background-image: none;
   }
 
   xul|*.radio-check[selected] {
-    list-style-image: url("chrome://global/skin/in-content/radio.svg#radio-native");
     background-color: -moz-dialog;
+    fill: -moz-dialogText;
   }
 }
 
@@ -57,24 +58,20 @@ xul|*.checkbox-icon {
 }
 
 /* Never draw a border for the focusring, use outline instead */
-xul|*.button-box,
 xul|*.menulist-label-box,
-xul|*.radio-label-box,
-xul|*.checkbox-label-box {
+xul|*.radio-label-box {
   border-style: none;
 }
 
-xul|button:-moz-focusring > xul|*.button-box,
 xul|menulist:-moz-focusring > xul|*.menulist-label-box,
 xul|radio[focused="true"] > xul|*.radio-label-box,
-html|input[type="checkbox"]:-moz-focusring + html|label:before,
-xul|checkbox:-moz-focusring > xul|*.checkbox-label-box {
+html|input[type="checkbox"]:-moz-focusring + html|label:before {
   outline: 1px dotted;
 }
 
 /* Use a 2px border so that selected row highlight is still visible behind
     an existing high-contrast border that uses the background color */
-@media not all and (-moz-windows-default-theme) {
+@media (-moz-windows-default-theme: 0) {
   xul|treechildren::-moz-tree-row(selected),
   xul|listbox xul|listitem[selected="true"] {
      border: 2px dotted Highlight;

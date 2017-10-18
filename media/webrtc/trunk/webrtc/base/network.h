@@ -11,15 +11,17 @@
 #ifndef WEBRTC_BASE_NETWORK_H_
 #define WEBRTC_BASE_NETWORK_H_
 
+#include <stdint.h>
+
 #include <deque>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "webrtc/base/basictypes.h"
 #include "webrtc/base/ipaddress.h"
+#include "webrtc/base/networkmonitor.h"
 #include "webrtc/base/messagehandler.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/base/sigslot.h"
 
 #if defined(WEBRTC_POSIX)
@@ -28,18 +30,19 @@ struct ifaddrs;
 
 namespace rtc {
 
+extern const char kPublicIPv4Host[];
+extern const char kPublicIPv6Host[];
+
+class IfAddrsConverter;
 class Network;
+class NetworkMonitorInterface;
 class Thread;
 
-enum AdapterType {
-  // This enum resembles the one in Chromium net::ConnectionType.
-  ADAPTER_TYPE_UNKNOWN = 0,
-  ADAPTER_TYPE_ETHERNET = 1 << 0,
-  ADAPTER_TYPE_WIFI = 1 << 1,
-  ADAPTER_TYPE_CELLULAR = 1 << 2,
-  ADAPTER_TYPE_VPN = 1 << 3,
-  ADAPTER_TYPE_LOOPBACK = 1 << 4
-};
+static const uint16_t kNetworkCostMax = 999;
+static const uint16_t kNetworkCostHigh = 900;
+static const uint16_t kNetworkCostUnknown = 50;
+static const uint16_t kNetworkCostLow = 10;
+static const uint16_t kNetworkCostMin = 0;
 
 // By default, ignore loopback interfaces on the host.
 const int kDefaultNetworkIgnoreMask = ADAPTER_TYPE_LOOPBACK;
@@ -50,20 +53,49 @@ const int kDefaultNetworkIgnoreMask = ADAPTER_TYPE_LOOPBACK;
 std::string MakeNetworkKey(const std::string& name, const IPAddress& prefix,
                            int prefix_length);
 
+class DefaultLocalAddressProvider {
+ public:
+  virtual ~DefaultLocalAddressProvider() = default;
+  // The default local address is the local address used in multi-homed endpoint
+  // when the any address (0.0.0.0 or ::) is used as the local address. It's
+  // important to check the return value as a IP family may not be enabled.
+  virtual bool GetDefaultLocalAddress(int family, IPAddress* ipaddr) const = 0;
+};
+
 // Generic network manager interface. It provides list of local
 // networks.
-class NetworkManager {
+//
+// Every method of NetworkManager (including the destructor) must be called on
+// the same thread, except for the constructor which may be called on any
+// thread.
+//
+// This allows constructing a NetworkManager subclass on one thread and
+// passing it into an object that uses it on a different thread.
+class NetworkManager : public DefaultLocalAddressProvider {
  public:
   typedef std::vector<Network*> NetworkList;
 
+  // This enum indicates whether adapter enumeration is allowed.
+  enum EnumerationPermission {
+    ENUMERATION_ALLOWED,  // Adapter enumeration is allowed. Getting 0 network
+                          // from GetNetworks means that there is no network
+                          // available.
+    ENUMERATION_BLOCKED,  // Adapter enumeration is disabled.
+                          // GetAnyAddressNetworks() should be used instead.
+  };
+
   NetworkManager();
-  virtual ~NetworkManager();
+  ~NetworkManager() override;
 
   // Called when network list is updated.
   sigslot::signal0<> SignalNetworksChanged;
 
   // Indicates a failure when getting list of network interfaces.
   sigslot::signal0<> SignalError;
+
+  // This should be called on the NetworkManager's thread before the
+  // NetworkManager is used. Subclasses may override this if necessary.
+  virtual void Initialize() {}
 
   // Start/Stop monitoring of network interfaces
   // list. SignalNetworksChanged or SignalError is emitted immediately
@@ -73,11 +105,14 @@ class NetworkManager {
   virtual void StopUpdating() = 0;
 
   // Returns the current list of networks available on this machine.
-  // UpdateNetworks() must be called before this method is called.
+  // StartUpdating() must be called before this method is called.
   // It makes sure that repeated calls return the same object for a
   // given network, so that quality is tracked appropriately. Does not
   // include ignored networks.
   virtual void GetNetworks(NetworkList* networks) const = 0;
+
+  // return the current permission state of GetNetworks()
+  virtual EnumerationPermission enumeration_permission() const;
 
   // "AnyAddressNetwork" is a network which only contains single "any address"
   // IP address.  (i.e. INADDR_ANY for IPv4 or in6addr_any for IPv6). This is
@@ -86,8 +121,9 @@ class NetworkManager {
   // TODO(guoweis): remove this body when chromium implements this.
   virtual void GetAnyAddressNetworks(NetworkList* networks) {}
 
-  // Dumps a list of networks available to LS_INFO.
-  virtual void DumpNetworks(bool include_ignored) {}
+  // Dumps the current list of networks in the network manager.
+  virtual void DumpNetworks() {}
+  bool GetDefaultLocalAddress(int family, IPAddress* ipaddr) const override;
 
   struct Stats {
     int ipv4_network_count;
@@ -105,13 +141,18 @@ class NetworkManagerBase : public NetworkManager {
   NetworkManagerBase();
   ~NetworkManagerBase() override;
 
-  void GetNetworks(std::vector<Network*>* networks) const override;
+  void GetNetworks(NetworkList* networks) const override;
   void GetAnyAddressNetworks(NetworkList* networks) override;
+  // Defaults to true.
   bool ipv6_enabled() const { return ipv6_enabled_; }
   void set_ipv6_enabled(bool enabled) { ipv6_enabled_ = enabled; }
 
   void set_max_ipv6_networks(int networks) { max_ipv6_networks_ = networks; }
   int max_ipv6_networks() { return max_ipv6_networks_; }
+
+  EnumerationPermission enumeration_permission() const override;
+
+  bool GetDefaultLocalAddress(int family, IPAddress* ipaddr) const override;
 
  protected:
   typedef std::map<std::string, Network*> NetworkMap;
@@ -127,9 +168,19 @@ class NetworkManagerBase : public NetworkManager {
                         bool* changed,
                         NetworkManager::Stats* stats);
 
+  void set_enumeration_permission(EnumerationPermission state) {
+    enumeration_permission_ = state;
+  }
+
+  void set_default_local_addresses(const IPAddress& ipv4,
+                                   const IPAddress& ipv6);
+
  private:
   friend class NetworkTest;
-  void DoUpdateNetworks();
+
+  Network* GetNetworkFromAddress(const rtc::IPAddress& ip) const;
+
+  EnumerationPermission enumeration_permission_;
 
   NetworkList networks_;
   int max_ipv6_networks_;
@@ -137,14 +188,23 @@ class NetworkManagerBase : public NetworkManager {
   NetworkMap networks_map_;
   bool ipv6_enabled_;
 
-  rtc::scoped_ptr<rtc::Network> ipv4_any_address_network_;
-  rtc::scoped_ptr<rtc::Network> ipv6_any_address_network_;
+  std::unique_ptr<rtc::Network> ipv4_any_address_network_;
+  std::unique_ptr<rtc::Network> ipv6_any_address_network_;
+
+  IPAddress default_local_ipv4_address_;
+  IPAddress default_local_ipv6_address_;
+  // We use 16 bits to save the bandwidth consumption when sending the network
+  // id over the Internet. It is OK that the 16-bit integer overflows to get a
+  // network id 0 because we only compare the network ids in the old and the new
+  // best connections in the transport channel.
+  uint16_t next_available_network_id_ = 1;
 };
 
 // Basic implementation of the NetworkManager interface that gets list
 // of networks using OS APIs.
 class BasicNetworkManager : public NetworkManagerBase,
-                            public MessageHandler {
+                            public MessageHandler,
+                            public sigslot::has_slots<> {
  public:
   BasicNetworkManager();
   ~BasicNetworkManager() override;
@@ -152,8 +212,7 @@ class BasicNetworkManager : public NetworkManagerBase,
   void StartUpdating() override;
   void StopUpdating() override;
 
-  // Logs the available networks.
-  void DumpNetworks(bool include_ignored) override;
+  void DumpNetworks() override;
 
   // MessageHandler interface.
   void OnMessage(Message* msg) override;
@@ -164,18 +223,6 @@ class BasicNetworkManager : public NetworkManagerBase,
   void set_network_ignore_list(const std::vector<std::string>& list) {
     network_ignore_list_ = list;
   }
-
-  // Sets the network types to ignore. For instance, calling this with
-  // ADAPTER_TYPE_ETHERNET | ADAPTER_TYPE_LOOPBACK will ignore Ethernet and
-  // loopback interfaces. Set to kDefaultNetworkIgnoreMask by default.
-  void set_network_ignore_mask(int network_ignore_mask) {
-    // TODO(phoglund): implement support for other types than loopback.
-    // See https://code.google.com/p/webrtc/issues/detail?id=4288.
-    // Then remove set_network_ignore_list.
-    network_ignore_mask_ = network_ignore_mask;
-  }
-
-  int network_ignore_mask() const { return network_ignore_mask_; }
 
 #if defined(WEBRTC_LINUX)
   // Sets the flag for ignoring non-default routes.
@@ -188,6 +235,7 @@ class BasicNetworkManager : public NetworkManagerBase,
 #if defined(WEBRTC_POSIX)
   // Separated from CreateNetworks for tests.
   void ConvertIfAddrs(ifaddrs* interfaces,
+                      IfAddrsConverter* converter,
                       bool include_ignored,
                       NetworkList* networks) const;
 #endif  // defined(WEBRTC_POSIX)
@@ -199,28 +247,60 @@ class BasicNetworkManager : public NetworkManagerBase,
   // based on the network's property instead of any individual IP.
   bool IsIgnoredNetwork(const Network& network) const;
 
+  // This function connects a UDP socket to a public address and returns the
+  // local address associated it. Since it binds to the "any" address
+  // internally, it returns the default local address on a multi-homed endpoint.
+  IPAddress QueryDefaultLocalAddress(int family) const;
+
  private:
   friend class NetworkTest;
 
-  void DoUpdateNetworks();
+  // Creates a network monitor and listens for network updates.
+  void StartNetworkMonitor();
+  // Stops and removes the network monitor.
+  void StopNetworkMonitor();
+  // Called when it receives updates from the network monitor.
+  void OnNetworksChanged();
+
+  // Updates the networks and reschedules the next update.
+  void UpdateNetworksContinually();
+  // Only updates the networks; does not reschedule the next update.
+  void UpdateNetworksOnce();
+
+  AdapterType GetAdapterTypeFromName(const char* network_name) const;
 
   Thread* thread_;
   bool sent_first_update_;
   int start_count_;
   std::vector<std::string> network_ignore_list_;
-  int network_ignore_mask_;
   bool ignore_non_default_routes_;
+  std::unique_ptr<NetworkMonitorInterface> network_monitor_;
 };
 
 // Represents a Unix-type network interface, with a name and single address.
 class Network {
  public:
-  Network(const std::string& name, const std::string& description,
-          const IPAddress& prefix, int prefix_length);
+  Network(const std::string& name,
+          const std::string& description,
+          const IPAddress& prefix,
+          int prefix_length);
 
-  Network(const std::string& name, const std::string& description,
-          const IPAddress& prefix, int prefix_length, AdapterType type);
+  Network(const std::string& name,
+          const std::string& description,
+          const IPAddress& prefix,
+          int prefix_length,
+          AdapterType type);
   ~Network();
+
+  sigslot::signal1<const Network*> SignalTypeChanged;
+
+  const DefaultLocalAddressProvider* default_local_address_provider() {
+    return default_local_address_provider_;
+  }
+  void set_default_local_address_provider(
+      const DefaultLocalAddressProvider* provider) {
+    default_local_address_provider_ = provider;
+  }
 
   // Returns the name of the interface this network is associated wtih.
   const std::string& name() const { return name_; }
@@ -284,13 +364,51 @@ class Network {
   void set_ignored(bool ignored) { ignored_ = ignored; }
 
   AdapterType type() const { return type_; }
+  void set_type(AdapterType type) {
+    if (type_ == type) {
+      return;
+    }
+    type_ = type;
+    SignalTypeChanged(this);
+  }
+
+  uint16_t GetCost() const {
+    switch (type_) {
+      case rtc::ADAPTER_TYPE_ETHERNET:
+      case rtc::ADAPTER_TYPE_LOOPBACK:
+        return kNetworkCostMin;
+      case rtc::ADAPTER_TYPE_WIFI:
+      case rtc::ADAPTER_TYPE_VPN:
+        return kNetworkCostLow;
+      case rtc::ADAPTER_TYPE_CELLULAR:
+        return kNetworkCostHigh;
+      default:
+        return kNetworkCostUnknown;
+    }
+  }
+  // A unique id assigned by the network manager, which may be signaled
+  // to the remote side in the candidate.
+  uint16_t id() const { return id_; }
+  void set_id(uint16_t id) { id_ = id; }
+
   int preference() const { return preference_; }
   void set_preference(int preference) { preference_ = preference; }
+
+  // When we enumerate networks and find a previously-seen network is missing,
+  // we do not remove it (because it may be used elsewhere). Instead, we mark
+  // it inactive, so that we can detect network changes properly.
+  bool active() const { return active_; }
+  void set_active(bool active) {
+    if (active_ != active) {
+      active_ = active;
+    }
+  }
 
   // Debugging description of this network
   std::string ToString() const;
 
  private:
+  const DefaultLocalAddressProvider* default_local_address_provider_ = nullptr;
   std::string name_;
   std::string description_;
   IPAddress prefix_;
@@ -301,6 +419,8 @@ class Network {
   bool ignored_;
   AdapterType type_;
   int preference_;
+  bool active_ = true;
+  uint16_t id_ = 0;
 
   friend class NetworkManager;
 };

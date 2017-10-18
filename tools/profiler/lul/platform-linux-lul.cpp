@@ -15,8 +15,8 @@
 #include "shared-libraries.h"
 #include "AutoObjectMapper.h"
 
-// Contains miscellaneous helpers that are used to connect SPS and LUL.
-
+// Contains miscellaneous helpers that are used to connect the Gecko Profiler
+// and LUL.
 
 // Find out, in a platform-dependent way, where the code modules got
 // mapped in the process' virtual address space, and get |aLUL| to
@@ -26,13 +26,15 @@ read_procmaps(lul::LUL* aLUL)
 {
   MOZ_ASSERT(aLUL->CountMappings() == 0);
 
-# if defined(SPS_OS_linux) || defined(SPS_OS_android) || defined(SPS_OS_darwin)
+# if defined(GP_OS_linux) || defined(GP_OS_android)
   SharedLibraryInfo info = SharedLibraryInfo::GetInfoForSelf();
 
   for (size_t i = 0; i < info.GetSize(); i++) {
     const SharedLibrary& lib = info.GetEntry(i);
 
-#   if defined(SPS_OS_android) && !defined(MOZ_WIDGET_GONK)
+    std::string nativePath = lib.GetNativeDebugPath();
+
+#   if defined(GP_OS_android)
     // We're using faulty.lib.  Use a special-case object mapper.
     AutoObjectMapperFaultyLib mapper(aLUL->mLog);
 #   else
@@ -44,21 +46,17 @@ read_procmaps(lul::LUL* aLUL)
     // to NotifyAfterMap().
     void*  image = nullptr;
     size_t size  = 0;
-    bool ok = mapper.Map(&image, &size, lib.GetName());
+    bool ok = mapper.Map(&image, &size, nativePath);
     if (ok && image && size > 0) {
       aLUL->NotifyAfterMap(lib.GetStart(), lib.GetEnd()-lib.GetStart(),
-                           lib.GetName().c_str(), image);
-    } else if (!ok && lib.GetName() == "") {
-      // The object has no name and (as a consequence) the mapper
-      // failed to map it.  This happens on Linux, where
-      // GetInfoForSelf() produces two such mappings: one for the
-      // executable and one for the VDSO.  The executable one isn't a
-      // big deal since there's not much interesting code in there,
-      // but the VDSO one is a problem on x86-{linux,android} because
-      // lack of knowledge about the mapped area inhibits LUL's
-      // special __kernel_syscall handling.  Hence notify |aLUL| at
-      // least of the mapping, even though it can't read any unwind
-      // information for the area.
+                           nativePath.c_str(), image);
+    } else if (!ok && lib.GetDebugName().IsEmpty()) {
+      // The object has no name and (as a consequence) the mapper failed to map
+      // it.  This happens on Linux, where GetInfoForSelf() produces such a
+      // mapping for the VDSO.  This is a problem on x86-{linux,android} because
+      // lack of knowledge about the mapped area inhibits LUL's special
+      // __kernel_syscall handling.  Hence notify |aLUL| at least of the
+      // mapping, even though it can't read any unwind information for the area.
       aLUL->NotifyExecutableArea(lib.GetStart(), lib.GetEnd()-lib.GetStart());
     }
 
@@ -71,18 +69,13 @@ read_procmaps(lul::LUL* aLUL)
 # endif
 }
 
-
 // LUL needs a callback for its logging sink.
 void
-logging_sink_for_LUL(const char* str) {
-  // Ignore any trailing \n, since LOG will add one anyway.
-  size_t n = strlen(str);
-  if (n > 0 && str[n-1] == '\n') {
-    char* tmp = strdup(str);
-    tmp[n-1] = 0;
-    LOG(tmp);
-    free(tmp);
-  } else {
-    LOG(str);
-  }
+logging_sink_for_LUL(const char* str)
+{
+  // These are only printed when Verbose logging is enabled (e.g. with
+  // MOZ_LOG="prof:5"). This is because LUL's logging is much more verbose than
+  // the rest of the profiler's logging, which occurs at the Info (3) and Debug
+  // (4) levels.
+  MOZ_LOG(gProfilerLog, mozilla::LogLevel::Verbose, ("[%d] %s", getpid(), str));
 }

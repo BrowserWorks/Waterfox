@@ -19,15 +19,14 @@ namespace layers {
 class D3D11RecycleAllocator : public TextureClientRecycleAllocator
 {
 public:
-  explicit D3D11RecycleAllocator(CompositableForwarder* aAllocator,
-                                 ID3D11Device* aDevice)
-    : TextureClientRecycleAllocator(aAllocator)
-    , mDevice(aDevice)
-  {}
+  explicit D3D11RecycleAllocator(KnowsCompositor* aAllocator,
+                                 ID3D11Device* aDevice);
 
   already_AddRefed<TextureClient>
   CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
                         const gfx::IntSize& aSize);
+
+  uint32_t VendorId() const { return mVendorId; }
 
 protected:
   virtual already_AddRefed<TextureClient>
@@ -38,6 +37,7 @@ protected:
            TextureAllocationFlags aAllocFlags) override;
 
   RefPtr<ID3D11Device> mDevice;
+  uint32_t mVendorId;
 };
 
 // Image class that wraps a ID3D11Texture2D. This class copies the image
@@ -50,11 +50,11 @@ public:
                         const gfx::IntRect& aRect);
   ~D3D11ShareHandleImage() override {}
 
-  bool AllocateTexture(D3D11RecycleAllocator* aAllocator);
+  bool AllocateTexture(D3D11RecycleAllocator* aAllocator, ID3D11Device* aDevice);
 
   gfx::IntSize GetSize() override;
   virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
   virtual gfx::IntRect GetPictureRect() override { return mPictureRect; }
 
   ID3D11Texture2D* GetTexture() const;
@@ -63,6 +63,7 @@ private:
   gfx::IntSize mSize;
   gfx::IntRect mPictureRect;
   RefPtr<TextureClient> mTextureClient;
+  RefPtr<ID3D11Texture2D> mTexture;
 };
 
 } // namepace layers

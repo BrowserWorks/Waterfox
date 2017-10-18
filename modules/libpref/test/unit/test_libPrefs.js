@@ -309,6 +309,7 @@ function run_test() {
   let savePrefFile = do_get_cwd();
   savePrefFile.append("data");
   savePrefFile.append("savePref.js");
+
   if (savePrefFile.exists())
     savePrefFile.remove(false);
   savePrefFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
@@ -317,7 +318,7 @@ function run_test() {
 
   // load a preexisting pref file
   let prefFile = do_get_file("data/testPref.js");
-  ps.readUserPrefs(prefFile);
+  ps.readUserPrefsFromFile(prefFile);
 
   // former prefs should have been replaced/lost
   do_check_throws(function() {
@@ -337,7 +338,12 @@ function run_test() {
   do_check_eq(pb.getCharPref("char2"), "älskar");
 
   // loading our former savePrefFile should allow us to read former prefs
-  ps.readUserPrefs(savePrefFile);
+
+  // Hack alert: on Windows nsLocalFile caches the size of savePrefFile from
+  // the .create() call above as 0. We call .exists() to reset the cache.
+  savePrefFile.exists();
+
+  ps.readUserPrefsFromFile(savePrefFile);
   // cleanup the file now we don't need it
   savePrefFile.remove(false);
   do_check_eq(ps.getBoolPref("ReadPref.bool"), true);
@@ -352,41 +358,59 @@ function run_test() {
   //**************************************************************************//
   // preference Observers
 
-  // an observer...
-  var observer = {
-    QueryInterface: function QueryInterface(aIID) {
+  class PrefObserver {
+    /**
+     * Creates and registers a pref observer.
+     *
+     * @param prefBranch The preference branch instance to observe.
+     * @param expectedName The pref name we expect to receive.
+     * @param expectedValue The int pref value we expect to receive.
+     */
+    constructor(prefBranch, expectedName, expectedValue) {
+      this.pb = prefBranch;
+      this.name = expectedName;
+      this.value = expectedValue;
+
+      prefBranch.addObserver(expectedName, this);
+    }
+
+    QueryInterface(aIID) {
       if (aIID.equals(Ci.nsIObserver) ||
           aIID.equals(Ci.nsISupports))
          return this;
       throw Components.results.NS_NOINTERFACE;
-    },
+    }
 
-    observe: function observe(aSubject, aTopic, aState) {
+    observe(aSubject, aTopic, aState) {
       do_check_eq(aTopic, "nsPref:changed");
-      do_check_eq(aState, "ReadPref.int");
-      do_check_eq(ps.getIntPref(aState), 76);
-      ps.removeObserver("ReadPref.int", this);
+      do_check_eq(aState, this.name);
+      do_check_eq(this.pb.getIntPref(aState), this.value);
+      pb.removeObserver(aState, this);
 
       // notification received, we may go on...
       do_test_finished();
     }
-  }
+  };
 
-  pb2.addObserver("ReadPref.int", observer, false);
-  ps.setIntPref("ReadPref.int", 76);
-
-  // test will continue upon notification...
+  // Indicate that we'll have 3 more async tests pending so that they all
+  // actually get a chance to run.
   do_test_pending();
+  do_test_pending();
+  do_test_pending();
+
+  let observer = new PrefObserver(pb2, "ReadPref.int", 76);
+  ps.setIntPref("ReadPref.int", 76);
 
   // removed observer should not fire
   pb2.removeObserver("ReadPref.int", observer);
   ps.setIntPref("ReadPref.int", 32);
 
   // let's test observers once more with a non-root prefbranch
-  pb2.getBranch("ReadPref.");
-  pb2.addObserver("int", observer, false);
+  pb = pb2.getBranch("ReadPref.");
+  observer = new PrefObserver(pb, "int", 76);
   ps.setIntPref("ReadPref.int", 76);
 
-  // test will complete upon notification...
-  do_test_pending();
+  // Let's try that again with different pref.
+  observer = new PrefObserver(pb, "another_int", 76);
+  ps.setIntPref("ReadPref.another_int", 76);
 }

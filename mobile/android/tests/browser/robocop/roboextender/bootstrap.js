@@ -3,14 +3,11 @@ var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
 
+Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 function loadIntoWindow(window) {}
 function unloadFromWindow(window) {}
-
-function _sendMessageToJava (aMsg) {
-  return Services.androidBridge.handleGeckoMessage(aMsg);
-};
 
 /*
  bootstrap.js API
@@ -20,19 +17,18 @@ var windowListener = {
     // Wait for the window to finish loading
     let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
     domWindow.addEventListener("load", function() {
-      domWindow.removeEventListener("load", arguments.callee, false);
       if (domWindow) {
         domWindow.addEventListener("scroll", function(e) {
           let message = {
-            type: 'robocop:scroll',
+            type: 'Robocop:Scroll',
             y: XPCNativeWrapper.unwrap(e.target).documentElement.scrollTop,
             height: XPCNativeWrapper.unwrap(e.target).documentElement.scrollHeight,
             cheight: XPCNativeWrapper.unwrap(e.target).documentElement.clientHeight,
           };
-          _sendMessageToJava(message);
+          EventDispatcher.instance.sendRequest(message);
         });
       }
-    }, false);
+    }, {once: true});
   },
   onCloseWindow: function(aWindow) { },
   onWindowTitleChange: function(aWindow, aTitle) { }
@@ -43,11 +39,11 @@ function startup(aData, aReason) {
 
   // Load into any new windows
   wm.addListener(windowListener);
-  Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
+  EventDispatcher.instance.registerListener(function (event, data, callback) {
       dump("Robocop:Quit received -- requesting quit");
       let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].getService(Ci.nsIAppStartup);
       appStartup.quit(Ci.nsIAppStartup.eForceQuit);
-  }, "Robocop:Quit", false);
+  }, "Robocop:Quit");
 }
 
 function shutdown(aData, aReason) {

@@ -4,11 +4,11 @@
 
 "use strict";
 
-const TEST_URL = Services.io.newURI("http://example.com/", null, null);
-const MOZURISPEC = Services.io.newURI("http://mozilla.com/", null, null);
+const TEST_URL = Services.io.newURI("http://example.com/");
+const MOZURISPEC = Services.io.newURI("http://mozilla.com/");
 
-add_task(function* () {
-  let organizer = yield promiseLibrary();
+add_task(async function() {
+  let organizer = await promiseLibrary();
 
   ok(PlacesUtils, "PlacesUtils in scope");
   ok(PlacesUIUtils, "PlacesUIUtils in scope");
@@ -20,10 +20,10 @@ add_task(function* () {
   ok(ContentTree, "ContentTree is in scope");
 
   let visits = {uri: MOZURISPEC, transition: PlacesUtils.history.TRANSITION_TYPED};
-  yield PlacesTestUtils.addVisits(visits);
+  await PlacesTestUtils.addVisits(visits);
 
   // create an initial tag to work with
-  let bm = yield PlacesUtils.bookmarks.insert({
+  let newBookmark = await PlacesUtils.bookmarks.insert({
     parentGuid: PlacesUtils.bookmarks.unfiledGuid,
     index: PlacesUtils.bookmarks.DEFAULT_INDEX,
     type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
@@ -31,7 +31,7 @@ add_task(function* () {
     url: TEST_URL
   });
 
-  ok(bm, "A bookmark was added");
+  ok(newBookmark, "A bookmark was added");
   PlacesUtils.tagging.tagURI(TEST_URL, ["foo"]);
   let tags = PlacesUtils.tagging.getTagsForURI(TEST_URL);
   is(tags[0], "foo", "tag is foo");
@@ -40,10 +40,10 @@ add_task(function* () {
   focusTag(PlacesOrganizer);
 
   let populate = () => copyHistNode(PlacesOrganizer, ContentTree);
-  yield promiseClipboard(populate, PlacesUtils.TYPE_X_MOZ_PLACE);
+  await promiseClipboard(populate, PlacesUtils.TYPE_X_MOZ_PLACE);
 
   focusTag(PlacesOrganizer);
-  PlacesOrganizer._places.controller.paste();
+  await PlacesOrganizer._places.controller.paste();
 
   // re-focus the history again
   PlacesOrganizer.selectLeftPaneQuery("History");
@@ -60,7 +60,7 @@ add_task(function* () {
 
   // check if a bookmark was created
   let bookmarks = [];
-  yield PlacesUtils.bookmarks.fetch({url: MOZURISPEC}, bm => {
+  await PlacesUtils.bookmarks.fetch({url: MOZURISPEC}, bm => {
     bookmarks.push(bm);
   });
   ok(bookmarks.length > 0, "bookmark exists for the tagged history item");
@@ -74,7 +74,7 @@ add_task(function* () {
   ok(unsortedNode, "unsortedNode is not null: " + unsortedNode.uri);
   is(unsortedNode.uri, MOZURISPEC.spec, "node uri's are the same");
 
-  yield promiseLibraryClosed(organizer);
+  await promiseLibraryClosed(organizer);
 
   // Remove new Places data we created.
   PlacesUtils.tagging.untagURI(MOZURISPEC, ["foo"]);
@@ -82,8 +82,8 @@ add_task(function* () {
   tags = PlacesUtils.tagging.getTagsForURI(TEST_URL);
   is(tags.length, 0, "tags are gone");
 
-  yield PlacesUtils.bookmarks.eraseEverything();
-  yield PlacesTestUtils.clearHistory();
+  await PlacesUtils.bookmarks.eraseEverything();
+  await PlacesTestUtils.clearHistory();
 });
 
 function focusTag(PlacesOrganizer) {
@@ -93,7 +93,7 @@ function focusTag(PlacesOrganizer) {
   let fooTag = tags.getChild(0);
   let tagNode = fooTag;
   PlacesOrganizer._places.selectNode(fooTag);
-  is(tagNode.title, 'foo', "tagNode title is foo");
+  is(tagNode.title, "foo", "tagNode title is foo");
   let ip = PlacesOrganizer._places.insertionPoint;
   ok(ip.isTag, "IP is a tag");
 }

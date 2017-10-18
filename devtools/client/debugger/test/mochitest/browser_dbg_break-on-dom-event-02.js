@@ -29,9 +29,9 @@ function test() {
       .then(aThreadClient => gThreadClient = aThreadClient)
       .then(pauseDebuggee)
       .then(testBreakOnClick)
-      .then(closeConnection)
+      .then(() => gClient.close())
       .then(finish)
-      .then(null, aError => {
+      .catch(aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
   });
@@ -72,15 +72,15 @@ function testBreakOnClick() {
 
       switch (handlers.length) {
         case 1:
-          is(aPacket.frame.where.line, 26, "Found the clicker handler.");
+          is(aPacket.frame.where.line, 25, "Found the clicker handler.");
           handlers.push("handleEventClick");
           break;
         case 2:
-          is(aPacket.frame.where.line, 36, "Found the handleEventClick handler.");
+          is(aPacket.frame.where.line, 35, "Found the handleEventClick handler.");
           handlers.push("boundHandleEventClick");
           break;
         case 3:
-          is(aPacket.frame.where.line, 46, "Found the boundHandleEventClick handler.");
+          is(aPacket.frame.where.line, 45, "Found the boundHandleEventClick handler.");
           gClient.removeListener("paused", tester);
           deferred.resolve();
       }
@@ -97,12 +97,6 @@ function testBreakOnClick() {
 function triggerButtonClick(aNodeId) {
   let button = content.document.getElementById(aNodeId);
   EventUtils.sendMouseEvent({ type: "click" }, button);
-}
-
-function closeConnection() {
-  let deferred = promise.defer();
-  gClient.close(deferred.resolve);
-  return deferred.promise;
 }
 
 registerCleanupFunction(function () {

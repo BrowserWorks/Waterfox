@@ -7,12 +7,15 @@
 
 #include "nsHtml5DocumentMode.h"
 #include "nsHtml5HtmlAttributes.h"
-#include "nsXPCOMStrings.h"
 #include "mozilla/dom/FromParser.h"
+#include "mozilla/NotNull.h"
 
 class nsIContent;
 class nsHtml5TreeOpExecutor;
 class nsHtml5DocumentBuilder;
+namespace mozilla {
+class Encoding;
+}
 
 enum eHtml5TreeOperation {
   eTreeOpUninitialized,
@@ -28,7 +31,6 @@ enum eHtml5TreeOperation {
   eTreeOpCreateElementNotNetwork,
   eTreeOpSetFormElement,
   eTreeOpAppendText,
-  eTreeOpAppendIsindexPrompt,
   eTreeOpFosterParentText,
   eTreeOpAppendComment,
   eTreeOpAppendCommentToDocument,
@@ -86,7 +88,9 @@ class nsHtml5TreeOperationStringPair {
     }
 };
 
-class nsHtml5TreeOperation {
+class nsHtml5TreeOperation final {
+    template <typename T> using NotNull = mozilla::NotNull<T>;
+    using Encoding = mozilla::Encoding;
 
   public:
     /**
@@ -108,7 +112,7 @@ class nsHtml5TreeOperation {
       }
       nsAutoString str;
       aAtom->ToString(str);
-      return NS_Atomize(str);
+      return NS_AtomizeMainThread(str);
     }
 
     static nsresult AppendTextToTextNode(const char16_t* aBuffer,
@@ -248,6 +252,27 @@ class nsHtml5TreeOperation {
                      int32_t aLineNumber)
     {
       Init(aOpCode, aString, aInt32);
+      mTwo.integer = aLineNumber;
+    }
+
+    inline void Init(eHtml5TreeOperation aOpCode, 
+                     NotNull<const Encoding*> aEncoding,
+                     int32_t aInt32)
+    {
+      NS_PRECONDITION(mOpCode == eTreeOpUninitialized,
+        "Op code must be uninitialized when initializing.");
+
+      mOpCode = aOpCode;
+      mOne.encoding = aEncoding;
+      mFour.integer = aInt32;
+    }
+
+    inline void Init(eHtml5TreeOperation aOpCode, 
+                     NotNull<const Encoding*> aEncoding,
+                     int32_t aInt32,
+                     int32_t aLineNumber)
+    {
+      Init(aOpCode, aEncoding, aInt32);
       mTwo.integer = aLineNumber;
     }
 
@@ -418,7 +443,7 @@ class nsHtml5TreeOperation {
       NS_PRECONDITION(mOpCode == eTreeOpUninitialized,
         "Op code must be uninitialized when initializing.");
 
-      char16_t* str = NS_StringCloneData(aString);
+      char16_t* str = ToNewUnicode(aString);
       mOpCode = aOpCode;
       mOne.unicharPtr = str;
     }
@@ -489,7 +514,8 @@ class nsHtml5TreeOperation {
     }
 
     nsresult Perform(nsHtml5TreeOpExecutor* aBuilder,
-                     nsIContent** aScriptElement);
+                     nsIContent** aScriptElement,
+                     bool* aInterrupted);
 
   private:
     // possible optimization:
@@ -507,6 +533,7 @@ class nsHtml5TreeOperation {
       nsAHtml5TreeBuilderState*       state;
       int32_t                         integer;
       nsresult                        result;
+      const Encoding*                 encoding;
     } mOne, mTwo, mThree, mFour, mFive;
 };
 

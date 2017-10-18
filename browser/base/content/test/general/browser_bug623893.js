@@ -1,47 +1,37 @@
-function test() {
-  waitForExplicitFinish();
+add_task(async function test() {
+  await BrowserTestUtils.withNewTab("data:text/plain;charset=utf-8,1", async function(browser) {
+    BrowserTestUtils.loadURI(browser, "data:text/plain;charset=utf-8,2");
+    await BrowserTestUtils.browserLoaded(browser);
 
-  loadAndWait("data:text/plain,1", function () {
-    loadAndWait("data:text/plain,2", function () {
-      loadAndWait("data:text/plain,3", runTests);
-    });
+    BrowserTestUtils.loadURI(browser, "data:text/plain;charset=utf-8,3");
+    await BrowserTestUtils.browserLoaded(browser);
+
+    await duplicate(0, "maintained the original index");
+    await BrowserTestUtils.removeTab(gBrowser.selectedTab);
+
+    await duplicate(-1, "went back");
+    await duplicate(1, "went forward");
+    await BrowserTestUtils.removeTab(gBrowser.selectedTab);
+    await BrowserTestUtils.removeTab(gBrowser.selectedTab);
+  });
+});
+
+function promiseGetIndex(browser) {
+  return ContentTask.spawn(browser, null, function() {
+    let shistory = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                           .getInterface(Ci.nsISHistory);
+    return shistory.index;
   });
 }
 
-function runTests() {
-  duplicate(0, "maintained the original index", function () {
-    gBrowser.removeCurrentTab();
-
-    duplicate(-1, "went back", function () {
-      duplicate(1, "went forward", function () {
-        gBrowser.removeCurrentTab();
-        gBrowser.removeCurrentTab();
-        gBrowser.addTab();
-        gBrowser.removeCurrentTab();
-        finish();
-      });
-    });
-  });
-}
-
-function duplicate(delta, msg, cb) {
-  var start = gBrowser.sessionHistory.index;
+let duplicate = async function(delta, msg, cb) {
+  var startIndex = await promiseGetIndex(gBrowser.selectedBrowser);
 
   duplicateTabIn(gBrowser.selectedTab, "tab", delta);
+
   let tab = gBrowser.selectedTab;
+  await BrowserTestUtils.waitForEvent(tab, "SSTabRestored");
 
-  tab.addEventListener("SSTabRestored", function tabRestoredListener() {
-    tab.removeEventListener("SSTabRestored", tabRestoredListener, false);
-    is(gBrowser.sessionHistory.index, start + delta, msg);
-    executeSoon(cb);
-  }, false);
-}
-
-function loadAndWait(url, cb) {
-  gBrowser.selectedBrowser.addEventListener("load", function () {
-    gBrowser.selectedBrowser.removeEventListener("load", arguments.callee, true);
-    executeSoon(cb);
-  }, true);
-
-  gBrowser.loadURI(url);
-}
+  let endIndex = await promiseGetIndex(gBrowser.selectedBrowser);
+  is(endIndex, startIndex + delta, msg);
+};

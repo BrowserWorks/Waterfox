@@ -40,6 +40,9 @@ runWithMSE(function () {
   var updateendCount = 0;
   var updateCount = 0;
 
+  ok(MediaSource.isTypeSupported("video/webm; codecs=vp8"), "VP8 MSE is always supported");
+  ok(MediaSource.isTypeSupported("audio/webm", "Audio MSE is always supported"));
+
   ms.addEventListener("sourceopen", function () {
     ok(true, "Receive a sourceopen event");
     is(ms.readyState, "open", "MediaSource must be in open state after sourceopen");
@@ -96,7 +99,7 @@ runWithMSE(function () {
     ok(updateendCount == 1 || updateendCount == 2, "updateend event received");
     ok(updatestartCount == 1 || updatestartCount == 2, "updatestart event received");
     is(loadedmetadataCount, 1, "loadedmetadata event received");
-    v.parentNode.removeChild(v);
+    v.remove();
     SimpleTest.finish();
   });
 });

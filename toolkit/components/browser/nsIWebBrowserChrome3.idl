@@ -1,0 +1,110 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsIWebBrowserChrome2.idl"
+#include "nsIURI.idl"
+#include "nsIDOMNode.idl"
+
+interface nsIDocShell;
+interface nsIInputStream;
+interface nsIRunnable;
+interface nsIPrincipal;
+
+/**
+ * nsIWebBrowserChrome3 is an extension to nsIWebBrowserChrome2.
+ */
+[scriptable, uuid(542b6625-35a9-426a-8257-c12a345383b0)]
+interface nsIWebBrowserChrome3 : nsIWebBrowserChrome2
+{
+  /**
+   * Determines the appropriate target for a link.
+   *
+   * @param originalTarget
+   *        The original link target.
+   * @param linkURI
+   *        Link destination URI.
+   * @param aDOMNode
+   *        Link DOM node.
+   * @param isAppTab
+   *        Whether or not the link is in an app tab.
+   * @returns A new link target, if appropriate.
+   *          Otherwise returns originalTarget.
+   */
+  AString onBeforeLinkTraversal(in AString originalTarget,
+                                in nsIURI linkURI,
+                                in nsIDOMNode linkNode,
+                                in boolean isAppTab);
+
+  /**
+   * Determines whether a load should continue.
+   *
+   * @param aDocShell
+   *        The docshell performing the load.
+   * @param aURI
+   *        The URI being loaded.
+   * @param aReferrer
+   *        The referrer of the load.
+   * @param aHasPostData
+   *        True if the load which is being asked about has associated post data
+   *        which would be discarded if the load was redirected across process
+   *        boundaries.
+   * @param aTriggeringPrincipal
+   *        The principal that initiated the load of aURI.
+   */
+  bool shouldLoadURI(in nsIDocShell    aDocShell,
+                     in nsIURI         aURI,
+                     in nsIURI         aReferrer,
+                     in boolean        aHasPostData,
+                     in nsIPrincipal   aTriggeringPrincipal);
+
+  bool shouldLoadURIInThisProcess(in nsIURI aURI);
+
+  /**
+   * Attempts to load the currently loaded page into a fresh process to increase
+   * available memory.
+   *
+   * @param aDocShell
+   *        The docshell performing the load.
+   */
+  bool reloadInFreshProcess(in nsIDocShell aDocShell,
+                            in nsIURI aURI,
+                            in nsIURI aReferrer,
+                            in nsIPrincipal aTriggeringPrincipal,
+                            in uint32_t aLoadFlags);
+
+  /**
+   * Tell the browser to start prerendering the given document. This prerendering
+   * _must_ be for the toplevel document.
+   *
+   * @param aHref The URI to begin prerendering
+   * @param aReferrer The URI of the document requesting the prerender.
+   * @param aTriggeringPrincipal The Principal that initiated to load aHref
+   */
+  void startPrerenderingDocument(in nsIURI aHref,
+                                 in nsIURI aReferrer,
+                                 in nsIPrincipal aTriggeringPrincipal);
+
+  /**
+   * Check if there's a prerendered document which matches given URI /
+   * referrer, and try to switch to the prerendered document immediately if
+   * there is.
+   *
+   * @param aHref
+   *        The URI which is being loaded.
+   * @param aReferrer
+   *        The referrer for the current load.
+   * @param aSuccess
+   *        (Optional) a runnable which will be run if the swap is successful.
+   * @param aFailure
+   *        (Optional) a runnable which will be run if the swap is not
+   *        successful. Note it's not invoked if the function returns false.
+   *
+   * @return True if there is a matched prerendered document to swap with,
+   *         false otherwise.
+   */
+  bool shouldSwitchToPrerenderedDocument(in nsIURI aHref,
+                                         in nsIURI aReferrer,
+                                         in nsIRunnable aSuccess,
+                                         in nsIRunnable aFailure);
+};

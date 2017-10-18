@@ -11,10 +11,10 @@
 }
 #TabsToolbar {
   --tab-stroke-background-size: auto 100%;
+  --tab-curve-width: 30px;
+  --tab-curve-half-width: 15px;
 }
 
-%define tabCurveWidth 30px
-%define tabCurveHalfWidth 15px
 
 /* image preloading hack */
 #tabbrowser-tabs::before {
@@ -55,9 +55,9 @@
 .tab-background-middle {
   -moz-box-flex: 1;
   background-clip: padding-box;
-  border-left: @tabCurveHalfWidth@ solid transparent;
-  border-right: @tabCurveHalfWidth@ solid transparent;
-  margin: 0 -@tabCurveHalfWidth@;
+  border-left: var(--tab-curve-half-width) solid transparent;
+  border-right: var(--tab-curve-half-width) solid transparent;
+  margin: 0 calc(-1 * var(--tab-curve-half-width));
 }
 
 .tab-content {
@@ -86,15 +86,16 @@
 }
 
 .tab-icon-image {
-  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
 }
 
 .tab-icon-image[sharing]:not([selected]),
 .tab-sharing-icon-overlay {
-  animation: 3s linear pulse infinite;
+  animation: 3s linear tab-sharing-icon-pulse infinite;
 }
 
-@keyframes pulse {
+/* This should remain identical to identity-box-sharing-icon-pulse in identity-block.inc.css */
+@keyframes tab-sharing-icon-pulse {
   0%, 16.66%, 83.33%, 100% {
     opacity: 0;
   }
@@ -111,23 +112,20 @@
   /* 16px of the icon + 6px of margin-inline-end of .tab-icon-image */
   margin-inline-start: -22px;
   position: relative;
+  -moz-context-properties: fill;
+  fill: rgb(224, 41, 29);
 }
 
 .tab-sharing-icon-overlay[sharing="camera"] {
-  list-style-image: url("chrome://browser/skin/notification-icons.svg#camera");
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#camera-sharing");
 }
 
 .tab-sharing-icon-overlay[sharing="microphone"] {
-  list-style-image: url("chrome://browser/skin/notification-icons.svg#microphone");
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#microphone-sharing");
 }
 
 .tab-sharing-icon-overlay[sharing="screen"] {
-  list-style-image: url("chrome://browser/skin/notification-icons.svg#screen");
-}
-
-.tab-sharing-icon-overlay[sharing] {
-  filter: url("chrome://browser/skin/filters.svg#fill");
-  fill: rgb(224, 41, 29);
+  list-style-image: url("chrome://browser/skin/notification-icons.svg#screen-sharing");
 }
 
 .tab-icon-overlay {
@@ -144,12 +142,14 @@
 }
 
 .tab-icon-overlay[soundplaying],
-.tab-icon-overlay[muted]:not([crashed]) {
+.tab-icon-overlay[muted]:not([crashed]),
+.tab-icon-overlay[activemedia-blocked]:not([crashed]) {
   border-radius: 10px;
 }
 
 .tab-icon-overlay[soundplaying]:hover,
-.tab-icon-overlay[muted]:not([crashed]):hover {
+.tab-icon-overlay[muted]:not([crashed]):hover,
+.tab-icon-overlay[activemedia-blocked]:not([crashed]):hover {
   background-color: white;
 }
 
@@ -161,12 +161,23 @@
   list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio-small.svg#tab-audio-muted");
 }
 
-#TabsToolbar[brighttext] .tab-icon-overlay[soundplaying]:not(:hover) {
+.tab-icon-overlay[activemedia-blocked]:not([crashed]) {
+  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio-small.svg#tab-audio-blocked");
+}
+
+#TabsToolbar[brighttext] .tab-icon-overlay[soundplaying]:not([selected]):not(:hover),
+.tab-icon-overlay[soundplaying][selected]:-moz-lwtheme-brighttext:not(:hover) {
   list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio-small.svg#tab-audio-white");
 }
 
-#TabsToolbar[brighttext] .tab-icon-overlay[muted]:not([crashed]):not(:hover) {
+#TabsToolbar[brighttext] .tab-icon-overlay[muted]:not([crashed]):not([selected]):not(:hover),
+.tab-icon-overlay[muted][selected]:-moz-lwtheme-brighttext:not(:hover) {
   list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio-small.svg#tab-audio-white-muted");
+}
+
+#TabsToolbar[brighttext] .tab-icon-overlay[activemedia-blocked]:not([crashed]):not([selected]):not(:hover),
+.tab-icon-overlay[activemedia-blocked][selected]:-moz-lwtheme-brighttext:not(:hover) {
+  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio-small.svg#tab-audio-white-blocked");
 }
 
 .tab-throbber[busy] {
@@ -183,106 +194,68 @@
 }
 
 .tab-close-button {
-  margin-inline-start: 4px;
+  margin-inline-start: 1px;
   margin-inline-end: -2px;
   padding: 0;
 }
 
 .tab-icon-sound {
-  margin-inline-start: 4px;
+  margin-inline-start: 1px;
   width: 16px;
   height: 16px;
   padding: 0;
 }
 
-.tab-icon-sound[soundplaying] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab");
-}
-
-.tab-icon-sound[soundplaying]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab-hover");
-}
-
-.tab-icon-sound[soundplaying]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab-pressed");
+.tab-icon-sound[soundplaying],
+.tab-icon-sound[muted],
+.tab-icon-sound[activemedia-blocked] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-playing.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
 }
 
 .tab-icon-sound[muted] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab-muted");
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-muted.svg);
 }
 
-.tab-icon-sound[muted]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab-muted-hover");
+.tab-icon-sound[activemedia-blocked] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-blocked.svg);
 }
 
-.tab-icon-sound[muted]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-backgroundTab-muted-pressed");
+.tab-icon-sound:-moz-lwtheme-darktext[soundplaying],
+.tab-icon-sound:-moz-lwtheme-darktext[muted],
+.tab-icon-sound:-moz-lwtheme-darktext[activemedia-blocked] {
+  filter: drop-shadow(1px 1px 1px white);
 }
 
-.tab-icon-sound:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][soundplaying] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio");
+.tab-icon-sound:-moz-lwtheme-brighttext[soundplaying],
+.tab-icon-sound:-moz-lwtheme-brighttext[muted],
+.tab-icon-sound:-moz-lwtheme-brighttext[activemedia-blocked] {
+  filter: drop-shadow(1px 1px 1px black);
 }
 
-.tab-icon-sound:hover:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][soundplaying]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-hover");
+.tab-icon-sound[soundplaying]:not(:hover),
+.tab-icon-sound[muted]:not(:hover),
+.tab-icon-sound[activemedia-blocked]:not(:hover) {
+  opacity: .8;
 }
 
-.tab-icon-sound:hover:active:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][soundplaying]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-pressed");
-}
-
-.tab-icon-sound[muted]:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][muted] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted");
-}
-
-.tab-icon-sound[muted]:hover:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][muted]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-hover");
-}
-
-.tab-icon-sound[muted]:hover:active:-moz-lwtheme,
-.tab-icon-sound[visuallyselected=true][muted]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-pressed");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[soundplaying] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[soundplaying]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white-hover");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[soundplaying]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-white-pressed");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[muted] {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[muted]:hover {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white-hover");
-}
-
-#TabsToolbar[brighttext] .tab-icon-sound[muted]:hover:active {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted-white-pressed");
+.tab-icon-sound[soundplaying-scheduledremoval]:not([muted]):not(:hover),
+.tab-icon-overlay[soundplaying-scheduledremoval]:not([muted]):not(:hover) {
+  transition: opacity .3s linear var(--soundplaying-removal-delay);
+  opacity: 0;
 }
 
 .tab-background,
 .tabs-newtab-button {
   /* overlap the tab curves */
-  margin-inline-end: -@tabCurveHalfWidth@;
-  margin-inline-start: -@tabCurveHalfWidth@;
+  margin-inline-end: calc(-1 * var(--tab-curve-half-width));
+  margin-inline-start: calc(-1 * var(--tab-curve-half-width));
 }
 
 .tabbrowser-arrowscrollbox > .arrowscrollbox-scrollbox {
-  padding-inline-end: @tabCurveHalfWidth@;
-  padding-inline-start: @tabCurveHalfWidth@;
+  padding-inline-end: var(--tab-curve-half-width);
+  padding-inline-start: var(--tab-curve-half-width);
 }
 
 /* Tab Overflow */
@@ -290,8 +263,8 @@
 .tabbrowser-arrowscrollbox > .arrowscrollbox-overflow-end-indicator:not([collapsed]) {
   background-image: url(chrome://browser/skin/tabbrowser/tab-overflow-indicator.png);
   background-size: 100% 100%;
-  width: 14px;
-  margin-bottom: var(--navbar-tab-toolbar-highlight-overlap);
+  width: 19px;
+  margin-bottom: calc(var(--navbar-tab-toolbar-highlight-overlap) + var(--tab-toolbar-navbar-overlap));
   pointer-events: none;
   position: relative;
   z-index: 3; /* the selected tab's z-index + 1 */
@@ -304,11 +277,11 @@
 
 .tabbrowser-arrowscrollbox > .arrowscrollbox-overflow-start-indicator:not([collapsed]) {
   margin-inline-start: -2px;
-  margin-inline-end: -12px;
+  margin-inline-end: -17px;
 }
 
 .tabbrowser-arrowscrollbox > .arrowscrollbox-overflow-end-indicator:not([collapsed]) {
-  margin-inline-start: -12px;
+  margin-inline-start: -17px;
   margin-inline-end: -2px;
 }
 
@@ -322,14 +295,14 @@
   transition: opacity 150ms ease;
 }
 
-.tab-background-start[visuallyselected=true]::after,
-.tab-background-start[visuallyselected=true]::before,
+.tab-background-start[selected=true]::after,
+.tab-background-start[selected=true]::before,
 .tab-background-start,
 .tab-background-end,
-.tab-background-end[visuallyselected=true]::after,
-.tab-background-end[visuallyselected=true]::before {
+.tab-background-end[selected=true]::after,
+.tab-background-end[selected=true]::before {
   min-height: var(--tab-min-height);
-  width: @tabCurveWidth@;
+  width: var(--tab-curve-width);
 }
 
 .tabbrowser-tab:not([visuallyselected=true]),
@@ -348,57 +321,57 @@
  */
 
 
-.tab-background-start[visuallyselected=true]::after,
-.tab-background-end[visuallyselected=true]::after {
+.tab-background-start[selected=true]::after,
+.tab-background-end[selected=true]::after {
   /* position ::after on top of its parent */
-  margin-inline-start: -@tabCurveWidth@;
+  margin-inline-start: calc(-1 * var(--tab-curve-width));
   background-size: 100% 100%;
   content: "";
   display: -moz-box;
   position: relative;
 }
 
-.tab-background-start[visuallyselected=true]::before,
-.tab-background-end[visuallyselected=true]::before {
+.tab-background-start[selected=true]::before,
+.tab-background-end[selected=true]::before {
   /* all ::before pseudo elements */
   content: "";
   display: -moz-box;
 }
 
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr):not(:-moz-lwtheme)::before,
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl):not(:-moz-lwtheme)::before {
+.tab-background-start[selected=true]:-moz-locale-dir(ltr):not(:-moz-lwtheme)::before,
+.tab-background-end[selected=true]:-moz-locale-dir(rtl):not(:-moz-lwtheme)::before {
   background-image: url(chrome://browser/skin/tabbrowser/tab-selected-start.svg);
   background-size: 100% 100%;
 }
 
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr):not(:-moz-lwtheme)::before,
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl):not(:-moz-lwtheme)::before {
+.tab-background-end[selected=true]:-moz-locale-dir(ltr):not(:-moz-lwtheme)::before,
+.tab-background-start[selected=true]:-moz-locale-dir(rtl):not(:-moz-lwtheme)::before {
   background-image: url(chrome://browser/skin/tabbrowser/tab-selected-end.svg);
   background-size: 100% 100%;
 }
 
 /* For lightweight themes, clip the header image on start, middle, and end. */
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr):-moz-lwtheme::before,
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl):-moz-lwtheme::before {
+.tab-background-start[selected=true]:-moz-locale-dir(ltr):-moz-lwtheme::before,
+.tab-background-end[selected=true]:-moz-locale-dir(rtl):-moz-lwtheme::before {
   clip-path: url(chrome://browser/content/browser.xul#tab-curve-clip-path-start);
 }
 
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr):-moz-lwtheme::before,
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl):-moz-lwtheme::before {
+.tab-background-end[selected=true]:-moz-locale-dir(ltr):-moz-lwtheme::before,
+.tab-background-start[selected=true]:-moz-locale-dir(rtl):-moz-lwtheme::before {
   clip-path: url(chrome://browser/content/browser.xul#tab-curve-clip-path-end);
 }
 
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl)::after {
+.tab-background-start[selected=true]:-moz-locale-dir(ltr)::after,
+.tab-background-end[selected=true]:-moz-locale-dir(rtl)::after {
   background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-start.png);
 }
 
-.tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-.tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl)::after {
+.tab-background-end[selected=true]:-moz-locale-dir(ltr)::after,
+.tab-background-start[selected=true]:-moz-locale-dir(rtl)::after {
   background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-end.png);
 }
 
-.tab-background-middle[visuallyselected=true] {
+.tab-background-middle[selected=true] {
   background-clip: padding-box, padding-box, content-box;
   background-color: @fgTabBackgroundColor@;
   background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle.png),
@@ -412,39 +385,65 @@
 }
 
 /* Selected tab lightweight theme styles.
-   See browser-lightweightTheme.css for information about run-time changes to LWT styles. */
-.tab-background-middle[visuallyselected=true]:-moz-lwtheme {
+   See the "Lightweight theme on tabs" section of this file
+   for information about run-time changes to LWT styles. */
+.tab-background-middle[selected=true]:-moz-lwtheme {
   background-color: transparent;
   background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle.png),
-                    @fgTabTextureLWT@;/*,
-                    lwtHeader;*/
+                    @fgTabTextureLWT@;
   /* Don't stretch the LWT header images */
   background-size: var(--tab-stroke-background-size), auto 100%, auto auto;
 }
 
-/* These LWT styles are normally overridden by browser-lightweightTheme.css */
-.tab-background-start[visuallyselected=true]:-moz-lwtheme::before,
-.tab-background-end[visuallyselected=true]:-moz-lwtheme::before {
+/* These LWT styles are normally overridden by the "Lightweight theme on tabs"
+   section of this file. */
+.tab-background-start[selected=true]:-moz-lwtheme::before,
+.tab-background-end[selected=true]:-moz-lwtheme::before {
   background-image: @fgTabTextureLWT@;
 }
 
-.tab-background-start[visuallyselected=true]:-moz-lwtheme::before,
-.tab-background-end[visuallyselected=true]:-moz-lwtheme::before,
-.tab-background-middle[visuallyselected=true]:-moz-lwtheme {
+.tab-background-start[selected=true]:-moz-lwtheme::before,
+.tab-background-end[selected=true]:-moz-lwtheme::before,
+.tab-background-middle[selected=true]:-moz-lwtheme {
   background-color: transparent;
+}
+
+/*
+ * LightweightThemeConsumer will set the current lightweight theme's header
+ * image to the lwt-header-image variable, used in each of the following rulesets.
+ */
+
+/* Lightweight theme on tabs */
+#tabbrowser-tabs:not([movingtab]) > .tabbrowser-tab > .tab-stack > .tab-background > .tab-background-start[selected=true]:-moz-lwtheme::before,
+#tabbrowser-tabs:not([movingtab]) > .tabbrowser-tab > .tab-stack > .tab-background > .tab-background-end[selected=true]:-moz-lwtheme::before {
+  background-attachment: scroll, fixed;
+  background-color: transparent;
+  background-image: @fgTabTextureLWT@, var(--lwt-header-image);
+  background-position: 0 0, right top;
+  background-repeat: repeat-x, no-repeat;
+}
+
+#tabbrowser-tabs:not([movingtab]) > .tabbrowser-tab > .tab-stack > .tab-background > .tab-background-middle[selected=true]:-moz-lwtheme {
+  background-attachment: scroll, scroll, fixed;
+  background-color: transparent;
+  background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle.png),
+                    @fgTabTextureLWT@,
+                    var(--lwt-header-image);
+  background-position: 0 0, 0 0, right top;
+  background-repeat: repeat-x, repeat-x, no-repeat;
 }
 
 /* End selected tab */
 
 /* new tab button border and gradient on hover */
-.tabbrowser-tab:hover > .tab-stack > .tab-background:not([visuallyselected=true]),
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]),
 .tabs-newtab-button:hover {
   background-image: url(chrome://browser/skin/tabbrowser/tab-background-start.png),
                     url(chrome://browser/skin/tabbrowser/tab-background-middle.png),
                     url(chrome://browser/skin/tabbrowser/tab-background-end.png);
-  background-position: left bottom, @tabCurveWidth@ bottom, right bottom;
+  background-position: left bottom, var(--tab-curve-width) bottom, right bottom;
   background-repeat: no-repeat;
-  background-size: @tabCurveWidth@ 100%, calc(100% - (2 * @tabCurveWidth@)) 100%, @tabCurveWidth@ 100%;
+  background-size: var(--tab-curve-width) 100%, calc(100% - (2 * var(--tab-curve-width))) 100%, var(--tab-curve-width) 100%;
 }
 
 /* Tab pointer-events */
@@ -456,6 +455,7 @@
 .tabs-newtab-button,
 .tab-icon-overlay[soundplaying],
 .tab-icon-overlay[muted]:not([crashed]),
+.tab-icon-overlay[activemedia-blocked]:not([crashed]),
 .tab-icon-sound,
 .tab-close-button {
   pointer-events: auto;
@@ -469,20 +469,25 @@
   position: absolute;
 }
 
-.tabbrowser-tab:-moz-any([image], [pinned]) > .tab-stack > .tab-content[attention]:not([visuallyselected="true"]),
-.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([visuallyselected="true"]) {
+.tabbrowser-tab:-moz-any([image], [pinned]) > .tab-stack > .tab-content[attention]:not([selected="true"]),
+.tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([selected="true"]) {
+%ifdef MOZ_PHOTON_THEME
+  background-image: url(chrome://browser/skin/tabbrowser/indicator-tab-attention.svg);
+  background-position: center bottom -3px;
+%else
   background-image: radial-gradient(farthest-corner at center bottom, rgb(255,255,255) 3%, rgba(186,221,251,0.75) 20%, rgba(127,179,255,0.25) 40%, transparent 70%);
   background-position: center bottom var(--tab-toolbar-navbar-overlap);
-  background-repeat: no-repeat;
   background-size: 85% 100%;
+%endif
+  background-repeat: no-repeat;
 }
 
-.tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([pinned]):not([visuallyselected="true"]) {
+.tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([pinned]):not([selected="true"]) {
   background-position: left bottom var(--tab-toolbar-navbar-overlap);
   background-size: 34px 100%;
 }
 
-.tab-label[attention]:not([visuallyselected="true"]) {
+.tab-label[attention]:not([selected="true"]) {
   font-weight: bold;
 }
 
@@ -490,12 +495,20 @@
 
 .tabbrowser-tab::after,
 .tabbrowser-tab::before {
-  width: 1px;
   margin-inline-start: -1px;
-  background-image: linear-gradient(transparent 5px,
-                                    currentColor 5px,
-                                    currentColor calc(100% - 4px),
-                                    transparent calc(100% - 4px));
+  /* Vertical margin doesn't work here for positioned pinned tabs, see
+     bug 1198236 and bug 1300410. We're using linear-gradient instead
+     to cut off the border at the top and at the bottom. */
+  border-left: 1px solid;
+  border-image: linear-gradient(transparent 6px,
+                                currentColor 6px,
+                                currentColor calc(100% - 5px),
+                                transparent calc(100% - 5px));
+  border-image-slice: 1;
+  /* The 1px border and negative margin may amount to a different number of
+     device pixels (bug 477157), so we also set a width to match the margin. */
+  width: 1px;
+  box-sizing: border-box;
   opacity: 0.2;
 }
 
@@ -506,16 +519,48 @@
 
 /* Also show separators beside the selected tab when dragging it. */
 #tabbrowser-tabs[movingtab] > .tabbrowser-tab[beforeselected]:not([last-visible-tab])::after,
-.tabbrowser-tab:not([visuallyselected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
-#tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([visuallyselected]):not([beforehovered]):not(:hover)::after {
+.tabbrowser-tab:not([selected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
+#tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([selected]):not([beforehovered]):not(:hover)::after {
   content: "";
   display: -moz-box;
 }
 
+/* Tab bar scroll arrows */
+
+.tabbrowser-arrowscrollbox > .scrollbutton-up,
+.tabbrowser-arrowscrollbox > .scrollbutton-down {
+  list-style-image: url(chrome://browser/skin/arrow-left.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+.tabbrowser-arrowscrollbox > .scrollbutton-up:-moz-locale-dir(rtl),
+.tabbrowser-arrowscrollbox > .scrollbutton-down:-moz-locale-dir(ltr) {
+  transform: scaleX(-1);
+}
+
 /* New tab button */
 
+.tabs-newtab-button,
+#TabsToolbar > #new-tab-button ,
+#TabsToolbar > toolbarpaletteitem > #new-tab-button {
+  list-style-image: url(chrome://browser/skin/tabbrowser/newtab.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  color: inherit;
+}
+
 .tabs-newtab-button {
-  width: calc(36px + @tabCurveWidth@);
+  width: calc(36px + var(--tab-curve-width));
+}
+
+.tabs-newtab-button > .toolbarbutton-menu-dropmarker {
+  display: none;
+}
+
+.tabs-newtab-button > .toolbarbutton-icon {
+  /* override drop marker image padding */
+  margin-inline-end: 0;
 }
 
 @media (min-resolution: 1.1dppx) {
@@ -527,38 +572,136 @@
       url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png);
   }
 
-  .tabbrowser-tab:hover > .tab-stack > .tab-background:not([visuallyselected=true]),
+  .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]),
   .tabs-newtab-button:hover {
     background-image: url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png),
                       url(chrome://browser/skin/tabbrowser/tab-background-middle@2x.png),
                       url(chrome://browser/skin/tabbrowser/tab-background-end@2x.png);
   }
 
-  .tab-background-middle[visuallyselected=true] {
+  .tab-background-middle[selected=true] {
     background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle@2x.png),
                       @fgTabTexture@,
                       none;
   }
 
-  .tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl)::after {
+  .tab-background-start[selected=true]:-moz-locale-dir(ltr)::after,
+  .tab-background-end[selected=true]:-moz-locale-dir(rtl)::after {
     background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-start@2x.png);
   }
 
-  .tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl)::after {
+  .tab-background-end[selected=true]:-moz-locale-dir(ltr)::after,
+  .tab-background-start[selected=true]:-moz-locale-dir(rtl)::after {
     background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-end@2x.png);
+  }
+
+  #tabbrowser-tabs:not([movingtab]) > .tabbrowser-tab > .tab-stack > .tab-background > .tab-background-middle[selected=true]:-moz-lwtheme {
+    background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle@2x.png),
+                      @fgTabTextureLWT@,
+                      var(--lwt-header-image);
   }
 
   .tab-throbber[busy] {
     list-style-image: url("chrome://browser/skin/tabbrowser/connecting@2x.png");
   }
 
-  .tab-icon-image {
-    list-style-image: url("chrome://mozapps/skin/places/defaultFavicon@2x.png");
-  }
-
   .tab-throbber[progress] {
     list-style-image: url("chrome://global/skin/icons/loading@2x.png");
   }
+}
+
+/* All tabs button and menupopup */
+
+#alltabs-button {
+  list-style-image: url(chrome://browser/skin/arrow-dropdown.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+.alltabs-item > .menu-iconic-left > .menu-iconic-icon {
+  list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.svg");
+}
+
+.alltabs-item[busy] > .menu-iconic-left > .menu-iconic-icon {
+  list-style-image: url("chrome://global/skin/icons/loading.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  .alltabs-item[busy] > .menu-iconic-left > .menu-iconic-icon {
+    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
+  }
+}
+
+.alltabs-item[tabIsVisible] {
+  /* box-shadow instead of background-color to work around native styling */
+  box-shadow: inset -5px 0 ThreeDShadow;
+}
+
+.alltabs-endimage[soundplaying],
+.alltabs-endimage[muted],
+.alltabs-endimage[activemedia-blocked] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-playing.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+.alltabs-endimage[muted] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-muted.svg);
+}
+
+.alltabs-endimage[activemedia-blocked] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio-blocked.svg);
+}
+
+.restore-tabs-button-wrapper {
+  visibility: hidden;
+  position: fixed; /* so the button does not take up actual space and cause overflow buttons in the tabbar when hidden */
+}
+
+.restore-tabs-button-wrapper[shown] {
+  visibility: visible;
+  position: initial;
+}
+
+.restore-tabs-button {
+  box-sizing: border-box;
+  -moz-appearance: none;
+  background-color: hsl(0,0%,0%,.04);
+  border: 1px solid hsla(0,0%,16%,.2);
+  border-radius: 3px;
+  margin: 3px;
+  margin-inline-start: 9px;
+  transition: max-width 100ms;
+  padding: 0 5px;
+}
+
+.restore-tabs-button:hover {
+  background-color: hsl(0,0%,0%,.08);
+}
+
+.restore-tabs-button:active {
+  background-color: hsl(0,0%,0%,.11);
+}
+
+#TabsToolbar[brighttext] .restore-tabs-button {
+  background-color: hsl(0,0%,100%,.07);
+  border-color:currentColor;
+  color: currentColor;
+  opacity: .7;
+}
+
+#TabsToolbar[brighttext] .restore-tabs-button:hover {
+  background-color: hsl(0,0%,100%,.17);
+}
+
+#TabsToolbar[brighttext] .restore-tabs-button:active {
+  background-color: hsl(0,0%,100%,.27);
+}
+
+.restore-tabs-button > .toolbarbutton-icon {
+  display: none;
+}
+
+.restore-tabs-button > .toolbarbutton-text {
+  display: -moz-box;
 }

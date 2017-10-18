@@ -28,15 +28,11 @@ public:
    * constructors
    */
 
-  nsTDependentString_CharT(const char_type* aStart, const char_type* aEnd)
-    : string_type(const_cast<char_type*>(aStart),
-                  uint32_t(aEnd - aStart), F_TERMINATED)
-  {
-    AssertValidDependentString();
-  }
+  nsTDependentString_CharT(const char_type* aStart, const char_type* aEnd);
 
   nsTDependentString_CharT(const char_type* aData, uint32_t aLength)
-    : string_type(const_cast<char_type*>(aData), aLength, F_TERMINATED)
+    : string_type(const_cast<char_type*>(aData), aLength,
+                  DataFlags::TERMINATED, ClassFlags(0))
   {
     AssertValidDependentString();
   }
@@ -51,7 +47,8 @@ public:
   explicit
   nsTDependentString_CharT(const char_type* aData)
     : string_type(const_cast<char_type*>(aData),
-                  uint32_t(char_traits::length(aData)), F_TERMINATED)
+                  uint32_t(char_traits::length(aData)),
+                  DataFlags::TERMINATED, ClassFlags(0))
   {
     AssertValidDependentString();
   }
@@ -92,11 +89,7 @@ public:
     Rebind(aData, uint32_t(char_traits::length(aData)));
   }
 
-  void Rebind(const char_type* aStart, const char_type* aEnd)
-  {
-    Rebind(aStart, uint32_t(aEnd - aStart));
-  }
-
+  void Rebind(const char_type* aStart, const char_type* aEnd);
   void Rebind(const string_type&, uint32_t aStartPos);
 
 private:

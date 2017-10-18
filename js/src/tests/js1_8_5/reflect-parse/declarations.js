@@ -58,7 +58,7 @@ assertDecl("function f(a,[x,y]) { function a() { } }",
 // redeclarations (TOK_NAME nodes with lexdef)
 
 assertStmt("function f() { function g() { } function g() { } }",
-           funDecl(ident("f"), [], blockStmt([emptyStmt,
+           funDecl(ident("f"), [], blockStmt([funDecl(ident("g"), [], blockStmt([])),
                                               funDecl(ident("g"), [], blockStmt([]))])));
 
 // Fails due to parser quirks (bug 638577)
@@ -78,7 +78,7 @@ assertDecl("var {x} = foo;", varDecl([{ id: objPatt([assignProp("x")]),
 
 // Bug 632030: redeclarations between var and funargs, var and function
 assertStmt("function g(x) { var x }",
-           funDecl(ident("g"), [ident("x")], blockStmt([varDecl[{ id: ident("x"), init: null }]])));
+           funDecl(ident("g"), [ident("x")], blockStmt([varDecl([{ id: ident("x"), init: null }])])));
 assertProg("f.p = 1; var f; f.p; function f(){}",
            [exprStmt(aExpr("=", dotExpr(ident("f"), ident("p")), lit(1))),
             varDecl([{ id: ident("f"), init: null }]),

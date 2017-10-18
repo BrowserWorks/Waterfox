@@ -51,9 +51,6 @@ NS_DEFINE_IID(kIDBRequestIID, PRIVATE_IDBREQUEST_IID);
 
 IDBRequest::IDBRequest(IDBDatabase* aDatabase)
   : IDBWrapperCache(aDatabase)
-#ifdef DEBUG
-  , mOwningThread(nullptr)
-#endif
   , mLoggingSerialNumber(0)
   , mLineNo(0)
   , mColumn(0)
@@ -67,9 +64,6 @@ IDBRequest::IDBRequest(IDBDatabase* aDatabase)
 
 IDBRequest::IDBRequest(nsPIDOMWindowInner* aOwner)
   : IDBWrapperCache(aOwner)
-#ifdef DEBUG
-  , mOwningThread(nullptr)
-#endif
   , mLoggingSerialNumber(0)
   , mLineNo(0)
   , mColumn(0)
@@ -83,23 +77,9 @@ IDBRequest::~IDBRequest()
   AssertIsOnOwningThread();
 }
 
-#ifdef DEBUG
-
-void
-IDBRequest::AssertIsOnOwningThread() const
-{
-  MOZ_ASSERT(mOwningThread);
-  MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
-}
-
-#endif // DEBUG
-
 void
 IDBRequest::InitMembers()
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 
   mResultVal.setUndefined();
@@ -231,29 +211,6 @@ IDBRequest::Reset()
 }
 
 void
-IDBRequest::DispatchNonTransactionError(nsresult aErrorCode)
-{
-  AssertIsOnOwningThread();
-  MOZ_ASSERT(NS_FAILED(aErrorCode));
-  MOZ_ASSERT(NS_ERROR_GET_MODULE(aErrorCode) == NS_ERROR_MODULE_DOM_INDEXEDDB);
-
-  SetError(aErrorCode);
-
-  // Make an error event and fire it at the target.
-  nsCOMPtr<nsIDOMEvent> event =
-    CreateGenericEvent(this,
-                       nsDependentString(kErrorEventType),
-                       eDoesBubble,
-                       eCancelable);
-  MOZ_ASSERT(event);
-
-  bool ignored;
-  if (NS_FAILED(DispatchEvent(event, &ignored))) {
-    NS_WARNING("Failed to dispatch event!");
-  }
-}
-
-void
 IDBRequest::SetError(nsresult aRv)
 {
   AssertIsOnOwningThread();
@@ -341,7 +298,6 @@ IDBRequest::GetResult(JS::MutableHandle<JS::Value> aResult,
     return;
   }
 
-  JS::ExposeValueToActiveJS(mResultVal);
   aResult.set(mResultVal);
 }
 
@@ -367,7 +323,6 @@ IDBRequest::SetResultCallback(ResultCallback* aCallback)
     // If we have a script owner we want the SafeJSContext and then to enter the
     // script owner's compartment.
     autoJS.Init();
-    JS::ExposeObjectToActiveJS(GetScriptOwner());
     ac.emplace(autoJS.cx(), GetScriptOwner());
   } else {
     // Otherwise our owner is a window and we use that to initialize.
@@ -419,8 +374,6 @@ IDBRequest::GetError(ErrorResult& aRv)
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBRequest)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(IDBRequest, IDBWrapperCache)
-  // Don't need NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS because
-  // DOMEventTargetHelper does it for us.
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsObjectStore)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsIndex)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSourceAsCursor)
@@ -453,7 +406,7 @@ NS_IMPL_ADDREF_INHERITED(IDBRequest, IDBWrapperCache)
 NS_IMPL_RELEASE_INHERITED(IDBRequest, IDBWrapperCache)
 
 nsresult
-IDBRequest::PreHandleEvent(EventChainPreVisitor& aVisitor)
+IDBRequest::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   AssertIsOnOwningThread();
 
@@ -515,6 +468,7 @@ IDBOpenDBRequest::IDBOpenDBRequest(IDBFactory* aFactory,
   : IDBRequest(aOwner)
   , mFactory(aFactory)
   , mFileHandleDisabled(aFileHandleDisabled)
+  , mIncreasedActiveDatabaseCount(false)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aFactory);
@@ -525,6 +479,7 @@ IDBOpenDBRequest::IDBOpenDBRequest(IDBFactory* aFactory,
 IDBOpenDBRequest::~IDBOpenDBRequest()
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(!mIncreasedActiveDatabaseCount);
 }
 
 // static
@@ -546,6 +501,8 @@ IDBOpenDBRequest::CreateForWindow(JSContext* aCx,
   CaptureCaller(aCx, request->mFilename, &request->mLineNo, &request->mColumn);
 
   request->SetScriptOwner(aScriptOwner);
+
+  request->IncreaseActiveDatabaseCount();
 
   return request.forget();
 }
@@ -575,13 +532,15 @@ IDBOpenDBRequest::CreateForJS(JSContext* aCx,
     workerPrivate->AssertIsOnWorkerThread();
 
     nsAutoPtr<WorkerHolder> workerHolder(new WorkerHolder(workerPrivate));
-    if (NS_WARN_IF(!workerHolder->HoldWorker(workerPrivate))) {
+    if (NS_WARN_IF(!workerHolder->HoldWorker(workerPrivate, Canceling))) {
       workerHolder->NoteAddWorkerHolderFailed();
       return nullptr;
     }
 
     request->mWorkerHolder = Move(workerHolder);
   }
+
+  request->IncreaseActiveDatabaseCount();
 
   return request.forget();
 }
@@ -597,14 +556,71 @@ IDBOpenDBRequest::SetTransaction(IDBTransaction* aTransaction)
 }
 
 void
+IDBOpenDBRequest::DispatchNonTransactionError(nsresult aErrorCode)
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(NS_FAILED(aErrorCode));
+  MOZ_ASSERT(NS_ERROR_GET_MODULE(aErrorCode) == NS_ERROR_MODULE_DOM_INDEXEDDB);
+
+  // The actor failed to initiate, decrease the number of active IDBOpenRequests
+  // here since NoteComplete won't be called.
+  MaybeDecreaseActiveDatabaseCount();
+
+  SetError(aErrorCode);
+
+  // Make an error event and fire it at the target.
+  nsCOMPtr<nsIDOMEvent> event =
+    CreateGenericEvent(this,
+                       nsDependentString(kErrorEventType),
+                       eDoesBubble,
+                       eCancelable);
+  MOZ_ASSERT(event);
+
+  bool ignored;
+  if (NS_FAILED(DispatchEvent(event, &ignored))) {
+    NS_WARNING("Failed to dispatch event!");
+  }
+}
+
+void
 IDBOpenDBRequest::NoteComplete()
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT_IF(!NS_IsMainThread(), mWorkerHolder);
 
+  // Normally, we decrease the number of active IDBOpenRequests here.
+  MaybeDecreaseActiveDatabaseCount();
+
   // If we have a WorkerHolder installed on the worker then nulling this out
   // will uninstall it from the worker.
   mWorkerHolder = nullptr;
+}
+
+void
+IDBOpenDBRequest::IncreaseActiveDatabaseCount()
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(!mIncreasedActiveDatabaseCount);
+
+  // Increase the number of active IDBOpenRequests.
+  // Note: We count here instead of the actor's ctor because the preemption
+  // could happen at next JS interrupt but its BackgroundFactoryRequestChild
+  // could be created asynchronously from IDBFactory::BackgroundCreateCallback
+  // ::ActorCreated() if its PBackgroundChild is not created yet on this thread.
+  mFactory->UpdateActiveDatabaseCount(1);
+  mIncreasedActiveDatabaseCount = true;
+}
+
+void
+IDBOpenDBRequest::MaybeDecreaseActiveDatabaseCount()
+{
+  AssertIsOnOwningThread();
+
+  if (mIncreasedActiveDatabaseCount) {
+    // Decrease the number of active IDBOpenRequests.
+    mFactory->UpdateActiveDatabaseCount(-1);
+    mIncreasedActiveDatabaseCount = false;
+  }
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBOpenDBRequest)

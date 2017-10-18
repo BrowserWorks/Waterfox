@@ -13,7 +13,6 @@ const SHOW_TEXT = Ci.nsIDOMNodeFilter.SHOW_TEXT;
 const TEXT_NODE = Ci.nsIDOMNode.TEXT_NODE;
 
 Cu.import("resource://services-common/utils.js");
-Cu.import("resource://gre/modules/Task.jsm");
 
 /**
  * This class represents a document that is being translated,
@@ -42,7 +41,7 @@ this.TranslationDocument.prototype = {
    *
    * @param document  The document to be translated
    */
-  _init: function(document) {
+  _init(document) {
     let window = document.defaultView;
     let winUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
                          .getInterface(Ci.nsIDOMWindowUtils);
@@ -94,7 +93,7 @@ this.TranslationDocument.prototype = {
    *
    * @returns           A TranslationItem object.
    */
-  _createItemForNode: function(node, id, isRoot) {
+  _createItemForNode(node, id, isRoot) {
     if (this.itemsMap.has(node)) {
       return this.itemsMap.get(node);
     }
@@ -129,7 +128,7 @@ this.TranslationDocument.prototype = {
    *
    * @returns        A string representation of the TranslationItem.
    */
-  generateTextForItem: function(item) {
+  generateTextForItem(item) {
     if (item.original) {
       return regenerateTextFromOriginalHelper(item);
     }
@@ -166,7 +165,7 @@ this.TranslationDocument.prototype = {
         item.original.push(objInMap);
         str += this.generateTextForItem(objInMap);
         wasLastItemPlaceholder = false;
-      } else {
+      } else if (!wasLastItemPlaceholder) {
         // Otherwise, if this node doesn't contain any useful content,
         // or if it is a root itself, we can replace it with a placeholder node.
         // We can't simply eliminate this node from our string representation
@@ -174,11 +173,9 @@ this.TranslationDocument.prototype = {
         // probably merge two separate text nodes).
         // It's not necessary to add more than one placeholder in sequence;
         // we can optimize them away.
-        if (!wasLastItemPlaceholder) {
-          item.original.push(TranslationItem_NodePlaceholder);
-          str += '<br>';
-          wasLastItemPlaceholder = true;
-        }
+        item.original.push(TranslationItem_NodePlaceholder);
+        str += "<br>";
+        wasLastItemPlaceholder = true;
       }
     }
 
@@ -189,7 +186,7 @@ this.TranslationDocument.prototype = {
    * Changes the document to display its translated
    * content.
    */
-  showTranslation: function() {
+  showTranslation() {
     this.originalShown = false;
     this._swapDocumentContent("translation");
   },
@@ -198,7 +195,7 @@ this.TranslationDocument.prototype = {
    * Changes the document to display its original
    * content.
    */
-  showOriginal: function() {
+  showOriginal() {
     this.originalShown = true;
     this._swapDocumentContent("original");
   },
@@ -210,8 +207,8 @@ this.TranslationDocument.prototype = {
    * @param target   A string that is either "translation"
    *                 or "original".
    */
-  _swapDocumentContent: function(target) {
-    Task.spawn(function *() {
+  _swapDocumentContent(target) {
+    (async () => {
       // Let the event loop breath on every 100 nodes
       // that are replaced.
       const YIELD_INTERVAL = 100;
@@ -221,10 +218,10 @@ this.TranslationDocument.prototype = {
         root.swapText(target);
         if (count-- == 0) {
           count = YIELD_INTERVAL;
-          yield CommonUtils.laterTickResolvingPromise();
+          await CommonUtils.laterTickResolvingPromise();
         }
       }
-    }.bind(this));
+    })();
   }
 };
 
@@ -276,10 +273,15 @@ TranslationItem.prototype = {
   isRoot: false,
   isSimpleRoot: false,
 
-  toString: function() {
-    let rootType = this.isRoot
-                   ? (this.isSimpleRoot ? ' (simple root)' : ' (non simple root)')
-                   : '';
+  toString() {
+    let rootType = "";
+    if (this.isRoot) {
+      if (this.isSimpleRoot) {
+        rootType = " (simple root)";
+      } else {
+        rootType = " (non simple root)";
+      }
+    }
     return "[object TranslationItem: <" + this.nodeRef.localName + ">"
            + rootType + "]";
   },
@@ -301,7 +303,7 @@ TranslationItem.prototype = {
    * @param result    A string with the textual result received from the server,
    *                  which can be plain-text or a serialized HTML doc.
    */
-  parseResult: function(result) {
+  parseResult(result) {
     if (this.isSimpleRoot) {
       this.translation = [result];
       return;
@@ -321,7 +323,7 @@ TranslationItem.prototype = {
    * @returns         A TranslationItem with the given id, or null if
    *                  it was not found.
    */
-  getChildById: function(id) {
+  getChildById(id) {
     for (let child of this.children) {
       if (("n" + child.id) == id) {
         return child;
@@ -337,7 +339,7 @@ TranslationItem.prototype = {
    * @param target   A string that is either "translation"
    *                 or "original".
    */
-  swapText: function(target) {
+  swapText(target) {
     swapTextForItem(this, target);
   }
 };
@@ -350,7 +352,7 @@ TranslationItem.prototype = {
  * for correct positioning and spliting of text nodes.
  */
 const TranslationItem_NodePlaceholder = {
-  toString: function() {
+  toString() {
     return "[object TranslationItem_NodePlaceholder]";
   }
 };
@@ -365,7 +367,7 @@ const TranslationItem_NodePlaceholder = {
  */
 function generateTranslationHtmlForItem(item, content) {
   let localName = item.isRoot ? "div" : "b";
-  return '<' + localName + ' id=n' + item.id + '>' +
+  return "<" + localName + " id=n" + item.id + ">" +
          content +
          "</" + localName + ">";
 }
@@ -499,7 +501,6 @@ function swapTextForItem(item, target) {
   // visitStack is the stack of items that we still need to visit.
   // Let's start the process by adding the root item.
   let visitStack = [ item ];
-  let source = target == "translation" ? "original" : "translation";
 
   while (visitStack.length > 0) {
     let curItem = visitStack.shift();

@@ -5,13 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsLayoutDebugCLH.h"
+#include "nsArray.h"
 #include "nsString.h"
 #include "plstr.h"
 #include "nsCOMPtr.h"
 #include "nsIWindowWatcher.h"
 #include "nsIServiceManager.h"
 #include "nsIDOMWindow.h"
-#include "nsISupportsArray.h"
 #include "nsISupportsPrimitives.h"
 #include "nsICommandLine.h"
 
@@ -49,18 +49,16 @@ nsLayoutDebugCLH::Handle(nsICommandLine* aCmdLine)
 
     aCmdLine->RemoveArguments(idx, idx + !url.IsEmpty());
 
-    nsCOMPtr<nsISupportsArray> argsArray =
-        do_CreateInstance(NS_SUPPORTSARRAY_CONTRACTID, &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<nsIMutableArray> argsArray = nsArray::Create();
 
     if (!url.IsEmpty())
     {
         nsCOMPtr<nsISupportsString> scriptableURL =
             do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID);
         NS_ENSURE_TRUE(scriptableURL, NS_ERROR_FAILURE);
-  
+
         scriptableURL->SetData(url);
-        argsArray->AppendElement(scriptableURL);
+        argsArray->AppendElement(scriptableURL, /*weak =*/ false);
     }
 
     nsCOMPtr<nsIWindowWatcher> wwatch =

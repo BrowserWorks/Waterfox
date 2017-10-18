@@ -11,8 +11,7 @@ function testAlias(arg, iface) {
   var ev;
   test(function() {
     ev = document.createEvent(arg);
-    assert_true(ev instanceof window[iface]);
-    assert_true(ev instanceof Event);
+    assert_equals(Object.getPrototypeOf(ev), window[iface].prototype);
   }, arg + " should be an alias for " + iface + ".");
   test(function() {
     assert_equals(ev.type, "",
@@ -72,6 +71,7 @@ test(function() {
  * interfaces that it is known some UA does or did not throw for.
  */
 var someNonCreateableEvents = [
+  "AnimationPlaybackEvent",
   "AnimationPlayerEvent",
   "ApplicationCacheErrorEvent",
   "AudioProcessingEvent",
@@ -81,7 +81,6 @@ var someNonCreateableEvents = [
   "ClipboardEvent",
   "CommandEvent",
   "DataContainerEvent",
-  "DeviceLightEvent",
   "ExtendableEvent",
   "ExtendableMessageEvent",
   "FetchEvent",
@@ -109,6 +108,7 @@ var someNonCreateableEvents = [
   "PopUpEvent",
   "PresentationConnectionAvailableEvent",
   "PresentationConnectionCloseEvent",
+  "ProgressEvent",
   "PromiseRejectionEvent",
   "PushEvent",
   "RTCDTMFToneChangeEvent",
@@ -117,6 +117,7 @@ var someNonCreateableEvents = [
   "RelatedEvent",
   "ResourceProgressEvent",
   "SVGEvent",
+  "SVGZoomEvent",
   "ScrollAreaEvent",
   "SecurityPolicyViolationEvent",
   "ServicePortConnectEvent",

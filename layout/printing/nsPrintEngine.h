@@ -6,13 +6,14 @@
 #define nsPrintEngine_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 
 #include "nsCOMPtr.h"
 
 #include "nsPrintObject.h"
 #include "nsPrintData.h"
 #include "nsFrameList.h"
-#include "mozilla/Attributes.h"
+#include "nsIFrame.h"
 #include "nsIWebProgress.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "nsIWebProgressListener.h"
@@ -77,7 +78,7 @@ public:
   void Destroy();
   void DestroyPrintingData();
 
-  nsresult Initialize(nsIDocumentViewerPrint* aDocViewerPrint, 
+  nsresult Initialize(nsIDocumentViewerPrint* aDocViewerPrint,
                       nsIDocShell*            aContainer,
                       nsIDocument*            aDocument,
                       float                   aScreenDPI,
@@ -96,8 +97,9 @@ public:
   nsresult EnablePOsForPrinting();
   nsPrintObject* FindSmallestSTF();
 
-  bool     PrintDocContent(nsPrintObject* aPO, nsresult& aStatus);
-  nsresult DoPrint(nsPrintObject * aPO);
+  bool PrintDocContent(const mozilla::UniquePtr<nsPrintObject>& aPO,
+                       nsresult& aStatus);
+  nsresult DoPrint(const mozilla::UniquePtr<nsPrintObject>& aPO);
 
   void SetPrintPO(nsPrintObject* aPO, bool aPrint);
 
@@ -114,12 +116,13 @@ public:
   //---------------------------------------------------------------------
   void BuildDocTree(nsIDocShell *      aParentNode,
                     nsTArray<nsPrintObject*> * aDocList,
-                    nsPrintObject *            aPO);
-  nsresult ReflowDocList(nsPrintObject * aPO, bool aSetPixelScale);
+                    const mozilla::UniquePtr<nsPrintObject>& aPO);
+  nsresult ReflowDocList(const mozilla::UniquePtr<nsPrintObject>& aPO,
+                         bool aSetPixelScale);
 
-  nsresult ReflowPrintObject(nsPrintObject * aPO);
+  nsresult ReflowPrintObject(const mozilla::UniquePtr<nsPrintObject>& aPO);
 
-  void CheckForChildFrameSets(nsPrintObject* aPO);
+  void CheckForChildFrameSets(const mozilla::UniquePtr<nsPrintObject>& aPO);
 
   void CalcNumPrintablePages(int32_t& aNumPages);
   void ShowPrintProgress(bool aIsForPrinting, bool& aDoNotify);
@@ -128,7 +131,7 @@ public:
   // object, for example by calling CleanupOnFailure().
   nsresult FinishPrintPreview();
   static void CloseProgressDialog(nsIWebProgressListener* aWebProgressListener);
-  void SetDocAndURLIntoProgress(nsPrintObject* aPO,
+  void SetDocAndURLIntoProgress(const mozilla::UniquePtr<nsPrintObject>& aPO,
                                 nsIPrintProgressParams* aParams);
   void EllipseLongString(nsAString& aStr, const uint32_t aLen, bool aDoFront);
   nsresult CheckForPrinters(nsIPrintSettings* aPrintSettings);
@@ -141,7 +144,7 @@ public:
 
 
   // Timer Methods
-  nsresult StartPagePrintTimer(nsPrintObject* aPO);
+  nsresult StartPagePrintTimer(const mozilla::UniquePtr<nsPrintObject>& aPO);
 
   bool IsWindowsInOurSubTree(nsPIDOMWindowOuter* aDOMWindow);
   static bool IsParentAFrameSet(nsIDocShell * aParent);
@@ -161,7 +164,7 @@ public:
   static void GetDocumentTitleAndURL(nsIDocument* aDoc,
                                      nsAString&   aTitle,
                                      nsAString&   aURLStr);
-  void GetDisplayTitleAndURL(nsPrintObject*   aPO,
+  void GetDisplayTitleAndURL(const mozilla::UniquePtr<nsPrintObject>& aPO,
                              nsAString&       aTitle,
                              nsAString&       aURLStr,
                              eDocTitleDefault aDefType);
@@ -175,7 +178,7 @@ public:
 
   float GetPrintPreviewScale() { return mPrtPreview->mPrintObject->
                                         mPresContext->GetPrintPreviewScale(); }
-  
+
   static nsIPresShell* GetPresShellFor(nsIDocShell* aDocShell);
 
   // These calls also update the DocViewer
@@ -215,7 +218,7 @@ protected:
                          nsIDOMDocument* aDoc);
 
   void FirePrintCompletionEvent();
-  static nsresult GetSeqFrameAndCountPagesInternal(nsPrintObject*  aPO,
+  static nsresult GetSeqFrameAndCountPagesInternal(const mozilla::UniquePtr<nsPrintObject>& aPO,
                                                    nsIFrame*&      aSeqFrame,
                                                    int32_t&        aCount);
 
@@ -242,11 +245,15 @@ protected:
                                            int32_t&              aEndPageNum,
                                            nsRect&               aEndRect);
 
-  static void MapContentForPO(nsPrintObject* aPO, nsIContent* aContent);
+  static void MapContentForPO(const mozilla::UniquePtr<nsPrintObject>& aPO,
+                              nsIContent* aContent);
 
-  static void MapContentToWebShells(nsPrintObject* aRootPO, nsPrintObject* aPO);
+  static void MapContentToWebShells(const mozilla::UniquePtr<nsPrintObject>& aRootPO,
+                                    const mozilla::UniquePtr<nsPrintObject>& aPO);
 
   static void SetPrintAsIs(nsPrintObject* aPO, bool aAsIs = true);
+
+  void DisconnectPagePrintTimer();
 
   // Static member variables
   bool mIsCreatingPrintPreview;
@@ -257,14 +264,20 @@ protected:
   nsCOMPtr<nsIDocumentViewerPrint> mDocViewerPrint;
   nsWeakPtr               mContainer;
   float                   mScreenDPI;
-  
-  nsPrintData*            mPrt;
+
+  // We are the primary owner of our nsPrintData member vars.  These vars
+  // are refcounted so that functions (e.g. nsPrintData methods) can create
+  // temporary owning references when they need to fire a callback that
+  // could conceivably destroy this nsPrintEngine owner object and all its
+  // member-data.
+  RefPtr<nsPrintData> mPrt;
+
   nsPagePrintTimer*       mPagePrintTimer;
-  nsIPageSequenceFrame*   mPageSeqFrame;
+  WeakFrame               mPageSeqFrame;
 
   // Print Preview
-  nsPrintData*            mPrtPreview;
-  nsPrintData*            mOldPrtPreview;
+  RefPtr<nsPrintData> mPrtPreview;
+  RefPtr<nsPrintData> mOldPrtPreview;
 
   nsCOMPtr<nsIDocument>   mDocument;
 

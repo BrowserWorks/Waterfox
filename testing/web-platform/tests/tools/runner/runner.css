@@ -90,12 +90,26 @@ html.done section + section {
 
 #manualUI {
     position: fixed;
-    top: 100px;
+    z-index: 2000;
+    top: -20px;
     left: 0;
     right: 0;
     display: block;
     padding: 40px;
     background: rgba(255, 200, 0, 0.5);
+}
+
+#current_test {
+  visibility: hidden;
+}
+
+#current_test a {
+  display: inline-block;
+  margin-left: 1em;
+}
+
+#current_test .match {
+  background-color: #BDF1FF;
 }
 
 #manualUI .panel {
@@ -119,6 +133,10 @@ body {
 
 .container {
     max-width: 800px;
+}
+
+.navbar-brand > img {
+    display: inline;
 }
 
 .navbar-inverse .navbar-brand {
@@ -179,19 +197,21 @@ td.ERROR {
     background-color: inherit;
   }
   to {
-    background-color: #ffc;
+    background-color: #f6bb42;
   }
 }
 
-#manifest {
-  padding-left: 6px;
-  padding-right: 6px;
-  font-size: 80%;
-  font-weight: normal;
-  font-style: italic;
-  color: #999;
+.loading-manifest {
+  background-image: none;
+  color: #333;
   animation-duration: 1.5s;
   animation-name: alert_updating;
   animation-iteration-count: infinite;
   animation-direction: alternate;
+}
+
+.reftestWarn {
+    color: yellow;
+    background: black;
+    padding: 8px;
 }

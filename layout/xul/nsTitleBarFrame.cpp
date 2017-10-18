@@ -33,8 +33,8 @@ NS_NewTitleBarFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsTitleBarFrame)
 
-nsTitleBarFrame::nsTitleBarFrame(nsStyleContext* aContext)
-:nsBoxFrame(aContext, false)
+nsTitleBarFrame::nsTitleBarFrame(nsStyleContext* aContext, ClassID aID)
+  : nsBoxFrame(aContext, aID, false)
 {
   mTrackingMouseMove = false;
   UpdateMouseThrough();
@@ -125,8 +125,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
          if (parent) {
            nsMenuPopupFrame* menuPopupFrame = static_cast<nsMenuPopupFrame*>(parent);
            nsCOMPtr<nsIWidget> widget = menuPopupFrame->GetWidget();
-           LayoutDeviceIntRect bounds;
-           widget->GetScreenBounds(bounds);
+           LayoutDeviceIntRect bounds = widget->GetScreenBounds();
 
            CSSPoint cssPos = (bounds.TopLeft() + nsMoveBy)
                            / aPresContext->CSSToDevPixelScale();
@@ -168,6 +167,23 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
 void
 nsTitleBarFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
+  bool isTrusted = false;
+  bool isShift = false;
+  bool isControl = false;
+  bool isAlt = false;
+  bool isMeta = false;
+  uint16_t inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
+
+  if(aEvent) {
+    isShift = aEvent->IsShift();
+    isControl = aEvent->IsControl();
+    isAlt = aEvent->IsAlt();
+    isMeta = aEvent->IsMeta();
+    inputSource = aEvent->inputSource;
+  }
+
   // Execute the oncommand event handler.
-  nsContentUtils::DispatchXULCommand(mContent, aEvent && aEvent->IsTrusted());
+  nsContentUtils::DispatchXULCommand(mContent, isTrusted, nullptr,
+                                     nullptr, isControl, isAlt,
+                                     isShift, isMeta, inputSource);
 }

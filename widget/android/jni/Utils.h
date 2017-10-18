@@ -3,13 +3,65 @@
 
 #include <jni.h>
 
-#if defined(DEBUG) || !defined(RELEASE_BUILD)
+#include "nsIRunnable.h"
+
+#include "mozilla/UniquePtr.h"
+
+#if defined(DEBUG) || !defined(RELEASE_OR_BETA)
+#define MOZ_CHECK_JNI
+#endif
+
+#ifdef MOZ_CHECK_JNI
+#include <pthread.h>
 #include "mozilla/Assertions.h"
+#include "APKOpen.h"
 #include "MainThreadUtils.h"
 #endif
 
 namespace mozilla {
 namespace jni {
+
+// How exception during a JNI call should be treated.
+enum class ExceptionMode
+{
+    // Abort on unhandled excepion (default).
+    ABORT,
+    // Ignore the exception and return to caller.
+    IGNORE,
+    // Catch any exception and return a nsresult.
+    NSRESULT,
+};
+
+// Thread that a particular JNI call is allowed on.
+enum class CallingThread
+{
+    // Can be called from any thread (default).
+    ANY,
+    // Can be called from the Gecko thread.
+    GECKO,
+    // Can be called from the Java UI thread.
+    UI,
+};
+
+// If and where a JNI call will be dispatched.
+enum class DispatchTarget
+{
+    // Call happens synchronously on the calling thread (default).
+    CURRENT,
+    // Call happens synchronously on the calling thread, but the call is
+    // wrapped in a function object and is passed thru UsesNativeCallProxy.
+    // Method must return void.
+    PROXY,
+    // Call is dispatched asynchronously on the Gecko thread to the XPCOM
+    // (nsThread) event queue. Method must return void.
+    GECKO,
+    // Call is dispatched asynchronously on the Gecko thread to the widget
+    // (nsAppShell) event queue. In most cases, events in the widget event
+    // queue (aka native event queue) are favored over events in the XPCOM
+    // event queue. Method must return void.
+    GECKO_PRIORITY,
+};
+
 
 extern JNIEnv* sGeckoThreadEnv;
 
@@ -20,13 +72,9 @@ inline bool IsAvailable()
 
 inline JNIEnv* GetGeckoThreadEnv()
 {
-#if defined(DEBUG) || !defined(RELEASE_BUILD)
-    if (!NS_IsMainThread()) {
-        MOZ_CRASH("Not on main thread");
-    }
-    if (!sGeckoThreadEnv) {
-        MOZ_CRASH("Don't have a JNIEnv");
-    }
+#ifdef MOZ_CHECK_JNI
+    MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Must be on Gecko thread");
+    MOZ_RELEASE_ASSERT(sGeckoThreadEnv, "Must have a JNIEnv");
 #endif
     return sGeckoThreadEnv;
 }
@@ -34,6 +82,21 @@ inline JNIEnv* GetGeckoThreadEnv()
 void SetGeckoThreadEnv(JNIEnv* aEnv);
 
 JNIEnv* GetEnvForThread();
+
+#ifdef MOZ_CHECK_JNI
+#define MOZ_ASSERT_JNI_THREAD(thread) \
+    do { \
+        if ((thread) == mozilla::jni::CallingThread::GECKO) { \
+            MOZ_RELEASE_ASSERT(::NS_IsMainThread()); \
+        } else if ((thread) == mozilla::jni::CallingThread::UI) { \
+            const bool isOnUiThread = ::pthread_equal(::pthread_self(), \
+                                                      ::getJavaUiThread()); \
+            MOZ_RELEASE_ASSERT(isOnUiThread); \
+        } \
+    } while (0)
+#else
+#define MOZ_ASSERT_JNI_THREAD(thread) do {} while (0)
+#endif
 
 bool ThrowException(JNIEnv *aEnv, const char *aClass,
                     const char *aMessage);
@@ -55,6 +118,8 @@ inline bool ThrowException(const char *aMessage)
 
 bool HandleUncaughtException(JNIEnv* aEnv);
 
+bool ReportException(JNIEnv* aEnv, jthrowable aExc, jstring aStack);
+
 #define MOZ_CATCH_JNI_EXCEPTION(env) \
     do { \
         if (mozilla::jni::HandleUncaughtException((env))) { \
@@ -62,11 +127,22 @@ bool HandleUncaughtException(JNIEnv* aEnv);
         } \
     } while (0)
 
+
 uintptr_t GetNativeHandle(JNIEnv* env, jobject instance);
 
 void SetNativeHandle(JNIEnv* env, jobject instance, uintptr_t handle);
 
-jclass GetClassGlobalRef(JNIEnv* aEnv, const char* aClassName);
+jclass GetClassRef(JNIEnv* aEnv, const char* aClassName);
+
+void DispatchToGeckoPriorityQueue(already_AddRefed<nsIRunnable> aCall);
+
+/**
+ * Returns whether Gecko is running in a Fennec environment, as determined by
+ * the presence of the GeckoApp class.
+ */
+bool IsFennec();
+
+int GetAPIVersion();
 
 } // jni
 } // mozilla

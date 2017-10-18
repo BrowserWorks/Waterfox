@@ -25,7 +25,7 @@ struct DependentAddPtr
     typedef typename T::Entry Entry;
 
     template <class Lookup>
-    DependentAddPtr(const ExclusiveContext* cx, const T& table, const Lookup& lookup)
+    DependentAddPtr(const JSContext* cx, const T& table, const Lookup& lookup)
       : addPtr(table.lookupForAdd(lookup))
       , originalGcNumber(cx->zone()->gcNumber())
     {}
@@ -36,15 +36,19 @@ struct DependentAddPtr
     {}
 
     template <class KeyInput, class ValueInput>
-    bool add(ExclusiveContext* cx, T& table, const KeyInput& key, const ValueInput& value) {
-        bool gcHappened = originalGcNumber != cx->zone()->gcNumber();
-        if (gcHappened)
-            addPtr = table.lookupForAdd(key);
+    bool add(JSContext* cx, T& table, const KeyInput& key, const ValueInput& value) {
+        refreshAddPtr(cx, table, key);
         if (!table.relookupOrAdd(addPtr, key, value)) {
             ReportOutOfMemory(cx);
             return false;
         }
         return true;
+    }
+
+    template <class KeyInput>
+    void remove(JSContext* cx, T& table, const KeyInput& key) {
+        refreshAddPtr(cx, table, key);
+        table.remove(addPtr);
     }
 
     bool found() const                 { return addPtr.found(); }
@@ -56,6 +60,13 @@ struct DependentAddPtr
     AddPtr addPtr ;
     const uint64_t originalGcNumber;
 
+    template <class KeyInput>
+    void refreshAddPtr(JSContext* cx, T& table, const KeyInput& key) {
+        bool gcHappened = originalGcNumber != cx->zone()->gcNumber();
+        if (gcHappened)
+            addPtr = table.lookupForAdd(key);
+    }
+
     DependentAddPtr() = delete;
     DependentAddPtr(const DependentAddPtr&) = delete;
     DependentAddPtr& operator=(const DependentAddPtr&) = delete;
@@ -63,7 +74,7 @@ struct DependentAddPtr
 
 template <typename T, typename Lookup>
 inline auto
-MakeDependentAddPtr(const ExclusiveContext* cx, T& table, const Lookup& lookup)
+MakeDependentAddPtr(const JSContext* cx, T& table, const Lookup& lookup)
   -> DependentAddPtr<typename mozilla::RemoveReference<decltype(table)>::Type>
 {
     using Ptr = DependentAddPtr<typename mozilla::RemoveReference<decltype(table)>::Type>;

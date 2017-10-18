@@ -7,12 +7,14 @@
 #ifndef nsKeygenHandler_h
 #define nsKeygenHandler_h
 
+#include "ScopedNSSTypes.h"
 #include "keythi.h"
 #include "nsCOMPtr.h"
 #include "nsError.h"
 #include "nsIFormProcessor.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsNSSShutDown.h"
+#include "nsString.h"
 #include "nsTArray.h"
 #include "secmodt.h"
 
@@ -24,7 +26,7 @@ nsresult GetSlotWithMechanism(uint32_t mechanism,
 #define DEFAULT_RSA_KEYGEN_PE 65537L
 #define DEFAULT_RSA_KEYGEN_ALG SEC_OID_PKCS1_MD5_WITH_RSA_ENCRYPTION
 
-SECKEYECParams *decode_ec_params(const char *curve);
+mozilla::UniqueSECItem DecodeECParams(const char* curve);
 
 class nsKeygenFormProcessor : public nsIFormProcessor
                             , public nsNSSShutDownObject
@@ -62,7 +64,7 @@ protected:
   virtual ~nsKeygenFormProcessor();
 
   nsresult GetPublicKey(const nsAString& aValue, const nsAString& aChallenge,
-                        const nsAFlatString& akeyType, nsAString& aOutPublicKey,
+                        const nsString& akeyType, nsAString& aOutPublicKey,
                         const nsAString& aPqg);
   nsresult GetSlot(uint32_t aMechanism, PK11SlotInfo** aSlot);
 private:

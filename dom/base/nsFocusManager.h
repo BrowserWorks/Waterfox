@@ -8,6 +8,7 @@
 #define nsFocusManager_h___
 
 #include "nsCycleCollectionParticipant.h"
+#include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsIFocusManager.h"
 #include "nsIObserver.h"
@@ -91,6 +92,26 @@ public:
     nsCOMPtr<nsIDocument> handlingDocument = mMouseButtonEventHandlingDocument;
     mMouseButtonEventHandlingDocument = aDocument;
     return handlingDocument.forget();
+  }
+
+  void NeedsFlushBeforeEventHandling(nsIContent* aContent)
+  {
+    if (mFocusedContent == aContent) {
+      mEventHandlingNeedsFlush = true;
+    }
+  }
+
+  bool CanSkipFocus(nsIContent* aContent);
+
+  void FlushBeforeEventHandlingIfNeeded(nsIContent* aContent)
+  {
+    if (mEventHandlingNeedsFlush) {
+      nsCOMPtr<nsIDocument> doc = aContent->GetComposedDoc();
+      if (doc) {
+        mEventHandlingNeedsFlush = false;
+        doc->FlushPendingNotifications(mozilla::FlushType::Layout);
+      }
+    }
   }
 
   /**
@@ -280,7 +301,8 @@ protected:
              nsIContent* aContentLostFocus = nullptr);
 
   /**
-   * Fires a focus or blur event at aTarget.
+   * Send a focus or blur event at aTarget. It may be added to the delayed
+   * event queue if the document is suppressing events.
    *
    * aEventMessage should be either eFocus or eBlur.
    * For blur events, aFocusMethod should normally be non-zero.
@@ -295,6 +317,45 @@ protected:
                             bool aWindowRaised,
                             bool aIsRefocus = false,
                             mozilla::dom::EventTarget* aRelatedTarget = nullptr);
+
+  /**
+   * Fire a focus or blur event at aTarget.
+   *
+   * aEventMessage should be either eFocus or eBlur.
+   * For blur events, aFocusMethod should normally be non-zero.
+   *
+   * aWindowRaised should only be true if called from WindowRaised.
+   */
+  void FireFocusOrBlurEvent(mozilla::EventMessage aEventMessage,
+                            nsIPresShell* aPresShell,
+                            nsISupports* aTarget,
+                            bool aWindowRaised,
+                            bool aIsRefocus = false,
+                            mozilla::dom::EventTarget* aRelatedTarget = nullptr);
+
+  /**
+   *  Fire a focusin or focusout event
+   *
+   *  aEventMessage should be either eFocusIn or eFocusOut.
+   *
+   *  aTarget is the content the event will fire on (the object that gained
+   *  focus for focusin, the object blurred for focusout).
+   *
+   *  aCurrentFocusedWindow is the window focused before the focus/blur event
+   *  was fired.
+   *
+   *  aCurrentFocusedContent is the content focused before the focus/blur event
+   *  was fired.
+   *
+   *  aRelatedTarget is the content related to the event (the object
+   *  losing focus for focusin, the object getting focus for focusout).
+   */
+  void FireFocusInOrOutEvent(mozilla::EventMessage aEventMessage,
+                             nsIPresShell* aPresShell,
+                             nsISupports* aTarget,
+                             nsPIDOMWindowOuter* aCurrentFocusedWindow,
+                             nsIContent* aCurrentFocusedContent,
+                             mozilla::dom::EventTarget* aRelatedTarget = nullptr);
 
   /**
    * Scrolls aContent into view unless the FLAG_NOSCROLL flag is set.
@@ -455,7 +516,7 @@ protected:
   /**
    * Retreives a focusable element within the current selection of aWindow.
    * Currently, this only detects links.
-   *  
+   *
    * This is used when MoveFocus is called with a type of MOVEFOCUS_CARET,
    * which is used, for example, to focus links as the caret is moved over
    * them.
@@ -475,6 +536,7 @@ private:
   // focus rings: in the losing focus case that information could be
   // wrong..
   static void NotifyFocusStateChange(nsIContent* aContent,
+                                     nsIContent* aContentToFocus,
                                      bool aWindowShouldShowFocusRing,
                                      bool aGettingFocus);
 
@@ -515,6 +577,10 @@ private:
   // and the caller can access the document node, the caller should succeed in
   // moving focus.
   nsCOMPtr<nsIDocument> mMouseButtonEventHandlingDocument;
+
+  // If set to true, layout of the document of the event target should be
+  // flushed before handling focus depending events.
+  bool mEventHandlingNeedsFlush;
 
   static bool sTestMode;
 

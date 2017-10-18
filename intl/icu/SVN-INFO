@@ -1,9 +1,10 @@
-Path: release-56-1
-URL: http://source.icu-project.org/repos/icu/icu/tags/release-56-1
-Repository Root: http://source.icu-project.org/repos/icu
+Path: icu4c
+URL: https://ssl.icu-project.org/repos/icu/tags/release-59-1/icu4c
+Relative URL: ^/tags/release-59-1/icu4c
+Repository Root: https://ssl.icu-project.org/repos/icu
 Repository UUID: 251d0590-4201-4cf1-90de-194747b24ca1
 Node Kind: directory
-Last Changed Author: mow
-Last Changed Rev: 38044
-Last Changed Date: 2015-10-07 22:20:20 +0000 (Wed, 07 Oct 2015)
+Last Changed Author: yoshito
+Last Changed Rev: 40047
+Last Changed Date: 2017-04-13 09:55:03 +0000 (Thu, 13 Apr 2017)
 

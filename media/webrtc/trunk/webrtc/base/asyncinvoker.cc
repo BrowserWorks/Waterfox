@@ -10,6 +10,7 @@
 
 #include "webrtc/base/asyncinvoker.h"
 
+#include "webrtc/base/checks.h"
 #include "webrtc/base/logging.h"
 
 namespace rtc {
@@ -35,12 +36,13 @@ void AsyncInvoker::OnMessage(Message* msg) {
   closure->Execute();
 }
 
-void AsyncInvoker::Flush(Thread* thread, uint32 id /*= MQID_ANY*/) {
+void AsyncInvoker::Flush(Thread* thread, uint32_t id /*= MQID_ANY*/) {
   if (destroying_) return;
 
   // Run this on |thread| to reduce the number of context switches.
   if (Thread::Current() != thread) {
-    thread->Invoke<void>(Bind(&AsyncInvoker::Flush, this, thread, id));
+    thread->Invoke<void>(RTC_FROM_HERE,
+                         Bind(&AsyncInvoker::Flush, this, thread, id));
     return;
   }
 
@@ -48,25 +50,65 @@ void AsyncInvoker::Flush(Thread* thread, uint32 id /*= MQID_ANY*/) {
   thread->Clear(this, id, &removed);
   for (MessageList::iterator it = removed.begin(); it != removed.end(); ++it) {
     // This message was pending on this thread, so run it now.
-    thread->Send(it->phandler,
-                 it->message_id,
-                 it->pdata);
+    thread->Send(it->posted_from, it->phandler, it->message_id, it->pdata);
   }
 }
 
-void AsyncInvoker::DoInvoke(Thread* thread,
+void AsyncInvoker::DoInvoke(const Location& posted_from,
+                            Thread* thread,
                             const scoped_refptr<AsyncClosure>& closure,
-                            uint32 id) {
+                            uint32_t id) {
   if (destroying_) {
     LOG(LS_WARNING) << "Tried to invoke while destroying the invoker.";
     return;
   }
-  thread->Post(this, id, new ScopedRefMessageData<AsyncClosure>(closure));
+  thread->Post(posted_from, this, id,
+               new ScopedRefMessageData<AsyncClosure>(closure));
 }
 
-NotifyingAsyncClosureBase::NotifyingAsyncClosureBase(AsyncInvoker* invoker,
-                                                     Thread* calling_thread)
-    : invoker_(invoker), calling_thread_(calling_thread) {
+void AsyncInvoker::DoInvokeDelayed(const Location& posted_from,
+                                   Thread* thread,
+                                   const scoped_refptr<AsyncClosure>& closure,
+                                   uint32_t delay_ms,
+                                   uint32_t id) {
+  if (destroying_) {
+    LOG(LS_WARNING) << "Tried to invoke while destroying the invoker.";
+    return;
+  }
+  thread->PostDelayed(posted_from, delay_ms, this, id,
+                      new ScopedRefMessageData<AsyncClosure>(closure));
+}
+
+GuardedAsyncInvoker::GuardedAsyncInvoker() : thread_(Thread::Current()) {
+  thread_->SignalQueueDestroyed.connect(this,
+                                        &GuardedAsyncInvoker::ThreadDestroyed);
+}
+
+GuardedAsyncInvoker::~GuardedAsyncInvoker() {
+}
+
+bool GuardedAsyncInvoker::Flush(uint32_t id) {
+  rtc::CritScope cs(&crit_);
+  if (thread_ == nullptr)
+    return false;
+  invoker_.Flush(thread_, id);
+  return true;
+}
+
+void GuardedAsyncInvoker::ThreadDestroyed() {
+  rtc::CritScope cs(&crit_);
+  // We should never get more than one notification about the thread dying.
+  RTC_DCHECK(thread_ != nullptr);
+  thread_ = nullptr;
+}
+
+NotifyingAsyncClosureBase::NotifyingAsyncClosureBase(
+    AsyncInvoker* invoker,
+    const Location& callback_posted_from,
+    Thread* calling_thread)
+    : invoker_(invoker),
+      callback_posted_from_(callback_posted_from),
+      calling_thread_(calling_thread) {
   calling_thread->SignalQueueDestroyed.connect(
       this, &NotifyingAsyncClosureBase::CancelCallback);
   invoker->SignalInvokerDestroyed.connect(
@@ -80,7 +122,8 @@ NotifyingAsyncClosureBase::~NotifyingAsyncClosureBase() {
 void NotifyingAsyncClosureBase::TriggerCallback() {
   CritScope cs(&crit_);
   if (!CallbackCanceled() && !callback_.empty()) {
-    invoker_->AsyncInvoke<void>(calling_thread_, callback_);
+    invoker_->AsyncInvoke<void>(callback_posted_from_, calling_thread_,
+                                callback_);
   }
 }
 

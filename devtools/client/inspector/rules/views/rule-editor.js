@@ -4,13 +4,9 @@
 
 "use strict";
 
-/* eslint-disable mozilla/reject-some-requires */
-const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
-/* eslint-enable mozilla/reject-some-requires */
 const {l10n} = require("devtools/shared/inspector/css-logic");
 const {ELEMENT_STYLE} = require("devtools/shared/specs/styles");
-const {PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
-const {Rule} = require("devtools/client/inspector/rules/models/rule");
+const Rule = require("devtools/client/inspector/rules/models/rule");
 const {InplaceEditor, editableField, editableItem} =
       require("devtools/client/shared/inplace-editor");
 const {TextPropertyEditor} =
@@ -21,23 +17,22 @@ const {
   promiseWarn
 } = require("devtools/client/inspector/shared/utils");
 const {
-  parseDeclarations,
+  parseNamedDeclarations,
   parsePseudoClassesAndAttributes,
   SELECTOR_ATTRIBUTE,
   SELECTOR_ELEMENT,
   SELECTOR_PSEUDO_CLASS
-} = require("devtools/shared/css-parsing-utils");
+} = require("devtools/shared/css/parsing-utils");
 const promise = require("promise");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
+const {Task} = require("devtools/shared/task");
 
-XPCOMUtils.defineLazyGetter(this, "_strings", function () {
-  return Services.strings.createBundle(
-    "chrome://devtools-shared/locale/styleinspector.properties");
-});
+const STYLE_INSPECTOR_PROPERTIES = "devtools/shared/locales/styleinspector.properties";
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const STYLE_INSPECTOR_L10N = new LocalizationHelper(STYLE_INSPECTOR_PROPERTIES);
 
-const HTML_NS = "http://www.w3.org/1999/xhtml";
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+const PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
 /**
  * RuleEditor is responsible for the following:
@@ -91,7 +86,7 @@ RuleEditor.prototype = {
 
   get isSelectorEditable() {
     let trait = this.isEditable &&
-      this.toolbox.target.client.traits.selectorEditable &&
+      this.ruleView.inspector.target.client.traits.selectorEditable &&
       this.rule.domRule.type !== ELEMENT_STYLE &&
       this.rule.domRule.type !== CSSRule.KEYFRAME_RULE;
 
@@ -101,7 +96,7 @@ RuleEditor.prototype = {
   },
 
   _create: function () {
-    this.element = this.doc.createElementNS(HTML_NS, "div");
+    this.element = this.doc.createElement("div");
     this.element.className = "ruleview-rule theme-separator";
     this.element.setAttribute("uneditable", !this.isEditable);
     this.element.setAttribute("unmatched", this.rule.isUnmatched);
@@ -115,15 +110,14 @@ RuleEditor.prototype = {
     this.source = createChild(this.element, "div", {
       class: "ruleview-rule-source theme-link"
     });
-    this.source.addEventListener("click", function () {
+    this.source.addEventListener("click", () => {
       if (this.source.hasAttribute("unselectable")) {
         return;
       }
       let rule = this.rule.domRule;
       this.ruleView.emit("ruleview-linked-clicked", rule);
-    }.bind(this));
-    let sourceLabel = this.doc.createElementNS(XUL_NS, "label");
-    sourceLabel.setAttribute("crop", "center");
+    });
+    let sourceLabel = this.doc.createElement("span");
     sourceLabel.classList.add("ruleview-rule-source-label");
     this.source.appendChild(sourceLabel);
 
@@ -144,27 +138,45 @@ RuleEditor.prototype = {
       this.selectorText.addEventListener("click", event => {
         // Clicks within the selector shouldn't propagate any further.
         event.stopPropagation();
-      }, false);
+      });
 
       editableField({
         element: this.selectorText,
         done: this._onSelectorDone,
+        cssProperties: this.rule.cssProperties,
+        contextMenu: this.ruleView.inspector.onTextBoxContextMenu
       });
     }
 
-    if (this.rule.domRule.type !== CSSRule.KEYFRAME_RULE &&
-        this.rule.domRule.selectors) {
-      let selector = this.rule.domRule.selectors.join(", ");
+    if (this.rule.domRule.type !== CSSRule.KEYFRAME_RULE) {
+      Task.spawn(function* () {
+        let selector;
 
-      let selectorHighlighter = createChild(header, "span", {
-        class: "ruleview-selectorhighlighter" +
-               (this.ruleView.highlightedSelector === selector ?
-                " highlighted" : ""),
-        title: l10n("rule.selectorHighlighter.tooltip")
-      });
-      selectorHighlighter.addEventListener("click", () => {
-        this.ruleView.toggleSelectorHighlighter(selectorHighlighter, selector);
-      });
+        if (this.rule.domRule.selectors) {
+          // This is a "normal" rule with a selector.
+          selector = this.rule.domRule.selectors.join(", ");
+        } else if (this.rule.inherited) {
+          // This is an inline style from an inherited rule. Need to resolve the unique
+          // selector from the node which rule this is inherited from.
+          selector = yield this.rule.inherited.getUniqueSelector();
+        } else {
+          // This is an inline style from the current node.
+          selector = this.ruleView.inspector.selectionCssSelector;
+        }
+
+        let selectorHighlighter = createChild(header, "span", {
+          class: "ruleview-selectorhighlighter" +
+                 (this.ruleView.highlighters.selectorHighlighterShown === selector ?
+                  " highlighted" : ""),
+          title: l10n("rule.selectorHighlighter.tooltip")
+        });
+        selectorHighlighter.addEventListener("click", () => {
+          this.ruleView.toggleSelectorHighlighter(selectorHighlighter, selector);
+        });
+
+        this.uniqueSelector = selector;
+        this.emit("selector-icon-created");
+      }.bind(this));
     }
 
     this.openBrace = createChild(header, "span", {
@@ -201,11 +213,11 @@ RuleEditor.prototype = {
         }
         // Cleanup the _ruleViewIsEditing flag
         this._ruleViewIsEditing = false;
-      }, false);
+      });
 
       this.element.addEventListener("mousedown", () => {
         this.doc.defaultView.focus();
-      }, false);
+      });
 
       // Create a property editor when the close brace is clicked.
       editableItem({ element: this.closeBrace }, () => {
@@ -229,7 +241,7 @@ RuleEditor.prototype = {
       this.rule.sheet.href : title;
     let sourceLine = this.rule.ruleLine > 0 ? ":" + this.rule.ruleLine : "";
 
-    sourceLabel.setAttribute("tooltiptext", sourceHref + sourceLine);
+    sourceLabel.setAttribute("title", sourceHref + sourceLine);
 
     if (this.toolbox.isToolRegistered("styleeditor")) {
       this.source.removeAttribute("unselectable");
@@ -238,19 +250,19 @@ RuleEditor.prototype = {
     }
 
     if (this.rule.isSystem) {
-      let uaLabel = _strings.GetStringFromName("rule.userAgentStyles");
-      sourceLabel.setAttribute("value", uaLabel + " " + title);
+      let uaLabel = STYLE_INSPECTOR_L10N.getStr("rule.userAgentStyles");
+      sourceLabel.textContent = uaLabel + " " + title;
 
       // Special case about:PreferenceStyleSheet, as it is generated on the
       // fly and the URI is not registered with the about: handler.
       // https://bugzilla.mozilla.org/show_bug.cgi?id=935803#c37
       if (sourceHref === "about:PreferenceStyleSheet") {
         this.source.setAttribute("unselectable", "true");
-        sourceLabel.setAttribute("value", uaLabel);
-        sourceLabel.removeAttribute("tooltiptext");
+        sourceLabel.textContent = uaLabel;
+        sourceLabel.removeAttribute("title");
       }
     } else {
-      sourceLabel.setAttribute("value", title);
+      sourceLabel.textContent = title;
       if (this.rule.ruleLine === -1 && this.rule.domRule.parentStyleSheet) {
         this.source.setAttribute("unselectable", "true");
       }
@@ -262,8 +274,8 @@ RuleEditor.prototype = {
       // Only get the original source link if the right pref is set, if the rule
       // isn't a system rule and if it isn't an inline rule.
       this.rule.getOriginalSourceStrings().then((strings) => {
-        sourceLabel.setAttribute("value", strings.short);
-        sourceLabel.setAttribute("tooltiptext", strings.full);
+        sourceLabel.textContent = strings.short;
+        sourceLabel.setAttribute("title", strings.full);
       }, e => console.error(e)).then(() => {
         this.emit("source-link-updated");
       });
@@ -449,12 +461,14 @@ RuleEditor.prototype = {
       destroy: this._newPropertyDestroy,
       advanceChars: ":",
       contentType: InplaceEditor.CONTENT_TYPES.CSS_PROPERTY,
-      popup: this.ruleView.popup
+      popup: this.ruleView.popup,
+      cssProperties: this.rule.cssProperties,
+      contextMenu: this.ruleView.inspector.onTextBoxContextMenu
     });
 
     // Auto-close the input if multiple rules get pasted into new property.
     this.editor.input.addEventListener("paste",
-      blurOnMultipleProperties(this.rule.cssProperties), false);
+      blurOnMultipleProperties(this.rule.cssProperties));
   },
 
   /**
@@ -474,8 +488,7 @@ RuleEditor.prototype = {
     // case, we're creating a new declaration, it doesn't make sense to accept
     // these entries
     this.multipleAddedProperties =
-      parseDeclarations(this.rule.cssProperties.isKnown, value, true)
-      .filter(d => d.name);
+      parseNamedDeclarations(this.rule.cssProperties.isKnown, value, true);
 
     // Blur the editor field now and deal with adding declarations later when
     // the field gets destroyed (see _newPropertyDestroy)
@@ -516,7 +529,7 @@ RuleEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  _onSelectorDone: function (value, commit, direction) {
+  _onSelectorDone: Task.async(function* (value, commit, direction) {
     if (!commit || this.isEditing || value === "" ||
         value === this.rule.selectorText) {
       return;
@@ -530,15 +543,27 @@ RuleEditor.prototype = {
 
     this.isEditing = true;
 
-    this.rule.domRule.modifySelector(element, value).then(response => {
-      this.isEditing = false;
+    try {
+      let response = yield this.rule.domRule.modifySelector(element, value);
 
       if (!supportsUnmatchedRules) {
+        this.isEditing = false;
+
         if (response) {
           this.ruleView.refreshPanel();
         }
         return;
       }
+
+      // We recompute the list of applied styles, because editing a
+      // selector might cause this rule's position to change.
+      let applied = yield elementStyle.pageStyle.getApplied(element, {
+        inherited: true,
+        matchedSelectors: true,
+        filter: elementStyle.showUserAgentStyles ? "ua" : undefined
+      });
+
+      this.isEditing = false;
 
       let {ruleProps, isMatching} = response;
       if (!ruleProps) {
@@ -553,25 +578,39 @@ RuleEditor.prototype = {
       let editor = new RuleEditor(ruleView, newRule);
       let rules = elementStyle.rules;
 
-      rules.splice(rules.indexOf(this.rule), 1);
-      rules.push(newRule);
+      let newRuleIndex = applied.findIndex((r) => r.rule == ruleProps.rule);
+      let oldIndex = rules.indexOf(this.rule);
+
+      // If the selector no longer matches, then we leave the rule in
+      // the same relative position.
+      if (newRuleIndex === -1) {
+        newRuleIndex = oldIndex;
+      }
+
+      // Remove the old rule and insert the new rule.
+      rules.splice(oldIndex, 1);
+      rules.splice(newRuleIndex, 0, newRule);
       elementStyle._changed();
       elementStyle.markOverriddenAll();
 
+      // We install the new editor in place of the old -- you might
+      // think we would replicate the list-modification logic above,
+      // but that is complicated due to the way the UI installs
+      // pseudo-element rules and the like.
       this.element.parentNode.replaceChild(editor.element, this.element);
 
       // Remove highlight for modified selector
-      if (ruleView.highlightedSelector) {
+      if (ruleView.highlighters.selectorHighlighterShown) {
         ruleView.toggleSelectorHighlighter(ruleView.lastSelectorIcon,
-          ruleView.highlightedSelector);
+          ruleView.highlighters.selectorHighlighterShown);
       }
 
       editor._moveSelectorFocus(direction);
-    }).then(null, err => {
+    } catch (err) {
       this.isEditing = false;
       promiseWarn(err);
-    });
-  },
+    }
+  }),
 
   /**
    * Handle moving the focus change after a tab or return keypress in the
@@ -593,4 +632,4 @@ RuleEditor.prototype = {
   }
 };
 
-exports.RuleEditor = RuleEditor;
+module.exports = RuleEditor;

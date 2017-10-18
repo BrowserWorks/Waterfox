@@ -570,7 +570,7 @@ var NetworkHelper = {
      *      => state === "insecure"
      *
      * - request is HTTPS but it uses a weak cipher or old protocol, see
-     *   http://hg.mozilla.org/mozilla-central/annotate/def6ed9d1c1a/
+     *   https://hg.mozilla.org/mozilla-central/annotate/def6ed9d1c1a/
      *   security/manager/ssl/nsNSSCallbacks.cpp#l1233
      * - request is mixed content (which makes no sense whatsoever)
      *   => .securityState has STATE_IS_BROKEN flag
@@ -633,15 +633,19 @@ var NetworkHelper = {
                       .getService(Ci.nsISiteSecurityService);
 
         // SiteSecurityService uses different storage if the channel is
-        // private. Thus we must give isSecureHost correct flags or we
+        // private. Thus we must give isSecureURI correct flags or we
         // might get incorrect results.
         let flags = (httpActivity.private) ?
                       Ci.nsISocketProvider.NO_PERMANENT_STORAGE : 0;
 
-        let host = httpActivity.hostname;
+        if (!uri) {
+          // isSecureURI only cares about the host, not the scheme.
+          let host = httpActivity.hostname;
+          uri = Services.io.newURI("https://" + host);
+        }
 
-        info.hsts = sss.isSecureHost(sss.HEADER_HSTS, host, flags);
-        info.hpkp = sss.isSecureHost(sss.HEADER_HPKP, host, flags);
+        info.hsts = sss.isSecureURI(sss.HEADER_HSTS, uri, flags);
+        info.hpkp = sss.isSecureURI(sss.HEADER_HPKP, uri, flags);
       } else {
         DevToolsUtils.reportException("NetworkHelper.parseSecurityInfo",
           "Could not get HSTS/HPKP status as hostname is not available.");
@@ -745,7 +749,7 @@ var NetworkHelper = {
     const wpl = Ci.nsIWebProgressListener;
 
     // If there's non-fatal security issues the request has STATE_IS_BROKEN
-    // flag set. See http://hg.mozilla.org/mozilla-central/file/44344099d119
+    // flag set. See https://hg.mozilla.org/mozilla-central/file/44344099d119
     // /security/manager/ssl/nsNSSCallbacks.cpp#l1233
     let reasons = [];
 
@@ -803,7 +807,7 @@ var NetworkHelper = {
       return store.get(url);
     }
 
-    let uri = Services.io.newURI(url, null, null).QueryInterface(Ci.nsIURL);
+    let uri = Services.io.newURI(url).QueryInterface(Ci.nsIURL);
     store.set(url, uri);
     return uri;
   }

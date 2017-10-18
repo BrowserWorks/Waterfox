@@ -54,7 +54,7 @@ HandleSeparator(nsACString& aDesc)
 class GetIMEGeneralPropertyName : public nsAutoCString
 {
 public:
-  GetIMEGeneralPropertyName(DWORD aFlags)
+  explicit GetIMEGeneralPropertyName(DWORD aFlags)
   {
     if (!aFlags) {
       AppendLiteral("no flags");
@@ -90,7 +90,7 @@ public:
 class GetIMEUIPropertyName : public nsAutoCString
 {
 public:
-  GetIMEUIPropertyName(DWORD aFlags)
+  explicit GetIMEUIPropertyName(DWORD aFlags)
   {
     if (!aFlags) {
       AppendLiteral("no flags");
@@ -114,7 +114,7 @@ public:
 class GetWritingModeName : public nsAutoCString
 {
 public:
-  GetWritingModeName(const WritingMode& aWritingMode)
+  explicit GetWritingModeName(const WritingMode& aWritingMode)
   {
     if (!aWritingMode.IsVertical()) {
       Assign("Horizontal");
@@ -132,7 +132,7 @@ public:
 class GetReconvertStringLog : public nsAutoCString
 {
 public:
-  GetReconvertStringLog(RECONVERTSTRING* aReconv)
+  explicit GetReconvertStringLog(RECONVERTSTRING* aReconv)
   {
     AssignLiteral("{ dwSize=");
     AppendInt(static_cast<uint32_t>(aReconv->dwSize));
@@ -180,9 +180,9 @@ IMEContext::IMEContext(HWND aWnd)
 {
 }
 
-IMEContext::IMEContext(nsWindow* aWindow)
-  : mWnd(aWindow->GetWindowHandle())
-  , mIMC(::ImmGetContext(aWindow->GetWindowHandle()))
+IMEContext::IMEContext(nsWindowBase* aWindowBase)
+  : mWnd(aWindowBase->GetWindowHandle())
+  , mIMC(::ImmGetContext(aWindowBase->GetWindowHandle()))
 {
 }
 
@@ -195,9 +195,9 @@ IMEContext::Init(HWND aWnd)
 }
 
 void
-IMEContext::Init(nsWindow* aWindow)
+IMEContext::Init(nsWindowBase* aWindowBase)
 {
-  Init(aWindow->GetWindowHandle());
+  Init(aWindowBase->GetWindowHandle());
 }
 
 void
@@ -344,7 +344,7 @@ IMMHandler::InitKeyboardLayout(nsWindow* aWindow,
     // Add room for the terminating null character
     sIMEName.SetLength(++IMENameLength);
     IMENameLength =
-      ::ImmGetDescriptionW(aKeyboardLayout, wwc(sIMEName.BeginWriting()),
+      ::ImmGetDescriptionW(aKeyboardLayout, sIMEName.get(),
                            IMENameLength);
     // Adjust the length to ignore the terminating null character
     sIMEName.SetLength(IMENameLength);
@@ -363,8 +363,8 @@ IMMHandler::InitKeyboardLayout(nsWindow* aWindow,
   // For hacking some bugs of some TIP, we should set an IME name from the
   // pref.
   if (sCodePage == 932 && sIMEName.IsEmpty()) {
-    sIMEName =
-      Preferences::GetString("intl.imm.japanese.assume_active_tip_name_as");
+    Preferences::GetString("intl.imm.japanese.assume_active_tip_name_as",
+                           sIMEName);
   }
 
   // Whether the IME supports vertical writing mode might be changed or
@@ -390,12 +390,12 @@ IMMHandler::GetKeyboardCodePage()
 }
 
 // static
-nsIMEUpdatePreference
-IMMHandler::GetIMEUpdatePreference()
+IMENotificationRequests
+IMMHandler::GetIMENotificationRequests()
 {
-  return nsIMEUpdatePreference(
-    nsIMEUpdatePreference::NOTIFY_POSITION_CHANGE |
-    nsIMEUpdatePreference::NOTIFY_MOUSE_BUTTON_EVENT_ON_CHAR);
+  return IMENotificationRequests(
+    IMENotificationRequests::NOTIFY_POSITION_CHANGE |
+    IMENotificationRequests::NOTIFY_MOUSE_BUTTON_EVENT_ON_CHAR);
 }
 
 // used for checking the lParam of WM_IME_COMPOSITION
@@ -2143,7 +2143,7 @@ IMMHandler::GetTargetClauseRange(uint32_t* aOffset,
 }
 
 bool
-IMMHandler::ConvertToANSIString(const nsAFlatString& aStr,
+IMMHandler::ConvertToANSIString(const nsString& aStr,
                                 UINT aCodePage,
                                 nsACString& aANSIStr)
 {
@@ -2439,8 +2439,7 @@ IMMHandler::SetIMERelatedWindowsPosOnPlugin(nsWindow* aWindow,
   nsWindow* toplevelWindow = aWindow->GetTopLevelWindow(false);
   LayoutDeviceIntRect pluginRectInScreen =
     editorRectEvent.mReply.mRect + toplevelWindow->WidgetToScreenOffset();
-  LayoutDeviceIntRect winRectInScreen;
-  aWindow->GetClientBounds(winRectInScreen);
+  LayoutDeviceIntRect winRectInScreen = aWindow->GetClientBounds();
   // composition window cannot be positioned on the edge of client area.
   winRectInScreen.width--;
   winRectInScreen.height--;
@@ -2539,8 +2538,12 @@ IMMHandler::AdjustCompositionFont(nsWindow* aWindow,
   // Therefore, we need to store the information which are set to the IM
   // context to static variables since IM context is never recreated.
   static bool sCompositionFontsInitialized = false;
-  static nsString sCompositionFont =
-    Preferences::GetString("intl.imm.composition_font");
+  static nsString sCompositionFont;
+  static bool sCompositionFontPrefDone = false;
+  if (!sCompositionFontPrefDone) {
+    sCompositionFontPrefDone = true;
+    Preferences::GetString("intl.imm.composition_font", sCompositionFont);
+  }
 
   // If composition font is customized by pref, we need to modify the
   // composition font of the IME context at first time even if the writing mode
@@ -2589,8 +2592,8 @@ IMMHandler::AdjustCompositionFont(nsWindow* aWindow,
   if (IsJapanist2003Active() && sCompositionFontForJapanist2003.IsEmpty()) {
     const char* kCompositionFontForJapanist2003 =
       "intl.imm.composition_font.japanist_2003";
-    sCompositionFontForJapanist2003 =
-      Preferences::GetString(kCompositionFontForJapanist2003);
+    Preferences::GetString(kCompositionFontForJapanist2003,
+                           sCompositionFontForJapanist2003);
     // If the font name is not specified properly, let's use
     // "MS PGothic" instead.
     if (sCompositionFontForJapanist2003.IsEmpty() ||
@@ -2763,8 +2766,9 @@ IMMHandler::OnKeyDownEvent(nsWindow* aWindow,
 void
 IMMHandler::SetCandidateWindow(nsWindow* aWindow, CANDIDATEFORM* aForm)
 {
-  // Hack for ATOK.  ATOK (Japanese IME) refers native caret position at
-  // deciding candidate window position.
+  // Hack for ATOK 2011 - 2016 (Japanese IME).  They refer native caret
+  // position at deciding candidate window position.  Note that we cannot
+  // check active IME since TIPs are wrapped and hidden by CUAS.
   if (aWindow->PluginHasFocus()) {
     // We cannot retrieve proper character height from plugin.  Therefore,
     // we should assume that the caret height is always 20px since if less than

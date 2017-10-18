@@ -9,7 +9,7 @@
 #include "nsStringFwd.h"
 #include "nsISaveAsCharset.h"
 #include "nsAutoPtr.h"
-#include "nsNCRFallbackEncoderWrapper.h"
+#include "mozilla/Encoding.h"
 #include "nsString.h"
 
 class nsSaveAsCharset : public nsISaveAsCharset
@@ -24,14 +24,13 @@ public:
 
   NS_IMETHOD Convert(const nsAString& ain, nsACString& aOut) override;
 
-  NS_IMETHODIMP GetCharset(nsACString& aCharset) override;
+  NS_IMETHOD GetCharset(nsACString& aCharset) override;
 
 private:
 
   virtual ~nsSaveAsCharset();
 
-  nsAutoPtr<nsNCRFallbackEncoderWrapper> mEncoder;
-  nsCString mCharset;
+  const mozilla::Encoding* mEncoding;
 };
 
 #endif

@@ -14,6 +14,7 @@
 #include "mozilla/UniquePtr.h"
 
 #include "nsIContent.h"
+#include "nsIContentInlines.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsRefPtrHashtable.h"
@@ -54,7 +55,7 @@ class XULTreeAccessible;
 #ifdef A11Y_LOG
 namespace logging {
   typedef const char* (*GetTreePrefix)(void* aData, Accessible*);
-  void Tree(const char* aTitle, const char* aMsgText, DocAccessible* aDoc,
+  void Tree(const char* aTitle, const char* aMsgText, Accessible* aRoot,
             GetTreePrefix aPrefixFunc, void* GetTreePrefixData);
 };
 #endif
@@ -955,6 +956,36 @@ public:
    */
   bool IsInsideAlert() const { return mContextFlags & eInsideAlert; }
 
+  /**
+   * Return true if there is a pending reorder event for this accessible.
+   */
+  bool ReorderEventTarget() const { return mReorderEventTarget; }
+
+  /**
+   * Return true if there is a pending show event for this accessible.
+   */
+  bool ShowEventTarget() const { return mShowEventTarget; }
+
+  /**
+   * Return true if there is a pending hide event for this accessible.
+   */
+  bool HideEventTarget() const { return mHideEventTarget; }
+
+  /**
+   * Set if there is a pending reorder event for this accessible.
+   */
+  void SetReorderEventTarget(bool aTarget) { mReorderEventTarget = aTarget; }
+
+  /**
+   * Set if this accessible is a show event target.
+   */
+  void SetShowEventTarget(bool aTarget) { mShowEventTarget = aTarget; }
+
+  /**
+   * Set if this accessible is a hide event target.
+   */
+  void SetHideEventTarget(bool aTarget) { mHideEventTarget = aTarget; }
+
 protected:
   virtual ~Accessible();
 
@@ -1107,7 +1138,7 @@ protected:
 
   // Data Members
   nsCOMPtr<nsIContent> mContent;
-  DocAccessible* mDoc;
+  RefPtr<DocAccessible> mDoc;
 
   Accessible* mParent;
   nsTArray<Accessible*> mChildren;
@@ -1131,12 +1162,15 @@ protected:
   uint32_t mContextFlags : kContextFlagsBits;
   uint32_t mType : kTypeBits;
   uint32_t mGenericTypes : kGenericTypesBits;
+  uint32_t mReorderEventTarget : 1;
+  uint32_t mShowEventTarget : 1;
+  uint32_t mHideEventTarget : 1;
 
   void StaticAsserts() const;
 
 #ifdef A11Y_LOG
   friend void logging::Tree(const char* aTitle, const char* aMsgText,
-                            DocAccessible* aDoc,
+                            Accessible* aRoot,
                             logging::GetTreePrefix aPrefixFunc,
                             void* aGetTreePrefixData);
 #endif

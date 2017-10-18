@@ -23,6 +23,7 @@
 #include "vm/JSONParser.h"
 #include "vm/StringBuffer.h"
 
+#include "jsarrayinlines.h"
 #include "jsatominlines.h"
 #include "jsboolinlines.h"
 
@@ -128,7 +129,7 @@ Quote(JSContext* cx, StringBuffer& sb, JSString* str)
 
 namespace {
 
-using ObjectSet = GCHashSet<JSObject*, MovableCellHasher<JSObject*>, SystemAllocPolicy>;
+using ObjectVector = GCVector<JSObject*, 8>;
 
 class StringifyContext
 {
@@ -139,7 +140,7 @@ class StringifyContext
       : sb(sb),
         gap(gap),
         replacer(cx, replacer),
-        stack(cx),
+        stack(cx, ObjectVector(cx)),
         propertyList(propertyList),
         depth(0),
         maybeSafely(maybeSafely)
@@ -148,14 +149,10 @@ class StringifyContext
         MOZ_ASSERT_IF(maybeSafely, gap.empty());
     }
 
-    bool init() {
-        return stack.init(8);
-    }
-
     StringBuffer& sb;
     const StringBuffer& gap;
     RootedObject replacer;
-    Rooted<ObjectSet> stack;
+    Rooted<ObjectVector> stack;
     const AutoIdVector& propertyList;
     uint32_t depth;
     bool maybeSafely;
@@ -303,30 +300,32 @@ class CycleDetector
 {
   public:
     CycleDetector(StringifyContext* scx, HandleObject obj)
-      : stack(&scx->stack), obj_(obj) {
+      : stack_(&scx->stack), obj_(obj), appended_(false) {
     }
 
-    bool foundCycle(JSContext* cx) {
-        auto addPtr = stack.lookupForAdd(obj_);
-        if (addPtr) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
-                                 js_object_str);
-            return false;
+    MOZ_ALWAYS_INLINE bool foundCycle(JSContext* cx) {
+        JSObject* obj = obj_;
+        for (JSObject* obj2 : stack_) {
+            if (MOZ_UNLIKELY(obj == obj2)) {
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE);
+                return false;
+            }
         }
-        if (!stack.add(addPtr, obj_)) {
-            ReportOutOfMemory(cx);
-            return false;
-        }
-        return true;
+        appended_ = stack_.append(obj);
+        return appended_;
     }
 
     ~CycleDetector() {
-        stack.remove(obj_);
+        if (MOZ_LIKELY(appended_)) {
+            MOZ_ASSERT(stack_.back() == obj_);
+            stack_.popBack();
+        }
     }
 
   private:
-    MutableHandle<ObjectSet> stack;
+    MutableHandle<ObjectVector> stack_;
     HandleObject obj_;
+    bool appended_;
 };
 
 /* ES5 15.12.3 JO. */
@@ -393,9 +392,9 @@ JO(JSContext* cx, HandleObject obj, StringifyContext* scx)
 #ifdef DEBUG
         if (scx->maybeSafely) {
             RootedNativeObject nativeObj(cx, &obj->as<NativeObject>());
-            RootedShape prop(cx);
+            Rooted<PropertyResult> prop(cx);
             NativeLookupOwnPropertyNoResolve(cx, nativeObj, id, &prop);
-            MOZ_ASSERT(prop && prop->isDataDescriptor());
+            MOZ_ASSERT(prop && prop.isNativeProperty() && prop.shape()->isDataDescriptor());
         }
 #endif // DEBUG
         if (!GetProperty(cx, obj, obj, id, &outputValue))
@@ -498,7 +497,7 @@ JA(JSContext* cx, HandleObject obj, StringifyContext* scx)
                 }
             }
 #endif
-            if (!GetElement(cx, obj, obj, i, &outputValue))
+            if (!GetElement(cx, obj, i, &outputValue))
                 return false;
             if (!PreprocessValue(cx, obj, i, &outputValue, scx))
                 return false;
@@ -533,7 +532,8 @@ Str(JSContext* cx, const Value& v, StringifyContext* scx)
     /* Step 11 must be handled by the caller. */
     MOZ_ASSERT(!IsFilteredValue(v));
 
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
 
     /*
      * This method implements the Str algorithm in ES5 15.12.3, but:
@@ -594,7 +594,7 @@ Str(JSContext* cx, const Value& v, StringifyContext* scx)
 
 /* ES6 24.3.2. */
 bool
-js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value space_,
+js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, const Value& space_,
               StringBuffer& sb, StringifyBehavior stringifyBehavior)
 {
     RootedObject replacer(cx, replacer_);
@@ -645,7 +645,7 @@ js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value s
                     return false;
 
                 /* Step 4b(iii)(5)(a-b). */
-                if (!GetElement(cx, replacer, replacer, k, &item))
+                if (!GetElement(cx, replacer, k, &item))
                     return false;
 
                 RootedId id(cx);
@@ -749,8 +749,6 @@ js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value s
     /* Step 12. */
     StringifyContext scx(cx, sb, gap, replacer, propertyList,
                          stringifyBehavior == StringifyBehavior::RestrictedSafe);
-    if (!scx.init())
-        return false;
     if (!PreprocessValue(cx, wrapper, HandleId(emptyId), vp, &scx))
         return false;
     if (IsFilteredValue(vp))
@@ -763,7 +761,8 @@ js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value s
 static bool
 Walk(JSContext* cx, HandleObject holder, HandleId name, HandleValue reviver, MutableHandleValue vp)
 {
-    JS_CHECK_RECURSION(cx, return false);
+    if (!CheckRecursionLimit(cx))
+        return false;
 
     /* Step 1. */
     RootedValue val(cx);
@@ -972,9 +971,9 @@ static const JSFunctionSpec json_static_methods[] = {
 JSObject*
 js::InitJSONClass(JSContext* cx, HandleObject obj)
 {
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+    Handle<GlobalObject*> global = obj.as<GlobalObject>();
 
-    RootedObject proto(cx, global->getOrCreateObjectPrototype(cx));
+    RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, global));
     if (!proto)
         return nullptr;
     RootedObject JSON(cx, NewObjectWithGivenProto(cx, &JSONClass, proto, SingletonObject));
@@ -988,6 +987,9 @@ js::InitJSONClass(JSContext* cx, HandleObject obj)
     }
 
     if (!JS_DefineFunctions(cx, JSON, json_static_methods))
+        return nullptr;
+
+    if (!DefineToStringTag(cx, JSON, cx->names().JSON))
         return nullptr;
 
     global->setConstructor(JSProto_JSON, ObjectValue(*JSON));

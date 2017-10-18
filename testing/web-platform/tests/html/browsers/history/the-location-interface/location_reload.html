@@ -11,27 +11,29 @@
     <iframe></iframe>
 
     <script>
-
+    var history_length;
     async_test(function(t) {
 
       var url = new URL("./location_reload-iframe.html", window.location).href;
-      var pingCount = 0;
 
+      window._pingCount = 0;
       window._ping = t.step_func(function(innerURL) {
-          assert_equals(url, innerURL, "iframe url (" + pingCount + ")");
-          pingCount++;
-          if (pingCount == 5) {
-            iframe.src = 'about:blank';
+          // Some browsers keep 'about:blank' in the session history
+          if (_pingCount == 0) {
+            history_length = history.length;
+          }
+          assert_equals(url, innerURL, "iframe url (" + _pingCount + ")");
+          assert_equals(history_length, history.length, "history length (" + _pingCount + ")");
+          _pingCount++;
+          if (_pingCount == 5) {
             t.done();
           }
       });
 
       var iframe = document.querySelector("iframe");
       iframe.src = url;
-
+      history_length = history.length;
     });
-
-
     </script>
 
   </body>

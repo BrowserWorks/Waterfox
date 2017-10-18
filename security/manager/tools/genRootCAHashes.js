@@ -48,8 +48,9 @@ const FILE_HEADER = "/* This Source Code Form is subject to the terms of the Moz
 "#define HASH_LEN 32\n";
 
 const FP_PREAMBLE = "struct CertAuthorityHash {\n" +
-" const uint8_t hash[HASH_LEN];\n" +
-" const int32_t binNumber;\n" +
+"  // See bug 1338873 about making these fields const.\n" +
+"  uint8_t hash[HASH_LEN];\n" +
+"  int32_t binNumber;\n" +
 "};\n\n" +
 "static const struct CertAuthorityHash ROOT_TABLE[] = {\n";
 
@@ -62,7 +63,7 @@ function writeString(fos, string) {
 
 // Remove all colons from a string
 function stripColons(hexString) {
-  return hexString.replace(/:/g, '');
+  return hexString.replace(/:/g, "");
 }
 
 // Expect an array of bytes and make it C-formatted
@@ -110,7 +111,7 @@ function loadTrustAnchors(file) {
 function writeTrustAnchors(file) {
   let fos = FileUtils.openSafeFileOutputStream(file);
 
-  let serializedData = JSON.stringify(gTrustAnchors, null, '  ');
+  let serializedData = JSON.stringify(gTrustAnchors, null, "  ");
   fos.write(JSON_HEADER, JSON_HEADER.length);
   fos.write(serializedData, serializedData.length);
 
@@ -139,9 +140,7 @@ function writeRootHashes(fos) {
     writeString(fos, FP_POSTAMBLE);
 
     writeString(fos, "\n");
-
-  }
-  catch (e) {
+  } catch (e) {
     dump("ERROR: problem writing output: " + e + "\n");
   }
 }
@@ -193,7 +192,6 @@ function insertTrustAnchorsFromDatabase() {
 
        // Scan to see if this is already in the database.
       if (findTrustAnchorByFingerprint(encodedFingerprint) == ROOT_NOT_ASSIGNED) {
-
         // Let's get a usable name; some old certs do not have CN= filled out
         let label = getLabelForCert(cert);
 

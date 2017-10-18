@@ -13,7 +13,9 @@
 
 #include <string>
 
+#include "webrtc/base/checks.h"
 #include "webrtc/base/constructormagic.h"
+#include "webrtc/base/nullsocketserver.h"
 #include "webrtc/base/sigslot.h"
 #include "webrtc/base/thread.h"
 
@@ -40,13 +42,10 @@ class SignalThread
     : public sigslot::has_slots<>,
       protected MessageHandler {
  public:
-  SignalThread();
+  explicit SignalThread(bool use_socket_server = true);
 
   // Context: Main Thread.  Call before Start to change the worker's name.
   bool SetName(const std::string& name, const void* obj);
-
-  // Context: Main Thread.  Call before Start to change the worker's priority.
-  bool SetPriority(ThreadPriority priority);
 
   // Context: Main Thread.  Call to begin the worker thread.
   void Start();
@@ -105,14 +104,18 @@ class SignalThread
 
   class Worker : public Thread {
    public:
-    explicit Worker(SignalThread* parent) : parent_(parent) {}
+    explicit Worker(SignalThread* parent, bool use_socket_server)
+        : Thread(use_socket_server
+                     ? SocketServer::CreateDefault()
+                     : std::unique_ptr<SocketServer>(new NullSocketServer())),
+          parent_(parent) {}
     ~Worker() override;
     void Run() override;
 
    private:
     SignalThread* parent_;
 
-    DISALLOW_IMPLICIT_CONSTRUCTORS(Worker);
+    RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(Worker);
   };
 
   class SCOPED_LOCKABLE EnterExit {
@@ -122,7 +125,7 @@ class SignalThread
       t_->cs_.Enter();
       // If refcount_ is zero then the object has already been deleted and we
       // will be double-deleting it in ~EnterExit()! (shouldn't happen)
-      ASSERT(t_->refcount_ != 0);
+      RTC_DCHECK(t_->refcount_ != 0);
       ++t_->refcount_;
     }
     ~EnterExit() UNLOCK_FUNCTION() {
@@ -135,7 +138,7 @@ class SignalThread
    private:
     SignalThread* t_;
 
-    DISALLOW_IMPLICIT_CONSTRUCTORS(EnterExit);
+    RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(EnterExit);
   };
 
   void Run();
@@ -147,7 +150,7 @@ class SignalThread
   State state_;
   int refcount_;
 
-  DISALLOW_COPY_AND_ASSIGN(SignalThread);
+  RTC_DISALLOW_COPY_AND_ASSIGN(SignalThread);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

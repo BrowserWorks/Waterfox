@@ -10,7 +10,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-common/async.js");
 
-Cu.importGlobalProperties(['crypto']);
+Cu.importGlobalProperties(["crypto"]);
 
 const CRYPT_ALGO        = "AES-CBC";
 const CRYPT_ALGO_LENGTH = 256;
@@ -28,14 +28,14 @@ this.WeaveCrypto = function WeaveCrypto() {
 };
 
 WeaveCrypto.prototype = {
-    prefBranch : null,
-    debug      : true,  // services.sync.log.cryptoDebug
+    prefBranch: null,
+    debug: true,  // services.sync.log.cryptoDebug
 
-    observer : {
-        _self : null,
+    observer: {
+        _self: null,
 
-        QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver,
-                                                Ci.nsISupportsWeakReference]),
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                               Ci.nsISupportsWeakReference]),
 
         observe(subject, topic, data) {
             let self = this._self;
@@ -49,15 +49,11 @@ WeaveCrypto.prototype = {
     init() {
         // Preferences. Add observer so we get notified of changes.
         this.prefBranch = Services.prefs.getBranch("services.sync.log.");
-        this.prefBranch.addObserver("cryptoDebug", this.observer, false);
+        this.prefBranch.addObserver("cryptoDebug", this.observer);
         this.observer._self = this;
-        try {
-          this.debug = this.prefBranch.getBoolPref("cryptoDebug");
-        } catch (x) {
-          this.debug = false;
-        }
-        XPCOMUtils.defineLazyGetter(this, 'encoder', () => new TextEncoder(UTF_LABEL));
-        XPCOMUtils.defineLazyGetter(this, 'decoder', () => new TextDecoder(UTF_LABEL, { fatal: true }));
+        this.debug = this.prefBranch.getBoolPref("cryptoDebug", false);
+        XPCOMUtils.defineLazyGetter(this, "encoder", () => new TextEncoder(UTF_LABEL));
+        XPCOMUtils.defineLazyGetter(this, "decoder", () => new TextDecoder(UTF_LABEL, { fatal: true }));
     },
 
     log(message) {
@@ -111,7 +107,8 @@ WeaveCrypto.prototype = {
         // We never want an IV longer than the block size, which is 16 bytes
         // for AES, neither do we want one smaller; throw in both cases.
         if (ivStr.length !== AES_CBC_IV_SIZE) {
-            throw "Invalid IV size; must be " + AES_CBC_IV_SIZE + " bytes.";
+            throw new Error(
+                `Invalid IV size; must be ${AES_CBC_IV_SIZE} bytes.`);
         }
 
         let iv = this.byteCompressInts(ivStr);
@@ -120,7 +117,7 @@ WeaveCrypto.prototype = {
                            ? crypto.subtle.encrypt
                            : crypto.subtle.decrypt)
                           .bind(crypto.subtle);
-        let algo = { name: CRYPT_ALGO, iv: iv };
+        let algo = { name: CRYPT_ALGO, iv };
 
 
         return Async.promiseSpinningly(
@@ -180,7 +177,7 @@ WeaveCrypto.prototype = {
                 memo = this._decryptionSymKeyMemo;
                 break;
             default:
-                throw "Unsupported operation in importSymKey.";
+                throw new Error("Unsupported operation in importSymKey.");
         }
 
         if (encodedKeyString in memo)
@@ -233,34 +230,5 @@ WeaveCrypto.prototype = {
             input = atob(input);
         }
         return this.byteCompressInts(input);
-    },
-
-    /**
-     * Returns the expanded data string for the derived key.
-     */
-    deriveKeyFromPassphrase(passphrase, saltStr, keyLength = 32) {
-        this.log("deriveKeyFromPassphrase() called.");
-        let keyData = this.makeUint8Array(passphrase, false);
-        let salt = this.makeUint8Array(saltStr, true);
-        let importAlgo = { name: KEY_DERIVATION_ALGO };
-        let deriveAlgo = {
-            name: KEY_DERIVATION_ALGO,
-            salt: salt,
-            iterations: KEY_DERIVATION_ITERATIONS,
-            hash: { name: KEY_DERIVATION_HASHING_ALGO },
-        };
-        let derivedKeyType = {
-            name: DERIVED_KEY_ALGO,
-            length: keyLength * 8,
-        };
-        return Async.promiseSpinningly(
-            crypto.subtle.importKey("raw", keyData, importAlgo, false, ["deriveKey"])
-            .then(key => crypto.subtle.deriveKey(deriveAlgo, key, derivedKeyType, true, []))
-            .then(derivedKey => crypto.subtle.exportKey("raw", derivedKey))
-            .then(keyBytes => {
-                keyBytes = new Uint8Array(keyBytes);
-                return this.expandData(keyBytes);
-            })
-        );
     },
 };

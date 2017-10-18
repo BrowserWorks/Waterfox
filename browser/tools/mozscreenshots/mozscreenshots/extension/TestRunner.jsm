@@ -13,7 +13,6 @@ const HOME_PAGE = "chrome://mozscreenshots/content/lib/mozscreenshots.html";
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
@@ -51,7 +50,7 @@ this.TestRunner = {
   /**
    * Load specified sets, execute all combinations of them, and capture screenshots.
    */
-  start: Task.async(function*(setNames, jobName = null) {
+  async start(setNames, jobName = null) {
     let subDirs = ["mozscreenshots",
                    (new Date()).toISOString().replace(/:/g, "-") + "_" + Services.appinfo.OS];
     let screenshotPath = FileUtils.getFile("TmpD", subDirs).path;
@@ -89,21 +88,30 @@ this.TestRunner = {
     Services.prefs.setCharPref("extensions.ui.lastCategory", "addons://list/extension");
     // Don't let the caret blink since it causes false positives for image diffs
     Services.prefs.setIntPref("ui.caretBlinkTime", -1);
+    // Disable some animations that can cause false positives, such as the
+    // reload/stop button spinning animation.
+    Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
 
     let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-    let selectedBrowser = browserWindow.gBrowser.selectedBrowser;
-    yield BrowserTestUtils.loadURI(selectedBrowser, HOME_PAGE);
-    yield BrowserTestUtils.browserLoaded(selectedBrowser);
 
-    for (let i = 0; i < this.combos.length; i++){
+    // When being automated through Marionette, Firefox shows a prominent indication
+    // in the urlbar and identity block. We don't want this to show when testing browser UI.
+    // Note that this doesn't prevent subsequently opened windows from showing the automation UI.
+    browserWindow.document.getElementById("main-window").removeAttribute("remotecontrol");
+
+    let selectedBrowser = browserWindow.gBrowser.selectedBrowser;
+    await BrowserTestUtils.loadURI(selectedBrowser, HOME_PAGE);
+    await BrowserTestUtils.browserLoaded(selectedBrowser);
+
+    for (let i = 0; i < this.combos.length; i++) {
       this.currentComboIndex = i;
-      yield this._performCombo(this.combos.item(this.currentComboIndex));
+      await this._performCombo(this.combos.item(this.currentComboIndex));
     }
 
     log.info("Done: Completed " + this.completedCombos + " out of " +
              this.combos.length + " configurations.");
     this.cleanup();
-  }),
+  },
 
   /**
    * Load sets of configurations from JSMs.
@@ -146,11 +154,12 @@ this.TestRunner = {
     gBrowser.unpinTab(gBrowser.selectedTab);
     gBrowser.selectedBrowser.loadURI("data:text/html;charset=utf-8,<h1>Done!");
     browserWindow.restore();
+    Services.prefs.clearUserPref("toolkit.cosmeticAnimations.enabled");
   },
 
-  ///// helpers /////
+  // helpers
 
-  _performCombo: function*(combo) {
+  async _performCombo(combo) {
     let paddedComboIndex = padLeft(this.currentComboIndex + 1, String(this.combos.length).length);
     log.info("Combination " + paddedComboIndex + "/" + this.combos.length + ": " +
              this._comboName(combo).substring(1));
@@ -177,7 +186,7 @@ this.TestRunner = {
         let config = combo[i];
         if (!this._lastCombo || config !== this._lastCombo[i]) {
           log.debug("promising", config.name);
-          yield changeConfig(config);
+          await changeConfig(config);
         }
       }
 
@@ -196,7 +205,7 @@ this.TestRunner = {
         // have invalidated it.
         if (config.verifyConfig) {
           log.debug("checking if the combo is valid with", config.name);
-          yield config.verifyConfig();
+          await config.verifyConfig();
         }
       }
     } catch (ex) {
@@ -208,7 +217,7 @@ this.TestRunner = {
       return;
     }
 
-    yield this._onConfigurationReady(combo);
+    await this._onConfigurationReady(combo);
   },
 
   _onConfigurationReady(combo) {
@@ -222,7 +231,7 @@ this.TestRunner = {
     };
 
     log.debug("_onConfigurationReady");
-    return Task.spawn(delayedScreenshot);
+    return delayedScreenshot();
   },
 
   _comboName(combo) {

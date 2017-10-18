@@ -48,7 +48,7 @@ nsSysNTLMAuthConstructor(nsISupports *outer, REFNSIID iid, void **result)
   nsAuthSSPI *auth = new nsAuthSSPI(PACKAGE_TYPE_NTLM);
   if (!auth)
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   NS_ADDREF(auth);
   nsresult rv = auth->QueryInterface(iid, result);
   NS_RELEASE(auth);
@@ -64,7 +64,7 @@ nsKerbSSPIAuthConstructor(nsISupports *outer, REFNSIID iid, void **result)
   nsAuthSSPI *auth = new nsAuthSSPI(PACKAGE_TYPE_KERBEROS);
   if (!auth)
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   NS_ADDREF(auth);
   nsresult rv = auth->QueryInterface(iid, result);
   NS_RELEASE(auth);
@@ -136,7 +136,7 @@ nsKerbGSSAPIAuthConstructor(nsISupports *outer, REFNSIID iid, void **result)
   nsAuthGSSAPI *auth = new nsAuthGSSAPI(PACKAGE_TYPE_KERBEROS);
   if (!auth)
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   NS_ADDREF(auth);
   nsresult rv = auth->QueryInterface(iid, result);
   NS_RELEASE(auth);
@@ -152,7 +152,7 @@ nsGSSAPIAuthConstructor(nsISupports *outer, REFNSIID iid, void **result)
   nsAuthGSSAPI *auth = new nsAuthGSSAPI(PACKAGE_TYPE_NEGOTIATE);
   if (!auth)
     return NS_ERROR_OUT_OF_MEMORY;
-  
+
   NS_ADDREF(auth);
   nsresult rv = auth->QueryInterface(iid, result);
   NS_RELEASE(auth);
@@ -210,7 +210,7 @@ static const mozilla::Module::ContractIDEntry kAuthContracts[] = {
   { NS_AUTH_MODULE_CONTRACTID_PREFIX "negotiate-sspi", &kNS_NEGOTIATEAUTHSSPI_CID },
   { NS_AUTH_MODULE_CONTRACTID_PREFIX "kerb-sspi", &kNS_KERBAUTHSSPI_CID },
   { NS_AUTH_MODULE_CONTRACTID_PREFIX "sys-ntlm", &kNS_SYSNTLMAUTH_CID },
-#else
+#elif !defined(XP_MACOSX)
   { NS_AUTH_MODULE_CONTRACTID_PREFIX "sys-ntlm", &kNS_SAMBANTLMAUTH_CID },
 #endif
   { NS_HTTP_AUTHENTICATOR_CONTRACTID_PREFIX "negotiate", &kNS_HTTPNEGOTIATEAUTH_CID },

@@ -23,6 +23,15 @@ NSDISTMODE = copy
 
 include $(topsrcdir)/config/config.mk
 
+# If we are trying to show an error dialog about the lack of SSE2 support,
+# make sure that code itself doesn't use SSE2.
+ifdef MOZ_LINUX_32_SSE2_STARTUP_ERROR
+CXXFLAGS := $(filter-out -march=% -msse -msse2 -mfpmath=sse,$(CXXFLAGS))
+CXX := $(filter-out -march=% -msse -msse2 -mfpmath=sse,$(CXX))
+CXXFLAGS += -mno-sse -mno-sse2 -mfpmath=387
+CXX += -march=pentiumpro
+endif
+
 ifeq ($(OS_ARCH),WINNT)
 # Rebuild firefox.exe if the manifest changes - it's included by splash.rc.
 # (this dependency should really be just for firefox.exe, not other targets)
@@ -75,11 +84,12 @@ MAC_BUNDLE_VERSION = $(shell $(PYTHON) $(srcdir)/macversion.py --version=$(MOZ_A
 
 .PHONY: repackage
 tools repackage:: $(DIST)/bin/$(MOZ_APP_NAME)
+	rm -rf $(dist_dest)
 	$(MKDIR) -p $(dist_dest)/Contents/MacOS
 	$(MKDIR) -p $(dist_dest)/$(LPROJ)
 	rsync -a --exclude '*.in' $(srcdir)/macbuild/Contents $(dist_dest) --exclude English.lproj
 	rsync -a --exclude '*.in' $(srcdir)/macbuild/Contents/Resources/English.lproj/ $(dist_dest)/$(LPROJ)
-	sed -e 's/%APP_VERSION%/$(MOZ_APP_VERSION)/' -e 's/%MAC_APP_NAME%/$(MAC_APP_NAME)/' -e 's/%MOZ_MACBUNDLE_ID%/$(MOZ_MACBUNDLE_ID)/' -e 's/%MAC_BUNDLE_VERSION%/$(MAC_BUNDLE_VERSION)/' $(srcdir)/macbuild/Contents/Info.plist.in > $(dist_dest)/Contents/Info.plist
+	sed -e 's/%APP_VERSION%/$(MOZ_APP_VERSION)/' -e 's/%MAC_APP_NAME%/$(MAC_APP_NAME)/' -e 's/%MOZ_MACBUNDLE_ID%/$(MOZ_MACBUNDLE_ID)/' -e 's/%MAC_BUNDLE_VERSION%/$(MAC_BUNDLE_VERSION)/' -e 's|%MOZ_DEVELOPER_REPO_PATH%|$(topsrcdir)|' -e 's|%MOZ_DEVELOPER_OBJ_PATH%|$(topobjdir)|' $(srcdir)/macbuild/Contents/Info.plist.in > $(dist_dest)/Contents/Info.plist
 	sed -e 's/%MAC_APP_NAME%/$(MAC_APP_NAME)/' $(srcdir)/macbuild/Contents/Resources/English.lproj/InfoPlist.strings.in | iconv -f UTF-8 -t UTF-16 > $(dist_dest)/$(LPROJ)/InfoPlist.strings
 	rsync -a --exclude-from='$(srcdir)/macbuild/Contents/MacOS-files.in' $(DIST)/bin/ $(dist_dest)/Contents/Resources
 	rsync -a --include-from='$(srcdir)/macbuild/Contents/MacOS-files.in' --exclude '*' $(DIST)/bin/ $(dist_dest)/Contents/MacOS
@@ -88,7 +98,9 @@ tools repackage:: $(DIST)/bin/$(MOZ_APP_NAME)
 	cp -RL $(DIST)/branding/firefox.icns $(dist_dest)/Contents/Resources/firefox.icns
 	cp -RL $(DIST)/branding/document.icns $(dist_dest)/Contents/Resources/document.icns
 	$(MKDIR) -p $(dist_dest)/Contents/Library/LaunchServices
+ifdef MOZ_UPDATER
 	mv -f $(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/org.mozilla.updater $(dist_dest)/Contents/Library/LaunchServices
 	ln -s ../../../../Library/LaunchServices/org.mozilla.updater $(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/org.mozilla.updater
+endif
 	printf APPLMOZB > $(dist_dest)/Contents/PkgInfo
 endif

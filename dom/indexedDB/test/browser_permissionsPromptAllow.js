@@ -7,84 +7,56 @@ const testPageURL = "http://mochi.test:8888/browser/" +
   "dom/indexedDB/test/browser_permissionsPrompt.html";
 const notificationID = "indexedDB-permissions-prompt";
 
-function test()
-{
-  waitForExplicitFinish();
-
+add_task(async function test1() {
   // We want a prompt.
   removePermission(testPageURL, "indexedDB");
-  executeSoon(test1);
-}
 
-function test1()
-{
   info("creating tab");
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
-  gBrowser.selectedBrowser.addEventListener("load", function () {
-    gBrowser.selectedBrowser.removeEventListener("load", arguments.callee, true);
-
-    setFinishedCallback(function(isIDBDatabase, exception) {
-      ok(isIDBDatabase,
-         "First database creation was successful");
-      ok(!exception, "No exception");
-      is(getPermission(testPageURL, "indexedDB"),
-         Components.interfaces.nsIPermissionManager.ALLOW_ACTION,
-         "Correct permission set");
-      gBrowser.removeCurrentTab();
-      executeSoon(test2);
-    });
-
-    registerPopupEventHandler("popupshowing", function () {
-      ok(true, "prompt showing");
-    });
-    registerPopupEventHandler("popupshown", function () {
-      ok(true, "prompt shown");
-      triggerMainCommand(this);
-    });
-    registerPopupEventHandler("popuphidden", function () {
-      ok(true, "prompt hidden");
-    });
-
-  }, true);
+  registerPopupEventHandler("popupshowing", function() {
+    ok(true, "prompt showing");
+  });
+  registerPopupEventHandler("popupshown", function() {
+    ok(true, "prompt shown");
+    triggerMainCommand(this);
+  });
+  registerPopupEventHandler("popuphidden", function() {
+    ok(true, "prompt hidden");
+  });
 
   info("loading test page: " + testPageURL);
-  content.location = testPageURL;
-}
+  gBrowser.selectedBrowser.loadURI(testPageURL);
 
-function test2()
-{
+  await waitForMessage(true, gBrowser);
+  is(getPermission(testPageURL, "indexedDB"),
+     Components.interfaces.nsIPermissionManager.ALLOW_ACTION,
+     "Correct permission set");
+  gBrowser.removeCurrentTab();
+});
+
+add_task(async function test2() {
   info("creating tab");
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
-  gBrowser.selectedBrowser.addEventListener("load", function () {
-    gBrowser.selectedBrowser.removeEventListener("load", arguments.callee, true);
-
-    setFinishedCallback(function(isIDBDatabase, exception) {
-      ok(isIDBDatabase,
-         "First database creation was successful");
-      ok(!exception, "No exception");
-      is(getPermission(testPageURL, "indexedDB"),
-         Components.interfaces.nsIPermissionManager.ALLOW_ACTION,
-         "Correct permission set");
-      gBrowser.removeCurrentTab();
-      unregisterAllPopupEventHandlers();
-      removePermission(testPageURL, "indexedDB");
-      executeSoon(finish);
-    });
-
-    registerPopupEventHandler("popupshowing", function () {
-      ok(false, "Shouldn't show a popup this time");
-    });
-    registerPopupEventHandler("popupshown", function () {
-      ok(false, "Shouldn't show a popup this time");
-    });
-    registerPopupEventHandler("popuphidden", function () {
-      ok(false, "Shouldn't show a popup this time");
-    });
-
-  }, true);
+  registerPopupEventHandler("popupshowing", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
+  registerPopupEventHandler("popupshown", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
+  registerPopupEventHandler("popuphidden", function() {
+    ok(false, "Shouldn't show a popup this time");
+  });
 
   info("loading test page: " + testPageURL);
-  content.location = testPageURL;
-}
+  gBrowser.selectedBrowser.loadURI(testPageURL);
+
+  await waitForMessage(true, gBrowser);
+  is(getPermission(testPageURL, "indexedDB"),
+     Components.interfaces.nsIPermissionManager.ALLOW_ACTION,
+     "Correct permission set");
+  gBrowser.removeCurrentTab();
+  unregisterAllPopupEventHandlers();
+  removePermission(testPageURL, "indexedDB");
+});

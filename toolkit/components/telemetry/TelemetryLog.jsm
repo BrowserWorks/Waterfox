@@ -8,15 +8,21 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 const Telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
+
+const LOG_ENTRY_MAX_COUNT = 1000;
+
 var gLogEntries = [];
 
 this.TelemetryLog = Object.freeze({
-  log: function(id, data) {
+  log(id, data) {
+    if (gLogEntries.length >= LOG_ENTRY_MAX_COUNT) {
+      return;
+    }
     id = String(id);
     var ts;
     try {
       ts = Math.floor(Telemetry.msSinceProcessStart());
-    } catch(e) {
+    } catch (e) {
       // If timestamp is screwed up, we just give up instead of making up
       // data.
       return;
@@ -29,7 +35,7 @@ this.TelemetryLog = Object.freeze({
     gLogEntries.push(entry);
   },
 
-  entries: function() {
+  entries() {
     return gLogEntries;
   }
 });

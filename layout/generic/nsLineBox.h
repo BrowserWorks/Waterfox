@@ -75,7 +75,7 @@ public:
   // Remove a nsFloatCache from this list.  Deleting this nsFloatCache
   // becomes the caller's responsibility.
   void Remove(nsFloatCache* aElement) { RemoveAndReturnPrev(aElement); }
-  
+
   // Steal away aList's nsFloatCache objects and put them in this
   // list.  aList must not be empty.
   void Append(nsFloatCacheFreeList& aList);
@@ -87,7 +87,7 @@ protected:
   // becomes the caller's responsibility. Returns the nsFloatCache that was
   // before aElement, or nullptr if aElement was the first.
   nsFloatCache* RemoveAndReturnPrev(nsFloatCache* aElement);
-  
+
   friend class nsFloatCacheFreeList;
 };
 
@@ -116,7 +116,7 @@ public:
   nsFloatCache* Tail() const {
     return mTail;
   }
-  
+
   bool NotEmpty() const {
     return nullptr != mHead;
   }
@@ -134,7 +134,7 @@ public:
   // Remove an nsFloatCache object from this list and return it, or create
   // a new one if this one is empty; Set its mFloat to aFloat.
   nsFloatCache* Alloc(nsIFrame* aFloat);
-  
+
 protected:
   nsFloatCache* mTail;
 
@@ -143,7 +143,6 @@ protected:
 
 //----------------------------------------------------------------------
 
-#define LINE_MAX_BREAK_TYPE  ((1 << 4) - 1)
 #define LINE_MAX_CHILD_COUNT INT32_MAX
 
 /**
@@ -205,10 +204,10 @@ class nsLineBox final : public nsLineLink {
 private:
   nsLineBox(nsIFrame* aFrame, int32_t aCount, bool aIsBlock);
   ~nsLineBox();
-  
+
   // Infallible overloaded new operator. Uses an arena (which comes from the
   // presShell) to perform the allocation.
-  void* operator new(size_t sz, nsIPresShell* aPresShell) CPP_THROW_NEW;
+  void* operator new(size_t sz, nsIPresShell* aPresShell);
   void operator delete(void* aPtr, size_t sz) = delete;
 
 public:
@@ -224,7 +223,7 @@ public:
     return mFlags.mBlock;
   }
   bool IsInline() const {
-    return 0 == mFlags.mBlock;
+    return !mFlags.mBlock;
   }
 
   // mDirty bit
@@ -394,37 +393,38 @@ public:
   // Break information is applied *before* the line if the line is a block,
   // or *after* the line if the line is an inline. Confusing, I know, but
   // using different names should help.
+  using StyleClear = mozilla::StyleClear;
   bool HasBreakBefore() const {
-    return IsBlock() && NS_STYLE_CLEAR_NONE != mFlags.mBreakType;
+    return IsBlock() && StyleClear::None != BreakType();
   }
-  void SetBreakTypeBefore(uint8_t aBreakType) {
-    NS_ASSERTION(IsBlock(), "Only blocks have break-before");
-    NS_ASSERTION(aBreakType == NS_STYLE_CLEAR_NONE ||
-                 aBreakType == NS_STYLE_CLEAR_LEFT ||
-                 aBreakType == NS_STYLE_CLEAR_RIGHT ||
-                 aBreakType == NS_STYLE_CLEAR_BOTH,
-                 "Only float break types are allowed before a line");
+  void SetBreakTypeBefore(StyleClear aBreakType) {
+    MOZ_ASSERT(IsBlock(), "Only blocks have break-before");
+    MOZ_ASSERT(aBreakType == StyleClear::None ||
+               aBreakType == StyleClear::Left ||
+               aBreakType == StyleClear::Right ||
+               aBreakType == StyleClear::Both,
+               "Only float break types are allowed before a line");
     mFlags.mBreakType = aBreakType;
   }
-  uint8_t GetBreakTypeBefore() const {
-    return IsBlock() ? mFlags.mBreakType : NS_STYLE_CLEAR_NONE;
+  StyleClear GetBreakTypeBefore() const {
+    return IsBlock() ? BreakType() : StyleClear::None;
   }
 
   bool HasBreakAfter() const {
-    return !IsBlock() && NS_STYLE_CLEAR_NONE != mFlags.mBreakType;
+    return !IsBlock() && StyleClear::None != BreakType();
   }
-  void SetBreakTypeAfter(uint8_t aBreakType) {
-    NS_ASSERTION(!IsBlock(), "Only inlines have break-after");
-    NS_ASSERTION(aBreakType <= LINE_MAX_BREAK_TYPE, "bad break type");
+  void SetBreakTypeAfter(StyleClear aBreakType) {
+    MOZ_ASSERT(!IsBlock(), "Only inlines have break-after");
     mFlags.mBreakType = aBreakType;
   }
   bool HasFloatBreakAfter() const {
-    return !IsBlock() && (NS_STYLE_CLEAR_LEFT == mFlags.mBreakType ||
-                          NS_STYLE_CLEAR_RIGHT == mFlags.mBreakType ||
-                          NS_STYLE_CLEAR_BOTH == mFlags.mBreakType);
+    return !IsBlock() &&
+           (StyleClear::Left == BreakType() ||
+            StyleClear::Right == BreakType() ||
+            StyleClear::Both == BreakType());
   }
-  uint8_t GetBreakTypeAfter() const {
-    return !IsBlock() ? mFlags.mBreakType : NS_STYLE_CLEAR_NONE;
+  StyleClear GetBreakTypeAfter() const {
+    return !IsBlock() ? BreakType() : StyleClear::None;
   }
 
   // mCarriedOutBEndMargin value
@@ -572,6 +572,7 @@ public:
                                     int32_t* aFrameIndexInLine);
 
 #ifdef DEBUG_FRAME_DUMP
+  const char* BreakTypeToString(StyleClear aBreakType) const;
   char* StateToString(char* aBuf, int32_t aBufSize) const;
 
   void List(FILE* out, int32_t aIndent, uint32_t aFlags = 0) const;
@@ -656,24 +657,26 @@ public:
   };
 
   struct FlagBits {
-    uint32_t mDirty : 1;
-    uint32_t mPreviousMarginDirty : 1;
-    uint32_t mHasClearance : 1;
-    uint32_t mBlock : 1;
-    uint32_t mImpactedByFloat : 1;
-    uint32_t mLineWrapped: 1;
-    uint32_t mInvalidateTextRuns : 1;
-    uint32_t mResizeReflowOptimizationDisabled: 1;  // default 0 = means that the opt potentially applies to this line. 1 = never skip reflowing this line for a resize reflow
-    uint32_t mEmptyCacheValid: 1;
-    uint32_t mEmptyCacheState: 1;
+    bool mDirty : 1;
+    bool mPreviousMarginDirty : 1;
+    bool mHasClearance : 1;
+    bool mBlock : 1;
+    bool mImpactedByFloat : 1;
+    bool mLineWrapped: 1;
+    bool mInvalidateTextRuns : 1;
+    // default 0 = means that the opt potentially applies to this line.
+    // 1 = never skip reflowing this line for a resize reflow
+    bool mResizeReflowOptimizationDisabled: 1;
+    bool mEmptyCacheValid: 1;
+    bool mEmptyCacheState: 1;
     // mHasBullet indicates that this is an inline line whose block's
     // bullet is adjacent to this line and non-empty.
-    uint32_t mHasBullet : 1;
+    bool mHasBullet : 1;
     // Indicates that this line *may* have a placeholder for a float
     // that was pushed to a later column or page.
-    uint32_t mHadFloatPushed : 1;
-    uint32_t mHasHashedFrames: 1;
-    uint32_t mBreakType : 4;
+    bool mHadFloatPushed : 1;
+    bool mHasHashedFrames: 1;
+    StyleClear mBreakType;
   };
 
   struct ExtraData {
@@ -692,16 +695,39 @@ public:
   };
 
   struct ExtraInlineData : public ExtraData {
-    explicit ExtraInlineData(const nsRect& aBounds) : ExtraData(aBounds) {
-    }
+    explicit ExtraInlineData(const nsRect& aBounds)
+      : ExtraData(aBounds)
+      , mFloatEdgeIStart(nscoord_MIN)
+      , mFloatEdgeIEnd(nscoord_MIN)
+    {}
+    nscoord mFloatEdgeIStart;
+    nscoord mFloatEdgeIEnd;
     nsFloatCacheList mFloats;
   };
 
+  bool GetFloatEdges(nscoord* aStart, nscoord* aEnd) const {
+    MOZ_ASSERT(IsInline(), "block line can't have float edges");
+    if (mInlineData && mInlineData->mFloatEdgeIStart != nscoord_MIN) {
+      *aStart = mInlineData->mFloatEdgeIStart;
+      *aEnd = mInlineData->mFloatEdgeIEnd;
+      return true;
+    }
+    return false;
+  }
+  void SetFloatEdges(nscoord aStart, nscoord aEnd);
+  void ClearFloatEdges();
+
 protected:
   nscoord mAscent;           // see |SetAscent| / |GetAscent|
+  static_assert(sizeof(FlagBits) <= sizeof(uint32_t),
+                "size of FlagBits should not be larger than size of uint32_t");
   union {
     uint32_t mAllFlags;
     FlagBits mFlags;
+  };
+
+  StyleClear BreakType() const {
+    return mFlags.mBreakType;
   };
 
   union {
@@ -720,7 +746,7 @@ protected:
  *
  * API heavily based on the |list| class in the C++ standard.
  */
- 
+
 class nsLineList_iterator {
   public:
     friend class nsLineList;

@@ -26,7 +26,9 @@ extern "C" __attribute__((weak,visibility("default"))) int atk_bridge_adaptor_in
 using namespace mozilla;
 using namespace mozilla::a11y;
 
-int atkMajorVersion = 1, atkMinorVersion = 12;
+int atkMajorVersion = 1, atkMinorVersion = 12, atkMicroVersion = 0;
+
+GType (*gAtkTableCellGetTypeFunc)();
 
 extern "C" {
 typedef GType (* AtkGetTypeType) (void);
@@ -156,6 +158,9 @@ a11y::PlatformInit()
       AtkSocketAccessible::g_atk_socket_embed;
   }
 
+  gAtkTableCellGetTypeFunc = (GType (*)())
+    PR_FindFunctionSymbol(sATKLib, "atk_table_cell_get_type");
+
   const char* (*atkGetVersion)() =
     (const char* (*)()) PR_FindFunctionSymbol(sATKLib, "atk_get_version");
   if (atkGetVersion) {
@@ -163,8 +168,11 @@ a11y::PlatformInit()
     if (version) {
       char* endPtr = nullptr;
       atkMajorVersion = strtol(version, &endPtr, 10);
-      if (*endPtr == '.')
+      if (atkMajorVersion != 0L) {
         atkMinorVersion = strtol(endPtr + 1, &endPtr, 10);
+        if (atkMinorVersion != 0L)
+          atkMicroVersion = strtol(endPtr + 1, &endPtr, 10);
+      }
     }
   }
 

@@ -68,7 +68,7 @@ HTMLStyleElement::GetMozDisabled(bool* aDisabled)
 bool
 HTMLStyleElement::Disabled()
 {
-  CSSStyleSheet* ss = GetSheet();
+  StyleSheet* ss = GetSheet();
   return ss && ss->Disabled();
 }
 
@@ -82,8 +82,7 @@ HTMLStyleElement::SetMozDisabled(bool aDisabled)
 void
 HTMLStyleElement::SetDisabled(bool aDisabled)
 {
-  CSSStyleSheet* ss = GetSheet();
-  if (ss) {
+  if (StyleSheet* ss = GetSheet()) {
     ss->SetDisabled(aDisabled);
   }
 }
@@ -147,9 +146,10 @@ HTMLStyleElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   NS_ENSURE_SUCCESS(rv, rv);
 
   void (HTMLStyleElement::*update)() = &HTMLStyleElement::UpdateStyleSheetInternal;
-  nsContentUtils::AddScriptRunner(NewRunnableMethod(this, update));
+  nsContentUtils::AddScriptRunner(
+    NewRunnableMethod("dom::HTMLStyleElement::BindToTree", this, update));
 
-  return rv;  
+  return rv;
 }
 
 void
@@ -172,21 +172,23 @@ HTMLStyleElement::UnbindFromTree(bool aDeep, bool aNullParent)
 
 nsresult
 HTMLStyleElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                               const nsAttrValue* aValue, bool aNotify)
+                               const nsAttrValue* aValue,
+                               const nsAttrValue* aOldValue, bool aNotify)
 {
   if (aNameSpaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::title ||
         aName == nsGkAtoms::media ||
         aName == nsGkAtoms::type) {
       UpdateStyleSheetInternal(nullptr, nullptr, true);
-    } else if (aName == nsGkAtoms::scoped) {
+    } else if (aName == nsGkAtoms::scoped &&
+               OwnerDoc()->IsScopedStyleEnabled()) {
       bool isScoped = aValue;
       UpdateStyleSheetScopedness(isScoped);
     }
   }
 
   return nsGenericHTMLElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                            aNotify);
+                                            aOldValue, aNotify);
 }
 
 NS_IMETHODIMP
@@ -242,7 +244,8 @@ HTMLStyleElement::GetStyleSheetInfo(nsAString& aTitle,
 
   GetAttr(kNameSpaceID_None, nsGkAtoms::type, aType);
 
-  *aIsScoped = HasAttr(kNameSpaceID_None, nsGkAtoms::scoped);
+  *aIsScoped = HasAttr(kNameSpaceID_None, nsGkAtoms::scoped) &&
+               OwnerDoc()->IsScopedStyleEnabled();
 
   nsAutoString mimeType;
   nsAutoString notUsed;

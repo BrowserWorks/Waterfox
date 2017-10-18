@@ -20,7 +20,7 @@ function failingOCSPResponder() {
 }
 
 function start_ocsp_responder(expectedCertNames, expectedPaths) {
-  return startOCSPResponder(SERVER_PORT, "www.example.com", [],
+  return startOCSPResponder(SERVER_PORT, "www.example.com",
                             "test_ocsp_url", expectedCertNames, expectedPaths);
 }
 
@@ -31,8 +31,8 @@ function check_cert_err(cert_name, expected_error) {
 }
 
 function run_test() {
-  addCertFromFile(certdb, "test_ocsp_url/ca.pem", 'CTu,CTu,CTu');
-  addCertFromFile(certdb, "test_ocsp_url/int.pem", ',,');
+  addCertFromFile(certdb, "test_ocsp_url/ca.pem", "CTu,CTu,CTu");
+  addCertFromFile(certdb, "test_ocsp_url/int.pem", ",,");
 
   // Enabled so that we can force ocsp failure responses.
   Services.prefs.setBoolPref("security.OCSP.require", true);
@@ -97,7 +97,7 @@ function run_test() {
 
   add_test(function() {
     clearOCSPCache();
-    let ocspResponder = start_ocsp_responder(["no-path-url"], ['']);
+    let ocspResponder = start_ocsp_responder(["no-path-url"], [""]);
     check_cert_err("no-path-url", PRErrorCodeSuccess);
     ocspResponder.stop(run_next_test);
   });

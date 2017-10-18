@@ -72,20 +72,16 @@
           // Setting this attribute allows wizard's clients to dynamically
           // change the styles of each page based on purpose of the page.
           this.setAttribute("currentpageid", val.pageid);
-
-          let { AppConstants } =
-              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
-
           if (this.onFirstPage) {
             this.canRewind = false;
             this.setAttribute("firstpage", "true");
-            if (AppConstants.XP_UNIX && AppConstants.platform != "macosx") {
+            if (/Linux/.test(navigator.platform)) {
               this._backButton.setAttribute('hidden', 'true');
             }
           } else {
             this.canRewind = true;
             this.setAttribute("firstpage", "false");
-            if (AppConstants.XP_UNIX && AppConstants.platform != "macosx") {
+            if (/Linux/.test(navigator.platform)) {
               this._backButton.setAttribute('hidden', 'false');
             }
           }
@@ -201,14 +197,14 @@
 
         this._initPages();
 
-        window.addEventListener("close", this._closeHandler, false);
+        window.addEventListener("close", this._closeHandler);
 
         // start off on the first page
         this.pageCount = this.wizardPages.length;
         this.advance();
 
         // give focus to the first focusable element in the dialog
-        window.addEventListener("load", this._setInitialFocus, false);
+        window.addEventListener("load", this._setInitialFocus);
       ]]></constructor>
 
       <method name="getPageById">
@@ -380,7 +376,7 @@
         <body><![CDATA[
          var btn = document.getAnonymousElementByAttribute(this._wizardButtons, "dlgtype", aName);
          if (btn) {
-           btn.addEventListener("command", this["_"+aName+"Func"], false);
+           btn.addEventListener("command", this["_"+aName+"Func"]);
            this["_"+aName+"Button"] = btn;
          }
          return btn;
@@ -389,17 +385,15 @@
 
       <method name="_adjustWizardHeader">
         <body><![CDATA[
-          let { AppConstants } =
-              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
           var label = this.currentPage.getAttribute("label");
           if (!label && this.onFirstPage && this._bundle) {
-            if (AppConstants.platform == "macosx") {
+            if (/Mac/.test(navigator.platform)) {
               label = this._bundle.GetStringFromName("default-first-title-mac");
             } else {
               label = this._bundle.formatStringFromName("default-first-title", [this.title], 1);
             }
           } else if (!label && this.onLastPage && this._bundle) {
-            if (AppConstants.platform == "macosx") {
+            if (/Mac/.test(navigator.platform)) {
               label = this._bundle.GetStringFromName("default-last-title-mac");
             } else {
               label = this._bundle.formatStringFromName("default-last-title", [this.title], 1);

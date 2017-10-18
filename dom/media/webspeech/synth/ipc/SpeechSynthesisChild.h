@@ -22,15 +22,19 @@ class SpeechSynthesisChild : public PSpeechSynthesisChild
   friend class nsSynthVoiceRegistry;
 
 public:
-  bool RecvVoiceAdded(const RemoteVoice& aVoice) override;
+  mozilla::ipc::IPCResult RecvInitialVoicesAndState(nsTArray<RemoteVoice>&& aVoices,
+                                                    nsTArray<nsString>&& aDefaults,
+                                                    const bool& aIsSpeaking) override;
 
-  bool RecvVoiceRemoved(const nsString& aUri) override;
+  mozilla::ipc::IPCResult RecvVoiceAdded(const RemoteVoice& aVoice) override;
 
-  bool RecvSetDefaultVoice(const nsString& aUri, const bool& aIsDefault) override;
+  mozilla::ipc::IPCResult RecvVoiceRemoved(const nsString& aUri) override;
 
-  bool RecvIsSpeakingChanged(const bool& aIsSpeaking) override;
+  mozilla::ipc::IPCResult RecvSetDefaultVoice(const nsString& aUri, const bool& aIsDefault) override;
 
-  bool RecvNotifyVoicesChanged() override;
+  mozilla::ipc::IPCResult RecvIsSpeakingChanged(const bool& aIsSpeaking) override;
+
+  mozilla::ipc::IPCResult RecvNotifyVoicesChanged() override;
 
 protected:
   SpeechSynthesisChild();
@@ -41,7 +45,8 @@ protected:
                                                                   const nsString& aText,
                                                                   const float& aVolume,
                                                                   const float& aPitch,
-                                                                  const float& aRate) override;
+                                                                  const float& aRate,
+                                                                  const bool& aIsChrome) override;
   bool DeallocPSpeechSynthesisRequestChild(PSpeechSynthesisRequestChild* aActor) override;
 };
 
@@ -52,21 +57,23 @@ public:
   virtual ~SpeechSynthesisRequestChild();
 
 protected:
-  bool RecvOnStart(const nsString& aUri) override;
+  mozilla::ipc::IPCResult RecvOnStart(const nsString& aUri) override;
 
-  bool RecvOnEnd(const bool& aIsError,
-                 const float& aElapsedTime,
-                 const uint32_t& aCharIndex) override;
+  mozilla::ipc::IPCResult RecvOnEnd(const bool& aIsError,
+                                    const float& aElapsedTime,
+                                    const uint32_t& aCharIndex) override;
 
-  bool RecvOnPause(const float& aElapsedTime, const uint32_t& aCharIndex) override;
+  mozilla::ipc::IPCResult RecvOnPause(const float& aElapsedTime, const uint32_t& aCharIndex) override;
 
-  bool RecvOnResume(const float& aElapsedTime, const uint32_t& aCharIndex) override;
+  mozilla::ipc::IPCResult RecvOnResume(const float& aElapsedTime, const uint32_t& aCharIndex) override;
 
-  bool RecvOnBoundary(const nsString& aName, const float& aElapsedTime,
-                      const uint32_t& aCharIndex) override;
+  mozilla::ipc::IPCResult RecvOnBoundary(const nsString& aName, const float& aElapsedTime,
+                                         const uint32_t& aCharIndex,
+                                         const uint32_t& aCharLength,
+                                         const uint8_t& argc) override;
 
-  bool RecvOnMark(const nsString& aName, const float& aElapsedTime,
-                  const uint32_t& aCharIndex) override;
+  mozilla::ipc::IPCResult RecvOnMark(const nsString& aName, const float& aElapsedTime,
+                                     const uint32_t& aCharIndex) override;
 
   RefPtr<SpeechTaskChild> mTask;
 };
@@ -76,7 +83,7 @@ class SpeechTaskChild : public nsSpeechTask
   friend class SpeechSynthesisRequestChild;
 public:
 
-  explicit SpeechTaskChild(SpeechSynthesisUtterance* aUtterance);
+  explicit SpeechTaskChild(SpeechSynthesisUtterance* aUtterance, bool aIsChrome);
 
   NS_IMETHOD Setup(nsISpeechTaskCallback* aCallback,
                    uint32_t aChannels, uint32_t aRate, uint8_t argc) override;

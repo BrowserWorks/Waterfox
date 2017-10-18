@@ -5,7 +5,7 @@
 %include ../../shared/customizableui/panelUI.inc.css
 
 .panel-subviews {
-  background-color: -moz-dialog;
+  background-color: var(--arrowpanel-background);
 }
 
 #BMB_bookmarksPopup > menuitem[type="checkbox"] {
@@ -14,9 +14,9 @@
 
 #BMB_bookmarksPopup menupopup {
   -moz-appearance: none;
-  background: var(--panel-arrowcontent-background);
-  color: var(--panel-arrowcontent-color);
-  border: var(--panel-arrowcontent-border);
+  background: var(--arrowpanel-background);
+  color: var(--arrowpanel-color);
+  border: 1px solid var(--arrowpanel-border-color);
   margin-top: -6px;
   padding-top: 1px;
 }
@@ -82,7 +82,7 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 }
 
 .subviewbutton > .toolbarbutton-icon {
-  margin-inline-end: 5px !important;
+  margin-inline-end: 5px;
 }
 
 .subviewbutton > .menu-right,
@@ -93,14 +93,30 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
   margin-bottom: 2px !important;
 }
 
-.PanelUI-subView toolbarseparator,
-.PanelUI-subView menuseparator,
-.cui-widget-panelview menuseparator,
-#PanelUI-footer-inner > toolbarseparator,
-#PanelUI-footer-fxa > toolbarseparator {
-  -moz-appearance: none !important;
-}
-
 .subviewradio > .radio-label-box {
   -moz-appearance: none;
 }
+
+/* START photon adjustments */
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-text,
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon,
+photonpanelmultiview .panel-banner-item > .toolbarbutton-multiline-text {
+  margin: 0;
+}
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon {
+  padding: 0;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item) > .toolbarbutton-text {
+  padding-inline-start: 8px;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item)[checked="true"] > .toolbarbutton-icon {
+  visibility: visible;
+}
+
+/* END photon adjustments */

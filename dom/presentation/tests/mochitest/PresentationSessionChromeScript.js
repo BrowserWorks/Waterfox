@@ -51,7 +51,7 @@ const address = Cc["@mozilla.org/supports-cstring;1"]
                   .createInstance(Ci.nsISupportsCString);
 address.data = "127.0.0.1";
 const addresses = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
-addresses.appendElement(address, false);
+addresses.appendElement(address);
 
 const mockedChannelDescription = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationChannelDescription]),
@@ -147,6 +147,14 @@ const mockedControlChannel = {
   terminate: function(presentationId) {
     sendAsyncMessage('sender-terminate', presentationId);
   },
+  reconnect: function(presentationId, url) {
+    sendAsyncMessage('start-reconnect', url);
+  },
+  notifyReconnected: function() {
+    this._listener
+        .QueryInterface(Ci.nsIPresentationControlChannelListener)
+        .notifyReconnected();
+  },
   disconnect: function(reason) {
     sendAsyncMessage('control-channel-closed', reason);
     this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyDisconnected(reason);
@@ -177,6 +185,10 @@ const mockedDevice = {
     sendAsyncMessage('control-channel-established');
     return mockedControlChannel;
   },
+  disconnect: function() {},
+  isRequestedUrlSupported: function(requestedUrl) {
+    return true;
+  },
 };
 
 const mockedDevicePrompt = {
@@ -201,13 +213,14 @@ const mockedDevicePrompt = {
   simulateSelect: function() {
     this._request.select(mockedDevice);
   },
-  simulateCancel: function() {
-    this._request.cancel();
+  simulateCancel: function(result) {
+    this._request.cancel(result);
   }
 };
 
 const mockedSessionTransport = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationSessionTransport,
+                                         Ci.nsIPresentationSessionTransportBuilder,
                                          Ci.nsIPresentationTCPSessionTransportBuilder,
                                          Ci.nsIPresentationDataChannelSessionTransportBuilder,
                                          Ci.nsIPresentationControlChannelListener,
@@ -276,14 +289,17 @@ const mockedSessionTransport = {
     sendAsyncMessage('message-sent', data);
   },
   close: function(reason) {
-    sendAsyncMessage('data-transport-closed', reason);
-    this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyTransportClosed(reason);
+    // Don't send a message after tearDown, to avoid a leak.
+    if (this._callback) {
+      sendAsyncMessage('data-transport-closed', reason);
+      this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyTransportClosed(reason);
+    }
   },
   simulateTransportReady: function() {
     this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyTransportReady();
   },
   simulateIncomingMessage: function(message) {
-    this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyData(message);
+    this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyData(message, false);
   },
   onOffer: function(aOffer) {
   },
@@ -365,7 +381,7 @@ function tearDown() {
   deviceManager.QueryInterface(Ci.nsIPresentationDeviceListener).removeDevice(mockedDevice);
 
   // Register original factories.
-  for (var data in originalFactoryData) {
+  for (var data of originalFactoryData) {
     registerOriginalFactory(data.contractId, data.mockedClassId,
                             data.mockedFactory, data.originalClassId,
                             data.originalFactory);
@@ -384,22 +400,26 @@ addMessageListener('trigger-device-prompt-select', function() {
   mockedDevicePrompt.simulateSelect();
 });
 
-addMessageListener('trigger-device-prompt-cancel', function() {
-  mockedDevicePrompt.simulateCancel();
+addMessageListener('trigger-device-prompt-cancel', function(result) {
+  mockedDevicePrompt.simulateCancel(result);
 });
 
 addMessageListener('trigger-incoming-session-request', function(url) {
   var deviceManager = Cc['@mozilla.org/presentation-device/manager;1']
                       .getService(Ci.nsIPresentationDeviceManager);
   deviceManager.QueryInterface(Ci.nsIPresentationDeviceListener)
-	       .onSessionRequest(mockedDevice, url, sessionId, mockedControlChannel);
+               .onSessionRequest(mockedDevice, url, sessionId, mockedControlChannel);
 });
 
 addMessageListener('trigger-incoming-terminate-request', function() {
   var deviceManager = Cc['@mozilla.org/presentation-device/manager;1']
                       .getService(Ci.nsIPresentationDeviceManager);
   deviceManager.QueryInterface(Ci.nsIPresentationDeviceListener)
-	       .onTerminateRequest(mockedDevice, sessionId, mockedControlChannel, true);
+               .onTerminateRequest(mockedDevice, sessionId, mockedControlChannel, true);
+});
+
+addMessageListener('trigger-reconnected-acked', function(url) {
+    mockedControlChannel.notifyReconnected();
 });
 
 addMessageListener('trigger-incoming-offer', function() {
@@ -434,10 +454,20 @@ addMessageListener('teardown', function() {
   tearDown();
 });
 
+var controlChannelListener;
+addMessageListener('save-control-channel-listener', function() {
+  controlChannelListener = mockedControlChannel.listener;
+});
+
+addMessageListener('restore-control-channel-listener', function(message) {
+  mockedControlChannel.listener = controlChannelListener;
+  controlChannelListener = null;
+});
+
 var obs = Cc["@mozilla.org/observer-service;1"]
           .getService(Ci.nsIObserverService);
 obs.addObserver(function observer(aSubject, aTopic, aData) {
   obs.removeObserver(observer, aTopic);
 
   requestPromise = aSubject;
-}, 'setup-request-promise', false);
+}, 'setup-request-promise');

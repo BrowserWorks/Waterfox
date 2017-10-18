@@ -9,6 +9,7 @@
 
 #include "jsatom.h"
 #include "jsbytecode.h"
+#include "jsmath.h"
 #include "jsobj.h"
 #include "jsscript.h"
 
@@ -30,7 +31,7 @@ namespace js {
 struct GSNCache {
     typedef HashMap<jsbytecode*,
                     jssrcnote*,
-                    PointerHasher<jsbytecode*, 0>,
+                    PointerHasher<jsbytecode*>,
                     SystemAllocPolicy> Map;
 
     jsbytecode*     code;
@@ -42,10 +43,10 @@ struct GSNCache {
 };
 
 /*
- * ScopeCoordinateName cache to avoid O(n^2) growth in finding the name
+ * EnvironmentCoordinateName cache to avoid O(n^2) growth in finding the name
  * associated with a given aliasedvar operation.
  */
-struct ScopeCoordinateNameCache {
+struct EnvironmentCoordinateNameCache {
     typedef HashMap<uint32_t,
                     jsid,
                     DefaultHasher<uint32_t>,
@@ -54,7 +55,7 @@ struct ScopeCoordinateNameCache {
     Shape* shape;
     Map map;
 
-    ScopeCoordinateNameCache() : shape(nullptr) {}
+    EnvironmentCoordinateNameCache() : shape(nullptr) {}
     void purge();
 };
 
@@ -111,43 +112,6 @@ struct LazyScriptHashPolicy
 };
 
 typedef FixedSizeHashSet<JSScript*, LazyScriptHashPolicy, 769> LazyScriptCache;
-
-class PropertyIteratorObject;
-
-class NativeIterCache
-{
-    static const size_t SIZE = size_t(1) << 8;
-
-    /* Cached native iterators. */
-    PropertyIteratorObject* data[SIZE];
-
-    static size_t getIndex(uint32_t key) {
-        return size_t(key) % SIZE;
-    }
-
-  public:
-    /* Native iterator most recently started. */
-    PropertyIteratorObject* last;
-
-    NativeIterCache()
-      : last(nullptr)
-    {
-        mozilla::PodArrayZero(data);
-    }
-
-    void purge() {
-        last = nullptr;
-        mozilla::PodArrayZero(data);
-    }
-
-    PropertyIteratorObject* get(uint32_t key) const {
-        return data[getIndex(key)];
-    }
-
-    void set(uint32_t key, PropertyIteratorObject* iterobj) {
-        data[getIndex(key)] = iterobj;
-    }
-};
 
 /*
  * Cache for speeding up repetitive creation of objects in the VM.
@@ -280,9 +244,7 @@ class NewObjectCache
     }
 };
 
-class MathCache;
-
-class ContextCaches
+class RuntimeCaches
 {
     UniquePtr<js::MathCache> mathCache_;
 
@@ -290,12 +252,11 @@ class ContextCaches
 
   public:
     js::GSNCache gsnCache;
-    js::ScopeCoordinateNameCache scopeCoordinateNameCache;
+    js::EnvironmentCoordinateNameCache envCoordinateNameCache;
     js::NewObjectCache newObjectCache;
-    js::NativeIterCache nativeIterCache;
     js::UncompressedSourceCache uncompressedSourceCache;
     js::EvalCache evalCache;
-    js::LazyScriptCache lazyScriptCache;
+    LazyScriptCache lazyScriptCache;
 
     bool init();
 

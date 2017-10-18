@@ -20,7 +20,7 @@
 class AutoCriticalSection
 {
 public:
-  AutoCriticalSection(LPCRITICAL_SECTION aSection)
+  explicit AutoCriticalSection(LPCRITICAL_SECTION aSection)
     : mSection(aSection)
   {
     ::EnterCriticalSection(mSection);
@@ -87,17 +87,17 @@ static LONGLONG sFrequencyPerSec = 0;
 static const LONGLONG kGTCTickLeapTolerance = 4;
 
 // Base tolerance (more: "inability of detection" range) threshold is calculated
-// dynamically, and kept in sGTCResulutionThreshold.
+// dynamically, and kept in sGTCResolutionThreshold.
 //
 // Schematically, QPC worked "100%" correctly if ((GTC_now - GTC_epoch) -
-// (QPC_now - QPC_epoch)) was in  [-sGTCResulutionThreshold, sGTCResulutionThreshold]
+// (QPC_now - QPC_epoch)) was in  [-sGTCResolutionThreshold, sGTCResolutionThreshold]
 // interval every time we'd compared two time stamps.
 // If not, then we check the overflow behind this basic threshold
 // is in kFailureThreshold.  If not, we condider it as a QPC failure.  If too many
 // failures in short time are detected, QPC is considered faulty and disabled.
 //
 // Kept in [mt]
-static LONGLONG sGTCResulutionThreshold;
+static LONGLONG sGTCResolutionThreshold;
 
 // If QPC is found faulty for two stamps in this interval, we engage
 // the fault detection algorithm.  For duration larger then this limit
@@ -197,6 +197,18 @@ PerformanceCounter()
 {
   LARGE_INTEGER pc;
   ::QueryPerformanceCounter(&pc);
+
+  if (!sHasStableTSC) {
+    // This is a simple go-backward protection for faulty hardware
+    AutoCriticalSection lock(&sTimeStampLock);
+
+    static decltype(LARGE_INTEGER::QuadPart) last;
+    if (last > pc.QuadPart) {
+      return last * 1000ULL;
+    }
+    last = pc.QuadPart;
+  }
+
   return pc.QuadPart * 1000ULL;
 }
 
@@ -232,7 +244,7 @@ InitThresholds()
     (int64_t(timeIncrementCeil) * sFrequencyPerSec) / 10000LL;
 
   // GTC may jump by 32 (2*16) ms in two steps, therefor use the ceiling value.
-  sGTCResulutionThreshold =
+  sGTCResolutionThreshold =
     LONGLONG(kGTCTickLeapTolerance * ticksPerGetTickCountResolutionCeiling);
 
   sHardFailureLimit = ms2mt(kHardFailureLimit);
@@ -329,13 +341,13 @@ TimeStampValue::CheckQPC(const TimeStampValue& aOther) const
 
   // Check QPC is sane before using it.
   int64_t diff = DeprecatedAbs(int64_t(deltaQPC) - int64_t(deltaGTC));
-  if (diff <= sGTCResulutionThreshold) {
+  if (diff <= sGTCResolutionThreshold) {
     return deltaQPC;
   }
 
   // Treat absolutely for calibration purposes
   int64_t duration = DeprecatedAbs(int64_t(deltaGTC));
-  int64_t overflow = diff - sGTCResulutionThreshold;
+  int64_t overflow = diff - sGTCResolutionThreshold;
 
   LOG(("TimeStamp: QPC check after %llums with overflow %1.4fms",
        mt2ms(duration), mt2ms_f(overflow)));
@@ -452,10 +464,12 @@ HasStableTSC()
   } cpuInfo;
 
   __cpuid(cpuInfo.regs, 0);
-  // Only allow Intel CPUs for now
+  // Only allow Intel or AMD CPUs for now.
   // The order of the registers is reg[1], reg[3], reg[2].  We just adjust the
   // string so that we can compare in one go.
   if (_strnicmp(cpuInfo.cpuString, "GenuntelineI",
+                sizeof(cpuInfo.cpuString)) &&
+      _strnicmp(cpuInfo.cpuString, "AuthcAMDenti",
                 sizeof(cpuInfo.cpuString))) {
     return false;
   }
@@ -464,19 +478,29 @@ HasStableTSC()
 
   // detect if the Advanced Power Management feature is supported
   __cpuid(regs, 0x80000000);
-  if (regs[0] < 0x80000007) {
+  if ((unsigned int)regs[0] < 0x80000007) {
+    // XXX should we return true here?  If there is no APM there may be
+    // no way how TSC can run out of sync among cores.
     return false;
   }
 
   __cpuid(regs, 0x80000007);
   // if bit 8 is set than TSC will run at a constant rate
-  // in all ACPI P-state, C-states and T-states
+  // in all ACPI P-states, C-states and T-states
   return regs[3] & (1 << 8);
 }
+
+static bool gInitialized = false;
 
 MFBT_API void
 TimeStamp::Startup()
 {
+  if (gInitialized) {
+    return;
+  }
+
+  gInitialized = true;
+
   // Decide which implementation to use for the high-performance timer.
 
   HMODULE kernelDLL = GetModuleHandleW(L"kernel32.dll");

@@ -24,6 +24,7 @@ namespace jit {
 class StackValue;
 class BaselineICEntry;
 class ICStub;
+class ControlFlowGraph;
 
 class PCMappingSlotInfo
 {
@@ -132,7 +133,7 @@ struct BaselineScript
     // For functions with a call object, template objects to use for the call
     // object and decl env object (linked via the call object's enclosing
     // scope).
-    HeapPtr<JSObject*> templateScope_;
+    HeapPtr<EnvironmentObject*> templateEnv_;
 
     // Allocated space for fallback stubs.
     FallbackICStubSpace fallbackStubSpace_;
@@ -158,8 +159,6 @@ struct BaselineScript
     bool traceLoggerScriptsEnabled_;
     bool traceLoggerEngineEnabled_;
 # endif
-    uint32_t traceLoggerEnterToggleOffset_;
-    uint32_t traceLoggerExitToggleOffset_;
     TraceLoggerEvent traceLoggerScriptEvent_;
 #endif
 
@@ -195,7 +194,12 @@ struct BaselineScript
         ION_COMPILED_OR_INLINED = 1 << 4,
 
         // Flag is set if this script has profiling instrumentation turned on.
-        PROFILER_INSTRUMENTATION_ON = 1 << 5
+        PROFILER_INSTRUMENTATION_ON = 1 << 5,
+
+        // Whether this script uses its environment chain. This is currently
+        // determined by the BytecodeAnalysis and cached on the BaselineScript
+        // for IonBuilder.
+        USES_ENVIRONMENT_CHAIN = 1 << 6,
     };
 
   private:
@@ -221,6 +225,11 @@ struct BaselineScript
     // instruction.
     uint32_t yieldEntriesOffset_;
 
+    // By default tracelogger is disabled. Therefore we disable the logging code
+    // by default. We store the offsets we must patch to enable the logging.
+    uint32_t traceLoggerToggleOffsetsOffset_;
+    uint32_t numTraceLoggerToggleOffsets_;
+
     // The total bytecode length of all scripts we inlined when we Ion-compiled
     // this script. 0 if Ion did not compile this script or if we didn't inline
     // anything.
@@ -236,13 +245,13 @@ struct BaselineScript
     // An ion compilation that is ready, but isn't linked yet.
     IonBuilder *pendingBuilder_;
 
+    ControlFlowGraph* controlFlowGraph_;
+
   public:
     // Do not call directly, use BaselineScript::New. This is public for cx->new_.
     BaselineScript(uint32_t prologueOffset, uint32_t epilogueOffset,
                    uint32_t profilerEnterToggleOffset,
                    uint32_t profilerExitToggleOffset,
-                   uint32_t traceLoggerEnterToggleOffset,
-                   uint32_t traceLoggerExitToggleOffset,
                    uint32_t postDebugPrologueOffset);
 
     ~BaselineScript() {
@@ -251,15 +260,16 @@ struct BaselineScript
         MOZ_ASSERT(fallbackStubSpace_.isEmpty());
     }
 
-    static BaselineScript* New(JSScript* jsscript, uint32_t prologueOffset,
-                               uint32_t epilogueOffset, uint32_t postDebugPrologueOffset,
+    static BaselineScript* New(JSScript* jsscript,
+                               uint32_t prologueOffset, uint32_t epilogueOffset,
                                uint32_t profilerEnterToggleOffset,
                                uint32_t profilerExitToggleOffset,
-                               uint32_t traceLoggerEnterToggleOffset,
-                               uint32_t traceLoggerExitToggleOffset,
-                               size_t icEntries, size_t pcMappingIndexEntries,
-                               size_t pcMappingSize,
-                               size_t bytecodeTypeMapEntries, size_t yieldEntries);
+                               uint32_t postDebugPrologueOffset,
+                               size_t icEntries,
+                               size_t pcMappingIndexEntries, size_t pcMappingSize,
+                               size_t bytecodeTypeMapEntries,
+                               size_t yieldEntries,
+                               size_t traceLoggerToggleOffsetEntries);
 
     static void Trace(JSTracer* trc, BaselineScript* script);
     static void Destroy(FreeOp* fop, BaselineScript* script);
@@ -317,6 +327,13 @@ struct BaselineScript
         return flags_ & ION_COMPILED_OR_INLINED;
     }
 
+    void setUsesEnvironmentChain() {
+        flags_ |= USES_ENVIRONMENT_CHAIN;
+    }
+    bool usesEnvironmentChain() const {
+        return flags_ & USES_ENVIRONMENT_CHAIN;
+    }
+
     uint32_t prologueOffset() const {
         return prologueOffset_;
     }
@@ -362,21 +379,21 @@ struct BaselineScript
         method_ = code;
     }
 
-    JSObject* templateScope() const {
-        return templateScope_;
+    EnvironmentObject* templateEnvironment() const {
+        return templateEnv_;
     }
-    void setTemplateScope(JSObject* templateScope) {
-        MOZ_ASSERT(!templateScope_);
-        templateScope_ = templateScope;
-    }
-
-    void toggleBarriers(bool enabled, ReprotectCode reprotect = Reprotect) {
-        method()->togglePreBarriers(enabled, reprotect);
+    void setTemplateEnvironment(EnvironmentObject* templateEnv) {
+        MOZ_ASSERT(!templateEnv_);
+        templateEnv_ = templateEnv;
     }
 
     bool containsCodeAddress(uint8_t* addr) const {
         return method()->raw() <= addr && addr <= method()->raw() + method()->instructionsSize();
     }
+
+    BaselineICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset);
+    BaselineICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset,
+                                              BaselineICEntry* prevLookedUpEntry);
 
     BaselineICEntry& icEntry(size_t index);
     BaselineICEntry& icEntryFromReturnOffset(CodeOffset returnOffset);
@@ -395,7 +412,7 @@ struct BaselineScript
     void copyICEntries(JSScript* script, const BaselineICEntry* entries, MacroAssembler& masm);
     void adoptFallbackStubs(FallbackICStubSpace* stubSpace);
 
-    void copyYieldEntries(JSScript* script, Vector<uint32_t>& yieldOffsets);
+    void copyYieldAndAwaitEntries(JSScript* script, Vector<uint32_t>& yieldAndAwaitOffsets);
 
     PCMappingIndexEntry& pcMappingIndexEntry(size_t index);
     CompactBufferReader pcMappingReader(size_t indexEntry);
@@ -431,17 +448,23 @@ struct BaselineScript
     }
 
 #ifdef JS_TRACE_LOGGING
-    void initTraceLogger(JSRuntime* runtime, JSScript* script);
+    void initTraceLogger(JSRuntime* runtime, JSScript* script, const Vector<CodeOffset>& offsets);
     void toggleTraceLoggerScripts(JSRuntime* runtime, JSScript* script, bool enable);
     void toggleTraceLoggerEngine(bool enable);
 
     static size_t offsetOfTraceLoggerScriptEvent() {
         return offsetof(BaselineScript, traceLoggerScriptEvent_);
     }
+
+    uint32_t* traceLoggerToggleOffsets() {
+        MOZ_ASSERT(traceLoggerToggleOffsetsOffset_);
+        return reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(this) +
+                                           traceLoggerToggleOffsetsOffset_);
+    }
 #endif
 
     void noteAccessedGetter(uint32_t pcOffset);
-    void noteArrayWriteHole(uint32_t pcOffset);
+    void noteHasDenseAdd(uint32_t pcOffset);
 
     static size_t offsetOfFlags() {
         return offsetof(BaselineScript, flags_);
@@ -503,6 +526,14 @@ struct BaselineScript
         setPendingIonBuilder(nullptr, script, nullptr);
         if (script->maybeIonScript() == ION_PENDING_SCRIPT)
             script->setIonScript(nullptr, nullptr);
+    }
+
+    const ControlFlowGraph* controlFlowGraph() const {
+        return controlFlowGraph_;
+    }
+
+    void setControlFlowGraph(ControlFlowGraph* controlFlowGraph) {
+        controlFlowGraph_ = controlFlowGraph;
     }
 
 };
@@ -573,6 +604,10 @@ struct BaselineBailoutInfo
     // The bytecode pc where we will resume.
     jsbytecode* resumePC;
 
+    // The bytecode pc of try block and fault block.
+    jsbytecode* tryPC;
+    jsbytecode* faultPC;
+
     // If resuming into a TypeMonitor IC chain, this field holds the
     // address of the first stub in that chain.  If this field is
     // set, then the actual jitcode resumed into is the jitcode for
@@ -583,6 +618,12 @@ struct BaselineBailoutInfo
 
     // Number of baseline frames to push on the stack.
     uint32_t numFrames;
+
+    // If Ion bailed out on a global script before it could perform the global
+    // declaration conflicts check. In such cases the baseline script is
+    // resumed at the first pc instead of the prologue, so an extra flag is
+    // needed to perform the check.
+    bool checkGlobalDeclarationConflicts;
 
     // The bailout kind.
     BailoutKind bailoutKind;

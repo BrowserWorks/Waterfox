@@ -15,13 +15,15 @@
 #include <string>
 
 #include "webrtc/base/asyncsocket.h"
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/base/cryptstring.h"
 #include "webrtc/base/logging.h"
 
 namespace rtc {
 
 struct HttpAuthContext;
-class ByteBuffer;
+class ByteBufferReader;
+class ByteBufferWriter;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -34,7 +36,7 @@ class BufferedReadAdapter : public AsyncSocketAdapter {
   ~BufferedReadAdapter() override;
 
   int Send(const void* pv, size_t cb) override;
-  int Recv(void* pv, size_t cb) override;
+  int Recv(void* pv, size_t cb, int64_t* timestamp) override;
 
  protected:
   int DirectSend(const void* pv, size_t cb) {
@@ -50,7 +52,7 @@ class BufferedReadAdapter : public AsyncSocketAdapter {
   char * buffer_;
   size_t buffer_size_, data_len_;
   bool buffering_;
-  DISALLOW_EVIL_CONSTRUCTORS(BufferedReadAdapter);
+  RTC_DISALLOW_COPY_AND_ASSIGN(BufferedReadAdapter);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,7 +80,7 @@ class AsyncSSLSocket : public BufferedReadAdapter {
  protected:
   void OnConnectEvent(AsyncSocket* socket) override;
   void ProcessInput(char* data, size_t* len) override;
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncSSLSocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncSSLSocket);
 };
 
 // Implements a socket adapter that performs the server side of a
@@ -89,7 +91,7 @@ class AsyncSSLServerSocket : public BufferedReadAdapter {
 
  protected:
   void ProcessInput(char* data, size_t* len) override;
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncSSLServerSocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncSSLServerSocket);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -137,7 +139,7 @@ class AsyncHttpsProxySocket : public BufferedReadAdapter {
   } state_;
   HttpAuthContext * context_;
   std::string unknown_mechanisms_;
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncHttpsProxySocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncHttpsProxySocket);
 };
 
 /* TODO: Implement this.
@@ -148,7 +150,7 @@ class AsyncHttpsProxyServerSocket : public AsyncProxyServerSocket {
  private:
   virtual void ProcessInput(char * data, size_t& len);
   void Error(int error);
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncHttpsProxyServerSocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncHttpsProxyServerSocket);
 };
 */
 
@@ -183,7 +185,7 @@ class AsyncSocksProxySocket : public BufferedReadAdapter {
   SocketAddress proxy_, dest_;
   std::string user_;
   CryptString pass_;
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncSocksProxySocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncSocksProxySocket);
 };
 
 // Implements a proxy server socket for the SOCKS protocol.
@@ -193,13 +195,13 @@ class AsyncSocksProxyServerSocket : public AsyncProxyServerSocket {
 
  private:
   void ProcessInput(char* data, size_t* len) override;
-  void DirectSend(const ByteBuffer& buf);
+  void DirectSend(const ByteBufferWriter& buf);
 
-  void HandleHello(ByteBuffer* request);
-  void SendHelloReply(uint8 method);
-  void HandleAuth(ByteBuffer* request);
-  void SendAuthReply(uint8 result);
-  void HandleConnect(ByteBuffer* request);
+  void HandleHello(ByteBufferReader* request);
+  void SendHelloReply(uint8_t method);
+  void HandleAuth(ByteBufferReader* request);
+  void SendAuthReply(uint8_t result);
+  void HandleConnect(ByteBufferReader* request);
   void SendConnectResult(int result, const SocketAddress& addr) override;
 
   void Error(int error);
@@ -209,7 +211,7 @@ class AsyncSocksProxyServerSocket : public AsyncProxyServerSocket {
     SS_HELLO, SS_AUTH, SS_CONNECT, SS_CONNECT_PENDING, SS_TUNNEL, SS_ERROR
   };
   State state_;
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncSocksProxyServerSocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncSocksProxyServerSocket);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -222,8 +224,11 @@ class LoggingSocketAdapter : public AsyncSocketAdapter {
 
   int Send(const void* pv, size_t cb) override;
   int SendTo(const void* pv, size_t cb, const SocketAddress& addr) override;
-  int Recv(void* pv, size_t cb) override;
-  int RecvFrom(void* pv, size_t cb, SocketAddress* paddr) override;
+  int Recv(void* pv, size_t cb, int64_t* timestamp) override;
+  int RecvFrom(void* pv,
+               size_t cb,
+               SocketAddress* paddr,
+               int64_t* timestamp) override;
   int Close() override;
 
  protected:
@@ -235,7 +240,7 @@ class LoggingSocketAdapter : public AsyncSocketAdapter {
   std::string label_;
   bool hex_mode_;
   LogMultilineState lms_;
-  DISALLOW_EVIL_CONSTRUCTORS(LoggingSocketAdapter);
+  RTC_DISALLOW_COPY_AND_ASSIGN(LoggingSocketAdapter);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

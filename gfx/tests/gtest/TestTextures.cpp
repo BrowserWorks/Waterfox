@@ -8,9 +8,10 @@
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Tools.h"
+#include "mozilla/layers/BufferTexture.h"
+#include "mozilla/layers/ImageBridgeChild.h"  // for ImageBridgeChild
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/TextureHost.h"
-#include "mozilla/layers/BufferTexture.h"
 #include "mozilla/RefPtr.h"
 #include "gfx2DGlue.h"
 #include "gfxImageSurface.h"
@@ -147,6 +148,7 @@ void TestTextureClientSurface(TextureClient* texture, gfxImageSurface* surface) 
 
   // host deserialization
   RefPtr<TextureHost> host = CreateBackendIndependentTextureHost(descriptor, nullptr,
+                                                                 LayersBackend::LAYERS_NONE,
                                                                  texture->GetFlags());
 
   ASSERT_TRUE(host.get() != nullptr);
@@ -191,6 +193,7 @@ void TestTextureClientYCbCr(TextureClient* client, PlanarYCbCrData& ycbcrData) {
 
   // host deserialization
   RefPtr<TextureHost> textureHost = CreateBackendIndependentTextureHost(descriptor, nullptr,
+                                                                        LayersBackend::LAYERS_NONE,
                                                                         client->GetFlags());
 
   RefPtr<BufferTextureHost> host = static_cast<BufferTextureHost*>(textureHost.get());
@@ -258,6 +261,7 @@ TEST(Layers, TextureYCbCrSerialization) {
   clientData.mYStride = ySurface->Stride();
   clientData.mCbCrStride = cbSurface->Stride();
   clientData.mStereoMode = StereoMode::MONO;
+  clientData.mYUVColorSpace = YUVColorSpace::BT601;
   clientData.mYSkip = 0;
   clientData.mCbSkip = 0;
   clientData.mCrSkip = 0;
@@ -265,8 +269,30 @@ TEST(Layers, TextureYCbCrSerialization) {
   clientData.mPicX = 0;
   clientData.mPicX = 0;
 
-  RefPtr<TextureClient> client = TextureClient::CreateForYCbCr(nullptr, clientData.mYSize, clientData.mCbCrSize,
-                                                               StereoMode::MONO, TextureFlags::DEALLOCATE_CLIENT);
+  uint32_t namespaceId = 1;
+  ImageBridgeChild::InitSameProcess(namespaceId);
+
+  RefPtr<ImageBridgeChild> imageBridge = ImageBridgeChild::GetSingleton();
+  static int retry = 5;
+  while(!imageBridge->IPCOpen() && retry) {
+    // IPDL connection takes time especially in slow testing environment, like
+    // VM machines. Here we added retry mechanism to wait for IPDL connnection.
+#ifdef XP_WIN
+    Sleep(1);
+#else
+    sleep(1);
+#endif
+    retry--;
+  }
+
+  // Skip this testing if IPDL connection is not ready
+  if (!retry && !imageBridge->IPCOpen()) {
+    return;
+  }
+
+  RefPtr<TextureClient> client = TextureClient::CreateForYCbCr(imageBridge, clientData.mYSize, clientData.mCbCrSize,
+                                                               StereoMode::MONO, YUVColorSpace::BT601,
+                                                               TextureFlags::DEALLOCATE_CLIENT);
 
   TestTextureClientYCbCr(client, clientData);
 

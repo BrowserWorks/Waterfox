@@ -7,8 +7,9 @@
 #include "mozilla/dom/cache/FileUtils.h"
 
 #include "mozilla/dom/quota/FileStreams.h"
+#include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/SnappyCompressOutputStream.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsIFile.h"
 #include "nsIUUIDGenerator.h"
 #include "nsNetCID.h"
@@ -24,6 +25,7 @@ namespace cache {
 using mozilla::dom::quota::FileInputStream;
 using mozilla::dom::quota::FileOutputStream;
 using mozilla::dom::quota::PERSISTENCE_TYPE_DEFAULT;
+using mozilla::dom::quota::QuotaManager;
 
 namespace {
 
@@ -43,7 +45,7 @@ BodyIdToFile(nsIFile* aBaseDir, const nsID& aId, BodyFileType aType,
 nsresult
 BodyCreateDir(nsIFile* aBaseDir)
 {
-  MOZ_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
 
   nsCOMPtr<nsIFile> aBodyDir;
   nsresult rv = aBaseDir->Clone(getter_AddRefs(aBodyDir));
@@ -63,9 +65,9 @@ BodyCreateDir(nsIFile* aBaseDir)
 
 // static
 nsresult
-BodyDeleteDir(nsIFile* aBaseDir)
+BodyDeleteDir(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir)
 {
-  MOZ_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
 
   nsCOMPtr<nsIFile> aBodyDir;
   nsresult rv = aBaseDir->Clone(getter_AddRefs(aBodyDir));
@@ -74,11 +76,7 @@ BodyDeleteDir(nsIFile* aBaseDir)
   rv = aBodyDir->Append(NS_LITERAL_STRING("morgue"));
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  rv = aBodyDir->Remove(/* recursive = */ true);
-  if (rv == NS_ERROR_FILE_NOT_FOUND ||
-      rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
-    rv = NS_OK;
-  }
+  rv = RemoveNsIFileRecursively(aQuotaInfo, aBodyDir);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   return rv;
@@ -88,14 +86,14 @@ BodyDeleteDir(nsIFile* aBaseDir)
 nsresult
 BodyGetCacheDir(nsIFile* aBaseDir, const nsID& aId, nsIFile** aCacheDirOut)
 {
-  MOZ_ASSERT(aBaseDir);
-  MOZ_ASSERT(aCacheDirOut);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aCacheDirOut);
 
   *aCacheDirOut = nullptr;
 
   nsresult rv = aBaseDir->Clone(aCacheDirOut);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  MOZ_ASSERT(*aCacheDirOut);
+  MOZ_DIAGNOSTIC_ASSERT(*aCacheDirOut);
 
   rv = (*aCacheDirOut)->Append(NS_LITERAL_STRING("morgue"));
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -126,12 +124,12 @@ BodyStartWriteStream(const QuotaInfo& aQuotaInfo,
                      nsAsyncCopyCallbackFun aCallback, nsID* aIdOut,
                      nsISupports** aCopyContextOut)
 {
-  MOZ_ASSERT(aBaseDir);
-  MOZ_ASSERT(aSource);
-  MOZ_ASSERT(aClosure);
-  MOZ_ASSERT(aCallback);
-  MOZ_ASSERT(aIdOut);
-  MOZ_ASSERT(aCopyContextOut);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aSource);
+  MOZ_DIAGNOSTIC_ASSERT(aClosure);
+  MOZ_DIAGNOSTIC_ASSERT(aCallback);
+  MOZ_DIAGNOSTIC_ASSERT(aIdOut);
+  MOZ_DIAGNOSTIC_ASSERT(aCopyContextOut);
 
   nsresult rv;
   nsCOMPtr<nsIUUIDGenerator> idGen =
@@ -183,8 +181,8 @@ BodyStartWriteStream(const QuotaInfo& aQuotaInfo,
 void
 BodyCancelWrite(nsIFile* aBaseDir, nsISupports* aCopyContext)
 {
-  MOZ_ASSERT(aBaseDir);
-  MOZ_ASSERT(aCopyContext);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aCopyContext);
 
   nsresult rv = NS_CancelAsyncCopy(aCopyContext, NS_ERROR_ABORT);
   Unused << NS_WARN_IF(NS_FAILED(rv));
@@ -197,7 +195,7 @@ BodyCancelWrite(nsIFile* aBaseDir, nsISupports* aCopyContext)
 nsresult
 BodyFinalizeWrite(nsIFile* aBaseDir, const nsID& aId)
 {
-  MOZ_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
 
   nsCOMPtr<nsIFile> tmpFile;
   nsresult rv = BodyIdToFile(aBaseDir, aId, BODY_FILE_TMP, getter_AddRefs(tmpFile));
@@ -211,6 +209,9 @@ BodyFinalizeWrite(nsIFile* aBaseDir, const nsID& aId)
   rv = finalFile->GetLeafName(finalFileName);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
+  // It's fine to not notify the QuotaManager that the path has been changed,
+  // because its path will be updated and its size will be recalculated when
+  // opening file next time.
   rv = tmpFile->RenameTo(nullptr, finalFileName);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -222,8 +223,8 @@ nsresult
 BodyOpen(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir, const nsID& aId,
          nsIInputStream** aStreamOut)
 {
-  MOZ_ASSERT(aBaseDir);
-  MOZ_ASSERT(aStreamOut);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aStreamOut);
 
   nsCOMPtr<nsIFile> finalFile;
   nsresult rv = BodyIdToFile(aBaseDir, aId, BODY_FILE_FINAL,
@@ -247,7 +248,8 @@ BodyOpen(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir, const nsID& aId,
 
 // static
 nsresult
-BodyDeleteFiles(nsIFile* aBaseDir, const nsTArray<nsID>& aIdList)
+BodyDeleteFiles(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir,
+                const nsTArray<nsID>& aIdList)
 {
   nsresult rv = NS_OK;
 
@@ -257,12 +259,7 @@ BodyDeleteFiles(nsIFile* aBaseDir, const nsTArray<nsID>& aIdList)
                       getter_AddRefs(tmpFile));
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = tmpFile->Remove(false /* recursive */);
-    if (rv == NS_ERROR_FILE_NOT_FOUND ||
-        rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
-      rv = NS_OK;
-    }
-
+    rv = RemoveNsIFile(aQuotaInfo, tmpFile);
     // Only treat file deletion as a hard failure in DEBUG builds.  Users
     // can unfortunately hit this on windows if anti-virus is scanning files,
     // etc.
@@ -273,12 +270,7 @@ BodyDeleteFiles(nsIFile* aBaseDir, const nsTArray<nsID>& aIdList)
                       getter_AddRefs(finalFile));
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-    rv = finalFile->Remove(false /* recursive */);
-    if (rv == NS_ERROR_FILE_NOT_FOUND ||
-        rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
-      rv = NS_OK;
-    }
-
+    rv = RemoveNsIFile(aQuotaInfo, finalFile);
     // Again, only treat removal as hard failure in debug build.
     MOZ_ASSERT(NS_SUCCEEDED(rv));
   }
@@ -292,14 +284,14 @@ nsresult
 BodyIdToFile(nsIFile* aBaseDir, const nsID& aId, BodyFileType aType,
              nsIFile** aBodyFileOut)
 {
-  MOZ_ASSERT(aBaseDir);
-  MOZ_ASSERT(aBodyFileOut);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aBodyFileOut);
 
   *aBodyFileOut = nullptr;
 
   nsresult rv = BodyGetCacheDir(aBaseDir, aId, aBodyFileOut);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  MOZ_ASSERT(*aBodyFileOut);
+  MOZ_DIAGNOSTIC_ASSERT(*aBodyFileOut);
 
   char idString[NSID_LENGTH];
   aId.ToProvidedString(idString);
@@ -321,9 +313,10 @@ BodyIdToFile(nsIFile* aBaseDir, const nsID& aId, BodyFileType aType,
 } // namespace
 
 nsresult
-BodyDeleteOrphanedFiles(nsIFile* aBaseDir, nsTArray<nsID>& aKnownBodyIdList)
+BodyDeleteOrphanedFiles(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir,
+                        nsTArray<nsID>& aKnownBodyIdList)
 {
-  MOZ_ASSERT(aBaseDir);
+  MOZ_DIAGNOSTIC_ASSERT(aBaseDir);
 
   // body files are stored in a directory structure like:
   //
@@ -357,7 +350,7 @@ BodyDeleteOrphanedFiles(nsIFile* aBaseDir, nsTArray<nsID>& aKnownBodyIdList)
 
     // If a file got in here somehow, try to remove it and move on
     if (NS_WARN_IF(!isDir)) {
-      rv = subdir->Remove(false /* recursive */);
+      rv = RemoveNsIFile(aQuotaInfo, subdir);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
       continue;
     }
@@ -384,7 +377,7 @@ BodyDeleteOrphanedFiles(nsIFile* aBaseDir, nsTArray<nsID>& aKnownBodyIdList)
       // all considered orphans.
       if (StringEndsWith(leafName, NS_LITERAL_CSTRING(".tmp"))) {
         // remove recursively in case its somehow a directory
-        rv = file->Remove(true /* recursive */);
+        rv = RemoveNsIFileRecursively(aQuotaInfo, file);
         MOZ_ASSERT(NS_SUCCEEDED(rv));
         continue;
       }
@@ -407,7 +400,7 @@ BodyDeleteOrphanedFiles(nsIFile* aBaseDir, nsTArray<nsID>& aKnownBodyIdList)
 
       if (!aKnownBodyIdList.Contains(id)) {
         // remove recursively in case its somehow a directory
-        rv = file->Remove(true /* recursive */);
+        rv = RemoveNsIFileRecursively(aQuotaInfo, file);
         MOZ_ASSERT(NS_SUCCEEDED(rv));
       }
     }
@@ -421,7 +414,7 @@ namespace {
 nsresult
 GetMarkerFileHandle(const QuotaInfo& aQuotaInfo, nsIFile** aFileOut)
 {
-  MOZ_ASSERT(aFileOut);
+  MOZ_DIAGNOSTIC_ASSERT(aFileOut);
 
   nsCOMPtr<nsIFile> marker;
   nsresult rv = aQuotaInfo.mDir->Clone(getter_AddRefs(marker));
@@ -468,11 +461,8 @@ DeleteMarkerFile(const QuotaInfo& aQuotaInfo)
   nsresult rv = GetMarkerFileHandle(aQuotaInfo, getter_AddRefs(marker));
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
-  rv = marker->Remove(/* recursive = */ false);
-  if (rv == NS_ERROR_FILE_NOT_FOUND ||
-      rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
-    rv = NS_OK;
-  }
+  rv = RemoveNsIFile(aQuotaInfo, marker);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 
   // Again, no fsync is necessary.  If the OS crashes before the file
   // removal is flushed, then the Cache will search for stale data on
@@ -494,6 +484,78 @@ MarkerFileExists(const QuotaInfo& aQuotaInfo)
   if (NS_WARN_IF(NS_FAILED(rv))) { return false; }
 
   return exists;
+}
+
+// static
+nsresult
+RemoveNsIFileRecursively(const QuotaInfo& aQuotaInfo, nsIFile* aFile)
+{
+  MOZ_DIAGNOSTIC_ASSERT(aFile);
+
+  bool isDirectory = false;
+  nsresult rv = aFile->IsDirectory(&isDirectory);
+  if (rv == NS_ERROR_FILE_NOT_FOUND ||
+      rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
+    return NS_OK;
+  }
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  if (!isDirectory) {
+    return RemoveNsIFile(aQuotaInfo, aFile);
+  }
+
+  // Unfortunately, we need to traverse all the entries and delete files one by
+  // one to update their usages to the QuotaManager.
+  nsCOMPtr<nsISimpleEnumerator> entries;
+  rv = aFile->GetDirectoryEntries(getter_AddRefs(entries));
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  bool hasMore = false;
+  while (NS_SUCCEEDED((rv = entries->HasMoreElements(&hasMore))) && hasMore) {
+    nsCOMPtr<nsISupports> entry;
+    rv = entries->GetNext(getter_AddRefs(entry));
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+    nsCOMPtr<nsIFile> file = do_QueryInterface(entry);
+    MOZ_ASSERT(file);
+
+    rv = RemoveNsIFileRecursively(aQuotaInfo, file);
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+  }
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  // In the end, remove the folder
+  rv = aFile->Remove(/* recursive */ false);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  return rv;
+}
+
+// static
+nsresult
+RemoveNsIFile(const QuotaInfo& aQuotaInfo, nsIFile* aFile)
+{
+  MOZ_DIAGNOSTIC_ASSERT(aFile);
+
+  int64_t fileSize = 0;
+  nsresult rv = aFile->GetFileSize(&fileSize);
+  if (rv == NS_ERROR_FILE_NOT_FOUND ||
+      rv == NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
+    return NS_OK;
+  }
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  rv = aFile->Remove( /* recursive */ false);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  QuotaManager* quotaManager = QuotaManager::Get();
+  MOZ_DIAGNOSTIC_ASSERT(quotaManager);
+
+  quotaManager->DecreaseUsageForOrigin(PERSISTENCE_TYPE_DEFAULT,
+                                       aQuotaInfo.mGroup, aQuotaInfo.mOrigin,
+                                       fileSize);
+
+  return rv;
 }
 
 } // namespace cache

@@ -37,6 +37,10 @@
 #   memleak.sh   - memory leak testing (optional)
 #   ssl_gtests.sh- Gtest based unit tests for ssl
 #   gtests.sh    - Gtest based unit tests for everything else
+#   bogo.sh      - Bogo interop tests (disabled by default)
+#                  https://boringssl.googlesource.com/boringssl/+/master/ssl/test/PORTING.md
+#   interop.sh   - Interoperability tests (disabled by default)
+#                  https://github.com/ekr/tls_interop
 #
 # NSS testing is now devided to 4 cycles:
 # ---------------------------------------
@@ -58,12 +62,10 @@
 # -------------------------------------------------------
 #   BUILT_OPT    - use optimized/debug build
 #   USE_64       - use 64bit/32bit build
-#   USE_ASAN     - use Address Sanitizer build
 #
 # Optional environment variables to enable specific NSS features:
 # ---------------------------------------------------------------
 #   NSS_DISABLE_ECC             - disable ECC
-#   NSS_ECC_MORE_THAN_SUITE_B   - enable extended ECC
 #
 # Optional environment variables to select which cycles/suites to test:
 # ---------------------------------------------------------------------
@@ -162,11 +164,7 @@ run_cycle_pkix()
 
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher dbtests sdr crmf smime merge multinit"
-
-    echo "${NSS_SSL_TESTS}" | grep "_" > /dev/null
-    RET=$?
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/bypass//g" -e "s/fips//g" -e "s/_//g"`
-    [ ${RET} -eq 0 ] && NSS_SSL_TESTS="${NSS_SSL_TESTS} bypass_bypass"
+    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
 
     run_tests
 }
@@ -209,10 +207,7 @@ run_cycle_upgrade_db()
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher libpkix cert dbtests sdr ocsp pkits chains"
 
-    echo "${NSS_SSL_TESTS}" | grep "_" > /dev/null
-    RET=$?
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/bypass//g" -e "s/fips//g" -e "s/_//g"`
-    [ ${RET} -eq 0 ] && NSS_SSL_TESTS="${NSS_SSL_TESTS} bypass_bypass"
+    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
     NSS_SSL_RUN=`echo "${NSS_SSL_RUN}" | sed -e "s/cov//g" -e "s/auth//g"`
 
     run_tests
@@ -240,10 +235,7 @@ run_cycle_shared_db()
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher libpkix dbupgrade sdr ocsp pkits"
 
-    echo "${NSS_SSL_TESTS}" | grep "_" > /dev/null
-    RET=$?
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/bypass//g" -e "s/fips//g" -e "s/_//g"`
-    [ ${RET} -eq 0 ] && NSS_SSL_TESTS="${NSS_SSL_TESTS} bypass_bypass"
+    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
     NSS_SSL_RUN=`echo "${NSS_SSL_RUN}" | sed -e "s/cov//g" -e "s/auth//g"`
 
     run_tests
@@ -281,12 +273,16 @@ run_cycles()
 cycles="standard pkix upgradedb sharedb"
 CYCLES=${NSS_CYCLES:-$cycles}
 
-tests="cipher lowhash libpkix cert dbtests tools fips sdr crmf smime ssl ocsp merge pkits chains ec gtests ssl_gtests"
+tests="cipher lowhash libpkix cert dbtests tools fips sdr crmf smime ssl ocsp merge pkits ec gtests ssl_gtests"
+# Don't run chains tests when we have a gyp build.
+if [ "$OBJDIR" != "Debug" -a "$OBJDIR" != "Release" ]; then
+  tests="$tests chains"
+fi
 TESTS=${NSS_TESTS:-$tests}
 
 ALL_TESTS=${TESTS}
 
-nss_ssl_tests="crl bypass_normal normal_bypass fips_normal normal_fips iopr policy"
+nss_ssl_tests="crl fips_normal normal_fips iopr policy"
 NSS_SSL_TESTS="${NSS_SSL_TESTS:-$nss_ssl_tests}"
 
 nss_ssl_run="cov auth stapling stress"
@@ -300,32 +296,6 @@ cd `dirname $0`
 if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
     cd common
     . ./init.sh
-fi
-
-# NOTE:
-# Since in make at the top level, modutil is the last file
-# created, we check for modutil to know whether the build
-# is complete. If a new file is created after that, the
-# following test for modutil should check for that instead.
-# Exception: when building softoken only, shlibsign is the
-# last file created.
-if [ "${NSS_BUILD_SOFTOKEN_ONLY}" = "1" ]; then
-  LAST_FILE_BUILT=shlibsign
-else
-  LAST_FILE_BUILT=modutil
-fi
-
-if [ ! -f ${DIST}/${OBJDIR}/bin/${LAST_FILE_BUILT}${PROG_SUFFIX} ]; then
-  if [ "${NSS_BUILD_UTIL_ONLY}" = "1" ]; then
-    # Currently no tests are run or built when building util only.
-    # This may change in the future, atob and bota are
-    # possible candidates.
-    echo "No tests were built"
-  else
-    echo "Build Incomplete. Aborting test." >> ${LOGFILE}
-    html_head "Testing Initialization"
-    Exit "Checking for build"
-  fi
 fi
 
 # NOTE:

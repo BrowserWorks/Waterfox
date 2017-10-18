@@ -24,6 +24,7 @@ class LIRGeneratorNone : public LIRGeneratorShared
     LBoxAllocation useBoxFixed(MDefinition*, Register, Register, bool useAtStart = false) { MOZ_CRASH(); }
 
     LAllocation useByteOpRegister(MDefinition*) { MOZ_CRASH(); }
+    LAllocation useByteOpRegisterAtStart(MDefinition*) { MOZ_CRASH(); }
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition*) { MOZ_CRASH(); }
     LDefinition tempByteOpRegister() { MOZ_CRASH(); }
     LDefinition tempToUnbox() { MOZ_CRASH(); }
@@ -73,14 +74,13 @@ class LIRGeneratorNone : public LIRGeneratorShared
     void visitUnbox(MUnbox* unbox) { MOZ_CRASH(); }
     void visitReturn(MReturn* ret) { MOZ_CRASH(); }
     void visitPowHalf(MPowHalf*) { MOZ_CRASH(); }
-    void visitAsmJSNeg(MAsmJSNeg*) { MOZ_CRASH(); }
+    void visitWasmNeg(MWasmNeg*) { MOZ_CRASH(); }
     void visitGuardShape(MGuardShape* ins) { MOZ_CRASH(); }
     void visitGuardObjectGroup(MGuardObjectGroup* ins) { MOZ_CRASH(); }
-    void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins) { MOZ_CRASH(); }
-    void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins) { MOZ_CRASH(); }
+    void visitWasmUnsignedToDouble(MWasmUnsignedToDouble* ins) { MOZ_CRASH(); }
+    void visitWasmUnsignedToFloat32(MWasmUnsignedToFloat32* ins) { MOZ_CRASH(); }
     void visitAsmJSLoadHeap(MAsmJSLoadHeap* ins) { MOZ_CRASH(); }
     void visitAsmJSStoreHeap(MAsmJSStoreHeap* ins) { MOZ_CRASH(); }
-    void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins) { MOZ_CRASH(); }
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins) { MOZ_CRASH(); }
     void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins) { MOZ_CRASH(); }
     void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins) { MOZ_CRASH(); }
@@ -88,7 +88,7 @@ class LIRGeneratorNone : public LIRGeneratorShared
     void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins) { MOZ_CRASH(); }
     void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins) { MOZ_CRASH(); }
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins) { MOZ_CRASH(); }
-    void visitAsmSelect(MAsmSelect*) { MOZ_CRASH(); }
+    void visitWasmSelect(MWasmSelect*) { MOZ_CRASH(); }
     void visitWasmBoundsCheck(MWasmBoundsCheck* ins) { MOZ_CRASH(); }
     void visitWasmLoad(MWasmLoad* ins) { MOZ_CRASH(); }
     void visitWasmStore(MWasmStore* ins) { MOZ_CRASH(); }

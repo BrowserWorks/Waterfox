@@ -8,6 +8,12 @@ html[details] {
   background-color: var(--color_about_item);
 }
 
+iframe {
+  padding: 0;
+  margin: 0;
+  border:none;
+}
+
 a {
   text-decoration: none;
   color: #0096DD;
@@ -23,6 +29,10 @@ a:active {
 
 .details > div {
   display: inline;
+}
+
+.hidden {
+  display: none;
 }
 
 .version {
@@ -57,12 +67,6 @@ a:active {
   font-weight: bold;
   padding: 0.5em;
   width: 100%;
-}
-
-.options-header {
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-top: 1em;
 }
 
 .addon-item[isDisabled="true"] .options-header,
@@ -158,7 +162,7 @@ setting > vbox {
 /* Checkbox */
 
 checkbox {
-  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox-with-spacing") !important;
+  -moz-binding: url("chrome://browser/content/bindings/checkbox.xml#checkbox-with-spacing") !important;
   margin: 0;
 }
 
@@ -241,7 +245,7 @@ menulist > dropmarker {
   border: none;
   -moz-box-align: center;
   -moz-box-pack: center;
-  list-style-image: url("chrome://browser/skin/images/dropmarker.svg") !important;
+  list-style-image: url("chrome://geckoview/skin/images/dropmarker.svg") !important;
   -moz-image-region: auto;
   display: block;
 }
@@ -327,6 +331,8 @@ div[opType="needs-disable"] .hide-on-disable {
   display: none;
 }
 
-#addons-list, #addons-details {
-  display: none;
+#browse-title:dir(rtl) {
+  background-position: left;
+  background-image: url("chrome://browser/skin/images/chevron-rtl.png");
 }
+

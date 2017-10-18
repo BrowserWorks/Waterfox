@@ -5,27 +5,32 @@ Cu.import("resource://services-sync/engines/tabs.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 
-var clientsEngine = Service.clientsEngine;
+let clientsEngine;
+
+add_task(async function setup() {
+  await Service.promiseInitialized;
+  clientsEngine = Service.clientsEngine;
+});
 
 function fakeSvcWinMediator() {
   // actions on windows are captured in logs
   let logs = [];
   delete Services.wm;
   Services.wm = {
-    getEnumerator: function() {
+    getEnumerator() {
       return {
         cnt: 2,
-        hasMoreElements: function() {
+        hasMoreElements() {
           return this.cnt-- > 0;
         },
-        getNext: function() {
+        getNext() {
           let elt = {addTopics: [], remTopics: [], numAPL: 0, numRPL: 0};
           logs.push(elt);
           return {
-            addEventListener: function(topic) {
+            addEventListener(topic) {
               elt.addTopics.push(topic);
             },
-            removeEventListener: function(topic) {
+            removeEventListener(topic) {
               elt.remTopics.push(topic);
             },
             gBrowser: {
@@ -44,7 +49,7 @@ function fakeSvcWinMediator() {
   return logs;
 }
 
-function run_test() {
+add_task(async function run_test() {
   let engine = Service.engineManager.get("tabs");
 
   _("We assume that tabs have changed at startup.");
@@ -52,7 +57,7 @@ function run_test() {
   tracker.persistChangedIDs = false;
 
   do_check_true(tracker.modified);
-  do_check_true(Utils.deepEquals(Object.keys(engine.getChangedIDs()),
+  do_check_true(Utils.deepEquals(Object.keys((await engine.getChangedIDs())),
                                  [clientsEngine.localID]));
 
   let logs;
@@ -96,9 +101,9 @@ function run_test() {
     do_check_false(tracker.modified);
 
     // Send a fake tab event
-    tracker.onTab({type: evttype , originalTarget: evttype});
+    tracker.onTab({type: evttype, originalTarget: evttype});
     do_check_true(tracker.modified);
-    do_check_true(Utils.deepEquals(Object.keys(engine.getChangedIDs()),
+    do_check_true(Utils.deepEquals(Object.keys((await engine.getChangedIDs())),
                                    [clientsEngine.localID]));
   }
 
@@ -107,7 +112,7 @@ function run_test() {
   do_check_false(tracker.modified);
 
   tracker.onTab({type: "pageshow", originalTarget: "pageshow"});
-  do_check_true(Utils.deepEquals(Object.keys(engine.getChangedIDs()),
+  do_check_true(Utils.deepEquals(Object.keys((await engine.getChangedIDs())),
                                  [clientsEngine.localID]));
 
   // Pretend we just synced and saw some progress listeners.
@@ -122,6 +127,6 @@ function run_test() {
 
   tracker.onLocationChange({ isTopLevel: true }, undefined, undefined, 0);
   do_check_true(tracker.modified, "location change for a new top-level document flagged as modified");
-  do_check_true(Utils.deepEquals(Object.keys(engine.getChangedIDs()),
+  do_check_true(Utils.deepEquals(Object.keys((await engine.getChangedIDs())),
                                  [clientsEngine.localID]));
-}
+});

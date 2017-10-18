@@ -6,15 +6,6 @@
 
 var tests = [];
 
-// Get database connection
-try {
-  var mDBConn = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
-                                   .DBConnection;
-}
-catch(ex) {
-  do_throw("Could not get database connection\n");
-}
-
 /*
   This test is:
     - don't block while doing backup and restore if tag containers contain
@@ -28,7 +19,7 @@ var invalidTagChildTest = {
   _tag: "testTag",
   _tagItemId: -1,
 
-  populate: function () {
+  populate() {
     // add a valid bookmark
     this._itemId = PlacesUtils.bookmarks
                               .insertBookmark(PlacesUtils.toolbarFolderId,
@@ -66,12 +57,12 @@ var invalidTagChildTest = {
                                        PlacesUtils.bookmarks.DEFAULT_INDEX);
   },
 
-  clean: function () {
+  clean() {
     PlacesUtils.tagging.untagURI(PlacesUtils._uri(this._itemUrl), [this._tag]);
     PlacesUtils.bookmarks.removeItem(this._itemId);
   },
 
-  validate: function () {
+  validate() {
     var query = PlacesUtils.history.getNewQuery();
     query.setFolders([PlacesUtils.bookmarks.toolbarFolder], 1);
     var options = PlacesUtils.history.getNewQueryOptions();
@@ -97,11 +88,7 @@ var invalidTagChildTest = {
 }
 tests.push(invalidTagChildTest);
 
-function run_test() {
-  run_next_test()
-}
-
-add_task(function* () {
+add_task(async function() {
   let jsonFile = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.json");
 
   // populate db
@@ -111,7 +98,7 @@ add_task(function* () {
     aTest.validate();
   });
 
-  yield BookmarkJSONUtils.exportToFile(jsonFile);
+  await BookmarkJSONUtils.exportToFile(jsonFile);
 
   // clean
   tests.forEach(function(aTest) {
@@ -119,7 +106,7 @@ add_task(function* () {
   });
 
   // restore json file
-  yield BookmarkJSONUtils.importFromFile(jsonFile, true);
+  await BookmarkJSONUtils.importFromFile(jsonFile, true);
 
   // validate
   tests.forEach(function(aTest) {
@@ -127,5 +114,5 @@ add_task(function* () {
   });
 
   // clean up
-  yield OS.File.remove(jsonFile);
+  await OS.File.remove(jsonFile);
 });

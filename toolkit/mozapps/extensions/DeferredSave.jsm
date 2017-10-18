@@ -9,8 +9,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/osfile.jsm");
-/*globals OS*/
-Cu.import("resource://gre/modules/Promise.jsm");
+/* globals OS*/
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 
 // Make it possible to mock out timers for testing
 var MakeTimer = () => Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -21,27 +21,32 @@ this.EXPORTED_SYMBOLS = ["DeferredSave"];
 const DEFAULT_SAVE_DELAY_MS = 50;
 
 Cu.import("resource://gre/modules/Log.jsm");
-//Configure a logger at the parent 'DeferredSave' level to format
-//messages for all the modules under DeferredSave.*
+// Configure a logger at the parent 'DeferredSave' level to format
+// messages for all the modules under DeferredSave.*
 const DEFERREDSAVE_PARENT_LOGGER_ID = "DeferredSave";
 var parentLogger = Log.repository.getLogger(DEFERREDSAVE_PARENT_LOGGER_ID);
 parentLogger.level = Log.Level.Warn;
 var formatter = new Log.BasicFormatter();
-//Set parent logger (and its children) to append to
-//the Javascript section of the Browser Console
+// Set parent logger (and its children) to append to
+// the Javascript section of the Browser Console
 parentLogger.addAppender(new Log.ConsoleAppender(formatter));
-//Set parent logger (and its children) to
-//also append to standard out
+// Set parent logger (and its children) to
+// also append to standard out
 parentLogger.addAppender(new Log.DumpAppender(formatter));
 
-//Provide the ability to enable/disable logging
-//messages at runtime.
-//If the "extensions.logging.enabled" preference is
-//missing or 'false', messages at the WARNING and higher
-//severity should be logged to the JS console and standard error.
-//If "extensions.logging.enabled" is set to 'true', messages
-//at DEBUG and higher should go to JS console and standard error.
+// Provide the ability to enable/disable logging
+// messages at runtime.
+// If the "extensions.logging.enabled" preference is
+// missing or 'false', messages at the WARNING and higher
+// severity should be logged to the JS console and standard error.
+// If "extensions.logging.enabled" is set to 'true', messages
+// at DEBUG and higher should go to JS console and standard error.
 Cu.import("resource://gre/modules/Services.jsm");
+
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
 
 const PREF_LOGGING_ENABLED = "extensions.logging.enabled";
 const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
@@ -52,28 +57,21 @@ const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
 * parent 'addons' level logger accordingly.
 */
 var PrefObserver = {
- init: function() {
-   Services.prefs.addObserver(PREF_LOGGING_ENABLED, this, false);
-   Services.obs.addObserver(this, "xpcom-shutdown", false);
+ init() {
+   Services.prefs.addObserver(PREF_LOGGING_ENABLED, this);
+   Services.obs.addObserver(this, "xpcom-shutdown");
    this.observe(null, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, PREF_LOGGING_ENABLED);
  },
 
- observe: function(aSubject, aTopic, aData) {
+ observe(aSubject, aTopic, aData) {
    if (aTopic == "xpcom-shutdown") {
      Services.prefs.removeObserver(PREF_LOGGING_ENABLED, this);
      Services.obs.removeObserver(this, "xpcom-shutdown");
-   }
-   else if (aTopic == NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) {
-     let debugLogEnabled = false;
-     try {
-       debugLogEnabled = Services.prefs.getBoolPref(PREF_LOGGING_ENABLED);
-     }
-     catch (e) {
-     }
+   } else if (aTopic == NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) {
+     let debugLogEnabled = Services.prefs.getBoolPref(PREF_LOGGING_ENABLED, false);
      if (debugLogEnabled) {
        parentLogger.level = Log.Level.Debug;
-     }
-     else {
+     } else {
        parentLogger.level = Log.Level.Warn;
      }
    }
@@ -90,21 +88,30 @@ PrefObserver.init();
  * fulfilled by a single write.
  *
  * @constructor
- * @param aPath
+ * @param {string} aPath
  *        String representing the full path of the file where the data
  *        is to be written.
- * @param aDataProvider
+ * @param {function} aDataProvider
  *        Callback function that takes no argument and returns the data to
  *        be written. If aDataProvider returns an ArrayBufferView, the
  *        bytes it contains are written to the file as is.
  *        If aDataProvider returns a String the data are UTF-8 encoded
  *        and then written to the file.
- * @param [optional] aDelay
+ * @param {object | integer} [aOptions]
  *        The delay in milliseconds between the first saveChanges() call
  *        that marks the data as needing to be saved, and when the DeferredSave
  *        begins writing the data to disk. Default 50 milliseconds.
+ *
+ *        Or, an options object containing:
+ *         - delay: A delay in milliseconds.
+ *         - finalizeAt: An AsyncShutdown blocker during which to
+ *           finalize any pending writes.
  */
-this.DeferredSave = function(aPath, aDataProvider, aDelay) {
+this.DeferredSave = function(aPath, aDataProvider, aOptions = {}) {
+  if (typeof aOptions == "number") {
+    aOptions = {delay: aOptions};
+  }
+
   // Create a new logger (child of 'DeferredSave' logger)
   // for use by this particular instance of DeferredSave object
   let leafName = OS.Path.basename(aPath);
@@ -148,10 +155,15 @@ this.DeferredSave = function(aPath, aDataProvider, aDelay) {
   // Error returned by the most recent write (if any)
   this._lastError = null;
 
-  if (aDelay && (aDelay > 0))
-    this._delay = aDelay;
+  if (aOptions.delay && (aOptions.delay > 0))
+    this._delay = aOptions.delay;
   else
     this._delay = DEFAULT_SAVE_DELAY_MS;
+
+  this._finalizeAt = aOptions.finalizeAt || AsyncShutdown.profileBeforeChange;
+  this._finalize = this._finalize.bind(this);
+  this._finalizeAt.addBlocker(`DeferredSave: writing data to ${aPath}`,
+                              this._finalize);
 }
 
 this.DeferredSave.prototype = {
@@ -163,8 +175,12 @@ this.DeferredSave.prototype = {
     return this._lastError;
   },
 
+  get path() {
+    return this._path;
+  },
+
   // Start the pending timer if data is dirty
-  _startTimer: function() {
+  _startTimer() {
     if (!this._pending) {
       return;
     }
@@ -181,14 +197,14 @@ this.DeferredSave.prototype = {
    * @return A Promise<integer> that will be resolved after the data is written to disk;
    *         the promise is resolved with the number of bytes written.
    */
-  saveChanges: function() {
+  saveChanges() {
       this.logger.debug("Save changes");
     if (!this._pending) {
       if (this.writeInProgress) {
           this.logger.debug("Data changed while write in progress");
         this.overlappedSaves++;
       }
-      this._pending = Promise.defer();
+      this._pending = PromiseUtils.defer();
       // Wait until the most recent write completes or fails (if it hasn't already)
       // and then restart our timer
       this._writing.then(count => this._startTimer(), error => this._startTimer());
@@ -196,7 +212,7 @@ this.DeferredSave.prototype = {
     return this._pending.promise;
   },
 
-  _deferredSave: function() {
+  _deferredSave() {
     let pending = this._pending;
     this._pending = null;
     let writing = this._writing;
@@ -207,17 +223,16 @@ this.DeferredSave.prototype = {
     let toSave = null;
     try {
       toSave = this._dataProvider();
-    }
-    catch(e) {
+    } catch (e) {
         this.logger.error("Deferred save dataProvider failed", e);
-      writing.then(null, error => {})
+      writing.catch(error => {})
         .then(count => {
           pending.reject(e);
         });
       return;
     }
 
-    writing.then(null, error => {return 0;})
+    writing.catch(error => { return 0; })
     .then(count => {
         this.logger.debug("Starting write");
       this.totalSaves++;
@@ -257,7 +272,7 @@ this.DeferredSave.prototype = {
    *         written. If all in-memory data is clean, completes with the
    *         result of the most recent write.
    */
-  flush: function() {
+  flush() {
     // If we have pending changes, cancel our timer and set up the write
     // immediately (_deferredSave queues the write for after the most
     // recent write completes, if it hasn't already)
@@ -271,5 +286,10 @@ this.DeferredSave.prototype = {
     }
 
     return this._writing;
-  }
+  },
+
+  _finalize() {
+    return this.flush().catch(Cu.reportError);
+  },
+
 };

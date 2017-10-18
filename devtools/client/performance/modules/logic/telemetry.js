@@ -4,7 +4,7 @@
 "use strict";
 
 const Telemetry = require("devtools/client/shared/telemetry");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 const EVENTS = require("devtools/client/performance/events");
 
 const EVENT_MAP_FLAGS = new Map([
@@ -32,7 +32,7 @@ function PerformanceTelemetry(emitter) {
   this._emitter.on(EVENTS.RECORDING_STATE_CHANGE, this.onRecordingStateChange);
   this._emitter.on(EVENTS.UI_DETAILS_VIEW_SELECTED, this.onViewSelected);
 
-  if (DevToolsUtils.testing) {
+  if (flags.testing) {
     this.recordLogs();
   }
 }
@@ -71,7 +71,8 @@ PerformanceTelemetry.prototype.onRecordingStateChange = function (_, status, mod
   let config = model.getConfiguration();
   for (let k in config) {
     if (RECORDING_FEATURES.indexOf(k) !== -1) {
-      this._telemetry.logKeyed("DEVTOOLS_PERFTOOLS_RECORDING_FEATURES_USED", k, config[k]);
+      this._telemetry.logKeyed("DEVTOOLS_PERFTOOLS_RECORDING_FEATURES_USED", k,
+                               config[k]);
     }
   }
 };
@@ -89,7 +90,7 @@ PerformanceTelemetry.prototype.onViewSelected = function (_, viewName) {
  * Should only be used in testing mode; throws otherwise.
  */
 PerformanceTelemetry.prototype.recordLogs = function () {
-  if (!DevToolsUtils.testing) {
+  if (!flags.testing) {
     throw new Error("Can only record telemetry logs in tests.");
   }
 
@@ -97,21 +98,21 @@ PerformanceTelemetry.prototype.recordLogs = function () {
   let originalLogKeyed = this._telemetry.logKeyed;
   this._log = {};
 
-  this._telemetry.log = (function (histo, data) {
+  this._telemetry.log = (histo, data) => {
     let results = this._log[histo] = this._log[histo] || [];
     results.push(data);
     originalLog(histo, data);
-  }).bind(this);
+  };
 
-  this._telemetry.logKeyed = (function (histo, key, data) {
+  this._telemetry.logKeyed = (histo, key, data) => {
     let results = this._log[histo] = this._log[histo] || [];
     results.push([key, data]);
     originalLogKeyed(histo, key, data);
-  }).bind(this);
+  };
 };
 
 PerformanceTelemetry.prototype.getLogs = function () {
-  if (!DevToolsUtils.testing) {
+  if (!flags.testing) {
     throw new Error("Can only get telemetry logs in tests.");
   }
 

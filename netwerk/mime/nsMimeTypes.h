@@ -2,9 +2,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 /*
- * This interface allows any module to access the encoder/decoder 
+ * This interface allows any module to access the encoder/decoder
  * routines for RFC822 headers. This will allow any mail/news module
  * to call on these routines.
  */
@@ -73,6 +73,7 @@
 #define APPLICATION_XSLT_XML                "application/xslt+xml"
 #define APPLICATION_MATHML_XML              "application/mathml+xml"
 #define APPLICATION_RDF_XML                 "application/rdf+xml"
+#define APPLICATION_WAPXHTML_XML            "application/vnd.wap.xhtml+xml"
 #define APPLICATION_PACKAGE                 "application/package"
 
 #define AUDIO_BASIC                         "audio/basic"
@@ -87,6 +88,7 @@
 #define AUDIO_3GPP2                         "audio/3gpp2"
 #define AUDIO_MIDI                          "audio/x-midi"
 #define AUDIO_MATROSKA                      "audio/x-matroska"
+#define AUDIO_AAC                           "audio/aac"
 
 #define BINARY_OCTET_STREAM                 "binary/octet-stream"
 
@@ -95,6 +97,7 @@
 #define IMAGE_JPG                           "image/jpg"
 #define IMAGE_PJPEG                         "image/pjpeg"
 #define IMAGE_PNG                           "image/png"
+#define IMAGE_APNG                          "image/apng"
 #define IMAGE_X_PNG                         "image/x-png"
 #define IMAGE_PPM                           "image/x-portable-pixmap"
 #define IMAGE_XBM                           "image/x-xbitmap"

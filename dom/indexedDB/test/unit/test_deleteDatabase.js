@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -59,7 +59,7 @@ function testSteps()
     db2.close();
     db.onversionchange = unexpectedSuccessHandler;
     db2.onversionchange = unexpectedSuccessHandler;
-  };
+  }
 
   // The IDB spec doesn't guarantee the order that onversionchange will fire
   // on the dbs.
@@ -102,5 +102,4 @@ function testSteps()
   ok(true, "after deleting a non-existent database, open should work");
 
   finishTest();
-  yield undefined;
 }

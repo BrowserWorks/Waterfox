@@ -20,8 +20,9 @@ extern "C" {
 class GetGlobalClassRefRunnable : public mozilla::Runnable {
   public:
     GetGlobalClassRefRunnable(const char *className, jclass *foundClass) :
+        mozilla::Runnable("GetGlobalClassRefRunnable"),
         mClassName(className), mResult(foundClass) {}
-    NS_IMETHOD Run() {
+    NS_IMETHOD Run() override {
         *mResult = __jsjni_GetGlobalClassRef(mClassName);
         return NS_OK;
     }

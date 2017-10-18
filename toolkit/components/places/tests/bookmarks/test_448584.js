@@ -10,8 +10,7 @@ var tests = [];
 try {
   var mDBConn = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
                                    .DBConnection;
-}
-catch(ex) {
+} catch (ex) {
   do_throw("Could not get database connection\n");
 }
 
@@ -25,7 +24,7 @@ var invalidURITest = {
   _itemUrl: "http://test.mozilla.org/",
   _itemId: null,
 
-  populate: function () {
+  populate() {
     // add a valid bookmark
     PlacesUtils.bookmarks.insertBookmark(PlacesUtils.toolbarFolderId,
                                          PlacesUtils._uri(this._itemUrl),
@@ -39,11 +38,11 @@ var invalidURITest = {
                                            this._itemTitle);
   },
 
-  clean: function () {
+  clean() {
     PlacesUtils.bookmarks.removeItem(this._itemId);
   },
 
-  validate: function (aExpectValidItemsCount) {
+  validate(aExpectValidItemsCount) {
     var query = PlacesUtils.history.getNewQuery();
     query.setFolders([PlacesUtils.bookmarks.toolbarFolder], 1);
     var options = PlacesUtils.history.getNewQueryOptions();
@@ -66,11 +65,7 @@ var invalidURITest = {
 }
 tests.push(invalidURITest);
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function*() {
+add_task(async function() {
   // make json file
   let jsonFile = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.json");
 
@@ -91,7 +86,7 @@ add_task(function*() {
     }
   });
 
-  yield BookmarkJSONUtils.exportToFile(jsonFile);
+  await BookmarkJSONUtils.exportToFile(jsonFile);
 
   // clean
   tests.forEach(function(aTest) {
@@ -100,8 +95,8 @@ add_task(function*() {
 
   // restore json file
   try {
-    yield BookmarkJSONUtils.importFromFile(jsonFile, true);
-  } catch(ex) { do_throw("couldn't import the exported file: " + ex); }
+    await BookmarkJSONUtils.importFromFile(jsonFile, true);
+  } catch (ex) { do_throw("couldn't import the exported file: " + ex); }
 
   // validate
   tests.forEach(function(aTest) {
@@ -109,5 +104,5 @@ add_task(function*() {
   });
 
   // clean up
-  yield OS.File.remove(jsonFile);
+  await OS.File.remove(jsonFile);
 });

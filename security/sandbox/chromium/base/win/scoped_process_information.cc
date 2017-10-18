@@ -23,7 +23,9 @@ bool CheckAndDuplicateHandle(HANDLE source, ScopedHandle* target) {
   if (!::DuplicateHandle(::GetCurrentProcess(), source,
                          ::GetCurrentProcess(), &temp, 0, FALSE,
                          DUPLICATE_SAME_ACCESS)) {
-    DPLOG(ERROR) << "Failed to duplicate a handle.";
+    DWORD last_error = ::GetLastError();
+    DPLOG(ERROR) << "Failed to duplicate a handle " << last_error;
+    ::SetLastError(last_error);
     return false;
   }
   target->Set(temp);

@@ -7,6 +7,7 @@
 #include "SwipeTracker.h"
 
 #include "InputData.h"
+#include "mozilla/FlushType.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/TouchEvents.h"
 #include "nsAlgorithm.h"
@@ -51,7 +52,7 @@ SwipeTracker::SwipeTracker(nsChildView& aWidget,
   , mEventsHaveStartedNewGesture(false)
   , mRegisteredWithRefreshDriver(false)
 {
-  SendSwipeEvent(eSwipeGestureStart, 0, 0.0);
+  SendSwipeEvent(eSwipeGestureStart, 0, 0.0, aSwipeStartEvent.mTimeStamp);
   ProcessEvent(aSwipeStartEvent);
 }
 
@@ -116,7 +117,7 @@ SwipeTracker::ProcessEvent(const PanGestureInput& aEvent)
     delta /= kRubberBandResistanceFactor;
   }
   mGestureAmount = ClampToAllowedRange(mGestureAmount + delta);
-  SendSwipeEvent(eSwipeGestureUpdate, 0, mGestureAmount);
+  SendSwipeEvent(eSwipeGestureUpdate, 0, mGestureAmount, aEvent.mTimeStamp);
 
   if (aEvent.mType != PanGestureInput::PANGESTURE_END) {
     double elapsedSeconds = std::max(0.008, (aEvent.mTimeStamp - mLastEventTimeStamp).ToSeconds());
@@ -127,7 +128,9 @@ SwipeTracker::ProcessEvent(const PanGestureInput& aEvent)
     bool didSwipeSucceed = SwipingInAllowedDirection() && ComputeSwipeSuccess();
     double targetValue = 0.0;
     if (didSwipeSucceed) {
-      SendSwipeEvent(eSwipeGesture, mSwipeDirection, 0.0);
+      // Let's use same timestamp as previous event because this is caused by
+      // the preceding event.
+      SendSwipeEvent(eSwipeGesture, mSwipeDirection, 0.0, aEvent.mTimeStamp);
       targetValue = SwipeSuccessTargetValue();
     }
     StartAnimating(targetValue);
@@ -150,7 +153,7 @@ SwipeTracker::StartAnimating(double aTargetValue)
   // unregister ourselves.
   MOZ_ASSERT(!mRegisteredWithRefreshDriver);
   if (mRefreshDriver) {
-    mRefreshDriver->AddRefreshObserver(this, Flush_Style);
+    mRefreshDriver->AddRefreshObserver(this, FlushType::Style);
     mRegisteredWithRefreshDriver = true;
   }
 }
@@ -164,23 +167,23 @@ SwipeTracker::WillRefresh(mozilla::TimeStamp aTime)
 
   bool isFinished = mAxis.IsFinished(1.0 / kWholePagePixelSize);
   mGestureAmount = (isFinished ? mAxis.GetDestination() : mAxis.GetPosition());
-  SendSwipeEvent(eSwipeGestureUpdate, 0, mGestureAmount);
+  SendSwipeEvent(eSwipeGestureUpdate, 0, mGestureAmount, now);
 
   if (isFinished) {
     UnregisterFromRefreshDriver();
-    SwipeFinished();
+    SwipeFinished(now);
   }
 }
 
 void
-SwipeTracker::CancelSwipe()
+SwipeTracker::CancelSwipe(const TimeStamp& aTimeStamp)
 {
-  SendSwipeEvent(eSwipeGestureEnd, 0, 0.0);
+  SendSwipeEvent(eSwipeGestureEnd, 0, 0.0, aTimeStamp);
 }
 
-void SwipeTracker::SwipeFinished()
+void SwipeTracker::SwipeFinished(const TimeStamp& aTimeStamp)
 {
-  SendSwipeEvent(eSwipeGestureEnd, 0, 0.0);
+  SendSwipeEvent(eSwipeGestureEnd, 0, 0.0, aTimeStamp);
   mWidget.SwipeFinished();
 }
 
@@ -189,28 +192,34 @@ SwipeTracker::UnregisterFromRefreshDriver()
 {
   if (mRegisteredWithRefreshDriver) {
     MOZ_ASSERT(mRefreshDriver, "How were we able to register, then?");
-    mRefreshDriver->RemoveRefreshObserver(this, Flush_Style);
+    mRefreshDriver->RemoveRefreshObserver(this, FlushType::Style);
   }
   mRegisteredWithRefreshDriver = false;
 }
 
 /* static */ WidgetSimpleGestureEvent
 SwipeTracker::CreateSwipeGestureEvent(EventMessage aMsg, nsIWidget* aWidget,
-                                      const LayoutDeviceIntPoint& aPosition)
+                                      const LayoutDeviceIntPoint& aPosition,
+                                      const TimeStamp& aTimeStamp)
 {
+  // XXX Why isn't this initialized with nsCocoaUtils::InitInputEvent()?
   WidgetSimpleGestureEvent geckoEvent(true, aMsg, aWidget);
   geckoEvent.mModifiers = 0;
-  geckoEvent.mTimeStamp = TimeStamp::Now();
+  // XXX How about geckoEvent.mTime?
+  geckoEvent.mTimeStamp = aTimeStamp;
   geckoEvent.mRefPoint = aPosition;
   geckoEvent.buttons = 0;
   return geckoEvent;
 }
 
 bool
-SwipeTracker::SendSwipeEvent(EventMessage aMsg, uint32_t aDirection, double aDelta)
+SwipeTracker::SendSwipeEvent(EventMessage aMsg,
+                             uint32_t aDirection,
+                             double aDelta,
+                             const TimeStamp& aTimeStamp)
 {
   WidgetSimpleGestureEvent geckoEvent =
-    CreateSwipeGestureEvent(aMsg, &mWidget, mEventPosition);
+    CreateSwipeGestureEvent(aMsg, &mWidget, mEventPosition, aTimeStamp);
   geckoEvent.mDirection = aDirection;
   geckoEvent.mDelta = aDelta;
   geckoEvent.mAllowedDirections = mAllowedDirections;

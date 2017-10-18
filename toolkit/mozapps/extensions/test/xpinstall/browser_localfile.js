@@ -13,10 +13,10 @@ function test() {
   try {
     xpipath = cr.convertChromeURL(makeURI(chromeroot + "amosigned.xpi")).spec;
   } catch (ex) {
-    //scenario where we are running from a .jar and already extracted
+    // scenario where we are running from a .jar and already extracted
   }
 
-  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
     gBrowser.loadURI(xpipath);
   });

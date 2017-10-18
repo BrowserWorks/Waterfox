@@ -81,6 +81,12 @@ function checkLoadInfoWithTwoRedirects() {
     "http://mochi.test:8888/tests/netwerk/test/mochitests/file_loadinfo_redirectchain.sjs?redir-1"
   ];
 
+  // Referrer header will not change when redirect
+  const EXPECTED_REFERRER =
+    "http://mochi.test:8888/tests/netwerk/test/mochitests/test_loadinfo_redirectchain.html";
+  const isAndroid = !!navigator.userAgent.includes("Android");
+  const EXPECTED_REMOTE_IP = isAndroid ? "10.0.2.2" : "127.0.0.1";
+
   myXHR.onload = function() {
     is(myXHR.responseText, "checking redirectchain", "sanity check to make sure redirects succeeded");
 
@@ -96,12 +102,18 @@ function checkLoadInfoWithTwoRedirects() {
        "two redirect, chainInternal should have length 2");
 
     for (var i = 0; i < redirectChain.length; i++) {
-      is(redirectChain[i].URI.spec,
+      is(redirectChain[i].principal.URI.spec,
         EXPECTED_REDIRECT_CHAIN[i],
          "redirectChain at index [" + i + "] should match");
-      is(redirectChainIncludingInternalRedirects[i].URI.spec,
+      is(redirectChainIncludingInternalRedirects[i].principal.URI.spec,
          EXPECTED_REDIRECT_CHAIN[i],
          "redirectChainIncludingInternalRedirects at index [" + i + "] should match");
+      is(redirectChain[i].referrerURI.spec,
+         EXPECTED_REFERRER,
+         "referrer should match");
+      is(redirectChain[i].remoteAddress,
+         EXPECTED_REMOTE_IP,
+         "remote address should match");
     }
 
     // move on to the next test
@@ -162,14 +174,14 @@ function confirmCheckLoadInfoWithInternalRedirects(event) {
   compareChains(loadinfo, EXPECTED_REDIRECT_CHAIN, EXPECTED_REDIRECT_CHAIN_INCLUDING_INTERNAL_REDIRECTS);
 
   // remove the postMessage listener and move on to the next test
-  window.removeEventListener("message", confirmCheckLoadInfoWithInternalRedirects, false);
+  window.removeEventListener("message", confirmCheckLoadInfoWithInternalRedirects);
   checkLoadInfoWithInternalRedirectsAndFallback();
 }
 
 function checkLoadInfoWithInternalRedirects() {
   // load the XHR request into an iframe so we can apply a CSP to the iframe
   // a postMessage returns the result back to the main page.
-  window.addEventListener("message", confirmCheckLoadInfoWithInternalRedirects, false);
+  window.addEventListener("message", confirmCheckLoadInfoWithInternalRedirects);
   document.getElementById("testframe").src =
     "https://example.com/tests/netwerk/test/mochitests/file_loadinfo_redirectchain.sjs?iframe-redir-https-2";
 }
@@ -192,14 +204,14 @@ function confirmCheckLoadInfoWithInternalRedirectsAndFallback(event) {
   compareChains(loadinfo, EXPECTED_REDIRECT_CHAIN, EXPECTED_REDIRECT_CHAIN_INCLUDING_INTERNAL_REDIRECTS);
 
   // remove the postMessage listener and finish test
-  window.removeEventListener("message", confirmCheckLoadInfoWithInternalRedirectsAndFallback, false);
+  window.removeEventListener("message", confirmCheckLoadInfoWithInternalRedirectsAndFallback);
   SimpleTest.finish();
 }
 
 function checkLoadInfoWithInternalRedirectsAndFallback() {
   // load the XHR request into an iframe so we can apply a CSP to the iframe
   // a postMessage returns the result back to the main page.
-  window.addEventListener("message", confirmCheckLoadInfoWithInternalRedirectsAndFallback, false);
+  window.addEventListener("message", confirmCheckLoadInfoWithInternalRedirectsAndFallback);
   document.getElementById("testframe").src =
     "https://example.com/tests/netwerk/test/mochitests/file_loadinfo_redirectchain.sjs?iframe-redir-err-2";
 }

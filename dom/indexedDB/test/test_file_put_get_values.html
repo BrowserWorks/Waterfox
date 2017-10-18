@@ -9,8 +9,10 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 
-  <script type="text/javascript;version=1.7">
-  function testSteps()
+  <script type="text/javascript">
+  /* import-globals-from file.js */
+  /* import-globals-from helpers.js */
+  function* testSteps()
   {
     const READ_WRITE = "readwrite";
 
@@ -20,6 +22,10 @@
 
     const blobData = { key: 1, blob: getRandomBlob(10000) };
     const fileData = { key: 2, file: getRandomFile("random.bin", 100000) };
+
+    SpecialPowers.pushPrefEnv({ set: [["dom.indexedDB.dataThreshold", -1]] },
+                              continueToNextStep);
+    yield undefined;
 
     let request = indexedDB.open(name, 1);
     request.onerror = errorHandler;
@@ -87,11 +93,10 @@
     is(bufferCache.length, 2, "Correct length");
 
     finishTest();
-    yield undefined;
   }
   </script>
-  <script type="text/javascript;version=1.7" src="file.js"></script>
-  <script type="text/javascript;version=1.7" src="helpers.js"></script>
+  <script type="text/javascript" src="file.js"></script>
+  <script type="text/javascript" src="helpers.js"></script>
 
 </head>
 

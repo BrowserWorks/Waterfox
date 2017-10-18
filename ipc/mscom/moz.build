@@ -5,41 +5,80 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.mscom += [
+    'Aggregation.h',
+    'AgileReference.h',
+    'AsyncInvoker.h',
     'COMApartmentRegion.h',
     'COMPtrHolder.h',
     'EnsureMTA.h',
-    'Interceptor.h',
-    'InterceptorLog.h',
-    'MainThreadHandoff.h',
-    'MainThreadInvoker.h',
+    'MainThreadClientInfo.h',
     'MainThreadRuntime.h',
+    'Objref.h',
     'ProxyStream.h',
     'Ptr.h',
-    'Registration.h',
     'Utils.h',
-    'WeakRef.h',
-]
-
-SOURCES += [
-    'Interceptor.cpp',
-    'Registration.cpp',
-    'Utils.cpp',
-    'WeakRef.cpp',
 ]
 
 UNIFIED_SOURCES += [
+    'AgileReference.cpp',
     'EnsureMTA.cpp',
-    'InterceptorLog.cpp',
-    'MainThreadHandoff.cpp',
-    'MainThreadInvoker.cpp',
+    'MainThreadClientInfo.cpp',
     'MainThreadRuntime.cpp',
+    'Objref.cpp',
     'ProxyStream.cpp',
+    'Utils.cpp',
 ]
 
+if CONFIG['MOZ_CRASHREPORTER']:
+    UNIFIED_SOURCES += [
+        'InterfaceRegistrationAnnotator.cpp',
+    ]
+
+if CONFIG['ACCESSIBILITY']:
+    DIRS += [
+        'oop',
+    ]
+
+    EXPORTS.mozilla.mscom += [
+        'ActivationContext.h',
+        'DispatchForwarder.h',
+        'IHandlerProvider.h',
+        'Interceptor.h',
+        'InterceptorLog.h',
+        'MainThreadHandoff.h',
+        'MainThreadInvoker.h',
+        'Registration.h',
+        'SpinEvent.h',
+        'StructStream.h',
+        'WeakRef.h',
+    ]
+
+    SOURCES += [
+        'Interceptor.cpp',
+        'Registration.cpp',
+        'SpinEvent.cpp',
+        'WeakRef.cpp',
+    ]
+
+    UNIFIED_SOURCES += [
+        'ActivationContext.cpp',
+        'DispatchForwarder.cpp',
+        'InterceptorLog.cpp',
+        'MainThreadHandoff.cpp',
+        'MainThreadInvoker.cpp',
+        'StructStream.cpp',
+    ]
+
 LOCAL_INCLUDES += [
+    '/xpcom/base',
     '/xpcom/build',
 ]
+
+DEFINES['MOZ_MSCOM_REMARSHAL_NO_HANDLER'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Disability Access APIs")

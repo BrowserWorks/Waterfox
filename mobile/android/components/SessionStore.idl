@@ -50,6 +50,11 @@ interface nsISessionStore : nsISupports
   nsIDOMNode forgetClosedTab(in nsIDOMWindow aWindow, in unsigned long aIndex);
 
   /**
+   * Whether the "Undo close tab" message should be shown or not after a tab has been closed.
+   */
+ readonly attribute boolean canUndoLastCloseTab;
+
+  /**
    * @param aTab is the browser tab to get the value for.
    * @param aKey is the value's name.
    * 
@@ -71,11 +76,10 @@ interface nsISessionStore : nsISupports
   void deleteTabValue(in jsval aTab, in AString aKey);
 
   /**
-   * Restores the previous browser session using a fast, lightweight strategy
-   * @param aSessionString The session string to restore from. If null, the
-   *                       backup session file is read from.
+   * Restores the passed tab if it is currently zombified and set to be delay loaded.
+   * @param aTab The browser tab to be restored.
    */
-  void restoreLastSession(in AString aSessionString);
+  void restoreZombieTab(in jsval aTab);
 
   /**
    * Removes a window from the current session history. Data from this window
@@ -83,4 +87,10 @@ interface nsISessionStore : nsISupports
    * @param aWindow The window to remove
    */
   void removeWindow(in nsIDOMWindow aWindow);
+
+  /**
+   * Set the load state of the session store. Use only for testing.
+   * @param aState The target load state.
+   */
+  void setLoadState(in long aState);
 };

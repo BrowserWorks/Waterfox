@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include "SkArenaAlloc.h"
 #include "SkColorFilterShader.h"
 #include "SkReadBuffer.h"
 #include "SkWriteBuffer.h"
@@ -52,19 +53,15 @@ uint32_t SkColorFilterShader::FilterShaderContext::getFlags() const {
     return shaderF;
 }
 
-SkShader::Context* SkColorFilterShader::onCreateContext(const ContextRec& rec,
-                                                        void* storage) const {
-    char* shaderContextStorage = (char*)storage + sizeof(FilterShaderContext);
-    SkShader::Context* shaderContext = fShader->createContext(rec, shaderContextStorage);
+SkShader::Context* SkColorFilterShader::onMakeContext(const ContextRec& rec,
+                                                      SkArenaAlloc* alloc) const {
+    SkShader::Context* shaderContext = fShader->makeContext(rec, alloc);
     if (nullptr == shaderContext) {
         return nullptr;
     }
-    return new (storage) FilterShaderContext(*this, shaderContext, rec);
+    return alloc->make<FilterShaderContext>(*this, shaderContext, rec);
 }
 
-size_t SkColorFilterShader::onContextSize(const ContextRec& rec) const {
-    return sizeof(FilterShaderContext) + fShader->contextSize(rec);
-}
 
 SkColorFilterShader::FilterShaderContext::FilterShaderContext(
                                                          const SkColorFilterShader& filterShader,
@@ -73,10 +70,6 @@ SkColorFilterShader::FilterShaderContext::FilterShaderContext(
     : INHERITED(filterShader, rec)
     , fShaderContext(shaderContext)
 {}
-
-SkColorFilterShader::FilterShaderContext::~FilterShaderContext() {
-    fShaderContext->~Context();
-}
 
 void SkColorFilterShader::FilterShaderContext::shadeSpan(int x, int y, SkPMColor result[],
                                                          int count) {
@@ -97,25 +90,20 @@ void SkColorFilterShader::FilterShaderContext::shadeSpan4f(int x, int y, SkPM4f 
 #if SK_SUPPORT_GPU
 /////////////////////////////////////////////////////////////////////
 
-const GrFragmentProcessor* SkColorFilterShader::asFragmentProcessor(
-                                                               GrContext* context,
-                                                               const SkMatrix& viewM,
-                                                               const SkMatrix* localMatrix,
-                                                               SkFilterQuality fq) const {
+sk_sp<GrFragmentProcessor> SkColorFilterShader::asFragmentProcessor(const AsFPArgs& args) const {
 
-    SkAutoTUnref<const GrFragmentProcessor> fp1(fShader->asFragmentProcessor(context, viewM,
-                                                                             localMatrix, fq));
-    if (!fp1.get()) {
+    sk_sp<GrFragmentProcessor> fp1(fShader->asFragmentProcessor(args));
+    if (!fp1) {
         return nullptr;
     }
 
-    SkAutoTUnref<const GrFragmentProcessor> fp2(fFilter->asFragmentProcessor(context));
-    if (!fp2.get()) {
-        return fp1.release();
+    sk_sp<GrFragmentProcessor> fp2(fFilter->asFragmentProcessor(args.fContext,
+                                                                args.fDstColorSpace));
+    if (!fp2) {
+        return fp1;
     }
 
-    const GrFragmentProcessor* fpSeries[] = { fp1.get(), fp2.get() };
-
+    sk_sp<GrFragmentProcessor> fpSeries[] = { std::move(fp1), std::move(fp2) };
     return GrFragmentProcessor::RunInSeries(fpSeries, 2);
 }
 #endif

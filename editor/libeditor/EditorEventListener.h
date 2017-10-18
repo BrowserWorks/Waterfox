@@ -6,6 +6,8 @@
 #ifndef EditorEventListener_h
 #define EditorEventListener_h
 
+#include "mozilla/Attributes.h"
+#include "mozilla/EventForwards.h"
 #include "nsCOMPtr.h"
 #include "nsError.h"
 #include "nsIDOMEventListener.h"
@@ -56,18 +58,18 @@ protected:
   void UninstallFromEditor();
 
 #ifdef HANDLE_NATIVE_TEXT_DIRECTION_SWITCH
-  nsresult KeyDown(nsIDOMKeyEvent* aKeyEvent);
-  nsresult KeyUp(nsIDOMKeyEvent* aKeyEvent);
+  nsresult KeyDown(const WidgetKeyboardEvent* aKeyboardEvent);
+  nsresult KeyUp(const WidgetKeyboardEvent* aKeyboardEvent);
 #endif
-  nsresult KeyPress(nsIDOMKeyEvent* aKeyEvent);
-  nsresult HandleText(nsIDOMEvent* aTextEvent);
-  nsresult HandleStartComposition(nsIDOMEvent* aCompositionEvent);
-  void HandleEndComposition(nsIDOMEvent* aCompositionEvent);
+  nsresult KeyPress(WidgetKeyboardEvent* aKeyboardEvent);
+  nsresult HandleChangeComposition(WidgetCompositionEvent* aCompositionEvent);
+  nsresult HandleStartComposition(WidgetCompositionEvent* aCompositionEvent);
+  void HandleEndComposition(WidgetCompositionEvent* aCompositionEvent);
   virtual nsresult MouseDown(nsIDOMMouseEvent* aMouseEvent);
   virtual nsresult MouseUp(nsIDOMMouseEvent* aMouseEvent) { return NS_OK; }
   virtual nsresult MouseClick(nsIDOMMouseEvent* aMouseEvent);
-  nsresult Focus(nsIDOMEvent* aEvent);
-  nsresult Blur(nsIDOMEvent* aEvent);
+  nsresult Focus(InternalFocusEvent* aFocusEvent);
+  nsresult Blur(InternalFocusEvent* aBlurEvent);
   nsresult DragEnter(nsIDOMDragEvent* aDragEvent);
   nsresult DragOver(nsIDOMDragEvent* aDragEvent);
   nsresult DragExit(nsIDOMDragEvent* aDragEvent);
@@ -79,11 +81,31 @@ protected:
   nsPresContext* GetPresContext();
   nsIContent* GetFocusedRootContent();
   // Returns true if IME consumes the mouse event.
-  bool NotifyIMEOfMouseButtonEvent(nsIDOMMouseEvent* aMouseEvent);
+  bool NotifyIMEOfMouseButtonEvent(WidgetMouseEvent* aMouseEvent);
   bool EditorHasFocus();
   bool IsFileControlTextBox();
-  bool ShouldHandleNativeKeyBindings(nsIDOMKeyEvent* aKeyEvent);
+  bool ShouldHandleNativeKeyBindings(WidgetKeyboardEvent* aKeyboardEvent);
   nsresult HandleMiddleClickPaste(nsIDOMMouseEvent* aMouseEvent);
+
+  /**
+   * DetachedFromEditor() returns true if editor was detached.
+   * Otherwise, false.
+   */
+  bool DetachedFromEditor() const;
+
+  /**
+   * DetachedFromEditorOrDefaultPrevented() returns true if editor was detached
+   * and/or the event was consumed.  Otherwise, i.e., attached editor can
+   * handle the event, returns true.
+   */
+  bool DetachedFromEditorOrDefaultPrevented(WidgetEvent* aEvent) const;
+
+  /**
+   * EnsureCommitComposition() requests to commit composition if there is.
+   * Returns false if the editor is detached from the listener, i.e.,
+   * impossible to continue to handle the event.  Otherwise, true.
+   */
+  MOZ_MUST_USE bool EnsureCommitCompoisition();
 
   EditorBase* mEditorBase; // weak
   RefPtr<nsCaret> mCaret;

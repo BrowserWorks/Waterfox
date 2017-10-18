@@ -12,7 +12,7 @@
 #define WEBRTC_P2P_BASE_ASYNCSTUNTCPSOCKET_H_
 
 #include "webrtc/base/asynctcpsocket.h"
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/base/constructormagic.h"
 #include "webrtc/base/socketfactory.h"
 
 namespace cricket {
@@ -42,7 +42,7 @@ class AsyncStunTCPSocket : public rtc::AsyncTCPSocketBase {
   size_t GetExpectedLength(const void* data, size_t len,
                            int* pad_bytes);
 
-  DISALLOW_EVIL_CONSTRUCTORS(AsyncStunTCPSocket);
+  RTC_DISALLOW_COPY_AND_ASSIGN(AsyncStunTCPSocket);
 };
 
 }  // namespace cricket

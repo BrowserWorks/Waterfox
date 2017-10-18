@@ -3,8 +3,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "webrtc/modules/desktop_capture/desktop_device_info.h"
-#include "webrtc/modules/desktop_capture/window_capturer.h"
-#include "webrtc/base/scoped_ptr.h"
 
 #include <cstddef>
 #include <cstdlib>
@@ -34,6 +32,7 @@ DesktopDisplayDevice::DesktopDisplayDevice() {
   screenId_ = kInvalidScreenId;
   deviceUniqueIdUTF8_ = NULL;
   deviceNameUTF8_ = NULL;
+  pid_ = 0;
 }
 
 DesktopDisplayDevice::~DesktopDisplayDevice() {
@@ -63,6 +62,10 @@ void DesktopDisplayDevice::setUniqueIdName(const char *deviceUniqueIdUTF8) {
   SetStringMember(&deviceUniqueIdUTF8_, deviceUniqueIdUTF8);
 }
 
+void DesktopDisplayDevice::setPid(const int pid) {
+  pid_ = pid;
+}
+
 ScreenId DesktopDisplayDevice::getScreenId() {
   return screenId_;
 }
@@ -75,6 +78,10 @@ const char *DesktopDisplayDevice::getUniqueIdName() {
   return deviceUniqueIdUTF8_;
 }
 
+pid_t DesktopDisplayDevice::getPid() {
+  return pid_;
+}
+
 DesktopDisplayDevice& DesktopDisplayDevice::operator= (DesktopDisplayDevice& other) {
   if (&other == this) {
     return *this;
@@ -82,6 +89,7 @@ DesktopDisplayDevice& DesktopDisplayDevice::operator= (DesktopDisplayDevice& oth
   screenId_ = other.getScreenId();
   setUniqueIdName(other.getUniqueIdName());
   setDeviceName(other.getDeviceName());
+  pid_ = other.getPid();
 
   return *this;
 }
@@ -259,10 +267,10 @@ void DesktopDeviceInfoImpl::CleanUpWindowList() {
   desktop_window_list_.clear();
 }
 void DesktopDeviceInfoImpl::InitializeWindowList() {
-  rtc::scoped_ptr<WindowCapturer> pWinCap(WindowCapturer::Create());
-  WindowCapturer::WindowList list;
-  if (pWinCap && pWinCap->GetWindowList(&list)) {
-    WindowCapturer::WindowList::iterator itr;
+  std::unique_ptr<DesktopCapturer> pWinCap = DesktopCapturer::CreateWindowCapturer(DesktopCaptureOptions::CreateDefault());
+  DesktopCapturer::SourceList list;
+  if (pWinCap && pWinCap->GetSourceList(&list)) {
+    DesktopCapturer::SourceList::iterator itr;
     for (itr = list.begin(); itr != list.end(); itr++) {
       DesktopDisplayDevice *pWinDevice = new DesktopDisplayDevice;
       if (!pWinDevice) {
@@ -271,6 +279,7 @@ void DesktopDeviceInfoImpl::InitializeWindowList() {
 
       pWinDevice->setScreenId(itr->id);
       pWinDevice->setDeviceName(itr->title.c_str());
+      pWinDevice->setPid(itr->pid);
 
       char idStr[BUFSIZ];
 #if WEBRTC_WIN

@@ -1,0 +1,222 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for simple WebExtension</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="head.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+// This file defines content scripts.
+/* eslint-env mozilla/frame-script */
+
+add_task(async function test_suspend() {
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      permissions: [
+        "webRequest",
+        "webRequestBlocking",
+        "http://mochi.test/",
+      ],
+    },
+
+    background() {
+      browser.webRequest.onBeforeSendHeaders.addListener(
+        details => {
+          // Make sure that returning undefined or a promise that resolves to
+          // undefined does not break later handlers.
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking", "requestHeaders"]);
+
+      browser.webRequest.onBeforeSendHeaders.addListener(
+        details => {
+          return Promise.resolve();
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking", "requestHeaders"]);
+
+      browser.webRequest.onBeforeSendHeaders.addListener(
+        details => {
+          let requestHeaders = details.requestHeaders.concat({name: "Foo", value: "Bar"});
+
+          return new Promise(resolve => {
+            setTimeout(resolve, 500);
+          }).then(() => {
+            return {requestHeaders};
+          });
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking", "requestHeaders"]);
+    },
+  });
+
+  await extension.startup();
+
+  let result = await fetch(SimpleTest.getTestFileURL("return_headers.sjs"));
+
+  let headers = JSON.parse(await result.text());
+
+  is(headers.foo, "Bar", "Request header was correctly set on suspended request");
+
+  await extension.unload();
+});
+
+
+// Test that requests that were canceled while suspended for a blocking
+// listener are correctly resumed.
+add_task(async function test_error_resume() {
+  let chromeScript = SpecialPowers.loadChromeScript(() => {
+    const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+    Cu.import("resource://gre/modules/Services.jsm");
+
+    let observer = channel => {
+      if (channel instanceof Ci.nsIHttpChannel && channel.URI.spec === "http://example.com/") {
+        Services.obs.removeObserver(observer, "http-on-modify-request");
+
+        // Wait until the next tick to make sure this runs after WebRequest observers.
+        Promise.resolve().then(() => {
+          channel.cancel(Cr.NS_BINDING_ABORTED);
+        });
+      }
+    };
+
+    Services.obs.addObserver(observer, "http-on-modify-request");
+  });
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      permissions: [
+        "webRequest",
+        "webRequestBlocking",
+        "http://example.com/",
+        "http://mochi.test/",
+      ],
+    },
+
+    background() {
+      browser.webRequest.onBeforeSendHeaders.addListener(
+        details => {
+          browser.test.log(`onBeforeSendHeaders({url: ${details.url}})`);
+
+          if (details.url === "http://example.com/") {
+            browser.test.sendMessage("got-before-send-headers");
+          }
+        },
+        {urls: ["<all_urls>"]},
+        ["blocking"]);
+
+      browser.webRequest.onErrorOccurred.addListener(
+        details => {
+          browser.test.log(`onErrorOccurred({url: ${details.url}})`);
+
+          if (details.url === "http://example.com/") {
+            browser.test.sendMessage("got-error-occurred");
+          }
+        },
+        {urls: ["<all_urls>"]});
+    },
+  });
+
+  await extension.startup();
+
+  try {
+    await fetch("http://example.com/");
+    ok(false, "Fetch should have failed.");
+  } catch (e) {
+    ok(true, "Got expected error.");
+  }
+
+  await extension.awaitMessage("got-before-send-headers");
+  await extension.awaitMessage("got-error-occurred");
+
+  await extension.unload();
+  chromeScript.destroy();
+});
+
+
+// Test that response header modifications take effect before onStartRequest fires.
+add_task(async function test_set_responseHeaders() {
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      permissions: [
+        "webRequest",
+        "webRequestBlocking",
+        "http://example.com/",
+      ],
+    },
+
+    background() {
+      browser.webRequest.onHeadersReceived.addListener(
+        details => {
+          browser.test.log(`onHeadersReceived({url: ${details.url}})`);
+
+          details.responseHeaders.push({name: "foo", value: "bar"});
+
+          return {responseHeaders: details.responseHeaders};
+        },
+        {urls: ["http://example.com/?modify_headers"]},
+        ["blocking", "responseHeaders"]);
+    },
+  });
+
+  await extension.startup();
+
+  await new Promise(resolve => setTimeout(resolve, 0));
+
+  let chromeScript = SpecialPowers.loadChromeScript(() => {
+    const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+
+    Cu.import("resource://gre/modules/NetUtil.jsm");
+    Cu.import("resource://gre/modules/Services.jsm");
+    Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+    let ssm = Services.scriptSecurityManager;
+
+    let channel = NetUtil.newChannel({
+      uri: "http://example.com/?modify_headers",
+      loadingPrincipal: ssm.createCodebasePrincipalFromOrigin("http://example.com"),
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
+      securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+    });
+
+    channel.asyncOpen2({
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIStreamListener]),
+
+      onStartRequest(request, context) {
+        request.QueryInterface(Ci.nsIHttpChannel);
+
+        try {
+          sendAsyncMessage("response-header-foo", request.getResponseHeader("foo"));
+        } catch (e) {
+          sendAsyncMessage("response-header-foo", null);
+        }
+        request.cancel(Cr.NS_BINDING_ABORTED);
+      },
+
+      onStopRequest() {
+      },
+
+      onDataAvailable() {
+        throw new Components.Exception("", Cr.NS_ERROR_FAILURE);
+      },
+    });
+  });
+
+  let headerValue = await chromeScript.promiseOneMessage("response-header-foo");
+  is(headerValue, "bar", "Expected Foo header value");
+
+  await extension.unload();
+  chromeScript.destroy();
+});
+
+
+</script>
+</body>
+</html>

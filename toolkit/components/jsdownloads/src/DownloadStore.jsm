@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,13 +32,7 @@ this.EXPORTED_SYMBOLS = [
   "DownloadStore",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -48,19 +40,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm")
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "gTextDecoder", function () {
+XPCOMUtils.defineLazyGetter(this, "gTextDecoder", function() {
   return new TextDecoder();
 });
 
-XPCOMUtils.defineLazyGetter(this, "gTextEncoder", function () {
+XPCOMUtils.defineLazyGetter(this, "gTextEncoder", function() {
   return new TextEncoder();
 });
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadStore
 
 /**
  * Handles serialization of Download objects and persistence into a file, so
@@ -71,8 +58,7 @@ XPCOMUtils.defineLazyGetter(this, "gTextEncoder", function () {
  * @param aPath
  *        String containing the file path where data should be saved.
  */
-this.DownloadStore = function (aList, aPath)
-{
+this.DownloadStore = function(aList, aPath) {
   this.list = aList;
   this.path = aPath;
 }
@@ -101,12 +87,11 @@ this.DownloadStore.prototype = {
    * @resolves When the operation finished successfully.
    * @rejects JavaScript exception.
    */
-  load: function DS_load()
-  {
-    return Task.spawn(function* task_DS_load() {
+  load: function DS_load() {
+    return (async () => {
       let bytes;
       try {
-        bytes = yield OS.File.read(this.path);
+        bytes = await OS.File.read(this.path);
       } catch (ex) {
         if (!(ex instanceof OS.File.Error) || !ex.becauseNoSuchFile) {
           throw ex;
@@ -120,7 +105,7 @@ this.DownloadStore.prototype = {
       // Create live downloads based on the static snapshot.
       for (let downloadData of storeData.list) {
         try {
-          let download = yield Downloads.createDownload(downloadData);
+          let download = await Downloads.createDownload(downloadData);
           try {
             if (!download.succeeded && !download.canceled && !download.error) {
               // Try to restart the download if it was in progress during the
@@ -130,19 +115,19 @@ this.DownloadStore.prototype = {
               // If the download was not in progress, try to update the current
               // progress from disk.  This is relevant in case we retained
               // partially downloaded data.
-              yield download.refresh();
+              await download.refresh();
             }
           } finally {
             // Add the download to the list if we succeeded in creating it,
             // after we have updated its initial state.
-            yield this.list.add(download);
+            await this.list.add(download);
           }
         } catch (ex) {
           // If an item is unrecognized, don't prevent others from being loaded.
           Cu.reportError(ex);
         }
       }
-    }.bind(this));
+    })();
   },
 
   /**
@@ -154,10 +139,9 @@ this.DownloadStore.prototype = {
    * @resolves When the operation finished successfully.
    * @rejects JavaScript exception.
    */
-  save: function DS_save()
-  {
-    return Task.spawn(function* task_DS_save() {
-      let downloads = yield this.list.getAll();
+  save: function DS_save() {
+    return (async () => {
+      let downloads = await this.list.getAll();
 
       // Take a static snapshot of the current state of all the downloads.
       let storeData = { list: [] };
@@ -185,12 +169,12 @@ this.DownloadStore.prototype = {
       if (atLeastOneDownload) {
         // Create or overwrite the file if there are downloads to save.
         let bytes = gTextEncoder.encode(JSON.stringify(storeData));
-        yield OS.File.writeAtomic(this.path, bytes,
+        await OS.File.writeAtomic(this.path, bytes,
                                   { tmpPath: this.path + ".tmp" });
       } else {
         // Remove the file if there are no downloads to save at all.
         try {
-          yield OS.File.remove(this.path);
+          await OS.File.remove(this.path);
         } catch (ex) {
           if (!(ex instanceof OS.File.Error) ||
               !(ex.becauseNoSuchFile || ex.becauseAccessDenied)) {
@@ -200,6 +184,6 @@ this.DownloadStore.prototype = {
           // file error if the file existed before, and was recently deleted.
         }
       }
-    }.bind(this));
+    })();
   },
 };

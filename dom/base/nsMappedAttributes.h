@@ -16,6 +16,7 @@
 #include "nsMappedAttributeElement.h"
 #include "nsIStyleRule.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/ServoBindingTypes.h"
 #include "mozilla/MemoryReporting.h"
 
 class nsIAtom;
@@ -33,7 +34,8 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  void SetAndTakeAttr(nsIAtom* aAttrName, nsAttrValue& aValue);
+  void SetAndSwapAttr(nsIAtom* aAttrName, nsAttrValue& aValue,
+                      bool* aValueWasSet);
   const nsAttrValue* GetAttr(nsIAtom* aAttrName) const;
   const nsAttrValue* GetAttr(const nsAString& aAttrName) const;
 
@@ -43,7 +45,7 @@ public:
   }
 
   bool Equals(const nsMappedAttributes* aAttributes) const;
-  uint32_t HashValue() const;
+  PLDHashNumber HashValue() const;
 
   void DropStyleSheetReference()
   {
@@ -70,18 +72,40 @@ public:
   void RemoveAttrAt(uint32_t aPos, nsAttrValue& aValue);
   const nsAttrName* GetExistingAttrNameFromQName(const nsAString& aName) const;
   int32_t IndexOfAttr(nsIAtom* aLocalName) const;
-  
 
-  // nsIStyleRule 
+  // Apply the contained mapper to the contained set of servo rules,
+  // unless the servo rules have already been initialized.
+  void LazilyResolveServoDeclaration(nsPresContext* aPresContext);
+
+  // Obtain the contained servo declaration block
+  // May return null if called before the inner block
+  // has been (lazily) resolved
+  const RefPtr<RawServoDeclarationBlock>& GetServoStyle() const
+  {
+    return mServoStyle;
+  }
+
+  void ClearServoStyle() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mServoStyle = nullptr;
+  }
+
+  // nsIStyleRule
   virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
   virtual bool MightMapInheritedStyleData() override;
+  virtual bool GetDiscretelyAnimatedCSSValue(nsCSSPropertyID aProperty,
+                                             nsCSSValue* aValue) override;
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
+  static void Shutdown();
 private:
+
+  void LastRelease();
+
   nsMappedAttributes(const nsMappedAttributes& aCopy);
   ~nsMappedAttributes();
 
@@ -113,7 +137,14 @@ private:
 #endif
   nsHTMLStyleSheet* mSheet; //weak
   nsMapRuleToAttributesFunc mRuleMapper;
+  RefPtr<RawServoDeclarationBlock> mServoStyle;
   void* mAttrs[1];
+
+  static bool sShuttingDown;
+
+  // We're caching some memory to avoid trashing the allocator.
+  // The memory stored at index N can hold N attribute values.
+  static nsTArray<void*>* sCachedMappedAttributeAllocations;
 };
 
 #endif /* nsMappedAttributes_h___ */

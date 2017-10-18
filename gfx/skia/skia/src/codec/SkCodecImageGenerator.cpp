@@ -6,47 +6,50 @@
  */
 
 #include "SkCodecImageGenerator.h"
+#include "SkMakeUnique.h"
 
-SkImageGenerator* SkCodecImageGenerator::NewFromEncodedCodec(SkData* data) {
+std::unique_ptr<SkImageGenerator> SkCodecImageGenerator::MakeFromEncodedCodec(sk_sp<SkData> data) {
     SkCodec* codec = SkCodec::NewFromData(data);
     if (nullptr == codec) {
         return nullptr;
     }
 
-    return new SkCodecImageGenerator(codec, data);
+    return std::unique_ptr<SkImageGenerator>(new SkCodecImageGenerator(codec, data));
 }
 
-// FIXME: We should expose information about the encoded format on the
-//        SkImageGenerator, so the client can interpret the encoded
-//        format and request an output format.  For now, as a workaround,
-//        we guess what output format the client wants.
-static SkImageInfo fix_info(const SkCodec& codec) {
-    const SkImageInfo& info = codec.getInfo();
-    SkAlphaType alphaType = (kUnpremul_SkAlphaType == info.alphaType()) ? kPremul_SkAlphaType :
-            info.alphaType();
+static SkImageInfo make_premul(const SkImageInfo& info) {
+    if (kUnpremul_SkAlphaType == info.alphaType()) {
+        return info.makeAlphaType(kPremul_SkAlphaType);
+    }
 
-    // Crudely guess that the presence of a color space means sRGB.
-    SkColorProfileType profileType = (codec.getColorSpace()) ? kSRGB_SkColorProfileType :
-            kLinear_SkColorProfileType;
-
-    return SkImageInfo::Make(info.width(), info.height(), info.colorType(), alphaType, profileType);
+    return info;
 }
 
-SkCodecImageGenerator::SkCodecImageGenerator(SkCodec* codec, SkData* data)
-    : INHERITED(fix_info(*codec))
+SkCodecImageGenerator::SkCodecImageGenerator(SkCodec* codec, sk_sp<SkData> data)
+    : INHERITED(make_premul(codec->getInfo()))
     , fCodec(codec)
-    , fData(SkRef(data))
+    , fData(std::move(data))
 {}
 
-SkData* SkCodecImageGenerator::onRefEncodedData(SK_REFENCODEDDATA_CTXPARAM) {
+SkData* SkCodecImageGenerator::onRefEncodedData(GrContext* ctx) {
     return SkRef(fData.get());
 }
 
 bool SkCodecImageGenerator::onGetPixels(const SkImageInfo& info, void* pixels, size_t rowBytes,
         SkPMColor ctable[], int* ctableCount) {
+    Options opts;
+    opts.fColorTable = ctable;
+    opts.fColorTableCount = ctableCount;
+    opts.fBehavior = SkTransferFunctionBehavior::kRespect;
+    return this->onGetPixels(info, pixels, rowBytes, opts);
+}
 
-    SkCodec::Result result = fCodec->getPixels(info, pixels, rowBytes, nullptr, ctable,
-            ctableCount);
+bool SkCodecImageGenerator::onGetPixels(const SkImageInfo& info, void* pixels, size_t rowBytes,
+                                        const Options& opts) {
+    SkCodec::Options codecOpts;
+    codecOpts.fPremulBehavior = opts.fBehavior;
+    SkCodec::Result result = fCodec->getPixels(info, pixels, rowBytes, &codecOpts, opts.fColorTable,
+                                               opts.fColorTableCount);
     switch (result) {
         case SkCodec::kSuccess:
         case SkCodec::kIncompleteInput:

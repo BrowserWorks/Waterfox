@@ -5,7 +5,12 @@
 
 #include "nsTemporaryFileInputStream.h"
 #include "nsStreamUtils.h"
+#include "mozilla/ipc/InputStreamUtils.h"
+#include "private/pprio.h"
 #include <algorithm>
+
+using namespace mozilla;
+using namespace mozilla::ipc;
 
 typedef mozilla::ipc::FileDescriptor::PlatformHandleType FileHandleType;
 
@@ -20,7 +25,7 @@ nsTemporaryFileInputStream::nsTemporaryFileInputStream(FileDescOwner* aFileDescO
     mCurPos(aStartPos),
     mEndPos(aEndPos),
     mClosed(false)
-{ 
+{
   NS_ASSERTION(aStartPos <= aEndPos, "StartPos should less equal than EndPos!");
 }
 
@@ -84,6 +89,11 @@ nsTemporaryFileInputStream::ReadSegments(nsWriteSegmentFun writer,
   while (*result < count) {
     uint32_t bufCount = std::min(count - *result, (uint32_t) sizeof(buf));
     int32_t bytesRead = PR_Read(mFileDescOwner->mFD, buf, bufCount);
+    if (bytesRead == 0) {
+      mClosed = true;
+      return NS_OK;
+    }
+
     if (bytesRead < 0) {
       return NS_ErrorAccordingToNSPR();
     }
@@ -217,7 +227,8 @@ nsTemporaryFileInputStream::Deserialize(const InputStreamParams& aParams,
   FileDescriptor fd;
   if (fileDescriptorIndex < aFileDescriptors.Length()) {
     fd = aFileDescriptors[fileDescriptorIndex];
-    NS_WARN_IF_FALSE(fd.IsValid(), "Received an invalid file descriptor!");
+    NS_WARNING_ASSERTION(fd.IsValid(),
+                         "Received an invalid file descriptor!");
   } else {
     NS_WARNING("Received a bad file descriptor index!");
   }
@@ -237,4 +248,10 @@ nsTemporaryFileInputStream::Deserialize(const InputStreamParams& aParams,
   mStartPos = mCurPos = params.startPos();
   mEndPos = params.endPos();
   return true;
+}
+
+Maybe<uint64_t>
+nsTemporaryFileInputStream::ExpectedSerializedLength()
+{
+  return Nothing();
 }

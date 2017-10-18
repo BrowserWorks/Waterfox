@@ -8,20 +8,20 @@
 
     <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
     <script type="application/javascript" src="chrome://mochikit/content/chrome-harness.js"></script>
-    <script type="application/javascript;version=1.8" src="head.js"></script>
+    <script type="application/javascript" src="head.js"></script>
     <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
   </head>
 
   <body>
 
-    <script type="application/javascript;version=1.8">
+    <script type="application/javascript">
       window.onload = function() {
         SimpleTest.waitForExplicitFinish();
 
         const asyncStorage = require("devtools/shared/async-storage");
         const EventEmitter = require("devtools/shared/event-emitter");
         const { GetAvailableAddons } = require("devtools/client/webide/modules/addons");
-        const { GetDevices } = require("devtools/client/shared/devices");
+        const { getDevices } = require("devtools/client/shared/devices");
         const { Simulator, Simulators } = require("devtools/client/webide/modules/simulators");
         const { AddonSimulatorProcess,
                 OldAddonSimulatorProcess,
@@ -29,31 +29,31 @@
 
         function addonStatus(addon, status) {
           if (addon.status == status) {
-            return promise.resolve();
+            return Promise.resolve();
           }
-          let deferred = promise.defer();
-          addon.on("update", function onUpdate() {
-            if (addon.status == status) {
-              addon.off("update", onUpdate);
-              nextTick().then(() => deferred.resolve());
-            }
+          return new Promise(resolve => {
+            addon.on("update", function onUpdate() {
+              if (addon.status == status) {
+                addon.off("update", onUpdate);
+                nextTick().then(() => resolve());
+              }
+            });
           });
-          return deferred.promise;
         }
 
         function waitForUpdate(length) {
           info(`Wait for update with length ${length}`);
-          let deferred = promise.defer();
-          let handler = (_, data) => {
-            if (data.length != length) {
-              return;
-            }
-            info(`Got update with length ${length}`);
-            Simulators.off("updated", handler);
-            deferred.resolve();
-          };
-          Simulators.on("updated", handler);
-          return deferred.promise;
+          return new Promise(resolve => {
+            let handler = (_, data) => {
+              if (data.length != length) {
+                return;
+              }
+              info(`Got update with length ${length}`);
+              Simulators.off("updated", handler);
+              resolve();
+            };
+            Simulators.on("updated", handler);
+          });
         }
 
         Task.spawn(function* () {
@@ -70,9 +70,9 @@
 
           // Hack SimulatorProcesses to spy on simulation parameters.
 
-          let runPromise;
-          function fakeRun() {
-            runPromise.resolve({
+          let resolver;
+	  function fakeRun() {
+            resolver({
               path: this.b2gBinary.path,
               args: this.args
             });
@@ -85,9 +85,10 @@
           CustomSimulatorProcess.prototype.run = fakeRun;
 
           function runSimulator(i) {
-            runPromise = promise.defer();
-            findAll(".runtime-panel-item-simulator")[i].click();
-            return runPromise.promise;
+            return new Promise(resolve => {
+              resolver = resolve;
+              findAll(".runtime-panel-item-simulator")[i].click();
+            });
           }
 
           // Install fake "Firefox OS 1.0" simulator addon.
@@ -190,7 +191,7 @@
 
           // Pick custom binary, but act like the user aborted the file picker.
 
-          MockFilePicker.returnFiles = [];
+          MockFilePicker.setFiles([]);
           yield set(form.version, "pick");
 
           is(form.version.value, sim20.addonID, "Version selector reverted to last valid choice after customization abort");
@@ -198,10 +199,10 @@
 
           // Pick custom binary, and actually follow through. (success, verify value = "custom" and textContent = custom path)
 
-          MockFilePicker.useAnyFile();
+          yield MockFilePicker.useAnyFile();
           yield set(form.version, "pick");
 
-          let fakeBinary = MockFilePicker.returnFiles[0];
+          let fakeBinary = MockFilePicker.file;
 
           ok(form.version.value == "custom", "Version selector was set to a new custom binary");
           ok(form.version.classList.contains("custom"), "Version selector is now customized");
@@ -221,7 +222,7 @@
           is(form.profile.value, "default", "Default simulator profile");
           ok(!form.profile.classList.contains("custom"), "Profile selector is not customized");
 
-          MockFilePicker.returnFiles = [];
+          MockFilePicker.setFiles([]);
           yield set(form.profile, "pick");
 
           is(form.profile.value, "default", "Profile selector reverted to last valid choice after customization abort");
@@ -229,7 +230,7 @@
 
           let fakeProfile = FileUtils.getDir("TmpD", []);
 
-          MockFilePicker.returnFiles = [ fakeProfile ];
+          MockFilePicker.setFiles([ fakeProfile ]);
           yield set(form.profile, "pick");
 
           ok(form.profile.value == "custom", "Profile selector was set to a new custom directory");
@@ -315,7 +316,7 @@
             is(form[param].value, String(defaults.phone[param]), "Default phone value for device " + param);
           }
 
-          let devices = yield GetDevices();
+          let devices = yield getDevices();
           devices = devices[devices.TYPES[0]];
           let device = devices[devices.length - 1];
 

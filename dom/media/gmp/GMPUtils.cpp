@@ -12,32 +12,12 @@
 #include "nsCRTGlue.h"
 #include "mozilla/Base64.h"
 #include "nsISimpleEnumerator.h"
+#include "prio.h"
+#include "nsIConsoleService.h"
+#include "mozIGeckoMediaPluginService.h"
+#include "GMPService.h"
 
 namespace mozilla {
-
-bool
-GetEMEVoucherPath(nsIFile** aPath)
-{
-  nsCOMPtr<nsIFile> path;
-  NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(path));
-  if (!path) {
-    NS_WARNING("GetEMEVoucherPath can't get NS_GRE_DIR!");
-    return false;
-  }
-  path->AppendNative(NS_LITERAL_CSTRING("voucher.bin"));
-  path.forget(aPath);
-  return true;
-}
-
-bool
-EMEVoucherFileExists()
-{
-  nsCOMPtr<nsIFile> path;
-  bool exists;
-  return GetEMEVoucherPath(getter_AddRefs(path)) &&
-         NS_SUCCEEDED(path->Exists(&exists)) &&
-         exists;
-}
 
 void
 SplitAt(const char* aDelims,
@@ -53,16 +33,29 @@ SplitAt(const char* aDelims,
 }
 
 nsCString
-ToBase64(const nsTArray<uint8_t>& aBytes)
+ToHexString(const uint8_t * aBytes, uint32_t aLength)
 {
-  nsAutoCString base64;
-  nsDependentCSubstring raw(reinterpret_cast<const char*>(aBytes.Elements()),
-                            aBytes.Length());
-  nsresult rv = Base64Encode(raw, base64);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return NS_LITERAL_CSTRING("[Base64EncodeFailed]");
+  static const char hex[] = {
+    '0', '1', '2', '3',
+    '4', '5', '6', '7',
+    '8', '9', 'a', 'b',
+    'c', 'd', 'e', 'f'
+  };
+  nsCString str;
+  for (uint32_t i = 0; i < aLength; i++) {
+    char buf[3];
+    buf[0] = hex[(aBytes[i] & 0xf0) >> 4];
+    buf[1] = hex[aBytes[i] & 0x0f];
+    buf[2] = 0;
+    str.AppendASCII(buf);
   }
-  return base64;
+  return str;
+}
+
+nsCString
+ToHexString(const nsTArray<uint8_t>& aBytes)
+{
+  return ToHexString(aBytes.Elements(), aBytes.Length());
 }
 
 bool
@@ -206,6 +199,63 @@ GMPInfoFileParser::Get(const nsCString& aKey) const {
     return nsCString(*p);
   }
   return EmptyCString();
+}
+
+bool
+HaveGMPFor(const nsCString& aAPI,
+           nsTArray<nsCString>&& aTags)
+{
+  nsCOMPtr<mozIGeckoMediaPluginService> mps =
+    do_GetService("@mozilla.org/gecko-media-plugin-service;1");
+  if (NS_WARN_IF(!mps)) {
+    return false;
+  }
+
+  bool hasPlugin = false;
+  if (NS_FAILED(mps->HasPluginForAPI(aAPI, &aTags, &hasPlugin))) {
+    return false;
+  }
+  return hasPlugin;
+}
+
+void
+LogToConsole(const nsAString& aMsg)
+{
+  nsCOMPtr<nsIConsoleService> console(
+    do_GetService("@mozilla.org/consoleservice;1"));
+  if (!console) {
+    NS_WARNING("Failed to log message to console.");
+    return;
+  }
+  nsAutoString msg(aMsg);
+  console->LogStringMessage(msg.get());
+}
+
+RefPtr<AbstractThread>
+GetGMPAbstractThread()
+{
+  RefPtr<gmp::GeckoMediaPluginService> service =
+    gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
+  return service ? service->GetAbstractGMPThread() : nullptr;
+}
+
+static size_t
+Align16(size_t aNumber)
+{
+  const size_t mask = 15; // Alignment - 1.
+  return (aNumber + mask) & ~mask;
+}
+
+size_t
+I420FrameBufferSizePadded(int32_t aWidth, int32_t aHeight)
+{
+  if (aWidth <= 0 || aHeight <= 0 || aWidth > MAX_VIDEO_WIDTH ||
+      aHeight > MAX_VIDEO_HEIGHT) {
+    return 0;
+  }
+
+  size_t ySize = Align16(aWidth) * Align16(aHeight);
+  return ySize + (ySize / 4) * 2;
 }
 
 } // namespace mozilla

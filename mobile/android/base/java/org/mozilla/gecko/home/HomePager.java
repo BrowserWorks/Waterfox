@@ -13,11 +13,11 @@ import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.activitystream.ActivityStream;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.home.HomeAdapter.OnAddPanelListener;
 import org.mozilla.gecko.home.HomeConfig.PanelConfig;
-import org.mozilla.gecko.util.Experiments;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
@@ -28,13 +28,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
-import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class HomePager extends ViewPager implements HomeScreen {
+import com.booking.rtlviewpager.RtlViewPager;
+
+public class HomePager extends RtlViewPager implements HomeScreen {
 
     @Override
     public boolean requestFocus(int direction, Rect previouslyFocusedRect) {
@@ -172,7 +173,7 @@ public class HomePager extends ViewPager implements HomeScreen {
         setFocusableInTouchMode(true);
 
         mOriginalBackground = getBackground();
-        setOnPageChangeListener(new PageChangeListener());
+        addOnPageChangeListener(new PageChangeListener());
 
         mLoadState = LoadState.UNLOADED;
     }
@@ -180,7 +181,7 @@ public class HomePager extends ViewPager implements HomeScreen {
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
         if (child instanceof Decor) {
-            ((ViewPager.LayoutParams) params).isDecor = true;
+            ((RtlViewPager.LayoutParams) params).isDecor = true;
             mDecor = (Decor) child;
             mTabStrip = child;
 
@@ -214,7 +215,7 @@ public class HomePager extends ViewPager implements HomeScreen {
         }
 
         // Only animate on post-HC devices, when a non-null animator is given
-        final boolean shouldAnimate = Versions.feature11Plus && animator != null;
+        final boolean shouldAnimate = animator != null;
 
         final HomeAdapter adapter = new HomeAdapter(mContext, fm);
         adapter.setOnAddPanelListener(mAddPanelListener);
@@ -226,8 +227,14 @@ public class HomePager extends ViewPager implements HomeScreen {
         // list of panels in place.
         mTabStrip.setVisibility(View.INVISIBLE);
 
-        // Load list of panels from configuration
-        lm.initLoader(LOADER_ID_CONFIG, null, mConfigLoaderCallbacks);
+        // If HomeConfigLoader already exist and there's no restoreData(for bookmark's parentStack),
+        // call forceLoad() to trigger updateUiFromConfigState() and reset HomePager's adapter.
+        if (lm.getLoader(LOADER_ID_CONFIG) != null && restoreData == null) {
+            lm.getLoader(LOADER_ID_CONFIG).forceLoad();
+        } else {
+            // Load list of panels from configuration
+            lm.initLoader(LOADER_ID_CONFIG, null, mConfigLoaderCallbacks);
+        }
 
         if (shouldAnimate) {
             animator.addPropertyAnimationListener(new PropertyAnimator.PropertyAnimationListener() {
@@ -456,6 +463,12 @@ public class HomePager extends ViewPager implements HomeScreen {
                 adapter.setCanLoadHint(true);
             }
         });
+
+        // We need to fire telemetry on the initial load: we will subsequently send telemetry whenever
+        // the user switches between homepanels, but the first load doesn't involve any switching hence
+        // we need to send telemetry now:
+        final String panelType = ((HomeAdapter) getAdapter()).getPanelIdAtPosition(mDefaultPageIndex);
+        startNewPanelTelemetrySession(panelType);
     }
 
     @Override
@@ -507,7 +520,7 @@ public class HomePager extends ViewPager implements HomeScreen {
         }
     }
 
-    private class PageChangeListener implements ViewPager.OnPageChangeListener {
+    private class PageChangeListener implements RtlViewPager.OnPageChangeListener {
         @Override
         public void onPageSelected(int position) {
             notifyPanelSelected(position);
@@ -548,7 +561,17 @@ public class HomePager extends ViewPager implements HomeScreen {
         stopCurrentPanelTelemetrySession();
 
         mCurrentPanelSession = TelemetryContract.Session.HOME_PANEL;
-        mCurrentPanelSessionSuffix = panelId;
+
+        if (HomeConfig.TOP_SITES_PANEL_ID.equals(panelId) &&
+                ActivityStream.isEnabled(getContext())) {
+            // Override the panel ID for Activity Stream: we're reusing the topsites panel to show
+            // Activity Stream, i.e. AS ends up havin the same panel ID. We override this for telemetry
+            // to distinguish between topsites and AS:
+            mCurrentPanelSessionSuffix = "activity_stream";
+        } else {
+            mCurrentPanelSessionSuffix = panelId;
+        }
+
         Telemetry.startUISession(mCurrentPanelSession, mCurrentPanelSessionSuffix);
     }
 

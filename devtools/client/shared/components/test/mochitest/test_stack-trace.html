@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -13,10 +16,15 @@ Test the rendering of a stack trace
 <body>
 <script src="head.js"></script>
 <script>
-window.onload = function() {
+/* import-globals-from head.js */
+"use strict";
+
+window.onload = function () {
   let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
   let React = browserRequire("devtools/client/shared/vendor/react");
-  let StackTrace = React.createFactory(browserRequire("devtools/client/shared/components/stack-trace"));
+  let StackTrace = React.createFactory(
+    browserRequire("devtools/client/shared/components/stack-trace")
+  );
   ok(StackTrace, "Got the StackTrace factory");
 
   add_task(function* () {
@@ -36,18 +44,19 @@ window.onload = function() {
 
     let props = {
       stacktrace,
-      onViewSourceInDebugger: () => {}
+      onViewSourceInDebugger: () => {},
+      onViewSourceInScratchpad: () => {},
     };
 
     let trace = ReactDOM.render(StackTrace(props), window.document.body);
     yield forceRender(trace);
 
-    let traceEl = trace.getDOMNode();
+    let traceEl = ReactDOM.findDOMNode(trace);
     ok(traceEl, "Rendered StackTrace has an element");
 
     // Get the child nodes and filter out the text-only whitespace ones
     let frameEls = Array.from(traceEl.childNodes)
-      .filter(n => n.className.includes("frame"));
+      .filter(n => n.className && n.className.includes("frame"));
     ok(frameEls, "Rendered StackTrace has frames");
     is(frameEls.length, 3, "StackTrace has 3 frames");
 
@@ -64,7 +73,8 @@ window.onload = function() {
     });
 
     // Check the async cause node
-    is(frameEls[1].className, "frame-link-async-cause", "Async cause has the right class");
+    is(frameEls[1].className, "frame-link-async-cause",
+       "Async cause has the right class");
     is(frameEls[1].textContent, "(Async: because)", "Async cause has the right label");
 
     // Check the third frame, the source should be parsed into a valid source URL
@@ -87,7 +97,7 @@ window.onload = function() {
     is(traceLines.length, 3, "The stack trace text has 3 lines");
     ok(traceLines.every(l => l[0] == "\t"), "Every stack trace line starts with tab");
   });
-}
+};
 </script>
 </body>
 </html>

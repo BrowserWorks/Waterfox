@@ -42,8 +42,6 @@ namespace mozilla {
 
 namespace hal {
 
-typedef Observer<void_t> AlarmObserver;
-
 class WindowIdentifier;
 
 typedef Observer<int64_t> SystemClockChangeObserver;
@@ -433,39 +431,10 @@ void NotifySwitchStateFromInputDevice(hal::SwitchDevice aDevice,
                                       hal::SwitchState aState);
 
 /**
- * Register an observer that is notified when a programmed alarm
- * expires.
- *
- * Currently, there can only be 0 or 1 alarm observers.
+ * Return true if the current platform supports the setting of process
+ * priority.
  */
-MOZ_MUST_USE bool RegisterTheOneAlarmObserver(hal::AlarmObserver* aObserver);
-
-/**
- * Unregister the alarm observer.  Doing so will implicitly cancel any
- * programmed alarm.
- */
-void UnregisterTheOneAlarmObserver();
-
-/**
- * Notify that the programmed alarm has expired.
- *
- * This API is internal to hal; clients shouldn't call it directly.
- */
-void NotifyAlarmFired();
-
-/**
- * Program the real-time clock to expire at the time |aSeconds|,
- * |aNanoseconds|.  These specify a point in real time relative to the
- * UNIX epoch.  The alarm will fire at this time point even if the
- * real-time clock is changed; that is, this alarm respects changes to
- * the real-time clock.  Return true iff the alarm was programmed.
- *
- * The alarm can be reprogrammed at any time.
- *
- * This API is currently only allowed to be used from non-sandboxed
- * contexts.
- */
-MOZ_MUST_USE bool SetAlarm(int32_t aSeconds, int32_t aNanoseconds);
+bool SetProcessPrioritySupported();
 
 /**
  * Set the priority of the given process.
@@ -474,9 +443,7 @@ MOZ_MUST_USE bool SetAlarm(int32_t aSeconds, int32_t aNanoseconds);
  * background processes higher nice values.  On other platforms, we might
  * ignore this call entirely.
  */
-void SetProcessPriority(int aPid,
-                        hal::ProcessPriority aPriority,
-                        uint32_t aLRU = 0);
+void SetProcessPriority(int aPid, hal::ProcessPriority aPriority);
 
 
 /**
@@ -493,104 +460,6 @@ void SetCurrentThreadPriority(hal::ThreadPriority aThreadPriority);
  */
 void SetThreadPriority(PlatformThreadId aThreadId,
                        hal::ThreadPriority aThreadPriority);
-
-/**
- * Register an observer for the FM radio.
- */
-void RegisterFMRadioObserver(hal::FMRadioObserver* aRadioObserver);
-
-/**
- * Unregister the observer for the FM radio.
- */
-void UnregisterFMRadioObserver(hal::FMRadioObserver* aRadioObserver);
-
-/**
- * Register an observer for the FM radio.
- */
-void RegisterFMRadioRDSObserver(hal::FMRadioRDSObserver* aRDSObserver);
-
-/**
- * Unregister the observer for the FM radio.
- */
-void UnregisterFMRadioRDSObserver(hal::FMRadioRDSObserver* aRDSObserver);
-
-/**
- * Notify observers that a call to EnableFMRadio, DisableFMRadio, or FMRadioSeek
- * has completed, and indicate what the call returned.
- */
-void NotifyFMRadioStatus(const hal::FMRadioOperationInformation& aRadioState);
-
-/**
- * Notify observers of new RDS data
- * This can be called on any thread.
- */
-void NotifyFMRadioRDSGroup(const hal::FMRadioRDSGroup& aRDSGroup);
-
-/**
- * Enable the FM radio and configure it according to the settings in aInfo.
- */
-void EnableFMRadio(const hal::FMRadioSettings& aInfo);
-
-/**
- * Disable the FM radio.
- */
-void DisableFMRadio();
-
-/**
- * Seek to an available FM radio station.
- *
- * This can be called off main thread, but all calls must be completed
- * before calling DisableFMRadio.
- */
-void FMRadioSeek(const hal::FMRadioSeekDirection& aDirection);
-
-/**
- * Get the current FM radio settings.
- */
-void GetFMRadioSettings(hal::FMRadioSettings* aInfo);
-
-/**
- * Set the FM radio's frequency.
- *
- * This can be called off main thread, but all calls must be completed
- * before calling DisableFMRadio.
- */
-void SetFMRadioFrequency(const uint32_t frequency);
-
-/**
- * Get the FM radio's frequency.
- */
-uint32_t GetFMRadioFrequency();
-
-/**
- * Get FM radio power state
- */
-bool IsFMRadioOn();
-
-/**
- * Get FM radio signal strength
- */
-uint32_t GetFMRadioSignalStrength();
-
-/**
- * Cancel FM radio seeking
- */
-void CancelFMRadioSeek();
-
-/**
- * Get FM radio band settings by country.
- */
-hal::FMRadioSettings GetFMBandSettings(hal::FMRadioCountry aCountry);
-
-/**
- * Enable RDS data reception
- */
-MOZ_MUST_USE bool EnableRDS(uint32_t aMask);
-
-/**
- * Disable RDS data reception
- */
-void DisableRDS();
 
 /**
  * Start a watchdog to compulsively shutdown the system if it hangs.
@@ -626,14 +495,6 @@ void StopDiskSpaceWatcher();
  * Returns 0 if we are unable to determine this information from /proc/meminfo.
  */
 uint32_t GetTotalSystemMemory();
-
-/**
- * Get the level of total system memory on device in MiB.
- * (round the value up to the next power of two)
- *
- * Returns 0 if we are unable to determine this information from /proc/meminfo.
- */
-uint32_t GetTotalSystemMemoryLevel();
 
 /**
  * Determine whether the headphone switch event is from input device

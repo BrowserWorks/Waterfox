@@ -40,7 +40,7 @@
 /**
  * NS_INLINE_DECL_IUNKNOWN_REFCOUNTING should be used for defining and
  * implementing AddRef() and Release() of IUnknown interface.
- * This depends on xpcom/glue/nsISupportsImpl.h.
+ * This depends on xpcom/base/nsISupportsImpl.h.
  */
 
 #define NS_INLINE_DECL_IUNKNOWN_REFCOUNTING(_class)                           \
@@ -96,10 +96,21 @@ typedef enum DPI_AWARENESS {
 #define DPI_AWARENESS_CONTEXT_DECLARED
 #endif // (DPI_AWARENESS_CONTEXT_DECLARED)
 
+#if WINVER < 0x0605
+WINUSERAPI DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext();
+WINUSERAPI BOOL WINAPI
+AreDpiAwarenessContextsEqual(DPI_AWARENESS_CONTEXT, DPI_AWARENESS_CONTEXT);
+#endif /* WINVER < 0x0605 */
 typedef DPI_AWARENESS_CONTEXT(WINAPI * SetThreadDpiAwarenessContextProc)(DPI_AWARENESS_CONTEXT);
 typedef BOOL(WINAPI * EnableNonClientDpiScalingProc)(HWND);
 
 namespace mozilla {
+#if defined(ACCESSIBILITY)
+namespace a11y {
+class Accessible;
+} // namespace a11y
+#endif // defined(ACCESSIBILITY)
+
 namespace widget {
 
 // Windows message debugging data
@@ -191,6 +202,12 @@ public:
   static double SystemScaleFactor();
 
   static bool IsPerMonitorDPIAware();
+  /**
+   * Get the DPI of the given monitor if it's per-monitor DPI aware, otherwise
+   * return the system DPI.
+   */
+  static float MonitorDPI(HMONITOR aMonitor);
+  static float SystemDPI();
   /**
    * Functions to convert between logical pixels as used by most Windows APIs
    * and physical (device) pixels.
@@ -382,23 +399,15 @@ public:
    */
   static uint16_t GetMouseInputSource();
 
+  /**
+   * Windows also fires mouse window messages for pens and touches, so we should
+   * retrieve their pointer ID on receiving mouse events as well. Please refer to
+   * https://msdn.microsoft.com/en-us/library/windows/desktop/ms703320(v=vs.85).aspx
+   */
+  static uint16_t GetMousePointerID();
+
   static bool GetIsMouseFromTouch(EventMessage aEventType);
 
-  /**
-   * SHCreateItemFromParsingName() calls native SHCreateItemFromParsingName()
-   * API which is available on Vista and up.
-   */
-  static HRESULT SHCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc,
-                                             REFIID riid, void **ppv);
-
-  /**
-   * SHGetKnownFolderPath() calls native SHGetKnownFolderPath()
-   * API which is available on Vista and up.
-   */
-  static HRESULT SHGetKnownFolderPath(REFKNOWNFOLDERID rfid,
-                                      DWORD dwFlags,
-                                      HANDLE hToken,
-                                      PWSTR *ppszPath);
   /**
    * GetShellItemPath return the file or directory path of a shell item.
    * Internally calls IShellItem's GetDisplayName.
@@ -460,41 +469,17 @@ public:
   static uint32_t GetMaxTouchPoints();
 
   /**
-   * Detect if path is within the Users folder and Users is actually a junction
-   * point to another folder.
-   * If this is detected it will change the path to the actual path.
+   * Fully resolves a path to its final path name. So if path contains
+   * junction points or symlinks to other folders, we'll resolve the path
+   * fully to the actual path that the links target.
    *
    * @param aPath path to be resolved.
    * @return true if successful, including if nothing needs to be changed.
    *         false if something failed or aPath does not exist, aPath will
    *               remain unchanged.
    */
-  static bool ResolveMovedUsersFolder(std::wstring& aPath);
-
-  /**
-  * dwmapi.dll function typedefs and declarations
-  */
-  typedef HRESULT (WINAPI*DwmExtendFrameIntoClientAreaProc)(HWND hWnd, const MARGINS *pMarInset);
-  typedef HRESULT (WINAPI*DwmIsCompositionEnabledProc)(BOOL *pfEnabled);
-  typedef HRESULT (WINAPI*DwmSetIconicThumbnailProc)(HWND hWnd, HBITMAP hBitmap, DWORD dwSITFlags);
-  typedef HRESULT (WINAPI*DwmSetIconicLivePreviewBitmapProc)(HWND hWnd, HBITMAP hBitmap, POINT *pptClient, DWORD dwSITFlags);
-  typedef HRESULT (WINAPI*DwmGetWindowAttributeProc)(HWND hWnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-  typedef HRESULT (WINAPI*DwmSetWindowAttributeProc)(HWND hWnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-  typedef HRESULT (WINAPI*DwmInvalidateIconicBitmapsProc)(HWND hWnd);
-  typedef HRESULT (WINAPI*DwmDefWindowProcProc)(HWND hWnd, UINT msg, LPARAM lParam, WPARAM wParam, LRESULT *aRetValue);
-  typedef HRESULT (WINAPI*DwmGetCompositionTimingInfoProc)(HWND hWnd, DWM_TIMING_INFO *info);
-  typedef HRESULT (WINAPI*DwmFlushProc)(void);
-
-  static DwmExtendFrameIntoClientAreaProc dwmExtendFrameIntoClientAreaPtr;
-  static DwmIsCompositionEnabledProc dwmIsCompositionEnabledPtr;
-  static DwmSetIconicThumbnailProc dwmSetIconicThumbnailPtr;
-  static DwmSetIconicLivePreviewBitmapProc dwmSetIconicLivePreviewBitmapPtr;
-  static DwmGetWindowAttributeProc dwmGetWindowAttributePtr;
-  static DwmSetWindowAttributeProc dwmSetWindowAttributePtr;
-  static DwmInvalidateIconicBitmapsProc dwmInvalidateIconicBitmapsPtr;
-  static DwmDefWindowProcProc dwmDwmDefWindowProcPtr;
-  static DwmGetCompositionTimingInfoProc dwmGetCompositionTimingInfoPtr;
-  static DwmFlushProc dwmFlushProcPtr;
+  static bool ResolveJunctionPointsAndSymLinks(std::wstring& aPath);
+  static bool ResolveJunctionPointsAndSymLinks(nsIFile* aPath);
 
   static void Initialize();
 
@@ -512,18 +497,13 @@ public:
    */
   static bool GetAppInitDLLs(nsAString& aOutput);
 
-private:
-  typedef HRESULT (WINAPI * SHCreateItemFromParsingNamePtr)(PCWSTR pszPath,
-                                                            IBindCtx *pbc,
-                                                            REFIID riid,
-                                                            void **ppv);
-  static SHCreateItemFromParsingNamePtr sCreateItemFromParsingName;
-  typedef HRESULT (WINAPI * SHGetKnownFolderPathPtr)(REFKNOWNFOLDERID rfid,
-                                                     DWORD dwFlags,
-                                                     HANDLE hToken,
-                                                     PWSTR *ppszPath);
-  static SHGetKnownFolderPathPtr sGetKnownFolderPath;
+#ifdef ACCESSIBILITY
+  static void SetAPCPending();
 
+  static a11y::Accessible* GetRootAccessibleForHWND(HWND aHwnd);
+#endif
+
+private:
   static void GetWhitelistedPaths(
       nsTArray<mozilla::Pair<nsString,nsDependentString>>& aOutput);
 };
@@ -581,7 +561,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
-  AsyncDeleteIconFromDisk(const nsAString &aIconPath);
+  explicit AsyncDeleteIconFromDisk(const nsAString &aIconPath);
 
 private:
   virtual ~AsyncDeleteIconFromDisk();
@@ -595,13 +575,14 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
-  AsyncDeleteAllFaviconsFromDisk(bool aIgnoreRecent = false);
+  explicit AsyncDeleteAllFaviconsFromDisk(bool aIgnoreRecent = false);
 
 private:
   virtual ~AsyncDeleteAllFaviconsFromDisk();
 
   int32_t mIcoNoDeleteSeconds;
   bool mIgnoreRecent;
+  nsCOMPtr<nsIFile> mJumpListCacheDir;
 };
 
 class FaviconHelper

@@ -25,7 +25,7 @@ profileDir.append("extensions");
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, args) {
+  openWindow(parent, url, name, features, args) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
 
@@ -36,12 +36,12 @@ var WindowWatcher = {
         aItem.disable = true;
     });
 
-    //run the code after the blocklist is closed
-    Services.obs.notifyObservers(null, "addon-blocklist-closed", null);
+    // run the code after the blocklist is closed
+    Services.obs.notifyObservers(null, "addon-blocklist-closed");
 
   },
 
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Ci.nsIWindowWatcher)
      || iid.equals(Ci.nsISupports))
       return this;
@@ -58,7 +58,7 @@ function load_blocklist(aFile, aCallback) {
     Services.obs.removeObserver(arguments.callee, "blocklist-updated");
 
     do_execute_soon(aCallback);
-  }, "blocklist-updated", false);
+  }, "blocklist-updated");
 
   Services.prefs.setCharPref("extensions.blocklist.url", "http://localhost:" +
                              gPort + "/data/" + aFile);
@@ -67,7 +67,7 @@ function load_blocklist(aFile, aCallback) {
   // if we're not using the blocklist.xml for certificate blocklist state,
   // ensure that kinto update is enabled
   if (!Services.prefs.getBoolPref("security.onecrl.via.amo")) {
-    ok(Services.prefs.getBoolPref("services.blocklist.update_enabled", false),
+    ok(Services.prefs.getBoolPref("services.blocklist.update_enabled"),
                                   "Kinto update should be enabled");
   }
   blocklist.notify(null);

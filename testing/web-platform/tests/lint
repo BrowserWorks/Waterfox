@@ -4,8 +4,8 @@ import sys
 try:
     from tools.lint import lint
 except ImportError:
-    print("tools.lint not found.  Did you forget to run "
-          '"git submodule update --init --recursive"?')
+    print("tools.lint not found.")
     sys.exit(2)
 
-sys.exit(0 if lint.main() == 0 else 1)
+args = lint.parse_args()
+sys.exit(0 if lint.main(**vars(args)) == 0 else 1)

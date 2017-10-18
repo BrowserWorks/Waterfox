@@ -11,6 +11,7 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Move.h"
 #include "mozilla/ReverseIterator.h"
 
 #include <stddef.h>
@@ -23,6 +24,16 @@ class Array
   T mArr[Length];
 
 public:
+  Array() {}
+
+  template <typename... Args>
+  MOZ_IMPLICIT Array(Args&&... aArgs)
+    : mArr{mozilla::Forward<Args>(aArgs)...}
+  {
+    static_assert(sizeof...(aArgs) == Length,
+                  "The number of arguments should be equal to the template parameter Length");
+  }
+
   T& operator[](size_t aIndex)
   {
     MOZ_ASSERT(aIndex < Length);
@@ -33,6 +44,16 @@ public:
   {
     MOZ_ASSERT(aIndex < Length);
     return mArr[aIndex];
+  }
+
+  bool operator==(const Array<T, Length>& aOther) const
+  {
+    for (size_t i = 0; i < Length; i++) {
+      if (mArr[i] != aOther[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   typedef T*                        iterator;

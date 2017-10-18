@@ -4,7 +4,7 @@
   <meta charset="utf8">
   <title>Test for Web Console commands registration.</title>
   <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <script type="text/javascript" src="common.js"></script>
   <!-- Any copyright is dedicated to the Public Domain.
      - http://creativecommons.org/publicdomain/zero/1.0/ -->
 </head>
@@ -12,13 +12,13 @@
 <p>Test for Web Console commands registration.</p>
 <p id="quack"></p>
 
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
 let gState;
 let tests;
 
-let {WebConsoleCommands} = require("devtools/shared/webconsole/utils");
+let {WebConsoleCommands} = require("devtools/server/actors/utils/webconsole-utils");
 
 function evaluateJS(input) {
   return new Promise((resolve) => gState.client.evaluateJS(input, resolve));

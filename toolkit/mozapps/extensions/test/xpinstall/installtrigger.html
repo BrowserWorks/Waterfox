@@ -8,7 +8,8 @@
 <head>
 <title>InstallTrigger tests</title>
 <script type="text/javascript">
-/*globals InstallTrigger*/
+/* globals InstallTrigger */
+/* exported startInstall */
 function installCallback(url, status) {
   document.getElementById("status").textContent = status;
 
@@ -26,8 +27,7 @@ function startInstall() {
     document.getElementById("return").textContent = InstallTrigger.install(triggers, installCallback);
     dump("Sending InstallTriggered\n");
     window.dispatchEvent(event);
-  }
-  catch (e) {
+  } catch (e) {
     document.getElementById("return").textContent = "exception";
     dump("Sending InstallTriggered\n");
     window.dispatchEvent(event);

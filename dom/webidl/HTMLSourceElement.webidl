@@ -11,18 +11,19 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLSourceElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString src;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString type;
 };
 
 partial interface HTMLSourceElement {
-           [SetterThrows, Pref="dom.image.picture.enabled"]
+           [CEReactions, SetterThrows]
            attribute DOMString srcset;
-           [SetterThrows, Pref="dom.image.picture.enabled"]
+           [CEReactions, SetterThrows]
            attribute DOMString sizes;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString media;
 };

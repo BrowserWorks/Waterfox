@@ -22,7 +22,7 @@ public:
 
     void Main();
 
-protected:    
+protected:
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (AbnormalShutdown != why)
@@ -42,7 +42,7 @@ public:
     virtual ~TestCrashCleanupChild();
 
 protected:
-    virtual bool AnswerDIEDIEDIE() override;
+    virtual mozilla::ipc::IPCResult AnswerDIEDIEDIE() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {

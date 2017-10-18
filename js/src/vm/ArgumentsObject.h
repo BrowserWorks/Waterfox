@@ -52,12 +52,10 @@ class RareArgumentsData
     }
 };
 
-/*
- * ArgumentsData stores the initial indexed arguments provided to the
- * corresponding and that function itself.  It is used to store arguments[i]
- * and arguments.callee -- up until the corresponding property is modified,
- * when the relevant value is flagged to memorialize the modification.
- */
+// ArgumentsData stores the initial indexed arguments provided to a function
+// call. It is used to store arguments[i] -- up until the corresponding
+// property is modified, when the relevant value is flagged to memorialize the
+// modification.
 struct ArgumentsData
 {
     /*
@@ -96,6 +94,7 @@ struct ArgumentsData
 // number of arguments that can be supplied to Function.prototype.apply.
 // This value also bounds the number of elements parsed in an array
 // initializer.
+// NB: keep this in sync with the copy in builtin/SelfHostingDefines.h.
 static const unsigned ARGS_LENGTH_MAX = 500 * 1000;
 
 /*
@@ -184,6 +183,8 @@ class ArgumentsObject : public NativeObject
     static bool obj_delProperty(JSContext* cx, HandleObject obj, HandleId id,
                                 ObjectOpResult& result);
 
+    static bool obj_mayResolve(const JSAtomState& names, jsid id, JSObject*);
+
   public:
     static const uint32_t RESERVED_SLOTS = 4;
     static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT4_BACKGROUND;
@@ -232,6 +233,11 @@ class ArgumentsObject : public NativeObject
         setFixedSlot(INITIAL_LENGTH_SLOT, Int32Value(v));
     }
 
+    /*
+     * Create the default "length" property and set LENGTH_OVERRIDDEN_BIT.
+     */
+    static bool reifyLength(JSContext* cx, Handle<ArgumentsObject*> obj);
+
     /* True iff arguments[@@iterator] has been assigned or its attributes
      * changed. */
     bool hasOverriddenIterator() const {
@@ -243,6 +249,11 @@ class ArgumentsObject : public NativeObject
         uint32_t v = getFixedSlot(INITIAL_LENGTH_SLOT).toInt32() | ITERATOR_OVERRIDDEN_BIT;
         setFixedSlot(INITIAL_LENGTH_SLOT, Int32Value(v));
     }
+
+    /*
+     * Create the default @@iterator property and set ITERATOR_OVERRIDDEN_BIT.
+     */
+    static bool reifyIterator(JSContext* cx, Handle<ArgumentsObject*> obj);
 
     /* True iff any element has been assigned or its attributes
      * changed. */
@@ -360,7 +371,7 @@ class ArgumentsObject : public NativeObject
         return getFixedSlotOffset(INITIAL_LENGTH_SLOT);
     }
 
-    static Value MagicScopeSlotValue(uint32_t slot) {
+    static Value MagicEnvSlotValue(uint32_t slot) {
         // When forwarding slots to a backing CallObject, the slot numbers are
         // stored as uint32 magic values. This raises an ambiguity if we have
         // also copied JS_OPTIMIZED_OUT magic from a JIT frame or
@@ -388,6 +399,7 @@ class ArgumentsObject : public NativeObject
 class MappedArgumentsObject : public ArgumentsObject
 {
     static const ClassOps classOps_;
+    static const ObjectOps objectOps_;
 
   public:
     static const Class class_;
@@ -409,6 +421,8 @@ class MappedArgumentsObject : public ArgumentsObject
   private:
     static bool obj_enumerate(JSContext* cx, HandleObject obj);
     static bool obj_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp);
+    static bool obj_defineProperty(JSContext* cx, HandleObject obj, HandleId id,
+                                   Handle<JS::PropertyDescriptor> desc, ObjectOpResult& result);
 };
 
 class UnmappedArgumentsObject : public ArgumentsObject

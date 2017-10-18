@@ -4,13 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Canvas: 2D')
+
 UNIFIED_SOURCES += [
     'TestImageBitmapColorUtils.cpp',
 ]
 
 LOCAL_INCLUDES += [
     '/dom/canvas',
-    '/media/libyuv/include'
+    '/media/libyuv/libyuv/include'
 ]
 
 FINAL_LIBRARY = 'xul-gtest'

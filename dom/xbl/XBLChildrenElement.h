@@ -33,17 +33,10 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // nsINode interface methods
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }
-
-  // nsIContent interface methods
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
-  virtual bool ParseAttribute(int32_t aNamespaceID,
-                              nsIAtom* aAttribute,
-                              const nsAString& aValue,
-                              nsAttrValue& aResult) override;
 
   void AppendInsertedChild(nsIContent* aChild)
   {
@@ -146,6 +139,9 @@ public:
 
 protected:
   ~XBLChildrenElement();
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                 const nsAttrValueOrString* aValue,
+                                 bool aNotify) override;
 
 private:
   nsTArray<nsIContent*> mInsertedChildren; // WEAK
@@ -161,7 +157,6 @@ public:
   explicit nsAnonymousContentList(nsIContent* aParent)
     : mParent(aParent)
   {
-    MOZ_COUNT_CTOR(nsAnonymousContentList);
   }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -183,7 +178,6 @@ public:
 private:
   virtual ~nsAnonymousContentList()
   {
-    MOZ_COUNT_DTOR(nsAnonymousContentList);
   }
 
   nsCOMPtr<nsIContent> mParent;

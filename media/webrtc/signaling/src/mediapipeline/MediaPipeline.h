@@ -8,11 +8,10 @@
 #ifndef mediapipeline_h__
 #define mediapipeline_h__
 
+#include <map>
+
 #include "sigslot.h"
 
-#ifdef USE_FAKE_MEDIA_STREAMS
-#include "FakeMediaStreams.h"
-#endif
 #include "MediaConduitInterface.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Atomics.h"
@@ -23,7 +22,7 @@
 #include "AudioPacketizer.h"
 #include "StreamTracks.h"
 
-#include "webrtc/modules/rtp_rtcp/interface/rtp_header_parser.h"
+#include "webrtc/modules/rtp_rtcp/include/rtp_header_parser.h"
 
 // Should come from MediaEngine.h, but that's a pain to include here
 // because of the MOZILLA_EXTERNAL_LINKAGE stuff.
@@ -34,17 +33,15 @@ class nsIPrincipal;
 namespace mozilla {
 class MediaPipelineFilter;
 class PeerIdentity;
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+class AudioProxyThread;
 class VideoFrameConverter;
-#endif
 
-#ifndef USE_FAKE_MEDIA_STREAMS
 namespace dom {
   class MediaStreamTrack;
+  struct RTCRTPContributingSourceStats;
 } // namespace dom
 
 class SourceMediaStream;
-#endif // USE_FAKE_MEDIA_STREAMS
 
 // A class that represents the pipeline of audio and video
 // The dataflow looks like:
@@ -120,10 +117,14 @@ class MediaPipeline : public sigslot::has_slots<> {
                          RefPtr<TransportFlow> rtcp_transport,
                          nsAutoPtr<MediaPipelineFilter> filter);
 
+  // Used only for testing; adds RTP header extension for RTP Stream Id with
+  // the given id.
+  void AddRIDExtension_m(size_t extension_id);
+  void AddRIDExtension_s(size_t extension_id);
   // Used only for testing; installs a MediaPipelineFilter that filters
-  // everything but the nth ssrc
-  void SelectSsrc_m(size_t ssrc_index);
-  void SelectSsrc_s(size_t ssrc_index);
+  // everything but the given RID
+  void AddRIDFilter_m(const std::string& rid);
+  void AddRIDFilter_s(const std::string& rid);
 
   virtual Direction direction() const { return direction_; }
   virtual const std::string& trackid() const { return track_id_; }
@@ -133,6 +134,45 @@ class MediaPipeline : public sigslot::has_slots<> {
   bool IsDoingRtcpMux() const {
     return (rtp_.type_ == MUX);
   }
+
+  class RtpCSRCStats {
+  public:
+    // Gets an expiration time for CRC info given a reference time,
+    //   this reference time would normally be the time of calling.
+    //   This value can then be used to check if a RtpCSRCStats
+    //   has expired via Expired(...)
+    static DOMHighResTimeStamp
+    GetExpiryFromTime(const DOMHighResTimeStamp aTime);
+
+    RtpCSRCStats(const uint32_t aCsrc,
+                 const DOMHighResTimeStamp aTime);
+    ~RtpCSRCStats() {};
+    // Initialize a webidl representation suitable for adding to a report.
+    //   This assumes that the webidl object is empty.
+    // @param aWebidlObj the webidl binding object to popluate
+    // @param aRtpInboundStreamId the associated RTCInboundRTPStreamStats.id
+    void
+    GetWebidlInstance(dom::RTCRTPContributingSourceStats& aWebidlObj,
+                             const nsString &aInboundRtpStreamId) const;
+    void SetTimestamp(const DOMHighResTimeStamp aTime) { mTimestamp = aTime; }
+    // Check if the RtpCSRCStats has expired, checks against a
+    //   given expiration time.
+    bool Expired(const DOMHighResTimeStamp aExpiry) const {
+      return mTimestamp < aExpiry;
+    }
+  private:
+    static const double constexpr EXPIRY_TIME_MILLISECONDS = 10 * 1000;
+    uint32_t mCsrc;
+    DOMHighResTimeStamp mTimestamp;
+  };
+
+  // Gets the gathered contributing source stats for the last expiration period.
+  // @param aId the stream id to use for populating inboundRtpStreamId field
+  // @param aArr the array to append the stats objects to
+  void
+  GetContributingSourceStats(
+      const nsString& aInboundStreamId,
+      FallibleTArray<dom::RTCRTPContributingSourceStats>& aArr) const;
 
   int32_t rtp_packets_sent() const { return rtp_packets_sent_; }
   int64_t rtp_bytes_sent() const { return rtp_bytes_sent_; }
@@ -153,11 +193,6 @@ class MediaPipeline : public sigslot::has_slots<> {
     MAX_RTP_TYPE
   } RtpType;
 
- protected:
-  virtual ~MediaPipeline();
-  virtual void DetachMedia() {}
-  nsresult AttachTransport_s();
-
   // Separate class to allow ref counting
   class PipelineTransport : public TransportInterface {
    public:
@@ -170,8 +205,8 @@ class MediaPipeline : public sigslot::has_slots<> {
     void Detach() { pipeline_ = nullptr; }
     MediaPipeline *pipeline() const { return pipeline_; }
 
-    virtual nsresult SendRtpPacket(const void* data, int len);
-    virtual nsresult SendRtcpPacket(const void* data, int len);
+    virtual nsresult SendRtpPacket(const uint8_t* data, size_t len);
+    virtual nsresult SendRtcpPacket(const uint8_t* data, size_t len);
 
    private:
     nsresult SendRtpRtcpPacket_s(nsAutoPtr<DataBuffer> data,
@@ -180,6 +215,15 @@ class MediaPipeline : public sigslot::has_slots<> {
     MediaPipeline *pipeline_;  // Raw pointer to avoid cycles
     nsCOMPtr<nsIEventTarget> sts_thread_;
   };
+
+  RefPtr<PipelineTransport> GetPiplelineTransport() {
+    return transport_;
+  }
+
+ protected:
+  virtual ~MediaPipeline();
+  virtual void DetachMedia() {}
+  nsresult AttachTransport_s();
   friend class PipelineTransport;
 
   class TransportInfo {
@@ -267,7 +311,8 @@ class MediaPipeline : public sigslot::has_slots<> {
   int64_t rtp_bytes_sent_;
   int64_t rtp_bytes_received_;
 
-  std::vector<uint32_t> ssrcs_received_;
+  // Only safe to access from STS thread.
+  std::map<uint32_t, RtpCSRCStats> csrc_stats_;
 
   // Written on Init. Read on STS thread.
   std::string pc_;
@@ -278,6 +323,8 @@ class MediaPipeline : public sigslot::has_slots<> {
   nsAutoPtr<webrtc::RtpHeaderParser> rtp_parser_;
 
  private:
+  // Gets the current time as a DOMHighResTimeStamp
+  static DOMHighResTimeStamp GetNow();
   nsresult Init_s();
 
   bool IsRtp(const unsigned char *data, size_t len);
@@ -287,10 +334,11 @@ class ConduitDeleteEvent: public Runnable
 {
 public:
   explicit ConduitDeleteEvent(already_AddRefed<MediaSessionConduit> aConduit) :
+    Runnable("ConduitDeleteEvent"),
     mConduit(aConduit) {}
 
   /* we exist solely to proxy release of the conduit */
-  NS_IMETHOD Run() { return NS_OK; }
+  NS_IMETHOD Run() override { return NS_OK; }
 private:
   RefPtr<MediaSessionConduit> mConduit;
 };
@@ -319,14 +367,12 @@ public:
   // written and used from MainThread
   bool IsVideo() const override;
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // When the principal of the domtrack changes, it calls through to here
   // so that we can determine whether to enable track transmission.
   // `track` has to be null or equal `domtrack_` for us to apply the update.
   virtual void UpdateSinkIdentity_m(dom::MediaStreamTrack* track,
                                     nsIPrincipal* principal,
                                     const PeerIdentity* sinkIdentity);
-#endif
 
   // Called on the main thread.
   void DetachMedia() override;
@@ -349,10 +395,9 @@ public:
 
  private:
   RefPtr<PipelineListener> listener_;
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  RefPtr<AudioProxyThread> audio_processing_;
   RefPtr<VideoFrameFeeder> feeder_;
   RefPtr<VideoFrameConverter> converter_;
-#endif
   dom::MediaStreamTrack* domtrack_;
 };
 
@@ -375,11 +420,9 @@ class MediaPipelineReceive : public MediaPipeline {
 
   int segments_added() const { return segments_added_; }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
   // Sets the PrincipalHandle we set on the media chunks produced by this
   // pipeline. Must be called on the main thread.
   virtual void SetPrincipalHandle_m(const PrincipalHandle& principal_handle) = 0;
-#endif // USE_FAKE_MEDIA_STREAMS
  protected:
   ~MediaPipelineReceive();
 
@@ -416,9 +459,7 @@ class MediaPipelineReceiveAudio : public MediaPipelineReceive {
   nsresult Init() override;
   bool IsVideo() const override { return false; }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
   void SetPrincipalHandle_m(const PrincipalHandle& principal_handle) override;
-#endif // USE_FAKE_MEDIA_STREAMS
 
  private:
   // Separate class to allow ref counting
@@ -455,9 +496,7 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
   nsresult Init() override;
   bool IsVideo() const override { return true; }
 
-#ifndef USE_FAKE_MEDIA_STREAMS
   void SetPrincipalHandle_m(const PrincipalHandle& principal_handle) override;
-#endif // USE_FAKE_MEDIA_STREAMS
 
  private:
   class PipelineRenderer;

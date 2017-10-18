@@ -3,10 +3,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { Cc, Ci, Cu, Cr } = require("chrome");
-loader.lazyRequireGetter(this, "extend",
-  "sdk/util/object", true);
-
 /**
  * Utility functions for managing recording models and their internal data,
  * such as filtering profile samples or offsetting timestamps.
@@ -16,7 +12,8 @@ function mapRecordingOptions(type, options) {
   if (type === "profiler") {
     return {
       entries: options.bufferSize,
-      interval: options.sampleFrequency ? (1000 / (options.sampleFrequency * 1000)) : void 0
+      interval: options.sampleFrequency ? (1000 / (options.sampleFrequency * 1000))
+                                        : void 0
     };
   }
 
@@ -332,7 +329,7 @@ function deflateStack(frames, uniqueStacks) {
  */
 function deflateSamples(samples, uniqueStacks) {
   // Schema:
-  //   [stack, time, responsiveness, rss, uss, frameNumber, power]
+  //   [stack, time, responsiveness, rss, uss]
 
   let deflatedSamples = new Array(samples.length);
   for (let i = 0; i < samples.length; i++) {
@@ -342,9 +339,7 @@ function deflateSamples(samples, uniqueStacks) {
       sample.time,
       sample.responsiveness,
       sample.rss,
-      sample.uss,
-      sample.frameNumber,
-      sample.power
+      sample.uss
     ];
   }
 
@@ -459,9 +454,7 @@ function samplesWithSchema(data) {
       time: slot++,
       responsiveness: slot++,
       rss: slot++,
-      uss: slot++,
-      frameNumber: slot++,
-      power: slot++
+      uss: slot++
     },
     data: data
   };
@@ -568,7 +561,8 @@ UniqueStacks.prototype.getOrAddFrameIndex = function (frame) {
   let implementationIndex = this.getOrAddStringIndex(frame.implementation);
 
   // Super dumb.
-  let hash = `${locationIndex} ${implementationIndex || ""} ${frame.line || ""} ${frame.category || ""}`;
+  let hash = `${locationIndex} ${implementationIndex || ""} ` +
+             `${frame.line || ""} ${frame.category || ""}`;
 
   let index = frameHash[hash];
   if (index !== undefined) {

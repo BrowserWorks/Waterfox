@@ -849,6 +849,8 @@
             '<(deqp_path)/modules/egl/teglMultiContextTests.hpp',
             '<(deqp_path)/modules/egl/teglMultiThreadTests.cpp',
             '<(deqp_path)/modules/egl/teglMultiThreadTests.hpp',
+            '<(deqp_path)/modules/egl/teglMutableRenderBufferTests.cpp',
+            '<(deqp_path)/modules/egl/teglMutableRenderBufferTests.hpp',
             '<(deqp_path)/modules/egl/teglNativeColorMappingTests.cpp',
             '<(deqp_path)/modules/egl/teglNativeColorMappingTests.hpp',
             '<(deqp_path)/modules/egl/teglNativeCoordMappingTests.cpp',
@@ -888,6 +890,8 @@
             '<(deqp_path)/modules/egl/teglTestPackage.cpp',
             '<(deqp_path)/modules/egl/teglTestPackage.hpp',
             '<(deqp_path)/modules/egl/teglTestPackageEntry.cpp',
+            '<(deqp_path)/modules/egl/teglThreadCleanUpTests.cpp',
+            '<(deqp_path)/modules/egl/teglThreadCleanUpTests.hpp',
             '<(deqp_path)/modules/egl/teglVGRenderUtil.cpp',
             '<(deqp_path)/modules/egl/teglVGRenderUtil.hpp',
         ],
@@ -961,12 +965,16 @@
             '<(deqp_path)/framework/common/tcuInterval.cpp',
             '<(deqp_path)/framework/common/tcuPlatform.cpp',
             '<(deqp_path)/framework/common/tcuRandomValueIterator.cpp',
+            '<(deqp_path)/framework/common/tcuRasterizationVerifier.cpp',
+            '<(deqp_path)/framework/common/tcuRasterizationVerifier.hpp',
             '<(deqp_path)/framework/common/tcuRenderTarget.cpp',
             '<(deqp_path)/framework/common/tcuResource.cpp',
             '<(deqp_path)/framework/common/tcuResultCollector.cpp',
             '<(deqp_path)/framework/common/tcuRGBA.cpp',
             '<(deqp_path)/framework/common/tcuStringTemplate.cpp',
             '<(deqp_path)/framework/common/tcuSurface.cpp',
+            '<(deqp_path)/framework/common/tcuSurfaceAccess.cpp',
+            '<(deqp_path)/framework/common/tcuSurfaceAccess.hpp',
             '<(deqp_path)/framework/common/tcuTestCase.cpp',
             '<(deqp_path)/framework/common/tcuTestContext.cpp',
             '<(deqp_path)/framework/common/tcuTestHierarchyIterator.cpp',
@@ -1056,6 +1064,8 @@
             '<(deqp_path)/framework/opengl/gluStrUtil.cpp',
             '<(deqp_path)/framework/opengl/gluTexture.cpp',
             '<(deqp_path)/framework/opengl/gluTextureUtil.cpp',
+            '<(deqp_path)/framework/opengl/gluTextureTestUtil.cpp',
+            '<(deqp_path)/framework/opengl/gluTextureTestUtil.hpp',
             '<(deqp_path)/framework/opengl/gluVarType.cpp',
             '<(deqp_path)/framework/opengl/gluVarTypeUtil.cpp',
             '<(deqp_path)/framework/opengl/simplereference/sglrContext.cpp',
@@ -1130,7 +1140,6 @@
             '<(deqp_path)/modules/glshared/glsRandomShaderCase.cpp',
             '<(deqp_path)/modules/glshared/glsRandomShaderProgram.cpp',
             '<(deqp_path)/modules/glshared/glsRandomUniformBlockCase.cpp',
-            '<(deqp_path)/modules/glshared/glsRasterizationTestUtil.cpp',
             '<(deqp_path)/modules/glshared/glsSamplerObjectTest.cpp',
             '<(deqp_path)/modules/glshared/glsScissorTests.cpp',
             '<(deqp_path)/modules/glshared/glsShaderConstExprTests.cpp',
@@ -1167,6 +1176,11 @@
             '<(deqp_path)/framework/delibs/dethread/unix/deSemaphoreUnix.c',
             '<(deqp_path)/framework/delibs/dethread/unix/deThreadLocalUnix.c',
             '<(deqp_path)/framework/delibs/dethread/unix/deThreadUnix.c',
+        ],
+        'deqp_libtester_sources_android':
+        [
+            '<(deqp_path)/framework/platform/android/tcuAndroidInternals.cpp',
+            '<(deqp_path)/framework/platform/android/tcuAndroidInternals.hpp',
         ],
         'deqp_gpu_test_expectations_sources':
         [
@@ -1250,7 +1264,7 @@
                 {
                     'target_name': 'angle_zlib',
                     'type': 'static_library',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'include_dirs':
                     [
                         '<(zlib_path)',
@@ -1326,7 +1340,7 @@
                 {
                     'target_name': 'angle_libpng',
                     'type': 'static_library',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'dependencies':
                     [
                         'angle_zlib'
@@ -1547,6 +1561,7 @@
                             'AdditionalOptions':
                             [
                                 '/bigobj', # needed for glsBuiltinPrecisionTests.cpp
+                                '/wd4251', # needed for angle_util STL objects not having DLL interface
                             ],
                         },
                     },
@@ -1762,6 +1777,7 @@
                     [
                         'angle_test_support',
                         '<(angle_path)/util/util.gyp:angle_util',
+                        '<(angle_path)/src/angle.gyp:angle_common',
                     ],
                     'export_dependent_settings':
                     [
@@ -1840,7 +1856,7 @@
                 {
                     'target_name': 'angle_deqp_gtest_gles2_tests',
                     'type': 'executable',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'dependencies':
                     [
                         'angle_deqp_gtest_support',
@@ -1855,7 +1871,7 @@
                 {
                     'target_name': 'angle_deqp_gtest_gles3_tests',
                     'type': 'executable',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'dependencies':
                     [
                         'angle_deqp_gtest_support',
@@ -1870,7 +1886,7 @@
                 {
                     'target_name': 'angle_deqp_gtest_gles31_tests',
                     'type': 'executable',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'dependencies':
                     [
                         'angle_deqp_gtest_support',
@@ -1885,7 +1901,7 @@
                 {
                     'target_name': 'angle_deqp_gtest_egl_tests',
                     'type': 'executable',
-                    'includes': [ '../../build/common_defines.gypi', ],
+                    'includes': [ '../../gyp/common_defines.gypi', ],
                     'dependencies':
                     [
                         'angle_deqp_gtest_support',

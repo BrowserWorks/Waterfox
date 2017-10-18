@@ -46,7 +46,7 @@ public:
 
 class FTUserFontData {
 public:
-    NS_INLINE_DECL_REFCOUNTING(FTUserFontData)
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FTUserFontData)
 
     explicit FTUserFontData(FT_Face aFace, const uint8_t* aData)
         : mFace(aFace), mFontData(aData)
@@ -58,7 +58,7 @@ public:
 private:
     ~FTUserFontData()
     {
-        FT_Done_Face(mFace);
+        mozilla::gfx::Factory::ReleaseFTFace(mFace);
         if (mFontData) {
             NS_Free((void*)mFontData);
         }
@@ -66,23 +66,6 @@ private:
 
     FT_Face        mFace;
     const uint8_t *mFontData;
-};
-
-class FTUserFontDataRef {
-public:
-    explicit FTUserFontDataRef(FTUserFontData *aUserFontData)
-        : mUserFontData(aUserFontData)
-    {
-    }
-
-    static void Destroy(void* aData) {
-        FTUserFontDataRef* aUserFontDataRef =
-            static_cast<FTUserFontDataRef*>(aData);
-        delete aUserFontDataRef;
-    }
-
-private:
-    RefPtr<FTUserFontData> mUserFontData;
 };
 
 // The names for the font entry and font classes should really
@@ -124,6 +107,8 @@ public:
     void ForgetHBFace() override;
     void ReleaseGrFace(gr_face* aFace) override;
 
+    double GetAspect();
+
 protected:
     virtual ~gfxFontconfigFontEntry();
 
@@ -133,6 +118,7 @@ protected:
     // helper method for creating cairo font from pattern
     cairo_scaled_font_t*
     CreateScaledFont(FcPattern* aRenderPattern,
+                     gfxFloat aAdjustedSize,
                      const gfxFontStyle *aStyle,
                      bool aNeedsBold);
 
@@ -143,8 +129,6 @@ protected:
 
     // if HB or GR faces are gone, close down the FT_Face
     void MaybeReleaseFTFace();
-
-    double GetAspect();
 
     // pattern for a single face of a family
     nsCountedRef<FcPattern> mFontPattern;
@@ -167,13 +151,35 @@ protected:
 
     // data font
     const uint8_t* mFontData;
+
+    class UnscaledFontCache
+    {
+    public:
+        already_AddRefed<mozilla::gfx::UnscaledFontFontconfig>
+        Lookup(const char* aFile, uint32_t aIndex);
+
+        void Add(const RefPtr<mozilla::gfx::UnscaledFontFontconfig>& aUnscaledFont) {
+            mUnscaledFonts[kNumEntries-1] = aUnscaledFont;
+            MoveToFront(kNumEntries-1);
+        }
+
+    private:
+        void MoveToFront(size_t aIndex);
+
+        static const size_t kNumEntries = 3;
+        mozilla::WeakPtr<mozilla::gfx::UnscaledFont> mUnscaledFonts[kNumEntries];
+    };
+
+    UnscaledFontCache mUnscaledFontCache;
 };
 
 class gfxFontconfigFontFamily : public gfxFontFamily {
 public:
     explicit gfxFontconfigFontFamily(const nsAString& aName) :
         gfxFontFamily(aName),
-        mContainsAppFonts(false)
+        mContainsAppFonts(false),
+        mHasNonScalableFaces(false),
+        mForceScalable(false)
     { }
 
     void FindStyleVariations(FontInfoData *aFontInfoData = nullptr) override;
@@ -187,18 +193,27 @@ public:
         mContainsAppFonts = aContainsAppFonts;
     }
 
+    void
+    FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
+                         nsTArray<gfxFontEntry*>& aFontEntryList,
+                         bool& aNeedsSyntheticBold) override;
+
 protected:
-    virtual ~gfxFontconfigFontFamily() { }
+    virtual ~gfxFontconfigFontFamily();
 
     nsTArray<nsCountedRef<FcPattern> > mFontPatterns;
 
     bool      mContainsAppFonts;
+    bool      mHasNonScalableFaces;
+    bool      mForceScalable;
 };
 
 class gfxFontconfigFont : public gfxFontconfigFontBase {
 public:
-    gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
+    gfxFontconfigFont(const RefPtr<mozilla::gfx::UnscaledFontFontconfig> &aUnscaledFont,
+                      cairo_scaled_font_t *aScaledFont,
                       FcPattern *aPattern,
+                      gfxFloat aAdjustedSize,
                       gfxFontEntry *aFontEntry,
                       const gfxFontStyle *aFontStyle,
                       bool aNeedsBold);
@@ -206,8 +221,6 @@ public:
 protected:
     virtual ~gfxFontconfigFont();
 };
-
-class nsILanguageAtomService;
 
 class gfxFcPlatformFontList : public gfxPlatformFontList {
 public:
@@ -218,15 +231,12 @@ public:
     }
 
     // initialize font lists
-    nsresult InitFontList() override;
+    virtual nsresult InitFontListForPlatform() override;
 
     void GetFontList(nsIAtom *aLangGroup,
                      const nsACString& aGenericFamily,
                      nsTArray<nsString>& aListOfFonts) override;
 
-
-    gfxFontFamily*
-    GetDefaultFont(const gfxFontStyle* aStyle) override;
 
     gfxFontEntry*
     LookupLocalFont(const nsAString& aFontName, uint16_t aWeight,
@@ -279,6 +289,9 @@ protected:
     bool PrefFontListsUseOnlyGenerics();
 
     static void CheckFontUpdates(nsITimer *aTimer, void *aThis);
+
+    virtual gfxFontFamily*
+    GetDefaultFontForPlatform(const gfxFontStyle* aStyle) override;
 
 #ifdef MOZ_BUNDLED_FONTS
     void ActivateBundledFonts();

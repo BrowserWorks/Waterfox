@@ -35,17 +35,16 @@ protected:
   virtual ~ImageLayerComposite();
 
 public:
-  virtual LayerRenderState GetRenderState() override;
-
   virtual void Disconnect() override;
 
   virtual bool SetCompositableHost(CompositableHost* aHost) override;
 
   virtual Layer* GetLayer() override;
 
-  virtual void SetLayerManager(LayerManagerComposite* aManager) override;
+  virtual void SetLayerManager(HostLayerManager* aManager) override;
 
-  virtual void RenderLayer(const gfx::IntRect& aClipRect) override;
+  virtual void RenderLayer(const gfx::IntRect& aClipRect,
+                           const Maybe<gfx::Polygon>& aGeometry) override;
 
   virtual void ComputeEffectiveTransforms(const mozilla::gfx::Matrix4x4& aTransformToSurface) override;
 
@@ -55,7 +54,7 @@ public:
 
   virtual void GenEffectChain(EffectChain& aEffect) override;
 
-  virtual LayerComposite* AsLayerComposite() override { return this; }
+  virtual HostLayer* AsHostLayer() override { return this; }
 
   virtual const char* Name() const override { return "ImageLayerComposite"; }
 

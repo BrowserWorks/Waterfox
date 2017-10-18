@@ -12,7 +12,7 @@
         SimpleTest.waitForExplicitFinish();
         SimpleTest.requestFlakyTimeout("untriaged");
 
-        const { NetUtil } = SpecialPowers.Cu.import('resource://gre/modules/NetUtil.jsm');
+        const { NetUtil } = SpecialPowers.Cu.import("resource://gre/modules/NetUtil.jsm");
 
         var prefs = Cc["@mozilla.org/preferences-service;1"].
                         getService(Ci.nsIPrefBranch);
@@ -22,8 +22,8 @@
         function dialogMonitor() {
             var observerService = SpecialPowers.Cc["@mozilla.org/observer-service;1"]
                                                .getService(Ci.nsIObserverService);
-            observerService.addObserver(this, "domwindowopened", false);
-            observerService.addObserver(this, "domwindowclosed", false);
+            observerService.addObserver(this, "domwindowopened");
+            observerService.addObserver(this, "domwindowclosed");
         }
 
         /*
@@ -36,37 +36,34 @@
          * we need to do SpecialPowers.wrapCallbackObject directly on the prototype.
          */
         dialogMonitor.prototype = SpecialPowers.wrapCallbackObject({
-            windowsOpen : 0,
-            windowsRegistered : 0,
+            windowsOpen: 0,
+            windowsRegistered: 0,
 
-            QueryInterface : function (iid) {
+            QueryInterface(iid) {
                 const interfaces = [Ci.nsIObserver, Ci.nsISupports];
 
-                if (!interfaces.some( function(v) { return iid.equals(v) } ))
+                if (!interfaces.some( function(v) { return iid.equals(v); } ))
                         throw SpecialPowers.Cr.NS_ERROR_NO_INTERFACE;
                 return this;
             },
 
-            observe: function(subject, topic, data) {
+            observe(subject, topic, data) {
                 if (topic === "domwindowopened") {
                     this.windowsOpen++;
                     this.windowsRegistered++;
-                    return;
-                }
-                if (topic === "domwindowclosed") {
+                } else if (topic === "domwindowclosed") {
                     this.windowsOpen--;
-                    return;
                 }
             },
 
-            shutdown: function() {
+            shutdown() {
                 var observerService = SpecialPowers.Cc["@mozilla.org/observer-service;1"]
                                                .getService(Ci.nsIObserverService);
                 observerService.removeObserver(this, "domwindowopened");
                 observerService.removeObserver(this, "domwindowclosed");
             },
 
-            reset: function() {
+            reset() {
                 this.windowsOpen = 0;
                 this.windowsRegistered = 0;
             }
@@ -121,7 +118,7 @@
             for (i in logins)
                 pwmgr.removeLogin(logins[i]);
 
-            var authMgr = SpecialPowers.Cc['@mozilla.org/network/http-auth-manager;1']
+            var authMgr = SpecialPowers.Cc["@mozilla.org/network/http-auth-manager;1"]
                                        .getService(Ci.nsIHttpAuthManager);
             authMgr.clearAll();
 
@@ -129,23 +126,23 @@
             SimpleTest.finish();
         }
 
-	var resolveCallback = SpecialPowers.wrapCallbackObject({
-	QueryInterface : function (iid) {
-	const interfaces = [Ci.nsIProtocolProxyCallback, Ci.nsISupports];
+        var resolveCallback = SpecialPowers.wrapCallbackObject({
+        QueryInterface(iid) {
+        const interfaces = [Ci.nsIProtocolProxyCallback, Ci.nsISupports];
 
-        if (!interfaces.some( function(v) { return iid.equals(v) } ))
+        if (!interfaces.some( function(v) { return iid.equals(v); } ))
           throw SpecialPowers.Cr.NS_ERROR_NO_INTERFACE;
-	  return this;
-	},
+          return this;
+        },
 
-	onProxyAvailable : function (req, uri, pi, status) {
+        onProxyAvailable(req, uri, pi, status) {
           initLogins(pi);
           doTest(testNum);
-	}
-	});
+        }
+        });
 
-	function startup() {
-            //need to allow for arbitrary network servers defined in PAC instead of a hardcoded moz-proxy.
+        function startup() {
+            // Need to allow for arbitrary network servers defined in PAC instead of a hardcoded moz-proxy.
             var channel = NetUtil.newChannel({
                 uri: "http://example.com",
                 loadUsingSystemPrincipal: true
@@ -155,14 +152,14 @@
                                    .getService();
 
             pps.asyncResolve(channel, 0, resolveCallback);
-	}
+        }
 
         // --------------- Test loop spin ----------------
         var testNum = 1;
         var iframe1;
         var iframe2a;
         var iframe2b;
-        window.onload = function () {
+        window.onload = function() {
             iframe1 = document.getElementById("iframe1");
             iframe2a = document.getElementById("iframe2a");
             iframe2b = document.getElementById("iframe2b");
@@ -170,8 +167,8 @@
             iframe2a.onload = onFrameLoad;
             iframe2b.onload = onFrameLoad;
 
-	    startup();
-        }
+            startup();
+        };
 
         var expectedLoads;
         var expectedDialogs;
@@ -189,7 +186,7 @@
             }
         }
 
-        function doTest(testNum)
+        function doTest(testNumber)
         {
             /*
              * These contentDocument variables are located here,
@@ -203,7 +200,7 @@
             var exampleCom = "http://example.com/tests/toolkit/components/passwordmgr/test/";
             var exampleOrg = "http://example.org/tests/toolkit/components/passwordmgr/test/";
 
-            switch (testNum)
+            switch (testNumber)
             {
             case 1:
                 // Load through a single proxy with authentication required 3 different
@@ -213,29 +210,29 @@
                 ok(true, "doTest testNum 1");
                 expectedLoads = 3;
                 expectedDialogs = 3;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "r=1&"+
-                    "user=user1name&"+
-                    "pass=user1pass&"+
-                    "realm=mochirealm&"+
-                    "proxy_user=proxy_user&"+
-                    "proxy_pass=proxy_pass&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "r=1&" +
+                    "user=user1name&" +
+                    "pass=user1pass&" +
+                    "realm=mochirealm&" +
+                    "proxy_user=proxy_user&" +
+                    "proxy_pass=proxy_pass&" +
                     "proxy_realm=proxy_realm";
-                iframe2a.src = exampleOrg + "authenticate.sjs?"+
-                    "r=2&"+
-                    "user=user2name&"+
-                    "pass=user2pass&"+
-                    "realm=mochirealm2&"+
-                    "proxy_user=proxy_user&"+
-                    "proxy_pass=proxy_pass&"+
+                iframe2a.src = exampleOrg + "authenticate.sjs?" +
+                    "r=2&" +
+                    "user=user2name&" +
+                    "pass=user2pass&" +
+                    "realm=mochirealm2&" +
+                    "proxy_user=proxy_user&" +
+                    "proxy_pass=proxy_pass&" +
                     "proxy_realm=proxy_realm";
-                iframe2b.src = exampleOrg + "authenticate.sjs?"+
-                    "r=3&"+
-                    "user=user2name&"+
-                    "pass=user2pass&"+
-                    "realm=mochirealm2&"+
-                    "proxy_user=proxy_user&"+
-                    "proxy_pass=proxy_pass&"+
+                iframe2b.src = exampleOrg + "authenticate.sjs?" +
+                    "r=3&" +
+                    "user=user2name&" +
+                    "pass=user2pass&" +
+                    "realm=mochirealm2&" +
+                    "proxy_user=proxy_user&" +
+                    "proxy_pass=proxy_pass&" +
                     "proxy_realm=proxy_realm";
                 break;
 
@@ -258,12 +255,12 @@
                 ok(true, "doTest testNum 3");
                 expectedLoads = 1;
                 expectedDialogs = 1;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "user=user4name&"+
-                    "pass=user4pass&"+
-                    "realm=mochirealm4&"+
-                    "proxy_user=proxy_user3&"+
-                    "proxy_pass=proxy_pass3&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "user=user4name&" +
+                    "pass=user4pass&" +
+                    "realm=mochirealm4&" +
+                    "proxy_user=proxy_user3&" +
+                    "proxy_pass=proxy_pass3&" +
                     "proxy_realm=proxy_realm3";
                 break;
 
@@ -274,12 +271,12 @@
                 ok(true, "doTest testNum 4");
                 expectedLoads = 1;
                 expectedDialogs = 2;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "user=user4name&"+
-                    "pass=user4pass&"+
-                    "realm=mochirealm4&"+
-                    "proxy_user=proxy_user3&"+
-                    "proxy_pass=proxy_pass3&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "user=user4name&" +
+                    "pass=user4pass&" +
+                    "realm=mochirealm4&" +
+                    "proxy_user=proxy_user3&" +
+                    "proxy_pass=proxy_pass3&" +
                     "proxy_realm=proxy_realm3";
 
 
@@ -294,13 +291,13 @@
                 ok(true, "doTest testNum 5");
                 expectedLoads = 1;
                 expectedDialogs = 1;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "user=user5name&"+
-                    "pass=user5pass&"+
-                    "realm=mochirealm5&"+
-                    "proxy_user=proxy_user4&"+
-                    "proxy_pass=proxy_pass4&"+
-                    "proxy_realm=proxy_realm4&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "user=user5name&" +
+                    "pass=user5pass&" +
+                    "realm=mochirealm5&" +
+                    "proxy_user=proxy_user4&" +
+                    "proxy_pass=proxy_pass4&" +
+                    "proxy_realm=proxy_realm4&" +
                     "huge=1";
                 break;
 
@@ -311,13 +308,13 @@
                 ok(true, "doTest testNum 6");
                 expectedLoads = 1;
                 expectedDialogs = 2;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "user=user5name&"+
-                    "pass=user5pass&"+
-                    "realm=mochirealm5&"+
-                    "proxy_user=proxy_user4&"+
-                    "proxy_pass=proxy_pass4&"+
-                    "proxy_realm=proxy_realm4&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "user=user5name&" +
+                    "pass=user5pass&" +
+                    "realm=mochirealm5&" +
+                    "proxy_user=proxy_user4&" +
+                    "proxy_pass=proxy_pass4&" +
+                    "proxy_realm=proxy_realm4&" +
                     "huge=1";
                 break;
 
@@ -337,14 +334,14 @@
                 ok(true, "doTest testNum 8");
                 expectedLoads = 1;
                 expectedDialogs = 5;
-                iframe1.src = exampleCom + "authenticate.sjs?"+
-                    "user=user6name&"+
-                    "pass=user6pass&"+
-                    "realm=mochirealm6&"+
-                    "proxy_user=proxy_user5&"+
-                    "proxy_pass=proxy_pass5&"+
-                    "proxy_realm=proxy_realm5&"+
-                    "huge=1&"+
+                iframe1.src = exampleCom + "authenticate.sjs?" +
+                    "user=user6name&" +
+                    "pass=user6pass&" +
+                    "realm=mochirealm6&" +
+                    "proxy_user=proxy_user5&" +
+                    "proxy_pass=proxy_pass5&" +
+                    "proxy_realm=proxy_realm5&" +
+                    "huge=1&" +
                     "multiple=3";
                 break;
 
@@ -356,11 +353,11 @@
             startCallbackTimer();
         }
 
-        function handleDialog(doc, testNum)
+        function handleDialog(doc, testNumber)
         {
             var dialog        = doc.getElementById("commonDialog");
 
-            switch (testNum)
+            switch (testNumber)
             {
                 case 1:
                 case 2:
@@ -403,14 +400,14 @@
                     break;
 
                 default:
-                    ok(false, "Unhandled testNum "+testNum+" in handleDialog");
+                    ok(false, "Unhandled testNum " + testNumber + " in handleDialog");
             }
 
             if (--expectedDialogs > 0)
                 startCallbackTimer();
         }
 
-        function doCheck(testNum)
+        function doCheck(testNumber)
         {
             var iframe1Doc = SpecialPowers.wrap(iframe1).contentDocument;
             var iframe2aDoc = SpecialPowers.wrap(iframe2a).contentDocument;
@@ -418,7 +415,7 @@
             var authok1;
             var proxyok1;
             var footnote;
-            switch (testNum)
+            switch (testNumber)
             {
                 case 1:
                     ok(true, "doCheck testNum 1");
@@ -526,7 +523,7 @@
                     break;
 
                 default:
-                    ok(false, "Unhandled testNum "+testNum+" in doCheck");
+                    ok(false, "Unhandled testNum " + testNumber + " in doCheck");
             }
         }
 

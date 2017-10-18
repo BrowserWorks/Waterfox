@@ -11,8 +11,8 @@
 
 /*
  * These macros should not be used with the NSPR printf-like functions or their
- * users, e.g. mozilla/Logging.h.  If you need to use NSPR's facilities, see the
- * comment on supported formats at the top of nsprpub/pr/include/prprf.h.
+ * users.  If you need to use NSPR's facilities, see the comment on
+ * supported formats at the top of nsprpub/pr/include/prprf.h.
  */
 
 /*
@@ -47,6 +47,38 @@
 #  define PRIxPTR "x"  /* uintptr_t */
 #  undef  PRIXPTR      /* uintptr_t */
 #  define PRIXPTR "X"  /* uintptr_t */
+#endif
+
+/*
+ * Fix up Android's broken macros for [u]int_fastN_t. On ARM64, Android's
+ * PRI*FAST16/32 macros are defined as "d", but the types themselves are defined
+ * as long and unsigned long.
+ */
+#if defined(ANDROID) && defined(__LP64__)
+#  undef  PRIdFAST16         /* int_fast16_t */
+#  define PRIdFAST16 PRId64  /* int_fast16_t */
+#  undef  PRIiFAST16         /* int_fast16_t */
+#  define PRIiFAST16 PRIi64  /* int_fast16_t */
+#  undef  PRIoFAST16         /* uint_fast16_t */
+#  define PRIoFAST16 PRIo64  /* uint_fast16_t */
+#  undef  PRIuFAST16         /* uint_fast16_t */
+#  define PRIuFAST16 PRIu64  /* uint_fast16_t */
+#  undef  PRIxFAST16         /* uint_fast16_t */
+#  define PRIxFAST16 PRIx64  /* uint_fast16_t */
+#  undef  PRIXFAST16         /* uint_fast16_t */
+#  define PRIXFAST16 PRIX64  /* uint_fast16_t */
+#  undef  PRIdFAST32         /* int_fast32_t */
+#  define PRIdFAST32 PRId64  /* int_fast32_t */
+#  undef  PRIiFAST32         /* int_fast32_t */
+#  define PRIiFAST32 PRIi64  /* int_fast32_t */
+#  undef  PRIoFAST32         /* uint_fast32_t */
+#  define PRIoFAST32 PRIo64  /* uint_fast32_t */
+#  undef  PRIuFAST32         /* uint_fast32_t */
+#  define PRIuFAST32 PRIu64  /* uint_fast32_t */
+#  undef  PRIxFAST32         /* uint_fast32_t */
+#  define PRIxFAST32 PRIx64  /* uint_fast32_t */
+#  undef  PRIXFAST32         /* uint_fast32_t */
+#  define PRIXFAST32 PRIX64  /* uint_fast32_t */
 #endif
 
 #endif  /* mozilla_IntegerPrintfMacros_h_ */

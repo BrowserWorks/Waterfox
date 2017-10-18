@@ -69,18 +69,30 @@ interface nsICookieManager2 : nsICookieManager
                      in boolean     aIsHttpOnly,
                      in boolean     aIsSession,
                      in int64_t     aExpiry,
-                     in NeckoOriginAttributesPtr aOriginAttributes);
+                     in OriginAttributesPtr aOriginAttributes);
 
   /**
    * Find whether a given cookie already exists.
    *
    * @param aCookie
    *        the cookie to look for
+   * @param aOriginAttributes
+   *        nsICookie2 contains an originAttributes but if nsICookie2 is
+   *        implemented in JS, we can't retrieve its originAttributes because
+   *        the getter is marked [implicit_jscontext]. This optional parameter
+   *        is a workaround.
    *
    * @return true if a cookie was found which matches the host, path, and name
    *         fields of aCookie
    */
-  boolean cookieExists(in nsICookie2 aCookie);
+  [implicit_jscontext, optional_argc]
+  boolean cookieExists(in nsICookie2 aCookie,
+                       [optional] in jsval aOriginAttributes);
+
+  [notxpcom]
+  nsresult cookieExistsNative(in nsICookie2 aCookie,
+                              in OriginAttributesPtr aOriginAttributes,
+                              out boolean aExists);
 
   /**
    * Count how many cookies exist within the base domain of 'aHost'.
@@ -132,13 +144,21 @@ interface nsICookieManager2 : nsICookieManager
    * Returns an enumerator of all cookies whose origin attributes matches aPattern
    *
    * @param aPattern origin attribute pattern in JSON format
+   *
+   * @param aHost
+   *        the host string to search for, e.g. "google.com". this should consist
+   *        of only the host portion of a URI. see @add for a description of
+   *        acceptable host strings. This attribute is optional. It will search
+   *        all hosts if this attribute is not given.
    */
-  nsISimpleEnumerator getCookiesWithOriginAttributes(in DOMString aPattern);
+  nsISimpleEnumerator getCookiesWithOriginAttributes(in DOMString aPattern,
+                                                     [optional] in AUTF8String aHost);
 
   /**
    * Remove all the cookies whose origin attributes matches aPattern
    *
    * @param aPattern origin attribute pattern in JSON format
    */
-  void removeCookiesWithOriginAttributes(in DOMString aPattern);
+  void removeCookiesWithOriginAttributes(in DOMString aPattern,
+                                         [optional] in AUTF8String aHost);
 };

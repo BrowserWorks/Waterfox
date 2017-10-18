@@ -4,7 +4,7 @@
 
 include protocol PCache;
 include protocol PCacheStreamControl;
-include protocol PSendStream;
+include protocol PChildToParentStream;
 include IPCStream;
 include ChannelInfo;
 include PBackgroundSharedTypes;
@@ -50,12 +50,12 @@ struct HeadersEntry
   nsCString name;
   nsCString value;
 };
-
 struct CacheRequest
 {
   nsCString method;
   nsCString urlWithoutQuery;
   nsCString urlQuery;
+  nsCString urlFragment;
   HeadersEntry[] headers;
   HeadersGuardEnum headersGuard;
   nsString referrer;
@@ -66,6 +66,7 @@ struct CacheRequest
   uint32_t contentPolicyType;
   RequestCache requestCache;
   RequestRedirect requestRedirect;
+  nsString integrity;
 };
 
 union CacheRequestOrVoid

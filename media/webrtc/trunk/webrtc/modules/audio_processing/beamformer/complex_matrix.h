@@ -14,7 +14,6 @@
 #include <complex>
 
 #include "webrtc/base/checks.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/modules/audio_processing/beamformer/matrix.h"
 
 namespace webrtc {
@@ -27,10 +26,10 @@ class ComplexMatrix : public Matrix<complex<T> > {
  public:
   ComplexMatrix() : Matrix<complex<T> >() {}
 
-  ComplexMatrix(int num_rows, int num_columns)
+  ComplexMatrix(size_t num_rows, size_t num_columns)
       : Matrix<complex<T> >(num_rows, num_columns) {}
 
-  ComplexMatrix(const complex<T>* data, int num_rows, int num_columns)
+  ComplexMatrix(const complex<T>* data, size_t num_rows, size_t num_columns)
       : Matrix<complex<T> >(data, num_rows, num_columns) {}
 
   // Complex Matrix operations.
@@ -51,7 +50,7 @@ class ComplexMatrix : public Matrix<complex<T> > {
 
   ComplexMatrix& ConjugateTranspose() {
     this->CopyDataToScratch();
-    int num_rows = this->num_rows();
+    size_t num_rows = this->num_rows();
     this->SetNumRows(this->num_columns());
     this->SetNumColumns(num_rows);
     this->Resize();
@@ -59,8 +58,8 @@ class ComplexMatrix : public Matrix<complex<T> > {
   }
 
   ComplexMatrix& ConjugateTranspose(const ComplexMatrix& operand) {
-    CHECK_EQ(operand.num_rows(), this->num_columns());
-    CHECK_EQ(operand.num_columns(), this->num_rows());
+    RTC_CHECK_EQ(operand.num_rows(), this->num_columns());
+    RTC_CHECK_EQ(operand.num_columns(), this->num_rows());
     return ConjugateTranspose(operand.elements());
   }
 
@@ -82,8 +81,8 @@ class ComplexMatrix : public Matrix<complex<T> > {
  private:
   ComplexMatrix& ConjugateTranspose(const complex<T>* const* src) {
     complex<T>* const* elements = this->elements();
-    for (int i = 0; i < this->num_rows(); ++i) {
-      for (int j = 0; j < this->num_columns(); ++j) {
+    for (size_t i = 0; i < this->num_rows(); ++i) {
+      for (size_t j = 0; j < this->num_columns(); ++j) {
         elements[i][j] = conj(src[j][i]);
       }
     }

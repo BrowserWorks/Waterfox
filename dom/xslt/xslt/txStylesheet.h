@@ -32,22 +32,24 @@ public:
 
     txStylesheet();
     nsresult init();
-    
+
     NS_INLINE_DECL_REFCOUNTING(txStylesheet)
 
-    txInstruction* findTemplate(const txXPathNode& aNode,
-                                const txExpandedName& aMode,
-                                txIMatchContext* aContext,
-                                ImportFrame* aImportedBy,
-                                ImportFrame** aImportFrame);
+    nsresult findTemplate(const txXPathNode& aNode,
+                          const txExpandedName& aMode,
+                          txIMatchContext* aContext,
+                          ImportFrame* aImportedBy,
+                          txInstruction** aTemplate,
+                          ImportFrame** aImportFrame);
     txDecimalFormat* getDecimalFormat(const txExpandedName& aName);
     txInstruction* getAttributeSet(const txExpandedName& aName);
     txInstruction* getNamedTemplate(const txExpandedName& aName);
     txOutputFormat* getOutputFormat();
     GlobalVariable* getGlobalVariable(const txExpandedName& aName);
     const txOwningExpandedNameMap<txXSLKey>& getKeyMap();
-    bool isStripSpaceAllowed(const txXPathNode& aNode,
-                               txIMatchContext* aContext);
+    nsresult isStripSpaceAllowed(const txXPathNode& aNode,
+                                 txIMatchContext* aContext,
+                                 bool& aAllowed);
 
     /**
      * Called by the stylesheet compiler once all stylesheets has been read.
@@ -117,35 +119,35 @@ private:
 
     // List of ImportFrames
     txList mImportFrames;
-    
+
     // output format
     txOutputFormat mOutputFormat;
 
     // List of first instructions of templates. This is the owner of all
     // instructions used in templates
     txList mTemplateInstructions;
-    
+
     // Root importframe
     ImportFrame* mRootFrame;
-    
+
     // Named templates
     txExpandedNameMap<txInstruction> mNamedTemplates;
-    
+
     // Map with all decimal-formats
     txOwningExpandedNameMap<txDecimalFormat> mDecimalFormats;
 
     // Map with all named attribute sets
     txExpandedNameMap<txInstruction> mAttributeSets;
-    
+
     // Map with all global variables and parameters
     txOwningExpandedNameMap<GlobalVariable> mGlobalVariables;
-    
+
     // Map with all keys
     txOwningExpandedNameMap<txXSLKey> mKeys;
-    
+
     // Array of all txStripSpaceTests, sorted in acending order
     nsTArray<nsAutoPtr<txStripSpaceTest> > mStripSpaceTests;
-    
+
     // Default templates
     nsAutoPtr<txInstruction> mContainerTemplate;
     nsAutoPtr<txInstruction> mCharactersTemplate;
@@ -166,8 +168,10 @@ public:
     {
     }
 
-    bool matches(const txXPathNode& aNode, txIMatchContext* aContext) {
-        return mNameTest.matches(aNode, aContext);
+    nsresult matches(const txXPathNode& aNode, txIMatchContext* aContext,
+                     bool& aMatched)
+    {
+        return mNameTest.matches(aNode, aContext, aMatched);
     }
 
     bool stripsSpace() {

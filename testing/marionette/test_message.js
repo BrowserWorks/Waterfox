@@ -17,6 +17,7 @@ add_test(function test_MessageOrigin() {
 add_test(function test_Message_fromMsg() {
   let cmd = new Command(4, "foo");
   let resp = new Response(5, () => {});
+  resp.error = "foo";
 
   ok(Message.fromMsg(cmd.toMsg()) instanceof Command);
   ok(Message.fromMsg(resp.toMsg()) instanceof Response);
@@ -43,14 +44,14 @@ add_test(function test_Command_onresponse() {
   let onerrorOk = false;
   let onresultOk = false;
 
-  let cmd = new Command();
+  let cmd = new Command(7, "foo");
   cmd.onerror = () => onerrorOk = true;
   cmd.onresult = () => onresultOk = true;
 
-  let errorResp = new Response();
+  let errorResp = new Response(8, () => {});
   errorResp.error = new WebDriverError("foo");
 
-  let bodyResp = new Response();
+  let bodyResp = new Response(9, () => {});
   bodyResp.body = "bar";
 
   cmd.onresponse(errorResp);
@@ -63,7 +64,7 @@ add_test(function test_Command_onresponse() {
   run_next_test();
 });
 
-add_test(function test_Command_fromMsg() {
+add_test(function test_Command_ctor() {
   let cmd = new Command(42, "bar", {bar: "baz"});
   let msg = cmd.toMsg();
 
@@ -95,6 +96,15 @@ add_test(function test_Command_fromMsg() {
   equal(c1.name, c2.name);
   equal(c1.parameters, c2.parameters);
 
+  Assert.throws(() => Command.fromMsg([null, 2, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([1, 2, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([0, null, "foo", {}]));
+  Assert.throws(() => Command.fromMsg([0, 2, null, {}]));
+  Assert.throws(() => Command.fromMsg([0, 2, "foo", false]));
+
+  let nullParams = Command.fromMsg([0, 2, "foo", null]);
+  equal("[object Object]", Object.prototype.toString.call(nullParams.parameters));
+
   run_next_test();
 });
 
@@ -103,7 +113,7 @@ add_test(function test_Command_TYPE() {
   run_next_test();
 });
 
-add_test(function test_Response() {
+add_test(function test_Response_ctor() {
   let handler = () => run_next_test();
 
   let resp = new Response(42, handler);
@@ -140,26 +150,57 @@ add_test(function test_Response_send() {
   run_next_test();
 });
 
-add_test(function test_Response_sendError() {
-  let err = new WebDriverError();
-  let resp = new Response(42, r => {
-    deepEqual(error.toJson(err), r.error);
-    equal(null, r.body);
-    equal(false, r.sent);
-  });
-
-  resp.sendError(err);
-  equal(true, resp.sent);
+add_test(function test_Response_sendError_sent() {
+  let resp = new Response(42, r => equal(false, r.sent));
+  resp.sendError(new WebDriverError());
+  ok(resp.sent);
   Assert.throws(() => resp.send(), /already been sent/);
 
-  resp.sent = false;
-  Assert.throws(() => resp.sendError(new Error()));
+  run_next_test();
+});
+
+add_test(function test_Response_sendError_body() {
+  let resp = new Response(42, r => equal(null, r.body));
+  resp.sendError(new WebDriverError());
+
+  run_next_test();
+});
+
+add_test(function test_Response_sendError_errorSerialisation() {
+  let err1 = new WebDriverError();
+  let resp1 = new Response(42);
+  resp1.sendError(err1);
+  equal(err1.status, resp1.error.error);
+  deepEqual(err1.toJSON(), resp1.error);
+
+  let err2 = new InvalidArgumentError();
+  let resp2 = new Response(43);
+  resp2.sendError(err2);
+  equal(err2.status, resp2.error.error);
+  deepEqual(err2.toJSON(), resp2.error);
+
+  run_next_test();
+});
+
+add_test(function test_Response_sendError_wrapInternalError() {
+  let err = new ReferenceError("foo");
+
+  // errors that originate from JavaScript (i.e. Marionette implementation
+  // issues) should be converted to UnknownError for transport
+  let resp = new Response(42, r => {
+    equal("unknown error", r.error.error);
+    equal(false, resp.sent);
+  });
+
+  // they should also throw after being sent
+  Assert.throws(() => resp.sendError(err), /foo/);
+  equal(true, resp.sent);
 
   run_next_test();
 });
 
 add_test(function test_Response_toMsg() {
-  let resp = new Response(42);
+  let resp = new Response(42, () => {});
   let msg = resp.toMsg();
 
   equal(Response.TYPE, msg[0]);
@@ -171,7 +212,7 @@ add_test(function test_Response_toMsg() {
 });
 
 add_test(function test_Response_toString() {
-  let resp = new Response(42);
+  let resp = new Response(42, () => {});
   resp.error = "foo";
   resp.body = "bar";
 
@@ -184,7 +225,7 @@ add_test(function test_Response_toString() {
 });
 
 add_test(function test_Response_fromMsg() {
-  let r1 = new Response(42);
+  let r1 = new Response(42, () => {});
   r1.error = "foo";
   r1.body = "bar";
 
@@ -194,6 +235,12 @@ add_test(function test_Response_fromMsg() {
   equal(r1.id, r2.id);
   equal(r1.error, r2.error);
   equal(r1.body, r2.body);
+
+  Assert.throws(() => Response.fromMsg([null, 2, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([0, 2, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([1, null, "foo", {}]));
+  Assert.throws(() => Response.fromMsg([1, 2, null, {}]));
+  Response.fromMsg([1, 2, "foo", null]);
 
   run_next_test();
 });

@@ -1,4 +1,7 @@
-protocol multimanNonexistentManagers {
+//error: protocol `Starsky' referenced as |manager| of `multimanNonexistentMgrs' has not been declared
+//error: protocol `Hutch' referenced as |manager| of `multimanNonexistentMgrs' has not been declared
+
+protocol multimanNonexistentMgrs {
     manager Starsky or Hutch;
 
 child:

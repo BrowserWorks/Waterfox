@@ -4,23 +4,37 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 EXPORTS.mozilla.dom += [
-    'DOMStorage.h',
-    'DOMStorageIPC.h',
+    'LocalStorage.h',
+    'LocalStorageManager.h',
+    'SessionStorageManager.h',
+    'Storage.h',
+    'StorageIPC.h',
+    'StorageNotifierService.h',
+    'StorageUtils.h',
 ]
 
 UNIFIED_SOURCES += [
-    'DOMStorage.cpp',
-    'DOMStorageCache.cpp',
-    'DOMStorageDBThread.cpp',
-    'DOMStorageDBUpdater.cpp',
-    'DOMStorageIPC.cpp',
-    'DOMStorageManager.cpp',
-    'DOMStorageObserver.cpp',
+    'LocalStorage.cpp',
+    'LocalStorageCache.cpp',
+    'LocalStorageManager.cpp',
+    'SessionStorage.cpp',
+    'SessionStorageCache.cpp',
+    'SessionStorageManager.cpp',
+    'Storage.cpp',
+    'StorageDBThread.cpp',
+    'StorageDBUpdater.cpp',
+    'StorageIPC.cpp',
+    'StorageNotifierService.cpp',
+    'StorageObserver.cpp',
+    'StorageUtils.cpp',
 ]
 
 IPDL_SOURCES += [
-    'PStorage.ipdl',
+    'PBackgroundStorage.ipdl',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

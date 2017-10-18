@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <title>Test allow-presentation sandboxing flag</title>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 "use strict";
 
@@ -71,19 +71,36 @@ function testDefaultRequest() {
   });
 }
 
+function testReconnectRequest() {
+  return new Promise(function(aResolve, aReject) {
+    var request = new PresentationRequest("http://example.com");
+
+    request.reconnect("dummyId").then(
+      function(aConnection) {
+        ok(false, "Unexpected success, should get a security error.");
+        aReject();
+      },
+      function(aError) {
+        is(aError.name, "SecurityError", "Should get a security error.");
+        aResolve();
+      }
+    );
+  });
+}
+
 function runTest() {
   testGetAvailability()
   .then(testStartRequest)
   .then(testDefaultRequest)
+  .then(testReconnectRequest)
   .then(finish);
 }
 
-window.addEventListener("message", function onMessage(evt) {
-  window.removeEventListener("message", onMessage);
+window.addEventListener("message", function(evt) {
   if (evt.data === "start") {
     runTest();
   }
-}, false);
+}, {once: true});
 
 window.setTimeout(function() {
   command("ready-to-start");

@@ -48,21 +48,16 @@ public:
   {
     return mInternalResponse->Type();
   }
-
   void
   GetUrl(nsAString& aUrl) const
   {
-    nsCString url;
-    mInternalResponse->GetURL(url);
-    CopyUTF8toUTF16(url, aUrl);
+    CopyUTF8toUTF16(mInternalResponse->GetURL(), aUrl);
   }
-
   bool
   Redirected() const
   {
     return mInternalResponse->IsRedirected();
   }
-
   uint16_t
   Status() const
   {
@@ -119,7 +114,7 @@ public:
 
   static already_AddRefed<Response>
   Constructor(const GlobalObject& aGlobal,
-              const Optional<ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams>& aBody,
+              const Optional<fetch::BodyInit>& aBody,
               const ResponseInit& aInit, ErrorResult& rv);
 
   nsIGlobalObject* GetParentObject() const
@@ -142,7 +137,6 @@ public:
 private:
   ~Response();
 
-  nsCOMPtr<nsIGlobalObject> mOwner;
   RefPtr<InternalResponse> mInternalResponse;
   // Lazily created
   RefPtr<Headers> mHeaders;

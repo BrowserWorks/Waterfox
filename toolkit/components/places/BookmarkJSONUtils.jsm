@@ -11,12 +11,11 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
-Cu.import("resource://gre/modules/PromiseUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+  "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
   "resource://gre/modules/PlacesBackups.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Deprecated",
@@ -57,18 +56,18 @@ this.BookmarkJSONUtils = Object.freeze({
    * @rejects JavaScript exception.
    */
   importFromURL: function BJU_importFromURL(aSpec, aReplace) {
-    return Task.spawn(function* () {
+    return (async function() {
       notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN);
       try {
         let importer = new BookmarkImporter(aReplace);
-        yield importer.importFromURL(aSpec);
+        await importer.importFromURL(aSpec);
 
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS);
-      } catch(ex) {
+      } catch (ex) {
         Cu.reportError("Failed to restore bookmarks from " + aSpec + ": " + ex);
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED);
       }
-    });
+    })();
   },
 
   /**
@@ -94,25 +93,25 @@ this.BookmarkJSONUtils = Object.freeze({
       aFilePath = aFilePath.path;
     }
 
-    return Task.spawn(function* () {
+    return (async function() {
       notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN);
       try {
-        if (!(yield OS.File.exists(aFilePath)))
+        if (!(await OS.File.exists(aFilePath)))
           throw new Error("Cannot restore from nonexisting json file");
 
         let importer = new BookmarkImporter(aReplace);
         if (aFilePath.endsWith("jsonlz4")) {
-          yield importer.importFromCompressedFile(aFilePath);
+          await importer.importFromCompressedFile(aFilePath);
         } else {
-          yield importer.importFromURL(OS.Path.toFileURI(aFilePath));
+          await importer.importFromURL(OS.Path.toFileURI(aFilePath));
         }
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS);
-      } catch(ex) {
+      } catch (ex) {
         Cu.reportError("Failed to restore bookmarks from " + aFilePath + ": " + ex);
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED);
         throw ex;
       }
-    });
+    })();
   },
 
   /**
@@ -133,15 +132,15 @@ this.BookmarkJSONUtils = Object.freeze({
    * @rejects JavaScript exception.
    * @deprecated passing an nsIFile is deprecated
    */
-  exportToFile: function BJU_exportToFile(aFilePath, aOptions={}) {
+  exportToFile: function BJU_exportToFile(aFilePath, aOptions = {}) {
     if (aFilePath instanceof Ci.nsIFile) {
       Deprecated.warning("Passing an nsIFile to BookmarksJSONUtils.exportToFile " +
                          "is deprecated. Please use an OS.File path string instead.",
                          "https://developer.mozilla.org/docs/JavaScript_OS.File");
       aFilePath = aFilePath.path;
     }
-    return Task.spawn(function* () {
-      let [bookmarks, count] = yield PlacesBackups.getBookmarksTree();
+    return (async function() {
+      let [bookmarks, count] = await PlacesBackups.getBookmarksTree();
       let startTime = Date.now();
       let jsonString = JSON.stringify(bookmarks);
       // Report the time taken to convert the tree to JSON.
@@ -168,14 +167,18 @@ this.BookmarkJSONUtils = Object.freeze({
       if (aOptions.compress)
         writeOptions.compression = "lz4";
 
-      yield OS.File.writeAtomic(aFilePath, jsonString, writeOptions);
-      return { count: count, hash: hash };
-    });
+      await OS.File.writeAtomic(aFilePath, jsonString, writeOptions);
+      return { count, hash };
+    })();
   }
 });
 
 function BookmarkImporter(aReplace) {
   this._replace = aReplace;
+  // The bookmark change source, used to determine the sync status and change
+  // counter.
+  this._source = aReplace ? PlacesUtils.bookmarks.SOURCE_IMPORT_REPLACE :
+                            PlacesUtils.bookmarks.SOURCE_IMPORT;
 }
 BookmarkImporter.prototype = {
   /**
@@ -208,7 +211,7 @@ BookmarkImporter.prototype = {
 
       let uri = NetUtil.newURI(spec);
       let channel = NetUtil.newChannel({
-        uri: uri,
+        uri,
         loadUsingSystemPrincipal: true
       });
       let streamLoader = Cc["@mozilla.org/network/stream-loader;1"]
@@ -228,308 +231,97 @@ BookmarkImporter.prototype = {
    * @resolves When the new bookmarks have been created.
    * @rejects JavaScript exception.
    */
-  importFromCompressedFile: function* BI_importFromCompressedFile(aFilePath) {
-      let aResult = yield OS.File.read(aFilePath, { compression: "lz4" });
+  importFromCompressedFile: async function BI_importFromCompressedFile(aFilePath) {
+      let aResult = await OS.File.read(aFilePath, { compression: "lz4" });
       let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
                         createInstance(Ci.nsIScriptableUnicodeConverter);
       converter.charset = "UTF-8";
       let jsonString = converter.convertFromByteArray(aResult, aResult.length);
-      yield this.importFromJSON(jsonString);
+      await this.importFromJSON(jsonString);
   },
 
   /**
    * Import bookmarks from a JSON string.
    *
-   * @param aString
-   *        JSON string of serialized bookmark data.
+   * @param {String} aString JSON string of serialized bookmark data.
+   * @return {Promise}
+   * @resolves When the new bookmarks have been created.
+   * @rejects JavaScript exception.
    */
-  importFromJSON: Task.async(function* (aString) {
-    this._importPromises = [];
-    let deferred = PromiseUtils.defer();
+  async importFromJSON(aString) {
     let nodes =
       PlacesUtils.unwrapNodes(aString, PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER);
 
     if (nodes.length == 0 || !nodes[0].children ||
         nodes[0].children.length == 0) {
-      deferred.resolve(); // Nothing to restore
-    } else {
-      // Ensure tag folder gets processed last
-      nodes[0].children.sort(function sortRoots(aNode, bNode) {
-        if (aNode.root && aNode.root == "tagsFolder")
-          return 1;
-        if (bNode.root && bNode.root == "tagsFolder")
-          return -1;
-        return 0;
-      });
-
-      let batch = {
-        nodes: nodes[0].children,
-        runBatched: function runBatched() {
-          if (this._replace) {
-            // Get roots excluded from the backup, we will not remove them
-            // before restoring.
-            let excludeItems = PlacesUtils.annotations.getItemsWithAnnotation(
-                                 PlacesUtils.EXCLUDE_FROM_BACKUP_ANNO);
-            // Delete existing children of the root node, excepting:
-            // 1. special folders: delete the child nodes
-            // 2. tags folder: untag via the tagging api
-            let root = PlacesUtils.getFolderContents(PlacesUtils.placesRootId,
-                                                   false, false).root;
-            let childIds = [];
-            for (let i = 0; i < root.childCount; i++) {
-              let childId = root.getChild(i).itemId;
-              if (!excludeItems.includes(childId) &&
-                  childId != PlacesUtils.tagsFolderId) {
-                childIds.push(childId);
-              }
-            }
-            root.containerOpen = false;
-
-            for (let i = 0; i < childIds.length; i++) {
-              let rootItemId = childIds[i];
-              if (PlacesUtils.isRootItem(rootItemId)) {
-                PlacesUtils.bookmarks.removeFolderChildren(rootItemId);
-              } else {
-                PlacesUtils.bookmarks.removeItem(rootItemId);
-              }
-            }
-          }
-
-          let searchIds = [];
-          let folderIdMap = [];
-
-          for (let node of batch.nodes) {
-            if (!node.children || node.children.length == 0)
-              continue; // Nothing to restore for this root
-
-            if (node.root) {
-              let container = PlacesUtils.placesRootId; // Default to places root
-              switch (node.root) {
-                case "bookmarksMenuFolder":
-                  container = PlacesUtils.bookmarksMenuFolderId;
-                  break;
-                case "tagsFolder":
-                  container = PlacesUtils.tagsFolderId;
-                  break;
-                case "unfiledBookmarksFolder":
-                  container = PlacesUtils.unfiledBookmarksFolderId;
-                  break;
-                case "toolbarFolder":
-                  container = PlacesUtils.toolbarFolderId;
-                  break;
-              }
-
-              // Insert the data into the db
-              for (let child of node.children) {
-                let index = child.index;
-                let [folders, searches] =
-                  this.importJSONNode(child, container, index, 0);
-                for (let i = 0; i < folders.length; i++) {
-                  if (folders[i])
-                    folderIdMap[i] = folders[i];
-                }
-                searchIds = searchIds.concat(searches);
-              }
-            } else {
-              this.importJSONNode(
-                node, PlacesUtils.placesRootId, node.index, 0);
-            }
-          }
-
-          // Fixup imported place: uris that contain folders
-          searchIds.forEach(function(aId) {
-            let oldURI = PlacesUtils.bookmarks.getBookmarkURI(aId);
-            let uri = fixupQuery(oldURI, folderIdMap);
-            if (!uri.equals(oldURI)) {
-              PlacesUtils.bookmarks.changeBookmarkURI(aId, uri);
-            }
-          });
-
-          deferred.resolve();
-        }.bind(this)
-      };
-
-      PlacesUtils.bookmarks.runInBatchMode(batch, null);
-    }
-    yield deferred.promise;
-    // TODO (bug 1095426) once converted to the new bookmarks API, methods will
-    // yield, so this hack should not be needed anymore.
-    try {
-      yield Promise.all(this._importPromises);
-    } finally {
-      delete this._importPromises;
-    }
-  }),
-
-  /**
-   * Takes a JSON-serialized node and inserts it into the db.
-   *
-   * @param aData
-   *        The unwrapped data blob of dropped or pasted data.
-   * @param aContainer
-   *        The container the data was dropped or pasted into
-   * @param aIndex
-   *        The index within the container the item was dropped or pasted at
-   * @return an array containing of maps of old folder ids to new folder ids,
-   *         and an array of saved search ids that need to be fixed up.
-   *         eg: [[[oldFolder1, newFolder1]], [search1]]
-   */
-  importJSONNode: function BI_importJSONNode(aData, aContainer, aIndex,
-                                             aGrandParentId) {
-    let folderIdMap = [];
-    let searchIds = [];
-    let id = -1;
-    switch (aData.type) {
-      case PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER:
-        if (aContainer == PlacesUtils.tagsFolderId) {
-          // Node is a tag
-          if (aData.children) {
-            aData.children.forEach(function(aChild) {
-              try {
-                PlacesUtils.tagging.tagURI(
-                  NetUtil.newURI(aChild.uri), [aData.title]);
-              } catch (ex) {
-                // Invalid tag child, skip it
-              }
-            });
-            return [folderIdMap, searchIds];
-          }
-        } else if (aData.annos &&
-                   aData.annos.some(anno => anno.name == PlacesUtils.LMANNO_FEEDURI)) {
-          // Node is a livemark
-          let feedURI = null;
-          let siteURI = null;
-          aData.annos = aData.annos.filter(function(aAnno) {
-            switch (aAnno.name) {
-              case PlacesUtils.LMANNO_FEEDURI:
-                feedURI = NetUtil.newURI(aAnno.value);
-                return false;
-              case PlacesUtils.LMANNO_SITEURI:
-                siteURI = NetUtil.newURI(aAnno.value);
-                return false;
-              default:
-                return true;
-            }
-          });
-
-          if (feedURI) {
-            let lmPromise = PlacesUtils.livemarks.addLivemark({
-              title: aData.title,
-              feedURI: feedURI,
-              parentId: aContainer,
-              index: aIndex,
-              lastModified: aData.lastModified,
-              siteURI: siteURI,
-              guid: aData.guid
-            }).then(function (aLivemark) {
-              let id = aLivemark.id;
-              if (aData.dateAdded)
-                PlacesUtils.bookmarks.setItemDateAdded(id, aData.dateAdded);
-              if (aData.annos && aData.annos.length)
-                PlacesUtils.setAnnotationsForItem(id, aData.annos);
-            });
-            this._importPromises.push(lmPromise);
-          }
-        } else {
-          id = PlacesUtils.bookmarks.createFolder(
-                 aContainer, aData.title, aIndex, aData.guid);
-          folderIdMap[aData.id] = id;
-          // Process children
-          if (aData.children) {
-            for (let i = 0; i < aData.children.length; i++) {
-              let child = aData.children[i];
-              let [folders, searches] =
-                this.importJSONNode(child, id, i, aContainer);
-              for (let j = 0; j < folders.length; j++) {
-                if (folders[j])
-                  folderIdMap[j] = folders[j];
-              }
-              searchIds = searchIds.concat(searches);
-            }
-          }
-        }
-        break;
-      case PlacesUtils.TYPE_X_MOZ_PLACE:
-        id = PlacesUtils.bookmarks.insertBookmark(
-               aContainer, NetUtil.newURI(aData.uri), aIndex, aData.title, aData.guid);
-        if (aData.keyword) {
-          // POST data could be set in 2 ways:
-          // 1. new backups have a postData property
-          // 2. old backups have an item annotation
-          let postDataAnno = aData.annos &&
-                             aData.annos.find(anno => anno.name == PlacesUtils.POST_DATA_ANNO);
-          let postData = aData.postData || (postDataAnno && postDataAnno.value);
-          let kwPromise = PlacesUtils.keywords.insert({ keyword: aData.keyword,
-                                                        url: aData.uri,
-                                                        postData });
-          this._importPromises.push(kwPromise);
-        }
-        if (aData.tags) {
-          let tags = aData.tags.split(",").filter(aTag =>
-            aTag.length <= Ci.nsITaggingService.MAX_TAG_LENGTH);
-          if (tags.length) {
-            try {
-              PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
-            } catch (ex) {
-              // Invalid tag child, skip it.
-              Cu.reportError(`Unable to set tags "${tags.join(", ")}" for ${aData.uri}: ${ex}`);
-            }
-          }
-        }
-        if (aData.charset) {
-          PlacesUtils.annotations.setPageAnnotation(
-            NetUtil.newURI(aData.uri), PlacesUtils.CHARSET_ANNO, aData.charset,
-            0, Ci.nsIAnnotationService.EXPIRE_NEVER);
-        }
-        if (aData.uri.substr(0, 6) == "place:")
-          searchIds.push(id);
-        if (aData.icon) {
-          try {
-            // Create a fake faviconURI to use (FIXME: bug 523932)
-            let faviconURI = NetUtil.newURI("fake-favicon-uri:" + aData.uri);
-            PlacesUtils.favicons.replaceFaviconDataFromDataURL(
-              faviconURI, aData.icon, 0,
-              Services.scriptSecurityManager.getSystemPrincipal());
-            PlacesUtils.favicons.setAndFetchFaviconForPage(
-              NetUtil.newURI(aData.uri), faviconURI, false,
-              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
-              Services.scriptSecurityManager.getSystemPrincipal());
-          } catch (ex) {
-            Components.utils.reportError("Failed to import favicon data:" + ex);
-          }
-        }
-        if (aData.iconUri) {
-          try {
-            PlacesUtils.favicons.setAndFetchFaviconForPage(
-              NetUtil.newURI(aData.uri), NetUtil.newURI(aData.iconUri), false,
-              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
-              Services.scriptSecurityManager.getSystemPrincipal());
-          } catch (ex) {
-            Components.utils.reportError("Failed to import favicon URI:" + ex);
-          }
-        }
-        break;
-      case PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR:
-        id = PlacesUtils.bookmarks.insertSeparator(aContainer, aIndex, aData.guid);
-        break;
-      default:
-        // Unknown node type
+      return;
     }
 
-    // Set generic properties, valid for all nodes
-    if (id != -1 && aContainer != PlacesUtils.tagsFolderId &&
-        aGrandParentId != PlacesUtils.tagsFolderId) {
-      if (aData.dateAdded)
-        PlacesUtils.bookmarks.setItemDateAdded(id, aData.dateAdded);
-      if (aData.lastModified)
-        PlacesUtils.bookmarks.setItemLastModified(id, aData.lastModified);
-      if (aData.annos && aData.annos.length)
-        PlacesUtils.setAnnotationsForItem(id, aData.annos);
+    // Change to nodes[0].children as we don't import the root, and also filter
+    // out any obsolete "tagsFolder" sections.
+    nodes = nodes[0].children.filter(node => !node.root || node.root != "tagsFolder");
+
+    // If we're replacing, then erase existing bookmarks first.
+    if (this._replace) {
+      await PlacesBackups.eraseEverythingIncludingUserRoots({ source: this._source });
     }
 
-    return [folderIdMap, searchIds];
-  }
-}
+    let folderIdToGuidMap = {};
+    let searchGuids = [];
+
+    // Now do some cleanup on the imported nodes so that the various guids
+    // match what we need for insertTree, and we also have mappings of folders
+    // so we can repair any searches after inserting the bookmarks (see bug 824502).
+    for (let node of nodes) {
+      if (!node.children || node.children.length == 0)
+        continue;  // Nothing to restore for this root
+
+      // Ensure we set the source correctly.
+      node.source = this._source;
+
+      // Translate the node for insertTree.
+      let [folders, searches] = translateTreeTypes(node);
+
+      folderIdToGuidMap = Object.assign(folderIdToGuidMap, folders);
+      searchGuids = searchGuids.concat(searches);
+    }
+
+    // Now we can add the actual nodes to the database.
+    for (let node of nodes) {
+      // Drop any nodes without children, we can't insert them.
+      if (!node.children || node.children.length == 0) {
+        continue;
+      }
+
+      // Places is moving away from supporting user-defined folders at the top
+      // of the tree, however, until we have a migration strategy we need to
+      // ensure any non-built-in folders are created (xref bug 1310299).
+      if (!PlacesUtils.bookmarks.userContentRoots.includes(node.guid)) {
+        node.parentGuid = PlacesUtils.bookmarks.rootGuid;
+        await PlacesUtils.bookmarks.insert(node);
+      }
+
+      await PlacesUtils.bookmarks.insertTree(node);
+
+      // Now add any favicons.
+      try {
+        insertFaviconsForTree(node);
+      } catch (ex) {
+        Cu.reportError(`Failed to insert favicons: ${ex}`);
+      }
+    }
+
+    // Now update any bookmarks with a place: search that contain an index to
+    // a folder id.
+    for (let guid of searchGuids) {
+      let searchBookmark = await PlacesUtils.bookmarks.fetch(guid);
+      let url = await fixupQuery(searchBookmark.url, folderIdToGuidMap);
+      if (url != searchBookmark.url) {
+        await PlacesUtils.bookmarks.update({ guid, url, source: this._source });
+      }
+    }
+  },
+};
 
 function notifyObservers(topic) {
   Services.obs.notifyObservers(null, topic, "json");
@@ -538,19 +330,227 @@ function notifyObservers(topic) {
 /**
  * Replaces imported folder ids with their local counterparts in a place: URI.
  *
- * @param   aURI
+ * @param   {nsIURI} aQueryURI
  *          A place: URI with folder ids.
- * @param   aFolderIdMap
- *          An array mapping old folder id to new folder ids.
- * @returns the fixed up URI if all matched. If some matched, it returns
- *          the URI with only the matching folders included. If none matched
- *          it returns the input URI unchanged.
+ * @param   {Object} aFolderIdMap
+ *          An array mapping of old folder IDs to new folder GUIDs.
+ * @return {String} the fixed up URI if all matched. If some matched, it returns
+ *         the URI with only the matching folders included. If none matched
+ *         it returns the input URI unchanged.
  */
-function fixupQuery(aQueryURI, aFolderIdMap) {
-  let convert = function(str, p1, offset, s) {
-    return "folder=" + aFolderIdMap[p1];
-  }
-  let stringURI = aQueryURI.spec.replace(/folder=([0-9]+)/g, convert);
+async function fixupQuery(aQueryURI, aFolderIdMap) {
+  const reGlobal = /folder=([0-9]+)/g;
+  const re = /([0-9]+)/;
 
-  return NetUtil.newURI(stringURI);
+  // Unfortunately .replace can't handle async functions. Therefore,
+  // we find the folder guids we need to know the ids for first, then
+  // do the async request, and finally replace everything in one go.
+  let uri = aQueryURI.href;
+  let found = uri.match(reGlobal);
+  if (!found) {
+    return uri;
+  }
+
+  let queryFolderGuids = [];
+  for (let folderString of found) {
+    let existingFolderId = folderString.match(re)[0];
+    queryFolderGuids.push(aFolderIdMap[existingFolderId])
+  }
+
+  let newFolderIds = await PlacesUtils.promiseManyItemIds(queryFolderGuids);
+  let convert = function(str, p1) {
+    return "folder=" + newFolderIds.get(aFolderIdMap[p1]);
+  }
+  return uri.replace(reGlobal, convert);
+}
+
+/**
+ * A mapping of root folder names to Guids. To help fixupRootFolderGuid.
+ */
+const rootToFolderGuidMap = {
+  "placesRoot": PlacesUtils.bookmarks.rootGuid,
+  "bookmarksMenuFolder": PlacesUtils.bookmarks.menuGuid,
+  "unfiledBookmarksFolder": PlacesUtils.bookmarks.unfiledGuid,
+  "toolbarFolder": PlacesUtils.bookmarks.toolbarGuid,
+  "mobileFolder": PlacesUtils.bookmarks.mobileGuid
+};
+
+/**
+ * Updates a bookmark node from the json version to the places GUID. This
+ * will only change GUIDs for the built-in folders. Other folders will remain
+ * unchanged.
+ *
+ * @param {Object} A bookmark node that is updated with the new GUID if necessary.
+ */
+function fixupRootFolderGuid(node) {
+  if (!node.guid && node.root && node.root in rootToFolderGuidMap) {
+    node.guid = rootToFolderGuidMap[node.root];
+  }
+}
+
+/**
+ * Translates the JSON types for a node and its children into Places compatible
+ * types. Also handles updating of other parameters e.g. dateAdded and lastModified.
+ *
+ * @param {Object} node A node to be updated. If it contains children, they will
+ *                      be updated as well.
+ * @return {Array} An array containing two items:
+ *       - {Object} A map of current folder ids to GUIDS
+ *       - {Array} An array of GUIDs for nodes that contain query URIs
+ */
+function translateTreeTypes(node) {
+  let folderIdToGuidMap = {};
+  let searchGuids = [];
+
+  // Do the uri fixup first, so we can be consistent in this function.
+  if (node.uri) {
+    node.url = node.uri;
+    delete node.uri;
+  }
+
+  switch (node.type) {
+    case PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER:
+      node.type = PlacesUtils.bookmarks.TYPE_FOLDER;
+
+      // Older type mobile folders have a random guid with an annotation. We need
+      // to make sure those go into the proper mobile folder.
+      let isMobileFolder = node.annos &&
+                           node.annos.some(anno => anno.name == PlacesUtils.MOBILE_ROOT_ANNO);
+      if (isMobileFolder) {
+        node.guid = PlacesUtils.bookmarks.mobileGuid;
+      } else {
+        // In case the Guid is broken, we need to fix it up.
+        fixupRootFolderGuid(node);
+      }
+
+      // Record the current id and the guid so that we can update any search
+      // queries later.
+      folderIdToGuidMap[node.id] = node.guid;
+      break;
+    case PlacesUtils.TYPE_X_MOZ_PLACE:
+      node.type = PlacesUtils.bookmarks.TYPE_BOOKMARK;
+
+      if (node.url && node.url.substr(0, 6) == "place:") {
+        searchGuids.push(node.guid);
+      }
+
+      break;
+    case PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR:
+      node.type = PlacesUtils.bookmarks.TYPE_SEPARATOR;
+      if ("title" in node) {
+        delete node.title;
+      }
+      break;
+    default:
+      // TODO We should handle this in a more robust fashion, see bug 1373610.
+      Cu.reportError(`Unexpected bookmark type ${node.type}`);
+      break;
+  }
+
+  if (node.dateAdded) {
+    node.dateAdded = PlacesUtils.toDate(node.dateAdded);
+  }
+
+  if (node.lastModified) {
+    let lastModified = PlacesUtils.toDate(node.lastModified);
+    // Ensure we get a last modified date that's later or equal to the dateAdded
+    // so that we don't upset the Bookmarks API.
+    if (lastModified >= node.dataAdded) {
+      node.lastModified = lastModified;
+    } else {
+      delete node.lastModified;
+    }
+  }
+
+  if (node.tags) {
+     // Separate any tags into an array, and ignore any that are too long.
+    node.tags = node.tags.split(",").filter(aTag =>
+      aTag.length > 0 && aTag.length <= Ci.nsITaggingService.MAX_TAG_LENGTH);
+
+    // If we end up with none, then delete the property completely.
+    if (!node.tags.length) {
+      delete node.tags;
+    }
+  }
+
+  // Sometimes postData can be null, so delete it to make the validators happy.
+  if (node.postData == null) {
+    delete node.postData;
+  }
+
+  // Now handle any children.
+  if (!node.children) {
+    return [folderIdToGuidMap, searchGuids];
+  }
+
+  // First sort the children by index.
+  node.children = node.children.sort((a, b) => {
+    return a.index - b.index;
+  });
+
+  // Now do any adjustments required for the children.
+  for (let child of node.children) {
+    let [folders, searches] = translateTreeTypes(child);
+    folderIdToGuidMap = Object.assign(folderIdToGuidMap, folders);
+    searchGuids = searchGuids.concat(searches);
+  }
+
+  return [folderIdToGuidMap, searchGuids];
+}
+
+/**
+ * Handles inserting favicons into the database for a bookmark node.
+ * It is assumed the node has already been inserted into the bookmarks
+ * database.
+ *
+ * @param {Object} node The bookmark node for icons to be inserted.
+ */
+function insertFaviconForNode(node) {
+  if (node.icon) {
+    try {
+      // Create a fake faviconURI to use (FIXME: bug 523932)
+      let faviconURI = Services.io.newURI("fake-favicon-uri:" + node.url);
+      PlacesUtils.favicons.replaceFaviconDataFromDataURL(
+        faviconURI, node.icon, 0,
+        Services.scriptSecurityManager.getSystemPrincipal());
+      PlacesUtils.favicons.setAndFetchFaviconForPage(
+        Services.io.newURI(node.url), faviconURI, false,
+        PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+        Services.scriptSecurityManager.getSystemPrincipal());
+    } catch (ex) {
+      Components.utils.reportError("Failed to import favicon data:" + ex);
+    }
+  }
+
+  if (!node.iconUri) {
+    return;
+  }
+
+  try {
+    PlacesUtils.favicons.setAndFetchFaviconForPage(
+      Services.io.newURI(node.url), Services.io.newURI(node.iconUri), false,
+      PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+      Services.scriptSecurityManager.getSystemPrincipal());
+  } catch (ex) {
+    Components.utils.reportError("Failed to import favicon URI:" + ex);
+  }
+}
+
+/**
+ * Handles inserting favicons into the database for a bookmark tree - a node
+ * and its children.
+ *
+ * It is assumed the nodes have already been inserted into the bookmarks
+ * database.
+ *
+ * @param {Object} nodeTree The bookmark node tree for icons to be inserted.
+ */
+function insertFaviconsForTree(nodeTree) {
+  insertFaviconForNode(nodeTree);
+
+  if (nodeTree.children) {
+    for (let child of nodeTree.children) {
+      insertFaviconsForTree(child);
+    }
+  }
 }

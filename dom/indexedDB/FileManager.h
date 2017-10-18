@@ -42,13 +42,15 @@ class FileManager final
   // Protected by IndexedDatabaseManager::FileMutex()
   nsDataHashtable<nsUint64HashKey, FileInfo*> mFileInfos;
 
-  const bool mIsApp;
   const bool mEnforcingQuota;
   bool mInvalidated;
 
 public:
   static already_AddRefed<nsIFile>
   GetFileForId(nsIFile* aDirectory, int64_t aId);
+
+  static already_AddRefed<nsIFile>
+  GetCheckedFileForId(nsIFile* aDirectory, int64_t aId);
 
   static nsresult
   InitDirectory(nsIFile* aDirectory,
@@ -64,7 +66,6 @@ public:
   FileManager(PersistenceType aPersistenceType,
               const nsACString& aGroup,
               const nsACString& aOrigin,
-              bool aIsApp,
               const nsAString& aDatabaseName,
               bool aEnforcingQuota);
 
@@ -84,12 +85,6 @@ public:
   Origin() const
   {
     return mOrigin;
-  }
-
-  bool
-  IsApp() const
-  {
-    return mIsApp;
   }
 
   const nsAString&
@@ -120,6 +115,9 @@ public:
   GetDirectory();
 
   already_AddRefed<nsIFile>
+  GetCheckedDirectory();
+
+  already_AddRefed<nsIFile>
   GetJournalDirectory();
 
   already_AddRefed<nsIFile>
@@ -134,7 +132,7 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FileManager)
 
 private:
-  ~FileManager();
+  ~FileManager() = default;
 };
 
 } // namespace indexedDB

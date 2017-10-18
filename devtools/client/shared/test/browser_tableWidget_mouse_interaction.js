@@ -6,17 +6,7 @@
 
 "use strict";
 
-const TEST_URI = "data:text/xml;charset=UTF-8,<?xml version='1.0'?>" +
-  "<?xml-stylesheet href='chrome://global/skin/global.css'?>" +
-
-  // Uncomment these lines to help with visual debugging. When uncommented they
-  // dump a couple of thousand errors in the log (bug 1258285)
-  // "<?xml-stylesheet href='chrome://devtools/skin/light-theme.css'?>" +
-  // "<?xml-stylesheet href='chrome://devtools/skin/widgets.css'?>" +
-
-  "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'" +
-  " title='Table Widget' width='600' height='500'>" +
-  "<box flex='1' class='theme-light'/></window>";
+const TEST_URI = CHROME_URL_ROOT + "doc_tableWidget_mouse_interaction.xul";
 const TEST_OPT = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
 const {TableWidget} = require("devtools/client/shared/widgets/TableWidget");
@@ -27,9 +17,7 @@ function test() {
   waitForExplicitFinish();
   let win = Services.ww.openWindow(null, TEST_URI, "_blank", TEST_OPT, null);
 
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
-
+  win.addEventListener("load", function () {
     waitForFocus(function () {
       doc = win.document;
       table = new TableWidget(doc.querySelector("box"), {
@@ -43,10 +31,11 @@ function test() {
         emptyText: "This is dummy empty text",
         highlightUpdated: true,
         removableColumns: true,
+        wrapTextInElements: true,
       });
       startTests();
     });
-  });
+  }, {once: true});
 }
 
 function endTests() {
@@ -143,34 +132,48 @@ var testMouseInteraction = Task.async(function* () {
   ok(!table.selectedRow, "Nothing should be selected beforehand");
 
   let event = table.once(TableWidget.EVENTS.ROW_SELECTED);
-  let node = table.tbody.firstChild.firstChild.children[1];
+  let firstColumnFirstRowCell = table.tbody.firstChild.firstChild.children[1];
   info("clicking on the first row");
-  ok(!node.classList.contains("theme-selected"),
+  ok(!firstColumnFirstRowCell.classList.contains("theme-selected"),
      "Node should not have selected class before clicking");
-  click(node);
+  click(firstColumnFirstRowCell);
   let id = yield event;
-  ok(node.classList.contains("theme-selected"),
+  ok(firstColumnFirstRowCell.classList.contains("theme-selected"),
      "Node has selected class after click");
   is(id, "id1", "Correct row was selected");
 
-  info("clicking on third row to select it");
+  info("clicking on second row to select it");
   event = table.once(TableWidget.EVENTS.ROW_SELECTED);
-  let node2 = table.tbody.firstChild.firstChild.children[3];
+  let firstColumnSecondRowCell = table.tbody.firstChild.firstChild.children[2];
   // node should not have selected class
-  ok(!node2.classList.contains("theme-selected"),
+  ok(!firstColumnSecondRowCell.classList.contains("theme-selected"),
      "New node should not have selected class before clicking");
-  click(node2);
+  click(firstColumnSecondRowCell);
   id = yield event;
-  ok(node2.classList.contains("theme-selected"),
+  ok(firstColumnSecondRowCell.classList.contains("theme-selected"),
      "New node has selected class after clicking");
-  is(id, "id3", "Correct table path is emitted for new node");
-  isnot(node, node2, "Old and new node are different");
-  ok(!node.classList.contains("theme-selected"),
+  is(id, "id2", "Correct table path is emitted for new node");
+  isnot(firstColumnFirstRowCell, firstColumnSecondRowCell,
+    "Old and new node are different");
+  ok(!firstColumnFirstRowCell.classList.contains("theme-selected"),
      "Old node should not have selected class after the click on new node");
+
+  info("clicking on the third row cell content to select third row");
+  event = table.once(TableWidget.EVENTS.ROW_SELECTED);
+  let firstColumnThirdRowCell = table.tbody.firstChild.firstChild.children[3];
+  let firstColumnThirdRowCellInnerNode = firstColumnThirdRowCell.querySelector("span");
+  // node should not have selected class
+  ok(!firstColumnThirdRowCell.classList.contains("theme-selected"),
+     "New node should not have selected class before clicking");
+  click(firstColumnThirdRowCellInnerNode);
+  id = yield event;
+  ok(firstColumnThirdRowCell.classList.contains("theme-selected"),
+     "New node has selected class after clicking the cell content");
+  is(id, "id3", "Correct table path is emitted for new node");
 
   // clicking on table header to sort by it
   event = table.once(TableWidget.EVENTS.COLUMN_SORTED);
-  node = table.tbody.children[6].firstChild.children[0];
+  let node = table.tbody.children[6].firstChild.children[0];
   info("clicking on the 4th coulmn header to sort the table by it");
   ok(!node.hasAttribute("sorted"),
      "Node should not have sorted attribute before clicking");

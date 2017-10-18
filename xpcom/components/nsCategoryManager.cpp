@@ -4,14 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define PL_ARENA_CONST_ALIGN_MASK 7
-
 #include "nsICategoryManager.h"
 #include "nsCategoryManager.h"
 
-#include "plarena.h"
 #include "prio.h"
-#include "prprf.h"
 #include "prlock.h"
 #include "nsCOMPtr.h"
 #include "nsTHashtable.h"
@@ -28,6 +24,7 @@
 #include "nsQuickSort.h"
 #include "nsEnumeratorUtils.h"
 #include "nsThreadUtils.h"
+#include "mozilla/ArenaAllocatorExtensions.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Services.h"
 
@@ -48,11 +45,6 @@ class nsIComponentLoaderManager;
   The leaf strings are allocated in an arena, because we assume they're not
   going to change much ;)
 */
-
-#define NS_CATEGORYMANAGER_ARENA_SIZE (1024 * 8)
-
-// pulled in from nsComponentManager.cpp
-char* ArenaStrdup(const char* aStr, PLArenaPool* aArena);
 
 //
 // BaseStringEnumerator is subclassed by EntryEnumerator and
@@ -113,8 +105,7 @@ BaseStringEnumerator::GetNext(nsISupports** aResult)
     return NS_ERROR_FAILURE;
   }
 
-  nsSupportsDependentCString* str =
-    new nsSupportsDependentCString(mArray[mSimpleCurItem++]);
+  auto* str = new nsSupportsDependentCString(mArray[mSimpleCurItem++]);
   if (!str) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -173,7 +164,7 @@ public:
 EntryEnumerator*
 EntryEnumerator::Create(nsTHashtable<CategoryLeaf>& aTable)
 {
-  EntryEnumerator* enumObj = new EntryEnumerator();
+  auto* enumObj = new EntryEnumerator();
   if (!enumObj) {
     return nullptr;
   }
@@ -202,24 +193,20 @@ EntryEnumerator::Create(nsTHashtable<CategoryLeaf>& aTable)
 //
 
 CategoryNode*
-CategoryNode::Create(PLArenaPool* aArena)
+CategoryNode::Create(CategoryAllocator* aArena)
 {
   return new (aArena) CategoryNode();
 }
 
-CategoryNode::~CategoryNode()
-{
-}
+CategoryNode::~CategoryNode() = default;
 
 void*
-CategoryNode::operator new(size_t aSize, PLArenaPool* aArena)
+CategoryNode::operator new(size_t aSize, CategoryAllocator* aArena)
 {
-  void* p;
-  PL_ARENA_ALLOCATE(p, aArena, aSize);
-  return p;
+  return aArena->Allocate(aSize, mozilla::fallible);
 }
 
-NS_METHOD
+nsresult
 CategoryNode::GetLeaf(const char* aEntryName,
                       char** aResult)
 {
@@ -237,12 +224,12 @@ CategoryNode::GetLeaf(const char* aEntryName,
   return rv;
 }
 
-NS_METHOD
+nsresult
 CategoryNode::AddLeaf(const char* aEntryName,
                       const char* aValue,
                       bool aReplace,
                       char** aResult,
-                      PLArenaPool* aArena)
+                      CategoryAllocator* aArena)
 {
   if (aResult) {
     *aResult = nullptr;
@@ -252,7 +239,7 @@ CategoryNode::AddLeaf(const char* aEntryName,
   CategoryLeaf* leaf = mTable.GetEntry(aEntryName);
 
   if (!leaf) {
-    const char* arenaEntryName = ArenaStrdup(aEntryName, aArena);
+    const char* arenaEntryName = ArenaStrdup(aEntryName, *aArena);
     if (!arenaEntryName) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -267,7 +254,7 @@ CategoryNode::AddLeaf(const char* aEntryName,
     return NS_ERROR_INVALID_ARG;
   }
 
-  const char* arenaValue = ArenaStrdup(aValue, aArena);
+  const char* arenaValue = ArenaStrdup(aValue, *aArena);
   if (!arenaValue) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -294,7 +281,7 @@ CategoryNode::DeleteLeaf(const char* aEntryName)
   mTable.RemoveEntry(aEntryName);
 }
 
-NS_METHOD
+nsresult
 CategoryNode::Enumerate(nsISimpleEnumerator** aResult)
 {
   if (NS_WARN_IF(!aResult)) {
@@ -337,7 +324,7 @@ CategoryEnumerator*
 CategoryEnumerator::Create(nsClassHashtable<nsDepCharHashKey, CategoryNode>&
                            aTable)
 {
-  CategoryEnumerator* enumObj = new CategoryEnumerator();
+  auto* enumObj = new CategoryEnumerator();
   if (!enumObj) {
     return nullptr;
   }
@@ -393,6 +380,12 @@ nsCategoryManager::GetSingleton()
 /* static */ void
 nsCategoryManager::Destroy()
 {
+  // The nsMemoryReporterManager gets destroyed before the nsCategoryManager,
+  // so we don't need to unregister the nsCategoryManager as a memory reporter.
+  // In debug builds we assert that unregistering fails, as a way (imperfect
+  // but better than nothing) of testing the "destroyed before" part.
+  MOZ_ASSERT(NS_FAILED(UnregisterWeakMemoryReporter(gCategoryManager)));
+
   delete gCategoryManager;
   gCategoryManager = nullptr;
 }
@@ -408,17 +401,17 @@ nsCategoryManager::Create(nsISupports* aOuter, REFNSIID aIID, void** aResult)
 }
 
 nsCategoryManager::nsCategoryManager()
-  : mLock("nsCategoryManager")
+  : mArena()
+  , mTable()
+  , mLock("nsCategoryManager")
   , mSuppressNotifications(false)
 {
-  PL_INIT_ARENA_POOL(&mArena, "CategoryManagerArena",
-                     NS_CATEGORYMANAGER_ARENA_SIZE);
 }
 
 void
 nsCategoryManager::InitMemoryReporter()
 {
-  RegisterStrongMemoryReporter(this);
+  RegisterWeakMemoryReporter(this);
 }
 
 nsCategoryManager::~nsCategoryManager()
@@ -427,8 +420,6 @@ nsCategoryManager::~nsCategoryManager()
   // destroyed, or else you will have PRLocks undestroyed and other Really
   // Bad Stuff (TM)
   mTable.Clear();
-
-  PL_FinishArenaPool(&mArena);
 }
 
 inline CategoryNode*
@@ -447,10 +438,12 @@ NS_IMETHODIMP
 nsCategoryManager::CollectReports(nsIHandleReportCallback* aHandleReport,
                                   nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT("explicit/xpcom/category-manager",
-                            KIND_HEAP, UNITS_BYTES,
-                            SizeOfIncludingThis(CategoryManagerMallocSizeOf),
-                            "Memory used for the XPCOM category manager.");
+  MOZ_COLLECT_REPORT(
+    "explicit/xpcom/category-manager", KIND_HEAP, UNITS_BYTES,
+    SizeOfIncludingThis(CategoryManagerMallocSizeOf),
+    "Memory used for the XPCOM category manager.");
+
+  return NS_OK;
 }
 
 size_t
@@ -458,12 +451,12 @@ nsCategoryManager::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 {
   size_t n = aMallocSizeOf(this);
 
-  n += PL_SizeOfArenaPoolExcludingPool(&mArena, aMallocSizeOf);
+  n += mArena.SizeOfExcludingThis(aMallocSizeOf);
 
   n += mTable.ShallowSizeOfExcludingThis(aMallocSizeOf);
   for (auto iter = mTable.ConstIter(); !iter.Done(); iter.Next()) {
     // We don't measure the key string because it's a non-owning pointer.
-    n += iter.Data().get()->SizeOfExcludingThis(aMallocSizeOf);
+    n += iter.Data()->SizeOfExcludingThis(aMallocSizeOf);
   }
 
   return n;
@@ -477,7 +470,8 @@ public:
   CategoryNotificationRunnable(nsISupports* aSubject,
                                const char* aTopic,
                                const char* aData)
-    : mSubject(aSubject)
+    : Runnable("CategoryNotificationRunnable")
+    , mSubject(aSubject)
     , mTopic(aTopic)
     , mData(aData)
   {
@@ -604,7 +598,7 @@ nsCategoryManager::AddCategoryEntry(const char* aCategoryName,
       // That category doesn't exist yet; let's make it.
       category = CategoryNode::Create(&mArena);
 
-      char* categoryName = ArenaStrdup(aCategoryName, &mArena);
+      char* categoryName = ArenaStrdup(aCategoryName, mArena);
       mTable.Put(categoryName, category);
     }
   }
@@ -743,7 +737,7 @@ struct writecat_struct
   bool        success;
 };
 
-NS_METHOD
+nsresult
 nsCategoryManager::SuppressNotifications(bool aSuppress)
 {
   mSuppressNotifications = aSuppress;

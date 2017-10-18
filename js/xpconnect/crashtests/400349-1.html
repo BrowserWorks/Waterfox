@@ -4,16 +4,16 @@
 <script>
 
 function init() {
-  window.removeEventListener("load", init, false);
+  window.removeEventListener("load", init);
 
   var fr = document.getElementsByTagName("iframe")[0];
   var b = fr.contentDocument.body;
 
-  fr.parentNode.removeChild(fr);
+  fr.remove();
   b.parentNode;
 }
 
-window.addEventListener("load", init, false);
+window.addEventListener("load", init);
 
 </script>
 

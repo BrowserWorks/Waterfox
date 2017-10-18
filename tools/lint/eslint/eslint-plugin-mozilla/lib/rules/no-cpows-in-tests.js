@@ -35,7 +35,7 @@ module.exports = function(context) {
     }
 
     context.report({
-      node: node,
+      node,
       message: identifier +
                " is a possible Cross Process Object Wrapper (CPOW)."
     });
@@ -55,7 +55,7 @@ module.exports = function(context) {
   // ---------------------------------------------------------------------------
 
   return {
-    CallExpression: function(node) {
+    CallExpression(node) {
       if (isContentTask(node.callee)) {
         isInContentTask = true;
       }
@@ -67,8 +67,8 @@ module.exports = function(context) {
       }
     },
 
-    MemberExpression: function(node) {
-      if (!helpers.getIsBrowserMochitest(this)) {
+    MemberExpression(node) {
+      if (helpers.getTestType(context) != "browser") {
         return;
       }
 
@@ -86,13 +86,13 @@ module.exports = function(context) {
       if (!someCpowFound && helpers.getIsGlobalScope(context.getAncestors())) {
         if (/^content\./.test(expression)) {
           showError(node, expression);
-          return;
+
         }
       }
     },
 
-    Identifier: function(node) {
-      if (!helpers.getIsBrowserMochitest(this)) {
+    Identifier(node) {
+      if (helpers.getTestType(context) != "browser") {
         return;
       }
 
@@ -105,7 +105,7 @@ module.exports = function(context) {
           return;
         }
         showError(node, expression);
-        return;
+
       }
     }
   };

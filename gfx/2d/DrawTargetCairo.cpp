@@ -601,6 +601,7 @@ DrawTargetCairo::DrawTargetCairo()
   , mSurface(nullptr)
   , mTransformSingular(false)
   , mLockedBits(nullptr)
+  , mFontOptions(nullptr)
 {
 }
 
@@ -610,6 +611,10 @@ DrawTargetCairo::~DrawTargetCairo()
   if (mSurface) {
     cairo_surface_destroy(mSurface);
     mSurface = nullptr;
+  }
+  if (mFontOptions) {
+    cairo_font_options_destroy(mFontOptions);
+    mFontOptions = nullptr;
   }
   MOZ_ASSERT(!mLockedBits);
 }
@@ -698,7 +703,9 @@ already_AddRefed<SourceSurface>
 DrawTargetCairo::Snapshot()
 {
   if (!IsValid()) {
-    gfxCriticalNote << "DrawTargetCairo::Snapshot with bad surface " << cairo_surface_status(mSurface);
+    gfxCriticalNote << "DrawTargetCairo::Snapshot with bad surface " << hexa(mSurface)
+                    << ", context " << hexa(mContext)
+                    << ", status " << (mSurface ? cairo_surface_status(mSurface) : -1);
     return nullptr;
   }
   if (mSnapshot) {
@@ -926,16 +933,18 @@ DrawTargetCairo::DrawSurfaceWithShadow(SourceSurface *aSurface,
   if (cairo_surface_get_type(sourcesurf) == CAIRO_SURFACE_TYPE_TEE) {
     blursurf = cairo_tee_surface_index(sourcesurf, 0);
     surf = cairo_tee_surface_index(sourcesurf, 1);
+  } else {
+    blursurf = sourcesurf;
+    surf = sourcesurf;
+  }
 
+  if (aSigma != 0.0f) {
     MOZ_ASSERT(cairo_surface_get_type(blursurf) == CAIRO_SURFACE_TYPE_IMAGE);
     Rect extents(0, 0, width, height);
     AlphaBoxBlur blur(extents,
                       cairo_image_surface_get_stride(blursurf),
                       aSigma, aSigma);
     blur.Blur(cairo_image_surface_get_data(blursurf));
-  } else {
-    blursurf = sourcesurf;
-    surf = sourcesurf;
   }
 
   WillChange();
@@ -946,25 +955,24 @@ DrawTargetCairo::DrawSurfaceWithShadow(SourceSurface *aSurface,
   cairo_identity_matrix(mContext);
   cairo_translate(mContext, aDest.x, aDest.y);
 
-  if (IsOperatorBoundByMask(aOperator)){
-    cairo_set_source_rgba(mContext, aColor.r, aColor.g, aColor.b, aColor.a);
-    cairo_mask_surface(mContext, blursurf, aOffset.x, aOffset.y);
+  bool needsGroup = !IsOperatorBoundByMask(aOperator);
+  if (needsGroup) {
+    cairo_push_group(mContext);
+  }
 
+  cairo_set_source_rgba(mContext, aColor.r, aColor.g, aColor.b, aColor.a);
+  cairo_mask_surface(mContext, blursurf, aOffset.x, aOffset.y);
+
+  if (blursurf != surf ||
+      aSurface->GetFormat() != SurfaceFormat::A8) {
     // Now that the shadow has been drawn, we can draw the surface on top.
     cairo_set_source_surface(mContext, surf, 0, 0);
     cairo_new_path(mContext);
     cairo_rectangle(mContext, 0, 0, width, height);
     cairo_fill(mContext);
-  } else {
-    cairo_push_group(mContext);
-      cairo_set_source_rgba(mContext, aColor.r, aColor.g, aColor.b, aColor.a);
-      cairo_mask_surface(mContext, blursurf, aOffset.x, aOffset.y);
+  }
 
-      // Now that the shadow has been drawn, we can draw the surface on top.
-      cairo_set_source_surface(mContext, surf, 0, 0);
-      cairo_new_path(mContext);
-      cairo_rectangle(mContext, 0, 0, width, height);
-      cairo_fill(mContext);
+  if (needsGroup) {
     cairo_pop_group_to_source(mContext);
     cairo_paint(mContext);
   }
@@ -1289,6 +1297,46 @@ DrawTargetCairo::IsCurrentGroupOpaque()
 }
 
 void
+DrawTargetCairo::SetFontOptions()
+{
+  //   This will attempt to detect if the currently set scaled font on the
+  // context has enabled subpixel AA. If it is not permitted, then it will
+  // downgrade to grayscale AA.
+  //   This only currently works effectively for the cairo-ft backend relative
+  // to system defaults, as only cairo-ft reflect system defaults in the scaled
+  // font state. However, this will work for cairo-ft on both tree Cairo and
+  // system Cairo.
+  //   Other backends leave the CAIRO_ANTIALIAS_DEFAULT setting untouched while
+  // potentially interpreting it as subpixel or even other types of AA that
+  // can't be safely equivocated with grayscale AA. For this reason we don't
+  // try to also detect and modify the default AA setting, only explicit
+  // subpixel AA. These other backends must instead rely on tree Cairo's
+  // cairo_surface_set_subpixel_antialiasing extension.
+
+  // If allowing subpixel AA, then leave Cairo's default AA state.
+  if (mPermitSubpixelAA) {
+    return;
+  }
+
+  if (!mFontOptions) {
+    mFontOptions = cairo_font_options_create();
+    if (!mFontOptions) {
+      gfxWarning() << "Failed allocating Cairo font options";
+      return;
+    }
+  }
+
+  // If the current font requests subpixel AA, force it to gray since we don't
+  // allow subpixel AA.
+  cairo_get_font_options(mContext, mFontOptions);
+  cairo_antialias_t antialias = cairo_font_options_get_antialias(mFontOptions);
+  if (antialias == CAIRO_ANTIALIAS_SUBPIXEL) {
+    cairo_font_options_set_antialias(mFontOptions, CAIRO_ANTIALIAS_GRAY);
+    cairo_set_font_options(mContext, mFontOptions);
+  }
+}
+
+void
 DrawTargetCairo::SetPermitSubpixelAA(bool aPermitSubpixelAA)
 {
   DrawTarget::SetPermitSubpixelAA(aPermitSubpixelAA);
@@ -1333,6 +1381,9 @@ DrawTargetCairo::FillGlyphs(ScaledFont *aFont,
   cairo_pattern_destroy(pat);
 
   cairo_set_antialias(mContext, GfxAntialiasToCairoAntialias(aOptions.mAntialiasMode));
+
+  // Override any font-specific options as necessary.
+  SetFontOptions();
 
   // Convert our GlyphBuffer into a vector of Cairo glyphs. This code can
   // execute millions of times in short periods, so we want to avoid heap
@@ -1628,6 +1679,27 @@ DrawTargetCairo::CreateFilter(FilterType aType)
   return FilterNodeSoftware::Create(aType);
 }
 
+void
+DrawTargetCairo::GetGlyphRasterizationMetrics(ScaledFont *aScaledFont, const uint16_t* aGlyphIndices,
+                                              uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics)
+{
+  for (uint32_t i = 0; i < aNumGlyphs; i++) {
+    cairo_glyph_t glyph;
+    cairo_text_extents_t extents;
+    glyph.index = aGlyphIndices[i];
+    glyph.x = 0;
+    glyph.y = 0;
+    cairo_glyph_extents(mContext, &glyph, 1, &extents);
+
+    aGlyphMetrics[i].mXBearing = extents.x_bearing;
+    aGlyphMetrics[i].mXAdvance = extents.x_advance;
+    aGlyphMetrics[i].mYBearing = extents.y_bearing;
+    aGlyphMetrics[i].mYAdvance = extents.y_advance;
+    aGlyphMetrics[i].mWidth = extents.width;
+    aGlyphMetrics[i].mHeight = extents.height;
+  }
+}
+
 already_AddRefed<SourceSurface>
 DrawTargetCairo::CreateSourceSurfaceFromData(unsigned char *aData,
                                              const IntSize &aSize,
@@ -1855,7 +1927,7 @@ DrawTargetCairo::CreateShadowDrawTarget(const IntSize &aSize, SurfaceFormat aFor
 
   // If we don't have a blur then we can use the RGBA mask and keep all the
   // operations in graphics memory.
-  if (aSigma == 0.0F) {
+  if (aSigma == 0.0f || aFormat == SurfaceFormat::A8) {
     RefPtr<DrawTargetCairo> target = new DrawTargetCairo();
     if (target->InitAlreadyReferenced(similar, aSize)) {
       return target.forget();
@@ -2103,7 +2175,7 @@ DrawTargetCairo::Draw3DTransformedSurface(SourceSurface* aSurface, const Matrix4
                                          0, nullptr);
 
   XRenderComposite(display, PictOpSrc,
-                   srcPict, None, dstPict,
+                   srcPict, X11None, dstPict,
                    0, 0, 0, 0, 0, 0,
                    xformBounds.width, xformBounds.height);
 
@@ -2253,7 +2325,7 @@ BorrowedXlibDrawable::Init(DrawTarget* aDT)
   MOZ_ASSERT(aDT, "Caller should check for nullptr");
   MOZ_ASSERT(!mDT, "Can't initialize twice!");
   mDT = aDT;
-  mDrawable = None;
+  mDrawable = X11None;
 
 #ifdef CAIRO_HAS_XLIB_SURFACE
   if (aDT->GetBackendType() != BackendType::CAIRO ||
@@ -2296,7 +2368,7 @@ BorrowedXlibDrawable::Finish()
   cairo_surface_t* surf = cairo_get_group_target(cairoDT->mContext);
   cairo_surface_mark_dirty(surf);
   if (mDrawable) {
-    mDrawable = None;
+    mDrawable = X11None;
   }
 }
 #endif

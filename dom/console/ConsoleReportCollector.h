@@ -27,10 +27,22 @@ public:
                    const nsTArray<nsString>& aStringParams) override;
 
   void
-  FlushConsoleReports(nsIDocument* aDocument) override;
+  FlushReportsToConsole(uint64_t aInnerWindowID,
+                        ReportAction aAction = ReportAction::Forget) override;
+
+  void
+  FlushConsoleReports(nsIDocument* aDocument,
+                      ReportAction aAction = ReportAction::Forget) override;
+
+  void
+  FlushConsoleReports(nsILoadGroup* aLoadGroup,
+                      ReportAction aAction = ReportAction::Forget) override;
 
   void
   FlushConsoleReports(nsIConsoleReportCollector* aCollector) override;
+
+  void
+  ClearConsoleReports() override;
 
 private:
   ~ConsoleReportCollector();

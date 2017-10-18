@@ -26,17 +26,14 @@ class BroadcastChannelParent final : public PBroadcastChannelParent
 
   typedef mozilla::ipc::PrincipalInfo PrincipalInfo;
 
-public:
-  void Deliver(const ClonedMessageData& aData);
-
 private:
   explicit BroadcastChannelParent(const nsAString& aOriginChannelKey);
   ~BroadcastChannelParent();
 
-  virtual bool
+  virtual mozilla::ipc::IPCResult
   RecvPostMessage(const ClonedMessageData& aData) override;
 
-  virtual bool RecvClose() override;
+  virtual mozilla::ipc::IPCResult RecvClose() override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 

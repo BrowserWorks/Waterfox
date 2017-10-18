@@ -31,11 +31,8 @@ public:
 
   void Init();
 
-  virtual bool RecvClose() override;
-  virtual bool RecvRequestDelete() override;
-
-  uint32_t GetAppId();
-  bool GetInIsolatedMozBrowser();
+  virtual mozilla::ipc::IPCResult RecvClose() override;
+  virtual mozilla::ipc::IPCResult RecvRequestDelete() override;
 
   void AddIPDLReference();
   void ReleaseIPDLReference();

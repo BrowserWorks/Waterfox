@@ -9,11 +9,12 @@
 const React = require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
-// Reps
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
 const TreeView = React.createFactory(require("devtools/client/shared/components/tree/tree-view"));
-const { Rep } = createFactories(require("devtools/client/shared/components/reps/rep"));
-const { Grip } = require("devtools/client/shared/components/reps/grip");
+
+// Reps
+const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
+const { Rep } = REPS;
+const Grip = REPS.Grip;
 
 // DOM Panel
 const { GripProvider } = require("../grip-provider");
@@ -61,6 +62,7 @@ var DomTree = React.createClass({
     let renderValue = props => {
       return Rep(Object.assign({}, props, {
         defaultRep: Grip,
+        cropLimit: 50,
       }));
     };
 
@@ -69,7 +71,7 @@ var DomTree = React.createClass({
         object: this.props.object,
         provider: new GripProvider(this.props.grips, this.props.dispatch),
         decorator: new DomDecorator(),
-        mode: "short",
+        mode: MODE.SHORT,
         columns: columns,
         renderValue: renderValue,
         onFilter: this.onFilter
@@ -87,4 +89,3 @@ const mapStateToProps = (state) => {
 
 // Exports from this module
 module.exports = connect(mapStateToProps)(DomTree);
-

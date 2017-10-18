@@ -1,11 +1,14 @@
 <html>
   <head>
     <script>
-      // change the eval function to ensure the window object in the debug-script is correctly wrapped
+      /* exported globalAccessibleVar */
+      "use strict";
+      // change the eval function to ensure the window object
+      // in the debug-script is correctly wrapped
+      // eslint-disable-next-line no-eval
       window.eval = function () {
         return "unsecure-eval-called";
       };
-
       var globalAccessibleVar = "global-value";
     </script>
   </head>

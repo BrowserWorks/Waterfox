@@ -38,23 +38,27 @@ add_task(function* () {
   is(toolbox.currentToolId, "netmonitor", "Network panel was opened");
 
   let panel = toolbox.getCurrentPanel();
-  let selected = panel.panelWin.NetMonitorView.RequestsMenu.selectedItem;
-  is(selected.attachment.method, htmlRequest.request.method,
+  let { store, windowRequire } = panel.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let { getSelectedRequest } = windowRequire("devtools/client/netmonitor/src/selectors/index");
+
+  let selected = getSelectedRequest(store.getState());
+  is(selected.method, htmlRequest.request.method,
      "The correct request is selected");
-  is(selected.attachment.url, htmlRequest.request.url,
+  is(selected.url, htmlRequest.request.url,
      "The correct request is definitely selected");
 
   // Filter out the HTML request.
-  panel.panelWin.NetMonitorView.RequestsMenu.filterOn("js");
+  store.dispatch(Actions.toggleRequestFilterType("js"));
 
   yield toolbox.selectTool("webconsole");
   is(toolbox.currentToolId, "webconsole", "Web console was selected");
   yield hud.ui.openNetworkPanel(htmlRequest.actor);
 
-  panel.panelWin.NetMonitorView.RequestsMenu.selectedItem;
-  is(selected.attachment.method, htmlRequest.request.method,
+  selected = getSelectedRequest(store.getState());
+  is(selected.method, htmlRequest.request.method,
      "The correct request is selected");
-  is(selected.attachment.url, htmlRequest.request.url,
+  is(selected.url, htmlRequest.request.url,
      "The correct request is definitely selected");
 
   // All tests are done. Shutdown.

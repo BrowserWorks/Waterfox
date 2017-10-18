@@ -12,10 +12,10 @@
   </head>
   <body>
     <script id="headers-idl" type="text/plain">
-      typedef (Headers or sequence<sequence<ByteString>> or OpenEndedDictionary<ByteString>) HeadersInit;
+      typedef (sequence<sequence<ByteString>> or record<ByteString, ByteString>) HeadersInit;
 
       [Constructor(optional HeadersInit init),
-      Exposed=(Window,Worker)]
+       Exposed=(Window,Worker)]
       interface Headers {
         void append(ByteString name, ByteString value);
         void delete(ByteString name);
@@ -27,7 +27,7 @@
     </script>
     <script>
       var idlsArray = new IdlArray();
-      var idl = document.getElementById("headers-idl").innerHTML
+      var idl = document.getElementById("headers-idl").textContent
       idlsArray.add_idls(idl);
       idlsArray.add_objects({ Headers: ['new Headers()'] });
       idlsArray.test();

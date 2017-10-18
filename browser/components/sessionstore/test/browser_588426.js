@@ -3,13 +3,13 @@
 
 function test() {
   let state = { windows: [{ tabs: [
-      {entries: [{url: "about:mozilla"}], hidden: true},
-      {entries: [{url: "about:rights"}], hidden: true}
+      {entries: [{url: "about:mozilla", triggeringPrincipal_base64}], hidden: true},
+      {entries: [{url: "about:rights", triggeringPrincipal_base64}], hidden: true}
   ] }] };
 
   waitForExplicitFinish();
 
-  newWindowWithState(state, function (win) {
+  newWindowWithState(state, function(win) {
     registerCleanupFunction(() => BrowserTestUtils.closeWindow(win));
 
     is(win.gBrowser.tabs.length, 2, "two tabs were restored");
@@ -26,16 +26,13 @@ function newWindowWithState(state, callback) {
   let opts = "chrome,all,dialog=no,height=800,width=800";
   let win = window.openDialog(getBrowserURL(), "_blank", opts);
 
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
-
-    executeSoon(function () {
-      win.addEventListener("SSWindowStateReady", function onReady() {
-        win.removeEventListener("SSWindowStateReady", onReady, false);
+  win.addEventListener("load", function() {
+    executeSoon(function() {
+      win.addEventListener("SSWindowStateReady", function() {
         promiseTabRestored(win.gBrowser.tabs[0]).then(() => callback(win));
-      }, false);
+      }, {once: true});
 
       ss.setWindowState(win, JSON.stringify(state), true);
     });
-  }, false);
+  }, {once: true});
 }

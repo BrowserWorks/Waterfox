@@ -8,12 +8,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 this.EXPORTED_SYMBOLS = ["LaterRun"];
 
-Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "setInterval", "resource://gre/modules/Timer.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "clearInterval", "resource://gre/modules/Timer.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow", "resource://gre/modules/RecentWindow.jsm");
 
 const kEnabledPref = "browser.laterrun.enabled";
 const kPagePrefRoot = "browser.laterrun.pages.";
@@ -37,7 +32,7 @@ class Page {
   }
 
   get hasRun() {
-    return Preferences.get(this.pref + "hasRun", false);
+    return Services.prefs.getBoolPref(this.pref + "hasRun", false);
   }
 
   applies(sessionInfo) {
@@ -59,35 +54,34 @@ let LaterRun = {
       return;
     }
     // If this is the first run, set the time we were installed
-    if (!Preferences.has(kProfileCreationTime)) {
+    if (Services.prefs.getPrefType(kProfileCreationTime) == Ci.nsIPrefBranch.PREF_INVALID) {
       // We need to store seconds in order to fit within int prefs.
-      Preferences.set(kProfileCreationTime, Math.floor(Date.now() / 1000));
+      Services.prefs.setIntPref(kProfileCreationTime, Math.floor(Date.now() / 1000));
     }
     this.sessionCount++;
 
     if (this.hoursSinceInstall > kSelfDestructHoursLimit ||
         this.sessionCount > kSelfDestructSessionLimit) {
       this.selfDestruct();
-      return;
     }
   },
 
   // The enabled, hoursSinceInstall and sessionCount properties mirror the
   // preferences system, and are here for convenience.
   get enabled() {
-    return Preferences.get(kEnabledPref, false);
+    return Services.prefs.getBoolPref(kEnabledPref, false);
   },
 
   set enabled(val) {
     let wasEnabled = this.enabled;
-    Preferences.set(kEnabledPref, val);
+    Services.prefs.setBoolPref(kEnabledPref, val);
     if (val && !wasEnabled) {
       this.init();
     }
   },
 
   get hoursSinceInstall() {
-    let installStamp = Preferences.get(kProfileCreationTime, Date.now() / 1000);
+    let installStamp = Services.prefs.getIntPref(kProfileCreationTime, Date.now() / 1000);
     return Math.floor((Date.now() / 1000 - installStamp) / 3600);
   },
 
@@ -95,19 +89,19 @@ let LaterRun = {
     if (this._sessionCount) {
       return this._sessionCount;
     }
-    return this._sessionCount = Preferences.get(kSessionCountPref, 0);
+    return this._sessionCount = Services.prefs.getIntPref(kSessionCountPref, 0);
   },
 
   set sessionCount(val) {
     this._sessionCount = val;
-    Preferences.set(kSessionCountPref, val);
+    Services.prefs.setIntPref(kSessionCountPref, val);
   },
 
   // Because we don't want to keep incrementing this indefinitely for no reason,
   // we will turn ourselves off after a set amount of time/sessions (see top of
   // file).
   selfDestruct() {
-    Preferences.set(kEnabledPref, false);
+    Services.prefs.setBoolPref(kEnabledPref, false);
   },
 
   // Create an array of Page objects based on the currently set prefs
@@ -120,13 +114,13 @@ let LaterRun = {
       if (!pageDataStore.has(slug)) {
         pageDataStore.set(slug, {pref: pref.substring(0, pref.length - prop.length)});
       }
-      let defaultPrefValue = 0;
       if (prop == "requireBoth" || prop == "hasRun") {
-        defaultPrefValue = false;
+        pageDataStore.get(slug)[prop] = Services.prefs.getBoolPref(pref, false);
       } else if (prop == "url") {
-        defaultPrefValue = "";
+        pageDataStore.get(slug)[prop] = Services.prefs.getStringPref(pref, "");
+      } else {
+        pageDataStore.get(slug)[prop] = Services.prefs.getIntPref(pref, 0);
       }
-      pageDataStore.get(slug)[prop] = Preferences.get(pref, defaultPrefValue);
     }
     let rv = [];
     for (let [, pageData] of pageDataStore) {
@@ -134,7 +128,7 @@ let LaterRun = {
         let uri = null;
         try {
           let urlString = Services.urlFormatter.formatURL(pageData.url.trim());
-          uri = Services.io.newURI(urlString, null, null);
+          uri = Services.io.newURI(urlString);
         } catch (ex) {
           Cu.reportError("Invalid LaterRun page URL " + pageData.url + " ignored.");
           continue;
@@ -160,7 +154,7 @@ let LaterRun = {
       return null;
     }
     let pages = this.readPages();
-    let page = pages.find(page => page.applies(this));
+    let page = pages.find(p => p.applies(this));
     if (page) {
       Services.prefs.setBoolPref(page.pref + "hasRun", true);
       return page.url;

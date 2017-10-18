@@ -43,6 +43,22 @@ DataChannelParent::NotifyTrackingProtectionDisabled()
 }
 
 NS_IMETHODIMP
+DataChannelParent::NotifyTrackingResource()
+{
+    // Nothing to do.
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+DataChannelParent::SetClassifierMatchedInfo(const nsACString& aList,
+                                            const nsACString& aProvider,
+                                            const nsACString& aPrefix)
+{
+  // nothing to do
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 DataChannelParent::Delete()
 {
     // Nothing to do.

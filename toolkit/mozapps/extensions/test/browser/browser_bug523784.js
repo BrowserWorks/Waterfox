@@ -14,7 +14,7 @@ var args = {
     icon: "chrome://mozapps/skin/plugins/pluginGeneric.png",
     disable: false,
     blocked: false,
-    url: 'http://example.com/bug523784_1',
+    url: "http://example.com/bug523784_1",
   }],
 };
 
@@ -29,10 +29,8 @@ function test() {
 
     let win = aSubject.QueryInterface(Ci.nsIDOMWindow);
     win.addEventListener("load", function() {
-      win.removeEventListener("load", arguments.callee, false);
-
       executeSoon(() => bug523784_test1(win));
-    }, false);
+    }, {once: true});
   };
   Services.ww.registerNotification(windowObserver);
 
@@ -54,7 +52,7 @@ function bug523784_test1(win) {
      bundle.GetStringFromName("restartLaterButton.accesskey"),
      "Accesskey should also be changed on Cancel button");
   is(moreInfoLink.getAttribute("href"),
-     'http://example.com/bug523784_1',
+     "http://example.com/bug523784_1",
      "More Info link should link to a detailed blocklist page.");
   let windowObserver = function(aSubject, aTopic, aData) {
     if (aTopic != "domwindowclosed")
@@ -80,9 +78,7 @@ function bug523784_test2(win) {
     Services.ww.unregisterNotification(windowObserver);
     let win = aSubject.QueryInterface(Ci.nsIDOMWindow);
     win.addEventListener("load", function() {
-      win.removeEventListener("load", arguments.callee, false);
-
-    executeSoon(function(){
+      executeSoon(function() {
       let moreInfoLink = win.document.getElementById("moreInfo");
       let cancelButton = win.document.documentElement.getButton("cancel");
       is(moreInfoLink.getAttribute("href"),
@@ -91,7 +87,7 @@ function bug523784_test2(win) {
       cancelButton.doCommand();
       executeSoon(finish);
     })
-    }, false);
+    }, {once: true});
   };
   Services.ww.registerNotification(windowObserver);
 
@@ -103,7 +99,7 @@ function bug523784_test2(win) {
     icon: "chrome://mozapps/skin/plugins/pluginGeneric.png",
     disable: false,
     blocked: false,
-    url: 'http://example.com/bug523784_2'
+    url: "http://example.com/bug523784_2"
   });
   args.list.push({
     name: "Bug 523784 softblocked addon 3",
@@ -111,7 +107,7 @@ function bug523784_test2(win) {
     icon: "chrome://mozapps/skin/plugins/pluginGeneric.png",
     disable: false,
     blocked: false,
-    url: 'http://example.com/bug523784_3'
+    url: "http://example.com/bug523784_3"
   });
 
   args.wrappedJSObject = args;

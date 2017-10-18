@@ -52,6 +52,9 @@
   <preference id="browser.formfill.enable"
               name="browser.formfill.enable"
               type="bool"/>
+  <preference id="privacy.history.custom"
+              name="privacy.history.custom"
+              type="bool"/>
   <!-- Cookies -->
   <preference id="network.cookie.cookieBehavior"
               name="network.cookie.cookieBehavior"
@@ -73,12 +76,6 @@
   <preference id="browser.privatebrowsing.autostart"
               name="browser.privatebrowsing.autostart"
               type="bool"/>
-
-  <!-- Containers -->
-  <preference id="privacy.userContext.enabled"
-              name="privacy.userContext.enabled"
-              type="bool"/>
-
 </preferences>
 
 <hbox id="header-privacy"
@@ -86,8 +83,7 @@
       hidden="true"
       data-category="panePrivacy">
   <label class="header-name" flex="1">&panePrivacy.title;</label>
-  <button class="help-button"
-          aria-label="&helpButton.label;"/>
+  <html:a class="help-button" target="_blank" aria-label="&helpButton.label;"></html:a>
 </hbox>
 
 <!-- Tracking -->
@@ -96,7 +92,7 @@
     <hbox align="start">
       <vbox>
         <caption><label>&trackingProtectionHeader.label;
-          <label id="trackingProtectionLearnMore" class="text-link"
+          <label id="trackingProtectionLearnMore" class="learnMore text-link"
                  value="&trackingProtectionLearnMore.label;"/>
         </label></caption>
         <radiogroup id="trackingProtectionRadioGroup">
@@ -130,9 +126,9 @@
       <checkbox id="trackingProtectionPBM"
                 preference="privacy.trackingprotection.pbmode.enabled"
                 accesskey="&trackingProtectionPBM5.accesskey;"
-                label="&trackingProtectionPBM5.label;" />
+                label="&trackingProtectionPBM5.label;"/>
       <label id="trackingProtectionPBMLearnMore"
-             class="text-link"
+             class="learnMore text-link"
              value="&trackingProtectionPBMLearnMore.label;"/>
       <spacer flex="1" />
       <button id="changeBlockListPBM"
@@ -210,9 +206,9 @@
                       preference="browser.formfill.enable"/>
           </vbox>
           <hbox id="cookiesBox">
-            <checkbox id="acceptCookies" label="&acceptCookies.label;"
+            <checkbox id="acceptCookies" label="&acceptCookies2.label;"
                       preference="network.cookie.cookieBehavior"
-                      accesskey="&acceptCookies.accesskey;"
+                      accesskey="&acceptCookies2.accesskey;"
                       onsyncfrompreference="return gPrivacyPane.readAcceptCookies();"
                       onsynctopreference="return gPrivacyPane.writeAcceptCookies();"/>
             <spacer flex="1" />
@@ -241,13 +237,16 @@
             <label id="keepUntil"
                    control="keepCookiesUntil"
                    accesskey="&keepUntil.accesskey;">&keepUntil.label;</label>
-            <menulist id="keepCookiesUntil"
-                      preference="network.cookie.lifetimePolicy">
-              <menupopup>
-                <menuitem label="&expire.label;" value="0"/>
-                <menuitem label="&close.label;" value="2"/>
-              </menupopup>
-            </menulist>
+            <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+            <hbox>
+              <menulist id="keepCookiesUntil"
+                        preference="network.cookie.lifetimePolicy">
+                <menupopup>
+                  <menuitem label="&expire.label;" value="0"/>
+                  <menuitem label="&close.label;" value="2"/>
+                </menupopup>
+              </menulist>
+            </hbox>
             <spacer flex="1"/>
             <button id="showCookiesButton"
                     label="&showCookies.label;" accesskey="&showCookies.accesskey;"
@@ -284,7 +283,7 @@
   <checkbox id="openpageSuggestion" label="&locbar.openpage.label;"
             accesskey="&locbar.openpage.accesskey;"
             preference="browser.urlbar.suggest.openpage"/>
-  <label class="text-link" onclick="if (event.button == 0) gotoPref('search')">
+  <label class="text-link" onclick="gotoPref('search')">
     &suggestionSettings.label;
   </label>
 </groupbox>
@@ -292,13 +291,19 @@
 <!-- Containers -->
 <groupbox id="browserContainersGroup" data-category="panePrivacy" hidden="true">
   <vbox id="browserContainersbox" hidden="true">
-    <caption><label>&browserContainersHeader.label;
-      <label id="browserContainersLearnMore" class="text-link"
+    <caption><label>&browserContainersHeader.label;</label></caption>
+    <hbox align="center">
+      <checkbox id="browserContainersCheckbox"
+                label="&browserContainersEnabled.label;"
+                accesskey="&browserContainersEnabled.accesskey;"
+                preference="privacy.userContext.enabled"
+                onsyncfrompreference="return gPrivacyPane.readBrowserContainersCheckbox();"/>
+      <label id="browserContainersLearnMore" class="learnMore text-link"
              value="&browserContainersLearnMore.label;"/>
-    </label></caption>
-    <checkbox id="browserContainersCheckbox"
-              label="&browserContainersEnabled.label;"
-              accesskey="&browserContainersEnabled.accesskey;"
-              preference="privacy.userContext.enabled"/>
+      <spacer flex="1"/>
+      <button id="browserContainersSettings"
+              label="&browserContainersSettings.label;"
+              accesskey="&browserContainersSettings.accesskey;"/>
+    </hbox>
   </vbox>
 </groupbox>

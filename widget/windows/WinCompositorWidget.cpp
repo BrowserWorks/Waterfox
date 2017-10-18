@@ -4,18 +4,25 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WinCompositorWidget.h"
+#include "gfxPrefs.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "mozilla/gfx/Point.h"
+#include "mozilla/layers/Compositor.h"
 #include "mozilla/widget/PlatformWidgetTypes.h"
 #include "nsWindow.h"
 #include "VsyncDispatcher.h"
+
+#include <ddraw.h>
 
 namespace mozilla {
 namespace widget {
 
 using namespace mozilla::gfx;
 
-WinCompositorWidget::WinCompositorWidget(const CompositorWidgetInitData& aInitData)
- : mWidgetKey(aInitData.widgetKey()),
+WinCompositorWidget::WinCompositorWidget(const CompositorWidgetInitData& aInitData,
+                                         const layers::CompositorOptions& aOptions)
+ : CompositorWidget(aOptions)
+ , mWidgetKey(aInitData.widgetKey()),
    mWnd(reinterpret_cast<HWND>(aInitData.hWnd())),
    mTransparencyMode(static_cast<nsTransparencyMode>(aInitData.transparencyMode())),
    mMemoryDC(nullptr),
@@ -23,6 +30,12 @@ WinCompositorWidget::WinCompositorWidget(const CompositorWidgetInitData& aInitDa
    mLockedBackBufferData(nullptr)
 {
   MOZ_ASSERT(mWnd && ::IsWindow(mWnd));
+
+  // mNotDeferEndRemoteDrawing is set on the main thread during init,
+  // but is only accessed after on the compositor thread.
+  mNotDeferEndRemoteDrawing = gfxPrefs::LayersCompositionFrameRate() == 0 ||
+                              gfxPlatform::IsInLayoutAsapMode() ||
+                              gfxPlatform::ForceSoftwareVsync();
 }
 
 void
@@ -33,7 +46,7 @@ WinCompositorWidget::OnDestroyWindow()
 }
 
 bool
-WinCompositorWidget::PreRender(layers::LayerManagerComposite* aManager)
+WinCompositorWidget::PreRender(WidgetRenderingContext* aContext)
 {
   // This can block waiting for WM_SETTEXT to finish
   // Using PreRender is unnecessarily pessimistic because
@@ -44,7 +57,7 @@ WinCompositorWidget::PreRender(layers::LayerManagerComposite* aManager)
 }
 
 void
-WinCompositorWidget::PostRender(layers::LayerManagerComposite* aManager)
+WinCompositorWidget::PostRender(WidgetRenderingContext* aContext)
 {
   mPresentLock.Leave();
 }
@@ -91,10 +104,16 @@ WinCompositorWidget::StartRemoteDrawing()
     return nullptr;
   }
 
-  MOZ_ASSERT(!mCompositeDC);
-  mCompositeDC = dc;
+  RefPtr<DrawTarget> dt =
+    mozilla::gfx::Factory::CreateDrawTargetForCairoSurface(surf->CairoSurface(),
+                                                           size);
+  if (dt) {
+    mCompositeDC = dc;
+  } else {
+    FreeWindowSurface(dc);
+  }
 
-  return mozilla::gfx::Factory::CreateDrawTargetForCairoSurface(surf->CairoSurface(), size);
+  return dt.forget();
 }
 
 void
@@ -110,6 +129,36 @@ WinCompositorWidget::EndRemoteDrawing()
     FreeWindowSurface(mCompositeDC);
   }
   mCompositeDC = nullptr;
+}
+
+bool
+WinCompositorWidget::NeedsToDeferEndRemoteDrawing()
+{
+  if(mNotDeferEndRemoteDrawing) {
+    return false;
+  }
+
+  IDirectDraw7* ddraw = DeviceManagerDx::Get()->GetDirectDraw();
+  if (!ddraw) {
+    return false;
+  }
+
+  DWORD scanLine = 0;
+  int height = ::GetSystemMetrics(SM_CYSCREEN);
+  HRESULT ret = ddraw->GetScanLine(&scanLine);
+  if (ret == DDERR_VERTICALBLANKINPROGRESS) {
+    scanLine = 0;
+  } else if (ret != DD_OK) {
+    return false;
+  }
+
+  // Check if there is a risk of tearing with GDI.
+  if (static_cast<int>(scanLine) > height / 2) {
+    // No need to defer.
+    return false;
+  }
+
+  return true;
 }
 
 already_AddRefed<gfx::DrawTarget>
@@ -156,6 +205,15 @@ WinCompositorWidget::EndBackBufferDrawing()
     mLockedBackBufferData = nullptr;
   }
   return CompositorWidget::EndBackBufferDrawing();
+}
+
+bool
+WinCompositorWidget::InitCompositor(layers::Compositor* aCompositor)
+{
+  if (aCompositor->GetBackendType() == layers::LayersBackend::LAYERS_BASIC) {
+    DeviceManagerDx::Get()->InitializeDirectDraw();
+  }
+  return true;
 }
 
 uintptr_t
@@ -228,8 +286,11 @@ WinCompositorWidget::ClearTransparentWindow()
 
   IntSize size = mTransparentSurface->GetSize();
   if (!size.IsEmpty()) {
-    RefPtr<DrawTarget> drawTarget = gfxPlatform::GetPlatform()->
-      CreateDrawTargetForSurface(mTransparentSurface, size);
+    RefPtr<DrawTarget> drawTarget =
+      gfxPlatform::CreateDrawTargetForSurface(mTransparentSurface, size);
+    if (!drawTarget) {
+      return;
+    }
     drawTarget->ClearRect(Rect(0, 0, size.width, size.height));
     RedrawTransparentWindow();
   }
@@ -270,6 +331,12 @@ WinCompositorWidget::FreeWindowSurface(HDC dc)
 {
   if (eTransparencyTransparent != mTransparencyMode)
     ::ReleaseDC(mWnd, dc);
+}
+
+bool
+WinCompositorWidget::IsHidden() const
+{
+  return ::IsIconic(mWnd);
 }
 
 } // namespace widget

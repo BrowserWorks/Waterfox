@@ -5,11 +5,26 @@
 %endif
 @namespace html "http://www.w3.org/1999/xhtml";
 
-#mainPrefPane {
+.main-content {
+  padding-top: 0;
+}
+
+.pane-container {
+  display: block;
   max-width: 800px;
+}
+
+#mainPrefPane {
+  width: 100%;
   padding: 0;
   font: message-box;
   font-size: 1.25rem;
+}
+
+description.indent,
+.indent > description {
+  font-size: 1.18rem;
+  color: #737373;
 }
 
 * {
@@ -17,21 +32,26 @@
 }
 
 button,
-treecol {
+treecol,
+html|option {
   /* override the * rule */
   -moz-user-select: none;
 }
 
 #engineList treechildren::-moz-tree-image(engineShown, checked),
 #blocklistsTree treechildren::-moz-tree-image(selectionCol, checked) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
+  list-style-image: url("chrome://global/skin/in-content/check.svg");
+  -moz-context-properties: fill, stroke;
+  fill: #2292d0;
+  stroke: none;
   width: 21px;
   height: 21px;
 }
 
 #engineList treechildren::-moz-tree-image(engineShown, checked, selected),
 #blocklistsTree treechildren::-moz-tree-image(selectionCol, checked, selected) {
-  list-style-image: url("chrome://global/skin/in-content/check.svg#check-inverted");
+  fill: white;
+  stroke: #0095dd;
 }
 
 #engineList treechildren::-moz-tree-row,
@@ -41,6 +61,36 @@ treecol {
 
 #selectionCol {
   min-width: 26px;
+}
+
+.learnMore {
+  margin-inline-start: 10px;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.accessory-button {
+  min-width: 145px;
+}
+
+/* Subcategory title */
+
+/**
+ * The first subcategory title for each category should not have margin-top.
+ */
+#generalCategory,
+#searchCategory,
+#browserPrivacyCategory,
+#firefoxAccountCategory {
+  margin-top: 0;
+}
+
+.header-name {
+  font-size: 2rem;
+}
+
+.subcategory {
+  margin-top: 48px;
 }
 
 /* Category List */
@@ -64,48 +114,39 @@ treecol {
 }
 
 #category-general > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#general");
+  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#general");
 }
 
 #category-search > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#search");
-}
-
-#category-content > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#content");
-}
-
-#category-application > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#applications");
+  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#search");
 }
 
 #category-privacy > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#privacy");
-}
-
-#category-security > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#security");
+  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#security");
 }
 
 #category-sync > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#sync");
-}
-
-#category-advanced > .category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#advanced");
+  list-style-image: url("chrome://browser/skin/preferences/in-content-new/icons.svg#sync");
 }
 
 @media (max-width: 800px) {
   .category-name {
     display: none;
   }
+  .help-button {
+    font-size: 0 !important;
+  }
 }
 
 /* header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-#header-advanced {
-  border-bottom: none;
-  padding-bottom: 0;
+.header[hidden=true] {
+  display: none;
 }
 
 /* General Pane */
@@ -164,15 +205,9 @@ treecol {
   margin-inline-start: 0;
 }
 
-/* Content pane */
-#playDRMContentLink {
-  /* Line up with the buttons in the other grid bits: */
-  margin-left: 4px !important;
-  margin-right: 4px !important;
-}
-
-#notificationsPolicyLearnMore {
-  margin-inline-start: 1.5em !important;
+#browserHomePage:-moz-locale-dir(rtl) input {
+  unicode-bidi: plaintext;
+  direction: rtl;
 }
 
 #defaultFontSizeLabel {
@@ -181,10 +216,6 @@ treecol {
 }
 
 /* Applications Pane Styles */
-
-#applicationsContent {
-  padding: 15px 0;
-}
 
 #filter {
   margin-inline-start: 0;
@@ -222,14 +253,6 @@ treecol {
 
 /* Privacy pane */
 
-#trackingProtectionPBMLearnMore,
-#trackingProtectionLearnMore,
-#browserContainersLearnMore {
-  margin-inline-start: 1.5em !important;
-  margin-top: 0;
-  font-weight: normal;
-}
-
 .doNotTrackLearnMore {
   margin-inline-start: calc(1em + 30px);
   margin-bottom: 1em;
@@ -241,14 +264,19 @@ treecol {
   margin-left: 0;
 }
 
+#doNotTrackLearnMoreBox {
+  margin-top: 30px
+}
+
+#trackingProtectionAdvancedSettings {
+  margin-inline-start: 15px;
+}
+
 /* Collapse the non-active vboxes in decks to use only the height the
    active vbox needs */
 #historyPane:not([selectedIndex="1"]) > #historyDontRememberPane,
 #historyPane:not([selectedIndex="2"]) > #historyCustomPane,
-#weavePrefsDeck:not([selectedIndex="1"]) > #hasAccount,
-#weavePrefsDeck:not([selectedIndex="2"]) > #needsUpdate,
-#weavePrefsDeck:not([selectedIndex="3"]) > #noFxaAccount,
-#weavePrefsDeck:not([selectedIndex="4"]) > #hasFxaAccount,
+#weavePrefsDeck:not([selectedIndex="1"]) > #hasFxaAccount,
 #fxaLoginStatus:not([selectedIndex="1"]) > #fxaLoginUnverified,
 #fxaLoginStatus:not([selectedIndex="2"]) > #fxaLoginRejected {
   visibility: collapse;
@@ -260,30 +288,26 @@ description > html|a {
   cursor: pointer;
 }
 
+description > checkbox {
+  vertical-align: middle;
+}
+
 #weavePrefsDeck > vbox > label,
 #weavePrefsDeck > vbox > groupbox,
 #weavePrefsDeck > vbox > description,
-#weavePrefsDeck > vbox > #pairDevice > label,
-#weavePrefsDeck > #needsUpdate > hbox > #loginError,
 #weavePrefsDeck > #hasFxaAccount > vbox > label,
-#weavePrefsDeck > #hasFxaAccount > hbox:not(#tosPP-normal) > label {
+#weavePrefsDeck > #hasFxaAccount > hbox > label {
   /* no margin-inline-start for elements at the beginning of a line */
   margin-inline-start: 0;
 }
 
-#tabsElement {
-  margin-inline-end: 4px; /* add the 4px end-margin of other elements */
+groupbox {
+  /* Give more available space for displaying tooltip on scrollable groupbox */
+  margin-top: 15px !important;
 }
 
-#telemetryLearnMore,
-#FHRLearnMore,
-#crashReporterLearnMore {
-  /* provide some margin between the links and the label text */
-  /* !important is needed to override the rules defined in common.css */
-  margin-inline-start: 20px !important;
-  /* center the links */
-  margin-top: 8px;
-  margin-bottom: 8px;
+#tabsElement {
+  margin-inline-end: 4px; /* add the 4px end-margin of other elements */
 }
 
 .indent {
@@ -304,12 +328,15 @@ description > html|a {
  * Dialog
  */
 
-#dialogOverlay {
-  background-color: rgba(0,0,0,0.5);
+.dialogOverlay {
   visibility: hidden;
 }
 
-#dialogBox {
+.dialogOverlay[topmost="true"] {
+  background-color: rgba(0,0,0,0.5);
+}
+
+.dialogBox {
   background-color: #fbfbfb;
   background-clip: content-box;
   color: #424e5a;
@@ -324,20 +351,20 @@ description > html|a {
   padding: 0;
 }
 
-#dialogBox[resizable="true"] {
+.dialogBox[resizable="true"] {
   resize: both;
   overflow: hidden;
   min-height: 20em;
   min-width: 66ch;
 }
 
-#dialogBox > .groupbox-title {
+.dialogBox > .groupbox-title {
   padding: 3.5px 0;
   background-color: #F1F1F1;
   border-bottom: 1px solid #C1C1C1;
 }
 
-#dialogTitle {
+.dialogTitle {
   text-align: center;
   -moz-user-select: none;
 }
@@ -352,15 +379,14 @@ description > html|a {
   min-width: 0;
 }
 
-#dialogBox > .groupbox-body {
+.dialogBox > .groupbox-body {
   -moz-appearance: none;
   padding: 20px;
 }
 
-#dialogFrame {
+.dialogFrame {
   -moz-box-flex: 1;
   /* Default dialog dimensions */
-  height: 20em;
   width: 66ch;
 }
 
@@ -389,15 +415,18 @@ description > html|a {
  */
 
 #fxaProfileImage {
-  max-width: 60px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   list-style-image: url(chrome://browser/skin/fxa/default-avatar.svg);
   margin-inline-end: 15px;
-  image-rendering: -moz-crisp-edges;
+  image-rendering: auto;
+  border: 1px solid transparent;
 }
 
 #fxaLoginStatus[hasName] #fxaProfileImage {
-  max-width: 80px;
+  width: 80px;
+  height: 80px;
 }
 
 #fxaProfileImage.actionable {
@@ -405,17 +434,14 @@ description > html|a {
 }
 
 #fxaProfileImage.actionable:hover {
-  box-shadow: 0px 0px 0px 1px #0095DD;
+  border-color: #0095DD;
 }
 
 #fxaProfileImage.actionable:hover:active {
-  box-shadow: 0px 0px 0px 1px #ff9500;
+  border-color: #ff9500;
 }
 
 #noFxaAccount {
-  /* Overriding the margins from the base preferences.css theme file.
-     These overrides can be simplified by fixing bug 1027174 */
-  margin: 0;
   padding-top: 15px;
 }
 
@@ -457,6 +483,9 @@ description > html|a {
 
 .fxaSyncIllustration {
   margin-top: 35px;
+  width: 231px;
+  -moz-context-properties: fill;
+  fill: #bfcbd3;
 }
 
 #syncOptions caption {
@@ -488,6 +517,8 @@ description > html|a {
 .fxaAccountBoxButtons {
   margin-bottom: 0 !important;
   margin-top: 11px;
+  display: flex;
+  align-items: center;
 }
 
 .fxaAccountBoxButtons > * {
@@ -503,12 +534,11 @@ description > html|a {
 }
 
 .fxaAccountBoxButtons > button:first-child {
-  margin-right: 14px !important;
+  margin-inline-end: 14px !important;
 }
 
-.fxaSyncIllustration {
-  width: 231px;
-  list-style-image: url(chrome://browser/skin/fxa/sync-illustration.png)
+#verifiedManage:visited {
+  color: var(--in-content-link-color);
 }
 
 #fxaLoginStatus[hasName] #fxaEmailAddress1 {
@@ -523,11 +553,13 @@ description > html|a {
 
 .fxaFirefoxLogo {
   list-style-image: url(chrome://browser/skin/fxa/logo.png);
-  max-width: 64px;
+  width: 64px;
+  height: 64px;
   margin-inline-end: 14px;
 }
 
 .fxaMobilePromo {
+  line-height: 28px;
   margin-bottom: 20px;
   margin-top: 25px;
 }
@@ -543,21 +575,18 @@ description > html|a {
 }
 
 .androidLink {
-  background-image: url("chrome://browser/skin/fxa/android.png");
+  list-style-image: url("chrome://browser/skin/fxa/android.png");
 }
 
 .iOSLink {
-  background-image: url("chrome://browser/skin/fxa/ios.png");
+  list-style-image: url("chrome://browser/skin/fxa/ios.png");
 }
 
 .androidLink,
 .iOSLink {
-  margin: 0 0 0 2px;
-  padding-left: 28px;
-  padding-top: 6px;
+  vertical-align: bottom;
+  padding: 0 5px;
   height: 28px;
-  background-repeat: no-repeat;
-  background-size: 24px 28px;
 }
 
 #tosPP-small {
@@ -567,15 +596,133 @@ description > html|a {
 
 @media (min-resolution: 1.1dppx) {
   .androidLink {
-    background-image: url("chrome://browser/skin/fxa/android@2x.png");
+    list-style-image: url("chrome://browser/skin/fxa/android@2x.png");
   }
   .iOSLink {
-    background-image: url("chrome://browser/skin/fxa/ios@2x.png");
-  }
-  .fxaSyncIllustration {
-    list-style-image: url(chrome://browser/skin/fxa/sync-illustration@2x.png)
+    list-style-image: url("chrome://browser/skin/fxa/ios@2x.png");
   }
   .fxaFirefoxLogo {
     list-style-image: url(chrome://browser/skin/fxa/logo@2x.png);
   }
+}
+
+#updateDeck > hbox > label {
+  margin-inline-end: 5px ! important;
+}
+
+.update-throbber {
+  width: 16px;
+  min-height: 16px;
+  margin-inline-end: 3px;
+  list-style-image: url("chrome://global/skin/icons/loading.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  .update-throbber {
+    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
+  }
+}
+
+.help-button {
+  position: fixed;
+  left: 0;
+  /* Needs to have enough gap from the bottom to not
+     get behind the status panel (bug 1357841). */
+  bottom: 2rem;
+  font-size: 13px;
+  line-height: 13px;
+  height: 14px;
+  background-position: 15px;
+  padding-inline-start: 35px;
+  white-space: nowrap;
+}
+
+.help-button:-moz-locale-dir(rtl) {
+  left: auto;
+  right: 0;
+  background-position: right 15px top 0;
+}
+
+.help-button:link,
+.help-button:visited {
+  color: var(--in-content-category-text);
+  text-decoration: none;
+}
+
+.search-container {
+  position: sticky;
+  background-color: var(--in-content-page-background);
+  width: 100%;
+  top: 0;
+  z-index: 1;
+}
+
+#searchInput {
+  width: 230px;
+  margin: 20px 0;
+}
+
+#searchInput .textbox-search-icons:not([selectedIndex="1"]) {
+  display: none;
+}
+
+.search-tooltip {
+  font-size: 1.25rem;
+  position: absolute;
+  padding: 0 10px;
+  background-color: #ffe900;
+  border: 1px solid #d7b600;
+  -moz-user-select: none;
+  bottom: 35px;
+}
+
+.search-tooltip:hover,
+.search-tooltip:hover::before {
+  opacity: .1;
+}
+
+.search-tooltip::before {
+  position: absolute;
+  content: "";
+  border: 7px solid transparent;
+  border-top-color: #d7b600;
+  top: 100%;
+  offset-inline-start: calc(50% - 7px);
+}
+
+.search-tooltip::after {
+  position: absolute;
+  content: "";
+  border: 6px solid transparent;
+  border-top-color: #ffe900;
+  top: 100%;
+  offset-inline-start: calc(50% - 6px);
+}
+
+.search-tooltip-parent {
+  position: relative;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left {
+  display: -moz-box;
+  min-width: auto; /* Override the min-width defined in menu.css */
+  margin-inline-end: 6px;
+}
+
+menulist[indicator=true] > menupopup menuitem:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  width: 8px;
+  height: 10px;
+  margin: 0;
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon {
+  list-style-image: url(chrome://browser/skin/preferences/in-content-new/search-arrow-indicator.svg);
+}
+
+menulist[indicator=true] > menupopup menuitem[indicator=true]:not([image]) > .menu-iconic-left > .menu-iconic-icon:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.menu-iconic-highlightable-text {
+  margin: 0; /* Align with the margin of xul:label.menu-iconic-text */
 }

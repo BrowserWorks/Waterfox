@@ -41,11 +41,11 @@ add_task(function* () {
   yield animations.setPlaybackRates(players, .5);
 
   info("Query their states and check they are correct");
-  for (let player of players) {
-    let state = yield player.getCurrentState();
-    is(state.playbackRate, .5, "The playbackRate was updated");
+  for (let animPlayer of players) {
+    let animPlayerState = yield animPlayer.getCurrentState();
+    is(animPlayerState.playbackRate, .5, "The playbackRate was updated");
   }
 
-  yield closeDebuggerClient(client);
+  yield client.close();
   gBrowser.removeCurrentTab();
 });

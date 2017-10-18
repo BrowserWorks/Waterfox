@@ -36,7 +36,7 @@ function Number_toLocaleString() {
     }
 
     // Step 5.
-    return intl_FormatNumber(numberFormat, x);
+    return intl_FormatNumber(numberFormat, x, /* formatToParts = */ false);
 }
 
 // ES6 draft ES6 20.1.2.4
@@ -53,25 +53,53 @@ function Number_isNaN(num) {
     return num !== num;
 }
 
-// ES6 draft ES6 20.1.2.5
-function Number_isSafeInteger(number) {
+// ES2018 draft rev f83aa38282c2a60c6916ebc410bfdf105a0f6a54
+// 20.1.2.3 Number.isInteger ( number )
+function Number_isInteger(number) {
     // Step 1.
-    if (typeof number !== 'number')
+    if (typeof number !== "number")
         return false;
 
-    // Step 2.
-    if (!Number_isFinite(number))
-        return false;
+    // -(2**31) is an int32, but abs(-(2**31)) isn't. Avoid bailouts below by
+    // special casing it here.
+    if (number === -(2 ** 31))
+        return true;
 
     // Step 3.
-    var integer = ToInteger(number);
+    // Note: We're using abs + floor instead ceil to workaround bug 1379626.
+    var absNumber = std_Math_abs(number);
+    var integer = std_Math_floor(absNumber);
 
-    // Step 4.
-    if (integer !== number)
+    // Steps 2, 4.
+    if (absNumber - integer !== 0)
         return false;
 
-    // Step 5. If abs(integer) <= 2**53 - 1, return true.
-    if (std_Math_abs(integer) <= 9007199254740991)
+    // Step 5.
+    return true;
+}
+
+// ES2018 draft rev f83aa38282c2a60c6916ebc410bfdf105a0f6a54
+// 20.1.2.5 Number.isSafeInteger ( number )
+function Number_isSafeInteger(number) {
+    // Step 1.
+    if (typeof number !== "number")
+        return false;
+
+    // -(2**31) is an int32, but abs(-(2**31)) isn't. Avoid bailouts below by
+    // special casing it here.
+    if (number === -(2 ** 31))
+        return true;
+
+    // Step 3.
+    var absNumber = std_Math_abs(number);
+    var integer = std_Math_floor(absNumber);
+
+    // Steps 2, 4.
+    if (absNumber - integer !== 0)
+        return false;
+
+    // Step 5.
+    if (integer <= (2 ** 53) - 1)
         return true;
 
     // Step 6.
@@ -82,6 +110,6 @@ function Global_isNaN(number) {
     return Number_isNaN(ToNumber(number));
 }
 
-function Global_isFinite(number){
+function Global_isFinite(number) {
     return Number_isFinite(ToNumber(number));
 }

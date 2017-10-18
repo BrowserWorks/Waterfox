@@ -7,6 +7,7 @@
 #define MOZILLA_GFX_TYPES_H_
 
 #include "mozilla/EndianUtils.h"
+#include "mozilla/MacroArgs.h" // for MOZ_CONCAT
 
 #include <stddef.h>
 #include <stdint.h>
@@ -15,6 +16,7 @@ namespace mozilla {
 namespace gfx {
 
 typedef float Float;
+typedef double Double;
 
 enum class SurfaceType : int8_t {
   DATA, /* Data surface - bitmap in memory */
@@ -28,7 +30,8 @@ enum class SurfaceType : int8_t {
   DUAL_DT, /* Snapshot of a dual drawtarget */
   D2D1_1_IMAGE, /* A D2D 1.1 ID2D1Image SourceSurface */
   RECORDING, /* Surface used for recording */
-  TILED /* Surface from a tiled DrawTarget */
+  TILED, /* Surface from a tiled DrawTarget */
+  DATA_SHARED, /* Data surface using shared memory */
 };
 
 enum class SurfaceFormat : int8_t {
@@ -53,6 +56,8 @@ enum class SurfaceFormat : int8_t {
 
   // This one is a single-byte, so endianness isn't an issue.
   A8,
+
+  R8G8,
 
   // These ones are their own special cases.
   YUV,
@@ -132,12 +137,13 @@ enum class DrawTargetType : int8_t {
 enum class BackendType : int8_t {
   NONE = 0,
   DIRECT2D, // Used for version independent D2D objects.
-  COREGRAPHICS,
-  COREGRAPHICS_ACCELERATED,
   CAIRO,
   SKIA,
   RECORDING,
-  DIRECT2D1_1
+  DIRECT2D1_1,
+
+  // Add new entries above this line.
+  BACKEND_LAST
 };
 
 enum class FontType : int8_t {
@@ -147,7 +153,8 @@ enum class FontType : int8_t {
   SKIA,
   CAIRO,
   COREGRAPHICS,
-  FONTCONFIG
+  FONTCONFIG,
+  FREETYPE
 };
 
 enum class NativeSurfaceType : int8_t {
@@ -271,6 +278,12 @@ enum class SamplingBounds : int8_t {
   BOUNDED
 };
 
+// Moz2d version for SVG mask types
+enum class LuminanceType : int8_t {
+  LUMINANCE,
+  LINEARRGB,
+};
+
 /* Color is stored in non-premultiplied form */
 struct Color
 {
@@ -367,21 +380,6 @@ typedef mozilla::gfx::SurfaceFormat gfxImageFormat;
 
 namespace mozilla {
 
-// We can't use MOZ_BEGIN_ENUM_CLASS here because that prevents the enum
-// values from being used for indexing. Wrapping the enum in a struct does at
-// least gives us name scoping.
-struct RectCorner {
-  enum {
-    // This order is important since Rect::AtCorner, AppendRoundedRectToPath
-    // and other code depends on it!
-    TopLeft = 0,
-    TopRight = 1,
-    BottomRight = 2,
-    BottomLeft = 3,
-    Count = 4
-  };
-};
-
 // Side constants for use in various places.
 enum Side { eSideTop, eSideRight, eSideBottom, eSideLeft };
 
@@ -396,11 +394,127 @@ enum SideBits {
   eSideBitsAll = eSideBitsTopBottom | eSideBitsLeftRight
 };
 
-} // namespace mozilla
+// Creates a for loop that walks over the four mozilla::Side values.
+// We use an int32_t helper variable (instead of a Side) for our loop counter,
+// to avoid triggering undefined behavior just before we exit the loop (at
+// which point the counter is incremented beyond the largest valid Side value).
+#define NS_FOR_CSS_SIDES(var_)                                           \
+  int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eSideTop;                 \
+  for (mozilla::Side var_;                                               \
+       MOZ_CONCAT(var_,__LINE__) <= mozilla::eSideLeft &&                \
+         ((var_ = mozilla::Side(MOZ_CONCAT(var_,__LINE__))), true);      \
+       ++MOZ_CONCAT(var_,__LINE__))
 
-#define NS_SIDE_TOP    mozilla::eSideTop
-#define NS_SIDE_RIGHT  mozilla::eSideRight
-#define NS_SIDE_BOTTOM mozilla::eSideBottom
-#define NS_SIDE_LEFT   mozilla::eSideLeft
+static inline Side& operator++(Side& side) {
+  MOZ_ASSERT(side >= eSideTop && side <= eSideLeft,
+             "Out of range side");
+  side = Side(side + 1);
+  return side;
+}
+
+enum Corner {
+  // This order is important!
+  eCornerTopLeft = 0,
+  eCornerTopRight = 1,
+  eCornerBottomRight = 2,
+  eCornerBottomLeft = 3
+};
+
+// RectCornerRadii::radii depends on this value. It is not being added to
+// Corner because we want to lift the responsibility to handle it in the
+// switch-case.
+constexpr int eCornerCount = 4;
+
+// Creates a for loop that walks over the four mozilla::Corner values. This
+// implementation uses the same technique as NS_FOR_CSS_SIDES.
+#define NS_FOR_CSS_FULL_CORNERS(var_)                                   \
+  int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eCornerTopLeft;          \
+  for (mozilla::Corner var_;                                            \
+       MOZ_CONCAT(var_,__LINE__) <= mozilla::eCornerBottomLeft &&       \
+         (var_ = mozilla::Corner(MOZ_CONCAT(var_,__LINE__)), true);     \
+       ++MOZ_CONCAT(var_,__LINE__))
+
+static inline Corner operator++(Corner& aCorner) {
+  MOZ_ASSERT(aCorner >= eCornerTopLeft && aCorner <= eCornerBottomLeft,
+             "Out of range corner!");
+  aCorner = Corner(aCorner + 1);
+  return aCorner;
+}
+
+// Indices into "half corner" arrays (nsStyleCorners e.g.)
+enum HalfCorner {
+  // This order is important!
+  eCornerTopLeftX = 0,
+  eCornerTopLeftY = 1,
+  eCornerTopRightX = 2,
+  eCornerTopRightY = 3,
+  eCornerBottomRightX = 4,
+  eCornerBottomRightY = 5,
+  eCornerBottomLeftX = 6,
+  eCornerBottomLeftY = 7
+};
+
+// Creates a for loop that walks over the eight mozilla::HalfCorner values.
+// This implementation uses the same technique as NS_FOR_CSS_SIDES.
+#define NS_FOR_CSS_HALF_CORNERS(var_)                                   \
+  int32_t MOZ_CONCAT(var_,__LINE__) = mozilla::eCornerTopLeftX;         \
+  for (mozilla::HalfCorner var_;                                        \
+       MOZ_CONCAT(var_,__LINE__) <= mozilla::eCornerBottomLeftY &&      \
+         (var_ = mozilla::HalfCorner(MOZ_CONCAT(var_,__LINE__)), true); \
+       ++MOZ_CONCAT(var_,__LINE__))
+
+static inline HalfCorner operator++(HalfCorner& aHalfCorner) {
+  MOZ_ASSERT(aHalfCorner >= eCornerTopLeftX && aHalfCorner <= eCornerBottomLeftY,
+             "Out of range half corner!");
+  aHalfCorner = HalfCorner(aHalfCorner + 1);
+  return aHalfCorner;
+}
+
+// The result of these conversion functions are exhaustively checked in
+// nsStyleCoord.cpp, which also serves as usage examples.
+
+constexpr bool HalfCornerIsX(HalfCorner aHalfCorner)
+{
+  return !(aHalfCorner % 2);
+}
+
+constexpr Corner HalfToFullCorner(HalfCorner aHalfCorner)
+{
+  return Corner(aHalfCorner / 2);
+}
+
+constexpr HalfCorner FullToHalfCorner(Corner aCorner, bool aIsVertical)
+{
+  return HalfCorner(aCorner * 2 + aIsVertical);
+}
+
+constexpr bool SideIsVertical(Side aSide)
+{
+  return aSide % 2;
+}
+
+// @param aIsSecond when true, return the clockwise second of the two
+// corners associated with aSide. For example, with aSide = eSideBottom the
+// result is eCornerBottomRight when aIsSecond is false, and
+// eCornerBottomLeft when aIsSecond is true.
+constexpr Corner SideToFullCorner(Side aSide, bool aIsSecond)
+{
+  return Corner((aSide + aIsSecond) % 4);
+}
+
+// @param aIsSecond see SideToFullCorner.
+// @param aIsParallel return the half-corner that is parallel with aSide
+// when aIsParallel is true. For example with aSide=eSideTop, aIsSecond=true
+// the result is eCornerTopRightX when aIsParallel is true, and
+// eCornerTopRightY when aIsParallel is false (because "X" is parallel with
+// eSideTop/eSideBottom, similarly "Y" is parallel with
+// eSideLeft/eSideRight)
+constexpr HalfCorner SideToHalfCorner(Side aSide, bool aIsSecond,
+                                      bool aIsParallel)
+{
+  return HalfCorner(((aSide + aIsSecond) * 2 + (aSide + !aIsParallel) % 2) % 8);
+}
+
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_TYPES_H_ */

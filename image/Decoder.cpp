@@ -57,13 +57,14 @@ Decoder::Decoder(RasterImage* aImage)
   , mSurfaceFlags(DefaultSurfaceFlags())
   , mInitialized(false)
   , mMetadataDecode(false)
+  , mHaveExplicitOutputSize(false)
   , mInFrame(false)
   , mFinishedNewFrame(false)
   , mReachedTerminalState(false)
   , mDecodeDone(false)
   , mError(false)
-  , mDecodeAborted(false)
   , mShouldReportError(false)
+  , mFinalizeFrames(true)
 { }
 
 Decoder::~Decoder()
@@ -77,7 +78,7 @@ Decoder::~Decoder()
   if (mImage && !NS_IsMainThread()) {
     // Dispatch mImage to main thread to prevent it from being destructed by the
     // decode thread.
-    NS_ReleaseOnMainThread(mImage.forget());
+    NS_ReleaseOnMainThreadSystemGroup(mImage.forget());
   }
 }
 
@@ -94,10 +95,12 @@ Decoder::Init()
   // All decoders must have a SourceBufferIterator.
   MOZ_ASSERT(mIterator);
 
-  // It doesn't make sense to decode anything but the first frame if we can't
-  // store anything in the SurfaceCache, since only the last frame we decode
-  // will be retrievable.
-  MOZ_ASSERT(ShouldUseSurfaceCache() || IsFirstFrameDecode());
+  // Metadata decoders must not set an output size.
+  MOZ_ASSERT_IF(mMetadataDecode, !mHaveExplicitOutputSize);
+
+  // All decoders must be anonymous except for metadata decoders.
+  // XXX(seth): Soon that exception will be removed.
+  MOZ_ASSERT_IF(mImage, IsMetadataDecode());
 
   // Implementation-specific initialization.
   nsresult rv = InitInternal();
@@ -121,7 +124,7 @@ Decoder::Decode(IResumable* aOnResume /* = nullptr */)
 
   LexerResult lexerResult(TerminalState::FAILURE);
   {
-    PROFILER_LABEL("ImageDecoder", "Decode", js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("Decoder::Decode", GRAPHICS);
     AutoRecordDecoderTelemetry telemetry(this);
 
     lexerResult =  DoDecode(*mIterator, aOnResume);
@@ -150,6 +153,20 @@ Decoder::Decode(IResumable* aOnResume /* = nullptr */)
                                 : TerminalState::SUCCESS);
 }
 
+LexerResult
+Decoder::TerminateFailure()
+{
+  PostError();
+
+  // Perform final cleanup if need be.
+  if (!mReachedTerminalState) {
+    mReachedTerminalState = true;
+    CompleteDecode();
+  }
+
+  return LexerResult(TerminalState::FAILURE);
+}
+
 bool
 Decoder::ShouldSyncDecode(size_t aByteLimit)
 {
@@ -174,46 +191,39 @@ Decoder::CompleteDecode()
     PostError();
   }
 
-  // If this was a metadata decode and we never got a size, the decode failed.
-  if (IsMetadataDecode() && !HasSize()) {
-    PostError();
+  if (IsMetadataDecode()) {
+    // If this was a metadata decode and we never got a size, the decode failed.
+    if (!HasSize()) {
+      PostError();
+    }
+    return;
   }
 
-  // If the implementation left us mid-frame, finish that up.
-  if (mInFrame && !HasError()) {
+  // If the implementation left us mid-frame, finish that up. Note that it may
+  // have left us transparent.
+  if (mInFrame) {
+    PostHasTransparency();
     PostFrameStop();
   }
 
-  // If PostDecodeDone() has not been called, and this decoder wasn't aborted
-  // early because of low-memory conditions or losing a race with another
-  // decoder, we need to send teardown notifications (and report an error to the
-  // console later).
-  if (!IsMetadataDecode() && !mDecodeDone && !WasAborted()) {
+  // If PostDecodeDone() has not been called, we may need to send teardown
+  // notifications if it is unrecoverable.
+  if (!mDecodeDone) {
+    // We should always report an error to the console in this case.
     mShouldReportError = true;
 
-    // Even if we encountered an error, we're still usable if we have at least
-    // one complete frame.
     if (GetCompleteFrameCount() > 0) {
-      // We're usable, so do exactly what we should have when the decoder
-      // completed.
-
-      // Not writing to the entire frame may have left us transparent.
+      // We're usable if we have at least one complete frame, so do exactly
+      // what we should have when the decoder completed.
       PostHasTransparency();
-
-      if (mInFrame) {
-        PostFrameStop();
-      }
       PostDecodeDone();
     } else {
       // We're not usable. Record some final progress indicating the error.
-      if (!IsMetadataDecode()) {
-        mProgress |= FLAG_DECODE_COMPLETE;
-      }
-      mProgress |= FLAG_HAS_ERROR;
+      mProgress |= FLAG_DECODE_COMPLETE | FLAG_HAS_ERROR;
     }
   }
 
-  if (mDecodeDone && !IsMetadataDecode()) {
+  if (mDecodeDone) {
     MOZ_ASSERT(HasError() || mCurrentFrame, "Should have an error or a frame");
 
     // If this image wasn't animated and isn't a transient image, mark its frame
@@ -227,24 +237,18 @@ Decoder::CompleteDecode()
   }
 }
 
-nsresult
-Decoder::SetTargetSize(const nsIntSize& aSize)
+void
+Decoder::SetOutputSize(const gfx::IntSize& aSize)
 {
-  // Make sure the size is reasonable.
-  if (MOZ_UNLIKELY(aSize.width <= 0 || aSize.height <= 0)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Create a downscaler that we'll filter our output through.
-  mDownscaler.emplace(aSize);
-
-  return NS_OK;
+  mOutputSize = Some(aSize);
+  mHaveExplicitOutputSize = true;
 }
 
-Maybe<IntSize>
-Decoder::GetTargetSize()
+Maybe<gfx::IntSize>
+Decoder::ExplicitOutputSize() const
 {
-  return mDownscaler ? Some(mDownscaler->TargetSize()) : Nothing();
+  MOZ_ASSERT_IF(mHaveExplicitOutputSize, mOutputSize);
+  return mHaveExplicitOutputSize ? mOutputSize : Nothing();
 }
 
 Maybe<uint32_t>
@@ -255,14 +259,33 @@ Decoder::TakeCompleteFrameCount()
   return finishedNewFrame ? Some(GetCompleteFrameCount()) : Nothing();
 }
 
+DecoderFinalStatus
+Decoder::FinalStatus() const
+{
+  return DecoderFinalStatus(IsMetadataDecode(),
+                            GetDecodeDone(),
+                            HasError(),
+                            ShouldReportError());
+}
+
+DecoderTelemetry
+Decoder::Telemetry() const
+{
+  MOZ_ASSERT(mIterator);
+  return DecoderTelemetry(SpeedHistogram(),
+                          mIterator->ByteCount(),
+                          mIterator->ChunkCount(),
+                          mDecodeTime);
+}
+
 nsresult
 Decoder::AllocateFrame(uint32_t aFrameNum,
-                       const nsIntSize& aTargetSize,
-                       const nsIntRect& aFrameRect,
+                       const gfx::IntSize& aOutputSize,
+                       const gfx::IntRect& aFrameRect,
                        gfx::SurfaceFormat aFormat,
                        uint8_t aPaletteDepth)
 {
-  mCurrentFrame = AllocateFrameInternal(aFrameNum, aTargetSize, aFrameRect,
+  mCurrentFrame = AllocateFrameInternal(aFrameNum, aOutputSize, aFrameRect,
                                         aFormat, aPaletteDepth,
                                         mCurrentFrame.get());
 
@@ -271,14 +294,16 @@ Decoder::AllocateFrame(uint32_t aFrameNum,
     mCurrentFrame->GetImageData(&mImageData, &mImageDataLength);
     mCurrentFrame->GetPaletteData(&mColormap, &mColormapSize);
 
-    if (aFrameNum + 1 == mFrameCount) {
-      // If we're past the first frame, PostIsAnimated() should've been called.
-      MOZ_ASSERT_IF(mFrameCount > 1, HasAnimation());
+    // We should now be on |aFrameNum|. (Note that we're comparing the frame
+    // number, which is zero-based, with the frame count, which is one-based.)
+    MOZ_ASSERT(aFrameNum + 1 == mFrameCount);
 
-      // Update our state to reflect the new frame
-      MOZ_ASSERT(!mInFrame, "Starting new frame but not done with old one!");
-      mInFrame = true;
-    }
+    // If we're past the first frame, PostIsAnimated() should've been called.
+    MOZ_ASSERT_IF(mFrameCount > 1, HasAnimation());
+
+    // Update our state to reflect the new frame.
+    MOZ_ASSERT(!mInFrame, "Starting new frame but not done with old one!");
+    mInFrame = true;
   }
 
   return mCurrentFrame ? NS_OK : NS_ERROR_FAILURE;
@@ -286,8 +311,8 @@ Decoder::AllocateFrame(uint32_t aFrameNum,
 
 RawAccessFrameRef
 Decoder::AllocateFrameInternal(uint32_t aFrameNum,
-                               const nsIntSize& aTargetSize,
-                               const nsIntRect& aFrameRect,
+                               const gfx::IntSize& aOutputSize,
+                               const gfx::IntRect& aFrameRect,
                                SurfaceFormat aFormat,
                                uint8_t aPaletteDepth,
                                imgFrame* aPreviousFrame)
@@ -301,23 +326,17 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
     return RawAccessFrameRef();
   }
 
-  if (aTargetSize.width <= 0 || aTargetSize.height <= 0 ||
+  if (aOutputSize.width <= 0 || aOutputSize.height <= 0 ||
       aFrameRect.width <= 0 || aFrameRect.height <= 0) {
     NS_WARNING("Trying to add frame with zero or negative size");
     return RawAccessFrameRef();
   }
 
-  const uint32_t bytesPerPixel = aPaletteDepth == 0 ? 4 : 1;
-  if (ShouldUseSurfaceCache() &&
-      !SurfaceCache::CanHold(aFrameRect.Size(), bytesPerPixel)) {
-    NS_WARNING("Trying to add frame that's too large for the SurfaceCache");
-    return RawAccessFrameRef();
-  }
-
   NotNull<RefPtr<imgFrame>> frame = WrapNotNull(new imgFrame());
   bool nonPremult = bool(mSurfaceFlags & SurfaceFlags::NO_PREMULTIPLY_ALPHA);
-  if (NS_FAILED(frame->InitForDecoder(aTargetSize, aFrameRect, aFormat,
-                                      aPaletteDepth, nonPremult))) {
+  if (NS_FAILED(frame->InitForDecoder(aOutputSize, aFrameRect, aFormat,
+                                      aPaletteDepth, nonPremult,
+                                      aFrameNum > 0))) {
     NS_WARNING("imgFrame::Init should succeed");
     return RawAccessFrameRef();
   }
@@ -326,29 +345,6 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
   if (!ref) {
     frame->Abort();
     return RawAccessFrameRef();
-  }
-
-  if (ShouldUseSurfaceCache()) {
-    NotNull<RefPtr<ISurfaceProvider>> provider =
-      WrapNotNull(new SimpleSurfaceProvider(frame));
-    InsertOutcome outcome =
-      SurfaceCache::Insert(provider, ImageKey(mImage.get()),
-                           RasterSurfaceKey(aTargetSize,
-                                            mSurfaceFlags,
-                                            aFrameNum));
-    if (outcome == InsertOutcome::FAILURE) {
-      // We couldn't insert the surface, almost certainly due to low memory. We
-      // treat this as a permanent error to help the system recover; otherwise,
-      // we might just end up attempting to decode this image again immediately.
-      ref->Abort();
-      return RawAccessFrameRef();
-    } else if (outcome == InsertOutcome::FAILURE_ALREADY_PRESENT) {
-      // Another decoder beat us to decoding this frame. We abort this decoder
-      // rather than treat this as a real error.
-      mDecodeAborted = true;
-      ref->Abort();
-      return RawAccessFrameRef();
-    }
   }
 
   if (aFrameNum == 1) {
@@ -386,7 +382,12 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
 nsresult Decoder::InitInternal() { return NS_OK; }
 nsresult Decoder::BeforeFinishInternal() { return NS_OK; }
 nsresult Decoder::FinishInternal() { return NS_OK; }
-nsresult Decoder::FinishWithErrorInternal() { return NS_OK; }
+
+nsresult Decoder::FinishWithErrorInternal()
+{
+  MOZ_ASSERT(!mInFrame);
+  return NS_OK;
+}
 
 /*
  * Progress Notifications
@@ -397,12 +398,35 @@ Decoder::PostSize(int32_t aWidth,
                   int32_t aHeight,
                   Orientation aOrientation /* = Orientation()*/)
 {
-  // Validate
+  // Validate.
   MOZ_ASSERT(aWidth >= 0, "Width can't be negative!");
   MOZ_ASSERT(aHeight >= 0, "Height can't be negative!");
 
-  // Tell the image
+  // Set our intrinsic size.
   mImageMetadata.SetSize(aWidth, aHeight, aOrientation);
+
+  // Verify it is the expected size, if given. Note that this is only used by
+  // the ICO decoder for embedded image types, so only its subdecoders are
+  // required to handle failures in PostSize.
+  if (!IsExpectedSize()) {
+    PostError();
+    return;
+  }
+
+  // Set our output size if it's not already set.
+  if (!mOutputSize) {
+    mOutputSize = Some(IntSize(aWidth, aHeight));
+  }
+
+  MOZ_ASSERT(mOutputSize->width <= aWidth && mOutputSize->height <= aHeight,
+             "Output size will result in upscaling");
+
+  // Create a downscaler if we need to downscale. This is used by legacy
+  // decoders that haven't been converted to use SurfacePipe yet.
+  // XXX(seth): Obviously, we'll remove this once all decoders use SurfacePipe.
+  if (mOutputSize->width < aWidth || mOutputSize->height < aHeight) {
+    mDownscaler.emplace(*mOutputSize);
+  }
 
   // Record this notification.
   mProgress |= FLAG_SIZE_AVAILABLE;
@@ -441,7 +465,7 @@ Decoder::PostFrameStop(Opacity aFrameOpacity
   mFinishedNewFrame = true;
 
   mCurrentFrame->Finish(aFrameOpacity, aDisposalMethod, aTimeout,
-                        aBlendMethod, aBlendRect);
+                        aBlendMethod, aBlendRect, mFinalizeFrames);
 
   mProgress |= FLAG_FRAME_COMPLETE;
 
@@ -451,13 +475,13 @@ Decoder::PostFrameStop(Opacity aFrameOpacity
   // here when the first frame is complete.
   if (!ShouldSendPartialInvalidations() && mFrameCount == 1) {
     mInvalidRect.UnionRect(mInvalidRect,
-                           gfx::IntRect(gfx::IntPoint(0, 0), GetSize()));
+                           IntRect(IntPoint(), Size()));
   }
 }
 
 void
-Decoder::PostInvalidation(const nsIntRect& aRect,
-                          const Maybe<nsIntRect>& aRectAtTargetSize
+Decoder::PostInvalidation(const gfx::IntRect& aRect,
+                          const Maybe<gfx::IntRect>& aRectAtOutputSize
                             /* = Nothing() */)
 {
   // We should be mid-frame
@@ -468,7 +492,7 @@ Decoder::PostInvalidation(const nsIntRect& aRect,
   // or we're past the first frame.
   if (ShouldSendPartialInvalidations() && mFrameCount == 1) {
     mInvalidRect.UnionRect(mInvalidRect, aRect);
-    mCurrentFrame->ImageUpdated(aRectAtTargetSize.valueOr(aRect));
+    mCurrentFrame->ImageUpdated(aRectAtOutputSize.valueOr(aRect));
   }
 }
 
@@ -499,16 +523,13 @@ Decoder::PostError()
 {
   mError = true;
 
-  if (mInFrame && mCurrentFrame) {
+  if (mInFrame) {
+    MOZ_ASSERT(mCurrentFrame);
+    MOZ_ASSERT(mFrameCount > 0);
     mCurrentFrame->Abort();
+    mInFrame = false;
+    --mFrameCount;
   }
-}
-
-Telemetry::ID
-Decoder::SpeedHistogram()
-{
-  // Use HistogramCount as an invalid Histogram ID.
-  return Telemetry::HistogramCount;
 }
 
 } // namespace image

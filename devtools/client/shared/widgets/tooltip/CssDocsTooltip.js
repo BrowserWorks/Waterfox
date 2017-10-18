@@ -4,12 +4,10 @@
 
 "use strict";
 
-const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 const {MdnDocsWidget} = require("devtools/client/shared/widgets/MdnDocsWidget");
+const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
-
-loader.lazyRequireGetter(this, "KeyShortcuts",
-  "devtools/client/shared/key-shortcuts", true);
 
 const TOOLTIP_WIDTH = 418;
 const TOOLTIP_HEIGHT = 308;
@@ -17,31 +15,37 @@ const TOOLTIP_HEIGHT = 308;
 /**
  * Tooltip for displaying docs for CSS properties from MDN.
  *
- * @param {Toolbox} toolbox
- *        Toolbox used to create the tooltip.
+ * @param {Document} toolboxDoc
+ *        The toolbox document to attach the CSS docs tooltip.
  */
-function CssDocsTooltip(toolbox) {
-  this.tooltip = new HTMLTooltip(toolbox, {
+function CssDocsTooltip(toolboxDoc) {
+  this.tooltip = new HTMLTooltip(toolboxDoc, {
     type: "arrow",
     consumeOutsideClicks: true,
     autofocus: true,
-    useXulWrapper: true,
-    stylesheet: "chrome://devtools/content/shared/widgets/mdn-docs.css",
+    useXulWrapper: true
   });
   this.widget = this.setMdnDocsContent();
   this._onVisitLink = this._onVisitLink.bind(this);
   this.widget.on("visitlink", this._onVisitLink);
 
   // Initialize keyboard shortcuts
-  this.shortcuts = new KeyShortcuts({ window: toolbox.doc.defaultView });
+  this.shortcuts = new KeyShortcuts({ window: this.tooltip.topWindow });
   this._onShortcut = this._onShortcut.bind(this);
 
   this.shortcuts.on("Escape", this._onShortcut);
 }
 
-module.exports.CssDocsTooltip = CssDocsTooltip;
-
 CssDocsTooltip.prototype = {
+  /**
+   * Reports if the tooltip is currently shown
+   *
+   * @return {Boolean} True if the tooltip is displayed.
+   */
+  isVisible: function () {
+    return this.tooltip.isVisible();
+  },
+
   /**
    * Load CSS docs for the given property,
    * then display the tooltip.
@@ -56,6 +60,8 @@ CssDocsTooltip.prototype = {
   hide: function () {
     this.tooltip.hide();
   },
+
+  revert: function () {},
 
   _onShortcut: function (shortcut, event) {
     if (!this.tooltip.isVisible()) {
@@ -93,3 +99,5 @@ CssDocsTooltip.prototype = {
     this.tooltip.destroy();
   }
 };
+
+module.exports = CssDocsTooltip;

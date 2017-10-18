@@ -1,12 +1,14 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1997-2013, International Business Machines
+*   Copyright (C) 1997-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *   file name:  locdispnames.cpp
-*   encoding:   US-ASCII
+*   encoding:   UTF-8
 *   tab size:   8 (not used)
 *   indentation:4
 *
@@ -638,7 +640,7 @@ uloc_getDisplayName(const char *locale,
                             break;
                         case 3:
                             kenum = uloc_openKeywords(locale, pErrorCode);
-                            /* fall through */
+                            U_FALLTHROUGH;
                         default: {
                             const char* kw=uenum_next(kenum, &len, pErrorCode);
                             if (kw == NULL) {
@@ -852,7 +854,7 @@ uloc_getDisplayKeywordValue(   const char* locale,
         /* now copy the dispName over if not NULL */
         if(dispName != NULL){
             if(dispNameLen <= destCapacity){
-                uprv_memcpy(dest, dispName, dispNameLen * U_SIZEOF_UCHAR);
+                u_memcpy(dest, dispName, dispNameLen);
                 return u_terminateUChars(dest, destCapacity, dispNameLen, status);
             }else{
                 *status = U_BUFFER_OVERFLOW_ERROR;

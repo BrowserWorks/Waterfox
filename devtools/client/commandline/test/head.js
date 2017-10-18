@@ -1,22 +1,27 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ /* eslint no-unused-vars: [2, {"vars": "local", "args": "none"}] */
+ /* import-globals-from helpers.js */
+ /* import-globals-from mockCommands.js */
+
+"use strict";
 
 const TEST_BASE_HTTP = "http://example.com/browser/devtools/client/commandline/test/";
 const TEST_BASE_HTTPS = "https://example.com/browser/devtools/client/commandline/test/";
 
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var { console } = require("resource://gre/modules/Console.jsm");
-var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var flags = require("devtools/shared/flags");
 
 // Import the GCLI test helper
 var testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
 Services.scriptloader.loadSubScript(testDir + "/helpers.js", this);
 Services.scriptloader.loadSubScript(testDir + "/mockCommands.js", this);
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 SimpleTest.registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
 });
 
 function whenDelayedStartupFinished(aWindow, aCallback) {
@@ -25,7 +30,7 @@ function whenDelayedStartupFinished(aWindow, aCallback) {
       Services.obs.removeObserver(observer, aTopic);
       executeSoon(aCallback);
     }
-  }, "browser-delayed-startup-finished", false);
+  }, "browser-delayed-startup-finished");
 }
 
 /**

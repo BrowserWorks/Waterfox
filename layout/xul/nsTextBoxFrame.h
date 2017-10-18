@@ -12,12 +12,11 @@ class nsAccessKeyInfo;
 class nsAsyncAccesskeyUpdate;
 class nsFontMetrics;
 
-class nsTextBoxFrame : public nsLeafBoxFrame
+class nsTextBoxFrame final : public nsLeafBoxFrame
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsTextBoxFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsTextBoxFrame)
 
   virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
@@ -53,7 +52,7 @@ public:
 
   virtual ~nsTextBoxFrame();
 
-  void PaintTitle(nsRenderingContext& aRenderingContext,
+  void PaintTitle(gfxContext&          aRenderingContext,
                   const nsRect&        aDirtyRect,
                   nsPoint              aPt,
                   const nscolor*       aOverrideColor);
@@ -71,7 +70,7 @@ protected:
   friend class nsDisplayXULTextBox;
   // Should be called only by nsAsyncAccesskeyUpdate.
   // Returns true if accesskey was updated.
-  bool UpdateAccesskey(nsWeakFrame& aWeakThis);
+  bool UpdateAccesskey(WeakFrame& aWeakThis);
   void UpdateAccessTitle();
   void UpdateAccessIndex();
 
@@ -81,21 +80,21 @@ protected:
 
   // REVIEW: SORRY! Couldn't resist devirtualizing these
   void LayoutTitle(nsPresContext*      aPresContext,
-                   nsRenderingContext& aRenderingContext,
+                   gfxContext&          aRenderingContext,
                    const nsRect&        aRect);
 
   void CalculateUnderline(DrawTarget* aDrawTarget, nsFontMetrics& aFontMetrics);
 
   void CalcTextSize(nsBoxLayoutState& aBoxLayoutState);
 
-  void CalcDrawRect(nsRenderingContext &aRenderingContext);
+  void CalcDrawRect(gfxContext &aRenderingContext);
 
   explicit nsTextBoxFrame(nsStyleContext* aContext);
 
-  nscoord CalculateTitleForWidth(nsRenderingContext& aRenderingContext,
+  nscoord CalculateTitleForWidth(gfxContext&          aRenderingContext,
                                  nscoord              aWidth);
 
-  void GetTextSize(nsRenderingContext& aRenderingContext,
+  void GetTextSize(gfxContext&          aRenderingContext,
                    const nsString&      aString,
                    nsSize&              aSize,
                    nscoord&             aAscent);
@@ -107,7 +106,7 @@ private:
   bool AlwaysAppendAccessKey();
   bool InsertSeparatorBeforeAccessKey();
 
-  void DrawText(nsRenderingContext& aRenderingContext,
+  void DrawText(gfxContext&         aRenderingContext,
                 const nsRect&       aDirtyRect,
                 const nsRect&       aTextRect,
                 const nscolor*      aOverrideColor);

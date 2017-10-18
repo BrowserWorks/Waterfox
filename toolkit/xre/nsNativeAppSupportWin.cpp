@@ -6,6 +6,7 @@
 #include "nsNativeAppSupportBase.h"
 #include "nsNativeAppSupportWin.h"
 #include "nsAppRunner.h"
+#include "nsContentUtils.h"
 #include "nsXULAppAPI.h"
 #include "nsString.h"
 #include "nsIBrowserDOMWindow.h"
@@ -35,11 +36,11 @@
 #include "nsIFile.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
-#include "nsIDOMLocation.h"
 #include "nsIWebNavigation.h"
 #include "nsIWindowMediator.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsIAppStartup.h"
+#include "mozilla/dom/Location.h"
 
 #include <windows.h>
 #include <shellapi.h>
@@ -95,7 +96,7 @@ activateWindow( mozIDOMWindowProxy *win ) {
 
 // Simple Win32 mutex wrapper.
 struct Win32Mutex {
-    Win32Mutex( const char16_t *name )
+    explicit Win32Mutex( const char16_t *name )
         : mName( name ),
           mHandle( 0 ),
           mState( -1 ) {
@@ -338,110 +339,56 @@ NS_IMPL_RELEASE_INHERITED(nsNativeAppSupportWin, nsNativeAppSupportBase)
 void
 UseParentConsole()
 {
-    // Try to attach console to the parent process.
-    // It will succeed when the parent process is a command line,
-    // so that stdio will be displayed in it.
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-        // Change std handles to refer to new console handles.
-        // Before doing so, ensure that stdout/stderr haven't been
-        // redirected to a valid file.
-        // The return value for _fileno(<a std handle>) for GUI apps was changed over.
-        // Until VC7, it was -1. Starting from VC8, it was changed to -2.
-        // http://msdn.microsoft.com/en-us/library/zs6wbdhx%28v=vs.80%29.aspx
-        // Starting from VC11, the return value was cahnged to 0 for stdin,
-        // 1 for stdout, 2 for stdout. Accroding to Microsoft, this is a bug
-        // which will be fixed in VC14.
-        // https://connect.microsoft.com/VisualStudio/feedback/details/785119/
-        // Although the document does not make it explicit, it looks like
-        // the return value from _get_osfhandle(_fileno(<a std handle>)) also
-        // changed to -2 and VC11 and 12 do not have a bug about _get_osfhandle().
-        // We support VC10 or later, so it's sufficient to compare the return
-        // value with -2.
-        if (_fileno(stdout) == -2 ||
-            _get_osfhandle(fileno(stdout)) == -2)
+        // Redirect the standard streams to the existing console, but
+        // only if they haven't been redirected to a valid file.
+        // Visual Studio's _fileno() returns -2 for the standard
+        // streams if they aren't associated with an output stream.
+        if (_fileno(stdout) == -2) {
             freopen("CONOUT$", "w", stdout);
-        // Merge stderr into CONOUT$ since there isn't any `CONERR$`.
-        // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683231%28v=vs.85%29.aspx
-        if (_fileno(stderr) == -2 ||
-            _get_osfhandle(fileno(stderr)) == -2)
+        }
+        // There is no CONERR$, so use CONOUT$ for stderr as well.
+        if (_fileno(stderr) == -2) {
             freopen("CONOUT$", "w", stderr);
-        if (_fileno(stdin) == -2 || _get_osfhandle(fileno(stdin)) == -2)
+        }
+        if (_fileno(stdin) == -2) {
             freopen("CONIN$", "r", stdin);
+        }
     }
 }
 
 void
-nsNativeAppSupportWin::CheckConsole() {
-    for ( int i = 1; i < gArgc; i++ ) {
-        if ( strcmp( "-console", gArgv[i] ) == 0 ||
-             strcmp( "--console", gArgv[i] ) == 0 ||
-             strcmp( "/console", gArgv[i] ) == 0 ) {
-            // Users wants to make sure we have a console.
-            // Try to allocate one.
-            BOOL rc = ::AllocConsole();
-            if ( rc ) {
-                // Console allocated.  Fix it up so that output works in
-                // all cases.  See http://support.microsoft.com/support/kb/articles/q105/3/05.asp.
-
-                // stdout
-                int hCrt = ::_open_osfhandle( (intptr_t)GetStdHandle( STD_OUTPUT_HANDLE ),
-                                            _O_TEXT );
-                if ( hCrt != -1 ) {
-                    FILE *hf = ::_fdopen( hCrt, "w" );
-                    if ( hf ) {
-                        *stdout = *hf;
-#ifdef DEBUG
-                        ::fprintf( stdout, "stdout directed to dynamic console\n" );
-#endif
-                    }
+nsNativeAppSupportWin::CheckConsole()
+{
+    for (int i = 1; i < gArgc; ++i) {
+        if (strcmp("-console", gArgv[i]) == 0 ||
+            strcmp("--console", gArgv[i]) == 0 ||
+            strcmp("/console", gArgv[i]) == 0)
+        {
+            if (AllocConsole()) {
+                // Redirect the standard streams to the new console, but
+                // only if they haven't been redirected to a valid file.
+                // Visual Studio's _fileno() returns -2 for the standard
+                // streams if they aren't associated with an output stream.
+                if (_fileno(stdout) == -2) {
+                    freopen("CONOUT$", "w", stdout);
                 }
-
-                // stderr
-                hCrt = ::_open_osfhandle( (intptr_t)::GetStdHandle( STD_ERROR_HANDLE ),
-                                          _O_TEXT );
-                if ( hCrt != -1 ) {
-                    FILE *hf = ::_fdopen( hCrt, "w" );
-                    if ( hf ) {
-                        *stderr = *hf;
-#ifdef DEBUG
-                        ::fprintf( stderr, "stderr directed to dynamic console\n" );
-#endif
-                    }
+                // There is no CONERR$, so use CONOUT$ for stderr as well.
+                if (_fileno(stderr) == -2) {
+                    freopen("CONOUT$", "w", stderr);
                 }
-
-                // stdin?
-                /* Don't bother for now.
-                hCrt = ::_open_osfhandle( (long)::GetStdHandle( STD_INPUT_HANDLE ),
-                                          _O_TEXT );
-                if ( hCrt != -1 ) {
-                    FILE *hf = ::_fdopen( hCrt, "r" );
-                    if ( hf ) {
-                        *stdin = *hf;
-                    }
+                if (_fileno(stdin) == -2) {
+                    freopen("CONIN$", "r", stdin);
                 }
-                */
-            } else {
-                // Failed.  Probably because there already is one.
-                // There's little we can do, in any case.
             }
-            // Remove the console argument from the command line.
-            do {
-                gArgv[i] = gArgv[i + 1];
-                ++i;
-            } while (gArgv[i]);
-
-            --gArgc;
-
-        } else if ( strcmp( "-attach-console", gArgv[i] ) == 0
-                    ||
-                    strcmp( "/attach-console", gArgv[i] ) == 0 ) {
+        } else if (strcmp("-attach-console", gArgv[i]) == 0 ||
+                   strcmp("--attach-console", gArgv[i]) == 0 ||
+                   strcmp("/attach-console", gArgv[i]) == 0)
+        {
             UseParentConsole();
         }
     }
-
-    return;
 }
-
 
 // Create and return an instance of class nsNativeAppSupportWin.
 nsresult
@@ -739,7 +686,7 @@ nsNativeAppSupportWin::StartDDE() {
                     NS_ERROR_FAILURE );
 
     // Allocate DDE strings.
-    NS_ENSURE_TRUE( ( mApplication = DdeCreateStringHandleA( mInstance, (char*) gAppData->name, CP_WINANSI ) ) && InitTopicStrings(),
+    NS_ENSURE_TRUE( ( mApplication = DdeCreateStringHandleA( mInstance, (char*)(const char*) gAppData->name, CP_WINANSI ) ) && InitTopicStrings(),
                     NS_ERROR_FAILURE );
 
     // Next step is to register a DDE service.
@@ -1007,7 +954,7 @@ nsNativeAppSupportWin::HandleDDENotification( UINT uType,       // transaction t
                     do {
                         // Get most recently used Nav window.
                         nsCOMPtr<mozIDOMWindowProxy> navWin;
-                        GetMostRecentWindow( NS_LITERAL_STRING( "navigator:browser" ).get(),
+                        GetMostRecentWindow( u"navigator:browser",
                                              getter_AddRefs( navWin ) );
                         nsCOMPtr<nsPIDOMWindowOuter> piNavWin = do_QueryInterface(navWin);
                         if ( !piNavWin ) {
@@ -1021,7 +968,7 @@ nsNativeAppSupportWin::HandleDDENotification( UINT uType,       // transaction t
                             break;
                         }
                         // Get location.
-                        nsCOMPtr<nsIDOMLocation> location = internalContent->GetLocation();
+                        RefPtr<dom::Location> location = internalContent->GetLocation();
                         if ( !location ) {
                             break;
                         }
@@ -1484,7 +1431,7 @@ nsNativeAppSupportWin::OpenBrowserWindow()
     // browser window.
 
     nsCOMPtr<mozIDOMWindowProxy> navWin;
-    GetMostRecentWindow( NS_LITERAL_STRING( "navigator:browser" ).get(), getter_AddRefs( navWin ) );
+    GetMostRecentWindow( u"navigator:browser", getter_AddRefs( navWin ) );
 
     // This isn't really a loop.  We just use "break" statements to fall
     // out to the OpenWindow call when things go awry.
@@ -1517,6 +1464,7 @@ nsNativeAppSupportWin::OpenBrowserWindow()
             rv = bwin->OpenURI( uri, 0,
                                 nsIBrowserDOMWindow::OPEN_DEFAULTWINDOW,
                                 nsIBrowserDOMWindow::OPEN_EXTERNAL,
+                                nsContentUtils::GetSystemPrincipal(),
                                 getter_AddRefs( container ) );
             if ( NS_SUCCEEDED( rv ) )
               return NS_OK;

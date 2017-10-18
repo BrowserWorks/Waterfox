@@ -14,7 +14,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1020244
 <div>
   <div id="test-element" class="test-class" test="test">text content</div>
 </div>
-  <script type="application/javascript;version=1.8">
+  <script type="application/javascript">
 
   // Insert content
   let chromeDocument = SpecialPowers.wrap(document);
@@ -59,6 +59,14 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1020244
   anonymousContent.removeAttributeForElement("test-element", "class");
   is(anonymousContent.getAttributeForElement("test-element", "class"), null,
     "Class attribute for the test element was removed");
+
+  let anim = anonymousContent.setAnimationForElement("test-element", [
+    { transform: 'translateY(0px)' },
+    { transform: 'translateY(-300px)' }
+  ], 2000);
+  is(anim.playState, "pending", "Animation should be running");
+  anim.cancel();
+  is(anim.playState, "idle", "Animation should have stopped immediately");
 
   chromeDocument.removeAnonymousContent(anonymousContent);
   </script>

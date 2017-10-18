@@ -18,14 +18,14 @@
 namespace js {
 namespace jit {
 
-static constexpr Register eax = { X86Encoding::rax };
-static constexpr Register ecx = { X86Encoding::rcx };
-static constexpr Register edx = { X86Encoding::rdx };
-static constexpr Register ebx = { X86Encoding::rbx };
-static constexpr Register esp = { X86Encoding::rsp };
-static constexpr Register ebp = { X86Encoding::rbp };
-static constexpr Register esi = { X86Encoding::rsi };
-static constexpr Register edi = { X86Encoding::rdi };
+static constexpr Register eax { X86Encoding::rax };
+static constexpr Register ecx { X86Encoding::rcx };
+static constexpr Register edx { X86Encoding::rdx };
+static constexpr Register ebx { X86Encoding::rbx };
+static constexpr Register esp { X86Encoding::rsp };
+static constexpr Register ebp { X86Encoding::rbp };
+static constexpr Register esi { X86Encoding::rsi };
+static constexpr Register edi { X86Encoding::rdi };
 
 static constexpr FloatRegister xmm0 = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
 static constexpr FloatRegister xmm1 = FloatRegister(X86Encoding::xmm1, FloatRegisters::Double);
@@ -36,7 +36,7 @@ static constexpr FloatRegister xmm5 = FloatRegister(X86Encoding::xmm5, FloatRegi
 static constexpr FloatRegister xmm6 = FloatRegister(X86Encoding::xmm6, FloatRegisters::Double);
 static constexpr FloatRegister xmm7 = FloatRegister(X86Encoding::xmm7, FloatRegisters::Double);
 
-static constexpr Register InvalidReg = { X86Encoding::invalid_reg };
+static constexpr Register InvalidReg { X86Encoding::invalid_reg };
 static constexpr FloatRegister InvalidFloatReg = FloatRegister();
 
 static constexpr Register JSReturnReg_Type = ecx;
@@ -51,11 +51,6 @@ static constexpr FloatRegister ReturnSimd128Reg = FloatRegister(X86Encoding::xmm
 static constexpr FloatRegister ScratchFloat32Reg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Single);
 static constexpr FloatRegister ScratchDoubleReg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Double);
 static constexpr FloatRegister ScratchSimd128Reg = FloatRegister(X86Encoding::xmm7, FloatRegisters::Simd128);
-
-// TLS pointer argument register for WebAssembly functions. This must not alias
-// any other register used for passing function arguments or return values.
-// Preserved by WebAssembly functions.
-static constexpr Register WasmTlsReg = esi;
 
 // Avoid ebp, which is the FramePointer, which is unavailable in some modes.
 static constexpr Register ArgumentsRectifierReg = esi;
@@ -87,33 +82,40 @@ class ABIArgGenerator
 };
 
 static constexpr Register ABINonArgReg0 = eax;
-static constexpr Register ABINonArgReg1 = ecx;
+static constexpr Register ABINonArgReg1 = ebx;
+static constexpr Register ABINonArgReg2 = ecx;
 
 // Note: these three registers are all guaranteed to be different
 static constexpr Register ABINonArgReturnReg0 = ecx;
 static constexpr Register ABINonArgReturnReg1 = edx;
 static constexpr Register ABINonVolatileReg = ebx;
 
+// TLS pointer argument register for WebAssembly functions. This must not alias
+// any other register used for passing function arguments or return values.
+// Preserved by WebAssembly functions.
+static constexpr Register WasmTlsReg = esi;
+
 // Registers used for asm.js/wasm table calls. These registers must be disjoint
-// from the ABI argument registers and from each other.
-static constexpr Register WasmTableCallPtrReg = ABINonArgReg0;
+// from the ABI argument registers, WasmTlsReg and each other.
+static constexpr Register WasmTableCallScratchReg = ABINonArgReg0;
 static constexpr Register WasmTableCallSigReg = ABINonArgReg1;
+static constexpr Register WasmTableCallIndexReg = ABINonArgReg2;
 
 static constexpr Register OsrFrameReg = edx;
 static constexpr Register PreBarrierReg = edx;
 
 // Registers used in the GenerateFFIIonExit Enable Activation block.
-static constexpr Register AsmJSIonExitRegCallee = ecx;
-static constexpr Register AsmJSIonExitRegE0 = edi;
-static constexpr Register AsmJSIonExitRegE1 = eax;
-static constexpr Register AsmJSIonExitRegE2 = ebx;
+static constexpr Register WasmIonExitRegCallee = ecx;
+static constexpr Register WasmIonExitRegE0 = edi;
+static constexpr Register WasmIonExitRegE1 = eax;
 
 // Registers used in the GenerateFFIIonExit Disable Activation block.
-static constexpr Register AsmJSIonExitRegReturnData = edx;
-static constexpr Register AsmJSIonExitRegReturnType = ecx;
-static constexpr Register AsmJSIonExitRegD0 = edi;
-static constexpr Register AsmJSIonExitRegD1 = eax;
-static constexpr Register AsmJSIonExitRegD2 = esi;
+static constexpr Register WasmIonExitRegReturnData = edx;
+static constexpr Register WasmIonExitRegReturnType = ecx;
+static constexpr Register WasmIonExitTlsReg = esi;
+static constexpr Register WasmIonExitRegD0 = edi;
+static constexpr Register WasmIonExitRegD1 = eax;
+static constexpr Register WasmIonExitRegD2 = ebx;
 
 // Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
 static constexpr Register RegExpMatcherRegExpReg = CallTempReg0;
@@ -126,7 +128,7 @@ static constexpr Register RegExpTesterStringReg = CallTempReg2;
 static constexpr Register RegExpTesterLastIndexReg = CallTempReg3;
 
 // GCC stack is aligned on 16 bytes. Ion does not maintain this for internal
-// calls. asm.js code does.
+// calls. wasm code does.
 #if defined(__GNUC__)
 static constexpr uint32_t ABIStackAlignment = 16;
 #else
@@ -155,18 +157,18 @@ static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
   "Stack alignment should be larger than any of the alignments which are used for "
   "spilled values.  Thus it should be larger than the alignment for SIMD accesses.");
 
-static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
+static const uint32_t WasmStackAlignment = SimdMemoryAlignment;
 
 struct ImmTag : public Imm32
 {
-    ImmTag(JSValueTag mask)
+    explicit ImmTag(JSValueTag mask)
       : Imm32(int32_t(mask))
     { }
 };
 
 struct ImmType : public ImmTag
 {
-    ImmType(JSValueType type)
+    explicit ImmType(JSValueType type)
       : ImmTag(JSVAL_TYPE_TO_TAG(type))
     { }
 };
@@ -196,7 +198,7 @@ PatchJump(CodeLocationJump jump, CodeLocationLabel label, ReprotectCode reprotec
     X86Encoding::SetRel32(jump.raw(), label.raw());
 }
 static inline void
-PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
+PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitZoneGroup::BackedgeTarget target)
 {
     PatchJump(jump_, label);
 }
@@ -231,7 +233,7 @@ class Assembler : public AssemblerX86Shared
 
     // Copy the assembly code to the given buffer, and perform any pending
     // relocations relying on the target address.
-    void executableCopy(uint8_t* buffer);
+    void executableCopy(uint8_t* buffer, bool flushICache = true);
 
     // Actual assembly emitting functions.
 
@@ -310,7 +312,7 @@ class Assembler : public AssemblerX86Shared
     }
     void mov(wasm::SymbolicAddress imm, Register dest) {
         masm.movl_i32r(-1, dest.encoding());
-        append(AsmJSAbsoluteAddress(CodeOffset(masm.currentOffset()), imm));
+        append(wasm::SymbolicAccess(CodeOffset(masm.currentOffset()), imm));
     }
     void mov(const Operand& src, Register dest) {
         movl(src, dest);
@@ -382,11 +384,11 @@ class Assembler : public AssemblerX86Shared
     }
     void cmpl(Register rhs, wasm::SymbolicAddress lhs) {
         masm.cmpl_rm_disp32(rhs.encoding(), (void*)-1);
-        append(AsmJSAbsoluteAddress(CodeOffset(masm.currentOffset()), lhs));
+        append(wasm::SymbolicAccess(CodeOffset(masm.currentOffset()), lhs));
     }
     void cmpl(Imm32 rhs, wasm::SymbolicAddress lhs) {
         JmpSrc src = masm.cmpl_im_disp32(rhs.value, (void*)-1);
-        append(AsmJSAbsoluteAddress(CodeOffset(src.offset()), lhs));
+        append(wasm::SymbolicAccess(CodeOffset(src.offset()), lhs));
     }
 
     void adcl(Imm32 imm, Register dest) {
@@ -615,6 +617,22 @@ class Assembler : public AssemblerX86Shared
         }
         return CodeOffset(masm.currentOffset());
     }
+    void vmovss(const Operand& src, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (src.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovss_mr_disp32(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovss_mr(src.address(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovss_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     CodeOffset vmovdWithPatch(const Operand& src, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
         switch (src.kind()) {
@@ -656,6 +674,22 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
         return CodeOffset(masm.currentOffset());
+    }
+    void vmovsd(const Operand& src, FloatRegister dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (src.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovsd_mr_disp32(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovsd_mr(src.address(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovsd_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
     CodeOffset vmovupsWithPatch(const Operand& src, FloatRegister dest) {
         MOZ_ASSERT(HasSSE2());
@@ -726,6 +760,36 @@ class Assembler : public AssemblerX86Shared
         }
         return CodeOffset(masm.currentOffset());
     }
+    CodeOffset movlWithPatchLow(Register regLow, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP: {
+            Address addr = dest.toAddress();
+            Operand low(addr.base, addr.offset + INT64LOW_OFFSET);
+            return movlWithPatch(regLow, low);
+          }
+          case Operand::MEM_ADDRESS32: {
+            Operand low(PatchedAbsoluteAddress(uint32_t(dest.address()) + INT64LOW_OFFSET));
+            return movlWithPatch(regLow, low);
+          }
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
+    CodeOffset movlWithPatchHigh(Register regHigh, const Operand& dest) {
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP: {
+            Address addr = dest.toAddress();
+            Operand high(addr.base, addr.offset + INT64HIGH_OFFSET);
+            return movlWithPatch(regHigh, high);
+          }
+          case Operand::MEM_ADDRESS32: {
+            Operand high(PatchedAbsoluteAddress(uint32_t(dest.address()) + INT64HIGH_OFFSET));
+            return movlWithPatch(regHigh, high);
+          }
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     CodeOffset vmovdWithPatch(FloatRegister src, const Operand& dest) {
         MOZ_ASSERT(HasSSE2());
         switch (dest.kind()) {
@@ -768,6 +832,22 @@ class Assembler : public AssemblerX86Shared
         }
         return CodeOffset(masm.currentOffset());
     }
+    void vmovss(FloatRegister src, const Operand& dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovss_rm_disp32(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovss_rm(src.encoding(), dest.address());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovss_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
+    }
     CodeOffset vmovsdWithPatch(FloatRegister src, const Operand& dest) {
         MOZ_ASSERT(HasSSE2());
         switch (dest.kind()) {
@@ -781,6 +861,22 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
         return CodeOffset(masm.currentOffset());
+    }
+    void vmovsd(FloatRegister src, const Operand& dest) {
+        MOZ_ASSERT(HasSSE2());
+        switch (dest.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.vmovsd_rm_disp32(src.encoding(), dest.disp(), dest.base());
+            break;
+          case Operand::MEM_ADDRESS32:
+            masm.vmovsd_rm(src.encoding(), dest.address());
+            break;
+          case Operand::MEM_SCALE:
+            masm.vmovsd_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
     CodeOffset vmovupsWithPatch(FloatRegister src, const Operand& dest) {
         MOZ_ASSERT(HasSSE2());
@@ -933,14 +1029,6 @@ class Assembler : public AssemblerX86Shared
         MOZ_ASSERT(HasSSE2());
         masm.vmovups_rm(src.encoding(), dest.addr);
         return CodeOffset(masm.currentOffset());
-    }
-
-    void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        CodeOffset label = movlWithPatch(PatchedAbsoluteAddress(), dest);
-        append(wasm::GlobalAccess(label, globalDataOffset));
-    }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        // x86 doesn't have a pinned heap register.
     }
 
     static bool canUseInSingleByteInstruction(Register reg) {

@@ -64,6 +64,7 @@
 == insert-into-split-inline-16a.html insert-into-split-inline-16-ref.html
 == insert-into-split-inline-16b.html insert-into-split-inline-16-ref.html
 == insert-into-split-inline-16-ref.html insert-into-split-inline-16-noib-ref.html
+== insert-into-split-inline-17.html insert-into-split-inline-17-ref.html
 == float-inside-inline-between-blocks-1.html float-inside-inline-between-blocks-1-ref.html
 == table-pseudo-in-part3-1.html table-pseudo-in-part3-1-ref.html
 == emptyspan-1.html emptyspan-1-ref.html
@@ -83,3 +84,5 @@
 == append-to-empty-trailing-inline-1.html append-to-empty-trailing-inline-1-ref.html
 == append-to-nested-split-inline-1.html append-to-nested-split-inline-1-ref.html
 == append-to-nested-split-inline-1-ref.html append-to-nested-split-inline-1-noib-ref.html
+== relpos-inline-1a.html relpos-inline-1-ref.html
+== relpos-inline-1b.html relpos-inline-1-ref.html

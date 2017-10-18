@@ -23,18 +23,18 @@ var quotesTest = {
   _folderTitle: '"quoted folder"',
   _folderId: null,
 
-  populate: function () {
+  populate() {
     this._folderId =
       PlacesUtils.bookmarks.createFolder(PlacesUtils.toolbarFolderId,
                                          this._folderTitle,
                                          PlacesUtils.bookmarks.DEFAULT_INDEX);
   },
 
-  clean: function () {
+  clean() {
     PlacesUtils.bookmarks.removeItem(this._folderId);
   },
 
-  validate: function () {
+  validate() {
     var query = PlacesUtils.history.getNewQuery();
     query.setFolders([PlacesUtils.bookmarks.toolbarFolder], 1);
     var result = PlacesUtils.history.executeQuery(query, PlacesUtils.history.getNewQueryOptions());
@@ -54,11 +54,7 @@ var quotesTest = {
 }
 tests.push(quotesTest);
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* () {
+add_task(async function() {
   // make json file
   let jsonFile = OS.Path.join(OS.Constants.Path.profileDir, "bookmarks.json");
 
@@ -70,7 +66,7 @@ add_task(function* () {
   });
 
   // export json to file
-  yield BookmarkJSONUtils.exportToFile(jsonFile);
+  await BookmarkJSONUtils.exportToFile(jsonFile);
 
   // clean
   tests.forEach(function(aTest) {
@@ -78,7 +74,7 @@ add_task(function* () {
   });
 
   // restore json file
-  yield BookmarkJSONUtils.importFromFile(jsonFile, true);
+  await BookmarkJSONUtils.importFromFile(jsonFile, true);
 
   // validate
   tests.forEach(function(aTest) {
@@ -86,6 +82,6 @@ add_task(function* () {
   });
 
   // clean up
-  yield OS.File.remove(jsonFile);
+  await OS.File.remove(jsonFile);
 
 });

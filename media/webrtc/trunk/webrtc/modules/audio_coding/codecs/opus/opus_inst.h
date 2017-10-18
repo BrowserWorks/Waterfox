@@ -11,17 +11,24 @@
 #ifndef WEBRTC_MODULES_AUDIO_CODING_CODECS_OPUS_OPUS_INST_H_
 #define WEBRTC_MODULES_AUDIO_CODING_CODECS_OPUS_OPUS_INST_H_
 
+#include <stddef.h>
+
+#include "webrtc/base/ignore_wundef.h"
+
+RTC_PUSH_IGNORING_WUNDEF()
 #include "opus.h"
+RTC_POP_IGNORING_WUNDEF()
 
 struct WebRtcOpusEncInst {
   OpusEncoder* encoder;
+  size_t channels;
   int in_dtx_mode;
 };
 
 struct WebRtcOpusDecInst {
   OpusDecoder* decoder;
   int prev_decoded_samples;
-  int channels;
+  size_t channels;
   int in_dtx_mode;
 };
 

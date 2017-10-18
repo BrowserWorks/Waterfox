@@ -5,10 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('*'):
-    BUG_COMPONENT = ('Core', 'Video/Audio: Recording')
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DIRS += ['fmp4_muxer']
+    BUG_COMPONENT = ('Core', 'Audio/Video: Recording')
 
 EXPORTS += [
     'ContainerWriter.h',
@@ -25,31 +22,17 @@ UNIFIED_SOURCES += [
     'TrackEncoder.cpp',
 ]
 
-if CONFIG['MOZ_OMX_ENCODER']:
-    EXPORTS += ['OmxTrackEncoder.h']
-    UNIFIED_SOURCES += ['OmxTrackEncoder.cpp']
-
 if CONFIG['MOZ_WEBM_ENCODER']:
     EXPORTS += ['VP8TrackEncoder.h',
     ]
     UNIFIED_SOURCES += ['VP8TrackEncoder.cpp',
     ]
-    LOCAL_INCLUDES += ['/media/libyuv/include']
+    LOCAL_INCLUDES += ['/media/libyuv/libyuv/include']
 
 FINAL_LIBRARY = 'xul'
 
 # These includes are from Android JB, for use of MediaCodec.
 LOCAL_INCLUDES += ['/ipc/chromium/src']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['ANDROID_VERSION'] > '15':
-    LOCAL_INCLUDES += [
-        '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
-            'frameworks/av/include/media',
-            'frameworks/native/include',
-            'frameworks/native/opengl/include',
-        ]
-
-    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

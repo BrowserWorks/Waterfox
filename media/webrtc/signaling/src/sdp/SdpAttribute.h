@@ -39,6 +39,7 @@ public:
     kCandidateAttribute,
     kConnectionAttribute,
     kDirectionAttribute,
+    kDtlsMessageAttribute,
     kEndOfCandidatesAttribute,
     kExtmapAttribute,
     kFingerprintAttribute,
@@ -73,7 +74,9 @@ public:
     kSimulcastAttribute,
     kSsrcAttribute,
     kSsrcGroupAttribute,
-    kLastAttribute = kSsrcGroupAttribute
+    kSctpPortAttribute,
+    kMaxMessageSizeAttribute,
+    kLastAttribute = kMaxMessageSizeAttribute
   };
 
   explicit SdpAttribute(AttributeType type) : mType(type) {}
@@ -219,6 +222,98 @@ inline std::ostream& operator<<(std::ostream& os,
   }
   return os;
 }
+
+inline SdpDirectionAttribute::Direction
+reverse(SdpDirectionAttribute::Direction d)
+{
+  switch (d) {
+    case SdpDirectionAttribute::Direction::kInactive:
+      return SdpDirectionAttribute::Direction::kInactive;
+    case SdpDirectionAttribute::Direction::kSendonly:
+      return SdpDirectionAttribute::Direction::kRecvonly;
+    case SdpDirectionAttribute::Direction::kRecvonly:
+      return SdpDirectionAttribute::Direction::kSendonly;
+    case SdpDirectionAttribute::Direction::kSendrecv:
+      return SdpDirectionAttribute::Direction::kSendrecv;
+  }
+  MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Invalid direction!");
+  MOZ_RELEASE_ASSERT(false);
+}
+
+inline SdpDirectionAttribute::Direction
+operator|(SdpDirectionAttribute::Direction d1,
+          SdpDirectionAttribute::Direction d2)
+{
+  return (SdpDirectionAttribute::Direction)((unsigned)d1 | (unsigned)d2);
+}
+
+inline SdpDirectionAttribute::Direction
+operator&(SdpDirectionAttribute::Direction d1,
+          SdpDirectionAttribute::Direction d2)
+{
+  return (SdpDirectionAttribute::Direction)((unsigned)d1 & (unsigned)d2);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// a=dtls-message, draft-rescorla-dtls-in-sdp
+//-------------------------------------------------------------------------
+//   attribute               =/   dtls-message-attribute
+//
+//   dtls-message-attribute  =    "dtls-message" ":" role SP value
+//
+//   role                    =    "client" / "server"
+//
+//   value                   =    1*(ALPHA / DIGIT / "+" / "/" / "=" )
+//                                ; base64 encoded message
+class SdpDtlsMessageAttribute : public SdpAttribute
+{
+public:
+  enum Role {
+    kClient,
+    kServer
+  };
+
+  explicit SdpDtlsMessageAttribute(Role role, const std::string& value)
+    : SdpAttribute(kDtlsMessageAttribute),
+      mRole(role),
+      mValue(value)
+  {}
+
+  explicit SdpDtlsMessageAttribute(const std::string& unparsed)
+    : SdpAttribute(kDtlsMessageAttribute),
+      mRole(kClient)
+  {
+    std::istringstream is(unparsed);
+    std::string error;
+    // We're not really worried about errors here if we don't parse;
+    // this attribute is a pure optimization.
+    Parse(is, &error);
+  }
+
+  virtual void Serialize(std::ostream& os) const override;
+  bool Parse(std::istream& is, std::string* error);
+
+  Role mRole;
+  std::string mValue;
+};
+
+inline std::ostream& operator<<(std::ostream& os,
+                                SdpDtlsMessageAttribute::Role r)
+{
+  switch (r) {
+    case SdpDtlsMessageAttribute::kClient:
+      os << "client";
+      break;
+    case SdpDtlsMessageAttribute::kServer:
+      os << "server";
+      break;
+    default:
+      MOZ_ASSERT(false);
+      os << "?";
+  }
+  return os;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////
 // a=extmap, RFC5285
@@ -1025,6 +1120,7 @@ public:
     kH264,
     kRed,
     kUlpfec,
+    kTelephoneEvent,
     kOtherCodec
   };
 
@@ -1109,6 +1205,9 @@ inline std::ostream& operator<<(std::ostream& os,
       break;
     case SdpRtpmapAttributeList::kUlpfec:
       os << "ulpfec";
+      break;
+    case SdpRtpmapAttributeList::kTelephoneEvent:
+      os << "telephone-event";
       break;
     default:
       MOZ_ASSERT(false);
@@ -1305,6 +1404,29 @@ public:
     unsigned int useInBandFec;
   };
 
+  class TelephoneEventParameters : public Parameters
+  {
+  public:
+    TelephoneEventParameters() :
+      Parameters(SdpRtpmapAttributeList::kTelephoneEvent),
+      dtmfTones("0-15")
+    {}
+
+    virtual Parameters*
+    Clone() const override
+    {
+      return new TelephoneEventParameters(*this);
+    }
+
+    void
+    Serialize(std::ostream& os) const override
+    {
+      os << dtmfTones;
+    }
+
+    std::string dtmfTones;
+  };
+
   class Fmtp
   {
   public:
@@ -1366,9 +1488,6 @@ public:
 //      streams      =  1*DIGIT
 //
 // We're going to pretend that there are spaces where they make sense.
-//
-// (draft-06 is not backward compatabile and draft-07 replaced sctpmap's with
-// fmtp maps - we should carefully choose when to upgrade)
 class SdpSctpmapAttributeList : public SdpAttribute
 {
 public:
@@ -1402,14 +1521,9 @@ public:
   }
 
   const Sctpmap&
-  GetEntry(const std::string& pt) const
+  GetFirstEntry() const
   {
-    for (auto it = mSctpmaps.begin(); it != mSctpmaps.end(); ++it) {
-      if (it->pt == pt) {
-        return *it;
-      }
-    }
-    MOZ_CRASH();
+    return mSctpmaps[0];
   }
 
   std::vector<Sctpmap> mSctpmaps;

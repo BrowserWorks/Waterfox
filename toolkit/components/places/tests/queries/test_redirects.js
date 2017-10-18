@@ -22,8 +22,8 @@ function check_results_callback(aSequence) {
   let maxResults = aSequence[1];
   let sortingMode = aSequence[2];
   print("\nTESTING: includeHidden(" + includeHidden + ")," +
-                  " maxResults("    + maxResults    + ")," +
-                  " sortingMode("   + sortingMode   + ").");
+                  " maxResults(" + maxResults + ")," +
+                  " sortingMode(" + sortingMode + ").");
 
   function isHidden(aVisit) {
     return aVisit.transType == Ci.nsINavHistoryService.TRANSITION_FRAMED_LINK ||
@@ -31,14 +31,14 @@ function check_results_callback(aSequence) {
   }
 
   // Build expectedData array.
-  let expectedData = visits.filter(function (aVisit, aIndex, aArray) {
+  let expectedData = visits.filter(function(aVisit, aIndex, aArray) {
     // Embed visits never appear in results.
     if (aVisit.transType == Ci.nsINavHistoryService.TRANSITION_EMBED)
       return false;
 
     if (!includeHidden && isHidden(aVisit)) {
       // If the page has any non-hidden visit, then it's visible.
-      if (visits.filter(function (refVisit) {
+      if (visits.filter(function(refVisit) {
         return refVisit.uri == aVisit.uri && !isHidden(refVisit);
           }).length == 0)
         return false;
@@ -49,11 +49,11 @@ function check_results_callback(aSequence) {
 
   // Remove duplicates, since queries are RESULTS_AS_URI (unique pages).
   let seen = [];
-  expectedData = expectedData.filter(function (aData) {
-    if (seen.includes(aData.uri))
+  expectedData = expectedData.filter(function(aData) {
+    if (seen.includes(aData.uri)) {
       return false;
-    else
-      seen.push(aData.uri);
+    }
+    seen.push(aData.uri);
     return true;
   });
 
@@ -66,12 +66,13 @@ function check_results_callback(aSequence) {
     return undefined;
   }
   function comparator(a, b) {
-    if (sortingMode == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING)
+    if (sortingMode == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING) {
       return b.lastVisit - a.lastVisit;
-    else if (sortingMode == Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING)
+    }
+    if (sortingMode == Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING) {
       return b.visitCount - a.visitCount;
-    else
-      return getFirstIndexFor(a) - getFirstIndexFor(b);
+    }
+    return getFirstIndexFor(a) - getFirstIndexFor(b);
   }
   expectedData.sort(comparator);
 
@@ -127,8 +128,7 @@ function check_results_callback(aSequence) {
  *         computed
  * @return the total number of sequences in the product
  */
-function cartProd(aSequences, aCallback)
-{
+function cartProd(aSequences, aCallback) {
   if (aSequences.length === 0)
     return 0;
 
@@ -169,16 +169,10 @@ function cartProd(aSequences, aCallback)
         // All element pointers are past the ends of their sequences.
         if (seqPtr < 0)
           done = true;
-      }
-      else break;
+      } else break;
     }
   }
   return numProds;
-}
-
-function run_test()
-{
-  run_next_test();
 }
 
 /**
@@ -186,9 +180,8 @@ function run_test()
  * We will generate visit-chains like:
  *   visit -> redirect_temp -> redirect_perm
  */
-add_task(function* test_add_visits_to_database()
-{
-  yield PlacesUtils.bookmarks.eraseEverything();
+add_task(async function test_add_visits_to_database() {
+  await PlacesUtils.bookmarks.eraseEverything();
 
   // We don't really bother on this, but we need a time to add visits.
   let timeInMicroseconds = Date.now() * 1000;
@@ -201,7 +194,7 @@ add_task(function* test_add_visits_to_database()
     Ci.nsINavHistoryService.TRANSITION_BOOKMARK,
     // Embed visits are not added to the database and we don't want redirects
     // to them, thus just avoid addition.
-    //Ci.nsINavHistoryService.TRANSITION_EMBED,
+    // Ci.nsINavHistoryService.TRANSITION_EMBED,
     Ci.nsINavHistoryService.TRANSITION_FRAMED_LINK,
     // Would make hard sorting by visit date because last_visit_date is actually
     // calculated excluding download transitions, but the query includes
@@ -210,6 +203,11 @@ add_task(function* test_add_visits_to_database()
     //Ci.nsINavHistoryService.TRANSITION_DOWNLOAD,
   ];
 
+  function newTimeInMicroseconds() {
+    timeInMicroseconds = timeInMicroseconds - 1000;
+    return timeInMicroseconds;
+  }
+
   // we add a visit for each of the above transition types.
   t.forEach(transition => visits.push(
     { isVisit: true,
@@ -217,7 +215,7 @@ add_task(function* test_add_visits_to_database()
       uri: "http://" + transition + ".example.com/",
       title: transition + "-example",
       isRedirect: true,
-      lastVisit: timeInMicroseconds--,
+      lastVisit: newTimeInMicroseconds(),
       visitCount: (transition == Ci.nsINavHistoryService.TRANSITION_EMBED ||
                    transition == Ci.nsINavHistoryService.TRANSITION_FRAMED_LINK) ? 0 : visitCount++,
       isInQuery: true }));
@@ -228,7 +226,7 @@ add_task(function* test_add_visits_to_database()
       transType: Ci.nsINavHistoryService.TRANSITION_REDIRECT_TEMPORARY,
       uri: "http://" + transition + ".redirect.temp.example.com/",
       title: transition + "-redirect-temp-example",
-      lastVisit: timeInMicroseconds--,
+      lastVisit: newTimeInMicroseconds(),
       isRedirect: true,
       referrer: "http://" + transition + ".example.com/",
       visitCount: visitCount++,
@@ -240,7 +238,7 @@ add_task(function* test_add_visits_to_database()
       transType: Ci.nsINavHistoryService.TRANSITION_REDIRECT_PERMANENT,
       uri: "http://" + transition + ".redirect.perm.example.com/",
       title: transition + "-redirect-perm-example",
-      lastVisit: timeInMicroseconds--,
+      lastVisit: newTimeInMicroseconds(),
       isRedirect: true,
       referrer: "http://" + transition + ".redirect.temp.example.com/",
       visitCount: visitCount++,
@@ -278,13 +276,12 @@ add_task(function* test_add_visits_to_database()
     isInQuery: false });
 
   // Put visits in the database.
-  yield task_populateDB(visits);
+  await task_populateDB(visits);
 });
 
-add_task(function* test_redirects()
-{
+add_task(async function test_redirects() {
   // Frecency and hidden are updated asynchronously, wait for them.
-  yield PlacesTestUtils.promiseAsyncUpdates();
+  await PlacesTestUtils.promiseAsyncUpdates();
 
   // This array will be used by cartProd to generate a matrix of all possible
   // combinations.
@@ -299,7 +296,7 @@ add_task(function* test_redirects()
   cartProd([includeHidden_options, maxResults_options, sorting_options],
            check_results_callback);
 
-  yield PlacesUtils.bookmarks.eraseEverything();
+  await PlacesUtils.bookmarks.eraseEverything();
 
-  yield PlacesTestUtils.clearHistory();
+  await PlacesTestUtils.clearHistory();
 });

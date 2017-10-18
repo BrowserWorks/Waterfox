@@ -11,18 +11,18 @@
 <!ENTITY % networkingDTD SYSTEM "chrome://global/locale/aboutNetworking.dtd"> %networkingDTD;
 ]>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="&locale.dir;">
     <head>
         <title>&aboutNetworking.title;</title>
         <link rel="stylesheet" href="chrome://mozapps/skin/aboutNetworking.css" type="text/css" />
-        <script type="application/javascript;version=1.7" src="chrome://global/content/aboutNetworking.js" />
+        <script type="application/javascript" src="chrome://global/content/aboutNetworking.js" />
     </head>
     <body id="body">
         <div id="warning_message" class="warningBackground" hidden="true">
             <div class="container">
                 <h1 class="title">&aboutNetworking.warning;</h1>
-                <div>
-                    <input id="warncheck" type="checkbox" checked="yes" />
+                <div class="toggle-container-with-text">
+                    <input id="warncheck" type="checkbox" checked="yes" role="checkbox" />
                     <label for="warncheck">&aboutNetworking.showNextTime;</label>
                 </div>
                 <div>
@@ -31,21 +31,27 @@
             </div>
         </div>
         <div id="categories">
-            <div class="category" selected="true" value="http">
+            <div class="category" selected="true" id="category-http">
                 <span class="category-name">&aboutNetworking.HTTP;</span>
             </div>
-            <div class="category" value="sockets">
+            <div class="category" id="category-sockets">
                 <span class="category-name">&aboutNetworking.sockets;</span>
             </div>
-            <div class="category" value="dns">
+            <div class="category" id="category-dns">
                 <span class="category-name">&aboutNetworking.dns;</span>
             </div>
-            <div class="category" value="websockets">
+            <div class="category" id="category-websockets">
                 <span class="category-name">&aboutNetworking.websockets;</span>
             </div>
             <hr></hr>
-            <div class="category" value="dnslookuptool">
+            <div class="category" id="category-dnslookuptool">
                 <span class="category-name">&aboutNetworking.dnsLookup;</span>
+            </div>
+            <div class="category" id="category-logging">
+                <span class="category-name">&aboutNetworking.logging;</span>
+            </div>
+            <div class="category" id="category-rcwn">
+                <span class="category-name">&aboutNetworking.rcwn;</span>
             </div>
         </div>
         <div class="main-content">
@@ -53,9 +59,9 @@
                 <div id="sectionTitle" class="header-name">
                     &aboutNetworking.HTTP;
                 </div>
-                <div id="refreshDiv">
+                <div id="refreshDiv" class="toggle-container-with-text">
                     <button id="refreshButton">&aboutNetworking.refresh;</button>
-                    <input id="autorefcheck" type="checkbox" name="Autorefresh" />
+                    <input id="autorefcheck" type="checkbox" name="Autorefresh" role="checkbox" />
                     <label for="autorefcheck">&aboutNetworking.autoRefresh;</label>
                 </div>
             </div>
@@ -66,7 +72,7 @@
                       <tr>
                           <th>&aboutNetworking.hostname;</th>
                           <th>&aboutNetworking.port;</th>
-                          <th>&aboutNetworking.spdy;</th>
+                          <th>&aboutNetworking.http2;</th>
                           <th>&aboutNetworking.ssl;</th>
                           <th>&aboutNetworking.active;</th>
                           <th>&aboutNetworking.idle;</th>
@@ -135,6 +141,108 @@
                   <tbody id="dnslookuptool_content" />
               </table>
           </div>
+
+          <div id="rcwn" class="tab" hidden="true">
+              <table>
+                  <thead>
+                      <tr>
+                          <th>&aboutNetworking.rcwnStatus;</th>
+                          <th>&aboutNetworking.totalNetworkRequests;</th>
+                          <th>&aboutNetworking.rcwnCacheWonCount;</th>
+                          <th>&aboutNetworking.rcwnNetWonCount;</th>
+                      </tr>
+                  </thead>
+                  <tbody id="rcwn_content">
+                    <tr>
+                      <td id="rcwn_status"> </td>
+                      <td id="total_req_count"> </td>
+                      <td id="rcwn_cache_won_count"> </td>
+                      <td id="rcwn_cache_net_count"> </td>
+                    </tr>
+                  </tbody>
+              </table>
+
+              <br/><br/>
+
+              <table>
+                  <thead>
+                      <tr>
+                          <th>&aboutNetworking.rcwnOperation;</th>
+                          <th>&aboutNetworking.rcwnAvgShort;</th>
+                          <th>&aboutNetworking.rcwnAvgLong;</th>
+                          <th>&aboutNetworking.rcwnStddevLong;</th>
+                      </tr>
+                  </thead>
+                  <tbody id="cacheperf_content">
+                      <tr>
+                          <td>&aboutNetworking.rcwnPerfOpen;</td>
+                          <td id="rcwn_perfstats_open_avgShort"> </td>
+                          <td id="rcwn_perfstats_open_avgLong"> </td>
+                          <td id="rcwn_perfstats_open_stddevLong"> </td>
+                      </tr>
+                      <tr>
+                          <td>&aboutNetworking.rcwnPerfRead;</td>
+                          <td id="rcwn_perfstats_read_avgShort"> </td>
+                          <td id="rcwn_perfstats_read_avgLong"> </td>
+                          <td id="rcwn_perfstats_read_stddevLong"> </td>
+                      </tr>
+                      <tr>
+                          <td>&aboutNetworking.rcwnPerfWrite;</td>
+                          <td id="rcwn_perfstats_write_avgShort"> </td>
+                          <td id="rcwn_perfstats_write_avgLong"> </td>
+                          <td id="rcwn_perfstats_write_stddevLong"> </td>
+                      </tr>
+                      <tr>
+                          <td>&aboutNetworking.rcwnPerfEntryOpen;</td>
+                          <td id="rcwn_perfstats_entryopen_avgShort"> </td>
+                          <td id="rcwn_perfstats_entryopen_avgLong"> </td>
+                          <td id="rcwn_perfstats_entryopen_stddevLong"> </td>
+                      </tr>
+                  </tbody>
+              </table>
+
+              <br/><br/>
+
+              <table>
+                  <thead>
+                      <tr>
+                          <th>&aboutNetworking.rcwnCacheSlow;</th>
+                          <th>&aboutNetworking.rcwnCacheNotSlow;</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td id="rcwn_cache_slow"> </td>
+                          <td id="rcwn_cache_not_slow"> </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <div id="logging" class="tab" hidden="true">
+            <div>
+              &aboutNetworking.logTutorial;
+            </div>
+            <br/>
+            <div>
+              <button id="start-logging-button"> &aboutNetworking.startLogging; </button>
+              <button id="stop-logging-button"> &aboutNetworking.stopLogging; </button>
+            </div>
+            <br/>
+            <br/>
+            <div>
+              &aboutNetworking.currentLogFile; <div id="current-log-file"></div><br/>
+              <input type="text" name="log-file" id="log-file"></input>
+              <button id="set-log-file-button"> &aboutNetworking.setLogFile; </button>
+            </div>
+            <div>
+              &aboutNetworking.currentLogModules; <div id="current-log-modules"></div><br/>
+              <input type="text" name="log-modules" id="log-modules" value="timestamp,sync,nsHttp:5,nsSocketTransport:5,nsStreamPump:5,nsHostResolver:5"></input>
+              <button id="set-log-modules-button"> &aboutNetworking.setLogModules; </button>
+            </div>
+          </div>
+
         </div>
     </body>
 </html>
+

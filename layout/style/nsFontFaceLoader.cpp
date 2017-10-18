@@ -6,6 +6,7 @@
 
 /* code for loading in @font-face defined font data */
 
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Logging.h"
 
 #include "nsFontFaceLoader.h"
@@ -52,6 +53,8 @@ nsFontFaceLoader::nsFontFaceLoader(gfxUserFontEntry* aUserFontEntry,
     mFontFaceSet(aFontFaceSet),
     mChannel(aChannel)
 {
+  MOZ_ASSERT(mFontFaceSet,
+             "We should get a valid FontFaceSet from the caller!");
   mStartTime = TimeStamp::Now();
 }
 
@@ -84,10 +87,13 @@ nsFontFaceLoader::StartedLoading(nsIStreamLoader* aStreamLoader)
   if (loadTimeout > 0) {
     mLoadTimer = do_CreateInstance("@mozilla.org/timer;1");
     if (mLoadTimer) {
-      mLoadTimer->InitWithFuncCallback(LoadTimerCallback,
-                                       static_cast<void*>(this),
-                                       loadTimeout,
-                                       nsITimer::TYPE_ONE_SHOT);
+      mLoadTimer->SetTarget(
+        mFontFaceSet->Document()->EventTargetFor(TaskCategory::Other));
+      mLoadTimer->InitWithNamedFuncCallback(LoadTimerCallback,
+                                            static_cast<void*>(this),
+                                            loadTimeout,
+                                            nsITimer::TYPE_ONE_SHOT,
+                                            "LoadTimerCallback");
     }
   } else {
     mUserFontEntry->mFontDataLoadingState = gfxUserFontEntry::LOADING_SLOWLY;
@@ -135,10 +141,12 @@ nsFontFaceLoader::LoadTimerCallback(nsITimer* aTimer, void* aClosure)
           ufe->mFontDataLoadingState = gfxUserFontEntry::LOADING_ALMOST_DONE;
           uint32_t delay;
           loader->mLoadTimer->GetDelay(&delay);
-          loader->mLoadTimer->InitWithFuncCallback(LoadTimerCallback,
-                                                   static_cast<void*>(loader),
-                                                   delay >> 1,
-                                                   nsITimer::TYPE_ONE_SHOT);
+          loader->mLoadTimer->InitWithNamedFuncCallback(
+            LoadTimerCallback,
+            static_cast<void*>(loader),
+            delay >> 1,
+            nsITimer::TYPE_ONE_SHOT,
+            "nsFontFaceLoader::LoadTimerCallback");
           updateUserFontSet = false;
           LOG(("userfonts (%p) 75%% done, resetting timer\n", loader));
         }
@@ -218,14 +226,12 @@ nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
   }
 
   if (LOG_ENABLED()) {
-    nsAutoCString fontURI;
-    mFontURI->GetSpec(fontURI);
     if (NS_SUCCEEDED(aStatus)) {
       LOG(("userfonts (%p) download completed - font uri: (%s) time: %d ms\n",
-           this, fontURI.get(), downloadTimeMS));
+           this, mFontURI->GetSpecOrDefault().get(), downloadTimeMS));
     } else {
-      LOG(("userfonts (%p) download failed - font uri: (%s) error: %8.8x\n",
-           this, fontURI.get(), aStatus));
+      LOG(("userfonts (%p) download failed - font uri: (%s) error: %8.8" PRIx32 "\n",
+           this, mFontURI->GetSpecOrDefault().get(), static_cast<uint32_t>(aStatus)));
     }
   }
 

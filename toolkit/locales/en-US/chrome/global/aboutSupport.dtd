@@ -25,6 +25,11 @@ This is likely the same like id.heading in crashes.dtd. -->
 <!ENTITY aboutSupport.extensionVersion "Version">
 <!ENTITY aboutSupport.extensionId "ID">
 
+<!ENTITY aboutSupport.featuresTitle "&brandShortName; Features">
+<!ENTITY aboutSupport.featureName "Name">
+<!ENTITY aboutSupport.featureVersion "Version">
+<!ENTITY aboutSupport.featureId "ID">
+
 <!ENTITY aboutSupport.experimentsTitle "Experimental Features">
 <!ENTITY aboutSupport.experimentName "Name">
 <!ENTITY aboutSupport.experimentId "ID">
@@ -65,6 +70,11 @@ Windows/Mac use the term "Folder" instead of "Directory" -->
 
 <!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocess Windows">
 
+<!ENTITY aboutSupport.appBasicsProcessCount "Web Content Processes">
+
+<!ENTITY aboutSupport.appBasicsKeyGoogle "Google Key">
+<!ENTITY aboutSupport.appBasicsKeyMozilla "Mozilla Location Service Key">
+
 <!ENTITY aboutSupport.appBasicsSafeMode "Safe Mode">
 
 <!ENTITY aboutSupport.showDir.label "Open Directory">
@@ -72,9 +82,9 @@ Windows/Mac use the term "Folder" instead of "Directory" -->
 variant of aboutSupport.showDir.label.  This allows us to use the preferred
 "Finder" terminology on Mac. -->
 <!ENTITY aboutSupport.showMac.label "Show in Finder">
-<!-- LOCALIZATION NOTE (aboutSupport.showWin.label): This is the Windows-specific
+<!-- LOCALIZATION NOTE (aboutSupport.showWin2.label): This is the Windows-specific
 variant of aboutSupport.showDir.label. -->
-<!ENTITY aboutSupport.showWin.label "Show Folder">
+<!ENTITY aboutSupport.showWin2.label "Open Folder">
 
 <!ENTITY aboutSupport.modifiedKeyPrefsTitle "Important Modified Preferences">
 <!ENTITY aboutSupport.modifiedPrefsName "Name">
@@ -100,6 +110,7 @@ variant of aboutSupport.showDir.label. -->
 <!ENTITY aboutSupport.a11yTitle "Accessibility">
 <!ENTITY aboutSupport.a11yActivated "Activated">
 <!ENTITY aboutSupport.a11yForceDisabled "Prevent Accessibility">
+<!ENTITY aboutSupport.a11yHandlerUsed "Accessible Handler Used">
 
 <!ENTITY aboutSupport.libraryVersionsTitle "Library Versions">
 
@@ -110,6 +121,14 @@ variant of aboutSupport.showDir.label. -->
 <!ENTITY aboutSupport.copyRawDataToClipboard.label "Copy raw data to clipboard">
 
 <!ENTITY aboutSupport.sandboxTitle "Sandbox">
+<!ENTITY aboutSupport.sandboxSyscallLogTitle "Rejected System Calls">
+<!ENTITY aboutSupport.sandboxSyscallIndex "#">
+<!ENTITY aboutSupport.sandboxSyscallAge "Seconds Ago">
+<!ENTITY aboutSupport.sandboxSyscallPID "PID">
+<!ENTITY aboutSupport.sandboxSyscallTID "TID">
+<!ENTITY aboutSupport.sandboxSyscallProcType "Process Type">
+<!ENTITY aboutSupport.sandboxSyscallNumber "Syscall">
+<!ENTITY aboutSupport.sandboxSyscallArgs "Arguments">
 
 <!ENTITY aboutSupport.safeModeTitle "Try Safe Mode">
 <!ENTITY aboutSupport.restartInSafeMode.label "Restart with Add-ons Disabled…">
@@ -122,3 +141,16 @@ variant of aboutSupport.showDir.label. -->
 <!ENTITY aboutSupport.graphicsDecisionLogTitle "Decision Log">
 <!ENTITY aboutSupport.graphicsCrashGuardsTitle "Crash Guard Disabled Features">
 <!ENTITY aboutSupport.graphicsWorkaroundsTitle "Workarounds">
+
+<!ENTITY aboutSupport.mediaTitle "Media">
+<!ENTITY aboutSupport.mediaOutputDevicesTitle "Output Devices">
+<!ENTITY aboutSupport.mediaInputDevicesTitle "Input Devices">
+<!ENTITY aboutSupport.mediaDeviceName "Name">
+<!ENTITY aboutSupport.mediaDeviceGroup "Group">
+<!ENTITY aboutSupport.mediaDeviceVendor "Vendor">
+<!ENTITY aboutSupport.mediaDeviceState "State">
+<!ENTITY aboutSupport.mediaDevicePreferred "Preferred">
+<!ENTITY aboutSupport.mediaDeviceFormat "Format">
+<!ENTITY aboutSupport.mediaDeviceChannels "Channels">
+<!ENTITY aboutSupport.mediaDeviceRate "Rate">
+<!ENTITY aboutSupport.mediaDeviceLatency "Latency">

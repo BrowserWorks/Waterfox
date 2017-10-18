@@ -10,8 +10,7 @@
 
 #include "webrtc/common_audio/vad/vad_filterbank.h"
 
-#include <assert.h>
-
+#include "webrtc/base/checks.h"
 #include "webrtc/common_audio/signal_processing/include/signal_processing_library.h"
 #include "webrtc/typedefs.h"
 
@@ -38,9 +37,9 @@ static const int16_t kOffsetVector[6] = { 368, 368, 272, 176, 176, 176 };
 // - filter_state [i/o] : State of the filter.
 // - data_out     [o]   : Output audio data in the frequency interval
 //                        80 - 250 Hz.
-static void HighPassFilter(const int16_t* data_in, int data_length,
+static void HighPassFilter(const int16_t* data_in, size_t data_length,
                            int16_t* filter_state, int16_t* data_out) {
-  int i;
+  size_t i;
   const int16_t* in_ptr = data_in;
   int16_t* out_ptr = data_out;
   int32_t tmp32 = 0;
@@ -80,7 +79,7 @@ static void HighPassFilter(const int16_t* data_in, int data_length,
 // - filter_coefficient [i]   : Given in Q15.
 // - filter_state       [i/o] : State of the filter given in Q(-1).
 // - data_out           [o]   : Output audio signal given in Q(-1).
-static void AllPassFilter(const int16_t* data_in, int data_length,
+static void AllPassFilter(const int16_t* data_in, size_t data_length,
                           int16_t filter_coefficient, int16_t* filter_state,
                           int16_t* data_out) {
   // The filter can only cause overflow (in the w16 output variable)
@@ -89,17 +88,16 @@ static void AllPassFilter(const int16_t* data_in, int data_length,
   // First 6 taps of the impulse response:
   // 0.6399 0.5905 -0.3779 0.2418 -0.1547 0.0990
 
-  int i;
+  size_t i;
   int16_t tmp16 = 0;
   int32_t tmp32 = 0;
   int32_t state32 = ((int32_t) (*filter_state) << 16);  // Q15
 
   for (i = 0; i < data_length; i++) {
-    tmp32 = state32 + WEBRTC_SPL_MUL_16_16(filter_coefficient, *data_in);
+    tmp32 = state32 + filter_coefficient * *data_in;
     tmp16 = (int16_t) (tmp32 >> 16);  // Q(-1)
     *data_out++ = tmp16;
-    state32 = (((int32_t) (*data_in)) << 14); // Q14
-    state32 -= WEBRTC_SPL_MUL_16_16(filter_coefficient, tmp16);  // Q14
+    state32 = (*data_in << 14) - filter_coefficient * tmp16;  // Q14
     state32 <<= 1;  // Q15.
     data_in += 2;
   }
@@ -118,11 +116,11 @@ static void AllPassFilter(const int16_t* data_in, int data_length,
 //                        The length is |data_length| / 2.
 // - lp_data_out  [o]   : Output audio data of the lower half of the spectrum.
 //                        The length is |data_length| / 2.
-static void SplitFilter(const int16_t* data_in, int data_length,
+static void SplitFilter(const int16_t* data_in, size_t data_length,
                         int16_t* upper_state, int16_t* lower_state,
                         int16_t* hp_data_out, int16_t* lp_data_out) {
-  int i;
-  int half_length = data_length >> 1;  // Downsampling by 2.
+  size_t i;
+  size_t half_length = data_length >> 1;  // Downsampling by 2.
   int16_t tmp_out;
 
   // All-pass filtering upper branch.
@@ -152,7 +150,7 @@ static void SplitFilter(const int16_t* data_in, int data_length,
 //                        NOTE: |total_energy| is only updated if
 //                        |total_energy| <= |kMinEnergy|.
 // - log_energy   [o]   : 10 * log10("energy of |data_in|") given in Q4.
-static void LogOfEnergy(const int16_t* data_in, int data_length,
+static void LogOfEnergy(const int16_t* data_in, size_t data_length,
                         int16_t offset, int16_t* total_energy,
                         int16_t* log_energy) {
   // |tot_rshifts| accumulates the number of right shifts performed on |energy|.
@@ -161,8 +159,8 @@ static void LogOfEnergy(const int16_t* data_in, int data_length,
   // we eventually will mask out the fractional part.
   uint32_t energy = 0;
 
-  assert(data_in != NULL);
-  assert(data_length > 0);
+  RTC_DCHECK(data_in);
+  RTC_DCHECK_GT(data_length, 0);
 
   energy = (uint32_t) WebRtcSpl_Energy((int16_t*) data_in, data_length,
                                        &tot_rshifts);
@@ -244,7 +242,7 @@ static void LogOfEnergy(const int16_t* data_in, int data_length,
 }
 
 int16_t WebRtcVad_CalculateFeatures(VadInstT* self, const int16_t* data_in,
-                                    int data_length, int16_t* features) {
+                                    size_t data_length, int16_t* features) {
   int16_t total_energy = 0;
   // We expect |data_length| to be 80, 160 or 240 samples, which corresponds to
   // 10, 20 or 30 ms in 8 kHz. Therefore, the intermediate downsampled data will
@@ -252,9 +250,9 @@ int16_t WebRtcVad_CalculateFeatures(VadInstT* self, const int16_t* data_in,
   // the second split.
   int16_t hp_120[120], lp_120[120];
   int16_t hp_60[60], lp_60[60];
-  const int half_data_length = data_length >> 1;
-  int length = half_data_length;  // |data_length| / 2, corresponds to
-                                  // bandwidth = 2000 Hz after downsampling.
+  const size_t half_data_length = data_length >> 1;
+  size_t length = half_data_length;  // |data_length| / 2, corresponds to
+                                     // bandwidth = 2000 Hz after downsampling.
 
   // Initialize variables for the first SplitFilter().
   int frequency_band = 0;
@@ -262,9 +260,8 @@ int16_t WebRtcVad_CalculateFeatures(VadInstT* self, const int16_t* data_in,
   int16_t* hp_out_ptr = hp_120;  // [2000 - 4000] Hz.
   int16_t* lp_out_ptr = lp_120;  // [0 - 2000] Hz.
 
-  assert(data_length >= 0);
-  assert(data_length <= 240);
-  assert(4 < kNumChannels - 1);  // Checking maximum |frequency_band|.
+  RTC_DCHECK_LE(data_length, 240);
+  RTC_DCHECK_LT(4, kNumChannels - 1);  // Checking maximum |frequency_band|.
 
   // Split at 2000 Hz and downsample.
   SplitFilter(in_ptr, data_length, &self->upper_state[frequency_band],

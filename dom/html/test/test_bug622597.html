@@ -16,7 +16,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=622597
   <form>
     <input required>
     <textarea required></textarea>
-    <select required><option>foo</option><option value="">bar</option></select>
+    <select required><option value="">foo</option><option selected>bar</option></select>
     <button>submit</button>
   </form>
 </div>
@@ -46,8 +46,6 @@ function checkPseudoClasses(aElement, aValid, aInvalid)
 }
 
 select.addEventListener("focus", function() {
-  select.removeEventListener("focus", arguments.callee, false);
-
   SimpleTest.executeSoon(function() {
     form.noValidate = false;
     SimpleTest.executeSoon(function() {
@@ -55,28 +53,22 @@ select.addEventListener("focus", function() {
       SimpleTest.finish();
     });
   });
-}, false);
+}, {once: true});
 
 textarea.addEventListener("focus", function() {
-  textarea.removeEventListener("focus", arguments.callee, false);
-
   SimpleTest.executeSoon(function() {
     form.noValidate = false;
     SimpleTest.executeSoon(function() {
       checkPseudoClasses(textarea, false, true);
       form.noValidate = true;
-      select.selectedIndex = 1;
+      select.selectedIndex = 0;
       select.focus();
     });
   });
-}, false);
+}, {once: true});
 
 input.addEventListener("invalid", function() {
-  input.removeEventListener("invalid", arguments.callee, false);
-
   input.addEventListener("focus", function() {
-    input.removeEventListener("focus", arguments.callee, false);
-
     SimpleTest.executeSoon(function() {
       form.noValidate = false;
       SimpleTest.executeSoon(function() {
@@ -86,7 +78,7 @@ input.addEventListener("invalid", function() {
         textarea.focus();
       });
     });
-  }, false);
+  }, {once: true});
 
   SimpleTest.executeSoon(function() {
     form.noValidate = true;
@@ -94,15 +86,13 @@ input.addEventListener("invalid", function() {
     input.value = '';
     input.focus();
   });
-}, false);
+}, {once: true});
 
 button.addEventListener("focus", function() {
-  button.removeEventListener("focus", arguments.callee, false);
-
   SimpleTest.executeSoon(function() {
     synthesizeKey("VK_RETURN", {});
   });
-}, false);
+}, {once: true});
 
 SimpleTest.waitForExplicitFinish();
 SimpleTest.waitForFocus(function() {

@@ -209,18 +209,17 @@ class ArrayBufferObject;
 class ArrayBufferViewObject;
 class SharedArrayBufferObject;
 class BaseShape;
-class DebugScopeObject;
+class DebugEnvironmentProxy;
 class GlobalObject;
 class LazyScript;
 class ModuleObject;
 class ModuleEnvironmentObject;
 class ModuleNamespaceObject;
 class NativeObject;
-class NestedScopeObject;
 class PlainObject;
 class PropertyName;
 class SavedFrame;
-class ScopeObject;
+class EnvironmentObject;
 class ScriptSourceObject;
 class Shape;
 class UnownedBaseShape;
@@ -243,17 +242,14 @@ bool
 CurrentThreadIsGCSweeping();
 
 bool
-CurrentThreadCanSkipPostBarrier(bool inNursery);
+IsMarkedBlack(JSObject* obj);
 #endif
 
-namespace gc {
-
-// Marking.h depends on these barrier definitions, so we need a separate
-// entry point for marking to implement the pre-barrier.
-void MarkValueForBarrier(JSTracer* trc, Value* v, const char* name);
-void MarkIdForBarrier(JSTracer* trc, jsid* idp, const char* name);
-
-} // namespace gc
+MOZ_ALWAYS_INLINE void
+CheckEdgeIsNotBlackToGray(JSObject* src, const Value& dst)
+{
+    MOZ_ASSERT_IF(IsMarkedBlack(src), JS::ValueIsNotGray(dst));
+}
 
 template <typename T>
 struct InternalBarrierMethods {};
@@ -263,15 +259,11 @@ struct InternalBarrierMethods<T*>
 {
     static bool isMarkable(T* v) { return v != nullptr; }
 
-    static bool isMarkableTaggedPointer(T* v) { return !IsNullTaggedPointer(v); }
-
     static void preBarrier(T* v) { T::writeBarrierPre(v); }
 
     static void postBarrier(T** vp, T* prev, T* next) { T::writeBarrierPost(vp, prev, next); }
 
     static void readBarrier(T* v) { T::readBarrier(v); }
-
-    static bool isInsideNursery(T* v) { return IsInsideNursery(v); }
 };
 
 template <typename S> struct PreBarrierFunctor : public VoidDefaultAdaptor<S> {
@@ -285,10 +277,9 @@ template <typename S> struct ReadBarrierFunctor : public VoidDefaultAdaptor<S> {
 template <>
 struct InternalBarrierMethods<Value>
 {
-    static bool isMarkable(Value v) { return v.isMarkable(); }
-    static bool isMarkableTaggedPointer(Value v) { return isMarkable(v); }
+    static bool isMarkable(const Value& v) { return v.isGCThing(); }
 
-    static void preBarrier(Value v) {
+    static void preBarrier(const Value& v) {
         DispatchTyped(PreBarrierFunctor<Value>(), v);
     }
 
@@ -316,37 +307,26 @@ struct InternalBarrierMethods<Value>
     static void readBarrier(const Value& v) {
         DispatchTyped(ReadBarrierFunctor<Value>(), v);
     }
-
-    static bool isInsideNursery(const Value& v) {
-        return v.isMarkable() && IsInsideNursery(v.toGCThing());
-    }
 };
 
 template <>
 struct InternalBarrierMethods<jsid>
 {
-    static bool isMarkable(jsid id) { return JSID_IS_STRING(id) || JSID_IS_SYMBOL(id); }
-    static bool isMarkableTaggedPointer(jsid id) { return isMarkable(id); }
-
+    static bool isMarkable(jsid id) { return JSID_IS_GCTHING(id); }
     static void preBarrier(jsid id) { DispatchTyped(PreBarrierFunctor<jsid>(), id); }
     static void postBarrier(jsid* idp, jsid prev, jsid next) {}
-
-    static bool isInsideNursery(jsid id) { return false; }
 };
-
-// Barrier classes can use Mixins to add methods to a set of barrier
-// instantiations, to make the barriered thing look and feel more like the
-// thing itself.
-template <typename T>
-class BarrieredBaseMixins {};
 
 // Base class of all barrier types.
 template <typename T>
-class BarrieredBase : public BarrieredBaseMixins<T>
+class BarrieredBase
 {
   protected:
     // BarrieredBase is not directly instantiable.
-    explicit BarrieredBase(T v) : value(v) {}
+    explicit BarrieredBase(const T& v) : value(v) {}
+
+    // BarrieredBase subclasses cannot be copy constructed by default.
+    BarrieredBase(const BarrieredBase<T>& other) = default;
 
     // Storage for all barrier classes. |value| must be a GC thing reference
     // type: either a direct pointer to a GC thing or a supported tagged
@@ -363,14 +343,18 @@ class BarrieredBase : public BarrieredBaseMixins<T>
 
 // Base class for barriered pointer types that intercept only writes.
 template <class T>
-class WriteBarrieredBase : public BarrieredBase<T>
+class WriteBarrieredBase : public BarrieredBase<T>,
+                           public WrappedPtrOperations<T, WriteBarrieredBase<T>>
 {
   protected:
+    using BarrieredBase<T>::value;
+
     // WriteBarrieredBase is not directly instantiable.
-    explicit WriteBarrieredBase(T v) : BarrieredBase<T>(v) {}
+    explicit WriteBarrieredBase(const T& v) : BarrieredBase<T>(v) {}
 
   public:
-    DECLARE_POINTER_COMPARISON_OPS(T);
+    using ElementType = T;
+
     DECLARE_POINTER_CONSTREF_OPS(T);
 
     // Use this if the automatic coercion to T isn't working.
@@ -378,14 +362,16 @@ class WriteBarrieredBase : public BarrieredBase<T>
 
     // Use this if you want to change the value without invoking barriers.
     // Obviously this is dangerous unless you know the barrier is not needed.
-    void unsafeSet(T v) { this->value = v; }
+    void unsafeSet(const T& v) { this->value = v; }
 
     // For users who need to manually barrier the raw types.
     static void writeBarrierPre(const T& v) { InternalBarrierMethods<T>::preBarrier(v); }
 
   protected:
     void pre() { InternalBarrierMethods<T>::preBarrier(this->value); }
-    void post(T prev, T next) { InternalBarrierMethods<T>::postBarrier(&this->value, prev, next); }
+    void post(const T& prev, const T& next) {
+        InternalBarrierMethods<T>::postBarrier(&this->value, prev, next);
+    }
 };
 
 /*
@@ -403,11 +389,11 @@ class PreBarriered : public WriteBarrieredBase<T>
      * Allow implicit construction for use in generic contexts, such as
      * DebuggerWeakMap::markKeys.
      */
-    MOZ_IMPLICIT PreBarriered(T v) : WriteBarrieredBase<T>(v) {}
+    MOZ_IMPLICIT PreBarriered(const T& v) : WriteBarrieredBase<T>(v) {}
     explicit PreBarriered(const PreBarriered<T>& v) : WriteBarrieredBase<T>(v.value) {}
     ~PreBarriered() { this->pre(); }
 
-    void init(T v) {
+    void init(const T& v) {
         this->value = v;
     }
 
@@ -442,7 +428,7 @@ class GCPtr : public WriteBarrieredBase<T>
 {
   public:
     GCPtr() : WriteBarrieredBase<T>(JS::GCPolicy<T>::initial()) {}
-    explicit GCPtr(T v) : WriteBarrieredBase<T>(v) {
+    explicit GCPtr(const T& v) : WriteBarrieredBase<T>(v) {
         this->post(JS::GCPolicy<T>::initial(), v);
     }
     explicit GCPtr(const GCPtr<T>& v) : WriteBarrieredBase<T>(v) {
@@ -450,25 +436,26 @@ class GCPtr : public WriteBarrieredBase<T>
     }
 #ifdef DEBUG
     ~GCPtr() {
-        // No prebarrier necessary as this only happens when we are sweeping or
-        // after we have just collected the nursery.
-        bool inNursery = InternalBarrierMethods<T>::isInsideNursery(this->value);
-        MOZ_ASSERT(CurrentThreadIsGCSweeping() ||
-                   CurrentThreadCanSkipPostBarrier(inNursery));
+        // No barriers are necessary as this only happens when we are sweeping
+        // or when after GCManagedDeletePolicy has triggered the barriers for us
+        // and cleared the pointer.
+        //
+        // If you get a crash here, you may need to make the containing object
+        // use GCManagedDeletePolicy and use JS::DeletePolicy to destroy it.
+        //
+        // Note that when sweeping the wrapped pointer may already have been
+        // freed by this point.
+        MOZ_ASSERT(CurrentThreadIsGCSweeping() || this->value == JS::GCPolicy<T>::initial());
         Poison(this, JS_FREED_HEAP_PTR_PATTERN, sizeof(*this));
     }
 #endif
 
-    void init(T v) {
+    void init(const T& v) {
         this->value = v;
         this->post(JS::GCPolicy<T>::initial(), v);
     }
 
     DECLARE_POINTER_ASSIGN_OPS(GCPtr, T);
-
-    T unbarrieredGet() const {
-        return this->value;
-    }
 
   private:
     void set(const T& v) {
@@ -536,7 +523,7 @@ class HeapPtr : public WriteBarrieredBase<T>
         this->post(this->value, JS::GCPolicy<T>::initial());
     }
 
-    void init(T v) {
+    void init(const T& v) {
         this->value = v;
         this->post(JS::GCPolicy<T>::initial(), this->value);
     }
@@ -569,11 +556,13 @@ class ReadBarrieredBase : public BarrieredBase<T>
 {
   protected:
     // ReadBarrieredBase is not directly instantiable.
-    explicit ReadBarrieredBase(T v) : BarrieredBase<T>(v) {}
+    explicit ReadBarrieredBase(const T& v) : BarrieredBase<T>(v) {}
 
   protected:
     void read() const { InternalBarrierMethods<T>::readBarrier(this->value); }
-    void post(T prev, T next) { InternalBarrierMethods<T>::postBarrier(&this->value, prev, next); }
+    void post(const T& prev, const T& next) {
+        InternalBarrierMethods<T>::postBarrier(&this->value, prev, next);
+    }
 };
 
 // Incremental GC requires that weak pointers have read barriers. See the block
@@ -584,8 +573,12 @@ class ReadBarrieredBase : public BarrieredBase<T>
 // insert manual post-barriers on the table for rekeying if the key is based in
 // any way on the address of the object.
 template <typename T>
-class ReadBarriered : public ReadBarrieredBase<T>
+class ReadBarriered : public ReadBarrieredBase<T>,
+                      public WrappedPtrOperations<T, ReadBarriered<T>>
 {
+  protected:
+    using ReadBarrieredBase<T>::value;
+
   public:
     ReadBarriered() : ReadBarrieredBase<T>(JS::GCPolicy<T>::initial()) {}
 
@@ -594,15 +587,16 @@ class ReadBarriered : public ReadBarrieredBase<T>
         this->post(JS::GCPolicy<T>::initial(), v);
     }
 
-    // Copy is creating a new edge, so we must read barrier the source edge.
+    // The copy constructor creates a new weak edge but the wrapped pointer does
+    // not escape, so no read barrier is necessary.
     explicit ReadBarriered(const ReadBarriered& v) : ReadBarrieredBase<T>(v) {
-        this->post(JS::GCPolicy<T>::initial(), v.get());
+        this->post(JS::GCPolicy<T>::initial(), v.unbarrieredGet());
     }
 
     // Move retains the lifetime status of the source edge, so does not fire
     // the read barrier of the defunct edge.
     ReadBarriered(ReadBarriered&& v)
-      : ReadBarrieredBase<T>(mozilla::Forward<ReadBarriered<T>>(v))
+      : ReadBarrieredBase<T>(mozilla::Move(v))
     {
         this->post(JS::GCPolicy<T>::initial(), v.value);
     }
@@ -618,14 +612,13 @@ class ReadBarriered : public ReadBarrieredBase<T>
         return *this;
     }
 
-    const T get() const {
-        if (!InternalBarrierMethods<T>::isMarkable(this->value))
-            return JS::GCPolicy<T>::initial();
-        this->read();
+    const T& get() const {
+        if (InternalBarrierMethods<T>::isMarkable(this->value))
+            this->read();
         return this->value;
     }
 
-    const T unbarrieredGet() const {
+    const T& unbarrieredGet() const {
         return this->value;
     }
 
@@ -633,9 +626,9 @@ class ReadBarriered : public ReadBarrieredBase<T>
         return bool(this->value);
     }
 
-    operator const T() const { return get(); }
+    operator const T&() const { return get(); }
 
-    const T operator->() const { return get(); }
+    const T& operator->() const { return get(); }
 
     T* unsafeGet() { return &this->value; }
     T const* unsafeGet() const { return &this->value; }
@@ -652,12 +645,6 @@ class ReadBarriered : public ReadBarrieredBase<T>
 // out when the GC discovers that it is not reachable from any other path.
 template <typename T>
 using WeakRef = ReadBarriered<T>;
-
-// Add Value operations to all Barrier types. Note, this must be defined before
-// HeapSlot for HeapSlot's base to get these operations.
-template <>
-class BarrieredBaseMixins<JS::Value> : public ValueOperations<WriteBarrieredBase<JS::Value>>
-{};
 
 // A pre- and post-barriered Value that is specialized to be aware that it
 // resides in a slots or elements vector. This allows it to be relocated in
@@ -695,11 +682,11 @@ class HeapSlot : public WriteBarrieredBase<Value>
 
 #ifdef DEBUG
     bool preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot) const;
-    bool preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
-                                         const Value& target) const;
+    void assertPreconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
+                                               const Value& target) const;
 #endif
 
-    void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
+    MOZ_ALWAYS_INLINE void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
         MOZ_ASSERT(preconditionForSet(owner, kind, slot));
         pre();
         value = v;
@@ -713,7 +700,9 @@ class HeapSlot : public WriteBarrieredBase<Value>
 
   private:
     void post(NativeObject* owner, Kind kind, uint32_t slot, const Value& target) {
-        MOZ_ASSERT(preconditionForWriteBarrierPost(owner, kind, slot, target));
+#ifdef DEBUG
+        assertPreconditionForWriteBarrierPost(owner, kind, slot, target);
+#endif
         if (this->value.isObject()) {
             gc::Cell* cell = reinterpret_cast<gc::Cell*>(&this->value.toObject());
             if (cell->storeBuffer())
@@ -901,13 +890,14 @@ struct DefaultHasher<ReadBarriered<T>> : ReadBarrieredHasher<T> { };
 
 class ArrayObject;
 class ArrayBufferObject;
-class NestedScopeObject;
-class DebugScopeObject;
 class GlobalObject;
+class Scope;
 class ScriptSourceObject;
 class Shape;
 class BaseShape;
 class UnownedBaseShape;
+class WasmInstanceObject;
+class WasmTableObject;
 namespace jit {
 class JitCode;
 } // namespace jit
@@ -939,6 +929,7 @@ typedef GCPtr<Shape*> GCPtrShape;
 typedef GCPtr<UnownedBaseShape*> GCPtrUnownedBaseShape;
 typedef GCPtr<jit::JitCode*> GCPtrJitCode;
 typedef GCPtr<ObjectGroup*> GCPtrObjectGroup;
+typedef GCPtr<Scope*> GCPtrScope;
 
 typedef PreBarriered<Value> PreBarrieredValue;
 typedef GCPtr<Value> GCPtrValue;
@@ -949,7 +940,7 @@ typedef GCPtr<jsid> GCPtrId;
 typedef ImmutableTenuredPtr<PropertyName*> ImmutablePropertyNamePtr;
 typedef ImmutableTenuredPtr<JS::Symbol*> ImmutableSymbolPtr;
 
-typedef ReadBarriered<DebugScopeObject*> ReadBarrieredDebugScopeObject;
+typedef ReadBarriered<DebugEnvironmentProxy*> ReadBarrieredDebugEnvironmentProxy;
 typedef ReadBarriered<GlobalObject*> ReadBarrieredGlobalObject;
 typedef ReadBarriered<JSObject*> ReadBarrieredObject;
 typedef ReadBarriered<JSFunction*> ReadBarrieredFunction;
@@ -959,8 +950,39 @@ typedef ReadBarriered<Shape*> ReadBarrieredShape;
 typedef ReadBarriered<jit::JitCode*> ReadBarrieredJitCode;
 typedef ReadBarriered<ObjectGroup*> ReadBarrieredObjectGroup;
 typedef ReadBarriered<JS::Symbol*> ReadBarrieredSymbol;
+typedef ReadBarriered<WasmInstanceObject*> ReadBarrieredWasmInstanceObject;
+typedef ReadBarriered<WasmTableObject*> ReadBarrieredWasmTableObject;
 
 typedef ReadBarriered<Value> ReadBarrieredValue;
+
+namespace detail {
+
+template <typename T>
+struct DefineComparisonOps<PreBarriered<T>> : mozilla::TrueType {
+    static const T& get(const PreBarriered<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<GCPtr<T>> : mozilla::TrueType {
+    static const T& get(const GCPtr<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<HeapPtr<T>> : mozilla::TrueType {
+    static const T& get(const HeapPtr<T>& v) { return v.get(); }
+};
+
+template <typename T>
+struct DefineComparisonOps<ReadBarriered<T>> : mozilla::TrueType {
+    static const T& get(const ReadBarriered<T>& v) { return v.unbarrieredGet(); }
+};
+
+template <>
+struct DefineComparisonOps<HeapSlot> : mozilla::TrueType {
+    static const Value& get(const HeapSlot& v) { return v.get(); }
+};
+
+} /* namespace detail */
 
 } /* namespace js */
 

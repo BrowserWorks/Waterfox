@@ -4,17 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Get bookmark service
-try {
-  var bmsvc = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].getService(Ci.nsINavBookmarksService);
-} catch(ex) {
-  do_throw("Could not get nav-bookmarks-service\n");
-}
-
 // Get annotation service
 try {
-  var annosvc= Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);
-} catch(ex) {
+  var annosvc = Cc["@mozilla.org/browser/annotation-service;1"].getService(Ci.nsIAnnotationService);
+} catch (ex) {
   do_throw("Could not get annotation service\n");
 }
 
@@ -22,51 +15,50 @@ var annoObserver = {
   PAGE_lastSet_URI: "",
   PAGE_lastSet_AnnoName: "",
 
-  onPageAnnotationSet: function(aURI, aName) {
+  onPageAnnotationSet(aURI, aName) {
     this.PAGE_lastSet_URI = aURI.spec;
     this.PAGE_lastSet_AnnoName = aName;
   },
 
   ITEM_lastSet_Id: -1,
   ITEM_lastSet_AnnoName: "",
-  onItemAnnotationSet: function(aItemId, aName) {
+  onItemAnnotationSet(aItemId, aName) {
     this.ITEM_lastSet_Id = aItemId;
     this.ITEM_lastSet_AnnoName = aName;
   },
 
   PAGE_lastRemoved_URI: "",
   PAGE_lastRemoved_AnnoName: "",
-  onPageAnnotationRemoved: function(aURI, aName) {
+  onPageAnnotationRemoved(aURI, aName) {
     this.PAGE_lastRemoved_URI = aURI.spec;
     this.PAGE_lastRemoved_AnnoName = aName;
   },
 
   ITEM_lastRemoved_Id: -1,
   ITEM_lastRemoved_AnnoName: "",
-  onItemAnnotationRemoved: function(aItemId, aName) {
+  onItemAnnotationRemoved(aItemId, aName) {
     this.ITEM_lastRemoved_Id = aItemId;
     this.ITEM_lastRemoved_AnnoName = aName;
   }
 };
 
-// main
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_execute()
-{
-  var testURI = uri("http://mozilla.com/");
-  var testItemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, testURI, -1, "");
-  var testAnnoName = "moz-test-places/annotations";
-  var testAnnoVal = "test";
+add_task(async function test_execute() {
+  let testURI = uri("http://mozilla.com/");
+  let testItem = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    title: "",
+    url: testURI,
+  });
+  let testItemId = await PlacesUtils.promiseItemId(testItem.guid);
+  let testAnnoName = "moz-test-places/annotations";
+  let testAnnoVal = "test";
+  let earlierDate = new Date(Date.now() - 1000);
 
   annosvc.addObserver(annoObserver);
   // create new string annotation
   try {
     annosvc.setPageAnnotation(testURI, testAnnoName, testAnnoVal, 0, 0);
-  } catch(ex) {
+  } catch (ex) {
     do_throw("unable to add page-annotation");
   }
   do_check_eq(annoObserver.PAGE_lastSet_URI, testURI.spec);
@@ -77,19 +69,27 @@ add_task(function* test_execute()
   var storedAnnoVal = annosvc.getPageAnnotation(testURI, testAnnoName);
   do_check_true(testAnnoVal === storedAnnoVal);
   // string item-annotation
+  let item = await PlacesUtils.bookmarks.fetch(testItem.guid);
+
+  // Verify that lastModified equals dateAdded before we set the annotation.
+  do_check_eq(item.lastModified.getTime(), item.dateAdded.getTime());
+  // Workaround possible VM timers issues moving last modified to the past.
+  await PlacesUtils.bookmarks.update({
+    guid: item.guid,
+    dateAdded: earlierDate,
+    lastModified: earlierDate,
+  });
+
   try {
-    var lastModified = bmsvc.getItemLastModified(testItemId);
-    // Verify that lastModified equals dateAdded before we set the annotation.
-    do_check_eq(lastModified, bmsvc.getItemDateAdded(testItemId));
-    // Workaround possible VM timers issues moving last modified to the past.
-    bmsvc.setItemLastModified(testItemId, --lastModified);
     annosvc.setItemAnnotation(testItemId, testAnnoName, testAnnoVal, 0, 0);
-    var lastModified2 = bmsvc.getItemLastModified(testItemId);
-    // verify that setting the annotation updates the last modified time
-    do_check_true(lastModified2 > lastModified);
-  } catch(ex) {
-    do_throw("unable to add item annotation");
+  } catch (ex) {
+    do_throw("unable to add item annotation " + ex);
   }
+
+  let updatedItem = await PlacesUtils.bookmarks.fetch(testItem.guid);
+
+  // verify that setting the annotation updates the last modified time
+  do_check_true(updatedItem.lastModified > item.lastModified);
   do_check_eq(annoObserver.ITEM_lastSet_Id, testItemId);
   do_check_eq(annoObserver.ITEM_lastSet_AnnoName, testAnnoName);
 
@@ -97,13 +97,13 @@ add_task(function* test_execute()
     var annoVal = annosvc.getItemAnnotation(testItemId, testAnnoName);
     // verify the anno value
     do_check_true(testAnnoVal === annoVal);
-  } catch(ex) {
+  } catch (ex) {
     do_throw("unable to get item annotation");
   }
 
   // test getPagesWithAnnotation
   var uri2 = uri("http://www.tests.tld");
-  yield PlacesTestUtils.addVisits(uri2);
+  await PlacesTestUtils.addVisits(uri2);
   annosvc.setPageAnnotation(uri2, testAnnoName, testAnnoVal, 0, 0);
   var pages = annosvc.getPagesWithAnnotation(testAnnoName);
   do_check_eq(pages.length, 2);
@@ -113,7 +113,12 @@ add_task(function* test_execute()
   do_check_true(pages[0].equals(uri2) || pages[1].equals(uri2));
 
   // test getItemsWithAnnotation
-  var testItemId2 = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, uri2, -1, "");
+  let testItem2 = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    title: "",
+    url: uri2,
+  });
+  let testItemId2 = await PlacesUtils.promiseItemId(testItem2.guid);
   annosvc.setItemAnnotation(testItemId2, testAnnoName, testAnnoVal, 0, 0);
   var items = annosvc.getItemsWithAnnotation(testAnnoName);
   do_check_eq(items.length, 2);
@@ -126,11 +131,11 @@ add_task(function* test_execute()
   try {
     annosvc.getPageAnnotation(testURI, "blah");
     do_throw("fetching page-annotation that doesn't exist, should've thrown");
-  } catch(ex) {}
+  } catch (ex) {}
   try {
     annosvc.getItemAnnotation(testURI, "blah");
     do_throw("fetching item-annotation that doesn't exist, should've thrown");
-  } catch(ex) {}
+  } catch (ex) {}
 
   // get annotation info
   var flags = {}, exp = {}, storageType = {};
@@ -155,7 +160,7 @@ add_task(function* test_execute()
 
   // copy annotations to another uri
   var newURI = uri("http://mozilla.org");
-  yield PlacesTestUtils.addVisits(newURI);
+  await PlacesTestUtils.addVisits(newURI);
   annosvc.setPageAnnotation(testURI, "oldAnno", "new", 0, 0);
   annosvc.setPageAnnotation(newURI, "oldAnno", "old", 0, 0);
   annoNames = annosvc.getPageAnnotationNames(newURI);
@@ -181,8 +186,18 @@ add_task(function* test_execute()
 
   // copy annotations to another item
   newURI = uri("http://mozilla.org");
-  var newItemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, newURI, -1, "");
-  var itemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, testURI, -1, "");
+  let newItem = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    title: "",
+    url: newURI,
+  });
+  let newItemId = await PlacesUtils.promiseItemId(newItem.guid);
+  item = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    title: "",
+    url: testURI,
+  });
+  var itemId = await PlacesUtils.promiseItemId(item.guid);
   annosvc.setItemAnnotation(itemId, "oldAnno", "new", 0, 0);
   annosvc.setItemAnnotation(itemId, "testAnno", "test", 0, 0);
   annosvc.setItemAnnotation(newItemId, "oldAnno", "old", 0, 0);
@@ -266,11 +281,19 @@ add_task(function* test_execute()
 
   annosvc.setItemAnnotation(testItemId, testAnnoName, testAnnoVal, 0, 0);
   // verify that removing an annotation updates the last modified date
-  var lastModified3 = bmsvc.getItemLastModified(testItemId);
+  testItem = await PlacesUtils.bookmarks.fetch(testItem.guid);
+
+  var lastModified3 = testItem.lastModified;
   // Workaround possible VM timers issues moving last modified to the past.
-  bmsvc.setItemLastModified(testItemId, --lastModified3);
+  await PlacesUtils.bookmarks.update({
+    guid: testItem.guid,
+    dateAdded: earlierDate,
+    lastModified: earlierDate,
+  });
   annosvc.removeItemAnnotation(testItemId, int32Key);
-  var lastModified4 = bmsvc.getItemLastModified(testItemId);
+
+  testItem = await PlacesUtils.bookmarks.fetch(testItem.guid);
+  var lastModified4 = testItem.lastModified;
   do_print("verify that removing an annotation updates the last modified date");
   do_print("lastModified3 = " + lastModified3);
   do_print("lastModified4 = " + lastModified4);
@@ -292,17 +315,20 @@ add_task(function* test_execute()
     try {
       annosvc.setItemAnnotation(id, "foo", "bar", 0, 0);
       do_throw("setItemAnnotation* should throw for invalid item id: " + id)
-    }
-    catch(ex) { }
+    } catch (ex) { }
   }
 
   // setting an annotation with EXPIRE_HISTORY for an item should throw
-  itemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, testURI, -1, "");
+  item = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.menuGuid,
+    title: "",
+    url: testURI,
+  });
+  itemId = await PlacesUtils.promiseItemId(item.guid);
   try {
     annosvc.setItemAnnotation(itemId, "foo", "bar", 0, annosvc.EXPIRE_WITH_HISTORY);
     do_throw("setting an item annotation with EXPIRE_HISTORY should throw");
-  }
-  catch(ex) {
+  } catch (ex) {
   }
 
   annosvc.removeObserver(annoObserver);
@@ -352,8 +378,7 @@ add_test(function test_getAnnotationsHavingName() {
         else
           do_check_eq(result.itemId, fid);
         do_check_guid_for_bookmark(result.itemId, result.guid);
-      }
-      else {
+      } else {
         do_check_guid_for_uri(result.uri, result.guid);
       }
     }

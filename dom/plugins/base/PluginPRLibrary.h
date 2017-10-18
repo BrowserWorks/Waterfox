@@ -81,7 +81,7 @@ public:
         return true;
     }
 
-#if defined(XP_UNIX) && !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
+#if defined(XP_UNIX) && !defined(XP_MACOSX)
     virtual nsresult NP_Initialize(NPNetscapeFuncs* aNetscapeFuncs,
                                    NPPluginFuncs* aFuncs, NPError* aError) override;
 #else
@@ -100,7 +100,7 @@ public:
 #endif
 
     virtual nsresult NPP_New(NPMIMEType aPluginType, NPP aInstance,
-                             uint16_t aMode, int16_t aArgc, char* aArgn[],
+                             int16_t aArgc, char* aArgn[],
                              char* aArgv[], NPSavedData* aSaved,
                              NPError* aError) override;
 
@@ -114,6 +114,8 @@ public:
     virtual bool IsOOP() override { return false; }
 #if defined(XP_MACOSX)
     virtual nsresult IsRemoteDrawingCoreAnimation(NPP aInstance, bool* aDrawing) override;
+#endif
+#if defined(XP_MACOSX) || defined(XP_WIN)
     virtual nsresult ContentsScaleFactorChanged(NPP aInstance, double aContentsScaleFactor) override;
 #endif
     virtual nsresult SetBackgroundUnknown(NPP instance) override;

@@ -9,15 +9,11 @@ with Files('*'):
 
 DIRS += ['blink']
 
-TEST_DIRS += ['compiledtest']
+TEST_DIRS += ['gtest']
 
 MOCHITEST_MANIFESTS += [
     'test/blink/mochitest.ini',
     'test/mochitest.ini',
-]
-
-BROWSER_CHROME_MANIFESTS += [
-    'test/browser.ini',
 ]
 
 TEST_HARNESS_FILES.testing.mochitest.tests.dom.media.webaudio.test.blink += [
@@ -54,9 +50,11 @@ EXPORTS.mozilla.dom += [
     'AudioNode.h',
     'AudioParam.h',
     'AudioProcessingEvent.h',
+    'AudioScheduledSourceNode.h',
     'BiquadFilterNode.h',
     'ChannelMergerNode.h',
     'ChannelSplitterNode.h',
+    'ConstantSourceNode.h',
     'ConvolverNode.h',
     'DelayNode.h',
     'DynamicsCompressorNode.h',
@@ -65,7 +63,6 @@ EXPORTS.mozilla.dom += [
     'MediaElementAudioSourceNode.h',
     'MediaStreamAudioDestinationNode.h',
     'MediaStreamAudioSourceNode.h',
-    'OfflineAudioCompletionEvent.h',
     'OscillatorNode.h',
     'PannerNode.h',
     'PeriodicWave.h',
@@ -89,10 +86,11 @@ UNIFIED_SOURCES += [
     'AudioNodeStream.cpp',
     'AudioParam.cpp',
     'AudioProcessingEvent.cpp',
+    'AudioScheduledSourceNode.cpp',
     'BiquadFilterNode.cpp',
-    'BufferDecoder.cpp',
     'ChannelMergerNode.cpp',
     'ChannelSplitterNode.cpp',
+    'ConstantSourceNode.cpp',
     'ConvolverNode.cpp',
     'DelayBuffer.cpp',
     'DelayNode.cpp',
@@ -104,7 +102,6 @@ UNIFIED_SOURCES += [
     'MediaElementAudioSourceNode.cpp',
     'MediaStreamAudioDestinationNode.cpp',
     'MediaStreamAudioSourceNode.cpp',
-    'OfflineAudioCompletionEvent.cpp',
     'OscillatorNode.cpp',
     'PannerNode.cpp',
     'PeriodicWave.cpp',
@@ -117,7 +114,7 @@ UNIFIED_SOURCES += [
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['AudioNodeEngineNEON.cpp']
-    SOURCES['AudioNodeEngineNEON.cpp'].flags += ['-mfpu=neon']
+    SOURCES['AudioNodeEngineNEON.cpp'].flags += CONFIG['NEON_FLAGS']
     LOCAL_INCLUDES += [
         '/media/openmax_dl/dl/api/'
     ]

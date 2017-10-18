@@ -56,9 +56,8 @@ SimpleTest.expectAssertions(3);
 
 SimpleTest.waitForExplicitFinish();
 
-function runTests()
-{
-  //XXX We send a useless click to each image to force it to setup its image
+function runTests() {
+  // XXX We send a useless click to each image to force it to setup its image
   // map, because flushing layout won't do it. Hopefully bug 135040 will make
   // this not suck.
   synthesizeMouse($("image"), 5, 5, { type: "mousedown" });
@@ -97,7 +96,7 @@ function runTests()
   // Bug 862673 - nuke all content so assertions in this test are attributed to
   // this test rather than the one which happens to follow.
   var content = document.getElementById("content");
-  content.parentNode.removeChild(content);
+  content.remove();
   SimpleTest.finish();
 }
 

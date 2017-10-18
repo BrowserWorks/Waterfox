@@ -182,7 +182,7 @@ nsHTMLCanvasFrame::GetCanvasSize()
 }
 
 /* virtual */ nscoord
-nsHTMLCanvasFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsHTMLCanvasFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   // XXX The caller doesn't account for constraints of the height,
   // min-height, and max-height properties.
@@ -194,7 +194,7 @@ nsHTMLCanvasFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsHTMLCanvasFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsHTMLCanvasFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   // XXX The caller doesn't account for constraints of the height,
   // min-height, and max-height properties.
@@ -219,7 +219,7 @@ nsHTMLCanvasFrame::GetIntrinsicRatio()
 
 /* virtual */
 LogicalSize
-nsHTMLCanvasFrame::ComputeSize(nsRenderingContext *aRenderingContext,
+nsHTMLCanvasFrame::ComputeSize(gfxContext *aRenderingContext,
                                WritingMode aWM,
                                const LogicalSize& aCBSize,
                                nscoord aAvailableISize,
@@ -236,14 +236,10 @@ nsHTMLCanvasFrame::ComputeSize(nsRenderingContext *aRenderingContext,
 
   nsSize intrinsicRatio = GetIntrinsicRatio(); // won't actually be used
 
-  return nsLayoutUtils::ComputeSizeWithIntrinsicDimensions(
-                            aWM,
-                            aRenderingContext, this,
-                            intrinsicSize, intrinsicRatio,
-                            aCBSize,
-                            aMargin,
-                            aBorder,
-                            aPadding);
+  return ComputeSizeWithIntrinsicDimensions(aRenderingContext, aWM,
+                                            intrinsicSize, intrinsicRatio,
+                                            aCBSize, aMargin, aBorder, aPadding,
+                                            aFlags);
 }
 
 void
@@ -261,7 +257,7 @@ nsHTMLCanvasFrame::Reflow(nsPresContext*           aPresContext,
 
   NS_PRECONDITION(mState & NS_FRAME_IN_REFLOW, "frame is not in reflow");
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   WritingMode wm = aReflowInput.GetWritingMode();
   LogicalSize finalSize(wm,
@@ -309,7 +305,7 @@ nsHTMLCanvasFrame::Reflow(nsPresContext*           aPresContext,
 // removed.  That needs to be fixed.
 // XXXdholbert As in nsImageFrame, this function's clients should probably
 // just be calling GetContentRectRelativeToSelf().
-nsRect 
+nsRect
 nsHTMLCanvasFrame::GetInnerArea() const
 {
   nsMargin bp = mBorderPadding.GetPhysicalMargin(GetWritingMode());
@@ -393,15 +389,9 @@ nsHTMLCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                           nsISelectionDisplay::DISPLAY_IMAGES);
 }
 
-nsIAtom*
-nsHTMLCanvasFrame::GetType() const
-{
-  return nsGkAtoms::HTMLCanvasFrame;
-}
-
 // get the offset into the content area of the image where aImg starts if it is a continuation.
 // from nsImageFrame
-nscoord 
+nscoord
 nsHTMLCanvasFrame::GetContinuationOffset(nscoord* aWidth) const
 {
   nscoord offset = 0;
@@ -421,6 +411,15 @@ nsHTMLCanvasFrame::GetContinuationOffset(nscoord* aWidth) const
     offset = std::max(0, offset);
   }
   return offset;
+}
+
+void
+nsHTMLCanvasFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
+{
+  MOZ_ASSERT(mFrames.FirstChild(), "Must have our canvas content anon box");
+  MOZ_ASSERT(!mFrames.FirstChild()->GetNextSibling(),
+             "Must only have our canvas content anon box");
+  aResult.AppendElement(OwnedAnonBox(mFrames.FirstChild()));
 }
 
 #ifdef ACCESSIBILITY

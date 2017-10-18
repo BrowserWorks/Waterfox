@@ -11,10 +11,9 @@ const icon =
   '<svg xmlns="http://www.w3.org/2000/svg" ' +
        'width="16" height="16" viewBox="0 0 16 16">' +
    '<rect x="4" y="4" width="8px" height="8px" style="fill: blue"/>' +
-  '</svg>';
+  "</svg>";
 
 function run_test() {
-  updateAppInfo();
   useHttpServer(); // Unused, but required to call addTestEngines.
 
   requestHandled = new Promise(resolve => {
@@ -35,16 +34,16 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_svg_icon() {
-  yield asyncInit();
+add_task(async function test_svg_icon() {
+  await asyncInit();
 
-  let [engine] = yield addTestEngines([
+  let [engine] = await addTestEngines([
     { name: "SVGIcon", details: [url, "", "SVG icon", "GET",
                                  "http://icon.svg/search?q={searchTerms}"] },
   ]);
 
-  yield requestHandled;
-  yield promiseAfterCache();
+  await requestHandled;
+  await promiseAfterCache();
 
   ok(engine.iconURI, "the engine has an icon");
   ok(engine.iconURI.spec.startsWith("data:image/svg+xml"),

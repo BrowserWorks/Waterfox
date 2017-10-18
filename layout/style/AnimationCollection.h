@@ -67,7 +67,7 @@ public:
   // Get the collection of animations for the given |aElement| and
   // |aPseudoType|.
   static AnimationCollection<AnimationType>*
-    GetAnimationCollection(dom::Element* aElement,
+    GetAnimationCollection(const dom::Element* aElement,
                            CSSPseudoElementType aPseudoType);
 
   // Given the frame |aFrame| with possibly animated content, finds its
@@ -87,31 +87,6 @@ public:
     GetOrCreateAnimationCollection(dom::Element* aElement,
                                    CSSPseudoElementType aPseudoType,
                                    bool* aCreatedCollection);
-
-  bool IsForElement() const { // rather than for a pseudo-element
-    return mElementProperty == TraitsType::ElementPropertyAtom();
-  }
-
-  bool IsForBeforePseudo() const {
-    return mElementProperty == TraitsType::BeforePropertyAtom();
-  }
-
-  bool IsForAfterPseudo() const {
-    return mElementProperty == TraitsType::AfterPropertyAtom();
-  }
-
-  CSSPseudoElementType PseudoElementType() const
-  {
-    if (IsForElement()) {
-      return CSSPseudoElementType::NotPseudo;
-    }
-    if (IsForBeforePseudo()) {
-      return CSSPseudoElementType::before;
-    }
-    MOZ_ASSERT(IsForAfterPseudo(),
-               "::before & ::after should be the only pseudo-elements here");
-    return CSSPseudoElementType::after;
-  }
 
   static nsString PseudoTypeAsString(CSSPseudoElementType aPseudoType);
 

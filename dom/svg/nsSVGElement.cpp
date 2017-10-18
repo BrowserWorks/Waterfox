@@ -6,7 +6,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsSVGElement.h"
 
@@ -14,14 +14,14 @@
 #include "mozilla/dom/SVGTests.h"
 #include "nsContentUtils.h"
 #include "nsICSSDeclaration.h"
+#include "nsIContentInlines.h"
 #include "nsIDocument.h"
 #include "nsIDOMMutationEvent.h"
-#include "nsSVGPathGeometryElement.h"
 #include "mozilla/InternalMutationEvent.h"
+#include "mozAutoDocUpdate.h"
 #include "nsError.h"
 #include "nsIPresShell.h"
 #include "nsGkAtoms.h"
-#include "mozilla/css/StyleRule.h"
 #include "nsRuleWalker.h"
 #include "mozilla/css/Declaration.h"
 #include "nsCSSProps.h"
@@ -45,17 +45,19 @@
 #include "SVGAnimatedPointList.h"
 #include "SVGAnimatedPathSegList.h"
 #include "SVGContentUtils.h"
+#include "SVGGeometryElement.h"
 #include "nsIFrame.h"
 #include "nsQueryObject.h"
 #include <stdarg.h>
-#include "nsSMILMappedAttribute.h"
 #include "SVGMotionSMILAttr.h"
 #include "nsAttrValueOrString.h"
 #include "nsSMILAnimationController.h"
 #include "mozilla/dom/SVGElementBinding.h"
-#include "mozilla/unused.h"
-#include "mozilla/RestyleManagerHandle.h"
-#include "mozilla/RestyleManagerHandleInlines.h"
+#include "mozilla/DeclarationBlock.h"
+#include "mozilla/DeclarationBlockInlines.h"
+#include "mozilla/Unused.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -94,6 +96,11 @@ nsSVGElement::nsSVGElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
 {
 }
 
+nsSVGElement::~nsSVGElement()
+{
+  OwnerDoc()->UnscheduleSVGForPresAttrEvaluation(this);
+}
+
 JSObject*
 nsSVGElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
@@ -122,6 +129,17 @@ nsSVGElement::GetStyle(nsIDOMCSSStyleDeclaration** aStyle)
 void
 nsSVGElement::DidAnimateClass()
 {
+  // For Servo, snapshot the element before we change it.
+  nsIPresShell* shell = OwnerDoc()->GetShell();
+  if (shell) {
+    nsPresContext* presContext = shell->GetPresContext();
+    if (presContext && presContext->RestyleManager()->IsServo()) {
+      presContext->RestyleManager()
+                 ->AsServo()
+                 ->ClassAttributeWillBeChangedBySMIL(this);
+    }
+  }
+
   nsAutoString src;
   mClassAttribute.GetAnimValue(src, this);
   if (!mClassAnimAttr) {
@@ -129,7 +147,6 @@ nsSVGElement::DidAnimateClass()
   }
   mClassAnimAttr->ParseAtomArray(src);
 
-  nsIPresShell* shell = OwnerDoc()->GetShell();
   if (shell) {
     shell->RestyleForAnimation(this, eRestyle_Self);
   }
@@ -258,7 +275,7 @@ nsSVGElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   }
   const nsAttrValue* oldVal = mAttrsAndChildren.GetAttr(nsGkAtoms::style);
 
-  if (oldVal && oldVal->Type() == nsAttrValue::eGeckoCSSDeclaration) {
+  if (oldVal && oldVal->Type() == nsAttrValue::eCSSDeclaration) {
     // we need to force a reparse because the baseURI of the document
     // may have changed, and in particular because we may be clones of
     // XBL anonymous content now being bound to the document we should
@@ -272,7 +289,9 @@ nsSVGElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     ParseStyleAttribute(stringValue, attrValue, true);
     // Don't bother going through SetInlineStyleDeclaration; we don't
     // want to fire off mutation events or document notifications anyway
-    rv = mAttrsAndChildren.SetAndSwapAttr(nsGkAtoms::style, attrValue);
+    bool oldValueSet;
+    rv = mAttrsAndChildren.SetAndSwapAttr(nsGkAtoms::style, attrValue,
+                                          &oldValueSet);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -281,7 +300,8 @@ nsSVGElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
 
 nsresult
 nsSVGElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                           const nsAttrValue* aValue, bool aNotify)
+                           const nsAttrValue* aValue,
+                           const nsAttrValue* aOldValue, bool aNotify)
 {
   // We don't currently use nsMappedAttributes within SVG. If this changes, we
   // need to be very careful because some nsAttrValues used by SVG point to
@@ -293,12 +313,14 @@ nsSVGElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
              "Unexpected use of nsMappedAttributes within SVG");
 
   // If this is an svg presentation attribute we need to map it into
-  // the content stylerule.
+  // the content declaration block.
   // XXX For some reason incremental mapping doesn't work, so for now
-  // just delete the style rule and lazily reconstruct it in
-  // GetContentStyleRule()
+  // just delete the style rule and lazily reconstruct it as needed).
   if (aNamespaceID == kNameSpaceID_None && IsAttributeMapped(aName)) {
-    mContentStyleRule = nullptr;
+    mContentDeclarationBlock = nullptr;
+    if (OwnerDoc()->GetStyleBackendType() == StyleBackendType::Servo) {
+      OwnerDoc()->ScheduleSVGForPresAttrEvaluation(this);
+    }
   }
 
   if (IsEventAttributeName(aName) && aValue) {
@@ -309,7 +331,8 @@ nsSVGElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  return nsSVGElementBase::AfterSetAttr(aNamespaceID, aName, aValue, aNotify);
+  return nsSVGElementBase::AfterSetAttr(aNamespaceID, aName, aValue, aOldValue,
+                                        aNotify);
 }
 
 bool
@@ -610,6 +633,9 @@ nsSVGElement::ParseAttribute(int32_t aNamespaceID,
           didSetResult = true;
         }
         foundMatch = true;
+      } else if (aAttribute == nsGkAtoms::tabindex) {
+        didSetResult = aResult.ParseIntValue(aValue);
+        foundMatch = true;
       }
     }
 
@@ -656,9 +682,11 @@ nsSVGElement::UnsetAttrInternal(int32_t aNamespaceID, nsIAtom* aName,
   // Maybe consolidate?
 
   if (aNamespaceID == kNameSpaceID_None) {
-    // If this is an svg presentation attribute, remove rule to force an update
-    if (IsAttributeMapped(aName))
-      mContentStyleRule = nullptr;
+    // If this is an svg presentation attribute, remove declaration block to
+    // force an update
+    if (IsAttributeMapped(aName)) {
+      mContentDeclarationBlock = nullptr;
+    }
 
     if (IsEventAttributeName(aName)) {
       EventListenerManager* manager = GetExistingListenerManager();
@@ -668,7 +696,7 @@ nsSVGElement::UnsetAttrInternal(int32_t aNamespaceID, nsIAtom* aName,
       }
       return;
     }
-    
+
     // Check if this is a length attribute going away
     LengthAttributesInfo lenInfo = GetLengthInfo();
 
@@ -894,50 +922,32 @@ nsSVGElement::IsNodeOfType(uint32_t aFlags) const
   return !(aFlags & ~eCONTENT);
 }
 
+void
+nsSVGElement::NodeInfoChanged(nsIDocument* aOldDoc)
+{
+  nsSVGElementBase::NodeInfoChanged(aOldDoc);
+  aOldDoc->UnscheduleSVGForPresAttrEvaluation(this);
+  mContentDeclarationBlock = nullptr;
+  OwnerDoc()->ScheduleSVGForPresAttrEvaluation(this);
+}
+
 NS_IMETHODIMP
 nsSVGElement::WalkContentStyleRules(nsRuleWalker* aRuleWalker)
 {
 #ifdef DEBUG
 //  printf("nsSVGElement(%p)::WalkContentStyleRules()\n", this);
 #endif
-  if (!mContentStyleRule)
-    UpdateContentStyleRule();
+  if (!mContentDeclarationBlock) {
+    UpdateContentDeclarationBlock(StyleBackendType::Gecko);
+  }
 
-  if (mContentStyleRule) {
-    css::Declaration* declaration = mContentStyleRule->GetDeclaration();
+  if (mContentDeclarationBlock) {
+    css::Declaration* declaration = mContentDeclarationBlock->AsGecko();
     declaration->SetImmutable();
     aRuleWalker->Forward(declaration);
   }
 
   return NS_OK;
-}
-
-void
-nsSVGElement::WalkAnimatedContentStyleRules(nsRuleWalker* aRuleWalker)
-{
-  // Update & walk the animated content style rule, to include style from
-  // animated mapped attributes.  But first, get nsPresContext to check
-  // whether this is a "no-animation restyle". (This should match the check
-  // in nsHTMLCSSStyleSheet::RulesMatching(), where we determine whether to
-  // apply the SMILOverrideStyle.)
-  RestyleManagerHandle restyleManager =
-    aRuleWalker->PresContext()->RestyleManager();
-  MOZ_ASSERT(restyleManager->IsGecko(),
-             "stylo: Servo-backed style system should not be calling "
-             "WalkAnimatedContentStyleRules");
-  if (!restyleManager->AsGecko()->SkipAnimationRules()) {
-    // update/walk the animated content style rule.
-    css::StyleRule* animContentStyleRule = GetAnimatedContentStyleRule();
-    if (!animContentStyleRule) {
-      UpdateAnimatedContentStyleRule();
-      animContentStyleRule = GetAnimatedContentStyleRule();
-    }
-    if (animContentStyleRule) {
-      css::Declaration* declaration = animContentStyleRule->GetDeclaration();
-      declaration->SetImmutable();
-      aRuleWalker->Forward(declaration);
-    }
-  }
 }
 
 NS_IMETHODIMP_(bool)
@@ -1013,7 +1023,7 @@ nsSVGElement::sFontSpecificationMap[] = {
   { &nsGkAtoms::font_stretch },
   { &nsGkAtoms::font_style },
   { &nsGkAtoms::font_variant },
-  { &nsGkAtoms::fontWeight },  
+  { &nsGkAtoms::fontWeight },
   { nullptr }
 };
 
@@ -1120,6 +1130,42 @@ nsSVGElement::ClassName()
   return mClassAttribute.ToDOMAnimatedString(this);
 }
 
+bool
+nsSVGElement::IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex)
+{
+  nsIDocument* doc = GetComposedDoc();
+  if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
+    // In designMode documents we only allow focusing the document.
+    if (aTabIndex) {
+      *aTabIndex = -1;
+    }
+
+    *aIsFocusable = false;
+
+    return true;
+  }
+
+  int32_t tabIndex = TabIndex();
+
+  if (aTabIndex) {
+    *aTabIndex = tabIndex;
+  }
+
+  // If a tabindex is specified at all, or the default tabindex is 0, we're focusable
+  *aIsFocusable =
+    tabIndex >= 0 || HasAttr(kNameSpaceID_None, nsGkAtoms::tabindex);
+
+  return false;
+}
+
+bool
+nsSVGElement::IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse)
+{
+  bool isFocusable = false;
+  IsSVGFocusable(&isFocusable, aTabIndex);
+  return isFocusable;
+}
+
 //------------------------------------------------------------------------
 // Helper class: MappedAttrParser, for parsing values of mapped attributes
 
@@ -1130,48 +1176,53 @@ public:
   MappedAttrParser(css::Loader* aLoader,
                    nsIURI* aDocURI,
                    already_AddRefed<nsIURI> aBaseURI,
-                   nsSVGElement* aElement);
+                   nsSVGElement* aElement,
+                   StyleBackendType aBackend);
   ~MappedAttrParser();
 
   // Parses a mapped attribute value.
   void ParseMappedAttrValue(nsIAtom* aMappedAttrName,
                             const nsAString& aMappedAttrValue);
 
-  // If we've parsed any values for mapped attributes, this method returns
-  // a new already_AddRefed css::StyleRule that incorporates the parsed
+  // If we've parsed any values for mapped attributes, this method returns the
+  // already_AddRefed css::Declaration that incorporates the parsed
   // values. Otherwise, this method returns null.
-  already_AddRefed<css::StyleRule> CreateStyleRule();
+  already_AddRefed<DeclarationBlock> GetDeclarationBlock();
 
 private:
   // MEMBER DATA
   // -----------
   nsCSSParser       mParser;
+  css::Loader*      mLoader;
 
   // Arguments for nsCSSParser::ParseProperty
   nsIURI*           mDocURI;
   nsCOMPtr<nsIURI>  mBaseURI;
 
   // Declaration for storing parsed values (lazily initialized)
-  css::Declaration* mDecl;
+  RefPtr<DeclarationBlock> mDecl;
 
   // For reporting use counters
   nsSVGElement*     mElement;
+
+  StyleBackendType mBackend;
 };
 
 MappedAttrParser::MappedAttrParser(css::Loader* aLoader,
                                    nsIURI* aDocURI,
                                    already_AddRefed<nsIURI> aBaseURI,
-                                   nsSVGElement* aElement)
-  : mParser(aLoader), mDocURI(aDocURI), mBaseURI(aBaseURI),
-    mDecl(nullptr), mElement(aElement)
+                                   nsSVGElement* aElement,
+                                   StyleBackendType aBackend)
+  : mParser(aLoader), mLoader(aLoader), mDocURI(aDocURI), mBaseURI(aBaseURI),
+    mElement(aElement), mBackend(aBackend)
 {
 }
 
 MappedAttrParser::~MappedAttrParser()
 {
   MOZ_ASSERT(!mDecl,
-             "If mDecl was initialized, it should have been converted "
-             "into a style rule (and had its pointer cleared)");
+             "If mDecl was initialized, it should have been returned via "
+             "GetDeclarationBlock (and had its pointer cleared)");
 }
 
 void
@@ -1179,18 +1230,33 @@ MappedAttrParser::ParseMappedAttrValue(nsIAtom* aMappedAttrName,
                                        const nsAString& aMappedAttrValue)
 {
   if (!mDecl) {
-    mDecl = new css::Declaration();
-    mDecl->InitializeEmpty();
+    if (mBackend == StyleBackendType::Gecko) {
+      mDecl = new css::Declaration();
+      mDecl->AsGecko()->InitializeEmpty();
+    } else {
+      mDecl = new ServoDeclarationBlock();
+    }
   }
 
-  // Get the nsCSSProperty ID for our mapped attribute.
-  nsCSSProperty propertyID =
+  // Get the nsCSSPropertyID ID for our mapped attribute.
+  nsCSSPropertyID propertyID =
     nsCSSProps::LookupProperty(nsDependentAtomString(aMappedAttrName),
                                CSSEnabledState::eForAllContent);
   if (propertyID != eCSSProperty_UNKNOWN) {
     bool changed = false; // outparam for ParseProperty.
-    mParser.ParseProperty(propertyID, aMappedAttrValue, mDocURI, mBaseURI,
-                          mElement->NodePrincipal(), mDecl, &changed, false, true);
+    if (mBackend == StyleBackendType::Gecko) {
+      mParser.ParseProperty(propertyID, aMappedAttrValue, mDocURI, mBaseURI,
+                            mElement->NodePrincipal(), mDecl->AsGecko(), &changed, false, true);
+    } else {
+      NS_ConvertUTF16toUTF8 value(aMappedAttrValue);
+      // FIXME (bug 1343964): Figure out a better solution for sending the base uri to servo
+      RefPtr<URLExtraData> data = new URLExtraData(mBaseURI, mDocURI,
+                                                   mElement->NodePrincipal());
+      changed = Servo_DeclarationBlock_SetPropertyById(
+        mDecl->AsServo()->Raw(), propertyID, &value, false, data,
+        ParsingMode::AllowUnitlessLength, mElement->OwnerDoc()->GetCompatibilityMode(), mLoader);
+    }
+
     if (changed) {
       // The normal reporting of use counters by the nsCSSParser won't happen
       // since it doesn't have a sheet.
@@ -1216,25 +1282,24 @@ MappedAttrParser::ParseMappedAttrValue(nsIAtom* aMappedAttrName,
   // nsCSSParser doesn't know about 'lang', so we need to handle it specially.
   if (aMappedAttrName == nsGkAtoms::lang) {
     propertyID = eCSSProperty__x_lang;
-    nsCSSExpandedDataBlock block;
-    mDecl->ExpandTo(&block);
-    nsCSSValue cssValue(PromiseFlatString(aMappedAttrValue), eCSSUnit_Ident);
-    block.AddLonghandProperty(propertyID, cssValue);
-    mDecl->ValueAppended(propertyID);
-    mDecl->CompressFrom(&block);
+    if (mBackend == StyleBackendType::Gecko) {
+      nsCSSExpandedDataBlock block;
+      mDecl->AsGecko()->ExpandTo(&block);
+      nsCSSValue cssValue(PromiseFlatString(aMappedAttrValue), eCSSUnit_Ident);
+      block.AddLonghandProperty(propertyID, cssValue);
+      mDecl->AsGecko()->ValueAppended(propertyID);
+      mDecl->AsGecko()->CompressFrom(&block);
+    } else {
+      nsCOMPtr<nsIAtom> atom = NS_Atomize(aMappedAttrValue);
+      Servo_DeclarationBlock_SetIdentStringValue(mDecl->AsServo()->Raw(), propertyID, atom);
+    }
   }
 }
 
-already_AddRefed<css::StyleRule>
-MappedAttrParser::CreateStyleRule()
+already_AddRefed<DeclarationBlock>
+MappedAttrParser::GetDeclarationBlock()
 {
-  if (!mDecl) {
-    return nullptr; // No mapped attributes were parsed
-  }
-
-  RefPtr<css::StyleRule> rule = new css::StyleRule(nullptr, mDecl, 0, 0);
-  mDecl = nullptr; // We no longer own the declaration -- drop our pointer to it
-  return rule.forget();
+  return mDecl.forget();
 }
 
 } // namespace
@@ -1243,9 +1308,10 @@ MappedAttrParser::CreateStyleRule()
 // Implementation Helpers:
 
 void
-nsSVGElement::UpdateContentStyleRule()
+nsSVGElement::UpdateContentDeclarationBlock(mozilla::StyleBackendType aBackend)
 {
-  NS_ASSERTION(!mContentStyleRule, "we already have a content style rule");
+  NS_ASSERTION(!mContentDeclarationBlock,
+               "we already have a content declaration block");
 
   uint32_t attrCount = mAttrsAndChildren.AttrCount();
   if (!attrCount) {
@@ -1255,7 +1321,7 @@ nsSVGElement::UpdateContentStyleRule()
 
   nsIDocument* doc = OwnerDoc();
   MappedAttrParser mappedAttrParser(doc->CSSLoader(), doc->GetDocumentURI(),
-                                    GetBaseURI(), this);
+                                    GetBaseURI(), this, aBackend);
 
   for (uint32_t i = 0; i < attrCount; ++i) {
     const nsAttrName* attrName = mAttrsAndChildren.AttrNameAt(i);
@@ -1294,86 +1360,13 @@ nsSVGElement::UpdateContentStyleRule()
     mAttrsAndChildren.AttrAt(i)->ToString(value);
     mappedAttrParser.ParseMappedAttrValue(attrName->Atom(), value);
   }
-  mContentStyleRule = mappedAttrParser.CreateStyleRule();
+  mContentDeclarationBlock = mappedAttrParser.GetDeclarationBlock();
 }
 
-static void
-ParseMappedAttrAnimValueCallback(void*    aObject,
-                                 nsIAtom* aPropertyName,
-                                 void*    aPropertyValue,
-                                 void*    aData)
+const DeclarationBlock*
+nsSVGElement::GetContentDeclarationBlock() const
 {
-  MOZ_ASSERT(aPropertyName != SMIL_MAPPED_ATTR_STYLERULE_ATOM,
-             "animated content style rule should have been removed "
-             "from properties table already (we're rebuilding it now)");
-
-  MappedAttrParser* mappedAttrParser = static_cast<MappedAttrParser*>(aData);
-  MOZ_ASSERT(mappedAttrParser, "parser should be non-null");
-
-  nsStringBuffer* animValBuf = static_cast<nsStringBuffer*>(aPropertyValue);
-  MOZ_ASSERT(animValBuf, "animated value should be non-null");
-
-  nsString animValStr;
-  nsContentUtils::PopulateStringFromStringBuffer(animValBuf, animValStr);
-
-  mappedAttrParser->ParseMappedAttrValue(aPropertyName, animValStr);
-}
-
-// Callback for freeing animated content style rule, in property table.
-static void
-ReleaseStyleRule(void*    aObject,       /* unused */
-                 nsIAtom* aPropertyName,
-                 void*    aPropertyValue,
-                 void*    aData          /* unused */)
-{
-  MOZ_ASSERT(aPropertyName == SMIL_MAPPED_ATTR_STYLERULE_ATOM,
-             "unexpected property name, for animated content style rule");
-  css::StyleRule* styleRule = static_cast<css::StyleRule*>(aPropertyValue);
-  MOZ_ASSERT(styleRule, "unexpected null style rule");
-  styleRule->Release();
-}
-
-void
-nsSVGElement::UpdateAnimatedContentStyleRule()
-{
-  MOZ_ASSERT(!GetAnimatedContentStyleRule(),
-             "Animated content style rule already set");
-
-  nsIDocument* doc = OwnerDoc();
-  if (!doc) {
-    NS_ERROR("SVG element without owner document");
-    return;
-  }
-
-  MappedAttrParser mappedAttrParser(doc->CSSLoader(), doc->GetDocumentURI(),
-                                    GetBaseURI(), this);
-  doc->PropertyTable(SMIL_MAPPED_ATTR_ANIMVAL)->
-    Enumerate(this, ParseMappedAttrAnimValueCallback, &mappedAttrParser);
- 
-  RefPtr<css::StyleRule>
-    animContentStyleRule(mappedAttrParser.CreateStyleRule());
-
-  if (animContentStyleRule) {
-#ifdef DEBUG
-    nsresult rv =
-#endif
-      SetProperty(SMIL_MAPPED_ATTR_ANIMVAL,
-                  SMIL_MAPPED_ATTR_STYLERULE_ATOM,
-                  animContentStyleRule.get(),
-                  ReleaseStyleRule);
-    Unused << animContentStyleRule.forget();
-    MOZ_ASSERT(rv == NS_OK,
-               "SetProperty failed (or overwrote something)");
-  }
-}
-
-css::StyleRule*
-nsSVGElement::GetAnimatedContentStyleRule()
-{
-  return
-    static_cast<css::StyleRule*>(GetProperty(SMIL_MAPPED_ATTR_ANIMVAL,
-                                             SMIL_MAPPED_ATTR_STYLERULE_ATOM,
-                                             nullptr));
+  return mContentDeclarationBlock;
 }
 
 /**
@@ -1425,26 +1418,15 @@ nsSVGElement::WillChangeValue(nsIAtom* aName)
   // We need an empty attr value:
   //   a) to pass to BeforeSetAttr when GetParsedAttr returns nullptr
   //   b) to store the old value in the case we have mutation listeners
-  // We can use the same value for both purposes since (a) happens before (b).
+  //
+  // We can use the same value for both purposes, because if GetParsedAttr
+  // returns non-null its return value is what will get passed to BeforeSetAttr,
+  // not matter what our mutation listener situation is.
+  //
   // Also, we should be careful to always return this value to benefit from
   // return value optimization.
   nsAttrValue emptyOrOldAttrValue;
   const nsAttrValue* attrValue = GetParsedAttr(aName);
-
-  // This is not strictly correct--the attribute value parameter for
-  // BeforeSetAttr should reflect the value that *will* be set but that implies
-  // allocating, e.g. an extra nsSVGLength2, and isn't necessary at the moment
-  // since no SVG elements overload BeforeSetAttr. For now we just pass the
-  // current value.
-  nsAttrValueOrString attrStringOrValue(attrValue ? *attrValue
-                                                  : emptyOrOldAttrValue);
-  DebugOnly<nsresult> rv =
-    BeforeSetAttr(kNameSpaceID_None, aName, &attrStringOrValue,
-                  kNotifyDocumentObservers);
-  // SVG elements aren't expected to overload BeforeSetAttr in such a way that
-  // it may fail. So long as this is the case we don't need to check and pass on
-  // the return value which simplifies the calling code significantly.
-  MOZ_ASSERT(NS_SUCCEEDED(rv), "Unexpected failure from BeforeSetAttr");
 
   // We only need to set the old value if we have listeners since otherwise it
   // isn't used.
@@ -1460,6 +1442,21 @@ nsSVGElement::WillChangeValue(nsIAtom* aName)
                   : static_cast<uint8_t>(nsIDOMMutationEvent::ADDITION);
   nsNodeUtils::AttributeWillChange(this, kNameSpaceID_None, aName, modType,
                                    nullptr);
+
+  // This is not strictly correct--the attribute value parameter for
+  // BeforeSetAttr should reflect the value that *will* be set but that implies
+  // allocating, e.g. an extra nsSVGLength2, and isn't necessary at the moment
+  // since no SVG elements overload BeforeSetAttr. For now we just pass the
+  // current value.
+  nsAttrValueOrString attrStringOrValue(attrValue ? *attrValue
+                                                  : emptyOrOldAttrValue);
+  DebugOnly<nsresult> rv =
+    BeforeSetAttr(kNameSpaceID_None, aName, &attrStringOrValue,
+                  kNotifyDocumentObservers);
+  // SVG elements aren't expected to overload BeforeSetAttr in such a way that
+  // it may fail. So long as this is the case we don't need to check and pass on
+  // the return value which simplifies the calling code significantly.
+  MOZ_ASSERT(NS_SUCCEEDED(rv), "Unexpected failure from BeforeSetAttr");
 
   return emptyOrOldAttrValue;
 }
@@ -1489,9 +1486,17 @@ nsSVGElement::DidChangeValue(nsIAtom* aName,
   uint8_t modType = HasAttr(kNameSpaceID_None, aName)
                   ? static_cast<uint8_t>(nsIDOMMutationEvent::MODIFICATION)
                   : static_cast<uint8_t>(nsIDOMMutationEvent::ADDITION);
-  SetAttrAndNotify(kNameSpaceID_None, aName, nullptr, aEmptyOrOldValue,
+
+  nsIDocument* document = GetComposedDoc();
+  mozAutoDocUpdate updateBatch(document, UPDATE_CONTENT_MODEL,
+                               kNotifyDocumentObservers);
+  // XXX Really, the fourth argument to SetAttrAndNotify should be null if
+  // aEmptyOrOldValue does not represent the actual previous value of the
+  // attribute, but currently SVG elements do not even use the old attribute
+  // value in |AfterSetAttr|, so this should be ok.
+  SetAttrAndNotify(kNameSpaceID_None, aName, nullptr, &aEmptyOrOldValue,
                    aNewValue, modType, hasListeners, kNotifyDocumentObservers,
-                   kCallAfterSetAttr);
+                   kCallAfterSetAttr, document, updateBatch);
 }
 
 void
@@ -1511,7 +1516,8 @@ nsSVGElement::MaybeSerializeAttrBeforeRemoval(nsIAtom* aName, bool aNotify)
   nsAutoString serializedValue;
   attrValue->ToString(serializedValue);
   nsAttrValue oldAttrValue(serializedValue);
-  mAttrsAndChildren.SetAndSwapAttr(aName, oldAttrValue);
+  bool oldValueSet;
+  mAttrsAndChildren.SetAndSwapAttr(aName, oldAttrValue, &oldValueSet);
 }
 
 /* static */
@@ -1626,7 +1632,7 @@ nsSVGElement::DidAnimateLength(uint8_t aAttrEnum)
     LengthAttributesInfo info = GetLengthInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mLengthInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -1723,7 +1729,7 @@ nsSVGElement::DidAnimateLengthList(uint8_t aAttrEnum)
     LengthListAttributesInfo info = GetLengthListInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mLengthListInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -1811,7 +1817,7 @@ nsSVGElement::DidAnimateNumberList(uint8_t aAttrEnum)
 
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mNumberListInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -1872,7 +1878,7 @@ nsSVGElement::DidAnimatePointList()
   if (frame) {
     frame->AttributeChanged(kNameSpaceID_None,
                             GetPointListAttrName(),
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -1909,7 +1915,7 @@ nsSVGElement::DidAnimatePathSegList()
   if (frame) {
     frame->AttributeChanged(kNameSpaceID_None,
                             GetPathDataAttrName(),
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -1950,7 +1956,7 @@ nsSVGElement::DidAnimateNumber(uint8_t aAttrEnum)
     NumberAttributesInfo info = GetNumberInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mNumberInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2020,7 +2026,7 @@ nsSVGElement::DidAnimateNumberPair(uint8_t aAttrEnum)
     NumberPairAttributesInfo info = GetNumberPairInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mNumberPairInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2056,12 +2062,12 @@ void
 nsSVGElement::DidAnimateInteger(uint8_t aAttrEnum)
 {
   nsIFrame* frame = GetPrimaryFrame();
-  
+
   if (frame) {
     IntegerAttributesInfo info = GetIntegerInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mIntegerInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2127,12 +2133,12 @@ void
 nsSVGElement::DidAnimateIntegerPair(uint8_t aAttrEnum)
 {
   nsIFrame* frame = GetPrimaryFrame();
-  
+
   if (frame) {
     IntegerPairAttributesInfo info = GetIntegerPairInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mIntegerPairInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2144,7 +2150,7 @@ nsSVGElement::GetAngleInfo()
 
 void nsSVGElement::AngleAttributesInfo::Reset(uint8_t aAttrEnum)
 {
-  mAngles[aAttrEnum].Init(aAttrEnum, 
+  mAngles[aAttrEnum].Init(aAttrEnum,
                           mAngleInfo[aAttrEnum].mDefaultValue,
                           mAngleInfo[aAttrEnum].mDefaultUnitType);
 }
@@ -2180,7 +2186,7 @@ nsSVGElement::DidAnimateAngle(uint8_t aAttrEnum)
     AngleAttributesInfo info = GetAngleInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mAngleInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2214,12 +2220,12 @@ void
 nsSVGElement::DidAnimateBoolean(uint8_t aAttrEnum)
 {
   nsIFrame* frame = GetPrimaryFrame();
-  
+
   if (frame) {
     BooleanAttributesInfo info = GetBooleanInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mBooleanInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2258,7 +2264,7 @@ nsSVGElement::DidAnimateEnum(uint8_t aAttrEnum)
     EnumAttributesInfo info = GetEnumInfo();
     frame->AttributeChanged(kNameSpaceID_None,
                             *info.mEnumInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2291,11 +2297,11 @@ void
 nsSVGElement::DidAnimateViewBox()
 {
   nsIFrame* frame = GetPrimaryFrame();
-  
+
   if (frame) {
     frame->AttributeChanged(kNameSpaceID_None,
                             nsGkAtoms::viewBox,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2331,11 +2337,11 @@ void
 nsSVGElement::DidAnimatePreserveAspectRatio()
 {
   nsIFrame* frame = GetPrimaryFrame();
-  
+
   if (frame) {
     frame->AttributeChanged(kNameSpaceID_None,
                             nsGkAtoms::preserveAspectRatio,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2433,7 +2439,7 @@ nsSVGElement::DidAnimateString(uint8_t aAttrEnum)
     StringAttributesInfo info = GetStringInfo();
     frame->AttributeChanged(info.mStringInfo[aAttrEnum].mNamespaceID,
                             *info.mStringInfo[aAttrEnum].mName,
-                            nsIDOMMutationEvent::MODIFICATION);
+                            nsIDOMMutationEvent::SMIL);
   }
 }
 
@@ -2500,7 +2506,7 @@ nsSVGElement::ReportAttributeParseFailure(nsIDocument* aDocument,
                                           nsIAtom* aAttribute,
                                           const nsAString& aValue)
 {
-  const nsAFlatString& attributeValue = PromiseFlatString(aValue);
+  const nsString& attributeValue = PromiseFlatString(aValue);
   const char16_t *strings[] = { aAttribute->GetUTF16String(),
                                  attributeValue.get() };
   return SVGContentUtils::ReportToConsole(aDocument,
@@ -2531,28 +2537,10 @@ nsSVGElement::RecompileScriptEventListeners()
   }
 }
 
-nsISMILAttr*
+UniquePtr<nsISMILAttr>
 nsSVGElement::GetAnimatedAttr(int32_t aNamespaceID, nsIAtom* aName)
 {
   if (aNamespaceID == kNameSpaceID_None) {
-    // We check mapped-into-style attributes first so that animations
-    // targeting width/height on outer-<svg> don't appear to be ignored
-    // because we returned a nsISMILAttr for the corresponding
-    // SVGAnimatedLength.
-
-    // Mapped attributes:
-    if (IsAttributeMapped(aName)) {
-      nsCSSProperty prop =
-        nsCSSProps::LookupProperty(nsDependentAtomString(aName),
-                                   CSSEnabledState::eForAllContent);
-      // Check IsPropertyAnimatable to avoid attributes that...
-      //  - map to explicitly unanimatable properties (e.g. 'direction')
-      //  - map to unsupported attributes (e.g. 'glyph-orientation-horizontal')
-      if (nsSMILCSSProperty::IsPropertyAnimatable(prop)) {
-        return new nsSMILMappedAttribute(prop, this);
-      }
-    }
-
     // Transforms:
     if (GetTransformListAttrName() == aName) {
       // The transform attribute is being animated, so we must ensure that the
@@ -2562,7 +2550,7 @@ nsSVGElement::GetAnimatedAttr(int32_t aNamespaceID, nsIAtom* aName)
 
     // Motion (fake 'attribute' for animateMotion)
     if (aName == nsGkAtoms::mozAnimateMotionDummyAttr) {
-      return new SVGMotionSMILAttr(this);
+      return MakeUnique<SVGMotionSMILAttr>(this);
     }
 
     // Lengths:

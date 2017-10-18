@@ -5,12 +5,12 @@
 
 const TEST_URL = "http://mochi.test:8888/browser/browser/base/content/test/general/file_favicon_change.html"
 
-add_task(function*() {
-  let extraTab = gBrowser.selectedTab = gBrowser.addTab();
-  let tabLoaded = promiseTabLoaded(extraTab);
+add_task(async function() {
+  let extraTab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   extraTab.linkedBrowser.loadURI(TEST_URL);
+  let tabLoaded = BrowserTestUtils.browserLoaded(extraTab.linkedBrowser);
   let expectedFavicon = "http://example.org/one-icon";
-  let haveChanged = new Promise.defer();
+  let haveChanged = PromiseUtils.defer();
   let observer = new MutationObserver(function(mutations) {
     for (let mut of mutations) {
       if (mut.attributeName != "image") {
@@ -26,14 +26,15 @@ add_task(function*() {
     }
   });
   observer.observe(extraTab, {attributes: true});
-  yield tabLoaded;
-  yield haveChanged.promise;
-  haveChanged = new Promise.defer();
+  await tabLoaded;
+  await haveChanged.promise;
+  haveChanged = PromiseUtils.defer();
   expectedFavicon = "http://example.org/other-icon";
-  let contentWin = extraTab.linkedBrowser.contentWindow;
-  let ev = new contentWin.CustomEvent("PleaseChangeFavicon", {});
-  contentWin.dispatchEvent(ev);
-  yield haveChanged.promise;
+  ContentTask.spawn(extraTab.linkedBrowser, null, function() {
+    let ev = new content.CustomEvent("PleaseChangeFavicon", {});
+    content.dispatchEvent(ev);
+  });
+  await haveChanged.promise;
   observer.disconnect();
   gBrowser.removeTab(extraTab);
 });

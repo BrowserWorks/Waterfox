@@ -13,6 +13,8 @@ namespace mozilla {
 namespace dom {
 namespace workers {
 
+class ServiceWorkerManager;
+
 // A job class that performs the Update and Install algorithms from the
 // service worker spec.  This class is designed to be inherited and customized
 // as a different job type.  This is necessary because the register job
@@ -25,7 +27,8 @@ public:
   ServiceWorkerUpdateJob(nsIPrincipal* aPrincipal,
                          const nsACString& aScope,
                          const nsACString& aScriptSpec,
-                         nsILoadGroup* aLoadGroup);
+                         nsILoadGroup* aLoadGroup,
+                         nsLoadFlags aLoadFlags);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
   GetRegistration() const;
@@ -36,7 +39,8 @@ protected:
                          nsIPrincipal* aPrincipal,
                          const nsACString& aScope,
                          const nsACString& aScriptSpec,
-                         nsILoadGroup* aLoadGroup);
+                         nsILoadGroup* aLoadGroup,
+                         nsLoadFlags aLoadFlags);
 
   virtual ~ServiceWorkerUpdateJob();
 
@@ -66,6 +70,9 @@ protected:
   void
   Update();
 
+  nsLoadFlags
+  GetLoadFlags() const;
+
 private:
   class CompareCallback;
   class ContinueUpdateRunnable;
@@ -77,7 +84,8 @@ private:
   ComparisonResult(nsresult aStatus,
                    bool aInCacheAndEqual,
                    const nsAString& aNewCacheName,
-                   const nsACString& aMaxScope);
+                   const nsACString& aMaxScope,
+                   nsLoadFlags aLoadFlags);
 
   // Utility method called after evaluating the worker script.
   void
@@ -85,13 +93,15 @@ private:
 
   // Utility method corresponding to the spec Install algorithm.
   void
-  Install();
+  Install(ServiceWorkerManager* aSWM);
 
   // Utility method called after the install event is handled.
   void
   ContinueAfterInstallEvent(bool aInstallEventSuccess);
 
   nsCOMPtr<nsILoadGroup> mLoadGroup;
+  nsLoadFlags mLoadFlags;
+
   RefPtr<ServiceWorkerRegistrationInfo> mRegistration;
 };
 

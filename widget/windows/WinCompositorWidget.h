@@ -43,17 +43,20 @@ class WinCompositorWidget
    public CompositorWidgetDelegate
 {
 public:
-  WinCompositorWidget(const CompositorWidgetInitData& aInitData);
+  WinCompositorWidget(const CompositorWidgetInitData& aInitData,
+                      const layers::CompositorOptions& aOptions);
 
-  bool PreRender(layers::LayerManagerComposite*) override;
-  void PostRender(layers::LayerManagerComposite*) override;
+  bool PreRender(WidgetRenderingContext*) override;
+  void PostRender(WidgetRenderingContext*) override;
   already_AddRefed<gfx::DrawTarget> StartRemoteDrawing() override;
   void EndRemoteDrawing() override;
+  bool NeedsToDeferEndRemoteDrawing() override;
   LayoutDeviceIntSize GetClientSize() override;
   already_AddRefed<gfx::DrawTarget> GetBackBufferDrawTarget(gfx::DrawTarget* aScreenTarget,
                                                             const LayoutDeviceIntRect& aRect,
                                                             const LayoutDeviceIntRect& aClearRect) override;
   already_AddRefed<gfx::SourceSurface> EndBackBufferDrawing() override;
+  bool InitCompositor(layers::Compositor* aCompositor) override;
   uintptr_t GetWidgetKey() override;
   WinCompositorWidget* AsWindows() override {
     return this;
@@ -61,6 +64,7 @@ public:
   CompositorWidgetDelegate* AsDelegate() override {
     return this;
   }
+  bool IsHidden() const override;
 
   // CompositorWidgetDelegate overrides.
   void EnterPresentLock() override;
@@ -100,6 +104,8 @@ private:
 
   // Locked back buffer of BasicCompositor
   uint8_t* mLockedBackBufferData;
+
+  bool mNotDeferEndRemoteDrawing;
 };
 
 } // namespace widget

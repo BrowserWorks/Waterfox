@@ -4,10 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "CSS Parsing and Computation")
+
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 EXPORTS.mozilla.dom += [
     'Grid.h',
+    'GridArea.h',
     'GridDimension.h',
     'GridLine.h',
     'GridLines.h',
@@ -17,6 +21,7 @@ EXPORTS.mozilla.dom += [
 
 UNIFIED_SOURCES += [
     'Grid.cpp',
+    'GridArea.cpp',
     'GridDimension.cpp',
     'GridLine.cpp',
     'GridLines.cpp',

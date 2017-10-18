@@ -5,9 +5,10 @@
 
 /* DOM object representing rectangle values in DOM computed style */
 
+#include "nsDOMCSSRect.h"
+
 #include "mozilla/dom/RectBinding.h"
 #include "nsROCSSPrimitiveValue.h"
-#include "nsDOMCSSRect.h"
 
 using namespace mozilla;
 
@@ -33,7 +34,7 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(nsDOMCSSRect)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsDOMCSSRect)
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsDOMCSSRect, mTop, mBottom, mLeft, mRight)
- 
+
 JSObject*
 nsDOMCSSRect::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {

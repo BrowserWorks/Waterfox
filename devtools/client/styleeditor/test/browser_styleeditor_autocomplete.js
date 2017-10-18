@@ -8,7 +8,7 @@
 const TESTCASE_URI = TEST_BASE_HTTP + "autocomplete.html";
 const MAX_SUGGESTIONS = 15;
 
-const {CSSProperties, CSSValues} = getCSSKeywords();
+const {initCssProperties} = require("devtools/shared/fronts/css-properties");
 
 // Test cases to test that autocompletion works correctly when enabled.
 // Format:
@@ -22,85 +22,93 @@ const {CSSProperties, CSSValues} = getCSSKeywords();
 //     entered: 1 if the suggestion is inserted and finalized
 //   }
 // ]
-var TEST_CASES = [
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["Ctrl+Space", {total: 1, current: 0}],
-  ["VK_LEFT"],
-  ["VK_RIGHT"],
-  ["VK_DOWN"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["Ctrl+Space", { total: getSuggestionNumberFor("font"), current: 0}],
-  ["VK_END"],
-  ["VK_RETURN"],
-  ["b", {total: getSuggestionNumberFor("b"), current: 0}],
-  ["a", {total: getSuggestionNumberFor("ba"), current: 0}],
-  ["VK_DOWN", {total: getSuggestionNumberFor("ba"), current: 0, inserted: 1}],
-  ["VK_TAB", {total: getSuggestionNumberFor("ba"), current: 1, inserted: 1}],
-  ["VK_RETURN", {current: 1, inserted: 1, entered: 1}],
-  ["b", {total: getSuggestionNumberFor("background", "b"), current: 0}],
-  ["l", {total: getSuggestionNumberFor("background", "bl"), current: 0}],
-  ["VK_TAB", {
-    total: getSuggestionNumberFor("background", "bl"),
-    current: 0, inserted: 1
-  }],
-  ["VK_DOWN", {
-    total: getSuggestionNumberFor("background", "bl"),
-    current: 1, inserted: 1
-  }],
-  ["VK_UP", {
-    total: getSuggestionNumberFor("background", "bl"),
-    current: 0,
-    inserted: 1
-  }],
-  ["VK_TAB", {
-    total: getSuggestionNumberFor("background", "bl"),
-    current: 1,
-    inserted: 1
-  }],
-  ["VK_TAB", {
-    total: getSuggestionNumberFor("background", "bl"),
-    current: 2,
-    inserted: 1
-  }],
-  [";"],
-  ["VK_RETURN"],
-  ["c", {total: getSuggestionNumberFor("c"), current: 0}],
-  ["o", {total: getSuggestionNumberFor("co"), current: 0}],
-  ["VK_RETURN", {current: 0, inserted: 1}],
-  ["r", {total: getSuggestionNumberFor("color", "r"), current: 0}],
-  ["VK_RETURN", {current: 0, inserted: 1}],
-  [";"],
-  ["VK_LEFT"],
-  ["VK_RIGHT"],
-  ["VK_DOWN"],
-  ["VK_RETURN"],
-  ["b", {total: 2, current: 0}],
-  ["u", {total: 1, current: 0}],
-  ["VK_RETURN", {current: 0, inserted: 1}],
-  ["{"],
-  ["VK_HOME"],
-  ["VK_DOWN"],
-  ["VK_DOWN"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["VK_RIGHT"],
-  ["Ctrl+Space", {total: 1, current: 0}],
-];
+
+function getTestCases(cssProperties) {
+  let keywords = getCSSKeywords(cssProperties);
+  let getSuggestionNumberFor = suggestionNumberGetter(keywords);
+
+  return [
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["Ctrl+Space", {total: 1, current: 0}],
+    ["VK_LEFT"],
+    ["VK_RIGHT"],
+    ["VK_DOWN"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["Ctrl+Space", { total: getSuggestionNumberFor("font"), current: 0}],
+    ["VK_END"],
+    ["VK_RETURN"],
+    ["b", {total: getSuggestionNumberFor("b"), current: 0}],
+    ["a", {total: getSuggestionNumberFor("ba"), current: 0}],
+    ["VK_DOWN", {total: getSuggestionNumberFor("ba"), current: 0, inserted: 1}],
+    ["VK_TAB", {total: getSuggestionNumberFor("ba"), current: 1, inserted: 1}],
+    ["VK_RETURN", {current: 1, inserted: 1, entered: 1}],
+    ["b", {total: getSuggestionNumberFor("background", "b"), current: 0}],
+    ["l", {total: getSuggestionNumberFor("background", "bl"), current: 0}],
+    ["VK_TAB", {
+      total: getSuggestionNumberFor("background", "bl"),
+      current: 0, inserted: 1
+    }],
+    ["VK_DOWN", {
+      total: getSuggestionNumberFor("background", "bl"),
+      current: 1, inserted: 1
+    }],
+    ["VK_UP", {
+      total: getSuggestionNumberFor("background", "bl"),
+      current: 0,
+      inserted: 1
+    }],
+    ["VK_TAB", {
+      total: getSuggestionNumberFor("background", "bl"),
+      current: 1,
+      inserted: 1
+    }],
+    ["VK_TAB", {
+      total: getSuggestionNumberFor("background", "bl"),
+      current: 2,
+      inserted: 1
+    }],
+    [";"],
+    ["VK_RETURN"],
+    ["c", {total: getSuggestionNumberFor("c"), current: 0}],
+    ["o", {total: getSuggestionNumberFor("co"), current: 0}],
+    ["VK_RETURN", {current: 0, inserted: 1}],
+    ["r", {total: getSuggestionNumberFor("color", "r"), current: 0}],
+    ["VK_RETURN", {current: 0, inserted: 1}],
+    [";"],
+    ["VK_LEFT"],
+    ["VK_RIGHT"],
+    ["VK_DOWN"],
+    ["VK_RETURN"],
+    ["b", {total: 2, current: 0}],
+    ["u", {total: 1, current: 0}],
+    ["VK_RETURN", {current: 0, inserted: 1}],
+    ["{"],
+    ["VK_HOME"],
+    ["VK_DOWN"],
+    ["VK_DOWN"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["VK_RIGHT"],
+    ["Ctrl+Space", {total: 1, current: 0}],
+  ];
+}
 
 add_task(function* () {
   let { panel, ui } = yield openStyleEditorForURL(TESTCASE_URI);
+  let { cssProperties } = yield initCssProperties(panel._toolbox);
+  let testCases = getTestCases(cssProperties);
 
   yield ui.selectStyleSheet(ui.editors[1].styleSheet);
   let editor = yield ui.editors[1].getSourceEditor();
@@ -110,14 +118,14 @@ add_task(function* () {
 
   yield SimpleTest.promiseFocus(panel.panelWindow);
 
-  for (let index in TEST_CASES) {
-    yield testState(index, sourceEditor, popup, panel.panelWindow);
-    yield checkState(index, sourceEditor, popup);
+  for (let index in testCases) {
+    yield testState(testCases, index, sourceEditor, popup, panel.panelWindow);
+    yield checkState(testCases, index, sourceEditor, popup);
   }
 });
 
-function testState(index, sourceEditor, popup, panelWindow) {
-  let [key, details] = TEST_CASES[index];
+function testState(testCases, index, sourceEditor, popup, panelWindow) {
+  let [key, details] = testCases[index];
   let entered;
   if (details) {
     entered = details.entered;
@@ -125,7 +133,7 @@ function testState(index, sourceEditor, popup, panelWindow) {
   let mods = {};
 
   info("pressing key " + key + " to get result: " +
-                JSON.stringify(TEST_CASES[index]) + " for index " + index);
+                JSON.stringify(testCases[index]) + " for index " + index);
 
   let evt = "after-suggest";
 
@@ -147,40 +155,39 @@ function testState(index, sourceEditor, popup, panelWindow) {
   return ready;
 }
 
-function checkState(index, sourceEditor, popup) {
-  let deferred = defer();
-  executeSoon(() => {
-    let [, details] = TEST_CASES[index];
-    details = details || {};
-    let {total, current, inserted} = details;
+function checkState(testCases, index, sourceEditor, popup) {
+  return new Promise(resolve => {
+    executeSoon(() => {
+      let [, details] = testCases[index];
+      details = details || {};
+      let {total, current, inserted} = details;
 
-    if (total != undefined) {
-      ok(popup.isOpen, "Popup is open for index " + index);
-      is(total, popup.itemCount,
-         "Correct total suggestions for index " + index);
-      is(current, popup.selectedIndex,
-         "Correct index is selected for index " + index);
-      if (inserted) {
-        let { text } = popup.getItemAtIndex(current);
-        let { line, ch } = sourceEditor.getCursor();
-        let lineText = sourceEditor.getText(line);
-        is(lineText.substring(ch - text.length, ch), text,
-           "Current suggestion from the popup is inserted into the editor.");
+      if (total != undefined) {
+        ok(popup.isOpen, "Popup is open for index " + index);
+        is(total, popup.itemCount,
+           "Correct total suggestions for index " + index);
+        is(current, popup.selectedIndex,
+           "Correct index is selected for index " + index);
+        if (inserted) {
+          let { text } = popup.getItemAtIndex(current);
+          let { line, ch } = sourceEditor.getCursor();
+          let lineText = sourceEditor.getText(line);
+          is(lineText.substring(ch - text.length, ch), text,
+             "Current suggestion from the popup is inserted into the editor.");
+        }
+      } else {
+        ok(!popup.isOpen, "Popup is closed for index " + index);
+        if (inserted) {
+          let { text } = popup.getItemAtIndex(current);
+          let { line, ch } = sourceEditor.getCursor();
+          let lineText = sourceEditor.getText(line);
+          is(lineText.substring(ch - text.length, ch), text,
+             "Current suggestion from the popup is inserted into the editor.");
+        }
       }
-    } else {
-      ok(!popup.isOpen, "Popup is closed for index " + index);
-      if (inserted) {
-        let { text } = popup.getItemAtIndex(current);
-        let { line, ch } = sourceEditor.getCursor();
-        let lineText = sourceEditor.getText(line);
-        is(lineText.substring(ch - text.length, ch), text,
-           "Current suggestion from the popup is inserted into the editor.");
-      }
-    }
-    deferred.resolve();
+      resolve();
+    });
   });
-
-  return deferred.promise;
 }
 
 /**
@@ -194,13 +201,11 @@ function checkState(index, sourceEditor, popup) {
  *                     value is an array of string containing all the possible
  *                     CSS values the property can have.
  */
-function getCSSKeywords() {
-  let domUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
-                   .getService(Ci.inIDOMUtils);
+function getCSSKeywords(cssProperties) {
   let props = {};
-  let propNames = domUtils.getCSSPropertyNames(domUtils.INCLUDE_ALIASES);
+  let propNames = cssProperties.getNames();
   propNames.forEach(prop => {
-    props[prop] = domUtils.getCSSValuesForProperty(prop).sort();
+    props[prop] = cssProperties.getValues(prop).sort();
   });
   return {
     CSSValues: props,
@@ -209,15 +214,17 @@ function getCSSKeywords() {
 }
 
 /**
- * Returns the number of expected suggestions for the given property and value.
- * If the value is not null, returns the number of values starting with `value`.
- * Returns the number of properties starting with `property` otherwise.
+ * Returns a function that returns the number of expected suggestions for the given
+ * property and value. If the value is not null, returns the number of values starting
+ * with `value`. Returns the number of properties starting with `property` otherwise.
  */
-function getSuggestionNumberFor(property, value) {
-  if (value == null) {
-    return CSSProperties.filter(prop => prop.startsWith(property))
-                        .slice(0, MAX_SUGGESTIONS).length;
-  }
-  return CSSValues[property].filter(val => val.startsWith(value))
-                            .slice(0, MAX_SUGGESTIONS).length;
+function suggestionNumberGetter({CSSProperties, CSSValues}) {
+  return (property, value) => {
+    if (value == null) {
+      return CSSProperties.filter(prop => prop.startsWith(property))
+                          .slice(0, MAX_SUGGESTIONS).length;
+    }
+    return CSSValues[property].filter(val => val.startsWith(value))
+                              .slice(0, MAX_SUGGESTIONS).length;
+  };
 }

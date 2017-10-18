@@ -5,10 +5,10 @@
 
 #include "GMPContentChild.h"
 #include "GMPChild.h"
-#include "GMPAudioDecoderChild.h"
 #include "GMPDecryptorChild.h"
 #include "GMPVideoDecoderChild.h"
 #include "GMPVideoEncoderChild.h"
+#include "ChromiumCDMChild.h"
 #include "base/task.h"
 
 namespace mozilla {
@@ -49,25 +49,10 @@ GMPContentChild::ProcessingError(Result aCode, const char* aReason)
   mGMPChild->ProcessingError(aCode, aReason);
 }
 
-PGMPAudioDecoderChild*
-GMPContentChild::AllocPGMPAudioDecoderChild()
-{
-  return new GMPAudioDecoderChild(this);
-}
-
-bool
-GMPContentChild::DeallocPGMPAudioDecoderChild(PGMPAudioDecoderChild* aActor)
-{
-  delete aActor;
-  return true;
-}
-
 PGMPDecryptorChild*
 GMPContentChild::AllocPGMPDecryptorChild()
 {
-  GMPDecryptorChild* actor = new GMPDecryptorChild(this,
-                                                   mGMPChild->mPluginVoucher,
-                                                   mGMPChild->mSandboxVoucher);
+  GMPDecryptorChild* actor = new GMPDecryptorChild(this);
   actor->AddRef();
   return actor;
 }
@@ -80,7 +65,7 @@ GMPContentChild::DeallocPGMPDecryptorChild(PGMPDecryptorChild* aActor)
 }
 
 PGMPVideoDecoderChild*
-GMPContentChild::AllocPGMPVideoDecoderChild()
+GMPContentChild::AllocPGMPVideoDecoderChild(const uint32_t& aDecryptorId)
 {
   GMPVideoDecoderChild* actor = new GMPVideoDecoderChild(this);
   actor->AddRef();
@@ -109,158 +94,56 @@ GMPContentChild::DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor)
   return true;
 }
 
-// Adapts GMPDecryptor7 to the current GMPDecryptor version.
-class GMPDecryptor7BackwardsCompat : public GMPDecryptor {
-public:
-  explicit GMPDecryptor7BackwardsCompat(GMPDecryptor7* aDecryptorV7)
-    : mDecryptorV7(aDecryptorV7)
-  {
-  }
-
-  void Init(GMPDecryptorCallback* aCallback,
-            bool aDistinctiveIdentifierRequired,
-            bool aPersistentStateRequired) override
-  {
-    // Distinctive identifier and persistent state arguments not present
-    // in v7 interface.
-    mDecryptorV7->Init(aCallback);
-  }
-
-  void CreateSession(uint32_t aCreateSessionToken,
-                     uint32_t aPromiseId,
-                     const char* aInitDataType,
-                     uint32_t aInitDataTypeSize,
-                     const uint8_t* aInitData,
-                     uint32_t aInitDataSize,
-                     GMPSessionType aSessionType) override
-  {
-    mDecryptorV7->CreateSession(aCreateSessionToken,
-                                aPromiseId,
-                                aInitDataType,
-                                aInitDataTypeSize,
-                                aInitData,
-                                aInitDataSize,
-                                aSessionType);
-  }
-
-  void LoadSession(uint32_t aPromiseId,
-                   const char* aSessionId,
-                   uint32_t aSessionIdLength) override
-  {
-    mDecryptorV7->LoadSession(aPromiseId, aSessionId, aSessionIdLength);
-  }
-
-  void UpdateSession(uint32_t aPromiseId,
-                     const char* aSessionId,
-                     uint32_t aSessionIdLength,
-                     const uint8_t* aResponse,
-                     uint32_t aResponseSize) override
-  {
-    mDecryptorV7->UpdateSession(aPromiseId,
-                                aSessionId,
-                                aSessionIdLength,
-                                aResponse,
-                                aResponseSize);
-  }
-
-  void CloseSession(uint32_t aPromiseId,
-                    const char* aSessionId,
-                    uint32_t aSessionIdLength) override
-  {
-    mDecryptorV7->CloseSession(aPromiseId, aSessionId, aSessionIdLength);
-  }
-
-  void RemoveSession(uint32_t aPromiseId,
-                     const char* aSessionId,
-                     uint32_t aSessionIdLength) override
-  {
-    mDecryptorV7->RemoveSession(aPromiseId, aSessionId, aSessionIdLength);
-  }
-
-  void SetServerCertificate(uint32_t aPromiseId,
-                            const uint8_t* aServerCert,
-                            uint32_t aServerCertSize) override
-  {
-    mDecryptorV7->SetServerCertificate(aPromiseId, aServerCert, aServerCertSize);
-  }
-
-  void Decrypt(GMPBuffer* aBuffer,
-               GMPEncryptedBufferMetadata* aMetadata) override
-  {
-    mDecryptorV7->Decrypt(aBuffer, aMetadata);
-  }
-
-  void DecryptingComplete() override
-  {
-    mDecryptorV7->DecryptingComplete();
-    delete this;
-  }
-private:
-  GMPDecryptor7* mDecryptorV7;
-};
+PChromiumCDMChild*
+GMPContentChild::AllocPChromiumCDMChild()
+{
+  ChromiumCDMChild* actor = new ChromiumCDMChild(this);
+  actor->AddRef();
+  return actor;
+}
 
 bool
+GMPContentChild::DeallocPChromiumCDMChild(PChromiumCDMChild* aActor)
+{
+  static_cast<ChromiumCDMChild*>(aActor)->Release();
+  return true;
+}
+
+mozilla::ipc::IPCResult
 GMPContentChild::RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor)
 {
   GMPDecryptorChild* child = static_cast<GMPDecryptorChild*>(aActor);
-  GMPDecryptorHost* host = static_cast<GMPDecryptorHost*>(child);
 
   void* ptr = nullptr;
-  GMPErr err = mGMPChild->GetAPI(GMP_API_DECRYPTOR, host, &ptr);
-  GMPDecryptor* decryptor = nullptr;
-  if (GMP_SUCCEEDED(err) && ptr) {
-    decryptor = static_cast<GMPDecryptor*>(ptr);
-  } else if (err != GMPNoErr) {
-    // We Adapt the previous GMPDecryptor version to the current, so that
-    // Gecko thinks it's only talking to the current version. v7 differs
-    // from v9 in its Init() function arguments, and v9 has extra enumeration
-    // members at the end of the key status enumerations.
-    err = mGMPChild->GetAPI(GMP_API_DECRYPTOR_BACKWARDS_COMPAT, host, &ptr);
-    if (err != GMPNoErr || !ptr) {
-      return false;
-    }
-    decryptor = new GMPDecryptor7BackwardsCompat(static_cast<GMPDecryptor7*>(ptr));
+  GMPErr err = mGMPChild->GetAPI(GMP_API_DECRYPTOR, nullptr, &ptr, child->DecryptorId());
+  if (err != GMPNoErr || !ptr) {
+    NS_WARNING("GMPGetAPI call failed trying to construct decryptor.");
+    return IPC_FAIL_NO_REASON(this);
   }
+  child->Init(static_cast<GMPDecryptor*>(ptr));
 
-  child->Init(decryptor);
-
-  return true;
+  return IPC_OK();
 }
 
-bool
-GMPContentChild::RecvPGMPAudioDecoderConstructor(PGMPAudioDecoderChild* aActor)
-{
-  auto vdc = static_cast<GMPAudioDecoderChild*>(aActor);
-
-  void* vd = nullptr;
-  GMPErr err = mGMPChild->GetAPI(GMP_API_AUDIO_DECODER, &vdc->Host(), &vd);
-  if (err != GMPNoErr || !vd) {
-    return false;
-  }
-
-  vdc->Init(static_cast<GMPAudioDecoder*>(vd));
-
-  return true;
-}
-
-bool
-GMPContentChild::RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor)
+mozilla::ipc::IPCResult
+GMPContentChild::RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor,
+                                                 const uint32_t& aDecryptorId)
 {
   auto vdc = static_cast<GMPVideoDecoderChild*>(aActor);
 
   void* vd = nullptr;
-  GMPErr err = mGMPChild->GetAPI(GMP_API_VIDEO_DECODER, &vdc->Host(), &vd);
+  GMPErr err = mGMPChild->GetAPI(GMP_API_VIDEO_DECODER, &vdc->Host(), &vd, aDecryptorId);
   if (err != GMPNoErr || !vd) {
     NS_WARNING("GMPGetAPI call failed trying to construct decoder.");
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   vdc->Init(static_cast<GMPVideoDecoder*>(vd));
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 GMPContentChild::RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor)
 {
   auto vec = static_cast<GMPVideoEncoderChild*>(aActor);
@@ -269,24 +152,36 @@ GMPContentChild::RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor)
   GMPErr err = mGMPChild->GetAPI(GMP_API_VIDEO_ENCODER, &vec->Host(), &ve);
   if (err != GMPNoErr || !ve) {
     NS_WARNING("GMPGetAPI call failed trying to construct encoder.");
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
 
   vec->Init(static_cast<GMPVideoEncoder*>(ve));
 
-  return true;
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+GMPContentChild::RecvPChromiumCDMConstructor(PChromiumCDMChild* aActor)
+{
+  ChromiumCDMChild* child = static_cast<ChromiumCDMChild*>(aActor);
+  cdm::Host_8* host = child;
+
+  void* cdm = nullptr;
+  GMPErr err = mGMPChild->GetAPI(CHROMIUM_CDM_API, host, &cdm);
+  if (err != GMPNoErr || !cdm) {
+    NS_WARNING("GMPGetAPI call failed trying to get CDM.");
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  child->Init(static_cast<cdm::ContentDecryptionModule_8*>(cdm));
+
+  return IPC_OK();
 }
 
 void
 GMPContentChild::CloseActive()
 {
   // Invalidate and remove any remaining API objects.
-  const ManagedContainer<PGMPAudioDecoderChild>& audioDecoders =
-    ManagedPGMPAudioDecoderChild();
-  for (auto iter = audioDecoders.ConstIter(); !iter.Done(); iter.Next()) {
-    iter.Get()->GetKey()->SendShutdown();
-  }
-
   const ManagedContainer<PGMPDecryptorChild>& decryptors =
     ManagedPGMPDecryptorChild();
   for (auto iter = decryptors.ConstIter(); !iter.Done(); iter.Next()) {
@@ -304,15 +199,20 @@ GMPContentChild::CloseActive()
   for (auto iter = videoEncoders.ConstIter(); !iter.Done(); iter.Next()) {
     iter.Get()->GetKey()->SendShutdown();
   }
+
+  const ManagedContainer<PChromiumCDMChild>& cdms = ManagedPChromiumCDMChild();
+  for (auto iter = cdms.ConstIter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->SendShutdown();
+  }
 }
 
 bool
 GMPContentChild::IsUsed()
 {
-  return !ManagedPGMPAudioDecoderChild().IsEmpty() ||
-         !ManagedPGMPDecryptorChild().IsEmpty() ||
+  return !ManagedPGMPDecryptorChild().IsEmpty() ||
          !ManagedPGMPVideoDecoderChild().IsEmpty() ||
-         !ManagedPGMPVideoEncoderChild().IsEmpty();
+         !ManagedPGMPVideoEncoderChild().IsEmpty() ||
+         !ManagedPChromiumCDMChild().IsEmpty();
 }
 
 } // namespace gmp

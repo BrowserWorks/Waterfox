@@ -7,10 +7,10 @@
 
 #include "nsBoxFrame.h"
 
+#include "gfxContext.h"
 #include "mozilla/gfx/2D.h"
 #include "nsCSSRendering.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
 #include "nsStyleContext.h"
 #include "nsDisplayList.h"
 
@@ -18,12 +18,13 @@ using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
 
-class nsGroupBoxFrame : public nsBoxFrame {
+class nsGroupBoxFrame final : public nsBoxFrame
+{
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsGroupBoxFrame)
 
   explicit nsGroupBoxFrame(nsStyleContext* aContext):
-    nsBoxFrame(aContext) {}
+    nsBoxFrame(aContext, kClassID) {}
 
   virtual nsresult GetXULBorderAndPadding(nsMargin& aBorderAndPadding) override;
 
@@ -39,7 +40,7 @@ public:
 
   virtual bool HonorPrintBackgroundSettings() override { return false; }
 
-  DrawResult PaintBorder(nsRenderingContext& aRenderingContext,
+  DrawResult PaintBorder(gfxContext& aRenderingContext,
                                    nsPoint aPt,
                                    const nsRect& aDirtyRect);
   nsRect GetBackgroundRectRelativeToSelf(nscoord* aOutYOffset = nullptr, nsRect* aOutGroupRect = nullptr);
@@ -48,9 +49,9 @@ public:
   // our child box has no content node so it will search for a parent with one.
   // that will be us.
   virtual void GetInitialOrientation(bool& aHorizontal) override { aHorizontal = false; }
-  virtual bool GetInitialHAlignment(Halignment& aHalign) override { aHalign = hAlign_Left; return true; } 
-  virtual bool GetInitialVAlignment(Valignment& aValign) override { aValign = vAlign_Top; return true; } 
-  virtual bool GetInitialAutoStretch(bool& aStretch) override { aStretch = true; return true; } 
+  virtual bool GetInitialHAlignment(Halignment& aHalign) override { aHalign = hAlign_Left; return true; }
+  virtual bool GetInitialVAlignment(Valignment& aValign) override { aValign = vAlign_Top; return true; }
+  virtual bool GetInitialAutoStretch(bool& aStretch) override { aStretch = true; return true; }
 
   nsIFrame* GetCaptionBox(nsRect& aCaptionRect);
 };
@@ -68,7 +69,7 @@ public:
     return MakeFrameName("GroupBoxFrameInner", aResult);
   }
 #endif
-  
+
   // we are always flexible
   virtual bool GetDefaultFlex(int32_t& aFlex) { aFlex = 1; return true; }
 
@@ -83,7 +84,8 @@ NS_NewGroupBoxFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsGroupBoxFrame)
 
-class nsDisplayXULGroupBorder : public nsDisplayItem {
+class nsDisplayXULGroupBorder final : public nsDisplayItem
+{
 public:
   nsDisplayXULGroupBorder(nsDisplayListBuilder* aBuilder,
                               nsGroupBoxFrame* aFrame) :
@@ -105,7 +107,7 @@ public:
     aOutFrames->AppendElement(mFrame);
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("XULGroupBackground", TYPE_XUL_GROUP_BACKGROUND)
 };
 
@@ -135,7 +137,7 @@ nsDisplayXULGroupBorder::ComputeInvalidationRegion(
 
 void
 nsDisplayXULGroupBorder::Paint(nsDisplayListBuilder* aBuilder,
-                                   nsRenderingContext* aCtx)
+                                   gfxContext* aCtx)
 {
   DrawResult result = static_cast<nsGroupBoxFrame*>(mFrame)
     ->PaintBorder(*aCtx, ToReferenceFrame(), mVisibleRect);
@@ -155,7 +157,7 @@ nsGroupBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       aLists.BorderBackground());
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
       nsDisplayXULGroupBorder(aBuilder, this));
-    
+
     DisplayOutline(aBuilder, aLists);
   }
 
@@ -194,11 +196,10 @@ nsGroupBoxFrame::GetBackgroundRectRelativeToSelf(nscoord* aOutYOffset, nsRect* a
 }
 
 DrawResult
-nsGroupBoxFrame::PaintBorder(nsRenderingContext& aRenderingContext,
+nsGroupBoxFrame::PaintBorder(gfxContext& aRenderingContext,
     nsPoint aPt, const nsRect& aDirtyRect) {
 
   DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
-  gfxContext* gfx = aRenderingContext.ThebesContext();
 
   Sides skipSides;
   const nsStyleBorder* borderStyleData = StyleBorder();
@@ -224,13 +225,14 @@ nsGroupBoxFrame::PaintBorder(nsRenderingContext& aRenderingContext,
     clipRect.width = groupRect.x - rect.x;
     clipRect.height = border.top;
 
-    gfx->Save();
-    gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
+    aRenderingContext.Save();
+    aRenderingContext.Clip(
+      NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
     result &=
       nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
                                   aDirtyRect, rect, mStyleContext,
                                   PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
-    gfx->Restore();
+    aRenderingContext.Restore();
 
     // draw right side
     clipRect = rect;
@@ -238,28 +240,30 @@ nsGroupBoxFrame::PaintBorder(nsRenderingContext& aRenderingContext,
     clipRect.width = rect.XMost() - groupRect.XMost();
     clipRect.height = border.top;
 
-    gfx->Save();
-    gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
+    aRenderingContext.Save();
+    aRenderingContext.Clip(
+      NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
     result &=
       nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
                                   aDirtyRect, rect, mStyleContext,
                                   PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
-    gfx->Restore();
-  
+
+    aRenderingContext.Restore();
     // draw bottom
 
     clipRect = rect;
     clipRect.y += border.top;
     clipRect.height = mRect.height - (yoff + border.top);
-  
-    gfx->Save();
-    gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
+
+    aRenderingContext.Save();
+    aRenderingContext.Clip(
+      NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
     result &=
       nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
                                   aDirtyRect, rect, mStyleContext,
                                   PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
-    gfx->Restore();
-    
+
+    aRenderingContext.Restore();
   } else {
     result &=
       nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,

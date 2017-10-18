@@ -11,26 +11,25 @@
 #include "webrtc/base/helpers.h"
 
 #include <limits>
+#include <memory>
 
 #if defined(FEATURE_ENABLE_SSL)
 #include "webrtc/base/sslconfig.h"
 #if defined(SSL_USE_OPENSSL)
 #include <openssl/rand.h>
-#elif defined(SSL_USE_NSS_RNG)
-#include "pk11func.h"
 #else
 #if defined(WEBRTC_WIN)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ntsecapi.h>
-#endif  // WEBRTC_WIN 
+#endif  // WEBRTC_WIN
 #endif  // else
 #endif  // FEATURE_ENABLED_SSL
 
 #include "webrtc/base/base64.h"
 #include "webrtc/base/basictypes.h"
+#include "webrtc/base/checks.h"
 #include "webrtc/base/logging.h"
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/base/timeutils.h"
 
 // Protect against max macro inclusion.
@@ -55,19 +54,6 @@ class SecureRandomGenerator : public RandomGenerator {
   bool Init(const void* seed, size_t len) override { return true; }
   bool Generate(void* buf, size_t len) override {
     return (RAND_bytes(reinterpret_cast<unsigned char*>(buf), len) > 0);
-  }
-};
-
-#elif defined(SSL_USE_NSS_RNG)
-// The NSS RNG.
-class SecureRandomGenerator : public RandomGenerator {
- public:
-  SecureRandomGenerator() {}
-  ~SecureRandomGenerator() override {}
-  bool Init(const void* seed, size_t len) override { return true; }
-  bool Generate(void* buf, size_t len) override {
-    return (PK11_GenerateRandom(reinterpret_cast<unsigned char*>(buf),
-                                static_cast<int>(len)) == SECSuccess);
   }
 };
 
@@ -141,7 +127,7 @@ class SecureRandomGenerator : public RandomGenerator {
 
 #error No SSL implementation has been selected!
 
-#endif  // WEBRTC_WIN 
+#endif  // WEBRTC_WIN
 #endif
 
 // A test random generator, for predictable output.
@@ -154,7 +140,7 @@ class TestRandomGenerator : public RandomGenerator {
   bool Init(const void* seed, size_t len) override { return true; }
   bool Generate(void* buf, size_t len) override {
     for (size_t i = 0; i < len; ++i) {
-      static_cast<uint8*>(buf)[i] = static_cast<uint8>(GetRandom());
+      static_cast<uint8_t*>(buf)[i] = static_cast<uint8_t>(GetRandom());
     }
     return true;
   }
@@ -166,22 +152,26 @@ class TestRandomGenerator : public RandomGenerator {
   int seed_;
 };
 
-// TODO: Use Base64::Base64Table instead.
-static const char BASE64[64] = {
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-  'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
-};
-
 namespace {
+
+// TODO: Use Base64::Base64Table instead.
+static const char kBase64[64] = {
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+
+static const char kHex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                              '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+static const char kUuidDigit17[4] = {'8', '9', 'a', 'b'};
 
 // This round about way of creating a global RNG is to safe-guard against
 // indeterminant static initialization order.
-scoped_ptr<RandomGenerator>& GetGlobalRng() {
-  LIBJINGLE_DEFINE_STATIC_LOCAL(scoped_ptr<RandomGenerator>, global_rng,
-                                (new SecureRandomGenerator()));
+std::unique_ptr<RandomGenerator>& GetGlobalRng() {
+  RTC_DEFINE_STATIC_LOCAL(std::unique_ptr<RandomGenerator>, global_rng,
+                          (new SecureRandomGenerator()));
   return global_rng;
 }
 
@@ -213,15 +203,20 @@ bool InitRandom(const char* seed, size_t len) {
 
 std::string CreateRandomString(size_t len) {
   std::string str;
-  CreateRandomString(len, &str);
+  RTC_CHECK(CreateRandomString(len, &str));
   return str;
 }
 
-bool CreateRandomString(size_t len,
+static bool CreateRandomString(size_t len,
                         const char* table, int table_size,
                         std::string* str) {
   str->clear();
-  scoped_ptr<uint8[]> bytes(new uint8[len]);
+  // Avoid biased modulo division below.
+  if (256 % table_size) {
+    LOG(LS_ERROR) << "Table size must divide 256 evenly!";
+    return false;
+  }
+  std::unique_ptr<uint8_t[]> bytes(new uint8_t[len]);
   if (!Rng().Generate(bytes.get(), len)) {
     LOG(LS_ERROR) << "Failed to generate random string!";
     return false;
@@ -234,7 +229,7 @@ bool CreateRandomString(size_t len,
 }
 
 bool CreateRandomString(size_t len, std::string* str) {
-  return CreateRandomString(len, BASE64, 64, str);
+  return CreateRandomString(len, kBase64, 64, str);
 }
 
 bool CreateRandomString(size_t len, const std::string& table,
@@ -243,20 +238,57 @@ bool CreateRandomString(size_t len, const std::string& table,
                             static_cast<int>(table.size()), str);
 }
 
-uint32 CreateRandomId() {
-  uint32 id;
-  if (!Rng().Generate(&id, sizeof(id))) {
-    LOG(LS_ERROR) << "Failed to generate random id!";
+bool CreateRandomData(size_t length, std::string* data) {
+  data->resize(length);
+  // std::string is guaranteed to use contiguous memory in c++11 so we can
+  // safely write directly to it.
+  return Rng().Generate(&data->at(0), length);
+}
+
+// Version 4 UUID is of the form:
+// xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+// Where 'x' is a hex digit, and 'y' is 8, 9, a or b.
+std::string CreateRandomUuid() {
+  std::string str;
+  std::unique_ptr<uint8_t[]> bytes(new uint8_t[31]);
+  RTC_CHECK(Rng().Generate(bytes.get(), 31));
+  str.reserve(36);
+  for (size_t i = 0; i < 8; ++i) {
+    str.push_back(kHex[bytes[i] % 16]);
   }
+  str.push_back('-');
+  for (size_t i = 8; i < 12; ++i) {
+    str.push_back(kHex[bytes[i] % 16]);
+  }
+  str.push_back('-');
+  str.push_back('4');
+  for (size_t i = 12; i < 15; ++i) {
+    str.push_back(kHex[bytes[i] % 16]);
+  }
+  str.push_back('-');
+  str.push_back(kUuidDigit17[bytes[15] % 4]);
+  for (size_t i = 16; i < 19; ++i) {
+    str.push_back(kHex[bytes[i] % 16]);
+  }
+  str.push_back('-');
+  for (size_t i = 19; i < 31; ++i) {
+    str.push_back(kHex[bytes[i] % 16]);
+  }
+  return str;
+}
+
+uint32_t CreateRandomId() {
+  uint32_t id;
+  RTC_CHECK(Rng().Generate(&id, sizeof(id)));
   return id;
 }
 
-uint64 CreateRandomId64() {
-  return static_cast<uint64>(CreateRandomId()) << 32 | CreateRandomId();
+uint64_t CreateRandomId64() {
+  return static_cast<uint64_t>(CreateRandomId()) << 32 | CreateRandomId();
 }
 
-uint32 CreateRandomNonZeroId() {
-  uint32 id;
+uint32_t CreateRandomNonZeroId() {
+  uint32_t id;
   do {
     id = CreateRandomId();
   } while (id == 0);
@@ -264,8 +296,8 @@ uint32 CreateRandomNonZeroId() {
 }
 
 double CreateRandomDouble() {
-  return CreateRandomId() / (std::numeric_limits<uint32>::max() +
-      std::numeric_limits<double>::epsilon());
+  return CreateRandomId() / (std::numeric_limits<uint32_t>::max() +
+                             std::numeric_limits<double>::epsilon());
 }
 
 }  // namespace rtc

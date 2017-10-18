@@ -11,7 +11,6 @@ interface nsIDOMWindow;
 interface nsIRequest;
 interface nsIRequestObserver;
 interface nsISimpleEnumerator;
-interface nsIXMLHttpRequest;
 interface nsIFile;
 
 /**
@@ -39,17 +38,6 @@ interface nsIUpdatePatch : nsISupports
    * The final URL this patch was being downloaded from
    */
   attribute AString finalURL;
-
-  /**
-   * The hash function to use when determining this file's integrity
-   */
-  attribute AString hashFunction;
-
-  /**
-   * The value of the hash function named above that should be computed if
-   * this file is not corrupt.
-   */
-  attribute AString hashValue;
 
   /**
    * The size of this file, in bytes.
@@ -114,11 +102,6 @@ interface nsIUpdate : nsISupports
   attribute AString appVersion;
 
   /**
-   * The Toolkit version of this update.
-   */
-  attribute AString platformVersion;
-
-  /**
    * The Application version prior to the application being updated.
    */
   attribute AString previousAppVersion;
@@ -140,12 +123,6 @@ interface nsIUpdate : nsISupports
   attribute AString detailsURL;
 
   /**
-   * The URL to a page that is typically localized to display in the update
-   * prompt.
-   */
-  attribute AString billboardURL;
-
-  /**
    * The URL to the Update Service that supplied this update.
    */
   attribute AString serviceURL;
@@ -154,20 +131,6 @@ interface nsIUpdate : nsISupports
    * The channel used to retrieve this update from the Update Service.
    */
   attribute AString channel;
-
-  /**
-   * Whether to show the update prompt which requires user confirmation when an
-   * update is found during a background update check. This overrides the
-   * default setting to download the update in the background.
-   */
-  attribute boolean showPrompt;
-
-  /**
-   * Whether to show the "No Thanks" button in the update prompt. This allows
-   * the user to never receive a notification for that specific update version
-   * again.
-   */
-  attribute boolean showNeverForVersion;
 
   /**
    * Whether the update is no longer supported on this system.
@@ -187,19 +150,6 @@ interface nsIUpdate : nsISupports
    * between the new version and the previous version.
    */
   attribute boolean isCompleteUpdate;
-
-  /**
-   * Whether or not the update is a security update or not. If this is true,
-   * then we present more serious sounding user interface messages to the
-   * user.
-   */
-  attribute boolean isSecurityUpdate;
-
-  /**
-   * Whether or not the update being downloaded is an OS update. This is
-   * generally only possible in Gonk right now.
-   */
-  attribute boolean isOSUpdate;
 
   /**
    * When the update was installed.
@@ -281,25 +231,25 @@ interface nsIUpdateCheckListener : nsISupports
   /**
    * The update check was completed.
    * @param   request
-   *          The nsIXMLHttpRequest handling the update check.
+   *          The XMLHttpRequest handling the update check.
    * @param   updates
    *          An array of nsIUpdate objects listing available updates.
    * @param   updateCount
    *          The size of the |updates| array.
    */
-  void onCheckComplete(in nsIXMLHttpRequest request,
+  void onCheckComplete(in jsval request,
                        [array, size_is(updateCount)] in nsIUpdate updates,
                        in unsigned long updateCount);
 
   /**
    * An error occurred while loading the remote update service file.
    * @param   request
-   *          The nsIXMLHttpRequest handling the update check.
+   *          The XMLHttpRequest handling the update check.
    * @param   update
    *          A nsIUpdate object that contains details about the
    *          error in its |statusText| property.
    */
-  void onError(in nsIXMLHttpRequest request,
+  void onError(in jsval request,
                in nsIUpdate update);
 };
 
@@ -397,14 +347,6 @@ interface nsIApplicationUpdateService : nsISupports
    *
    */
   AString downloadUpdate(in nsIUpdate update, in boolean background);
-
-  /**
-   * Apply the OS update which has been downloaded and staged as applied.
-   * @param   update 
-   *          The update has been downloaded and staged as applied.
-   * @throws  if the update object is not an OS update.
-   */
-  void applyOsUpdate(in nsIUpdate update);
 
   /**
    * Get the Active Updates directory

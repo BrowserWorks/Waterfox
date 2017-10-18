@@ -16,9 +16,16 @@ enum OverSampleType {
   "4x"
 };
 
+dictionary WaveShaperOptions : AudioNodeOptions {
+             sequence<float> curve;
+             OverSampleType  oversample = "none";
+};
+
+[Pref="dom.webaudio.enabled",
+ Constructor(BaseAudioContext context, optional WaveShaperOptions options)]
 interface WaveShaperNode : AudioNode {
 
-      [SetterThrows]
+      [Cached, Pure, SetterThrows]
       attribute Float32Array? curve;
       attribute OverSampleType oversample;
 

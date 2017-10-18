@@ -31,7 +31,6 @@ class nsHtml5Parser final : public nsIParser,
                             public nsSupportsWeakReference
 {
   public:
-    NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
     NS_DECL_CYCLE_COLLECTING_ISUPPORTS
 
     NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsHtml5Parser, nsIParser)
@@ -68,18 +67,11 @@ class nsHtml5Parser final : public nsIParser,
      *  Call this method once you've created a parser, and want to instruct it
      *  about what charset to load
      *
-     *  @param   aCharset the charset of a document
+     *  @param   aEncoding the charset of a document
      *  @param   aCharsetSource the source of the charset
      */
-    NS_IMETHOD_(void) SetDocumentCharset(const nsACString& aCharset, int32_t aSource) override;
-
-    /**
-     * Don't call. For interface compat only.
-     */
-    NS_IMETHOD_(void) GetDocumentCharset(nsACString& aCharset, int32_t& aSource) override
-    {
-      NS_NOTREACHED("No one should call this.");
-    }
+    virtual void SetDocumentCharset(NotNull<const Encoding*> aEncoding,
+                                    int32_t aSource) override;
 
     /**
      * Get the channel associated with this parser
@@ -175,7 +167,7 @@ class nsHtml5Parser final : public nsIParser,
     /**
      * Don't call. For interface compat only.
      */
-    NS_IMETHODIMP CancelParsingEvents() override;
+    NS_IMETHOD CancelParsingEvents() override;
 
     /**
      * Don't call. For interface compat only.
@@ -188,14 +180,17 @@ class nsHtml5Parser final : public nsIParser,
     virtual bool IsInsertionPointDefined() override;
 
     /**
-     * Call immediately before starting to evaluate a parser-inserted script.
+     * Call immediately before starting to evaluate a parser-inserted script or
+     * in general when the spec says to define an insertion point.
      */
-    virtual void BeginEvaluatingParserInsertedScript() override;
+    virtual void PushDefinedInsertionPoint() override;
 
     /**
-     * Call immediately after having evaluated a parser-inserted script.
+     * Call immediately after having evaluated a parser-inserted script or
+     * generally want to restore to the state before the last
+     * PushDefinedInsertionPoint call.
      */
-    virtual void EndEvaluatingParserInsertedScript() override;
+    virtual void PopDefinedInsertionPoint() override;
 
     /**
      * Marks the HTML5 parser as not a script-created parser: Prepares the 
@@ -276,9 +271,10 @@ class nsHtml5Parser final : public nsIParser,
     bool                          mDocWriteSpeculativeLastWasCR;
 
     /**
-     * The parser is blocking on a script
+     * The parser is blocking on the load of an external script from a web
+     * page, or any number of extension content scripts.
      */
-    bool                          mBlocked;
+    uint32_t                      mBlocked;
 
     /**
      * Whether the document.write() speculator is already active.
@@ -286,9 +282,10 @@ class nsHtml5Parser final : public nsIParser,
     bool                          mDocWriteSpeculatorActive;
     
     /**
-     * The number of parser-inserted script currently being evaluated.
+     * The number of PushDefinedInsertionPoint calls we've seen without a
+     * matching PopDefinedInsertionPoint.
      */
-    int32_t                       mParserInsertedScriptsBeingEvaluated;
+    int32_t                       mInsertionPointPushLevel;
 
     /**
      * True if document.close() has been called.

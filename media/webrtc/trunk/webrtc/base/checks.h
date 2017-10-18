@@ -11,97 +11,115 @@
 #ifndef WEBRTC_BASE_CHECKS_H_
 #define WEBRTC_BASE_CHECKS_H_
 
+#include "webrtc/typedefs.h"
+
+// If you for some reson need to know if DCHECKs are on, test the value of
+// RTC_DCHECK_IS_ON. (Test its value, not if it's defined; it'll always be
+// defined, to either a true or a false value.)
+#if !defined(NDEBUG) || defined(DCHECK_ALWAYS_ON)
+#define RTC_DCHECK_IS_ON 1
+#else
+#define RTC_DCHECK_IS_ON 0
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+NO_RETURN void rtc_FatalMessage(const char* file, int line, const char* msg);
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+#ifdef __cplusplus
+// C++ version.
+
 #include <sstream>
 #include <string>
 
-#ifdef WEBRTC_CHROMIUM_BUILD
-// Include logging.h in a Chromium build to enable the overrides mechanism for
-// using Chromium's macros. Otherwise, don't depend on logging.h.
-// TODO(ajm): Ideally, checks.h would be combined with logging.h, but
-// consolidation with system_wrappers/logging.h should happen first.
-#include "webrtc/base/logging.h"
-#endif
-#include "webrtc/typedefs.h"
+#include "webrtc/base/safe_compare.h"
 
 // The macros here print a message to stderr and abort under various
 // conditions. All will accept additional stream messages. For example:
-// DCHECK_EQ(foo, bar) << "I'm printed when foo != bar.";
+// RTC_DCHECK_EQ(foo, bar) << "I'm printed when foo != bar.";
 //
-// - CHECK(x) is an assertion that x is always true, and that if it isn't, it's
-//   better to terminate the process than to continue. During development, the
-//   reason that it's better to terminate might simply be that the error
+// - RTC_CHECK(x) is an assertion that x is always true, and that if it isn't,
+//   it's better to terminate the process than to continue. During development,
+//   the reason that it's better to terminate might simply be that the error
 //   handling code isn't in place yet; in production, the reason might be that
 //   the author of the code truly believes that x will always be true, but that
 //   she recognizes that if she is wrong, abrupt and unpleasant process
 //   termination is still better than carrying on with the assumption violated.
 //
-//   CHECK always evaluates its argument, so it's OK for x to have side
+//   RTC_CHECK always evaluates its argument, so it's OK for x to have side
 //   effects.
 //
-// - DCHECK(x) is the same as CHECK(x)---an assertion that x is always
+// - RTC_DCHECK(x) is the same as RTC_CHECK(x)---an assertion that x is always
 //   true---except that x will only be evaluated in debug builds; in production
 //   builds, x is simply assumed to be true. This is useful if evaluating x is
 //   expensive and the expected cost of failing to detect the violated
 //   assumption is acceptable. You should not handle cases where a production
 //   build fails to spot a violated condition, even those that would result in
 //   crashes. If the code needs to cope with the error, make it cope, but don't
-//   call DCHECK; if the condition really can't occur, but you'd sleep better
-//   at night knowing that the process will suicide instead of carrying on in
-//   case you were wrong, use CHECK instead of DCHECK.
+//   call RTC_DCHECK; if the condition really can't occur, but you'd sleep
+//   better at night knowing that the process will suicide instead of carrying
+//   on in case you were wrong, use RTC_CHECK instead of RTC_DCHECK.
 //
-//   DCHECK only evaluates its argument in debug builds, so if x has visible
+//   RTC_DCHECK only evaluates its argument in debug builds, so if x has visible
 //   side effects, you need to write e.g.
-//     bool w = x; DCHECK(w);
+//     bool w = x; RTC_DCHECK(w);
 //
-// - CHECK_EQ, _NE, _GT, ..., and DCHECK_EQ, _NE, _GT, ... are specialized
-//   variants of CHECK and DCHECK that print prettier messages if the condition
-//   doesn't hold. Prefer them to raw CHECK and DCHECK.
+// - RTC_CHECK_EQ, _NE, _GT, ..., and RTC_DCHECK_EQ, _NE, _GT, ... are
+//   specialized variants of RTC_CHECK and RTC_DCHECK that print prettier
+//   messages if the condition doesn't hold. Prefer them to raw RTC_CHECK and
+//   RTC_DCHECK.
 //
 // - FATAL() aborts unconditionally.
+//
+// TODO(ajm): Ideally, checks.h would be combined with logging.h, but
+// consolidation with system_wrappers/logging.h should happen first.
 
 namespace rtc {
 
-// The use of overrides/webrtc/base/logging.h in a Chromium build results in
-// redefined macro errors. Fortunately, Chromium's macros can be used as drop-in
-// replacements for the standalone versions.
-#ifndef WEBRTC_CHROMIUM_BUILD
-
 // Helper macro which avoids evaluating the arguments to a stream if
 // the condition doesn't hold.
-#define LAZY_STREAM(stream, condition)                                        \
+#define RTC_LAZY_STREAM(stream, condition)                                    \
   !(condition) ? static_cast<void>(0) : rtc::FatalMessageVoidify() & (stream)
 
-// The actual stream used isn't important. We reference condition in the code
+// The actual stream used isn't important. We reference |ignored| in the code
 // but don't evaluate it; this is to avoid "unused variable" warnings (we do so
 // in a particularly convoluted way with an extra ?: because that appears to be
 // the simplest construct that keeps Visual Studio from complaining about
 // condition being unused).
-#define EAT_STREAM_PARAMETERS(condition) \
-  (true ? true : !(condition))           \
-      ? static_cast<void>(0)             \
+#define RTC_EAT_STREAM_PARAMETERS(ignored) \
+  (true ? true : ((void)(ignored), true))  \
+      ? static_cast<void>(0)               \
       : rtc::FatalMessageVoidify() & rtc::FatalMessage("", 0).stream()
 
-// CHECK dies with a fatal error if condition is not true.  It is *not*
-// controlled by NDEBUG, so the check will be executed regardless of
-// compilation mode.
-//
-// We make sure CHECK et al. always evaluates their arguments, as
-// doing CHECK(FunctionWithSideEffect()) is a common idiom.
-#define CHECK(condition)                                                    \
-  LAZY_STREAM(rtc::FatalMessage(__FILE__, __LINE__).stream(), !(condition)) \
-  << "Check failed: " #condition << std::endl << "# "
+// Call RTC_EAT_STREAM_PARAMETERS with an argument that fails to compile if
+// values of the same types as |a| and |b| can't be compared with the given
+// operation, and that would evaluate |a| and |b| if evaluated.
+#define RTC_EAT_STREAM_PARAMETERS_OP(op, a, b) \
+  RTC_EAT_STREAM_PARAMETERS(((void)rtc::safe_cmp::op(a, b)))
 
-#define RTC_CHECK(condition) CHECK(condition)
+// RTC_CHECK dies with a fatal error if condition is not true. It is *not*
+// controlled by NDEBUG or anything else, so the check will be executed
+// regardless of compilation mode.
+//
+// We make sure RTC_CHECK et al. always evaluates their arguments, as
+// doing RTC_CHECK(FunctionWithSideEffect()) is a common idiom.
+#define RTC_CHECK(condition)                                      \
+  RTC_LAZY_STREAM(rtc::FatalMessage(__FILE__, __LINE__).stream(), \
+                  !(condition))                                   \
+      << "Check failed: " #condition << std::endl << "# "
 
 // Helper macro for binary operators.
-// Don't use this macro directly in your code, use CHECK_EQ et al below.
+// Don't use this macro directly in your code, use RTC_CHECK_EQ et al below.
 //
 // TODO(akalin): Rewrite this so that constructs like if (...)
-// CHECK_EQ(...) else { ... } work properly.
-#define CHECK_OP(name, op, val1, val2)                      \
-  if (std::string* _result =                                \
-      rtc::Check##name##Impl((val1), (val2),                \
-                             #val1 " " #op " " #val2))      \
+// RTC_CHECK_EQ(...) else { ... } work properly.
+#define RTC_CHECK_OP(name, op, val1, val2)                                 \
+  if (std::string* _result =                                               \
+          rtc::Check##name##Impl((val1), (val2), #val1 " " #op " " #val2)) \
     rtc::FatalMessage(__FILE__, __LINE__, _result).stream()
 
 // Build the error message string.  This is separate from the "Impl"
@@ -136,85 +154,59 @@ std::string* MakeCheckOpString<std::string, std::string>(
     const std::string&, const std::string&, const char* name);
 #endif
 
-// Helper functions for CHECK_OP macro.
+// Helper functions for RTC_CHECK_OP macro.
 // The (int, int) specialization works around the issue that the compiler
 // will not instantiate the template version of the function on values of
 // unnamed enum type - see comment below.
-#define DEFINE_CHECK_OP_IMPL(name, op) \
-  template <class t1, class t2> \
-  inline std::string* Check##name##Impl(const t1& v1, const t2& v2, \
-                                        const char* names) { \
-    if (v1 op v2) return NULL; \
-    else return rtc::MakeCheckOpString(v1, v2, names); \
-  } \
+#define DEFINE_RTC_CHECK_OP_IMPL(name)                                       \
+  template <class t1, class t2>                                              \
+  inline std::string* Check##name##Impl(const t1& v1, const t2& v2,          \
+                                        const char* names) {                 \
+    if (rtc::safe_cmp::name(v1, v2))                                         \
+      return NULL;                                                           \
+    else                                                                     \
+      return rtc::MakeCheckOpString(v1, v2, names);                          \
+  }                                                                          \
   inline std::string* Check##name##Impl(int v1, int v2, const char* names) { \
-    if (v1 op v2) return NULL; \
-    else return rtc::MakeCheckOpString(v1, v2, names); \
+    if (rtc::safe_cmp::name(v1, v2))                                         \
+      return NULL;                                                           \
+    else                                                                     \
+      return rtc::MakeCheckOpString(v1, v2, names);                          \
   }
-DEFINE_CHECK_OP_IMPL(EQ, ==)
-DEFINE_CHECK_OP_IMPL(NE, !=)
-DEFINE_CHECK_OP_IMPL(LE, <=)
-DEFINE_CHECK_OP_IMPL(LT, < )
-DEFINE_CHECK_OP_IMPL(GE, >=)
-DEFINE_CHECK_OP_IMPL(GT, > )
-#undef DEFINE_CHECK_OP_IMPL
+DEFINE_RTC_CHECK_OP_IMPL(Eq)
+DEFINE_RTC_CHECK_OP_IMPL(Ne)
+DEFINE_RTC_CHECK_OP_IMPL(Le)
+DEFINE_RTC_CHECK_OP_IMPL(Lt)
+DEFINE_RTC_CHECK_OP_IMPL(Ge)
+DEFINE_RTC_CHECK_OP_IMPL(Gt)
+#undef DEFINE_RTC_CHECK_OP_IMPL
 
-#define CHECK_EQ(val1, val2) CHECK_OP(EQ, ==, val1, val2)
-#define CHECK_NE(val1, val2) CHECK_OP(NE, !=, val1, val2)
-#define CHECK_LE(val1, val2) CHECK_OP(LE, <=, val1, val2)
-#define CHECK_LT(val1, val2) CHECK_OP(LT, < , val1, val2)
-#define CHECK_GE(val1, val2) CHECK_OP(GE, >=, val1, val2)
-#define CHECK_GT(val1, val2) CHECK_OP(GT, > , val1, val2)
-
-// The DCHECK macro is equivalent to CHECK except that it only generates code
-// in debug builds. It does reference the condition parameter in all cases,
-// though, so callers won't risk getting warnings about unused variables.
-#if (!defined(NDEBUG) || defined(DCHECK_ALWAYS_ON))
-#define DCHECK(condition) CHECK(condition)
-#define DCHECK_EQ(v1, v2) CHECK_EQ(v1, v2)
-#define DCHECK_NE(v1, v2) CHECK_NE(v1, v2)
-#define DCHECK_LE(v1, v2) CHECK_LE(v1, v2)
-#define DCHECK_LT(v1, v2) CHECK_LT(v1, v2)
-#define DCHECK_GE(v1, v2) CHECK_GE(v1, v2)
-#define DCHECK_GT(v1, v2) CHECK_GT(v1, v2)
-#else
-#define DCHECK(condition) EAT_STREAM_PARAMETERS(condition)
-#define DCHECK_EQ(v1, v2) EAT_STREAM_PARAMETERS((v1) == (v2))
-#define DCHECK_NE(v1, v2) EAT_STREAM_PARAMETERS((v1) != (v2))
-#define DCHECK_LE(v1, v2) EAT_STREAM_PARAMETERS((v1) <= (v2))
-#define DCHECK_LT(v1, v2) EAT_STREAM_PARAMETERS((v1) < (v2))
-#define DCHECK_GE(v1, v2) EAT_STREAM_PARAMETERS((v1) >= (v2))
-#define DCHECK_GT(v1, v2) EAT_STREAM_PARAMETERS((v1) > (v2))
-#endif
-
-#define RTC_CHECK_EQ(val1, val2) CHECK_OP(EQ, ==, val1, val2)
-#define RTC_CHECK_NE(val1, val2) CHECK_OP(NE, !=, val1, val2)
-#define RTC_CHECK_LE(val1, val2) CHECK_OP(LE, <=, val1, val2)
-#define RTC_CHECK_LT(val1, val2) CHECK_OP(LT, < , val1, val2)
-#define RTC_CHECK_GE(val1, val2) CHECK_OP(GE, >=, val1, val2)
-#define RTC_CHECK_GT(val1, val2) CHECK_OP(GT, > , val1, val2)
+#define RTC_CHECK_EQ(val1, val2) RTC_CHECK_OP(Eq, ==, val1, val2)
+#define RTC_CHECK_NE(val1, val2) RTC_CHECK_OP(Ne, !=, val1, val2)
+#define RTC_CHECK_LE(val1, val2) RTC_CHECK_OP(Le, <=, val1, val2)
+#define RTC_CHECK_LT(val1, val2) RTC_CHECK_OP(Lt, <, val1, val2)
+#define RTC_CHECK_GE(val1, val2) RTC_CHECK_OP(Ge, >=, val1, val2)
+#define RTC_CHECK_GT(val1, val2) RTC_CHECK_OP(Gt, >, val1, val2)
 
 // The RTC_DCHECK macro is equivalent to RTC_CHECK except that it only generates
 // code in debug builds. It does reference the condition parameter in all cases,
 // though, so callers won't risk getting warnings about unused variables.
-#if (!defined(NDEBUG) || defined(DCHECK_ALWAYS_ON))
-#define RTC_DCHECK_IS_ON 1
-#define RTC_DCHECK(condition) CHECK(condition)
-#define RTC_DCHECK_EQ(v1, v2) CHECK_EQ(v1, v2)
-#define RTC_DCHECK_NE(v1, v2) CHECK_NE(v1, v2)
-#define RTC_DCHECK_LE(v1, v2) CHECK_LE(v1, v2)
-#define RTC_DCHECK_LT(v1, v2) CHECK_LT(v1, v2)
-#define RTC_DCHECK_GE(v1, v2) CHECK_GE(v1, v2)
-#define RTC_DCHECK_GT(v1, v2) CHECK_GT(v1, v2)
+#if RTC_DCHECK_IS_ON
+#define RTC_DCHECK(condition) RTC_CHECK(condition)
+#define RTC_DCHECK_EQ(v1, v2) RTC_CHECK_EQ(v1, v2)
+#define RTC_DCHECK_NE(v1, v2) RTC_CHECK_NE(v1, v2)
+#define RTC_DCHECK_LE(v1, v2) RTC_CHECK_LE(v1, v2)
+#define RTC_DCHECK_LT(v1, v2) RTC_CHECK_LT(v1, v2)
+#define RTC_DCHECK_GE(v1, v2) RTC_CHECK_GE(v1, v2)
+#define RTC_DCHECK_GT(v1, v2) RTC_CHECK_GT(v1, v2)
 #else
-#define RTC_DCHECK_IS_ON 0
-#define RTC_DCHECK(condition) EAT_STREAM_PARAMETERS(condition)
-#define RTC_DCHECK_EQ(v1, v2) EAT_STREAM_PARAMETERS((v1) == (v2))
-#define RTC_DCHECK_NE(v1, v2) EAT_STREAM_PARAMETERS((v1) != (v2))
-#define RTC_DCHECK_LE(v1, v2) EAT_STREAM_PARAMETERS((v1) <= (v2))
-#define RTC_DCHECK_LT(v1, v2) EAT_STREAM_PARAMETERS((v1) < (v2))
-#define RTC_DCHECK_GE(v1, v2) EAT_STREAM_PARAMETERS((v1) >= (v2))
-#define RTC_DCHECK_GT(v1, v2) EAT_STREAM_PARAMETERS((v1) > (v2))
+#define RTC_DCHECK(condition) RTC_EAT_STREAM_PARAMETERS(condition)
+#define RTC_DCHECK_EQ(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Eq, v1, v2)
+#define RTC_DCHECK_NE(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Ne, v1, v2)
+#define RTC_DCHECK_LE(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Le, v1, v2)
+#define RTC_DCHECK_LT(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Lt, v1, v2)
+#define RTC_DCHECK_GE(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Ge, v1, v2)
+#define RTC_DCHECK_GT(v1, v2) RTC_EAT_STREAM_PARAMETERS_OP(Gt, v1, v2)
 #endif
 
 // This is identical to LogMessageVoidify but in name.
@@ -226,13 +218,11 @@ class FatalMessageVoidify {
   void operator&(std::ostream&) { }
 };
 
-#endif  // WEBRTC_CHROMIUM_BUILD
-
 #define RTC_UNREACHABLE_CODE_HIT false
-#define RTC_NOTREACHED() DCHECK(RTC_UNREACHABLE_CODE_HIT)
+#define RTC_NOTREACHED() RTC_DCHECK(RTC_UNREACHABLE_CODE_HIT)
 
 #define FATAL() rtc::FatalMessage(__FILE__, __LINE__).stream()
-// TODO(ajm): Consider adding NOTIMPLEMENTED and NOTREACHED macros when
+// TODO(ajm): Consider adding RTC_NOTIMPLEMENTED macro when
 // base/logging.h and system_wrappers/logging.h are consolidated such that we
 // can match the Chromium behavior.
 
@@ -240,7 +230,7 @@ class FatalMessageVoidify {
 class FatalMessage {
  public:
   FatalMessage(const char* file, int line);
-  // Used for CHECK_EQ(), etc. Takes ownership of the given string.
+  // Used for RTC_CHECK_EQ(), etc. Takes ownership of the given string.
   FatalMessage(const char* file, int line, std::string* result);
   NO_RETURN ~FatalMessage();
 
@@ -256,10 +246,44 @@ class FatalMessage {
 // remainder is zero.
 template <typename T>
 inline T CheckedDivExact(T a, T b) {
-  CHECK_EQ(a % b, static_cast<T>(0));
+  RTC_CHECK_EQ(a % b, 0) << a << " is not evenly divisible by " << b;
   return a / b;
 }
 
 }  // namespace rtc
+
+#else  // __cplusplus not defined
+// C version. Lacks many features compared to the C++ version, but usage
+// guidelines are the same.
+
+#define RTC_CHECK(condition)                                             \
+  do {                                                                   \
+    if (!(condition)) {                                                  \
+      rtc_FatalMessage(__FILE__, __LINE__, "CHECK failed: " #condition); \
+    }                                                                    \
+  } while (0)
+
+#define RTC_CHECK_EQ(a, b) RTC_CHECK((a) == (b))
+#define RTC_CHECK_NE(a, b) RTC_CHECK((a) != (b))
+#define RTC_CHECK_LE(a, b) RTC_CHECK((a) <= (b))
+#define RTC_CHECK_LT(a, b) RTC_CHECK((a) < (b))
+#define RTC_CHECK_GE(a, b) RTC_CHECK((a) >= (b))
+#define RTC_CHECK_GT(a, b) RTC_CHECK((a) > (b))
+
+#define RTC_DCHECK(condition)                                             \
+  do {                                                                    \
+    if (RTC_DCHECK_IS_ON && !(condition)) {                               \
+      rtc_FatalMessage(__FILE__, __LINE__, "DCHECK failed: " #condition); \
+    }                                                                     \
+  } while (0)
+
+#define RTC_DCHECK_EQ(a, b) RTC_DCHECK((a) == (b))
+#define RTC_DCHECK_NE(a, b) RTC_DCHECK((a) != (b))
+#define RTC_DCHECK_LE(a, b) RTC_DCHECK((a) <= (b))
+#define RTC_DCHECK_LT(a, b) RTC_DCHECK((a) < (b))
+#define RTC_DCHECK_GE(a, b) RTC_DCHECK((a) >= (b))
+#define RTC_DCHECK_GT(a, b) RTC_DCHECK((a) > (b))
+
+#endif  // __cplusplus
 
 #endif  // WEBRTC_BASE_CHECKS_H_

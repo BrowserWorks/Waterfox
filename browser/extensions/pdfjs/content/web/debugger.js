@@ -119,7 +119,7 @@ var FontInspector = (function FontInspectorClosure() {
         download.href = url[1];
       } else if (fontObj.data) {
         url = URL.createObjectURL(new Blob([fontObj.data], {
-          type: fontObj.mimeType
+          type: fontObj.mimeType,
         }));
         download.href = url;
       }
@@ -149,12 +149,12 @@ var FontInspector = (function FontInspectorClosure() {
       fonts.appendChild(font);
       // Somewhat of a hack, should probably add a hook for when the text layer
       // is done rendering.
-      setTimeout(function() {
+      setTimeout(() => {
         if (this.active) {
           resetSelection();
         }
-      }.bind(this), 2000);
-    }
+      }, 2000);
+    },
   };
 })();
 
@@ -243,7 +243,7 @@ var StepperManager = (function StepperManagerClosure() {
     saveBreakPoints: function saveBreakPoints(pageIndex, bps) {
       breakPoints[pageIndex] = bps;
       sessionStorage.setItem('pdfjsBreakPoints', JSON.stringify(breakPoints));
-    }
+    },
   };
 })();
 
@@ -387,7 +387,9 @@ var Stepper = (function StepperClosure() {
       this.table.appendChild(chunk);
     },
     getNextBreakPoint: function getNextBreakPoint() {
-      this.breakPoints.sort(function(a, b) { return a - b; });
+      this.breakPoints.sort(function(a, b) {
+        return a - b;
+      });
       for (var i = 0; i < this.breakPoints.length; i++) {
         if (this.breakPoints[i] > this.currentIdx) {
           return this.breakPoints[i];
@@ -403,13 +405,13 @@ var Stepper = (function StepperClosure() {
       var listener = function(e) {
         switch (e.keyCode) {
           case 83: // step
-            dom.removeEventListener('keydown', listener, false);
+            dom.removeEventListener('keydown', listener);
             self.nextBreakPoint = self.currentIdx + 1;
             self.goTo(-1);
             callback();
             break;
           case 67: // continue
-            dom.removeEventListener('keydown', listener, false);
+            dom.removeEventListener('keydown', listener);
             var breakPoint = self.getNextBreakPoint();
             self.nextBreakPoint = breakPoint;
             self.goTo(-1);
@@ -417,7 +419,7 @@ var Stepper = (function StepperClosure() {
             break;
         }
       };
-      dom.addEventListener('keydown', listener, false);
+      dom.addEventListener('keydown', listener);
       self.goTo(idx);
     },
     goTo: function goTo(idx) {
@@ -431,7 +433,7 @@ var Stepper = (function StepperClosure() {
           row.style.backgroundColor = null;
         }
       }
-    }
+    },
   };
   return Stepper;
 })();
@@ -457,14 +459,14 @@ var Stats = (function Stats() {
     name: 'Stats',
     panel: null,
     manager: null,
-    init: function init(pdfjsLib) {
+    init(pdfjsLib) {
       this.panel.setAttribute('style', 'padding: 5px;');
       pdfjsLib.PDFJS.enableStats = true;
     },
     enabled: false,
     active: false,
     // Stats specific functions.
-    add: function(pageNumber, stat) {
+    add(pageNumber, stat) {
       if (!stat) {
         return;
       }
@@ -483,22 +485,24 @@ var Stats = (function Stats() {
       statsDiv.textContent = stat.toString();
       wrapper.appendChild(title);
       wrapper.appendChild(statsDiv);
-      stats.push({ pageNumber: pageNumber, div: wrapper });
-      stats.sort(function(a, b) { return a.pageNumber - b.pageNumber; });
+      stats.push({ pageNumber, div: wrapper, });
+      stats.sort(function(a, b) {
+        return a.pageNumber - b.pageNumber;
+      });
       clear(this.panel);
       for (var i = 0, ii = stats.length; i < ii; ++i) {
         this.panel.appendChild(stats[i].div);
       }
     },
-    cleanup: function () {
+    cleanup() {
       stats = [];
       clear(this.panel);
-    }
+    },
   };
 })();
 
 // Manages all the debugging tools.
-var PDFBug = (function PDFBugClosure() {
+window.PDFBug = (function PDFBugClosure() {
   var panelWidth = 300;
   var buttons = [];
   var activePanel = null;
@@ -509,7 +513,7 @@ var PDFBug = (function PDFBugClosure() {
       StepperManager,
       Stats
     ],
-    enable: function(ids) {
+    enable(ids) {
       var all = false, tools = this.tools;
       if (ids.length === 1 && ids[0] === 'all') {
         all = true;
@@ -531,7 +535,7 @@ var PDFBug = (function PDFBugClosure() {
         });
       }
     },
-    init: function init(pdfjsLib, container) {
+    init(pdfjsLib, container) {
       /*
        * Basic Layout:
        * PDFBug
@@ -584,14 +588,14 @@ var PDFBug = (function PDFBugClosure() {
       }
       this.selectPanel(0);
     },
-    cleanup: function cleanup() {
+    cleanup() {
       for (var i = 0, ii = this.tools.length; i < ii; i++) {
         if (this.tools[i].enabled) {
           this.tools[i].cleanup();
         }
       }
     },
-    selectPanel: function selectPanel(index) {
+    selectPanel(index) {
       if (typeof index !== 'number') {
         index = this.tools.indexOf(index);
       }
@@ -611,6 +615,6 @@ var PDFBug = (function PDFBugClosure() {
           tools[j].panel.setAttribute('hidden', 'true');
         }
       }
-    }
+    },
   };
 })();

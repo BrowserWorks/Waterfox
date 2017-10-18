@@ -14,8 +14,11 @@
 #include "ia2AccessibleComponent.h"
 #include "ia2AccessibleHyperlink.h"
 #include "ia2AccessibleValue.h"
+#include "mozilla/a11y/AccessibleHandler.h"
+#include "mozilla/a11y/MsaaIdGenerator.h"
 #include "mozilla/a11y/ProxyAccessible.h"
-#include "mozilla/a11y/IDSet.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/mscom/Utils.h"
 
 #ifdef __GNUC__
 // Inheriting from both XPCOM and MSCOM interfaces causes a lot of warnings
@@ -47,88 +50,88 @@ public: // construction, destruction
     CLSID GetClassID() const;
 
   public: // COM interface IAccessible
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accParent( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accParent(
         /* [retval][out] */ IDispatch __RPC_FAR *__RPC_FAR *ppdispParent) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accChildCount( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accChildCount(
         /* [retval][out] */ long __RPC_FAR *pcountChildren) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accChild( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accChild(
         /* [in] */ VARIANT varChild,
         /* [retval][out] */ IDispatch __RPC_FAR *__RPC_FAR *ppdispChild) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accName( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accName(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszName) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accValue( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accValue(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszValue) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accDescription( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accDescription(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszDescription) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accRole( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accRole(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ VARIANT __RPC_FAR *pvarRole) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accState( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accState(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ VARIANT __RPC_FAR *pvarState) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accHelp( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accHelp(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszHelp) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accHelpTopic( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accHelpTopic(
         /* [out] */ BSTR __RPC_FAR *pszHelpFile,
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ long __RPC_FAR *pidTopic) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accKeyboardShortcut(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszKeyboardShortcut) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accFocus( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accFocus(
         /* [retval][out] */ VARIANT __RPC_FAR *pvarChild) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accSelection( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accSelection(
         /* [retval][out] */ VARIANT __RPC_FAR *pvarChildren) override;
 
-    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accDefaultAction( 
+    virtual /* [id][propget] */ HRESULT STDMETHODCALLTYPE get_accDefaultAction(
         /* [optional][in] */ VARIANT varChild,
         /* [retval][out] */ BSTR __RPC_FAR *pszDefaultAction) override;
 
-    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accSelect( 
+    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accSelect(
         /* [in] */ long flagsSelect,
         /* [optional][in] */ VARIANT varChild) override;
 
-    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accLocation( 
+    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accLocation(
         /* [out] */ long __RPC_FAR *pxLeft,
         /* [out] */ long __RPC_FAR *pyTop,
         /* [out] */ long __RPC_FAR *pcxWidth,
         /* [out] */ long __RPC_FAR *pcyHeight,
         /* [optional][in] */ VARIANT varChild) override;
 
-    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accNavigate( 
+    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accNavigate(
         /* [in] */ long navDir,
         /* [optional][in] */ VARIANT varStart,
         /* [retval][out] */ VARIANT __RPC_FAR *pvarEndUpAt) override;
 
-    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accHitTest( 
+    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accHitTest(
         /* [in] */ long xLeft,
         /* [in] */ long yTop,
         /* [retval][out] */ VARIANT __RPC_FAR *pvarChild) override;
 
-    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accDoDefaultAction( 
+    virtual /* [id] */ HRESULT STDMETHODCALLTYPE accDoDefaultAction(
         /* [optional][in] */ VARIANT varChild) override;
 
-    virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_accName( 
+    virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_accName(
         /* [optional][in] */ VARIANT varChild,
         /* [in] */ BSTR szName) override;
 
-    virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_accValue( 
+    virtual /* [id][propput] */ HRESULT STDMETHODCALLTYPE put_accValue(
         /* [optional][in] */ VARIANT varChild,
         /* [in] */ BSTR szValue) override;
 
@@ -162,34 +165,59 @@ public: // construction, destruction
   static void FireWinEvent(Accessible* aTarget, uint32_t aEventType);
 
   /**
-   * System caret support: update the Windows caret position. 
+   * System caret support: update the Windows caret position.
    * The system caret works more universally than the MSAA caret
    * For example, Window-Eyes, JAWS, ZoomText and Windows Tablet Edition use it
    * We will use an invisible system caret.
    * Gecko is still responsible for drawing its own caret
    */
   void UpdateSystemCaretFor(Accessible* aAccessible);
+  static void UpdateSystemCaretFor(ProxyAccessible* aProxy,
+                                   const LayoutDeviceIntRect& aCaretRect);
 
+private:
+  static void UpdateSystemCaretFor(HWND aCaretWnd,
+                                   const LayoutDeviceIntRect& aCaretRect);
+
+public:
   /**
    * Find an accessible by the given child ID in cached documents.
    */
-  Accessible* GetXPAccessibleFor(const VARIANT& aVarChild);
+  MOZ_MUST_USE already_AddRefed<IAccessible>
+  GetIAccessibleFor(const VARIANT& aVarChild, bool* aIsDefunct);
 
   virtual void GetNativeInterface(void **aOutAccessible) override;
 
   static IDispatch* NativeAccessible(Accessible* aAccessible);
 
-#ifdef _WIN64
   uint32_t GetExistingID() const { return mID; }
   static const uint32_t kNoID = 0;
-#endif
+  void SetID(uint32_t aID);
+
+  static uint32_t GetContentProcessIdFor(dom::ContentParentId aIPCContentId);
+  static void ReleaseContentProcessIdFor(dom::ContentParentId aIPCContentId);
+
+  static void SetHandlerControl(DWORD aPid, RefPtr<IHandlerControl> aCtrl);
+
+  bool DispatchTextChangeToHandler(bool aIsInsert, const nsString& aText,
+                                   int32_t aStart, uint32_t aLen);
+
+  static void AssignChildIDTo(NotNull<sdnAccessible*> aSdnAcc);
+  static void ReleaseChildID(NotNull<sdnAccessible*> aSdnAcc);
 
 protected:
   virtual ~AccessibleWrap();
 
-#ifdef _WIN64
   uint32_t mID;
-#endif
+
+  HRESULT
+  ResolveChild(const VARIANT& aVarChild, IAccessible** aOutInterface);
+
+  /**
+   * Find a remote accessible by the given child ID.
+   */
+  MOZ_MUST_USE already_AddRefed<IAccessible>
+  GetRemoteIAccessibleFor(const VARIANT& aVarChild);
 
   /**
    * Return the wrapper for the document's proxy.
@@ -203,9 +231,7 @@ protected:
 
   static ITypeInfo* gTypeInfo;
 
-#ifdef _WIN64
-  static IDSet sIDGen;
-#endif
+  static MsaaIdGenerator sIDGen;
 
   enum navRelations {
     NAVRELATION_CONTROLLED_BY = 0x1000,
@@ -227,8 +253,46 @@ protected:
     NAVRELATION_NODE_PARENT_OF = 0x1010,
     NAVRELATION_CONTAINING_DOCUMENT = 0x1011,
     NAVRELATION_CONTAINING_TAB_PANE = 0x1012,
-    NAVRELATION_CONTAINING_APPLICATION = 0x1014
+    NAVRELATION_CONTAINING_WINDOW = 0x1013,
+    NAVRELATION_CONTAINING_APPLICATION = 0x1014,
+    NAVRELATION_DETAILS = 0x1015,
+    NAVRELATION_DETAILS_FOR = 0x1016,
+    NAVRELATION_ERROR = 0x1017,
+    NAVRELATION_ERROR_FOR = 0x1018
   };
+
+  struct HandlerControllerData final
+  {
+    HandlerControllerData(DWORD aPid, RefPtr<IHandlerControl>&& aCtrl)
+      : mPid(aPid)
+      , mCtrl(Move(aCtrl))
+    {
+      mIsProxy = mozilla::mscom::IsProxy(mCtrl);
+    }
+
+    HandlerControllerData(HandlerControllerData&& aOther)
+      : mPid(aOther.mPid)
+      , mIsProxy(aOther.mIsProxy)
+      , mCtrl(Move(aOther.mCtrl))
+    {
+    }
+
+    bool operator==(const HandlerControllerData& aOther) const
+    {
+      return mPid == aOther.mPid;
+    }
+
+    bool operator==(const DWORD& aPid) const
+    {
+      return mPid == aPid;
+    }
+
+    DWORD mPid;
+    bool mIsProxy;
+    RefPtr<IHandlerControl> mCtrl;
+  };
+
+  static StaticAutoPtr<nsTArray<HandlerControllerData>> sHandlerControllers;
 };
 
 static inline AccessibleWrap*

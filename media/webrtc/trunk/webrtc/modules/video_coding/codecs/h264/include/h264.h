@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2014 The WebRTC project authors. All Rights Reserved.
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
@@ -12,23 +12,33 @@
 #ifndef WEBRTC_MODULES_VIDEO_CODING_CODECS_H264_INCLUDE_H264_H_
 #define WEBRTC_MODULES_VIDEO_CODING_CODECS_H264_INCLUDE_H264_H_
 
-#include "webrtc/modules/video_coding/codecs/interface/video_codec_interface.h"
+#include "webrtc/media/base/codec.h"
+#include "webrtc/modules/video_coding/include/video_codec_interface.h"
 
 namespace webrtc {
 
+// Set to disable the H.264 encoder/decoder implementations that are provided if
+// |rtc_use_h264| build flag is true (if false, this function does nothing).
+// This function should only be called before or during WebRTC initialization
+// and is not thread-safe.
+void DisableRtcUseH264();
+
 class H264Encoder : public VideoEncoder {
  public:
-  static H264Encoder* Create();
+  static H264Encoder* Create(const cricket::VideoCodec& codec);
+  // If H.264 is supported (any implementation).
+  static bool IsSupported();
 
-  virtual ~H264Encoder() {}
-};  // H264Encoder
+  ~H264Encoder() override {}
+};
 
 class H264Decoder : public VideoDecoder {
  public:
   static H264Decoder* Create();
+  static bool IsSupported();
 
-  virtual ~H264Decoder() {}
-};  // H264Decoder
+  ~H264Decoder() override {}
+};
 
 }  // namespace webrtc
 

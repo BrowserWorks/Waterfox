@@ -35,17 +35,19 @@ using namespace mozilla::net;
 
 class nsFileCopyEvent : public Runnable {
 public:
-  nsFileCopyEvent(nsIOutputStream *dest, nsIInputStream *source, int64_t len)
-    : mDest(dest)
+  nsFileCopyEvent(nsIOutputStream* dest, nsIInputStream* source, int64_t len)
+    : mozilla::Runnable("nsFileCopyEvent")
+    , mDest(dest)
     , mSource(source)
     , mLen(len)
     , mStatus(NS_OK)
-    , mInterruptStatus(NS_OK) {
+    , mInterruptStatus(NS_OK)
+  {
   }
 
   // Read the current status of the file copy operation.
   nsresult Status() { return mStatus; }
-  
+
   // Call this method to perform the file copy synchronously.
   void DoCopy();
 
@@ -63,7 +65,7 @@ public:
     mInterruptStatus = status;
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     DoCopy();
     return NS_OK;
   }
@@ -112,7 +114,7 @@ nsFileCopyEvent::DoCopy()
       mSink->OnTransportStatus(nullptr, NS_NET_STATUS_WRITING, progress,
                                mLen);
     }
-                               
+
     len -= num;
   }
 
@@ -129,7 +131,8 @@ nsFileCopyEvent::DoCopy()
 
     // Release the callback on the target thread to avoid destroying stuff on
     // the wrong thread.
-    NS_ProxyRelease(mCallbackTarget, mCallback.forget());
+    NS_ProxyRelease(
+      "nsFileCopyEvent::mCallback", mCallbackTarget, mCallback.forget());
   }
 }
 
@@ -181,10 +184,10 @@ public:
     return mCopyEvent != nullptr;
   }
 
-  NS_IMETHODIMP ReadSegments(nsWriteSegmentFun fun, void *closure,
-                             uint32_t count, uint32_t *result) override;
-  NS_IMETHODIMP AsyncWait(nsIInputStreamCallback *callback, uint32_t flags,
-                          uint32_t count, nsIEventTarget *target) override;
+  NS_IMETHOD ReadSegments(nsWriteSegmentFun fun, void *closure,
+                          uint32_t count, uint32_t *result) override;
+  NS_IMETHOD AsyncWait(nsIInputStreamCallback *callback, uint32_t flags,
+                       uint32_t count, nsIEventTarget *target) override;
 
 private:
   virtual ~nsFileUploadContentStream() {}
@@ -211,7 +214,7 @@ nsFileUploadContentStream::ReadSegments(nsWriteSegmentFun fun, void *closure,
     // Inform the caller that they will have to wait for the copy operation to
     // complete asynchronously.  We'll kick of the copy operation once they
     // call AsyncWait.
-    return NS_BASE_STREAM_WOULD_BLOCK;  
+    return NS_BASE_STREAM_WOULD_BLOCK;
   }
 
   // Perform copy synchronously, and then close out the stream.
@@ -232,7 +235,9 @@ nsFileUploadContentStream::AsyncWait(nsIInputStreamCallback *callback,
 
   if (IsNonBlocking()) {
     nsCOMPtr<nsIRunnable> callback =
-      NewRunnableMethod(this, &nsFileUploadContentStream::OnCopyComplete);
+      NewRunnableMethod("nsFileUploadContentStream::OnCopyComplete",
+                        this,
+                        &nsFileUploadContentStream::OnCopyComplete);
     mCopyEvent->Dispatch(callback, mSink, target);
   }
 
@@ -250,28 +255,51 @@ nsFileUploadContentStream::OnCopyComplete()
 
 //-----------------------------------------------------------------------------
 
-nsFileChannel::nsFileChannel(nsIURI *uri) 
+nsFileChannel::nsFileChannel(nsIURI *uri)
+  : mFileURI(uri)
 {
+}
+
+nsresult
+nsFileChannel::Init()
+{
+  NS_ENSURE_STATE(mLoadInfo);
+
+  nsresult rv;
+
+  rv = nsBaseChannel::Init();
+  NS_ENSURE_SUCCESS(rv, rv);
+
   // If we have a link file, we should resolve its target right away.
   // This is to protect against a same origin attack where the same link file
   // can point to different resources right after the first resource is loaded.
   nsCOMPtr<nsIFile> file;
   nsCOMPtr <nsIURI> targetURI;
+#ifdef XP_WIN
+  nsAutoString fileTarget;
+#else
   nsAutoCString fileTarget;
+#endif
   nsCOMPtr<nsIFile> resolvedFile;
   bool symLink;
-  nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(uri);
-  if (fileURL && 
+  nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(mFileURI);
+  if (fileURL &&
       NS_SUCCEEDED(fileURL->GetFile(getter_AddRefs(file))) &&
-      NS_SUCCEEDED(file->IsSymlink(&symLink)) && 
+      NS_SUCCEEDED(file->IsSymlink(&symLink)) &&
       symLink &&
+#ifdef XP_WIN
+      NS_SUCCEEDED(file->GetTarget(fileTarget)) &&
+      NS_SUCCEEDED(NS_NewLocalFile(fileTarget, true,
+                                   getter_AddRefs(resolvedFile))) &&
+#else
       NS_SUCCEEDED(file->GetNativeTarget(fileTarget)) &&
-      NS_SUCCEEDED(NS_NewNativeLocalFile(fileTarget, PR_TRUE, 
+      NS_SUCCEEDED(NS_NewNativeLocalFile(fileTarget, true,
                                          getter_AddRefs(resolvedFile))) &&
-      NS_SUCCEEDED(NS_NewFileURI(getter_AddRefs(targetURI), 
-                   resolvedFile, nullptr))) {
+#endif
+      NS_SUCCEEDED(NS_NewFileURI(getter_AddRefs(targetURI),
+                                 resolvedFile, nullptr))) {
     // Make an effort to match up the query strings.
-    nsCOMPtr<nsIURL> origURL = do_QueryInterface(uri);
+    nsCOMPtr<nsIURL> origURL = do_QueryInterface(mFileURI);
     nsCOMPtr<nsIURL> targetURL = do_QueryInterface(targetURI);
     nsAutoCString queryString;
     if (origURL && targetURL && NS_SUCCEEDED(origURL->GetQuery(queryString))) {
@@ -279,13 +307,13 @@ nsFileChannel::nsFileChannel(nsIURI *uri)
     }
 
     SetURI(targetURI);
-    SetOriginalURI(uri);
-    nsLoadFlags loadFlags = 0;
-    GetLoadFlags(&loadFlags);
-    SetLoadFlags(loadFlags | nsIChannel::LOAD_REPLACE);
+    SetOriginalURI(mFileURI);
+    mLoadInfo->SetResultPrincipalURI(targetURI);
   } else {
-    SetURI(uri);
+    SetURI(mFileURI);
   }
+
+  return NS_OK;
 }
 
 nsFileChannel::~nsFileChannel()
@@ -348,7 +376,7 @@ nsFileChannel::OpenContentStream(bool async, nsIInputStream **result,
   rv = NS_GetFileProtocolHandler(getter_AddRefs(fileHandler));
   if (NS_FAILED(rv))
     return rv;
-    
+
   nsCOMPtr<nsIURI> newURI;
   rv = fileHandler->ReadURLFile(file, getter_AddRefs(newURI));
   if (NS_SUCCEEDED(rv)) {
@@ -410,7 +438,7 @@ nsFileChannel::OpenContentStream(bool async, nsIInputStream **result,
       int64_t size;
       rv = file->GetFileSize(&size);
       if (NS_FAILED(rv)) {
-        if (async && 
+        if (async &&
             (NS_ERROR_FILE_NOT_FOUND == rv ||
              NS_ERROR_FILE_TARGET_DOES_NOT_EXIST == rv)) {
           size = 0;

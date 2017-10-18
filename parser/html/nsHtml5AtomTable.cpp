@@ -24,9 +24,10 @@ nsHtml5AtomEntry::~nsHtml5AtomEntry()
 }
 
 nsHtml5AtomTable::nsHtml5AtomTable()
+  : mRecentlyUsedParserAtoms{}
 {
 #ifdef DEBUG
-  NS_GetMainThread(getter_AddRefs(mPermittedLookupThread));
+  mPermittedLookupEventTarget = mozilla::GetCurrentThreadSerialEventTarget();
 #endif
 }
 
@@ -39,18 +40,26 @@ nsHtml5AtomTable::GetAtom(const nsAString& aKey)
 {
 #ifdef DEBUG
   {
-    nsCOMPtr<nsIThread> currentThread;
-    NS_GetCurrentThread(getter_AddRefs(currentThread));
-    NS_ASSERTION(mPermittedLookupThread == currentThread, "Wrong thread!");
+    MOZ_ASSERT(mPermittedLookupEventTarget->IsOnCurrentThread());
   }
 #endif
+
+  uint32_t index = mozilla::HashString(aKey) % RECENTLY_USED_PARSER_ATOMS_SIZE;
+  nsIAtom* cachedAtom = mRecentlyUsedParserAtoms[index];
+  if (cachedAtom && cachedAtom->Equals(aKey)) {
+    return cachedAtom;
+  }
+
   nsIAtom* atom = NS_GetStaticAtom(aKey);
   if (atom) {
+    mRecentlyUsedParserAtoms[index] = atom;
     return atom;
   }
   nsHtml5AtomEntry* entry = mTable.PutEntry(aKey);
   if (!entry) {
     return nullptr;
   }
+
+  mRecentlyUsedParserAtoms[index] = entry->GetAtom();
   return entry->GetAtom();
 }

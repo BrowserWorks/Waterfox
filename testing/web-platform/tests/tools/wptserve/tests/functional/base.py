@@ -1,21 +1,28 @@
+from __future__ import print_function
+
 import base64
 import logging
 import os
+import pytest
 import unittest
-import urllib
-import urllib2
-import urlparse
 
-import wptserve
+from six.moves.urllib.parse import urlencode, urlunsplit
+from six.moves.urllib.request import Request as BaseRequest
+from six.moves.urllib.request import urlopen
+
+wptserve = pytest.importorskip("wptserve")
 
 logging.basicConfig()
+
+wptserve.logger.set_logger(logging.getLogger())
 
 here = os.path.split(__file__)[0]
 doc_root = os.path.join(here, "docroot")
 
-class Request(urllib2.Request):
+
+class Request(BaseRequest):
     def __init__(self, *args, **kwargs):
-        urllib2.Request.__init__(self, *args, **kwargs)
+        BaseRequest.__init__(self, *args, **kwargs)
         self.method = "GET"
 
     def get_method(self):
@@ -23,10 +30,11 @@ class Request(urllib2.Request):
 
     def add_data(self, data):
         if hasattr(data, "iteritems"):
-            data = urllib.urlencode(data)
-        print data
+            data = urlencode(data)
+        print(data)
         self.add_header("Content-Length", str(len(data)))
-        urllib2.Request.add_data(self, data)
+        BaseRequest.add_data(self, data)
+
 
 class TestUsingServer(unittest.TestCase):
     def setUp(self):
@@ -41,7 +49,7 @@ class TestUsingServer(unittest.TestCase):
         self.server.stop()
 
     def abs_url(self, path, query=None):
-        return urlparse.urlunsplit(("http", "%s:%i" % (self.server.host, self.server.port), path, query, None))
+        return urlunsplit(("http", "%s:%i" % (self.server.host, self.server.port), path, query, None))
 
     def request(self, path, query=None, method="GET", headers=None, body=None, auth=None):
         req = Request(self.abs_url(path, query))
@@ -56,6 +64,6 @@ class TestUsingServer(unittest.TestCase):
             req.add_data(body)
 
         if auth is not None:
-            req.add_header("Authorization", "Basic %s" % base64.encodestring('%s:%s' % auth))
+            req.add_header("Authorization", "Basic %s" % base64.b64encode('%s:%s' % auth))
 
-        return urllib2.urlopen(req)
+        return urlopen(req)

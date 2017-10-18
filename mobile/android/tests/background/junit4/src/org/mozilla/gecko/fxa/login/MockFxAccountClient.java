@@ -14,7 +14,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountRemoteError;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
-import org.mozilla.gecko.fxa.FxAccountDevice;
+import org.mozilla.gecko.fxa.devices.FxAccountDevice;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -23,6 +23,7 @@ import org.mozilla.gecko.sync.Utils;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -178,22 +179,45 @@ public class MockFxAccountClient implements FxAccountClient {
       String deviceId = deviceToRegister.id;
       if (TextUtils.isEmpty(deviceId)) { // Create
         deviceId = UUID.randomUUID().toString();
-        FxAccountDevice device = new FxAccountDevice(deviceToRegister.name, deviceId, deviceToRegister.type, null);
-        deviceToRegister.id = deviceId;
+        FxAccountDevice device = new FxAccountDevice(deviceToRegister.name, deviceId, deviceToRegister.type, null, null, null, null, null);
+        requestDelegate.handleSuccess(device);
       } else { // Update
         FxAccountDevice existingDevice = user.devices.get(deviceId);
         if (existingDevice != null) {
+          String deviceName = existingDevice.name;
           if (!TextUtils.isEmpty(deviceToRegister.name)) {
-            existingDevice.name = deviceToRegister.name;
+            deviceName = deviceToRegister.name;
           } // We could also update the other fields..
+          FxAccountDevice device = new FxAccountDevice(deviceName, existingDevice.id, existingDevice.type, existingDevice.isCurrentDevice,
+                  existingDevice.lastAccessTime, existingDevice.pushCallback, existingDevice.pushPublicKey,existingDevice.pushAuthKey);
+          requestDelegate.handleSuccess(device);
         } else { // Device unknown
           handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.UNKNOWN_DEVICE, "device is unknown");
           return;
         }
       }
-      requestDelegate.handleSuccess(deviceToRegister);
     } catch (Exception e) {
       requestDelegate.handleError(e);
+    }
+  }
+
+  @Override
+  public void destroyDevice(byte[] sessionToken, String deviceId, RequestDelegate<ExtendedJSONObject> requestDelegate) {
+    String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
+    User user = users.get(email);
+    if (email == null || user == null) {
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid sessionToken");
+      return;
+    }
+    if (!user.verified) {
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_OPERATE_ON_AN_UNVERIFIED_ACCOUNT, "user is unverified");
+      return;
+    }
+    if(user.devices.containsKey(deviceId)) {
+      user.devices.remove(deviceId);
+      requestDelegate.handleSuccess(new ExtendedJSONObject());
+    } else {
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.UNKNOWN_DEVICE, "device is unknown");
     }
   }
 
@@ -212,5 +236,10 @@ public class MockFxAccountClient implements FxAccountClient {
     Collection<FxAccountDevice> devices = user.devices.values();
     FxAccountDevice[] devicesArray = devices.toArray(new FxAccountDevice[devices.size()]);
     requestDelegate.handleSuccess(devicesArray);
+  }
+
+  @Override
+  public void notifyDevices(byte[] sessionToken, List<String> deviceIds, ExtendedJSONObject payload, Long TTL, RequestDelegate<ExtendedJSONObject> requestDelegate) {
+    requestDelegate.handleSuccess(new ExtendedJSONObject());
   }
 }

@@ -2,8 +2,8 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* () {
-  let tab1 = yield BrowserTestUtils.openNewForegroundTab(gBrowser,
+add_task(async function() {
+  let tab1 = await BrowserTestUtils.openNewForegroundTab(gBrowser,
     "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context.html");
 
   gBrowser.selectedTab = tab1;
@@ -14,6 +14,11 @@ add_task(function* () {
     },
 
     background: function() {
+      // Report onClickData info back.
+      browser.contextMenus.onClicked.addListener(info => {
+        browser.test.sendMessage("contextmenus-click", info);
+      });
+
       browser.contextMenus.create({
         title: "radio-group-1",
         type: "radio",
@@ -38,8 +43,8 @@ add_task(function* () {
     },
   });
 
-  yield extension.startup();
-  yield extension.awaitFinish("contextmenus-radio-groups");
+  await extension.startup();
+  await extension.awaitFinish("contextmenus-radio-groups");
 
   function confirmRadioGroupStates(extensionMenuRoot, expectedStates) {
     let radioItems = extensionMenuRoot.getElementsByAttribute("type", "radio");
@@ -57,22 +62,39 @@ add_task(function* () {
     return extensionMenuRoot.getElementsByAttribute("type", "radio");
   }
 
-  let extensionMenuRoot = yield openExtensionContextMenu();
+  function confirmOnClickData(onClickData, id, was, checked) {
+    is(onClickData.wasChecked, was, `radio item ${id} was ${was ? "" : "not "}checked before the click`);
+    is(onClickData.checked, checked, `radio item ${id} is ${checked ? "" : "not "}checked after the click`);
+  }
+
+  let extensionMenuRoot = await openExtensionContextMenu();
   let items = confirmRadioGroupStates(extensionMenuRoot, [true, false, false]);
-  yield closeExtensionContextMenu(items[1]);
+  await closeExtensionContextMenu(items[1]);
 
-  extensionMenuRoot = yield openExtensionContextMenu();
+  let result = await extension.awaitMessage("contextmenus-click");
+  confirmOnClickData(result, 2, false, true);
+
+  extensionMenuRoot = await openExtensionContextMenu();
   items = confirmRadioGroupStates(extensionMenuRoot, [true, true, false]);
-  yield closeExtensionContextMenu(items[2]);
+  await closeExtensionContextMenu(items[2]);
 
-  extensionMenuRoot = yield openExtensionContextMenu();
+  result = await extension.awaitMessage("contextmenus-click");
+  confirmOnClickData(result, 3, false, true);
+
+  extensionMenuRoot = await openExtensionContextMenu();
   items = confirmRadioGroupStates(extensionMenuRoot, [true, false, true]);
-  yield closeExtensionContextMenu(items[0]);
+  await closeExtensionContextMenu(items[0]);
 
-  extensionMenuRoot = yield openExtensionContextMenu();
+  result = await extension.awaitMessage("contextmenus-click");
+  confirmOnClickData(result, 1, true, true);
+
+  extensionMenuRoot = await openExtensionContextMenu();
   items = confirmRadioGroupStates(extensionMenuRoot, [true, false, true]);
-  yield closeExtensionContextMenu(items[0]);
+  await closeExtensionContextMenu(items[0]);
 
-  yield extension.unload();
-  yield BrowserTestUtils.removeTab(tab1);
+  result = await extension.awaitMessage("contextmenus-click");
+  confirmOnClickData(result, 1, true, true);
+
+  await extension.unload();
+  await BrowserTestUtils.removeTab(tab1);
 });

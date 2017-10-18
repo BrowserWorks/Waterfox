@@ -2,14 +2,15 @@
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   let uri = Cc["@mozilla.org/network/io-service;1"].
             getService(Ci.nsIIOService).
-            newURI("https://www.example.com", null, null);
+            newURI("https://www.example.com");
   let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
               .getService(Ci.nsIScriptSecurityManager);
   let principal = ssm.createCodebasePrincipal(uri, {});
@@ -41,16 +42,12 @@ function testSteps()
   req.onsuccess = grabEventAndContinueHandler;
   let event = yield undefined;
 
-  let dbA = event.target.result;
-
   // Keep at least one factory operation alive by deleting a database that is
   // stil open.
   req = indexedDB.open("foo-b", 1);
   req.onerror = errorHandler;
   req.onsuccess = grabEventAndContinueHandler;
   event = yield undefined;
-
-  let dbB = event.target.result;
 
   indexedDB.deleteDatabase("foo-b");
 
@@ -122,8 +119,9 @@ function testSteps()
   let usageBeforeMaintenance;
 
   quotaManagerService.getUsageForPrincipal(principal, (request) => {
-    ok(request.usage > 0, "Usage is non-zero");
-    usageBeforeMaintenance = request.usage;
+    let usage = request.result.usage;
+    ok(usage > 0, "Usage is non-zero");
+    usageBeforeMaintenance = usage;
     continueToNextStep();
   });
   yield undefined;
@@ -155,8 +153,9 @@ function testSteps()
   let usageAfterMaintenance;
 
   quotaManagerService.getUsageForPrincipal(principal, (request) => {
-    ok(request.usage > 0, "Usage is non-zero");
-    usageAfterMaintenance = request.usage;
+    let usage = request.result.usage;
+    ok(usage > 0, "Usage is non-zero");
+    usageAfterMaintenance = usage;
     continueToNextStep();
   });
   yield undefined;

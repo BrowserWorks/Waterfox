@@ -2,6 +2,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 // Tests that keyboard interaction works fine with the tree widget
 
 const TEST_URI = "data:text/html;charset=utf-8,<head>" +
@@ -138,11 +140,10 @@ function* testKeyboardInteraction(tree, win) {
 
   // pressing left to check expand collapse feature.
   // This does not emit any event, so listening for keypress
-  tree.root.children.addEventListener("keypress", function onClick() {
-    tree.root.children.removeEventListener("keypress", onClick);
+  tree.root.children.addEventListener("keypress", function () {
     // executeSoon so that other listeners on the same method are executed first
     executeSoon(() => event.resolve(null));
-  });
+  }, {once: true});
   info("Pressing left key to collapse the item");
   event = defer();
   node = tree._selectedLabel;
@@ -181,10 +182,9 @@ function* testKeyboardInteraction(tree, win) {
 
   // collapsing the item to check expand feature.
 
-  tree.root.children.addEventListener("keypress", function onClick() {
-    tree.root.children.removeEventListener("keypress", onClick);
+  tree.root.children.addEventListener("keypress", function () {
     executeSoon(() => event.resolve(null));
-  });
+  }, {once: true});
   info("Pressing left key to collapse the item");
   event = defer();
   node = tree._selectedLabel;
@@ -195,10 +195,9 @@ function* testKeyboardInteraction(tree, win) {
 
   // pressing right should expand this now.
 
-  tree.root.children.addEventListener("keypress", function onClick() {
-    tree.root.children.removeEventListener("keypress", onClick);
+  tree.root.children.addEventListener("keypress", function () {
     executeSoon(() => event.resolve(null));
-  });
+  }, {once: true});
   info("Pressing right key to expend the collapsed item");
   event = defer();
   node = tree._selectedLabel;
@@ -213,10 +212,9 @@ function* testKeyboardInteraction(tree, win) {
   node = tree._selectedLabel;
   // pressing down again should not change selection
   event = defer();
-  tree.root.children.addEventListener("keypress", function onClick() {
-    tree.root.children.removeEventListener("keypress", onClick);
+  tree.root.children.addEventListener("keypress", function () {
     executeSoon(() => event.resolve(null));
-  });
+  }, {once: true});
   info("Pressing down key on last item of the tree");
   EventUtils.sendKey("DOWN", win);
   yield event.promise;

@@ -125,6 +125,7 @@ public:
   static void ReadPathToBuilder(std::istream &aStream, PathBuilder *aBuilder);
 
 private:
+  friend class DrawTargetWrapAndRecord;
   friend class DrawTargetRecording;
   friend class RecordedPathCreation;
 
@@ -133,7 +134,7 @@ private:
   FillRule mFillRule;
 
   // Event recorders that have this path in their event stream.
-  std::vector<DrawEventRecorderPrivate*> mStoredRecorders;
+  std::vector<RefPtr<DrawEventRecorderPrivate>> mStoredRecorders;
 };
 
 } // namespace gfx

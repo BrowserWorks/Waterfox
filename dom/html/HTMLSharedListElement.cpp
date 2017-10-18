@@ -9,12 +9,12 @@
 #include "mozilla/dom/HTMLOListElementBinding.h"
 #include "mozilla/dom/HTMLUListElementBinding.h"
 
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsGenericHTMLElement.h"
 #include "nsAttrValueInlines.h"
 #include "nsGkAtoms.h"
 #include "nsStyleConsts.h"
 #include "nsMappedAttributes.h"
-#include "nsRuleData.h"
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(SharedList)
 
@@ -38,11 +38,6 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLSharedListElement)
 
 
-NS_IMPL_BOOL_ATTR(HTMLSharedListElement, Compact, compact)
-NS_IMPL_INT_ATTR_DEFAULT_VALUE(HTMLSharedListElement, Start, start, 1)
-NS_IMPL_STRING_ATTR(HTMLSharedListElement, Type, type)
-NS_IMPL_BOOL_ATTR(HTMLSharedListElement, Reversed, reversed)
-
 // Shared with nsHTMLSharedElement.cpp
 nsAttrValue::EnumTable kListTypeTable[] = {
   { "none", NS_STYLE_LIST_STYLE_NONE },
@@ -55,7 +50,7 @@ nsAttrValue::EnumTable kListTypeTable[] = {
   { "upper-roman", NS_STYLE_LIST_STYLE_UPPER_ROMAN },
   { "lower-alpha", NS_STYLE_LIST_STYLE_LOWER_ALPHA },
   { "upper-alpha", NS_STYLE_LIST_STYLE_UPPER_ALPHA },
-  { 0 }
+  { nullptr, 0 }
 };
 
 static const nsAttrValue::EnumTable kOldListTypeTable[] = {
@@ -64,7 +59,7 @@ static const nsAttrValue::EnumTable kOldListTypeTable[] = {
   { "a", NS_STYLE_LIST_STYLE_LOWER_ALPHA },
   { "I", NS_STYLE_LIST_STYLE_UPPER_ROMAN },
   { "i", NS_STYLE_LIST_STYLE_LOWER_ROMAN },
-  { 0 }
+  { nullptr, 0 }
 };
 
 bool
@@ -92,15 +87,14 @@ HTMLSharedListElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLSharedListElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                             nsRuleData* aData)
+                                             GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(List)) {
-    nsCSSValue* listStyleType = aData->ValueForListStyleType();
-    if (listStyleType->GetUnit() == eCSSUnit_Null) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(List))) {
+    if (!aData->PropertyIsSet(eCSSProperty_list_style_type)) {
       // type: enum
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::type);
       if (value && value->Type() == nsAttrValue::eEnum) {
-        listStyleType->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
+        aData->SetKeywordValue(eCSSProperty_list_style_type, value->GetEnumValue());
       }
     }
   }

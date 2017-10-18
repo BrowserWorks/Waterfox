@@ -78,10 +78,7 @@ void GrBufferAllocPool::reset() {
     VALIDATE();
     fBytesInUse = 0;
     this->deleteBlocks();
-
-    // we may have created a large cpu mirror of a large VB. Reset the size to match our minimum.
-    this->resetCpuData(fMinBlockSize);
-
+    this->resetCpuData(0);      // delete all the cpu-side memory
     VALIDATE();
 }
 
@@ -281,7 +278,7 @@ void* GrBufferAllocPool::resetCpuData(size_t newSize) {
     sk_free(fCpuData);
     if (newSize) {
         if (fGpu->caps()->mustClearUploadedBufferData()) {
-            fCpuData = sk_calloc(newSize);
+            fCpuData = sk_calloc_throw(newSize);
         } else {
             fCpuData = sk_malloc_throw(newSize);
         }
@@ -337,7 +334,7 @@ void* GrVertexBufferAllocPool::makeSpace(size_t vertexSize,
     SkASSERT(buffer);
     SkASSERT(startVertex);
 
-    size_t offset = 0; // assign to suppress warning
+    size_t offset SK_INIT_TO_AVOID_WARNING;
     void* ptr = INHERITED::makeSpace(vertexSize * vertexCount,
                                      vertexSize,
                                      buffer,
@@ -362,7 +359,7 @@ void* GrIndexBufferAllocPool::makeSpace(int indexCount,
     SkASSERT(buffer);
     SkASSERT(startIndex);
 
-    size_t offset = 0; // assign to suppress warning
+    size_t offset SK_INIT_TO_AVOID_WARNING;
     void* ptr = INHERITED::makeSpace(indexCount * sizeof(uint16_t),
                                      sizeof(uint16_t),
                                      buffer,

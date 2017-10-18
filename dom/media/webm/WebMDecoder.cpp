@@ -5,90 +5,72 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Preferences.h"
+#ifdef MOZ_AV1
+#include "AOMDecoder.h"
+#endif
+#include "MediaContainerType.h"
 #include "MediaDecoderStateMachine.h"
 #include "WebMDemuxer.h"
 #include "WebMDecoder.h"
 #include "VideoUtils.h"
-#include "nsContentTypeParser.h"
 
 namespace mozilla {
 
 MediaDecoderStateMachine* WebMDecoder::CreateStateMachine()
 {
-  mReader =
-    new MediaFormatReader(this, new WebMDemuxer(GetResource()), GetVideoFrameContainer());
+  MediaFormatReaderInit init;
+  init.mVideoFrameContainer = GetVideoFrameContainer();
+  init.mKnowsCompositor = GetCompositor();
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, new WebMDemuxer(mResource));
   return new MediaDecoderStateMachine(this, mReader);
 }
 
 /* static */
 bool
-WebMDecoder::IsEnabled()
+WebMDecoder::IsSupportedType(const MediaContainerType& aContainerType)
 {
-  return Preferences::GetBool("media.webm.enabled");
-}
-
-/* static */
-bool
-WebMDecoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
-                                const nsAString& aCodecs)
-{
-  if (!IsEnabled()) {
+  if (!Preferences::GetBool("media.webm.enabled")) {
     return false;
   }
 
-  const bool isWebMAudio = aMIMETypeExcludingCodecs.EqualsASCII("audio/webm");
-  const bool isWebMVideo = aMIMETypeExcludingCodecs.EqualsASCII("video/webm");
-  if (!isWebMAudio && !isWebMVideo) {
+  bool isVideo = aContainerType.Type() == MEDIAMIMETYPE("video/webm");
+  if (aContainerType.Type() != MEDIAMIMETYPE("audio/webm") && !isVideo) {
     return false;
   }
 
-  nsTArray<nsCString> codecMimes;
-  if (aCodecs.IsEmpty()) {
+  const MediaCodecs& codecs = aContainerType.ExtendedType().Codecs();
+  if (codecs.IsEmpty()) {
     // WebM guarantees that the only codecs it contained are vp8, vp9, opus or vorbis.
     return true;
   }
   // Verify that all the codecs specified are ones that we expect that
   // we can play.
-  nsTArray<nsString> codecs;
-  if (!ParseCodecsString(aCodecs, codecs)) {
-    return false;
-  }
-  for (const nsString& codec : codecs) {
+  for (const auto& codec : codecs.Range()) {
     if (codec.EqualsLiteral("opus") || codec.EqualsLiteral("vorbis")) {
       continue;
     }
-    // Note: Only accept VP8/VP9 in a video content type, not in an audio
-    // content type.
-    if (isWebMVideo &&
+    // Note: Only accept VP8/VP9 in a video container type, not in an audio
+    // container type.
+    if (isVideo &&
         (codec.EqualsLiteral("vp8") || codec.EqualsLiteral("vp8.0") ||
          codec.EqualsLiteral("vp9") || codec.EqualsLiteral("vp9.0"))) {
-
       continue;
     }
+#ifdef MOZ_AV1
+    if (isVideo && AOMDecoder::IsSupportedCodec(codec)) {
+      continue;
+    }
+#endif
     // Some unsupported codec.
     return false;
   }
   return true;
 }
 
-/* static */ bool
-WebMDecoder::CanHandleMediaType(const nsAString& aContentType)
-{
-  nsContentTypeParser parser(aContentType);
-  nsAutoString mimeType;
-  nsresult rv = parser.GetType(mimeType);
-  if (NS_FAILED(rv)) {
-    return false;
-  }
-  nsString codecs;
-  parser.GetParameter("codecs", codecs);
-
-  return CanHandleMediaType(NS_ConvertUTF16toUTF8(mimeType),
-                            codecs);
-}
-
 void
-WebMDecoder::GetMozDebugReaderData(nsAString& aString)
+WebMDecoder::GetMozDebugReaderData(nsACString& aString)
 {
   if (mReader) {
     mReader->GetMozDebugReaderData(aString);

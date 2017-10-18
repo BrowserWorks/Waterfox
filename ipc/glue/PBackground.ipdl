@@ -5,8 +5,8 @@
 include protocol PAsmJSCacheEntry;
 include protocol PBackgroundIDBFactory;
 include protocol PBackgroundIndexedDBUtils;
+include protocol PBackgroundStorage;
 include protocol PBackgroundTest;
-include protocol PBlob;
 include protocol PBroadcastChannel;
 include protocol PCache;
 include protocol PCacheStorage;
@@ -15,16 +15,21 @@ include protocol PFileDescriptorSet;
 include protocol PFileSystemRequest;
 include protocol PGamepadEventChannel;
 include protocol PGamepadTestChannel;
+include protocol PHttpBackgroundChannel;
+include protocol PIPCBlobInputStream;
+include protocol PPendingIPCBlob;
 include protocol PMessagePort;
 include protocol PCameras;
-include protocol PNuwa;
 include protocol PQuota;
-include protocol PSendStream;
+include protocol PChildToParentStream;
+include protocol PParentToChildStream;
 include protocol PServiceWorkerManager;
+include protocol PWebAuthnTransaction;
 include protocol PUDPSocket;
 include protocol PVsync;
 
 include DOMTypes;
+include IPCBlob;
 include PBackgroundSharedTypes;
 include PBackgroundIDBSharedTypes;
 include PFileSystemParams;
@@ -49,8 +54,8 @@ sync protocol PBackground
   manages PAsmJSCacheEntry;
   manages PBackgroundIDBFactory;
   manages PBackgroundIndexedDBUtils;
+  manages PBackgroundStorage;
   manages PBackgroundTest;
-  manages PBlob;
   manages PBroadcastChannel;
   manages PCache;
   manages PCacheStorage;
@@ -59,12 +64,16 @@ sync protocol PBackground
   manages PFileSystemRequest;
   manages PGamepadEventChannel;
   manages PGamepadTestChannel;
+  manages PHttpBackgroundChannel;
+  manages PIPCBlobInputStream;
+  manages PPendingIPCBlob;
   manages PMessagePort;
   manages PCameras;
-  manages PNuwa;
   manages PQuota;
-  manages PSendStream;
+  manages PChildToParentStream;
+  manages PParentToChildStream;
   manages PServiceWorkerManager;
+  manages PWebAuthnTransaction;
   manages PUDPSocket;
   manages PVsync;
 
@@ -78,6 +87,15 @@ parent:
 
   // Use only for testing!
   async FlushPendingFileDeletions();
+
+  async PBackgroundStorage(nsString profilePath);
+
+  async BroadcastLocalStorageChange(nsString documentURI,
+                                    nsString key,
+                                    nsString oldValue,
+                                    nsString newValue,
+                                    PrincipalInfo principalInfo,
+                                    bool isPrivate);
 
   async PVsync();
 
@@ -94,9 +112,7 @@ parent:
 
   async PMessagePort(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
 
-  async PNuwa();
-
-  async PSendStream();
+  async PChildToParentStream();
 
   async MessagePortForceClose(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
 
@@ -112,12 +128,29 @@ parent:
 
   async PGamepadTestChannel();
 
+  async PHttpBackgroundChannel(uint64_t channelId);
+
+  async PWebAuthnTransaction();
+
 child:
   async PCache();
   async PCacheStreamControl();
 
+  async PParentToChildStream();
+
+  async PPendingIPCBlob(IPCBlob blob);
+
+  async DispatchLocalStorageChange(nsString documentURI,
+                                   nsString key,
+                                   nsString oldValue,
+                                   nsString newValue,
+                                   PrincipalInfo principalInfo,
+                                   bool isPrivate);
+
 both:
-  async PBlob(BlobConstructorParams params);
+  // PIPCBlobInputStream is created on the parent side only if the child starts
+  // a migration.
+  async PIPCBlobInputStream(nsID aID, uint64_t aSize);
 
   async PFileDescriptorSet(FileDescriptor fd);
 };

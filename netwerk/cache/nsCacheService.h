@@ -40,17 +40,18 @@ class mozIStorageService;
 
 class nsNotifyDoomListener : public mozilla::Runnable {
 public:
-    nsNotifyDoomListener(nsICacheListener *listener,
-                         nsresult status)
-        : mListener(listener)      // transfers reference
-        , mStatus(status)
-    {}
+  nsNotifyDoomListener(nsICacheListener* listener, nsresult status)
+    : mozilla::Runnable("nsNotifyDoomListener")
+    , mListener(listener) // transfers reference
+    , mStatus(status)
+  {
+  }
 
-    NS_IMETHOD Run()
-    {
-        mListener->OnCacheEntryDoomed(mStatus);
-        NS_RELEASE(mListener);
-        return NS_OK;
+  NS_IMETHOD Run() override
+  {
+    mListener->OnCacheEntryDoomed(mStatus);
+    NS_RELEASE(mListener);
+    return NS_OK;
     }
 
 private:
@@ -255,7 +256,7 @@ private:
      */
 
     static void      Lock();
-    static void      Lock(::mozilla::Telemetry::ID mainThreadLockerID);
+    static void      Lock(::mozilla::Telemetry::HistogramID mainThreadLockerID);
     static void      Unlock();
     void             LockAcquired();
     void             LockReleased();
@@ -381,7 +382,7 @@ public:
     nsCacheServiceAutoLock() {
         nsCacheService::Lock();
     }
-    explicit nsCacheServiceAutoLock(mozilla::Telemetry::ID mainThreadLockerID) {
+    explicit nsCacheServiceAutoLock(mozilla::Telemetry::HistogramID mainThreadLockerID) {
         nsCacheService::Lock(mainThreadLockerID);
     }
     ~nsCacheServiceAutoLock() {

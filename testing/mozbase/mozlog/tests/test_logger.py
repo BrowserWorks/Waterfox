@@ -9,9 +9,11 @@ import threading
 import time
 import unittest
 
-import mozfile
+import mozunit
 
+import mozfile
 import mozlog.unstructured as mozlog
+
 
 class ListHandler(mozlog.Handler):
     """Mock handler appends messages to a list for later inspection."""
@@ -22,6 +24,7 @@ class ListHandler(mozlog.Handler):
 
     def emit(self, record):
         self.messages.append(self.format(record))
+
 
 class TestLogging(unittest.TestCase):
     """Tests behavior of basic mozlog api."""
@@ -59,6 +62,7 @@ class TestLogging(unittest.TestCase):
         # Just verify that this raises no exceptions.
         datetime.datetime.strptime(handler.messages[-1][:23],
                                    '%Y-%m-%d %H:%M:%S,%f')
+
 
 class TestStructuredLogging(unittest.TestCase):
     """Tests structured output in mozlog."""
@@ -190,8 +194,8 @@ class TestStructuredLogging(unittest.TestCase):
                                            '_level': 'DEBUG'})
 
         message_string = message_string_one + '\n' + \
-                         message_string_two + '\n' + \
-                         message_string_three + '\n'
+            message_string_two + '\n' + \
+            message_string_three + '\n'
 
         server_thread = threading.Thread(target=self.log_server.handle_request)
         server_thread.start()
@@ -215,9 +219,11 @@ class TestStructuredLogging(unittest.TestCase):
 
         server_thread.join()
 
+
 class Loggable(mozlog.LoggingMixin):
     """Trivial class inheriting from LoggingMixin"""
     pass
+
 
 class TestLoggingMixin(unittest.TestCase):
     """Tests basic use of LoggingMixin"""
@@ -227,7 +233,7 @@ class TestLoggingMixin(unittest.TestCase):
         self.assertTrue(not hasattr(loggable, "_logger"))
         loggable.log(mozlog.INFO, "This will instantiate the logger")
         self.assertTrue(hasattr(loggable, "_logger"))
-        self.assertEqual(loggable._logger.name, "test_logger.Loggable")
+        self.assertEqual(loggable._logger.name, "__main__.Loggable")
 
         self.assertRaises(ValueError, loggable.set_logger,
                           "not a logger")
@@ -244,7 +250,7 @@ class TestLoggingMixin(unittest.TestCase):
         loggable.info('message for "info" method')
         loggable.error('message for "error" method')
         loggable.log_structured('test_message',
-                                params={'_message': 'message for ' + \
+                                params={'_message': 'message for ' +
                                         '"log_structured" method'})
 
         expected_messages = ['message for "log" method',
@@ -255,5 +261,6 @@ class TestLoggingMixin(unittest.TestCase):
         actual_messages = loggable._logger.handlers[0].messages
         self.assertEqual(expected_messages, actual_messages)
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

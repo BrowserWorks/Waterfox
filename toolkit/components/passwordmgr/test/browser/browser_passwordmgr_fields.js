@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function test() {
-  waitForExplicitFinish();
+add_task(async function test() {
+  await new Promise(resolve => {
 
   let pwmgr = Cc["@mozilla.org/login-manager;1"].
                 getService(Ci.nsILoginManager);
@@ -41,25 +41,27 @@ function test() {
 
 
     let timeLastUsedCol = doc.getElementById("timeLastUsedCol");
-    is(timeLastUsedCol.getAttribute("hidden"), "",
-       "Last Used column is displayed");
+    is(timeLastUsedCol.getAttribute("hidden"), "true",
+       "Last Used column is not displayed");
 
     let timePasswordChangedCol = doc.getElementById("timePasswordChangedCol");
     is(timePasswordChangedCol.getAttribute("hidden"), "",
        "Last Changed column is displayed");
 
     // cleanup
-    Services.ww.registerNotification(function (aSubject, aTopic, aData) {
+    Services.ww.registerNotification(function(aSubject, aTopic, aData) {
       if (aSubject.location == pwmgrdlg.location && aTopic == "domwindowclosed") {
         // unregister ourself
         Services.ww.unregisterNotification(arguments.callee);
 
         pwmgr.removeAllLogins();
 
-        finish();
+        resolve();
       }
     });
 
     pwmgrdlg.close();
   }
-}
+
+  });
+});

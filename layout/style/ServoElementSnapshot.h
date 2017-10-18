@@ -13,6 +13,7 @@
 #include "nsAttrName.h"
 #include "nsAttrValue.h"
 #include "nsChangeHint.h"
+#include "nsGkAtoms.h"
 #include "nsIAtom.h"
 
 namespace mozilla {
@@ -46,7 +47,9 @@ enum class ServoElementSnapshotFlags : uint8_t
 {
   State = 1 << 0,
   Attributes = 1 << 1,
-  All = State | Attributes
+  Id = 1 << 2,
+  MaybeClass = 1 << 3,
+  OtherPseudoClassState = 1 << 4,
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ServoElementSnapshotFlags)
@@ -67,11 +70,17 @@ class ServoElementSnapshot
 public:
   typedef ServoElementSnapshotFlags Flags;
 
-  explicit ServoElementSnapshot(Element* aElement);
+  explicit ServoElementSnapshot(const Element* aElement);
+  ~ServoElementSnapshot();
 
-  bool HasAttrs() { return HasAny(Flags::Attributes); }
+  bool HasAttrs() const { return HasAny(Flags::Attributes); }
 
-  bool HasState() { return HasAny(Flags::State); }
+  bool HasState() const { return HasAny(Flags::State); }
+
+  bool HasOtherPseudoClassState() const
+  {
+    return HasAny(Flags::OtherPseudoClassState);
+  }
 
   /**
    * Captures the given state (if not previously captured).
@@ -86,28 +95,26 @@ public:
 
   /**
    * Captures the given element attributes (if not previously captured).
+   *
+   * The attribute name and namespace are used to note which kind of attribute
+   * has changed.
    */
-  void AddAttrs(Element* aElement);
+  void AddAttrs(Element* aElement,
+                int32_t aNameSpaceID,
+                nsIAtom* aChangedAttribute);
 
-  void AddExplicitChangeHint(nsChangeHint aMinChangeHint)
-  {
-    mExplicitChangeHint |= aMinChangeHint;
-  }
-
-  void AddExplicitRestyleHint(nsRestyleHint aRestyleHint)
-  {
-    mExplicitRestyleHint |= aRestyleHint;
-  }
-
-  nsRestyleHint ExplicitRestyleHint() { return mExplicitRestyleHint; }
-
-  nsChangeHint ExplicitChangeHint() { return mExplicitChangeHint; }
+  /**
+   * Captures some other pseudo-class matching state not included in
+   * EventStates.
+   */
+  void AddOtherPseudoClassState(Element* aElement);
 
   /**
    * Needed methods for attribute matching.
    */
   BorrowedAttrInfo GetAttrInfoAt(uint32_t aIndex) const
   {
+    MOZ_ASSERT(HasAttrs());
     if (aIndex >= mAttrs.Length()) {
       return BorrowedAttrInfo(nullptr, nullptr);
     }
@@ -122,6 +129,7 @@ public:
   const nsAttrValue* GetParsedAttr(nsIAtom* aLocalName,
                                    int32_t aNamespaceID) const
   {
+    MOZ_ASSERT(HasAttrs());
     uint32_t i, len = mAttrs.Length();
     if (aNamespaceID == kNameSpaceID_None) {
       // This should be the common case so lets make an optimized loop
@@ -143,19 +151,46 @@ public:
     return nullptr;
   }
 
-  bool HasAny(Flags aFlags) { return bool(mContains & aFlags); }
+  const nsAttrValue* GetClasses() const
+  {
+    MOZ_ASSERT(HasAttrs());
+    return &mClass;
+  }
+
+  bool IsInChromeDocument() const { return mIsInChromeDocument; }
+  bool SupportsLangAttr() const { return mSupportsLangAttr; }
+
+  bool HasAny(Flags aFlags) const { return bool(mContains & aFlags); }
+
+  bool IsTableBorderNonzero() const
+  {
+    MOZ_ASSERT(HasOtherPseudoClassState());
+    return mIsTableBorderNonzero;
+  }
+
+  bool IsMozBrowserFrame() const
+  {
+    MOZ_ASSERT(HasOtherPseudoClassState());
+    return mIsMozBrowserFrame;
+  }
 
 private:
   // TODO: Profile, a 1 or 2 element AutoTArray could be worth it, given we know
   // we're dealing with attribute changes when we take snapshots of attributes,
   // though it can be wasted space if we deal with a lot of state-only
   // snapshots.
-  Flags mContains;
   nsTArray<ServoAttrSnapshot> mAttrs;
+  nsAttrValue mClass;
   ServoStateType mState;
-  nsRestyleHint mExplicitRestyleHint;
-  nsChangeHint mExplicitChangeHint;
-  bool mIsHTMLElementInHTMLDocument;
+  Flags mContains;
+  bool mIsHTMLElementInHTMLDocument : 1;
+  bool mIsInChromeDocument : 1;
+  bool mSupportsLangAttr : 1;
+  bool mIsTableBorderNonzero : 1;
+  bool mIsMozBrowserFrame : 1;
+  bool mClassAttributeChanged : 1;
+  bool mIdAttributeChanged : 1;
+  bool mOtherAttributeChanged : 1;
 };
 
 } // namespace mozilla

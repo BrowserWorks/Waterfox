@@ -66,11 +66,11 @@ public:
     bool HasAlpha() const;
     bool IsReadableFloat() const;
 
-    void Clear();
+    void Clear(const char* funcName);
 
-    void SetTexImage(WebGLTexture* tex, TexImageTarget target, GLint level,
-                     GLint layer = 0);
-    void SetRenderbuffer(WebGLRenderbuffer* rb);
+    void SetTexImage(const char* funcName, WebGLTexture* tex, TexImageTarget target,
+                     GLint level, GLint layer = 0);
+    void SetRenderbuffer(const char* funcName, WebGLRenderbuffer* rb);
 
     WebGLTexture* Texture() const { return mTexturePtr; }
     WebGLRenderbuffer* Renderbuffer() const { return mRenderbufferPtr; }
@@ -100,7 +100,20 @@ public:
                            GLenum target, GLenum attachment, GLenum pname,
                            ErrorResult* const out_error) const;
 
-    void OnBackingStoreRespecified() const;
+    void OnBackingStoreRespecified(const char* funcName) const;
+
+    bool IsEquivalentForFeedback(const WebGLFBAttachPoint& other) const {
+        if (!IsDefined() || !other.IsDefined())
+            return false;
+
+#define _(X) X == other.X
+        return ( _(mRenderbufferPtr) &&
+                 _(mTexturePtr) &&
+                 _(mTexImageTarget.get()) &&
+                 _(mTexImageLevel) &&
+                 _(mTexImageLayer) );
+#undef _
+    }
 
     ////
 
@@ -132,7 +145,6 @@ class WebGLFramebuffer final
     : public nsWrapperCache
     , public WebGLRefCountedObject<WebGLFramebuffer>
     , public LinkedListElement<WebGLFramebuffer>
-    , public WebGLContextBoundObject
     , public SupportsWeakPtr<WebGLFramebuffer>
 {
     friend class WebGLContext;
@@ -141,6 +153,9 @@ public:
     MOZ_DECLARE_WEAKREFERENCE_TYPENAME(WebGLFramebuffer)
 
     const GLuint mGLName;
+
+private:
+    uint64_t mNumFBStatusInvals;
 
 protected:
 #ifdef ANDROID
@@ -172,11 +187,6 @@ protected:
     ////
 
     struct ResolvedData {
-        // BlitFramebuffer
-        bool hasSampleBuffers;
-        const WebGLFBAttachPoint* depthBuffer;
-        const WebGLFBAttachPoint* stencilBuffer;
-
         // IsFeedback
         std::vector<const WebGLFBAttachPoint*> texDrawBuffers; // Non-null
         std::set<WebGLFBAttachPoint::Ordered> drawSet;
@@ -208,6 +218,7 @@ public:
 
     ////
 
+    bool HasDuplicateAttachments() const;
     bool HasDefinedAttachments() const;
     bool HasIncompleteAttachments(nsCString* const out_info) const;
     bool AllImageRectsMatch() const;
@@ -223,9 +234,11 @@ protected:
     bool ResolveAttachmentData(const char* funcName) const;
 
 public:
-    void DetachTexture(const WebGLTexture* tex);
-    void DetachRenderbuffer(const WebGLRenderbuffer* rb);
+    void DetachTexture(const char* funcName, const WebGLTexture* tex);
+    void DetachRenderbuffer(const char* funcName, const WebGLRenderbuffer* rb);
     bool ValidateAndInitAttachments(const char* funcName);
+    bool ValidateClearBufferType(const char* funcName, GLenum buffer, uint32_t drawBuffer,
+                                 GLenum funcType) const;
 
     bool ValidateForRead(const char* info,
                          const webgl::FormatUsageInfo** const out_format,
@@ -249,11 +262,7 @@ public:
     // Invalidation
 
     bool IsResolvedComplete() const { return bool(mResolvedCompleteData); }
-
-    void InvalidateFramebufferStatus() {
-        mResolvedCompleteData = nullptr;
-    }
-
+    void InvalidateFramebufferStatus(const char* funcName);
     void RefreshResolvedData();
 
     ////////////////

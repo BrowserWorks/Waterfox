@@ -22,7 +22,8 @@ public:
     };
 
     void    release();
-    bool    attach(SkBackEndTypes attachType, int msaaSampleCount, AttachmentInfo*);
+    bool    attach(SkBackEndTypes attachType, int msaaSampleCount, bool deepColor,
+                   AttachmentInfo*);
     void    present();
 
     bool makeFullscreen() { return true; }
@@ -36,7 +37,7 @@ protected:
     virtual void onHandleInval(const SkIRect&);
     // overrides from SkView
     virtual void onAddMenu(const SkOSMenu*);
-    virtual void onUpdateMenu(SkOSMenu*);
+    virtual void onUpdateMenu(const SkOSMenu*);
     virtual void onSetTitle(const char[]);
 
 private:

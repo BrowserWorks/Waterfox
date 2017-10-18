@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include "nsASCIIMask.h"
 #include "nsURLHelper.h"
 #include "nsIFile.h"
 #include "nsIURLParser.h"
@@ -227,8 +228,8 @@ net_ParseFileURL(const nsACString &inURL,
 //----------------------------------------------------------------------------
 
 // Replace all /./ with a / while resolving URLs
-// But only till #? 
-void 
+// But only till #?
+void
 net_CoalesceDirs(netCoalesceFlags flags, char* path)
 {
     /* Stolen from the old netlib's mkparse.c.
@@ -244,21 +245,21 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
     uint32_t special_ftp_len = 0;
 
     /* Remember if this url is a special ftp one: */
-    if (flags & NET_COALESCE_DOUBLE_SLASH_IS_ROOT) 
+    if (flags & NET_COALESCE_DOUBLE_SLASH_IS_ROOT)
     {
-       /* some schemes (for example ftp) have the speciality that 
-          the path can begin // or /%2F to mark the root of the 
-          servers filesystem, a simple / only marks the root relative 
+       /* some schemes (for example ftp) have the speciality that
+          the path can begin // or /%2F to mark the root of the
+          servers filesystem, a simple / only marks the root relative
           to the user loging in. We remember the length of the marker */
         if (nsCRT::strncasecmp(path,"/%2F",4) == 0)
             special_ftp_len = 4;
         else if (nsCRT::strncmp(path,"//",2) == 0 )
-            special_ftp_len = 2; 
+            special_ftp_len = 2;
     }
 
     /* find the last slash before # or ? */
-    for(; (*fwdPtr != '\0') && 
-            (*fwdPtr != '?') && 
+    for(; (*fwdPtr != '\0') &&
+            (*fwdPtr != '?') &&
             (*fwdPtr != '#'); ++fwdPtr)
     {
     }
@@ -271,7 +272,7 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
     }
 
     /* search the slash */
-    for(; (fwdPtr != path) && 
+    for(; (fwdPtr != path) &&
             (*fwdPtr != '/'); --fwdPtr)
     {
     }
@@ -280,19 +281,19 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
 
     /* replace all %2E or %2e with . in the path */
     /* but stop at lastchar if non null */
-    for(; (*fwdPtr != '\0') && 
-            (*fwdPtr != '?') && 
+    for(; (*fwdPtr != '\0') &&
+            (*fwdPtr != '?') &&
             (*fwdPtr != '#') &&
             (*lastslash == '\0' || fwdPtr != lastslash); ++fwdPtr)
     {
-        if (*fwdPtr == '%' && *(fwdPtr+1) == '2' && 
+        if (*fwdPtr == '%' && *(fwdPtr+1) == '2' &&
             (*(fwdPtr+2) == 'E' || *(fwdPtr+2) == 'e'))
         {
             *urlPtr++ = '.';
             ++fwdPtr;
             ++fwdPtr;
-        } 
-        else 
+        }
+        else
         {
             *urlPtr++ = *fwdPtr;
         }
@@ -302,14 +303,14 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
     {
         *urlPtr++ = *fwdPtr;
     }
-    *urlPtr = '\0';  // terminate the url 
+    *urlPtr = '\0';  // terminate the url
 
-    // start again, this time for real 
+    // start again, this time for real
     fwdPtr = path;
     urlPtr = path;
 
-    for(; (*fwdPtr != '\0') && 
-            (*fwdPtr != '?') && 
+    for(; (*fwdPtr != '\0') &&
+            (*fwdPtr != '?') &&
             (*fwdPtr != '#'); ++fwdPtr)
     {
         if (*fwdPtr == '/' && *(fwdPtr+1) == '.' && *(fwdPtr+2) == '/' )
@@ -317,54 +318,54 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
             // remove . followed by slash
             ++fwdPtr;
         }
-        else if(*fwdPtr == '/' && *(fwdPtr+1) == '.' && *(fwdPtr+2) == '.' && 
-                (*(fwdPtr+3) == '/' || 
-                    *(fwdPtr+3) == '\0' || // This will take care of 
+        else if(*fwdPtr == '/' && *(fwdPtr+1) == '.' && *(fwdPtr+2) == '.' &&
+                (*(fwdPtr+3) == '/' ||
+                    *(fwdPtr+3) == '\0' || // This will take care of
                     *(fwdPtr+3) == '?' ||  // something like foo/bar/..#sometag
                     *(fwdPtr+3) == '#'))
         {
-            // remove foo/.. 
+            // remove foo/..
             // reverse the urlPtr to the previous slash if possible
-            // if url does not allow relative root then drop .. above root 
-            // otherwise retain them in the path 
-            if(traversal > 0 || !(flags & 
+            // if url does not allow relative root then drop .. above root
+            // otherwise retain them in the path
+            if(traversal > 0 || !(flags &
                                   NET_COALESCE_ALLOW_RELATIVE_ROOT))
-            { 
+            {
                 if (urlPtr != path)
-                    urlPtr--; // we must be going back at least by one 
+                    urlPtr--; // we must be going back at least by one
                 for(;*urlPtr != '/' && urlPtr != path; urlPtr--)
-                    ;  // null body 
+                    ;  // null body
                 --traversal; // count back
                 // forward the fwdPtr past the ../
                 fwdPtr += 2;
                 // if we have reached the beginning of the path
                 // while searching for the previous / and we remember
                 // that it is an url that begins with /%2F then
-                // advance urlPtr again by 3 chars because /%2F already 
+                // advance urlPtr again by 3 chars because /%2F already
                 // marks the root of the path
-                if (urlPtr == path && special_ftp_len > 3) 
+                if (urlPtr == path && special_ftp_len > 3)
                 {
                     ++urlPtr;
                     ++urlPtr;
                     ++urlPtr;
                 }
-                // special case if we have reached the end 
+                // special case if we have reached the end
                 // to preserve the last /
                 if (*fwdPtr == '.' && *(fwdPtr+1) == '\0')
                     ++urlPtr;
-            } 
-            else 
+            }
+            else
             {
                 // there are to much /.. in this path, just copy them instead.
                 // forward the urlPtr past the /.. and copying it
 
                 // However if we remember it is an url that starts with
-                // /%2F and urlPtr just points at the "F" of "/%2F" then do 
+                // /%2F and urlPtr just points at the "F" of "/%2F" then do
                 // not overwrite it with the /, just copy .. and move forward
-                // urlPtr. 
+                // urlPtr.
                 if (special_ftp_len > 3 && urlPtr == path+special_ftp_len-1)
                     ++urlPtr;
-                else 
+                else
                     *urlPtr++ = *fwdPtr;
                 ++fwdPtr;
                 *urlPtr++ = *fwdPtr;
@@ -375,16 +376,16 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
         else
         {
             // count the hierachie, but only if we do not have reached
-            // the root of some special urls with a special root marker 
+            // the root of some special urls with a special root marker
             if (*fwdPtr == '/' &&  *(fwdPtr+1) != '.' &&
                (special_ftp_len != 2 || *(fwdPtr+1) != '/'))
                 traversal++;
-            // copy the url incrementaly 
+            // copy the url incrementaly
             *urlPtr++ = *fwdPtr;
         }
     }
 
-    /* 
+    /*
      *  Now lets remove trailing . case
      *     /foo/foo1/.   ->  /foo/foo1/
      */
@@ -397,7 +398,7 @@ net_CoalesceDirs(netCoalesceFlags flags, char* path)
     {
         *urlPtr++ = *fwdPtr;
     }
-    *urlPtr = '\0';  // terminate the url 
+    *urlPtr = '\0';  // terminate the url
 }
 
 nsresult
@@ -437,7 +438,7 @@ net_ResolveRelativePath(const nsACString &relativePath,
                 //  skip over that when searching for next one to the left
                 int32_t offset = path.Length() - (needsDelim ? 1 : 2);
                 // First check for errors
-                if (offset < 0 ) 
+                if (offset < 0 )
                     return NS_ERROR_MALFORMED_URI;
                 int32_t pos = path.RFind("/", false, offset);
                 if (pos >= 0)
@@ -522,7 +523,7 @@ net_ExtractURLScheme(const nsACString &inURI,
     }
 
     p.Claim(scheme);
-    scheme.StripChars("\r\n\t");
+    scheme.StripTaggedASCII(ASCIIMask::MaskCRLFTab());
     return NS_OK;
 }
 
@@ -591,8 +592,6 @@ net_IsAbsoluteURL(const nsACString& uri)
 void
 net_FilterURIString(const nsACString& input, nsACString& result)
 {
-    const char kCharsToStrip[] = "\r\n\t";
-
     result.Truncate();
 
     auto start = input.BeginReading();
@@ -607,9 +606,14 @@ net_FilterURIString(const nsACString& input, nsACString& result)
         charFilter).base();
 
     // Check if chars need to be stripped.
-    auto itr = std::find_first_of(
-        newStart, newEnd, std::begin(kCharsToStrip), std::end(kCharsToStrip));
-    const bool needsStrip = itr != newEnd;
+    bool needsStrip = false;
+    const ASCIIMaskArray& mask = ASCIIMask::MaskCRLFTab();
+    for (auto itr = start; itr != end; ++itr) {
+        if (ASCIIMask::IsMasked(mask, *itr)) {
+            needsStrip = true;
+            break;
+        }
+    }
 
     // Just use the passed in string rather than creating new copies if no
     // changes are necessary.
@@ -620,7 +624,7 @@ net_FilterURIString(const nsACString& input, nsACString& result)
 
     result.Assign(Substring(newStart, newEnd));
     if (needsStrip) {
-        result.StripChars(kCharsToStrip);
+        result.StripTaggedASCII(mask);
     }
 }
 
@@ -743,7 +747,7 @@ net_FindStringEnd(const nsCString& flatStr,
     do {
         // stringStart points to either the start quote or the last
         // escaped char (the char following a '\\')
-                
+
         // Write to searchStart here, so that when we get back to the
         // top of the loop right outside this one we search from the
         // right place.
@@ -768,7 +772,7 @@ net_FindStringEnd(const nsCString& flatStr,
     NS_NOTREACHED("How did we get here?");
     return flatStr.Length();
 }
-                  
+
 
 static uint32_t
 net_FindMediaDelimiter(const nsCString& flatStr,
@@ -782,7 +786,7 @@ net_FindMediaDelimiter(const nsCString& flatStr,
         uint32_t curDelimPos = flatStr.FindCharInSet(delimStr, searchStart);
         if (curDelimPos == uint32_t(kNotFound))
             return flatStr.Length();
-            
+
         char ch = flatStr.CharAt(curDelimPos);
         if (ch == delimiter) {
             // Found delimiter
@@ -909,7 +913,7 @@ net_ParseMediaType(const nsACString &aMediaTypeStr,
                 for (const char *c = charset; c != charsetEnd; c++) {
                     if (*c == '\\' && c + 1 != charsetEnd) {
                         // eat escape
-                        c++;  
+                        c++;
                     }
                     aContentCharset.Append(*c);
                 }
@@ -967,7 +971,7 @@ net_ParseContentType(const nsACString &aHeaderStr,
     //   parameter    = attribute "=" value
     //   attribute    = token
     //   value        = token | quoted-string
-    //   
+    //
     //
     // Examples:
     //
@@ -982,7 +986,7 @@ net_ParseContentType(const nsACString &aHeaderStr,
 
     *aHadCharset = false;
     const nsCString& flatStr = PromiseFlatCString(aHeaderStr);
-    
+
     // iterate over media-types.  Note that ',' characters can happen
     // inside quoted strings, so we need to watch out for that.
     uint32_t curTypeStart = 0;
@@ -991,7 +995,7 @@ net_ParseContentType(const nsACString &aHeaderStr,
         // to look for its end.
         uint32_t curTypeEnd =
             net_FindMediaDelimiter(flatStr, curTypeStart, ',');
-        
+
         // At this point curTypeEnd points to the spot where the media-type
         // starting at curTypeEnd ends.  Time to parse that!
         net_ParseMediaType(Substring(flatStr, curTypeStart,
@@ -1051,7 +1055,7 @@ net_ParseRequestContentType(const nsACString &aHeaderStr,
 }
 
 bool
-net_IsValidHostName(const nsCSubstring &host)
+net_IsValidHostName(const nsACString& host)
 {
     const char *end = host.EndReading();
     // Use explicit whitelists to select which characters we are
@@ -1061,7 +1065,7 @@ net_IsValidHostName(const nsCSubstring &host)
     // the commonest characters will tend to be near the start of
     // the list.
 
-    // Whitelist for DNS names (RFC 1035) with extra characters added 
+    // Whitelist for DNS names (RFC 1035) with extra characters added
     // for pragmatic reasons "$+_"
     // see https://bugzilla.mozilla.org/show_bug.cgi?id=355181#c2
     if (net_FindCharNotInSet(host.BeginReading(), end,
@@ -1096,7 +1100,8 @@ net_IsValidIPv4Addr(const char *addr, int32_t addrLen)
             if (octet == 0) {
                 // leading 0 is not allowed
                 return false;
-            } else if (octet == -1) {
+            }
+            if (octet == -1) {
                 octet = *p - '0';
             } else {
                 octet *= 10;

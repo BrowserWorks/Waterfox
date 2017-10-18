@@ -21,7 +21,7 @@ add_task(function* () {
     webconsole: hud,
     messages: [
       {
-        text: "SyntaxError: redefining arguments is deprecated",
+        text: "SyntaxError: 'arguments' can't be defined or assigned to in strict mode code",
         category: CATEGORY_JS,
         severity: SEVERITY_ERROR,
       },
@@ -55,7 +55,7 @@ add_task(function* () {
     webconsole: hud,
     messages: [
       {
-        text: "TypeError: setting a property that has only a getter",
+        text: 'TypeError: setting getter-only property "p"',
         category: CATEGORY_JS,
         severity: SEVERITY_ERROR,
       },

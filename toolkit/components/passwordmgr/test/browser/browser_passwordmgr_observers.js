@@ -1,8 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-function test() {
-  waitForExplicitFinish();
+add_task(async function test() {
+  await new Promise(resolve => {
 
   const LOGIN_HOST = "http://example.com";
   const LOGIN_COUNT = 5;
@@ -12,16 +12,14 @@ function test() {
   let pmDialog = window.openDialog(
     "chrome://passwordmgr/content/passwordManager.xul",
     "Toolkit:PasswordManager", "");
-  let pmexDialog = window.openDialog(
-    "chrome://passwordmgr/content/passwordManagerExceptions.xul",
-    "Toolkit:PasswordManagerExceptions", "");
+
   let logins = [];
   let loginCounter = 0;
   let loginOrder = null;
   let modifiedLogin;
   let testNumber = 0;
   let testObserver = {
-    observe: function (subject, topic, data) {
+    observe(subject, topic, data) {
       if (topic == "passwordmgr-dialog-updated") {
         switch (testNumber) {
           case 1:
@@ -48,14 +46,6 @@ function test() {
             is(countLogins(), 0, "Verify all logins removed");
             runNextTest();
             break;
-          case 9:
-            is(countDisabledHosts(), 1, "Verify disabled host added");
-            runNextTest();
-            break;
-          case 10:
-            is(countDisabledHosts(), 0, "Verify disabled host removed");
-            runNextTest();
-            break;
         }
       }
     }
@@ -75,12 +65,6 @@ function test() {
     is(logins.length, LOGIN_COUNT, "Verify logins created");
   }
 
-  function countDisabledHosts() {
-    let doc = pmexDialog.document;
-    let rejectsTree = doc.getElementById("rejectsTree");
-    return rejectsTree.view.rowCount;
-  }
-
   function countLogins() {
     let doc = pmDialog.document;
     let signonsTree = doc.getElementById("signonsTree");
@@ -95,7 +79,7 @@ function test() {
     for (let i = 0; i < signonsTree.view.rowCount; i++) {
       order.push(signonsTree.view.getCellText(i, column));
     }
-    return order.join(',');
+    return order.join(",");
   }
 
   function getLoginPassword() {
@@ -107,7 +91,7 @@ function test() {
 
   function startTest() {
     Services.obs.addObserver(
-      testObserver, "passwordmgr-dialog-updated", false);
+      testObserver, "passwordmgr-dialog-updated");
     is(countLogins(), 0, "Verify starts with 0 logins");
     createLogins();
     runNextTest();
@@ -134,21 +118,14 @@ function test() {
       case 8: // remove all logins
         Services.logins.removeAllLogins();
         break;
-      case 9: // save a disabled host
-        pmDialog.close();
-        SimpleTest.waitForFocus(function() {
-          Services.logins.setLoginSavingEnabled(LOGIN_HOST, false);
-        }, pmexDialog);
-        break;
-      case 10: // remove a disabled host
-        Services.logins.setLoginSavingEnabled(LOGIN_HOST, true);
-        break;
-      case 11: // finish
+      case 9: // finish
         Services.obs.removeObserver(
-          testObserver, "passwordmgr-dialog-updated", false);
-        pmexDialog.close();
-        finish();
+          testObserver, "passwordmgr-dialog-updated");
+        pmDialog.close();
+        resolve();
         break;
     }
   }
-}
+
+  });
+});

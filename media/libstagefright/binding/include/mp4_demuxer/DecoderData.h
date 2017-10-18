@@ -19,13 +19,11 @@ namespace stagefright
 class MetaData;
 }
 
-#ifdef MOZ_RUST_MP4PARSE
 extern "C" {
 typedef struct mp4parse_track_info mp4parse_track_info;
 typedef struct mp4parse_track_audio_info mp4parse_track_audio_info;
 typedef struct mp4parse_track_video_info mp4parse_track_video_info;
 }
-#endif
 
 namespace mp4_demuxer
 {
@@ -38,6 +36,10 @@ struct PsshInfo
   PsshInfo(const PsshInfo& aOther) : uuid(aOther.uuid), data(aOther.data) {}
   nsTArray<uint8_t> uuid;
   nsTArray<uint8_t> data;
+
+  bool operator==(const PsshInfo& aOther) const {
+    return uuid == aOther.uuid && data == aOther.data;
+  }
 };
 
 class CryptoFile
@@ -69,6 +71,9 @@ public:
   void Update(const stagefright::MetaData* aMetaData,
               const char* aMimeType);
 
+  void Update(const mp4parse_track_info* track,
+              const mp4parse_track_audio_info* audio);
+
   virtual bool IsValid() const override;
 };
 
@@ -80,10 +85,8 @@ public:
   void Update(const stagefright::MetaData* aMetaData,
               const char* aMimeType);
 
-#ifdef MOZ_RUST_MP4PARSE
   void Update(const mp4parse_track_info* track,
               const mp4parse_track_video_info* video);
-#endif
 
   virtual bool IsValid() const override;
 };

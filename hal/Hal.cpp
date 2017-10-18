@@ -89,8 +89,6 @@ AssertMainProcess()
   MOZ_ASSERT(GeckoProcessType_Default == XRE_GetProcessType());
 }
 
-#if !defined(MOZ_WIDGET_GONK)
-
 bool
 WindowIsActive(nsPIDOMWindowInner* aWindow)
 {
@@ -99,8 +97,6 @@ WindowIsActive(nsPIDOMWindowInner* aWindow)
 
   return !document->Hidden();
 }
-
-#endif // !defined(MOZ_WIDGET_GONK)
 
 StaticAutoPtr<WindowIdentifier::IDArrayType> gLastIDToVibrate;
 
@@ -123,7 +119,6 @@ Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier &id)
 {
   AssertMainThread();
 
-#if !defined(MOZ_WIDGET_GONK)
   // Only active windows may start vibrations.  If |id| hasn't gone
   // through the IPC layer -- that is, if our caller is the outside
   // world, not hal_proxy -- check whether the window is active.  If
@@ -134,7 +129,6 @@ Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier &id)
     HAL_LOG("Vibrate: Window is inactive, dropping vibrate.");
     return;
   }
-#endif // !defined(MOZ_WIDGET_GONK)
 
   if (!InSandbox()) {
     if (!gLastIDToVibrate) {
@@ -264,7 +258,7 @@ public:
 protected:
   virtual void GetCurrentInformationInternal(InfoType*) = 0;
 
-  virtual void OnNotificationsDisabled() {
+  void OnNotificationsDisabled() override {
     mHasValidCache = false;
   }
 
@@ -276,15 +270,15 @@ private:
 class BatteryObserversManager : public CachingObserversManager<BatteryInformation>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableBatteryNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableBatteryNotifications());
   }
 
-  void GetCurrentInformationInternal(BatteryInformation* aInfo) {
+  void GetCurrentInformationInternal(BatteryInformation* aInfo) override {
     PROXY_IF_SANDBOXED(GetCurrentBatteryInformation(aInfo));
   }
 };
@@ -300,15 +294,15 @@ BatteryObservers()
 class NetworkObserversManager : public CachingObserversManager<NetworkInformation>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableNetworkNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableNetworkNotifications());
   }
 
-  void GetCurrentInformationInternal(NetworkInformation* aInfo) {
+  void GetCurrentInformationInternal(NetworkInformation* aInfo) override {
     PROXY_IF_SANDBOXED(GetCurrentNetworkInformation(aInfo));
   }
 };
@@ -324,11 +318,11 @@ NetworkObservers()
 class WakeLockObserversManager : public ObserversManager<WakeLockInformation>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableWakeLockNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableWakeLockNotifications());
   }
 };
@@ -344,15 +338,15 @@ WakeLockObservers()
 class ScreenConfigurationObserversManager : public CachingObserversManager<ScreenConfiguration>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableScreenConfigurationNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableScreenConfigurationNotifications());
   }
 
-  void GetCurrentInformationInternal(ScreenConfiguration* aInfo) {
+  void GetCurrentInformationInternal(ScreenConfiguration* aInfo) override {
     PROXY_IF_SANDBOXED(GetCurrentScreenConfiguration(aInfo));
   }
 };
@@ -449,11 +443,11 @@ void SetScreenBrightness(double aBrightness)
 class SystemClockChangeObserversManager : public ObserversManager<int64_t>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableSystemClockChangeNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableSystemClockChangeNotifications());
   }
 };
@@ -489,11 +483,11 @@ NotifySystemClockChange(const int64_t& aClockDeltaMS)
 class SystemTimezoneChangeObserversManager : public ObserversManager<SystemTimezoneChangeInformation>
 {
 protected:
-  void EnableNotifications() {
+  void EnableNotifications() override {
     PROXY_IF_SANDBOXED(EnableSystemTimezoneChangeNotifications());
   }
 
-  void DisableNotifications() {
+  void DisableNotifications() override {
     PROXY_IF_SANDBOXED(DisableSystemTimezoneChangeNotifications());
   }
 };
@@ -850,49 +844,18 @@ NotifySwitchChange(const SwitchEvent& aEvent)
   observer.Broadcast(aEvent);
 }
 
-static AlarmObserver* sAlarmObserver;
-
 bool
-RegisterTheOneAlarmObserver(AlarmObserver* aObserver)
+SetProcessPrioritySupported()
 {
-  MOZ_ASSERT(!InSandbox());
-  MOZ_ASSERT(!sAlarmObserver);
-
-  sAlarmObserver = aObserver;
-  RETURN_PROXY_IF_SANDBOXED(EnableAlarm(), false);
+  RETURN_PROXY_IF_SANDBOXED(SetProcessPrioritySupported(), false);
 }
 
 void
-UnregisterTheOneAlarmObserver()
-{
-  if (sAlarmObserver) {
-    sAlarmObserver = nullptr;
-    PROXY_IF_SANDBOXED(DisableAlarm());
-  }
-}
-
-void
-NotifyAlarmFired()
-{
-  if (sAlarmObserver) {
-    sAlarmObserver->Notify(void_t());
-  }
-}
-
-bool
-SetAlarm(int32_t aSeconds, int32_t aNanoseconds)
-{
-  // It's pointless to program an alarm nothing is going to observe ...
-  MOZ_ASSERT(sAlarmObserver);
-  RETURN_PROXY_IF_SANDBOXED(SetAlarm(aSeconds, aNanoseconds), false);
-}
-
-void
-SetProcessPriority(int aPid, ProcessPriority aPriority, uint32_t aLRU)
+SetProcessPriority(int aPid, ProcessPriority aPriority)
 {
   // n.b. The sandboxed implementation crashes; SetProcessPriority works only
   // from the main process.
-  PROXY_IF_SANDBOXED(SetProcessPriority(aPid, aPriority, aLRU));
+  PROXY_IF_SANDBOXED(SetProcessPriority(aPid, aPriority));
 }
 
 void
@@ -947,243 +910,6 @@ ThreadPriorityToString(ThreadPriority aPriority)
   }
 }
 
-static StaticAutoPtr<ObserverList<FMRadioOperationInformation> > sFMRadioObservers;
-static StaticAutoPtr<ObserverList<FMRadioRDSGroup> > sFMRadioRDSObservers;
-
-static void
-InitializeFMRadioObserver()
-{
-  if (!sFMRadioObservers) {
-    sFMRadioObservers = new ObserverList<FMRadioOperationInformation>;
-    sFMRadioRDSObservers = new ObserverList<FMRadioRDSGroup>;
-    ClearOnShutdown(&sFMRadioRDSObservers);
-    ClearOnShutdown(&sFMRadioObservers);
-  }
-}
-
-void
-RegisterFMRadioObserver(FMRadioObserver* aFMRadioObserver) {
-  AssertMainThread();
-  InitializeFMRadioObserver();
-  sFMRadioObservers->AddObserver(aFMRadioObserver);
-}
-
-void
-UnregisterFMRadioObserver(FMRadioObserver* aFMRadioObserver) {
-  AssertMainThread();
-  InitializeFMRadioObserver();
-  sFMRadioObservers->RemoveObserver(aFMRadioObserver);
-}
-
-void
-NotifyFMRadioStatus(const FMRadioOperationInformation& aFMRadioState) {
-  InitializeFMRadioObserver();
-  sFMRadioObservers->Broadcast(aFMRadioState);
-}
-
-void
-RegisterFMRadioRDSObserver(FMRadioRDSObserver* aFMRadioRDSObserver) {
-  AssertMainThread();
-  InitializeFMRadioObserver();
-  sFMRadioRDSObservers->AddObserver(aFMRadioRDSObserver);
-}
-
-void
-UnregisterFMRadioRDSObserver(FMRadioRDSObserver* aFMRadioRDSObserver) {
-  AssertMainThread();
-  InitializeFMRadioObserver();
-  sFMRadioRDSObservers->RemoveObserver(aFMRadioRDSObserver);
-}
-
-
-void
-NotifyFMRadioRDSGroup(const FMRadioRDSGroup& aRDSGroup) {
-  InitializeFMRadioObserver();
-  sFMRadioRDSObservers->Broadcast(aRDSGroup);
-}
-
-void
-EnableFMRadio(const FMRadioSettings& aInfo) {
-  AssertMainThread();
-  PROXY_IF_SANDBOXED(EnableFMRadio(aInfo));
-}
-
-void
-DisableFMRadio() {
-  AssertMainThread();
-  PROXY_IF_SANDBOXED(DisableFMRadio());
-}
-
-void
-FMRadioSeek(const FMRadioSeekDirection& aDirection) {
-  PROXY_IF_SANDBOXED(FMRadioSeek(aDirection));
-}
-
-void
-GetFMRadioSettings(FMRadioSettings* aInfo) {
-  AssertMainThread();
-  PROXY_IF_SANDBOXED(GetFMRadioSettings(aInfo));
-}
-
-void
-SetFMRadioFrequency(const uint32_t aFrequency) {
-  PROXY_IF_SANDBOXED(SetFMRadioFrequency(aFrequency));
-}
-
-uint32_t
-GetFMRadioFrequency() {
-  AssertMainThread();
-  RETURN_PROXY_IF_SANDBOXED(GetFMRadioFrequency(), 0);
-}
-
-bool
-IsFMRadioOn() {
-  AssertMainThread();
-  RETURN_PROXY_IF_SANDBOXED(IsFMRadioOn(), false);
-}
-
-uint32_t
-GetFMRadioSignalStrength() {
-  AssertMainThread();
-  RETURN_PROXY_IF_SANDBOXED(GetFMRadioSignalStrength(), 0);
-}
-
-void
-CancelFMRadioSeek() {
-  AssertMainThread();
-  PROXY_IF_SANDBOXED(CancelFMRadioSeek());
-}
-
-bool
-EnableRDS(uint32_t aMask) {
-  AssertMainThread();
-  RETURN_PROXY_IF_SANDBOXED(EnableRDS(aMask), false);
-}
-
-void
-DisableRDS() {
-  AssertMainThread();
-  PROXY_IF_SANDBOXED(DisableRDS());
-}
-
-FMRadioSettings
-GetFMBandSettings(FMRadioCountry aCountry) {
-  FMRadioSettings settings;
-
-  switch (aCountry) {
-    case FM_RADIO_COUNTRY_US:
-    case FM_RADIO_COUNTRY_EU:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 87800;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 75;
-      break;
-    case FM_RADIO_COUNTRY_JP_STANDARD:
-      settings.upperLimit() = 76000;
-      settings.lowerLimit() = 90000;
-      settings.spaceType() = 100;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_CY:
-    case FM_RADIO_COUNTRY_DE:
-    case FM_RADIO_COUNTRY_DK:
-    case FM_RADIO_COUNTRY_ES:
-    case FM_RADIO_COUNTRY_FI:
-    case FM_RADIO_COUNTRY_FR:
-    case FM_RADIO_COUNTRY_HU:
-    case FM_RADIO_COUNTRY_IR:
-    case FM_RADIO_COUNTRY_IT:
-    case FM_RADIO_COUNTRY_KW:
-    case FM_RADIO_COUNTRY_LT:
-    case FM_RADIO_COUNTRY_ML:
-    case FM_RADIO_COUNTRY_NO:
-    case FM_RADIO_COUNTRY_OM:
-    case FM_RADIO_COUNTRY_PG:
-    case FM_RADIO_COUNTRY_NL:
-    case FM_RADIO_COUNTRY_CZ:
-    case FM_RADIO_COUNTRY_UK:
-    case FM_RADIO_COUNTRY_RW:
-    case FM_RADIO_COUNTRY_SN:
-    case FM_RADIO_COUNTRY_SI:
-    case FM_RADIO_COUNTRY_ZA:
-    case FM_RADIO_COUNTRY_SE:
-    case FM_RADIO_COUNTRY_CH:
-    case FM_RADIO_COUNTRY_TW:
-    case FM_RADIO_COUNTRY_UA:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 87500;
-      settings.spaceType() = 100;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_VA:
-    case FM_RADIO_COUNTRY_MA:
-    case FM_RADIO_COUNTRY_TR:
-      settings.upperLimit() = 10800;
-      settings.lowerLimit() = 87500;
-      settings.spaceType() = 100;
-      settings.preEmphasis() = 75;
-      break;
-    case FM_RADIO_COUNTRY_AU:
-    case FM_RADIO_COUNTRY_BD:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 87500;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 75;
-      break;
-    case FM_RADIO_COUNTRY_AW:
-    case FM_RADIO_COUNTRY_BS:
-    case FM_RADIO_COUNTRY_CO:
-    case FM_RADIO_COUNTRY_KR:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 75;
-      break;
-    case FM_RADIO_COUNTRY_EC:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 0;
-      break;
-    case FM_RADIO_COUNTRY_GM:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 0;
-      settings.preEmphasis() = 75;
-      break;
-    case FM_RADIO_COUNTRY_QA:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_SG:
-      settings.upperLimit() = 108000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 200;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_IN:
-      settings.upperLimit() = 100000;
-      settings.lowerLimit() = 108000;
-      settings.spaceType() = 100;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_NZ:
-      settings.upperLimit() = 100000;
-      settings.lowerLimit() = 88000;
-      settings.spaceType() = 50;
-      settings.preEmphasis() = 50;
-      break;
-    case FM_RADIO_COUNTRY_USER_DEFINED:
-      break;
-    default:
-      MOZ_ASSERT(0);
-      break;
-    }
-    return settings;
-}
-
 void FactoryReset(mozilla::dom::FactoryResetReason& aReason)
 {
   AssertMainThread();
@@ -1210,12 +936,6 @@ uint32_t
 GetTotalSystemMemory()
 {
   return hal_impl::GetTotalSystemMemory();
-}
-
-uint32_t
-GetTotalSystemMemoryLevel()
-{
-  return hal_impl::GetTotalSystemMemoryLevel();
 }
 
 bool IsHeadphoneEventFromInputDev()

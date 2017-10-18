@@ -8,8 +8,6 @@ var Ci = Components.interfaces;
 var Cr = Components.results;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
 var asyncShutdownService = Cc["@mozilla.org/async-shutdown-service;1"].
@@ -37,14 +35,14 @@ function makeLock(kind) {
     let topic = "test-Phase-" + ++makeLock.counter;
     let phase = AsyncShutdown._getPhase(topic);
     return {
-      addBlocker: function(...args) {
+      addBlocker(...args) {
         return phase.addBlocker(...args);
       },
-      removeBlocker: function(blocker) {
+      removeBlocker(blocker) {
         return phase.removeBlocker(blocker);
       },
-      wait: function() {
-        Services.obs.notifyObservers(null, topic, null);
+      wait() {
+        Services.obs.notifyObservers(null, topic);
         return Promise.resolve();
       }
     };
@@ -54,7 +52,7 @@ function makeLock(kind) {
     return {
       addBlocker: barrier.client.addBlocker,
       removeBlocker: barrier.client.removeBlocker,
-      wait: function() {
+      wait() {
         return barrier.wait();
       }
     };
@@ -62,7 +60,7 @@ function makeLock(kind) {
     let name = "test-xpcom-Barrier-" + ++makeLock.counter;
     let barrier = asyncShutdownService.makeBarrier(name);
     return {
-      addBlocker: function(name, condition, state) {
+      addBlocker(blockerName, condition, state) {
         if (condition == null) {
           // Slight trick as `null` or `undefined` cannot be used as keys
           // for `xpcomMap`. Note that this has no incidence on the result
@@ -73,20 +71,20 @@ function makeLock(kind) {
         let blocker = makeLock.xpcomMap.get(condition);
         if (!blocker) {
           blocker = {
-            name: name,
-            state: state,
-            blockShutdown: function(aBarrierClient) {
-              return Task.spawn(function*() {
+            name: blockerName,
+            state,
+            blockShutdown(aBarrierClient) {
+              return (async function() {
                 try {
                   if (typeof condition == "function") {
-                    yield Promise.resolve(condition());
+                    await Promise.resolve(condition());
                   } else {
-                    yield Promise.resolve(condition);
+                    await Promise.resolve(condition);
                   }
                 } finally {
                   aBarrierClient.removeBlocker(blocker);
                 }
-              });
+              })();
             },
           };
           makeLock.xpcomMap.set(condition, blocker);
@@ -94,14 +92,14 @@ function makeLock(kind) {
         let {fileName, lineNumber, stack} = (new Error());
         return barrier.client.addBlocker(blocker, fileName, lineNumber, stack);
       },
-      removeBlocker: function(condition) {
+      removeBlocker(condition) {
         let blocker = makeLock.xpcomMap.get(condition);
         if (!blocker) {
           return;
         }
         barrier.client.removeBlocker(blocker);
       },
-      wait: function() {
+      wait() {
         return new Promise(resolve => {
           barrier.wait(resolve);
         });
@@ -114,15 +112,14 @@ function makeLock(kind) {
     return {
       addBlocker: client.addBlocker,
       removeBlocker: client.removeBlocker,
-      wait: function() {
+      wait() {
         return new Promise(resolve => {
           barrier.wait(resolve);
         });
       }
     };
-  } else {
-    throw new TypeError("Unknown kind " + kind);
   }
+  throw new TypeError("Unknown kind " + kind);
 }
 makeLock.counter = 0;
 makeLock.xpcomMap = new Map(); // Note: Not a WeakMap as we wish to handle non-gc-able keys (e.g. strings)
@@ -144,13 +141,13 @@ function longRunningAsyncTask(resolution = undefined, outResult = {}) {
   if (!("countFinished" in outResult)) {
     outResult.countFinished = 0;
   }
-  let deferred = Promise.defer();
-  do_timeout(100, function() {
-    ++outResult.countFinished;
-    outResult.isFinished = true;
-    deferred.resolve(resolution);
+  return new Promise(resolve => {
+    do_timeout(100, function() {
+      ++outResult.countFinished;
+      outResult.isFinished = true;
+      resolve(resolution);
+    });
   });
-  return deferred.promise;
 }
 
 function get_exn(f) {

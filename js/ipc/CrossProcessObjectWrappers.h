@@ -49,11 +49,14 @@ class CrossProcessCpowHolder : public CpowHolder
     CrossProcessCpowHolder(dom::CPOWManagerGetter* managerGetter,
                            const InfallibleTArray<CpowEntry>& cpows);
 
+    ~CrossProcessCpowHolder();
+
     bool ToObject(JSContext* cx, JS::MutableHandleObject objp);
 
   private:
     CPOWManager* js_;
     const InfallibleTArray<CpowEntry>& cpows_;
+    bool unwrapped_;
 };
 
 CPOWManager*
@@ -78,16 +81,19 @@ void
 GetWrappedCPOWTag(JSObject* obj, nsACString& out);
 
 PJavaScriptParent*
-NewJavaScriptParent(JSRuntime* rt);
+NewJavaScriptParent();
 
 void
 ReleaseJavaScriptParent(PJavaScriptParent* parent);
 
 PJavaScriptChild*
-NewJavaScriptChild(JSRuntime* rt);
+NewJavaScriptChild();
 
 void
 ReleaseJavaScriptChild(PJavaScriptChild* child);
+
+void
+AfterProcessTask();
 
 } // namespace jsipc
 } // namespace mozilla

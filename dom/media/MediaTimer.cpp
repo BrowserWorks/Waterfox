@@ -6,13 +6,12 @@
 
 #include "MediaTimer.h"
 
-#include <math.h>
-
-#include "nsComponentManagerUtils.h"
-#include "nsThreadUtils.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/SharedThreadPool.h"
+#include "nsComponentManagerUtils.h"
+#include "nsThreadUtils.h"
+#include <math.h>
 
 namespace mozilla {
 
@@ -42,8 +41,10 @@ MediaTimer::DispatchDestroy()
   // Destroy(), which may run completely before the stack if Dispatch() begins
   // to unwind.
   nsCOMPtr<nsIEventTarget> thread = mThread;
-  nsresult rv = thread->Dispatch(NewNonOwningRunnableMethod(this, &MediaTimer::Destroy),
-                                 NS_DISPATCH_NORMAL);
+  nsresult rv =
+    thread->Dispatch(NewNonOwningRunnableMethod(
+                       "MediaTimer::Destroy", this, &MediaTimer::Destroy),
+                     NS_DISPATCH_NORMAL);
   MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
   (void) rv;
 }
@@ -80,7 +81,7 @@ RefPtr<MediaTimerPromise>
 MediaTimer::WaitUntil(const TimeStamp& aTimeStamp, const char* aCallSite)
 {
   MonitorAutoLock mon(mMonitor);
-  TIMER_LOG("MediaTimer::WaitUntil %lld", RelativeMicroseconds(aTimeStamp));
+  TIMER_LOG("MediaTimer::WaitUntil %" PRId64, RelativeMicroseconds(aTimeStamp));
   Entry e(aTimeStamp, aCallSite);
   RefPtr<MediaTimerPromise> p = e.mPromise.get();
   mEntries.push(e);
@@ -97,8 +98,9 @@ MediaTimer::ScheduleUpdate()
   }
   mUpdateScheduled = true;
 
-  nsresult rv = mThread->Dispatch(NewRunnableMethod(this, &MediaTimer::Update),
-                                  NS_DISPATCH_NORMAL);
+  nsresult rv = mThread->Dispatch(
+    NewRunnableMethod("MediaTimer::Update", this, &MediaTimer::Update),
+    NS_DISPATCH_NORMAL);
   MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
   (void) rv;
 }

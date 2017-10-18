@@ -3,11 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PBackground;
+include protocol PServiceWorkerUpdater;
 
 include PBackgroundSharedTypes;
 include ServiceWorkerRegistrarTypes;
 
-using mozilla::PrincipalOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
+using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 
 namespace mozilla {
 namespace dom {
@@ -15,13 +16,14 @@ namespace dom {
 protocol PServiceWorkerManager
 {
   manager PBackground;
+  manages PServiceWorkerUpdater;
 
 parent:
   async Register(ServiceWorkerRegistrationData data);
 
   async Unregister(PrincipalInfo principalInfo, nsString scope);
 
-  async PropagateSoftUpdate(PrincipalOriginAttributes originAttributes,
+  async PropagateSoftUpdate(OriginAttributes originAttributes,
                             nsString scope);
   async PropagateUnregister(PrincipalInfo principalInfo, nsString scope);
 
@@ -31,9 +33,12 @@ parent:
 
   async Shutdown();
 
+  async PServiceWorkerUpdater(OriginAttributes originAttributes,
+                              nsCString scope);
+
 child:
   async NotifyRegister(ServiceWorkerRegistrationData data);
-  async NotifySoftUpdate(PrincipalOriginAttributes originAttributes, nsString scope);
+  async NotifySoftUpdate(OriginAttributes originAttributes, nsString scope);
   async NotifyUnregister(PrincipalInfo principalInfo, nsString scope);
   async NotifyRemove(nsCString host);
   async NotifyRemoveAll();

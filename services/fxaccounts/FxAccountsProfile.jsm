@@ -24,57 +24,9 @@ Cu.import("resource://gre/modules/FxAccounts.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsProfileClient",
   "resource://gre/modules/FxAccountsProfileClient.jsm");
 
-// Based off of deepEqual from Assert.jsm
-function deepEqual(actual, expected) {
-  if (actual === expected) {
-    return true;
-  } else if (typeof actual != "object" && typeof expected != "object") {
-    return actual == expected;
-  } else {
-    return objEquiv(actual, expected);
-  }
-}
-
-function isUndefinedOrNull(value) {
-  return value === null || value === undefined;
-}
-
-function objEquiv(a, b) {
-  if (isUndefinedOrNull(a) || isUndefinedOrNull(b)) {
-    return false;
-  }
-  if (a.prototype !== b.prototype) {
-    return false;
-  }
-  let ka, kb, key, i;
-  try {
-    ka = Object.keys(a);
-    kb = Object.keys(b);
-  } catch (e) {
-    return false;
-  }
-  if (ka.length != kb.length) {
-    return false;
-  }
-  ka.sort();
-  kb.sort();
-  for (i = ka.length - 1; i >= 0; i--) {
-    key = ka[i];
-    if (!deepEqual(a[key], b[key])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function hasChanged(oldData, newData) {
-  return !deepEqual(oldData, newData);
-}
-
-this.FxAccountsProfile = function (options = {}) {
-  this._cachedProfile = null;
-  this._cachedAt = 0; // when we saved the cached version.
+this.FxAccountsProfile = function(options = {}) {
   this._currentFetchPromise = null;
+  this._cachedAt = 0; // when we saved the cached version.
   this._isNotifying = false; // are we sending a notification?
   this.fxa = options.fxa || fxAccounts;
   this.client = options.profileClient || new FxAccountsProfileClient({
@@ -106,66 +58,74 @@ this.FxAccountsProfile.prototype = {
     }
   },
 
-  tearDown: function () {
+  tearDown() {
     this.fxa = null;
     this.client = null;
-    this._cachedProfile = null;
     Services.obs.removeObserver(this, ON_PROFILE_CHANGE_NOTIFICATION);
   },
 
-  _getCachedProfile: function () {
-    // The cached profile will end up back in the generic accountData
-    // once bug 1157529 is fixed.
-    return Promise.resolve(this._cachedProfile);
-  },
-
-  _notifyProfileChange: function (uid) {
+  _notifyProfileChange(uid) {
     this._isNotifying = true;
     Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION, uid);
     this._isNotifying = false;
   },
 
-  // Cache fetched data if it is different from what's in the cache.
-  // Send out a notification if it has changed so that UI can update.
-  _cacheProfile: function (profileData) {
-    if (!hasChanged(this._cachedProfile, profileData)) {
-      log.debug("fetched profile matches cached copy");
-      return Promise.resolve(null); // indicates no change (but only tests care)
-    }
-    this._cachedProfile = profileData;
-    this._cachedAt = Date.now();
-    return this.fxa.getSignedInUser()
+  // Cache fetched data and send out a notification so that UI can update.
+  _cacheProfile(response) {
+    let profileCache = {
+      profile: response.body,
+      etag: response.etag
+    };
+
+    return this.fxa.setProfileCache(profileCache)
+      .then(() => {
+        return this.fxa.getSignedInUser();
+      })
       .then(userData => {
         log.debug("notifying profile changed for user ${uid}", userData);
         this._notifyProfileChange(userData.uid);
-        return profileData;
+        return response.body;
       });
   },
 
-  _fetchAndCacheProfile: function () {
-    if (!this._currentFetchPromise) {
-      this._currentFetchPromise = this.client.fetchProfile().then(profile => {
-        return this._cacheProfile(profile).then(() => {
-          return profile;
-        });
-      }).then(profile => {
-        this._currentFetchPromise = null;
-        return profile;
+  _fetchAndCacheProfileInternal() {
+    let onFinally = () => {
+      this._cachedAt = Date.now();
+      this._currentFetchPromise = null;
+    }
+    return this.fxa.getProfileCache()
+      .then(profileCache => {
+        const etag = profileCache ? profileCache.etag : null;
+        return this.client.fetchProfile(etag);
+      })
+      .then(response => {
+        // response may be null if the profile was not modified (same ETag).
+        return response ? this._cacheProfile(response) : null;
+      })
+      .then(body => { // finally block
+        onFinally();
+        // body may be null if the profile was not modified
+        return body;
       }, err => {
-        this._currentFetchPromise = null;
+        onFinally();
         throw err;
       });
+  },
+
+  _fetchAndCacheProfile() {
+    if (!this._currentFetchPromise) {
+      this._currentFetchPromise = this._fetchAndCacheProfileInternal();
     }
-    return this._currentFetchPromise
+    return this._currentFetchPromise;
   },
 
   // Returns cached data right away if available, then fetches the latest profile
   // data in the background. After data is fetched a notification will be sent
   // out if the profile has changed.
-  getProfile: function () {
-    return this._getCachedProfile()
-      .then(cachedProfile => {
-        if (cachedProfile) {
+  getProfile() {
+    return this.fxa.getProfileCache()
+      .then(profileCache => {
+        if (profileCache) {
           if (Date.now() > this._cachedAt + this.PROFILE_FRESHNESS_THRESHOLD) {
             // Note that _fetchAndCacheProfile isn't returned, so continues
             // in the background.
@@ -175,12 +135,9 @@ this.FxAccountsProfile.prototype = {
           } else {
             log.trace("not checking freshness of profile as it remains recent");
           }
-          return cachedProfile;
+          return profileCache.profile;
         }
         return this._fetchAndCacheProfile();
-      })
-      .then(profile => {
-        return profile;
       });
   },
 

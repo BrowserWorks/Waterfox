@@ -11,20 +11,8 @@ DIRS += [
     'testshell',
 ]
 
-if CONFIG['MOZ_B2G_RIL']:
-    DIRS += ['ril']
-
-if CONFIG['MOZ_ENABLE_DBUS'] or CONFIG['MOZ_B2G_BT_BLUEZ']:
+if CONFIG['MOZ_ENABLE_DBUS']:
     DIRS += ['dbus']
-
-if CONFIG['MOZ_NFC']:
-    DIRS += ['nfc']
-
-if CONFIG['MOZ_B2G_RIL'] or CONFIG['MOZ_B2G_BT'] or CONFIG['MOZ_NFC'] or CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DIRS += ['unixfd', 'unixsocket']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DIRS += ['hal', 'keystore', 'netd']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DIRS += ['contentproc']
@@ -33,3 +21,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += ['mscom']
 
 DIRS += ['app']
+
+with Files("**"):
+    BUG_COMPONENT = ("Core", "IPC")

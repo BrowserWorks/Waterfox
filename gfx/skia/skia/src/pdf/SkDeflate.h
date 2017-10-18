@@ -9,8 +9,6 @@
 #ifndef SkFlate_DEFINED
 #define SkFlate_DEFINED
 
-#include "SkTypes.h"
-
 #include "SkStream.h"
 
 /**
@@ -37,7 +35,7 @@ public:
                      bool gzip = false);
 
     /** The destructor calls finalize(). */
-    ~SkDeflateWStream();
+    ~SkDeflateWStream() override;
 
     /** Write the end of the compressed stream.  All subsequent calls to
         write() will fail. Subsequent calls to finalize() do nothing. */

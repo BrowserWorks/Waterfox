@@ -49,8 +49,7 @@ function download() {
   req.open("GET", SOURCE, false); // doing the request synchronously
   try {
     req.send();
-  }
-  catch (e) {
+  } catch (e) {
     throw new Error(`ERROR: problem downloading '${SOURCE}': ${e}`);
   }
 
@@ -62,8 +61,7 @@ function download() {
   var resultDecoded;
   try {
     resultDecoded = atob(req.responseText);
-  }
-  catch (e) {
+  } catch (e) {
     throw new Error("ERROR: could not decode data as base64 from '" + SOURCE +
                     "': " + e);
   }
@@ -73,8 +71,7 @@ function download() {
   var data = null;
   try {
     data = JSON.parse(result);
-  }
-  catch (e) {
+  } catch (e) {
     throw new Error(`ERROR: could not parse data from '${SOURCE}': ${e}`);
   }
   return data;
@@ -115,14 +112,14 @@ function processStsHeader(host, header, status, securityInfo) {
   var error = ERROR_NONE;
   if (header != null && securityInfo != null) {
     try {
-      var uri = Services.io.newURI("https://" + host.name, null, null);
+      var uri = Services.io.newURI("https://" + host.name);
       var sslStatus = securityInfo.QueryInterface(Ci.nsISSLStatusProvider)
                                   .SSLStatus;
       gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS,
-                               uri, header, sslStatus, 0, maxAge,
-                               includeSubdomains);
-    }
-    catch (e) {
+                               uri, header, sslStatus, 0,
+                               Ci.nsISiteSecurityService.SOURCE_PRELOAD_LIST,
+                               {}, maxAge, includeSubdomains);
+    } catch (e) {
       dump("ERROR: could not process header '" + header + "' from " +
            host.name + ": " + e + "\n");
       error = e;
@@ -142,9 +139,9 @@ function processStsHeader(host, header, status, securityInfo) {
   return { name: host.name,
            maxAge: maxAge.value,
            includeSubdomains: includeSubdomains.value,
-           error: error,
+           error,
            retries: host.retries - 1,
-           forceInclude: forceInclude,
+           forceInclude,
            originalIncludeSubdomains: host.originalIncludeSubdomains };
 }
 
@@ -153,20 +150,20 @@ function RedirectAndAuthStopper() {}
 
 RedirectAndAuthStopper.prototype = {
   // nsIChannelEventSink
-  asyncOnChannelRedirect: function(oldChannel, newChannel, flags, callback) {
+  asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
     throw new Error(Cr.NS_ERROR_ENTITY_CHANGED);
   },
 
   // nsIAuthPrompt2
-  promptAuth: function(channel, level, authInfo) {
+  promptAuth(channel, level, authInfo) {
     return false;
   },
 
-  asyncPromptAuth: function(channel, callback, context, level, authInfo) {
+  asyncPromptAuth(channel, callback, context, level, authInfo) {
     throw new Error(Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
-  getInterface: function(iid) {
+  getInterface(iid) {
     return this.QueryInterface(iid);
   },
 
@@ -181,7 +178,6 @@ function getHSTSStatus(host, resultList) {
   var uri = "https://" + host.name + "/";
   req.open("GET", uri, true);
   req.timeout = REQUEST_TIMEOUT;
-  req.channel.notificationCallbacks = new RedirectAndAuthStopper();
 
   let errorhandler = (evt) => {
     dump(`ERROR: error making request to ${host.name} (type=${evt.type})\n`);
@@ -205,9 +201,9 @@ function getHSTSStatus(host, resultList) {
   };
 
   try {
+    req.channel.notificationCallbacks = new RedirectAndAuthStopper();
     req.send();
-  }
-  catch (e) {
+  } catch (e) {
     dump("ERROR: exception making request to " + host.name + ": " + e + "\n");
   }
 }
@@ -321,7 +317,7 @@ function output(sortedStatuses, currentList) {
       // lengths of string literals, and the preload list is large enough
       // that it runs into said limits.
       for (let c of status.name) {
-	writeTo("'" + c + "', ", fos);
+        writeTo("'" + c + "', ", fos);
       }
       writeTo("'\\0',\n", fos);
     }
@@ -330,8 +326,9 @@ function output(sortedStatuses, currentList) {
     const PREFIX = "\n" +
       "struct nsSTSPreload\n" +
       "{\n" +
-      "  const uint32_t mHostIndex : 31;\n" +
-      "  const uint32_t mIncludeSubdomains : 1;\n" +
+      "  // See bug 1338873 about making these fields const.\n" +
+      "  uint32_t mHostIndex : 31;\n" +
+      "  uint32_t mIncludeSubdomains : 1;\n" +
       "};\n" +
       "\n" +
       "static const nsSTSPreload kSTSPreloadList[] = {\n";
@@ -344,8 +341,7 @@ function output(sortedStatuses, currentList) {
     writeTo(POSTFIX, fos);
     FileUtils.closeSafeFileOutputStream(fos);
     FileUtils.closeSafeFileOutputStream(eos);
-  }
-  catch (e) {
+  } catch (e) {
     dump("ERROR: problem writing output to '" + OUTPUT + "': " + e + "\n");
   }
 }
@@ -391,10 +387,7 @@ function waitForAResponse(outputList) {
   // From <https://developer.mozilla.org/en/XPConnect/xpcshell/HOWTO>
   var threadManager = Cc["@mozilla.org/thread-manager;1"]
                       .getService(Ci.nsIThreadManager);
-  var mainThread = threadManager.currentThread;
-  while (outputList.length == 0) {
-    mainThread.processNextEvent(true);
-  }
+  threadManager.spinEventLoopUntil(() => outputList.length != 0);
 }
 
 function readCurrentList(filename) {
@@ -409,8 +402,8 @@ function readCurrentList(filename) {
   // for details), we still need to be able to read entries in the version 1
   // format for bootstrapping a version 2 preload list from a version 1
   // preload list.  Hence these two regexes.
-  var v1EntryRegex = /  { "([^"]*)", (true|false) },/;
-  var v2EntryRegex = /  \/\* "([^"]*)", (true|false) \*\//;
+  var v1EntryRegex = / {2}{ "([^"]*)", (true|false) },/;
+  var v2EntryRegex = / {2}\/\* "([^"]*)", (true|false) \*\//;
   while (fis.readLine(line)) {
     var match = v1EntryRegex.exec(line.value);
     if (!match) {
@@ -438,6 +431,33 @@ function combineLists(newHosts, currentHosts) {
   }
 }
 
+const TEST_ENTRIES = [
+  { name: "includesubdomains.preloaded.test", includeSubdomains: true },
+  { name: "includesubdomains2.preloaded.test", includeSubdomains: true },
+  { name: "noincludesubdomains.preloaded.test", includeSubdomains: false },
+];
+
+function deleteTestHosts(currentHosts) {
+  for (let testEntry of TEST_ENTRIES) {
+    delete currentHosts[testEntry.name];
+  }
+}
+
+function insertTestHosts(hstsStatuses) {
+  for (let testEntry of TEST_ENTRIES) {
+    hstsStatuses.push({
+      name: testEntry.name,
+      maxAge: MINIMUM_REQUIRED_MAX_AGE,
+      includeSubdomains: testEntry.includeSubdomains,
+      error: ERROR_NONE,
+      // This deliberately doesn't have a value for `retries` (because we should
+      // never attempt to connect to this host).
+      forceInclude: true,
+      originalIncludeSubdomains: testEntry.includeSubdomains,
+    });
+  }
+}
+
 // ****************************************************************************
 // This is where the action happens:
 if (arguments.length != 1) {
@@ -446,6 +466,8 @@ if (arguments.length != 1) {
 }
 // get the current preload list
 var currentHosts = readCurrentList(arguments[0]);
+// delete any hosts we use in tests so we don't actually connect to them
+deleteTestHosts(currentHosts);
 // disable the current preload list so it won't interfere with requests we make
 Services.prefs.setBoolPref("network.stricttransportsecurity.preloadlist", false);
 // download and parse the raw json file from the Chromium source
@@ -457,6 +479,8 @@ combineLists(hosts, currentHosts);
 // get the HSTS status of each host
 var hstsStatuses = [];
 getHSTSStatuses(hosts, hstsStatuses);
+// add the hosts we use in tests
+insertTestHosts(hstsStatuses);
 // sort the hosts alphabetically
 hstsStatuses.sort(compareHSTSStatus);
 // write the results to a file (this is where we filter out hosts that we

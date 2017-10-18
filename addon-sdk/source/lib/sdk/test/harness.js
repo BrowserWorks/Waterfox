@@ -13,7 +13,7 @@ const { serializeStack, parseStack  } = require("toolkit/loader");
 const { setTimeout } = require('../timers');
 const { PlainTextConsole } = require("../console/plain-text");
 const { when: unload } = require("../system/unload");
-const { format, fromException }  = require("../console/traceback");
+lazyRequire(this, "../console/traceback", "format", "fromException");
 const system = require("../system");
 const { gc: gcPromise } = require('./memory');
 const { defer } = require('../core/promise');
@@ -280,7 +280,7 @@ function getPotentialLeaks() {
 
   let ioService = Cc["@mozilla.org/network/io-service;1"].
                  getService(Ci.nsIIOService);
-  let uri = ioService.newURI("chrome://global/content/", "UTF-8", null);
+  let uri = ioService.newURI("chrome://global/content/", "UTF-8");
   let chromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"].
                   getService(Ci.nsIChromeRegistry);
   uri = chromeReg.convertChromeURL(uri);

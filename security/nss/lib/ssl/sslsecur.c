@@ -15,11 +15,6 @@
 #include "nss.h"      /* for NSS_RegisterShutdown */
 #include "prinit.h"   /* for PR_CallOnceWithArg */
 
-#define MAX_BLOCK_CYPHER_SIZE 32
-
-#define TEST_FOR_FAILURE /* reminder */
-#define SET_ERROR_CODE   /* reminder */
-
 /* Returns a SECStatus: SECSuccess or SECFailure, NOT SECWouldBlock.
  *
  * Currently, the list of functions called through ss->handshake is:
@@ -99,6 +94,8 @@ ssl_FinishHandshake(sslSocket *ss)
                     ssl_preinfo_all);
         (ss->handshakeCallback)(ss->fd, ss->handshakeCallbackData);
     }
+
+    ssl_FreeEphemeralKeyPairs(ss);
 }
 
 /*
@@ -201,6 +198,9 @@ SSL_ResetHandshake(PRFileDesc *s, PRBool asServer)
 
     ssl_ReleaseSSL3HandshakeLock(ss);
     ssl_Release1stHandshakeLock(ss);
+
+    ssl3_DestroyRemoteExtensions(&ss->ssl3.hs.remoteExtensions);
+    ssl3_ResetExtensionData(&ss->xtnData);
 
     if (!ss->TCPconnected)
         ss->TCPconnected = (PR_SUCCESS == ssl_DefGetpeername(ss, &addr));
@@ -478,7 +478,7 @@ sslBuffer_Append(sslBuffer *b, const void *data, unsigned int len)
 void
 sslBuffer_Clear(sslBuffer *b)
 {
-    if (b->len > 0) {
+    if (b->buf) {
         PORT_Free(b->buf);
         b->buf = NULL;
         b->len = 0;
@@ -650,8 +650,6 @@ SECStatus
 ssl_CopySecurityInfo(sslSocket *ss, sslSocket *os)
 {
     ss->sec.isServer = os->sec.isServer;
-    ss->sec.keyBits = os->sec.keyBits;
-    ss->sec.secretKeyBits = os->sec.secretKeyBits;
 
     ss->sec.peerCert = CERT_DupCertificate(os->sec.peerCert);
     if (os->sec.peerCert && !ss->sec.peerCert)
@@ -886,6 +884,7 @@ int
 ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
 {
     int rv = 0;
+    PRBool zeroRtt = PR_FALSE;
 
     SSL_TRC(2, ("%d: SSL[%d]: SecureSend: sending %d bytes",
                 SSL_GETPID(), ss->fd, len));
@@ -925,15 +924,20 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
      * Case 2: TLS 1.3 0-RTT
      */
     if (!ss->firstHsDone) {
-        PRBool falseStart = PR_FALSE;
+        PRBool allowEarlySend = PR_FALSE;
+
         ssl_Get1stHandshakeLock(ss);
         if (ss->opt.enableFalseStart ||
             (ss->opt.enable0RttData && !ss->sec.isServer)) {
             ssl_GetSSL3HandshakeLock(ss);
-            falseStart = ss->ssl3.hs.canFalseStart || ss->ssl3.hs.doing0Rtt;
+            /* The client can sometimes send before the handshake is fully
+             * complete. In TLS 1.2: false start; in TLS 1.3: 0-RTT. */
+            zeroRtt = ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                      ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted;
+            allowEarlySend = ss->ssl3.hs.canFalseStart || zeroRtt;
             ssl_ReleaseSSL3HandshakeLock(ss);
         }
-        if (!falseStart && ss->handshake) {
+        if (!allowEarlySend && ss->handshake) {
             rv = ssl_Do1stHandshake(ss);
         }
         ssl_Release1stHandshakeLock(ss);
@@ -941,6 +945,20 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
     if (rv < 0) {
         ss->writerThread = NULL;
         goto done;
+    }
+
+    if (zeroRtt) {
+        /* There's a limit to the number of early data octets we can send.
+         *
+         * Note that taking this lock doesn't prevent the cipher specs from
+         * being changed out between here and when records are ultimately
+         * encrypted.  The only effect of that is to occasionally do an
+         * unnecessary short write when data is identified as 0-RTT here but
+         * 1-RTT later.
+         */
+        ssl_GetSpecReadLock(ss);
+        len = tls13_LimitEarlyData(ss, content_application_data, len);
+        ssl_ReleaseSpecReadLock(ss);
     }
 
     /* Check for zero length writes after we do housekeeping so we make forward
@@ -955,17 +973,6 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
         PORT_SetError(PR_INVALID_ARGUMENT_ERROR);
         rv = PR_FAILURE;
         goto done;
-    }
-
-    if (!ss->firstHsDone) {
-#ifdef DEBUG
-        ssl_GetSSL3HandshakeLock(ss);
-        PORT_Assert(ss->ssl3.hs.canFalseStart ||
-                    (ss->ssl3.hs.doing0Rtt && !ss->sec.isServer));
-        ssl_ReleaseSSL3HandshakeLock(ss);
-#endif
-        SSL_TRC(3, ("%d: SSL[%d]: SecureSend: sending data due to false start",
-                    SSL_GETPID(), ss->fd));
     }
 
     ssl_GetXmitBufLock(ss);
@@ -987,6 +994,42 @@ int
 ssl_SecureWrite(sslSocket *ss, const unsigned char *buf, int len)
 {
     return ssl_SecureSend(ss, buf, len, 0);
+}
+
+SECStatus
+SSL_AlertReceivedCallback(PRFileDesc *fd, SSLAlertCallback cb, void *arg)
+{
+    sslSocket *ss;
+
+    ss = ssl_FindSocket(fd);
+    if (!ss) {
+        SSL_DBG(("%d: SSL[%d]: unable to find socket in SSL_AlertReceivedCallback",
+                 SSL_GETPID(), fd));
+        return SECFailure;
+    }
+
+    ss->alertReceivedCallback = cb;
+    ss->alertReceivedCallbackArg = arg;
+
+    return SECSuccess;
+}
+
+SECStatus
+SSL_AlertSentCallback(PRFileDesc *fd, SSLAlertCallback cb, void *arg)
+{
+    sslSocket *ss;
+
+    ss = ssl_FindSocket(fd);
+    if (!ss) {
+        SSL_DBG(("%d: SSL[%d]: unable to find socket in SSL_AlertSentCallback",
+                 SSL_GETPID(), fd));
+        return SECFailure;
+    }
+
+    ss->alertSentCallback = cb;
+    ss->alertSentCallbackArg = arg;
+
+    return SECSuccess;
 }
 
 SECStatus
@@ -1107,7 +1150,7 @@ SSL_InvalidateSession(PRFileDesc *fd)
         ssl_Get1stHandshakeLock(ss);
         ssl_GetSSL3HandshakeLock(ss);
 
-        if (ss->sec.ci.sid && ss->sec.uncache) {
+        if (ss->sec.ci.sid) {
             ss->sec.uncache(ss->sec.ci.sid);
             rv = SECSuccess;
         }

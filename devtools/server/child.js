@@ -20,15 +20,11 @@ try {
 
     if (!DebuggerServer.initialized) {
       DebuggerServer.init();
-      // For non-e10s mode, there is only one server instance, so be sure the browser
-      // actors get loaded.
-      DebuggerServer.addBrowserActors();
     }
-
-    // In case of apps being loaded in parent process, DebuggerServer is already
-    // initialized, but child specific actors are not registered. Otherwise, for apps in
-    // child process, we need to load actors the first time we load child.js.
-    DebuggerServer.addChildActors();
+    // We want a special server without any root actor and only tab actors.
+    // We are going to spawn a ContentActor instance in the next few lines,
+    // it is going to act like a root actor without being one.
+    DebuggerServer.registerActors({ root: false, browser: false, tab: true });
 
     let connections = new Map();
 
@@ -37,12 +33,22 @@ try {
 
       let mm = msg.target;
       let prefix = msg.data.prefix;
+      let addonId = msg.data.addonId;
 
       let conn = DebuggerServer.connectToParent(prefix, mm);
       conn.parentMessageManager = mm;
       connections.set(prefix, conn);
 
-      let actor = new DebuggerServer.ContentActor(conn, chromeGlobal, prefix);
+      let actor;
+
+      if (addonId) {
+        const { WebExtensionChildActor } = require("devtools/server/actors/webextension");
+        actor = new WebExtensionChildActor(conn, chromeGlobal, prefix, addonId);
+      } else {
+        const { ContentActor } = require("devtools/server/actors/childtab");
+        actor = new ContentActor(conn, chromeGlobal, prefix);
+      }
+
       let actorPool = new ActorPool(conn);
       actorPool.addActor(actor);
       conn.addActorPool(actorPool);
@@ -61,8 +67,8 @@ try {
       try {
         m = require(module);
 
-        if (!setupChild in m) {
-          dumpn(`ERROR: module '${module}' does not export 'setupChild'`);
+        if (!(setupChild in m)) {
+          dumpn(`ERROR: module '${module}' does not export '${setupChild}'`);
           return false;
         }
 
@@ -85,17 +91,21 @@ try {
     addMessageListener("debug:setup-in-child", onSetupInChild);
 
     let onDisconnect = DevToolsUtils.makeInfallible(function (msg) {
-      removeMessageListener("debug:disconnect", onDisconnect);
+      let prefix = msg.data.prefix;
+      let conn = connections.get(prefix);
+      if (!conn) {
+        // Several copies of this frame script can be running for a single frame since it
+        // is loaded once for each DevTools connection to the frame.  If this disconnect
+        // request doesn't match a connection known here, ignore it.
+        return;
+      }
 
+      removeMessageListener("debug:disconnect", onDisconnect);
       // Call DebuggerServerConnection.close to destroy all child actors. It should end up
       // calling DebuggerServerConnection.onClosed that would actually cleanup all actor
       // pools.
-      let prefix = msg.data.prefix;
-      let conn = connections.get(prefix);
-      if (conn) {
-        conn.close();
-        connections.delete(prefix);
-      }
+      conn.close();
+      connections.delete(prefix);
     });
     addMessageListener("debug:disconnect", onDisconnect);
 
@@ -108,15 +118,6 @@ try {
       }
       connections.clear();
     });
-
-    let onInspect = DevToolsUtils.makeInfallible(function (msg) {
-      // Store the node to be inspected in a global variable (gInspectingNode). Later
-      // we'll fetch this variable again using the findInspectingNode request over the
-      // remote debugging protocol.
-      let inspector = require("devtools/server/actors/inspector");
-      inspector.setInspectingNode(msg.objects.node);
-    });
-    addMessageListener("debug:inspect", onInspect);
   })();
 } catch (e) {
   dump(`Exception in app child process: ${e}\n`);

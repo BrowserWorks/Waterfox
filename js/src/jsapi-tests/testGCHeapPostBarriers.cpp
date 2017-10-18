@@ -5,11 +5,41 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 
 #include "js/RootingAPI.h"
 #include "jsapi-tests/tests.h"
 #include "vm/Runtime.h"
+
+#include "jscntxtinlines.h"
+
+// A heap-allocated structure containing one of our barriered pointer wrappers
+// to test.
+template <typename W>
+struct TestStruct
+{
+    W wrapper;
+};
+
+// A specialized version for GCPtr that adds a zone() method.
+template <typename T>
+struct TestStruct<js::GCPtr<T>>
+{
+    js::GCPtr<T> wrapper;
+
+    void trace(JSTracer* trc) {
+        TraceNullableEdge(trc, &wrapper, "TestStruct::wrapper");
+    }
+};
+
+// Give the GCPtr version GCManagedDeletePolicy as required.
+namespace JS {
+template <typename T>
+struct DeletePolicy<TestStruct<js::GCPtr<T>>>
+    : public js::GCManagedDeletePolicy<TestStruct<js::GCPtr<T>>>
+{};
+} // namespace JS
 
 template <typename T>
 static T* CreateGCThing(JSContext* cx)
@@ -101,25 +131,30 @@ TestHeapPostBarrierUpdate()
     CHECK(js::gc::IsInsideNursery(initialObj));
     uintptr_t initialObjAsInt = uintptr_t(initialObj);
 
-    W* ptr = nullptr;
+    TestStruct<W>* ptr = nullptr;
 
     {
-        auto heapPtr = cx->make_unique<W>();
-        CHECK(heapPtr);
+        auto testStruct = cx->make_unique<TestStruct<W>>();
+        CHECK(testStruct);
 
-        W& wrapper = *heapPtr;
+        W& wrapper = testStruct->wrapper;
         CHECK(wrapper.get() == nullptr);
         wrapper = initialObj;
         CHECK(wrapper == initialObj);
 
-        ptr = heapPtr.release();
+        ptr = testStruct.release();
     }
 
     cx->minorGC(JS::gcreason::API);
 
-    CHECK(uintptr_t(ptr->get()) != initialObjAsInt);
-    CHECK(!js::gc::IsInsideNursery(ptr->get()));
-    CHECK(CanAccessObject(ptr->get()));
+    W& wrapper = ptr->wrapper;
+    CHECK(uintptr_t(wrapper.get()) != initialObjAsInt);
+    CHECK(!js::gc::IsInsideNursery(wrapper.get()));
+    CHECK(CanAccessObject(wrapper.get()));
+
+    JS::DeletePolicy<TestStruct<W>>()(ptr);
+
+    cx->minorGC(JS::gcreason::API);
 
     return true;
 }
@@ -136,13 +171,15 @@ TestHeapPostBarrierInitFailure()
     CHECK(js::gc::IsInsideNursery(initialObj));
 
     {
-        auto heapPtr = cx->make_unique<W>();
-        CHECK(heapPtr);
+        auto testStruct = cx->make_unique<TestStruct<W>>();
+        CHECK(testStruct);
 
-        W& wrapper = *heapPtr;
+        W& wrapper = testStruct->wrapper;
         CHECK(wrapper.get() == nullptr);
         wrapper = initialObj;
         CHECK(wrapper == initialObj);
+
+        // testStruct deleted here, as if we left this block due to an error.
     }
 
     cx->minorGC(JS::gcreason::API);
@@ -151,3 +188,115 @@ TestHeapPostBarrierInitFailure()
 }
 
 END_TEST(testGCHeapPostBarriers)
+
+BEGIN_TEST(testUnbarrieredEquality)
+{
+#ifdef JS_GC_ZEAL
+    AutoLeaveZeal nozeal(cx);
+#endif /* JS_GC_ZEAL */
+
+    // Use ArrayBuffers because they have finalizers, which allows using them
+    // in ObjectPtr without awkward conversations about nursery allocatability.
+    JS::RootedObject robj(cx, JS_NewArrayBuffer(cx, 20));
+    JS::RootedObject robj2(cx, JS_NewArrayBuffer(cx, 30));
+    cx->runtime()->gc.evictNursery(); // Need tenured objects
+
+    // Need some bare pointers to compare against.
+    JSObject* obj = robj;
+    JSObject* obj2 = robj2;
+    const JSObject* constobj = robj;
+    const JSObject* constobj2 = robj2;
+
+    // Make them gray. We will make sure they stay gray. (For most reads, the
+    // barrier will unmark gray.)
+    using namespace js::gc;
+    TenuredCell* cell = &obj->asTenured();
+    TenuredCell* cell2 = &obj2->asTenured();
+    cell->markIfUnmarked(MarkColor::Gray);
+    cell2->markIfUnmarked(MarkColor::Gray);
+    MOZ_ASSERT(cell->isMarkedGray());
+    MOZ_ASSERT(cell2->isMarkedGray());
+
+    {
+        JS::Heap<JSObject*> heap(obj);
+        JS::Heap<JSObject*> heap2(obj2);
+        CHECK(TestWrapper(obj, obj2, heap, heap2));
+        CHECK(TestWrapper(constobj, constobj2, heap, heap2));
+    }
+
+    {
+        JS::TenuredHeap<JSObject*> heap(obj);
+        JS::TenuredHeap<JSObject*> heap2(obj2);
+        CHECK(TestWrapper(obj, obj2, heap, heap2));
+        CHECK(TestWrapper(constobj, constobj2, heap, heap2));
+    }
+
+    {
+        JS::ObjectPtr objptr(obj);
+        JS::ObjectPtr objptr2(obj2);
+        CHECK(TestWrapper(obj, obj2, objptr, objptr2));
+        CHECK(TestWrapper(constobj, constobj2, objptr, objptr2));
+        objptr.finalize(cx);
+        objptr2.finalize(cx);
+    }
+
+    // Sanity check that the barriers normally mark things black.
+    {
+        JS::Heap<JSObject*> heap(obj);
+        JS::Heap<JSObject*> heap2(obj2);
+        heap.get();
+        heap2.get();
+        CHECK(cell->isMarkedBlack());
+        CHECK(cell2->isMarkedBlack());
+    }
+
+    return true;
+}
+
+template <typename ObjectT, typename WrapperT>
+bool
+TestWrapper(ObjectT obj, ObjectT obj2, WrapperT& wrapper, WrapperT& wrapper2)
+{
+    using namespace js::gc;
+
+    const TenuredCell& cell = obj->asTenured();
+    const TenuredCell& cell2 = obj2->asTenured();
+
+    int x = 0;
+
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += obj == obj2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += obj == wrapper2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += wrapper == obj2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += wrapper == wrapper2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+
+    CHECK(x == 0);
+
+    x += obj != obj2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += obj != wrapper2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += wrapper != obj2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+    x += wrapper != wrapper2;
+    CHECK(cell.isMarkedGray());
+    CHECK(cell2.isMarkedGray());
+
+    CHECK(x == 4);
+
+    return true;
+}
+
+END_TEST(testUnbarrieredEquality)

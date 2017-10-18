@@ -4,8 +4,12 @@
 
 // This file contains unit tests for ServiceResolverThunk.
 
-#include "base/basictypes.h"
-#include "base/memory/scoped_ptr.h"
+#include <stddef.h>
+
+#include <memory>
+
+#include "base/bit_cast.h"
+#include "base/macros.h"
 #include "base/win/windows_version.h"
 #include "sandbox/win/src/resolver.h"
 #include "sandbox/win/src/sandbox_utils.h"
@@ -38,12 +42,12 @@ class ResolverThunkTest : public T {
                         void* thunk_storage,
                         size_t storage_bytes) {
     NTSTATUS ret = STATUS_SUCCESS;
-    ret = ResolverThunk::Init(target_module, interceptor_module, target_name,
-                              interceptor_name, interceptor_entry_point,
-                              thunk_storage, storage_bytes);
+    ret = T::Init(target_module, interceptor_module, target_name,
+                  interceptor_name, interceptor_entry_point, thunk_storage,
+                  storage_bytes);
     EXPECT_EQ(STATUS_SUCCESS, ret);
 
-    target_ = fake_target_;
+    this->target_ = fake_target_;
 
     return ret;
   };
@@ -61,6 +65,7 @@ typedef ResolverThunkTest<sandbox::ServiceResolverThunk> WinXpResolverTest;
 typedef ResolverThunkTest<sandbox::Win8ResolverThunk> Win8ResolverTest;
 typedef ResolverThunkTest<sandbox::Wow64ResolverThunk> Wow64ResolverTest;
 typedef ResolverThunkTest<sandbox::Wow64W8ResolverThunk> Wow64W8ResolverTest;
+typedef ResolverThunkTest<sandbox::Wow64W10ResolverThunk> Wow64W10ResolverTest;
 #endif
 
 const BYTE kJump32 = 0xE9;
@@ -104,7 +109,7 @@ NTSTATUS PatchNtdllWithResolver(const char* function, bool relaxed,
   // Any pointer will do as an interception_entry_point
   void* function_entry = resolver;
   size_t thunk_size = resolver->GetThunkSize();
-  scoped_ptr<char[]> thunk(new char[thunk_size]);
+  std::unique_ptr<char[]> thunk(new char[thunk_size]);
   size_t used;
 
   resolver->AllowLocalPatches();
@@ -135,6 +140,8 @@ sandbox::ServiceResolverThunk* GetTestResolver(bool relaxed) {
 #else
   base::win::OSInfo* os_info = base::win::OSInfo::GetInstance();
   if (os_info->wow64_status() == base::win::OSInfo::WOW64_ENABLED) {
+    if (os_info->version() >= base::win::VERSION_WIN10)
+      return new Wow64W10ResolverTest(relaxed);
     if (os_info->version() >= base::win::VERSION_WIN8)
       return new Wow64W8ResolverTest(relaxed);
     return new Wow64ResolverTest(relaxed);
@@ -240,7 +247,7 @@ TEST(ServiceResolverTest, LocalPatchesAllowed) {
   // Any pointer will do as an interception_entry_point
   void* function_entry = resolver;
   size_t thunk_size = resolver->GetThunkSize();
-  scoped_ptr<char[]> thunk(new char[thunk_size]);
+  std::unique_ptr<char[]> thunk(new char[thunk_size]);
   size_t used;
 
   NTSTATUS ret = STATUS_UNSUCCESSFUL;

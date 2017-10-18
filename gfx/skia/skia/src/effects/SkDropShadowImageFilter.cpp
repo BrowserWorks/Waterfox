@@ -9,10 +9,22 @@
 
 #include "SkBlurImageFilter.h"
 #include "SkCanvas.h"
+#include "SkColorSpaceXformer.h"
 #include "SkReadBuffer.h"
 #include "SkSpecialImage.h"
 #include "SkSpecialSurface.h"
 #include "SkWriteBuffer.h"
+
+sk_sp<SkImageFilter> SkDropShadowImageFilter::Make(SkScalar dx, SkScalar dy,
+                                                   SkScalar sigmaX, SkScalar sigmaY,
+                                                   SkColor color, ShadowMode shadowMode,
+                                                   sk_sp<SkImageFilter> input,
+                                                   const CropRect* cropRect) {
+    return sk_sp<SkImageFilter>(new SkDropShadowImageFilter(dx, dy, sigmaX, sigmaY, 
+                                                            color, shadowMode,
+                                                            std::move(input),
+                                                            cropRect));
+}
 
 SkDropShadowImageFilter::SkDropShadowImageFilter(SkScalar dx, SkScalar dy,
                                                  SkScalar sigmaX, SkScalar sigmaY, SkColor color,
@@ -66,9 +78,7 @@ sk_sp<SkSpecialImage> SkDropShadowImageFilter::onFilterImage(SkSpecialImage* sou
         return nullptr;
     }
 
-    const SkImageInfo info = SkImageInfo::MakeN32(bounds.width(), bounds.height(),
-                                                  kPremul_SkAlphaType);
-    sk_sp<SkSpecialSurface> surf(source->makeSurface(info));
+    sk_sp<SkSpecialSurface> surf(source->makeSurface(ctx.outputProperties(), bounds.size()));
     if (!surf) {
         return nullptr;
     }
@@ -84,9 +94,9 @@ sk_sp<SkSpecialImage> SkDropShadowImageFilter::onFilterImage(SkSpecialImage* sou
     sigma.fY = SkMaxScalar(0, sigma.fY);
 
     SkPaint paint;
+    paint.setAntiAlias(true);
     paint.setImageFilter(SkBlurImageFilter::Make(sigma.fX, sigma.fY, nullptr));
-    paint.setColorFilter(SkColorFilter::MakeModeFilter(fColor, SkXfermode::kSrcIn_Mode));
-    paint.setXfermodeMode(SkXfermode::kSrcOver_Mode);
+    paint.setColorFilter(SkColorFilter::MakeModeFilter(fColor, SkBlendMode::kSrcIn));
 
     SkVector offsetVec = SkVector::Make(fDx, fDy);
     ctx.ctm().mapVectors(&offsetVec, 1);
@@ -103,12 +113,21 @@ sk_sp<SkSpecialImage> SkDropShadowImageFilter::onFilterImage(SkSpecialImage* sou
     return surf->makeImageSnapshot();
 }
 
+sk_sp<SkImageFilter> SkDropShadowImageFilter::onMakeColorSpace(SkColorSpaceXformer* xformer) const {
+    SkASSERT(1 == this->countInputs());
+
+    sk_sp<SkImageFilter> input =
+            this->getInput(0) ? this->getInput(0)->makeColorSpace(xformer) : nullptr;
+
+    return SkDropShadowImageFilter::Make(fDx, fDy, fSigmaX, fSigmaY, xformer->apply(fColor),
+                                         fShadowMode, std::move(input));
+}
+
 SkRect SkDropShadowImageFilter::computeFastBounds(const SkRect& src) const {
     SkRect bounds = this->getInput(0) ? this->getInput(0)->computeFastBounds(src) : src;
     SkRect shadowBounds = bounds;
     shadowBounds.offset(fDx, fDy);
-    shadowBounds.outset(SkScalarMul(fSigmaX, SkIntToScalar(3)),
-                        SkScalarMul(fSigmaY, SkIntToScalar(3)));
+    shadowBounds.outset(fSigmaX * 3, fSigmaY * 3);
     if (fShadowMode == kDrawShadowAndForeground_ShadowMode) {
         bounds.join(shadowBounds);
     } else {
@@ -128,8 +147,9 @@ SkIRect SkDropShadowImageFilter::onFilterNodeBounds(const SkIRect& src, const Sk
                                  SkScalarCeilToInt(offsetVec.y()));
     SkVector sigma = SkVector::Make(fSigmaX, fSigmaY);
     ctm.mapVectors(&sigma, 1);
-    dst.outset(SkScalarCeilToInt(SkScalarMul(sigma.x(), SkIntToScalar(3))),
-                SkScalarCeilToInt(SkScalarMul(sigma.y(), SkIntToScalar(3))));
+    dst.outset(
+        SkScalarCeilToInt(SkScalarAbs(sigma.x() * 3)),
+        SkScalarCeilToInt(SkScalarAbs(sigma.y() * 3)));
     if (fShadowMode == kDrawShadowAndForeground_ShadowMode) {
         dst.join(src);
     }

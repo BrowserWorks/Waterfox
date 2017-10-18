@@ -11,12 +11,6 @@ interface nsIFile;
 
 [Constructor(sequence<BlobPart> fileBits,
              USVString fileName, optional FilePropertyBag options),
-
- // These constructors are just for chrome callers:
- Constructor(Blob fileBits, optional ChromeFilePropertyBag options),
- Constructor(nsIFile fileBits, optional ChromeFilePropertyBag options),
- Constructor(USVString fileBits, optional ChromeFilePropertyBag options),
-
  Exposed=(Window,Worker)]
 interface File : Blob {
   readonly attribute DOMString name;
@@ -32,7 +26,7 @@ dictionary FilePropertyBag {
 
 dictionary ChromeFilePropertyBag : FilePropertyBag {
   DOMString name = "";
-  boolean temporary = false;
+  boolean existenceCheck = true;
 };
 
 // Mozilla extensions
@@ -40,9 +34,25 @@ partial interface File {
   [GetterThrows, Deprecated="FileLastModifiedDate"]
   readonly attribute Date lastModifiedDate;
 
-  [BinaryName="path", Func="mozilla::dom::Directory::WebkitBlinkDirectoryPickerEnabled"]
-  readonly attribute DOMString webkitRelativePath;
+  [BinaryName="relativePath", Func="mozilla::dom::Directory::WebkitBlinkDirectoryPickerEnabled"]
+  readonly attribute USVString webkitRelativePath;
 
-  [GetterThrows, ChromeOnly]
+  [GetterThrows, ChromeOnly, NeedsCallerType]
   readonly attribute DOMString mozFullPath;
+};
+
+// Mozilla extensions
+// These 2 methods can be used only in these conditions:
+// - the main-thread
+// - parent process OR file process OR, only for testing, with pref
+//   `dom.file.createInChild' set to true.
+[Exposed=(Window)]
+partial interface File {
+  [ChromeOnly, Throws, NeedsCallerType]
+  static Promise<File> createFromNsIFile(nsIFile file,
+                                         optional ChromeFilePropertyBag options);
+
+  [ChromeOnly, Throws, NeedsCallerType]
+  static Promise<File> createFromFileName(USVString fileName,
+                                          optional ChromeFilePropertyBag options);
 };

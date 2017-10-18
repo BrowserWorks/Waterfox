@@ -78,11 +78,12 @@ FxAccountsPushService.prototype = {
     }
 
     // listen to new push messages, push changes and logout events
-    Services.obs.addObserver(this, this.pushService.pushTopic, false);
-    Services.obs.addObserver(this, this.pushService.subscriptionChangeTopic, false);
-    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION, false);
+    Services.obs.addObserver(this, this.pushService.pushTopic);
+    Services.obs.addObserver(this, this.pushService.subscriptionChangeTopic);
+    Services.obs.addObserver(this, ONLOGOUT_NOTIFICATION);
 
     this.log.debug("FxAccountsPush initialized");
+    return true;
   },
   /**
    * Registers a new endpoint with the Push Server
@@ -113,8 +114,9 @@ FxAccountsPushService.prototype = {
    * @param subject
    * @param topic
    * @param data
+   * @returns {Promise}
    */
-  observe(subject, topic, data) {
+  _observe(subject, topic, data) {
     this.log.trace(`observed topic=${topic}, data=${data}, subject=${subject}`);
     switch (topic) {
       case this.pushService.pushTopic:
@@ -133,30 +135,75 @@ FxAccountsPushService.prototype = {
         this.unsubscribe().catch(err => {
           this.log.error("Error during unsubscribe", err);
         });
-        break;
       default:
         break;
     }
   },
   /**
+   * Wrapper around _observe that catches errors
+   */
+  observe(subject, topic, data) {
+    Promise.resolve()
+      .then(() => this._observe(subject, topic, data))
+      .catch(err => this.log.error(err));
+  },
+  /**
    * Fired when the Push server sends a notification.
    *
    * @private
+   * @returns {Promise}
    */
   _onPushMessage(message) {
     this.log.trace("FxAccountsPushService _onPushMessage");
     if (!message.data) {
       // Use the empty signal to check the verification state of the account right away
+      this.log.debug("empty push message - checking account status");
       this.fxAccounts.checkVerificationStatus();
       return;
     }
     let payload = message.data.json();
+    this.log.debug(`push command: ${payload.command}`);
     switch (payload.command) {
+      case ON_DEVICE_CONNECTED_NOTIFICATION:
+        Services.obs.notifyObservers(null, ON_DEVICE_CONNECTED_NOTIFICATION, payload.data.deviceName);
+        break;
       case ON_DEVICE_DISCONNECTED_NOTIFICATION:
         this.fxAccounts.handleDeviceDisconnection(payload.data.id);
+        return;
+      case ON_PROFILE_UPDATED_NOTIFICATION:
+        // We already have a "profile updated" notification sent via WebChannel,
+        // let's just re-use that.
+        Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION);
+        return;
+      case ON_PASSWORD_CHANGED_NOTIFICATION:
+      case ON_PASSWORD_RESET_NOTIFICATION:
+        this._onPasswordChanged();
+        return;
+      case ON_ACCOUNT_DESTROYED_NOTIFICATION:
+        this.fxAccounts.handleAccountDestroyed(payload.data.uid);
+        return;
+      case ON_COLLECTION_CHANGED_NOTIFICATION:
+        Services.obs.notifyObservers(null, ON_COLLECTION_CHANGED_NOTIFICATION, payload.data.collections);
+        return;
+      case ON_VERIFY_LOGIN_NOTIFICATION:
+        Services.obs.notifyObservers(null, ON_VERIFY_LOGIN_NOTIFICATION, JSON.stringify(payload.data));
         break;
       default:
         this.log.warn("FxA Push command unrecognized: " + payload.command);
+    }
+  },
+  /**
+   * Check the FxA session status after a password change/reset event.
+   * If the session is invalid, reset credentials and notify listeners of
+   * ON_ACCOUNT_STATE_CHANGE_NOTIFICATION that the account may have changed
+   *
+   * @returns {Promise}
+   * @private
+   */
+  async _onPasswordChanged() {
+    if (!(await this.fxAccounts.sessionStatus())) {
+      await this.fxAccounts.resetCredentials();
+      Services.obs.notifyObservers(null, ON_ACCOUNT_STATE_CHANGE_NOTIFICATION);
     }
   },
   /**
@@ -164,11 +211,12 @@ FxAccountsPushService.prototype = {
    *
    * https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIPushService#Receiving_Push_Messages
    *
+   * @returns {Promise}
    * @private
    */
   _onPushSubscriptionChange() {
     this.log.trace("FxAccountsPushService _onPushSubscriptionChange");
-    this.fxAccounts.updateDeviceRegistration();
+    return this.fxAccounts.updateDeviceRegistration();
   },
   /**
    * Unsubscribe from the Push server
@@ -194,14 +242,11 @@ FxAccountsPushService.prototype = {
             this.log.warn("FxAccountsPushService failed to unsubscribe", result);
           }
           return resolve(ok);
-        })
-    })
+        });
+    });
   },
 };
 
 // Service registration below registers with FxAccountsComponents.manifest
 const components = [FxAccountsPushService];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);
-
-// The following registration below helps with testing this service.
-this.EXPORTED_SYMBOLS=["FxAccountsPushService"];

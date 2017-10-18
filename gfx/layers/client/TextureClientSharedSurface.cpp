@@ -9,14 +9,9 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Logging.h"        // for gfxDebug
 #include "mozilla/layers/ISurfaceAllocator.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsThreadUtils.h"
 #include "SharedSurface.h"
-
-#ifdef MOZ_WIDGET_GONK
-#include "mozilla/layers/GrallocTextureClient.h"
-#include "SharedSurfaceGralloc.h"
-#endif
 
 using namespace mozilla::gl;
 
@@ -32,7 +27,7 @@ SharedSurfaceTextureData::~SharedSurfaceTextureData()
 {}
 
 void
-SharedSurfaceTextureData::Deallocate(ClientIPCAllocator*)
+SharedSurfaceTextureData::Deallocate(LayersIPCChannel*)
 {}
 
 void
@@ -55,7 +50,7 @@ SharedSurfaceTextureData::Serialize(SurfaceDescriptor& aOutDescriptor)
 
 SharedSurfaceTextureClient::SharedSurfaceTextureClient(SharedSurfaceTextureData* aData,
                                                        TextureFlags aFlags,
-                                                       ClientIPCAllocator* aAllocator)
+                                                       LayersIPCChannel* aAllocator)
 : TextureClient(aData, aFlags, aAllocator)
 {
   mWorkaroundAnnoyingSharedSurfaceLifetimeIssues = true;
@@ -63,7 +58,7 @@ SharedSurfaceTextureClient::SharedSurfaceTextureClient(SharedSurfaceTextureData*
 
 already_AddRefed<SharedSurfaceTextureClient>
 SharedSurfaceTextureClient::Create(UniquePtr<gl::SharedSurface> surf, gl::SurfaceFactory* factory,
-                                   ClientIPCAllocator* aAllocator, TextureFlags aFlags)
+                                   LayersIPCChannel* aAllocator, TextureFlags aFlags)
 {
   if (!surf) {
     return nullptr;
@@ -71,67 +66,6 @@ SharedSurfaceTextureClient::Create(UniquePtr<gl::SharedSurface> surf, gl::Surfac
   TextureFlags flags = aFlags | TextureFlags::RECYCLE | surf->GetTextureFlags();
   SharedSurfaceTextureData* data = new SharedSurfaceTextureData(Move(surf));
   return MakeAndAddRef<SharedSurfaceTextureClient>(data, flags, aAllocator);
-}
-
-void
-SharedSurfaceTextureClient::SetReleaseFenceHandle(const FenceHandle& aReleaseFenceHandle)
-{
-#ifdef MOZ_WIDGET_GONK
-  gl::SharedSurface_Gralloc* surf = nullptr;
-  if (Surf()->mType == gl::SharedSurfaceType::Gralloc) {
-    surf = gl::SharedSurface_Gralloc::Cast(Surf());
-  }
-  if (surf && surf->GetTextureClient()) {
-    surf->GetTextureClient()->SetReleaseFenceHandle(aReleaseFenceHandle);
-    return;
-  }
-#endif
-  TextureClient::SetReleaseFenceHandle(aReleaseFenceHandle);
-}
-
-FenceHandle
-SharedSurfaceTextureClient::GetAndResetReleaseFenceHandle()
-{
-#ifdef MOZ_WIDGET_GONK
-  gl::SharedSurface_Gralloc* surf = nullptr;
-  if (Surf()->mType == gl::SharedSurfaceType::Gralloc) {
-    surf = gl::SharedSurface_Gralloc::Cast(Surf());
-  }
-  if (surf && surf->GetTextureClient()) {
-    return surf->GetTextureClient()->GetAndResetReleaseFenceHandle();
-  }
-#endif
-  return TextureClient::GetAndResetReleaseFenceHandle();
-}
-
-void
-SharedSurfaceTextureClient::SetAcquireFenceHandle(const FenceHandle& aAcquireFenceHandle)
-{
-#ifdef MOZ_WIDGET_GONK
-  gl::SharedSurface_Gralloc* surf = nullptr;
-  if (Surf()->mType == gl::SharedSurfaceType::Gralloc) {
-    surf = gl::SharedSurface_Gralloc::Cast(Surf());
-  }
-  if (surf && surf->GetTextureClient()) {
-    return surf->GetTextureClient()->SetAcquireFenceHandle(aAcquireFenceHandle);
-  }
-#endif
-  TextureClient::SetAcquireFenceHandle(aAcquireFenceHandle);
-}
-
-const FenceHandle&
-SharedSurfaceTextureClient::GetAcquireFenceHandle() const
-{
-#ifdef MOZ_WIDGET_GONK
-  gl::SharedSurface_Gralloc* surf = nullptr;
-  if (Surf()->mType == gl::SharedSurfaceType::Gralloc) {
-    surf = gl::SharedSurface_Gralloc::Cast(Surf());
-  }
-  if (surf && surf->GetTextureClient()) {
-    return surf->GetTextureClient()->GetAcquireFenceHandle();
-  }
-#endif
-  return TextureClient::GetAcquireFenceHandle();
 }
 
 SharedSurfaceTextureClient::~SharedSurfaceTextureClient()

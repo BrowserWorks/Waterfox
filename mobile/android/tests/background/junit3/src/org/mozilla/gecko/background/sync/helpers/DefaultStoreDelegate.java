@@ -11,7 +11,7 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onRecordStoreFailed(Exception ex, String guid) {
-    performNotify("Store failed", ex);
+    performNotify("Record store failed", ex);
   }
 
   @Override
@@ -23,6 +23,14 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   public void onStoreCompleted(long storeEnd) {
     performNotify("DefaultStoreDelegate used", null);
   }
+
+  @Override
+  public void onStoreFailed(Exception ex) {
+    performNotify("Store failed", ex);
+  }
+
+  @Override
+  public void onRecordStoreReconciled(String guid) {}
 
   @Override
   public RepositorySessionStoreDelegate deferredStoreDelegate(final ExecutorService executor) {
@@ -50,6 +58,16 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
       }
 
       @Override
+      public void onRecordStoreReconciled(final String guid) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            self.onRecordStoreReconciled(guid);
+          }
+        });
+      }
+
+      @Override
       public void onStoreCompleted(final long storeEnd) {
         executor.execute(new Runnable() {
           @Override
@@ -57,6 +75,11 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
             self.onStoreCompleted(storeEnd);
           }
         });
+      }
+
+      @Override
+      public void onStoreFailed(Exception e) {
+
       }
 
       @Override

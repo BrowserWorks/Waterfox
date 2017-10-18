@@ -22,6 +22,14 @@ function manifestVideo() {
   return gManifestNavigatorSource.contentDocument.createElement('video');
 }
 
+// Need to get the server url composed with ip:port instead of mochi.test.
+// Since we will provide the url to Exoplayer which cannot recognize the domain
+// name "mochi.test".
+let serverUrl = SpecialPowers.Services.prefs.getCharPref("media.hls.server.url");
+var gHLSTests = [
+  { name: serverUrl + "/bipbop_4x3_variant.m3u8", type:"audio/x-mpegurl", duration:19.95334 }
+];
+
 // These are small test files, good for just seeing if something loads. We
 // really only need one test file per backend here.
 var gSmallTests = [
@@ -30,13 +38,22 @@ var gSmallTests = [
   { name:"small-shot.mp3", type:"audio/mpeg", duration:0.27 },
   { name:"small-shot-mp3.mp4", type:"audio/mp4; codecs=mp3", duration:0.34 },
   { name:"small-shot.flac", type:"audio/flac", duration:0.197 },
-  { name:"r11025_s16_c1.wav", type:"audio/x-wav", duration:1.0 },
+  { name:"r11025_s16_c1-short.wav", type:"audio/x-wav", duration:0.37 },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266 },
-  { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
-  { name:"vp9.webm", type:"video/webm", width:320, height:240, duration:4 },
-  { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 },
-  { name:"gizmo.mp4", type:"video/mp4", width:560, height:320, duration:5.56 },
+  { name:"seek-short.webm", type:"video/webm", width:320, height:240, duration:0.23 },
+  { name:"vp9-short.webm", type:"video/webm", width:320, height:240, duration:0.20 },
+  { name:"detodos-short.opus", type:"audio/ogg; codecs=opus", duration:0.22 },
+  { name:"gizmo-short.mp4", type:"video/mp4", width:560, height:320, duration:0.27 },
+  { name:"flac-s24.flac", type:"audio/flac", duration:4.04 },
   { name:"bogus.duh", type:"bogus/duh" }
+];
+
+var gFrameCountTests = [
+  { name:"bipbop.mp4", type:"video/mp4", totalFrameCount:297},
+  { name:"gizmo.mp4", type:"video/mp4", totalFrameCount:166},
+  { name:"seek-short.webm", type:"video/webm", totalFrameCount:8},
+  { name:"seek.webm", type:"video/webm", totalFrameCount:120},
+  { name:"320x240.ogv", type:"video/ogg", totalFrameCount:8},
 ];
 
 if (SpecialPowers.Services.appinfo.name != "B2G") {
@@ -54,7 +71,7 @@ if (SpecialPowers.Services.appinfo.name != "B2G") {
 // Used by test_bug654550.html, for videoStats preference
 var gVideoTests = [
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266 },
-  { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
+  { name:"seek-short.webm", type:"video/webm", width:320, height:240, duration:0.23 },
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
@@ -68,36 +85,36 @@ var gLongerTests = [
 // during resource download.
 var gProgressTests = [
   { name:"r11025_u8_c1.wav", type:"audio/x-wav", duration:1.0, size:11069 },
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444 },
-  { name:"seek.ogv", type:"video/ogg", duration:3.966, size:285310 },
+  { name:"big-short.wav", type:"audio/x-wav", duration:1.11, size:12366 },
+  { name:"seek-short.ogv", type:"video/ogg", duration:1.03, size:79921 },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266, size:28942 },
-  { name:"seek.webm", type:"video/webm", duration:3.966, size:215529 },
-  { name:"gizmo.mp4", type:"video/mp4", duration:5.56, size:383631 },
+  { name:"seek-short.webm", type:"video/webm", duration:0.23, size:19267 },
+  { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27, size:29905 },
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
 // Used by test_played.html
 var gPlayedTests = [
-  { name:"big.wav", type:"audio/x-wav", duration:9.0 },
-  { name:"seek.ogv", type:"video/ogg", duration:3.966 },
-  { name:"seek.webm", type:"video/webm", duration:3.966 },
-  { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
-  { name:"owl.mp3", type:"audio/mpeg", duration:3.343 },
+  { name:"big-short.wav", type:"audio/x-wav", duration:1.11 },
+  { name:"seek-short.ogv", type:"video/ogg", duration:1.03 },
+  { name:"seek-short.webm", type:"video/webm", duration:0.23 },
+  { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27 },
+  { name:"owl-short.mp3", type:"audio/mpeg", duration:0.52 },
+  { name:"very-short.mp3", type:"audio/mpeg", duration:0.07 },
   // Disable vbr.mp3 to see if it reduces the error of AUDCLNT_E_CPUUSAGE_EXCEEDED.
   // See bug 1110922 comment 26.
   //{ name:"vbr.mp3", type:"audio/mpeg", duration:10.0 },
-  { name:"bug495794.ogg", type:"audio/ogg", duration:0.3 }
+  { name:"bug495794.ogg", type:"audio/ogg", duration:0.3 },
 ];
 
 // Used by test_mozLoadFrom.  Need one test file per decoder backend, plus
 // anything for testing clone-specific bugs.
 var cloneKey = Math.floor(Math.random()*100000000);
-var gCloneTests = gSmallTests.concat([
-  { name:"bug520908.ogv", type:"video/ogg", duration:0.2 },
+var gCloneTests = [
   // short-video is more like 1s, so if you load this twice you'll get an unexpected duration
   { name:"dynamic_resource.sjs?key=" + cloneKey + "&res1=320x240.ogv&res2=short-video.ogv",
     type:"video/ogg", duration:0.266 },
-]);
+];
 
 // Used by test_play_twice.  Need one test file per decoder backend, plus
 // anything for testing bugs that occur when replying a played file.
@@ -115,26 +132,29 @@ var gPausedAfterEndedTests = gSmallTests.concat([
 // Test the mozHasAudio property, and APIs that detect different kinds of
 // tracks
 var gTrackTests = [
-  { name:"big.wav", type:"audio/x-wav", duration:9.278982, size:102444, hasAudio:true, hasVideo:false },
+  { name:"big-short.wav", type:"audio/x-wav", duration:1.11, size:12366, hasAudio:true, hasVideo:false },
   { name:"320x240.ogv", type:"video/ogg", width:320, height:240, duration:0.266, size:28942, hasAudio:false, hasVideo:true },
   { name:"short-video.ogv", type:"video/ogg", duration:1.081, hasAudio:true, hasVideo:true },
-  { name:"seek.webm", type:"video/webm", duration:3.966, size:215529, hasAudio:false, hasVideo:true },
+  { name:"seek-short.webm", type:"video/webm", duration:0.23, size:19267, hasAudio:false, hasVideo:true },
+  { name:"flac-s24.flac", type:"audio/flac", duration:4.04, hasAudio:true, hasVideo:false },
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
 var gClosingConnectionsTest = [
-  { name:"seek.ogv", type:"video/ogg", duration:3.966 }
+  { name:"seek-short.ogv", type:"video/ogg", duration:1.03 },
 ];
 
 // Used by any media recorder test. Need one test file per decoder backend
 // currently supported by the media encoder.
 var gMediaRecorderTests = [
-  { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 }
+  // Duration should be greater than 500ms because we will record 2
+  // time slices (250ms per slice)
+  { name:"detodos-recorder-test.opus", type:"audio/ogg; codecs=opus", duration:0.62 }
 ];
 
 // Used by video media recorder tests
 var gMediaRecorderVideoTests = [
-  { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
+  { name:"seek-short.webm", type:"video/webm", width:320, height:240, duration:0.23 },
 ];
 
 // These are files that we want to make sure we can play through.  We can
@@ -143,8 +163,7 @@ var gMediaRecorderVideoTests = [
 // Used by test_playback, which expects no error event and one ended event.
 var gPlayTests = [
   // Test playback of a WebM file with vp9 video
-  //{ name:"vp9.webm", type:"video/webm", duration:4 },
-  { name:"vp9cake.webm", type:"video/webm", duration:7.966 },
+  { name:"vp9cake-short.webm", type:"video/webm", duration:1.00 },
 
   // 8-bit samples
   { name:"r11025_u8_c1.wav", type:"audio/x-wav", duration:1.0 },
@@ -162,6 +181,10 @@ var gPlayTests = [
   { name:"wavedata_alaw.wav", type:"audio/x-wav", duration:1.0 },
   // uLaw compressed wave file
   { name:"wavedata_ulaw.wav", type:"audio/x-wav", duration:1.0 },
+  // Data length 0xFFFFFFFF
+  { name:"bug1301226.wav", type:"audio/x-wav", duration:0.003673 },
+  // Data length 0xFFFFFFFF and odd chunk lengths.
+  { name:"bug1301226-odd.wav", type:"audio/x-wav", duration:0.003673 },
 
   // Ogg stream without eof marker
   { name:"bug461281.ogg", type:"application/ogg", duration:2.208 },
@@ -215,7 +238,7 @@ var gPlayTests = [
     type:"video/ogg", duration:0.266 },
 
   // Test playback of a webm file
-  { name:"seek.webm", type:"video/webm", duration:3.966 },
+  { name:"seek-short.webm", type:"video/webm", duration:0.23 },
 
   // Test playback of a WebM file with non-zero start time.
   { name:"split.webm", type:"video/webm", duration:1.967 },
@@ -232,9 +255,9 @@ var gPlayTests = [
   { name:"spacestorm-1000Hz-100ms.ogg", type:"audio/ogg", duration:0.099 },
 
   // Opus data in an ogg container
-  { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 },
+  { name:"detodos-short.opus", type:"audio/ogg; codecs=opus", duration:0.22 },
   // Opus data in a webm container
-  { name:"detodos.webm", type:"audio/webm; codecs=opus", duration:2.9135 },
+  { name:"detodos-short.webm", type:"audio/webm; codecs=opus", duration:0.26 },
   { name:"bug1066943.webm", type:"audio/webm; codecs=opus", duration:1.383 },
 
   // Multichannel Opus in an ogg container
@@ -247,7 +270,7 @@ var gPlayTests = [
   { name:"test-7-6.1.opus", type:"audio/ogg; codecs=opus", duration:11.690 },
   { name:"test-8-7.1.opus", type:"audio/ogg; codecs=opus", duration:13.478 },
 
-  { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
+  { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27 },
   // Test playback of a MP4 file with a non-zero start time (and audio starting
   // a second later).
   { name:"bipbop-lateaudio.mp4", type:"video/mp4" },
@@ -256,10 +279,10 @@ var gPlayTests = [
   { name:"small-shot.mp3", type:"audio/mpeg", duration:0.27 },
   { name:"owl.mp3", type:"audio/mpeg", duration:3.343 },
   // owl.mp3 as above, but with something funny going on in the ID3v2 tag
-  // that causes DirectShow to fail.
+  // that caused DirectShow to fail.
   { name:"owl-funny-id3.mp3", type:"audio/mpeg", duration:3.343 },
   // owl.mp3 as above, but with something even funnier going on in the ID3v2 tag
-  // that causes DirectShow to fail.
+  // that caused DirectShow to fail.
   { name:"owl-funnier-id3.mp3", type:"audio/mpeg", duration:3.343 },
   // One second of silence with ~140KB of ID3 tags. Usually when the first MP3
   // frame is at such a high offset into the file, MP3FrameParser will give up
@@ -272,14 +295,21 @@ var gPlayTests = [
   // trust the header, so this should be reported as 10 seconds.
   { name:"vbr-head.mp3", type:"audio/mpeg", duration:10.00 },
 
+  // A flac file where the STREAMINFO block was removed.
+  // It is necessary to parse the file to find an audio frame instead.
+  { name:"flac-noheader-s16.flac", type:"audio/flac", duration:4.0 },
+  { name:"flac-s24.flac", type:"audio/flac", duration:4.04 },
+  // Ogg with theora video and flac audio.
+  { name:"A4.ogv", type:"video/ogg", width:320, height:240, duration:3.13 },
+
   // Invalid file
   { name:"bogus.duh", type:"bogus/duh", duration:Number.NaN },
 ];
 
 var gSeekToNextFrameTests = [
   // Test playback of a WebM file with vp9 video
-  { name:"vp9.webm", type:"video/webm", duration:4 },
-  { name:"vp9cake.webm", type:"video/webm", duration:7.966 },
+  { name:"vp9-short.webm", type:"video/webm", duration:0.20 },
+  { name:"vp9cake-short.webm", type:"video/webm", duration:1.00 },
   // oggz-chop stream
   { name:"bug482461.ogv", type:"video/ogg", duration:4.34 },
   // Theora only oggz-chop stream
@@ -310,13 +340,13 @@ var gSeekToNextFrameTests = [
   { name:"redirect.sjs?domain=mochi.test:8888&file=320x240.ogv",
     type:"video/ogg", duration:0.266 },
   // Test playback of a webm file
-  { name:"seek.webm", type:"video/webm", duration:3.966 },
+  { name:"seek-short.webm", type:"video/webm", duration:0.23 },
   // Test playback of a WebM file with non-zero start time.
   { name:"split.webm", type:"video/webm", duration:1.967 },
   // Test playback of a raw file
   { name:"seek.yuv", type:"video/x-raw-yuv", duration:1.833 },
 
-  { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
+  { name:"gizmo-short.mp4", type:"video/mp4", duration:0.27 },
 
   // Test playback of a MP4 file with a non-zero start time (and audio starting
   // a second later).
@@ -368,16 +398,16 @@ var gInvalidPlayTests = [
 // - Skeleton v4, wrong message field sequence for vorbis
 // multiple-bos-more-header-fields.ogg
 // - Skeleton v3, w/ Content-Type,Role,Name,Language,Title for both theora/vorbis
-// seek.ogv
+// seek-short.ogv
 // - No skeleton, but theora
-// audio-overhang.ogg
+// audio-gaps-short.ogg
 // - No skeleton, but vorbis
 var gMultitrackInfoOggPlayList = [
-  { name:"sample-fisbone-skeleton4.ogv", type:"video/ogg", duration:5.049 },
-  { name:"sample-fisbone-wrong-header.ogv", type:"video/ogg", duration:5.049 },
+  { name:"sample-fisbone-skeleton4.ogv", type:"video/ogg", duration:1.00 },
+  { name:"sample-fisbone-wrong-header.ogv", type:"video/ogg", duration:1.00 },
   { name:"multiple-bos-more-header-fileds.ogg", type:"video/ogg", duration:0.431 },
-  { name:"seek.ogv", type:"video/ogg", duration:3.996 },
-  { name:"audio-gaps.ogg", type:"audio/ogg", duration:2.208 }
+  { name:"seek-short.ogv", type:"video/ogg", duration:1.03 },
+  { name:"audio-gaps-short.ogg", type:"audio/ogg", duration:0.50 }
 ];
 // Pre-parsed results of gMultitrackInfoOggPlayList.
 var gOggTrackInfoResults = {
@@ -411,13 +441,13 @@ var gOggTrackInfoResults = {
     "video_language":"",
     "video_label":""
   },
-  "seek.ogv" : {
+  "seek-short.ogv" : {
     "video_id":"2",
     "video_kind":"main",
     "video_language":"",
     "video_label":""
   },
-  "audio-gaps.ogg" : {
+  "audio-gaps-short.ogg" : {
     "audio_id":"1",
     "audio_kind":"main",
     "audio_language":"",
@@ -509,11 +539,9 @@ var gInfoLeakTests = [
 ];
 
 // These are files that must fire an error during load or playback, and do not
-// cause a crash.  Put files of the same type together in this list so if
-// something crashes we have some idea of which backend is responsible.  Used
-// by test_playback_errors, which expects one error event and no ended event.
-// Put files of the same type together in this list so if something crashes
-// we have some idea of which backend is responsible.
+// cause a crash. Used by test_playback_errors, which expects one error event
+// and no ended event. Put files of the same type together in this list so if
+// something crashes we have some idea of which backend is responsible.
 var gErrorTests = [
   { name:"bogus.wav", type:"audio/x-wav" },
   { name:"bogus.ogv", type:"video/ogg" },
@@ -526,19 +554,20 @@ var gErrorTests = [
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
-function IsWindowsVistaOrLater() {
-  var re = /Windows NT (\d+.\d)/;
-  var winver = manifestNavigator().userAgent.match(re);
-  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.0;
-}
-
 // Windows' H.264 decoder cannot handle H.264 streams with resolution
 // less than 48x48 pixels. We refuse to play and error on such streams.
-if (IsWindowsVistaOrLater() &&
+if (manifestNavigator().userAgent.includes("Windows") &&
     manifestVideo().canPlayType('video/mp4; codecs="avc1.42E01E"')) {
   gErrorTests = gErrorTests.concat({name: "red-46x48.mp4", type:"video/mp4"},
                                    {name: "red-48x46.mp4", type:"video/mp4"});
 }
+
+// These files would get error after receiving "loadedmetadata", we would like
+// to check duration in "onerror" and make sure the duration is still available.
+var gDurationTests = [
+  { name:"bug603918.webm", duration:6.076 },
+  { name:"bug604067.webm", duration:6.076 }
+]
 
 // These are files that have nontrivial duration and are useful for seeking within.
 var gSeekTests = [
@@ -596,14 +625,6 @@ if (manifestNavigator().userAgent.indexOf("Mobile") != -1 ||
 
 function getAndroidVersion() {
   return androidVersion;
-}
-
-//Android supports fragmented MP4 playback from 4.3.
-//Fragmented MP4.
-if (getAndroidVersion() >= 18) {
-  gUnseekableTests = gUnseekableTests.concat([
-    { name:"street.mp4", type:"video/mp4" }
-  ]);
 }
 
 // These are files suitable for using with a "new Audio" constructor.
@@ -772,8 +793,45 @@ var gMetadataTests = [
   },
 ];
 
+// Now Fennec doesn't support flac, so only test it on non-android platforms.
+if (getAndroidVersion() < 0) {
+  gMetadataTests = gMetadataTests.concat([
+    { name:"flac-s24.flac", tags: {
+        ALBUM:"Seascapes",
+        TITLE:"(La Mer) - II. Jeux de vagues. Allegro",
+        COMPOSER:"Debussy, Claude",
+        TRACKNUMBER:"2/9",
+        DISCNUMBER:"1/1",
+        encoder:"Lavf57.41.100",
+      }
+    }]);
+}
+
 // Test files for Encrypted Media Extensions
 var gEMETests = [
+  {
+    name:"vp9 in mp4",
+    tracks: [
+      {
+          name:"video",
+          type:"video/mp4; codecs=\"vp9.0\"",
+          fragments:[ "short-vp9-encrypted-video.mp4",
+                    ]
+      },
+      {
+          name:"audio",
+          type:"audio/mp4; codecs=\"mp4a.40.2\"",
+          fragments:[ "short-aac-encrypted-audio.mp4",
+                    ]
+      }
+    ],
+    keys: {
+      "2cdb0ed6119853e7850671c3e9906c3c":"808B9ADAC384DE1E4F56140F4AD76194"
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:0.47
+  },
   {
     name:"video-only with 2 keys",
     tracks: [
@@ -1407,6 +1465,30 @@ var gEMETests = [
     sessionCount:2,
     duration:1.60,
   },
+  {
+    name: "WebM vorbis audio & vp9 video clearkey with subsample encryption",
+    tracks: [
+      {
+        name:"audio",
+        type:"audio/webm; codecs=\"vorbis\"",
+        fragments:[ "sintel-short-clearkey-subsample-encrypted-audio.webm",
+                  ],
+      },
+      {
+        name:"video",
+        type:"video/webm; codecs=\"vp9\"",
+        fragments:[ "sintel-short-clearkey-subsample-encrypted-video.webm",
+                  ],
+      },
+    ],
+    keys: {
+      // "keyid" : "key"
+      "2cdb0ed6119853e7850671c3e9906c3c" : "808B9ADAC384DE1E4F56140F4AD76194",
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:2.0,
+  },
 ];
 
 var gEMENonMSEFailTests = [
@@ -1416,6 +1498,15 @@ var gEMENonMSEFailTests = [
     videoType:"video/mp4; codecs=\"avc1.64000d\"",
     duration:0.47,
   },
+];
+
+// These are files that are used for video decode suspend in
+// background tabs tests.
+var gDecodeSuspendTests = [
+  { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
+  { name:"gizmo-noaudio.mp4", type:"video/mp4", duration:5.56 },
+  { name:"gizmo.webm", type:'video/webm; codecs="vp9,opus"', duration:5.56 },
+  { name:"gizmo-noaudio.webm", type:'video/webm; codecs="vp9"', duration:5.56 }
 ];
 
 function checkMetadata(msg, e, test) {
@@ -1443,12 +1534,12 @@ function getPlayableVideo(candidates) {
 }
 
 function getPlayableVideos(candidates) {
-  var v = document.createElement("video");
+  var v = manifestVideo();
   return candidates.filter(function(x){return /^video/.test(x.type) && v.canPlayType(x.type);});
 }
 
 function getPlayableAudio(candidates) {
-  var v = document.createElement("audio");
+  var v = manifestVideo();
   var resources = candidates.filter(function(x){return /^audio/.test(x.type) && v.canPlayType(x.type);});
   if (resources.length > 0)
     return resources[0];
@@ -1467,24 +1558,20 @@ function getMajorMimeType(mimetype) {
 // Force releasing decoder to avoid timeout in waiting for decoding resource.
 function removeNodeAndSource(n) {
   n.remove();
-  // Clearing srcObject and/or src will actually set them to some default
-  // URI that will fail to load, so make sure we don't produce a spurious
-  // bailing error.
-  n.onerror = null;
   // reset |srcObject| first since it takes precedence over |src|.
   n.srcObject = null;
-  n.src = "";
+  n.removeAttribute("src");
+  n.load();
   while (n.firstChild) {
-    n.removeChild(n.firstChild);
+    n.firstChild.remove();
   }
 }
 
 function once(target, name, cb) {
   var p = new Promise(function(resolve, reject) {
-    target.addEventListener(name, function onceEvent() {
-      target.removeEventListener(name, onceEvent);
+    target.addEventListener(name, function() {
       resolve();
-    });
+    }, {once: true});
   });
   if (cb) {
     p.then(cb);
@@ -1519,9 +1606,8 @@ var PARALLEL_TESTS = 2;
 // conditions that might not otherwise be encountered on the test data.
 var gTestPrefs = [
   ['media.recorder.max_memory', 1024],
-  ["media.preload.default", 2], // default preload = metadata
-  ["media.preload.auto", 3], // auto preload = enough
-  ["media.test.dumpDebugInfo", true],
+  ['media.audio-max-decode-error', 0],
+  ['media.video-max-decode-error', 0],
 ];
 
 // When true, we'll loop forever on whatever test we run. Use this to debug
@@ -1544,6 +1630,12 @@ const DEBUG_TEST_LOOP_FOREVER = false;
 //      the token back to the manager. The manager may either start the next run
 //      or end the mochitest if all the tests are done.
 function MediaTestManager() {
+
+  // Set a very large timeout to prevent Mochitest timeout.
+  // Instead MediaTestManager will manage timeout of each test.
+  SimpleTest.requestLongerTimeout(1000);
+
+  this.hasTimeout = false;
 
   // Return how many seconds elapsed since |begin|.
   function elapsedTime(begin) {
@@ -1568,14 +1660,15 @@ function MediaTestManager() {
     this.isShutdown = false;
     this.numTestsRunning = 0;
     this.handlers = {};
+    this.timers = {};
 
     // Always wait for explicit finish.
     SimpleTest.waitForExplicitFinish();
-    SpecialPowers.pushPrefEnv({'set': gTestPrefs}, (function() {
+    SpecialPowers.pushPrefEnv({'set': gTestPrefs}, () => {
       this.nextTest();
-    }).bind(this));
+    });
 
-    SimpleTest.registerCleanupFunction(function() {
+    SimpleTest.registerCleanupFunction(() => {
       if (this.tokens.length > 0) {
         info("Test timed out. Remaining tests=" + this.tokens);
       }
@@ -1585,7 +1678,7 @@ function MediaTestManager() {
           handler.ontimeout();
         }
       }
-    }.bind(this));
+    });
   }
 
   // Registers that the test corresponding to 'token' has been started.
@@ -1594,6 +1687,16 @@ function MediaTestManager() {
     this.tokens.push(token);
     this.numTestsRunning++;
     this.handlers[token] = handler;
+
+    var onTimeout = () => {
+      this.hasTimeout = true;
+      ok(false, `${token} timed out!`);
+      this.finished(token);
+    };
+    // Default timeout to 180s for each test.
+    // Call SimpleTest._originalSetTimeout() to bypass the flaky timeout checker.
+    this.timers[token] = SimpleTest._originalSetTimeout.call(window, onTimeout, 180000);
+
     is(this.numTestsRunning, this.tokens.length,
        "[started " + token + " t=" + elapsedTime(this.startTime) + "] Length of array should match number of running tests");
   }
@@ -1607,6 +1710,12 @@ function MediaTestManager() {
     if (i != -1) {
       // Remove the element from the list of running tests.
       this.tokens.splice(i, 1);
+    }
+
+    if (this.timers[token]) {
+      // Cancel the timer when the test finishes.
+      clearTimeout(this.timers[token]);
+      this.timers[token] = null;
     }
 
     info("[finished " + token + "] remaining= " + this.tokens);
@@ -1647,12 +1756,15 @@ function MediaTestManager() {
       if (this.onFinished) {
         this.onFinished();
       }
-      var onCleanup = function() {
+      if (this.hasTimeout) {
+        dumpDebugInfo();
+      }
+      var onCleanup = () => {
         var end = new Date();
         SimpleTest.info("Finished at " + end + " (" + (end.getTime() / 1000) + "s)");
         SimpleTest.info("Running time: " + elapsedTime(this.startTime) + "s");
         SimpleTest.finish();
-      }.bind(this);
+      };
       mediaTestCleanup(onCleanup);
       return;
     }
@@ -1676,17 +1788,18 @@ function mediaTestCleanup(callback) {
     SpecialPowers.exactGC(callback);
 }
 
-function setMediaTestsPrefs(callback, extraPrefs) {
-  var prefs = gTestPrefs;
-  if (extraPrefs) {
-    prefs = prefs.concat(extraPrefs);
-  }
-  SpecialPowers.pushPrefEnv({"set": prefs}, callback);
-}
-
 // B2G emulator and Android 2.3 are condidered slow platforms
 function isSlowPlatform() {
   return SpecialPowers.Services.appinfo.name == "B2G" || getAndroidVersion() == 10;
+}
+
+function dumpDebugInfo() {
+  for (var v of document.getElementsByTagName("video")) {
+    v.mozDumpDebugInfo();
+  }
+  for (var a of document.getElementsByTagName("audio")) {
+    a.mozDumpDebugInfo();
+  }
 }
 
 // Could be undefined in a page opened by the parent test page
@@ -1695,12 +1808,5 @@ if ("SimpleTest" in window) {
   SimpleTest.requestFlakyTimeout("untriaged");
 
   // Register timeout function to dump debugging logs.
-  SimpleTest.registerTimeoutFunction(function() {
-    for (var v of document.getElementsByTagName("video")) {
-      v.mozDumpDebugInfo();
-    }
-    for (var a of document.getElementsByTagName("audio")) {
-      a.mozDumpDebugInfo();
-    }
-  });
+  SimpleTest.registerTimeoutFunction(dumpDebugInfo);
 }

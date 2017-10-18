@@ -32,6 +32,7 @@ class XULInfo:
         predicates on XUL build info evaluate properly."""
 
         return ('var xulRuntime = {{ OS: "{}", XPCOMABI: "{}", shell: true }};'
+                'var release_or_beta = getBuildConfiguration().release_or_beta;'
                 'var isDebugBuild={}; var Android={}; '
                 'var browserIsRemote={}'.format(
                     self.os,
@@ -91,6 +92,10 @@ class XULInfoTester:
         if ans is None:
             cmd = [
                 self.js_bin,
+                # run in safe configuration, since it is hard to debug
+                # crashes when running code here. In particular, msan will
+                # error out if the jit is active.
+                '--no-baseline',
                 '-e', self.js_prologue,
                 '-e', 'print(!!({}))'.format(cond)
             ]
@@ -112,9 +117,9 @@ class NullXULInfoTester:
     def test(self, cond):
         return False
 
-def _parse_one(testcase, xul_tester):
+def _parse_one(testcase, terms, xul_tester):
     pos = 0
-    parts = testcase.terms.split()
+    parts = terms.split()
     while pos < len(parts):
         if parts[pos] == 'fails':
             testcase.expect = False
@@ -152,6 +157,15 @@ def _parse_one(testcase, xul_tester):
             if xul_tester.test("xulRuntime.OS == 'Darwin'"):
                 testcase.expect = testcase.enable = False
             pos += 1
+        elif parts[pos].startswith('error:'):
+            # This directive allows to specify an error type.
+            (_, _, errortype) = parts[pos].partition(':')
+            testcase.error = errortype
+            pos += 1
+        elif parts[pos] == 'module':
+            # This directive marks the test as module code.
+            testcase.is_module = True
+            pos += 1
         else:
             print('warning: invalid manifest line element "{}"'.format(
                 parts[pos]))
@@ -159,10 +173,24 @@ def _parse_one(testcase, xul_tester):
 
 def _build_manifest_script_entry(script_name, test):
     line = []
+    properties = []
     if test.terms:
-        line.append(test.terms)
+        # Remove jsreftest internal terms.
+        terms = " ".join([term for term in test.terms.split()
+                          if not (term == "module" or term.startswith("error:"))])
+        if terms:
+            line.append(terms)
+    if test.error:
+        properties.append("error=" + test.error)
+    if test.is_module:
+        # XXX: Remove when modules are enabled by default in browser.
+        line.append("pref(dom.moduleScripts.enabled,true)")
+        properties.append("module")
     line.append("script")
-    line.append(script_name)
+    script = script_name
+    if properties:
+        script = ";".join([script] + properties)
+    line.append(script)
     if test.comment:
         line.append("#")
         line.append(test.comment)
@@ -236,6 +264,17 @@ def _find_all_js_files(base, location):
 TEST_HEADER_PATTERN_INLINE = re.compile(r'//\s*\|(.*?)\|\s*(.*?)\s*(--\s*(.*))?$')
 TEST_HEADER_PATTERN_MULTI  = re.compile(r'/\*\s*\|(.*?)\|\s*(.*?)\s*(--\s*(.*))?\*/')
 
+def _append_terms_and_comment(testcase, terms, comment):
+    if testcase.terms is None:
+        testcase.terms = terms
+    else:
+        testcase.terms += " " + terms
+
+    if testcase.comment is None:
+        testcase.comment = comment
+    elif comment:
+        testcase.comment += "; " + comment
+
 def _parse_test_header(fullpath, testcase, xul_tester):
     """
     This looks a bit weird.  The reason is that it needs to be efficient, since
@@ -261,10 +300,8 @@ def _parse_test_header(fullpath, testcase, xul_tester):
             return
 
     testcase.tag = matches.group(1)
-    testcase.terms = matches.group(2)
-    testcase.comment = matches.group(4)
-
-    _parse_one(testcase, xul_tester)
+    _append_terms_and_comment(testcase, matches.group(2), matches.group(4))
+    _parse_one(testcase, matches.group(2), xul_tester)
 
 def _parse_external_manifest(filename, relpath):
     """
@@ -319,19 +356,14 @@ def _apply_external_manifests(filename, testcase, entries, xul_tester):
             # At this point, we use external manifests only for test cases
             # that can't have their own failure type comments, so we simply
             # use the terms for the most specific path.
-            testcase.terms = entry["terms"]
-            testcase.comment = entry["comment"]
-            _parse_one(testcase, xul_tester)
+            _append_terms_and_comment(testcase, entry["terms"], entry["comment"])
+            _parse_one(testcase, entry["terms"], xul_tester)
 
 def _is_test_file(path_from_root, basename, filename, requested_paths,
-                  excluded_paths):
+                  excluded_files, excluded_dirs):
     # Any file whose basename matches something in this set is ignored.
     EXCLUDED = set(('browser.js', 'shell.js', 'template.js',
-                    'user.js', 'sta.js',
-                    'test262-browser.js', 'test262-shell.js',
-                    'test402-browser.js', 'test402-shell.js',
-                    'testBuiltInObject.js', 'testIntl.js',
-                    'js-test-driver-begin.js', 'js-test-driver-end.js'))
+                    'user.js', 'js-test-driver-begin.js', 'js-test-driver-end.js'))
 
     # Skip js files in the root test directory.
     if not path_from_root:
@@ -347,17 +379,36 @@ def _is_test_file(path_from_root, basename, filename, requested_paths,
         return False
 
     # Skip excluded tests.
-    if filename in excluded_paths:
+    if filename in excluded_files:
         return False
+    for dir in excluded_dirs:
+        if filename.startswith(dir + '/'):
+            return False
 
     return True
 
 
+def _split_files_and_dirs(location, paths):
+    """Split up a set of paths into files and directories"""
+    files, dirs = set(), set()
+    for path in paths:
+        fullpath = os.path.join(location, path)
+        if path.endswith('/'):
+            dirs.add(path[0:-1])
+        elif os.path.isdir(fullpath):
+            dirs.add(path)
+        elif os.path.exists(fullpath):
+            files.add(path)
+
+    return files, dirs
+
+
 def count_tests(location, requested_paths, excluded_paths):
     count = 0
+    excluded_files, excluded_dirs = _split_files_and_dirs(location, excluded_paths)
     for root, basename in _find_all_js_files(location, location):
         filename = os.path.join(root, basename)
-        if _is_test_file(root, basename, filename, requested_paths, excluded_paths):
+        if _is_test_file(root, basename, filename, requested_paths, excluded_files, excluded_dirs):
             count += 1
     return count
 
@@ -374,10 +425,12 @@ def load_reftests(location, requested_paths, excluded_paths, xul_tester, reldir=
     manifestFile = os.path.join(location, 'jstests.list')
     externalManifestEntries = _parse_external_manifest(manifestFile, '')
 
+    excluded_files, excluded_dirs = _split_files_and_dirs(location, excluded_paths)
+
     for root, basename in _find_all_js_files(location, location):
         # Get the full path and relative location of the file.
         filename = os.path.join(root, basename)
-        if not _is_test_file(root, basename, filename, requested_paths, excluded_paths):
+        if not _is_test_file(root, basename, filename, requested_paths, excluded_files, excluded_dirs):
             continue
 
         # Skip empty files.

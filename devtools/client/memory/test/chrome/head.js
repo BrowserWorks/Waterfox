@@ -1,5 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
@@ -7,7 +8,7 @@ var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 var { require } = BrowserLoader({
   baseURI: "resource://devtools/client/memory/",
-  window: this
+  window
 });
 var { Assert } = require("resource://testing-common/Assert.jsm");
 var Services = require("Services");
@@ -17,14 +18,16 @@ var EXPECTED_DTU_ASSERT_FAILURE_COUNT = 0;
 
 SimpleTest.registerCleanupFunction(function () {
   if (DevToolsUtils.assertionFailureCount !== EXPECTED_DTU_ASSERT_FAILURE_COUNT) {
-    ok(false, "Should have had the expected number of DevToolsUtils.assert() failures. Expected " +
-       EXPECTED_DTU_ASSERT_FAILURE_COUNT + ", got " + DevToolsUtils.assertionFailureCount);
+    ok(false, "Should have had the expected number of DevToolsUtils.assert() failures." +
+      "Expected " + EXPECTED_DTU_ASSERT_FAILURE_COUNT +
+      ", got " + DevToolsUtils.assertionFailureCount);
   }
 });
 
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
-DevToolsUtils.testing = true;
 var { immutableUpdate } = DevToolsUtils;
+var flags = require("devtools/shared/flags");
+flags.testing = true;
 
 var constants = require("devtools/client/memory/constants");
 var {
@@ -114,7 +117,9 @@ function makeTestDominatorTreeNode(opts, children) {
   }, opts);
 
   if (children && children.length) {
-    children.map(c => c.parentId = node.nodeId);
+    children.map(c => {
+      c.parentId = node.nodeId;
+    });
   }
 
   return node;
@@ -314,18 +319,6 @@ function renderComponent(element, container) {
         dumpn("Rendered = " + container.innerHTML);
         resolve(component);
       }));
-  });
-}
-
-function setState(component, newState) {
-  return new Promise(resolve => {
-    component.setState(newState, onNextAnimationFrame(resolve));
-  });
-}
-
-function setProps(component, newProps) {
-  return new Promise(resolve => {
-    component.setProps(newProps, onNextAnimationFrame(resolve));
   });
 }
 

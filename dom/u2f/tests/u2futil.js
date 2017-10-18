@@ -1,6 +1,11 @@
 // Used by local_addTest() / local_completeTest()
 var _countCompletions = 0;
 var _expectedCompletions = 0;
+var _parentOrigin = "http://mochi.test:8888";
+
+function local_setParentOrigin(aOrigin) {
+  _parentOrigin = aOrigin;
+}
 
 function handleEventMessage(event) {
   if ("test" in event.data) {
@@ -40,7 +45,7 @@ function local_isnot(value, expected, message) {
 
 function local_ok(expression, message) {
   let body = {"test": this.location.pathname, "status":expression, "msg": message}
-  parent.postMessage(body, "http://mochi.test:8888");
+  parent.postMessage(body, _parentOrigin);
 }
 
 function local_doesThrow(fn, name) {
@@ -70,7 +75,7 @@ function local_completeTest() {
 }
 
 function local_finished() {
-  parent.postMessage({"done":true}, "http://mochi.test:8888");
+  parent.postMessage({"done":true}, _parentOrigin);
 }
 
 function string2buffer(str) {
@@ -125,6 +130,27 @@ function hexEncode(buf) {
 
 function hexDecode(str) {
   return new Uint8Array(str.match(/../g).map(x => parseInt(x, 16)));
+}
+
+function decodeU2FRegistration(aRegData) {
+  if (aRegData[0] != 0x05) {
+    return Promise.reject("Sentinal byte != 0x05");
+  }
+
+  let keyHandleLength = aRegData[66];
+  let u2fRegObj = {
+    publicKeyBytes: aRegData.slice(1, 66),
+    keyHandleBytes: aRegData.slice(67, 67 + keyHandleLength),
+    attestationBytes: aRegData.slice(67 + keyHandleLength)
+  }
+
+  u2fRegObj.keyHandle = bytesToBase64UrlSafe(u2fRegObj.keyHandleBytes);
+
+  return importPublicKey(u2fRegObj.publicKeyBytes)
+  .then(function(keyObj) {
+    u2fRegObj.publicKey = keyObj;
+    return u2fRegObj;
+  });
 }
 
 function importPublicKey(keyBytes) {
@@ -194,6 +220,8 @@ function verifySignature(key, data, derSig) {
   // all depends on what lib generated the signature.
   let R = sanitizeSigArray(sigR);
   let S = sanitizeSigArray(sigS);
+
+  console.log("Verifying these bytes: " + bytesToBase64UrlSafe(data));
 
   let sigData = new Uint8Array(R.length + S.length);
   sigData.set(R);

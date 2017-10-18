@@ -8,7 +8,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 
@@ -30,46 +29,46 @@ MozSelfSupportInterface.prototype = {
 
   _window: null,
 
-  init: function (window) {
+  init(window) {
     this._window = window;
   },
 
   get healthReportDataSubmissionEnabled() {
-    return Preferences.get(PREF_FHR_UPLOAD_ENABLED, false);
+    return Services.prefs.getBoolPref(PREF_FHR_UPLOAD_ENABLED, false);
   },
 
   set healthReportDataSubmissionEnabled(enabled) {
-    Preferences.set(PREF_FHR_UPLOAD_ENABLED, enabled);
+    Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, enabled);
   },
 
-  resetPref: function(name) {
+  resetPref(name) {
     Services.prefs.clearUserPref(name);
   },
 
-  resetSearchEngines: function() {
+  resetSearchEngines() {
     Services.search.restoreDefaultEngines();
     Services.search.resetToOriginalDefaultEngine();
   },
 
-  getTelemetryPingList: function() {
+  getTelemetryPingList() {
     return this._wrapPromise(TelemetryArchive.promiseArchivedPingList());
   },
 
-  getTelemetryPing: function(pingId) {
+  getTelemetryPing(pingId) {
     return this._wrapPromise(TelemetryArchive.promiseArchivedPingById(pingId));
   },
 
-  getCurrentTelemetryEnvironment: function() {
+  getCurrentTelemetryEnvironment() {
     const current = TelemetryEnvironment.currentEnvironment;
     return new this._window.Promise(resolve => resolve(current));
   },
 
-  getCurrentTelemetrySubsessionPing: function() {
+  getCurrentTelemetrySubsessionPing() {
     const current = TelemetryController.getCurrentPingData(true);
     return new this._window.Promise(resolve => resolve(current));
   },
 
-  _wrapPromise: function(promise) {
+  _wrapPromise(promise) {
     return new this._window.Promise(
       (resolve, reject) => promise.then(resolve, reject));
   },

@@ -8,9 +8,10 @@ module.metadata = {
 };
 
 const { Ci, Cc, Cu } = require("chrome");
-const core = require("../l10n/core");
-const { loadSheet, removeSheet } = require("../stylesheet/utils");
+lazyRequireModule(this, "../l10n/core", "core");
+lazyRequire(this, "../stylesheet/utils", "loadSheet", "removeSheet");
 const { process, frames } = require("../remote/child");
+
 var observerService = Cc["@mozilla.org/observer-service;1"]
                       .getService(Ci.nsIObserverService);
 const { ShimWaiver } = Cu.import("resource://gre/modules/ShimWaiver.jsm");
@@ -70,8 +71,7 @@ exports.translateElement = translateElement;
 
 function onDocumentReady2Translate(event) {
   let document = event.target;
-  document.removeEventListener("DOMContentLoaded", onDocumentReady2Translate,
-                               false);
+  document.removeEventListener("DOMContentLoaded", onDocumentReady2Translate);
 
   translateElement(document);
 
@@ -108,8 +108,7 @@ function onContentWindow(document) {
     console.exception(e);
   }
   // Wait for DOM tree to be built before applying localization
-  document.addEventListener("DOMContentLoaded", onDocumentReady2Translate,
-                            false);
+  document.addEventListener("DOMContentLoaded", onDocumentReady2Translate);
 }
 
 // Listen to creation of content documents in order to translate them as soon

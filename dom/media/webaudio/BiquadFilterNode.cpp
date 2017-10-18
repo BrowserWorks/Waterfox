@@ -159,8 +159,8 @@ public:
 
           RefPtr<PlayingRefChangeHandler> refchanged =
             new PlayingRefChangeHandler(aStream, PlayingRefChangeHandler::RELEASE);
-          aStream->Graph()->
-            DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+          aStream->Graph()->DispatchToMainThreadAfterStreamStateUpdate(
+            refchanged.forget());
         }
 
         aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -173,8 +173,8 @@ public:
       if (mBiquads.IsEmpty()) {
         RefPtr<PlayingRefChangeHandler> refchanged =
           new PlayingRefChangeHandler(aStream, PlayingRefChangeHandler::ADDREF);
-        aStream->Graph()->
-          DispatchToMainThreadAfterStreamStateUpdate(refchanged.forget());
+        aStream->Graph()->DispatchToMainThreadAfterStreamStateUpdate(
+          refchanged.forget());
       } else { // Help people diagnose bug 924718
         WebAudioUtils::LogToDeveloperConsole(mWindowID,
                                              "BiquadFilterChannelCountChangeWarning");
@@ -234,7 +234,7 @@ public:
   }
 
 private:
-  AudioNodeStream* mDestination;
+  RefPtr<AudioNodeStream> mDestination;
   BiquadFilterType mType;
   AudioParamTimeline mFrequency;
   AudioParamTimeline mDetune;
@@ -251,19 +251,43 @@ BiquadFilterNode::BiquadFilterNode(AudioContext* aContext)
               ChannelInterpretation::Speakers)
   , mType(BiquadFilterType::Lowpass)
   , mFrequency(new AudioParam(this, BiquadFilterNodeEngine::FREQUENCY,
-                              350.f, "frequency"))
-  , mDetune(new AudioParam(this, BiquadFilterNodeEngine::DETUNE, 0.f, "detune"))
-  , mQ(new AudioParam(this, BiquadFilterNodeEngine::Q, 1.f, "Q"))
-  , mGain(new AudioParam(this, BiquadFilterNodeEngine::GAIN, 0.f, "gain"))
+                              "frequency", 350.f,
+                              -(aContext->SampleRate() / 2),
+                              aContext->SampleRate() / 2))
+  , mDetune(new AudioParam(this, BiquadFilterNodeEngine::DETUNE, "detune", 0.f))
+  , mQ(new AudioParam(this, BiquadFilterNodeEngine::Q, "Q", 1.f))
+  , mGain(new AudioParam(this, BiquadFilterNodeEngine::GAIN, "gain", 0.f))
 {
   uint64_t windowID = aContext->GetParentObject()->WindowID();
   BiquadFilterNodeEngine* engine = new BiquadFilterNodeEngine(this, aContext->Destination(), windowID);
   mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+                                    AudioNodeStream::NO_STREAM_FLAGS,
+                                    aContext->Graph());
 }
 
-BiquadFilterNode::~BiquadFilterNode()
+/* static */ already_AddRefed<BiquadFilterNode>
+BiquadFilterNode::Create(AudioContext& aAudioContext,
+                         const BiquadFilterOptions& aOptions,
+                         ErrorResult& aRv)
 {
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  RefPtr<BiquadFilterNode> audioNode = new BiquadFilterNode(&aAudioContext);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  audioNode->SetType(aOptions.mType);
+  audioNode->Q()->SetValue(aOptions.mQ);
+  audioNode->Detune()->SetValue(aOptions.mDetune);
+  audioNode->Frequency()->SetValue(aOptions.mFrequency);
+  audioNode->Gain()->SetValue(aOptions.mGain);
+
+  return audioNode.forget();
 }
 
 size_t

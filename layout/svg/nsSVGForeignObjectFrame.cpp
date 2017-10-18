@@ -7,12 +7,13 @@
 #include "nsSVGForeignObjectFrame.h"
 
 // Keep others in (case-insensitive) order:
+#include "DrawResult.h"
 #include "gfxContext.h"
+#include "nsDisplayList.h"
 #include "nsGkAtoms.h"
 #include "nsNameSpaceManager.h"
 #include "nsLayoutUtils.h"
 #include "nsRegion.h"
-#include "nsRenderingContext.h"
 #include "nsSVGContainerFrame.h"
 #include "nsSVGEffects.h"
 #include "mozilla/dom/SVGForeignObjectElement.h"
@@ -23,6 +24,7 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::image;
 
 //----------------------------------------------------------------------
 // Implementation
@@ -37,7 +39,7 @@ NS_NewSVGForeignObjectFrame(nsIPresShell   *aPresShell,
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGForeignObjectFrame)
 
 nsSVGForeignObjectFrame::nsSVGForeignObjectFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mInReflow(false)
 {
   AddStateBits(NS_FRAME_REFLOW_ROOT | NS_FRAME_MAY_BE_TRANSFORMED |
@@ -48,7 +50,7 @@ nsSVGForeignObjectFrame::nsSVGForeignObjectFrame(nsStyleContext* aContext)
 // nsIFrame methods
 
 NS_QUERYFRAME_HEAD(nsSVGForeignObjectFrame)
-  NS_QUERYFRAME_ENTRY(nsISVGChildFrame)
+  NS_QUERYFRAME_ENTRY(nsSVGDisplayableFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 void
@@ -75,12 +77,6 @@ void nsSVGForeignObjectFrame::DestroyFrom(nsIFrame* aDestructRoot)
       nsSVGUtils::GetOuterSVGFrame(this)->UnregisterForeignObject(this);
   }
   nsContainerFrame::DestroyFrom(aDestructRoot);
-}
-
-nsIAtom *
-nsSVGForeignObjectFrame::GetType() const
-{
-  return nsGkAtoms::svgForeignObjectFrame;
 }
 
 nsresult
@@ -155,7 +151,7 @@ nsSVGForeignObjectFrame::Reflow(nsPresContext*           aPresContext,
                         aReflowInput.ComputedBSize());
   aDesiredSize.SetSize(wm, finalSize);
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 }
 
 void
@@ -166,6 +162,7 @@ nsSVGForeignObjectFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   if (!static_cast<const nsSVGElement*>(mContent)->HasValidDimensions()) {
     return;
   }
+  DisplayOutline(aBuilder, aLists);
   BuildDisplayListForNonBlockChildren(aBuilder, aDirtyRect, aLists);
 }
 
@@ -198,9 +195,10 @@ nsSVGForeignObjectFrame::IsSVGTransformed(Matrix *aOwnTransform,
   return foundTransform;
 }
 
-DrawResult
+void
 nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
                                   const gfxMatrix& aTransform,
+                                  imgDrawingParams& aImgParams,
                                   const nsIntRect* aDirtyRect)
 {
   NS_ASSERTION(!NS_SVGDisplayListPaintingEnabled() ||
@@ -208,16 +206,18 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
                "If display lists are enabled, only painting of non-display "
                "SVG should take this code path");
 
-  if (IsDisabled())
-    return DrawResult::SUCCESS;
+  if (IsDisabled()) {
+    return;
+  }
 
   nsIFrame* kid = PrincipalChildList().FirstChild();
-  if (!kid)
-    return DrawResult::SUCCESS;
+  if (!kid) {
+    return;
+  }
 
   if (aTransform.IsSingular()) {
     NS_WARNING("Can't render foreignObject element!");
-    return DrawResult::BAD_ARGS;
+    return;
   }
 
   nsRect kidDirtyRect = kid->GetVisualOverflowRect();
@@ -245,7 +245,7 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
     // int32_t appUnitsPerDevPx = PresContext()->AppUnitsPerDevPixel();
     // mRect.ToOutsidePixels(appUnitsPerDevPx).Intersects(*aDirtyRect)
     if (kidDirtyRect.IsEmpty())
-      return DrawResult::SUCCESS;
+      return;
   }
 
   aContext.Save();
@@ -266,7 +266,7 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
   float cssPxPerDevPx = PresContext()->
     AppUnitsToFloatCSSPixels(PresContext()->AppUnitsPerDevPixel());
   gfxMatrix canvasTMForChildren = aTransform;
-  canvasTMForChildren.Scale(cssPxPerDevPx, cssPxPerDevPx);
+  canvasTMForChildren.PreScale(cssPxPerDevPx, cssPxPerDevPx);
 
   aContext.Multiply(canvasTMForChildren);
 
@@ -275,15 +275,15 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
   if (SVGAutoRenderState::IsPaintingToWindow(aContext.GetDrawTarget())) {
     flags |= PaintFrameFlags::PAINT_TO_WINDOW;
   }
-  nsRenderingContext rendCtx(&aContext);
-  nsresult rv = nsLayoutUtils::PaintFrame(&rendCtx, kid, nsRegion(kidDirtyRect),
-                                         NS_RGBA(0,0,0,0),
-                                         nsDisplayListBuilderMode::PAINTING,
-                                         flags);
+  if (aImgParams.imageFlags & imgIContainer::FLAG_SYNC_DECODE) {
+    flags |= PaintFrameFlags::PAINT_SYNC_DECODE_IMAGES;
+  }
+  Unused << nsLayoutUtils::PaintFrame(&aContext, kid, nsRegion(kidDirtyRect),
+                                      NS_RGBA(0,0,0,0),
+                                      nsDisplayListBuilderMode::PAINTING,
+                                      flags);
 
   aContext.Restore();
-
-  return NS_FAILED(rv) ? DrawResult::BAD_ARGS : DrawResult::SUCCESS;
 }
 
 nsIFrame*
@@ -317,20 +317,6 @@ nsSVGForeignObjectFrame::GetFrameForPoint(const gfxPoint& aPoint)
   nsPoint point = nsPoint(NSToIntRound(pt.x), NSToIntRound(pt.y));
 
   return nsLayoutUtils::GetFrameForPoint(kid, point);
-}
-
-nsRect
-nsSVGForeignObjectFrame::GetCoveredRegion()
-{
-  float x, y, w, h;
-  static_cast<SVGForeignObjectElement*>(mContent)->
-    GetAnimatedLengthValues(&x, &y, &w, &h, nullptr);
-  if (w < 0.0f) w = 0.0f;
-  if (h < 0.0f) h = 0.0f;
-  // GetCanvasTM includes the x,y translation
-  return nsSVGUtils::ToCanvasBounds(gfxRect(0.0, 0.0, w, h),
-                                    GetCanvasTM(),
-                                    PresContext());
 }
 
 void
@@ -534,15 +520,15 @@ nsSVGForeignObjectFrame::DoReflow()
   if (!kid)
     return;
 
-  // initiate a synchronous reflow here and now:  
-  nsRenderingContext renderingContext(
-    presContext->PresShell()->CreateReferenceRenderingContext());
+  // initiate a synchronous reflow here and now:
+  RefPtr<gfxContext> renderingContext =
+    presContext->PresShell()->CreateReferenceRenderingContext();
 
   mInReflow = true;
 
   WritingMode wm = kid->GetWritingMode();
   ReflowInput reflowInput(presContext, kid,
-                                &renderingContext,
+                                renderingContext,
                                 LogicalSize(wm, ISize(wm),
                                             NS_UNCONSTRAINEDSIZE));
   ReflowOutput desiredSize(reflowInput);
@@ -564,7 +550,7 @@ nsSVGForeignObjectFrame::DoReflow()
                mRect.height == desiredSize.Height(), "unexpected size");
   FinishReflowChild(kid, presContext, desiredSize, &reflowInput, 0, 0,
                     NS_FRAME_NO_MOVE_FRAME);
-  
+
   mInReflow = false;
 }
 
@@ -585,4 +571,9 @@ nsSVGForeignObjectFrame::GetInvalidRegion()
   return nsRect();
 }
 
-
+void
+nsSVGForeignObjectFrame::AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult)
+{
+  MOZ_ASSERT(PrincipalChildList().FirstChild(), "Must have our anon box");
+  aResult.AppendElement(OwnedAnonBox(PrincipalChildList().FirstChild()));
+}

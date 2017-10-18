@@ -13,14 +13,13 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const { Cc, Ci } = require("chrome");
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
-const STRINGS_URI = "chrome://devtools/locale/filterwidget.properties";
+const { LocalizationHelper } = require("devtools/shared/l10n");
+const STRINGS_URI = "devtools/client/locales/filterwidget.properties";
 const L10N = new LocalizationHelper(STRINGS_URI);
 
-const {cssTokenizer} = require("devtools/shared/css-parsing-utils");
+const {cssTokenizer} = require("devtools/shared/css/parsing-utils");
 
-loader.lazyGetter(this, "asyncStorage",
-                  () => require("devtools/shared/async-storage"));
+const asyncStorage = require("devtools/shared/async-storage");
 
 loader.lazyGetter(this, "DOMUtils", () => {
   return Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
@@ -116,11 +115,14 @@ const SPECIAL_VALUES = new Set(["none", "unset", "initial", "inherit"]);
  *        The widget container.
  * @param {String} value
  *        CSS filter value
+ * @param {Function} cssIsValid
+ *        Test whether css name / value is valid.
  */
-function CSSFilterEditorWidget(el, value = "") {
+function CSSFilterEditorWidget(el, value = "", cssIsValid) {
   this.doc = el.ownerDocument;
   this.win = this.doc.defaultView;
   this.el = el;
+  this._cssIsValid = cssIsValid;
 
   this._addButtonClick = this._addButtonClick.bind(this);
   this._removeButtonClick = this._removeButtonClick.bind(this);
@@ -160,6 +162,7 @@ CSSFilterEditorWidget.prototype = {
     let newPresetPlaceholder = L10N.getStr("newPresetPlaceholder");
     let savePresetButton = L10N.getStr("savePresetButton");
 
+    // eslint-disable-next-line no-unsanitized/property
     this.el.innerHTML = `
       <div class="filters-list">
         <div id="filters"></div>
@@ -214,6 +217,7 @@ CSSFilterEditorWidget.prototype = {
     let select = this.filterSelect;
     filterList.forEach(filter => {
       let option = this.doc.createElementNS(XHTML_NS, "option");
+      // eslint-disable-next-line no-unsanitized/property
       option.innerHTML = option.value = filter.name;
       select.appendChild(option);
     });
@@ -626,6 +630,7 @@ CSSFilterEditorWidget.prototype = {
    */
   render: function () {
     if (!this.filters.length) {
+  // eslint-disable-next-line no-unsanitized/property
       this.filtersList.innerHTML = `<p> ${L10N.getStr("emptyFilterList")} <br />
                                  ${L10N.getStr("addUsingList")} </p>`;
       this.emit("render");
@@ -689,9 +694,11 @@ CSSFilterEditorWidget.prototype = {
         this.filtersList.querySelector(".filter:last-of-type input");
     if (lastInput) {
       lastInput.focus();
-      // move cursor to end of input
-      const end = lastInput.value.length;
-      lastInput.setSelectionRange(end, end);
+      if (lastInput.type === "text") {
+        // move cursor to end of input
+        const end = lastInput.value.length;
+        lastInput.setSelectionRange(end, end);
+      }
     }
 
     this.emit("render");
@@ -705,6 +712,7 @@ CSSFilterEditorWidget.prototype = {
       }
 
       if (!presets || !presets.length) {
+      // eslint-disable-next-line no-unsanitized/property
         this.presetsList.innerHTML = `<p>${L10N.getStr("emptyPresetList")}</p>`;
         this.emit("render");
         return;
@@ -767,7 +775,7 @@ CSSFilterEditorWidget.prototype = {
       // If the specified value is invalid, replace it with the
       // default.
       if (name !== "url") {
-        if (!DOMUtils.cssPropertyIsValid("filter", name + "(" + value + ")")) {
+        if (!this._cssIsValid("filter", name + "(" + value + ")")) {
           value = null;
         }
       }

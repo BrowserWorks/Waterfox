@@ -7,7 +7,7 @@
 #ifndef mozilla_a11y_sdnTextAccessible_h_
 #define mozilla_a11y_sdnTextAccessible_h_
 
-#include "ISimpleDOMText.h"
+#include "ISimpleDOM.h"
 #include "IUnknownImpl.h"
 
 #include "AccessibleWrap.h"
@@ -17,11 +17,11 @@ struct nsPoint;
 
 namespace mozilla {
 namespace a11y {
- 
+
 class sdnTextAccessible final : public ISimpleDOMText
 {
 public:
-  sdnTextAccessible(AccessibleWrap* aAccessible) : mAccessible(aAccessible) {};
+  explicit sdnTextAccessible(AccessibleWrap* aAccessible) : mAccessible(aAccessible) {};
   ~sdnTextAccessible() {}
 
   DECL_IUNKNOWN

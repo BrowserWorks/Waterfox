@@ -206,46 +206,46 @@ function run_test() {
   do_check_eq(typeof roundtrip(data).unknownURL, "undefined");
 
   function roundtripSet(props, modify, test, secure) {
-    props.forEach(function (prop) {
-      var data = dummy();
-      modify(data, prop);
-      test(roundtrip(data, secure), prop, data);
+    props.forEach(function(prop) {
+      var theme = dummy();
+      modify(theme, prop);
+      test(roundtrip(theme, secure), prop, theme);
     });
   }
 
-  roundtripSet(MANDATORY, function (data, prop) {
-    delete data[prop];
-  }, function (after) {
+  roundtripSet(MANDATORY, function(theme, prop) {
+    delete theme[prop];
+  }, function(after) {
     do_check_eq(after, null);
   });
 
-  roundtripSet(OPTIONAL, function (data, prop) {
-    delete data[prop];
-  }, function (after) {
+  roundtripSet(OPTIONAL, function(theme, prop) {
+    delete theme[prop];
+  }, function(after) {
     do_check_neq(after, null);
   });
 
-  roundtripSet(MANDATORY, function (data, prop) {
-    data[prop] = "";
-  }, function (after) {
+  roundtripSet(MANDATORY, function(theme, prop) {
+    theme[prop] = "";
+  }, function(after) {
     do_check_eq(after, null);
   });
 
-  roundtripSet(OPTIONAL, function (data, prop) {
-    data[prop] = "";
-  }, function (after, prop) {
+  roundtripSet(OPTIONAL, function(theme, prop) {
+    theme[prop] = "";
+  }, function(after, prop) {
     do_check_eq(typeof after[prop], "undefined");
   });
 
-  roundtripSet(MANDATORY, function (data, prop) {
-    data[prop] = " ";
-  }, function (after) {
+  roundtripSet(MANDATORY, function(theme, prop) {
+    theme[prop] = " ";
+  }, function(after) {
     do_check_eq(after, null);
   });
 
-  roundtripSet(OPTIONAL, function (data, prop) {
-    data[prop] = " ";
-  }, function (after, prop) {
+  roundtripSet(OPTIONAL, function(theme, prop) {
+    theme[prop] = " ";
+  }, function(after, prop) {
     do_check_neq(after, null);
     do_check_eq(typeof after[prop], "undefined");
   });
@@ -258,48 +258,48 @@ function run_test() {
     return props.filter(prop => /URL$/.test(prop));
   }
 
-  roundtripSet(non_urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {
-    data[prop] = prop;
-  }, function (after, prop, before) {
+  roundtripSet(non_urls(MANDATORY.concat(OPTIONAL)), function(theme, prop) {
+    theme[prop] = prop;
+  }, function(after, prop, before) {
     do_check_eq(after[prop], before[prop]);
   });
 
-  roundtripSet(non_urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {
-    data[prop] = " " + prop + "  ";
-  }, function (after, prop, before) {
+  roundtripSet(non_urls(MANDATORY.concat(OPTIONAL)), function(theme, prop) {
+    theme[prop] = " " + prop + "  ";
+  }, function(after, prop, before) {
     do_check_eq(after[prop], before[prop].trim());
   });
 
-  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {
-    data[prop] = Math.random().toString();
-  }, function (after, prop, before) {
+  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function(theme, prop) {
+    theme[prop] = Math.random().toString();
+  }, function(after, prop, before) {
     if (prop == "updateURL")
       do_check_eq(typeof after[prop], "undefined");
     else
       do_check_eq(after[prop], "http://lwttest.invalid/" + before[prop]);
   });
 
-  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {
-    data[prop] = Math.random().toString();
-  }, function (after, prop, before) {
+  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function(theme, prop) {
+    theme[prop] = Math.random().toString();
+  }, function(after, prop, before) {
     do_check_eq(after[prop], "https://lwttest.invalid/" + before[prop]);
   }, true);
 
-  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {
-    data[prop] = "https://sub.lwttest.invalid/" + Math.random().toString();
-  }, function (after, prop, before) {
+  roundtripSet(urls(MANDATORY.concat(OPTIONAL)), function(theme, prop) {
+    theme[prop] = "https://sub.lwttest.invalid/" + Math.random().toString();
+  }, function(after, prop, before) {
     do_check_eq(after[prop], before[prop]);
   });
 
-  roundtripSet(urls(MANDATORY), function (data, prop) {
-    data[prop] = "ftp://lwttest.invalid/" + Math.random().toString();
-  }, function (after) {
+  roundtripSet(urls(MANDATORY), function(theme, prop) {
+    theme[prop] = "ftp://lwttest.invalid/" + Math.random().toString();
+  }, function(after) {
     do_check_eq(after, null);
   });
 
-  roundtripSet(urls(OPTIONAL), function (data, prop) {
-    data[prop] = "ftp://lwttest.invalid/" + Math.random().toString();
-  }, function (after, prop) {
+  roundtripSet(urls(OPTIONAL), function(theme, prop) {
+    theme[prop] = "ftp://lwttest.invalid/" + Math.random().toString();
+  }, function(after, prop) {
     do_check_eq(typeof after[prop], "undefined");
   });
 
@@ -311,8 +311,7 @@ function run_test() {
   try {
     ltm.currentTheme = data;
     do_throw("Should have rejected a theme with no name");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -321,8 +320,7 @@ function run_test() {
   try {
     ltm.currentTheme = data;
     do_throw("Should have rejected a theme with a bad headerURL");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -331,8 +329,7 @@ function run_test() {
   try {
     ltm.currentTheme = data;
     do_throw("Should have rejected a theme with a non-http(s) headerURL");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -341,8 +338,7 @@ function run_test() {
   try {
     ltm.currentTheme = data;
     do_throw("Should have rejected a theme with a non-http(s) headerURL");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -367,8 +363,7 @@ function run_test() {
   try {
     ltm.setLocalTheme(data);
     do_throw("Should have rejected a theme with a non-http(s), non-file headerURL");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -377,8 +372,7 @@ function run_test() {
   try {
     ltm.currentTheme = data;
     do_throw("Should have rejected a theme with no ID");
-  }
-  catch (e) {
+  } catch (e) {
     // Expected exception
   }
 
@@ -546,12 +540,12 @@ function run_test() {
 
   do_test_pending();
 
-  AddonManager.getAddonByID("builtInTheme0@personas.mozilla.org", aAddon => {
+  AddonManager.getAddonByID("builtInTheme0@personas.mozilla.org", builtInThemeAddon => {
     // App specific theme can't be uninstalled or disabled,
     // but can be enabled (since it isn't already applied).
-    do_check_eq(hasPermission(aAddon, "uninstall"), false);
-    do_check_eq(hasPermission(aAddon, "disable"), false);
-    do_check_eq(hasPermission(aAddon, "enable"), true);
+    do_check_eq(hasPermission(builtInThemeAddon, "uninstall"), false);
+    do_check_eq(hasPermission(builtInThemeAddon, "disable"), false);
+    do_check_eq(hasPermission(builtInThemeAddon, "enable"), true);
 
     ltm.currentTheme = dummy("x0");
     do_check_eq([...ltm._builtInThemes].length, 2);
@@ -566,12 +560,12 @@ function run_test() {
     Assert.throws(() => { ltm.addBuiltInTheme("not a theme object") },
       "Exception is thrown adding an invalid theme");
 
-    AddonManager.getAddonByID("x0@personas.mozilla.org", aAddon => {
+    AddonManager.getAddonByID("x0@personas.mozilla.org", x0Addon => {
       // Currently applied (non-app-specific) can be uninstalled or disabled,
       // but can't be enabled (since it's already applied).
-      do_check_eq(hasPermission(aAddon, "uninstall"), true);
-      do_check_eq(hasPermission(aAddon, "disable"), true);
-      do_check_eq(hasPermission(aAddon, "enable"), false);
+      do_check_eq(hasPermission(x0Addon, "uninstall"), true);
+      do_check_eq(hasPermission(x0Addon, "disable"), true);
+      do_check_eq(hasPermission(x0Addon, "enable"), false);
 
       ltm.forgetUsedTheme("x0");
       do_check_eq(ltm.currentTheme, null);

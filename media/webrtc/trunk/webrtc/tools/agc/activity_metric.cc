@@ -14,17 +14,18 @@
 #include <stdlib.h>
 
 #include <algorithm>
+#include <memory>
 
 #include "gflags/gflags.h"
-#include "testing/gtest/include/gtest/gtest.h"
 #include "webrtc/modules/audio_processing/agc/agc.h"
-#include "webrtc/modules/audio_processing/agc/agc_audio_proc.h"
-#include "webrtc/modules/audio_processing/agc/common.h"
-#include "webrtc/modules/audio_processing/agc/histogram.h"
-#include "webrtc/modules/audio_processing/agc/pitch_based_vad.h"
-#include "webrtc/modules/audio_processing/agc/standalone_vad.h"
+#include "webrtc/modules/audio_processing/agc/loudness_histogram.h"
 #include "webrtc/modules/audio_processing/agc/utility.h"
-#include "webrtc/modules/interface/module_common_types.h"
+#include "webrtc/modules/audio_processing/vad/common.h"
+#include "webrtc/modules/audio_processing/vad/pitch_based_vad.h"
+#include "webrtc/modules/audio_processing/vad/standalone_vad.h"
+#include "webrtc/modules/audio_processing/vad/vad_audio_proc.h"
+#include "webrtc/modules/include/module_common_types.h"
+#include "webrtc/test/gtest.h"
 
 static const int kAgcAnalWindowSamples = 100;
 static const double kDefaultActivityThreshold = 0.3;
@@ -56,16 +57,16 @@ namespace webrtc {
 // silence frame. Otherwise true VAD would drift with respect to the audio.
 // We only consider mono inputs.
 static void DitherSilence(AudioFrame* frame) {
-  ASSERT_EQ(1, frame->num_channels_);
+  ASSERT_EQ(1u, frame->num_channels_);
   const double kRmsSilence = 5;
   const double sum_squared_silence = kRmsSilence * kRmsSilence *
       frame->samples_per_channel_;
   double sum_squared = 0;
-  for (int n = 0; n < frame->samples_per_channel_; n++)
+  for (size_t n = 0; n < frame->samples_per_channel_; n++)
     sum_squared += frame->data_[n] * frame->data_[n];
   if (sum_squared <= sum_squared_silence) {
-    for (int n = 0; n < frame->samples_per_channel_; n++)
-      frame->data_[n] = (rand() & 0xF) - 8;
+    for (size_t n = 0; n < frame->samples_per_channel_; n++)
+      frame->data_[n] = (rand() & 0xF) - 8;  // NOLINT: ignore non-threadsafe.
   }
 }
 
@@ -74,12 +75,12 @@ class AgcStat {
   AgcStat()
       : video_index_(0),
         activity_threshold_(kDefaultActivityThreshold),
-        audio_content_(Histogram::Create(kAgcAnalWindowSamples)),
-        audio_processing_(new AgcAudioProc()),
+        audio_content_(LoudnessHistogram::Create(kAgcAnalWindowSamples)),
+        audio_processing_(new VadAudioProc()),
         vad_(new PitchBasedVad()),
         standalone_vad_(StandaloneVad::Create()),
         audio_content_fid_(NULL) {
-    for (int n = 0; n < kMaxNumFrames; n++)
+    for (size_t n = 0; n < kMaxNumFrames; n++)
       video_vad_[n] = 0.5;
   }
 
@@ -116,7 +117,7 @@ class AgcStat {
       // TODO(turajs) combining and limiting are used in the source files as
       // well they can be moved to utility.
       // Combine Video and stand-alone VAD.
-      for (int n = 0; n < features.num_frames; n++) {
+      for (size_t n = 0; n < features.num_frames; n++) {
         double p_active = p[n] * video_vad_[n];
         double p_passive = (1 - p[n]) * (1 - video_vad_[n]);
         p[n]  = p_active / (p_active + p_passive);
@@ -125,7 +126,7 @@ class AgcStat {
       }
       if (vad_->VoicingProbability(features, p) < 0)
         return -1;
-      for (int n = 0; n < features.num_frames; n++) {
+      for (size_t n = 0; n < features.num_frames; n++) {
         audio_content_->Update(features.rms[n], p[n]);
         double ac = audio_content_->AudioContent();
         if (audio_content_fid_ != NULL) {
@@ -139,7 +140,7 @@ class AgcStat {
       }
       video_index_ = 0;
     }
-    return features.num_frames;
+    return static_cast<int>(features.num_frames);
   }
 
   void Reset() {
@@ -154,10 +155,10 @@ class AgcStat {
   int video_index_;
   double activity_threshold_;
   double video_vad_[kMaxNumFrames];
-  rtc::scoped_ptr<Histogram> audio_content_;
-  rtc::scoped_ptr<AgcAudioProc> audio_processing_;
-  rtc::scoped_ptr<PitchBasedVad> vad_;
-  rtc::scoped_ptr<StandaloneVad> standalone_vad_;
+  std::unique_ptr<LoudnessHistogram> audio_content_;
+  std::unique_ptr<VadAudioProc> audio_processing_;
+  std::unique_ptr<PitchBasedVad> vad_;
+  std::unique_ptr<StandaloneVad> standalone_vad_;
 
   FILE* audio_content_fid_;
 };
@@ -246,7 +247,7 @@ void void_main(int argc, char* argv[]) {
   bool onset = false;
   uint8_t previous_true_vad = 0;
   int num_not_adapted = 0;
-  int true_vad_index = 0;
+  size_t true_vad_index = 0;
   bool in_false_positive_region = false;
   int total_false_positive_duration = 0;
   bool video_adapted = false;
@@ -292,7 +293,7 @@ void void_main(int argc, char* argv[]) {
     ASSERT_GE(ret_val, 0);
 
     if (ret_val > 0) {
-      ASSERT_TRUE(ret_val == true_vad_index);
+      ASSERT_EQ(true_vad_index, static_cast<size_t>(ret_val));
       for (int n = 0; n < ret_val; n++) {
         if (true_vad[n] == 1) {
           total_active++;

@@ -4,7 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+if not CONFIG['JS_STANDALONE']:
+    TEST_DIRS += [
+        'gtest',
+    ]
+
 CppUnitTests([
+    'TestArray',
     'TestArrayUtils',
     'TestAtomics',
     'TestBinarySearch',
@@ -15,12 +21,14 @@ CppUnitTests([
     'TestCheckedInt',
     'TestCountPopulation',
     'TestCountZeroes',
+    'TestDefineEnum',
+    'TestDoublyLinkedList',
     'TestEndian',
+    'TestEnumeratedArray',
     'TestEnumSet',
+    'TestEnumTypeTraits',
     'TestFastBernoulliTrial',
     'TestFloatingPoint',
-    'TestFunction',
-    'TestInitializerList',
     'TestIntegerPrintfMacros',
     'TestIntegerRange',
     'TestJSONWriter',
@@ -31,12 +39,15 @@ CppUnitTests([
     'TestMaybe',
     'TestNotNull',
     'TestPair',
+    'TestRange',
     'TestRefPtr',
+    'TestResult',
     'TestRollingMean',
     'TestSaturate',
     'TestScopeExit',
     'TestSegmentedVector',
     'TestSHA1',
+    'TestSmallPointerArray',
     'TestSplayTree',
     'TestTemplateLib',
     'TestTuple',

@@ -10,11 +10,7 @@
 
 const NUMBER_OF_BACKUPS = 10;
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* () {
+add_task(async function() {
   // Generate random dates.
   let dateObj = new Date();
   let dates = [];
@@ -30,7 +26,7 @@ add_task(function* () {
   dates.sort();
 
   // Get and cleanup the backups folder.
-  let backupFolderPath = yield PlacesBackups.getBackupFolder();
+  let backupFolderPath = await PlacesBackups.getBackupFolder();
   let bookmarksBackupDir = new FileUtils.File(backupFolderPath);
 
   // Fake backups are created backwards to ensure we won't consider file
@@ -46,7 +42,7 @@ add_task(function* () {
       do_throw("Unable to create fake backup " + backupFile.leafName);
   }
 
-  yield PlacesBackups.create(NUMBER_OF_BACKUPS);
+  await PlacesBackups.create(NUMBER_OF_BACKUPS);
   // Add today's backup.
   dates.push(dateObj.getTime());
 
@@ -67,8 +63,7 @@ add_task(function* () {
         }
       }
       shouldExist = true;
-    }
-    else {
+    } else {
       backupFilename = PlacesBackups.getFilenameForDate(new Date(dates[i]));
       backupFile = bookmarksBackupDir.clone();
       backupFile.append(backupFilename);

@@ -7,6 +7,7 @@
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/RefPtr.h"
 #include "ImageRegion.h"
 #include "Orientation.h"
@@ -31,7 +32,7 @@ DynamicImage::GetProgressTracker()
 }
 
 size_t
-DynamicImage::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
+DynamicImage::SizeOfSourceWithComputedFallback(SizeOfState& aState) const
 {
   return 0;
 }
@@ -80,7 +81,7 @@ DynamicImage::OnImageDataComplete(nsIRequest* aRequest,
 }
 
 void
-DynamicImage::OnSurfaceDiscarded()
+DynamicImage::OnSurfaceDiscarded(const SurfaceKey& aSurfaceKey)
 { }
 
 void
@@ -125,6 +126,12 @@ DynamicImage::GetHeight(int32_t* aHeight)
 {
   *aHeight = mDrawable->Size().height;
   return NS_OK;
+}
+
+nsresult
+DynamicImage::GetNativeSizes(nsTArray<IntSize>& aNativeSizes) const
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
@@ -189,7 +196,8 @@ DynamicImage::GetFrameAtSize(const IntSize& aSize,
   MOZ_ASSERT(context); // already checked the draw target above
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
-                     aWhichFrame, SamplingFilter::POINT, Nothing(), aFlags);
+                     aWhichFrame, SamplingFilter::POINT, Nothing(), aFlags,
+                     1.0);
 
   return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
@@ -219,15 +227,17 @@ DynamicImage::Draw(gfxContext* aContext,
                    uint32_t aWhichFrame,
                    SamplingFilter aSamplingFilter,
                    const Maybe<SVGImageContext>& aSVGContext,
-                   uint32_t aFlags)
+                   uint32_t aFlags,
+                   float aOpacity)
 {
   MOZ_ASSERT(!aSize.IsEmpty(), "Unexpected empty size");
 
   IntSize drawableSize(mDrawable->Size());
 
   if (aSize == drawableSize) {
-    gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, aRegion,
-                               SurfaceFormat::B8G8R8A8, aSamplingFilter);
+    gfxUtils::DrawPixelSnapped(aContext, mDrawable, SizeDouble(drawableSize), aRegion,
+                               SurfaceFormat::B8G8R8A8, aSamplingFilter,
+                               aOpacity);
     return DrawResult::SUCCESS;
   }
 
@@ -240,15 +250,22 @@ DynamicImage::Draw(gfxContext* aContext,
   gfxContextMatrixAutoSaveRestore saveMatrix(aContext);
   aContext->Multiply(gfxMatrix::Scaling(scale.width, scale.height));
 
-  gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, region,
-                             SurfaceFormat::B8G8R8A8, aSamplingFilter);
+  gfxUtils::DrawPixelSnapped(aContext, mDrawable, SizeDouble(drawableSize), region,
+                             SurfaceFormat::B8G8R8A8, aSamplingFilter,
+                             aOpacity);
   return DrawResult::SUCCESS;
 }
 
 NS_IMETHODIMP
-DynamicImage::StartDecoding()
+DynamicImage::StartDecoding(uint32_t aFlags)
 {
   return NS_OK;
+}
+
+bool
+DynamicImage::StartDecodingWithResult(uint32_t aFlags)
+{
+  return true;
 }
 
 NS_IMETHODIMP

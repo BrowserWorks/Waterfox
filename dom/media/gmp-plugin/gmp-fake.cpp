@@ -54,7 +54,7 @@
 #define PUBLIC_FUNC
 #endif
 
-GMPPlatformAPI* g_platform_api = NULL;
+GMPPlatformAPI* g_platform_api = nullptr;
 
 extern "C" {
 
@@ -72,11 +72,9 @@ extern "C" {
       // happens when decoder init fails.
       return GMPGenericErr;
 #if defined(GMP_FAKE_SUPPORT_DECRYPT)
-    } else if (!strcmp (aApiName, GMP_API_DECRYPTOR_BACKWARDS_COMPAT)) {
-      *aPluginApi = new FakeDecryptor(static_cast<GMPDecryptorHost*> (aHostAPI));
-      return GMPNoErr;
-    } else if (!strcmp (aApiName, GMP_API_ASYNC_SHUTDOWN)) {
-      *aPluginApi = new TestAsyncShutdown(static_cast<GMPAsyncShutdownHost*> (aHostAPI));
+    }
+    if (!strcmp (aApiName, GMP_API_DECRYPTOR)) {
+      *aPluginApi = new FakeDecryptor();
       return GMPNoErr;
 #endif
     }
@@ -85,14 +83,7 @@ extern "C" {
 
   PUBLIC_FUNC void
   GMPShutdown (void) {
-    g_platform_api = NULL;
+    g_platform_api = nullptr;
   }
-
-#if defined(GMP_FAKE_SUPPORT_DECRYPT)
-  PUBLIC_FUNC void
-  GMPSetNodeId(const char* aNodeId, uint32_t aLength) {
-    FakeDecryptor::SetNodeId(aNodeId, aLength);
-  }
-#endif
 
 } // extern "C"

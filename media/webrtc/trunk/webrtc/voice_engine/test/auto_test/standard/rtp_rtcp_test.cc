@@ -8,18 +8,18 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "webrtc/system_wrappers/interface/atomic32.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
-#include "webrtc/system_wrappers/interface/event_wrapper.h"
+#include <memory>
+
+#include "webrtc/base/criticalsection.h"
+#include "webrtc/system_wrappers/include/atomic32.h"
+#include "webrtc/system_wrappers/include/event_wrapper.h"
 #include "webrtc/test/testsupport/fileutils.h"
 #include "webrtc/voice_engine/test/auto_test/fixtures/after_streaming_fixture.h"
 #include "webrtc/voice_engine/test/auto_test/voe_standard_test.h"
 
 class TestRtpObserver : public webrtc::VoERTPObserver {
  public:
-  TestRtpObserver()
-      : crit_(voetest::CriticalSectionWrapper::CreateCriticalSection()),
-        changed_ssrc_event_(voetest::EventWrapper::Create()) {}
+  TestRtpObserver() : changed_ssrc_event_(voetest::EventWrapper::Create()) {}
   virtual ~TestRtpObserver() {}
   virtual void OnIncomingCSRCChanged(int channel,
                                      unsigned int CSRC,
@@ -31,13 +31,13 @@ class TestRtpObserver : public webrtc::VoERTPObserver {
     EXPECT_EQ(voetest::kEventSignaled, changed_ssrc_event_->Wait(10*1000));
   }
   void SetIncomingSsrc(unsigned int ssrc) {
-    voetest::CriticalSectionScoped lock(crit_.get());
+    rtc::CritScope lock(&crit_);
     incoming_ssrc_ = ssrc;
   }
  public:
-  rtc::scoped_ptr<voetest::CriticalSectionWrapper> crit_;
+  rtc::CriticalSection crit_;
   unsigned int incoming_ssrc_;
-  rtc::scoped_ptr<voetest::EventWrapper> changed_ssrc_event_;
+  std::unique_ptr<voetest::EventWrapper> changed_ssrc_event_;
 };
 
 void TestRtpObserver::OnIncomingSSRCChanged(int channel,
@@ -48,7 +48,7 @@ void TestRtpObserver::OnIncomingSSRCChanged(int channel,
   TEST_LOG("%s", msg);
 
   {
-    voetest::CriticalSectionScoped lock(crit_.get());
+    rtc::CritScope lock(&crit_);
     if (incoming_ssrc_ == SSRC)
       changed_ssrc_event_->Set();
   }
@@ -63,11 +63,10 @@ class RtpRtcpTest : public AfterStreamingFixture {
     second_channel_ = voe_base_->CreateChannel();
     EXPECT_GE(second_channel_, 0);
 
-    transport_ = new LoopBackTransport(voe_network_);
+    transport_ = new LoopBackTransport(voe_network_, second_channel_);
     EXPECT_EQ(0, voe_network_->RegisterExternalTransport(second_channel_,
                                                          *transport_));
 
-    EXPECT_EQ(0, voe_base_->StartReceive(second_channel_));
     EXPECT_EQ(0, voe_base_->StartPlayout(second_channel_));
     EXPECT_EQ(0, voe_rtp_rtcp_->SetLocalSSRC(second_channel_, 5678));
     EXPECT_EQ(0, voe_base_->StartSend(second_channel_));
@@ -101,8 +100,7 @@ TEST_F(RtpRtcpTest, RemoteRtcpCnameHasPropagatedToRemoteSide) {
   EXPECT_STREQ(RTCP_CNAME, char_buffer);
 }
 
-// Flakily hangs on Linux. code.google.com/p/webrtc/issues/detail?id=2178.
-TEST_F(RtpRtcpTest, DISABLED_ON_LINUX(SSRCPropagatesCorrectly)) {
+TEST_F(RtpRtcpTest, SSRCPropagatesCorrectly) {
   unsigned int local_ssrc = 1234;
   EXPECT_EQ(0, voe_base_->StopSend(channel_));
   EXPECT_EQ(0, voe_rtp_rtcp_->SetLocalSSRC(channel_, local_ssrc));
@@ -117,23 +115,3 @@ TEST_F(RtpRtcpTest, DISABLED_ON_LINUX(SSRCPropagatesCorrectly)) {
   EXPECT_EQ(0, voe_rtp_rtcp_->GetRemoteSSRC(channel_, ssrc));
   EXPECT_EQ(local_ssrc, ssrc);
 }
-
-// TODO(xians, phoglund): Re-enable when issue 372 is resolved.
-TEST_F(RtpRtcpTest, DISABLED_CanCreateRtpDumpFilesWithoutError) {
-  // Create two RTP dump files (3 seconds long). You can verify these after
-  // the test using rtpplay or NetEqRTPplay if you like.
-  std::string output_path = webrtc::test::OutputPath();
-  std::string incoming_filename = output_path + "dump_in_3sec.rtp";
-  std::string outgoing_filename = output_path + "dump_out_3sec.rtp";
-
-  EXPECT_EQ(0, voe_rtp_rtcp_->StartRTPDump(
-      channel_, incoming_filename.c_str(), webrtc::kRtpIncoming));
-  EXPECT_EQ(0, voe_rtp_rtcp_->StartRTPDump(
-      channel_, outgoing_filename.c_str(), webrtc::kRtpOutgoing));
-
-  Sleep(3000);
-
-  EXPECT_EQ(0, voe_rtp_rtcp_->StopRTPDump(channel_, webrtc::kRtpIncoming));
-  EXPECT_EQ(0, voe_rtp_rtcp_->StopRTPDump(channel_, webrtc::kRtpOutgoing));
-}
-

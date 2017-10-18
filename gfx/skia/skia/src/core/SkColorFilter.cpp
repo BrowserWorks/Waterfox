@@ -6,6 +6,7 @@
  */
 
 #include "SkColorFilter.h"
+#include "SkArenaAlloc.h"
 #include "SkReadBuffer.h"
 #include "SkRefCnt.h"
 #include "SkString.h"
@@ -19,7 +20,7 @@
 #include "GrFragmentProcessor.h"
 #endif
 
-bool SkColorFilter::asColorMode(SkColor* color, SkXfermode::Mode* mode) const {
+bool SkColorFilter::asColorMode(SkColor*, SkBlendMode*) const {
     return false;
 }
 
@@ -31,19 +32,37 @@ bool SkColorFilter::asComponentTable(SkBitmap*) const {
     return false;
 }
 
-void SkColorFilter::filterSpan4f(const SkPM4f[], int count, SkPM4f span[]) const {
+#if SK_SUPPORT_GPU
+sk_sp<GrFragmentProcessor> SkColorFilter::asFragmentProcessor(GrContext*, SkColorSpace*) const {
+    return nullptr;
+}
+#endif
+
+bool SkColorFilter::appendStages(SkRasterPipeline* pipeline,
+                                 SkColorSpace* dst,
+                                 SkArenaAlloc* scratch,
+                                 bool shaderIsOpaque) const {
+    return this->onAppendStages(pipeline, dst, scratch, shaderIsOpaque);
+}
+
+bool SkColorFilter::onAppendStages(SkRasterPipeline*, SkColorSpace*, SkArenaAlloc*, bool) const {
+    return false;
+}
+
+void SkColorFilter::filterSpan4f(const SkPM4f src[], int count, SkPM4f result[]) const {
     const int N = 128;
     SkPMColor tmp[N];
     while (count > 0) {
         int n = SkTMin(count, N);
         for (int i = 0; i < n; ++i) {
-            SkNx_cast<uint8_t>(Sk4f::Load(span[i].fVec) * Sk4f(255) + Sk4f(0.5f)).store(&tmp[i]);
+            tmp[i] = src[i].toPMColor();
         }
         this->filterSpan(tmp, n, tmp);
         for (int i = 0; i < n; ++i) {
-            span[i] = SkPM4f::FromPMColor(tmp[i]);
+            result[i] = SkPM4f::FromPMColor(tmp[i]);
         }
-        span += n;
+        src += n;
+        result += n;
         count -= n;
     }
 }
@@ -94,18 +113,21 @@ public:
         SkString outerS, innerS;
         fOuter->toString(&outerS);
         fInner->toString(&innerS);
-        str->appendf("SkComposeColorFilter: outer(%s) inner(%s)", outerS.c_str(), innerS.c_str());
+        // These strings can be long.  SkString::appendf has limitations.
+        str->append(SkStringPrintf("SkComposeColorFilter: outer(%s) inner(%s)", outerS.c_str(),
+                                   innerS.c_str()));
     }
 #endif
 
 #if SK_SUPPORT_GPU
-    const GrFragmentProcessor* asFragmentProcessor(GrContext* context) const override {
-        SkAutoTUnref<const GrFragmentProcessor> innerFP(fInner->asFragmentProcessor(context));
-        SkAutoTUnref<const GrFragmentProcessor> outerFP(fOuter->asFragmentProcessor(context));
+    sk_sp<GrFragmentProcessor> asFragmentProcessor(GrContext* context,
+                                                   SkColorSpace* dstColorSpace) const override {
+        sk_sp<GrFragmentProcessor> innerFP(fInner->asFragmentProcessor(context, dstColorSpace));
+        sk_sp<GrFragmentProcessor> outerFP(fOuter->asFragmentProcessor(context, dstColorSpace));
         if (!innerFP || !outerFP) {
             return nullptr;
         }
-        const GrFragmentProcessor* series[] = { innerFP, outerFP };
+        sk_sp<GrFragmentProcessor> series[] = { std::move(innerFP), std::move(outerFP) };
         return GrFragmentProcessor::RunInSeries(series, 2);
     }
 #endif

@@ -8,7 +8,6 @@
 
 #include "js/Class.h"
 #include "js/Proxy.h"
-#include "mozilla/dom/DOMJSProxyHandler.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "nsCycleCollectionTraversalCallback.h"
@@ -50,13 +49,6 @@ void
 nsWrapperCache::ReleaseWrapper(void* aScriptObjectHolder)
 {
   if (PreservingWrapper()) {
-    // PreserveWrapper puts new DOM bindings in the JS holders hash, but they
-    // can also be in the DOM expando hash, so we need to try to remove them
-    // from both here.
-    JSObject* obj = GetWrapperPreserveColor();
-    if (IsDOMBinding() && obj && js::IsProxy(obj)) {
-      DOMProxyHandler::ClearExternalRefsForWrapperRelease(obj);
-    }
     SetPreservingWrapper(false);
     cyclecollector::DropJSObjectsImpl(aScriptObjectHolder);
   }
@@ -69,7 +61,7 @@ class DebugWrapperTraversalCallback : public nsCycleCollectionTraversalCallback
 public:
   explicit DebugWrapperTraversalCallback(JSObject* aWrapper)
     : mFound(false)
-    , mWrapper(aWrapper)
+    , mWrapper(JS::GCCellPtr(aWrapper))
   {
     mFlags = WANT_ALL_TRACES;
   }
@@ -84,14 +76,11 @@ public:
   {
   }
 
-  NS_IMETHOD_(void) NoteJSObject(JSObject* aChild)
+  NS_IMETHOD_(void) NoteJSChild(const JS::GCCellPtr& aChild)
   {
     if (aChild == mWrapper) {
       mFound = true;
     }
-  }
-  NS_IMETHOD_(void) NoteJSScript(JSScript* aChild)
-  {
   }
   NS_IMETHOD_(void) NoteXPCOMChild(nsISupports* aChild)
   {
@@ -108,7 +97,7 @@ public:
   bool mFound;
 
 private:
-  JSObject* mWrapper;
+  JS::GCCellPtr mWrapper;
 };
 
 static void
@@ -117,7 +106,7 @@ DebugWrapperTraceCallback(JS::GCCellPtr aPtr, const char* aName, void* aClosure)
   DebugWrapperTraversalCallback* callback =
     static_cast<DebugWrapperTraversalCallback*>(aClosure);
   if (aPtr.is<JSObject>()) {
-    callback->NoteJSObject(&aPtr.as<JSObject>());
+    callback->NoteJSChild(aPtr);
   }
 }
 
@@ -136,7 +125,7 @@ nsWrapperCache::CheckCCWrapperTraversal(void* aScriptObjectHolder,
   // see through the COM layer, so we use a suppression to help it.
   JS::AutoSuppressGCAnalysis suppress;
 
-  aTracer->Traverse(aScriptObjectHolder, callback);
+  aTracer->TraverseNativeAndJS(aScriptObjectHolder, callback);
   MOZ_ASSERT(callback.mFound,
              "Cycle collection participant didn't traverse to preserved "
              "wrapper! This will probably crash.");

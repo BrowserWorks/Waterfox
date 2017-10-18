@@ -7,7 +7,6 @@
 #include "ServiceProvider.h"
 
 #include "ApplicationAccessibleWrap.h"
-#include "Compatibility.h"
 #include "DocAccessible.h"
 #include "nsAccUtils.h"
 #include "nsCoreUtils.h"
@@ -17,7 +16,7 @@
 #include "mozilla/Preferences.h"
 #include "nsIDocShell.h"
 
-#include "ISimpleDOMNode_i.c"
+#include "ISimpleDOM.h"
 
 namespace mozilla {
 namespace a11y {
@@ -72,8 +71,10 @@ ServiceProvider::QueryService(REFGUID aGuidService, REFIID aIID,
   }
 
   // Can get to IAccessibleApplication from any node via QS
+  // Note: in case of JAWS we want to check if aIID is
+  // IID_IAccessibleApplication.
   if (aGuidService == IID_IAccessibleApplication ||
-      (Compatibility::IsJAWS() && aIID == IID_IAccessibleApplication)) {
+      aIID == IID_IAccessibleApplication) {
     ApplicationAccessibleWrap* applicationAcc =
       static_cast<ApplicationAccessibleWrap*>(ApplicationAcc());
     if (!applicationAcc)

@@ -47,6 +47,7 @@ public:
   virtual const SdpRtcpAttribute& GetRtcp() const = 0;
   virtual const SdpRemoteCandidatesAttribute& GetRemoteCandidates() const = 0;
   virtual const SdpSetupAttribute& GetSetup() const = 0;
+  virtual const SdpDtlsMessageAttribute& GetDtlsMessage() const = 0;
 
   // These attributes can appear multiple times, so the returned
   // classes actually represent a collection of values.
@@ -63,6 +64,8 @@ public:
   virtual const SdpRtcpFbAttributeList& GetRtcpFb() const = 0;
   virtual const SdpRtpmapAttributeList& GetRtpmap() const = 0;
   virtual const SdpSctpmapAttributeList& GetSctpmap() const = 0;
+  virtual uint32_t GetSctpPort() const = 0;
+  virtual uint32_t GetMaxMessageSize() const = 0;
   virtual const SdpSsrcAttributeList& GetSsrc() const = 0;
   virtual const SdpSsrcGroupAttributeList& GetSsrcGroup() const = 0;
 

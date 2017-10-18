@@ -4,9 +4,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 XPIDL_SOURCES += [
     'nsIDOMHTMLAnchorElement.idl',
-    'nsIDOMHTMLAppletElement.idl',
     'nsIDOMHTMLAreaElement.idl',
     'nsIDOMHTMLBaseElement.idl',
     'nsIDOMHTMLBodyElement.idl',
@@ -51,7 +53,6 @@ XPIDL_SOURCES += [
     'nsIDOMHTMLTableCellElement.idl',
     'nsIDOMHTMLTextAreaElement.idl',
     'nsIDOMHTMLUListElement.idl',
-    'nsIDOMMediaError.idl',
     'nsIDOMMozBrowserFrame.idl',
     'nsIDOMTimeRanges.idl',
     'nsIDOMValidityState.idl',

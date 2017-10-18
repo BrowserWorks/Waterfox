@@ -5,7 +5,7 @@
 // This test makes sure that the title of existing history entries does not
 // change inside a private window.
 
-add_task(function* test() {
+add_task(async function test() {
   const TEST_URL = "http://mochi.test:8888/browser/browser/components/" +
                    "privatebrowsing/test/browser/title.sjs";
   let cm = Services.cookies;
@@ -17,79 +17,52 @@ add_task(function* test() {
     return PlacesTestUtils.clearHistory();
   }
 
-  yield cleanup();
+  await cleanup();
+  registerCleanupFunction(cleanup);
 
-  let deferredFirst = PromiseUtils.defer();
-  let deferredSecond = PromiseUtils.defer();
-  let deferredThird = PromiseUtils.defer();
+  let win = await BrowserTestUtils.openNewBrowserWindow();
+  registerCleanupFunction(async () => {
+    await BrowserTestUtils.closeWindow(win);
+  });
 
-  let testNumber = 0;
-  let historyObserver = {
-    onTitleChanged: function(aURI, aPageTitle) {
-      if (aURI.spec != TEST_URL)
-        return;
-      switch (++testNumber) {
-        case 1:
-          // The first time that the page is loaded
-          deferredFirst.resolve(aPageTitle);
-          break;
-        case 2:
-          // The second time that the page is loaded
-          deferredSecond.resolve(aPageTitle);
-          break;
-        case 3:
-          // After clean up
-          deferredThird.resolve(aPageTitle);
-          break;
-        default:
-          // Checks that opening the page in a private window should not fire a
-          // title change.
-          ok(false, "Title changed. Unexpected pass: " + testNumber);
-      }
-    },
+  let promiseTitleChanged = PlacesTestUtils.waitForNotification(
+    "onTitleChanged", (uri, title) => uri.spec == TEST_URL, "history");
+  await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
+  await promiseTitleChanged;
+  await BrowserTestUtils.waitForCondition(async function() {
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "No Cookie";
+  }, "The page should be loaded without any cookie for the first time");
 
-    onBeginUpdateBatch: function () {},
-    onEndUpdateBatch: function () {},
-    onVisit: function () {},
-    onDeleteURI: function () {},
-    onClearHistory: function () {},
-    onPageChanged: function () {},
-    onDeleteVisits: function() {},
-    QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryObserver])
-  };
-  PlacesUtils.history.addObserver(historyObserver, false);
+  promiseTitleChanged = PlacesTestUtils.waitForNotification(
+    "onTitleChanged", (uri, title) => uri.spec == TEST_URL, "history");
+  await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
+  await promiseTitleChanged;
+  await BrowserTestUtils.waitForCondition(async function() {
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "Cookie";
+  }, "The page should be loaded with a cookie for the second time");
 
+  await cleanup();
 
-  let win = yield BrowserTestUtils.openNewBrowserWindow();
-  win.gBrowser.selectedTab = win.gBrowser.addTab(TEST_URL);
-  let aPageTitle = yield deferredFirst.promise;
-  // The first time that the page is loaded
-  is(aPageTitle, "No Cookie",
-     "The page should be loaded without any cookie for the first time");
+  promiseTitleChanged = PlacesTestUtils.waitForNotification(
+    "onTitleChanged", (uri, title) => uri.spec == TEST_URL, "history");
+  await BrowserTestUtils.openNewForegroundTab(win.gBrowser, TEST_URL);
+  await promiseTitleChanged;
+  await BrowserTestUtils.waitForCondition(async function() {
+    return (await PlacesUtils.history.fetch(TEST_URL)).title == "No Cookie";
+  }, "The page should be loaded without any cookie again");
 
-  win.gBrowser.selectedTab = win.gBrowser.addTab(TEST_URL);
-  aPageTitle = yield deferredSecond.promise;
-  // The second time that the page is loaded
-  is(aPageTitle, "Cookie",
-     "The page should be loaded with a cookie for the second time");
+  // Reopen the page in a private browser window, it should not notify a title
+  // change.
+  let win2 = await BrowserTestUtils.openNewBrowserWindow({private: true});
+  registerCleanupFunction(async () => {
+    let promisePBExit = TestUtils.topicObserved("last-pb-context-exited");
+    await BrowserTestUtils.closeWindow(win2);
+    await promisePBExit;
+  });
 
-  yield cleanup();
-
-  win.gBrowser.selectedTab = win.gBrowser.addTab(TEST_URL);
-  aPageTitle = yield deferredThird.promise;
-  // After clean up
-  is(aPageTitle, "No Cookie",
-     "The page should be loaded without any cookie again");
-
-  let win2 = yield BrowserTestUtils.openNewBrowserWindow({private: true});
-
-  let private_tab = win2.gBrowser.addTab(TEST_URL);
-  win2.gBrowser.selectedTab = private_tab;
-  yield BrowserTestUtils.browserLoaded(private_tab.linkedBrowser);
-
-  // Cleanup
-  yield cleanup();
-  PlacesUtils.history.removeObserver(historyObserver);
-  yield BrowserTestUtils.closeWindow(win);
-  yield BrowserTestUtils.closeWindow(win2);
+  await BrowserTestUtils.openNewForegroundTab(win2.gBrowser, TEST_URL);
+  // Wait long enough to be sure history didn't set a title.
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  is((await PlacesUtils.history.fetch(TEST_URL)).title, "No Cookie",
+     "The title remains the same after visiting in private window");
 });

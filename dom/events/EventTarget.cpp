@@ -58,6 +58,13 @@ EventTarget::SetEventHandler(nsIAtom* aType, const nsAString& aTypeString,
 }
 
 bool
+EventTarget::HasUntrustedOrNonSystemGroupKeyEventListeners() const
+{
+  EventListenerManager* elm = GetExistingListenerManager();
+  return elm && elm->HasUntrustedOrNonSystemGroupKeyEventListeners();
+}
+
+bool
 EventTarget::IsApzAware() const
 {
   EventListenerManager* elm = GetExistingListenerManager();
@@ -65,13 +72,13 @@ EventTarget::IsApzAware() const
 }
 
 bool
-EventTarget::DispatchEvent(JSContext* aCx,
-                           Event& aEvent,
+EventTarget::DispatchEvent(Event& aEvent,
+                           CallerType aCallerType,
                            ErrorResult& aRv)
 {
   bool result = false;
   aRv = DispatchEvent(&aEvent, &result);
-  return !aEvent.DefaultPrevented(aCx);
+  return !aEvent.DefaultPrevented(aCallerType);
 }
 
 } // namespace dom

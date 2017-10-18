@@ -43,9 +43,9 @@ class ImportEntryObject : public NativeObject
     };
 
     static const Class class_;
-    static JSObject* initClass(ExclusiveContext* cx, HandleObject obj);
+    static JSObject* initClass(JSContext* cx, HandleObject obj);
     static bool isInstance(HandleValue value);
-    static ImportEntryObject* create(ExclusiveContext* cx,
+    static ImportEntryObject* create(JSContext* cx,
                                      HandleAtom moduleRequest,
                                      HandleAtom importName,
                                      HandleAtom localName);
@@ -70,9 +70,9 @@ class ExportEntryObject : public NativeObject
     };
 
     static const Class class_;
-    static JSObject* initClass(ExclusiveContext* cx, HandleObject obj);
+    static JSObject* initClass(JSContext* cx, HandleObject obj);
     static bool isInstance(HandleValue value);
-    static ExportEntryObject* create(ExclusiveContext* cx,
+    static ExportEntryObject* create(JSContext* cx,
                                      HandleAtom maybeExportName,
                                      HandleAtom maybeModuleRequest,
                                      HandleAtom maybeImportName,
@@ -142,14 +142,7 @@ class ModuleNamespaceObject : public ProxyObject
   private:
     struct ProxyHandler : public BaseProxyHandler
     {
-        enum
-        {
-            EnumerateFunctionSlot = 0
-        };
-
         ProxyHandler();
-
-        JS::Value getEnumerateFunction(HandleObject proxy) const;
 
         bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                                       MutableHandle<PropertyDescriptor> desc) const override;
@@ -199,17 +192,19 @@ struct FunctionDeclaration
 
 using FunctionDeclarationVector = GCVector<FunctionDeclaration, 0, ZoneAllocPolicy>;
 
+// Possible values for ModuleState are defined in SelfHostingDefines.h.
+using ModuleState = int32_t;
+
 class ModuleObject : public NativeObject
 {
   public:
     enum
     {
         ScriptSlot = 0,
-        StaticScopeSlot,
         InitialEnvironmentSlot,
         EnvironmentSlot,
         NamespaceSlot,
-        EvaluatedSlot,
+        StateSlot,
         HostDefinedSlot,
         RequestedModulesSlot,
         ImportEntriesSlot,
@@ -230,7 +225,7 @@ class ModuleObject : public NativeObject
 
     static bool isInstance(HandleValue value);
 
-    static ModuleObject* create(ExclusiveContext* cx, HandleObject enclosingStaticScope);
+    static ModuleObject* create(JSContext* cx);
     void init(HandleScript script);
     void setInitialEnvironment(Handle<ModuleEnvironmentObject*> initialEnvironment);
     void initImportExportData(HandleArrayObject requestedModules,
@@ -242,14 +237,14 @@ class ModuleObject : public NativeObject
 #ifdef DEBUG
     static bool IsFrozen(JSContext* cx, HandleModuleObject self);
 #endif
-    void fixScopesAfterCompartmentMerge(JSContext* cx);
+    void fixEnvironmentsAfterCompartmentMerge();
 
     JSScript* script() const;
-    JSObject* enclosingStaticScope() const;
+    Scope* enclosingScope() const;
     ModuleEnvironmentObject& initialEnvironment() const;
     ModuleEnvironmentObject* environment() const;
     ModuleNamespaceObject* namespace_();
-    bool evaluated() const;
+    ModuleState state() const;
     Value hostDefinedField() const;
     ArrayObject& requestedModules() const;
     ArrayObject& importEntries() const;
@@ -263,19 +258,18 @@ class ModuleObject : public NativeObject
     static bool DeclarationInstantiation(JSContext* cx, HandleModuleObject self);
     static bool Evaluation(JSContext* cx, HandleModuleObject self);
 
-    void setHostDefinedField(JS::Value value);
+    void setHostDefinedField(const JS::Value& value);
 
     // For intrinsic_CreateModuleEnvironment.
     void createEnvironment();
 
     // For BytecodeEmitter.
-    bool noteFunctionDeclaration(ExclusiveContext* cx, HandleAtom name, HandleFunction fun);
+    bool noteFunctionDeclaration(JSContext* cx, HandleAtom name, HandleFunction fun);
 
     // For intrinsic_InstantiateModuleFunctionDeclarations.
     static bool instantiateFunctionDeclarations(JSContext* cx, HandleModuleObject self);
 
-    // For intrinsic_SetModuleEvaluated.
-    void setEvaluated();
+    void setState(ModuleState newState);
 
     // For intrinsic_EvaluateModule.
     static bool evaluate(JSContext* cx, HandleModuleObject self, MutableHandleValue rval);
@@ -300,7 +294,7 @@ class ModuleObject : public NativeObject
 class MOZ_STACK_CLASS ModuleBuilder
 {
   public:
-    explicit ModuleBuilder(ExclusiveContext* cx, HandleModuleObject module);
+    explicit ModuleBuilder(JSContext* cx, HandleModuleObject module);
 
     bool processImport(frontend::ParseNode* pn);
     bool processExport(frontend::ParseNode* pn);
@@ -323,7 +317,7 @@ class MOZ_STACK_CLASS ModuleBuilder
     using RootedImportEntryVector = JS::Rooted<ImportEntryVector>;
     using RootedExportEntryVector = JS::Rooted<ExportEntryVector>;
 
-    ExclusiveContext* cx_;
+    JSContext* cx_;
     RootedModuleObject module_;
     RootedAtomVector requestedModules_;
     RootedAtomVector importedBoundNames_;

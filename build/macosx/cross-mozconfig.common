@@ -7,7 +7,6 @@ MOZ_AUTOMATION_L10N_CHECK=0
 if [ "x$IS_NIGHTLY" = "xyes" ]; then
   # Some nightlies (eg: Mulet) don't want these set.
   MOZ_AUTOMATION_UPDATE_PACKAGING=${MOZ_AUTOMATION_UPDATE_PACKAGING-1}
-  MOZ_AUTOMATION_SDK=${MOZ_AUTOMATION_SDK-1}
 fi
 . "$topsrcdir/build/mozconfig.common"
 
@@ -15,19 +14,27 @@ fi
 mk_add_options "export LD_LIBRARY_PATH=$topsrcdir/clang/lib"
 
 CROSS_CCTOOLS_PATH=$topsrcdir/cctools
+# This SDK was copied from a local XCode install and uploaded to tooltool.
+# Generate the tarball by running this command with the proper SDK version:
+#   sdk_path=$(xcrun --sdk macosx10.12 --show-sdk-path)
+#   tar -C $(dirname ${sdk_path}) -cHjf /tmp/$(basename ${sdk_path}).tar.bz2 $(basename ${sdk_path})
+# Upload the resulting tarball from /tmp to tooltool, and change the entry in
+# `browser/config/tooltool-manifests/macosx64/cross-releng.manifest`.
 CROSS_SYSROOT=$topsrcdir/MacOSX10.7.sdk
 CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
-FLAGS="-target x86_64-apple-darwin10 -mlinker-version=136 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"
+FLAGS="-target x86_64-apple-darwin11 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"
 
 export CC="$topsrcdir/clang/bin/clang $FLAGS"
 export CXX="$topsrcdir/clang/bin/clang++ $FLAGS"
 export CPP="$topsrcdir/clang/bin/clang $FLAGS -E"
 export LLVMCONFIG=$topsrcdir/clang/bin/llvm-config
 export LDFLAGS="-Wl,-syslibroot,$CROSS_SYSROOT -Wl,-dead_strip"
-export TOOLCHAIN_PREFIX=$CROSS_CCTOOLS_PATH/bin/x86_64-apple-darwin10-
+export BINDGEN_CFLAGS="$FLAGS"
+export TOOLCHAIN_PREFIX=$CROSS_CCTOOLS_PATH/bin/x86_64-apple-darwin11-
 export DSYMUTIL=$topsrcdir/clang/bin/llvm-dsymutil
-export GENISOIMAGE=$topsrcdir/genisoimage/genisoimage
+export MKFSHFS=$topsrcdir/hfsplus-tools/newfs_hfs
 export DMG_TOOL=$topsrcdir/dmg/dmg
+export HFS_TOOL=$topsrcdir/dmg/hfsplus
 
 export HOST_CC="$topsrcdir/clang/bin/clang"
 export HOST_CXX="$topsrcdir/clang/bin/clang++"
@@ -39,9 +46,10 @@ export HOST_LDFLAGS="-g"
 ac_add_options --target=x86_64-apple-darwin
 ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
 
-# Enable static analysis checks by default on OSX cross builds.
-ac_add_options --enable-clang-plugin
-
-. "$topsrcdir/build/mozconfig.cache"
+if [ "x$MOZ_PKG_SPECIAL" != "xasan" ]; then
+  # Enable static analysis checks by default on OSX cross builds.
+  # Exception is ASan, where this breaks.
+  ac_add_options --enable-clang-plugin
+fi
 
 export SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE=/builds/crash-stats-api.token

@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=639362
 -->
 <head>
   <title>Test for Bug 639362</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -19,8 +18,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=639362
 SimpleTest.waitForExplicitFinish();
 
 function loaded(iframe) {
-  is(iframe.contentWindow.location.href, iframe.src, "should load correct URL");
-  is(iframe.contentDocument.body.textContent, 'CACHE MANIFEST', "text/cache-manifest should be treated as text");
+  is(SpecialPowers.wrap(iframe).contentWindow.location.href, iframe.src, "should load correct URL");
+  is(SpecialPowers.wrap(iframe).contentDocument.body.textContent, 'CACHE MANIFEST', "text/cache-manifest should be treated as text");
   SimpleTest.finish();
 }
 </script>

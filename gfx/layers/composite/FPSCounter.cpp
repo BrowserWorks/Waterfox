@@ -18,7 +18,7 @@
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsIFile.h"                    // for nsIFile
 #include "nsDirectoryServiceDefs.h"     // for NS_OS_TMP_DIR
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "FPSCounter.h"
 
 namespace mozilla {
@@ -209,8 +209,11 @@ FPSCounter::WriteFrameTimeStamps(PRFileDesc* fd)
 {
   const int bufferSize = 256;
   char buffer[bufferSize];
-  int writtenCount = snprintf_literal(buffer, "FPS Data for: %s\n", mFPSName);
-  MOZ_ASSERT(writtenCount >= 0);
+  int writtenCount = SprintfLiteral(buffer, "FPS Data for: %s\n", mFPSName);
+  MOZ_ASSERT(writtenCount < bufferSize);
+  if (writtenCount >= bufferSize) {
+    return;
+  }
   PR_Write(fd, buffer, writtenCount);
 
   ResetReverseIterator();
@@ -224,9 +227,11 @@ FPSCounter::WriteFrameTimeStamps(PRFileDesc* fd)
 
   while (HasNext(startTimeStamp)) {
     TimeDuration duration = previousSample - nextTimeStamp;
-    writtenCount = snprintf_literal(buffer, "%f,\n", duration.ToMilliseconds());
-
-    MOZ_ASSERT(writtenCount >= 0);
+    writtenCount = SprintfLiteral(buffer, "%f,\n", duration.ToMilliseconds());
+    MOZ_ASSERT(writtenCount < bufferSize);
+    if (writtenCount >= bufferSize) {
+      continue;
+    }
     PR_Write(fd, buffer, writtenCount);
 
     previousSample = nextTimeStamp;
@@ -299,8 +304,13 @@ FPSCounter::PrintFPS()
 void
 FPSCounter::PrintHistogram(std::map<int, int>& aHistogram)
 {
+  if (aHistogram.size() == 0) {
+    return;
+  }
+
   int length = 0;
   const int kBufferLength = 512;
+  int availableSpace = kBufferLength;
   char buffer[kBufferLength];
 
   for (std::map<int, int>::iterator iter = aHistogram.begin();
@@ -309,9 +319,14 @@ FPSCounter::PrintHistogram(std::map<int, int>& aHistogram)
     int fps = iter->first;
     int count = iter->second;
 
-    length += snprintf(buffer + length, kBufferLength - length,
-                       "FPS: %d = %d. ", fps, count);
-    NS_ASSERTION(length >= kBufferLength, "Buffer overrun while printing FPS histogram.");
+    int lengthRequired = snprintf(buffer + length, availableSpace,
+                                  "FPS: %d = %d. ", fps, count);
+    // Ran out of buffer space. Oh well - just print what we have.
+    if (lengthRequired > availableSpace) {
+      break;
+    }
+    length += lengthRequired;
+    availableSpace -= lengthRequired;
   }
 
   printf_stderr("%s\n", buffer);
@@ -354,97 +369,6 @@ FPSCounter::WriteFrameTimeStamps()
 
   printf_stderr("Wrote FPS data to file: %s\n", path.get());
   return NS_OK;
-}
-
-FPSState::FPSState()
-  : mCompositionFps("Compositor")
-  , mTransactionFps("LayerTransactions")
-{
-}
-
-// Size of the builtin font.
-static const float FontHeight = 7.f;
-static const float FontWidth = 4.f;
-
-// Scale the font when drawing it to the viewport for better readability.
-static const float FontScaleX = 2.f;
-static const float FontScaleY = 3.f;
-
-static void DrawDigits(unsigned int aValue,
-                       int aOffsetX, int aOffsetY,
-                       Compositor* aCompositor,
-                       EffectChain& aEffectChain)
-{
-  if (aValue > 999) {
-    aValue = 999;
-  }
-
-  unsigned int divisor = 100;
-  float textureWidth = FontWidth * 10;
-  gfx::Float opacity = 1;
-  gfx::Matrix4x4 transform;
-  transform.PreScale(FontScaleX, FontScaleY, 1);
-
-  for (size_t n = 0; n < 3; ++n) {
-    unsigned int digit = aValue % (divisor * 10) / divisor;
-    divisor /= 10;
-
-    RefPtr<TexturedEffect> texturedEffect = static_cast<TexturedEffect*>(aEffectChain.mPrimaryEffect.get());
-    texturedEffect->mTextureCoords = Rect(float(digit * FontWidth) / textureWidth, 0, FontWidth / textureWidth, 1.0f);
-
-    Rect drawRect = Rect(aOffsetX + n * FontWidth, aOffsetY, FontWidth, FontHeight);
-    IntRect clipRect = IntRect(0, 0, 300, 100);
-    aCompositor->DrawQuad(drawRect, clipRect,
-  aEffectChain, opacity, transform);
-  }
-}
-
-void FPSState::DrawFPS(TimeStamp aNow,
-                       int aOffsetX, int aOffsetY,
-                       unsigned int aFillRatio,
-                       Compositor* aCompositor)
-{
-  if (!mFPSTextureSource) {
-    const char *text =
-      "                                        "
-      " XXX XX  XXX XXX X X XXX XXX XXX XXX XXX"
-      " X X  X    X   X X X X   X     X X X X X"
-      " X X  X  XXX XXX XXX XXX XXX   X XXX XXX"
-      " X X  X  X     X   X   X X X   X X X   X"
-      " XXX XXX XXX XXX   X XXX XXX   X XXX   X"
-      "                                        ";
-
-    // Convert the text encoding above to RGBA.
-    int w = FontWidth * 10;
-    int h = FontHeight;
-    uint32_t* buf = (uint32_t *) malloc(w * h * sizeof(uint32_t));
-    for (int i = 0; i < h; i++) {
-      for (int j = 0; j < w; j++) {
-        uint32_t purple = 0xfff000ff;
-        uint32_t white  = 0xffffffff;
-        buf[i * w + j] = (text[i * w + j] == ' ') ? purple : white;
-      }
-    }
-
-   int bytesPerPixel = 4;
-    RefPtr<DataSourceSurface> fpsSurface = Factory::CreateWrappingDataSourceSurface(
-      reinterpret_cast<uint8_t*>(buf), w * bytesPerPixel, IntSize(w, h), SurfaceFormat::B8G8R8A8);
-    mFPSTextureSource = aCompositor->CreateDataTextureSource();
-    mFPSTextureSource->Update(fpsSurface);
-  }
-
-  EffectChain effectChain;
-  effectChain.mPrimaryEffect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8,
-                                                    mFPSTextureSource,
-                                                    SamplingFilter::POINT,
-                                                    true);
-
-  unsigned int fps = unsigned(mCompositionFps.AddFrameAndGetFps(aNow));
-  unsigned int txnFps = unsigned(mTransactionFps.GetFPS(aNow));
-
-  DrawDigits(fps, aOffsetX + 0, aOffsetY, aCompositor, effectChain);
-  DrawDigits(txnFps, aOffsetX + FontWidth * 4, aOffsetY, aCompositor, effectChain);
-  DrawDigits(aFillRatio, aOffsetX + FontWidth * 8, aOffsetY, aCompositor, effectChain);
 }
 
 } // end namespace layers

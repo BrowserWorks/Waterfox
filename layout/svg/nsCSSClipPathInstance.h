@@ -11,7 +11,7 @@
 #include "mozilla/gfx/2D.h"
 
 class nsIFrame;
-class nsRenderingContext;
+class gfxContext;
 
 namespace mozilla {
 
@@ -28,7 +28,7 @@ public:
                                     const gfxPoint& aPoint);
 private:
   explicit nsCSSClipPathInstance(nsIFrame* aFrame,
-                                 const nsStyleClipPath aClipPathStyle)
+                                 const StyleShapeSource aClipPathStyle)
     : mTargetFrame(aFrame)
     , mClipPathStyle(aClipPathStyle)
   {
@@ -45,11 +45,15 @@ private:
   already_AddRefed<Path> CreateClipPathPolygon(DrawTarget* aDrawTarget,
                                                const nsRect& aRefBox);
 
+  already_AddRefed<Path> CreateClipPathInset(DrawTarget* aDrawTarget,
+                                             const nsRect& aRefBox);
+
+
   /**
    * The frame for the element that is currently being clipped.
    */
   nsIFrame* mTargetFrame;
-  nsStyleClipPath mClipPathStyle;
+  StyleShapeSource mClipPathStyle;
 };
 
 } // namespace mozilla

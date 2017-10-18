@@ -5,54 +5,52 @@
 
 #include "LayersTypes.h"
 
-#ifdef MOZ_WIDGET_GONK
-#include <ui/GraphicBuffer.h>
-#endif
+#include "nsStyleStruct.h"              // for nsStyleFilter
 
 namespace mozilla {
 namespace layers {
 
-LayerRenderState::LayerRenderState()
-  : mFlags(LayerRenderStateFlags::LAYER_RENDER_STATE_DEFAULT)
-  , mHasOwnOffset(false)
-#ifdef MOZ_WIDGET_GONK
-  , mSurface(nullptr)
-  , mOverlayId(INVALID_OVERLAY)
-  , mTexture(nullptr)
-#endif
+CSSFilter ToCSSFilter(const nsStyleFilter& filter)
 {
+  switch (filter.GetType()) {
+    case NS_STYLE_FILTER_BRIGHTNESS: {
+      return {
+          CSSFilterType::BRIGHTNESS,
+          filter.GetFilterParameter().GetFactorOrPercentValue(),
+      };
+    }
+    case NS_STYLE_FILTER_CONTRAST: {
+      return {
+          CSSFilterType::CONTRAST,
+          filter.GetFilterParameter().GetFactorOrPercentValue(),
+      };
+    }
+    case NS_STYLE_FILTER_GRAYSCALE: {
+      return {
+          CSSFilterType::GRAYSCALE,
+          filter.GetFilterParameter().GetFactorOrPercentValue(),
+      };
+    }
+    case NS_STYLE_FILTER_INVERT: {
+      return {
+          CSSFilterType::INVERT,
+          filter.GetFilterParameter().GetFactorOrPercentValue(),
+      };
+    }
+    case NS_STYLE_FILTER_SEPIA: {
+      return {
+          CSSFilterType::SEPIA,
+          filter.GetFilterParameter().GetFactorOrPercentValue(),
+      };
+    }
+    // All other filter types should be prevented by the code which converts
+    // display items into layers.
+    default:
+      MOZ_ASSERT_UNREACHABLE("Tried to convert an unsupported filter");
+      return { CSSFilterType::CONTRAST, 0 };
+  }
 }
-
-LayerRenderState::LayerRenderState(const LayerRenderState& aOther)
-  : mFlags(aOther.mFlags)
-  , mHasOwnOffset(aOther.mHasOwnOffset)
-  , mOffset(aOther.mOffset)
-#ifdef MOZ_WIDGET_GONK
-  , mSurface(aOther.mSurface)
-  , mOverlayId(aOther.mOverlayId)
-  , mSize(aOther.mSize)
-  , mTexture(aOther.mTexture)
-#endif
-{
-}
-
-LayerRenderState::~LayerRenderState()
-{
-}
-
-#ifdef MOZ_WIDGET_GONK
-LayerRenderState::LayerRenderState(android::GraphicBuffer* aSurface,
-                                   const gfx::IntSize& aSize,
-                                   LayerRenderStateFlags aFlags,
-                                   TextureHost* aTexture)
-  : mFlags(aFlags)
-  , mHasOwnOffset(false)
-  , mSurface(aSurface)
-  , mOverlayId(INVALID_OVERLAY)
-  , mSize(aSize)
-  , mTexture(aTexture)
-{}
-#endif
 
 } // namespace layers
 } // namespace mozilla
+

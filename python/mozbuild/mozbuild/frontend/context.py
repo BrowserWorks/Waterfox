@@ -926,13 +926,6 @@ VARIABLES = {
         APK file.
         """),
 
-    'ANDROID_ECLIPSE_PROJECT_TARGETS': (dict, dict,
-        """Defines Android Eclipse project targets.
-
-        This variable should not be populated directly. Instead, it should
-        populated by calling add_android_eclipse{_library}_project().
-        """),
-
     'SOURCES': (ContextDerivedTypedListWithItems(Path, StrictOrderingOnAppendListWithFlagsFactory({'no_pgo': bool, 'flags': List})), list,
         """Source code files.
 
@@ -943,6 +936,36 @@ VARIABLES = {
     'FILES_PER_UNIFIED_FILE': (int, int,
         """The number of source files to compile into each unified source file.
 
+        """),
+
+    'IS_RUST_LIBRARY': (bool, bool,
+        """Whether the current library defined by this moz.build is built by Rust.
+
+        The library defined by this moz.build should have a build definition in
+        a Cargo.toml file that exists in this moz.build's directory.
+        """),
+
+    'RUST_LIBRARY_FEATURES': (List, list,
+        """Cargo features to activate for this library.
+
+        This variable should not be used directly; you should be using the
+        RustLibrary template instead.
+        """),
+
+    'RUST_LIBRARY_TARGET_DIR': (unicode, unicode,
+        """Where CARGO_TARGET_DIR should point when compiling this library.  If
+        not set, it defaults to the current objdir.  It should be a relative path
+        to the current objdir; absolute paths should not be used.
+
+        This variable should not be used directly; you should be using the
+        RustLibrary template instead.
+        """),
+
+    'HOST_RUST_LIBRARY_FEATURES': (List, list,
+        """Cargo features to activate for this host library.
+
+        This variable should not be used directly; you should be using the
+        HostRustLibrary template instead.
         """),
 
     'UNIFIED_SOURCES': (ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList), list,
@@ -956,13 +979,15 @@ VARIABLES = {
 
     'GENERATED_FILES': (StrictOrderingOnAppendListWithFlagsFactory({
                 'script': unicode,
-                'inputs': list }), list,
+                'inputs': list,
+                'flags': list, }), list,
         """Generic generated files.
 
         This variable contains a list of files for the build system to
         generate at export time. The generation method may be declared
-        with optional ``script`` and ``inputs`` flags on individual entries.
-        If the optional ``script`` flag is not present on an entry, it
+        with optional ``script``, ``inputs`` and ``flags`` attributes on
+        individual entries.
+        If the optional ``script`` attribute is not present on an entry, it
         is assumed that rules for generating the file are present in
         the associated Makefile.in.
 
@@ -996,6 +1021,9 @@ VARIABLES = {
 
         The chosen script entry point may optionally return a set of strings,
         indicating extra files the output depends on.
+
+        When the ``flags`` attribute is present, the given list of flags is
+        passed as extra arguments following the inputs.
         """),
 
     'DEFINES': (InitializedDefines, dict,
@@ -1141,16 +1169,6 @@ VARIABLES = {
         with the host compiler.
         """),
 
-    'IS_COMPONENT': (bool, bool,
-        """Whether the library contains a binary XPCOM component manifest.
-
-        Implies FORCE_SHARED_LIB.
-        """),
-
-    'PYTHON_UNIT_TESTS': (StrictOrderingOnAppendList, list,
-        """A list of python unit tests.
-        """),
-
     'HOST_LIBRARY_NAME': (unicode, unicode,
         """Name of target library generated when cross compiling.
         """),
@@ -1261,7 +1279,7 @@ VARIABLES = {
         This variable can only be used on Linux.
         """),
 
-    'SYMBOLS_FILE': (SourcePath, unicode,
+    'SYMBOLS_FILE': (Path, unicode,
         """A file containing a list of symbols to export from a shared library.
 
         The given file contains a list of symbols to be exported, and is
@@ -1283,26 +1301,6 @@ VARIABLES = {
 
            BRANDING_FILES += ['foo.png']
            BRANDING_FILES.images.subdir += ['bar.png']
-        """),
-
-    'SDK_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
-        """List of files to be installed into the sdk directory.
-
-        ``SDK_FILES`` will copy (or symlink, if the platform supports it)
-        the contents of its files to the ``dist/sdk`` directory. Files that
-        are destined for a subdirectory can be specified by accessing a field.
-        For example, to export ``foo.py`` to the top-level directory and
-        ``bar.py`` to the directory ``subdir``, append to
-        ``SDK_FILES`` like so::
-
-           SDK_FILES += ['foo.py']
-           SDK_FILES.subdir += ['bar.py']
-        """),
-
-    'SDK_LIBRARY': (bool, bool,
-        """Whether the library built in the directory is part of the SDK.
-
-        The library will be copied into ``SDK_LIB_DIR`` (``$DIST/sdk/lib``).
         """),
 
     'SIMPLE_PROGRAMS': (StrictOrderingOnAppendList, list,
@@ -1333,6 +1331,20 @@ VARIABLES = {
         If the configuration token ``HOST_BIN_SUFFIX`` is set, its value will
         be automatically appended to each name. If a name already ends with
         ``HOST_BIN_SUFFIX``, the name will remain unchanged.
+        """),
+
+    'RUST_PROGRAMS': (StrictOrderingOnAppendList, list,
+        """Compile a list of Rust host executable names.
+
+        Each name in this variable corresponds to an executable built from
+        the Cargo.toml in the same directory.
+        """),
+
+    'HOST_RUST_PROGRAMS': (StrictOrderingOnAppendList, list,
+        """Compile a list of Rust executable names.
+
+        Each name in this variable corresponds to an executable built from
+        the Cargo.toml in the same directory.
         """),
 
     'CONFIGURE_SUBST_FILES': (ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList), list,
@@ -1508,20 +1520,24 @@ VARIABLES = {
         """List of manifest files defining Android instrumentation tests.
         """),
 
+    'FIREFOX_UI_FUNCTIONAL_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining firefox-ui-functional tests.
+        """),
+
+    'FIREFOX_UI_UPDATE_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining firefox-ui-update tests.
+        """),
+
+    'PUPPETEER_FIREFOX_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining puppeteer unit tests for Firefox.
+        """),
+
     'MARIONETTE_LAYOUT_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-layout tests.
         """),
 
-    'MARIONETTE_LOOP_MANIFESTS': (ManifestparserManifestList, list,
-        """List of manifest files defining marionette-loop tests.
-        """),
-
     'MARIONETTE_UNIT_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-unit tests.
-        """),
-
-    'MARIONETTE_UPDATE_MANIFESTS': (ManifestparserManifestList, list,
-        """List of manifest files defining marionette-update tests.
         """),
 
     'MARIONETTE_WEBAPI_MANIFESTS': (ManifestparserManifestList, list,
@@ -1563,6 +1579,11 @@ VARIABLES = {
     'XPCSHELL_TESTS_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining xpcshell tests.
         """),
+
+    'PYTHON_UNITTEST_MANIFESTS': (ManifestparserManifestList, list,
+        """List of manifest files defining python unit tests.
+        """),
+
 
     # The following variables are used to control the target of installed files.
     'XPI_NAME': (unicode, unicode,
@@ -1613,7 +1634,10 @@ VARIABLES = {
             'variables': dict,
             'input': unicode,
             'sandbox_vars': dict,
+            'no_chromium': bool,
+            'no_unified': bool,
             'non_unified_sources': StrictOrderingOnAppendList,
+            'action_overrides': dict,
         }), list,
         """Defines a list of object directories handled by gyp configurations.
 
@@ -1628,9 +1652,15 @@ VARIABLES = {
             - sandbox_vars, a dictionary containing variables and values to
               pass to the mozbuild processor on top of those derived from gyp
               configuration.
+            - no_chromium, a boolean which if set to True disables some
+              special handling that emulates gyp_chromium.
+            - no_unified, a boolean which if set to True disables source
+              file unification entirely.
             - non_unified_sources, a list containing sources files, relative to
               the current moz.build, that should be excluded from source file
               unification.
+            - action_overrides, a dict of action_name to values of the `script`
+              attribute to use for GENERATED_FILES for the specified action.
 
         Typical use looks like:
             GYP_DIRS += ['foo', 'bar']
@@ -1800,7 +1830,6 @@ TEMPLATE_VARIABLES = {
     'HOST_PROGRAM',
     'HOST_LIBRARY_NAME',
     'HOST_SIMPLE_PROGRAMS',
-    'IS_COMPONENT',
     'IS_FRAMEWORK',
     'LIBRARY_NAME',
     'PROGRAM',
@@ -1865,35 +1894,6 @@ FUNCTIONS = {
 
         This returns a rich Java JAR type, described at
         :py:class:`mozbuild.frontend.data.JavaJarData`.
-        """),
-
-    'add_android_eclipse_project': (
-        lambda self: self._add_android_eclipse_project, (str, str),
-        """Declare an Android Eclipse project.
-
-        This is one of the supported ways to populate the
-        ANDROID_ECLIPSE_PROJECT_TARGETS variable.
-
-        The parameters are:
-        * name - project name.
-        * manifest - path to AndroidManifest.xml.
-
-        This returns a rich Android Eclipse project type, described at
-        :py:class:`mozbuild.frontend.data.AndroidEclipseProjectData`.
-        """),
-
-    'add_android_eclipse_library_project': (
-        lambda self: self._add_android_eclipse_library_project, (str,),
-        """Declare an Android Eclipse library project.
-
-        This is one of the supported ways to populate the
-        ANDROID_ECLIPSE_PROJECT_TARGETS variable.
-
-        The parameters are:
-        * name - project name.
-
-        This returns a rich Android Eclipse project type, described at
-        :py:class:`mozbuild.frontend.data.AndroidEclipseProjectData`.
         """),
 
     'export': (lambda self: self._export, (str,),
@@ -2204,17 +2204,6 @@ DEPRECATION_HINTS = {
 
             Library('foo') [ or LIBRARY_NAME = 'foo' ]
             FORCE_SHARED_LIB = True
-        ''',
-
-    'IS_COMPONENT': '''
-        Please use
-
-            XPCOMBinaryComponent('foo')
-
-        instead of
-
-            Library('foo') [ or LIBRARY_NAME = 'foo' ]
-            IS_COMPONENT = True
         ''',
 
     'IS_FRAMEWORK': '''

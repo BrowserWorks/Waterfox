@@ -185,7 +185,7 @@
                 <menuitem id="menu_preferences"
                           label="&preferencesCmdUnix.label;"
                           accesskey="&preferencesCmdUnix.accesskey;"
-                          oncommand="openPreferences();"/>
+                          oncommand="openPreferences(undefined, {origin: 'menubar'});"/>
 #endif
 #endif
               </menupopup>
@@ -220,9 +220,6 @@
                     <menuitem id="menu_tabsSidebar"
                               observes="viewTabsSidebar"
                               label="&syncedTabs.sidebar.label;"/>
-                    <!-- Service providers with sidebars are inserted between these two menuseperators -->
-                    <menuseparator hidden="true"/>
-                    <menuseparator class="social-provider-menu" hidden="true"/>
                   </menupopup>
                 </menu>
                 <menuseparator/>
@@ -300,6 +297,7 @@
 #endif
                 <menuitem id="menu_readerModeItem"
                           observes="View:ReaderView"
+                          key="key_toggleReaderMode"
                           hidden="true"/>
                 <menuitem id="menu_showAllTabs"
                           hidden="true"
@@ -387,7 +385,7 @@
 #endif
                context="placesContext"
                openInTabs="children"
-               oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
+               oncommand="BookmarksEventHandler.onCommand(event);"
                onclick="BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
                onpopupshowing="BookmarkingUI.onMainMenuPopupShowing(event);
                                if (!this.parentNode._placesView)
@@ -455,6 +453,19 @@
                    onpopupshowing="if (!this.parentNode._placesView)
                                      new PlacesMenu(event, 'place:folder=UNFILED_BOOKMARKS');"/>
       </menu>
+      <menu id="menu_mobileBookmarks"
+            class="menu-iconic bookmark-item"
+            label="&mobileBookmarksCmd.label;"
+            hidden="true"
+            container="true">
+        <menupopup id="mobileBookmarksFolderPopup"
+#ifndef XP_MACOSX
+                   placespopup="true"
+#endif
+                   context="placesContext"
+                   onpopupshowing="if (!this.parentNode._placesView)
+                                     new PlacesMenu(event, 'place:folder=MOBILE_BOOKMARKS');"/>
+      </menu>
       <menuseparator id="bookmarksMenuItemsSeparator"/>
       <!-- Bookmarks menu items -->
     </menupopup>
@@ -464,12 +475,7 @@
                   label="&toolsMenu.label;"
                   accesskey="&toolsMenu.accesskey;"
                   onpopupshowing="mirrorShow(this)">
-              <menupopup id="menu_ToolsPopup"
-# We have to use setTimeout() here to avoid a flickering menu bar when opening
-# the Tools menu, see bug 970769. This can be removed once we got rid of the
-# event loop spinning in Weave.Status._authManager.
-                         onpopupshowing="setTimeout(() => gSyncUI.updateUI());"
-                         >
+              <menupopup id="menu_ToolsPopup">
               <menuitem id="menu_openDownloads"
                         label="&downloads.label;"
                         accesskey="&downloads.accesskey;"
@@ -486,17 +492,17 @@
                         label="&syncSignIn.label;"
                         accesskey="&syncSignIn.accesskey;"
                         observes="sync-setup-state"
-                        oncommand="gSyncUI.openSetup(null, 'menubar')"/>
+                        oncommand="gSync.openPrefs('menubar')"/>
               <menuitem id="sync-syncnowitem"
                         label="&syncSyncNowItem.label;"
                         accesskey="&syncSyncNowItem.accesskey;"
                         observes="sync-syncnow-state"
-                        oncommand="gSyncUI.doSync(event);"/>
+                        oncommand="gSync.doSync(event);"/>
               <menuitem id="sync-reauthitem"
                         label="&syncReAuthItem.label;"
                         accesskey="&syncReAuthItem.accesskey;"
                         observes="sync-reauth-state"
-                        oncommand="gSyncUI.openSignInAgainPage('menubar');"/>
+                        oncommand="gSync.openSignInAgainPage('menubar');"/>
               <menuseparator id="devToolsSeparator"/>
               <menu id="webDeveloperMenu"
                     label="&webDeveloperMenu.label;"
@@ -526,7 +532,7 @@
               <menuitem id="menu_preferences"
                         label="&preferencesCmd2.label;"
                         accesskey="&preferencesCmd2.accesskey;"
-                        oncommand="openPreferences();"/>
+                        oncommand="openPreferences(undefined, {origin: 'menubar'});"/>
 #endif
               </menupopup>
             </menu>

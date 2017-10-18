@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps() {
+function* testSteps() {
   const dbName = this.window ?
                  window.location.pathname :
                  "test_transaction_error";
@@ -89,6 +89,7 @@ function testSteps() {
   info("Adding duplicate entry without preventDefault()");
 
   if ("SimpleTest" in this) {
+    /* global SimpleTest */
     SimpleTest.expectUncaughtException();
   } else if ("DedicatedWorkerGlobalScope" in self &&
              self instanceof DedicatedWorkerGlobalScope) {
@@ -132,5 +133,4 @@ function testSteps() {
      "Transaction has correct error");
 
   finishTest();
-  yield undefined;
 }

@@ -1,0 +1,42 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Graphics: WebRender')
+
+EXPORTS.mozilla.webrender += [
+    'RenderBufferTextureHost.h',
+    'RendererOGL.h',
+    'RenderTextureHost.h',
+    'RenderTextureHostOGL.h',
+    'RenderThread.h',
+    'webrender_ffi.h',
+    'webrender_ffi_generated.h',
+    'WebRenderAPI.h',
+    'WebRenderTypes.h',
+]
+
+UNIFIED_SOURCES += [
+    'Moz2DImageRenderer.cpp',
+    'RenderBufferTextureHost.cpp',
+    'RendererOGL.cpp',
+    'RenderTextureHost.cpp',
+    'RenderTextureHostOGL.cpp',
+    'RenderThread.cpp',
+    'WebRenderAPI.cpp',
+]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXPORTS.mozilla.webrender += [
+        'RenderMacIOSurfaceTextureHostOGL.h',
+    ]
+    UNIFIED_SOURCES += [
+        'RenderMacIOSurfaceTextureHostOGL.cpp',
+    ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

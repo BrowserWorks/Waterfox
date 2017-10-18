@@ -18,15 +18,17 @@ public:
   explicit nsGfxRadioControlFrame(nsStyleContext* aContext);
   ~nsGfxRadioControlFrame();
 
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsGfxRadioControlFrame)
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
+#ifdef MOZ_WIDGET_ANDROID
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
+#endif
 };
 
 #endif

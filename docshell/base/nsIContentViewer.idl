@@ -21,6 +21,9 @@ class nsIPresShell;
 class nsPresContext;
 class nsView;
 class nsDOMNavigationTiming;
+namespace mozilla {
+class Encoding;
+}
 %}
 
 [ptr] native nsIWidgetPtr(nsIWidget);
@@ -30,6 +33,7 @@ class nsDOMNavigationTiming;
 [ptr] native nsViewPtr(nsView);
 [ptr] native nsDOMNavigationTimingPtr(nsDOMNavigationTiming);
 [ref] native nsIContentViewerTArray(nsTArray<nsCOMPtr<nsIContentViewer> >);
+[ptr] native Encoding(const mozilla::Encoding);
 
 [scriptable, builtinclass, uuid(2da17016-7851-4a45-a7a8-00b360e01595)]
 interface nsIContentViewer : nsISupports
@@ -42,6 +46,8 @@ interface nsIContentViewer : nsISupports
   [noscript,notxpcom,nostdcall] void loadStart(in nsIDocument aDoc);
   void loadComplete(in nsresult aStatus);
   [noscript] readonly attribute boolean loadCompleted;
+
+  [noscript] readonly attribute boolean isStopped;
 
   /**
    * Checks if the document wants to prevent unloading by firing beforeunload on
@@ -200,15 +206,25 @@ interface nsIContentViewer : nsISupports
   /** The amount by which to scale all text. Default is 1.0. */
   attribute float textZoom;
 
+  /** The actual text zoom in effect, as modified by the system font scale. */
+  readonly attribute float effectiveTextZoom;
+
   /** The amount by which to scale all lengths. Default is 1.0. */
   attribute float fullZoom;
+
+  /**
+   * The value used to override devicePixelRatio and media queries dppx.
+   * Default is 0.0, that means no overriding is done (only a positive value
+   * is applied).
+   */
+  attribute float overrideDPPX;
 
   /** Disable entire author style level (including HTML presentation hints) */
   attribute boolean authorStyleDisabled;
 
   /**
-   * XXX comm-central only: bug 829543. Not the Character Encoding menu in 
-     * browser!
+   * XXX comm-central only: bug 829543. Not the Character Encoding menu in
+   * browser!
    */
   attribute ACString forceCharacterSet;
 
@@ -270,4 +286,9 @@ interface nsIContentViewer : nsISupports
    * Restore the viewer's natural media type
    */
   void stopEmulatingMedium();
+
+  [noscript, notxpcom] Encoding getHintCharset();
+  [noscript, notxpcom] void setHintCharset(in Encoding aEncoding);
+  [noscript, notxpcom] Encoding getForceCharset();
+  [noscript, notxpcom] void setForceCharset(in Encoding aEncoding);
 };

@@ -27,7 +27,10 @@ public:
 
   IMPL_EVENT_HANDLER(audioprocess)
 
+  using EventTarget::EventListenerAdded;
   void EventListenerAdded(nsIAtom* aType) override;
+
+  using EventTarget::EventListenerRemoved;
   void EventListenerRemoved(nsIAtom* aType) override;
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -50,13 +53,15 @@ public:
       UpdateConnectedStatus();
     }
   }
-
+  void Disconnect(ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aRv);
+    UpdateConnectedStatus();
+  }
   void Disconnect(uint32_t aOutput, ErrorResult& aRv) override
   {
     AudioNode::Disconnect(aOutput, aRv);
-    if (!aRv.Failed()) {
-      UpdateConnectedStatus();
-    }
+    UpdateConnectedStatus();
   }
   void NotifyInputsChanged() override
   {
@@ -68,20 +73,42 @@ public:
     // No need to UpdateConnectedStatus() because there was previously an
     // input in InputNodes().
   }
-
+  void Disconnect(AudioNode& aDestination, ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aDestination, aRv);
+    UpdateConnectedStatus();
+  }
+  void Disconnect(AudioNode& aDestination, uint32_t aOutput, ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aDestination, aOutput, aRv);
+    UpdateConnectedStatus();
+  }
+  void Disconnect(AudioNode& aDestination, uint32_t aOutput, uint32_t aInput, ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aDestination, aOutput, aInput, aRv);
+    UpdateConnectedStatus();
+  }
+  void Disconnect(AudioParam& aDestination, ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aDestination, aRv);
+    UpdateConnectedStatus();
+  }
+  void Disconnect(AudioParam& aDestination, uint32_t aOutput, ErrorResult& aRv) override
+  {
+    AudioNode::Disconnect(aDestination, aOutput, aRv);
+    UpdateConnectedStatus();
+  }
   void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv) override
   {
     if (aChannelCount != ChannelCount()) {
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     }
-    return;
   }
   void SetChannelCountModeValue(ChannelCountMode aMode, ErrorResult& aRv) override
   {
     if (aMode != ChannelCountMode::Explicit) {
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     }
-    return;
   }
 
   uint32_t BufferSize() const

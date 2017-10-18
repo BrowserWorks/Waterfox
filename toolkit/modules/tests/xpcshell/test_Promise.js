@@ -10,8 +10,7 @@ Components.utils.import("resource://testing-common/PromiseTestUtils.jsm");
 // Prevent test failures due to the unhandled rejections in this test file.
 PromiseTestUtils.disableUncaughtRejectionObserverForSelfTest();
 
-////////////////////////////////////////////////////////////////////////////////
-//// Test runner
+// Test runner
 
 var run_promise_tests = function run_promise_tests(tests, cb) {
   let loop = function loop(index) {
@@ -79,8 +78,7 @@ var make_promise_test = function(test) {
   };
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// Tests
+// Tests
 
 var tests = [];
 
@@ -89,7 +87,7 @@ var tests = [];
 // not returned.
 var observe_failures = function observe_failures(promise) {
   promise.catch(function onReject(reason) {
-    test.do_throw("Observed failure in test " + test + ": " + reason);
+    do_throw("Observed failure in test: " + reason);
   });
 };
 
@@ -125,14 +123,14 @@ tests.push(make_promise_test(
 
     // Install a number of observers before resolving
     let i;
-    for (i = 0; i < SIZE/2; ++i) {
+    for (i = 0; i < SIZE / 2; ++i) {
       install_observer(i);
     }
 
     source.resolve(RESULT);
 
     // Install remaining observers
-    for(;i < SIZE; ++i) {
+    for (;i < SIZE; ++i) {
       install_observer(i);
     }
 
@@ -253,14 +251,14 @@ tests.push(make_promise_test(
 
     // Install a number of observers before resolving
     let i;
-    for (i = 0; i < SIZE/2; ++i) {
+    for (i = 0; i < SIZE / 2; ++i) {
       install_observer(i);
     }
 
     observed.resolve(RESULT);
 
     // Install remaining observers
-    for(;i < SIZE; ++i) {
+    for (;i < SIZE; ++i) {
       install_observer(i);
     }
 
@@ -277,7 +275,7 @@ tests.push(make_promise_test(
 // does not prevent other observers from receiving the notification
 // of success.
 tests.push(
-  make_promise_test(function exceptions_do_not_stop_notifications(test)  {
+  make_promise_test(function exceptions_do_not_stop_notifications(test) {
     let source = Promise.defer();
 
     let exception_thrown = false;
@@ -289,7 +287,7 @@ tests.push(
         throw exception_content;
       });
 
-    let observer_2 = source.promise.then(
+    source.promise.then(
       function onResolve() {
         do_check_true(exception_thrown, "Second observer called after first observer has thrown");
       }
@@ -552,7 +550,7 @@ tests.push(
 // Test that Promise.resolve throws when its argument is an async function.
 tests.push(
   make_promise_test(function test_promise_resolve_throws_with_async_function(test) {
-    Assert.throws(() => Promise.resolve(Task.async(function* () {})),
+    Assert.throws(() => Promise.resolve(Task.async(function* () {})), // eslint-disable-line mozilla/no-task
                   /Cannot resolve a promise with an async function/);
     return Promise.resolve();
   }));
@@ -924,10 +922,7 @@ tests.push(
     let shouldExitNestedEventLoop = false;
 
     function event_loop() {
-      let thr = Services.tm.mainThread;
-      while(!shouldExitNestedEventLoop) {
-        thr.processNextEvent(true);
-      }
+      Services.tm.spinEventLoopUntil(() => shouldExitNestedEventLoop);
     }
 
     // I wish there was a way to cancel xpcshell do_timeout()s
@@ -948,7 +943,7 @@ tests.push(
     }, null);
 
     do_print("Setting wait for second promise");
-    return promise2.catch(error => {return 3;})
+    return promise2.catch(error => { return 3; })
     .then(
       count => {
         shouldExitNestedEventLoop = true;
@@ -962,7 +957,6 @@ function wait_for_uncaught(aMustAppear, aTimeout = undefined) {
   }
   let deferred = Promise.defer();
   let print = do_print;
-  let execute_soon = do_execute_soon;
   let observer = function({message, stack}) {
     let data = message + stack;
     print("Observing " + message + ", looking for " + aMustAppear.join(", "));
@@ -1016,7 +1010,7 @@ function wait_for_uncaught(aMustAppear, aTimeout = undefined) {
     let error = new Error("This is an uncaught error " + salt);
     return {
       mustFind: [error.message, error.fileName, error.lineNumber, error.stack],
-      error: error
+      error
     };
   };
   let make_exception_rejection = function make_exception_rejection() {
@@ -1074,7 +1068,7 @@ make_promise_test(function test_caught_is_not_reported() {
   let promise = wait_for_uncaught([salt], 500);
   (function() {
     let uncaught = Promise.reject("This error, on the other hand, is caught " + salt);
-    uncaught.catch(function() { /* ignore rejection */});
+    uncaught.catch(function() { /* ignore rejection */ });
     uncaught = null;
   })();
   // Isolate this in a function to increase likelihood that the gc will
@@ -1100,8 +1094,7 @@ tests.push(
   })
 );
 
-function run_test()
-{
+function run_test() {
   do_test_pending();
   run_promise_tests(tests, do_test_finished);
 }

@@ -32,6 +32,13 @@ typedef void (*NotifySubDocInvalidationFunc)(ContainerLayer* aLayer,
  */
 struct LayerProperties
 {
+protected:
+  LayerProperties() {}
+
+  LayerProperties(const LayerProperties& a) = delete;
+  LayerProperties& operator=(const LayerProperties& a) = delete;
+
+public:
   virtual ~LayerProperties() {}
 
   /**
@@ -58,8 +65,7 @@ struct LayerProperties
    * @return Painted area changed by the layer tree changes.
    */
   virtual nsIntRegion ComputeDifferences(Layer* aRoot,
-                                         NotifySubDocInvalidationFunc aCallback,
-                                         bool* aGeometryChanged = nullptr) = 0;
+                                         NotifySubDocInvalidationFunc aCallback) = 0;
 
   virtual void MoveBy(const gfx::IntPoint& aOffset) = 0;
 };

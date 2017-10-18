@@ -4,13 +4,13 @@
 /**
  * Test that we get "Parse HTML" markers.
  */
+"use strict";
 
 const { PerformanceFront } = require("devtools/shared/fronts/performance");
 const MARKER_NAME = "Parse HTML";
 
 add_task(function* () {
-  let browser = yield addTab(MAIN_DOMAIN + "doc_innerHTML.html");
-  let doc = browser.contentDocument;
+  yield addTab(MAIN_DOMAIN + "doc_innerHTML.html");
 
   initDebuggerServer();
   let client = new DebuggerClient(DebuggerServer.connectPipe());
@@ -24,6 +24,6 @@ add_task(function* () {
 
   ok(markers.some(m => m.name === MARKER_NAME), `got some ${MARKER_NAME} markers`);
 
-  yield closeDebuggerClient(client);
+  yield client.close();
   gBrowser.removeCurrentTab();
 });

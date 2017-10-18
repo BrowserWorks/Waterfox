@@ -5,7 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <assert.h>
-#include "nsAutoPtr.h"
+#include <algorithm>
 #include "BasePin.h"
 
 namespace mozilla {
@@ -24,14 +24,14 @@ class DECLSPEC_UUID("4de7a03c-6c3f-4314-949a-ee7e1ad05083")
 {
 public:
 
-  EnumMediaTypes(BasePin* aPin)
+  explicit EnumMediaTypes(BasePin* aPin)
     : mPin(aPin)
     , mIndex(0)
     , mRefCnt(0)
   {
   }
 
-  EnumMediaTypes(EnumMediaTypes* aEnum)
+  explicit EnumMediaTypes(EnumMediaTypes* aEnum)
     : mPin(aEnum->mPin)
     , mIndex(aEnum->mIndex)
     , mRefCnt(0)
@@ -214,7 +214,7 @@ BasePin::QueryPinInfo(PIN_INFO * aInfo)
   if (!mName.empty()) {
     // Copy at most (max_buffer_size - sizeof(WCHAR)). The -1 is there to
     // ensure we always have a null terminator.
-    unsigned int len = PR_MIN((MAX_PIN_NAME-1)*sizeof(WCHAR), (sizeof(WCHAR)*mName.length()));
+    size_t len = std::min<size_t>(MAX_PIN_NAME - 1, mName.length()) * sizeof(WCHAR);
     memcpy(aInfo->achName, mName.data(), len);
   }
 
@@ -276,7 +276,7 @@ BasePin::EnumMediaTypes(IEnumMediaTypes **aEnum)
     return E_OUTOFMEMORY;
 
   // Must addref, caller's responsibility to release.
-  NS_ADDREF(*aEnum);
+  (*aEnum)->AddRef();
 
   return S_OK;
 }

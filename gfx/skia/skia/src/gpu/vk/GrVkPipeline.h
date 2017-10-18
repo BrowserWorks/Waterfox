@@ -17,6 +17,7 @@
 class GrNonInstancedVertices;
 class GrPipeline;
 class GrPrimitiveProcessor;
+class GrStencilSettings;
 class GrVkCommandBuffer;
 class GrVkGpu;
 class GrVkRenderPass;
@@ -25,6 +26,7 @@ class GrVkPipeline : public GrVkResource {
 public:
     static GrVkPipeline* Create(GrVkGpu* gpu,
                                 const GrPipeline& pipeline,
+                                const GrStencilSettings&,
                                 const GrPrimitiveProcessor& primProc,
                                 VkPipelineShaderStageCreateInfo* shaderStageInfo,
                                 int shaderStageCount,
@@ -37,16 +39,19 @@ public:
 
     static void SetDynamicState(GrVkGpu*, GrVkCommandBuffer*, const GrPipeline&);
 
+#ifdef SK_TRACE_VK_RESOURCES
+    void dumpInfo() const override {
+        SkDebugf("GrVkPipeline: %d (%d refs)\n", fPipeline, this->getRefCnt());
+    }
+#endif
 
-private:
+protected:
     GrVkPipeline(VkPipeline pipeline) : INHERITED(), fPipeline(pipeline) {}
 
-    GrVkPipeline(const GrVkPipeline&);
-    GrVkPipeline& operator=(const GrVkPipeline&);
-
-    void freeGPUData(const GrVkGpu* gpu) const override;
-
     VkPipeline  fPipeline;
+
+private:
+    void freeGPUData(const GrVkGpu* gpu) const override;
 
     typedef GrVkResource INHERITED;
 };

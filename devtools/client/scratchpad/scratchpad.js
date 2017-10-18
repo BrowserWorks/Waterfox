@@ -50,6 +50,7 @@ const TargetFactory = require("devtools/client/framework/target").TargetFactory;
 const EventEmitter = require("devtools/shared/event-emitter");
 const {DevToolsWorker} = require("devtools/shared/worker/worker");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 const promise = require("promise");
 const Services = require("Services");
 const {gDevTools} = require("devtools/client/framework/devtools");
@@ -91,7 +92,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "Reflect",
   "resource://gre/modules/reflect.jsm");
 
-var WebConsoleUtils = require("devtools/shared/webconsole/utils").Utils;
+var WebConsoleUtils = require("devtools/client/webconsole/utils").Utils;
 
 /**
  * The scratchpad object handles the Scratchpad window functionality.
@@ -671,7 +672,7 @@ var Scratchpad = {
       this._prettyPrintWorker = new DevToolsWorker(
         "resource://devtools/server/actors/pretty-print-worker.js",
         { name: "pretty-print",
-          verbose: DevToolsUtils.dumpn.wantLogging }
+          verbose: flags.wantLogging }
       );
     }
     return this._prettyPrintWorker;
@@ -694,7 +695,7 @@ var Scratchpad = {
       source: uglyText
     }).then(data => {
       this.editor.setText(data.code);
-    }).then(null, error => {
+    }).catch(error => {
       this.writeAsErrorComment({ exception: error });
       throw error;
     });
@@ -1287,8 +1288,7 @@ var Scratchpad = {
     // Unicode strings.
 
     if (branch.prefHasUserValue("recentFilePaths")) {
-      let data = branch.getComplexValue("recentFilePaths",
-        Ci.nsISupportsString).data;
+      let data = branch.getStringPref("recentFilePaths");
       filePaths = JSON.parse(data);
     }
 
@@ -1335,16 +1335,8 @@ var Scratchpad = {
 
     filePaths.push(aFile.path);
 
-    // WARNING: Do not use setCharPref here, it doesn't play nicely with
-    // Unicode strings.
-
-    let str = Cc["@mozilla.org/supports-string;1"]
-      .createInstance(Ci.nsISupportsString);
-    str.data = JSON.stringify(filePaths);
-
-    let branch = Services.prefs.getBranch("devtools.scratchpad.");
-    branch.setComplexValue("recentFilePaths",
-      Ci.nsISupportsString, str);
+    Services.prefs.getBranch("devtools.scratchpad.")
+            .setStringPref("recentFilePaths", JSON.stringify(filePaths));
   },
 
   /**
@@ -1366,7 +1358,7 @@ var Scratchpad = {
 
     recentFilesMenu.setAttribute("disabled", true);
     while (recentFilesPopup.hasChildNodes()) {
-      recentFilesPopup.removeChild(recentFilesPopup.firstChild);
+      recentFilesPopup.firstChild.remove();
     }
 
     if (filePaths.length > 0) {
@@ -1411,16 +1403,8 @@ var Scratchpad = {
     let filePaths = this.getRecentFiles();
     filePaths.splice(aIndex, aLength);
 
-    // WARNING: Do not use setCharPref here, it doesn't play nicely with
-    // Unicode strings.
-
-    let str = Cc["@mozilla.org/supports-string;1"]
-      .createInstance(Ci.nsISupportsString);
-    str.data = JSON.stringify(filePaths);
-
-    let branch = Services.prefs.getBranch("devtools.scratchpad.");
-    branch.setComplexValue("recentFilePaths",
-      Ci.nsISupportsString, str);
+    Services.prefs.getBranch("devtools.scratchpad.")
+            .setStringPref("recentFilePaths", JSON.stringify(filePaths));
   },
 
   /**
@@ -1751,10 +1735,18 @@ var Scratchpad = {
       this.populateRecentFilesMenu();
       PreferenceObserver.init();
       CloseObserver.init();
-    }).then(null, (err) => console.error(err));
+    }).catch((err) => console.error(err));
     this._setupCommandListeners();
     this._updateViewMenuItems();
     this._setupPopupShowingListeners();
+
+    // Change the accesskey for the help menu as it can be specific on Windows
+    // some localizations of Windows (ex:french, german) use "?"
+    //  for the help button in the menubar but Gnome does not.
+    if (Services.appinfo.OS == "WINNT") {
+      let helpMenu = document.getElementById("sp-help-menu");
+      helpMenu.setAttribute("accesskey", helpMenu.getAttribute("accesskeywindows"));
+    }
   },
 
   /**
@@ -2407,7 +2399,7 @@ var PreferenceObserver = {
     }
 
     this.branch = Services.prefs.getBranch("devtools.scratchpad.");
-    this.branch.addObserver("", this, false);
+    this.branch.addObserver("", this);
     this._initialized = true;
   },
 
@@ -2443,7 +2435,7 @@ var PreferenceObserver = {
 var CloseObserver = {
   init: function CO_init()
   {
-    Services.obs.addObserver(this, "browser-lastwindow-close-requested", false);
+    Services.obs.addObserver(this, "browser-lastwindow-close-requested");
   },
 
   observe: function CO_observe(aSubject)
@@ -2465,8 +2457,7 @@ var CloseObserver = {
     }
 
     this._uninited = true;
-    Services.obs.removeObserver(this, "browser-lastwindow-close-requested",
-                                false);
+    Services.obs.removeObserver(this, "browser-lastwindow-close-requested");
   },
 };
 

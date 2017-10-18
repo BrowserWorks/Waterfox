@@ -52,7 +52,7 @@ AudioSinkWrapper::OnEnded(TrackType aType)
   return nullptr;
 }
 
-int64_t
+TimeUnit
 AudioSinkWrapper::GetEndTime(TrackType aType) const
 {
   AssertOwnerThread();
@@ -60,27 +60,27 @@ AudioSinkWrapper::GetEndTime(TrackType aType) const
   if (aType == TrackInfo::kAudioTrack && mAudioSink) {
     return mAudioSink->GetEndTime();
   }
-  return -1;
+  return TimeUnit::Zero();
 }
 
-int64_t
+TimeUnit
 AudioSinkWrapper::GetVideoPosition(TimeStamp aNow) const
 {
   AssertOwnerThread();
   MOZ_ASSERT(!mPlayStartTime.IsNull());
   // Time elapsed since we started playing.
-  int64_t delta = (aNow - mPlayStartTime).ToMicroseconds();
+  double delta = (aNow - mPlayStartTime).ToSeconds();
   // Take playback rate into account.
-  return mPlayDuration + delta * mParams.mPlaybackRate;
+  return mPlayDuration + TimeUnit::FromSeconds(delta * mParams.mPlaybackRate);
 }
 
-int64_t
+TimeUnit
 AudioSinkWrapper::GetPosition(TimeStamp* aTimeStamp) const
 {
   AssertOwnerThread();
   MOZ_ASSERT(mIsStarted, "Must be called after playback starts.");
 
-  int64_t pos = -1;
+  TimeUnit pos;
   TimeStamp t = TimeStamp::Now();
 
   if (!mAudioEnded) {
@@ -177,7 +177,7 @@ AudioSinkWrapper::SetPlaying(bool aPlaying)
 }
 
 void
-AudioSinkWrapper::Start(int64_t aStartTime, const MediaInfo& aInfo)
+AudioSinkWrapper::Start(const TimeUnit& aStartTime, const MediaInfo& aInfo)
 {
   AssertOwnerThread();
   MOZ_ASSERT(!mIsStarted, "playback already started.");
@@ -190,13 +190,14 @@ AudioSinkWrapper::Start(int64_t aStartTime, const MediaInfo& aInfo)
   mAudioEnded = !aInfo.HasAudio();
 
   if (aInfo.HasAudio()) {
-    mAudioSink = mCreator->Create();
+    mAudioSink.reset(mCreator->Create());
     mEndPromise = mAudioSink->Init(mParams);
 
-    mAudioSinkPromise.Begin(mEndPromise->Then(
+    mEndPromise->Then(
       mOwnerThread.get(), __func__, this,
       &AudioSinkWrapper::OnAudioEnded,
-      &AudioSinkWrapper::OnAudioEnded));
+      &AudioSinkWrapper::OnAudioEnded
+    )->Track(mAudioSinkPromise);
   }
 }
 

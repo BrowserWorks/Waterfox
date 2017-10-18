@@ -16,6 +16,7 @@
 #include "nsReadableUtils.h"
 #include "nsStringEnumerator.h"
 #include "nsIServiceManager.h" 
+#include "nsThreadUtils.h"
 
 #include "nsPSPrinters.h"
 #include "nsPaperPS.h"  /* Paper size list */
@@ -40,16 +41,9 @@ using mozilla::gfx::PrintTarget;
 using mozilla::gfx::PrintTargetPDF;
 using mozilla::gfx::PrintTargetPS;
 
-static PRLogModuleInfo *
-GetDeviceContextSpecGTKLog()
-{
-  static PRLogModuleInfo *sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("DeviceContextSpecGTK");
-  return sLog;
-}
+static LazyLogModule sDeviceContextSpecGTKLog("DeviceContextSpecGTK");
 /* Macro to make lines shorter */
-#define DO_PR_DEBUG_LOG(x) MOZ_LOG(GetDeviceContextSpecGTKLog(), mozilla::LogLevel::Debug, x)
+#define DO_PR_DEBUG_LOG(x) MOZ_LOG(sDeviceContextSpecGTKLog, mozilla::LogLevel::Debug, x)
 
 //----------------------------------------------------------------------------------
 // The printer data is shared between the PrinterEnumerator and the nsDeviceContextSpecGTK
@@ -264,7 +258,10 @@ gboolean nsDeviceContextSpecGTK::PrinterEnumerator(GtkPrinter *aPrinter,
       // misunderstanding what the capabilities of the printer are due to a
       // GTK bug (https://bugzilla.gnome.org/show_bug.cgi?id=753041). We
       // sidestep this by deferring the print to the next tick.
-      NS_DispatchToCurrentThread(NewRunnableMethod(spec, &nsDeviceContextSpecGTK::StartPrintJob));
+      NS_DispatchToCurrentThread(
+        NewRunnableMethod("nsDeviceContextSpecGTK::StartPrintJob",
+                          spec,
+                          &nsDeviceContextSpecGTK::StartPrintJob));
       return TRUE;
     }
   }
@@ -322,7 +319,10 @@ NS_IMETHODIMP nsDeviceContextSpecGTK::EndDocument()
     } else {
       // We don't have a printer. We have to enumerate the printers and find
       // one with a matching name.
-      NS_DispatchToCurrentThread(NewRunnableMethod(this, &nsDeviceContextSpecGTK::EnumeratePrinters));
+      NS_DispatchToCurrentThread(
+        NewRunnableMethod("nsDeviceContextSpecGTK::EnumeratePrinters",
+                          this,
+                          &nsDeviceContextSpecGTK::EnumeratePrinters));
     }
   } else {
     // Handle print-to-file ourselves for the benefit of embedders
@@ -330,8 +330,7 @@ NS_IMETHODIMP nsDeviceContextSpecGTK::EndDocument()
     nsCOMPtr<nsIFile> destFile;
     mPrintSettings->GetToFileName(getter_Copies(targetPath));
 
-    nsresult rv = NS_NewNativeLocalFile(NS_ConvertUTF16toUTF8(targetPath),
-                                        false, getter_AddRefs(destFile));
+    nsresult rv = NS_NewLocalFile(targetPath, false, getter_AddRefs(destFile));
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsAutoString destLeafName;

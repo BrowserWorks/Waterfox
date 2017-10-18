@@ -11,8 +11,7 @@
  */
 
 var protocol = require("devtools/shared/protocol");
-var {Arg, Option, RetVal} = protocol;
-var events = require("sdk/event/core");
+var {RetVal} = protocol;
 
 function simpleHello() {
   return {
@@ -88,7 +87,7 @@ function run_test() {
     }, () => {
       ok(false, "Request failed unexpectedly");
     }).then(() => {
-      client.close(() => {
+      client.close().then(() => {
         do_test_finished();
       });
     });

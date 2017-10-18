@@ -88,8 +88,8 @@ var ActionBarHandler = {
   /**
    * ActionBarHandler notification observers.
    */
-  observe: function(subject, topic, data) {
-    switch (topic) {
+  onEvent: function(event, data, callback) {
+    switch (event) {
       // User click an ActionBar button.
       case "TextSelection:Action": {
         if (!this._selectionID) {
@@ -97,7 +97,7 @@ var ActionBarHandler = {
         }
         for (let type in this.actions) {
           let action = this.actions[type];
-          if (action.id == data) {
+          if (action.id == data.id) {
             action.action(this._targetElement, this._contentWindow);
             break;
           }
@@ -107,12 +107,11 @@ var ActionBarHandler = {
 
       // Provide selected text to FindInPageBar on request.
       case "TextSelection:Get": {
-        Messaging.sendRequest({
-          type: "TextSelection:Data",
-          requestId: data,
-          text: this._getSelectedText(),
-        });
-
+        try {
+          callback.onSuccess(this._getSelectedText());
+        } catch (e) {
+          callback.onError(e.toString());
+        }
         this._uninit();
         break;
       }
@@ -120,7 +119,7 @@ var ActionBarHandler = {
       // User closed ActionBar by clicking "checkmark" button.
       case "TextSelection:End": {
         // End the requested selection only.
-        if (this._selectionID == JSON.parse(data).selectionID) {
+        if (this._selectionID == data.selectionID) {
           this._uninit();
         }
         break;
@@ -143,7 +142,7 @@ var ActionBarHandler = {
     this._boundingClientRect = boundingClientRect;
 
     // Open the ActionBar, send it's actions list.
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:ActionbarInit",
       selectionID: this._selectionID,
     });
@@ -156,7 +155,7 @@ var ActionBarHandler = {
    * Called when content is scrolled and handles are hidden.
    */
   _updateVisibility: function() {
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:Visibility",
       selectionID: this._selectionID,
     });
@@ -207,7 +206,7 @@ var ActionBarHandler = {
     }
 
     // Close the ActionBar.
-    Messaging.sendRequest({
+    WindowEventDispatcher.sendRequest({
       type: "TextSelection:ActionbarUninit",
     });
 
@@ -233,9 +232,9 @@ var ActionBarHandler = {
   _clearSelection: function(element = this._targetElement, win = this._contentWindow) {
     // Commit edit compositions, and clear focus from editables.
     if (element) {
-      let imeSupport = this._getEditor(element, win).QueryInterface(Ci.nsIEditorIMESupport);
-      if (imeSupport.composing) {
-        imeSupport.forceCompositionEnd();
+      let editor = this._getEditor(element, win);
+      if (editor.composing) {
+        editor.forceCompositionEnd();
       }
       element.blur();
     }
@@ -266,7 +265,7 @@ var ActionBarHandler = {
       });
 
     if (sendAlways || !actionsMatch) {
-      Messaging.sendRequest({
+      WindowEventDispatcher.sendRequest({
         type: "TextSelection:ActionbarStatus",
         selectionID: this._selectionID,
         actions: actions,
@@ -327,7 +326,7 @@ var ActionBarHandler = {
 
     SELECT_ALL: {
       id: "selectall_action",
-      label: Strings.browser.GetStringFromName("contextmenu.selectAll"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.selectAll"),
       icon: "drawable://ab_select_all",
       order: 5,
       floatingOrder: 5,
@@ -346,9 +345,8 @@ var ActionBarHandler = {
         if (element) {
           // If we have an active composition string, commit it, and 
           // ensure proper element focus.
-          let imeSupport = ActionBarHandler._getEditor(element, win).
-            QueryInterface(Ci.nsIEditorIMESupport);
-          if (imeSupport.composing) {
+          let editor = ActionBarHandler._getEditor(element, win)
+          if (editor.composing) {
             element.blur();
             element.focus();
           }
@@ -362,7 +360,7 @@ var ActionBarHandler = {
 
     CUT: {
       id: "cut_action",
-      label: Strings.browser.GetStringFromName("contextmenu.cut"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.cut"),
       icon: "drawable://ab_cut",
       order: 4,
       floatingOrder: 1,
@@ -407,7 +405,7 @@ var ActionBarHandler = {
 
     COPY: {
       id: "copy_action",
-      label: Strings.browser.GetStringFromName("contextmenu.copy"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.copy"),
       icon: "drawable://ab_copy",
       order: 3,
       floatingOrder: 2,
@@ -440,7 +438,7 @@ var ActionBarHandler = {
 
     PASTE: {
       id: "paste_action",
-      label: Strings.browser.GetStringFromName("contextmenu.paste"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.paste"),
       icon: "drawable://ab_paste",
       order: 2,
       floatingOrder: 3,
@@ -473,7 +471,7 @@ var ActionBarHandler = {
 
     CALL: {
       id: "call_action",
-      label: Strings.browser.GetStringFromName("contextmenu.call"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.call"),
       icon: "drawable://phone",
       order: 1,
       floatingOrder: 0,
@@ -530,7 +528,7 @@ var ActionBarHandler = {
 
     SEARCH_ADD: {
       id: "search_add_action",
-      label: Strings.browser.GetStringFromName("contextmenu.addSearchEngine3"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.addSearchEngine3"),
       icon: "drawable://ab_add_search_engine",
       order: 0,
       floatingOrder: 8,
@@ -575,7 +573,7 @@ var ActionBarHandler = {
 
     SHARE: {
       id: "share_action",
-      label: Strings.browser.GetStringFromName("contextmenu.share"),
+      label: () => Strings.browser.GetStringFromName("contextmenu.share"),
       icon: "drawable://ic_menu_share",
       order: 0,
       floatingOrder: 4,
@@ -591,7 +589,7 @@ var ActionBarHandler = {
       },
 
       action: function(element, win) {
-        Messaging.sendRequest({
+        WindowEventDispatcher.sendRequest({
           type: "Share:Text",
           text: ActionBarHandler._getSelectedText(),
         });

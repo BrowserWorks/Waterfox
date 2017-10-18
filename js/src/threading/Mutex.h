@@ -8,54 +8,70 @@
 #define threading_Mutex_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/Attributes.h"
 #include "mozilla/Move.h"
-
-#include <new>
-#include <string.h>
+#include "mozilla/PlatformMutex.h"
+#include "mozilla/ThreadLocal.h"
+#include "mozilla/Vector.h"
 
 namespace js {
 
-class Mutex
+// A MutexId secifies the name and mutex order for a mutex.
+//
+// The mutex order defines the allowed order of mutex acqusition on a single
+// thread. Mutexes must be acquired in strictly increasing order. Mutexes with
+// the same order may not be held at the same time by that thread.
+struct MutexId
+{
+  const char* name;
+  uint32_t order;
+};
+
+#ifndef DEBUG
+
+class Mutex : public mozilla::detail::MutexImpl
 {
 public:
-  struct PlatformData;
+  static bool Init() { return true; }
+  static void ShutDown() {}
 
-  Mutex();
-  ~Mutex();
+  explicit Mutex(const MutexId& id) {}
+
+  using MutexImpl::lock;
+  using MutexImpl::unlock;
+};
+
+#else
+
+// In debug builds, js::Mutex is a wrapper over MutexImpl that checks correct
+// locking order is observed.
+//
+// The class maintains a per-thread stack of currently-held mutexes to enable it
+// to check this.
+class Mutex : public mozilla::detail::MutexImpl
+{
+public:
+  static bool Init();
+  static void ShutDown();
+
+  explicit Mutex(const MutexId& id)
+   : id_(id)
+  {
+    MOZ_ASSERT(id_.order != 0);
+  }
 
   void lock();
   void unlock();
-
-  Mutex(Mutex&& rhs)
-    : platformData_(rhs.platformData_)
-  {
-    MOZ_ASSERT(this != &rhs, "self move disallowed!");
-    rhs.platformData_ = nullptr;
-  }
-
-  Mutex& operator=(Mutex&& rhs) {
-    this->~Mutex();
-    new (this) Mutex(mozilla::Move(rhs));
-    return *this;
-  }
-
-  bool operator==(const Mutex& rhs) {
-    return platformData_ == rhs.platformData_;
-  }
+  bool ownedByCurrentThread() const;
 
 private:
-  Mutex(const Mutex&) = delete;
-  void operator=(const Mutex&) = delete;
+  const MutexId id_;
 
-  friend class ConditionVariable;
-  PlatformData* platformData() {
-    MOZ_ASSERT(platformData_);
-    return platformData_;
-  };
-
-  PlatformData* platformData_;
+  using MutexVector = mozilla::Vector<const Mutex*>;
+  static MOZ_THREAD_LOCAL(MutexVector*) HeldMutexStack;
+  static MutexVector& heldMutexStack();
 };
+
+#endif
 
 } // namespace js
 

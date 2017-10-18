@@ -1,6 +1,3 @@
-#filter substitution
-#include @OBJDIR@/api_keys
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,6 +19,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 const PREF_APP_DISTRIBUTION           = "distribution.id";
 const PREF_APP_DISTRIBUTION_VERSION   = "distribution.version";
@@ -88,9 +86,7 @@ nsURLFormatterService.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIURLFormatter]),
 
   _defaults: {
-    LOCALE:           () => Cc["@mozilla.org/chrome/chrome-registry;1"].
-                            getService(Ci.nsIXULChromeRegistry).
-                            getSelectedLocale('global'),
+    LOCALE:           () => Services.locale.getAppLocaleAsLangTag(),
     REGION:           function() {
       try {
         // When the geoip lookup failed to identify the region, we fallback to
@@ -114,12 +110,10 @@ nsURLFormatterService.prototype = {
     BUILD_TARGET:     function() { return this.appInfo.OS + "_" + this.ABI; },
     OS_VERSION:       function() { return this.OSVersion; },
     CHANNEL:          () => UpdateUtils.UpdateChannel,
-    MOZILLA_API_KEY:  () => "@MOZ_MOZILLA_API_KEY@",
-    GOOGLE_API_KEY:   () => "@MOZ_GOOGLE_API_KEY@",
-    GOOGLE_OAUTH_API_CLIENTID:() => "@MOZ_GOOGLE_OAUTH_API_CLIENTID@",
-    GOOGLE_OAUTH_API_KEY:     () => "@MOZ_GOOGLE_OAUTH_API_KEY@",
-    BING_API_CLIENTID:() => "@MOZ_BING_API_CLIENTID@",
-    BING_API_KEY:     () => "@MOZ_BING_API_KEY@",
+    MOZILLA_API_KEY:  () => AppConstants.MOZ_MOZILLA_API_KEY,
+    GOOGLE_API_KEY:   () => AppConstants.MOZ_GOOGLE_API_KEY,
+    BING_API_CLIENTID:() => AppConstants.MOZ_BING_API_CLIENTID,
+    BING_API_KEY:     () => AppConstants.MOZ_BING_API_KEY,
     DISTRIBUTION:     function() { return this.distribution.id; },
     DISTRIBUTION_VERSION: function() { return this.distribution.version; }
   },
@@ -142,7 +136,7 @@ nsURLFormatterService.prototype = {
              getService(Ci.nsIPrefBranch);
 
     try {
-      format = PS.getComplexValue(aPref, Ci.nsISupportsString).data;
+      format = PS.getStringPref(aPref);
     } catch(ex) {
       Cu.reportError("formatURLPref: Couldn't get pref: " + aPref);
       return "about:blank";
@@ -161,7 +155,7 @@ nsURLFormatterService.prototype = {
 
   trimSensitiveURLs: function uf_trimSensitiveURLs(aMsg) {
     // Only the google API key is sensitive for now.
-    return "@MOZ_GOOGLE_API_KEY@" ? aMsg.replace(/@MOZ_GOOGLE_API_KEY@/g,
+    return AppConstants.MOZ_GOOGLE_API_KEY ? aMsg.replace(RegExp(AppConstants.MOZ_GOOGLE_API_KEY, 'g'),
                                                  "[trimmed-google-api-key]")
                                   : aMsg;
   }

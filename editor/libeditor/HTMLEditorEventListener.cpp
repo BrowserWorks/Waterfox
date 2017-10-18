@@ -7,6 +7,7 @@
 
 #include "HTMLEditUtils.h"
 #include "mozilla/HTMLEditor.h"
+#include "mozilla/MouseEvents.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/Selection.h"
 #include "nsCOMPtr.h"
@@ -17,7 +18,6 @@
 #include "nsIDOMEventTarget.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIDOMNode.h"
-#include "nsIEditor.h"
 #include "nsIHTMLInlineTableEditor.h"
 #include "nsIHTMLObjectResizer.h"
 #include "nsISupportsImpl.h"
@@ -29,30 +29,31 @@ namespace mozilla {
 
 using namespace dom;
 
-#ifdef DEBUG
 nsresult
 HTMLEditorEventListener::Connect(EditorBase* aEditorBase)
 {
-  nsCOMPtr<nsIHTMLEditor> htmlEditor = do_QueryObject(aEditorBase);
-  nsCOMPtr<nsIHTMLInlineTableEditor> htmlInlineTableEditor =
-    do_QueryObject(aEditorBase);
-  NS_PRECONDITION(htmlEditor && htmlInlineTableEditor,
-                  "Set HTMLEditor or its sub class");
-  return EditorEventListener::Connect(aEditorBase);
-}
-#endif
-
-HTMLEditor*
-HTMLEditorEventListener::GetHTMLEditor()
-{
-  // mEditor must be HTMLEditor or its subclass.
-  return static_cast<HTMLEditor*>(mEditorBase);
+  if (NS_WARN_IF(!aEditorBase)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  // Guarantee that mEditorBase is always HTMLEditor.
+  HTMLEditor* htmlEditor = aEditorBase->AsHTMLEditor();
+  if (NS_WARN_IF(!htmlEditor)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  return EditorEventListener::Connect(htmlEditor);
 }
 
 nsresult
 HTMLEditorEventListener::MouseUp(nsIDOMMouseEvent* aMouseEvent)
 {
-  HTMLEditor* htmlEditor = GetHTMLEditor();
+  if (DetachedFromEditor()) {
+    return NS_OK;
+  }
+
+  // FYI: We need to notify HTML editor of mouseup even if it's consumed
+  //      because HTML editor always needs to release grabbing resizer.
+  HTMLEditor* htmlEditor = mEditorBase->AsHTMLEditor();
+  MOZ_ASSERT(htmlEditor);
 
   nsCOMPtr<nsIDOMEventTarget> target;
   nsresult rv = aMouseEvent->AsEvent()->GetTarget(getter_AddRefs(target));
@@ -71,14 +72,27 @@ HTMLEditorEventListener::MouseUp(nsIDOMMouseEvent* aMouseEvent)
 nsresult
 HTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
 {
-  HTMLEditor* htmlEditor = GetHTMLEditor();
+  if (NS_WARN_IF(!aMouseEvent) || DetachedFromEditor()) {
+    return NS_OK;
+  }
+
+  // Even if it's not acceptable mousedown event (i.e., when mousedown
+  // event is fired outside of the active editing host), we need to commit
+  // composition because it will be change the selection to the clicked
+  // point.  Then, we won't be able to commit the composition.
+  if (!EnsureCommitCompoisition()) {
+    return NS_OK;
+  }
+
+  WidgetMouseEvent* mousedownEvent =
+    aMouseEvent->AsEvent()->WidgetEventPtr()->AsMouseEvent();
+
+  HTMLEditor* htmlEditor = mEditorBase->AsHTMLEditor();
+  MOZ_ASSERT(htmlEditor);
+
   // Contenteditable should disregard mousedowns outside it.
   // IsAcceptableInputEvent() checks it for a mouse event.
-  if (!htmlEditor->IsAcceptableInputEvent(aMouseEvent->AsEvent())) {
-    // If it's not acceptable mousedown event (including when mousedown event
-    // is fired outside of the active editing host), we need to commit
-    // composition because it will be change the selection to the clicked
-    // point.  Then, we won't be able to commit the composition.
+  if (!htmlEditor->IsAcceptableInputEvent(mousedownEvent)) {
     return EditorEventListener::MouseDown(aMouseEvent);
   }
 
@@ -103,7 +117,7 @@ HTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
   nsCOMPtr<nsIDOMElement> element = do_QueryInterface(target);
 
   if (isContextClick || (buttonNumber == 0 && clickCount == 2)) {
-    RefPtr<Selection> selection = mEditorBase->GetSelection();
+    RefPtr<Selection> selection = htmlEditor->GetSelection();
     NS_ENSURE_TRUE(selection, NS_OK);
 
     // Get location of mouse within target node
@@ -159,21 +173,13 @@ HTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
       // Select entire element clicked on if NOT within an existing selection
       //   and not the entire body, or table-related elements
       if (element) {
-        nsCOMPtr<nsIDOMNode> selectAllNode =
-          htmlEditor->FindUserSelectAllNode(element);
-
-        if (selectAllNode) {
-          nsCOMPtr<nsIDOMElement> newElement = do_QueryInterface(selectAllNode);
-          if (newElement) {
-            node = selectAllNode;
-            element = newElement;
-          }
-        }
-
         if (isContextClick && !HTMLEditUtils::IsImage(node)) {
           selection->Collapse(parent, offset);
         } else {
           htmlEditor->SelectElement(element);
+        }
+        if (DetachedFromEditor()) {
+          return NS_OK;
         }
       }
     }
@@ -201,13 +207,19 @@ HTMLEditorEventListener::MouseDown(nsIDOMMouseEvent* aMouseEvent)
 nsresult
 HTMLEditorEventListener::MouseClick(nsIDOMMouseEvent* aMouseEvent)
 {
+  if (NS_WARN_IF(DetachedFromEditor())) {
+    return NS_OK;
+  }
+
   nsCOMPtr<nsIDOMEventTarget> target;
   nsresult rv = aMouseEvent->AsEvent()->GetTarget(getter_AddRefs(target));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(target, NS_ERROR_NULL_POINTER);
   nsCOMPtr<nsIDOMElement> element = do_QueryInterface(target);
 
-  GetHTMLEditor()->DoInlineTableEditingAction(element);
+  HTMLEditor* htmlEditor = mEditorBase->AsHTMLEditor();
+  MOZ_ASSERT(htmlEditor);
+  htmlEditor->DoInlineTableEditingAction(element);
 
   return EditorEventListener::MouseClick(aMouseEvent);
 }

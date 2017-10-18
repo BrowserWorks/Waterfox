@@ -1,0 +1,126 @@
+/* -*- Mode: C++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 8 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PRemotePrintJob;
+
+namespace mozilla {
+namespace embedding {
+
+struct CStringKeyValue {
+  nsCString key;
+  nsCString value;
+};
+
+struct PrintData {
+  nullable PRemotePrintJob remotePrintJob;
+  int32_t startPageRange;
+  int32_t endPageRange;
+  double edgeTop;
+  double edgeLeft;
+  double edgeBottom;
+  double edgeRight;
+  double marginTop;
+  double marginLeft;
+  double marginBottom;
+  double marginRight;
+  double unwriteableMarginTop;
+  double unwriteableMarginLeft;
+  double unwriteableMarginBottom;
+  double unwriteableMarginRight;
+  double scaling;
+  bool printBGColors;
+  bool printBGImages;
+  short printRange;
+  nsString title;
+  nsString docURL;
+  nsString headerStrLeft;
+  nsString headerStrCenter;
+  nsString headerStrRight;
+  nsString footerStrLeft;
+  nsString footerStrCenter;
+  nsString footerStrRight;
+
+  short  howToEnableFrameUI;
+  bool isCancelled;
+  short printFrameTypeUsage;
+  short  printFrameType;
+  bool printSilent;
+  bool shrinkToFit;
+  bool showPrintProgress;
+
+  nsString paperName;
+  short paperData;
+  double paperWidth;
+  double paperHeight;
+  short paperSizeUnit;
+  bool printReversed;
+  bool printInColor;
+  int32_t orientation;
+  int32_t numCopies;
+  nsString printerName;
+  bool printToFile;
+  nsString toFileName;
+  short outputFormat;
+  int32_t printPageDelay;
+  int32_t resolution;
+  int32_t duplex;
+  bool isInitializedFromPrinter;
+  bool isInitializedFromPrefs;
+  int32_t optionFlags;
+
+  /* Windows-specific things */
+  nsString driverName;
+  nsString deviceName;
+  double printableWidthInInches;
+  double printableHeightInInches;
+  bool isFramesetDocument;
+  bool isFramesetFrameSelected;
+  bool isIFrameSelected;
+  bool isRangeSelection;
+  uint8_t[] devModeData;
+
+  /**
+   * GTK-specific things. Some of these might look like dupes of the
+   * information we're already passing, but the generalized settings that
+   * we hold in nsIPrintSettings don't map perfectly to GTK's GtkPrintSettings,
+   * so there are some nuances. GtkPrintSettings, for example, stores both an
+   * internal name for paper size, as well as the display name.
+   */
+  CStringKeyValue[] GTKPrintSettings;
+
+  /**
+   * OS X specific things.
+   */
+  nsString printJobName;
+  bool printAllPages;
+  bool mustCollate;
+  nsString disposition;
+  /** TODO: Is there an "unsigned short" primitive? **/
+  short pagesAcross;
+  short pagesDown;
+  double printTime;
+  bool detailedErrorReporting;
+  nsString faxNumber;
+  bool addHeaderAndFooter;
+  bool fileNameExtensionHidden;
+  /*
+   * Holds the scaling factor from the Print dialog when shrink
+   * to fit is not used. This is needed by the child when it
+   * isn't using remote printing. When shrink to fit is enabled
+   * (default), print dialog code ensures this value is 1.0.
+   */
+  float scalingFactor;
+  /*
+   * Scaling factor for converting from OS X native paper size
+   * units to inches.
+   */
+  float widthScale;
+  float heightScale;
+  double adjustedPaperWidth;
+  double adjustedPaperHeight;
+};
+
+} // namespace embedding
+} // namespace mozilla

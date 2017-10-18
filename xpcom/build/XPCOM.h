@@ -14,6 +14,10 @@
 
 #include <string.h>
 
+#ifndef MOZILLA_INTERNAL_API
+#error "MOZILLA_INTERNAL_API must be defined"
+#endif
+
 // core headers required by pretty much everything else
 
 #include "nscore.h"
@@ -35,13 +39,9 @@
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
 
-#ifndef MOZILLA_INTERNAL_API
-#include "nsStringAPI.h"
-#else
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsNativeCharsetUtils.h"
-#endif
 
 #include "nsISupportsUtils.h"
 #include "nsISupportsImpl.h"
@@ -63,7 +63,6 @@
 #include "nsIAtomService.h"
 #include "nsICategoryManager.h"
 #include "nsIClassInfo.h"
-#include "nsICollection.h"
 #include "nsIComponentManager.h"
 #include "nsIConsoleListener.h"
 #include "nsIConsoleMessage.h"

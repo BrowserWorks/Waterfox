@@ -1,0 +1,37 @@
+[package]
+name = "gkrust-shared"
+version = "0.1.0"
+authors = ["nobody@mozilla.org"]
+license = "MPL-2.0"
+description = "Shared Rust code for libxul"
+
+[dependencies]
+geckoservo = { path = "../../../../servo/ports/geckolib", optional = true }
+mp4parse_capi = { path = "../../../../media/libstagefright/binding/mp4parse_capi" }
+nsstring = { path = "../../../../xpcom/rust/nsstring" }
+nserror = { path = "../../../../xpcom/rust/nserror" }
+rust_url_capi = { path = "../../../../netwerk/base/rust-url-capi" }
+webrender_bindings = { path = "../../../../gfx/webrender_bindings", optional = true }
+cubeb-pulse = { path = "../../../../media/libcubeb/cubeb-pulse-rs", optional = true, features=["pulse-dlopen"] }
+encoding_c = "0.7.1"
+encoding_glue = { path = "../../../../intl/encoding_glue" }
+
+[features]
+default = []
+bindgen = ["geckoservo/bindgen"]
+servo = ["geckoservo"]
+quantum_render = ["webrender_bindings"]
+cubeb_pulse_rust = ["cubeb-pulse"]
+gecko_debug = ["geckoservo/gecko_debug"]
+simd-accel = ["encoding_c/simd-accel", "encoding_glue/simd-accel"]
+no-static-ideograph-encoder-tables = ["encoding_c/no-static-ideograph-encoder-tables", "encoding_glue/no-static-ideograph-encoder-tables"]
+parallel-utf8 = ["encoding_c/parallel-utf8", "encoding_glue/parallel-utf8"]
+
+[lib]
+path = "lib.rs"
+test = false
+doctest = false
+bench = false
+doc = false
+plugin = false
+harness = false

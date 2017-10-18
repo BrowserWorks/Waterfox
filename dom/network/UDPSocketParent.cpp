@@ -9,15 +9,11 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIUDPSocket.h"
 #include "nsINetAddr.h"
-#include "mozilla/AppProcessChecker.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/net/DNS.h"
 #include "mozilla/net/NeckoCommon.h"
 #include "mozilla/net/PNeckoParent.h"
-#include "nsNetUtil.h"
-#include "mozilla/dom/ContentParent.h"
-#include "mozilla/dom/TabParent.h"
 #include "nsIPermissionManager.h"
 #include "nsIScriptSecurityManager.h"
 #include "mozilla/ipc/PBackgroundParent.h"
@@ -30,60 +26,18 @@ NS_IMPL_ISUPPORTS(UDPSocketParent, nsIUDPSocketListener)
 
 UDPSocketParent::UDPSocketParent(PBackgroundParent* aManager)
   : mBackgroundManager(aManager)
-  , mNeckoManager(nullptr)
   , mIPCOpen(true)
 {
-  mObserver = new mozilla::net::OfflineObserver(this);
 }
 
 UDPSocketParent::UDPSocketParent(PNeckoParent* aManager)
   : mBackgroundManager(nullptr)
-  , mNeckoManager(aManager)
   , mIPCOpen(true)
 {
-  mObserver = new mozilla::net::OfflineObserver(this);
 }
 
 UDPSocketParent::~UDPSocketParent()
 {
-  if (mObserver) {
-    mObserver->RemoveObserver();
-  }
-}
-
-nsresult
-UDPSocketParent::OfflineNotification(nsISupports *aSubject)
-{
-  nsCOMPtr<nsIAppOfflineInfo> info(do_QueryInterface(aSubject));
-  if (!info) {
-    return NS_OK;
-  }
-
-  uint32_t targetAppId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
-  info->GetAppId(&targetAppId);
-
-  // Obtain App ID
-  uint32_t appId = GetAppId();
-  if (appId != targetAppId) {
-    return NS_OK;
-  }
-
-  // If the app is offline, close the socket
-  if (mSocket && NS_IsAppOffline(appId)) {
-    mSocket->Close();
-  }
-
-  return NS_OK;
-}
-
-uint32_t
-UDPSocketParent::GetAppId()
-{
-  uint32_t appId;
-  if (!mPrincipal || NS_FAILED(mPrincipal->GetAppId(&appId))) {
-    return nsIScriptSecurityManager::UNKNOWN_APP_ID;
-  }
-  return appId;
 }
 
 bool
@@ -99,15 +53,6 @@ UDPSocketParent::Init(const IPC::Principal& aPrincipal,
   if (net::UsingNeckoIPCSecurity() &&
       mPrincipal &&
       !ContentParent::IgnoreIPCPrincipal()) {
-    if (mNeckoManager) {
-      if (!AssertAppPrincipal(mNeckoManager->Manager(), mPrincipal)) {
-        return false;
-      }
-    } else {
-      // PBackground is (for now) using a STUN filter for verification
-      // it's not being used for DoS
-    }
-
     nsCOMPtr<nsIPermissionManager> permMgr =
       services::GetPermissionManager();
     if (!permMgr) {
@@ -152,7 +97,7 @@ UDPSocketParent::Init(const IPC::Principal& aPrincipal,
 
 // PUDPSocketParent methods
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvBind(const UDPAddressInfo& aAddressInfo,
                           const bool& aAddressReuse, const bool& aLoopback,
                           const uint32_t& recvBufferSize,
@@ -164,7 +109,7 @@ UDPSocketParent::RecvBind(const UDPAddressInfo& aAddressInfo,
                              aAddressReuse, aLoopback, recvBufferSize,
                              sendBufferSize))) {
     FireInternalError(__LINE__);
-    return true;
+    return IPC_OK();
   }
 
   nsCOMPtr<nsINetAddr> localAddr;
@@ -173,19 +118,19 @@ UDPSocketParent::RecvBind(const UDPAddressInfo& aAddressInfo,
   nsCString addr;
   if (NS_FAILED(localAddr->GetAddress(addr))) {
     FireInternalError(__LINE__);
-    return true;
+    return IPC_OK();
   }
 
   uint16_t port;
   if (NS_FAILED(localAddr->GetPort(&port))) {
     FireInternalError(__LINE__);
-    return true;
+    return IPC_OK();
   }
 
   UDPSOCKET_LOG(("%s: SendCallbackOpened: %s:%u", __FUNCTION__, addr.get(), port));
   mozilla::Unused << SendCallbackOpened(UDPAddressInfo(addr, port));
 
-  return true;
+  return IPC_OK();
 }
 
 nsresult
@@ -196,7 +141,8 @@ UDPSocketParent::BindInternal(const nsCString& aHost, const uint16_t& aPort,
 {
   nsresult rv;
 
-  UDPSOCKET_LOG(("%s: [this=%p] %s:%u addressReuse: %d loopback: %d recvBufferSize: %lu, sendBufferSize: %lu",
+  UDPSOCKET_LOG(("%s: [this=%p] %s:%u addressReuse: %d loopback: %d recvBufferSize: %"
+                 PRIu32 ", sendBufferSize: %" PRIu32,
                 __FUNCTION__, this, nsCString(aHost).get(), aPort,
                 aAddressReuse, aLoopback, recvBufferSize, sendBufferSize));
 
@@ -248,13 +194,13 @@ UDPSocketParent::BindInternal(const nsCString& aHost, const uint16_t& aPort,
   if (recvBufferSize != 0) {
     rv = sock->SetRecvBufferSize(recvBufferSize);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set recv buffer size to: %lu", __FUNCTION__, this, nsCString(aHost).get(), aPort, recvBufferSize));
+      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set recv buffer size to: %" PRIu32, __FUNCTION__, this, nsCString(aHost).get(), aPort, recvBufferSize));
     }
   }
   if (sendBufferSize != 0) {
     rv = sock->SetSendBufferSize(sendBufferSize);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set send buffer size to: %lu", __FUNCTION__, this, nsCString(aHost).get(), aPort, sendBufferSize));
+      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set send buffer size to: %" PRIu32, __FUNCTION__, this, nsCString(aHost).get(), aPort, sendBufferSize));
     }
   }
 
@@ -292,18 +238,19 @@ static void CheckSTSThread()
 
 // Proxy the Connect() request to the STS thread, since it may block and
 // should be done there.
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvConnect(const UDPAddressInfo& aAddressInfo)
 {
-  nsCOMPtr<nsIEventTarget> thread(NS_GetCurrentThread());
-  NS_WARN_IF(NS_FAILED(GetSTSThread()->Dispatch(WrapRunnable(
-                                                  this,
-                                                  &UDPSocketParent::DoConnect,
-                                                  mSocket,
-                                                  thread,
-                                                  aAddressInfo),
-                                                NS_DISPATCH_NORMAL)));
-  return true;
+  nsCOMPtr<nsIEventTarget> target = GetCurrentThreadEventTarget();
+  Unused <<
+    NS_WARN_IF(NS_FAILED(GetSTSThread()->Dispatch(WrapRunnable(
+                                                    RefPtr<UDPSocketParent>(this),
+                                                    &UDPSocketParent::DoConnect,
+                                                    mSocket,
+                                                    target,
+                                                    aAddressInfo),
+                                                  NS_DISPATCH_NORMAL)));
+  return IPC_OK();
 }
 
 void
@@ -317,11 +264,12 @@ void
 UDPSocketParent::SendConnectResponse(nsIEventTarget *aThread,
                                      const UDPAddressInfo& aAddressInfo)
 {
-  NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
-                                           this,
-                                           &UDPSocketParent::DoSendConnectResponse,
-                                           aAddressInfo),
-                                         NS_DISPATCH_NORMAL)));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
+                                             RefPtr<UDPSocketParent>(this),
+                                             &UDPSocketParent::DoSendConnectResponse,
+                                             aAddressInfo),
+                                           NS_DISPATCH_NORMAL)));
 }
 
 // Runs on STS thread
@@ -362,7 +310,13 @@ UDPSocketParent::ConnectInternal(const nsCString& aHost, const uint16_t& aPort)
   nsresult rv;
 
   UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, nsCString(aHost).get(), aPort));
+
+  if (!mSocket) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   PRNetAddr prAddr;
+  memset(&prAddr, 0, sizeof(prAddr));
   PR_InitializeNetAddr(PR_IpAddrAny, aPort, &prAddr);
   PRStatus status = PR_StringToNetAddr(aHost.BeginReading(), &prAddr);
   if (status != PR_SUCCESS) {
@@ -380,21 +334,25 @@ UDPSocketParent::ConnectInternal(const nsCString& aHost, const uint16_t& aPort)
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvOutgoingData(const UDPData& aData,
                                   const UDPSocketAddr& aAddr)
 {
-  MOZ_ASSERT(mSocket);
+  if (!mSocket) {
+    NS_WARNING("sending socket is closed");
+    FireInternalError(__LINE__);
+    return IPC_OK();
+  }
 
   nsresult rv;
   if (mFilter) {
     if (aAddr.type() != UDPSocketAddr::TNetAddr) {
-      return true;
+      return IPC_OK();
     }
 
     // TODO, Packet filter doesn't support input stream yet.
     if (aData.type() != UDPData::TArrayOfuint8_t) {
-      return true;
+      return IPC_OK();
     }
 
     bool allowed;
@@ -405,7 +363,7 @@ UDPSocketParent::RecvOutgoingData(const UDPData& aData,
 
     // Sending unallowed data, kill content.
     if (NS_WARN_IF(NS_FAILED(rv)) || !allowed) {
-      return false;
+      return IPC_FAIL(this, "Content tried to send non STUN packet");
     }
   }
 
@@ -413,15 +371,15 @@ UDPSocketParent::RecvOutgoingData(const UDPData& aData,
     case UDPData::TArrayOfuint8_t:
       Send(aData.get_ArrayOfuint8_t(), aAddr);
       break;
-    case UDPData::TInputStreamParams:
-      Send(aData.get_InputStreamParams(), aAddr);
+    case UDPData::TIPCStream:
+      Send(aData.get_IPCStream(), aAddr);
       break;
     default:
       MOZ_ASSERT(false, "Invalid data type!");
-      return true;
+      return IPC_OK();
   }
 
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -454,11 +412,10 @@ UDPSocketParent::Send(const InfallibleTArray<uint8_t>& aData,
 }
 
 void
-UDPSocketParent::Send(const InputStreamParams& aStream,
+UDPSocketParent::Send(const IPCStream& aStream,
                       const UDPSocketAddr& aAddr)
 {
-  nsTArray<mozilla::ipc::FileDescriptor> fds;
-  nsCOMPtr<nsIInputStream> stream = DeserializeInputStream(aStream, fds);
+  nsCOMPtr<nsIInputStream> stream = DeserializeIPCStream(aStream);
 
   if (NS_WARN_IF(!stream)) {
     return;
@@ -486,7 +443,7 @@ UDPSocketParent::Send(const InputStreamParams& aStream,
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvJoinMulticast(const nsCString& aMulticastAddress,
                                    const nsCString& aInterface)
 {
@@ -496,10 +453,10 @@ UDPSocketParent::RecvJoinMulticast(const nsCString& aMulticastAddress,
     FireInternalError(__LINE__);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvLeaveMulticast(const nsCString& aMulticastAddress,
                                     const nsCString& aInterface)
 {
@@ -509,14 +466,14 @@ UDPSocketParent::RecvLeaveMulticast(const nsCString& aMulticastAddress,
     FireInternalError(__LINE__);
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvClose()
 {
   if (!mSocket) {
-    return true;
+    return IPC_OK();
   }
 
   nsresult rv = mSocket->Close();
@@ -524,14 +481,14 @@ UDPSocketParent::RecvClose()
 
   mozilla::Unused << NS_WARN_IF(NS_FAILED(rv));
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 UDPSocketParent::RecvRequestDelete()
 {
   mozilla::Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -626,11 +583,12 @@ UDPSocketParent::SendInternalError(nsIEventTarget *aThread,
                                    uint32_t aLineNo)
 {
   UDPSOCKET_LOG(("SendInternalError: %u", aLineNo));
-  NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
-                                           this,
-                                           &UDPSocketParent::FireInternalError,
-                                           aLineNo),
-                                         NS_DISPATCH_NORMAL)));
+  Unused <<
+    NS_WARN_IF(NS_FAILED(aThread->Dispatch(WrapRunnable(
+                                             RefPtr<UDPSocketParent>(this),
+                                             &UDPSocketParent::FireInternalError,
+                                             aLineNo),
+                                           NS_DISPATCH_NORMAL)));
 }
 
 } // namespace dom

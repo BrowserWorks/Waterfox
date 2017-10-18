@@ -8,15 +8,11 @@
 
 #include "nsBackdropFrame.h"
 
+#include "nsDisplayList.h"
+
 using namespace mozilla;
 
 NS_IMPL_FRAMEARENA_HELPERS(nsBackdropFrame)
-
-/* virtual */ nsIAtom*
-nsBackdropFrame::GetType() const
-{
-  return nsGkAtoms::backdropFrame;
-}
 
 #ifdef DEBUG_FRAME_DUMP
 nsresult
@@ -45,18 +41,8 @@ nsBackdropFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   // none or contents so that we can respond to style change on it. To
   // support those values, we skip painting ourselves in those cases.
   auto display = StyleDisplay()->mDisplay;
-  if (display == NS_STYLE_DISPLAY_NONE ||
-      display == NS_STYLE_DISPLAY_CONTENTS) {
-    return;
-  }
-
-  // The WebVR specific render path in nsContainerLayerComposite
-  // results in an alternating frame strobing effect when an nsBackdropFrame is
-  // rendered.
-  // Currently, VR content is composed of a fullscreen canvas element that
-  // is expected to cover the entire viewport so a backdrop should not
-  // be necessary.
-  if (GetStateBits() & NS_FRAME_HAS_VR_CONTENT) {
+  if (display == mozilla::StyleDisplay::None ||
+      display == mozilla::StyleDisplay::Contents) {
     return;
   }
 
@@ -64,18 +50,18 @@ nsBackdropFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 }
 
 /* virtual */ LogicalSize
-nsBackdropFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                                 WritingMode aWM,
-                                 const LogicalSize& aCBSize,
-                                 nscoord aAvailableISize,
-                                 const LogicalSize& aMargin,
-                                 const LogicalSize& aBorder,
-                                 const LogicalSize& aPadding,
-                                 bool aShrinkWrap)
+nsBackdropFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                                 WritingMode         aWM,
+                                 const LogicalSize&  aCBSize,
+                                 nscoord             aAvailableISize,
+                                 const LogicalSize&  aMargin,
+                                 const LogicalSize&  aBorder,
+                                 const LogicalSize&  aPadding,
+                                 ComputeSizeFlags    aFlags)
 {
   // Note that this frame is a child of the viewport frame.
   LogicalSize result(aWM, 0xdeadbeef, NS_UNCONSTRAINEDSIZE);
-  if (aShrinkWrap) {
+  if (aFlags & ComputeSizeFlags::eShrinkWrap) {
     result.ISize(aWM) = 0;
   } else {
     result.ISize(aWM) = aAvailableISize - aMargin.ISize(aWM) -
@@ -100,5 +86,5 @@ nsBackdropFrame::Reflow(nsPresContext* aPresContext,
   nscoord isize = aReflowInput.ComputedISize() + borderPadding.IStartEnd(wm);
   nscoord bsize = aReflowInput.ComputedBSize() + borderPadding.BStartEnd(wm);
   aDesiredSize.SetSize(wm, LogicalSize(wm, isize, bsize));
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 }

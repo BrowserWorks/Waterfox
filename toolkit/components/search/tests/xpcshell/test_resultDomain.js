@@ -9,14 +9,13 @@
 
 function run_test() {
   removeMetadata();
-  updateAppInfo();
   useHttpServer();
 
   run_next_test();
 }
 
-add_task(function* test_resultDomain() {
-  let [engine1, engine2, engine3] = yield addTestEngines([
+add_task(async function test_resultDomain() {
+  let [engine1, engine2, engine3] = await addTestEngines([
     { name: "Test search engine", xmlFileName: "engine.xml" },
     { name: "A second test engine", xmlFileName: "engine2.xml" },
     { name: "bacon", details: ["", "bacon", "Search Bacon", "GET",

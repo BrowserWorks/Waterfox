@@ -38,8 +38,8 @@ nsBlockReflowContext::nsBlockReflowContext(nsPresContext* aPresContext,
 
 static nsIFrame* DescendIntoBlockLevelFrame(nsIFrame* aFrame)
 {
-  nsIAtom* type = aFrame->GetType();
-  if (type == nsGkAtoms::columnSetFrame) {
+  LayoutFrameType type = aFrame->Type();
+  if (type == LayoutFrameType::ColumnSet) {
     static_cast<nsColumnSetFrame*>(aFrame)->DrainOverflowColumns();
     nsIFrame* child = aFrame->PrincipalChildList().FirstChild();
     if (child) {
@@ -101,8 +101,8 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const ReflowInput& aRI,
   // OK because our traversal is idempotent.
   for ( ;block; block = static_cast<nsBlockFrame*>(block->GetNextInFlow())) {
     for (int overflowLines = 0; overflowLines <= 1; ++overflowLines) {
-      nsBlockFrame::line_iterator line;
-      nsBlockFrame::line_iterator line_end;
+      nsBlockFrame::LineIterator line;
+      nsBlockFrame::LineIterator line_end;
       bool anyLines = true;
       if (overflowLines) {
         nsBlockFrame::FrameLines* frames = block->GetOverflowLines();
@@ -114,8 +114,8 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const ReflowInput& aRI,
           line_end = lines->end();
         }
       } else {
-        line = block->begin_lines();
-        line_end = block->end_lines();
+        line = block->LinesBegin();
+        line_end = block->LinesEnd();
       }
       for (; anyLines && line != line_end; ++line) {
         if (!aClearanceFrame && line->HasClearance()) {
@@ -168,7 +168,7 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const ReflowInput& aRI,
                                                availSpace);
             // Record that we're being optimistic by assuming the kid
             // has no clearance
-            if (kid->StyleDisplay()->mBreakType != NS_STYLE_CLEAR_NONE ||
+            if (kid->StyleDisplay()->mBreakType != StyleClear::None ||
                 !nsBlockFrame::BlockCanIntersectFloats(kid)) {
               *aMayNeedRetry = true;
             }
@@ -211,7 +211,7 @@ nsBlockReflowContext::ComputeCollapsedBStartMargin(const ReflowInput& aRI,
   if (!setBlockIsEmpty && aBlockIsEmpty) {
     *aBlockIsEmpty = aRI.mFrame->IsEmpty();
   }
-  
+
 #ifdef NOISY_BLOCKDIR_MARGINS
   nsFrame::ListTag(stdout, aRI.mFrame);
   printf(": => %d\n", aMargin->get());
@@ -307,7 +307,7 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
   mOuterReflowInput.mFloatManager->Translate(-tI, -tB);
 
 #ifdef DEBUG
-  if (!NS_INLINE_IS_BREAK_BEFORE(aFrameReflowStatus)) {
+  if (!aFrameReflowStatus.IsInlineBreakBefore()) {
     if ((CRAZY_SIZE(mMetrics.ISize(mWritingMode)) ||
          CRAZY_SIZE(mMetrics.BSize(mWritingMode))) &&
         !mFrame->GetParent()->IsCrazySizeAssertSuppressed()) {
@@ -330,13 +330,13 @@ nsBlockReflowContext::ReflowBlock(const LogicalRect&  aSpace,
     mMetrics.SetOverflowAreasToDesiredBounds();
   }
 
-  if (!NS_INLINE_IS_BREAK_BEFORE(aFrameReflowStatus) ||
+  if (!aFrameReflowStatus.IsInlineBreakBefore() ||
       (mFrame->GetStateBits() & NS_FRAME_OUT_OF_FLOW)) {
     // If frame is complete and has a next-in-flow, we need to delete
     // them now. Do not do this when a break-before is signaled because
     // the frame is going to get reflowed again (and may end up wanting
     // a next-in-flow where it ends up), unless it is an out of flow frame.
-    if (NS_FRAME_IS_FULLY_COMPLETE(aFrameReflowStatus)) {
+    if (aFrameReflowStatus.IsFullyComplete()) {
       nsIFrame* kidNextInFlow = mFrame->GetNextInFlow();
       if (nullptr != kidNextInFlow) {
         // Remove all of the childs next-in-flows. Make sure that we ask
@@ -367,7 +367,7 @@ nsBlockReflowContext::PlaceBlock(const ReflowInput&  aReflowInput,
   // Compute collapsed block-end margin value.
   WritingMode wm = aReflowInput.GetWritingMode();
   WritingMode parentWM = mMetrics.GetWritingMode();
-  if (NS_FRAME_IS_COMPLETE(aReflowStatus)) {
+  if (aReflowStatus.IsComplete()) {
     aBEndMarginResult = mMetrics.mCarriedOutBEndMargin;
     aBEndMarginResult.Include(aReflowInput.ComputedLogicalMargin().
       ConvertTo(parentWM, wm).BEnd(parentWM));

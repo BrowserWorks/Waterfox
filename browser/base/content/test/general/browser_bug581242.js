@@ -4,7 +4,7 @@
 
 function test() {
   // Create a new tab and load about:addons
-  let blanktab = gBrowser.addTab();
+  let blanktab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = blanktab;
   BrowserOpenAddonsMgr();
 
@@ -12,10 +12,9 @@ function test() {
   // Verify that about:addons loads
   waitForExplicitFinish();
   gBrowser.selectedBrowser.addEventListener("load", function() {
-    gBrowser.selectedBrowser.removeEventListener("load", arguments.callee, true);
     let browser = blanktab.linkedBrowser;
     is(browser.currentURI.spec, "about:addons", "about:addons should load into blank tab.");
     gBrowser.removeTab(blanktab);
     finish();
-  }, true);
+  }, {capture: true, once: true});
 }

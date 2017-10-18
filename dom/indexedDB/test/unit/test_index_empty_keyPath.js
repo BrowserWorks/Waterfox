@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -33,7 +33,7 @@ function testSteps()
     request.onerror = errorHandler;
     request.onsuccess = function(event) {
       if (++addedData == objectStoreData.length) {
-        testGenerator.send(event);
+        testGenerator.next(event);
       }
     }
   }
@@ -45,12 +45,12 @@ function testSteps()
 
   let trans = db.transaction("data", "readwrite");
   objectStore = trans.objectStore("data");
-  index = objectStore.index("set");
+  let index = objectStore.index("set");
 
   request = index.get("bar");
   request.onerror = errorHandler;
   request.onsuccess = grabEventAndContinueHandler;
-  
+
   event = yield undefined;
 
   is(event.target.result, "bar", "Got correct result");
@@ -64,7 +64,7 @@ function testSteps()
   request = index.get("foopy");
   request.onerror = errorHandler;
   request.onsuccess = grabEventAndContinueHandler;
-  
+
   event = yield undefined;
 
   is(event.target.result, "foopy", "Got correct result");
@@ -79,5 +79,4 @@ function testSteps()
   yield undefined;
 
   finishTest();
-  yield undefined;
 }

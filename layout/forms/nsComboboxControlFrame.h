@@ -54,30 +54,32 @@ class nsComboboxControlFrame final : public nsBlockFrame,
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
 public:
-  friend nsContainerFrame* NS_NewComboboxControlFrame(nsIPresShell* aPresShell,
-                                                      nsStyleContext* aContext,
-                                                      nsFrameState aFlags);
+  friend nsComboboxControlFrame* NS_NewComboboxControlFrame(nsIPresShell* aPresShell,
+                                                            nsStyleContext* aContext,
+                                                            nsFrameState aFlags);
   friend class nsComboboxDisplayFrame;
 
   explicit nsComboboxControlFrame(nsStyleContext* aContext);
   ~nsComboboxControlFrame();
 
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsComboboxControlFrame)
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) override;
-  virtual nsIFrame* CreateFrameFor(nsIContent* aContent) override;
+
+  nsIContent* GetDisplayNode() { return mDisplayContent; }
+  nsIFrame* CreateFrameForDisplayNode();
 
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
 
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   virtual void Reflow(nsPresContext*           aCX,
                       ReflowOutput&     aDesiredSize,
@@ -93,11 +95,6 @@ public:
                                 const nsDisplayListSet& aLists) override;
 
   void PaintFocus(DrawTarget& aDrawTarget, nsPoint aPt);
-
-  // XXXbz this is only needed to prevent the quirk percent height stuff from
-  // leaking out of the combobox.  We may be able to get rid of this as more
-  // things move to IsFrameOfType.
-  virtual nsIAtom* GetType() const override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -119,6 +116,9 @@ public:
   virtual void GetChildLists(nsTArray<ChildList>* aLists) const override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
+
+  // Return the dropdown and display frame.
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
 
   // nsIFormControlFrame
   virtual nsresult SetFormProperty(nsIAtom* aName, const nsAString& aValue) override;
@@ -174,6 +174,12 @@ public:
     mIsOpenInParentProcess = aVal;
   }
 
+  void GetPreviewText(nsAString& aValue) override
+  {
+    aValue = mPreviewText;
+  }
+  void SetPreviewText(const nsAString& aValue) override;
+
   // nsISelectControlFrame
   NS_IMETHOD AddOption(int32_t index) override;
   NS_IMETHOD RemoveOption(int32_t index) override;
@@ -227,7 +233,7 @@ protected:
   friend class nsResizeDropdownAtFinalPosition;
 
   // Utilities
-  void ReflowDropdown(nsPresContext*          aPresContext, 
+  void ReflowDropdown(nsPresContext*          aPresContext,
                       const ReflowInput& aReflowInput);
 
   enum DropDownPositionState {
@@ -241,18 +247,22 @@ protected:
   DropDownPositionState AbsolutelyPositionDropDown();
 
   // Helper for GetMinISize/GetPrefISize
-  nscoord GetIntrinsicISize(nsRenderingContext* aRenderingContext,
+  nscoord GetIntrinsicISize(gfxContext* aRenderingContext,
                             nsLayoutUtils::IntrinsicISizeType aType);
 
   class RedisplayTextEvent : public mozilla::Runnable {
   public:
     NS_DECL_NSIRUNNABLE
-    explicit RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
+    explicit RedisplayTextEvent(nsComboboxControlFrame* c)
+      : mozilla::Runnable("nsComboboxControlFrame::RedisplayTextEvent")
+      , mControlFrame(c)
+    {
+    }
     void Revoke() { mControlFrame = nullptr; }
   private:
     nsComboboxControlFrame *mControlFrame;
   };
-  
+
   /**
    * Show or hide the dropdown list.
    * @note This method might destroy |this|.
@@ -268,7 +278,7 @@ protected:
   bool ShowList(bool aShowList);
   void CheckFireOnChange();
   void FireValueChangeEvent();
-  nsresult RedisplayText(int32_t aIndex);
+  nsresult RedisplayText();
   void HandleRedisplayTextEvent();
   void ActuallyDisplayText(bool aNotify);
 
@@ -289,12 +299,13 @@ protected:
   // The inline size of our display area.  Used by that frame's reflow
   // to size to the full inline size except the drop-marker.
   nscoord mDisplayISize;
-  
+
   nsRevocableEventPtr<RedisplayTextEvent> mRedisplayTextEvent;
 
   int32_t               mRecentSelectedIndex;
   int32_t               mDisplayedIndex;
-  nsString              mDisplayedOptionText;
+  nsString              mDisplayedOptionTextOrPreview;
+  nsString              mPreviewText;
 
   // make someone to listen to the button. If its programmatically pressed by someone like Accessibility
   // then open or close the combo box.

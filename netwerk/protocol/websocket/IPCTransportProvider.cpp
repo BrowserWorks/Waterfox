@@ -19,12 +19,10 @@ NS_IMPL_ISUPPORTS(TransportProviderParent,
 
 TransportProviderParent::TransportProviderParent()
 {
-  MOZ_COUNT_CTOR(TransportProviderParent);
 }
 
 TransportProviderParent::~TransportProviderParent()
 {
-  MOZ_COUNT_DTOR(TransportProviderParent);
 }
 
 NS_IMETHODIMP
@@ -38,11 +36,12 @@ TransportProviderParent::SetListener(nsIHttpUpgradeListener* aListener)
   return NS_OK;
 }
 
-NS_IMETHODIMP_(mozilla::net::PTransportProviderChild*)
-TransportProviderParent::GetIPCChild()
+NS_IMETHODIMP
+TransportProviderParent::GetIPCChild(mozilla::net::PTransportProviderChild** aChild)
 {
   MOZ_CRASH("Don't call this in parent process");
-  return nullptr;
+  *aChild = nullptr;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -67,7 +66,10 @@ TransportProviderParent::MaybeNotify()
     return;
   }
 
-  mListener->OnTransportAvailable(mTransport, mSocketIn, mSocketOut);
+  DebugOnly<nsresult> rv = mListener->OnTransportAvailable(mTransport,
+                                                           mSocketIn,
+                                                           mSocketOut);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
 
@@ -76,12 +78,10 @@ NS_IMPL_ISUPPORTS(TransportProviderChild,
 
 TransportProviderChild::TransportProviderChild()
 {
-  MOZ_COUNT_CTOR(TransportProviderChild);
 }
 
 TransportProviderChild::~TransportProviderChild()
 {
-  MOZ_COUNT_DTOR(TransportProviderChild);
   Send__delete__(this);
 }
 
@@ -92,10 +92,11 @@ TransportProviderChild::SetListener(nsIHttpUpgradeListener* aListener)
   return NS_OK;
 }
 
-NS_IMETHODIMP_(mozilla::net::PTransportProviderChild*)
-TransportProviderChild::GetIPCChild()
+NS_IMETHODIMP
+TransportProviderChild::GetIPCChild(mozilla::net::PTransportProviderChild** aChild)
 {
-  return this;
+  *aChild = this;
+  return NS_OK;
 }
 
 } // net

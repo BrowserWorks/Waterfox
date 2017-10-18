@@ -1,3 +1,5 @@
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 #******************************************************************************
 #
 #   Copyright (C) 1999-2011, International Business Machines
@@ -53,7 +55,7 @@ DYNAMICCXXFLAGS = $(SHAREDLIBCXXFLAGS)
 CFLAGS += $(LIBCFLAGS)
 CXXFLAGS += $(LIBCXXFLAGS)
 
-CPPFLAGS += -I$(top_srcdir)/common -I$(top_srcdir)/i18n $(LIBCPPFLAGS) $(CPPFLAGSICUIO)
+CPPFLAGS += -I$(srcdir) -I$(top_srcdir)/common -I$(top_srcdir)/i18n $(LIBCPPFLAGS) $(CPPFLAGSICUIO)
 DEFS += -DU_IO_IMPLEMENTATION
 LDFLAGS += $(LDFLAGSICUIO)
 LIBS = $(LIBICUUC) $(LIBICUI18N) $(DEFAULT_LIBS)

@@ -10,13 +10,16 @@
 
   <body>
     <script type="text/javascript">
-      function performWork() {
-        var worker = new Worker("js_simpleWorker.js");
+      "use strict";
 
-        worker.addEventListener("message", function(e) {
+      /* exported performWork */
+      function performWork() {
+        const worker = new Worker("js_simpleWorker.js");
+
+        worker.addEventListener("message", function (e) {
           console.log(e.data);
           console.timeStamp("Done");
-        }, false);
+        });
 
         worker.postMessage("Hello World");
       }

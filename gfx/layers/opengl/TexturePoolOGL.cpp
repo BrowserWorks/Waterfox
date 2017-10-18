@@ -5,12 +5,23 @@
 #include "TexturePoolOGL.h"
 #include <stdlib.h>                     // for malloc
 #include "GLContext.h"                  // for GLContext
+#include "mozilla/Logging.h"
 #include "mozilla/Monitor.h"            // for Monitor, MonitorAutoLock
 #include "mozilla/mozalloc.h"           // for operator delete, etc
+#include "mozilla/layers/CompositorThread.h"
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_ERROR, etc
 #include "nsDeque.h"                    // for nsDeque
+#include "nsThreadUtils.h"
 
-#define TEXTURE_POOL_SIZE 10
+#ifdef MOZ_WIDGET_ANDROID
+#include "GeneratedJNINatives.h"
+#endif
+
+static const unsigned int TEXTURE_POOL_SIZE = 10;
+static const unsigned int TEXTURE_REFILL_THRESHOLD = TEXTURE_POOL_SIZE / 2;
+
+static mozilla::LazyLogModule gTexturePoolLog("TexturePoolOGL");
+#define LOG(arg, ...) MOZ_LOG(gTexturePoolLog, mozilla::LogLevel::Debug, ("TexturePoolOGL::%s: " arg, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 namespace gl {
@@ -20,9 +31,49 @@ static GLContext* sActiveContext = nullptr;
 static Monitor* sMonitor = nullptr;
 static nsDeque* sTextures = nullptr;
 
+enum class PoolState : uint8_t {
+  NOT_INITIALIZE,
+  INITIALIZED,
+  SHUTDOWN
+};
+static PoolState sPoolState = PoolState::NOT_INITIALIZE;
+
+static bool sHasPendingFillTask = false;
+
+#ifdef MOZ_WIDGET_ANDROID
+
+class GeckoSurfaceTextureSupport final
+    : public java::GeckoSurfaceTexture::Natives<GeckoSurfaceTextureSupport>
+{
+public:
+  static int32_t NativeAcquireTexture() {
+    return TexturePoolOGL::AcquireTexture();
+  }
+};
+
+#endif // MOZ_WIDGET_ANDROID
+
+void TexturePoolOGL::MaybeFillTextures()
+{
+  if (sTextures->GetSize() < TEXTURE_REFILL_THRESHOLD &&
+      !sHasPendingFillTask) {
+    LOG("need to refill the texture pool.");
+    sHasPendingFillTask = true;
+    MessageLoop* loop = mozilla::layers::CompositorThreadHolder::Loop();
+    MOZ_ASSERT(loop);
+    loop->PostTask(
+      NS_NewRunnableFunction(
+        "TexturePoolOGL::MaybeFillTextures",
+        [] () {
+          TexturePoolOGL::Fill(sActiveContext);
+    }));
+  }
+}
+
 GLuint TexturePoolOGL::AcquireTexture()
 {
-  NS_ASSERTION(sMonitor, "not initialized");
+  MOZ_ASSERT(sPoolState != PoolState::NOT_INITIALIZE, "not initialized");
+  MOZ_ASSERT(sPoolState != PoolState::SHUTDOWN, "should not be called after shutdown");
 
   MonitorAutoLock lock(*sMonitor);
 
@@ -55,6 +106,9 @@ GLuint TexturePoolOGL::AcquireTexture()
     delete popped;
 
     NS_ASSERTION(texture, "Failed to retrieve texture from pool");
+
+    MaybeFillTextures();
+    LOG("remaining textures num = %zu", sTextures->GetSize());
   }
 
   return texture;
@@ -62,25 +116,26 @@ GLuint TexturePoolOGL::AcquireTexture()
 
 static void Clear()
 {
-  if (!sActiveContext)
-    return;
-
-  sActiveContext->MakeCurrent();
+  const bool isCurrent = sActiveContext && sActiveContext->MakeCurrent();
 
   GLuint* item;
   while (sTextures->GetSize()) {
     item = (GLuint*)sTextures->Pop();
-    sActiveContext->fDeleteTextures(1, item);
+    if (isCurrent) {
+      sActiveContext->fDeleteTextures(1, item);
+    }
     delete item;
   }
 }
 
 void TexturePoolOGL::Fill(GLContext* aContext)
 {
-  NS_ASSERTION(aContext, "NULL GLContext");
-  NS_ASSERTION(sMonitor, "not initialized");
+  MOZ_ASSERT(aContext, "NULL GLContext");
+  MOZ_ASSERT(sPoolState != PoolState::NOT_INITIALIZE, "not initialized");
+  MOZ_ASSERT(sPoolState != PoolState::SHUTDOWN, "should not be called after shutdown");
 
   MonitorAutoLock lock(*sMonitor);
+  sHasPendingFillTask = false;
 
   if (sActiveContext != aContext) {
     Clear();
@@ -90,7 +145,8 @@ void TexturePoolOGL::Fill(GLContext* aContext)
   if (sTextures->GetSize() == TEXTURE_POOL_SIZE)
     return;
 
-  sActiveContext->MakeCurrent();
+  DebugOnly<bool> ok = sActiveContext->MakeCurrent();
+  MOZ_ASSERT(ok);
 
   GLuint* texture = nullptr;
   while (sTextures->GetSize() < TEXTURE_POOL_SIZE) {
@@ -99,6 +155,7 @@ void TexturePoolOGL::Fill(GLContext* aContext)
     sTextures->Push((void*) texture);
   }
 
+  LOG("fill texture pool to %d", TEXTURE_POOL_SIZE);
   sMonitor->NotifyAll();
 }
 
@@ -109,12 +166,22 @@ GLContext* TexturePoolOGL::GetGLContext()
 
 void TexturePoolOGL::Init()
 {
+  MOZ_ASSERT(sPoolState != PoolState::INITIALIZED);
   sMonitor = new Monitor("TexturePoolOGL.sMonitor");
   sTextures = new nsDeque();
+
+#ifdef MOZ_WIDGET_ANDROID
+  if (jni::IsAvailable()) {
+    GeckoSurfaceTextureSupport::Init();
+  }
+#endif
+  sPoolState = PoolState::INITIALIZED;
 }
 
 void TexturePoolOGL::Shutdown()
 {
+  MOZ_ASSERT(sPoolState == PoolState::INITIALIZED);
+  sPoolState = PoolState::SHUTDOWN;
   delete sMonitor;
   delete sTextures;
 }

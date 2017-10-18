@@ -82,11 +82,11 @@ exports.devtoolsModules = [
  * The map/reduce incantation squashes the array of arrays to a single array.
  */
 try {
-  const defaultTools = require("devtools/client/definitions").defaultTools;
+  const { defaultTools } = require("devtools/client/definitions");
   exports.devtoolsToolModules = defaultTools.map(def => def.commands || [])
                                    .reduce((prev, curr) => prev.concat(curr), []);
-} catch(e) {
-  // "definitions" is only accessible from Firefox
+} catch (e) {
+  // "devtools/client/definitions" is only accessible from Firefox
   exports.devtoolsToolModules = [];
 }
 
@@ -96,18 +96,18 @@ try {
  * single array.
  */
 try {
-  const { ToolboxButtons } = require("devtools/client/framework/toolbox");
+  const { ToolboxButtons } = require("devtools/client/definitions");
   exports.devtoolsButtonModules = ToolboxButtons.map(def => def.commands || [])
                                      .reduce((prev, curr) => prev.concat(curr), []);
-} catch(e) {
-  // "devtools/framework/toolbox" is only accessible from Firefox
+} catch (e) {
+  // "devtools/client/definitions" is only accessible from Firefox
   exports.devtoolsButtonModules = [];
 }
 
 /**
  * Add modules to a system for use in a content process (but don't call load)
  */
-exports.addAllItemsByModule = function(system) {
+exports.addAllItemsByModule = function (system) {
   system.addItemsByModule(exports.baseModules, { delayedLoad: true });
   system.addItemsByModule(exports.devtoolsModules, { delayedLoad: true });
   system.addItemsByModule(exports.devtoolsToolModules, { delayedLoad: true });
@@ -133,7 +133,7 @@ var customProperties = [ "buttonId", "buttonClass", "tooltipText" ];
  * Create a system which connects to a GCLI in a remote target
  * @return Promise<System> for the given target
  */
-exports.getSystem = function(target) {
+exports.getSystem = function (target) {
   const existingLinks = linksForTarget.get(target);
   if (existingLinks != null) {
     existingLinks.refs++;
@@ -164,7 +164,7 @@ exports.getSystem = function(target) {
  * Someone that called getSystem doesn't need it any more, so decrement the
  * count of users of the system for that target, and destroy if needed
  */
-exports.releaseSystem = function(target) {
+exports.releaseSystem = function (target) {
   const links = linksForTarget.get(target);
   if (links == null) {
     throw new Error("releaseSystem called for unknown target");

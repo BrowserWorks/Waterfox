@@ -11,7 +11,7 @@ function installAddon(aCallback) {
   AddonManager.getInstallForURL(TESTROOT + "addons/browser_inlinesettings1_custom.xpi",
                                 function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function() {
+      onInstallEnded() {
         executeSoon(aCallback);
       }
     });
@@ -22,7 +22,7 @@ function installAddon(aCallback) {
 function test() {
   waitForExplicitFinish();
 
-  installAddon(function () {
+  installAddon(function() {
     open_manager("addons://list/extension", function(aWindow) {
       gManagerWindow = aWindow;
       gCategoryUtilities = new CategoryUtilities(gManagerWindow);
@@ -72,7 +72,7 @@ add_test(function() {
 
     ok(settings[0].hasAttribute("first-row"), "First visible row should have first-row attribute");
 
-    var style = window.getComputedStyle(settings[0], null);
+    var style = window.getComputedStyle(settings[0]);
     is(style.getPropertyValue("background-color"), "rgb(0, 0, 255)", "Background color should be set");
     is(style.getPropertyValue("display"), "-moz-grid-line", "Display should be set");
     is(style.getPropertyValue("-moz-binding"), 'url("chrome://inlinesettings/content/binding.xml#custom")', "Binding should be set");

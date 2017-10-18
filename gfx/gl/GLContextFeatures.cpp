@@ -124,7 +124,7 @@ static const FeatureInfo sFeatureInfoArr[] = {
     {
         "draw_buffers",
         GLVersion::GL2,
-        GLESVersion::NONE,
+        GLESVersion::ES3,
         GLContext::Extension_None,
         {
             GLContext::ARB_draw_buffers,
@@ -312,16 +312,6 @@ static const FeatureInfo sFeatureInfoArr[] = {
          */
     },
     {
-        "get_string_indexed",
-        GLVersion::GL3,
-        GLESVersion::ES3,
-        GLContext::Extension_None,
-        {
-            GLContext::Extensions_End
-        }
-        // glGetStringi
-    },
-    {
         "gpu_shader4",
         GLVersion::GL3,
         GLESVersion::ES3,
@@ -445,7 +435,7 @@ static const FeatureInfo sFeatureInfoArr[] = {
         GLESVersion::NONE,
         GLContext::Extension_None,
         {
-            GLContext::NV_primitive_restart,
+            //GLContext::NV_primitive_restart, // Has different enum values.
             GLContext::Extensions_End
         }
     },
@@ -533,6 +523,17 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
+        "robust_buffer_access_behavior",
+        GLVersion::NONE,
+        GLESVersion::NONE,
+        GLContext::Extension_None,
+        {
+            GLContext::ARB_robust_buffer_access_behavior,
+            GLContext::KHR_robust_buffer_access_behavior,
+            GLContext::Extensions_End
+        }
+    },
+    {
         "robustness",
         GLVersion::NONE,
         GLESVersion::NONE,
@@ -540,6 +541,7 @@ static const FeatureInfo sFeatureInfoArr[] = {
         {
             GLContext::ARB_robustness,
             GLContext::EXT_robustness,
+            GLContext::KHR_robustness,
             GLContext::Extensions_End
         }
     },

@@ -38,8 +38,7 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
 const NOTIFICATIONS = [
@@ -78,7 +77,7 @@ var CrashMonitorInternal = {
   previousCheckpoints: null,
 
   /* Deferred for AsyncShutdown blocker */
-  profileBeforeChangeDeferred: Promise.defer(),
+  profileBeforeChangeDeferred: PromiseUtils.defer(),
 
   /**
    * Path to checkpoint file.
@@ -93,11 +92,11 @@ var CrashMonitorInternal = {
    *
    * @return {Promise} A promise that resolves/rejects once loading is complete
    */
-  loadPreviousCheckpoints: function () {
-    this.previousCheckpoints = Task.spawn(function*() {
+  loadPreviousCheckpoints() {
+    this.previousCheckpoints = (async function() {
       let data;
       try {
-        data = yield OS.File.read(CrashMonitorInternal.path, { encoding: "utf-8" });
+        data = await OS.File.read(CrashMonitorInternal.path, { encoding: "utf-8" });
       } catch (ex) {
         if (!(ex instanceof OS.File.Error)) {
           throw ex;
@@ -124,7 +123,7 @@ var CrashMonitorInternal = {
       }
 
       return Object.freeze(notifications);
-    });
+    })();
 
     return this.previousCheckpoints;
   }
@@ -155,7 +154,7 @@ this.CrashMonitor = {
    *
    * @return {Promise}
    */
-  init: function () {
+  init() {
     if (CrashMonitorInternal.initialized) {
       throw new Error("CrashMonitor.init() must only be called once!");
     }
@@ -165,8 +164,8 @@ this.CrashMonitor = {
     // called after receiving it
     CrashMonitorInternal.checkpoints["profile-after-change"] = true;
 
-    NOTIFICATIONS.forEach(function (aTopic) {
-      Services.obs.addObserver(this, aTopic, false);
+    NOTIFICATIONS.forEach(function(aTopic) {
+      Services.obs.addObserver(this, aTopic);
     }, this);
 
     // Add shutdown blocker for profile-before-change
@@ -185,12 +184,12 @@ this.CrashMonitor = {
    *
    * Update checkpoint file for every new notification received.
    */
-  observe: function (aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (!(aTopic in CrashMonitorInternal.checkpoints)) {
       // If this is the first time this notification is received,
       // remember it and write it to file
       CrashMonitorInternal.checkpoints[aTopic] = true;
-      Task.spawn(function* () {
+      (async function() {
         try {
           let data = JSON.stringify(CrashMonitorInternal.checkpoints);
 
@@ -200,7 +199,7 @@ this.CrashMonitor = {
            * written by the time the notification completes. The
            * exception is profile-before-change which has a shutdown
            * blocker. */
-          yield OS.File.writeAtomic(
+          await OS.File.writeAtomic(
             CrashMonitorInternal.path,
             data, {tmpPath: CrashMonitorInternal.path + ".tmp"});
 
@@ -210,12 +209,12 @@ this.CrashMonitor = {
             CrashMonitorInternal.profileBeforeChangeDeferred.resolve();
           }
         }
-      });
+      })();
     }
 
     if (NOTIFICATIONS.every(elem => elem in CrashMonitorInternal.checkpoints)) {
       // All notifications received, unregister observers
-      NOTIFICATIONS.forEach(function (aTopic) {
+      NOTIFICATIONS.forEach(function(aTopic) {
         Services.obs.removeObserver(this, aTopic);
       }, this);
     }

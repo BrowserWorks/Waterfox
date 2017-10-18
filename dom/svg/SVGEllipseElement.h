@@ -7,7 +7,7 @@
 #ifndef mozilla_dom_SVGEllipseElement_h
 #define mozilla_dom_SVGEllipseElement_h
 
-#include "nsSVGPathGeometryElement.h"
+#include "SVGGeometryElement.h"
 #include "nsSVGLength2.h"
 
 nsresult NS_NewSVGEllipseElement(nsIContent **aResult,
@@ -16,7 +16,7 @@ nsresult NS_NewSVGEllipseElement(nsIContent **aResult,
 namespace mozilla {
 namespace dom {
 
-typedef nsSVGPathGeometryElement SVGEllipseElementBase;
+typedef SVGGeometryElement SVGEllipseElementBase;
 
 class SVGEllipseElement final : public SVGEllipseElementBase
 {
@@ -30,13 +30,14 @@ public:
   // nsSVGSVGElement methods:
   virtual bool HasValidDimensions() const override;
 
-  // nsSVGPathGeometryElement methods:
+  // SVGGeometryElement methods:
   virtual bool GetGeometryBounds(Rect* aBounds, const StrokeOptions& aStrokeOptions,
                                  const Matrix& aToBoundsSpace,
                                  const Matrix* aToNonScalingStrokeSpace = nullptr) override;
   virtual already_AddRefed<Path> BuildPath(PathBuilder* aBuilder) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedLength> Cx();

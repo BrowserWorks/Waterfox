@@ -28,7 +28,9 @@ enum class VibrancyType {
   MENU,
   HIGHLIGHTED_MENUITEM,
   SHEET,
-  SOURCE_LIST
+  SOURCE_LIST,
+  SOURCE_LIST_SELECTION,
+  ACTIVE_SOURCE_LIST_SELECTION
 };
 
 /**
@@ -72,6 +74,8 @@ public:
    */
   void UpdateVibrantRegion(VibrancyType aType,
                            const LayoutDeviceIntRegion& aRegion);
+
+  bool HasVibrantRegions() { return !mVibrantRegions.IsEmpty(); }
 
   /**
    * Clear the vibrant areas that we know about.

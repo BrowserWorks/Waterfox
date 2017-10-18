@@ -24,13 +24,13 @@ class SVGViewFrame : public nsFrame
   NS_NewSVGViewFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
   explicit SVGViewFrame(nsStyleContext* aContext)
-    : nsFrame(aContext)
+    : nsFrame(aContext, kClassID)
   {
     AddStateBits(NS_FRAME_IS_NONDISPLAY);
   }
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(SVGViewFrame)
 
 #ifdef DEBUG
   virtual void Init(nsIContent*       aContent,
@@ -49,13 +49,6 @@ public:
     return MakeFrameName(NS_LITERAL_STRING("SVGView"), aResult);
   }
 #endif
-
-  /**
-   * Get the "type" of the frame
-   *
-   * @see nsGkAtoms::svgFELeafFrame
-   */
-  virtual nsIAtom* GetType() const override;
 
   virtual nsresult AttributeChanged(int32_t  aNameSpaceID,
                                     nsIAtom* aAttribute,
@@ -88,19 +81,13 @@ SVGViewFrame::Init(nsIContent*       aContent,
 }
 #endif /* DEBUG */
 
-nsIAtom *
-SVGViewFrame::GetType() const
-{
-  return nsGkAtoms::svgViewFrame;
-}
-
 nsresult
 SVGViewFrame::AttributeChanged(int32_t  aNameSpaceID,
                                nsIAtom* aAttribute,
                                int32_t  aModType)
 {
   // Ignore zoomAndPan as it does not cause the <svg> element to re-render
-    
+
   if (aNameSpaceID == kNameSpaceID_None &&
       (aAttribute == nsGkAtoms::preserveAspectRatio ||
        aAttribute == nsGkAtoms::viewBox ||

@@ -10,12 +10,12 @@ const kTestWidgetCount = 3;
 registerCleanupFunction(removeCustomToolbars);
 
 // unregisterArea should keep placements by default and restore them when re-adding the area
-add_task(function*() {
+add_task(async function() {
   let widgetIds = [];
   for (let i = 0; i < kTestWidgetCount; i++) {
     let id = kTestWidgetPfx + i;
     widgetIds.push(id);
-    let spec = {id: id, type: 'button', removable: true, label: "unregisterArea test", tooltiptext: "" + i};
+    let spec = {id, type: "button", removable: true, label: "unregisterArea test", tooltiptext: "" + i};
     CustomizableUI.createWidget(spec);
   }
   for (let i = kTestWidgetCount; i < kTestWidgetCount * 2; i++) {
@@ -70,7 +70,7 @@ add_task(function*() {
   checkWidgetFates(widgetIds);
   toolbarNode.remove();
 
-  //XXXgijs: ensure cleanup function doesn't barf:
+  // XXXgijs: ensure cleanup function doesn't barf:
   gAddedToolbars.delete(kToolbarName);
 
   // Remove all the XUL widgets, destroy the others:
@@ -101,6 +101,6 @@ function checkWidgetFates(aWidgetIds) {
   }
 }
 
-add_task(function* asyncCleanup() {
-  yield resetCustomization();
+add_task(async function asyncCleanup() {
+  await resetCustomization();
 });

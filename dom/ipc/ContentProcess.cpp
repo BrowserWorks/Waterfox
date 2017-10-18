@@ -7,10 +7,7 @@
 #include "mozilla/ipc/IOThreadChild.h"
 
 #include "ContentProcess.h"
-
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
-#include "mozilla/WindowsVersion.h"
-#endif
+#include "ContentPrefs.h"
 
 #if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
 #include <stdlib.h>
@@ -18,6 +15,7 @@
 
 #if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
 #include "mozilla/Preferences.h"
+#include "mozilla/SandboxSettings.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryService.h"
 #include "nsDirectoryServiceDefs.h"
@@ -33,9 +31,8 @@ static bool
 IsSandboxTempDirRequired()
 {
   // On Windows, a sandbox-writable temp directory is only used
-  // for Vista or later with sandbox pref level >= 1.
-  return (IsVistaOrLater() &&
-    (Preferences::GetInt("security.sandbox.content.level") >= 1));
+  // when sandbox pref level >= 1.
+  return GetEffectiveContentSandboxLevel() >= 1;
 }
 
 static void
@@ -49,10 +46,10 @@ SetTmpEnvironmentVariable(nsIFile* aValue)
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
-  NS_WARN_IF(!SetEnvironmentVariableW(L"TMP", fullTmpPath.get()));
+  Unused << NS_WARN_IF(!SetEnvironmentVariableW(L"TMP", fullTmpPath.get()));
   // We also set TEMP in case there is naughty third-party code that is
   // referencing the environment variable directly.
-  NS_WARN_IF(!SetEnvironmentVariableW(L"TEMP", fullTmpPath.get()));
+  Unused << NS_WARN_IF(!SetEnvironmentVariableW(L"TEMP", fullTmpPath.get()));
 }
 #endif
 
@@ -61,7 +58,7 @@ static bool
 IsSandboxTempDirRequired()
 {
   // On OSX, use the sandbox-writable temp when the pref level >= 1.
-  return (Preferences::GetInt("security.sandbox.content.level") >= 1);
+  return (GetEffectiveContentSandboxLevel() >= 1);
 }
 
 static void
@@ -72,7 +69,7 @@ SetTmpEnvironmentVariable(nsIFile* aValue)
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
-  NS_WARN_IF(setenv("TMPDIR", fullTmpPath.get(), 1) != 0);
+  Unused << NS_WARN_IF(setenv("TMPDIR", fullTmpPath.get(), 1) != 0);
 }
 #endif
 
@@ -108,27 +105,153 @@ SetUpSandboxEnvironment()
 }
 #endif
 
-void
-ContentProcess::SetAppDir(const nsACString& aPath)
-{
-  mXREEmbed.SetAppDir(aPath);
-}
-
 bool
-ContentProcess::Init()
+ContentProcess::Init(int aArgc, char* aArgv[])
 {
-    mContent.Init(IOThreadChild::message_loop(),
-                  ParentPid(),
-                  IOThreadChild::channel());
-    mXREEmbed.Start();
-    mContent.InitXPCOM();
-    mContent.InitGraphicsDeviceData();
+  // If passed in grab the application path for xpcom init
+  bool foundAppdir = false;
+  bool foundChildID = false;
+  bool foundIsForBrowser = false;
+  bool foundIntPrefs = false;
+  bool foundBoolPrefs = false;
+  bool foundStringPrefs = false;
 
-#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
-    SetUpSandboxEnvironment();
+  uint64_t childID;
+  bool isForBrowser;
+
+#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
+  // If passed in grab the profile path for sandboxing
+  bool foundProfile = false;
+  nsCOMPtr<nsIFile> profileDir;
 #endif
 
-    return true;
+  InfallibleTArray<PrefSetting> prefsArray;
+  for (int idx = aArgc; idx > 0; idx--) {
+    if (!aArgv[idx]) {
+      continue;
+    }
+
+    if (!strcmp(aArgv[idx], "-appdir")) {
+      MOZ_ASSERT(!foundAppdir);
+      if (foundAppdir) {
+        continue;
+      }
+      nsCString appDir;
+      appDir.Assign(nsDependentCString(aArgv[idx+1]));
+      mXREEmbed.SetAppDir(appDir);
+      foundAppdir = true;
+    } else if (!strcmp(aArgv[idx], "-childID")) {
+      MOZ_ASSERT(!foundChildID);
+      if (foundChildID) {
+        continue;
+      }
+      if (idx + 1 < aArgc) {
+        childID = strtoull(aArgv[idx + 1], nullptr, 10);
+        foundChildID = true;
+      }
+    } else if (!strcmp(aArgv[idx], "-isForBrowser") || !strcmp(aArgv[idx], "-notForBrowser")) {
+      MOZ_ASSERT(!foundIsForBrowser);
+      if (foundIsForBrowser) {
+        continue;
+      }
+      isForBrowser = strcmp(aArgv[idx], "-notForBrowser");
+      foundIsForBrowser = true;
+    } else if (!strcmp(aArgv[idx], "-intPrefs")) {
+      SET_PREF_PHASE(BEGIN_INIT_PREFS);
+      char* str = aArgv[idx + 1];
+      while (*str) {
+        int32_t index = strtol(str, &str, 10);
+        MOZ_ASSERT(str[0] == ':');
+        str++;
+        MaybePrefValue value(PrefValue(static_cast<int32_t>(strtol(str, &str, 10))));
+        MOZ_ASSERT(str[0] == '|');
+        str++;
+        PrefSetting pref(nsCString(ContentPrefs::GetContentPref(index)), value, MaybePrefValue());
+        prefsArray.AppendElement(pref);
+      }
+      SET_PREF_PHASE(END_INIT_PREFS);
+      foundIntPrefs = true;
+    } else if (!strcmp(aArgv[idx], "-boolPrefs")) {
+      SET_PREF_PHASE(BEGIN_INIT_PREFS);
+      char* str = aArgv[idx + 1];
+      while (*str) {
+        int32_t index = strtol(str, &str, 10);
+        MOZ_ASSERT(str[0] == ':');
+        str++;
+        MaybePrefValue value(PrefValue(!!strtol(str, &str, 10)));
+        MOZ_ASSERT(str[0] == '|');
+        str++;
+        PrefSetting pref(nsCString(ContentPrefs::GetContentPref(index)), value, MaybePrefValue());
+        prefsArray.AppendElement(pref);
+      }
+      SET_PREF_PHASE(END_INIT_PREFS);
+      foundBoolPrefs = true;
+    } else if (!strcmp(aArgv[idx], "-stringPrefs")) {
+      SET_PREF_PHASE(BEGIN_INIT_PREFS);
+      char* str = aArgv[idx + 1];
+      while (*str) {
+        int32_t index = strtol(str, &str, 10);
+        MOZ_ASSERT(str[0] == ':');
+        str++;
+        int32_t length = strtol(str, &str, 10);
+        MOZ_ASSERT(str[0] == ';');
+        str++;
+        MaybePrefValue value(PrefValue(nsCString(str, length)));
+        PrefSetting pref(nsCString(ContentPrefs::GetContentPref(index)), value, MaybePrefValue());
+        prefsArray.AppendElement(pref);
+        str += length + 1;
+        MOZ_ASSERT(*(str - 1) == '|');
+      }
+      SET_PREF_PHASE(END_INIT_PREFS);
+      foundStringPrefs = true;
+    }
+    else if (!strcmp(aArgv[idx], "-safeMode")) {
+      gSafeMode = true;
+    }
+
+#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
+    else if (!strcmp(aArgv[idx], "-profile")) {
+      MOZ_ASSERT(!foundProfile);
+      if (foundProfile) {
+        continue;
+      }
+      bool flag;
+      nsresult rv = XRE_GetFileFromPath(aArgv[idx+1], getter_AddRefs(profileDir));
+      if (NS_FAILED(rv) ||
+          NS_FAILED(profileDir->Exists(&flag)) || !flag) {
+        NS_WARNING("Invalid profile directory passed to content process.");
+        profileDir = nullptr;
+      }
+      foundProfile = true;
+    }
+#endif /* XP_MACOSX && MOZ_CONTENT_SANDBOX */
+
+    bool allFound = foundAppdir && foundChildID && foundIsForBrowser && foundIntPrefs && foundBoolPrefs && foundStringPrefs;
+
+#if defined(XP_MACOSX) && defined(MOZ_CONTENT_SANDBOX)
+    allFound &= foundProfile;
+#endif
+
+    if (allFound) {
+      break;
+    }
+  }
+  Preferences::SetInitPreferences(&prefsArray);
+  mContent.Init(IOThreadChild::message_loop(),
+                ParentPid(),
+                IOThreadChild::channel(),
+                childID,
+                isForBrowser);
+  mXREEmbed.Start();
+#if (defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+  mContent.SetProfileDir(profileDir);
+#endif
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+  SetUpSandboxEnvironment();
+#endif
+
+  return true;
 }
 
 // Note: CleanUp() never gets called in non-debug builds because we exit early
@@ -136,7 +259,7 @@ ContentProcess::Init()
 void
 ContentProcess::CleanUp()
 {
-    mXREEmbed.Stop();
+  mXREEmbed.Stop();
 }
 
 } // namespace dom

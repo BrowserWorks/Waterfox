@@ -3,7 +3,6 @@ config = {
     "branch": "mozilla-beta",
     "en_us_binary_url": "http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-beta/",
     "update_channel": "beta",
-    "latest_mar_dir": '/pub/mozilla.org/firefox/nightly/latest-mozilla-beta-l10n',
 
     # l10n
     "hg_l10n_base": "https://hg.mozilla.org/releases/l10n/mozilla-beta",
@@ -16,10 +15,11 @@ config = {
         "branch": "default",
         "dest": "tools",
     }, {
-        "vcs": "hgtool",
+        "vcs": "hg",
         "repo": "https://hg.mozilla.org/releases/mozilla-beta",
         "revision": "%(revision)s",
         "dest": "mozilla-beta",
+        "clone_upstream_url": "https://hg.mozilla.org/mozilla-unified",
     }],
     # purge options
     'purge_minsize': 12,

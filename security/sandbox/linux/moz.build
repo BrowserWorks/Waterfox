@@ -4,26 +4,23 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# WARNING: On desktop Linux, SandboxHooks.cpp must be statically compiled
-# into the main executable in order to function properly.
-# This is currently the case, but if mozsandbox is moved to its own
-# shared library, something needs to change regarding SandboxHooks.cpp.
-# See Bug 1176099 for further details.
+SharedLibrary('mozsandbox')
 
+# Depend on mozglue if and only if it's a shared library;
+# this needs to match mozglue/build/moz.build:
 if CONFIG['OS_TARGET'] == 'Android':
-    SharedLibrary('mozsandbox')
     USE_LIBS += [
         'mozglue',
     ]
-else:
-    Library('mozsandbox')
 
 EXPORTS.mozilla += [
     'Sandbox.h',
+    'SandboxInfo.h',
 ]
 
 SOURCES += [
     '../chromium-shim/base/logging.cpp',
+    '../chromium-shim/base/threading/platform_thread_linux.cpp',
     '../chromium/base/at_exit.cc',
     '../chromium/base/callback_internal.cc',
     '../chromium/base/lazy_instance.cc',
@@ -42,25 +39,25 @@ SOURCES += [
     '../chromium/base/synchronization/lock_impl_posix.cc',
     '../chromium/base/synchronization/waitable_event_posix.cc',
     '../chromium/base/third_party/icu/icu_utf.cc',
-    '../chromium/base/threading/platform_thread_linux.cc',
+    '../chromium/base/threading/platform_thread_internal_posix.cc',
     '../chromium/base/threading/platform_thread_posix.cc',
     '../chromium/base/threading/thread_collision_warner.cc',
     '../chromium/base/threading/thread_id_name_manager.cc',
-    '../chromium/base/threading/thread_local_posix.cc',
+    '../chromium/base/threading/thread_local_storage.cc',
+    '../chromium/base/threading/thread_local_storage_posix.cc',
     '../chromium/base/threading/thread_restrictions.cc',
     '../chromium/base/time/time.cc',
     '../chromium/base/time/time_posix.cc',
     '../chromium/sandbox/linux/bpf_dsl/bpf_dsl.cc',
+    '../chromium/sandbox/linux/bpf_dsl/codegen.cc',
     '../chromium/sandbox/linux/bpf_dsl/dump_bpf.cc',
     '../chromium/sandbox/linux/bpf_dsl/policy.cc',
     '../chromium/sandbox/linux/bpf_dsl/policy_compiler.cc',
-    '../chromium/sandbox/linux/seccomp-bpf/basicblock.cc',
-    '../chromium/sandbox/linux/seccomp-bpf/codegen.cc',
+    '../chromium/sandbox/linux/bpf_dsl/syscall_set.cc',
     '../chromium/sandbox/linux/seccomp-bpf/die.cc',
-    '../chromium/sandbox/linux/seccomp-bpf/errorcode.cc',
     '../chromium/sandbox/linux/seccomp-bpf/syscall.cc',
-    '../chromium/sandbox/linux/seccomp-bpf/syscall_iterator.cc',
     '../chromium/sandbox/linux/seccomp-bpf/trap.cc',
+    '../chromium/sandbox/linux/services/syscall_wrappers.cc',
     'broker/SandboxBrokerCommon.cpp',
     'LinuxCapabilities.cpp',
     'Sandbox.cpp',
@@ -68,13 +65,16 @@ SOURCES += [
     'SandboxChroot.cpp',
     'SandboxFilter.cpp',
     'SandboxFilterUtil.cpp',
+    'SandboxHooks.cpp',
+    'SandboxInfo.cpp',
     'SandboxLogging.cpp',
+    'SandboxReporterClient.cpp',
     'SandboxUtil.cpp',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+if CONFIG['MOZ_GMP_SANDBOX']:
     SOURCES += [
-        'SandboxHooks.cpp',
+        'SandboxOpenedFiles.cpp',
     ]
 
 # This copy of SafeSPrintf doesn't need to avoid the Chromium logging
@@ -88,6 +88,9 @@ if CONFIG['CLANG_CXX']:
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-shadow']
+    SOURCES['../chromium/sandbox/linux/services/syscall_wrappers.cc'].flags += [
+        '-Wno-empty-body',
+    ]
 
 # gcc lto likes to put the top level asm in syscall.cc in a different partition
 # from the function using it which breaks the build.  Work around that by
@@ -98,7 +101,7 @@ if '-flto' in CONFIG['OS_CXXFLAGS'] and not CONFIG['CLANG_CXX']:
 DEFINES['NS_NO_XPCOM'] = True
 DISABLE_STL_WRAPPING = True
 
-LOCAL_INCLUDES += ['/security/sandbox/linux/common']
+LOCAL_INCLUDES += ['/security/sandbox/linux']
 LOCAL_INCLUDES += ['/security/sandbox/chromium-shim']
 LOCAL_INCLUDES += ['/security/sandbox/chromium']
 LOCAL_INCLUDES += ['/nsprpub']
@@ -110,14 +113,11 @@ if CONFIG['OS_TARGET'] != 'Android':
         'rt',
     ]
 
-USE_LIBS += [
-    'mfbt',
-]
-
 DIRS += [
     'broker',
-    'common',
     'glue',
+    'interfaces',
+    'reporter',
 ]
 
 TEST_DIRS += [

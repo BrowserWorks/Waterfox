@@ -11,7 +11,7 @@
  * If both the username and password matches an already existing login, we should not
  * update it's password, but only it's usage timestamp and count.
  */
-add_task(function* test_edit_password() {
+add_task(async function test_edit_password() {
   let testCases = [{
     usernameInPage: "username",
     passwordInPage: "password",
@@ -70,35 +70,38 @@ add_task(function* test_edit_password() {
       }));
     }
 
-    yield BrowserTestUtils.withNewTab({
+    await BrowserTestUtils.withNewTab({
       gBrowser,
       url: "https://example.com/browser/toolkit/components/" +
            "passwordmgr/test/browser/form_basic.html",
-    }, function* (browser) {
+    }, async function(browser) {
       // Submit the form in the content page with the credentials from the test
       // case. This will cause the doorhanger notification to be displayed.
       let promiseShown = BrowserTestUtils.waitForEvent(PopupNotifications.panel,
-                                                       "popupshown");
-      yield ContentTask.spawn(browser, testCase,
-        function* (testCase) {
+                                                       "popupshown",
+                                                       (event) => event.target == PopupNotifications.panel);
+      await ContentTask.spawn(browser, testCase,
+        async function(contentTestCase) {
           let doc = content.document;
-          doc.getElementById("form-basic-username").value = testCase.usernameInPage;
-          doc.getElementById("form-basic-password").value = testCase.passwordInPage;
+          doc.getElementById("form-basic-username").value = contentTestCase.usernameInPage;
+          doc.getElementById("form-basic-password").value = contentTestCase.passwordInPage;
           doc.getElementById("form-basic").submit();
         });
-      yield promiseShown;
-
+      await promiseShown;
       let notificationElement = PopupNotifications.panel.childNodes[0];
+      // Style flush to make sure binding is attached
+      notificationElement.querySelector("#password-notification-password").clientTop;
+
       // Modify the username in the dialog if requested.
       if (testCase.usernameChangedTo) {
         notificationElement.querySelector("#password-notification-username")
-                .setAttribute("value", testCase.usernameChangedTo);
+                .value = testCase.usernameChangedTo;
       }
 
       // Modify the password in the dialog if requested.
       if (testCase.passwordChangedTo) {
         notificationElement.querySelector("#password-notification-password")
-                .setAttribute("value", testCase.passwordChangedTo);
+                .value = testCase.passwordChangedTo;
       }
 
       // We expect a modifyLogin notification if the final username used by the
@@ -114,7 +117,7 @@ add_task(function* test_edit_password() {
       let promiseLogin = TestUtils.topicObserved("passwordmgr-storage-changed",
                          (_, data) => data == expectedNotification);
       notificationElement.button.doCommand();
-      let [result] = yield promiseLogin;
+      let [result] = await promiseLogin;
 
       // Check that the values in the database match the expected values.
       let login = expectModifyLogin ? result.QueryInterface(Ci.nsIArray)

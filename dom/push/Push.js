@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "PushService",
 const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
 
 /**
- * The Push component runs in the child process and exposes the SimplePush API
+ * The Push component runs in the child process and exposes the Push API
  * to the web application. The PushService running in the parent process is the
  * one actually performing all operations.
  */
@@ -92,29 +92,47 @@ Push.prototype = {
   subscribe: function(options) {
     console.debug("subscribe()", this._scope);
 
-    let histogram = Services.telemetry.getHistogramById("PUSH_API_USED");
-    histogram.add(true);
     return this.askPermission().then(() =>
       this.createPromise((resolve, reject) => {
         let callback = new PushSubscriptionCallback(this, resolve, reject);
 
-        if (!options || !options.applicationServerKey) {
+        if (!options || options.applicationServerKey === null) {
           PushService.subscribe(this._scope, this._principal, callback);
           return;
         }
 
-        let appServerKey = options.applicationServerKey;
-        let keyView = new Uint8Array(ArrayBuffer.isView(appServerKey) ?
-                                     appServerKey.buffer : appServerKey);
+        let keyView = this._normalizeAppServerKey(options.applicationServerKey);
         if (keyView.byteLength === 0) {
           callback._rejectWithError(Cr.NS_ERROR_DOM_PUSH_INVALID_KEY_ERR);
           return;
         }
         PushService.subscribeWithKey(this._scope, this._principal,
-                                     appServerKey.length, appServerKey,
+                                     keyView.byteLength, keyView,
                                      callback);
       })
     );
+  },
+
+  _normalizeAppServerKey: function(appServerKey) {
+    let key;
+    if (typeof appServerKey == "string") {
+      try {
+        key = Cu.cloneInto(ChromeUtils.base64URLDecode(appServerKey, {
+          padding: "reject",
+        }), this._window);
+      } catch (e) {
+        throw new this._window.DOMException(
+          "String contains an invalid character",
+          "InvalidCharacterError"
+        );
+      }
+    } else if (this._window.ArrayBuffer.isView(appServerKey)) {
+      key = appServerKey.buffer;
+    } else {
+      // `appServerKey` is an array buffer.
+      key = appServerKey;
+    }
+    return new this._window.Uint8Array(key);
   },
 
   getSubscription: function() {
@@ -172,28 +190,18 @@ Push.prototype = {
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionType]),
     };
     let typeArray = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
-    typeArray.appendElement(type, false);
+    typeArray.appendElement(type);
 
     // create a nsIContentPermissionRequest
     let request = {
       types: typeArray,
       principal: this._principal,
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionRequest]),
-      allow: function() {
-        let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_GRANTED");
-        histogram.add();
-        allowCallback();
-      },
-      cancel: function() {
-        let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_DENIED");
-        histogram.add();
-        cancelCallback();
-      },
+      allow: allowCallback,
+      cancel: cancelCallback,
       window: this._window,
     };
 
-    let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_REQUESTED");
-    histogram.add(1);
     // Using askPermission from nsIDOMWindowUtils that takes care of the
     // remoting if needed.
     let windowUtils = this._window.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -242,12 +250,14 @@ PushSubscriptionCallback.prototype = {
 
   _getKey: function(subscription, name) {
     let outKeyLen = {};
-    let rawKey = subscription.getKey(name, outKeyLen);
+    let rawKey = Cu.cloneInto(subscription.getKey(name, outKeyLen),
+                              this.pushManager._window);
     if (!outKeyLen.value) {
       return null;
     }
-    let key = new ArrayBuffer(outKeyLen.value);
-    let keyView = new Uint8Array(key);
+
+    let key = new this.pushManager._window.ArrayBuffer(outKeyLen.value);
+    let keyView = new this.pushManager._window.Uint8Array(key);
     keyView.set(rawKey);
     return key;
   },

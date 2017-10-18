@@ -7,15 +7,13 @@
 #ifndef nsSHEntry_h
 #define nsSHEntry_h
 
-// Helper Classes
-#include "nsCOMPtr.h"
 #include "nsCOMArray.h"
-#include "nsString.h"
-#include "mozilla/Attributes.h"
-
-// Interfaces needed
-#include "nsISHEntry.h"
+#include "nsCOMPtr.h"
 #include "nsISHContainer.h"
+#include "nsISHEntry.h"
+#include "nsString.h"
+
+#include "mozilla/Attributes.h"
 
 class nsSHEntryShared;
 class nsIInputStream;
@@ -49,7 +47,7 @@ private:
   // See nsSHEntry.idl for comments on these members.
   nsCOMPtr<nsIURI> mURI;
   nsCOMPtr<nsIURI> mOriginalURI;
-  bool mLoadReplace;
+  nsCOMPtr<nsIURI> mResultPrincipalURI;
   nsCOMPtr<nsIURI> mReferrerURI;
   uint32_t mReferrerPolicy;
   nsString mTitle;
@@ -60,12 +58,14 @@ private:
   int32_t mScrollPositionY;
   nsISHEntry* mParent;
   nsCOMArray<nsISHEntry> mChildren;
-  bool mURIWasModified;
   nsCOMPtr<nsIStructuredCloneContainer> mStateData;
-  bool mIsSrcdocEntry;
-  bool mScrollRestorationIsManual;
   nsString mSrcdocData;
   nsCOMPtr<nsIURI> mBaseURI;
+  bool mLoadReplace;
+  bool mURIWasModified;
+  bool mIsSrcdocEntry;
+  bool mScrollRestorationIsManual;
+  bool mLoadedInThisProcess;
 };
 
 #endif /* nsSHEntry_h */

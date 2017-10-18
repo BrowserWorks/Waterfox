@@ -10,26 +10,27 @@
 #ifndef WEBRTC_TEST_FAKE_AUDIO_DEVICE_H_
 #define WEBRTC_TEST_FAKE_AUDIO_DEVICE_H_
 
+#include <memory>
 #include <string>
 
-#include "webrtc/base/scoped_ptr.h"
+#include "webrtc/base/criticalsection.h"
+#include "webrtc/base/platform_thread.h"
 #include "webrtc/modules/audio_device/include/fake_audio_device.h"
+#include "webrtc/test/drifting_clock.h"
 #include "webrtc/typedefs.h"
 
 namespace webrtc {
 
 class Clock;
-class CriticalSectionWrapper;
-class EventWrapper;
+class EventTimerWrapper;
 class FileWrapper;
 class ModuleFileUtility;
-class ThreadWrapper;
 
 namespace test {
 
 class FakeAudioDevice : public FakeAudioDeviceModule {
  public:
-  FakeAudioDevice(Clock* clock, const std::string& filename);
+  FakeAudioDevice(Clock* clock, const std::string& filename, float speed);
 
   virtual ~FakeAudioDevice();
 
@@ -48,20 +49,21 @@ class FakeAudioDevice : public FakeAudioDeviceModule {
   void CaptureAudio();
 
   static const uint32_t kFrequencyHz = 16000;
-  static const uint32_t kBufferSizeBytes = 2 * kFrequencyHz;
+  static const size_t kBufferSizeBytes = 2 * kFrequencyHz;
 
   AudioTransport* audio_callback_;
   bool capturing_;
   int8_t captured_audio_[kBufferSizeBytes];
   int8_t playout_buffer_[kBufferSizeBytes];
+  const float speed_;
   int64_t last_playout_ms_;
 
-  Clock* clock_;
-  rtc::scoped_ptr<EventWrapper> tick_;
-  rtc::scoped_ptr<CriticalSectionWrapper> lock_;
-  rtc::scoped_ptr<ThreadWrapper> thread_;
-  rtc::scoped_ptr<ModuleFileUtility> file_utility_;
-  rtc::scoped_ptr<FileWrapper> input_stream_;
+  DriftingClock clock_;
+  std::unique_ptr<EventTimerWrapper> tick_;
+  rtc::CriticalSection lock_;
+  rtc::PlatformThread thread_;
+  std::unique_ptr<ModuleFileUtility> file_utility_;
+  std::unique_ptr<FileWrapper> input_stream_;
 };
 }  // namespace test
 }  // namespace webrtc

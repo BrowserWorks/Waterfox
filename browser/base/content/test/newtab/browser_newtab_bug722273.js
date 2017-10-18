@@ -11,19 +11,19 @@ Cc["@mozilla.org/moz/jssubscript-loader;1"]
 
 var {Sanitizer} = tmp;
 
-add_task(function* () {
-  yield promiseSanitizeHistory();
-  yield promiseAddFakeVisits();
-  yield* addNewTabPageTab();
+add_task(async function() {
+  await promiseSanitizeHistory();
+  await promiseAddFakeVisits();
+  await addNewTabPageTab();
 
-  let cellUrl = yield performOnCell(0, cell => { return cell.site.url; });
+  let cellUrl = await performOnCell(0, cell => { return cell.site.url; });
   is(cellUrl, URL, "first site is our fake site");
 
   let updatedPromise = whenPagesUpdated();
-  yield promiseSanitizeHistory();
-  yield updatedPromise;
+  await promiseSanitizeHistory();
+  await updatedPromise;
 
-  let isGone = yield performOnCell(0, cell => { return cell.site == null; });
+  let isGone = await performOnCell(0, cell => { return cell.site == null; });
   ok(isGone, "fake site is gone");
 });
 
@@ -38,14 +38,14 @@ function promiseAddFakeVisits() {
   let place = {
     uri: makeURI(URL),
     title: "fake site",
-    visits: visits
+    visits
   };
   return new Promise((resolve, reject) => {
     PlacesUtils.asyncHistory.updatePlaces(place, {
       handleError: () => reject(new Error("Couldn't add visit")),
-      handleResult: function () {},
-      handleCompletion: function () {
-        NewTabUtils.links.populateCache(function () {
+      handleResult() {},
+      handleCompletion() {
+        NewTabUtils.links.populateCache(function() {
           NewTabUtils.allPages.update();
           resolve();
         }, true);

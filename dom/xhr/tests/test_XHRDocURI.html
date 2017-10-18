@@ -21,7 +21,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=459470
 
 </div>
 <pre id="test">
-<script class="testbody" type="application/javascript;version=1.8">
+<script class="testbody" type="application/javascript">
 
 SimpleTest.waitForExplicitFinish();
 var gen;
@@ -101,7 +101,7 @@ function testCloneDocURI(aDoc) {
   is(clone.baseURI, aDoc.baseURI, "wrong base (clone)");
 }
 
-function runTest() {
+function* runTest() {
   is(document.baseURI, "http://example.org/", "wrong doc baseURI");
 
   // use content XHR and access URI properties from content privileged script
@@ -504,7 +504,6 @@ function runTest() {
 
   SimpleTest.finish();
   SpecialPowers.removePermission("systemXHR", document);
-  yield undefined;
 }
 
 </script>

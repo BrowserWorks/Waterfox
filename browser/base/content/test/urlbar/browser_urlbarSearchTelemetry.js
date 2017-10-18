@@ -6,51 +6,92 @@ const SUGGEST_URLBAR_PREF = "browser.urlbar.suggest.searches";
 const TEST_ENGINE_BASENAME = "searchSuggestionEngine.xml";
 
 // Must run first.
-add_task(function* prepare() {
+add_task(async function prepare() {
+  let suggestionsEnabled = Services.prefs.getBoolPref(SUGGEST_URLBAR_PREF);
   Services.prefs.setBoolPref(SUGGEST_URLBAR_PREF, true);
-  let engine = yield promiseNewSearchEngine(TEST_ENGINE_BASENAME);
+  let engine = await promiseNewSearchEngine(TEST_ENGINE_BASENAME);
   let oldCurrentEngine = Services.search.currentEngine;
   Services.search.currentEngine = engine;
-  registerCleanupFunction(function* () {
-    Services.prefs.clearUserPref(SUGGEST_URLBAR_PREF);
+
+  registerCleanupFunction(async function() {
+    Services.prefs.setBoolPref(SUGGEST_URLBAR_PREF, suggestionsEnabled);
     Services.search.currentEngine = oldCurrentEngine;
 
     // Clicking urlbar results causes visits to their associated pages, so clear
     // that history now.
-    yield PlacesTestUtils.clearHistory();
+    await PlacesTestUtils.clearHistory();
 
     // Make sure the popup is closed for the next test.
     gURLBar.blur();
     Assert.ok(!gURLBar.popup.popupOpen, "popup should be closed");
   });
-});
 
-add_task(function* heuristicResult() {
-  yield compareCounts(function* () {
-    gBrowser.selectedTab = gBrowser.addTab();
-    yield promiseAutocompleteResultPopup("heuristicResult");
-    let action = getActionAtIndex(0);
-    Assert.ok(!!action, "there should be an action at index 0");
-    Assert.equal(action.type, "searchengine", "type should be searchengine");
-    let item = gURLBar.popup.richlistbox.getItemAtIndex(0);
-    let loadPromise = promiseTabLoaded(gBrowser.selectedTab);
-    item.click();
-    yield loadPromise;
-    gBrowser.removeTab(gBrowser.selectedTab);
+  // Move the mouse away from the urlbar one-offs so that a one-off engine is
+  // not inadvertently selected.
+  await new Promise(resolve => {
+    EventUtils.synthesizeNativeMouseMove(window.document.documentElement, 0, 0,
+                                         resolve);
   });
 });
 
-add_task(function* searchSuggestion() {
-  yield compareCounts(function* () {
-    gBrowser.selectedTab = gBrowser.addTab();
-    yield promiseAutocompleteResultPopup("searchSuggestion");
+add_task(async function heuristicResultMouse() {
+  await compareCounts(async function() {
+    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+    gURLBar.focus();
+    await promiseAutocompleteResultPopup("heuristicResult");
+    let action = getActionAtIndex(0);
+    Assert.ok(!!action, "there should be an action at index 0");
+    Assert.equal(action.type, "searchengine", "type should be searchengine");
+    let loadPromise = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+    gURLBar.popup.richlistbox.getItemAtIndex(0).click();
+    await loadPromise;
+    await BrowserTestUtils.removeTab(tab);
+  });
+});
+
+add_task(async function heuristicResultKeyboard() {
+  await compareCounts(async function() {
+    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+    gURLBar.focus();
+    await promiseAutocompleteResultPopup("heuristicResult");
+    let action = getActionAtIndex(0);
+    Assert.ok(!!action, "there should be an action at index 0");
+    Assert.equal(action.type, "searchengine", "type should be searchengine");
+    let loadPromise = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+    EventUtils.sendKey("return");
+    await loadPromise;
+    await BrowserTestUtils.removeTab(tab);
+  });
+});
+
+add_task(async function searchSuggestionMouse() {
+  await compareCounts(async function() {
+    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+    gURLBar.focus();
+    await promiseAutocompleteResultPopup("searchSuggestion");
     let idx = getFirstSuggestionIndex();
     Assert.ok(idx >= 0, "there should be a first suggestion");
-    let item = gURLBar.popup.richlistbox.getItemAtIndex(idx);
-    let loadPromise = promiseTabLoaded(gBrowser.selectedTab);
-    item.click();
-    yield loadPromise;
-    gBrowser.removeTab(gBrowser.selectedTab);
+    let loadPromise = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+    gURLBar.popup.richlistbox.getItemAtIndex(idx).click();
+    await loadPromise;
+    await BrowserTestUtils.removeTab(tab);
+  });
+});
+
+add_task(async function searchSuggestionKeyboard() {
+  await compareCounts(async function() {
+    let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
+    gURLBar.focus();
+    await promiseAutocompleteResultPopup("searchSuggestion");
+    let idx = getFirstSuggestionIndex();
+    Assert.ok(idx >= 0, "there should be a first suggestion");
+    let loadPromise = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+    while (idx--) {
+      EventUtils.sendKey("down");
+    }
+    EventUtils.sendKey("return");
+    await loadPromise;
+    await BrowserTestUtils.removeTab(tab);
   });
 });
 
@@ -62,7 +103,7 @@ add_task(function* searchSuggestion() {
  * @param clickCallback Use this to open the urlbar popup and choose and click a
  *        result.
  */
-function* compareCounts(clickCallback) {
+async function compareCounts(clickCallback) {
   // Search events triggered by clicks (not the Return key in the urlbar) are
   // recorded in three places:
   // * BrowserUITelemetry
@@ -105,7 +146,7 @@ function* compareCounts(clickCallback) {
                         { value: engineID });
 
   gURLBar.focus();
-  yield clickCallback();
+  await clickCallback();
 
   // Now get the new counts and compare them to the old.
 
@@ -148,7 +189,7 @@ function getActionAtIndex(index) {
   }
   let [, type, paramStr] = mozActionMatch;
   return {
-    type: type,
+    type,
     params: JSON.parse(paramStr),
   };
 }

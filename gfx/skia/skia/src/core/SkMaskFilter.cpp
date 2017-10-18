@@ -5,18 +5,19 @@
  * found in the LICENSE file.
  */
 
-
 #include "SkMaskFilter.h"
+
+#include "SkAutoMalloc.h"
 #include "SkBlitter.h"
-#include "SkDraw.h"
 #include "SkCachedData.h"
+#include "SkDraw.h"
 #include "SkPath.h"
-#include "SkRasterClip.h"
 #include "SkRRect.h"
-#include "SkTypes.h"
+#include "SkRasterClip.h"
 
 #if SK_SUPPORT_GPU
 #include "GrTexture.h"
+#include "GrTextureProxy.h"
 #include "SkGr.h"
 #endif
 
@@ -214,8 +215,7 @@ static int countNestedRects(const SkPath& path, SkRect rects[2]) {
 }
 
 bool SkMaskFilter::filterRRect(const SkRRect& devRRect, const SkMatrix& matrix,
-                               const SkRasterClip& clip, SkBlitter* blitter,
-                               SkPaint::Style style) const {
+                               const SkRasterClip& clip, SkBlitter* blitter) const {
     // Attempt to speed up drawing by creating a nine patch. If a nine patch
     // cannot be used, return false to allow our caller to recover and perform
     // the drawing another way.
@@ -233,10 +233,10 @@ bool SkMaskFilter::filterRRect(const SkRRect& devRRect, const SkMatrix& matrix,
 
 bool SkMaskFilter::filterPath(const SkPath& devPath, const SkMatrix& matrix,
                               const SkRasterClip& clip, SkBlitter* blitter,
-                              SkPaint::Style style) const {
+                              SkStrokeRec::InitStyle style) const {
     SkRect rects[2];
     int rectCount = 0;
-    if (SkPaint::kFill_Style == style) {
+    if (SkStrokeRec::kFill_InitStyle == style) {
         rectCount = countNestedRects(devPath, rects);
     }
     if (rectCount > 0) {
@@ -314,33 +314,32 @@ bool SkMaskFilter::canFilterMaskGPU(const SkRRect& devRRect,
     return false;
 }
 
- bool SkMaskFilter::directFilterMaskGPU(GrTextureProvider* texProvider,
-                                        GrDrawContext* drawContext,
-                                        GrPaint* grp,
-                                        const GrClip&,
-                                        const SkMatrix& viewMatrix,
-                                        const SkStrokeRec& strokeRec,
-                                        const SkPath& path) const {
+bool SkMaskFilter::directFilterMaskGPU(GrContext*,
+                                       GrRenderTargetContext* renderTargetContext,
+                                       GrPaint&&,
+                                       const GrClip&,
+                                       const SkMatrix& viewMatrix,
+                                       const SkStrokeRec& strokeRec,
+                                       const SkPath& path) const {
     return false;
 }
 
-
-bool SkMaskFilter::directFilterRRectMaskGPU(GrTextureProvider* texProvider,
-                                            GrDrawContext* drawContext,
-                                            GrPaint* grp,
+bool SkMaskFilter::directFilterRRectMaskGPU(GrContext*,
+                                            GrRenderTargetContext* renderTargetContext,
+                                            GrPaint&&,
                                             const GrClip&,
                                             const SkMatrix& viewMatrix,
                                             const SkStrokeRec& strokeRec,
-                                            const SkRRect& rrect) const {
+                                            const SkRRect& rrect,
+                                            const SkRRect& devRRect) const {
     return false;
 }
 
-bool SkMaskFilter::filterMaskGPU(GrTexture* src,
-                                 const SkMatrix& ctm,
-                                 const SkRect& maskRect,
-                                 GrTexture** result,
-                                 bool canOverwriteSrc) const {
-    return false;
+sk_sp<GrTextureProxy> SkMaskFilter::filterMaskGPU(GrContext*,
+                                                  sk_sp<GrTextureProxy> srcProxy,
+                                                  const SkMatrix& ctm,
+                                                  const SkIRect& maskRect) const {
+    return nullptr;
 }
 #endif
 

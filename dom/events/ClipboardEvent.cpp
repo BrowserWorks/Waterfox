@@ -53,6 +53,8 @@ ClipboardEvent::InitClipboardEvent(const nsAString& aType, bool aCanBubble,
                                    bool aCancelable,
                                    DataTransfer* aClipboardData)
 {
+  NS_ENSURE_TRUE_VOID(!mEvent->mFlags.mIsBeingDispatched);
+
   Event::InitEvent(aType, aCanBubble, aCancelable);
   mEvent->AsClipboardEvent()->mClipboardData = aClipboardData;
 }
@@ -75,7 +77,8 @@ ClipboardEvent::Constructor(const GlobalObject& aGlobal,
       // support other types of events, make sure that read/write privileges are
       // checked properly within DataTransfer.
       clipboardData = new DataTransfer(ToSupports(e), eCopy, false, -1);
-      clipboardData->SetData(aParam.mDataType, aParam.mData, aRv);
+      clipboardData->SetData(aParam.mDataType, aParam.mData,
+                             *aGlobal.GetSubjectPrincipal(), aRv);
       NS_ENSURE_TRUE(!aRv.Failed(), nullptr);
     }
   }
@@ -83,6 +86,7 @@ ClipboardEvent::Constructor(const GlobalObject& aGlobal,
   e->InitClipboardEvent(aType, aParam.mBubbles, aParam.mCancelable,
                         clipboardData);
   e->SetTrusted(trusted);
+  e->SetComposed(aParam.mComposed);
   return e.forget();
 }
 

@@ -1,0 +1,53 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# moved from embedding/components/webbrowserpersist Jan 13, 2017
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+XPIDL_SOURCES += [
+    'nsCWebBrowserPersist.idl',
+    'nsIWebBrowserPersist.idl',
+    'nsIWebBrowserPersistable.idl',
+    'nsIWebBrowserPersistDocument.idl',
+]
+
+XPIDL_MODULE = 'webbrowserpersist'
+
+IPDL_SOURCES += [
+    'PWebBrowserPersistDocument.ipdl',
+    'PWebBrowserPersistResources.ipdl',
+    'PWebBrowserPersistSerialize.ipdl',
+]
+
+UNIFIED_SOURCES += [
+    'nsWebBrowserPersist.cpp',
+    'WebBrowserPersistDocumentChild.cpp',
+    'WebBrowserPersistDocumentParent.cpp',
+    'WebBrowserPersistLocalDocument.cpp',
+    'WebBrowserPersistRemoteDocument.cpp',
+    'WebBrowserPersistResourcesChild.cpp',
+    'WebBrowserPersistResourcesParent.cpp',
+    'WebBrowserPersistSerializeChild.cpp',
+    'WebBrowserPersistSerializeParent.cpp',
+]
+
+EXPORTS.mozilla += [
+    'WebBrowserPersistDocumentChild.h',
+    'WebBrowserPersistDocumentParent.h',
+    'WebBrowserPersistLocalDocument.h',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'
+LOCAL_INCLUDES += [
+    '/dom/base',
+    '/dom/html',
+]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

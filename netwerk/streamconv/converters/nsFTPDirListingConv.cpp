@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/Unused.h"
 
 //
 // Log module for FTP dir listing stream converter logging...
@@ -37,7 +38,7 @@ using namespace mozilla;
 // nsISupports implementation
 NS_IMPL_ISUPPORTS(nsFTPDirListingConv,
                   nsIStreamConverter,
-                  nsIStreamListener, 
+                  nsIStreamListener,
                   nsIRequestObserver)
 
 
@@ -62,7 +63,7 @@ nsFTPDirListingConv::AsyncConvertData(const char *aFromType, const char *aToType
     mFinalListener = aListener;
     NS_ADDREF(mFinalListener);
 
-    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, 
+    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug,
         ("nsFTPDirListingConv::AsyncConvertData() converting FROM raw, TO application/http-index-format\n"));
 
     return NS_OK;
@@ -74,12 +75,12 @@ NS_IMETHODIMP
 nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
                                   nsIInputStream *inStr, uint64_t sourceOffset, uint32_t count) {
     NS_ASSERTION(request, "FTP dir listing stream converter needs a request");
-    
+
     nsresult rv;
 
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(request, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
-    
+
     uint32_t read, streamLen;
 
     uint64_t streamLen64;
@@ -96,7 +97,7 @@ nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
     // the dir listings are ascii text, null terminate this sucker.
     buffer[streamLen] = '\0';
 
-    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("nsFTPDirListingConv::OnData(request = %x, ctxt = %x, inStr = %x, sourceOffset = %llu, count = %u)\n", request, ctxt, inStr, sourceOffset, count));
+    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("nsFTPDirListingConv::OnData(request = %p, ctxt = %p, inStr = %p, sourceOffset = %" PRIu64 ", count = %u)\n", request, ctxt, inStr, sourceOffset, count));
 
     if (!mBuffer.IsEmpty()) {
         // we have data left over from a previous OnDataAvailable() call.
@@ -128,13 +129,13 @@ nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
     char *line = buffer.get();
     line = DigestBufferLines(line, indexFormat);
 
-    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("::OnData() sending the following %d bytes...\n\n%s\n\n", 
+    MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("::OnData() sending the following %d bytes...\n\n%s\n\n",
         indexFormat.Length(), indexFormat.get()) );
 
     // if there's any data left over, buffer it.
     if (line && *line) {
         mBuffer.Append(line);
-        MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("::OnData() buffering the following %d bytes...\n\n%s\n\n",
+        MOZ_LOG(gFTPDirListConvLog, LogLevel::Debug, ("::OnData() buffering the following %zu bytes...\n\n%s\n\n",
             strlen(line), line) );
     }
 
@@ -153,7 +154,7 @@ nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
 // nsIRequestObserver implementation
 NS_IMETHODIMP
 nsFTPDirListingConv::OnStartRequest(nsIRequest* request, nsISupports *ctxt) {
-    // we don't care about start. move along... but start masqeurading 
+    // we don't care about start. move along... but start masqeurading
     // as the http-index channel now.
     return mFinalListener->OnStartRequest(request, ctxt);
 }
@@ -200,7 +201,7 @@ nsFTPDirListingConv::GetHeaders(nsACString& headers,
     } else {
         rv = uri->GetAsciiSpec(spec);
         if (NS_FAILED(rv)) return rv;
-        
+
         headers.Append(spec);
     }
     headers.Append(char(nsCRT::LF));
@@ -236,9 +237,9 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
 
         int type = ParseFTPList(line, &state, &result );
 
-        // if it is other than a directory, file, or link -OR- if it is a 
+        // if it is other than a directory, file, or link -OR- if it is a
         // directory named . or .., skip over this line.
-        if ((type != 'd' && type != 'f' && type != 'l') || 
+        if ((type != 'd' && type != 'f' && type != 'l') ||
             (result.fe_type == 'd' && result.fe_fname[0] == '.' &&
             (result.fe_fnlen == 1 || (result.fe_fnlen == 2 &&  result.fe_fname[1] == '.'))) )
         {
@@ -246,7 +247,7 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
                 line = eol+2;
             else
                 line = eol+1;
-            
+
             continue;
         }
 
@@ -264,21 +265,21 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
 
         nsAutoCString buf;
         aString.Append('\"');
-        aString.Append(NS_EscapeURL(Substring(result.fe_fname, 
+        aString.Append(NS_EscapeURL(Substring(result.fe_fname,
                                               result.fe_fname+result.fe_fnlen),
                                     esc_Minimal|esc_OnlyASCII|esc_Forced,buf));
         aString.AppendLiteral("\" ");
- 
+
         // CONTENT LENGTH
-        
-        if (type != 'd') 
+
+        if (type != 'd')
         {
             for (int i = 0; i < int(sizeof(result.fe_size)); ++i)
             {
                 if (result.fe_size[i] != '\0')
                     aString.Append((const char*)&result.fe_size[i], 1);
             }
-            
+
             aString.Append(' ');
         }
         else
@@ -287,6 +288,13 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
 
         // MODIFIED DATE
         char buffer[256] = "";
+
+        // ParseFTPList can return time structure with invalid values.
+        // PR_NormalizeTime will set all values into valid limits.
+        result.fe_time.tm_params.tp_gmt_offset = 0;
+        result.fe_time.tm_params.tp_dst_offset = 0;
+        PR_NormalizeTime(&result.fe_time, PR_GMTParameters);
+
         // Note: The below is the RFC822/1123 format, as required by
         // the application/http-index-format specs
         // viewers of such a format can then reformat this into the
@@ -295,7 +303,7 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
                                "%a, %d %b %Y %H:%M:%S", &result.fe_time );
 
         nsAutoCString escaped;
-        NS_WARN_IF(!NS_Escape(nsDependentCString(buffer), escaped, url_Path));
+        Unused << NS_WARN_IF(!NS_Escape(nsDependentCString(buffer), escaped, url_Path));
         aString.Append(escaped);
         aString.Append(' ');
 
@@ -306,7 +314,7 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
             aString.AppendLiteral("SYMBOLIC-LINK");
         else
             aString.AppendLiteral("FILE");
-        
+
         aString.Append(' ');
 
         aString.Append(char(nsCRT::LF)); // complete this line

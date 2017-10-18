@@ -17,15 +17,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
 const { interfaces: Ci, classes: Cc } = Components;
 
 this.Feeds = {
-  init() {
-    let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
-    mm.addMessageListener("WCCR:registerProtocolHandler", this);
-    mm.addMessageListener("WCCR:registerContentHandler", this);
-
-    Services.ppmm.addMessageListener("WCCR:setAutoHandler", this);
-    Services.ppmm.addMessageListener("FeedConverter:addLiveBookmark", this);
-  },
-
+  // Listeners are added in nsBrowserGlue.js
   receiveMessage(aMessage) {
     let data = aMessage.data;
     switch (aMessage.name) {
@@ -72,7 +64,7 @@ this.Feeds = {
    *         Whether this is already a known feed or not, if true only a security
    *         check will be performed.
    */
-  isValidFeed: function(aLink, aPrincipal, aIsFeed) {
+  isValidFeed(aLink, aPrincipal, aIsFeed) {
     if (!aLink || !aPrincipal)
       return false;
 
@@ -93,8 +85,7 @@ this.Feeds = {
         BrowserUtils.urlSecurityCheck(aLink.href, principalToCheck,
                                       Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
         return type || "application/rss+xml";
-      }
-      catch(ex) {
+      } catch (ex) {
       }
     }
 

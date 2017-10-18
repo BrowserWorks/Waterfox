@@ -12,9 +12,9 @@
 #include "mozilla/dom/HTMLParamElementBinding.h"
 #include "mozilla/dom/HTMLQuoteElementBinding.h"
 
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsAttrValueInlines.h"
 #include "nsStyleConsts.h"
-#include "nsRuleData.h"
 #include "nsMappedAttributes.h"
 #include "nsContentUtils.h"
 #include "nsIContentSecurityPolicy.h"
@@ -48,7 +48,7 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLSharedElement)
 
 // nsIDOMHTMLQuoteElement
-NS_IMPL_URI_ATTR(HTMLSharedElement, Cite, cite)
+// Empty
 
 // nsIDOMHTMLHeadElement
 // Empty
@@ -76,7 +76,7 @@ HTMLSharedElement::GetHref(nsAString& aValue)
     aValue = href;
     return NS_OK;
   }
-  
+
   nsAutoCString spec;
   uri->GetSpec(spec);
   CopyUTF8toUTF16(spec, aValue);
@@ -113,18 +113,17 @@ HTMLSharedElement::ParseAttribute(int32_t aNamespaceID,
 
 static void
 DirectoryMapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                               nsRuleData* aData)
+                               GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(List)) {
-    nsCSSValue* listStyleType = aData->ValueForListStyleType();
-    if (listStyleType->GetUnit() == eCSSUnit_Null) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(List))) {
+    if (!aData->PropertyIsSet(eCSSProperty_list_style_type)) {
       // type: enum
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::type);
       if (value) {
         if (value->Type() == nsAttrValue::eEnum) {
-          listStyleType->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
+          aData->SetKeywordValue(eCSSProperty_list_style_type, value->GetEnumValue());
         } else {
-          listStyleType->SetIntValue(NS_STYLE_LIST_STYLE_DISC, eCSSUnit_Enumerated);
+          aData->SetKeywordValue(eCSSProperty_list_style_type, NS_STYLE_LIST_STYLE_DISC);
         }
       }
     }
@@ -140,9 +139,9 @@ HTMLSharedElement::IsAttributeMapped(const nsIAtom* aAttribute) const
     static const MappedAttributeEntry attributes[] = {
       { &nsGkAtoms::type },
       // { &nsGkAtoms::compact }, // XXX
-      { nullptr} 
+      { nullptr}
     };
-  
+
     static const MappedAttributeEntry* const map[] = {
       attributes,
       sCommonAttributeMap,
@@ -231,52 +230,33 @@ SetBaseTargetUsingFirstBaseWithTarget(nsIDocument* aDocument,
 }
 
 nsresult
-HTMLSharedElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify)
+HTMLSharedElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
-  nsresult rv = nsGenericHTMLElement::SetAttr(aNameSpaceID, aName, aPrefix,
-                                              aValue, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // If the href attribute of a <base> tag is changing, we may need to update
-  // the document's base URI, which will cause all the links on the page to be
-  // re-resolved given the new base.  If the target attribute is changing, we
-  // similarly need to change the base target.
-  if (mNodeInfo->Equals(nsGkAtoms::base) &&
-      aNameSpaceID == kNameSpaceID_None &&
-      IsInUncomposedDoc()) {
+  if (aNamespaceID == kNameSpaceID_None) {
     if (aName == nsGkAtoms::href) {
-      SetBaseURIUsingFirstBaseWithHref(GetUncomposedDoc(), this);
+      // If the href attribute of a <base> tag is changing, we may need to
+      // update the document's base URI, which will cause all the links on the
+      // page to be re-resolved given the new base.
+      // If the href is being unset (aValue is null), we will need to find a new
+      // <base>.
+      if (mNodeInfo->Equals(nsGkAtoms::base) && IsInUncomposedDoc()) {
+        SetBaseURIUsingFirstBaseWithHref(GetUncomposedDoc(),
+                                         aValue ? this : nullptr);
+      }
     } else if (aName == nsGkAtoms::target) {
-      SetBaseTargetUsingFirstBaseWithTarget(GetUncomposedDoc(), this);
+      // The target attribute is in pretty much the same situation as the href
+      // attribute, above.
+      if (mNodeInfo->Equals(nsGkAtoms::base) && IsInUncomposedDoc()) {
+        SetBaseTargetUsingFirstBaseWithTarget(GetUncomposedDoc(),
+                                              aValue ? this : nullptr);
+      }
     }
   }
 
-  return NS_OK;
-}
-
-nsresult
-HTMLSharedElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                             bool aNotify)
-{
-  nsresult rv = nsGenericHTMLElement::UnsetAttr(aNameSpaceID, aName, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // If we're the first <base> with an href and our href attribute is being
-  // unset, then we're no longer the first <base> with an href, and we need to
-  // find the new one.  Similar for target.
-  if (mNodeInfo->Equals(nsGkAtoms::base) &&
-      aNameSpaceID == kNameSpaceID_None &&
-      IsInUncomposedDoc()) {
-    if (aName == nsGkAtoms::href) {
-      SetBaseURIUsingFirstBaseWithHref(GetUncomposedDoc(), nullptr);
-    } else if (aName == nsGkAtoms::target) {
-      SetBaseTargetUsingFirstBaseWithTarget(GetUncomposedDoc(), nullptr);
-    }
-  }
-
-  return NS_OK;
+  return nsGenericHTMLElement::AfterSetAttr(aNamespaceID, aName, aValue,
+                                            aOldValue, aNotify);
 }
 
 nsresult

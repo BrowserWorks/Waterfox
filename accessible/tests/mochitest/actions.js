@@ -41,7 +41,7 @@ const XUL_EVENTS = CLICK_EVENTS | COMMAND_EVENT;
  *
  *    // [optional] an array of invoker's checker objects (see eventQueue
  *    // constructor events.js)
- *    get eventSeq() {} 
+ *    get eventSeq() {}
  *  };
  *
  *
@@ -61,7 +61,7 @@ function testActions(aArray)
     var accOrElmOrIDOfTarget = actionObj.targetID ?
       actionObj.targetID : accOrElmOrID;
 
-    var eventSeq = new Array();
+    var eventSeq = [];
     if (events) {
       var elm = getNode(accOrElmOrIDOfTarget);
       if (events & MOUSEDOWN_EVENT)
@@ -134,7 +134,7 @@ function actionInvoker(aAccOrElmOrId, aActionIndex, aActionName, aEventSeq)
     try {
       acc.doAction(aActionIndex);
     }
-    catch (e){
+    catch (e) {
       ok(false, "doAction(" + aActionIndex + ") failed with: " + e.name);
       return INVOKER_ACTION_FAILED;
     }

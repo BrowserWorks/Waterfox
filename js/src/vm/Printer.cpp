@@ -6,15 +6,42 @@
 
 #include "vm/Printer.h"
 
+#include "mozilla/PodOperations.h"
+#include "mozilla/Printf.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "jscntxt.h"
-#include "jsprf.h"
 #include "jsutil.h"
 
 #include "ds/LifoAlloc.h"
+
+using mozilla::PodCopy;
+
+namespace
+{
+
+class GenericPrinterPrintfTarget : public mozilla::PrintfTarget
+{
+public:
+
+    explicit GenericPrinterPrintfTarget(js::GenericPrinter& p)
+        : printer(p)
+    {
+    }
+
+    bool append(const char* sp, size_t len) {
+        return printer.put(sp, len);
+    }
+
+private:
+
+    js::GenericPrinter& printer;
+};
+
+}
 
 namespace js {
 
@@ -37,38 +64,29 @@ GenericPrinter::hadOutOfMemory() const
     return hadOOM_;
 }
 
-int
-GenericPrinter::put(const char* s)
-{
-    return put(s, strlen(s));
-}
-
-int
+bool
 GenericPrinter::printf(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
-    int i = vprintf(fmt, va);
+    bool r = vprintf(fmt, va);
     va_end(va);
-    return i;
+    return r;
 }
 
-int
+bool
 GenericPrinter::vprintf(const char* fmt, va_list ap)
 {
     // Simple shortcut to avoid allocating strings.
     if (strchr(fmt, '%') == nullptr)
         return put(fmt);
 
-    char* bp;
-    bp = JS_vsmprintf(fmt, ap);      /* XXX vsaprintf */
-    if (!bp) {
+    GenericPrinterPrintfTarget printer(*this);
+    if (!printer.vprint(fmt, ap)) {
         reportOutOfMemory();
-        return -1;
+        return false;
     }
-    int i = put(bp);
-    js_free(bp);
-    return i;
+    return true;
 }
 
 const size_t Sprinter::DefaultSize = 64;
@@ -88,7 +106,7 @@ Sprinter::realloc_(size_t newSize)
     return true;
 }
 
-Sprinter::Sprinter(ExclusiveContext* cx, bool shouldReportOOM)
+Sprinter::Sprinter(JSContext* cx, bool shouldReportOOM)
   : context(cx),
 #ifdef DEBUG
     initialized(false),
@@ -132,16 +150,20 @@ Sprinter::checkInvariants() const
     MOZ_ASSERT(base[size - 1] == 0);
 }
 
-const char*
-Sprinter::string() const
+char*
+Sprinter::release()
 {
-    return base;
-}
+    checkInvariants();
+    if (hadOOM_)
+        return nullptr;
 
-const char*
-Sprinter::stringEnd() const
-{
-    return base + offset;
+    char* str = base;
+    base = nullptr;
+    offset = size = 0;
+#ifdef DEBUG
+    initialized = false;
+#endif
+    return str;
 }
 
 char*
@@ -173,7 +195,7 @@ Sprinter::reserve(size_t len)
     return sb;
 }
 
-int
+bool
 Sprinter::put(const char* s, size_t len)
 {
     InvariantChecker ic(this);
@@ -181,10 +203,9 @@ Sprinter::put(const char* s, size_t len)
     const char* oldBase = base;
     const char* oldEnd = base + size;
 
-    ptrdiff_t oldOffset = offset;
     char* bp = reserve(len);
     if (!bp)
-        return -1;
+        return false;
 
     /* s is within the buffer already */
     if (s >= oldBase && s < oldEnd) {
@@ -197,29 +218,10 @@ Sprinter::put(const char* s, size_t len)
     }
 
     bp[len] = 0;
-    return oldOffset;
+    return true;
 }
 
-int
-Sprinter::vprintf(const char* fmt, va_list ap)
-{
-    InvariantChecker ic(this);
-
-    do {
-        va_list aq;
-        va_copy(aq, ap);
-        int i = JS_vsnprintf(base + offset, size - offset, fmt, aq);
-        va_end(aq);
-        if (i > -1 && (size_t) i < size - offset) {
-            offset += i;
-            return i;
-        }
-    } while (realloc_(size * 2));
-
-    return -1;
-}
-
-int
+bool
 Sprinter::putString(JSString* s)
 {
     InvariantChecker ic(this);
@@ -227,23 +229,22 @@ Sprinter::putString(JSString* s)
     size_t length = s->length();
     size_t size = length;
 
-    ptrdiff_t oldOffset = offset;
     char* buffer = reserve(size);
     if (!buffer)
-        return -1;
+        return false;
 
     JSLinearString* linear = s->ensureLinear(context);
     if (!linear)
-        return -1;
+        return false;
 
     JS::AutoCheckCannotGC nogc;
     if (linear->hasLatin1Chars())
-        mozilla::PodCopy(reinterpret_cast<Latin1Char*>(buffer), linear->latin1Chars(nogc), length);
+        PodCopy(reinterpret_cast<Latin1Char*>(buffer), linear->latin1Chars(nogc), length);
     else
         DeflateStringToBuffer(nullptr, linear->twoByteChars(nogc), length, buffer, &size);
 
     buffer[size] = 0;
-    return oldOffset;
+    return true;
 }
 
 ptrdiff_t
@@ -262,23 +263,16 @@ Sprinter::reportOutOfMemory()
     hadOOM_ = true;
 }
 
-ptrdiff_t
-Sprint(Sprinter* sp, const char* format, ...)
+bool
+Sprinter::jsprintf(const char* format, ...)
 {
     va_list ap;
-    char* bp;
-    ptrdiff_t offset;
-
     va_start(ap, format);
-    bp = JS_vsmprintf(format, ap);      /* XXX vsaprintf */
+
+    bool r = vprintf(format, ap);
     va_end(ap);
-    if (!bp) {
-        sp->reportOutOfMemory();
-        return -1;
-    }
-    offset = sp->put(bp);
-    js_free(bp);
-    return offset;
+
+    return r;
 }
 
 const char js_EscapeMap[] = {
@@ -296,24 +290,30 @@ const char js_EscapeMap[] = {
 
 template <typename CharT>
 static char*
-QuoteString(Sprinter* sp, const CharT* s, size_t length, char16_t quote)
+QuoteString(Sprinter* sp, const mozilla::Range<const CharT> chars, char16_t quote)
 {
+    using CharPtr = mozilla::RangedPtr<const CharT>;
+
     /* Sample off first for later return value pointer computation. */
     ptrdiff_t offset = sp->getOffset();
 
-    if (quote && Sprint(sp, "%c", char(quote)) < 0)
-        return nullptr;
+    if (quote) {
+        if (!sp->jsprintf("%c", char(quote)))
+            return nullptr;
+    }
 
-    const CharT* end = s + length;
+    const CharPtr end = chars.end();
 
     /* Loop control variables: end points at end of string sentinel. */
-    for (const CharT* t = s; t < end; s = ++t) {
+    for (CharPtr t = chars.begin(); t < end; ++t) {
         /* Move t forward from s past un-quote-worthy characters. */
+        const CharPtr s = t;
         char16_t c = *t;
         while (c < 127 && isprint(c) && c != quote && c != '\\' && c != '\t') {
-            c = *++t;
+            ++t;
             if (t == end)
                 break;
+            c = *t;
         }
 
         {
@@ -323,7 +323,7 @@ QuoteString(Sprinter* sp, const CharT* s, size_t length, char16_t quote)
                 return nullptr;
 
             for (ptrdiff_t i = 0; i < len; ++i)
-                (*sp)[base + i] = char(*s++);
+                (*sp)[base + i] = char(s[i]);
             (*sp)[base + len] = 0;
         }
 
@@ -333,7 +333,7 @@ QuoteString(Sprinter* sp, const CharT* s, size_t length, char16_t quote)
         /* Use js_EscapeMap, \u, or \x only if necessary. */
         const char* escape;
         if (!(c >> 8) && c != 0 && (escape = strchr(js_EscapeMap, int(c))) != nullptr) {
-            if (Sprint(sp, "\\%c", escape[1]) < 0)
+            if (!sp->jsprintf("\\%c", escape[1]))
                 return nullptr;
         } else {
             /*
@@ -341,21 +341,25 @@ QuoteString(Sprinter* sp, const CharT* s, size_t length, char16_t quote)
              * because ECMA-262 allows only \u, not \x, in Unicode identifiers
              * (see bug 621814).
              */
-            if (Sprint(sp, (quote && !(c >> 8)) ? "\\x%02X" : "\\u%04X", c) < 0)
+            if (!sp->jsprintf((quote && !(c >> 8)) ? "\\x%02X" : "\\u%04X", c))
                 return nullptr;
         }
     }
 
     /* Sprint the closing quote and return the quoted string. */
-    if (quote && Sprint(sp, "%c", char(quote)) < 0)
-        return nullptr;
+    if (quote) {
+        if (!sp->jsprintf("%c", char(quote)))
+            return nullptr;
+    }
 
     /*
      * If we haven't Sprint'd anything yet, Sprint an empty string so that
      * the return below gives a valid result.
      */
-    if (offset == sp->getOffset() && Sprint(sp, "") < 0)
-        return nullptr;
+    if (offset == sp->getOffset()) {
+        if (!sp->put(""))
+            return nullptr;
+    }
 
     return sp->stringAt(offset);
 }
@@ -369,12 +373,12 @@ QuoteString(Sprinter* sp, JSString* str, char16_t quote)
 
     JS::AutoCheckCannotGC nogc;
     return linear->hasLatin1Chars()
-           ? QuoteString(sp, linear->latin1Chars(nogc), linear->length(), quote)
-           : QuoteString(sp, linear->twoByteChars(nogc), linear->length(), quote);
+           ? QuoteString(sp, linear->latin1Range(nogc), quote)
+           : QuoteString(sp, linear->twoByteRange(nogc), quote);
 }
 
 JSString*
-QuoteString(ExclusiveContext* cx, JSString* str, char16_t quote)
+QuoteString(JSContext* cx, JSString* str, char16_t quote)
 {
     Sprinter sprinter(cx);
     if (!sprinter.init())
@@ -437,47 +441,16 @@ Fprinter::finish()
     file_ = nullptr;
 }
 
-int
+bool
 Fprinter::put(const char* s, size_t len)
 {
     MOZ_ASSERT(file_);
-    int i = fwrite(s, len, 1, file_);
-    if (i == -1 || i != int(len))
+    int i = fwrite(s, /*size=*/ 1, /*nitems=*/ len, file_);
+    if (size_t(i) != len) {
         reportOutOfMemory();
-    return i;
-}
-
-int
-Fprinter::put(const char* s)
-{
-    MOZ_ASSERT(file_);
-    int i = fputs(s, file_);
-    if (i == -1)
-        reportOutOfMemory();
-    return i;
-}
-
-int
-Fprinter::printf(const char* fmt, ...)
-{
-    MOZ_ASSERT(file_);
-    va_list ap;
-    va_start(ap, fmt);
-    int i = vfprintf(file_, fmt, ap);
-    if (i == -1)
-        reportOutOfMemory();
-    va_end(ap);
-    return i;
-}
-
-int
-Fprinter::vprintf(const char* fmt, va_list ap)
-{
-    MOZ_ASSERT(file_);
-    int i = vfprintf(file_, fmt, ap);
-    if (i == -1)
-        reportOutOfMemory();
-    return i;
+        return false;
+    }
+    return true;
 }
 
 LSprinter::LSprinter(LifoAlloc* lifoAlloc)
@@ -513,104 +486,71 @@ LSprinter::clear()
     hadOOM_ = false;
 }
 
-int
+bool
 LSprinter::put(const char* s, size_t len)
 {
-    size_t origLen = len;
+    // Compute how much data will fit in the current chunk.
+    size_t existingSpaceWrite = 0;
+    size_t overflow = len;
     if (unused_ > 0 && tail_) {
-        size_t minLen = unused_ < len ? unused_ : len;
-        js_memcpy(tail_->end() - unused_, s, minLen);
-        unused_ -= minLen;
-        len -= minLen;
-        s += minLen;
+        existingSpaceWrite = std::min(unused_, len);
+        overflow = len - existingSpaceWrite;
     }
 
-    if (len == 0)
-        return origLen;
-
-    size_t allocLength = AlignBytes(sizeof(Chunk) + len, js::detail::LIFO_ALLOC_ALIGN);
+    // If necessary, allocate a new chunk for overflow data.
+    size_t allocLength = 0;
     Chunk* last = nullptr;
-    {
+    if (overflow > 0) {
+        allocLength = AlignBytes(sizeof(Chunk) + overflow, js::detail::LIFO_ALLOC_ALIGN);
+
         LifoAlloc::AutoFallibleScope fallibleAllocator(alloc_);
         last = reinterpret_cast<Chunk*>(alloc_->alloc(allocLength));
-    }
-    if (!last) {
-        reportOutOfMemory();
-        return origLen - len;
-    }
-
-    if (tail_ && reinterpret_cast<char*>(last) == tail_->end()) {
-        // tail_ and last are next to each others in memory, knowing that the
-        // TempAlloctator has no meta data and is just a bump allocator, we
-        // append the new allocated space to the tail_.
-        unused_ = allocLength;
-        tail_->length += allocLength;
-    } else {
-        // Remove the size of the header from the allocated length.
-        allocLength -= sizeof(Chunk);
-        last->next = nullptr;
-        last->length = allocLength;
-        unused_ = allocLength;
-        if (!head_)
-            head_ = last;
-        else
-            tail_->next = last;
-
-        tail_ = last;
+        if (!last) {
+            reportOutOfMemory();
+            return false;
+        }
     }
 
-    MOZ_ASSERT(tail_->length >= unused_);
-    js_memcpy(tail_->end() - unused_, s, len);
-    unused_ -= len;
-    return origLen;
-}
+    // All fallible operations complete: now fill up existing space, then
+    // overflow space in any new chunk.
+    MOZ_ASSERT(existingSpaceWrite + overflow == len);
 
-int
-LSprinter::put(const char* s)
-{
-    return put(s, strlen(s));
-}
-
-int
-LSprinter::printf(const char* fmt, ...)
-{
-    va_list va;
-    va_start(va, fmt);
-    int i = vprintf(fmt, va);
-    va_end(va);
-    return i;
-}
-
-int
-LSprinter::vprintf(const char* fmt, va_list ap)
-{
-    // Simple shortcut to avoid allocating strings.
-    if (strchr(fmt, '%') == nullptr)
-        return put(fmt);
-
-    char* bp;
-    bp = JS_vsmprintf(fmt, ap);      /* XXX vsaprintf */
-    if (!bp) {
-        reportOutOfMemory();
-        return -1;
+    if (existingSpaceWrite > 0) {
+        PodCopy(tail_->end() - unused_, s, existingSpaceWrite);
+        unused_ -= existingSpaceWrite;
+        s += existingSpaceWrite;
     }
-    int i = put(bp);
-    js_free(bp);
-    return i;
-}
 
-void
-LSprinter::reportOutOfMemory()
-{
-    if (hadOOM_)
-        return;
-    hadOOM_ = true;
-}
+    if (overflow > 0) {
+        if (tail_ && reinterpret_cast<char*>(last) == tail_->end()) {
+            // tail_ and last are consecutive in memory.  LifoAlloc has no
+            // metadata and is just a bump allocator, so we can cheat by
+            // appending the newly-allocated space to tail_.
+            unused_ = allocLength;
+            tail_->length += allocLength;
+        } else {
+            // Remove the size of the header from the allocated length.
+            size_t availableSpace = allocLength - sizeof(Chunk);
+            last->next = nullptr;
+            last->length = availableSpace;
 
-bool
-LSprinter::hadOutOfMemory() const
-{
-    return hadOOM_;
+            unused_ = availableSpace;
+            if (!head_)
+                head_ = last;
+            else
+                tail_->next = last;
+
+            tail_ = last;
+        }
+
+        PodCopy(tail_->end() - unused_, s, overflow);
+
+        MOZ_ASSERT(unused_ >= overflow);
+        unused_ -= overflow;
+    }
+
+    MOZ_ASSERT(len <= INT_MAX);
+    return true;
 }
 
 } // namespace js

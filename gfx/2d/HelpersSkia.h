@@ -15,7 +15,6 @@
 #endif
 #include "mozilla/Assertions.h"
 #include <vector>
-#include "RefPtrSkia.h"
 #include "nsDebug.h"
 
 namespace mozilla {
@@ -187,65 +186,65 @@ StrokeOptionsToPaint(SkPaint& aPaint, const StrokeOptions &aOptions)
   return true;
 }
 
-static inline SkXfermode::Mode
+static inline SkBlendMode
 GfxOpToSkiaOp(CompositionOp op)
 {
   switch (op)
   {
     case CompositionOp::OP_OVER:
-      return SkXfermode::kSrcOver_Mode;
+      return SkBlendMode::kSrcOver;
     case CompositionOp::OP_ADD:
-      return SkXfermode::kPlus_Mode;
+      return SkBlendMode::kPlus;
     case CompositionOp::OP_ATOP:
-      return SkXfermode::kSrcATop_Mode;
+      return SkBlendMode::kSrcATop;
     case CompositionOp::OP_OUT:
-      return SkXfermode::kSrcOut_Mode;
+      return SkBlendMode::kSrcOut;
     case CompositionOp::OP_IN:
-      return SkXfermode::kSrcIn_Mode;
+      return SkBlendMode::kSrcIn;
     case CompositionOp::OP_SOURCE:
-      return SkXfermode::kSrc_Mode;
+      return SkBlendMode::kSrc;
     case CompositionOp::OP_DEST_IN:
-      return SkXfermode::kDstIn_Mode;
+      return SkBlendMode::kDstIn;
     case CompositionOp::OP_DEST_OUT:
-      return SkXfermode::kDstOut_Mode;
+      return SkBlendMode::kDstOut;
     case CompositionOp::OP_DEST_OVER:
-      return SkXfermode::kDstOver_Mode;
+      return SkBlendMode::kDstOver;
     case CompositionOp::OP_DEST_ATOP:
-      return SkXfermode::kDstATop_Mode;
+      return SkBlendMode::kDstATop;
     case CompositionOp::OP_XOR:
-      return SkXfermode::kXor_Mode;
+      return SkBlendMode::kXor;
     case CompositionOp::OP_MULTIPLY:
-      return SkXfermode::kMultiply_Mode;
+      return SkBlendMode::kMultiply;
     case CompositionOp::OP_SCREEN:
-      return SkXfermode::kScreen_Mode;
+      return SkBlendMode::kScreen;
     case CompositionOp::OP_OVERLAY:
-      return SkXfermode::kOverlay_Mode;
+      return SkBlendMode::kOverlay;
     case CompositionOp::OP_DARKEN:
-      return SkXfermode::kDarken_Mode;
+      return SkBlendMode::kDarken;
     case CompositionOp::OP_LIGHTEN:
-      return SkXfermode::kLighten_Mode;
+      return SkBlendMode::kLighten;
     case CompositionOp::OP_COLOR_DODGE:
-      return SkXfermode::kColorDodge_Mode;
+      return SkBlendMode::kColorDodge;
     case CompositionOp::OP_COLOR_BURN:
-      return SkXfermode::kColorBurn_Mode;
+      return SkBlendMode::kColorBurn;
     case CompositionOp::OP_HARD_LIGHT:
-      return SkXfermode::kHardLight_Mode;
+      return SkBlendMode::kHardLight;
     case CompositionOp::OP_SOFT_LIGHT:
-      return SkXfermode::kSoftLight_Mode;
+      return SkBlendMode::kSoftLight;
     case CompositionOp::OP_DIFFERENCE:
-      return SkXfermode::kDifference_Mode;
+      return SkBlendMode::kDifference;
     case CompositionOp::OP_EXCLUSION:
-      return SkXfermode::kExclusion_Mode;
+      return SkBlendMode::kExclusion;
     case CompositionOp::OP_HUE:
-      return SkXfermode::kHue_Mode;
+      return SkBlendMode::kHue;
     case CompositionOp::OP_SATURATION:
-      return SkXfermode::kSaturation_Mode;
+      return SkBlendMode::kSaturation;
     case CompositionOp::OP_COLOR:
-      return SkXfermode::kColor_Mode;
+      return SkBlendMode::kColor;
     case CompositionOp::OP_LUMINOSITY:
-      return SkXfermode::kLuminosity_Mode;
+      return SkBlendMode::kLuminosity;
     default:
-      return SkXfermode::kSrcOver_Mode;
+      return SkBlendMode::kSrcOver;
   }
 }
 
@@ -296,6 +295,12 @@ static inline SkIRect
 IntRectToSkIRect(const IntRect& aRect)
 {
   return SkIRect::MakeXYWH(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+
+static inline IntRect
+SkIRectToIntRect(const SkIRect& aRect)
+{
+  return IntRect(aRect.x(), aRect.y(), aRect.width(), aRect.height());
 }
 
 static inline Point
@@ -370,6 +375,25 @@ static inline FillRule GetFillRule(SkPath::FillType aFillType)
   }
 
   return FillRule::FILL_EVEN_ODD;
+}
+
+/**
+ * Returns true if the canvas is backed by pixels.  Returns false if the canvas
+ * wraps an SkPDFDocument, for example.
+ *
+ * Note: It is not clear whether the test used to implement this function may
+ * result in it returning false in some circumstances even when the canvas
+ * _is_ pixel backed.  In other words maybe it is possible for such a canvas to
+ * have kUnknown_SkPixelGeometry?
+ */
+static inline bool IsBackedByPixels(const SkCanvas* aCanvas)
+{
+  SkSurfaceProps props(0, kUnknown_SkPixelGeometry);
+  if (!aCanvas->getProps(&props) ||
+      props.pixelGeometry() == kUnknown_SkPixelGeometry) {
+    return false;
+  }
+  return true;
 }
 
 } // namespace gfx

@@ -18,13 +18,14 @@ const TRANSITION_DOWNLOAD = PlacesUtils.history.TRANSITION_DOWNLOAD;
 /**
  * Returns a moz_places field value for a url.
  *
- * @param aURI
+ * @param {nsIURI|String} aURI
  *        The URI or spec to get field for.
- * param aCallback
+ * @param {String} aFieldName
+ *        The field name to get the value of.
+ * @param {Function} aCallback
  *        Callback function that will get the property value.
  */
-function fieldForUrl(aURI, aFieldName, aCallback)
-{
+function fieldForUrl(aURI, aFieldName, aCallback) {
   let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
   let stmt = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
                                 .DBConnection.createAsyncStatement(
@@ -33,14 +34,14 @@ function fieldForUrl(aURI, aFieldName, aCallback)
   stmt.params.page_url = url;
   stmt.executeAsync({
     _value: -1,
-    handleResult: function(aResultSet) {
+    handleResult(aResultSet) {
       let row = aResultSet.getNextRow();
       if (!row)
         ok(false, "The page should exist in the database");
       this._value = row.getResultByName(aFieldName);
     },
-    handleError: function() {},
-    handleCompletion: function(aReason) {
+    handleError() {},
+    handleCompletion(aReason) {
       if (aReason != Ci.mozIStorageStatementCallback.REASON_FINISHED)
          ok(false, "The statement should properly succeed");
       aCallback(this._value);
@@ -50,20 +51,39 @@ function fieldForUrl(aURI, aFieldName, aCallback)
 }
 
 /**
+ * Promise wrapper for fieldForUrl.
+ *
+ * @param {nsIURI|String} aURI
+ *        The URI or spec to get field for.
+ * @param {String} aFieldName
+ *        The field name to get the value of.
+ * @return {Promise}
+ *        A promise that is resolved with the value of the field.
+ */
+function promiseFieldForUrl(aURI, aFieldName) {
+  return new Promise(resolve => {
+    function callback(result) {
+      resolve(result);
+    }
+    fieldForUrl(aURI, aFieldName, callback);
+  });
+}
+
+/**
  * Generic nsINavHistoryObserver that doesn't implement anything, but provides
  * dummy methods to prevent errors about an object not having a certain method.
  */
 function NavHistoryObserver() {}
 
 NavHistoryObserver.prototype = {
-  onBeginUpdateBatch: function () {},
-  onEndUpdateBatch: function () {},
-  onVisit: function () {},
-  onTitleChanged: function () {},
-  onDeleteURI: function () {},
-  onClearHistory: function () {},
-  onPageChanged: function () {},
-  onDeleteVisits: function () {},
+  onBeginUpdateBatch() {},
+  onEndUpdateBatch() {},
+  onVisit() {},
+  onTitleChanged() {},
+  onDeleteURI() {},
+  onClearHistory() {},
+  onPageChanged() {},
+  onDeleteVisits() {},
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsINavHistoryObserver,
   ])
@@ -103,7 +123,7 @@ function waitForFaviconChanged(aExpectedPageURI, aExpectedFaviconURI, aWindow,
       }
     }
   };
-  aWindow.PlacesUtils.history.addObserver(historyObserver, false);
+  aWindow.PlacesUtils.history.addObserver(historyObserver);
 }
 
 /**
@@ -125,12 +145,10 @@ function waitForFaviconChanged(aExpectedPageURI, aExpectedFaviconURI, aWindow,
  *        The stack frame used to report errors.
  */
 function addVisits(aPlaceInfo, aWindow, aCallback, aStack) {
-  let stack = aStack || Components.stack.caller;
   let places = [];
   if (aPlaceInfo instanceof Ci.nsIURI) {
     places.push({ uri: aPlaceInfo });
-  }
-  else if (Array.isArray(aPlaceInfo)) {
+  } else if (Array.isArray(aPlaceInfo)) {
     places = places.concat(aPlaceInfo);
   } else {
     places.push(aPlaceInfo)
@@ -154,9 +172,9 @@ function addVisits(aPlaceInfo, aWindow, aCallback, aStack) {
     places,
     {
       handleError: function AAV_handleError() {
-        throw("Unexpected error in adding visit.");
+        throw ("Unexpected error in adding visit.");
       },
-      handleResult: function () {},
+      handleResult() {},
       handleCompletion: function UP_handleCompletion() {
         if (aCallback)
           aCallback();
@@ -180,7 +198,7 @@ function addVisits(aPlaceInfo, aWindow, aCallback, aStack) {
 function checkFaviconDataForPage(aPageURI, aExpectedMimeType, aExpectedData,
   aWindow, aCallback) {
   aWindow.PlacesUtils.favicons.getFaviconDataForPage(aPageURI,
-    function (aURI, aDataLen, aData, aMimeType) {
+    function(aURI, aDataLen, aData, aMimeType) {
       is(aExpectedMimeType, aMimeType, "Check expected MimeType");
       is(aExpectedData.length, aData.length,
         "Check favicon data for the given page matches the provided data");
@@ -258,7 +276,7 @@ function DBConn(aForceNewConnection) {
 
   // If the Places database connection has been closed, create a new connection.
   if (!gDBConn || aForceNewConnection) {
-    let file = Services.dirsvc.get('ProfD', Ci.nsIFile);
+    let file = Services.dirsvc.get("ProfD", Ci.nsIFile);
     file.append("places.sqlite");
     let dbConn = gDBConn = Services.storage.openDatabase(file);
 
@@ -266,7 +284,7 @@ function DBConn(aForceNewConnection) {
     Services.obs.addObserver(function DBCloseCallback(aSubject, aTopic, aData) {
       Services.obs.removeObserver(DBCloseCallback, aTopic);
       dbConn.asyncClose();
-    }, "profile-before-change", false);
+    }, "profile-before-change");
   }
 
   return gDBConn.connectionReady ? gDBConn : null;
@@ -288,7 +306,7 @@ function whenNewWindowLoaded(aOptions, aCallback) {
  */
 function promiseIsURIVisited(aURI, aExpectedValue) {
   return new Promise(resolve => {
-    PlacesUtils.asyncHistory.isURIVisited(aURI, function(aURI, aIsVisited) {
+    PlacesUtils.asyncHistory.isURIVisited(aURI, function(unused, aIsVisited) {
       resolve(aIsVisited);
     });
   });

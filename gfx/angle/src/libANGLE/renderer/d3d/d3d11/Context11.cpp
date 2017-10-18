@@ -82,6 +82,9 @@ TextureImpl *Context11::createTexture(const gl::TextureState &state)
             return new TextureD3D_2DArray(state, mRenderer);
         case GL_TEXTURE_EXTERNAL_OES:
             return new TextureD3D_External(state, mRenderer);
+        case GL_TEXTURE_2D_MULTISAMPLE:
+            UNIMPLEMENTED();
+            break;
         default:
             UNREACHABLE();
     }
@@ -94,9 +97,9 @@ RenderbufferImpl *Context11::createRenderbuffer()
     return new RenderbufferD3D(mRenderer);
 }
 
-BufferImpl *Context11::createBuffer()
+BufferImpl *Context11::createBuffer(const gl::BufferState &state)
 {
-    Buffer11 *buffer = new Buffer11(mRenderer);
+    Buffer11 *buffer = new Buffer11(state, mRenderer);
     mRenderer->onBufferCreate(buffer);
     return buffer;
 }
@@ -148,7 +151,7 @@ gl::Error Context11::finish()
 
 gl::Error Context11::drawArrays(GLenum mode, GLint first, GLsizei count)
 {
-    return mRenderer->genericDrawArrays(this, mode, first, count, 0);
+    return mRenderer->genericDrawArrays(this, mode, first, count, 1);
 }
 
 gl::Error Context11::drawArraysInstanced(GLenum mode,
@@ -165,7 +168,7 @@ gl::Error Context11::drawElements(GLenum mode,
                                   const GLvoid *indices,
                                   const gl::IndexRange &indexRange)
 {
-    return mRenderer->genericDrawElements(this, mode, count, type, indices, 0, indexRange);
+    return mRenderer->genericDrawElements(this, mode, count, type, indices, 1, indexRange);
 }
 
 gl::Error Context11::drawElementsInstanced(GLenum mode,
@@ -186,7 +189,7 @@ gl::Error Context11::drawRangeElements(GLenum mode,
                                        const GLvoid *indices,
                                        const gl::IndexRange &indexRange)
 {
-    return mRenderer->genericDrawElements(this, mode, count, type, indices, 0, indexRange);
+    return mRenderer->genericDrawElements(this, mode, count, type, indices, 1, indexRange);
 }
 
 GLenum Context11::getResetStatus()

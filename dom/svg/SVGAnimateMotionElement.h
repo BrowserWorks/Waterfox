@@ -31,13 +31,13 @@ protected:
 
 public:
   // nsIDOMNode specializations
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // SVGAnimationElement
   virtual nsSMILAnimationFunction& AnimationFunction() override;
   virtual bool GetTargetAttributeName(int32_t *aNamespaceID,
                                       nsIAtom **aLocalName) const override;
-  virtual nsSMILTargetAttrType GetTargetAttributeType() const override;
 
   // nsSVGElement
   virtual nsIAtom* GetPathDataAttrName() const override {

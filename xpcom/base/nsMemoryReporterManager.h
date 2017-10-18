@@ -8,15 +8,17 @@
 #define nsMemoryReporterManager_h__
 
 #include "mozilla/Mutex.h"
+#include "nsDataHashtable.h"
 #include "nsHashKeys.h"
+#include "nsIEventTarget.h"
 #include "nsIMemoryReporter.h"
 #include "nsITimer.h"
 #include "nsServiceManagerUtils.h"
-#include "nsTHashtable.h"
+#include "nsDataHashtable.h"
 
 namespace mozilla {
+class MemoryReportingProcess;
 namespace dom {
-class ContentParent;
 class MemoryReport;
 } // namespace dom
 } // namespace mozilla
@@ -183,9 +185,12 @@ public:
   SizeOfTabFns mSizeOfTabFns;
 
 private:
-  nsresult RegisterReporterHelper(nsIMemoryReporter* aReporter,
-                                  bool aForce, bool aStrongRef, bool aIsAsync);
-  nsresult StartGettingReports();
+  MOZ_MUST_USE nsresult
+  RegisterReporterHelper(nsIMemoryReporter* aReporter,
+                         bool aForce, bool aStrongRef, bool aIsAsync);
+
+  MOZ_MUST_USE nsresult StartGettingReports();
+  // No MOZ_MUST_USE here because ignoring the result is common and reasonable.
   nsresult FinishReporting();
 
   void DispatchReporter(nsIMemoryReporter* aReporter, bool aIsAsync,
@@ -219,7 +224,7 @@ private:
     bool                                 mAnonymize;
     bool                                 mMinimize;
     nsCOMPtr<nsITimer>                   mTimer;
-    nsTArray<RefPtr<mozilla::dom::ContentParent>> mChildrenPending;
+    nsTArray<RefPtr<mozilla::MemoryReportingProcess>> mChildrenPending;
     uint32_t                             mNumProcessesRunning;
     uint32_t                             mNumProcessesCompleted;
     uint32_t                             mConcurrencyLimit;
@@ -272,9 +277,13 @@ private:
   // This is reinitialized each time a call to GetReports is initiated.
   PendingReportersState* mPendingReportersState;
 
+  // Used in GetHeapAllocatedAsync() to run jemalloc_stats async.
+  nsCOMPtr<nsIEventTarget> mThreadPool;
+
   PendingProcessesState* GetStateForGeneration(uint32_t aGeneration);
-  static bool StartChildReport(mozilla::dom::ContentParent* aChild,
-                               const PendingProcessesState* aState);
+  static MOZ_MUST_USE bool
+  StartChildReport(mozilla::MemoryReportingProcess* aChild,
+                   const PendingProcessesState* aState);
 };
 
 #define NS_MEMORY_REPORTER_MANAGER_CID \

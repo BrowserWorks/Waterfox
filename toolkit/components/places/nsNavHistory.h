@@ -208,13 +208,11 @@ public:
    * objects for places components.
    */
   nsIStringBundle* GetBundle();
-  nsIStringBundle* GetDateFormatBundle();
   nsICollation* GetCollation();
-  void GetStringFromName(const char16_t* aName, nsACString& aResult);
-  void GetAgeInDaysString(int32_t aInt, const char16_t *aName,
-                          nsACString& aResult);
-  void GetMonthName(int32_t aIndex, nsACString& aResult);
-  void GetMonthYear(int32_t aMonth, int32_t aYear, nsACString& aResult);
+  void GetStringFromName(const char* aName, nsACString& aResult);
+  void GetAgeInDaysString(int32_t aInt, const char* aName, nsACString& aResult);
+  static void GetMonthName(const PRExplodedTime& aTime, nsACString& aResult);
+  static void GetMonthYear(const PRExplodedTime& aTime, nsACString& aResult);
 
   // Returns whether history is enabled or not.
   bool IsHistoryDisabled() {
@@ -259,8 +257,8 @@ public:
                             const nsACString& aBookmarkGuid,
                             const nsACString& aURI,
                             const nsACString& aTitle,
-                            uint32_t aAccessCount, PRTime aTime,
-                            const nsACString& aFavicon,
+                            uint32_t aAccessCount,
+                            PRTime aTime,
                             nsNavHistoryResultNode** aNode);
 
   nsresult VisitIdToResultNode(int64_t visitId,
@@ -394,8 +392,13 @@ public:
   }
 
   int32_t GetFrecencyTransitionBonus(int32_t aTransitionType,
-                                     bool aVisited) const
+                                     bool aVisited,
+                                     bool aRedirect = false) const
   {
+    if (aRedirect) {
+      return mRedirectSourceVisitBonus;
+    }
+
     switch (aTransitionType) {
       case nsINavHistoryService::TRANSITION_EMBED:
         return mEmbedVisitBonus;
@@ -417,7 +420,8 @@ public:
         return mReloadVisitBonus;
       default:
         // 0 == undefined (see bug #375777 for details)
-        NS_WARN_IF_FALSE(!aTransitionType, "new transition but no bonus for frecency");
+        NS_WARNING_ASSERTION(!aTransitionType,
+                             "new transition but no bonus for frecency");
         return mDefaultVisitBonus;
     }
   }
@@ -438,7 +442,8 @@ public:
                      const nsACString& aGuid,
                      bool aHidden,
                      uint32_t aVisitCount,
-                     uint32_t aTyped);
+                     uint32_t aTyped,
+                     const nsAString& aLastKnownTitle);
 
   /**
    * Fires onTitleChanged event to nsINavHistoryService observers
@@ -559,7 +564,6 @@ protected:
 
   // localization
   nsCOMPtr<nsIStringBundle> mBundle;
-  nsCOMPtr<nsIStringBundle> mDateFormatBundle;
   nsCOMPtr<nsICollation> mCollation;
 
   // recent events
@@ -618,6 +622,7 @@ protected:
   int32_t mDownloadVisitBonus;
   int32_t mPermRedirectVisitBonus;
   int32_t mTempRedirectVisitBonus;
+  int32_t mRedirectSourceVisitBonus;
   int32_t mDefaultVisitBonus;
   int32_t mUnvisitedBookmarkBonus;
   int32_t mUnvisitedTypedBonus;

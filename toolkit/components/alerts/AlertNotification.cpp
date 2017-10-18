@@ -14,7 +14,7 @@
 #include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 namespace mozilla {
 
@@ -34,7 +34,7 @@ AlertNotification::Init(const nsAString& aName, const nsAString& aImageURL,
                         bool aTextClickable, const nsAString& aCookie,
                         const nsAString& aDir, const nsAString& aLang,
                         const nsAString& aData, nsIPrincipal* aPrincipal,
-                        bool aInPrivateBrowsing)
+                        bool aInPrivateBrowsing, bool aRequireInteraction)
 {
   mName = aName;
   mImageURL = aImageURL;
@@ -47,6 +47,7 @@ AlertNotification::Init(const nsAString& aName, const nsAString& aImageURL,
   mData = aData;
   mPrincipal = aPrincipal;
   mInPrivateBrowsing = aInPrivateBrowsing;
+  mRequireInteraction = aRequireInteraction;
   return NS_OK;
 }
 
@@ -103,6 +104,13 @@ NS_IMETHODIMP
 AlertNotification::GetLang(nsAString& aLang)
 {
   aLang = mLang;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+AlertNotification::GetRequireInteraction(bool* aRequireInteraction)
+{
+  *aRequireInteraction = mRequireInteraction;
   return NS_OK;
 }
 
@@ -187,6 +195,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AlertImageRequest)
   NS_INTERFACE_MAP_ENTRY(imgINotificationObserver)
   NS_INTERFACE_MAP_ENTRY(nsICancelable)
   NS_INTERFACE_MAP_ENTRY(nsITimerCallback)
+  NS_INTERFACE_MAP_ENTRY(nsINamed)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, imgINotificationObserver)
 NS_INTERFACE_MAP_END
 
@@ -259,6 +268,13 @@ AlertImageRequest::Notify(nsITimer* aTimer)
 {
   MOZ_ASSERT(aTimer == mTimer);
   return NotifyMissing();
+}
+
+NS_IMETHODIMP
+AlertImageRequest::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("AlertImageRequest");
+  return NS_OK;
 }
 
 NS_IMETHODIMP

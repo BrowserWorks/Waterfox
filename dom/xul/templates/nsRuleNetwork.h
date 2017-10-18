@@ -29,6 +29,7 @@
 #define nsRuleNetwork_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/HashFunctions.h"
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
 #include "nsIAtom.h"
@@ -118,7 +119,7 @@ public:
         mElements = aSet.mElements;
         NS_IF_ADDREF(mElements);
         return *this; }
-        
+
     ~MemoryElementSet() {
         MOZ_COUNT_DTOR(MemoryElementSet);
         NS_IF_RELEASE(mElements); }
@@ -208,9 +209,8 @@ public:
         return mVariable != aAssignment.mVariable || mValue != aAssignment.mValue; }
 
     PLHashNumber Hash() const {
-        // XXX I have no idea if this hashing function is good or not // XXX change this
-        PLHashNumber temp = PLHashNumber(NS_PTR_TO_INT32(mValue.get())) >> 2; // strip alignment bits
-        return (temp & 0xffff) | NS_PTR_TO_INT32(mVariable.get()); }
+        using mozilla::HashGeneric;
+        return HashGeneric(mVariable.get()) ^ HashGeneric(mValue.get()); }
 };
 
 
@@ -816,7 +816,7 @@ public:
      * The node must then pass the resulting set of instantiations up
      * to its parent (by recursive call; we should make this iterative
      * & interruptable at some point.)
-     * 
+     *
      * @param aInstantiations the set of instantiations that must
      *   be constrained
      * @return NS_OK if no errors occurred

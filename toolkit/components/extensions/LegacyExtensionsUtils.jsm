@@ -17,24 +17,26 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-// Lazy imports.
 XPCOMUtils.defineLazyModuleGetter(this, "Extension",
                                   "resource://gre/modules/Extension.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "ExtensionContext",
-                                  "resource://gre/modules/Extension.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionChild",
+                                  "resource://gre/modules/ExtensionChild.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+
+Cu.import("resource://gre/modules/ExtensionCommon.jsm");
+
+var {
+  BaseContext,
+} = ExtensionCommon;
 
 /**
  * Instances created from this class provide to a legacy extension
  * a simple API to exchange messages with a webextension.
  */
-var LegacyExtensionContext = class extends ExtensionContext {
+var LegacyExtensionContext = class extends BaseContext {
   /**
-   * Create a new LegacyExtensionContext given a target Extension instance and an optional
-   * url (which can be used to recognize the messages of container context).
+   * Create a new LegacyExtensionContext given a target Extension instance.
    *
    * @param {Extension} targetExtension
    *   The webextension instance associated with this context. This will be the
@@ -42,10 +44,7 @@ var LegacyExtensionContext = class extends ExtensionContext {
    *   used through the EmbeddedWebExtensionsUtils.
    */
   constructor(targetExtension) {
-    super(targetExtension, {
-      contentWindow: null,
-      type: "legacy_extension",
-    });
+    super("legacy_extension", targetExtension);
 
     // Legacy Extensions (xul overlays, bootstrap restartless and Addon SDK)
     // runs with a systemPrincipal.
@@ -61,6 +60,13 @@ var LegacyExtensionContext = class extends ExtensionContext {
       this, "cloneScope",
       {value: cloneScope, enumerable: true, configurable: true, writable: true}
     );
+
+    let sender = {id: targetExtension.id};
+    let filter = {extensionId: targetExtension.id};
+    // Legacy addons live in the main process. Messages from other addons are
+    // Messages from WebExtensions are sent to the main process and forwarded via
+    // the parent process manager to the legacy extension.
+    this.messenger = new ExtensionChild.Messenger(this, [Services.cpmm], sender, filter);
 
     this.api = {
       browser: {
@@ -84,13 +90,6 @@ var LegacyExtensionContext = class extends ExtensionContext {
     Cu.nukeSandbox(this.cloneScope);
     this.cloneScope = null;
   }
-
-  /**
-   * The LegacyExtensionContext is not a visible context.
-   */
-  get externallyVisible() {
-    return false;
-  }
 };
 
 var EmbeddedExtensionManager;
@@ -110,12 +109,15 @@ class EmbeddedExtension {
    *   An object with the following properties:
    * @param {string} containerAddonParams.id
    *   The Add-on id of the Legacy Extension which will contain the embedded webextension.
+   * @param {string} containerAddonParams.version
+   *   The add-on version.
    * @param {nsIURI} containerAddonParams.resourceURI
    *   The nsIURI of the Legacy Extension container add-on.
    */
-  constructor({id, resourceURI}) {
+  constructor({id, resourceURI, version}) {
     this.addonId = id;
     this.resourceURI = resourceURI;
+    this.version = version;
 
     // Setup status flag.
     this.started = false;
@@ -124,10 +126,13 @@ class EmbeddedExtension {
   /**
    * Start the embedded webextension.
    *
+   * @param {number} reason
+   *   The add-on startup bootstrap reason received from the XPIProvider.
+   *
    * @returns {Promise<LegacyContextAPI>} A promise which resolve to the API exposed to the
    *   legacy context.
    */
-  startup() {
+  startup(reason) {
     if (this.started) {
       return Promise.reject(new Error("This embedded extension has already been started"));
     }
@@ -140,7 +145,10 @@ class EmbeddedExtension {
       this.extension = new Extension({
         id: this.addonId,
         resourceURI: embeddedExtensionURI,
+        version: this.version,
       });
+
+      this.extension.isEmbedded = true;
 
       // This callback is register to the "startup" event, emitted by the Extension instance
       // after the extension manifest.json has been loaded without any errors, but before
@@ -178,7 +186,7 @@ class EmbeddedExtension {
 
       // Run ambedded extension startup and catch any error during embedded extension
       // startup.
-      this.extension.startup().catch((err) => {
+      this.extension.startup(reason).catch((err) => {
         this.started = false;
         this.startupPromise = null;
         this.extension.off("startup", onBeforeStarted);
@@ -193,24 +201,21 @@ class EmbeddedExtension {
   /**
    * Shuts down the embedded webextension.
    *
+   * @param {number} reason
+   *   The add-on shutdown bootstrap reason received from the XPIProvider.
+   *
    * @returns {Promise<void>} a promise that is resolved when the shutdown has been done
    */
-  shutdown() {
+  async shutdown(reason) {
     EmbeddedExtensionManager.untrackEmbeddedExtension(this);
 
-    // If there is a pending startup,  wait to be completed and then shutdown.
-    if (this.startupPromise) {
-      return this.startupPromise.then(() => {
-        this.extension.shutdown();
-      });
-    }
+    if (this.extension && !this.extension.hasShutdown) {
+      let {extension} = this;
+      this.extension = null;
 
-    // Run shutdown now if the embedded webextension has been correctly started
-    if (this.extension && this.started && !this.extension.hasShutdown) {
-      this.extension.shutdown();
+      await extension.shutdown(reason);
     }
-
-    return Promise.resolve();
+    return undefined;
   }
 }
 
@@ -228,11 +233,11 @@ EmbeddedExtensionManager = {
     }
   },
 
-  getEmbeddedExtensionFor({id, resourceURI}) {
+  getEmbeddedExtensionFor({id, resourceURI, version}) {
     let embeddedExtension = this.embeddedExtensionsByAddonId.get(id);
 
     if (!embeddedExtension) {
-      embeddedExtension = new EmbeddedExtension({id, resourceURI});
+      embeddedExtension = new EmbeddedExtension({id, resourceURI, version});
       // Keep track of the embedded extension instance.
       this.embeddedExtensionsByAddonId.set(id, embeddedExtension);
     }

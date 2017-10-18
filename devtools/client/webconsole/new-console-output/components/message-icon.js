@@ -13,20 +13,30 @@ const {
 } = require("devtools/client/shared/vendor/react");
 const {l10n} = require("devtools/client/webconsole/new-console-output/utils/messages");
 
-MessageIcon.displayName = "MessageIcon";
-
-MessageIcon.propTypes = {
-  severity: PropTypes.string.isRequired,
+// Store common icons so they can be used without recreating the element
+// during render.
+const CONSTANT_ICONS = {
+  "error": getIconElement("level.error"),
+  "warn": getIconElement("level.warn"),
+  "info": getIconElement("level.info"),
+  "log": getIconElement("level.log"),
+  "debug": getIconElement("level.debug"),
 };
 
-function MessageIcon(props) {
-  const { severity } = props;
-
-  const title = l10n.getStr("severity." + severity);
-  return dom.div({
+function getIconElement(level) {
+  return dom.span({
     className: "icon",
-    title
+    title: l10n.getStr(level),
   });
 }
 
-module.exports.MessageIcon = MessageIcon;
+MessageIcon.displayName = "MessageIcon";
+MessageIcon.propTypes = {
+  level: PropTypes.string.isRequired,
+};
+function MessageIcon(props) {
+  const { level } = props;
+  return CONSTANT_ICONS[level] || getIconElement(level);
+}
+
+module.exports = MessageIcon;

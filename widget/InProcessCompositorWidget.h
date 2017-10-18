@@ -15,13 +15,14 @@ namespace widget {
 class InProcessCompositorWidget : public CompositorWidget
 {
 public:
-  explicit InProcessCompositorWidget(nsBaseWidget* aWidget);
+  explicit InProcessCompositorWidget(const layers::CompositorOptions& aOptions,
+                                     nsBaseWidget* aWidget);
 
-  virtual bool PreRender(layers::LayerManagerComposite* aManager) override;
-  virtual void PostRender(layers::LayerManagerComposite* aManager) override;
-  virtual void DrawWindowUnderlay(layers::LayerManagerComposite* aManager,
+  virtual bool PreRender(WidgetRenderingContext* aManager) override;
+  virtual void PostRender(WidgetRenderingContext* aManager) override;
+  virtual void DrawWindowUnderlay(WidgetRenderingContext* aContext,
                                   LayoutDeviceIntRect aRect) override;
-  virtual void DrawWindowOverlay(layers::LayerManagerComposite* aManager,
+  virtual void DrawWindowOverlay(WidgetRenderingContext* aContext,
                                  LayoutDeviceIntRect aRect) override;
   virtual already_AddRefed<gfx::DrawTarget> StartRemoteDrawing() override;
   virtual already_AddRefed<gfx::DrawTarget>
@@ -35,14 +36,13 @@ public:
   virtual bool InitCompositor(layers::Compositor* aCompositor) override;
   virtual LayoutDeviceIntSize GetClientSize() override;
   virtual uint32_t GetGLFrameBufferFormat() override;
-  virtual layers::Composer2D* GetComposer2D() override;
   virtual void ObserveVsync(VsyncObserver* aObserver) override;
   virtual uintptr_t GetWidgetKey() override;
 
   // If you can override this method, inherit from CompositorWidget instead.
   nsIWidget* RealWidget() override;
 
-private:
+protected:
   nsBaseWidget* mWidget;
 };
 

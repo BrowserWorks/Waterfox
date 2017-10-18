@@ -5,7 +5,6 @@
 import os, sys
 
 from ipdl.ast import Visitor
-from ipdl.ast import IN, OUT, INOUT, ASYNC, SYNC, INTR
 
 class CodePrinter:
     def __init__(self, outf=sys.stdout, indentCols=4):
@@ -52,7 +51,7 @@ Also known as pretty-printing.'''
             self.println('/* Included file:')
             IPDLCodeGen(outf=self.outf, indentCols=self.indentCols,
                         printed=self.printed).visitTranslationUnit(inc.tu)
-        
+
             self.println('*/')
 
     def visitProtocol(self, p):
@@ -68,8 +67,6 @@ Also known as pretty-printing.'''
 
         for msgDecl in p.messageDecls:  msgDecl.accept(self)
         self.println()
-
-        for transStmt in p.transitionStmts:  transStmt.accept(self)
 
         self.dedent()
         self.println('}')

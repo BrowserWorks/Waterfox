@@ -154,7 +154,7 @@ this.checkCert =
 
   validateCert(cert, aCerts);
 
-  if (aAllowNonBuiltInCerts ===  true)
+  if (aAllowNonBuiltInCerts === true)
     return;
 
   var issuerCert = cert;
@@ -165,14 +165,8 @@ this.checkCert =
   if (!issuerCert)
     throw new Ce(certNotBuiltInErr, Cr.NS_ERROR_ABORT);
 
-  var tokenNames = issuerCert.getAllTokenNames({});
-
-  if (!tokenNames || !tokenNames.some(isBuiltinToken))
+  if (!issuerCert.isBuiltInRoot)
     throw new Ce(certNotBuiltInErr, Cr.NS_ERROR_ABORT);
-}
-
-function isBuiltinToken(tokenName) {
-  return tokenName == "Builtin Object Token";
 }
 
 /**
@@ -191,7 +185,7 @@ this.BadCertHandler =
 BadCertHandler.prototype = {
 
   // nsIChannelEventSink
-  asyncOnChannelRedirect: function(oldChannel, newChannel, flags, callback) {
+  asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
     if (this.allowNonBuiltInCerts) {
       callback.onRedirectVerifyCallback(Components.results.NS_OK);
       return;
@@ -207,12 +201,12 @@ BadCertHandler.prototype = {
   },
 
   // nsIInterfaceRequestor
-  getInterface: function(iid) {
+  getInterface(iid) {
     return this.QueryInterface(iid);
   },
 
   // nsISupports
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (!iid.equals(Ci.nsIChannelEventSink) &&
         !iid.equals(Ci.nsIInterfaceRequestor) &&
         !iid.equals(Ci.nsISupports))

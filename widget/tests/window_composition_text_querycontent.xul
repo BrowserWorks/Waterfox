@@ -11,7 +11,6 @@
           src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
   <script type="application/javascript"
           src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js" />
-  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js"></script>
 
   <panel id="panel" hidden="true"
          orient="vertical"
@@ -64,6 +63,35 @@ function isnot(aLeft, aRight, aMessage)
   window.opener.wrappedJSObject.SimpleTest.isnot(aLeft, aRight, aMessage);
 }
 
+function todo(aCondition, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.todo(aCondition, aMessage);
+}
+
+function todo_is(aLeft, aRight, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.todo_is(aLeft, aRight, aMessage);
+}
+
+function todo_isnot(aLeft, aRight, aMessage)
+{
+  window.opener.wrappedJSObject.SimpleTest.todo_isnot(aLeft, aRight, aMessage);
+}
+
+function isSimilarTo(aLeft, aRight, aAllowedDifference, aMessage)
+{
+  if (Math.abs(aLeft - aRight) <= aAllowedDifference) {
+    ok(true, aMessage);
+  } else {
+    ok(false, aMessage + ", got=" + aLeft + ", expected=" + (aRight - aAllowedDifference) + "~" + (aRight + aAllowedDifference));
+  }
+}
+
+function isGreaterThan(aLeft, aRight, aMessage)
+{
+  ok(aLeft > aRight, aMessage + ", got=" + aLeft + ", expected minimum value=" + aRight);
+}
+
 function finish()
 {
   window.close();
@@ -88,7 +116,6 @@ var textareaInFrame;
 
 const nsITextInputProcessorCallback = Components.interfaces.nsITextInputProcessorCallback;
 const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
-const nsIEditorIMESupport = Components.interfaces.nsIEditorIMESupport;
 const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
 const nsIWebNavigation = Components.interfaces.nsIWebNavigation;
 const nsIDocShell = Components.interfaces.nsIDocShell;
@@ -102,11 +129,9 @@ function hitEventLoop(aFunc, aTimes)
   }
 }
 
-function getEditorIMESupport(aNode)
+function getEditor(aNode)
 {
-  return aNode.QueryInterface(nsIDOMNSEditableElement).
-               editor.
-               QueryInterface(nsIEditorIMESupport);
+  return aNode.QueryInterface(nsIDOMNSEditableElement).editor;
 }
 
 function getHTMLEditorIMESupport(aWindow)
@@ -238,6 +263,27 @@ function checkRect(aRect, aExpectedRect, aMessage)
          aRect.top == aExpectedRect.top &&
          aRect.width == aExpectedRect.width &&
          aRect.height == aExpectedRect.height;
+}
+
+function checkRectArray(aQueryTextRectArrayResult, aExpectedTextRectArray, aMessage)
+{
+  for (var i = 1; i < aExpectedTextRectArray.length; ++i) {
+    var rect = { left: {}, top: {}, width: {}, height: {} };
+    try {
+      aQueryTextRectArrayResult.getCharacterRect(i, rect.left, rect.top, rect.width, rect.height);
+    } catch (e) {
+      ok(false, aMessage + ": failed to retrieve " + i + "th rect (" + e + ")");
+      return false;
+    }
+    function toRect(aRect)
+    {
+      return { left: aRect.left.value, top: aRect.top.value, width: aRect.width.value, height: aRect.height.value };
+    }
+    if (!checkRect(toRect(rect), aExpectedTextRectArray[i], aMessage + " " + i + "th rect")) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function checkRectContainsRect(aRect, aContainer, aMessage)
@@ -2233,6 +2279,737 @@ function runCompositionEventTest()
                             formEventHandlerForInput, true);
 }
 
+function runQueryTextRectInContentEditableTest()
+{
+  contenteditable.focus();
+
+  contenteditable.innerHTML = "<p>abc</p><p>def</p>";
+                      // \n    0  123    4  567
+                      // \r\n  01 234    56 789
+
+  var description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "a"
+  var a = synthesizeQueryTextRect(kLFLen, 1);
+  if (!checkQueryContentResult(a, description + "rect for 'a'")) {
+    return;
+  }
+
+  // "b"
+  var b = synthesizeQueryTextRect(kLFLen + 1, 1);
+  if (!checkQueryContentResult(b, description + "rect for 'b'")) {
+    return;
+  }
+
+  is(b.top, a.top, description + "'a' and 'b' should be at same top");
+  isSimilarTo(b.left, a.left + a.width, 2, description + "left of 'b' should be at similar to right of 'a'");
+  is(b.height, a.height, description + "'a' and 'b' should be same height");
+
+  // "c"
+  var c = synthesizeQueryTextRect(kLFLen + 2, 1);
+  if (!checkQueryContentResult(c, description + "rect for 'c'")) {
+    return;
+  }
+
+  is(c.top, b.top, description + "'b' and 'c' should be at same top");
+  isSimilarTo(c.left, b.left + b.width, 2, description + "left of 'c' should be at similar to right of 'b'");
+  is(c.height, b.height, description + "'b' and 'c' should be same height");
+
+  // "abc" as array
+  var abcAsArray = synthesizeQueryTextRectArray(kLFLen, 3);
+  if (!checkQueryContentResult(abcAsArray, description + "rect array for 'abc'") ||
+      !checkRectArray(abcAsArray, [a, b, c], description + "query text rect array result of 'abc' should match with each query text rect result")) {
+    return;
+  }
+
+  // 2nd <p> (can be computed with the rect of 'c')
+  var p2 = synthesizeQueryTextRect(kLFLen + 3, 1);
+  if (!checkQueryContentResult(p2, description + "rect for 2nd <p>")) {
+    return;
+  }
+
+  is(p2.top, c.top, description + "'c' and a line breaker caused by 2nd <p> should be at same top");
+  isSimilarTo(p2.left, c.left + c.width, 2, description + "left of a line breaker caused by 2nd <p> should be at similar to right of 'c'");
+  is(p2.height, c.height, description + "'c' and a line breaker caused by 2nd <p> should be same height");
+
+  // 2nd <p> as array
+  var p2AsArray = synthesizeQueryTextRectArray(kLFLen + 3, 1);
+  if (!checkQueryContentResult(p2AsArray, description + "2nd <p>'s line breaker as array") ||
+      !checkRectArray(p2AsArray, [p2], description + "query text rect array result of 2nd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var p2_2 = synthesizeQueryTextRect(kLFLen + 4, 1);
+    if (!checkQueryContentResult(p2_2, description + "rect for \\n of \\r\\n caused by 2nd <p>")) {
+      return;
+    }
+
+    is(p2_2.top, p2.top, description + "'\\r' and '\\n' should be at same top");
+    is(p2_2.left, p2.left, description + "'\\r' and '\\n' should be at same top");
+    is(p2_2.height, p2.height, description + "'\\r' and '\\n' should be same height");
+    is(p2_2.width, p2.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var p2_2AsArray = synthesizeQueryTextRectArray(kLFLen + 4, 1);
+    if (!checkQueryContentResult(p2_2AsArray, description + "rect array for \\n of \\r\\n caused by 2nd <p>") ||
+        !checkRectArray(p2_2AsArray, [p2_2], description + "query text rect array result of \\n of \\r\\n caused by 2nd <p> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // "d"
+  var d = synthesizeQueryTextRect(kLFLen * 2 + 3, 1);
+  if (!checkQueryContentResult(d, description + "rect for 'd'")) {
+    return;
+  }
+
+  isGreaterThan(d.top, a.top + a.height, description + "top of 'd' should be greater than bottom of 'a'");
+  is(d.left, a.left, description + "'a' and 'd' should be same at same left");
+  is(d.height, a.height, description + "'a' and 'd' should be same height");
+
+  // "e"
+  var e = synthesizeQueryTextRect(kLFLen * 2 + 4, 1);
+  if (!checkQueryContentResult(e, description + "rect for 'e'")) {
+    return;
+  }
+
+  is(e.top, d.top, description + "'d' and 'd' should be at same top");
+  isSimilarTo(e.left, d.left + d.width, 2, description + "left of 'e' should be at similar to right of 'd'");
+  is(e.height, d.height, description + "'d' and 'e' should be same height");
+
+  // "f"
+  var f = synthesizeQueryTextRect(kLFLen * 2 + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+
+  // "def" as array
+  var defAsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 3, 3);
+  if (!checkQueryContentResult(defAsArray, description + "rect array for 'def'") ||
+      !checkRectArray(defAsArray, [d, e, f], description + "query text rect array result of 'def' should match with each query text rect result")) {
+    return;
+  }
+
+  // next of "f" (can be computed with rect of 'f')
+  var next_f = synthesizeQueryTextRect(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(next_f, description + "rect for next of 'f'")) {
+    return;
+  }
+
+  is(next_f.top, d.top, 2, description + "'f' and next of 'f' should be at same top");
+  isSimilarTo(next_f.left, f.left + f.width, 2, description + "left of next of 'f' should be at similar to right of 'f'");
+  is(next_f.height, d.height, description + "'f' and next of 'f' should be same height");
+
+  // next of "f" as array
+  var next_fAsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(next_fAsArray, description + "rect array for next of 'f'") ||
+      !checkRectArray(next_fAsArray, [next_f], description + "query text rect array result of next of 'f' should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  var tooBigOffset = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_f.top, description + "too big offset and next of 'f' should be at same top");
+  is(tooBigOffset.left, next_f.left, description + "too big offset and next of 'f' should be at same left");
+  is(tooBigOffset.height, next_f.height, description + "too big offset and next of 'f' should be same height");
+  is(tooBigOffset.width, next_f.width, description + "too big offset and next of 'f' should be same width");
+
+  // too big offset for the editors as array
+  var tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+
+  contenteditable.innerHTML = "<p>abc</p><p>def</p><p><br></p>";
+                      // \n    0  123    4  567    8  9
+                      // \r\n  01 234    56 789    01 23
+
+  description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "f"
+  f = synthesizeQueryTextRect(kLFLen * 2 + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+
+  // 3rd <p> (can be computed with rect of 'f')
+  var p3 = synthesizeQueryTextRect(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(p3, description + "rect for 3rd <p>")) {
+    return;
+  }
+
+  is(p3.top, f.top, description + "'f' and a line breaker caused by 3rd <p> should be at same top");
+  is(p3.height, f.height, description + "'f' and a line breaker caused by 3rd <p> should be same height");
+  isSimilarTo(p3.left, f.left + f.width, 2, description + "left of a line breaker caused by 3rd <p> should be similar to right of 'f'");
+
+  // 3rd <p> as array
+  var p3AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(p3AsArray, description + "3rd <p>'s line breaker as array") ||
+      !checkRectArray(p3AsArray, [p3], description + "query text rect array result of 3rd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var p3_2 = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(p3_2, description + "rect for \\n of \\r\\n caused by 3rd <p>")) {
+      return;
+    }
+
+    is(p3_2.top, p3.top, description + "'\\r' and '\\n' should be at same top");
+    is(p3_2.left, p3.left, description + "'\\r' and '\\n' should be at same top");
+    is(p3_2.height, p3.height, description + "'\\r' and '\\n' should be same height");
+    is(p3_2.width, p3.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var p3_2AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(p3_2AsArray, description + "rect array for \\n of \\r\\n caused by 3rd <p>") ||
+        !checkRectArray(p3_2AsArray, [p3_2], description + "query text rect array result of \\n of \\r\\n caused by 3rd <p> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // <br> in 3rd <p>
+  var br = synthesizeQueryTextRect(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(br, description + "rect for <br> in 3rd <p>")) {
+    return;
+  }
+
+  isGreaterThan(br.top, d.top + d.height, description + "a line breaker caused by <br> in 3rd <p> should be greater than bottom of 'd'");
+  isSimilarTo(br.height, d.height, 2, description + "'d' and a line breaker caused by <br> in 3rd <p> should be similar height");
+  is(br.left, d.left, description + "left of a line breaker caused by <br> in 3rd <p> should be same left of 'd'");
+
+  // <br> in 3rd <p> as array
+  var brAsArray = synthesizeQueryTextRectArray(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(brAsArray, description + "<br> in 3rd <p> as array") ||
+      !checkRectArray(brAsArray, [br], description + "query text rect array result of <br> in 3rd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var br_2 = synthesizeQueryTextRect(kLFLen * 3 + 7, 1);
+    if (!checkQueryContentResult(br_2, description + "rect for \\n of \\r\\n caused by <br> in 3rd <p>")) {
+      return;
+    }
+
+    is(br_2.top, br.top, description + "'\\r' and '\\n' should be at same top");
+    is(br_2.left, br.left, description + "'\\r' and '\\n' should be at same top");
+    is(br_2.height, br.height, description + "'\\r' and '\\n' should be same height");
+    is(br_2.width, br.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var br_2AsArray = synthesizeQueryTextRectArray(kLFLen * 3 + 7, 1);
+    if (!checkQueryContentResult(br_2AsArray, description + "rect array for \\n of \\r\\n caused by <br> in 3rd <p>") ||
+        !checkRectArray(br_2AsArray, [br_2], description + "query text rect array result of \\n of \\r\\n caused by <br> in 3rd <p> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // next of <br> in 3rd <p>
+  var next_br = synthesizeQueryTextRect(kLFLen * 4 + 6, 1);
+  if (!checkQueryContentResult(next_br, description + "rect for next of <br> in 3rd <p>")) {
+    return;
+  }
+
+  is(next_br.top, br.top, description + "next of <br> and <br> should be at same top");
+  is(next_br.left, br.left, description + "next of <br> and <br> should be at same left");
+  is(next_br.height, br.height, description + "next of <br> and <br> should be same height");
+  is(next_br.width, br.width, description + "next of <br> and <br> should be same width");
+
+  // next of <br> in 3rd <p> as array
+  var next_brAsArray = synthesizeQueryTextRectArray(kLFLen * 4 + 6, 1);
+  if (!checkQueryContentResult(next_brAsArray, description + "rect array for next of <br> in 3rd <p>") ||
+      !checkRectArray(next_brAsArray, [next_br], description + "query text rect array result of next of <br> in 3rd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  tooBigOffset = synthesizeQueryTextRect(kLFLen * 4 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_br.top, description + "too big offset and next of 3rd <p> should be at same top");
+  is(tooBigOffset.left, next_br.left, description + "too big offset and next of 3rd <p> should be at same left");
+  is(tooBigOffset.height, next_br.height, description + "too big offset and next of 3rd <p> should be same height");
+  is(tooBigOffset.width, next_br.width, description + "too big offset and next of 3rd <p> should be same width");
+
+  // too big offset for the editors as array
+  tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen * 4 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+
+  contenteditable.innerHTML = "<p>abc</p><p>def</p><p></p>";
+                      // \n    0  123    4  567    8
+                      // \r\n  01 234    56 789    0
+
+  description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "f"
+  f = synthesizeQueryTextRect(kLFLen * 2 + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+
+  // 3rd <p> (can be computed with rect of 'f')
+  p3 = synthesizeQueryTextRect(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(p3, description + "rect for 3rd <p>")) {
+    return;
+  }
+
+  is(p3.top, f.top, description + "'f' and a line breaker caused by 3rd <p> should be at same top");
+  is(p3.height, f.height, description + "'f' and a line breaker caused by 3rd <p> should be same height");
+  isSimilarTo(p3.left, f.left + f.width, 2, description + "left of a line breaker caused by 3rd <p> should be similar to right of 'f'");
+
+  // 3rd <p> as array
+  p3AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(p3AsArray, description + "3rd <p>'s line breaker as array") ||
+      !checkRectArray(p3AsArray, [p3], description + "query text rect array result of 3rd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    p3_2 = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(p3_2, description + "rect for \\n of \\r\\n caused by 3rd <p>")) {
+      return;
+    }
+
+    is(p3_2.top, p3.top, description + "'\\r' and '\\n' should be at same top");
+    is(p3_2.left, p3.left, description + "'\\r' and '\\n' should be at same top");
+    is(p3_2.height, p3.height, description + "'\\r' and '\\n' should be same height");
+    is(p3_2.width, p3.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    p3_2AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(p3_2AsArray, description + "rect array for \\n of \\r\\n caused by 3rd <p>") ||
+        !checkRectArray(p3_2AsArray, [p3_2], description + "query text rect array result of \\n of \\r\\n caused by 3rd <p> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // next of 3rd <p>
+  var next_p3 = synthesizeQueryTextRect(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(next_p3, description + "rect for next of 3rd <p>")) {
+    return;
+  }
+
+  isGreaterThan(next_p3.top, d.top + d.height, description + "top of next of 3rd <p> should equal to or be bigger than bottom of 'd'");
+  isSimilarTo(next_p3.left, d.left, 2, description + "left of next of 3rd <p> should be at similar to left of 'd'");
+  isSimilarTo(next_p3.height, d.height, 2, description + "next of 3rd <p> and 'd' should be similar height");
+
+  // next of 3rd <p> as array
+  var next_p3AsArray = synthesizeQueryTextRectArray(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(next_p3AsArray, description + "next of 3rd <p> as array") ||
+      !checkRectArray(next_p3AsArray, [next_p3], description + "query text rect array result of next of 3rd <p> should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  tooBigOffset = synthesizeQueryTextRect(kLFLen * 3 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_p3.top, description + "too big offset and next of 3rd <p> should be at same top");
+  is(tooBigOffset.left, next_p3.left, description + "too big offset and next of 3rd <p> should be at same left");
+  is(tooBigOffset.height, next_p3.height, description + "too big offset and next of 3rd <p> should be same height");
+  is(tooBigOffset.width, next_p3.width, description + "too big offset and next of 3rd <p> should be same width");
+
+  // too big offset for the editors as array
+  tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen * 3 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+
+  contenteditable.innerHTML = "abc<br>def";
+                      // \n    0123   456
+                      // \r\n  01234  567
+
+  description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "a"
+  a = synthesizeQueryTextRect(0, 1);
+  if (!checkQueryContentResult(a, description + "rect for 'a'")) {
+    return;
+  }
+
+  // "b"
+  b = synthesizeQueryTextRect(1, 1);
+  if (!checkQueryContentResult(b, description + "rect for 'b'")) {
+    return;
+  }
+
+  is(b.top, a.top, description + "'a' and 'b' should be at same top");
+  isSimilarTo(b.left, a.left + a.width, 2, description + "left of 'b' should be at similar to right of 'a'");
+  is(b.height, a.height, description + "'a' and 'b' should be same height");
+
+  // "c"
+  c = synthesizeQueryTextRect(2, 1);
+  if (!checkQueryContentResult(c, description + "rect for 'c'")) {
+    return;
+  }
+
+  is(c.top, b.top, description + "'b' and 'c' should be at same top");
+  isSimilarTo(c.left, b.left + b.width, 2, description + "left of 'c' should be at similar to right of 'b'");
+  is(c.height, b.height, description + "'b' and 'c' should be same height");
+
+  // "abc" as array
+  abcAsArray = synthesizeQueryTextRectArray(0, 3);
+  if (!checkQueryContentResult(abcAsArray, description + "rect array for 'abc'") ||
+      !checkRectArray(abcAsArray, [a, b, c], description + "query text rect array result of 'abc' should match with each query text rect result")) {
+    return;
+  }
+
+  // <br> (can be computed with the rect of 'c')
+  br = synthesizeQueryTextRect(3, 1);
+  if (!checkQueryContentResult(br, description + "rect for <br>")) {
+    return;
+  }
+
+  is(br.top, c.top, description + "'c' and a line breaker caused by <br> should be at same top");
+  isSimilarTo(br.left, c.left + c.width, 2, description + "left of a line breaker caused by <br> should be at similar to right of 'c'");
+  is(br.height, c.height, description + "'c' and a line breaker caused by <br> should be same height");
+
+  // <br> as array
+  brAsArray = synthesizeQueryTextRectArray(3, 1);
+  if (!checkQueryContentResult(brAsArray, description + "<br>'s line breaker as array") ||
+      !checkRectArray(brAsArray, [br], description + "query text rect array result of <br> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var br_2 = synthesizeQueryTextRect(4, 1);
+    if (!checkQueryContentResult(br_2, description + "rect for \n of \r\n caused by <br>")) {
+      return;
+    }
+
+    is(br_2.top, br.top, description + "'\\r' and '\\n' should be at same top");
+    is(br_2.left, br.left, description + "'\\r' and '\\n' should be at same top");
+    is(br_2.height, br.height, description + "'\\r' and '\\n' should be same height");
+    is(br_2.width, br.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var br_2AsArray = synthesizeQueryTextRectArray(4, 1);
+    if (!checkQueryContentResult(br_2AsArray, description + "rect array for \\n of \\r\\n caused by <br>") ||
+        !checkRectArray(br_2AsArray, [br_2], description + "query text rect array result of \\n of \\r\\n caused by <br> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // "d"
+  d = synthesizeQueryTextRect(kLFLen + 3, 1);
+  if (!checkQueryContentResult(d, description + "rect for 'd'")) {
+    return;
+  }
+
+  isSimilarTo(d.top, a.top + a.height, 2, description + "top of 'd' should be at similar to bottom of 'a'");
+  is(d.left, a.left, description + "'a' and 'd' should be same at same left");
+  is(d.height, a.height, description + "'a' and 'd' should be same height");
+
+  // "e"
+  e = synthesizeQueryTextRect(kLFLen + 4, 1);
+  if (!checkQueryContentResult(e, description + "rect for 'e'")) {
+    return;
+  }
+
+  is(e.top, d.top, description + "'d' and 'd' should be at same top");
+  isSimilarTo(e.left, d.left + d.width, 2, description + "left of 'e' should be at similar to right of 'd'");
+  is(e.height, d.height, description + "'d' and 'e' should be same height");
+
+  // "f"
+  f = synthesizeQueryTextRect(kLFLen + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+
+  // "def" as array
+  defAsArray = synthesizeQueryTextRectArray(kLFLen + 3, 3);
+  if (!checkQueryContentResult(defAsArray, description + "rect array for 'def'") ||
+      !checkRectArray(defAsArray, [d, e, f], description + "query text rect array result of 'def' should match with each query text rect result")) {
+    return;
+  }
+
+  // next of "f" (can be computed with rect of 'f')
+  next_f = synthesizeQueryTextRect(kLFLen + 6, 1);
+  if (!checkQueryContentResult(next_f, description + "rect for next of 'f'")) {
+    return;
+  }
+
+  is(next_f.top, d.top, 2, description + "'f' and next of 'f' should be at same top");
+  isSimilarTo(next_f.left, f.left + f.width, 2, description + "left of next of 'f' should be at similar to right of 'f'");
+  is(next_f.height, d.height, description + "'f' and next of 'f' should be same height");
+
+  // next of "f" as array
+  next_fAsArray = synthesizeQueryTextRectArray(kLFLen + 6, 1);
+  if (!checkQueryContentResult(next_fAsArray, description + "rect array for next of 'f'") ||
+      !checkRectArray(next_fAsArray, [next_f], description + "query text rect array result of next of 'f' should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  tooBigOffset = synthesizeQueryTextRect(kLFLen + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_f.top, description + "too big offset and next of 'f' should be at same top");
+  is(tooBigOffset.left, next_f.left, description + "too big offset and next of 'f' should be at same left");
+  is(tooBigOffset.height, next_f.height, description + "too big offset and next of 'f' should be same height");
+  is(tooBigOffset.width, next_f.width, description + "too big offset and next of 'f' should be same width");
+
+  // too big offset for the editors as array
+  tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+
+  // Note that this case does not have an empty line at the end.
+  contenteditable.innerHTML = "abc<br>def<br>";
+                      // \n    0123   4567
+                      // \r\n  01234  56789
+
+  description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "f"
+  f = synthesizeQueryTextRect(kLFLen + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+
+  // 2nd <br> (can be computed with rect of 'f')
+  var br2 = synthesizeQueryTextRect(kLFLen + 6, 1);
+  if (!checkQueryContentResult(br2, description + "rect for 2nd <br>")) {
+    return;
+  }
+
+  is(br2.top, f.top, description + "'f' and a line breaker caused by 2nd <br> should be at same top");
+  is(br2.height, f.height, description + "'f' and a line breaker caused by 2nd <br> should be same height");
+  isSimilarTo(br2.left, f.left + f.width, 2, description + "left of a line breaker caused by 2nd <br> should be similar to right of 'f'");
+
+  // 2nd <br> as array
+  var br2AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(br2AsArray, description + "2nd <br>'s line breaker as array") ||
+      !checkRectArray(br2AsArray, [br2], description + "query text rect array result of 2nd <br> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var br2_2 = synthesizeQueryTextRect(kLFLen + 7, 1);
+    if (!checkQueryContentResult(br2_2, description + "rect for \\n of \\r\\n caused by 2nd <br>")) {
+      return;
+    }
+
+    is(br2_2.top, br2.top, description + "'\\r' and '\\n' should be at same top");
+    is(br2_2.left, br2.left, description + "'\\r' and '\\n' should be at same top");
+    is(br2_2.height, br2.height, description + "'\\r' and '\\n' should be same height");
+    is(br2_2.width, br2.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var br2_2AsArray = synthesizeQueryTextRectArray(kLFLen + 7, 1);
+    if (!checkQueryContentResult(br2_2AsArray, description + "rect array for \\n of \\r\\n caused by 2nd <br>") ||
+        !checkRectArray(br2_2AsArray, [br2_2], description + "query text rect array result of \\n of \\r\\n caused by 2nd <br> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // next of 2nd <br>
+  var next_br2 = synthesizeQueryTextRect(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(next_br2, description + "rect for next of 2nd <br>")) {
+    return;
+  }
+
+  is(next_br2.top, br2.top, description + "2nd <br> and next of 2nd <br> should be at same top");
+  is(next_br2.left, br2.left, description + "2nd <br> and next of 2nd <br> should be at same top");
+  is(next_br2.height, br2.height, description + "2nd <br> and next of 2nd <br> should be same height");
+  is(next_br2.width, br2.width, description + "2nd <br> and next of 2nd <br> should be same width");
+
+  // next of 2nd <br> as array
+  var next_br2AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 6, 1);
+  if (!checkQueryContentResult(next_br2AsArray, description + "rect array for next of 2nd <br>") ||
+      !checkRectArray(next_br2AsArray, [next_br2], description + "query text rect array result of next of 2nd <br> should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  tooBigOffset = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_br2.top, description + "too big offset and next of 2nd <br> should be at same top");
+  is(tooBigOffset.left, next_br2.left, description + "too big offset and next of 2nd <br> should be at same left");
+  is(tooBigOffset.height, next_br2.height, description + "too big offset and next of 2nd <br> should be same height");
+  is(tooBigOffset.width, next_br2.width, description + "too big offset and next of 2nd <br> should be same width");
+
+  // too big offset for the editors as array
+  tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+
+  contenteditable.innerHTML = "abc<br>def<br><br>";
+                      // \n    0123   4567   8
+                      // \r\n  01234  56789  01
+
+  description = "runTextRectInContentEditableTest: \"" + contenteditable.innerHTML + "\", ";
+
+  // "f"
+  f = synthesizeQueryTextRect(kLFLen + 5, 1);
+  if (!checkQueryContentResult(f, description + "rect for 'f'")) {
+    return;
+  }
+
+  is(f.top, e.top, description + "'e' and 'f' should be at same top");
+  isSimilarTo(f.left, e.left + e.width, 2, description + "left of 'f' should be at similar to right of 'e'");
+  is(f.height, e.height, description + "'e' and 'f' should be same height");
+
+  // 2nd <br>
+  br2 = synthesizeQueryTextRect(kLFLen + 6, 1);
+  if (!checkQueryContentResult(br2, description + "rect for 2nd <br>")) {
+    return;
+  }
+
+  is(br2.top, f.top, description + "'f' and a line breaker caused by 2nd <br> should be at same top");
+  is(br2.height, f.height, description + "'f' and a line breaker caused by 2nd <br> should be same height");
+  ok(f.left < br2.left, description + "left of a line breaker caused by 2nd <br> should be bigger than left of 'f', f.left=" + f.left + ", br2.left=" + br2.left);
+
+  // 2nd <br> as array
+  br2AsArray = synthesizeQueryTextRectArray(kLFLen + 6, 1);
+  if (!checkQueryContentResult(br2AsArray, description + "2nd <br>'s line breaker as array") ||
+      !checkRectArray(br2AsArray, [br2], description + "query text rect array result of 2nd <br> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    br2_2 = synthesizeQueryTextRect(kLFLen + 7, 1);
+    if (!checkQueryContentResult(br2_2, description + "rect for \\n of \\r\\n caused by 2nd <br>")) {
+      return;
+    }
+
+    is(br2_2.top, br2.top, description + "'\\r' and '\\n' should be at same top");
+    is(br2_2.left, br2.left, description + "'\\r' and '\\n' should be at same top");
+    is(br2_2.height, br2.height, description + "'\\r' and '\\n' should be same height");
+    is(br2_2.width, br2.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var br2_2AsArray = synthesizeQueryTextRectArray(kLFLen + 7, 1);
+    if (!checkQueryContentResult(br2_2AsArray, description + "rect array for \\n of \\r\\n caused by 2nd <br>") ||
+        !checkRectArray(br2_2AsArray, [br2_2], description + "query text rect array result of \\n of \\r\\n caused by 2nd <br> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // 3rd <br>
+  var br3 = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(br3, description + "rect for next of 3rd <br>")) {
+    return;
+  }
+
+  isSimilarTo(br3.top, d.top + d.height, 3, description + "top of next of 3rd <br> should at similar to bottom of 'd'");
+  isSimilarTo(br3.left, d.left, 2, description + "left of next of 3rd <br> should be at similar to left of 'd'");
+  isSimilarTo(br3.height, d.height, 2, description + "next of 3rd <br> and 'd' should be similar height");
+
+  // 3rd <br> as array
+  var br3AsArray = synthesizeQueryTextRectArray(kLFLen + 6, 1);
+  if (!checkQueryContentResult(br3AsArray, description + "3rd <br>'s line breaker as array") ||
+      !checkRectArray(br3AsArray, [br3], description + "query text rect array result of 3rd <br> should match with each query text rect result")) {
+    return;
+  }
+
+  if (kLFLen > 1) {
+    // \n of \r\n
+    var br3_2 = synthesizeQueryTextRect(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(br3_2, description + "rect for \\n of \\r\\n caused by 3rd <br>")) {
+      return;
+    }
+
+    is(br3_2.top, br3.top, description + "'\\r' and '\\n' should be at same top");
+    is(br3_2.left, br3.left, description + "'\\r' and '\\n' should be at same left");
+    is(br3_2.height, br3.height, description + "'\\r' and '\\n' should be same height");
+    is(br3_2.width, br3.width, description + "'\\r' and '\\n' should be same width");
+
+    // \n of \r\n as array
+    var br2_2AsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+    if (!checkQueryContentResult(br2_2AsArray, description + "rect array for \\n of \\r\\n caused by 3rd <br>") ||
+        !checkRectArray(br2_2AsArray, [br2_2], description + "query text rect array result of \\n of \\r\\n caused by 3rd <br> should match with each query text rect result")) {
+      return;
+    }
+  }
+
+  // next of 3rd <br>
+  var next_br3 = synthesizeQueryTextRect(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(next_br3, description + "rect for next of 3rd <br>")) {
+    return;
+  }
+
+  is(next_br3.top, br3.top, description + "3rd <br> and next of 3rd <br> should be at same top");
+  is(next_br3.left, br3.left, description + "3rd <br> and next of 3rd <br> should be at same left");
+  is(next_br3.height, br3.height, description + "3rd <br> and next of 3rd <br> should be same height");
+  is(next_br3.width, br3.width, description + "3rd <br> and next of 3rd <br> should be same width");
+
+  // next of 3rd <br> as array
+  var next_br3AsArray = synthesizeQueryTextRectArray(kLFLen * 3 + 6, 1);
+  if (!checkQueryContentResult(next_br3AsArray, description + "rect array for next of 3rd <br>") ||
+      !checkRectArray(next_br3AsArray, [next_br3], description + "query text rect array result of next of 3rd <br> should match with each query text rect result")) {
+    return;
+  }
+
+  // too big offset for the editor
+  tooBigOffset = synthesizeQueryTextRect(kLFLen * 3 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffset, description + "rect for too big offset")) {
+    return;
+  }
+
+  is(tooBigOffset.top, next_br3.top, description + "too big offset and next of 3rd <br> should be at same top");
+  is(tooBigOffset.left, next_br3.left, description + "too big offset and next of 3rd <br> should be at same left");
+  is(tooBigOffset.height, next_br3.height, description + "too big offset and next of 3rd <br> should be same height");
+  is(tooBigOffset.width, next_br3.width, description + "too big offset and next of 3rd <br> should be same width");
+
+  // too big offset for the editors as array
+  tooBigOffsetAsArray = synthesizeQueryTextRectArray(kLFLen * 2 + 7, 1);
+  if (!checkQueryContentResult(tooBigOffsetAsArray, description + "rect array for too big offset") ||
+      !checkRectArray(tooBigOffsetAsArray, [tooBigOffset], description + "query text rect array result with too big offset should match with each query text rect result")) {
+    return;
+  }
+}
+
 function runCharAtPointTest(aFocusedEditor, aTargetName)
 {
   aFocusedEditor.value = "This is a test of the\nContent Events";
@@ -3258,14 +4035,53 @@ function runSetSelectionEventTest()
   contenteditable.innerHTML = "a<blink>b</blink>c";
   synthesizeSelectionSet(0, 3);
   is(selection.anchorNode, contenteditable.firstChild,
-     "runSetSelectionEventTest #15 (0, 0), \"" + contenteditable.innerHTML + "\": selection anchor node should be the first text node");
+     "runSetSelectionEventTest #16 (0, 3), \"" + contenteditable.innerHTML + "\": selection anchor node should be the first text node");
   is(selection.anchorOffset, 0,
-     "runSetSelectionEventTest #15 (0, 0), \"" + contenteditable.innerHTML + "\": selection anchor offset should be 0");
+     "runSetSelectionEventTest #16 (0, 3), \"" + contenteditable.innerHTML + "\": selection anchor offset should be 0");
   is(selection.focusNode, contenteditable.lastChild,
-     "runSetSelectionEventTest #15 (0, 0), \"" + contenteditable.innerHTML + "\": selection focus node should be the last text node");
+     "runSetSelectionEventTest #16 (0, 3), \"" + contenteditable.innerHTML + "\": selection focus node should be the last text node");
   is(selection.focusOffset, contenteditable.lastChild.wholeText.length,
-     "runSetSelectionEventTest #15 (0, 0), \"" + contenteditable.innerHTML + "\": selection focus offset should be the length of the last text node");
+     "runSetSelectionEventTest #16 (0, 3), \"" + contenteditable.innerHTML + "\": selection focus offset should be the length of the last text node");
   checkSelection(0, "abc", "runSetSelectionEventTest #16 (0, 3), \"" + contenteditable.innerHTML + "\"");
+
+  // #17 (bug 1319660 - incorrect adjustment of content iterator last node)
+  contenteditable.innerHTML = "<div>a</div><div><br></div>";
+
+  synthesizeSelectionSet(kLFLen, 1+kLFLen);
+  is(selection.anchorNode, contenteditable.firstChild,
+     "runSetSelectionEventTest #17 (kLFLen, 1+kLFLen), \"" + contenteditable.innerHTML + "\": selection anchor node should be the first <div> element");
+  is(selection.anchorOffset, 0,
+     "runSetSelectionEventTest #17 (kLFLen, 1+kLFLen), \"" + contenteditable.innerHTML + "\": selection anchor offset should be 0");
+  is(selection.focusNode, contenteditable.lastChild,
+     "runSetSelectionEventTest #17 (kLFLen, 1+kLFLen), \"" + contenteditable.innerHTML + "\": selection focus node should be the second <div> element");
+  is(selection.focusOffset, 0,
+     "runSetSelectionEventTest #17 (kLFLen, 1+kLFLen), \"" + contenteditable.innerHTML + "\": selection focus offset should be 0");
+  checkSelection(kLFLen, "a" + kLF, "runSetSelectionEventTest #17 (kLFLen, 1+kLFLen), \"" + contenteditable.innerHTML + "\"");
+
+  synthesizeSelectionSet(1+2*kLFLen, 0);
+  is(selection.anchorNode, contenteditable.lastChild,
+     "runSetSelectionEventTest #17 (1+2*kLFLen, 0), \"" + contenteditable.innerHTML + "\": selection anchor node should be the second <div> element");
+  is(selection.anchorOffset, 0,
+     "runSetSelectionEventTest #17 (1+2*kLFLen, 0), \"" + contenteditable.innerHTML + "\": selection anchor offset should be 0");
+  is(selection.focusNode, contenteditable.lastChild,
+     "runSetSelectionEventTest #17 (1+2*kLFLen, 0), \"" + contenteditable.innerHTML + "\": selection focus node should be the second <div> element");
+  is(selection.focusOffset, 0,
+     "runSetSelectionEventTest #17 (1+2*kLFLen, 0), \"" + contenteditable.innerHTML + "\": selection focus offset should be 0");
+  checkSelection(1+2*kLFLen, "", "runSetSelectionEventTest #17 (1+2*kLFLen, 0), \"" + contenteditable.innerHTML + "\"");
+
+  // #18 (bug 1319660 - content iterator start node regression)
+  contenteditable.innerHTML = "<div><br></div><div><br></div>";
+
+  synthesizeSelectionSet(2*kLFLen, kLFLen);
+  is(selection.anchorNode, contenteditable.firstChild,
+     "runSetSelectionEventTest #18 (2*kLFLen, kLFLen), \"" + contenteditable.innerHTML + "\": selection anchor node should be the first <div> element");
+  is(selection.anchorOffset, 1,
+     "runSetSelectionEventTest #18 (2*kLFLen, kLFLen), \"" + contenteditable.innerHTML + "\": selection anchor offset should be 1");
+  is(selection.focusNode, contenteditable.lastChild,
+     "runSetSelectionEventTest #18 (2*kLFLen, kLFLen), \"" + contenteditable.innerHTML + "\": selection focus node should be the second <div> element");
+  is(selection.focusOffset, 0,
+     "runSetSelectionEventTest #18 (2*kLFLen, kLFLen), \"" + contenteditable.innerHTML + "\": selection focus offset should be 0");
+  checkSelection(2*kLFLen, kLF, "runSetSelectionEventTest #18 (2*kLFLen, kLFLen), \"" + contenteditable.innerHTML + "\"");
 }
 
 function runQueryTextContentEventTest()
@@ -3692,6 +4508,89 @@ function runQueryContentEventRelativeToInsertionPoint()
   synthesizeComposition({ type: "compositioncommitasis" });
 }
 
+function runBug1375825Test()
+{
+  contenteditable.focus();
+
+  // #1
+  contenteditable.innerHTML = "abc<span contenteditable=\"false\">defgh</span>";
+
+  var ret = synthesizeQueryTextRect(2, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (2, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "c", "runBug1375825Test #1 (2, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'c'");
+
+  ret = synthesizeQueryTextRect(3, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (3, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "d", "runBug1375825Test #1 (3, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'd'");
+
+  ret = synthesizeQueryTextRect(4, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (4, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "e", "runBug1375825Test #1 (4, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'e'");
+
+  ret = synthesizeQueryTextRect(5, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (5, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "f", "runBug1375825Test #1 (5, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'f'");
+
+  ret = synthesizeQueryTextRect(6, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (6, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "g", "runBug1375825Test #1 (6, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'g'");
+
+  ret = synthesizeQueryTextRect(7, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #1 (7, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "h", "runBug1375825Test #1 (7, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'h'");
+
+  // #2
+  contenteditable.innerHTML = "abc<span style=\"-moz-user-select: all;\">defgh</span>";
+
+  ret = synthesizeQueryTextRect(2, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (2, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "c", "runBug1375825Test #2 (2, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'c'");
+
+  ret = synthesizeQueryTextRect(3, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (3, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "d", "runBug1375825Test #2 (3, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'd'");
+
+  ret = synthesizeQueryTextRect(4, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (4, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "e", "runBug1375825Test #2 (4, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'e'");
+
+  ret = synthesizeQueryTextRect(5, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (5, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "f", "runBug1375825Test #2 (5, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'f'");
+
+  ret = synthesizeQueryTextRect(6, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (6, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "g", "runBug1375825Test #2 (6, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'g'");
+
+  ret = synthesizeQueryTextRect(7, 1);
+  if (!checkQueryContentResult(ret, "runBug1375825Test #2 (7, 1), \"" + contenteditable.innerHTML + "\"")) {
+    return;
+  }
+  is(ret.text, "h", "runBug1375825Test #2 (7, 1), \"" + contenteditable.innerHTML + "\": should have queried a rect for 'h'");
+}
+
 function runCSSTransformTest()
 {
   textarea.focus();
@@ -3732,41 +4631,95 @@ function runCSSTransformTest()
 
     var editorRectTranslated = synthesizeQueryEditorRect();
     if (!checkQueryContentResult(editorRectTranslated,
-          "runCSSTransformTest: editorRectTranslated") ||
+          "runCSSTransformTest: editorRectTranslated, " + textarea.style.transform) ||
         !checkRect(editorRectTranslated, movedRect(editorRect, 10, 15),
-          "runCSSTransformTest: editorRectTranslated")) {
+          "runCSSTransformTest: editorRectTranslated, " + textarea.style.transform)) {
       return;
     }
     var firstCharRectTranslated = synthesizeQueryTextRect(0, 1);
     if (!checkQueryContentResult(firstCharRectTranslated,
-          "runCSSTransformTest: firstCharRectTranslated") ||
+          "runCSSTransformTest: firstCharRectTranslated, " + textarea.style.transform) ||
         !checkRect(firstCharRectTranslated, movedRect(firstCharRect, 10, 15),
-          "runCSSTransformTest: firstCharRectTranslated")) {
+          "runCSSTransformTest: firstCharRectTranslated, " + textarea.style.transform)) {
       return;
     }
     var lastCharRectTranslated = synthesizeQueryTextRect(textarea.value.length - 1, textarea.value.length);
     if (!checkQueryContentResult(lastCharRectTranslated,
-          "runCSSTransformTest: lastCharRectTranslated") ||
+          "runCSSTransformTest: lastCharRectTranslated, " + textarea.style.transform) ||
         !checkRect(lastCharRectTranslated, movedRect(lastCharRect, 10, 15),
-          "runCSSTransformTest: lastCharRectTranslated")) {
+          "runCSSTransformTest: lastCharRectTranslated, " + textarea.style.transform)) {
       return;
     }
     var caretRectTranslated = synthesizeQueryCaretRect(textarea.selectionStart);
     if (!checkQueryContentResult(caretRectTranslated,
-          "runCSSTransformTest: caretRectTranslated") ||
+          "runCSSTransformTest: caretRectTranslated, " + textarea.style.transform) ||
         !checkRect(caretRectTranslated, movedRect(caretRect, 10, 15),
-          "runCSSTransformTest: caretRectTranslated")) {
+          "runCSSTransformTest: caretRectTranslated, " + textarea.style.transform)) {
       return;
     }
     var caretRectBeforeFirstCharTranslated = synthesizeQueryCaretRect(0);
     if (!checkQueryContentResult(caretRectBeforeFirstCharTranslated,
-          "runCSSTransformTest: caretRectBeforeFirstCharTranslated") ||
+          "runCSSTransformTest: caretRectBeforeFirstCharTranslated, " + textarea.style.transform) ||
         !checkRect(caretRectBeforeFirstCharTranslated, movedRect(caretRectBeforeFirstChar, 10, 15),
-          "runCSSTransformTest: caretRectBeforeFirstCharTranslated")) {
+          "runCSSTransformTest: caretRectBeforeFirstCharTranslated, " + textarea.style.transform)) {
+      return;
+    }
+    var firstCharRectTranslatedAsArray = synthesizeQueryTextRectArray(0, 1);
+    if (!checkQueryContentResult(firstCharRectTranslatedAsArray, "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(firstCharRectTranslatedAsArray, [firstCharRectTranslated], "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform)) {
+      return;
+    }
+    var lastCharRectTranslatedAsArray = synthesizeQueryTextRectArray(textarea.value.length - 1, textarea.value.length);
+    if (!checkQueryContentResult(lastCharRectTranslatedAsArray, "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(lastCharRectTranslatedAsArray, [lastCharRectTranslated], "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform)) {
       return;
     }
 
     // XXX It's too difficult to check the result with scale and rotate...
+    //     For now, let's check if query text rect and query text rect array returns same rect.
+    textarea.style.transform = "scale(1.5)";
+    firstCharRectTranslated = synthesizeQueryTextRect(0, 1);
+    if (!checkQueryContentResult(firstCharRectTranslated,
+          "runCSSTransformTest: firstCharRectTranslated, " + textarea.style.transform)) {
+      return;
+    }
+    lastCharRectTranslated = synthesizeQueryTextRect(textarea.value.length - 1, textarea.value.length);
+    if (!checkQueryContentResult(lastCharRectTranslated,
+          "runCSSTransformTest: lastCharRectTranslated, " + textarea.style.transform)) {
+      return;
+    }
+    firstCharRectTranslatedAsArray = synthesizeQueryTextRectArray(0, 1);
+    if (!checkQueryContentResult(firstCharRectTranslatedAsArray, "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(firstCharRectTranslatedAsArray, [firstCharRectTranslated], "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform)) {
+      return;
+    }
+    lastCharRectTranslatedAsArray = synthesizeQueryTextRectArray(textarea.value.length - 1, textarea.value.length);
+    if (!checkQueryContentResult(lastCharRectTranslatedAsArray, "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(lastCharRectTranslatedAsArray, [lastCharRectTranslated], "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform)) {
+      return;
+    }
+
+    textarea.style.transform = "rotate(30deg)";
+    firstCharRectTranslated = synthesizeQueryTextRect(0, 1);
+    if (!checkQueryContentResult(firstCharRectTranslated,
+          "runCSSTransformTest: firstCharRectTranslated, " + textarea.style.transform)) {
+      return;
+    }
+    lastCharRectTranslated = synthesizeQueryTextRect(textarea.value.length - 1, textarea.value.length);
+    if (!checkQueryContentResult(lastCharRectTranslated,
+          "runCSSTransformTest: lastCharRectTranslated, " + textarea.style.transform)) {
+      return;
+    }
+    firstCharRectTranslatedAsArray = synthesizeQueryTextRectArray(0, 1);
+    if (!checkQueryContentResult(firstCharRectTranslatedAsArray, "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(firstCharRectTranslatedAsArray, [firstCharRectTranslated], "runCSSTransformTest: firstCharRectTranslatedAsArray, " + textarea.style.transform)) {
+      return;
+    }
+    lastCharRectTranslatedAsArray = synthesizeQueryTextRectArray(textarea.value.length - 1, textarea.value.length);
+    if (!checkQueryContentResult(lastCharRectTranslatedAsArray, "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform) ||
+        !checkRectArray(lastCharRectTranslatedAsArray, [lastCharRectTranslated], "runCSSTransformTest: lastCharRectTranslatedAsArray, " + textarea.style.transform)) {
+      return;
+    }
   } finally {
     textarea.style.transform = "";
   }
@@ -3784,21 +4737,73 @@ function runBug722639Test()
         "runBug722639Test: firstLine")) {
     return;
   }
+  ok(true, "runBug722639Test: 1st line, top=" + firstLine.top + ", left=" + firstLine.left);
+  var firstLineAsArray = synthesizeQueryTextRectArray(0, 1);
+  if (!checkQueryContentResult(firstLineAsArray, "runBug722639Test: 1st line as array") ||
+      !checkRectArray(firstLineAsArray, [firstLine], "runBug722639Test: 1st line as array should match with text rect result")) {
+    return;
+  }
+  if (kLFLen > 1) {
+    var firstLineLF = synthesizeQueryTextRect(1, 1);
+    if (!checkQueryContentResult(firstLineLF,
+          "runBug722639Test: firstLineLF")) {
+      return;
+    }
+    is(firstLineLF.top, firstLine.top, "runBug722639Test: 1st line's \\n rect should be same as 1st line's \\r rect");
+    is(firstLineLF.left, firstLine.left, "runBug722639Test: 1st line's \\n rect should be same as 1st line's \\r rect");
+    is(firstLineLF.height, firstLine.height, "runBug722639Test: 1st line's \\n rect should be same as 1st line's \\r rect");
+    is(firstLineLF.width, firstLine.width, "runBug722639Test: 1st line's \\n rect should be same as 1st line's \\r rect");
+    var firstLineLFAsArray = synthesizeQueryTextRectArray(1, 1);
+    if (!checkQueryContentResult(firstLineLFAsArray, "runBug722639Test: 1st line's \\n rect as array") ||
+        !checkRectArray(firstLineLFAsArray, [firstLineLF], "runBug722639Test: 1st line's rect as array should match with text rect result")) {
+      return;
+    }
+  }
   var secondLine = synthesizeQueryTextRect(kLFLen, 1);
   if (!checkQueryContentResult(secondLine,
         "runBug722639Test: secondLine")) {
     return;
+  }
+  ok(true, "runBug722639Test: 2nd line, top=" + secondLine.top + ", left=" + secondLine.left);
+  var secondLineAsArray = synthesizeQueryTextRectArray(kLFLen, 1);
+  if (!checkQueryContentResult(secondLineAsArray, "runBug722639Test: 2nd line as array") ||
+      !checkRectArray(secondLineAsArray, [secondLine], "runBug722639Test: 2nd line as array should match with text rect result")) {
+    return;
+  }
+  if (kLFLen > 1) {
+    var secondLineLF = synthesizeQueryTextRect(kLFLen + 1, 1);
+    if (!checkQueryContentResult(secondLineLF,
+          "runBug722639Test: secondLineLF")) {
+      return;
+    }
+    is(secondLineLF.top, secondLine.top, "runBug722639Test: 2nd line's \\n rect should be same as 2nd line's \\r rect");
+    is(secondLineLF.left, secondLine.left, "runBug722639Test: 2nd line's \\n rect should be same as 2nd line's \\r rect");
+    is(secondLineLF.height, secondLine.height, "runBug722639Test: 2nd line's \\n rect should be same as 2nd line's \\r rect");
+    is(secondLineLF.width, secondLine.width, "runBug722639Test: 2nd line's \\n rect should be same as 2nd line's \\r rect");
+    var secondLineLFAsArray = synthesizeQueryTextRectArray(kLFLen + 1, 1);
+    if (!checkQueryContentResult(secondLineLFAsArray, "runBug722639Test: 2nd line's \\n rect as array") ||
+        !checkRectArray(secondLineLFAsArray, [secondLineLF], "runBug722639Test: 2nd line's rect as array should match with text rect result")) {
+      return;
+    }
   }
   var lineHeight = secondLine.top -  firstLine.top;
   ok(lineHeight > 0,
      "runBug722639Test: lineHeight must be positive");
   is(secondLine.left, firstLine.left,
      "runBug722639Test: the left value must be always same value");
+  is(secondLine.height, firstLine.height,
+     "runBug722639Test: the height must be always same value");
   var previousTop = secondLine.top;
-  for (var i = 2; i < textarea.value.length; i++) {
-    var currentLine = synthesizeQueryTextRect(kLFLen * i, 1);
+  for (var i = 3; i <= textarea.value.length + 1; i++) {
+    var currentLine = synthesizeQueryTextRect(kLFLen * (i - 1), 1);
     if (!checkQueryContentResult(currentLine,
            "runBug722639Test: " + i + "th currentLine")) {
+      return;
+    }
+    ok(true, "runBug722639Test: " + i + "th line, top=" + currentLine.top + ", left=" + currentLine.left);
+    var currentLineAsArray = synthesizeQueryTextRectArray(kLFLen * (i - 1), 1);
+    if (!checkQueryContentResult(currentLineAsArray, "runBug722639Test: " + i + "th line as array") ||
+        !checkRectArray(currentLineAsArray, [currentLine], "runBug722639Test: " + i + "th line as array should match with text rect result")) {
       return;
     }
     // NOTE: the top position may be 1px larger or smaller than other lines
@@ -3811,6 +4816,24 @@ function runBug722639Test()
     }
     is(currentLine.left, firstLine.left,
        "runBug722639Test: " + i + "th line's left is unexpected");
+    is(currentLine.height, firstLine.height,
+       "runBug722639Test: " + i + "th line's height is unexpected");
+    if (kLFLen > 1) {
+      var currentLineLF = synthesizeQueryTextRect(kLFLen * (i - 1) + 1, 1);
+      if (!checkQueryContentResult(currentLineLF,
+            "runBug722639Test: " + i + "th currentLineLF")) {
+        return;
+      }
+      is(currentLineLF.top, currentLine.top, "runBug722639Test: " + i + "th line's \\n rect should be same as same line's \\r rect");
+      is(currentLineLF.left, currentLine.left, "runBug722639Test: " + i + "th line's \\n rect should be same as same line's \\r rect");
+      is(currentLineLF.height, currentLine.height, "runBug722639Test: " + i + "th line's \\n rect should be same as same line's \\r rect");
+      is(currentLineLF.width, currentLine.width, "runBug722639Test: " + i + "th line's \\n rect should be same as same line's \\r rect");
+      var currentLineLFAsArray = synthesizeQueryTextRectArray(kLFLen * (i - 1) + 1, 1);
+      if (!checkQueryContentResult(currentLineLFAsArray, "runBug722639Test: " + i + "th line's \\n rect as array") ||
+          !checkRectArray(currentLineLFAsArray, [currentLineLF], "runBug722639Test: " + i + "th line's rect as array should match with text rect result")) {
+        return;
+      }
+    }
     previousTop = currentLine.top;
   }
 }
@@ -3874,7 +4897,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #2");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #2");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #2");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #2");
@@ -3914,9 +4937,9 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #3");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #3");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #3");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runForceCommitTest: the input has composition #3");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #3");
@@ -3957,7 +4980,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #4");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #4");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #4");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #4");
@@ -3997,9 +5020,9 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #5");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #5");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #5");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runForceCommitTest: the input has composition #5");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #5");
@@ -4041,9 +5064,9 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #6");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #6");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #6");
-  ok(!getEditorIMESupport(textareaInFrame).isComposing,
+  ok(!getEditor(textareaInFrame).isComposing,
      "runForceCommitTest: the textarea in frame has composition #6");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #6");
@@ -4085,9 +5108,9 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #7");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #7");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #7");
-  ok(!getEditorIMESupport(textareaInFrame).isComposing,
+  ok(!getEditor(textareaInFrame).isComposing,
      "runForceCommitTest: the textarea in frame has composition #7");
   is(textarea.value, "\u306E",
      "runForceCommitTest: the textarea doesn't have the committed text #7");
@@ -4130,7 +5153,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #8");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #8");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #8");
   ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
      "runForceCommitTest: the editable document has composition #8");
@@ -4218,7 +5241,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 3rd event was fired on wrong event target #10");
   ok(!getHTMLEditorIMESupport(iframe2.contentWindow).isComposing,
      "runForceCommitTest: the editable document still has composition #10");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea has composition #10");
   ok(iframe2.contentDocument.body.innerHTML != iframe2BodyInnerHTML &&
      iframe2.contentDocument.body.innerHTML.indexOf("\u306E") >= 0,
@@ -4306,7 +5329,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #12");
   is(events[2].target, input,
      "runForceCommitTest: The 3rd event was fired on wrong event target #12");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runForceCommitTest: the input still has composition #12");
   is(input.value, "set value",
      "runForceCommitTest: the input doesn't have the set text #12");
@@ -4344,7 +5367,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #13");
   is(events[2].target, textarea,
      "runForceCommitTest: The 3rd event was fired on wrong event target #13");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runForceCommitTest: the textarea still has composition #13");
   is(textarea.value, "set value",
      "runForceCommitTest: the textarea doesn't have the set text #13");
@@ -4382,7 +5405,7 @@ function runForceCommitTest()
      "runForceCommitTest: The 2nd event was fired on wrong event target #14");
   is(events[2].target, input,
      "runForceCommitTest: The 3rd event was fired on wrong event target #14");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runForceCommitTest: the input still has composition #14");
   is(input.value, "\u306E appended value",
      "runForceCommitTest: the input should have both composed text and appended text #14");
@@ -4494,7 +5517,7 @@ function runNestedSettingValue()
      "runNestedSettingValue: The 2nd event was fired on wrong event target #1");
   is(events[2].target, textarea,
      "runNestedSettingValue: The 3rd event was fired on wrong event target #1");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runNestedSettingValue: the textarea still has composition #1");
   is(textarea.value, "first setting value, text, compositionend, input, ",
      "runNestedSettingValue: the textarea should have all string set to value attribute");
@@ -4534,7 +5557,7 @@ function runNestedSettingValue()
      "runNestedSettingValue: The 2nd event was fired on wrong event target #2");
   is(events[2].target, input,
      "runNestedSettingValue: The 3rd event was fired on wrong event target #2");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runNestedSettingValue: the input still has composition #2");
   is(textarea.value, "first setting value, text, compositionend, input, ",
      "runNestedSettingValue: the input should have all string set to value attribute #2");
@@ -4574,7 +5597,7 @@ function runNestedSettingValue()
      "runNestedSettingValue: The 2nd event was fired on wrong event target #3");
   is(events[2].target, textarea,
      "runNestedSettingValue: The 3rd event was fired on wrong event target #3");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runNestedSettingValue: the textarea still has composition #3");
   is(textarea.value, "\u306Efirst setting value, text, compositionend, input, ",
      "runNestedSettingValue: the textarea should have appended by setRangeText() and all string set to value attribute #3");
@@ -4614,7 +5637,7 @@ function runNestedSettingValue()
      "runNestedSettingValue: The 2nd event was fired on wrong event target #4");
   is(events[2].target, input,
      "runNestedSettingValue: The 3rd event was fired on wrong event target #4");
-  ok(!getEditorIMESupport(input).isComposing,
+  ok(!getEditor(input).isComposing,
      "runNestedSettingValue: the input still has composition #4");
   is(textarea.value, "\u306Efirst setting value, text, compositionend, input, ",
      "runNestedSettingValue: the input should have all string appended by setRangeText() and set to value attribute #4");
@@ -4627,7 +5650,7 @@ function runNestedSettingValue()
 
 }
 
-function runAsyncForceCommitTest(aNextTest)
+function runAsyncForceCommitTest()
 {
   var events;
   function eventHandler(aEvent)
@@ -4661,7 +5684,7 @@ function runAsyncForceCommitTest(aNextTest)
       window.removeEventListener("input", eventHandler, true);
       window.removeEventListener("text", eventHandler, true);
 
-      SimpleTest.executeSoon(aNextTest);
+      SimpleTest.executeSoon(continueTest);
     }, 1);
     return true;
   };
@@ -4721,7 +5744,7 @@ function runAsyncForceCommitTest(aNextTest)
      "runAsyncForceCommitTest: The 2nd event was fired on wrong event target #2");
   is(events[2].target, textarea,
      "runAsyncForceCommitTest: The 3rd event was fired on wrong event target #2");
-  ok(!getEditorIMESupport(textarea).isComposing,
+  ok(!getEditor(textarea).isComposing,
      "runAsyncForceCommitTest: the textarea still has composition #2");
   is(textarea.value, "\u306E",
      "runAsyncForceCommitTest: the textarea doesn't have the committed text #2");
@@ -5060,6 +6083,140 @@ function runNotRedundantChangeTest()
   textarea.removeEventListener("text", handler, true);
 }
 
+function runNativeLineBreakerTest()
+{
+  textarea.focus();
+
+  var result = {};
+  function clearResult()
+  {
+    result = { compositionupdate: null, compositionend: null };
+  }
+
+  function handler(aEvent)
+  {
+    result[aEvent.type] = aEvent.data;
+  }
+
+  SpecialPowers.setBoolPref("dom.compositionevent.allow_control_characters", false);
+
+  textarea.addEventListener("compositionupdate", handler, true);
+  textarea.addEventListener("compositionend", handler, true);
+
+  // '\n' in composition string shouldn't be changed.
+  clearResult();
+  textarea.value = "";
+  var clauses = [ "abc\n", "def\n\ng", "hi\n", "\njkl" ];
+  var caret = clauses[0] + clauses[1] + clauses[2];
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": clauses.join(''),
+        "clauses":
+        [
+          { "length": clauses[0].length,
+            "attr": COMPOSITION_ATTR_RAW_CLAUSE },
+          { "length": clauses[1].length,
+            "attr": COMPOSITION_ATTR_SELECTED_RAW_CLAUSE },
+          { "length": clauses[2].length,
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE },
+          { "length": clauses[3].length,
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
+        ]
+      },
+      "caret": { "start": caret.length, "length": 0 }
+    });
+
+  checkSelection(caret.replace(/\n/g, "\n").length + (kLFLen - 1) * 4, "", "runNativeLineBreakerTest", "#1");
+  checkIMESelection("RawClause", true, 0, clauses[0].replace(/\n/g, kLF), "runNativeLineBreakerTest: \\n shouldn't be replaced with any character #1");
+  checkIMESelection("SelectedRawClause", true, clauses[0].replace(/\n/g, kLF).length, clauses[1].replace(/\n/g, kLF), "runNativeLineBreakerTest: \\n shouldn't be replaced with any character #1");
+  checkIMESelection("ConvertedClause", true, (clauses[0] + clauses[1]).replace(/\n/g, kLF).length, clauses[2].replace(/\n/g, kLF), "runNativeLineBreakerTest: \\n shouldn't be replaced with any character #1");
+  checkIMESelection("SelectedClause", true, (clauses[0] + clauses[1] + clauses[2]).replace(/\n/g, kLF).length, clauses[3].replace(/\n/g, kLF), "runNativeLineBreakerTest: \\n shouldn't be replaced with any character #1");
+  is(result.compositionupdate, clauses.join('').replace(/\n/g, "\n"), "runNativeLineBreakerTest: \\n in compositionupdate.data shouldn't be removed nor replaced with other characters #1");
+  is(textarea.value, clauses.join('').replace(/\n/g, "\n"), "runNativeLineBreakerTest: \\n in textarea.value shouldn't be removed nor replaced with other characters #1");
+
+  synthesizeComposition({ type: "compositioncommit", data: clauses.join('') });
+  checkSelection(clauses.join('').replace(/\n/g, "\n").length + (kLFLen - 1) * 5, "", "runNativeLineBreakerTest", "#2");
+  is(result.compositionend, clauses.join('').replace(/\n/g, "\n"), "runNativeLineBreakerTest: \\n in compositionend.data shouldn't be removed nor replaced with other characters #2");
+  is(textarea.value, clauses.join('').replace(/\n/g, "\n"), "runNativeLineBreakerTest: \\n in textarea.value shouldn't be removed nor replaced with other characters #2");
+
+  // \r\n in composition string should be replaced with \n.
+  clearResult();
+  textarea.value = "";
+  clauses = [ "abc\r\n", "def\r\n\r\ng", "hi\r\n", "\r\njkl" ];
+  caret = clauses[0] + clauses[1] + clauses[2];
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": clauses.join(''),
+        "clauses":
+        [
+          { "length": clauses[0].length,
+            "attr": COMPOSITION_ATTR_RAW_CLAUSE },
+          { "length": clauses[1].length,
+            "attr": COMPOSITION_ATTR_SELECTED_RAW_CLAUSE },
+          { "length": clauses[2].length,
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE },
+          { "length": clauses[3].length,
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
+        ]
+      },
+      "caret": { "start": caret.length, "length": 0 }
+    });
+
+  checkSelection(caret.replace(/\r\n/g, "\n").length + (kLFLen - 1) * 4, "", "runNativeLineBreakerTest", "#3");
+  checkIMESelection("RawClause", true, 0, clauses[0].replace(/\r\n/g, kLF), "runNativeLineBreakerTest: \\r\\n should be replaced with \\n #3");
+  checkIMESelection("SelectedRawClause", true, clauses[0].replace(/\r\n/g, kLF).length, clauses[1].replace(/\r\n/g, kLF), "runNativeLineBreakerTest: \\r\\n should be replaced with \\n #3");
+  checkIMESelection("ConvertedClause", true, (clauses[0] + clauses[1]).replace(/\r\n/g, kLF).length, clauses[2].replace(/\r\n/g, kLF), "runNativeLineBreakerTest: \\r\\n should be replaced with \\n #3");
+  checkIMESelection("SelectedClause", true, (clauses[0] + clauses[1] + clauses[2]).replace(/\r\n/g, kLF).length, clauses[3].replace(/\r\n/g, kLF), "runNativeLineBreakerTest: \\r\\n should be replaced with \\n #3");
+  is(result.compositionupdate, clauses.join('').replace(/\r\n/g, "\n"), "runNativeLineBreakerTest: \\r\\n in compositionudpate.data should be replaced with \\n #3");
+  is(textarea.value, clauses.join('').replace(/\r\n/g, "\n"), "runNativeLineBreakerTest: \\r\\n in textarea.value should be replaced with \\n #3");
+
+  synthesizeComposition({ type: "compositioncommit", data: clauses.join('') });
+  checkSelection(clauses.join('').replace(/\r\n/g, "\n").length + (kLFLen - 1) * 5, "", "runNativeLineBreakerTest", "#4");
+  is(result.compositionend, clauses.join('').replace(/\r\n/g, "\n"), "runNativeLineBreakerTest: \\r\\n in compositionend.data should be replaced with \\n #4");
+  is(textarea.value, clauses.join('').replace(/\r\n/g, "\n"), "runNativeLineBreakerTest: \\r\\n in textarea.value should be replaced with \\n #4");
+
+  // \r (not followed by \n) in composition string should be replaced with \n.
+  clearResult();
+  textarea.value = "";
+  clauses = [ "abc\r", "def\r\rg", "hi\r", "\rjkl" ];
+  caret = clauses[0] + clauses[1] + clauses[2];
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": clauses.join(''),
+        "clauses":
+        [
+          { "length": clauses[0].length,
+            "attr": COMPOSITION_ATTR_RAW_CLAUSE },
+          { "length": clauses[1].length,
+            "attr": COMPOSITION_ATTR_SELECTED_RAW_CLAUSE },
+          { "length": clauses[2].length,
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE },
+          { "length": clauses[3].length,
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
+        ]
+      },
+      "caret": { "start": caret.length, "length": 0 }
+    });
+
+  checkSelection(caret.replace(/\r/g, "\n").length + (kLFLen - 1) * 4, "", "runNativeLineBreakerTest", "#5");
+  checkIMESelection("RawClause", true, 0, clauses[0].replace(/\r/g, kLF), "runNativeLineBreakerTest: \\r should be replaced with \\n #5");
+  checkIMESelection("SelectedRawClause", true, clauses[0].replace(/\r/g, kLF).length, clauses[1].replace(/\r/g, kLF), "runNativeLineBreakerTest: \\r should be replaced with \\n #5");
+  checkIMESelection("ConvertedClause", true, (clauses[0] + clauses[1]).replace(/\r/g, kLF).length, clauses[2].replace(/\r/g, kLF), "runNativeLineBreakerTest: \\r should be replaced with \\n #5");
+  checkIMESelection("SelectedClause", true, (clauses[0] + clauses[1] + clauses[2]).replace(/\r/g, kLF).length, clauses[3].replace(/\r/g, kLF), "runNativeLineBreakerTest: \\r should be replaced with \\n #5");
+  is(result.compositionupdate, clauses.join('').replace(/\r/g, "\n"), "runNativeLineBreakerTest: \\r in compositionupdate.data should be replaced with \\n #5");
+  is(textarea.value, clauses.join('').replace(/\r/g, "\n"), "runNativeLineBreakerTest: \\r in textarea.value should be replaced with \\n #5");
+
+  synthesizeComposition({ type: "compositioncommit", data: clauses.join('') });
+  checkSelection(clauses.join('').replace(/\r/g, "\n").length + (kLFLen - 1) * 5, "", "runNativeLineBreakerTest", "#6");
+  is(result.compositionend, clauses.join('').replace(/\r/g, "\n"), "runNativeLineBreakerTest: \\r in compositionend.data should be replaced with \\n #6");
+  is(textarea.value, clauses.join('').replace(/\r/g, "\n"), "runNativeLineBreakerTest: \\r in textarea.value should be replaced with \\n #6");
+
+  textarea.removeEventListener("compositionupdate", handler, true);
+  textarea.removeEventListener("compositionend", handler, true);
+
+  SpecialPowers.clearUserPref("dom.compositionevent.allow_control_characters");
+}
+
 function runControlCharTest()
 {
   textarea.focus();
@@ -5081,7 +6238,7 @@ function runControlCharTest()
   textarea.value = "";
 
   var controlChars = String.fromCharCode.apply(null, Object.keys(Array.from({length:0x20}))) + "\x7F";
-  var allowedChars = "\t";
+  var allowedChars = "\t\n\n";
 
   var data = "AB" + controlChars + "CD" + controlChars + "EF";
   var removedData = "AB" + allowedChars + "CD" + allowedChars + "EF";
@@ -5105,7 +6262,7 @@ function runControlCharTest()
       "caret": { "start": DIndex, "length": 0 }
     });
 
-  checkSelection(removedDIndex, "", "runControlCharTest", "#1")
+  checkSelection(removedDIndex + (kLFLen - 1) * 2, "", "runControlCharTest", "#1")
 
   is(result.compositionupdate, removedData, "runControlCharTest: control characters in event.data should be removed in compositionupdate event #1");
   is(textarea.value, removedData, "runControlCharTest: control characters should not appear in textarea #1");
@@ -5137,14 +6294,14 @@ function runControlCharTest()
       "caret": { "start": DIndex, "length": 0 }
     });
 
-  checkSelection(DIndex - 1 + kLFLen, "", "runControlCharTest", "#3")
+  checkSelection(DIndex + (kLFLen - 1) * 2, "", "runControlCharTest", "#3")
 
-  is(result.compositionupdate, data, "runControlCharTest: control characters in event.data should not be removed in compositionupdate event #3");
+  is(result.compositionupdate, data.replace(/\r/g, "\n"), "runControlCharTest: control characters in event.data should not be removed in compositionupdate event #3");
   is(textarea.value, data.replace(/\r/g, "\n"), "runControlCharTest: control characters should appear in textarea #3");
 
   synthesizeComposition({ type: "compositioncommit", data: data });
 
-  is(result.compositionend, data, "runControlCharTest: control characters in event.data should not be removed in compositionend event #4");
+  is(result.compositionend, data.replace(/\r/g, "\n"), "runControlCharTest: control characters in event.data should not be removed in compositionend event #4");
   is(textarea.value, data.replace(/\r/g, "\n"), "runControlCharTest: control characters should appear in textarea #4");
 
   SpecialPowers.clearUserPref("dom.compositionevent.allow_control_characters");
@@ -5153,7 +6310,7 @@ function runControlCharTest()
   textarea.removeEventListener("compositionend", handler, true);
 }
 
-function runRemoveContentTest(aCallback)
+function runRemoveContentTest()
 {
   var events = [];
   function eventHandler(aEvent)
@@ -5206,7 +6363,7 @@ function runRemoveContentTest(aCallback)
        "runRemoveContentTest: The 2nd event was fired on wrong event target #1");
     is(events[2].target, textarea,
        "runRemoveContentTest: The 3rd event was fired on wrong event target #1");
-    ok(!getEditorIMESupport(textarea).isComposing,
+    ok(!getEditor(textarea).isComposing,
        "runRemoveContentTest: the textarea still has composition #1");
     todo_is(textarea.value, "",
        "runRemoveContentTest: the textarea has the committed text? #1");
@@ -5231,7 +6388,7 @@ function runRemoveContentTest(aCallback)
          "runRemoveContentTest: compositionupdate has wrong data #2");
       is(events[0].target, textarea,
          "runRemoveContentTest: The 1st event was fired on wrong event target #2");
-      ok(!getEditorIMESupport(textarea).isComposing,
+      ok(!getEditor(textarea).isComposing,
          "runRemoveContentTest: the textarea still has composition #2");
       is(textarea.value, "",
          "runRemoveContentTest: the textarea has the committed text? #2");
@@ -5244,7 +6401,7 @@ function runRemoveContentTest(aCallback)
       textarea.removeEventListener("input", eventHandler, true);
       textarea.removeEventListener("text", eventHandler, true);
 
-      SimpleTest.executeSoon(aCallback);
+      SimpleTest.executeSoon(continueTest);
     }, 50);
   }, 50);
 }
@@ -5385,7 +6542,7 @@ function onPanelHidden(aEvent)
 {
   panel.hidden = true;
   ok(gIsPanelHiding, "runPanelTest: the panel is hidden unexpectedly");
-  finish();
+  SimpleTest.executeSoon(continueTest);
 }
 
 function runPanelTest()
@@ -5710,9 +6867,9 @@ function runMaxLengthTest()
   }
 }
 
-function runEditorReframeTests(aCallback)
+function* runEditorReframeTests()
 {
-  function runEditorReframeTest(aEditor, aWindow, aEventType, aNextTest)
+  function runEditorReframeTest(aEditor, aWindow, aEventType)
   {
     function getValue()
     {
@@ -5986,38 +7143,1003 @@ function runEditorReframeTests(aCallback)
       if (tests.length <= index) {
         aEditor.style.overflow = "auto";
         aEditor.removeEventListener(aEventType, doReframe);
-        requestAnimationFrame(function() { setTimeout(aNextTest); });
+        requestAnimationFrame(function() { SimpleTest.executeSoon(continueTest); });
         return;
       }
       tests[index].test();
       hitEventLoop(function () {
         tests[index].check();
         index++;
-        setTimeout(doNext, 0);
+        SimpleTest.executeSoon(doNext);
       }, 20);
     }
     doNext();
   }
 
   input.value = "";
-  runEditorReframeTest(input, window, "input", function () {
-    input.value = "";
-    runEditorReframeTest(input, window, "compositionupdate", function () {
-      textarea.value = "";
-      runEditorReframeTest(textarea, window, "input", function () {
-        textarea.value = "";
-        runEditorReframeTest(textarea, window, "compositionupdate", function () {
-          contenteditable.innerHTML = "";
-          runEditorReframeTest(contenteditable, windowOfContenteditable, "input", function () {
-            contenteditable.innerHTML = "";
-            runEditorReframeTest(contenteditable, windowOfContenteditable, "compositionupdate", function () {
-              aCallback();
-            });
-          });
-        });
-      });
+  yield runEditorReframeTest(input, window, "input");
+  input.value = "";
+  yield runEditorReframeTest(input, window, "compositionupdate");
+  textarea.value = "";
+  yield runEditorReframeTest(textarea, window, "input");
+  textarea.value = "";
+  yield runEditorReframeTest(textarea, window, "compositionupdate");
+  contenteditable.innerHTML = "";
+  yield runEditorReframeTest(contenteditable, windowOfContenteditable, "input");
+  contenteditable.innerHTML = "";
+  yield runEditorReframeTest(contenteditable, windowOfContenteditable, "compositionupdate");
+}
+
+function* runIMEContentObserverTest()
+{
+  var notifications = [];
+  var callContinueTest = false;
+  function callback(aTIP, aNotification)
+  {
+    if (aNotification.type != "notify-end-input-transaction") {
+      notifications.push(aNotification);
+    }
+    switch (aNotification.type) {
+      case "request-to-commit":
+        aTIP.commitComposition();
+        break;
+      case "request-to-cancel":
+        aTIP.cancelComposition();
+        break;
+    }
+    if (callContinueTest) {
+      callContinueTest = false;
+      SimpleTest.executeSoon(continueTest);
+    }
+    return true;
+  }
+
+  function dumpUnexpectedNotifications(aDescription, aExpectedCount)
+  {
+    if (notifications.length <= aExpectedCount) {
+      return;
+    }
+    for (var i = aExpectedCount; i < notifications.length; i++) {
+      ok(false,
+         aDescription + " caused unexpected notification: " + notifications[i].type);
+    }
+  }
+
+  function waitUntilNotificationsReceived()
+  {
+    if (notifications.length > 0) {
+      SimpleTest.executeSoon(continueTest);
+    } else {
+      callContinueTest = true;
+    }
+  }
+
+  function flushNotifications()
+  {
+    // FYI: Dispatching non-op keyboard events causes forcibly flushing pending
+    //      notifications.
+    synthesizeKey("KEY_Unidentified", { code: "" });
+    SimpleTest.executeSoon(()=>{
+      notifications = [];
+      continueTest();
     });
-  });
+  }
+
+  function ensureToRemovePrecedingPositionChangeNotification(aDescription)
+  {
+    if (!notifications.length) {
+      return;
+    }
+    if (notifications[0].type != "notify-position-change") {
+      return;
+    }
+    // Sometimes, notify-position-change is notified first separately if
+    // the operation causes scroll or something.  Tests can ignore this.
+    ok(true, "notify-position-change", aDescription + "Unnecessary notify-position-change occurred, ignoring it");
+    notifications.shift();
+  }
+
+  // Bug 1374057 - On ubuntu 16.04 there are notify-position-change events that are
+  // recorded after all the other events so we remove them through this function.
+  function ensureToRemovePostPositionChangeNotification(aDescription, expectedCount)
+  {
+    if (!notifications.length) {
+      return;
+    }
+    if (notifications.length <= expectedCount) {
+      return;
+    }
+    if (notifications[notifications.length-1].type != "notify-position-change") {
+      return;
+    }
+    ok(true, "notify-position-change", aDescription + "Unnecessary notify-position-change occurred, ignoring it");
+    notifications.pop();
+  }
+
+  function getNativeText(aXPText)
+  {
+    if (kLF == "\n") {
+      return aXPText;
+    }
+    return aXPText.replace(/\n/g, kLF);
+  }
+
+  function checkPositionChangeNotification(aNotification, aDescription)
+  {
+    is(!aNotification || aNotification.type, "notify-position-change",
+       aDescription + " should cause position change notification");
+  }
+
+  function checkSelectionChangeNotification(aNotification, aDescription, aExpected)
+  {
+    is(!aNotification || aNotification.type, "notify-selection-change",
+       aDescription + " should cause selection change notification");
+    if (!aNotification || (aNotification.type != "notify-selection-change")) {
+      return;
+    }
+    is(aNotification.offset, aExpected.offset,
+       aDescription + " should cause selection change notification whose offset is " + aExpected.offset);
+    is(aNotification.text, aExpected.text,
+       aDescription + " should cause selection change notification whose text is '" + aExpected.text + "'");
+    is(aNotification.collapsed, aExpected.text.length == 0,
+       aDescription + " should cause selection change notification whose collapsed is " + (aExpected.text.length == 0));
+    is(aNotification.length, aExpected.text.length,
+       aDescription + " should cause selection change notification whose length is " + aExpected.text.length);
+    is(aNotification.reversed, aExpected.reversed || false,
+       aDescription + " should cause selection change notification whose reversed is " + (aExpected.reversed || false));
+    is(aNotification.writingMode, aExpected.writingMode || "horizontal-tb",
+       aDescription + " should cause selection change notification whose writingMode is '" + (aExpected.writingMode || "horizontal-tb"));
+  }
+
+  function checkTextChangeNotification(aNotification, aDescription, aExpected)
+  {
+    is(!aNotification || aNotification.type, "notify-text-change",
+       aDescription + " should cause text change notification");
+    if (!aNotification || aNotification.type != "notify-text-change") {
+      return;
+    }
+    is(aNotification.offset, aExpected.offset,
+       aDescription + " should cause text change notification whose offset is " + aExpected.offset);
+    is(aNotification.removedLength, aExpected.removedLength,
+       aDescription + " should cause text change notification whose removedLength is " + aExpected.removedLength);
+    is(aNotification.addedLength, aExpected.addedLength,
+       aDescription + " should cause text change notification whose addedLength is " + aExpected.addedLength);
+  }
+
+  function getAsInnerHTML(aElement)
+  {
+    if (aElement.tagName.toLowerCase() == "input" || aElement.tagName.toLowerCase() == "textarea") {
+      return aElement.value;
+    }
+    return aElement.innerHTML;
+  }
+
+  function* testWithPlaintextEditor(aDescription, aElement, aTestLineBreaker)
+  {
+    aElement.value = "";
+    aElement.blur();
+    var doc = aElement.ownerDocument;
+    var win = doc.defaultView;
+    aElement.focus();
+    yield flushNotifications();
+
+    // "a[]"
+    var description = aDescription + "typing 'a'";
+    notifications = [];
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "ab[]"
+    description = aDescription + "typing 'b'";
+    notifications = [];
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "abc[]"
+    description = aDescription + "typing 'c'";
+    notifications = [];
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 3, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "ab[c]"
+    description = aDescription + "selecting 'c' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 2, text: "c", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "a[bc]"
+    description = aDescription + "selecting 'bc' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 1, text: "bc", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[abc]"
+    description = aDescription + "selecting 'bc' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "abc", reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[]abc"
+    description = aDescription + "collapsing selection to the left-most with pressing ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[a]bc"
+    description = aDescription + "selecting 'a' with pressing Shift+ArrowRight";
+    notifications = [];
+    synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "a" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[ab]c"
+    description = aDescription + "selecting 'ab' with pressing Shift+ArrowRight";
+    notifications = [];
+    synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0, text: "ab" });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[]c"
+    description = aDescription + "deleting 'ab' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "[]"
+    description = aDescription + "deleting following 'c' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 1, addedLength: 0 });
+    checkPositionChangeNotification(notifications[1], description);
+    ensureToRemovePostPositionChangeNotification(description, 2);
+    dumpUnexpectedNotifications(description, 2);
+
+    // "abc[]"
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    yield flushNotifications();
+
+    // "ab[]"
+    description = aDescription + "deleting 'c' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 1, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "[ab]"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "[]"
+    description = aDescription + "deleting 'ab' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "abcd[]"
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    synthesizeKey("d", { code: "KeyD" }, win, callback);
+    yield flushNotifications();
+
+    // "a[bc]d"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "a[]d"
+    description = aDescription + "deleting 'bc' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "a[bc]d"
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "aB[]d"
+    description = aDescription + "replacing 'bc' with 'B' with pressing Shift+B";
+    notifications = [];
+    synthesizeKey("B", { code: "KeyB", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 2, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    if (!aTestLineBreaker) {
+      return;
+    }
+
+    // "aB\n[]d"
+    description = aDescription + "inserting a line break after 'B' with pressing Enter";
+    notifications = [];
+    synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: 0, addedLength: kLFLen });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("aB\n").length, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "aB[]d"
+    description = aDescription + "removing a line break after 'B' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2, removedLength: kLFLen, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "a[B]d"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "a\n[]d"
+    description = aDescription + "replacing 'B' with a line break with pressing Enter";
+    notifications = [];
+    synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: 1, addedLength: kLFLen });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("a\n").length, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "a[\n]d"
+    description = aDescription + "selecting '\n' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 1, text: kLF, reversed: true });
+    ensureToRemovePostPositionChangeNotification(description, 1);
+    dumpUnexpectedNotifications(description, 1);
+
+    // "a[]d"
+    description = aDescription + "removing selected '\n' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1, removedLength: kLFLen, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // ab\ncd\nef\ngh\n[]
+    description = aDescription + "setting the value property to 'ab\ncd\nef\ngh\n'";
+    notifications = [];
+    aElement.value = "ab\ncd\nef\ngh\n";
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: 2, addedLength: getNativeText("ab\ncd\nef\ngh\n").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("ab\ncd\nef\ngh\n").length, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+
+    // []
+    description = aDescription + "setting the value property to ''";
+    notifications = [];
+    aElement.value = "";
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    // XXX Removing invisible <br> or something? The removed length is a line breaker length longer.
+    checkTextChangeNotification(notifications[0], description, { offset: 0, removedLength: getNativeText("ab\ncd\nef\ngh\n").length + kLFLen, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    ensureToRemovePostPositionChangeNotification(description, 3);
+    dumpUnexpectedNotifications(description, 3);
+  }
+
+  function* testWithHTMLEditor(aDescription, aElement, aDefaultParagraphSeparator)
+  {
+    var doc = aElement.ownerDocument;
+    var win = doc.defaultView;
+    var sel = doc.getSelection();
+    var inDesignMode = doc.designMode == "on";
+    var offsetAtStart = 0;
+    var offsetAtContainer = 0;
+    var isDefaultParagraphSeparatorBlock = aDefaultParagraphSeparator != "br";
+    doc.execCommand("defaultParagraphSeparator", false, aDefaultParagraphSeparator);
+
+    // "[]", "<p>[]</p>" or "<div>[]</div>"
+    switch (aDefaultParagraphSeparator) {
+      case "br":
+        aElement.innerHTML = "";
+        break;
+      case "p":
+      case "div":
+        aElement.innerHTML = "<" + aDefaultParagraphSeparator + "></" + aDefaultParagraphSeparator + ">";
+        sel.collapse(aElement.firstChild, 0);
+        offsetAtContainer = offsetAtStart + kLFLen;
+        break;
+      default:
+        ok(false, aDescription + "aDefaultParagraphSeparator is illegal value");
+        yield flushPendingNotifications();
+        return;
+    }
+
+    if (inDesignMode) {
+      win.focus();
+    } else {
+      aElement.focus();
+    }
+    yield flushNotifications();
+
+    // "a[]"
+    var description = aDescription + "typing 'a'";
+    notifications = [];
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "ab[]"
+    description = aDescription + "typing 'b'";
+    notifications = [];
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "abc[]"
+    description = aDescription + "typing 'c'";
+    notifications = [];
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2 + offsetAtContainer, removedLength: 0, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 3 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "ab[c]"
+    description = aDescription + "selecting 'c' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 2 + offsetAtContainer, text: "c", reversed: true });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "a[bc]"
+    description = aDescription + "selecting 'bc' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, text: "bc", reversed: true });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[abc]"
+    description = aDescription + "selecting 'bc' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, text: "abc", reversed: true });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[]abc"
+    description = aDescription + "collapsing selection to the left-most with pressing ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, text: "" });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[a]bc"
+    description = aDescription + "selecting 'a' with pressing Shift+ArrowRight";
+    notifications = [];
+    synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, text: "a" });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[ab]c"
+    description = aDescription + "selecting 'ab' with pressing Shift+ArrowRight";
+    notifications = [];
+    synthesizeKey("KEY_ArrowRight", { code: "ArrowRight", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, text: "ab" });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "[]c"
+    description = aDescription + "deleting 'ab' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "[]"
+    description = aDescription + "deleting following 'c' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 1, addedLength: kLFLen });
+    checkPositionChangeNotification(notifications[1], description);
+    dumpUnexpectedNotifications(description, 2);
+
+    // "abc[]"
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    yield flushNotifications();
+
+    // "ab[]"
+    description = aDescription + "deleting 'c' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 2 + offsetAtContainer, removedLength: 1, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "[ab]"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "[]"
+    description = aDescription + "deleting 'ab' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "abcd[]"
+    synthesizeKey("a", { code: "KeyA" }, win, callback);
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    synthesizeKey("d", { code: "KeyD" }, win, callback);
+    yield flushNotifications();
+
+    // "a[bc]d"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "a[]d"
+    description = aDescription + "deleting 'bc' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, removedLength: 2, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "a[bc]d"
+    synthesizeKey("b", { code: "KeyB" }, win, callback);
+    synthesizeKey("c", { code: "KeyC" }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "aB[]d"
+    description = aDescription + "replacing 'bc' with 'B' with pressing Shift+B";
+    notifications = [];
+    synthesizeKey("B", { code: "KeyB", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, removedLength: 2, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 2 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "aB<br>[]d" or "<block>ab</block><block>[]d</block>"
+    description = aDescription + "inserting a line break after 'B' with pressing Enter";
+    notifications = [];
+    synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    if (isDefaultParagraphSeparatorBlock) {
+      // Splitting current block causes removing "<block>aB" and inserting "<block>aB</block><block>".
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer - kLFLen, removedLength: getNativeText("\naB").length, addedLength: getNativeText("\naB\n").length });
+    } else {
+      // Oddly, inserting <br> causes removing "aB" and inserting "ab<br>".
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 2, addedLength: getNativeText("ab\n").length });
+    }
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("aB\n").length + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "aB[]d"
+    description = aDescription + "removing a line break after 'B' with pressing Backspace";
+    notifications = [];
+    synthesizeKey("KEY_Backspace", { code: "Backspace" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    if (isDefaultParagraphSeparatorBlock) {
+      // Joining two blocks causes removing both block elements and inserting new block element.
+      checkTextChangeNotification(notifications[0], description, { offset: offsetAtContainer - kLFLen, removedLength: getNativeText("\naB\nd").length, addedLength: getNativeText("\naBd").length });
+      checkSelectionChangeNotification(notifications[1], description, { offset: 2 + offsetAtContainer, text: "" });
+      checkPositionChangeNotification(notifications[2], description);
+      dumpUnexpectedNotifications(description, 3);
+    } else {
+      checkTextChangeNotification(notifications[0], description, { offset: 2 + offsetAtContainer, removedLength: kLFLen, addedLength: 0 });
+      is(notifications.length, 3, description + " should cause 3 notifications");
+      is(notifications[1] && notifications[1].type, "notify-selection-change", description + " should cause selection change notification");
+      is(notifications[2] && notifications[2].type, "notify-position-change", description + " should cause position change notification");
+    }
+
+    // "a[B]d"
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield flushNotifications();
+
+    // "a<br>[]d" or "<block>a</block><block>[]d</block>"
+    description = aDescription + "replacing 'B' with a line break with pressing Enter";
+    notifications = [];
+    synthesizeKey("KEY_Enter", { code: "Enter" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    if (isDefaultParagraphSeparatorBlock) {
+      // Splitting current block causes removing "<block>aB" and inserting "<block>aB</block><block>".
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer - kLFLen, removedLength: getNativeText("\naB").length, addedLength: getNativeText("\na\n").length });
+    } else {
+      checkTextChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, removedLength: 1, addedLength: kLFLen });
+    }
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("a\n").length + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "a[<br>]d" or "<block>a[</block><block>]d</block>"
+    description = aDescription + "selecting '\\n' with pressing Shift+ArrowLeft";
+    notifications = [];
+    synthesizeKey("KEY_ArrowLeft", { code: "ArrowLeft", shiftKey: true }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkSelectionChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, text: kLF, reversed: true });
+    dumpUnexpectedNotifications(description, 1);
+
+    // "a[]d"
+    description = aDescription + "removing selected '\\n' with pressing Delete";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    if (isDefaultParagraphSeparatorBlock) {
+      // Joining the blocks causes removing "<block>a</block><block>d</block>" and inserting "<block>ad</block>".
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer - kLFLen, removedLength: getNativeText("\na\nd").length, addedLength: getNativeText("\nad").length });
+    } else {
+      checkTextChangeNotification(notifications[0], description, { offset: 1 + offsetAtContainer, removedLength: kLFLen, addedLength: 0 });
+    }
+    checkSelectionChangeNotification(notifications[1], description, { offset: 1 + offsetAtContainer, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5</div>"
+    description = aDescription + "inserting HTML which has nested block elements";
+    notifications = [];
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5</div>";
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    // There is <br> after the end of the line.  Therefore, removed length includes a line breaker length.
+    if (isDefaultParagraphSeparatorBlock) {
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer - kLFLen, removedLength: getNativeText("\nad\n").length, addedLength: getNativeText("\n1\n2\n345").length });
+    } else {
+      checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtContainer, removedLength: 2 + kLFLen, addedLength: getNativeText("\n1\n2\n345").length });
+    }
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1[<div>2<div>3</div>4</div>]5</div>" and removing selection
+    sel.setBaseAndExtent(aElement.firstChild.firstChild, 1, aElement.firstChild.childNodes.item(2), 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>15</div>", description + " should remove '<div>2<div>3</div>4</div>'");
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1").length + offsetAtStart, removedLength: getNativeText("\n2\n34").length, addedLength: 0 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1[<div>2<div>3</div>]4</div>5</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5</div>";
+    sel.setBaseAndExtent(aElement.firstChild.firstChild, 1, aElement.firstChild.childNodes.item(1).childNodes.item(2), 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (partially #1) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>145</div>", description + " should remove '<div>2<div>3</div></div>'");
+    // It causes removing '<div>2<div>3</div>4</div>' and inserting '4'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1").length + offsetAtStart, removedLength: getNativeText("\n2\n34").length, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1[<div>2<div>]3</div>4</div>5</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5</div>";
+    sel.setBaseAndExtent(aElement.firstChild.firstChild, 1, aElement.firstChild.childNodes.item(1).childNodes.item(1).firstChild, 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (partially #2) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>13<div>4</div>5</div>", description + " should remove '<div>2</div>'");
+    // It causes removing '1<div>2<div>3</div></div>' and inserting '13<div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: kLFLen + offsetAtStart, removedLength: getNativeText("1\n2\n3").length, addedLength: getNativeText("13\n").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2<div>3[</div>4</div>]5</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5</div>";
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(2), 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (partially #3) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>2<div>35</div></div></div>", description + " should remove '4'");
+    // It causes removing '45' and inserting '5'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, removedLength: 2, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>"
+    description = aDescription + "inserting HTML which has a pair of nested block elements";
+    notifications = [];
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>";
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    checkTextChangeNotification(notifications[0], description, { offset: 0 + offsetAtStart, removedLength: getNativeText("\n1\n2\n35").length, addedLength: getNativeText("\n1\n2\n345\n6\n789").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: 0 + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2<div>3[</div>4</div>5<div>6<div>]7</div>8</div>9</div>" and removing selection
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(3).childNodes.item(1).firstChild, 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (between same level descendants) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>2<div>37</div></div><div>8</div>9</div>", description + " should remove '456<div>7'");
+    // It causes removing '<div>3</div>4</div>5<div>6<div>7</div>' and inserting '<div>37</div><div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1\n2").length + offsetAtStart, removedLength: getNativeText("\n345\n6\n7").length, addedLength: getNativeText("\n37\n").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2[<div>3</div>4</div>5<div>6<div>]7</div>8</div>9</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>";
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(3).childNodes.item(1).firstChild, 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (between different level descendants #1) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>27</div><div>8</div>9</div>", description + " should remove '<div>2<div>3</div>4</div>5<div>6<div>7</div>'");
+    // It causes removing '<div>2<div>3</div>4</div>5<div>6<div>7</div>' and inserting '<div>27</div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1").length + offsetAtStart, removedLength: getNativeText("\n2\n345\n6\n7").length, addedLength: getNativeText("\n27\n").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2[<div>3</div>4</div>5<div>6<div>7</div>8</div>]9</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>";
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(4), 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (between different level descendants #2) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>29</div></div>", description + " should remove '<div>3</div>4</div>5<div>6<div>7</div>8</div>'");
+    // It causes removing '<div>3</div>4</div>5</div>6<div>7</div>8</div>9' and inserting '9</div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1\n2").length + offsetAtStart, removedLength: getNativeText("\n345\n6\n789").length, addedLength: 1 });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2<div>3[</div>4</div>5<div>]6<div>7</div>8</div>9</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>";
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(3).firstChild, 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (between different level descendants #3) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>2<div>36<div>7</div>8</div></div>9</div>", description + " should remove '<div>36<div>7</div>8</div>'");
+    // It causes removing '<div>3</div>4</div>5<div>6<div>7</div>8</div>' and inserting '<div>36<div>7</div>8</div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1\n2").length + offsetAtStart, removedLength: getNativeText("\n345\n6\n78").length, addedLength: getNativeText("\n36\n78").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+
+    // "<div>1<div>2<div>3[</div>4</div>5<div>6<div>7</div>8</div>]9</div>" and removing selection
+    aElement.innerHTML = "<div>1<div>2<div>3</div>4</div>5<div>6<div>7</div>8</div>9</div>";
+    sel.setBaseAndExtent(aElement.firstChild.childNodes.item(1).childNodes.item(1).firstChild, 1, aElement.firstChild.childNodes.item(4), 0);
+    yield flushNotifications();
+    description = aDescription + "deleting child nodes (between different level descendants #4) with pressing Delete key";
+    notifications = [];
+    synthesizeKey("KEY_Delete", { code: "Delete" }, win, callback);
+    yield waitUntilNotificationsReceived();
+    ensureToRemovePrecedingPositionChangeNotification();
+    is(aElement.innerHTML, "<div>1<div>2<div>39</div></div></div>", description + " should remove '</div>4</div>5<div>6<div>7</div>8</div>'");
+    // It causes removing '</div>4</div>5<div>6<div>7</div>8</div>' and inserting '<div>36<div>7</div>8</div>'.
+    checkTextChangeNotification(notifications[0], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, removedLength: getNativeText("45\n6\n789").length, addedLength: getNativeText("9").length });
+    checkSelectionChangeNotification(notifications[1], description, { offset: getNativeText("\n1\n2\n3").length + offsetAtStart, text: "" });
+    checkPositionChangeNotification(notifications[2], description);
+    dumpUnexpectedNotifications(description, 3);
+  }
+
+  yield* testWithPlaintextEditor("runIMEContentObserverTest with input element: ", input, false);
+  yield* testWithPlaintextEditor("runIMEContentObserverTest with textarea element: ", textarea, true);
+  yield* testWithHTMLEditor("runIMEContentObserverTest with contenteditable (defaultParagraphSeparator is br): ", contenteditable, "br");
+  yield* testWithHTMLEditor("runIMEContentObserverTest with contenteditable (defaultParagraphSeparator is p): ", contenteditable, "p");
+  yield* testWithHTMLEditor("runIMEContentObserverTest with contenteditable (defaultParagraphSeparator is div): ", contenteditable, "div");
+  // XXX Due to the difference of HTML editor behavior between designMode and contenteditable,
+  //     testWithHTMLEditor() gets some unexpected behavior.  However, IMEContentObserveri is
+  //     not depend on editor's detail.  So, we should investigate this issue later.  It's not
+  //     so important for now.
+  // yield* testWithHTMLEditor("runIMEContentObserverTest in designMode (defaultParagraphSeparator is br): ", iframe2.contentDocument.body, "br");
+  // yield* testWithHTMLEditor("runIMEContentObserverTest in designMode (defaultParagraphSeparator is p): ", iframe2.contentDocument.body, "p");
+  // yield* testWithHTMLEditor("runIMEContentObserverTest in designMode (defaultParagraphSeparator is div): ", iframe2.contentDocument.body, "div");
+}
+
+var gTestContinuation = null;
+
+function continueTest()
+{
+  if (!gTestContinuation) {
+    gTestContinuation = testBody();
+  }
+  var ret = gTestContinuation.next();
+  if (ret.done) {
+    finish();
+  }
+}
+
+function* testBody()
+{
+  runUndoRedoTest();
+  runCompositionCommitAsIsTest();
+  runCompositionCommitTest();
+  runCompositionTest();
+  runCompositionEventTest();
+  runQueryTextRectInContentEditableTest();
+  runCharAtPointTest(textarea, "textarea in the document");
+  runCharAtPointAtOutsideTest();
+  runSetSelectionEventTest();
+  runQueryTextContentEventTest();
+  runQueryIMESelectionTest();
+  runQueryContentEventRelativeToInsertionPoint();
+  yield* runIMEContentObserverTest();
+  runCSSTransformTest();
+  runBug722639Test();
+  runBug1375825Test();
+  runForceCommitTest();
+  runNestedSettingValue();
+  runBug811755Test();
+  runIsComposingTest();
+  runRedundantChangeTest();
+  runNotRedundantChangeTest();
+  runNativeLineBreakerTest();
+  runControlCharTest();
+  yield* runEditorReframeTests();
+  yield runAsyncForceCommitTest();
+  yield runRemoveContentTest();
+  runFrameTest();
+  yield runPanelTest();
+  runMaxLengthTest();
 }
 
 function runTest()
@@ -6025,36 +8147,7 @@ function runTest()
   contenteditable = document.getElementById("iframe4").contentDocument.getElementById("contenteditable");
   windowOfContenteditable = document.getElementById("iframe4").contentWindow;
   textareaInFrame = iframe.contentDocument.getElementById("textarea");
-
-  runUndoRedoTest();
-  runCompositionCommitAsIsTest();
-  runCompositionCommitTest();
-  runCompositionTest();
-  runCompositionEventTest();
-  runCharAtPointTest(textarea, "textarea in the document");
-  runCharAtPointAtOutsideTest();
-  runSetSelectionEventTest();
-  runQueryTextContentEventTest();
-  runQueryIMESelectionTest();
-  runQueryContentEventRelativeToInsertionPoint();
-  runCSSTransformTest();
-  runBug722639Test();
-  runForceCommitTest();
-  runNestedSettingValue();
-  runBug811755Test();
-  runIsComposingTest();
-  runRedundantChangeTest();
-  runNotRedundantChangeTest();
-  runControlCharTest();
-  runEditorReframeTests(function () {
-    runAsyncForceCommitTest(function () {
-      runRemoveContentTest(function () {
-        runFrameTest();
-        runPanelTest();
-        runMaxLengthTest();
-      });
-    });
-  });
+  continueTest();
 }
 
 ]]>

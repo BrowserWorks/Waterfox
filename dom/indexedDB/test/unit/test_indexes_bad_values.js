@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -55,7 +55,7 @@ function testSteps()
     request.onerror = errorHandler;
     request.onsuccess = function(event) {
       if (++addedData == objectStoreData.length) {
-        testGenerator.send(event);
+        testGenerator.next(event);
       }
     }
   }
@@ -87,7 +87,7 @@ function testSteps()
 
   request = objectStore.index("weight").openKeyCursor();
   request.onerror = errorHandler;
-  request.onsuccess = function (event) {
+  request.onsuccess = function(event) {
     let cursor = event.target.result;
     if (cursor) {
       is(cursor.key, objectStoreDataWeightSort[keyIndex].value.weight,
@@ -110,7 +110,7 @@ function testSteps()
 
   request = objectStore.openCursor();
   request.onerror = errorHandler;
-  request.onsuccess = function (event) {
+  request.onsuccess = function(event) {
     let cursor = event.target.result;
     if (cursor) {
       keyIndex++;
@@ -126,5 +126,4 @@ function testSteps()
      "Saw all people");
 
   finishTest();
-  yield undefined;
 }

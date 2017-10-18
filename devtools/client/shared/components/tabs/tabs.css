@@ -7,10 +7,12 @@
 
 .tabs {
   height: 100%;
+  background: var(--theme-body-background);
+  display: flex;
+  flex-direction: column;
 }
 
 .tabs .tabs-menu {
-  display: table;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -18,38 +20,61 @@
 
 .tabs .tabs-menu-item {
   display: inline-block;
+  position: relative;
 }
 
 .tabs .tabs-menu-item a {
-  display: block;
-  color: #A9A9A9;
+  display: flex;
+  justify-content: center;
   padding: 4px 8px;
   border: 1px solid transparent;
   text-decoration: none;
   white-space: nowrap;
 }
 
-/* Make sure panel content takes entire vertical space.
-  (minus the height of the tab bar) */
-.tabs .panels {
-  height: calc(100% - 24px);
+.tabs .tabs-menu-item .tab-badge {
+  color: var(--theme-highlight-blue);
+  font-size: 80%;
+  font-style: italic;
+  /* Tabs have a 15px padding start/end, so we set the margins here in order to center the
+     badge after the tab title, with a 5px effective margin. */
+  margin-inline-start: 5px;
+  margin-inline-end: -10px;
 }
 
-.tabs .tab-panel-box,
+.tabs .tabs-menu-item.is-active .tab-badge {
+  /* Use the same color as the tab-item when active */
+  color: inherit;
+}
+
+/* To avoid "select all" commands from selecting content in hidden tabs */
+.tabs .hidden,
+.tabs .hidden * {
+  -moz-user-select: none !important;
+}
+
+.tabs .tabs-menu-item a {
+  cursor: default;
+  -moz-user-select: none;
+}
+
+/* Make sure panel content takes entire vertical space. */
+.tabs .panels {
+  flex: 1;
+  overflow: hidden;
+}
+
 .tabs .tab-panel {
   height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* Light Theme */
-
-.theme-dark .tabs,
-.theme-light .tabs {
-  background: var(--theme-tab-toolbar-background);
-}
-
-.theme-dark .tabs .tabs-navigation,
-.theme-light .tabs .tabs-navigation {
+.tabs .tabs-navigation,
+.tabs .tabs-navigation {
+  position: relative;
   border-bottom: 1px solid var(--theme-splitter-color);
+  background: var(--theme-tab-toolbar-background);
 }
 
 .theme-dark .tabs .tabs-menu-item,
@@ -60,66 +85,58 @@
   border-width: 0;
   border-inline-start-width: 1px;
   border-color: var(--theme-splitter-color);
-}
-
-.theme-dark .tabs .tabs-menu-item a,
-.theme-light .tabs .tabs-menu-item a {
   color: var(--theme-content-color1);
 }
 
-.theme-dark .tabs .tabs-menu-item a:hover,
+.theme-dark .tabs .tabs-menu-item:last-child,
+.theme-light:not(.theme-firebug) .tabs .tabs-menu-item:last-child {
+  border-inline-end-width: 1px;
+}
+
 .theme-dark .tabs .tabs-menu-item a,
-.theme-light .tabs .tabs-menu-item a:hover,
 .theme-light .tabs .tabs-menu-item a {
   padding: 3px 15px;
 }
 
 .theme-dark .tabs .tabs-menu-item:hover:not(.is-active),
 .theme-light .tabs .tabs-menu-item:hover:not(.is-active) {
-  background-color: var(--toolbar-tab-hover);
+  background-color: var(--theme-toolbar-hover);
 }
 
 .theme-dark .tabs .tabs-menu-item:hover:active:not(.is-active),
 .theme-light .tabs .tabs-menu-item:hover:active:not(.is-active) {
-  background-color: var(--toolbar-tab-hover-active);
+  background-color: var(--theme-toolbar-hover-active);
 }
 
 .theme-dark .tabs .tabs-menu-item.is-active,
 .theme-light .tabs .tabs-menu-item.is-active {
   background-color: var(--theme-selection-background);
-}
-
-.theme-dark .tabs .tabs-menu-item.is-active a,
-.theme-light .tabs .tabs-menu-item.is-active a {
   color: var(--theme-selection-color);
 }
 
 /* Dark Theme */
 
-.theme-dark .tabs .tabs-menu-item a {
+.theme-dark .tabs .tabs-menu-item {
   color: var(--theme-body-color-alt);
 }
 
-.theme-dark .tabs .tabs-menu-item:hover:not(.is-active) a {
-  color: #CED3D9;
+.theme-dark .tabs .tabs-menu-item:hover:not(.is-active) {
+  color: var(--theme-focus-outline-color);
 }
 
-.theme-dark .tabs .tabs-menu-item:hover:active a {
+.theme-dark .tabs .tabs-menu-item:hover:active {
   color: var(--theme-selection-color);
 }
 
 /* Firebug Theme */
 
-.theme-firebug .tabs {
-  background-color: rgb(219, 234, 249);
-  background-image: linear-gradient(rgba(253, 253, 253, 0.2), rgba(253, 253, 253, 0));
-}
-
 .theme-firebug .tabs .tabs-navigation {
   padding-top: 3px;
   padding-left: 3px;
-  height: 27px;
-  border-bottom: 1px solid rgb(170, 188, 207);
+}
+
+.theme-firebug .tabs .tabs-menu {
+  margin-bottom: -1px;
 }
 
 .theme-firebug .tabs .tabs-menu-item.is-active,
@@ -140,20 +157,20 @@
 }
 
 .theme-firebug .tabs .tabs-menu-item:hover:not(.is-active) a {
-  border: 1px solid #C8C8C8;
+  border: 1px solid var(--theme-splitter-color);
   border-bottom: 1px solid transparent;
   background-color: transparent;
 }
 
 .theme-firebug .tabs .tabs-menu-item.is-active a {
-  background-color: rgb(247, 251, 254);
-  border: 1px solid rgb(170, 188, 207);
+  background-color: var(--theme-toolbar-tab-selected-background);
+  border: 1px solid var(--theme-splitter-color);
   border-bottom-color: transparent;
   color: var(--theme-body-color);
 }
 
 .theme-firebug .tabs .tabs-menu-item:hover:active a {
-  background-color: var(--toolbar-tab-hover-active);
+  background-color: var(--theme-toolbar-hover-active);
 }
 
 .theme-firebug .tabs .tabs-menu-item.is-active:hover:active a {
@@ -163,9 +180,5 @@
 
 .theme-firebug .tabs .tabs-menu-item a {
   border: 1px solid transparent;
-}
-
-.theme-firebug .tabs .tabs-menu-item a:hover,
-.theme-firebug .tabs .tabs-menu-item a {
-  padding: 4px 8px 4px 8px;
+  padding: 4px 8px;
 }

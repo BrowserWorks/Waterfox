@@ -27,7 +27,7 @@ namespace jit {
 class OutOfLineCode;
 class CodeGenerator;
 class MacroAssembler;
-class IonCache;
+class IonIC;
 
 template <class ArgSeq, class StoreOutputTo>
 class OutOfLineCallVM;
@@ -101,8 +101,15 @@ class CodeGeneratorShared : public LElementVisitor
     // Allocated data space needed at runtime.
     js::Vector<uint8_t, 0, SystemAllocPolicy> runtimeData_;
 
-    // Vector of information about generated polymorphic inline caches.
-    js::Vector<uint32_t, 0, SystemAllocPolicy> cacheList_;
+    // Vector mapping each IC index to its offset in runtimeData_.
+    js::Vector<uint32_t, 0, SystemAllocPolicy> icList_;
+
+    // IC data we need at compile-time. Discarded after creating the IonScript.
+    struct CompileTimeICInfo {
+        CodeOffset icOffsetForJump;
+        CodeOffset icOffsetForPush;
+    };
+    js::Vector<CompileTimeICInfo, 0, SystemAllocPolicy> icInfo_;
 
     // Patchable backedges generated for loops.
     Vector<PatchableBackedgeInfo, 0, SystemAllocPolicy> patchableBackedges_;
@@ -115,7 +122,6 @@ class CodeGeneratorShared : public LElementVisitor
             : offset(offset), event(event)
         {}
     };
-    js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTraceLoggers_;
     js::Vector<PatchableTLEvent, 0, SystemAllocPolicy> patchableTLEvents_;
     js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTLScripts_;
 #endif
@@ -207,9 +213,6 @@ class CodeGeneratorShared : public LElementVisitor
     // For arguments to the current function.
     inline int32_t ArgToStackOffset(int32_t slot) const;
 
-    // For the callee of the current function.
-    inline int32_t CalleeStackOffset() const;
-
     inline int32_t SlotToStackOffset(int32_t slot) const;
     inline int32_t StackOffsetToSlot(int32_t offset) const;
 
@@ -279,19 +282,17 @@ class CodeGeneratorShared : public LElementVisitor
         return !masm.oom();
     }
 
-    // Ensure the cache is an IonCache while expecting the size of the derived
-    // class. We only need the cache list at GC time. Everyone else can just take
-    // runtimeData offsets.
     template <typename T>
-    inline size_t allocateCache(const T& cache) {
-        static_assert(mozilla::IsBaseOf<IonCache, T>::value, "T must inherit from IonCache");
+    inline size_t allocateIC(const T& cache) {
+        static_assert(mozilla::IsBaseOf<IonIC, T>::value, "T must inherit from IonIC");
         size_t index;
         masm.propagateOOM(allocateData(sizeof(mozilla::AlignedStorage2<T>), &index));
-        masm.propagateOOM(cacheList_.append(index));
+        masm.propagateOOM(icList_.append(index));
+        masm.propagateOOM(icInfo_.append(CompileTimeICInfo()));
         if (masm.oom())
             return SIZE_MAX;
         // Use the copy constructor on the allocated space.
-        MOZ_ASSERT(index == cacheList_.back());
+        MOZ_ASSERT(index == icList_.back());
         new (&runtimeData_[index]) T(cache);
         return index;
     }
@@ -339,11 +340,19 @@ class CodeGeneratorShared : public LElementVisitor
     //      an invalidation marker.
     void ensureOsiSpace();
 
-    OutOfLineCode* oolTruncateDouble(FloatRegister src, Register dest, MInstruction* mir);
-    void emitTruncateDouble(FloatRegister src, Register dest, MInstruction* mir);
-    void emitTruncateFloat32(FloatRegister src, Register dest, MInstruction* mir);
+    OutOfLineCode* oolTruncateDouble(FloatRegister src, Register dest, MInstruction* mir,
+                                     wasm::BytecodeOffset callOffset = wasm::BytecodeOffset());
+    void emitTruncateDouble(FloatRegister src, Register dest, MTruncateToInt32* mir);
+    void emitTruncateFloat32(FloatRegister src, Register dest, MTruncateToInt32* mir);
 
-    void emitAsmJSCallBase(LAsmJSCallBase* ins);
+    void emitWasmCallBase(LWasmCallBase* ins);
+    void visitWasmCall(LWasmCall* ins) { emitWasmCallBase(ins); }
+    void visitWasmCallI64(LWasmCallI64* ins) { emitWasmCallBase(ins); }
+
+    void visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins);
+    void visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins);
+    void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
+    void visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins);
 
     void emitPreBarrier(Register base, const LAllocation* index, int32_t offsetAdjustment);
     void emitPreBarrier(Address address);
@@ -437,8 +446,16 @@ class CodeGeneratorShared : public LElementVisitor
 #endif
     }
 
+    template <typename T>
+    CodeOffset pushArgWithPatch(const T& t) {
+#ifdef DEBUG
+        pushedArgs_++;
+#endif
+        return masm.PushWithPatch(t);
+    }
+
     void storeResultTo(Register reg) {
-        masm.storeCallResult(reg);
+        masm.storeCallWordResult(reg);
     }
 
     void storeFloatResultTo(FloatRegister reg) {
@@ -456,8 +473,8 @@ class CodeGeneratorShared : public LElementVisitor
     inline OutOfLineCode* oolCallVM(const VMFunction& fun, LInstruction* ins, const ArgSeq& args,
                                     const StoreOutputTo& out);
 
-    void addCache(LInstruction* lir, size_t cacheIndex);
-    bool addCacheLocations(const CacheLocationList& locs, size_t* numLocs, size_t* offset);
+    void addIC(LInstruction* lir, size_t cacheIndex);
+
     ReciprocalMulConstants computeDivisionConstants(uint32_t d, int maxLog);
 
   protected:
@@ -485,6 +502,11 @@ class CodeGeneratorShared : public LElementVisitor
     void jumpToBlock(MBasicBlock* mir, Assembler::Condition cond);
 #endif
 
+    template <class T>
+    wasm::TrapDesc trap(T* mir, wasm::Trap trap) {
+        return wasm::TrapDesc(mir->bytecodeOffset(), trap, masm.framePushed());
+    }
+
   private:
     void generateInvalidateEpilogue();
 
@@ -508,8 +530,10 @@ class CodeGeneratorShared : public LElementVisitor
     void emitTracelogScript(bool isStart);
     void emitTracelogTree(bool isStart, uint32_t textId);
     void emitTracelogTree(bool isStart, const char* text, TraceLoggerTextId enabledTextId);
+#endif
 
   public:
+#ifdef JS_TRACE_LOGGING
     void emitTracelogScriptStart() {
         emitTracelogScript(/* isStart =*/ true);
     }
@@ -531,30 +555,34 @@ class CodeGeneratorShared : public LElementVisitor
     void emitTracelogStopEvent(const char* text, TraceLoggerTextId enabledTextId) {
         emitTracelogTree(/* isStart =*/ false, text, enabledTextId);
     }
-#endif
     void emitTracelogIonStart() {
-#ifdef JS_TRACE_LOGGING
         emitTracelogScriptStart();
         emitTracelogStartEvent(TraceLogger_IonMonkey);
-#endif
     }
     void emitTracelogIonStop() {
-#ifdef JS_TRACE_LOGGING
         emitTracelogStopEvent(TraceLogger_IonMonkey);
         emitTracelogScriptStop();
-#endif
     }
+#else
+    void emitTracelogScriptStart() {}
+    void emitTracelogScriptStop() {}
+    void emitTracelogStartEvent(uint32_t textId) {}
+    void emitTracelogStopEvent(uint32_t textId) {}
+    void emitTracelogStartEvent(const char* text, TraceLoggerTextId enabledTextId) {}
+    void emitTracelogStopEvent(const char* text, TraceLoggerTextId enabledTextId) {}
+    void emitTracelogIonStart() {}
+    void emitTracelogIonStop() {}
+#endif
 
   protected:
-    inline void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, bool isLoad, bool isInt64,
-                                            Scalar::Type type, unsigned numElems,
-                                            const Operand& mem, LAllocation alloc);
+    inline void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, bool isLoad,
+                                            Scalar::Type type, Operand mem, LAllocation alloc);
 
   public:
-    inline void verifyLoadDisassembly(uint32_t begin, uint32_t end, bool isInt64, Scalar::Type type,
-                                      unsigned numElems, const Operand& mem, LAllocation alloc);
-    inline void verifyStoreDisassembly(uint32_t begin, uint32_t end, bool isInt64, Scalar::Type type,
-                                       unsigned numElems, const Operand& mem, LAllocation alloc);
+    inline void verifyLoadDisassembly(uint32_t begin, uint32_t end, Scalar::Type type,
+                                      Operand mem, LAllocation alloc);
+    inline void verifyStoreDisassembly(uint32_t begin, uint32_t end, Scalar::Type type,
+                                       Operand mem, LAllocation alloc);
 
     bool isGlobalObject(JSObject* object);
 };
@@ -650,12 +678,14 @@ template <typename HeadType, typename... TailTypes>
 class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 {
   private:
-    HeadType head_;
+    using RawHeadType = typename mozilla::RemoveReference<HeadType>::Type;
+    RawHeadType head_;
 
   public:
-    explicit ArgSeq(HeadType&& head, TailTypes&&... tail)
-      : ArgSeq<TailTypes...>(mozilla::Move(tail)...),
-        head_(mozilla::Move(head))
+    template <typename ProvidedHead, typename... ProvidedTail>
+    explicit ArgSeq(ProvidedHead&& head, ProvidedTail&&... tail)
+      : ArgSeq<TailTypes...>(mozilla::Forward<ProvidedTail>(tail)...),
+        head_(mozilla::Forward<ProvidedHead>(head))
     { }
 
     // Arguments are pushed in reverse order, from last argument to first
@@ -668,9 +698,9 @@ class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 
 template <typename... ArgTypes>
 inline ArgSeq<ArgTypes...>
-ArgList(ArgTypes... args)
+ArgList(ArgTypes&&... args)
 {
-    return ArgSeq<ArgTypes...>(mozilla::Move(args)...);
+    return ArgSeq<ArgTypes...>(mozilla::Forward<ArgTypes>(args)...);
 }
 
 // Store wrappers, to generate the right move of data after the VM call.
@@ -812,16 +842,17 @@ class OutOfLineWasmTruncateCheck : public OutOfLineCodeBase<CodeGeneratorShared>
     MIRType toType_;
     FloatRegister input_;
     bool isUnsigned_;
+    wasm::BytecodeOffset bytecodeOffset_;
 
   public:
     OutOfLineWasmTruncateCheck(MWasmTruncateToInt32* mir, FloatRegister input)
       : fromType_(mir->input()->type()), toType_(MIRType::Int32), input_(input),
-        isUnsigned_(mir->isUnsigned())
+        isUnsigned_(mir->isUnsigned()), bytecodeOffset_(mir->bytecodeOffset())
     { }
 
     OutOfLineWasmTruncateCheck(MWasmTruncateToInt64* mir, FloatRegister input)
       : fromType_(mir->input()->type()), toType_(MIRType::Int64), input_(input),
-        isUnsigned_(mir->isUnsigned())
+        isUnsigned_(mir->isUnsigned()), bytecodeOffset_(mir->bytecodeOffset())
     { }
 
     void accept(CodeGeneratorShared* codegen) {
@@ -832,6 +863,7 @@ class OutOfLineWasmTruncateCheck : public OutOfLineCodeBase<CodeGeneratorShared>
     MIRType toType() const { return toType_; }
     MIRType fromType() const { return fromType_; }
     bool isUnsigned() const { return isUnsigned_; }
+    wasm::BytecodeOffset bytecodeOffset() const { return bytecodeOffset_; }
 };
 
 } // namespace jit

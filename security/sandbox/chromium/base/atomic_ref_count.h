@@ -4,9 +4,6 @@
 
 // This is a low level implementation of atomic semantics for reference
 // counting.  Please use base/memory/ref_counted.h directly instead.
-//
-// The implementation includes annotations to avoid some false positives
-// when using data race detection tools.
 
 #ifndef BASE_ATOMIC_REF_COUNT_H_
 #define BASE_ATOMIC_REF_COUNT_H_
@@ -15,7 +12,7 @@
 
 namespace base {
 
-typedef subtle::Atomic32 AtomicRefCount;
+typedef subtle::AtomicWord AtomicRefCount;
 
 // Increment a reference count by "increment", which must exceed 0.
 inline void AtomicRefCountIncN(volatile AtomicRefCount *ptr,

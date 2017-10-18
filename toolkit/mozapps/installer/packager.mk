@@ -4,7 +4,6 @@
 
 include $(MOZILLA_DIR)/toolkit/mozapps/installer/package-name.mk
 include $(MOZILLA_DIR)/toolkit/mozapps/installer/upload-files.mk
-include $(MOZILLA_DIR)/toolkit/mozapps/installer/make-eme.mk
 
 # This is how we create the binary packages we release to the public.
 
@@ -21,13 +20,12 @@ endif
 	@rm -rf $(DEPTH)/installer-stage $(DIST)/xpt
 	@echo 'Staging installer files...'
 	@$(NSINSTALL) -D $(DEPTH)/installer-stage/core
-	@cp -av $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/. $(DEPTH)/installer-stage/core
+	@cp -av $(DIST)/$(MOZ_PKG_DIR)$(_BINPATH)/. $(DEPTH)/installer-stage/core
+	@(cd $(DEPTH)/installer-stage/core && $(CREATE_PRECOMPLETE_CMD))
 ifdef MOZ_SIGN_PREPARED_PACKAGE_CMD
 # The && true is necessary to make sure Pymake spins a shell
 	$(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(DEPTH)/installer-stage && true
 endif
-	$(call MAKE_SIGN_EME_VOUCHER,$(DEPTH)/installer-stage/core)
-	@(cd $(DEPTH)/installer-stage/core && $(CREATE_PRECOMPLETE_CMD))
 
 ifeq (gonk,$(MOZ_WIDGET_TOOLKIT))
 ELF_HACK_FLAGS = --fill
@@ -51,10 +49,9 @@ stage-package: $(MOZ_PKG_MANIFEST) $(MOZ_PKG_MANIFEST_DEPS)
 		$(if $(JARLOG_DIR),$(addprefix --jarlog ,$(wildcard $(JARLOG_FILE_AB_CD)))) \
 		$(if $(OPTIMIZEJARS),--optimizejars) \
 		$(if $(DISABLE_JAR_COMPRESSION),--disable-compression) \
-		$(addprefix --unify ,$(UNIFY_DIST)) \
-		$(MOZ_PKG_MANIFEST) $(DIST) $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)$(if $(MOZ_PKG_MANIFEST),,$(_BINPATH)) \
+		$(MOZ_PKG_MANIFEST) $(DIST) $(DIST)/$(MOZ_PKG_DIR)$(if $(MOZ_PKG_MANIFEST),,$(_BINPATH)) \
 		$(if $(filter omni,$(MOZ_PACKAGER_FORMAT)),$(if $(NON_OMNIJAR_FILES),--non-resource $(NON_OMNIJAR_FILES)))
-	$(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/find-dupes.py $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)
+	$(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/find-dupes.py $(DEFINES) $(ACDEFINES) $(MOZ_PKG_DUPEFLAGS) $(DIST)/$(MOZ_PKG_DIR)
 ifndef MOZ_THUNDERBIRD
 	# Package mozharness
 	$(call py_action,test_archive, \
@@ -67,6 +64,12 @@ ifdef MOZ_PACKAGE_JSSHELL
 	$(RM) $(PKG_JSSHELL)
 	$(MAKE_JSSHELL)
 endif # MOZ_PACKAGE_JSSHELL
+ifdef MOZ_ARTIFACT_BUILD_SYMBOLS
+	@echo 'Packaging existing crashreporter symbols from artifact build...'
+	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
+	cd $(DIST)/crashreporter-symbols && \
+          zip -r5D '../$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip' . -i '*.sym' -i '*.txt'
+endif # MOZ_ARTIFACT_BUILD_SYMBOLS
 ifdef MOZ_CODE_COVERAGE
 	# Package code coverage gcno tree
 	@echo 'Packaging code coverage data...'
@@ -76,10 +79,17 @@ ifdef MOZ_CODE_COVERAGE
 endif
 ifeq (Darwin, $(OS_ARCH))
 ifdef MOZ_ASAN
-	@echo "Rewriting ASan runtime dylib paths for all binaries in $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH) ..."
-	$(PYTHON) $(MOZILLA_DIR)/build/unix/rewrite_asan_dylib.py $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)
+	@echo "Rewriting ASan runtime dylib paths for all binaries in $(DIST)/$(MOZ_PKG_DIR)$(_BINPATH) ..."
+	$(PYTHON) $(MOZILLA_DIR)/build/unix/rewrite_asan_dylib.py $(DIST)/$(MOZ_PKG_DIR)$(_BINPATH)
 endif # MOZ_ASAN
 endif # Darwin
+ifdef MOZ_STYLO
+ifndef MOZ_ARTIFACT_BUILDS
+	@echo 'Packing stylo binding files...'
+	cd '$(DIST)/rust_bindings/style' && \
+		zip -r5D '$(ABS_DIST)/$(PKG_PATH)$(STYLO_BINDINGS_PACKAGE)' .
+endif # MOZ_ARTIFACT_BUILDS
+endif # MOZ_STYLO
 
 prepare-package: stage-package
 
@@ -115,12 +125,6 @@ make-mozinfo-file:
 	cp $(DEPTH)/mozinfo.json $(MOZ_MOZINFO_FILE)
 
 # The install target will install the application to prefix/lib/appname-version
-# In addition if INSTALL_SDK is set, it will install the development headers,
-# libraries, and IDL files as follows:
-# dist/include -> prefix/include/appname-version
-# dist/idl -> prefix/share/idl/appname-version
-# dist/sdk/lib -> prefix/lib/appname-devel-version/lib
-# prefix/lib/appname-devel-version/* symlinks to the above directories
 install:: prepare-package
 ifeq ($(OS_ARCH),WINNT)
 	$(error "make install" is not supported on this platform. Use "make package" instead.)
@@ -134,70 +138,6 @@ endif
 	$(NSINSTALL) -D $(DESTDIR)$(bindir)
 	$(RM) -f $(DESTDIR)$(bindir)/$(MOZ_APP_NAME)
 	ln -s $(installdir)/$(MOZ_APP_NAME) $(DESTDIR)$(bindir)
-ifdef INSTALL_SDK # Here comes the hard part
-	$(NSINSTALL) -D $(DESTDIR)$(includedir)
-	(cd $(DIST)/include && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DESTDIR)$(includedir) && tar -xf -)
-	$(NSINSTALL) -D $(DESTDIR)$(idldir)
-	(cd $(DIST)/idl && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DESTDIR)$(idldir) && tar -xf -)
-# SDK directory is the libs + a bunch of symlinks
-	$(NSINSTALL) -D $(DESTDIR)$(sdkdir)/sdk/lib
-	$(NSINSTALL) -D $(DESTDIR)$(sdkdir)/sdk/bin
-	if test -f $(DIST)/include/xpcom-config.h; then \
-	  $(SYSINSTALL) $(IFLAGS1) $(DIST)/include/xpcom-config.h $(DESTDIR)$(sdkdir); \
-	fi
-	find $(DIST)/sdk -name '*.pyc' | xargs rm -f
-	(cd $(DIST)/sdk/lib && $(TAR) $(TAR_CREATE_FLAGS) - .) | (cd $(DESTDIR)$(sdkdir)/sdk/lib && tar -xf -)
-	(cd $(DIST)/sdk/bin && $(TAR) $(TAR_CREATE_FLAGS) - .) | (cd $(DESTDIR)$(sdkdir)/sdk/bin && tar -xf -)
-	$(RM) -f $(DESTDIR)$(sdkdir)/lib $(DESTDIR)$(sdkdir)/bin $(DESTDIR)$(sdkdir)/include $(DESTDIR)$(sdkdir)/include $(DESTDIR)$(sdkdir)/sdk/idl $(DESTDIR)$(sdkdir)/idl
-	ln -s $(sdkdir)/sdk/lib $(DESTDIR)$(sdkdir)/lib
-	ln -s $(installdir) $(DESTDIR)$(sdkdir)/bin
-	ln -s $(includedir) $(DESTDIR)$(sdkdir)/include
-	ln -s $(idldir) $(DESTDIR)$(sdkdir)/idl
-endif # INSTALL_SDK
-
-make-sdk:
-ifndef SDK_UNIFY
-	$(MAKE) stage-package UNIVERSAL_BINARY= STAGE_SDK=1 MOZ_PKG_DIR=sdk-stage
-endif
-	@echo 'Packaging SDK...'
-	$(RM) -rf $(DIST)/$(MOZ_APP_NAME)-sdk
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/bin
-ifdef SDK_UNIFY
-	(cd $(UNIFY_DIST)/sdk-stage && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/bin && tar -xf -)
-else
-	(cd $(DIST)/sdk-stage && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/bin && tar -xf -)
-endif
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/host/bin
-	(cd $(DIST)/host/bin && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/host/bin && tar -xf -)
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/sdk
-	find $(DIST)/sdk -name '*.pyc' | xargs rm -f
-	(cd $(DIST)/sdk && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/sdk && tar -xf -)
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/include
-	(cd $(DIST)/include && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/include && tar -xf -)
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/idl
-	(cd $(DIST)/idl && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/idl && tar -xf -)
-	$(NSINSTALL) -D $(DIST)/$(MOZ_APP_NAME)-sdk/lib
-# sdk/lib is the same as sdk/sdk/lib
-	(cd $(DIST)/sdk/lib && $(TAR) $(TAR_CREATE_FLAGS) - .) | \
-	  (cd $(DIST)/$(MOZ_APP_NAME)-sdk/lib && tar -xf -)
-	$(NSINSTALL) -D $(DIST)/$(SDK_PATH)
-ifndef PKG_SKIP_STRIP
-	USE_ELF_HACK= $(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/strip.py $(DIST)/$(MOZ_APP_NAME)-sdk
-endif
-	cd $(DIST) && $(MAKE_SDK)
-ifdef UNIFY_DIST
-ifndef SDK_UNIFY
-	$(MAKE) -C $(UNIFY_DIST)/.. sdk SDK_UNIFY=1
-endif
-endif
 
 checksum:
 	mkdir -p `dirname $(CHECKSUM_FILE)`
@@ -222,7 +162,17 @@ upload: checksum
 # source-package creates a source tarball from the files in MOZ_PKG_SRCDIR,
 # which is either set to a clean checkout or defaults to $topsrcdir
 source-package:
+	@echo 'Generate the sourcestamp file'
+	# Make sure to have repository information available and then generate the
+	# sourcestamp file.
+	$(MAKE) -C $(DEPTH) 'source-repo.h'
+	$(MAKE) make-sourcestamp-file
 	@echo 'Packaging source tarball...'
+	# We want to include the sourcestamp file in the source tarball, so copy it
+	# in the root source directory. This is useful to enable telemetry submissions
+	# from builds made from the source package with the correct revision information.
+	# Don't bother removing it as this is only used by automation.
+	@cp $(MOZ_SOURCESTAMP_FILE) '$(MOZ_PKG_SRCDIR)/sourcestamp.txt'
 	$(MKDIR) -p $(DIST)/$(PKG_SRCPACK_PATH)
 	(cd $(MOZ_PKG_SRCDIR) && $(CREATE_SOURCE_TAR) - ./ ) | xz -9e > $(SOURCE_TAR)
 

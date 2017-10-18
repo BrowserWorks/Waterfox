@@ -8,17 +8,18 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include "webrtc/base/flags.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "webrtc/base/checks.h"
 
 #if defined(WEBRTC_WIN)
 #include "webrtc/base/win32.h"
 #include <shellapi.h>
 #endif
-
-#include "webrtc/base/flags.h"
 
 namespace rtc {
 // -----------------------------------------------------------------------------
@@ -163,7 +164,7 @@ void FlagList::SplitArgument(const char* arg,
     if (*arg == '=') {
       // make a copy so we can NUL-terminate flag name
       int n = static_cast<int>(arg - *name);
-      CHECK_LT(n, buffer_size);
+      RTC_CHECK_LT(n, buffer_size);
       memcpy(buffer, *name, n * sizeof(char));
       buffer[n] = '\0';
       *name = buffer;
@@ -256,8 +257,12 @@ int FlagList::SetFlagsFromCommandLine(int* argc, const char** argv,
 }
 
 void FlagList::Register(Flag* flag) {
-  assert(flag != NULL && strlen(flag->name()) > 0);
-  CHECK(!Lookup(flag->name())) << "flag " << flag->name() << " declared twice";
+  RTC_DCHECK(flag);
+  RTC_DCHECK_GT(strlen(flag->name()), 0);
+  // NOTE: Don't call Lookup() within Register because it accesses the name_
+  // of other flags in list_, and if the flags are coming from two different
+  // compilation units, the initialization order between them is undefined, and
+  // this will trigger an asan initialization-order-fiasco error.
   flag->next_ = list_;
   list_ = flag;
 }

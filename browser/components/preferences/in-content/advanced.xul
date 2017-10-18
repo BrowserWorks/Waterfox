@@ -34,23 +34,17 @@
   <preference id="general.smoothScroll"
               name="general.smoothScroll"
               type="bool"/>
-  <preference id="layers.acceleration.disabled"
-              name="layers.acceleration.disabled"
-              type="bool"
-              inverted="true"/>
-#ifdef XP_WIN
-  <preference id="gfx.direct2d.disabled"
-              name="gfx.direct2d.disabled"
-              type="bool"
-              inverted="true"/>
-#endif
   <preference id="layout.spellcheckDefault"
               name="layout.spellcheckDefault"
               type="int"/>
-
-#ifdef MOZ_TELEMETRY_REPORTING
   <preference id="toolkit.telemetry.enabled"
               name="toolkit.telemetry.enabled"
+              type="bool"/>
+
+  <!-- Data Choices tab -->
+#ifdef MOZ_CRASHREPORTER
+  <preference id="browser.crashReports.unsubmittedCheck.autoSubmit"
+              name="browser.crashReports.unsubmittedCheck.autoSubmit"
               type="bool"/>
 #endif
 
@@ -113,15 +107,14 @@
   <stringbundle id="bundleShell" src="chrome://browser/locale/shellservice.properties"/>
   <stringbundle id="bundleBrand" src="chrome://branding/locale/brand.properties"/>
 #endif
-  <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences/preferences.properties"/>
+  <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences-old/preferences.properties"/>
 
 <hbox id="header-advanced"
       class="header"
       hidden="true"
       data-category="paneAdvanced">
   <label class="header-name" flex="1">&paneAdvanced.title;</label>
-  <button class="help-button"
-          aria-label="&helpButton.label;"/>
+  <html:a class="help-button" target="_blank" aria-label="&helpButton.label;"></html:a>
 </hbox>
 
 <tabbox id="advancedPrefs"
@@ -161,12 +154,12 @@
                   accesskey="&useCursorNavigation.accesskey;"
                   preference="accessibility.browsewithcaret"/>
         <checkbox id="searchStartTyping"
-                  label="&searchStartTyping.label;"
-                  accesskey="&searchStartTyping.accesskey;"
+                  label="&searchOnStartTyping.label;"
+                  accesskey="&searchOnStartTyping.accesskey;"
                   preference="accessibility.typeaheadfind"/>
         <checkbox id="blockAutoRefresh"
-                  label="&blockAutoRefresh.label;"
-                  accesskey="&blockAutoRefresh.accesskey;"
+                  label="&blockAutoReload.label;"
+                  accesskey="&blockAutoReload.accesskey;"
                   preference="accessibility.blockautorefresh"/>
       </groupbox>
       <!-- Browsing -->
@@ -181,13 +174,9 @@
                   label="&useSmoothScrolling.label;"
                   accesskey="&useSmoothScrolling.accesskey;"
                   preference="general.smoothScroll"/>
-        <checkbox id="allowHWAccel"
-                  label="&allowHWAccel.label;"
-                  accesskey="&allowHWAccel.accesskey;"
-                  preference="layers.acceleration.disabled"/>
         <checkbox id="checkSpelling"
-                  label="&checkSpelling.label;"
-                  accesskey="&checkSpelling.accesskey;"
+                  label="&checkUserSpelling.label;"
+                  accesskey="&checkUserSpelling.accesskey;"
                   onsyncfrompreference="return gAdvancedPane.readCheckSpelling();"
                   onsynctopreference="return gAdvancedPane.writeCheckSpelling();"
                   preference="layout.spellcheckDefault"/>
@@ -197,17 +186,19 @@
     <!-- Data Choices -->
     <tabpanel id="dataChoicesPanel" orient="vertical">
 #ifdef MOZ_TELEMETRY_REPORTING
+      <description>&healthReportingDisabled.label;</description>
+      <separator class="thin"/>
+#endif
       <groupbox>
         <caption>
           <checkbox id="submitHealthReportBox" label="&enableHealthReport.label;"
                     accesskey="&enableHealthReport.accesskey;"/>
         </caption>
         <vbox>
-          <hbox class="indent">
+          <hbox class="indent" flex="1">
             <label flex="1">&healthReportDesc.label;</label>
-            <spacer flex="10"/>
-            <label id="FHRLearnMore"
-                   class="text-link">&healthReportLearnMore.label;</label>
+            <label id="FHRLearnMore" flex="1"
+                   class="learnMore text-link">&healthReportLearnMore.label;</label>
           </hbox>
           <hbox class="indent">
             <groupbox flex="1">
@@ -216,28 +207,27 @@
                           label="&enableTelemetryData.label;"
                           accesskey="&enableTelemetryData.accesskey;"/>
               </caption>
-              <hbox class="indent">
+              <hbox class="indent" flex="1">
                 <label id="telemetryDataDesc" flex="1">&telemetryDesc.label;</label>
-                <spacer flex="10"/>
-                <label id="telemetryLearnMore"
-                       class="text-link">&telemetryLearnMore.label;</label>
+                <label id="telemetryLearnMore" flex="1"
+                       class="learnMore text-link">&telemetryLearnMore.label;</label>
               </hbox>
             </groupbox>
           </hbox>
         </vbox>
       </groupbox>
-#endif
 #ifdef MOZ_CRASHREPORTER
       <groupbox>
         <caption>
-          <checkbox id="submitCrashesBox" label="&enableCrashReporter.label;"
-                    accesskey="&enableCrashReporter.accesskey;"/>
+          <checkbox id="automaticallySubmitCrashesBox"
+                    preference="browser.crashReports.unsubmittedCheck.autoSubmit"
+                    label="&alwaysSubmitCrashReports.label;"
+                    accesskey="&alwaysSubmitCrashReports.accesskey;"/>
         </caption>
-        <hbox class="indent">
-          <label flex="1">&crashReporterDesc.label;</label>
-          <spacer flex="10"/>
-          <label id="crashReporterLearnMore"
-                 class="text-link">&crashReporterLearnMore.label;</label>
+        <hbox class="indent" flex="1">
+          <label flex="1">&crashReporterDesc2.label;</label>
+          <label id="crashReporterLearnMore" flex="1"
+                 class="learnMore text-link">&crashReporterLearnMore.label;</label>
         </hbox>
       </groupbox>
 #endif
@@ -286,7 +276,7 @@
       </groupbox>
 
       <!-- Offline apps -->
-      <groupbox id="offlineGroup">
+      <groupbox id="offlineGroup" hidden="true">
         <caption><label>&offlineStorage2.label;</label></caption>
 
         <hbox align="center">
@@ -296,13 +286,13 @@
         </hbox>
         <hbox align="center">
           <checkbox id="offlineNotify"
-                    label="&offlineNotify.label;" accesskey="&offlineNotify.accesskey;"
+                    label="&offlineStorageNotify.label;" accesskey="&offlineStorageNotify.accesskey;"
                     preference="browser.offline-apps.notify"
                     onsyncfrompreference="return gAdvancedPane.readOfflineNotify();"/>
           <spacer flex="1"/>
           <button id="offlineNotifyExceptions"
-                  label="&offlineNotifyExceptions.label;"
-                  accesskey="&offlineNotifyExceptions.accesskey;"/>
+                  label="&offlineStorageNotifyExceptions.label;"
+                  accesskey="&offlineStorageNotifyExceptions.accesskey;"/>
         </hbox>
         <hbox>
           <vbox flex="1">
@@ -320,21 +310,39 @@
           </vbox>
         </hbox>
       </groupbox>
+
+      <!-- Site Data -->
+      <groupbox id="siteDataGroup" hidden="true">
+        <caption><label>&siteData.label;</label></caption>
+
+        <hbox align="baseline">
+          <label id="totalSiteDataSize"></label>
+          <label id="siteDataLearnMoreLink" class="learnMore text-link" value="&siteDataLearnMoreLink.label;"></label>
+          <spacer flex="1" />
+          <button id="clearSiteDataButton" icon="clear"
+                  label="&clearSiteData.label;" accesskey="&clearSiteData.accesskey;"/>
+        </hbox>
+        <vbox align="end">
+          <button id="siteDataSettings"
+                  label="&siteDataSettings.label;"
+                  accesskey="&siteDataSettings.accesskey;"/>
+        </vbox>
+      </groupbox>
     </tabpanel>
 
     <!-- Update -->
     <tabpanel id="updatePanel" orient="vertical">
 #ifdef MOZ_UPDATER
       <groupbox id="updateApp" align="start">
-        <caption><label>&updateApp.label;</label></caption>
+        <caption><label>&updateApplication.label;</label></caption>
         <radiogroup id="updateRadioGroup" align="start">
           <radio id="autoDesktop"
                  value="auto"
                  label="&updateAuto1.label;"
                  accesskey="&updateAuto1.accesskey;"/>
           <radio value="checkOnly"
-                label="&updateCheck.label;"
-                accesskey="&updateCheck.accesskey;"/>
+                label="&updateCheckChoose.label;"
+                accesskey="&updateCheckChoose.accesskey;"/>
           <radio value="manual"
                 label="&updateManual.label;"
                 accesskey="&updateManual.accesskey;"/>
@@ -356,7 +364,7 @@
       </groupbox>
 #endif
       <groupbox id="updateOthers" align="start">
-        <caption><label>&updateOthers.label;</label></caption>
+        <caption><label>&autoUpdateOthers.label;</label></caption>
         <checkbox id="enableSearchUpdate"
                   label="&enableSearchUpdate.label;"
                   accesskey="&enableSearchUpdate.accesskey;"
@@ -367,8 +375,8 @@
     <!-- Certificates -->
     <tabpanel id="encryptionPanel" orient="vertical">
       <groupbox id="certSelection" align="start">
-        <caption><label>&certSelection.label;</label></caption>
-        <description id="CertSelectionDesc" control="certSelection">&certSelection.description;</description>
+        <caption><label>&certPersonal.label;</label></caption>
+        <description id="CertSelectionDesc" control="certSelection">&certPersonal.description;</description>
 
         <!--
           The values on these radio buttons may look like l12y issues, but
@@ -379,11 +387,11 @@
                     preftype="string"
                     preference="security.default_personal_cert"
                     aria-labelledby="CertSelectionDesc">
-          <radio label="&certs.auto;"
-                 accesskey="&certs.auto.accesskey;"
+          <radio label="&selectCerts.auto;"
+                 accesskey="&selectCerts.auto.accesskey;"
                  value="Select Automatically"/>
-          <radio label="&certs.ask;"
-                 accesskey="&certs.ask.accesskey;"
+          <radio label="&selectCerts.ask;"
+                 accesskey="&selectCerts.ask.accesskey;"
                  value="Ask Every Time"/>
         </radiogroup>
       </groupbox>

@@ -19,6 +19,7 @@ interface nsIBrowserHistory : nsISupports
      * @note It is preferrable to use this one rather then RemovePages when
      *       removing less than 10 pages, since it won't start a full batch
      *       operation.
+     * @deprecated Use PlacesUtils.history.remove() API instead.
      */
     void removePage(in nsIURI aURI);
 
@@ -31,6 +32,7 @@ interface nsIBrowserHistory : nsISupports
      *        Length of the array.
      *
      * @note the removal happens in a batch.
+     * @deprecated Use PlacesUtils.history.remove() API instead.
      */
     void removePages([array, size_is(aLength)] in nsIURI aURIs,
                      in unsigned long aLength);
@@ -67,21 +69,4 @@ interface nsIBrowserHistory : nsISupports
      */
     void removePagesByTimeframe(in PRTime aBeginTime,
                                 in PRTime aEndTime);
-
-    /**
-     * Removes all visits in a given timeframe.
-     * Limits are included: aBeginTime <= timeframe <= aEndTime.
-     * Any pages that becomes unvisited as a result will also be deleted.
-     *
-     * @param aBeginTime
-     *        Microseconds from epoch, representing the initial time.
-     * @param aEndTime
-     *        Microseconds from epoch, representing the final time.
-     *
-     * @note The removal happens in a batch.
-     *
-     * @deprecated Please use PlacesUtils.history.removeVisitsByFilter instead
-     */
-    void removeVisitsByTimeframe(in PRTime aBeginTime,
-                                 in PRTime aEndTime);
 };

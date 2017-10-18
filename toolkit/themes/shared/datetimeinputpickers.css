@@ -1,0 +1,397 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+:root {
+  --font-size-default: 1.1rem;
+  --spinner-width: 3rem;
+  --spinner-margin-top-bottom: 0.4rem;
+  --spinner-item-height: 2.4rem;
+  --spinner-item-margin-bottom: 0.1rem;
+  --spinner-button-height: 1.2rem;
+  --colon-width: 2rem;
+  --day-period-spacing-width: 1rem;
+  --calendar-width: 23.1rem;
+  --date-picker-item-height: 2.5rem;
+  --date-picker-item-width: 3.3rem;
+
+  --border: 0.1rem solid #D6D6D6;
+  --border-radius: 0.3rem;
+  --border-active-color: #B1B1B1;
+
+  --font-color: #191919;
+  --fill-color: #EBEBEB;
+
+  --today-fill-color: rgb(212, 212, 212);
+
+  --selected-font-color: #FFFFFF;
+  --selected-fill-color: #0996F8;
+
+  --button-font-color: #858585;
+  --button-font-color-hover: #4D4D4D;
+  --button-font-color-active: #191919;
+  --button-fill-color-active: #D4D4D4;
+
+  --weekday-header-font-color: #6C6C6C;
+  --weekend-header-font-color: rgb(218, 78, 68);
+
+  --weekend-font-color: rgb(218, 78, 68);
+  --weekday-outside-font-color: rgb(153, 153, 153);
+  --weekend-outside-font-color: rgb(255, 152, 143);
+
+  --weekday-disabled-font-color: rgba(25, 25, 25, 0.2);
+  --weekend-disabled-font-color: rgba(218, 78, 68, 0.2);
+  --disabled-fill-color: rgba(235, 235, 235, 0.8);
+
+  --disabled-opacity: 0.2;
+}
+
+html {
+  font-size: 10px;
+}
+
+body {
+  margin: 0;
+  color: var(--font-color);
+  font: message-box;
+  font-size: var(--font-size-default);
+}
+
+button {
+  -moz-appearance: none;
+  background: none;
+  border: none;
+}
+
+.nav {
+  display: flex;
+  width: var(--calendar-width);
+  height: 2.4rem;
+  margin-bottom: 0.8rem;
+  justify-content: space-between;
+}
+
+.nav > button {
+  width: 3rem;
+  height: var(--date-picker-item-height);
+  -moz-context-properties: fill;
+  fill: var(--button-font-color);
+}
+
+.nav > button:hover {
+  fill: var(--button-font-color-hover);
+}
+
+.nav > button.active {
+  fill: var(--button-font-color-active);
+}
+
+.nav > button.prev,
+.nav > button.next:dir(rtl) {
+  background: url("chrome://global/skin/icons/calendar-arrow-left.svg") no-repeat 50% 50%;
+}
+
+.nav > button.next,
+.nav > button.prev:dir(rtl) {
+  background: url("chrome://global/skin/icons/calendar-arrow-right.svg") no-repeat 50% 50%;
+}
+
+.month-year-container {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0;
+  left: 3rem;
+  right: 3rem;
+  width: 17.1rem;
+  height: var(--date-picker-item-height);
+  z-index: 10;
+}
+
+button.month-year {
+  font-size: 1.3rem;
+  border: var(--border);
+  border-radius: 0.3rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  padding-inline-start: 1.2rem;
+  padding-inline-end: 2.6rem;
+}
+
+button.month-year:hover {
+  background: var(--fill-color);
+}
+
+button.month-year.active {
+  border-color: var(--border-active-color);
+  background: var(--button-fill-color-active);
+}
+
+button.month-year::after {
+  position: absolute;
+  content: "";
+  width: 2.6rem;
+  height: 1.6rem;
+  background: url("chrome://global/skin/icons/spinner-arrow-down.svg") no-repeat 50% 50%;
+  -moz-context-properties: fill;
+  fill: var(--button-font-color);
+}
+
+button.month-year.active::after {
+  background: url("chrome://global/skin/icons/spinner-arrow-up.svg") no-repeat 50% 50%;
+}
+
+.month-year-view {
+  position: absolute;
+  z-index: 5;
+  padding-top: 3.2rem;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--calendar-width);
+  background: window;
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+.month-year-view.hidden {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.month-year-view > .spinner-container {
+  width: 5.5rem;
+  margin: 0 0.5rem;
+}
+
+.month-year-view .spinner {
+  transform: scaleY(1);
+  transform-origin: top;
+  transition: transform 0.15s;
+}
+
+.month-year-view.hidden .spinner {
+  transform: scaleY(0);
+  transition: none;
+}
+
+.month-year-view .spinner > div {
+  transform: scaleY(1);
+  transition: transform 0.15s;
+}
+
+.month-year-view.hidden .spinner > div {
+  transform: scaleY(2.5);
+  transition: none;
+}
+
+.order-month-year > #spinner-month,
+.order-year-month > #spinner-year {
+  order: 1;
+}
+
+.order-month-year > #spinner-year,
+.order-year-month > #spinner-month {
+  order: 2;
+}
+
+.calendar-container {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  width: var(--calendar-width);
+}
+
+.week-header {
+  display: flex;
+}
+
+.week-header > div {
+  color: var(--weekday-header-font-color);
+}
+
+.week-header > div.weekend {
+  color: var(--weekend-header-font-color);
+}
+
+.days-viewport {
+  height: 15rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.days-view {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+.week-header > div,
+.days-view > div {
+  align-items: center;
+  display: flex;
+  height: var(--date-picker-item-height);
+  position: relative;
+  justify-content: center;
+  width: var(--date-picker-item-width);
+}
+
+.days-view > .outside {
+  color: var(--weekday-outside-font-color);
+}
+
+.days-view > .weekend {
+  color: var(--weekend-font-color);
+}
+
+.days-view > .weekend.outside {
+  color: var(--weekend-outside-font-color);
+}
+
+.days-view > .out-of-range,
+.days-view > .off-step {
+  color: var(--weekday-disabled-font-color);
+  background: var(--disabled-fill-color);
+}
+
+.days-view > .out-of-range.weekend,
+.days-view > .off-step.weekend {
+  color: var(--weekend-disabled-font-color);
+}
+
+.days-view > .today {
+  font-weight: bold;
+}
+
+.days-view > .out-of-range::before,
+.days-view > .off-step::before {
+  display: none;
+}
+
+.days-view > div:hover::before,
+.days-view > .select::before,
+.days-view > .today::before {
+  top: 5%;
+  bottom: 5%;
+  left: 5%;
+  right: 5%;
+}
+
+#time-picker,
+.month-year-view {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  width: var(--spinner-width);
+}
+
+.spinner-container > button {
+  height: var(--spinner-button-height);
+  -moz-context-properties: fill;
+  fill: var(--button-font-color);
+}
+
+.spinner-container > button:hover {
+  fill: var(--button-font-color-hover);
+}
+
+.spinner-container > button.active {
+  fill: var(--button-font-color-active);
+}
+
+.spinner-container > button.up {
+  background: url("chrome://global/skin/icons/spinner-arrow-up.svg") no-repeat 50% 50%;
+}
+
+.spinner-container > button.down {
+  background: url("chrome://global/skin/icons/spinner-arrow-down.svg") no-repeat 50% 50%;
+}
+
+.spinner-container.hide-buttons > button {
+  visibility: hidden;
+}
+
+.spinner-container > .spinner {
+  position: relative;
+  width: 100%;
+  margin: var(--spinner-margin-top-bottom) 0;
+  cursor: default;
+  overflow-y: scroll;
+  scroll-snap-type: mandatory;
+  scroll-snap-points-y: repeat(100%);
+}
+
+.spinner-container > .spinner > div {
+  box-sizing: border-box;
+  position: relative;
+  text-align: center;
+  padding: calc((var(--spinner-item-height) - var(--font-size-default)) / 2) 0;
+  margin-bottom: var(--spinner-item-margin-bottom);
+  height: var(--spinner-item-height);
+  -moz-user-select: none;
+  scroll-snap-coordinate: 0 0;
+}
+
+.spinner-container > .spinner > div::before,
+.calendar-container .days-view > div::before {
+  position: absolute;
+  top: 5%;
+  bottom: 5%;
+  left: 5%;
+  right: 5%;
+  z-index: -10;
+  border-radius: var(--border-radius);
+}
+
+.spinner-container > .spinner > div:hover::before,
+.calendar-container .days-view > div:hover::before {
+  background: var(--fill-color);
+  border: var(--border);
+  content: "";
+}
+
+.calendar-container .days-view > div.today::before {
+  background: var(--today-fill-color);
+  content: "";
+}
+
+.spinner-container > .spinner:not(.scrolling) > div.selection,
+.calendar-container .days-view > div.selection {
+  color: var(--selected-font-color);
+}
+
+.spinner-container > .spinner > div.selection::before,
+.calendar-container .days-view > div.selection::before {
+  background: var(--selected-fill-color);
+  border: none;
+  content: "";
+}
+
+.spinner-container > .spinner > div.disabled::before,
+.spinner-container > .spinner.scrolling > div.selection::before,
+.spinner-container > .spinner.scrolling > div:hover::before {
+  display: none;
+}
+
+.spinner-container > .spinner > div.disabled {
+  opacity: var(--disabled-opacity);
+}
+
+.colon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: var(--colon-width);
+  margin-bottom: 0.3rem;
+}
+
+.spacer {
+  width: var(--day-period-spacing-width);
+}

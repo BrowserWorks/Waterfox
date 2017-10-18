@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 HTMLFieldSetElement::HTMLFieldSetElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-  : nsGenericHTMLFormElement(aNodeInfo)
+  : nsGenericHTMLFormElement(aNodeInfo, NS_FORM_FIELDSET)
   , mElements(nullptr)
   , mFirstLegend(nullptr)
   , mInvalidElementsCount(0)
@@ -59,9 +59,6 @@ NS_IMPL_ELEMENT_CLONE(HTMLFieldSetElement)
 NS_IMPL_BOOL_ATTR(HTMLFieldSetElement, Disabled, disabled)
 NS_IMPL_STRING_ATTR(HTMLFieldSetElement, Name, name)
 
-// nsIConstraintValidation
-NS_IMPL_NSICONSTRAINTVALIDATION(HTMLFieldSetElement)
-
 bool
 HTMLFieldSetElement::IsDisabledForEvents(EventMessage aMessage)
 {
@@ -70,7 +67,7 @@ HTMLFieldSetElement::IsDisabledForEvents(EventMessage aMessage)
 
 // nsIContent
 nsresult
-HTMLFieldSetElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
+HTMLFieldSetElement::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   // Do not process any DOM events if the element is disabled.
   aVisitor.mCanHandle = false;
@@ -78,29 +75,35 @@ HTMLFieldSetElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
     return NS_OK;
   }
 
-  return nsGenericHTMLFormElement::PreHandleEvent(aVisitor);
+  return nsGenericHTMLFormElement::GetEventTargetParent(aVisitor);
 }
 
 nsresult
 HTMLFieldSetElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                  const nsAttrValue* aValue, bool aNotify)
+                                  const nsAttrValue* aValue,
+                                  const nsAttrValue* aOldValue, bool aNotify)
 {
-  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled &&
-      nsINode::GetFirstChild()) {
-    if (!mElements) {
-      mElements = new nsContentList(this, MatchListedElements, nullptr, nullptr,
-                                    true);
-    }
+  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::disabled) {
+    // This *has* to be called *before* calling FieldSetDisabledChanged on our
+    // controls, as they may depend on our disabled state.
+    UpdateDisabledState(aNotify);
 
-    uint32_t length = mElements->Length(true);
-    for (uint32_t i=0; i<length; ++i) {
-      static_cast<nsGenericHTMLFormElement*>(mElements->Item(i))
-        ->FieldSetDisabledChanged(aNotify);
+    if (nsINode::GetFirstChild()) {
+      if (!mElements) {
+        mElements = new nsContentList(this, MatchListedElements, nullptr, nullptr,
+                                      true);
+      }
+
+      uint32_t length = mElements->Length(true);
+      for (uint32_t i=0; i<length; ++i) {
+        static_cast<nsGenericHTMLFormElement*>(mElements->Item(i))
+          ->FieldSetDisabledChanged(aNotify);
+      }
     }
   }
 
   return nsGenericHTMLFormElement::AfterSetAttr(aNameSpaceID, aName,
-                                                aValue, aNotify);
+                                                aValue, aOldValue, aNotify);
 }
 
 // nsIDOMHTMLFieldSetElement
@@ -120,10 +123,10 @@ HTMLFieldSetElement::GetType(nsAString& aType)
 
 /* static */
 bool
-HTMLFieldSetElement::MatchListedElements(nsIContent* aContent, int32_t aNamespaceID,
+HTMLFieldSetElement::MatchListedElements(Element* aElement, int32_t aNamespaceID,
                                          nsIAtom* aAtom, void* aData)
 {
-  nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(aContent);
+  nsCOMPtr<nsIFormControl> formControl = do_QueryInterface(aElement);
   return formControl;
 }
 
@@ -224,14 +227,8 @@ HTMLFieldSetElement::AddElement(nsGenericHTMLFormElement* aElement)
   // invalid elements in aElement are also invalid elements of this.
   HTMLFieldSetElement* fieldSet = FromContent(aElement);
   if (fieldSet) {
-    if (fieldSet->mInvalidElementsCount > 0) {
-      // The order we call UpdateValidity and adjust mInvalidElementsCount is
-      // important. We need to first call UpdateValidity in case
-      // mInvalidElementsCount was 0 before the call and will be incremented to
-      // 1 and so we need to change state to invalid. After that is done, we
-      // are free to increment mInvalidElementsCount to the correct amount.
+    for (int32_t i = 0; i < fieldSet->mInvalidElementsCount; i++) {
       UpdateValidity(false);
-      mInvalidElementsCount += fieldSet->mInvalidElementsCount - 1;
     }
     return;
   }
@@ -272,12 +269,7 @@ HTMLFieldSetElement::RemoveElement(nsGenericHTMLFormElement* aElement)
   // invalid elements in aElement are also removed from this.
   HTMLFieldSetElement* fieldSet = FromContent(aElement);
   if (fieldSet) {
-    if (fieldSet->mInvalidElementsCount > 0) {
-      // The order we update mInvalidElementsCount and call UpdateValidity is
-      // important. We need to first decrement mInvalidElementsCount and then
-      // call UpdateValidity, in case mInvalidElementsCount hits 0 in the call
-      // of UpdateValidity and we have to change state to valid.
-      mInvalidElementsCount -= fieldSet->mInvalidElementsCount - 1;
+    for (int32_t i = 0; i < fieldSet->mInvalidElementsCount; i++) {
       UpdateValidity(true);
     }
     return;
@@ -353,8 +345,6 @@ HTMLFieldSetElement::UpdateValidity(bool aElementValidity)
   if (mFieldSet) {
     mFieldSet->UpdateValidity(aElementValidity);
   }
-
-  return;
 }
 
 EventStates

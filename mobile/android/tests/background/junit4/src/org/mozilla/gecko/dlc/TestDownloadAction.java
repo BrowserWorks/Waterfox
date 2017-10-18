@@ -10,6 +10,7 @@ import android.content.Context;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.background.testhelpers.TestRunner;
 import org.mozilla.gecko.dlc.catalog.DownloadContent;
 import org.mozilla.gecko.dlc.catalog.DownloadContentBuilder;
@@ -48,7 +49,7 @@ public class TestDownloadAction {
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(true).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
 
-        action.perform(RuntimeEnvironment.application, null);
+        action.perform(RuntimeEnvironment.application, mockCatalogWithScheduledDownloads());
 
         verify(action, never()).buildHttpURLConnection(anyString());
         verify(action, never()).download(anyString(), any(File.class));
@@ -65,7 +66,7 @@ public class TestDownloadAction {
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isConnectedToNetwork(RuntimeEnvironment.application);
 
-        action.perform(RuntimeEnvironment.application, null);
+        action.perform(RuntimeEnvironment.application, mockCatalogWithScheduledDownloads());
 
         verify(action, never()).isActiveNetworkMetered(any(Context.class));
         verify(action, never()).buildHttpURLConnection(anyString());
@@ -85,6 +86,7 @@ public class TestDownloadAction {
 
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Collections.singletonList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
 
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
@@ -157,6 +159,7 @@ public class TestDownloadAction {
 
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Collections.singletonList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
 
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
@@ -195,6 +198,7 @@ public class TestDownloadAction {
 
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Collections.singletonList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
 
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
@@ -284,6 +288,7 @@ public class TestDownloadAction {
 
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Collections.singletonList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
 
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
@@ -323,6 +328,7 @@ public class TestDownloadAction {
 
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Collections.singletonList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
 
         DownloadAction action = spy(new DownloadAction(null));
         doReturn(false).when(action).isActiveNetworkMetered(RuntimeEnvironment.application);
@@ -523,10 +529,32 @@ public class TestDownloadAction {
         DownloadContent unknownContent = createUnknownContent(1024L);
         DownloadContent contentWithUnknownType = createContentWithoutType(1024L);
 
-        Assert.assertTrue(fontContent.isKnownContent());
-        Assert.assertTrue(hyphenationContent.isKnownContent());
+        Assert.assertEquals(AppConstants.MOZ_ANDROID_EXCLUDE_FONTS, fontContent.isKnownContent());
+        Assert.assertEquals(AppConstants.MOZ_EXCLUDE_HYPHENATION_DICTIONARIES, hyphenationContent.isKnownContent());
+
         Assert.assertFalse(unknownContent.isKnownContent());
         Assert.assertFalse(contentWithUnknownType.isKnownContent());
+    }
+
+    /**
+     * Scenario: Action is executed with no downloads scheduled.
+     *
+     * Verify that:
+     * * Nothing is done.
+     */
+    @Test
+    public void testNoDownloadScheduled() throws Exception {
+        final DownloadAction action = spy(new DownloadAction(null));
+
+        final DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
+        doReturn(false).when(catalog).hasScheduledDownloads();
+
+        action.perform(RuntimeEnvironment.application, catalog);
+
+        verify(catalog, never()).getScheduledDownloads();
+        verify(action, never()).isConnectedToNetwork(any(Context.class));
+        verify(action, never()).isActiveNetworkMetered(any(Context.class));
+        verify(action, never()).download(anyString(), any(File.class));
     }
 
     private DownloadContent createUnknownContent(long size) {
@@ -566,9 +594,16 @@ public class TestDownloadAction {
                 .build();
     }
 
+    private DownloadContentCatalog mockCatalogWithScheduledDownloads() {
+        return mockCatalogWithScheduledDownloads(
+                createUnknownContent(1337),
+                createUnknownContent(4223));
+    }
+
     private DownloadContentCatalog mockCatalogWithScheduledDownloads(DownloadContent... content) {
         DownloadContentCatalog catalog = mock(DownloadContentCatalog.class);
         doReturn(Arrays.asList(content)).when(catalog).getScheduledDownloads();
+        doReturn(true).when(catalog).hasScheduledDownloads();
         return catalog;
     }
 

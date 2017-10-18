@@ -578,22 +578,22 @@ protected:
   nsSMILTimeValue                 mMin;
   nsSMILTimeValue                 mMax;
 
-  enum nsSMILFillMode
+  enum nsSMILFillMode : uint8_t
   {
     FILL_REMOVE,
     FILL_FREEZE
   };
   nsSMILFillMode                  mFillMode;
-  static nsAttrValue::EnumTable   sFillModeTable[];
+  static const nsAttrValue::EnumTable sFillModeTable[];
 
-  enum nsSMILRestartMode
+  enum nsSMILRestartMode : uint8_t
   {
     RESTART_ALWAYS,
     RESTART_WHENNOTACTIVE,
     RESTART_NEVER
   };
   nsSMILRestartMode               mRestartMode;
-  static nsAttrValue::EnumTable   sRestartModeTable[];
+  static const nsAttrValue::EnumTable sRestartModeTable[];
 
   InstanceTimeList                mBeginInstances;
   InstanceTimeList                mEndInstances;

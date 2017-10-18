@@ -11,18 +11,18 @@ function test() {
   var triggers = encodeURIComponent(JSON.stringify({
     "Unsigned XPI": TESTROOT + "amosigned.xpi"
   }));
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   ContentTask.spawn(gBrowser.selectedBrowser, TESTROOT + "installtrigger.html?" + triggers, url => {
     return new Promise(resolve => {
       function page_loaded() {
-        content.removeEventListener("PageLoaded", page_loaded, false);
+        content.removeEventListener("PageLoaded", page_loaded);
         resolve(content.document.getElementById("return").textContent);
       }
 
       function load_listener() {
         removeEventListener("load", load_listener, true);
-        content.addEventListener("InstallTriggered", page_loaded, false);
+        content.addEventListener("InstallTriggered", page_loaded);
       }
 
       addEventListener("load", load_listener, true);

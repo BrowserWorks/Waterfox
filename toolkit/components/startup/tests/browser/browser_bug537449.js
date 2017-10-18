@@ -4,13 +4,6 @@
 
 "use strict";
 
-///////////////////
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed.
-//
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.docShell is null");
-
 SpecialPowers.pushPrefEnv({"set": [["dom.require_user_interaction_for_beforeunload", false]]});
 
 const TEST_URL = "http://example.com/browser/toolkit/components/startup/tests/browser/beforeunload.html";
@@ -18,10 +11,10 @@ const TEST_URL = "http://example.com/browser/toolkit/components/startup/tests/br
 function test() {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab(TEST_URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, TEST_URL);
   let browser = gBrowser.selectedBrowser;
 
-  whenBrowserLoaded(browser, function () {
+  whenBrowserLoaded(browser, function() {
     let seenDialog = false;
 
     // Cancel the prompt the first time.
@@ -30,7 +23,7 @@ function test() {
       btnStay.click();
     });
 
-    let appStartup = Cc['@mozilla.org/toolkit/app-startup;1'].
+    let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].
                        getService(Ci.nsIAppStartup);
     appStartup.quit(Ci.nsIAppStartup.eAttemptQuit);
     ok(seenDialog, "Should have seen a prompt dialog");
@@ -38,8 +31,7 @@ function test() {
 
     let win2 = window.openDialog(location, "", "chrome,all,dialog=no", "about:blank");
     ok(win2 != null, "Should have been able to open a new window");
-    win2.addEventListener("load", function onLoad() {
-      win2.removeEventListener("load", onLoad);
+    win2.addEventListener("load", function() {
       win2.close();
 
       // Leave the page the second time.
@@ -49,6 +41,6 @@ function test() {
 
       gBrowser.removeTab(gBrowser.selectedTab);
       executeSoon(finish);
-    });
+    }, {once: true});
   });
 }

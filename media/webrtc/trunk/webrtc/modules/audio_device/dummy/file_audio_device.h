@@ -13,16 +13,20 @@
 
 #include <stdio.h>
 
+#include <memory>
 #include <string>
 
+#include "webrtc/base/timeutils.h"
 #include "webrtc/modules/audio_device/audio_device_generic.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
-#include "webrtc/system_wrappers/interface/file_wrapper.h"
-#include "webrtc/system_wrappers/interface/clock.h"
+#include "webrtc/system_wrappers/include/critical_section_wrapper.h"
+#include "webrtc/system_wrappers/include/file_wrapper.h"
+
+namespace rtc {
+class PlatformThread;
+}  // namespace rtc
 
 namespace webrtc {
 class EventWrapper;
-class ThreadWrapper;
 
 // This is a fake audio device which plays audio from a file as its microphone
 // and plays out into a file.
@@ -44,7 +48,7 @@ class FileAudioDevice : public AudioDeviceGeneric {
       AudioDeviceModule::AudioLayer& audioLayer) const override;
 
   // Main initializaton and termination
-  int32_t Init() override;
+  InitStatus Init() override;
   int32_t Terminate() override;
   bool Initialized() const override;
 
@@ -174,24 +178,23 @@ class FileAudioDevice : public AudioDeviceGeneric {
   uint32_t _playoutFramesLeft;
   CriticalSectionWrapper& _critSect;
 
-  uint32_t _recordingBufferSizeIn10MS;
-  uint32_t _recordingFramesIn10MS;
-  uint32_t _playoutFramesIn10MS;
+  size_t _recordingBufferSizeIn10MS;
+  size_t _recordingFramesIn10MS;
+  size_t _playoutFramesIn10MS;
 
-  rtc::scoped_ptr<ThreadWrapper> _ptrThreadRec;
-  rtc::scoped_ptr<ThreadWrapper> _ptrThreadPlay;
+  // TODO(pbos): Make plain members instead of pointers and stop resetting them.
+  std::unique_ptr<rtc::PlatformThread> _ptrThreadRec;
+  std::unique_ptr<rtc::PlatformThread> _ptrThreadPlay;
 
   bool _playing;
   bool _recording;
-  uint64_t _lastCallPlayoutMillis;
-  uint64_t _lastCallRecordMillis;
+  int64_t _lastCallPlayoutMillis;
+  int64_t _lastCallRecordMillis;
 
   FileWrapper& _outputFile;
   FileWrapper& _inputFile;
   std::string _outputFilename;
   std::string _inputFilename;
-
-  Clock* _clock;
 };
 
 }  // namespace webrtc

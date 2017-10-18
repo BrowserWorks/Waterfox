@@ -15,9 +15,7 @@ FileDescriptorSetParent::FileDescriptorSetParent(
   mFileDescriptors.AppendElement(aFileDescriptor);
 }
 
-FileDescriptorSetParent::~FileDescriptorSetParent()
-{
-}
+FileDescriptorSetParent::~FileDescriptorSetParent() = default;
 
 void
 FileDescriptorSetParent::ForgetFileDescriptors(
@@ -33,12 +31,12 @@ FileDescriptorSetParent::ActorDestroy(ActorDestroyReason aWhy)
   // Implement me! Bug 1005157
 }
 
-bool
+mozilla::ipc::IPCResult
 FileDescriptorSetParent::RecvAddFileDescriptor(
                                           const FileDescriptor& aFileDescriptor)
 {
   mFileDescriptors.AppendElement(aFileDescriptor);
-  return true;
+  return IPC_OK();
 }
 
 } // namespace ipc

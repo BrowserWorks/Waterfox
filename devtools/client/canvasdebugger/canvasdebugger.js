@@ -14,16 +14,15 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
 const { CanvasFront } = require("devtools/shared/fronts/canvas");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { LocalizationHelper } = require("devtools/client/shared/l10n");
+const flags = require("devtools/shared/flags");
+const { LocalizationHelper } = require("devtools/shared/l10n");
+const { PluralForm } = require("devtools/shared/plural-form");
 const { Heritage, WidgetMethods, setNamedTimeout, clearNamedTimeout,
         setConditionalTimeout } = require("devtools/client/shared/widgets/view-helpers");
 
-const CANVAS_ACTOR_RECORDING_ATTEMPT = DevToolsUtils.testing ? 500 : 5000;
+const CANVAS_ACTOR_RECORDING_ATTEMPT = flags.testing ? 500 : 5000;
 
 const { Task } = require("devtools/shared/task");
-
-XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
-  "resource://gre/modules/PluralForm.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
   "resource://gre/modules/FileUtils.jsm");
@@ -76,8 +75,8 @@ const EVENTS = {
 XPCOMUtils.defineConstant(this, "EVENTS", EVENTS);
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const STRINGS_URI = "chrome://devtools/locale/canvasdebugger.properties";
-const SHARED_STRINGS_URI = "chrome://devtools/locale/shared.properties";
+const STRINGS_URI = "devtools/client/locales/canvasdebugger.properties";
+const SHARED_STRINGS_URI = "devtools/client/locales/shared.properties";
 
 const SNAPSHOT_START_RECORDING_DELAY = 10; // ms
 const SNAPSHOT_DATA_EXPORT_MAX_BLOCK = 1000; // ms

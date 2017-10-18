@@ -2,19 +2,17 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 Cu.import("resource://services-common/kinto-offline-client.js");
+Cu.import("resource://services-common/kinto-storage-adapter.js");
 
 // set up what we need to make storage adapters
-const Kinto = loadKinto();
-const FirefoxAdapter = Kinto.adapters.FirefoxAdapter;
 const kintoFilename = "kinto.sqlite";
 
-let gFirefoxAdapter = null;
+function do_get_kinto_connection() {
+  return FirefoxAdapter.openConnection({path: kintoFilename});
+}
 
-function do_get_kinto_adapter() {
-  if (gFirefoxAdapter == null) {
-    gFirefoxAdapter = new FirefoxAdapter("test");
-  }
-  return gFirefoxAdapter;
+function do_get_kinto_adapter(sqliteHandle) {
+  return new FirefoxAdapter("test", {sqliteHandle});
 }
 
 function do_get_kinto_db() {
@@ -25,105 +23,103 @@ function do_get_kinto_db() {
 }
 
 function cleanup_kinto() {
-  add_test(function cleanup_kinto_files(){
+  add_test(function cleanup_kinto_files() {
     let kintoDB = do_get_kinto_db();
     // clean up the db
     kintoDB.remove(false);
-    // force re-creation of the adapter
-    gFirefoxAdapter = null;
     run_next_test();
   });
 }
 
 function test_collection_operations() {
-  add_task(function* test_kinto_clear() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    yield adapter.clear();
-    yield adapter.close();
+  add_task(async function test_kinto_clear() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    await adapter.clear();
+    await sqliteHandle.close();
   });
 
   // test creating new records... and getting them again
-  add_task(function* test_kinto_create_new_get_existing() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    let record = {id:"test-id", foo:"bar"};
-    yield adapter.execute((transaction) => transaction.create(record));
-    let newRecord = yield adapter.get("test-id");
+  add_task(async function test_kinto_create_new_get_existing() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    let record = {id: "test-id", foo: "bar"};
+    await adapter.execute((transaction) => transaction.create(record));
+    let newRecord = await adapter.get("test-id");
     // ensure the record is the same as when it was added
     deepEqual(record, newRecord);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test removing records
-  add_task(function* test_kinto_can_remove_some_records() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
+  add_task(async function test_kinto_can_remove_some_records() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
     // create a second record
-    let record = {id:"test-id-2", foo:"baz"};
-    yield adapter.execute((transaction) => transaction.create(record));
-    let newRecord = yield adapter.get("test-id-2");
+    let record = {id: "test-id-2", foo: "baz"};
+    await adapter.execute((transaction) => transaction.create(record));
+    let newRecord = await adapter.get("test-id-2");
     deepEqual(record, newRecord);
     // delete the record
-    yield adapter.execute((transaction) => transaction.delete(record.id));
-    newRecord = yield adapter.get(record.id);
+    await adapter.execute((transaction) => transaction.delete(record.id));
+    newRecord = await adapter.get(record.id);
     // ... and ensure it's no longer there
     do_check_eq(newRecord, undefined);
     // ensure the other record still exists
-    newRecord = yield adapter.get("test-id");
+    newRecord = await adapter.get("test-id");
     do_check_neq(newRecord, undefined);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test getting records that don't exist
-  add_task(function* test_kinto_get_non_existant() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
+  add_task(async function test_kinto_get_non_existant() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
     // Kinto expects adapters to either:
-    let newRecord = yield adapter.get("missing-test-id");
+    let newRecord = await adapter.get("missing-test-id");
     // resolve with an undefined record
     do_check_eq(newRecord, undefined);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test updating records... and getting them again
-  add_task(function* test_kinto_update_get_existing() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    let originalRecord = {id:"test-id", foo:"bar"};
-    let updatedRecord = {id:"test-id", foo:"baz"};
-    yield adapter.clear();
-    yield adapter.execute((transaction) => transaction.create(originalRecord));
-    yield adapter.execute((transaction) => transaction.update(updatedRecord));
+  add_task(async function test_kinto_update_get_existing() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    let originalRecord = {id: "test-id", foo: "bar"};
+    let updatedRecord = {id: "test-id", foo: "baz"};
+    await adapter.clear();
+    await adapter.execute((transaction) => transaction.create(originalRecord));
+    await adapter.execute((transaction) => transaction.update(updatedRecord));
     // ensure the record exists
-    let newRecord = yield adapter.get("test-id");
+    let newRecord = await adapter.get("test-id");
     // ensure the record is the same as when it was added
     deepEqual(updatedRecord, newRecord);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test listing records
-  add_task(function* test_kinto_list() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    let originalRecord = {id:"test-id-1", foo:"bar"};
-    let records = yield adapter.list();
+  add_task(async function test_kinto_list() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    let originalRecord = {id: "test-id-1", foo: "bar"};
+    let records = await adapter.list();
     do_check_eq(records.length, 1);
-    yield adapter.execute((transaction) => transaction.create(originalRecord));
-    records = yield adapter.list();
+    await adapter.execute((transaction) => transaction.create(originalRecord));
+    records = await adapter.list();
     do_check_eq(records.length, 2);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test aborting transaction
-  add_task(function* test_kinto_aborting_transaction() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    yield adapter.clear();
+  add_task(async function test_kinto_aborting_transaction() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    await adapter.clear();
     let record = {id: 1, foo: "bar"};
     let error = null;
     try {
-      yield adapter.execute((transaction) => {
+      await adapter.execute((transaction) => {
         transaction.create(record);
         throw new Error("unexpected");
       });
@@ -131,100 +127,100 @@ function test_collection_operations() {
       error = e;
     }
     do_check_neq(error, null);
-    records = yield adapter.list();
+    let records = await adapter.list();
     do_check_eq(records.length, 0);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test save and get last modified
-  add_task(function* test_kinto_last_modified() {
+  add_task(async function test_kinto_last_modified() {
     const initialValue = 0;
     const intendedValue = 12345678;
 
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    let lastModified = yield adapter.getLastModified();
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    let lastModified = await adapter.getLastModified();
     do_check_eq(lastModified, initialValue);
-    let result = yield adapter.saveLastModified(intendedValue);
+    let result = await adapter.saveLastModified(intendedValue);
     do_check_eq(result, intendedValue);
-    lastModified = yield adapter.getLastModified();
+    lastModified = await adapter.getLastModified();
     do_check_eq(lastModified, intendedValue);
 
     // test saveLastModified parses values correctly
-    result = yield adapter.saveLastModified(" " + intendedValue + " blah");
+    result = await adapter.saveLastModified(" " + intendedValue + " blah");
     // should resolve with the parsed int
     do_check_eq(result, intendedValue);
     // and should have saved correctly
-    lastModified = yield adapter.getLastModified();
+    lastModified = await adapter.getLastModified();
     do_check_eq(lastModified, intendedValue);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
   // test loadDump(records)
-  add_task(function* test_kinto_import_records() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
+  add_task(async function test_kinto_import_records() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
     let record1 = {id: 1, foo: "bar"};
     let record2 = {id: 2, foo: "baz"};
-    let impactedRecords = yield adapter.loadDump([
+    let impactedRecords = await adapter.loadDump([
       record1, record2
     ]);
     do_check_eq(impactedRecords.length, 2);
-    let newRecord1 = yield adapter.get("1");
+    let newRecord1 = await adapter.get("1");
     // ensure the record is the same as when it was added
     deepEqual(record1, newRecord1);
-    let newRecord2 = yield adapter.get("2");
+    let newRecord2 = await adapter.get("2");
     // ensure the record is the same as when it was added
     deepEqual(record2, newRecord2);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
-  add_task(function* test_kinto_import_records_should_override_existing() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    yield adapter.clear();
-    records = yield adapter.list();
+  add_task(async function test_kinto_import_records_should_override_existing() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    await adapter.clear();
+    let records = await adapter.list();
     do_check_eq(records.length, 0);
-    let impactedRecords = yield adapter.loadDump([
+    let impactedRecords = await adapter.loadDump([
       {id: 1, foo: "bar"},
       {id: 2, foo: "baz"},
     ]);
     do_check_eq(impactedRecords.length, 2);
-    yield adapter.loadDump([
+    await adapter.loadDump([
       {id: 1, foo: "baz"},
       {id: 3, foo: "bab"},
     ]);
-    records = yield adapter.list();
+    records = await adapter.list();
     do_check_eq(records.length, 3);
-    let newRecord1 = yield adapter.get("1");
+    let newRecord1 = await adapter.get("1");
     deepEqual(newRecord1.foo, "baz");
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
-  add_task(function* test_import_updates_lastModified() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    yield adapter.loadDump([
+  add_task(async function test_import_updates_lastModified() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    await adapter.loadDump([
       {id: 1, foo: "bar", last_modified: 1457896541},
       {id: 2, foo: "baz", last_modified: 1458796542},
     ]);
-    let lastModified = yield adapter.getLastModified();
+    let lastModified = await adapter.getLastModified();
     do_check_eq(lastModified, 1458796542);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 
-  add_task(function* test_import_preserves_older_lastModified() {
-    let adapter = do_get_kinto_adapter();
-    yield adapter.open();
-    yield adapter.saveLastModified(1458796543);
+  add_task(async function test_import_preserves_older_lastModified() {
+    let sqliteHandle = await do_get_kinto_connection();
+    let adapter = do_get_kinto_adapter(sqliteHandle);
+    await adapter.saveLastModified(1458796543);
 
-    yield adapter.loadDump([
+    await adapter.loadDump([
       {id: 1, foo: "bar", last_modified: 1457896541},
       {id: 2, foo: "baz", last_modified: 1458796542},
     ]);
-    let lastModified = yield adapter.getLastModified();
+    let lastModified = await adapter.getLastModified();
     do_check_eq(lastModified, 1458796543);
-    yield adapter.close();
+    await sqliteHandle.close();
   });
 }
 
@@ -250,10 +246,9 @@ add_test(function test_creation_from_empty_db() {
   add_test(function test_create_from_empty_db() {
     // place an empty kinto db file in the profile
     let profile = do_get_profile();
-    let kintoDB = do_get_kinto_db();
 
     let emptyDB = do_get_file("test_storage_adapter/empty.sqlite");
-    emptyDB.copyTo(profile,kintoFilename);
+    emptyDB.copyTo(profile, kintoFilename);
 
     run_next_test();
   });
@@ -263,7 +258,3 @@ add_test(function test_creation_from_empty_db() {
   cleanup_kinto();
   run_next_test();
 });
-
-function run_test() {
-  run_next_test();
-}

@@ -17,7 +17,7 @@
 
 class nsMathMLmactionFrame : public nsMathMLSelectedFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMathMLmactionFrame)
 
   friend nsIFrame* NS_NewMathMLmactionFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
@@ -59,9 +59,9 @@ private:
 
 protected:
   explicit nsMathMLmactionFrame(nsStyleContext* aContext) :
-    nsMathMLSelectedFrame(aContext) {}
+    nsMathMLSelectedFrame(aContext, kClassID) {}
   virtual ~nsMathMLmactionFrame();
-  
+
 private:
   int32_t         mActionType;
   int32_t         mChildCount;
@@ -69,7 +69,7 @@ private:
   RefPtr<MouseListener> mListener;
 
   // helper to return the frame for the attribute selection="number"
-  nsIFrame* 
+  nsIFrame*
   GetSelectedFrame() override;
 };
 

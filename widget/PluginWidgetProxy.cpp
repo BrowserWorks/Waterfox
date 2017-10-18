@@ -50,7 +50,7 @@ PluginWidgetProxy::~PluginWidgetProxy()
   PWLOG("PluginWidgetProxy::~PluginWidgetProxy()\n");
 }
 
-NS_IMETHODIMP
+nsresult
 PluginWidgetProxy::Create(nsIWidget* aParent,
                           nsNativeWidget aNativeParent,
                           const LayoutDeviceIntRect& aRect,
@@ -75,18 +75,16 @@ PluginWidgetProxy::Create(nsIWidget* aParent,
   mEnabled = true;
   mVisible = true;
 
-#if defined(XP_WIN)
   PluginInstanceParent* instance =
     PluginInstanceParent::LookupPluginInstanceByID(pluginInstanceId);
   if (instance) {
     Unused << NS_WARN_IF(NS_FAILED(instance->SetScrollCaptureId(scrollCaptureId)));
   }
-#endif
 
   return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 PluginWidgetProxy::SetParent(nsIWidget* aNewParent)
 {
   nsCOMPtr<nsIWidget> kungFuDeathGrip(this);
@@ -98,7 +96,6 @@ PluginWidgetProxy::SetParent(nsIWidget* aNewParent)
     aNewParent->AddChild(this);
   }
   mParent = aNewParent;
-  return NS_OK;
 }
 
 nsIWidget*
@@ -107,7 +104,7 @@ PluginWidgetProxy::GetParent(void)
   return mParent.get();
 }
 
-NS_IMETHODIMP
+void
 PluginWidgetProxy::Destroy()
 {
   PWLOG("PluginWidgetProxy::Destroy()\n");
@@ -119,7 +116,7 @@ PluginWidgetProxy::Destroy()
     mActor = nullptr;
   }
 
-  return PuppetWidget::Destroy();
+  PuppetWidget::Destroy();
 }
 
 void
@@ -159,7 +156,6 @@ PluginWidgetProxy::GetNativeData(uint32_t aDataType)
   return (void*)mCachedPluginPort;
 }
 
-#if defined(XP_WIN)
 void
 PluginWidgetProxy::SetNativeData(uint32_t aDataType, uintptr_t aVal)
 {
@@ -180,9 +176,8 @@ PluginWidgetProxy::SetNativeData(uint32_t aDataType, uintptr_t aVal)
       NS_ERROR("SetNativeData called with unsupported data type.");
   }
 }
-#endif
 
-NS_IMETHODIMP
+nsresult
 PluginWidgetProxy::SetFocus(bool aRaise)
 {
   ENSURE_CHANNEL;

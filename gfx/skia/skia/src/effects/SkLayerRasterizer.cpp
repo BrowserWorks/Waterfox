@@ -16,7 +16,7 @@
 #include "SkPath.h"
 #include "SkPathEffect.h"
 #include "../core/SkRasterClip.h"
-#include "SkXfermode.h"
+#include "../core/SkStrokeRec.h"
 #include <new>
 
 struct SkLayerRasterizer_Rec {
@@ -78,7 +78,7 @@ static bool compute_bounds(const SkDeque& layers, const SkPath& path,
         if (!SkDraw::DrawToMask(devPath, clipBounds, paint.getMaskFilter(),
                                 &matrix, &mask,
                                 SkMask::kJustComputeBounds_CreateMode,
-                                SkPaint::kFill_Style)) {
+                                SkStrokeRec::kFill_InitStyle)) {
             return false;
         }
 
@@ -129,7 +129,6 @@ bool SkLayerRasterizer::onRasterize(const SkPath& path, const SkMatrix& matrix,
 
         draw.fMatrix    = &drawMatrix;
         draw.fRC        = &rectClip;
-        draw.fClip      = &rectClip.bwRgn();
         // we set the matrixproc in the loop, as the matrix changes each time (potentially)
 
         SkDeque::F2BIter        iter(*fLayers);

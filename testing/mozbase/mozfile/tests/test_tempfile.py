@@ -12,6 +12,8 @@ import mozfile
 import os
 import unittest
 
+import mozunit
+
 
 class TestNamedTemporaryFile(unittest.TestCase):
     """test our fix for NamedTemporaryFile"""
@@ -98,5 +100,6 @@ class TestNamedTemporaryFile(unittest.TestCase):
             if path and os.path.exists(path):
                 os.remove(path)
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

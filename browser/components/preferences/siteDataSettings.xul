@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/content/preferences/siteDataSettings.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content-new/siteDataSettings.css" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://browser/locale/preferences/siteDataSettings.dtd" >
+
+<window id="SiteDataSettingsDialog" windowtype="Browser:SiteDataSettings"
+        class="windowDialog" title="&window.title;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        style="width: 45em;"
+        onload="gSiteDataSettings.init();"
+        persist="screenX screenY width height">
+
+  <script src="chrome://browser/content/preferences/siteDataSettings.js"/>
+
+  <stringbundle id="bundlePreferences"
+                src="chrome://browser/locale/preferences/preferences.properties"/>
+  <stringbundle id="bundle_brand" src="chrome://branding/locale/brand.properties"/>
+
+  <vbox flex="1">
+    <description id="settingsDescription"></description>
+    <separator class="thin"/>
+
+    <hbox id="searchBoxContainer">
+      <textbox id="searchBox" type="search" flex="1"
+        placeholder="&searchTextboxPlaceHolder;" accesskey="&searchTextboxPlaceHolder.accesskey;"/>
+    </hbox>
+    <separator class="thin"/>
+
+    <richlistbox id="sitesList" orient="vertical" flex="1">
+      <listheader>
+        <treecol flex="4" width="50" label="&hostCol.label;" id="hostCol"/>
+        <treecol flex="2" width="50" label="&statusCol.label;" id="statusCol"/>
+        <!-- Sorted by usage so the user can quickly see which sites use the most data. -->
+        <treecol flex="1" width="50" label="&usageCol.label;" id="usageCol" data-isCurrentSortCol="true"/>
+      </listheader>
+    </richlistbox>
+  </vbox>
+
+  <hbox align="start">
+    <button id="removeSelected" label="&removeSelected.label;" accesskey="&removeSelected.accesskey;"/>
+    <button id="removeAll"/>
+  </hbox>
+
+  <vbox align="end">
+    <hbox>
+        <button id="cancel" label="&cancel.label;" accesskey="&cancel.accesskey;"/>
+        <button id="save" label="&save.label;" accesskey="&save.accesskey;"/>
+    </hbox>
+  </vbox>
+
+</window>

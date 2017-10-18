@@ -30,10 +30,19 @@
 
 #include "irregexp/RegExpParser.h"
 
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Move.h"
+
 #include "frontend/TokenStream.h"
+#include "irregexp/RegExpCharacters.h"
+#include "vm/ErrorReporting.h"
+#include "vm/StringBuffer.h"
 
 using namespace js;
 using namespace js::irregexp;
+
+using mozilla::Move;
+using mozilla::PointerRangeSize;
 
 // ----------------------------------------------------------------------------
 // RegExpBuilder
@@ -120,6 +129,12 @@ void
 RegExpBuilder::AddAssertion(RegExpTree* assert)
 {
     FlushText();
+    if (terms_.length() > 0 && terms_.last()->IsAssertion()) {
+        // Omit repeated assertions of the same type.
+        RegExpAssertion* last = terms_.last()->AsAssertion();
+        RegExpAssertion* next = assert->AsAssertion();
+        if (last->assertion_type() == next->assertion_type()) return;
+    }
     terms_.Add(alloc, assert);
 #ifdef DEBUG
     last_added_ = ADD_ASSERT;
@@ -226,7 +241,8 @@ RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
   : ts(ts),
     alloc(alloc),
     captures_(nullptr),
-    next_pos_(chars),
+    start_(chars),
+    next_pos_(start_),
     end_(end),
     current_(kEndMarker),
     capture_count_(0),
@@ -242,11 +258,64 @@ RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
 }
 
 template <typename CharT>
+void
+RegExpParser<CharT>::SyntaxError(unsigned errorNumber, ...)
+{
+    ErrorMetadata err;
+
+    ts.fillExcludingContext(&err, ts.currentToken().pos.begin);
+
+    // For most error reporting, the line of context derives from the token
+    // stream.  So when location information doesn't come from the token
+    // stream, we can't give a line of context.  But here the "line of context"
+    // can be (and is) derived from the pattern text, so we can provide it no
+    // matter if the location is derived from the caller.
+    size_t offset = PointerRangeSize(start_, next_pos_ - 1);
+    size_t end = PointerRangeSize(start_, end_);
+
+    const CharT* windowStart = (offset > ErrorMetadata::lineOfContextRadius)
+                               ? start_ + (offset - ErrorMetadata::lineOfContextRadius)
+                               : start_;
+
+    const CharT* windowEnd = (end - offset > ErrorMetadata::lineOfContextRadius)
+                             ? start_ + offset + ErrorMetadata::lineOfContextRadius
+                             : end_;
+
+    size_t windowLength = PointerRangeSize(windowStart, windowEnd);
+    MOZ_ASSERT(windowLength <= ErrorMetadata::lineOfContextRadius * 2);
+
+    // Create the windowed string, not including the potential line
+    // terminator.
+    StringBuffer windowBuf(ts.context());
+    if (!windowBuf.append(windowStart, windowEnd))
+        return;
+
+    // The line of context must be null-terminated, and StringBuffer doesn't
+    // make that happen unless we force it to.
+    if (!windowBuf.append('\0'))
+        return;
+
+    err.lineOfContext.reset(windowBuf.stealChars());
+    if (!err.lineOfContext)
+        return;
+
+    err.lineLength = windowLength;
+    err.tokenOffset = offset - (windowStart - start_);
+
+    va_list args;
+    va_start(args, errorNumber);
+
+    ReportCompileError(ts.context(), Move(err), nullptr, JSREPORT_ERROR, errorNumber, args);
+
+    va_end(args);
+}
+
+template <typename CharT>
 RegExpTree*
-RegExpParser<CharT>::ReportError(unsigned errorNumber)
+RegExpParser<CharT>::ReportError(unsigned errorNumber, const char* param /* = nullptr */)
 {
     gc::AutoSuppressGC suppressGC(ts.context());
-    ts.reportError(errorNumber);
+    SyntaxError(errorNumber, param);
     return nullptr;
 }
 
@@ -276,7 +345,7 @@ HexValue(uint32_t c)
 }
 
 template <typename CharT>
-size_t
+widechar
 RegExpParser<CharT>::ParseOctalLiteral()
 {
     MOZ_ASSERT('0' <= current() && current() <= '7');
@@ -297,7 +366,7 @@ RegExpParser<CharT>::ParseOctalLiteral()
 
 template <typename CharT>
 bool
-RegExpParser<CharT>::ParseHexEscape(int length, size_t* value)
+RegExpParser<CharT>::ParseHexEscape(int length, widechar* value)
 {
     const CharT* start = position();
     uint32_t val = 0;
@@ -321,7 +390,7 @@ RegExpParser<CharT>::ParseHexEscape(int length, size_t* value)
 
 template <typename CharT>
 bool
-RegExpParser<CharT>::ParseBracedHexEscape(size_t* value)
+RegExpParser<CharT>::ParseBracedHexEscape(widechar* value)
 {
     MOZ_ASSERT(current() == '{');
     Advance();
@@ -350,7 +419,7 @@ RegExpParser<CharT>::ParseBracedHexEscape(size_t* value)
         }
         code = (code << 4) | d;
         if (code > unicode::NonBMPMax) {
-            ReportError(JSMSG_UNICODE_OVERFLOW);
+            ReportError(JSMSG_UNICODE_OVERFLOW, "regular expression");
             return false;
         }
         Advance();
@@ -363,7 +432,7 @@ RegExpParser<CharT>::ParseBracedHexEscape(size_t* value)
 
 template <typename CharT>
 bool
-RegExpParser<CharT>::ParseTrailSurrogate(size_t* value)
+RegExpParser<CharT>::ParseTrailSurrogate(widechar* value)
 {
     if (current() != '\\')
         return false;
@@ -446,6 +515,21 @@ IsSyntaxCharacter(widechar c)
   }
 }
 
+inline bool
+IsInRange(int value, int lower_limit, int higher_limit)
+{
+    MOZ_ASSERT(lower_limit <= higher_limit);
+    return static_cast<unsigned int>(value - lower_limit) <=
+           static_cast<unsigned int>(higher_limit - lower_limit);
+}
+
+inline bool
+IsDecimalDigit(widechar c)
+{
+    // ECMA-262, 3rd, 7.8.3 (p 16)
+    return IsInRange(c, '0', '9');
+}
+
 #ifdef DEBUG
 // Currently only used in an assert.kASSERT.
 static bool
@@ -522,14 +606,17 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
         *code = '\\';
         return true;
       }
-      case '0': case '1': case '2': case '3': case '4': case '5':
-      case '6': case '7':
+      case '0':
         if (unicode_) {
-            if (current() == '0') {
-                Advance();
-                *code = 0;
-                return true;
-            }
+            Advance();
+            if (IsDecimalDigit(current()))
+                return ReportError(JSMSG_INVALID_DECIMAL_ESCAPE);
+            *code = 0;
+            return true;
+        }
+        MOZ_FALLTHROUGH;
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+        if (unicode_) {
             ReportError(JSMSG_INVALID_IDENTITY_ESCAPE);
             return false;
         }
@@ -541,7 +628,7 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
         return true;
       case 'x': {
         Advance();
-        size_t value;
+        widechar value;
         if (ParseHexEscape(2, &value)) {
             *code = value;
             return true;
@@ -557,7 +644,7 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
       }
       case 'u': {
         Advance();
-        size_t value;
+        widechar value;
         if (unicode_) {
             if (current() == '{') {
                 if (!ParseBracedHexEscape(&value))
@@ -567,7 +654,7 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
             }
             if (ParseHexEscape(4, &value)) {
                 if (unicode::IsLeadSurrogate(value)) {
-                    size_t trail;
+                    widechar trail;
                     if (ParseTrailSurrogate(&trail)) {
                         *code = unicode::UTF16Decode(value, trail);
                         return true;
@@ -782,10 +869,10 @@ NegateUnicodeRanges(LifoAlloc* alloc, InfallibleVector<RangeType, 1>** ranges,
         const RangeType& range = (**ranges)[i];
         for (size_t j = 0; j < tmp_ranges->length(); j++) {
             const RangeType& tmpRange = (*tmp_ranges)[j];
-            size_t from1 = tmpRange.from();
-            size_t to1 = tmpRange.to();
-            size_t from2 = range.from();
-            size_t to2 = range.to();
+            auto from1 = tmpRange.from();
+            auto to1 = tmpRange.to();
+            auto from2 = range.from();
+            auto to2 = range.to();
 
             if (from1 < from2) {
                 if (to1 < from2) {
@@ -926,8 +1013,8 @@ UnicodeRangesAtom(LifoAlloc* alloc,
         const WideCharRange& range = (*wide_ranges)[i];
         widechar from = range.from();
         widechar to = range.to();
-        size_t from_lead, from_trail;
-        size_t to_lead, to_trail;
+        char16_t from_lead, from_trail;
+        char16_t to_lead, to_trail;
 
         unicode::UTF16Encode(from, &from_lead, &from_trail);
         if (from == to) {
@@ -1158,21 +1245,6 @@ RegExpParser<CharT>::ScanForCaptures()
     is_scanned_for_captures_ = true;
 }
 
-inline bool
-IsInRange(int value, int lower_limit, int higher_limit)
-{
-    MOZ_ASSERT(lower_limit <= higher_limit);
-    return static_cast<unsigned int>(value - lower_limit) <=
-           static_cast<unsigned int>(higher_limit - lower_limit);
-}
-
-inline bool
-IsDecimalDigit(widechar c)
-{
-    // ECMA-262, 3rd, 7.8.3 (p 16)
-    return IsInRange(c, '0', '9');
-}
-
 template <typename CharT>
 bool
 RegExpParser<CharT>::ParseBackReferenceIndex(int* index_out)
@@ -1353,11 +1425,9 @@ UnicodeEverythingAtom(LifoAlloc* alloc)
     // everything except \x0a, \x0d, \u2028 and \u2029
 
     CharacterRangeVector* ranges = alloc->newInfallible<CharacterRangeVector>(*alloc);
-    ranges->append(CharacterRange::Range(0x0, 0x09));
-    ranges->append(CharacterRange::Range(0x0b, 0x0c));
-    ranges->append(CharacterRange::Range(0x0e, 0x2027));
-    ranges->append(CharacterRange::Range(0x202A, unicode::LeadSurrogateMin - 1));
-    ranges->append(CharacterRange::Range(unicode::TrailSurrogateMax + 1, unicode::UTF16Max));
+    AddClassNegated(kLineTerminatorAndSurrogateRanges,
+                    kLineTerminatorAndSurrogateRangeCount,
+                    ranges);
     builder->AddAtom(alloc->newInfallible<RegExpCharacterClass>(ranges, false));
 
     builder->NewAlternative();
@@ -1636,7 +1706,7 @@ RegExpParser<CharT>::ParseDisjunction()
                 }
 
                 Advance();
-                size_t octal = ParseOctalLiteral();
+                widechar octal = ParseOctalLiteral();
                 builder->AddCharacter(octal);
                 break;
               }
@@ -1684,7 +1754,7 @@ RegExpParser<CharT>::ParseDisjunction()
               }
               case 'x': {
                 Advance(2);
-                size_t value;
+                widechar value;
                 if (ParseHexEscape(2, &value)) {
                     builder->AddCharacter(value);
                 } else {
@@ -1696,7 +1766,7 @@ RegExpParser<CharT>::ParseDisjunction()
               }
               case 'u': {
                 Advance(2);
-                size_t value;
+                widechar value;
                 if (unicode_) {
                     if (current() == '{') {
                         if (!ParseBracedHexEscape(&value))
@@ -1706,7 +1776,7 @@ RegExpParser<CharT>::ParseDisjunction()
                         } else if (unicode::IsTrailSurrogate(value)) {
                             builder->AddAtom(TrailSurrogateAtom(alloc, value));
                         } else if (value >= unicode::NonBMPMin) {
-                            size_t lead, trail;
+                            char16_t lead, trail;
                             unicode::UTF16Encode(value, &lead, &trail);
                             builder->AddAtom(SurrogatePairAtom(alloc, lead, trail,
                                                                ignore_case_));
@@ -1715,7 +1785,7 @@ RegExpParser<CharT>::ParseDisjunction()
                         }
                     } else if (ParseHexEscape(4, &value)) {
                         if (unicode::IsLeadSurrogate(value)) {
-                            size_t trail;
+                            widechar trail;
                             if (ParseTrailSurrogate(&trail)) {
                                 builder->AddAtom(SurrogatePairAtom(alloc, value, trail,
                                                                    ignore_case_));
@@ -1834,7 +1904,9 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
              bool multiline, bool match_only, bool unicode, bool ignore_case,
              bool global, bool sticky, RegExpCompileData* data)
 {
-    if (match_only) {
+    // We shouldn't strip pattern for exec, or test with global/sticky,
+    // to reflect correct match position and lastIndex.
+    if (match_only && !global && !sticky) {
         // Try to strip a leading '.*' from the RegExp, but only if it is not
         // followed by a '?' (which will affect how the .* is parsed). This
         // pattern will affect the captures produced by the RegExp, but not
@@ -1846,13 +1918,9 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
 
         // Try to strip a trailing '.*' from the RegExp, which as above will
         // affect the captures but not whether there is a match. Only do this
-        // when the following conditions are met:
-        //   1. there are no other meta characters in the RegExp, so that we
-        //      are sure this will not affect how the RegExp is parsed
-        //   2. global and sticky flags are not set, as lastIndex needs to be
-        //      set properly on global or sticky match
+        // when there are no other meta characters in the RegExp, so that we
+        // are sure this will not affect how the RegExp is parsed.
         if (length >= 3 && !HasRegExpMetaChars(chars, length - 2) &&
-            !global && !sticky &&
             chars[length - 2] == '.' && chars[length - 1] == '*')
         {
             length -= 2;
@@ -1902,4 +1970,11 @@ irregexp::ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom
     return str->hasLatin1Chars()
            ? ::ParsePatternSyntax(ts, alloc, str->latin1Chars(nogc), str->length(), unicode)
            : ::ParsePatternSyntax(ts, alloc, str->twoByteChars(nogc), str->length(), unicode);
+}
+
+bool
+irregexp::ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc,
+                             const mozilla::Range<const char16_t> chars, bool unicode)
+{
+    return ::ParsePatternSyntax(ts, alloc, chars.begin().get(), chars.length(), unicode);
 }

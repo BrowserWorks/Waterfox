@@ -4,53 +4,56 @@
 
 var Ci = Components.interfaces;
 
-add_task(function* () {
+add_task(async function() {
   const url = "data:text/html;base64," +
               btoa("<body><iframe srcdoc=\"content\"/></iframe>" +
                    "<a href=\"http://test.com\">test link</a>");
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, url);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, url);
 
   let finder = tab.linkedBrowser.finder;
   let listener = {
-    onFindResult: function () {
-      ok(false, "callback wasn't replaced");
+    onFindResult() {
+      ok(false, "onFindResult callback wasn't replaced");
+    },
+    onHighlightFinished() {
+      ok(false, "onHighlightFinished callback wasn't replaced");
     }
   };
   finder.addResultListener(listener);
 
-  function waitForFind() {
+  function waitForFind(which = "onFindResult") {
     return new Promise(resolve => {
-      listener.onFindResult = resolve;
+      listener[which] = resolve;
     })
   }
 
-  let promiseFind = waitForFind();
+  let promiseFind = waitForFind("onHighlightFinished");
   finder.highlight(true, "content");
-  let findResult = yield promiseFind;
-  is(findResult.result, Ci.nsITypeAheadFind.FIND_FOUND, "should find string");
+  let findResult = await promiseFind;
+  Assert.ok(findResult.found, "should find string");
 
-  promiseFind = waitForFind();
+  promiseFind = waitForFind("onHighlightFinished");
   finder.highlight(true, "Bla");
-  findResult = yield promiseFind;
-  is(findResult.result, Ci.nsITypeAheadFind.FIND_NOTFOUND, "should not find string");
+  findResult = await promiseFind;
+  Assert.ok(!findResult.found, "should not find string");
 
   // Search only for links and draw outlines.
   promiseFind = waitForFind();
   finder.fastFind("test link", true, true);
-  findResult = yield promiseFind;
+  findResult = await promiseFind;
   is(findResult.result, Ci.nsITypeAheadFind.FIND_FOUND, "should find link");
 
-  yield ContentTask.spawn(tab.linkedBrowser, {}, function* (arg) {
+  await ContentTask.spawn(tab.linkedBrowser, {}, async function(arg) {
     Assert.ok(!!content.document.getElementsByTagName("a")[0].style.outline, "outline set");
   });
 
   // Just a simple search for "test link".
   promiseFind = waitForFind();
   finder.fastFind("test link", false, false);
-  findResult = yield promiseFind;
+  findResult = await promiseFind;
   is(findResult.result, Ci.nsITypeAheadFind.FIND_FOUND, "should find link again");
 
-  yield ContentTask.spawn(tab.linkedBrowser, {}, function* (arg) {
+  await ContentTask.spawn(tab.linkedBrowser, {}, async function(arg) {
     Assert.ok(!content.document.getElementsByTagName("a")[0].style.outline, "outline not set");
   });
 

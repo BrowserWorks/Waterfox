@@ -1,4 +1,4 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
+  /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -10,6 +10,8 @@ this.EXPORTED_SYMBOLS = ["Pocket"];
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode",
@@ -22,10 +24,19 @@ var Pocket = {
   /**
    * Functions related to the Pocket panel UI.
    */
+  onBeforeCommand(event) {
+    BrowserUtils.setToolbarButtonHeightProperty(event.target);
+  },
+
   onPanelViewShowing(event) {
     let document = event.target.ownerDocument;
     let window = document.defaultView;
     let iframe = window.pktUI.getPanelFrame();
+
+    let libraryButton = document.getElementById("library-button");
+    if (libraryButton) {
+      BrowserUtils.setToolbarButtonHeightProperty(libraryButton);
+    }
 
     let urlToSave = Pocket._urlToSave;
     let titleToSave = Pocket._titleToSave;

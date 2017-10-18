@@ -16,8 +16,8 @@ class WebGLTransformFeedback final
     : public nsWrapperCache
     , public WebGLRefCountedObject<WebGLTransformFeedback>
     , public LinkedListElement<WebGLTransformFeedback>
-    , public WebGLContextBoundObject
 {
+    friend class ScopedDrawHelper;
     friend class ScopedDrawWithTransformFeedback;
     friend class WebGLContext;
     friend class WebGL2Context;
@@ -33,9 +33,9 @@ private:
     bool mIsActive;
     // Not in state tables:
     WebGLRefPtr<WebGLProgram> mActive_Program;
-    GLenum mActive_PrimMode;
-    size_t mActive_VertPosition;
-    size_t mActive_VertCapacity;
+    MOZ_INIT_OUTSIDE_CTOR GLenum mActive_PrimMode;
+    MOZ_INIT_OUTSIDE_CTOR size_t mActive_VertPosition;
+    MOZ_INIT_OUTSIDE_CTOR size_t mActive_VertCapacity;
 
 public:
     WebGLTransformFeedback(WebGLContext* webgl, GLuint tf);
@@ -49,6 +49,10 @@ public:
     void Delete();
     WebGLContext* GetParentObject() const { return mContext; }
     virtual JSObject* WrapObject(JSContext*, JS::Handle<JSObject*>) override;
+
+    bool IsActiveAndNotPaused() const { return mIsActive && !mIsPaused; }
+
+    void AddBufferBindCounts(int8_t addVal) const;
 
     // GL Funcs
     void BeginTransformFeedback(GLenum primMode);

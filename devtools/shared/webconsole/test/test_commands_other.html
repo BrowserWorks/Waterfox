@@ -4,14 +4,14 @@
   <meta charset="utf8">
   <title>Test for the other command helpers</title>
   <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <script type="text/javascript" src="common.js"></script>
   <!-- Any copyright is dedicated to the Public Domain.
      - http://creativecommons.org/publicdomain/zero/1.0/ -->
 </head>
 <body>
 <p>Test for the querySelector / querySelectorAll helpers</p>
 
-<script class="testbody" type="text/javascript;version=1.8">
+<script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 let gState;
 let gWin;
@@ -72,12 +72,22 @@ function testEnd() {
   });
 }
 
-window.onload = function() {
+let load = Task.async(function*() {
+  removeEventListener("load", load);
+
+  yield new Promise(resolve => {
+    SpecialPowers.pushPrefEnv({"set": [
+      ["security.data_uri.unique_opaque_origin", false],
+    ]}, resolve);
+  });
+
   // Open a content window to test XRay functionality on built in functions.
   gWin = window.open("data:text/html,");
   info ("Waiting for content window to load");
   gWin.onload = startTest;
-}
+});
+addEventListener("load", load);
+
 </script>
 </body>
 </html>

@@ -31,7 +31,7 @@ function setupUpdaterTestFinished() {
  * Called after the call to waitForHelperSleep finishes.
  */
 function waitForHelperSleepFinished() {
-  stageUpdate();
+  stageUpdate(true);
 }
 
 /**
@@ -40,7 +40,7 @@ function waitForHelperSleepFinished() {
 function stageUpdateFinished() {
   checkPostUpdateRunningFile(false);
   checkFilesAfterUpdateSuccess(getStageDirFile, true);
-  checkUpdateLogContents(LOG_COMPLETE_SUCCESS_STAGE, true);
+  checkUpdateLogContents(LOG_COMPLETE_SUCCESS, true);
   // Switch the application to the staged application that was updated.
   runUpdate(STATE_SUCCEEDED, true, 0, true);
 }
@@ -84,23 +84,22 @@ function checkPostUpdateAppLogFinished() {
  * Setup symlinks for the test.
  */
 function setupSymLinks() {
-  // The tests don't support symlinks on gonk.
-  if (IS_UNIX && !IS_TOOLKIT_GONK) {
+  if (IS_UNIX) {
     removeSymlink();
     createSymlink();
     do_register_cleanup(removeSymlink);
     gTestFiles.splice(gTestFiles.length - 3, 0,
-    {
-      description      : "Readable symlink",
-      fileName         : "link",
-      relPathDir       : DIR_RESOURCES,
-      originalContents : "test",
-      compareContents  : "test",
-      originalFile     : null,
-      compareFile      : null,
-      originalPerms    : 0o666,
-      comparePerms     : 0o666
-    });
+      {
+        description: "Readable symlink",
+        fileName: "link",
+        relPathDir: DIR_RESOURCES,
+        originalContents: "test",
+        compareContents: "test",
+        originalFile: null,
+        compareFile: null,
+        originalPerms: 0o666,
+        comparePerms: 0o666
+      });
   }
 }
 
@@ -108,8 +107,7 @@ function setupSymLinks() {
  * Checks the state of the symlinks for the test.
  */
 function checkSymLinks() {
-  // The tests don't support symlinks on gonk.
-  if (IS_UNIX && !IS_TOOLKIT_GONK) {
+  if (IS_UNIX) {
     checkSymlink();
   }
 }

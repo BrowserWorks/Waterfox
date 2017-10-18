@@ -26,8 +26,9 @@ Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "RuntimePermissions", "resource://gre/modules/RuntimePermissions.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "JNI", "resource://gre/modules/JNI.jsm");
 
 // -----------------------------------------------------------------------
 // HelperApp Launcher Dialog
@@ -136,8 +137,16 @@ HelperAppLauncherDialog.prototype = {
     }
 
     if (this._shouldForwardToAndroidDownloadManager(aLauncher)) {
-      this._downloadWithAndroidDownloadManager(aLauncher);
-      aLauncher.cancel(Cr.NS_BINDING_ABORTED);
+      Task.spawn(function* () {
+        try {
+          let hasPermission = yield RuntimePermissions.waitForPermissions(RuntimePermissions.WRITE_EXTERNAL_STORAGE);
+          if (hasPermission) {
+            this._downloadWithAndroidDownloadManager(aLauncher);
+            aLauncher.cancel(Cr.NS_BINDING_ABORTED);
+          }
+        } finally {
+        }
+      }.bind(this)).catch(Cu.reportError);
       return;
     }
 
@@ -201,14 +210,18 @@ HelperAppLauncherDialog.prototype = {
     }
 
     // Otherwise, let's go through the prompt.
+    let alwaysUse = bundle.GetStringFromName("helperapps.alwaysUse");
+    let justOnce = bundle.GetStringFromName("helperapps.useJustOnce");
+    let newButtonOrder = this._useNewButtonOrder();
+
     HelperApps.prompt(apps, {
       title: bundle.GetStringFromName("helperapps.pick"),
       buttons: [
-        bundle.GetStringFromName("helperapps.alwaysUse"),
-        bundle.GetStringFromName("helperapps.useJustOnce")
+        newButtonOrder ? alwaysUse : justOnce,
+        newButtonOrder ? justOnce : alwaysUse
       ],
       // Tapping an app twice should choose "Just once".
-      doubleTapButton: 1
+      doubleTapButton: newButtonOrder ? 1 : 0
     }, (data) => {
       if (data.button < 0) {
         return;
@@ -216,10 +229,36 @@ HelperAppLauncherDialog.prototype = {
 
       callback(apps[data.icongrid0]);
 
-      if (data.button === 0) {
+      if (data.button === (newButtonOrder ? 0 : 1)) {
         this._setPreferredApp(aLauncher, apps[data.icongrid0]);
       }
     });
+  },
+
+  /**
+   * In the system app chooser, the order of the "Always" and "Just once" buttons has been swapped
+   * around starting from Lollipop.
+   */
+  _useNewButtonOrder: function() {
+    let _useNewButtonOrder = true;
+    let jenv = null;
+
+    try {
+      jenv = JNI.GetForThread();
+      let jAppConstants = JNI.LoadClass(jenv, "org.mozilla.gecko.AppConstants$Versions", {
+        static_fields: [
+          { name: "feature21Plus", sig: "Z" }
+        ],
+      });
+
+      useNewButtonOrder = jAppConstants.feature21Plus;
+    } finally {
+      if (jenv) {
+        JNI.UnloadClasses(jenv);
+      }
+    }
+
+    return useNewButtonOrder;
   },
 
   _refuseDownload: function(aLauncher) {
@@ -239,7 +278,7 @@ HelperAppLauncherDialog.prototype = {
       mimeType = ContentAreaUtils.getMIMETypeForURI(aLauncher.source) || "";
     }
 
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       'type': 'Download:AndroidDownloadManager',
       'uri': aLauncher.source.spec,
       'mimeType': mimeType,

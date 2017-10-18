@@ -15,10 +15,10 @@
 //   * none of above    -- replaceValue is a string without "$"
 
 // ES 2017 draft 03bfda119d060aca4099d2b77cf43f6d4f11cfa2 21.2.5.8
-// steps 8-16.
+// steps 8.b-16.
 // Optimized path for @@replace with the following conditions:
 //   * global flag is true
-function FUNC_NAME(rx, S, lengthS, replaceValue
+function FUNC_NAME(rx, S, lengthS, replaceValue, fullUnicode
 #ifdef SUBSTITUTION
                    , firstDollarIndex
 #endif
@@ -27,12 +27,16 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
 #endif
                   )
 {
-    // Step 8.a.
-    var fullUnicode = !!rx.unicode;
-
     // Step 8.b.
     var lastIndex = 0;
     rx.lastIndex = 0;
+
+#if defined(FUNCTIONAL) || defined(ELEMBASE)
+    // Save the original source and flags, so we can check if the replacer
+    // function recompiled the regexp.
+    var originalSource = UnsafeGetStringFromReservedSlot(rx, REGEXP_SOURCE_SLOT);
+    var originalFlags = UnsafeGetInt32FromReservedSlot(rx, REGEXP_FLAGS_SLOT);
+#endif
 
     // Step 12 (reordered).
     var accumulatedResult = "";
@@ -49,54 +53,44 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
         if (result === null)
             break;
 
-        var nCaptures;
-#if defined(FUNCTIONAL) || defined(SUBSTITUTION)
+#if defined(SUBSTITUTION)
         // Steps 14.a-b.
-        nCaptures = std_Math_max(result.length - 1, 0);
+        assert(result.length >= 1, "RegExpMatcher doesn't return an empty array");
+        var nCaptures = result.length - 1;
 #endif
 
-        // Step 14.c (reordered).
+        // Step 14.c.
         var matched = result[0];
 
         // Step 14.d.
-        var matchLength = matched.length;
+        var matchLength = matched.length | 0;
 
         // Steps 14.e-f.
-        var position = result.index;
+        var position = result.index | 0;
         lastIndex = position + matchLength;
 
-        // Steps g-j.
+        // Steps g-k.
         var replacement;
 #if defined(FUNCTIONAL)
-        replacement = RegExpGetComplexReplacement(result, matched, S, position,
-
-                                                  nCaptures, replaceValue,
-                                                  true, -1);
+        replacement = RegExpGetFunctionalReplacement(result, S, position, replaceValue);
 #elif defined(SUBSTITUTION)
         replacement = RegExpGetComplexReplacement(result, matched, S, position,
-
                                                   nCaptures, replaceValue,
                                                   false, firstDollarIndex);
 #elif defined(ELEMBASE)
         if (IsObject(elemBase)) {
             var prop = GetStringDataProperty(elemBase, matched);
             if (prop !== undefined) {
-                assert(typeof prop === "string", "GetStringDataProperty should return either string or undefined");
+                assert(typeof prop === "string",
+                       "GetStringDataProperty should return either string or undefined");
                 replacement = prop;
             } else {
                 elemBase = undefined;
             }
         }
 
-        if (!IsObject(elemBase)) {
-            // Steps 14.a-b (reordered).
-            nCaptures = std_Math_max(result.length - 1, 0);
-
-            replacement = RegExpGetComplexReplacement(result, matched, S, position,
-
-                                                      nCaptures, replaceValue,
-                                                      true, -1);
-        }
+        if (!IsObject(elemBase))
+            replacement = RegExpGetFunctionalReplacement(result, S, position, replaceValue);
 #else
         replacement = replaceValue;
 #endif
@@ -113,7 +107,18 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
             lastIndex = fullUnicode ? AdvanceStringIndex(S, lastIndex) : lastIndex + 1;
             if (lastIndex > lengthS)
                 break;
+            lastIndex |= 0;
         }
+
+#if defined(FUNCTIONAL) || defined(ELEMBASE)
+        // Ensure the current source and flags match the original regexp, the
+        // replaceValue function may have called RegExp#compile.
+        if (UnsafeGetStringFromReservedSlot(rx, REGEXP_SOURCE_SLOT) !== originalSource ||
+            UnsafeGetInt32FromReservedSlot(rx, REGEXP_FLAGS_SLOT) !== originalFlags)
+        {
+            rx = regexp_construct_raw_flags(originalSource, originalFlags);
+        }
+#endif
     }
 
     // Step 15.

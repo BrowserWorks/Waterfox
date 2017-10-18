@@ -19,8 +19,8 @@
 #include "nsStyleSet.h"
 #include "mozilla/dom/URL.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 using namespace mozilla;
 using mozilla::dom::IsChromeURI;
@@ -38,6 +38,9 @@ nsXBLPrototypeResources::~nsXBLPrototypeResources()
   if (mLoader) {
     mLoader->mResources = nullptr;
   }
+  if (mServoStyleSet) {
+    mServoStyleSet->Shutdown();
+  }
 }
 
 void
@@ -47,13 +50,14 @@ nsXBLPrototypeResources::AddResource(nsIAtom* aResourceType, const nsAString& aS
     mLoader->AddResource(aResourceType, aSrc);
 }
 
-void
-nsXBLPrototypeResources::LoadResources(bool* aResult)
+bool
+nsXBLPrototypeResources::LoadResources(nsIContent* aBoundElement)
 {
-  if (mLoader)
-    mLoader->LoadResources(aResult);
-  else
-    *aResult = true; // All resources loaded.
+  if (mLoader) {
+    return mLoader->LoadResources(aBoundElement);
+  }
+
+  return true; // All resources loaded.
 }
 
 void
@@ -84,18 +88,18 @@ nsXBLPrototypeResources::FlushSkinSheets()
   // skin sheets can't be, and which in any case don't have a usable
   // URL to reload.)
 
-  nsTArray<StyleSheetHandle::RefPtr> oldSheets;
+  nsTArray<RefPtr<StyleSheet>> oldSheets;
 
   oldSheets.SwapElements(mStyleSheetList);
 
   mozilla::css::Loader* cssLoader = doc->CSSLoader();
 
   for (size_t i = 0, count = oldSheets.Length(); i < count; ++i) {
-    StyleSheetHandle oldSheet = oldSheets[i];
+    StyleSheet* oldSheet = oldSheets[i];
 
     nsIURI* uri = oldSheet->GetSheetURI();
 
-    StyleSheetHandle::RefPtr newSheet;
+    RefPtr<StyleSheet> newSheet;
     if (!oldSheet->IsInline() && IsChromeURI(uri)) {
       if (NS_FAILED(cssLoader->LoadSheetSync(uri, &newSheet)))
         continue;
@@ -147,7 +151,7 @@ void
 nsXBLPrototypeResources::GatherRuleProcessor()
 {
   nsTArray<RefPtr<CSSStyleSheet>> sheets(mStyleSheetList.Length());
-  for (StyleSheetHandle sheet : mStyleSheetList) {
+  for (StyleSheet* sheet : mStyleSheetList) {
     MOZ_ASSERT(sheet->IsGecko(),
                "GatherRuleProcessor must only be called for "
                "nsXBLPrototypeResources objects with Gecko-flavored style "
@@ -161,24 +165,41 @@ nsXBLPrototypeResources::GatherRuleProcessor()
 }
 
 void
-nsXBLPrototypeResources::AppendStyleSheet(StyleSheetHandle aSheet)
+nsXBLPrototypeResources::ComputeServoStyleSet(nsPresContext* aPresContext)
+{
+  mServoStyleSet.reset(new ServoStyleSet());
+  mServoStyleSet->Init(aPresContext, nullptr);
+  for (StyleSheet* sheet : mStyleSheetList) {
+    MOZ_ASSERT(sheet->IsServo(),
+               "This should only be called with Servo-flavored style backend!");
+    // The XBL style sheets aren't document level sheets, but we need to
+    // decide a particular SheetType to add them to style set. This type
+    // doesn't affect the place where we pull those rules from
+    // stylist::push_applicable_declarations_as_xbl_only_stylist().
+    mServoStyleSet->AppendStyleSheet(SheetType::Doc, sheet->AsServo());
+  }
+  mServoStyleSet->UpdateStylistIfNeeded();
+}
+
+void
+nsXBLPrototypeResources::AppendStyleSheet(StyleSheet* aSheet)
 {
   mStyleSheetList.AppendElement(aSheet);
 }
 
 void
-nsXBLPrototypeResources::RemoveStyleSheet(StyleSheetHandle aSheet)
+nsXBLPrototypeResources::RemoveStyleSheet(StyleSheet* aSheet)
 {
   mStyleSheetList.RemoveElement(aSheet);
 }
 
 void
-nsXBLPrototypeResources::InsertStyleSheetAt(size_t aIndex, StyleSheetHandle aSheet)
+nsXBLPrototypeResources::InsertStyleSheetAt(size_t aIndex, StyleSheet* aSheet)
 {
   mStyleSheetList.InsertElementAt(aIndex, aSheet);
 }
 
-StyleSheetHandle
+StyleSheet*
 nsXBLPrototypeResources::StyleSheetAt(size_t aIndex) const
 {
   return mStyleSheetList[aIndex];
@@ -198,7 +219,7 @@ nsXBLPrototypeResources::HasStyleSheets() const
 
 void
 nsXBLPrototypeResources::AppendStyleSheetsTo(
-                                      nsTArray<StyleSheetHandle>& aResult) const
+                                      nsTArray<StyleSheet*>& aResult) const
 {
   aResult.AppendElements(mStyleSheetList);
 }

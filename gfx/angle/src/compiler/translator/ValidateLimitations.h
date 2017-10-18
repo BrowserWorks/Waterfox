@@ -8,7 +8,9 @@
 #define COMPILER_TRANSLATOR_VALIDATELIMITATIONS_H_
 
 #include "compiler/translator/IntermNode.h"
-#include "compiler/translator/LoopInfo.h"
+
+namespace sh
+{
 
 class TInfoSinkBase;
 
@@ -55,9 +57,11 @@ class ValidateLimitations : public TIntermTraverser
     sh::GLenum mShaderType;
     TInfoSinkBase *mSink;
     int mNumErrors;
-    TLoopStack mLoopStack;
+    std::vector<int> mLoopSymbolIds;
     bool mValidateIndexing;
     bool mValidateInnerLoops;
 };
+
+}  // namespace sh
 
 #endif // COMPILER_TRANSLATOR_VALIDATELIMITATIONS_H_

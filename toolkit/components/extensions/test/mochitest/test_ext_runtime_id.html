@@ -14,7 +14,7 @@
 <script type="text/javascript">
 "use strict";
 
-add_task(function* test_runtime_id() {
+add_task(async function test_runtime_id() {
   function background() {
     browser.test.sendMessage("background-id", browser.runtime.id);
   }
@@ -28,6 +28,7 @@ add_task(function* test_runtime_id() {
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
+      applications: {gecko: {id}},
       "content_scripts": [{
         "matches": ["http://mochi.test/*/file_sample.html"],
         "run_at": "document_start",
@@ -35,23 +36,23 @@ add_task(function* test_runtime_id() {
       }],
     },
 
-    background: `(${background})()`,
+    background,
 
     files: {
-      "content_script.js": `(${content})()`,
+      "content_script.js": content,
     },
-  }, id);
+  });
 
-  yield extension.startup();
+  await extension.startup();
 
-  let backgroundId = yield extension.awaitMessage("background-id");
+  let backgroundId = await extension.awaitMessage("background-id");
   is(backgroundId, id, "runtime.id from background script is correct");
   let win = window.open("file_sample.html");
-  let contentId = yield extension.awaitMessage("content-id");
+  let contentId = await extension.awaitMessage("content-id");
   is(contentId, id, "runtime.id from content script is correct");
 
   win.close();
-  yield extension.unload();
+  await extension.unload();
 });
 
 </script>

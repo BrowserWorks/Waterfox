@@ -1,0 +1,68 @@
+{
+  "manifest_version": 2,
+  "name": "Firefox Screenshots",
+  "version": "10.12.0",
+  "description": "__MSG_addonDescription__",
+  "author": "__MSG_addonAuthorsList__",
+  "homepage_url": "https://github.com/mozilla-services/screenshots",
+  "applications": {
+    "gecko": {
+      "id": "screenshots@mozilla.org"
+    }
+  },
+  "default_locale": "en_US",
+  "browser_action": {
+    "default_icon": {
+      "16": "icons/icon-16-v2.svg",
+      "32": "icons/icon-32-v2.svg"
+    },
+    "default_title": "Firefox Screenshots",
+    "browser_style": false
+  },
+  "background": {
+    "scripts": [
+      "build/buildSettings.js",
+      "background/startBackground.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://screenshots.firefox.com/*"],
+      "js": [
+        "build/buildSettings.js",
+        "log.js",
+        "catcher.js",
+        "selector/callBackground.js",
+        "sitehelper.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    "blank.html",
+    "icons/cancel.svg",
+    "icons/download.svg",
+    "icons/icon-256.png",
+    "icons/back.svg",
+    "icons/back-highlight.svg",
+    "icons/menu-fullpage.svg",
+    "icons/menu-visible.svg",
+    "icons/menu-myshot.svg",
+    "icons/onboarding-1.png",
+    "icons/onboarding-2.png",
+    "icons/onboarding-3.png",
+    "icons/onboarding-4.png",
+    "icons/done.svg",
+    "icons/icon-welcome-face-without-eyes.svg"
+  ],
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "tabs",
+    "storage",
+    "notifications",
+    "clipboardWrite",
+    "contextMenus",
+    "<all_urls>",
+    "https://screenshots.firefox.com/"
+  ]
+}

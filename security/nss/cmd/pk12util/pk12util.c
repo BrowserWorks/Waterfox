@@ -615,11 +615,7 @@ P12U_ExportPKCS12Object(char *nn, char *outfile, PK11SlotInfo *inSlot,
     }
 
     if (certlist) {
-        CERTCertificate *cert = NULL;
-        node = CERT_LIST_HEAD(certlist);
-        if (node) {
-            cert = node->cert;
-        }
+        CERTCertificate *cert = CERT_LIST_HEAD(certlist)->cert;
         if (cert) {
             slot = cert->slot; /* use the slot from the first matching
                 certificate to create the context . This is for keygen */
@@ -752,8 +748,7 @@ P12U_ListPKCS12File(char *in_file, PK11SlotInfo *slot,
                             PR_Close(fd);
                         }
                     } else if (SECU_PrintSignedData(stdout, dip->der,
-                                                    (dip->hasKey) ?
-                                                                  "(has private key)"
+                                                    (dip->hasKey) ? "(has private key)"
                                                                   : "",
                                                     0, (SECU_PPFunc)SECU_PrintCertificate) !=
                                0) {
@@ -862,6 +857,9 @@ p12u_EnableAllCiphers()
     SEC_PKCS12EnableCipher(PKCS12_RC2_CBC_128, 1);
     SEC_PKCS12EnableCipher(PKCS12_DES_56, 1);
     SEC_PKCS12EnableCipher(PKCS12_DES_EDE3_168, 1);
+    SEC_PKCS12EnableCipher(PKCS12_AES_CBC_128, 1);
+    SEC_PKCS12EnableCipher(PKCS12_AES_CBC_192, 1);
+    SEC_PKCS12EnableCipher(PKCS12_AES_CBC_256, 1);
     SEC_PKCS12SetPreferredCipher(PKCS12_DES_EDE3_168, 1);
 }
 
@@ -982,10 +980,8 @@ main(int argc, char **argv)
 
     slotname = SECU_GetOptionArg(&pk12util, opt_TokenName);
 
-    import_file = (pk12util.options[opt_List].activated) ?
-                                                         SECU_GetOptionArg(&pk12util, opt_List)
-                                                         :
-                                                         SECU_GetOptionArg(&pk12util, opt_Import);
+    import_file = (pk12util.options[opt_List].activated) ? SECU_GetOptionArg(&pk12util, opt_List)
+                                                         : SECU_GetOptionArg(&pk12util, opt_Import);
     export_file = SECU_GetOptionArg(&pk12util, opt_Export);
 
     if (pk12util.options[opt_P12FilePWFile].activated) {
@@ -1052,8 +1048,7 @@ main(int argc, char **argv)
         }
     }
 
-    certCipher = PK11_IsFIPS() ? SEC_OID_UNKNOWN :
-                               SEC_OID_PKCS12_V2_PBE_WITH_SHA1_AND_40_BIT_RC2_CBC;
+    certCipher = PK11_IsFIPS() ? SEC_OID_UNKNOWN : SEC_OID_PKCS12_V2_PBE_WITH_SHA1_AND_40_BIT_RC2_CBC;
     if (pk12util.options[opt_CertCipher].activated) {
         char *cipherString = pk12util.options[opt_CertCipher].arg;
 
@@ -1063,7 +1058,7 @@ main(int argc, char **argv)
             certCipher = PKCS12U_MapCipherFromString(cipherString, certKeyLen);
             /* If the user requested a cipher and we didn't find it, then
 	     * don't just silently not encrypt. */
-            if (cipher == SEC_OID_UNKNOWN) {
+            if (certCipher == SEC_OID_UNKNOWN) {
                 PORT_SetError(SEC_ERROR_INVALID_ALGORITHM);
                 SECU_PrintError(progName, "Algorithm: \"%s\"", cipherString);
                 pk12uErrno = PK12UERR_INVALIDALGORITHM;

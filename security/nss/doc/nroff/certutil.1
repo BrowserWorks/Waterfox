@@ -2,12 +2,12 @@
 .\"     Title: CERTUTIL
 .\"    Author: [see the "Authors" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 13 August 2015
+.\"      Date:  8 September 2016
 .\"    Manual: NSS Security Tools
 .\"    Source: nss-tools
 .\"  Language: English
 .\"
-.TH "CERTUTIL" "1" "13 August 2015" "nss-tools" "NSS Security Tools"
+.TH "CERTUTIL" "1" "8 September 2016" "nss-tools" "NSS Security Tools"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -371,9 +371,9 @@ Read an alternate PQG value from the specified file when generating DSA key pair
 \fBcertutil\fR
 generates its own PQG value\&. PQG files are created with a separate DSA utility\&.
 .sp
-Elliptic curve name is one of the ones from SUITE B: nistp256, nistp384, nistp521
+Elliptic curve name is one of the ones from nistp256, nistp384, nistp521, curve25519.
 .sp
-If NSS has been compiled with support curves outside of SUITE B: sect163k1, nistk163, sect163r1, sect163r2, nistb163, sect193r1, sect193r2, sect233k1, nistk233, sect233r1, nistb233, sect239k1, sect283k1, nistk283, sect283r1, nistb283, sect409k1, nistk409, sect409r1, nistb409, sect571k1, nistk571, sect571r1, nistb571, secp160k1, secp160r1, secp160r2, secp192k1, secp192r1, nistp192, secp224k1, secp224r1, nistp224, secp256k1, secp256r1, secp384r1, secp521r1, prime192v1, prime192v2, prime192v3, prime239v1, prime239v2, prime239v3, c2pnb163v1, c2pnb163v2, c2pnb163v3, c2pnb176v1, c2tnb191v1, c2tnb191v2, c2tnb191v3, c2pnb208w1, c2tnb239v1, c2tnb239v2, c2tnb239v3, c2pnb272w1, c2pnb304w1, c2tnb359w1, c2pnb368w1, c2tnb431r1, secp112r1, secp112r2, secp128r1, secp128r2, sect113r1, sect113r2 sect131r1, sect131r2
+If a token is available that supports more curves, the foolowing curves are supported as well: sect163k1, nistk163, sect163r1, sect163r2, nistb163,  sect193r1, sect193r2, sect233k1, nistk233, sect233r1, nistb233, sect239k1, sect283k1, nistk283, sect283r1, nistb283, sect409k1, nistk409, sect409r1, nistb409,  sect571k1, nistk571, sect571r1, nistb571, secp160k1, secp160r1, secp160r2, secp192k1, secp192r1, nistp192,  secp224k1, secp224r1, nistp224, secp256k1, secp256r1, secp384r1, secp521r1, prime192v1, prime192v2, prime192v3, prime239v1, prime239v2, prime239v3, c2pnb163v1, c2pnb163v2, c2pnb163v3, c2pnb176v1, c2tnb191v1, c2tnb191v2, c2tnb191v3, c2pnb208w1, c2tnb239v1, c2tnb239v2, c2tnb239v3, c2pnb272w1, c2pnb304w1, c2tnb359w1, c2pnb368w1, c2tnb431r1, secp112r1, secp112r2, secp128r1, secp128r2, sect113r1, sect113r2, sect131r1, sect131r2
 .RE
 .PP
 \-r
@@ -436,7 +436,7 @@ for each trust setting\&. In each category position, use none, any, or all of th
 .sp -1
 .IP \(bu 2.3
 .\}
-\fBT\fR
+\fBC\fR
 \- Trusted CA (implies c)
 .RE
 .sp
@@ -448,27 +448,17 @@ for each trust setting\&. In each category position, use none, any, or all of th
 .sp -1
 .IP \(bu 2.3
 .\}
-\fBC\fR
+\fBT\fR
 \- trusted CA for client authentication (ssl server only)
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-\fBu\fR
-\- user
 .RE
 .sp
 The attribute codes for the categories are separated by commas, and the entire set of attributes enclosed by quotation marks\&. For example:
 .sp
-\fB\-t "TCu,Cu,Tu"\fR
+\fB\-t "TC,C,T"\fR
 .sp
 Use the \-L option to see a list of the current certificates and trust attributes in a certificate database\&.
+.sp
+Note that the output of the \-L option may include "u" flag, which means that there is a private key associated with the certificate\&. It is a dynamic flag and you cannot set it with certutil\&.
 .RE
 .PP
 \-u certusage
@@ -1322,7 +1312,7 @@ From there, new certificates can reference the self\-signed certificate:
 .RS 4
 .\}
 .nf
-$ certutil \-S \-s "CN=My Server Cert" \-n my\-server\-cert \-c "my\-ca\-cert" \-t "u,u,u" \-1 \-5 \-6 \-8 \-m 730
+$ certutil \-S \-s "CN=My Server Cert" \-n my\-server\-cert \-c "my\-ca\-cert" \-t ",," \-1 \-5 \-6 \-8 \-m 730
 .fi
 .if n \{\
 .RE
@@ -1598,7 +1588,7 @@ For example:
 .RS 4
 .\}
 .nf
-$ certutil \-A \-n "CN=My SSL Certificate" \-t "u,u,u" \-d sql:/home/my/sharednssdb \-i /home/example\-certs/cert\&.cer
+$ certutil \-A \-n "CN=My SSL Certificate" \-t ",," \-d sql:/home/my/sharednssdb \-i /home/example\-certs/cert\&.cer
 .fi
 .if n \{\
 .RE
@@ -1616,7 +1606,7 @@ command\&. The trust arguments for certificates have the format
 .RS 4
 .\}
 .nf
-$ certutil \-E \-n "CN=John Smith Email Cert" \-t ",Pu," \-d sql:/home/my/sharednssdb \-i /home/example\-certs/email\&.cer
+$ certutil \-E \-n "CN=John Smith Email Cert" \-t ",P," \-d sql:/home/my/sharednssdb \-i /home/example\-certs/email\&.cer
 .fi
 .if n \{\
 .RE
@@ -1698,7 +1688,7 @@ For example:
 .RS 4
 .\}
 .nf
-$ certutil \-M \-n "My CA Certificate" \-d sql:/home/my/sharednssdb \-t "CTu,CTu,CTu"
+$ certutil \-M \-n "My CA Certificate" \-d sql:/home/my/sharednssdb \-t "CT,CT,CT"
 .fi
 .if n \{\
 .RE

@@ -12,9 +12,10 @@
 
 #import "webrtc/modules/video_capture/mac/avfoundation/video_capture_avfoundation_info_objc.h"
 
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/system_wrappers/include/trace.h"
 
 using namespace webrtc;
+using namespace videocapturemodule;
 
 #pragma mark **** hidden class interface
 
@@ -38,11 +39,32 @@ using namespace webrtc;
     return self;
 }
 
+- (void)registerOwner:(VideoCaptureMacAVFoundationInfo*)owner {
+    [_lock lock];
+    _owner = owner;
+    [_lock unlock];
+}
+
 /// ***** Objective-C. Similar to C++ destructor
 /// ***** Returns nothing
 - (void)dealloc {
 
     [_captureDevicesInfo release];
+
+    // Remove Observers
+    NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+    for (id observer in _observers)
+        [notificationCenter removeObserver:observer];
+    [_observers release];
+    [_lock release];
+
+    for (NSMutableArray* capabilityMap in _capabilityMaps) {
+        [capabilityMap removeAllObjects];
+        [capabilityMap release];
+    }
+
+    [_capabilityMaps removeAllObjects];
+    [_capabilityMaps release];
 
     [super dealloc];
 }
@@ -83,8 +105,10 @@ using namespace webrtc;
         return [NSNumber numberWithInt:-1];
     }
 
-    for (int index = 0; index < _captureDeviceCountInfo; index++) {
-        captureDevice = (AVCaptureDevice*)[_captureDevicesInfo objectAtIndex:index];
+    int deviceIndex;
+
+    for (deviceIndex = 0; deviceIndex < _captureDeviceCountInfo; deviceIndex++) {
+        captureDevice = (AVCaptureDevice*)[_captureDevicesInfo objectAtIndex:deviceIndex];
         char captureDeviceId[1024] = "";
         [[captureDevice uniqueID] getCString:captureDeviceId
                                    maxLength:1024
@@ -92,7 +116,7 @@ using namespace webrtc;
         if (strcmp(uniqueId, captureDeviceId) == 0) {
             WEBRTC_TRACE(kTraceInfo, kTraceVideoCapture, 0,
                 "%s:%d Found capture device id %s as index %d",
-                __FUNCTION__, __LINE__, captureDeviceId, index);
+                __FUNCTION__, __LINE__, captureDeviceId, deviceIndex);
             break;
         }
         captureDevice = nil;
@@ -101,7 +125,30 @@ using namespace webrtc;
     if (!captureDevice)
         return [NSNumber numberWithInt:-1];
 
-    return [NSNumber numberWithInt:[captureDevice formats].count];
+    NSMutableArray* capabilityMap = (NSMutableArray*)[_capabilityMaps objectForKey:[NSNumber numberWithInt:deviceIndex]];
+
+    if (capabilityMap != nil) {
+        [capabilityMap removeAllObjects];
+    } else {
+        capabilityMap = [[NSMutableArray alloc] init];
+        [_capabilityMaps setObject:capabilityMap forKey:[NSNumber numberWithInt:deviceIndex]];
+    }
+
+    int count = 0;
+
+    for (int formatIndex = 0; formatIndex < (int)[captureDevice formats].count; formatIndex++) {
+        AVCaptureDeviceFormat* format =
+            (AVCaptureDeviceFormat*) [[captureDevice formats] objectAtIndex:formatIndex];
+
+        count += format.videoSupportedFrameRateRanges.count;
+        for (int frameRateIndex = 0;
+                frameRateIndex < (int) format.videoSupportedFrameRateRanges.count;
+                frameRateIndex++) {
+            [capabilityMap addObject: [NSNumber numberWithInt:((formatIndex << 16) + (frameRateIndex & 0xffff))]];
+        }
+    }
+
+    return [NSNumber numberWithInt:count];
 }
 
 - (NSNumber*)getCaptureCapability:(const char*)uniqueId
@@ -118,8 +165,10 @@ using namespace webrtc;
         return [NSNumber numberWithInt:-1];
     }
 
-    for (int index = 0; index < _captureDeviceCountInfo; index++) {
-        captureDevice = (AVCaptureDevice*)[_captureDevicesInfo objectAtIndex:index];
+    int deviceIndex;
+
+    for (deviceIndex = 0; deviceIndex < _captureDeviceCountInfo; deviceIndex++) {
+        captureDevice = (AVCaptureDevice*)[_captureDevicesInfo objectAtIndex:deviceIndex];
         char captureDeviceId[1024] = "";
         [[captureDevice uniqueID] getCString:captureDeviceId
                                    maxLength:1024
@@ -127,7 +176,7 @@ using namespace webrtc;
         if (strcmp(uniqueId, captureDeviceId) == 0) {
             WEBRTC_TRACE(kTraceInfo, kTraceVideoCapture, 0,
                 "%s:%d Found capture device id %s as index %d",
-                __FUNCTION__, __LINE__, captureDeviceId, index);
+                __FUNCTION__, __LINE__, captureDeviceId, deviceIndex);
             break;
         }
         captureDevice = nil;
@@ -136,19 +185,31 @@ using namespace webrtc;
     if (!captureDevice)
         return [NSNumber numberWithInt:-1];
 
-    AVCaptureDeviceFormat* format = (AVCaptureDeviceFormat*)[[captureDevice formats]objectAtIndex:capabilityId];
-    CMVideoDimensions videoDimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-    AVFrameRateRange* maxFrameRateRange = nil;
+    NSMutableArray* capabilityMap = [_capabilityMaps objectForKey:[NSNumber numberWithInt:deviceIndex]];
+    NSNumber* indexNumber = [capabilityMap objectAtIndex:capabilityId];
 
-    for ( AVFrameRateRange* range in format.videoSupportedFrameRateRanges ) {
-        if ( range.maxFrameRate > maxFrameRateRange.maxFrameRate ) {
-            maxFrameRateRange = range;
-        }
-    }
+    // protection for illegal capabilityId
+    if (!indexNumber)
+        return [NSNumber numberWithInt:-1];
+
+    int indexInt = static_cast<int>([indexNumber integerValue]);
+    int formatIndex = indexInt >> 16;
+    int frameRateIndex = indexInt & 0xffff;
+
+    AVCaptureDeviceFormat* format = (AVCaptureDeviceFormat*)[[captureDevice formats]objectAtIndex:formatIndex];
+    CMVideoDimensions videoDimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
+    AVFrameRateRange* frameRateRange = [format.videoSupportedFrameRateRanges objectAtIndex:frameRateIndex];
 
     *width = videoDimensions.width;
     *height = videoDimensions.height;
-    *maxFPS = maxFrameRateRange.maxFrameRate;
+
+    // This is to fix setCaptureHeight() which fails for some webcams supporting non-integer framerates.
+    // In setCaptureHeight(), we match the best framerate range by searching a range whose max framerate
+    // is most close to (but smaller than or equal to) the target. Since maxFPS of capability is integer,
+    // we fill in the capability maxFPS with the floor value (e.g., 29) of the real supported fps
+    // (e.g., 29.97). If the target is set to 29, we failed to match the best format with max framerate
+    // 29.97 since it is over the target. Therefore, we need to return a ceiling value as the maxFPS here.
+    *maxFPS = static_cast<int32_t>(ceil(frameRateRange.maxFrameRate));
     *rawType = [VideoCaptureMacAVFoundationUtility fourCCToRawVideoType:CMFormatDescriptionGetMediaSubType(format.formatDescription)];
 
     return [NSNumber numberWithInt:0];
@@ -222,6 +283,35 @@ using namespace webrtc;
 
     _captureDeviceCountInfo = 0;
     [self getCaptureDevices];
+
+    _lock = [[NSLock alloc] init];
+
+    //register device connected / disconnected event
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+
+    id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
+        object:nil
+        queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification *note) {
+            [_lock lock];
+            if(_owner)
+                _owner->DeviceChange();
+            [_lock unlock];
+        }];
+
+    id deviceWasDisconnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasDisconnectedNotification
+        object:nil
+        queue:[NSOperationQueue mainQueue]
+        usingBlock:^(NSNotification *note) {
+            [_lock lock];
+            if(_owner)
+                _owner->DeviceChange();
+            [_lock unlock];
+        }];
+
+    _observers = [[NSArray alloc] initWithObjects:deviceWasConnectedObserver, deviceWasDisconnectedObserver, nil];
+
+    _capabilityMaps = [[NSMutableDictionary alloc] init];
 
     return [NSNumber numberWithInt:0];
 }

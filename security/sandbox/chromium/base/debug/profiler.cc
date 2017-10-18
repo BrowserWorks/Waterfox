@@ -6,16 +6,19 @@
 
 #include <string>
 
+#include "base/debug/debugging_flags.h"
 #include "base/process/process_handle.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
-#include "base/strings/stringprintf.h"
+#include "build/build_config.h"
 
 #if defined(OS_WIN)
+#include "base/win/current_module.h"
 #include "base/win/pe_image.h"
 #endif  // defined(OS_WIN)
 
 // TODO(peria): Enable profiling on Windows.
-#if defined(ENABLE_PROFILING) && !defined(NO_TCMALLOC) && !defined(OS_WIN)
+#if BUILDFLAG(ENABLE_PROFILING) && !defined(NO_TCMALLOC) && !defined(OS_WIN)
 #include "third_party/tcmalloc/chromium/src/gperftools/profiler.h"
 #endif
 
@@ -23,15 +26,15 @@ namespace base {
 namespace debug {
 
 // TODO(peria): Enable profiling on Windows.
-#if defined(ENABLE_PROFILING) && !defined(NO_TCMALLOC) && !defined(OS_WIN)
+#if BUILDFLAG(ENABLE_PROFILING) && !defined(NO_TCMALLOC) && !defined(OS_WIN)
 
 static int profile_count = 0;
 
 void StartProfiling(const std::string& name) {
   ++profile_count;
   std::string full_name(name);
-  std::string pid = StringPrintf("%d", GetCurrentProcId());
-  std::string count = StringPrintf("%d", profile_count);
+  std::string pid = IntToString(GetCurrentProcId());
+  std::string count = IntToString(profile_count);
   ReplaceSubstringsAfterOffset(&full_name, 0, "{pid}", pid);
   ReplaceSubstringsAfterOffset(&full_name, 0, "{count}", count);
   ProfilerStart(full_name.c_str());
@@ -54,6 +57,10 @@ void RestartProfilingAfterFork() {
   ProfilerRegisterThread();
 }
 
+bool IsProfilingSupported() {
+  return true;
+}
+
 #else
 
 void StartProfiling(const std::string& name) {
@@ -70,6 +77,10 @@ bool BeingProfiled() {
 }
 
 void RestartProfilingAfterFork() {
+}
+
+bool IsProfilingSupported() {
+  return false;
 }
 
 #endif
@@ -98,9 +109,6 @@ MoveDynamicSymbol GetProfilerMoveDynamicSymbolFunc() {
 
 #else  // defined(OS_WIN)
 
-// http://blogs.msdn.com/oldnewthing/archive/2004/10/25/247180.aspx
-extern "C" IMAGE_DOS_HEADER __ImageBase;
-
 bool IsBinaryInstrumented() {
   enum InstrumentationCheckState {
     UNINITIALIZED,
@@ -111,8 +119,7 @@ bool IsBinaryInstrumented() {
   static InstrumentationCheckState state = UNINITIALIZED;
 
   if (state == UNINITIALIZED) {
-    HMODULE this_module = reinterpret_cast<HMODULE>(&__ImageBase);
-    base::win::PEImage image(this_module);
+    base::win::PEImage image(CURRENT_MODULE());
 
     // Check to be sure our image is structured as we'd expect.
     DCHECK(image.VerifyMagic());
@@ -147,8 +154,8 @@ bool FindResolutionFunctionInImports(
   FunctionSearchContext* context =
       reinterpret_cast<FunctionSearchContext*>(cookie);
 
-  DCHECK_NE(static_cast<FunctionSearchContext*>(NULL), context);
-  DCHECK_EQ(static_cast<FARPROC>(NULL), context->function);
+  DCHECK(context);
+  DCHECK(!context->function);
 
   // Our import address table contains pointers to the functions we import
   // at this point. Let's retrieve the first such function and use it to
@@ -182,8 +189,7 @@ FunctionType FindFunctionInImports(const char* function_name) {
   if (!IsBinaryInstrumented())
     return NULL;
 
-  HMODULE this_module = reinterpret_cast<HMODULE>(&__ImageBase);
-  base::win::PEImage image(this_module);
+  base::win::PEImage image(CURRENT_MODULE());
 
   FunctionSearchContext ctx = { function_name, NULL };
   image.EnumImportChunks(FindResolutionFunctionInImports, &ctx);

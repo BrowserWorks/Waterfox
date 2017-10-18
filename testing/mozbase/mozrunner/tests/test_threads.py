@@ -6,10 +6,13 @@
 import threading
 from time import sleep
 
+import mozunit
+
 import mozrunnertest
 
 
 class RunnerThread(threading.Thread):
+
     def __init__(self, runner, do_start, timeout=10):
         threading.Thread.__init__(self)
         self.runner = runner
@@ -70,3 +73,7 @@ class MozrunnerThreadsTestCase(mozrunnertest.MozrunnerTestCase):
         self.assertEqual(self.runner.returncode, returncode)
         self.assertIsNotNone(self.runner.process_handler)
         self.assertEqual(self.runner.wait(10), returncode)
+
+
+if __name__ == '__main__':
+    mozunit.main()

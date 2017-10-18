@@ -2,7 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests the API for saving global session data.
-add_task(function* () {
+add_task(async function() {
   const key1 = "Unique name 1: " + Date.now();
   const key2 = "Unique name 2: " + Date.now();
   const value1 = "Unique value 1: " + Math.random();
@@ -15,11 +15,11 @@ add_task(function* () {
     windows: [
       {
         tabs: [
-          { entries: [{ url: "about:blank" }] },
+          { entries: [{ url: "about:blank", triggeringPrincipal_base64 }] },
         ]
       }
     ],
-    global: global
+    global
   };
 
   function testRestoredState() {
@@ -39,7 +39,7 @@ add_task(function* () {
     is(ss.getGlobalValue(key2), "", "global value was deleted");
   }
 
-  yield promiseBrowserState(testState);
+  await promiseBrowserState(testState);
   testRestoredState();
   testGlobalStore();
 });

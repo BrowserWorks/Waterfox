@@ -13,6 +13,7 @@
 #include "nsMargin.h"
 #include "nsGkAtoms.h"
 #include "nsTArray.h"
+#include "nsINamed.h"
 #include "nsITimer.h"
 #include "nsIContent.h"
 
@@ -24,13 +25,14 @@ namespace mozilla {
 class EventStates;
 } // namespace mozilla
 
-class nsNativeTheme : public nsITimerCallback
+class nsNativeTheme : public nsITimerCallback, public nsINamed
 {
  protected:
   virtual ~nsNativeTheme() {}
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
   enum ScrollbarButtonType {
     eScrollbarButton_UpTop   = 0,
@@ -60,7 +62,7 @@ class nsNativeTheme : public nsITimerCallback
   bool IsDisabled(nsIFrame* aFrame, mozilla::EventStates aEventStates);
 
   // RTL chrome direction
-  bool IsFrameRTL(nsIFrame* aFrame);
+  static bool IsFrameRTL(nsIFrame* aFrame);
 
   bool IsHTMLContent(nsIFrame *aFrame);
   

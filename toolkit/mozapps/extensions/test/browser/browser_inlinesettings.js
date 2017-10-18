@@ -3,7 +3,6 @@
  */
 
 // Tests various aspects of the details view
-Components.utils.import("resource://gre/modules/Preferences.jsm");
 
 var gManagerWindow;
 var gCategoryUtilities;
@@ -17,22 +16,22 @@ MockFilePicker.init(window);
 var observer = {
   lastDisplayed: null,
   callback: null,
-  checkDisplayed: function(aExpected) {
+  checkDisplayed(aExpected) {
     is(this.lastDisplayed, aExpected, "'addon-options-displayed' notification should have fired");
     this.lastDisplayed = null;
   },
-  checkNotDisplayed: function() {
+  checkNotDisplayed() {
     is(this.lastDisplayed, null, "'addon-options-displayed' notification should not have fired");
   },
   lastHidden: null,
-  checkHidden: function(aExpected) {
+  checkHidden(aExpected) {
     is(this.lastHidden, aExpected, "'addon-options-hidden' notification should have fired");
     this.lastHidden = null;
   },
-  checkNotHidden: function() {
+  checkNotHidden() {
     is(this.lastHidden, null, "'addon-options-hidden' notification should not have fired");
   },
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic == AddonManager.OPTIONS_NOTIFICATION_DISPLAYED) {
       this.lastDisplayed = aData;
       // Test if the binding has applied before the observers are notified. We test the second setting here,
@@ -59,7 +58,7 @@ function installAddon(aCallback) {
   AddonManager.getInstallForURL(TESTROOT + "addons/browser_inlinesettings1.xpi",
                                 function(aInstall) {
     aInstall.addListener({
-      onInstallEnded: function() {
+      onInstallEnded() {
         executeSoon(aCallback);
       }
     });
@@ -89,31 +88,29 @@ function test() {
     optionsURL: CHROMEROOT + "options.xul",
     optionsType: AddonManager.OPTIONS_TYPE_INLINE,
     operationsRequiringRestart: AddonManager.OP_NEEDS_RESTART_DISABLE,
-  },{
+  }, {
     id: "inlinesettings3@tests.mozilla.org",
     name: "Inline Settings (More Options)",
     description: "Tests for option types introduced after Mozilla 7.0",
     version: "1",
     optionsURL: CHROMEROOT + "more_options.xul",
     optionsType: AddonManager.OPTIONS_TYPE_INLINE
-  },{
+  }, {
     id: "noninlinesettings@tests.mozilla.org",
     name: "Non-Inline Settings",
     version: "1",
     optionsURL: CHROMEROOT + "addon_prefs.xul"
   }]);
 
-  installAddon(function () {
+  installAddon(function() {
     open_manager("addons://list/extension", function(aWindow) {
       gManagerWindow = aWindow;
       gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 
       Services.obs.addObserver(observer,
-                               AddonManager.OPTIONS_NOTIFICATION_DISPLAYED,
-                               false);
+                               AddonManager.OPTIONS_NOTIFICATION_DISPLAYED);
       Services.obs.addObserver(observer,
-                               AddonManager.OPTIONS_NOTIFICATION_HIDDEN,
-                               false);
+                               AddonManager.OPTIONS_NOTIFICATION_HIDDEN);
 
       run_next_test();
     });
@@ -254,7 +251,7 @@ add_test(function() {
     EventUtils.synthesizeKey("/", {}, gManagerWindow);
     is(input.value, "bar\u03DE/", "Text box should have updated value");
     is(gManagerWindow.document.getBindingParent(gManagerWindow.document.activeElement), input, "Search box should not have focus");
-    is(Preferences.get("extensions.inlinesettings1.string", "wrong"), "bar\u03DE/", "String pref should have been updated");
+    is(Services.prefs.getStringPref("extensions.inlinesettings1.string", "wrong"), "bar\u03DE/", "String pref should have been updated");
 
     ok(!settings[4].hasAttribute("first-row"), "Not the first row");
     input = settings[4].firstElementChild;
@@ -277,32 +274,42 @@ add_test(function() {
     is(input.color, "#FF9900", "Color picker should have updated value");
     is(Services.prefs.getCharPref("extensions.inlinesettings1.color"), "#FF9900", "Color pref should have been updated");
 
-    try {
-      ok(!settings[6].hasAttribute("first-row"), "Not the first row");
-      var button = gManagerWindow.document.getAnonymousElementByAttribute(settings[6], "anonid", "button");
-      input = gManagerWindow.document.getAnonymousElementByAttribute(settings[6], "anonid", "input");
-      is(input.value, "", "Label value should be empty");
-      is(input.tooltipText, "", "Label tooltip should be empty");
+    ok(!settings[6].hasAttribute("first-row"), "Not the first row");
+    var button = gManagerWindow.document.getAnonymousElementByAttribute(settings[6], "anonid", "button");
+    input = gManagerWindow.document.getAnonymousElementByAttribute(settings[6], "anonid", "input");
+    is(input.value, "", "Label value should be empty");
+    is(input.tooltipText, "", "Label tooltip should be empty");
 
-      var testFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
-      testFile.append("\u2622");
-      var curProcD = Services.dirsvc.get("CurProcD", Ci.nsIFile);
+    var testFile = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    testFile.append("\u2622");
+    var curProcD = Services.dirsvc.get("CurProcD", Ci.nsIFile);
 
-      MockFilePicker.returnFiles = [testFile];
-      MockFilePicker.returnValue = Ci.nsIFilePicker.returnOK;
+    MockFilePicker.setFiles([testFile]);
+    MockFilePicker.returnValue = Ci.nsIFilePicker.returnOK;
+
+    let promise = new Promise(resolve => {
+      MockFilePicker.afterOpenCallback = resolve;
       EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+    });
+
+    promise.then(() => {
       is(MockFilePicker.mode, Ci.nsIFilePicker.modeOpen, "File picker mode should be open file");
       is(input.value, testFile.path, "Label value should match file chosen");
       is(input.tooltipText, testFile.path, "Label tooltip should match file chosen");
-      is(Preferences.get("extensions.inlinesettings1.file", "wrong"), testFile.path, "File pref should match file chosen");
+      is(Services.prefs.getStringPref("extensions.inlinesettings1.file", "wrong"), testFile.path, "File pref should match file chosen");
 
-      MockFilePicker.returnFiles = [curProcD];
+      MockFilePicker.setFiles([curProcD]);
       MockFilePicker.returnValue = Ci.nsIFilePicker.returnCancel;
-      EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+
+      return new Promise(resolve => {
+        MockFilePicker.afterOpenCallback = resolve;
+        EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+      });
+    }).then(() => {
       is(MockFilePicker.mode, Ci.nsIFilePicker.modeOpen, "File picker mode should be open file");
       is(input.value, testFile.path, "Label value should not have changed");
       is(input.tooltipText, testFile.path, "Label tooltip should not have changed");
-      is(Preferences.get("extensions.inlinesettings1.file", "wrong"), testFile.path, "File pref should not have changed");
+      is(Services.prefs.getStringPref("extensions.inlinesettings1.file", "wrong"), testFile.path, "File pref should not have changed");
 
       ok(!settings[7].hasAttribute("first-row"), "Not the first row");
       button = gManagerWindow.document.getAnonymousElementByAttribute(settings[7], "anonid", "button");
@@ -310,31 +317,41 @@ add_test(function() {
       is(input.value, "", "Label value should be empty");
       is(input.tooltipText, "", "Label tooltip should be empty");
 
-      MockFilePicker.returnFiles = [testFile];
+      MockFilePicker.setFiles([testFile]);
       MockFilePicker.returnValue = Ci.nsIFilePicker.returnOK;
-      EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+
+      return new Promise(resolve => {
+        MockFilePicker.afterOpenCallback = resolve;
+        EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+      });
+    }).then(() => {
       is(MockFilePicker.mode, Ci.nsIFilePicker.modeGetFolder, "File picker mode should be directory");
       is(input.value, testFile.path, "Label value should match file chosen");
       is(input.tooltipText, testFile.path, "Label tooltip should match file chosen");
-      is(Preferences.get("extensions.inlinesettings1.directory", "wrong"), testFile.path, "Directory pref should match file chosen");
+      is(Services.prefs.getStringPref("extensions.inlinesettings1.directory", "wrong"), testFile.path, "Directory pref should match file chosen");
 
-      MockFilePicker.returnFiles = [curProcD];
+      MockFilePicker.setFiles([curProcD]);
       MockFilePicker.returnValue = Ci.nsIFilePicker.returnCancel;
-      EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+
+      return new Promise(resolve => {
+        MockFilePicker.afterOpenCallback = resolve;
+        EventUtils.synthesizeMouseAtCenter(button, { clickCount: 1 }, gManagerWindow);
+      });
+    }).then(() => {
       is(MockFilePicker.mode, Ci.nsIFilePicker.modeGetFolder, "File picker mode should be directory");
       is(input.value, testFile.path, "Label value should not have changed");
       is(input.tooltipText, testFile.path, "Label tooltip should not have changed");
-      is(Preferences.get("extensions.inlinesettings1.directory", "wrong"), testFile.path, "Directory pref should not have changed");
+      is(Services.prefs.getStringPref("extensions.inlinesettings1.directory", "wrong"), testFile.path, "Directory pref should not have changed");
 
       var unsizedInput = gManagerWindow.document.getAnonymousElementByAttribute(settings[2], "anonid", "input");
       var sizedInput = gManagerWindow.document.getAnonymousElementByAttribute(settings[8], "anonid", "input");
       is(unsizedInput.clientWidth > sizedInput.clientWidth, true, "Input with size attribute should be smaller than input without");
-    } finally {
+    }).then(() => {
       button = gManagerWindow.document.getElementById("detail-prefs-btn");
       is_element_hidden(button, "Preferences button should not be visible");
 
       gCategoryUtilities.openType("extension", run_next_test);
-    }
+    });
   });
 });
 
@@ -383,9 +400,9 @@ add_test(function() {
     is(radios[1].selected, true, "Correct radio button should be selected");
     isnot(radios[2].selected, true, "Correct radio button should be selected");
     EventUtils.synthesizeMouseAtCenter(radios[0], { clickCount: 1 }, gManagerWindow);
-    is(Preferences.get("extensions.inlinesettings3.radioString", "wrong"), "india", "Radio pref should have been updated");
+    is(Services.prefs.getStringPref("extensions.inlinesettings3.radioString", "wrong"), "india", "Radio pref should have been updated");
     EventUtils.synthesizeMouseAtCenter(radios[2], { clickCount: 1 }, gManagerWindow);
-    is(Preferences.get("extensions.inlinesettings3.radioString", "wrong"), "kilo \u338F", "Radio pref should have been updated");
+    is(Services.prefs.getStringPref("extensions.inlinesettings3.radioString", "wrong"), "kilo \u338F", "Radio pref should have been updated");
 
     ok(!settings[3].hasAttribute("first-row"), "Not the first row");
     Services.prefs.setIntPref("extensions.inlinesettings3.menulist", 8);
@@ -591,7 +608,7 @@ add_test(function() {
   Services.prefs.setBoolPref("extensions.inlinesettings1.bool", false);
   Services.prefs.setIntPref("extensions.inlinesettings1.boolint", 1);
   Services.prefs.setIntPref("extensions.inlinesettings1.integer", 12);
-  Preferences.set("extensions.inlinesettings1.string", "bar\u03DE/");
+  Services.prefs.setStringPref("extensions.inlinesettings1.string", "bar\u03DE/");
   Services.prefs.setCharPref("extensions.inlinesettings1.color", "#FF9900");
   Services.prefs.setCharPref("extensions.inlinesettings1.file", profD.path);
   Services.prefs.setCharPref("extensions.inlinesettings1.directory", profD.path);
@@ -643,7 +660,7 @@ add_test(function() {
   // change the tests above.
   Services.prefs.setBoolPref("extensions.inlinesettings3.radioBool", false);
   Services.prefs.setIntPref("extensions.inlinesettings3.radioInt", 6);
-  Preferences.set("extensions.inlinesettings3.radioString", "kilo \u338F");
+  Services.prefs.setStringPref("extensions.inlinesettings3.radioString", "kilo \u338F");
   Services.prefs.setIntPref("extensions.inlinesettings3.menulist", 9);
 
   var addon = get_addon_element(gManagerWindow, "inlinesettings3@tests.mozilla.org");

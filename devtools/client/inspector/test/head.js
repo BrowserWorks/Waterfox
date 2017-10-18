@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
 /* import-globals-from ../../framework/test/shared-head.js */
-/* import-globals-from ../../commandline/test/helpers.js */
 /* import-globals-from ../../shared/test/test-actor-registry.js */
 /* import-globals-from ../../inspector/test/shared-head.js */
 "use strict";
@@ -19,11 +18,6 @@ Services.scriptloader.loadSubScript(
 //   Services.prefs.clearUserPref("devtools.debugger.log");
 // });
 
-// Import the GCLI test helper
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/devtools/client/commandline/test/helpers.js",
-  this);
-
 // Import helpers registering the test-actor in remote targets
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/shared/test/test-actor-registry.js",
@@ -34,9 +28,13 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/inspector/test/shared-head.js",
   this);
 
-DevToolsUtils.testing = true;
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const INSPECTOR_L10N =
+      new LocalizationHelper("devtools/client/locales/inspector.properties");
+
+flags.testing = true;
 registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
 });
 
 registerCleanupFunction(() => {
@@ -44,37 +42,48 @@ registerCleanupFunction(() => {
 });
 
 registerCleanupFunction(function* () {
-  let target = TargetFactory.forTab(gBrowser.selectedTab);
-  yield gDevTools.closeToolbox(target);
-
   // Move the mouse outside inspector. If the test happened fake a mouse event
   // somewhere over inspector the pointer is considered to be there when the
   // next test begins. This might cause unexpected events to be emitted when
   // another test moves the mouse.
   EventUtils.synthesizeMouseAtPoint(1, 1, {type: "mousemove"}, window);
-
-  while (gBrowser.tabs.length > 1) {
-    gBrowser.removeCurrentTab();
-  }
 });
 
-var navigateTo = function (toolbox, url) {
-  let activeTab = toolbox.target.activeTab;
-  return activeTab.navigateTo(url);
-};
+var navigateTo = Task.async(function* (inspector, url) {
+  let markuploaded = inspector.once("markuploaded");
+  let onNewRoot = inspector.once("new-root");
+  let onUpdated = inspector.once("inspector-updated");
+
+  info("Navigating to: " + url);
+  let activeTab = inspector.toolbox.target.activeTab;
+  yield activeTab.navigateTo(url);
+
+  info("Waiting for markup view to load after navigation.");
+  yield markuploaded;
+
+  info("Waiting for new root.");
+  yield onNewRoot;
+
+  info("Waiting for inspector to update after new-root event.");
+  yield onUpdated;
+});
 
 /**
  * Start the element picker and focus the content window.
  * @param {Toolbox} toolbox
+ * @param {Boolean} skipFocus - Allow tests to bypass the focus event.
  */
-var startPicker = Task.async(function* (toolbox) {
+var startPicker = Task.async(function* (toolbox, skipFocus) {
   info("Start the element picker");
+  toolbox.win.focus();
   yield toolbox.highlighterUtils.startPicker();
-  // Make sure the content window is focused since the picker does not focus
-  // the content window by default.
-  yield ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
-    content.focus();
-  });
+  if (!skipFocus) {
+    // By default make sure the content window is focused since the picker may not focus
+    // the content window by default.
+    yield ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+      content.focus();
+    });
+  }
 });
 
 /**
@@ -193,9 +202,8 @@ var focusSearchBoxUsingShortcut = Task.async(function* (panelWin, callback) {
   let focused = once(searchBox, "focus");
 
   panelWin.focus();
-  let strings = Services.strings.createBundle(
-    "chrome://devtools/locale/inspector.properties");
-  synthesizeKeyShortcut(strings.GetStringFromName("inspector.searchHTML.key"));
+
+  synthesizeKeyShortcut(INSPECTOR_L10N.getStr("inspector.searchHTML.key"));
 
   yield focused;
 
@@ -222,13 +230,21 @@ function getContainerForNodeFront(nodeFront, {markup}) {
  * @param {String|NodeFront} selector
  * @param {InspectorPanel} inspector The instance of InspectorPanel currently
  * loaded in the toolbox
+ * @param {Boolean} Set to true in the event that the node shouldn't be found.
  * @return {MarkupContainer}
  */
-var getContainerForSelector = Task.async(function* (selector, inspector) {
+var getContainerForSelector =
+Task.async(function* (selector, inspector, expectFailure = false) {
   info("Getting the markup-container for node " + selector);
   let nodeFront = yield getNodeFront(selector, inspector);
   let container = getContainerForNodeFront(nodeFront, inspector);
-  info("Found markup-container " + container);
+
+  if (expectFailure) {
+    ok(!container, "Shouldn't find markup-container for selector: " + selector);
+  } else {
+    ok(container, "Found markup-container for selector: " + selector);
+  }
+
   return container;
 });
 
@@ -423,6 +439,14 @@ const getHighlighterHelperFor = (type) => Task.async(
         };
       },
 
+      get actorID() {
+        if (!highlighter) {
+          return null;
+        }
+
+        return highlighter.actorID;
+      },
+
       show: function* (selector = ":root", options) {
         highlightedNode = yield getNodeFront(selector, inspector);
         return yield highlighter.show(highlightedNode, options);
@@ -479,11 +503,11 @@ const getHighlighterHelperFor = (type) => Task.async(
       //   mouse.up();         // synthesize "mouseup" at 20,30
       mouse: new Proxy({}, {
         get: (target, name) =>
-          function* (x = prevX, y = prevY) {
+          function* (x = prevX, y = prevY, selector = ":root") {
             prevX = x;
             prevY = y;
             yield testActor.synthesizeMouse({
-              selector: ":root", x, y, options: {type: "mouse" + name}});
+              selector, x, y, options: {type: "mouse" + name}});
           }
       }),
 
@@ -582,23 +606,6 @@ function waitForStyleEditor(toolbox, href) {
 }
 
 /**
- * @see SimpleTest.waitForClipboard
- *
- * @param {Function} setup
- *        Function to execute before checking for the
- *        clipboard content
- * @param {String|Function} expected
- *        An expected string or validator function
- * @return a promise that resolves when the expected string has been found or
- * the validator function has returned true, rejects otherwise.
- */
-function waitForClipboard(setup, expected) {
-  let def = defer();
-  SimpleTest.waitForClipboard(expected, setup, def.resolve, def.reject);
-  return def.promise;
-}
-
-/**
  * Checks if document's active element is within the given element.
  * @param  {HTMLDocument}  doc document with active element in question
  * @param  {DOMNode}       container element tested on focus containment
@@ -645,33 +652,96 @@ function synthesizeKeys(input, win) {
 }
 
 /**
- * Given a tooltip object instance (see Tooltip.js), checks if it is set to
- * toggle and hover and if so, checks if the given target is a valid hover
- * target. This won't actually show the tooltip (the less we interact with XUL
- * panels during test runs, the better).
+ * Make sure window is properly focused before sending a key event.
  *
- * @return a promise that resolves when the answer is known
+ * @param {Window} win
+ *        The window containing the panel
+ * @param {String} key
+ *        The string value to input
  */
-function isHoverTooltipTarget(tooltip, target) {
-  if (!tooltip._toggle._baseNode || !tooltip.panel) {
-    return promise.reject(new Error(
-      "The tooltip passed isn't set to toggle on hover or is not a tooltip"));
-  }
-  return tooltip._toggle.isValidHoverTarget(target);
+function focusAndSendKey(win, key) {
+  win.document.documentElement.focus();
+  EventUtils.sendKey(key, win);
 }
 
 /**
- * Same as isHoverTooltipTarget except that it will fail the test if there is no
- * tooltip defined on hover of the given element
+ * Given a Tooltip instance, fake a mouse event on the `target` DOM Element
+ * and assert that the `tooltip` is correctly displayed.
  *
- * @return a promise
+ * @param {Tooltip} tooltip
+ *        The tooltip instance
+ * @param {DOMElement} target
+ *        The DOM Element on which a tooltip should appear
+ *
+ * @return a promise that resolves with the tooltip object
  */
-function assertHoverTooltipOn(tooltip, element) {
-  return isHoverTooltipTarget(tooltip, element).then(() => {
-    ok(true, "A tooltip is defined on hover of the given element");
-  }, () => {
-    ok(false, "No tooltip is defined on hover of the given element");
+function* assertTooltipShownOnHover(tooltip, target) {
+  let mouseEvent = new target.ownerDocument.defaultView.MouseEvent("mousemove", {
+    bubbles: true,
   });
+  target.dispatchEvent(mouseEvent);
+
+  if (!tooltip.isVisible()) {
+    info("Waiting for tooltip to be shown");
+    yield tooltip.once("shown");
+  }
+
+  ok(tooltip.isVisible(), `The tooltip is visible`);
+
+  return tooltip;
+}
+
+/**
+ * Given an inspector `view` object, fake a mouse event on the `target` DOM
+ * Element and assert that the preview tooltip  is correctly displayed.
+ *
+ * @param {CssRuleView|ComputedView|...} view
+ *        The instance of an inspector panel
+ * @param {DOMElement} target
+ *        The DOM Element on which a tooltip should appear
+ *
+ * @return a promise that resolves with the tooltip object
+ */
+function* assertShowPreviewTooltip(view, target) {
+  let mouseEvent = new target.ownerDocument.defaultView.MouseEvent("mousemove", {
+    bubbles: true,
+  });
+  target.dispatchEvent(mouseEvent);
+
+  let name = "previewTooltip";
+  ok(view.tooltips._instances.has(name),
+    `Tooltip '${name}' has been instantiated`);
+  let tooltip = view.tooltips.getTooltip(name);
+
+  if (!tooltip.isVisible()) {
+    info("Waiting for tooltip to be shown");
+    yield tooltip.once("shown");
+  }
+
+  ok(tooltip.isVisible(), `The tooltip '${name}' is visible`);
+
+  return tooltip;
+}
+
+/**
+ * Given a `tooltip` instance, fake a mouse event on `target` DOM element
+ * and check that the tooltip correctly disappear.
+ *
+ * @param {Tooltip} tooltip
+ *        The tooltip instance
+ * @param {DOMElement} target
+ *        The DOM Element on which a tooltip should appear
+ */
+function* assertTooltipHiddenOnMouseOut(tooltip, target) {
+  let mouseEvent = new target.ownerDocument.defaultView.MouseEvent("mouseout", {
+    bubbles: true,
+    relatedTarget: target
+  });
+  target.dispatchEvent(mouseEvent);
+
+  yield tooltip.once("hidden");
+
+  ok(!tooltip.isVisible(), "The tooltip is hidden on mouseout");
 }
 
 /**
@@ -709,4 +779,57 @@ function getRuleViewRuleEditor(view, childrenIndex, nodeIndex) {
   return nodeIndex !== undefined ?
     view.element.children[childrenIndex].childNodes[nodeIndex]._ruleEditor :
     view.element.children[childrenIndex]._ruleEditor;
+}
+
+/**
+ * Get the text displayed for a given DOM Element's textContent within the
+ * markup view.
+ *
+ * @param {String} selector
+ * @param {InspectorPanel} inspector
+ * @return {String} The text displayed in the markup view
+ */
+function* getDisplayedNodeTextContent(selector, inspector) {
+  // We have to ensure that the textContent is displayed, for that the DOM
+  // Element has to be selected in the markup view and to be expanded.
+  yield selectNode(selector, inspector);
+
+  let container = yield getContainerForSelector(selector, inspector);
+  yield inspector.markup.expandNode(container.node);
+  yield waitForMultipleChildrenUpdates(inspector);
+  if (container) {
+    let textContainer = container.elt.querySelector("pre");
+    return textContainer.textContent;
+  }
+  return null;
+}
+
+/**
+ * Toggle the shapes highlighter by simulating a click on the toggle
+ * in the rules view with the given selector and property
+ *
+ * @param {CssRuleView} view
+ *        The instance of the rule-view panel
+ * @param {Object} highlighters
+ *        The highlighters instance of the rule-view panel
+ * @param {String} selector
+ *        The selector in the rule-view to look for the property in
+ * @param {String} property
+ *        The name of the property
+ * @param {Boolean} show
+ *        If true, the shapes highlighter is being shown. If false, it is being hidden
+ */
+function* toggleShapesHighlighter(view, highlighters, selector, property, show) {
+  info("Toggle shapes highlighter");
+  let container = getRuleViewProperty(view, selector, property).valueSpan;
+  let shapesToggle = container.querySelector(".ruleview-shape");
+  if (show) {
+    let onHighlighterShown = highlighters.once("shapes-highlighter-shown");
+    shapesToggle.click();
+    yield onHighlighterShown;
+  } else {
+    let onHighlighterHidden = highlighters.once("shapes-highlighter-hidden");
+    shapesToggle.click();
+    yield onHighlighterHidden;
+  }
 }

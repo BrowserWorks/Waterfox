@@ -18,45 +18,29 @@ CRCCheck on
 
 RequestExecutionLevel user
 
-; The commands inside this ifdef require NSIS 3.0a2 or greater so the ifdef can
-; be removed after we require NSIS 3.0a2 or greater.
-!ifdef NSIS_PACKEDVERSION
-  Unicode true
-  ManifestSupportedOS all
-  ManifestDPIAware true
-!endif
+Unicode true
+ManifestSupportedOS all
+ManifestDPIAware true
 
 !addplugindir ./
 
 Var Dialog
 Var Progressbar
 Var ProgressbarMarqueeIntervalMS
-Var LabelDownloading
-Var LabelInstalling
-Var LabelFreeSpace
 Var CheckboxSetAsDefault
-Var CheckboxShortcutOnBar ; Used for Quicklaunch or Taskbar as appropriate
-Var CheckboxShortcutInStartMenu
-Var CheckboxShortcutOnDesktop
+Var CheckboxShortcuts
 Var CheckboxSendPing
 Var CheckboxInstallMaintSvc
-Var DirRequest
-Var ButtonBrowse
-Var LabelBlurb1
-Var LabelBlurb2
-Var LabelBlurb3
-Var BitmapBlurb1
-Var BitmapBlurb2
-Var BitmapBlurb3
-Var HwndBitmapBlurb1
-Var HwndBitmapBlurb2
-Var HWndBitmapBlurb3
+Var DroplistArch
+Var LabelBlurb
+Var BgBitmapImage
+Var HwndBgBitmapControl
+Var CurrentBlurbIdx
 
-Var FontNormal
-Var FontItalic
+Var FontInstalling
 Var FontBlurb
+Var FontFooter
 
-Var WasOptionsButtonClicked
 Var CanWriteToInstallDir
 Var HasRequiredSpaceAvailable
 Var IsDownloadFinished
@@ -73,15 +57,10 @@ Var InstallStepSize
 Var InstallTotalSteps
 Var ProgressCompleted
 Var ProgressTotal
-Var TmpVal
 
 Var ExitCode
 Var FirefoxLaunchCode
 
-; The first three tick counts are for the start of a phase and equate equate to
-; the display of individual installer pages.
-Var StartIntroPhaseTickCount
-Var StartOptionsPhaseTickCount
 Var StartDownloadPhaseTickCount
 ; Since the Intro and Options pages can be displayed multiple times the total
 ; seconds spent on each of these pages is reported.
@@ -108,9 +87,8 @@ Var DownloadRetryCount
 Var OpenedDownloadPage
 Var DownloadServerIP
 Var PostSigningData
-
-Var ControlHeightPX
-Var ControlRightPX
+Var PreviousInstallDir
+Var PreviousInstallArch
 
 ; Uncomment the following to prevent pinging the metrics server when testing
 ; the stub installer
@@ -199,7 +177,15 @@ Var ControlRightPX
 ; InstallProgressFirstStep .
 !define /math InstallPaveOverTotalSteps ${InstallProgressFirstStep} + 1800
 
-; On Vista and above attempt to elevate Standard Users in addition to users that
+; Blurb duty cycle
+!define BlurbDisplayMS 19500
+!define BlurbBlankMS 500
+
+; Amount of physical memory required for the 64-bit build to be selected (2 GB).
+; Machines with this or less RAM get the 32-bit build, even with a 64-bit OS.
+!define RAM_NEEDED_FOR_64BIT 0x80000000
+
+; Attempt to elevate Standard Users in addition to users that
 ; are a member of the Administrators group.
 !define NONADMIN_ELEVATE
 
@@ -217,6 +203,9 @@ Var ControlRightPX
 !ifndef INVALID_HANDLE_VALUE
   !define INVALID_HANDLE_VALUE -1
 !endif
+
+!define DefaultInstDir32bit "$PROGRAMFILES32\${BrandFullName}"
+!define DefaultInstDir64bit "$PROGRAMFILES64\${BrandFullName}"
 
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
@@ -243,14 +232,19 @@ Var ControlRightPX
 ; set the update channel to beta.
 !ifdef OFFICIAL
 !ifdef BETA_UPDATE_CHANNEL
-!undef URLStubDownload
-!define URLStubDownload "http://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-beta-latest"
+!undef URLStubDownload32
+!undef URLStubDownload64
+!define URLStubDownload32 "http://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-beta-latest"
+!define URLStubDownload64 "http://download.mozilla.org/?os=win64&lang=${AB_CD}&product=firefox-beta-latest"
 !undef URLManualDownload
 !define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=beta&installer_lang=${AB_CD}"
 !undef Channel
 !define Channel "beta"
 !endif
 !endif
+
+!undef INSTALL_BLURB_TEXT_COLOR
+!define INSTALL_BLURB_TEXT_COLOR 0xFFFFFF
 
 !include "common.nsh"
 
@@ -266,20 +260,15 @@ Var ControlRightPX
 !insertmacro ITBL3Create
 !insertmacro UnloadUAC
 
-VIAddVersionKey "FileDescription" "${BrandShortName} Stub Installer"
+VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup-stub.exe"
 
 Name "$BrandFullName"
 OutFile "setup-stub.exe"
-icon "setup.ico"
+Icon "firefox64.ico"
 XPStyle on
 BrandingText " "
 ChangeUI all "nsisui.exe"
-!ifdef HAVE_64BIT_BUILD
-  InstallDir "$PROGRAMFILES64\${BrandFullName}\"
-!else
-  InstallDir "$PROGRAMFILES32\${BrandFullName}\"
-!endif
 
 !ifdef ${AB_CD}_rtl
   LoadLanguageFile "locale-rtl.nlf"
@@ -289,21 +278,8 @@ ChangeUI all "nsisui.exe"
 
 !include "nsisstrings.nlf"
 
-!if "${AB_CD}" == "en-US"
-  ; Custom strings for en-US. This is done here so they aren't translated.
-  !include oneoff_en-US.nsh
-!else
-  !define INTRO_BLURB "$(INTRO_BLURB1)"
-  !define INSTALL_BLURB1 "$(INSTALL_BLURB1)"
-  !define INSTALL_BLURB2 "$(INSTALL_BLURB2)"
-  !define INSTALL_BLURB3 "$(INSTALL_BLURB3)"
-!endif
+Caption "$(INSTALLER_WIN_CAPTION)"
 
-Caption "$(WIN_CAPTION)"
-
-Page custom createDummy ; Needed to enable the Intro page's back button
-Page custom createIntro leaveIntro ; Introduction page
-Page custom createOptions leaveOptions ; Options page
 Page custom createInstall ; Download / Installation page
 
 Function .onInit
@@ -321,10 +297,8 @@ Function .onInit
   ; SSE2 instruction set is available.
   System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
 
-!ifdef HAVE_64BIT_BUILD
-  ; Restrict x64 builds from being installed on x86 and pre Win7
-  ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWin7}
+  ; Windows NT 6.0 (Vista/Server 2008) and lower are not supported.
+  ${Unless} ${AtLeastWin7}
     ${If} "$R7" == "0"
       strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
     ${Else}
@@ -335,64 +309,42 @@ Function .onInit
     Quit
   ${EndUnless}
 
-  SetRegView 64
-!else
-  StrCpy $R8 "0"
-  ${If} ${AtMostWin2000}
-    StrCpy $R8 "1"
-  ${EndIf}
-
-  ${If} ${IsWinXP}
-  ${AndIf} ${AtMostServicePack} 1
-    StrCpy $R8 "1"
-  ${EndIf}
-
-  ${If} $R8 == "1"
-    ; XXX-rstrong - some systems failed the AtLeastWin2000 test that we
-    ; used to use for an unknown reason and likely fail the AtMostWin2000
-    ; and possibly the IsWinXP test as well. To work around this also
-    ; check if the Windows NT registry Key exists and if it does if the
-    ; first char in CurrentVersion is equal to 3 (Windows NT 3.5 and
-    ; 3.5.1), 4 (Windows NT 4), or 5 (Windows 2000 and Windows XP).
-    StrCpy $R8 ""
-    ClearErrors
-    ReadRegStr $R8 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentVersion"
-    StrCpy $R8 "$R8" 1
-    ${If} ${Errors}
-    ${OrIf} "$R8" == "3"
-    ${OrIf} "$R8" == "4"
-    ${OrIf} "$R8" == "5"
-      ${If} "$R7" == "0"
-        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
-      ${Else}
-        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_MSG)"
-      ${EndIf}
-      MessageBox MB_OKCANCEL|MB_ICONSTOP "$R7" IDCANCEL +2
-      ExecShell "open" "${URLSystemRequirements}"
-      Quit
-    ${EndIf}
-  ${EndUnless}
-!endif
-
+  ; SSE2 CPU support
   ${If} "$R7" == "0"
     MessageBox MB_OKCANCEL|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_CPU_MSG)" IDCANCEL +2
     ExecShell "open" "${URLSystemRequirements}"
     Quit
   ${EndIf}
 
+  ; Check if we meet the RAM requirement for the 64-bit build.
+  System::Call "*(i 64, i, l 0, l, l, l, l, l, l)p.r0"
+  System::Call "Kernel32::GlobalMemoryStatusEx(p r0)"
+  System::Call "*$0(i, i, l.r1, l, l, l, l, l, l)"
+  System::Free $0
+
+  ${If} ${RunningX64}
+  ${AndIf} $1 L> ${RAM_NEEDED_FOR_64BIT}
+    StrCpy $DroplistArch "$(VERSION_64BIT)"
+    StrCpy $INSTDIR "${DefaultInstDir64bit}"
+  ${Else}
+    StrCpy $DroplistArch "$(VERSION_32BIT)"
+    StrCpy $INSTDIR "${DefaultInstDir32bit}"
+  ${EndIf}
+
   ; Require elevation if the user can elevate
   ${ElevateUAC}
 
-; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
-; removed after we require NSIS 3.0a2 or greater.
-!ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
-    System::Call 'user32::SetProcessDPIAware()'
-  ${EndIf}
-!endif
-
+  ; If we have any existing installation, use its location as the default
+  ; path for this install, even if it's not the same architecture.
+  SetRegView 32
   SetShellVarContext all ; Set SHCTX to HKLM
   ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+
+  ${If} "$R9" == "false"
+  ${AndIf} ${RunningX64}
+    SetRegView 64
+    ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+  ${EndIf}
 
   ${If} "$R9" == "false"
     SetShellVarContext current ; Set SHCTX to HKCU
@@ -400,7 +352,7 @@ Function .onInit
 
     ${If} ${RunningX64}
       ; In HKCU there is no WOW64 redirection, which means we may have gotten
-      ; the path to a 32-bit install even though we're 64-bit, or vice-versa.
+      ; the path to a 32-bit install even though we're 64-bit.
       ; In that case, just use the default path instead of offering an upgrade.
       ; But only do that override if the existing install is in Program Files,
       ; because that's the only place we can be sure is specific
@@ -408,20 +360,36 @@ Function .onInit
       ; The WordFind syntax below searches for the first occurence of the
       ; "delimiter" (the Program Files path) in the install path and returns
       ; anything that appears before that. If nothing appears before that,
-      ; then the install is under Program Files (32 or 64).
-!ifdef HAVE_64BIT_BUILD
+      ; then the install is under Program Files.
       ${WordFind} $R9 $PROGRAMFILES32 "+1{" $0
-!else
-      ${WordFind} $R9 $PROGRAMFILES64 "+1{" $0
-!endif
       ${If} $0 == ""
         StrCpy $R9 "false"
       ${EndIf}
     ${EndIf}
   ${EndIf}
 
+  StrCpy $PreviousInstallDir ""
+  StrCpy $PreviousInstallArch ""
   ${If} "$R9" != "false"
-    StrCpy $INSTDIR "$R9"
+    ; Don't override the default install path with an existing installation
+    ; of a different architecture.
+    System::Call "*(i)p.r0"
+    StrCpy $1 "$R9\${FileMainEXE}"
+    System::Call "Kernel32::GetBinaryTypeW(w r1, p r0)i"
+    System::Call "*$0(i.r2)"
+    System::Free $0
+
+    ${If} $2 == "6" ; 6 == SCS_64BIT_BINARY
+    ${AndIf} ${RunningX64}
+      StrCpy $PreviousInstallDir "$R9"
+      StrCpy $PreviousInstallArch "64"
+      StrCpy $INSTDIR "$PreviousInstallDir"
+    ${ElseIf} $2 == "0" ; 0 == SCS_32BIT_BINARY
+    ${AndIfNot} ${RunningX64}
+      StrCpy $PreviousInstallDir "$R9"
+      StrCpy $PreviousInstallArch "32"
+      StrCpy $INSTDIR "$PreviousInstallDir"
+    ${EndIf}
   ${EndIf}
 
   ; Used to determine if the default installation directory was used.
@@ -436,18 +404,14 @@ Function .onInit
   ${If} ${Errors}
   ${OrIf} ${AtLeastWin8}
     StrCpy $CanSetAsDefault "false"
-    StrCpy $CheckboxSetAsDefault "0"
   ${Else}
     DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     StrCpy $CanSetAsDefault "true"
   ${EndIf}
+  StrCpy $CheckboxSetAsDefault "0"
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinVista}
-    StrCpy $ProgressbarMarqueeIntervalMS "10"
-  ${Else}
-    StrCpy $ProgressbarMarqueeIntervalMS "50"
-  ${EndIf}
+  StrCpy $ProgressbarMarqueeIntervalMS "10"
 
   ; Initialize the majority of variables except those that need to be reset
   ; when a page is displayed.
@@ -458,16 +422,20 @@ Function .onInit
   StrCpy $InitialInstallRequirementsCode ""
   StrCpy $IsDownloadFinished ""
   StrCpy $FirefoxLaunchCode "0"
-  StrCpy $CheckboxShortcutOnBar "1"
-  StrCpy $CheckboxShortcutInStartMenu "1"
-  StrCpy $CheckboxShortcutOnDesktop "1"
+  StrCpy $CheckboxShortcuts "1"
   StrCpy $CheckboxSendPing "1"
 !ifdef MOZ_MAINTENANCE_SERVICE
-  StrCpy $CheckboxInstallMaintSvc "1"
+  ; We can only install the maintenance service if the user is an admin.
+  Call IsUserAdmin
+  Pop $0
+  ${If} "$0" == "true"
+    StrCpy $CheckboxInstallMaintSvc "1"
+  ${Else}
+    StrCpy $CheckboxInstallMaintSvc "0"
+  ${EndIf}
 !else
   StrCpy $CheckboxInstallMaintSvc "0"
 !endif
-  StrCpy $WasOptionsButtonClicked "0"
 
   StrCpy $0 ""
 !ifdef FONT_FILE1
@@ -487,21 +455,12 @@ Function .onInit
     StrCpy $0 "$(^Font)"
   ${EndIf}
 
-  CreateFont $FontBlurb "$0" "12" "500"
-  CreateFont $FontNormal "$0" "11" "500"
-  CreateFont $FontItalic "$0" "11" "500" /ITALIC
+  CreateFont $FontInstalling "$0" "28" "400"
+  CreateFont $FontBlurb      "$0" "15" "400"
+  CreateFont $FontFooter     "$0" "13" "400"
 
   InitPluginsDir
-  File /oname=$PLUGINSDIR\bgintro.bmp "bgintro.bmp"
-  File /oname=$PLUGINSDIR\appname.bmp "appname.bmp"
-  File /oname=$PLUGINSDIR\clock.bmp "clock.bmp"
-  File /oname=$PLUGINSDIR\particles.bmp "particles.bmp"
-!ifdef ${AB_CD}_rtl
-  ; The horizontally flipped pencil looks better in RTL
-  File /oname=$PLUGINSDIR\pencil.bmp "pencil-rtl.bmp"
-!else
-  File /oname=$PLUGINSDIR\pencil.bmp "pencil.bmp"
-!endif
+  File /oname=$PLUGINSDIR\bgstub.bmp "bgstub.bmp"
 FunctionEnd
 
 ; .onGUIInit isn't needed except for RTL locales
@@ -530,6 +489,8 @@ Function .onUserAbort
   ${NSD_KillTimer} FinishInstall
   ${NSD_KillTimer} FinishProgressBar
   ${NSD_KillTimer} DisplayDownloadError
+  ${NSD_KillTimer} NextBlurb
+  ${NSD_KillTimer} ClearBlurb
 
   ${If} "$IsDownloadFinished" != ""
     Call DisplayDownloadError
@@ -611,11 +572,11 @@ Function SendPing
     ; completion of all phases.
     ${GetSecondsElapsed} "$EndInstallPhaseTickCount" "$EndFinishPhaseTickCount" $4
 
-!ifdef HAVE_64BIT_BUILD
-    StrCpy $R0 "1"
-!else
-    StrCpy $R0 "0"
-!endif
+    ${If} $DroplistArch == "$(VERSION_64BIT)"
+      StrCpy $R0 "1"
+    ${Else}
+      StrCpy $R0 "0"
+    ${EndIf}
 
     ${If} ${RunningX64}
       StrCpy $R1 "1"
@@ -688,36 +649,25 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinVista}
-      ; Check to see if this install location is currently set as the default
-      ; browser by Default Programs which is only available on Vista and above.
-      ClearErrors
-      ReadRegStr $R3 HKLM "Software\RegisteredApplications" "${AppRegName}"
-      ${Unless} ${Errors}
-        AppAssocReg::QueryAppIsDefaultAll "${AppRegName}" "effective"
-        Pop $R3
-        ${If} $R3 == "1"
-          StrCpy $R3 ""
-          ReadRegStr $R2 HKLM "Software\Classes\http\shell\open\command" ""
-          ${If} $R2 != ""
-            ${GetPathFromString} "$R2" $R2
-            ${GetParent} "$R2" $R3
-            ${GetLongPath} "$R3" $R3
-            ${If} $R3 == $INSTDIR
-              StrCpy $R2 "1" ; This Firefox install is set as default.
-            ${Else}
-              StrCpy $R2 "$R2" "" -11 # length of firefox.exe
-              ${If} "$R2" == "${FileMainEXE}"
-                StrCpy $R2 "2" ; Another Firefox install is set as default.
-              ${Else}
-                StrCpy $R2 "0"
-              ${EndIf}
-            ${EndIf}
+      StrCpy $R3 ""
+      ReadRegStr $R2 HKLM "Software\Classes\http\shell\open\command" ""
+      ${If} $R2 != ""
+        ${GetPathFromString} "$R2" $R2
+        ${GetParent} "$R2" $R3
+        ${GetLongPath} "$R3" $R3
+        ${If} $R3 == $INSTDIR
+          StrCpy $R2 "1" ; This Firefox install is set as default.
+        ${Else}
+          StrCpy $R2 "$R2" "" -11 # length of firefox.exe
+          ${If} "$R2" == "${FileMainEXE}"
+            StrCpy $R2 "2" ; Another Firefox install is set as default.
           ${Else}
-            StrCpy $R2 "0" ; Firefox is not set as default.
+            StrCpy $R2 "0"
           ${EndIf}
         ${EndIf}
-      ${EndUnless}
+      ${Else}
+        StrCpy $R2 "0" ; Firefox is not set as default.
+      ${EndIf}
     ${EndIf}
 
     ${If} $CanSetAsDefault == "true"
@@ -794,89 +744,7 @@ Function SendPing
   ${EndIf}
 FunctionEnd
 
-Function createDummy
-FunctionEnd
-
-Function createIntro
-  nsDialogs::Create /NOUNLOAD 1018
-  Pop $Dialog
-
-  GetFunctionAddress $0 OnBack
-  nsDialogs::OnBack /NOUNLOAD $0
-
-!ifdef ${AB_CD}_rtl
-  ; For RTL align the text with the top of the F in the Firefox bitmap
-  StrCpy $0 "${INTRO_BLURB_RTL_TOP_DU}"
-!else
-  ; For LTR align the text with the top of the x in the Firefox bitmap
-  StrCpy $0 "${INTRO_BLURB_LTR_TOP_DU}"
-!endif
-  ${NSD_CreateLabel} ${INTRO_BLURB_EDGE_DU} $0 ${INTRO_BLURB_WIDTH_DU} 76u "${INTRO_BLURB}"
-  Pop $0
-  SendMessage $0 ${WM_SETFONT} $FontBlurb 0
-  SetCtlColors $0 ${INTRO_BLURB_TEXT_COLOR} transparent
-
-  SetCtlColors $HWNDPARENT ${FOOTER_CONTROL_TEXT_COLOR_NORMAL} ${FOOTER_BKGRD_COLOR}
-  GetDlgItem $0 $HWNDPARENT 10 ; Default browser checkbox
-  ${If} "$CanSetAsDefault" == "true"
-    ; The uxtheme must be disabled on checkboxes in order to override the
-    ; system font color.
-    System::Call 'uxtheme::SetWindowTheme(i $0 , w " ", w " ")'
-    SendMessage $0 ${WM_SETFONT} $FontNormal 0
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(MAKE_DEFAULT)"
-    SendMessage $0 ${BM_SETCHECK} 1 0
-    SetCtlColors $0 ${FOOTER_CONTROL_TEXT_COLOR_NORMAL} ${FOOTER_BKGRD_COLOR}
-  ${Else}
-    ShowWindow $0 ${SW_HIDE}
-  ${EndIf}
-  GetDlgItem $0 $HWNDPARENT 11
-  ShowWindow $0 ${SW_HIDE}
-
-  ${NSD_CreateBitmap} ${APPNAME_BMP_EDGE_DU} ${APPNAME_BMP_TOP_DU} \
-                      ${APPNAME_BMP_WIDTH_DU} ${APPNAME_BMP_HEIGHT_DU} ""
-  Pop $2
-  ${SetStretchedTransparentImage} $2 $PLUGINSDIR\appname.bmp $0
-
-  ${NSD_CreateBitmap} 0 0 100% 100% ""
-  Pop $2
-  ${NSD_SetStretchedImage} $2 $PLUGINSDIR\bgintro.bmp $1
-
-  GetDlgItem $0 $HWNDPARENT 1 ; Install button
-  ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(UPGRADE_BUTTON)"
-  ${Else}
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(INSTALL_BUTTON)"
-  ${EndIf}
-  ${NSD_SetFocus} $0
-
-  GetDlgItem $0 $HWNDPARENT 2 ; Cancel button
-  SendMessage $0 ${WM_SETTEXT} 0 "STR:$(CANCEL_BUTTON)"
-
-  GetDlgItem $0 $HWNDPARENT 3 ; Back button used for Options
-  SendMessage $0 ${WM_SETTEXT} 0 "STR:$(OPTIONS_BUTTON)"
-
-  System::Call "kernel32::GetTickCount()l .s"
-  Pop $StartIntroPhaseTickCount
-
-  LockWindow off
-  nsDialogs::Show
-
-  ${NSD_FreeImage} $0
-  ${NSD_FreeImage} $1
-FunctionEnd
-
-Function leaveIntro
-  LockWindow on
-
-  System::Call "kernel32::GetTickCount()l .s"
-  Pop $0
-  ${GetSecondsElapsed} "$StartIntroPhaseTickCount" "$0" $IntroPhaseSeconds
-  ; It is possible for this value to be 0 if the user clicks fast enough so
-  ; increment the value by 1 if it is 0.
-  ${If} $IntroPhaseSeconds == 0
-    IntOp $IntroPhaseSeconds $IntroPhaseSeconds + 1
-  ${EndIf}
-
+Function createInstall
   SetShellVarContext all ; Set SHCTX to All Users
   ; If the user doesn't have write access to the installation directory set
   ; the installation directory to a subdirectory of the All Users application
@@ -903,9 +771,6 @@ Function leaveIntro
     ${GetLongPath} "$INSTDIR" $INSTDIR
   ${EndIf}
 
-FunctionEnd
-
-Function createOptions
   ; Check whether the install requirements are satisfied using the default
   ; values for metrics.
   ${If} "$InitialInstallRequirementsCode" == ""
@@ -921,365 +786,77 @@ Function createOptions
     ${EndIf}
   ${EndIf}
 
-  ; Skip the options page unless the Options button was clicked as long as the
-  ; installation directory can be written to and there is the minimum required
-  ; space available.
-  ${If} "$WasOptionsButtonClicked" != "1"
-    ${If} "$CanWriteToInstallDir" == "true"
-    ${AndIf} "$HasRequiredSpaceAvailable" == "true"
-      Abort ; Skip the options page
-    ${EndIf}
-  ${EndIf}
-
-  StrCpy $ExistingTopDir ""
-
-  nsDialogs::Create /NOUNLOAD 1018
-  Pop $Dialog
-  ; Since the text color for controls is set in this Dialog the foreground and
-  ; background colors of the Dialog must also be hardcoded.
-  SetCtlColors $Dialog ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-
-  ${NSD_CreateLabel} ${OPTIONS_ITEM_EDGE_DU} 18u ${OPTIONS_ITEM_WIDTH_DU} \
-                     12u "$(CREATE_SHORTCUTS)"
-  Pop $0
-  SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $0 ${WM_SETFONT} $FontNormal 0
-
-  ${If} ${AtLeastWin7}
-    StrCpy $0 "$(ADD_SC_TASKBAR)"
-  ${Else}
-    StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"
-  ${EndIf}
-  ${NSD_CreateCheckbox} ${OPTIONS_SUBITEM_EDGE_DU} 38u \
-                        ${OPTIONS_SUBITEM_WIDTH_DU} 12u "$0"
-  Pop $CheckboxShortcutOnBar
-  ; The uxtheme must be disabled on checkboxes in order to override the system
-  ; font color.
-  System::Call 'uxtheme::SetWindowTheme(i $CheckboxShortcutOnBar, w " ", w " ")'
-  SetCtlColors $CheckboxShortcutOnBar ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $CheckboxShortcutOnBar ${WM_SETFONT} $FontNormal 0
-  ${NSD_Check} $CheckboxShortcutOnBar
-
-  ${NSD_CreateCheckbox} ${OPTIONS_SUBITEM_EDGE_DU} 54u ${OPTIONS_SUBITEM_WIDTH_DU} \
-                        12u "$(ADD_CheckboxShortcutInStartMenu)"
-  Pop $CheckboxShortcutInStartMenu
-  ; The uxtheme must be disabled on checkboxes in order to override the system
-  ; font color.
-  System::Call 'uxtheme::SetWindowTheme(i $CheckboxShortcutInStartMenu, w " ", w " ")'
-  SetCtlColors $CheckboxShortcutInStartMenu ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $CheckboxShortcutInStartMenu ${WM_SETFONT} $FontNormal 0
-  ${NSD_Check} $CheckboxShortcutInStartMenu
-
-  ${NSD_CreateCheckbox} ${OPTIONS_SUBITEM_EDGE_DU} 70u ${OPTIONS_SUBITEM_WIDTH_DU} \
-                        12u "$(ADD_CheckboxShortcutOnDesktop)"
-  Pop $CheckboxShortcutOnDesktop
-  ; The uxtheme must be disabled on checkboxes in order to override the system
-  ; font color.
-  System::Call 'uxtheme::SetWindowTheme(i $CheckboxShortcutOnDesktop, w " ", w " ")'
-  SetCtlColors $CheckboxShortcutOnDesktop ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $CheckboxShortcutOnDesktop ${WM_SETFONT} $FontNormal 0
-  ${NSD_Check} $CheckboxShortcutOnDesktop
-
-  ${NSD_CreateLabel} ${OPTIONS_ITEM_EDGE_DU} 100u ${OPTIONS_ITEM_WIDTH_DU} \
-                     12u "$(DEST_FOLDER)"
-  Pop $0
-  SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $0 ${WM_SETFONT} $FontNormal 0
-
-  ${NSD_CreateDirRequest} ${OPTIONS_SUBITEM_EDGE_DU} 116u 159u 14u "$INSTDIR"
-  Pop $DirRequest
-  SetCtlColors $DirRequest ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $DirRequest ${WM_SETFONT} $FontNormal 0
-  System::Call shlwapi::SHAutoComplete(i $DirRequest, i ${SHACF_FILESYSTEM})
-  ${NSD_OnChange} $DirRequest OnChange_DirRequest
-
-!ifdef ${AB_CD}_rtl
-  ; Remove the RTL styling from the directory request text box
-  ${RemoveStyle} $DirRequest ${SS_RIGHT}
-  ${RemoveExStyle} $DirRequest ${WS_EX_RIGHT}
-  ${RemoveExStyle} $DirRequest ${WS_EX_RTLREADING}
-  ${NSD_AddStyle} $DirRequest ${SS_LEFT}
-  ${NSD_AddExStyle} $DirRequest ${WS_EX_LTRREADING}|${WS_EX_LEFT}
-!endif
-
-  ${NSD_CreateBrowseButton} 280u 116u 50u 14u "$(BROWSE_BUTTON)"
-  Pop $ButtonBrowse
-  SetCtlColors $ButtonBrowse "" ${COMMON_BKGRD_COLOR}
-  ${NSD_OnClick} $ButtonBrowse OnClick_ButtonBrowse
-
-  ; Get the number of pixels from the left of the Dialog to the right side of
-  ; the "Space Required:" and "Space Available:" labels prior to setting RTL so
-  ; the correct position of the controls can be set by NSIS for RTL locales.
-
-  ; Get the width and height of both labels and use the tallest for the height
-  ; and the widest to calculate where to place the labels after these labels.
-  ${GetTextExtent} "$(SPACE_REQUIRED)" $FontItalic $0 $1
-  ${GetTextExtent} "$(SPACE_AVAILABLE)" $FontItalic $2 $3
-  ${If} $1 > $3
-    StrCpy $ControlHeightPX "$1"
-  ${Else}
-    StrCpy $ControlHeightPX "$3"
-  ${EndIf}
-
-  IntOp $0 $0 + 8 ; Add padding to the control's width
-  ; Make both controls the same width as the widest control
-  ${NSD_CreateLabelCenter} ${OPTIONS_SUBITEM_EDGE_DU} 134u $0 $ControlHeightPX "$(SPACE_REQUIRED)"
-  Pop $5
-  SetCtlColors $5 ${COMMON_TEXT_COLOR_FADED} ${COMMON_BKGRD_COLOR}
-  SendMessage $5 ${WM_SETFONT} $FontItalic 0
-
-  IntOp $2 $2 + 8 ; Add padding to the control's width
-  ${NSD_CreateLabelCenter} ${OPTIONS_SUBITEM_EDGE_DU} 145u $2 $ControlHeightPX "$(SPACE_AVAILABLE)"
-  Pop $6
-  SetCtlColors $6 ${COMMON_TEXT_COLOR_FADED} ${COMMON_BKGRD_COLOR}
-  SendMessage $6 ${WM_SETFONT} $FontItalic 0
-
-  ; Use the widest label for aligning the labels next to them
-  ${If} $0 > $2
-    StrCpy $6 "$5"
-  ${EndIf}
-  FindWindow $1 "#32770" "" $HWNDPARENT
-  ${GetDlgItemEndPX} $6 $ControlRightPX
-
-  IntOp $ControlRightPX $ControlRightPX + 6
-
-  ${NSD_CreateLabel} $ControlRightPX 134u 100% $ControlHeightPX \
-                     "${APPROXIMATE_REQUIRED_SPACE_MB} $(MEGA)$(BYTE)"
-  Pop $7
-  SetCtlColors $7 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $7 ${WM_SETFONT} $FontNormal 0
-
-  ; Create the free space label with an empty string and update it by calling
-  ; UpdateFreeSpaceLabel
-  ${NSD_CreateLabel} $ControlRightPX 145u 100% $ControlHeightPX " "
-  Pop $LabelFreeSpace
-  SetCtlColors $LabelFreeSpace ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $LabelFreeSpace ${WM_SETFONT} $FontNormal 0
-
-  Call UpdateFreeSpaceLabel
-
-  ${NSD_CreateCheckbox} ${OPTIONS_ITEM_EDGE_DU} 168u ${OPTIONS_SUBITEM_WIDTH_DU} \
-                        12u "$(SEND_PING)"
-  Pop $CheckboxSendPing
-  ; The uxtheme must be disabled on checkboxes in order to override the system
-  ; font color.
-  System::Call 'uxtheme::SetWindowTheme(i $CheckboxSendPing, w " ", w " ")'
-  SetCtlColors $CheckboxSendPing ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-  SendMessage $CheckboxSendPing ${WM_SETFONT} $FontNormal 0
-  ${NSD_Check} $CheckboxSendPing
-
-!ifdef MOZ_MAINTENANCE_SERVICE
-  ; We can only install the maintenance service if the user is an admin.
-  Call IsUserAdmin
-  Pop $0
-
-  ; Only show the maintenance service checkbox if we're on XP SP3 or higher;
-  ;  we don't ever want to install it on XP without at least SP3 installed.
-  ${If} $0 == "true"
-  ${AndIf} ${IsWinXP}
-  ${AndIf} ${AtMostServicePack} 2
-    StrCpy $0 "false"
-  ${EndIf}
-
-  ; Only show the maintenance service checkbox if we have write access to HKLM
-  ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
-                   "Write Test"
-  ${If} ${Errors}
-  ${OrIf} $0 != "true"
-    StrCpy $CheckboxInstallMaintSvc "0"
-  ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
-    ; Read the registry instead of using ServicesHelper::IsInstalled so the
-    ; plugin isn't included in the stub installer to lessen its size.
-    ClearErrors
-    ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\services\MozillaMaintenance" "ImagePath"
-    ${If} ${Errors}
-      ${NSD_CreateCheckbox} ${OPTIONS_ITEM_EDGE_DU} 184u ${OPTIONS_ITEM_WIDTH_DU} \
-                            12u "$(INSTALL_MAINT_SERVICE)"
-      Pop $CheckboxInstallMaintSvc
-      System::Call 'uxtheme::SetWindowTheme(i $CheckboxInstallMaintSvc, w " ", w " ")'
-      SetCtlColors $CheckboxInstallMaintSvc ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
-      SendMessage $CheckboxInstallMaintSvc ${WM_SETFONT} $FontNormal 0
-      ${NSD_Check} $CheckboxInstallMaintSvc
-    ${EndIf}
-  ${EndIf}
-!endif
-
-  GetDlgItem $0 $HWNDPARENT 1 ; Install button
-  ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(UPGRADE_BUTTON)"
-  ${Else}
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(INSTALL_BUTTON)"
-  ${EndIf}
-  ${NSD_SetFocus} $0
-
-  GetDlgItem $0 $HWNDPARENT 2 ; Cancel button
-  SendMessage $0 ${WM_SETTEXT} 0 "STR:$(CANCEL_BUTTON)"
-
-  GetDlgItem $0 $HWNDPARENT 3 ; Back button used for Options
-  EnableWindow $0 0
-  ShowWindow $0 ${SW_HIDE}
-
-  ; If the option button was not clicked display the reason for what needs to be
-  ; resolved to continue the installation.
-  ${If} "$WasOptionsButtonClicked" != "1"
-    ${If} "$CanWriteToInstallDir" == "false"
-      MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_WRITE_ACCESS)"
-    ${ElseIf} "$HasRequiredSpaceAvailable" == "false"
-      MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_DISK_SPACE)"
-    ${EndIf}
-  ${EndIf}
-
-  System::Call "kernel32::GetTickCount()l .s"
-  Pop $StartOptionsPhaseTickCount
-
-  LockWindow off
-  nsDialogs::Show
-FunctionEnd
-
-Function leaveOptions
-  LockWindow on
-
-  ${GetRoot} "$INSTDIR" $0
-  ${GetLongPath} "$INSTDIR" $INSTDIR
-  ${GetLongPath} "$0" $0
-  ${If} "$INSTDIR" == "$0"
-    LockWindow off
-    MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_ROOT_INSTALL)"
-    Abort ; Stay on the page
-  ${EndIf}
-
   Call CanWrite
   ${If} "$CanWriteToInstallDir" == "false"
-    LockWindow off
-    MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_WRITE_ACCESS)"
-    Abort ; Stay on the page
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_WRITE_ACCESS_QUIT)\n\n$INSTDIR"
+    Quit
   ${EndIf}
 
   Call CheckSpace
   ${If} "$HasRequiredSpaceAvailable" == "false"
-    LockWindow off
-    MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_DISK_SPACE)"
-    Abort ; Stay on the page
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(WARN_DISK_SPACE_QUIT)"
+    Quit
   ${EndIf}
 
-  System::Call "kernel32::GetTickCount()l .s"
-  Pop $0
-  ${GetSecondsElapsed} "$StartOptionsPhaseTickCount" "$0" $OptionsPhaseSeconds
-  ; It is possible for this value to be 0 if the user clicks fast enough so
-  ; increment the value by 1 if it is 0.
-  ${If} $OptionsPhaseSeconds == 0
-    IntOp $OptionsPhaseSeconds $OptionsPhaseSeconds + 1
-  ${EndIf}
+  ; Begin setting up the download/install window
 
-  ${NSD_GetState} $CheckboxShortcutOnBar $CheckboxShortcutOnBar
-  ${NSD_GetState} $CheckboxShortcutInStartMenu $CheckboxShortcutInStartMenu
-  ${NSD_GetState} $CheckboxShortcutOnDesktop $CheckboxShortcutOnDesktop
-  ${NSD_GetState} $CheckboxSendPing $CheckboxSendPing
-!ifdef MOZ_MAINTENANCE_SERVICE
-  ${NSD_GetState} $CheckboxInstallMaintSvc $CheckboxInstallMaintSvc
-!endif
-
-FunctionEnd
-
-Function createInstall
   nsDialogs::Create /NOUNLOAD 1018
   Pop $Dialog
+
+  SetCtlColors $HWNDPARENT ${FOOTER_CONTROL_TEXT_COLOR_NORMAL} ${FOOTER_BKGRD_COLOR}
+
   ; Since the text color for controls is set in this Dialog the foreground and
   ; background colors of the Dialog must also be hardcoded.
   SetCtlColors $Dialog ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
 
-  ${NSD_CreateLabel} 0 0 49u 64u ""
-  Pop $0
-  ${GetDlgItemWidthHeight} $0 $1 $2
-  System::Call 'user32::DestroyWindow(i r0)'
-
-  ${NSD_CreateLabel} 0 0 11u 16u ""
-  Pop $0
-  ${GetDlgItemWidthHeight} $0 $3 $4
-  System::Call 'user32::DestroyWindow(i r0)'
-
   FindWindow $7 "#32770" "" $HWNDPARENT
-  ${GetDlgItemWidthHeight} $7 $8 $9
+  ${GetDlgItemWidthHeight} $HWNDPARENT $8 $9
 
-  ; Allow a maximum text width of half of the Dialog's width
-  IntOp $R0 $8 / 2
+  ; Resize the Dialog to fill the entire window
+  System::Call 'user32::MoveWindow(i$Dialog,i0,i0,i $8,i $9,i0)'
 
-  ${GetTextWidthHeight} "${INSTALL_BLURB1}" $FontBlurb $R0 $5 $6
-  IntOp $R1 $1 + $3
-  IntOp $R1 $R1 + $5
-  IntOp $R1 $8 - $R1
-  IntOp $R1 $R1 / 2
-  ${NSD_CreateBitmap} $R1 ${INSTALL_BLURB_TOP_DU} 49u 64u ""
-  Pop $BitmapBlurb1
-  ${SetStretchedTransparentImage} $BitmapBlurb1 $PLUGINSDIR\clock.bmp $HwndBitmapBlurb1
-  IntOp $R1 $R1 + $1
-  IntOp $R1 $R1 + $3
-  ${NSD_CreateLabel} $R1 ${INSTALL_BLURB_TOP_DU} $5 $6 "${INSTALL_BLURB1}"
-  Pop $LabelBlurb1
-  SendMessage $LabelBlurb1 ${WM_SETFONT} $FontBlurb 0
-  SetCtlColors $LabelBlurb1 ${INSTALL_BLURB_TEXT_COLOR} transparent
+  ; The header string may need more than half the width of the window, but it's
+  ; currently not close to needing multiple lines in any localization.
+  ${NSD_CreateLabelCenter} 0% ${NOW_INSTALLING_TOP_DU} 100% 47u "$(STUB_INSTALLING_LABEL)"
+  Pop $0
+  SendMessage $0 ${WM_SETFONT} $FontInstalling 0
+  SetCtlColors $0 ${INSTALL_BLURB_TEXT_COLOR} transparent
 
-  ${GetTextWidthHeight} "${INSTALL_BLURB2}" $FontBlurb $R0 $5 $6
-  IntOp $R1 $1 + $3
-  IntOp $R1 $R1 + $5
-  IntOp $R1 $8 - $R1
-  IntOp $R1 $R1 / 2
-  ${NSD_CreateBitmap} $R1 ${INSTALL_BLURB_TOP_DU} 49u 64u ""
-  Pop $BitmapBlurb2
-  ${SetStretchedTransparentImage} $BitmapBlurb2 $PLUGINSDIR\particles.bmp $HwndBitmapBlurb2
-  IntOp $R1 $R1 + $1
-  IntOp $R1 $R1 + $3
-  ${NSD_CreateLabel} $R1 ${INSTALL_BLURB_TOP_DU} $5 $6 "${INSTALL_BLURB2}"
-  Pop $LabelBlurb2
-  SendMessage $LabelBlurb2 ${WM_SETFONT} $FontBlurb 0
-  SetCtlColors $LabelBlurb2 ${INSTALL_BLURB_TEXT_COLOR} transparent
-  ShowWindow $BitmapBlurb2 ${SW_HIDE}
-  ShowWindow $LabelBlurb2 ${SW_HIDE}
+  ${NSD_CreateLabelCenter} 0% ${INSTALL_BLURB_TOP_DU} 100% 60u "$(STUB_BLURB1)"
+  Pop $LabelBlurb
+  SendMessage $LabelBlurb ${WM_SETFONT} $FontBlurb 0
+  SetCtlColors $LabelBlurb ${INSTALL_BLURB_TEXT_COLOR} transparent
 
-  ${GetTextWidthHeight} "${INSTALL_BLURB3}" $FontBlurb $R0 $5 $6
-  IntOp $R1 $1 + $3
-  IntOp $R1 $R1 + $5
-  IntOp $R1 $8 - $R1
-  IntOp $R1 $R1 / 2
-  ${NSD_CreateBitmap} $R1 ${INSTALL_BLURB_TOP_DU} 49u 64u ""
-  Pop $BitmapBlurb3
-  ${SetStretchedTransparentImage} $BitmapBlurb3 $PLUGINSDIR\pencil.bmp $HWndBitmapBlurb3
-  IntOp $R1 $R1 + $1
-  IntOp $R1 $R1 + $3
-  ${NSD_CreateLabel} $R1 ${INSTALL_BLURB_TOP_DU} $5 $6 "${INSTALL_BLURB3}"
-  Pop $LabelBlurb3
-  SendMessage $LabelBlurb3 ${WM_SETFONT} $FontBlurb 0
-  SetCtlColors $LabelBlurb3 ${INSTALL_BLURB_TEXT_COLOR} transparent
-  ShowWindow $BitmapBlurb3 ${SW_HIDE}
-  ShowWindow $LabelBlurb3 ${SW_HIDE}
+  StrCpy $CurrentBlurbIdx "0"
 
-  ${NSD_CreateProgressBar} 103u 166u 241u 9u ""
+  ; In some locales, the footer message may be too long to fit on one line.
+  ; Figure out how much height it needs and give it that much.
+  ${GetTextWidthHeight} "$(STUB_BLURB_FOOTER2)" $FontFooter \
+    ${INSTALL_FOOTER_WIDTH_DU} $R1 $R2
+  !ifdef ${AB_CD}_rtl
+    nsDialogs::CreateControl STATIC ${DEFAULT_STYLES}|${SS_NOTIFY} \
+      ${WS_EX_TRANSPARENT} 30u ${INSTALL_FOOTER_TOP_DU} ${INSTALL_FOOTER_WIDTH_DU} "$R2u" \
+      "$(STUB_BLURB_FOOTER2)"
+  !else
+    nsDialogs::CreateControl STATIC ${DEFAULT_STYLES}|${SS_NOTIFY}|${SS_RIGHT} \
+      ${WS_EX_TRANSPARENT} 175u ${INSTALL_FOOTER_TOP_DU} ${INSTALL_FOOTER_WIDTH_DU} "$R2u" \
+      "$(STUB_BLURB_FOOTER2)"
+  !endif
+  Pop $0
+  SendMessage $0 ${WM_SETFONT} $FontFooter 0
+  SetCtlColors $0 ${INSTALL_BLURB_TEXT_COLOR} transparent
+
+  ${NSD_CreateProgressBar} 20% ${PROGRESS_BAR_TOP_DU} 60% 12u ""
   Pop $Progressbar
   ${NSD_AddStyle} $Progressbar ${PBS_MARQUEE}
   SendMessage $Progressbar ${PBM_SETMARQUEE} 1 \
               $ProgressbarMarqueeIntervalMS ; start=1|stop=0 interval(ms)=+N
 
-  ${NSD_CreateLabelCenter} 103u 180u 241u 20u "$(DOWNLOADING_LABEL)"
-  Pop $LabelDownloading
-  SendMessage $LabelDownloading ${WM_SETFONT} $FontNormal 0
-  SetCtlColors $LabelDownloading ${INSTALL_PROGRESS_TEXT_COLOR_NORMAL} transparent
-
-  ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
-    ${NSD_CreateLabelCenter} 103u 180u 241u 20u "$(UPGRADING_LABEL)"
-  ${Else}
-    ${NSD_CreateLabelCenter} 103u 180u 241u 20u "$(INSTALLING_LABEL)"
-  ${EndIf}
-  Pop $LabelInstalling
-  SendMessage $LabelInstalling ${WM_SETFONT} $FontNormal 0
-  SetCtlColors $LabelInstalling ${INSTALL_PROGRESS_TEXT_COLOR_NORMAL} transparent
-  ShowWindow $LabelInstalling ${SW_HIDE}
-
-  ${NSD_CreateBitmap} ${APPNAME_BMP_EDGE_DU} ${APPNAME_BMP_TOP_DU} \
-                      ${APPNAME_BMP_WIDTH_DU} ${APPNAME_BMP_HEIGHT_DU} ""
-  Pop $2
-  ${SetStretchedTransparentImage} $2 $PLUGINSDIR\appname.bmp $0
+  ${NSD_CreateBitmap} 0 0 100% 100% ""
+  Pop $HwndBgBitmapControl
+  ${NSD_SetStretchedImage} $HwndBgBitmapControl $PLUGINSDIR\bgstub.bmp $BgBitmapImage
+  ; transparent bg on control prevents flicker on redraw
+  SetCtlColors $HwndBgBitmapControl ${INSTALL_BLURB_TEXT_COLOR} transparent
 
   GetDlgItem $0 $HWNDPARENT 1 ; Install button
   EnableWindow $0 0
@@ -1290,29 +867,23 @@ Function createInstall
   ShowWindow $0 ${SW_HIDE}
 
   GetDlgItem $0 $HWNDPARENT 2 ; Cancel button
-  SendMessage $0 ${WM_SETTEXT} 0 "STR:$(CANCEL_BUTTON)"
   ; Focus the Cancel button otherwise it isn't possible to tab to it since it is
   ; the only control that can be tabbed to.
   ${NSD_SetFocus} $0
   ; Kill the Cancel button's focus so pressing enter won't cancel the install.
   SendMessage $0 ${WM_KILLFOCUS} 0 0
+  ; Hide the Cancel button, but don't disable it (or else it won't be possible
+  ; to close the window)
+  ShowWindow $0 ${SW_HIDE}
 
-  ${If} "$CanSetAsDefault" == "true"
-    GetDlgItem $0 $HWNDPARENT 10 ; Default browser checkbox
-    SendMessage $0 ${BM_GETCHECK} 0 0 $CheckboxSetAsDefault
-    EnableWindow $0 0
-    ShowWindow $0 ${SW_HIDE}
-  ${EndIf}
+  GetDlgItem $0 $HWNDPARENT 10 ; Default browser checkbox
+  ; Hiding and then disabling allows Esc to still exit the installer
+  ShowWindow $0 ${SW_HIDE}
+  EnableWindow $0 0
 
-  GetDlgItem $0 $HWNDPARENT 11
-  ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(ONE_MOMENT_UPGRADE)"
-  ${Else}
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(ONE_MOMENT_INSTALL)"
-  ${EndIf}
-  SendMessage $0 ${WM_SETFONT} $FontNormal 0
-  SetCtlColors $0 ${FOOTER_CONTROL_TEXT_COLOR_FADED} ${FOOTER_BKGRD_COLOR}
-  ShowWindow $0 ${SW_SHOW}
+  GetDlgItem $0 $HWNDPARENT 11 ; Footer text
+  ShowWindow $0 ${SW_HIDE}
+  EnableWindow $0 0
 
   ; Set $DownloadReset to true so the first download tick count is measured.
   StrCpy $DownloadReset "true"
@@ -1358,20 +929,25 @@ Function createInstall
   ${ITBL3SetProgressState} "${TBPF_INDETERMINATE}"
 
   ${NSD_CreateTimer} StartDownload ${DownloadIntervalMS}
+  ${NSD_CreateTimer} ClearBlurb ${BlurbDisplayMS}
 
   LockWindow off
   nsDialogs::Show
 
-  ${NSD_FreeImage} $0
-  ${NSD_FreeImage} $HwndBitmapBlurb1
-  ${NSD_FreeImage} $HwndBitmapBlurb2
-  ${NSD_FreeImage} $HWndBitmapBlurb3
+  ${NSD_FreeImage} $BgBitmapImage
 FunctionEnd
 
 Function StartDownload
   ${NSD_KillTimer} StartDownload
-  InetBgDL::Get "${URLStubDownload}${URLStubDownloadAppend}" "$PLUGINSDIR\download.exe" \
-                /CONNECTTIMEOUT 120 /RECEIVETIMEOUT 120 /END
+  ${If} $DroplistArch == "$(VERSION_64BIT)"
+    InetBgDL::Get "${URLStubDownload64}${URLStubDownloadAppend}" \
+                  "$PLUGINSDIR\download.exe" \
+                  /CONNECTTIMEOUT 120 /RECEIVETIMEOUT 120 /END
+  ${Else}
+    InetBgDL::Get "${URLStubDownload32}${URLStubDownloadAppend}" \
+                  "$PLUGINSDIR\download.exe" \
+                  /CONNECTTIMEOUT 120 /RECEIVETIMEOUT 120 /END
+  ${EndIf}
   StrCpy $4 ""
   ${NSD_CreateTimer} OnDownload ${DownloadIntervalMS}
   ${If} ${FileExists} "$INSTDIR\${TO_BE_DELETED}"
@@ -1392,6 +968,40 @@ Function RemoveFileProgressCallback
   System::Int64Op $ProgressCompleted + $InstallStepSize
   Pop $ProgressCompleted
   Call SetProgressBars
+FunctionEnd
+
+Function NextBlurb
+  ${NSD_KillTimer} NextBlurb
+
+  IntOp $CurrentBlurbIdx $CurrentBlurbIdx + 1
+  IntOp $CurrentBlurbIdx $CurrentBlurbIdx % 3
+
+  ${If} $CurrentBlurbIdx == "0"
+    StrCpy $0 "$(STUB_BLURB1)"
+  ${ElseIf} $CurrentBlurbIdx == "1"
+    StrCpy $0 "$(STUB_BLURB2)"
+  ${ElseIf} $CurrentBlurbIdx == "2"
+    StrCpy $0 "$(STUB_BLURB3)"
+  ${EndIf}
+
+  SendMessage $LabelBlurb ${WM_SETTEXT} 0 "STR:$0"
+
+  ${NSD_CreateTimer} ClearBlurb ${BlurbDisplayMS}
+FunctionEnd
+
+Function ClearBlurb
+  ${NSD_KillTimer} ClearBlurb
+
+  SendMessage $LabelBlurb ${WM_SETTEXT} 0 "STR:"
+
+  ; force the background to repaint to clear the transparent label
+  System::Call "*(i,i,i,i) p .r0"
+  System::Call "user32::GetWindowRect(p $LabelBlurb, p r0)"
+  System::Call "user32::MapWindowPoints(p 0, p $HwndBgBitmapControl, p r0, i 2)"
+  System::Call "user32::InvalidateRect(p $HwndBgBitmapControl, p r0, i 0)"
+  System::Free $0
+
+  ${NSD_CreateTimer} NextBlurb ${BlurbBlankMS}
 FunctionEnd
 
 Function OnDownload
@@ -1526,7 +1136,6 @@ Function OnDownload
         Return
       ${EndIf}
 
-      LockWindow on
       ; Update the progress bars first in the UI change so they take affect
       ; before other UI changes.
       StrCpy $ProgressCompleted "$DownloadSizeBytes"
@@ -1536,16 +1145,9 @@ Function OnDownload
       System::Int64Op $ProgressCompleted + $R9
       Pop $ProgressCompleted
       Call SetProgressBars
-      ShowWindow $LabelDownloading ${SW_HIDE}
-      ShowWindow $LabelInstalling ${SW_SHOW}
-      ShowWindow $LabelBlurb2 ${SW_HIDE}
-      ShowWindow $BitmapBlurb2 ${SW_HIDE}
-      ShowWindow $LabelBlurb3 ${SW_SHOW}
-      ShowWindow $BitmapBlurb3 ${SW_SHOW}
       ; Disable the Cancel button during the install
       GetDlgItem $5 $HWNDPARENT 2
       EnableWindow $5 0
-      LockWindow off
 
       ; Open a handle to prevent modification of the full installer
       StrCpy $R9 "${INVALID_HANDLE_VALUE}"
@@ -1592,23 +1194,18 @@ Function OnDownload
       ; Don't create the QuickLaunch or Taskbar shortcut from the launched installer
       WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "QuickLaunchShortcut" "false"
 
-      ; Either avoid or force adding a taskbar pin based on the checkbox value:
-      ${If} $CheckboxShortcutOnBar == 0
+      ; Always create a start menu shortcut, so the user always has some way
+      ; to access the application.
+      WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "StartMenuShortcuts" "true"
+
+      ; Either avoid or force adding a taskbar pin and desktop shortcut
+      ; based on the checkbox value.
+      ${If} $CheckboxShortcuts == 0
         WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "TaskbarShortcut" "false"
+        WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "DesktopShortcut" "false"
       ${Else}
         WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "TaskbarShortcut" "true"
-      ${EndIf}
-
-      ${If} $CheckboxShortcutOnDesktop == 1
         WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "DesktopShortcut" "true"
-      ${Else}
-        WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "DesktopShortcut" "false"
-      ${EndIf}
-
-      ${If} $CheckboxShortcutInStartMenu == 1
-        WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "StartMenuShortcuts" "true"
-      ${Else}
-        WriteINIStr "$PLUGINSDIR\${CONFIG_INI}" "Install" "StartMenuShortcuts" "false"
       ${EndIf}
 
 !ifdef MOZ_MAINTENANCE_SERVICE
@@ -1648,12 +1245,6 @@ Function OnDownload
       ${If} $HalfOfDownload != "true"
       ${AndIf} $3 > $HalfOfDownload
         StrCpy $HalfOfDownload "true"
-        LockWindow on
-        ShowWindow $LabelBlurb1 ${SW_HIDE}
-        ShowWindow $BitmapBlurb1 ${SW_HIDE}
-        ShowWindow $LabelBlurb2 ${SW_SHOW}
-        ShowWindow $BitmapBlurb2 ${SW_SHOW}
-        LockWindow off
       ${EndIf}
       StrCpy $DownloadedBytes "$3"
       StrCpy $ProgressCompleted "$DownloadedBytes"
@@ -1747,33 +1338,6 @@ Function FinishInstall
   StrCpy $ProgressCompleted "$ProgressTotal"
   Call SetProgressBars
 
-  ${If} "$CheckboxSetAsDefault" == "1"
-    ${GetParameters} $0
-    ClearErrors
-    ${GetOptions} "$0" "/UAC:" $0
-    ${If} ${Errors} ; Not elevated
-      Call ExecSetAsDefaultAppUser
-    ${Else} ; Elevated - execute the function in the unelevated process
-      GetFunctionAddress $0 ExecSetAsDefaultAppUser
-      UAC::ExecCodeSegment $0
-    ${EndIf}
-  ${EndIf}
-
-  ${If} $CheckboxShortcutOnBar == 1
-    ${If} ${AtMostWinVista}
-      ClearErrors
-      ${GetParameters} $0
-      ClearErrors
-      ${GetOptions} "$0" "/UAC:" $0
-      ${If} ${Errors}
-        Call AddQuickLaunchShortcut
-      ${Else}
-        GetFunctionAddress $0 AddQuickLaunchShortcut
-        UAC::ExecCodeSegment $0
-      ${EndIf}
-    ${EndIf}
-  ${EndIf}
-
   ${If} ${FileExists} "$INSTDIR\${FileMainEXE}.moz-upgrade"
     Delete "$INSTDIR\${FileMainEXE}"
     Rename "$INSTDIR\${FileMainEXE}.moz-upgrade" "$INSTDIR\${FileMainEXE}"
@@ -1793,19 +1357,12 @@ Function FinishProgressBar
   ${EndIf}
 
   ${NSD_KillTimer} FinishProgressBar
+  ${NSD_KillTimer} NextBlurb
+  ${NSD_KillTimer} ClearBlurb
 
   Call CopyPostSigningData
   Call LaunchApp
   Call SendPing
-FunctionEnd
-
-Function OnBack
-  StrCpy $WasOptionsButtonClicked "1"
-  StrCpy $R9 "1" ; Goto the next page
-  Call RelativeGotoPage
-  ; The call to Abort prevents NSIS from trying to move to the previous or the
-  ; next page.
-  Abort
 FunctionEnd
 
 Function RelativeGotoPage
@@ -1815,84 +1372,6 @@ Function RelativeGotoPage
 
   Move:
   SendMessage $HWNDPARENT "0x408" "$R9" ""
-FunctionEnd
-
-Function UpdateFreeSpaceLabel
-  ; Only update when $ExistingTopDir isn't set
-  ${If} "$ExistingTopDir" != ""
-    StrLen $5 "$ExistingTopDir"
-    StrLen $6 "$INSTDIR"
-    ${If} $5 <= $6
-      StrCpy $7 "$INSTDIR" $5
-      ${If} "$7" == "$ExistingTopDir"
-        Return
-      ${EndIf}
-    ${EndIf}
-  ${EndIf}
-
-  Call CheckSpace
-
-  StrCpy $0 "$SpaceAvailableBytes"
-
-  StrCpy $1 "$(BYTE)"
-
-  ${If} $0 > 1024
-  ${OrIf} $0 < 0
-    System::Int64Op $0 / 1024
-    Pop $0
-    StrCpy $1 "$(KILO)$(BYTE)"
-    ${If} $0 > 1024
-    ${OrIf} $0 < 0
-      System::Int64Op $0 / 1024
-      Pop $0
-      StrCpy $1 "$(MEGA)$(BYTE)"
-      ${If} $0 > 1024
-      ${OrIf} $0 < 0
-        System::Int64Op $0 / 1024
-        Pop $0
-        StrCpy $1 "$(GIGA)$(BYTE)"
-      ${EndIf}
-    ${EndIf}
-  ${EndIf}
-
-  SendMessage $LabelFreeSpace ${WM_SETTEXT} 0 "STR:$0 $1"
-FunctionEnd
-
-Function OnChange_DirRequest
-  Pop $0
-  System::Call 'user32::GetWindowTextW(i $DirRequest, w .r0, i ${NSIS_MAX_STRLEN})'
-  StrCpy $1 "$0" 1 ; the first character
-  ${If} "$1" == "$\""
-    StrCpy $1 "$0" "" -1 ; the last character
-    ${If} "$1" == "$\""
-      StrCpy $0 "$0" "" 1 ; all but the first character
-      StrCpy $0 "$0" -1 ; all but the last character
-    ${EndIf}
-  ${EndIf}
-
-  StrCpy $INSTDIR "$0"
-  Call UpdateFreeSpaceLabel
-
-  GetDlgItem $0 $HWNDPARENT 1 ; Install button
-  ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(UPGRADE_BUTTON)"
-  ${Else}
-    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(INSTALL_BUTTON)"
-  ${EndIf}
-FunctionEnd
-
-Function OnClick_ButtonBrowse
-  StrCpy $0 "$INSTDIR"
-  nsDialogs::SelectFolderDialog /NOUNLOAD "$(SELECT_FOLDER_TEXT)" $0
-  Pop $0
-  ${If} $0 == "error" ; returns 'error' if 'cancel' was pressed?
-    Return
-  ${EndIf}
-
-  ${If} $0 != ""
-    StrCpy $INSTDIR "$0"
-    System::Call 'user32::SetWindowTextW(i $DirRequest, w "$INSTDIR")'
-  ${EndIf}
 FunctionEnd
 
 Function CheckSpace
@@ -1959,6 +1438,7 @@ Function CanWrite
   GetTempFileName $2 "$0"
   Delete $2
   CreateDirectory "$2"
+
   ${If} ${FileExists} "$2"
     ${If} ${FileExists} "$INSTDIR"
       GetTempFileName $3 "$INSTDIR"
@@ -1971,20 +1451,6 @@ Function CanWrite
     ${EndIf}
     RmDir "$2"
   ${EndIf}
-FunctionEnd
-
-Function AddQuickLaunchShortcut
-  CreateShortCut "$QUICKLAUNCH\${BrandFullName}.lnk" "$INSTDIR\${FileMainEXE}"
-  ${If} ${FileExists} "$QUICKLAUNCH\${BrandFullName}.lnk"
-    ShellLink::SetShortCutWorkingDirectory "$QUICKLAUNCH\${BrandFullName}.lnk" \
-                                           "$INSTDIR"
-  ${EndIf}
-FunctionEnd
-
-Function ExecSetAsDefaultAppUser
-  ; Using the helper.exe lessens the stub installer size.
-  ; This could ask for elevatation when the user doesn't install as admin.
-  Exec "$\"$INSTDIR\uninstall\helper.exe$\" /SetAsDefaultAppUser"
 FunctionEnd
 
 Function LaunchApp
@@ -2013,15 +1479,9 @@ Function LaunchApp
 FunctionEnd
 
 Function LaunchAppFromElevatedProcess
-  ; Find the installation directory when launching using GetFunctionAddress
-  ; from an elevated installer since $INSTDIR will not be set in this installer
-  ${StrFilter} "${FileMainEXE}" "+" "" "" $R9
-  ReadRegStr $0 HKLM "Software\Clients\StartMenuInternet\$R9\DefaultIcon" ""
-  ${GetPathFromString} "$0" $0
   ; Set the current working directory to the installation directory
-  ${GetParent} "$0" $1
-  SetOutPath "$1"
-  Exec "$\"$0$\""
+  SetOutPath "$INSTDIR"
+  Exec "$\"$INSTDIR\${FileMainEXE}$\""
 FunctionEnd
 
 Function CopyPostSigningData
@@ -2037,11 +1497,13 @@ FunctionEnd
 
 Function DisplayDownloadError
   ${NSD_KillTimer} DisplayDownloadError
+  ${NSD_KillTimer} NextBlurb
+  ${NSD_KillTimer} ClearBlurb
   ; To better display the error state on the taskbar set the progress completed
   ; value to the total value.
   ${ITBL3SetProgressValue} "100" "100"
   ${ITBL3SetProgressState} "${TBPF_ERROR}"
-  MessageBox MB_OKCANCEL|MB_ICONSTOP "$(ERROR_DOWNLOAD)" IDCANCEL +2 IDOK +1
+  MessageBox MB_OKCANCEL|MB_ICONSTOP "$(ERROR_DOWNLOAD_CONT)" IDCANCEL +2 IDOK +1
   StrCpy $OpenedDownloadPage "1" ; Already initialized to 0
 
   ${If} "$OpenedDownloadPage" == "1"

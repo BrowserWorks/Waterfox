@@ -10,9 +10,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.keepsafe.switchboard.SwitchBoard;
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.switchboard.SwitchBoard;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +27,7 @@ import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.UrlAnnotations;
 import org.mozilla.gecko.delegates.TabsTrayVisibilityAwareDelegate;
-import org.mozilla.gecko.util.Experiments;
+import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.lang.ref.WeakReference;
@@ -36,7 +38,7 @@ import ch.boye.httpclientandroidlib.util.TextUtils;
  * Promote "Add to home screen" if user visits website often.
  */
 public class AddToHomeScreenPromotion extends TabsTrayVisibilityAwareDelegate implements Tabs.OnTabsChangedListener {
-    private static class URLHistory {
+    public static class URLHistory {
         public final long visits;
         public final long lastVisit;
 
@@ -135,6 +137,11 @@ public class AddToHomeScreenPromotion extends TabsTrayVisibilityAwareDelegate im
             return;
         }
 
+        // Temporary remove add to home screen
+        if (AppConstants.Versions.feature26Plus) {
+            return;
+        }
+
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
@@ -209,17 +216,22 @@ public class AddToHomeScreenPromotion extends TabsTrayVisibilityAwareDelegate im
     }
 
     protected boolean hasAcceptedOrDeclinedHomeScreenShortcut(Context context, String url) {
-        final UrlAnnotations urlAnnotations = GeckoProfile.get(context).getDB().getUrlAnnotations();
+        final UrlAnnotations urlAnnotations = BrowserDB.from(context).getUrlAnnotations();
         return urlAnnotations.hasAcceptedOrDeclinedHomeScreenShortcut(context.getContentResolver(), url);
     }
 
-    protected URLHistory getHistoryForURL(Context context, String url) {
+    @Nullable
+    public static URLHistory getHistoryForURL(Context context, String url) {
         final GeckoProfile profile = GeckoProfile.get(context);
-        final BrowserDB browserDB = profile.getDB();
+        final BrowserDB browserDB = BrowserDB.from(profile);
 
         Cursor cursor = null;
         try {
             cursor = browserDB.getHistoryForURL(context.getContentResolver(), url);
+
+            if (cursor == null) {
+                return null;
+            }
 
             if (cursor.moveToFirst()) {
                 return new URLHistory(

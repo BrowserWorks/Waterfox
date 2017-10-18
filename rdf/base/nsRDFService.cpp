@@ -52,11 +52,11 @@
 #include "plstr.h"
 #include "mozilla/Logging.h"
 #include "prprf.h"
-#include "prmem.h"
 #include "rdf.h"
 #include "nsCRT.h"
 #include "nsCRTGlue.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/IntegerPrintfMacros.h"
 
 using namespace mozilla;
 
@@ -82,19 +82,19 @@ class BlobImpl;
 static void *
 DataSourceAllocTable(void *pool, size_t size)
 {
-    return PR_MALLOC(size);
+    return malloc(size);
 }
 
 static void
 DataSourceFreeTable(void *pool, void *item)
 {
-    PR_Free(item);
+    free(item);
 }
 
 static PLHashEntry *
 DataSourceAllocEntry(void *pool, const void *key)
 {
-    return PR_NEW(PLHashEntry);
+    return (PLHashEntry*) malloc(sizeof(PLHashEntry));
 }
 
 static void
@@ -102,7 +102,7 @@ DataSourceFreeEntry(void *pool, PLHashEntry *he, unsigned flag)
 {
     if (flag == HT_FREE_ENTRY) {
         PL_strfree((char*) he->key);
-        PR_Free(he);
+        free(he);
     }
 }
 
@@ -826,7 +826,7 @@ RDFServiceImpl::GetResource(const nsACString& aURI, nsIRDFResource** aResource)
     if (aURI.IsEmpty())
         return NS_ERROR_INVALID_ARG;
 
-    const nsAFlatCString& flatURI = PromiseFlatCString(aURI);
+    const nsCString& flatURI = PromiseFlatCString(aURI);
     MOZ_LOG(gLog, LogLevel::Debug, ("rdfserv get-resource %s", flatURI.get()));
 
     // First, check the cache to see if we've already created and
@@ -1298,8 +1298,10 @@ RDFServiceImpl::GetDataSource(const char* aURI, bool aBlock, nsIRDFDataSource** 
     if (!StringBeginsWith(spec, NS_LITERAL_CSTRING("rdf:"))) {
         nsCOMPtr<nsIURI> uri;
         NS_NewURI(getter_AddRefs(uri), spec);
-        if (uri)
-            uri->GetSpec(spec);
+        if (uri) {
+            rv = uri->GetSpec(spec);
+            if (NS_FAILED(rv)) return rv;
+        }
     }
 
     // First, check the cache to see if we already have this
@@ -1383,7 +1385,7 @@ RDFServiceImpl::RegisterLiteral(nsIRDFLiteral* aLiteral)
 
     MOZ_LOG(gLog, LogLevel::Debug,
            ("rdfserv   register-literal [%p] %s",
-            aLiteral, (const char16_t*) value));
+            aLiteral, NS_ConvertUTF16toUTF8(value).get()));
 
     return NS_OK;
 }
@@ -1403,7 +1405,7 @@ RDFServiceImpl::UnregisterLiteral(nsIRDFLiteral* aLiteral)
     // reference to it in the hashtable.
     MOZ_LOG(gLog, LogLevel::Debug,
            ("rdfserv unregister-literal [%p] %s",
-            aLiteral, (const char16_t*) value));
+            aLiteral, NS_ConvertUTF16toUTF8(value).get()));
 
     return NS_OK;
 }
@@ -1482,7 +1484,7 @@ RDFServiceImpl::RegisterDate(nsIRDFDate* aDate)
     entry->mKey = value;
 
     MOZ_LOG(gLog, LogLevel::Debug,
-           ("rdfserv   register-date [%p] %ld",
+           ("rdfserv   register-date [%p] %" PRId64,
             aDate, value));
 
     return NS_OK;
@@ -1502,7 +1504,7 @@ RDFServiceImpl::UnregisterDate(nsIRDFDate* aDate)
     // N.B. that we _don't_ release the literal: we only held a weak
     // reference to it in the hashtable.
     MOZ_LOG(gLog, LogLevel::Debug,
-           ("rdfserv unregister-date [%p] %ld",
+           ("rdfserv unregister-date [%p] %" PRId64,
             aDate, value));
 
     return NS_OK;

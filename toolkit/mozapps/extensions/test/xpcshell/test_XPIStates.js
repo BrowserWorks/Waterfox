@@ -4,7 +4,6 @@
 
 // Test that we only check manifest age for disabled extensions
 
-Components.utils.import("resource://gre/modules/Promise.jsm");
 
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
@@ -60,7 +59,7 @@ writeInstallRDFToDir({
     maxVersion: "1"
   }],
   name: "Unpacked, Enabled",
-}, profileDir, null, "extraFile.js");
+}, profileDir, undefined, "extraFile.js");
 
 
 // Unpacked, disabled
@@ -75,7 +74,7 @@ writeInstallRDFToDir({
     maxVersion: "1"
   }],
   name: "Unpacked, disabled",
-}, profileDir, null, "extraFile.js");
+}, profileDir, undefined, "extraFile.js");
 
 // Keep track of the last time stamp we've used, so that we can keep moving
 // it forward (if we touch two different files in the same add-on with the same
@@ -100,13 +99,19 @@ function checkChange(XS, aPath, aChange) {
 
 // Get a reference to the XPIState (loaded by startupManager) so we can unit test it.
 function getXS() {
-  let XPI = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+  let XPI = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm", {});
   return XPI.XPIStates;
 }
 
-add_task(function* detect_touches() {
+async function getXSJSON() {
+  await AddonTestUtils.loadAddonsList(true);
+
+  return aomStartup.readStartupData();
+}
+
+add_task(async function detect_touches() {
   startupManager();
-  let [pe, pd, ue, ud] = yield promiseAddonsByIDs([
+  let [/* pe */, pd, /* ue */, ud] = await promiseAddonsByIDs([
          "packed-enabled@tests.mozilla.org",
          "packed-disabled@tests.mozilla.org",
          "unpacked-enabled@tests.mozilla.org",
@@ -148,10 +153,6 @@ add_task(function* detect_touches() {
   let manifest = ueDir.clone();
   manifest.append("install.rdf");
   checkChange(XS, manifest, true);
-  // We also notice changing another file for enabled unpacked add-on.
-  let otherFile = ueDir.clone();
-  otherFile.append("extraFile.js");
-  checkChange(XS, otherFile, true);
 
   // We notice changing install.rdf for a *disabled* unpacked add-on.
   let udDir = profileDir.clone();
@@ -161,7 +162,7 @@ add_task(function* detect_touches() {
   checkChange(XS, manifest, true);
   // Finally, the case we actually care about...
   // We *don't* notice changing another file for disabled unpacked add-on.
-  otherFile = udDir.clone();
+  let otherFile = udDir.clone();
   otherFile.append("extraFile.js");
   checkChange(XS, otherFile, false);
 
@@ -173,48 +174,40 @@ add_task(function* detect_touches() {
   ud.userDisabled = false;
   let xState = XS.getAddon("app-profile", ud.id);
   do_check_true(xState.enabled);
-  do_check_eq(xState.scanTime, ud.updateDate.getTime());
+  do_check_eq(xState.mtime, ud.updateDate.getTime());
 });
 
 /*
  * Uninstalling bootstrap add-ons should immediately remove them from the
  * extensions.xpiState preference.
  */
-add_task(function* uninstall_bootstrap() {
-  let [pe, pd, ue, ud] = yield promiseAddonsByIDs([
+add_task(async function uninstall_bootstrap() {
+  let [pe, /* pd, ue, ud */] = await promiseAddonsByIDs([
          "packed-enabled@tests.mozilla.org",
          "packed-disabled@tests.mozilla.org",
          "unpacked-enabled@tests.mozilla.org",
          "unpacked-disabled@tests.mozilla.org"
          ]);
   pe.uninstall();
-  let xpiState = Services.prefs.getCharPref("extensions.xpiState");
-  do_check_false(xpiState.includes("\"packed-enabled@tests.mozilla.org\""));
+
+  let xpiState = await getXSJSON();
+  do_check_false("packed-enabled@tests.mozilla.org" in xpiState["app-profile"].addons);
 });
 
 /*
  * Installing a restartless add-on should immediately add it to XPIState
  */
-add_task(function* install_bootstrap() {
+add_task(async function install_bootstrap() {
   let XS = getXS();
 
-  let installer = yield new Promise((resolve, reject) =>
-    AddonManager.getInstallForFile(do_get_addon("test_bootstrap1_1"), resolve));
+  let installer = await promiseInstallFile(
+    do_get_addon("test_bootstrap1_1"));
 
-  let promiseInstalled = new Promise((resolve, reject) => {
-    AddonManager.addInstallListener({
-      onInstallFailed: reject,
-      onInstallEnded: (install, newAddon) => resolve(newAddon)
-    });
-  });
-
-  installer.install();
-
-  let newAddon = yield promiseInstalled;
+  let newAddon = installer.addon;
   let xState = XS.getAddon("app-profile", newAddon.id);
   do_check_true(!!xState);
   do_check_true(xState.enabled);
-  do_check_eq(xState.scanTime, newAddon.updateDate.getTime());
+  do_check_eq(xState.mtime, newAddon.updateDate.getTime());
   newAddon.uninstall();
 });
 
@@ -225,22 +218,13 @@ add_task(function* install_bootstrap() {
  * uninstalling it marks XPIState as disabled immediately
  * and removes XPIState after restart.
  */
-add_task(function* install_restart() {
+add_task(async function install_restart() {
   let XS = getXS();
 
-  let installer = yield new Promise((resolve, reject) =>
-    AddonManager.getInstallForFile(do_get_addon("test_bootstrap1_4"), resolve));
+  let installer = await promiseInstallFile(
+    do_get_addon("test_bootstrap1_4"));
 
-  let promiseInstalled = new Promise((resolve, reject) => {
-    AddonManager.addInstallListener({
-      onInstallFailed: reject,
-      onInstallEnded: (install, newAddon) => resolve(newAddon)
-    });
-  });
-
-  installer.install();
-
-  let newAddon = yield promiseInstalled;
+  let newAddon = installer.addon;
   let newID = newAddon.id;
   let xState = XS.getAddon("app-profile", newID);
   do_check_false(xState);
@@ -249,14 +233,14 @@ add_task(function* install_restart() {
   // because the add-on manager reloads it.
   XS = null;
   newAddon = null;
-  yield promiseRestartManager();
+  await promiseRestartManager();
   XS = getXS();
 
-  newAddon = yield promiseAddonByID(newID);
+  newAddon = await promiseAddonByID(newID);
   xState = XS.getAddon("app-profile", newID);
   do_check_true(xState);
   do_check_true(xState.enabled);
-  do_check_eq(xState.scanTime, newAddon.updateDate.getTime());
+  do_check_eq(xState.mtime, newAddon.updateDate.getTime());
 
   // Check that XPIState enabled flag is updated immediately,
   // and doesn't change over restart.
@@ -264,18 +248,18 @@ add_task(function* install_restart() {
   do_check_false(xState.enabled);
   XS = null;
   newAddon = null;
-  yield promiseRestartManager();
+  await promiseRestartManager();
   XS = getXS();
   xState = XS.getAddon("app-profile", newID);
   do_check_true(xState);
   do_check_false(xState.enabled);
 
-  newAddon = yield promiseAddonByID(newID);
+  newAddon = await promiseAddonByID(newID);
   newAddon.userDisabled = false;
   do_check_true(xState.enabled);
   XS = null;
   newAddon = null;
-  yield promiseRestartManager();
+  await promiseRestartManager();
   XS = getXS();
   xState = XS.getAddon("app-profile", newID);
   do_check_true(xState);
@@ -283,7 +267,7 @@ add_task(function* install_restart() {
 
   // Uninstalling immediately marks XPIState disabled,
   // removes state after restart.
-  newAddon = yield promiseAddonByID(newID);
+  newAddon = await promiseAddonByID(newID);
   newAddon.uninstall();
   xState = XS.getAddon("app-profile", newID);
   do_check_true(xState);
@@ -292,7 +276,7 @@ add_task(function* install_restart() {
   // Restart to finish uninstall.
   XS = null;
   newAddon = null;
-  yield promiseRestartManager();
+  await promiseRestartManager();
   XS = getXS();
   xState = XS.getAddon("app-profile", newID);
   do_check_false(xState);

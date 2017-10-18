@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "SVG")
+
 MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 
 EXPORTS += [
@@ -64,6 +67,7 @@ EXPORTS.mozilla.dom += [
     'SVGFilterElement.h',
     'SVGForeignObjectElement.h',
     'SVGGElement.h',
+    'SVGGeometryElement.h',
     'SVGGradientElement.h',
     'SVGGraphicsElement.h',
     'SVGImageElement.h',
@@ -98,7 +102,7 @@ EXPORTS.mozilla.dom += [
     'SVGTSpanElement.h',
     'SVGUseElement.h',
     'SVGViewElement.h',
-    'SVGZoomEvent.h',
+    'SVGViewportElement.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -130,8 +134,6 @@ UNIFIED_SOURCES += [
     'nsSVGNumber2.cpp',
     'nsSVGNumberPair.cpp',
     'nsSVGPathDataParser.cpp',
-    'nsSVGPathGeometryElement.cpp',
-    'nsSVGPolyElement.cpp',
     'nsSVGString.cpp',
     'nsSVGTransform.cpp',
     'nsSVGViewBox.cpp',
@@ -189,6 +191,7 @@ UNIFIED_SOURCES += [
     'SVGForeignObjectElement.cpp',
     'SVGFragmentIdentifier.cpp',
     'SVGGElement.cpp',
+    'SVGGeometryElement.cpp',
     'SVGGradientElement.cpp',
     'SVGGraphicsElement.cpp',
     'SVGImageElement.cpp',
@@ -217,6 +220,7 @@ UNIFIED_SOURCES += [
     'SVGPatternElement.cpp',
     'SVGPointList.cpp',
     'SVGPointListSMILType.cpp',
+    'SVGPolyElement.cpp',
     'SVGPolygonElement.cpp',
     'SVGPolylineElement.cpp',
     'SVGPreserveAspectRatio.cpp',
@@ -245,7 +249,7 @@ UNIFIED_SOURCES += [
     'SVGUseElement.cpp',
     'SVGViewBoxSMILType.cpp',
     'SVGViewElement.cpp',
-    'SVGZoomEvent.cpp',
+    'SVGViewportElement.cpp',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

@@ -79,11 +79,18 @@ public:
   virtual nsresult AddDtlsFingerprint(const std::string& algorithm,
                                       const std::vector<uint8_t>& value) override;
 
+  nsresult AddRtpExtension(std::vector<SdpExtmapAttributeList::Extmap>& extensions,
+                           const std::string& extensionName,
+                           SdpDirectionAttribute::Direction direction);
   virtual nsresult AddAudioRtpExtension(
-      const std::string& extensionName) override;
+      const std::string& extensionName,
+      SdpDirectionAttribute::Direction direction =
+      SdpDirectionAttribute::Direction::kSendrecv) override;
 
   virtual nsresult AddVideoRtpExtension(
-      const std::string& extensionName) override;
+      const std::string& extensionName,
+      SdpDirectionAttribute::Direction direction =
+      SdpDirectionAttribute::Direction::kSendrecv) override;
 
   virtual std::vector<JsepCodecDescription*>&
   Codecs() override
@@ -122,9 +129,11 @@ public:
   virtual nsresult CreateAnswer(const JsepAnswerOptions& options,
                                 std::string* answer) override;
 
-  virtual std::string GetLocalDescription() const override;
+  virtual std::string GetLocalDescription(JsepDescriptionPendingOrCurrent type)
+                                          const override;
 
-  virtual std::string GetRemoteDescription() const override;
+  virtual std::string GetRemoteDescription(JsepDescriptionPendingOrCurrent type)
+                                           const override;
 
   virtual nsresult SetLocalDescription(JsepSdpType type,
                                        const std::string& sdp) override;
@@ -161,7 +170,7 @@ public:
   }
 
   virtual bool
-  IsOfferer() const
+  IsOfferer() const override
   {
     return mIsOfferer;
   }
@@ -219,6 +228,7 @@ private:
   nsresult SetRemoteDescriptionAnswer(JsepSdpType type, UniquePtr<Sdp> answer);
   nsresult ValidateLocalDescription(const Sdp& description);
   nsresult ValidateRemoteDescription(const Sdp& description);
+  nsresult ValidateOffer(const Sdp& offer);
   nsresult ValidateAnswer(const Sdp& offer, const Sdp& answer);
   nsresult SetRemoteTracksFromDescription(const Sdp* remoteDescription);
   // Non-const because we use our Uuid generator
@@ -237,7 +247,7 @@ private:
   nsresult SetupOfferMSections(const JsepOfferOptions& options, Sdp* sdp);
   // Non-const so it can assign m-line index to tracks
   nsresult SetupOfferMSectionsByType(SdpMediaSection::MediaType type,
-                                     Maybe<size_t> offerToReceive,
+                                     const Maybe<size_t>& offerToReceive,
                                      Sdp* sdp);
   nsresult BindLocalTracks(SdpMediaSection::MediaType mediatype,
                            Sdp* sdp);
@@ -281,8 +291,7 @@ private:
                                    bool usingBundle,
                                    size_t transportLevel,
                                    JsepTrackPair* trackPairOut);
-  void UpdateTransport(const SdpMediaSection& msection,
-                       JsepTransport* transport);
+  void InitTransport(const SdpMediaSection& msection, JsepTransport* transport);
 
   nsresult FinalizeTransport(const SdpAttributeList& remote,
                              const SdpAttributeList& answer,
@@ -292,8 +301,10 @@ private:
 
   nsresult EnableOfferMsection(SdpMediaSection* msection);
 
-  mozilla::Sdp* GetParsedLocalDescription() const;
-  mozilla::Sdp* GetParsedRemoteDescription() const;
+  mozilla::Sdp* GetParsedLocalDescription(JsepDescriptionPendingOrCurrent type)
+                                          const;
+  mozilla::Sdp* GetParsedRemoteDescription(JsepDescriptionPendingOrCurrent type)
+                                           const;
   const Sdp* GetAnswer() const;
 
   std::vector<JsepSendingTrack> mLocalTracks;

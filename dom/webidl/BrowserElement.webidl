@@ -31,26 +31,6 @@ interface BrowserElementCommon {
   [Throws,
    Pref="dom.mozBrowserFramesEnabled",
    ChromeOnly]
-  void setVisible(boolean visible);
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  DOMRequest getVisible();
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void setActive(boolean active);
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  boolean getActive();
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
   void addNextPaintListener(BrowserElementNextPaintEventCallback listener);
 
   [Throws,
@@ -143,16 +123,6 @@ interface BrowserElementPrivileged {
    Pref="dom.mozBrowserFramesEnabled",
    ChromeOnly]
   DOMRequest getContentDimensions();
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  DOMRequest setInputMethodActive(boolean isActive);
-
-  [Throws,
-   Pref="dom.mozBrowserFramesEnabled",
-   ChromeOnly]
-  void setNFCFocus(boolean isFocus);
 
   [Throws,
    Pref="dom.mozBrowserFramesEnabled",

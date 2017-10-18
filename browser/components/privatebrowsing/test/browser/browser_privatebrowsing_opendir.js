@@ -8,11 +8,10 @@
 var windowsToClose = [];
 function testOnWindow(options, callback) {
   var win = OpenBrowserWindow(options);
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
+  win.addEventListener("load", function() {
     windowsToClose.push(win);
     callback(win);
-  }, false);
+  }, {once: true});
 }
 
 registerCleanupFunction(function() {
@@ -82,7 +81,7 @@ function test() {
       ok(!privateWindow.gLastOpenDirectory.path,
          "No original path should exist inside the private browsing mode");
       privateWindow.gLastOpenDirectory.path = dir1;
-      is(privateWindow.gLastOpenDirectory.path.path, dir1.path, 
+      is(privateWindow.gLastOpenDirectory.path.path, dir1.path,
          "The path should be successfully set inside the private browsing mode");
       // test the non-private window
       ok(!nonPrivateWindow.gLastOpenDirectory.path,

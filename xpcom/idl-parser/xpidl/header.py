@@ -47,10 +47,13 @@ def attributeNativeName(a, getter):
 
 def attributeReturnType(a, macro):
     """macro should be NS_IMETHOD or NS_IMETHODIMP"""
-    if (a.nostdcall):
-        return macro == "NS_IMETHOD" and "virtual nsresult" or "nsresult"
+    if a.nostdcall:
+        ret = macro == "NS_IMETHOD" and "virtual nsresult" or "nsresult"
     else:
-        return macro
+        ret = macro
+    if a.must_use:
+        ret = "MOZ_MUST_USE " + ret
+    return ret
 
 
 def attributeParamlist(a, getter):
@@ -78,14 +81,17 @@ def methodNativeName(m):
 def methodReturnType(m, macro):
     """macro should be NS_IMETHOD or NS_IMETHODIMP"""
     if m.nostdcall and m.notxpcom:
-        return "%s%s" % (macro == "NS_IMETHOD" and "virtual " or "",
-                         m.realtype.nativeType('in').strip())
+        ret = "%s%s" % (macro == "NS_IMETHOD" and "virtual " or "",
+                        m.realtype.nativeType('in').strip())
     elif m.nostdcall:
-        return "%snsresult" % (macro == "NS_IMETHOD" and "virtual " or "")
+        ret = "%snsresult" % (macro == "NS_IMETHOD" and "virtual " or "")
     elif m.notxpcom:
-        return "%s_(%s)" % (macro, m.realtype.nativeType('in').strip())
+        ret = "%s_(%s)" % (macro, m.realtype.nativeType('in').strip())
     else:
-        return macro
+        ret = macro
+    if m.must_use:
+        ret = "MOZ_MUST_USE " + ret
+    return ret
 
 
 def methodAsNative(m, declType = 'NS_IMETHOD'):
@@ -131,8 +137,12 @@ def paramlistAsNative(m, empty='void'):
 
 
 def paramAsNative(p):
-    return "%s%s" % (p.nativeType(),
-                     p.name)
+    default_spec = ''
+    if p.default_value:
+        default_spec = " = " + p.default_value
+    return "%s%s%s" % (p.nativeType(),
+                       p.name,
+                       default_spec)
 
 
 def paramlistNames(m):
@@ -346,6 +356,21 @@ def write_interface(iface, fd):
     if iface.namemap is None:
         raise Exception("Interface was not resolved.")
 
+    # Confirm that no names of methods will overload in this interface
+    names = set()
+    def record_name(name):
+        if name in names:
+            raise Exception("Unexpected overloaded virtual method %s in interface %s"
+                            % (name, iface.name))
+        names.add(name)
+    for m in iface.members:
+        if type(m) == xpidl.Attribute:
+            record_name(attributeNativeName(m, getter=True))
+            if not m.readonly:
+                record_name(attributeNativeName(m, getter=False))
+        elif type(m) == xpidl.Method:
+            record_name(methodNativeName(m))
+
     def write_const_decls(g):
         fd.write("  enum {\n")
         enums = []
@@ -439,7 +464,7 @@ def write_interface(iface, fd):
     fd.write(iface_epilog % names)
 
     def writeDeclaration(fd, iface, virtual):
-        declType = "NS_IMETHOD" if virtual else "NS_METHOD"
+        declType = "NS_IMETHOD" if virtual else "nsresult"
         suffix = " override" if virtual else ""
         for member in iface.members:
             if isinstance(member, xpidl.Attribute):
@@ -527,7 +552,7 @@ def write_interface(iface, fd):
 
 
 def main(outputfile):
-    cachedir = '.'
+    cachedir = os.path.dirname(outputfile.name if outputfile else '') or '.'
     if not os.path.isdir(cachedir):
         os.mkdir(cachedir)
     sys.path.append(cachedir)
@@ -542,4 +567,4 @@ def main(outputfile):
     p = xpidl.IDLParser(outputdir=cachedir)
 
 if __name__ == '__main__':
-    main()
+    main(None)

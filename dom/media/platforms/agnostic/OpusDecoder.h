@@ -6,13 +6,16 @@
 #if !defined(OpusDecoder_h_)
 #define OpusDecoder_h_
 
-#include "OpusParser.h"
 #include "PlatformDecoderModule.h"
 
 #include "mozilla/Maybe.h"
 #include "nsAutoPtr.h"
 
+struct OpusMSDecoder;
+
 namespace mozilla {
+
+class OpusParser;
 
 class OpusDataDecoder : public MediaDataDecoder
 {
@@ -21,10 +24,10 @@ public:
   ~OpusDataDecoder();
 
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
-  nsresult Flush() override;
-  nsresult Drain() override;
-  nsresult Shutdown() override;
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<DecodePromise> Drain() override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
   const char* GetDescriptionName() const override
   {
     return "opus audio decoder";
@@ -41,21 +44,12 @@ public:
   static void AppendCodecDelay(MediaByteBuffer* config, uint64_t codecDelayUS);
 
 private:
-  enum DecodeError {
-    DECODE_SUCCESS,
-    DECODE_ERROR,
-    FATAL_ERROR
-  };
-
   nsresult DecodeHeader(const unsigned char* aData, size_t aLength);
 
-  void ProcessDecode(MediaRawData* aSample);
-  DecodeError DoDecode(MediaRawData* aSample);
-  void ProcessDrain();
+  RefPtr<DecodePromise> ProcessDecode(MediaRawData* aSample);
 
   const AudioInfo& mInfo;
   const RefPtr<TaskQueue> mTaskQueue;
-  MediaDataDecoderCallback* mCallback;
 
   // Opus decoder state
   nsAutoPtr<OpusParser> mOpusParser;
@@ -71,8 +65,6 @@ private:
   int64_t mFrames;
   Maybe<int64_t> mLastFrameTime;
   uint8_t mMappingTable[MAX_AUDIO_CHANNELS]; // Channel mapping table.
-
-  Atomic<bool> mIsFlushing;
 };
 
 } // namespace mozilla

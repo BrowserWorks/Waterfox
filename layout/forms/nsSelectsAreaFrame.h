@@ -11,7 +11,7 @@
 class nsSelectsAreaFrame : public nsBlockFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsSelectsAreaFrame)
 
   friend nsContainerFrame* NS_NewSelectsAreaFrame(nsIPresShell* aShell,
                                                   nsStyleContext* aContext,
@@ -31,11 +31,13 @@ public:
                       nsReflowStatus&          aStatus) override;
 
   nscoord BSizeOfARow() const { return mBSizeOfARow; }
-  
+
 protected:
   explicit nsSelectsAreaFrame(nsStyleContext* aContext) :
-    nsBlockFrame(aContext),
-    mBSizeOfARow(0)
+    nsBlockFrame(aContext, kClassID),
+    // initialize to wacky value so first call of
+    // nsSelectsAreaFrame::Reflow will always invalidate
+    mBSizeOfARow(nscoord_MIN)
   {}
 
   // We cache the block size of a single row so that changes to the

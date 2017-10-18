@@ -9,6 +9,7 @@
 #include "nsIDocumentLoaderFactory.h"
 #include "nsMimeTypes.h"
 
+class nsDocShell;
 class nsIChannel;
 class nsIContentViewer;
 class nsILoadGroup;
@@ -45,6 +46,16 @@ public:
                              nsISupports* aExtraInfo,
                              nsIStreamListener** aDocListener,
                              nsIContentViewer** aContentViewer);
+
+  /**
+   * Create a blank document using the given loadgroup and given
+   * principal.  aPrincipal is allowed to be null, in which case the
+   * new document will get the about:blank codebase principal.
+   */
+  static already_AddRefed<nsIDocument>
+  CreateBlankDocument(nsILoadGroup* aLoadGroup,
+                      nsIPrincipal* aPrincipal,
+                      nsDocShell* aContainer);
 
 private:
   static nsresult EnsureUAStyleSheet();
@@ -85,6 +96,7 @@ NS_NewContentDocumentLoaderFactory(nsIDocumentLoaderFactory** aResult);
     { "Gecko-Content-Viewers", IMAGE_SVG_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", APPLICATION_MATHML_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", TEXT_VTT, "@mozilla.org/content/document-loader-factory;1" }, \
+    { "Gecko-Content-Viewers", APPLICATION_WAPXHTML_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     CONTENTDLF_WEBM_CATEGORIES
 
 

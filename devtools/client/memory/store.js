@@ -2,11 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 const { combineReducers } = require("../shared/vendor/redux");
 const createStore = require("../shared/redux/create-store");
 const reducers = require("./reducers");
-const { viewState } = require("./constants");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 
 module.exports = function () {
   let shouldLog = false;
@@ -14,7 +15,7 @@ module.exports = function () {
 
   // If testing, store the action history in an array
   // we'll later attach to the store
-  if (DevToolsUtils.testing) {
+  if (flags.testing) {
     history = [];
     // Uncomment this for TONS of logging in tests.
     // shouldLog = true;

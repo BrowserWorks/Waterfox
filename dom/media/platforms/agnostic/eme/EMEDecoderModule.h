@@ -7,21 +7,20 @@
 #if !defined(EMEDecoderModule_h_)
 #define EMEDecoderModule_h_
 
+#include "MediaDataDecoderProxy.h"
 #include "PlatformDecoderModule.h"
-#include "PDMFactory.h"
-#include "gmp-decryption.h"
+#include "PlatformDecoderModule.h"
+#include "SamplesWaitingForKey.h"
 
 namespace mozilla {
 
 class CDMProxy;
+class PDMFactory;
 
-class EMEDecoderModule : public PlatformDecoderModule {
-private:
-
+class EMEDecoderModule : public PlatformDecoderModule
+{
 public:
   EMEDecoderModule(CDMProxy* aProxy, PDMFactory* aPDM);
-
-  virtual ~EMEDecoderModule();
 
 protected:
   // Decode thread.
@@ -32,19 +31,38 @@ protected:
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const CreateDecoderParams& aParams) override;
 
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
-
   bool
-  SupportsMimeType(const nsACString& aMimeType,
-                   DecoderDoctorDiagnostics* aDiagnostics) const override;
+  SupportsMimeType(const nsACString &aMimeType,
+                   DecoderDoctorDiagnostics *aDiagnostics) const override;
 
 private:
+  virtual ~EMEDecoderModule();
   RefPtr<CDMProxy> mProxy;
   // Will be null if CDM has decoding capability.
   RefPtr<PDMFactory> mPDM;
-  // We run the PDM on its own task queue.
+};
+
+class EMEMediaDataDecoderProxy : public MediaDataDecoderProxy
+{
+public:
+  EMEMediaDataDecoderProxy(
+    already_AddRefed<AbstractThread> aProxyThread, CDMProxy* aProxy,
+    const CreateDecoderParams& aParams);
+  EMEMediaDataDecoderProxy(const CreateDecoderParams& aParams,
+                           already_AddRefed<MediaDataDecoder> aProxyDecoder,
+                           CDMProxy* aProxy);
+
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
+  RefPtr<FlushPromise> Flush() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
+
+private:
   RefPtr<TaskQueue> mTaskQueue;
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  MozPromiseRequestHolder<SamplesWaitingForKey::WaitForKeyPromise> mKeyRequest;
+  MozPromiseHolder<DecodePromise> mDecodePromise;
+  MozPromiseRequestHolder<DecodePromise> mDecodeRequest;
+  RefPtr<CDMProxy> mProxy;
 };
 
 } // namespace mozilla

@@ -10,18 +10,17 @@
 
 #include "webrtc/test/vcm_capturer.h"
 
-#include "webrtc/modules/video_capture/include/video_capture_factory.h"
+#include "webrtc/modules/video_capture/video_capture_factory.h"
 #include "webrtc/video_send_stream.h"
 
 namespace webrtc {
 namespace test {
 
-VcmCapturer::VcmCapturer(webrtc::VideoSendStreamInput* input)
-    : VideoCapturer(input), started_(false), vcm_(NULL) {}
+VcmCapturer::VcmCapturer() : started_(false), sink_(nullptr), vcm_(NULL) {}
 
 bool VcmCapturer::Init(size_t width, size_t height, size_t target_fps) {
   VideoCaptureModule::DeviceInfo* device_info =
-      VideoCaptureFactory::CreateDeviceInfo(42);  // Any ID (42) will do.
+      VideoCaptureFactory::CreateDeviceInfo();
 
   char device_name[256];
   char unique_name[256];
@@ -32,8 +31,8 @@ bool VcmCapturer::Init(size_t width, size_t height, size_t target_fps) {
     return false;
   }
 
-  vcm_ = webrtc::VideoCaptureFactory::Create(0, unique_name);
-  vcm_->RegisterCaptureDataCallback(*this);
+  vcm_ = webrtc::VideoCaptureFactory::Create(unique_name);
+  vcm_->RegisterCaptureDataCallback(this);
 
   device_info->GetCapability(vcm_->CurrentDeviceName(), 0, capability_);
   delete device_info;
@@ -53,46 +52,59 @@ bool VcmCapturer::Init(size_t width, size_t height, size_t target_fps) {
   return true;
 }
 
-VcmCapturer* VcmCapturer::Create(VideoSendStreamInput* input,
-                                 size_t width, size_t height,
+VcmCapturer* VcmCapturer::Create(size_t width,
+                                 size_t height,
                                  size_t target_fps) {
-  VcmCapturer* vcm__capturer = new VcmCapturer(input);
-  if (!vcm__capturer->Init(width, height, target_fps)) {
+  VcmCapturer* vcm_capturer = new VcmCapturer();
+  if (!vcm_capturer->Init(width, height, target_fps)) {
     // TODO(pbos): Log a warning that this failed.
-    delete vcm__capturer;
+    delete vcm_capturer;
     return NULL;
   }
-  return vcm__capturer;
+  return vcm_capturer;
 }
 
 
-void VcmCapturer::Start() { started_ = true; }
+void VcmCapturer::Start() {
+  rtc::CritScope lock(&crit_);
+  started_ = true;
+}
 
-void VcmCapturer::Stop() { started_ = false; }
+void VcmCapturer::Stop() {
+  rtc::CritScope lock(&crit_);
+  started_ = false;
+}
+
+void VcmCapturer::AddOrUpdateSink(rtc::VideoSinkInterface<VideoFrame>* sink,
+                                  const rtc::VideoSinkWants& wants) {
+  rtc::CritScope lock(&crit_);
+  RTC_CHECK(!sink_ || sink_ == sink);
+  sink_ = sink;
+}
+
+void VcmCapturer::RemoveSink(rtc::VideoSinkInterface<VideoFrame>* sink) {
+  rtc::CritScope lock(&crit_);
+  RTC_CHECK(sink_ == sink);
+  sink_ = nullptr;
+}
 
 void VcmCapturer::Destroy() {
-  if (vcm_ == NULL) {
+  if (!vcm_)
     return;
-  }
 
   vcm_->StopCapture();
   vcm_->DeRegisterCaptureDataCallback();
-  vcm_->Release();
-
-  // TODO(pbos): How do I destroy the VideoCaptureModule? This still leaves
-  //             non-freed memory.
-  vcm_ = NULL;
+  // Release reference to VCM.
+  vcm_ = nullptr;
 }
 
 VcmCapturer::~VcmCapturer() { Destroy(); }
 
-void VcmCapturer::OnIncomingCapturedFrame(const int32_t id,
-                                          const I420VideoFrame& frame) {
-  if (started_)
-    input_->IncomingCapturedFrame(frame);
+void VcmCapturer::OnFrame(const VideoFrame& frame) {
+  rtc::CritScope lock(&crit_);
+  if (started_ && sink_)
+    sink_->OnFrame(frame);
 }
 
-void VcmCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay) {
-}
 }  // test
 }  // webrtc

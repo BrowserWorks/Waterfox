@@ -5,6 +5,8 @@ import shutil
 import tempfile
 import unittest
 
+import mozunit
+
 from manifestparser import TestManifest, ParseError
 from manifestparser.filters import subsuite
 
@@ -18,9 +20,11 @@ class TestTestManifest(unittest.TestCase):
         # Test filtering based on platform:
         filter_example = os.path.join(here, 'filter-example.ini')
         manifest = TestManifest(manifests=(filter_example,), strict=False)
-        self.assertEqual([i['name'] for i in manifest.active_tests(os='win', disabled=False, exists=False)],
+        self.assertEqual([i['name'] for i in manifest.active_tests(os='win', disabled=False,
+                                                                   exists=False)],
                          ['windowstest', 'fleem'])
-        self.assertEqual([i['name'] for i in manifest.active_tests(os='linux', disabled=False, exists=False)],
+        self.assertEqual([i['name'] for i in manifest.active_tests(os='linux', disabled=False,
+                                                                   exists=False)],
                          ['fleem', 'linuxtest'])
 
         # Look for existing tests.  There is only one:
@@ -116,5 +120,6 @@ class TestTestManifest(unittest.TestCase):
         self.assertEqual(len(empty_manifest.test_paths()), 0)
         self.assertEqual(len(empty_manifest.active_tests()), 0)
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

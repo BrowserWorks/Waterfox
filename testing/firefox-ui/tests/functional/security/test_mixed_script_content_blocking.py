@@ -2,15 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import By, Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestMixedScriptContentBlocking(FirefoxTestCase):
+class TestMixedScriptContentBlocking(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestMixedScriptContentBlocking, self).setUp()
 
         self.url = 'https://mozqa.com/data/firefox/security/mixed_content_blocked/index.html'
 
@@ -28,27 +28,26 @@ class TestMixedScriptContentBlocking(FirefoxTestCase):
         try:
             self.identity_popup.close(force=True)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestMixedScriptContentBlocking, self).tearDown()
 
     def _expect_protection_status(self, enabled):
         if enabled:
-            color, icon_filename, state = (
+            color, identity, state = (
                 'rgb(0, 136, 0)',
-                'identity-secure',
+                'verifiedDomain mixedActiveBlocked',
                 'blocked'
             )
         else:
-            color, icon_filename, state = (
+            color, identity, state = (
                 'rgb(255, 0, 0)',
-                'identity-mixed-active-loaded',
+                'unknownIdentity mixedActiveContent',
                 'unblocked'
             )
 
         # First call to Wait() needs a longer timeout due to the reload of the web page.
-        connection_icon = self.locationbar.connection_icon
-        Wait(self.marionette, timeout=self.browser.timeout_page_load).until(
-            lambda _: icon_filename in connection_icon.value_of_css_property('list-style-image'),
-            message="The correct icon is displayed"
+        Wait(self.marionette, timeout=self.marionette.timeout.page_load).until(
+            lambda _: self.locationbar.identity_box.get_property('className') == identity,
+            message='Expected identity "{}" not found'.format(identity)
         )
 
         with self.marionette.using_context('content'):

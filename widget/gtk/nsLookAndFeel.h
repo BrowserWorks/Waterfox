@@ -14,12 +14,14 @@
 
 struct _GtkStyle;
 
-class nsLookAndFeel: public nsXPLookAndFeel {
+class nsLookAndFeel final : public nsXPLookAndFeel
+{
 public:
     nsLookAndFeel();
     virtual ~nsLookAndFeel();
 
     virtual nsresult NativeGetColor(ColorID aID, nscolor &aResult);
+    virtual void NativeInit() final;
     virtual nsresult GetIntImpl(IntID aID, int32_t &aResult);
     virtual nsresult GetFloatImpl(FloatID aID, float &aResult);
     virtual bool GetFontImpl(FontID aID, nsString& aFontName,
@@ -33,9 +35,6 @@ public:
 protected:
 #if (MOZ_WIDGET_GTK == 2)
     struct _GtkStyle *mStyle;
-#else
-    struct _GtkStyleContext *mBackgroundStyle;
-    struct _GtkStyleContext *mButtonStyle;
 #endif
 
     // Cached fonts
@@ -84,8 +83,9 @@ protected:
     char16_t sInvisibleCharacter;
     float   sCaretRatio;
     bool    sMenuSupportsDrag;
+    bool    mInitialized;
 
-    void Init();
+    void EnsureInit();
 };
 
 #endif

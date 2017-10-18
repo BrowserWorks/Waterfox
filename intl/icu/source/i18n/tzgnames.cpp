@@ -1,6 +1,8 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
-* Copyright (C) 2011-2015, International Business Machines Corporation and
+* Copyright (C) 2011-2016, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 */
@@ -13,9 +15,10 @@
 
 #include "unicode/basictz.h"
 #include "unicode/locdspnm.h"
-#include "unicode/msgfmt.h"
 #include "unicode/rbtz.h"
+#include "unicode/simpleformatter.h"
 #include "unicode/simpletz.h"
+#include "unicode/strenum.h"
 #include "unicode/vtzone.h"
 
 #include "cmemory.h"
@@ -287,8 +290,8 @@ private:
     UHashtable* fLocationNamesMap;
     UHashtable* fPartialLocationNamesMap;
 
-    MessageFormat* fRegionFormat;
-    MessageFormat* fFallbackFormat;
+    SimpleFormatter fRegionFormat;
+    SimpleFormatter fFallbackFormat;
 
     LocaleDisplayNames* fLocaleDisplayNames;
     ZNStringPool fStringPool;
@@ -333,8 +336,6 @@ TZGNCore::TZGNCore(const Locale& locale, UErrorCode& status)
   fTimeZoneNames(NULL),
   fLocationNamesMap(NULL),
   fPartialLocationNamesMap(NULL),
-  fRegionFormat(NULL),
-  fFallbackFormat(NULL),
   fLocaleDisplayNames(NULL),
   fStringPool(status),
   fGNamesTrie(TRUE, deleteGNameInfo),
@@ -379,14 +380,8 @@ TZGNCore::initialize(const Locale& locale, UErrorCode& status) {
     }
     ures_close(zoneStrings);
 
-    fRegionFormat = new MessageFormat(rpat, status);
-    if (fRegionFormat == NULL) {
-        status = U_MEMORY_ALLOCATION_ERROR;
-    }
-    fFallbackFormat = new MessageFormat(fpat, status);
-    if (fFallbackFormat == NULL) {
-        status = U_MEMORY_ALLOCATION_ERROR;
-    }
+    fRegionFormat.applyPatternMinMaxArguments(rpat, 1, 1, status);
+    fFallbackFormat.applyPatternMinMaxArguments(fpat, 2, 2, status);
     if (U_FAILURE(status)) {
         cleanup();
         return;
@@ -441,12 +436,6 @@ TZGNCore::initialize(const Locale& locale, UErrorCode& status) {
 
 void
 TZGNCore::cleanup() {
-    if (fRegionFormat != NULL) {
-        delete fRegionFormat;
-    }
-    if (fFallbackFormat != NULL) {
-        delete fFallbackFormat;
-    }
     if (fLocaleDisplayNames != NULL) {
         delete fLocaleDisplayNames;
     }
@@ -545,8 +534,6 @@ TZGNCore::getGenericLocationName(const UnicodeString& tzCanonicalID) {
     ZoneMeta::getCanonicalCountry(tzCanonicalID, usCountryCode, &isPrimary);
 
     if (!usCountryCode.isEmpty()) {
-        FieldPosition fpos;
-
         if (isPrimary) {
             // If this is the primary zone in the country, use the country name.
             char countryCode[ULOC_COUNTRY_CAPACITY];
@@ -556,12 +543,7 @@ TZGNCore::getGenericLocationName(const UnicodeString& tzCanonicalID) {
 
             UnicodeString country;
             fLocaleDisplayNames->regionDisplayName(countryCode, country);
-
-            Formattable param[] = {
-                Formattable(country)
-            };
-
-            fRegionFormat->format(param, 1, name, fpos, status);
+            fRegionFormat.format(country, name, status);
         } else {
             // If this is not the primary zone in the country,
             // use the exemplar city name.
@@ -571,12 +553,7 @@ TZGNCore::getGenericLocationName(const UnicodeString& tzCanonicalID) {
 
             UnicodeString city;
             fTimeZoneNames->getExemplarLocationName(tzCanonicalID, city);
-
-            Formattable param[] = {
-                Formattable(city),
-            };
-
-            fRegionFormat->format(param, 1, name, fpos, status);
+            fRegionFormat.format(city, name, status);
         }
         if (U_FAILURE(status)) {
             return NULL;
@@ -828,13 +805,7 @@ TZGNCore::getPartialLocationName(const UnicodeString& tzCanonicalID,
 
     UErrorCode status = U_ZERO_ERROR;
     UnicodeString name;
-
-    FieldPosition fpos;
-    Formattable param[] = {
-        Formattable(location),
-        Formattable(mzDisplayName)
-    };
-    fFallbackFormat->format(param, 2, name, fpos, status);
+    fFallbackFormat.format(location, mzDisplayName, name, status);
     if (U_FAILURE(status)) {
         return NULL;
     }

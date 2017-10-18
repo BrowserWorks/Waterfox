@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <vector>
 #include <zlib.h>
+#include <pthread.h>
 #include "Utils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/RefCounted.h"
@@ -212,6 +213,7 @@ public:
      * Constructor
      */
     Stream(): compressedBuf(nullptr), compressedSize(0), uncompressedSize(0)
+            , CRC32(0)
             , type(STORE) { }
 
     /**
@@ -220,6 +222,7 @@ public:
     const void *GetBuffer() { return compressedBuf; }
     size_t GetSize() { return compressedSize; }
     size_t GetUncompressedSize() { return uncompressedSize; }
+    size_t GetCRC32() { return CRC32; }
     Type GetType() { return type; }
 
     /**
@@ -243,6 +246,7 @@ public:
     const void *compressedBuf;
     size_t compressedSize;
     size_t uncompressedSize;
+    size_t CRC32;
     Type type;
   };
 
@@ -456,6 +460,8 @@ private:
 
   /* Pointer to the Directory entries */
   mutable const DirectoryEntry *entries;
+
+  mutable pthread_mutex_t mutex;
 };
 
 /**
@@ -474,6 +480,8 @@ public:
 
 protected:
   friend class Zip;
+  friend class mozilla::detail::RefCounted<Zip, mozilla::detail::AtomicRefCount>;
+
   /**
    * Register the given Zip instance. This method is meant to be called
    * by Zip::Create.
@@ -484,11 +492,45 @@ protected:
    * Forget about the given Zip instance. This method is meant to be called
    * by the Zip destructor.
    */
-  static void Forget(Zip *zip);
+  static void Forget(const Zip *zip);
 
 private:
   /* Zip instances bookkept in this collection */
-  std::vector<Zip *> zips;
+  std::vector<RefPtr<Zip>> zips;
 };
+
+namespace mozilla {
+namespace detail {
+
+template<>
+inline void
+RefCounted<Zip, AtomicRefCount>::Release() const
+{
+  MOZ_ASSERT(static_cast<int32_t>(mRefCnt) > 0);
+  const auto count = --mRefCnt;
+  if (count == 1) {
+    // No external references are left, attempt to remove it from the collection.
+    // If it's successfully removed from the collection, Release() will be called
+    // with mRefCnt = 1, which will finally delete this zip.
+    ZipCollection::Forget(static_cast<const Zip*>(this));
+  } else if (count == 0) {
+#ifdef DEBUG
+    mRefCnt = detail::DEAD;
+#endif
+    delete static_cast<const Zip*>(this);
+  }
+}
+
+template<>
+inline
+RefCounted<Zip, AtomicRefCount>::~RefCounted()
+{
+  MOZ_ASSERT(mRefCnt == detail::DEAD);
+}
+
+} // namespace detail
+} // namespace mozilla
+
+
 
 #endif /* Zip_h */

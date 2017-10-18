@@ -8,16 +8,18 @@ transforms applied for a particular kind may not be!
 Overview
 --------
 
-To begin, a kind implementation generates a collection of items.  For example,
-the test kind implementation generates a list of tests to run for each matching
-build, representing each as a test description.  The items are simply Python
-dictionaries.
+To begin, a kind implementation generates a collection of items; see
+:doc:`loading`.  The items are simply Python dictionaries, and describe
+"semantically" what the resulting task or tasks should do.
 
 The kind also defines a sequence of transformations.  These are applied, in
 order, to each item.  Early transforms might apply default values or break
 items up into smaller items (for example, chunking a test suite).  Later
 transforms rewrite the items entirely, with the final result being a task
 definition.
+
+Transform Functions
+...................
 
 Each transformation looks like this:
 
@@ -45,7 +47,7 @@ The ``transforms`` object is an instance of
 mechanism to combine a sequence of transforms into one.
 
 Schemas
--------
+.......
 
 The items used in transforms are validated against some simple schemas at
 various points in the transformation process.  These schemas accomplish two
@@ -53,7 +55,7 @@ things: they provide a place to add comments about the meaning of each field,
 and they enforce that the fields are actually used in the documented fashion.
 
 Keyed By
---------
+........
 
 Several fields in the input items can be "keyed by" another value in the item.
 For example, a test description's chunks may be keyed by ``test-platform``.
@@ -65,66 +67,144 @@ In the item, this looks like:
         by-test-platform:
             linux64/debug: 12
             linux64/opt: 8
+            android.*: 14
             default: 10
 
 This is a simple but powerful way to encode business rules in the items
 provided as input to the transforms, rather than expressing those rules in the
 transforms themselves.  If you are implementing a new business rule, prefer
 this mode where possible.  The structure is easily resolved to a single value
-using :func:`taskgraph.transform.base.get_keyed_by`.
+using :func:`taskgraph.transform.base.resolve_keyed_by`.
 
-Task-Generation Transforms
---------------------------
+Exact matches are used immediately.  If no exact matches are found, each
+alternative is treated as a regular expression, matched against the whole
+value.  Thus ``android.*`` would match ``android-api-16/debug``.  If nothing
+matches as a regular expression, but there is a ``default`` alternative, it is
+used.  Otherwise, an exception is raised and graph generation stops.
+
+Organization
+-------------
+
+Task creation operates broadly in a few phases, with the interfaces of those
+stages defined by schemas.  The process begins with the raw data structures
+parsed from the YAML files in the kind configuration.  This data can processed
+by kind-specific transforms resulting, for test jobs, in a "test description".
+For non-test jobs, the next step is a "job description".  These transformations
+may also "duplicate" tasks, for example to implement chunking or several
+variations of the same task.
+
+In any case, shared transforms then convert this into a "task description",
+which the task-generation transforms then convert into a task definition
+suitable for ``queue.createTask``.
+
+Test Descriptions
+-----------------
+
+Test descriptions specify how to run a unittest or talos run.  They aim to
+describe this abstractly, although in many cases the unique nature of
+invocation on different platforms leaves a lot of specific behavior in the test
+description, divided by ``by-test-platform``.
+
+Test descriptions are validated to conform to the schema in
+``taskcluster/taskgraph/transforms/tests.py``.  This schema is extensively
+documented and is a the primary reference for anyone modifying tests.
+
+The output of ``tests.py`` is a task description.  Test dependencies are
+produced in the form of a dictionary mapping dependency name to task label.
+
+Job Descriptions
+----------------
+
+A job description says what to run in the task.  It is a combination of a
+``run`` section and all of the fields from a task description.  The run section
+has a ``using`` property that defines how this task should be run; for example,
+``mozharness`` to run a mozharness script, or ``mach`` to run a mach command.
+The remainder of the run section is specific to the run-using implementation.
+
+The effect of a job description is to say "run this thing on this worker".  The
+job description must contain enough information about the worker to identify
+the workerType and the implementation (docker-worker, generic-worker, etc.).
+Alternatively, job descriptions can specify the ``platforms`` field in
+conjunction with the  ``by-platform`` key to specify multiple workerTypes and
+implementations. Any other task-description information is passed along
+verbatim, although it is augmented by the run-using implementation.
+
+The run-using implementations are all located in
+``taskcluster/taskgraph/transforms/job``, along with the schemas for their
+implementations.  Those well-commented source files are the canonical
+documentation for what constitutes a job description, and should be considered
+part of the documentation.
+
+following ``run-using`` are available
+
+  * ``hazard``
+  * ``mach``
+  * ``mozharness``
+  * ``mozharness-test``
+  * ``run-task``
+  * ``spidermonkey`` or ``spidermonkey-package`` or ``spidermonkey-mozjs-crate``
+  * ``toolchain-script``
+
+
+Task Descriptions
+-----------------
 
 Every kind needs to create tasks, and all of those tasks have some things in
 common.  They all run on one of a small set of worker implementations, each
 with their own idiosyncracies.  And they all report to TreeHerder in a similar
 way.
 
-The transforms in ``taskcluster/taskgraph/transforms/make_task.py`` implement
+The transforms in ``taskcluster/taskgraph/transforms/task.py`` implement
 this common functionality.  They expect a "task description", and produce a
 task definition.  The schema for a task description is defined at the top of
-``make_task.py``, with copious comments.  The result is a dictionary with keys
-``label``, ``attributes``, ``task``, and ``dependencies``, with the latter
-having the same format as the input dependencies.
+``task.py``, with copious comments.  Go forth and read it now!
 
-These transforms assign names to treeherder groups using an internal list of
-group names.  Feel free to add additional groups to this list as necessary.
+In general, the task-description transforms handle functionality that is common
+to all Gecko tasks.  While the schema is the definitive reference, the
+functionality includes:
 
-Test Transforms
----------------
+* TreeHerder metadata
 
-The transforms configured for test kinds proceed as follows, based on
-configuration in ``kind.yml``:
+* Build index routes
 
- * The test description is validated to conform to the schema in
-   ``taskcluster/taskgraph/transforms/tests/test_description.py``.  This schema
-   is extensively documented and is a the primary reference for anyone
-   modifying tests.
+* Information about the projects on which this task should run
 
- * Kind-specific transformations are applied.  These may apply default
-   settings, split tests (e.g., one to run with feature X enabled, one with it
-   disabled), or apply across-the-board business rules such as "all desktop
-   debug test platforms should have a max-run-time of 5400s".
+* Optimizations
 
- * Transformations generic to all tests are applied.  These apply policies
-   which apply to multiple kinds, e.g., for treeherder tiers.  This is also the
-   place where most values which differ based on platform are resolved, and
-   where chunked tests are split out into a test per chunk.
+* Defaults for ``expires-after`` and and ``deadline-after``, based on project
 
- * The test is again validated against the same schema.  At this point it is
-   still a test description, just with defaults and policies applied, and
-   per-platform options resolved.  So transforms up to this point do not modify
-   the "shape" of the test description, and are still governed by the schema in
-   ``test_description.py``.
+* Worker configuration
 
- * The ``taskgraph.transforms.tests.make_task_description:transforms`` then
-   take the test description and create a *task* description.  This transform
-   embodies the specifics of how test runs work: invoking mozharness, various
-   worker options, and so on.
+The parts of the task description that are specific to a worker implementation
+are isolated in a ``task_description['worker']`` object which has an
+``implementation`` property naming the worker implementation.  Each worker
+implementation has its own section of the schema describing the fields it
+expects.  Thus the transforms that produce a task description must be aware of
+the worker implementation to be used, but need not be aware of the details of
+its payload format.
 
- * Finally, the ``taskgraph.transforms.make_task:transforms``, described above
-   under "Task-Generation Transforms", are applied.
+The ``task.py`` file also contains a dictionary mapping treeherder groups to
+group names using an internal list of group names.  Feel free to add additional
+groups to this list as necessary.
 
-Test dependencies are produced in the form of a dictionary mapping dependency
-name to task label.
+Signing Descriptions
+--------------------
+
+Signing kinds are passed a single dependent job (from its kind dependency) to act
+on.
+
+The transforms in ``taskcluster/taskgraph/transforms/signing.py`` implement
+this common functionality.  They expect a "signing description", and produce a
+task definition.  The schema for a signing description is defined at the top of
+``signing.py``, with copious comments.
+
+In particular you define a set of upstream artifact urls (that point at the dependent
+task) and can optionally provide a dependent name (defaults to build) for use in
+task-reference. You also need to provide the signing formats to use.
+
+More Detail
+-----------
+
+The source files provide lots of additional detail, both in the code itself and
+in the comments and docstrings.  For the next level of detail beyond this file,
+consult the transform source under ``taskcluster/taskgraph/transforms``.

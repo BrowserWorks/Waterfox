@@ -2,6 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Managed via the message managers.
+/* global initialProcessData */
+
 "use strict";
 
 var Ci = Components.interfaces;
@@ -17,7 +20,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "MatchPattern",
 XPCOMUtils.defineLazyModuleGetter(this, "WebRequestCommon",
                                   "resource://gre/modules/WebRequestCommon.jsm");
 
-const IS_HTTP = /^https?:/;
+// Websockets will get handled via httpchannel notifications same as http
+// requests, treat them the same as http in ContentPolicy.
+const IS_HTTP = /^https?:|wss?:/;
 
 var ContentPolicy = {
   _classDescription: "WebRequest content policy",
@@ -80,6 +85,19 @@ var ContentPolicy = {
 
   shouldLoad(policyType, contentLocation, requestOrigin,
              node, mimeTypeGuess, extra, requestPrincipal) {
+    // Loads of TYPE_DOCUMENT and TYPE_SUBDOCUMENT perform a ConPol check
+    // within docshell as well as within the ContentSecurityManager. To avoid
+    // duplicate evaluations we ignore ConPol checks performed within docShell.
+    if (extra instanceof Ci.nsISupportsString) {
+      if (extra.data === "conPolCheckFromDocShell") {
+        return Ci.nsIContentPolicy.ACCEPT;
+      }
+    }
+
+    if (requestPrincipal &&
+        Services.scriptSecurityManager.isSystemPrincipal(requestPrincipal)) {
+      return Ci.nsIContentPolicy.ACCEPT;
+    }
     let url = contentLocation.spec;
     if (IS_HTTP.test(url)) {
       // We'll handle this in our parent process HTTP observer.

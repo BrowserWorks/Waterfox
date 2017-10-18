@@ -12,13 +12,13 @@
 
 </head>
 <body onload="runTest();">
-  <script type="text/javascript;version=1.7">
+  <script type="text/javascript">
 
   function runTest() {
     // doing this IDBRequest should not be able to retrieve the filename and
     // line number.
     SimpleTest.requestFlakyTimeout("untriaged");
-    setTimeout(indexedDB.deleteDatabase.bind(indexedDB), 0, 'x');
+    setTimeout(indexedDB.deleteDatabase.bind(indexedDB), 0, "x");
     setTimeout(function() {
       ok(true, "Still alive");
       SimpleTest.finish();

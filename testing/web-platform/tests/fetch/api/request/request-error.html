@@ -37,11 +37,6 @@
       },"RequestInit's referrer is invalid");
 
       test(function() {
-        assert_throws(new TypeError() , function() { new Request("", {"referrer" : "http://test.url"}); },
-          "Expect TypeError exception");
-      },"RequestInit's referrer has invalid origin")
-
-      test(function() {
         assert_throws(new TypeError() , function() { new Request("", {"method" : "IN VALID"}); },
           "Expect TypeError exception");
       }, "RequestInit's method is invalid");
@@ -105,6 +100,20 @@
           assert_throws(new TypeError(), function() { new Request("", options); });
         },"Bad " + parameter +" init parameter value");
       });
+
+      function testOnlyIfCachedMode(fetchMode, ok) {
+        test(function() {
+          var options = {"cache": "only-if-cached", "mode": fetchMode};
+          if (ok)
+            new Request("test", options);
+          else
+            assert_throws(new TypeError(), function() { new Request("test", options); });
+        }, "Request with cache mode: only-if-cached and fetch mode: " + fetchMode);
+      }
+      testOnlyIfCachedMode("same-origin", true);
+      testOnlyIfCachedMode("cors", false);
+      testOnlyIfCachedMode("no-cors", false);
+
     </script>
   </body>
 </html>

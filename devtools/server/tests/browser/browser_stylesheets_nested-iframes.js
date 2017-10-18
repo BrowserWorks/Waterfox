@@ -10,8 +10,7 @@
 const {StyleSheetsFront} = require("devtools/shared/fronts/stylesheets");
 
 add_task(function* () {
-  let browser = yield addTab(MAIN_DOMAIN + "stylesheets-nested-iframes.html");
-  let doc = browser.contentDocument;
+  yield addTab(MAIN_DOMAIN + "stylesheets-nested-iframes.html");
 
   info("Initialising the debugger server and client.");
   initDebuggerServer();
@@ -34,5 +33,5 @@ add_task(function* () {
   // something sensible (if we got this far, the test has served its purpose).
   ok(sheets.length > 2, sheets.length + " sheets found (expected 3 or more).");
 
-  yield closeDebuggerClient(client);
+  yield client.close();
 });

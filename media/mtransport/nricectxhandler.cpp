@@ -18,9 +18,8 @@ namespace mozilla {
 MOZ_MTLOG_MODULE("mtransport")
 
 NrIceCtxHandler::NrIceCtxHandler(const std::string& name,
-                                 bool offerer,
                                  NrIceCtx::Policy policy)
-  : current_ctx(new NrIceCtx(name, offerer, policy)),
+  : current_ctx(new NrIceCtx(name, policy)),
     old_ctx(nullptr),
     restart_count(0)
 {
@@ -28,21 +27,19 @@ NrIceCtxHandler::NrIceCtxHandler(const std::string& name,
 
 RefPtr<NrIceCtxHandler>
 NrIceCtxHandler::Create(const std::string& name,
-                        bool offerer,
                         bool allow_loopback,
                         bool tcp_enabled,
                         bool allow_link_local,
-                        bool hide_non_default,
                         NrIceCtx::Policy policy)
 {
   // InitializeGlobals only executes once
   NrIceCtx::InitializeGlobals(allow_loopback, tcp_enabled, allow_link_local);
 
-  RefPtr<NrIceCtxHandler> ctx = new NrIceCtxHandler(name, offerer, policy);
+  RefPtr<NrIceCtxHandler> ctx = new NrIceCtxHandler(name, policy);
 
   if (ctx == nullptr ||
       ctx->current_ctx == nullptr ||
-      !ctx->current_ctx->Initialize(hide_non_default)) {
+      !ctx->current_ctx->Initialize()) {
     return nullptr;
   }
 
@@ -62,27 +59,23 @@ NrIceCtxHandler::CreateStream(const std::string& name, int components)
 
 
 RefPtr<NrIceCtx>
-NrIceCtxHandler::CreateCtx(bool hide_non_default) const
+NrIceCtxHandler::CreateCtx() const
 {
-  return CreateCtx(NrIceCtx::GetNewUfrag(),
-                   NrIceCtx::GetNewPwd(),
-                   hide_non_default);
+  return CreateCtx(NrIceCtx::GetNewUfrag(), NrIceCtx::GetNewPwd());
 }
 
 
 RefPtr<NrIceCtx>
 NrIceCtxHandler::CreateCtx(const std::string& ufrag,
-                           const std::string& pwd,
-                           bool hide_non_default) const
+                           const std::string& pwd) const
 {
   RefPtr<NrIceCtx> new_ctx = new NrIceCtx(this->current_ctx->name(),
-                                          true, // offerer (hardcoded per bwc)
                                           this->current_ctx->policy());
   if (new_ctx == nullptr) {
     return nullptr;
   }
 
-  if (!new_ctx->Initialize(hide_non_default, ufrag, pwd)) {
+  if (!new_ctx->Initialize(ufrag, pwd)) {
     return nullptr;
   }
 
@@ -145,6 +138,12 @@ NrIceCtxHandler::BeginIceRestart(RefPtr<NrIceCtx> new_ctx)
 void
 NrIceCtxHandler::FinalizeIceRestart()
 {
+  if (old_ctx) {
+    // Fixup the telemetry by transferring old stats to current ctx.
+    NrIceStats stats = old_ctx->Destroy();
+    current_ctx->AccumulateStats(stats);
+  }
+
   // no harm calling this even if we're not in the middle of restarting
   old_ctx = nullptr;
 }
@@ -160,5 +159,30 @@ NrIceCtxHandler::RollbackIceRestart()
   old_ctx = nullptr;
 }
 
+NrIceStats NrIceCtxHandler::Destroy()
+{
+  NrIceStats stats;
+
+  // designed to be called more than once so if stats are desired, this can be
+  // called just prior to the destructor
+  if (old_ctx && current_ctx) {
+    stats = old_ctx->Destroy();
+    current_ctx->AccumulateStats(stats);
+  }
+
+  if (current_ctx) {
+    stats = current_ctx->Destroy();
+  }
+
+  old_ctx = nullptr;
+  current_ctx = nullptr;
+
+  return stats;
+}
+
+NrIceCtxHandler::~NrIceCtxHandler()
+{
+  Destroy();
+}
 
 } // close namespace

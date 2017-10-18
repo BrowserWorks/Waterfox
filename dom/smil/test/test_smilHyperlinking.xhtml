@@ -41,7 +41,7 @@ function continueTest()
 
   window.location.hash = "";
   if (gAnim) {
-    gAnim.parentNode.removeChild(gAnim);
+    gAnim.remove();
   }
   gAnim = createAnim();
   gSvg.setCurrentTime(0);
@@ -207,25 +207,21 @@ function fireLink(callback) {
   } else {
     window.location.hash = '';
     window.addEventListener("hashchange",
-      function clearHash() {
-        window.removeEventListener("hashchange", clearHash, false);
+      function() {
         window.setTimeout(fireLinkPart2, 0, callback);
-      },
-      false);
+      }, {once: true});
   }
 }
 
 function fireLinkPart2(callback) {
   window.addEventListener("hashchange",
-    function triggerCallback() {
-      window.removeEventListener("hashchange", triggerCallback, false);
+    function() {
       window.setTimeout(callback, 0);
-    },
-    false);
+    }, {once: true});
   window.location.hash = '#anim';
 }
 
-window.addEventListener("load", continueTest, false);
+window.addEventListener("load", continueTest);
 ]]>
 </script>
 </pre>

@@ -9,8 +9,7 @@
 #include "TCPServerSocketParent.h"
 #include "nsJSUtils.h"
 #include "TCPSocketParent.h"
-#include "mozilla/unused.h"
-#include "mozilla/AppProcessChecker.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabParent.h"
 
@@ -62,30 +61,6 @@ TCPServerSocketParent::Init()
   NS_ENSURE_SUCCESS_VOID(mServerSocket->Init());
 }
 
-uint32_t
-TCPServerSocketParent::GetAppId()
-{
-  const PContentParent *content = Manager()->Manager();
-  if (PBrowserParent* browser = SingleManagedOrNull(content->ManagedPBrowserParent())) {
-    TabParent *tab = TabParent::GetFrom(browser);
-    return tab->OwnAppId();
-  } else {
-    return nsIScriptSecurityManager::UNKNOWN_APP_ID;
-  }
-}
-
-bool
-TCPServerSocketParent::GetInIsolatedMozBrowser()
-{
-  const PContentParent *content = Manager()->Manager();
-  if (PBrowserParent* browser = SingleManagedOrNull(content->ManagedPBrowserParent())) {
-    TabParent *tab = TabParent::GetFrom(browser);
-    return tab->IsIsolatedMozBrowserElement();
-  } else {
-    return false;
-  }
-}
-
 nsresult
 TCPServerSocketParent::SendCallbackAccept(TCPSocketParent *socket)
 {
@@ -121,12 +96,12 @@ TCPServerSocketParent::SendCallbackAccept(TCPSocketParent *socket)
   return NS_OK;
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPServerSocketParent::RecvClose()
 {
-  NS_ENSURE_TRUE(mServerSocket, true);
+  NS_ENSURE_TRUE(mServerSocket, IPC_OK());
   mServerSocket->Close();
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -139,18 +114,17 @@ TCPServerSocketParent::ActorDestroy(ActorDestroyReason why)
   mNeckoParent = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 TCPServerSocketParent::RecvRequestDelete()
 {
   mozilla::Unused << Send__delete__(this);
-  return true;
+  return IPC_OK();
 }
 
 void
 TCPServerSocketParent::OnConnect(TCPServerSocketEvent* event)
 {
   RefPtr<TCPSocket> socket = event->Socket();
-  socket->SetAppIdAndBrowser(GetAppId(), GetInIsolatedMozBrowser());
 
   RefPtr<TCPSocketParent> socketParent = new TCPSocketParent();
   socketParent->SetSocket(socket);

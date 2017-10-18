@@ -54,7 +54,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsTreeColumn)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContent)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNext)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(nsTreeColumn)
 
@@ -412,7 +411,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsTreeColumns)
   NS_INTERFACE_MAP_ENTRY(nsITreeColumns)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
-                                                                                
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsTreeColumns)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(nsTreeColumns)
 
@@ -545,7 +544,7 @@ nsTreeColumns::GetKeyColumn()
 
     if (!first)
       first = currCol;
-    
+
     if (nsContentUtils::HasNonEmptyAttr(currCol->mContent, kNameSpaceID_None,
                                         nsGkAtoms::sortDirection)) {
       // Use sorted column as the key.

@@ -7,9 +7,26 @@
 #include "mozilla/layers/APZCTreeManagerChild.h"
 
 #include "InputData.h"                  // for InputData
+#include "mozilla/dom/TabParent.h"      // for TabParent
+#include "mozilla/layers/APZCCallbackHelper.h" // for APZCCallbackHelper
+#include "mozilla/layers/RemoteCompositorSession.h" // for RemoteCompositorSession
 
 namespace mozilla {
 namespace layers {
+
+APZCTreeManagerChild::APZCTreeManagerChild()
+  : mCompositorSession(nullptr)
+{
+}
+
+void
+APZCTreeManagerChild::SetCompositorSession(RemoteCompositorSession* aSession)
+{
+  // Exactly one of mCompositorSession and aSession must be null (i.e. either
+  // we're setting mCompositorSession or we're clearing it).
+  MOZ_ASSERT(!mCompositorSession ^ !aSession);
+  mCompositorSession = aSession;
+}
 
 nsEventStatus
 APZCTreeManagerChild::ReceiveInputEvent(
@@ -102,11 +119,31 @@ APZCTreeManagerChild::ReceiveInputEvent(
     event = processedEvent;
     return res;
   }
+  case KEYBOARD_INPUT: {
+    KeyboardInput& event = aEvent.AsKeyboardInput();
+    KeyboardInput processedEvent;
+
+    nsEventStatus res;
+    SendReceiveKeyboardInputEvent(event,
+                                  &res,
+                                  &processedEvent,
+                                  aOutTargetGuid,
+                                  aOutInputBlockId);
+
+    event = processedEvent;
+    return res;
+  }
   default: {
     MOZ_ASSERT_UNREACHABLE("Invalid InputData type.");
     return nsEventStatus_eConsumeNoDefault;
   }
   }
+}
+
+void
+APZCTreeManagerChild::SetKeyboardMap(const KeyboardMap& aKeyboardMap)
+{
+  SendSetKeyboardMap(aKeyboardMap);
 }
 
 void
@@ -149,12 +186,6 @@ APZCTreeManagerChild::CancelAnimation(const ScrollableLayerGuid &aGuid)
 }
 
 void
-APZCTreeManagerChild::AdjustScrollForSurfaceShift(const ScreenPoint& aShift)
-{
-  SendAdjustScrollForSurfaceShift(aShift);
-}
-
-void
 APZCTreeManagerChild::SetDPI(float aDpiValue)
 {
   SendSetDPI(aDpiValue);
@@ -177,6 +208,20 @@ APZCTreeManagerChild::StartScrollbarDrag(
 }
 
 void
+APZCTreeManagerChild::StartAutoscroll(
+    const ScrollableLayerGuid& aGuid,
+    const ScreenPoint& aAnchorLocation)
+{
+  SendStartAutoscroll(aGuid, aAnchorLocation);
+}
+
+void
+APZCTreeManagerChild::StopAutoscroll(const ScrollableLayerGuid& aGuid)
+{
+  SendStopAutoscroll(aGuid);
+}
+
+void
 APZCTreeManagerChild::SetLongTapEnabled(bool aTapGestureEnabled)
 {
   SendSetLongTapEnabled(aTapGestureEnabled);
@@ -196,19 +241,57 @@ APZCTreeManagerChild::UpdateWheelTransaction(
   SendUpdateWheelTransaction(aRefPoint, aEventMessage);
 }
 
-void APZCTreeManagerChild::TransformEventRefPoint(
+void APZCTreeManagerChild::ProcessUnhandledEvent(
     LayoutDeviceIntPoint* aRefPoint,
-    ScrollableLayerGuid* aOutTargetGuid)
+    ScrollableLayerGuid*  aOutTargetGuid,
+    uint64_t*             aOutFocusSequenceNumber)
 {
-  SendTransformEventRefPoint(*aRefPoint, aRefPoint, aOutTargetGuid);
+  SendProcessUnhandledEvent(*aRefPoint,
+                            aRefPoint,
+                            aOutTargetGuid,
+                            aOutFocusSequenceNumber);
 }
 
-void
-APZCTreeManagerChild::OnProcessingError(
-        Result aCode,
-        const char* aReason)
+mozilla::ipc::IPCResult
+APZCTreeManagerChild::RecvHandleTap(const TapType& aType,
+                                    const LayoutDevicePoint& aPoint,
+                                    const Modifiers& aModifiers,
+                                    const ScrollableLayerGuid& aGuid,
+                                    const uint64_t& aInputBlockId)
 {
-  MOZ_RELEASE_ASSERT(aCode != MsgDropped);
+  MOZ_ASSERT(XRE_IsParentProcess());
+  if (mCompositorSession &&
+      mCompositorSession->RootLayerTreeId() == aGuid.mLayersId &&
+      mCompositorSession->GetContentController()) {
+    mCompositorSession->GetContentController()->HandleTap(aType, aPoint,
+        aModifiers, aGuid, aInputBlockId);
+    return IPC_OK();
+  }
+  dom::TabParent* tab = dom::TabParent::GetTabParentFromLayersId(aGuid.mLayersId);
+  if (tab) {
+    tab->SendHandleTap(aType, aPoint, aModifiers, aGuid, aInputBlockId);
+  }
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult
+APZCTreeManagerChild::RecvNotifyPinchGesture(const PinchGestureType& aType,
+                                             const ScrollableLayerGuid& aGuid,
+                                             const LayoutDeviceCoord& aSpanChange,
+                                             const Modifiers& aModifiers)
+{
+  // This will only get sent from the GPU process to the parent process, so
+  // this function should never get called in the content process.
+  MOZ_ASSERT(XRE_IsParentProcess());
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // We want to handle it in this process regardless of what the target guid
+  // of the pinch is. This may change in the future.
+  if (mCompositorSession &&
+      mCompositorSession->GetWidget()) {
+    APZCCallbackHelper::NotifyPinchGesture(aType, aSpanChange, aModifiers, mCompositorSession->GetWidget());
+  }
+  return IPC_OK();
 }
 
 } // namespace layers

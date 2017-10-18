@@ -4,7 +4,7 @@
 // See Bug 1270998.
 requestLongerTimeout(2);
 
-add_task(function* () {
+add_task(async function() {
   let aboutURLs = [];
 
   // List of about: URLs that will initiate network requests.
@@ -25,7 +25,7 @@ add_task(function* () {
     let contract = "@mozilla.org/network/protocol/about;1?what=" + aboutType;
     try {
       let am = Cc[contract].getService(Ci.nsIAboutModule);
-      let uri = ios.newURI("about:"+aboutType, null, null);
+      let uri = ios.newURI("about:" + aboutType);
       let flags = am.getURIFlags(uri);
       if (!(flags & Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT) &&
           networkURLs.indexOf(aboutType) == -1) {
@@ -38,11 +38,12 @@ add_task(function* () {
   }
 
   for (let url of aboutURLs) {
-    let tab = gBrowser.addTab("about:"+url, {userContextId: 1});
-    yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
+    info("Loading about:" + url);
+    let tab = BrowserTestUtils.addTab(gBrowser, "about:" + url, {userContextId: 1});
+    await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
-    ok(true);
+    ok(true, "Done loading about:" + url);
 
-    yield BrowserTestUtils.removeTab(tab);
+    await BrowserTestUtils.removeTab(tab);
   }
 });

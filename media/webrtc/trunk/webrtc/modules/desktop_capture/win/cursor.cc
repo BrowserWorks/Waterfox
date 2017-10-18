@@ -11,13 +11,13 @@
 #include "webrtc/modules/desktop_capture/win/cursor.h"
 
 #include <algorithm>
+#include <memory>
 
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/modules/desktop_capture/win/scoped_gdi_object.h"
 #include "webrtc/modules/desktop_capture/desktop_frame.h"
 #include "webrtc/modules/desktop_capture/desktop_geometry.h"
 #include "webrtc/modules/desktop_capture/mouse_cursor.h"
-#include "webrtc/system_wrappers/interface/logging.h"
+#include "webrtc/system_wrappers/include/logging.h"
 #include "webrtc/typedefs.h"
 
 namespace webrtc {
@@ -50,7 +50,6 @@ const uint32_t kPixelRgbaWhite = RGBA(0xff, 0xff, 0xff, 0xff);
 const uint32_t kPixelRgbaTransparent = RGBA(0, 0, 0, 0);
 
 const uint32_t kPixelRgbWhite = RGB(0xff, 0xff, 0xff);
-const uint32_t kPixelRgbBlack = RGB(0, 0, 0);
 
 // Expands the cursor shape to add a white outline for visibility against
 // dark backgrounds.
@@ -136,7 +135,7 @@ MouseCursor* CreateMouseCursorFromHCursor(HDC dc, HCURSOR cursor) {
 
   int width = bitmap_info.bmWidth;
   int height = bitmap_info.bmHeight;
-  rtc::scoped_ptr<uint32_t[]> mask_data(new uint32_t[width * height]);
+  std::unique_ptr<uint32_t[]> mask_data(new uint32_t[width * height]);
 
   // Get pixel data from |scoped_mask| converting it to 32bpp along the way.
   // GetDIBits() sets the alpha component of every pixel to 0.
@@ -163,7 +162,7 @@ MouseCursor* CreateMouseCursorFromHCursor(HDC dc, HCURSOR cursor) {
   }
 
   uint32_t* mask_plane = mask_data.get();
-  rtc::scoped_ptr<DesktopFrame> image(
+  std::unique_ptr<DesktopFrame> image(
       new BasicDesktopFrame(DesktopSize(width, height)));
   bool has_alpha = false;
 

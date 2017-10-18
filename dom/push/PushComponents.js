@@ -210,9 +210,6 @@ Object.assign(PushServiceParent.prototype, {
       this.notificationForOriginClosed(data);
       return;
     }
-    if (!target.assertPermission("push")) {
-      return;
-    }
     if (name === "Push:ReportError") {
       this.reportDeliveryError(data.messageId, data.reason);
       return;
@@ -496,6 +493,11 @@ PushSubscription.prototype = {
    */
   get isSystemSubscription() {
     return !!this._props.systemRecord;
+  },
+
+  /** The private key used to decrypt incoming push messages, in JWK format */
+  get p256dhPrivateKey() {
+    return this._props.p256dhPrivateKey;
   },
 
   /**

@@ -15,7 +15,7 @@ nsLeafFrame::~nsLeafFrame()
 }
 
 /* virtual */ nscoord
-nsLeafFrame::GetMinISize(nsRenderingContext *aRenderingContext)
+nsLeafFrame::GetMinISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -24,7 +24,7 @@ nsLeafFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 }
 
 /* virtual */ nscoord
-nsLeafFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
+nsLeafFrame::GetPrefISize(gfxContext *aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -34,14 +34,14 @@ nsLeafFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 
 /* virtual */
 LogicalSize
-nsLeafFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                             WritingMode aWM,
-                             const LogicalSize& aCBSize,
-                             nscoord aAvailableISize,
-                             const LogicalSize& aMargin,
-                             const LogicalSize& aBorder,
-                             const LogicalSize& aPadding,
-                             bool aShrinkWrap)
+nsLeafFrame::ComputeAutoSize(gfxContext*         aRenderingContext,
+                             WritingMode         aWM,
+                             const LogicalSize&  aCBSize,
+                             nscoord             aAvailableISize,
+                             const LogicalSize&  aMargin,
+                             const LogicalSize&  aBorder,
+                             const LogicalSize&  aPadding,
+                             ComputeSizeFlags    aFlags)
 {
   const WritingMode wm = GetWritingMode();
   LogicalSize result(wm, GetIntrinsicISize(), GetIntrinsicBSize());
@@ -64,7 +64,7 @@ nsLeafFrame::Reflow(nsPresContext* aPresContext,
 
   DoReflow(aPresContext, aMetrics, aReflowInput, aStatus);
 
-  FinishAndStoreOverflow(&aMetrics);
+  FinishAndStoreOverflow(&aMetrics, aReflowInput.mStyleDisplay);
 }
 
 void
@@ -85,7 +85,7 @@ nsLeafFrame::DoReflow(nsPresContext* aPresContext,
   WritingMode wm = aReflowInput.GetWritingMode();
   aMetrics.SetSize(wm, aReflowInput.ComputedSizeWithBorderPadding());
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
                  ("exit nsLeafFrame::DoReflow: size=%d,%d",
@@ -111,5 +111,5 @@ nsLeafFrame::SizeToAvailSize(const ReflowInput& aReflowInput,
                    aReflowInput.AvailableBSize());
   aDesiredSize.SetSize(wm, size);
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  FinishAndStoreOverflow(&aDesiredSize);  
+  FinishAndStoreOverflow(&aDesiredSize, aReflowInput.mStyleDisplay);
 }

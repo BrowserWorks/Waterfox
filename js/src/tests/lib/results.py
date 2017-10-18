@@ -57,7 +57,7 @@ class TestResult:
         result = None          # str:      overall result, see class-level variables
         results = []           # (str,str) list: subtest results (pass/fail, message)
 
-        out, rc = output.out, output.rc
+        out, err, rc = output.out, output.err, output.rc
 
         failures = 0
         passes = 0
@@ -81,6 +81,12 @@ class TestResult:
                 if m:
                     expected_rcs.append(int(m.group(1)))
 
+        if test.error is not None:
+            expected_rcs.append(3)
+            if test.error not in err:
+                failures += 1
+                results.append((cls.FAIL, "Expected uncaught error: {}".format(test.error)))
+
         if rc and not rc in expected_rcs:
             if rc == 3:
                 result = cls.FAIL
@@ -94,13 +100,20 @@ class TestResult:
 
         return cls(test, result, results)
 
+class TestDuration:
+    def __init__(self, test, duration):
+        self.test = test
+        self.duration = duration
+
 class ResultsSink:
     def __init__(self, options, testcount):
         self.options = options
         self.fp = options.output_fp
 
         self.groups = {}
+        self.output_dict = {}
         self.counts = {'PASS': 0, 'FAIL': 0, 'TIMEOUT': 0, 'SKIP': 0}
+        self.slow_tests = []
         self.n = 0
 
         if options.hide_progress:
@@ -115,6 +128,8 @@ class ResultsSink:
             self.pb = ProgressBar(testcount, fmt)
 
     def push(self, output):
+        if self.options.show_slow and output.dt >= self.options.slow_test_threshold:
+            self.slow_tests.append(TestDuration(output.test, output.dt))
         if output.timed_out:
             self.counts['TIMEOUT'] += 1
         if isinstance(output, NullTestOutput):
@@ -128,6 +143,17 @@ class ResultsSink:
             result = TestResult.from_output(output)
             tup = (result.result, result.test.expect, result.test.random)
             dev_label = self.LABELS[tup][1]
+
+            if self.options.check_output:
+                if output.test.path in self.output_dict.keys():
+                    if self.output_dict[output.test.path] != output:
+                        self.counts['FAIL'] += 1
+                        self.print_automation_result(
+                            "TEST-UNEXPECTED-FAIL", result.test, time=output.dt,
+                            message="Same test with different flag producing different output")
+                else:
+                    self.output_dict[output.test.path] = output
+
             if output.timed_out:
                 dev_label = 'TIMEOUTS'
             self.groups.setdefault(dev_label, []).append(result)
@@ -244,6 +270,17 @@ class ResultsSink:
             print('PASS' + suffix)
         else:
             print('FAIL' + suffix)
+
+        if self.options.show_slow:
+            min_duration = self.options.slow_test_threshold
+            print('Slow tests (duration > {}s)'.format(min_duration))
+            slow_tests = sorted(self.slow_tests, key=lambda x: x.duration, reverse=True)
+            any = False
+            for test in slow_tests:
+                print('{:>5} {}'.format(round(test.duration, 2), test.test))
+                any = True
+            if not any:
+                print('None')
 
     def all_passed(self):
         return 'REGRESSIONS' not in self.groups and 'TIMEOUTS' not in self.groups

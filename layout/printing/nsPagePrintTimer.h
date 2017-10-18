@@ -14,6 +14,7 @@
 #include "nsThreadUtils.h"
 
 class nsPrintEngine;
+class nsIDocument;
 
 //---------------------------------------------------
 //-- Page Timer Class
@@ -27,15 +28,19 @@ public:
 
   nsPagePrintTimer(nsPrintEngine* aPrintEngine,
                    nsIDocumentViewerPrint* aDocViewerPrint,
+                   nsIDocument* aDocument,
                    uint32_t aDelay)
-    : mPrintEngine(aPrintEngine)
+    : Runnable("nsPagePrintTimer")
+    , mPrintEngine(aPrintEngine)
     , mDocViewerPrint(aDocViewerPrint)
+    , mDocument(aDocument)
     , mDelay(aDelay)
     , mFiringCount(0)
     , mPrintObj(nullptr)
     , mWatchDogCount(0)
     , mDone(false)
   {
+    MOZ_ASSERT(aDocument);
     mDocViewerPrint->IncrementDestroyRefCount();
   }
 
@@ -50,6 +55,12 @@ public:
   void WaitForRemotePrint();
   void RemotePrintFinished();
 
+  void Disconnect()
+  {
+    mPrintEngine = nullptr;
+    mPrintObj = nullptr;
+  }
+
 private:
   ~nsPagePrintTimer();
 
@@ -60,6 +71,7 @@ private:
 
   nsPrintEngine*             mPrintEngine;
   nsCOMPtr<nsIDocumentViewerPrint> mDocViewerPrint;
+  nsCOMPtr<nsIDocument>      mDocument;
   nsCOMPtr<nsITimer>         mTimer;
   nsCOMPtr<nsITimer>         mWatchDogTimer;
   nsCOMPtr<nsITimer>         mWaitingForRemotePrint;
@@ -70,11 +82,14 @@ private:
   bool                       mDone;
 
   static const uint32_t WATCH_DOG_INTERVAL  = 1000;
-  static const uint32_t WATCH_DOG_MAX_COUNT = 10;
+  static const uint32_t WATCH_DOG_MAX_COUNT =
+#ifdef DEBUG
+    // Debug builds are very slow (on Mac at least) and can need extra time
+                                              30
+#else
+                                              10
+#endif
+  ;
 };
-
-
-nsresult
-NS_NewPagePrintTimer(nsPagePrintTimer **aResult);
 
 #endif /* nsPagePrintTimer_h___ */

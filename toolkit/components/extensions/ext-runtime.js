@@ -1,115 +1,144 @@
 "use strict";
 
-var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+// The ext-* files are imported into the same scopes.
+/* import-globals-from ext-toolkit.js */
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
+                                  "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
+                                  "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionParent",
+                                  "resource://gre/modules/ExtensionParent.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
+                                  "resource://gre/modules/NetUtil.jsm");
 
-Cu.import("resource://gre/modules/ExtensionUtils.jsm");
-var {
-  EventManager,
-  ignoreEvent,
-} = ExtensionUtils;
+this.runtime = class extends ExtensionAPI {
+  getAPI(context) {
+    let {extension} = context;
+    return {
+      runtime: {
+        onStartup: new EventManager(context, "runtime.onStartup", fire => {
+          if (context.incognito) {
+            // This event should not fire if we are operating in a private profile.
+            return () => {};
+          }
+          let listener = () => {
+            if (extension.startupReason === "APP_STARTUP") {
+              fire.sync();
+            }
+          };
+          extension.on("startup", listener);
+          return () => {
+            extension.off("startup", listener);
+          };
+        }).api(),
 
-XPCOMUtils.defineLazyModuleGetter(this, "NativeApp",
-                                  "resource://gre/modules/NativeMessaging.jsm");
+        onInstalled: new EventManager(context, "runtime.onInstalled", fire => {
+          let temporary = !!extension.addonData.temporarilyInstalled;
 
-extensions.registerSchemaAPI("runtime", (extension, context) => {
-  return {
-    runtime: {
-      onStartup: new EventManager(context, "runtime.onStartup", fire => {
-        extension.onStartup = fire;
-        return () => {
-          extension.onStartup = null;
-        };
-      }).api(),
+          let listener = () => {
+            switch (extension.startupReason) {
+              case "APP_STARTUP":
+                if (AddonManagerPrivate.browserUpdated) {
+                  fire.sync({reason: "browser_update", temporary});
+                }
+                break;
+              case "ADDON_INSTALL":
+                fire.sync({reason: "install", temporary});
+                break;
+              case "ADDON_UPGRADE":
+                fire.sync({
+                  reason: "update",
+                  previousVersion: extension.addonData.oldVersion,
+                  temporary,
+                });
+                break;
+            }
+          };
+          extension.on("startup", listener);
+          return () => {
+            extension.off("startup", listener);
+          };
+        }).api(),
 
-      onInstalled: ignoreEvent(context, "runtime.onInstalled"),
+        onUpdateAvailable: new EventManager(context, "runtime.onUpdateAvailable", fire => {
+          let instanceID = extension.addonData.instanceID;
+          AddonManager.addUpgradeListener(instanceID, upgrade => {
+            extension.upgrade = upgrade;
+            let details = {
+              version: upgrade.version,
+            };
+            fire.sync(details);
+          });
+          return () => {
+            AddonManager.removeUpgradeListener(instanceID).catch(e => {
+              // This can happen if we try this after shutdown is complete.
+            });
+          };
+        }).api(),
 
-      onMessage: context.messenger.onMessage("runtime.onMessage"),
+        reload: () => {
+          if (extension.upgrade) {
+            // If there is a pending update, install it now.
+            extension.upgrade.install();
+          } else {
+            // Otherwise, reload the current extension.
+            AddonManager.getAddonByID(extension.id, addon => {
+              addon.reload();
+            });
+          }
+        },
 
-      onConnect: context.messenger.onConnect("runtime.onConnect"),
+        get lastError() {
+          // TODO(robwu): Figure out how to make sure that errors in the parent
+          // process are propagated to the child process.
+          // lastError should not be accessed from the parent.
+          return context.lastError;
+        },
 
-      connect: function(extensionId, connectInfo) {
-        let name = connectInfo !== null && connectInfo.name || "";
-        let recipient = extensionId !== null ? {extensionId} : {extensionId: extension.id};
+        getBrowserInfo: function() {
+          const {name, vendor, version, appBuildID} = Services.appinfo;
+          const info = {name, vendor, version, buildID: appBuildID};
+          return Promise.resolve(info);
+        },
 
-        return context.messenger.connect(Services.cpmm, name, recipient);
-      },
+        getPlatformInfo: function() {
+          return Promise.resolve(ExtensionParent.PlatformInfo);
+        },
 
-      sendMessage: function(...args) {
-        let options; // eslint-disable-line no-unused-vars
-        let extensionId, message, responseCallback;
-        if (args.length == 1) {
-          message = args[0];
-        } else if (args.length == 2) {
-          [message, responseCallback] = args;
-        } else {
-          [extensionId, message, options, responseCallback] = args;
-        }
-        let recipient = {extensionId: extensionId ? extensionId : extension.id};
+        openOptionsPage: function() {
+          if (!extension.manifest.options_ui) {
+            return Promise.reject({message: "No `options_ui` declared"});
+          }
 
-        if (!GlobalManager.extensionMap.has(recipient.extensionId)) {
-          return context.wrapPromise(Promise.reject({message: "Invalid extension ID"}),
-                                     responseCallback);
-        }
-        return context.messenger.sendMessage(Services.cpmm, message, recipient, responseCallback);
-      },
+          // This expects openOptionsPage to be defined in the file using this,
+          // e.g. the browser/ version of ext-runtime.js
+          /* global openOptionsPage:false */
+          return openOptionsPage(extension).then(() => {});
+        },
 
-      connectNative(application) {
-        let app = new NativeApp(extension, context, application);
-        return app.portAPI();
-      },
+        setUninstallURL: function(url) {
+          if (url.length == 0) {
+            return Promise.resolve();
+          }
 
-      sendNativeMessage(application, message) {
-        let app = new NativeApp(extension, context, application);
-        return app.sendMessage(message);
-      },
+          let uri;
+          try {
+            uri = NetUtil.newURI(url);
+          } catch (e) {
+            return Promise.reject({message: `Invalid URL: ${JSON.stringify(url)}`});
+          }
 
-      get lastError() {
-        return context.lastError;
-      },
+          if (uri.scheme != "http" && uri.scheme != "https") {
+            return Promise.reject({message: "url must have the scheme http or https"});
+          }
 
-      getManifest() {
-        return Cu.cloneInto(extension.manifest, context.cloneScope);
-      },
-
-      id: extension.id,
-
-      getURL: function(url) {
-        return extension.baseURI.resolve(url);
-      },
-
-      getPlatformInfo: function() {
-        return Promise.resolve(ExtensionUtils.PlatformInfo);
-      },
-
-      openOptionsPage: function() {
-        if (!extension.manifest.options_ui) {
-          return Promise.reject({message: "No `options_ui` declared"});
-        }
-
-        return openOptionsPage(extension).then(() => {});
-      },
-
-      setUninstallURL: function(url) {
-        if (url.length == 0) {
+          extension.uninstallURL = url;
           return Promise.resolve();
-        }
-
-        let uri;
-        try {
-          uri = NetUtil.newURI(url);
-        } catch (e) {
-          return Promise.reject({message: `Invalid URL: ${JSON.stringify(url)}`});
-        }
-
-        if (uri.scheme != "http" && uri.scheme != "https") {
-          return Promise.reject({message: "url must have the scheme http or https"});
-        }
-
-        extension.uninstallURL = url;
-        return Promise.resolve();
+        },
       },
-    },
-  };
-});
+    };
+  }
+};

@@ -8,6 +8,11 @@
 #include "GMPTimerChild.h"
 #include "mozilla/Monitor.h"
 #include "GMPChild.h"
+#include "mozilla/Mutex.h"
+#include "base/thread.h"
+#include "base/time.h"
+#include "mozilla/ReentrantMonitor.h"
+
 #include <ctime>
 
 namespace mozilla {
@@ -72,7 +77,8 @@ public:
     //    main thread tries to do a sync call back to the calling thread.
     MOZ_ASSERT(!IsOnChildMainThread());
 
-    mMessageLoop->PostTask(NewRunnableMethod(this, &GMPSyncRunnable::Run));
+    mMessageLoop->PostTask(NewRunnableMethod(
+      "gmp::GMPSyncRunnable::Run", this, &GMPSyncRunnable::Run));
     MonitorAutoLock lock(mMonitor);
     while (!mDone) {
       lock.Wait();
@@ -100,6 +106,21 @@ private:
   Monitor mMonitor;
 };
 
+class GMPThreadImpl : public GMPThread
+{
+public:
+  GMPThreadImpl();
+  virtual ~GMPThreadImpl();
+
+  // GMPThread
+  void Post(GMPTask* aTask) override;
+  void Join() override;
+
+private:
+  Mutex mMutex;
+  base::Thread mThread;
+};
+
 GMPErr
 CreateThread(GMPThread** aThread)
 {
@@ -120,7 +141,8 @@ RunOnMainThread(GMPTask* aTask)
   }
 
   RefPtr<GMPRunnable> r = new GMPRunnable(aTask);
-  sMainLoop->PostTask(NewRunnableMethod(r, &GMPRunnable::Run));
+  sMainLoop->PostTask(
+    NewRunnableMethod("gmp::GMPRunnable::Run", r, &GMPRunnable::Run));
 
   return GMPNoErr;
 }
@@ -138,6 +160,21 @@ SyncRunOnMainThread(GMPTask* aTask)
 
   return GMPNoErr;
 }
+
+class GMPMutexImpl : public GMPMutex
+{
+public:
+  GMPMutexImpl();
+  virtual ~GMPMutexImpl();
+
+  // GMPMutex
+  void Acquire() override;
+  void Release() override;
+  void Destroy() override;
+
+private:
+  ReentrantMonitor mMonitor;
+};
 
 GMPErr
 CreateMutex(GMPMutex** aMutex)
@@ -186,23 +223,11 @@ SetTimerOnMainThread(GMPTask* aTask, int64_t aTimeoutMS)
 GMPErr
 GetClock(GMPTimestamp* aOutTime)
 {
-  *aOutTime = time(0) * 1000;
-  return GMPNoErr;
-}
-
-GMPErr
-CreateRecordIterator(RecvGMPRecordIteratorPtr aRecvIteratorFunc,
-                     void* aUserArg)
-{
-  if (!aRecvIteratorFunc) {
-    return GMPInvalidArgErr;
-  }
-  GMPStorageChild* storage = sChild->GetGMPStorage();
-  if (!storage) {
+  if (!aOutTime) {
     return GMPGenericErr;
   }
-  MOZ_ASSERT(storage);
-  return storage->EnumerateRecords(aRecvIteratorFunc, aUserArg);
+  *aOutTime = base::Time::Now().ToDoubleT() * 1000.0;
+ return GMPNoErr;
 }
 
 void
@@ -223,7 +248,6 @@ InitPlatformAPI(GMPPlatformAPI& aPlatformAPI, GMPChild* aChild)
   aPlatformAPI.createrecord = &CreateRecord;
   aPlatformAPI.settimer = &SetTimerOnMainThread;
   aPlatformAPI.getcurrenttime = &GetClock;
-  aPlatformAPI.getrecordenumerator = &CreateRecordIterator;
 }
 
 GMPThreadImpl::GMPThreadImpl()
@@ -252,7 +276,8 @@ GMPThreadImpl::Post(GMPTask* aTask)
   }
 
   RefPtr<GMPRunnable> r = new GMPRunnable(aTask);
-  mThread.message_loop()->PostTask(NewRunnableMethod(r.get(), &GMPRunnable::Run));
+  mThread.message_loop()->PostTask(
+    NewRunnableMethod("gmp::GMPRunnable::Run", r.get(), &GMPRunnable::Run));
 }
 
 void
@@ -294,6 +319,33 @@ void
 GMPMutexImpl::Release()
 {
   mMonitor.Exit();
+}
+
+GMPTask*
+NewGMPTask(std::function<void()>&& aFunction)
+{
+  class Task : public GMPTask
+  {
+  public:
+    explicit Task(std::function<void()>&& aFunction)
+      : mFunction(Move(aFunction))
+    {
+    }
+    void Destroy() override
+    {
+      delete this;
+    }
+    ~Task() override
+    {
+    }
+    void Run() override
+    {
+      mFunction();
+    }
+  private:
+    std::function<void()> mFunction;
+  };
+  return new Task(Move(aFunction));
 }
 
 } // namespace gmp

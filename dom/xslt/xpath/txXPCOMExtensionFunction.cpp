@@ -345,7 +345,9 @@ txParamArrayHolder::~txParamArrayHolder()
                            variant.type.TagPart() == nsXPTType::T_INTERFACE_IS,
                            "We only support cleanup of strings and interfaces "
                            "here, and this looks like neither!");
-                static_cast<nsISupports*>(variant.val.p)->Release();
+                if (variant.val.p != nullptr) {
+                    static_cast<nsISupports*>(variant.val.p)->Release();
+                }
             }
         }
     }
@@ -384,7 +386,7 @@ txXPCOMExtensionFunctionCall::evaluate(txIEvalContext* aContext,
     uint8_t paramCount = methodInfo->GetParamCount();
     uint8_t inArgs = paramCount - 1;
 
-    JS::Rooted<txParamArrayHolder> invokeParams(mozilla::dom::GetJSRuntime());
+    JS::Rooted<txParamArrayHolder> invokeParams(mozilla::dom::RootingCx());
     if (!invokeParams.get().Init(paramCount)) {
         return NS_ERROR_OUT_OF_MEMORY;
     }

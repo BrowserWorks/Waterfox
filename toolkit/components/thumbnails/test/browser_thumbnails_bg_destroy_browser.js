@@ -2,6 +2,10 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 function* runTests() {
+  yield SpecialPowers.pushPrefEnv({
+    set: [["dom.ipc.processCount", 1]]
+  });
+
   let url1 = "http://example.com/1";
   ok(!thumbnailExists(url1), "First file should not exist yet.");
 
@@ -15,7 +19,13 @@ function* runTests() {
   ok(thumbnailExists(url1), "First file should exist after capture.");
   removeThumbnail(url1);
 
-  yield wait(2000);
+  // arbitrary wait - intermittent failures noted after 2 seconds
+  for (let i = 0; i < 5; i++) {
+    yield wait(1000);
+    if (BackgroundPageThumbs._thumbBrowser === undefined) {
+      break;
+    }
+  }
   is(BackgroundPageThumbs._thumbBrowser, undefined,
      "Thumb browser should be destroyed after timeout.");
   BackgroundPageThumbs._destroyBrowserTimeout = defaultTimeout;

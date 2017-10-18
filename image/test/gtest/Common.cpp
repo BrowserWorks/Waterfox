@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 
+#include "gfxPrefs.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIDirectoryService.h"
 #include "nsIFile.h"
@@ -24,6 +25,41 @@ using namespace gfx;
 
 using std::abs;
 using std::vector;
+
+static bool sImageLibInitialized = false;
+
+AutoInitializeImageLib::AutoInitializeImageLib()
+{
+  if (MOZ_LIKELY(sImageLibInitialized)) {
+    return;
+  }
+
+  EXPECT_TRUE(NS_IsMainThread());
+  sImageLibInitialized = true;
+
+  // Force sRGB to be consistent with reftests.
+  Preferences::SetBool("gfx.color_management.force_srgb", true);
+
+  // Ensure that ImageLib services are initialized.
+  nsCOMPtr<imgITools> imgTools = do_CreateInstance("@mozilla.org/image/tools;1");
+  EXPECT_TRUE(imgTools != nullptr);
+
+  // Ensure gfxPlatform is initialized.
+  gfxPlatform::GetPlatform();
+
+  // Depending on initialization order, it is possible that our pref changes
+  // have not taken effect yet because there are pending gfx-related events on
+  // the main thread.
+  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  EXPECT_TRUE(mainThread != nullptr);
+
+  bool processed;
+  do {
+    processed = false;
+    nsresult rv = mainThread->ProcessNextEvent(false, &processed);
+    EXPECT_TRUE(NS_SUCCEEDED(rv));
+  } while (processed);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // General Helpers
@@ -288,7 +324,7 @@ CheckGeneratedImage(Decoder* aDecoder,
                     uint8_t aFuzz /* = 0 */)
 {
   RawAccessFrameRef currentFrame = aDecoder->GetCurrentFrameRef();
-  RefPtr<SourceSurface> surface = currentFrame->GetSurface();
+  RefPtr<SourceSurface> surface = currentFrame->GetSourceSurface();
   const IntSize surfaceSize = surface->GetSize();
 
   // This diagram shows how the surface is divided into regions that the code
@@ -376,10 +412,10 @@ CheckGeneratedPalettedImage(Decoder* aDecoder, const IntRect& aRect)
 void
 CheckWritePixels(Decoder* aDecoder,
                  SurfaceFilter* aFilter,
-                 Maybe<IntRect> aOutputRect /* = Nothing() */,
-                 Maybe<IntRect> aInputRect /* = Nothing() */,
-                 Maybe<IntRect> aInputWriteRect /* = Nothing() */,
-                 Maybe<IntRect> aOutputWriteRect /* = Nothing() */,
+                 const Maybe<IntRect>& aOutputRect /* = Nothing() */,
+                 const Maybe<IntRect>& aInputRect /* = Nothing() */,
+                 const Maybe<IntRect>& aInputWriteRect /* = Nothing() */,
+                 const Maybe<IntRect>& aOutputWriteRect /* = Nothing() */,
                  uint8_t aFuzz /* = 0 */)
 {
   IntRect outputRect = aOutputRect.valueOr(IntRect(0, 0, 100, 100));
@@ -423,10 +459,10 @@ CheckWritePixels(Decoder* aDecoder,
 void
 CheckPalettedWritePixels(Decoder* aDecoder,
                          SurfaceFilter* aFilter,
-                         Maybe<IntRect> aOutputRect /* = Nothing() */,
-                         Maybe<IntRect> aInputRect /* = Nothing() */,
-                         Maybe<IntRect> aInputWriteRect /* = Nothing() */,
-                         Maybe<IntRect> aOutputWriteRect /* = Nothing() */,
+                         const Maybe<IntRect>& aOutputRect /* = Nothing() */,
+                         const Maybe<IntRect>& aInputRect /* = Nothing() */,
+                         const Maybe<IntRect>& aInputWriteRect /* = Nothing() */,
+                         const Maybe<IntRect>& aOutputWriteRect /* = Nothing() */,
                          uint8_t aFuzz /* = 0 */)
 {
   IntRect outputRect = aOutputRect.valueOr(IntRect(0, 0, 100, 100));
@@ -558,6 +594,15 @@ ImageTestCase CorruptICOWithBadBMPHeightTestCase()
                        IntSize(100, 100), TEST_CASE_HAS_ERROR);
 }
 
+ImageTestCase CorruptICOWithBadBppTestCase()
+{
+  // This test case is an ICO with a BPP (15) in the ICO header which differs
+  // from that in the BMP header itself (1). It should ignore the ICO BPP when
+  // the BMP BPP is available and thus correctly decode the image.
+  return ImageTestCase("corrupt-with-bad-ico-bpp.ico", "image/x-icon",
+                       IntSize(100, 100), TEST_CASE_IS_TRANSPARENT);
+}
+
 ImageTestCase TransparentPNGTestCase()
 {
   return ImageTestCase("transparent.png", "image/png", IntSize(32, 32),
@@ -662,6 +707,29 @@ ImageTestCase DownscaledTransparentICOWithANDMaskTestCase()
   return ImageTestCase("transparent-ico-with-and-mask.ico", "image/x-icon",
                        IntSize(32, 32), IntSize(20, 20),
                        TEST_CASE_IS_TRANSPARENT | TEST_CASE_IGNORE_OUTPUT);
+}
+
+ImageTestCase TruncatedSmallGIFTestCase()
+{
+  return ImageTestCase("green-1x1-truncated.gif", "image/gif", IntSize(1, 1));
+}
+
+ImageTestCase LargeICOWithBMPTestCase()
+{
+  return ImageTestCase("green-large-bmp.ico", "image/x-icon", IntSize(256, 256),
+                       TEST_CASE_IS_TRANSPARENT);
+}
+
+ImageTestCase LargeICOWithPNGTestCase()
+{
+  return ImageTestCase("green-large-png.ico", "image/x-icon", IntSize(512, 512),
+                       TEST_CASE_IS_TRANSPARENT);
+}
+
+ImageTestCase GreenMultipleSizesICOTestCase()
+{
+  return ImageTestCase("green-multiple-sizes.ico", "image/x-icon",
+                       IntSize(256, 256));
 }
 
 } // namespace image

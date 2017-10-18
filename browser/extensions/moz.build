@@ -5,15 +5,35 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DIRS += [
+    'activity-stream',
     'aushelper',
+    'clicktoplay-rollout',
     'e10srollout',
+    'followonsearch',
+    'formautofill',
+    'onboarding',
     'pdfjs',
     'pocket',
+    'screenshots',
+    'shield-recipe-client',
     'webcompat',
 ]
 
 # Only include the following system add-ons if building Aurora or Nightly
-if 'a' in CONFIG['GRE_MILESTONE']:
+if not CONFIG['RELEASE_OR_BETA']:
     DIRS += [
         'flyweb',
+        'presentation',
+    ]
+
+# Only include the following system add-ons if building DevEdition or Nightly
+if CONFIG['MOZ_DEV_EDITION'] or CONFIG['NIGHTLY_BUILD']:
+    DIRS += [
+        'webcompat-reporter',
+    ]
+
+# Only include mortar system add-ons if we locally enable it
+if CONFIG['MOZ_MORTAR']:
+    DIRS += [
+        'mortar',
     ]

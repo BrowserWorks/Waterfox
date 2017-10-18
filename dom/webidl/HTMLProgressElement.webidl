@@ -11,15 +11,12 @@
  * and create derivative works of this document.
  */
 
+[HTMLConstructor]
 interface HTMLProgressElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute double value;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute double max;
   readonly attribute double position;
-
-  /**
-   * The labels attribute will be done with bug 567740.
-   */
-  //readonly attribute NodeList labels;
+  readonly attribute NodeList labels;
 };

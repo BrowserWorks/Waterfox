@@ -50,6 +50,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Char16.h"
+#include "mozilla/MathAlgorithms.h"
 #include "mozilla/Types.h"
 
 #include <stdint.h>
@@ -121,11 +122,7 @@ AddU32ToHash(uint32_t aHash, uint32_t aValue)
  */
 template<size_t PtrSize>
 inline uint32_t
-AddUintptrToHash(uint32_t aHash, uintptr_t aValue);
-
-template<>
-inline uint32_t
-AddUintptrToHash<4>(uint32_t aHash, uintptr_t aValue)
+AddUintptrToHash(uint32_t aHash, uintptr_t aValue)
 {
   return AddU32ToHash(aHash, static_cast<uint32_t>(aValue));
 }
@@ -134,13 +131,6 @@ template<>
 inline uint32_t
 AddUintptrToHash<8>(uint32_t aHash, uintptr_t aValue)
 {
-  /*
-   * The static cast to uint64_t below is necessary because this function
-   * sometimes gets compiled on 32-bit platforms (yes, even though it's a
-   * template and we never call this particular override in a 32-bit build).  If
-   * we do aValue >> 32 on a 32-bit machine, we're shifting a 32-bit uintptr_t
-   * right 32 bits, and the compiler throws an error.
-   */
   uint32_t v1 = static_cast<uint32_t>(aValue);
   uint32_t v2 = static_cast<uint32_t>(static_cast<uint64_t>(aValue) >> 32);
   return AddU32ToHash(AddU32ToHash(aHash, v1), v2);
@@ -155,9 +145,11 @@ AddUintptrToHash<8>(uint32_t aHash, uintptr_t aValue)
  * Currently, we support hashing uint32_t's, values which we can implicitly
  * convert to uint32_t, data pointers, and function pointers.
  */
-template<typename A>
+template<typename T,
+         bool TypeIsNotIntegral = !mozilla::IsIntegral<T>::value,
+         typename U = typename mozilla::EnableIf<TypeIsNotIntegral>::Type>
 MOZ_MUST_USE inline uint32_t
-AddToHash(uint32_t aHash, A aA)
+AddToHash(uint32_t aHash, T aA)
 {
   /*
    * Try to convert |A| to uint32_t implicitly.  If this works, great.  If not,
@@ -180,11 +172,15 @@ AddToHash(uint32_t aHash, A* aA)
   return detail::AddUintptrToHash<sizeof(uintptr_t)>(aHash, uintptr_t(aA));
 }
 
-template<>
+// We use AddUintptrToHash() for hashing all integral types.  8-byte integral types
+// are treated the same as 64-bit pointers, and smaller integral types are first
+// implicitly converted to 32 bits and then passed to AddUintptrToHash() to be hashed.
+template<typename T,
+         typename U = typename mozilla::EnableIf<mozilla::IsIntegral<T>::value>::Type>
 MOZ_MUST_USE inline uint32_t
-AddToHash(uint32_t aHash, uintptr_t aA)
+AddToHash(uint32_t aHash, T aA)
 {
-  return detail::AddUintptrToHash<sizeof(uintptr_t)>(aHash, aA);
+  return detail::AddUintptrToHash<sizeof(T)>(aHash, aA);
 }
 
 template<typename A, typename... Args>
@@ -297,6 +293,90 @@ HashString(const wchar_t* aStr, size_t aLength)
  */
 MOZ_MUST_USE extern MFBT_API uint32_t
 HashBytes(const void* bytes, size_t aLength);
+
+/**
+ * A pseudorandom function mapping 32-bit integers to 32-bit integers.
+ *
+ * This is for when you're feeding private data (like pointer values or credit
+ * card numbers) to a non-crypto hash function (like HashBytes) and then using
+ * the hash code for something that untrusted parties could observe (like a JS
+ * Map). Plug in a HashCodeScrambler before that last step to avoid leaking the
+ * private data.
+ *
+ * By itself, this does not prevent hash-flooding DoS attacks, because an
+ * attacker can still generate many values with exactly equal hash codes by
+ * attacking the non-crypto hash function alone. Equal hash codes will, of
+ * course, still be equal however much you scramble them.
+ *
+ * The algorithm is SipHash-1-3. See <https://131002.net/siphash/>.
+ */
+class HashCodeScrambler
+{
+  struct SipHasher;
+
+  uint64_t mK0, mK1;
+
+public:
+  /** Creates a new scrambler with the given 128-bit key. */
+  constexpr HashCodeScrambler(uint64_t aK0, uint64_t aK1) : mK0(aK0), mK1(aK1) {}
+
+  /**
+   * Scramble a hash code. Always produces the same result for the same
+   * combination of key and hash code.
+   */
+  uint32_t scramble(uint32_t aHashCode) const
+  {
+    SipHasher hasher(mK0, mK1);
+    return uint32_t(hasher.sipHash(aHashCode));
+  }
+
+private:
+  struct SipHasher
+  {
+    SipHasher(uint64_t aK0, uint64_t aK1)
+    {
+      // 1. Initialization.
+      mV0 = aK0 ^ UINT64_C(0x736f6d6570736575);
+      mV1 = aK1 ^ UINT64_C(0x646f72616e646f6d);
+      mV2 = aK0 ^ UINT64_C(0x6c7967656e657261);
+      mV3 = aK1 ^ UINT64_C(0x7465646279746573);
+    }
+
+    uint64_t sipHash(uint64_t aM)
+    {
+      // 2. Compression.
+      mV3 ^= aM;
+      sipRound();
+      mV0 ^= aM;
+
+      // 3. Finalization.
+      mV2 ^= 0xff;
+      for (int i = 0; i < 3; i++)
+        sipRound();
+      return mV0 ^ mV1 ^ mV2 ^ mV3;
+    }
+
+    void sipRound()
+    {
+      mV0 += mV1;
+      mV1 = RotateLeft(mV1, 13);
+      mV1 ^= mV0;
+      mV0 = RotateLeft(mV0, 32);
+      mV2 += mV3;
+      mV3 = RotateLeft(mV3, 16);
+      mV3 ^= mV2;
+      mV0 += mV3;
+      mV3 = RotateLeft(mV3, 21);
+      mV3 ^= mV0;
+      mV2 += mV1;
+      mV1 = RotateLeft(mV1, 17);
+      mV1 ^= mV2;
+      mV2 = RotateLeft(mV2, 32);
+    }
+
+    uint64_t mV0, mV1, mV2, mV3;
+  };
+};
 
 } /* namespace mozilla */
 #endif /* __cplusplus */

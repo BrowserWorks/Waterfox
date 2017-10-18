@@ -1,9 +1,6 @@
 // Up-to-date as of 2013-04-12.
 var tabularElements = {
   table: {
-    // Conforming
-    sortable: "boolean",
-
     // Obsolete
     align: "string",
     border: "string",
@@ -20,7 +17,7 @@ var tabularElements = {
     align: "string",
   },
   colgroup: {
-    span: "limited unsigned long",
+    span: {type: "clamped unsigned long", defaultVal: 1, min: 1, max: 1000},
 
     // Obsolete
     align: "string",
@@ -31,7 +28,7 @@ var tabularElements = {
   },
   col: {
     // Conforming
-    span: "limited unsigned long",
+    span: {type: "clamped unsigned long", defaultVal: 1, min: 1, max: 1000},
 
     // Obsolete
     align: "string",
@@ -71,8 +68,8 @@ var tabularElements = {
   },
   td: {
     // HTMLTableCellElement (Conforming)
-    colSpan: {type: "unsigned long", defaultVal: 1},
-    rowSpan: {type: "unsigned long", defaultVal: 1},
+    colSpan: {type: "clamped unsigned long", defaultVal: 1, min: 1, max: 1000},
+    rowSpan: {type: "clamped unsigned long", defaultVal: 1, min: 0, max: 65534},
     headers: "settable tokenlist",
     scope: {type: "enum", keywords: ["row", "col", "rowgroup", "colgroup"]},
     abbr: "string",
@@ -90,8 +87,8 @@ var tabularElements = {
   },
   th: {
     // HTMLTableCellElement (Conforming)
-    colSpan: {type: "unsigned long", defaultVal: 1},
-    rowSpan: {type: "unsigned long", defaultVal: 1},
+    colSpan: {type: "clamped unsigned long", defaultVal: 1, min: 1, max: 1000},
+    rowSpan: {type: "clamped unsigned long", defaultVal: 1, min: 0, max: 65534},
     headers: "settable tokenlist",
     scope: {type: "enum", keywords: ["row", "col", "rowgroup", "colgroup"]},
     abbr: "string",

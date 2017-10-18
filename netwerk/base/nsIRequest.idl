@@ -124,16 +124,16 @@ interface nsIRequest : nsISupports
      */
     const unsigned long LOAD_BACKGROUND = 1 << 0;
 
+    /**
+     * This flag marks the request as being made to load the data for an html
+     * <object> tag. This means that the LOAD_DOCUMENT_URI flag may be set after
+     * the channel has been provided with the MIME type.
+     */
+    const unsigned long LOAD_HTML_OBJECT_DATA = 1 << 1;
+
     /**************************************************************************
      * The following flags control the flow of data into the cache.
      */
-
-    /**
-     *  This flag prevents loading of the request with an HTTP pipeline.
-     *  Generally this is because the resource is expected to take a
-     *  while to load and may cause head of line blocking problems.
-     */
-    const unsigned long INHIBIT_PIPELINE = 1 << 6;
 
     /**
      * This flag prevents caching of any kind.  It does not, however, prevent

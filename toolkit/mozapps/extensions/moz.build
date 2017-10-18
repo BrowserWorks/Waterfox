@@ -14,9 +14,9 @@ TEST_DIRS += ['test']
 
 XPIDL_SOURCES += [
     'amIAddonManager.idl',
+    'amIAddonManagerStartup.idl',
     'amIAddonPathService.idl',
-    'amIWebInstaller.idl',
-    'amIWebInstallListener.idl',
+    'amIWebInstallPrompt.idl',
 ]
 
 XPIDL_MODULE = 'extensions'
@@ -26,7 +26,6 @@ EXTRA_COMPONENTS += [
     'amContentHandler.js',
     'amInstallTrigger.js',
     'amWebAPI.js',
-    'amWebInstallListener.js',
     'nsBlocklistService.js',
     'nsBlocklistServiceContent.js',
 ]
@@ -46,12 +45,14 @@ JAR_MANIFESTS += ['jar.mn']
 
 EXPORTS.mozilla += [
     'AddonContentPolicy.h',
+    'AddonManagerStartup.h',
     'AddonManagerWebAPI.h',
     'AddonPathService.h',
 ]
 
 UNIFIED_SOURCES += [
     'AddonContentPolicy.cpp',
+    'AddonManagerStartup.cpp',
     'AddonManagerWebAPI.cpp',
     'AddonPathService.cpp',
 ]

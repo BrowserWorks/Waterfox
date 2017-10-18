@@ -16,7 +16,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=646641
   
 </div>
 <pre id="test">
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 /** Test for Bug 646641 **/
 
@@ -47,9 +47,6 @@ function childLoad(n) {
     // Spin the event loop before calling gGen.next() so the generator runs
     // outside the onload handler.  This prevents us from encountering all
     // sorts of docshell quirks.
-    //
-    // (I don't know why I need to wrap gGen.next() in a function, but it
-    // throws an error otherwise.)
     setTimeout(function() { gGen.next() }, 0);
   }
   else {
@@ -84,18 +81,14 @@ function waitForShow(n) {
   expectedPageshowNum = n;
 }
 
-function test() {
-  var popup = window.open('data:text/html,' +
-                          '<html><body onload="opener.childLoad(1)" ' +
-                                      'onpageshow="opener.childPageshow(1)">' +
-                                'Popup 1' +
-                                '</body></html>');
+function* test() {
+  var popup = window.open('file_bfcache_plus_hash_1.html');
   waitForLoad(1);
   yield undefined;
 
   popup.history.pushState('', '', '');
 
-  popup.location = 'data:text/html,<html><body onload="opener.childLoad(2)">Popup 2</body></html>';
+  popup.location = 'file_bfcache_plus_hash_2.html';
   waitForLoad(2);
   yield undefined;
 
@@ -106,9 +99,6 @@ function test() {
 
   popup.close();
   SimpleTest.finish();
-  
-  // Yield once more so we don't throw a StopIteration exception.
-  yield undefined;
 }
 
 var gGen = test();

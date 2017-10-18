@@ -1,3 +1,4 @@
+atomic.h
 nspr.h
 plarena.h
 plarenas.h
@@ -489,6 +490,7 @@ gdk/gdkkeysyms.h
 gdk/gdkprivate.h
 gdk/gdkx.h
 gdk/gdkdirectfb.h
+gdk/gdkwayland.h
 gdk-pixbuf/gdk-pixbuf.h
 Gestalt.h
 getopt.h
@@ -872,9 +874,6 @@ Quickdraw.h
 QuickDraw.h
 QuickTimeComponents.h
 quipu/attr.h
-rasdlg.h
-raserror.h
-ras.h
 regex.h
 Region.h
 resolv.h
@@ -888,6 +887,7 @@ rpc/types.h
 sane/sane.h
 sane/sanei.h
 sane/saneopts.h
+sanitizer/asan_interface.h
 sched.h
 Scrap.h
 Screen.h
@@ -991,6 +991,7 @@ sym.h
 synch.h
 syncmgr.h
 sys/atomic_op.h
+sys/auxv.h
 sys/bitypes.h
 sys/byteorder.h
 syscall.h
@@ -1000,6 +1001,7 @@ sys/elf.h
 sys/endian.h
 sys/epoll.h
 sys/errno.h
+sys/eventfd.h
 sys/fault.h
 sys/fcntl.h
 sys/file.h
@@ -1054,6 +1056,7 @@ sys/statvfs.h
 sys/syscall.h
 sys/sysctl.h
 sys/sysinfo.h
+sys/sysmacros.h
 sys/sysmp.h
 sys/syssgi.h
 sys/system_properties.h
@@ -1228,6 +1231,7 @@ X11/extensions/Xrender.h
 X11/extensions/Xfixes.h
 X11/extensions/Xdamage.h
 X11/extensions/Xcomposite.h
+X11/ImUtil.h
 X11/Intrinsic.h
 X11/keysymdef.h
 X11/keysym.h
@@ -1270,11 +1274,12 @@ hunspell.hxx
 #if MOZ_SYSTEM_BZ2==1
 bzlib.h
 #endif
-#ifdef MOZ_ENABLE_GIO
 gio/gio.h
-#endif
 #if MOZ_SYSTEM_LIBEVENT==1
 event.h
+event2/event.h
+event2/event_compat.h
+event2/event_struct.h
 #else
 sys/event.h
 #endif
@@ -1316,6 +1321,7 @@ xlocale.h
 #ifdef MOZ_SYSTEM_ICU
 unicode/locid.h
 unicode/numsys.h
+unicode/plurrule.h
 unicode/timezone.h
 unicode/ucal.h
 unicode/uchar.h
@@ -1324,10 +1330,13 @@ unicode/ucol.h
 unicode/udat.h
 unicode/udatpg.h
 unicode/uenum.h
+unicode/unistr.h
 unicode/unorm.h
 unicode/unum.h
+unicode/upluralrules.h
 unicode/ustring.h
 unicode/utypes.h
 #endif
 libutil.h
 unwind.h
+fenv.h

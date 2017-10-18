@@ -16,7 +16,7 @@ Testing that img referrer attribute is honoured correctly
 https://bugzilla.mozilla.org/show_bug.cgi?id=1166910
 -->
 
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 
 SimpleTest.waitForExplicitFinish();
 var advance = function() { tests.next(); };
@@ -82,10 +82,7 @@ function resetState() {
 /**
  * testing if img referrer attribute is honoured (1165501)
  */
-var tests = (function() {
-
-  // enable referrer attribute
-  yield SpecialPowers.pushPrefEnv({"set": [['network.http.enablePerElementReferrer', true]]}, advance);
+var tests = (function*() {
 
   var iframe = document.getElementById("testframe");
   var sjs = "/tests/dom/base/test/img_referrer_testserver.sjs?action=generate-img-policy-test";
@@ -174,8 +171,8 @@ var tests = (function() {
   yield iframe.src = sjs + "&imgPolicy=" + escape('default') + "&policy=" + escape('unsafe-url') + "&name=" + name;
   yield checkIndividualResults("unsafe-url in meta, default in img", ["full"], [name]);
 
-  // complete.  Be sure to yield so we don't call this twice.
-  yield SimpleTest.finish();
+  // complete.
+  SimpleTest.finish();
 })();
 
 </script>

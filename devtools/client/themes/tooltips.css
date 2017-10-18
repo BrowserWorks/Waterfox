@@ -3,6 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* Import stylesheets for specific tooltip widgets */
+@import url(chrome://devtools/content/shared/widgets/color-widget.css);
+@import url(chrome://devtools/content/shared/widgets/cubic-bezier.css);
+@import url(chrome://devtools/content/shared/widgets/filter-widget.css);
+@import url(chrome://devtools/content/shared/widgets/mdn-docs.css);
+@import url(chrome://devtools/content/shared/widgets/spectrum.css);
+
 /* Tooltip specific theme variables */
 
 .theme-dark {
@@ -15,7 +22,7 @@
   --bezier-grid-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Tooltip widget (see devtools/client/shared/widgets/Tooltip.js) */
+/* Tooltip widget (see devtools/client/shared/widgets/tooltip/Tooltip.js) */
 
 .devtools-tooltip .panel-arrowcontent {
   padding: 4px;
@@ -70,19 +77,6 @@
 
 .devtools-tooltip-simple-text:last-child {
   margin-bottom: -4px;
-}
-
-/* Tooltip: Alert Icon */
-
-.devtools-tooltip-alert-icon {
-  width: 32px;
-  height: 32px;
-  margin: 6px;
-  margin-inline-end: 20px;
-}
-
-.devtools-tooltip-alert-icon {
-  list-style-image: url("chrome://global/skin/icons/warning-32.png");
 }
 
 /* Tooltip: Variables View */
@@ -305,7 +299,8 @@
   direction: rtl;
 }
 
-.event-tooltip-debugger-icon {
+.event-tooltip-debugger-icon,
+.event-tooltip-debugger-spacer {
   width: 16px;
   height: 16px;
   margin-inline-end: 4px;
@@ -362,7 +357,7 @@
   padding: 2px;
   margin-inline-start: 5px;
   background-color: var(--theme-body-color-alt);
-  color: var(--theme-toolbar-background);
+  color: var(--theme-body-background);
 }
 
 .event-tooltip-attributes {
@@ -457,4 +452,12 @@
 
 #searchbox-panel-listbox .autocomplete-item > .autocomplete-value {
   max-width: 150px;
+}
+
+/* Tooltip: Image tooltip */
+
+.devtools-tooltip-image-broken {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 7px;
 }

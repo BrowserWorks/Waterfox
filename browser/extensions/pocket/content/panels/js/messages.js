@@ -13,66 +13,66 @@ var pktPanelMessaging = (function() {
  }
 
  function prefixedMessageId(messageId) {
-   return 'PKT_' + messageId;
+   return "PKT_" + messageId;
  }
 
  function panelPrefixedMessageId(panelId, messageId) {
-   return prefixedMessageId(panelId + '_' + messageId);
+   return prefixedMessageId(panelId + "_" + messageId);
  }
 
  function addMessageListener(panelId, messageId, callback) {
    document.addEventListener(panelPrefixedMessageId(panelId, messageId), function(e) {
 
-			callback(JSON.parse(e.target.getAttribute("payload"))[0]);
+    callback(JSON.parse(e.target.getAttribute("payload"))[0]);
 
-			// TODO: Figure out why e.target.parentNode is null
-			// e.target.parentNode.removeChild(e.target);
+    // TODO: Figure out why e.target.parentNode is null
+    // e.target.parentNode.removeChild(e.target);
 
-		},false);
+    });
 
-	}
+  }
 
-	function removeMessageListener(panelId, messageId, callback) {
+  function removeMessageListener(panelId, messageId, callback) {
    document.removeEventListener(panelPrefixedMessageId(panelId, messageId), callback);
-	}
+  }
 
  function sendMessage(panelId, messageId, payload, callback) {
    // Payload needs to be an object in format:
    // { panelId: panelId, data: {} }
    var messagePayload = {
-     panelId: panelId,
+     panelId,
      data: (payload || {})
    };
 
-		// Create a callback to listen for a response
-		if (callback) {
-	        var messageResponseId = messageId + "Response";
-	        var responseListener = function(responsePayload) {
-	            callback(responsePayload);
-	            removeMessageListener(panelId, messageResponseId, responseListener);
-	        }
+    // Create a callback to listen for a response
+    if (callback) {
+      var messageResponseId = messageId + "Response";
+      var responseListener = function(responsePayload) {
+        callback(responsePayload);
+        removeMessageListener(panelId, messageResponseId, responseListener);
+      }
 
-	        addMessageListener(panelId, messageResponseId, responseListener);
-	    }
+      addMessageListener(panelId, messageResponseId, responseListener);
+    }
 
-	    // Send message
-		var element = document.createElement("PKTMessageFromPanelElement");
-		element.setAttribute("payload", JSON.stringify([messagePayload]));
-		document.documentElement.appendChild(element);
+      // Send message
+    var element = document.createElement("PKTMessageFromPanelElement");
+    element.setAttribute("payload", JSON.stringify([messagePayload]));
+    document.documentElement.appendChild(element);
 
-		var evt = document.createEvent("Events");
-		evt.initEvent(prefixedMessageId(messageId), true, false);
-		element.dispatchEvent(evt);
-	}
+    var evt = document.createEvent("Events");
+    evt.initEvent(prefixedMessageId(messageId), true, false);
+    element.dispatchEvent(evt);
+  }
 
 
     /**
      * Public functions
      */
     return {
-      panelIdFromURL: panelIdFromURL,
-        addMessageListener : addMessageListener,
-        removeMessageListener : removeMessageListener,
-        sendMessage: sendMessage
+      panelIdFromURL,
+        addMessageListener,
+        removeMessageListener,
+        sendMessage
     };
 }());

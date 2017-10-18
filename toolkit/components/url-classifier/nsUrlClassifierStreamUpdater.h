@@ -9,6 +9,7 @@
 #include <nsISupportsUtils.h>
 
 #include "nsCOMPtr.h"
+#include "nsINamed.h"
 #include "nsIObserver.h"
 #include "nsIUrlClassifierStreamUpdater.h"
 #include "nsIStreamListener.h"
@@ -25,7 +26,8 @@ class nsUrlClassifierStreamUpdater final : public nsIUrlClassifierStreamUpdater,
                                            public nsIStreamListener,
                                            public nsIObserver,
                                            public nsIInterfaceRequestor,
-                                           public nsITimerCallback
+                                           public nsITimerCallback,
+                                           public nsINamed
 {
 public:
   nsUrlClassifierStreamUpdater();
@@ -38,6 +40,7 @@ public:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIOBSERVER
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
 private:
   // No subclassing
@@ -54,11 +57,13 @@ private:
 
   // Fetches an update for a single table.
   nsresult FetchUpdate(nsIURI *aURI,
-                       const nsACString &aRequestBody,
+                       const nsACString &aRequest,
+                       bool aIsPostRequest,
                        const nsACString &aTable);
   // Dumb wrapper so we don't have to create URIs.
   nsresult FetchUpdate(const nsACString &aURI,
-                       const nsACString &aRequestBody,
+                       const nsACString &aRequest,
+                       bool aIsPostRequest,
                        const nsACString &aTable);
 
   // Fetches the next table, from mPendingUpdates.
@@ -66,19 +71,44 @@ private:
   // Fetches the next request, from mPendingRequests
   nsresult FetchNextRequest();
 
+  enum UpdateTimeout {
+    eNoTimeout = 0,
+    eResponseTimeout = 1,
+    eDownloadTimeout = 2,
+  };
 
   bool mIsUpdating;
   bool mInitialized;
   bool mDownloadError;
   bool mBeganStream;
+
+  nsCString mDownloadErrorStatusStr;
+
+  // Note that mStreamTable is only used by v2, it is empty for v4 update.
   nsCString mStreamTable;
+
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsIUrlClassifierDBService> mDBService;
-  nsCOMPtr<nsITimer> mTimer;
+
+  // In v2, a update response might contain redirection and this
+  // timer is for fetching the redirected update.
+  nsCOMPtr<nsITimer> mFetchIndirectUpdatesTimer;
+
+  // When we DownloadUpdate(), the DBService might be busy on processing
+  // request issused outside of StreamUpdater. We have to fire a timer to
+  // retry on our own.
+  nsCOMPtr<nsITimer> mFetchNextRequestTimer;
+
+  // Timer to abort the download if the server takes too long to respond.
+  nsCOMPtr<nsITimer> mResponseTimeoutTimer;
+
+  // Timer to abort the download if it takes too long.
+  nsCOMPtr<nsITimer> mTimeoutTimer;
 
   struct PendingRequest {
     nsCString mTables;
-    nsCString mRequest;
+    nsCString mRequestPayload;
+    bool mIsPostRequest;
     nsCString mUrl;
     nsCOMPtr<nsIUrlClassifierCallback> mSuccessCallback;
     nsCOMPtr<nsIUrlClassifierCallback> mUpdateErrorCallback;
@@ -95,6 +125,11 @@ private:
   nsCOMPtr<nsIUrlClassifierCallback> mSuccessCallback;
   nsCOMPtr<nsIUrlClassifierCallback> mUpdateErrorCallback;
   nsCOMPtr<nsIUrlClassifierCallback> mDownloadErrorCallback;
+
+  // The provider for current update request and should be only used by telemetry
+  // since it would show up as "other" for any other providers.
+  nsCString mTelemetryProvider;
+  PRIntervalTime mTelemetryClockStart;
 };
 
 #endif // nsUrlClassifierStreamUpdater_h_

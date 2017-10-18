@@ -1,5 +1,6 @@
+/* eslint-env mozilla/frame-script */
 
-var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+var SocialService = Cu.import("resource:///modules/SocialService.jsm", {}).SocialService;
 
 var baseURL = "https://example.com/browser/browser/base/content/test/social/";
 
@@ -26,7 +27,7 @@ function test() {
   Services.prefs.setCharPref("social.shareDirectory", activationPage);
 
   let frameScript = "data:,(" + function frame_script() {
-    addEventListener("OpenGraphData", function (aEvent) {
+    addEventListener("OpenGraphData", function(aEvent) {
       sendAsyncMessage("sharedata", aEvent.detail);
     }, true, true);
     /* bug 1042991, ensure history is available by calling history.back on close */
@@ -37,15 +38,15 @@ function test() {
     /* if text is entered into field, onbeforeunload will cause a modal dialog
        unless dialogs have been disabled for the iframe. */
     content.onbeforeunload = function(e) {
-      return 'FAIL.';
+      return "FAIL.";
     };
   }.toString() + ")();";
-  let mm = getGroupMessageManager("social");
+  let mm = window.getGroupMessageManager("social");
   mm.loadFrameScript(frameScript, true);
 
   // Animation on the panel can cause intermittent failures such as bug 1115131.
   SocialShare.panel.setAttribute("animate", "false");
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     SocialShare.panel.removeAttribute("animate");
     mm.removeDelayedFrameScript(frameScript);
     Services.prefs.clearUserPref("social.directories");
@@ -64,35 +65,35 @@ function test() {
 
 var corpus = [
   {
-    url: baseURL+"opengraph/opengraph.html",
+    url: baseURL + "opengraph/opengraph.html",
     options: {
       // og:title
       title: ">This is my title<",
       // og:description
       description: "A test corpus file for open graph tags we care about",
-      //medium: this.getPageMedium(),
-      //source: this.getSourceURL(),
+      // medium: this.getPageMedium(),
+      // source: this.getSourceURL(),
       // og:url
       url: "https://www.mozilla.org/",
-      //shortUrl: this.getShortURL(),
+      // shortUrl: this.getShortURL(),
       // og:image
-      previews:["https://www.mozilla.org/favicon.png"],
+      previews: ["https://www.mozilla.org/favicon.png"],
       // og:site_name
       siteName: ">My simple test page<"
     }
   },
   {
     // tests that og:url doesn't override the page url if it is bad
-    url: baseURL+"opengraph/og_invalid_url.html",
+    url: baseURL + "opengraph/og_invalid_url.html",
     options: {
       description: "A test corpus file for open graph tags passing a bad url",
-      url: baseURL+"opengraph/og_invalid_url.html",
+      url: baseURL + "opengraph/og_invalid_url.html",
       previews: [],
       siteName: "Evil chrome delivering website"
     }
   },
   {
-    url: baseURL+"opengraph/shorturl_link.html",
+    url: baseURL + "opengraph/shorturl_link.html",
     options: {
       previews: ["http://example.com/1234/56789.jpg"],
       url: "http://www.example.com/photos/56789/",
@@ -100,7 +101,7 @@ var corpus = [
     }
   },
   {
-    url: baseURL+"opengraph/shorturl_linkrel.html",
+    url: baseURL + "opengraph/shorturl_linkrel.html",
     options: {
       previews: ["http://example.com/1234/56789.jpg"],
       url: "http://www.example.com/photos/56789/",
@@ -108,7 +109,7 @@ var corpus = [
     }
   },
   {
-    url: baseURL+"opengraph/shortlink_linkrel.html",
+    url: baseURL + "opengraph/shortlink_linkrel.html",
     options: {
       previews: ["http://example.com/1234/56789.jpg"],
       url: "http://www.example.com/photos/56789/",
@@ -118,25 +119,24 @@ var corpus = [
 ];
 
 function hasoptions(testOptions, options) {
-  let msg;
   for (let option in testOptions) {
     let data = testOptions[option];
-    info("data: "+JSON.stringify(data));
+    info("data: " + JSON.stringify(data));
     let message_data = options[option];
-    info("message_data: "+JSON.stringify(message_data));
+    info("message_data: " + JSON.stringify(message_data));
     if (Array.isArray(data)) {
       // the message may have more array elements than we are testing for, this
       // is ok since some of those are hard to test. So we just test that
       // anything in our test data IS in the message.
-      ok(Array.every(data, function(item) { return message_data.indexOf(item) >= 0 }), "option "+option);
+      ok(Array.every(data, function(item) { return message_data.indexOf(item) >= 0 }), "option " + option);
     } else {
-      is(message_data, data, "option "+option);
+      is(message_data, data, "option " + option);
     }
   }
 }
 
 var tests = {
-  testShareDisabledOnActivation: function(next) {
+  testShareDisabledOnActivation(next) {
     // starting on about:blank page, share should be visible but disabled when
     // adding provider
     is(gBrowser.currentURI.spec, "about:blank");
@@ -158,7 +158,7 @@ var tests = {
       SocialService.disableProvider(manifest.origin, next);
     });
   },
-  testShareEnabledOnActivation: function(next) {
+  testShareEnabledOnActivation(next) {
     // starting from *some* page, share should be visible and enabled when
     // activating provider
     // initialize the button into the navbar
@@ -181,9 +181,7 @@ var tests = {
       });
     });
   },
-  testSharePage: function(next) {
-    let provider = Social._getProviderFromOrigin(manifest.origin);
-
+  testSharePage(next) {
     let testTab;
     let testIndex = 0;
     let testData = corpus[testIndex++];
@@ -193,12 +191,12 @@ var tests = {
     // ensure correct state
     SocialUI.onCustomizeEnd(window);
 
-    let mm = getGroupMessageManager("social");
+    let mm = window.getGroupMessageManager("social");
     mm.addMessageListener("sharedata", function handler(msg) {
       BrowserTestUtils.removeTab(testTab).then(() => {
         hasoptions(testData.options, JSON.parse(msg.data));
         testData = corpus[testIndex++];
-        BrowserTestUtils.waitForCondition(() => { return SocialShare.currentShare == null; },"share panel closed").then(() => {
+        BrowserTestUtils.waitForCondition(() => { return SocialShare.currentShare == null; }, "share panel closed").then(() => {
           if (testData) {
             runOneTest();
           } else {
@@ -225,7 +223,7 @@ var tests = {
     }
     executeSoon(runOneTest);
   },
-  testShareMicroformats: function(next) {
+  testShareMicroformats(next) {
     // initialize the button into the navbar
     CustomizableUI.addWidgetToArea("social-share-button", CustomizableUI.AREA_NAVBAR);
     // ensure correct state
@@ -279,7 +277,7 @@ var tests = {
         }
       });
 
-      let mm = getGroupMessageManager("social");
+      let mm = window.getGroupMessageManager("social");
       mm.addMessageListener("sharedata", function handler(msg) {
         is(msg.data, expecting, "microformats data ok");
         BrowserTestUtils.waitForCondition(() => { return SocialShare.currentShare == null; },
@@ -308,7 +306,7 @@ var tests = {
       });
     });
   },
-  testSharePanelActivation: function(next) {
+  testSharePanelActivation(next) {
     let testTab;
     // cleared in the cleanup function
     Services.prefs.setCharPref("social.directories", "https://example.com");
@@ -327,7 +325,7 @@ var tests = {
       ensureFrameLoaded(subframe, activationPage).then(() => {
         is(subframe.contentDocument.location.href, activationPage, "activation page loaded");
         promiseObserverNotified("social:provider-enabled").then(() => {
-          let mm = getGroupMessageManager("social");
+          let mm = window.getGroupMessageManager("social");
           mm.addMessageListener("sharedata", function handler(msg) {
             ok(true, "share completed");
 
@@ -355,7 +353,7 @@ var tests = {
       SocialShare.sharePage();
     });
   },
-  testSharePanelDialog: function(next) {
+  testSharePanelDialog(next) {
     let testTab;
     // initialize the button into the navbar
     CustomizableUI.addWidgetToArea("social-share-button", CustomizableUI.AREA_NAVBAR);
@@ -372,16 +370,15 @@ var tests = {
           EventUtils.sendKey("a");
           EventUtils.sendKey("i");
           EventUtils.sendKey("l");
-  
-          SocialShare.panel.addEventListener("popuphidden", function hidden(evt) {
-            SocialShare.panel.removeEventListener("popuphidden", hidden);
+
+          SocialShare.panel.addEventListener("popuphidden", function(evt) {
             let topwin = Services.wm.getMostRecentWindow(null);
             is(topwin, window, "no dialog is open");
 
             BrowserTestUtils.removeTab(testTab).then(() => {
               SocialService.disableProvider(manifest.origin, next);
             });
-          });
+          }, {once: true});
           SocialShare.iframe.messageManager.sendAsyncMessage("closeself", {});
         });
 

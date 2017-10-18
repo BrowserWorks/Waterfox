@@ -44,12 +44,13 @@ public:
   NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
   TCPServerSocketChild(TCPServerSocket* aServerSocket, uint16_t aLocalPort,
-                       uint16_t aBacklog, bool aUseArrayBuffers);
+                       uint16_t aBacklog, bool aUseArrayBuffers,
+                       nsIEventTarget* aIPCEventTarget);
   ~TCPServerSocketChild();
 
   void Close();
 
-  virtual bool RecvCallbackAccept(PTCPSocketChild *socket)  override;
+  virtual mozilla::ipc::IPCResult RecvCallbackAccept(PTCPSocketChild *socket)  override;
 };
 
 } // namespace dom

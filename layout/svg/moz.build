@@ -7,14 +7,27 @@
 with Files('**'):
     BUG_COMPONENT = ('Core', 'SVG')
 
+if CONFIG['ENABLE_TESTS']:
+    MOCHITEST_MANIFESTS += [
+        'tests/mochitest.ini',
+]
+    MOCHITEST_CHROME_MANIFESTS += [
+        'tests/chrome.ini',
+]
+
 EXPORTS += [
     'nsFilterInstance.h',
     'nsSVGEffects.h',
     'nsSVGFilterInstance.h',
     'nsSVGForeignObjectFrame.h',
+    'nsSVGImageFrame.h',
     'nsSVGIntegrationUtils.h',
     'nsSVGUtils.h',
     'SVGImageContext.h',
+]
+
+EXPORTS.mozilla += [
+    'SVGContextPaint.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -37,29 +50,30 @@ UNIFIED_SOURCES += [
     'nsSVGMarkerFrame.cpp',
     'nsSVGMaskFrame.cpp',
     'nsSVGOuterSVGFrame.cpp',
-    'nsSVGPathGeometryFrame.cpp',
     'nsSVGPatternFrame.cpp',
     'nsSVGStopFrame.cpp',
     'nsSVGSwitchFrame.cpp',
+    'nsSVGSymbolFrame.cpp',
     'nsSVGUseFrame.cpp',
     'nsSVGUtils.cpp',
+    'nsSVGViewportFrame.cpp',
+    'SVGContextPaint.cpp',
     'SVGFEContainerFrame.cpp',
     'SVGFEImageFrame.cpp',
     'SVGFELeafFrame.cpp',
     'SVGFEUnstyledLeafFrame.cpp',
+    'SVGGeometryFrame.cpp',
+    'SVGImageContext.cpp',
     'SVGTextFrame.cpp',
     'SVGViewFrame.cpp',
 ]
-
-if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
-    SOURCES += ['nsSVGMaskFrameNEON.cpp']
-    SOURCES['nsSVGMaskFrameNEON.cpp'].flags += ['-mfpu=neon']
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../../widget',
     '../base',
     '../generic',
+    '../painting',
     '../style',
     '../xul',
     '/dom/base',

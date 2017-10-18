@@ -23,8 +23,6 @@ XPCOMUtils.defineLazyModuleGetter(
 XPCOMUtils.defineLazyModuleGetter(
   this, "OS", "resource://gre/modules/osfile.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(
-  this, "Promise", "resource://gre/modules/Promise.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(
   this, "UpdateUtils", "resource://gre/modules/UpdateUtils.jsm");
@@ -100,7 +98,7 @@ this.UserAgentUpdates = {
     this._lastUpdated = 0;
     this._applySavedUpdate();
 
-    Services.prefs.addObserver(PREF_UPDATES, this, false);
+    Services.prefs.addObserver(PREF_UPDATES, this);
   },
 
   uninit: function() {
@@ -142,8 +140,8 @@ this.UserAgentUpdates = {
         }
       );
       // try to load next one if the previous load failed
-      return prevLoad ? prevLoad.then(null, tryNext) : tryNext();
-    }, null).then(null, (ex) => {
+      return prevLoad ? prevLoad.catch(tryNext) : tryNext();
+    }, null).catch((ex) => {
       if (AppConstants.platform !== "android") {
         // All previous (non-Android) load attempts have failed, so we bail.
         throw new Error("UserAgentUpdates: Failed to load " + FILE_UPDATES +
@@ -228,15 +226,15 @@ this.UserAgentUpdates = {
   _update: function() {
     let url = this._getUpdateURL();
     url && this._fetchUpdate(url,
-      (function(response) { // success
+      response => { // success
         // apply update and save overrides to profile
         this._applyUpdate(response);
         this._saveToFile(response);
         this._scheduleUpdate(); // cancel any retries
-      }).bind(this),
-      (function(response) { // error
+      },
+      response => { // error
         this._scheduleUpdate(true /* retry */);
-      }).bind(this));
+      });
   },
 
   _scheduleUpdate: function(retry) {

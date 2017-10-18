@@ -16,7 +16,7 @@ const kRowHeaderCell = 2; // Indicates the cell is row header cell
 const kColHeaderCell = 4; // Indicated the cell is column header cell
 const kOrigin = kDataCell | kRowHeaderCell | kColHeaderCell;
 
-const kRowSpanned = 8; // Indicates the cell is not origin and row spanned 
+const kRowSpanned = 8; // Indicates the cell is not origin and row spanned
 const kColSpanned = 16; // Indicates the cell is not origin and column spanned
 const kSpanned = kRowSpanned | kColSpanned;
 
@@ -303,7 +303,7 @@ function testTableIndexes(aIdentifier, aIdxes)
           }
 
           if (strIdx) {
-            is (parseInt(strIdx), idx,
+            is(parseInt(strIdx), idx,
                 cellId + ": cell index from object attributes of cell accessible isn't corrent.");
           }
 
@@ -374,7 +374,7 @@ function testTableSelection(aIdentifier, aCellsArray, aMsg)
   var colsCount = aCellsArray[0].length;
 
   // Columns selection tests.
-  var selCols = new Array();
+  var selCols = [];
 
   // isColumnSelected test
   for (var colIdx = 0; colIdx < colsCount; colIdx++) {
@@ -404,20 +404,19 @@ function testTableSelection(aIdentifier, aCellsArray, aMsg)
   var actualSelCols = acc.getSelectedColumnIndices(actualSelColsCountObj);
 
   var actualSelColsCount = actualSelColsCountObj.value;
-  is (actualSelColsCount, selCols.length,
+  is(actualSelColsCount, selCols.length,
       msg + "Wrong count of selected columns for " + prettyName(aIdentifier) +
       "from getSelectedColumns.");
 
   for (var i = 0; i < actualSelColsCount; i++) {
-    is (actualSelCols[i], selCols[i],
+    is(actualSelCols[i], selCols[i],
         msg + "Column at index " + selCols[i] + " should be selected.");
   }
 
   // Rows selection tests.
-  var selRows = new Array();
+  var selRows = [];
 
   // isRowSelected test
-  var selrowCount = 0;
   for (var rowIdx = 0; rowIdx < rowCount; rowIdx++) {
     var isRowSelected = true;
     for (var colIdx = 0; colIdx < colsCount; colIdx++) {
@@ -445,17 +444,17 @@ function testTableSelection(aIdentifier, aCellsArray, aMsg)
   var actualSelRows = acc.getSelectedRowIndices(actualSelrowCountObj);
 
   var actualSelrowCount = actualSelrowCountObj.value;
-  is (actualSelrowCount, selRows.length,
+  is(actualSelrowCount, selRows.length,
       msg + "Wrong count of selected rows for " + prettyName(aIdentifier) +
       "from getSelectedRows.");
 
   for (var i = 0; i < actualSelrowCount; i++) {
-    is (actualSelRows[i], selRows[i],
+    is(actualSelRows[i], selRows[i],
         msg + "Row at index " + selRows[i] + " should be selected.");
   }
 
   // Cells selection tests.
-  var selCells = new Array();
+  var selCells = [];
 
   // isCellSelected test
   for (var rowIdx = 0; rowIdx < rowCount; rowIdx++) {
@@ -539,7 +538,6 @@ function testUnselectTableColumn(aIdentifier, aColIdx, aCellsArray)
 
   var rowCount = aCellsArray.length;
   for (var rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-    var cellState = aCellsArray[rowIdx][aColIdx];
     // Unselect origin cell.
     var [origRowIdx, origColIdx] =
       getOrigRowAndColumn(aCellsArray, rowIdx, aColIdx);

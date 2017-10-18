@@ -7,8 +7,13 @@
 #ifndef builtin_AtomicsObject_h
 #define builtin_AtomicsObject_h
 
-#include "jslock.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/TimeStamp.h"
+
 #include "jsobj.h"
+
+#include "threading/ConditionVariable.h"
+#include "vm/MutexIDs.h"
 
 namespace js {
 
@@ -34,16 +39,19 @@ MOZ_MUST_USE bool atomics_wait(JSContext* cx, unsigned argc, Value* vp);
 MOZ_MUST_USE bool atomics_wake(JSContext* cx, unsigned argc, Value* vp);
 
 /* asm.js callouts */
-int32_t atomics_add_asm_callout(int32_t vt, int32_t offset, int32_t value);
-int32_t atomics_sub_asm_callout(int32_t vt, int32_t offset, int32_t value);
-int32_t atomics_and_asm_callout(int32_t vt, int32_t offset, int32_t value);
-int32_t atomics_or_asm_callout(int32_t vt, int32_t offset, int32_t value);
-int32_t atomics_xor_asm_callout(int32_t vt, int32_t offset, int32_t value);
-int32_t atomics_cmpxchg_asm_callout(int32_t vt, int32_t offset, int32_t oldval, int32_t newval);
-int32_t atomics_xchg_asm_callout(int32_t vt, int32_t offset, int32_t value);
+namespace wasm { class Instance; }
+int32_t atomics_add_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
+int32_t atomics_sub_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
+int32_t atomics_and_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
+int32_t atomics_or_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
+int32_t atomics_xor_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
+int32_t atomics_cmpxchg_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t oldval, int32_t newval);
+int32_t atomics_xchg_asm_callout(wasm::Instance* i, int32_t vt, int32_t offset, int32_t value);
 
-class FutexRuntime
+class FutexThread
 {
+    friend class AutoLockFutexAPI;
+
 public:
     static MOZ_MUST_USE bool initialize();
     static void destroy();
@@ -51,7 +59,7 @@ public:
     static void lock();
     static void unlock();
 
-    FutexRuntime();
+    FutexThread();
     MOZ_MUST_USE bool initInstance();
     void destroyInstance();
 
@@ -72,14 +80,16 @@ public:
     // The futex lock must be held around this call.
     //
     // The timeout is the number of milliseconds, with fractional
-    // times allowed; specify positive infinity for an indefinite wait.
+    // times allowed; specify mozilla::Nothing() for an indefinite
+    // wait.
     //
     // wait() will not wake up spuriously.  It will return true and
     // set *result to a return code appropriate for
     // Atomics.wait() on success, and return false on error.
-    MOZ_MUST_USE bool wait(JSContext* cx, double timeout, WaitResult* result);
+    MOZ_MUST_USE bool wait(JSContext* cx, js::UniqueLock<js::Mutex>& locked,
+                           mozilla::Maybe<mozilla::TimeDuration>& timeout, WaitResult* result);
 
-    // Wake the thread represented by this Runtime.
+    // Wake the thread this is associated with.
     //
     // The futex lock must be held around this call.  (The sleeping
     // thread will not wake up until the caller of Atomics.wake()
@@ -100,7 +110,7 @@ public:
     bool isWaiting();
 
     // If canWait() returns false (the default) then wait() is disabled
-    // on the runtime to which the FutexRuntime belongs.
+    // on the thread to which the FutexThread belongs.
     bool canWait() {
         return canWait_;
     }
@@ -122,7 +132,7 @@ public:
     };
 
     // Condition variable that this runtime will wait on.
-    PRCondVar* cond_;
+    js::ConditionVariable* cond_;
 
     // Current futex state for this runtime.  When not in a wait this
     // is Idle; when in a wait it is Waiting or the reason the futex
@@ -132,15 +142,10 @@ public:
     // Shared futex lock for all runtimes.  We can perhaps do better,
     // but any lock will need to be per-domain (consider SharedWorker)
     // or coarser.
-    static mozilla::Atomic<PRLock*> lock_;
-
-#ifdef DEBUG
-    // Null or the thread holding the lock.
-    static mozilla::Atomic<PRThread*> lockHolder_;
-#endif
+    static mozilla::Atomic<js::Mutex*> lock_;
 
     // A flag that controls whether waiting is allowed.
-    bool canWait_;
+    ThreadLocalData<bool> canWait_;
 };
 
 JSObject*

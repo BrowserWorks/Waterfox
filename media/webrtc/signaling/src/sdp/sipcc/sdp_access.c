@@ -31,6 +31,7 @@ static const char* logTag = "sdp_access";
 #define SIPSDP_ATTR_ENCNAME_OPUS      "opus"
 #define SIPSDP_ATTR_ENCNAME_RED       "red"
 #define SIPSDP_ATTR_ENCNAME_ULPFEC    "ulpfec"
+#define SIPSDP_ATTR_ENCNAME_TELEPHONE_EVENT "telephone-event"
 
 /* Function:    sdp_find_media_level
  * Description: Find and return a pointer to the specified media level,
@@ -1385,6 +1386,9 @@ rtp_ptype sdp_get_known_payload_type(sdp_t *sdp_p,
         if (cpr_strcasecmp(encname, SIPSDP_ATTR_ENCNAME_ULPFEC) == 0) {
           return (RTP_ULPFEC);
         }
+        if (cpr_strcasecmp(encname, SIPSDP_ATTR_ENCNAME_TELEPHONE_EVENT) == 0) {
+          return (RTP_TELEPHONE_EVENT);
+        }
       }
     }
   }
@@ -1592,6 +1596,19 @@ int32_t sdp_get_media_sctp_port(sdp_t *sdp_p, uint16_t level)
     }
 
     return mca_p->sctpport;
+}
+
+sdp_sctp_media_fmt_type_e sdp_get_media_sctp_fmt(sdp_t *sdp_p, uint16_t level)
+{
+    sdp_mca_t  *mca_p;
+
+    mca_p = sdp_find_media_level(sdp_p, level);
+    if (!mca_p) {
+        sdp_p->conf_p->num_invalid_param++;
+        return -1;
+    }
+
+    return mca_p->sctp_fmt;
 }
 
 /* Function:    sdp_set_media_transport

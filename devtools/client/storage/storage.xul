@@ -6,6 +6,7 @@
 <?xml-stylesheet href="chrome://devtools/content/shared/widgets/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/storage.css" type="text/css"?>
+<?xml-stylesheet href="resource://devtools/client/shared/components/sidebar-toggle.css" type="text/css"?>
 
 <!DOCTYPE window [
   <!ENTITY % storageDTD SYSTEM "chrome://devtools/locale/storage.dtd">
@@ -16,7 +17,7 @@
 
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript;version=1.8"
+  <script type="application/javascript"
           src="chrome://devtools/content/shared/theme-switching.js"/>
   <script type="text/javascript" src="chrome://global/content/globalOverlay.js"/>
 
@@ -26,9 +27,10 @@
     <menupopup id="storage-tree-popup">
       <menuitem id="storage-tree-popup-delete-all"
                 label="&storage.popupMenu.deleteAllLabel;"/>
-      <menuitem id="storage-tree-popup-delete-database"/>
+      <menuitem id="storage-tree-popup-delete"/>
     </menupopup>
     <menupopup id="storage-table-popup">
+      <menuitem id="storage-table-popup-add"/>
       <menuitem id="storage-table-popup-delete"/>
       <menuitem id="storage-table-popup-delete-all-from"/>
       <menuitem id="storage-table-popup-delete-all"
@@ -41,11 +43,15 @@
     <splitter class="devtools-side-splitter"/>
     <vbox flex="1">
       <hbox id="storage-toolbar" class="devtools-toolbar">
+        <button id="add-button"
+                class="devtools-button add-button"></button>
+        <spacer flex="1"/>
         <textbox id="storage-searchbox"
                  class="devtools-filterinput"
                  type="search"
                  timeout="200"
                  placeholder="&searchBox.placeholder;"/>
+        <button class="devtools-button sidebar-toggle" hidden="true"></button>
       </hbox>
       <vbox id="storage-table" class="theme-sidebar" flex="1"/>
     </vbox>

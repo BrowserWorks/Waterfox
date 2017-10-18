@@ -36,7 +36,7 @@ is(cs.textIndent, "50px", "changing delay doesn't change transitioning");
 p.style.transitionProperty = "text-indent";
 is(cs.textIndent, "50px",
    "irrelevant change to transition property doesn't change transitioning");
-p.style.transitionProperty = "font";
+p.style.transitionProperty = "letter-spacing";
 is(cs.textIndent, "0px",
    "relevant change to transition property does change transitioning");
 
@@ -60,7 +60,7 @@ p.style.transitionDelay = "-1s";
 p.style.transitionProperty = "text-indent";
 var endCount = 0;
 function incrementEndCount(event) { ++endCount; }
-p.addEventListener("transitionend", incrementEndCount, false);
+p.addEventListener("transitionend", incrementEndCount);
 utils.advanceTimeAndRefresh(0);
 p.style.textIndent = "100px";
 is(cs.textIndent, "100px", "value should now be 100px");

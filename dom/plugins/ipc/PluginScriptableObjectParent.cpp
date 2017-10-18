@@ -10,9 +10,8 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/plugins/PluginTypes.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "nsNPAPIPlugin.h"
-#include "PluginAsyncSurrogate.h"
 #include "PluginScriptableObjectUtils.h"
 
 using namespace mozilla;
@@ -111,7 +110,6 @@ inline void
 ReleaseVariant(NPVariant& aVariant,
                PluginInstanceParent* aInstance)
 {
-  PushSurrogateAcceptCalls acceptCalls(aInstance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(aInstance);
   if (npn) {
     npn->releasevariantvalue(&aVariant);
@@ -654,7 +652,6 @@ PluginScriptableObjectParent::CreateProxyObject()
   NS_ASSERTION(mInstance, "Must have an instance!");
   NS_ASSERTION(mType == Proxy, "Shouldn't call this for non-proxy object!");
 
-  PushSurrogateAcceptCalls acceptCalls(mInstance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(mInstance);
 
   NPObject* npobject = npn->createobject(mInstance->GetNPP(),
@@ -753,14 +750,14 @@ PluginScriptableObjectParent::ActorDestroy(ActorDestroyReason aWhy)
   // Implement me! Bug 1005163
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerHasMethod(const PluginIdentifier& aId,
                                               bool* aHasMethod)
 {
   if (!mObject) {
     NS_WARNING("Calling AnswerHasMethod with an invalidated object!");
     *aHasMethod = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -770,27 +767,26 @@ PluginScriptableObjectParent::AnswerHasMethod(const PluginIdentifier& aId,
   if (!instance) {
     NS_ERROR("No instance?!");
     *aHasMethod = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aHasMethod = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aHasMethod = false;
-    return true;
+    return IPC_OK();
   }
   *aHasMethod = npn->hasmethod(instance->GetNPP(), mObject, stackID.ToNPIdentifier());
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
                                            InfallibleTArray<Variant>&& aArgs,
                                            Variant* aResult,
@@ -800,7 +796,7 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
     NS_WARNING("Calling AnswerInvoke with an invalidated object!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -811,23 +807,22 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
     NS_ERROR("No instance?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   AutoTArray<NPVariant, 10> convertedArgs;
@@ -836,7 +831,7 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
   if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   for (uint32_t index = 0; index < argCount; index++) {
@@ -847,7 +842,7 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
       }
       *aResult = void_t();
       *aSuccess = false;
-      return true;
+      return IPC_OK();
     }
   }
 
@@ -862,7 +857,7 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   Variant convertedResult;
@@ -873,15 +868,15 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   *aResult = convertedResult;
   *aSuccess = true;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aArgs,
                                                   Variant* aResult,
                                                   bool* aSuccess)
@@ -890,7 +885,7 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
     NS_WARNING("Calling AnswerInvoke with an invalidated object!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -901,16 +896,15 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
     NS_ERROR("No instance?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   AutoTArray<NPVariant, 10> convertedArgs;
@@ -919,7 +913,7 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
   if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   for (uint32_t index = 0; index < argCount; index++) {
@@ -930,7 +924,7 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
       }
       *aResult = void_t();
       *aSuccess = false;
-      return true;
+      return IPC_OK();
     }
   }
 
@@ -946,7 +940,7 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   Variant convertedResult;
@@ -957,22 +951,22 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   *aResult = convertedResult;
   *aSuccess = true;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerHasProperty(const PluginIdentifier& aId,
                                                 bool* aHasProperty)
 {
   if (!mObject) {
     NS_WARNING("Calling AnswerHasProperty with an invalidated object!");
     *aHasProperty = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -982,29 +976,28 @@ PluginScriptableObjectParent::AnswerHasProperty(const PluginIdentifier& aId,
   if (!instance) {
     NS_ERROR("No instance?!");
     *aHasProperty = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aHasProperty = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aHasProperty = false;
-    return true;
+    return IPC_OK();
   }
 
   *aHasProperty = npn->hasproperty(instance->GetNPP(), mObject,
                                    stackID.ToNPIdentifier());
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerGetParentProperty(
                                                    const PluginIdentifier& aId,
                                                    Variant* aResult,
@@ -1014,7 +1007,7 @@ PluginScriptableObjectParent::AnswerGetParentProperty(
     NS_WARNING("Calling AnswerGetProperty with an invalidated object!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -1025,23 +1018,22 @@ PluginScriptableObjectParent::AnswerGetParentProperty(
     NS_ERROR("No instance?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NPVariant result;
@@ -1049,7 +1041,7 @@ PluginScriptableObjectParent::AnswerGetParentProperty(
                         &result)) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   Variant converted;
@@ -1061,10 +1053,10 @@ PluginScriptableObjectParent::AnswerGetParentProperty(
     *aResult = void_t();
   }
 
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerSetProperty(const PluginIdentifier& aId,
                                                 const Variant& aValue,
                                                 bool* aSuccess)
@@ -1072,7 +1064,7 @@ PluginScriptableObjectParent::AnswerSetProperty(const PluginIdentifier& aId,
   if (!mObject) {
     NS_WARNING("Calling AnswerSetProperty with an invalidated object!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -1082,44 +1074,43 @@ PluginScriptableObjectParent::AnswerSetProperty(const PluginIdentifier& aId,
   if (!instance) {
     NS_ERROR("No instance?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NPVariant converted;
   if (!ConvertToVariant(aValue, converted, instance)) {
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   if ((*aSuccess = npn->setproperty(instance->GetNPP(), mObject,
                                     stackID.ToNPIdentifier(), &converted))) {
     ReleaseVariant(converted, instance);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerRemoveProperty(const PluginIdentifier& aId,
                                                    bool* aSuccess)
 {
   if (!mObject) {
     NS_WARNING("Calling AnswerRemoveProperty with an invalidated object!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -1129,36 +1120,35 @@ PluginScriptableObjectParent::AnswerRemoveProperty(const PluginIdentifier& aId,
   if (!instance) {
     NS_ERROR("No instance?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   StackIdentifier stackID(aId);
   if (stackID.Failed()) {
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   *aSuccess = npn->removeproperty(instance->GetNPP(), mObject,
                                   stackID.ToNPIdentifier());
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerEnumerate(InfallibleTArray<PluginIdentifier>* aProperties,
                                               bool* aSuccess)
 {
   if (!mObject) {
     NS_WARNING("Calling AnswerEnumerate with an invalidated object!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -1168,22 +1158,21 @@ PluginScriptableObjectParent::AnswerEnumerate(InfallibleTArray<PluginIdentifier>
   if (!instance) {
     NS_ERROR("No instance?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_WARNING("No netscape funcs?!");
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NPIdentifier* ids;
   uint32_t idCount;
   if (!npn->enumerate(instance->GetNPP(), mObject, &ids, &idCount)) {
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   aProperties->SetCapacity(idCount);
@@ -1191,17 +1180,17 @@ PluginScriptableObjectParent::AnswerEnumerate(InfallibleTArray<PluginIdentifier>
   for (uint32_t index = 0; index < idCount; index++) {
     PluginIdentifier id;
     if (!FromNPIdentifier(ids[index], &id)) {
-      return false;
+      return IPC_FAIL_NO_REASON(this);
     }
     aProperties->AppendElement(id);
   }
 
   npn->memfree(ids);
   *aSuccess = true;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
                                               Variant* aResult,
                                               bool* aSuccess)
@@ -1210,7 +1199,7 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
     NS_WARNING("Calling AnswerConstruct with an invalidated object!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
@@ -1221,16 +1210,15 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
     NS_ERROR("No instance?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   AutoTArray<NPVariant, 10> convertedArgs;
@@ -1239,7 +1227,7 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
   if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   for (uint32_t index = 0; index < argCount; index++) {
@@ -1250,7 +1238,7 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
       }
       *aResult = void_t();
       *aSuccess = false;
-      return true;
+      return IPC_OK();
     }
   }
 
@@ -1265,7 +1253,7 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   Variant convertedResult;
@@ -1276,35 +1264,35 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   *aSuccess = true;
   *aResult = convertedResult;
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::RecvProtect()
 {
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
   NS_ASSERTION(mType == LocalObject, "Bad type!");
 
   Protect();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::RecvUnprotect()
 {
   NS_ASSERTION(mObject->_class != GetClass(), "Bad object type!");
   NS_ASSERTION(mType == LocalObject, "Bad type!");
 
   Unprotect();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PluginScriptableObjectParent::AnswerNPN_Evaluate(const nsCString& aScript,
                                                  Variant* aResult,
                                                  bool* aSuccess)
@@ -1314,16 +1302,15 @@ PluginScriptableObjectParent::AnswerNPN_Evaluate(const nsCString& aScript,
     NS_ERROR("No instance?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
-  PushSurrogateAcceptCalls acceptCalls(instance);
   const NPNetscapeFuncs* npn = GetNetscapeFuncs(instance);
   if (!npn) {
     NS_ERROR("No netscape funcs?!");
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   NPString script = { aScript.get(), aScript.Length() };
@@ -1333,7 +1320,7 @@ PluginScriptableObjectParent::AnswerNPN_Evaluate(const nsCString& aScript,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   Variant convertedResult;
@@ -1344,12 +1331,12 @@ PluginScriptableObjectParent::AnswerNPN_Evaluate(const nsCString& aScript,
   if (!success) {
     *aResult = void_t();
     *aSuccess = false;
-    return true;
+    return IPC_OK();
   }
 
   *aSuccess = true;
   *aResult = convertedResult;
-  return true;
+  return IPC_OK();
 }
 
 bool

@@ -10,10 +10,6 @@ var GCSuppressionTypes = [];
 var ignoreIndirectCalls = {
     "mallocSizeOf" : true,
     "aMallocSizeOf" : true,
-    "_malloc_message" : true,
-    "je_malloc_message" : true,
-    "chunk_dalloc" : true,
-    "chunk_alloc" : true,
     "__conv" : true,
     "__convf" : true,
     "prerrortable.c:callback_newtable" : true,
@@ -63,7 +59,6 @@ var ignoreClasses = {
     "JSLocaleCallbacks" : true,
     "JSC::ExecutableAllocator" : true,
     "PRIOMethods": true,
-    "XPCOMFunctions" : true, // I'm a little unsure of this one
     "_MD_IOVector" : true,
     "malloc_table_t": true, // replace_malloc
     "malloc_hook_table_t": true, // replace_malloc
@@ -161,6 +156,7 @@ function isSuppressedVirtualMethod(csu, method)
 var ignoreFunctions = {
     "ptio.c:pt_MapError" : true,
     "je_malloc_printf" : true,
+    "malloc_usable_size" : true,
     "vprintf_stderr" : true,
     "PR_ExplodeTime" : true,
     "PR_ErrorInstallTable" : true,
@@ -174,6 +170,12 @@ var ignoreFunctions = {
 
     // Bug 1056410 - devirtualization prevents the standard nsISupports::Release heuristic from working
     "uint32 nsXPConnect::Release()" : true,
+
+    // Allocation API
+    "malloc": true,
+    "calloc": true,
+    "realloc": true,
+    "free": true,
 
     // FIXME!
     "NS_LogInit": true,
@@ -196,8 +198,7 @@ var ignoreFunctions = {
     // The nsScriptNameSpaceManager functions can't actually GC.  They
     // just use a PLDHashTable which has function pointers, which makes the
     // analysis think maybe they can.
-    "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupNavigatorName(nsAString_internal*)": true,
-    "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupName(nsAString_internal*, uint16**)": true,
+    "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupName(nsAString*, uint16**)": true,
 
     // Similar to heap snapshot mock classes, and GTests below. This posts a
     // synchronous runnable when a GTest fails, and we are pretty sure that the
@@ -218,16 +219,31 @@ var ignoreFunctions = {
     // nsTHashtable<T>::s_MatchEntry for its matchEntry function pointer, but
     // there is no mechanism for that. So we will just annotate a particularly
     // troublesome logging-related usage.
-    "EntryType* nsTHashtable<EntryType>::PutEntry(nsTHashtable<EntryType>::KeyType) [with EntryType = nsBaseHashtableET<nsCharPtrHashKey, nsAutoPtr<mozilla::LogModule> >; nsTHashtable<EntryType>::KeyType = const char*]" : true,
+    "EntryType* nsTHashtable<EntryType>::PutEntry(nsTHashtable<EntryType>::KeyType, const fallible_t&) [with EntryType = nsBaseHashtableET<nsCharPtrHashKey, nsAutoPtr<mozilla::LogModule> >; nsTHashtable<EntryType>::KeyType = const char*; nsTHashtable<EntryType>::fallible_t = mozilla::fallible_t]" : true,
     "EntryType* nsTHashtable<EntryType>::GetEntry(nsTHashtable<EntryType>::KeyType) const [with EntryType = nsBaseHashtableET<nsCharPtrHashKey, nsAutoPtr<mozilla::LogModule> >; nsTHashtable<EntryType>::KeyType = const char*]" : true,
     "EntryType* nsTHashtable<EntryType>::PutEntry(nsTHashtable<EntryType>::KeyType) [with EntryType = nsBaseHashtableET<nsPtrHashKey<const mozilla::BlockingResourceBase>, nsAutoPtr<mozilla::DeadlockDetector<mozilla::BlockingResourceBase>::OrderingEntry> >; nsTHashtable<EntryType>::KeyType = const mozilla::BlockingResourceBase*]" : true,
     "EntryType* nsTHashtable<EntryType>::GetEntry(nsTHashtable<EntryType>::KeyType) const [with EntryType = nsBaseHashtableET<nsPtrHashKey<const mozilla::BlockingResourceBase>, nsAutoPtr<mozilla::DeadlockDetector<mozilla::BlockingResourceBase>::OrderingEntry> >; nsTHashtable<EntryType>::KeyType = const mozilla::BlockingResourceBase*]" : true,
 
+    // VTune internals that lazy-load a shared library and make IndirectCalls.
+    "iJIT_IsProfilingActive" : true,
+    "iJIT_NotifyEvent": true,
+
     // The big hammers.
     "PR_GetCurrentThread" : true,
     "calloc" : true,
+
+    "uint8 nsContentUtils::IsExpandedPrincipal(nsIPrincipal*)" : true,
+
+    "void mozilla::AutoProfilerLabel::~AutoProfilerLabel(int32)" : true,
 };
 
+function extraGCFunctions() {
+    return ["ffi_call"];
+}
+
+function extraGCFunctions() {
+    return ["ffi_call"].filter(f => f in readableNames);
+}
 function isProtobuf(name)
 {
     return name.match(/\bgoogle::protobuf\b/) ||
@@ -247,7 +263,7 @@ function isGTest(name)
 
 function ignoreGCFunction(mangled)
 {
-    assert(mangled in readableNames);
+    assert(mangled in readableNames, mangled + " not in readableNames");
     var fun = readableNames[mangled][0];
 
     if (fun in ignoreFunctions)
@@ -363,6 +379,9 @@ function isOverridableField(initialCSU, csu, field)
 {
     if (csu != 'nsISupports')
         return false;
+
+    // Now that binary XPCOM is dead, all these annotations should be replaced
+    // with something based on bug 1347999.
     if (field == 'GetCurrentJSContext')
         return false;
     if (field == 'IsOnCurrentThread')
@@ -377,6 +396,12 @@ function isOverridableField(initialCSU, csu, field)
         return false;
     if (initialCSU == 'nsIXPConnect' && field == 'GetSafeJSContext')
         return false;
+
+    // nsIScriptSecurityManager is not [builtinclass], but smaug says "the
+    // interface definitely should be builtinclass", which is good enough.
+    if (initialCSU == 'nsIScriptSecurityManager' && field == 'IsSystemPrincipal')
+        return false;
+
     if (initialCSU == 'nsIScriptContext') {
         if (field == 'GetWindowProxy' || field == 'GetWindowProxyPreserveColor')
             return false;

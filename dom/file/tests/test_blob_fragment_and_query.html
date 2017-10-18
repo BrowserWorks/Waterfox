@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test for Blob URI with fragments</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+  <script>
+
+var  blob = new Blob(['hello world']);
+ok(blob, "We have a blob.");
+
+var tests = [
+  { part: "", revoke: true },
+  { part: "?aa", revoke: false },
+  { part: "#bb", revoke: false },
+  { part: "?cc#dd", revoke: false },
+  { part: "#ee?ff", revoke: false }
+];
+
+function runTest() {
+  if (!tests.length) {
+    SimpleTest.finish();
+    return;
+  }
+
+  var url = URL.createObjectURL(blob);
+  ok(url, "We have a URI");
+
+  var test = tests.shift();
+
+  URL.revokeObjectURL(url + test.part);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url + test.part);
+
+  xhr.onload = function() {
+    is(xhr.responseText, 'hello world', 'URL: ' + url + test.part);
+    runTest();
+  }
+
+  try {
+    xhr.send();
+  } catch(e) {
+    ok(test.revoke, "This should fail!");
+    runTest();
+    return;
+  }
+  ok(!test.revoke, "This should succeed!");
+}
+
+SimpleTest.waitForExplicitFinish();
+runTest();
+
+  </script>
+</body>
+</html>

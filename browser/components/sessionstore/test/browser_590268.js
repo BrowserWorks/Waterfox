@@ -11,8 +11,6 @@ function test() {
   waitForExplicitFinish();
   requestLongerTimeout(2);
 
-  let startedTest = false;
-
   // wasLoaded will be used to keep track of tabs that have already had SSTabRestoring
   // fired for them.
   let wasLoaded = { };
@@ -25,7 +23,7 @@ function test() {
   for (let i = 0; i < NUM_TABS; i++) {
     let uniq = r();
     let tabData = {
-      entries: [{ url: "http://example.com/#" + i }],
+      entries: [{ url: "http://example.com/#" + i, triggeringPrincipal_base64}],
       extData: { "uniq": uniq, "baz": "qux" }
     };
     state.windows[0].tabs.push(tabData);
@@ -87,8 +85,7 @@ function test() {
       // then the test is successful.
       try {
         ss.deleteTabValue(tab, "baz");
-      }
-      catch (e) {
+      } catch (e) {
         ok(false, "no error calling deleteTabValue - " + e);
       }
 
@@ -116,9 +113,9 @@ function test() {
 
   function cleanup() {
     // remove the event listener and clean up before finishing
-    gBrowser.tabContainer.removeEventListener("SSTabRestoring", onSSTabRestoring, false);
+    gBrowser.tabContainer.removeEventListener("SSTabRestoring", onSSTabRestoring);
     gBrowser.tabContainer.removeEventListener("SSTabRestored", onSSTabRestored, true);
-    gBrowser.tabContainer.removeEventListener("TabOpen", onTabOpen, false);
+    gBrowser.tabContainer.removeEventListener("TabOpen", onTabOpen);
     // Put this in an executeSoon because we still haven't called restoreNextTab
     // in sessionstore for the last tab (we'll call it after this). We end up
     // trying to restore the tab (since we then add a closed tab to the array).
@@ -129,9 +126,9 @@ function test() {
   }
 
   // Add the event listeners
-  gBrowser.tabContainer.addEventListener("SSTabRestoring", onSSTabRestoring, false);
+  gBrowser.tabContainer.addEventListener("SSTabRestoring", onSSTabRestoring);
   gBrowser.tabContainer.addEventListener("SSTabRestored", onSSTabRestored, true);
-  gBrowser.tabContainer.addEventListener("TabOpen", onTabOpen, false);
+  gBrowser.tabContainer.addEventListener("TabOpen", onTabOpen);
   // Restore state
   ss.setBrowserState(JSON.stringify(state));
 }

@@ -3,9 +3,12 @@
 #include <stdio.h>
 
 #include "nscore.h"
-#include "nsXULAppAPI.h"
-#include "nsExceptionHandler.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
+#include "ExceptionThrower.h"
+
+#ifdef XP_WIN
+#include <windows.h>
+#endif
 
 /*
  * This pure virtual call example is from MSDN
@@ -43,10 +46,10 @@ void PureVirtualCall()
 // Keep these in sync with CrashTestUtils.jsm!
 const int16_t CRASH_INVALID_POINTER_DEREF = 0;
 const int16_t CRASH_PURE_VIRTUAL_CALL     = 1;
-const int16_t CRASH_RUNTIMEABORT          = 2;
 const int16_t CRASH_OOM                   = 3;
 const int16_t CRASH_MOZ_CRASH             = 4;
 const int16_t CRASH_ABORT                 = 5;
+const int16_t CRASH_UNCAUGHT_EXCEPTION    = 6;
 
 extern "C" NS_EXPORT
 void Crash(int16_t how)
@@ -63,10 +66,6 @@ void Crash(int16_t how)
     // not reached
     break;
   }
-  case CRASH_RUNTIMEABORT: {
-    NS_RUNTIMEABORT("Intentional crash");
-    break;
-  }
   case CRASH_OOM: {
     mozilla::Unused << moz_xmalloc((size_t) -1);
     mozilla::Unused << moz_xmalloc((size_t) -1);
@@ -81,17 +80,13 @@ void Crash(int16_t how)
     abort();
     break;
   }
+  case CRASH_UNCAUGHT_EXCEPTION: {
+    ThrowException();
+    break;
+  }
   default:
     break;
   }
-}
-
-extern "C" NS_EXPORT
-nsISupports* LockDir(nsIFile *directory)
-{
-  nsISupports* lockfile = nullptr;
-  XRE_LockProfileDirectory(directory, &lockfile);
-  return lockfile;
 }
 
 char testData[32];

@@ -15,7 +15,11 @@ EXPORTS.mozilla.ipc += [
     'BackgroundParent.h',
     'BackgroundUtils.h',
     'BrowserProcessSubThread.h',
+    'CrashReporterClient.h',
+    'CrashReporterHost.h',
+    'CrashReporterMetadataShmem.h',
     'CrossProcessMutex.h',
+    'CrossProcessSemaphore.h',
     'FileDescriptor.h',
     'FileDescriptorSetChild.h',
     'FileDescriptorSetParent.h',
@@ -23,6 +27,9 @@ EXPORTS.mozilla.ipc += [
     'GeckoChildProcessHost.h',
     'InputStreamUtils.h',
     'IOThreadChild.h',
+    'IPCStreamAlloc.h',
+    'IPCStreamDestination.h',
+    'IPCStreamSource.h',
     'IPCStreamUtils.h',
     'MessageChannel.h',
     'MessageLink.h',
@@ -30,8 +37,6 @@ EXPORTS.mozilla.ipc += [
     'ProcessChild.h',
     'ProtocolUtils.h',
     'ScopedXREEmbed.h',
-    'SendStream.h',
-    'SendStreamAlloc.h',
     'SharedMemory.h',
     'SharedMemoryBasic.h',
     'Shmem.h',
@@ -41,7 +46,7 @@ EXPORTS.mozilla.ipc += [
     'WindowsMessageLoop.h',
 ]
 
-if CONFIG['MOZ_FAULTY'] == '1':
+if CONFIG['FUZZING'] == '1':
     EXPORTS.mozilla.ipc += ['Faulty.h']
     SOURCES += ['Faulty.cpp']
 
@@ -76,6 +81,19 @@ elif not CONFIG['OS_ARCH'] in ('NetBSD', 'OpenBSD'):
 else:
     UNIFIED_SOURCES += [
         'CrossProcessMutex_unimplemented.cpp',
+    ]
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    SOURCES += [
+        'CrossProcessSemaphore_windows.cpp',
+    ]
+elif CONFIG['OS_ARCH'] != 'Darwin':
+    UNIFIED_SOURCES += [
+        'CrossProcessSemaphore_posix.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'CrossProcessSemaphore_unimplemented.cpp',
     ]
 
 # Android has its own,
@@ -119,10 +137,17 @@ UNIFIED_SOURCES += [
     'BackgroundImpl.cpp',
     'BackgroundUtils.cpp',
     'BrowserProcessSubThread.cpp',
+    'CrashReporterClient.cpp',
+    'CrashReporterHost.cpp',
+    'CrashReporterMetadataShmem.cpp',
     'FileDescriptor.cpp',
     'FileDescriptorUtils.cpp',
     'InputStreamUtils.cpp',
     'IPCMessageUtils.cpp',
+    'IPCStreamChild.cpp',
+    'IPCStreamDestination.cpp',
+    'IPCStreamParent.cpp',
+    'IPCStreamSource.cpp',
     'IPCStreamUtils.cpp',
     'MessageChannel.cpp',
     'MessageLink.cpp',
@@ -130,23 +155,29 @@ UNIFIED_SOURCES += [
     'ProcessChild.cpp',
     'ProtocolUtils.cpp',
     'ScopedXREEmbed.cpp',
-    'SendStreamChild.cpp',
-    'SendStreamParent.cpp',
     'SharedMemory.cpp',
     'Shmem.cpp',
     'StringUtil.cpp',
+    'URIUtils.cpp',
 ]
 
-# GeckoChildProcessHost.cpp cannot be built in unified mode because it uses plarena.h.
-# URIUtils.cpp cannot be built in unified mode because of name clashes on strdup.
 SOURCES += [
     'BackgroundChildImpl.cpp',
     'BackgroundParentImpl.cpp',
     'FileDescriptorSetChild.cpp',
     'FileDescriptorSetParent.cpp',
-    'GeckoChildProcessHost.cpp',
-    'URIUtils.cpp',
 ]
+
+if CONFIG['OS_ARCH'] == 'Darwin':
+    # GeckoChildProcessHost.cpp cannot be built unified due to OSX header
+    # clashes with TextRange.
+    SOURCES += [
+        'GeckoChildProcessHost.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'GeckoChildProcessHost.cpp',
+    ]
 
 if CONFIG['_MSC_VER']:
     # This is intended as a temporary hack to support building with VS2015.
@@ -158,6 +189,7 @@ LOCAL_INCLUDES += [
     '/caps',
     '/dom/broadcastchannel',
     '/dom/indexedDB',
+    '/dom/storage',
     '/dom/workers',
     '/media/webrtc/trunk',
     '/xpcom/build',
@@ -169,15 +201,16 @@ IPDL_SOURCES = [
     'PBackground.ipdl',
     'PBackgroundSharedTypes.ipdlh',
     'PBackgroundTest.ipdl',
+    'PChildToParentStream.ipdl',
     'PFileDescriptorSet.ipdl',
-    'PProcLoader.ipdl',
+    'PParentToChildStream.ipdl',
     'ProtocolTypes.ipdlh',
-    'PSendStream.ipdl',
     'URIParams.ipdlh',
 ]
 
-
 LOCAL_INCLUDES += [
+    '/dom/ipc',
+    '/toolkit/crashreporter',
     '/toolkit/xre',
     '/xpcom/threads',
 ]
@@ -189,10 +222,6 @@ FINAL_LIBRARY = 'xul'
 for var in ('MOZ_CHILD_PROCESS_NAME', 'MOZ_CHILD_PROCESS_NAME_PIE',
             'MOZ_CHILD_PROCESS_BUNDLE', 'DLL_PREFIX', 'DLL_SUFFIX'):
     DEFINES[var] = '"%s"' % CONFIG[var]
-
-LOCAL_INCLUDES += [
-    '/toolkit/crashreporter',
-]
 
 if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [

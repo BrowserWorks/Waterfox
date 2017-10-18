@@ -7,24 +7,19 @@
 "use strict";
 
 const Services = require("Services");
-const { Cc, Ci, Cu, Cr, components, ChromeWorker } = require("chrome");
+const { Cc, Ci, Cr } = require("chrome");
 const { ActorPool, OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
-const { BreakpointActor, setBreakpointAtEntryPoints } = require("devtools/server/actors/breakpoint");
-const { EnvironmentActor } = require("devtools/server/actors/environment");
-const { FrameActor } = require("devtools/server/actors/frame");
 const { ObjectActor, createValueGrip, longStringGrip } = require("devtools/server/actors/object");
-const { SourceActor, getSourceURL } = require("devtools/server/actors/source");
-const { DebuggerServer } = require("devtools/server/main");
 const { ActorClassWithSpec } = require("devtools/shared/protocol");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { assert, dumpn, update, fetch } = DevToolsUtils;
+const flags = require("devtools/shared/flags");
+const { assert, dumpn } = DevToolsUtils;
 const promise = require("promise");
 const xpcInspector = require("xpcInspector");
 const { DevToolsWorker } = require("devtools/shared/worker/worker");
-const object = require("sdk/util/object");
 const { threadSpec } = require("devtools/shared/specs/script");
 
-const { defer, resolve, reject, all } = promise;
+const { resolve, reject, all } = promise;
 
 loader.lazyGetter(this, "Debugger", () => {
   let Debugger = require("Debugger");
@@ -32,8 +27,14 @@ loader.lazyGetter(this, "Debugger", () => {
   return Debugger;
 });
 loader.lazyRequireGetter(this, "CssLogic", "devtools/server/css-logic", true);
+loader.lazyRequireGetter(this, "findCssSelector", "devtools/shared/inspector/css-logic", true);
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "mapURIToAddonID", "devtools/server/actors/utils/map-uri-to-addon-id");
+loader.lazyRequireGetter(this, "BreakpointActor", "devtools/server/actors/breakpoint", true);
+loader.lazyRequireGetter(this, "setBreakpointAtEntryPoints", "devtools/server/actors/breakpoint", true);
+loader.lazyRequireGetter(this, "getSourceURL", "devtools/server/actors/source", true);
+loader.lazyRequireGetter(this, "EnvironmentActor", "devtools/server/actors/environment", true);
+loader.lazyRequireGetter(this, "FrameActor", "devtools/server/actors/frame", true);
 
 /**
  * A BreakpointActorMap is a map from locations to instances of BreakpointActor.
@@ -69,21 +70,22 @@ BreakpointActorMap.prototype = {
       return;
     }
 
-    function* findKeys(object, key) {
+    function* findKeys(obj, key) {
       if (key !== undefined) {
-        if (key in object) {
+        if (key in obj) {
           yield key;
         }
-      }
-      else {
-        for (let key of Object.keys(object)) {
+      } else {
+        for (key of Object.keys(obj)) {
           yield key;
         }
       }
     }
 
     let query = {
-      sourceActorID: location.originalSourceActor ? location.originalSourceActor.actorID : undefined,
+      sourceActorID: location.originalSourceActor
+                     ? location.originalSourceActor.actorID
+                     : undefined,
       line: location.originalLine,
     };
 
@@ -98,12 +100,17 @@ BreakpointActorMap.prototype = {
       query.endColumn = location.originalColumn ? query.originalColumn + 1 : undefined;
     }
 
-    for (let sourceActorID of findKeys(this._actors, query.sourceActorID))
-      for (let line of findKeys(this._actors[sourceActorID], query.line))
-        for (let beginColumn of findKeys(this._actors[sourceActorID][line], query.beginColumn))
-          for (let endColumn of findKeys(this._actors[sourceActorID][line][beginColumn], query.endColumn)) {
-            yield this._actors[sourceActorID][line][beginColumn][endColumn];
+    for (let sourceActorID of findKeys(this._actors, query.sourceActorID)) {
+      let actor = this._actors[sourceActorID];
+      for (let line of findKeys(actor, query.line)) {
+        for (let beginColumn of findKeys(actor[line], query.beginColumn)) {
+          for (let endColumn of findKeys(actor[line][beginColumn],
+               query.endColumn)) {
+            yield actor[line][beginColumn][endColumn];
           }
+        }
+      }
+    }
   },
 
   /**
@@ -208,8 +215,8 @@ SourceActorStore.prototype = {
   /**
    * Lookup an existing actor id that represents this source, if available.
    */
-  getReusableActorId: function (aSource, aOriginalUrl) {
-    let url = this.getUniqueKey(aSource, aOriginalUrl);
+  getReusableActorId: function (source, originalUrl) {
+    let url = this.getUniqueKey(source, originalUrl);
     if (url && url in this._sourceActorIds) {
       return this._sourceActorIds[url];
     }
@@ -219,8 +226,8 @@ SourceActorStore.prototype = {
   /**
    * Update a source with an actorID.
    */
-  setReusableActorId: function (aSource, aOriginalUrl, actorID) {
-    let url = this.getUniqueKey(aSource, aOriginalUrl);
+  setReusableActorId: function (source, originalUrl, actorID) {
+    let url = this.getUniqueKey(source, originalUrl);
     if (url) {
       this._sourceActorIds[url] = actorID;
     }
@@ -229,14 +236,13 @@ SourceActorStore.prototype = {
   /**
    * Make a unique URL from a source that identifies it across reloads.
    */
-  getUniqueKey: function (aSource, aOriginalUrl) {
-    if (aOriginalUrl) {
+  getUniqueKey: function (source, originalUrl) {
+    if (originalUrl) {
       // Original source from a sourcemap.
-      return aOriginalUrl;
+      return originalUrl;
     }
-    else {
-      return getSourceURL(aSource);
-    }
+
+    return getSourceURL(source);
   }
 };
 
@@ -334,7 +340,9 @@ function EventLoop({ thread, connection, hooks }) {
 EventLoop.prototype = {
   entered: false,
   resolved: false,
-  get url() { return this._hooks.url; },
+  get url() {
+    return this._hooks.url;
+  },
 
   /**
    * Enter this nested event loop.
@@ -408,10 +416,10 @@ EventLoop.prototype = {
  *        window.
  */
 const ThreadActor = ActorClassWithSpec(threadSpec, {
-  initialize: function (aParent, aGlobal) {
+  initialize: function (parent, global) {
     this._state = "detached";
     this._frameActors = [];
-    this._parent = aParent;
+    this._parent = parent;
     this._dbg = null;
     this._gripDepth = 0;
     this._threadLifetimePool = null;
@@ -433,7 +441,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     // server.
     this._hiddenBreakpoints = new Map();
 
-    this.global = aGlobal;
+    this.global = global;
 
     this._allEventsListener = this._allEventsListener.bind(this);
     this.onNewGlobal = this.onNewGlobal.bind(this);
@@ -509,7 +517,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       this._prettyPrintWorker = new DevToolsWorker(
         "resource://devtools/server/actors/pretty-print-worker.js",
         { name: "pretty-print",
-          verbose: dumpn.wantLogging }
+          verbose: flags.wantLogging }
       );
     }
     return this._prettyPrintWorker;
@@ -550,18 +558,18 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Listener for our |Debugger|'s "newGlobal" event.
    */
-  onNewGlobal: function (aGlobal) {
+  onNewGlobal: function (global) {
     // Notify the client.
     this.conn.send({
       from: this.actorID,
       type: "newGlobal",
       // TODO: after bug 801084 lands see if we need to JSONify this.
-      hostAnnotations: aGlobal.hostAnnotations
+      hostAnnotations: global.hostAnnotations
     });
   },
 
-  disconnect: function () {
-    dumpn("in ThreadActor.prototype.disconnect");
+  destroy: function () {
+    dumpn("in ThreadActor.prototype.destroy");
     if (this._state == "paused") {
       this.onResume();
     }
@@ -591,15 +599,15 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   },
 
   /**
-   * Disconnect the debugger and put the actor in the exited state.
+   * destroy the debugger and put the actor in the exited state.
    */
   exit: function () {
-    this.disconnect();
+    this.destroy();
     this._state = "exited";
   },
 
   // Request handlers
-  onAttach: function (aRequest) {
+  onAttach: function (request) {
     if (this.state === "exited") {
       return { type: "exited" };
     }
@@ -612,7 +620,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     this._state = "attached";
     this._debuggerSourcesSeen = new WeakSet();
 
-    Object.assign(this._options, aRequest.options || {});
+    Object.assign(this._options, request.options || {});
     this.sources.setOptions(this._options);
     this.sources.on("newSource", this.onSourceEvent);
     this.sources.on("updatedSource", this.onSourceEvent);
@@ -652,8 +660,8 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     }
   },
 
-  onDetach: function (aRequest) {
-    this.disconnect();
+  onDetach: function (request) {
+    this.destroy();
     this._state = "detached";
     this._debuggerSourcesSeen = null;
 
@@ -663,14 +671,17 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     };
   },
 
-  onReconfigure: function (aRequest) {
+  onReconfigure: function (request) {
     if (this.state == "exited") {
       return { error: "wrongState" };
     }
-    const options = aRequest.options || {};
+    const options = request.options || {};
 
     if ("observeAsmJS" in options) {
       this.dbg.allowUnobservedAsmJS = !options.observeAsmJS;
+    }
+    if ("wasmBinarySource" in options) {
+      this.dbg.allowWasmBinarySource = !!options.wasmBinarySource;
     }
 
     Object.assign(this._options, options);
@@ -685,23 +696,25 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * Pause the debuggee, by entering a nested event loop, and return a 'paused'
    * packet to the client.
    *
-   * @param Debugger.Frame aFrame
+   * @param Debugger.Frame frame
    *        The newest debuggee frame in the stack.
-   * @param object aReason
+   * @param object reason
    *        An object with a 'type' property containing the reason for the pause.
    * @param function onPacket
    *        Hook to modify the packet before it is sent. Feel free to return a
    *        promise.
    */
-  _pauseAndRespond: function (aFrame, aReason, onPacket = function (k) { return k; }) {
+  _pauseAndRespond: function (frame, reason, onPacket = function (k) {
+    return k;
+  }) {
     try {
-      let packet = this._paused(aFrame);
+      let packet = this._paused(frame);
       if (!packet) {
         return undefined;
       }
-      packet.why = aReason;
+      packet.why = reason;
 
-      let generatedLocation = this.sources.getFrameLocation(aFrame);
+      let generatedLocation = this.sources.getFrameLocation(frame);
       this.sources.getOriginalLocation(generatedLocation)
                   .then((originalLocation) => {
                     if (!originalLocation.originalSourceActor) {
@@ -724,16 +737,18 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
                       column: originalLocation.originalColumn
                     };
                     resolve(onPacket(packet))
-          .then(null, error => {
+          .catch(error => {
             reportError(error);
             return {
               error: "unknownError",
               message: error.message + "\n" + error.stack
             };
           })
-          .then(packet => {
-            this.conn.send(packet);
+          .then(pkt => {
+            this.conn.send(pkt);
           });
+
+                    return undefined;
                   });
 
       this._pushThreadPause();
@@ -748,25 +763,26 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   },
 
   _makeOnEnterFrame: function ({ pauseAndRespond }) {
-    return aFrame => {
-      const generatedLocation = this.sources.getFrameLocation(aFrame);
-      let { originalSourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
-        generatedLocation));
+    return frame => {
+      const generatedLocation = this.sources.getFrameLocation(frame);
+      let { originalSourceActor } = this.unsafeSynchronize(
+        this.sources.getOriginalLocation(generatedLocation));
       let url = originalSourceActor.url;
 
       return this.sources.isBlackBoxed(url)
         ? undefined
-        : pauseAndRespond(aFrame);
+        : pauseAndRespond(frame);
     };
   },
 
-  _makeOnPop: function ({ thread, pauseAndRespond, createValueGrip }) {
-    return function (aCompletion) {
+  _makeOnPop: function (
+    { thread, pauseAndRespond, createValueGrip: createValueGripHook }) {
+    return function (completion) {
       // onPop is called with 'this' set to the current frame.
 
       const generatedLocation = thread.sources.getFrameLocation(this);
-      const { originalSourceActor } = thread.unsafeSynchronize(thread.sources.getOriginalLocation(
-        generatedLocation));
+      const { originalSourceActor } = thread.unsafeSynchronize(
+        thread.sources.getOriginalLocation(generatedLocation));
       const url = originalSourceActor.url;
 
       if (thread.sources.isBlackBoxed(url)) {
@@ -777,18 +793,18 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       // subsequent step events on its caller.
       this.reportedPop = true;
 
-      return pauseAndRespond(this, aPacket => {
-        aPacket.why.frameFinished = {};
-        if (!aCompletion) {
-          aPacket.why.frameFinished.terminated = true;
-        } else if (aCompletion.hasOwnProperty("return")) {
-          aPacket.why.frameFinished.return = createValueGrip(aCompletion.return);
-        } else if (aCompletion.hasOwnProperty("yield")) {
-          aPacket.why.frameFinished.return = createValueGrip(aCompletion.yield);
+      return pauseAndRespond(this, packet => {
+        packet.why.frameFinished = {};
+        if (!completion) {
+          packet.why.frameFinished.terminated = true;
+        } else if (completion.hasOwnProperty("return")) {
+          packet.why.frameFinished.return = createValueGripHook(completion.return);
+        } else if (completion.hasOwnProperty("yield")) {
+          packet.why.frameFinished.return = createValueGripHook(completion.yield);
         } else {
-          aPacket.why.frameFinished.throw = createValueGrip(aCompletion.throw);
+          packet.why.frameFinished.throw = createValueGripHook(completion.throw);
         }
-        return aPacket;
+        return packet;
       });
     };
   },
@@ -858,20 +874,20 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Define the JS hook functions for stepping.
    */
-  _makeSteppingHooks: function (aStartLocation, steppingType) {
+  _makeSteppingHooks: function (startLocation, steppingType) {
     // Bind these methods and state because some of the hooks are called
     // with 'this' set to the current frame. Rather than repeating the
     // binding in each _makeOnX method, just do it once here and pass it
     // in to each function.
     const steppingHookState = {
-      pauseAndRespond: (aFrame, onPacket = k=>k) => {
-        return this._pauseAndRespond(aFrame, { type: "resumeLimit" }, onPacket);
+      pauseAndRespond: (frame, onPacket = k=>k) => {
+        return this._pauseAndRespond(frame, { type: "resumeLimit" }, onPacket);
       },
       createValueGrip: v => createValueGrip(v, this._pausePool,
         this.objectGrip),
       thread: this,
       startFrame: this.youngestFrame,
-      startLocation: aStartLocation,
+      startLocation: startLocation,
       steppingType: steppingType
     };
 
@@ -886,13 +902,13 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * Handle attaching the various stepping hooks we need to attach when we
    * receive a resume request with a resumeLimit property.
    *
-   * @param Object aRequest
+   * @param Object request
    *        The request packet received over the RDP.
    * @returns A promise that resolves to true once the hooks are attached, or is
    *          rejected with an error packet.
    */
-  _handleResumeLimit: function (aRequest) {
-    let steppingType = aRequest.resumeLimit.type;
+  _handleResumeLimit: function (request) {
+    let steppingType = request.resumeLimit.type;
     if (["break", "step", "next", "finish"].indexOf(steppingType) == -1) {
       return reject({ error: "badParameterType",
                       message: "Unknown resumeLimit type" });
@@ -935,12 +951,12 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * @param Debugger.Frame aFrame
    *        The frame we want to clear the stepping hooks from.
    */
-  _clearSteppingHooks: function (aFrame) {
-    if (aFrame && aFrame.live) {
-      while (aFrame) {
-        aFrame.onStep = undefined;
-        aFrame.onPop = undefined;
-        aFrame = aFrame.older;
+  _clearSteppingHooks: function (frame) {
+    if (frame && frame.live) {
+      while (frame) {
+        frame.onStep = undefined;
+        frame.onPop = undefined;
+        frame = frame.older;
       }
     }
   },
@@ -948,12 +964,12 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Listen to the debuggee's DOM events if we received a request to do so.
    *
-   * @param Object aRequest
+   * @param Object request
    *        The resume request packet received over the RDP.
    */
-  _maybeListenToEvents: function (aRequest) {
+  _maybeListenToEvents: function (request) {
     // Break-on-DOMEvents is only supported in content debugging.
-    let events = aRequest.pauseOnDOMEvents;
+    let events = request.pauseOnDOMEvents;
     if (this.global && events &&
         (events == "*" ||
         (Array.isArray(events) && events.length))) {
@@ -977,12 +993,13 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Handle a protocol request to resume execution of the debuggee.
    */
-  onResume: function (aRequest) {
+  onResume: function (request) {
     if (this._state !== "paused") {
       return {
         error: "wrongState",
         message: "Can't resume when debuggee isn't paused. Current state is '"
-          + this._state + "'"
+          + this._state + "'",
+        state: this._state
       };
     }
 
@@ -1000,27 +1017,27 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     }
 
     let resumeLimitHandled;
-    if (aRequest && aRequest.resumeLimit) {
-      resumeLimitHandled = this._handleResumeLimit(aRequest);
+    if (request && request.resumeLimit) {
+      resumeLimitHandled = this._handleResumeLimit(request);
     } else {
       this._clearSteppingHooks(this.youngestFrame);
       resumeLimitHandled = resolve(true);
     }
 
     return resumeLimitHandled.then(() => {
-      if (aRequest) {
-        this._options.pauseOnExceptions = aRequest.pauseOnExceptions;
-        this._options.ignoreCaughtExceptions = aRequest.ignoreCaughtExceptions;
+      if (request) {
+        this._options.pauseOnExceptions = request.pauseOnExceptions;
+        this._options.ignoreCaughtExceptions = request.ignoreCaughtExceptions;
         this.maybePauseOnExceptions();
-        this._maybeListenToEvents(aRequest);
+        this._maybeListenToEvents(request);
       }
 
       let packet = this._resumed();
       this._popThreadPause();
-      // Tell anyone who cares of the resume (as of now, that's the xpcshell
-      // harness)
+      // Tell anyone who cares of the resume (as of now, that's the xpcshell harness and
+      // devtools-startup.js when handling the --wait-for-jsdebugger flag)
       if (Services.obs) {
-        Services.obs.notifyObservers(this, "devtools-thread-resumed", null);
+        Services.obs.notifyObservers(this, "devtools-thread-resumed");
       }
       return packet;
     }, error => {
@@ -1040,28 +1057,27 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * world's state can change out from underneath your feet because JS is no
    * longer run-to-completion.
    *
-   * @param aPromise
+   * @param p
    *        The promise we want to resolve.
    * @returns The promise's resolution.
    */
-  unsafeSynchronize: function (aPromise) {
+  unsafeSynchronize: function (p) {
     let needNest = true;
     let eventLoop;
     let returnVal;
 
-    aPromise
-      .then((aResolvedVal) => {
-        needNest = false;
-        returnVal = aResolvedVal;
-      })
-      .then(null, (aError) => {
-        reportError(aError, "Error inside unsafeSynchronize:");
-      })
-      .then(() => {
-        if (eventLoop) {
-          eventLoop.resolve();
-        }
-      });
+    p.then((resolvedVal) => {
+      needNest = false;
+      returnVal = resolvedVal;
+    })
+    .catch((error) => {
+      reportError(error, "Error inside unsafeSynchronize:");
+    })
+    .then(() => {
+      if (eventLoop) {
+        eventLoop.resolve();
+      }
+    });
 
     if (needNest) {
       eventLoop = this._nestedEventLoops.push();
@@ -1112,7 +1128,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     let els = Cc["@mozilla.org/eventlistenerservice;1"]
                 .getService(Ci.nsIEventListenerService);
 
-    let targets = els.getEventTargetChainFor(eventTarget);
+    let targets = els.getEventTargetChainFor(eventTarget, true);
     let listeners = [];
 
     for (let target of targets) {
@@ -1121,15 +1137,16 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         // Null is returned for all-events handlers, and native event listeners
         // don't provide any listenerObject, which makes them not that useful to
         // a JS debugger.
-        if (!handler || !handler.listenerObject || !handler.type)
+        if (!handler || !handler.listenerObject || !handler.type) {
           continue;
+        }
         // Create a listener-like object suitable for our purposes.
         let l = Object.create(null);
         l.type = handler.type;
         let listener = handler.listenerObject;
         let listenerDO = this.globalDebugObject.makeDebuggeeValue(listener);
-        // If the listener is an object with a 'handleEvent' method, use that.
-        if (listenerDO.class == "Object" || listenerDO.class == "XULElement") {
+        // If the listener is not callable, assume it is an event handler object.
+        if (!listenerDO.callable) {
           // For some events we don't have permission to access the
           // 'handleEvent' property when running in content scope.
           if (!listenerDO.unwrap()) {
@@ -1152,8 +1169,9 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         l.script = listenerDO.script;
         // Chrome listeners won't be converted to debuggee values, since their
         // compartment is not added as a debuggee.
-        if (!l.script)
+        if (!l.script) {
           continue;
+        }
         listeners.push(l);
       }
     }
@@ -1185,21 +1203,21 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Helper method that returns the next frame when stepping.
    */
-  _getNextStepFrame: function (aFrame) {
-    let stepFrame = aFrame.reportedPop ? aFrame.older : aFrame;
+  _getNextStepFrame: function (frame) {
+    let stepFrame = frame.reportedPop ? frame.older : frame;
     if (!stepFrame || !stepFrame.script) {
       stepFrame = null;
     }
     return stepFrame;
   },
 
-  onClientEvaluate: function (aRequest) {
+  onClientEvaluate: function (request) {
     if (this.state !== "paused") {
       return { error: "wrongState",
                message: "Debuggee must be paused to evaluate code." };
     }
 
-    let frame = this._requestFrame(aRequest.frame);
+    let frame = this._requestFrame(request.frame);
     if (!frame) {
       return { error: "unknownFrame",
                message: "Evaluation frame not found" };
@@ -1218,7 +1236,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
 
     // Run the expression.
     // XXX: test syntax errors
-    let completion = frame.eval(aRequest.expression);
+    let completion = frame.eval(request.expression);
 
     // Put ourselves back in the pause state.
     let packet = this._paused(youngest);
@@ -1229,14 +1247,14 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     return packet;
   },
 
-  onFrames: function (aRequest) {
+  onFrames: function (request) {
     if (this.state !== "paused") {
       return { error: "wrongState",
                message: "Stack frames are only available while the debuggee is paused."};
     }
 
-    let start = aRequest.start ? aRequest.start : 0;
-    let count = aRequest.count;
+    let start = request.start ? request.start : 0;
+    let count = request.count;
 
     // Find the starting frame...
     let frame = this.youngestFrame;
@@ -1253,7 +1271,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       let form = this._createFrameActor(frame).form();
       form.depth = i;
 
-      let promise = this.sources.getOriginalLocation(new GeneratedLocation(
+      let framePromise = this.sources.getOriginalLocation(new GeneratedLocation(
         this.sources.createNonSourceMappedActor(frame.script.source),
         form.where.line,
         form.where.column
@@ -1271,7 +1289,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         form.source = sourceForm;
         return form;
       });
-      promises.push(promise);
+      promises.push(framePromise);
     }
 
     return all(promises).then(function (frames) {
@@ -1280,14 +1298,14 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     });
   },
 
-  onReleaseMany: function (aRequest) {
-    if (!aRequest.actors) {
+  onReleaseMany: function (request) {
+    if (!request.actors) {
       return { error: "missingParameter",
                message: "no actors were specified" };
     }
 
     let res;
-    for (let actorID of aRequest.actors) {
+    for (let actorID of request.actors) {
       let actor = this.threadLifetimePool.get(actorID);
       if (!actor) {
         if (!res) {
@@ -1321,7 +1339,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     }));
   },
 
-  onSources: function (aRequest) {
+  onSources: function (request) {
     return this._discoverSources().then(() => {
       // No need to flush the new source packets here, as we are sending the
       // list of sources out immediately and we don't need to invoke the
@@ -1347,11 +1365,10 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     }
   },
 
-
   /**
    * Handle a protocol request to pause the debuggee.
    */
-  onInterrupt: function (aRequest) {
+  onInterrupt: function (request) {
     if (this.state == "exited") {
       return { type: "exited" };
     } else if (this.state == "paused") {
@@ -1366,9 +1383,9 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     try {
       // If execution should pause just before the next JavaScript bytecode is
       // executed, just set an onEnterFrame handler.
-      if (aRequest.when == "onNext") {
-        let onEnterFrame = (aFrame) => {
-          return this._pauseAndRespond(aFrame, { type: "interrupted", onNext: true });
+      if (request.when == "onNext") {
+        let onEnterFrame = (frame) => {
+          return this._pauseAndRespond(frame, { type: "interrupted", onNext: true });
         };
         this.dbg.onEnterFrame = onEnterFrame;
 
@@ -1403,7 +1420,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Handle a protocol request to retrieve all the event listeners on the page.
    */
-  onEventListeners: function (aRequest) {
+  onEventListeners: function (request) {
     // This request is only supported in content debugging.
     if (!this.global) {
       return {
@@ -1433,7 +1450,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         }
 
         // There will be no tagName if the event listener is set on the window.
-        let selector = node.tagName ? CssLogic.findCssSelector(node) : "window";
+        let selector = node.tagName ? findCssSelector(node) : "window";
         let nodeDO = this.globalDebugObject.makeDebuggeeValue(node);
         listenerForm.node = {
           selector: selector,
@@ -1448,7 +1465,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         if (typeof node.hasAttribute !== "undefined") {
           listenerForm.isEventHandler = !!node.hasAttribute(handlerName);
         }
-        if (!!node[handlerName]) {
+        if (node[handlerName]) {
           listenerForm.isEventHandler = !!node[handlerName];
         }
         // Get the Debugger.Object for the listener object.
@@ -1485,19 +1502,19 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Return the Debug.Frame for a frame mentioned by the protocol.
    */
-  _requestFrame: function (aFrameID) {
-    if (!aFrameID) {
+  _requestFrame: function (frameID) {
+    if (!frameID) {
       return this.youngestFrame;
     }
 
-    if (this._framePool.has(aFrameID)) {
-      return this._framePool.get(aFrameID).frame;
+    if (this._framePool.has(frameID)) {
+      return this._framePool.get(frameID).frame;
     }
 
     return undefined;
   },
 
-  _paused: function (aFrame) {
+  _paused: function (frame) {
     // We don't handle nested pauses correctly.  Don't try - if we're
     // paused, just continue running whatever code triggered the pause.
     // We don't want to actually have nested pauses (although we
@@ -1512,9 +1529,9 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     // Clear stepping hooks.
     this.dbg.onEnterFrame = undefined;
     this.dbg.onExceptionUnwind = undefined;
-    if (aFrame) {
-      aFrame.onStep = undefined;
-      aFrame.onPop = undefined;
+    if (frame) {
+      frame.onStep = undefined;
+      frame.onPop = undefined;
     }
 
     // Clear DOM event breakpoints.
@@ -1554,8 +1571,8 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     let packet = { from: this.actorID,
                    type: "paused",
                    actor: this._pauseActor.actorID };
-    if (aFrame) {
-      packet.frame = this._createFrameActor(aFrame).form();
+    if (frame) {
+      packet.frame = this._createFrameActor(frame).form();
     }
 
     if (poppedFrames) {
@@ -1611,15 +1628,15 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     return popped;
   },
 
-  _createFrameActor: function (aFrame) {
-    if (aFrame.actor) {
-      return aFrame.actor;
+  _createFrameActor: function (frame) {
+    if (frame.actor) {
+      return frame.actor;
     }
 
-    let actor = new FrameActor(aFrame, this);
+    let actor = new FrameActor(frame, this);
     this._frameActors.push(actor);
     this._framePool.addActor(actor);
-    aFrame.actor = actor;
+    frame.actor = actor;
 
     return actor;
   },
@@ -1627,25 +1644,25 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Create and return an environment actor that corresponds to the provided
    * Debugger.Environment.
-   * @param Debugger.Environment aEnvironment
+   * @param Debugger.Environment environment
    *        The lexical environment we want to extract.
-   * @param object aPool
+   * @param object pool
    *        The pool where the newly-created actor will be placed.
-   * @return The EnvironmentActor for aEnvironment or undefined for host
+   * @return The EnvironmentActor for environment or undefined for host
    *         functions or functions scoped to a non-debuggee global.
    */
-  createEnvironmentActor: function (aEnvironment, aPool) {
-    if (!aEnvironment) {
+  createEnvironmentActor: function (environment, pool) {
+    if (!environment) {
       return undefined;
     }
 
-    if (aEnvironment.actor) {
-      return aEnvironment.actor;
+    if (environment.actor) {
+      return environment.actor;
     }
 
-    let actor = new EnvironmentActor(aEnvironment, this);
-    aPool.addActor(actor);
-    aEnvironment.actor = actor;
+    let actor = new EnvironmentActor(environment, this);
+    pool.addActor(actor);
+    environment.actor = actor;
 
     return actor;
   },
@@ -1654,18 +1671,18 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * Return a protocol completion value representing the given
    * Debugger-provided completion value.
    */
-  createProtocolCompletionValue: function (aCompletion) {
+  createProtocolCompletionValue: function (completion) {
     let protoValue = {};
-    if (aCompletion == null) {
+    if (completion == null) {
       protoValue.terminated = true;
-    } else if ("return" in aCompletion) {
-      protoValue.return = createValueGrip(aCompletion.return,
+    } else if ("return" in completion) {
+      protoValue.return = createValueGrip(completion.return,
         this._pausePool, this.objectGrip);
-    } else if ("throw" in aCompletion) {
-      protoValue.throw = createValueGrip(aCompletion.throw,
+    } else if ("throw" in completion) {
+      protoValue.throw = createValueGrip(completion.throw,
         this._pausePool, this.objectGrip);
     } else {
-      protoValue.return = createValueGrip(aCompletion.yield,
+      protoValue.return = createValueGrip(completion.yield,
         this._pausePool, this.objectGrip);
     }
     return protoValue;
@@ -1674,67 +1691,67 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Create a grip for the given debuggee object.
    *
-   * @param aValue Debugger.Object
+   * @param value Debugger.Object
    *        The debuggee object value.
-   * @param aPool ActorPool
+   * @param pool ActorPool
    *        The actor pool where the new object actor will be added.
    */
-  objectGrip: function (aValue, aPool) {
-    if (!aPool.objectActors) {
-      aPool.objectActors = new WeakMap();
+  objectGrip: function (value, pool) {
+    if (!pool.objectActors) {
+      pool.objectActors = new WeakMap();
     }
 
-    if (aPool.objectActors.has(aValue)) {
-      return aPool.objectActors.get(aValue).grip();
-    } else if (this.threadLifetimePool.objectActors.has(aValue)) {
-      return this.threadLifetimePool.objectActors.get(aValue).grip();
+    if (pool.objectActors.has(value)) {
+      return pool.objectActors.get(value).grip();
+    } else if (this.threadLifetimePool.objectActors.has(value)) {
+      return this.threadLifetimePool.objectActors.get(value).grip();
     }
 
-    let actor = new PauseScopedObjectActor(aValue, {
+    let actor = new PauseScopedObjectActor(value, {
       getGripDepth: () => this._gripDepth,
       incrementGripDepth: () => this._gripDepth++,
       decrementGripDepth: () => this._gripDepth--,
       createValueGrip: v => createValueGrip(v, this._pausePool,
         this.pauseObjectGrip),
       sources: () => this.sources,
-      createEnvironmentActor: (env, pool) =>
-        this.createEnvironmentActor(env, pool),
+      createEnvironmentActor: (e, p) =>
+        this.createEnvironmentActor(e, p),
       promote: () => this.threadObjectGrip(actor),
       isThreadLifetimePool: () =>
         actor.registeredPool !== this.threadLifetimePool,
       getGlobalDebugObject: () => this.globalDebugObject
     });
-    aPool.addActor(actor);
-    aPool.objectActors.set(aValue, actor);
+    pool.addActor(actor);
+    pool.objectActors.set(value, actor);
     return actor.grip();
   },
 
   /**
    * Create a grip for the given debuggee object with a pause lifetime.
    *
-   * @param aValue Debugger.Object
+   * @param value Debugger.Object
    *        The debuggee object value.
    */
-  pauseObjectGrip: function (aValue) {
+  pauseObjectGrip: function (value) {
     if (!this._pausePool) {
-      throw "Object grip requested while not paused.";
+      throw new Error("Object grip requested while not paused.");
     }
 
-    return this.objectGrip(aValue, this._pausePool);
+    return this.objectGrip(value, this._pausePool);
   },
 
   /**
    * Extend the lifetime of the provided object actor to thread lifetime.
    *
-   * @param aActor object
+   * @param actor object
    *        The object actor.
    */
-  threadObjectGrip: function (aActor) {
+  threadObjectGrip: function (actor) {
     // We want to reuse the existing actor ID, so we just remove it from the
     // current pool's weak map and then let pool.addActor do the rest.
-    aActor.registeredPool.objectActors.delete(aActor.obj);
-    this.threadLifetimePool.addActor(aActor);
-    this.threadLifetimePool.objectActors.set(aActor.obj, aActor);
+    actor.registeredPool.objectActors.delete(actor.obj);
+    this.threadLifetimePool.addActor(actor);
+    this.threadLifetimePool.objectActors.set(actor.obj, actor);
   },
 
   /**
@@ -1744,17 +1761,17 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * @param aRequest object
    *        The protocol request object.
    */
-  onThreadGrips: function (aRequest) {
+  onThreadGrips: function (request) {
     if (this.state != "paused") {
       return { error: "wrongState" };
     }
 
-    if (!aRequest.actors) {
+    if (!request.actors) {
       return { error: "missingParameter",
                message: "no actors were specified" };
     }
 
-    for (let actorID of aRequest.actors) {
+    for (let actorID of request.actors) {
       let actor = this._pausePool.get(actorID);
       if (actor) {
         this.threadObjectGrip(actor);
@@ -1766,21 +1783,21 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   /**
    * Create a long string grip that is scoped to a pause.
    *
-   * @param aString String
+   * @param string String
    *        The string we are creating a grip for.
    */
-  pauseLongStringGrip: function (aString) {
-    return longStringGrip(aString, this._pausePool);
+  pauseLongStringGrip: function (string) {
+    return longStringGrip(string, this._pausePool);
   },
 
   /**
    * Create a long string grip that is scoped to a thread.
    *
-   * @param aString String
+   * @param string String
    *        The string we are creating a grip for.
    */
-  threadLongStringGrip: function (aString) {
-    return longStringGrip(aString, this._threadLifetimePool);
+  threadLongStringGrip: function (string) {
+    return longStringGrip(string, this._threadLifetimePool);
   },
 
   // JS Debugger API hooks.
@@ -1790,45 +1807,45 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * breakpoint handler, watchpoint handler, or similar function throws some
    * exception.
    *
-   * @param aException exception
+   * @param exception exception
    *        The exception that was thrown in the debugger code.
    */
-  uncaughtExceptionHook: function (aException) {
-    dumpn("Got an exception: " + aException.message + "\n" + aException.stack);
+  uncaughtExceptionHook: function (exception) {
+    dumpn("Got an exception: " + exception.message + "\n" + exception.stack);
   },
 
   /**
    * A function that the engine calls when a debugger statement has been
    * executed in the specified frame.
    *
-   * @param aFrame Debugger.Frame
+   * @param frame Debugger.Frame
    *        The stack frame that contained the debugger statement.
    */
-  onDebuggerStatement: function (aFrame) {
+  onDebuggerStatement: function (frame) {
     // Don't pause if we are currently stepping (in or over) or the frame is
     // black-boxed.
-    const generatedLocation = this.sources.getFrameLocation(aFrame);
-    const { originalSourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
-      generatedLocation));
+    const generatedLocation = this.sources.getFrameLocation(frame);
+    const { originalSourceActor } = this.unsafeSynchronize(
+      this.sources.getOriginalLocation(generatedLocation));
     const url = originalSourceActor ? originalSourceActor.url : null;
 
-    return this.sources.isBlackBoxed(url) || aFrame.onStep
+    return this.sources.isBlackBoxed(url) || frame.onStep
       ? undefined
-      : this._pauseAndRespond(aFrame, { type: "debuggerStatement" });
+      : this._pauseAndRespond(frame, { type: "debuggerStatement" });
   },
 
   /**
    * A function that the engine calls when an exception has been thrown and has
    * propagated to the specified frame.
    *
-   * @param aFrame Debugger.Frame
+   * @param youngestFrame Debugger.Frame
    *        The youngest remaining stack frame.
-   * @param aValue object
+   * @param value object
    *        The exception that was thrown.
    */
-  onExceptionUnwind: function (aFrame, aValue) {
+  onExceptionUnwind: function (youngestFrame, value) {
     let willBeCaught = false;
-    for (let frame = aFrame; frame != null; frame = frame.older) {
+    for (let frame = youngestFrame; frame != null; frame = frame.older) {
       if (frame.script.isInCatchScope(frame.offset)) {
         willBeCaught = true;
         break;
@@ -1842,13 +1859,13 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     // NS_ERROR_NO_INTERFACE exceptions are a special case in browser code,
     // since they're almost always thrown by QueryInterface functions, and
     // handled cleanly by native code.
-    if (aValue == Cr.NS_ERROR_NO_INTERFACE) {
+    if (value == Cr.NS_ERROR_NO_INTERFACE) {
       return undefined;
     }
 
-    const generatedLocation = this.sources.getFrameLocation(aFrame);
-    const { originalSourceActor } = this.unsafeSynchronize(this.sources.getOriginalLocation(
-      generatedLocation));
+    const generatedLocation = this.sources.getFrameLocation(youngestFrame);
+    const { originalSourceActor } = this.unsafeSynchronize(
+      this.sources.getOriginalLocation(generatedLocation));
     const url = originalSourceActor ? originalSourceActor.url : null;
 
     if (this.sources.isBlackBoxed(url)) {
@@ -1856,15 +1873,15 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
     }
 
     try {
-      let packet = this._paused(aFrame);
+      let packet = this._paused(youngestFrame);
       if (!packet) {
         return undefined;
       }
 
       packet.why = { type: "exception",
-                     exception: createValueGrip(aValue, this._pausePool,
+                     exception: createValueGrip(value, this._pausePool,
                                                 this.objectGrip)
-                   };
+      };
       this.conn.send(packet);
 
       this._pushThreadPause();
@@ -1879,13 +1896,13 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    * A function that the engine calls when a new script has been loaded into the
    * scope of the specified debuggee global.
    *
-   * @param aScript Debugger.Script
+   * @param script Debugger.Script
    *        The source script that has been loaded into a debuggee compartment.
-   * @param aGlobal Debugger.Object
+   * @param global Debugger.Object
    *        A Debugger.Object instance whose referent is the global object.
    */
-  onNewScript: function (aScript, aGlobal) {
-    this._addSource(aScript.source);
+  onNewScript: function (script, global) {
+    this._addSource(script.source);
   },
 
   /**
@@ -1920,12 +1937,12 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
    *        The source that will be stored.
    * @returns true, if the source was added; false otherwise.
    */
-  _addSource: function (aSource) {
-    if (!this.sources.allowSource(aSource) || this._debuggerSourcesSeen.has(aSource)) {
+  _addSource: function (source) {
+    if (!this.sources.allowSource(source) || this._debuggerSourcesSeen.has(source)) {
       return false;
     }
 
-    let sourceActor = this.sources.createNonSourceMappedActor(aSource);
+    let sourceActor = this.sources.createNonSourceMappedActor(source);
     let bpActors = [...this.breakpointActorMap.findActors()];
 
     if (this._options.useSourceMaps) {
@@ -1934,7 +1951,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       // Go ahead and establish the source actors for this script, which
       // fetches sourcemaps if available and sends onNewSource
       // notifications.
-      let sourceActorsCreated = this.sources._createSourceMappedActors(aSource);
+      let sourceActorsCreated = this.sources._createSourceMappedActors(source);
 
       if (bpActors.length) {
         // We need to use unsafeSynchronize here because if the page is being reloaded,
@@ -1946,21 +1963,20 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
         this.unsafeSynchronize(sourceActorsCreated);
       }
 
-      for (let _actor of bpActors) {
-        // XXX bug 1142115: We do async work in here, so we need to create a fresh
-        // binding because for/of does not yet do that in SpiderMonkey.
-        let actor = _actor;
-
+      for (const actor of bpActors) {
         if (actor.isPending) {
           promises.push(actor.originalLocation.originalSourceActor._setBreakpoint(actor));
         } else {
-          promises.push(this.sources.getAllGeneratedLocations(actor.originalLocation)
-                                    .then((generatedLocations) => {
-            if (generatedLocations.length > 0 &&
-                generatedLocations[0].generatedSourceActor.actorID === sourceActor.actorID) {
-              sourceActor._setBreakpointAtAllGeneratedLocations(actor, generatedLocations);
-            }
-          }));
+          promises.push(
+            this.sources.getAllGeneratedLocations(actor.originalLocation).then(
+              (generatedLocations) => {
+                if (generatedLocations.length > 0 &&
+                    generatedLocations[0].generatedSourceActor
+                                         .actorID === sourceActor.actorID) {
+                  sourceActor._setBreakpointAtAllGeneratedLocations(
+                    actor, generatedLocations);
+                }
+              }));
         }
       }
 
@@ -1991,17 +2007,16 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
       }
     }
 
-    this._debuggerSourcesSeen.add(aSource);
+    this._debuggerSourcesSeen.add(source);
     return true;
   },
-
 
   /**
    * Get prototypes and properties of multiple objects.
    */
-  onPrototypesAndProperties: function (aRequest) {
+  onPrototypesAndProperties: function (request) {
     let result = {};
-    for (let actorID of aRequest.actors) {
+    for (let actorID of request.actors) {
       // This code assumes that there are no lazily loaded actors returned
       // by this call.
       let actor = this.conn.getActor(actorID);
@@ -2024,7 +2039,7 @@ const ThreadActor = ActorClassWithSpec(threadSpec, {
   }
 });
 
-ThreadActor.prototype.requestTypes = object.merge(ThreadActor.prototype.requestTypes, {
+Object.assign(ThreadActor.prototype.requestTypes, {
   "attach": ThreadActor.prototype.onAttach,
   "detach": ThreadActor.prototype.onDetach,
   "reconfigure": ThreadActor.prototype.onReconfigure,
@@ -2050,15 +2065,13 @@ exports.ThreadActor = ThreadActor;
  * @param ActorPool aPool
  *        The actor pool created for this pause.
  */
-function PauseActor(aPool)
-{
-  this.pool = aPool;
+function PauseActor(pool) {
+  this.pool = pool;
 }
 
 PauseActor.prototype = {
   actorPrefix: "pause"
 };
-
 
 /**
  * A base actor for any actors that should only respond receive messages in the
@@ -2067,24 +2080,22 @@ PauseActor.prototype = {
  * "constructor" property if they want better error messages. You should never
  * instantiate a PauseScopedActor directly, only through subclasses.
  */
-function PauseScopedActor()
-{
+function PauseScopedActor() {
 }
 
 /**
  * A function decorator for creating methods to handle protocol messages that
  * should only be received while in the paused state.
  *
- * @param aMethod Function
+ * @param method Function
  *        The function we are decorating.
  */
-PauseScopedActor.withPaused = function (aMethod) {
+PauseScopedActor.withPaused = function (method) {
   return function () {
     if (this.isPaused()) {
-      return aMethod.apply(this, arguments);
-    } else {
-      return this._wrongState();
+      return method.apply(this, arguments);
     }
+    return this._wrongState();
   };
 };
 
@@ -2150,10 +2161,10 @@ Object.assign(PauseScopedObjectActor.prototype, {
    * Handle a protocol request to promote a pause-lifetime grip to a
    * thread-lifetime grip.
    *
-   * @param aRequest object
+   * @param request object
    *        The protocol request object.
    */
-  onThreadGrip: PauseScopedActor.withPaused(function (aRequest) {
+  onThreadGrip: PauseScopedActor.withPaused(function (request) {
     this.hooks.promote();
     return {};
   }),
@@ -2161,10 +2172,10 @@ Object.assign(PauseScopedObjectActor.prototype, {
   /**
    * Handle a protocol request to release a thread-lifetime grip.
    *
-   * @param aRequest object
+   * @param request object
    *        The protocol request object.
    */
-  onRelease: PauseScopedActor.withPaused(function (aRequest) {
+  onRelease: PauseScopedActor.withPaused(function (request) {
     if (this.hooks.isThreadLifetimePool()) {
       return { error: "notReleasable",
                message: "Only thread-lifetime actors can be released." };
@@ -2187,10 +2198,15 @@ function hackDebugger(Debugger) {
    * for debugging the debugger.
    */
   Debugger.Script.prototype.toString = function () {
+    if (this.type == "wasm") {
+      return "[wasm]";
+    }
+
     let output = "";
     if (this.url) {
       output += this.url;
     }
+
     if (typeof this.staticLevel != "undefined") {
       output += ":L" + this.staticLevel;
     }
@@ -2221,30 +2237,27 @@ function hackDebugger(Debugger) {
     get: function () {
       if (this.script) {
         return this.script.getOffsetLocation(this.offset).lineNumber;
-      } else {
-        return null;
       }
+      return null;
     }
   });
 }
-
 
 /**
  * Creates an actor for handling chrome debugging. ChromeDebuggerActor is a
  * thin wrapper over ThreadActor, slightly changing some of its behavior.
  *
- * @param aConnection object
+ * @param connection object
  *        The DebuggerServerConnection with which this ChromeDebuggerActor
  *        is associated. (Currently unused, but required to make this
  *        constructor usable with addGlobalActor.)
  *
- * @param aParent object
+ * @param parent object
  *        This actor's parent actor. See ThreadActor for a list of expected
  *        properties.
  */
-function ChromeDebuggerActor(aConnection, aParent)
-{
-  ThreadActor.prototype.initialize.call(this, aParent);
+function ChromeDebuggerActor(connection, parent) {
+  ThreadActor.prototype.initialize.call(this, parent);
 }
 
 ChromeDebuggerActor.prototype = Object.create(ThreadActor.prototype);
@@ -2262,17 +2275,17 @@ exports.ChromeDebuggerActor = ChromeDebuggerActor;
  * Creates an actor for handling add-on debugging. AddonThreadActor is
  * a thin wrapper over ThreadActor.
  *
- * @param aConnection object
+ * @param connection object
  *        The DebuggerServerConnection with which this AddonThreadActor
  *        is associated. (Currently unused, but required to make this
  *        constructor usable with addGlobalActor.)
  *
- * @param aParent object
+ * @param parent object
  *        This actor's parent actor. See ThreadActor for a list of expected
  *        properties.
  */
-function AddonThreadActor(aConnect, aParent) {
-  ThreadActor.prototype.initialize.call(this, aParent);
+function AddonThreadActor(connection, parent) {
+  ThreadActor.prototype.initialize.call(this, parent);
 }
 
 AddonThreadActor.prototype = Object.create(ThreadActor.prototype);
@@ -2291,15 +2304,15 @@ exports.AddonThreadActor = AddonThreadActor;
 /**
  * Report the given error in the error console and to stdout.
  *
- * @param Error aError
+ * @param Error error
  *        The error object you wish to report.
- * @param String aPrefix
+ * @param String prefix
  *        An optional prefix for the reported error message.
  */
 var oldReportError = reportError;
-reportError = function (aError, aPrefix = "") {
-  assert(aError instanceof Error, "Must pass Error objects to reportError");
-  let msg = aPrefix + aError.message + ":\n" + aError.stack;
+this.reportError = function (error, prefix = "") {
+  assert(error instanceof Error, "Must pass Error objects to reportError");
+  let msg = prefix + error.message + ":\n" + error.stack;
   oldReportError(msg);
   dumpn(msg);
 };
@@ -2351,8 +2364,7 @@ exports.unwrapDebuggerObjectGlobal = wrappedGlobal => {
     let global = wrappedGlobal.unsafeDereference();
     Object.getPrototypeOf(global) + "";
     return global;
-  }
-  catch (e) {
+  } catch (e) {
     return undefined;
   }
 };

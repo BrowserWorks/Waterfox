@@ -9,6 +9,7 @@ var {utils: Cu} = Components;
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
+Cu.import("chrome://marionette/content/assert.js");
 Cu.import("chrome://marionette/content/error.js");
 
 this.EXPORTED_SYMBOLS = [
@@ -20,11 +21,26 @@ this.EXPORTED_SYMBOLS = [
 
 const logger = Log.repository.getLogger("Marionette");
 
-this.MessageOrigin = {
+/**
+ * Messages may originate from either the server or the client.
+ * Because the remote protocol is full duplex, both endpoints may be the
+ * origin of both commands and responses.
+ *
+ * @enum
+ * @see {@link Message}
+ */
+const MessageOrigin = {
+  /** Indicates that the message originates from the client. */
   Client: 0,
+  /** Indicates that the message originates from the server. */
   Server: 1,
 };
 
+/**
+ * Representation of the packets transproted over the wire.
+ *
+ * @class
+ */
 this.Message = {};
 
 /**
@@ -35,8 +51,9 @@ this.Message = {};
  *     message type, message ID, method name or error, and parameters
  *     or result.
  *
- * @return {(Command,Response)}
- *     Based on the message type, a Command or Response instance.
+ * @return {Message}
+ *     Based on the message type, a {@link Command} or {@link Response}
+ *     instance.
  *
  * @throws {TypeError}
  *     If the message type is not recognised.
@@ -67,18 +84,18 @@ Message.fromMsg = function(data) {
  *
  * where
  *
- *   type:
+ *   type (integer)
  *     Must be zero (integer). Zero means that this message is a command.
  *
- *   id:
- *     Number used as a sequence number.  The server replies with a
- *     requested id.
+ *   id (integer)
+ *     Integer used as a sequence number.  The server replies with the
+ *     same ID for the response.
  *
- *   name:
+ *   name (string)
  *     String representing the command name with an associated set of
  *     remote end steps.
  *
- *   params:
+ *   params (JSON Object or null)
  *     Object of command function arguments.  The keys of this object
  *     must be strings, but the values can be arbitrary values.
  *
@@ -94,14 +111,14 @@ Message.fromMsg = function(data) {
  *     Message ID unique identifying this message.
  * @param {string} name
  *     Command name.
- * @param {Object<string, ?>} params
+ * @param {Object.<string, ?>} params
  *     Command parameters.
  */
-this.Command = class {
-  constructor(msgId, name, params={}) {
-    this.id = msgId;
-    this.name = name;
-    this.parameters = params;
+class Command {
+  constructor(msgID, name, params = {}) {
+    this.id = assert.integer(msgID);
+    this.name = assert.string(name);
+    this.parameters = assert.object(params);
 
     this.onerror = null;
     this.onresult = null;
@@ -119,9 +136,9 @@ this.Command = class {
    *     {@code onerror} or {@code onresult} handlers to.
    */
   onresponse(resp) {
-    if (resp.error && this.onerror) {
+    if (this.onerror && resp.error) {
       this.onerror(resp.error);
-    } else if (resp.body && this.onresult) {
+    } else if (this.onresult && resp.body) {
       this.onresult(resp.body);
     }
   }
@@ -133,16 +150,23 @@ this.Command = class {
   toString() {
     return "Command {id: " + this.id + ", " +
         "name: " + JSON.stringify(this.name) + ", " +
-        "parameters: " + JSON.stringify(this.parameters) + "}"
+        "parameters: " + JSON.stringify(this.parameters) + "}";
   }
 
   static fromMsg(msg) {
-    return new Command(msg[1], msg[2], msg[3]);
+    let [type, msgID, name, params] = msg;
+    assert.that(n => n === Command.TYPE)(type);
+
+    // if parameters are given but null, treat them as undefined
+    if (params === null) {
+      params = undefined;
+    }
+
+    return new Command(msgID, name, params);
   }
-};
+}
 
 Command.TYPE = 0;
-
 
 const validator = {
   exclusionary: {
@@ -152,7 +176,7 @@ const validator = {
     "value": ["error", "sessionId", "capabilities"],
   },
 
-  set: function(obj, prop, val) {
+  set(obj, prop, val) {
     let tests = this.exclusionary[prop];
     if (tests) {
       for (let t of tests) {
@@ -179,7 +203,14 @@ const validator = {
  * {@code value}, {@code sessionId}, or {@code capabilities} have been
  * set previously will cause an error.
  */
-this.ResponseBody = () => new Proxy({}, validator);
+const ResponseBody = () => new Proxy({}, validator);
+
+/**
+ * @callback ResponseCallback
+ *
+ * @param {Response} resp
+ *     Response to handle.
+ */
 
 /**
  * Represents the response returned from the remote end after execution
@@ -194,23 +225,22 @@ this.ResponseBody = () => new Proxy({}, validator);
  * has finished executing, and any modifications made subsequent to that
  * will have no effect.
  *
- * @param {number} msgId
+ * @param {number} msgID
  *     Message ID tied to the corresponding command request this is a
  *     response for.
- * @param {function(Response|Message)} respHandler
+ * @param {ResponseHandler} respHandler
  *     Function callback called on sending the response.
  */
-this.Response = class {
-  constructor(msgId, respHandler) {
-    this.id = msgId;
+class Response {
+  constructor(msgID, respHandler = () => {}) {
+    this.id = assert.integer(msgID);
+    this.respHandler_ = assert.callable(respHandler);
 
     this.error = null;
     this.body = ResponseBody();
 
     this.origin = MessageOrigin.Server;
     this.sent = false;
-
-    this.respHandler_ = respHandler;
   }
 
   /**
@@ -254,15 +284,12 @@ this.Response = class {
    *     propagated.
    */
   sendError(err) {
-    let wd = error.isWebDriverError(err);
-    let we = wd ? err : new WebDriverError(err.message);
-
-    this.error = error.toJson(we);
+    this.error = error.wrap(err).toJSON();
     this.body = null;
     this.send();
 
-    // propagate errors that are implementation problems
-    if (!wd) {
+    // propagate errors which are implementation problems
+    if (!error.isWebDriverError(err)) {
       throw err;
     }
   }
@@ -278,11 +305,15 @@ this.Response = class {
   }
 
   static fromMsg(msg) {
-    let resp = new Response(msg[1], null);
-    resp.error = msg[2];
-    resp.body = msg[3];
+    let [type, msgID, err, body] = msg;
+    assert.that(n => n === Response.TYPE)(type);
+
+    let resp = new Response(msgID);
+    resp.error = assert.string(err);
+
+    resp.body = body;
     return resp;
   }
-};
+}
 
 Response.TYPE = 1;

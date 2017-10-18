@@ -14,9 +14,9 @@ nsIThread *gThread = nullptr;
 
 class TestRunnable : public Runnable {
 public:
-  TestRunnable() : ran_(false) {}
+  TestRunnable() : Runnable("TestRunnable"), ran_(false) {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     ran_ = true;
 

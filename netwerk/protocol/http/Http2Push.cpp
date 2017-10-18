@@ -25,16 +25,17 @@ namespace net {
 
 class CallChannelOnPush final : public Runnable {
   public:
-  CallChannelOnPush(nsIHttpChannelInternal *associatedChannel,
-                    const nsACString &pushedURI,
-                    Http2PushedStream *pushStream)
-    : mAssociatedChannel(associatedChannel)
-    , mPushedURI(pushedURI)
-    , mPushedStream(pushStream)
-  {
+    CallChannelOnPush(nsIHttpChannelInternal* associatedChannel,
+                      const nsACString& pushedURI,
+                      Http2PushedStream* pushStream)
+      : Runnable("net::CallChannelOnPush")
+      , mAssociatedChannel(associatedChannel)
+      , mPushedURI(pushedURI)
+      , mPushedStream(pushStream)
+    {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     RefPtr<nsHttpChannel> channel;
@@ -109,21 +110,26 @@ Http2PushedStream::WriteSegments(nsAHttpSegmentWriter *writer,
 bool
 Http2PushedStream::DeferCleanup(nsresult status)
 {
-  LOG3(("Http2PushedStream::DeferCleanup Query %p %x\n", this, status));
+  LOG3(("Http2PushedStream::DeferCleanup Query %p %" PRIx32 "\n", this,
+        static_cast<uint32_t>(status)));
 
   if (NS_SUCCEEDED(status) && mDeferCleanupOnSuccess) {
-    LOG3(("Http2PushedStream::DeferCleanup %p %x defer on success\n", this, status));
+    LOG3(("Http2PushedStream::DeferCleanup %p %" PRIx32 " defer on success\n", this,
+          static_cast<uint32_t>(status)));
     return true;
   }
   if (mDeferCleanupOnPush) {
-    LOG3(("Http2PushedStream::DeferCleanup %p %x defer onPush ref\n", this, status));
+    LOG3(("Http2PushedStream::DeferCleanup %p %" PRIx32 " defer onPush ref\n", this,
+          static_cast<uint32_t>(status)));
     return true;
   }
   if (mConsumerStream) {
-    LOG3(("Http2PushedStream::DeferCleanup %p %x defer active consumer\n", this, status));
+    LOG3(("Http2PushedStream::DeferCleanup %p %" PRIx32 " defer active consumer\n", this,
+          static_cast<uint32_t>(status)));
     return true;
   }
-  LOG3(("Http2PushedStream::DeferCleanup Query %p %x not deferred\n", this, status));
+  LOG3(("Http2PushedStream::DeferCleanup Query %p %" PRIx32 " not deferred\n", this,
+        static_cast<uint32_t>(status)));
   return false;
 }
 
@@ -180,12 +186,14 @@ Http2PushedStream::ReadSegments(nsAHttpSegmentReader *reader,
   nsresult rv = NS_OK;
   *count = 0;
 
+  mozilla::OriginAttributes originAttributes;
   switch (mUpstreamState) {
   case GENERATING_HEADERS:
     // The request headers for this has been processed, so we need to verify
     // that :authority, :scheme, and :path MUST be present. :method MUST NOT be
     // present
-    CreatePushHashKey(mHeaderScheme, mHeaderHost,
+    mSocketTransport->GetOriginAttributes(&originAttributes);
+    CreatePushHashKey(mHeaderScheme, mHeaderHost, originAttributes,
                       mSession->Serial(), mHeaderPath,
                       mOrigin, mHashKey);
 
@@ -420,7 +428,7 @@ Http2PushTransactionBuffer::WriteSegments(nsAHttpSegmentWriter *writer,
 
     if (consumer) {
       LOG3(("Http2PushTransactionBuffer::WriteSegments notifying connection "
-            "consumer data available 0x%X [%u] done=%d\n",
+            "consumer data available 0x%X [%" PRIu64 "] done=%d\n",
             mPushStream->StreamID(), Available(), mIsDone));
       mPushStream->ConnectPushedStream(consumer);
     }
@@ -460,30 +468,6 @@ Http2PushTransactionBuffer::Close(nsresult reason)
 {
   mStatus = reason;
   mIsDone = true;
-}
-
-nsresult
-Http2PushTransactionBuffer::AddTransaction(nsAHttpTransaction *trans)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-uint32_t
-Http2PushTransactionBuffer::PipelineDepth()
-{
-  return 0;
-}
-
-nsresult
-Http2PushTransactionBuffer::SetPipelinePosition(int32_t position)
-{
-  return NS_OK;
-}
-
-int32_t
-Http2PushTransactionBuffer::PipelinePosition()
-{
-  return 1;
 }
 
 nsresult

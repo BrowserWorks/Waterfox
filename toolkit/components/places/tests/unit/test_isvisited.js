@@ -4,36 +4,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_execute()
-{
+add_task(async function test_execute() {
   var referrer = uri("about:blank");
 
   // add a http:// uri
   var uri1 = uri("http://mozilla.com");
-  yield PlacesTestUtils.addVisits({uri: uri1, referrer: referrer});
+  await PlacesTestUtils.addVisits({uri: uri1, referrer});
   do_check_guid_for_uri(uri1);
-  do_check_true(yield promiseIsURIVisited(uri1));
+  do_check_true(await promiseIsURIVisited(uri1));
 
   // add a https:// uri
   var uri2 = uri("https://etrade.com");
-  yield PlacesTestUtils.addVisits({uri: uri2, referrer: referrer});
+  await PlacesTestUtils.addVisits({uri: uri2, referrer});
   do_check_guid_for_uri(uri2);
-  do_check_true(yield promiseIsURIVisited(uri2));
+  do_check_true(await promiseIsURIVisited(uri2));
 
   // add a ftp:// uri
   var uri3 = uri("ftp://ftp.mozilla.org");
-  yield PlacesTestUtils.addVisits({uri: uri3, referrer: referrer});
+  await PlacesTestUtils.addVisits({uri: uri3, referrer});
   do_check_guid_for_uri(uri3);
-  do_check_true(yield promiseIsURIVisited(uri3));
+  do_check_true(await promiseIsURIVisited(uri3));
 
   // check if a nonexistent uri is visited
   var uri4 = uri("http://foobarcheese.com");
-  do_check_false(yield promiseIsURIVisited(uri4));
+  do_check_false(await promiseIsURIVisited(uri4));
 
   // check that certain schemes never show up as visited
   // even if we attempt to add them to history
@@ -55,24 +49,19 @@ add_task(function* test_execute()
   for (let currentURL of URLS) {
     try {
       var cantAddUri = uri(currentURL);
-    }
-    catch(e) {
+    } catch (e) {
       // nsIIOService.newURI() can throw if e.g. our app knows about imap://
       // but the account is not set up and so the URL is invalid for us.
       // Note this in the log but ignore as it's not the subject of this test.
       do_print("Could not construct URI for '" + currentURL + "'; ignoring");
     }
     if (cantAddUri) {
-      try {
-        yield PlacesTestUtils.addVisits({uri: cantAddUri, referrer: referrer});
-        do_throw("Should have generated an exception.");
-      } catch(ex) {
-        if (ex.result != Cr.NS_ERROR_ILLEGAL_VALUE) {
-          throw ex;
-        }
-      }
-      do_check_false(yield promiseIsURIVisited(cantAddUri));
+      PlacesTestUtils.addVisits({uri: cantAddUri, referrer}).then(() => {
+        do_throw("Should not have added history for invalid URI.");
+      }, error => {
+        do_check_true(error.message.includes("No items were added to history"));
+      });
+      do_check_false(await promiseIsURIVisited(cantAddUri));
     }
   }
 });
-

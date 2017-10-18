@@ -4,21 +4,16 @@
 
 "use strict";
 
-const { Ci, Cc } = require("chrome");
 const Services = require("Services");
 const { DOMHelpers } = require("resource://devtools/client/shared/DOMHelpers.jsm");
 const { Task } = require("devtools/shared/task");
 const defer = require("devtools/shared/defer");
-const { getMostRecentBrowserWindow } = require("sdk/window/utils");
 
 const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const DEV_EDITION_PROMO_URL = "chrome://devtools/content/framework/dev-edition-promo/dev-edition-promo.xul";
 const DEV_EDITION_PROMO_ENABLED_PREF = "devtools.devedition.promo.enabled";
 const DEV_EDITION_PROMO_SHOWN_PREF = "devtools.devedition.promo.shown";
 const DEV_EDITION_PROMO_URL_PREF = "devtools.devedition.promo.url";
-const LOCALE = Cc["@mozilla.org/chrome/chrome-registry;1"]
-               .getService(Ci.nsIXULChromeRegistry)
-               .getSelectedLocale("global");
 
 /**
  * Only show Dev Edition promo if it's enabled (beta channel),
@@ -28,7 +23,7 @@ const LOCALE = Cc["@mozilla.org/chrome/chrome-registry;1"]
 function shouldDevEditionPromoShow() {
   return Services.prefs.getBoolPref(DEV_EDITION_PROMO_ENABLED_PREF) &&
          !Services.prefs.getBoolPref(DEV_EDITION_PROMO_SHOWN_PREF) &&
-         LOCALE === "en-US";
+         Services.locale.getAppLocaleAsLangTag() === "en-US";
 }
 
 var TYPES = {
@@ -154,7 +149,7 @@ function onFrameLoad(frame) {
 }
 
 function getGBrowser() {
-  return getMostRecentBrowserWindow().gBrowser;
+  return Services.wm.getMostRecentWindow("navigator:browser").gBrowser;
 }
 
 function wait(n) {

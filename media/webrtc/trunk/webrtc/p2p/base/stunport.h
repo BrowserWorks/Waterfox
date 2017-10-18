@@ -11,6 +11,7 @@
 #ifndef WEBRTC_P2P_BASE_STUNPORT_H_
 #define WEBRTC_P2P_BASE_STUNPORT_H_
 
+#include <memory>
 #include <string>
 
 #include "webrtc/p2p/base/port.h"
@@ -25,6 +26,11 @@ class SignalThread;
 
 namespace cricket {
 
+// Lifetime chosen for STUN ports on low-cost networks.
+static const int INFINITE_LIFETIME = -1;
+// Lifetime for STUN ports on high-cost networks: 2 minutes
+static const int HIGH_COST_PORT_KEEPALIVE_LIFETIME = 2 * 60 * 1000;
+
 // Communicates using the address on the outside of a NAT.
 class UDPPort : public Port {
  public:
@@ -34,9 +40,10 @@ class UDPPort : public Port {
                          rtc::AsyncPacketSocket* socket,
                          const std::string& username,
                          const std::string& password,
-                         const std::string& origin) {
-    UDPPort* port = new UDPPort(thread, factory, network, socket,
-                                username, password, origin);
+                         const std::string& origin,
+                         bool emit_local_for_anyaddress) {
+    UDPPort* port = new UDPPort(thread, factory, network, socket, username,
+                                password, origin, emit_local_for_anyaddress);
     if (!port->Init()) {
       delete port;
       port = NULL;
@@ -48,14 +55,15 @@ class UDPPort : public Port {
                          rtc::PacketSocketFactory* factory,
                          rtc::Network* network,
                          const rtc::IPAddress& ip,
-                         uint16 min_port,
-                         uint16 max_port,
+                         uint16_t min_port,
+                         uint16_t max_port,
                          const std::string& username,
                          const std::string& password,
-                         const std::string& origin) {
-    UDPPort* port = new UDPPort(thread, factory, network,
-                                ip, min_port, max_port,
-                                username, password, origin);
+                         const std::string& origin,
+                         bool emit_local_for_anyaddress) {
+    UDPPort* port =
+        new UDPPort(thread, factory, network, ip, min_port, max_port, username,
+                    password, origin, emit_local_for_anyaddress);
     if (!port->Init()) {
       delete port;
       port = NULL;
@@ -72,8 +80,7 @@ class UDPPort : public Port {
   const ServerAddresses& server_addresses() const {
     return server_addresses_;
   }
-  void
-  set_server_addresses(const ServerAddresses& addresses) {
+  void set_server_addresses(const ServerAddresses& addresses) {
     server_addresses_ = addresses;
   }
 
@@ -93,6 +100,11 @@ class UDPPort : public Port {
     OnReadPacket(socket, data, size, remote_addr, packet_time);
     return true;
   }
+  virtual bool SupportsProtocol(const std::string& protocol) const {
+    return protocol == UDP_PROTOCOL_NAME;
+  }
+
+  virtual ProtocolType GetProtocol() const { return PROTO_UDP; }
 
   void set_stun_keepalive_delay(int delay) {
     stun_keepalive_delay_ = delay;
@@ -101,16 +113,27 @@ class UDPPort : public Port {
     return stun_keepalive_delay_;
   }
 
+  // Visible for testing.
+  int stun_keepalive_lifetime() const { return stun_keepalive_lifetime_; }
+  void set_stun_keepalive_lifetime(int lifetime) {
+    stun_keepalive_lifetime_ = lifetime;
+  }
+  // Returns true if there is a pending request with type |msg_type|.
+  bool HasPendingRequest(int msg_type) {
+    return requests_.HasRequest(msg_type);
+  }
+
  protected:
   UDPPort(rtc::Thread* thread,
           rtc::PacketSocketFactory* factory,
           rtc::Network* network,
           const rtc::IPAddress& ip,
-          uint16 min_port,
-          uint16 max_port,
+          uint16_t min_port,
+          uint16_t max_port,
           const std::string& username,
           const std::string& password,
-          const std::string& origin);
+          const std::string& origin,
+          bool emit_local_for_anyaddress);
 
   UDPPort(rtc::Thread* thread,
           rtc::PacketSocketFactory* factory,
@@ -118,7 +141,8 @@ class UDPPort : public Port {
           rtc::AsyncPacketSocket* socket,
           const std::string& username,
           const std::string& password,
-          const std::string& origin);
+          const std::string& origin,
+          bool emit_local_for_anyaddress);
 
   bool Init();
 
@@ -127,6 +151,8 @@ class UDPPort : public Port {
                      const rtc::PacketOptions& options,
                      bool payload);
 
+  virtual void UpdateNetworkCost();
+
   void OnLocalAddressReady(rtc::AsyncPacketSocket* socket,
                            const rtc::SocketAddress& address);
   void OnReadPacket(rtc::AsyncPacketSocket* socket,
@@ -134,12 +160,21 @@ class UDPPort : public Port {
                     const rtc::SocketAddress& remote_addr,
                     const rtc::PacketTime& packet_time);
 
+  void OnSentPacket(rtc::AsyncPacketSocket* socket,
+                    const rtc::SentPacket& sent_packet);
+
   void OnReadyToSend(rtc::AsyncPacketSocket* socket);
 
   // This method will send STUN binding request if STUN server address is set.
   void MaybePrepareStunCandidate();
 
   void SendStunBindingRequests();
+
+  // Helper function which will set |addr|'s IP to the default local address if
+  // |addr| is the "any" address and |emit_local_for_anyaddress_| is true. When
+  // returning false, it indicates that the operation has failed and the
+  // address shouldn't be used by any candidate.
+  bool MaybeSetDefaultLocalAddress(rtc::SocketAddress* addr) const;
 
  private:
   // A helper class which can be called repeatedly to resolve multiple
@@ -192,15 +227,29 @@ class UDPPort : public Port {
 
   bool HasCandidateWithAddress(const rtc::SocketAddress& addr) const;
 
+  // If this is a low-cost network, it will keep on sending STUN binding
+  // requests indefinitely to keep the NAT binding alive. Otherwise, stop
+  // sending STUN binding requests after HIGH_COST_PORT_KEEPALIVE_LIFETIME.
+  int GetStunKeepaliveLifetime() {
+    return (network_cost() >= rtc::kNetworkCostHigh)
+               ? HIGH_COST_PORT_KEEPALIVE_LIFETIME
+               : INFINITE_LIFETIME;
+  }
+
   ServerAddresses server_addresses_;
   ServerAddresses bind_request_succeeded_servers_;
   ServerAddresses bind_request_failed_servers_;
   StunRequestManager requests_;
   rtc::AsyncPacketSocket* socket_;
   int error_;
-  rtc::scoped_ptr<AddressResolver> resolver_;
+  std::unique_ptr<AddressResolver> resolver_;
   bool ready_;
   int stun_keepalive_delay_;
+  int stun_keepalive_lifetime_ = INFINITE_LIFETIME;
+
+  // This is true by default and false when
+  // PORTALLOCATOR_DISABLE_DEFAULT_LOCAL_CANDIDATE is specified.
+  bool emit_local_for_anyaddress_;
 
   friend class StunBindingRequest;
 };
@@ -211,7 +260,8 @@ class StunPort : public UDPPort {
                           rtc::PacketSocketFactory* factory,
                           rtc::Network* network,
                           const rtc::IPAddress& ip,
-                          uint16 min_port, uint16 max_port,
+                          uint16_t min_port,
+                          uint16_t max_port,
                           const std::string& username,
                           const std::string& password,
                           const ServerAddresses& servers,
@@ -238,14 +288,22 @@ class StunPort : public UDPPort {
            rtc::PacketSocketFactory* factory,
            rtc::Network* network,
            const rtc::IPAddress& ip,
-           uint16 min_port,
-           uint16 max_port,
+           uint16_t min_port,
+           uint16_t max_port,
            const std::string& username,
            const std::string& password,
            const ServerAddresses& servers,
            const std::string& origin)
-     : UDPPort(thread, factory, network, ip, min_port, max_port, username,
-               password, origin) {
+      : UDPPort(thread,
+                factory,
+                network,
+                ip,
+                min_port,
+                max_port,
+                username,
+                password,
+                origin,
+                false) {
     // UDPPort will set these to local udp, updating these to STUN.
     set_type(STUN_PORT_TYPE);
     set_server_addresses(servers);

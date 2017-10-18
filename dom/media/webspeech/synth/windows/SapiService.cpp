@@ -7,7 +7,6 @@
 #include "nsISupports.h"
 #include "SapiService.h"
 #include "nsServiceManagerUtils.h"
-#include "nsWin32Locale.h"
 #include "GeckoProfiler.h"
 #include "nsEscape.h"
 
@@ -139,17 +138,19 @@ SapiCallback::OnSpeechEvent(const SPEVENT& speechEvent)
   case SPEI_TTS_BOOKMARK:
     mCurrentIndex = static_cast<ULONG>(speechEvent.lParam) - mTextOffset;
     mTask->DispatchBoundary(NS_LITERAL_STRING("mark"),
-                            GetTickCount() - mStartingTime, mCurrentIndex);
+                            GetTickCount() - mStartingTime, mCurrentIndex, 0, 0);
     break;
   case SPEI_WORD_BOUNDARY:
     mCurrentIndex = static_cast<ULONG>(speechEvent.lParam) - mTextOffset;
     mTask->DispatchBoundary(NS_LITERAL_STRING("word"),
-                            GetTickCount() - mStartingTime, mCurrentIndex);
+                            GetTickCount() - mStartingTime, mCurrentIndex,
+                            static_cast<ULONG>(speechEvent.wParam), 1);
     break;
   case SPEI_SENTENCE_BOUNDARY:
     mCurrentIndex = static_cast<ULONG>(speechEvent.lParam) - mTextOffset;
     mTask->DispatchBoundary(NS_LITERAL_STRING("sentence"),
-                            GetTickCount() - mStartingTime, mCurrentIndex);
+                            GetTickCount() - mStartingTime, mCurrentIndex,
+                            static_cast<ULONG>(speechEvent.wParam), 1);
     break;
   default:
     break;
@@ -199,7 +200,7 @@ SapiService::~SapiService()
 bool
 SapiService::Init()
 {
-  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+  AUTO_PROFILER_LABEL("SapiService::Init", OTHER);
 
   MOZ_ASSERT(!mInitialized);
 
@@ -274,6 +275,7 @@ SapiService::RegisterVoices()
     return false;
   }
 
+  WCHAR locale[LOCALE_NAME_MAX_LENGTH];
   while (true) {
     RefPtr<ISpObjectToken> voiceToken;
     if (voiceTokens->Next(1, getter_AddRefs(voiceToken), nullptr) != S_OK) {
@@ -296,8 +298,10 @@ SapiService::RegisterVoices()
     nsAutoString hexLcid;
     LCID lcid = wcstol(language, nullptr, 16);
     CoTaskMemFree(language);
-    nsAutoString locale;
-    nsWin32Locale::GetXPLocale(lcid, locale);
+    if (NS_WARN_IF(!LCIDToLocaleName(lcid, locale,
+                                     LOCALE_NAME_MAX_LENGTH, 0))) {
+      continue;
+    }
 
     WCHAR* description = nullptr;
     if (FAILED(voiceToken->GetStringValue(nullptr, &description))) {
@@ -313,7 +317,8 @@ SapiService::RegisterVoices()
     // This service can only speak one utterance at a time, se we set
     // aQueuesUtterances to true in order to track global state and schedule
     // access to this service.
-    rv = registry->AddVoice(this, uri, nsDependentString(description), locale,
+    rv = registry->AddVoice(this, uri, nsDependentString(description),
+                            nsDependentString(locale),
                             true, true);
     CoTaskMemFree(description);
     if (NS_FAILED(rv)) {

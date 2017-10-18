@@ -9,6 +9,18 @@ Components.utils.import("resource://testing-common/MockRegistrar.jsm");
  * showUpdateError when the app.update.silent preference is true.
  */
 
+const WindowWatcher = {
+  openWindow(aParent, aUrl, aName, aFeatures, aArgs) {
+    gCheckFunc();
+  },
+
+  getNewPrompter(aParent) {
+    gCheckFunc();
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
+};
+
 function run_test() {
   setupTestCommon();
 
@@ -27,10 +39,9 @@ function run_test() {
   standardInit();
 
   debugDump("testing showUpdateAvailable should not call openWindow");
-  writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
-  let patches = getLocalPatchString(null, null, null, null, null, null,
-                                    STATE_FAILED);
-  let updates = getLocalUpdateString(patches);
+  let patchProps = {state: STATE_FAILED};
+  let patches = getLocalPatchString(patchProps);
+  let updates = getLocalUpdateString({}, patches);
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(updates), true);
   writeStatusFile(STATE_FAILED);
   reloadUpdateManagerData();
@@ -62,15 +73,3 @@ function check_showUpdateAvailable() {
 function check_showUpdateError() {
   do_throw("showUpdateError should not have seen getNewPrompter!");
 }
-
-const WindowWatcher = {
-  openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
-    gCheckFunc();
-  },
-
-  getNewPrompter: function(aParent) {
-    gCheckFunc();
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
-};

@@ -9,6 +9,15 @@ if CONFIG['OS_TARGET'] != 'Android':
 
     UNIFIED_SOURCES += [
         'crashreporter.cpp',
+        'ping.cpp',
+    ]
+
+    LOCAL_INCLUDES += [
+        '/toolkit/components/jsoncpp/include',
+    ]
+
+    USE_LIBS += [
+        'jsoncpp',
     ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -19,9 +28,11 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['_UNICODE'] = True
     USE_LIBS += [
         'google_breakpad_libxul_s',
+        'nss',
     ]
     OS_LIBS += [
         'comctl32',
+        'ole32',
         'shell32',
         'wininet',
         'shlwapi',
@@ -38,6 +49,7 @@ elif CONFIG['OS_ARCH'] == 'Darwin':
     USE_LIBS += [
         'breakpad_common_s',
         'breakpad_mac_common_s',
+        'nss',
     ]
 elif CONFIG['OS_ARCH'] == 'SunOS':
     SOURCES += [
@@ -66,6 +78,8 @@ if CONFIG['OS_ARCH'] == 'Linux' or CONFIG['OS_ARCH'] == 'SunOS':
     FINAL_TARGET_FILES += [
         '/toolkit/themes/windows/global/throbber/Throbber-small.gif',
     ]
+
+DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
 RCINCLUDE = 'crashreporter.rc'
 

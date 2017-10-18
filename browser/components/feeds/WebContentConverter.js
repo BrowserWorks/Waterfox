@@ -5,7 +5,8 @@
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -30,7 +31,6 @@ const PREF_SELECTED_WEB = "browser.feeds.handlers.webservice";
 const PREF_SELECTED_ACTION = "browser.feeds.handler";
 const PREF_SELECTED_READER = "browser.feeds.handler.default";
 const PREF_HANDLER_EXTERNAL_PREFIX = "network.protocol-handler.external";
-const PREF_ALLOW_DIFFERENT_HOST = "gecko.handlerService.allowRegisterFromDifferentHost";
 
 const STRING_BUNDLE_URI = "chrome://browser/locale/feeds/subscribe.properties";
 
@@ -156,11 +156,8 @@ const Utils = {
     }
 
     // We also reject handlers registered from a different host (see bug 402287)
-    // The pref allows us to test the feature
-    let pb = Services.prefs;
-    if (!pb.getBoolPref(PREF_ALLOW_DIFFERENT_HOST) &&
-        (!["http:", "https:"].includes(aContentWindow.location.protocol) ||
-         aContentWindow.location.hostname != uri.host)) {
+    if (!["http:", "https:"].includes(aContentWindow.location.protocol) ||
+        aContentWindow.location.hostname != uri.host) {
       throw this.getSecurityError(
         "Permission denied to add " + uri.spec + " as a content or protocol handler",
         aContentWindow);
@@ -187,13 +184,9 @@ const Utils = {
 
     // check if it is in the black list
     let pb = Services.prefs;
-    let allowed;
-    try {
-      allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "." + aProtocol);
-    }
-    catch (e) {
-      allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default");
-    }
+    let allowed =
+      pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "." + aProtocol,
+                     pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default"));
     if (!allowed) {
       throw this.getSecurityError(
         `Not allowed to register a protocol handler for ${aProtocol}`,
@@ -305,11 +298,15 @@ WebContentConverterRegistrar.prototype = {
     if (handler) {
       request.cancel(Cr.NS_ERROR_FAILURE);
 
+      let triggeringPrincipal = channel.loadInfo
+        ? channel.loadInfo.triggeringPrincipal
+        : Services.scriptSecurityManager.getSystemPrincipal();
+
       let webNavigation =
           channel.notificationCallbacks.getInterface(Ci.nsIWebNavigation);
       webNavigation.loadURI(handler.getHandlerURI(channel.URI.spec),
                             Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                            null, null, null);
+                            null, null, null, triggeringPrincipal);
     }
   },
 
@@ -435,18 +432,17 @@ WebContentConverterRegistrar.prototype = {
 
       callback(aNotification, aButtonInfo) {
           let protocol = aButtonInfo.protocolInfo.protocol;
-          let uri      = aButtonInfo.protocolInfo.uri;
           let name     = aButtonInfo.protocolInfo.name;
 
           let handler = Cc["@mozilla.org/uriloader/web-handler-app;1"].
                         createInstance(Ci.nsIWebHandlerApp);
           handler.name = name;
-          handler.uriTemplate = uri;
+          handler.uriTemplate = aButtonInfo.protocolInfo.uri;
 
           let eps = Cc["@mozilla.org/uriloader/external-protocol-service;1"].
                     getService(Ci.nsIExternalProtocolService);
           let handlerInfo = eps.getProtocolHandlerInfo(protocol);
-          handlerInfo.possibleApplicationHandlers.appendElement(handler, false);
+          handlerInfo.possibleApplicationHandlers.appendElement(handler);
 
           // Since the user has agreed to add a new handler, chances are good
           // that the next time they see a handler of this type, they're going
@@ -507,8 +503,7 @@ WebContentConverterRegistrar.prototype = {
       }
 
       this._appendFeedReaderNotification(uri, aTitle, notificationBox);
-    }
-    else {
+    } else {
       this._registerContentHandler(contentType, aURIString, aTitle);
     }
   },
@@ -639,8 +634,7 @@ WebContentConverterRegistrar.prototype = {
       try {
         typeBranch.getCharPref("type");
         ++i;
-      }
-      catch (e) {
+      } catch (e) {
         // No more handlers
         break;
       }
@@ -707,12 +701,7 @@ WebContentConverterRegistrar.prototype = {
       let pb = Services.prefs.getBranch(null);
       pb.setCharPref(PREF_SELECTED_READER, "web");
 
-      let supportsString =
-        Cc["@mozilla.org/supports-string;1"].
-        createInstance(Ci.nsISupportsString);
-        supportsString.data = uri;
-      pb.setComplexValue(PREF_SELECTED_WEB, Ci.nsISupportsString,
-                         supportsString);
+      pb.setStringPref(PREF_SELECTED_WEB, uri);
       pb.setCharPref(PREF_SELECTED_ACTION, "ask");
       this._setAutoHandler(TYPE_MAYBE_FEED, null);
     }
@@ -834,7 +823,7 @@ WebContentConverterRegistrar.prototype = {
       autoBranch = ps.getBranch(PREF_CONTENTHANDLERS_AUTO);
     } catch (e) {
       // No auto branch yet, that's fine
-      //LOG("WCCR.init: There is no auto branch, benign");
+      // LOG("WCCR.init: There is no auto branch, benign");
     }
 
     if (autoBranch) {
@@ -857,7 +846,7 @@ WebContentConverterRegistrar.prototype = {
     let os = Services.obs;
     switch (topic) {
     case "app-startup":
-      os.addObserver(this, "browser-ui-startup-complete", false);
+      os.addObserver(this, "browser-ui-startup-complete");
       break;
     case "browser-ui-startup-complete":
       os.removeObserver(this, "browser-ui-startup-complete");
@@ -916,11 +905,11 @@ WebContentConverterRegistrarContent.prototype = {
       .sort();
 
     // now register them
-    for (num of nums) {
+    for (let num of nums) {
       let branch = ps.getBranch(PREF_CONTENTHANDLERS_BRANCH + num + ".");
       try {
         this._registerContentHandlerHavingBranch(branch);
-      } catch(ex) {
+      } catch (ex) {
         // do nothing, the next branch might have values
       }
     }

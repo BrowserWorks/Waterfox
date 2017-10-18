@@ -5,29 +5,26 @@
 
 /* global BrowserLoader */
 
-var { utils: Cu } = Components;
-
 // Initialize module loader and load all modules of the new inline
 // preview feature. The entire code-base doesn't need any extra
 // privileges and runs entirely in content scope.
 const rootUrl = "resource://devtools/client/webconsole/net/";
 const require = BrowserLoader({
   baseURI: rootUrl,
-  window: this}).require;
+  window}).require;
 
 const NetRequest = require("./net-request");
-const { loadSheet } = require("sdk/stylesheet/utils");
+const { loadSheet } = require("devtools/shared/layout/utils");
 
 // Localization
-const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-var networkStrings = Services.strings.createBundle(
-  "chrome://devtools/locale/netmonitor.properties");
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/client/locales/netmonitor.properties");
 
 // Stylesheets
 var styleSheets = [
   "resource://devtools/client/jsonview/css/toolbar.css",
   "resource://devtools/client/shared/components/tree/tree-view.css",
-  "resource://devtools/client/shared/components/reps/reps.css",
+  "resource://devtools/client/shared/components/reps.css",
   "resource://devtools/client/webconsole/net/net-request.css",
   "resource://devtools/client/webconsole/net/components/size-limit.css",
   "resource://devtools/client/webconsole/net/components/net-info-body.css",
@@ -55,10 +52,11 @@ styleSheets.forEach(url => {
 this.Locale = {
   $STR: key => {
     try {
-      return networkStrings.GetStringFromName(key);
+      return L10N.getStr(key);
     } catch (err) {
       console.error(key + ": " + err);
     }
+    return key;
   }
 };
 
@@ -89,8 +87,6 @@ function onNetworkEvent(log) {
   if (log.update) {
     netRequest.updateBody(response);
   }
-
-  return;
 }
 
 // Make the 'onNetworkEvent' accessible from chrome (see webconsole.js)

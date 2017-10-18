@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define PL_ARENA_CONST_ALIGN_MASK (sizeof(void*)-1)
-#include "plarena.h"
-
 #include "nsAutoPtr.h"
 #include "nsViewManager.h"
 #include "nsGfxCIID.h"
@@ -17,6 +14,7 @@
 #include "nsIPluginWidget.h"
 #include "nsXULPopupManager.h"
 #include "nsIPresShell.h"
+#include "nsIPresShellInlines.h"
 #include "nsPresContext.h"
 #include "mozilla/StartupTimeline.h"
 #include "GeckoProfiler.h"
@@ -40,7 +38,7 @@
    A note about platform assumptions:
 
    We assume that a widget is z-ordered on top of its parent.
-   
+
    We do NOT assume anything about the relative z-ordering of sibling widgets. Even though
    we ask for a specific z-order, we don't assume that widget z-ordering actually works.
 */
@@ -57,20 +55,21 @@ nsTArray<nsViewManager*>* nsViewManager::gViewManagers = nullptr;
 uint32_t nsViewManager::gLastUserEventTime = 0;
 
 nsViewManager::nsViewManager()
-  : mDelayedResize(NSCOORD_NONE, NSCOORD_NONE)
+  : mPresShell(nullptr)
+  , mDelayedResize(NSCOORD_NONE, NSCOORD_NONE)
+  , mRootView(nullptr)
+  , mRootViewManager(this)
+  , mRefreshDisableCount(0)
+  , mPainting(false)
+  , mRecursiveRefreshPending(false)
+  , mHasPendingWidgetGeometryChanges(false)
 {
-  mRootViewManager = this;
   if (gViewManagers == nullptr) {
     // Create an array to hold a list of view managers
     gViewManagers = new nsTArray<nsViewManager*>;
   }
- 
-  gViewManagers->AppendElement(this);
 
-  // NOTE:  we use a zeroing operator new, so all data members are
-  // assumed to be cleared here.
-  mHasPendingWidgetGeometryChanges = false;
-  mRecursiveRefreshPending = false;
+  gViewManagers->AppendElement(this);
 }
 
 nsViewManager::~nsViewManager()
@@ -127,7 +126,7 @@ nsViewManager::CreateView(const nsRect& aBounds,
                           nsView* aParent,
                           nsViewVisibility aVisibilityFlag)
 {
-  nsView *v = new nsView(this, aVisibilityFlag);
+  auto *v = new nsView(this, aVisibilityFlag);
   v->SetParent(aParent);
   v->SetPosition(aBounds.x, aBounds.y);
   nsRect dim(0, 0, aBounds.width, aBounds.height);
@@ -140,7 +139,7 @@ nsViewManager::SetRootView(nsView *aView)
 {
   NS_PRECONDITION(!aView || aView->GetViewManager() == this,
                   "Unexpected viewmanager on root view");
-  
+
   // Do NOT destroy the current root view. It's the caller's responsibility
   // to destroy it
   mRootView = aView;
@@ -228,10 +227,9 @@ nsViewManager::SetWindowDimensions(nscoord aWidth, nscoord aHeight, bool aDelayR
       DoSetWindowDimensions(aWidth, aHeight);
     } else {
       mDelayedResize.SizeTo(aWidth, aHeight);
-      if (mPresShell && mPresShell->GetDocument()) {
-        nsIDocument* doc = mPresShell->GetDocument();
-        doc->SetNeedStyleFlush();
-        doc->SetNeedLayoutFlush();
+      if (mPresShell) {
+        mPresShell->SetNeedStyleFlush();
+        mPresShell->SetNeedLayoutFlush();
       }
     }
   }
@@ -322,7 +320,7 @@ void nsViewManager::Refresh(nsView* aView, const LayoutDeviceIntRegion& aRegion)
 #endif
     return;
   }
-  
+
   nsIWidget *widget = aView->GetWidget();
   if (!widget) {
     return;
@@ -332,7 +330,7 @@ void nsViewManager::Refresh(nsView* aView, const LayoutDeviceIntRegion& aRegion)
   if (IsPainting()) {
     RootViewManager()->mRecursiveRefreshPending = true;
     return;
-  }  
+  }
 
   {
     nsAutoScriptBlocker scriptBlocker;
@@ -382,7 +380,7 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
   }
 
   nsCOMPtr<nsIPresShell> rootShell(mPresShell);
-  nsTArray<nsCOMPtr<nsIWidget> > widgets;
+  AutoTArray<nsCOMPtr<nsIWidget>, 1> widgets;
   aView->GetViewManager()->ProcessPendingUpdatesRecurse(aView, widgets);
   for (uint32_t i = 0; i < widgets.Length(); ++i) {
     nsView* view = nsView::GetViewFor(widgets[i]);
@@ -405,7 +403,6 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
     return; // presentation might have been torn down
   }
   if (aFlushDirtyRegion) {
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_START);
     nsAutoScriptBlocker scriptBlocker;
     SetPainting(true);
     for (uint32_t i = 0; i < widgets.Length(); ++i) {
@@ -416,13 +413,12 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
       }
     }
     SetPainting(false);
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_END);
   }
 }
 
 void
 nsViewManager::ProcessPendingUpdatesRecurse(nsView* aView,
-                                            nsTArray<nsCOMPtr<nsIWidget> >& aWidgets)
+                                            AutoTArray<nsCOMPtr<nsIWidget>, 1>& aWidgets)
 {
   if (mPresShell && mPresShell->IsNeverPainting()) {
     return;
@@ -511,13 +507,6 @@ void nsViewManager::FlushDirtyRegionToWidget(nsView* aView)
   nsRegion r =
     ConvertRegionBetweenViews(*dirtyRegion, aView, nearestViewWithWidget);
 
-  // If we draw the frame counter we need to make sure we invalidate the area
-  // for it to make it on screen
-  if (gfxPrefs::DrawFrameCounter()) {
-    nsRect counterBounds = ToAppUnits(gfxPlatform::FrameCounterBounds(), AppUnitsPerDevPixel());
-    r.OrWith(counterBounds);
-  }
-
   nsViewManager* widgetVM = nearestViewWithWidget->GetViewManager();
   widgetVM->InvalidateWidgetArea(nearestViewWithWidget, r);
   dirtyRegion->SetEmpty();
@@ -603,8 +592,7 @@ nsViewManager::InvalidateWidgetArea(nsView *aWidgetView,
         // plugin widgets are basically invisible
 #ifndef XP_MACOSX
         // GetBounds should compensate for chrome on a toplevel widget
-        LayoutDeviceIntRect bounds;
-        childWidget->GetBounds(bounds);
+        LayoutDeviceIntRect bounds = childWidget->GetBounds();
 
         nsTArray<LayoutDeviceIntRect> clipRects;
         childWidget->GetWindowClipRegion(&clipRects);
@@ -691,7 +679,7 @@ nsViewManager::InvalidateAllViews()
   if (RootViewManager() != this) {
     return RootViewManager()->InvalidateAllViews();
   }
-  
+
   InvalidateViews(mRootView);
 }
 
@@ -733,7 +721,7 @@ void nsViewManager::WillPaintWindow(nsIWidget* aWidget)
 }
 
 bool nsViewManager::PaintWindow(nsIWidget* aWidget,
-                                LayoutDeviceIntRegion aRegion)
+                                const LayoutDeviceIntRegion& aRegion)
 {
   if (!aWidget || !mContext)
     return false;
@@ -764,8 +752,7 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
                              nsView* aView,
                              nsEventStatus* aStatus)
 {
-  PROFILER_LABEL("nsViewManager", "DispatchEvent",
-    js::ProfileEntry::Category::EVENTS);
+  AUTO_PROFILER_LABEL("nsViewManager::DispatchEvent", EVENTS);
 
   WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
   if ((mouseEvent &&
@@ -821,7 +808,7 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
   *aStatus = nsEventStatus_eIgnore;
 }
 
-// Recursively reparent widgets if necessary 
+// Recursively reparent widgets if necessary
 
 void nsViewManager::ReparentChildWidgets(nsView* aView, nsIWidget *aNewWidget)
 {
@@ -837,11 +824,7 @@ void nsViewManager::ReparentChildWidgets(nsView* aView, nsIWidget *aNewWidget)
     if (parentWidget) {
       // Child widget
       if (parentWidget != aNewWidget) {
-#ifdef DEBUG
-        nsresult rv =
-#endif
-          widget->SetParent(aNewWidget);
-        NS_ASSERTION(NS_SUCCEEDED(rv), "SetParent failed!");
+        widget->SetParent(aNewWidget);
       }
     } else {
       // Toplevel widget (popup, dialog, etc)
@@ -864,9 +847,9 @@ void nsViewManager::ReparentWidgets(nsView* aView, nsView *aParent)
 {
   NS_PRECONDITION(aParent, "Must have a parent");
   NS_PRECONDITION(aView, "Must have a view");
-  
+
   // Quickly determine whether the view has pre-existing children or a
-  // widget. In most cases the view will not have any pre-existing 
+  // widget. In most cases the view will not have any pre-existing
   // children when this is called.  Only in the case
   // where a view has been reparented by removing it from
   // a reinserting it into a new location in the view hierarchy do we
@@ -943,15 +926,6 @@ nsViewManager::InsertChild(nsView *aParent, nsView *aChild, nsView *aSibling,
 }
 
 void
-nsViewManager::InsertChild(nsView *aParent, nsView *aChild, int32_t aZIndex)
-{
-  // no-one really calls this with anything other than aZIndex == 0 on a fresh view
-  // XXX this method should simply be eliminated and its callers redirected to the real method
-  SetViewZIndex(aChild, false, aZIndex);
-  InsertChild(aParent, aChild, nullptr, true);
-}
-
-void
 nsViewManager::RemoveChild(nsView *aChild)
 {
   NS_ASSERTION(aChild, "aChild must not be null");
@@ -1011,18 +985,18 @@ bool nsViewManager::IsViewInserted(nsView *aView)
 {
   if (mRootView == aView) {
     return true;
-  } else if (aView->GetParent() == nullptr) {
-    return false;
-  } else {
-    nsView* view = aView->GetParent()->GetFirstChild();
-    while (view != nullptr) {
-      if (view == aView) {
-        return true;
-      }
-      view = view->GetNextSibling();
-    }
+  }
+  if (aView->GetParent() == nullptr) {
     return false;
   }
+  nsView* view = aView->GetParent()->GetFirstChild();
+  while (view != nullptr) {
+    if (view == aView) {
+      return true;
+    }
+    view = view->GetNextSibling();
+  }
+  return false;
 }
 
 void

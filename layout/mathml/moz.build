@@ -12,6 +12,9 @@ if CONFIG['ENABLE_TESTS']:
         'imptests/mochitest.ini',
         'tests/mochitest.ini',
 ]
+    MOCHITEST_CHROME_MANIFESTS += [
+        'tests/chrome.ini',
+]
 
 UNIFIED_SOURCES += [
     'nsMathMLChar.cpp',
@@ -45,6 +48,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../base',
     '../generic',
+    '../painting',
     '../style',
     '../tables',
     '../xul',
@@ -59,11 +63,6 @@ RESOURCE_FILES.fonts += [
     'mathfontSTIXGeneral.properties',
     'mathfontUnicode.properties',
 ]
-
-if CONFIG['OS_TARGET'] == 'WINNT':
-    RESOURCE_FILES.fonts += [
-        'mathfontSymbol.properties',
-    ]
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']

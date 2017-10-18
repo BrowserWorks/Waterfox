@@ -8,32 +8,45 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
+#endif
 
 #include <cmath>
 
 #include "webrtc/modules/audio_processing/beamformer/covariance_matrix_generator.h"
 
+namespace webrtc {
 namespace {
 
 float BesselJ0(float x) {
-#if WEBRTC_WIN
+#ifdef WEBRTC_WIN
   return _j0(x);
 #else
   return j0(x);
 #endif
 }
 
-}  // namespace
+// Calculates the Euclidean norm for a row vector.
+float Norm(const ComplexMatrix<float>& x) {
+  RTC_CHECK_EQ(1, x.num_rows());
+  const size_t length = x.num_columns();
+  const complex<float>* elems = x.elements()[0];
+  float result = 0.f;
+  for (size_t i = 0u; i < length; ++i) {
+    result += std::norm(elems[i]);
+  }
+  return std::sqrt(result);
+}
 
-namespace webrtc {
+}  // namespace
 
 void CovarianceMatrixGenerator::UniformCovarianceMatrix(
     float wave_number,
     const std::vector<Point>& geometry,
     ComplexMatrix<float>* mat) {
-  CHECK_EQ(static_cast<int>(geometry.size()), mat->num_rows());
-  CHECK_EQ(static_cast<int>(geometry.size()), mat->num_columns());
+  RTC_CHECK_EQ(geometry.size(), mat->num_rows());
+  RTC_CHECK_EQ(geometry.size(), mat->num_columns());
 
   complex<float>* const* mat_els = mat->elements();
   for (size_t i = 0; i < geometry.size(); ++i) {
@@ -51,14 +64,14 @@ void CovarianceMatrixGenerator::UniformCovarianceMatrix(
 void CovarianceMatrixGenerator::AngledCovarianceMatrix(
     float sound_speed,
     float angle,
-    int frequency_bin,
-    int fft_size,
-    int num_freq_bins,
+    size_t frequency_bin,
+    size_t fft_size,
+    size_t num_freq_bins,
     int sample_rate,
     const std::vector<Point>& geometry,
     ComplexMatrix<float>* mat) {
-  CHECK_EQ(static_cast<int>(geometry.size()), mat->num_rows());
-  CHECK_EQ(static_cast<int>(geometry.size()), mat->num_columns());
+  RTC_CHECK_EQ(geometry.size(), mat->num_rows());
+  RTC_CHECK_EQ(geometry.size(), mat->num_columns());
 
   ComplexMatrix<float> interf_cov_vector(1, geometry.size());
   ComplexMatrix<float> interf_cov_vector_transposed(geometry.size(), 1);
@@ -69,21 +82,22 @@ void CovarianceMatrixGenerator::AngledCovarianceMatrix(
                       geometry,
                       angle,
                       &interf_cov_vector);
+  interf_cov_vector.Scale(1.f / Norm(interf_cov_vector));
   interf_cov_vector_transposed.Transpose(interf_cov_vector);
   interf_cov_vector.PointwiseConjugate();
   mat->Multiply(interf_cov_vector_transposed, interf_cov_vector);
 }
 
 void CovarianceMatrixGenerator::PhaseAlignmentMasks(
-    int frequency_bin,
-    int fft_size,
+    size_t frequency_bin,
+    size_t fft_size,
     int sample_rate,
     float sound_speed,
     const std::vector<Point>& geometry,
     float angle,
     ComplexMatrix<float>* mat) {
-  CHECK_EQ(1, mat->num_rows());
-  CHECK_EQ(static_cast<int>(geometry.size()), mat->num_columns());
+  RTC_CHECK_EQ(1, mat->num_rows());
+  RTC_CHECK_EQ(geometry.size(), mat->num_columns());
 
   float freq_in_hertz =
       (static_cast<float>(frequency_bin) / fft_size) * sample_rate;

@@ -2,34 +2,13 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-function* openPanel(extension, win = window) {
+function openPanel(extension, win = window, awaitLoad = false) {
   clickBrowserAction(extension, win);
 
-  let {target} = yield BrowserTestUtils.waitForEvent(win.document, "load", true, (event) => {
-    return event.target.location && event.target.location.href.endsWith("popup.html");
-  });
-
-  yield new Promise(resolve => setTimeout(resolve, 0));
-  yield new Promise(resolve => setTimeout(resolve, 100));
-
-  return target.defaultView
-               .QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDocShell)
-               .chromeEventHandler;
+  return awaitExtensionPanel(extension, win, awaitLoad);
 }
 
-function* awaitResize(browser) {
-  // Debouncing code makes this a bit racy.
-  // Try to skip the first, early resize, and catch the resize event we're
-  // looking for, but don't wait longer than a few seconds.
-
-  return Promise.race([
-    BrowserTestUtils.waitForEvent(browser, "WebExtPopupResized")
-      .then(() => BrowserTestUtils.waitForEvent(browser, "WebExtPopupResized")),
-    new Promise(resolve => setTimeout(resolve, 5000)),
-  ]);
-}
-
-add_task(function* testBrowserActionPopupResize() {
+add_task(async function testBrowserActionPopupResize() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "browser_action": {
@@ -39,31 +18,35 @@ add_task(function* testBrowserActionPopupResize() {
     },
 
     files: {
-      "popup.html": '<html><head><meta charset="utf-8"></head></html>',
+      "popup.html": '<!DOCTYPE html><html><head><meta charset="utf-8"></head></html>',
     },
   });
 
-  yield extension.startup();
+  await extension.startup();
 
-  let browser = yield openPanel(extension);
-  let panelWindow = browser.contentWindow;
-  let panelBody = panelWindow.document.body;
+  let browser = await openPanel(extension, undefined, true);
 
-  function checkSize(expected) {
-    is(panelWindow.innerHeight, expected, `Panel window should be ${expected}px tall`);
-    is(panelBody.clientHeight, panelBody.scrollHeight,
+  async function checkSize(expected) {
+    let dims = await promiseContentDimensions(browser);
+
+    Assert.lessOrEqual(Math.abs(dims.window.innerHeight - expected), 1,
+                       `Panel window should be ${expected}px tall (was ${dims.window.innerHeight})`);
+    is(dims.body.clientHeight, dims.body.scrollHeight,
       "Panel body should be tall enough to fit its contents");
 
     // Tolerate if it is 1px too wide, as that may happen with the current resizing method.
-    ok(Math.abs(panelWindow.innerWidth - expected) <= 1, `Panel window should be ${expected}px wide`);
-    is(panelBody.clientWidth, panelBody.scrollWidth,
+    Assert.lessOrEqual(Math.abs(dims.window.innerWidth - expected), 1,
+                       `Panel window should be ${expected}px wide`);
+    is(dims.body.clientWidth, dims.body.scrollWidth,
       "Panel body should be wide enough to fit its contents");
   }
 
+  /* eslint-disable mozilla/no-cpows-in-tests */
   function setSize(size) {
-    panelBody.style.height = `${size}px`;
-    panelBody.style.width = `${size}px`;
+    content.document.body.style.height = `${size}px`;
+    content.document.body.style.width = `${size}px`;
   }
+  /* eslint-enable mozilla/no-cpows-in-tests */
 
   let sizes = [
     200,
@@ -72,17 +55,20 @@ add_task(function* testBrowserActionPopupResize() {
   ];
 
   for (let size of sizes) {
-    setSize(size);
-    yield awaitResize(browser);
-    checkSize(size);
+    await alterContent(browser, setSize, size);
+    await checkSize(size);
   }
 
-  yield closeBrowserAction(extension);
-  yield extension.unload();
+  await closeBrowserAction(extension);
+  await extension.unload();
 });
 
-function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
+async function testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
   let docType = standardsMode ? "<!DOCTYPE html>" : "";
+  let overflowView = browserWin.document.getElementById("widget-overflow-mainView");
+  if (overflowView) {
+    overflowView.style.minHeight = "600px";
+  }
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -127,29 +113,34 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
     },
   });
 
-  yield extension.startup();
+  await extension.startup();
+
+  /* eslint-disable mozilla/no-cpows-in-tests */
 
   if (arrowSide == "top") {
     // Test the standalone panel for a toolbar button.
-    let browser = yield openPanel(extension, browserWin);
-    let win = browser.contentWindow;
-    let body = win.document.body;
+    let browser = await openPanel(extension, browserWin, true);
 
-    let isStandards = win.document.compatMode != "BackCompat";
-    is(isStandards, standardsMode, "Document has the expected compat mode");
+    let dims = await promiseContentDimensions(browser);
 
-    let {innerWidth, innerHeight} = win;
+    is(dims.isStandards, standardsMode, "Document has the expected compat mode");
 
-    body.classList.add("bigger");
-    yield awaitResize(browser);
+    let {innerWidth, innerHeight} = dims.window;
 
+    dims = await alterContent(browser, () => {
+      content.document.body.classList.add("bigger");
+    });
+
+    let win = dims.window;
     is(win.innerHeight, innerHeight, "Window height should not change");
     ok(win.innerWidth > innerWidth, `Window width should increase (${win.innerWidth} > ${innerWidth})`);
 
 
-    body.classList.remove("bigger");
-    yield awaitResize(browser);
+    dims = await alterContent(browser, () => {
+      content.document.body.classList.remove("bigger");
+    });
 
+    win = dims.window;
     is(win.innerHeight, innerHeight, "Window height should not change");
 
     // The getContentSize calculation is not always reliable to single-pixel
@@ -157,19 +148,17 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
     ok(Math.abs(win.innerWidth - innerWidth) <= 1,
        `Window width should return to approximately its original value (${win.innerWidth} ~= ${innerWidth})`);
 
-    yield closeBrowserAction(extension, browserWin);
+    await closeBrowserAction(extension, browserWin);
   }
 
 
   // Test the PanelUI panel for a menu panel button.
   let widget = getBrowserActionWidget(extension);
-  CustomizableUI.addWidgetToArea(widget.id, CustomizableUI.AREA_PANEL);
+  CustomizableUI.addWidgetToArea(widget.id, getCustomizableUIPanelID());
 
-  let browser = yield openPanel(extension, browserWin);
-  let win = browser.contentWindow;
-  let body = win.document.body;
+  let browser = await openPanel(extension, browserWin);
 
-  let {panel} = browserWin.PanelUI;
+  let panel = gPhotonStructure ? browserWin.PanelUI.overflowPanel : browserWin.PanelUI.panel;
   let origPanelRect = panel.getBoundingClientRect();
 
   // Check that the panel is still positioned as expected.
@@ -181,9 +170,9 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
       ok(panelRect.top, origPanelRect.top, "Panel has not moved downwards");
       ok(panelRect.bottom >= origPanelRect.bottom, `Panel has not shrunk from original size (${panelRect.bottom} >= ${origPanelRect.bottom})`);
 
-      let screenBottom = browserWin.screen.availTop + win.screen.availHeight;
+      let screenBottom = browserWin.screen.availTop + browserWin.screen.availHeight;
       let panelBottom = browserWin.mozInnerScreenY + panelRect.bottom;
-      ok(panelBottom <= screenBottom, `Bottom of popup should be on-screen. (${panelBottom} <= ${screenBottom})`);
+      ok(Math.round(panelBottom) <= screenBottom, `Bottom of popup should be on-screen. (${panelBottom} <= ${screenBottom})`);
     } else {
       ok(panelRect.bottom, origPanelRect.bottom, "Panel has not moved upwards");
       ok(panelRect.top <= origPanelRect.top, `Panel has not shrunk from original size (${panelRect.top} <= ${origPanelRect.top})`);
@@ -193,13 +182,21 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
     }
   };
 
+  await awaitBrowserLoaded(browser);
 
-  let isStandards = win.document.compatMode != "BackCompat";
-  is(isStandards, standardsMode, "Document has the expected compat mode");
-
+  let panelview = browser.closest("panelview");
+  // Need to wait first for the forced panel width and for the panelview's border to be gone,
+  // then for layout to happen again. Otherwise the removal of the border between views in the
+  // panelmultiview trips up our width checking causing it to be off-by-one.
+  await BrowserTestUtils.waitForCondition(() => (!panel.hasAttribute("width") && (!panelview || !panelview.style.borderInlineStart)));
+  await promiseAnimationFrame(browserWin);
   // Wait long enough to make sure the initial resize debouncing timer has
   // expired.
-  yield new Promise(resolve => setTimeout(resolve, 100));
+  await delay(100);
+
+  let dims = await promiseContentDimensions(browser);
+
+  is(dims.isStandards, standardsMode, "Document has the expected compat mode");
 
   // If the browser's preferred height is smaller than the initial height of the
   // panel, then it will still take up the full available vertical space. Even
@@ -207,42 +204,49 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
   // correct, so check that explicitly.
   let getHeight = () => parseFloat(browser.style.height);
 
-  let {innerWidth, innerHeight} = win;
+  let {innerWidth, innerHeight} = dims.window;
   let height = getHeight();
 
 
+  let setClass = className => {
+    content.document.body.className = className;
+  };
+
   info("Increase body children's width. " +
        "Expect them to wrap, and the frame to grow vertically rather than widen.");
-  body.className = "big";
-  yield awaitResize(browser);
+
+  dims = await alterContent(browser, setClass, "big");
+  let win = dims.window;
 
   ok(getHeight() > height, `Browser height should increase (${getHeight()} > ${height})`);
 
   is(win.innerWidth, innerWidth, "Window width should not change");
   ok(win.innerHeight >= innerHeight, `Window height should increase (${win.innerHeight} >= ${innerHeight})`);
-  is(win.scrollMaxY, 0, "Document should not be vertically scrollable");
+  Assert.lessOrEqual(win.scrollMaxY, 1, "Document should not be vertically scrollable");
 
   checkPanelPosition();
 
 
   info("Increase body children's width and height. " +
        "Expect them to wrap, and the frame to grow vertically rather than widen.");
-  body.className = "bigger";
-  yield awaitResize(browser);
+
+  dims = await alterContent(browser, setClass, "bigger");
+  win = dims.window;
 
   ok(getHeight() > height, `Browser height should increase (${getHeight()} > ${height})`);
 
   is(win.innerWidth, innerWidth, "Window width should not change");
   ok(win.innerHeight >= innerHeight, `Window height should increase (${win.innerHeight} >= ${innerHeight})`);
-  is(win.scrollMaxY, 0, "Document should not be vertically scrollable");
+  Assert.lessOrEqual(win.scrollMaxY, 1, "Document should not be vertically scrollable");
 
   checkPanelPosition();
 
 
   info("Increase body height beyond the height of the screen. " +
        "Expect the panel to grow to accommodate, but not larger than the height of the screen.");
-  body.className = "huge";
-  yield awaitResize(browser);
+
+  dims = await alterContent(browser, setClass, "huge");
+  win = dims.window;
 
   ok(getHeight() > height, `Browser height should increase (${getHeight()} > ${height})`);
 
@@ -255,41 +259,44 @@ function* testPopupSize(standardsMode, browserWin = window, arrowSide = "top") {
 
 
   info("Restore original styling. Expect original dimensions.");
-  body.className = "";
-  yield awaitResize(browser);
+  dims = await alterContent(browser, setClass, "");
+  win = dims.window;
 
   is(getHeight(), height, "Browser height should return to its original value");
 
   is(win.innerWidth, innerWidth, "Window width should not change");
   is(win.innerHeight, innerHeight, "Window height should return to its original value");
-  is(win.scrollMaxY, 0, "Document should not be vertically scrollable");
+  Assert.lessOrEqual(win.scrollMaxY, 1, "Document should not be vertically scrollable");
 
   checkPanelPosition();
 
-  yield closeBrowserAction(extension, browserWin);
+  await closeBrowserAction(extension, browserWin);
 
-  yield extension.unload();
+  if (overflowView) {
+    overflowView.style.removeProperty("min-height");
+  }
+  await extension.unload();
 }
 
-add_task(function* testBrowserActionMenuResizeStandards() {
-  yield testPopupSize(true);
+add_task(async function testBrowserActionMenuResizeStandards() {
+  await testPopupSize(true);
 });
 
-add_task(function* testBrowserActionMenuResizeQuirks() {
-  yield testPopupSize(false);
+add_task(async function testBrowserActionMenuResizeQuirks() {
+  await testPopupSize(false);
 });
 
 // Test that we still make reasonable maximum size calculations when the window
 // is close enough to the bottom of the screen that the menu panel opens above,
 // rather than below, its button.
-add_task(function* testBrowserActionMenuResizeBottomArrow() {
+add_task(async function testBrowserActionMenuResizeBottomArrow() {
   const WIDTH = 800;
-  const HEIGHT = 300;
+  const HEIGHT = 80;
 
   let left = screen.availLeft + screen.availWidth - WIDTH;
   let top = screen.availTop + screen.availHeight - HEIGHT;
 
-  let win = yield BrowserTestUtils.openNewBrowserWindow();
+  let win = await BrowserTestUtils.openNewBrowserWindow();
 
   win.resizeTo(WIDTH, HEIGHT);
 
@@ -303,10 +310,12 @@ add_task(function* testBrowserActionMenuResizeBottomArrow() {
       break;
     }
 
-    yield new Promise(resolve => setTimeout(resolve, 100));
+    await delay(100);
   }
 
-  yield testPopupSize(true, win, "bottom");
+  await SimpleTest.promiseFocus(win);
 
-  yield BrowserTestUtils.closeWindow(win);
+  await testPopupSize(true, win, "bottom");
+
+  await BrowserTestUtils.closeWindow(win);
 });

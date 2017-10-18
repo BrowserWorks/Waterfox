@@ -12,11 +12,11 @@
 class nsButtonBoxFrame : public nsBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsButtonBoxFrame)
 
   friend nsIFrame* NS_NewButtonBoxFrame(nsIPresShell* aPresShell);
 
-  explicit nsButtonBoxFrame(nsStyleContext* aContext);
+  explicit nsButtonBoxFrame(nsStyleContext* aContext, ClassID = kClassID);
 
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -28,7 +28,7 @@ public:
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
-  virtual nsresult HandleEvent(nsPresContext* aPresContext, 
+  virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
 
@@ -44,7 +44,7 @@ public:
 #endif
 
   /**
-   * Our implementation of MouseClicked. 
+   * Our implementation of MouseClicked.
    * @param aTrustEvent if true and aEvent as null, then assume the event was trusted
    */
   void DoMouseClick(mozilla::WidgetGUIEvent* aEvent, bool aTrustEvent);

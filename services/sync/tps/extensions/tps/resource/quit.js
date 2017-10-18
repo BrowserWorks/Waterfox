@@ -15,14 +15,13 @@ function canQuitApplication() {
   try {
     var cancelQuit = Components.classes["@mozilla.org/supports-PRBool;1"]
                      .createInstance(Components.interfaces.nsISupportsPRBool);
-    Services.obs.notifyObservers(cancelQuit, "quit-application-requested", null);
+    Services.obs.notifyObservers(cancelQuit, "quit-application-requested");
 
     // Something aborted the quit process.
     if (cancelQuit.data) {
       return false;
     }
-  }
-  catch (ex) {}
+  } catch (ex) {}
 
   return true;
 }
@@ -32,30 +31,27 @@ function goQuitApplication() {
     return false;
   }
 
-  const kAppStartup = '@mozilla.org/toolkit/app-startup;1';
-  const kAppShell   = '@mozilla.org/appshell/appShellService;1';
-  var   appService;
-  var   forceQuit;
+  const kAppStartup = "@mozilla.org/toolkit/app-startup;1";
+  const kAppShell   = "@mozilla.org/appshell/appShellService;1";
+  var appService;
+  var forceQuit;
 
   if (kAppStartup in Components.classes) {
     appService = Components.classes[kAppStartup]
                  .getService(Components.interfaces.nsIAppStartup);
     forceQuit  = Components.interfaces.nsIAppStartup.eForceQuit;
-  }
-  else if (kAppShell in Components.classes) {
+  } else if (kAppShell in Components.classes) {
     appService = Components.classes[kAppShell].
       getService(Components.interfaces.nsIAppShellService);
     forceQuit = Components.interfaces.nsIAppShellService.eForceQuit;
-  }
-  else {
-    throw new Error('goQuitApplication: no AppStartup/appShell');
+  } else {
+    throw new Error("goQuitApplication: no AppStartup/appShell");
   }
 
   try {
     appService.quit(forceQuit);
-  }
-  catch(ex) {
-    throw new Error('goQuitApplication: ' + ex);
+  } catch (ex) {
+    throw new Error(`goQuitApplication: ${ex.message}`);
   }
 
   return true;

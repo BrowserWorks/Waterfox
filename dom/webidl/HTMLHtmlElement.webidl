@@ -13,10 +13,11 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-html-element
+[HTMLConstructor]
 interface HTMLHtmlElement : HTMLElement {};
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLHtmlElement {
-           [SetterThrows, Pure]
+           [CEReactions, SetterThrows, Pure]
            attribute DOMString version;
 };

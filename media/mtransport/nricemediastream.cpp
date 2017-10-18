@@ -91,7 +91,11 @@ static bool ToNrIceAddr(nr_transport_addr &addr,
 
   switch (addr.protocol) {
     case IPPROTO_TCP:
-      out->transport = kNrIceTransportTcp;
+      if (addr.tls_host[0] != '\0') {
+        out->transport = kNrIceTransportTls;
+      } else {
+        out->transport = kNrIceTransportTcp;
+      }
       break;
     case IPPROTO_UDP:
       out->transport = kNrIceTransportUdp;
@@ -224,8 +228,8 @@ nsresult NrIceMediaStream::ParseAttributes(std::vector<std::string>&
 
   std::vector<char *> attributes_in;
 
-  for (size_t i=0; i<attributes.size(); ++i) {
-    attributes_in.push_back(const_cast<char *>(attributes[i].c_str()));
+  for (auto& attribute : attributes) {
+    attributes_in.push_back(const_cast<char *>(attribute.c_str()));
   }
 
   // Still need to call nr_ice_ctx_parse_stream_attributes.
@@ -398,9 +402,22 @@ nsresult NrIceMediaStream::GetCandidatePairs(std::vector<NrIceCandidatePair>*
 
     pair.priority = p1->priority;
     pair.nominated = p1->peer_nominated || p1->nominated;
+    // As discussed with drno: a component's can_send field (set to true
+    // by ICE consent) is a very close approximation for writable and
+    // readable. Note: the component for the local candidate never has
+    // the can_send member set to true, remote for both readable and
+    // writable. (mjf)
+    pair.writable = p1->remote->component->can_send;
+    pair.readable = p1->remote->component->can_send;
     pair.selected = p1->remote->component &&
                     p1->remote->component->active == p1;
     pair.codeword = p1->codeword;
+    pair.bytes_sent = p1->bytes_sent;
+    pair.bytes_recvd = p1->bytes_recvd;
+    pair.ms_since_last_send = p1->last_sent.tv_sec*1000
+                              + p1->last_sent.tv_usec/1000;
+    pair.ms_since_last_recv = p1->last_recvd.tv_sec*1000
+                              + p1->last_recvd.tv_usec/1000;
 
     if (!ToNrIceCandidate(*(p1->local), &pair.local) ||
         !ToNrIceCandidate(*(p1->remote), &pair.remote)) {
@@ -436,7 +453,7 @@ nsresult NrIceMediaStream::GetDefaultCandidate(
 }
 
 std::vector<std::string> NrIceMediaStream::GetCandidates() const {
-  char **attrs = 0;
+  char **attrs = nullptr;
   int attrct;
   int r;
   std::vector<std::string> ret;

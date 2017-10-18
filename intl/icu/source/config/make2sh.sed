@@ -1,7 +1,10 @@
+# Copyright (C) 2016 and later: Unicode, Inc. and others.
+# License & terms of use: http://www.unicode.org/copyright.html
 # Copyright (C) 1999-2011, International Business Machines  Corporation and others.  All Rights Reserved.
 s%^\([a-zA-Z0-9\._-]*\)[ 	]*+=%\1=$(\1) %
 s%^[A-Z]*_SO_TARG*%## &%
 s%^SHARED_OBJECT.*%## &%
+s@^_%.*@## &@
 s%^LD_SONAME.*%## &%
 s%$(\([^\)]*\))%${\1}%g
 s%^	%#M#	%

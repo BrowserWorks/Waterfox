@@ -13,9 +13,7 @@ this.EXPORTED_SYMBOLS = [
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 Cu.import("resource://testing-common/TestUtils.jsm");
@@ -36,9 +34,9 @@ this.LoginTestUtils = {
    * Forces the storage module to save all data, and the Login Manager service
    * to replace the storage module with a newly initialized instance.
    */
-  * reloadData() {
-    Services.obs.notifyObservers(null, "passwordmgr-storage-replace", null);
-    yield TestUtils.topicObserved("passwordmgr-storage-replace-complete");
+  async reloadData() {
+    Services.obs.notifyObservers(null, "passwordmgr-storage-replace");
+    await TestUtils.topicObserved("passwordmgr-storage-replace-complete");
   },
 
   /**
@@ -111,7 +109,7 @@ this.LoginTestUtils.testData = {
                                   "form_field_username", "form_field_password");
     loginInfo.QueryInterface(Ci.nsILoginMetaInfo);
     if (modifications) {
-      for (let [name, value] of Iterator(modifications)) {
+      for (let [name, value] of Object.entries(modifications)) {
         loginInfo[name] = value;
       }
     }
@@ -131,7 +129,7 @@ this.LoginTestUtils.testData = {
                                   "the password", "", "");
     loginInfo.QueryInterface(Ci.nsILoginMetaInfo);
     if (modifications) {
-      for (let [name, value] of Iterator(modifications)) {
+      for (let [name, value] of Object.entries(modifications)) {
         loginInfo[name] = value;
       }
     }
@@ -263,19 +261,12 @@ this.LoginTestUtils.masterPassword = {
       newPW = "";
     }
 
-    let secmodDB = Cc["@mozilla.org/security/pkcs11moduledb;1"]
-                     .getService(Ci.nsIPKCS11ModuleDB);
-    let slot = secmodDB.findSlotByName("");
-    if (!slot) {
-      throw new Error("Can't find slot");
-    }
-
     // Set master password. Note that this does not log you in, so the next
     // invocation of pwmgr can trigger a MP prompt.
     let pk11db = Cc["@mozilla.org/security/pk11tokendb;1"]
                    .getService(Ci.nsIPK11TokenDB);
-    let token = pk11db.findTokenByName("");
-    if (slot.status == Ci.nsIPKCS11Slot.SLOT_UNINITIALIZED) {
+    let token = pk11db.getInternalKeyToken();
+    if (token.needsUserInit) {
       dump("MP initialized to " + newPW + "\n");
       token.initPassword(newPW);
     } else {

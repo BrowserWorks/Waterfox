@@ -25,6 +25,7 @@ namespace rx
 class FramebufferGL;
 class FunctionsGL;
 class StateManagerGL;
+class TextureGL;
 struct WorkaroundsGL;
 
 class BlitGL : public angle::NonCopyable
@@ -43,6 +44,7 @@ class BlitGL : public angle::NonCopyable
                                                const gl::Rectangle &sourceArea,
                                                GLenum internalFormat,
                                                const gl::Framebuffer *source);
+
     gl::Error copySubImageToLUMAWorkaroundTexture(GLuint texture,
                                                   GLenum textureType,
                                                   GLenum target,
@@ -52,19 +54,51 @@ class BlitGL : public angle::NonCopyable
                                                   const gl::Rectangle &sourceArea,
                                                   const gl::Framebuffer *source);
 
+    gl::Error blitColorBufferWithShader(const gl::Framebuffer *source,
+                                        const gl::Framebuffer *dest,
+                                        const gl::Rectangle &sourceArea,
+                                        const gl::Rectangle &destArea,
+                                        GLenum filter);
+
+    gl::Error copySubTexture(TextureGL *source,
+                             TextureGL *dest,
+                             const gl::Extents &sourceSize,
+                             const gl::Rectangle &sourceArea,
+                             const gl::Offset &destOffset,
+                             bool needsLumaWorkaround,
+                             GLenum lumaFormat,
+                             bool unpackFlipY,
+                             bool unpackPremultiplyAlpha,
+                             bool unpackUnmultiplyAlpha);
+
+    gl::Error copyTexSubImage(TextureGL *source,
+                              TextureGL *dest,
+                              const gl::Rectangle &sourceArea,
+                              const gl::Offset &destOffset);
+
     gl::Error initializeResources();
 
   private:
+    void orphanScratchTextures();
+    void setScratchTextureParameter(GLenum param, GLenum value);
+
     const FunctionsGL *mFunctions;
     const WorkaroundsGL &mWorkarounds;
     StateManagerGL *mStateManager;
 
     GLuint mBlitProgram;
+    GLint mTexCoordAttributeLocation;
+    GLint mSourceTextureLocation;
+    GLint mScaleLocation;
+    GLint mOffsetLocation;
+    GLint mMultiplyAlphaLocation;
+    GLint mUnMultiplyAlphaLocation;
 
     GLuint mScratchTextures[2];
     GLuint mScratchFBO;
 
     GLuint mVAO;
+    GLuint mVertexBuffer;
 };
 }
 

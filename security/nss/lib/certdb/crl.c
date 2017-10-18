@@ -1618,20 +1618,20 @@ DPCache_Lookup(CRLDPCache* cache, const SECItem* sn, CERTCrlEntry** returned)
 
 #if defined(DPC_RWLOCK)
 
-#define DPCache_LockWrite()                                                    \
-    {                                                                          \
-        if (readlocked) {                                                      \
-            NSSRWLock_UnlockRead(cache->lock);                                 \
-        }                                                                      \
-        NSSRWLock_LockWrite(cache->lock);                                      \
+#define DPCache_LockWrite()                    \
+    {                                          \
+        if (readlocked) {                      \
+            NSSRWLock_UnlockRead(cache->lock); \
+        }                                      \
+        NSSRWLock_LockWrite(cache->lock);      \
     }
 
-#define DPCache_UnlockWrite()                                                  \
-    {                                                                          \
-        if (readlocked) {                                                      \
-            NSSRWLock_LockRead(cache->lock);                                   \
-        }                                                                      \
-        NSSRWLock_UnlockWrite(cache->lock);                                    \
+#define DPCache_UnlockWrite()                \
+    {                                        \
+        if (readlocked) {                    \
+            NSSRWLock_LockRead(cache->lock); \
+        }                                    \
+        NSSRWLock_UnlockWrite(cache->lock);  \
     }
 
 #else
@@ -1639,12 +1639,12 @@ DPCache_Lookup(CRLDPCache* cache, const SECItem* sn, CERTCrlEntry** returned)
 /* with a global lock, we are always locked for read before we need write
    access, so do nothing */
 
-#define DPCache_LockWrite()                                                    \
-    {                                                                          \
+#define DPCache_LockWrite() \
+    {                       \
     }
 
-#define DPCache_UnlockWrite()                                                  \
-    {                                                                          \
+#define DPCache_UnlockWrite() \
+    {                         \
     }
 
 #endif
@@ -1958,10 +1958,11 @@ DPCache_SelectCRL(CRLDPCache* cache)
         qsort(cache->crls, cache->ncrls, sizeof(CachedCrl*), SortImperfectCRLs);
         return SECSuccess;
     }
-    /* all CRLs are good, sort them by thisUpdate */
-    qsort(cache->crls, cache->ncrls, sizeof(CachedCrl*), SortCRLsByThisUpdate);
 
     if (cache->ncrls) {
+        /* all CRLs are good, sort them by thisUpdate */
+        qsort(cache->crls, cache->ncrls, sizeof(CachedCrl*), SortCRLsByThisUpdate);
+
         /* pick the newest CRL */
         selected = cache->crls[cache->ncrls - 1];
 
@@ -2781,7 +2782,7 @@ cert_CacheCRLByGeneralName(CERTCertDBHandle* dbhandle, SECItem* crl,
     rv = cert_FindCRLByGeneralName(ncc, canonicalizedName, &oldEntry);
     PORT_Assert(SECSuccess == rv);
     if (SECSuccess != rv) {
-        rv = cert_ReleaseNamedCRLCache(ncc);
+        (void)cert_ReleaseNamedCRLCache(ncc);
         SECITEM_ZfreeItem(crl, PR_TRUE);
         return SECFailure;
     }

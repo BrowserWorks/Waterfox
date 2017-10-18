@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="application/javascript" src="/tests/dom/canvas/test/captureStream_common.js"></script>
+  <script type="application/javascript" src="mediaStreamPlayback.js"></script>
+</head>
+<body>
+<pre id="test">
+<script>
+
+createHTML({
+  bug: "1259788",
+  title: "Test CaptureStream video content on HTMLMediaElement playing a gUM MediaStream",
+  visible: true
+});
+
+var gUMVideoElement;
+var captureStreamElement;
+
+// We check a pixel somewhere away from the top left corner since
+// MediaEngineDefault puts semi-transparent time indicators there.
+const offsetX = 20;
+const offsetY = 20;
+const threshold = 16;
+const pausedTimeout = 1000;
+let h;
+
+runTest(() => getUserMedia({video: true, fake: true})
+  .then(stream => {
+    h = new VideoStreamHelper();
+    gUMVideoElement =
+      createMediaElement("video", "gUMVideo");
+    gUMVideoElement.srcObject = stream;
+    gUMVideoElement.play();
+
+    info("Capturing");
+    captureStreamElement =
+      createMediaElement("video", "captureStream");
+    captureStreamElement.srcObject = gUMVideoElement.mozCaptureStream();
+    captureStreamElement.play();
+
+    // Adding a dummy audio track to the stream will keep a consuming media
+    // element from ending.
+    // We could also solve it by repeatedly play()ing or autoplay, but then we
+    // wouldn't be sure the media element stopped rendering video because it
+    // went to the ended state or because there were no frames for the track.
+    let osc = createOscillatorStream(new AudioContext(), 1000);
+    captureStreamElement.srcObject.addTrack(osc.getTracks()[0]);
+
+    return h.checkVideoPlaying(captureStreamElement, 10, 10, 16);
+  })
+  .then(() => {
+    info("Video flowing. Pausing.");
+    gUMVideoElement.pause();
+
+    return h.checkVideoPaused(captureStreamElement, 10, 10, 16, pausedTimeout);
+  })
+  .then(() => {
+    info("Video stopped flowing. Playing.");
+    gUMVideoElement.play();
+
+    return h.checkVideoPlaying(captureStreamElement, 10, 10, 16);
+  })
+  .then(() => {
+    info("Video flowing. Removing source.");
+    var stream = gUMVideoElement.srcObject;
+    gUMVideoElement.srcObject = null;
+
+    return h.checkVideoPaused(captureStreamElement, 10, 10, 16, pausedTimeout)
+        .then(() => stream);
+  })
+  .then(stream => {
+    info("Video stopped flowing. Setting source.");
+    gUMVideoElement.srcObject = stream;
+    return h.checkVideoPlaying(captureStreamElement, 10, 10, 16);
+  })
+  .then(() => {
+    info("Video flowing. Changing source by track manipulation. Remove first.");
+    var track = gUMVideoElement.srcObject.getTracks()[0];
+    gUMVideoElement.srcObject.removeTrack(track);
+    return h.checkVideoPaused(captureStreamElement, 10, 10, 16, pausedTimeout)
+        .then(() => track);
+  })
+  .then(track => {
+    info("Video paused. Changing source by track manipulation. Add first.");
+    gUMVideoElement.srcObject.addTrack(track);
+    gUMVideoElement.play();
+    return h.checkVideoPlaying(captureStreamElement, 10, 10, 16);
+  })
+  .then(() => {
+    gUMVideoElement.srcObject.getTracks().forEach(t => t.stop());
+    ok(true, "Test passed.");
+  })
+  .catch(e => ok(false, "Test failed: " + e + (e.stack ? "\n" + e.stack : ""))));
+
+</script>
+</pre>
+</body>
+</html>

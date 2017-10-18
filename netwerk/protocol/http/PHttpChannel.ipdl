@@ -11,8 +11,6 @@ include URIParams;
 include PBackgroundSharedTypes;
 include NeckoChannelParams;
 
-include protocol PBlob; //FIXME: bug #792908
-
 include "mozilla/net/NeckoMessageUtils.h";
 
 using class nsHttpHeaderArray from "nsHttpHeaderArray.h";
@@ -31,7 +29,6 @@ parent:
   // Note: channels are opened during construction, so no open method here:
   // see PNecko.ipdl
 
-  async SetPriority(uint16_t priority);
   async SetClassOfService(uint32_t cos);
 
   async SetCacheTokenCachedCharset(nsCString charset);
@@ -45,8 +42,11 @@ parent:
 
   // Reports approval/veto of redirect by child process redirect observers
   async Redirect2Verify(nsresult result, RequestHeaderTuples changedHeaders,
-                        uint32_t loadFlags, OptionalURIParams apiRedirectTo,
+                        uint32_t loadFlags, uint32_t referrerPolicy,
+                        OptionalURIParams referrerUri,
+                        OptionalURIParams apiRedirectTo,
                         OptionalCorsPreflightArgs corsPreflightArgs,
+                        bool forceHSTSPriming, bool mixedContentWouldBlock,
                         bool chooseAppcache);
 
   // For document loads we keep this protocol open after child's
@@ -98,29 +98,16 @@ child:
                        nsHttpHeaderArray   requestHeaders,
                        bool                isFromCache,
                        bool                cacheEntryAvailable,
+                       int32_t             cacheFetchCount,
                        uint32_t            cacheExpirationTime,
                        nsCString           cachedCharset,
                        nsCString           securityInfoSerialization,
                        NetAddr             selfAddr,
                        NetAddr             peerAddr,
                        int16_t             redirectCount,
-                       uint32_t            cacheKey);
-
-  // Combines a single OnDataAvailable and its associated OnProgress &
-  // OnStatus calls into one IPDL message
-  async OnTransportAndData(nsresult  channelStatus,
-                           nsresult  transportStatus,
-                           uint64_t  progress,
-                           uint64_t  progressMax,
-                           uint64_t  offset,
-                           uint32_t  count,
-                           nsCString data);
-
-  async OnStopRequest(nsresult channelStatus, ResourceTimingStruct timing);
-
-  async OnProgress(int64_t progress, int64_t progressMax);
-
-  async OnStatus(nsresult status);
+                       uint32_t            cacheKey,
+                       nsCString           altDataType,
+                       int64_t             altDataLength);
 
   // Used to cancel child channel if we hit errors during creating and
   // AsyncOpen of nsHttpChannel on the parent.
@@ -129,11 +116,12 @@ child:
   // Called to initiate content channel redirect, starts talking to sinks
   // on the content process and reports result via Redirect2Verify above
   async Redirect1Begin(uint32_t           registrarId,
-                       URIParams          newUri,
+                       URIParams          newOriginalUri,
                        uint32_t           redirectFlags,
                        nsHttpResponseHead responseHead,
                        nsCString          securityInfoSerialization,
-                       nsCString          channelId);
+                       uint64_t           channelId,
+                       NetAddr            oldPeerAddr);
 
   // Called if redirect successful so that child can complete setup.
   async Redirect3Complete();
@@ -141,16 +129,6 @@ child:
   // Associate the child with an application ids
   async AssociateApplicationCache(nsCString groupID,
                                   nsCString clientID);
-
-  // Tell the child that tracking protection was disabled for this load.
-  async NotifyTrackingProtectionDisabled();
-
-  // Parent has been suspended for diversion; no more events to be enqueued.
-  async FlushedForDiversion();
-
-  // Child should resume processing the ChannelEventQueue, i.e. diverting any
-  // OnDataAvailable and OnStopRequest messages in the queue back to the parent.
-  async DivertMessages();
 
   // Report a security message to the console associated with this
   // channel.
@@ -163,12 +141,19 @@ child:
   // Tell the child to issue a deprecation warning.
   async IssueDeprecationWarning(uint32_t warning, bool asError);
 
+  // When CORS blocks the request in the parent process, it doesn't have the
+  // correct window ID, so send the message to the child for logging to the web
+  // console.
+  async LogBlockedCORSRequest(nsString message);
+
 both:
-  // After receiving this message, the parent calls SendDeleteSelf, and makes
-  // sure not to send any more messages after that. When receiving this message,
-  // the child will call Send__delete__() and complete the steps required to
-  // finish the redirect.
+  // After receiving this message, the parent also calls
+  // SendFinishInterceptedRedirect, and makes sure not to send any more messages
+  // after that. When receiving this message, the child will call
+  // Send__delete__() and complete the steps required to finish the redirect.
   async FinishInterceptedRedirect();
+
+  async SetPriority(int16_t priority);
 };
 
 

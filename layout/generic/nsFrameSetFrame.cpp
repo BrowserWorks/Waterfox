@@ -25,7 +25,6 @@
 #include "nsStyleConsts.h"
 #include "nsStyleContext.h"
 #include "nsHTMLParts.h"
-#include "nsRenderingContext.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsNameSpaceManager.h"
 #include "nsCSSAnonBoxes.h"
@@ -83,10 +82,10 @@ void nsFramesetDrag::UnSet()
 /*******************************************************************************
  * nsHTMLFramesetBorderFrame
  ******************************************************************************/
-class nsHTMLFramesetBorderFrame : public nsLeafFrame
+class nsHTMLFramesetBorderFrame final : public nsLeafFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLFramesetBorderFrame)
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -134,12 +133,11 @@ protected:
 /*******************************************************************************
  * nsHTMLFramesetBlankFrame
  ******************************************************************************/
-class nsHTMLFramesetBlankFrame : public nsLeafFrame
+class nsHTMLFramesetBlankFrame final : public nsLeafFrame
 {
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsHTMLFramesetBlankFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsHTMLFramesetBlankFrame)
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override
@@ -158,7 +156,10 @@ public:
                           nsReflowStatus&          aStatus) override;
 
 protected:
-  explicit nsHTMLFramesetBlankFrame(nsStyleContext* aContext) : nsLeafFrame(aContext) {}
+  explicit nsHTMLFramesetBlankFrame(nsStyleContext* aContext)
+    : nsLeafFrame(aContext, kClassID)
+  {}
+
   virtual ~nsHTMLFramesetBlankFrame();
   virtual nscoord GetIntrinsicISize() override;
   virtual nscoord GetIntrinsicBSize() override;
@@ -174,7 +175,7 @@ bool    nsHTMLFramesetFrame::gDragInProgress = false;
 #define DEFAULT_BORDER_WIDTH_PX 6
 
 nsHTMLFramesetFrame::nsHTMLFramesetFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
 {
   mNumRows             = 0;
   mNumCols             = 0;
@@ -236,16 +237,17 @@ nsHTMLFramesetFrame::Init(nsIContent*       aContent,
   ourContent->GetRowSpec(&mNumRows, &rowSpecs);
   ourContent->GetColSpec(&mNumCols, &colSpecs);
 
-  // Maximum value of mNumRows and mNumCols is NS_MAX_FRAMESET_SPEC_COUNT
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nscoord));
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nscoord),
+                "Maximum value of mNumRows and mNumCols is NS_MAX_FRAMESET_SPEC_COUNT");
   mRowSizes  = MakeUnique<nscoord[]>(mNumRows);
   mColSizes  = MakeUnique<nscoord[]>(mNumCols);
 
-  // Ensure we can't overflow numCells
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < INT32_MAX / NS_MAX_FRAMESET_SPEC_COUNT);
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT < INT32_MAX / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Should not overflow numCells");
   int32_t numCells = mNumRows*mNumCols;
 
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nsHTMLFramesetBorderFrame*));
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nsHTMLFramesetBorderFrame*),
+                "Should not overflow nsHTMLFramesetBorderFrame");
   mVerBorders    = MakeUnique<nsHTMLFramesetBorderFrame*[]>(mNumCols);  // 1 more than number of ver borders
 
   for (int verX  = 0; verX < mNumCols; verX++)
@@ -256,12 +258,15 @@ nsHTMLFramesetFrame::Init(nsIContent*       aContent,
   for (int horX = 0; horX < mNumRows; horX++)
     mHorBorders[horX]    = nullptr;
 
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT
-                   < UINT_MAX / sizeof(int32_t) / NS_MAX_FRAMESET_SPEC_COUNT);
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT
-                   < UINT_MAX / sizeof(nsFrameborder) / NS_MAX_FRAMESET_SPEC_COUNT);
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT
-                   < UINT_MAX / sizeof(nsBorderColor) / NS_MAX_FRAMESET_SPEC_COUNT);
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT
+                   < UINT_MAX / sizeof(int32_t) / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Should not overflow numCells");
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT
+                   < UINT_MAX / sizeof(nsFrameborder) / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Should not overflow numCells");
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT
+                   < UINT_MAX / sizeof(nsBorderColor) / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Should not overflow numCells");
   mChildFrameborder  = MakeUnique<nsFrameborder[]>(numCells);
   mChildBorderColors  = MakeUnique<nsBorderColor[]>(numCells);
 
@@ -298,7 +303,8 @@ nsHTMLFramesetFrame::Init(nsIContent*       aContent,
       RefPtr<nsStyleContext> kidSC;
 
       kidSC = shell->StyleSet()->ResolveStyleFor(child->AsElement(),
-                                                 mStyleContext);
+                                                 mStyleContext,
+                                                 LazyComputeBehavior::Allow);
       if (child->IsHTMLElement(nsGkAtoms::frameset)) {
         frame = NS_NewHTMLFramesetFrame(shell, kidSC);
 
@@ -330,7 +336,7 @@ nsHTMLFramesetFrame::Init(nsIContent*       aContent,
   for (int blankX = mChildCount; blankX < numCells; blankX++) {
     RefPtr<nsStyleContext> pseudoStyleContext;
     pseudoStyleContext = shell->StyleSet()->
-      ResolveAnonymousBoxStyle(nsCSSAnonBoxes::framesetBlank, mStyleContext);
+      ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::framesetBlank);
 
     // XXX the blank frame is using the content of its parent - at some point it
     // should just have null content, if we support that
@@ -421,8 +427,8 @@ void nsHTMLFramesetFrame::CalculateRowCol(nsPresContext*        aPresContext,
                                           const nsFramesetSpec* aSpecs,
                                           nscoord*              aValues)
 {
-  // aNumSpecs maximum value is NS_MAX_FRAMESET_SPEC_COUNT
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(int32_t));
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(int32_t),
+                "aNumSpecs maximum value is NS_MAX_FRAMESET_SPEC_COUNT");
 
   int32_t  fixedTotal = 0;
   int32_t  numFixed = 0;
@@ -658,6 +664,7 @@ nsresult
 nsHTMLFramesetFrame::GetCursor(const nsPoint&    aPoint,
                                nsIFrame::Cursor& aCursor)
 {
+  aCursor.mLoading = false;
   if (mDragger) {
     aCursor.mCursor = (mDragger->mVertical) ? NS_STYLE_CURSOR_EW_RESIZE : NS_STYLE_CURSOR_NS_RESIZE;
   } else {
@@ -699,7 +706,7 @@ nsHTMLFramesetFrame::ReflowPlaceChild(nsIFrame*                aChild,
 
   ReflowChild(aChild, aPresContext, reflowOutput, reflowInput, aOffset.x,
               aOffset.y, 0, status);
-  NS_ASSERTION(NS_FRAME_IS_COMPLETE(status), "bad status");
+  NS_ASSERTION(status.IsComplete(), "bad status");
 
   // Place and size the child
   reflowOutput.Width() = aSize.width;
@@ -843,7 +850,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
   // If the number of cols or rows has changed, the frame for the frameset
   // will be re-created.
   if (mNumRows != rows || mNumCols != cols) {
-    aStatus = NS_FRAME_COMPLETE;
+    aStatus.Reset();
     mDrag.UnSet();
     NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
     return;
@@ -862,8 +869,10 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
   if (firstTime) {
     // Check for overflow in memory allocations using mNumCols and mNumRows
     // which have a maxium value of NS_MAX_FRAMESET_SPEC_COUNT.
-    PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(bool));
-    PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nscolor));
+    static_assert(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(bool),
+                  "Check for overflow");
+    static_assert(NS_MAX_FRAMESET_SPEC_COUNT < UINT_MAX / sizeof(nscolor),
+                  "Check for overflow");
 
     verBordersVis = MakeUnique<bool[]>(mNumCols);
     verBorderColors = MakeUnique<nscolor[]>(mNumCols);
@@ -903,8 +912,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
 
         RefPtr<nsStyleContext> pseudoStyleContext;
         pseudoStyleContext = styleSet->
-          ResolveAnonymousBoxStyle(nsCSSAnonBoxes::horizontalFramesetBorder,
-                                   mStyleContext);
+          ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::horizontalFramesetBorder);
 
         borderFrame = new (shell) nsHTMLFramesetBorderFrame(pseudoStyleContext,
                                                             borderWidth,
@@ -933,8 +941,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
 
             RefPtr<nsStyleContext> pseudoStyleContext;
             pseudoStyleContext = styleSet->
-              ResolveAnonymousBoxStyle(nsCSSAnonBoxes::verticalFramesetBorder,
-                                       mStyleContext);
+              ResolveNonInheritingAnonymousBoxStyle(nsCSSAnonBoxes::verticalFramesetBorder);
 
             borderFrame = new (shell) nsHTMLFramesetBorderFrame(pseudoStyleContext,
                                                                 borderWidth,
@@ -1076,19 +1083,13 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
     mChildBorderColors.reset();
   }
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   mDrag.UnSet();
 
   aDesiredSize.SetOverflowAreasToDesiredBounds();
   FinishAndStoreOverflow(&aDesiredSize);
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
-}
-
-nsIAtom*
-nsHTMLFramesetFrame::GetType() const
-{
-  return nsGkAtoms::frameSetFrame;
 }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1098,13 +1099,6 @@ nsHTMLFramesetFrame::GetFrameName(nsAString& aResult) const
   return MakeFrameName(NS_LITERAL_STRING("Frameset"), aResult);
 }
 #endif
-
-bool
-nsHTMLFramesetFrame::IsLeaf() const
-{
-  // We handle constructing our kids manually
-  return true;
-}
 
 bool
 nsHTMLFramesetFrame::CanResize(bool aVertical,
@@ -1156,9 +1150,11 @@ nsHTMLFramesetFrame::RecalculateBorderResize()
     return;
   }
 
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT < INT32_MAX / NS_MAX_FRAMESET_SPEC_COUNT);
-  PR_STATIC_ASSERT(NS_MAX_FRAMESET_SPEC_COUNT
-                   < UINT_MAX / sizeof(int32_t) / NS_MAX_FRAMESET_SPEC_COUNT);
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT < INT32_MAX / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Check for overflow");
+  static_assert(NS_MAX_FRAMESET_SPEC_COUNT
+                   < UINT_MAX / sizeof(int32_t) / NS_MAX_FRAMESET_SPEC_COUNT,
+                "Check for overflow");
   // set the visibility and mouse sensitivity of borders
   int32_t verX;
   for (verX = 0; verX < mNumCols-1; verX++) {
@@ -1246,7 +1242,7 @@ nsHTMLFramesetFrame::MouseDrag(nsPresContext* aPresContext,
   }
 
   int32_t change; // measured positive from left-to-right or top-to-bottom
-  nsWeakFrame weakFrame(this);
+  AutoWeakFrame weakFrame(this);
   if (mDragger->mVertical) {
     change = aPresContext->DevPixelsToAppUnits(
                              aEvent->mRefPoint.x - mFirstDragPoint.x);
@@ -1330,9 +1326,12 @@ NS_IMPL_FRAMEARENA_HELPERS(nsHTMLFramesetFrame)
  ******************************************************************************/
 nsHTMLFramesetBorderFrame::nsHTMLFramesetBorderFrame(nsStyleContext* aContext,
                                                      int32_t aWidth,
-                                                     bool    aVertical,
-                                                     bool    aVisibility)
-  : nsLeafFrame(aContext), mWidth(aWidth), mVertical(aVertical), mVisibility(aVisibility)
+                                                     bool aVertical,
+                                                     bool aVisibility)
+  : nsLeafFrame(aContext, kClassID)
+  , mWidth(aWidth)
+  , mVertical(aVertical)
+  , mVisibility(aVisibility)
 {
    mCanResize    = true;
    mColor        = NO_COLOR;
@@ -1384,7 +1383,7 @@ nsHTMLFramesetBorderFrame::Reflow(nsPresContext*           aPresContext,
   SizeToAvailSize(aReflowInput, aDesiredSize);
 
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 }
 
 class nsDisplayFramesetBorder : public nsDisplayItem {
@@ -1408,12 +1407,12 @@ public:
     aOutFrames->AppendElement(mFrame);
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("FramesetBorder", TYPE_FRAMESET_BORDER)
 };
 
 void nsDisplayFramesetBorder::Paint(nsDisplayListBuilder* aBuilder,
-                                    nsRenderingContext* aCtx)
+                                    gfxContext* aCtx)
 {
   static_cast<nsHTMLFramesetBorderFrame*>(mFrame)->
     PaintBorder(aCtx->GetDrawTarget(), ToReferenceFrame());
@@ -1543,6 +1542,7 @@ nsresult
 nsHTMLFramesetBorderFrame::GetCursor(const nsPoint&    aPoint,
                                      nsIFrame::Cursor& aCursor)
 {
+  aCursor.mLoading = false;
   if (!mCanResize) {
     aCursor.mCursor = NS_STYLE_CURSOR_DEFAULT;
   } else {
@@ -1598,7 +1598,7 @@ nsHTMLFramesetBlankFrame::Reflow(nsPresContext*           aPresContext,
   SizeToAvailSize(aReflowInput, aDesiredSize);
 
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 }
 
 class nsDisplayFramesetBlank : public nsDisplayItem {
@@ -1615,12 +1615,12 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) override;
+                     gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("FramesetBlank", TYPE_FRAMESET_BLANK)
 };
 
 void nsDisplayFramesetBlank::Paint(nsDisplayListBuilder* aBuilder,
-                                   nsRenderingContext* aCtx)
+                                   gfxContext* aCtx)
 {
   DrawTarget* drawTarget = aCtx->GetDrawTarget();
   int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();

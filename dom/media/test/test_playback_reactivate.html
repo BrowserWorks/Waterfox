@@ -17,12 +17,6 @@
    Test pass if the video plays to the end.
 */
 
-// longer timeout for slow platforms
-if (isSlowPlatform()) {
-  SimpleTest.requestLongerTimeout(1.5);
-  SimpleTest.requestCompleteLog();
-}
-
 var manager = new MediaTestManager;
 
 function startTest(test, token) {
@@ -63,15 +57,14 @@ function startTest(test, token) {
     is(test.name, v.name, test.name + ": Name should match #2");
     checkMetadata(test.name, v, test);
     is(v.readyState, v.HAVE_CURRENT_DATA, test.name + " checking readyState");
-    ok(v.readyState != v.NETWORK_LOADED, test.name + " shouldn't report NETWORK_LOADED");
     ok(v.ended, test.name + " checking playback has ended");
 
     finish();
   }}(test, v);
 
 
-  v.addEventListener("loadedmetadata", check, false);
-  v.addEventListener("ended", checkEnded, false);
+  v.addEventListener("loadedmetadata", check);
+  v.addEventListener("ended", checkEnded);
 
   document.body.appendChild(v);
 
@@ -85,7 +78,7 @@ function startTest(test, token) {
       Log(e.target.token, "got " + e.type);
     }
     events.forEach(function(e) {
-      v.addEventListener(e, logEvent, false);
+      v.addEventListener(e, logEvent);
     });
   }
 }

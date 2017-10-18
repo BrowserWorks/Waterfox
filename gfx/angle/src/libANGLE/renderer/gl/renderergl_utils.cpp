@@ -11,14 +11,19 @@
 
 #include <limits>
 
+#include "common/mathutil.h"
+#include "libANGLE/Buffer.h"
 #include "libANGLE/Caps.h"
 #include "libANGLE/formatutils.h"
 #include "libANGLE/renderer/gl/FunctionsGL.h"
+#include "libANGLE/renderer/gl/QueryGL.h"
 #include "libANGLE/renderer/gl/WorkaroundsGL.h"
 #include "libANGLE/renderer/gl/formatutilsgl.h"
 
 #include <algorithm>
 #include <sstream>
+
+using angle::CheckedNumeric;
 
 namespace rx
 {
@@ -158,7 +163,8 @@ static GLfloat QueryGLFloatRange(const FunctionsGL *functions, GLenum name, size
 static gl::TypePrecision QueryTypePrecision(const FunctionsGL *functions, GLenum shaderType, GLenum precisionType)
 {
     gl::TypePrecision precision;
-    functions->getShaderPrecisionFormat(shaderType, precisionType, precision.range, &precision.precision);
+    functions->getShaderPrecisionFormat(shaderType, precisionType, precision.range.data(),
+                                        &precision.precision);
     return precision;
 }
 
@@ -543,16 +549,11 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
         LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
     }
 
-    // Check if index constant sampler array indexing is supported
-    if (!functions->isAtLeastGL(gl::Version(4, 0)) &&
-        !functions->isAtLeastGLES(gl::Version(2, 0)) &&
-        !functions->hasExtension("GL_ARB_gpu_shader5"))
-    {
-        // This should also be required for ES2 but there are some driver support index constant
-        // sampler array indexing without meeting the requirements above. Don't limit their ES
-        // version as it would break WebGL for some users.
-        LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
-    }
+    // Non-constant sampler array indexing is required for OpenGL ES 2 and OpenGL ES after 3.2.
+    // However having it available on OpenGL ES 2 is a specification bug, and using this
+    // indexing in WebGL is undefined. Requiring this feature would break WebGL 1 for some users
+    // so we don't check for it. (it is present with ESSL 100, ESSL >= 320, GLSL >= 400 and
+    // GL_ARB_gpu_shader5)
 
     // Check if sampler objects are supported
     if (!functions->isAtLeastGL(gl::Version(3, 3)) &&
@@ -792,11 +793,7 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
                               functions->isAtLeastGLES(gl::Version(3, 0)) || functions->hasGLESExtension("GL_EXT_draw_buffers");
     extensions->textureStorage = true;
     extensions->textureFilterAnisotropic = functions->hasGLExtension("GL_EXT_texture_filter_anisotropic") || functions->hasGLESExtension("GL_EXT_texture_filter_anisotropic");
-    extensions->occlusionQueryBoolean =
-        functions->isAtLeastGL(gl::Version(1, 5)) ||
-        functions->hasGLExtension("GL_ARB_occlusion_query2") ||
-        functions->isAtLeastGLES(gl::Version(3, 0)) ||
-        functions->hasGLESExtension("GL_EXT_occlusion_query_boolean");
+    extensions->occlusionQueryBoolean    = nativegl::SupportsOcclusionQueries(functions);
     extensions->maxTextureAnisotropy = extensions->textureFilterAnisotropic ? QuerySingleGLFloat(functions, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 0.0f;
     extensions->fence = functions->hasGLExtension("GL_NV_fence") || functions->hasGLESExtension("GL_NV_fence");
     extensions->blendMinMax = functions->isAtLeastGL(gl::Version(1, 5)) || functions->hasGLExtension("GL_EXT_blend_minmax") ||
@@ -854,6 +851,9 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
                              functions->hasGLESExtension("GL_KHR_robustness") ||
                              functions->hasGLESExtension("GL_EXT_robustness");
 
+    extensions->copyTexture = true;
+    extensions->syncQuery   = SyncQueryGL::IsSupported(functions);
+
     // NV_path_rendering
     // We also need interface query which is available in
     // >= 4.3 core or ARB_interface_query or >= GLES 3.1
@@ -867,37 +867,110 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
         functions->isAtLeastGLES(gl::Version(3, 1));
 
     extensions->pathRendering = canEnableGLPathRendering || canEnableESPathRendering;
+
+    extensions->textureSRGBDecode = functions->hasGLExtension("GL_EXT_texture_sRGB_decode") ||
+                                    functions->hasGLESExtension("GL_EXT_texture_sRGB_decode");
+
+#if defined(ANGLE_PLATFORM_APPLE)
+    VendorID vendor = GetVendorID(functions);
+    if ((IsAMD(vendor) || IsIntel(vendor)) && *maxSupportedESVersion >= gl::Version(3, 0))
+    {
+        // Apple Intel/AMD drivers do not correctly use the TEXTURE_SRGB_DECODE property of sampler
+        // states.  Disable this extension when we would advertise any ES version that has samplers.
+        extensions->textureSRGBDecode = false;
+    }
+#endif
+
+    extensions->sRGBWriteControl = functions->isAtLeastGL(gl::Version(3, 0)) ||
+                                   functions->hasGLExtension("GL_EXT_framebuffer_sRGB") ||
+                                   functions->hasGLExtension("GL_ARB_framebuffer_sRGB") ||
+                                   functions->hasGLESExtension("GL_EXT_sRGB_write_control");
+
+#if defined(ANGLE_PLATFORM_ANDROID)
+    // SRGB blending does not appear to work correctly on the Nexus 5. Writing to an SRGB
+    // framebuffer with GL_FRAMEBUFFER_SRGB enabled and then reading back returns the same value.
+    // Disabling GL_FRAMEBUFFER_SRGB will then convert in the wrong direction.
+    extensions->sRGBWriteControl = false;
+#endif
+
+    // EXT_discard_framebuffer can be implemented as long as glDiscardFramebufferEXT or
+    // glInvalidateFramebuffer is available
+    extensions->discardFramebuffer = functions->isAtLeastGL(gl::Version(4, 3)) ||
+                                     functions->hasGLExtension("GL_ARB_invalidate_subdata") ||
+                                     functions->isAtLeastGLES(gl::Version(3, 0)) ||
+                                     functions->hasGLESExtension("GL_EXT_discard_framebuffer") ||
+                                     functions->hasGLESExtension("GL_ARB_invalidate_subdata");
 }
 
 void GenerateWorkarounds(const FunctionsGL *functions, WorkaroundsGL *workarounds)
 {
     VendorID vendor = GetVendorID(functions);
 
+    workarounds->dontRemoveInvariantForFragmentInput =
+        functions->standard == STANDARD_GL_DESKTOP && IsAMD(vendor);
+
     // Don't use 1-bit alpha formats on desktop GL with AMD or Intel drivers.
     workarounds->avoid1BitAlphaTextureFormats =
-        functions->standard == STANDARD_GL_DESKTOP &&
-        (vendor == VENDOR_ID_AMD || vendor == VENDOR_ID_INTEL);
+        functions->standard == STANDARD_GL_DESKTOP && (IsAMD(vendor) || IsIntel(vendor));
 
     workarounds->rgba4IsNotSupportedForColorRendering =
-        functions->standard == STANDARD_GL_DESKTOP && vendor == VENDOR_ID_INTEL;
+        functions->standard == STANDARD_GL_DESKTOP && IsIntel(vendor);
+
+    workarounds->emulateAbsIntFunction = IsIntel(vendor);
+
+    workarounds->addAndTrueToLoopCondition = IsIntel(vendor);
+
+    workarounds->emulateIsnanFloat = IsIntel(vendor);
 
     workarounds->doesSRGBClearsOnLinearFramebufferAttachments =
-        functions->standard == STANDARD_GL_DESKTOP &&
-        (vendor == VENDOR_ID_INTEL || vendor == VENDOR_ID_AMD);
+        functions->standard == STANDARD_GL_DESKTOP && (IsIntel(vendor) || IsAMD(vendor));
 
 #if defined(ANGLE_PLATFORM_APPLE)
     workarounds->doWhileGLSLCausesGPUHang = true;
+    workarounds->useUnusedBlocksWithStandardOrSharedLayout = true;
 #endif
 
     workarounds->finishDoesNotCauseQueriesToBeAvailable =
-        functions->standard == STANDARD_GL_DESKTOP && vendor == VENDOR_ID_NVIDIA;
+        functions->standard == STANDARD_GL_DESKTOP && IsNvidia(vendor);
 
     // TODO(cwallez): Disable this workaround for MacOSX versions 10.9 or later.
     workarounds->alwaysCallUseProgramAfterLink = true;
 
-    workarounds->unpackOverlappingRowsSeparatelyUnpackBuffer = vendor == VENDOR_ID_NVIDIA;
+    workarounds->unpackOverlappingRowsSeparatelyUnpackBuffer = IsNvidia(vendor);
+    workarounds->packOverlappingRowsSeparatelyPackBuffer     = IsNvidia(vendor);
+
+    workarounds->initializeCurrentVertexAttributes = IsNvidia(vendor);
+
+#if defined(ANGLE_PLATFORM_APPLE)
+    workarounds->unpackLastRowSeparatelyForPaddingInclusion = true;
+    workarounds->packLastRowSeparatelyForPaddingInclusion   = true;
+#else
+    workarounds->unpackLastRowSeparatelyForPaddingInclusion = IsNvidia(vendor);
+    workarounds->packLastRowSeparatelyForPaddingInclusion   = IsNvidia(vendor);
+#endif
+
+    workarounds->removeInvariantAndCentroidForESSL3 =
+        functions->isAtMostGL(gl::Version(4, 1)) ||
+        (functions->standard == STANDARD_GL_DESKTOP && IsAMD(vendor));
 }
 
+}
+
+namespace nativegl
+{
+bool SupportsFenceSync(const FunctionsGL *functions)
+{
+    return functions->isAtLeastGL(gl::Version(3, 2)) || functions->hasGLExtension("GL_ARB_sync") ||
+           functions->isAtLeastGLES(gl::Version(3, 0));
+}
+
+bool SupportsOcclusionQueries(const FunctionsGL *functions)
+{
+    return functions->isAtLeastGL(gl::Version(1, 5)) ||
+           functions->hasGLExtension("GL_ARB_occlusion_query2") ||
+           functions->isAtLeastGLES(gl::Version(3, 0)) ||
+           functions->hasGLESExtension("GL_EXT_occlusion_query_boolean");
+}
 }
 
 bool CanMapBufferForRead(const FunctionsGL *functions)
@@ -950,5 +1023,46 @@ uint8_t *MapBufferRangeWithFallback(const FunctionsGL *functions,
         UNREACHABLE();
         return nullptr;
     }
+}
+
+gl::ErrorOrResult<bool> ShouldApplyLastRowPaddingWorkaround(const gl::Extents &size,
+                                                            const gl::PixelStoreStateBase &state,
+                                                            GLenum format,
+                                                            GLenum type,
+                                                            bool is3D,
+                                                            const void *pixels)
+{
+    if (state.pixelBuffer.get() == nullptr)
+    {
+        return false;
+    }
+
+    // We are using an pack or unpack buffer, compute what the driver thinks is going to be the
+    // last byte read or written. If it is past the end of the buffer, we will need to use the
+    // workaround otherwise the driver will generate INVALID_OPERATION and not do the operation.
+    CheckedNumeric<size_t> checkedEndByte;
+    CheckedNumeric<size_t> pixelBytes;
+    size_t rowPitch;
+
+    const gl::InternalFormat &glFormat =
+        gl::GetInternalFormatInfo(gl::GetSizedInternalFormat(format, type));
+    ANGLE_TRY_RESULT(glFormat.computePackUnpackEndByte(size, state, is3D), checkedEndByte);
+    ANGLE_TRY_RESULT(glFormat.computeRowPitch(size.width, state.alignment, state.rowLength),
+                     rowPitch);
+    pixelBytes = glFormat.pixelBytes;
+
+    checkedEndByte += reinterpret_cast<intptr_t>(pixels);
+
+    // At this point checkedEndByte is the actual last byte read.
+    // The driver adds an extra row padding (if any), mimic it.
+    ANGLE_TRY_CHECKED_MATH(pixelBytes);
+    if (pixelBytes.ValueOrDie() * size.width < rowPitch)
+    {
+        checkedEndByte += rowPitch - pixelBytes * size.width;
+    }
+
+    ANGLE_TRY_CHECKED_MATH(checkedEndByte);
+
+    return checkedEndByte.ValueOrDie() > static_cast<size_t>(state.pixelBuffer->getSize());
 }
 }

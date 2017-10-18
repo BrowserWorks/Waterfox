@@ -1,0 +1,46 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+* License, v. 2.0. If a copy of the MPL was not distributed with this
+* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+/**
+ * This is a set of APIs that are of general usefulness for user interface
+ * internationalization.
+ *
+ * They're all in various stages of the standardization process through
+ * ECMA402, so they are exposed to privileged content only but are written
+ * in the way to allow for easy migration to standard Intl object once
+ * the appropriate stage of the ECMA402 is achieved.
+ *
+ * The exact structure of the code is a little bit complex because of that:
+ *
+ * 1) The core is in SpiderMonkey together with other Intl APIs
+ *
+ * This allows us to write the code once, stick to the spec language
+ * of the proposal, reuse our ICU bindings in Spidermonkey and use
+ * the code to inform us on refining the spec proposal for the given API itself.
+ *
+ * 2) The MozIntlHelper API exposes the SpiderMonkey APIs
+ *
+ * This helper API allows attaching the new APIs on any regular object.
+ *
+ * 3) The MozIntl API provides the access to those APIs
+ *
+ * This API exposes the actual functionality and wraps around the MozIntlHelper
+ * lazily retrieving and setting the accessors.
+ * On top of that, the API also binds additional functionality like using
+ * current application locale by default, and fetching OS regional preferences
+ * for date time format.
+ */
+[scriptable, uuid(7f63279a-1a29-4ae6-9e7a-dc9684a23530)]
+interface mozIMozIntl : nsISupports
+{
+  jsval getCalendarInfo([optional] in jsval locales);
+  jsval getDisplayNames([optional] in jsval locales, [optional] in jsval options);
+  jsval getLocaleInfo([optional] in jsval locales);
+
+  jsval createPluralRules([optional] in jsval locales, [optional] in jsval options);
+  jsval createDateTimeFormat([optional] in jsval locales, [optional] in jsval options);
+};

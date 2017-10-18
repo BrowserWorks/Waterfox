@@ -39,7 +39,7 @@ public:
   // LayerComposite Implementation
   virtual Layer* GetLayer() override { return this; }
 
-  virtual void SetLayerManager(LayerManagerComposite* aManager) override
+  virtual void SetLayerManager(HostLayerManager* aManager) override
   {
     LayerComposite::SetLayerManager(aManager);
     mManager = aManager;
@@ -47,14 +47,16 @@ public:
 
   virtual void Destroy() override { mDestroyed = true; }
 
-  virtual void RenderLayer(const gfx::IntRect& aClipRect) override;
+  virtual void RenderLayer(const gfx::IntRect& aClipRect,
+                           const Maybe<gfx::Polygon>& aGeometry) override;
+
   virtual void CleanupResources() override {};
 
   virtual void GenEffectChain(EffectChain& aEffect) override;
 
   CompositableHost* GetCompositableHost() override { return nullptr; }
 
-  virtual LayerComposite* AsLayerComposite() override { return this; }
+  virtual HostLayer* AsHostLayer() override { return this; }
 
   virtual const char* Name() const override { return "ColorLayerComposite"; }
 };

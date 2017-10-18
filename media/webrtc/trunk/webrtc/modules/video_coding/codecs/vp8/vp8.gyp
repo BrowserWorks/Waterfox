@@ -21,7 +21,7 @@
         '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
       ],
       'include_dirs': [
-        '../../../../../../../libyuv/include',
+        '../../../../../../../libyuv/libyuv/include',
       ],
       'conditions': [
         ['build_libvpx==1', {
@@ -49,8 +49,6 @@
         'simulcast_encoder_adapter.cc',
         'simulcast_encoder_adapter.h',
         'temporal_layers.h',
-        'vp8_factory.cc',
-        'vp8_factory.h',
         'vp8_impl.cc',
         'vp8_impl.h',
       ],
@@ -69,7 +67,6 @@
           'dependencies': [
             'webrtc_vp8',
             '<(webrtc_root)/common_video/common_video.gyp:common_video',
-            '<(webrtc_root)/test/metrics.gyp:metrics',
             '<(DEPTH)/testing/gtest.gyp:gtest',
             '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
             '<(webrtc_root)/test/test.gyp:test_support_main',

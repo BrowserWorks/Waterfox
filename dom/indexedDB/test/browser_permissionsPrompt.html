@@ -7,8 +7,9 @@
     <meta charset=UTF-8>
     <title>Indexed Database Test</title>
 
-    <script type="text/javascript;version=1.7">
-      function testSteps()
+    <script type="text/javascript">
+      /* import-globals-from browserHelpers.js */
+      function* testSteps()
       {
         const name = window.location.pathname;
 
@@ -22,7 +23,7 @@
           testResult = event.target.result instanceof IDBDatabase;
         }
         else {
-          testException = event.target.error.name;
+          testResult = event.target.error.name;
         }
 
         event.preventDefault();
@@ -32,7 +33,7 @@
       }
     </script>
 
-    <script type="text/javascript;version=1.7" src="browserHelpers.js"></script>
+    <script type="text/javascript" src="browserHelpers.js"></script>
 
   </head>
 

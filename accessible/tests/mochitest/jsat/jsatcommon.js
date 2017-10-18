@@ -70,7 +70,7 @@ var AccessFuTest = {
       isDeeply(data.details, aWaitForData, "Data is correct");
       aListener.apply(listener);
     };
-    Services.obs.addObserver(listener, 'accessibility-output', false);
+    Services.obs.addObserver(listener, 'accessibility-output');
     return listener;
   },
 
@@ -149,8 +149,7 @@ var AccessFuTest = {
       Logger.logLevel = Logger.DEBUG;
     };
 
-    var prefs = [['accessibility.accessfu.notify_output', 1],
-      ['dom.mozSettings.enabled', true]];
+    var prefs = [['accessibility.accessfu.notify_output', 1]];
     prefs.push.apply(prefs, aAdditionalPrefs);
 
     this.originalDwellThreshold = GestureSettings.dwellThreshold;

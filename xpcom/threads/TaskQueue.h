@@ -11,29 +11,51 @@
 #include "mozilla/MozPromise.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TaskDispatcher.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include <queue>
 
-#include "mozilla/SharedThreadPool.h"
 #include "nsThreadUtils.h"
 
+class nsIEventTarget;
 class nsIRunnable;
 
 namespace mozilla {
 
-class SharedThreadPool;
-
 typedef MozPromise<bool, bool, false> ShutdownPromise;
 
-// Abstracts executing runnables in order in a thread pool. The runnables
-// dispatched to the TaskQueue will be executed in the order in which
+// Abstracts executing runnables in order on an arbitrary event target. The
+// runnables dispatched to the TaskQueue will be executed in the order in which
 // they're received, and are guaranteed to not be executed concurrently.
 // They may be executed on different threads, and a memory barrier is used
 // to make this threadsafe for objects that aren't already threadsafe.
-class TaskQueue : public AbstractThread {
+//
+// Note, since a TaskQueue can also be converted to an nsIEventTarget using
+// WrapAsEventTarget() its possible to construct a hierarchy of TaskQueues.
+// Consider these three TaskQueues:
+//
+//  TQ1 dispatches to the main thread
+//  TQ2 dispatches to TQ1
+//  TQ3 dispatches to TQ1
+//
+// This ensures there is only ever a single runnable from the entire chain on
+// the main thread.  It also ensures that TQ2 and TQ3 only have a single runnable
+// in TQ1 at any time.
+//
+// This arrangement lets you prioritize work by dispatching runnables directly
+// to TQ1.  You can issue many runnables for important work.  Meanwhile the TQ2
+// and TQ3 work will always execute at most one runnable and then yield.
+class TaskQueue : public AbstractThread
+{
+  class EventTargetWrapper;
+
 public:
-  explicit TaskQueue(already_AddRefed<SharedThreadPool> aPool, bool aSupportsTailDispatch = false);
+  explicit TaskQueue(already_AddRefed<nsIEventTarget> aTarget,
+                     bool aSupportsTailDispatch = false);
+
+  TaskQueue(already_AddRefed<nsIEventTarget> aTarget,
+            const char* aName,
+            bool aSupportsTailDispatch = false);
 
   TaskDispatcher& TailDispatcher() override;
 
@@ -46,8 +68,12 @@ public:
     nsCOMPtr<nsIRunnable> r = aRunnable;
     {
       MonitorAutoLock mon(mQueueMonitor);
-      nsresult rv = DispatchLocked(/* passed by ref */r, AbortIfFlushing, aFailureHandling, aReason);
-      MOZ_DIAGNOSTIC_ASSERT(aFailureHandling == DontAssertDispatchSuccess || NS_SUCCEEDED(rv));
+      nsresult rv = DispatchLocked(/* passed by ref */r, aFailureHandling, aReason);
+#if defined(DEBUG) || !defined(RELEASE_OR_BETA) || defined(EARLY_BETA_OR_EARLIER)
+      if (NS_FAILED(rv) && aFailureHandling == AssertDispatchSuccess) {
+        MOZ_CRASH_UNSAFE_PRINTF("%s: Dispatch failed. rv=%x", mName, uint32_t(rv));
+      }
+#endif
       Unused << rv;
     }
     // If the ownership of |r| is not transferred in DispatchLocked() due to
@@ -56,10 +82,13 @@ public:
     // in deadlocks.
   }
 
+  // Prevent a GCC warning about the other overload of Dispatch being hidden.
+  using AbstractThread::Dispatch;
+
   // Puts the queue in a shutdown state and returns immediately. The queue will
   // remain alive at least until all the events are drained, because the Runners
   // hold a strong reference to the task queue, and one of them is always held
-  // by the threadpool event queue when the task queue is non-empty.
+  // by the target event queue when the task queue is non-empty.
   //
   // The returned promise is resolved when the queue goes empty.
   RefPtr<ShutdownPromise> BeginShutdown();
@@ -72,10 +101,15 @@ public:
   void AwaitShutdownAndIdle();
 
   bool IsEmpty();
+  uint32_t ImpreciseLengthForHeuristics();
 
   // Returns true if the current thread is currently running a Runnable in
   // the task queue.
   bool IsCurrentThreadIn() override;
+
+  // Create a new nsIEventTarget wrapper object that dispatches to this
+  // TaskQueue.
+  already_AddRefed<nsISerialEventTarget> WrapAsEventTarget();
 
 protected:
   virtual ~TaskQueue();
@@ -86,10 +120,7 @@ protected:
   // mQueueMonitor must be held.
   void AwaitIdleLocked();
 
-  enum DispatchMode { AbortIfFlushing, IgnoreFlushing };
-
   nsresult DispatchLocked(nsCOMPtr<nsIRunnable>& aRunnable,
-                          DispatchMode aMode,
                           DispatchFailureHandling aFailureHandling,
                           DispatchReason aReason = NormalDispatch);
 
@@ -98,11 +129,11 @@ protected:
     mQueueMonitor.AssertCurrentThreadOwns();
     if (mIsShutdown && !mIsRunning) {
       mShutdownPromise.ResolveIfExists(true, __func__);
-      mPool = nullptr;
+      mTarget = nullptr;
     }
   }
 
-  RefPtr<SharedThreadPool> mPool;
+  nsCOMPtr<nsIEventTarget> mTarget;
 
   // Monitor that protects the queue and mIsRunning;
   Monitor mQueueMonitor;
@@ -118,7 +149,7 @@ protected:
   // The thread can't die while we're running in it, and we only use it for
   // pointer-comparison with the current thread anyway - so we make it atomic
   // and don't refcount it.
-  Atomic<nsIThread*> mRunningThread;
+  Atomic<PRThread*> mRunningThread;
 
   // RAII class that gets instantiated for each dispatched task.
   class AutoTaskGuard : public AutoTaskDispatcher
@@ -126,37 +157,39 @@ protected:
   public:
     explicit AutoTaskGuard(TaskQueue* aQueue)
       : AutoTaskDispatcher(/* aIsTailDispatcher = */ true), mQueue(aQueue)
+      , mLastCurrentThread(nullptr)
     {
       // NB: We don't hold the lock to aQueue here. Don't do anything that
       // might require it.
       MOZ_ASSERT(!mQueue->mTailDispatcher);
       mQueue->mTailDispatcher = this;
 
-      MOZ_ASSERT(sCurrentThreadTLS.get() == nullptr);
+      mLastCurrentThread = sCurrentThreadTLS.get();
       sCurrentThreadTLS.set(aQueue);
 
       MOZ_ASSERT(mQueue->mRunningThread == nullptr);
-      mQueue->mRunningThread = NS_GetCurrentThread();
+      mQueue->mRunningThread = GetCurrentPhysicalThread();
     }
 
     ~AutoTaskGuard()
     {
       DrainDirectTasks();
 
-      MOZ_ASSERT(mQueue->mRunningThread == NS_GetCurrentThread());
+      MOZ_ASSERT(mQueue->mRunningThread == GetCurrentPhysicalThread());
       mQueue->mRunningThread = nullptr;
 
-      sCurrentThreadTLS.set(nullptr);
+      sCurrentThreadTLS.set(mLastCurrentThread);
       mQueue->mTailDispatcher = nullptr;
     }
 
   private:
   TaskQueue* mQueue;
+  AbstractThread* mLastCurrentThread;
   };
 
   TaskDispatcher* mTailDispatcher;
 
-  // True if we've dispatched an event to the pool to execute events from
+  // True if we've dispatched an event to the target to execute events from
   // the queue.
   bool mIsRunning;
 
@@ -164,16 +197,17 @@ protected:
   bool mIsShutdown;
   MozPromiseHolder<ShutdownPromise> mShutdownPromise;
 
-  // True if we're flushing; we reject new tasks if we're flushing.
-  bool mIsFlushing;
+  // The name of this TaskQueue. Useful when debugging dispatch failures.
+  const char* const mName;
 
   class Runner : public Runnable {
   public:
     explicit Runner(TaskQueue* aQueue)
-      : mQueue(aQueue)
+      : Runnable("TaskQueue::Runner")
+      , mQueue(aQueue)
     {
     }
-    NS_METHOD Run() override;
+    NS_IMETHOD Run() override;
   private:
     RefPtr<TaskQueue> mQueue;
   };

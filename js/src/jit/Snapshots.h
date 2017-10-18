@@ -8,6 +8,7 @@
 #define jit_Snapshot_h
 
 #include "mozilla/Alignment.h"
+#include "mozilla/Attributes.h"
 
 #include "jsalloc.h"
 #include "jsbytecode.h"
@@ -504,23 +505,28 @@ class SnapshotReader
     }
 };
 
-class RInstructionStorage
+class MOZ_NON_PARAM RInstructionStorage
 {
-    static const size_t Size = 4 * sizeof(uint32_t);
-    mozilla::AlignedStorage<Size> mem;
+    static constexpr size_t Size = 4 * sizeof(uint32_t);
+
+    // This presumes all RInstructionStorage are safely void*-alignable.
+    // RInstruction::readRecoverData asserts that no RInstruction subclass
+    // has stricter alignment requirements than RInstructionStorage.
+    static constexpr size_t Alignment = alignof(void*);
+
+    alignas(Alignment) unsigned char mem[Size];
 
   public:
-    const void* addr() const { return mem.addr(); }
-    void* addr() { return mem.addr(); }
+    const void* addr() const { return mem; }
+    void* addr() { return mem; }
 
     RInstructionStorage() = default;
 
-    RInstructionStorage(const RInstructionStorage& other) {
-        memcpy(addr(), other.addr(), Size);
-    }
-    void operator=(const RInstructionStorage& other) {
-        memcpy(addr(), other.addr(), Size);
-    }
+    // Making a copy of raw bytes holding a RInstruction instance would be a
+    // strict aliasing violation: see bug 1269319 for an instance of bytewise
+    // copying having caused crashes.
+    RInstructionStorage(const RInstructionStorage&) = delete;
+    RInstructionStorage& operator=(const RInstructionStorage& other) = delete;
 };
 
 class RInstruction;
@@ -549,6 +555,8 @@ class RecoverReader
 
   public:
     RecoverReader(SnapshotReader& snapshot, const uint8_t* recovers, uint32_t size);
+    explicit RecoverReader(const RecoverReader& rr);
+    RecoverReader& operator=(const RecoverReader& rr);
 
     uint32_t numInstructions() const {
         return numInstructions_;

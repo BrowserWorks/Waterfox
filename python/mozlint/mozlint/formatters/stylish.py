@@ -32,14 +32,31 @@ class NullTerminal(object):
 class StylishFormatter(object):
     """Formatter based on the eslint default."""
 
+    # Colors later on in the list are fallbacks in case the terminal
+    # doesn't support colors earlier in the list.
+    # See http://www.calmar.ws/vim/256-xterm-24bit-rgb-color-chart.html
+    _colors = {
+        'grey': [247, 8, 7],
+        'red': [1],
+        'yellow': [3],
+        'brightred': [9, 1],
+        'brightyellow': [11, 3],
+    }
     fmt = "  {c1}{lineno}{column}  {c2}{level}{normal}  {message}  {c1}{rule}({linter}){normal}"
-    fmt_summary = "{t.bold}{c}\u2716 {problem} ({error}, {warning}){t.normal}"
+    fmt_summary = "{t.bold}{c}\u2716 {problem} ({error}, {warning}{failure}){t.normal}"
 
     def __init__(self, disable_colors=None):
         if disable_colors or not blessings:
             self.term = NullTerminal()
         else:
             self.term = blessings.Terminal()
+        self.num_colors = self.term.number_of_colors
+
+    def color(self, color):
+        for num in self._colors[color]:
+            if num < self.num_colors:
+                return self.term.color(num)
+        return ''
 
     def _reset_max(self):
         self.max_lineno = 0
@@ -60,8 +77,9 @@ class StylishFormatter(object):
             s += 's'
         return str(num) + ' ' + s
 
-    def __call__(self, result):
+    def __call__(self, result, failed=None, **kwargs):
         message = []
+        failed = failed or []
 
         num_errors = 0
         num_warnings = 0
@@ -81,8 +99,8 @@ class StylishFormatter(object):
             for err in errors:
                 message.append(self.fmt.format(
                     normal=self.term.normal,
-                    c1=self.term.color(8),
-                    c2=self.term.color(1) if err.level == 'error' else self.term.color(3),
+                    c1=self.color('grey'),
+                    c2=self.color('red') if err.level == 'error' else self.color('yellow'),
                     lineno=str(err.lineno).rjust(self.max_lineno),
                     column=(":" + str(err.column).ljust(self.max_column)) if err.column else "",
                     level=err.level.ljust(self.max_level),
@@ -93,13 +111,21 @@ class StylishFormatter(object):
 
             message.append('')  # newline
 
+        # If there were failures, make it clear which linters failed
+        for fail in failed:
+            message.append("{c}A failure occured in the {name} linter.".format(
+                c=self.color('brightred'),
+                name=fail,
+            ))
+
         # Print a summary
         message.append(self.fmt_summary.format(
             t=self.term,
-            c=self.term.color(9) if num_errors else self.term.color(11),
-            problem=self._pluralize('problem', num_errors + num_warnings),
+            c=self.color('brightred') if num_errors or failed else self.color('brightyellow'),
+            problem=self._pluralize('problem', num_errors + num_warnings + len(failed)),
             error=self._pluralize('error', num_errors),
             warning=self._pluralize('warning', num_warnings),
+            failure=', {}'.format(self._pluralize('failure', len(failed))) if failed else '',
         ))
 
         return '\n'.join(message)

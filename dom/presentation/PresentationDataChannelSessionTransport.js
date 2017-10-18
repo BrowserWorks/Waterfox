@@ -27,7 +27,7 @@ function PresentationDataChannelDescription(aDataChannelSDP) {
 PresentationDataChannelDescription.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationChannelDescription]),
   get type() {
-    return nsIPresentationChannelDescription.TYPE_DATACHANNEL;
+    return Ci.nsIPresentationChannelDescription.TYPE_DATACHANNEL;
   },
   get tcpAddress() {
     return null;
@@ -48,7 +48,8 @@ function PresentationTransportBuilder() {
 PresentationTransportBuilder.prototype = {
   classID: PRESENTATIONTRANSPORTBUILDER_CID,
   contractID: PRESENTATIONTRANSPORTBUILDER_CONTRACTID,
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationDataChannelSessionTransportBuilder,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationSessionTransportBuilder,
+                                         Ci.nsIPresentationDataChannelSessionTransportBuilder,
                                          Ci.nsITimerCallback]),
 
   buildDataChannelTransport: function(aRole, aWindow, aListener) {
@@ -77,6 +78,10 @@ PresentationTransportBuilder.prototype = {
 
     this._peerConnection.onnegotiationneeded = () => {
       log("onnegotiationneeded with role " + this._role);
+      if (!this._peerConnection) {
+        log("ignoring negotiationneeded without PeerConnection");
+        return;
+      }
       this._peerConnection.createOffer()
           .then(aOffer => this._peerConnection.setLocalDescription(aOffer))
           .then(() => this._listener
@@ -93,6 +98,8 @@ PresentationTransportBuilder.prototype = {
       case Ci.nsIPresentationService.ROLE_RECEIVER:
         this._peerConnection.ondatachannel = aEvent => {
           this._dataChannel = aEvent.channel;
+          // Ensure the binaryType of dataChannel is blob.
+          this._dataChannel.binaryType = "blob";
           this._setDataChannel();
         }
         break;
@@ -102,13 +109,7 @@ PresentationTransportBuilder.prototype = {
 
     // TODO bug 1228235 we should have a way to let device providers customize
     // the time-out duration.
-    let timeout;
-    try {
-      timeout = Services.prefs.getIntPref("presentation.receiver.loading.timeout");
-    } catch (e) {
-      // This happens if the pref doesn't exist, so we have a default value.
-      timeout = 10000;
-    }
+    let timeout = Services.prefs.getIntPref("presentation.receiver.loading.timeout", 10000);
 
     // The timer is to check if the negotiation finishes on time.
     this._timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -133,7 +134,9 @@ PresentationTransportBuilder.prototype = {
       // Handoff the ownership of _peerConnection and _dataChannel to
       // _sessionTransport
       this._sessionTransport = new PresentationTransport();
-      this._sessionTransport.init(this._peerConnection, this._dataChannel);
+      this._sessionTransport.init(this._peerConnection, this._dataChannel, this._window);
+      this._peerConnection.onicecandidate = null;
+      this._peerConnection.onnegotiationneeded = null;
       this._peerConnection = this._dataChannel = null;
 
       this._listener.onSessionTransport(this._sessionTransport);
@@ -217,6 +220,10 @@ PresentationTransportBuilder.prototype = {
 
   onIceCandidate: function(aCandidate) {
     log("onIceCandidate: " + aCandidate + " with role " + this._role);
+    if (!this._window || !this._peerConnection) {
+      log("ignoring ICE candidate after connection");
+      return;
+    }
     let candidate = new this._window.RTCIceCandidate(JSON.parse(aCandidate));
     this._peerConnection.addIceCandidate(candidate).catch(e => this._reportError(e));
   },
@@ -242,11 +249,12 @@ PresentationTransport.prototype = {
   contractID: PRESENTATIONTRANSPORT_CONTRACTID,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationSessionTransport]),
 
-  init: function(aPeerConnection, aDataChannel) {
+  init: function(aPeerConnection, aDataChannel, aWindow) {
     log("initWithDataChannel");
     this._enableDataNotification = false;
     this._dataChannel = aDataChannel;
     this._peerConnection = aPeerConnection;
+    this._window = aWindow;
 
     this._dataChannel.onopen = () => {
       log("data channel reopen. Should never touch here");
@@ -268,7 +276,7 @@ PresentationTransport.prototype = {
         this._messageQueue.push(aEvent.data);
         return;
       }
-      this._callback.notifyData(aEvent.data);
+      this._doNotifyData(aEvent.data);
     };
 
     this._dataChannel.onerror = aError => {
@@ -298,6 +306,23 @@ PresentationTransport.prototype = {
     this._dataChannel.send(aData);
   },
 
+  sendBinaryMsg: function(aData) {
+    log("sendBinaryMsg");
+
+    let array = new Uint8Array(aData.length);
+    for (let i = 0; i < aData.length; i++) {
+      array[i] = aData.charCodeAt(i);
+    }
+
+    this._dataChannel.send(array);
+  },
+
+  sendBlob: function(aBlob) {
+    log("sendBlob");
+
+    this._dataChannel.send(aBlob);
+  },
+
   enableDataNotification: function() {
     log("enableDataNotification");
     if (this._enableDataNotification) {
@@ -310,7 +335,7 @@ PresentationTransport.prototype = {
 
     this._enableDataNotification = true;
 
-    this._messageQueue.forEach(aData => this._callback.notifyData(aData));
+    this._messageQueue.forEach(aData => this._doNotifyData(aData));
     this._messageQueue = [];
   },
 
@@ -329,6 +354,23 @@ PresentationTransport.prototype = {
     }
     this._callback = null;
     this._messageQueue = [];
+    this._window = null;
+  },
+
+  _doNotifyData: function(aData) {
+    if (!this._callback) {
+      throw NS_ERROR_NOT_AVAILABLE;
+    }
+
+    if (aData instanceof this._window.Blob) {
+      let reader = new this._window.FileReader();
+      reader.addEventListener("load", (aEvent) => {
+        this._callback.notifyData(aEvent.target.result, true);
+      });
+      reader.readAsBinaryString(aData);
+    } else {
+      this._callback.notifyData(aData, false);
+    }
   },
 };
 

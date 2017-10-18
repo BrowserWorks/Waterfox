@@ -3,10 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@import url(variables.css);
-@import url(common.css);
-@import url(toolbars.css);
-@import url(tooltips.css);
+@import url(resource://devtools/client/themes/variables.css);
+@import url(resource://devtools/client/themes/common.css);
+@import url(chrome://devtools/skin/toolbars.css);
+@import url(chrome://devtools/skin/tooltips.css);
 
 body {
   margin: 0;
@@ -208,11 +208,11 @@ body {
 }
 
 .cm-s-mozilla.CodeMirror-focused .CodeMirror-selected { /* selected text (focused) */
-  background: rgb(185, 215, 253);
+  background: rgb(77, 86, 103);
 }
 
 .cm-s-mozilla .CodeMirror-selected { /* selected text (unfocused) */
-  background: rgb(176, 176, 176);
+  background: rgb(77, 86, 103);
 }
 
 .cm-s-mozilla .CodeMirror-activeline-background { /* selected color with alpha */
@@ -256,51 +256,7 @@ div.CodeMirror span.eval-text {
   min-height: 1.4em;
 }
 
-/* Twisty and checkbox controls */
-.theme-twisty, .theme-checkbox {
-  width: 14px;
-  height: 14px;
-  background-repeat: no-repeat;
-  background-image: url("chrome://devtools/skin/images/controls.png");
-  background-size: 56px 28px;
-}
-
-.theme-twisty {
-  cursor: pointer;
-  background-position: -28px -14px;
-}
-
-.theme-twisty:-moz-focusring {
-  outline-style: none;
-}
-
-.theme-twisty[open], .theme-twisty.open  {
-  background-position: -42px -14px;
-}
-
-.theme-twisty[invisible] {
-  visibility: hidden;
-}
-
-.theme-checkbox {
-  display: inline-block;
-  border: 0;
-  padding: 0;
-  outline: none;
-  background-position: -28px 0;
-}
-
-.theme-checkbox[checked] {
-  background-position: -42px 0;
-}
-
-@media (min-resolution: 1.1dppx) {
-  .theme-twisty, .theme-checkbox {
-    background-image: url("chrome://devtools/skin/images/controls@2x.png");
-  }
-}
-
-/* XUL panel styling (see devtools/client/shared/widgets/Tooltip.js) */
+/* XUL panel styling (see devtools/client/shared/widgets/tooltip/Tooltip.js) */
 
 .theme-tooltip-panel .panel-arrowcontent {
   padding: 5px;

@@ -283,7 +283,7 @@ function pageEventListener(event) {
   // doPageNavigation() to return.
   if ((typeof(gExpectedEvents) == "undefined") && event.type == "pageshow")
   {
-    setTimeout(function() { gFinalEvent = true; }, 0);
+    waitForNextPaint(function() { gFinalEvent = true; });
     return;
   }
   
@@ -332,7 +332,7 @@ function pageEventListener(event) {
 
   // If we're out of expected events, let doPageNavigation() return.
   if (gExpectedEvents.length == 0)
-    setTimeout(function() { gFinalEvent = true; }, 0);
+    waitForNextPaint(function() { gFinalEvent = true; });
 }
 
 /**
@@ -362,9 +362,7 @@ function finish() {
   ww.registerNotification(function(subject, topic, data) {
     if (topic == "domwindowclosed") {
       ww.unregisterNotification(arguments.callee);
-      SimpleTest.waitForFocus(function() {
-        SimpleTest.finish();
-      }, opener);
+      SimpleTest.waitForFocus(SimpleTest.finish, opener);
     }
   });
 
@@ -417,6 +415,10 @@ function waitForTrue(fn, onWaitComplete, timeout) {
           onWaitComplete.call();          
         } 
       }, 20);
+}
+
+function waitForNextPaint(cb) {
+  requestAnimationFrame(_ => requestAnimationFrame(cb));
 }
 
 /**

@@ -56,13 +56,13 @@ function* simpleCaptureTest() {
     }
   }
 
-  Services.obs.addObserver(observe, "page-thumbnail:create", false);
+  Services.obs.addObserver(observe, "page-thumbnail:create");
   // Create a tab - we don't care what the content is.
   yield addTab(URL);
   let browser = gBrowser.selectedBrowser;
 
   // Capture the screenshot.
-  PageThumbs.captureAndStore(browser, function () {
+  PageThumbs.captureAndStore(browser, function() {
     // We've got a capture so should have seen the observer.
     is(numNotifications, 1, "got notification of item being created.");
     // The capture is now "fresh" - so requesting the URL should not cause
@@ -100,8 +100,8 @@ function* capIfStaleErrorResponseUpdateTest() {
   let now = Date.now() - 1000 ;
   PageThumbs.captureAndStoreIfStale(gBrowser.selectedBrowser, () => {
     ok(getThumbnailModifiedTime(URL) < now, "modified time should be < now");
-    retrieveImageDataForURL(URL, function ([r, g, b]) {
-      is("" + [r,g,b], "" + [0, 255, 0], "thumbnail is still green");
+    retrieveImageDataForURL(URL, function([r, g, b]) {
+      is("" + [r, g, b], "" + [0, 255, 0], "thumbnail is still green");
       gBrowser.removeTab(gBrowser.selectedTab);
       next();
     });
@@ -132,8 +132,8 @@ function* capIfStaleGoodResponseUpdateTest() {
     ok(getThumbnailModifiedTime(URL) >= now, "modified time should be >= now");
     // the captureAndStoreIfStale request saw a 200 response with the red body,
     // so we expect to see the red version here.
-    retrieveImageDataForURL(URL, function ([r, g, b]) {
-      is("" + [r,g,b], "" + [255, 0, 0], "thumbnail is now red");
+    retrieveImageDataForURL(URL, function([r, g, b]) {
+      is("" + [r, g, b], "" + [255, 0, 0], "thumbnail is now red");
       next();
     });
   });

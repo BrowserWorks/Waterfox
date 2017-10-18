@@ -14,6 +14,7 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.skin.SkinConfig;
 import org.mozilla.gecko.widget.themed.ThemedImageView;
 
 import android.content.Context;
@@ -21,6 +22,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -57,15 +59,34 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
         focusOrder.addAll(Arrays.asList(tabsButton, menuButton));
 
         roundCornerShape = new Path();
-        roundCornerShape.moveTo(0, 0);
-        roundCornerShape.lineTo(30, 0);
-        roundCornerShape.cubicTo(0, 0, 0, 0, 0, 30);
-        roundCornerShape.lineTo(0, 0);
+        updateRoundCornerShape();
 
         roundCornerPaint = new Paint();
         roundCornerPaint.setAntiAlias(true);
         roundCornerPaint.setColor(ContextCompat.getColor(context, R.color.text_and_tabs_tray_grey));
         roundCornerPaint.setStrokeWidth(0.0f);
+    }
+
+    private void updateRoundCornerShape() {
+        roundCornerShape.reset();
+        if (ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+            int right = getRight();
+            roundCornerShape.moveTo(right, 0);
+            roundCornerShape.lineTo(right - 30, 0);
+            roundCornerShape.cubicTo(right, 0, right, 0, right, 30);
+            roundCornerShape.lineTo(right, 0);
+        } else {
+            roundCornerShape.moveTo(0, 0);
+            roundCornerShape.lineTo(30, 0);
+            roundCornerShape.cubicTo(0, 0, 0, 0, 0, 30);
+            roundCornerShape.lineTo(0, 0);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        updateRoundCornerShape();
     }
 
     @Override
@@ -118,8 +139,11 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
     public void draw(final Canvas canvas) {
         super.draw(canvas);
 
-        if (uiMode == UIMode.DISPLAY) {
-            canvas.drawPath(roundCornerShape, roundCornerPaint);
+        // bug 1375351: Only draw curve in Australis flavor
+        if (SkinConfig.isAustralis()) {
+            if (uiMode == UIMode.DISPLAY) {
+                canvas.drawPath(roundCornerShape, roundCornerPaint);
+            }
         }
     }
 
@@ -127,7 +151,13 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
     public void triggerTabsPanelTransition(final PropertyAnimator animator, final boolean areTabsShown) {
         if (areTabsShown) {
             ViewHelper.setAlpha(tabsCounter, 0.0f);
-            ViewHelper.setAlpha(menuIcon, 0.0f);
+
+            // bug 1375351: menuIcon only exists in Australis flavor
+            if (SkinConfig.isAustralis()) {
+                ViewHelper.setAlpha(menuIcon, 0.0f);
+            } else {
+                ViewHelper.setAlpha(menuButton, 0.0f);
+            }
             return;
         }
 
@@ -136,9 +166,18 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
         buttonsAnimator.attach(tabsCounter,
                                PropertyAnimator.Property.ALPHA,
                                1.0f);
-        buttonsAnimator.attach(menuIcon,
-                               PropertyAnimator.Property.ALPHA,
-                               1.0f);
+
+        // bug 1375351: menuIcon only exists in Australis flavor
+        if (SkinConfig.isAustralis()) {
+            buttonsAnimator.attach(menuIcon,
+                    PropertyAnimator.Property.ALPHA,
+                    1.0f);
+        } else {
+            buttonsAnimator.attach(menuButton,
+                    PropertyAnimator.Property.ALPHA,
+                    1.0f);
+        }
+
         buttonsAnimator.start();
     }
 
@@ -151,11 +190,19 @@ abstract class BrowserToolbarPhoneBase extends BrowserToolbar {
         // Find the distance from the right-edge of the url bar (where we're translating from) to
         // the left-edge of the cancel button (where we're translating to; note that the cancel
         // button must be laid out, i.e. not View.GONE).
-        return editCancel.getLeft() - urlBarEntry.getRight();
+        if (ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+            return editCancel.getRight() - urlBarEntry.getLeft();
+        } else {
+            return editCancel.getLeft() - urlBarEntry.getRight();
+        }
     }
 
     protected int getUrlBarCurveTranslation() {
-        return getWidth() - tabsButton.getLeft();
+        if (ViewCompat.getLayoutDirection(this) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+            return 0 - tabsButton.getRight();
+        } else {
+            return getWidth() - tabsButton.getLeft();
+        }
     }
 
     protected void updateTabCountAndAnimate(final int count) {

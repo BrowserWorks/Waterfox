@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * This Original Code has been modified by IBM Corporation. Modifications made by IBM 
+ * This Original Code has been modified by IBM Corporation. Modifications made by IBM
  * described herein are Copyright (c) International Business Machines Corporation, 2000.
  * Modifications to Mozilla code or documentation identified per MPL Section 3.3
  *
@@ -68,7 +68,7 @@ class nsPropertyTable
    * Get the value of the property |aPropertyName| for node |aObject|.
    * |aResult|, if supplied, is filled in with a return status code.
    **/
-  void* GetProperty(nsPropertyOwner aObject,
+  void* GetProperty(const nsPropertyOwner& aObject,
                     nsIAtom    *aPropertyName,
                     nsresult   *aResult = nullptr)
   {
@@ -92,7 +92,7 @@ class nsPropertyTable
    * table changes too). If |aTransfer| is false the property will just be
    * deleted instead.
    */
-  nsresult SetProperty(nsPropertyOwner     aObject,
+  nsresult SetProperty(const nsPropertyOwner&     aObject,
                                    nsIAtom            *aPropertyName,
                                    void               *aPropertyValue,
                                    NSPropertyDtorFunc  aDtor,
@@ -116,7 +116,7 @@ class nsPropertyTable
    * |aObject|, but do not call the property's destructor function.  The
    * property value is returned.
    */
-  void* UnsetProperty(nsPropertyOwner aObject,
+  void* UnsetProperty(const nsPropertyOwner& aObject,
                       nsIAtom    *aPropertyName,
                       nsresult   *aStatus = nullptr)
   {
@@ -161,7 +161,7 @@ class nsPropertyTable
    */
   void DeleteAllProperties();
 
-  nsPropertyTable() : mPropertyList(nullptr) {}  
+  nsPropertyTable() : mPropertyList(nullptr) {}
   ~nsPropertyTable() {
     DeleteAllProperties();
   }

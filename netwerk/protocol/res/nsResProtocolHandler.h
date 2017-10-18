@@ -13,6 +13,8 @@
 #include "nsWeakReference.h"
 #include "nsStandardURL.h"
 
+class nsISubstitutionObserver;
+
 struct SubstitutionMapping;
 class nsResProtocolHandler final : public nsIResProtocolHandler,
                                    public mozilla::SubstitutingProtocolHandler,
@@ -29,7 +31,7 @@ public:
                                     /* aEnforceFileOrJar = */ false)
     {}
 
-    nsresult Init();
+    MOZ_MUST_USE nsresult Init();
 
     NS_IMETHOD SetSubstitution(const nsACString& aRoot, nsIURI* aBaseURI) override;
 
@@ -48,14 +50,24 @@ public:
         return mozilla::SubstitutingProtocolHandler::ResolveURI(aResURI, aResult);
     }
 
+    NS_IMETHOD AddObserver(nsISubstitutionObserver *aObserver) override
+    {
+        return mozilla::SubstitutingProtocolHandler::AddObserver(aObserver);
+    }
+
+    NS_IMETHOD RemoveObserver(nsISubstitutionObserver *aObserver) override
+    {
+        return mozilla::SubstitutingProtocolHandler::RemoveObserver(aObserver);
+    }
+
 protected:
-    nsresult GetSubstitutionInternal(const nsACString& aRoot, nsIURI** aResult) override;
+    MOZ_MUST_USE nsresult GetSubstitutionInternal(const nsACString& aRoot, nsIURI** aResult) override;
     virtual ~nsResProtocolHandler() {}
 
-    bool ResolveSpecialCases(const nsACString& aHost,
-                             const nsACString& aPath,
-                             const nsACString& aPathname,
-                             nsACString& aResult) override;
+    MOZ_MUST_USE bool ResolveSpecialCases(const nsACString& aHost,
+                                          const nsACString& aPath,
+                                          const nsACString& aPathname,
+                                          nsACString& aResult) override;
 
 private:
     nsCString mAppURI;

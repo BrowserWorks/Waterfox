@@ -5,18 +5,22 @@
 </head>
 <body>
 <pre id="test">
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
   createHTML({
     bug: "1244913",
     title: "Scale resolution down on a PeerConnection",
     visible: true
   });
 
+  const pushPrefs = (...p) => SpecialPowers.pushPrefEnv({set: p});
+
   var mustRejectWith = (msg, reason, f) =>
     f().then(() => ok(false, msg),
              e => is(e.name, reason, msg));
 
-  var removeVP8 = d => (d.sdp = d.sdp.replace("a=rtpmap:120 VP8/90000\r\n", ""), d);
+  var removeAllButCodec = (d, codec) =>
+    (d.sdp = d.sdp.replace(/m=video (\w) UDP\/TLS\/RTP\/SAVPF \w.*\r\n/,
+                           "m=video $1 UDP/TLS/RTP/SAVPF " + codec + "\r\n"), d);
 
   function testScale(codec) {
     var pc1 = new RTCPeerConnection();
@@ -30,7 +34,7 @@
 
     pc1.onnegotiationneeded = e =>
       pc1.createOffer()
-      .then(d => pc1.setLocalDescription(codec == "VP8" ? d : removeVP8(d)))
+      .then(d => pc1.setLocalDescription(codec == "VP8" ? d : removeAllButCodec(d, 126)))
       .then(() => pc2.setRemoteDescription(pc1.localDescription))
       .then(() => pc2.createAnswer()).then(d => pc2.setLocalDescription(d))
       .then(() => pc1.setRemoteDescription(pc2.localDescription))
@@ -75,8 +79,15 @@
     .catch(generateErrorCallback());
   }
 
-  runNetworkTest(() => testScale("VP8").then(() => testScale("H264"))
-                 .then(networkTestFinished));
+  pushPrefs(['media.peerconnection.video.lock_scaling', true]).then(() => {
+    if (!navigator.appVersion.includes("Android")) {
+      runNetworkTest(() => testScale("VP8").then(() => testScale("H264"))
+                    .then(networkTestFinished));
+    } else {
+      // No support for H.264 on Android in automation, see Bug 1355786
+      runNetworkTest(() => testScale("VP8").then(networkTestFinished));
+    }
+  });
 </script>
 </pre>
 </body>

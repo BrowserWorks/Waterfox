@@ -5,9 +5,7 @@
 // Tests that the eula is shown correctly for search results
 
 var gManagerWindow;
-var gCategoryUtilities;
 
-var gApp = document.getElementById("bundle_brand").getString("brandShortName");
 var gSearchCount = 0;
 
 function test() {
@@ -18,9 +16,8 @@ function test() {
   Services.prefs.setIntPref(PREF_SEARCH_MAXRESULTS, 15);
   Services.prefs.setCharPref("extensions.getAddons.search.url", TESTROOT + "browser_eula.xml");
 
-  open_manager(null, function(aWindow) {
+  open_manager("addons://list/extension", function(aWindow) {
     gManagerWindow = aWindow;
-    gCategoryUtilities = new CategoryUtilities(gManagerWindow);
     run_next_test();
   });
 }
@@ -53,9 +50,9 @@ function installSearchResult(aCallback) {
     EventUtils.synthesizeMouseAtCenter(get_node(status, "install-remote-btn"), {}, gManagerWindow);
 
     item.mInstall.addListener({
-      onInstallEnded: function() {
+      onInstallEnded() {
         executeSoon(aCallback);
-      }
+      },
     });
   });
 }

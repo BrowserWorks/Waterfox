@@ -42,7 +42,7 @@ class TestShellCommandParent : public PTestShellCommandParent
 public:
   TestShellCommandParent() {}
 
-  bool SetCallback(JSContext* aCx, JS::Value aCallback);
+  bool SetCallback(JSContext* aCx, const JS::Value& aCallback);
 
   bool RunCallback(const nsString& aResponse);
 
@@ -53,8 +53,11 @@ protected:
 
   void ActorDestroy(ActorDestroyReason why);
 
-  bool Recv__delete__(const nsString& aResponse) {
-    return ExecuteCallback(aResponse);
+  mozilla::ipc::IPCResult Recv__delete__(const nsString& aResponse) {
+    if (!ExecuteCallback(aResponse)) {
+      return IPC_FAIL_NO_REASON(this);
+    }
+    return IPC_OK();
   }
 
 private:

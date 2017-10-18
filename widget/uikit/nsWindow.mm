@@ -33,7 +33,7 @@
 
 #include "mozilla/BasicEvents.h"
 #include "mozilla/TouchEvents.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "GeckoProfiler.h"
 
@@ -270,16 +270,14 @@ private:
 - (void)drawUsingOpenGL
 {
     ALOG("drawUsingOpenGL");
-  PROFILER_LABEL("ChildView", "drawUsingOpenGL",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("ChildView::drawUsingOpenGL", GRAPHICS);
 
   if (!mGeckoChild->IsVisible())
     return;
 
   mWaitingForPaint = NO;
 
-  LayoutDeviceIntRect geckoBounds;
-  mGeckoChild->GetBounds(geckoBounds);
+  LayoutDeviceIntRect geckoBounds = mGeckoChild->GetBounds();
   LayoutDeviceIntRegion region(geckoBounds);
 
   mGeckoChild->PaintWindow(region);
@@ -305,8 +303,7 @@ private:
 - (void)drawRect:(CGRect)aRect inContext:(CGContextRef)aContext
 {
 #ifdef DEBUG_UPDATE
-  LayoutDeviceIntRect geckoBounds;
-  mGeckoChild->GetBounds(geckoBounds);
+  LayoutDeviceIntRect geckoBounds = mGeckoChild->GetBounds();
 
   fprintf (stderr, "---- Update[%p][%p] [%f %f %f %f] cgc: %p\n  gecko bounds: [%d %d %d %d]\n",
            self, mGeckoChild,
@@ -328,8 +325,7 @@ private:
     [self drawUsingOpenGL];
     return;
   }
-  PROFILER_LABEL("ChildView", "drawRect",
-    js::ProfileEntry::Category::GRAPHICS);
+  AUTO_PROFILER_LABEL("ChildView::drawRect", GRAPHICS);
 
   // The CGContext that drawRect supplies us with comes with a transform that
   // scales one user space unit to one Cocoa point, which can consist of
@@ -354,16 +350,7 @@ private:
   RefPtr<gfxQuartzSurface> targetSurface;
 
   RefPtr<gfxContext> targetContext;
-  if (gfxPlatform::GetPlatform()->SupportsAzureContentForType(gfx::BackendType::COREGRAPHICS)) {
-    RefPtr<gfx::DrawTarget> dt =
-      gfx::Factory::CreateDrawTargetForCairoCGContext(aContext, backingSize);
-    if (!dt || !dt->IsValid()) {
-        gfxDevCrash(mozilla::gfx::LogReason::InvalidContext) << "Window context problem 1 " << backingSize;
-        return;
-    }
-    dt->AddUserData(&gfxContext::sDontUseAsSourceKey, dt, nullptr);
-    targetContext = gfxContext::CreateOrNull(dt);
-  } else if (gfxPlatform::GetPlatform()->SupportsAzureContentForType(gfx::BackendType::CAIRO)) {
+  if (gfxPlatform::GetPlatform()->SupportsAzureContentForType(gfx::BackendType::CAIRO)) {
     // This is dead code unless you mess with prefs, but keep it around for
     // debugging.
     targetSurface = new gfxQuartzSurface(aContext, backingSize);
@@ -469,7 +456,7 @@ nsWindow::IsTopLevel()
 // nsIWidget
 //
 
-NS_IMETHODIMP
+nsresult
 nsWindow::Create(nsIWidget* aParent,
                  nsNativeWidget aNativeParent,
                  const LayoutDeviceIntRect& aRect,
@@ -530,8 +517,8 @@ nsWindow::Create(nsIWidget* aParent,
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsWindow::Destroy(void)
+void
+nsWindow::Destroy()
 {
     for (uint32_t i = 0; i < mChildren.Length(); ++i) {
         // why do we still have children?
@@ -554,7 +541,7 @@ nsWindow::Destroy(void)
     return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::ConfigureChildren(const nsTArray<nsIWidget::Configuration>& config)
 {
     for (uint32_t i = 0; i < config.Length(); ++i) {
@@ -569,13 +556,7 @@ nsWindow::ConfigureChildren(const nsTArray<nsIWidget::Configuration>& config)
     return NS_OK;
 }
 
-NS_IMETHODIMP
-nsWindow::ReparentNativeWidget(nsIWidget* aNewParent)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
+void
 nsWindow::Show(bool aState)
 {
   if (aState != mVisible) {
@@ -587,28 +568,13 @@ nsWindow::Show(bool aState)
       }
       mVisible = aState;
   }
-  return NS_OK;
 }
 
-NS_IMETHODIMP
-nsWindow::SetModal(bool aModal)
-{
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsWindow::ConstrainPosition(bool aAllowSlop,
-                            int32_t *aX,
-                            int32_t *aY)
-{
-  return NS_OK;
-}
-
-NS_IMETHODIMP
+void
 nsWindow::Move(double aX, double aY)
 {
   if (!mNativeView || (mBounds.x == aX && mBounds.y == aY))
-    return NS_OK;
+    return;
 
   //XXX: handle this
   // The point we have is in Gecko coordinates (origin top-left). Convert
@@ -622,10 +588,9 @@ nsWindow::Move(double aX, double aY)
     [mNativeView setNeedsDisplay];
 
   ReportMoveEvent();
-  return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Resize(double aX, double aY,
                  double aWidth, double aHeight,
                  bool aRepaint)
@@ -633,7 +598,7 @@ nsWindow::Resize(double aX, double aY,
     BOOL isMoving = (mBounds.x != aX || mBounds.y != aY);
     BOOL isResizing = (mBounds.width != aWidth || mBounds.height != aHeight);
     if (!mNativeView || (!isMoving && !isResizing))
-        return NS_OK;
+        return;
 
     if (isMoving) {
         mBounds.x = aX;
@@ -654,14 +619,13 @@ nsWindow::Resize(double aX, double aY,
 
     if (isResizing)
         ReportSizeEvent();
-
-    return NS_OK;
 }
 
-NS_IMETHODIMP nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
+void
+nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
 {
     if (!mNativeView || (mBounds.width == aWidth && mBounds.height == aHeight))
-        return NS_OK;
+        return;
 
     mBounds.width  = aWidth;
     mBounds.height = aHeight;
@@ -672,40 +636,28 @@ NS_IMETHODIMP nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
         [mNativeView setNeedsDisplay];
 
     ReportSizeEvent();
-
-    return NS_OK;
 }
 
-NS_IMETHODIMP
-nsWindow::PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
-                      nsIWidget *aWidget,
-                      bool aActivate)
-{
-  return NS_OK;
-}
-
-NS_IMETHODIMP
+void
 nsWindow::SetSizeMode(nsSizeMode aMode)
 {
     if (aMode == static_cast<int32_t>(mSizeMode)) {
-        return NS_OK;
+        return;
     }
 
-    nsresult rv = NS_OK;
     mSizeMode = static_cast<nsSizeMode>(aMode);
     if (aMode == nsSizeMode_Maximized || aMode == nsSizeMode_Fullscreen) {
         // Resize to fill screen
-        rv = nsBaseWidget::MakeFullScreen(true);
+        nsBaseWidget::InfallibleMakeFullScreen(true);
     }
     ReportSizeModeEvent(aMode);
-    return rv;
 }
 
-NS_IMETHODIMP
+void
 nsWindow::Invalidate(const LayoutDeviceIntRect& aRect)
 {
   if (!mNativeView || !mVisible)
-    return NS_OK;
+    return;
 
   MOZ_RELEASE_ASSERT(GetLayerManager()->GetBackendType() != LayersBackend::LAYERS_CLIENT,
                      "Shouldn't need to invalidate with accelerated OMTC layers!");
@@ -713,11 +665,9 @@ nsWindow::Invalidate(const LayoutDeviceIntRect& aRect)
 
   [mNativeView setNeedsLayout];
   [mNativeView setNeedsDisplayInRect:DevPixelsToUIKitPoints(mBounds, BackingScaleFactor())];
-
-  return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::SetFocus(bool aRaise)
 {
   [[mNativeView window] makeKeyWindow];
@@ -774,23 +724,15 @@ void nsWindow::ReportSizeModeEvent(nsSizeMode aMode)
 void nsWindow::ReportSizeEvent()
 {
     if (mWidgetListener) {
-        LayoutDeviceIntRect innerBounds;
-        GetClientBounds(innerBounds);
+        LayoutDeviceIntRect innerBounds = GetClientBounds();
         mWidgetListener->WindowResized(this, innerBounds.width, innerBounds.height);
     }
 }
 
-NS_IMETHODIMP
-nsWindow::GetScreenBounds(LayoutDeviceIntRect& aRect)
+LayoutDeviceIntRect
+nsWindow::GetScreenBounds()
 {
-    LayoutDeviceIntPoint p = WidgetToScreenOffset();
-
-    aRect.x = p.x;
-    aRect.y = p.y;
-    aRect.width = mBounds.width;
-    aRect.height = mBounds.height;
-
-    return NS_OK;
+    return LayoutDeviceIntRect(WidgetToScreenOffset(), mBounds.Size());
 }
 
 LayoutDeviceIntPoint nsWindow::WidgetToScreenOffset()
@@ -813,7 +755,7 @@ LayoutDeviceIntPoint nsWindow::WidgetToScreenOffset()
     return offset;
 }
 
-NS_IMETHODIMP
+nsresult
 nsWindow::DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                         nsEventStatus& aStatus)
 {
@@ -826,7 +768,7 @@ nsWindow::DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
   return NS_OK;
 }
 
-NS_IMETHODIMP_(void)
+void
 nsWindow::SetInputContext(const InputContext& aContext,
                           const InputContextAction& aAction)
 {
@@ -834,7 +776,7 @@ nsWindow::SetInputContext(const InputContext& aContext,
     mInputContext = aContext;
 }
 
-NS_IMETHODIMP_(mozilla::widget::InputContext)
+mozilla::widget::InputContext
 nsWindow::GetInputContext()
 {
     return mInputContext;

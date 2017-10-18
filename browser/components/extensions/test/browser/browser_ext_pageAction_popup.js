@@ -2,7 +2,9 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* testPageActionPopup() {
+add_task(async function testPageActionPopup() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.com/");
+
   let scriptPage = url => `<html><head><meta charset="utf-8"><script src="${url}"></script></head></html>`;
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -20,7 +22,7 @@ add_task(function* testPageActionPopup() {
       "popup-a.js": function() {
         window.onload = () => {
           let background = window.getComputedStyle(document.body).backgroundColor;
-          browser.test.assertEq("transparent", background);
+          browser.test.assertEq("rgba(0, 0, 0, 0)", background);
           browser.runtime.sendMessage("from-popup-a");
         };
         browser.runtime.onMessage.addListener(msg => {
@@ -37,7 +39,7 @@ add_task(function* testPageActionPopup() {
 
       "data/background.html": scriptPage("background.js"),
 
-      "data/background.js": function() {
+      "data/background.js": async function() {
         let tabId;
 
         let sendClick;
@@ -68,6 +70,12 @@ add_task(function* testPageActionPopup() {
           },
           () => {
             browser.test.sendMessage("next-test", {expectClosed: true});
+          },
+          () => {
+            sendClick({expectEvent: false, expectPopup: "a", runNextTest: true});
+          },
+          () => {
+            browser.test.sendMessage("next-test", {closeOnTabSwitch: true});
           },
         ];
 
@@ -107,7 +115,7 @@ add_task(function* testPageActionPopup() {
           browser.test.sendMessage("next-test");
         });
 
-        browser.test.onMessage.addListener((msg) => {
+        browser.test.onMessage.addListener(msg => {
           if (msg == "close-popup") {
             browser.runtime.sendMessage("close-popup");
             return;
@@ -125,36 +133,48 @@ add_task(function* testPageActionPopup() {
           }
         });
 
-        browser.tabs.query({active: true, currentWindow: true}, tabs => {
-          tabId = tabs[0].id;
+        let [tab] = await browser.tabs.query({active: true, currentWindow: true});
+        tabId = tab.id;
 
-          browser.pageAction.show(tabId).then(() => {
-            browser.test.sendMessage("next-test");
-          });
-        });
+        await browser.pageAction.show(tabId);
+        browser.test.sendMessage("next-test");
       },
     },
   });
-
-  let pageActionId = makeWidgetId(extension.id) + "-page-action";
-  let panelId = makeWidgetId(extension.id) + "-panel";
 
   extension.onMessage("send-click", () => {
     clickPageAction(extension);
   });
 
-  extension.onMessage("next-test", Task.async(function* (expecting = {}) {
+  let pageActionId, panelId;
+  extension.onMessage("next-test", async function(expecting = {}) {
+    pageActionId = `${makeWidgetId(extension.id)}-page-action`;
+    panelId = `${makeWidgetId(extension.id)}-panel`;
     let panel = document.getElementById(panelId);
     if (expecting.expectClosed) {
       ok(panel, "Expect panel to exist");
-      yield promisePopupShown(panel);
+      await promisePopupShown(panel);
 
       extension.sendMessage("close-popup");
 
-      yield promisePopupHidden(panel);
+      await promisePopupHidden(panel);
       ok(true, `Panel is closed`);
+    } else if (expecting.closeOnTabSwitch) {
+      ok(panel, "Expect panel to exist");
+      await promisePopupShown(panel);
+
+      let oldTab = gBrowser.selectedTab;
+      ok(oldTab != gBrowser.tabs[0], "Should have an inactive tab to switch to");
+
+      let hiddenPromise = promisePopupHidden(panel);
+
+      gBrowser.selectedTab = gBrowser.tabs[0];
+      await hiddenPromise;
+      info("Panel closed");
+
+      gBrowser.selectedTab = oldTab;
     } else if (panel) {
-      yield promisePopupShown(panel);
+      await promisePopupShown(panel);
       panel.hidePopup();
     }
 
@@ -164,23 +184,25 @@ add_task(function* testPageActionPopup() {
     }
 
     extension.sendMessage("next-test");
-  }));
+  });
 
 
-  yield extension.startup();
-  yield extension.awaitFinish("pageaction-tests-done");
+  await extension.startup();
+  await extension.awaitFinish("pageaction-tests-done");
 
-  yield extension.unload();
+  await extension.unload();
 
   let node = document.getElementById(pageActionId);
   is(node, null, "pageAction image removed from document");
 
   let panel = document.getElementById(panelId);
   is(panel, null, "pageAction panel removed from document");
+
+  await BrowserTestUtils.removeTab(tab);
 });
 
 
-add_task(function* testPageActionSecurity() {
+add_task(async function testPageActionSecurity() {
   const URL = "chrome://browser/content/browser.xul";
 
   let apis = ["browser_action", "page_action"];
@@ -204,12 +226,12 @@ add_task(function* testPageActionSecurity() {
       },
     });
 
-    yield Assert.rejects(extension.startup(),
+    await Assert.rejects(extension.startup(),
                          null,
                          "Manifest rejected");
 
     SimpleTest.endMonitorConsole();
-    yield waitForConsole;
+    await waitForConsole;
   }
 });
 

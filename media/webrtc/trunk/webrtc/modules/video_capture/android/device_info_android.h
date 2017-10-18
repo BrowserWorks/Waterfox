@@ -29,7 +29,7 @@ class DeviceInfoAndroid : public DeviceInfoImpl {
   static void Initialize(JavaVM* javaVM);
   static void DeInitialize();
 
-  DeviceInfoAndroid(int32_t id);
+  DeviceInfoAndroid();
   virtual ~DeviceInfoAndroid();
 
   // Set |*index| to the index of the camera matching |deviceUniqueIdUTF8|, or
@@ -46,7 +46,8 @@ class DeviceInfoAndroid : public DeviceInfoImpl {
       char* deviceUniqueIdUTF8,
       uint32_t deviceUniqueIdUTF8Length,
       char* productUniqueIdUTF8 = 0,
-      uint32_t productUniqueIdUTF8Length = 0);
+      uint32_t productUniqueIdUTF8Length = 0,
+      pid_t* pid = 0);
   virtual int32_t CreateCapabilityMap(const char* deviceUniqueIdUTF8);
 
   virtual int32_t DisplayCaptureSettingsDialogBox(

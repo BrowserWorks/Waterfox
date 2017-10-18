@@ -11,8 +11,9 @@
 #define LIBANGLE_PROGRAM_H_
 
 #include <GLES2/gl2.h>
-#include <GLSLANG/ShaderLang.h>
+#include <GLSLANG/ShaderVars.h>
 
+#include <map>
 #include <set>
 #include <sstream>
 #include <string>
@@ -241,12 +242,15 @@ class Program final : angle::NonCopyable, public LabeledObject
     void setLabel(const std::string &label) override;
     const std::string &getLabel() const override;
 
-    rx::ProgramImpl *getImplementation() { return mProgram; }
-    const rx::ProgramImpl *getImplementation() const { return mProgram; }
+    rx::ProgramImpl *getImplementation() const { return mProgram; }
 
-    bool attachShader(Shader *shader);
+    void attachShader(Shader *shader);
     bool detachShader(Shader *shader);
     int getAttachedShadersCount() const;
+
+    const Shader *getAttachedVertexShader() const { return mState.mAttachedVertexShader; }
+    const Shader *getAttachedFragmentShader() const { return mState.mAttachedFragmentShader; }
+    const Shader *getAttachedComputeShader() const { return mState.mAttachedComputeShader; }
 
     void bindAttributeLocation(GLuint index, const char *name);
     void bindUniformLocation(GLuint index, const char *name);
@@ -324,7 +328,6 @@ class Program final : angle::NonCopyable, public LabeledObject
     void getUniformuiv(GLint location, GLuint *params) const;
 
     void getActiveUniformBlockName(GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName) const;
-    void getActiveUniformBlockiv(GLuint uniformBlockIndex, GLenum pname, GLint *params) const;
     GLuint getActiveUniformBlockCount() const;
     GLint getActiveUniformBlockMaxLength() const;
 
@@ -377,10 +380,7 @@ class Program final : angle::NonCopyable, public LabeledObject
     void unlink(bool destroy = false);
     void resetUniformBlockBindings();
 
-    bool linkAttributes(const ContextState &data,
-                        InfoLog &infoLog,
-                        const Bindings &attributeBindings,
-                        const Shader *vertexShader);
+    bool linkAttributes(const ContextState &data, InfoLog &infoLog);
     bool validateUniformBlocksCount(GLuint maxUniformBlocks,
                                     const std::vector<sh::InterfaceBlock> &block,
                                     const std::string &errorMessage,
@@ -458,11 +458,15 @@ class Program final : angle::NonCopyable, public LabeledObject
 
     void defineUniformBlock(const sh::InterfaceBlock &interfaceBlock, GLenum shaderType);
 
+    // Both these function update the cached uniform values and return a modified "count"
+    // so that the uniform update doesn't overflow the uniform.
     template <typename T>
-    void setUniformInternal(GLint location, GLsizei count, const T *v);
-
+    GLsizei setUniformInternal(GLint location, GLsizei count, int vectorSize, const T *v);
     template <size_t cols, size_t rows, typename T>
-    void setMatrixUniformInternal(GLint location, GLsizei count, GLboolean transpose, const T *v);
+    GLsizei setMatrixUniformInternal(GLint location,
+                                     GLsizei count,
+                                     GLboolean transpose,
+                                     const T *v);
 
     template <typename DestT>
     void getUniformInternal(GLint location, DestT *dataOut) const;

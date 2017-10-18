@@ -5,18 +5,20 @@
 
 #include "nsGfxCheckboxControlFrame.h"
 
+#include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "nsIContent.h"
 #include "nsCOMPtr.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
 #include "nsIDOMHTMLInputElement.h"
 #include "nsDisplayList.h"
 #include <algorithm>
 
 using namespace mozilla;
 using namespace mozilla::gfx;
+
+#ifdef MOZ_WIDGET_ANDROID
 
 static void
 PaintCheckMark(nsIFrame* aFrame,
@@ -74,6 +76,8 @@ PaintIndeterminateMark(nsIFrame* aFrame,
     devPxRect, ColorPattern(ToDeviceColor(aFrame->StyleColor()->mColor)));
 }
 
+#endif
+
 //------------------------------------------------------------
 nsIFrame*
 NS_NewGfxCheckboxControlFrame(nsIPresShell* aPresShell,
@@ -88,7 +92,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsGfxCheckboxControlFrame)
 //------------------------------------------------------------
 // Initialize GFX-rendered state
 nsGfxCheckboxControlFrame::nsGfxCheckboxControlFrame(nsStyleContext* aContext)
-: nsFormControlFrame(aContext)
+: nsFormControlFrame(aContext, kClassID)
 {
 }
 
@@ -105,17 +109,19 @@ nsGfxCheckboxControlFrame::AccessibleType()
 #endif
 
 //------------------------------------------------------------
+#ifdef MOZ_WIDGET_ANDROID
+
 void
 nsGfxCheckboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                             const nsRect&           aDirtyRect,
                                             const nsDisplayListSet& aLists)
 {
   nsFormControlFrame::BuildDisplayList(aBuilder, aDirtyRect, aLists);
-  
+
   // Get current checked state through content model.
   if ((!IsChecked() && !IsIndeterminate()) || !IsVisibleForPainting(aBuilder))
     return;   // we're not checked or not visible, nothing to paint.
-    
+
   if (IsThemed())
     return; // No need to paint the checkmark. The theme will do it.
 
@@ -127,6 +133,7 @@ nsGfxCheckboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                      nsDisplayItem::TYPE_CHECKED_CHECKBOX));
 }
 
+#endif
 //------------------------------------------------------------
 bool
 nsGfxCheckboxControlFrame::IsChecked()

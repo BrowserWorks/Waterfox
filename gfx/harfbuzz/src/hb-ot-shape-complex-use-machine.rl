@@ -44,7 +44,6 @@
 O	= 0; # OTHER
 
 B	= 1; # BASE
-IV	= 2; # BASE_VOWEL
 IND	= 3; # BASE_IND
 N	= 4; # BASE_NUM
 GB	= 5; # BASE_OTHER
@@ -90,28 +89,22 @@ SMBlw	= 42; # SYM_MOD_BELOW
 
 
 consonant_modifiers = CMAbv* CMBlw* ((H B | SUB) VS? CMAbv? CMBlw*)*;
-medial_consonants = MPre? MAbv? MBlw? MPst?;
+# Override: Allow two MBlw. https://github.com/behdad/harfbuzz/issues/376
+medial_consonants = MPre? MAbv? MBlw?.MBlw? MPst?;
 dependent_vowels = VPre* VAbv* VBlw* VPst*;
 vowel_modifiers = VMPre* VMAbv* VMBlw* VMPst*;
 final_consonants = FAbv* FBlw* FPst* FM?;
 
 virama_terminated_cluster =
-	R? (B | GB | IV) VS?
+	R? (B | GB) VS?
 	consonant_modifiers
 	H
 ;
-consonant_cluster =
+standard_cluster =
 	R? (B | GB) VS?
 	consonant_modifiers
 	medial_consonants
 	dependent_vowels
-	vowel_modifiers
-	final_consonants
-;
-vowel_cluster =
-	R? (IV) VS?
-	consonant_modifiers
-	medial_consonants
 	vowel_modifiers
 	final_consonants
 ;
@@ -125,20 +118,21 @@ broken_cluster =
 	final_consonants
 ;
 
-number_joiner_terminated_cluster = N VS? (HN N VS?)* H;
+number_joiner_terminated_cluster = N VS? (HN N VS?)* HN;
 numeral_cluster = N VS? (HN N VS?)*;
 symbol_cluster = S VS? SMAbv* SMBlw*;
 independent_cluster = (IND | O | Rsv | WJ) VS?;
+other = any;
 
 main := |*
 	independent_cluster			=> { found_syllable (independent_cluster); };
 	virama_terminated_cluster		=> { found_syllable (virama_terminated_cluster); };
-	consonant_cluster			=> { found_syllable (consonant_cluster); };
-	vowel_cluster				=> { found_syllable (vowel_cluster); };
+	standard_cluster			=> { found_syllable (standard_cluster); };
 	number_joiner_terminated_cluster	=> { found_syllable (number_joiner_terminated_cluster); };
 	numeral_cluster				=> { found_syllable (numeral_cluster); };
 	symbol_cluster				=> { found_syllable (symbol_cluster); };
 	broken_cluster				=> { found_syllable (broken_cluster); };
+	other					=> { found_syllable (non_cluster); };
 *|;
 
 

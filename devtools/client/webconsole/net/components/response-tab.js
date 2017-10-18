@@ -6,9 +6,9 @@
 const React = require("devtools/client/shared/vendor/react");
 
 // Reps
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
 const TreeView = React.createFactory(require("devtools/client/shared/components/tree/tree-view"));
-const { Rep } = createFactories(require("devtools/client/shared/components/reps/rep"));
+const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
+const { Rep } = REPS;
 
 // Network
 const SizeLimit = React.createFactory(require("./size-limit"));
@@ -104,8 +104,10 @@ var ResponseTab = React.createClass({
       content: TreeView({
         columns: [{id: "value"}],
         object: json,
-        mode: "tiny",
-        renderValue: props => Rep(props)
+        mode: MODE.TINY,
+        renderValue: props => Rep(Object.assign({}, props, {
+          cropLimit: 50,
+        })),
       }),
       name: Locale.$STR("jsonScopeName")
     };
@@ -199,6 +201,16 @@ var ResponseTab = React.createClass({
     return group;
   },
 
+  componentDidMount() {
+    let { actions, data: file } = this.props;
+    let content = file.response.content;
+
+    if (!content || typeof (content.text) == "undefined") {
+      // TODO: use async action objects as soon as Redux is in place
+      actions.requestData("responseContent");
+    }
+  },
+
   /**
    * The response panel displays two groups:
    *
@@ -206,8 +218,7 @@ var ResponseTab = React.createClass({
    * 2) Raw response data (always displayed if not discarded)
    */
   render() {
-    let actions = this.props.actions;
-    let file = this.props.data;
+    let { actions, data: file } = this.props;
 
     // If response bodies are discarded (not collected) let's just
     // display a info message indicating what to do to collect even
@@ -224,9 +235,6 @@ var ResponseTab = React.createClass({
     // empty or not available yet.
     let content = file.response.content;
     if (!content || typeof (content.text) == "undefined") {
-      // TODO: use async action objects as soon as Redux is in place
-      actions.requestData("responseContent");
-
       return (
         Spinner()
       );

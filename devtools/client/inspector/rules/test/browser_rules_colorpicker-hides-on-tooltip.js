@@ -25,23 +25,24 @@ add_task(function* () {
   let swatch = getRuleViewProperty(view, "body", "color").valueSpan
     .querySelector(".ruleview-colorswatch");
 
-  let bgImageSpan = getRuleViewProperty(view, "body", "background-image")
-    .valueSpan;
+  let bgImageSpan = getRuleViewProperty(view, "body", "background-image").valueSpan;
   let uriSpan = bgImageSpan.querySelector(".theme-link");
-  let tooltip = view.tooltips.colorPicker.tooltip;
 
+  let colorPicker = view.tooltips.getTooltip("colorPicker");
   info("Showing the color picker tooltip by clicking on the color swatch");
-  let onShown = tooltip.once("shown");
+  let onColorPickerReady = colorPicker.once("ready");
   swatch.click();
-  yield onShown;
+  yield onColorPickerReady;
 
   info("Now showing the image preview tooltip to hide the color picker");
-  let onHidden = tooltip.once("hidden");
+  let onHidden = colorPicker.tooltip.once("hidden");
   // Hiding the color picker refreshes the value.
   let onRuleViewChanged = view.once("ruleview-changed");
-  yield assertHoverTooltipOn(view.tooltips.previewTooltip, uriSpan);
+  let previewTooltip = yield assertShowPreviewTooltip(view, uriSpan);
   yield onHidden;
   yield onRuleViewChanged;
+
+  yield assertTooltipHiddenOnMouseOut(previewTooltip, uriSpan);
 
   ok(true, "The color picker closed when the image preview tooltip appeared");
 });

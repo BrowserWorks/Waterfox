@@ -13,19 +13,25 @@
 namespace mozilla {
 namespace layers {
 
+class RemoteCompositorSession;
 
 class APZCTreeManagerChild
   : public IAPZCTreeManager
   , public PAPZCTreeManagerChild
 {
 public:
-  APZCTreeManagerChild() { }
+  APZCTreeManagerChild();
+
+  void SetCompositorSession(RemoteCompositorSession* aSession);
 
   nsEventStatus
   ReceiveInputEvent(
           InputData& aEvent,
           ScrollableLayerGuid* aOutTargetGuid,
           uint64_t* aOutInputBlockId) override;
+
+  void
+  SetKeyboardMap(const KeyboardMap& aKeyboardMap) override;
 
   void
   ZoomToRect(
@@ -52,9 +58,6 @@ public:
   CancelAnimation(const ScrollableLayerGuid &aGuid) override;
 
   void
-  AdjustScrollForSurfaceShift(const ScreenPoint& aShift) override;
-
-  void
   SetDPI(float aDpiValue) override;
 
   void
@@ -68,30 +71,47 @@ public:
           const AsyncDragMetrics& aDragMetrics) override;
 
   void
+  StartAutoscroll(
+          const ScrollableLayerGuid& aGuid,
+          const ScreenPoint& aAnchorLocation) override;
+
+  void
+  StopAutoscroll(const ScrollableLayerGuid& aGuid) override;
+
+  void
   SetLongTapEnabled(bool aTapGestureEnabled) override;
 
   void
   ProcessTouchVelocity(uint32_t aTimestampMs, float aSpeedY) override;
 
   void
-  TransformEventRefPoint(
+  ProcessUnhandledEvent(
           LayoutDeviceIntPoint* aRefPoint,
-          ScrollableLayerGuid* aOutTargetGuid) override;
+          ScrollableLayerGuid*  aOutTargetGuid,
+          uint64_t*             aOutFocusSequenceNumber) override;
 
   void
   UpdateWheelTransaction(
           LayoutDeviceIntPoint aRefPoint,
           EventMessage aEventMessage) override;
 
-  void
-  OnProcessingError(
-          Result aCode,
-          const char* aReason) override;
-
 protected:
+  mozilla::ipc::IPCResult RecvHandleTap(const TapType& aType,
+                                        const LayoutDevicePoint& aPoint,
+                                        const Modifiers& aModifiers,
+                                        const ScrollableLayerGuid& aGuid,
+                                        const uint64_t& aInputBlockId) override;
+
+  mozilla::ipc::IPCResult RecvNotifyPinchGesture(const PinchGestureType& aType,
+                                                 const ScrollableLayerGuid& aGuid,
+                                                 const LayoutDeviceCoord& aSpanChange,
+                                                 const Modifiers& aModifiers) override;
 
   virtual
   ~APZCTreeManagerChild() { }
+
+private:
+  MOZ_NON_OWNING_REF RemoteCompositorSession* mCompositorSession;
 };
 
 } // namespace layers

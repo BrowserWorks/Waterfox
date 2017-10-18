@@ -11,10 +11,8 @@
 #include "nsContentPermissionHelper.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/PBrowserChild.h"
-#include "nsIDOMDesktopNotification.h"
 #include "mozilla/Preferences.h"
 #include "nsGlobalWindow.h"
-#include "nsIAppsService.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "PermissionMessageUtils.h"
@@ -39,7 +37,8 @@ public:
   NS_DECL_NSICONTENTPERMISSIONREQUEST
 
   explicit DesktopNotificationRequest(DesktopNotification* aNotification)
-    : mDesktopNotification(aNotification)
+    : Runnable("dom::DesktopNotificationRequest")
+    , mDesktopNotification(aNotification)
   {
     mRequester = new nsContentPermissionRequester(mDesktopNotification->GetOwner());
   }
@@ -73,34 +72,6 @@ DesktopNotification::PostDesktopNotification()
     mObserver = new AlertServiceObserver(this);
   }
 
-#ifdef MOZ_B2G
-  nsCOMPtr<nsIAppNotificationService> appNotifier =
-    do_GetService("@mozilla.org/system-alerts-service;1");
-  if (appNotifier) {
-    nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
-    uint32_t appId = window ? window->GetDoc()->NodePrincipal()->GetAppId()
-                            : nsIScriptSecurityManager::UNKNOWN_APP_ID;
-
-    if (appId != nsIScriptSecurityManager::UNKNOWN_APP_ID) {
-      nsCOMPtr<nsIAppsService> appsService = do_GetService("@mozilla.org/AppsService;1");
-      nsString manifestUrl = EmptyString();
-      appsService->GetManifestURLByLocalId(appId, manifestUrl);
-      mozilla::AutoSafeJSContext cx;
-      JS::Rooted<JS::Value> val(cx);
-      AppNotificationServiceOptions ops;
-      ops.mTextClickable = true;
-      ops.mManifestURL = manifestUrl;
-
-      if (!ToJSValue(cx, ops, &val)) {
-        return NS_ERROR_FAILURE;
-      }
-
-      return appNotifier->ShowAppNotification(mIconURL, mTitle, mDescription,
-                                              mObserver, val);
-    }
-  }
-#endif
-
   nsCOMPtr<nsIAlertsService> alerts = do_GetService("@mozilla.org/alerts-service;1");
   if (!alerts) {
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -131,7 +102,8 @@ DesktopNotification::PostDesktopNotification()
                             EmptyString(),
                             EmptyString(),
                             principal,
-                            inPrivateBrowsing);
+                            inPrivateBrowsing,
+                            false /* requireInteraction */);
   NS_ENSURE_SUCCESS(rv, rv);
   return alerts->ShowAlert(alert, mObserver);
 }

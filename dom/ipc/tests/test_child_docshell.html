@@ -8,13 +8,14 @@
 </head>
 <body>
 
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 "use strict";
 
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.addPermission("browser", true, document);
 SpecialPowers.pushPrefEnv({'set':[
   ["dom.mozBrowserFramesEnabled", true],
+  ["network.disable.ipc.security", true],
   ["dom.ipc.tabs.disabled", false]
 ]}, function () {
 

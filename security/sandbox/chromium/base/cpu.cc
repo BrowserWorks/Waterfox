@@ -4,13 +4,14 @@
 
 #include "base/cpu.h"
 
-#include <stdlib.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <algorithm>
 
-#include "base/basictypes.h"
-#include "base/strings/string_piece.h"
+#include "base/macros.h"
 #include "build/build_config.h"
 
 #if defined(ARCH_CPU_ARM_FAMILY) && (defined(OS_ANDROID) || defined(OS_LINUX))
@@ -42,11 +43,11 @@ CPU::CPU()
     has_ssse3_(false),
     has_sse41_(false),
     has_sse42_(false),
+    has_popcnt_(false),
     has_avx_(false),
-    has_avx_hardware_(false),
+    has_avx2_(false),
     has_aesni_(false),
     has_non_stop_time_stamp_counter_(false),
-    has_broken_neon_(false),
     cpu_vendor_("unknown") {
   Initialize();
 }
@@ -72,7 +73,7 @@ void __cpuid(int cpu_info[4], int info_type) {
 
 void __cpuid(int cpu_info[4], int info_type) {
   __asm__ volatile (
-    "cpuid \n\t"
+    "cpuid\n"
     : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
     : "a"(info_type)
   );
@@ -82,11 +83,12 @@ void __cpuid(int cpu_info[4], int info_type) {
 
 // _xgetbv returns the value of an Intel Extended Control Register (XCR).
 // Currently only XCR0 is defined by Intel so |xcr| should always be zero.
-uint64 _xgetbv(uint32 xcr) {
-  uint32 eax, edx;
+uint64_t _xgetbv(uint32_t xcr) {
+  uint32_t eax, edx;
 
-  __asm__ volatile ("xgetbv" : "=a" (eax), "=d" (edx) : "c" (xcr));
-  return (static_cast<uint64>(edx) << 32) | eax;
+  __asm__ volatile (
+    "xgetbv" : "=a"(eax), "=d"(edx) : "c"(xcr));
+  return (static_cast<uint64_t>(edx) << 32) | eax;
 }
 
 #endif  // !_MSC_VER
@@ -95,7 +97,7 @@ uint64 _xgetbv(uint32 xcr) {
 #if defined(ARCH_CPU_ARM_FAMILY) && (defined(OS_ANDROID) || defined(OS_LINUX))
 class LazyCpuInfoValue {
  public:
-  LazyCpuInfoValue() : has_broken_neon_(false) {
+  LazyCpuInfoValue() {
     // This function finds the value from /proc/cpuinfo under the key "model
     // name" or "Processor". "model name" is used in Linux 3.8 and later (3.7
     // and later for arm64) and is shown once per CPU. "Processor" is used in
@@ -103,21 +105,6 @@ class LazyCpuInfoValue {
     // regardless of the number CPUs.
     const char kModelNamePrefix[] = "model name\t: ";
     const char kProcessorPrefix[] = "Processor\t: ";
-
-    // This function also calculates whether we believe that this CPU has a
-    // broken NEON unit based on these fields from cpuinfo:
-    unsigned implementer = 0, architecture = 0, variant = 0, part = 0,
-             revision = 0;
-    const struct {
-      const char key[17];
-      unsigned *result;
-    } kUnsignedValues[] = {
-      {"CPU implementer", &implementer},
-      {"CPU architecture", &architecture},
-      {"CPU variant", &variant},
-      {"CPU part", &part},
-      {"CPU revision", &revision},
-    };
 
     std::string contents;
     ReadFileToString(FilePath("/proc/cpuinfo"), &contents);
@@ -134,52 +121,13 @@ class LazyCpuInfoValue {
            line.compare(0, strlen(kProcessorPrefix), kProcessorPrefix) == 0)) {
         brand_.assign(line.substr(strlen(kModelNamePrefix)));
       }
-
-      for (size_t i = 0; i < arraysize(kUnsignedValues); i++) {
-        const char *key = kUnsignedValues[i].key;
-        const size_t len = strlen(key);
-
-        if (line.compare(0, len, key) == 0 &&
-            line.size() >= len + 1 &&
-            (line[len] == '\t' || line[len] == ' ' || line[len] == ':')) {
-          size_t colon_pos = line.find(':', len);
-          if (colon_pos == std::string::npos) {
-            continue;
-          }
-
-          const StringPiece line_sp(line);
-          StringPiece value_sp = line_sp.substr(colon_pos + 1);
-          while (!value_sp.empty() &&
-                 (value_sp[0] == ' ' || value_sp[0] == '\t')) {
-            value_sp = value_sp.substr(1);
-          }
-
-          // The string may have leading "0x" or not, so we use strtoul to
-          // handle that.
-          char *endptr;
-          std::string value(value_sp.as_string());
-          unsigned long int result = strtoul(value.c_str(), &endptr, 0);
-          if (*endptr == 0 && result <= UINT_MAX) {
-            *kUnsignedValues[i].result = result;
-          }
-        }
-      }
     }
-
-    has_broken_neon_ =
-      implementer == 0x51 &&
-      architecture == 7 &&
-      variant == 1 &&
-      part == 0x4d &&
-      revision == 0;
   }
 
   const std::string& brand() const { return brand_; }
-  bool has_broken_neon() const { return has_broken_neon_; }
 
  private:
   std::string brand_;
-  bool has_broken_neon_;
   DISALLOW_COPY_AND_ASSIGN(LazyCpuInfoValue);
 };
 
@@ -211,7 +159,11 @@ void CPU::Initialize() {
 
   // Interpret CPU feature information.
   if (num_ids > 0) {
+    int cpu_info7[4] = {0};
     __cpuid(cpu_info, 1);
+    if (num_ids >= 7) {
+      __cpuid(cpu_info7, 7);
+    }
     signature_ = cpu_info[0];
     stepping_ = cpu_info[0] & 0xf;
     model_ = ((cpu_info[0] >> 4) & 0xf) + ((cpu_info[0] >> 12) & 0xf0);
@@ -226,8 +178,8 @@ void CPU::Initialize() {
     has_ssse3_ = (cpu_info[2] & 0x00000200) != 0;
     has_sse41_ = (cpu_info[2] & 0x00080000) != 0;
     has_sse42_ = (cpu_info[2] & 0x00100000) != 0;
-    has_avx_hardware_ =
-                 (cpu_info[2] & 0x10000000) != 0;
+    has_popcnt_ = (cpu_info[2] & 0x00800000) != 0;
+
     // AVX instructions will generate an illegal instruction exception unless
     //   a) they are supported by the CPU,
     //   b) XSAVE is supported by the CPU and
@@ -239,11 +191,12 @@ void CPU::Initialize() {
     // Because of that, we also test the XSAVE bit because its description in
     // the CPUID documentation suggests that it signals xgetbv support.
     has_avx_ =
-        has_avx_hardware_ &&
+        (cpu_info[2] & 0x10000000) != 0 &&
         (cpu_info[2] & 0x04000000) != 0 /* XSAVE */ &&
         (cpu_info[2] & 0x08000000) != 0 /* OSXSAVE */ &&
         (_xgetbv(0) & 6) == 6 /* XSAVE enabled by kernel */;
     has_aesni_ = (cpu_info[2] & 0x02000000) != 0;
+    has_avx2_ = has_avx_ && (cpu_info7[1] & 0x00000020) != 0;
   }
 
   // Get the brand string of the cpu.
@@ -270,11 +223,11 @@ void CPU::Initialize() {
   }
 #elif defined(ARCH_CPU_ARM_FAMILY) && (defined(OS_ANDROID) || defined(OS_LINUX))
   cpu_brand_.assign(g_lazy_cpuinfo.Get().brand());
-  has_broken_neon_ = g_lazy_cpuinfo.Get().has_broken_neon();
 #endif
 }
 
 CPU::IntelMicroArchitecture CPU::GetIntelMicroArchitecture() const {
+  if (has_avx2()) return AVX2;
   if (has_avx()) return AVX;
   if (has_sse42()) return SSE42;
   if (has_sse41()) return SSE41;

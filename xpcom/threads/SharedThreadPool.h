@@ -34,7 +34,7 @@ namespace mozilla {
 // cause some functions to fail. So be careful when using Win32 APIs on a
 // SharedThreadPool, and avoid sharing objects if at all possible.
 //
-// [1] http://mxr.mozilla.org/mozilla-central/search?string=coinitialize
+// [1] https://dxr.mozilla.org/mozilla-central/search?q=coinitialize&redirect=false
 class SharedThreadPool : public nsIThreadPool
 {
 public:
@@ -58,13 +58,16 @@ public:
   // Call this when dispatching from an event on the same
   // threadpool that is about to complete. We should not create a new thread
   // in that case since a thread is about to become idle.
-  nsresult TailDispatch(nsIRunnable *event) { return Dispatch(event, NS_DISPATCH_TAIL); }
+  nsresult DispatchFromEndOfTaskInThisPool(nsIRunnable *event)
+  {
+    return Dispatch(event, NS_DISPATCH_AT_END);
+  }
 
   NS_IMETHOD DispatchFromScript(nsIRunnable *event, uint32_t flags) override {
       return Dispatch(event, flags);
   }
 
-  NS_IMETHOD Dispatch(already_AddRefed<nsIRunnable> event, uint32_t flags) override
+  NS_IMETHOD Dispatch(already_AddRefed<nsIRunnable> event, uint32_t flags = NS_DISPATCH_NORMAL) override
     { return !mEventTarget ? NS_ERROR_NULL_POINTER : mEventTarget->Dispatch(Move(event), flags); }
 
   NS_IMETHOD DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t) override
@@ -73,6 +76,8 @@ public:
   using nsIEventTarget::Dispatch;
 
   NS_IMETHOD IsOnCurrentThread(bool *_retval) override { return !mEventTarget ? NS_ERROR_NULL_POINTER : mEventTarget->IsOnCurrentThread(_retval); }
+
+  NS_IMETHOD_(bool) IsOnCurrentThreadInfallible() override { return mEventTarget && mEventTarget->IsOnCurrentThread(); }
 
   // Creates necessary statics. Called once at startup.
   static void InitStatics();

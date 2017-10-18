@@ -16,7 +16,7 @@ function create_n_element_array(n)
   for (let i=0; i<n; i++) {
     let str = new SupportsString();
     str.data = "element " + i;
-    arr.appendElement(str, false);
+    arr.appendElement(str);
   }
   return arr;
 }
@@ -25,7 +25,7 @@ function test_appending_null_actually_inserts()
 {
   var arr = new MutableArray();
   do_check_eq(0, arr.length);
-  arr.appendElement(null, false);
+  arr.appendElement(null);
   do_check_eq(1, arr.length);
 }
 
@@ -34,7 +34,7 @@ function test_object_gets_appended()
   var arr = new MutableArray();
   var str = new SupportsString();
   str.data = "hello";
-  arr.appendElement(str, false);
+  arr.appendElement(str);
   do_check_eq(1, arr.length);
   var obj = arr.queryElementAt(0, Ci.nsISupportsString);
   do_check_eq(str, obj);
@@ -107,6 +107,27 @@ function test_enumerate()
   do_check_eq(arr.length, i);
 }
 
+function test_nsiarrayextensions() {
+  // Tests to check that the extensions that make an nsArray act like an
+  // nsISupportsArray for iteration purposes works.
+  // Note: we do not want to QI here, just want to make sure the magic glue
+  // works as a drop-in replacement.
+
+  let fake_nsisupports_array = create_n_element_array(5);
+
+  // Check that |Count| works.
+  do_check_eq(5, fake_nsisupports_array.Count());
+
+  for (let i = 0; i < fake_nsisupports_array.Count(); i++) {
+    // Check that the generic |GetElementAt| works.
+    let elm = fake_nsisupports_array.GetElementAt(i);
+    do_check_neq(elm, null);
+    let str = elm.QueryInterface(Ci.nsISupportsString);
+    do_check_neq(str, null);
+    do_check_eq(str.data, "element " + i);
+  }
+}
+
 var tests = [
   test_appending_null_actually_inserts,
   test_object_gets_appended,
@@ -114,6 +135,7 @@ var tests = [
   test_replace_element,
   test_clear,
   test_enumerate,
+  test_nsiarrayextensions,
 ];
 
 function run_test() {

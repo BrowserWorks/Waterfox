@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -11,8 +14,8 @@ Test that collapsed subtrees aren't rendered.
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
     let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
@@ -21,6 +24,7 @@ window.onload = Task.async(function* () {
 
     const tree = ReactDOM.render(Tree(TEST_TREE_INTERFACE), window.document.body);
 
+    isAccessibleTree(tree);
     TEST_TREE.expanded = new Set("MNO".split(""));
     yield forceRender(tree);
 

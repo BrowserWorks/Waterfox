@@ -11,6 +11,7 @@
 #include "gfxImageSurface.h"
 #include "gfxPlatform.h"
 #include "gfxDrawable.h"
+#include "gfxQuad.h"
 #include "imgIEncoder.h"
 #include "mozilla/Base64.h"
 #include "mozilla/dom/ImageEncoder.h"
@@ -19,6 +20,8 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Logging.h"
+#include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/gfx/Swizzle.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtrExtensions.h"
@@ -45,8 +48,6 @@ using namespace mozilla;
 using namespace mozilla::image;
 using namespace mozilla::layers;
 using namespace mozilla::gfx;
-
-#include "DeprecatedPremultiplyTables.h"
 
 #undef compress
 #include "mozilla/Compression.h"
@@ -90,93 +91,6 @@ void mozilla_dump_image(void* bytes, int width, int height, int bytepp,
 
 }
 
-static uint8_t PremultiplyValue(uint8_t a, uint8_t v) {
-    return gfxUtils::sPremultiplyTable[a*256+v];
-}
-
-static uint8_t UnpremultiplyValue(uint8_t a, uint8_t v) {
-    return gfxUtils::sUnpremultiplyTable[a*256+v];
-}
-
-static void
-PremultiplyData(const uint8_t* srcData,
-                size_t srcStride,  // row-to-row stride in bytes
-                uint8_t* destData,
-                size_t destStride, // row-to-row stride in bytes
-                size_t pixelWidth,
-                size_t rowCount)
-{
-    MOZ_ASSERT(srcData && destData);
-
-    for (size_t y = 0; y < rowCount; ++y) {
-        const uint8_t* src  = srcData  + y * srcStride;
-        uint8_t* dest       = destData + y * destStride;
-
-        for (size_t x = 0; x < pixelWidth; ++x) {
-#ifdef IS_LITTLE_ENDIAN
-            uint8_t b = *src++;
-            uint8_t g = *src++;
-            uint8_t r = *src++;
-            uint8_t a = *src++;
-
-            *dest++ = PremultiplyValue(a, b);
-            *dest++ = PremultiplyValue(a, g);
-            *dest++ = PremultiplyValue(a, r);
-            *dest++ = a;
-#else
-            uint8_t a = *src++;
-            uint8_t r = *src++;
-            uint8_t g = *src++;
-            uint8_t b = *src++;
-
-            *dest++ = a;
-            *dest++ = PremultiplyValue(a, r);
-            *dest++ = PremultiplyValue(a, g);
-            *dest++ = PremultiplyValue(a, b);
-#endif
-        }
-    }
-}
-static void
-UnpremultiplyData(const uint8_t* srcData,
-                  size_t srcStride,  // row-to-row stride in bytes
-                  uint8_t* destData,
-                  size_t destStride, // row-to-row stride in bytes
-                  size_t pixelWidth,
-                  size_t rowCount)
-{
-    MOZ_ASSERT(srcData && destData);
-
-    for (size_t y = 0; y < rowCount; ++y) {
-        const uint8_t* src  = srcData  + y * srcStride;
-        uint8_t* dest       = destData + y * destStride;
-
-        for (size_t x = 0; x < pixelWidth; ++x) {
-#ifdef IS_LITTLE_ENDIAN
-            uint8_t b = *src++;
-            uint8_t g = *src++;
-            uint8_t r = *src++;
-            uint8_t a = *src++;
-
-            *dest++ = UnpremultiplyValue(a, b);
-            *dest++ = UnpremultiplyValue(a, g);
-            *dest++ = UnpremultiplyValue(a, r);
-            *dest++ = a;
-#else
-            uint8_t a = *src++;
-            uint8_t r = *src++;
-            uint8_t g = *src++;
-            uint8_t b = *src++;
-
-            *dest++ = a;
-            *dest++ = UnpremultiplyValue(a, r);
-            *dest++ = UnpremultiplyValue(a, g);
-            *dest++ = UnpremultiplyValue(a, b);
-#endif
-        }
-    }
-}
-
 static bool
 MapSrcDest(DataSourceSurface* srcSurf,
            DataSourceSurface* destSurf,
@@ -186,16 +100,7 @@ MapSrcDest(DataSourceSurface* srcSurf,
     MOZ_ASSERT(srcSurf && destSurf);
     MOZ_ASSERT(out_srcMap && out_destMap);
 
-    if (srcSurf->GetFormat()  != SurfaceFormat::B8G8R8A8 ||
-        destSurf->GetFormat() != SurfaceFormat::B8G8R8A8)
-    {
-        MOZ_ASSERT(false, "Only operate on BGRA8 surfs.");
-        return false;
-    }
-
-    if (srcSurf->GetSize().width  != destSurf->GetSize().width ||
-        srcSurf->GetSize().height != destSurf->GetSize().height)
-    {
+    if (srcSurf->GetSize() != destSurf->GetSize()) {
         MOZ_ASSERT(false, "Width and height must match.");
         return false;
     }
@@ -255,10 +160,9 @@ gfxUtils::PremultiplyDataSurface(DataSourceSurface* srcSurf,
     if (!MapSrcDest(srcSurf, destSurf, &srcMap, &destMap))
         return false;
 
-    PremultiplyData(srcMap.mData, srcMap.mStride,
-                    destMap.mData, destMap.mStride,
-                    srcSurf->GetSize().width,
-                    srcSurf->GetSize().height);
+    PremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                    destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                    srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return true;
@@ -275,10 +179,9 @@ gfxUtils::UnpremultiplyDataSurface(DataSourceSurface* srcSurf,
     if (!MapSrcDest(srcSurf, destSurf, &srcMap, &destMap))
         return false;
 
-    UnpremultiplyData(srcMap.mData, srcMap.mStride,
-                      destMap.mData, destMap.mStride,
-                      srcSurf->GetSize().width,
-                      srcSurf->GetSize().height);
+    UnpremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                      destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                      srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return true;
@@ -292,11 +195,6 @@ MapSrcAndCreateMappedDest(DataSourceSurface* srcSurf,
 {
     MOZ_ASSERT(srcSurf);
     MOZ_ASSERT(out_destSurf && out_srcMap && out_destMap);
-
-    if (srcSurf->GetFormat() != SurfaceFormat::B8G8R8A8) {
-        MOZ_ASSERT(false, "Only operate on BGRA8.");
-        return false;
-    }
 
     // Ok, map source for reading.
     DataSourceSurface::MappedSurface srcMap;
@@ -339,10 +237,9 @@ gfxUtils::CreatePremultipliedDataSurface(DataSourceSurface* srcSurf)
         return surface.forget();
     }
 
-    PremultiplyData(srcMap.mData, srcMap.mStride,
-                    destMap.mData, destMap.mStride,
-                    srcSurf->GetSize().width,
-                    srcSurf->GetSize().height);
+    PremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                    destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                    srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return destSurf.forget();
@@ -360,10 +257,9 @@ gfxUtils::CreateUnpremultipliedDataSurface(DataSourceSurface* srcSurf)
         return surface.forget();
     }
 
-    UnpremultiplyData(srcMap.mData, srcMap.mStride,
-                      destMap.mData, destMap.mStride,
-                      srcSurf->GetSize().width,
-                      srcSurf->GetSize().height);
+    UnpremultiplyData(srcMap.mData, srcMap.mStride, srcSurf->GetFormat(),
+                      destMap.mData, destMap.mStride, destSurf->GetFormat(),
+                      srcSurf->GetSize());
 
     UnmapSrcDest(srcSurf, destSurf);
     return destSurf.forget();
@@ -373,20 +269,9 @@ void
 gfxUtils::ConvertBGRAtoRGBA(uint8_t* aData, uint32_t aLength)
 {
     MOZ_ASSERT((aLength % 4) == 0, "Loop below will pass srcEnd!");
-
-    uint8_t *src = aData;
-    uint8_t *srcEnd = src + aLength;
-
-    uint8_t buffer[4];
-    for (; src != srcEnd; src += 4) {
-        buffer[0] = src[2];
-        buffer[1] = src[1];
-        buffer[2] = src[0];
-
-        src[0] = buffer[0];
-        src[1] = buffer[1];
-        src[2] = buffer[2];
-    }
+    SwizzleData(aData, aLength, SurfaceFormat::B8G8R8A8,
+                aData, aLength, SurfaceFormat::R8G8B8A8,
+                IntSize(aLength / 4, 1));
 }
 
 #if !defined(MOZ_GFX_OPTIMIZE_MOBILE)
@@ -415,8 +300,7 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
                                  const ImageRegion& aRegion,
                                  const SurfaceFormat aFormat)
 {
-    PROFILER_LABEL("gfxUtils", "CreateSamplingRestricedDrawable",
-      js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("CreateSamplingRestrictedDrawable", GRAPHICS);
 
     DrawTarget* destDrawTarget = aContext->GetDrawTarget();
     if (destDrawTarget->GetBackendType() == BackendType::DIRECT2D1_1) {
@@ -638,8 +522,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
                            uint32_t            aImageFlags,
                            gfxFloat            aOpacity)
 {
-    PROFILER_LABEL("gfxUtils", "DrawPixelSnapped",
-      js::ProfileEntry::Category::GRAPHICS);
+    AUTO_PROFILER_LABEL("gfxUtils::DrawPixelSnapped", GRAPHICS);
 
     gfxRect imageRect(gfxPoint(0, 0), aImageSize);
     gfxRect region(aRegion.Rect());
@@ -731,29 +614,45 @@ gfxUtils::ClipToRegion(gfxContext* aContext, const nsIntRegion& aRegion)
 /*static*/ void
 gfxUtils::ClipToRegion(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
-  if (!aRegion.IsComplex()) {
-    IntRect rect = aRegion.GetBounds();
-    aTarget->PushClipRect(Rect(rect.x, rect.y, rect.width, rect.height));
+  uint32_t numRects = aRegion.GetNumRects();
+  // If there is only one rect, then the region bounds are equivalent to the
+  // contents. So just use push a single clip rect with the bounds.
+  if (numRects == 1) {
+    aTarget->PushClipRect(Rect(aRegion.GetBounds()));
     return;
   }
 
-  RefPtr<PathBuilder> pb = aTarget->CreatePathBuilder();
-
-  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
-    const IntRect& r = iter.Get();
-    pb->MoveTo(Point(r.x, r.y));
-    pb->LineTo(Point(r.XMost(), r.y));
-    pb->LineTo(Point(r.XMost(), r.YMost()));
-    pb->LineTo(Point(r.x, r.YMost()));
-    pb->Close();
+  // Check if the target's transform will preserve axis-alignment and
+  // pixel-alignment for each rect. For now, just handle the common case
+  // of integer translations.
+  Matrix transform = aTarget->GetTransform();
+  if (transform.IsIntegerTranslation()) {
+    IntPoint translation = RoundedToInt(transform.GetTranslation());
+    AutoTArray<IntRect, 16> rects;
+    rects.SetLength(numRects);
+    uint32_t i = 0;
+    // Build the list of transformed rects by adding in the translation.
+    for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+      IntRect rect = iter.Get();
+      rect.MoveBy(translation);
+      rects[i++] = rect;
+    }
+    aTarget->PushDeviceSpaceClipRects(rects.Elements(), rects.Length());
+  } else {
+    // The transform does not produce axis-aligned rects or a rect was not
+    // pixel-aligned. So just build a path with all the rects and clip to it
+    // instead.
+    RefPtr<PathBuilder> pathBuilder = aTarget->CreatePathBuilder();
+    for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+      AppendRectToPath(pathBuilder, Rect(iter.Get()));
+    }
+    RefPtr<Path> path = pathBuilder->Finish();
+    aTarget->PushClip(path);
   }
-  RefPtr<Path> path = pb->Finish();
-
-  aTarget->PushClip(path);
 }
 
 /*static*/ gfxFloat
-gfxUtils::ClampToScaleFactor(gfxFloat aVal)
+gfxUtils::ClampToScaleFactor(gfxFloat aVal, bool aRoundDown)
 {
   // Arbitary scale factor limitation. We can increase this
   // for better scaling performance at the cost of worse
@@ -779,8 +678,12 @@ gfxUtils::ClampToScaleFactor(gfxFloat aVal)
   // next integer value.
   if (fabs(power - NS_round(power)) < 1e-5) {
     power = NS_round(power);
-  } else if (inverse) {
+  // Use floor when we are either inverted or rounding down, but
+  // not both.
+  } else if (inverse != aRoundDown) {
     power = floor(power);
+  // Otherwise, ceil when we are not inverted and not rounding
+  // down, or we are inverted and rounding down.
   } else {
     power = ceil(power);
   }
@@ -853,6 +756,71 @@ gfxUtils::GfxRectToIntRect(const gfxRect& aIn, IntRect* aOut)
   return gfxRect(aOut->x, aOut->y, aOut->width, aOut->height).IsEqualEdges(aIn);
 }
 
+/* Clamp r to CAIRO_COORD_MIN .. CAIRO_COORD_MAX
+ * these are to be device coordinates.
+ *
+ * Cairo is currently using 24.8 fixed point,
+ * so -2^24 .. 2^24-1 is our valid
+ */
+/*static*/ void
+gfxUtils::ConditionRect(gfxRect& aRect)
+{
+#define CAIRO_COORD_MAX (16777215.0)
+#define CAIRO_COORD_MIN (-16777216.0)
+  // if either x or y is way out of bounds;
+  // note that we don't handle negative w/h here
+  if (aRect.x > CAIRO_COORD_MAX) {
+    aRect.x = CAIRO_COORD_MAX;
+    aRect.width = 0.0;
+  }
+
+  if (aRect.y > CAIRO_COORD_MAX) {
+    aRect.y = CAIRO_COORD_MAX;
+    aRect.height = 0.0;
+  }
+
+  if (aRect.x < CAIRO_COORD_MIN) {
+    aRect.width += aRect.x - CAIRO_COORD_MIN;
+    if (aRect.width < 0.0) {
+      aRect.width = 0.0;
+    }
+    aRect.x = CAIRO_COORD_MIN;
+  }
+
+  if (aRect.y < CAIRO_COORD_MIN) {
+    aRect.height += aRect.y - CAIRO_COORD_MIN;
+    if (aRect.height < 0.0) {
+      aRect.height = 0.0;
+    }
+    aRect.y = CAIRO_COORD_MIN;
+  }
+
+  if (aRect.x + aRect.width > CAIRO_COORD_MAX) {
+    aRect.width = CAIRO_COORD_MAX - aRect.x;
+  }
+
+  if (aRect.y + aRect.height > CAIRO_COORD_MAX) {
+    aRect.height = CAIRO_COORD_MAX - aRect.y;
+  }
+#undef CAIRO_COORD_MAX
+#undef CAIRO_COORD_MIN
+}
+
+/*static*/ gfxQuad
+gfxUtils::TransformToQuad(const gfxRect& aRect,
+                          const mozilla::gfx::Matrix4x4 &aMatrix)
+{
+  gfxPoint points[4];
+
+  points[0] = aMatrix.TransformPoint(aRect.TopLeft());
+  points[1] = aMatrix.TransformPoint(aRect.TopRight());
+  points[2] = aMatrix.TransformPoint(aRect.BottomRight());
+  points[3] = aMatrix.TransformPoint(aRect.BottomLeft());
+
+  // Could this ever result in lines that intersect? I don't think so.
+  return gfxQuad(points[0], points[1], points[2], points[3]);
+}
+
 /* static */ void gfxUtils::ClearThebesSurface(gfxASurface* aSurface)
 {
   if (aSurface->CairoStatus()) {
@@ -880,7 +848,7 @@ gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
 
   Rect bounds(0, 0, aSurface->GetSize().width, aSurface->GetSize().height);
 
-  if (aSurface->GetType() != SurfaceType::DATA) {
+  if (!aSurface->IsDataSourceSurface()) {
     // If the surface is NOT of type DATA then its data is not mapped into main
     // memory. Format conversion is probably faster on the GPU, and by doing it
     // there we can avoid any expensive uploads/readbacks except for (possibly)
@@ -1141,6 +1109,84 @@ gfxUtils::EncodeSourceSurface(SourceSurface* aSurface,
 {
   return EncodeSourceSurfaceInternal(aSurface, aMimeType, aOutputOptions,
                                      aBinaryOrData, aFile, nullptr);
+}
+
+/* From Rec601:
+[R]   [1.1643835616438356,  0.0,                 1.5960267857142858]      [ Y -  16]
+[G] = [1.1643835616438358, -0.3917622900949137, -0.8129676472377708]    x [Cb - 128]
+[B]   [1.1643835616438356,  2.017232142857143,   8.862867620416422e-17]   [Cr - 128]
+
+For [0,1] instead of [0,255], and to 5 places:
+[R]   [1.16438,  0.00000,  1.59603]   [ Y - 0.06275]
+[G] = [1.16438, -0.39176, -0.81297] x [Cb - 0.50196]
+[B]   [1.16438,  2.01723,  0.00000]   [Cr - 0.50196]
+
+From Rec709:
+[R]   [1.1643835616438356,  4.2781193979771426e-17, 1.7927410714285714]     [ Y -  16]
+[G] = [1.1643835616438358, -0.21324861427372963,   -0.532909328559444]    x [Cb - 128]
+[B]   [1.1643835616438356,  2.1124017857142854,     0.0]                    [Cr - 128]
+
+For [0,1] instead of [0,255], and to 5 places:
+[R]   [1.16438,  0.00000,  1.79274]   [ Y - 0.06275]
+[G] = [1.16438, -0.21325, -0.53291] x [Cb - 0.50196]
+[B]   [1.16438,  2.11240,  0.00000]   [Cr - 0.50196]
+*/
+
+static const float kRec601[9] = {
+  1.16438f, 0.00000f, 1.59603f,
+  1.16438f,-0.39176f,-0.81297f,
+  1.16438f, 2.01723f, 0.00000f,
+};
+static const float kRec709[9] = {
+  1.16438f, 0.00000f, 1.79274f,
+  1.16438f,-0.21325f,-0.53291f,
+  1.16438f, 2.11240f, 0.00000f,
+};
+
+/* static */ const float*
+gfxUtils::YuvToRgbMatrix4x3RowMajor(YUVColorSpace aYUVColorSpace)
+{
+  #define X(x) { x[0], x[1], x[2], 0.0f, \
+                 x[3], x[4], x[5], 0.0f, \
+                 x[6], x[7], x[8], 0.0f }
+
+  static const float rec601[12] = X(kRec601);
+  static const float rec709[12] = X(kRec709);
+
+  #undef X
+
+  switch (aYUVColorSpace) {
+  case YUVColorSpace::BT601:
+    return rec601;
+  case YUVColorSpace::BT709:
+    return rec709;
+  default: // YUVColorSpace::UNKNOWN
+    MOZ_ASSERT(false, "unknown aYUVColorSpace");
+    return rec601;
+  }
+}
+
+/* static */ const float*
+gfxUtils::YuvToRgbMatrix3x3ColumnMajor(YUVColorSpace aYUVColorSpace)
+{
+  #define X(x) { x[0], x[3], x[6], \
+                 x[1], x[4], x[7], \
+                 x[2], x[5], x[8] }
+
+  static const float rec601[9] = X(kRec601);
+  static const float rec709[9] = X(kRec709);
+
+  #undef X
+
+  switch (aYUVColorSpace) {
+  case YUVColorSpace::BT601:
+    return rec601;
+  case YUVColorSpace::BT709:
+    return rec709;
+  default: // YUVColorSpace::UNKNOWN
+    MOZ_ASSERT(false, "unknown aYUVColorSpace");
+    return rec601;
+  }
 }
 
 /* static */ void
@@ -1414,7 +1460,7 @@ gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
                                    status);
 
     ErrorResult rv;
-    runnable->Dispatch(rv);
+    runnable->Dispatch(dom::workers::Terminating, rv);
     if (rv.Failed()) {
         // XXXbz This is totally broken, since we're supposed to just abort
         // everything up the callstack but the callers basically eat the

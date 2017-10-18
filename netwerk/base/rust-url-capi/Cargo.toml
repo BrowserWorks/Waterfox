@@ -1,0 +1,13 @@
+[package]
+name = "rust_url_capi"
+version = "0.0.1"
+authors = ["Valentin Gosu <valentin.gosu@gmail.com>"]
+
+[lib]
+name = "rust_url_capi"
+
+[dependencies]
+libc = "0.2.0"
+url = "1.4.0"
+nsstring = { path = "../../../xpcom/rust/nsstring" }
+nserror = { path = "../../../xpcom/rust/nserror" }

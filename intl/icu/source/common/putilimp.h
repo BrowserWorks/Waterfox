@@ -1,7 +1,9 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2015, International Business Machines
+*   Copyright (C) 1997-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -85,7 +87,7 @@ typedef size_t uintptr_t;
 
 #ifdef U_HAVE_NL_LANGINFO_CODESET
     /* Use the predefined value. */
-#elif U_PLATFORM_HAS_WIN32_API || U_PLATFORM == U_PF_ANDROID || U_PLATFORM == U_PF_QNX
+#elif U_PLATFORM_USES_ONLY_WIN32_API || U_PLATFORM == U_PF_ANDROID || U_PLATFORM == U_PF_QNX
 #   define U_HAVE_NL_LANGINFO_CODESET 0
 #else
 #   define U_HAVE_NL_LANGINFO_CODESET 1
@@ -104,7 +106,10 @@ typedef size_t uintptr_t;
 #ifdef U_TZSET
     /* Use the predefined value. */
 #elif U_PLATFORM_USES_ONLY_WIN32_API
+    // UWP doesn't support tzset or environment variables for tz
+#if U_PLATFORM_HAS_WINUWP_API == 0
 #   define U_TZSET _tzset
+#endif
 #elif U_PLATFORM == U_PF_OS400
    /* not defined */
 #else
@@ -139,7 +144,10 @@ typedef size_t uintptr_t;
 #ifdef U_TZNAME
     /* Use the predefined value. */
 #elif U_PLATFORM_USES_ONLY_WIN32_API
+    /* not usable on all windows platforms */
+#if U_PLATFORM_HAS_WINUWP_API == 0
 #   define U_TZNAME _tzname
+#endif
 #elif U_PLATFORM == U_PF_OS400
    /* not defined */
 #else
@@ -148,7 +156,7 @@ typedef size_t uintptr_t;
 
 #ifdef U_HAVE_MMAP
     /* Use the predefined value. */
-#elif U_PLATFORM_HAS_WIN32_API
+#elif U_PLATFORM_USES_ONLY_WIN32_API
 #   define U_HAVE_MMAP 0
 #else
 #   define U_HAVE_MMAP 1
@@ -171,7 +179,7 @@ typedef size_t uintptr_t;
  */
 #ifdef U_HAVE_DIRENT_H
     /* Use the predefined value. */
-#elif U_PLATFORM_HAS_WIN32_API
+#elif U_PLATFORM_USES_ONLY_WIN32_API
 #   define U_HAVE_DIRENT_H 0
 #else
 #   define U_HAVE_DIRENT_H 1

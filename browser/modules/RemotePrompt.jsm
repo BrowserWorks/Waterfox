@@ -11,18 +11,20 @@ var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "RemotePrompt" ];
 
-Cu.import("resource:///modules/PlacesUIUtils.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/SharedPromptUtils.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
+                                  "resource:///modules/PlacesUIUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+                                  "resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromptUtils",
+                                  "resource://gre/modules/SharedPromptUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Services",
+                                  "resource://gre/modules/Services.jsm");
 
 var RemotePrompt = {
-  init: function() {
-    let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
-    mm.addMessageListener("Prompt:Open", this);
-  },
-
-  receiveMessage: function(message) {
+  // Listeners are added in nsBrowserGlue.js
+  receiveMessage(message) {
     switch (message.name) {
       case "Prompt:Open":
         if (message.data.uri) {
@@ -34,10 +36,9 @@ var RemotePrompt = {
     }
   },
 
-  openTabPrompt: function(args, browser) {
+  openTabPrompt(args, browser) {
     let window = browser.ownerGlobal;
     let tabPrompt = window.gBrowser.getTabModalPromptBox(browser)
-    let callbackInvoked = false;
     let newPrompt;
     let needRemove = false;
     let promptId = args._remoteId;
@@ -93,7 +94,7 @@ var RemotePrompt = {
     }
   },
 
-  openModalWindow: function(args, browser) {
+  openModalWindow(args, browser) {
     let window = browser.ownerGlobal;
     try {
       PromptUtils.fireDialogEvent(window, "DOMWillOpenModalDialog", browser);

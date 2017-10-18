@@ -8,7 +8,6 @@ this.EXPORTED_SYMBOLS = ["TabStateFlusher"];
 
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/Promise.jsm", this);
 
 /**
  * A module that enables async flushes. Updates from frame scripts are
@@ -48,7 +47,7 @@ this.TabStateFlusher = Object.freeze({
    *        An error message that will be sent to the Console in the
    *        event that a flush failed.
    */
-  resolve(browser, flushID, success=true, message="") {
+  resolve(browser, flushID, success = true, message = "") {
     TabStateFlusherInternal.resolve(browser, flushID, success, message);
   },
 
@@ -66,7 +65,7 @@ this.TabStateFlusher = Object.freeze({
    *        An error message that will be sent to the Console in the
    *        event that the flushes failed.
    */
-  resolveAll(browser, success=true, message="") {
+  resolveAll(browser, success = true, message = "") {
     TabStateFlusherInternal.resolveAll(browser, success, message);
   }
 });
@@ -102,12 +101,16 @@ var TabStateFlusherInternal = {
   },
 
   /**
-   * Requests an async flush for all browsers of a given window. Returns a Promise
-   * that will resolve when we've heard back from all browsers.
+   * Requests an async flush for all non-lazy browsers of a given window.
+   * Returns a Promise that will resolve when we've heard back from all browsers.
    */
   flushWindow(window) {
-    let browsers = window.gBrowser.browsers;
-    let promises = browsers.map((browser) => this.flush(browser));
+    let promises = [];
+    for (let browser of window.gBrowser.browsers) {
+      if (window.gBrowser.getTabForBrowser(browser).linkedPanel) {
+        promises.push(this.flush(browser));
+      }
+    }
     return Promise.all(promises);
   },
 
@@ -124,7 +127,7 @@ var TabStateFlusherInternal = {
    *        An error message that will be sent to the Console in the
    *        event that a flush failed.
    */
-  resolve(browser, flushID, success=true, message="") {
+  resolve(browser, flushID, success = true, message = "") {
     // Nothing to do if there are no pending flushes for the given browser.
     if (!this._requests.has(browser.permanentKey)) {
       return;
@@ -160,7 +163,7 @@ var TabStateFlusherInternal = {
    *        An error message that will be sent to the Console in the
    *        event that the flushes failed.
    */
-  resolveAll(browser, success=true, message="") {
+  resolveAll(browser, success = true, message = "") {
     // Nothing to do if there are no pending flushes for the given browser.
     if (!this._requests.has(browser.permanentKey)) {
       return;

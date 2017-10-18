@@ -11,9 +11,8 @@ function testBFCache() {
   function theTest() {
     var abort = false;
     var chances, gImage, gFrames;
-    gBrowser.selectedTab = gBrowser.addTab(TESTROOT + "image.html");
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, TESTROOT + "image.html");
     gBrowser.selectedBrowser.addEventListener("pageshow", function () {
-      gBrowser.selectedBrowser.removeEventListener("pageshow", arguments.callee, true);
       var window = gBrowser.contentWindow;
       // If false, we are in an optimized build, and we abort this and
       // all further tests
@@ -25,7 +24,7 @@ function testBFCache() {
         abort = true;
       }
       goer.next();
-    }, true);
+    }, {capture: true, once: true});
     yield;
     if (abort) {
       finish();
@@ -112,16 +111,15 @@ function testSharedContainers() {
     var gImages = [];
     var gFrames;
 
-    gBrowser.selectedTab = gBrowser.addTab(TESTROOT + "image.html");
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, TESTROOT + "image.html");
     gBrowser.selectedBrowser.addEventListener("pageshow", function () {
-      gBrowser.selectedBrowser.removeEventListener("pageshow", arguments.callee, true);
       actOnMozImage(gBrowser.contentDocument, "img1", function(image) {
         gImages[0] = image;
         gFrames = image.framesNotified; // May in theory have frames from last test
                                         // in this counter - so subtract them out
       });
       goer.next();
-    }, true);
+    }, {capture: true, once: true});
     yield;
 
     // Load next tab somewhat later
@@ -131,16 +129,15 @@ function testSharedContainers() {
     }, 1500, Ci.nsITimer.TYPE_ONE_SHOT);
     yield;
 
-    gBrowser.selectedTab = gBrowser.addTab(TESTROOT + "imageX2.html");
+    gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, TESTROOT + "imageX2.html");
     gBrowser.selectedBrowser.addEventListener("pageshow", function () {
-      gBrowser.selectedBrowser.removeEventListener("pageshow", arguments.callee, true);
       [1,2].forEach(function(i) {
         actOnMozImage(gBrowser.contentDocument, "img"+i, function(image) {
           gImages[i] = image;
         });
       });
       goer.next();
-    }, true);
+    }, {capture: true, once: true});
     yield;
 
     var chances = 120;

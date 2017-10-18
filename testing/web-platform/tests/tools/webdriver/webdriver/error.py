@@ -1,8 +1,3 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this file,
-# You can obtain one at http://mozilla.org/MPL/2.0/.
-
-
 import collections
 
 
@@ -19,6 +14,11 @@ class ElementNotSelectableException(WebDriverException):
 class ElementNotVisibleException(WebDriverException):
     http_status = 400
     status_code = "element not visible"
+
+
+class InsecureCertificateException(WebDriverException):
+    http_status = 400
+    status_code = "insecure certificate"
 
 
 class InvalidArgumentException(WebDriverException):

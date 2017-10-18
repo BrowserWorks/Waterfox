@@ -1,6 +1,949 @@
 # This file contains a definition of the scalar probes that are recorded in Telemetry.
 # They are submitted with the "main" pings and can be inspected in about:telemetry.
 
+# The following section contains the accessibility scalars.
+a11y:
+  instantiators:
+    bug_numbers:
+      - 1323069
+    description: >
+      The leaf name and version number of the binary for the process responsible
+      for remotely instantiating a11y.
+    expires: "61"
+    kind: string
+    notification_emails:
+      - dbolter@mozilla.com
+    record_in_processes:
+      - 'main'
+    release_channel_collection: opt-out
+    keyed: false
+    cpp_guard: 'ACCESSIBILITY'
+
+# The following section contains the aushelper system add-on scalars.
+aushelper:
+  websense_reg_version:
+    bug_numbers:
+      - 1305847
+    description: The Websense version from the Windows registry.
+    expires: "60"
+    kind: string
+    notification_emails:
+      - application-update-telemetry-alerts@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+# The following section contains the browser engagement scalars.
+browser.engagement:
+  max_concurrent_tab_count:
+    bug_numbers:
+      - 1271304
+    description: >
+      The count of maximum number of tabs open during a subsession,
+      across all windows, including tabs in private windows and restored
+      at startup.
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  tab_open_event_count:
+    bug_numbers:
+      - 1271304
+    description: >
+      The count of tab open events per subsession, across all windows, after the
+      session has been restored. This includes tab open events from private windows
+      and from manual session restorations (i.e. after crashes and from about:home).
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  max_concurrent_window_count:
+    bug_numbers:
+      - 1271304
+    description: >
+      The count of maximum number of browser windows open during a subsession. This
+      includes private windows and the ones opened when starting the browser.
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  window_open_event_count:
+    bug_numbers:
+      - 1271304
+    description: >
+      The count of browser window open events per subsession, after the session
+      has been restored. The count includes private windows and the ones from manual
+      session restorations (i.e. after crashes and from about:home).
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  total_uri_count:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count of the total non-unique http(s) URIs visited in a subsession, including
+      page reloads, after the session has been restored. This does not include background
+      page requests and URIs from embedded pages or private browsing.
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  unfiltered_uri_count:
+    bug_numbers:
+      - 1304647
+    description: >
+      The count of the total non-unique URIs visited in a subsession, not restricted to
+      a specific protocol, including page reloads and about:* pages (other than initial
+      pages such as about:blank, ...), after the session has been restored. This does
+      not include background page requests and URIs from embedded pages or private browsing.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  unique_domains_count:
+    bug_numbers:
+      - 1271310
+    description: >
+      The count of the unique domains visited in a subsession, after the session
+      has been restored. Subdomains under eTLD are aggregated after the first level
+      (i.e. test.example.com and other.example.com are only counted once).
+      This does not include background page requests and domains from embedded pages
+      or private browsing. The count is limited to 100 unique domains.
+    expires: never
+    kind: uint
+    notification_emails:
+      - rweiss@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  restored_pinned_tabs_count:
+    bug_numbers:
+      - 1373728
+    description: >
+      The count of the number of pinned tabs that were restored.
+    expires: '62'
+    kind: uint
+    notification_emails:
+      - chutten@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  active_ticks:
+    bug_numbers:
+      - 1376942
+    description: >
+      The count of the number of five-second intervals ('ticks') the user
+      was considered 'active' in a subsession. Session activity involves keyboard or mouse
+      interaction with the application. It does not take into account whether or not the window
+      has focus or is in the foreground, only if it is receiving these interaction events.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+# The following section contains the browser engagement scalars.
+browser.engagement.navigation:
+  urlbar:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count URI loads triggered in a subsession from the urlbar (awesomebar),
+      broken down by the originating action.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  searchbar:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count URI loads triggered in a subsession from the searchbar,
+      broken down by the originating action.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  about_home:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count URI loads triggered in a subsession from about:home,
+      broken down by the originating action.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  about_newtab:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count URI loads triggered in a subsession from about:newtab,
+      broken down by the originating action.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  contextmenu:
+    bug_numbers:
+      - 1271313
+    description: >
+      The count URI loads triggered in a subsession from the contextmenu,
+      broken down by the originating action.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - bcolloran@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+# The following section contains the browser usage scalars.
+browser.usage:
+  graphite:
+    bug_numbers:
+      - 1331915
+    description: >
+      The number of times a graphite2 font has been loaded.
+    expires: "60"
+    kind: uint
+    notification_emails:
+      - tom@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all'
+
+  plugin_instantiated:
+    bug_numbers:
+      - 1381591
+    description: >-
+      The number of plugin instances that were created.
+    expires: never # Jan-2021 but we don't have a version number for that
+    kind: uint
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+# The following section contains the session restore scalars.
+browser.session.restore:
+  number_of_win:
+    bug_numbers:
+      - 1379226
+    description: The count of windows open after a session has been restored.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  number_of_tabs:
+    bug_numbers:
+      - 1379226
+    description: The count of tabs open after a session has been restored.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  tabbar_restore_available:
+    bug_numbers:
+      - 1379226
+    description: >
+      Recorded on startup. Boolean stating whether the tabbar session
+      restore button was ever available.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  tabbar_restore_clicked:
+    bug_numbers:
+      - 1379226
+    description: >
+      Recorded on click event. Boolean stating if the session restore button
+      was clicked.
+    expires: never
+    kind: boolean
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  browser_startup_page:
+    bug_numbers:
+      - 1379226
+    description: >
+      The value of the browser.startup.page pref.
+      This pref restores the tabs and windows automatically when set to 3.
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  browser_tabs_restorebutton:
+    bug_numbers:
+      - 1379226
+    description: >
+      The value of the browser.tabs.restorebutton pref.
+      0 - the user is not a part of the experiment
+      1 - the user is a part of the experiment
+      2 - the user is part of the control group
+    expires: never
+    kind: uint
+    notification_emails:
+      - bwinton@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+# This section is for probes used to measure use of the Webextensions storage.sync API.
+storage.sync.api.usage:
+  extensions_using:
+    bug_numbers:
+      - 1328974
+    description: >
+      The count of webextensions that have data stored in the chrome.storage.sync API.
+      This includes extensions that have not used the storage.sync API this session.
+      This includes items that were not stored this session.
+      This scalar is collected after every sync.
+    expires: "58"
+    kind: uint
+    keyed: false
+    notification_emails:
+      - eglassercamp@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  items_stored:
+    bug_numbers:
+      - 1328974
+    description: >
+      The count of items in storage.sync storage, broken down by extension ID.
+      This includes extensions that have not used the storage.sync API this session.
+      This includes items that were not stored this session.
+      This scalar is collected after every sync.
+    expires: "58"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - eglassercamp@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  storage_consumed:
+    bug_numbers:
+      - 1328974
+    description: >
+      The count of bytes used in storage.sync, broken down by extension ID.
+      This includes extensions that have not used the storage.sync API this session.
+      This includes items that were not stored this session.
+      This scalar is collected after every sync.
+    expires: "58"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - eglassercamp@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+
+services.sync:
+  fxa_verification_method:
+    bug_numbers:
+      - 1353645
+    description: >
+      The method we used ("push" or "poll") to determine the verification of a
+      Firefox Account email.
+    expires: "60"
+    kind: string
+    keyed: false
+    notification_emails:
+      - sync-staff@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+
+security:
+  pkcs11_modules_loaded:
+    bug_numbers:
+      - 1369911
+    description: >
+      A keyed boolean indicating the library names of the PKCS#11 modules that
+      have been loaded by the browser.
+    expires: "62"
+    kind: boolean
+    keyed: true
+    notification_emails:
+      - seceng-telemetry@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+
+sandbox:
+  no_job:
+    bug_numbers:
+      - 1392570
+    description: >
+      Indicates that we can't use a job object for sandboxed child processes.
+      Keyed by whether we are in a remote session or not from ::GetSystemMetrics(SM_REMOTESESSION).
+    expires: "62"
+    kind: boolean
+    keyed: true
+    notification_emails:
+      - bowen@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+    cpp_guard: 'XP_WIN'
+
+preferences:
+  created_new_user_prefs_file:
+    bug_numbers:
+      - 1367813
+    description: >-
+      A boolean indicating that profile/prefs.js was not found and it is being
+      created for the first time in this session.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  prefs_file_was_invalid:
+    bug_numbers:
+      - 1367813
+    description: >-
+      Set to true if a failure occurred reading profile/prefs.js.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  read_user_js:
+    bug_numbers:
+      - 1367813
+    description: >-
+      Set to true if user.js exists and was read.
+    expires: "62"
+    kind: boolean
+    notification_emails:
+      - bsmedberg@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - main
+  search_query:
+    bug_numbers:
+      - 1359306
+    description: >-
+      Each key is a search query string when user performs a search action within
+      about:preferences, and each value is the number of times that key is recorded.
+      The telemetry data will be recorded if there is a successful search result highlighted.
+    expires: "62"
+    kind: uint
+    keyed: true
+    notification_emails:
+      - chsiang@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - main
+
+# The following section contains WebRTC nICEr scalars
+# For more info on ICE, see https://tools.ietf.org/html/rfc5245
+# For more info on STUN, see https://tools.ietf.org/html/rfc5389
+# For more info on TURN, see https://tools.ietf.org/html/rfc5766
+webrtc.nicer:
+  stun_retransmits:
+    bug_numbers:
+      - 1325536
+    description: >
+      The count of STUN message retransmissions during a WebRTC call.
+      When sending STUN request messages over UDP, messages may be
+      dropped by the network. Retransmissions are the mechanism used to
+      accomplish reliability of the STUN request/response transaction.
+      This can happen during both successful and unsuccessful WebRTC
+      calls.
+      For more info on ICE, see https://tools.ietf.org/html/rfc5245
+      For more info on STUN, see https://tools.ietf.org/html/rfc5389
+      For more info on TURN, see https://tools.ietf.org/html/rfc5766
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - webrtc-ice-telemetry-alerts@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+  turn_401s:
+    bug_numbers:
+      - 1325536
+    description: >
+      The count of TURN 401 (Unauthorized) responses to allocation
+      requests. Only 401 responses beyond the first, expected 401 are
+      counted. More than one 401 repsonse indicates the client is
+      experiencing difficulty authenticating with the TURN server. This
+      can happen during both successful and unsuccessful WebRTC calls.
+      For more info on ICE, see https://tools.ietf.org/html/rfc5245
+      For more info on STUN, see https://tools.ietf.org/html/rfc5389
+      For more info on TURN, see https://tools.ietf.org/html/rfc5766
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - webrtc-ice-telemetry-alerts@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+  turn_403s:
+    bug_numbers:
+      - 1325536
+    description: >
+      The count of TURN 403 (Forbidden) responses to CreatePermission or
+      ChannelBind requests.  This indicates that the TURN server is
+      refusing the request for an IP address or IP address/port
+      combination, likely due to administrative restrictions.
+      For more info on ICE, see https://tools.ietf.org/html/rfc5245
+      For more info on STUN, see https://tools.ietf.org/html/rfc5389
+      For more info on TURN, see https://tools.ietf.org/html/rfc5766
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - webrtc-ice-telemetry-alerts@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+  turn_438s:
+    bug_numbers:
+      - 1325536
+    description: >
+      The count of TURN 438 (Stale Nonce) responses to allocation
+      requests. This can happen during both successful and unsuccessful
+      WebRTC calls.
+      For more info on ICE, see https://tools.ietf.org/html/rfc5245
+      For more info on STUN, see https://tools.ietf.org/html/rfc5389
+      For more info on TURN, see https://tools.ietf.org/html/rfc5766
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - webrtc-ice-telemetry-alerts@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+# The following section contains content process base counters.
+dom.contentprocess:
+  troubled_due_to_memory:
+    bug_numbers:
+      - 1305091
+    description: >
+      The number of content processes that were marked as troubled because
+      it was running low on virtual memory.
+    expires: "58"
+    kind: uint
+    notification_emails:
+      - benjamin@smedbergs.us
+      - mconley@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+
+devtools.toolbar.eyedropper:
+  opened:
+    bug_numbers:
+      - 1247985
+      - 1352115
+    description: Number of times the DevTools Eyedropper has been opened via the inspector toolbar.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.copy.unique.css.selector:
+  opened:
+    bug_numbers:
+      - 1323700
+      - 1352115
+    description: Number of times the DevTools copy unique CSS selector has been used.
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.copy.full.css.selector:
+  opened:
+    bug_numbers:
+      - 1323700
+      - 1352115
+    description: Number of times the DevTools copy full CSS selector has been used.
+    expires: "57"
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.copy.xpath:
+  opened:
+    bug_numbers:
+      - 987877
+    description: Number of times the DevTools copy XPath has been used.
+    expires: "58"
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.rules.gridinspector:
+  opened:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector was opened from the rules view.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.gridinspector:
+  opened:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector was opened from the grid view.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showGridAreasOverlay:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Display grid areas" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showGridLineNumbers:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Display grid numbers" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools.grid.showInfiniteLines:
+  checked:
+    bug_numbers:
+      - 1373483
+    description: >
+      Number of times the DevTools grid inspector's "Extend grid lines infinitely" was checked.
+    expires: never
+    kind: uint
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+devtools:
+  current_theme:
+    bug_numbers:
+      - 1396811
+    description: >
+      Number of times DevTools was opened, keyed by theme.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - dev-developer-tools@lists.mozilla.org
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+navigator.storage:
+  estimate_count:
+    bug_numbers:
+      - 1359708
+    description: >
+      Number of times navigator.storage.estimate has been used.
+    expires: "60"
+    kind: uint
+    notification_emails:
+      - shuang@mozilla.com
+      - ttung@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+  persist_count:
+    bug_numbers:
+      - 1359708
+    description: >
+      Number of times navigator.storage.persist has been used.
+    expires: "60"
+    kind: uint
+    notification_emails:
+      - shuang@mozilla.com
+      - ttung@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+telemetry:
+  os_shutting_down:
+    bug_numbers:
+      - 1363345
+    description: >
+      Records true if there is a signal that Firefox was quitting because
+      the OS was shutting down. Only available on Windows.
+    expires: "58"
+    kind: boolean
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+telemetry.discarded:
+  accumulations:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded accumulations to histograms in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  keyed_accumulations:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded accumulations to keyed histograms in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  scalar_actions:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded actions on scalars in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  keyed_scalar_actions:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded actions on keyed scalars in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+  child_events:
+    bug_numbers:
+      - 1369041
+    description: >
+      Number of discarded events in child processes
+    expires: "never"
+    kind: uint
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'all_childs'
+
+# The following section contains graphics-related scalars.
+gfx.advanced.layers:
+  failure_id:
+    bug_numbers:
+      - 1365879
+    description: >
+      Each key is a failure for initializing Advanced Layers, and each value
+      is the number of times that failure was recorded. The failure codes
+      are unique strings present in MLGDeviceD3D11::Initialize, such that
+      a failure can be traced back to a specific Direct3D API call.
+    keyed: true
+    kind: uint
+    expires: "61"
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+    record_in_processes:
+      - 'main'
+
+# The following section contains the form autofill related scalars.
+formautofill:
+  availability:
+    bug_numbers:
+      - 1386959
+    description: A boolean sent once per session to represent whether the formautofill is available in the build
+    expires: never
+    kind: boolean
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+formautofill.addresses:
+  fill_type_manual:
+    bug_numbers:
+      - 990200
+    description: Count at submission time whether the submitted form was filled manually.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+  fill_type_autofill:
+    bug_numbers:
+      - 990200
+    description: Count at submission time whether the submitted form was autofilled.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+  fill_type_autofill_update:
+    bug_numbers:
+      - 990200
+    description: >
+      Count at submission time whether the submitted form was autofilled, but
+      the data in form is changed and can not be merged to orginal address profile.
+    expires: never
+    kind: uint
+    notification_emails:
+      - autofill@lists.mozilla.org
+      - jcheng@mozilla.com
+      - chsiang@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
 # The following section is for probes testing the Telemetry system. They will not be
 # submitted in pings and are only used for testing.
 telemetry.test:
@@ -14,6 +957,8 @@ telemetry.test:
     kind: uint
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
 
   string_kind:
     bug_numbers:
@@ -23,6 +968,8 @@ telemetry.test:
     kind: string
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
 
   boolean_kind:
     bug_numbers:
@@ -32,6 +979,8 @@ telemetry.test:
     kind: boolean
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
 
   expired:
     bug_numbers:
@@ -41,6 +990,8 @@ telemetry.test:
     kind: uint
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
 
   unexpired:
     bug_numbers:
@@ -50,6 +1001,8 @@ telemetry.test:
     kind: uint
     notification_emails:
       - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
 
   release_optin:
     bug_numbers:
@@ -60,6 +1013,8 @@ telemetry.test:
     notification_emails:
       - telemetry-client-dev@mozilla.com
     release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
 
   release_optout:
     bug_numbers:
@@ -70,82 +1025,105 @@ telemetry.test:
     notification_emails:
       - telemetry-client-dev@mozilla.com
     release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
 
-# The following section contains the browser engagement scalars.
-browser.engagement:
-  max_concurrent_tab_count:
+  keyed_release_optin:
     bug_numbers:
-      - 1271304
-    description: >
-      The count of maximum number of tabs open during a subsession,
-      across all windows, including tabs in private windows and restored
-      at startup.
-    expires: "55"
+      - 1277806
+    description: A testing scalar; not meant to be touched.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-in
+    record_in_processes:
+      - 'main'
+
+  keyed_release_optout:
+    bug_numbers:
+      - 1277806
+    description: A testing scalar; not meant to be touched.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    release_channel_collection: opt-out
+    record_in_processes:
+      - 'main'
+
+  keyed_expired:
+    bug_numbers:
+      - 1277806
+    description: This is an expired testing scalar; not meant to be touched.
+    expires: 4.0a1
+    kind: uint
+    keyed: true
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
+
+  keyed_unsigned_int:
+    bug_numbers:
+      - 1277806
+    description: A testing keyed uint scalar; not meant to be touched.
+    expires: never
+    kind: uint
+    keyed: true
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
+
+  keyed_boolean_kind:
+    bug_numbers:
+      - 1277806
+    description: A testing keyed boolean scalar; not meant to be touched.
+    expires: never
+    kind: boolean
+    keyed: true
+    notification_emails:
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'main'
+      - 'content'
+
+  content_only_uint:
+    bug_numbers:
+      - 1278556
+    description: A testing uint scalar; not meant to be touched.
+    expires: never
     kind: uint
     notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'content'
 
-  tab_open_event_count:
+  all_processes_uint:
     bug_numbers:
-      - 1271304
-    description: >
-      The count of tab open events per subsession, across all windows, after the
-      session has been restored. This includes tab open events from private windows.
-    expires: "55"
+      - 1278556
+    description: A testing uint scalar; not meant to be touched.
+    expires: never
     kind: uint
     notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'all'
 
-  max_concurrent_window_count:
+  all_child_processes_string:
     bug_numbers:
-      - 1271304
-    description: >
-      The count of maximum number of browser windows open during a subsession. This
-      includes private windows and the ones opened when starting the browser.
-    expires: "55"
-    kind: uint
+      - 1278556
+    description: A testing string scalar; not meant to be touched.
+    expires: never
+    kind: string
     notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
+      - telemetry-client-dev@mozilla.com
+    record_in_processes:
+      - 'all_childs'
 
-  window_open_event_count:
-    bug_numbers:
-      - 1271304
-    description: >
-      The count of browser window open events per subsession, after the session
-      has been restored. The count includes the private windows.
-    expires: "55"
-    kind: uint
-    notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
-
-  total_uri_count:
-    bug_numbers:
-      - 1271313
-    description: >
-      The count of the total non-unique http(s) URIs visited in a subsession, including
-      page reloads, after the session has been restored. This does not include background
-      page requests and URIs from embedded pages or private browsing.
-    expires: "55"
-    kind: uint
-    notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
-
-  unique_domains_count:
-    bug_numbers:
-      - 1271310
-    description: >
-      The count of the unique domains visited in a subsession, after the session
-      has been restored. Subdomains under eTLD are aggregated after the first level
-      (i.e. test.example.com and other.example.com are only counted once).
-      This does not include background page requests and domains from embedded pages
-      or private browsing. The count is limited to 100 unique domains.
-    expires: "55"
-    kind: uint
-    notification_emails:
-      - rweiss@mozilla.com
-    release_channel_collection: opt-out
+# NOTE: Please don't add new definitions below this point. Consider adding
+# them earlier in the file and leave the telemetry.test group as the last
+# one for readability.

@@ -47,7 +47,7 @@
 #define KP_START_USEC p_ustart_usec
 #endif
 
-#include "mozilla/Snprintf.h"
+#include "mozilla/Sprintf.h"
 #include "mozilla/TimeStamp.h"
 #include <pthread.h>
 
@@ -154,7 +154,8 @@ BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds)
   double result = aMilliseconds * kNsPerMsd;
   if (result > INT64_MAX) {
     return INT64_MAX;
-  } else if (result < INT64_MIN) {
+  }
+  if (result < INT64_MIN) {
     return INT64_MIN;
   }
 
@@ -191,8 +192,6 @@ TimeStamp::Startup()
        sResolutionSigDigs *= 10);
 
   gInitialized = true;
-
-  return;
 }
 
 void
@@ -270,7 +269,7 @@ ComputeProcessUptimeThread(void* aTime)
   }
 
   char threadStat[40];
-  snprintf_literal(threadStat, "/proc/self/task/%d/stat", (pid_t)syscall(__NR_gettid));
+  SprintfLiteral(threadStat, "/proc/self/task/%d/stat", (pid_t)syscall(__NR_gettid));
 
   uint64_t threadJiffies = JiffiesSinceBoot(threadStat);
   uint64_t selfJiffies = JiffiesSinceBoot("/proc/self/stat");

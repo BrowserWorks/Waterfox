@@ -19,6 +19,7 @@
 #include "jsprototypes.h"
 #include "jstypes.h"
 
+#include "js/Result.h"
 #include "js/TraceKind.h"
 #include "js/TypeDecls.h"
 
@@ -28,9 +29,7 @@
 
 namespace JS {
 
-template <typename T>
-class AutoVectorRooter;
-typedef AutoVectorRooter<jsid> AutoIdVector;
+class AutoIdVector;
 class CallArgs;
 
 template <typename T>
@@ -45,12 +44,7 @@ class JS_PUBLIC_API(CompartmentOptions);
 class Value;
 struct Zone;
 
-} /* namespace JS */
-
-namespace js {
-struct ContextFriendFields;
-class RootLists;
-} // namespace js
+} // namespace JS
 
 /*
  * Run-time version enumeration.  For compile-time version checking, please use
@@ -70,7 +64,7 @@ enum JSVersion {
 
 /* Result of typeof operator enumeration. */
 enum JSType {
-    JSTYPE_VOID,                /* undefined */
+    JSTYPE_UNDEFINED,           /* undefined */
     JSTYPE_OBJECT,              /* object */
     JSTYPE_FUNCTION,            /* function */
     JSTYPE_STRING,              /* string */
@@ -110,7 +104,6 @@ class JS_PUBLIC_API(JSTracer);
 
 class JSFlatString;
 
-typedef struct PRCallOnceType   JSCallOnceType;
 typedef bool                    (*JSInitCallback)(void);
 
 template<typename T> struct JSConstScalarSpec;
@@ -129,11 +122,29 @@ namespace gc {
 class AutoTraceSession;
 class StoreBuffer;
 } // namespace gc
+
+class CooperatingContext;
+
+inline JSCompartment* GetContextCompartment(const JSContext* cx);
+inline JS::Zone* GetContextZone(const JSContext* cx);
+
+// Whether the current thread is permitted access to any part of the specified
+// runtime or zone.
+JS_FRIEND_API(bool)
+CurrentThreadCanAccessRuntime(const JSRuntime* rt);
+
+#ifdef DEBUG
+JS_FRIEND_API(bool)
+CurrentThreadIsPerformingGC();
+#endif
+
 } // namespace js
 
 namespace JS {
 
-struct PropertyDescriptor;
+class JS_PUBLIC_API(AutoEnterCycleCollection);
+class JS_PUBLIC_API(AutoAssertOnBarrier);
+struct JS_PUBLIC_API(PropertyDescriptor);
 
 typedef void (*OffThreadCompileCallback)(void* token, void* callbackData);
 
@@ -141,50 +152,72 @@ enum class HeapState {
     Idle,             // doing nothing with the GC heap
     Tracing,          // tracing the GC heap without collecting, e.g. IterateCompartments()
     MajorCollecting,  // doing a GC of the major heap
-    MinorCollecting   // doing a GC of the minor heap (nursery)
+    MinorCollecting,  // doing a GC of the minor heap (nursery)
+    CycleCollecting   // in the "Unlink" phase of cycle collection
 };
 
-namespace shadow {
+JS_PUBLIC_API(HeapState)
+CurrentThreadHeapState();
 
-struct Runtime
+static inline bool
+CurrentThreadIsHeapBusy()
 {
-  protected:
-    // Allow inlining of heapState checks.
-    friend class js::gc::AutoTraceSession;
-    JS::HeapState heapState_;
+    return CurrentThreadHeapState() != HeapState::Idle;
+}
 
-    js::gc::StoreBuffer* gcStoreBufferPtr_;
+static inline bool
+CurrentThreadIsHeapTracing()
+{
+    return CurrentThreadHeapState() == HeapState::Tracing;
+}
 
+static inline bool
+CurrentThreadIsHeapMajorCollecting()
+{
+    return CurrentThreadHeapState() == HeapState::MajorCollecting;
+}
+
+static inline bool
+CurrentThreadIsHeapMinorCollecting()
+{
+    return CurrentThreadHeapState() == HeapState::MinorCollecting;
+}
+
+static inline bool
+CurrentThreadIsHeapCollecting()
+{
+    HeapState state = CurrentThreadHeapState();
+    return state == HeapState::MajorCollecting || state == HeapState::MinorCollecting;
+}
+
+static inline bool
+CurrentThreadIsHeapCycleCollecting()
+{
+    return CurrentThreadHeapState() == HeapState::CycleCollecting;
+}
+
+// Decorates the Unlinking phase of CycleCollection so that accidental use
+// of barriered accessors results in assertions instead of leaks.
+class MOZ_STACK_CLASS JS_PUBLIC_API(AutoEnterCycleCollection)
+{
+#ifdef DEBUG
   public:
-    Runtime()
-      : heapState_(JS::HeapState::Idle)
-      , gcStoreBufferPtr_(nullptr)
-    {}
-
-    bool isHeapBusy() const { return heapState_ != JS::HeapState::Idle; }
-    bool isHeapMajorCollecting() const { return heapState_ == JS::HeapState::MajorCollecting; }
-    bool isHeapMinorCollecting() const { return heapState_ == JS::HeapState::MinorCollecting; }
-    bool isHeapCollecting() const { return isHeapMinorCollecting() || isHeapMajorCollecting(); }
-
-    js::gc::StoreBuffer* gcStoreBufferPtr() { return gcStoreBufferPtr_; }
-
-    static JS::shadow::Runtime* asShadowRuntime(JSRuntime* rt) {
-        return reinterpret_cast<JS::shadow::Runtime*>(rt);
-    }
-
-  protected:
-    void setGCStoreBufferPtr(js::gc::StoreBuffer* storeBuffer) {
-        gcStoreBufferPtr_ = storeBuffer;
-    }
+    explicit AutoEnterCycleCollection(JSRuntime* rt);
+    ~AutoEnterCycleCollection();
+#else
+  public:
+    explicit AutoEnterCycleCollection(JSRuntime* rt) {}
+    ~AutoEnterCycleCollection() {}
+#endif
 };
 
-} /* namespace shadow */
+class RootingContext;
 
 class JS_PUBLIC_API(AutoGCRooter)
 {
   public:
     AutoGCRooter(JSContext* cx, ptrdiff_t tag);
-    AutoGCRooter(js::ContextFriendFields* cx, ptrdiff_t tag);
+    AutoGCRooter(RootingContext* cx, ptrdiff_t tag);
 
     ~AutoGCRooter() {
         MOZ_ASSERT(this == *stackTop);
@@ -193,15 +226,8 @@ class JS_PUBLIC_API(AutoGCRooter)
 
     /* Implemented in gc/RootMarking.cpp. */
     inline void trace(JSTracer* trc);
-    static void traceAll(JSTracer* trc);
-    static void traceAllWrappers(JSTracer* trc);
-
-    /* T must be a context type */
-    template<typename T>
-    static void traceAllInContext(T* cx, JSTracer* trc) {
-        for (AutoGCRooter* gcr = cx->roots.autoGCRooters_; gcr; gcr = gcr->down)
-            gcr->trace(trc);
-    }
+    static void traceAll(const js::CooperatingContext& target, JSTracer* trc);
+    static void traceAllWrappers(const js::CooperatingContext& target, JSTracer* trc);
 
   protected:
     AutoGCRooter * const down;
@@ -246,11 +272,8 @@ struct MapTypeToRootKind<void*> {
     static const RootKind kind = RootKind::Traceable;
 };
 
-} /* namespace JS */
-
-namespace js {
-
-class ExclusiveContext;
+using RootedListHeads = mozilla::EnumeratedArray<RootKind, RootKind::Limit,
+                                                 Rooted<void*>*>;
 
 /*
  * This list enumerates the different types of conceptual stacks we have in
@@ -265,12 +288,9 @@ enum StackKind
     StackKindCount
 };
 
-using RootedListHeads = mozilla::EnumeratedArray<JS::RootKind, JS::RootKind::Limit,
-                                                 JS::Rooted<void*>*>;
-
-// Abstracts JS rooting mechanisms so they can be shared between the JSContext
-// and JSRuntime.
-class RootLists
+// Superclass of JSContext which can be used for rooting data in use by the
+// current thread but that does not provide all the functions of a JSContext.
+class RootingContext
 {
     // Stack GC roots for Rooted GC heap pointers.
     RootedListHeads stackRoots_;
@@ -280,51 +300,16 @@ class RootLists
     JS::AutoGCRooter* autoGCRooters_;
     friend class JS::AutoGCRooter;
 
-    // Heap GC roots for PersistentRooted pointers.
-    mozilla::EnumeratedArray<JS::RootKind, JS::RootKind::Limit,
-                             mozilla::LinkedList<JS::PersistentRooted<void*>>> heapRoots_;
-    template <typename T> friend class JS::PersistentRooted;
-
   public:
-    RootLists() : autoGCRooters_(nullptr) {
-        for (auto& stackRootPtr : stackRoots_)
-            stackRootPtr = nullptr;
-    }
-
-    ~RootLists() {
-        // The semantics of PersistentRooted containing pointers and tagged
-        // pointers are somewhat different from those of PersistentRooted
-        // containing a structure with a trace method. PersistentRooted
-        // containing pointers are allowed to outlive the owning RootLists,
-        // whereas those containing a traceable structure are not.
-        //
-        // The purpose of this feature is to support lazy initialization of
-        // global references for the several places in Gecko that do not have
-        // access to a tighter context, but that still need to refer to GC
-        // pointers. For such pointers, FinishPersistentRootedChains ensures
-        // that the contained references are nulled out when the owning
-        // RootLists dies to prevent UAF errors.
-        //
-        // However, for RootKind::Traceable, we do not know the concrete type
-        // of the held thing, so we simply cannot do this without accruing
-        // extra overhead and complexity for all users for a case that is
-        // unlikely to ever be used in practice. For this reason, the following
-        // assertion disallows usage of PersistentRooted<Traceable> that
-        // outlives the RootLists.
-        MOZ_ASSERT(heapRoots_[JS::RootKind::Traceable].isEmpty());
-    }
+    RootingContext();
 
     void traceStackRoots(JSTracer* trc);
     void checkNoGCRooters();
 
-    void tracePersistentRoots(JSTracer* trc);
-    void finishPersistentRoots();
-};
-
-struct ContextFriendFields
-{
   protected:
-    JSRuntime* const     runtime_;
+    // The remaining members in this class should only be accessed through
+    // JSContext pointers. They are unrelated to rooting and are in place so
+    // that inlined API functions can directly access the data.
 
     /* The current compartment. */
     JSCompartment*      compartment_;
@@ -333,105 +318,46 @@ struct ContextFriendFields
     JS::Zone*           zone_;
 
   public:
-    /* Rooting structures. */
-    RootLists           roots;
+    /* Limit pointer for checking native stack consumption. */
+    uintptr_t nativeStackLimit[StackKindCount];
 
-    explicit ContextFriendFields(JSRuntime* rt)
-      : runtime_(rt), compartment_(nullptr), zone_(nullptr)
-    {}
-
-    static const ContextFriendFields* get(const JSContext* cx) {
-        return reinterpret_cast<const ContextFriendFields*>(cx);
+    static const RootingContext* get(const JSContext* cx) {
+        return reinterpret_cast<const RootingContext*>(cx);
     }
 
-    static ContextFriendFields* get(JSContext* cx) {
-        return reinterpret_cast<ContextFriendFields*>(cx);
+    static RootingContext* get(JSContext* cx) {
+        return reinterpret_cast<RootingContext*>(cx);
     }
 
-    friend JSRuntime* GetRuntime(const JSContext* cx);
-    friend JSCompartment* GetContextCompartment(const JSContext* cx);
-    friend JS::Zone* GetContextZone(const JSContext* cx);
-    template <typename T> friend class JS::Rooted;
+    friend JSCompartment* js::GetContextCompartment(const JSContext* cx);
+    friend JS::Zone* js::GetContextZone(const JSContext* cx);
 };
+
+} /* namespace JS */
+
+namespace js {
 
 /*
  * Inlinable accessors for JSContext.
  *
  * - These must not be available on the more restricted superclasses of
- *   JSContext, so we can't simply define them on ContextFriendFields.
+ *   JSContext, so we can't simply define them on RootingContext.
  *
  * - They're perfectly ordinary JSContext functionality, so ought to be
  *   usable without resorting to jsfriendapi.h, and when JSContext is an
  *   incomplete type.
  */
-inline JSRuntime*
-GetRuntime(const JSContext* cx)
-{
-    return ContextFriendFields::get(cx)->runtime_;
-}
-
 inline JSCompartment*
 GetContextCompartment(const JSContext* cx)
 {
-    return ContextFriendFields::get(cx)->compartment_;
+    return JS::RootingContext::get(cx)->compartment_;
 }
 
 inline JS::Zone*
 GetContextZone(const JSContext* cx)
 {
-    return ContextFriendFields::get(cx)->zone_;
+    return JS::RootingContext::get(cx)->zone_;
 }
-
-class PerThreadData;
-
-struct PerThreadDataFriendFields
-{
-  private:
-    // Note: this type only exists to permit us to derive the offset of
-    // the perThread data within the real JSRuntime* type in a portable
-    // way.
-    struct RuntimeDummy : JS::shadow::Runtime
-    {
-        struct PerThreadDummy {
-            void* field1;
-            uintptr_t field2;
-#ifdef JS_DEBUG
-            uint64_t field3;
-#endif
-        } mainThread;
-    };
-
-  public:
-    /* Rooting structures. */
-    RootLists roots;
-
-    PerThreadDataFriendFields();
-
-    /* Limit pointer for checking native stack consumption. */
-    uintptr_t nativeStackLimit[js::StackKindCount];
-
-    static const size_t RuntimeMainThreadOffset = offsetof(RuntimeDummy, mainThread);
-
-    static inline PerThreadDataFriendFields* get(js::PerThreadData* pt) {
-        return reinterpret_cast<PerThreadDataFriendFields*>(pt);
-    }
-
-    static inline PerThreadDataFriendFields* getMainThread(JSRuntime* rt) {
-        // mainThread must always appear directly after |JS::shadow::Runtime|.
-        // Tested by a JS_STATIC_ASSERT in |jsfriendapi.cpp|
-        return reinterpret_cast<PerThreadDataFriendFields*>(
-            reinterpret_cast<char*>(rt) + RuntimeMainThreadOffset);
-    }
-
-    static inline const PerThreadDataFriendFields* getMainThread(const JSRuntime* rt) {
-        // mainThread must always appear directly after |JS::shadow::Runtime|.
-        // Tested by a JS_STATIC_ASSERT in |jsfriendapi.cpp|
-        return reinterpret_cast<const PerThreadDataFriendFields*>(
-            reinterpret_cast<const char*>(rt) + RuntimeMainThreadOffset);
-    }
-
-    template <typename T> friend class JS::Rooted;
-};
 
 } /* namespace js */
 

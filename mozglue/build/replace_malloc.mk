@@ -19,14 +19,8 @@ OS_LDFLAGS += \
   -Wl,-U,_replace_jemalloc_stats \
   -Wl,-U,_replace_jemalloc_purge_freed_pages \
   -Wl,-U,_replace_jemalloc_free_dirty_pages \
+  -Wl,-U,_replace_jemalloc_thread_local_arena \
   $(NULL)
-
-ifneq ($(MOZ_REPLACE_MALLOC_LINKAGE),compiler support)
-OS_LDFLAGS += -flat_namespace
-endif
-ifeq ($(MOZ_REPLACE_MALLOC_LINKAGE),dummy library)
-OS_LDFLAGS += -Wl,-weak_library,$(DEPTH)/memory/replace/dummy/$(DLL_PREFIX)dummy_replace_malloc$(DLL_SUFFIX)
-endif
 
 EXTRA_DEPS += $(topsrcdir)/mozglue/build/replace_malloc.mk
 endif

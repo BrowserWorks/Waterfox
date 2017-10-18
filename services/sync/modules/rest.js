@@ -4,10 +4,8 @@
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/rest.js");
 Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-sync/constants.js");
 
 this.EXPORTED_SYMBOLS = ["SyncStorageRequest"];
 
@@ -39,7 +37,12 @@ SyncStorageRequest.prototype = {
     }
 
     if (this.authenticator) {
-      this.authenticator(this);
+      let result = this.authenticator(this, method);
+      if (result && result.headers) {
+        for (let [k, v] of Object.entries(result.headers)) {
+          this.setHeader(k, v);
+        }
+      }
     } else {
       this._log.debug("No authenticator found.");
     }

@@ -7,19 +7,21 @@
 // arrow keys, applying multiplier using alt/shift on number-type filters
 
 const {CSSFilterEditorWidget} = require("devtools/client/shared/widgets/FilterWidget");
+const {getClientCssProperties} = require("devtools/shared/fronts/css-properties");
 
 const FAST_VALUE_MULTIPLIER = 10;
 const SLOW_VALUE_MULTIPLIER = 0.1;
 const DEFAULT_VALUE_MULTIPLIER = 1;
 
-const TEST_URI = `data:text/html,<div id="filter-container" />`;
+const TEST_URI = CHROME_URL_ROOT + "doc_filter-editor-01.html";
 
 add_task(function* () {
-  let [host, win, doc] = yield createHost("bottom", TEST_URI);
+  let [,, doc] = yield createHost("bottom", TEST_URI);
+  const cssIsValid = getClientCssProperties().getValidityChecker(doc);
 
   const container = doc.querySelector("#filter-container");
   const initialValue = "blur(2px)";
-  let widget = new CSSFilterEditorWidget(container, initialValue);
+  let widget = new CSSFilterEditorWidget(container, initialValue, cssIsValid);
 
   let value = 2;
 

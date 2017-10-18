@@ -23,6 +23,8 @@ enum eHtml5FlushState {
 
 class nsHtml5DocumentBuilder : public nsContentSink
 {
+  using Encoding = mozilla::Encoding;
+  template <typename T> using NotNull = mozilla::NotNull<T>;
 public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsHtml5DocumentBuilder,
                                            nsContentSink)
@@ -87,7 +89,8 @@ public:
     return mFlushState == eInDocUpdate;
   }
 
-  void SetDocumentCharsetAndSource(nsACString& aCharset, int32_t aCharsetSource);
+  void SetDocumentCharsetAndSource(NotNull<const Encoding*> aEncoding,
+                                   int32_t aCharsetSource);
 
   /**
    * Sets up style sheet load / parse
@@ -119,9 +122,6 @@ protected:
    * parser needs to be marked as broken, because some input has been lost
    * and parsing more input could lead to a DOM where pieces of HTML source
    * that weren't supposed to become scripts become scripts.
-   *
-   * Since NS_OK is actually 0, zeroing operator new takes care of
-   * initializing this.
    */
   nsresult                             mBroken;
   eHtml5FlushState                     mFlushState;

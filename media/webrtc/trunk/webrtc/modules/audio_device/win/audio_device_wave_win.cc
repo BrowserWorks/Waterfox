@@ -8,12 +8,13 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include "webrtc/base/logging.h"
+#include "webrtc/base/timeutils.h"
 #include "webrtc/modules/audio_device/audio_device_config.h"
-#include "webrtc/modules/audio_device/audio_device_utility.h"
 #include "webrtc/modules/audio_device/win/audio_device_wave_win.h"
 
-#include "webrtc/system_wrappers/interface/event_wrapper.h"
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/system_wrappers/include/event_wrapper.h"
+#include "webrtc/system_wrappers/include/trace.h"
 
 #include <windows.h>
 #include <objbase.h>    // CoTaskMemAlloc, CoTaskMemFree
@@ -47,7 +48,7 @@ namespace webrtc {
 AudioDeviceWindowsWave::AudioDeviceWindowsWave(const int32_t id) :
     _ptrAudioBuffer(NULL),
     _critSect(*CriticalSectionWrapper::CreateCriticalSection()),
-    _timeEvent(*EventWrapper::Create()),
+    _timeEvent(*EventTimerWrapper::Create()),
     _recStartEvent(*EventWrapper::Create()),
     _playStartEvent(*EventWrapper::Create()),
     _hGetCaptureVolumeThread(NULL),
@@ -196,93 +197,69 @@ int32_t AudioDeviceWindowsWave::ActiveAudioLayer(AudioDeviceModule::AudioLayer& 
 //  Init
 // ----------------------------------------------------------------------------
 
-int32_t AudioDeviceWindowsWave::Init()
-{
+AudioDeviceGeneric::InitStatus AudioDeviceWindowsWave::Init() {
+  CriticalSectionScoped lock(&_critSect);
 
-    CriticalSectionScoped lock(&_critSect);
+  if (_initialized) {
+    return InitStatus::OK;
+  }
 
-    if (_initialized)
-    {
-        return 0;
-    }
+  const uint32_t nowTime(rtc::TimeMillis());
 
-    const uint32_t nowTime(AudioDeviceUtility::GetTimeInMS());
+  _recordedBytes = 0;
+  _prevRecByteCheckTime = nowTime;
+  _prevRecTime = nowTime;
+  _prevPlayTime = nowTime;
+  _prevTimerCheckTime = nowTime;
 
-    _recordedBytes = 0;
-    _prevRecByteCheckTime = nowTime;
-    _prevRecTime = nowTime;
-    _prevPlayTime = nowTime;
-    _prevTimerCheckTime = nowTime;
+  _playWarning = 0;
+  _playError = 0;
+  _recWarning = 0;
+  _recError = 0;
 
-    _playWarning = 0;
-    _playError = 0;
-    _recWarning = 0;
-    _recError = 0;
+  _mixerManager.EnumerateAll();
 
-    _mixerManager.EnumerateAll();
+  if (_ptrThread) {
+    // thread is already created and active
+    return InitStatus::OK;
+  }
 
-    if (_ptrThread)
-    {
-        // thread is already created and active
-        return 0;
-    }
+  const char* threadName = "webrtc_audio_module_thread";
+  _ptrThread.reset(new rtc::PlatformThread(ThreadFunc, this, threadName));
+  _ptrThread->Start();
+  _ptrThread->SetPriority(rtc::kRealtimePriority);
 
-    const char* threadName = "webrtc_audio_module_thread";
-    _ptrThread = ThreadWrapper::CreateThread(ThreadFunc, this, threadName);
-    if (!_ptrThread->Start())
-    {
-        WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, _id,
-                     "failed to start the audio thread");
-        _ptrThread.reset();
-        return -1;
-    }
-    _ptrThread->SetPriority(kRealtimePriority);
+  const bool periodic(true);
+  if (!_timeEvent.StartTimer(periodic, TIMER_PERIOD_MS)) {
+    LOG(LS_ERROR) << "failed to start the timer event";
+    _ptrThread->Stop();
+    _ptrThread.reset();
+    return InitStatus::OTHER_ERROR;
+  }
+  WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
+               "periodic timer (dT=%d) is now active", TIMER_PERIOD_MS);
 
-    const bool periodic(true);
-    if (!_timeEvent.StartTimer(periodic, TIMER_PERIOD_MS))
-    {
-        WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, _id,
-                     "failed to start the timer event");
-        _ptrThread->Stop();
-        _ptrThread.reset();
-        return -1;
-    }
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                 "periodic timer (dT=%d) is now active", TIMER_PERIOD_MS);
+  _hGetCaptureVolumeThread =
+      CreateThread(NULL, 0, GetCaptureVolumeThread, this, 0, NULL);
+  if (_hGetCaptureVolumeThread == NULL) {
+    LOG(LS_ERROR) << "  failed to create the volume getter thread";
+    return InitStatus::OTHER_ERROR;
+  }
 
-    _hGetCaptureVolumeThread = CreateThread(NULL,
-                                            0,
-                                            GetCaptureVolumeThread,
-                                            this,
-                                            0,
-                                            NULL);
-    if (_hGetCaptureVolumeThread == NULL)
-    {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  failed to create the volume getter thread");
-        return -1;
-    }
+  SetThreadPriority(_hGetCaptureVolumeThread, THREAD_PRIORITY_NORMAL);
 
-    SetThreadPriority(_hGetCaptureVolumeThread, THREAD_PRIORITY_NORMAL);
+  _hSetCaptureVolumeThread =
+      CreateThread(NULL, 0, SetCaptureVolumeThread, this, 0, NULL);
+  if (_hSetCaptureVolumeThread == NULL) {
+    LOG(LS_ERROR) << "  failed to create the volume setter thread";
+    return InitStatus::OTHER_ERROR;
+  }
 
-    _hSetCaptureVolumeThread = CreateThread(NULL,
-                                            0,
-                                            SetCaptureVolumeThread,
-                                            this,
-                                            0,
-                                            NULL);
-    if (_hSetCaptureVolumeThread == NULL)
-    {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  failed to create the volume setter thread");
-        return -1;
-    }
+  SetThreadPriority(_hSetCaptureVolumeThread, THREAD_PRIORITY_NORMAL);
 
-    SetThreadPriority(_hSetCaptureVolumeThread, THREAD_PRIORITY_NORMAL);
+  _initialized = true;
 
-    _initialized = true;
-
-    return 0;
+  return InitStatus::OK;
 }
 
 // ----------------------------------------------------------------------------
@@ -303,7 +280,7 @@ int32_t AudioDeviceWindowsWave::Terminate()
 
     if (_ptrThread)
     {
-        ThreadWrapper* tmpThread = _ptrThread.release();
+        rtc::PlatformThread* tmpThread = _ptrThread.release();
         _critSect.Leave();
 
         _timeEvent.Set();
@@ -2751,7 +2728,7 @@ int32_t AudioDeviceWindowsWave::GetPlayoutBufferDelay(uint32_t& writtenSamples, 
             msecInPlayoutBuffer = ((writtenSamples - playedSamples)/nSamplesPerMs);
         }
     }
-    else if ((_writtenSamplesOld > POW2(31)) && (writtenSamples < 96000))
+    else if ((_writtenSamplesOld > (unsigned long)POW2(31)) && (writtenSamples < 96000))
     {
         // Wrap around as expected after having used all 32 bits. (But we still
         // test if the wrap around happened earlier which it should not)
@@ -2768,7 +2745,7 @@ int32_t AudioDeviceWindowsWave::GetPlayoutBufferDelay(uint32_t& writtenSamples, 
         msecInPlayoutBuffer = (int)((writtenSamples + POW2(i + 1) - playedSamples)/nSamplesPerMs);
 
     }
-    else if ((writtenSamples < 96000) && (playedSamples > POW2(31)))
+    else if ((writtenSamples < 96000) && (playedSamples > (unsigned long)POW2(31)))
     {
         // Wrap around has, as expected, happened for written_sampels before
         // playedSampels so we have to adjust for this until also playedSampels
@@ -2967,7 +2944,7 @@ int32_t AudioDeviceWindowsWave::GetRecordingBufferDelay(uint32_t& readSamples, u
     if((_wrapCounter>200)){
         // Do nothing, handled later
     }
-    else if((_rec_samples_old > POW2(31)) && (recSamples < 96000)) {
+    else if((_rec_samples_old > (unsigned long)POW2(31)) && (recSamples < 96000)) {
         WEBRTC_TRACE (kTraceDebug, kTraceUtility, -1,"WRAP 2 (_rec_samples_old %d recSamples %d)",_rec_samples_old, recSamples);
         // Wrap around as expected after having used all 32 bits.
         _read_samples_old = readSamples;
@@ -2976,7 +2953,7 @@ int32_t AudioDeviceWindowsWave::GetRecordingBufferDelay(uint32_t& readSamples, u
         return (int)((recSamples + POW2(32) - readSamples)/nSamplesPerMs);
 
 
-    } else if((recSamples < 96000) && (readSamples > POW2(31))) {
+    } else if((recSamples < 96000) && (readSamples > (unsigned long)POW2(31))) {
         WEBRTC_TRACE (kTraceDebug, kTraceUtility, -1,"WRAP 3 (readSamples %d recSamples %d)",readSamples, recSamples);
         // Wrap around has, as expected, happened for rec_sampels before
         // readSampels so we have to adjust for this until also readSampels
@@ -3052,7 +3029,7 @@ bool AudioDeviceWindowsWave::ThreadProcess()
         return true;
     }
 
-    time = AudioDeviceUtility::GetTimeInMS();
+    time = rtc::TimeMillis();
 
     if (_startPlay)
     {

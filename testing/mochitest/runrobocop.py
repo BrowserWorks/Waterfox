@@ -4,10 +4,10 @@
 
 import json
 import os
-import shutil
 import sys
 import tempfile
 import traceback
+from collections import defaultdict
 
 sys.path.insert(
     0, os.path.abspath(
@@ -27,7 +27,6 @@ import mozinfo
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-# TODO inherit from MochitestBase instead
 class RobocopTestRunner(MochitestDesktop):
     """
        A test harness for Robocop. Robocop tests are UI tests for Firefox for Android,
@@ -43,7 +42,7 @@ class RobocopTestRunner(MochitestDesktop):
         """
            Simple one-time initialization.
         """
-        MochitestDesktop.__init__(self, options)
+        MochitestDesktop.__init__(self, options.flavor, options)
 
         self.auto = automation
         self.dm = devmgr
@@ -90,7 +89,10 @@ class RobocopTestRunner(MochitestDesktop):
         self.killNamedOrphans('xpcshell')
         self.auto.deleteANRs()
         self.auto.deleteTombstones()
-        self.dm.killProcess(self.options.app.split('/')[-1])
+        procName = self.options.app.split('/')[-1]
+        self.dm.killProcess(procName)
+        if self.dm.processExist(procName):
+            self.log.warning("unable to kill %s before running tests!" % procName)
         self.dm.removeDir(self.remoteScreenshots)
         self.dm.removeDir(self.remoteMozLog)
         self.dm.mkDir(self.remoteMozLog)
@@ -103,7 +105,7 @@ class RobocopTestRunner(MochitestDesktop):
             "Android sdk version '%s'; will use this to filter manifests" %
             str(androidVersion))
         mozinfo.info['android_version'] = androidVersion
-        if (self.options.dm_trans == 'adb' and self.options.robocopApk):
+        if self.options.robocopApk:
             self.dm._checkCmd(["install", "-r", self.options.robocopApk])
             self.log.debug("Robocop APK %s installed" %
                            self.options.robocopApk)
@@ -241,7 +243,6 @@ class RobocopTestRunner(MochitestDesktop):
         self.localProfile = self.options.profilePath
         self.log.debug("Profile created at %s" % self.localProfile)
         # some files are not needed for robocop; save time by not pushing
-        shutil.rmtree(os.path.join(self.localProfile, 'webapps'))
         os.remove(os.path.join(self.localProfile, 'userChrome.css'))
         try:
             self.dm.pushDir(self.localProfile, self.remoteProfileCopy)
@@ -376,9 +377,9 @@ class RobocopTestRunner(MochitestDesktop):
             for key, value in browserEnv.items():
                 try:
                     value.index(',')
-                    self.log.error(
-                        "setupRobotiumConfig: browserEnv - Found a ',' in our value, unable to process value. key=%s,value=%s" %
-                        (key, value))
+                    self.log.error("setupRobotiumConfig: browserEnv - Found a ',' "
+                                   "in our value, unable to process value. key=%s,value=%s" %
+                                   (key, value))
                     self.log.error("browserEnv=%s" % browserEnv)
                 except ValueError:
                     envstr += "%s%s=%s" % (delim, key, value)
@@ -399,8 +400,6 @@ class RobocopTestRunner(MochitestDesktop):
             xrePath=None,
             debugger=None)
         # remove desktop environment not used on device
-        if "MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA" in browserEnv:
-            del browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"]
         if "XPCOM_MEM_BLOAT_LOG" in browserEnv:
             del browserEnv["XPCOM_MEM_BLOAT_LOG"]
         browserEnv["MOZ_LOG_FILE"] = os.path.join(
@@ -445,9 +444,9 @@ class RobocopTestRunner(MochitestDesktop):
             # This does not launch a test at all. It launches an activity
             # that starts Fennec and then waits indefinitely, since cat
             # never returns.
-            browserArgs = ["start",
-                           "-n", "org.mozilla.roboexample.test/org.mozilla.gecko.LaunchFennecWithConfigurationActivity",
-                           "&&", "cat"]
+            browserArgs = ["start", "-n",
+                           "org.mozilla.roboexample.test/org.mozilla."
+                           "gecko.LaunchFennecWithConfigurationActivity", "&&", "cat"]
             self.dm.default_timeout = sys.maxint  # Forever.
             self.log.info("")
             self.log.info("Serving mochi.test Robocop root at http://%s:%s/tests/robocop/" %
@@ -460,7 +459,7 @@ class RobocopTestRunner(MochitestDesktop):
             timeout = self.options.timeout
             if not timeout:
                 timeout = self.NO_OUTPUT_TIMEOUT
-            result = self.auto.runApp(
+            result, _ = self.auto.runApp(
                 None, browserEnv, "am", self.localProfile, browserArgs,
                 timeout=timeout, symbolsPath=self.options.symbolsPath)
             self.log.debug("runApp completes with status %d" % result)
@@ -516,7 +515,12 @@ class RobocopTestRunner(MochitestDesktop):
                               (test['name'], test['disabled']))
                 continue
             active_tests.append(test)
-        self.log.suite_start([t['name'] for t in active_tests])
+
+        tests_by_manifest = defaultdict(list)
+        for test in active_tests:
+            tests_by_manifest[test['manifest']].append(test['name'])
+        self.log.suite_start(tests_by_manifest)
+
         worstTestResult = None
         for test in active_tests:
             result = self.runSingleTest(test)
@@ -583,6 +587,7 @@ def main(args=sys.argv[1:]):
     parser = MochitestArgumentParser(app='android')
     options = parser.parse_args(args)
     return run_test_harness(parser, options)
+
 
 if __name__ == "__main__":
     sys.exit(main())

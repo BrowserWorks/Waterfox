@@ -45,10 +45,11 @@
 
 #include <math.h>
 
-#include "testing/gtest/include/gtest/gtest.h"
-#include "webrtc/base/scoped_ptr.h"
+#include <memory>
+
 #include "webrtc/modules/rtp_rtcp/source/forward_error_correction_internal.h"
 #include "webrtc/modules/rtp_rtcp/test/testFec/average_residual_loss_xor_codes.h"
+#include "webrtc/test/gtest.h"
 #include "webrtc/test/testsupport/fileutils.h"
 
 namespace webrtc {
@@ -58,13 +59,6 @@ enum { kMaxNumberMediaPackets = 48 };
 
 // Maximum number of media packets allowed for each mask type.
 const uint16_t kMaxMediaPackets[] = {kMaxNumberMediaPackets, 12};
-
-// Maximum number of media packets allowed in this test. The burst mask types
-// are currently defined up to (k=12,m=12).
-const int kMaxMediaPacketsTest = 12;
-
-// Maximum number of FEC codes considered in this test.
-const int kNumberCodes = kMaxMediaPacketsTest * (kMaxMediaPacketsTest + 1) / 2;
 
 // Maximum gap size for characterizing the consecutiveness of the loss.
 const int kMaxGapSize = 2 * kMaxMediaPacketsTest;
@@ -198,7 +192,7 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
   int RecoveredMediaPackets(int num_media_packets,
                             int num_fec_packets,
                             uint8_t* state) {
-    rtc::scoped_ptr<uint8_t[]> state_tmp(
+    std::unique_ptr<uint8_t[]> state_tmp(
         new uint8_t[num_media_packets + num_fec_packets]);
     memcpy(state_tmp.get(), state, num_media_packets + num_fec_packets);
     int num_recovered_packets = 0;
@@ -392,7 +386,7 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
   // (which containes the code size parameters/protection length).
   void ComputeMetricsForCode(CodeType code_type,
                              int code_index) {
-    rtc::scoped_ptr<double[]> prob_weight(new double[kNumLossModels]);
+    std::unique_ptr<double[]> prob_weight(new double[kNumLossModels]);
     memset(prob_weight.get() , 0, sizeof(double) * kNumLossModels);
     MetricsFecCode metrics_code;
     SetMetricsZero(&metrics_code);
@@ -400,14 +394,14 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
     int num_media_packets = code_params_[code_index].num_media_packets;
     int num_fec_packets = code_params_[code_index].num_fec_packets;
     int tot_num_packets = num_media_packets + num_fec_packets;
-    rtc::scoped_ptr<uint8_t[]> state(new uint8_t[tot_num_packets]);
+    std::unique_ptr<uint8_t[]> state(new uint8_t[tot_num_packets]);
     memset(state.get() , 0, tot_num_packets);
 
     int num_loss_configurations = static_cast<int>(pow(2.0f, tot_num_packets));
     // Loop over all loss configurations for the symbol sequence of length
     // |tot_num_packets|. In this version we process up to (k=12, m=12) codes,
     // and get exact expressions for the residual loss.
-    // TODO (marpan): For larger codes, loop over some random sample of loss
+    // TODO(marpan): For larger codes, loop over some random sample of loss
     // configurations, sampling driven by the underlying statistical loss model
     // (importance sampling).
 
@@ -427,7 +421,7 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
 
       // Map configuration number to a loss state.
       for (int j = 0; j < tot_num_packets; j++) {
-        state[j]=0;  // Received state.
+        state[j] = 0;  // Received state.
         int bit_value = i >> (tot_num_packets - j - 1) & 1;
         if (bit_value == 1) {
           state[j] = 1;  // Lost state.
@@ -736,24 +730,24 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
     int code_index = 0;
     // Maximum number of media packets allowed for the mask type.
     const int packet_mask_max = kMaxMediaPackets[fec_mask_type];
-    uint8_t* packet_mask = new uint8_t[packet_mask_max * kMaskSizeLBitSet];
+    std::unique_ptr<uint8_t[]> packet_mask(
+        new uint8_t[packet_mask_max * kUlpfecMaxPacketMaskSize]);
     // Loop through codes up to |kMaxMediaPacketsTest|.
     for (int num_media_packets = 1; num_media_packets <= kMaxMediaPacketsTest;
         num_media_packets++) {
       const int mask_bytes_fec_packet =
-          (num_media_packets > 16) ? kMaskSizeLBitSet : kMaskSizeLBitClear;
+          static_cast<int>(internal::PacketMaskSize(num_media_packets));
       internal::PacketMaskTable mask_table(fec_mask_type, num_media_packets);
       for (int num_fec_packets = 1; num_fec_packets <= num_media_packets;
           num_fec_packets++) {
-        memset(packet_mask, 0, num_media_packets * mask_bytes_fec_packet);
-        memcpy(packet_mask, mask_table.fec_packet_mask_table()
-               [num_media_packets - 1][num_fec_packets - 1],
+        memset(packet_mask.get(), 0, num_media_packets * mask_bytes_fec_packet);
+        memcpy(packet_mask.get(),
+               mask_table.fec_packet_mask_table()[num_media_packets - 1]
+                                                 [num_fec_packets - 1],
                num_fec_packets * mask_bytes_fec_packet);
         // Convert to bit mask.
-        GetPacketMaskConvertToBitMask(packet_mask,
-                                      num_media_packets,
-                                      num_fec_packets,
-                                      mask_bytes_fec_packet,
+        GetPacketMaskConvertToBitMask(packet_mask.get(), num_media_packets,
+                                      num_fec_packets, mask_bytes_fec_packet,
                                       code_type);
         if (RejectInvalidMasks(num_media_packets, num_fec_packets) < 0) {
           return -1;
@@ -765,7 +759,6 @@ class FecPacketMaskMetricsTest : public ::testing::Test {
       }
     }
     assert(code_index == kNumberCodes);
-    delete [] packet_mask;
     return 0;
   }
 
@@ -860,9 +853,9 @@ TEST_F(FecPacketMaskMetricsTest, FecXorVsRS) {
         EXPECT_GE(kMetricsXorBursty[code_index].average_residual_loss[k],
                   kMetricsReedSolomon[code_index].average_residual_loss[k]);
        }
-      // TODO (marpan): There are some cases (for high loss rates and/or
-      // burst loss models) where XOR is better than RS. Is there some pattern
-      // we can identify and enforce as a constraint?
+       // TODO(marpan): There are some cases (for high loss rates and/or
+       // burst loss models) where XOR is better than RS. Is there some pattern
+       // we can identify and enforce as a constraint?
     }
   }
 }
@@ -874,7 +867,7 @@ TEST_F(FecPacketMaskMetricsTest, FecXorVsRS) {
 TEST_F(FecPacketMaskMetricsTest, FecTrendXorVsRsLossRate) {
   SetLossModels();
   SetCodeParams();
-  // TODO (marpan): Examine this further to see if the condition can be strictly
+  // TODO(marpan): Examine this further to see if the condition can be strictly
   // satisfied (i.e., scale = 1.0) for all codes with different/better masks.
   double scale = 0.90;
   int num_loss_rates = sizeof(kAverageLossRate) /
@@ -898,7 +891,7 @@ TEST_F(FecPacketMaskMetricsTest, FecTrendXorVsRsLossRate) {
                kMetricsXorRandom[code_index].average_residual_loss[k+1];
           EXPECT_GE(diff_rs_xor_random_loss1, scale * diff_rs_xor_random_loss2);
         }
-        // TODO (marpan): Investigate the cases for the bursty mask where
+        // TODO(marpan): Investigate the cases for the bursty mask where
         // this trend is not strictly satisfied.
       }
     }
@@ -937,7 +930,7 @@ TEST_F(FecPacketMaskMetricsTest, FecBehaviorViaProtectionLevelAndLength) {
             EXPECT_LT(
                 kMetricsReedSolomon[code_index2].average_residual_loss[k],
                 kMetricsReedSolomon[code_index1].average_residual_loss[k]);
-            // TODO (marpan): There are some corner cases where this is not
+            // TODO(marpan): There are some corner cases where this is not
             // satisfied with the current packet masks. Look into updating
             // these cases to see if this behavior should/can be satisfied,
             // with overall lower residual loss for those XOR codes.
@@ -963,7 +956,7 @@ TEST_F(FecPacketMaskMetricsTest, FecVarianceBehaviorXorVsRs) {
   SetCodeParams();
   // The condition is not strictly satisfied with the current masks,
   // i.e., for some codes, the variance of XOR may be slightly higher than RS.
-  // TODO (marpan): Examine this further to see if the condition can be strictly
+  // TODO(marpan): Examine this further to see if the condition can be strictly
   // satisfied (i.e., scale = 1.0) for all codes with different/better masks.
   double scale = 0.95;
   for (int code_index = 0; code_index < max_num_codes_; code_index++) {
@@ -998,7 +991,7 @@ TEST_F(FecPacketMaskMetricsTest, FecXorBurstyPerfectRecoveryConsecutiveLoss) {
 // bursty mask type, for random loss models at low loss rates.
 // The XOR codes with bursty mask types are generally better than the one with
 // random mask type, for bursty loss models and/or high loss rates.
-// TODO (marpan): Enable this test when some of the packet masks are updated.
+// TODO(marpan): Enable this test when some of the packet masks are updated.
 // Some isolated cases of the codes don't pass this currently.
 /*
 TEST_F(FecPacketMaskMetricsTest, FecXorRandomVsBursty) {

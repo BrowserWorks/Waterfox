@@ -4,9 +4,13 @@
 
 include protocol PBackgroundIDBDatabaseFile;
 include protocol PBackgroundMutableFile;
-include protocol PBlob;
+include protocol PChildToParentStream; // FIXME: bug 792908
+include protocol PFileDescriptorSet; // FIXME: bug 792908
+include protocol PIPCBlobInputStream; // FIXME: bug 792908
+include protocol PParentToChildStream; // FIXME: bug 792908
 
 include DOMTypes;
+include IPCBlob;
 include ProtocolTypes;
 
 include "mozilla/dom/indexedDB/SerializationHelpers.h";
@@ -21,6 +25,9 @@ using struct mozilla::void_t
 using mozilla::dom::IDBCursor::Direction
   from "mozilla/dom/IDBCursor.h";
 
+using mozilla::dom::indexedDB::StructuredCloneFile::FileType
+  from "mozilla/dom/IndexedDatabase.h";
+
 using class mozilla::dom::indexedDB::Key
   from "mozilla/dom/indexedDB/Key.h";
 
@@ -29,6 +36,9 @@ using class mozilla::dom::indexedDB::KeyPath
 
 using mozilla::dom::quota::PersistenceType
   from "mozilla/dom/quota/PersistenceType.h";
+
+using mozilla::SerializedStructuredCloneBuffer
+  from "ipc/IPCMessageUtils.h";
 
 namespace mozilla {
 namespace dom {
@@ -43,27 +53,29 @@ struct SerializedKeyRange
   bool isOnly;
 };
 
-union NullableMutableFile
+union BlobOrMutableFile
 {
   null_t;
+  IPCBlob;
   PBackgroundMutableFile;
 };
 
-union BlobOrMutableFile
+struct SerializedStructuredCloneFile
 {
-  PBlob;
-  NullableMutableFile;
+  BlobOrMutableFile file;
+  FileType type;
 };
 
 struct SerializedStructuredCloneReadInfo
 {
-  uint8_t[] data;
-  BlobOrMutableFile[] blobs;
+  SerializedStructuredCloneBuffer data;
+  SerializedStructuredCloneFile[] files;
+  bool hasPreprocessInfo;
 };
 
 struct SerializedStructuredCloneWriteInfo
 {
-  uint8_t[] data;
+  SerializedStructuredCloneBuffer data;
   uint64_t offsetToKeyProp;
 };
 
@@ -162,13 +174,19 @@ union DatabaseOrMutableFile
   PBackgroundMutableFile;
 };
 
+struct FileAddInfo
+{
+  DatabaseOrMutableFile file;
+  FileType type;
+};
+
 struct ObjectStoreAddPutParams
 {
   int64_t objectStoreId;
   SerializedStructuredCloneWriteInfo cloneInfo;
   Key key;
   IndexUpdateInfo[] indexUpdateInfos;
-  DatabaseOrMutableFile[] files;
+  FileAddInfo[] fileAddInfos;
 };
 
 struct ObjectStoreAddParams
@@ -182,6 +200,12 @@ struct ObjectStorePutParams
 };
 
 struct ObjectStoreGetParams
+{
+  int64_t objectStoreId;
+  SerializedKeyRange keyRange;
+};
+
+struct ObjectStoreGetKeyParams
 {
   int64_t objectStoreId;
   SerializedKeyRange keyRange;
@@ -260,6 +284,7 @@ union RequestParams
   ObjectStoreAddParams;
   ObjectStorePutParams;
   ObjectStoreGetParams;
+  ObjectStoreGetKeyParams;
   ObjectStoreGetAllParams;
   ObjectStoreGetAllKeysParams;
   ObjectStoreDeleteParams;

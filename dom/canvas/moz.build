@@ -4,13 +4,36 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Canvas: 2D')
+
+with Files('TexUnpackBlob.cpp'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('WebGL*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/webgl-conf/**'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/webgl-mochitest/**'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/reftest/webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/chrome/*webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
+with Files('test/crossorigin/*webgl*'):
+    BUG_COMPONENT = ('Core', 'Canvas: WebGL')
+
 TEST_DIRS += [
-    'compiledtest',
     'gtest'
 ]
 
 # Change the following line(s) to avoid bug 1081323 (clobber after changing a manifest):
-# * Implement ReadPixel with PBOs.
+# * Adjust failure errata for webgl-conf.
 
 MOCHITEST_MANIFESTS += [
     'test/crash/mochitest.ini',
@@ -32,6 +55,7 @@ EXPORTS.mozilla.ipc += [
 ]
 
 EXPORTS.mozilla.dom += [
+    'BasicRenderingContext2D.h',
     'CanvasGradient.h',
     'CanvasPath.h',
     'CanvasPattern.h',
@@ -42,6 +66,7 @@ EXPORTS.mozilla.dom += [
     'ImageBitmapRenderingContext.h',
     'ImageBitmapSource.h',
     'ImageData.h',
+    'ImageUtils.h',
     'OffscreenCanvas.h',
     'TextMetrics.h',
     'WebGLVertexArrayObject.h',
@@ -71,10 +96,8 @@ SOURCES += [
 UNIFIED_SOURCES += [
     'TexUnpackBlob.cpp',
     'WebGL1Context.cpp',
-    'WebGL1ContextUniforms.cpp',
     'WebGL2Context.cpp',
     'WebGL2ContextBuffers.cpp',
-    'WebGL2ContextDraw.cpp',
     'WebGL2ContextFramebuffers.cpp',
     'WebGL2ContextMRTs.cpp',
     'WebGL2ContextPrograms.cpp',
@@ -87,7 +110,6 @@ UNIFIED_SOURCES += [
     'WebGL2ContextTransformFeedback.cpp',
     'WebGL2ContextUniforms.cpp',
     'WebGL2ContextVAOs.cpp',
-    'WebGL2ContextVertices.cpp',
     'WebGLActiveInfo.cpp',
     'WebGLBuffer.cpp',
     'WebGLContext.cpp',
@@ -104,16 +126,17 @@ UNIFIED_SOURCES += [
     'WebGLContextValidate.cpp',
     'WebGLContextVertexArray.cpp',
     'WebGLContextVertices.cpp',
-    'WebGLElementArrayCache.cpp',
     'WebGLExtensionBase.cpp',
     'WebGLExtensionBlendMinMax.cpp',
     'WebGLExtensionColorBufferFloat.cpp',
     'WebGLExtensionColorBufferHalfFloat.cpp',
+    'WebGLExtensionCompressedTextureASTC.cpp',
     'WebGLExtensionCompressedTextureATC.cpp',
     'WebGLExtensionCompressedTextureES3.cpp',
     'WebGLExtensionCompressedTextureETC1.cpp',
     'WebGLExtensionCompressedTexturePVRTC.cpp',
     'WebGLExtensionCompressedTextureS3TC.cpp',
+    'WebGLExtensionCompressedTextureS3TC_SRGB.cpp',
     'WebGLExtensionDebugRendererInfo.cpp',
     'WebGLExtensionDebugShaders.cpp',
     'WebGLExtensionDepthTexture.cpp',
@@ -124,6 +147,7 @@ UNIFIED_SOURCES += [
     'WebGLExtensionFragDepth.cpp',
     'WebGLExtensionInstancedArrays.cpp',
     'WebGLExtensionLoseContext.cpp',
+    'WebGLExtensionMOZDebug.cpp',
     'WebGLExtensionShaderTextureLod.cpp',
     'WebGLExtensionSRGB.cpp',
     'WebGLExtensionStandardDerivatives.cpp',
@@ -149,7 +173,6 @@ UNIFIED_SOURCES += [
     'WebGLTexelConversions.cpp',
     'WebGLTexture.cpp',
     'WebGLTextureUpload.cpp',
-    'WebGLTimerQuery.cpp',
     'WebGLTransformFeedback.cpp',
     'WebGLUniformLocation.cpp',
     'WebGLValidateStrings.cpp',
@@ -157,6 +180,7 @@ UNIFIED_SOURCES += [
     'WebGLVertexArrayFake.cpp',
     'WebGLVertexArrayGL.cpp',
     'WebGLVertexArrayObject.cpp',
+    'WebGLVertexAttribData.cpp',
 ]
 
 SOURCES += [
@@ -187,7 +211,7 @@ LOCAL_INCLUDES += [
     '/layout/generic',
     '/layout/style',
     '/layout/xul',
-    '/media/libyuv/include',
+    '/media/libyuv/libyuv/include',
 ]
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

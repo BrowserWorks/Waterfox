@@ -8,14 +8,8 @@ const {Cc, Ci, Cu} = require("chrome");
 const Services = require("Services");
 const defer = require("devtools/shared/defer");
 
-function l10n(name) {
-  const bundle = Services.strings.createBundle("chrome://devtools/locale/toolbox.properties");
-  try {
-    return bundle.GetStringFromName(name);
-  } catch (e) {
-    throw new Error("Failed loading l10n string: " + name);
-  }
-}
+const {LocalizationHelper} = require("devtools/shared/l10n");
+const L10N = new LocalizationHelper("devtools/client/locales/toolbox.properties");
 
 function handleThreadState(toolbox, event, packet) {
   // Suppress interrupted events by default because the thread is
@@ -46,10 +40,22 @@ function attachThread(toolbox) {
 
   let target = toolbox.target;
   let { form: { chromeDebugger, actor } } = target;
-  let threadOptions = {
-    useSourceMaps: Services.prefs.getBoolPref("devtools.debugger.source-maps-enabled"),
-    autoBlackBox: Services.prefs.getBoolPref("devtools.debugger.auto-black-box")
-  };
+
+  // Sourcemaps are always turned off when using the new debugger
+  // frontend. This is because it does sourcemapping on the
+  // client-side, so the server should not do it.
+  let useSourceMaps = false;
+  let autoBlackBox = false;
+  let ignoreFrameEnvironment = false;
+  const newDebuggerEnabled = Services.prefs.getBoolPref("devtools.debugger.new-debugger-frontend");
+  if(!newDebuggerEnabled) {
+    useSourceMaps = Services.prefs.getBoolPref("devtools.debugger.source-maps-enabled");
+    autoBlackBox = Services.prefs.getBoolPref("devtools.debugger.auto-black-box");
+  } else {
+    ignoreFrameEnvironment = true;
+  }
+
+  let threadOptions = { useSourceMaps, autoBlackBox, ignoreFrameEnvironment };
 
   let handleResponse = (res, threadClient) => {
     if (res.error) {
@@ -78,7 +84,7 @@ function attachThread(toolbox) {
       if (res.error === "wrongOrder") {
         const box = toolbox.getNotificationBox();
         box.appendNotification(
-          l10n("toolbox.resumeOrderWarning"),
+          L10N.getStr("toolbox.resumeOrderWarning"),
           "wrong-resume-order",
           "",
           box.PRIORITY_WARNING_HIGH

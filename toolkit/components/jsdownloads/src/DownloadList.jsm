@@ -1,21 +1,9 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80 filetype=javascript: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * This file includes the following constructors and global objects:
- *
- * DownloadList
- * Represents a collection of Download objects that can be viewed and managed by
- * the user interface, and persisted across sessions.
- *
- * DownloadCombinedList
- * Provides a unified, unordered list combining public and private downloads.
- *
- * DownloadSummary
- * Provides an aggregated view on the contents of a DownloadList.
+ * Provides collections of Download objects and aggregate views on them.
  */
 
 "use strict";
@@ -26,30 +14,15 @@ this.EXPORTED_SYMBOLS = [
   "DownloadSummary",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadList
 
 /**
  * Represents a collection of Download objects that can be viewed and managed by
  * the user interface, and persisted across sessions.
  */
-this.DownloadList = function ()
-{
+this.DownloadList = function() {
   this._downloads = [];
   this._views = new Set();
 }
@@ -156,6 +129,12 @@ this.DownloadList.prototype = {
    *          onDownloadRemoved: function (aDownload) {
    *            // Called after aDownload is removed from the list.
    *          },
+   *          onDownloadBatchStarting: function () {
+   *            // Called before multiple changes are made at the same time.
+   *          },
+   *          onDownloadBatchEnded: function () {
+   *            // Called after all the changes have been made.
+   *          },
    *        }
    *
    * @return {Promise}
@@ -163,11 +142,11 @@ this.DownloadList.prototype = {
    *           notifications for the existing downloads have been sent.
    * @rejects JavaScript exception.
    */
-  addView: function DL_addView(aView)
-  {
+  addView: function DL_addView(aView) {
     this._views.add(aView);
 
     if ("onDownloadAdded" in aView) {
+      this._notifyAllViews("onDownloadBatchStarting");
       for (let download of this._downloads) {
         try {
           aView.onDownloadAdded(download);
@@ -175,6 +154,7 @@ this.DownloadList.prototype = {
           Cu.reportError(ex);
         }
       }
+      this._notifyAllViews("onDownloadBatchEnded");
     }
 
     return Promise.resolve();
@@ -191,8 +171,7 @@ this.DownloadList.prototype = {
    *           will not receive any more notifications.
    * @rejects JavaScript exception.
    */
-  removeView: function DL_removeView(aView)
-  {
+  removeView: function DL_removeView(aView) {
     this._views.delete(aView);
 
     return Promise.resolve();
@@ -206,7 +185,7 @@ this.DownloadList.prototype = {
    * @param aDownload
    *        The Download object that changed.
    */
-  _notifyAllViews: function (aMethodName, aDownload) {
+  _notifyAllViews(aMethodName, aDownload) {
     for (let view of this._views) {
       try {
         if (aMethodName in view) {
@@ -233,8 +212,8 @@ this.DownloadList.prototype = {
    *        additional filter.
    */
   removeFinished: function DL_removeFinished(aFilterFn) {
-    Task.spawn(function* () {
-      let list = yield this.getAll();
+    (async () => {
+      let list = await this.getAll();
       for (let download of list) {
         // Remove downloads that have been canceled, even if the cancellation
         // operation hasn't completed yet so we don't check "stopped" here.
@@ -243,20 +222,17 @@ this.DownloadList.prototype = {
             (!aFilterFn || aFilterFn(download))) {
           // Remove the download first, so that the views don't get the change
           // notifications that may occur during finalization.
-          yield this.remove(download);
+          await this.remove(download);
           // Ensure that the download is stopped and no partial data is kept.
           // This works even if the download state has changed meanwhile.  We
           // don't need to wait for the procedure to be complete before
           // processing the other downloads in the list.
-          download.finalize(true).then(null, Cu.reportError);
+          download.finalize(true).catch(Cu.reportError);
         }
       }
-    }.bind(this)).then(null, Cu.reportError);
+    })().catch(Cu.reportError);
   },
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadCombinedList
 
 /**
  * Provides a unified, unordered list combining public and private downloads.
@@ -270,13 +246,12 @@ this.DownloadList.prototype = {
  * @param aPrivateList
  *        Underlying DownloadList containing private downloads.
  */
-this.DownloadCombinedList = function (aPublicList, aPrivateList)
-{
+this.DownloadCombinedList = function(aPublicList, aPrivateList) {
   DownloadList.call(this);
   this._publicList = aPublicList;
   this._privateList = aPrivateList;
-  aPublicList.addView(this).then(null, Cu.reportError);
-  aPrivateList.addView(this).then(null, Cu.reportError);
+  aPublicList.addView(this).catch(Cu.reportError);
+  aPrivateList.addView(this).catch(Cu.reportError);
 }
 
 this.DownloadCombinedList.prototype = {
@@ -308,13 +283,11 @@ this.DownloadCombinedList.prototype = {
    * @resolves When the download has been added.
    * @rejects JavaScript exception.
    */
-  add: function (aDownload)
-  {
+  add(aDownload) {
     if (aDownload.source.isPrivate) {
       return this._privateList.add(aDownload);
-    } else {
-      return this._publicList.add(aDownload);
     }
+    return this._publicList.add(aDownload);
   },
 
   /**
@@ -333,31 +306,26 @@ this.DownloadCombinedList.prototype = {
    * @resolves When the download has been removed.
    * @rejects JavaScript exception.
    */
-  remove: function (aDownload)
-  {
+  remove(aDownload) {
     if (aDownload.source.isPrivate) {
       return this._privateList.remove(aDownload);
-    } else {
-      return this._publicList.remove(aDownload);
     }
+    return this._publicList.remove(aDownload);
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// DownloadList view
-
-  onDownloadAdded: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadAdded(aDownload) {
     this._downloads.push(aDownload);
     this._notifyAllViews("onDownloadAdded", aDownload);
   },
 
-  onDownloadChanged: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadChanged(aDownload) {
     this._notifyAllViews("onDownloadChanged", aDownload);
   },
 
-  onDownloadRemoved: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadRemoved(aDownload) {
     let index = this._downloads.indexOf(aDownload);
     if (index != -1) {
       this._downloads.splice(index, 1);
@@ -366,14 +334,10 @@ this.DownloadCombinedList.prototype = {
   },
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadSummary
-
 /**
  * Provides an aggregated view on the contents of a DownloadList.
  */
-this.DownloadSummary = function ()
-{
+this.DownloadSummary = function() {
   this._downloads = [];
   this._views = new Set();
 }
@@ -403,8 +367,7 @@ this.DownloadSummary.prototype = {
    * @resolves When the view on the underlying list has been registered.
    * @rejects JavaScript exception.
    */
-  bindToList: function (aList)
-  {
+  bindToList(aList) {
     if (this._list) {
       throw new Error("bindToList may be called only once.");
     }
@@ -439,8 +402,7 @@ this.DownloadSummary.prototype = {
    *           notification has been sent.
    * @rejects JavaScript exception.
    */
-  addView: function (aView)
-  {
+  addView(aView) {
     this._views.add(aView);
 
     if ("onSummaryChanged" in aView) {
@@ -465,8 +427,7 @@ this.DownloadSummary.prototype = {
    *           will not receive any more notifications.
    * @rejects JavaScript exception.
    */
-  removeView: function (aView)
-  {
+  removeView(aView) {
     this._views.delete(aView);
 
     return Promise.resolve();
@@ -501,7 +462,7 @@ this.DownloadSummary.prototype = {
    * and will recalculate the summary and notify the views in case the
    * aggregated properties are different.
    */
-  _onListChanged: function () {
+  _onListChanged() {
     let allHaveStopped = true;
     let progressTotalBytes = 0;
     let progressCurrentBytes = 0;
@@ -540,24 +501,21 @@ this.DownloadSummary.prototype = {
     }
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// DownloadList view
-
-  onDownloadAdded: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadAdded(aDownload) {
     this._downloads.push(aDownload);
     if (this._list) {
       this._onListChanged();
     }
   },
 
-  onDownloadChanged: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadChanged(aDownload) {
     this._onListChanged();
   },
 
-  onDownloadRemoved: function (aDownload)
-  {
+  // DownloadList callback
+  onDownloadRemoved(aDownload) {
     let index = this._downloads.indexOf(aDownload);
     if (index != -1) {
       this._downloads.splice(index, 1);

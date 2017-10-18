@@ -26,7 +26,6 @@
 
 #pragma comment(lib, "mfuuid.lib")
 #pragma comment(lib, "wmcodecdspuuid")
-#pragma comment(lib, "mfplat.lib")
 
 void LOG(const char* format, ...)
 {
@@ -36,12 +35,6 @@ void LOG(const char* format, ...)
   vprintf(format, args);
 #endif
 }
-
-#ifdef WMF_MUST_DEFINE_AAC_MFT_CLSID
-// Some SDK versions don't define the AAC decoder CLSID.
-// {32D186A7-218F-4C75-8876-DD77273A8999}
-DEFINE_GUID(CLSID_CMSAACDecMFT, 0x32D186A7, 0x218F, 0x4C75, 0x88, 0x76, 0xDD, 0x77, 0x27, 0x3A, 0x89, 0x99);
-#endif
 
 DEFINE_GUID(CLSID_CMSH264DecMFT, 0x62CE7E72, 0x4C71, 0x4d20, 0xB1, 0x5D, 0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D);
 
@@ -76,28 +69,15 @@ LinkMfplat()
 }
 
 const char*
-WMFDecoderDllNameFor(CodecType aCodec)
+WMFDecoderDllName()
 {
-  if (aCodec == H264) {
-    // For H.264 decoding, we need msmpeg2vdec.dll on Win 7 & 8,
-    // and mfh264dec.dll on Vista.
-    if (IsWindows7OrGreater()) {
-      return "msmpeg2vdec.dll";
-    } else {
-      return "mfh264dec.dll";
-    }
-  } else if (aCodec == AAC) {
-    // For AAC decoding, we need to use msauddecmft.dll on Win8,
-    // msmpeg2adec.dll on Win7, and msheaacdec.dll on Vista.
-    if (IsWindows8OrGreater()) {
-      return "msauddecmft.dll";
-    } else if (IsWindows7OrGreater()) {
-      return "msmpeg2adec.dll";
-    } else {
-      return "mfheaacdec.dll";
-    }
-  } else {
-    return "";
+  // For H.264 decoding, we need msmpeg2vdec.dll on Win 7 & 8,
+  // and mfh264dec.dll on Vista.
+  if (IsWindows7OrGreater()) {
+    return "msmpeg2vdec.dll";
+  }
+  else {
+    return "mfh264dec.dll";
   }
 }
 
@@ -109,8 +89,7 @@ EnsureLibs()
   static bool sInitOk = false;
   if (!sInitDone) {
     sInitOk = LinkMfplat() &&
-              !!GetModuleHandleA(WMFDecoderDllNameFor(AAC)) &&
-              !!GetModuleHandleA(WMFDecoderDllNameFor(H264));
+              !!GetModuleHandleA(WMFDecoderDllName());
     sInitDone = true;
   }
   return sInitOk;
@@ -162,10 +141,13 @@ GetPictureRegion(IMFMediaType* aMediaType, IntRect& aOutPictureRegion)
 
   if (SUCCEEDED(hr)) {
     // The media specified a picture region, return it.
-    aOutPictureRegion = IntRect(MFOffsetToInt32(videoArea.OffsetX),
-                                  MFOffsetToInt32(videoArea.OffsetY),
-                                  videoArea.Area.cx,
-                                  videoArea.Area.cy);
+    IntRect picture = IntRect(MFOffsetToInt32(videoArea.OffsetX),
+                              MFOffsetToInt32(videoArea.OffsetY),
+                              videoArea.Area.cx,
+                              videoArea.Area.cy);
+    ENSURE(picture.width <= mozilla::MAX_VIDEO_WIDTH, E_FAIL);
+    ENSURE(picture.height <= mozilla::MAX_VIDEO_HEIGHT, E_FAIL);
+    aOutPictureRegion = picture;
     return S_OK;
   }
 
@@ -173,6 +155,8 @@ GetPictureRegion(IMFMediaType* aMediaType, IntRect& aOutPictureRegion)
   UINT32 width = 0, height = 0;
   hr = MFGetAttributeSize(aMediaType, MF_MT_FRAME_SIZE, &width, &height);
   ENSURE(SUCCEEDED(hr), hr);
+  ENSURE(width <= mozilla::MAX_VIDEO_WIDTH, E_FAIL);
+  ENSURE(height <= mozilla::MAX_VIDEO_HEIGHT, E_FAIL);
   aOutPictureRegion = IntRect(0, 0, width, height);
   return S_OK;
 }
@@ -182,8 +166,11 @@ HRESULT
 GetDefaultStride(IMFMediaType *aType, uint32_t* aOutStride)
 {
   // Try to get the default stride from the media type.
-  HRESULT hr = aType->GetUINT32(MF_MT_DEFAULT_STRIDE, aOutStride);
+  UINT32 stride = 0;
+  HRESULT hr = aType->GetUINT32(MF_MT_DEFAULT_STRIDE, &stride);
   if (SUCCEEDED(hr)) {
+    ENSURE(stride <= mozilla::MAX_VIDEO_WIDTH, E_FAIL);
+    *aOutStride = stride;
     return S_OK;
   }
 
@@ -197,9 +184,15 @@ GetDefaultStride(IMFMediaType *aType, uint32_t* aOutStride)
 
   hr = MFGetAttributeSize(aType, MF_MT_FRAME_SIZE, &width, &height);
   ENSURE(SUCCEEDED(hr), hr);
+  ENSURE(width <= mozilla::MAX_VIDEO_WIDTH, E_FAIL);
+  ENSURE(height <= mozilla::MAX_VIDEO_HEIGHT, E_FAIL);
 
-  hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, width, (LONG*)(aOutStride));
+  LONG lstride = 0;
+  hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, width, &lstride);
   ENSURE(SUCCEEDED(hr), hr);
+  ENSURE(lstride <= mozilla::MAX_VIDEO_WIDTH, E_FAIL);
+  ENSURE(lstride >= 0, E_FAIL);
+  *aOutStride = lstride;
 
   return hr;
 }

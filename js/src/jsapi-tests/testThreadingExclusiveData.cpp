@@ -28,13 +28,13 @@ struct CounterAndBit
 };
 
 void
-printDiagnosticMessage(uint64_t seen)
+printDiagnosticMessage(uint8_t bit, uint64_t seen)
 {
     if (!ShowDiagnostics)
         return;
 
-    fprintf(stderr, "Thread %p saw ", PR_GetCurrentThread());
-    for (auto i : mozilla::MakeRange(NumThreads)) {
+    fprintf(stderr, "Thread %d saw ", bit);
+    for (auto i : mozilla::IntegerRange(NumThreads)) {
         if (seen & (uint64_t(1) << i))
             fprintf(stderr, "1");
         else
@@ -50,7 +50,7 @@ setBitAndCheck(CounterAndBit* counterAndBit)
         {
             // Set our bit. Repeatedly setting it is idempotent.
             auto guard = counterAndBit->counter.lock();
-            printDiagnosticMessage(guard);
+            printDiagnosticMessage(counterAndBit->bit, guard);
             guard |= (uint64_t(1) << counterAndBit->bit);
         }
 
@@ -58,7 +58,7 @@ setBitAndCheck(CounterAndBit* counterAndBit)
             // Check to see if we have observed all the other threads setting
             // their bit as well.
             auto guard = counterAndBit->counter.lock();
-            printDiagnosticMessage(guard);
+            printDiagnosticMessage(counterAndBit->bit, guard);
             if (guard == UINT64_MAX) {
                 js_delete(counterAndBit);
                 return;
@@ -69,15 +69,16 @@ setBitAndCheck(CounterAndBit* counterAndBit)
 
 BEGIN_TEST(testExclusiveData)
 {
-    js::ExclusiveData<uint64_t> counter(0);
+    js::ExclusiveData<uint64_t> counter(js::mutexid::TestMutex, 0);
 
     js::Vector<js::Thread> threads(cx);
     CHECK(threads.reserve(NumThreads));
 
-    for (auto i : mozilla::MakeRange(NumThreads)) {
+    for (auto i : mozilla::IntegerRange(NumThreads)) {
         auto counterAndBit = js_new<CounterAndBit>(i, counter);
         CHECK(counterAndBit);
-        CHECK(threads.emplaceBack(setBitAndCheck, counterAndBit));
+        CHECK(threads.emplaceBack());
+        CHECK(threads.back().init(setBitAndCheck, counterAndBit));
     }
 
     for (auto& thread : threads)

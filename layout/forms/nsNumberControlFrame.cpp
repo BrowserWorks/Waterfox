@@ -46,12 +46,11 @@ NS_IMPL_FRAMEARENA_HELPERS(nsNumberControlFrame)
 NS_QUERYFRAME_HEAD(nsNumberControlFrame)
   NS_QUERYFRAME_ENTRY(nsNumberControlFrame)
   NS_QUERYFRAME_ENTRY(nsIAnonymousContentCreator)
-  NS_QUERYFRAME_ENTRY(nsITextControlFrame)
   NS_QUERYFRAME_ENTRY(nsIFormControlFrame)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 nsNumberControlFrame::nsNumberControlFrame(nsStyleContext* aContext)
-  : nsContainerFrame(aContext)
+  : nsContainerFrame(aContext, kClassID)
   , mHandlingInputEvent(false)
 {
 }
@@ -68,7 +67,7 @@ nsNumberControlFrame::DestroyFrom(nsIFrame* aDestructRoot)
 }
 
 nscoord
-nsNumberControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
+nsNumberControlFrame::GetMinISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_MIN_WIDTH(this, result);
@@ -86,7 +85,7 @@ nsNumberControlFrame::GetMinISize(nsRenderingContext* aRenderingContext)
 }
 
 nscoord
-nsNumberControlFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
+nsNumberControlFrame::GetPrefISize(gfxContext* aRenderingContext)
 {
   nscoord result;
   DISPLAY_PREF_WIDTH(this, result);
@@ -184,7 +183,7 @@ nsNumberControlFrame::Reflow(nsPresContext* aPresContext,
     ReflowChild(outerWrapperFrame, aPresContext, wrappersDesiredSize,
                 wrapperReflowInput, myWM, wrapperOffset, dummyContainerSize, 0,
                 childStatus);
-    MOZ_ASSERT(NS_FRAME_IS_FULLY_COMPLETE(childStatus),
+    MOZ_ASSERT(childStatus.IsFullyComplete(),
                "We gave our child unconstrained available block-size, "
                "so it should be complete");
 
@@ -243,7 +242,7 @@ nsNumberControlFrame::Reflow(nsPresContext* aPresContext,
 
   FinishAndStoreOverflow(&aDesiredSize);
 
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
 
   NS_FRAME_SET_TRUNCATION(aStatus, aReflowInput, aDesiredSize);
 }
@@ -304,14 +303,16 @@ class FocusTextField : public Runnable
 {
 public:
   FocusTextField(nsIContent* aNumber, nsIContent* aTextField)
-    : mNumber(aNumber),
-      mTextField(aTextField)
+    : mozilla::Runnable("FocusTextField")
+    , mNumber(aNumber)
+    , mTextField(aTextField)
   {}
 
-  NS_IMETHODIMP Run() override
+  NS_IMETHOD Run() override
   {
     if (mNumber->AsElement()->State().HasState(NS_EVENT_STATE_FOCUS)) {
-      HTMLInputElement::FromContent(mTextField)->Focus();
+      IgnoredErrorResult ignored;
+      HTMLInputElement::FromContent(mTextField)->Focus(ignored);
     }
 
     return NS_OK;
@@ -326,27 +327,15 @@ nsresult
 nsNumberControlFrame::MakeAnonymousElement(Element** aResult,
                                            nsTArray<ContentInfo>& aElements,
                                            nsIAtom* aTagName,
-                                           CSSPseudoElementType aPseudoType,
-                                           nsStyleContext* aParentContext)
+                                           CSSPseudoElementType aPseudoType)
 {
   // Get the NodeInfoManager and tag necessary to create the anonymous divs.
   nsCOMPtr<nsIDocument> doc = mContent->GetComposedDoc();
   RefPtr<Element> resultElement = doc->CreateHTMLElement(aTagName);
+  resultElement->SetPseudoElementType(aPseudoType);
 
-  // If we legitimately fail this assertion and need to allow
-  // non-pseudo-element anonymous children, then we'll need to add a branch
-  // that calls ResolveStyleFor((*aResult)->AsElement(), aParentContext)") to
-  // set newStyleContext.
-  NS_ASSERTION(aPseudoType != CSSPseudoElementType::NotPseudo,
-               "Expecting anonymous children to all be pseudo-elements");
   // Associate the pseudo-element with the anonymous child
-  RefPtr<nsStyleContext> newStyleContext =
-    PresContext()->StyleSet()->ResolvePseudoElementStyle(mContent->AsElement(),
-                                                         aPseudoType,
-                                                         aParentContext,
-                                                         resultElement);
-
-  if (!aElements.AppendElement(ContentInfo(resultElement, newStyleContext))) {
+  if (!aElements.AppendElement(resultElement)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -383,8 +372,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mOuterWrapper),
                             aElements,
                             nsGkAtoms::div,
-                            CSSPseudoElementType::mozNumberWrapper,
-                            mStyleContext);
+                            CSSPseudoElementType::mozNumberWrapper);
   NS_ENSURE_SUCCESS(rv, rv);
 
   ContentInfo& outerWrapperCI = aElements.LastElement();
@@ -393,8 +381,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mTextField),
                             outerWrapperCI.mChildren,
                             nsGkAtoms::input,
-                            CSSPseudoElementType::mozNumberText,
-                            outerWrapperCI.mStyleContext);
+                            CSSPseudoElementType::mozNumberText);
   NS_ENSURE_SUCCESS(rv, rv);
 
   mTextField->SetAttr(kNameSpaceID_None, nsGkAtoms::type,
@@ -405,7 +392,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 
   // Initialize the text field value:
   nsAutoString value;
-  content->GetValue(value);
+  content->GetValue(value, CallerType::System);
   SetValueOfAnonTextControl(value);
 
   // If we're readonly, make sure our anonymous text control is too:
@@ -415,9 +402,8 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   }
 
   // Propogate our tabindex:
-  int32_t tabIndex;
-  content->GetTabIndex(&tabIndex);
-  textField->SetTabIndex(tabIndex);
+  IgnoredErrorResult ignored;
+  textField->SetTabIndex(content->TabIndex(), ignored);
 
   // Initialize the text field's placeholder, if ours is set:
   nsAutoString placeholder;
@@ -441,8 +427,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mSpinBox),
                             outerWrapperCI.mChildren,
                             nsGkAtoms::div,
-                            CSSPseudoElementType::mozNumberSpinBox,
-                            outerWrapperCI.mStyleContext);
+                            CSSPseudoElementType::mozNumberSpinBox);
   NS_ENSURE_SUCCESS(rv, rv);
 
   ContentInfo& spinBoxCI = outerWrapperCI.mChildren.LastElement();
@@ -451,92 +436,18 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mSpinUp),
                             spinBoxCI.mChildren,
                             nsGkAtoms::div,
-                            CSSPseudoElementType::mozNumberSpinUp,
-                            spinBoxCI.mStyleContext);
+                            CSSPseudoElementType::mozNumberSpinUp);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Create the ::-moz-number-spin-down pseudo-element:
   rv = MakeAnonymousElement(getter_AddRefs(mSpinDown),
                             spinBoxCI.mChildren,
                             nsGkAtoms::div,
-                            CSSPseudoElementType::mozNumberSpinDown,
-                            spinBoxCI.mStyleContext);
+                            CSSPseudoElementType::mozNumberSpinDown);
 
   SyncDisabledState();
 
   return rv;
-}
-
-nsIAtom*
-nsNumberControlFrame::GetType() const
-{
-  return nsGkAtoms::numberControlFrame;
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::GetEditor(nsIEditor **aEditor)
-{
-  return GetTextFieldFrame()->GetEditor(aEditor);
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::SetSelectionStart(int32_t aSelectionStart)
-{
-  return GetTextFieldFrame()->SetSelectionStart(aSelectionStart);
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::SetSelectionEnd(int32_t aSelectionEnd)
-{
-  return GetTextFieldFrame()->SetSelectionEnd(aSelectionEnd);
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::SetSelectionRange(int32_t aSelectionStart,
-                                        int32_t aSelectionEnd,
-                                        SelectionDirection aDirection)
-{
-  return GetTextFieldFrame()->SetSelectionRange(aSelectionStart, aSelectionEnd,
-                                                aDirection);
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::GetSelectionRange(int32_t* aSelectionStart,
-                                        int32_t* aSelectionEnd,
-                                        SelectionDirection* aDirection)
-{
-  return GetTextFieldFrame()->GetSelectionRange(aSelectionStart, aSelectionEnd,
-                                                aDirection);
-}
-
-NS_IMETHODIMP
-nsNumberControlFrame::GetOwnedSelectionController(nsISelectionController** aSelCon)
-{
-  return GetTextFieldFrame()->GetOwnedSelectionController(aSelCon);
-}
-
-nsFrameSelection*
-nsNumberControlFrame::GetOwnedFrameSelection()
-{
-  return GetTextFieldFrame()->GetOwnedFrameSelection();
-}
-
-nsresult
-nsNumberControlFrame::GetPhonetic(nsAString& aPhonetic)
-{
-  return GetTextFieldFrame()->GetPhonetic(aPhonetic);
-}
-
-nsresult
-nsNumberControlFrame::EnsureEditorInitialized()
-{
-  return GetTextFieldFrame()->EnsureEditorInitialized();
-}
-
-nsresult
-nsNumberControlFrame::ScrollSelectionIntoView()
-{
-  return GetTextFieldFrame()->ScrollSelectionIntoView();
 }
 
 void
@@ -680,14 +591,15 @@ nsNumberControlFrame::HandleFocusEvent(WidgetEvent* aEvent)
 {
   if (aEvent->mOriginalTarget != mTextField) {
     // Move focus to our text field
-    HTMLInputElement::FromContent(mTextField)->Focus();
+    IgnoredErrorResult ignored;
+    HTMLInputElement::FromContent(mTextField)->Focus(ignored);
   }
 }
 
-nsresult
+void
 nsNumberControlFrame::HandleSelectCall()
 {
-  return HTMLInputElement::FromContent(mTextField)->Select();
+  HTMLInputElement::FromContent(mTextField)->Select();
 }
 
 #define STYLES_DISABLING_NATIVE_THEMING \
@@ -758,7 +670,14 @@ nsNumberControlFrame::SetValueOfAnonTextControl(const nsAString& aValue)
   // this must be its value, and not its 'value' attribute (the default value),
   // since the default value is ignored once a user types into the text
   // control.
-  HTMLInputElement::FromContent(mTextField)->SetValue(localizedValue);
+  //
+  // Pass NonSystem as the caller type; this should work fine for actual number
+  // inputs, and be safe in case our input has a type we don't expect for some
+  // reason.
+  IgnoredErrorResult rv;
+  HTMLInputElement::FromContent(mTextField)->SetValue(localizedValue,
+                                                      CallerType::NonSystem,
+                                                      rv);
 }
 
 void
@@ -769,7 +688,7 @@ nsNumberControlFrame::GetValueOfAnonTextControl(nsAString& aValue)
     return;
   }
 
-  HTMLInputElement::FromContent(mTextField)->GetValue(aValue);
+  HTMLInputElement::FromContent(mTextField)->GetValue(aValue, CallerType::System);
 
 #ifdef ENABLE_INTL_API
   // Here we need to de-localize any number typed in by the user. That is, we
@@ -822,7 +741,7 @@ nsNumberControlFrame::AnonTextControlIsEmpty()
     return true;
   }
   nsAutoString value;
-  HTMLInputElement::FromContent(mTextField)->GetValue(value);
+  HTMLInputElement::FromContent(mTextField)->GetValue(value, CallerType::System);
   return value.IsEmpty();
 }
 

@@ -4,7 +4,14 @@
 
 #include "nsISupports.idl"
 
+%{C++
+#include "nsTArrayForwardDeclare.h"
+class nsCString;
+%}
+[ref] native StringArrayRef(nsTArray<nsCString>);
+
 interface nsIChannel;
+interface nsIEventTarget;
 interface nsIPrincipal;
 interface nsIURI;
 
@@ -23,8 +30,17 @@ interface nsIURIClassifierCallback : nsISupports
    * @param aErrorCode
    *        The error code with which the channel should be cancelled, or
    *        NS_OK if the load should continue normally.
+   * @param aList
+   *        Name of the list that matched
+   * @param aProvider
+   *        Name of provider that matched
+   * @param aPrefix
+   *        Hash prefix of URL that matched
    */
-  void onClassifyComplete(in nsresult aErrorCode);
+  void onClassifyComplete(in nsresult aErrorCode,
+                          in ACString aList,
+                          in ACString aProvider,
+                          in ACString aPrefix);
 };
 
 /**
@@ -39,6 +55,12 @@ interface nsIURIClassifier : nsISupports
    *
    * @param aPrincipal
    *        The principal that should be checked by the URI classifier.
+   *
+   * @param nsIEventTarget
+   *        Event target for constructing actor in content process.
+   *        The event target should be tied to Docgroup/Tabgroup by
+   *        using EventTargetFor
+   *
    * @param aTrackingProtectionEnabled
    *        Whether or not to classify the given URI against tracking
    *        protection lists
@@ -53,13 +75,30 @@ interface nsIURIClassifier : nsISupports
    *         callback will be called.
    */
   boolean classify(in nsIPrincipal aPrincipal,
+                   in nsIEventTarget aEventTarget,
                    in boolean aTrackingProtectionEnabled,
                    in nsIURIClassifierCallback aCallback);
 
   /**
    * Synchronously classify a URI with a comma-separated string
    * containing the given tables. This does not make network requests.
-   * The result is a comma-separated string of tables that match.
+   * The result is an array of table names that match.
    */
-  ACString classifyLocalWithTables(in nsIURI aURI, in ACString aTables);
+  [noscript] StringArrayRef classifyLocalWithTables(in nsIURI aURI, in ACString aTables);
+  /**
+   * Asynchronously classify a URI with a comma-separated string
+   * containing the given tables. This does not make network requests.
+   * The callback does NOT totally follow nsIURIClassifierCallback's
+   * semantics described above. Only |aList| will be meaningful, which
+   * is a comma separated list of table names. (same as what classifyLocal
+   * returns.)
+   */
+  void asyncClassifyLocalWithTables(in nsIURI aURI,
+                                    in ACString aTables,
+                                    in nsIURIClassifierCallback aCallback);
+  /**
+   * Same as above, but returns a comma separated list of table names.
+   * This is an internal interface used only for testing purposes.
+   */
+  ACString classifyLocal(in nsIURI aURI, in ACString aTables);
 };

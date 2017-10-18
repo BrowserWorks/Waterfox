@@ -1,28 +1,27 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
-"use strict";
 
-// /////////////////
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed.
-//
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: can't convert undefined to object");
+"use strict";
 
 /**
  * Tests if cached requests have the correct status code
  */
 
-var test = Task.async(function* () {
-  let [tab, debuggee, monitor] = yield initNetMonitor(STATUS_CODES_URL, null, true);
+add_task(function* () {
+  // Disable rcwn to make cache behavior deterministic.
+  yield pushPref("network.http.rcwn.enabled", false);
+
+  let { tab, monitor } = yield initNetMonitor(STATUS_CODES_URL, true);
   info("Starting test... ");
 
-  let { document, L10N, NetMonitorView } = monitor.panelWin;
-  let { RequestsMenu, NetworkDetails } = NetMonitorView;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-  RequestsMenu.lazyUpdate = false;
-  NetworkDetails._params.lazyEmpty = false;
+  store.dispatch(Actions.batchEnable(false));
 
   const REQUEST_DATA = [
     {
@@ -61,7 +60,7 @@ var test = Task.async(function* () {
       details: {
         status: 200,
         statusText: "OK (cached)",
-        displayedStatus : "cached",
+        displayedStatus: "cached",
         type: "plain",
         fullMimeType: "text/plain; charset=utf-8"
       }
@@ -90,23 +89,33 @@ var test = Task.async(function* () {
   ];
 
   info("Performing requests #1...");
-  debuggee.performCachedRequests();
-  yield waitForNetworkEvents(monitor, 3);
+  yield performRequestsAndWait();
 
   info("Performing requests #2...");
-  debuggee.performCachedRequests();
-  yield waitForNetworkEvents(monitor, 3);
+  yield performRequestsAndWait();
 
   let index = 0;
   for (let request of REQUEST_DATA) {
-    let item = RequestsMenu.getItemAtIndex(index);
-
     info("Verifying request #" + index);
-    yield verifyRequestItemTarget(item, request.method, request.uri, request.details);
+    yield verifyRequestItemTarget(
+      document,
+      getDisplayedRequests(store.getState()),
+      getSortedRequests(store.getState()).get(index),
+      request.method,
+      request.uri,
+      request.details
+    );
 
     index++;
   }
 
   yield teardown(monitor);
-  finish();
+
+  function* performRequestsAndWait() {
+    let wait = waitForNetworkEvents(monitor, 3);
+    yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+      content.wrappedJSObject.performCachedRequests();
+    });
+    yield wait;
+  }
 });

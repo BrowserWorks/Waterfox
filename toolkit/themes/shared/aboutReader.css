@@ -3,29 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 body {
-  padding: 64px 0;
-}
-
-@media (max-width: 785px) {
-  body {
-    padding-top: 64px;
-    padding-inline-end: 0;
-    padding-bottom: 64px;
-    padding-inline-start: 51px;
-  }
-}
-
-@media print {
-  #container {
-    max-width: 100% !important;
-    font-size: 14px !important;
-    font-family: Georgia, "Times New Roman", serif !important;
-  }
-
-  body {
-    padding-top: 0px;
-    padding-bottom: 0px;
-  }
+  padding: 64px 51px;
 }
 
 body.loaded {

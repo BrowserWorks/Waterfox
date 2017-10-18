@@ -2109,7 +2109,7 @@ goog.dom.createTable_ = function(doc, rows, columns, fillWithNbsp) {
   totalHtml.push("</table>");
   var elem = doc.createElement(goog.dom.TagName.DIV);
   elem.innerHTML = totalHtml.join("");
-  return elem.removeChild(elem.firstChild)
+  return elem.firstChild.remove()
 };
 goog.dom.htmlToDocumentFragment = function(htmlString) {
   return goog.dom.htmlToDocumentFragment_(document, htmlString)
@@ -2118,12 +2118,12 @@ goog.dom.htmlToDocumentFragment_ = function(doc, htmlString) {
   var tempDiv = doc.createElement("div");
   if(goog.dom.BrowserFeature.INNER_HTML_NEEDS_SCOPED_ELEMENT) {
     tempDiv.innerHTML = "<br>" + htmlString;
-    tempDiv.removeChild(tempDiv.firstChild)
+    tempDiv.firstChild.remove()
   }else {
     tempDiv.innerHTML = htmlString
   }
   if(tempDiv.childNodes.length == 1) {
-    return tempDiv.removeChild(tempDiv.firstChild)
+    return tempDiv.firstChild.remove()
   }else {
     var fragment = doc.createDocumentFragment();
     while(tempDiv.firstChild) {
@@ -2213,7 +2213,7 @@ goog.dom.insertSiblingAfter = function(newNode, refNode) {
   }
 };
 goog.dom.removeNode = function(node) {
-  return node && node.parentNode ? node.parentNode.removeChild(node) : null
+  return node && node.parentNode ? node.remove() : null
 };
 goog.dom.replaceNode = function(newNode, oldNode) {
   var parent = oldNode.parentNode;

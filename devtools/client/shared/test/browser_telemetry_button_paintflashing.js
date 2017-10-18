@@ -13,6 +13,7 @@ const TOOL_DELAY = 200;
 add_task(function* () {
   yield addTab(TEST_URI);
   let Telemetry = loadTelemetryAndRecordLogs();
+  yield pushPref("devtools.command-button-paintflashing.enabled", true);
 
   let target = TargetFactory.forTab(gBrowser.selectedTab);
   let toolbox = yield gDevTools.showToolbox(target, "inspector");
@@ -43,23 +44,27 @@ function* delayedClicks(toolbox, node, clicks) {
       setTimeout(() => resolve(), TOOL_DELAY);
     });
 
-    // this event will fire once the command execution starts and
-    // the output object is created
-    let clicked = toolbox._requisition.commandOutputManager.onOutput.once();
+    let { CommandState } = require("devtools/shared/gcli/command-state");
+    let clicked = new Promise(resolve => {
+      CommandState.on("changed", function changed(type, { command }) {
+        if (command === "paintflashing") {
+          CommandState.off("changed", changed);
+          resolve();
+        }
+      });
+    });
 
     info("Clicking button " + node.id);
     node.click();
 
-    let outputEvent = yield clicked;
-    // promise gets resolved once execution finishes and output is ready
-    yield outputEvent.output.promise;
+    yield clicked;
   }
 }
 
 function checkResults(histIdFocus, Telemetry) {
   let result = Telemetry.prototype.telemetryInfo;
 
-  for (let [histId, value] of Iterator(result)) {
+  for (let [histId, value] of Object.entries(result)) {
     if (histId.startsWith("DEVTOOLS_INSPECTOR_") ||
         !histId.includes(histIdFocus)) {
       // Inspector stats are tested in
@@ -68,10 +73,7 @@ function checkResults(histIdFocus, Telemetry) {
       continue;
     }
 
-    if (histId.endsWith("OPENED_PER_USER_FLAG")) {
-      ok(value.length === 1 && value[0] === true,
-         "Per user value " + histId + " has a single value of true");
-    } else if (histId.endsWith("OPENED_COUNT")) {
+    if (histId.endsWith("OPENED_COUNT")) {
       ok(value.length > 1, histId + " has more than one entry");
 
       let okay = value.every(function (element) {

@@ -17,8 +17,8 @@
 #include "mozilla/dom/HTMLContentElement.h"
 #include "mozilla/dom/HTMLShadowElement.h"
 #include "nsXBLPrototypeBinding.h"
-#include "mozilla/StyleSheetHandle.h"
-#include "mozilla/StyleSheetHandleInlines.h"
+#include "mozilla/StyleSheet.h"
+#include "mozilla/StyleSheetInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -75,8 +75,8 @@ ShadowRoot::ShadowRoot(nsIContent* aContent,
 
   SetFlags(NODE_IS_IN_SHADOW_TREE);
 
-  DOMSlots()->mBindingParent = aContent;
-  DOMSlots()->mContainingShadow = this;
+  ExtendedDOMSlots()->mBindingParent = aContent;
+  ExtendedDOMSlots()->mContainingShadow = this;
 
   // Add the ShadowRoot as a mutation observer on the host to watch
   // for mutations because the insertion points in this ShadowRoot
@@ -132,7 +132,7 @@ ShadowRoot::StyleSheetChanged()
 }
 
 void
-ShadowRoot::InsertSheet(StyleSheetHandle aSheet,
+ShadowRoot::InsertSheet(StyleSheet* aSheet,
                         nsIContent* aLinkingContent)
 {
   nsCOMPtr<nsIStyleSheetLinkingElement>
@@ -163,7 +163,7 @@ ShadowRoot::InsertSheet(StyleSheetHandle aSheet,
 }
 
 void
-ShadowRoot::RemoveSheet(StyleSheetHandle aSheet)
+ShadowRoot::RemoveSheet(StyleSheet* aSheet)
 {
   mProtoBinding->RemoveStyleSheet(aSheet);
 
@@ -206,8 +206,7 @@ ShadowRoot::GetElementsByTagNameNS(const nsAString& aNamespaceURI,
 void
 ShadowRoot::AddToIdTable(Element* aElement, nsIAtom* aId)
 {
-  nsIdentifierMapEntry *entry =
-    mIdentifierMap.PutEntry(nsDependentAtomString(aId));
+  nsIdentifierMapEntry* entry = mIdentifierMap.PutEntry(aId);
   if (entry) {
     entry->AddIdElement(aElement);
   }
@@ -216,8 +215,7 @@ ShadowRoot::AddToIdTable(Element* aElement, nsIAtom* aId)
 void
 ShadowRoot::RemoveFromIdTable(Element* aElement, nsIAtom* aId)
 {
-  nsIdentifierMapEntry *entry =
-    mIdentifierMap.GetEntry(nsDependentAtomString(aId));
+  nsIdentifierMapEntry* entry = mIdentifierMap.GetEntry(aId);
   if (entry) {
     entry->RemoveIdElement(aElement);
     if (entry->IsEmpty()) {
@@ -562,11 +560,12 @@ ShadowRoot::ChangePoolHost(nsIContent* aNewHost)
 bool
 ShadowRoot::IsShadowInsertionPoint(nsIContent* aContent)
 {
-  if (aContent && aContent->IsHTMLElement(nsGkAtoms::shadow)) {
-    HTMLShadowElement* shadowElem = static_cast<HTMLShadowElement*>(aContent);
-    return shadowElem->IsInsertionPoint();
+  if (!aContent) {
+    return false;
   }
-  return false;
+
+  HTMLShadowElement* shadowElem = HTMLShadowElement::FromContent(aContent);
+  return shadowElem && shadowElem->IsInsertionPoint();
 }
 
 /**
@@ -594,10 +593,11 @@ ShadowRoot::IsPooledNode(nsIContent* aContent, nsIContent* aContainer,
     return true;
   }
 
-  if (aContainer && aContainer->IsHTMLElement(nsGkAtoms::content)) {
+  if (aContainer) {
     // Fallback content will end up in pool if its parent is a child of the host.
-    HTMLContentElement* content = static_cast<HTMLContentElement*>(aContainer);
-    return content->IsInsertionPoint() && content->MatchedNodes().IsEmpty() &&
+    HTMLContentElement* content = HTMLContentElement::FromContent(aContainer);
+    return content && content->IsInsertionPoint() &&
+           content->MatchedNodes().IsEmpty() &&
            aContainer->GetParentNode() == aHost;
   }
 
@@ -639,7 +639,7 @@ ShadowRoot::ContentAppended(nsIDocument* aDocument,
   while (currentChild) {
     // Add insertion point to destination insertion points of fallback content.
     if (nsContentUtils::IsContentInsertionPoint(aContainer)) {
-      HTMLContentElement* content = static_cast<HTMLContentElement*>(aContainer);
+      HTMLContentElement* content = HTMLContentElement::FromContent(aContainer);
       if (content->MatchedNodes().IsEmpty()) {
         currentChild->DestInsertionPoints().AppendElement(aContainer);
       }
@@ -670,7 +670,7 @@ ShadowRoot::ContentInserted(nsIDocument* aDocument,
   if (IsPooledNode(aChild, aContainer, mPoolHost)) {
     // Add insertion point to destination insertion points of fallback content.
     if (nsContentUtils::IsContentInsertionPoint(aContainer)) {
-      HTMLContentElement* content = static_cast<HTMLContentElement*>(aContainer);
+      HTMLContentElement* content = HTMLContentElement::FromContent(aContainer);
       if (content->MatchedNodes().IsEmpty()) {
         aChild->DestInsertionPoints().AppendElement(aContainer);
       }
@@ -696,7 +696,7 @@ ShadowRoot::ContentRemoved(nsIDocument* aDocument,
   // Clear destination insertion points for removed
   // fallback content.
   if (nsContentUtils::IsContentInsertionPoint(aContainer)) {
-    HTMLContentElement* content = static_cast<HTMLContentElement*>(aContainer);
+    HTMLContentElement* content = HTMLContentElement::FromContent(aContainer);
     if (content->MatchedNodes().IsEmpty()) {
       aChild->DestInsertionPoints().Clear();
     }
@@ -710,7 +710,8 @@ ShadowRoot::ContentRemoved(nsIDocument* aDocument,
 }
 
 nsresult
-ShadowRoot::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+ShadowRoot::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                  bool aPreallocateChildren) const
 {
   *aResult = nullptr;
   return NS_ERROR_DOM_DATA_CLONE_ERR;
@@ -737,31 +738,20 @@ NS_IMPL_RELEASE_INHERITED(ShadowRootStyleSheetList, StyleSheetList)
 ShadowRootStyleSheetList::ShadowRootStyleSheetList(ShadowRoot* aShadowRoot)
   : mShadowRoot(aShadowRoot)
 {
-  MOZ_COUNT_CTOR(ShadowRootStyleSheetList);
 }
 
 ShadowRootStyleSheetList::~ShadowRootStyleSheetList()
 {
-  MOZ_COUNT_DTOR(ShadowRootStyleSheetList);
 }
 
-CSSStyleSheet*
+StyleSheet*
 ShadowRootStyleSheetList::IndexedGetter(uint32_t aIndex, bool& aFound)
 {
   aFound = aIndex < mShadowRoot->mProtoBinding->SheetCount();
-
   if (!aFound) {
     return nullptr;
   }
-
-  // XXXheycam Return null until ServoStyleSheet implements the right
-  // DOM interfaces.
-  StyleSheetHandle sheet = mShadowRoot->mProtoBinding->StyleSheetAt(aIndex);
-  if (sheet->IsServo()) {
-    NS_ERROR("stylo: can't return ServoStyleSheets to script yet");
-    return nullptr;
-  }
-  return sheet->AsGecko();
+  return mShadowRoot->mProtoBinding->StyleSheetAt(aIndex);
 }
 
 uint32_t

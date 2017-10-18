@@ -9,41 +9,73 @@
 // React & Redux
 const {
   createFactory,
-  DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const MessageRepeat = createFactory(require("devtools/client/webconsole/new-console-output/components/message-repeat").MessageRepeat);
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
 
 PageError.displayName = "PageError";
 
 PageError.propTypes = {
   message: PropTypes.object.isRequired,
+  open: PropTypes.bool,
+  timestampsVisible: PropTypes.bool.isRequired,
+  serviceContainer: PropTypes.object,
+};
+
+PageError.defaultProps = {
+  open: false,
 };
 
 function PageError(props) {
-  const { message } = props;
-  const repeat = MessageRepeat({repeat: message.repeat});
-  const icon = MessageIcon({severity: message.severity});
+  const {
+    dispatch,
+    message,
+    open,
+    serviceContainer,
+    timestampsVisible,
+  } = props;
+  const {
+    id: messageId,
+    indent,
+    source,
+    type,
+    level,
+    messageText,
+    repeat,
+    stacktrace,
+    frame,
+    exceptionDocURL,
+    timeStamp,
+    notes,
+  } = message;
 
-  // @TODO Use of "is" is a temporary hack to get the category and severity
-  // attributes to be applied. There are targeted in webconsole's CSS rules,
-  // so if we remove this hack, we have to modify the CSS rules accordingly.
-  return dom.div({
-    class: "message",
-    is: "fdt-message",
-    category: message.category,
-    severity: message.severity
-  },
-    icon,
-    dom.span(
-      {className: "message-body-wrapper message-body devtools-monospace"},
-      dom.span({},
-        message.messageText
-      )
-    ),
-    repeat
-  );
+  let messageBody;
+  if (typeof messageText === "string") {
+    messageBody = messageText;
+  } else if (typeof messageText === "object" && messageText.type === "longString") {
+    messageBody = `${message.messageText.initial}…`;
+  }
+
+  return Message({
+    dispatch,
+    messageId,
+    open,
+    collapsible: Array.isArray(stacktrace),
+    source,
+    type,
+    level,
+    topLevelClasses: [],
+    indent,
+    messageBody,
+    repeat,
+    frame,
+    stacktrace,
+    serviceContainer,
+    exceptionDocURL,
+    timeStamp,
+    notes,
+    timestampsVisible,
+  });
 }
 
-module.exports.PageError = PageError;
+module.exports = PageError;

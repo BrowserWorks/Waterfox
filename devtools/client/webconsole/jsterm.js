@@ -6,19 +6,18 @@
 
 "use strict";
 
-const {Ci} = require("chrome");
-
 const {Utils: WebConsoleUtils} =
-  require("devtools/shared/webconsole/utils");
+  require("devtools/client/webconsole/utils");
 const promise = require("promise");
 const Debugger = require("Debugger");
 const Services = require("Services");
+const {KeyCodes} = require("devtools/client/shared/keycodes");
 
 loader.lazyServiceGetter(this, "clipboardHelper",
                          "@mozilla.org/widget/clipboardhelper;1",
                          "nsIClipboardHelper");
 loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
-loader.lazyRequireGetter(this, "AutocompletePopup", "devtools/client/shared/autocomplete-popup", true);
+loader.lazyRequireGetter(this, "AutocompletePopup", "devtools/client/shared/autocomplete-popup");
 loader.lazyRequireGetter(this, "ToolSidebar", "devtools/client/framework/sidebar", true);
 loader.lazyRequireGetter(this, "Messages", "devtools/client/webconsole/console-output", true);
 loader.lazyRequireGetter(this, "asyncStorage", "devtools/shared/async-storage");
@@ -28,8 +27,7 @@ loader.lazyImporter(this, "VariablesView", "resource://devtools/client/shared/wi
 loader.lazyImporter(this, "VariablesViewController", "resource://devtools/client/shared/widgets/VariablesViewController.jsm");
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 
-const STRINGS_URI = "chrome://devtools/locale/webconsole.properties";
-var l10n = new WebConsoleUtils.L10n(STRINGS_URI);
+const l10n = require("devtools/client/webconsole/webconsole-l10n");
 
 // Constants used for defining the direction of JSTerm input history navigation.
 const HISTORY_BACK = -1;
@@ -253,19 +251,19 @@ JSTerm.prototype = {
     };
 
     let doc = this.hud.document;
-
     let toolbox = gDevTools.getToolbox(this.hud.owner.target);
-    if (!toolbox) {
-      // In some cases (e.g. Browser Console), there is no toolbox.
-      toolbox = { doc };
-    }
-    this.autocompletePopup = new AutocompletePopup(toolbox, autocompleteOptions);
-
+    let tooltipDoc = toolbox ? toolbox.doc : doc;
+    // The popup will be attached to the toolbox document or HUD document in the case
+    // such as the browser console which doesn't have a toolbox.
+    this.autocompletePopup = new AutocompletePopup(tooltipDoc, autocompleteOptions);
     let inputContainer = doc.querySelector(".jsterm-input-container");
     this.completeNode = doc.querySelector(".jsterm-complete-node");
     this.inputNode = doc.querySelector(".jsterm-input-node");
+    // Update the character width and height needed for the popup offset
+    // calculations.
+    this._updateCharSize();
 
-    if (this.hud.owner._browserConsole &&
+    if (this.hud.isBrowserConsole &&
         !Services.prefs.getBoolPref("devtools.chrome.enabled")) {
       inputContainer.style.display = "none";
     } else {
@@ -274,15 +272,15 @@ JSTerm.prototype = {
       this._onPaste = WebConsoleUtils.pasteHandlerGen(
         this.inputNode, doc.getElementById("webconsole-notificationbox"),
         msg, okstring);
-      this.inputNode.addEventListener("keypress", this._keyPress, false);
+      this.inputNode.addEventListener("keypress", this._keyPress);
       this.inputNode.addEventListener("paste", this._onPaste);
       this.inputNode.addEventListener("drop", this._onPaste);
-      this.inputNode.addEventListener("input", this._inputEventHandler, false);
-      this.inputNode.addEventListener("keyup", this._inputEventHandler, false);
-      this.inputNode.addEventListener("focus", this._focusEventHandler, false);
+      this.inputNode.addEventListener("input", this._inputEventHandler);
+      this.inputNode.addEventListener("keyup", this._inputEventHandler);
+      this.inputNode.addEventListener("focus", this._focusEventHandler);
     }
 
-    this.hud.window.addEventListener("blur", this._blurEventHandler, false);
+    this.hud.window.addEventListener("blur", this._blurEventHandler);
     this.lastInputValue && this.setInputValue(this.lastInputValue);
   },
 
@@ -346,11 +344,7 @@ JSTerm.prototype = {
           this.clearHistory();
           break;
         case "inspectObject":
-          this.openVariablesView({
-            label:
-              VariablesView.getString(helperResult.object, { concise: true }),
-            objectActor: helperResult.object,
-          });
+          this.inspectObjectActor(helperResult.object);
           break;
         case "error":
           try {
@@ -370,15 +364,14 @@ JSTerm.prototype = {
 
     // Hide undefined results coming from JSTerm helper functions.
     if (!errorMessage && result && typeof result == "object" &&
-        result.type == "undefined" &&
-        helperResult && !helperHasRawOutput) {
+      result.type == "undefined" &&
+      helperResult && !helperHasRawOutput) {
       callback && callback();
       return;
     }
 
     if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
-      this.hud.newConsoleOutput.dispatchMessageAdd(response);
-      // @TODO figure out what to do about the callback.
+      this.hud.newConsoleOutput.dispatchMessageAdd(response, true).then(callback);
       return;
     }
     let msg = new Messages.JavaScriptEvalOutput(response,
@@ -410,6 +403,23 @@ JSTerm.prototype = {
     }
   },
 
+  inspectObjectActor: function (objectActor) {
+    if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
+      this.hud.newConsoleOutput.dispatchMessageAdd({
+        helperResult: {
+          type: "inspectObject",
+          object: objectActor
+        }
+      }, true);
+      return this.hud.newConsoleOutput;
+    }
+
+    return this.openVariablesView({
+      objectActor,
+      label: VariablesView.getString(objectActor, {concise: true}),
+    });
+  },
+
   /**
    * Execute a string. Execution happens asynchronously in the content process.
    *
@@ -424,12 +434,17 @@ JSTerm.prototype = {
    */
   execute: function (executeString, callback) {
     let deferred = promise.defer();
-    let resultCallback = function (msg) {
-      deferred.resolve(msg);
-      if (callback) {
-        callback(msg);
-      }
-    };
+    let resultCallback;
+    if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
+      resultCallback = (msg) => deferred.resolve(msg);
+    } else {
+      resultCallback = (msg) => {
+        deferred.resolve(msg);
+        if (callback) {
+          callback(msg);
+        }
+      };
+    }
 
     // attempt to execute the content of the inputNode
     executeString = executeString || this.getInputValue();
@@ -447,13 +462,8 @@ JSTerm.prototype = {
       const { ConsoleCommand } = require("devtools/client/webconsole/new-console-output/types");
       let message = new ConsoleCommand({
         messageText: executeString,
-        source: "javascript",
-        type: "command",
-        // @TODO remove category and severity
-        category: "input",
-        severity: "log",
       });
-      this.hud.newConsoleOutput.dispatchMessageAdd(message);
+      this.hud.proxy.dispatchMessageAdd(message);
     } else {
       let message = new Messages.Simple(executeString, {
         category: "input",
@@ -584,6 +594,11 @@ JSTerm.prototype = {
    *         opened. The new variables view instance is given to the callbacks.
    */
   openVariablesView: function (options) {
+    // Bail out if the side bar doesn't exist.
+    if (!this.hud.document.querySelector("#webconsole-sidebar")) {
+      return Promise.resolve(null);
+    }
+
     let onContainerReady = (window) => {
       let container = window.document.querySelector("#variables");
       let view = this._variablesView;
@@ -616,11 +631,10 @@ JSTerm.prototype = {
       let document = options.targetElement.ownerDocument;
       let iframe = document.createElementNS(XHTML_NS, "iframe");
 
-      iframe.addEventListener("load", function onIframeLoad() {
-        iframe.removeEventListener("load", onIframeLoad, true);
+      iframe.addEventListener("load", function () {
         iframe.style.visibility = "visible";
         deferred.resolve(iframe.contentWindow);
-      }, true);
+      }, {capture: true, once: true});
 
       iframe.flex = 1;
       iframe.style.visibility = "hidden";
@@ -690,7 +704,7 @@ JSTerm.prototype = {
    */
   _onKeypressInVariablesView: function (event) {
     let tag = event.target.nodeName;
-    if (event.keyCode != Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE || event.shiftKey ||
+    if (event.keyCode != KeyCodes.DOM_VK_ESCAPE || event.shiftKey ||
         event.altKey || event.ctrlKey || event.metaKey ||
         ["input", "textarea", "select", "textbox"].indexOf(tag) > -1) {
       return;
@@ -770,7 +784,7 @@ JSTerm.prototype = {
     });
 
     if (options.objectActor &&
-        (!this.hud.owner._browserConsole ||
+        (!this.hud.isBrowserConsole ||
          Services.prefs.getBoolPref("devtools.chrome.enabled"))) {
       // Make sure eval works in the correct context.
       view.eval = this._variablesViewEvaluate.bind(this, options);
@@ -943,31 +957,29 @@ JSTerm.prototype = {
    */
   clearOutput: function (clearStorage) {
     let hud = this.hud;
-    let outputNode = hud.outputNode;
-    let node;
-    while ((node = outputNode.firstChild)) {
-      hud.removeOutputMessage(node);
-    }
-
-    hud.groupDepth = 0;
-    hud._outputQueue.forEach(hud._destroyItem, hud);
-    hud._outputQueue = [];
-    this.webConsoleClient.clearNetworkRequests();
-    hud._repeatNodes = {};
-
-    if (clearStorage) {
-      this.webConsoleClient.clearMessagesCache();
-    }
-
-    this._sidebarDestroy();
 
     if (hud.NEW_CONSOLE_OUTPUT_ENABLED) {
       hud.newConsoleOutput.dispatchMessagesClear();
-    }
+    } else {
+      let outputNode = hud.outputNode;
+      let node;
+      while ((node = outputNode.firstChild)) {
+        hud.removeOutputMessage(node);
+      }
 
+      hud.groupDepth = 0;
+      hud._outputQueue.forEach(hud._destroyItem, hud);
+      hud._outputQueue = [];
+      hud._repeatNodes = {};
+    }
+    this.webConsoleClient.clearNetworkRequests();
+    if (clearStorage) {
+      this.webConsoleClient.clearMessagesCache();
+    }
+    this._sidebarDestroy();
+    this.focus();
     this.emit("messages-cleared");
   },
-
   /**
    * Remove all of the private messages from the Web Console output.
    *
@@ -1119,7 +1131,7 @@ JSTerm.prototype = {
           break;
       }
       return;
-    } else if (event.keyCode == Ci.nsIDOMKeyEvent.DOM_VK_RETURN) {
+    } else if (event.keyCode == KeyCodes.DOM_VK_RETURN) {
       let autoMultiline = Services.prefs.getBoolPref(PREF_AUTO_MULTILINE);
       if (event.shiftKey ||
           (!Debugger.isCompilableUnit(inputNode.value) && autoMultiline)) {
@@ -1129,7 +1141,7 @@ JSTerm.prototype = {
     }
 
     switch (event.keyCode) {
-      case Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE:
+      case KeyCodes.DOM_VK_ESCAPE:
         if (this.autocompletePopup.isOpen) {
           this.clearCompletion();
           event.preventDefault();
@@ -1141,7 +1153,7 @@ JSTerm.prototype = {
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_RETURN:
+      case KeyCodes.DOM_VK_RETURN:
         if (this._autocompletePopupNavigated &&
             this.autocompletePopup.isOpen &&
             this.autocompletePopup.selectedIndex > -1) {
@@ -1153,7 +1165,7 @@ JSTerm.prototype = {
         event.preventDefault();
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_UP:
+      case KeyCodes.DOM_VK_UP:
         if (this.autocompletePopup.isOpen) {
           inputUpdated = this.complete(this.COMPLETE_BACKWARD);
           if (inputUpdated) {
@@ -1167,7 +1179,7 @@ JSTerm.prototype = {
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_DOWN:
+      case KeyCodes.DOM_VK_DOWN:
         if (this.autocompletePopup.isOpen) {
           inputUpdated = this.complete(this.COMPLETE_FORWARD);
           if (inputUpdated) {
@@ -1181,67 +1193,67 @@ JSTerm.prototype = {
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP:
+      case KeyCodes.DOM_VK_PAGE_UP:
         if (this.autocompletePopup.isOpen) {
           inputUpdated = this.complete(this.COMPLETE_PAGEUP);
           if (inputUpdated) {
             this._autocompletePopupNavigated = true;
           }
         } else {
-          this.hud.outputWrapper.scrollTop =
+          this.hud.outputScroller.scrollTop =
             Math.max(0,
-              this.hud.outputWrapper.scrollTop -
-              this.hud.outputWrapper.clientHeight
+              this.hud.outputScroller.scrollTop -
+              this.hud.outputScroller.clientHeight
             );
         }
         event.preventDefault();
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN:
+      case KeyCodes.DOM_VK_PAGE_DOWN:
         if (this.autocompletePopup.isOpen) {
           inputUpdated = this.complete(this.COMPLETE_PAGEDOWN);
           if (inputUpdated) {
             this._autocompletePopupNavigated = true;
           }
         } else {
-          this.hud.outputWrapper.scrollTop =
-            Math.min(this.hud.outputWrapper.scrollHeight,
-              this.hud.outputWrapper.scrollTop +
-              this.hud.outputWrapper.clientHeight
+          this.hud.outputScroller.scrollTop =
+            Math.min(this.hud.outputScroller.scrollHeight,
+              this.hud.outputScroller.scrollTop +
+              this.hud.outputScroller.clientHeight
             );
         }
         event.preventDefault();
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_HOME:
+      case KeyCodes.DOM_VK_HOME:
         if (this.autocompletePopup.isOpen) {
           this.autocompletePopup.selectedIndex = 0;
           event.preventDefault();
         } else if (inputValue.length <= 0) {
-          this.hud.outputWrapper.scrollTop = 0;
+          this.hud.outputScroller.scrollTop = 0;
           event.preventDefault();
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_END:
+      case KeyCodes.DOM_VK_END:
         if (this.autocompletePopup.isOpen) {
           this.autocompletePopup.selectedIndex =
             this.autocompletePopup.itemCount - 1;
           event.preventDefault();
         } else if (inputValue.length <= 0) {
-          this.hud.outputWrapper.scrollTop =
-            this.hud.outputWrapper.scrollHeight;
+          this.hud.outputScroller.scrollTop =
+            this.hud.outputScroller.scrollHeight;
           event.preventDefault();
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_LEFT:
+      case KeyCodes.DOM_VK_LEFT:
         if (this.autocompletePopup.isOpen || this.lastCompletion.value) {
           this.clearCompletion();
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_RIGHT:
+      case KeyCodes.DOM_VK_RIGHT:
         let cursorAtTheEnd = this.inputNode.selectionStart ==
                              this.inputNode.selectionEnd &&
                              this.inputNode.selectionStart ==
@@ -1260,7 +1272,7 @@ JSTerm.prototype = {
         }
         break;
 
-      case Ci.nsIDOMKeyEvent.DOM_VK_TAB:
+      case KeyCodes.DOM_VK_TAB:
         // Generate a completion and accept the first proposed value.
         if (this.complete(this.COMPLETE_HINT_ONLY) &&
             this.lastCompletion &&
@@ -1587,18 +1599,16 @@ JSTerm.prototype = {
       value: inputValue,
       matchProp: lastPart,
     };
-
     if (items.length > 1 && !popup.isOpen) {
       let str = this.getInputValue().substr(0, this.inputNode.selectionStart);
       let offset = str.length - (str.lastIndexOf("\n") + 1) - lastPart.length;
-      let x = offset * this.hud._inputCharWidth;
-      popup.openPopup(inputNode, x + this.hud._chevronWidth);
+      let x = offset * this._inputCharWidth;
+      popup.openPopup(inputNode, x + this._chevronWidth);
       this._autocompletePopupNavigated = false;
     } else if (items.length < 2 && popup.isOpen) {
       popup.hidePopup();
       this._autocompletePopupNavigated = false;
     }
-
     if (items.length == 1) {
       popup.selectedIndex = 0;
     }
@@ -1642,6 +1652,12 @@ JSTerm.prototype = {
     this.lastCompletion = { value: null };
     this.updateCompleteNode("");
     if (this.autocompletePopup.isOpen) {
+      // Trigger a blur/focus of the JSTerm input to force screen readers to read the
+      // value again.
+      this.inputNode.blur();
+      this.autocompletePopup.once("popup-closed", () => {
+        this.inputNode.focus();
+      });
       this.autocompletePopup.hidePopup();
       this._autocompletePopupNavigated = false;
     }
@@ -1686,6 +1702,31 @@ JSTerm.prototype = {
     let prefix = suffix ? this.getInputValue().replace(/[\S]/g, " ") : "";
     this.completeNode.value = prefix + suffix;
   },
+  /**
+   * Calculates the width and height of a single character of the input box.
+   * This will be used in opening the popup at the correct offset.
+   *
+   * @private
+   */
+  _updateCharSize: function () {
+    let doc = this.hud.document;
+    let tempLabel = doc.createElementNS(XHTML_NS, "span");
+    let style = tempLabel.style;
+    style.position = "fixed";
+    style.padding = "0";
+    style.margin = "0";
+    style.width = "auto";
+    style.color = "transparent";
+    WebConsoleUtils.copyTextStyles(this.inputNode, tempLabel);
+    tempLabel.textContent = "x";
+    doc.documentElement.appendChild(tempLabel);
+    this._inputCharWidth = tempLabel.offsetWidth;
+    tempLabel.remove();
+    // Calculate the width of the chevron placed at the beginning of the input
+    // box. Remove 4 more pixels to accomodate the padding of the popup.
+    this._chevronWidth = +doc.defaultView.getComputedStyle(this.inputNode)
+                             .paddingLeft.replace(/[^0-9.]/g, "") - 4;
+  },
 
   /**
    * Destroy the sidebar.
@@ -1719,16 +1760,16 @@ JSTerm.prototype = {
     this.autocompletePopup = null;
 
     if (this._onPaste) {
-      this.inputNode.removeEventListener("paste", this._onPaste, false);
-      this.inputNode.removeEventListener("drop", this._onPaste, false);
+      this.inputNode.removeEventListener("paste", this._onPaste);
+      this.inputNode.removeEventListener("drop", this._onPaste);
       this._onPaste = null;
     }
 
-    this.inputNode.removeEventListener("keypress", this._keyPress, false);
-    this.inputNode.removeEventListener("input", this._inputEventHandler, false);
-    this.inputNode.removeEventListener("keyup", this._inputEventHandler, false);
-    this.inputNode.removeEventListener("focus", this._focusEventHandler, false);
-    this.hud.window.removeEventListener("blur", this._blurEventHandler, false);
+    this.inputNode.removeEventListener("keypress", this._keyPress);
+    this.inputNode.removeEventListener("input", this._inputEventHandler);
+    this.inputNode.removeEventListener("keyup", this._inputEventHandler);
+    this.inputNode.removeEventListener("focus", this._focusEventHandler);
+    this.hud.window.removeEventListener("blur", this._blurEventHandler);
 
     this.hud = null;
   },

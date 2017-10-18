@@ -13,10 +13,10 @@ function test() {
     "Unsigned XPI": {
       URL: TESTROOT + "amosigned.xpi",
       Hash: "foo:3d0dc22e1f394e159b08aaf5f0f97de4d5c65f4f",
-      toString: function() { return this.URL; }
+      toString() { return this.URL; }
     }
   }));
-  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
 }
 

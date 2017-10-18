@@ -50,7 +50,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=435442
     25% { margin-top: 100px }
   }
   @keyframes kf4 {
-    to, from { border-collapse: collapse; margin-top: 37px }
+    to, from { display: none; margin-top: 37px }
   }
   @keyframes kf_cascade1 {
     from { padding-top: 50px }
@@ -163,6 +163,38 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=435442
     0% { opacity: 0.2 }
     100% { opacity: 0.8 }
   }
+
+  @keyframes "string name 1" { /* using string for keyframes name */
+    0%, 100% { left: 1px }
+  }
+
+  @keyframes "string name 2" {
+    0%, 100% { left: 2px }
+  }
+
+  @keyframes custom\ ident\ 1 {
+    0%, 100% { left: 3px }
+  }
+
+  @keyframes custom\ ident\ 2 {
+    0%, 100% { left: 4px }
+  }
+
+  @keyframes "initial" {
+    0%, 100% { left: 5px }
+  }
+
+  @keyframes initial { /* illegal as an identifier, should be dropped */
+    0%, 100% { left: 6px }
+  }
+
+  @keyframes "none" {
+    0%, 100% { left: 7px }
+  }
+
+  @keyframes none { /* illegal as an identifier, should be dropped */
+    0%, 100% { left: 8px }
+  }
   </style>
 </head>
 <body>
@@ -198,6 +230,10 @@ window.new_div = function(style) {
 
 // take over the refresh driver right from the start.
 advance_clock(0);
+
+SimpleTest.registerCleanupFunction(() => {
+  SpecialPowers.DOMWindowUtils.restoreNormalRefresh();
+});
 
 /*
  * css3-animations:  2. Animations
@@ -566,23 +602,23 @@ done_div();
 // we still override the value when two consecutive keyframes have
 // the same value.
 new_div("animation: kf4 ease 10s");
-is(cs.borderCollapse, "separate",
+is(cs.display, "block",
    "non-animatable properties should be ignored (linear, 0s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (linear, 0s)");
 advance_clock(1000);
-is(cs.borderCollapse, "separate",
+is(cs.display, "block",
    "non-animatable properties should be ignored (linear, 1s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (linear, 1s)");
 done_div();
 new_div("animation: kf4 step-start 10s");
-is(cs.borderCollapse, "separate",
+is(cs.display, "block",
    "non-animatable properties should be ignored (step-start, 0s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (step-start, 0s)");
 advance_clock(1000);
-is(cs.borderCollapse, "separate",
+is(cs.display, "block",
    "non-animatable properties should be ignored (step-start, 1s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (step-start, 1s)");
@@ -1195,9 +1231,6 @@ is_approx(px_to_num(cs.marginRight), 100 * gTF.ease_in(0.4), 0.01,
           "large negative delay test at 0ms");
 check_events([{ type: 'animationstart', target: div,
                 animationName: 'anim2', elapsedTime: 3.6,
-                pseudoElement: "" },
-              { type: 'animationiteration', target: div,
-                animationName: 'anim2', elapsedTime: 3.6,
                 pseudoElement: "" }],
              "right after start in large negative delay test");
 advance_clock(380);
@@ -1529,7 +1562,7 @@ is(cs.marginLeft, "50px", "dynamic rule change test, change in keyframe keyText"
 dyn1.deleteRule("25%");
 is(cs.marginLeft, "25px", "dynamic rule change test, @keyframes deleteRule");
 done_div();
-dyn_sheet_elt.parentNode.removeChild(dyn_sheet_elt);
+dyn_sheet_elt.remove();
 dyn_sheet_elt = null;
 dyn_sheet = null;
 
@@ -2019,7 +2052,7 @@ div.parentNode.insertBefore(ancestor, div);
 ancestor.appendChild(div);
 testDisplayNoneTurnsOffAnimations("AncestorElement ", ancestor);
 ancestor.parentNode.insertBefore(div, ancestor);
-ancestor.parentNode.removeChild(ancestor);
+ancestor.remove();
 done_div();
 
 
@@ -2039,7 +2072,32 @@ advance_clock(500);
 is(cs.getPropertyValue("opacity"), "0.35", "opacity animation overriding transition at 0.5s");
 done_div();
 
-SpecialPowers.DOMWindowUtils.restoreNormalRefresh();
+
+/*
+ * Bug 1320474 - keyframes-name may be a string, allows names that would otherwise be excluded
+ */
+new_div("position: relative; animation: \"string name 1\" 1s linear");
+advance_clock(0);
+is(cs.getPropertyValue("left"), "1px", "animation name as a string");
+div.style.animation = "string\\ name\\ 2 1s linear";
+is(cs.getPropertyValue("left"), "2px", "animation name specified as string, referenced using custom ident");
+div.style.animation = "custom\\ ident\\ 1 1s linear";
+is(cs.getPropertyValue("left"), "3px", "animation name specified as custom-ident");
+div.style.animation = "\"custom ident 2\" 1s linear";
+is(cs.getPropertyValue("left"), "4px", "animation name specified as custom-ident, referenced using string");
+div.style.animation = "unset";
+div.style.animation = "initial 1s linear";
+is(cs.getPropertyValue("left"), "0px", "animation name 'initial' as identifier is ignored");
+div.style.animation = "unset";
+div.style.animation = "\"initial\" 1s linear";
+is(cs.getPropertyValue("left"), "5px", "animation name 'initial' as string is accepted");
+div.style.animation = "unset";
+div.style.animation = "none 1s linear";
+is(cs.getPropertyValue("left"), "0px", "animation name 'none' as identifier is ignored");
+div.style.animation = "unset";
+div.style.animation = "\"none\" 1s linear";
+is(cs.getPropertyValue("left"), "7px", "animation name 'none' as string is accepted");
+done_div();
 
 </script>
 </pre>

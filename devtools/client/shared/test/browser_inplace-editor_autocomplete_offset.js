@@ -5,17 +5,11 @@
 
 "use strict";
 
+const AutocompletePopup = require("devtools/client/shared/autocomplete-popup");
 const { InplaceEditor } = require("devtools/client/shared/inplace-editor");
-const { AutocompletePopup } = require("devtools/client/shared/autocomplete-popup");
 loadHelperScript("helper_inplace_editor.js");
 
-const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
-  <?xml-stylesheet href="chrome://global/skin/global.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/common.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/tooltips.css"?>
-  <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-   title="Tooltip test">
-  </window>`;
+const TEST_URI = CHROME_URL_ROOT + "doc_inplace-editor_autocomplete_offset.xul";
 
 // Test the inplace-editor autocomplete popup is aligned with the completed query.
 // Which means when completing "style=display:flex; color:" the popup will aim to be
@@ -69,7 +63,7 @@ add_task(function* () {
   yield addTab("data:text/html;charset=utf-8,inplace editor CSS value autocomplete");
   let [host,, doc] = yield createHost("bottom", TEST_URI);
 
-  let popup = new AutocompletePopup({ doc }, { autoSelect: true });
+  let popup = new AutocompletePopup(doc, { autoSelect: true });
 
   info("Create a CSS_MIXED type autocomplete");
   yield new Promise(resolve => {

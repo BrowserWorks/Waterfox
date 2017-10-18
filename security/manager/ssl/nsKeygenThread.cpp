@@ -4,14 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "pk11func.h"
-#include "nsCOMPtr.h"
-#include "nsThreadUtils.h"
 #include "nsKeygenThread.h"
+
+#include "mozilla/Assertions.h"
+#include "mozilla/DebugOnly.h"
+
+#include "GeckoProfiler.h"
+#include "PSMRunnable.h"
+#include "nsCOMPtr.h"
 #include "nsIObserver.h"
 #include "nsNSSShutDown.h"
-#include "PSMRunnable.h"
-#include "mozilla/DebugOnly.h"
+#include "nsThreadUtils.h"
+#include "pk11func.h"
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -42,13 +46,13 @@ nsKeygenThread::nsKeygenThread()
 nsKeygenThread::~nsKeygenThread()
 {
   // clean up in the unlikely case that nobody consumed our results
-  
+
   if (privateKey)
     SECKEY_DestroyPrivateKey(privateKey);
-    
+
   if (publicKey)
     SECKEY_DestroyPublicKey(publicKey);
-    
+
   if (usedSlot)
     PK11_FreeSlot(usedSlot);
 }
@@ -64,7 +68,7 @@ void nsKeygenThread::SetParams(
 {
   nsNSSShutDownPreventionLock locker;
   MutexAutoLock lock(mutex);
- 
+
     if (!alreadyReceivedParams) {
       alreadyReceivedParams = true;
       slot = (a_slot) ? PK11_ReferenceSlot(a_slot) : nullptr;
@@ -89,10 +93,10 @@ nsresult nsKeygenThread::ConsumeResult(
   nsresult rv;
 
   MutexAutoLock lock(mutex);
-  
+
     // GetParams must not be called until thread creator called
     // Join on this thread.
-    NS_ASSERTION(keygenReady, "logic error in nsKeygenThread::GetParams");
+    MOZ_ASSERT(keygenReady, "Logic error in nsKeygenThread::GetParams");
 
     if (keygenReady) {
       *a_privateKey = privateKey;
@@ -102,19 +106,20 @@ nsresult nsKeygenThread::ConsumeResult(
       privateKey = 0;
       publicKey = 0;
       usedSlot = 0;
-      
+
       rv = NS_OK;
     }
     else {
       rv = NS_ERROR_FAILURE;
     }
-  
+
   return rv;
 }
 
 static void nsKeygenThreadRunner(void *arg)
 {
-  PR_SetCurrentThreadName("Keygen");
+  AutoProfilerRegisterThread registerThread("Keygen");
+  NS_SetCurrentThreadName("Keygen");
   nsKeygenThread *self = static_cast<nsKeygenThread *>(arg);
   self->Run();
 }
@@ -125,7 +130,7 @@ nsresult nsKeygenThread::StartKeyGeneration(nsIObserver* aObserver)
     NS_ERROR("nsKeygenThread::StartKeyGeneration called off the main thread");
     return NS_ERROR_NOT_SAME_THREAD;
   }
-  
+
   if (!aObserver)
     return NS_OK;
 
@@ -141,13 +146,12 @@ nsresult nsKeygenThread::StartKeyGeneration(nsIObserver* aObserver)
 
     iAmRunning = true;
 
-    threadHandle = PR_CreateThread(PR_USER_THREAD, nsKeygenThreadRunner, static_cast<void*>(this), 
+    threadHandle = PR_CreateThread(PR_USER_THREAD, nsKeygenThreadRunner, static_cast<void*>(this),
       PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
 
     // bool thread_started_ok = (threadHandle != nullptr);
     // we might want to return "thread started ok" to caller in the future
-    NS_ASSERTION(threadHandle, "Could not create nsKeygenThreadRunner thread\n");
-  
+    MOZ_ASSERT(threadHandle, "Could not create nsKeygenThreadRunner thread");
   return NS_OK;
 }
 
@@ -159,7 +163,7 @@ nsresult nsKeygenThread::UserCanceled(bool *threadAlreadyClosedDialog)
   *threadAlreadyClosedDialog = false;
 
   MutexAutoLock lock(mutex);
-  
+
     if (keygenReady)
       *threadAlreadyClosedDialog = statusDialogClosed;
 
@@ -202,11 +206,11 @@ void nsKeygenThread::Run(void)
       }
     }
   }
-  
+
   // This call gave us ownership over privateKey and publicKey.
   // But as the params structure is owner by our caller,
   // we effectively transferred ownership to the caller.
-  // As long as key generation can't be canceled, we don't need 
+  // As long as key generation can't be canceled, we don't need
   // to care for cleaning this up.
 
   nsCOMPtr<nsIRunnable> notifyObserver;
@@ -237,8 +241,8 @@ void nsKeygenThread::Run(void)
 
   if (notifyObserver) {
     DebugOnly<nsresult> rv = NS_DispatchToMainThread(notifyObserver);
-    NS_ASSERTION(NS_SUCCEEDED(rv),
-		 "failed to dispatch keygen thread observer to main thread");
+    MOZ_ASSERT(NS_SUCCEEDED(rv),
+               "Failed to dispatch keygen thread observer to main thread");
   }
 }
 
@@ -246,9 +250,7 @@ void nsKeygenThread::Join()
 {
   if (!threadHandle)
     return;
-  
+
   PR_JoinThread(threadHandle);
   threadHandle = nullptr;
-
-  return;
 }

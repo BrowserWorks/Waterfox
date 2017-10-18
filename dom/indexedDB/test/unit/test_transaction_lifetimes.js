@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   let request = indexedDB.open(this.window ? window.location.pathname : "Splendid Test", 1);
   request.onerror = errorHandler;
@@ -20,7 +20,7 @@ function testSteps()
   event.target.transaction.oncomplete = grabEventAndContinueHandler;
 
   let os = db.createObjectStore("foo", { autoIncrement: true });
-  let index = os.createIndex("bar", "foo.bar");
+  os.createIndex("bar", "foo.bar");
   event = yield undefined;
 
   is(request.transaction, event.target,
@@ -87,5 +87,4 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }

@@ -8,7 +8,7 @@
   Eric D Vaughan
   A frame that can have multiple children. Only one child may be displayed at one time. So the
   can be flipped though like a deck of cards.
- 
+
 **/
 
 #ifndef nsGridRowLeafFrame_h___
@@ -27,7 +27,7 @@
 class nsGridRowLeafFrame : public nsBoxFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsGridRowLeafFrame)
 
   friend nsIFrame* NS_NewGridRowLeafFrame(nsIPresShell* aPresShell,
                                           nsStyleContext* aContext);
@@ -41,8 +41,9 @@ public:
 
   nsGridRowLeafFrame(nsStyleContext* aContext,
                      bool aIsRoot,
-                     nsBoxLayout* aLayoutManager):
-    nsBoxFrame(aContext, aIsRoot, aLayoutManager) {}
+                     nsBoxLayout* aLayoutManager,
+                     ClassID aID = kClassID) :
+    nsBoxFrame(aContext, aID, aIsRoot, aLayoutManager) {}
 
   virtual nsresult GetXULBorderAndPadding(nsMargin& aBorderAndPadding) override;
 

@@ -31,10 +31,11 @@
 
 #ifdef JS_SIMULATOR_MIPS32
 
-#include "jslock.h"
+#include "mozilla/Atomics.h"
 
 #include "jit/IonTypes.h"
-#include "threading/Mutex.h"
+#include "threading/Thread.h"
+#include "vm/MutexIDs.h"
 
 namespace js {
 namespace jit {
@@ -103,10 +104,9 @@ const uint32_t kMaxStopCode = 127;
 typedef uint32_t Instr;
 class SimInstruction;
 
+// Per thread simulator state.
 class Simulator {
-    friend class Redirection;
     friend class MipsDebugger;
-    friend class AutoLockSimulatorCache;
   public:
 
     // Registers are declared in order. See "See MIPS Run Linux" chapter 2.
@@ -143,7 +143,7 @@ class Simulator {
     };
 
     // Returns nullptr on OOM.
-    static Simulator* Create();
+    static Simulator* Create(JSContext* cx);
 
     static void Destroy(Simulator* simulator);
 
@@ -213,8 +213,6 @@ class Simulator {
     // Debugger input.
     void setLastDebuggerInput(char* input);
     char* lastDebuggerInput() { return lastDebuggerInput_; }
-    // ICache checking.
-    static void FlushICache(void* start, size_t size);
 
     // Returns true if pc register contains one of the 'SpecialValues' defined
     // below (bad_ra, end_sim_pc).
@@ -364,6 +362,13 @@ class Simulator {
         char* desc_;
     };
     StopCountAndDesc watchedStops_[kNumOfWatchedStops];
+};
+
+// Process wide simulator state.
+class SimulatorProcess
+{
+    friend class Redirection;
+    friend class AutoLockSimulatorCache;
 
   private:
     // ICache checking.
@@ -377,45 +382,61 @@ class Simulator {
   public:
     typedef HashMap<void*, CachePage*, ICacheHasher, SystemAllocPolicy> ICacheMap;
 
+    static mozilla::Atomic<size_t, mozilla::ReleaseAcquire> ICacheCheckingDisableCount;
+    static void FlushICache(void* start, size_t size);
+
+    // Jitcode may be rewritten from a signal handler, but is prevented from
+    // calling FlushICache() because the signal may arrive within the critical
+    // area of an AutoLockSimulatorCache. This flag instructs the Simulator
+    // to remove all cache entries the next time it checks, avoiding false negatives.
+    static mozilla::Atomic<bool, mozilla::ReleaseAcquire> cacheInvalidatedBySignalHandler_;
+
+    static void checkICacheLocked(SimInstruction* instr);
+
+    static bool initialize() {
+        singleton_ = js_new<SimulatorProcess>();
+        return singleton_ && singleton_->init();
+    }
+    static void destroy() {
+        js_delete(singleton_);
+        singleton_ = nullptr;
+    }
+
+    SimulatorProcess();
+    ~SimulatorProcess();
+
   private:
+    bool init();
+
+    static SimulatorProcess* singleton_;
+
     // This lock creates a critical section around 'redirection_' and
     // 'icache_', which are referenced both by the execution engine
     // and by the off-thread compiler (see Redirection::Get in the cpp file).
     Mutex cacheLock_;
-#ifdef DEBUG
-    PRThread* cacheLockHolder_;
-#endif
 
     Redirection* redirection_;
     ICacheMap icache_;
 
   public:
-    ICacheMap& icache() {
+    static ICacheMap& icache() {
         // Technically we need the lock to access the innards of the
         // icache, not to take its address, but the latter condition
         // serves as a useful complement to the former.
-        MOZ_ASSERT(cacheLockHolder_);
-        return icache_;
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        return singleton_->icache_;
     }
 
-    Redirection* redirection() const {
-        MOZ_ASSERT(cacheLockHolder_);
-        return redirection_;
+    static Redirection* redirection() {
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        return singleton_->redirection_;
     }
 
-    void setRedirection(js::jit::Redirection* redirection) {
-        MOZ_ASSERT(cacheLockHolder_);
-        redirection_ = redirection;
+    static void setRedirection(js::jit::Redirection* redirection) {
+        MOZ_ASSERT(singleton_->cacheLock_.ownedByCurrentThread());
+        singleton_->redirection_ = redirection;
     }
 };
-
-#define JS_CHECK_SIMULATOR_RECURSION_WITH_EXTRA(cx, extra, onerror)             \
-    JS_BEGIN_MACRO                                                              \
-        if (cx->mainThread().simulator()->overRecursedWithExtra(extra)) {       \
-            js::ReportOverRecursed(cx);                                         \
-            onerror;                                                            \
-        }                                                                       \
-    JS_END_MACRO
 
 } // namespace jit
 } // namespace js

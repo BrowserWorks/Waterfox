@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['cpp']
+TEST_DIRS += ['gtest']
 
 TESTING_JS_MODULES += [
     'PlacesTestUtils.jsm',
@@ -16,16 +16,10 @@ XPCSHELL_TESTS_MANIFESTS += [
     'favicons/xpcshell.ini',
     'history/xpcshell.ini',
     'migration/xpcshell.ini',
-    'network/xpcshell.ini',
     'queries/xpcshell.ini',
     'unifiedcomplete/xpcshell.ini',
     'unit/xpcshell.ini',
 ]
-
-if CONFIG['MOZ_SUITE']:
-    XPCSHELL_TESTS_MANIFESTS += [
-        'autocomplete/xpcshell.ini',
-    ]
 
 BROWSER_CHROME_MANIFESTS += ['browser/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += [
@@ -58,7 +52,9 @@ TEST_HARNESS_FILES.testing.mochitest.tests.toolkit.components.places.tests.brows
     'browser/redirect-target.html',
     'browser/redirect.sjs',
     'browser/redirect_once.sjs',
+    'browser/redirect_thrice.sjs',
     'browser/redirect_twice.sjs',
+    'browser/redirect_twice_perma.sjs',
     'browser/title1.html',
     'browser/title2.html',
 ]
@@ -71,4 +67,3 @@ TEST_HARNESS_FILES.testing.mochitest.tests.toolkit.components.places.tests.chrom
     'chrome/rss_as_html.rss^headers^',
     'chrome/sample_feed.atom',
 ]
-

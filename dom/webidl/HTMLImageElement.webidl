@@ -14,28 +14,28 @@
 interface imgINotificationObserver;
 interface imgIRequest;
 interface URI;
-interface MozChannel;
 interface nsIStreamListener;
 
-[NamedConstructor=Image(optional unsigned long width, optional unsigned long height)]
+[HTMLConstructor,
+ NamedConstructor=Image(optional unsigned long width, optional unsigned long height)]
 interface HTMLImageElement : HTMLElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString alt;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString src;
-           [SetterThrows, Pref="dom.image.srcset.enabled"]
+           [CEReactions, SetterThrows]
            attribute DOMString srcset;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString? crossOrigin;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString useMap;
-           [SetterThrows, Pref="network.http.enablePerElementReferrer"]
+           [CEReactions, SetterThrows]
            attribute DOMString referrerPolicy;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute boolean isMap;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute unsigned long width;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute unsigned long height;
   readonly attribute unsigned long naturalWidth;
   readonly attribute unsigned long naturalHeight;
@@ -44,31 +44,31 @@ interface HTMLImageElement : HTMLElement {
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLImageElement {
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString name;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString align;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute unsigned long hspace;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute unsigned long vspace;
-           [SetterThrows]
+           [CEReactions, SetterThrows]
            attribute DOMString longDesc;
 
-  [TreatNullAs=EmptyString,SetterThrows] attribute DOMString border;
+  [CEReactions, TreatNullAs=EmptyString,SetterThrows] attribute DOMString border;
 };
 
 // [Update me: not in whatwg spec yet]
 // http://picture.responsiveimages.org/#the-img-element
 partial interface HTMLImageElement {
-           [SetterThrows, Pref="dom.image.picture.enabled"]
+           [CEReactions, SetterThrows]
            attribute DOMString sizes;
-           [Pref="dom.image.srcset.enabled"]
   readonly attribute DOMString currentSrc;
 };
 
 // Mozilla extensions.
 partial interface HTMLImageElement {
+           [CEReactions, SetterThrows]
            attribute DOMString lowsrc;
 
   // These attributes are offsets from the closest view (to mimic
@@ -102,8 +102,6 @@ interface MozImageLoadingContent {
   long getRequestType(imgIRequest aRequest);
   [ChromeOnly,Throws]
   readonly attribute URI? currentURI;
-  [ChromeOnly,Throws]
-  nsIStreamListener? loadImageWithChannel(MozChannel aChannel);
   [ChromeOnly,Throws]
   void forceReload(optional boolean aNotify);
   [ChromeOnly]

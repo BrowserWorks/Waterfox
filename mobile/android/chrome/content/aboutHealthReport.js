@@ -8,8 +8,11 @@
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/SharedPreferences.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "EventDispatcher",
+                                  "resource://gre/modules/Messaging.jsm");
 
 // Name of Android SharedPreference controlling whether to upload
 // health reports.
@@ -31,13 +34,13 @@ var sharedPrefs = SharedPreferences.forApp();
 var healthReportWrapper = {
   init: function () {
     let iframe = document.getElementById("remote-report");
-    iframe.addEventListener("load", healthReportWrapper.initRemotePage, false);
+    iframe.addEventListener("load", healthReportWrapper.initRemotePage);
     let report = this._getReportURI();
     iframe.src = report.spec;
     console.log("AboutHealthReport: loading content from " + report.spec);
 
-    sharedPrefs.addObserver(PREF_UPLOAD_ENABLED, this, false);
-    Services.obs.addObserver(this, EVENT_HEALTH_RESPONSE, false);
+    sharedPrefs.addObserver(PREF_UPLOAD_ENABLED, this);
+    Services.obs.addObserver(this, EVENT_HEALTH_RESPONSE);
   },
 
   observe: function (subject, topic, data) {
@@ -56,7 +59,7 @@ var healthReportWrapper = {
   _getReportURI: function () {
     let url = Services.urlFormatter.formatURLPref(PREF_REPORTURL);
     // This handles URLs that already have query parameters.
-    let uri = Services.io.newURI(url, null, null).QueryInterface(Ci.nsIURL);
+    let uri = Services.io.newURI(url).QueryInterface(Ci.nsIURL);
     uri.query += ((uri.query != "") ? "&v=" : "v=") + WRAPPER_VERSION;
     return uri;
   },
@@ -87,7 +90,7 @@ var healthReportWrapper = {
 
   refreshPayload: function () {
     console.log("AboutHealthReport: page requested fresh payload.");
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       type: EVENT_HEALTH_REQUEST,
     });
   },
@@ -119,15 +122,15 @@ var healthReportWrapper = {
 
   showSettings: function () {
     console.log("AboutHealthReport: showing settings.");
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       type: "Settings:Show",
-      resource: "preferences_vendor",
+      resource: "preferences_privacy",
     });
   },
 
   launchUpdater: function () {
     console.log("AboutHealthReport: launching updater.");
-    Messaging.sendRequest({
+    EventDispatcher.instance.sendRequest({
       type: "Updater:Launch",
     });
   },
@@ -162,8 +165,7 @@ var healthReportWrapper = {
   initRemotePage: function () {
     let iframe = document.getElementById("remote-report").contentDocument;
     iframe.addEventListener("RemoteHealthReportCommand",
-                            function onCommand(e) {healthReportWrapper.handleRemoteCommand(e);},
-                            false);
+                            function onCommand(e) {healthReportWrapper.handleRemoteCommand(e);});
     healthReportWrapper.injectData("begin", null);
   },
 
@@ -188,5 +190,5 @@ var healthReportWrapper = {
   },
 };
 
-window.addEventListener("load", healthReportWrapper.init.bind(healthReportWrapper), false);
-window.addEventListener("unload", healthReportWrapper.uninit.bind(healthReportWrapper), false);
+window.addEventListener("load", healthReportWrapper.init.bind(healthReportWrapper));
+window.addEventListener("unload", healthReportWrapper.uninit.bind(healthReportWrapper));

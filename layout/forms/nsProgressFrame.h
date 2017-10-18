@@ -15,16 +15,16 @@ namespace mozilla {
 enum class CSSPseudoElementType : uint8_t;
 } // namespace mozilla
 
-class nsProgressFrame : public nsContainerFrame,
-                        public nsIAnonymousContentCreator
+class nsProgressFrame final
+  : public nsContainerFrame
+  , public nsIAnonymousContentCreator
 {
   typedef mozilla::CSSPseudoElementType CSSPseudoElementType;
   typedef mozilla::dom::Element Element;
 
 public:
-  NS_DECL_QUERYFRAME_TARGET(nsProgressFrame)
   NS_DECL_QUERYFRAME
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsProgressFrame)
 
   explicit nsProgressFrame(nsStyleContext* aContext);
   virtual ~nsProgressFrame();
@@ -40,15 +40,11 @@ public:
                       const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
 
-  virtual nsIAtom* GetType() const override;
-
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {
     return MakeFrameName(NS_LITERAL_STRING("Progress"), aResult);
   }
 #endif
-
-  virtual bool IsLeaf() const override { return true; }
 
   // nsIAnonymousContentCreator
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
@@ -60,17 +56,17 @@ public:
                                     int32_t  aModType) override;
 
   virtual mozilla::LogicalSize
-  ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                  mozilla::WritingMode aWritingMode,
+  ComputeAutoSize(gfxContext*                 aRenderingContext,
+                  mozilla::WritingMode        aWM,
                   const mozilla::LogicalSize& aCBSize,
-                  nscoord aAvailableISize,
+                  nscoord                     aAvailableISize,
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) override;
+                  ComputeSizeFlags            aFlags) override;
 
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(gfxContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(gfxContext *aRenderingContext) override;
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
@@ -86,11 +82,11 @@ public:
   virtual Element* GetPseudoElement(CSSPseudoElementType aType) override;
 
 protected:
-  // Helper function which reflow the anonymous div frame.
-  void ReflowBarFrame(nsIFrame*                aBarFrame,
-                      nsPresContext*           aPresContext,
-                      const ReflowInput& aReflowInput,
-                      nsReflowStatus&          aStatus);
+  // Helper function to reflow a child frame.
+  void ReflowChildFrame(nsIFrame*          aChild,
+                        nsPresContext*     aPresContext,
+                        const ReflowInput& aReflowInput,
+                        nsReflowStatus&    aStatus);
 
   /**
    * The div used to show the progress bar.
@@ -100,4 +96,3 @@ protected:
 };
 
 #endif
-

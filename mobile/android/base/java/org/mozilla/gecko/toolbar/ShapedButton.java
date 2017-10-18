@@ -17,6 +17,7 @@ import android.graphics.Path;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 
 /**
@@ -39,7 +40,7 @@ public class ShapedButton extends ThemedImageButton
         paint.setAntiAlias(true);
         paint.setColor(ContextCompat.getColor(context, R.color.canvas_delegate_paint));
         paint.setStrokeWidth(0.0f);
-        mCanvasDelegate = new CanvasDelegate(this, Mode.DST_IN, paint);
+        mCanvasDelegate = new CanvasDelegate(this, Mode.DST_OUT, paint);
 
         setWillNotDraw(false);
     }
@@ -91,15 +92,15 @@ public class ShapedButton extends ThemedImageButton
             return;
         }
 
-        int[] padding =  new int[] { getPaddingLeft(),
+        int[] padding =  new int[] { ViewCompat.getPaddingStart(this),
                                      getPaddingTop(),
-                                     getPaddingRight(),
+                                     ViewCompat.getPaddingEnd(this),
                                      getPaddingBottom()
                                    };
         drawable.setLevel(getBackground().getLevel());
         super.setBackgroundDrawable(drawable);
 
-        setPadding(padding[0], padding[1], padding[2], padding[3]);
+        ViewCompat.setPaddingRelative(this, padding[0], padding[1], padding[2], padding[3]);
     }
 
     @Override

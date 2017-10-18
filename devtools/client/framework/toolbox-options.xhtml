@@ -6,18 +6,18 @@
 <!ENTITY % toolboxDTD SYSTEM "chrome://devtools/locale/toolbox.dtd" >
  %toolboxDTD;
 ]>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="">
   <head>
     <title>Toolbox option</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" href="chrome://devtools/content/framework/options-panel.css" type="text/css"/>
-    <script type="application/javascript;version=1.8" src="chrome://devtools/content/shared/theme-switching.js"/>
+    <script type="application/javascript" src="chrome://devtools/content/shared/theme-switching.js"/>
   </head>
   <body role="application" class="theme-body">
   <form id="options-panel">
     <div id="tools-box" class="options-vertical-pane">
       <fieldset id="default-tools-box" class="options-groupbox">
-        <legend>&options.selectDefaultTools.label;</legend>
+        <legend>&options.selectDefaultTools.label2;</legend>
       </fieldset>
 
       <fieldset id="additional-tools-box" class="options-groupbox">
@@ -84,6 +84,16 @@
         </label>
       </fieldset>
 
+      <fieldset id="debugger-options" class="options-groupbox">
+        <legend>&options.debugger.label;</legend>
+        <label title="&options.sourceMaps.tooltip;">
+          <input type="checkbox"
+                 id="debugger-sourcemaps"
+                 data-pref="devtools.debugger.client-source-maps-enabled"/>
+          <span>&options.sourceMaps.label;</span>
+        </label>
+      </fieldset>
+
       <fieldset id="styleeditor-options" class="options-groupbox">
         <legend>&options.styleeditor.label;</legend>
         <label title="&options.stylesheetSourceMaps.tooltip;">
@@ -95,6 +105,22 @@
           <input type="checkbox"
                  data-pref="devtools.styleeditor.autocompletion-enabled"/>
           <span>&options.stylesheetAutocompletion.label;</span>
+        </label>
+      </fieldset>
+
+      <fieldset id="screenshot-options" class="options-groupbox">
+        <legend>&options.screenshot.label;</legend>
+        <label title="&options.screenshot.clipboard.tooltip;">
+          <input type="checkbox"
+                 id="devtools-screenshot-clipboard"
+                 data-pref="devtools.screenshot.clipboard.enabled"/>
+          <span>&options.screenshot.clipboard.label;</span>
+        </label>
+        <label title="&options.screenshot.audio.tooltip;">
+          <input type="checkbox"
+                 id="devtools-screenshot-audio"
+                 data-pref="devtools.screenshot.audio.enabled"/>
+          <span>&options.screenshot.audio.label;</span>
         </label>
       </fieldset>
     </div>
@@ -171,15 +197,10 @@
                    data-pref="devtools.chrome.enabled"/>
             <span>&options.enableChrome.label5;</span>
           </label>
-          <label title="&options.enableRemote.tooltip;">
+          <label title="&options.enableRemote.tooltip2;">
             <input type="checkbox"
                    data-pref="devtools.debugger.remote-enabled"/>
             <span>&options.enableRemote.label3;</span>
-          </label>
-          <label title="&options.enableWorkers.tooltip;">
-            <input type="checkbox"
-                   data-pref="devtools.debugger.workers"/>
-            <span>&options.enableWorkers.label;</span>
           </label>
           <span class="options-citation-label theme-comment"
           >&options.context.triggersPageRefresh;</span>

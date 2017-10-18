@@ -16,6 +16,7 @@ var { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
 var { CanvasFront } = require("devtools/shared/fronts/canvas");
 var { setTimeout } = require("sdk/timers");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var flags = require("devtools/shared/flags");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 var { isWebGLSupported } = require("devtools/client/shared/webgl-utils");
@@ -46,11 +47,11 @@ waitForExplicitFinish();
 
 var gToolEnabled = Services.prefs.getBoolPref("devtools.canvasdebugger.enabled");
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 
 registerCleanupFunction(() => {
   info("finish() was called, cleaning up...");
-  DevToolsUtils.testing = false;
+  flags.testing = false;
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
   Services.prefs.setBoolPref("devtools.canvasdebugger.enabled", gToolEnabled);
 
@@ -97,11 +98,10 @@ function removeTab(aTab, aWindow) {
   let targetBrowser = targetWindow.gBrowser;
   let tabContainer = targetBrowser.tabContainer;
 
-  tabContainer.addEventListener("TabClose", function onClose(aEvent) {
-    tabContainer.removeEventListener("TabClose", onClose, false);
+  tabContainer.addEventListener("TabClose", function (aEvent) {
     info("Tab removed and finished closing.");
     deferred.resolve();
-  }, false);
+  }, {once: true});
 
   targetBrowser.removeTab(aTab);
   return deferred.promise;
@@ -126,7 +126,7 @@ function ifTestingUnsupported() {
 
 function test() {
   let generator = isTestingSupported() ? ifTestingSupported : ifTestingUnsupported;
-  Task.spawn(generator).then(null, handleError);
+  Task.spawn(generator).catch(handleError);
 }
 
 function createCanvas() {

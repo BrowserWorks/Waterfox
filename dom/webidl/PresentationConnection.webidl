@@ -2,6 +2,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://w3c.github.io/presentation-api/#interface-presentationconnection
  */
 
 enum PresentationConnectionState
@@ -20,14 +23,24 @@ enum PresentationConnectionState
   "terminated"
 };
 
-[Pref="dom.presentation.enabled",
- Func="Navigator::HasPresentationSupport"]
+enum PresentationConnectionBinaryType
+{
+  "blob",
+  "arraybuffer"
+};
+
+[Pref="dom.presentation.enabled"]
 interface PresentationConnection : EventTarget {
   /*
    * Unique id for all existing connections.
    */
   [Constant]
   readonly attribute DOMString id;
+
+  /*
+   * Specifies the connection's presentation URL.
+   */
+  readonly attribute DOMString url;
 
   /*
    * @value "connected", "closed", or "terminated".
@@ -37,6 +50,7 @@ interface PresentationConnection : EventTarget {
   attribute EventHandler onconnect;
   attribute EventHandler onclose;
   attribute EventHandler onterminate;
+  attribute PresentationConnectionBinaryType binaryType;
 
   /*
    * After a communication channel has been established between the controlling
@@ -44,12 +58,18 @@ interface PresentationConnection : EventTarget {
    * event handler "onmessage" will be invoked at the remote side.
    *
    * This function only works when the state is "connected".
-   *
-   * TODO bug 1228474 Implement PresentationSessionTransport with DataChannel to
-   * support other binary types.
    */
   [Throws]
   void send(DOMString data);
+
+  [Throws]
+  void send(Blob data);
+
+  [Throws]
+  void send(ArrayBuffer data);
+
+  [Throws]
+  void send(ArrayBufferView data);
 
   /*
    * It is triggered when receiving messages.

@@ -15,6 +15,7 @@
 #include "nsISimpleEnumerator.h"
 #include "nsIDirectoryEnumerator.h"
 #include "mozilla/Base64.h"
+#include "mozilla/IntegerPrintfMacros.h"
 
 
 namespace mozilla {
@@ -140,7 +141,7 @@ CacheFileContextEvictor::AddContext(nsILoadContextInfo *aLoadContextInfo,
       // the array, but leave the info on the disk. No entry can be opened
       // during shutdown and we'll load the eviction info on next start.
       LOG(("CacheFileContextEvictor::AddContext() - Cannot get an iterator. "
-           "[rv=0x%08x]", rv));
+           "[rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
       mEntries.RemoveElement(entry);
       return rv;
     }
@@ -237,7 +238,7 @@ CacheFileContextEvictor::WasEvicted(const nsACString &aKey, nsIFile *aFile,
     }
 
     LOG(("CacheFileContextEvictor::WasEvicted() - evicted [pinning=%d, "
-         "mTimeStamp=%lld, lastModifiedTime=%lld]",
+         "mTimeStamp=%" PRId64 ", lastModifiedTime=%" PRId64 "]",
          entry->mPinned, entry->mTimeStamp, lastModifiedTime));
 
     if (entry->mPinned) {
@@ -275,7 +276,7 @@ CacheFileContextEvictor::PersistEvictionInfoToDisk(
                               &fd);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     LOG(("CacheFileContextEvictor::PersistEvictionInfoToDisk() - Creating file "
-         "failed! [path=%s, rv=0x%08x]", path.get(), rv));
+         "failed! [path=%s, rv=0x%08" PRIx32 "]", path.get(), static_cast<uint32_t>(rv)));
     return rv;
   }
 
@@ -310,7 +311,7 @@ CacheFileContextEvictor::RemoveEvictInfoFromDisk(
   rv = file->Remove(false);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     LOG(("CacheFileContextEvictor::RemoveEvictionInfoFromDisk() - Removing file"
-         " failed! [path=%s, rv=0x%08x]", path.get(), rv));
+         " failed! [path=%s, rv=0x%08" PRIx32 "]", path.get(), static_cast<uint32_t>(rv)));
     return rv;
   }
 
@@ -482,7 +483,7 @@ CacheFileContextEvictor::CreateIterators()
                                  getter_AddRefs(mEntries[i]->mIterator));
     if (NS_FAILED(rv)) {
       LOG(("CacheFileContextEvictor::CreateIterators() - Cannot get an iterator"
-           ". [rv=0x%08x]", rv));
+           ". [rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
       mEntries.RemoveElementAt(i);
       continue;
     }
@@ -522,14 +523,16 @@ CacheFileContextEvictor::StartEvicting()
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NewRunnableMethod(this, &CacheFileContextEvictor::EvictEntries);
+  ev = NewRunnableMethod("net::CacheFileContextEvictor::EvictEntries",
+                         this,
+                         &CacheFileContextEvictor::EvictEntries);
 
   RefPtr<CacheIOThread> ioThread = CacheFileIOManager::IOThread();
 
   nsresult rv = ioThread->Dispatch(ev, CacheIOThread::EVICT);
   if (NS_FAILED(rv)) {
     LOG(("CacheFileContextEvictor::StartEvicting() - Cannot dispatch event to "
-         "IO thread. [rv=0x%08x]", rv));
+         "IO thread. [rv=0x%08" PRIx32 "]", static_cast<uint32_t>(rv)));
   }
 
   mEvicting = true;
@@ -553,6 +556,14 @@ CacheFileContextEvictor::EvictEntries()
   }
 
   while (true) {
+    if (CacheObserver::ShuttingDown()) {
+      LOG(("CacheFileContextEvictor::EvictEntries() - Stopping evicting due to "
+           "shutdown."));
+      mEvicting = true; // We don't want to start eviction again during shutdown
+                        // process. Setting this flag to true ensures it.
+      return NS_OK;
+    }
+
     if (CacheIOThread::YieldAndRerun()) {
       LOG(("CacheFileContextEvictor::EvictEntries() - Breaking loop for higher "
            "level events."));
@@ -604,8 +615,11 @@ CacheFileContextEvictor::EvictEntries()
     }
 
     CacheIndex::EntryStatus status;
-    bool pinned;
-    rv = CacheIndex::HasEntry(hash, &status, &pinned);
+    bool pinned = false;
+    auto callback = [&pinned](const CacheIndexEntry * aEntry) {
+      pinned = aEntry->IsPinned();
+    };
+    rv = CacheIndex::HasEntry(hash, &status, callback);
     // This must never fail, since eviction (this code) happens only when the index
     // is up-to-date and thus the informatin is known.
     MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -637,7 +651,7 @@ CacheFileContextEvictor::EvictEntries()
 
     if (lastModifiedTime > mEntries[0]->mTimeStamp) {
       LOG(("CacheFileContextEvictor::EvictEntries() - Skipping newer entry. "
-           "[mTimeStamp=%lld, lastModifiedTime=%lld]", mEntries[0]->mTimeStamp,
+           "[mTimeStamp=%" PRId64 ", lastModifiedTime=%" PRId64 "]", mEntries[0]->mTimeStamp,
            lastModifiedTime));
       continue;
     }

@@ -11,9 +11,12 @@
 #include "nsPrintfCString.h"
 #include "nsAutoPtr.h"
 
-#define PL_ARENA_CONST_ALIGN_MASK 3
 #include "nsPersistentProperties.h"
 #include "nsIProperties.h"
+
+#include "mozilla/ArenaAllocatorExtensions.h"
+
+using mozilla::ArenaStrdup;
 
 struct PropertyTableEntry : public PLDHashEntryHdr
 {
@@ -21,34 +24,6 @@ struct PropertyTableEntry : public PLDHashEntryHdr
   const char* mKey;
   const char16_t* mValue;
 };
-
-static char16_t*
-ArenaStrdup(const nsAFlatString& aString, PLArenaPool* aArena)
-{
-  void* mem;
-  // add one to include the null terminator
-  int32_t len = (aString.Length() + 1) * sizeof(char16_t);
-  PL_ARENA_ALLOCATE(mem, aArena, len);
-  NS_ASSERTION(mem, "Couldn't allocate space!\n");
-  if (mem) {
-    memcpy(mem, aString.get(), len);
-  }
-  return static_cast<char16_t*>(mem);
-}
-
-static char*
-ArenaStrdup(const nsAFlatCString& aString, PLArenaPool* aArena)
-{
-  void* mem;
-  // add one to include the null terminator
-  int32_t len = (aString.Length() + 1) * sizeof(char);
-  PL_ARENA_ALLOCATE(mem, aArena, len);
-  NS_ASSERTION(mem, "Couldn't allocate space!\n");
-  if (mem) {
-    memcpy(mem, aString.get(), len);
-  }
-  return static_cast<char*>(mem);
-}
 
 static const struct PLDHashTableOps property_HashTableOps = {
   PLDHashTable::HashStringKey,
@@ -111,12 +86,12 @@ public:
 
   EParserState GetState() { return mState; }
 
-  static NS_METHOD SegmentWriter(nsIUnicharInputStream* aStream,
-                                 void* aClosure,
-                                 const char16_t* aFromSegment,
-                                 uint32_t aToOffset,
-                                 uint32_t aCount,
-                                 uint32_t* aWriteCount);
+  static nsresult SegmentWriter(nsIUnicharInputStream* aStream,
+                                void* aClosure,
+                                const char16_t* aFromSegment,
+                                uint32_t aToOffset,
+                                uint32_t aCount,
+                                uint32_t* aWriteCount);
 
   nsresult ParseBuffer(const char16_t* aBuffer, uint32_t aBufferLength);
 
@@ -343,7 +318,7 @@ nsPropertiesParser::ParseValueCharacter(char16_t aChar, const char16_t* aCur,
   return true;
 }
 
-NS_METHOD
+nsresult
 nsPropertiesParser::SegmentWriter(nsIUnicharInputStream* aStream,
                                   void* aClosure,
                                   const char16_t* aFromSegment,
@@ -461,13 +436,12 @@ nsPropertiesParser::ParseBuffer(const char16_t* aBuffer,
 nsPersistentProperties::nsPersistentProperties()
   : mIn(nullptr)
   , mTable(&property_HashTableOps, sizeof(PropertyTableEntry), 16)
+  , mArena()
 {
-  PL_INIT_ARENA_POOL(&mArena, "PersistentPropertyArena", 2048);
 }
 
 nsPersistentProperties::~nsPersistentProperties()
 {
-  PL_FinishArenaPool(&mArena);
 }
 
 nsresult
@@ -521,7 +495,7 @@ nsPersistentProperties::SetStringProperty(const nsACString& aKey,
                                           const nsAString& aNewValue,
                                           nsAString& aOldValue)
 {
-  const nsAFlatCString&  flatKey = PromiseFlatCString(aKey);
+  const nsCString& flatKey = PromiseFlatCString(aKey);
   auto entry = static_cast<PropertyTableEntry*>
                           (mTable.Add(flatKey.get()));
 
@@ -533,8 +507,8 @@ nsPersistentProperties::SetStringProperty(const nsACString& aKey,
     aOldValue.Truncate();
   }
 
-  entry->mKey = ArenaStrdup(flatKey, &mArena);
-  entry->mValue = ArenaStrdup(PromiseFlatString(aNewValue), &mArena);
+  entry->mKey = ArenaStrdup(flatKey, mArena);
+  entry->mValue = ArenaStrdup(aNewValue, mArena);
 
   return NS_OK;
 }
@@ -549,7 +523,7 @@ NS_IMETHODIMP
 nsPersistentProperties::GetStringProperty(const nsACString& aKey,
                                           nsAString& aValue)
 {
-  const nsAFlatCString&  flatKey = PromiseFlatCString(aKey);
+  const nsCString& flatKey = PromiseFlatCString(aKey);
 
   auto entry = static_cast<PropertyTableEntry*>(mTable.Search(flatKey.get()));
   if (!entry) {
@@ -623,7 +597,7 @@ nsPersistentProperties::GetKeys(uint32_t* aCount, char*** aKeys)
 // PropertyElement
 ////////////////////////////////////////////////////////////////////////////////
 
-NS_METHOD
+nsresult
 nsPropertyElement::Create(nsISupports* aOuter, REFNSIID aIID, void** aResult)
 {
   if (aOuter) {

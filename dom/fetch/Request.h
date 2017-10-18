@@ -12,6 +12,7 @@
 #include "nsWrapperCache.h"
 
 #include "mozilla/dom/Fetch.h"
+#include "mozilla/dom/FetchSignal.h"
 #include "mozilla/dom/InternalRequest.h"
 // Required here due to certain WebIDL enums/classes being declared in both
 // files.
@@ -81,6 +82,12 @@ public:
     return mRequest->GetRedirectMode();
   }
 
+  void
+  GetIntegrity(nsAString& aIntegrity) const
+  {
+    aIntegrity = mRequest->GetIntegrity();
+  }
+
   RequestContext
   Context() const
   {
@@ -139,10 +146,16 @@ public:
 
   already_AddRefed<InternalRequest>
   GetInternalRequest();
+
+  const UniquePtr<mozilla::ipc::PrincipalInfo>&
+  GetPrincipalInfo() const
+  {
+    return mRequest->GetPrincipalInfo();
+  }
+
 private:
   ~Request();
 
-  nsCOMPtr<nsIGlobalObject> mOwner;
   RefPtr<InternalRequest> mRequest;
   // Lazily created.
   RefPtr<Headers> mHeaders;

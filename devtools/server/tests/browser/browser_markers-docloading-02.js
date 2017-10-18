@@ -4,12 +4,14 @@
 /**
  * Test that we get DOMContentLoaded and Load markers
  */
+"use strict";
 
 const { TimelineFront } = require("devtools/shared/fronts/timeline");
 const MARKER_NAMES = ["document::DOMContentLoaded", "document::Load"];
 
 add_task(function* () {
   let browser = yield addTab(MAIN_DOMAIN + "doc_innerHTML.html");
+  // eslint-disable-next-line mozilla/no-cpows-in-tests
   let doc = browser.contentDocument;
 
   initDebuggerServer();
@@ -30,6 +32,6 @@ add_task(function* () {
 
   ok(true, "Found the required marker names.");
 
-  yield closeDebuggerClient(client);
+  yield client.close();
   gBrowser.removeCurrentTab();
 });

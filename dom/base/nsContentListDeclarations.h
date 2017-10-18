@@ -18,6 +18,12 @@ class nsINode;
 class nsString;
 class nsAString;
 
+namespace mozilla {
+namespace dom {
+class Element;
+} // namespace dom
+} // namespace mozilla
+
 // Magic namespace id that means "match all namespaces".  This is
 // negative so it won't collide with actual namespace constants.
 #define kNameSpaceID_Wildcard INT32_MIN
@@ -26,7 +32,7 @@ class nsAString;
 // arbitrary matching algorithm.  aContent is the content that may
 // match the list, while aNamespaceID, aAtom, and aData are whatever
 // was passed to the list's constructor.
-typedef bool (*nsContentListMatchFunc)(nsIContent* aContent,
+typedef bool (*nsContentListMatchFunc)(mozilla::dom::Element* aElement,
                                        int32_t aNamespaceID,
                                        nsIAtom* aAtom,
                                        void* aData);
@@ -51,17 +57,12 @@ NS_GetContentList(nsINode* aRootNode,
                   int32_t aMatchNameSpaceId,
                   const nsAString& aTagname);
 
+template<class ListType>
 already_AddRefed<nsContentList>
-NS_GetFuncStringNodeList(nsINode* aRootNode,
+GetFuncStringContentList(nsINode* aRootNode,
                          nsContentListMatchFunc aFunc,
                          nsContentListDestroyFunc aDestroyFunc,
                          nsFuncStringContentListDataAllocator aDataAllocator,
                          const nsAString& aString);
-already_AddRefed<nsContentList>
-NS_GetFuncStringHTMLCollection(nsINode* aRootNode,
-                               nsContentListMatchFunc aFunc,
-                               nsContentListDestroyFunc aDestroyFunc,
-                               nsFuncStringContentListDataAllocator aDataAllocator,
-                               const nsAString& aString);
 
 #endif // nsContentListDeclarations_h

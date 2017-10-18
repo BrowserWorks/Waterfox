@@ -8,7 +8,7 @@ var self = this;
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const dbName = self.window ?
                  window.location.pathname :
@@ -76,7 +76,7 @@ function testSteps()
     if (readonly) {
       transaction.objectStore(objStoreName).get(0);
     } else {
-      try { transaction.objectStore(objStoreName).add({}); } catch(e) { }
+      try { transaction.objectStore(objStoreName).add({}); } catch (e) { }
     }
   }
   ok(true, "Created all transactions");
@@ -87,5 +87,4 @@ function testSteps()
   ok(caughtError, "Caught the error event when we aborted the transaction");
 
   finishTest();
-  yield undefined;
 }

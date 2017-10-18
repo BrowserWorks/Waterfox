@@ -12,7 +12,6 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'debug_build': True,
@@ -22,7 +21,6 @@ config = {
     #### 32 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': MOZ_OBJDIR,

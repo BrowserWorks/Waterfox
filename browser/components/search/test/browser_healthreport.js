@@ -24,7 +24,7 @@ function test() {
     }
 
     // Now perform a search and ensure the count is incremented.
-    let tab = gBrowser.addTab();
+    let tab = BrowserTestUtils.addTab(gBrowser);
     gBrowser.selectedTab = tab;
     let searchBar = BrowserSearch.searchBar;
 
@@ -41,8 +41,8 @@ function test() {
         Assert.equal(hs[histogramKey].sum, numSearchesBefore + 1,
                      "Performing a search increments the related SEARCH_COUNTS key by 1.");
 
-        let engine = Services.search.getEngineByName("Foo");
-        Services.search.removeEngine(engine);
+        let fooEngine = Services.search.getEngineByName("Foo");
+        Services.search.removeEngine(fooEngine);
       }
 
       EventUtils.synthesizeKey("VK_RETURN", {});
@@ -69,7 +69,7 @@ function test() {
     }
   }
 
-  Services.obs.addObserver(observer, "browser-search-engine-modified", false);
+  Services.obs.addObserver(observer, "browser-search-engine-modified");
   SpecialPowers.pushPrefEnv({set: [["toolkit.telemetry.enabled", true]]}).then(function() {
     Services.search.addEngine("http://mochi.test:8888/browser/browser/components/search/test/testEngine.xml",
                               null, "data:image/x-icon,%00", false);

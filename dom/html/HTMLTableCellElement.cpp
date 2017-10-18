@@ -7,9 +7,9 @@
 #include "mozilla/dom/HTMLTableCellElement.h"
 #include "mozilla/dom/HTMLTableElement.h"
 #include "mozilla/dom/HTMLTableRowElement.h"
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsMappedAttributes.h"
 #include "nsAttrValueInlines.h"
-#include "nsRuleData.h"
 #include "nsRuleWalker.h"
 #include "celldata.h"
 #include "mozilla/dom/HTMLTableCellElementBinding.h"
@@ -107,14 +107,22 @@ HTMLTableCellElement::WalkContentStyleRules(nsRuleWalker* aRuleWalker)
   nsresult rv = nsGenericHTMLElement::WalkContentStyleRules(aRuleWalker);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (HTMLTableElement* table = GetTable()) {
-    nsMappedAttributes* tableInheritedAttributes =
-      table->GetAttributesMappedForCell();
+  if (nsMappedAttributes* tableInheritedAttributes = GetMappedAttributesInheritedFromTable()) {
     if (tableInheritedAttributes) {
       aRuleWalker->Forward(tableInheritedAttributes);
     }
   }
   return NS_OK;
+}
+
+nsMappedAttributes*
+HTMLTableCellElement::GetMappedAttributesInheritedFromTable() const
+{
+  if (HTMLTableElement* table = GetTable()) {
+    return table->GetAttributesMappedForCell();
+  }
+
+  return nullptr;
 }
 
 NS_IMETHODIMP
@@ -366,7 +374,7 @@ static const nsAttrValue::EnumTable kCellScopeTable[] = {
   { "col",      NS_STYLE_CELL_SCOPE_COL },
   { "rowgroup", NS_STYLE_CELL_SCOPE_ROWGROUP },
   { "colgroup", NS_STYLE_CELL_SCOPE_COLGROUP },
-  { 0 }
+  { nullptr,    0 }
 };
 
 void
@@ -390,26 +398,16 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
       return aResult.ParseIntWithBounds(aValue, 0);
     }
     if (aAttribute == nsGkAtoms::colspan) {
-      bool res = aResult.ParseIntWithBounds(aValue, -1);
-      if (res) {
-        int32_t val = aResult.GetIntegerValue();
-        // reset large colspan values as IE and opera do
-        if (val > MAX_COLSPAN || val <= 0) {
-          aResult.SetTo(1, &aValue);
-        }
-      }
-      return res;
+      aResult.ParseClampedNonNegativeInt(aValue, 1, 1, MAX_COLSPAN);
+      return true;
     }
     if (aAttribute == nsGkAtoms::rowspan) {
-      bool res = aResult.ParseIntWithBounds(aValue, -1, MAX_ROWSPAN);
-      if (res) {
-        int32_t val = aResult.GetIntegerValue();
-        // quirks mode does not honor the special html 4 value of 0
-        if (val < 0 || (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1, &aValue);
-        }
+      aResult.ParseClampedNonNegativeInt(aValue, 1, 0, MAX_ROWSPAN);
+      // quirks mode does not honor the special html 4 value of 0
+      if (aResult.GetIntegerValue() == 0 && InNavQuirksMode(OwnerDoc())) {
+        aResult.SetTo(1, &aValue);
       }
-      return res;
+      return true;
     }
     if (aAttribute == nsGkAtoms::height) {
       return aResult.ParseSpecialIntValue(aValue);
@@ -440,75 +438,56 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLTableCellElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                            nsRuleData* aData)
+                                            GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Position)) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Position))) {
     // width: value
-    nsCSSValue* width = aData->ValueForWidth();
-    if (width->GetUnit() == eCSSUnit_Null) {
+    if (!aData->PropertyIsSet(eCSSProperty_width)) {
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
       if (value && value->Type() == nsAttrValue::eInteger) {
         if (value->GetIntegerValue() > 0)
-          width->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel); 
+          aData->SetPixelValue(eCSSProperty_width, (float)value->GetIntegerValue());
         // else 0 implies auto for compatibility.
       }
       else if (value && value->Type() == nsAttrValue::ePercent) {
         if (value->GetPercentValue() > 0.0f)
-          width->SetPercentValue(value->GetPercentValue());
+          aData->SetPercentValue(eCSSProperty_width, value->GetPercentValue());
         // else 0 implies auto for compatibility
       }
     }
-
     // height: value
-    nsCSSValue* height = aData->ValueForHeight();
-    if (height->GetUnit() == eCSSUnit_Null) {
+    if (!aData->PropertyIsSet(eCSSProperty_height)) {
       const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::height);
       if (value && value->Type() == nsAttrValue::eInteger) {
         if (value->GetIntegerValue() > 0)
-          height->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel);
+          aData->SetPixelValue(eCSSProperty_height, (float)value->GetIntegerValue());
         // else 0 implies auto for compatibility.
       }
       else if (value && value->Type() == nsAttrValue::ePercent) {
         if (value->GetPercentValue() > 0.0f)
-          height->SetPercentValue(value->GetPercentValue());
+          aData->SetPercentValue(eCSSProperty_height, value->GetPercentValue());
         // else 0 implies auto for compatibility
       }
     }
   }
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Text)) {
-    nsCSSValue* textAlign = aData->ValueForTextAlign();
-    if (textAlign->GetUnit() == eCSSUnit_Null) {
-      // align: enum
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
-      if (value && value->Type() == nsAttrValue::eEnum)
-        textAlign->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
-    }
-
-    nsCSSValue* whiteSpace = aData->ValueForWhiteSpace();
-    if (whiteSpace->GetUnit() == eCSSUnit_Null) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Text))) {
+    if (!aData->PropertyIsSet(eCSSProperty_white_space)) {
       // nowrap: enum
       if (aAttributes->GetAttr(nsGkAtoms::nowrap)) {
         // See if our width is not a nonzero integer width.
         const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
-        nsCompatibility mode = aData->mPresContext->CompatibilityMode();
+        nsCompatibility mode = aData->PresContext()->CompatibilityMode();
         if (!value || value->Type() != nsAttrValue::eInteger ||
             value->GetIntegerValue() == 0 ||
             eCompatibility_NavQuirks != mode) {
-          whiteSpace->SetIntValue(NS_STYLE_WHITESPACE_NOWRAP, eCSSUnit_Enumerated);
+          aData->SetKeywordValue(eCSSProperty_white_space, StyleWhiteSpace::Nowrap);
         }
       }
     }
   }
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Display)) {
-    nsCSSValue* verticalAlign = aData->ValueForVerticalAlign();
-    if (verticalAlign->GetUnit() == eCSSUnit_Null) {
-      // valign: enum
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::valign);
-      if (value && value->Type() == nsAttrValue::eEnum)
-        verticalAlign->SetIntValue(value->GetEnumValue(), eCSSUnit_Enumerated);
-    }
-  }
-  
+
+  nsGenericHTMLElement::MapDivAlignAttributeInto(aAttributes, aData);
+  nsGenericHTMLElement::MapVAlignAttributeInto(aAttributes, aData);
   nsGenericHTMLElement::MapBackgroundAttributesInto(aAttributes, aData);
   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
 }
@@ -517,7 +496,7 @@ NS_IMETHODIMP_(bool)
 HTMLTableCellElement::IsAttributeMapped(const nsIAtom* aAttribute) const
 {
   static const MappedAttributeEntry attributes[] = {
-    { &nsGkAtoms::align }, 
+    { &nsGkAtoms::align },
     { &nsGkAtoms::valign },
     { &nsGkAtoms::nowrap },
 #if 0

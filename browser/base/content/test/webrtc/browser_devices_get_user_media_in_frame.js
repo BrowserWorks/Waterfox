@@ -2,25 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-registerCleanupFunction(function() {
-  gBrowser.removeCurrentTab();
-});
-
-function promiseReloadFrame(aFrameId) {
-  return ContentTask.spawn(gBrowser.selectedBrowser, aFrameId, function*(aFrameId) {
-    content.wrappedJSObject.document.getElementById(aFrameId).contentWindow.location.reload();
-  });
-}
-
 var gTests = [
 
 {
   desc: "getUserMedia audio+video",
-  run: function checkAudioVideo() {
+  run: async function checkAudioVideo() {
     let promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, true, "frame1");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
+    await promiseRequestDevice(true, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
 
     is(PopupNotifications.getNotification("webRTC-shareDevices").anchorID,
        "webRTC-shareDevices-notification-icon", "anchored to device icon");
@@ -29,63 +19,49 @@ var gTests = [
        "webRTC-shareDevices", "panel using devices icon");
 
     let indicator = promiseIndicatorWindow();
-    yield promiseMessage("ok", () => {
+    await promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
-    yield expectObserverCalled("getUserMedia:response:allow");
-    yield expectObserverCalled("recording-device-events");
-    is((yield getMediaCaptureState()), "CameraAndMicrophone",
-       "expected camera and microphone to be shared");
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {audio: true, video: true},
+                     "expected camera and microphone to be shared");
 
-    yield indicator;
-    yield checkSharingUI({audio: true, video: true});
-    yield closeStream(false, "frame1");
+    await indicator;
+    await checkSharingUI({audio: true, video: true});
+    await closeStream(false, "frame1");
   }
 },
 
 {
   desc: "getUserMedia audio+video: stop sharing",
-  run: function checkStopSharing() {
+  run: async function checkStopSharing() {
     let promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, true, "frame1");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
+    await promiseRequestDevice(true, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
     checkDeviceSelectors(true, true);
 
     let indicator = promiseIndicatorWindow();
-    yield promiseMessage("ok", () => {
+    await promiseMessage("ok", () => {
       activateSecondaryAction(kActionAlways);
     });
-    yield expectObserverCalled("getUserMedia:response:allow");
-    yield expectObserverCalled("recording-device-events");
-    is((yield getMediaCaptureState()), "CameraAndMicrophone",
-       "expected camera and microphone to be shared");
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {audio: true, video: true},
+                     "expected camera and microphone to be shared");
 
-    yield indicator;
-    yield checkSharingUI({video: true, audio: true});
+    await indicator;
+    await checkSharingUI({video: true, audio: true});
 
     let Perms = Services.perms;
-    let uri = Services.io.newURI("https://example.com/", null, null);
+    let uri = Services.io.newURI("https://example.com/");
     is(Perms.testExactPermission(uri, "microphone"), Perms.ALLOW_ACTION,
                                  "microphone persistently allowed");
     is(Perms.testExactPermission(uri, "camera"), Perms.ALLOW_ACTION,
                                  "camera persistently allowed");
 
-    yield promiseNotificationShown(PopupNotifications.getNotification("webRTC-sharingDevices"));
-    activateSecondaryAction(kActionDeny);
-
-    yield promiseObserverCalled("recording-device-events");
-    yield expectObserverCalled("getUserMedia:revoke");
-
-    yield promiseNoPopupNotification("webRTC-sharingDevices");
-    yield expectObserverCalled("recording-window-ended");
-
-    if ((yield promiseTodoObserverNotCalled("recording-device-events")) == 1) {
-      todo(false, "Got the 'recording-device-events' notification twice, likely because of bug 962719");
-    }
-
-    yield expectNoObserverCalled();
-    yield checkNotSharing();
+    await stopSharing();
 
     // The persistent permissions for the frame should have been removed.
     is(Perms.testExactPermission(uri, "microphone"), Perms.UNKNOWN_ACTION,
@@ -94,162 +70,148 @@ var gTests = [
                                  "camera not persistently allowed");
 
     // the stream is already closed, but this will do some cleanup anyway
-    yield closeStream(true, "frame1");
+    await closeStream(true, "frame1");
   }
 },
 
 {
   desc: "getUserMedia audio+video: reloading the frame removes all sharing UI",
-  run: function checkReloading() {
+  run: async function checkReloading() {
     let promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, true, "frame1");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
+    await promiseRequestDevice(true, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
     checkDeviceSelectors(true, true);
 
     let indicator = promiseIndicatorWindow();
-    yield promiseMessage("ok", () => {
+    await promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
-    yield expectObserverCalled("getUserMedia:response:allow");
-    yield expectObserverCalled("recording-device-events");
-    is((yield getMediaCaptureState()), "CameraAndMicrophone",
-       "expected camera and microphone to be shared");
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {audio: true, video: true},
+                     "expected camera and microphone to be shared");
 
-    yield indicator;
-    yield checkSharingUI({video: true, audio: true});
+    await indicator;
+    await checkSharingUI({video: true, audio: true});
 
     info("reloading the frame");
-    promise = promiseObserverCalled("recording-device-events");
-    yield promiseReloadFrame("frame1");
-    yield promise;
+    let promises = [promiseObserverCalled("recording-device-stopped"),
+                    promiseObserverCalled("recording-device-events"),
+                    promiseObserverCalled("recording-window-ended")];
+    await promiseReloadFrame("frame1");
+    await Promise.all(promises);
 
-    yield promiseNoPopupNotification("webRTC-sharingDevices");
-    if ((yield promiseTodoObserverNotCalled("recording-device-events")) == 1) {
-      todo(false, "Got the 'recording-device-events' notification twice, likely because of bug 962719");
-    }
-    yield expectObserverCalled("recording-window-ended");
-    yield expectNoObserverCalled();
-    yield checkNotSharing();
+    await expectNoObserverCalled();
+    await checkNotSharing();
   }
 },
 
 {
   desc: "getUserMedia audio+video: reloading the frame removes prompts",
-  run: function checkReloadingRemovesPrompts() {
+  run: async function checkReloadingRemovesPrompts() {
     let promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, true, "frame1");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
+    await promiseRequestDevice(true, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
     checkDeviceSelectors(true, true);
 
     info("reloading the frame");
     promise = promiseObserverCalled("recording-window-ended");
-    yield promiseReloadFrame("frame1");
-    yield promise;
-    yield promiseNoPopupNotification("webRTC-shareDevices");
+    await promiseReloadFrame("frame1");
+    await promise;
+    await promiseNoPopupNotification("webRTC-shareDevices");
 
-    yield expectNoObserverCalled();
-    yield checkNotSharing();
+    await expectNoObserverCalled();
+    await checkNotSharing();
   }
 },
 
 {
   desc: "getUserMedia audio+video: reloading a frame updates the sharing UI",
-  run: function checkUpdateWhenReloading() {
-    // We'll share only the mic in the first frame, then share both in the
+  run: async function checkUpdateWhenReloading() {
+    // We'll share only the cam in the first frame, then share both in the
     // second frame, then reload the second frame. After each step, we'll check
     // the UI is in the correct state.
 
     let promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, false, "frame1");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
-    checkDeviceSelectors(true, false);
+    await promiseRequestDevice(false, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
+    checkDeviceSelectors(false, true);
 
     let indicator = promiseIndicatorWindow();
-    yield promiseMessage("ok", () => {
+    await promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
-    yield expectObserverCalled("getUserMedia:response:allow");
-    yield expectObserverCalled("recording-device-events");
-    is((yield getMediaCaptureState()), "Microphone", "microphone to be shared");
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {video: true},
+                     "expected camera to be shared");
 
-    yield indicator;
-    yield checkSharingUI({video: false, audio: true});
-    yield expectNoObserverCalled();
+    await indicator;
+    await checkSharingUI({video: true, audio: false});
+    await expectNoObserverCalled();
 
     promise = promisePopupNotificationShown("webRTC-shareDevices");
-    yield promiseRequestDevice(true, true, "frame2");
-    yield promise;
-    yield expectObserverCalled("getUserMedia:request");
+    await promiseRequestDevice(true, true, "frame2");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
     checkDeviceSelectors(true, true);
 
-    yield promiseMessage("ok", () => {
+    await promiseMessage("ok", () => {
       PopupNotifications.panel.firstChild.button.click();
     });
-    yield expectObserverCalled("getUserMedia:response:allow");
-    yield expectObserverCalled("recording-device-events");
-    is((yield getMediaCaptureState()), "CameraAndMicrophone",
-       "expected camera and microphone to be shared");
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {audio: true, video: true},
+                     "expected camera and microphone to be shared");
 
-    yield checkSharingUI({video: true, audio: true});
-    yield expectNoObserverCalled();
+    await checkSharingUI({video: true, audio: true});
+    await expectNoObserverCalled();
 
     info("reloading the second frame");
     promise = promiseObserverCalled("recording-device-events");
-    yield promiseReloadFrame("frame2");
-    yield promise;
+    await promiseReloadFrame("frame2");
+    await promise;
 
-    yield checkSharingUI({video: false, audio: true});
-    yield expectObserverCalled("recording-window-ended");
-    if ((yield promiseTodoObserverNotCalled("recording-device-events")) == 1) {
-      todo(false, "Got the 'recording-device-events' notification twice, likely because of bug 962719");
-    }
-    yield expectNoObserverCalled();
+    await expectObserverCalled("recording-window-ended");
+    await checkSharingUI({video: true, audio: false});
+    await expectNoObserverCalled();
 
-    yield closeStream(false, "frame1");
-    yield promiseNoPopupNotification("webRTC-sharingDevices");
-    yield expectNoObserverCalled();
-    yield checkNotSharing();
+    await closeStream(false, "frame1");
+    await expectNoObserverCalled();
+    await checkNotSharing();
+  }
+},
+
+{
+  desc: "getUserMedia audio+video: reloading the top level page removes all sharing UI",
+  run: async function checkReloading() {
+    let promise = promisePopupNotificationShown("webRTC-shareDevices");
+    await promiseRequestDevice(true, true, "frame1");
+    await promise;
+    await expectObserverCalled("getUserMedia:request");
+    checkDeviceSelectors(true, true);
+
+    let indicator = promiseIndicatorWindow();
+    await promiseMessage("ok", () => {
+      PopupNotifications.panel.firstChild.button.click();
+    });
+    await expectObserverCalled("getUserMedia:response:allow");
+    await expectObserverCalled("recording-device-events");
+    Assert.deepEqual((await getMediaCaptureState()), {audio: true, video: true},
+                     "expected camera and microphone to be shared");
+
+    await indicator;
+    await checkSharingUI({video: true, audio: true});
+
+    await reloadAndAssertClosedStreams();
   }
 }
 
 ];
 
-function test() {
-  waitForExplicitFinish();
-
-  let tab = gBrowser.addTab();
-  gBrowser.selectedTab = tab;
-  let browser = tab.linkedBrowser;
-
-  browser.messageManager.loadFrameScript(CONTENT_SCRIPT_HELPER, true);
-
-  browser.addEventListener("load", function onload() {
-    browser.removeEventListener("load", onload, true);
-
-    is(PopupNotifications._currentNotifications.length, 0,
-       "should start the test without any prior popup notification");
-
-    Task.spawn(function () {
-      yield SpecialPowers.pushPrefEnv({"set": [[PREF_PERMISSION_FAKE, true]]});
-
-      for (let test of gTests) {
-        info(test.desc);
-        yield test.run();
-
-        // Cleanup before the next test
-        yield expectNoObserverCalled();
-      }
-    }).then(finish, ex => {
-     ok(false, "Unexpected Exception: " + ex);
-     finish();
-    });
-  }, true);
-  let rootDir = getRootDirectory(gTestPath);
-  rootDir = rootDir.replace("chrome://mochitests/content/",
-                            "https://example.com/");
-  let url = rootDir + "get_user_media.html";
-  content.location = 'data:text/html,<iframe id="frame1" src="' + url + '"></iframe><iframe id="frame2" src="' + url + '"></iframe>'
-}
+add_task(async function test() {
+  await runTests(gTests, { relativeURI: "get_user_media_in_frame.html" });
+});

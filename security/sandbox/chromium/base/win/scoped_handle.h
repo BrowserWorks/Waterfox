@@ -8,10 +8,10 @@
 #include <windows.h>
 
 #include "base/base_export.h"
-#include "base/basictypes.h"
+#include "base/gtest_prod_util.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/move.h"
+#include "base/macros.h"
 
 // TODO(rvargas): remove this with the rest of the verifier.
 #if defined(COMPILER_MSVC)
@@ -27,13 +27,15 @@ namespace win {
 
 // Generic wrapper for raw handles that takes care of closing handles
 // automatically. The class interface follows the style of
-// the ScopedFILE class with one addition:
+// the ScopedFILE class with two additions:
 //   - IsValid() method can tolerate multiple invalid handle values such as NULL
 //     and INVALID_HANDLE_VALUE (-1) for Win32 handles.
+//   - Set() (and the constructors and assignment operators that call it)
+//     preserve the Windows LastError code. This ensures that GetLastError() can
+//     be called after stashing a handle in a GenericScopedHandle object. Doing
+//     this explicitly is necessary because of bug 528394 and VC++ 2015.
 template <class Traits, class Verifier>
 class GenericScopedHandle {
-  MOVE_ONLY_TYPE_FOR_CPP_03(GenericScopedHandle, RValue)
-
  public:
   typedef typename Traits::Handle Handle;
 
@@ -43,9 +45,9 @@ class GenericScopedHandle {
     Set(handle);
   }
 
-  // Move constructor for C++03 move emulation of this type.
-  GenericScopedHandle(RValue other) : handle_(Traits::NullHandle()) {
-    Set(other.object->Take());
+  GenericScopedHandle(GenericScopedHandle&& other)
+      : handle_(Traits::NullHandle()) {
+    Set(other.Take());
   }
 
   ~GenericScopedHandle() {
@@ -56,16 +58,16 @@ class GenericScopedHandle {
     return Traits::IsHandleValid(handle_);
   }
 
-  // Move operator= for C++03 move emulation of this type.
-  GenericScopedHandle& operator=(RValue other) {
-    if (this != other.object) {
-      Set(other.object->Take());
-    }
+  GenericScopedHandle& operator=(GenericScopedHandle&& other) {
+    DCHECK_NE(this, &other);
+    Set(other.Take());
     return *this;
   }
 
   void Set(Handle handle) {
     if (handle_ != handle) {
+      // Preserve old LastError to avoid bug 528394.
+      auto last_error = ::GetLastError();
       Close();
 
       if (Traits::IsHandleValid(handle)) {
@@ -73,6 +75,7 @@ class GenericScopedHandle {
         Verifier::StartTracking(handle, this, BASE_WIN_GET_CALLER,
                                 tracked_objects::GetProgramCounter());
       }
+      ::SetLastError(last_error);
     }
   }
 
@@ -103,7 +106,11 @@ class GenericScopedHandle {
   }
 
  private:
+  FRIEND_TEST_ALL_PREFIXES(ScopedHandleTest, ActiveVerifierWrongOwner);
+  FRIEND_TEST_ALL_PREFIXES(ScopedHandleTest, ActiveVerifierUntrackedHandle);
   Handle handle_;
+
+  DISALLOW_COPY_AND_ASSIGN(GenericScopedHandle);
 };
 
 #undef BASE_WIN_GET_CALLER
@@ -163,15 +170,19 @@ typedef GenericScopedHandle<HandleTraits, VerifierTraits> ScopedHandle;
 // This function may be called by the embedder to disable the use of
 // VerifierTraits at runtime. It has no effect if DummyVerifierTraits is used
 // for ScopedHandle.
-void BASE_EXPORT DisableHandleVerifier();
+BASE_EXPORT void DisableHandleVerifier();
 
 // This should be called whenever the OS is closing a handle, if extended
 // verification of improper handle closing is desired. If |handle| is being
 // tracked by the handle verifier and ScopedHandle is not the one closing it,
 // a CHECK is generated.
-void BASE_EXPORT OnHandleBeingClosed(HANDLE handle);
+BASE_EXPORT void OnHandleBeingClosed(HANDLE handle);
+
+// This testing function returns the module that the ActiveVerifier concrete
+// implementation was instantiated in.
+BASE_EXPORT HMODULE GetHandleVerifierModuleForTesting();
 
 }  // namespace win
 }  // namespace base
 
-#endif  // BASE_SCOPED_HANDLE_WIN_H_
+#endif  // BASE_WIN_SCOPED_HANDLE_H_

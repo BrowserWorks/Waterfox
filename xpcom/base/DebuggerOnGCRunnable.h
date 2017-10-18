@@ -20,11 +20,11 @@ class DebuggerOnGCRunnable : public CancelableRunnable
   JS::dbg::GarbageCollectionEvent::Ptr mGCData;
 
   explicit DebuggerOnGCRunnable(JS::dbg::GarbageCollectionEvent::Ptr&& aGCData)
-    : mGCData(Move(aGCData))
+    : CancelableRunnable("DebuggerOnGCRunnable"), mGCData(Move(aGCData))
   { }
 
 public:
-  static NS_METHOD Enqueue(JSContext* aCx, const JS::GCDescription& aDesc);
+  static nsresult Enqueue(JSContext* aCx, const JS::GCDescription& aDesc);
 
   NS_DECL_NSIRUNNABLE
   nsresult Cancel() override;

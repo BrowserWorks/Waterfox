@@ -39,7 +39,7 @@ class Accessor
     static void GetNsresult(JNIEnv* env, nsresult* rv)
     {
         if (env->ExceptionCheck()) {
-#ifdef DEBUG
+#ifdef MOZ_CHECK_JNI
             env->ExceptionDescribe();
 #endif
             env->ExceptionClear();
@@ -77,6 +77,10 @@ protected:
 
     static void BeginAccess(const Context& ctx)
     {
+        MOZ_ASSERT_JNI_THREAD(Traits::callingThread);
+        static_assert(Traits::dispatchTarget == DispatchTarget::CURRENT,
+                      "Dispatching not supported for method call");
+
         if (sID) {
             return;
         }
@@ -109,7 +113,7 @@ public:
         auto result = TypeAdapter<ReturnType>::ToNative(env,
                 Traits::isStatic ?
                 (env->*TypeAdapter<ReturnType>::StaticCall)(
-                        ctx.RawClassRef(), sID, jargs) :
+                        ctx.ClassRef(), sID, jargs) :
                 (env->*TypeAdapter<ReturnType>::Call)(
                         ctx.Get(), sID, jargs));
 
@@ -143,7 +147,7 @@ public:
         };
 
         if (Traits::isStatic) {
-            env->CallStaticVoidMethodA(ctx.RawClassRef(), Base::sID, jargs);
+            env->CallStaticVoidMethodA(ctx.ClassRef(), Base::sID, jargs);
         } else {
             env->CallVoidMethodA(ctx.Get(), Base::sID, jargs);
         }
@@ -173,7 +177,7 @@ public:
         };
 
         auto result = TypeAdapter<ReturnType>::ToNative(
-                env, env->NewObjectA(ctx.RawClassRef(), Base::sID, jargs));
+                env, env->NewObjectA(ctx.ClassRef(), Base::sID, jargs));
 
         Base::EndAccess(ctx, rv);
         return result;
@@ -196,6 +200,10 @@ private:
 
     static void BeginAccess(const Context& ctx)
     {
+        MOZ_ASSERT_JNI_THREAD(Traits::callingThread);
+        static_assert(Traits::dispatchTarget == DispatchTarget::CURRENT,
+                      "Dispatching not supported for field access");
+
         if (sID) {
             return;
         }
@@ -224,7 +232,7 @@ public:
                 env, Traits::isStatic ?
 
                 (env->*TypeAdapter<GetterType>::StaticGet)
-                        (ctx.RawClassRef(), sID) :
+                        (ctx.ClassRef(), sID) :
 
                 (env->*TypeAdapter<GetterType>::Get)
                         (ctx.Get(), sID));
@@ -240,7 +248,7 @@ public:
 
         if (Traits::isStatic) {
             (env->*TypeAdapter<SetterType>::StaticSet)(
-                    ctx.RawClassRef(), sID,
+                    ctx.ClassRef(), sID,
                     TypeAdapter<SetterType>::FromNative(env, val));
         } else {
             (env->*TypeAdapter<SetterType>::Set)(

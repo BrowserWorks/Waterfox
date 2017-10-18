@@ -9,6 +9,7 @@
 #include "gfxPlatform.h"
 #include "nsAutoRef.h"
 #include "nsTArray.h"
+#include "mozilla/gfx/gfxVars.h"
 
 #if (MOZ_WIDGET_GTK == 2)
 extern "C" {
@@ -83,16 +84,11 @@ public:
                                            uint32_t aLength) override;
 
     /**
-     * Check whether format is supported on a platform or not (if unclear,
-     * returns true).
-     */
-    virtual bool IsFontFormatSupported(nsIURI *aFontURI,
-                                         uint32_t aFormatFlags) override;
-
-    /**
      * Calls XFlush if xrender is enabled.
      */
     virtual void FlushContentDrawing() override;
+
+    FT_Library GetFTLibrary() override;
 
 #if (MOZ_WIDGET_GTK == 2)
     static void SetGdkDrawable(cairo_surface_t *target,
@@ -100,25 +96,15 @@ public:
     static GdkDrawable *GetGdkDrawable(cairo_surface_t *target);
 #endif
 
-    static int32_t GetDPI();
-    static double  GetDPIScale();
-
-    bool UseXRender() {
-#if defined(MOZ_X11)
-        return sUseXRender;
-#else
-        return false;
-#endif
-    }
+    static int32_t GetFontScaleDPI();
+    static double  GetFontScaleFactor();
 
 #ifdef MOZ_X11
     virtual void GetAzureBackendInfo(mozilla::widget::InfoObject &aObj) override {
       gfxPlatform::GetAzureBackendInfo(aObj);
-      aObj.DefineProperty("CairoUseXRender", UseXRender());
+      aObj.DefineProperty("CairoUseXRender", mozilla::gfx::gfxVars::UseXRender());
     }
 #endif
-
-    static bool UseFcFontList() { return sUseFcFontList; }
 
     bool UseImageOffscreenSurfaces();
 
@@ -128,8 +114,6 @@ public:
       return true;
     }
 
-    bool SupportsApzTouchInput() const override;
-
     void FontsPrefsChanged(const char *aPref) override;
 
     // maximum number of fonts to substitute for a generic
@@ -137,6 +121,10 @@ public:
 
     bool SupportsPluginDirectBitmapDrawing() override {
       return true;
+    }
+
+    bool AccelerateLayersByDefault() override {
+      return false;
     }
 
 #ifdef GL_PROVIDER_GLX
@@ -159,14 +147,8 @@ private:
                                              size_t &size) override;
 
 #ifdef MOZ_X11
-    static bool sUseXRender;
-
     Display* mCompositorDisplay;
 #endif
-
-    // xxx - this will be removed once the new fontconfig platform font list
-    // replaces gfxPangoFontGroup
-    static bool sUseFcFontList;
 };
 
 #endif /* GFX_PLATFORM_GTK_H */

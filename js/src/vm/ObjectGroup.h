@@ -12,6 +12,7 @@
 
 #include "ds/IdValuePair.h"
 #include "gc/Barrier.h"
+#include "js/CharacterEncoding.h"
 #include "js/GCHashTable.h"
 #include "vm/TaggedProto.h"
 #include "vm/TypeInference.h"
@@ -45,6 +46,12 @@ enum NewObjectKind {
      * singleton and is allocated in the tenured heap.
      */
     SingletonObject,
+
+    /*
+     * CrossCompartmentWrappers use the common Proxy class, but are allowed
+     * to have nursery lifetime.
+     */
+    NurseryAllocatedProxy,
 
     /*
      * Objects which will not benefit from being allocated in the nursery
@@ -96,6 +103,7 @@ class ObjectGroup : public gc::TenuredCell
     }
 
     void setClasp(const Class* clasp) {
+        MOZ_ASSERT(JS::StringIsASCII(clasp->name));
         clasp_ = clasp;
     }
 
@@ -131,6 +139,7 @@ class ObjectGroup : public gc::TenuredCell
     /* Flags for this group. */
     ObjectGroupFlags flags_;
 
+  public:
     // Kinds of addendums which can be attached to ObjectGroups.
     enum AddendumKind {
         Addendum_None,
@@ -160,6 +169,7 @@ class ObjectGroup : public gc::TenuredCell
         Addendum_TypeDescr
     };
 
+  private:
     // If non-null, holds additional information about this object, whose
     // format is indicated by the object's addendum kind.
     void* addendum_;
@@ -192,7 +202,11 @@ class ObjectGroup : public gc::TenuredCell
     inline TypeNewScript* newScript();
 
     void setNewScript(TypeNewScript* newScript) {
+        MOZ_ASSERT(newScript);
         setAddendum(Addendum_NewScript, newScript);
+    }
+    void detachNewScript() {
+        setAddendum(Addendum_None, nullptr);
     }
 
     inline PreliminaryObjectArrayWithTemplate* maybePreliminaryObjects();
@@ -367,16 +381,16 @@ class ObjectGroup : public gc::TenuredCell
 
     inline bool canPreTenure();
     inline bool fromAllocationSite();
-    inline void setShouldPreTenure(ExclusiveContext* cx);
+    inline void setShouldPreTenure(JSContext* cx);
 
     /*
      * Get or create a property of this object. Only call this for properties which
      * a script accesses explicitly.
      */
-    inline HeapTypeSet* getProperty(ExclusiveContext* cx, JSObject* obj, jsid id);
+    inline HeapTypeSet* getProperty(JSContext* cx, JSObject* obj, jsid id);
 
     /* Get a property only if it already exists. */
-    inline HeapTypeSet* maybeGetProperty(jsid id);
+    MOZ_ALWAYS_INLINE HeapTypeSet* maybeGetProperty(jsid id);
 
     /*
      * Iterate through the group's properties. getPropertyCount overapproximates
@@ -388,16 +402,16 @@ class ObjectGroup : public gc::TenuredCell
 
     /* Helpers */
 
-    void updateNewPropertyTypes(ExclusiveContext* cx, JSObject* obj, jsid id, HeapTypeSet* types);
-    void addDefiniteProperties(ExclusiveContext* cx, Shape* shape);
+    void updateNewPropertyTypes(JSContext* cx, JSObject* obj, jsid id, HeapTypeSet* types);
+    void addDefiniteProperties(JSContext* cx, Shape* shape);
     bool matchDefiniteProperties(HandleObject obj);
-    void markPropertyNonData(ExclusiveContext* cx, JSObject* obj, jsid id);
-    void markPropertyNonWritable(ExclusiveContext* cx, JSObject* obj, jsid id);
-    void markStateChange(ExclusiveContext* cx);
-    void setFlags(ExclusiveContext* cx, ObjectGroupFlags flags);
-    void markUnknown(ExclusiveContext* cx);
+    void markPropertyNonData(JSContext* cx, JSObject* obj, jsid id);
+    void markPropertyNonWritable(JSContext* cx, JSObject* obj, jsid id);
+    void markStateChange(JSContext* cx);
+    void setFlags(JSContext* cx, ObjectGroupFlags flags);
+    void markUnknown(JSContext* cx);
     void maybeClearNewScriptOnOOM();
-    void clearNewScript(ExclusiveContext* cx, ObjectGroup* replacement = nullptr);
+    void clearNewScript(JSContext* cx, ObjectGroup* replacement = nullptr);
 
     void print();
 
@@ -433,6 +447,10 @@ class ObjectGroup : public gc::TenuredCell
 
     static inline uint32_t offsetOfProto() {
         return offsetof(ObjectGroup, proto_);
+    }
+
+    static inline uint32_t offsetOfCompartment() {
+        return offsetof(ObjectGroup, compartment_);
     }
 
     static inline uint32_t offsetOfAddendum() {
@@ -477,10 +495,10 @@ class ObjectGroup : public gc::TenuredCell
 
     // Static accessors for ObjectGroupCompartment NewTable.
 
-    static ObjectGroup* defaultNewGroup(ExclusiveContext* cx, const Class* clasp,
+    static ObjectGroup* defaultNewGroup(JSContext* cx, const Class* clasp,
                                         TaggedProto proto,
                                         JSObject* associated = nullptr);
-    static ObjectGroup* lazySingletonGroup(ExclusiveContext* cx, const Class* clasp,
+    static ObjectGroup* lazySingletonGroup(JSContext* cx, const Class* clasp,
                                            TaggedProto proto);
 
     static void setDefaultNewGroupUnknown(JSContext* cx, const js::Class* clasp, JS::HandleObject obj);
@@ -499,13 +517,13 @@ class ObjectGroup : public gc::TenuredCell
 
     // Create an ArrayObject or UnboxedArrayObject with the specified elements
     // and a group specialized for the elements.
-    static JSObject* newArrayObject(ExclusiveContext* cx, const Value* vp, size_t length,
+    static JSObject* newArrayObject(JSContext* cx, const Value* vp, size_t length,
                                     NewObjectKind newKind,
                                     NewArrayKind arrayKind = NewArrayKind::Normal);
 
     // Create a PlainObject or UnboxedPlainObject with the specified properties
     // and a group specialized for those properties.
-    static JSObject* newPlainObject(ExclusiveContext* cx,
+    static JSObject* newPlainObject(JSContext* cx,
                                     IdValuePair* properties, size_t nproperties,
                                     NewObjectKind newKind);
 
@@ -548,6 +566,28 @@ class ObjectGroupCompartment
     NewTable* defaultNewTable;
     NewTable* lazyTable;
 
+    // Cache for defaultNewGroup. Purged on GC.
+    class DefaultNewGroupCache
+    {
+        ObjectGroup* group_;
+        JSObject* associated_;
+
+      public:
+        DefaultNewGroupCache() { purge(); }
+
+        void purge() {
+            group_ = nullptr;
+        }
+        void put(ObjectGroup* group, JSObject* associated) {
+            group_ = group;
+            associated_ = associated;
+        }
+
+        MOZ_ALWAYS_INLINE ObjectGroup* lookup(const Class* clasp, TaggedProto proto,
+                                              JSObject* associated);
+    };
+    DefaultNewGroupCache defaultNewGroupCache;
+
     struct ArrayObjectKey;
     using ArrayObjectTable = js::GCRekeyableHashMap<ArrayObjectKey,
                                                     ReadBarrieredObjectGroup,
@@ -583,6 +623,14 @@ class ObjectGroupCompartment
     // Table for referencing types of objects keyed to an allocation site.
     AllocationSiteTable* allocationSiteTable;
 
+    // A single per-compartment ObjectGroup for all calls to StringSplitString.
+    // StringSplitString is always called from self-hosted code, and conceptually
+    // the return object for a string.split(string) operation should have a
+    // unified type.  Having a global group for this also allows us to remove
+    // the hash-table lookup that would be required if we allocated this group
+    // on the basis of call-site pc.
+    ReadBarrieredObjectGroup stringSplitStringGroup;
+
   public:
     struct NewEntry;
 
@@ -596,9 +644,11 @@ class ObjectGroupCompartment
     void replaceDefaultNewGroup(const Class* clasp, TaggedProto proto, JSObject* associated,
                                 ObjectGroup* group);
 
-    static ObjectGroup* makeGroup(ExclusiveContext* cx, const Class* clasp,
+    static ObjectGroup* makeGroup(JSContext* cx, const Class* clasp,
                                   Handle<TaggedProto> proto,
                                   ObjectGroupFlags initialFlags = 0);
+
+    static ObjectGroup* getStringSplitStringGroup(JSContext* cx);
 
     void addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* allocationSiteTables,
@@ -609,6 +659,10 @@ class ObjectGroupCompartment
     void clearTables();
 
     void sweep(FreeOp* fop);
+
+    void purge() {
+        defaultNewGroupCache.purge();
+    }
 
 #ifdef JSGC_HASH_TABLE_CHECKS
     void checkTablesAfterMovingGC() {
@@ -631,15 +685,15 @@ class ObjectGroupCompartment
 };
 
 PlainObject*
-NewPlainObjectWithProperties(ExclusiveContext* cx, IdValuePair* properties, size_t nproperties,
+NewPlainObjectWithProperties(JSContext* cx, IdValuePair* properties, size_t nproperties,
                              NewObjectKind newKind);
 
 bool
-CombineArrayElementTypes(ExclusiveContext* cx, JSObject* newObj,
+CombineArrayElementTypes(JSContext* cx, JSObject* newObj,
                          const Value* compare, size_t ncompare);
 
 bool
-CombinePlainObjectPropertyTypes(ExclusiveContext* cx, JSObject* newObj,
+CombinePlainObjectPropertyTypes(JSContext* cx, JSObject* newObj,
                                 const Value* compare, size_t ncompare);
 
 } // namespace js

@@ -15,100 +15,226 @@
 
 namespace js {
 
-class XDRBuffer {
+class XDRBufferBase
+{
   public:
-    explicit XDRBuffer(JSContext* cx)
-      : context(cx), base(nullptr), cursor(nullptr), limit(nullptr) { }
+    explicit XDRBufferBase(JSContext* cx, size_t cursor = 0)
+      : context_(cx), cursor_(cursor) { }
 
     JSContext* cx() const {
-        return context;
+        return context_;
     }
 
-    void* getData(uint32_t* lengthp) const {
-        MOZ_ASSERT(size_t(cursor - base) <= size_t(UINT32_MAX));
-        *lengthp = uint32_t(cursor - base);
-        return base;
+    size_t cursor() const {
+        return cursor_;
     }
 
-    void setData(const void* data, uint32_t length) {
-        base = static_cast<uint8_t*>(const_cast<void*>(data));
-        cursor = base;
-        limit = base + length;
-    }
+  protected:
+    JSContext* const context_;
+    size_t cursor_;
+};
 
-    const uint8_t* read(size_t n) {
-        MOZ_ASSERT(n <= size_t(limit - cursor));
-        uint8_t* ptr = cursor;
-        cursor += n;
+template <XDRMode mode>
+class XDRBuffer;
+
+template <>
+class XDRBuffer<XDR_ENCODE> : public XDRBufferBase
+{
+  public:
+    XDRBuffer(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
+      : XDRBufferBase(cx, cursor),
+        buffer_(buffer) { }
+
+    uint8_t* write(size_t n) {
+        MOZ_ASSERT(n != 0);
+        if (!buffer_.growByUninitialized(n)) {
+            ReportOutOfMemory(cx());
+            return nullptr;
+        }
+        uint8_t* ptr = &buffer_[cursor_];
+        cursor_ += n;
         return ptr;
     }
 
     const char* readCString() {
-        char* ptr = reinterpret_cast<char*>(cursor);
-        cursor = reinterpret_cast<uint8_t*>(strchr(ptr, '\0')) + 1;
-        MOZ_ASSERT(base < cursor);
-        MOZ_ASSERT(cursor <= limit);
+        MOZ_CRASH("Should never read in encode mode");
+        return nullptr;
+    }
+
+    const uint8_t* read(size_t n) {
+        MOZ_CRASH("Should never read in encode mode");
+        return nullptr;
+    }
+
+  private:
+    JS::TranscodeBuffer& buffer_;
+};
+
+template <>
+class XDRBuffer<XDR_DECODE> : public XDRBufferBase
+{
+  public:
+    XDRBuffer(JSContext* cx, const JS::TranscodeRange& range)
+      : XDRBufferBase(cx),
+        buffer_(range) { }
+
+    XDRBuffer(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
+      : XDRBufferBase(cx, cursor),
+        buffer_(buffer.begin(), buffer.length()) { }
+
+    const char* readCString() {
+        char* ptr = reinterpret_cast<char*>(&buffer_[cursor_]);
+        uint8_t* end = reinterpret_cast<uint8_t*>(strchr(ptr, '\0')) + 1;
+        MOZ_ASSERT(buffer_.begin().get() < end);
+        MOZ_ASSERT(end <= buffer_.end().get());
+        cursor_ = end - buffer_.begin().get();
+        return ptr;
+    }
+
+    const uint8_t* read(size_t n) {
+        MOZ_ASSERT(cursor_ < buffer_.length());
+        uint8_t* ptr = &buffer_[cursor_];
+        cursor_ += n;
         return ptr;
     }
 
     uint8_t* write(size_t n) {
-        if (n > size_t(limit - cursor)) {
-            if (!grow(n))
-                return nullptr;
-        }
-        uint8_t* ptr = cursor;
-        cursor += n;
-        return ptr;
+        MOZ_CRASH("Should never write in decode mode");
+        return nullptr;
     }
 
-    void freeBuffer();
+  private:
+    const JS::TranscodeRange buffer_;
+};
+
+class XDRCoderBase;
+class XDRIncrementalEncoder;
+
+// An AutoXDRTree is used to identify section encoded by an XDRIncrementalEncoder.
+//
+// Its primary goal is to identify functions, such that we can first encode them
+// as LazyScript, and later replaced by them by their corresponding bytecode
+// once delazified.
+//
+// As a convenience, this is also used to identify the top-level of the content
+// encoded by an XDRIncrementalEncoder.
+//
+// Sections can be encoded any number of times in an XDRIncrementalEncoder, and
+// the latest encoded version would replace all the previous one.
+class MOZ_RAII AutoXDRTree
+{
+  public:
+    // For a JSFunction, a tree key is defined as being:
+    //     script()->begin << 32 | script()->end
+    //
+    // Based on the invariant that |begin <= end|, we can make special
+    // keys, such as the top-level script.
+    using Key = uint64_t;
+
+    AutoXDRTree(XDRCoderBase* xdr, Key key);
+    ~AutoXDRTree();
+
+    // Indicate the lack of a key for the current tree.
+    static constexpr Key noKey = 0;
+
+    // Used to end the slices when there is no children.
+    static constexpr Key noSubTree = Key(1) << 32;
+
+    // Used as the root key of the tree in the hash map.
+    static constexpr Key topLevel = Key(2) << 32;
 
   private:
-    bool grow(size_t n);
+    friend class XDRIncrementalEncoder;
 
-    JSContext*  const context;
-    uint8_t*    base;
-    uint8_t*    cursor;
-    uint8_t*    limit;
+    Key key_;
+    AutoXDRTree* parent_;
+    XDRCoderBase* xdr_;
+};
+
+class XDRCoderBase
+{
+  protected:
+    XDRCoderBase() {}
+
+  public:
+    virtual AutoXDRTree::Key getTopLevelTreeKey() const { return AutoXDRTree::noKey; }
+    virtual AutoXDRTree::Key getTreeKey(JSFunction* fun) const { return AutoXDRTree::noKey; }
+    virtual void createOrReplaceSubTree(AutoXDRTree* child) {};
+    virtual void endSubTree() {};
 };
 
 /*
  * XDR serialization state.  All data is encoded in little endian.
  */
 template <XDRMode mode>
-class XDRState {
+class XDRState : public XDRCoderBase
+{
   public:
-    XDRBuffer buf;
-
-  protected:
-    explicit XDRState(JSContext* cx)
-      : buf(cx) { }
+    XDRBuffer<mode> buf;
+  private:
+    JS::TranscodeResult resultCode_;
 
   public:
+    XDRState(JSContext* cx, JS::TranscodeBuffer& buffer, size_t cursor = 0)
+      : buf(cx, buffer, cursor),
+        resultCode_(JS::TranscodeResult_Ok)
+    {
+    }
+
+    template <typename RangeType>
+    XDRState(JSContext* cx, const RangeType& range)
+      : buf(cx, range),
+        resultCode_(JS::TranscodeResult_Ok)
+    {
+    }
+
+    virtual ~XDRState() {};
+
     JSContext* cx() const {
         return buf.cx();
+    }
+    virtual LifoAlloc& lifoAlloc() const;
+
+    virtual bool hasOptions() const { return false; }
+    virtual const ReadOnlyCompileOptions& options() {
+        MOZ_CRASH("does not have options");
+    }
+    virtual bool hasScriptSourceObjectOut() const { return false; }
+    virtual ScriptSourceObject** scriptSourceObjectOut() {
+        MOZ_CRASH("does not have scriptSourceObjectOut.");
+    }
+
+    // Record logical failures of XDR.
+    void postProcessContextErrors(JSContext* cx);
+    JS::TranscodeResult resultCode() const {
+        return resultCode_;
+    }
+    bool fail(JS::TranscodeResult code) {
+        MOZ_ASSERT(resultCode_ == JS::TranscodeResult_Ok);
+        resultCode_ = code;
+        return false;
     }
 
     bool codeUint8(uint8_t* n) {
         if (mode == XDR_ENCODE) {
-            uint8_t* ptr = buf.write(sizeof *n);
+            uint8_t* ptr = buf.write(sizeof(*n));
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             *ptr = *n;
         } else {
-            *n = *buf.read(sizeof *n);
+            *n = *buf.read(sizeof(*n));
         }
         return true;
     }
 
     bool codeUint16(uint16_t* n) {
         if (mode == XDR_ENCODE) {
-            uint8_t* ptr = buf.write(sizeof *n);
+            uint8_t* ptr = buf.write(sizeof(*n));
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             mozilla::LittleEndian::writeUint16(ptr, *n);
         } else {
-            const uint8_t* ptr = buf.read(sizeof *n);
+            const uint8_t* ptr = buf.read(sizeof(*n));
             *n = mozilla::LittleEndian::readUint16(ptr);
         }
         return true;
@@ -116,12 +242,12 @@ class XDRState {
 
     bool codeUint32(uint32_t* n) {
         if (mode == XDR_ENCODE) {
-            uint8_t* ptr = buf.write(sizeof *n);
+            uint8_t* ptr = buf.write(sizeof(*n));
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             mozilla::LittleEndian::writeUint32(ptr, *n);
         } else {
-            const uint8_t* ptr = buf.read(sizeof *n);
+            const uint8_t* ptr = buf.read(sizeof(*n));
             *n = mozilla::LittleEndian::readUint32(ptr);
         }
         return true;
@@ -131,7 +257,7 @@ class XDRState {
         if (mode == XDR_ENCODE) {
             uint8_t* ptr = buf.write(sizeof(*n));
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             mozilla::LittleEndian::writeUint64(ptr, *n);
         } else {
             const uint8_t* ptr = buf.read(sizeof(*n));
@@ -173,10 +299,12 @@ class XDRState {
     }
 
     bool codeBytes(void* bytes, size_t len) {
+        if (len == 0)
+            return true;
         if (mode == XDR_ENCODE) {
             uint8_t* ptr = buf.write(len);
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             memcpy(ptr, bytes, len);
         } else {
             memcpy(bytes, buf.read(len), len);
@@ -195,7 +323,7 @@ class XDRState {
             size_t n = strlen(*sp) + 1;
             uint8_t* ptr = buf.write(n);
             if (!ptr)
-                return false;
+                return fail(JS::TranscodeResult_Throw);
             memcpy(ptr, *sp, n);
         } else {
             *sp = buf.readCString();
@@ -206,36 +334,144 @@ class XDRState {
     bool codeChars(const JS::Latin1Char* chars, size_t nchars);
     bool codeChars(char16_t* chars, size_t nchars);
 
-    bool codeFunction(JS::MutableHandleFunction objp);
+    bool codeFunction(JS::MutableHandleFunction objp, HandleScriptSource sourceObject = nullptr);
     bool codeScript(MutableHandleScript scriptp);
     bool codeConstValue(MutableHandleValue vp);
 };
 
-class XDREncoder : public XDRState<XDR_ENCODE> {
+using XDREncoder = XDRState<XDR_ENCODE>;
+using XDRDecoder = XDRState<XDR_DECODE>;
+
+class XDROffThreadDecoder : public XDRDecoder
+{
+    const ReadOnlyCompileOptions* options_;
+    ScriptSourceObject** sourceObjectOut_;
+    LifoAlloc& alloc_;
+
   public:
-    explicit XDREncoder(JSContext* cx)
-      : XDRState<XDR_ENCODE>(cx) {
+    // Note, when providing an JSContext, where isJSContext is false,
+    // then the initialization of the ScriptSourceObject would remain
+    // incomplete. Thus, the sourceObjectOut must be used to finish the
+    // initialization with ScriptSourceObject::initFromOptions after the
+    // decoding.
+    //
+    // When providing a sourceObjectOut pointer, you have to ensure that it is
+    // marked by the GC to avoid dangling pointers.
+    XDROffThreadDecoder(JSContext* cx, LifoAlloc& alloc,
+                        const ReadOnlyCompileOptions* options,
+                        ScriptSourceObject** sourceObjectOut,
+                        const JS::TranscodeRange& range)
+      : XDRDecoder(cx, range),
+        options_(options),
+        sourceObjectOut_(sourceObjectOut),
+        alloc_(alloc)
+    {
+        MOZ_ASSERT(options);
+        MOZ_ASSERT(sourceObjectOut);
+        MOZ_ASSERT(*sourceObjectOut == nullptr);
     }
 
-    ~XDREncoder() {
-        buf.freeBuffer();
+    LifoAlloc& lifoAlloc() const override {
+        return alloc_;
     }
 
-    const void* getData(uint32_t* lengthp) const {
-        return buf.getData(lengthp);
+    bool hasOptions() const override { return true; }
+    const ReadOnlyCompileOptions& options() override {
+        return *options_;
     }
-
-    void* forgetData(uint32_t* lengthp) {
-        void* data = buf.getData(lengthp);
-        buf.setData(nullptr, 0);
-        return data;
+    bool hasScriptSourceObjectOut() const override { return true; }
+    ScriptSourceObject** scriptSourceObjectOut() override {
+        return sourceObjectOut_;
     }
 };
 
-class XDRDecoder : public XDRState<XDR_DECODE> {
-  public:
-    XDRDecoder(JSContext* cx, const void* data, uint32_t length);
+class XDRIncrementalEncoder : public XDREncoder
+{
+    // The incremental encoder encodes the content of scripts and functions in
+    // the XDRBuffer. It can be used to encode multiple times the same AutoXDRTree,
+    // and uses its key to identify which part to replace.
+    //
+    // Internally, this encoder keeps a tree representation of the scopes. Each
+    // node is composed of a vector of slices which are interleaved by child
+    // nodes.
+    //
+    // A slice corresponds to an index and a length within the content of the
+    // slices_ buffer. The index is updated when a slice is created, and the
+    // length is updated when the slice is ended, either by creating a new scope
+    // child, or by closing the scope and going back to the parent.
+    //
+    //                  +---+---+---+
+    //        begin     |   |   |   |
+    //        length    |   |   |   |
+    //        child     | . | . | . |
+    //                  +-|-+-|-+---+
+    //                    |   |
+    //          +---------+   +---------+
+    //          |                       |
+    //          v                       v
+    //      +---+---+                 +---+
+    //      |   |   |                 |   |
+    //      |   |   |                 |   |
+    //      | . | . |                 | . |
+    //      +-|-+---+                 +---+
+    //        |
+    //        |
+    //        |
+    //        v
+    //      +---+
+    //      |   |
+    //      |   |
+    //      | . |
+    //      +---+
+    //
+    //
+    // The tree key is used to identify the child nodes, and to make them
+    // easily replaceable.
+    //
+    // The tree is rooted at the |topLevel| key.
+    //
 
+    struct Slice {
+        size_t sliceBegin;
+        size_t sliceLength;
+        AutoXDRTree::Key child;
+    };
+
+    using SlicesNode = Vector<Slice, 1, SystemAllocPolicy>;
+    using SlicesTree = HashMap<AutoXDRTree::Key, SlicesNode, DefaultHasher<AutoXDRTree::Key>,
+                               SystemAllocPolicy>;
+
+    // Last opened XDR-tree on the stack.
+    AutoXDRTree* scope_;
+    // Node corresponding to the opened scope.
+    SlicesNode* node_;
+    // Tree of slices.
+    SlicesTree tree_;
+    JS::TranscodeBuffer slices_;
+    bool oom_;
+
+  public:
+    explicit XDRIncrementalEncoder(JSContext* cx)
+      : XDREncoder(cx, slices_, 0),
+        scope_(nullptr),
+        node_(nullptr),
+        oom_(false)
+    {
+    }
+
+    virtual ~XDRIncrementalEncoder() {}
+
+    AutoXDRTree::Key getTopLevelTreeKey() const override;
+    AutoXDRTree::Key getTreeKey(JSFunction* fun) const override;
+
+    MOZ_MUST_USE bool init();
+
+    void createOrReplaceSubTree(AutoXDRTree* child) override;
+    void endSubTree() override;
+
+    // Append the content collected during the incremental encoding into the
+    // buffer given as argument.
+    MOZ_MUST_USE bool linearize(JS::TranscodeBuffer& buffer);
 };
 
 } /* namespace js */

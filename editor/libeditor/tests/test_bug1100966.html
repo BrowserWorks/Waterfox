@@ -5,9 +5,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1100966
 -->
 <head>
   <title>Test for Bug 1100966</title>
-  <script type="application/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
-  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
-  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/EventUtils.js"></script>
+  <script src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" href="/tests/SimpleTest/test.css">
+  <script src="/tests/SimpleTest/EventUtils.js"></script>
 </head>
 <body>
 <div id="display">
@@ -23,6 +23,8 @@ fivee sixx<br>
 
 <script class="testbody" type="application/javascript">
 
+let {onSpellCheck} = SpecialPowers.Cu.import("resource://testing-common/AsyncSpellCheckTestHelper.jsm", {});
+
 /** Test for Bug 1100966 **/
 SimpleTest.waitForExplicitFinish();
 SimpleTest.waitForFocus(function() {
@@ -30,31 +32,42 @@ SimpleTest.waitForFocus(function() {
   div.focus();
   synthesizeMouseAtCenter(div, {});
 
-  synthesizeKey(" ", {});
-  setTimeout(function() {
-    synthesizeKey("a", {});
+  getSpellChecker().UpdateCurrentDictionary(() => {
+    synthesizeKey(" ", {});
     setTimeout(function() {
-      synthesizeKey("VK_BACK_SPACE", {});
+      synthesizeKey("a", {});
+      setTimeout(function() {
+        synthesizeKey("VK_BACK_SPACE", {});
 
-      var sel = getSpellCheckSelection();
-      is(sel.rangeCount, 2, "We should have two misspelled words");
-      is(String(sel.getRangeAt(0)), "fivee", "Correct misspelled word");
-      is(String(sel.getRangeAt(1)), "sixx", "Correct misspelled word");
+        onSpellCheck(div, function() {
+          var sel = getSpellCheckSelection();
+          is(sel.rangeCount, 2, "We should have two misspelled words");
+          is(String(sel.getRangeAt(0)), "fivee", "Correct misspelled word");
+          is(String(sel.getRangeAt(1)), "sixx", "Correct misspelled word");
 
-      SimpleTest.finish();
+          SimpleTest.finish();
+        });
+      },0);
     },0);
-  },0);
-
+  });
 });
 
+function getEditor() {
+  var Ci = SpecialPowers.Ci;
+  var editingSession = SpecialPowers.wrap(window)
+    .QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIWebNavigation)
+    .QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIEditingSession);
+  return editingSession.getEditorForWindow(window);
+}
+
+function getSpellChecker() {
+  return getEditor().getInlineSpellChecker(false).spellChecker;
+}
+
 function getSpellCheckSelection() {
-  var Ci = Components.interfaces;
-  var editingSession = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                             .getInterface(Ci.nsIWebNavigation)
-                             .QueryInterface(Ci.nsIInterfaceRequestor)
-                             .getInterface(Ci.nsIEditingSession);
-  var editor = editingSession.getEditorForWindow(window);
-  var selcon = editor.selectionController;
+  var selcon = getEditor().selectionController;
   return selcon.getSelection(selcon.SELECTION_SPELLCHECK);
 }
 

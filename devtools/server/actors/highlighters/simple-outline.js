@@ -4,18 +4,25 @@
 
 "use strict";
 
-const { installHelperSheet,
-  addPseudoClassLock, removePseudoClassLock } = require("./utils/markup");
+const {
+  isNodeValid,
+  addPseudoClassLock,
+  removePseudoClassLock
+} = require("./utils/markup");
+
+const { loadSheet } = require("devtools/shared/layout/utils");
 
 // SimpleOutlineHighlighter's stylesheet
 const HIGHLIGHTED_PSEUDO_CLASS = ":-moz-devtools-highlighted";
-const SIMPLE_OUTLINE_SHEET = `.__fx-devtools-hide-shortcut__ {
-                                visibility: hidden !important
-                              }
-                              ${HIGHLIGHTED_PSEUDO_CLASS} {
-                                outline: 2px dashed #F06!important;
-                                outline-offset: -2px!important
-                              }`;
+const SIMPLE_OUTLINE_SHEET = "data:text/css;charset=utf-8," + encodeURIComponent(`
+  .__fx-devtools-hide-shortcut__ {
+    visibility: hidden !important
+  }
+  ${HIGHLIGHTED_PSEUDO_CLASS} {
+    outline: 2px dashed #F06!important;
+    outline-offset: -2px!important
+  }`);
+
 /**
  * The SimpleOutlineHighlighter is a class that has the same API than the
  * BoxModelHighlighter, but adds a pseudo-class on the target element itself
@@ -41,10 +48,10 @@ SimpleOutlineHighlighter.prototype = {
    * @param {DOMNode} node
    */
   show: function (node) {
-    if (!this.currentNode || node !== this.currentNode) {
+    if (isNodeValid(node) && (!this.currentNode || node !== this.currentNode)) {
       this.hide();
       this.currentNode = node;
-      installHelperSheet(node.ownerDocument.defaultView, SIMPLE_OUTLINE_SHEET);
+      loadSheet(node.ownerGlobal, SIMPLE_OUTLINE_SHEET);
       addPseudoClassLock(node, HIGHLIGHTED_PSEUDO_CLASS);
     }
     return true;

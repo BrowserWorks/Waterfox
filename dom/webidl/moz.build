@@ -4,16 +4,376 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("APZTestData.webidl"):
+    BUG_COMPONENT = ("Core", "Panning and Zooming")
+
+with Files("AccessibleNode.webidl"):
+    BUG_COMPONENT = ("Core", "Disability Access APIs")
+
+with Files("Addon*"):
+    BUG_COMPONENT = ("Toolkit", "Add-ons Manager")
+
+with Files("AnalyserNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Animat*"):
+    BUG_COMPONENT = ("Core", "DOM: Animation")
+
+with Files("*Audio*"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Autocomplete*"):
+    BUG_COMPONENT = ("Toolkit", "Autocomplete")
+
+with Files("BaseKeyframeTypes.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Animation")
+
+with Files("BatteryManager.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("BiquadFilterNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("BrowserElement*"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("CSP*"):
+    BUG_COMPONENT = ("Core", "DOM: Security")
+
+with Files("CSS*"):
+    BUG_COMPONENT = ("Core", "CSS Parsing and Computation")
+
+with Files("Canvas*"):
+    BUG_COMPONENT = ("Core", "Canvas: 2D")
+
+with Files("Caret*"):
+    BUG_COMPONENT = ("Core", "Editor")
+
+with Files("Channel*"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Client*"):
+    BUG_COMPONENT = ("Core", "DOM: Service Workers")
+
+with Files("ClipboardEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("ConstantSourceNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("ContainerBoxObject.webidl"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("ConvolverNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Coordinates.webidl"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("Crypto.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Security")
+
+with Files("Device*"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("Directory.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("DataTransfer*"):
+    BUG_COMPONENT = ("Core", "Drag and Drop")
+
+with Files("DragEvent.webidl"):
+    BUG_COMPONENT = ("Core", "Drag and Drop")
+
+with Files("DecoderDoctorNotification.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Playback")
+
+with Files("DelayNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("DynamicsCompressorNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("DesktopNotification.webidl"):
+    BUG_COMPONENT = ("Toolkit", "Notifications and Alerts")
+
+with Files("FakePluginTagInit.webidl"):
+    BUG_COMPONENT = ("Core", "Plug-ins")
+
+with Files("FlyWeb*"):
+    BUG_COMPONENT = ("Core", "DOM: Flyweb")
+
+with Files("FocusEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("Font*"):
+    BUG_COMPONENT = ("Core", "CSS Parsing and Computation")
+
+with Files("FormData.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Core & HTML")
+
+with Files("Geolocation.webidl"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("GainNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Gamepad*"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("GeometryUtils.webidl"):
+    BUG_COMPONENT = ("Core", "Layout")
+
+with Files("GetUserMediaRequest.webidl"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("Grid.webidl"):
+    BUG_COMPONENT = ("Core", "CSS Parsing and Computation")
+
+with Files("GroupedHistoryEvent.webidl"):
+    BUG_COMPONENT = ("Core", "Document Navigation")
+
+with Files("HTML*"):
+    BUG_COMPONENT = ("Core", "DOM: Core & HTML")
+
+with Files("HashChangeEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("HeapSnapshot.webidl"):
+    BUG_COMPONENT = ("Firefox", "Developer Tools: Memory")
+
+with Files("HiddenPluginEvent.webidl"):
+    BUG_COMPONENT = ("Core", "Plug-ins")
+
+with Files("IDB*"):
+    BUG_COMPONENT = ("Core", "DOM: IndexedDB")
+
+with Files("IIRFilterNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Image*"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("ImageCapture*"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("InputEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("InstallTrigger.webidl"):
+    BUG_COMPONENT = ("Toolkit", "Add-ons Manager")
+
+with Files("InspectorUtils.webidl"):
+    BUG_COMPONENT = ("Firefox", "Developer Tools: Inspector")
+
+with Files("KeyAlgorithm.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Security")
+
+with Files("Key*Event*"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("KeyIdsInitData.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Playback")
+
+with Files("Keyframe*"):
+    BUG_COMPONENT = ("Core", "DOM: Animation")
+
+with Files("LocalMediaStream.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("MediaDevice*"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("Media*Source*"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("MediaStream*"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("MediaStreamAudio*"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("MediaEncryptedEvent.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("MediaKey*"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Playback")
+
+with Files("Media*List*"):
+    BUG_COMPONENT = ("Core", "CSS Parsing and Computation")
+
+with Files("MediaStreamList.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("*Record*"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Recording")
+
+with Files("Media*Track*"):
+    BUG_COMPONENT = ("Core", "WebRTC: Audio/Video")
+
+with Files("Mouse*"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("MozSelfSupport.webidl"):
+    BUG_COMPONENT = ("Firefox Health Report", "Client: Desktop")
+
+with Files("MozTimeManager.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("MutationEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("NativeOSFileInternals.webidl"):
+    BUG_COMPONENT = ("Toolkit", "OS.File")
+
+with Files("Net*"):
+    BUG_COMPONENT = ("Core", "Networking")
+
+with Files("OfflineAudio*"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("OffscreenCanvas.webidl"):
+    BUG_COMPONENT = ("Core", "Canvas 2D")
+
+with Files("OscillatorNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("PannerNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Peer*"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("PeriodicWave.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("PointerEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("PopStateEvent.webidl*"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("Position*"):
+    BUG_COMPONENT = ("Core", "Geolocation")
+
+with Files("ProfileTimelineMarker.webidl"):
+    BUG_COMPONENT = ("Firefox", "Developer Tools: Performance Tools (profiler/timeline)")
+
+with Files("ProgressEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("Push*"):
+    BUG_COMPONENT = ("Core", "DOM: Push Notifications")
+
+with Files("RTC*"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("SVG*"):
+    BUG_COMPONENT = ("Core", "SVG")
+
+with Files("ScriptProcessorNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+# TODO: SecureElement*, SettingChangeNotification
+# are FirefoxOS::*, leaving as Core::DOM
+
+with Files("Selection.webidl"):
+    BUG_COMPONENT = ("Core", "Selection")
+
+with Files("ServiceWorker*"):
+    BUG_COMPONENT = ("Core", "DOM: Service Workers")
+
+with Files("SimpleGestureEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("SocketCommon.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("SourceBuffer*"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("StereoPannerNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("Style*"):
+    BUG_COMPONENT = ("Core", "DOM: CSS Object Model")
+
+with Files("SubtleCrypto.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Security")
+
+with Files("TCP*"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("TextTrack*"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("ThreadSafeChromeUtils.webidl"):
+    BUG_COMPONENT = ("Firefox", "Developer Tools: Memory")
+
+with Files("TrackEvent.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("U2F.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("UDP*"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("UIEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("URL.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("UserProximityEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("VTT*"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("VRDisplay.webidl"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
+with Files("Video*"):
+    BUG_COMPONENT = ("Core", "Audio/Video")
+
+with Files("WaveShaperNode.webidl"):
+    BUG_COMPONENT = ("Core", "Web Audio")
+
+with Files("WebAuthentication.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
+
+with Files("WebGL*"):
+    BUG_COMPONENT = ("Core", "Canvas: WebGL")
+
+with Files("WebKitCSSMatrix.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: CSS Object Model")
+
+with Files("Webrtc*"):
+    BUG_COMPONENT = ("Core", "WebRTC")
+
+with Files("WheelEvent.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Events")
+
+with Files("WidevineCDMManifest.webidl"):
+    BUG_COMPONENT = ("Core", "Audio/Video: Playback")
+
+with Files("WindowOrWorkerGlobalScope.webidl"):
+    BUG_COMPONENT = ("Core", "DOM: Workers")
+
+with Files("Worker*"):
+    BUG_COMPONENT = ("Core", "DOM: Workers")
+
 GENERATED_WEBIDL_FILES = [
     'CSS2Properties.webidl',
 ]
 
 PREPROCESSED_WEBIDL_FILES = [
-    'HTMLMediaElement.webidl',
     'Navigator.webidl',
-    'Promise.webidl',
-    'PromiseDebugging.webidl',
-    'ServiceWorkerRegistration.webidl',
+    'Node.webidl',
     'Window.webidl',
 ]
 
@@ -32,8 +392,6 @@ WEBIDL_FILES = [
     'AppInfo.webidl',
     'AppNotificationServiceOptions.webidl',
     'APZTestData.webidl',
-    'ArchiveReader.webidl',
-    'ArchiveRequest.webidl',
     'Attr.webidl',
     'AudioBuffer.webidl',
     'AudioBufferSourceNode.webidl',
@@ -44,31 +402,26 @@ WEBIDL_FILES = [
     'AudioNode.webidl',
     'AudioParam.webidl',
     'AudioProcessingEvent.webidl',
+    'AudioScheduledSourceNode.webidl',
     'AudioStreamTrack.webidl',
     'AudioTrack.webidl',
     'AudioTrackList.webidl',
+    'AudioWorkletGlobalScope.webidl',
     'AutocompleteInfo.webidl',
-    'AVInputPort.webidl',
     'BarProp.webidl',
+    'BaseAudioContext.webidl',
     'BaseKeyframeTypes.webidl',
+    'BasicCardPayment.webidl',
     'BatteryManager.webidl',
-    'BeforeAfterKeyboardEvent.webidl',
     'BeforeUnloadEvent.webidl',
     'BiquadFilterNode.webidl',
     'Blob.webidl',
     'BoxObject.webidl',
     'BroadcastChannel.webidl',
     'BrowserElement.webidl',
-    'BrowserElementAudioChannel.webidl',
     'BrowserElementDictionaries.webidl',
-    'BrowserElementProxy.webidl',
     'Cache.webidl',
     'CacheStorage.webidl',
-    'CallsList.webidl',
-    'CameraCapabilities.webidl',
-    'CameraControl.webidl',
-    'CameraManager.webidl',
-    'CameraUtil.webidl',
     'CanvasCaptureMediaStream.webidl',
     'CanvasRenderingContext2D.webidl',
     'CaretPosition.webidl',
@@ -79,7 +432,6 @@ WEBIDL_FILES = [
     'CheckerboardReportService.webidl',
     'ChildNode.webidl',
     'ChromeNodeList.webidl',
-    'ChromeNotifications.webidl',
     'ChromeUtils.webidl',
     'Client.webidl',
     'Clients.webidl',
@@ -88,27 +440,42 @@ WEBIDL_FILES = [
     'Comment.webidl',
     'CompositionEvent.webidl',
     'Console.webidl',
-    'Contacts.webidl',
+    'ConstantSourceNode.webidl',
     'ContainerBoxObject.webidl',
     'ConvolverNode.webidl',
     'Coordinates.webidl',
     'CreateOfferRequest.webidl',
+    'CredentialManagement.webidl',
     'Crypto.webidl',
     'CSPDictionaries.webidl',
     'CSPReport.webidl',
     'CSS.webidl',
     'CSSAnimation.webidl',
+    'CSSConditionRule.webidl',
+    'CSSCounterStyleRule.webidl',
+    'CSSFontFaceRule.webidl',
+    'CSSFontFeatureValuesRule.webidl',
+    'CSSGroupingRule.webidl',
+    'CSSImportRule.webidl',
+    'CSSKeyframeRule.webidl',
+    'CSSKeyframesRule.webidl',
     'CSSLexer.webidl',
+    'CSSMediaRule.webidl',
+    'CSSMozDocumentRule.webidl',
+    'CSSNamespaceRule.webidl',
+    'CSSPageRule.webidl',
     'CSSPrimitiveValue.webidl',
     'CSSPseudoElement.webidl',
+    'CSSRule.webidl',
     'CSSRuleList.webidl',
     'CSSStyleDeclaration.webidl',
+    'CSSStyleRule.webidl',
     'CSSStyleSheet.webidl',
+    'CSSSupportsRule.webidl',
     'CSSTransition.webidl',
     'CSSValue.webidl',
     'CSSValueList.webidl',
-    'CustomElementsRegistry.webidl',
-    'DataContainerEvent.webidl',
+    'CustomElementRegistry.webidl',
     'DataTransfer.webidl',
     'DataTransferItem.webidl',
     'DataTransferItemList.webidl',
@@ -117,10 +484,7 @@ WEBIDL_FILES = [
     'DelayNode.webidl',
     'DesktopNotification.webidl',
     'DeviceMotionEvent.webidl',
-    'DeviceStorage.webidl',
-    'DeviceStorageAreaListener.webidl',
     'Directory.webidl',
-    'DisplayPortInputPort.webidl',
     'Document.webidl',
     'DocumentFragment.webidl',
     'DocumentTimeline.webidl',
@@ -128,11 +492,9 @@ WEBIDL_FILES = [
     'DOMCursor.webidl',
     'DOMError.webidl',
     'DOMException.webidl',
-    'DOMFileSystem.webidl',
     'DOMImplementation.webidl',
     'DominatorTree.webidl',
     'DOMMatrix.webidl',
-    'DOMMobileMessageError.webidl',
     'DOMParser.webidl',
     'DOMPoint.webidl',
     'DOMQuad.webidl',
@@ -142,8 +504,6 @@ WEBIDL_FILES = [
     'DOMStringList.webidl',
     'DOMStringMap.webidl',
     'DOMTokenList.webidl',
-    'DOMTransaction.webidl',
-    'Downloads.webidl',
     'DragEvent.webidl',
     'DynamicsCompressorNode.webidl',
     'Element.webidl',
@@ -156,12 +516,20 @@ WEBIDL_FILES = [
     'ExtendableMessageEvent.webidl',
     'FakePluginTagInit.webidl',
     'Fetch.webidl',
+    'FetchController.webidl',
     'FetchEvent.webidl',
+    'FetchObserver.webidl',
+    'FetchSignal.webidl',
     'File.webidl',
     'FileList.webidl',
     'FileMode.webidl',
     'FileReader.webidl',
     'FileReaderSync.webidl',
+    'FileSystem.webidl',
+    'FileSystemDirectoryEntry.webidl',
+    'FileSystemDirectoryReader.webidl',
+    'FileSystemEntry.webidl',
+    'FileSystemFileEntry.webidl',
     'FlyWebDiscoveryManager.webidl',
     'FlyWebFetchEvent.webidl',
     'FlyWebPublish.webidl',
@@ -173,17 +541,19 @@ WEBIDL_FILES = [
     'FormData.webidl',
     'Function.webidl',
     'GainNode.webidl',
+    'Gamepad.webidl',
+    'GamepadHapticActuator.webidl',
+    'GamepadPose.webidl',
+    'GamepadServiceTest.webidl',
     'Geolocation.webidl',
     'GeometryUtils.webidl',
     'GetUserMediaRequest.webidl',
     'Grid.webidl',
-    'HDMIInputPort.webidl',
     'Headers.webidl',
     'HeapSnapshot.webidl',
     'History.webidl',
     'HTMLAllCollection.webidl',
     'HTMLAnchorElement.webidl',
-    'HTMLAppletElement.webidl',
     'HTMLAreaElement.webidl',
     'HTMLAudioElement.webidl',
     'HTMLBaseElement.webidl',
@@ -196,6 +566,7 @@ WEBIDL_FILES = [
     'HTMLDataElement.webidl',
     'HTMLDataListElement.webidl',
     'HTMLDetailsElement.webidl',
+    'HTMLDialogElement.webidl',
     'HTMLDirectoryElement.webidl',
     'HTMLDivElement.webidl',
     'HTMLDListElement.webidl',
@@ -221,6 +592,7 @@ WEBIDL_FILES = [
     'HTMLLIElement.webidl',
     'HTMLLinkElement.webidl',
     'HTMLMapElement.webidl',
+    'HTMLMediaElement.webidl',
     'HTMLMenuElement.webidl',
     'HTMLMenuItemElement.webidl',
     'HTMLMetaElement.webidl',
@@ -257,10 +629,8 @@ WEBIDL_FILES = [
     'HTMLTrackElement.webidl',
     'HTMLUListElement.webidl',
     'HTMLVideoElement.webidl',
-    'IccCardLockError.webidl',
     'IDBCursor.webidl',
     'IDBDatabase.webidl',
-    'IDBEnvironment.webidl',
     'IDBFactory.webidl',
     'IDBFileHandle.webidl',
     'IDBFileRequest.webidl',
@@ -272,6 +642,7 @@ WEBIDL_FILES = [
     'IDBRequest.webidl',
     'IDBTransaction.webidl',
     'IDBVersionChangeEvent.webidl',
+    'IdleDeadline.webidl',
     'IIRFilterNode.webidl',
     'ImageBitmap.webidl',
     'ImageBitmapRenderingContext.webidl',
@@ -279,24 +650,34 @@ WEBIDL_FILES = [
     'ImageData.webidl',
     'ImageDocument.webidl',
     'InputEvent.webidl',
-    'InputMethod.webidl',
-    'InputPort.webidl',
-    'InputPortManager.webidl',
     'InspectorUtils.webidl',
+    'IntersectionObserver.webidl',
     'IterableIterator.webidl',
     'KeyAlgorithm.webidl',
     'KeyboardEvent.webidl',
     'KeyEvent.webidl',
+    'KeyframeAnimationOptions.webidl',
     'KeyframeEffect.webidl',
+    'KeyIdsInitData.webidl',
     'LegacyQueryInterface.webidl',
     'LinkStyle.webidl',
     'ListBoxObject.webidl',
     'LocalMediaStream.webidl',
     'Location.webidl',
+    'MatchGlob.webidl',
+    'MatchPattern.webidl',
     'MediaDeviceInfo.webidl',
     'MediaDevices.webidl',
     'MediaElementAudioSourceNode.webidl',
+    'MediaEncryptedEvent.webidl',
     'MediaError.webidl',
+    'MediaKeyError.webidl',
+    'MediaKeyMessageEvent.webidl',
+    'MediaKeys.webidl',
+    'MediaKeySession.webidl',
+    'MediaKeysRequestStatus.webidl',
+    'MediaKeyStatusMap.webidl',
+    'MediaKeySystemAccess.webidl',
     'MediaList.webidl',
     'MediaQueryList.webidl',
     'MediaRecorder.webidl',
@@ -313,31 +694,13 @@ WEBIDL_FILES = [
     'MessageChannel.webidl',
     'MessageEvent.webidl',
     'MessagePort.webidl',
-    'MessagePortList.webidl',
     'MimeType.webidl',
     'MimeTypeArray.webidl',
-    'MMICall.webidl',
-    'MmsMessage.webidl',
-    'MobileMessageThread.webidl',
     'MouseEvent.webidl',
     'MouseScrollEvent.webidl',
-    'MozCellBroadcast.webidl',
-    'MozCellBroadcastMessage.webidl',
-    'MozIcc.webidl',
-    'MozIccInfo.webidl',
-    'MozIccManager.webidl',
-    'MozMobileCellInfo.webidl',
-    'MozMobileConnection.webidl',
-    'MozMobileConnectionArray.webidl',
-    'MozMobileConnectionInfo.webidl',
-    'MozMobileMessageManager.webidl',
-    'MozMobileNetworkInfo.webidl',
     'MozPowerManager.webidl',
     'MozSelfSupport.webidl',
-    'MozTetheringManager.webidl',
     'MozTimeManager.webidl',
-    'MozVoicemail.webidl',
-    'MozVoicemailStatus.webidl',
     'MozWakeLock.webidl',
     'MutationEvent.webidl',
     'MutationObserver.webidl',
@@ -346,22 +709,25 @@ WEBIDL_FILES = [
     'NetDashboard.webidl',
     'NetworkInformation.webidl',
     'NetworkOptions.webidl',
-    'Node.webidl',
     'NodeFilter.webidl',
     'NodeIterator.webidl',
     'NodeList.webidl',
     'Notification.webidl',
     'NotificationEvent.webidl',
     'NotifyPaintEvent.webidl',
-    'OfflineAudioCompletionEvent.webidl',
     'OfflineAudioContext.webidl',
     'OfflineResourceList.webidl',
     'OffscreenCanvas.webidl',
     'OscillatorNode.webidl',
     'PaintRequest.webidl',
     'PaintRequestList.webidl',
+    'PaintWorkletGlobalScope.webidl',
     'PannerNode.webidl',
     'ParentNode.webidl',
+    'PaymentAddress.webidl',
+    'PaymentRequest.webidl',
+    'PaymentRequestUpdateEvent.webidl',
+    'PaymentResponse.webidl',
     'Performance.webidl',
     'PerformanceEntry.webidl',
     'PerformanceMark.webidl',
@@ -373,30 +739,34 @@ WEBIDL_FILES = [
     'PerformanceTiming.webidl',
     'PeriodicWave.webidl',
     'Permissions.webidl',
-    'PermissionSettings.webidl',
     'PermissionStatus.webidl',
-    'PhoneNumberService.webidl',
     'Plugin.webidl',
     'PluginArray.webidl',
     'PointerEvent.webidl',
     'PopupBoxObject.webidl',
     'Position.webidl',
     'PositionError.webidl',
+    'PrecompiledScript.webidl',
     'Presentation.webidl',
     'PresentationAvailability.webidl',
     'PresentationConnection.webidl',
     'PresentationConnectionList.webidl',
-    'PresentationDeviceInfoManager.webidl',
     'PresentationReceiver.webidl',
     'PresentationRequest.webidl',
     'ProcessingInstruction.webidl',
     'ProfileTimelineMarker.webidl',
+    'Promise.webidl',
+    'PromiseDebugging.webidl',
+    'PushEvent.webidl',
+    'PushManager.webidl',
+    'PushManager.webidl',
+    'PushMessageData.webidl',
+    'PushSubscription.webidl',
+    'PushSubscriptionOptions.webidl',
     'RadioNodeList.webidl',
     'Range.webidl',
     'Rect.webidl',
     'Request.webidl',
-    'ResourceStats.webidl',
-    'ResourceStatsManager.webidl',
     'Response.webidl',
     'RGBColor.webidl',
     'RTCStatsReport.webidl',
@@ -409,21 +779,21 @@ WEBIDL_FILES = [
     'ServiceWorker.webidl',
     'ServiceWorkerContainer.webidl',
     'ServiceWorkerGlobalScope.webidl',
-    'ServiceWorkerMessageEvent.webidl',
+    'ServiceWorkerRegistration.webidl',
     'SettingChangeNotification.webidl',
-    'SettingsManager.webidl',
     'ShadowRoot.webidl',
     'SharedWorker.webidl',
     'SharedWorkerGlobalScope.webidl',
     'SimpleGestureEvent.webidl',
-    'SmsMessage.webidl',
     'SocketCommon.webidl',
     'SourceBuffer.webidl',
     'SourceBufferList.webidl',
     'StereoPannerNode.webidl',
     'Storage.webidl',
     'StorageEvent.webidl',
+    'StorageManager.webidl',
     'StorageType.webidl',
+    'StructuredCloneHolder.webidl',
     'StyleSheet.webidl',
     'StyleSheetList.webidl',
     'SubtleCrypto.webidl',
@@ -452,7 +822,6 @@ WEBIDL_FILES = [
     'SVGComponentTransferFunctionElement.webidl',
     'SVGDefsElement.webidl',
     'SVGDescElement.webidl',
-    'SVGDocument.webidl',
     'SVGElement.webidl',
     'SVGEllipseElement.webidl',
     'SVGFEBlendElement.webidl',
@@ -485,6 +854,7 @@ WEBIDL_FILES = [
     'SVGFitToViewBox.webidl',
     'SVGForeignObjectElement.webidl',
     'SVGGElement.webidl',
+    'SVGGeometryElement.webidl',
     'SVGGradientElement.webidl',
     'SVGGraphicsElement.webidl',
     'SVGImageElement.webidl',
@@ -529,21 +899,17 @@ WEBIDL_FILES = [
     'SVGTransformList.webidl',
     'SVGTSpanElement.webidl',
     'SVGUnitTypes.webidl',
+    'SVGUnitTypeValues.webidl',
     'SVGURIReference.webidl',
     'SVGUseElement.webidl',
     'SVGViewElement.webidl',
     'SVGZoomAndPan.webidl',
-    'SVGZoomEvent.webidl',
-    'SystemUpdate.webidl',
+    'SVGZoomAndPanValues.webidl',
     'TCPServerSocket.webidl',
     'TCPServerSocketEvent.webidl',
     'TCPSocket.webidl',
     'TCPSocketErrorEvent.webidl',
     'TCPSocketEvent.webidl',
-    'Telephony.webidl',
-    'TelephonyCall.webidl',
-    'TelephonyCallGroup.webidl',
-    'TelephonyCallId.webidl',
     'Text.webidl',
     'TextClause.webidl',
     'TextDecoder.webidl',
@@ -562,42 +928,45 @@ WEBIDL_FILES = [
     'TreeBoxObject.webidl',
     'TreeColumn.webidl',
     'TreeColumns.webidl',
+    'TreeContentView.webidl',
+    'TreeView.webidl',
     'TreeWalker.webidl',
-    'TVChannel.webidl',
-    'TVManager.webidl',
-    'TVProgram.webidl',
-    'TVSource.webidl',
-    'TVTuner.webidl',
     'U2F.webidl',
     'UDPMessageEvent.webidl',
     'UDPSocket.webidl',
     'UIEvent.webidl',
-    'UndoManager.webidl',
     'URL.webidl',
     'URLSearchParams.webidl',
-    'USSDSession.webidl',
     'ValidityState.webidl',
     'VideoPlaybackQuality.webidl',
     'VideoStreamTrack.webidl',
     'VideoTrack.webidl',
     'VideoTrackList.webidl',
-    'VRDevice.webidl',
+    'VRDisplay.webidl',
+    'VRDisplayEvent.webidl',
+    'VRServiceTest.webidl',
     'VTTCue.webidl',
     'VTTRegion.webidl',
     'WaveShaperNode.webidl',
+    'WebAuthentication.webidl',
     'WebComponents.webidl',
+    'WebExtensionContentScript.webidl',
+    'WebExtensionPolicy.webidl',
     'WebGL2RenderingContext.webidl',
     'WebGLRenderingContext.webidl',
     'WebKitCSSMatrix.webidl',
     'WebSocket.webidl',
     'WheelEvent.webidl',
-    'WifiOptions.webidl',
+    'WidevineCDMManifest.webidl',
+    'WindowOrWorkerGlobalScope.webidl',
     'WindowRoot.webidl',
     'Worker.webidl',
     'WorkerDebuggerGlobalScope.webidl',
     'WorkerGlobalScope.webidl',
     'WorkerLocation.webidl',
     'WorkerNavigator.webidl',
+    'Worklet.webidl',
+    'WorkletGlobalScope.webidl',
     'XMLDocument.webidl',
     'XMLHttpRequest.webidl',
     'XMLHttpRequestEventTarget.webidl',
@@ -612,12 +981,8 @@ WEBIDL_FILES = [
     'XULCommandEvent.webidl',
     'XULDocument.webidl',
     'XULElement.webidl',
+    'XULTemplateBuilder.webidl',
 ]
-
-if CONFIG['MOZ_AUDIO_CHANNEL_MANAGER']:
-    WEBIDL_FILES += [
-        'AudioChannelManager.webidl',
-    ]
 
 if CONFIG['MOZ_WEBRTC']:
     WEBIDL_FILES += [
@@ -629,6 +994,7 @@ if CONFIG['MOZ_WEBRTC']:
         'PeerConnectionObserverEnums.webidl',
         'RTCCertificate.webidl',
         'RTCConfiguration.webidl',
+        'RTCDTMFSender.webidl',
         'RTCIceCandidate.webidl',
         'RTCIdentityAssertion.webidl',
         'RTCIdentityProvider.webidl',
@@ -658,20 +1024,11 @@ if CONFIG['MOZ_WEBSPEECH']:
         'SpeechSynthesisVoice.webidl',
     ]
 
-if CONFIG['MOZ_GAMEPAD']:
-    WEBIDL_FILES += [
-        'Gamepad.webidl',
-        'GamepadServiceTest.webidl'
-    ]
-
 WEBIDL_FILES += [
     'CloseEvent.webidl',
     'CustomEvent.webidl',
     'DeviceOrientationEvent.webidl',
-    'DeviceStorageChangeEvent.webidl',
-    'DOMTransactionEvent.webidl',
     'HashChangeEvent.webidl',
-    'MozSettingsEvent.webidl',
     'PageTransitionEvent.webidl',
     'PopStateEvent.webidl',
     'PopupBlockedEvent.webidl',
@@ -690,133 +1047,52 @@ if CONFIG['MOZ_DEBUG']:
                      'TestInterfaceJSDictionaries.webidl',
                      'TestInterfaceJSMaplikeSetlikeIterable.webidl']
 
-if CONFIG['MOZ_B2G_BT']:
-    WEBIDL_FILES += [
-        'BluetoothAdapter.webidl',
-        'BluetoothClassOfDevice.webidl',
-        'BluetoothDevice.webidl',
-        'BluetoothDiscoveryHandle.webidl',
-        'BluetoothGatt.webidl',
-        'BluetoothGattAttributeEvent.webidl',
-        'BluetoothGattCharacteristic.webidl',
-        'BluetoothGattDescriptor.webidl',
-        'BluetoothGattServer.webidl',
-        'BluetoothGattService.webidl',
-        'BluetoothLeDeviceEvent.webidl',
-        'BluetoothManager.webidl',
-        'BluetoothMapParameters.webidl',
-        'BluetoothMapRequestHandle.webidl',
-        'BluetoothObexAuthHandle.webidl',
-        'BluetoothPairingHandle.webidl',
-        'BluetoothPairingListener.webidl',
-        'BluetoothPbapParameters.webidl',
-        'BluetoothPbapRequestHandle.webidl',
-        'BluetoothUUID.webidl',
-    ]
-
-if CONFIG['MOZ_SIMPLEPUSH']:
-    WEBIDL_FILES += [
-        'SimplePushManager.webidl'
-    ]
-else:
-    WEBIDL_FILES += [
-        'PushEvent.webidl',
-        'PushManager.webidl',
-        'PushManager.webidl',
-        'PushMessageData.webidl',
-        'PushSubscription.webidl',
-        'PushSubscriptionOptions.webidl',
-    ]
-
-if CONFIG['MOZ_NFC']:
-    WEBIDL_FILES += [
-         'MozIsoDepTech.webidl',
-         'MozNDEFRecord.webidl',
-         'MozNFC.webidl',
-         'MozNfcATech.webidl',
-         'MozNFCPeer.webidl',
-         'MozNFCTag.webidl',
-         'NfcOptions.webidl',
-    ]
-
 if CONFIG['MOZ_SECUREELEMENT']:
     WEBIDL_FILES += [
          'SecureElement.webidl',
          'SecureElementManager.webidl',
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    WEBIDL_FILES += [
-        'MozNetworkStats.webidl',
-        'MozNetworkStatsAlarm.webidl',
-        'MozNetworkStatsData.webidl',
-        'MozNetworkStatsInterface.webidl',
-        'MozNetworkStatsManager.webidl',
-        'MozSpeakerManager.webidl',
-        'MozWifiCapabilities.webidl',
-        'MozWifiManager.webidl',
-        'MozWifiP2pManager.webidl',
-    ]
-else:
-    WEBIDL_FILES += [
-        'InstallTrigger.webidl',
-    ]
+WEBIDL_FILES += [
+    'InstallTrigger.webidl',
+]
 
-if CONFIG['MOZ_B2G_FM']:
+if CONFIG['FUZZING']:
     WEBIDL_FILES += [
-        'FMRadio.webidl',
+        'FuzzingFunctions.webidl',
     ]
 
 GENERATED_EVENTS_WEBIDL_FILES = [
     'AddonEvent.webidl',
     'AnimationPlaybackEvent.webidl',
-    'AutocompleteErrorEvent.webidl',
     'BlobEvent.webidl',
-    'CallEvent.webidl',
-    'CallGroupErrorEvent.webidl',
-    'CameraClosedEvent.webidl',
-    'CameraConfigurationEvent.webidl',
-    'CameraFacesDetectedEvent.webidl',
-    'CameraStateChangeEvent.webidl',
     'CaretStateChangedEvent.webidl',
-    'CFStateChangeEvent.webidl',
     'CloseEvent.webidl',
-    'DataErrorEvent.webidl',
     'DeviceLightEvent.webidl',
     'DeviceOrientationEvent.webidl',
     'DeviceProximityEvent.webidl',
-    'DeviceStorageAreaChangedEvent.webidl',
-    'DeviceStorageChangeEvent.webidl',
-    'DOMTransactionEvent.webidl',
-    'DownloadEvent.webidl',
     'ErrorEvent.webidl',
     'FontFaceSetLoadEvent.webidl',
+    'GamepadAxisMoveEvent.webidl',
+    'GamepadButtonEvent.webidl',
+    'GamepadEvent.webidl',
+    'GroupedHistoryEvent.webidl',
     'HashChangeEvent.webidl',
     'HiddenPluginEvent.webidl',
-    'IccChangeEvent.webidl',
     'ImageCaptureErrorEvent.webidl',
+    'MediaQueryListEvent.webidl',
     'MediaStreamEvent.webidl',
     'MediaStreamTrackEvent.webidl',
-    'MozCellBroadcastEvent.webidl',
-    'MozClirModeEvent.webidl',
-    'MozContactChangeEvent.webidl',
-    'MozEmergencyCbModeEvent.webidl',
-    'MozMessageDeletedEvent.webidl',
-    'MozMmsEvent.webidl',
-    'MozOtaStatusEvent.webidl',
-    'MozSettingsEvent.webidl',
-    'MozSettingsTransactionEvent.webidl',
-    'MozSmsEvent.webidl',
-    'MozStkCommandEvent.webidl',
-    'MozVoicemailEvent.webidl',
+    'OfflineAudioCompletionEvent.webidl',
     'PageTransitionEvent.webidl',
     'PerformanceEntryEvent.webidl',
     'PluginCrashedEvent.webidl',
     'PopStateEvent.webidl',
     'PopupBlockedEvent.webidl',
     'PresentationConnectionAvailableEvent.webidl',
-    'PresentationConnectionClosedEvent.webidl',
+    'PresentationConnectionCloseEvent.webidl',
     'ProgressEvent.webidl',
+    'PromiseRejectionEvent.webidl',
     'RecordErrorEvent.webidl',
     'ScrollViewChangeEvent.webidl',
     'StyleRuleChangeEvent.webidl',
@@ -826,19 +1102,15 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'TCPSocketErrorEvent.webidl',
     'TCPSocketEvent.webidl',
     'TrackEvent.webidl',
-    'TVCurrentChannelChangedEvent.webidl',
-    'TVCurrentSourceChangedEvent.webidl',
-    'TVEITBroadcastedEvent.webidl',
-    'TVScanningStateChangedEvent.webidl',
     'UDPMessageEvent.webidl',
     'UserProximityEvent.webidl',
-    'USSDReceivedEvent.webidl',
     'WebGLContextEvent.webidl',
 ]
 
 if CONFIG['MOZ_WEBRTC']:
     GENERATED_EVENTS_WEBIDL_FILES += [
         'RTCDataChannelEvent.webidl',
+        'RTCDTMFToneChangeEvent.webidl',
         'RTCPeerConnectionIceEvent.webidl',
         'RTCTrackEvent.webidl',
     ]
@@ -848,47 +1120,6 @@ if CONFIG['MOZ_WEBSPEECH']:
         'SpeechRecognitionEvent.webidl',
         'SpeechSynthesisErrorEvent.webidl',
         'SpeechSynthesisEvent.webidl',
-    ]
-
-if CONFIG['MOZ_GAMEPAD']:
-    GENERATED_EVENTS_WEBIDL_FILES += [
-        'GamepadAxisMoveEvent.webidl',
-        'GamepadButtonEvent.webidl',
-        'GamepadEvent.webidl',
-    ]
-
-if CONFIG['MOZ_B2G_BT']:
-    GENERATED_EVENTS_WEBIDL_FILES += [
-        'BluetoothAdapterEvent.webidl',
-        'BluetoothAttributeEvent.webidl',
-        'BluetoothDeviceEvent.webidl',
-        'BluetoothGattCharacteristicEvent.webidl',
-        'BluetoothMapFolderListingEvent.webidl',
-        'BluetoothMapGetMessageEvent.webidl',
-        'BluetoothMapMessagesListingEvent.webidl',
-        'BluetoothMapMessageUpdateEvent.webidl',
-        'BluetoothMapSendMessageEvent.webidl',
-        'BluetoothMapSetMessageStatusEvent.webidl',
-        'BluetoothObexAuthEvent.webidl',
-        'BluetoothPairingEvent.webidl',
-        'BluetoothPhonebookPullingEvent.webidl',
-        'BluetoothStatusChangedEvent.webidl',
-        'BluetoothVCardListingEvent.webidl',
-        'BluetoothVCardPullingEvent.webidl'
-    ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    GENERATED_EVENTS_WEBIDL_FILES += [
-        'MozWifiConnectionInfoEvent.webidl',
-        'MozWifiP2pStatusChangeEvent.webidl',
-        'MozWifiStationInfoEvent.webidl',
-        'MozWifiStatusChangeEvent.webidl',
-    ]
-
-if CONFIG['MOZ_NFC']:
-    GENERATED_EVENTS_WEBIDL_FILES += [
-        'MozNFCPeerEvent.webidl',
-        'MozNFCTagEvent.webidl',
     ]
 
 if CONFIG['MOZ_BUILD_APP'] in ['browser', 'xulrunner'] or CONFIG['MOZ_SUITE']:
@@ -901,35 +1132,20 @@ if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
         'External.webidl',
     ]
 
-if CONFIG['MOZ_EME']:
-    WEBIDL_FILES += [
-        'MediaEncryptedEvent.webidl',
-        'MediaKeyError.webidl',
-        'MediaKeyMessageEvent.webidl',
-        'MediaKeys.webidl',
-        'MediaKeySession.webidl',
-        'MediaKeysRequestStatus.webidl',
-        'MediaKeyStatusMap.webidl',
-        'MediaKeySystemAccess.webidl',
-        'WidevineCDMManifest.webidl',
-    ]
-
-if CONFIG['MOZ_PAY']:
-    WEBIDL_FILES += [
-        'MozPaymentProvider.webidl'
-    ]
-
 if CONFIG['MOZ_B2G']:
     WEBIDL_FILES += [
-        'Apps.webidl',
-        'Identity.webidl',
         'MozApplicationEvent.webidl'
     ]
     GENERATED_EVENTS_WEBIDL_FILES += [
         'MozApplicationEvent.webidl'
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+if CONFIG['ACCESSIBILITY']:
     WEBIDL_FILES += [
-        'AlarmsManager.webidl',
+        'AccessibleNode.webidl',
+    ]
+
+if CONFIG['ENABLE_INTL_API']:
+    WEBIDL_FILES += [
+        'IntlUtils.webidl',
     ]

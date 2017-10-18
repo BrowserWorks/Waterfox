@@ -4,8 +4,7 @@
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-////////////////////////////////////////////////////////////////////////////////
-//// Constants
+// Constants
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -14,22 +13,18 @@ const Cr = Components.results;
 const CONTENT_HANDLING_URL = "chrome://mozapps/content/handling/dialog.xul";
 const STRINGBUNDLE_URL = "chrome://mozapps/locale/handling/handling.properties";
 
-////////////////////////////////////////////////////////////////////////////////
-//// nsContentDispatchChooser class
+// nsContentDispatchChooser class
 
-function nsContentDispatchChooser()
-{
+function nsContentDispatchChooser() {
 }
 
 nsContentDispatchChooser.prototype =
 {
   classID: Components.ID("e35d5067-95bc-4029-8432-e8f1e431148d"),
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsIContentDispatchChooser
+  // nsIContentDispatchChooser
 
-  ask: function ask(aHandler, aWindowContext, aURI, aReason)
-  {
+  ask: function ask(aHandler, aWindowContext, aURI, aReason) {
     var window = null;
     try {
       if (aWindowContext)
@@ -61,11 +56,11 @@ nsContentDispatchChooser.prototype =
     for (let text of arr) {
       let string = new SupportsString;
       string.data = text;
-      params.appendElement(string, false);
+      params.appendElement(string);
     }
-    params.appendElement(aHandler, false);
-    params.appendElement(aURI, false);
-    params.appendElement(aWindowContext, false);
+    params.appendElement(aHandler);
+    params.appendElement(aURI);
+    params.appendElement(aWindowContext);
 
     var ww = Cc["@mozilla.org/embedcomp/window-watcher;1"].
              getService(Ci.nsIWindowWatcher);
@@ -76,14 +71,12 @@ nsContentDispatchChooser.prototype =
                   params);
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsISupports
+  // nsISupports
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentDispatchChooser])
 };
 
-////////////////////////////////////////////////////////////////////////////////
-//// Module
+// Module
 
 var components = [nsContentDispatchChooser];
 

@@ -61,6 +61,12 @@ public class TestStoreTracking extends AndroidSyncTestCase {
       }
 
       @Override
+      public void onRecordStoreReconciled(String guid) {
+        Logger.debug(getName(), "Reconciled " + guid);
+        assertEq(expectedGUID, guid);
+      }
+
+      @Override
       public void onStoreCompleted(long storeEnd) {
         Logger.debug(getName(), "Store completed at " + storeEnd + ".");
         try {
@@ -104,12 +110,27 @@ public class TestStoreTracking extends AndroidSyncTestCase {
                     performNotify(e);
                   }
                 }
+
+                @Override
+                public void onBatchCompleted() {
+
+                }
               });
+            }
+
+            @Override
+            public void onBatchCompleted() {
+
             }
           });
         } catch (InactiveSessionException e) {
           performNotify(e);
         }
+      }
+
+      @Override
+      public void onStoreFailed(Exception e) {
+
       }
     };
 
@@ -155,6 +176,11 @@ public class TestStoreTracking extends AndroidSyncTestCase {
                   } catch (InactiveSessionException e) {
                     performNotify(e);
                   }
+                }
+
+                @Override
+                public void onBatchCompleted() {
+
                 }
               });
             }

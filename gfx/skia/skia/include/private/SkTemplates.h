@@ -11,6 +11,7 @@
 #define SkTemplates_DEFINED
 
 #include "SkMath.h"
+#include "SkMalloc.h"
 #include "SkTLogic.h"
 #include "SkTypes.h"
 #include <limits.h>
@@ -42,7 +43,7 @@ template <typename D, typename S> static D* SkTAfter(S* ptr, size_t count = 1) {
 template <typename D, typename S> static D* SkTAddOffset(S* ptr, size_t byteOffset) {
     // The intermediate char* has the same cv-ness as D as this produces better error messages.
     // This relies on the fact that reinterpret_cast can add constness, but cannot remove it.
-    return reinterpret_cast<D*>((char*)(ptr) + byteOffset);
+    return reinterpret_cast<D*>(reinterpret_cast<sknonstd::same_cv_t<char, D>*>(ptr) + byteOffset);
 }
 
 template <typename R, typename T, R (*P)(T*)> struct SkFunctionWrapper {
@@ -79,33 +80,6 @@ public:
     SkAutoTCallIProc(T* obj): std::unique_ptr<T, SkFunctionWrapper<int, T, P>>(obj) {}
 
     operator T*() const { return this->get(); }
-};
-
-/** \class SkAutoTDelete
-  An SkAutoTDelete<T> is like a T*, except that the destructor of SkAutoTDelete<T>
-  automatically deletes the pointer it holds (if any).  That is, SkAutoTDelete<T>
-  owns the T object that it points to.  Like a T*, an SkAutoTDelete<T> may hold
-  either NULL or a pointer to a T object.  Also like T*, SkAutoTDelete<T> is
-  thread-compatible, and once you dereference it, you get the threadsafety
-  guarantees of T.
-
-  The size of a SkAutoTDelete is small: sizeof(SkAutoTDelete<T>) == sizeof(T*)
-*/
-template <typename T> class SkAutoTDelete : public std::unique_ptr<T> {
-public:
-    SkAutoTDelete(T* obj = NULL) : std::unique_ptr<T>(obj) {}
-
-    operator T*() const { return this->get(); }
-
-#if defined(SK_BUILD_FOR_ANDROID_FRAMEWORK)
-    // Need to update graphics/BitmapRegionDecoder.cpp.
-    T* detach() { return this->release(); }
-#endif
-};
-
-template <typename T> class SkAutoTDeleteArray : public std::unique_ptr<T[]> {
-public:
-    SkAutoTDeleteArray(T array[]) : std::unique_ptr<T[]>(array) {}
 };
 
 /** Allocate an array of T elements, and free the array in the destructor
@@ -192,6 +166,7 @@ public:
             (--iter)->~T();
         }
 
+        SkASSERT(count >= 0);
         if (fCount != count) {
             if (fCount > kCount) {
                 // 'fArray' was allocated last time so free it now
@@ -230,6 +205,14 @@ public:
      */
     T* get() const { return fArray; }
 
+    T* begin() { return fArray; }
+
+    const T* begin() const { return fArray; }
+
+    T* end() { return fArray + fCount; }
+
+    const T* end() const { return fArray + fCount; }
+
     /** Return the nth element in the array
      */
     T&  operator[](int index) const {
@@ -267,8 +250,10 @@ public:
 
     /** Allocates space for 'count' Ts. */
     explicit SkAutoTMalloc(size_t count) {
-        fPtr = (T*)sk_malloc_flags(count * sizeof(T), SK_MALLOC_THROW);
+        fPtr = count ? (T*)sk_malloc_flags(count * sizeof(T), SK_MALLOC_THROW) : nullptr;
     }
+
+    SkAutoTMalloc(SkAutoTMalloc<T>&& that) : fPtr(that.release()) {}
 
     ~SkAutoTMalloc() {
         sk_free(fPtr);
@@ -276,7 +261,11 @@ public:
 
     /** Resize the memory area pointed to by the current ptr preserving contents. */
     void realloc(size_t count) {
-        fPtr = reinterpret_cast<T*>(sk_realloc_throw(fPtr, count * sizeof(T)));
+        if (count) {
+            fPtr = reinterpret_cast<T*>(sk_realloc_throw(fPtr, count * sizeof(T)));
+        } else {
+            this->reset(0);
+        }
     }
 
     /** Resize the memory area pointed to by the current ptr without preserving contents. */
@@ -304,6 +293,14 @@ public:
         return fPtr[index];
     }
 
+    SkAutoTMalloc& operator=(SkAutoTMalloc<T>&& that) {
+        if (this != &that) {
+            sk_free(fPtr);
+            fPtr = that.release();
+        }
+        return *this;
+    }
+
     /**
      *  Transfer ownership of the ptr to the caller, setting the internal
      *  pointer to NULL. Note that this differs from get(), which also returns
@@ -326,8 +323,10 @@ public:
     SkAutoSTMalloc(size_t count) {
         if (count > kCount) {
             fPtr = (T*)sk_malloc_flags(count * sizeof(T), SK_MALLOC_THROW | SK_MALLOC_TEMP);
-        } else {
+        } else if (count) {
             fPtr = fTStorage;
+        } else {
+            fPtr = nullptr;
         }
     }
 
@@ -344,8 +343,10 @@ public:
         }
         if (count > kCount) {
             fPtr = (T*)sk_malloc_throw(count * sizeof(T));
-        } else {
+        } else if (count) {
             fPtr = fTStorage;
+        } else {
+            fPtr = nullptr;
         }
         return fPtr;
     }
@@ -377,8 +378,12 @@ public:
             } else {
                 fPtr = (T*)sk_realloc_throw(fPtr, count * sizeof(T));
             }
-        } else if (fPtr != fTStorage) {
-            fPtr = (T*)sk_realloc_throw(fPtr, count * sizeof(T));
+        } else if (count) {
+            if (fPtr != fTStorage) {
+                fPtr = (T*)sk_realloc_throw(fPtr, count * sizeof(T));
+            }
+        } else {
+            this->reset(0);
         }
     }
 
@@ -434,6 +439,12 @@ T* SkInPlaceNewCheck(void* storage, size_t size, const A1& a1, const A2& a2, con
     return (sizeof(T) <= size) ? new (storage) T(a1, a2, a3) : new T(a1, a2, a3);
 }
 
+template <typename T, typename A1, typename A2, typename A3, typename A4>
+T* SkInPlaceNewCheck(void* storage, size_t size,
+                     const A1& a1, const A2& a2, const A3& a3, const A4& a4) {
+    return (sizeof(T) <= size) ? new (storage) T(a1, a2, a3, a4) : new T(a1, a2, a3, a4);
+}
+
 /**
  * Reserves memory that is aligned on double and pointer boundaries.
  * Hopefully this is sufficient for all practical purposes.
@@ -469,5 +480,7 @@ public:
 private:
     SkAlignedSStorage<sizeof(T)*N> fStorage;
 };
+
+using SkAutoFree = std::unique_ptr<void, SkFunctionWrapper<void, void, sk_free>>;
 
 #endif

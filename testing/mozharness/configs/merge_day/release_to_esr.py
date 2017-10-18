@@ -1,9 +1,10 @@
 import os
 
 ABS_WORK_DIR = os.path.join(os.getcwd(), "build")
-NEW_ESR_REPO = "ssh://hg.mozilla.org/releases/mozilla-esr45"
-OLD_ESR_REPO = "https://hg.mozilla.org/releases/mozilla-esr38"
-OLD_ESR_CHANGESET = "16351963d75c"
+NEW_ESR_REPO = "ssh://hg.mozilla.org/releases/mozilla-esr59"
+# ESR-specific branding (logo) lives in the old repo:
+OLD_ESR_REPO = "https://hg.mozilla.org/releases/mozilla-esr52"
+OLD_ESR_CHANGESET = "df0931ac8b02"
 
 config = {
     "log_name": "relese_to_esr",
@@ -20,6 +21,18 @@ config = {
         ("browser/confvars.sh",
          "MAR_CHANNEL_ID=firefox-mozilla-release",
          "MAR_CHANNEL_ID=firefox-mozilla-esr"),
+        ("build/mozconfig.common",
+         "# Enable checking that add-ons are signed by the trusted root",
+         "# Disable checking that add-ons are signed by the trusted root"),
+        ("build/mozconfig.common",
+         "MOZ_ADDON_SIGNING=${MOZ_ADDON_SIGNING-1}",
+         "MOZ_ADDON_SIGNING=${MOZ_ADDON_SIGNING-0}"),
+        ("build/mozconfig.common",
+         "# Enable enforcing that add-ons are signed by the trusted root",
+         "# Disable enforcing that add-ons are signed by the trusted root"),
+        ("build/mozconfig.common",
+         "MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-1}",
+         "MOZ_REQUIRE_SIGNING=${MOZ_REQUIRE_SIGNING-0}"),
     ],
     "vcs_share_base": os.path.join(ABS_WORK_DIR, 'hg-shared'),
     # "hg_share_base": None,
@@ -29,14 +42,12 @@ config = {
     "to_repo_url": NEW_ESR_REPO,
 
     "base_tag": "FIREFOX_ESR_%(major_version)s_BASE",
-    "end_tag": "FIREFOX_ESR_%(major_version)s_END",
-
     "migration_behavior": "release_to_esr",
     "require_remove_locales": False,
-    "transplant_patches": [
+    "graft_patches": [
         {"repo": OLD_ESR_REPO,
          "changeset": OLD_ESR_CHANGESET},
     ],
     "requires_head_merge": False,
-    "pull_all_branches": True,
+    "pull_all_branches": False,
 }

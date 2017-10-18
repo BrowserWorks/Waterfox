@@ -12,6 +12,8 @@
 
 #include "PoisonIOInterposer.h"
 
+#include "prlock.h"
+
 #ifdef MOZ_REPLACE_MALLOC
 #include "replace_malloc_bridge.h"
 #endif
@@ -35,6 +37,7 @@ FileDescriptorToHandle(int aFd)
 using namespace mozilla;
 
 namespace {
+
 struct DebugFilesAutoLockTraits
 {
   typedef PRLock* type;
@@ -47,7 +50,6 @@ class DebugFilesAutoLock : public Scoped<DebugFilesAutoLockTraits>
 {
   static PRLock* Lock;
 public:
-  static void Clear();
   static PRLock* getDebugFileIDsLock()
   {
     // On windows this static is not thread safe, but we know that the first
@@ -73,12 +75,6 @@ public:
 };
 
 PRLock* DebugFilesAutoLock::Lock;
-void
-DebugFilesAutoLock::Clear()
-{
-  MOZ_ASSERT(Lock != nullptr);
-  Lock = nullptr;
-}
 
 // The ChunkedList<T> class implements, at the high level, a non-iterable
 // list of instances of T. Its goal is to be somehow minimalist for the
@@ -205,7 +201,6 @@ getDebugFileIDs()
   static FdList DebugFileIDs;
   return DebugFileIDs;
 }
-
 
 } // namespace
 

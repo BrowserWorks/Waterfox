@@ -85,7 +85,8 @@ private:
                                             nsIContent **outImageOrLinkNode,
                                             bool* outDragSelectedText);
   static already_AddRefed<nsIContent> FindParentLinkNode(nsIContent* inNode);
-  static void GetAnchorURL(nsIContent* inNode, nsAString& outURL);
+  static MOZ_MUST_USE nsresult
+  GetAnchorURL(nsIContent* inNode, nsAString& outURL);
   static void GetNodeString(nsIContent* inNode, nsAString & outNodeString);
   static void CreateLinkText(const nsAString& inURL, const nsAString & inText,
                               nsAString& outLinkText);
@@ -164,7 +165,7 @@ nsContentAreaDragDropDataProvider::SaveURIToFile(nsAString& inSourceURIString,
 
   // referrer policy can be anything since the referrer is nullptr
   return persist->SavePrivacyAwareURI(sourceURI, nullptr, nullptr,
-                                      mozilla::net::RP_Default,
+                                      mozilla::net::RP_Unset,
                                       nullptr, nullptr,
                                       inDestFile, isPrivate);
 }
@@ -295,19 +296,21 @@ DragDataProducer::FindParentLinkNode(nsIContent* inNode)
 //
 // GetAnchorURL
 //
-void
+nsresult
 DragDataProducer::GetAnchorURL(nsIContent* inNode, nsAString& outURL)
 {
   nsCOMPtr<nsIURI> linkURI;
   if (!inNode || !inNode->IsLink(getter_AddRefs(linkURI))) {
     // Not a link
     outURL.Truncate();
-    return;
+    return NS_OK;
   }
 
   nsAutoCString spec;
-  linkURI->GetSpec(spec);
+  nsresult rv = linkURI->GetSpec(spec);
+  NS_ENSURE_SUCCESS(rv, rv);
   CopyUTF8toUTF16(spec, outURL);
+  return NS_OK;
 }
 
 
@@ -350,7 +353,7 @@ DragDataProducer::GetNodeString(nsIContent* inNode,
 
   // use a range to get the text-equivalent of the node
   nsCOMPtr<nsIDocument> doc = node->OwnerDoc();
-  mozilla::ErrorResult rv;
+  mozilla::IgnoredErrorResult rv;
   RefPtr<nsRange> range = doc->CreateRange(rv);
   if (range) {
     range->SelectNode(*node, rv);
@@ -409,7 +412,7 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
       findFormParent = findFormParent->GetParent();
     }
   }
-    
+
   // if set, serialize the content under this node
   nsCOMPtr<nsIContent> nodeToSerialize;
 
@@ -463,7 +466,7 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
       // Note that while <object> elements implement nsIFormControl, we should
       // really allow dragging them if they happen to be images.
       nsCOMPtr<nsIFormControl> form(do_QueryInterface(mTarget));
-      if (form && !mIsAltKeyPressed && form->GetType() != NS_FORM_OBJECT) {
+      if (form && !mIsAltKeyPressed && form->ControlType() != NS_FORM_OBJECT) {
         *aCanDrag = false;
         return NS_OK;
       }
@@ -521,7 +524,8 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
         mIsAnchor = true;
 
         // gives an absolute link
-        GetAnchorURL(draggedNode, mUrlString);
+        nsresult rv = GetAnchorURL(draggedNode, mUrlString);
+        NS_ENSURE_SUCCESS(rv, rv);
 
         mHtmlString.AssignLiteral("<a href=\"");
         mHtmlString.Append(mUrlString);
@@ -539,7 +543,8 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
         image->GetCurrentURI(getter_AddRefs(imageURI));
         if (imageURI) {
           nsAutoCString spec;
-          imageURI->GetSpec(spec);
+          rv = imageURI->GetSpec(spec);
+          NS_ENSURE_SUCCESS(rv, rv);
           CopyUTF8toUTF16(spec, mUrlString);
         }
 
@@ -584,13 +589,14 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
 
             if (mimeInfo) {
               nsAutoCString spec;
-              imgUrl->GetSpec(spec);
+              rv = imgUrl->GetSpec(spec);
+              NS_ENSURE_SUCCESS(rv, rv);
 
               // pass out the image source string
               CopyUTF8toUTF16(spec, mImageSourceString);
 
               bool validExtension;
-              if (extension.IsEmpty() || 
+              if (extension.IsEmpty() ||
                   NS_FAILED(mimeInfo->ExtensionExists(extension,
                                                       &validExtension)) ||
                   !validExtension) {
@@ -647,7 +653,8 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
 
       if (linkNode) {
         mIsAnchor = true;
-        GetAnchorURL(linkNode, mUrlString);
+        rv = GetAnchorURL(linkNode, mUrlString);
+        NS_ENSURE_SUCCESS(rv, rv);
         dragNode = linkNode;
       }
     }

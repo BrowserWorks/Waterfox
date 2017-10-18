@@ -6,19 +6,23 @@
 
 #include "jit/x86-shared/AssemblerBuffer-x86-shared.h"
 
+#include "mozilla/Sprintf.h"
+
 #include "jsopcode.h"
 
-void js::jit::GenericAssembler::spew(const char* fmt, va_list va)
+#ifdef JS_JITSPEW
+void
+js::jit::GenericAssembler::spew(const char* fmt, va_list va)
 {
     // Buffer to hold the formatted string. Note that this may contain
     // '%' characters, so do not pass it directly to printf functions.
     char buf[200];
 
-    int i = vsnprintf(buf, sizeof(buf), fmt, va);
-
+    int i = VsprintfLiteral(buf, fmt, va);
     if (i > -1) {
         if (printer)
             printer->printf("%s\n", buf);
         js::jit::JitSpew(js::jit::JitSpew_Codegen, "%s", buf);
     }
 }
+#endif

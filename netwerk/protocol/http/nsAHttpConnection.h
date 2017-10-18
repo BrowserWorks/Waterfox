@@ -41,34 +41,33 @@ public:
     //
     // @return failure code to close the transaction.
     //
-    virtual nsresult OnHeadersAvailable(nsAHttpTransaction *,
-                                        nsHttpRequestHead *,
-                                        nsHttpResponseHead *,
-                                        bool *reset) = 0;
+    virtual MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction *,
+                                                     nsHttpRequestHead *,
+                                                     nsHttpResponseHead *,
+                                                     bool *reset) = 0;
 
     //
     // called by a transaction to resume either sending or receiving data
     // after a transaction returned NS_BASE_STREAM_WOULD_BLOCK from its
     // ReadSegments/WriteSegments methods.
     //
-    virtual nsresult ResumeSend() = 0;
-    virtual nsresult ResumeRecv() = 0;
+    virtual MOZ_MUST_USE nsresult ResumeSend() = 0;
+    virtual MOZ_MUST_USE nsresult ResumeRecv() = 0;
 
     // called by a transaction to force a "send/recv from network" iteration
     // even if not scheduled by socket associated with connection
-    virtual nsresult ForceSend() = 0;
-    virtual nsresult ForceRecv() = 0;
+    virtual MOZ_MUST_USE nsresult ForceSend() = 0;
+    virtual MOZ_MUST_USE nsresult ForceRecv() = 0;
 
     // After a connection has had ResumeSend() called by a transaction,
     // and it is ready to write to the network it may need to know the
     // transaction that has data to write. This is only an issue for
-    // multiplexed protocols like SPDY - plain HTTP or pipelined HTTP
-    // implicitly have this information in a 1:1 relationship with the
+    // multiplexed protocols like SPDY - h1
+    // implicitly has this information in a 1:1 relationship with the
     // transaction(s) they manage.
     virtual void TransactionHasDataToWrite(nsAHttpTransaction *)
     {
         // by default do nothing - only multiplexed protocols need to overload
-        return;
     }
 
     // This is the companion to *HasDataToWrite() for the case
@@ -76,7 +75,6 @@ public:
     virtual void TransactionHasDataToRecv(nsAHttpTransaction *)
     {
         // by default do nothing - only multiplexed protocols need to overload
-        return;
     }
 
     // called by the connection manager to close a transaction being processed
@@ -96,9 +94,9 @@ public:
 
     // get the transport level information for this connection. This may fail
     // if it is in use.
-    virtual nsresult TakeTransport(nsISocketTransport **,
-                                   nsIAsyncInputStream **,
-                                   nsIAsyncOutputStream **) = 0;
+    virtual MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport **,
+                                                nsIAsyncInputStream **,
+                                                nsIAsyncOutputStream **) = 0;
 
     // called by a transaction to get the security info from the socket.
     virtual void GetSecurityInfo(nsISupports **) = 0;
@@ -112,8 +110,8 @@ public:
     virtual void DontReuse() = 0;
 
     // called by a transaction when the transaction reads more from the socket
-    // than it should have (eg. containing part of the next pipelined response).
-    virtual nsresult PushBack(const char *data, uint32_t length) = 0;
+    // than it should have (eg. containing part of the next response).
+    virtual MOZ_MUST_USE nsresult PushBack(const char *data, uint32_t length) = 0;
 
     // Used to determine if the connection wants read events even though
     // it has not written out a transaction. Used when a connection has issued
@@ -129,17 +127,12 @@ public:
     // reference to it to the caller.
     virtual already_AddRefed<nsHttpConnection> TakeHttpConnection() = 0;
 
+    // Like TakeHttpConnection() but do not drop our own ref
+    virtual already_AddRefed<nsHttpConnection> HttpConnection() = 0;
+
     // Get the nsISocketTransport used by the connection without changing
     //  references or ownership.
     virtual nsISocketTransport *Transport() = 0;
-
-    // Cancel and reschedule transactions deeper than the current response.
-    // Returns the number of canceled transactions.
-    virtual uint32_t CancelPipeline(nsresult originalReason) = 0;
-
-    // Read and write class of transaction that is carried on this connection
-    virtual nsAHttpTransaction::Classifier Classification() = 0;
-    virtual void Classify(nsAHttpTransaction::Classifier newclass) = 0;
 
     // The number of transaction bytes written out on this HTTP Connection, does
     // not count CONNECT tunnel setup
@@ -156,19 +149,21 @@ public:
 NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
 
 #define NS_DECL_NSAHTTPCONNECTION(fwdObject)                    \
-    nsresult OnHeadersAvailable(nsAHttpTransaction *, nsHttpRequestHead *, nsHttpResponseHead *, bool *reset) override; \
+    MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction *,  \
+                                             nsHttpRequestHead *,   \
+                                             nsHttpResponseHead *,  \
+                                             bool *reset) override; \
     void CloseTransaction(nsAHttpTransaction *, nsresult) override; \
-    nsresult TakeTransport(nsISocketTransport **,    \
-                           nsIAsyncInputStream **,   \
-                           nsIAsyncOutputStream **) override; \
+    MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport **,    \
+                                        nsIAsyncInputStream **,   \
+                                        nsIAsyncOutputStream **) override; \
     bool IsPersistent() override;                         \
     bool IsReused() override;                             \
     void DontReuse() override;                            \
-    nsresult PushBack(const char *, uint32_t) override;   \
+    MOZ_MUST_USE nsresult PushBack(const char *, uint32_t) override; \
     already_AddRefed<nsHttpConnection> TakeHttpConnection() override; \
-    uint32_t CancelPipeline(nsresult originalReason) override; \
-    nsAHttpTransaction::Classifier Classification() override; \
-    /*                                                    \
+    already_AddRefed<nsHttpConnection> HttpConnection() override; \
+    /*                                                                  \
        Thes methods below have automatic definitions that just forward the \
        function to a lower level connection object        \
     */                                                    \
@@ -189,25 +184,25 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
       }                                                   \
       return (fwdObject)->GetSecurityInfo(result);        \
     }                                                     \
-    nsresult ResumeSend() override     \
+    MOZ_MUST_USE nsresult ResumeSend() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ResumeSend();  \
     }                                      \
-    nsresult ResumeRecv() override     \
+    MOZ_MUST_USE nsresult ResumeRecv() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ResumeRecv();  \
     }                                      \
-    nsresult ForceSend() override      \
+    MOZ_MUST_USE nsresult ForceSend() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
         return (fwdObject)->ForceSend();   \
     }                                      \
-    nsresult ForceRecv() override      \
+    MOZ_MUST_USE nsresult ForceRecv() override \
     {                                      \
         if (!(fwdObject))                  \
             return NS_ERROR_FAILURE;       \
@@ -228,22 +223,19 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
     }                                      \
     bool IsProxyConnectInProgress() override                \
     {                                                       \
-        return (fwdObject)->IsProxyConnectInProgress();     \
+        return (!fwdObject) ? false :                       \
+               (fwdObject)->IsProxyConnectInProgress();     \
     }                                                       \
     bool LastTransactionExpectedNoContent() override        \
     {                                                       \
-        return (fwdObject)->LastTransactionExpectedNoContent(); \
+        return (!fwdObject) ? false :                       \
+        (fwdObject)->LastTransactionExpectedNoContent();    \
     }                                                       \
     void SetLastTransactionExpectedNoContent(bool val)      \
       override                                              \
     {                                                       \
-        return (fwdObject)->SetLastTransactionExpectedNoContent(val); \
-    }                                                       \
-    void Classify(nsAHttpTransaction::Classifier newclass)  \
-      override                                              \
-    {                                                       \
-    if (fwdObject)                                          \
-        return (fwdObject)->Classify(newclass);             \
+      if (fwdObject)                                        \
+        (fwdObject)->SetLastTransactionExpectedNoContent(val); \
     }                                                       \
     int64_t BytesWritten() override                         \
     {     return fwdObject ? (fwdObject)->BytesWritten() : 0; } \
@@ -253,6 +245,9 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
         if (fwdObject)                                      \
             (fwdObject)->SetSecurityCallbacks(aCallbacks);  \
     }
+
+    // ThrottleResponse deliberately ommited since we want different implementation
+    // for h1 and h2 connections.
 
 } // namespace net
 } // namespace mozilla

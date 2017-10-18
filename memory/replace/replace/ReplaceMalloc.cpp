@@ -15,9 +15,7 @@
  * This is however a limited version to fulfil more immediate needs.
  */
 static const malloc_table_t* gFuncs = nullptr;
-/* This should normally be a mozilla::Atomic<const malloc_hook_table_t*>
- * but MSVC 2013's atomic type doesn't like it. */
-static mozilla::Atomic<malloc_hook_table_t*> gHookTable(nullptr);
+static mozilla::Atomic<const malloc_hook_table_t*> gHookTable(nullptr);
 
 class GenericReplaceMallocBridge : public ReplaceMallocBridge
 {
@@ -251,5 +249,15 @@ replace_jemalloc_free_dirty_pages(void)
   const malloc_hook_table_t* hook_table = gHookTable;
   if (hook_table && hook_table->jemalloc_free_dirty_pages_hook) {
     hook_table->jemalloc_free_dirty_pages_hook();
+  }
+}
+
+void
+replace_jemalloc_thread_local_arena(jemalloc_bool aEnabled)
+{
+  gFuncs->jemalloc_thread_local_arena(aEnabled);
+  const malloc_hook_table_t* hook_table = gHookTable;
+  if (hook_table && hook_table->jemalloc_thread_local_arena_hook) {
+    hook_table->jemalloc_thread_local_arena_hook(aEnabled);
   }
 }

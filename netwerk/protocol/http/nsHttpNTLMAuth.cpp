@@ -27,8 +27,15 @@
 #include "nsISSLStatusProvider.h"
 #endif
 #include "mozilla/Attributes.h"
+#include "mozilla/Base64.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/Tokenizer.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Unused.h"
 #include "nsNetUtil.h"
 #include "nsIChannel.h"
+#include "nsUnicharUtils.h"
+#include "mozilla/net/HttpAuthUtils.h"
 
 namespace mozilla {
 namespace net {
@@ -37,66 +44,7 @@ static const char kAllowProxies[] = "network.automatic-ntlm-auth.allow-proxies";
 static const char kAllowNonFqdn[] = "network.automatic-ntlm-auth.allow-non-fqdn";
 static const char kTrustedURIs[]  = "network.automatic-ntlm-auth.trusted-uris";
 static const char kForceGeneric[] = "network.auth.force-generic-ntlm";
-
-// XXX MatchesBaseURI and TestPref are duplicated in nsHttpNegotiateAuth.cpp,
-// but since that file lives in a separate library we cannot directly share it.
-// bug 236865 addresses this problem.
-
-static bool
-MatchesBaseURI(const nsCSubstring &matchScheme,
-               const nsCSubstring &matchHost,
-               int32_t             matchPort,
-               const char         *baseStart,
-               const char         *baseEnd)
-{
-    // check if scheme://host:port matches baseURI
-
-    // parse the base URI
-    const char *hostStart, *schemeEnd = strstr(baseStart, "://");
-    if (schemeEnd) {
-        // the given scheme must match the parsed scheme exactly
-        if (!matchScheme.Equals(Substring(baseStart, schemeEnd)))
-            return false;
-        hostStart = schemeEnd + 3;
-    }
-    else
-        hostStart = baseStart;
-
-    // XXX this does not work for IPv6-literals
-    const char *hostEnd = strchr(hostStart, ':');
-    if (hostEnd && hostEnd < baseEnd) {
-        // the given port must match the parsed port exactly
-        int port = atoi(hostEnd + 1);
-        if (matchPort != (int32_t) port)
-            return false;
-    }
-    else
-        hostEnd = baseEnd;
-
-
-    // if we didn't parse out a host, then assume we got a match.
-    if (hostStart == hostEnd)
-        return true;
-
-    uint32_t hostLen = hostEnd - hostStart;
-
-    // matchHost must either equal host or be a subdomain of host
-    if (matchHost.Length() < hostLen)
-        return false;
-
-    const char *end = matchHost.EndReading();
-    if (PL_strncasecmp(end - hostLen, hostStart, hostLen) == 0) {
-        // if matchHost ends with host from the base URI, then make sure it is
-        // either an exact match, or prefixed with a dot.  we don't want
-        // "foobar.com" to match "bar.com"
-        if (matchHost.Length() == hostLen ||
-            *(end - hostLen) == '.' ||
-            *(end - hostLen - 1) == '.')
-            return true;
-    }
-
-    return false;
-}
+static const char kSSOinPBmode[] = "network.auth.private-browsing-sso";
 
 static bool
 IsNonFqdn(nsIURI *uri)
@@ -110,60 +58,6 @@ IsNonFqdn(nsIURI *uri)
     // return true if host does not contain a dot and is not an ip address
     return !host.IsEmpty() && !host.Contains('.') &&
            PR_StringToNetAddr(host.BeginReading(), &addr) != PR_SUCCESS;
-}
-
-static bool
-TestPref(nsIURI *uri, const char *pref)
-{
-    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
-    if (!prefs)
-        return false;
-
-    nsAutoCString scheme, host;
-    int32_t port;
-
-    if (NS_FAILED(uri->GetScheme(scheme)))
-        return false;
-    if (NS_FAILED(uri->GetAsciiHost(host)))
-        return false;
-    if (NS_FAILED(uri->GetPort(&port)))
-        return false;
-
-    char *hostList;
-    if (NS_FAILED(prefs->GetCharPref(pref, &hostList)) || !hostList)
-        return false;
-
-    // pseudo-BNF
-    // ----------
-    //
-    // url-list       base-url ( base-url "," LWS )*
-    // base-url       ( scheme-part | host-part | scheme-part host-part )
-    // scheme-part    scheme "://"
-    // host-part      host [":" port]
-    //
-    // for example:
-    //   "https://, http://office.foo.com"
-    //
-
-    char *start = hostList, *end;
-    for (;;) {
-        // skip past any whitespace
-        while (*start == ' ' || *start == '\t')
-            ++start;
-        end = strchr(start, ',');
-        if (!end)
-            end = start + strlen(start);
-        if (start == end)
-            break;
-        if (MatchesBaseURI(scheme, host, port, start, end))
-            return true;
-        if (*end == '\0')
-            break;
-        start = end + 1;
-    }
-
-    free(hostList);
-    return false;
 }
 
 // Check to see if we should use our generic (internal) NTLM auth module.
@@ -188,27 +82,12 @@ CanUseDefaultCredentials(nsIHttpAuthenticableChannel *channel,
                          bool isProxyAuth)
 {
     nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
-
-    // Prevent using default credentials for authentication when we are in the
-    // private browsing mode.  It would cause a privacy data leak.
-    nsCOMPtr<nsIChannel> bareChannel = do_QueryInterface(channel);
-    MOZ_ASSERT(bareChannel);
-
-    if (NS_UsePrivateBrowsing(bareChannel)) {
-        // But allow when in the "Never remember history" mode.
-        bool dontRememberHistory;
-        if (prefs &&
-            NS_SUCCEEDED(prefs->GetBoolPref("browser.privatebrowsing.autostart",
-                                            &dontRememberHistory)) &&
-            !dontRememberHistory) {
-            return false;
-        }
-    }
-
     if (!prefs) {
         return false;
     }
 
+    // Proxy should go all the time, it's not considered a privacy leak
+    // to send default credentials to a proxy.
     if (isProxyAuth) {
         bool val;
         if (NS_FAILED(prefs->GetBoolPref(kAllowProxies, &val)))
@@ -217,8 +96,29 @@ CanUseDefaultCredentials(nsIHttpAuthenticableChannel *channel,
         return val;
     }
 
+    // Prevent using default credentials for authentication when we are in the
+    // private browsing mode (but not in "never remember history" mode) and when
+    // not explicitely allowed.  Otherwise, it would cause a privacy data leak.
+    nsCOMPtr<nsIChannel> bareChannel = do_QueryInterface(channel);
+    MOZ_ASSERT(bareChannel);
+
+    if (NS_UsePrivateBrowsing(bareChannel)) {
+        bool ssoInPb;
+        if (NS_SUCCEEDED(prefs->GetBoolPref(kSSOinPBmode, &ssoInPb)) &&
+            ssoInPb) {
+            return true;
+        }
+
+        bool dontRememberHistory;
+        if (NS_SUCCEEDED(prefs->GetBoolPref("browser.privatebrowsing.autostart",
+                                            &dontRememberHistory)) &&
+            !dontRememberHistory) {
+            return false;
+        }
+    }
+
     nsCOMPtr<nsIURI> uri;
-    channel->GetURI(getter_AddRefs(uri));
+    Unused << channel->GetURI(getter_AddRefs(uri));
 
     bool allowNonFqdn;
     if (NS_FAILED(prefs->GetBoolPref(kAllowNonFqdn, &allowNonFqdn)))
@@ -228,7 +128,7 @@ CanUseDefaultCredentials(nsIHttpAuthenticableChannel *channel,
         return true;
     }
 
-    bool isTrustedHost = (uri && TestPref(uri, kTrustedURIs));
+    bool isTrustedHost = (uri && auth::URIMatchesPrefPattern(uri, kTrustedURIs));
     LOG(("Default credentials allowed for host: %d\n", isTrustedHost));
     return isTrustedHost;
 }
@@ -322,7 +222,7 @@ nsHttpNTLMAuth::ChallengeReceived(nsIHttpAuthenticableChannel *channel,
             // see bug 520607 for details.
             LOG(("Trying to fall back on internal ntlm auth.\n"));
             module = do_CreateInstance(NS_AUTH_MODULE_CONTRACTID_PREFIX "ntlm");
-	
+
             mUseNative = false;
 
             // Prompt user for domain, username, and password.
@@ -451,8 +351,8 @@ nsHttpNTLMAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChannel,
 
             uint32_t length;
             uint8_t* certArray;
-            cert->GetRawDER(&length, &certArray);						
-			
+            cert->GetRawDER(&length, &certArray);
+
             // If there is a server certificate, we pass it along the
             // first time we call GetNextToken().
             inBufLen = length;
@@ -481,29 +381,28 @@ nsHttpNTLMAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChannel,
           len--;
 
         // decode into the input secbuffer
-        inBufLen = (len * 3)/4;      // sufficient size (see plbase64.h)
-        inBuf = moz_xmalloc(inBufLen);
-        if (!inBuf)
-            return NS_ERROR_OUT_OF_MEMORY;
-
-        if (PL_Base64Decode(challenge, len, (char *) inBuf) == nullptr) {
-            free(inBuf);
-            return NS_ERROR_UNEXPECTED; // improper base64 encoding
+        rv = Base64Decode(challenge, len, (char**)&inBuf, &inBufLen);
+        if (NS_FAILED(rv)) {
+            return rv;
         }
     }
 
     rv = module->GetNextToken(inBuf, inBufLen, &outBuf, &outBufLen);
     if (NS_SUCCEEDED(rv)) {
         // base64 encode data in output buffer and prepend "NTLM "
-        int credsLen = 5 + ((outBufLen + 2)/3)*4;
-        *creds = (char *) moz_xmalloc(credsLen + 1);
-        if (!*creds)
-            rv = NS_ERROR_OUT_OF_MEMORY;
-        else {
-            memcpy(*creds, "NTLM ", 5);
-            PL_Base64Encode((char *) outBuf, outBufLen, *creds + 5);
-            (*creds)[credsLen] = '\0'; // null terminate
+        CheckedUint32 credsLen = ((CheckedUint32(outBufLen) + 2) / 3) * 4;
+        credsLen += 5; // "NTLM "
+        credsLen += 1; // null terminate
+
+        if (!credsLen.isValid()) {
+          rv = NS_ERROR_FAILURE;
+        } else {
+          *creds = (char *) moz_xmalloc(credsLen.value());
+          memcpy(*creds, "NTLM ", 5);
+          PL_Base64Encode((char *) outBuf, outBufLen, *creds + 5);
+          (*creds)[credsLen.value() - 1] = '\0'; // null terminate
         }
+
         // OK, we are done with |outBuf|
         free(outBuf);
     }

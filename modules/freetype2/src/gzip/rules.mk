@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 2002, 2003, 2013 by
+# Copyright 2002-2016 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -21,9 +21,14 @@ GZIP_DIR := $(SRC_DIR)/gzip
 # compilation flags for the driver
 #
 ifeq ($(SYSTEM_ZLIB),)
-  GZIP_COMPILE := $(FT_COMPILE) $I$(subst /,$(COMPILER_SEP),$(GZIP_DIR))
+  GZIP_COMPILE := $(CC) $(ANSIFLAGS)                             \
+                        $I$(subst /,$(COMPILER_SEP),$(GZIP_DIR)) \
+                        $(INCLUDE_FLAGS)                         \
+                        $(FT_CFLAGS)
 else
-  GZIP_COMPILE := $(FT_COMPILE)
+  GZIP_COMPILE := $(CC) $(ANSIFLAGS)     \
+                        $(INCLUDE_FLAGS) \
+                        $(FT_CFLAGS)
 endif
 
 
@@ -35,6 +40,7 @@ endif
 # unconditionally.
 #
 GZIP_DRV_SRCS := $(GZIP_DIR)/adler32.c  \
+                 $(GZIP_DIR)/ftzconf.h  \
                  $(GZIP_DIR)/infblock.c \
                  $(GZIP_DIR)/infblock.h \
                  $(GZIP_DIR)/infcodes.c \
@@ -45,7 +51,6 @@ GZIP_DRV_SRCS := $(GZIP_DIR)/adler32.c  \
                  $(GZIP_DIR)/inftrees.h \
                  $(GZIP_DIR)/infutil.c  \
                  $(GZIP_DIR)/infutil.h  \
-                 $(GZIP_DIR)/zconf.h    \
                  $(GZIP_DIR)/zlib.h     \
                  $(GZIP_DIR)/zutil.c    \
                  $(GZIP_DIR)/zutil.h

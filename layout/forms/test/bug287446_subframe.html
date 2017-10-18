@@ -24,16 +24,15 @@
             doIs(evt.data, "continue", "Unexpected message");
             doIs(t.value, "FooTest", "Shouldn't have lost our typed value");
             sendString("Bar");
-            doIs(t.value, "BarFooTest", "Typing should still work");
+            doIs(t.value, "FooBarTest", "Typing should still work");
             window.parent.postMessage("f", "*");
           }
         },
         "false");
-      
+
     </script>
   </head>
   <body>
     <input id="target" value="Test">
   </body>
 </html>
-           

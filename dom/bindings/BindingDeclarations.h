@@ -26,6 +26,7 @@
 #include "nsStringGlue.h"
 #include "nsTArray.h"
 
+class nsIPrincipal;
 class nsWrapperCache;
 
 namespace mozilla {
@@ -83,6 +84,8 @@ struct EnumEntry {
   size_t length;
 };
 
+enum class CallerType : uint32_t;
+
 class MOZ_STACK_CLASS GlobalObject
 {
 public:
@@ -107,6 +110,14 @@ public:
   {
     return !Get();
   }
+
+  // It returns the subjectPrincipal if called on the main-thread, otherwise
+  // a nullptr is returned.
+  nsIPrincipal* GetSubjectPrincipal() const;
+
+  // Get the caller type.  Note that this needs to be called before anyone has
+  // had a chance to mess with the JSContext.
+  dom::CallerType CallerType() const;
 
 protected:
   JS::Rooted<JSObject*> mGlobalJSObject;
@@ -274,7 +285,7 @@ class Optional<JS::Value>
 private:
   Optional() = delete;
 
-  explicit Optional(JS::Value aValue) = delete;
+  explicit Optional(const JS::Value& aValue) = delete;
 };
 
 // A specialization of Optional for NonNull that lets us get a T& from Value()
@@ -517,6 +528,20 @@ public:
 };
 
 } // namespace binding_detail
+
+// Enum to represent a system or non-system caller type.
+enum class CallerType : uint32_t {
+  System,
+  NonSystem
+};
+
+// A class that can be passed (by value or const reference) to indicate that the
+// caller is always a system caller.  This can be used as the type of an
+// argument to force only system callers to call a function.
+class SystemCallerGuarantee {
+public:
+  operator CallerType() const { return CallerType::System; }
+};
 
 } // namespace dom
 } // namespace mozilla

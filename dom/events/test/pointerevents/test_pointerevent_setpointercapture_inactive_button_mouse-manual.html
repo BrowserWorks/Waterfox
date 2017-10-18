@@ -14,17 +14,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1000870
     <script type="text/javascript">
       SimpleTest.waitForExplicitFinish();
       function startTest() {
-        var iframe = document.getElementById("testFrame");
-        iframe.src = "pointerevent_setpointercapture_inactive_button_mouse-manual.html";
+        runTestInNewWindow("pointerevent_setpointercapture_inactive_button_mouse-manual.html");
       }
       function executeTest(int_win) {
-        sendPointerEvent(int_win, "target1", "pointermove", MouseEvent.MOZ_SOURCE_MOUSE);
-        sendPointerEvent(int_win, "target0", "pointermove", MouseEvent.MOZ_SOURCE_MOUSE);
-        sendPointerEvent(int_win, "target1", "pointermove", MouseEvent.MOZ_SOURCE_MOUSE);
+        let target0 = int_win.document.getElementById("target0");
+        let rect = target0.getBoundingClientRect();
+        sendMouseEventAtPoint(int_win, rect.left + 1, rect.top + 1, "mousemove");
+        sendMouseEventAtPoint(int_win, rect.left - 1, rect.top - 1, "mousemove");
       }
     </script>
   </head>
   <body>
-    <iframe id="testFrame" height="800" width="1000"></iframe>
   </body>
 </html>

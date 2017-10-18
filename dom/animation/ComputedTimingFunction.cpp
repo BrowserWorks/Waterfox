@@ -18,7 +18,7 @@ ComputedTimingFunction::Init(const nsTimingFunction &aFunction)
     mTimingFunction.Init(aFunction.mFunc.mX1, aFunction.mFunc.mY1,
                          aFunction.mFunc.mX2, aFunction.mFunc.mY2);
   } else {
-    mSteps = aFunction.mSteps;
+    mStepsOrFrames = aFunction.mStepsOrFrames;
   }
 }
 
@@ -28,16 +28,11 @@ StepTiming(uint32_t aSteps,
            ComputedTimingFunction::BeforeFlag aBeforeFlag,
            nsTimingFunction::Type aType)
 {
-  MOZ_ASSERT(0.0 <= aPortion && aPortion <= 1.0, "out of range");
   MOZ_ASSERT(aType == nsTimingFunction::Type::StepStart ||
              aType == nsTimingFunction::Type::StepEnd, "invalid type");
 
-  if (aPortion == 1.0) {
-    return 1.0;
-  }
-
   // Calculate current step using step-end behavior
-  uint32_t step = uint32_t(aPortion * aSteps); // floor
+  int32_t step = floor(aPortion * aSteps);
 
   // step-start is one step ahead
   if (aType == nsTimingFunction::Type::StepStart) {
@@ -45,16 +40,41 @@ StepTiming(uint32_t aSteps,
   }
 
   // If the "before flag" is set and we are at a transition point,
-  // drop back a step (but only if we are not already at the zero point--
-  // we do this clamping here since |step| is an unsigned integer)
-  if (step != 0 &&
-      aBeforeFlag == ComputedTimingFunction::BeforeFlag::Set &&
+  // drop back a step
+  if (aBeforeFlag == ComputedTimingFunction::BeforeFlag::Set &&
       fmod(aPortion * aSteps, 1) == 0) {
     step--;
   }
 
   // Convert to a progress value
-  return double(step) / double(aSteps);
+  double result = double(step) / double(aSteps);
+
+  // We should not produce a result outside [0, 1] unless we have an
+  // input outside that range. This takes care of steps that would otherwise
+  // occur at boundaries.
+  if (result < 0.0 && aPortion >= 0.0) {
+    return 0.0;
+  }
+  if (result > 1.0 && aPortion <= 1.0) {
+    return 1.0;
+  }
+  return result;
+}
+
+static inline double
+FramesTiming(uint32_t aFrames, double aPortion)
+{
+  MOZ_ASSERT(aFrames > 1, "the number of frames must be greater than 1");
+  int32_t currentFrame = floor(aPortion * aFrames);
+  double result = double(currentFrame) / double(aFrames - 1);
+
+  // Don't overshoot the natural range of the animation (by producing an output
+  // progress greater than 1.0) when we are at the exact end of its interval
+  // (i.e. the input progress is 1.0).
+  if (result > 1.0 && aPortion <= 1.0) {
+    return 1.0;
+  }
+  return result;
 }
 
 double
@@ -108,19 +128,9 @@ ComputedTimingFunction::GetValue(
     return mTimingFunction.GetSplineValue(aPortion);
   }
 
-  // Since we use endpoint-exclusive timing, the output of a steps(start) timing
-  // function when aPortion = 0.0 is the top of the first step. When aPortion is
-  // negative, however, we should use the bottom of the first step. We handle
-  // negative values of aPortion specially here since once we clamp aPortion
-  // to [0,1] below we will no longer be able to distinguish to the two cases.
-  if (aPortion < 0.0) {
-    return 0.0;
-  }
-
-  // Clamp in case of steps(end) and steps(start) for values greater than 1.
-  aPortion = clamped(aPortion, 0.0, 1.0);
-
-  return StepTiming(mSteps, aPortion, aBeforeFlag, mType);
+  return mType == nsTimingFunction::Type::Frames
+         ? FramesTiming(mStepsOrFrames, aPortion)
+         : StepTiming(mStepsOrFrames, aPortion, aBeforeFlag, mType);
 }
 
 int32_t
@@ -136,9 +146,10 @@ ComputedTimingFunction::Compare(const ComputedTimingFunction& aRhs) const
       return order;
     }
   } else if (mType == nsTimingFunction::Type::StepStart ||
-             mType == nsTimingFunction::Type::StepEnd) {
-    if (mSteps != aRhs.mSteps) {
-      return int32_t(mSteps) - int32_t(aRhs.mSteps);
+             mType == nsTimingFunction::Type::StepEnd ||
+             mType == nsTimingFunction::Type::Frames) {
+    if (mStepsOrFrames != aRhs.mStepsOrFrames) {
+      return int32_t(mStepsOrFrames) - int32_t(aRhs.mStepsOrFrames);
     }
   }
 
@@ -158,7 +169,10 @@ ComputedTimingFunction::AppendToString(nsAString& aResult) const
       break;
     case nsTimingFunction::Type::StepStart:
     case nsTimingFunction::Type::StepEnd:
-      nsStyleUtil::AppendStepsTimingFunction(mType, mSteps, aResult);
+      nsStyleUtil::AppendStepsTimingFunction(mType, mStepsOrFrames, aResult);
+      break;
+    case nsTimingFunction::Type::Frames:
+      nsStyleUtil::AppendFramesTimingFunction(mStepsOrFrames, aResult);
       break;
     default:
       nsStyleUtil::AppendCubicBezierKeywordTimingFunction(mType, aResult);

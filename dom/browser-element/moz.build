@@ -4,16 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 EXPORTS.mozilla += [
     'BrowserElementParent.h',
 ]
 
-EXPORTS.mozilla.dom += [
-    'BrowserElementAudioChannel.h',
-]
-
 SOURCES += [
-    'BrowserElementAudioChannel.cpp',
     'BrowserElementParent.cpp',
 ]
 
@@ -26,8 +24,6 @@ XPIDL_MODULE = 'browser-element'
 EXTRA_COMPONENTS += [
     'BrowserElementParent.js',
     'BrowserElementParent.manifest',
-    'BrowserElementProxy.js',
-    'BrowserElementProxy.manifest',
 ]
 
 EXTRA_JS_MODULES += [
@@ -35,7 +31,6 @@ EXTRA_JS_MODULES += [
 ]
 
 LOCAL_INCLUDES += [
-    '../bluetooth',
     '/dom/html',
 ]
 
@@ -52,10 +47,8 @@ LOCAL_INCLUDES += [
 MOCHITEST_MANIFESTS += [
     'mochitest/mochitest-oop.ini',
     'mochitest/mochitest.ini',
-    'mochitest/priority/mochitest.ini',
 ]
 
 MOCHITEST_CHROME_MANIFESTS += [
     'mochitest/chrome.ini',
-    'mochitest/priority/chrome.ini',
 ]

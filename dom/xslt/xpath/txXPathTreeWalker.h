@@ -14,26 +14,6 @@
 class nsIAtom;
 class nsIDOMDocument;
 
-class txUint32Array : public nsTArray<uint32_t>
-{
-public:
-    bool AppendValue(uint32_t aValue)
-    {
-        return AppendElement(aValue) != nullptr;
-    }
-    bool RemoveValueAt(uint32_t aIndex)
-    {
-        if (aIndex < Length()) {
-            RemoveElementAt(aIndex);
-        }
-        return true;
-    }
-    uint32_t ValueAt(uint32_t aIndex) const
-    {
-        return (aIndex < Length()) ? ElementAt(aIndex) : 0;
-    }
-};
-
 class txXPathTreeWalker
 {
 public:
@@ -67,10 +47,6 @@ private:
     txXPathNode mPosition;
 
     bool moveToValidAttribute(uint32_t aStartIndex);
-    bool moveToSibling(int32_t aDir);
-
-    uint32_t mCurrentIndex;
-    txUint32Array mDescendants;
 };
 
 class txXPathNodeUtils
@@ -93,7 +69,7 @@ public:
     static nsresult getXSLTId(const txXPathNode& aNode,
                               const txXPathNode& aBase, nsAString& aResult);
     static void release(txXPathNode* aNode);
-    static void getBaseURI(const txXPathNode& aNode, nsAString& aURI);
+    static nsresult getBaseURI(const txXPathNode& aNode, nsAString& aURI);
     static int comparePosition(const txXPathNode& aNode,
                                const txXPathNode& aOtherNode);
     static bool localNameEquals(const txXPathNode& aNode,
@@ -195,9 +171,6 @@ txXPathTreeWalker::moveTo(const txXPathTreeWalker& aWalker)
         NS_IF_ADDREF(newRoot);
         NS_IF_RELEASE(root);
     }
-
-    mCurrentIndex = aWalker.mCurrentIndex;
-    mDescendants.Clear();
 }
 
 inline bool

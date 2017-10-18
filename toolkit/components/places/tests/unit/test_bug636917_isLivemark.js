@@ -1,5 +1,5 @@
 // Test that asking for a livemark in a annotationChanged notification works.
-add_task(function* () {
+add_task(async function() {
   let annoPromise = new Promise(resolve => {
     let annoObserver = {
       onItemAnnotationSet(id, name) {
@@ -15,21 +15,21 @@ add_task(function* () {
         Ci.nsIAnnotationObserver
       ]),
     };
-    PlacesUtils.annotations.addObserver(annoObserver, false);
+    PlacesUtils.annotations.addObserver(annoObserver);
   });
 
 
-  let livemark = yield PlacesUtils.livemarks.addLivemark(
-    { title: "livemark title"
-    , parentGuid: PlacesUtils.bookmarks.unfiledGuid
-    , index: PlacesUtils.bookmarks.DEFAULT_INDEX
-    , siteURI: uri("http://example.com/")
-    , feedURI: uri("http://example.com/rdf")
+  let livemark = await PlacesUtils.livemarks.addLivemark(
+    { title: "livemark title",
+      parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+      index: PlacesUtils.bookmarks.DEFAULT_INDEX,
+      siteURI: uri("http://example.com/"),
+      feedURI: uri("http://example.com/rdf")
     });
 
-  yield annoPromise;
+  await annoPromise;
 
-  livemark = yield PlacesUtils.livemarks.getLivemark({ guid: livemark.guid });
+  livemark = await PlacesUtils.livemarks.getLivemark({ guid: livemark.guid });
   Assert.ok(livemark);
-  yield PlacesUtils.livemarks.removeLivemark({ guid: livemark.guid });
+  await PlacesUtils.livemarks.removeLivemark({ guid: livemark.guid });
 });

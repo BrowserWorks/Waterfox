@@ -242,7 +242,7 @@ nsTableCellMap::GetMapFor(const nsTableRowGroupFrame* aRowGroup,
 
     const nsStyleDisplay* display = aRowGroup->StyleDisplay();
     nsTableRowGroupFrame* rgOrig =
-      (NS_STYLE_DISPLAY_TABLE_HEADER_GROUP == display->mDisplay) ?
+      (StyleDisplay::TableHeaderGroup == display->mDisplay) ?
       fifTable->GetTHead() : fifTable->GetTFoot();
     // find the row group cell map using the original header/footer
     if (rgOrig && rgOrig != aRowGroup) {
@@ -1055,7 +1055,7 @@ nsTableCellMap::SetBCBorderEdge(LogicalSide aSide,
 // (aRowIndex, aColIndex). For eBStartIEnd, store it in the entry to the iEnd-wards where
 // it would be BStartIStart. For eBEndIEnd, store it in the entry to the bEnd-wards. etc.
 void
-nsTableCellMap::SetBCBorderCorner(Corner      aCorner,
+nsTableCellMap::SetBCBorderCorner(LogicalCorner aCorner,
                                   nsCellMap&  aCellMap,
                                   uint32_t    aCellMapStart,
                                   uint32_t    aRowIndex,
@@ -1076,15 +1076,15 @@ nsTableCellMap::SetBCBorderCorner(Corner      aCorner,
   int32_t yPos = aRowIndex;
   int32_t rgYPos = aRowIndex - aCellMapStart;
 
-  if (eBStartIEnd == aCorner) {
+  if (eLogicalCornerBStartIEnd == aCorner) {
     xPos++;
   }
-  else if (eBEndIEnd == aCorner) {
+  else if (eLogicalCornerBEndIEnd == aCorner) {
     xPos++;
     rgYPos++;
     yPos++;
   }
-  else if (eBEndIStart == aCorner) {
+  else if (eLogicalCornerBEndIStart == aCorner) {
     rgYPos++;
     yPos++;
   }
@@ -2348,13 +2348,13 @@ void nsCellMap::Dump(bool aIsBorderCollapse) const
   nsTableRowGroupFrame* rg = GetRowGroup();
   const nsStyleDisplay* display = rg->StyleDisplay();
   switch (display->mDisplay) {
-  case NS_STYLE_DISPLAY_TABLE_HEADER_GROUP:
+  case StyleDisplay::TableHeaderGroup:
     printf("  thead ");
     break;
-  case NS_STYLE_DISPLAY_TABLE_FOOTER_GROUP:
+  case StyleDisplay::TableFooterGroup:
     printf("  tfoot ");
     break;
-  case NS_STYLE_DISPLAY_TABLE_ROW_GROUP:
+  case StyleDisplay::TableRowGroup:
     printf("  tbody ");
     break;
   default:
@@ -2580,10 +2580,12 @@ void nsCellMap::DestroyCellData(CellData* aData)
   if (mIsBC) {
     BCCellData* bcData = static_cast<BCCellData*>(aData);
     bcData->~BCCellData();
-    mPresContext->FreeToShell(sizeof(BCCellData), bcData);
+    mPresContext->PresShell()->
+      FreeByObjectID(eArenaObjectID_BCCellData, bcData);
   } else {
     aData->~CellData();
-    mPresContext->FreeToShell(sizeof(CellData), aData);
+    mPresContext->PresShell()->
+      FreeByObjectID(eArenaObjectID_CellData, aData);
   }
 }
 
@@ -2591,7 +2593,8 @@ CellData* nsCellMap::AllocCellData(nsTableCellFrame* aOrigCell)
 {
   if (mIsBC) {
     BCCellData* data = (BCCellData*)
-      mPresContext->AllocateFromShell(sizeof(BCCellData));
+      mPresContext->PresShell()->
+        AllocateByObjectID(eArenaObjectID_BCCellData, sizeof(BCCellData));
     if (data) {
       new (data) BCCellData(aOrigCell);
     }
@@ -2599,7 +2602,8 @@ CellData* nsCellMap::AllocCellData(nsTableCellFrame* aOrigCell)
   }
 
   CellData* data = (CellData*)
-    mPresContext->AllocateFromShell(sizeof(CellData));
+    mPresContext->PresShell()->
+      AllocateByObjectID(eArenaObjectID_CellData, sizeof(CellData));
   if (data) {
     new (data) CellData(aOrigCell);
   }

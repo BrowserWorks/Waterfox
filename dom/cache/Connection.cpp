@@ -22,7 +22,7 @@ Connection::Connection(mozIStorageConnection* aBase)
   : mBase(aBase)
   , mClosed(false)
 {
-  MOZ_ASSERT(mBase);
+  MOZ_DIAGNOSTIC_ASSERT(mBase);
 }
 
 Connection::~Connection()
@@ -59,6 +59,13 @@ NS_IMETHODIMP
 Connection::AsyncClose(mozIStorageCompletionCallback*)
 {
   // async methods are not supported
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+Connection::SpinningSynchronousClose()
+{
+  // not supported
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

@@ -8,13 +8,10 @@
 
 #include <stdint.h>                     // for uint32_t
 
-#ifdef MOZ_WIDGET_GONK
-#include <utils/RefBase.h>
-#include "mozilla/layers/GonkNativeHandle.h"
-#endif
-
 #include "Units.h"
+#include "mozilla/DefineEnum.h"         // for MOZ_DEFINE_ENUM
 #include "mozilla/gfx/Point.h"          // for IntPoint
+#include "mozilla/Maybe.h"
 #include "mozilla/TypedEnumBits.h"
 #include "nsRegion.h"
 
@@ -31,9 +28,15 @@
 
 #define INVALID_OVERLAY -1
 
+namespace IPC {
+template <typename T> struct ParamTraits;
+} // namespace IPC
+
 namespace android {
 class MOZ_EXPORT GraphicBuffer;
 } // namespace android
+
+struct nsStyleFilter;
 
 namespace mozilla {
 namespace layers {
@@ -47,9 +50,9 @@ enum class LayersBackend : int8_t {
   LAYERS_NONE = 0,
   LAYERS_BASIC,
   LAYERS_OPENGL,
-  LAYERS_D3D9,
   LAYERS_D3D11,
   LAYERS_CLIENT,
+  LAYERS_WR,
   LAYERS_LAST
 };
 
@@ -70,94 +73,12 @@ enum class SurfaceMode : int8_t {
   SURFACE_COMPONENT_ALPHA
 };
 
-// LayerRenderState for Composer2D
-// We currently only support Composer2D using gralloc. If we want to be backed
-// by other surfaces we will need a more generic LayerRenderState.
-enum class LayerRenderStateFlags : int8_t {
-  LAYER_RENDER_STATE_DEFAULT = 0,
-  ORIGIN_BOTTOM_LEFT = 1 << 0,
-  BUFFER_ROTATION = 1 << 1,
-  // Notify Composer2D to swap the RB pixels of gralloc buffer
-  FORMAT_RB_SWAP = 1 << 2,
-  // We record opaqueness here alongside the actual surface we're going to
-  // render. This avoids confusion when a layer might return different kinds
-  // of surfaces over time (e.g. video frames).
-  OPAQUE = 1 << 3
-};
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(LayerRenderStateFlags)
-
-// The 'ifdef MOZ_WIDGET_GONK' sadness here is because we don't want to include
-// android::sp unless we have to.
-struct LayerRenderState {
-  // Constructors and destructor are defined in LayersTypes.cpp so we don't
-  // have to pull in a definition for GraphicBuffer.h here. In KK at least,
-  // that results in nasty pollution such as libui's hardware.h #defining
-  // 'version_major' and 'version_minor' which conflict with Theora's codec.c...
-  LayerRenderState();
-  LayerRenderState(const LayerRenderState& aOther);
-  ~LayerRenderState();
-
-#ifdef MOZ_WIDGET_GONK
-  LayerRenderState(android::GraphicBuffer* aSurface,
-                   const gfx::IntSize& aSize,
-                   LayerRenderStateFlags aFlags,
-                   TextureHost* aTexture);
-
-  bool OriginBottomLeft() const
-  { return bool(mFlags & LayerRenderStateFlags::ORIGIN_BOTTOM_LEFT); }
-
-  bool BufferRotated() const
-  { return bool(mFlags & LayerRenderStateFlags::BUFFER_ROTATION); }
-
-  bool FormatRBSwapped() const
-  { return bool(mFlags & LayerRenderStateFlags::FORMAT_RB_SWAP); }
-
-  void SetOverlayId(const int32_t& aId)
-  { mOverlayId = aId; }
-
-  void SetSidebandStream(const GonkNativeHandle& aStream)
-  {
-    mSidebandStream = aStream;
-  }
-
-  android::GraphicBuffer* GetGrallocBuffer() const
-  { return mSurface.get(); }
-
-  const GonkNativeHandle& GetSidebandStream()
-  { return mSidebandStream; }
-#endif
-
-  void SetOffset(const nsIntPoint& aOffset)
-  {
-    mOffset = aOffset;
-    mHasOwnOffset = true;
-  }
-
-  // see LayerRenderStateFlags
-  LayerRenderStateFlags mFlags;
-  // true if mOffset is applicable
-  bool mHasOwnOffset;
-  // the location of the layer's origin on mSurface
-  nsIntPoint mOffset;
-  // The 'ifdef MOZ_WIDGET_GONK' sadness here is because we don't want to include
-  // android::sp unless we have to.
-#ifdef MOZ_WIDGET_GONK
-  // surface to render
-  android::sp<android::GraphicBuffer> mSurface;
-  int32_t mOverlayId;
-  // size of mSurface
-  gfx::IntSize mSize;
-  TextureHost* mTexture;
-  GonkNativeHandle mSidebandStream;
-#endif
-};
-
-enum class ScaleMode : int8_t {
-  SCALE_NONE,
-  STRETCH,
-  SENTINEL
+MOZ_DEFINE_ENUM_CLASS_WITH_BASE(
+  ScaleMode, int8_t, (
+    SCALE_NONE,
+    STRETCH
 // Unimplemented - PRESERVE_ASPECT_RATIO_CONTAIN
-};
+));
 
 struct EventRegions {
   // The hit region for a layer contains all areas on the layer that are
@@ -291,6 +212,123 @@ typedef gfx::Matrix4x4Typed<LayerPixel, CSSTransformedLayerPixel> CSSTransformMa
 // PixelCastJustification is provided for this purpose.
 typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel> AsyncTransformComponentMatrix;
 typedef gfx::Matrix4x4Typed<CSSTransformedLayerPixel, ParentLayerPixel> AsyncTransformMatrix;
+
+typedef Array<gfx::Color, 4> BorderColors;
+typedef Array<LayerSize, 4> BorderCorners;
+typedef Array<LayerCoord, 4> BorderWidths;
+typedef Array<uint8_t, 4> BorderStyles;
+
+typedef Maybe<LayerRect> MaybeLayerRect;
+
+// This is used to communicate Layers across IPC channels. The Handle is valid
+// for layers in the same PLayerTransaction. Handles are created by ClientLayerManager,
+// and are cached in LayerTransactionParent on first use.
+class LayerHandle
+{
+  friend struct IPC::ParamTraits<mozilla::layers::LayerHandle>;
+public:
+  LayerHandle() : mHandle(0)
+  {}
+  LayerHandle(const LayerHandle& aOther) : mHandle(aOther.mHandle)
+  {}
+  explicit LayerHandle(uint64_t aHandle) : mHandle(aHandle)
+  {}
+  bool IsValid() const {
+    return mHandle != 0;
+  }
+  explicit operator bool() const {
+    return IsValid();
+  }
+  bool operator ==(const LayerHandle& aOther) const {
+    return mHandle == aOther.mHandle;
+  }
+  uint64_t Value() const {
+    return mHandle;
+  }
+private:
+  uint64_t mHandle;
+};
+
+// This is used to communicate Compositables across IPC channels. The Handle is valid
+// for layers in the same PLayerTransaction or PImageBridge. Handles are created by
+// ClientLayerManager or ImageBridgeChild, and are cached in the parent side on first
+// use.
+class CompositableHandle
+{
+  friend struct IPC::ParamTraits<mozilla::layers::CompositableHandle>;
+public:
+  CompositableHandle() : mHandle(0)
+  {}
+  CompositableHandle(const CompositableHandle& aOther) : mHandle(aOther.mHandle)
+  {}
+  explicit CompositableHandle(uint64_t aHandle) : mHandle(aHandle)
+  {}
+  bool IsValid() const {
+    return mHandle != 0;
+  }
+  explicit operator bool() const {
+    return IsValid();
+  }
+  bool operator ==(const CompositableHandle& aOther) const {
+    return mHandle == aOther.mHandle;
+  }
+  uint64_t Value() const {
+    return mHandle;
+  }
+private:
+  uint64_t mHandle;
+};
+
+class ReadLockHandle
+{
+  friend struct IPC::ParamTraits<mozilla::layers::ReadLockHandle>;
+public:
+  ReadLockHandle() : mHandle(0)
+  {}
+  ReadLockHandle(const ReadLockHandle& aOther) : mHandle(aOther.mHandle)
+  {}
+  explicit ReadLockHandle(uint64_t aHandle) : mHandle(aHandle)
+  {}
+  bool IsValid() const {
+    return mHandle != 0;
+  }
+  explicit operator bool() const {
+    return IsValid();
+  }
+  bool operator ==(const ReadLockHandle& aOther) const {
+    return mHandle == aOther.mHandle;
+  }
+  uint64_t Value() const {
+    return mHandle;
+  }
+private:
+  uint64_t mHandle;
+};
+
+MOZ_DEFINE_ENUM_CLASS_WITH_BASE(ScrollDirection, uint32_t, (
+  NONE,
+  VERTICAL,
+  HORIZONTAL
+));
+
+enum class CSSFilterType : int8_t {
+  BLUR,
+  BRIGHTNESS,
+  CONTRAST,
+  GRAYSCALE,
+  HUE_ROTATE,
+  INVERT,
+  OPACITY,
+  SATURATE,
+  SEPIA,
+};
+
+struct CSSFilter {
+  CSSFilterType type;
+  float argument;
+};
+
+CSSFilter ToCSSFilter(const nsStyleFilter& filter);
 
 } // namespace layers
 } // namespace mozilla

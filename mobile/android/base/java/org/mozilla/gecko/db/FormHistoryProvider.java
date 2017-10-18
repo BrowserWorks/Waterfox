@@ -7,8 +7,7 @@ package org.mozilla.gecko.db;
 import java.lang.IllegalArgumentException;
 import java.util.HashMap;
 
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.db.BrowserContract.FormHistory;
 import org.mozilla.gecko.db.BrowserContract.DeletedFormHistory;
 import org.mozilla.gecko.db.BrowserContract;
@@ -31,7 +30,6 @@ public class FormHistoryProvider extends SQLiteBridgeContentProvider {
     private static final UriMatcher URI_MATCHER;
 
 
-    // This should be kept in sync with the db version in toolkit/components/satchel/nsFormHistory.js
     private static final int DB_VERSION = 4;
     private static final String DB_FILENAME = "formhistory.sqlite";
     private static final String TELEMETRY_TAG = "SQLITEBRIDGE_PROVIDER_FORMS";
@@ -126,7 +124,7 @@ public class FormHistoryProvider extends SQLiteBridgeContentProvider {
 
     @Override
     public void initGecko() {
-        GeckoAppShell.notifyObservers("FormHistory:Init", null);
+        EventDispatcher.getInstance().dispatch("FormHistory:Init", null);
     }
 
     @Override

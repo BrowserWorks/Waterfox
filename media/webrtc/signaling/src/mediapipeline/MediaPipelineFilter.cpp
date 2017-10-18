@@ -9,7 +9,11 @@
 
 #include "MediaPipelineFilter.h"
 
-#include "webrtc/modules/interface/module_common_types.h"
+#include "webrtc/common_types.h"
+#include "logging.h"
+
+// Logging context
+MOZ_MTLOG_MODULE("mediapipeline")
 
 namespace mozilla {
 
@@ -24,12 +28,21 @@ bool MediaPipelineFilter::Filter(const webrtc::RTPHeader& header,
     if (correlator == correlator_) {
       AddRemoteSSRC(header.ssrc);
       return true;
-    } else {
-      // Some other stream; it is possible that an SSRC has moved, so make sure
-      // we don't have that SSRC in our filter any more.
-      remote_ssrc_set_.erase(header.ssrc);
-      return false;
     }
+    // Some other stream; it is possible that an SSRC has moved, so make sure
+    // we don't have that SSRC in our filter any more.
+    remote_ssrc_set_.erase(header.ssrc);
+    return false;
+  }
+
+  if (!header.extension.rtpStreamId.empty() &&
+      remote_rid_set_.size() &&
+      remote_rid_set_.count(header.extension.rtpStreamId.data())) {
+    return true;
+  }
+  if (!header.extension.rtpStreamId.empty()) {
+    MOZ_MTLOG(ML_DEBUG, "MediaPipelineFilter ignoring seq# " << header.sequenceNumber <<
+              " ssrc: " << header.ssrc << " RID: " << header.extension.rtpStreamId.data());
   }
 
   if (remote_ssrc_set_.count(header.ssrc)) {
@@ -49,6 +62,10 @@ bool MediaPipelineFilter::Filter(const webrtc::RTPHeader& header,
 
 void MediaPipelineFilter::AddRemoteSSRC(uint32_t ssrc) {
   remote_ssrc_set_.insert(ssrc);
+}
+
+void MediaPipelineFilter::AddRemoteRtpStreamId(const std::string& rtp_strm_id) {
+  remote_rid_set_.insert(rtp_strm_id);
 }
 
 void MediaPipelineFilter::AddUniquePT(uint8_t payload_type) {
@@ -74,6 +91,11 @@ void MediaPipelineFilter::Update(const MediaPipelineFilter& filter_update) {
 bool
 MediaPipelineFilter::FilterSenderReport(const unsigned char* data,
                                         size_t len) const {
+
+  if (!data) {
+    return false;
+  }
+
   if (len < FIRST_SSRC_OFFSET + 4) {
     return false;
   }

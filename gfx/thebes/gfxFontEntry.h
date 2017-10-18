@@ -15,11 +15,13 @@
 #include "nsTHashtable.h"
 #include "mozilla/HashFunctions.h"
 #include "mozilla/MemoryReporting.h"
+#include "MainThreadUtils.h"
 #include "nsUnicodeScriptCodes.h"
 #include "nsDataHashtable.h"
 #include "harfbuzz/hb.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/WeakPtr.h"
 
 typedef struct gr_face gr_face;
 
@@ -33,11 +35,13 @@ class gfxFont;
 class gfxFontFamily;
 class gfxUserFontData;
 class gfxSVGGlyphs;
-class gfxMathTable;
-class gfxTextContextPaint;
 class FontInfoData;
 struct FontListSizes;
 class nsIAtom;
+
+namespace mozilla {
+class SVGContextPaint;
+};
 
 class gfxCharacterMap : public gfxSparseBitSet {
 public:
@@ -99,7 +103,8 @@ public:
     typedef mozilla::gfx::DrawTarget DrawTarget;
     typedef mozilla::unicode::Script Script;
 
-    NS_INLINE_DECL_REFCOUNTING(gfxFontEntry)
+    // Used by stylo
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(gfxFontEntry)
 
     explicit gfxFontEntry(const nsAString& aName, bool aIsStandardFace = false);
 
@@ -184,84 +189,11 @@ public:
     bool HasSVGGlyph(uint32_t aGlyphId);
     bool GetSVGGlyphExtents(DrawTarget* aDrawTarget, uint32_t aGlyphId,
                             gfxRect *aResult);
-    bool RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
-                        gfxTextContextPaint *aContextPaint);
+    void RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
+                        mozilla::SVGContextPaint* aContextPaint);
     // Call this when glyph geometry or rendering has changed
     // (e.g. animated SVG glyphs)
     void NotifyGlyphsChanged();
-
-    enum MathConstant {
-        // The order of the constants must match the order of the fields
-        // defined in the MATH table.
-        ScriptPercentScaleDown,
-        ScriptScriptPercentScaleDown,
-        DelimitedSubFormulaMinHeight,
-        DisplayOperatorMinHeight,
-        MathLeading,
-        AxisHeight,
-        AccentBaseHeight,
-        FlattenedAccentBaseHeight,
-        SubscriptShiftDown,
-        SubscriptTopMax,
-        SubscriptBaselineDropMin,
-        SuperscriptShiftUp,
-        SuperscriptShiftUpCramped,
-        SuperscriptBottomMin,
-        SuperscriptBaselineDropMax,
-        SubSuperscriptGapMin,
-        SuperscriptBottomMaxWithSubscript,
-        SpaceAfterScript,
-        UpperLimitGapMin,
-        UpperLimitBaselineRiseMin,
-        LowerLimitGapMin,
-        LowerLimitBaselineDropMin,
-        StackTopShiftUp,
-        StackTopDisplayStyleShiftUp,
-        StackBottomShiftDown,
-        StackBottomDisplayStyleShiftDown,
-        StackGapMin,
-        StackDisplayStyleGapMin,
-        StretchStackTopShiftUp,
-        StretchStackBottomShiftDown,
-        StretchStackGapAboveMin,
-        StretchStackGapBelowMin,
-        FractionNumeratorShiftUp,
-        FractionNumeratorDisplayStyleShiftUp,
-        FractionDenominatorShiftDown,
-        FractionDenominatorDisplayStyleShiftDown,
-        FractionNumeratorGapMin,
-        FractionNumDisplayStyleGapMin,
-        FractionRuleThickness,
-        FractionDenominatorGapMin,
-        FractionDenomDisplayStyleGapMin,
-        SkewedFractionHorizontalGap,
-        SkewedFractionVerticalGap,
-        OverbarVerticalGap,
-        OverbarRuleThickness,
-        OverbarExtraAscender,
-        UnderbarVerticalGap,
-        UnderbarRuleThickness,
-        UnderbarExtraDescender,
-        RadicalVerticalGap,
-        RadicalDisplayStyleVerticalGap,
-        RadicalRuleThickness,
-        RadicalExtraAscender,
-        RadicalKernBeforeDegree,
-        RadicalKernAfterDegree,
-        RadicalDegreeBottomRaisePercent
-    };
-
-    // Call TryGetMathTable to try to load the Open Type MATH table. The other
-    // functions forward the call to the gfxMathTable class. The GetMath...()
-    // functions MUST NOT be called unless TryGetMathTable() has returned true.
-    bool     TryGetMathTable();
-    gfxFloat GetMathConstant(MathConstant aConstant);
-    bool     GetMathItalicsCorrection(uint32_t aGlyphID,
-                                      gfxFloat* aItalicCorrection);
-    uint32_t GetMathVariantsSize(uint32_t aGlyphID, bool aVertical,
-                                 uint16_t aSize);
-    bool     GetMathVariantsParts(uint32_t aGlyphID, bool aVertical,
-                                  uint32_t aGlyphs[4]);
 
     bool     TryGetColorGlyphs();
     bool     GetColorLayersInfo(uint32_t aGlyphId,
@@ -317,10 +249,15 @@ public:
         AutoTable& operator=(const AutoTable&) = delete;
     };
 
-    already_AddRefed<gfxFont>
-    FindOrMakeFont(const gfxFontStyle *aStyle,
-                   bool aNeedsBold,
-                   gfxCharacterMap* aUnicodeRangeMap = nullptr);
+    // Return a font instance for a particular style. This may be a newly-
+    // created instance, or a font already in the global cache.
+    // We can't return a UniquePtr here, because we may be returning a shared
+    // cached instance; but we also don't return already_AddRefed, because
+    // the caller may only need to use the font temporarily and doesn't need
+    // a strong reference.
+    gfxFont* FindOrMakeFont(const gfxFontStyle *aStyle,
+                            bool aNeedsBold,
+                            gfxCharacterMap* aUnicodeRangeMap = nullptr);
 
     // Get an existing font table cache entry in aBlob if it has been
     // registered, or return false if not.  Callers must call
@@ -412,7 +349,6 @@ public:
     bool             mIgnoreGDEF  : 1;
     bool             mIgnoreGSUB  : 1;
     bool             mSVGInitialized : 1;
-    bool             mMathInitialized : 1;
     bool             mHasSpaceFeaturesInitialized : 1;
     bool             mHasSpaceFeatures : 1;
     bool             mHasSpaceFeaturesKerning : 1;
@@ -443,7 +379,6 @@ public:
     mozilla::UniquePtr<gfxSVGGlyphs> mSVGGlyphs;
     // list of gfxFonts that are using SVG glyphs
     nsTArray<gfxFont*> mFontsUsingSVGGlyphs;
-    mozilla::UniquePtr<gfxMathTable> mMathTable;
     nsTArray<gfxFontFeature> mFeatureSettings;
     mozilla::UniquePtr<nsDataHashtable<nsUint32HashKey,bool>> mSupportedFeatures;
     mozilla::UniquePtr<nsDataHashtable<nsUint32HashKey,hb_set_t*>> mFeatureInputs;
@@ -466,10 +401,8 @@ protected:
     // Protected destructor, to discourage deletion outside of Release():
     virtual ~gfxFontEntry();
 
-    virtual gfxFont *CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold) {
-        NS_NOTREACHED("oops, somebody didn't override CreateFontInstance");
-        return nullptr;
-    }
+    virtual gfxFont *CreateFontInstance(const gfxFontStyle *aFontStyle,
+                                        bool aNeedsBold) = 0;
 
     virtual void CheckForGraphiteTables();
 
@@ -660,7 +593,8 @@ struct GlobalFontMatch {
 
 class gfxFontFamily {
 public:
-    NS_INLINE_DECL_REFCOUNTING(gfxFontFamily)
+    // Used by stylo
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(gfxFontFamily)
 
     explicit gfxFontFamily(const nsAString& aName) :
         mName(aName),
@@ -711,7 +645,7 @@ public:
     gfxFontEntry *FindFontForStyle(const gfxFontStyle& aFontStyle, 
                                    bool& aNeedsSyntheticBold);
 
-    void
+    virtual void
     FindAllFontsForStyle(const gfxFontStyle& aFontStyle,
                          nsTArray<gfxFontEntry*>& aFontEntryList,
                          bool& aNeedsSyntheticBold);
@@ -803,9 +737,7 @@ public:
 
 protected:
     // Protected destructor, to discourage deletion outside of Release():
-    virtual ~gfxFontFamily()
-    {
-    }
+    virtual ~gfxFontFamily();
 
     bool ReadOtherFamilyNamesForFace(gfxPlatformFontList *aPlatformFontList,
                                      hb_blob_t           *aNameTable,

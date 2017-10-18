@@ -49,14 +49,9 @@ bool OpenProcessHandle(ProcessId pid, ProcessHandle* handle) {
   return true;
 }
 
-bool OpenPrivilegedProcessHandle(ProcessId pid,
-                                 ProcessHandle* handle,
-                                 int64_t* error) {
+bool OpenPrivilegedProcessHandle(ProcessId pid, ProcessHandle* handle) {
   // On POSIX permissions are checked for each operation on process,
   // not when opening a "handle".
-  if (error) {
-    *error = 0;
-  }
   return OpenProcessHandle(pid, handle);
 }
 
@@ -75,6 +70,11 @@ ProcessId GetProcId(ProcessHandle process) {
 bool KillProcess(ProcessHandle process_id, int exit_code, bool wait) {
   bool result = kill(process_id, SIGTERM) == 0;
 
+  if (!result && (errno == ESRCH)) {
+    result = true;
+    wait = false;
+  }
+
   if (result && wait) {
     int tries = 60;
     bool exited = false;
@@ -82,6 +82,9 @@ bool KillProcess(ProcessHandle process_id, int exit_code, bool wait) {
     while (tries-- > 0) {
       int pid = HANDLE_EINTR(waitpid(process_id, NULL, WNOHANG));
       if (pid == process_id) {
+        exited = true;
+        break;
+      } else if (errno == ECHILD) {
         exited = true;
         break;
       }
@@ -122,7 +125,7 @@ void CloseSuperfluousFds(const base::InjectiveMultimap& saved_mapping) {
 #if defined(ANDROID)
   static const rlim_t kSystemDefaultMaxFds = 1024;
   static const char kFDDir[] = "/proc/self/fd";
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_SOLARIS)
   static const rlim_t kSystemDefaultMaxFds = 8192;
   static const char kFDDir[] = "/proc/self/fd";
 #elif defined(OS_MACOSX)
@@ -214,7 +217,7 @@ void CloseSuperfluousFds(const base::InjectiveMultimap& saved_mapping) {
 // TODO(agl): Remove this function. It's fundamentally broken for multithreaded
 // apps.
 void SetAllFDsToCloseOnExec() {
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) || defined(OS_SOLARIS)
   const char fd_dir[] = "/proc/self/fd";
 #elif defined(OS_MACOSX) || defined(OS_BSD)
   const char fd_dir[] = "/dev/fd";

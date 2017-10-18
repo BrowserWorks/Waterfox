@@ -40,8 +40,8 @@ OptimizationInfo::initNormalOptimizationInfo()
 
     registerAllocator_ = RegisterAllocator_Backtracking;
 
-    inlineMaxBytecodePerCallSiteMainThread_ = 550;
-    inlineMaxBytecodePerCallSiteOffThread_ = 1100;
+    inlineMaxBytecodePerCallSiteActiveCooperatingThread_ = 550;
+    inlineMaxBytecodePerCallSiteHelperThread_ = 1100;
     inlineMaxCalleeInlinedBytecodeLength_ = 3550;
     inlineMaxTotalBytecodeLength_ = 85000;
     inliningMaxCallerBytecodeLength_ = 1600;
@@ -55,22 +55,22 @@ OptimizationInfo::initNormalOptimizationInfo()
 }
 
 void
-OptimizationInfo::initAsmjsOptimizationInfo()
+OptimizationInfo::initWasmOptimizationInfo()
 {
-    // The AsmJS optimization level
-    // Disables some passes that don't work well with asmjs.
+    // The Wasm optimization level
+    // Disables some passes that don't work well with wasm.
 
     // Take normal option values for not specified values.
     initNormalOptimizationInfo();
 
-    level_ = OptimizationLevel::AsmJS;
+    level_ = OptimizationLevel::Wasm;
 
     ama_ = true;
     autoTruncate_ = false;
-    eagerSimdUnbox_ = false;           // AsmJS has no boxing / unboxing.
+    eagerSimdUnbox_ = false;           // wasm has no boxing / unboxing.
     edgeCaseAnalysis_ = false;
     eliminateRedundantChecks_ = false;
-    scalarReplacement_ = false;        // AsmJS has no objects.
+    scalarReplacement_ = false;        // wasm has no objects.
     sincos_ = false;
     sink_ = false;
 }
@@ -93,17 +93,17 @@ OptimizationInfo::compilerWarmUpThreshold(JSScript* script, jsbytecode* pc) cons
             warmUpThreshold = JitOptions.forcedDefaultIonSmallFunctionWarmUpThreshold.ref();
     }
 
-    // If the script is too large to compile on the main thread, we can still
+    // If the script is too large to compile on the active thread, we can still
     // compile it off thread. In these cases, increase the warm-up counter
     // threshold to improve the compilation's type information and hopefully
     // avoid later recompilation.
 
-    if (script->length() > MAX_MAIN_THREAD_SCRIPT_SIZE)
-        warmUpThreshold *= (script->length() / (double) MAX_MAIN_THREAD_SCRIPT_SIZE);
+    if (script->length() > MAX_ACTIVE_THREAD_SCRIPT_SIZE)
+        warmUpThreshold *= (script->length() / (double) MAX_ACTIVE_THREAD_SCRIPT_SIZE);
 
     uint32_t numLocalsAndArgs = NumLocalsAndArgs(script);
-    if (numLocalsAndArgs > MAX_MAIN_THREAD_LOCALS_AND_ARGS)
-        warmUpThreshold *= (numLocalsAndArgs / (double) MAX_MAIN_THREAD_LOCALS_AND_ARGS);
+    if (numLocalsAndArgs > MAX_ACTIVE_THREAD_LOCALS_AND_ARGS)
+        warmUpThreshold *= (numLocalsAndArgs / (double) MAX_ACTIVE_THREAD_LOCALS_AND_ARGS);
 
     if (!pc || JitOptions.eagerCompilation)
         return warmUpThreshold;
@@ -119,7 +119,7 @@ OptimizationInfo::compilerWarmUpThreshold(JSScript* script, jsbytecode* pc) cons
 OptimizationLevelInfo::OptimizationLevelInfo()
 {
     infos_[OptimizationLevel::Normal].initNormalOptimizationInfo();
-    infos_[OptimizationLevel::AsmJS].initAsmjsOptimizationInfo();
+    infos_[OptimizationLevel::Wasm].initWasmOptimizationInfo();
 
 #ifdef DEBUG
     OptimizationLevel level = firstLevel();
@@ -139,7 +139,7 @@ OptimizationLevelInfo::nextLevel(OptimizationLevel level) const
       case OptimizationLevel::DontCompile:
         return OptimizationLevel::Normal;
       case OptimizationLevel::Normal:
-      case OptimizationLevel::AsmJS:
+      case OptimizationLevel::Wasm:
       case OptimizationLevel::Count:;
     }
     MOZ_CRASH("Unknown optimization level.");

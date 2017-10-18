@@ -46,8 +46,6 @@ ia2AccessibleValue::QueryInterface(REFIID iid, void** ppv)
 STDMETHODIMP
 ia2AccessibleValue::get_currentValue(VARIANT* aCurrentValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (!aCurrentValue)
     return E_INVALIDARG;
 
@@ -55,14 +53,12 @@ ia2AccessibleValue::get_currentValue(VARIANT* aCurrentValue)
 
   AccessibleWrap* valueAcc = static_cast<AccessibleWrap*>(this);
   double currentValue;
-  if (valueAcc->IsProxy()) {
-    currentValue = valueAcc->Proxy()->CurValue();
-  } else {
-    if (valueAcc->IsDefunct())
-      return CO_E_OBJNOTCONNECTED;
-
-    currentValue = valueAcc->CurValue();
+  MOZ_ASSERT(!valueAcc->IsProxy());
+  if (valueAcc->IsDefunct()) {
+    return CO_E_OBJNOTCONNECTED;
   }
+
+  currentValue = valueAcc->CurValue();
 
   if (IsNaN(currentValue))
     return S_FALSE;
@@ -70,35 +66,26 @@ ia2AccessibleValue::get_currentValue(VARIANT* aCurrentValue)
   aCurrentValue->vt = VT_R8;
   aCurrentValue->dblVal = currentValue;
   return S_OK;
-
-  A11Y_TRYBLOCK_END
 }
 
 STDMETHODIMP
 ia2AccessibleValue::setCurrentValue(VARIANT aValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (aValue.vt != VT_R8)
     return E_INVALIDARG;
 
   AccessibleWrap* valueAcc = static_cast<AccessibleWrap*>(this);
-  if (valueAcc->IsProxy())
-    return valueAcc->Proxy()->SetCurValue(aValue.dblVal) ? S_OK : E_FAIL;
+  MOZ_ASSERT(!valueAcc->IsProxy());
 
   if (valueAcc->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
   return valueAcc->SetCurValue(aValue.dblVal) ? S_OK : E_FAIL;
-
-  A11Y_TRYBLOCK_END
 }
 
 STDMETHODIMP
 ia2AccessibleValue::get_maximumValue(VARIANT* aMaximumValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (!aMaximumValue)
     return E_INVALIDARG;
 
@@ -106,14 +93,12 @@ ia2AccessibleValue::get_maximumValue(VARIANT* aMaximumValue)
 
   AccessibleWrap* valueAcc = static_cast<AccessibleWrap*>(this);
   double maximumValue;
-  if (valueAcc->IsProxy()) {
-    maximumValue = valueAcc->Proxy()->MaxValue();
-  } else {
-    if (valueAcc->IsDefunct())
-      return CO_E_OBJNOTCONNECTED;
-
-    maximumValue = valueAcc->MaxValue();
+  MOZ_ASSERT(!valueAcc->IsProxy());
+  if (valueAcc->IsDefunct()) {
+    return CO_E_OBJNOTCONNECTED;
   }
+
+  maximumValue = valueAcc->MaxValue();
 
   if (IsNaN(maximumValue))
     return S_FALSE;
@@ -121,15 +106,11 @@ ia2AccessibleValue::get_maximumValue(VARIANT* aMaximumValue)
   aMaximumValue->vt = VT_R8;
   aMaximumValue->dblVal = maximumValue;
   return S_OK;
-
-  A11Y_TRYBLOCK_END
 }
 
 STDMETHODIMP
 ia2AccessibleValue::get_minimumValue(VARIANT* aMinimumValue)
 {
-  A11Y_TRYBLOCK_BEGIN
-
   if (!aMinimumValue)
     return E_INVALIDARG;
 
@@ -137,14 +118,12 @@ ia2AccessibleValue::get_minimumValue(VARIANT* aMinimumValue)
 
   AccessibleWrap* valueAcc = static_cast<AccessibleWrap*>(this);
   double minimumValue;
-  if (valueAcc->IsProxy()) {
-    minimumValue = valueAcc->Proxy()->MinValue();
-  } else {
-    if (valueAcc->IsDefunct())
-      return CO_E_OBJNOTCONNECTED;
-
-    minimumValue = valueAcc->MinValue();
+  MOZ_ASSERT(!valueAcc->IsProxy());
+  if (valueAcc->IsDefunct()) {
+    return CO_E_OBJNOTCONNECTED;
   }
+
+  minimumValue = valueAcc->MinValue();
 
   if (IsNaN(minimumValue))
     return S_FALSE;
@@ -152,7 +131,5 @@ ia2AccessibleValue::get_minimumValue(VARIANT* aMinimumValue)
   aMinimumValue->vt = VT_R8;
   aMinimumValue->dblVal = minimumValue;
   return S_OK;
-
-  A11Y_TRYBLOCK_END
 }
 

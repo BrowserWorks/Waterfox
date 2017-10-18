@@ -78,8 +78,8 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
     if (gen->isProfilerInstrumentationEnabled())
         masm.enableProfilingInstrumentation();
 
-    if (gen->compilingAsmJS()) {
-        // Since asm.js uses the system ABI which does not necessarily use a
+    if (gen->compilingWasm()) {
+        // Since wasm uses the system ABI which does not necessarily use a
         // regular array where all slots are sizeof(Value), it maintains the max
         // argument stack depth separately.
         MOZ_ASSERT(graph->argumentSlotCount() == 0);
@@ -88,23 +88,23 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
         if (gen->usesSimd()) {
             // If the function uses any SIMD then we may need to insert padding
             // so that local slots are aligned for SIMD.
-            frameInitialAdjustment_ = ComputeByteAlignment(sizeof(AsmJSFrame),
-                                                           AsmJSStackAlignment);
+            frameInitialAdjustment_ = ComputeByteAlignment(sizeof(wasm::Frame), WasmStackAlignment);
             frameDepth_ += frameInitialAdjustment_;
+
             // Keep the stack aligned. Some SIMD sequences build values on the
             // stack and need the stack aligned.
-            frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
-                                                AsmJSStackAlignment);
-        } else if (gen->performsCall()) {
-            // An MAsmJSCall does not align the stack pointer at calls sites but
+            frameDepth_ += ComputeByteAlignment(sizeof(wasm::Frame) + frameDepth_,
+                                                WasmStackAlignment);
+        } else if (gen->needsStaticStackAlignment()) {
+            // An MWasmCall does not align the stack pointer at calls sites but
             // instead relies on the a priori stack adjustment. This must be the
             // last adjustment of frameDepth_.
-            frameDepth_ += ComputeByteAlignment(sizeof(AsmJSFrame) + frameDepth_,
-                                                AsmJSStackAlignment);
+            frameDepth_ += ComputeByteAlignment(sizeof(wasm::Frame) + frameDepth_,
+                                                WasmStackAlignment);
         }
 
         // FrameSizeClass is only used for bailing, which cannot happen in
-        // asm.js code.
+        // wasm code.
         frameClass_ = FrameSizeClass::None();
     } else {
         frameClass_ = FrameSizeClass::FromDepth(frameDepth_);
@@ -115,7 +115,7 @@ bool
 CodeGeneratorShared::generatePrologue()
 {
     MOZ_ASSERT(masm.framePushed() == 0);
-    MOZ_ASSERT(!gen->compilingAsmJS());
+    MOZ_ASSERT(!gen->compilingWasm());
 
 #ifdef JS_USE_LINK_REGISTER
     masm.pushReturnAddress();
@@ -139,7 +139,7 @@ CodeGeneratorShared::generatePrologue()
 bool
 CodeGeneratorShared::generateEpilogue()
 {
-    MOZ_ASSERT(!gen->compilingAsmJS());
+    MOZ_ASSERT(!gen->compilingWasm());
     masm.bind(&returnLabel_);
 
     emitTracelogIonStop();
@@ -162,10 +162,14 @@ CodeGeneratorShared::generateEpilogue()
 bool
 CodeGeneratorShared::generateOutOfLineCode()
 {
+    // OOL paths should not attempt to use |current| as it's the last block
+    // instead of the block corresponding to the OOL path.
+    current = nullptr;
+
     for (size_t i = 0; i < outOfLineCode_.length(); i++) {
         // Add native => bytecode mapping entries for OOL sites.
-        // Not enabled on asm.js yet since asm doesn't contain bytecode mappings.
-        if (!gen->compilingAsmJS()) {
+        // Not enabled on wasm yet since it doesn't contain bytecode mappings.
+        if (!gen->compilingWasm()) {
             if (!addNativeToBytecodeEntry(outOfLineCode_[i]->bytecodeSite()))
                 return false;
         }
@@ -197,7 +201,7 @@ CodeGeneratorShared::addOutOfLineCode(OutOfLineCode* code, const BytecodeSite* s
 {
     code->setFramePushed(masm.framePushed());
     code->setBytecodeSite(site);
-    MOZ_ASSERT_IF(!gen->compilingAsmJS(), code->script()->containsPC(code->pc()));
+    MOZ_ASSERT_IF(!gen->compilingWasm(), code->script()->containsPC(code->pc()));
     masm.propagateOOM(outOfLineCode_.append(code));
 }
 
@@ -233,7 +237,7 @@ CodeGeneratorShared::addNativeToBytecodeEntry(const BytecodeSite* site)
         // bytecodeOffset, but the nativeOffset has changed, do nothing.
         // The same site just generated some more code.
         if (lastEntry.tree == tree && lastEntry.pc == pc) {
-            JitSpew(JitSpew_Profiling, " => In-place update [%u-%u]",
+            JitSpew(JitSpew_Profiling, " => In-place update [%zu-%" PRIu32 "]",
                     lastEntry.nativeOffset.offset(), nativeOffset);
             return true;
         }
@@ -280,7 +284,7 @@ CodeGeneratorShared::dumpNativeToBytecodeEntries()
 {
 #ifdef JS_JITSPEW
     InlineScriptTree* topTree = gen->info().inlineScriptTree();
-    JitSpewStart(JitSpew_Profiling, "Native To Bytecode Entries for %s:%d\n",
+    JitSpewStart(JitSpew_Profiling, "Native To Bytecode Entries for %s:%zu\n",
                  topTree->script()->filename(), topTree->script()->lineno());
     for (unsigned i = 0; i < nativeToBytecodeList_.length(); i++)
         dumpNativeToBytecodeEntry(i);
@@ -303,16 +307,16 @@ CodeGeneratorShared::dumpNativeToBytecodeEntry(uint32_t idx)
         if (nextRef->tree == ref.tree)
             pcDelta = nextRef->pc - ref.pc;
     }
-    JitSpewStart(JitSpew_Profiling, "    %08x [+%-6d] => %-6d [%-4d] {%-10s} (%s:%d",
+    JitSpewStart(JitSpew_Profiling, "    %08zx [+%-6d] => %-6ld [%-4d] {%-10s} (%s:%zu",
                  ref.nativeOffset.offset(),
                  nativeDelta,
-                 ref.pc - script->code(),
+                 (long) (ref.pc - script->code()),
                  pcDelta,
                  CodeName[JSOp(*ref.pc)],
                  script->filename(), script->lineno());
 
     for (tree = tree->caller(); tree; tree = tree->caller()) {
-        JitSpewCont(JitSpew_Profiling, " <= %s:%d", tree->script()->filename(),
+        JitSpewCont(JitSpew_Profiling, " <= %s:%zu", tree->script()->filename(),
                                                     tree->script()->lineno());
     }
     JitSpewCont(JitSpew_Profiling, ")");
@@ -411,8 +415,9 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
 
         // Lambda should have a default value readable for iterating over the
         // inner frames.
-        if (mir->isLambda()) {
-            MConstant* constant = mir->toLambda()->functionOperand();
+        if (mir->isLambda() || mir->isLambdaArrow()) {
+            MConstant* constant = mir->isLambda() ? mir->toLambda()->functionOperand()
+                                                  : mir->toLambdaArrow()->functionOperand();
             uint32_t cstIndex;
             masm.propagateOOM(graph.addConstantToPool(constant->toJSValue(), &cstIndex));
             alloc = RValueAllocation::RecoverInstruction(index, cstIndex);
@@ -923,11 +928,11 @@ CodeGeneratorShared::generateCompactTrackedOptimizationsMap(JSContext* cx, JitCo
 
     verifyCompactTrackedOptimizationsMap(code, numRegions, unique, allTypes);
 
-    JitSpew(JitSpew_OptimizationTracking,
+    JitSpew(JitSpew_OptimizationTrackingExtended,
             "== Compact Native To Optimizations Map [%p-%p] size %u",
             data, data + trackedOptimizationsMapSize_, trackedOptimizationsMapSize_);
-    JitSpew(JitSpew_OptimizationTracking,
-            "     with type list of length %u, size %u",
+    JitSpew(JitSpew_OptimizationTrackingExtended,
+            "     with type list of length %zu, size %zu",
             allTypes->length(), allTypes->length() * sizeof(IonTrackedTypeWithAddendum));
 
     return true;
@@ -1054,7 +1059,7 @@ CodeGeneratorShared::verifyCompactTrackedOptimizationsMap(JitCode* code, uint32_
             // decoded. This is disabled for now if the types table might
             // contain nursery pointers, in which case the types might not
             // match, see bug 1175761.
-            if (!code->runtimeFromMainThread()->gc.storeBuffer.cancelIonCompilations()) {
+            if (!code->zone()->group()->storeBuffer().cancelIonCompilations()) {
                 IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
                 TempOptimizationTypeInfoVector tvec(alloc());
                 ReadTempTypeInfoVectorOp top(alloc(), &tvec);
@@ -1289,8 +1294,8 @@ CodeGeneratorShared::verifyOsiPointRegs(LSafepoint* safepoint)
     // forces them to have an osi point associated with them.  The
     // FunctionBoundary for inline function entry is added to the caller's
     // graph with a PC from the caller's code, but during codegen it modifies
-    // SPS instrumentation to add the callee as the current top-most script.
-    // When codegen gets to the OSIPoint, and the callWithABI below is
+    // Gecko Profiler instrumentation to add the callee as the current top-most
+    // script. When codegen gets to the OSIPoint, and the callWithABI below is
     // emitted, the codegen thinks that the current frame is the callee, but
     // the PC it's using from the OSIPoint refers to the caller.  This causes
     // the profiler instrumentation of the callWithABI below to ASSERT, since
@@ -1353,11 +1358,6 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
     }
 #endif
 
-#ifdef JS_TRACE_LOGGING
-    emitTracelogStartEvent(TraceLogger_VM);
-    emitTracelogStartEvent(fun.name(), TraceLogger_VMSpecific);
-#endif
-
     // Stack is:
     //    ... frame ...
     //    [args]
@@ -1404,11 +1404,6 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
     masm.implicitPop(fun.explicitStackSlots() * sizeof(void*) + framePop);
     // Stack is:
     //    ... frame ...
-
-#ifdef JS_TRACE_LOGGING
-    emitTracelogStopEvent(TraceLogger_VM);
-    emitTracelogStopEvent(fun.name(), TraceLogger_VMSpecific);
-#endif
 }
 
 class OutOfLineTruncateSlow : public OutOfLineCodeBase<CodeGeneratorShared>
@@ -1416,10 +1411,15 @@ class OutOfLineTruncateSlow : public OutOfLineCodeBase<CodeGeneratorShared>
     FloatRegister src_;
     Register dest_;
     bool widenFloatToDouble_;
+    wasm::BytecodeOffset bytecodeOffset_;
 
   public:
-    OutOfLineTruncateSlow(FloatRegister src, Register dest, bool widenFloatToDouble = false)
-      : src_(src), dest_(dest), widenFloatToDouble_(widenFloatToDouble)
+    OutOfLineTruncateSlow(FloatRegister src, Register dest, bool widenFloatToDouble = false,
+                          wasm::BytecodeOffset bytecodeOffset = wasm::BytecodeOffset())
+      : src_(src),
+        dest_(dest),
+        widenFloatToDouble_(widenFloatToDouble),
+        bytecodeOffset_(bytecodeOffset)
     { }
 
     void accept(CodeGeneratorShared* codegen) {
@@ -1434,30 +1434,37 @@ class OutOfLineTruncateSlow : public OutOfLineCodeBase<CodeGeneratorShared>
     bool widenFloatToDouble() const {
         return widenFloatToDouble_;
     }
-
+    wasm::BytecodeOffset bytecodeOffset() const {
+        return bytecodeOffset_;
+    }
 };
 
 OutOfLineCode*
-CodeGeneratorShared::oolTruncateDouble(FloatRegister src, Register dest, MInstruction* mir)
+CodeGeneratorShared::oolTruncateDouble(FloatRegister src, Register dest, MInstruction* mir,
+                                       wasm::BytecodeOffset bytecodeOffset)
 {
-    OutOfLineTruncateSlow* ool = new(alloc()) OutOfLineTruncateSlow(src, dest);
+    MOZ_ASSERT_IF(IsCompilingWasm(), bytecodeOffset.isValid());
+
+    OutOfLineTruncateSlow* ool = new(alloc()) OutOfLineTruncateSlow(src, dest, /* float32 */ false,
+                                                                    bytecodeOffset);
     addOutOfLineCode(ool, mir);
     return ool;
 }
 
 void
-CodeGeneratorShared::emitTruncateDouble(FloatRegister src, Register dest, MInstruction* mir)
+CodeGeneratorShared::emitTruncateDouble(FloatRegister src, Register dest, MTruncateToInt32* mir)
 {
-    OutOfLineCode* ool = oolTruncateDouble(src, dest, mir);
+    OutOfLineCode* ool = oolTruncateDouble(src, dest, mir, mir->bytecodeOffset());
 
     masm.branchTruncateDoubleMaybeModUint32(src, dest, ool->entry());
     masm.bind(ool->rejoin());
 }
 
 void
-CodeGeneratorShared::emitTruncateFloat32(FloatRegister src, Register dest, MInstruction* mir)
+CodeGeneratorShared::emitTruncateFloat32(FloatRegister src, Register dest, MTruncateToInt32* mir)
 {
-    OutOfLineTruncateSlow* ool = new(alloc()) OutOfLineTruncateSlow(src, dest, true);
+    OutOfLineTruncateSlow* ool = new(alloc()) OutOfLineTruncateSlow(src, dest, /* float32 */ true,
+                                                                    mir->bytecodeOffset());
     addOutOfLineCode(ool, mir);
 
     masm.branchTruncateFloat32MaybeModUint32(src, dest, ool->entry());
@@ -1471,7 +1478,8 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
     Register dest = ool->dest();
 
     saveVolatile(dest);
-    masm.outOfLineTruncateSlow(src, dest, ool->widenFloatToDouble(), gen->compilingAsmJS());
+    masm.outOfLineTruncateSlow(src, dest, ool->widenFloatToDouble(), gen->compilingWasm(),
+                               ool->bytecodeOffset());
     restoreVolatile(dest);
 
     masm.jump(ool->rejoin());
@@ -1485,55 +1493,61 @@ CodeGeneratorShared::omitOverRecursedCheck() const
     // stack overflow check. Note that the actual number here is somewhat
     // arbitrary, and codegen actually uses small bounded amounts of
     // additional stack space in some cases too.
-    return frameSize() < 64 && !gen->performsCall();
+    return frameSize() < 64 && !gen->needsOverrecursedCheck();
 }
 
 void
-CodeGeneratorShared::emitAsmJSCallBase(LAsmJSCallBase* ins)
+CodeGeneratorShared::emitWasmCallBase(LWasmCallBase* ins)
 {
-    MAsmJSCall* mir = ins->mir();
+    MWasmCall* mir = ins->mir();
 
     if (mir->spIncrement())
         masm.freeStack(mir->spIncrement());
 
-    MOZ_ASSERT((sizeof(AsmJSFrame) + masm.framePushed()) % AsmJSStackAlignment == 0);
-    static_assert(AsmJSStackAlignment >= ABIStackAlignment &&
-                  AsmJSStackAlignment % ABIStackAlignment == 0,
-                  "The asm.js stack alignment should subsume the ABI-required alignment");
+    MOZ_ASSERT((sizeof(wasm::Frame) + masm.framePushed()) % WasmStackAlignment == 0);
+    static_assert(WasmStackAlignment >= ABIStackAlignment &&
+                  WasmStackAlignment % ABIStackAlignment == 0,
+                  "The wasm stack alignment should subsume the ABI-required alignment");
 
 #ifdef DEBUG
     Label ok;
-    masm.branchTestStackPtr(Assembler::Zero, Imm32(AsmJSStackAlignment - 1), &ok);
+    masm.branchTestStackPtr(Assembler::Zero, Imm32(WasmStackAlignment - 1), &ok);
     masm.breakpoint();
     masm.bind(&ok);
 #endif
 
-    MAsmJSCall::Callee callee = mir->callee();
+    // LWasmCallBase::isCallPreserved() assumes that all MWasmCalls preserve the
+    // TLS and pinned regs. The only case where where we don't have to reload
+    // the TLS and pinned regs is when the callee preserves them.
+    bool reloadRegs = true;
+
+    const wasm::CallSiteDesc& desc = mir->desc();
+    const wasm::CalleeDesc& callee = mir->callee();
     switch (callee.which()) {
-      case MAsmJSCall::Callee::Internal: {
-        masm.call(mir->desc(), callee.internal());
+      case wasm::CalleeDesc::Func:
+        masm.call(desc, callee.funcIndex());
+        reloadRegs = false;
         break;
-      }
-      case MAsmJSCall::Callee::Dynamic: {
-        wasm::SigIdDesc sigId = callee.dynamicSigId();
-        switch (sigId.kind()) {
-          case wasm::SigIdDesc::Kind::Global:
-            masm.loadWasmGlobalPtr(sigId.globalDataOffset(), WasmTableCallSigReg);
-            break;
-          case wasm::SigIdDesc::Kind::Immediate:
-            masm.move32(Imm32(sigId.immediate()), WasmTableCallSigReg);
-            break;
-          case wasm::SigIdDesc::Kind::None:
-            break;
-        }
-        MOZ_ASSERT(WasmTableCallPtrReg == ToRegister(ins->getOperand(mir->dynamicCalleeOperandIndex())));
-        masm.call(mir->desc(), WasmTableCallPtrReg);
+      case wasm::CalleeDesc::Import:
+        masm.wasmCallImport(desc, callee);
         break;
-      }
-      case MAsmJSCall::Callee::Builtin: {
-        masm.call(callee.builtin());
+      case wasm::CalleeDesc::AsmJSTable:
+      case wasm::CalleeDesc::WasmTable:
+        masm.wasmCallIndirect(desc, callee, ins->needsBoundsCheck());
+        reloadRegs = callee.which() == wasm::CalleeDesc::WasmTable && callee.wasmTableIsExternal();
         break;
-      }
+      case wasm::CalleeDesc::Builtin:
+        masm.call(desc, callee.builtin());
+        reloadRegs = false;
+        break;
+      case wasm::CalleeDesc::BuiltinInstanceMethod:
+        masm.wasmCallBuiltinInstanceMethod(desc, mir->instanceArg(), callee.builtin());
+        break;
+    }
+
+    if (reloadRegs) {
+        masm.loadWasmTlsRegFromFrame();
+        masm.loadWasmPinnedRegsFromTls();
     }
 
     if (mir->spIncrement())
@@ -1541,21 +1555,123 @@ CodeGeneratorShared::emitAsmJSCallBase(LAsmJSCallBase* ins)
 }
 
 void
+CodeGeneratorShared::visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins)
+{
+    MWasmLoadGlobalVar* mir = ins->mir();
+
+    MIRType type = mir->type();
+    MOZ_ASSERT(IsNumberType(type) || IsSimdType(type));
+
+    Register tls = ToRegister(ins->tlsPtr());
+    Address addr(tls, offsetof(wasm::TlsData, globalArea) + mir->globalDataOffset());
+    switch (type) {
+      case MIRType::Int32:
+        masm.load32(addr, ToRegister(ins->output()));
+        break;
+      case MIRType::Float32:
+        masm.loadFloat32(addr, ToFloatRegister(ins->output()));
+        break;
+      case MIRType::Double:
+        masm.loadDouble(addr, ToFloatRegister(ins->output()));
+        break;
+      // Aligned access: code is aligned on PageSize + there is padding
+      // before the global data section.
+      case MIRType::Int8x16:
+      case MIRType::Int16x8:
+      case MIRType::Int32x4:
+      case MIRType::Bool8x16:
+      case MIRType::Bool16x8:
+      case MIRType::Bool32x4:
+        masm.loadInt32x4(addr, ToFloatRegister(ins->output()));
+        break;
+      case MIRType::Float32x4:
+        masm.loadFloat32x4(addr, ToFloatRegister(ins->output()));
+        break;
+      default:
+        MOZ_CRASH("unexpected type in visitWasmLoadGlobalVar");
+    }
+}
+
+void
+CodeGeneratorShared::visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins)
+{
+    MWasmStoreGlobalVar* mir = ins->mir();
+
+    MIRType type = mir->value()->type();
+    MOZ_ASSERT(IsNumberType(type) || IsSimdType(type));
+
+    Register tls = ToRegister(ins->tlsPtr());
+    Address addr(tls, offsetof(wasm::TlsData, globalArea) + mir->globalDataOffset());
+    switch (type) {
+      case MIRType::Int32:
+        masm.store32(ToRegister(ins->value()), addr);
+        break;
+      case MIRType::Float32:
+        masm.storeFloat32(ToFloatRegister(ins->value()), addr);
+        break;
+      case MIRType::Double:
+        masm.storeDouble(ToFloatRegister(ins->value()), addr);
+        break;
+      // Aligned access: code is aligned on PageSize + there is padding
+      // before the global data section.
+      case MIRType::Int8x16:
+      case MIRType::Int16x8:
+      case MIRType::Int32x4:
+      case MIRType::Bool8x16:
+      case MIRType::Bool16x8:
+      case MIRType::Bool32x4:
+        masm.storeInt32x4(ToFloatRegister(ins->value()), addr);
+        break;
+      case MIRType::Float32x4:
+        masm.storeFloat32x4(ToFloatRegister(ins->value()), addr);
+        break;
+      default:
+        MOZ_CRASH("unexpected type in visitWasmStoreGlobalVar");
+    }
+}
+
+void
+CodeGeneratorShared::visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins)
+{
+    MWasmLoadGlobalVar* mir = ins->mir();
+    MOZ_ASSERT(mir->type() == MIRType::Int64);
+
+    Register tls = ToRegister(ins->tlsPtr());
+    Address addr(tls, offsetof(wasm::TlsData, globalArea) + mir->globalDataOffset());
+
+    Register64 output = ToOutRegister64(ins);
+    masm.load64(addr, output);
+}
+
+void
+CodeGeneratorShared::visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins)
+{
+    MWasmStoreGlobalVar* mir = ins->mir();
+    MOZ_ASSERT(mir->value()->type() == MIRType::Int64);
+
+    Register tls = ToRegister(ins->tlsPtr());
+    Address addr(tls, offsetof(wasm::TlsData, globalArea) + mir->globalDataOffset());
+
+    Register64 value = ToRegister64(ins->value());
+    masm.store64(value, addr);
+}
+
+void
 CodeGeneratorShared::emitPreBarrier(Register base, const LAllocation* index, int32_t offsetAdjustment)
 {
     if (index->isConstant()) {
         Address address(base, ToInt32(index) * sizeof(Value) + offsetAdjustment);
-        masm.patchableCallPreBarrier(address, MIRType::Value);
+        masm.guardedCallPreBarrier(address, MIRType::Value);
     } else {
         BaseIndex address(base, ToRegister(index), TimesEight, offsetAdjustment);
-        masm.patchableCallPreBarrier(address, MIRType::Value);
+        masm.guardedCallPreBarrier(address, MIRType::Value);
     }
 }
 
 void
 CodeGeneratorShared::emitPreBarrier(Address address)
 {
-    masm.patchableCallPreBarrier(address, MIRType::Value);
+    masm.guardedCallPreBarrier(address, MIRType::Value);
 }
 
 Label*
@@ -1563,10 +1679,10 @@ CodeGeneratorShared::labelForBackedgeWithImplicitCheck(MBasicBlock* mir)
 {
     // If this is a loop backedge to a loop header with an implicit interrupt
     // check, use a patchable jump. Skip this search if compiling without a
-    // script for asm.js, as there will be no interrupt check instruction.
+    // script for wasm, as there will be no interrupt check instruction.
     // Due to critical edge unsplitting there may no longer be unique loop
     // backedges, so just look for any edge going to an earlier block in RPO.
-    if (!gen->compilingAsmJS() && mir->isLoopHeader() && mir->id() <= current->mir()->id()) {
+    if (!gen->compilingWasm() && mir->isLoopHeader() && mir->id() <= current->mir()->id()) {
         for (LInstructionIterator iter = mir->lir()->begin(); iter != mir->lir()->end(); iter++) {
             if (iter->isMoveGroup()) {
                 // Continue searching for an interrupt check.
@@ -1651,26 +1767,6 @@ CodeGeneratorShared::jumpToBlock(MBasicBlock* mir, Assembler::Condition cond)
     }
 }
 #endif
-
-MOZ_MUST_USE bool
-CodeGeneratorShared::addCacheLocations(const CacheLocationList& locs, size_t* numLocs,
-                                       size_t* curIndex)
-{
-    size_t firstIndex = runtimeData_.length();
-    size_t numLocations = 0;
-    for (CacheLocationList::iterator iter = locs.begin(); iter != locs.end(); iter++) {
-        // allocateData() ensures that sizeof(CacheLocation) is word-aligned.
-        // If this changes, we will need to pad to ensure alignment.
-        if (!allocateData(sizeof(CacheLocation), curIndex))
-            return false;
-        new (&runtimeData_[*curIndex]) CacheLocation(iter->pc, iter->script);
-        numLocations++;
-    }
-    MOZ_ASSERT(numLocations != 0);
-    *numLocs = numLocations;
-    *curIndex = firstIndex;
-    return true;
-}
 
 ReciprocalMulConstants
 CodeGeneratorShared::computeDivisionConstants(uint32_t d, int maxLog) {
@@ -1770,10 +1866,8 @@ CodeGeneratorShared::emitTracelogScript(bool isStart)
 
     masm.Push(logger);
 
-    CodeOffset patchLogger = masm.movWithPatch(ImmPtr(nullptr), logger);
-    masm.propagateOOM(patchableTraceLoggers_.append(patchLogger));
-
-    masm.branchTest32(Assembler::Zero, logger, logger, &done);
+    masm.loadTraceLogger(logger);
+    masm.branchTestPtr(Assembler::Zero, logger, logger, &done);
 
     Address enabledAddress(logger, TraceLoggerThread::offsetOfEnabled());
     masm.branch32(Assembler::Equal, enabledAddress, Imm32(0), &done);
@@ -1807,10 +1901,8 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, uint32_t textId)
 
     masm.Push(logger);
 
-    CodeOffset patchLocation = masm.movWithPatch(ImmPtr(nullptr), logger);
-    masm.propagateOOM(patchableTraceLoggers_.append(patchLocation));
-
-    masm.branchTest32(Assembler::Zero, logger, logger, &done);
+    masm.loadTraceLogger(logger);
+    masm.branchTestPtr(Assembler::Zero, logger, logger, &done);
 
     Address enabledAddress(logger, TraceLoggerThread::offsetOfEnabled());
     masm.branch32(Assembler::Equal, enabledAddress, Imm32(0), &done);
@@ -1840,10 +1932,8 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, const char* text,
 
     masm.Push(loggerReg);
 
-    CodeOffset patchLocation = masm.movWithPatch(ImmPtr(nullptr), loggerReg);
-    masm.propagateOOM(patchableTraceLoggers_.append(patchLocation));
-
-    masm.branchTest32(Assembler::Zero, loggerReg, loggerReg, &done);
+    masm.loadTraceLogger(loggerReg);
+    masm.branchTestPtr(Assembler::Zero, loggerReg, loggerReg, &done);
 
     Address enabledAddress(loggerReg, TraceLoggerThread::offsetOfEnabled());
     masm.branch32(Assembler::Equal, enabledAddress, Imm32(0), &done);

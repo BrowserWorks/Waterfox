@@ -17,7 +17,7 @@ namespace jsipc {
 class JavaScriptParent : public JavaScriptBase<PJavaScriptParent>
 {
   public:
-    explicit JavaScriptParent(JSRuntime* rt);
+    JavaScriptParent() : savedNextCPOWNumber_(1) {}
     virtual ~JavaScriptParent();
 
     bool init();
@@ -26,13 +26,14 @@ class JavaScriptParent : public JavaScriptBase<PJavaScriptParent>
     void drop(JSObject* obj);
 
     bool allowMessage(JSContext* cx) override;
-
-    mozilla::ipc::IProtocol*
-    CloneProtocol(Channel* aChannel, ProtocolCloneContext* aCtx) override;
+    void afterProcessTask();
 
   protected:
     virtual bool isParent() override { return true; }
     virtual JSObject* scopeForTargetObjects() override;
+
+  private:
+    uint64_t savedNextCPOWNumber_;
 };
 
 } // namespace jsipc

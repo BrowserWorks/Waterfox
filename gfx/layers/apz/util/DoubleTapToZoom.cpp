@@ -60,7 +60,7 @@ ElementFromPoint(const nsCOMPtr<nsIPresShell>& aShell,
 static bool
 ShouldZoomToElement(const nsCOMPtr<dom::Element>& aElement) {
   if (nsIFrame* frame = aElement->GetPrimaryFrame()) {
-    if (frame->GetDisplay() == NS_STYLE_DISPLAY_INLINE) {
+    if (frame->GetDisplay() == StyleDisplay::Inline) {
       return false;
     }
   }
@@ -92,7 +92,7 @@ CalculateRectToZoomTo(const nsCOMPtr<nsIDocument>& aRootContentDocument,
                       const CSSPoint& aPoint)
 {
   // Ensure the layout information we get is up-to-date.
-  aRootContentDocument->FlushPendingNotifications(Flush_Layout);
+  aRootContentDocument->FlushPendingNotifications(FlushType::Layout);
 
   // An empty rect as return value is interpreted as "zoom out".
   const CSSRect zoomOut;

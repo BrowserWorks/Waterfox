@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   // This lives in storage/default/http+++www.mozilla.org
   const url = "http://www.mozilla.org";
@@ -19,7 +19,7 @@ function testSteps()
                          .getService(SpecialPowers.Ci.nsIScriptSecurityManager);
 
   function openDatabase() {
-    let uri = ios.newURI(url, null, null);
+    let uri = ios.newURI(url);
     let principal = ssm.createCodebasePrincipal(uri, {});
     let request = indexedDB.openForPrincipal(principal, dbName, dbVersion);
     return request;

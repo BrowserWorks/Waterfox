@@ -7,7 +7,45 @@ module.metadata = {
   "stability": "unstable"
 };
 
-const { flatten } = require('./array');
+lazyRequire(this, './array', "flatten");
+
+// Create a shortcut for Array.prototype.slice.call().
+const unbind = Function.call.bind(Function.bind, Function.call);
+const slice = unbind(Array.prototype.slice);
+
+class DefaultWeakMap extends WeakMap {
+  constructor(createItem, items = undefined) {
+    super(items);
+
+    this.createItem = createItem;
+  }
+
+  get(key) {
+    if (!this.has(key)) {
+      this.set(key, this.createItem(key));
+    }
+
+    return super.get(key);
+  }
+}
+
+class DefaultMap extends Map {
+  constructor(createItem, items = undefined) {
+    super(items);
+
+    this.createItem = createItem;
+  }
+
+  get(key) {
+    if (!this.has(key)) {
+      this.set(key, this.createItem(key));
+    }
+
+    return super.get(key);
+  }
+}
+
+Object.assign(exports, {DefaultMap, DefaultWeakMap});
 
 /**
  * Merges all the properties of all arguments into first argument. If two or
@@ -34,7 +72,7 @@ function merge(source) {
   // `Boolean` converts the first parameter to a boolean value. Any object is
   // converted to `true` where `null` and `undefined` becames `false`. Therefore
   // the `filter` method will keep only objects that are defined and not null.
-  Array.slice(arguments, 1).filter(Boolean).forEach(function onEach(properties) {
+  slice(arguments, 1).filter(Boolean).forEach(function onEach(properties) {
     getOwnPropertyIdentifiers(properties).forEach(function(name) {
       descriptor[name] = Object.getOwnPropertyDescriptor(properties, name);
     });
@@ -50,7 +88,7 @@ exports.merge = merge;
  * `merge(Object.create(source1), source2, source3)`.
  */
 function extend(source) {
-  let rest = Array.slice(arguments, 1);
+  let rest = slice(arguments, 1);
   rest.unshift(Object.create(source));
   return merge.apply(null, rest);
 }
@@ -72,7 +110,7 @@ exports.each = each;
  * merging XPCOM objects
  */
 function safeMerge(source) {
-  Array.slice(arguments, 1).forEach(function onEach (obj) {
+  slice(arguments, 1).forEach(function onEach (obj) {
     for (let prop in obj) source[prop] = obj[prop];
   });
   return source;

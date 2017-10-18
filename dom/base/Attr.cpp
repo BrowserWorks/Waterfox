@@ -59,8 +59,6 @@ Attr::Attr(nsDOMAttributeMap *aAttrMap,
 NS_IMPL_CYCLE_COLLECTION_CLASS(Attr)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Attr)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
-
   if (!nsINode::Traverse(tmp, cb)) {
     return NS_SUCCESS_INTERRUPTED_TRAVERSE;
   }
@@ -76,7 +74,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Attr)
   Element* ownerElement = tmp->GetElement();
-  if (tmp->IsBlack()) {
+  if (tmp->HasKnownLiveWrapper()) {
     if (ownerElement) {
       // The attribute owns the element via attribute map so we can
       // mark it when the attribute is certainly alive.
@@ -91,11 +89,11 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Attr)
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(Attr)
-  return tmp->IsBlackAndDoesNotNeedTracing(static_cast<nsIAttribute*>(tmp));
+  return tmp->HasKnownLiveWrapperAndDoesNotNeedTracing(static_cast<nsIAttribute*>(tmp));
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(Attr)
-  return tmp->IsBlack();
+  return tmp->HasKnownLiveWrapper();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 
 // QueryInterface implementation for Attr
@@ -253,7 +251,8 @@ Attr::SetNodeValueInternal(const nsAString& aNodeValue, ErrorResult& aError)
 }
 
 nsresult
-Attr::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
+Attr::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+            bool aPreallocateChildren) const
 {
   nsAutoString value;
   const_cast<Attr*>(this)->GetValue(value);
@@ -279,7 +278,7 @@ Attr::GetBaseURI(bool aTryUseXHRDocBaseURI) const
 
 void
 Attr::GetTextContentInternal(nsAString& aTextContent,
-                             ErrorResult& aError)
+                             OOMReporter& aError)
 {
   OwnerDoc()->WarnOnceAbout(nsIDocument::eTextContent);
 
@@ -346,7 +345,7 @@ Attr::RemoveChildAt(uint32_t aIndex, bool aNotify)
 }
 
 nsresult
-Attr::PreHandleEvent(EventChainPreVisitor& aVisitor)
+Attr::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
   return NS_OK;

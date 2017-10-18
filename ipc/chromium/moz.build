@@ -13,7 +13,6 @@ UNIFIED_SOURCES += [
     'src/base/file_path.cc',
     'src/base/file_util.cc',
     'src/base/histogram.cc',
-    'src/base/lock.cc',
     'src/base/logging.cc',
     'src/base/message_loop.cc',
     'src/base/message_pump_default.cc',
@@ -58,6 +57,11 @@ if os_win:
         'src/chrome/common/process_watcher_win.cc',
         'src/chrome/common/transport_dib_win.cc',
     ]
+
+    EXPORTS.base += [
+        'src/base/child_privileges.h',
+    ]
+
 elif not CONFIG['MOZ_SYSTEM_LIBEVENT']:
     DIRS += ['src/third_party']
 
@@ -131,8 +135,6 @@ if os_linux:
         ]
         DEFINES['ANDROID'] = True
         DEFINES['_POSIX_MONOTONIC_CLOCK'] = 0
-        if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-            DEFINES['HAVE_ANDROID_OS'] = True
 
 if os_bsd or os_linux:
     if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:

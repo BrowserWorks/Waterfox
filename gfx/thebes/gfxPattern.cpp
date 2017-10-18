@@ -106,7 +106,7 @@ gfxPattern::GetInverseMatrix() const
 
 Pattern*
 gfxPattern::GetPattern(const DrawTarget *aTarget,
-                       Matrix *aOriginalUserToDevice)
+                       const Matrix *aOriginalUserToDevice)
 {
   Matrix patternToUser = mPatternToUserSpace;
 
@@ -209,10 +209,4 @@ gfxPattern::GetSolidColor(Color& aColorOut)
   }
 
  return false;
-}
-
-int
-gfxPattern::CairoStatus()
-{
-  return CAIRO_STATUS_SUCCESS;
 }

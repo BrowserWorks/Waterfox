@@ -21,25 +21,35 @@
       'sources': [
         'include/bwe_defines.h',
         'include/remote_bitrate_estimator.h',
+        'include/send_time_history.h',
         'aimd_rate_control.cc',
         'aimd_rate_control.h',
+        'bwe_defines.cc',
         'inter_arrival.cc',
         'inter_arrival.h',
-        'mimd_rate_control.cc',
-        'mimd_rate_control.h',
         'overuse_detector.cc',
         'overuse_detector.h',
         'overuse_estimator.cc',
         'overuse_estimator.h',
-        'rate_statistics.cc',
-        'rate_statistics.h',
         'remote_bitrate_estimator_abs_send_time.cc',
+        'remote_bitrate_estimator_abs_send_time.h',
         'remote_bitrate_estimator_single_stream.cc',
-        'remote_rate_control.cc',
-        'remote_rate_control.h',
-        'test/bwe_test_logging.cc',
+        'remote_bitrate_estimator_single_stream.h',
+        'remote_estimator_proxy.cc',
+        'remote_estimator_proxy.h',
+        'send_time_history.cc',
         'test/bwe_test_logging.h',
       ], # source
+      'conditions': [
+        ['enable_bwe_test_logging==1', {
+          'defines': [ 'BWE_TEST_LOGGING_COMPILE_TIME_ENABLE=1' ],
+          'sources': [
+            'test/bwe_test_logging.cc'
+          ],
+        }, {
+          'defines': [ 'BWE_TEST_LOGGING_COMPILE_TIME_ENABLE=0' ],
+        }],
+      ],
     },
   ], # targets
   'conditions': [
@@ -49,6 +59,7 @@
           'target_name': 'bwe_tools_util',
           'type': 'static_library',
           'dependencies': [
+            '<(DEPTH)/third_party/gflags/gflags.gyp:gflags',
             '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
             'rtp_rtcp',
           ],

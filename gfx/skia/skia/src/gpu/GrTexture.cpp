@@ -36,24 +36,7 @@ void GrTexture::dirtyMipMaps(bool mipMapsDirty) {
 }
 
 size_t GrTexture::onGpuMemorySize() const {
-    size_t textureSize;
-
-    if (GrPixelConfigIsCompressed(fDesc.fConfig)) {
-        textureSize = GrCompressedFormatDataSize(fDesc.fConfig, fDesc.fWidth, fDesc.fHeight);
-    } else {
-        textureSize = (size_t) fDesc.fWidth * fDesc.fHeight * GrBytesPerPixel(fDesc.fConfig);
-    }
-
-    if (this->texturePriv().hasMipMaps()) {
-        // We don't have to worry about the mipmaps being a different size than
-        // we'd expect because we never change fDesc.fWidth/fHeight.
-        textureSize += textureSize/3;
-    }
-
-    SkASSERT(!SkToBool(fDesc.fFlags & kRenderTarget_GrSurfaceFlag));
-    SkASSERT(textureSize <= WorseCaseSize(fDesc));
-
-    return textureSize;
+    return GrSurface::ComputeSize(fDesc, 1, this->texturePriv().hasMipMaps());
 }
 
 void GrTexture::validateDesc() const {
@@ -86,23 +69,25 @@ GrSurfaceOrigin resolve_origin(const GrSurfaceDesc& desc) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-GrTexture::GrTexture(GrGpu* gpu, LifeCycle lifeCycle, const GrSurfaceDesc& desc,
-                     GrSLType samplerType, bool wasMipMapDataProvided)
-    : INHERITED(gpu, lifeCycle, desc)
-    , fSamplerType(samplerType) {
-    if (!this->isExternal() && !GrPixelConfigIsCompressed(desc.fConfig) &&
-        !desc.fTextureStorageAllocator.fAllocateTextureStorage) {
-        GrScratchKey key;
-        GrTexturePriv::ComputeScratchKey(desc, &key);
-        this->setScratchKey(key);
-    }
-
+GrTexture::GrTexture(GrGpu* gpu, const GrSurfaceDesc& desc, GrSLType samplerType,
+                     GrSamplerParams::FilterMode highestFilterMode, bool wasMipMapDataProvided)
+    : INHERITED(gpu, desc)
+    , fSamplerType(samplerType)
+    , fHighestFilterMode(highestFilterMode)
+    // Mip color mode is explicitly set after creation via GrTexturePriv
+    , fMipColorMode(SkDestinationSurfaceColorMode::kLegacy) {
     if (wasMipMapDataProvided) {
         fMipMapsStatus = kValid_MipMapsStatus;
         fMaxMipMapLevel = SkMipMap::ComputeLevelCount(fDesc.fWidth, fDesc.fHeight);
     } else {
         fMipMapsStatus = kNotAllocated_MipMapsStatus;
         fMaxMipMapLevel = 0;
+    }
+}
+
+void GrTexture::computeScratchKey(GrScratchKey* key) const {
+    if (!GrPixelConfigIsCompressed(fDesc.fConfig)) {
+        GrTexturePriv::ComputeScratchKey(fDesc, key);
     }
 }
 

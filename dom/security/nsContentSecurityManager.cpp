@@ -6,6 +6,11 @@
 #include "nsContentUtils.h"
 #include "nsCORSListenerProxy.h"
 #include "nsIStreamListener.h"
+#include "nsIDocument.h"
+#include "nsMixedContentBlocker.h"
+#include "nsCDefaultURIFixup.h"
+#include "nsIURIFixup.h"
+#include "nsIImageLoadingContent.h"
 
 #include "mozilla/dom/Element.h"
 
@@ -49,6 +54,7 @@ static bool IsImageLoadInEditorAppType(nsILoadInfo* aLoadInfo)
   nsContentPolicyType type = aLoadInfo->InternalContentPolicyType();
   if (type != nsIContentPolicy::TYPE_INTERNAL_IMAGE  &&
       type != nsIContentPolicy::TYPE_INTERNAL_IMAGE_PRELOAD &&
+      type != nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON &&
       type != nsIContentPolicy::TYPE_IMAGESET) {
     return false;
   }
@@ -164,10 +170,6 @@ DoCORSChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo,
 static nsresult
 DoContentSecurityChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo)
 {
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-  
   nsContentPolicyType contentPolicyType =
     aLoadInfo->GetExternalContentPolicyType();
   nsContentPolicyType internalContentPolicyType =
@@ -175,12 +177,24 @@ DoContentSecurityChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo)
   nsCString mimeTypeGuess;
   nsCOMPtr<nsINode> requestingContext = nullptr;
 
-#ifdef DEBUG
-  // Don't enforce TYPE_DOCUMENT assertions for loads
-  // initiated by javascript tests.
-  bool skipContentTypeCheck = false;
-  skipContentTypeCheck = Preferences::GetBool("network.loadinfo.skip_type_assertion");
-#endif
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
+      contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT) {
+    // TYPE_DOCUMENT and TYPE_SUBDOCUMENT loads might potentially
+    // be wyciwyg:// channels. Let's fix up the URI so we can
+    // perform proper security checks.
+    nsCOMPtr<nsIURIFixup> urifixup(do_GetService(NS_URIFIXUP_CONTRACTID, &rv));
+    if (NS_SUCCEEDED(rv) && urifixup) {
+      nsCOMPtr<nsIURI> fixedURI;
+      rv = urifixup->CreateExposableURI(uri, getter_AddRefs(fixedURI));
+      if (NS_SUCCEEDED(rv)) {
+        uri = fixedURI;
+      }
+    }
+  }
 
   switch(contentPolicyType) {
     case nsIContentPolicy::TYPE_OTHER: {
@@ -214,16 +228,14 @@ DoContentSecurityChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo)
     }
 
     case nsIContentPolicy::TYPE_DOCUMENT: {
-      MOZ_ASSERT(skipContentTypeCheck || false, "contentPolicyType not supported yet");
+      mimeTypeGuess = EmptyCString();
+      requestingContext = aLoadInfo->LoadingNode();
       break;
     }
 
     case nsIContentPolicy::TYPE_SUBDOCUMENT: {
       mimeTypeGuess = NS_LITERAL_CSTRING("text/html");
       requestingContext = aLoadInfo->LoadingNode();
-      MOZ_ASSERT(!requestingContext ||
-                 requestingContext->NodeType() == nsIDOMNode::DOCUMENT_NODE,
-                 "type_subdocument requires requestingContext of type Document");
       break;
     }
 
@@ -313,7 +325,8 @@ DoContentSecurityChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo)
         = do_QueryInterface(aChannel);
       MOZ_ASSERT(httpChannelInternal);
       if (httpChannelInternal) {
-        httpChannelInternal->GetProxyURI(getter_AddRefs(uri));
+        rv = httpChannelInternal->GetProxyURI(getter_AddRefs(uri));
+        MOZ_ASSERT(NS_SUCCEEDED(rv));
       }
       mimeTypeGuess = EmptyCString();
       requestingContext = aLoadInfo->LoadingNode();
@@ -367,20 +380,41 @@ DoContentSecurityChecks(nsIChannel* aChannel, nsILoadInfo* aLoadInfo)
       MOZ_ASSERT(false, "can not perform security check without a valid contentType");
   }
 
+  // For document loads we use the triggeringPrincipal as the originPrincipal.
+  // Note the the loadingPrincipal for loads of TYPE_DOCUMENT is a nullptr.
+  nsCOMPtr<nsIPrincipal> principal =
+    (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
+     contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT)
+    ? aLoadInfo->TriggeringPrincipal()
+    : aLoadInfo->LoadingPrincipal();
+
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
   rv = NS_CheckContentLoadPolicy(internalContentPolicyType,
                                  uri,
-                                 aLoadInfo->LoadingPrincipal(),
+                                 principal,
                                  requestingContext,
                                  mimeTypeGuess,
                                  nullptr,        //extra,
                                  &shouldLoad,
-                                 nsContentUtils::GetContentPolicy(),
-                                 nsContentUtils::GetSecurityManager());
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (NS_CP_REJECTED(shouldLoad)) {
+                                 nsContentUtils::GetContentPolicy());
+
+  if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
+    if ((NS_SUCCEEDED(rv) && shouldLoad == nsIContentPolicy::REJECT_TYPE) &&
+        (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
+         contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT)) {
+      // for docshell loads we might have to return SHOW_ALT.
+      return NS_ERROR_CONTENT_BLOCKED_SHOW_ALT;
+    }
     return NS_ERROR_CONTENT_BLOCKED;
   }
+
+  if (nsMixedContentBlocker::sSendHSTSPriming) {
+    rv = nsMixedContentBlocker::MarkLoadInfoForPriming(uri,
+                                                       requestingContext,
+                                                       aLoadInfo);
+    return rv;
+  }
+
   return NS_OK;
 }
 
@@ -430,8 +464,7 @@ nsContentSecurityManager::doContentSecurityCheck(nsIChannel* aChannel,
   // please note that some implementations of ::AsyncOpen2 might already
   // have set that flag to true (e.g. nsViewSourceChannel) in which case
   // we just set the flag again.
-  rv = loadInfo->SetEnforceSecurity(true);
-  NS_ENSURE_SUCCESS(rv, rv);
+  loadInfo->SetEnforceSecurity(true);
 
   if (loadInfo->GetSecurityMode() == nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS) {
     rv = DoCORSChecks(aChannel, loadInfo, aInAndOutListener);
@@ -446,8 +479,7 @@ nsContentSecurityManager::doContentSecurityCheck(nsIChannel* aChannel,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // now lets set the initalSecurityFlag for subsequent calls
-  rv = loadInfo->SetInitialSecurityCheckDone(true);
-  NS_ENSURE_SUCCESS(rv, rv);
+  loadInfo->SetInitialSecurityCheckDone(true);
 
   // all security checks passed - lets allow the load
   return NS_OK;
@@ -476,22 +508,15 @@ nsContentSecurityManager::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
     GetChannelResultPrincipal(aOldChannel, getter_AddRefs(oldPrincipal));
 
   nsCOMPtr<nsIURI> newURI;
-  aNewChannel->GetURI(getter_AddRefs(newURI));
-  nsCOMPtr<nsIURI> newOriginalURI;
-  aNewChannel->GetOriginalURI(getter_AddRefs(newOriginalURI));
-
-  NS_ENSURE_STATE(oldPrincipal && newURI && newOriginalURI);
+  Unused << NS_GetFinalChannelURI(aNewChannel, getter_AddRefs(newURI));
+  NS_ENSURE_STATE(oldPrincipal && newURI);
 
   const uint32_t flags =
       nsIScriptSecurityManager::LOAD_IS_AUTOMATIC_DOCUMENT_REPLACEMENT |
       nsIScriptSecurityManager::DISALLOW_SCRIPT;
   nsresult rv = nsContentUtils::GetSecurityManager()->
     CheckLoadURIWithPrincipal(oldPrincipal, newURI, flags);
-  if (NS_SUCCEEDED(rv) && newOriginalURI != newURI) {
-      rv = nsContentUtils::GetSecurityManager()->
-        CheckLoadURIWithPrincipal(oldPrincipal, newOriginalURI, flags);
-  }
-  NS_ENSURE_SUCCESS(rv, rv);  
+  NS_ENSURE_SUCCESS(rv, rv);
 
   aCb->OnRedirectVerifyCallback(NS_OK);
   return NS_OK;
@@ -519,6 +544,24 @@ nsContentSecurityManager::CheckChannel(nsIChannel* aChannel)
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
+
+  nsContentPolicyType contentPolicyType =
+    loadInfo->GetExternalContentPolicyType();
+
+  if (contentPolicyType == nsIContentPolicy::TYPE_DOCUMENT ||
+      contentPolicyType == nsIContentPolicy::TYPE_SUBDOCUMENT) {
+    // TYPE_DOCUMENT and TYPE_SUBDOCUMENT loads might potentially
+    // be wyciwyg:// channels. Let's fix up the URI so we can
+    // perform proper security checks.
+    nsCOMPtr<nsIURIFixup> urifixup(do_GetService(NS_URIFIXUP_CONTRACTID, &rv));
+    if (NS_SUCCEEDED(rv) && urifixup) {
+      nsCOMPtr<nsIURI> fixedURI;
+      rv = urifixup->CreateExposableURI(uri, getter_AddRefs(fixedURI));
+      if (NS_SUCCEEDED(rv)) {
+        uri = fixedURI;
+      }
+    }
+  }
 
   // Handle cookie policies
   uint32_t cookiePolicy = loadInfo->GetCookiePolicy();
@@ -576,6 +619,8 @@ nsContentSecurityManager::CheckChannel(nsIChannel* aChannel)
     // within nsCorsListenerProxy
     rv = DoCheckLoadURIChecks(uri, loadInfo);
     NS_ENSURE_SUCCESS(rv, rv);
+    // TODO: Bug 1371237
+    // consider calling SetBlockedRequest in nsContentSecurityManager::CheckChannel
   }
 
   return NS_OK;
@@ -633,8 +678,8 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipa
   // Blobs are expected to inherit their principal so we don't expect to have
   // a codebase principal with scheme 'blob' here.  We can't assert that though
   // since someone could mess with a non-blob URI to give it that scheme.
-  NS_WARN_IF_FALSE(!scheme.EqualsLiteral("blob"),
-                   "IsOriginPotentiallyTrustworthy ignoring blob scheme");
+  NS_WARNING_ASSERTION(!scheme.EqualsLiteral("blob"),
+                       "IsOriginPotentiallyTrustworthy ignoring blob scheme");
 
   // According to the specification, the user agent may choose to extend the
   // trust to other, vendor-specific URL schemes. We use this for "resource:",
@@ -663,5 +708,26 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipa
     *aIsTrustWorthy = true;
     return NS_OK;
   }
+
+  // If a host is not considered secure according to the default algorithm, then
+  // check to see if it has been whitelisted by the user.  We only apply this
+  // whitelist for network resources, i.e., those with scheme "http" or "ws".
+  // The pref should contain a comma-separated list of hostnames.
+  if (scheme.EqualsLiteral("http") || scheme.EqualsLiteral("ws")) {
+    nsAutoCString whitelist;
+    nsresult rv =
+      Preferences::GetCString("dom.securecontext.whitelist", whitelist);
+    if (NS_SUCCEEDED(rv)) {
+      nsCCharSeparatedTokenizer tokenizer(whitelist, ',');
+      while (tokenizer.hasMoreTokens()) {
+        const nsACString& allowedHost = tokenizer.nextToken();
+        if (host.Equals(allowedHost)) {
+          *aIsTrustWorthy = true;
+          return NS_OK;
+        }
+      }
+    }
+  }
+
   return NS_OK;
 }

@@ -3,6 +3,10 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- This file is imported into the browser window, and expects various variables,
+     e.g. Ci, Services, to be available. -->
+<!-- eslint-env mozilla/browser-window -->
+
 <!DOCTYPE bindings [
 <!ENTITY % commonDialogDTD  SYSTEM "chrome://global/locale/commonDialog.dtd">
 <!ENTITY % dialogOverlayDTD SYSTEM "chrome://global/locale/dialogOverlay.dtd">
@@ -90,31 +94,31 @@
             }
 
             this.ui = {
-                prompt             : this,
-                loginContainer     : getElement("loginContainer"),
-                loginTextbox       : getElement("loginTextbox"),
-                loginLabel         : getElement("loginLabel"),
-                password1Container : getElement("password1Container"),
-                password1Textbox   : getElement("password1Textbox"),
-                password1Label     : getElement("password1Label"),
-                infoBody           : getElement("info.body"),
-                infoTitle          : getElement("info.title"),
-                infoIcon           : null,
-                checkbox           : getElement("checkbox"),
-                checkboxContainer  : getElement("checkboxContainer"),
-                button3            : getElement("button3"),
-                button2            : getElement("button2"),
-                button1            : getElement("button1"),
-                button0            : getElement("button0"),
+                prompt: this,
+                loginContainer: getElement("loginContainer"),
+                loginTextbox: getElement("loginTextbox"),
+                loginLabel: getElement("loginLabel"),
+                password1Container: getElement("password1Container"),
+                password1Textbox: getElement("password1Textbox"),
+                password1Label: getElement("password1Label"),
+                infoBody: getElement("info.body"),
+                infoTitle: getElement("info.title"),
+                infoIcon: null,
+                checkbox: getElement("checkbox"),
+                checkboxContainer: getElement("checkboxContainer"),
+                button3: getElement("button3"),
+                button2: getElement("button2"),
+                button1: getElement("button1"),
+                button0: getElement("button0"),
                 // focusTarget (for BUTTON_DELAY_ENABLE) not yet supported
             };
 
-            this.ui.button0.addEventListener("command", this.onButtonClick.bind(this, 0), false);
-            this.ui.button1.addEventListener("command", this.onButtonClick.bind(this, 1), false);
-            this.ui.button2.addEventListener("command", this.onButtonClick.bind(this, 2), false);
-            this.ui.button3.addEventListener("command", this.onButtonClick.bind(this, 3), false);
+            this.ui.button0.addEventListener("command", this.onButtonClick.bind(this, 0));
+            this.ui.button1.addEventListener("command", this.onButtonClick.bind(this, 1));
+            this.ui.button2.addEventListener("command", this.onButtonClick.bind(this, 2));
+            this.ui.button3.addEventListener("command", this.onButtonClick.bind(this, 3));
             // Anonymous wrapper used here because |Dialog| doesn't exist until init() is called!
-            this.ui.checkbox.addEventListener("command", function() { self.Dialog.onCheckbox(); } , false);
+            this.ui.checkbox.addEventListener("command", function() { self.Dialog.onCheckbox(); });
             this.isLive = false;
         ]]>
         </constructor>
@@ -154,9 +158,11 @@
                 // the page navigates, else we never unwind the event loop and that's sad times.
                 // Remember to cleanup in shutdownPrompt()!
                 this.isLive = true;
-                window.addEventListener("resize", this, false);
-                window.addEventListener("unload", this, false);
-                linkedTab.addEventListener("TabClose", this, false);
+                window.addEventListener("resize", this);
+                window.addEventListener("unload", this);
+                if (linkedTab) {
+                  linkedTab.addEventListener("TabClose", this);
+                }
                 // Note:
                 // nsPrompter.js or in e10s mode browser-parent.js call abortPrompt,
                 // when the domWindow, for which the prompt was created, generates
@@ -185,10 +191,12 @@
             <![CDATA[
                 // remove our event listeners
                 try {
-                    window.removeEventListener("resize", this, false);
-                    window.removeEventListener("unload", this, false);
-                    this.linkedTab.removeEventListener("TabClose", this, false);
-                } catch(e) { }
+                    window.removeEventListener("resize", this);
+                    window.removeEventListener("unload", this);
+                    if (this.linkedTab) {
+                      this.linkedTab.removeEventListener("TabClose", this);
+                    }
+                } catch (e) { }
                 this.isLive = false;
                 // invoke callback
                 this.onCloseCallback();
@@ -270,8 +278,20 @@
             <parameter name="buttonNum"/>
             <body>
             <![CDATA[
-                this.Dialog["onButton" + buttonNum]();
-                this.shutdownPrompt();
+                // We want to do all the work her asynchronously off a Gecko
+                // runnable, because of situations like the one described in
+                // https://bugzilla.mozilla.org/show_bug.cgi?id=1167575#c35 : we
+                // get here off processing of an OS event and will also process
+                // one more Gecko runnable before we break out of the event loop
+                // spin whoever posted the prompt is doing.  If we do all our
+                // work sync, we will exit modal state _before_ processing that
+                // runnable, and if exiting moral state posts a runnable we will
+                // incorrectly process that runnable before leaving our event
+                // loop spin.
+                Services.tm.dispatchToMainThread(() => {
+                    this.Dialog["onButton" + buttonNum]();
+                    this.shutdownPrompt();
+                  });
             ]]>
             </body>
         </method>
@@ -287,7 +307,6 @@
                 event.stopPropagation();
                 if (action == "default") {
                     let bnum = this.args.defaultButtonNum || 0;
-                    let button = this.ui["button" + bnum];
                     this.onButtonClick(bnum);
                 } else { // action == "cancel"
                     this.onButtonClick(1); // Cancel button

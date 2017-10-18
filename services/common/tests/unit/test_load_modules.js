@@ -8,7 +8,6 @@ const shared_modules = [
   "async.js",
   "logmanager.js",
   "rest.js",
-  "stringbundle.js",
   "utils.js",
 ];
 
@@ -25,7 +24,7 @@ const non_android_test_modules = [
   "storageserver.js",
 ];
 
-function expectImportsToSucceed(mm, base=MODULE_BASE) {
+function expectImportsToSucceed(mm, base = MODULE_BASE) {
   for (let m of mm) {
     let resource = base + m;
     let succeeded = false;
@@ -35,12 +34,12 @@ function expectImportsToSucceed(mm, base=MODULE_BASE) {
     } catch (e) {}
 
     if (!succeeded) {
-      throw "Importing " + resource + " should have succeeded!";
+      throw new Error(`Importing ${resource} should have succeeded!`);
     }
   }
 }
 
-function expectImportsToFail(mm, base=MODULE_BASE) {
+function expectImportsToFail(mm, base = MODULE_BASE) {
   for (let m of mm) {
     let resource = base + m;
     let succeeded = false;
@@ -50,7 +49,7 @@ function expectImportsToFail(mm, base=MODULE_BASE) {
     } catch (e) {}
 
     if (succeeded) {
-      throw "Importing " + resource + " should have failed!";
+      throw new Error(`Importing ${resource} should have failed!`);
     }
   }
 }

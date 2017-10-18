@@ -53,11 +53,11 @@ void
 ServiceWorkerJob::AppendResultCallback(Callback* aCallback)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(mState != State::Finished);
-  MOZ_ASSERT(aCallback);
-  MOZ_ASSERT(mFinalCallback != aCallback);
+  MOZ_DIAGNOSTIC_ASSERT(mState != State::Finished);
+  MOZ_DIAGNOSTIC_ASSERT(aCallback);
+  MOZ_DIAGNOSTIC_ASSERT(mFinalCallback != aCallback);
   MOZ_ASSERT(!mResultCallbackList.Contains(aCallback));
-  MOZ_ASSERT(!mResultCallbacksInvoked);
+  MOZ_DIAGNOSTIC_ASSERT(!mResultCallbacksInvoked);
   mResultCallbackList.AppendElement(aCallback);
 }
 
@@ -84,24 +84,30 @@ void
 ServiceWorkerJob::Start(Callback* aFinalCallback)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(!mCanceled);
+  MOZ_DIAGNOSTIC_ASSERT(!mCanceled);
 
-  MOZ_ASSERT(aFinalCallback);
-  MOZ_ASSERT(!mFinalCallback);
+  MOZ_DIAGNOSTIC_ASSERT(aFinalCallback);
+  MOZ_DIAGNOSTIC_ASSERT(!mFinalCallback);
   MOZ_ASSERT(!mResultCallbackList.Contains(aFinalCallback));
   mFinalCallback = aFinalCallback;
 
-  MOZ_ASSERT(mState == State::Initial);
+  MOZ_DIAGNOSTIC_ASSERT(mState == State::Initial);
   mState = State::Started;
 
   nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod(this, &ServiceWorkerJob::AsyncExecute);
+    NewRunnableMethod("ServiceWorkerJob::AsyncExecute",
+                      this, &ServiceWorkerJob::AsyncExecute);
 
   // We may have to wait for the PBackground actor to be initialized
   // before proceeding.  We should always be able to get a ServiceWorkerManager,
   // however, since Start() should not be called during shutdown.
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+  if (!swm) {
+    // browser shutdown
+    return;
+  }
   if (!swm->HasBackgroundActor()) {
+    // waiting to initialize
     swm->AppendPendingOperation(runnable);
     return;
   }
@@ -150,9 +156,9 @@ void
 ServiceWorkerJob::InvokeResultCallbacks(ErrorResult& aRv)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(mState == State::Started);
+  MOZ_DIAGNOSTIC_ASSERT(mState == State::Started);
 
-  MOZ_ASSERT(!mResultCallbacksInvoked);
+  MOZ_DIAGNOSTIC_ASSERT(!mResultCallbacksInvoked);
   mResultCallbacksInvoked = true;
 
   nsTArray<RefPtr<Callback>> callbackList;
@@ -182,7 +188,14 @@ void
 ServiceWorkerJob::Finish(ErrorResult& aRv)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(mState == State::Started);
+
+  // Avoid double-completion because it can result on operating on cleaned
+  // up data.  This should not happen, though, so also assert to try to
+  // narrow down the causes.
+  MOZ_DIAGNOSTIC_ASSERT(mState == State::Started);
+  if (mState != State::Started) {
+    return;
+  }
 
   // Ensure that we only surface SecurityErr, TypeErr or InvalidStateErr to script.
   if (aRv.Failed() && !aRv.ErrorCodeIs(NS_ERROR_DOM_SECURITY_ERR) &&
@@ -208,15 +221,19 @@ ServiceWorkerJob::Finish(ErrorResult& aRv)
 
   mState = State::Finished;
 
-  mFinalCallback->JobFinished(this, aRv);
-  mFinalCallback = nullptr;
+  MOZ_DIAGNOSTIC_ASSERT(mFinalCallback);
+  if (mFinalCallback) {
+    mFinalCallback->JobFinished(this, aRv);
+    mFinalCallback = nullptr;
+  }
 
   // The callback might not consume the error.
   aRv.SuppressException();
 
   // Async release this object to ensure that our caller methods complete
   // as well.
-  NS_ReleaseOnMainThread(kungFuDeathGrip.forget(), true /* always proxy */);
+  NS_ReleaseOnMainThreadSystemGroup("ServiceWorkerJob",
+    kungFuDeathGrip.forget(), true /* always proxy */);
 }
 
 void

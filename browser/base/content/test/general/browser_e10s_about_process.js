@@ -27,11 +27,11 @@ function AboutModule() {
 }
 
 AboutModule.prototype = {
-  newChannel: function(aURI, aLoadInfo) {
+  newChannel(aURI, aLoadInfo) {
     throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
   },
 
-  getURIFlags: function(aURI) {
+  getURIFlags(aURI) {
     for (let module of TEST_MODULES) {
       if (aURI.path.startsWith(module.path)) {
         return module.flags;
@@ -42,7 +42,7 @@ AboutModule.prototype = {
     return 0;
   },
 
-  getIndexedDBOriginPostfix: function(aURI) {
+  getIndexedDBOriginPostfix(aURI) {
     return null;
   },
 
@@ -50,20 +50,20 @@ AboutModule.prototype = {
 };
 
 var AboutModuleFactory = {
-  createInstance: function(aOuter, aIID) {
+  createInstance(aOuter, aIID) {
     if (aOuter)
       throw Components.results.NS_ERROR_NO_AGGREGATION;
     return new AboutModule().QueryInterface(aIID);
   },
 
-  lockFactory: function(aLock) {
+  lockFactory(aLock) {
     throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory])
 };
 
-add_task(function* init() {
+add_task(async function init() {
   let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
   for (let module of TEST_MODULES) {
     registrar.registerFactory(Components.ID(module.id), "",
@@ -101,14 +101,14 @@ function test_url(url, chromeResult, contentResult) {
      contentResult, "Check URL with query and ref in content process.");
 }
 
-add_task(function* test_chrome() {
+add_task(async function test_chrome() {
   test_url("about:" + CHROME.path, true, false);
 });
 
-add_task(function* test_any() {
+add_task(async function test_any() {
   test_url("about:" + CANREMOTE.path, true, true);
 });
 
-add_task(function* test_remote() {
+add_task(async function test_remote() {
   test_url("about:" + MUSTREMOTE.path, false, true);
 });

@@ -6,9 +6,10 @@
 
 #include "mozilla/dom/PushManager.h"
 
+#include "mozilla/Base64.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/PushManagerBinding.h"
 #include "mozilla/dom/PushSubscription.h"
 #include "mozilla/dom/PushSubscriptionOptionsBinding.h"
@@ -271,7 +272,8 @@ public:
                           const nsAString& aScope,
                           PushManager::SubscriptionAction aAction,
                           nsTArray<uint8_t>&& aAppServerKey)
-    : mProxy(aProxy)
+    : Runnable("dom::GetSubscriptionRunnable")
+    , mProxy(aProxy)
     , mScope(aScope)
     , mAction(aAction)
     , mAppServerKey(Move(aAppServerKey))
@@ -399,7 +401,8 @@ class PermissionStateRunnable final : public Runnable
 {
 public:
   explicit PermissionStateRunnable(PromiseWorkerProxy* aProxy)
-    : mProxy(aProxy)
+    : Runnable("dom::PermissionStateRunnable")
+    , mProxy(aProxy)
   {}
 
   NS_IMETHOD
@@ -580,11 +583,10 @@ PushManager::PerformSubscriptionActionFromWorker(SubscriptionAction aAction,
 
   nsTArray<uint8_t> appServerKey;
   if (!aOptions.mApplicationServerKey.IsNull()) {
-    const OwningArrayBufferViewOrArrayBuffer& bufferSource =
-      aOptions.mApplicationServerKey.Value();
-    if (!PushUtil::CopyBufferSourceToArray(bufferSource, appServerKey) ||
-        appServerKey.IsEmpty()) {
-      p->MaybeReject(NS_ERROR_DOM_PUSH_INVALID_KEY_ERR);
+    nsresult rv = NormalizeAppServerKey(aOptions.mApplicationServerKey.Value(),
+                                        appServerKey);
+    if (NS_FAILED(rv)) {
+      p->MaybeReject(rv);
       return p.forget();
     }
   }
@@ -594,6 +596,39 @@ PushManager::PerformSubscriptionActionFromWorker(SubscriptionAction aAction,
   MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
 
   return p.forget();
+}
+
+nsresult
+PushManager::NormalizeAppServerKey(const OwningArrayBufferViewOrArrayBufferOrString& aSource,
+                                   nsTArray<uint8_t>& aAppServerKey)
+{
+  if (aSource.IsString()) {
+    NS_ConvertUTF16toUTF8 base64Key(aSource.GetAsString());
+    FallibleTArray<uint8_t> decodedKey;
+    nsresult rv = Base64URLDecode(base64Key,
+                                  Base64URLDecodePaddingPolicy::Reject,
+                                  decodedKey);
+    if (NS_FAILED(rv)) {
+      return NS_ERROR_DOM_INVALID_CHARACTER_ERR;
+    }
+    aAppServerKey = decodedKey;
+  } else if (aSource.IsArrayBuffer()) {
+    if (!PushUtil::CopyArrayBufferToArray(aSource.GetAsArrayBuffer(),
+                                         aAppServerKey)) {
+      return NS_ERROR_DOM_PUSH_INVALID_KEY_ERR;
+    }
+  } else if (aSource.IsArrayBufferView()) {
+    if (!PushUtil::CopyArrayBufferViewToArray(aSource.GetAsArrayBufferView(),
+                                              aAppServerKey)) {
+      return NS_ERROR_DOM_PUSH_INVALID_KEY_ERR;
+    }
+  } else {
+    MOZ_CRASH("Uninitialized union: expected string, buffer, or view");
+  }
+  if (aAppServerKey.IsEmpty()) {
+    return NS_ERROR_DOM_PUSH_INVALID_KEY_ERR;
+  }
+  return NS_OK;
 }
 
 } // namespace dom

@@ -6,39 +6,35 @@
 #if !defined(WebMDecoder_h_)
 #define WebMDecoder_h_
 
-#include "MediaDecoder.h"
+#include "ChannelMediaDecoder.h"
 #include "MediaFormatReader.h"
 
 namespace mozilla {
 
-class WebMDecoder : public MediaDecoder
+class MediaContainerType;
+
+class WebMDecoder : public ChannelMediaDecoder
 {
 public:
-  explicit WebMDecoder(MediaDecoderOwner* aOwner) : MediaDecoder(aOwner) {}
-  MediaDecoder* Clone(MediaDecoderOwner* aOwner) override {
+  explicit WebMDecoder(MediaDecoderInit& aInit)
+    : ChannelMediaDecoder(aInit)
+  {
+  }
+  ChannelMediaDecoder* Clone(MediaDecoderInit& aInit) override
+  {
     if (!IsWebMEnabled()) {
       return nullptr;
     }
-    return new WebMDecoder(aOwner);
+    return new WebMDecoder(aInit);
   }
   MediaDecoderStateMachine* CreateStateMachine() override;
 
-  // Returns true if the WebM backend is preffed on.
-  static bool IsEnabled();
+  // Returns true if aContainerType is a WebM type that we think we can render
+  // with an enabled platform decoder backend.
+  // If provided, codecs are checked for support.
+  static bool IsSupportedType(const MediaContainerType& aContainerType);
 
-  // Returns true if aMIMEType is a type that we think we can render with the
-  // a WebM platform decoder backend. If aCodecs is non emtpy, it is filled
-  // with a comma-delimited list of codecs to check support for. Notes in
-  // out params whether the codecs string contains Opus/Vorbis or VP8/VP9.
-  static bool CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
-                                 const nsAString& aCodecs);
-
-  static bool CanHandleMediaType(const nsAString& aContentType);
-
-  void GetMozDebugReaderData(nsAString& aString) override;
-
-private:
-  RefPtr<MediaFormatReader> mReader;
+  void GetMozDebugReaderData(nsACString& aString) override;
 };
 
 } // namespace mozilla

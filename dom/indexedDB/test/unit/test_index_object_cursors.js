@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const objectStoreData = [
     { name: "", options: { keyPath: "id", autoIncrement: true } },
@@ -40,9 +40,9 @@ function testSteps()
                                            objectStoreInfo.options);
     for (let indexIndex in indexData) {
       const indexInfo = indexData[indexIndex];
-      let index = objectStore.createIndex(indexInfo.name,
-                                          indexInfo.keyPath,
-                                          indexInfo.options);
+      objectStore.createIndex(indexInfo.name,
+                              indexInfo.keyPath,
+                              indexInfo.options);
     }
   }
   yield undefined;
@@ -143,5 +143,4 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }

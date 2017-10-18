@@ -5,6 +5,7 @@
 #ifndef mozilla_net_WyciwygChannelChild_h
 #define mozilla_net_WyciwygChannelChild_h
 
+#include "mozilla/net/NeckoTargetHolder.h"
 #include "mozilla/net/PWyciwygChannelChild.h"
 #include "nsIWyciwygChannel.h"
 #include "nsIChannel.h"
@@ -39,6 +40,7 @@ enum WyciwygChannelChildState {
 class WyciwygChannelChild final : public PWyciwygChannelChild
                                 , public nsIWyciwygChannel
                                 , public PrivateBrowsingChannel<WyciwygChannelChild>
+                                , public NeckoTargetHolder
 {
 public:
   NS_DECL_ISUPPORTS
@@ -46,7 +48,7 @@ public:
   NS_DECL_NSICHANNEL
   NS_DECL_NSIWYCIWYGCHANNEL
 
-  WyciwygChannelChild();
+  explicit WyciwygChannelChild(nsIEventTarget *aNeckoTarget);
 
   void AddIPDLReference();
   void ReleaseIPDLReference();
@@ -58,15 +60,15 @@ public:
 protected:
   virtual ~WyciwygChannelChild();
 
-  bool RecvOnStartRequest(const nsresult& statusCode,
-                          const int64_t& contentLength,
-                          const int32_t& source,
-                          const nsCString& charset,
-                          const nsCString& securityInfo) override;
-  bool RecvOnDataAvailable(const nsCString& data,
-                           const uint64_t& offset) override;
-  bool RecvOnStopRequest(const nsresult& statusCode) override;
-  bool RecvCancelEarly(const nsresult& statusCode) override;
+  mozilla::ipc::IPCResult RecvOnStartRequest(const nsresult& statusCode,
+                                             const int64_t& contentLength,
+                                             const int32_t& source,
+                                             const nsCString& charset,
+                                             const nsCString& securityInfo) override;
+  mozilla::ipc::IPCResult RecvOnDataAvailable(const nsCString& data,
+                                              const uint64_t& offset) override;
+  mozilla::ipc::IPCResult RecvOnStopRequest(const nsresult& statusCode) override;
+  mozilla::ipc::IPCResult RecvCancelEarly(const nsresult& statusCode) override;
 
   void OnStartRequest(const nsresult& statusCode,
                       const int64_t& contentLength,
@@ -110,6 +112,7 @@ private:
   friend class WyciwygDataAvailableEvent;
   friend class WyciwygStopRequestEvent;
   friend class WyciwygCancelEvent;
+  friend class NeckoTargetChannelEvent<WyciwygChannelChild>;
 };
 
 inline bool

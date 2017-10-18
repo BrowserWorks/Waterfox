@@ -17,7 +17,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=782342
   <input id="fileList" type="file"></input>
 </p>
 
-<script type="text/javascript;version=1.7">
+<script type="text/javascript">
 SimpleTest.waitForExplicitFinish();
 
 var url = "file_bug782342.txt";
@@ -74,10 +74,10 @@ xhr.addEventListener("load", function () {
       ok(blob2.type == blob.type, "Blob types are: " + blob2.type + " - " + blob.type);
 
       SimpleTest.finish();
-    }, false);
+    });
     xhrBlob.send();
   }
-}, false);
+});
 xhr.send();
 </script>
 </body>

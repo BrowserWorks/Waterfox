@@ -9,27 +9,22 @@
 
 #include "mozilla/MozPromise.h"
 #include "MediaDecoder.h"
-#include "MediaDecoderReader.h"
 #include "SeekTarget.h"
 
 namespace mozilla {
 
-struct SeekJob {
-  SeekJob();
-
-  SeekJob(SeekJob&& aOther);
-
-  SeekJob& operator=(SeekJob&& aOther);
-
-  bool Exists() const;
-
-  void Resolve(bool aAtEnd, const char* aCallSite);
-
-  void RejectIfExists(const char* aCallSite);
-
+struct SeekJob
+{
+  SeekJob() = default;
+  SeekJob(SeekJob&& aOther) = default;
+  SeekJob& operator=(SeekJob&& aOther) = default;
   ~SeekJob();
 
-  SeekTarget mTarget;
+  bool Exists() const;
+  void Resolve(const char* aCallSite);
+  void RejectIfExists(const char* aCallSite);
+
+  Maybe<SeekTarget> mTarget;
   MozPromiseHolder<MediaDecoder::SeekPromise> mPromise;
 };
 

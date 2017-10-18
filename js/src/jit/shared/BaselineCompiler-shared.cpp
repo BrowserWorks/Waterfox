@@ -33,11 +33,10 @@ BaselineCompilerShared::BaselineCompilerShared(JSContext* cx, TempAllocator& all
 #ifdef DEBUG
     inCall_(false),
 #endif
-    spsPushToggleOffset_(),
+    profilerPushToggleOffset_(),
     profilerEnterFrameToggleOffset_(),
     profilerExitFrameToggleOffset_(),
-    traceLoggerEnterToggleOffset_(),
-    traceLoggerExitToggleOffset_(),
+    traceLoggerToggleOffsets_(cx),
     traceLoggerScriptTextIdOffset_()
 { }
 

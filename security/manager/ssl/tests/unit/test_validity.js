@@ -14,8 +14,8 @@ const SERVER_PORT = 8888;
 
 function getOCSPResponder(expectedCertNames) {
   let expectedPaths = expectedCertNames.slice();
-  return startOCSPResponder(SERVER_PORT, "www.example.com", [],
-                            "test_validity", expectedCertNames, expectedPaths);
+  return startOCSPResponder(SERVER_PORT, "www.example.com", "test_validity",
+                            expectedCertNames, expectedPaths);
 }
 
 function certFromFile(filename) {
@@ -42,8 +42,7 @@ function loadCert(certFilename, trustString) {
  *        Whether the chain is expected to validate as EV.
  */
 function addEVTest(expectedNamesForOCSP, rootCertFileName, intCertFileNames,
-                   endEntityCertFileName, expectedResult)
-{
+                   endEntityCertFileName, expectedResult) {
   add_test(function() {
     clearOCSPCache();
     let ocspResponder = getOCSPResponder(expectedNamesForOCSP);

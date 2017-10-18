@@ -1,10 +1,10 @@
 #include "FetchUtil.h"
 
 #include "nsError.h"
-#include "nsIUnicodeDecoder.h"
 #include "nsString.h"
+#include "nsIDocument.h"
 
-#include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/dom/InternalRequest.h"
 
 namespace mozilla {
 namespace dom {
@@ -51,9 +51,10 @@ FindCRLF(nsACString::const_iterator& aStart,
 
 // Reads over a CRLF and positions start after it.
 static bool
-PushOverLine(nsACString::const_iterator& aStart)
+PushOverLine(nsACString::const_iterator& aStart,
+	     const nsACString::const_iterator& aEnd)
 {
-  if (*aStart == nsCRT::CR && (aStart.size_forward() > 1) && *(++aStart) == nsCRT::LF) {
+  if (*aStart == nsCRT::CR && (aEnd - aStart > 1) && *(++aStart) == nsCRT::LF) {
     ++aStart; // advance to after CRLF
     return true;
   }
@@ -86,26 +87,81 @@ FetchUtil::ExtractHeader(nsACString::const_iterator& aStart,
 
   nsAutoCString header(beginning, aStart.get() - beginning);
 
-  nsACString::const_iterator headerStart, headerEnd;
+  nsACString::const_iterator headerStart, iter, headerEnd;
   header.BeginReading(headerStart);
   header.EndReading(headerEnd);
-  if (!FindCharInReadable(':', headerStart, headerEnd)) {
+  iter = headerStart;
+  if (!FindCharInReadable(':', iter, headerEnd)) {
     return false;
   }
 
-  aHeaderName.Assign(StringHead(header, headerStart.size_backward()));
+  aHeaderName.Assign(StringHead(header, iter - headerStart));
   aHeaderName.CompressWhitespace();
   if (!NS_IsValidHTTPToken(aHeaderName)) {
     return false;
   }
 
-  aHeaderValue.Assign(Substring(++headerStart, headerEnd));
+  aHeaderValue.Assign(Substring(++iter, headerEnd));
   if (!NS_IsReasonableHTTPHeaderValue(aHeaderValue)) {
     return false;
   }
   aHeaderValue.CompressWhitespace();
 
-  return PushOverLine(aStart);
+  return PushOverLine(aStart, aEnd);
+}
+
+// static
+nsresult
+FetchUtil::SetRequestReferrer(nsIPrincipal* aPrincipal,
+                              nsIDocument* aDoc,
+                              nsIHttpChannel* aChannel,
+                              InternalRequest* aRequest) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsAutoString referrer;
+  aRequest->GetReferrer(referrer);
+  net::ReferrerPolicy policy = aRequest->GetReferrerPolicy();
+
+  nsresult rv = NS_OK;
+  if (referrer.IsEmpty()) {
+    // This is the case request’s referrer is "no-referrer"
+    rv = aChannel->SetReferrerWithPolicy(nullptr, net::RP_No_Referrer);
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else if (referrer.EqualsLiteral(kFETCH_CLIENT_REFERRER_STR)) {
+    rv = nsContentUtils::SetFetchReferrerURIWithPolicy(aPrincipal,
+                                                       aDoc,
+                                                       aChannel,
+                                                       policy);
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    // From "Determine request's Referrer" step 3
+    // "If request's referrer is a URL, let referrerSource be request's
+    // referrer."
+    nsCOMPtr<nsIURI> referrerURI;
+    rv = NS_NewURI(getter_AddRefs(referrerURI), referrer, nullptr, nullptr);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = aChannel->SetReferrerWithPolicy(referrerURI, policy);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  nsCOMPtr<nsIURI> referrerURI;
+  Unused << aChannel->GetReferrer(getter_AddRefs(referrerURI));
+
+  // Step 8 https://fetch.spec.whatwg.org/#main-fetch
+  // If request’s referrer is not "no-referrer", set request’s referrer to
+  // the result of invoking determine request’s referrer.
+  if (referrerURI) {
+    nsAutoCString spec;
+    rv = referrerURI->GetSpec(spec);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    aRequest->SetReferrer(NS_ConvertUTF8toUTF16(spec));
+  } else {
+    aRequest->SetReferrer(EmptyString());
+  }
+
+  return NS_OK;
 }
 
 } // namespace dom

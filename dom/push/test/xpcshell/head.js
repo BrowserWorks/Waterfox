@@ -7,9 +7,7 @@ var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
-Cu.import('resource://gre/modules/Task.jsm');
 Cu.import('resource://gre/modules/Timer.jsm');
-Cu.import('resource://gre/modules/Promise.jsm');
 Cu.import('resource://gre/modules/Preferences.jsm');
 Cu.import('resource://gre/modules/PlacesUtils.jsm');
 Cu.import('resource://gre/modules/ObjectUtils.jsm');
@@ -32,7 +30,7 @@ var isParent = Cc['@mozilla.org/xre/runtime;1']
 
 // Stop and clean up after the PushService.
 Services.obs.addObserver(function observe(subject, topic, data) {
-  Services.obs.removeObserver(observe, topic, false);
+  Services.obs.removeObserver(observe, topic);
   serviceExports.PushService.uninit();
   // Occasionally, `profile-change-teardown` and `xpcom-shutdown` will fire
   // before the PushService and AlarmService finish writing to IndexedDB. This
@@ -48,7 +46,7 @@ Services.obs.addObserver(function observe(subject, topic, data) {
       Cu.reportError(e);
     }
   }
-}, 'profile-change-net-teardown', false);
+}, 'profile-change-net-teardown');
 
 /**
  * Gates a function so that it is called only after the wrapper is called a
@@ -92,9 +90,9 @@ function promiseObserverNotification(topic, matchFunc) {
       if (!matches) {
         return;
       }
-      Services.obs.removeObserver(observe, topic, false);
+      Services.obs.removeObserver(observe, topic);
       resolve({subject, data});
-    }, topic, false);
+    }, topic);
   });
 }
 
@@ -316,7 +314,7 @@ MockWebSocket.prototype = {
   },
 };
 
-var setUpServiceInParent = Task.async(function* (service, db) {
+var setUpServiceInParent = async function(service, db) {
   if (!isParent) {
     return;
   }
@@ -326,7 +324,7 @@ var setUpServiceInParent = Task.async(function* (service, db) {
     userAgentID: userAgentID,
   });
 
-  yield db.put({
+  await db.put({
     channelID: '6e2814e1-5f84-489e-b542-855cc1311f09',
     pushEndpoint: 'https://example.org/push/get',
     scope: 'https://example.com/get/ok',
@@ -336,7 +334,7 @@ var setUpServiceInParent = Task.async(function* (service, db) {
     lastPush: 1438360548322,
     quota: 16,
   });
-  yield db.put({
+  await db.put({
     channelID: '3a414737-2fd0-44c0-af05-7efc172475fc',
     pushEndpoint: 'https://example.org/push/unsub',
     scope: 'https://example.com/unsub/ok',
@@ -346,7 +344,7 @@ var setUpServiceInParent = Task.async(function* (service, db) {
     lastPush: 1438360848322,
     quota: 4,
   });
-  yield db.put({
+  await db.put({
     channelID: 'ca3054e8-b59b-4ea0-9c23-4a3c518f3161',
     pushEndpoint: 'https://example.org/push/stale',
     scope: 'https://example.com/unsub/fail',
@@ -416,31 +414,23 @@ var setUpServiceInParent = Task.async(function* (service, db) {
       });
     },
   });
-});
+};
 
-var tearDownServiceInParent = Task.async(function* (db) {
+var tearDownServiceInParent = async function(db) {
   if (!isParent) {
     return;
   }
 
-  let record = yield db.getByIdentifiers({
+  let record = await db.getByIdentifiers({
     scope: 'https://example.com/sub/ok',
     originAttributes: '',
   });
   ok(record.pushEndpoint.startsWith('https://example.org/push'),
     'Wrong push endpoint in subscription record');
 
-  record = yield db.getByIdentifiers({
-    scope: 'https://example.net/scope/1',
-    originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: 1, inIsolatedMozBrowser: true }),
-  });
-  ok(record.pushEndpoint.startsWith('https://example.org/push'),
-    'Wrong push endpoint in app record');
-
-  record = yield db.getByKeyID('3a414737-2fd0-44c0-af05-7efc172475fc');
+  record = await db.getByKeyID('3a414737-2fd0-44c0-af05-7efc172475fc');
   ok(!record, 'Unsubscribed record should not exist');
-});
+};
 
 function putTestRecord(db, keyID, scope, quota) {
   return db.put({

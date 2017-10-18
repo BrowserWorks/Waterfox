@@ -11,9 +11,9 @@
 #ifndef WEBRTC_TEST_CONFIGURABLE_FRAME_SIZE_ENCODER_H_
 #define WEBRTC_TEST_CONFIGURABLE_FRAME_SIZE_ENCODER_H_
 
+#include <memory>
 #include <vector>
 
-#include "webrtc/base/scoped_ptr.h"
 #include "webrtc/video_encoder.h"
 
 namespace webrtc {
@@ -28,9 +28,9 @@ class ConfigurableFrameSizeEncoder : public VideoEncoder {
                      int32_t number_of_cores,
                      size_t max_payload_size) override;
 
-  int32_t Encode(const I420VideoFrame& input_image,
+  int32_t Encode(const VideoFrame& input_image,
                  const CodecSpecificInfo* codec_specific_info,
-                 const std::vector<VideoFrameType>* frame_types) override;
+                 const std::vector<FrameType>* frame_types) override;
 
   int32_t RegisterEncodeCompleteCallback(
       EncodedImageCallback* callback) override;
@@ -39,11 +39,10 @@ class ConfigurableFrameSizeEncoder : public VideoEncoder {
 
   int32_t SetChannelParameters(uint32_t packet_loss, int64_t rtt) override;
 
-  int32_t SetRates(uint32_t new_bit_rate, uint32_t frame_rate) override;
+  int32_t SetRateAllocation(const BitrateAllocation& allocation,
+                            uint32_t framerate) override;
 
   int32_t SetPeriodicKeyFrames(bool enable) override;
-
-  int32_t CodecConfigParameters(uint8_t* buffer, int32_t size) override;
 
   int32_t SetFrameSize(size_t size);
 
@@ -51,7 +50,7 @@ class ConfigurableFrameSizeEncoder : public VideoEncoder {
   EncodedImageCallback* callback_;
   const size_t max_frame_size_;
   size_t current_frame_size_;
-  rtc::scoped_ptr<uint8_t[]> buffer_;
+  std::unique_ptr<uint8_t[]> buffer_;
 };
 
 }  // namespace test

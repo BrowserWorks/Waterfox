@@ -1,25 +1,24 @@
 "use strict";
 
-const TEST_URL = 'http://example.com/browser/browser/components/places/tests/browser/pageopeningwindow.html';
+const TEST_URL = "http://example.com/browser/browser/components/places/tests/browser/pageopeningwindow.html";
 
 function makeBookmarkFor(url, keyword) {
   return Promise.all([
     PlacesUtils.bookmarks.insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
                                    title: "bookmarklet",
-                                   url: url }),
-    PlacesUtils.keywords.insert({url: url,
-                                 keyword: keyword})
+                                   url }),
+    PlacesUtils.keywords.insert({url,
+                                 keyword})
   ]);
 
 }
 
-add_task(function* openKeywordBookmarkWithWindowOpen() {
+add_task(async function openKeywordBookmarkWithWindowOpen() {
   // This is the current default, but let's not assume that...
-  yield new Promise((resolve, reject) => {
-    SpecialPowers.pushPrefEnv({ 'set': [[ 'browser.link.open_newwindow', 3 ],
-                                        [ 'dom.disable_open_during_load', true ]] },
-                              resolve);
-  });
+  await SpecialPowers.pushPrefEnv({"set": [
+    [ "browser.link.open_newwindow", 3 ],
+    [ "dom.disable_open_during_load", true ]
+  ]});
 
   let moztab;
   let tabOpened = BrowserTestUtils.openNewForegroundTab(gBrowser, "about:mozilla")
@@ -32,7 +31,7 @@ add_task(function* openKeywordBookmarkWithWindowOpen() {
         .then((values) => {
           bookmarkInfo = values[0];
         });
-  yield Promise.all([tabOpened, bookmarkCreated]);
+  await Promise.all([tabOpened, bookmarkCreated]);
 
   registerCleanupFunction(function() {
     return Promise.all([
@@ -47,15 +46,15 @@ add_task(function* openKeywordBookmarkWithWindowOpen() {
   EventUtils.synthesizeKey("VK_RETURN", {});
 
   info("Waiting for tab being created");
-  let {target: tab} = yield tabCreatedPromise;
+  let {target: tab} = await tabCreatedPromise;
   info("Got tab");
   let browser = tab.linkedBrowser;
   if (!browser.currentURI || browser.currentURI.spec != TEST_URL) {
     info("Waiting for browser load");
-    yield BrowserTestUtils.browserLoaded(browser);
+    await BrowserTestUtils.browserLoaded(browser, false, TEST_URL);
   }
   is(browser.currentURI && browser.currentURI.spec, TEST_URL, "Tab with expected URL loaded.");
   info("Waiting to remove tab");
-  yield Promise.all([ BrowserTestUtils.removeTab(tab),
+  await Promise.all([ BrowserTestUtils.removeTab(tab),
                       BrowserTestUtils.removeTab(moztab) ]);
 });

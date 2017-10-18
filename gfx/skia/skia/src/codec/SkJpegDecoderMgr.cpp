@@ -25,6 +25,17 @@ static void output_message(j_common_ptr info) {
     print_message(info, "output_message");
 }
 
+static void progress_monitor(j_common_ptr info) {
+  int scan = ((j_decompress_ptr)info)->input_scan_number;
+  // Progressive images with a very large number of scans can cause the
+  // decoder to hang.  Here we use the progress monitor to abort on
+  // a very large number of scans.  100 is arbitrary, but much larger
+  // than the number of scans we might expect in a normal image.
+  if (scan >= 100) {
+      skjpeg_err_exit(info);
+  }
+}
+
 bool JpegDecoderMgr::returnFalse(const char caller[]) {
     print_message((j_common_ptr) &fDInfo, caller);
     return false;
@@ -35,12 +46,25 @@ SkCodec::Result JpegDecoderMgr::returnFailure(const char caller[], SkCodec::Resu
     return result;
 }
 
-SkColorType JpegDecoderMgr::getColorType() {
+bool JpegDecoderMgr::getEncodedColor(SkEncodedInfo::Color* outColor) {
     switch (fDInfo.jpeg_color_space) {
         case JCS_GRAYSCALE:
-            return kGray_8_SkColorType;
+            *outColor = SkEncodedInfo::kGray_Color;
+            return true;
+        case JCS_YCbCr:
+            *outColor = SkEncodedInfo::kYUV_Color;
+            return true;
+        case JCS_RGB:
+            *outColor = SkEncodedInfo::kRGB_Color;
+            return true;
+        case JCS_YCCK:
+            *outColor = SkEncodedInfo::kYCCK_Color;
+            return true;
+        case JCS_CMYK:
+            *outColor = SkEncodedInfo::kInvertedCMYK_Color;
+            return true;
         default:
-            return kN32_SkColorType;
+            return false;
     }
 }
 
@@ -58,6 +82,8 @@ void JpegDecoderMgr::init() {
     fInit = true;
     fDInfo.src = &fSrcMgr;
     fDInfo.err->output_message = &output_message;
+    fDInfo.progress = &fProgressMgr;
+    fProgressMgr.progress_monitor = &progress_monitor;
 }
 
 JpegDecoderMgr::~JpegDecoderMgr() {

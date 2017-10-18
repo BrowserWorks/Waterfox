@@ -120,10 +120,10 @@ function run_test() {
   let obs = AM_Cc["@mozilla.org/observer-service;1"].
     getService(AM_Ci.nsIObserverService);
   obs.addObserver({
-    observe: function(aSubject, aTopic, aData) {
+    observe(aSubject, aTopic, aData) {
       gCachePurged = true;
     }
-  }, "startupcache-invalidate", false);
+  }, "startupcache-invalidate");
 
   startupManager();
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
@@ -134,7 +134,7 @@ function run_test() {
 
   do_check_false(gExtensionsJSON.exists());
 
-  do_check_false(gExtensionsINI.exists());
+  do_check_false(gAddonStartup.exists());
 
   AddonManager.getAddonsByIDs(["addon1@tests.mozilla.org",
                                "addon2@tests.mozilla.org",
@@ -163,7 +163,7 @@ function end_test() {
 }
 
 // Try to install all the items into the profile
-function run_test_1() {
+async function run_test_1() {
   writeInstallRDFForExtension(addon1, profileDir);
   var dest = writeInstallRDFForExtension(addon2, profileDir);
   // Attempt to make this look like it was added some time in the past so
@@ -177,7 +177,7 @@ function run_test_1() {
   writeInstallRDFForExtension(addon7, profileDir);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, ["addon1@tests.mozilla.org",
                                       "addon2@tests.mozilla.org",
                                       "addon3@tests.mozilla.org"]);
@@ -187,8 +187,8 @@ function run_test_1() {
   check_startup_changes(AddonManager.STARTUP_CHANGE_ENABLED, []);
   do_check_true(gCachePurged);
 
-  do_print("Checking for " + gExtensionsINI.path);
-  do_check_true(gExtensionsINI.exists());
+  do_print("Checking for " + gAddonStartup.path);
+  do_check_true(gAddonStartup.exists());
 
   AddonManager.getAddonsByIDs(["addon1@tests.mozilla.org",
                                "addon2@tests.mozilla.org",
@@ -281,21 +281,22 @@ function run_test_1() {
 
 // Test that modified items are detected and items in other install locations
 // are ignored
-function run_test_2() {
+async function run_test_2() {
   addon1.version = "1.1";
   writeInstallRDFForExtension(addon1, userDir);
-  addon2.version="2.1";
+  addon2.version = "2.1";
   writeInstallRDFForExtension(addon2, profileDir);
-  addon2.version="2.2";
+  addon2.version = "2.2";
   writeInstallRDFForExtension(addon2, globalDir);
-  addon2.version="2.3";
+  addon2.version = "2.3";
   writeInstallRDFForExtension(addon2, userDir);
   var dest = profileDir.clone();
   dest.append(do_get_expected_addon_name("addon3@tests.mozilla.org"));
   dest.remove(true);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon2@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, ["addon3@tests.mozilla.org"]);
@@ -303,7 +304,7 @@ function run_test_2() {
   check_startup_changes(AddonManager.STARTUP_CHANGE_ENABLED, []);
   do_check_true(gCachePurged);
 
-  do_check_true(gExtensionsINI.exists());
+  do_check_true(gAddonStartup.exists());
 
   AddonManager.getAddonsByIDs(["addon1@tests.mozilla.org",
                                "addon2@tests.mozilla.org",
@@ -350,7 +351,7 @@ function run_test_2() {
 }
 
 // Check that removing items from the profile reveals their hidden versions.
-function run_test_3() {
+async function run_test_3() {
   var dest = profileDir.clone();
   dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
   dest.remove(true);
@@ -360,7 +361,8 @@ function run_test_3() {
   writeInstallRDFForExtension(addon3, profileDir, "addon4@tests.mozilla.org");
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon1@tests.mozilla.org",
                                     "addon2@tests.mozilla.org"]);
@@ -415,11 +417,12 @@ function run_test_3() {
 }
 
 // Test that disabling an install location works
-function run_test_4() {
+async function run_test_4() {
   Services.prefs.setIntPref("extensions.enabledScopes", AddonManager.SCOPE_SYSTEM);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon2@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, ["addon1@tests.mozilla.org"]);
@@ -454,11 +457,12 @@ function run_test_4() {
 }
 
 // Switching disabled locations works
-function run_test_5() {
+async function run_test_5() {
   Services.prefs.setIntPref("extensions.enabledScopes", AddonManager.SCOPE_USER);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, ["addon1@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon2@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, []);
@@ -499,11 +503,12 @@ function run_test_5() {
 }
 
 // Resetting the pref makes everything visible again
-function run_test_6() {
+async function run_test_6() {
   Services.prefs.clearUserPref("extensions.enabledScopes");
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, []);
@@ -544,7 +549,7 @@ function run_test_6() {
 }
 
 // Check that items in the profile hide the others again.
-function run_test_7() {
+async function run_test_7() {
   addon1.version = "1.2";
   writeInstallRDFForExtension(addon1, profileDir);
   var dest = userDir.clone();
@@ -552,7 +557,8 @@ function run_test_7() {
   dest.remove(true);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon1@tests.mozilla.org",
                                     "addon2@tests.mozilla.org"]);
@@ -603,11 +609,12 @@ function run_test_7() {
 }
 
 // Disabling all locations still leaves the profile working
-function run_test_8() {
+async function run_test_8() {
   Services.prefs.setIntPref("extensions.enabledScopes", 0);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, ["addon2@tests.mozilla.org"]);
@@ -642,8 +649,8 @@ function run_test_8() {
 }
 
 // More hiding and revealing
-function run_test_9() {
-  Services.prefs.clearUserPref("extensions.enabledScopes", 0);
+async function run_test_9() {
+  Services.prefs.clearUserPref("extensions.enabledScopes");
 
   var dest = userDir.clone();
   dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
@@ -655,7 +662,8 @@ function run_test_9() {
   writeInstallRDFForExtension(addon2, profileDir);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, ["addon2@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, []);
@@ -704,7 +712,7 @@ function run_test_9() {
 
 // Checks that a removal from one location and an addition in another location
 // for the same item is handled
-function run_test_10() {
+async function run_test_10() {
   var dest = profileDir.clone();
   dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
   dest.remove(true);
@@ -712,7 +720,8 @@ function run_test_10() {
   writeInstallRDFForExtension(addon1, userDir);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, ["addon1@tests.mozilla.org"]);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, []);
@@ -760,7 +769,7 @@ function run_test_10() {
 }
 
 // This should remove any remaining items
-function run_test_11() {
+async function run_test_11() {
   var dest = userDir.clone();
   dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
   dest.remove(true);
@@ -769,7 +778,8 @@ function run_test_11() {
   dest.remove(true);
 
   gCachePurged = false;
-  restartManager();
+  await promiseRestartManager();
+
   check_startup_changes(AddonManager.STARTUP_CHANGE_INSTALLED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_CHANGED, []);
   check_startup_changes(AddonManager.STARTUP_CHANGE_UNINSTALLED, ["addon1@tests.mozilla.org",
@@ -868,31 +878,31 @@ function run_test_12() {
                                  "addon3@tests.mozilla.org",
                                  "addon4@tests.mozilla.org",
                                  "addon5@tests.mozilla.org"],
-                                 function([a1, a2, a3, a4, a5]) {
-      do_check_neq(a1, null);
-      do_check_false(a1.userDisabled);
-      do_check_true(a1.seen);
-      do_check_true(a1.isActive);
+                                 function([a1_2, a2_2, a3_2, a4_2, a5_2]) {
+      do_check_neq(a1_2, null);
+      do_check_false(a1_2.userDisabled);
+      do_check_true(a1_2.seen);
+      do_check_true(a1_2.isActive);
 
-      do_check_neq(a2, null);
-      do_check_false(a2.userDisabled);
-      do_check_true(a2.seen);
-      do_check_true(a2.isActive);
+      do_check_neq(a2_2, null);
+      do_check_false(a2_2.userDisabled);
+      do_check_true(a2_2.seen);
+      do_check_true(a2_2.isActive);
 
-      do_check_neq(a3, null);
-      do_check_true(a3.userDisabled);
-      do_check_false(a3.seen);
-      do_check_false(a3.isActive);
+      do_check_neq(a3_2, null);
+      do_check_true(a3_2.userDisabled);
+      do_check_false(a3_2.seen);
+      do_check_false(a3_2.isActive);
 
-      var dest = profileDir.clone();
-      dest.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
-      dest.remove(true);
-      dest = userDir.clone();
-      dest.append(do_get_expected_addon_name("addon2@tests.mozilla.org"));
-      dest.remove(true);
-      dest = globalDir.clone();
-      dest.append(do_get_expected_addon_name("addon3@tests.mozilla.org"));
-      dest.remove(true);
+      var dest2 = profileDir.clone();
+      dest2.append(do_get_expected_addon_name("addon1@tests.mozilla.org"));
+      dest2.remove(true);
+      dest2 = userDir.clone();
+      dest2.append(do_get_expected_addon_name("addon2@tests.mozilla.org"));
+      dest2.remove(true);
+      dest2 = globalDir.clone();
+      dest2.append(do_get_expected_addon_name("addon3@tests.mozilla.org"));
+      dest2.remove(true);
 
       restartManager();
 
@@ -909,21 +919,21 @@ function run_test_12() {
                                    "addon3@tests.mozilla.org",
                                    "addon4@tests.mozilla.org",
                                    "addon5@tests.mozilla.org"],
-                                   function([a1, a2, a3, a4, a5]) {
-        do_check_neq(a1, null);
-        do_check_false(a1.userDisabled);
-        do_check_true(a1.seen);
-        do_check_true(a1.isActive);
+                                   function([a1_3, a2_3, a3_3, a4_3, a5_3]) {
+        do_check_neq(a1_3, null);
+        do_check_false(a1_3.userDisabled);
+        do_check_true(a1_3.seen);
+        do_check_true(a1_3.isActive);
 
-        do_check_neq(a2, null);
-        do_check_true(a2.userDisabled);
-        do_check_false(a2.seen);
-        do_check_false(a2.isActive);
+        do_check_neq(a2_3, null);
+        do_check_true(a2_3.userDisabled);
+        do_check_false(a2_3.seen);
+        do_check_false(a2_3.isActive);
 
-        do_check_neq(a3, null);
-        do_check_true(a3.userDisabled);
-        do_check_false(a3.seen);
-        do_check_false(a3.isActive);
+        do_check_neq(a3_3, null);
+        do_check_true(a3_3.userDisabled);
+        do_check_false(a3_3.seen);
+        do_check_false(a3_3.isActive);
 
         do_execute_soon(end_test);
       });

@@ -4,7 +4,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Networking: File')
+
 EXPORTS.mozilla.net += [
+    'FileChannelParent.h',
     'nsFileProtocolHandler.h',
 ]
 
@@ -16,9 +20,13 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'necko_file'
 
 UNIFIED_SOURCES += [
+    'FileChannelChild.cpp',
+    'FileChannelParent.cpp',
     'nsFileChannel.cpp',
     'nsFileProtocolHandler.cpp',
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 

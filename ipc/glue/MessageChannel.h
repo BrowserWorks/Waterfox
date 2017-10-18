@@ -11,11 +11,12 @@
 #include "base/basictypes.h"
 #include "base/message_loop.h"
 
-#include "mozilla/Function.h"
+#include "nsIMemoryReporter.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/MozPromise.h"
 #include "mozilla/Vector.h"
-#include "mozilla/WeakPtr.h"
 #if defined(OS_WIN)
 #include "mozilla/ipc/Neutering.h"
 #endif // defined(OS_WIN)
@@ -25,15 +26,22 @@
 #include "nsExceptionHandler.h"
 #endif
 #include "MessageLink.h"
+#include "nsThreadUtils.h"
 
 #include <deque>
-#include <stack>
+#include <functional>
+#include <map>
 #include <math.h>
+#include <stack>
+#include <vector>
+
+class nsIEventTarget;
 
 namespace mozilla {
 namespace ipc {
 
 class MessageChannel;
+class IToplevelProtocol;
 
 class RefCountedMonitor : public Monitor
 {
@@ -61,9 +69,26 @@ enum class SyncSendError {
     ReplyError,
 };
 
+enum class PromiseRejectReason {
+    SendError,
+    ChannelClosed,
+    HandlerRejected,
+    ActorDestroyed,
+    EndGuard_,
+};
+
+enum ChannelState {
+    ChannelClosed,
+    ChannelOpening,
+    ChannelConnected,
+    ChannelTimeout,
+    ChannelClosing,
+    ChannelError
+};
+
 class AutoEnterTransaction;
 
-class MessageChannel : HasResultCodes
+class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver
 {
     friend class ProcessLink;
     friend class ThreadLink;
@@ -73,6 +98,26 @@ class MessageChannel : HasResultCodes
 
     typedef mozilla::Monitor Monitor;
 
+    // We could templatize the actor type but it would unnecessarily
+    // expand the code size. Using the actor address as the
+    // identifier is already good enough.
+    typedef void* ActorIdType;
+
+    struct PromiseHolder
+    {
+        RefPtr<MozPromiseRefcountable> mPromise;
+
+        // For rejecting and removing the pending promises when a
+        // subprotocol is destoryed.
+        ActorIdType mActorId;
+
+        std::function<void(MozPromiseRefcountable*,
+                           PromiseRejectReason,
+                           const char*)> mRejectFunction;
+    };
+    static Atomic<size_t> gUnresolvedPromises;
+    friend class PromiseReporter;
+
   public:
     static const int32_t kNoTimeout;
 
@@ -80,8 +125,13 @@ class MessageChannel : HasResultCodes
     typedef IPC::MessageInfo MessageInfo;
     typedef mozilla::ipc::Transport Transport;
 
-    explicit MessageChannel(MessageListener *aListener);
+    explicit MessageChannel(const char *aName,
+                            IToplevelProtocol *aListener);
     ~MessageChannel();
+
+    IToplevelProtocol *Listener() const {
+        return mListener;
+    }
 
     // "Open" from the perspective of the transport layer; the underlying
     // socketpair/pipe should already be created.
@@ -98,7 +148,7 @@ class MessageChannel : HasResultCodes
     // For more details on the process of opening a channel between
     // threads, see the extended comment on this function
     // in MessageChannel.cpp.
-    bool Open(MessageChannel *aTargetChan, MessageLoop *aTargetLoop, Side aSide);
+    bool Open(MessageChannel *aTargetChan, nsIEventTarget *aEventTarget, Side aSide);
 
     // Close the underlying transport channel.
     void Close();
@@ -117,7 +167,7 @@ class MessageChannel : HasResultCodes
     // Call aInvoke for each pending message until it returns false.
     // XXX: You must get permission from an IPC peer to use this function
     //      since it requires custom deserialization and re-orders events.
-    void PeekMessages(mozilla::function<bool(const Message& aMsg)> aInvoke);
+    void PeekMessages(const std::function<bool(const Message& aMsg)>& aInvoke);
 
     // Misc. behavioral traits consumers can request for this channel
     enum ChannelFlags {
@@ -127,13 +177,42 @@ class MessageChannel : HasResultCodes
       // handling to prevent deadlocks. Should only be used for protocols
       // that manage child processes which might create native UI, like
       // plugins.
-      REQUIRE_DEFERRED_MESSAGE_PROTECTION     = 1 << 0
+      REQUIRE_DEFERRED_MESSAGE_PROTECTION     = 1 << 0,
+      // Windows: When this flag is specified, any wait that occurs during
+      // synchronous IPC will be alertable, thus allowing a11y code in the
+      // chrome process to reenter content while content is waiting on a
+      // synchronous call.
+      REQUIRE_A11Y_REENTRY                    = 1 << 1,
     };
     void SetChannelFlags(ChannelFlags aFlags) { mFlags = aFlags; }
     ChannelFlags GetChannelFlags() { return mFlags; }
 
     // Asynchronously send a message to the other side of the channel
     bool Send(Message* aMsg);
+
+    // Asynchronously send a message to the other side of the channel
+    // and wait for asynchronous reply
+    template<typename Promise>
+    bool Send(Message* aMsg, Promise* aPromise, ActorIdType aActorId) {
+        int32_t seqno = NextSeqno();
+        aMsg->set_seqno(seqno);
+        if (!Send(aMsg)) {
+            return false;
+        }
+        PromiseHolder holder;
+        holder.mPromise = aPromise;
+        holder.mActorId = aActorId;
+        holder.mRejectFunction = [](MozPromiseRefcountable* aRejectPromise,
+                                    PromiseRejectReason aReason,
+                                    const char* aRejectSite) {
+            static_cast<Promise*>(aRejectPromise)->Reject(aReason, aRejectSite);
+        };
+        mPendingPromises.insert(std::make_pair(seqno, Move(holder)));
+        gUnresolvedPromises++;
+        return true;
+    }
+
+    void SendBuildID();
 
     // Asynchronously deliver a message back to this side of the
     // channel
@@ -149,6 +228,13 @@ class MessageChannel : HasResultCodes
     bool WaitForIncomingMessage();
 
     bool CanSend() const;
+
+    // Remove and return a promise that needs reply
+    already_AddRefed<MozPromiseRefcountable> PopPromise(const Message& aMsg);
+
+    // Used to reject and remove pending promises owned by the given
+    // actor when it's about to be destroyed.
+    void RejectPendingPromisesForActor(ActorIdType aActorId);
 
     // If sending a sync message returns an error, this function gives a more
     // descriptive error message.
@@ -171,6 +257,22 @@ class MessageChannel : HasResultCodes
     bool IsInTransaction() const;
     void CancelCurrentTransaction();
 
+    // Force all calls to Send to defer actually sending messages. This will
+    // cause sync messages to block until another thread calls
+    // StopPostponingSends.
+    //
+    // This must be called from the worker thread.
+    void BeginPostponingSends();
+
+    // Stop postponing sent messages, and immediately flush all postponed
+    // messages to the link. This may be called from any thread.
+    //
+    // Note that there are no ordering guarantees between two different
+    // MessageChannels. If channel B sends a message, then stops postponing
+    // channel A, messages from A may arrive before B. The easiest way to order
+    // this, if needed, is to make B send a sync message.
+    void StopPostponingSends();
+
     /**
      * This function is used by hang annotation code to determine which IPDL
      * actor is highest in the call stack at the time of the hang. It should
@@ -178,8 +280,6 @@ class MessageChannel : HasResultCodes
      * be sent.
      */
     int32_t GetTopmostMessageRoutingId() const;
-
-    void FlushPendingInterruptQueue();
 
     // Unsound_IsClosed and Unsound_NumQueuedMessages are safe to call from any
     // thread, but they make no guarantees about whether you'll get an
@@ -200,18 +300,6 @@ class MessageChannel : HasResultCodes
     static void SetIsPumpingMessages(bool aIsPumping) {
         sIsPumpingMessages = aIsPumping;
     }
-
-#ifdef MOZ_NUWA_PROCESS
-    void Block() {
-        MOZ_ASSERT(mLink);
-        mLink->Block();
-    }
-
-    void Unblock() {
-        MOZ_ASSERT(mLink);
-        mLink->Unblock();
-    }
-#endif
 
 #ifdef OS_WIN
     struct MOZ_STACK_CLASS SyncStackFrame
@@ -255,7 +343,10 @@ class MessageChannel : HasResultCodes
 
   private:
     void SpinInternalEventLoop();
-#endif
+#if defined(ACCESSIBILITY)
+    bool WaitForSyncNotifyWithA11yReentry();
+#endif // defined(ACCESSIBILITY)
+#endif // defined(OS_WIN)
 
   private:
     void CommonThreadOpenInit(MessageChannel *aTargetChan, Side aSide);
@@ -280,10 +371,6 @@ class MessageChannel : HasResultCodes
 
     void MaybeUndeferIncall();
     void EnqueuePendingMessages();
-
-    // Executed on the worker thread. Dequeues one pending message.
-    bool OnMaybeDequeueOne();
-    bool DequeueOne(Message *recvd);
 
     // Dispatches an incoming message to its appropriate handler.
     void DispatchMessage(Message &&aMsg);
@@ -316,6 +403,8 @@ class MessageChannel : HasResultCodes
     void EndTimeout();
     void CancelTransaction(int transaction);
 
+    void RepostAllMessages();
+
     // The "remote view of stack depth" can be different than the
     // actual stack depth when there are out-of-turn replies.  When we
     // receive one, our actual Interrupt stack depth doesn't decrease, but
@@ -337,31 +426,14 @@ class MessageChannel : HasResultCodes
     // This helper class manages mCxxStackDepth on behalf of MessageChannel.
     // When the stack depth is incremented from zero to non-zero, it invokes
     // a callback, and similarly for when the depth goes from non-zero to zero.
-    void EnteredCxxStack() {
-       mListener->OnEnteredCxxStack();
-    }
-
+    void EnteredCxxStack();
     void ExitedCxxStack();
 
-    void EnteredCall() {
-        mListener->OnEnteredCall();
-    }
+    void EnteredCall();
+    void ExitedCall();
 
-    void ExitedCall() {
-        mListener->OnExitedCall();
-    }
-
-    void EnteredSyncSend() {
-        mListener->OnEnteredSyncSend();
-    }
-
-    void ExitedSyncSend() {
-        mListener->OnExitedSyncSend();
-    }
-
-    MessageListener *Listener() const {
-        return mListener.get();
-    }
+    void EnteredSyncSend();
+    void ExitedSyncSend();
 
     void DebugAbort(const char* file, int line, const char* cond,
                     const char* why,
@@ -413,9 +485,9 @@ class MessageChannel : HasResultCodes
         return mDispatchingAsyncMessage;
     }
 
-    int DispatchingAsyncMessagePriority() const {
+    int DispatchingAsyncMessageNestedLevel() const {
         AssertWorkerThread();
-        return mDispatchingAsyncMessagePriority;
+        return mDispatchingAsyncMessageNestedLevel;
     }
 
     bool Connected() const;
@@ -433,8 +505,18 @@ class MessageChannel : HasResultCodes
     // Tell the IO thread to close the channel and wait for it to ACK.
     void SynchronouslyClose();
 
+    // Returns true if ShouldDeferMessage(aMsg) is guaranteed to return true.
+    // Otherwise, the result of ShouldDeferMessage(aMsg) may be true or false,
+    // depending on context.
+    static bool IsAlwaysDeferred(const Message& aMsg);
+
+    // Helper for sending a message via the link. This should only be used for
+    // non-special messages that might have to be postponed.
+    void SendMessageToLink(Message* aMsg);
+
     bool WasTransactionCanceled(int transaction);
     bool ShouldDeferMessage(const Message& aMsg);
+    bool ShouldDeferInterruptMessage(const Message& aMsg, size_t aStackDepth);
     void OnMessageReceivedFromLink(Message&& aMsg);
     void OnChannelErrorFromLink();
 
@@ -447,7 +529,8 @@ class MessageChannel : HasResultCodes
     // Can be run on either thread
     void AssertWorkerThread() const
     {
-        MOZ_RELEASE_ASSERT(mWorkerLoopID == MessageLoop::current()->id(),
+        MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
+        MOZ_RELEASE_ASSERT(mWorkerThread == GetCurrentVirtualThread(),
                            "not on worker thread!");
     }
 
@@ -456,131 +539,60 @@ class MessageChannel : HasResultCodes
     // NOT our worker thread.
     void AssertLinkThread() const
     {
-        MOZ_RELEASE_ASSERT(mWorkerLoopID != MessageLoop::current()->id(),
+        MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
+        MOZ_RELEASE_ASSERT(mWorkerThread != GetCurrentVirtualThread(),
                            "on worker thread but should not be!");
     }
 
   private:
-#if defined(MOZ_CRASHREPORTER) && defined(OS_WIN)
-    // TODO: Remove the condition OS_WIN above once we move to GCC 5 or higher,
-    // the code will be able to get compiled as std::deque will meet C++11
-    // allocator requirements.
-    template<class T>
-    struct AnnotateAllocator
+    class MessageTask :
+        public CancelableRunnable,
+        public LinkedListElement<RefPtr<MessageTask>>,
+        public nsIRunnablePriority
     {
-      typedef T value_type;
-      AnnotateAllocator(MessageChannel& channel) : mChannel(channel) {}
-      template<class U> AnnotateAllocator(const AnnotateAllocator<U>& other) :
-        mChannel(other.mChannel) {}
-      template<class U> bool operator==(const AnnotateAllocator<U>&) { return true; }
-      template<class U> bool operator!=(const AnnotateAllocator<U>&) { return false; }
-      T* allocate(size_t n) {
-        void* p = ::operator new(n * sizeof(T), std::nothrow);
-        if (!p && n) {
-          // Sort the pending messages by its type, note the sorting algorithm
-          // has to be in-place to avoid memory allocation.
-          MessageQueue& q = mChannel.mPending;
-          std::sort(q.begin(), q.end(), [](const Message& a, const Message& b) {
-            return a.type() < b.type();
-          });
+    public:
+        explicit MessageTask(MessageChannel* aChannel, Message&& aMessage);
 
-          // Iterate over the sorted queue to find the message that has the
-          // highest number of count.
-          char* topName = nullptr;
-          char* curName = nullptr;
-          msgid_t topType = 0, curType = 0;
-          uint32_t topCount = 0, curCount = 0;
-          for (MessageQueue::iterator it = q.begin(); it != q.end(); ++it) {
-            Message &msg = *it;
-            if (msg.type() == curType) {
-              ++curCount;
-            } else {
-              if (curCount > topCount) {
-                topName = curName;
-                topType = curType;
-                topCount = curCount;
-              }
-              curName = const_cast<char*>(msg.name());
-              curType = msg.type();
-              curCount = 1;
-            }
-          }
-          // In case the last type is the top one.
-          if (curCount > topCount) {
-            topName = curName;
-            topType = curType;
-            topCount = curCount;
-          }
+        NS_DECL_ISUPPORTS_INHERITED
 
-          CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("NumberOfPendingIPC"),
-                                             nsPrintfCString("%zu", q.size()));
-          CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("TopPendingIPCCount"),
-                                             nsPrintfCString("%u", topCount));
-          CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("TopPendingIPCName"),
-                                             nsPrintfCString("%s(0x%x)", topName, topType));
+        NS_IMETHOD Run() override;
+        nsresult Cancel() override;
+        NS_IMETHOD GetPriority(uint32_t* aPriority) override;
+        void Post();
+        void Clear();
 
-          mozalloc_handle_oom(n * sizeof(T));
-        }
-        return static_cast<T*>(p);
-      }
-      void deallocate(T* p, size_t n) {
-        ::operator delete(p);
-      }
-      MessageChannel& mChannel;
+        bool IsScheduled() const { return mScheduled; }
+
+        Message& Msg() { return mMessage; }
+        const Message& Msg() const { return mMessage; }
+
+    private:
+        MessageTask() = delete;
+        MessageTask(const MessageTask&) = delete;
+        ~MessageTask() {}
+
+        MessageChannel* mChannel;
+        Message mMessage;
+        bool mScheduled : 1;
     };
-    typedef std::deque<Message, AnnotateAllocator<Message>> MessageQueue;
-#else
-    typedef std::deque<Message> MessageQueue;
-#endif
+
+    bool ShouldRunMessage(const Message& aMsg);
+    void RunMessage(MessageTask& aTask);
+
+    typedef LinkedList<RefPtr<MessageTask>> MessageQueue;
     typedef std::map<size_t, Message> MessageMap;
+    typedef std::map<size_t, PromiseHolder> PromiseMap;
     typedef IPC::Message::msgid_t msgid_t;
 
-    // XXXkhuey this can almost certainly die.
-    // All dequeuing tasks require a single point of cancellation,
-    // which is handled via a reference-counted task.
-    class RefCountedTask
-    {
-      public:
-        explicit RefCountedTask(already_AddRefed<CancelableRunnable> aTask)
-          : mTask(aTask)
-        { }
-      private:
-        ~RefCountedTask() { }
-      public:
-        void Run() { mTask->Run(); }
-        void Cancel() { mTask->Cancel(); }
-
-        NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefCountedTask)
-
-      private:
-        RefPtr<CancelableRunnable> mTask;
-    };
-
-    // Wrap an existing task which can be cancelled at any time
-    // without the wrapper's knowledge.
-    class DequeueTask : public CancelableRunnable
-    {
-      public:
-        explicit DequeueTask(RefCountedTask* aTask)
-          : mTask(aTask)
-        { }
-        NS_IMETHOD Run() override {
-          if (mTask) {
-            mTask->Run();
-          }
-          return NS_OK;
-        }
-        nsresult Cancel() override {
-          mTask = nullptr;
-          return NS_OK;
-        }
-
-      private:
-        RefPtr<RefCountedTask> mTask;
-    };
+    void WillDestroyCurrentMessageLoop() override;
 
   private:
-    mozilla::WeakPtr<MessageListener> mListener;
+    // This will be a string literal, so lifetime is not an issue.
+    const char* mName;
+
+    // Based on presumption the listener owns and overlives the channel,
+    // this is never nullified.
+    IToplevelProtocol* mListener;
     ChannelState mChannelState;
     RefPtr<RefCountedMonitor> mMonitor;
     Side mSide;
@@ -588,12 +600,9 @@ class MessageChannel : HasResultCodes
     MessageLoop* mWorkerLoop;           // thread where work is done
     RefPtr<CancelableRunnable> mChannelErrorTask;  // NotifyMaybeChannelError runnable
 
-    // id() of mWorkerLoop.  This persists even after mWorkerLoop is cleared
-    // during channel shutdown.
-    int mWorkerLoopID;
-
-    // A task encapsulating dequeuing one pending message.
-    RefPtr<RefCountedTask> mDequeueOneTask;
+    // Thread we are allowed to send and receive on. This persists even after
+    // mWorkerLoop is cleared during channel shutdown.
+    PRThread* mWorkerThread;
 
     // Timeout periods are broken up in two to prevent system suspension from
     // triggering an abort. This method (called by WaitForEvent with a 'did
@@ -603,7 +612,7 @@ class MessageChannel : HasResultCodes
     bool mInTimeoutSecondHalf;
 
     // Worker-thread only; sequence numbers for messages that require
-    // synchronous replies.
+    // replies.
     int32_t mNextSeqno;
 
     static bool sIsPumpingMessages;
@@ -634,7 +643,7 @@ class MessageChannel : HasResultCodes
     };
 
     bool mDispatchingAsyncMessage;
-    int mDispatchingAsyncMessagePriority;
+    int mDispatchingAsyncMessageNestedLevel;
 
     // When we send an urgent request from the parent process, we could race
     // with an RPC message that was issued by the child beforehand. In this
@@ -657,13 +666,19 @@ class MessageChannel : HasResultCodes
     friend class AutoEnterTransaction;
     AutoEnterTransaction *mTransactionStack;
 
-    int32_t CurrentHighPriorityTransaction() const;
+    int32_t CurrentNestedInsideSyncTransaction() const;
 
     bool AwaitingSyncReply() const;
-    int AwaitingSyncReplyPriority() const;
+    int AwaitingSyncReplyNestedLevel() const;
 
     bool DispatchingSyncMessage() const;
-    int DispatchingSyncMessagePriority() const;
+    int DispatchingSyncMessageNestedLevel() const;
+
+#ifdef DEBUG
+    void AssertMaybeDeferredCountCorrect();
+#else
+    void AssertMaybeDeferredCountCorrect() {}
+#endif
 
     // If a sync message times out, we store its sequence number here. Any
     // future sync messages will fail immediately. Once the reply for original
@@ -679,11 +694,9 @@ class MessageChannel : HasResultCodes
     // hitting a lot of corner cases with message nesting that we don't really
     // care about.
     int32_t mTimedOutMessageSeqno;
-    int mTimedOutMessagePriority;
+    int mTimedOutMessageNestedLevel;
 
-    // Queue of all incoming messages, except for replies to sync and urgent
-    // messages, which are delivered directly to mRecvd, and any pending urgent
-    // incall, which is stored in mPendingUrgentRequest.
+    // Queue of all incoming messages.
     //
     // If both this side and the other side are functioning correctly, the queue
     // can only be in certain configurations.  Let
@@ -695,7 +708,7 @@ class MessageChannel : HasResultCodes
     //
     // The queue can only match this configuration
     //
-    //  A<* (S< | C< | R< (?{mStack.size() == 1} A<* (S< | C<)))
+    //  A<* (S< | C< | R< (?{mInterruptStack.size() == 1} A<* (S< | C<)))
     //
     // The other side can send as many async messages |A<*| as it wants before
     // sending us a blocking message.
@@ -710,7 +723,7 @@ class MessageChannel : HasResultCodes
     // |mRemoteStackDepth|, and races don't matter to the queue.)
     //
     // Final case, the other side replied to our most recent out-call |R<|.
-    // If that was the *only* out-call on our stack, |?{mStack.size() == 1}|,
+    // If that was the *only* out-call on our stack, |?{mInterruptStack.size() == 1}|,
     // then other side "finished with us," and went back to its own business.
     // That business might have included sending any number of async message
     // |A<*| until sending a blocking message |(S< | C<)|.  If we had more than
@@ -718,6 +731,11 @@ class MessageChannel : HasResultCodes
     // another blocking message, because it's blocked on a reply from us.
     //
     MessageQueue mPending;
+
+    // The number of messages in mPending for which IsAlwaysDeferred is false
+    // (i.e., the number of messages that might not be deferred, depending on
+    // context).
+    size_t mMaybeDeferredPendingCount;
 
     // Stack of all the out-calls on which this channel is awaiting responses.
     // Each stack refers to a different protocol and the stacks are mutually
@@ -735,7 +753,7 @@ class MessageChannel : HasResultCodes
     //
     // Then when processing an in-call |c|, it must be true that
     //
-    //   mStack.size() == c.remoteDepth
+    //   mInterruptStack.size() == c.remoteDepth
     //
     // I.e., my depth is actually the same as what the other side thought it
     // was when it sent in-call |c|.  If this fails to hold, we have detected
@@ -774,6 +792,9 @@ class MessageChannel : HasResultCodes
     // https://bugzilla.mozilla.org/show_bug.cgi?id=521929.
     MessageMap mOutOfTurnReplies;
 
+    // Map of async Promises that are still waiting replies.
+    PromiseMap mPendingPromises;
+
     // Stack of Interrupt in-calls that were deferred because of race
     // conditions.
     std::stack<Message> mDeferred;
@@ -786,15 +807,24 @@ class MessageChannel : HasResultCodes
     // a channel error occurs?
     bool mAbortOnError;
 
+    // True if the listener has already been notified of a channel close or
+    // error.
+    bool mNotifiedChannelDone;
+
     // See SetChannelFlags
     ChannelFlags mFlags;
 
     // Task and state used to asynchronously notify channel has been connected
     // safely.  This is necessary to be able to cancel notification if we are
     // closed at the same time.
-    RefPtr<RefCountedTask> mOnChannelConnectedTask;
+    RefPtr<CancelableRunnable> mOnChannelConnectedTask;
     bool mPeerPidSet;
     int32_t mPeerPid;
+
+    // Channels can enter messages are not sent immediately; instead, they are
+    // held in a queue until another thread deems it is safe to send them.
+    bool mIsPostponingSends;
+    std::vector<UniquePtr<Message>> mPostponedSends;
 };
 
 void
@@ -802,5 +832,14 @@ CancelCPOWs();
 
 } // namespace ipc
 } // namespace mozilla
+
+namespace IPC {
+template <>
+struct ParamTraits<mozilla::ipc::PromiseRejectReason>
+    : public ContiguousEnumSerializer<mozilla::ipc::PromiseRejectReason,
+                                      mozilla::ipc::PromiseRejectReason::SendError,
+                                      mozilla::ipc::PromiseRejectReason::EndGuard_>
+{ };
+} // namespace IPC
 
 #endif  // ifndef ipc_glue_MessageChannel_h

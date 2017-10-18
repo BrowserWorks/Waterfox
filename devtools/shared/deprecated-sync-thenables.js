@@ -6,6 +6,8 @@
  * THIS MODULE IS DEPRECATED. IMPORT "Promise.jsm" INSTEAD.
  */
 
+/* eslint-disable */
+
 "use strict";
 
 this.Promise = {};
@@ -59,6 +61,9 @@ function defer() {
       }
 
       return deferred.promise;
+    },
+    catch: function (callback) {
+      return this.then(null, callback);
     }
   };
 

@@ -21,6 +21,7 @@
 #include "nsIRequestContext.h"
 #include "CacheObserver.h"
 #include "MainThreadUtils.h"
+#include "mozilla/Unused.h"
 
 #include "mozilla/net/NeckoChild.h"
 
@@ -115,7 +116,7 @@ nsLoadGroup::nsLoadGroup(nsISupports* outer)
     , mTimedNonCachedRequestsUntilOnEndPageLoad(0)
 {
     NS_INIT_AGGREGATED(outer);
-    LOG(("LOADGROUP [%x]: Created.\n", this));
+    LOG(("LOADGROUP [%p]: Created.\n", this));
 }
 
 nsLoadGroup::~nsLoadGroup()
@@ -123,26 +124,20 @@ nsLoadGroup::~nsLoadGroup()
     DebugOnly<nsresult> rv = Cancel(NS_BINDING_ABORTED);
     NS_ASSERTION(NS_SUCCEEDED(rv), "Cancel failed");
 
-    mDefaultLoadRequest = 0;
+    mDefaultLoadRequest = nullptr;
 
     if (mRequestContext) {
-        nsID rcid;
+        uint64_t rcid;
         mRequestContext->GetID(&rcid);
 
         if (IsNeckoChild() && gNeckoChild) {
-            char rcid_str[NSID_LENGTH];
-            rcid.ToProvidedString(rcid_str);
-
-            nsCString rcid_nscs;
-            rcid_nscs.AssignASCII(rcid_str);
-
-            gNeckoChild->SendRemoveRequestContext(rcid_nscs);
+            gNeckoChild->SendRemoveRequestContext(rcid);
         } else {
             mRequestContextService->RemoveRequestContext(rcid);
         }
     }
 
-    LOG(("LOADGROUP [%x]: Destroyed.\n", this));
+    LOG(("LOADGROUP [%p]: Destroyed.\n", this));
 }
 
 
@@ -231,7 +226,7 @@ nsLoadGroup::Cancel(nsresult status)
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    // set the load group status to our cancel status while we cancel 
+    // set the load group status to our cancel status while we cancel
     // all our requests...once the cancel is done, we'll reset it...
     //
     mStatus = status;
@@ -257,7 +252,7 @@ nsLoadGroup::Cancel(nsresult status)
         if (MOZ_LOG_TEST(gLoadGroupLog, LogLevel::Debug)) {
             nsAutoCString nameStr;
             request->GetName(nameStr);
-            LOG(("LOADGROUP [%x]: Canceling request %x %s.\n",
+            LOG(("LOADGROUP [%p]: Canceling request %p %s.\n",
                  this, request, nameStr.get()));
         }
 
@@ -318,7 +313,7 @@ nsLoadGroup::Suspend()
         if (MOZ_LOG_TEST(gLoadGroupLog, LogLevel::Debug)) {
             nsAutoCString nameStr;
             request->GetName(nameStr);
-            LOG(("LOADGROUP [%x]: Suspending request %x %s.\n",
+            LOG(("LOADGROUP [%p]: Suspending request %p %s.\n",
                 this, request, nameStr.get()));
         }
 
@@ -363,7 +358,7 @@ nsLoadGroup::Resume()
         if (MOZ_LOG_TEST(gLoadGroupLog, LogLevel::Debug)) {
             nsAutoCString nameStr;
             request->GetName(nameStr);
-            LOG(("LOADGROUP [%x]: Resuming request %x %s.\n",
+            LOG(("LOADGROUP [%p]: Resuming request %p %s.\n",
                 this, request, nameStr.get()));
         }
 
@@ -452,7 +447,7 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
     if (MOZ_LOG_TEST(gLoadGroupLog, LogLevel::Debug)) {
         nsAutoCString nameStr;
         request->GetName(nameStr);
-        LOG(("LOADGROUP [%x]: Adding request %x %s (count=%d).\n",
+        LOG(("LOADGROUP [%p]: Adding request %p %s (count=%d).\n",
              this, request, nameStr.get(), mRequests.EntryCount()));
     }
 
@@ -463,7 +458,7 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
     // Do not add the channel, if the loadgroup is being canceled...
     //
     if (mIsCanceling) {
-        LOG(("LOADGROUP [%x]: AddChannel() ABORTED because LoadGroup is"
+        LOG(("LOADGROUP [%p]: AddChannel() ABORTED because LoadGroup is"
              " being canceled!!\n", this));
 
         return NS_BINDING_ABORTED;
@@ -509,12 +504,12 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
         //
         nsCOMPtr<nsIRequestObserver> observer = do_QueryReferent(mObserver);
         if (observer) {
-            LOG(("LOADGROUP [%x]: Firing OnStartRequest for request %x."
+            LOG(("LOADGROUP [%p]: Firing OnStartRequest for request %p."
                  "(foreground count=%d).\n", this, request, mForegroundCount));
 
             rv = observer->OnStartRequest(request, ctxt);
             if (NS_FAILED(rv)) {
-                LOG(("LOADGROUP [%x]: OnStartRequest for request %x FAILED.\n",
+                LOG(("LOADGROUP [%p]: OnStartRequest for request %p FAILED.\n",
                     this, request));
                 //
                 // The URI load has been canceled by the observer.  Clean up
@@ -549,8 +544,9 @@ nsLoadGroup::RemoveRequest(nsIRequest *request, nsISupports* ctxt,
     if (MOZ_LOG_TEST(gLoadGroupLog, LogLevel::Debug)) {
         nsAutoCString nameStr;
         request->GetName(nameStr);
-        LOG(("LOADGROUP [%x]: Removing request %x %s status %x (count=%d).\n",
-            this, request, nameStr.get(), aStatus, mRequests.EntryCount() - 1));
+        LOG(("LOADGROUP [%p]: Removing request %p %s status %" PRIx32 " (count=%d).\n",
+             this, request, nameStr.get(), static_cast<uint32_t>(aStatus),
+             mRequests.EntryCount() - 1));
     }
 
     // Make sure we have a owning reference to the request we're about
@@ -566,7 +562,7 @@ nsLoadGroup::RemoveRequest(nsIRequest *request, nsISupports* ctxt,
     auto entry = static_cast<RequestMapEntry*>(mRequests.Search(request));
 
     if (!entry) {
-        LOG(("LOADGROUP [%x]: Unable to remove request %x. Not in group!\n",
+        LOG(("LOADGROUP [%p]: Unable to remove request %p. Not in group!\n",
             this, request));
 
         return NS_ERROR_FAILURE;
@@ -627,13 +623,13 @@ nsLoadGroup::RemoveRequest(nsIRequest *request, nsISupports* ctxt,
         // Fire the OnStopRequest out to the observer...
         nsCOMPtr<nsIRequestObserver> observer = do_QueryReferent(mObserver);
         if (observer) {
-            LOG(("LOADGROUP [%x]: Firing OnStopRequest for request %x."
+            LOG(("LOADGROUP [%p]: Firing OnStopRequest for request %p."
                  "(foreground count=%d).\n", this, request, mForegroundCount));
 
             rv = observer->OnStopRequest(request, ctxt, aStatus);
 
             if (NS_FAILED(rv)) {
-                LOG(("LOADGROUP [%x]: OnStopRequest for request %x FAILED.\n",
+                LOG(("LOADGROUP [%p]: OnStopRequest for request %p FAILED.\n",
                     this, request));
             }
         }
@@ -701,7 +697,7 @@ nsLoadGroup::SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks)
 }
 
 NS_IMETHODIMP
-nsLoadGroup::GetRequestContextID(nsID *aRCID)
+nsLoadGroup::GetRequestContextID(uint64_t *aRCID)
 {
     if (!mRequestContext) {
         return NS_ERROR_NOT_AVAILABLE;
@@ -829,7 +825,13 @@ nsLoadGroup::SetUserAgentOverrideCache(const nsACString & aUserAgentOverrideCach
 void
 nsLoadGroup::TelemetryReport()
 {
-    if (mDefaultLoadIsTimed) {
+    nsresult defaultStatus = NS_ERROR_INVALID_ARG;
+    // We should only report HTTP_PAGE_* telemetry if the defaultRequest was
+    // actually successful.
+    if (mDefaultLoadRequest) {
+        mDefaultLoadRequest->GetStatus(&defaultStatus);
+    }
+    if (mDefaultLoadIsTimed && NS_SUCCEEDED(defaultStatus)) {
         Telemetry::Accumulate(Telemetry::HTTP_REQUEST_PER_PAGE, mTimedRequests);
         if (mTimedRequests) {
             Telemetry::Accumulate(Telemetry::HTTP_REQUEST_PER_PAGE_FROM_CACHE,
@@ -888,6 +890,11 @@ nsLoadGroup::TelemetryReportChannel(nsITimedChannel *aTimedChannel,
     if (NS_FAILED(rv))
         return;
 
+    TimeStamp secureConnectionStart;
+    rv = aTimedChannel->GetSecureConnectionStart(&secureConnectionStart);
+    if (NS_FAILED(rv))
+        return;
+
     TimeStamp connectEnd;
     rv = aTimedChannel->GetConnectEnd(&connectEnd);
     if (NS_FAILED(rv))
@@ -921,12 +928,17 @@ nsLoadGroup::TelemetryReportChannel(nsITimedChannel *aTimedChannel,
             domainLookupStart, domainLookupEnd);                               \
     }                                                                          \
                                                                                \
-    if (!connectStart.IsNull() && !connectEnd.IsNull()) {                      \
+    if (!secureConnectionStart.IsNull() && !connectEnd.IsNull()) {             \
         Telemetry::AccumulateTimeDelta(                                        \
-            Telemetry::HTTP_##prefix##_TCP_CONNECTION,                         \
-            connectStart, connectEnd);                                         \
+            Telemetry::HTTP_##prefix##_TLS_HANDSHAKE,                          \
+            secureConnectionStart, connectEnd);                                \
     }                                                                          \
                                                                                \
+    if (!connectStart.IsNull() && !connectEnd.IsNull()) {                      \
+        Telemetry::AccumulateTimeDelta(                                        \
+            Telemetry::HTTP_##prefix##_TCP_CONNECTION_2,                       \
+            connectStart, connectEnd);                                         \
+    }                                                                          \
                                                                                \
     if (!requestStart.IsNull() && !responseEnd.IsNull()) {                     \
         Telemetry::AccumulateTimeDelta(                                        \
@@ -1071,11 +1083,7 @@ nsresult nsLoadGroup::Init()
 {
     mRequestContextService = do_GetService("@mozilla.org/network/request-context-service;1");
     if (mRequestContextService) {
-        nsID requestContextID;
-        if (NS_SUCCEEDED(mRequestContextService->NewRequestContextID(&requestContextID))) {
-            mRequestContextService->GetRequestContext(requestContextID,
-                                                      getter_AddRefs(mRequestContext));
-        }
+        Unused << mRequestContextService->NewRequestContext(getter_AddRefs(mRequestContext));
     }
 
     return NS_OK;

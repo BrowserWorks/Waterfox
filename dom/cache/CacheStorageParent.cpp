@@ -6,7 +6,7 @@
 
 #include "mozilla/dom/cache/CacheStorageParent.h"
 
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/cache/CacheOpParent.h"
@@ -43,18 +43,18 @@ CacheStorageParent::CacheStorageParent(PBackgroundParent* aManagingActor,
   , mVerifiedStatus(NS_OK)
 {
   MOZ_COUNT_CTOR(cache::CacheStorageParent);
-  MOZ_ASSERT(aManagingActor);
+  MOZ_DIAGNOSTIC_ASSERT(aManagingActor);
 
   // Start the async principal verification process immediately.
   mVerifier = PrincipalVerifier::CreateAndDispatch(this, aManagingActor,
                                                    aPrincipalInfo);
-  MOZ_ASSERT(mVerifier);
+  MOZ_DIAGNOSTIC_ASSERT(mVerifier);
 }
 
 CacheStorageParent::~CacheStorageParent()
 {
   MOZ_COUNT_DTOR(cache::CacheStorageParent);
-  MOZ_ASSERT(!mVerifier);
+  MOZ_DIAGNOSTIC_ASSERT(!mVerifier);
 }
 
 void
@@ -88,46 +88,46 @@ CacheStorageParent::DeallocPCacheOpParent(PCacheOpParent* aActor)
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheStorageParent::RecvPCacheOpConstructor(PCacheOpParent* aActor,
                                             const CacheOpArgs& aOpArgs)
 {
   auto actor = static_cast<CacheOpParent*>(aActor);
 
   if (mVerifier) {
-    MOZ_ASSERT(!mManagerId);
+    MOZ_DIAGNOSTIC_ASSERT(!mManagerId);
     actor->WaitForVerification(mVerifier);
-    return true;
+    return IPC_OK();
   }
 
   if (NS_WARN_IF(NS_FAILED(mVerifiedStatus))) {
     ErrorResult result(mVerifiedStatus);
     Unused << CacheOpParent::Send__delete__(actor, result, void_t());
     result.SuppressException();
-    return true;
+    return IPC_OK();
   }
 
-  MOZ_ASSERT(mManagerId);
+  MOZ_DIAGNOSTIC_ASSERT(mManagerId);
   actor->Execute(mManagerId);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheStorageParent::RecvTeardown()
 {
   if (!Send__delete__(this)) {
     // child process is gone, warn and allow actor to clean up normally
     NS_WARNING("CacheStorage failed to delete actor.");
   }
-  return true;
+  return IPC_OK();
 }
 
 void
 CacheStorageParent::OnPrincipalVerified(nsresult aRv, ManagerId* aManagerId)
 {
-  MOZ_ASSERT(mVerifier);
-  MOZ_ASSERT(!mManagerId);
-  MOZ_ASSERT(NS_SUCCEEDED(mVerifiedStatus));
+  MOZ_DIAGNOSTIC_ASSERT(mVerifier);
+  MOZ_DIAGNOSTIC_ASSERT(!mManagerId);
+  MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(mVerifiedStatus));
 
   if (NS_WARN_IF(NS_FAILED(aRv))) {
     mVerifiedStatus = aRv;

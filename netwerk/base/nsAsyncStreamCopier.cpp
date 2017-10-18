@@ -33,10 +33,12 @@ public:
      *        The nsAsyncStreamCopier requesting the information.
      */
     explicit AsyncApplyBufferingPolicyEvent(nsAsyncStreamCopier* aCopier)
-        : mCopier(aCopier)
-      , mTarget(NS_GetCurrentThread())
-      { }
-    NS_METHOD Run()
+      : mozilla::Runnable("AsyncApplyBufferingPolicyEvent")
+      , mCopier(aCopier)
+      , mTarget(GetCurrentThreadEventTarget())
+    {}
+
+    NS_IMETHOD Run() override
     {
       nsresult rv = mCopier->ApplyBufferingPolicy();
       if (NS_FAILED(rv)) {
@@ -44,7 +46,8 @@ public:
           return NS_OK;
       }
 
-      rv = mTarget->Dispatch(NewRunnableMethod(mCopier,
+      rv = mTarget->Dispatch(NewRunnableMethod("nsAsyncStreamCopier::AsyncCopyInternal",
+                                               mCopier,
 					       &nsAsyncStreamCopier::AsyncCopyInternal),
 			     NS_DISPATCH_NORMAL);
       MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -54,6 +57,7 @@ public:
       }
       return NS_OK;
     }
+
 private:
       RefPtr<nsAsyncStreamCopier> mCopier;
       nsCOMPtr<nsIEventTarget> mTarget;
@@ -71,12 +75,12 @@ nsAsyncStreamCopier::nsAsyncStreamCopier()
     , mIsPending(false)
     , mShouldSniffBuffering(false)
 {
-    LOG(("Creating nsAsyncStreamCopier @%x\n", this));
+    LOG(("Creating nsAsyncStreamCopier @%p\n", this));
 }
 
 nsAsyncStreamCopier::~nsAsyncStreamCopier()
 {
-    LOG(("Destroying nsAsyncStreamCopier @%x\n", this));
+    LOG(("Destroying nsAsyncStreamCopier @%p\n", this));
 }
 
 bool
@@ -97,7 +101,8 @@ nsAsyncStreamCopier::AsRequest()
 void
 nsAsyncStreamCopier::Complete(nsresult status)
 {
-    LOG(("nsAsyncStreamCopier::Complete [this=%p status=%x]\n", this, status));
+    LOG(("nsAsyncStreamCopier::Complete [this=%p status=%" PRIx32 "]\n", this,
+         static_cast<uint32_t>(status)));
 
     nsCOMPtr<nsIRequestObserver> observer;
     nsCOMPtr<nsISupports> ctx;
@@ -116,7 +121,8 @@ nsAsyncStreamCopier::Complete(nsresult status)
     }
 
     if (observer) {
-        LOG(("  calling OnStopRequest [status=%x]\n", status));
+        LOG(("  calling OnStopRequest [status=%" PRIx32 "]\n",
+             static_cast<uint32_t>(status)));
         observer->OnStopRequest(AsRequest(), ctx, status);
     }
 }
@@ -346,7 +352,7 @@ nsAsyncStreamCopier::ApplyBufferingPolicy()
 NS_IMETHODIMP
 nsAsyncStreamCopier::AsyncCopy(nsIRequestObserver *observer, nsISupports *ctx)
 {
-    LOG(("nsAsyncStreamCopier::AsyncCopy [this=%p observer=%x]\n", this, observer));
+    LOG(("nsAsyncStreamCopier::AsyncCopy [this=%p observer=%p]\n", this, observer));
 
     NS_ASSERTION(mSource && mSink, "not initialized");
     nsresult rv;

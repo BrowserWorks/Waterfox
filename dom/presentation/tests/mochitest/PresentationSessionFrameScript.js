@@ -134,7 +134,7 @@ function loadPrivilegedScriptTest() {
       this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyTransportReady();
     },
     simulateIncomingMessage: function(message) {
-      this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyData(message);
+      this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyData(message, false);
     },
     onOffer: function(aOffer) {
       this._listener.sendAnswer(mockedChannelDescription);
@@ -157,7 +157,7 @@ function loadPrivilegedScriptTest() {
     mockedSessionTransport.callback = null;
 
     /* Register original factories. */
-    for (var data in originalFactoryData) {
+    for (var data of originalFactoryData) {
       registerOriginalFactory(data.contractId, data.mockedClassId,
                               data.mockedFactory, data.originalClassId,
                               data.originalFactory);

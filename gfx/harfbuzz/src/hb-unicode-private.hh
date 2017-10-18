@@ -115,6 +115,8 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     /* XXX This hack belongs to the Tibetan shaper:
      * Reorder PADMA to ensure it comes after any vowel marks. */
     if (unlikely (unicode == 0x0FC6u)) return 254;
+    /* Reorder TSA -PHRU to reorder before U+0F74 */
+    if (unlikely (unicode == 0x0F39u)) return 127;
 
     return _hb_modified_combining_class[combining_class (unicode)];
   }
@@ -124,7 +126,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
   {
     /* U+180B..180D MONGOLIAN FREE VARIATION SELECTORs are handled in the
      * Arabic shaper.  No need to match them here. */
-    return unlikely (hb_in_ranges (unicode,
+    return unlikely (hb_in_ranges<hb_codepoint_t> (unicode,
 				   0xFE00u, 0xFE0Fu, /* VARIATION SELECTOR-1..16 */
 				   0xE0100u, 0xE01EFu));  /* VARIATION SELECTOR-17..256 */
   }
@@ -177,13 +179,13 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
 	case 0x00: return unlikely (ch == 0x00ADu);
 	case 0x03: return unlikely (ch == 0x034Fu);
 	case 0x06: return unlikely (ch == 0x061Cu);
-	case 0x17: return hb_in_range (ch, 0x17B4u, 0x17B5u);
-	case 0x18: return hb_in_range (ch, 0x180Bu, 0x180Eu);
-	case 0x20: return hb_in_ranges (ch, 0x200Bu, 0x200Fu,
-							    0x202Au, 0x202Eu,
-							    0x2060u, 0x206Fu);
-	case 0xFE: return hb_in_range (ch, 0xFE00u, 0xFE0Fu) || ch == 0xFEFFu;
-	case 0xFF: return hb_in_range (ch, 0xFFF0u, 0xFFF8u);
+	case 0x17: return hb_in_range<hb_codepoint_t> (ch, 0x17B4u, 0x17B5u);
+	case 0x18: return hb_in_range<hb_codepoint_t> (ch, 0x180Bu, 0x180Eu);
+	case 0x20: return hb_in_ranges<hb_codepoint_t> (ch, 0x200Bu, 0x200Fu,
+					    0x202Au, 0x202Eu,
+					    0x2060u, 0x206Fu);
+	case 0xFE: return hb_in_range<hb_codepoint_t> (ch, 0xFE00u, 0xFE0Fu) || ch == 0xFEFFu;
+	case 0xFF: return hb_in_range<hb_codepoint_t> (ch, 0xFFF0u, 0xFFF8u);
 	default: return false;
       }
     }
@@ -191,9 +193,9 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     {
       /* Other planes */
       switch (plane) {
-	case 0x01: return hb_in_ranges (ch, 0x1BCA0u, 0x1BCA3u,
+	case 0x01: return hb_in_ranges<hb_codepoint_t> (ch, 0x1BCA0u, 0x1BCA3u,
 					    0x1D173u, 0x1D17Au);
-	case 0x0E: return hb_in_range (ch, 0xE0000u, 0xE0FFFu);
+	case 0x0E: return hb_in_range<hb_codepoint_t> (ch, 0xE0000u, 0xE0FFFu);
 	default: return false;
       }
     }
@@ -343,11 +345,14 @@ extern HB_INTERNAL const hb_unicode_funcs_t _hb_unicode_funcs_nil;
 #define HB_MODIFIED_COMBINING_CLASS_CCC118 118 /* sign u / sign uu */
 #define HB_MODIFIED_COMBINING_CLASS_CCC122 122 /* mai * */
 
-/* Tibetan */
+/* Tibetan
+ * 
+ * In case of multiple vowel-signs, use u first (but after achung) 
+ * this allows Dzongkha multi-vowel shortcuts to render correctly 
+ */
 #define HB_MODIFIED_COMBINING_CLASS_CCC129 129 /* sign aa */
-#define HB_MODIFIED_COMBINING_CLASS_CCC130 130 /* sign i */
-#define HB_MODIFIED_COMBINING_CLASS_CCC132 132 /* sign u */
-
+#define HB_MODIFIED_COMBINING_CLASS_CCC130 132 /* sign i */
+#define HB_MODIFIED_COMBINING_CLASS_CCC132 131 /* sign u */
 
 /* Misc */
 

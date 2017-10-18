@@ -23,6 +23,7 @@
 #include "nsContentSecurityManager.h"
 #include "LoadInfo.h"
 #include "nsServiceManagerUtils.h"
+#include "nsRedirectHistoryEntry.h"
 
 // This class is used to suspend a request across a function scope.
 class ScopedRequestSuspender {
@@ -42,20 +43,23 @@ private:
   nsIRequest *mRequest;
 };
 
-// Used to suspend data events from mPump within a function scope.  This is
+// Used to suspend data events from mRequest within a function scope.  This is
 // usually needed when a function makes callbacks that could process events.
 #define SUSPEND_PUMP_FOR_SCOPE() \
-  ScopedRequestSuspender pump_suspender__(mPump)
+  ScopedRequestSuspender pump_suspender__(mRequest)
 
 //-----------------------------------------------------------------------------
 // nsBaseChannel
 
 nsBaseChannel::nsBaseChannel()
-  : mLoadFlags(LOAD_NORMAL)
+  : NeckoTargetHolder(nullptr)
+  , mPumpingData(false)
+  , mLoadFlags(LOAD_NORMAL)
   , mQueriedProgressSink(true)
   , mSynthProgressEvents(false)
   , mAllowThreadRetargeting(true)
   , mWaitingOnAsyncRedirect(false)
+  , mOpenRedirectChannel(false)
   , mStatus(NS_OK)
   , mContentDispositionHint(UINT32_MAX)
   , mContentLength(-1)
@@ -66,7 +70,8 @@ nsBaseChannel::nsBaseChannel()
 
 nsBaseChannel::~nsBaseChannel()
 {
-  NS_ReleaseOnMainThread(mLoadInfo.forget());
+  NS_ReleaseOnMainThreadSystemGroup(
+    "nsBaseChannel::mLoadInfo", mLoadInfo.forget());
 }
 
 nsresult
@@ -95,7 +100,13 @@ nsBaseChannel::Redirect(nsIChannel *newChannel, uint32_t redirectFlags,
     bool isInternalRedirect =
       (redirectFlags & (nsIChannelEventSink::REDIRECT_INTERNAL |
                         nsIChannelEventSink::REDIRECT_STS_UPGRADE));
-    newLoadInfo->AppendRedirectedPrincipal(uriPrincipal, isInternalRedirect);
+
+    // nsBaseChannel hst no thing to do with HttpBaseChannel, we would not care
+    // about referrer and remote address in this case
+    nsCOMPtr<nsIRedirectHistoryEntry> entry =
+      new nsRedirectHistoryEntry(uriPrincipal, nullptr, EmptyCString());
+
+    newLoadInfo->AppendRedirectHistoryEntry(entry, isInternalRedirect);
     newChannel->SetLoadInfo(newLoadInfo);
   }
   else {
@@ -128,12 +139,13 @@ nsBaseChannel::Redirect(nsIChannel *newChannel, uint32_t redirectFlags,
       new nsAsyncRedirectVerifyHelper();
 
   bool checkRedirectSynchronously = !openNewChannel;
+  nsCOMPtr<nsIEventTarget> target = GetNeckoTarget();
 
   mRedirectChannel = newChannel;
   mRedirectFlags = redirectFlags;
   mOpenRedirectChannel = openNewChannel;
   nsresult rv = redirectCallbackHelper->Init(this, newChannel, redirectFlags,
-                                             checkRedirectSynchronously);
+                                             target, checkRedirectSynchronously);
   if (NS_FAILED(rv))
     return rv;
 
@@ -230,17 +242,29 @@ nsBaseChannel::PushStreamConverter(const char *fromType,
 nsresult
 nsBaseChannel::BeginPumpingData()
 {
+  nsresult rv;
+
+  rv = BeginAsyncRead(this, getter_AddRefs(mRequest));
+  if (NS_SUCCEEDED(rv)) {
+    mPumpingData = true;
+    return NS_OK;
+  }
+  if (rv != NS_ERROR_NOT_IMPLEMENTED) {
+    return rv;
+  }
+
   nsCOMPtr<nsIInputStream> stream;
   nsCOMPtr<nsIChannel> channel;
-  nsresult rv = OpenContentStream(true, getter_AddRefs(stream),
-                                  getter_AddRefs(channel));
+  rv = OpenContentStream(true, getter_AddRefs(stream),
+                         getter_AddRefs(channel));
   if (NS_FAILED(rv))
     return rv;
 
   NS_ASSERTION(!stream || !channel, "Got both a channel and a stream?");
 
   if (channel) {
-      rv = NS_DispatchToCurrentThread(new RedirectRunnable(this, channel));
+      nsCOMPtr<nsIRunnable> runnable = new RedirectRunnable(this, channel);
+      rv = Dispatch(runnable.forget());
       if (NS_SUCCEEDED(rv))
           mWaitingOnAsyncRedirect = true;
       return rv;
@@ -251,11 +275,15 @@ nsBaseChannel::BeginPumpingData()
   // call to AsyncRead results in the stream's AsyncWait method being called)
   // and especially when we call into the loadgroup.  Our caller takes care to
   // release mPump if we return an error.
- 
+
+  nsCOMPtr<nsIEventTarget> target = GetNeckoTarget();
   rv = nsInputStreamPump::Create(getter_AddRefs(mPump), stream, -1, -1, 0, 0,
-                                 true);
-  if (NS_SUCCEEDED(rv))
+                                 true, target);
+  if (NS_SUCCEEDED(rv)) {
+    mPumpingData = true;
+    mRequest = mPump;
     rv = mPump->AsyncRead(this, nullptr);
+  }
 
   return rv;
 }
@@ -263,7 +291,7 @@ nsBaseChannel::BeginPumpingData()
 void
 nsBaseChannel::HandleAsyncRedirect(nsIChannel* newChannel)
 {
-  NS_ASSERTION(!mPump, "Shouldn't have gotten here");
+  NS_ASSERTION(!mPumpingData, "Shouldn't have gotten here");
 
   nsresult rv = mStatus;
   if (NS_SUCCEEDED(mStatus)) {
@@ -312,9 +340,9 @@ nsBaseChannel::ClassifyURI()
   }
 
   if (mLoadFlags & LOAD_CLASSIFY_URI) {
-    RefPtr<nsChannelClassifier> classifier = new nsChannelClassifier();
+    RefPtr<nsChannelClassifier> classifier = new nsChannelClassifier(this);
     if (classifier) {
-      classifier->Start(this);
+      classifier->Start();
     } else {
       Cancel(NS_ERROR_OUT_OF_MEMORY);
     }
@@ -360,8 +388,8 @@ nsBaseChannel::IsPending(bool *result)
 NS_IMETHODIMP
 nsBaseChannel::GetStatus(nsresult *status)
 {
-  if (mPump && NS_SUCCEEDED(mStatus)) {
-    mPump->GetStatus(status);
+  if (mRequest && NS_SUCCEEDED(mStatus)) {
+    mRequest->GetStatus(status);
   } else {
     *status = mStatus;
   }
@@ -377,8 +405,8 @@ nsBaseChannel::Cancel(nsresult status)
 
   mStatus = status;
 
-  if (mPump)
-    mPump->Cancel(status);
+  if (mRequest)
+    mRequest->Cancel(status);
 
   return NS_OK;
 }
@@ -386,15 +414,17 @@ nsBaseChannel::Cancel(nsresult status)
 NS_IMETHODIMP
 nsBaseChannel::Suspend()
 {
-  NS_ENSURE_TRUE(mPump, NS_ERROR_NOT_INITIALIZED);
-  return mPump->Suspend();
+  NS_ENSURE_TRUE(mPumpingData, NS_ERROR_NOT_INITIALIZED);
+  NS_ENSURE_TRUE(mRequest, NS_ERROR_NOT_IMPLEMENTED);
+  return mRequest->Suspend();
 }
 
 NS_IMETHODIMP
 nsBaseChannel::Resume()
 {
-  NS_ENSURE_TRUE(mPump, NS_ERROR_NOT_INITIALIZED);
-  return mPump->Resume();
+  NS_ENSURE_TRUE(mPumpingData, NS_ERROR_NOT_INITIALIZED);
+  NS_ENSURE_TRUE(mRequest, NS_ERROR_NOT_IMPLEMENTED);
+  return mRequest->Resume();
 }
 
 NS_IMETHODIMP
@@ -475,6 +505,9 @@ NS_IMETHODIMP
 nsBaseChannel::SetLoadInfo(nsILoadInfo* aLoadInfo)
 {
   mLoadInfo = aLoadInfo;
+
+  // Need to update |mNeckoTarget| when load info has changed.
+  SetupNeckoTarget();
   return NS_OK;
 }
 
@@ -483,6 +516,12 @@ nsBaseChannel::GetLoadInfo(nsILoadInfo** aLoadInfo)
 {
   NS_IF_ADDREF(*aLoadInfo = mLoadInfo);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsBaseChannel::GetIsDocument(bool *aIsDocument)
+{
+  return NS_GetIsDocumentChannel(this, aIsDocument);
 }
 
 NS_IMETHODIMP
@@ -505,7 +544,7 @@ nsBaseChannel::SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks)
   return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsBaseChannel::GetSecurityInfo(nsISupports **aSecurityInfo)
 {
   NS_IF_ADDREF(*aSecurityInfo = mSecurityInfo);
@@ -603,7 +642,7 @@ NS_IMETHODIMP
 nsBaseChannel::Open(nsIInputStream **result)
 {
   NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_INITIALIZED);
-  NS_ENSURE_TRUE(!mPump, NS_ERROR_IN_PROGRESS);
+  NS_ENSURE_TRUE(!mPumpingData, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_IN_PROGRESS);
 
   nsCOMPtr<nsIChannel> chan;
@@ -645,9 +684,11 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt)
              "security flags in loadInfo but asyncOpen2() not called");
 
   NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_INITIALIZED);
-  NS_ENSURE_TRUE(!mPump, NS_ERROR_IN_PROGRESS);
+  NS_ENSURE_TRUE(!mPumpingData, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
   NS_ENSURE_ARG(listener);
+
+  SetupNeckoTarget();
 
   // Skip checking for chrome:// sub-resources.
   nsAutoCString scheme;
@@ -676,6 +717,8 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt)
   rv = BeginPumpingData();
   if (NS_FAILED(rv)) {
     mPump = nullptr;
+    mRequest = nullptr;
+    mPumpingData = false;
     ChannelDone();
     mCallbacks = nullptr;
     return rv;
@@ -700,7 +743,10 @@ nsBaseChannel::AsyncOpen2(nsIStreamListener *aListener)
 {
   nsCOMPtr<nsIStreamListener> listener = aListener;
   nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_FAILED(rv)) {
+    mCallbacks = nullptr;
+    return rv;
+  }
   return AsyncOpen(listener, nullptr);
 }
 
@@ -713,7 +759,7 @@ nsBaseChannel::OnTransportStatus(nsITransport *transport, nsresult status,
 {
   // In some cases, we may wish to suppress transport-layer status events.
 
-  if (!mPump || NS_FAILED(mStatus)) {
+  if (!mPumpingData || NS_FAILED(mStatus)) {
     return NS_OK;
   }
 
@@ -752,7 +798,7 @@ NS_IMETHODIMP
 nsBaseChannel::GetInterface(const nsIID &iid, void **result)
 {
   NS_QueryNotificationCallbacks(mCallbacks, mLoadGroup, iid, result);
-  return *result ? NS_OK : NS_ERROR_NO_INTERFACE; 
+  return *result ? NS_OK : NS_ERROR_NO_INTERFACE;
 }
 
 //-----------------------------------------------------------------------------
@@ -789,19 +835,21 @@ CallUnknownTypeSniffer(void *aClosure, const uint8_t *aData, uint32_t aCount)
 NS_IMETHODIMP
 nsBaseChannel::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
 {
-  MOZ_ASSERT(request == mPump);
+  MOZ_ASSERT_IF(mRequest, request == mRequest);
 
-  // If our content type is unknown, use the content type
-  // sniffer. If the sniffer is not available for some reason, then we just keep
-  // going as-is.
-  if (NS_SUCCEEDED(mStatus) &&
-      mContentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE)) {
-    mPump->PeekStream(CallUnknownTypeSniffer, static_cast<nsIChannel*>(this));
+  if (mPump) {
+    // If our content type is unknown, use the content type
+    // sniffer. If the sniffer is not available for some reason, then we just keep
+    // going as-is.
+    if (NS_SUCCEEDED(mStatus) &&
+        mContentType.EqualsLiteral(UNKNOWN_CONTENT_TYPE)) {
+      mPump->PeekStream(CallUnknownTypeSniffer, static_cast<nsIChannel*>(this));
+    }
+
+    // Now, the general type sniffers. Skip this if we have none.
+    if (mLoadFlags & LOAD_CALL_CONTENT_SNIFFERS)
+      mPump->PeekStream(CallTypeSniffers, static_cast<nsIChannel*>(this));
   }
-
-  // Now, the general type sniffers. Skip this if we have none.
-  if (mLoadFlags & LOAD_CALL_CONTENT_SNIFFERS)
-    mPump->PeekStream(CallTypeSniffers, static_cast<nsIChannel*>(this));
 
   SUSPEND_PUMP_FOR_SCOPE();
 
@@ -821,6 +869,8 @@ nsBaseChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt,
 
   // Cause Pending to return false.
   mPump = nullptr;
+  mRequest = nullptr;
+  mPumpingData = false;
 
   if (mListener) // null in case of redirect
       mListener->OnStopRequest(this, mListenerContext, mStatus);
@@ -865,9 +915,10 @@ nsBaseChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctxt,
         OnTransportStatusAsyncEvent(nsBaseChannel* aChannel,
                                     int64_t aProgress,
                                     int64_t aContentLength)
-          : mChannel(aChannel),
-            mProgress(aProgress),
-            mContentLength(aContentLength)
+          : mozilla::Runnable("OnTransportStatusAsyncEvent")
+          , mChannel(aChannel)
+          , mProgress(aProgress)
+          , mContentLength(aContentLength)
         { }
 
         NS_IMETHOD Run() override
@@ -879,7 +930,7 @@ nsBaseChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctxt,
 
       nsCOMPtr<nsIRunnable> runnable =
         new OnTransportStatusAsyncEvent(this, prog, mContentLength);
-      NS_DispatchToMainThread(runnable);
+      Dispatch(runnable.forget());
     }
   }
 
@@ -909,13 +960,16 @@ nsBaseChannel::RetargetDeliveryTo(nsIEventTarget* aEventTarget)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  NS_ENSURE_TRUE(mPump, NS_ERROR_NOT_INITIALIZED);
+  NS_ENSURE_TRUE(mRequest, NS_ERROR_NOT_INITIALIZED);
 
-  if (!mAllowThreadRetargeting) {
-    return NS_ERROR_NOT_IMPLEMENTED;
+  nsCOMPtr<nsIThreadRetargetableRequest> req;
+  if (mAllowThreadRetargeting) {
+    req = do_QueryInterface(mRequest);
   }
 
-  return mPump->RetargetDeliveryTo(aEventTarget);
+  NS_ENSURE_TRUE(req, NS_ERROR_NOT_IMPLEMENTED);
+
+  return req->RetargetDeliveryTo(aEventTarget);
 }
 
 NS_IMETHODIMP
@@ -934,4 +988,11 @@ nsBaseChannel::CheckListenerChain()
   }
 
   return listener->CheckListenerChain();
+}
+
+void
+nsBaseChannel::SetupNeckoTarget()
+{
+  mNeckoTarget =
+    nsContentUtils::GetEventTargetByLoadInfo(mLoadInfo, TaskCategory::Other);
 }

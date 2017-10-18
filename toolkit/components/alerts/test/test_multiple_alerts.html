@@ -2,25 +2,24 @@
 <html>
 <head>
   <title>Test for multiple alerts</title>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script> 
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* eslint-env mozilla/frame-script */
 
 const Cc = SpecialPowers.Cc;
 const Ci = SpecialPowers.Ci;
 
 const chromeScript = SpecialPowers.loadChromeScript(_ => {
-  const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+  Components.utils.import("resource://gre/modules/Services.jsm");
+  Components.utils.import("resource://gre/modules/Timer.jsm");
 
-  Cu.import("resource://gre/modules/Services.jsm");
-  Cu.import("resource://gre/modules/Timer.jsm");
-
-  const alertService = Cc["@mozilla.org/alerts-service;1"]
-                         .getService(Ci.nsIAlertsService);
+  const alertService = Components.classes["@mozilla.org/alerts-service;1"]
+                                 .getService(Components.interfaces.nsIAlertsService);
 
   addMessageListener("waitForPosition", function() {
     var timer = setTimeout(function() {
@@ -38,20 +37,17 @@ const chromeScript = SpecialPowers.loadChromeScript(_ => {
 
       Services.ww.unregisterNotification(windowObserver);
 
-      var win = aSubject.QueryInterface(Ci.nsIDOMWindow);
-      win.addEventListener("pageshow", function onPageShow() {
-        win.removeEventListener("pageshow", onPageShow, false);
-
+      var win = aSubject.QueryInterface(Components.interfaces.nsIDOMWindow);
+      win.addEventListener("pageshow", function() {
         var x = win.screenX;
         var y = win.screenY;
 
-        win.addEventListener("pagehide", function onPageHide() {
-          win.removeEventListener("pagehide", onPageHide, false);
+        win.addEventListener("pagehide", function() {
           sendAsyncMessage("waitedForPosition", { x, y });
-        }, false);
+        }, {once: true});
 
         alertService.closeAlert();
-      }, false);
+      }, {once: true});
     };
 
     Services.ww.registerNotification(windowObserver);
@@ -71,7 +67,7 @@ function promiseAlertPosition(alertService) {
   });
 }
 
-add_task(function* test_multiple_alerts() {
+add_task(async function test_multiple_alerts() {
   if (!("@mozilla.org/alerts-service;1" in Cc)) {
     todo(false, "Alerts service does not exist in this application.");
     return;
@@ -88,13 +84,13 @@ add_task(function* test_multiple_alerts() {
     return;
   }
 
-  var firstAlertPosition = yield promiseAlertPosition(alertService);
+  var firstAlertPosition = await promiseAlertPosition(alertService);
   if (!firstAlertPosition) {
     ok(true, "Platform does not use XUL alerts.");
     return;
   }
 
-  var secondAlertPosition = yield promiseAlertPosition(alertService);
+  var secondAlertPosition = await promiseAlertPosition(alertService);
   is(secondAlertPosition.x, firstAlertPosition.x, "Second alert should be opened in the same position.");
   is(secondAlertPosition.y, firstAlertPosition.y, "Second alert should be opened in the same position.");
 });

@@ -22,8 +22,8 @@ body {
 }
 
 input {
-  font: message-box !important;
-  font-size: 16px !important;
+  font: message-box;
+  font-size: 16px;
 }
 
 input[type=button] {
@@ -122,6 +122,10 @@ input[type=button] {
   pointer-events: none;
 }
 
+body:not(.compact) #topsites-heading {
+  display: none;
+}
+
 /*
  * If you change the sizes here, make sure you
  * change the preferences:
@@ -134,6 +138,12 @@ input[type=button] {
   height: 210px;
   margin: 20px 10px 35px;
   width: 290px;
+}
+
+body.compact .newtab-cell {
+  width: 110px;
+  height: 110px;
+  margin: 12px;
 }
 
 /* SITES */
@@ -165,129 +175,25 @@ input[type=button] {
 }
 
 /* TITLES */
-.newtab-sponsored,
-.newtab-title,
-.newtab-suggested {
+.newtab-title {
   overflow: hidden;
   position: absolute;
   right: 0;
   text-align: center;
-}
-
-.newtab-sponsored,
-.newtab-title {
   bottom: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 13px;
-  line-height: 30px;
   vertical-align: middle;
-  background-color: #F2F2F2;
-}
-
-.newtab-suggested {
-  border: 1px solid transparent;
-  border-radius: 2px;
-  font-size: 12px;
-  height: 17px;
-  line-height: 17px;
-  margin-bottom: -1px;
-  padding: 2px 8px;
-  display: none;
-  margin-left: auto;
-  margin-right: auto;
-  left: 0;
-  top: 215px;
-  -moz-user-select: none;
-}
-
-.newtab-suggested-bounds {
-  max-height: 34px; /* 34 / 17 = 2 lines maximum */
 }
 
 .newtab-title {
   left: 0;
   padding: 0 4px;
-  border: 1px solid #FFFFFF;
-  border-radius: 0px 0px 8px 8px;
-}
-
-.newtab-sponsored {
-  background-color: #FFFFFF;
-  border: 1px solid #E2E2E2;
-  border-radius: 3px;
-  color: #4A4A4A;
-  cursor: pointer;
-  display: none;
-  font-family: Arial;
-  font-size: 9px;
-  height: 17px;
-  left: 0;
-  line-height: 6px;
-  padding: 4px;
-  right: auto;
-  top: -15px;
-}
-
-.newtab-site[suggested=true] > .newtab-sponsored {
-  background-color: #E2E2E2;
-  border: none;
-}
-
-.newtab-site > .newtab-sponsored:-moz-any(:hover, [active]) {
-  background-color: #4A90E2;
-  border: 0;
-  color: white;
-}
-
-.newtab-site > .newtab-sponsored[active] {
-  background-color: #000000;
-}
-
-.newtab-sponsored:dir(rtl) {
-  right: 0;
-  left: auto;
-}
-
-.newtab-site:-moz-any([type=enhanced], [type=sponsored], [suggested]) .newtab-sponsored {
-  display: block;
-}
-
-.newtab-site[suggested] .newtab-suggested {
-  display: table;
-}
-
-.sponsored-explain,
-.sponsored-explain a,
-.suggested-explain,
-.suggested-explain a {
-  color: white;
-}
-
-.sponsored-explain,
-.suggested-explain {
-  background-color: rgba(51, 51, 51, 0.95);
-  bottom: 30px;
-  line-height: 20px;
-  padding: 15px 10px;
-  position: absolute;
-  text-align: start;
-}
-
-.sponsored-explain input,
-.suggested-explain input {
-  background-size: 18px;
-  height: 18px;
-  opacity: 1;
-  pointer-events: none;
-  position: static;
-  width: 18px;
 }
 
 /* CONTROLS */
 .newtab-control {
   position: absolute;
-  top: 4px;
   opacity: 0;
   transition: opacity 100ms ease-out;
 }
@@ -305,16 +211,6 @@ input[type=button] {
   .newtab-control {
     opacity: 1;
   }
-}
-
-.newtab-control-pin:dir(ltr),
-.newtab-control-block:dir(rtl) {
-  left: 4px;
-}
-
-.newtab-control-block:dir(ltr),
-.newtab-control-pin:dir(rtl) {
-  right: 4px;
 }
 
 /* DRAG & DROP */
@@ -336,7 +232,12 @@ input[type=button] {
   display: -moz-box;
   position: relative;
   -moz-box-pack: center;
-  margin: 40px 0 15px;
+  margin: 55px 0 15px;
+}
+
+body.compact #newtab-search-container {
+  margin-top: 0;
+  margin-bottom: 80px;
 }
 
 #newtab-search-container[page-disabled] {
@@ -377,6 +278,7 @@ input[type=button] {
               0 0 2px hsla(210,65%,9%,.1) inset,
               0 1px 0 hsla(0,0%,100%,.2);
   color: inherit;
+  unicode-bidi: plaintext;
 }
 
 #newtab-search-text:dir(rtl) {
@@ -399,15 +301,16 @@ input[type=button] {
 
 #newtab-search-submit {
   margin-inline-start: -1px;
-  background: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go") center center no-repeat, linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1)) padding-box;
+  color: transparent;
+  background: url("chrome://browser/skin/search-arrow-go.svg") center center no-repeat, linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1)) padding-box;
+  -moz-context-properties: fill;
+  fill: #616366;
   padding: 0;
   border: 1px solid;
-  border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2);
+  border-color: hsla(210,54%,20%,.15) hsla(210,54%,20%,.17) hsla(210,54%,20%,.2) transparent;
   border-radius: 0 2px 2px 0;
-  border-inline-start: 1px solid transparent;
   box-shadow: 0 0 2px hsla(0,0%,100%,.5) inset,
               0 1px 0 hsla(0,0%,100%,.2);
-  color: inherit;
   cursor: pointer;
   transition-property: background-color, border-color, box-shadow;
   transition-duration: 150ms;
@@ -415,28 +318,28 @@ input[type=button] {
 }
 
 #newtab-search-submit:dir(rtl) {
-  border-radius: 2px 0 0 2px;
-  background-image: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-rtl"), linear-gradient(hsla(0,0%,100%,.8), hsla(0,0%,100%,.1));
+  transform: scaleX(-1);
 }
 
 #newtab-search-text:focus + #newtab-search-submit,
 #newtab-search-text + #newtab-search-submit:hover,
 #newtab-search-text[autofocus] + #newtab-search-submit {
   border-color: #59b5fc #45a3e7 #3294d5;
-  color: white;
 }
 
 #newtab-search-text:focus + #newtab-search-submit,
 #newtab-search-text[keepfocus] + #newtab-search-submit,
 #newtab-search-text[autofocus] + #newtab-search-submit {
-  background-image: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-inverted"), linear-gradient(#4cb1ff, #1793e5);
+  background-image: url("chrome://browser/skin/search-arrow-go.svg"), linear-gradient(#4cb1ff, #1793e5);
+  fill: white;
   box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
               0 0 0 1px hsla(0,0%,100%,.1) inset,
               0 1px 0 hsla(210,54%,20%,.03);
 }
 
 #newtab-search-text + #newtab-search-submit:hover {
-  background-image: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-inverted"), linear-gradient(#4cb1ff, #1793e5);
+  background-image: url("chrome://browser/skin/search-arrow-go.svg"), linear-gradient(#4cb1ff, #1793e5);
+  fill: white;
   box-shadow: 0 1px 0 hsla(0,0%,100%,.2) inset,
               0 0 0 1px hsla(0,0%,100%,.1) inset,
               0 1px 0 hsla(210,54%,20%,.03),
@@ -447,13 +350,6 @@ input[type=button] {
   box-shadow: 0 1px 1px hsla(211,79%,6%,.1) inset,
               0 0 1px hsla(211,79%,6%,.2) inset;
   transition-duration: 0ms;
-}
-
-#newtab-search-text:focus + #newtab-search-submit:dir(rtl),
-#newtab-search-text[keepfocus] + #newtab-search-submit:dir(rtl),
-#newtab-search-text[autofocus] + #newtab-search-submit:dir(rtl),
-#newtab-search-text + #newtab-search-submit:dir(rtl):hover {
-  background-image: url("chrome://browser/skin/search-arrow-go.svg#search-arrow-go-rtl-inverted"), linear-gradient(#4cb1ff, #1793e5);
 }
 
 /* CUSTOMIZE */
@@ -573,12 +469,12 @@ input[type=button] {
   background-color: #F9F9F9;
 }
 
-.newtab-customize-panel-item[selected]:-moz-locale-dir(rtl) {
+.newtab-customize-panel-item[selected]:dir(rtl){
   background-position: right 15px center;
 }
 
-.newtab-customize-complex-option:hover > .selectable:not([selected]):-moz-locale-dir(rtl),
-.selectable:not([selected]):hover:-moz-locale-dir(rtl) {
+.newtab-customize-complex-option:hover > .selectable:not([selected]):dir(rtl),
+.selectable:not([selected]):hover:dir(rtl) {
   background-position: right 15px center;
 }
 

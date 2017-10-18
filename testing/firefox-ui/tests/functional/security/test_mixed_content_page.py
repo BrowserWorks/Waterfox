@@ -2,14 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette_driver import Wait
+from firefox_puppeteer import PuppeteerMixin
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestMixedContentPage(FirefoxTestCase):
+class TestMixedContentPage(PuppeteerMixin, MarionetteTestCase):
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestMixedContentPage, self).setUp()
 
         self.locationbar = self.browser.navbar.locationbar
         self.identity_popup = self.locationbar.identity_popup
@@ -20,14 +19,14 @@ class TestMixedContentPage(FirefoxTestCase):
         try:
             self.identity_popup.close(force=True)
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestMixedContentPage, self).tearDown()
 
     def test_mixed_content(self):
         with self.marionette.using_context('content'):
             self.marionette.navigate(self.url)
 
-        self.assertIn('identity-mixed-passive-loaded',
-                      self.locationbar.connection_icon.value_of_css_property('list-style-image'))
+        self.assertEqual(self.locationbar.identity_box.get_property('className'),
+                         'unknownIdentity mixedDisplayContent')
 
         # Open the identity popup
         self.locationbar.open_identity_popup()

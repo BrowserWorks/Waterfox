@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE HTML>
 <html>
 <!--
@@ -13,17 +16,25 @@ other inputs.
 </head>
 <body>
 <pre id="test">
-<script src="head.js" type="application/javascript;version=1.8"></script>
-<script type="application/javascript;version=1.8">
+<script src="head.js" type="application/javascript"></script>
+<script type="application/javascript">
 window.onload = Task.async(function* () {
   try {
     const ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
     const React = browserRequire("devtools/client/shared/vendor/react");
     const { Simulate } = React.addons.TestUtils;
     const Tree = React.createFactory(browserRequire("devtools/client/shared/components/tree"));
-    const tree = ReactDOM.render(Tree(Object.assign({}, TEST_TREE_INTERFACE, {
-      onFocus: x => setProps(tree, { focused: x }),
-    })), window.document.body);
+
+    function renderTree(props) {
+      const treeProps = Object.assign({},
+        TEST_TREE_INTERFACE,
+        { onFocus: x => renderTree({ focused: x }) },
+        props
+      );
+      return ReactDOM.render(Tree(treeProps), window.document.body);
+    }
+
+    const tree = renderTree();
 
     const input = document.createElement("input");
     document.body.appendChild(input);

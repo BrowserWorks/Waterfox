@@ -10,13 +10,14 @@
 A script to increase in-tree version number after shipping a release.
 """
 
+from distutils.version import StrictVersion
 import os
 import sys
 
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.buildbot import BuildbotMixin
-from mozharness.mozilla.repo_manupulation import MercurialRepoManipulationMixin
+from mozharness.mozilla.repo_manipulation import MercurialRepoManipulationMixin
 
 
 # PostReleaseVersionBump {{{1
@@ -158,10 +159,15 @@ class PostReleaseVersionBump(MercurialScript, BuildbotMixin,
         """Bump version"""
         dirs = self.query_abs_dirs()
         for f in self.config["version_files"]:
-            curr_version = ".".join(
-                self.get_version(dirs['abs_gecko_dir'], f["file"]))
-            self.replace(os.path.join(dirs['abs_gecko_dir'], f["file"]),
-                         curr_version, self.config["next_version"])
+            curr_version = ".".join(self.get_version(dirs['abs_gecko_dir'], f["file"]))
+            next_version = self.config['next_version']
+
+            if StrictVersion(next_version) <= StrictVersion(curr_version):
+                self.warning("Version bumping skipped due to conflicting values")
+                continue
+            else:
+                self.replace(os.path.join(dirs['abs_gecko_dir'], f["file"]),
+                             curr_version, self.config["next_version"])
 
     def tag(self):
         dirs = self.query_abs_dirs()

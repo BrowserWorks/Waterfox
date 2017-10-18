@@ -6,8 +6,9 @@
   <head>
     <title>Indexed Database Test</title>
 
-    <script type="text/javascript;version=1.7">
-      function testSteps()
+    <script type="text/javascript">
+      /* import-globals-from browserHelpers.js */
+      function* testSteps()
       {
         let request = indexedDB.open("browser_forgetThisSite.js", 11);
         request.onerror = grabEventAndContinueHandler;
@@ -15,7 +16,7 @@
         let event = yield undefined;
 
         if (event.type == "error") {
-          testException = event.target.error.name;
+          testResult = event.target.error.name;
         }
         else {
           let db = event.target.result;
@@ -30,7 +31,7 @@
       }
     </script>
 
-    <script type="text/javascript;version=1.7" src="browserHelpers.js"></script>
+    <script type="text/javascript" src="browserHelpers.js"></script>
 
   </head>
 

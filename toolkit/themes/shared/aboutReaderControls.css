@@ -63,9 +63,14 @@
 .header > .credits {
   font-size: 0.9em;
   line-height: 1.48em;
-  margin: 0 0 30px 0;
+  margin: 0 0 10px 0;
   padding: 0;
   font-style: italic;
+}
+
+.header > .meta-data {
+  font-size: 0.65em;
+  margin: 0 0 15px 0;
 }
 
 /*======= Controls toolbar =======*/
@@ -82,6 +87,7 @@
   background-color: #fbfbfb;
   -moz-user-select: none;
   border-right: 1px solid #b5b5b5;
+  z-index: 1;
 }
 
 .button {
@@ -133,7 +139,7 @@
   border-radius: 4px;
   border: 1px solid #b5b5b5;
   border-bottom-width: 0;
-  box-shadow: 0 1px 12px #666;
+  box-shadow: 0 1px 3px #c1c1c1;
 }
 
 .keep-open .dropdown-popup {
@@ -152,7 +158,7 @@
   position: absolute;
   top: 30px; /* offset arrow from top of popup */
   left: -16px;
-  width: 24px;
+  width: 16px;
   height: 24px;
   background-image: url("chrome://global/skin/reader/RM-Type-Controls-Arrow.svg");
   display: block;
@@ -329,20 +335,21 @@
 /*======= Toolbar icons =======*/
 
 .close-button {
-  background-image: url("chrome://global/skin/reader/RM-Close-24x24.svg#close");
+  background-image: url("chrome://global/skin/reader/RM-Close-24x24.svg");
+  -moz-context-properties: fill;
+  fill: #808080;
   height: 68px;
   background-position: center 8px;
 }
 
 .close-button:hover {
-  background-image: url("chrome://global/skin/reader/RM-Close-24x24.svg#close-hover");
+  fill: #fff;
   background-color: #d94141;
   border-bottom: 1px solid #d94141;
   border-right: 1px solid #d94141;
 }
 
 .close-button:hover:active {
-  background-image: url("chrome://global/skin/reader/RM-Close-24x24.svg#close-hover");
   background-color: #AE2325;
   border-bottom: 1px solid #AE2325;
   border-right: 1px solid #AE2325;

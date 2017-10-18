@@ -10,6 +10,7 @@ var embeddedElements = {
     isMap: "boolean",
     width: {type: "unsigned long", customGetter: true},
     height: {type: "unsigned long", customGetter: true},
+    referrerPolicy: {type: "enum", keywords: ["", "no-referrer", "no-referrer-when-downgrade", "same-origin", "origin", "strict-origin", "origin-when-cross-origin", "strict-origin-when-cross-origin", "unsafe-url"]},
 
     // Obsolete
     name: "string",
@@ -26,10 +27,12 @@ var embeddedElements = {
     srcdoc: "string",
     name: "string",
     sandbox: "settable tokenlist",
-    seamless: "boolean",
     allowFullscreen: "boolean",
+    allowUserMedia: "boolean",
+    allowPaymentRequest: "boolean",
     width: "string",
     height: "string",
+    referrerPolicy: {type: "enum", keywords: ["", "no-referrer", "no-referrer-when-downgrade", "same-origin", "origin", "strict-origin", "origin-when-cross-origin", "strict-origin-when-cross-origin", "unsafe-url"]},
 
     // Obsolete
     align: "string",
@@ -135,11 +138,10 @@ var embeddedElements = {
     shape: "string",
     target: "string",
     download: "string",
-    ping: "urls",
+    ping: "string",
     rel: "string",
     relList: {type: "tokenlist", domAttrName: "rel"},
-    hreflang: "string",
-    type: "string",
+    referrerPolicy: {type: "enum", keywords: ["", "no-referrer", "no-referrer-when-downgrade", "same-origin", "origin", "strict-origin", "origin-when-cross-origin", "strict-origin-when-cross-origin", "unsafe-url"]},
 
     // HTMLHyperlinkElementUtils
     href: "url",

@@ -29,7 +29,6 @@
 #include "nsFilePicker.h"
 #include "nsSound.h"
 #include "nsBidiKeyboard.h"
-#include "nsScreenManagerGtk.h"
 #include "nsGTKToolkit.h"
 #include "WakeLockListener.h"
 
@@ -54,6 +53,7 @@
 #include "nsIComponentRegistrar.h"
 #include "nsComponentManagerUtils.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/widget/ScreenManager.h"
 #include <gtk/gtk.h>
 
 using namespace mozilla;
@@ -66,18 +66,17 @@ using namespace mozilla::widget;
 static NS_DEFINE_CID(kXULFilePickerCID, XULFILEPICKER_CID);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsWindow)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsChildWindow)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsTransferable)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsBidiKeyboard)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLFormatConverter)
 #ifdef MOZ_X11
 NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIdleServiceGTK, nsIdleServiceGTK::GetInstance)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsClipboardHelper)
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsClipboard, Init)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsIClipboard, nsClipboard::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsDragService, nsDragService::GetInstance)
 #endif
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSound)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsScreenManagerGtk)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(nsISound, nsSound::GetInstance)
+NS_GENERIC_FACTORY_SINGLETON_CONSTRUCTOR(ScreenManager, ScreenManager::GetAddRefedSingleton)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsImageToPixbuf)
 
 
@@ -88,6 +87,9 @@ static nsresult
 nsNativeThemeGTKConstructor(nsISupports *aOuter, REFNSIID aIID,
                             void **aResult)
 {
+    if (gfxPlatform::IsHeadless()) {
+        return NS_ERROR_NO_INTERFACE;
+    }
     nsresult rv;
     nsNativeThemeGTK * inst;
 
@@ -227,23 +229,23 @@ NS_DEFINE_NAMED_CID(NS_GFXINFO_CID);
 
 static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
     { &kNS_WINDOW_CID, false, nullptr, nsWindowConstructor },
-    { &kNS_CHILD_CID, false, nullptr, nsChildWindowConstructor },
-    { &kNS_APPSHELL_CID, false, nullptr, nsAppShellConstructor },
+    { &kNS_CHILD_CID, false, nullptr, nsWindowConstructor },
+    { &kNS_APPSHELL_CID, false, nullptr, nsAppShellConstructor, Module::ALLOW_IN_GPU_PROCESS },
     { &kNS_COLORPICKER_CID, false, nullptr, nsColorPickerConstructor, Module::MAIN_PROCESS_ONLY },
     { &kNS_FILEPICKER_CID, false, nullptr, nsFilePickerConstructor, Module::MAIN_PROCESS_ONLY },
 #if (MOZ_WIDGET_GTK == 3)
     { &kNS_APPLICATIONCHOOSER_CID, false, nullptr, nsApplicationChooserConstructor, Module::MAIN_PROCESS_ONLY },
 #endif
-    { &kNS_SOUND_CID, false, nullptr, nsSoundConstructor, Module::MAIN_PROCESS_ONLY },
+    { &kNS_SOUND_CID, false, nullptr, nsISoundConstructor, Module::MAIN_PROCESS_ONLY },
     { &kNS_TRANSFERABLE_CID, false, nullptr, nsTransferableConstructor },
 #ifdef MOZ_X11
-    { &kNS_CLIPBOARD_CID, false, nullptr, nsClipboardConstructor, Module::MAIN_PROCESS_ONLY },
+    { &kNS_CLIPBOARD_CID, false, nullptr, nsIClipboardConstructor, Module::MAIN_PROCESS_ONLY },
     { &kNS_CLIPBOARDHELPER_CID, false, nullptr, nsClipboardHelperConstructor },
     { &kNS_DRAGSERVICE_CID, false, nullptr, nsDragServiceConstructor, Module::MAIN_PROCESS_ONLY },
 #endif
     { &kNS_HTMLFORMATCONVERTER_CID, false, nullptr, nsHTMLFormatConverterConstructor },
     { &kNS_BIDIKEYBOARD_CID, false, nullptr, nsBidiKeyboardConstructor },
-    { &kNS_SCREENMANAGER_CID, false, nullptr, nsScreenManagerGtkConstructor,
+    { &kNS_SCREENMANAGER_CID, false, nullptr, ScreenManagerConstructor,
       Module::MAIN_PROCESS_ONLY },
     { &kNS_THEMERENDERER_CID, false, nullptr, nsNativeThemeGTKConstructor },
 #ifdef NS_PRINTING
@@ -264,7 +266,7 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
 static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
     { "@mozilla.org/widget/window/gtk;1", &kNS_WINDOW_CID },
     { "@mozilla.org/widgets/child_window/gtk;1", &kNS_CHILD_CID },
-    { "@mozilla.org/widget/appshell/gtk;1", &kNS_APPSHELL_CID },
+    { "@mozilla.org/widget/appshell/gtk;1", &kNS_APPSHELL_CID, Module::ALLOW_IN_GPU_PROCESS },
     { "@mozilla.org/colorpicker;1", &kNS_COLORPICKER_CID, Module::MAIN_PROCESS_ONLY },
     { "@mozilla.org/filepicker;1", &kNS_FILEPICKER_CID, Module::MAIN_PROCESS_ONLY },
 #if (MOZ_WIDGET_GTK == 3)
@@ -324,7 +326,8 @@ static const mozilla::Module kWidgetModule = {
     nullptr,
     nullptr,
     nsAppShellInit,
-    nsWidgetGtk2ModuleDtor
+    nsWidgetGtk2ModuleDtor,
+    Module::ALLOW_IN_GPU_PROCESS
 };
 
 NSMODULE_DEFN(nsWidgetGtk2Module) = &kWidgetModule;

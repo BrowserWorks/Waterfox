@@ -20,8 +20,6 @@
 
 using namespace std;
 
-std::string FakeDecryptor::sNodeId;
-
 FakeDecryptor* FakeDecryptor::sInstance = nullptr;
 extern GMPPlatformAPI* g_platform_api; // Defined in gmp-fake.cpp
 
@@ -98,9 +96,8 @@ private:
   set<string> mTestIDs;
 };
 
-FakeDecryptor::FakeDecryptor(GMPDecryptorHost* aHost)
+FakeDecryptor::FakeDecryptor()
   : mCallback(nullptr)
-  , mHost(aHost)
 {
   MOZ_ASSERT(!sInstance);
   sInstance = this;
@@ -277,7 +274,7 @@ public:
     MOZ_ASSERT(aRecord);
   }
 
-  virtual void OpenComplete(GMPErr aStatus, GMPRecord* aRecord) override {
+  void OpenComplete(GMPErr aStatus, GMPRecord* aRecord) override {
     if (GMP_SUCCEEDED(aStatus)) {
       FakeDecryptor::Message("FAIL OpenSecondTimeContinuation should not be able to re-open record.");
     }
@@ -302,7 +299,7 @@ public:
                               const string& aTestID)
     : mID(aID), mTestmanager(aTestManager), mTestID(aTestID) {}
 
-  virtual void OpenComplete(GMPErr aStatus, GMPRecord* aRecord) override {
+  void OpenComplete(GMPErr aStatus, GMPRecord* aRecord) override {
     if (GMP_FAILED(aStatus)) {
       FakeDecryptor::Message("FAIL OpenAgainContinuation to open record initially.");
       mTestmanager->EndTest(mTestID);
@@ -379,8 +376,8 @@ class TestStorageTask : public GMPTask {
 public:
   TestStorageTask(const string& aPrefix, TestManager* aTestManager)
     : mPrefix(aPrefix), mTestManager(aTestManager) {}
-  virtual void Destroy() { delete this; }
-  virtual void Run() {
+  void Destroy() override { delete this; }
+  void Run() override {
     DoTestStorage(mPrefix, mTestManager);
   }
 private:
@@ -391,7 +388,7 @@ private:
 void
 FakeDecryptor::TestStorage()
 {
-  TestManager* testManager = new TestManager();
+  auto* testManager = new TestManager();
   GMPThread* thread1 = nullptr;
   GMPThread* thread2 = nullptr;
 
@@ -477,45 +474,6 @@ public:
   string mRecordId;
 };
 
-static void
-RecvGMPRecordIterator(GMPRecordIterator* aRecordIterator,
-                      void* aUserArg,
-                      GMPErr aStatus)
-{
-  FakeDecryptor* decryptor = reinterpret_cast<FakeDecryptor*>(aUserArg);
-  decryptor->ProcessRecordNames(aRecordIterator, aStatus);
-}
-
-void
-FakeDecryptor::ProcessRecordNames(GMPRecordIterator* aRecordIterator,
-                                  GMPErr aStatus)
-{
-  if (sInstance != this) {
-    FakeDecryptor::Message("Error aUserArg was not passed through GetRecordIterator");
-    return;
-  }
-  if (GMP_FAILED(aStatus)) {
-    FakeDecryptor::Message("Error GetRecordIterator failed");
-    return;
-  }
-  std::string response("record-names ");
-  bool first = true;
-  const char* name = nullptr;
-  uint32_t len = 0;
-  while (GMP_SUCCEEDED(aRecordIterator->GetName(&name, &len))) {
-    std::string s(name, name+len);
-    if (!first) {
-      response += ",";
-    } else {
-      first = false;
-    }
-    response += s;
-    aRecordIterator->NextRecord();
-  }
-  aRecordIterator->Close();
-  FakeDecryptor::Message(response);
-}
-
 enum ShutdownMode {
   ShutdownNormal,
   ShutdownTimeout,
@@ -561,48 +519,5 @@ FakeDecryptor::UpdateSession(uint32_t aPromiseId,
     ReadRecord("shutdown-token", new ReportReadRecordContinuation("shutdown-token"));
   } else if (task == "test-op-apis") {
     mozilla::gmptest::TestOuputProtectionAPIs();
-  } else if (task == "retrieve-plugin-voucher") {
-    const uint8_t* rawVoucher = nullptr;
-    uint32_t length = 0;
-    mHost->GetPluginVoucher(&rawVoucher, &length);
-    std::string voucher((const char*)rawVoucher, (const char*)(rawVoucher + length));
-    Message("retrieved plugin-voucher: " + voucher);
-  } else if (task == "retrieve-record-names") {
-    GMPEnumRecordNames(&RecvGMPRecordIterator, this);
-  } else if (task == "retrieve-node-id") {
-    Message("node-id " + sNodeId);
-  }
-}
-
-class CompleteShutdownTask : public GMPTask {
-public:
-  explicit CompleteShutdownTask(GMPAsyncShutdownHost* aHost)
-    : mHost(aHost)
-  {
-  }
-  virtual void Run() {
-    mHost->ShutdownComplete();
-  }
-  virtual void Destroy() { delete this; }
-  GMPAsyncShutdownHost* mHost;
-};
-
-void
-TestAsyncShutdown::BeginShutdown() {
-  switch (sShutdownMode) {
-    case ShutdownNormal:
-      mHost->ShutdownComplete();
-      break;
-    case ShutdownTimeout:
-      // Don't do anything; wait for timeout, Gecko should kill
-      // the plugin and recover.
-      break;
-    case ShutdownStoreToken:
-      // Store message, then shutdown.
-      WriteRecord("shutdown-token",
-                  sShutdownToken,
-                  new CompleteShutdownTask(mHost),
-                  new SendMessageTask("FAIL writing shutdown-token."));
-      break;
   }
 }

@@ -13,8 +13,6 @@
 
 class nsDocShell;
 class nsIWebNavigationInfo;
-class nsIHttpChannel;
-class nsAString;
 
 class nsDSURIContentListener final
   : public nsIURIContentListener
@@ -38,23 +36,6 @@ protected:
     mExistingJPEGRequest = nullptr;
     mExistingJPEGStreamListener = nullptr;
   }
-
-  // Determine if X-Frame-Options allows content to be framed
-  // as a subdocument
-  bool CheckFrameOptions(nsIRequest* aRequest);
-  bool CheckOneFrameOptionsPolicy(nsIHttpChannel* aHttpChannel,
-                                  const nsAString& aPolicy);
-
-  enum XFOHeader
-  {
-    eDENY,
-    eSAMEORIGIN,
-    eALLOWFROM
-  };
-
-  void ReportXFOViolation(nsIDocShellTreeItem* aTopDocShellItem,
-                          nsIURI* aThisURI,
-                          XFOHeader aHeader);
 
 protected:
   nsDocShell* mDocShell;

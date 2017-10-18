@@ -34,12 +34,7 @@ public:
       mContent(aContent)
     {}
 
-    ContentInfo(nsIContent* aContent, nsStyleContext* aStyleContext) :
-      mContent(aContent), mStyleContext(aStyleContext)
-    {}
-
     nsIContent* mContent;
-    RefPtr<nsStyleContext> mStyleContext;
     nsTArray<ContentInfo> mChildren;
   };
 
@@ -66,18 +61,12 @@ public:
    * Appends "native" anonymous children created by CreateAnonymousContent()
    * to the given content list depending on the filter.
    *
-   * @see nsIContent::GetChildren for set of values used for filter.
+   * @see nsIContent::GetChildren for set of values used for filter.  Currently,
+   *   eSkipPlaceholderContent is the only flag that any implementation of
+   *   this method heeds.
    */
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) = 0;
-
-  /**
-   * Implementations can override this method to create special frames for the
-   * anonymous content returned from CreateAnonymousContent.
-   * By default this method returns nullptr, which means the default frame
-   * is created.
-   */
-  virtual nsIFrame* CreateFrameFor(nsIContent* aContent) { return nullptr; }
 };
 
 #endif

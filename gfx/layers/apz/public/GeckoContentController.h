@@ -8,11 +8,12 @@
 #define mozilla_layers_GeckoContentController_h
 
 #include "FrameMetrics.h"               // for FrameMetrics, etc
+#include "InputData.h"                  // for PinchGestureInput
 #include "Units.h"                      // for CSSPoint, CSSRect, etc
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
+#include "mozilla/DefineEnum.h"         // for MOZ_DEFINE_ENUM
 #include "mozilla/EventForwards.h"      // for Modifiers
 #include "nsISupportsImpl.h"
-#include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
 namespace mozilla {
 
@@ -23,17 +24,16 @@ namespace layers {
 class GeckoContentController
 {
 public:
-  /**
-   * At least one class deriving from GeckoContentController needs to do
-   * synchronous cleanup on the main thread, so we use
-   * NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION.
-   */
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GeckoContentController)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GeckoContentController)
 
   /**
    * Requests a paint of the given FrameMetrics |aFrameMetrics| from Gecko.
    * Implementations per-platform are responsible for actually handling this.
-   * This method will always be called on the Gecko main thread.
+   *
+   * This method must always be called on the repaint thread, which depends
+   * on the GeckoContentController. For ChromeProcessController it is the
+   * Gecko main thread, while for RemoteContentController it is the compositor
+   * thread where it can send IPDL messages.
    */
   virtual void RequestContentRepaint(const FrameMetrics& aFrameMetrics) = 0;
 
@@ -44,15 +44,20 @@ public:
    * all eLongTap notifications will be followed by an eLongTapUp (for instance,
    * if the user moves their finger after triggering the long-tap but before
    * lifting it).
+   * The difference between eDoubleTap and eSecondTap is subtle - the eDoubleTap
+   * is for an actual double-tap "gesture" while eSecondTap is for the same user
+   * input but where a double-tap gesture is not allowed. This is used to fire
+   * a click event with detail=2 to web content (similar to what a mouse double-
+   * click would do).
    */
-  enum class TapType {
-    eSingleTap,
-    eDoubleTap,
-    eLongTap,
-    eLongTapUp,
-
-    eSentinel,
-  };
+  MOZ_DEFINE_ENUM_CLASS_AT_CLASS_SCOPE(
+    TapType, (
+      eSingleTap,
+      eDoubleTap,
+      eSecondTap,
+      eLongTap,
+      eLongTapUp
+  ));
 
   /**
    * Requests handling of a tap event. |aPoint| is in LD pixels, relative to the
@@ -65,6 +70,27 @@ public:
                          uint64_t aInputBlockId) = 0;
 
   /**
+   * When the apz.allow_zooming pref is set to false, the APZ will not
+   * translate pinch gestures to actual zooming. Instead, it will call this
+   * method to notify gecko of the pinch gesture, and allow it to deal with it
+   * however it wishes. Note that this function is not called if the pinch is
+   * prevented by content calling preventDefault() on the touch events, or via
+   * use of the touch-action property.
+   * @param aType One of PINCHGESTURE_START, PINCHGESTURE_SCALE, or
+   *        PINCHGESTURE_END, indicating the phase of the pinch.
+   * @param aGuid The guid of the APZ that is detecting the pinch. This is
+   *        generally the root APZC for the layers id.
+   * @param aSpanChange For the START or END event, this is always 0.
+   *        For a SCALE event, this is the difference in span between the
+   *        previous state and the new state.
+   * @param aModifiers The keyboard modifiers depressed during the pinch.
+   */
+  virtual void NotifyPinchGesture(PinchGestureInput::PinchGestureType aType,
+                                  const ScrollableLayerGuid& aGuid,
+                                  LayoutDeviceCoord aSpanChange,
+                                  Modifiers aModifiers) = 0;
+
+  /**
    * Schedules a runnable to run on the controller/UI thread at some time
    * in the future.
    * This method must always be called on the controller thread.
@@ -72,50 +98,41 @@ public:
   virtual void PostDelayedTask(already_AddRefed<Runnable> aRunnable, int aDelayMs) = 0;
 
   /**
-   * APZ uses |FrameMetrics::mCompositionBounds| for hit testing. Sometimes,
-   * widget code has knowledge of a touch-sensitive region that should
-   * additionally constrain hit testing for all frames associated with the
-   * controller. This method allows APZ to query the controller for such a
-   * region. A return value of true indicates that the controller has such a
-   * region, and it is returned in |aOutRegion|.
-   * This method needs to be called on the main thread.
-   * TODO: once bug 928833 is implemented, this should be removed, as
-   * APZ can then get the correct touch-sensitive region for each frame
-   * directly from the layer.
+   * Returns true if we are currently on the thread that can send repaint requests.
    */
-  virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion)
-  {
-    return false;
-  }
+  virtual bool IsRepaintThread() = 0;
 
-  enum class APZStateChange {
-    /**
-     * APZ started modifying the view (including panning, zooming, and fling).
-     */
-    eTransformBegin,
-    /**
-     * APZ finished modifying the view.
-     */
-    eTransformEnd,
-    /**
-     * APZ started a touch.
-     * |aArg| is 1 if touch can be a pan, 0 otherwise.
-     */
-    eStartTouch,
-    /**
-     * APZ started a pan.
-     */
-    eStartPanning,
-    /**
-     * APZ finished processing a touch.
-     * |aArg| is 1 if touch was a click, 0 otherwise.
-     */
-    eEndTouch,
+  /**
+   * Runs the given task on the "repaint" thread.
+   */
+  virtual void DispatchToRepaintThread(already_AddRefed<Runnable> aTask) = 0;
 
-    // Sentinel value for IPC, this must be the last item in the enum and
-    // should not be used as an actual message value.
-    eSentinel
-  };
+  MOZ_DEFINE_ENUM_CLASS_AT_CLASS_SCOPE(
+    APZStateChange, (
+      /**
+       * APZ started modifying the view (including panning, zooming, and fling).
+       */
+      eTransformBegin,
+      /**
+       * APZ finished modifying the view.
+       */
+      eTransformEnd,
+      /**
+       * APZ started a touch.
+       * |aArg| is 1 if touch can be a pan, 0 otherwise.
+       */
+      eStartTouch,
+      /**
+       * APZ started a pan.
+       */
+      eStartPanning,
+      /**
+       * APZ finished processing a touch.
+       * |aArg| is 1 if touch was a click, 0 otherwise.
+       */
+      eEndTouch
+  ));
+
   /**
    * General notices of APZ state changes for consumers.
    * |aGuid| identifies the APZC originating the state change.
@@ -138,12 +155,15 @@ public:
    */
   virtual void NotifyFlushComplete() = 0;
 
-  virtual void UpdateOverscrollVelocity(const float aX, const float aY) {}
-  virtual void UpdateOverscrollOffset(const float aX, const float aY) {}
-  virtual void SetScrollingRootContent(const bool isRootContent) {}
+  virtual void NotifyAsyncScrollbarDragRejected(const FrameMetrics::ViewID& aScrollId) = 0;
+
+  virtual void NotifyAutoscrollHandledByAPZ(const FrameMetrics::ViewID& aScrollId) = 0;
+
+  virtual void UpdateOverscrollVelocity(float aX, float aY, bool aIsRootContent) {}
+  virtual void UpdateOverscrollOffset(float aX, float aY, bool aIsRootContent) {}
 
   GeckoContentController() {}
-  virtual void ChildAdopted() {}
+
   /**
    * Needs to be called on the main thread.
    */

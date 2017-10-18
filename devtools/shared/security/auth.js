@@ -8,7 +8,6 @@
 
 var { Ci, Cc } = require("chrome");
 var Services = require("Services");
-var promise = require("promise");
 var defer = require("devtools/shared/defer");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var { dumpn, dumpv } = DevToolsUtils;
@@ -96,6 +95,13 @@ Prompt.Client = function () {};
 Prompt.Client.prototype = {
 
   mode: Prompt.mode,
+
+  /**
+   * When client is about to make a new connection, verify that the connection settings
+   * are compatible with this authenticator.
+   * @throws if validation requirements are not met
+   */
+  validateSettings() {},
 
   /**
    * When client has just made a new socket connection, validate the connection
@@ -262,6 +268,17 @@ OOBCert.Client.prototype = {
   mode: OOBCert.mode,
 
   /**
+   * When client is about to make a new connection, verify that the connection settings
+   * are compatible with this authenticator.
+   * @throws if validation requirements are not met
+   */
+  validateSettings({ encryption }) {
+    if (!encryption) {
+      throw new Error(`${OOBCert.mode} authentication requires encryption.`);
+    }
+  },
+
+  /**
    * When client has just made a new socket connection, validate the connection
    * to ensure it meets the authenticator's policies.
    *
@@ -363,7 +380,7 @@ OOBCert.Client.prototype = {
             break;
           default:
             transport.close(new Error("Invalid auth result: " + authResult));
-            return;
+            break;
         }
       }.bind(this)),
       onClosed(reason) {
@@ -390,7 +407,8 @@ OOBCert.Client.prototype = {
   }),
 
   _createRandom() {
-    const length = 16; // 16 bytes / 128 bits
+    // 16 bytes / 128 bits
+    const length = 16;
     let rng = Cc["@mozilla.org/security/random-generator;1"]
               .createInstance(Ci.nsIRandomGenerator);
     let bytes = rng.generateRandomBytes(length);
@@ -527,9 +545,11 @@ OOBCert.Server.prototype = {
     switch (authResult) {
       case AuthenticationResult.ALLOW_PERSIST:
       case AuthenticationResult.ALLOW:
-        break; // Further processing
+        // Further processing
+        break;
       default:
-        return authResult; // Abort for any negative results
+        // Abort for any negative results
+        return authResult;
     }
 
     // Examine additional data for authentication

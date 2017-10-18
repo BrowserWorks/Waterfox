@@ -3,6 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
+/* global XPCNativeWrapper */
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
@@ -14,28 +15,51 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyServiceGetter(
-    this, "cookieManager", "@mozilla.org/cookiemanager;1", "nsICookieManager2");
-
-Cu.import("chrome://marionette/content/action.js");
+Cu.import("chrome://marionette/content/accessibility.js");
+Cu.import("chrome://marionette/content/addon.js");
+Cu.import("chrome://marionette/content/assert.js");
 Cu.import("chrome://marionette/content/atom.js");
 Cu.import("chrome://marionette/content/browser.js");
+Cu.import("chrome://marionette/content/capture.js");
+Cu.import("chrome://marionette/content/cert.js");
+Cu.import("chrome://marionette/content/cookie.js");
 Cu.import("chrome://marionette/content/element.js");
-Cu.import("chrome://marionette/content/error.js");
+const {
+  ElementNotInteractableError,
+  error,
+  InsecureCertificateError,
+  InvalidArgumentError,
+  InvalidCookieDomainError,
+  InvalidSelectorError,
+  NoAlertOpenError,
+  NoSuchFrameError,
+  NoSuchWindowError,
+  SessionNotCreatedError,
+  UnknownError,
+  UnsupportedOperationError,
+  WebDriverError,
+} = Cu.import("chrome://marionette/content/error.js", {});
 Cu.import("chrome://marionette/content/evaluate.js");
 Cu.import("chrome://marionette/content/event.js");
 Cu.import("chrome://marionette/content/interaction.js");
-Cu.import("chrome://marionette/content/logging.js");
+Cu.import("chrome://marionette/content/l10n.js");
+Cu.import("chrome://marionette/content/legacyaction.js");
 Cu.import("chrome://marionette/content/modal.js");
 Cu.import("chrome://marionette/content/proxy.js");
-Cu.import("chrome://marionette/content/simpletest.js");
+Cu.import("chrome://marionette/content/reftest.js");
+Cu.import("chrome://marionette/content/session.js");
+Cu.import("chrome://marionette/content/wait.js");
+
+Cu.importGlobalProperties(["URL"]);
 
 this.EXPORTED_SYMBOLS = ["GeckoDriver", "Context"];
 
 var FRAME_SCRIPT = "chrome://marionette/content/listener.js";
-const BROWSER_STARTUP_FINISHED = "browser-delayed-startup-finished";
+
 const CLICK_TO_START_PREF = "marionette.debugging.clicktostart";
 const CONTENT_LISTENER_PREF = "marionette.contentListener";
+
+const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 const SUPPORTED_STRATEGIES = new Set([
   element.Strategy.ClassName,
@@ -51,6 +75,14 @@ const logger = Log.repository.getLogger("Marionette");
 const globalMessageManager = Cc["@mozilla.org/globalmessagemanager;1"]
     .getService(Ci.nsIMessageBroadcaster);
 
+/**
+ * The Marionette WebDriver services provides a standard conforming
+ * implementation of the W3C WebDriver specification.
+ *
+ * @see {@link https://w3c.github.io/webdriver/webdriver-spec.html}
+ * @namespace driver
+ */
+
 // This is used to prevent newSession from returning before the telephony
 // API's are ready; see bug 792647.  This assumes that marionette-server.js
 // will be loaded before the 'system-message-listener-ready' message
@@ -58,20 +90,18 @@ const globalMessageManager = Cc["@mozilla.org/globalmessagemanager;1"]
 var systemMessageListenerReady = false;
 Services.obs.addObserver(function() {
   systemMessageListenerReady = true;
-}, "system-message-listener-ready", false);
+}, "system-message-listener-ready");
 
-// This is used on desktop to prevent newSession from returning before a page
-// load initiated by the Firefox command line has completed.
-var delayedBrowserStarted = false;
-Services.obs.addObserver(function () {
-  delayedBrowserStarted = true;
-}, BROWSER_STARTUP_FINISHED, false);
-
+/**
+ * @enum
+ * @memberof driver
+ */
 this.Context = {
   CHROME: "chrome",
   CONTENT: "content",
 };
 
+/** @memberof driver */
 this.Context.fromString = function(s) {
   s = s.toUpperCase();
   if (s in this) {
@@ -81,97 +111,207 @@ this.Context.fromString = function(s) {
 };
 
 /**
+ * Helper function for converting a {@link nsISimpleEnumerator} to a
+ * JavaScript iterator.
+ *
+ * @memberof driver
+ *
+ * @param {nsISimpleEnumerator} enumerator
+ *     Enumerator to turn into  iterator.
+ *
+ * @return {Iterable}
+ *     Iterator.
+ */
+function* enumeratorIterator(enumerator) {
+  while (enumerator.hasMoreElements()) {
+    yield enumerator.getNext();
+  }
+}
+
+/**
  * Implements (parts of) the W3C WebDriver protocol.  GeckoDriver lives
  * in chrome space and mediates calls to the message listener of the current
  * browsing context's content frame message listener via ListenerProxy.
  *
- * Throughout this prototype, functions with the argument {@code cmd}'s
- * documentation refers to the contents of the {@code cmd.parameters}
+ * Throughout this prototype, functions with the argument <var>cmd</var>'s
+ * documentation refers to the contents of the <code>cmd.parameter</code>}
  * object.
  *
+ * @class GeckoDriver
+ *
  * @param {string} appName
- *     Description of the product, for example "B2G" or "Firefox".
- * @param {function()} stopSignal
- *     Signal to stop the Marionette server.
+ *     Description of the product, for example "Firefox".
+ * @param {MarionetteServer} server
+ *     The instance of Marionette server.
  */
-this.GeckoDriver = function(appName, stopSignal) {
+this.GeckoDriver = function(appName, server) {
   this.appName = appName;
-  this.stopSignal_ = stopSignal;
+  this._server = server;
 
   this.sessionId = null;
   this.wins = new browser.Windows();
   this.browsers = {};
   // points to current browser
   this.curBrowser = null;
-  this.context = Context.CONTENT;
-  this.scriptTimeout = null;
-  this.searchTimeout = null;
-  this.pageTimeout = null;
-  this.timer = null;
-  this.inactivityTimer = null;
-  this.marionetteLog = new logging.ContentLogger();
   // topmost chrome frame
   this.mainFrame = null;
   // chrome iframe that currently has focus
   this.curFrame = null;
-  this.mainContentFrameId = null;
-  this.importedScripts = new evaluate.ScriptStorageService([Context.CHROME, Context.CONTENT]);
-  this.currentFrameElement = null;
-  this.testName = null;
   this.mozBrowserClose = null;
-  this.sandboxes = new Sandboxes(() => this.getCurrentWindow());
+  this.currentFrameElement = null;
   // frame ID of the current remote frame, used for mozbrowserclose events
   this.oopFrameId = null;
   this.observing = null;
   this._browserIds = new WeakMap();
-  this.actions = new action.Chain();
 
-  this.sessionCapabilities = {
-    // mandated capabilities
-    "browserName": Services.appinfo.name.toLowerCase(),
-    "browserVersion": Services.appinfo.version,
-    "platformName": Services.sysinfo.getProperty("name").toLowerCase(),
-    "platformVersion": Services.sysinfo.getProperty("version"),
-    "specificationLevel": 0,
+  // The curent context decides if commands should affect chrome- or
+  // content space.
+  this.context = Context.CONTENT;
 
-    // supported features
-    "raisesAccessibilityExceptions": false,
-    "rotatable": this.appName == "B2G",
-    "acceptSslCerts": false,
-    "takesElementScreenshot": true,
-    "takesScreenshot": true,
-    "proxy": {},
+  this.sandboxes = new Sandboxes(() => this.getCurrentWindow());
+  this.legacyactions = new legacyaction.Chain();
 
-    // Selenium 2 compat
-    "platform": Services.sysinfo.getProperty("name").toUpperCase(),
+  this.timer = null;
+  this.inactivityTimer = null;
 
-    // proprietary extensions
-    "XULappId" : Services.appinfo.ID,
-    "appBuildId" : Services.appinfo.appBuildID,
-    "processId" : Services.appinfo.processID,
-    "version": Services.appinfo.version,
-  };
+  this.testName = null;
+
+  this.capabilities = new session.Capabilities();
 
   this.mm = globalMessageManager;
-  this.listener = proxy.toListener(() => this.mm, this.sendAsync.bind(this));
+  this.listener = proxy.toListener(() => this.mm, this.sendAsync.bind(this),
+      () => this.curBrowser);
 
-  // always keep weak reference to current dialogue
+  // points to an alert instance if a modal dialog is present
   this.dialog = null;
-  let handleDialog = (subject, topic) => {
-    let winr;
-    if (topic == modal.COMMON_DIALOG_LOADED) {
-      winr = Cu.getWeakReference(subject);
-    }
-    this.dialog = new modal.Dialog(() => this.curBrowser, winr);
-  };
-  modal.addHandler(handleDialog);
+  this.dialogHandler = this.globalModalDialogHandler.bind(this);
 };
+
+Object.defineProperty(GeckoDriver.prototype, "a11yChecks", {
+  get() {
+    return this.capabilities.get("moz:accessibilityChecks");
+  },
+});
+
+/**
+ * Returns the current URL of the ChromeWindow or content browser,
+ * depending on context.
+ *
+ * @return {URL}
+ *     Read-only property containing the currently loaded URL.
+ */
+Object.defineProperty(GeckoDriver.prototype, "currentURL", {
+  get() {
+    switch (this.context) {
+      case Context.CHROME:
+        let chromeWin = this.getCurrentWindow();
+        return new URL(chromeWin.location.href);
+
+      case Context.CONTENT:
+        return new URL(this.curBrowser.currentURI.spec);
+
+      default:
+        throw TypeError(`Unknown context: ${this.context}`);
+    }
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "title", {
+  get() {
+    switch (this.context) {
+      case Context.CHROME:
+        let chromeWin = this.getCurrentWindow();
+        return chromeWin.document.documentElement.getAttribute("title");
+
+      case Context.CONTENT:
+        return this.curBrowser.currentTitle;
+
+      default:
+        throw TypeError(`Unknown context: ${this.context}`);
+    }
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "proxy", {
+  get() {
+    return this.capabilities.get("proxy");
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "secureTLS", {
+  get() {
+    return !this.capabilities.get("acceptInsecureCerts");
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "timeouts", {
+  get() {
+    return this.capabilities.get("timeouts");
+  },
+
+  set(newTimeouts) {
+    this.capabilities.set("timeouts", newTimeouts);
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "windows", {
+  get() {
+    return enumeratorIterator(Services.wm.getEnumerator(null));
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "windowHandles", {
+  get() {
+    let hs = [];
+
+    for (let win of this.windows) {
+      let tabBrowser = browser.getTabBrowser(win);
+
+      // Only return handles for browser windows
+      if (tabBrowser && tabBrowser.tabs) {
+        tabBrowser.tabs.forEach(tab => {
+          let winId = this.getIdForBrowser(browser.getBrowserForTab(tab));
+          if (winId !== null) {
+            hs.push(winId);
+          }
+        });
+      }
+    }
+
+    return hs;
+  },
+});
+
+Object.defineProperty(GeckoDriver.prototype, "chromeWindowHandles", {
+  get() {
+    let hs = [];
+
+    for (let win of this.windows) {
+      hs.push(getOuterWindowId(win));
+    }
+
+    return hs;
+  },
+});
 
 GeckoDriver.prototype.QueryInterface = XPCOMUtils.generateQI([
   Ci.nsIMessageListener,
   Ci.nsIObserver,
-  Ci.nsISupportsWeakReference
+  Ci.nsISupportsWeakReference,
 ]);
+
+/**
+ * Callback used to observe the creation of new modal or tab modal dialogs
+ * during the session's lifetime.
+ */
+GeckoDriver.prototype.globalModalDialogHandler = function(subject, topic) {
+  let winr;
+  if (topic === modal.COMMON_DIALOG_LOADED) {
+    // Always keep a weak reference to the current dialog
+    winr = Cu.getWeakReference(subject);
+  }
+  this.dialog = new modal.Dialog(() => this.curBrowser, winr);
+};
 
 /**
  * Switches to the global ChromeMessageBroadcaster, potentially replacing
@@ -182,7 +322,8 @@ GeckoDriver.prototype.QueryInterface = XPCOMUtils.generateQI([
  * sleep", which removes most of the message listeners from it as well.
  */
 GeckoDriver.prototype.switchToGlobalMessageManager = function() {
-  if (this.curBrowser && this.curBrowser.frameManager.currentRemoteFrame !== null) {
+  if (this.curBrowser &&
+      this.curBrowser.frameManager.currentRemoteFrame !== null) {
     this.curBrowser.frameManager.removeMessageManagerListeners(this.mm);
     this.sendAsync("sleepSession");
     this.curBrowser.frameManager.currentRemoteFrame = null;
@@ -193,71 +334,113 @@ GeckoDriver.prototype.switchToGlobalMessageManager = function() {
 /**
  * Helper method to send async messages to the content listener.
  * Correct usage is to pass in the name of a function in listener.js,
- * a message object consisting of JSON serialisable primitives,
- * and the current command's ID.
+ * a serialisable object, and optionally the current command's ID
+ * when not using the modern dispatching technique.
  *
  * @param {string} name
- *     Suffix of the targetted message listener ({@code Marionette:<suffix>}).
+ *     Suffix of the targetted message listener
+ *     <tt>Marionette:SUFFIX</tt>.
  * @param {Object=} msg
- *     JSON serialisable object to send to the listener.
- * @param {number=} cmdId
- *     Command ID to ensure synchronisity.
+ *     Optional JSON serialisable object to send to the listener.
+ * @param {number=} commandID
+ *     Optional command ID to ensure synchronisity.
  */
-GeckoDriver.prototype.sendAsync = function(name, msg, cmdId) {
-  let curRemoteFrame = this.curBrowser.frameManager.currentRemoteFrame;
+GeckoDriver.prototype.sendAsync = function(name, data, commandID) {
   name = "Marionette:" + name;
+  let payload = copy(data);
 
   // TODO(ato): When proxy.AsyncMessageChannel
   // is used for all chrome <-> content communication
   // this can be removed.
-  if (cmdId) {
-    msg.command_id = cmdId;
+  if (commandID) {
+    payload.command_id = commandID;
   }
 
-  if (curRemoteFrame === null) {
-    this.curBrowser.executeWhenReady(() => {
-      if (this.curBrowser.curFrameId) {
-        this.mm.broadcastAsyncMessage(name + this.curBrowser.curFrameId, msg);
-      } else {
-        throw new NoSuchWindowError(
-            "No such content frame; perhaps the listener was not registered?");
-      }
-    });
+  if (!this.curBrowser.frameManager.currentRemoteFrame) {
+    this.broadcastDelayedAsyncMessage_(name, payload);
   } else {
-    let remoteFrameId = curRemoteFrame.targetFrameId;
-    try {
-      this.mm.sendAsyncMessage(name + remoteFrameId, msg);
-    } catch (e) {
-      switch(e.result) {
-        case Cr.NS_ERROR_FAILURE:
-        case Cr.NS_ERROR_NOT_INITIALIZED:
-          throw new NoSuchWindowError();
-        default:
-          throw new WebDriverError(e.toString());
-      }
+    this.sendTargettedAsyncMessage_(name, payload);
+  }
+};
+
+// eslint-disable-next-line
+GeckoDriver.prototype.broadcastDelayedAsyncMessage_ = function(name, payload) {
+  this.curBrowser.executeWhenReady(() => {
+    if (this.curBrowser.curFrameId) {
+      const target = name + this.curBrowser.curFrameId;
+      this.mm.broadcastAsyncMessage(target, payload);
+    } else {
+      throw new NoSuchWindowError(
+          "No such content frame; perhaps the listener was not registered?");
+    }
+  });
+};
+
+GeckoDriver.prototype.sendTargettedAsyncMessage_ = function(name, payload) {
+  const curRemoteFrame = this.curBrowser.frameManager.currentRemoteFrame;
+  const target = name + curRemoteFrame.targetFrameId;
+
+  try {
+    this.mm.sendAsyncMessage(target, payload);
+  } catch (e) {
+    switch (e.result) {
+      case Cr.NS_ERROR_FAILURE:
+      case Cr.NS_ERROR_NOT_INITIALIZED:
+        throw new NoSuchWindowError();
+
+      default:
+        throw new WebDriverError(e);
     }
   }
 };
 
 /**
- * Gets the current active window.
+ * Get the session's current top-level browsing context.
  *
- * @return {nsIDOMWindow}
+ * It will return the outer {@link ChromeWindow} previously selected by
+ * window handle through {@link #switchToWindow}, or the first window that
+ * was registered.
+ *
+ * @param {Context=} forcedContext
+ *     Optional name of the context to use for finding the window.
+ *     It will be required if a command always needs a specific context,
+ *     whether which context is currently set. Defaults to the current
+ *     context.
+ *
+ * @return {ChromeWindow}
+ *     The current top-level browsing context.
  */
-GeckoDriver.prototype.getCurrentWindow = function() {
-  let typ = null;
-  if (this.curFrame === null) {
-    if (this.curBrowser === null) {
-      if (this.context == Context.CONTENT) {
-        typ = "navigator:browser";
+GeckoDriver.prototype.getCurrentWindow = function(forcedContext = undefined) {
+  let context = typeof forcedContext == "undefined" ? this.context : forcedContext;
+  let win = null;
+
+  switch (context) {
+    case Context.CHROME:
+      if (this.curFrame !== null) {
+        win = this.curFrame;
+      } else if (this.curBrowser !== null) {
+        win = this.curBrowser.window;
       }
-      return Services.wm.getMostRecentWindow(typ);
-    } else {
-      return this.curBrowser.window;
-    }
-  } else {
-    return this.curFrame;
+      break;
+
+    case Context.CONTENT:
+      if (this.curFrame !== null) {
+        win = this.curFrame;
+      } else if (this.curBrowser !== null && this.curBrowser.contentBrowser) {
+        win = this.curBrowser.window;
+      }
+      break;
   }
+
+  return win;
+};
+
+GeckoDriver.prototype.isReftestBrowser = function(element) {
+  return this._reftest &&
+    element &&
+    element.tagName === "xul:browser" &&
+    element.parentElement &&
+    element.parentElement.id === "reftest";
 };
 
 GeckoDriver.prototype.addFrameCloseListener = function(action) {
@@ -283,9 +466,8 @@ GeckoDriver.prototype.addFrameCloseListener = function(action) {
  */
 GeckoDriver.prototype.addBrowser = function(win) {
   let bc = new browser.Context(win, this);
-  let winId = win.QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
-  winId = winId + ((this.appName == "B2G") ? "-b2g" : "");
+  let winId = getOuterWindowId(win);
+
   this.browsers[winId] = bc;
   this.curBrowser = this.browsers[winId];
   if (!this.wins.has(winId)) {
@@ -304,7 +486,7 @@ GeckoDriver.prototype.addBrowser = function(win) {
  *
  * @param {nsIDOMWindow} win
  *     Window whose browser we need to access.
- * @param {boolean=false} isNewSession
+ * @param {boolean=} [false] isNewSession
  *     True if this is the first time we're talking to this browser.
  */
 GeckoDriver.prototype.startBrowser = function(win, isNewSession = false) {
@@ -312,7 +494,7 @@ GeckoDriver.prototype.startBrowser = function(win, isNewSession = false) {
   this.curFrame = null;
   this.addBrowser(win);
   this.curBrowser.isNewSession = isNewSession;
-  this.curBrowser.startSession(isNewSession, win, this.whenBrowserStarted.bind(this));
+  this.whenBrowserStarted(win, isNewSession);
 };
 
 /**
@@ -330,11 +512,19 @@ GeckoDriver.prototype.whenBrowserStarted = function(win, isNewSession) {
     if (!isNewSession) {
       // Loading the frame script corresponds to a situation we need to
       // return to the server. If the messageManager is a message broadcaster
-      // with no children, we don't have a hope of coming back from this call,
-      // so send the ack here. Otherwise, make a note of how many child scripts
-      // will be loaded so we known when it's safe to return.
+      // with no children, we don't have a hope of coming back from this
+      // call, so send the ack here. Otherwise, make a note of how many
+      // child scripts will be loaded so we known when it's safe to return.
+      // Child managers may not have child scripts yet (e.g. socialapi),
+      // only count child managers that have children, but only count the top
+      // level children as they are the ones that we expect a response from.
       if (mm.childCount !== 0) {
-        this.curBrowser.frameRegsPending = mm.childCount;
+        this.curBrowser.frameRegsPending = 0;
+        for (let i = 0; i < mm.childCount; i++) {
+          if (mm.getChildAt(i).childCount !== 0) {
+            this.curBrowser.frameRegsPending += 1;
+          }
+        }
       }
     }
 
@@ -399,42 +589,39 @@ GeckoDriver.prototype.registerBrowser = function(id, be) {
     //
     // TODO: Should have a better way of determining that this message
     // is from a remote frame.
-    this.curBrowser.frameManager.currentRemoteFrame.targetFrameId =
-        this.generateFrameId(id);
+    this.curBrowser.frameManager.currentRemoteFrame.targetFrameId = id;
   }
 
-  let reg = {};
-  // this will be sent to tell the content process if it is the main content
-  let mainContent = this.curBrowser.mainContentId === null;
-  if (be.getAttribute("type") != "content") {
+  // We want to ignore frames that are XUL browsers that aren't in the "main"
+  // tabbrowser, but accept things on Fennec (which doesn't have a
+  // xul:tabbrowser), and accept HTML iframes (because tests depend on it),
+  // as well as XUL frames. Ideally this should be cleaned up and we should
+  // keep track of browsers a different way.
+  if (this.appName != "Firefox" || be.namespaceURI != XUL_NS ||
+      be.nodeName != "browser" || be.getTabBrowser()) {
     // curBrowser holds all the registered frames in knownFrames
-    let uid = this.generateFrameId(id);
-    reg.id = uid;
-    reg.remotenessChange = this.curBrowser.register(uid, be);
+    this.curBrowser.register(id, be);
   }
 
-  // set to true if we updated mainContentId
-  mainContent = mainContent && this.curBrowser.mainContentId !== null;
-  if (mainContent) {
-    this.mainContentFrameId = this.curBrowser.curFrameId;
-  }
-
-  this.wins.set(reg.id, listenerWindow);
+  this.wins.set(id, listenerWindow);
   if (nullPrevious && (this.curBrowser.curFrameId !== null)) {
-    this.sendAsync("newSession", this.sessionCapabilities, this.newSessionCommandId);
+    this.sendAsync(
+        "newSession",
+        this.capabilities.toJSON(),
+        this.newSessionCommandId);
     if (this.curBrowser.isNewSession) {
       this.newSessionCommandId = null;
     }
   }
 
-  return [reg, mainContent, this.sessionCapabilities];
+  return [id, this.capabilities.toJSON()];
 };
 
 GeckoDriver.prototype.registerPromise = function() {
   const li = "Marionette:register";
 
-  return new Promise((resolve) => {
-    let cb = (msg) => {
+  return new Promise(resolve => {
+    let cb = msg => {
       let wid = msg.json.value;
       let be = msg.target;
       let rv = this.registerBrowser(wid, be);
@@ -457,33 +644,60 @@ GeckoDriver.prototype.registerPromise = function() {
 
 GeckoDriver.prototype.listeningPromise = function() {
   const li = "Marionette:listenersAttached";
-  return new Promise((resolve) => {
-    let cb = () => {
-      this.mm.removeMessageListener(li, cb);
-      resolve();
+
+  return new Promise(resolve => {
+    let cb = msg => {
+      if (msg.json.listenerId === this.curBrowser.curFrameId) {
+        this.mm.removeMessageListener(li, cb);
+        resolve();
+      }
     };
     this.mm.addMessageListener(li, cb);
   });
 };
 
 /** Create a new session. */
-GeckoDriver.prototype.newSession = function*(cmd, resp) {
+GeckoDriver.prototype.newSession = function* (cmd, resp) {
   if (this.sessionId) {
-    throw new SessionNotCreatedError("Maximum number of active sessions.")
+    throw new SessionNotCreatedError("Maximum number of active sessions");
   }
+
   this.sessionId = cmd.parameters.sessionId ||
       cmd.parameters.session_id ||
       element.generateUUID();
-
   this.newSessionCommandId = cmd.id;
-  this.setSessionCapabilities(cmd.parameters.capabilities);
-  this.scriptTimeout = 10000;
+
+  try {
+    this.capabilities = session.Capabilities.fromJSON(
+        cmd.parameters.capabilities, {merge: true});
+    logger.config("Matched capabilities: " +
+        JSON.stringify(this.capabilities));
+  } catch (e) {
+    throw new SessionNotCreatedError(e);
+  }
+
+  if (!this.secureTLS) {
+    logger.warn("TLS certificate errors will be ignored for this session");
+    let acceptAllCerts = new cert.InsecureSweepingOverride();
+    cert.installOverride(acceptAllCerts);
+  }
+
+  if (this.proxy.init()) {
+    logger.info("Proxy settings initialised: " + JSON.stringify(this.proxy));
+  }
+
+  // If we are testing accessibility with marionette, start a11y service in
+  // chrome first. This will ensure that we do not have any content-only
+  // services hanging around.
+  if (this.a11yChecks && accessibility.service) {
+    logger.info("Preemptively starting accessibility service in Chrome");
+  }
 
   let registerBrowsers = this.registerPromise();
   let browserListening = this.listeningPromise();
 
   let waitForWindow = function() {
-    let win = this.getCurrentWindow();
+    let win = Services.wm.getMostRecentWindow("navigator:browser");
     if (!win) {
       // if the window isn't even created, just poll wait for it
       let checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -503,44 +717,42 @@ GeckoDriver.prototype.newSession = function*(cmd, resp) {
       win.addEventListener("load", listener, true);
     } else {
       let clickToStart = Preferences.get(CLICK_TO_START_PREF);
-      if (clickToStart && (this.appName != "B2G")) {
-        let pService = Cc["@mozilla.org/embedcomp/prompt-service;1"]
-            .getService(Ci.nsIPromptService);
-        pService.alert(win, "", "Click to start execution of marionette tests");
+      if (clickToStart) {
+        Services.prompt.alert(win, "", "Click to start execution of marionette tests");
       }
       this.startBrowser(win, true);
     }
   };
 
-  let runSessionStart = function() {
-    if (!Preferences.get(CONTENT_LISTENER_PREF)) {
-      waitForWindow.call(this);
-    } else if (this.appName != "Firefox" && this.curBrowser === null) {
-      // if there is a content listener, then we just wake it up
-      this.addBrowser(this.getCurrentWindow());
-      this.curBrowser.startSession(this.whenBrowserStarted.bind(this));
-      this.mm.broadcastAsyncMessage("Marionette:restart", {});
-    } else {
-      throw new WebDriverError("Session already running");
-    }
-    this.switchToGlobalMessageManager();
-  };
-
-  if (!delayedBrowserStarted && this.appName != "B2G") {
-    let self = this;
-    Services.obs.addObserver(function onStart() {
-      Services.obs.removeObserver(onStart, BROWSER_STARTUP_FINISHED);
-      runSessionStart.call(self);
-    }, BROWSER_STARTUP_FINISHED, false);
+  if (!Preferences.get(CONTENT_LISTENER_PREF)) {
+    waitForWindow.call(this);
+  } else if (this.appName != "Firefox" && this.curBrowser === null) {
+    // if there is a content listener, then we just wake it up
+    let win = this.getCurrentWindow();
+    this.addBrowser(win);
+    this.whenBrowserStarted(win, false);
+    this.mm.broadcastAsyncMessage("Marionette:restart", {});
   } else {
-    runSessionStart.call(this);
+    throw new WebDriverError("Session already running");
   }
+  this.switchToGlobalMessageManager();
 
   yield registerBrowsers;
   yield browserListening;
 
-  resp.body.sessionId = this.sessionId;
-  resp.body.capabilities = this.sessionCapabilities;
+  if (this.curBrowser.tab) {
+    this.curBrowser.contentBrowser.focus();
+  }
+
+  // Setup global listener for modal dialogs, and check if there is already
+  // one open for the currently selected browser window.
+  modal.addHandler(this.dialogHandler);
+  this.dialog = modal.findModalDialogs(this.curBrowser);
+
+  return {
+    sessionId: this.sessionId,
+    capabilities: this.capabilities,
+  };
 };
 
 /**
@@ -555,149 +767,7 @@ GeckoDriver.prototype.newSession = function*(cmd, resp) {
  * numerical or string.
  */
 GeckoDriver.prototype.getSessionCapabilities = function(cmd, resp) {
-  resp.body.capabilities = this.sessionCapabilities;
-};
-
-/**
- * Update the sessionCapabilities object with the keys that have been
- * passed in when a new session is created.
- *
- * This is not a public API, only available when a new session is
- * created.
- *
- * @param {Object} newCaps
- *     Key/value dictionary to overwrite session's current capabilities.
- */
-GeckoDriver.prototype.setSessionCapabilities = function(newCaps) {
-  const copy = (from, to={}) => {
-    let errors = [];
-
-    // Remove any duplicates between required and desired in favour of the
-    // required capabilities
-    if (from !== null && from.desiredCapabilities) {
-      for (let cap in from.requiredCapabilities) {
-        if (from.desiredCapabilities[cap]) {
-          delete from.desiredCapabilities[cap];
-        }
-      }
-
-      // Let's remove the sessionCapabilities from desired capabilities
-      for (let cap in this.sessionCapabilities) {
-        if (from.desiredCapabilities && from.desiredCapabilities[cap]) {
-          delete from.desiredCapabilities[cap];
-        }
-      }
-    }
-
-    for (let key in from) {
-      switch (key) {
-        case "desiredCapabilities":
-          to = copy(from[key], to);
-          break;
-
-        case "requiredCapabilities":
-          if (from[key].proxy) {
-              this.setUpProxy(from[key].proxy);
-              to.proxy = from[key].proxy;
-              delete from[key].proxy;
-          }
-          for (let caps in from[key]) {
-            if (from[key][caps] !== this.sessionCapabilities[caps]) {
-              errors.push(from[key][caps] + " does not equal " +
-                  this.sessionCapabilities[caps]);
-            }
-          }
-          break;
-
-        default:
-          to[key] = from[key];
-      }
-    }
-
-    if (Object.keys(errors).length == 0) {
-      return to;
-    }
-
-    throw new SessionNotCreatedError(
-        `Not all requiredCapabilities could be met: ${JSON.stringify(errors)}`);
-  };
-
-  // clone, overwrite, and set
-  let caps = copy(this.sessionCapabilities);
-  caps = copy(newCaps, caps);
-  logger.config("Changing capabilities: " + JSON.stringify(caps));
-  this.sessionCapabilities = caps;
-};
-
-GeckoDriver.prototype.setUpProxy = function(proxy) {
-  logger.config("User-provided proxy settings: " + JSON.stringify(proxy));
-
-  if (typeof proxy == "object" && proxy.hasOwnProperty("proxyType")) {
-    switch (proxy.proxyType.toUpperCase()) {
-      case "MANUAL":
-        Preferences.set("network.proxy.type", 1);
-        if (proxy.httpProxy && proxy.httpProxyPort){
-          Preferences.set("network.proxy.http", proxy.httpProxy);
-          Preferences.set("network.proxy.http_port", proxy.httpProxyPort);
-        }
-        if (proxy.sslProxy && proxy.sslProxyPort){
-          Preferences.set("network.proxy.ssl", proxy.sslProxy);
-          Preferences.set("network.proxy.ssl_port", proxy.sslProxyPort);
-        }
-        if (proxy.ftpProxy && proxy.ftpProxyPort) {
-          Preferences.set("network.proxy.ftp", proxy.ftpProxy);
-          Preferences.set("network.proxy.ftp_port", proxy.ftpProxyPort);
-        }
-        if (proxy.socksProxy) {
-          Preferences.set("network.proxy.socks", proxy.socksProxy);
-          Preferences.set("network.proxy.socks_port", proxy.socksProxyPort);
-          if (proxy.socksVersion) {
-            Preferences.set("network.proxy.socks_version", proxy.socksVersion);
-          }
-        }
-        break;
-
-      case "PAC":
-        Preferences.set("network.proxy.type", 2);
-        Preferences.set("network.proxy.autoconfig_url", proxy.proxyAutoconfigUrl);
-        break;
-
-      case "AUTODETECT":
-        Preferences.set("network.proxy.type", 4);
-        break;
-
-      case "SYSTEM":
-        Preferences.set("network.proxy.type", 5);
-        break;
-
-      case "NOPROXY":
-      default:
-        Preferences.set("network.proxy.type", 0);
-        break;
-    }
-  } else {
-    throw new InvalidArgumentError("Value of 'proxy' should be an object");
-  }
-};
-
-/**
- * Log message.  Accepts user defined log-level.
- *
- * @param {string} value
- *     Log message.
- * @param {string} level
- *     Arbitrary log level.
- */
-GeckoDriver.prototype.log = function(cmd, resp) {
-  // if level is null, we want to use ContentLogger#send's default
-  this.marionetteLog.log(
-      cmd.parameters.value,
-      cmd.parameters.level || undefined);
-};
-
-/** Return all logged messages. */
-GeckoDriver.prototype.getLogs = function(cmd, resp) {
-  resp.body = this.marionetteLog.get();
+  resp.body.capabilities = this.capabilities;
 };
 
 /**
@@ -727,7 +797,7 @@ GeckoDriver.prototype.getContext = function(cmd, resp) {
  * context, if in content space, or in chrome space otherwise, and returns
  * the return value of the function.
  *
- * It is important to note that if the {@code sandboxName} parameter
+ * It is important to note that if the <var>sandboxName</var> parameter
  * is left undefined, the script will be evaluated in a mutable sandbox,
  * causing any change it makes on the global state of the document to have
  * lasting side-effects.
@@ -735,15 +805,15 @@ GeckoDriver.prototype.getContext = function(cmd, resp) {
  * @param {string} script
  *     Script to evaluate as a function body.
  * @param {Array.<(string|boolean|number|object|WebElement)>} args
- *     Arguments exposed to the script in {@code arguments}.  The array
- *     items must be serialisable to the WebDriver protocol.
+ *     Arguments exposed to the script in <code>arguments</code>.
+ *     The array items must be serialisable to the WebDriver protocol.
  * @param {number} scriptTimeout
  *     Duration in milliseconds of when to interrupt and abort the
  *     script evaluation.
  * @param {string=} sandbox
  *     Name of the sandbox to evaluate the script in.  The sandbox is
  *     cached for later re-use on the same Window object if
- *     {@code newSandbox} is false.  If he parameter is undefined,
+ *     <var>newSandbox</var> is false.  If he parameter is undefined,
  *     the script is evaluated in a mutable sandbox.  If the parameter
  *     is "system", it will be evaluted in a sandbox with elevated system
  *     privileges, equivalent to chrome space.
@@ -756,8 +826,8 @@ GeckoDriver.prototype.getContext = function(cmd, resp) {
  * @param {number=} line
  *     Line in the client's program where this script is evaluated.
  * @param {boolean=} debug_script
- *     Attach an {@code onerror} event handler on the Window object.
- *     It does not differentiate content errors from chrome errors.
+ *     Attach an <code>onerror</code> event handler on the {@link Window}
+ *     object.  It does not differentiate content errors from chrome errors.
  * @param {boolean=} directInject
  *     Evaluate the script without wrapping it in a function.
  *
@@ -765,21 +835,23 @@ GeckoDriver.prototype.getContext = function(cmd, resp) {
  *     Return value from the script, or null which signifies either the
  *     JavaScript notion of null or undefined.
  *
- * @throws ScriptTimeoutError
- *     If the script was interrupted due to reaching the {@code
- *     scriptTimeout} or default timeout.
- * @throws JavaScriptError
- *     If an Error was thrown whilst evaluating the script.
+ * @throws {ScriptTimeoutError}
+ *     If the script was interrupted due to reaching the
+ *     <var>scriptTimeout</var> or default timeout.
+ * @throws {JavaScriptError}
+ *     If an {@link Error} was thrown whilst evaluating the script.
  */
 GeckoDriver.prototype.executeScript = function*(cmd, resp) {
+  assert.window(this.getCurrentWindow());
+
   let {script, args, scriptTimeout} = cmd.parameters;
-  scriptTimeout = scriptTimeout || this.scriptTimeout;
+  scriptTimeout = scriptTimeout || this.timeouts.script;
 
   let opts = {
     sandboxName: cmd.parameters.sandbox,
     newSandbox: !!(typeof cmd.parameters.newSandbox == "undefined") ||
         cmd.parameters.newSandbox,
-    filename: cmd.parameters.filename,
+    file: cmd.parameters.filename,
     line: cmd.parameters.line,
     debug: cmd.parameters.debug_script,
   };
@@ -792,15 +864,17 @@ GeckoDriver.prototype.executeScript = function*(cmd, resp) {
  * context, if in content space, or in chrome space otherwise, and returns
  * the object passed to the callback.
  *
- * The callback is always the last argument to the {@code arguments}
+ * The callback is always the last argument to the <var>arguments</var>
  * list passed to the function scope of the script.  It can be retrieved
  * as such:
  *
+ * <pre><code>
  *     let callback = arguments[arguments.length - 1];
  *     callback("foo");
  *     // "foo" is returned
+ * </code></pre>
  *
- * It is important to note that if the {@code sandboxName} parameter
+ * It is important to note that if the <var>sandboxName</var> parameter
  * is left undefined, the script will be evaluated in a mutable sandbox,
  * causing any change it makes on the global state of the document to have
  * lasting side-effects.
@@ -808,15 +882,15 @@ GeckoDriver.prototype.executeScript = function*(cmd, resp) {
  * @param {string} script
  *     Script to evaluate as a function body.
  * @param {Array.<(string|boolean|number|object|WebElement)>} args
- *     Arguments exposed to the script in {@code arguments}.  The array
- *     items must be serialisable to the WebDriver protocol.
+ *     Arguments exposed to the script in <code>arguments</code>.
+ *     The array items must be serialisable to the WebDriver protocol.
  * @param {number} scriptTimeout
  *     Duration in milliseconds of when to interrupt and abort the
  *     script evaluation.
  * @param {string=} sandbox
  *     Name of the sandbox to evaluate the script in.  The sandbox is
  *     cached for later re-use on the same Window object if
- *     {@code newSandbox} is false.  If he parameter is undefined,
+ *     <var>newSandbox</var> is false.  If the parameter is undefined,
  *     the script is evaluated in a mutable sandbox.  If the parameter
  *     is "system", it will be evaluted in a sandbox with elevated system
  *     privileges, equivalent to chrome space.
@@ -829,8 +903,8 @@ GeckoDriver.prototype.executeScript = function*(cmd, resp) {
  * @param {number=} line
  *     Line in the client's program where this script is evaluated.
  * @param {boolean=} debug_script
- *     Attach an {@code onerror} event handler on the Window object.
- *     It does not differentiate content errors from chrome errors.
+ *     Attach an <code>onerror</code> event handler on the {@link Window}
+ *     object.  It does not differentiate content errors from chrome errors.
  * @param {boolean=} directInject
  *     Evaluate the script without wrapping it in a function.
  *
@@ -838,21 +912,23 @@ GeckoDriver.prototype.executeScript = function*(cmd, resp) {
  *     Return value from the script, or null which signifies either the
  *     JavaScript notion of null or undefined.
  *
- * @throws ScriptTimeoutError
- *     If the script was interrupted due to reaching the {@code
- *     scriptTimeout} or default timeout.
- * @throws JavaScriptError
+ * @throws {ScriptTimeoutError}
+ *     If the script was interrupted due to reaching the
+ *     <var>scriptTimeout</var> or default timeout.
+ * @throws {JavaScriptError}
  *     If an Error was thrown whilst evaluating the script.
  */
-GeckoDriver.prototype.executeAsyncScript = function(cmd, resp) {
+GeckoDriver.prototype.executeAsyncScript = function* (cmd, resp) {
+  assert.window(this.getCurrentWindow());
+
   let {script, args, scriptTimeout} = cmd.parameters;
-  scriptTimeout = scriptTimeout || this.scriptTimeout;
+  scriptTimeout = scriptTimeout || this.timeouts.script;
 
   let opts = {
     sandboxName: cmd.parameters.sandbox,
     newSandbox: !!(typeof cmd.parameters.newSandbox == "undefined") ||
         cmd.parameters.newSandbox,
-    filename: cmd.parameters.filename,
+    file: cmd.parameters.filename,
     line: cmd.parameters.line,
     debug: cmd.parameters.debug_script,
     async: true,
@@ -866,82 +942,24 @@ GeckoDriver.prototype.execute_ = function(script, args, timeout, opts = {}) {
     case Context.CONTENT:
       // evaluate in content with lasting side-effects
       if (!opts.sandboxName) {
-        return this.listener.execute(script, args, timeout, opts);
+        return this.listener.execute(script, args, timeout, opts)
+            .then(evaluate.toJSON);
+      }
 
       // evaluate in content with sandbox
-      } else {
-        return this.listener.executeInSandbox(script, args, timeout, opts);
-      }
+      return this.listener.executeInSandbox(script, args, timeout, opts)
+          .then(evaluate.toJSON);
 
     case Context.CHROME:
       let sb = this.sandboxes.get(opts.sandboxName, opts.newSandbox);
-      if (opts.sandboxName) {
-        sb = sandbox.augment(sb, new logging.Adapter(this.marionetteLog));
-        sb = sandbox.augment(sb, {global: sb});
-      }
-
       opts.timeout = timeout;
-      script = this.importedScripts.for(Context.CHROME).concat(script);
-      let wargs = element.fromJson(args, this.curBrowser.seenEls, sb.window);
-      let evaluatePromise = evaluate.sandbox(sb, script, wargs, opts);
-      return evaluatePromise.then(res => element.toJson(res, this.curBrowser.seenEls));
+      let wargs = evaluate.fromJSON(args, this.curBrowser.seenEls, sb.window);
+      return evaluate.sandbox(sb, script, wargs, opts)
+          .then(res => evaluate.toJSON(res, this.curBrowser.seenEls));
+
+    default:
+      throw new TypeError(`Unknown context: ${this.context}`);
   }
-};
-
-/**
- * Execute pure JavaScript.  Used to execute simpletest harness tests,
- * which are like mochitests only injected using Marionette.
- *
- * Scripts are expected to call the {@code finish} global when done.
- */
-GeckoDriver.prototype.executeJSScript = function(cmd, resp) {
-  let {script, args, scriptTimeout} = cmd.parameters;
-  scriptTimeout = scriptTimeout || this.scriptTimeout;
-
-  let opts = {
-    filename: cmd.parameters.filename,
-    line: cmd.parameters.line,
-    async: cmd.parameters.async,
-  };
-
-  switch (this.context) {
-    case Context.CHROME:
-      let win = this.getCurrentWindow();
-      let wargs = element.fromJson(args, this.curBrowser.seenEls, win);
-      let harness = new simpletest.Harness(
-          win,
-          Context.CHROME,
-          this.marionetteLog,
-          scriptTimeout,
-          function() {},
-          this.testName);
-
-      let sb = sandbox.createSimpleTest(win, harness);
-      // TODO(ato): Not sure this is needed:
-      sb = sandbox.augment(sb, new logging.Adapter(this.marionetteLog));
-
-      let res = yield evaluate.sandbox(sb, script, wargs, opts);
-      resp.body.value = element.toJson(res, this.curBrowser.seenEls);
-      break;
-
-    case Context.CONTENT:
-      resp.body.value = yield this.listener.executeSimpleTest(script, args, scriptTimeout, opts);
-      break;
-  }
-};
-
-/**
- * Set the timeout for asynchronous script execution.
- *
- * @param {number} ms
- *     Time in milliseconds.
- */
-GeckoDriver.prototype.setScriptTimeout = function(cmd, resp) {
-  let ms = parseInt(cmd.parameters.ms);
-  if (isNaN(ms)) {
-    throw new WebDriverError("Not a Number");
-  }
-  this.scriptTimeout = ms;
 };
 
 /**
@@ -966,69 +984,41 @@ GeckoDriver.prototype.setScriptTimeout = function(cmd, resp) {
  *
  * @param {string} url
  *     URL to navigate to.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.get = function*(cmd, resp) {
+GeckoDriver.prototype.get = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let url = cmd.parameters.url;
 
-  switch (this.context) {
-    case Context.CONTENT:
-      let get = this.listener.get({url: url, pageTimeout: this.pageTimeout});
+  let get = this.listener.get({url, pageTimeout: this.timeouts.pageLoad});
+
+  // If a reload of the frame script interrupts our page load, this will
+  // never return. We need to re-issue this request to correctly poll for
+  // readyState and send errors.
+  this.curBrowser.pendingCommands.push(() => {
+    let parameters = {
       // TODO(ato): Bug 1242595
-      let id = this.listener.activeMessageId;
-
-      // If a remoteness update interrupts our page load, this will never return
-      // We need to re-issue this request to correctly poll for readyState and
-      // send errors.
-      this.curBrowser.pendingCommands.push(() => {
-        cmd.parameters.command_id = id;
-        cmd.parameters.pageTimeout = this.pageTimeout;
-        this.mm.broadcastAsyncMessage(
-            "Marionette:pollForReadyState" + this.curBrowser.curFrameId,
-            cmd.parameters);
-      });
-
-      yield get;
-      break;
-
-    case Context.CHROME:
-      // At least on desktop, navigating in chrome scope does not
-      // correspond to something a user can do, and leaves marionette
-      // and the browser in an unusable state. Return a generic error insted.
-      // TODO: Error codes need to be refined as a part of bug 1100545 and
-      // bug 945729.
-      if (this.appName == "Firefox") {
-        throw new UnknownError("Cannot navigate in chrome context");
-      }
-
-      this.getCurrentWindow().location.href = url;
-      yield this.pageLoadPromise();
-      break;
-  }
-};
-
-GeckoDriver.prototype.pageLoadPromise = function() {
-  let win = this.getCurrentWindow();
-  let timeout = this.pageTimeout;
-  let checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-  let start = new Date().getTime();
-  let end = null;
-
-  return new Promise((resolve) => {
-    let checkLoad = function() {
-      end = new Date().getTime();
-      let elapse = end - start;
-      if (timeout === null || elapse <= timeout) {
-        if (win.document.readyState == "complete") {
-          resolve();
-        } else {
-          checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
-        }
-      } else {
-        throw new UnknownError("Error loading page");
-      }
+      command_id: this.listener.activeMessageId,
+      pageTimeout: this.timeouts.pageLoad,
+      startTime: new Date().getTime(),
     };
-    checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
+    this.mm.broadcastAsyncMessage(
+        "Marionette:waitForPageLoaded" + this.curBrowser.curFrameId,
+        parameters);
   });
+
+  yield get;
+
+  this.curBrowser.contentBrowser.focus();
 };
 
 /**
@@ -1040,43 +1030,62 @@ GeckoDriver.prototype.pageLoadPromise = function() {
  *
  * When in the context of the chrome, this returns the canonical URL
  * of the current resource.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getCurrentUrl = function(cmd) {
-  switch (this.context) {
-    case Context.CHROME:
-      return this.getCurrentWindow().location.href;
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-    case Context.CONTENT:
-      let isB2G = this.appName == "B2G";
-      return this.listener.getCurrentUrl(isB2G);
-  }
+  return this.currentURL.toString();
 };
 
-/** Gets the current title of the window. */
-GeckoDriver.prototype.getTitle = function*(cmd, resp) {
-  switch (this.context) {
-    case Context.CHROME:
-      let win = this.getCurrentWindow();
-      resp.body.value = win.document.documentElement.getAttribute("title");
-      break;
+/**
+ * Gets the current title of the window.
+ *
+ * @return {string}
+ *     Document title of the top-level browsing context.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.getTitle = function* (cmd, resp) {
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-    case Context.CONTENT:
-      resp.body.value = yield this.listener.getTitle();
-      break;
-  }
+  return this.title;
 };
 
 /** Gets the current type of the window. */
 GeckoDriver.prototype.getWindowType = function(cmd, resp) {
-  let win = this.getCurrentWindow();
+  let win = assert.window(this.getCurrentWindow());
+
   resp.body.value = win.document.documentElement.getAttribute("windowtype");
 };
 
-/** Gets the page source of the content document. */
-GeckoDriver.prototype.getPageSource = function*(cmd, resp) {
+/**
+ * Gets the page source of the content document.
+ *
+ * @return {string}
+ *     String serialisation of the DOM of the current browsing context's
+ *     active document.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.getPageSource = function* (cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let s = new win.XMLSerializer();
       resp.body.value = s.serializeToString(win.document);
       break;
@@ -1087,20 +1096,158 @@ GeckoDriver.prototype.getPageSource = function*(cmd, resp) {
   }
 };
 
-/** Go back in history. */
-GeckoDriver.prototype.goBack = function*(cmd, resp) {
-  yield this.listener.goBack();
+/**
+ * Cause the browser to traverse one step backward in the joint history
+ * of the current browsing context.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.goBack = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.contentBrowser(this.curBrowser);
+  assert.noUserPrompt(this.dialog);
+
+  // If there is no history, just return
+  if (!this.curBrowser.contentBrowser.webNavigation.canGoBack) {
+    return;
+  }
+
+  let lastURL = this.currentURL;
+  let goBack = this.listener.goBack({pageTimeout: this.timeouts.pageLoad});
+
+  // If a reload of the frame script interrupts our page load, this will
+  // never return. We need to re-issue this request to correctly poll for
+  // readyState and send errors.
+  this.curBrowser.pendingCommands.push(() => {
+    let parameters = {
+      // TODO(ato): Bug 1242595
+      command_id: this.listener.activeMessageId,
+      lastSeenURL: lastURL.toString(),
+      pageTimeout: this.timeouts.pageLoad,
+      startTime: new Date().getTime(),
+    };
+    this.mm.broadcastAsyncMessage(
+        "Marionette:waitForPageLoaded" + this.curBrowser.curFrameId,
+        parameters);
+  });
+
+  yield goBack;
 };
 
-/** Go forward in history. */
-GeckoDriver.prototype.goForward = function*(cmd, resp) {
-  yield this.listener.goForward();
+/**
+ * Cause the browser to traverse one step forward in the joint history
+ * of the current browsing context.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.goForward = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.contentBrowser(this.curBrowser);
+  assert.noUserPrompt(this.dialog);
+
+  // If there is no history, just return
+  if (!this.curBrowser.contentBrowser.webNavigation.canGoForward) {
+    return;
+  }
+
+  let lastURL = this.currentURL;
+  let goForward = this.listener.goForward(
+      {pageTimeout: this.timeouts.pageLoad});
+
+  // If a reload of the frame script interrupts our page load, this will
+  // never return. We need to re-issue this request to correctly poll for
+  // readyState and send errors.
+  this.curBrowser.pendingCommands.push(() => {
+    let parameters = {
+      // TODO(ato): Bug 1242595
+      command_id: this.listener.activeMessageId,
+      lastSeenURL: lastURL.toString(),
+      pageTimeout: this.timeouts.pageLoad,
+      startTime: new Date().getTime(),
+    };
+    this.mm.broadcastAsyncMessage(
+        "Marionette:waitForPageLoaded" + this.curBrowser.curFrameId,
+        parameters);
+  });
+
+  yield goForward;
 };
 
-/** Refresh the page. */
-GeckoDriver.prototype.refresh = function*(cmd, resp) {
-  yield this.listener.refresh();
+/**
+ * Causes the browser to reload the page in current top-level browsing
+ * context.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.refresh = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let refresh = this.listener.refresh(
+      {pageTimeout: this.timeouts.pageLoad});
+
+  // If a reload of the frame script interrupts our page load, this will
+  // never return. We need to re-issue this request to correctly poll for
+  // readyState and send errors.
+  this.curBrowser.pendingCommands.push(() => {
+    let parameters = {
+      // TODO(ato): Bug 1242595
+      command_id: this.listener.activeMessageId,
+      pageTimeout: this.timeouts.pageLoad,
+      startTime: new Date().getTime(),
+    };
+    this.mm.broadcastAsyncMessage(
+        "Marionette:waitForPageLoaded" + this.curBrowser.curFrameId,
+        parameters);
+  });
+
+  yield refresh;
 };
+
+/**
+ * Forces an update for the given browser's id.
+ */
+GeckoDriver.prototype.updateIdForBrowser = function(browser, newId) {
+  this._browserIds.set(browser.permanentKey, newId);
+};
+
+/**
+ * Retrieves a listener id for the given xul browser element. In case
+ * the browser is not known, an attempt is made to retrieve the id from
+ * a CPOW, and null is returned if this fails.
+ */
+GeckoDriver.prototype.getIdForBrowser = function(browser) {
+  if (browser === null) {
+    return null;
+  }
+  let permKey = browser.permanentKey;
+  if (this._browserIds.has(permKey)) {
+    return this._browserIds.get(permKey);
+  }
+
+  let winId = browser.outerWindowID;
+  if (winId) {
+    this._browserIds.set(permKey, winId);
+    return winId;
+  }
+  return null;
+},
 
 /**
  * Get the current window's handle. On desktop this typically corresponds
@@ -1112,55 +1259,20 @@ GeckoDriver.prototype.refresh = function*(cmd, resp) {
  *
  * @return {string}
  *     Unique window handle.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
  */
 GeckoDriver.prototype.getWindowHandle = function(cmd, resp) {
-  // curFrameId always holds the current tab.
-  if (this.curBrowser.curFrameId && this.appName != "B2G") {
-    resp.body.value = this.curBrowser.curFrameId;
-    return;
-  }
+  assert.contentBrowser(this.curBrowser);
 
-  for (let i in this.browsers) {
-    if (this.curBrowser == this.browsers[i]) {
-      resp.body.value = i;
-      return;
-    }
-  }
+  return this.curBrowser.curFrameId.toString();
 };
 
 /**
- * Forces an update for the given browser's id.
- */
-GeckoDriver.prototype.updateIdForBrowser = function (browser, newId) {
-  this._browserIds.set(browser.permanentKey, newId);
-};
-
-/**
- * Retrieves a listener id for the given xul browser element. In case
- * the browser is not known, an attempt is made to retrieve the id from
- * a CPOW, and null is returned if this fails.
- */
-GeckoDriver.prototype.getIdForBrowser = function getIdForBrowser(browser) {
-  if (browser === null) {
-    return null;
-  }
-  let permKey = browser.permanentKey;
-  if (this._browserIds.has(permKey)) {
-    return this._browserIds.get(permKey);
-  }
-
-  let winId = browser.outerWindowID;
-  if (winId) {
-    winId += "";
-    this._browserIds.set(permKey, winId);
-    return winId;
-  }
-  return null;
-},
-
-/**
- * Get a list of top-level browsing contexts.  On desktop this typically
- * corresponds to the set of open tabs.
+ * Get a list of top-level browsing contexts. On desktop this typically
+ * corresponds to the set of open tabs for browser windows, or the window
+ * itself for non-browser chrome windows.
  *
  * Each window handle is assigned by the server and is guaranteed unique,
  * however the return array does not have a specified ordering.
@@ -1169,28 +1281,7 @@ GeckoDriver.prototype.getIdForBrowser = function getIdForBrowser(browser) {
  *     Unique window handles.
  */
 GeckoDriver.prototype.getWindowHandles = function(cmd, resp) {
-  let hs = [];
-  let winEn = Services.wm.getEnumerator(null);
-  while (winEn.hasMoreElements()) {
-    let win = winEn.getNext();
-    if (win.gBrowser && this.appName != "B2G") {
-      let tabbrowser = win.gBrowser;
-      for (let i = 0; i < tabbrowser.browsers.length; ++i) {
-        let winId = this.getIdForBrowser(tabbrowser.getBrowserAtIndex(i));
-        if (winId !== null) {
-          hs.push(winId);
-        }
-      }
-    } else {
-      // XUL Windows, at least, do not have gBrowser
-      let winId = win.QueryInterface(Ci.nsIInterfaceRequestor)
-          .getInterface(Ci.nsIDOMWindowUtils)
-          .outerWindowID;
-      winId += (this.appName == "B2G") ? "-b2g" : "";
-      hs.push(winId);
-    }
-  }
-  resp.body = hs;
+  return this.windowHandles.map(String);
 };
 
 /**
@@ -1203,8 +1294,13 @@ GeckoDriver.prototype.getWindowHandles = function(cmd, resp) {
  *
  * @return {string}
  *     Unique window handle.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
  */
 GeckoDriver.prototype.getChromeWindowHandle = function(cmd, resp) {
+  assert.window(this.getCurrentWindow(Context.CHROME));
+
   for (let i in this.browsers) {
     if (this.curBrowser == this.browsers[i]) {
       resp.body.value = i;
@@ -1221,33 +1317,38 @@ GeckoDriver.prototype.getChromeWindowHandle = function(cmd, resp) {
  *     Unique window handles.
  */
 GeckoDriver.prototype.getChromeWindowHandles = function(cmd, resp) {
-  let hs = [];
-  let winEn = Services.wm.getEnumerator(null);
-  while (winEn.hasMoreElements()) {
-    let foundWin = winEn.getNext();
-    let winId = foundWin.QueryInterface(Ci.nsIInterfaceRequestor)
-        .getInterface(Ci.nsIDOMWindowUtils)
-        .outerWindowID;
-    winId = winId + ((this.appName == "B2G") ? "-b2g" : "");
-    hs.push(winId);
-  }
-  resp.body = hs;
+  return this.chromeWindowHandles.map(String);
 };
 
 /**
- * Get the current window position.
+ * Get the current position and size of the browser window currently in focus.
+ *
+ * Will return the current browser window size in pixels. Refers to
+ * window outerWidth and outerHeight values, which include scroll bars,
+ * title bars, etc.
  *
  * @return {Object.<string, number>}
- *     Object with x and y coordinates.
+ *     Object with |x| and |y| coordinates, and |width| and |height|
+ *     of browser window.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.getWindowPosition = function(cmd, resp) {
-  let win = this.getCurrentWindow();
-  resp.body.x = win.screenX;
-  resp.body.y = win.screenY;
+GeckoDriver.prototype.getWindowRect = function(cmd, resp) {
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+  return this.curBrowser.rect;
 };
 
 /**
- * Set the window position of the browser on the OS Window Manager
+ * Set the window position and size of the browser on the operating
+ * system window manager.
+ *
+ * The supplied |width| and |height| values refer to the window outerWidth
+ * and outerHeight values, which include browser chrome and OS-level
+ * window borders.
  *
  * @param {number} x
  *     X coordinate of the top/left of the window that it will be
@@ -1255,104 +1356,235 @@ GeckoDriver.prototype.getWindowPosition = function(cmd, resp) {
  * @param {number} y
  *     Y coordinate of the top/left of the window that it will be
  *     moved to.
+ * @param {number} width
+ *     Width to resize the window to.
+ * @param {number} height
+ *     Height to resize the window to.
+ *
+ * @return {Object.<string, number>}
+ *     Object with |x| and |y| coordinates and |width| and |height|
+ *     dimensions.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not applicable to application.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.setWindowPosition = function(cmd, resp) {
-  if (this.appName != "Firefox") {
-    throw new WebDriverError("Unable to set the window position on mobile");
+GeckoDriver.prototype.setWindowRect = async function(cmd, resp) {
+  assert.firefox();
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let {x, y, width, height} = cmd.parameters;
+  let origRect = this.curBrowser.rect;
+
+  // Throttle resize event by forcing the event queue to flush and delay
+  // until the main thread is idle.
+  function optimisedResize(resolve) {
+    return () => Services.tm.idleDispatchToMainThread(() => {
+      win.requestAnimationFrame(resolve);
+    });
   }
 
-  let x = parseInt(cmd.parameters.x);
-  let y  = parseInt(cmd.parameters.y);
-  if (isNaN(x) || isNaN(y)) {
-    throw new UnknownError("x and y arguments should be integers");
+  // Exit fullscreen and wait for window to resize.
+  async function exitFullscreen() {
+    return new Promise(resolve => {
+      win.addEventListener("sizemodechange", optimisedResize(resolve), {once: true});
+      win.fullScreen = false;
+    });
   }
 
-  let win = this.getCurrentWindow();
-  win.moveTo(x, y);
+  // Synchronous resize to |width| and |height| dimensions.
+  async function resizeWindow(width, height) {
+    return new Promise(resolve => {
+      win.addEventListener("resize", optimisedResize(resolve), {once: true});
+      win.resizeTo(width, height);
+    });
+  }
+
+  // Wait until window size has changed.  We can't wait for the
+  // user-requested window size as this may not be achievable on the
+  // current system.
+  const windowResizeChange = async () => {
+    return wait.until((resolve, reject) => {
+      let curRect = this.curBrowser.rect;
+      if (curRect.width != origRect.width &&
+          curRect.height != origRect.height) {
+        resolve();
+      } else {
+        reject();
+      }
+    });
+  };
+
+  // Wait for the window position to change.
+  async function windowPosition(x, y) {
+    return wait.until((resolve, reject) => {
+      if ((x == win.screenX && y == win.screenY) ||
+          (win.screenX != origRect.x || win.screenY != origRect.y)) {
+        resolve();
+      } else {
+        reject();
+      }
+    });
+  }
+
+  if (win.windowState == win.STATE_FULLSCREEN) {
+    await exitFullscreen();
+  }
+
+  if (height != null && width != null) {
+    assert.positiveInteger(height);
+    assert.positiveInteger(width);
+
+    if (win.outerWidth != width || win.outerHeight != height) {
+      await resizeWindow(width, height);
+      await windowResizeChange();
+    }
+  }
+
+  if (x != null && y != null) {
+    assert.integer(x);
+    assert.integer(y);
+
+    win.moveTo(x, y);
+    await windowPosition(x, y);
+  }
+
+  return this.curBrowser.rect;
 };
 
 /**
- * Switch current top-level browsing context by name or server-assigned ID.
- * Searches for windows by name, then ID.  Content windows take precedence.
+ * Switch current top-level browsing context by name or server-assigned
+ * ID.  Searches for windows by name, then ID.  Content windows take
+ * precedence.
  *
  * @param {string} name
  *     Target name or ID of the window to switch to.
+ * @param {boolean=} focus
+ *      A boolean value which determines whether to focus
+ *      the window. Defaults to true.
  */
-GeckoDriver.prototype.switchToWindow = function*(cmd, resp) {
-  let switchTo = cmd.parameters.name;
-  let isMobile = this.appName == "Fennec";
-  let found;
-
-  let getOuterWindowId = function(win) {
-    let rv = win.QueryInterface(Ci.nsIInterfaceRequestor)
-        .getInterface(Ci.nsIDOMWindowUtils)
-        .outerWindowID;
-    return rv;
-  };
-
-  let byNameOrId = function(name, outerId, contentWindowId) {
-    return switchTo == name ||
-        switchTo == contentWindowId ||
-        switchTo == outerId;
-  };
-
-  let winEn = Services.wm.getEnumerator(null);
-  while (winEn.hasMoreElements()) {
-    let win = winEn.getNext();
-    let outerId = getOuterWindowId(win);
-
-    if (win.gBrowser && !isMobile) {
-      let tabbrowser = win.gBrowser;
-      for (let i = 0; i < tabbrowser.browsers.length; ++i) {
-        let browser = tabbrowser.getBrowserAtIndex(i);
-        let contentWindowId = this.getIdForBrowser(browser);
-        if (byNameOrId(win.name, contentWindowId, outerId)) {
-          found = {
-            win: win,
-            outerId: outerId,
-            tabIndex: i,
-          };
-          break;
-        }
-      }
-    } else {
-      if (byNameOrId(win.name, outerId)) {
-        found = {win: win, outerId: outerId};
-        break;
-      }
-    }
+GeckoDriver.prototype.switchToWindow = function* (cmd, resp) {
+  let focus = true;
+  if (typeof cmd.parameters.focus != "undefined") {
+    focus = cmd.parameters.focus;
   }
 
+  // Window IDs are internally handled as numbers, but here it could
+  // also be the name of the window.
+  let switchTo = parseInt(cmd.parameters.name);
+  if (isNaN(switchTo)) {
+    switchTo = cmd.parameters.name;
+  }
+
+  let byNameOrId = function(win, windowId) {
+    return switchTo === win.name || switchTo === windowId;
+  };
+
+  let found = this.findWindow(this.windows, byNameOrId);
+
   if (found) {
-    // Initialise Marionette if browser has not been seen before,
-    // otherwise switch to known browser and activate the tab if it's a
-    // content browser.
-    if (!(found.outerId in this.browsers)) {
-      let registerBrowsers, browserListening;
-      if ("tabIndex" in found) {
-        registerBrowsers = this.registerPromise();
-        browserListening = this.listeningPromise();
-      }
-
-      this.startBrowser(found.win, false /* isNewSession */);
-
-      if (registerBrowsers && browserListening) {
-        yield registerBrowsers;
-        yield browserListening;
-      }
-    } else {
-      this.curBrowser = this.browsers[found.outerId];
-
-      if ("tabIndex" in found) {
-        this.curBrowser.switchToTab(found.tabIndex, found.win);
-      }
-    }
+    yield this.setWindowHandle(found, focus);
   } else {
     throw new NoSuchWindowError(`Unable to locate window: ${switchTo}`);
   }
 };
 
+/**
+ * Find a specific window according to some filter function.
+ *
+ * @param {Iterable.<Window>} winIterable
+ *     Iterable that emits Windows.
+ * @param {function(Window, number): boolean} filter
+ *     A callback function taking two arguments; the window and
+ *     the outerId of the window, and returning a boolean indicating
+ *     whether the window is the target.
+ *
+ * @return {Object}
+ *     A window handle object containing the window and some
+ *     associated metadata.
+ */
+GeckoDriver.prototype.findWindow = function(winIterable, filter) {
+  for (let win of winIterable) {
+    let outerId = getOuterWindowId(win);
+    let tabBrowser = browser.getTabBrowser(win);
+
+    // In case the wanted window is a chrome window, we are done.
+    if (filter(win, outerId)) {
+      return {win, outerId, hasTabBrowser: !!tabBrowser};
+
+    // Otherwise check if the chrome window has a tab browser, and that it
+    // contains a tab with the wanted window handle.
+    } else if (tabBrowser && tabBrowser.tabs) {
+      for (let i = 0; i < tabBrowser.tabs.length; ++i) {
+        let contentBrowser = browser.getBrowserForTab(tabBrowser.tabs[i]);
+        let contentWindowId = this.getIdForBrowser(contentBrowser);
+
+        if (filter(win, contentWindowId)) {
+          return {
+            win,
+            outerId,
+            hasTabBrowser: true,
+            tabIndex: i,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Switch the marionette window to a given window. If the browser in
+ * the window is unregistered, registers that browser and waits for
+ * the registration is complete. If |focus| is true then set the focus
+ * on the window.
+ *
+ * @param {Object} winProperties
+ *     Object containing window properties such as returned from
+ *     GeckoDriver#findWindow
+ * @param {boolean=} focus
+ *     A boolean value which determines whether to focus the window.
+ *     Defaults to true.
+ */
+GeckoDriver.prototype.setWindowHandle = function* (
+    winProperties, focus = true) {
+  if (!(winProperties.outerId in this.browsers)) {
+    // Initialise Marionette if the current chrome window has not been seen
+    // before. Also register the initial tab, if one exists.
+    let registerBrowsers, browserListening;
+
+    if (winProperties.hasTabBrowser) {
+      registerBrowsers = this.registerPromise();
+      browserListening = this.listeningPromise();
+    }
+
+    this.startBrowser(winProperties.win, false /* isNewSession */);
+
+    if (registerBrowsers && browserListening) {
+      yield registerBrowsers;
+      yield browserListening;
+    }
+
+  } else {
+    // Otherwise switch to the known chrome window, and activate the tab
+    // if it's a content browser.
+    this.curBrowser = this.browsers[winProperties.outerId];
+
+    if ("tabIndex" in winProperties) {
+      this.curBrowser.switchToTab(
+          winProperties.tabIndex, winProperties.win, focus);
+    }
+  }
+};
+
 GeckoDriver.prototype.getActiveFrame = function(cmd, resp) {
+  assert.window(this.getCurrentWindow());
+
   switch (this.context) {
     case Context.CHROME:
       // no frame means top-level
@@ -1375,8 +1607,20 @@ GeckoDriver.prototype.getActiveFrame = function(cmd, resp) {
   }
 };
 
-GeckoDriver.prototype.switchToParentFrame = function*(cmd, resp) {
-  let res = yield this.listener.switchToParentFrame();
+/**
+ * Set the current browsing context for future commands to the parent
+ * of the current browsing context.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.switchToParentFrame = function* (cmd, resp) {
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  yield this.listener.switchToParentFrame();
 };
 
 /**
@@ -1387,59 +1631,80 @@ GeckoDriver.prototype.switchToParentFrame = function*(cmd, resp) {
  * @param {(string|number)} id
  *     If element is not defined, then this holds either the id, name,
  *     or index of the frame to switch to.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
+GeckoDriver.prototype.switchToFrame = function* (cmd, resp) {
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let {id, element, focus} = cmd.parameters;
 
-  let checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+  const otherErrorsExpr = /about:.+(error)|(blocked)\?/;
+  const checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+
   let curWindow = this.getCurrentWindow();
 
   let checkLoad = function() {
-    let errorRegex = /about:.+(error)|(blocked)\?/;
-    let curWindow = this.getCurrentWindow();
-    if (curWindow.document.readyState == "complete") {
+    let win = this.getCurrentWindow();
+    if (win.document.readyState == "complete") {
       return;
-    } else if (curWindow.document.readyState == "interactive" &&
-        errorRegex.exec(curWindow.document.baseURI)) {
-      throw new UnknownError("Error loading page");
+    } else if (win.document.readyState == "interactive") {
+      let documentURI = win.document.documentURI;
+      if (documentURI.startsWith("about:certerror")) {
+        throw new InsecureCertificateError();
+      } else if (otherErrorsExpr.exec(documentURI)) {
+        throw new UnknownError("Reached error page: " + documentURI);
+      }
     }
 
-    checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+    checkTimer.initWithCallback(
+        checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
   };
 
   if (this.context == Context.CHROME) {
     let foundFrame = null;
 
-   // just focus
-   if (typeof id == "undefined" && typeof element == "undefined") {
+    // just focus
+    if (typeof id == "undefined" && typeof element == "undefined") {
       this.curFrame = null;
       if (focus) {
         this.mainFrame.focus();
       }
-      checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+      checkTimer.initWithCallback(
+          checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
       return;
     }
 
     // by element
     if (this.curBrowser.seenEls.has(element)) {
       // HTMLIFrameElement
-      let wantedFrame = this.curBrowser.seenEls.get(element, {frame: curWindow});
+      let wantedFrame = this.curBrowser.seenEls.get(
+          element, {frame: curWindow});
       // Deal with an embedded xul:browser case
-      if (wantedFrame.tagName == "xul:browser" || wantedFrame.tagName == "browser") {
+      if (wantedFrame.tagName == "xul:browser" ||
+          wantedFrame.tagName == "browser") {
         curWindow = wantedFrame.contentWindow;
         this.curFrame = curWindow;
         if (focus) {
           this.curFrame.focus();
         }
-        checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+        checkTimer.initWithCallback(
+            checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
         return;
       }
 
       // Check if the frame is XBL anonymous
       let parent = curWindow.document.getBindingParent(wantedFrame);
-      // Shadow nodes also show up in getAnonymousNodes, we should ignore them.
-      if (parent && !(parent.shadowRoot && parent.shadowRoot.contains(wantedFrame))) {
-        let anonNodes = [...curWindow.document.getAnonymousNodes(parent) || []];
+      // Shadow nodes also show up in getAnonymousNodes, we should
+      // ignore them.
+      if (parent &&
+          !(parent.shadowRoot && parent.shadowRoot.contains(wantedFrame))) {
+        const doc = curWindow.document;
+        let anonNodes = [...doc.getAnonymousNodes(parent) || []];
         if (anonNodes.length > 0) {
           let el = wantedFrame;
           while (el) {
@@ -1449,7 +1714,8 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
               if (focus) {
                 this.curFrame.focus();
               }
-              checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+              checkTimer.initWithCallback(
+                  checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
               return;
             }
             el = el.parentNode;
@@ -1461,13 +1727,16 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
       let frames = curWindow.document.getElementsByTagName("iframe");
       let numFrames = frames.length;
       for (let i = 0; i < numFrames; i++) {
-        if (new XPCNativeWrapper(frames[i]) == new XPCNativeWrapper(wantedFrame)) {
+        let wrappedEl = new XPCNativeWrapper(frames[i]);
+        let wrappedWanted = new XPCNativeWrapper(wantedFrame);
+        if (wrappedEl == wrappedWanted) {
           curWindow = frames[i].contentWindow;
           this.curFrame = curWindow;
           if (focus) {
             this.curFrame.focus();
           }
-          checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+          checkTimer.initWithCallback(
+              checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
           return;
         }
       }
@@ -1479,7 +1748,7 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
         let frames = curWindow.document.getElementsByTagName("iframe");
         let numFrames = frames.length;
         for (let i = 0; i < numFrames; i++) {
-          //give precedence to name
+          // give precedence to name
           let frame = frames[i];
           if (frame.getAttribute("name") == id) {
             foundFrame = i;
@@ -1497,7 +1766,8 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
       case "number":
         if (typeof curWindow.frames[id] != "undefined") {
           foundFrame = id;
-          curWindow = curWindow.frames[foundFrame].frameElement.contentWindow;
+          let frameEl = curWindow.frames[foundFrame].frameElement;
+          curWindow = frameEl.contentWindow;
         }
         break;
     }
@@ -1507,7 +1777,8 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
       if (focus) {
         this.curFrame.focus();
       }
-      checkTimer.initWithCallback(checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
+      checkTimer.initWithCallback(
+          checkLoad.bind(this), 100, Ci.nsITimer.TYPE_ONE_SHOT);
     } else {
       throw new NoSuchFrameError(`Unable to locate frame: ${id}`);
     }
@@ -1515,10 +1786,11 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
   } else if (this.context == Context.CONTENT) {
     if (!id && !element &&
         this.curBrowser.frameManager.currentRemoteFrame !== null) {
-      // We're currently using a ChromeMessageSender for a remote frame, so this
-      // request indicates we need to switch back to the top-level (parent) frame.
-      // We'll first switch to the parent's (global) ChromeMessageBroadcaster, so
-      // we send the message to the right listener.
+      // We're currently using a ChromeMessageSender for a remote frame,
+      // so this request indicates we need to switch back to the top-level
+      // (parent) frame.  We'll first switch to the parent's (global)
+      // ChromeMessageBroadcaster, so we send the message to the right
+      // listener.
       this.switchToGlobalMessageManager();
     }
     cmd.command_id = cmd.id;
@@ -1540,63 +1812,84 @@ GeckoDriver.prototype.switchToFrame = function*(cmd, resp) {
   }
 };
 
-/**
- * Set timeout for searching for elements.
- *
- * @param {number} ms
- *     Search timeout in milliseconds.
- */
-GeckoDriver.prototype.setSearchTimeout = function(cmd, resp) {
-  let ms = parseInt(cmd.parameters.ms);
-  if (isNaN(ms)) {
-    throw new WebDriverError("Not a Number");
-  }
-  this.searchTimeout = ms;
+GeckoDriver.prototype.getTimeouts = function(cmd, resp) {
+  return this.timeouts;
 };
 
 /**
  * Set timeout for page loading, searching, and scripts.
  *
- * @param {string} type
- *     Type of timeout.
- * @param {number} ms
- *     Timeout in milliseconds.
+ * @param {Object.<string, number>}
+ *     Dictionary of timeout types and their new value, where all timeout
+ *     types are optional.
+ *
+ * @throws {InvalidArgumentError}
+ *     If timeout type key is unknown, or the value provided with it is
+ *     not an integer.
  */
-GeckoDriver.prototype.timeouts = function(cmd, resp) {
-  let typ = cmd.parameters.type;
-  let ms = parseInt(cmd.parameters.ms);
-  if (isNaN(ms)) {
-    throw new WebDriverError("Not a Number");
-  }
-
-  switch (typ) {
-    case "implicit":
-      this.setSearchTimeout(cmd, resp);
-      break;
-
-    case "script":
-      this.setScriptTimeout(cmd, resp);
-      break;
-
-    default:
-      this.pageTimeout = ms;
-      break;
-  }
+GeckoDriver.prototype.setTimeouts = function(cmd, resp) {
+  // merge with existing timeouts
+  let merged = Object.assign(this.timeouts.toJSON(), cmd.parameters);
+  this.timeouts = session.Timeouts.fromJSON(merged);
 };
 
 /** Single tap. */
 GeckoDriver.prototype.singleTap = function*(cmd, resp) {
+  assert.window(this.getCurrentWindow());
+
   let {id, x, y} = cmd.parameters;
 
   switch (this.context) {
     case Context.CHROME:
-      throw new WebDriverError("Command 'singleTap' is not available in chrome context");
+      throw new UnsupportedOperationError(
+          "Command 'singleTap' is not yet available in chrome context");
 
     case Context.CONTENT:
       this.addFrameCloseListener("tap");
       yield this.listener.singleTap(id, x, y);
       break;
   }
+};
+
+/**
+ * Perform a series of grouped actions at the specified points in time.
+ *
+ * @param {Array.<?>} actions
+ *     Array of objects that each represent an action sequence.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not yet available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.performActions = function* (cmd, resp) {
+  assert.content(this.context,
+      "Command 'performActions' is not yet available in chrome context");
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let actions = cmd.parameters.actions;
+  yield this.listener.performActions({"actions": actions});
+};
+
+/**
+ * Release all the keys and pointer buttons that are currently depressed.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.releaseActions = function*(cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  yield this.listener.releaseActions();
 };
 
 /**
@@ -1608,21 +1901,27 @@ GeckoDriver.prototype.singleTap = function*(cmd, resp) {
  *
  * @return {number}
  *     Last touch ID.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not applicable to application.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.actionChain = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let {chain, nextId} = cmd.parameters;
 
   switch (this.context) {
     case Context.CHROME:
-      if (this.appName != "Firefox") {
-        // be conservative until this has a use case and is established
-        // to work as expected on b2g/fennec
-        throw new WebDriverError(
-            "Command 'actionChain' is not available in chrome context");
-      }
+      // be conservative until this has a use case and is established
+      // to work as expected in Fennec
+      assert.firefox();
 
-      let win = this.getCurrentWindow();
-      resp.body.value = yield this.actions.dispatchActions(
+      resp.body.value = yield this.legacyactions.dispatchActions(
           chain, nextId, {frame: win}, this.curBrowser.seenEls);
       break;
 
@@ -1640,17 +1939,23 @@ GeckoDriver.prototype.actionChain = function*(cmd, resp) {
  *     A nested array where the inner array represents eache vent,
  *     the middle array represents a collection of events for each
  *     finger, and the outer array represents all fingers.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.multiAction = function*(cmd, resp) {
-  switch (this.context) {
-    case Context.CHROME:
-      throw new WebDriverError("Command 'multiAction' is not available in chrome context");
+GeckoDriver.prototype.multiAction = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-    case Context.CONTENT:
-      this.addFrameCloseListener("multi action chain");
-      yield this.listener.multiAction(cmd.parameters.value, cmd.parameters.max_length);
-      break;
-  }
+  let {value, max_length} = cmd.parameters;
+
+  this.addFrameCloseListener("multi action chain");
+  yield this.listener.multiAction(value, max_length);
 };
 
 /**
@@ -1660,13 +1965,21 @@ GeckoDriver.prototype.multiAction = function*(cmd, resp) {
  *     Indicates which search method to use.
  * @param {string} value
  *     Value the client is looking for.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.findElement = function*(cmd, resp) {
+GeckoDriver.prototype.findElement = function* (cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let strategy = cmd.parameters.using;
   let expr = cmd.parameters.value;
   let opts = {
     startNode: cmd.parameters.element,
-    timeout: this.searchTimeout,
+    timeout: this.timeouts.implicit,
     all: false,
   };
 
@@ -1676,9 +1989,10 @@ GeckoDriver.prototype.findElement = function*(cmd, resp) {
         throw new InvalidSelectorError(`Strategy not supported: ${strategy}`);
       }
 
-      let container = {frame: this.getCurrentWindow()};
+      let container = {frame: win};
       if (opts.startNode) {
-        opts.startNode = this.curBrowser.seenEls.get(opts.startNode, container);
+        opts.startNode = this.curBrowser.seenEls.get(
+            opts.startNode, container);
       }
       let el = yield element.find(container, strategy, expr, opts);
       let elRef = this.curBrowser.seenEls.add(el);
@@ -1705,11 +2019,13 @@ GeckoDriver.prototype.findElement = function*(cmd, resp) {
  *     Value the client is looking for.
  */
 GeckoDriver.prototype.findElements = function*(cmd, resp) {
+  let win = assert.window(this.getCurrentWindow());
+
   let strategy = cmd.parameters.using;
   let expr = cmd.parameters.value;
   let opts = {
     startNode: cmd.parameters.element,
-    timeout: this.searchTimeout,
+    timeout: this.timeouts.implicit,
     all: true,
   };
 
@@ -1719,9 +2035,10 @@ GeckoDriver.prototype.findElements = function*(cmd, resp) {
         throw new InvalidSelectorError(`Strategy not supported: ${strategy}`);
       }
 
-      let container = {frame: this.getCurrentWindow()};
+      let container = {frame: win};
       if (opts.startNode) {
-        opts.startNode = this.curBrowser.seenEls.get(opts.startNode, container);
+        opts.startNode = this.curBrowser.seenEls.get(
+            opts.startNode, container);
       }
       let els = yield element.find(container, strategy, expr, opts);
 
@@ -1739,8 +2056,24 @@ GeckoDriver.prototype.findElements = function*(cmd, resp) {
   }
 };
 
-/** Return the active element on the page. */
-GeckoDriver.prototype.getActiveElement = function*(cmd, resp) {
+/**
+ * Return the active element on the page.
+ *
+ * @return {WebElement}
+ *     Active element of the current browsing context's document element.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.getActiveElement = function* (cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   resp.body.value = yield this.listener.getActiveElement();
 };
 
@@ -1749,25 +2082,51 @@ GeckoDriver.prototype.getActiveElement = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be clicked.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.clickElement = function*(cmd, resp) {
+GeckoDriver.prototype.clickElement = function* (cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
-      yield interaction.clickElement(
-          el, this.sessionCapabilities.raisesAccessibilityExceptions);
+      yield interaction.clickElement(el, this.a11yChecks);
       break;
 
     case Context.CONTENT:
-      // We need to protect against the click causing an OOP frame to close.
-      // This fires the mozbrowserclose event when it closes so we need to
-      // listen for it and then just send an error back. The person making the
-      // call should be aware something isnt right and handle accordingly
+      // We need to protect against the click causing an OOP frame
+      // to close.  This fires the mozbrowserclose event when it closes
+      // so we need to listen for it and then just send an error back.
+      // The person making the call should be aware something is not right
+      // and handle accordingly.
       this.addFrameCloseListener("click");
-      yield this.listener.clickElement(id);
+
+      let click = this.listener.clickElement(
+          {id, pageTimeout: this.timeouts.pageLoad});
+
+      // If a reload of the frame script interrupts our page load, this will
+      // never return. We need to re-issue this request to correctly poll for
+      // readyState and send errors.
+      this.curBrowser.pendingCommands.push(() => {
+        let parameters = {
+          // TODO(ato): Bug 1242595
+          command_id: this.listener.activeMessageId,
+          pageTimeout: this.timeouts.pageLoad,
+          startTime: new Date().getTime(),
+        };
+        this.mm.broadcastAsyncMessage(
+            "Marionette:waitForPageLoaded" + this.curBrowser.curFrameId,
+            parameters);
+      });
+
+      yield click;
       break;
   }
 };
@@ -1782,15 +2141,22 @@ GeckoDriver.prototype.clickElement = function*(cmd, resp) {
  *
  * @return {string}
  *     Value of the attribute.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getElementAttribute = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let {id, name} = cmd.parameters;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
-      resp.body.value = atom.getElementAttribute(el, name, this.getCurrentWindow());
+      resp.body.value = el.getAttribute(name);
       break;
 
     case Context.CONTENT:
@@ -1809,13 +2175,20 @@ GeckoDriver.prototype.getElementAttribute = function*(cmd, resp) {
  *
  * @return {string}
  *     Value of the property.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getElementProperty = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let {id, name} = cmd.parameters;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       resp.body.value = el[name];
       break;
@@ -1832,14 +2205,24 @@ GeckoDriver.prototype.getElementProperty = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be inspected.
+ *
+ * @return {string}
+ *     Element's text "as rendered".
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getElementText = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
       // for chrome, we look at text nodes, and any node with a "label" field
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       let lines = [];
       this.getVisibleText(el, lines);
@@ -1857,13 +2240,23 @@ GeckoDriver.prototype.getElementText = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be inspected.
+ *
+ * @return {string}
+ *     Local tag name of element.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getElementTagName = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       resp.body.value = el.tagName.toLowerCase();
       break;
@@ -1879,16 +2272,26 @@ GeckoDriver.prototype.getElementTagName = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be inspected.
+ *
+ * @return {boolean}
+ *     True if displayed, false otherwise.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.isElementDisplayed = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       resp.body.value = yield interaction.isElementDisplayed(
-          el, this.sessionCapabilities.raisesAccessibilityExceptions);
+          el, this.a11yChecks);
       break;
 
     case Context.CONTENT:
@@ -1904,20 +2307,31 @@ GeckoDriver.prototype.isElementDisplayed = function*(cmd, resp) {
  *     Reference ID to the element that will be checked.
  * @param {string} propertyName
  *     CSS rule that is being requested.
+ *
+ * @return {string}
+ *     Value of |propertyName|.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.getElementValueOfCssProperty = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let {id, propertyName: prop} = cmd.parameters;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
-      let sty = win.document.defaultView.getComputedStyle(el, null);
+      let sty = win.document.defaultView.getComputedStyle(el);
       resp.body.value = sty.getPropertyValue(prop);
       break;
 
     case Context.CONTENT:
-      resp.body.value = yield this.listener.getElementValueOfCssProperty(id, prop);
+      resp.body.value = yield this.listener
+          .getElementValueOfCssProperty(id, prop);
       break;
   }
 };
@@ -1927,41 +2341,61 @@ GeckoDriver.prototype.getElementValueOfCssProperty = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be checked.
+ *
+ * @return {boolean}
+ *     True if enabled, false if disabled.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.isElementEnabled = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
       // Selenium atom doesn't quite work here
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       resp.body.value = yield interaction.isElementEnabled(
-          el, this.sessionCapabilities.raisesAccessibilityExceptions);
+          el, this.a11yChecks);
       break;
 
     case Context.CONTENT:
       resp.body.value = yield this.listener.isElementEnabled(id);
       break;
   }
-},
+};
 
 /**
  * Check if element is selected.
  *
  * @param {string} id
  *     Reference ID to the element that will be checked.
+ *
+ * @return {boolean}
+ *     True if selected, false if unselected.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.isElementSelected = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
       // Selenium atom doesn't quite work here
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       resp.body.value = yield interaction.isElementSelected(
-          el, this.sessionCapabilities.raisesAccessibilityExceptions);
+          el, this.a11yChecks);
       break;
 
     case Context.CONTENT:
@@ -1970,19 +2404,27 @@ GeckoDriver.prototype.isElementSelected = function*(cmd, resp) {
   }
 };
 
+/**
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
 GeckoDriver.prototype.getElementRect = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       let rect = el.getBoundingClientRect();
       resp.body = {
         x: rect.x + win.pageXOffset,
         y: rect.y + win.pageYOffset,
         width: rect.width,
-        height: rect.height
+        height: rect.height,
       };
       break;
 
@@ -1999,33 +2441,30 @@ GeckoDriver.prototype.getElementRect = function*(cmd, resp) {
  *     Reference ID to the element that will be checked.
  * @param {string} value
  *     Value to send to the element.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.sendKeysToElement = function*(cmd, resp) {
-  let {id, value} = cmd.parameters;
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-  if (!value) {
-    throw new InvalidArgumentError(`Expected character sequence: ${value}`);
-  }
+  let {id, text} = cmd.parameters;
+  assert.string(text);
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       yield interaction.sendKeysToElement(
-          el, value, true, this.sessionCapabilities.raisesAccessibilityExceptions);
+          el, text, true, this.a11yChecks);
       break;
 
     case Context.CONTENT:
-      yield this.listener.sendKeysToElement(id, value);
+      yield this.listener.sendKeysToElement(id, text);
       break;
   }
-};
-
-/** Sets the test name.  The test name is used for logging purposes. */
-GeckoDriver.prototype.setTestName = function*(cmd, resp) {
-  let val = cmd.parameters.value;
-  this.testName = val;
-  yield this.listener.setTestName({value: val});
 };
 
 /**
@@ -2033,14 +2472,21 @@ GeckoDriver.prototype.setTestName = function*(cmd, resp) {
  *
  * @param {string} id
  *     Reference ID to the element that will be cleared.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.clearElement = function*(cmd, resp) {
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
   let id = cmd.parameters.id;
 
   switch (this.context) {
     case Context.CHROME:
       // the selenium atom doesn't work here
-      let win = this.getCurrentWindow();
       let el = this.curBrowser.seenEls.get(id, {frame: win});
       if (el.nodeName == "textbox") {
         el.value = "";
@@ -2061,177 +2507,211 @@ GeckoDriver.prototype.clearElement = function*(cmd, resp) {
  * @param {string} id element id.
  */
 GeckoDriver.prototype.switchToShadowRoot = function*(cmd, resp) {
-  let id;
-  if (cmd.parameters) { id = cmd.parameters.id; }
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+
+  let id = cmd.parameters.id;
   yield this.listener.switchToShadowRoot(id);
 };
 
-/** Add a cookie to the document. */
-GeckoDriver.prototype.addCookie = function*(cmd, resp) {
-  let cb = msg => {
-    this.mm.removeMessageListener("Marionette:addCookie", cb);
-    let cookie = msg.json;
-    Services.cookies.add(
-        cookie.domain,
-        cookie.path,
-        cookie.name,
-        cookie.value,
-        cookie.secure,
-        cookie.httpOnly,
-        cookie.session,
-        cookie.expiry,
-        {}); // originAttributes
-    return true;
-  };
-  this.mm.addMessageListener("Marionette:addCookie", cb);
-  yield this.listener.addCookie(cmd.parameters.cookie);
+/**
+ * Add a single cookie to the cookie store associated with the active
+ * document's address.
+ *
+ * @param {Map.<string, (string|number|boolean)> cookie
+ *     Cookie object.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ * @throws {InvalidCookieDomainError}
+ *     If <var>cookie</var> is for a different domain than the active
+ *     document's host.
+ */
+GeckoDriver.prototype.addCookie = function(cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let {protocol, hostname} = this.currentURL;
+
+  const networkSchemes = ["ftp:", "http:", "https:"];
+  if (!networkSchemes.includes(protocol)) {
+    throw new InvalidCookieDomainError("Document is cookie-averse");
+  }
+
+  let newCookie = cookie.fromJSON(cmd.parameters.cookie);
+  if (typeof newCookie.domain == "undefined") {
+    newCookie.domain = hostname;
+  }
+
+  cookie.add(newCookie, {restrictToHost: hostname});
 };
 
 /**
  * Get all the cookies for the current domain.
  *
- * This is the equivalent of calling {@code document.cookie} and parsing
- * the result.
+ * This is the equivalent of calling <code>document.cookie</code> and
+ * parsing the result.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.getCookies = function*(cmd, resp) {
-  resp.body = yield this.listener.getCookies();
-};
+GeckoDriver.prototype.getCookies = function(cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-/** Delete all cookies that are visible to a document. */
-GeckoDriver.prototype.deleteAllCookies = function*(cmd, resp) {
-  let cb = msg => {
-    let cookie = msg.json;
-    cookieManager.remove(
-        cookie.host,
-        cookie.name,
-        cookie.path,
-        false,
-        cookie.originAttributes);
-    return true;
-  };
-  this.mm.addMessageListener("Marionette:deleteCookie", cb);
-  yield this.listener.deleteAllCookies();
-  this.mm.removeMessageListener("Marionette:deleteCookie", cb);
-};
-
-/** Delete a cookie by name. */
-GeckoDriver.prototype.deleteCookie = function*(cmd, resp) {
-  let cb = msg => {
-    this.mm.removeMessageListener("Marionette:deleteCookie", cb);
-    let cookie = msg.json;
-    cookieManager.remove(
-        cookie.host,
-        cookie.name,
-        cookie.path,
-        false,
-        cookie.originAttributes);
-    return true;
-  };
-  this.mm.addMessageListener("Marionette:deleteCookie", cb);
-  yield this.listener.deleteCookie(cmd.parameters.name);
+  let {hostname, pathname} = this.currentURL;
+  resp.body = [...cookie.iter(hostname, pathname)];
 };
 
 /**
- * Close the current window, ending the session if it's the last
- * window currently open.
+ * Delete all cookies that are visible to a document.
  *
- * On B2G this method is a noop and will return immediately.
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.deleteAllCookies = function(cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let {hostname, pathname} = this.currentURL;
+  for (let toDelete of cookie.iter(hostname, pathname)) {
+    cookie.remove(toDelete);
+  }
+};
+
+/**
+ * Delete a cookie by name.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available in current context.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
+ */
+GeckoDriver.prototype.deleteCookie = function(cmd, resp) {
+  assert.content(this.context);
+  assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let {hostname, pathname} = this.currentURL;
+  let candidateName = assert.string(cmd.parameters.name);
+  for (let toDelete of cookie.iter(hostname, pathname)) {
+    if (toDelete.name === candidateName) {
+      return cookie.remove(toDelete);
+    }
+  }
+
+  throw UnknownError("Unable to find cookie");
+};
+
+/**
+ * Close the currently selected tab/window.
+ *
+ * With multiple open tabs present the currently selected tab will
+ * be closed.  Otherwise the window itself will be closed. If it is the
+ * last window currently open, the window will not be closed to prevent
+ * a shutdown of the application. Instead the returned list of window
+ * handles is empty.
+ *
+ * @return {Array.<string>}
+ *     Unique window handles of remaining windows.
+ *
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
 GeckoDriver.prototype.close = function(cmd, resp) {
-  // can't close windows on B2G
-  if (this.appName == "B2G") {
-    return;
-  }
+  assert.contentBrowser(this.curBrowser);
+  assert.noUserPrompt(this.dialog);
 
   let nwins = 0;
-  let winEn = Services.wm.getEnumerator(null);
-  while (winEn.hasMoreElements()) {
-    let win = winEn.getNext();
 
-    // count both windows and tabs
-    if (win.gBrowser) {
-      nwins += win.gBrowser.browsers.length;
+  for (let win of this.windows) {
+    // For browser windows count the tabs. Otherwise take the window itself.
+    let tabbrowser = browser.getTabBrowser(win);
+    if (tabbrowser && tabbrowser.tabs) {
+      nwins += tabbrowser.tabs.length;
     } else {
-      nwins++;
+      nwins += 1;
     }
   }
 
-  // if there is only 1 window left, delete the session
-  if (nwins == 1) {
-    this.sessionTearDown();
-    return;
+  // If there is only one window left, do not close it. Instead return
+  // a faked empty array of window handles.  This will instruct geckodriver
+  // to terminate the application.
+  if (nwins === 1) {
+    return [];
   }
 
-  try {
-    if (this.mm != globalMessageManager) {
-      this.mm.removeDelayedFrameScript(FRAME_SCRIPT);
-    }
-
-    if (this.curBrowser.tab) {
-      this.curBrowser.closeTab();
-    } else {
-      this.getCurrentWindow().close();
-    }
-  } catch (e) {
-    throw new UnknownError(`Could not close window: ${e.message}`);
+  if (this.mm != globalMessageManager) {
+    this.mm.removeDelayedFrameScript(FRAME_SCRIPT);
   }
+
+  return this.curBrowser.closeTab()
+      .then(() => this.windowHandles.map(String));
 };
 
 /**
- * Close the currently selected chrome window, ending the session if it's the last
- * window currently open.
+ * Close the currently selected chrome window.
  *
- * On B2G this method is a noop and will return immediately.
+ * If it is the last window currently open, the chrome window will not be
+ * closed to prevent a shutdown of the application. Instead the returned
+ * list of chrome window handles is empty.
+ *
+ * @return {Array.<string>}
+ *     Unique chrome window handles of remaining chrome windows.
  */
 GeckoDriver.prototype.closeChromeWindow = function(cmd, resp) {
-  // can't close windows on B2G
-  if (this.appName == "B2G") {
-    return;
-  }
+  assert.firefox();
+  assert.window(this.getCurrentWindow(Context.CHROME));
 
-  // Get the total number of windows
   let nwins = 0;
-  let winEn = Services.wm.getEnumerator(null);
-  while (winEn.hasMoreElements()) {
+
+  // eslint-disable-next-line
+  for (let _ of this.windows) {
     nwins++;
-    winEn.getNext();
   }
 
-  // if there is only 1 window left, delete the session
+  // If there is only one window left, do not close it.  Instead return
+  // a faked empty array of window handles. This will instruct geckodriver
+  // to terminate the application.
   if (nwins == 1) {
-    this.sessionTearDown();
-    return;
+    return [];
   }
 
-  try {
+  // reset frame to the top-most frame
+  this.curFrame = null;
+
+  if (this.mm != globalMessageManager) {
     this.mm.removeDelayedFrameScript(FRAME_SCRIPT);
-    this.getCurrentWindow().close();
-  } catch (e) {
-    throw new UnknownError(`Could not close window: ${e.message}`);
   }
+
+  return this.curBrowser.closeWindow()
+      .then(() => this.chromeWindowHandles.map(String));
 };
 
-/**
- * Deletes the session.
- *
- * If it is a desktop environment, it will close all listeners.
- *
- * If it is a B2G environment, it will make the main content listener
- * sleep, and close all other listeners.  The main content listener
- * persists after disconnect (it's the homescreen), and can safely
- * be reused.
- */
-GeckoDriver.prototype.sessionTearDown = function(cmd, resp) {
+/** Delete Marionette session. */
+GeckoDriver.prototype.deleteSession = function(cmd, resp) {
   if (this.curBrowser !== null) {
-    if (this.appName == "B2G") {
-      globalMessageManager.broadcastAsyncMessage(
-          "Marionette:sleepSession" + this.curBrowser.mainContentId, {});
-      this.curBrowser.knownFrames.splice(
-          this.curBrowser.knownFrames.indexOf(this.curBrowser.mainContentId), 1);
-    } else {
-      // don't set this pref for B2G since the framescript can be safely reused
-      Preferences.set(CONTENT_LISTENER_PREF, false);
-    }
+    // frame scripts can be safely reused
+    Preferences.set(CONTENT_LISTENER_PREF, false);
 
     // delete session in each frame in each browser
     for (let win in this.browsers) {
@@ -2242,10 +2722,8 @@ GeckoDriver.prototype.sessionTearDown = function(cmd, resp) {
       }
     }
 
-    let winEn = Services.wm.getEnumerator(null);
-    while (winEn.hasMoreElements()) {
-      let win = winEn.getNext();
-      if (win.messageManager){
+    for (let win of this.windows) {
+      if (win.messageManager) {
         win.messageManager.removeDelayedFrameScript(FRAME_SCRIPT);
       } else {
         logger.error(
@@ -2262,10 +2740,12 @@ GeckoDriver.prototype.sessionTearDown = function(cmd, resp) {
   // reset frame to the top-most frame
   this.curFrame = null;
   if (this.mainFrame) {
-    this.mainFrame.focus();
+    try {
+      this.mainFrame.focus();
+    } catch (e) {
+      this.mainFrame = null;
+    }
   }
-
-  this.sessionId = null;
 
   if (this.observing !== null) {
     for (let topic in this.observing) {
@@ -2273,47 +2753,14 @@ GeckoDriver.prototype.sessionTearDown = function(cmd, resp) {
     }
     this.observing = null;
   }
+
+  modal.removeHandler(this.dialogHandler);
+
   this.sandboxes.clear();
-};
+  cert.uninstallOverride();
 
-/**
- * Processes the "deleteSession" request from the client by tearing down
- * the session and responding "ok".
- */
-GeckoDriver.prototype.deleteSession = function(cmd, resp) {
-  this.sessionTearDown();
-};
-
-/** Returns the current status of the Application Cache. */
-GeckoDriver.prototype.getAppCacheStatus = function*(cmd, resp) {
-  resp.body.value = yield this.listener.getAppCacheStatus();
-};
-
-/**
- * Import script to the JS evaluation runtime.
- *
- * Imported scripts are exposed in the contexts of all subsequent
- * calls to {@code executeScript}, {@code executeAsyncScript}, and
- * {@code executeJSScript} by prepending them to the evaluated script.
- *
- * Scripts can be cleared with the {@code clearImportedScripts} command.
- *
- * @param {string} script
- *     Script to include.  If the script is byte-by-byte equal to an
- *     existing imported script, it is not imported.
- */
-GeckoDriver.prototype.importScript = function*(cmd, resp) {
-  let script = cmd.parameters.script;
-  this.importedScripts.for(this.context).add(script);
-};
-
-/**
- * Clear all scripts that are imported into the JS evaluation runtime.
- *
- * Scripts can be imported using the {@code importScript} command.
- */
-GeckoDriver.prototype.clearImportedScripts = function*(cmd, resp) {
-  this.importedScripts.for(this.context).clear();
+  this.sessionId = null;
+  this.capabilities = new session.Capabilities();
 };
 
 /**
@@ -2322,78 +2769,78 @@ GeckoDriver.prototype.clearImportedScripts = function*(cmd, resp) {
  * The screen capture is returned as a lossless PNG image encoded as
  * a base 64 string.
  *
- * If called in the content context, the <code>id</code> argument is not null
- * and refers to a present and visible web element's ID, the capture area
- * will be limited to the bounding box of that element. Otherwise, the
- * capture area will be the bounding box of the current frame.
+ * If called in the content context, the |id| argument is not null and
+ * refers to a present and visible web element's ID, the capture area will
+ * be limited to the bounding box of that element.  Otherwise, the capture
+ * area will be the bounding box of the current frame.
  *
- * If called in the chrome context, the screenshot will always represent the
- * entire viewport.
+ * If called in the chrome context, the screenshot will always represent
+ * the entire viewport.
  *
- * @param {string} id
- *     Reference to a web element.
- * @param {string} highlights
+ * @param {string=} id
+ *     Optional web element reference to take a screenshot of.
+ *     If undefined, a screenshot will be taken of the document element.
+ * @param {Array.<string>=} highlights
  *     List of web elements to highlight.
- * @param {boolean} hash
+ * @param {boolean} full
+ *     True to take a screenshot of the entire document element. Is not
+ *     considered if <var>id</var> is not defined. Defaults to true.
+ * @param {boolean=} hash
  *     True if the user requests a hash of the image data.
+ * @param {boolean=} scroll
+ *     Scroll to element if |id| is provided.  If undefined, it will
+ *     scroll to the element.
  *
  * @return {string}
- *     If {@code hash} is false, PNG image encoded as base64 encoded string. If
- *     'hash' is True, hex digest of the SHA-256 hash of the base64 encoded
- *     string.
+ *     If <var>hash</var> is false, PNG image encoded as Base64 encoded
+ *     string.  If <var>hash</var> is true, hex digest of the SHA-256
+ *     hash of the Base64 encoded string.
  */
 GeckoDriver.prototype.takeScreenshot = function(cmd, resp) {
+  let win = assert.window(this.getCurrentWindow());
+
   let {id, highlights, full, hash} = cmd.parameters;
   highlights = highlights || [];
+  let format = hash ? capture.Format.Hash : capture.Format.Base64;
 
   switch (this.context) {
     case Context.CHROME:
-      let win = this.getCurrentWindow();
-      let canvas = win.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-      let doc;
-      if (this.appName == "B2G") {
-        doc = win.document.body;
-      } else {
-        doc = win.document.documentElement;
-      }
-      let docRect = doc.getBoundingClientRect();
-      let width = docRect.width;
-      let height = docRect.height;
+      let container = {frame: win.document.defaultView};
 
-      // Convert width and height from CSS pixels (potentially fractional)
-      // to device pixels (integer).
-      let scale = win.devicePixelRatio;
-      canvas.setAttribute("width", Math.round(width * scale));
-      canvas.setAttribute("height", Math.round(height * scale));
+      let highlightEls = highlights.map(
+          ref => this.curBrowser.seenEls.get(ref, container));
 
-      let context = canvas.getContext("2d");
-      let flags;
-      if (this.appName == "B2G") {
-        flags =
-          context.DRAWWINDOW_DRAW_CARET |
-          context.DRAWWINDOW_DRAW_VIEW |
-          context.DRAWWINDOW_USE_WIDGET_LAYERS;
+      // viewport
+      let canvas;
+      if (!id && !full) {
+        canvas = capture.viewport(container.frame, highlightEls);
+
+      // element or full document element
       } else {
-        // Bug 1075168: CanvasRenderingContext2D image is distorted
-        // when using certain flags in chrome context.
-        flags =
-          context.DRAWWINDOW_DRAW_VIEW |
-          context.DRAWWINDOW_USE_WIDGET_LAYERS;
+        let node;
+        if (id) {
+          node = this.curBrowser.seenEls.get(id, container);
+        } else {
+          node = container.frame.document.documentElement;
+        }
+
+        canvas = capture.element(node, highlightEls);
       }
-      context.scale(scale, scale);
-      context.drawWindow(win, 0, 0, width, height, "rgb(255,255,255)", flags);
-      let dataUrl = canvas.toDataURL("image/png", "");
-      let data = dataUrl.substring(dataUrl.indexOf(",") + 1);
-      resp.body.value = data;
+
+      switch (format) {
+        case capture.Format.Hash:
+          return capture.toHash(canvas);
+
+        case capture.Format.Base64:
+          return capture.toBase64(canvas);
+      }
       break;
 
     case Context.CONTENT:
-      if (hash) {
-        return this.listener.getScreenshotHash(id, full, highlights);
-      } else {
-        return this.listener.takeScreenshot(id, full, highlights);
-      }
+      return this.listener.takeScreenshot(format, cmd.parameters);
   }
+
+  throw new TypeError(`Unknown context: ${this.context}`);
 };
 
 /**
@@ -2404,10 +2851,10 @@ GeckoDriver.prototype.takeScreenshot = function(cmd, resp) {
  * landscape-secondary.
  */
 GeckoDriver.prototype.getScreenOrientation = function(cmd, resp) {
-  if (this.appName == "Firefox") {
-    throw new UnsupportedOperationError();
-  }
-  resp.body.value = this.getCurrentWindow().screen.mozOrientation;
+  assert.fennec();
+  let win = assert.window(this.getCurrentWindow());
+
+  resp.body.value = win.screen.mozOrientation;
 };
 
 /**
@@ -2422,72 +2869,143 @@ GeckoDriver.prototype.getScreenOrientation = function(cmd, resp) {
  * and "portrait-secondary" as well as "landscape-secondary".
  */
 GeckoDriver.prototype.setScreenOrientation = function(cmd, resp) {
-  if (this.appName == "Firefox") {
-    throw new UnsupportedOperationError();
-  }
+  assert.fennec();
+  let win = assert.window(this.getCurrentWindow());
 
   const ors = [
     "portrait", "landscape",
     "portrait-primary", "landscape-primary",
-    "portrait-secondary", "landscape-secondary"
+    "portrait-secondary", "landscape-secondary",
   ];
 
   let or = String(cmd.parameters.orientation);
+  assert.string(or);
   let mozOr = or.toLowerCase();
-  if (ors.indexOf(mozOr) < 0) {
+  if (!ors.includes(mozOr)) {
     throw new InvalidArgumentError(`Unknown screen orientation: ${or}`);
   }
 
-  let win = this.getCurrentWindow();
   if (!win.screen.mozLockOrientation(mozOr)) {
     throw new WebDriverError(`Unable to set screen orientation: ${or}`);
   }
 };
 
 /**
- * Get the size of the browser window currently in focus.
+ * Synchronously minimizes the user agent window as if the user pressed
+ * the minimize button, or restores it if it is already minimized.
  *
- * Will return the current browser window size in pixels. Refers to
- * window outerWidth and outerHeight values, which include scroll bars,
- * title bars, etc.
+ * Not supported on Fennec.
+ *
+ * @return {Object.<string, number>}
+ *     Window rect and window state.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available for current application.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.getWindowSize = function(cmd, resp) {
-  let win = this.getCurrentWindow();
-  resp.body.width = win.outerWidth;
-  resp.body.height = win.outerHeight;
+GeckoDriver.prototype.minimizeWindow = function* (cmd, resp) {
+  assert.firefox();
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
+
+  let state;
+  yield new Promise(resolve => {
+    win.addEventListener("sizemodechange", resolve, {once: true});
+
+    if (win.windowState == win.STATE_MINIMIZED) {
+      win.restore();
+      state = "normal";
+    } else {
+      win.minimize();
+      state = "minimized";
+    }
+  });
+
+  resp.body = {
+    x: win.screenX,
+    y: win.screenY,
+    width: win.outerWidth,
+    height: win.outerHeight,
+    state,
+  };
 };
 
 /**
- * Set the size of the browser window currently in focus.
+ * Synchronously maximizes the user agent window as if the user pressed
+ * the maximize button, or restores it if it is already maximized.
  *
- * Not supported on B2G. The supplied width and height values refer to
- * the window outerWidth and outerHeight values, which include scroll
- * bars, title bars, etc.
+ * Not supported on Fennec.
+ *
+ * @return {Map.<string, number>}
+ *     Window rect.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available for current application.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.setWindowSize = function(cmd, resp) {
-  if (this.appName != "Firefox") {
-    throw new UnsupportedOperationError();
-  }
+GeckoDriver.prototype.maximizeWindow = function* (cmd, resp) {
+  assert.firefox();
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-  let {width, height} = cmd.parameters;
-  let win = this.getCurrentWindow();
-  win.resizeTo(width, height);
-  this.getWindowSize(cmd, resp);
+  yield new Promise(resolve => {
+    win.addEventListener("resize", resolve, {once: true});
+
+    if (win.windowState == win.STATE_MAXIMIZED) {
+      win.restore();
+    } else {
+      win.maximize();
+    }
+  });
+
+  resp.body = {
+    x: win.screenX,
+    y: win.screenY,
+    width: win.outerWidth,
+    height: win.outerHeight,
+  };
 };
 
 /**
- * Maximizes the user agent window as if the user pressed the maximise
- * button.
+ * Synchronously sets the user agent window to full screen as if the user
+ * had done "View > Enter Full Screen", or restores it if it is already
+ * in full screen.
  *
- * Not Supported on B2G or Fennec.
+ * Not supported on Fennec.
+ *
+ * @return {Map.<string, number>}
+ *     Window rect.
+ *
+ * @throws {UnsupportedOperationError}
+ *     Not available for current application.
+ * @throws {NoSuchWindowError}
+ *     Top-level browsing context has been discarded.
+ * @throws {UnexpectedAlertOpenError}
+ *     A modal dialog is open, blocking this operation.
  */
-GeckoDriver.prototype.maximizeWindow = function(cmd, resp) {
-  if (this.appName != "Firefox") {
-    throw new UnsupportedOperationError();
-  }
+GeckoDriver.prototype.fullscreen = function* (cmd, resp) {
+  assert.firefox();
+  const win = assert.window(this.getCurrentWindow());
+  assert.noUserPrompt(this.dialog);
 
-  let win = this.getCurrentWindow();
-  win.maximize()
+  yield new Promise(resolve => {
+    win.addEventListener("sizemodechange", resolve, {once: true});
+
+    win.fullScreen = !win.fullScreen;
+  });
+
+  resp.body = {
+    x: win.screenX,
+    y: win.screenY,
+    width: win.outerWidth,
+    height: win.outerHeight,
+  };
 };
 
 /**
@@ -2495,6 +3013,7 @@ GeckoDriver.prototype.maximizeWindow = function(cmd, resp) {
  * no modal is displayed.
  */
 GeckoDriver.prototype.dismissDialog = function(cmd, resp) {
+  assert.window(this.getCurrentWindow());
   this._checkIfAlertIsPresent();
 
   let {button0, button1} = this.dialog.ui;
@@ -2507,6 +3026,7 @@ GeckoDriver.prototype.dismissDialog = function(cmd, resp) {
  * no modal is displayed.
  */
 GeckoDriver.prototype.acceptDialog = function(cmd, resp) {
+  assert.window(this.getCurrentWindow());
   this._checkIfAlertIsPresent();
 
   let {button0} = this.dialog.ui;
@@ -2515,10 +3035,11 @@ GeckoDriver.prototype.acceptDialog = function(cmd, resp) {
 };
 
 /**
- * Returns the message shown in a currently displayed modal, or returns a no such
- * alert error if no modal is currently displayed.
+ * Returns the message shown in a currently displayed modal, or returns
+ * a no such alert error if no modal is currently displayed.
  */
 GeckoDriver.prototype.getTextFromDialog = function(cmd, resp) {
+  assert.window(this.getCurrentWindow());
   this._checkIfAlertIsPresent();
 
   let {infoBody} = this.dialog.ui;
@@ -2526,66 +3047,171 @@ GeckoDriver.prototype.getTextFromDialog = function(cmd, resp) {
 };
 
 /**
+ * Set the user prompt's value field.
+ *
  * Sends keys to the input field of a currently displayed modal, or
  * returns a no such alert error if no modal is currently displayed. If
  * a tab modal is currently displayed but has no means for text input,
  * an element not visible error is returned.
+ *
+ * @param {string} text
+ *     Input to the user prompt's value field.
+ *
+ * @throws {ElementNotInteractableError}
+ *     If the current user prompt is an alert or confirm.
+ * @throws {NoSuchAlertError}
+ *     If there is no current user prompt.
+ * @throws {UnsupportedOperationError}
+ *     If the current user prompt is something other than an alert,
+ *     confirm, or a prompt.
  */
 GeckoDriver.prototype.sendKeysToDialog = function(cmd, resp) {
+  let win = assert.window(this.getCurrentWindow());
   this._checkIfAlertIsPresent();
 
   // see toolkit/components/prompts/content/commonDialog.js
   let {loginContainer, loginTextbox} = this.dialog.ui;
   if (loginContainer.hidden) {
-    throw new ElementNotVisibleError("This prompt does not accept text input");
+    throw new ElementNotInteractableError(
+        "This prompt does not accept text input");
   }
 
-  let win = this.dialog.window ? this.dialog.window : this.getCurrentWindow();
   event.sendKeysToElement(
-      cmd.parameters.value,
+      cmd.parameters.text,
       loginTextbox,
       {ignoreVisibility: true},
-      win);
+      this.dialog.window ? this.dialog.window : win);
 };
 
 GeckoDriver.prototype._checkIfAlertIsPresent = function() {
   if (!this.dialog || !this.dialog.ui) {
-    throw new NoAlertOpenError(
-        "No tab modal was open when attempting to get the dialog text");
+    throw new NoAlertOpenError("No modal dialog is currently open");
   }
 };
 
 /**
- * Quits Firefox with the provided flags and tears down the current
- * session.
+ * Enables or disables accepting new socket connections.
+ *
+ * By calling this method with `false` the server will not accept any
+ * further connections, but existing connections will not be forcible
+ * closed. Use `true` to re-enable accepting connections.
+ *
+ * Please note that when closing the connection via the client you can
+ * end-up in a non-recoverable state if it hasn't been enabled before.
+ *
+ * This method is used for custom in application shutdowns via
+ * marionette.quit() or marionette.restart(), like File -> Quit.
+ *
+ * @param {boolean} state
+ *     True if the server should accept new socket connections.
  */
-GeckoDriver.prototype.quitApplication = function(cmd, resp) {
-  if (this.appName != "Firefox") {
-    throw new WebDriverError("In app initiated quit only supported in Firefox");
-  }
-
-  let flags = Ci.nsIAppStartup.eAttemptQuit;
-  for (let k of cmd.parameters.flags || []) {
-    flags |= Ci.nsIAppStartup[k];
-  }
-
-  this.stopSignal_();
-  resp.send();
-
-  this.sessionTearDown();
-  Services.startup.quit(flags);
+GeckoDriver.prototype.acceptConnections = function(cmd, resp) {
+  assert.boolean(cmd.parameters.value);
+  this._server.acceptConnections = cmd.parameters.value;
 };
 
 /**
- * Helper function to convert an outerWindowID into a UID that Marionette
- * tracks.
+ * Quits the application with the provided flags.
+ *
+ * Marionette will stop accepting new connections before ending the
+ * current session, and finally attempting to quit the application.
+ *
+ * Optional {@link nsIAppStartup} flags may be provided as
+ * an array of masks, and these will be combined by ORing
+ * them with a bitmask.  The available masks are defined in
+ * https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIAppStartup.
+ *
+ * Crucially, only one of the *Quit flags can be specified. The |eRestart|
+ * flag may be bit-wise combined with one of the *Quit flags to cause
+ * the application to restart after it quits.
+ *
+ * @param {Array.<string>=} flags
+ *     Constant name of masks to pass to |Services.startup.quit|.
+ *     If empty or undefined, |nsIAppStartup.eAttemptQuit| is used.
+ *
+ * @return {string}
+ *     Explaining the reason why the application quit.  This can be
+ *     in response to a normal shutdown or restart, yielding "shutdown"
+ *     or "restart", respectively.
+ *
+ * @throws {InvalidArgumentError}
+ *     If |flags| contains unknown or incompatible flags, for example
+ *     multiple Quit flags.
  */
-GeckoDriver.prototype.generateFrameId = function(id) {
-  let uid = id + (this.appName == "B2G" ? "-b2g" : "");
-  return uid;
+GeckoDriver.prototype.quit = function* (cmd, resp) {
+  const quits = ["eConsiderQuit", "eAttemptQuit", "eForceQuit"];
+
+  let flags = [];
+  if (typeof cmd.parameters.flags != "undefined") {
+    flags = assert.array(cmd.parameters.flags);
+  }
+
+  // bug 1298921
+  assert.firefox();
+
+  let quitSeen;
+  let mode = 0;
+  if (flags.length > 0) {
+    for (let k of flags) {
+      assert.in(k, Ci.nsIAppStartup);
+
+      if (quits.includes(k)) {
+        if (quitSeen) {
+          throw new InvalidArgumentError(
+              `${k} cannot be combined with ${quitSeen}`);
+        }
+        quitSeen = k;
+      }
+
+      mode |= Ci.nsIAppStartup[k];
+    }
+  } else {
+    mode = Ci.nsIAppStartup.eAttemptQuit;
+  }
+
+  this._server.acceptConnections = false;
+  this.deleteSession();
+
+  // delay response until the application is about to quit
+  let quitApplication = new Promise(resolve => {
+    Services.obs.addObserver(
+        (subject, topic, data) => resolve(data),
+        "quit-application");
+  });
+
+  Services.startup.quit(mode);
+
+  yield quitApplication
+      .then(cause => resp.body.cause = cause)
+      .then(() => resp.send());
+};
+
+GeckoDriver.prototype.installAddon = function(cmd, resp) {
+  assert.firefox();
+
+  let path = cmd.parameters.path;
+  let temp = cmd.parameters.temporary || false;
+  if (typeof path == "undefined" || typeof path != "string" ||
+      typeof temp != "boolean") {
+    throw InvalidArgumentError();
+  }
+
+  return addon.install(path, temp);
+};
+
+GeckoDriver.prototype.uninstallAddon = function(cmd, resp) {
+  assert.firefox();
+
+  let id = cmd.parameters.id;
+  if (typeof id == "undefined" || typeof id != "string") {
+    throw new InvalidArgumentError();
+  }
+
+  return addon.uninstall(id);
 };
 
 /** Receives all messages from content messageManager. */
+/* eslint-disable consistent-return */
 GeckoDriver.prototype.receiveMessage = function(message) {
   switch (message.name) {
     case "Marionette:ok":
@@ -2602,13 +3228,6 @@ GeckoDriver.prototype.receiveMessage = function(message) {
     case "Marionette:log":
       // log server-side messages
       logger.info(message.json.message);
-      break;
-
-    case "Marionette:shareData":
-      // log messages from tests
-      if (message.json.log) {
-        this.marionetteLog.addAll(message.json.log);
-      }
       break;
 
     case "Marionette:switchToModalOrigin":
@@ -2631,36 +3250,6 @@ GeckoDriver.prototype.receiveMessage = function(message) {
       }
       break;
 
-    case "Marionette:getVisibleCookies":
-      let [currentPath, host] = message.json;
-      let isForCurrentPath = path => currentPath.indexOf(path) != -1;
-      let results = [];
-
-      let en = cookieManager.getCookiesFromHost(host, {});
-      while (en.hasMoreElements()) {
-        let cookie = en.getNext().QueryInterface(Ci.nsICookie2);
-        // take the hostname and progressively shorten
-        let hostname = host;
-        do {
-          if ((cookie.host == "." + hostname || cookie.host == hostname) &&
-              isForCurrentPath(cookie.path)) {
-            results.push({
-              "name": cookie.name,
-              "value": cookie.value,
-              "path": cookie.path,
-              "host": cookie.host,
-              "secure": cookie.isSecure,
-              "expiry": cookie.expires,
-              "httpOnly": cookie.isHttpOnly,
-              "originAttributes": cookie.originAttributes
-            });
-            break;
-          }
-          hostname = hostname.replace(/^.*?\./, "");
-        } while (hostname.indexOf(".") != -1);
-      }
-      return results;
-
     case "Marionette:emitTouchEvent":
       globalMessageManager.broadcastAsyncMessage(
           "MarionetteMainListener:emitTouchEvent", message.json);
@@ -2674,105 +3263,318 @@ GeckoDriver.prototype.receiveMessage = function(message) {
 
     case "Marionette:listenersAttached":
       if (message.json.listenerId === this.curBrowser.curFrameId) {
-        // If remoteness gets updated we need to call newSession. In the case
-        // of desktop this just sets up a small amount of state that doesn't
-        // change over the course of a session.
-        this.sendAsync("newSession", this.sessionCapabilities);
+        // If the frame script gets reloaded we need to call newSession.
+        // In the case of desktop this just sets up a small amount of state
+        // that doesn't change over the course of a session.
+        this.sendAsync("newSession", this.capabilities.toJSON());
         this.curBrowser.flushPendingCommands();
       }
       break;
   }
 };
+/* eslint-enable consistent-return */
 
-GeckoDriver.prototype.responseCompleted = function () {
+GeckoDriver.prototype.responseCompleted = function() {
   if (this.curBrowser !== null) {
     this.curBrowser.pendingCommands = [];
   }
 };
 
+/**
+ * Retrieve the localized string for the specified entity id.
+ *
+ * Example:
+ *     localizeEntity(["chrome://global/locale/about.dtd"], "about.version")
+ *
+ * @param {Array.<string>} urls
+ *     Array of .dtd URLs.
+ * @param {string} id
+ *     The ID of the entity to retrieve the localized string for.
+ *
+ * @return {string}
+ *     The localized string for the requested entity.
+ */
+GeckoDriver.prototype.localizeEntity = function(cmd, resp) {
+  let {urls, id} = cmd.parameters;
+
+  if (!Array.isArray(urls)) {
+    throw new InvalidArgumentError("Value of `urls` should be of type 'Array'");
+  }
+  if (typeof id != "string") {
+    throw new InvalidArgumentError("Value of `id` should be of type 'string'");
+  }
+
+  resp.body.value = l10n.localizeEntity(urls, id);
+};
+
+/**
+ * Retrieve the localized string for the specified property id.
+ *
+ * Example:
+ *
+ *     localizeProperty(
+ *         ["chrome://global/locale/findbar.properties"], "FastFind");
+ *
+ * @param {Array.<string>} urls
+ *     Array of .properties URLs.
+ * @param {string} id
+ *     The ID of the property to retrieve the localized string for.
+ *
+ * @return {string}
+ *     The localized string for the requested property.
+ */
+GeckoDriver.prototype.localizeProperty = function(cmd, resp) {
+  let {urls, id} = cmd.parameters;
+
+  if (!Array.isArray(urls)) {
+    throw new InvalidArgumentError("Value of `urls` should be of type 'Array'");
+  }
+  if (typeof id != "string") {
+    throw new InvalidArgumentError("Value of `id` should be of type 'string'");
+  }
+
+  resp.body.value = l10n.localizeProperty(urls, id);
+};
+
+/**
+ * Initialize the reftest mode
+ */
+GeckoDriver.prototype.setupReftest = function* (cmd, resp) {
+  if (this._reftest) {
+    throw new UnsupportedOperationError("Called reftest:setup with a reftest session already active");
+  }
+
+  if (this.context !== Context.CHROME) {
+    throw new UnsupportedOperationError("Must set chrome context before running reftests");
+  }
+
+  let {urlCount = {}, screenshot = "unexpected"} = cmd.parameters;
+  if (!["always", "fail", "unexpected"].includes(screenshot)) {
+    throw new InvalidArgumentError("Value of `screenshot` should be 'always', 'fail' or 'unexpected'");
+  }
+
+  this._reftest = new reftest.Runner(this);
+
+  yield this._reftest.setup(urlCount, screenshot);
+};
+
+
+/**
+ * Run a reftest
+ */
+GeckoDriver.prototype.runReftest = function* (cmd, resp) {
+  let {test, references, expected, timeout} = cmd.parameters;
+
+  if (!this._reftest) {
+    throw new UnsupportedOperationError("Called reftest:run before reftest:start");
+  }
+
+  assert.string(test);
+  assert.string(expected);
+  assert.array(references);
+
+  let result = yield this._reftest.run(test, references, expected, timeout);
+
+  resp.body.value = result;
+};
+
+/**
+ * End a reftest run
+ *
+ * Closes the reftest window (without changing the current window handle),
+ * and removes cached canvases.
+ */
+GeckoDriver.prototype.teardownReftest = function* (cmd, resp) {
+  if (!this._reftest) {
+    throw new UnsupportedOperationError("Called reftest:teardown before reftest:start");
+  }
+
+  this._reftest.abort();
+
+  this._reftest = null;
+};
+
+
 GeckoDriver.prototype.commands = {
-  "getMarionetteID": GeckoDriver.prototype.getMarionetteID,
-  "sayHello": GeckoDriver.prototype.sayHello,
-  "newSession": GeckoDriver.prototype.newSession,
-  "getSessionCapabilities": GeckoDriver.prototype.getSessionCapabilities,
-  "log": GeckoDriver.prototype.log,
-  "getLogs": GeckoDriver.prototype.getLogs,
-  "setContext": GeckoDriver.prototype.setContext,
+  // Marionette service
+  "Marionette:SetContext": GeckoDriver.prototype.setContext,
+  "setContext": GeckoDriver.prototype.setContext,  // deprecated, remove in Firefox 60
+  "Marionette:GetContext": GeckoDriver.prototype.getContext,
   "getContext": GeckoDriver.prototype.getContext,
-  "executeScript": GeckoDriver.prototype.executeScript,
-  "setScriptTimeout": GeckoDriver.prototype.setScriptTimeout,
-  "timeouts": GeckoDriver.prototype.timeouts,
-  "singleTap": GeckoDriver.prototype.singleTap,
+  "Marionette:AcceptConnections": GeckoDriver.prototype.acceptConnections,
+  "acceptConnections": GeckoDriver.prototype.acceptConnections,  // deprecated, remove in Firefox 60
+  "Marionette:Quit": GeckoDriver.prototype.quit,
+  "quit": GeckoDriver.prototype.quit,  // deprecated, remove in Firefox 60
+  "quitApplication": GeckoDriver.prototype.quit,  // deprecated, remove in Firefox 60
+
+  // Addon service
+  "Addon:Install": GeckoDriver.prototype.installAddon,
+  "addon:install": GeckoDriver.prototype.installAddon,  // deprecated, remove in Firefox 60
+  "Addon:Uninstall": GeckoDriver.prototype.uninstallAddon,
+  "addon:uninstall": GeckoDriver.prototype.uninstallAddon,  // deprecated, remove in Firefox 60
+
+  // L10n service
+  "L10n:LocalizeEntity": GeckoDriver.prototype.localizeEntity,
+  "localization:l10n:localizeEntity": GeckoDriver.prototype.localizeEntity,  // deprecated, remove in Firefox 60
+  "L10n:LocalizeProperty": GeckoDriver.prototype.localizeProperty,
+  "localization:l10n:localizeProperty": GeckoDriver.prototype.localizeProperty,  // deprecated, remove in Firefox 60
+
+  // Reftest service
+  "reftest:setup": GeckoDriver.prototype.setupReftest,
+  "reftest:run": GeckoDriver.prototype.runReftest,
+  "reftest:teardown": GeckoDriver.prototype.teardownReftest,
+
+  // WebDriver service
+  "WebDriver:AcceptDialog": GeckoDriver.prototype.acceptDialog,
+  "WebDriver:AddCookie": GeckoDriver.prototype.addCookie,
+  "WebDriver:Back": GeckoDriver.prototype.goBack,
+  "WebDriver:CloseChromeWindow": GeckoDriver.prototype.closeChromeWindow,
+  "WebDriver:CloseWindow": GeckoDriver.prototype.close,
+  "WebDriver:DeleteAllCookies": GeckoDriver.prototype.deleteAllCookies,
+  "WebDriver:DeleteCookie": GeckoDriver.prototype.deleteCookie,
+  "WebDriver:DeleteSession": GeckoDriver.prototype.deleteSession,
+  "WebDriver:DismissAlert": GeckoDriver.prototype.dismissDialog,
+  "WebDriver:ElementClear": GeckoDriver.prototype.clearElement,
+  "WebDriver:ElementClick": GeckoDriver.prototype.clickElement,
+  "WebDriver:ElementSendKeys": GeckoDriver.prototype.sendKeysToElement,
+  "WebDriver:ExecuteAsyncScript": GeckoDriver.prototype.executeAsyncScript,
+  "WebDriver:ExecuteScript": GeckoDriver.prototype.executeScript,
+  "WebDriver:FindElement": GeckoDriver.prototype.findElement,
+  "WebDriver:FindElements": GeckoDriver.prototype.findElements,
+  "WebDriver:Forward": GeckoDriver.prototype.goForward,
+  "WebDriver:FullscreenWindow": GeckoDriver.prototype.fullscreen,
+  "WebDriver:GetActiveElement": GeckoDriver.prototype.getActiveElement,
+  "WebDriver:GetActiveFrame": GeckoDriver.prototype.getActiveFrame,
+  "WebDriver:GetAlertText": GeckoDriver.prototype.getTextFromDialog,
+  "WebDriver:GetCapabilities": GeckoDriver.prototype.getSessionCapabilities,
+  "WebDriver:GetChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
+  "WebDriver:GetChromeWindowHandles": GeckoDriver.prototype.getChromeWindowHandles,
+  "WebDriver:GetCookies": GeckoDriver.prototype.getCookies,
+  "WebDriver:GetCurrentChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
+  "WebDriver:GetCurrentURL": GeckoDriver.prototype.getCurrentUrl,
+  "WebDriver:GetElementAttribute": GeckoDriver.prototype.getElementAttribute,
+  "WebDriver:GetElementCSSValue": GeckoDriver.prototype.getElementValueOfCssProperty,
+  "WebDriver:GetElementProperty": GeckoDriver.prototype.getElementProperty,
+  "WebDriver:GetElementRect": GeckoDriver.prototype.getElementRect,
+  "WebDriver:GetElementTagName": GeckoDriver.prototype.getElementTagName,
+  "WebDriver:GetElementText": GeckoDriver.prototype.getElementText,
+  "WebDriver:GetPageSource": GeckoDriver.prototype.getPageSource,
+  "WebDriver:GetScreenOrientation": GeckoDriver.prototype.getScreenOrientation,
+  "WebDriver:GetTimeouts": GeckoDriver.prototype.getTimeouts,
+  "WebDriver:GetTitle": GeckoDriver.prototype.getTitle,
+  "WebDriver:GetWindowHandle": GeckoDriver.prototype.getWindowHandle,
+  "WebDriver:GetWindowHandles": GeckoDriver.prototype.getWindowHandles,
+  "WebDriver:GetWindowRect": GeckoDriver.prototype.getWindowRect,
+  "WebDriver:GetWindowType": GeckoDriver.prototype.getWindowType,
+  "WebDriver:IsElementDisplayed": GeckoDriver.prototype.isElementDisplayed,
+  "WebDriver:IsElementEnabled": GeckoDriver.prototype.isElementEnabled,
+  "WebDriver:IsElementSelected": GeckoDriver.prototype.isElementSelected,
+  "WebDriver:MinimizeWindow": GeckoDriver.prototype.minimizeWindow,
+  "WebDriver:MaximizeWindow": GeckoDriver.prototype.maximizeWindow,
+  "WebDriver:Navigate": GeckoDriver.prototype.get,
+  "WebDriver:NewSession": GeckoDriver.prototype.newSession,
+  "WebDriver:PerformActions": GeckoDriver.prototype.performActions,
+  "WebDriver:Refresh":  GeckoDriver.prototype.refresh,
+  "WebDriver:ReleaseActions": GeckoDriver.prototype.releaseActions,
+  "WebDriver:SendAlertText": GeckoDriver.prototype.sendKeysToDialog,
+  "WebDriver:SetScreenOrientation": GeckoDriver.prototype.setScreenOrientation,
+  "WebDriver:SetTimeouts": GeckoDriver.prototype.setTimeouts,
+  "WebDriver:SetWindowRect": GeckoDriver.prototype.setWindowRect,
+  "WebDriver:SwitchToFrame": GeckoDriver.prototype.switchToFrame,
+  "WebDriver:SwitchToParentFrame": GeckoDriver.prototype.switchToParentFrame,
+  "WebDriver:SwitchToShadowRoot": GeckoDriver.prototype.switchToShadowRoot,
+  "WebDriver:SwitchToWindow": GeckoDriver.prototype.switchToWindow,
+  "WebDriver:TakeScreenshot": GeckoDriver.prototype.takeScreenshot,
+
+  // deprecated WebDriver commands, remove in Firefox 60
+  "acceptDialog": GeckoDriver.prototype.acceptDialog,
   "actionChain": GeckoDriver.prototype.actionChain,
-  "multiAction": GeckoDriver.prototype.multiAction,
-  "executeAsyncScript": GeckoDriver.prototype.executeAsyncScript,
-  "executeJSScript": GeckoDriver.prototype.executeJSScript,
-  "setSearchTimeout": GeckoDriver.prototype.setSearchTimeout,
-  "findElement": GeckoDriver.prototype.findElement,
-  "findElements": GeckoDriver.prototype.findElements,
-  "clickElement": GeckoDriver.prototype.clickElement,
-  "getElementAttribute": GeckoDriver.prototype.getElementAttribute,
-  "getElementProperty": GeckoDriver.prototype.getElementProperty,
-  "getElementText": GeckoDriver.prototype.getElementText,
-  "getElementTagName": GeckoDriver.prototype.getElementTagName,
-  "isElementDisplayed": GeckoDriver.prototype.isElementDisplayed,
-  "getElementValueOfCssProperty": GeckoDriver.prototype.getElementValueOfCssProperty,
-  "getElementRect": GeckoDriver.prototype.getElementRect,
-  "isElementEnabled": GeckoDriver.prototype.isElementEnabled,
-  "isElementSelected": GeckoDriver.prototype.isElementSelected,
-  "sendKeysToElement": GeckoDriver.prototype.sendKeysToElement,
-  "clearElement": GeckoDriver.prototype.clearElement,
-  "getTitle": GeckoDriver.prototype.getTitle,
-  "getWindowType": GeckoDriver.prototype.getWindowType,
-  "getPageSource": GeckoDriver.prototype.getPageSource,
-  "get": GeckoDriver.prototype.get,
-  "goUrl": GeckoDriver.prototype.get,  // deprecated
-  "getCurrentUrl": GeckoDriver.prototype.getCurrentUrl,
-  "getUrl": GeckoDriver.prototype.getCurrentUrl,  // deprecated
-  "goBack": GeckoDriver.prototype.goBack,
-  "goForward": GeckoDriver.prototype.goForward,
-  "refresh":  GeckoDriver.prototype.refresh,
-  "getWindowHandle": GeckoDriver.prototype.getWindowHandle,
-  "getCurrentWindowHandle":  GeckoDriver.prototype.getWindowHandle,  // Selenium 2 compat
-  "getChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
-  "getCurrentChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
-  "getWindow":  GeckoDriver.prototype.getWindowHandle,  // deprecated
-  "getWindowHandles": GeckoDriver.prototype.getWindowHandles,
-  "getChromeWindowHandles": GeckoDriver.prototype.getChromeWindowHandles,
-  "getCurrentWindowHandles": GeckoDriver.prototype.getWindowHandles,  // Selenium 2 compat
-  "getWindows":  GeckoDriver.prototype.getWindowHandles,  // deprecated
-  "getWindowPosition": GeckoDriver.prototype.getWindowPosition,
-  "setWindowPosition": GeckoDriver.prototype.setWindowPosition,
-  "getActiveFrame": GeckoDriver.prototype.getActiveFrame,
-  "switchToFrame": GeckoDriver.prototype.switchToFrame,
-  "switchToParentFrame": GeckoDriver.prototype.switchToParentFrame,
-  "switchToWindow": GeckoDriver.prototype.switchToWindow,
-  "switchToShadowRoot": GeckoDriver.prototype.switchToShadowRoot,
-  "deleteSession": GeckoDriver.prototype.deleteSession,
-  "importScript": GeckoDriver.prototype.importScript,
-  "clearImportedScripts": GeckoDriver.prototype.clearImportedScripts,
-  "getAppCacheStatus": GeckoDriver.prototype.getAppCacheStatus,
-  "close": GeckoDriver.prototype.close,
-  "closeWindow": GeckoDriver.prototype.close,  // deprecated
-  "closeChromeWindow": GeckoDriver.prototype.closeChromeWindow,
-  "setTestName": GeckoDriver.prototype.setTestName,
-  "takeScreenshot": GeckoDriver.prototype.takeScreenshot,
-  "screenShot": GeckoDriver.prototype.takeScreenshot,  // deprecated
-  "screenshot": GeckoDriver.prototype.takeScreenshot,  // Selenium 2 compat
   "addCookie": GeckoDriver.prototype.addCookie,
-  "getCookies": GeckoDriver.prototype.getCookies,
-  "getAllCookies": GeckoDriver.prototype.getCookies,  // deprecated
+  "clearElement": GeckoDriver.prototype.clearElement,
+  "clickElement": GeckoDriver.prototype.clickElement,
+  "closeChromeWindow": GeckoDriver.prototype.closeChromeWindow,
+  "close": GeckoDriver.prototype.close,
   "deleteAllCookies": GeckoDriver.prototype.deleteAllCookies,
   "deleteCookie": GeckoDriver.prototype.deleteCookie,
-  "getActiveElement": GeckoDriver.prototype.getActiveElement,
-  "getScreenOrientation": GeckoDriver.prototype.getScreenOrientation,
-  "setScreenOrientation": GeckoDriver.prototype.setScreenOrientation,
-  "getWindowSize": GeckoDriver.prototype.getWindowSize,
-  "setWindowSize": GeckoDriver.prototype.setWindowSize,
-  "maximizeWindow": GeckoDriver.prototype.maximizeWindow,
+  "deleteSession": GeckoDriver.prototype.deleteSession,
   "dismissDialog": GeckoDriver.prototype.dismissDialog,
-  "acceptDialog": GeckoDriver.prototype.acceptDialog,
+  "executeAsyncScript": GeckoDriver.prototype.executeAsyncScript,
+  "executeScript": GeckoDriver.prototype.executeScript,
+  "findElement": GeckoDriver.prototype.findElement,
+  "findElements": GeckoDriver.prototype.findElements,
+  "fullscreen": GeckoDriver.prototype.fullscreen,
+  "getActiveElement": GeckoDriver.prototype.getActiveElement,
+  "getActiveFrame": GeckoDriver.prototype.getActiveFrame,
+  "getChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
+  "getChromeWindowHandles": GeckoDriver.prototype.getChromeWindowHandles,
+  "getCookies": GeckoDriver.prototype.getCookies,
+  "getCurrentChromeWindowHandle": GeckoDriver.prototype.getChromeWindowHandle,
+  "getCurrentUrl": GeckoDriver.prototype.getCurrentUrl,
+  "getElementAttribute": GeckoDriver.prototype.getElementAttribute,
+  "getElementProperty": GeckoDriver.prototype.getElementProperty,
+  "getElementRect": GeckoDriver.prototype.getElementRect,
+  "getElementTagName": GeckoDriver.prototype.getElementTagName,
+  "getElementText": GeckoDriver.prototype.getElementText,
+  "getElementValueOfCssProperty": GeckoDriver.prototype.getElementValueOfCssProperty,
+  "get": GeckoDriver.prototype.get,
+  "getPageSource": GeckoDriver.prototype.getPageSource,
+  "getScreenOrientation": GeckoDriver.prototype.getScreenOrientation,
+  "getSessionCapabilities": GeckoDriver.prototype.getSessionCapabilities,
   "getTextFromDialog": GeckoDriver.prototype.getTextFromDialog,
+  "getTimeouts": GeckoDriver.prototype.getTimeouts,
+  "getTitle": GeckoDriver.prototype.getTitle,
+  "getWindowHandle": GeckoDriver.prototype.getWindowHandle,
+  "getWindowHandles": GeckoDriver.prototype.getWindowHandles,
+  "getWindowPosition": GeckoDriver.prototype.getWindowRect, // redirect for compatibility
+  "getWindowRect": GeckoDriver.prototype.getWindowRect,
+  "getWindowSize": GeckoDriver.prototype.getWindowRect, // redirect for compatibility
+  "getWindowType": GeckoDriver.prototype.getWindowType,
+  "goBack": GeckoDriver.prototype.goBack,
+  "goForward": GeckoDriver.prototype.goForward,
+  "isElementDisplayed": GeckoDriver.prototype.isElementDisplayed,
+  "isElementEnabled": GeckoDriver.prototype.isElementEnabled,
+  "isElementSelected": GeckoDriver.prototype.isElementSelected,
+  "maximizeWindow": GeckoDriver.prototype.maximizeWindow,
+  "multiAction": GeckoDriver.prototype.multiAction,
+  "newSession": GeckoDriver.prototype.newSession,
+  "performActions": GeckoDriver.prototype.performActions,
+  "refresh":  GeckoDriver.prototype.refresh,
+  "releaseActions": GeckoDriver.prototype.releaseActions,
   "sendKeysToDialog": GeckoDriver.prototype.sendKeysToDialog,
-  "quitApplication": GeckoDriver.prototype.quitApplication,
+  "sendKeysToElement": GeckoDriver.prototype.sendKeysToElement,
+  "setScreenOrientation": GeckoDriver.prototype.setScreenOrientation,
+  "setTimeouts": GeckoDriver.prototype.setTimeouts,
+  "setWindowPosition": GeckoDriver.prototype.setWindowRect, // redirect for compatibility
+  "setWindowRect": GeckoDriver.prototype.setWindowRect,
+  "setWindowSize": GeckoDriver.prototype.setWindowRect, // redirect for compatibility
+  "singleTap": GeckoDriver.prototype.singleTap,
+  "switchToFrame": GeckoDriver.prototype.switchToFrame,
+  "switchToParentFrame": GeckoDriver.prototype.switchToParentFrame,
+  "switchToShadowRoot": GeckoDriver.prototype.switchToShadowRoot,
+  "switchToWindow": GeckoDriver.prototype.switchToWindow,
+  "takeScreenshot": GeckoDriver.prototype.takeScreenshot,
 };
+
+function copy(obj) {
+  if (Array.isArray(obj)) {
+    return obj.slice();
+  } else if (typeof obj == "object") {
+    return Object.assign({}, obj);
+  }
+  return obj;
+}
+
+/**
+ * Get the outer window ID for the specified window.
+ *
+ * @param {nsIDOMWindow} win
+ *     Window whose browser we need to access.
+ *
+ * @return {string}
+ *     Returns the unique window ID.
+ */
+function getOuterWindowId(win) {
+  return win.QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIDOMWindowUtils)
+      .outerWindowID;
+}

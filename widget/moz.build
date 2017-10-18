@@ -4,11 +4,38 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "Widget")
+
+with Files("crashtests/*1128214*"):
+    BUG_COMPONENT = ("Core", "Layout")
+
+with Files("crashtests/*303901*"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
+with Files("crashtests/*380359*"):
+    BUG_COMPONENT = ("Core", "Widget")
+
+with Files("reftests/**"):
+    BUG_COMPONENT = ("Core", "Widget: Cocoa")
+
+with Files("reftests/*fallback*"):
+    BUG_COMPONENT = ("Core", "Layout: Form Controls")
+
+with Files("*CompositorWidget*"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
+with Files("*WindowSurface*"):
+    BUG_COMPONENT = ("Core", "Graphics")
+
+with Files("*FontRange*"):
+    BUG_COMPONENT = ("Core", "Widget: Cocoa")
+
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
-if toolkit in ('cocoa', 'android', 'gonk', 'uikit'):
+if toolkit in ('cocoa', 'android', 'uikit'):
     DIRS += [toolkit]
-if toolkit in ('android', 'gonk', 'gtk2', 'gtk3'):
+if toolkit in ('android', 'cocoa', 'gtk2', 'gtk3'):
     EXPORTS += ['nsIPrintDialogService.h']
 
 if toolkit == 'windows':
@@ -38,10 +65,11 @@ elif toolkit == 'cocoa':
     ]
     EXPORTS += [
         'nsINativeMenuService.h',
-        'nsIPrintDialogService.h',
     ]
 
 TEST_DIRS += ['tests']
+
+DIRS += ['headless']
 
 # Don't build the DSO under the 'build' directory as windows does.
 #
@@ -65,7 +93,6 @@ XPIDL_SOURCES += [
     'nsIClipboardHelper.idl',
     'nsIClipboardOwner.idl',
     'nsIColorPicker.idl',
-    'nsIDatePicker.idl',
     'nsIDisplayInfo.idl',
     'nsIDragService.idl',
     'nsIDragSession.idl',
@@ -75,7 +102,7 @@ XPIDL_SOURCES += [
     'nsIGfxInfoDebug.idl',
     'nsIIdleService.idl',
     'nsIIdleServiceInternal.idl',
-    'nsIPrintOptions.idl',
+    'nsIPrinterEnumerator.idl',
     'nsIPrintSession.idl',
     'nsIPrintSettings.idl',
     'nsIPrintSettingsService.idl',
@@ -102,7 +129,6 @@ EXPORTS += [
     'nsIWidgetListener.h',
     'nsWidgetInitData.h',
     'nsWidgetsCID.h',
-    'PluginWidgetProxy.h',
     'PuppetWidget.h',
 ]
 
@@ -131,7 +157,10 @@ EXPORTS.mozilla.widget += [
     'CompositorWidget.h',
     'IMEData.h',
     'InProcessCompositorWidget.h',
+    'nsAutoRollup.h',
     'PuppetBidiKeyboard.h',
+    'Screen.h',
+    'ScreenManager.h',
     'WidgetMessageUtils.h',
     'WindowSurface.h'
 ]
@@ -145,13 +174,13 @@ UNIFIED_SOURCES += [
     'GfxInfoWebGL.cpp',
     'InProcessCompositorWidget.cpp',
     'InputData.cpp',
+    'nsAutoRollup.cpp',
     'nsBaseAppShell.cpp',
     'nsBaseScreen.cpp',
     'nsClipboardHelper.cpp',
     'nsClipboardProxy.cpp',
     'nsColorPickerProxy.cpp',
     'nsContentProcessWidgetFactory.cpp',
-    'nsDatePickerProxy.cpp',
     'nsDragServiceProxy.cpp',
     'nsFilePickerProxy.cpp',
     'nsHTMLFormatConverter.cpp',
@@ -159,18 +188,26 @@ UNIFIED_SOURCES += [
     'nsIWidgetListener.cpp',
     'nsPrimitiveHelpers.cpp',
     'nsPrintSettingsImpl.cpp',
-    'nsScreenManagerProxy.cpp',
     'nsTransferable.cpp',
     'nsXPLookAndFeel.cpp',
     'PuppetBidiKeyboard.cpp',
     'PuppetWidget.cpp',
-    'ScreenProxy.cpp',
+    'Screen.cpp',
+    'ScreenManager.cpp',
     'SharedWidgetUtils.cpp',
     'TextEventDispatcher.cpp',
     'VsyncDispatcher.cpp',
     'WidgetEventImpl.cpp',
     'WidgetUtils.cpp',
 ]
+
+if CONFIG['OS_ARCH'] == 'Linux':
+    EXPORTS.mozilla.widget += [
+        'LSBUtils.h'
+    ]
+    SOURCES += [
+        'LSBUtils.cpp'
+    ]
 
 if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
     EXPORTS += [
@@ -185,12 +222,9 @@ if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
 
 # nsBaseWidget.cpp needs to be built separately because of name clashes in the OS X headers
 # nsBaseDragService.cpp moved out of UNIFIED to fix xgill crash (bug 1259850) after moving widget/ContentHelper -> apz/util/TouchActionHelper
-# PluginWidgetProxy includes MacOS system headers which define a Point struct
-# that conflicts with mozilla::gfx::Point
 SOURCES += [
     'nsBaseDragService.cpp',
     'nsBaseWidget.cpp',
-    'PluginWidgetProxy.cpp',
 ]
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
@@ -210,13 +244,21 @@ if CONFIG['MOZ_X11']:
         'WindowSurfaceX11SHM.cpp',
     ]
 
+if toolkit == 'windows':
+    EXPORTS += [
+        'PluginWidgetProxy.h',
+    ]
+    SOURCES += [
+        'PluginWidgetProxy.cpp',
+    ]
+
 if toolkit in ('cocoa', 'windows'):
     UNIFIED_SOURCES += [
         'nsBaseClipboard.cpp',
     ]
 
 if toolkit in {'gtk2', 'gtk3', 'cocoa', 'windows',
-               'android', 'gonk', 'uikit'}:
+               'android', 'uikit'}:
     UNIFIED_SOURCES += [
         'nsBaseFilePicker.cpp',
     ]
@@ -241,15 +283,22 @@ LOCAL_INCLUDES += [
     '/layout/base',
     '/layout/forms',
     '/layout/generic',
+    '/layout/painting',
     '/layout/xul',
     '/view',
     '/widget',
+    '/widget/headless',
 ]
 
 if toolkit == 'windows':
     IPDL_SOURCES = [
         'windows/PCompositorWidget.ipdl',
         'windows/PlatformWidgetTypes.ipdlh',
+    ]
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] and CONFIG['MOZ_X11']:
+    IPDL_SOURCES = [
+        'gtk/PCompositorWidget.ipdl',
+        'gtk/PlatformWidgetTypes.ipdlh',
     ]
 else:
     IPDL_SOURCES = [
@@ -271,6 +320,3 @@ if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-error=shadow']

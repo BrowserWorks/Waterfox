@@ -28,9 +28,9 @@ DEFAULTS = dict(
         profile_path='${talos}/base_profile',
         responsiveness=False,
         e10s=False,
-        sps_profile=False,
-        sps_profile_interval=1,
-        sps_profile_entries=100000,
+        gecko_profile=False,
+        gecko_profile_interval=1,
+        gecko_profile_entries=100000,
         resolution=1,
         rss=False,
         mainthread=False,
@@ -39,6 +39,11 @@ DEFAULTS = dict(
         tpchrome=True,
         tpcycles=10,
         tpmozafterpaint=False,
+        fnbpaint=False,
+        firstpaint=False,
+        userready=False,
+        testeventmap=[],
+        base_vs_ref=False,
         tpdisable_e10s=False,
         tpnoisy=True,
         tppagecycles=1,
@@ -92,14 +97,23 @@ DEFAULTS = dict(
         'dom.send_after_paint_to_content': True,
         'security.turn_off_all_security_so_that_viruses_can_'
         'take_over_this_computer': True,
+        'browser.newtabpage.activity-stream.default.sites': '',
+        'browser.newtabpage.activity-stream.telemetry': False,
+        'browser.newtabpage.activity-stream.feeds.section.topstories': False,
+        'browser.newtabpage.activity-stream.feeds.snippets': False,
         'browser.newtabpage.directory.source':
             '${webserver}/directoryLinks.json',
-        'browser.newtabpage.directory.ping': '',
         'browser.newtabpage.introShown': True,
+        'browser.safebrowsing.downloads.remote.url':
+            'http://127.0.0.1/safebrowsing-dummy/downloads',
         'browser.safebrowsing.provider.google.gethashURL':
             'http://127.0.0.1/safebrowsing-dummy/gethash',
         'browser.safebrowsing.provider.google.updateURL':
             'http://127.0.0.1/safebrowsing-dummy/update',
+        'browser.safebrowsing.provider.google4.gethashURL':
+            'http://127.0.0.1/safebrowsing4-dummy/gethash',
+        'browser.safebrowsing.provider.google4.updateURL':
+            'http://127.0.0.1/safebrowsing4-dummy/update',
         'browser.safebrowsing.provider.mozilla.gethashURL':
             'http://127.0.0.1/safebrowsing-dummy/gethash',
         'browser.safebrowsing.provider.mozilla.updateURL':
@@ -108,14 +122,12 @@ DEFAULTS = dict(
             'http://127.0.0.1/trackingprotection/tour',
         'browser.safebrowsing.phishing.enabled': False,
         'browser.safebrowsing.malware.enabled': False,
-        'browser.safebrowsing.forbiddenURIs.enabled': False,
         'browser.safebrowsing.blockedURIs.enabled': False,
         'privacy.trackingprotection.enabled': False,
         'privacy.trackingprotection.pbmode.enabled': False,
         'browser.search.isUS': True,
         'browser.search.countryCode': 'US',
-        'browser.selfsupport.url':
-            'https://127.0.0.1/selfsupport-dummy/',
+        'browser.urlbar.userMadeSearchSuggestionsChoice': True,
         'extensions.update.url':
             'http://127.0.0.1/extensions-dummy/updateURL',
         'extensions.update.background.url':
@@ -140,8 +152,11 @@ DEFAULTS = dict(
             'http://127.0.0.1/extensions-dummy/repositorySearchURL',
         'media.gmp-manager.url':
             'http://127.0.0.1/gmpmanager-dummy/update.xml',
+        'media.gmp-manager.updateEnabled': False,
         'extensions.systemAddon.update.url':
             'http://127.0.0.1/dummy-system-addons.xml',
+        'extensions.shield-recipe-client.api_url':
+            'https://127.0.0.1/selfsupport-dummy/',
         'media.navigator.enabled': True,
         'media.peerconnection.enabled': True,
         'media.navigator.permission.disabled': True,
@@ -167,16 +182,15 @@ DEFAULTS = dict(
         'experiments.manifest.uri':
             'https://127.0.0.1/experiments-dummy/manifest',
         'network.http.speculative-parallel-limit': 0,
-        'app.update.badge': False,
         'lightweightThemes.selectedThemeID': "",
-        'devtools.webide.widget.enabled': False,
-        'devtools.webide.widget.inNavbarByDefault': False,
         'devtools.chrome.enabled': False,
         'devtools.debugger.remote-enabled': False,
         'devtools.theme': "light",
         'devtools.timeline.enabled': False,
         'identity.fxaccounts.migrateToDevEdition': False,
-        'media.libavcodec.allow-obsolete': True
+        'plugin.state.flash': 0,
+        'media.libavcodec.allow-obsolete': True,
+        'extensions.legacy.enabled': True
     }
 )
 
@@ -184,9 +198,9 @@ DEFAULTS = dict(
 # keys to generated self.config that are global overrides to tests
 GLOBAL_OVERRIDES = (
     'cycles',
-    'sps_profile',
-    'sps_profile_interval',
-    'sps_profile_entries',
+    'gecko_profile',
+    'gecko_profile_interval',
+    'gecko_profile_entries',
     'rss',
     'mainthread',
     'shutdown',
@@ -196,6 +210,9 @@ GLOBAL_OVERRIDES = (
     'tpmanifest',
     'tptimeout',
     'tpmozafterpaint',
+    'fnbpaint',
+    'firstpaint',
+    'userready',
 )
 
 
@@ -300,9 +317,6 @@ def get_active_tests(config):
         raise ConfigurationError("No definition found for test(s): %s"
                                  % missing)
 
-    # disabled DAMP on winXP: frequent hangs, <3% of devtools users on winXP
-    if utils.PLATFORM_TYPE == 'win_':
-        activeTests = [i for i in activeTests if i != 'damp']
     return activeTests
 
 
@@ -313,7 +327,7 @@ def get_global_overrides(config):
         value = config[key]
         if value is not None:
             global_overrides[key] = value
-        if key != 'sps_profile':
+        if key != 'gecko_profile':
             config.pop(key)
 
     # add noChrome to global overrides (HACK)
@@ -349,6 +363,9 @@ def build_manifest(config, manifestName):
 
 def get_test(config, global_overrides, counters, test_instance):
     mozAfterPaint = getattr(test_instance, 'tpmozafterpaint', None)
+    firstPaint = getattr(test_instance, 'firstpaint', None)
+    userReady = getattr(test_instance, 'userready', None)
+    firstNonBlankPaint = getattr(test_instance, 'fnbpaint', None)
 
     test_instance.update(**global_overrides)
 
@@ -356,6 +373,12 @@ def get_test(config, global_overrides, counters, test_instance):
     # so check for None
     if mozAfterPaint is not None:
         test_instance.tpmozafterpaint = mozAfterPaint
+    if firstNonBlankPaint is not None:
+        test_instance.fnbpaint = firstNonBlankPaint
+    if firstPaint is not None:
+        test_instance.firstpaint = firstPaint
+    if userReady is not None:
+        test_instance.userready = userReady
 
     # fix up url
     url = getattr(test_instance, 'url', None)
@@ -415,6 +438,9 @@ def get_browser_config(config):
                 'test_timeout': 1200,
                 'xperf_path': None,
                 'error_filename': None,
+                'no_upload_results': False,
+                'stylo': False,
+                'stylothreads': 0,
                 }
     browser_config = dict(title=config['title'])
     browser_config.update(dict([(i, config[i]) for i in required]))

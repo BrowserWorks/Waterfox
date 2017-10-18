@@ -1,11 +1,5 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/si.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 si{
     Currencies{
         AED{
@@ -100,9 +94,13 @@ si{
             "BWP",
             "බොට්ස්වානා පුලා",
         }
+        BYN{
+            "BYN",
+            "බෙලරූස් රූබල්",
+        }
         BYR{
             "BYR",
-            "බෙලරූස් රූබල්",
+            "බෙලරූස් රූබල් (2000–2016)",
         }
         BZD{
             "BZD",
@@ -434,7 +432,7 @@ si{
         }
         PEN{
             "PEN",
-            "පේරු නියුවෝ සොල්",
+            "පේරු සොල්",
         }
         PGK{
             "PGK",
@@ -654,7 +652,7 @@ si{
         BRL{"R$"}
         BSD{"$"}
         BWP{"P"}
-        BYR{"р."}
+        BYN{"р."}
         BZD{"$"}
         CAD{"$"}
         CLP{"$"}
@@ -671,6 +669,7 @@ si{
         FJD{"$"}
         FKP{"£"}
         GBP{"£"}
+        GEL{"₾"}
         GIP{"£"}
         GNF{"FG"}
         GTQ{"Q"}
@@ -833,9 +832,13 @@ si{
             one{"බොට්ස්වානා පුලා"}
             other{"බොට්ස්වානා පුලා"}
         }
-        BYR{
+        BYN{
             one{"බෙලරූස් රූබල්"}
             other{"බෙලරූස් රූබල්"}
+        }
+        BYR{
+            one{"බෙලරූස් රූබල් (2000–2016)"}
+            other{"බෙලරූස් රූබල් (2000–2016)"}
         }
         BZD{
             one{"බෙලිස් ඩොලර්"}
@@ -1162,8 +1165,8 @@ si{
             other{"පැනමා බැල්බෝ"}
         }
         PEN{
-            one{"පේරු නියුවෝ සොල්"}
-            other{"පේරු නියුවෝ සොල්"}
+            one{"පේරු සොල්"}
+            other{"පේරු සොල්"}
         }
         PGK{
             one{"පැපුවා නිව් ගිනියානු කිනා"}
@@ -1370,5 +1373,5 @@ si{
         one{"{1}{0}"}
         other{"{1}{0}"}
     }
-    Version{"2.1.20.4"}
+    Version{"2.1.33.28"}
 }

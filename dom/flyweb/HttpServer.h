@@ -20,6 +20,8 @@
 
 class nsIX509Cert;
 
+class nsISerialEventTarget;
+
 namespace mozilla {
 namespace dom {
 
@@ -32,9 +34,7 @@ class InternalResponse;
 class HttpServerListener
 {
 public:
-  // switch to NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING when that lands
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) = 0;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) = 0;
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
 
   virtual void OnServerStarted(nsresult aStatus) = 0;
   virtual void OnRequest(InternalRequest* aRequest) = 0;
@@ -46,7 +46,7 @@ class HttpServer final : public nsIServerSocketListener,
                          public nsILocalCertGetCallback
 {
 public:
-  HttpServer();
+  explicit HttpServer(nsISerialEventTarget* aEventTarget);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISERVERSOCKETLISTENER
@@ -129,12 +129,12 @@ private:
 
     void SetSecurityObserver(bool aListen);
 
-    static NS_METHOD ReadSegmentsFunc(nsIInputStream* aIn,
-                                      void* aClosure,
-                                      const char* aBuffer,
-                                      uint32_t aToOffset,
-                                      uint32_t aCount,
-                                      uint32_t* aWriteCount);
+    static nsresult ReadSegmentsFunc(nsIInputStream* aIn,
+                                     void* aClosure,
+                                     const char* aBuffer,
+                                     uint32_t aToOffset,
+                                     uint32_t aCount,
+                                     uint32_t* aWriteCount);
     nsresult ConsumeInput(const char*& aBuffer,
                           const char* aEnd);
     nsresult ConsumeLine(const char* aBuffer,
@@ -185,6 +185,8 @@ private:
 
   int32_t mPort;
   bool mHttps;
+
+  const nsCOMPtr<nsISerialEventTarget> mEventTarget;
 };
 
 } // namespace dom

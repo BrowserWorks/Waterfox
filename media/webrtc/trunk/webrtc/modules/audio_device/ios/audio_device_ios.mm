@@ -8,1899 +8,836 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#if !defined(__has_feature) || !__has_feature(objc_arc)
+#error "This file requires ARC support."
+#endif
+
 #import <AVFoundation/AVFoundation.h>
 #import <Foundation/Foundation.h>
 
 #include "webrtc/modules/audio_device/ios/audio_device_ios.h"
 
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/base/atomicops.h"
+#include "webrtc/base/bind.h"
+#include "webrtc/base/checks.h"
+#include "webrtc/base/criticalsection.h"
+#include "webrtc/base/logging.h"
+#include "webrtc/base/thread.h"
+#include "webrtc/base/thread_annotations.h"
+#include "webrtc/modules/audio_device/fine_audio_buffer.h"
+#include "webrtc/sdk/objc/Framework/Classes/helpers.h"
+
+#import "WebRTC/RTCLogging.h"
+#import "webrtc/modules/audio_device/ios/objc/RTCAudioSession.h"
+#import "webrtc/modules/audio_device/ios/objc/RTCAudioSession+Private.h"
+#import "webrtc/modules/audio_device/ios/objc/RTCAudioSessionConfiguration.h"
+#import "webrtc/modules/audio_device/ios/objc/RTCAudioSessionDelegateAdapter.h"
 
 namespace webrtc {
-AudioDeviceIOS::AudioDeviceIOS(const int32_t id)
-    :
-    _ptrAudioBuffer(NULL),
-    _critSect(*CriticalSectionWrapper::CreateCriticalSection()),
-    _id(id),
-    _auVoiceProcessing(NULL),
-    _audioInterruptionObserver(NULL),
-    _initialized(false),
-    _isShutDown(false),
-    _recording(false),
-    _playing(false),
-    _recIsInitialized(false),
-    _playIsInitialized(false),
-    _recordingDeviceIsSpecified(false),
-    _playoutDeviceIsSpecified(false),
-    _micIsInitialized(false),
-    _speakerIsInitialized(false),
-    _AGC(false),
-    _adbSampFreq(0),
-    _recordingDelay(0),
-    _playoutDelay(0),
-    _playoutDelayMeasurementCounter(9999),
-    _recordingDelayHWAndOS(0),
-    _recordingDelayMeasurementCounter(9999),
-    _playWarning(0),
-    _playError(0),
-    _recWarning(0),
-    _recError(0),
-    _playoutBufferUsed(0),
-    _recordingCurrentSeq(0),
-    _recordingBufferTotalSize(0) {
-    WEBRTC_TRACE(kTraceMemory, kTraceAudioDevice, id,
-                 "%s created", __FUNCTION__);
 
-    memset(_playoutBuffer, 0, sizeof(_playoutBuffer));
-    memset(_recordingBuffer, 0, sizeof(_recordingBuffer));
-    memset(_recordingLength, 0, sizeof(_recordingLength));
-    memset(_recordingSeqNumber, 0, sizeof(_recordingSeqNumber));
+#define LOGI() LOG(LS_INFO) << "AudioDeviceIOS::"
+
+#define LOG_AND_RETURN_IF_ERROR(error, message) \
+  do {                                          \
+    OSStatus err = error;                       \
+    if (err) {                                  \
+      LOG(LS_ERROR) << message << ": " << err;  \
+      return false;                             \
+    }                                           \
+  } while (0)
+
+#define LOG_IF_ERROR(error, message)           \
+  do {                                         \
+    OSStatus err = error;                      \
+    if (err) {                                 \
+      LOG(LS_ERROR) << message << ": " << err; \
+    }                                          \
+  } while (0)
+
+
+// Hardcoded delay estimates based on real measurements.
+// TODO(henrika): these value is not used in combination with built-in AEC.
+// Can most likely be removed.
+const UInt16 kFixedPlayoutDelayEstimate = 30;
+const UInt16 kFixedRecordDelayEstimate = 30;
+
+enum AudioDeviceMessageType : uint32_t {
+  kMessageTypeInterruptionBegin,
+  kMessageTypeInterruptionEnd,
+  kMessageTypeValidRouteChange,
+  kMessageTypeCanPlayOrRecordChange,
+};
+
+using ios::CheckAndLogError;
+
+#if !defined(NDEBUG)
+// Helper method that logs essential device information strings.
+static void LogDeviceInfo() {
+  LOG(LS_INFO) << "LogDeviceInfo";
+  @autoreleasepool {
+    LOG(LS_INFO) << " system name: " << ios::GetSystemName();
+    LOG(LS_INFO) << " system version 1(2): " << ios::GetSystemVersionAsString();
+    LOG(LS_INFO) << " system version 2(2): " << ios::GetSystemVersion();
+    LOG(LS_INFO) << " device type: " << ios::GetDeviceType();
+    LOG(LS_INFO) << " device name: " << ios::GetDeviceName();
+    LOG(LS_INFO) << " process name: " << ios::GetProcessName();
+    LOG(LS_INFO) << " process ID: " << ios::GetProcessID();
+    LOG(LS_INFO) << " OS version: " << ios::GetOSVersionString();
+    LOG(LS_INFO) << " processing cores: " << ios::GetProcessorCount();
+#if defined(__IPHONE_9_0) && defined(__IPHONE_OS_VERSION_MAX_ALLOWED) \
+    && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0
+    LOG(LS_INFO) << " low power mode: " << ios::GetLowPowerModeEnabled();
+#endif
+  }
+}
+#endif  // !defined(NDEBUG)
+
+AudioDeviceIOS::AudioDeviceIOS()
+    : audio_device_buffer_(nullptr),
+      audio_unit_(nullptr),
+      recording_(0),
+      playing_(0),
+      initialized_(false),
+      audio_is_initialized_(false),
+      is_interrupted_(false),
+      has_configured_session_(false) {
+  LOGI() << "ctor" << ios::GetCurrentThreadDescription();
+  thread_ = rtc::Thread::Current();
+  audio_session_observer_ =
+      [[RTCAudioSessionDelegateAdapter alloc] initWithObserver:this];
 }
 
 AudioDeviceIOS::~AudioDeviceIOS() {
-    WEBRTC_TRACE(kTraceMemory, kTraceAudioDevice, _id,
-                 "%s destroyed", __FUNCTION__);
-
-    Terminate();
-
-    delete &_critSect;
+  LOGI() << "~dtor" << ios::GetCurrentThreadDescription();
+  audio_session_observer_ = nil;
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  Terminate();
 }
-
-
-// ============================================================================
-//                                     API
-// ============================================================================
 
 void AudioDeviceIOS::AttachAudioBuffer(AudioDeviceBuffer* audioBuffer) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    _ptrAudioBuffer = audioBuffer;
-
-    // inform the AudioBuffer about default settings for this implementation
-    _ptrAudioBuffer->SetRecordingSampleRate(ENGINE_REC_BUF_SIZE_IN_SAMPLES);
-    _ptrAudioBuffer->SetPlayoutSampleRate(ENGINE_PLAY_BUF_SIZE_IN_SAMPLES);
-    _ptrAudioBuffer->SetRecordingChannels(N_REC_CHANNELS);
-    _ptrAudioBuffer->SetPlayoutChannels(N_PLAY_CHANNELS);
+  LOGI() << "AttachAudioBuffer";
+  RTC_DCHECK(audioBuffer);
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  audio_device_buffer_ = audioBuffer;
 }
 
-int32_t AudioDeviceIOS::ActiveAudioLayer(
-    AudioDeviceModule::AudioLayer& audioLayer) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    audioLayer = AudioDeviceModule::kPlatformDefaultAudio;
-    return 0;
-}
-
-int32_t AudioDeviceIOS::Init() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (_initialized) {
-        return 0;
-    }
-
-    _isShutDown = false;
-
-    // Create and start capture thread
-    if (!_captureWorkerThread) {
-        _captureWorkerThread = ThreadWrapper::CreateThread(
-            RunCapture, this, "CaptureWorkerThread");
-        bool res = _captureWorkerThread->Start();
-        WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice,
-                     _id, "CaptureWorkerThread started (res=%d)", res);
-        _captureWorkerThread->SetPriority(kRealtimePriority);
-    } else {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice,
-                     _id, "Thread already created");
-    }
-    _playWarning = 0;
-    _playError = 0;
-    _recWarning = 0;
-    _recError = 0;
-
-    _initialized = true;
-
-    return 0;
+AudioDeviceGeneric::InitStatus AudioDeviceIOS::Init() {
+  LOGI() << "Init";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  if (initialized_) {
+    return InitStatus::OK;
+  }
+#if !defined(NDEBUG)
+  LogDeviceInfo();
+#endif
+  // Store the preferred sample rate and preferred number of channels already
+  // here. They have not been set and confirmed yet since configureForWebRTC
+  // is not called until audio is about to start. However, it makes sense to
+  // store the parameters now and then verify at a later stage.
+  RTCAudioSessionConfiguration* config =
+      [RTCAudioSessionConfiguration webRTCConfiguration];
+  playout_parameters_.reset(config.sampleRate,
+                            config.outputNumberOfChannels);
+  record_parameters_.reset(config.sampleRate,
+                           config.inputNumberOfChannels);
+  // Ensure that the audio device buffer (ADB) knows about the internal audio
+  // parameters. Note that, even if we are unable to get a mono audio session,
+  // we will always tell the I/O audio unit to do a channel format conversion
+  // to guarantee mono on the "input side" of the audio unit.
+  UpdateAudioDeviceBuffer();
+  initialized_ = true;
+  return InitStatus::OK;
 }
 
 int32_t AudioDeviceIOS::Terminate() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    if (!_initialized) {
-        return 0;
-    }
-
-
-    // Stop capture thread
-    if (_captureWorkerThread) {
-        WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice,
-                     _id, "Stopping CaptureWorkerThread");
-        bool res = _captureWorkerThread->Stop();
-        WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice,
-                     _id, "CaptureWorkerThread stopped (res=%d)", res);
-        _captureWorkerThread.reset();
-    }
-
-    // Shut down Audio Unit
-    ShutdownPlayOrRecord();
-
-    _isShutDown = true;
-    _initialized = false;
-    _speakerIsInitialized = false;
-    _micIsInitialized = false;
-    _playoutDeviceIsSpecified = false;
-    _recordingDeviceIsSpecified = false;
+  LOGI() << "Terminate";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  if (!initialized_) {
     return 0;
-}
-
-bool AudioDeviceIOS::Initialized() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    return (_initialized);
-}
-
-int32_t AudioDeviceIOS::InitSpeaker() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_initialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Not initialized");
-        return -1;
-    }
-
-    if (_playing) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Cannot init speaker when playing");
-        return -1;
-    }
-
-    if (!_playoutDeviceIsSpecified) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Playout device is not specified");
-        return -1;
-    }
-
-    // Do nothing
-    _speakerIsInitialized = true;
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::InitMicrophone() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_initialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Not initialized");
-        return -1;
-    }
-
-    if (_recording) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Cannot init mic when recording");
-        return -1;
-    }
-
-    if (!_recordingDeviceIsSpecified) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice,
-                     _id, "  Recording device is not specified");
-        return -1;
-    }
-
-    // Do nothing
-
-    _micIsInitialized = true;
-
-    return 0;
-}
-
-bool AudioDeviceIOS::SpeakerIsInitialized() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    return _speakerIsInitialized;
-}
-
-bool AudioDeviceIOS::MicrophoneIsInitialized() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    return _micIsInitialized;
-}
-
-int32_t AudioDeviceIOS::SpeakerVolumeIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Speaker volume not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetSpeakerVolume(uint32_t volume) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetSpeakerVolume(volume=%u)", volume);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::SpeakerVolume(uint32_t& volume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::SetWaveOutVolume(uint16_t volumeLeft,
-                                     uint16_t volumeRight) {
-    WEBRTC_TRACE(
-        kTraceModuleCall,
-        kTraceAudioDevice,
-        _id,
-        "AudioDeviceIOS::SetWaveOutVolume(volumeLeft=%u, volumeRight=%u)",
-        volumeLeft, volumeRight);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-
-    return -1;
-}
-
-int32_t
-AudioDeviceIOS::WaveOutVolume(uint16_t& /*volumeLeft*/,
-                                 uint16_t& /*volumeRight*/) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::MaxSpeakerVolume(uint32_t& maxVolume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::MinSpeakerVolume(
-    uint32_t& minVolume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::SpeakerVolumeStepSize(uint16_t& stepSize) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::SpeakerMuteIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Speaker mute not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetSpeakerMute(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::SpeakerMute(bool& enabled) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::MicrophoneMuteIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Mic mute not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetMicrophoneMute(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::MicrophoneMute(bool& enabled) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t AudioDeviceIOS::MicrophoneBoostIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Mic boost not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetMicrophoneBoost(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetMicrophoneBoost(enable=%u)", enable);
-
-    if (!_micIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Microphone not initialized");
-        return -1;
-    }
-
-    if (enable) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  SetMicrophoneBoost cannot be enabled on this platform");
-        return -1;
-    }
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::MicrophoneBoost(bool& enabled) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    if (!_micIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Microphone not initialized");
-        return -1;
-    }
-
-    enabled = false;
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::StereoRecordingIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Stereo recording not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetStereoRecording(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetStereoRecording(enable=%u)", enable);
-
-    if (enable) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     " Stereo recording is not supported on this platform");
-        return -1;
-    }
-    return 0;
-}
-
-int32_t AudioDeviceIOS::StereoRecording(bool& enabled) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    enabled = false;
-    return 0;
-}
-
-int32_t AudioDeviceIOS::StereoPlayoutIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Stereo playout not supported on iOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetStereoPlayout(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetStereoPlayout(enable=%u)", enable);
-
-    if (enable) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     " Stereo playout is not supported on this platform");
-        return -1;
-    }
-    return 0;
-}
-
-int32_t AudioDeviceIOS::StereoPlayout(bool& enabled) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    enabled = false;
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetAGC(bool enable) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetAGC(enable=%d)", enable);
-
-    _AGC = enable;
-
-    return 0;
-}
-
-bool AudioDeviceIOS::AGC() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    return _AGC;
-}
-
-int32_t AudioDeviceIOS::MicrophoneVolumeIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    available = false;  // Mic volume not supported on IOS
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::SetMicrophoneVolume(uint32_t volume) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetMicrophoneVolume(volume=%u)", volume);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::MicrophoneVolume(uint32_t& volume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::MaxMicrophoneVolume(uint32_t& maxVolume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::MinMicrophoneVolume(uint32_t& minVolume) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::MicrophoneVolumeStepSize(
-                                            uint16_t& stepSize) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
-}
-
-int16_t AudioDeviceIOS::PlayoutDevices() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-
-    return (int16_t)1;
-}
-
-int32_t AudioDeviceIOS::SetPlayoutDevice(uint16_t index) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetPlayoutDevice(index=%u)", index);
-
-    if (_playIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Playout already initialized");
-        return -1;
-    }
-
-    if (index !=0) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  SetPlayoutDevice invalid index");
-        return -1;
-    }
-    _playoutDeviceIsSpecified = true;
-
-    return 0;
-}
-
-int32_t
-    AudioDeviceIOS::SetPlayoutDevice(AudioDeviceModule::WindowsDeviceType) {
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "WindowsDeviceType not supported");
-    return -1;
-}
-
-int32_t
-    AudioDeviceIOS::PlayoutDeviceName(uint16_t index,
-                                         char name[kAdmMaxDeviceNameSize],
-                                         char guid[kAdmMaxGuidSize]) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::PlayoutDeviceName(index=%u)", index);
-
-    if (index != 0) {
-        return -1;
-    }
-    // return empty strings
-    memset(name, 0, kAdmMaxDeviceNameSize);
-    if (guid != NULL) {
-        memset(guid, 0, kAdmMaxGuidSize);
-    }
-
-    return 0;
-}
-
-int32_t
-    AudioDeviceIOS::RecordingDeviceName(uint16_t index,
-                                           char name[kAdmMaxDeviceNameSize],
-                                           char guid[kAdmMaxGuidSize]) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::RecordingDeviceName(index=%u)", index);
-
-    if (index != 0) {
-        return -1;
-    }
-    // return empty strings
-    memset(name, 0, kAdmMaxDeviceNameSize);
-    if (guid != NULL) {
-        memset(guid, 0, kAdmMaxGuidSize);
-    }
-
-    return 0;
-}
-
-int16_t AudioDeviceIOS::RecordingDevices() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    return (int16_t)1;
-}
-
-int32_t AudioDeviceIOS::SetRecordingDevice(uint16_t index) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetRecordingDevice(index=%u)", index);
-
-    if (_recIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Recording already initialized");
-        return -1;
-    }
-
-    if (index !=0) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  SetRecordingDevice invalid index");
-        return -1;
-    }
-
-    _recordingDeviceIsSpecified = true;
-
-    return 0;
-}
-
-int32_t
-    AudioDeviceIOS::SetRecordingDevice(
-                                        AudioDeviceModule::WindowsDeviceType) {
-    WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                 "WindowsDeviceType not supported");
-    return -1;
-}
-
-// ----------------------------------------------------------------------------
-//  SetLoudspeakerStatus
-//
-//  Change the default receiver playout route to speaker.
-//
-// ----------------------------------------------------------------------------
-
-int32_t AudioDeviceIOS::SetLoudspeakerStatus(bool enable) {
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetLoudspeakerStatus(enable=%d)", enable);
-
-    AVAudioSession* session = [AVAudioSession sharedInstance];
-    NSString* category = session.category;
-    AVAudioSessionCategoryOptions options = session.categoryOptions;
-    // Respect old category options if category is
-    // AVAudioSessionCategoryPlayAndRecord. Otherwise reset it since old options
-    // might not be valid for this category.
-    if ([category isEqualToString:AVAudioSessionCategoryPlayAndRecord]) {
-      if (enable) {
-        options |= AVAudioSessionCategoryOptionDefaultToSpeaker;
-      } else {
-        options &= ~AVAudioSessionCategoryOptionDefaultToSpeaker;
-      }
-    } else {
-      options = AVAudioSessionCategoryOptionDefaultToSpeaker;
-    }
-
-    NSError* error = nil;
-    [session setCategory:AVAudioSessionCategoryPlayAndRecord
-             withOptions:options
-                   error:&error];
-    if (error != nil) {
-      WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                   "Error changing default output route ");
-      return -1;
-    }
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::GetLoudspeakerStatus(bool &enabled) const {
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetLoudspeakerStatus(enabled=?)");
-
-    AVAudioSession* session = [AVAudioSession sharedInstance];
-    AVAudioSessionCategoryOptions options = session.categoryOptions;
-    enabled = options & AVAudioSessionCategoryOptionDefaultToSpeaker;
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::PlayoutIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    available = false;
-
-    // Try to initialize the playout side
-    int32_t res = InitPlayout();
-
-    // Cancel effect of initialization
-    StopPlayout();
-
-    if (res != -1) {
-        available = true;
-    }
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::RecordingIsAvailable(bool& available) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    available = false;
-
-    // Try to initialize the recording side
-    int32_t res = InitRecording();
-
-    // Cancel effect of initialization
-    StopRecording();
-
-    if (res != -1) {
-        available = true;
-    }
-
-    return 0;
+  }
+  StopPlayout();
+  StopRecording();
+  initialized_ = false;
+  return 0;
 }
 
 int32_t AudioDeviceIOS::InitPlayout() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_initialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id, "  Not initialized");
-        return -1;
+  LOGI() << "InitPlayout";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTC_DCHECK(initialized_);
+  RTC_DCHECK(!audio_is_initialized_);
+  RTC_DCHECK(!playing_);
+  if (!audio_is_initialized_) {
+    if (!InitPlayOrRecord()) {
+      LOG_F(LS_ERROR) << "InitPlayOrRecord failed for InitPlayout!";
+      return -1;
     }
-
-    if (_playing) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  Playout already started");
-        return -1;
-    }
-
-    if (_playIsInitialized) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Playout already initialized");
-        return 0;
-    }
-
-    if (!_playoutDeviceIsSpecified) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Playout device is not specified");
-        return -1;
-    }
-
-    // Initialize the speaker
-    if (InitSpeaker() == -1) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  InitSpeaker() failed");
-    }
-
-    _playIsInitialized = true;
-
-    if (!_recIsInitialized) {
-        // Audio init
-        if (InitPlayOrRecord() == -1) {
-            // todo: Handle error
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                         "  InitPlayOrRecord() failed");
-        }
-    } else {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-        "  Recording already initialized - InitPlayOrRecord() not called");
-    }
-
-    return 0;
-}
-
-bool AudioDeviceIOS::PlayoutIsInitialized() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-    return (_playIsInitialized);
+  }
+  audio_is_initialized_ = true;
+  return 0;
 }
 
 int32_t AudioDeviceIOS::InitRecording() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_initialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Not initialized");
-        return -1;
+  LOGI() << "InitRecording";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTC_DCHECK(initialized_);
+  RTC_DCHECK(!audio_is_initialized_);
+  RTC_DCHECK(!recording_);
+  if (!audio_is_initialized_) {
+    if (!InitPlayOrRecord()) {
+      LOG_F(LS_ERROR) << "InitPlayOrRecord failed for InitRecording!";
+      return -1;
     }
-
-    if (_recording) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  Recording already started");
-        return -1;
-    }
-
-    if (_recIsInitialized) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Recording already initialized");
-        return 0;
-    }
-
-    if (!_recordingDeviceIsSpecified) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Recording device is not specified");
-        return -1;
-    }
-
-    // Initialize the microphone
-    if (InitMicrophone() == -1) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  InitMicrophone() failed");
-    }
-
-    _recIsInitialized = true;
-
-    if (!_playIsInitialized) {
-        // Audio init
-        if (InitPlayOrRecord() == -1) {
-            // todo: Handle error
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                         "  InitPlayOrRecord() failed");
-        }
-    } else {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Playout already initialized - InitPlayOrRecord() " \
-                     "not called");
-    }
-
-    return 0;
-}
-
-bool AudioDeviceIOS::RecordingIsInitialized() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-    return (_recIsInitialized);
-}
-
-int32_t AudioDeviceIOS::StartRecording() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_recIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Recording not initialized");
-        return -1;
-    }
-
-    if (_recording) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Recording already started");
-        return 0;
-    }
-
-    // Reset recording buffer
-    memset(_recordingBuffer, 0, sizeof(_recordingBuffer));
-    memset(_recordingLength, 0, sizeof(_recordingLength));
-    memset(_recordingSeqNumber, 0, sizeof(_recordingSeqNumber));
-    _recordingCurrentSeq = 0;
-    _recordingBufferTotalSize = 0;
-    _recordingDelay = 0;
-    _recordingDelayHWAndOS = 0;
-    // Make sure first call to update delay function will update delay
-    _recordingDelayMeasurementCounter = 9999;
-    _recWarning = 0;
-    _recError = 0;
-
-    if (!_playing) {
-        // Start Audio Unit
-        WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice, _id,
-                     "  Starting Audio Unit");
-        OSStatus result = AudioOutputUnitStart(_auVoiceProcessing);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, _id,
-                         "  Error starting Audio Unit (result=%d)", result);
-            return -1;
-        }
-    }
-
-    _recording = true;
-
-    return 0;
-}
-
-int32_t AudioDeviceIOS::StopRecording() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_recIsInitialized) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Recording is not initialized");
-        return 0;
-    }
-
-    _recording = false;
-
-    if (!_playing) {
-        // Both playout and recording has stopped, shutdown the device
-        ShutdownPlayOrRecord();
-    }
-
-    _recIsInitialized = false;
-    _micIsInitialized = false;
-
-    return 0;
-}
-
-bool AudioDeviceIOS::Recording() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-    return (_recording);
+  }
+  audio_is_initialized_ = true;
+  return 0;
 }
 
 int32_t AudioDeviceIOS::StartPlayout() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    // This lock is (among other things) needed to avoid concurrency issues
-    // with capture thread
-    // shutting down Audio Unit
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_playIsInitialized) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Playout not initialized");
-        return -1;
+  LOGI() << "StartPlayout";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTC_DCHECK(audio_is_initialized_);
+  RTC_DCHECK(!playing_);
+  RTC_DCHECK(audio_unit_);
+  if (fine_audio_buffer_) {
+    fine_audio_buffer_->ResetPlayout();
+  }
+  if (!recording_ &&
+      audio_unit_->GetState() == VoiceProcessingAudioUnit::kInitialized) {
+    if (!audio_unit_->Start()) {
+      RTCLogError(@"StartPlayout failed to start audio unit.");
+      return -1;
     }
-
-    if (_playing) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Playing already started");
-        return 0;
-    }
-
-    // Reset playout buffer
-    memset(_playoutBuffer, 0, sizeof(_playoutBuffer));
-    _playoutBufferUsed = 0;
-    _playoutDelay = 0;
-    // Make sure first call to update delay function will update delay
-    _playoutDelayMeasurementCounter = 9999;
-    _playWarning = 0;
-    _playError = 0;
-
-    if (!_recording) {
-        // Start Audio Unit
-        WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice, _id,
-                     "  Starting Audio Unit");
-        OSStatus result = AudioOutputUnitStart(_auVoiceProcessing);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceCritical, kTraceAudioDevice, _id,
-                         "  Error starting Audio Unit (result=%d)", result);
-            return -1;
-        }
-    }
-
-    _playing = true;
-
-    return 0;
+    LOG(LS_INFO) << "Voice-Processing I/O audio unit is now started";
+  }
+  rtc::AtomicOps::ReleaseStore(&playing_, 1);
+  return 0;
 }
 
 int32_t AudioDeviceIOS::StopPlayout() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_playIsInitialized) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Playout is not initialized");
-        return 0;
-    }
-
-    _playing = false;
-
-    if (!_recording) {
-        // Both playout and recording has stopped, signal shutdown the device
-        ShutdownPlayOrRecord();
-    }
-
-    _playIsInitialized = false;
-    _speakerIsInitialized = false;
-
+  LOGI() << "StopPlayout";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  if (!audio_is_initialized_ || !playing_) {
     return 0;
+  }
+  if (!recording_) {
+    ShutdownPlayOrRecord();
+    audio_is_initialized_ = false;
+  }
+  rtc::AtomicOps::ReleaseStore(&playing_, 0);
+  return 0;
 }
 
-bool AudioDeviceIOS::Playing() const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "%s", __FUNCTION__);
-    return (_playing);
+int32_t AudioDeviceIOS::StartRecording() {
+  LOGI() << "StartRecording";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTC_DCHECK(audio_is_initialized_);
+  RTC_DCHECK(!recording_);
+  RTC_DCHECK(audio_unit_);
+  if (fine_audio_buffer_) {
+    fine_audio_buffer_->ResetRecord();
+  }
+  if (!playing_ &&
+      audio_unit_->GetState() == VoiceProcessingAudioUnit::kInitialized) {
+    if (!audio_unit_->Start()) {
+      RTCLogError(@"StartRecording failed to start audio unit.");
+      return -1;
+    }
+    LOG(LS_INFO) << "Voice-Processing I/O audio unit is now started";
+  }
+  rtc::AtomicOps::ReleaseStore(&recording_, 1);
+  return 0;
 }
 
-// ----------------------------------------------------------------------------
-//  ResetAudioDevice
-//
-//  Disable playout and recording, signal to capture thread to shutdown,
-//  and set enable states after shutdown to same as current.
-//  In capture thread audio device will be shutdown, then started again.
-// ----------------------------------------------------------------------------
-int32_t AudioDeviceIOS::ResetAudioDevice() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    CriticalSectionScoped lock(&_critSect);
-
-    if (!_playIsInitialized && !_recIsInitialized) {
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Playout or recording not initialized, doing nothing");
-        return 0;  // Nothing to reset
-    }
-
-    // Store the states we have before stopping to restart below
-    bool initPlay = _playIsInitialized;
-    bool play = _playing;
-    bool initRec = _recIsInitialized;
-    bool rec = _recording;
-
-    int res(0);
-
-    // Stop playout and recording
-    WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice, _id,
-                 "  Stopping playout and recording");
-    res += StopPlayout();
-    res += StopRecording();
-
-    // Restart
-    WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice, _id,
-                 "  Restarting playout and recording (%d, %d, %d, %d)",
-                 initPlay, play, initRec, rec);
-    if (initPlay) res += InitPlayout();
-    if (initRec)  res += InitRecording();
-    if (play)     res += StartPlayout();
-    if (rec)      res += StartRecording();
-
-    if (0 != res) {
-        // Logging is done in init/start/stop calls above
-        return -1;
-    }
-
+int32_t AudioDeviceIOS::StopRecording() {
+  LOGI() << "StopRecording";
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  if (!audio_is_initialized_ || !recording_) {
     return 0;
+  }
+  if (!playing_) {
+    ShutdownPlayOrRecord();
+    audio_is_initialized_ = false;
+  }
+  rtc::AtomicOps::ReleaseStore(&recording_, 0);
+  return 0;
+}
+
+// Change the default receiver playout route to speaker.
+int32_t AudioDeviceIOS::SetLoudspeakerStatus(bool enable) {
+  LOGI() << "SetLoudspeakerStatus(" << enable << ")";
+
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  [session lockForConfiguration];
+  NSString* category = session.category;
+  AVAudioSessionCategoryOptions options = session.categoryOptions;
+  // Respect old category options if category is
+  // AVAudioSessionCategoryPlayAndRecord. Otherwise reset it since old options
+  // might not be valid for this category.
+  if ([category isEqualToString:AVAudioSessionCategoryPlayAndRecord]) {
+    if (enable) {
+      options |= AVAudioSessionCategoryOptionDefaultToSpeaker;
+    } else {
+      options &= ~AVAudioSessionCategoryOptionDefaultToSpeaker;
+    }
+  } else {
+    options = AVAudioSessionCategoryOptionDefaultToSpeaker;
+  }
+  NSError* error = nil;
+  BOOL success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+                          withOptions:options
+                                error:&error];
+  ios::CheckAndLogError(success, error);
+  [session unlockForConfiguration];
+  return (error == nil) ? 0 : -1;
+}
+
+int32_t AudioDeviceIOS::GetLoudspeakerStatus(bool& enabled) const {
+  LOGI() << "GetLoudspeakerStatus";
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  AVAudioSessionCategoryOptions options = session.categoryOptions;
+  enabled = options & AVAudioSessionCategoryOptionDefaultToSpeaker;
+  return 0;
 }
 
 int32_t AudioDeviceIOS::PlayoutDelay(uint16_t& delayMS) const {
-    delayMS = _playoutDelay;
-    return 0;
+  delayMS = kFixedPlayoutDelayEstimate;
+  return 0;
 }
 
 int32_t AudioDeviceIOS::RecordingDelay(uint16_t& delayMS) const {
-    delayMS = _recordingDelay;
-    return 0;
+  delayMS = kFixedRecordDelayEstimate;
+  return 0;
 }
 
-int32_t
-    AudioDeviceIOS::SetPlayoutBuffer(const AudioDeviceModule::BufferType type,
-                                     uint16_t sizeMS) {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id,
-                 "AudioDeviceIOS::SetPlayoutBuffer(type=%u, sizeMS=%u)",
-                 type, sizeMS);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
+int AudioDeviceIOS::GetPlayoutAudioParameters(AudioParameters* params) const {
+  LOGI() << "GetPlayoutAudioParameters";
+  RTC_DCHECK(playout_parameters_.is_valid());
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  *params = playout_parameters_;
+  return 0;
 }
 
-int32_t
-    AudioDeviceIOS::PlayoutBuffer(AudioDeviceModule::BufferType& type,
-                                     uint16_t& sizeMS) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    type = AudioDeviceModule::kAdaptiveBufferSize;
-
-    sizeMS = _playoutDelay;
-
-    return 0;
+int AudioDeviceIOS::GetRecordAudioParameters(AudioParameters* params) const {
+  LOGI() << "GetRecordAudioParameters";
+  RTC_DCHECK(record_parameters_.is_valid());
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  *params = record_parameters_;
+  return 0;
 }
 
-int32_t AudioDeviceIOS::CPULoad(uint16_t& /*load*/) const {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                 "  API call not supported on this platform");
-    return -1;
+void AudioDeviceIOS::OnInterruptionBegin() {
+  RTC_DCHECK(thread_);
+  thread_->Post(RTC_FROM_HERE, this, kMessageTypeInterruptionBegin);
 }
 
-bool AudioDeviceIOS::PlayoutWarning() const {
-    return (_playWarning > 0);
+void AudioDeviceIOS::OnInterruptionEnd() {
+  RTC_DCHECK(thread_);
+  thread_->Post(RTC_FROM_HERE, this, kMessageTypeInterruptionEnd);
 }
 
-bool AudioDeviceIOS::PlayoutError() const {
-    return (_playError > 0);
+void AudioDeviceIOS::OnValidRouteChange() {
+  RTC_DCHECK(thread_);
+  thread_->Post(RTC_FROM_HERE, this, kMessageTypeValidRouteChange);
 }
 
-bool AudioDeviceIOS::RecordingWarning() const {
-    return (_recWarning > 0);
+void AudioDeviceIOS::OnCanPlayOrRecordChange(bool can_play_or_record) {
+  RTC_DCHECK(thread_);
+  thread_->Post(RTC_FROM_HERE, this, kMessageTypeCanPlayOrRecordChange,
+                new rtc::TypedMessageData<bool>(can_play_or_record));
 }
 
-bool AudioDeviceIOS::RecordingError() const {
-    return (_recError > 0);
+OSStatus AudioDeviceIOS::OnDeliverRecordedData(
+    AudioUnitRenderActionFlags* flags,
+    const AudioTimeStamp* time_stamp,
+    UInt32 bus_number,
+    UInt32 num_frames,
+    AudioBufferList* /* io_data */) {
+  OSStatus result = noErr;
+  // Simply return if recording is not enabled.
+  if (!rtc::AtomicOps::AcquireLoad(&recording_))
+    return result;
+
+  size_t frames_per_buffer = record_parameters_.frames_per_buffer();
+  if (num_frames != frames_per_buffer) {
+    // We have seen short bursts (1-2 frames) where |in_number_frames| changes.
+    // Add a log to keep track of longer sequences if that should ever happen.
+    // Also return since calling AudioUnitRender in this state will only result
+    // in kAudio_ParamError (-50) anyhow.
+    RTCLogWarning(@"Expected %u frames but got %u",
+                  static_cast<unsigned int>(frames_per_buffer),
+                  static_cast<unsigned int>(num_frames));
+
+    RTCAudioSession *session = [RTCAudioSession sharedInstance];
+    RTCLogWarning(@"Session:\n %@", session);
+    return result;
+  }
+
+  // Obtain the recorded audio samples by initiating a rendering cycle.
+  // Since it happens on the input bus, the |io_data| parameter is a reference
+  // to the preallocated audio buffer list that the audio unit renders into.
+  // We can make the audio unit provide a buffer instead in io_data, but we
+  // currently just use our own.
+  // TODO(henrika): should error handling be improved?
+  AudioBufferList* io_data = &audio_record_buffer_list_;
+  result =
+      audio_unit_->Render(flags, time_stamp, bus_number, num_frames, io_data);
+  if (result != noErr) {
+    RTCLogError(@"Failed to render audio.");
+    return result;
+  }
+
+  // Get a pointer to the recorded audio and send it to the WebRTC ADB.
+  // Use the FineAudioBuffer instance to convert between native buffer size
+  // and the 10ms buffer size used by WebRTC.
+  AudioBuffer* audio_buffer = &io_data->mBuffers[0];
+  const size_t size_in_bytes = audio_buffer->mDataByteSize;
+  RTC_CHECK_EQ(size_in_bytes / VoiceProcessingAudioUnit::kBytesPerSample,
+               num_frames);
+  int8_t* data = static_cast<int8_t*>(audio_buffer->mData);
+  fine_audio_buffer_->DeliverRecordedData(data, size_in_bytes,
+                                          kFixedPlayoutDelayEstimate,
+                                          kFixedRecordDelayEstimate);
+  return noErr;
 }
 
-void AudioDeviceIOS::ClearPlayoutWarning() {
-    _playWarning = 0;
+OSStatus AudioDeviceIOS::OnGetPlayoutData(AudioUnitRenderActionFlags* flags,
+                                          const AudioTimeStamp* time_stamp,
+                                          UInt32 bus_number,
+                                          UInt32 num_frames,
+                                          AudioBufferList* io_data) {
+  // Verify 16-bit, noninterleaved mono PCM signal format.
+  RTC_DCHECK_EQ(1, io_data->mNumberBuffers);
+  AudioBuffer* audio_buffer = &io_data->mBuffers[0];
+  RTC_DCHECK_EQ(1, audio_buffer->mNumberChannels);
+  // Get pointer to internal audio buffer to which new audio data shall be
+  // written.
+  const size_t size_in_bytes = audio_buffer->mDataByteSize;
+  RTC_CHECK_EQ(size_in_bytes / VoiceProcessingAudioUnit::kBytesPerSample,
+               num_frames);
+  int8_t* destination = reinterpret_cast<int8_t*>(audio_buffer->mData);
+  // Produce silence and give audio unit a hint about it if playout is not
+  // activated.
+  if (!rtc::AtomicOps::AcquireLoad(&playing_)) {
+    *flags |= kAudioUnitRenderAction_OutputIsSilence;
+    memset(destination, 0, size_in_bytes);
+    return noErr;
+  }
+  // Produce silence and log a warning message for the case when Core Audio is
+  // asking for an invalid number of audio frames. I don't expect this to happen
+  // but it is done as a safety measure to avoid bad audio if such as case would
+  // ever be triggered e.g. in combination with BT devices.
+  const size_t frames_per_buffer = playout_parameters_.frames_per_buffer();
+  if (num_frames != frames_per_buffer) {
+    RTCLogWarning(@"Expected %u frames but got %u",
+                  static_cast<unsigned int>(frames_per_buffer),
+                  static_cast<unsigned int>(num_frames));
+    *flags |= kAudioUnitRenderAction_OutputIsSilence;
+    memset(destination, 0, size_in_bytes);
+    return noErr;
+  }
+
+  // Read decoded 16-bit PCM samples from WebRTC (using a size that matches
+  // the native I/O audio unit) to a preallocated intermediate buffer and
+  // copy the result to the audio buffer in the |io_data| destination.
+  int8_t* source = playout_audio_buffer_.get();
+  fine_audio_buffer_->GetPlayoutData(source);
+  memcpy(destination, source, size_in_bytes);
+  return noErr;
 }
 
-void AudioDeviceIOS::ClearPlayoutError() {
-    _playError = 0;
+void AudioDeviceIOS::OnMessage(rtc::Message *msg) {
+  switch (msg->message_id) {
+    case kMessageTypeInterruptionBegin:
+      HandleInterruptionBegin();
+      break;
+    case kMessageTypeInterruptionEnd:
+      HandleInterruptionEnd();
+      break;
+    case kMessageTypeValidRouteChange:
+      HandleValidRouteChange();
+      break;
+    case kMessageTypeCanPlayOrRecordChange: {
+      rtc::TypedMessageData<bool>* data =
+          static_cast<rtc::TypedMessageData<bool>*>(msg->pdata);
+      HandleCanPlayOrRecordChange(data->data());
+      delete data;
+      break;
+    }
+  }
 }
 
-void AudioDeviceIOS::ClearRecordingWarning() {
-    _recWarning = 0;
+void AudioDeviceIOS::HandleInterruptionBegin() {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+
+  if (audio_unit_ &&
+      audio_unit_->GetState() == VoiceProcessingAudioUnit::kStarted) {
+    RTCLog(@"Stopping the audio unit due to interruption begin.");
+    if (!audio_unit_->Stop()) {
+      RTCLogError(@"Failed to stop the audio unit for interruption begin.");
+    }
+  }
+  is_interrupted_ = true;
 }
 
-void AudioDeviceIOS::ClearRecordingError() {
-    _recError = 0;
+void AudioDeviceIOS::HandleInterruptionEnd() {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+
+  is_interrupted_ = false;
+  RTCLog(@"Interruption ended. Updating audio unit state.");
+  UpdateAudioUnit([RTCAudioSession sharedInstance].canPlayOrRecord);
 }
 
-// ============================================================================
-//                                 Private Methods
-// ============================================================================
+void AudioDeviceIOS::HandleValidRouteChange() {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
 
-int32_t AudioDeviceIOS::InitPlayOrRecord() {
-    WEBRTC_TRACE(kTraceModuleCall, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    OSStatus result = -1;
-
-    // Check if already initialized
-    if (NULL != _auVoiceProcessing) {
-        // We already have initialized before and created any of the audio unit,
-        // check that all exist
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "  Already initialized");
-        // todo: Call AudioUnitReset() here and empty all buffers?
-        return 0;
-    }
-
-    // Create Voice Processing Audio Unit
-    AudioComponentDescription desc;
-    AudioComponent comp;
-
-    desc.componentType = kAudioUnitType_Output;
-    desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
-    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
-    desc.componentFlags = 0;
-    desc.componentFlagsMask = 0;
-
-    comp = AudioComponentFindNext(NULL, &desc);
-    if (NULL == comp) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Could not find audio component for Audio Unit");
-        return -1;
-    }
-
-    result = AudioComponentInstanceNew(comp, &_auVoiceProcessing);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Could not create Audio Unit instance (result=%d)",
-                     result);
-        return -1;
-    }
-
-    // Set preferred hardware sample rate to 16 kHz
-    NSError* error = nil;
-    AVAudioSession* session = [AVAudioSession sharedInstance];
-    Float64 preferredSampleRate(16000.0);
-    [session setPreferredSampleRate:preferredSampleRate
-                              error:&error];
-    if (error != nil) {
-        const char* errorString = [[error localizedDescription] UTF8String];
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "Could not set preferred sample rate: %s", errorString);
-    }
-    error = nil;
-    [session setMode:AVAudioSessionModeVoiceChat
-               error:&error];
-    if (error != nil) {
-        const char* errorString = [[error localizedDescription] UTF8String];
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "Could not set mode: %s", errorString);
-    }
-    error = nil;
-    [session setCategory:AVAudioSessionCategoryPlayAndRecord
-                   error:&error];
-    if (error != nil) {
-        const char* errorString = [[error localizedDescription] UTF8String];
-        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                     "Could not set category: %s", errorString);
-    }
-
-    //////////////////////
-    // Setup Voice Processing Audio Unit
-
-    // Note: For Signal Processing AU element 0 is output bus, element 1 is
-    //       input bus for global scope element is irrelevant (always use
-    //       element 0)
-
-    // Enable IO on both elements
-
-    // todo: Below we just log and continue upon error. We might want
-    //       to close AU and return error for some cases.
-    // todo: Log info about setup.
-
-    UInt32 enableIO = 1;
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioOutputUnitProperty_EnableIO,
-                                  kAudioUnitScope_Input,
-                                  1,  // input bus
-                                  &enableIO,
-                                  sizeof(enableIO));
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Could not enable IO on input (result=%d)", result);
-    }
-
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioOutputUnitProperty_EnableIO,
-                                  kAudioUnitScope_Output,
-                                  0,   // output bus
-                                  &enableIO,
-                                  sizeof(enableIO));
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Could not enable IO on output (result=%d)", result);
-    }
-
-    // Disable AU buffer allocation for the recorder, we allocate our own
-    UInt32 flag = 0;
-    result = AudioUnitSetProperty(
-        _auVoiceProcessing, kAudioUnitProperty_ShouldAllocateBuffer,
-        kAudioUnitScope_Output,  1, &flag, sizeof(flag));
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  Could not disable AU buffer allocation (result=%d)",
-                     result);
-        // Should work anyway
-    }
-
-    // Set recording callback
-    AURenderCallbackStruct auCbS;
-    memset(&auCbS, 0, sizeof(auCbS));
-    auCbS.inputProc = RecordProcess;
-    auCbS.inputProcRefCon = this;
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioOutputUnitProperty_SetInputCallback,
-                                  kAudioUnitScope_Global, 1,
-                                  &auCbS, sizeof(auCbS));
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set record callback for Audio Unit (result=%d)",
-            result);
-    }
-
-    // Set playout callback
-    memset(&auCbS, 0, sizeof(auCbS));
-    auCbS.inputProc = PlayoutProcess;
-    auCbS.inputProcRefCon = this;
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioUnitProperty_SetRenderCallback,
-                                  kAudioUnitScope_Global, 0,
-                                  &auCbS, sizeof(auCbS));
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set play callback for Audio Unit (result=%d)",
-            result);
-    }
-
-    // Get stream format for out/0
-    AudioStreamBasicDescription playoutDesc;
-    UInt32 size = sizeof(playoutDesc);
-    result = AudioUnitGetProperty(_auVoiceProcessing,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Output, 0, &playoutDesc,
-                                  &size);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not get stream format Audio Unit out/0 (result=%d)",
-            result);
-    }
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                 "  Audio Unit playout opened in sampling rate %f",
-                 playoutDesc.mSampleRate);
-
-    playoutDesc.mSampleRate = preferredSampleRate;
-
-    // Store the sampling frequency to use towards the Audio Device Buffer
-    // todo: Add 48 kHz (increase buffer sizes). Other fs?
-    if ((playoutDesc.mSampleRate > 44090.0)
-        && (playoutDesc.mSampleRate < 44110.0)) {
-        _adbSampFreq = 44100;
-    } else if ((playoutDesc.mSampleRate > 15990.0)
-               && (playoutDesc.mSampleRate < 16010.0)) {
-        _adbSampFreq = 16000;
-    } else if ((playoutDesc.mSampleRate > 7990.0)
-               && (playoutDesc.mSampleRate < 8010.0)) {
-        _adbSampFreq = 8000;
-    } else {
-        _adbSampFreq = 0;
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Audio Unit out/0 opened in unknown sampling rate (%f)",
-            playoutDesc.mSampleRate);
-        // todo: We should bail out here.
-    }
-
-    // Set the audio device buffer sampling rate,
-    // we assume we get the same for play and record
-    if (_ptrAudioBuffer->SetRecordingSampleRate(_adbSampFreq) < 0) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set audio device buffer recording sampling rate (%d)",
-            _adbSampFreq);
-    }
-
-    if (_ptrAudioBuffer->SetPlayoutSampleRate(_adbSampFreq) < 0) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set audio device buffer playout sampling rate (%d)",
-            _adbSampFreq);
-    }
-
-    // Set stream format for in/0  (use same sampling frequency as for out/0)
-    playoutDesc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger
-                               | kLinearPCMFormatFlagIsPacked
-                               | kLinearPCMFormatFlagIsNonInterleaved;
-    playoutDesc.mBytesPerPacket = 2;
-    playoutDesc.mFramesPerPacket = 1;
-    playoutDesc.mBytesPerFrame = 2;
-    playoutDesc.mChannelsPerFrame = 1;
-    playoutDesc.mBitsPerChannel = 16;
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Input, 0, &playoutDesc, size);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set stream format Audio Unit in/0 (result=%d)",
-            result);
-    }
-
-    // Get stream format for in/1
-    AudioStreamBasicDescription recordingDesc;
-    size = sizeof(recordingDesc);
-    result = AudioUnitGetProperty(_auVoiceProcessing,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Input, 1, &recordingDesc,
-                                  &size);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not get stream format Audio Unit in/1 (result=%d)",
-            result);
-    }
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                 "  Audio Unit recording opened in sampling rate %f",
-                 recordingDesc.mSampleRate);
-
-    recordingDesc.mSampleRate = preferredSampleRate;
-
-    // Set stream format for out/1 (use same sampling frequency as for in/1)
-    recordingDesc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger
-                                 | kLinearPCMFormatFlagIsPacked
-                                 | kLinearPCMFormatFlagIsNonInterleaved;
-
-    recordingDesc.mBytesPerPacket = 2;
-    recordingDesc.mFramesPerPacket = 1;
-    recordingDesc.mBytesPerFrame = 2;
-    recordingDesc.mChannelsPerFrame = 1;
-    recordingDesc.mBitsPerChannel = 16;
-    result = AudioUnitSetProperty(_auVoiceProcessing,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Output, 1, &recordingDesc,
-                                  size);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-            "  Could not set stream format Audio Unit out/1 (result=%d)",
-            result);
-    }
-
-    // Initialize here already to be able to get/set stream properties.
-    result = AudioUnitInitialize(_auVoiceProcessing);
-    if (0 != result) {
-        WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                     "  Could not init Audio Unit (result=%d)", result);
-    }
-
-    // Get hardware sample rate for logging (see if we get what we asked for)
-    double sampleRate = session.sampleRate;
-    WEBRTC_TRACE(kTraceDebug, kTraceAudioDevice, _id,
-                 "  Current HW sample rate is %f, ADB sample rate is %d",
-                 sampleRate, _adbSampFreq);
-
-    // Listen to audio interruptions.
-    NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
-    id observer =
-        [center addObserverForName:AVAudioSessionInterruptionNotification
-                            object:nil
-                             queue:[NSOperationQueue mainQueue]
-                        usingBlock:^(NSNotification* notification) {
-          NSNumber* typeNumber =
-              [notification userInfo][AVAudioSessionInterruptionTypeKey];
-          AVAudioSessionInterruptionType type =
-              (AVAudioSessionInterruptionType)[typeNumber unsignedIntegerValue];
-          switch (type) {
-            case AVAudioSessionInterruptionTypeBegan:
-              // At this point our audio session has been deactivated and the
-              // audio unit render callbacks no longer occur. Nothing to do.
-              break;
-            case AVAudioSessionInterruptionTypeEnded: {
-              NSError* error = nil;
-              AVAudioSession* session = [AVAudioSession sharedInstance];
-              [session setActive:YES
-                           error:&error];
-              if (error != nil) {
-                  WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                               "Error activating audio session");
-              }
-              // Post interruption the audio unit render callbacks don't
-              // automatically continue, so we restart the unit manually here.
-              AudioOutputUnitStop(_auVoiceProcessing);
-              AudioOutputUnitStart(_auVoiceProcessing);
-              break;
-            }
-          }
-        }];
-    // Increment refcount on observer using ARC bridge. Instance variable is a
-    // void* instead of an id because header is included in other pure C++
-    // files.
-    _audioInterruptionObserver = (__bridge_retained void*)observer;
-
-    // Activate audio session.
-    error = nil;
-    [session setActive:YES
-                 error:&error];
-    if (error != nil) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "Error activating audio session");
-    }
-
-    return 0;
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  RTCLog(@"%@", session);
+  HandleSampleRateChange(session.sampleRate);
 }
 
-int32_t AudioDeviceIOS::ShutdownPlayOrRecord() {
-    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "%s", __FUNCTION__);
-
-    if (_audioInterruptionObserver != NULL) {
-        NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
-        // Transfer ownership of observer back to ARC, which will dealloc the
-        // observer once it exits this scope.
-        id observer = (__bridge_transfer id)_audioInterruptionObserver;
-        [center removeObserver:observer];
-        _audioInterruptionObserver = NULL;
-    }
-
-    // Close and delete AU
-    OSStatus result = -1;
-    if (NULL != _auVoiceProcessing) {
-        result = AudioOutputUnitStop(_auVoiceProcessing);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                "  Error stopping Audio Unit (result=%d)", result);
-        }
-        result = AudioComponentInstanceDispose(_auVoiceProcessing);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                "  Error disposing Audio Unit (result=%d)", result);
-        }
-        _auVoiceProcessing = NULL;
-    }
-
-    return 0;
+void AudioDeviceIOS::HandleCanPlayOrRecordChange(bool can_play_or_record) {
+  RTCLog(@"Handling CanPlayOrRecord change to: %d", can_play_or_record);
+  UpdateAudioUnit(can_play_or_record);
 }
 
-// ============================================================================
-//                                  Thread Methods
-// ============================================================================
+void AudioDeviceIOS::HandleSampleRateChange(float sample_rate) {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTCLog(@"Handling sample rate change to %f.", sample_rate);
 
-OSStatus
-    AudioDeviceIOS::RecordProcess(void *inRefCon,
-                                  AudioUnitRenderActionFlags *ioActionFlags,
-                                  const AudioTimeStamp *inTimeStamp,
-                                  UInt32 inBusNumber,
-                                  UInt32 inNumberFrames,
-                                  AudioBufferList *ioData) {
-    AudioDeviceIOS* ptrThis = static_cast<AudioDeviceIOS*>(inRefCon);
+  // Don't do anything if we're interrupted.
+  if (is_interrupted_) {
+    RTCLog(@"Ignoring sample rate change to %f due to interruption.",
+           sample_rate);
+    return;
+  }
 
-    return ptrThis->RecordProcessImpl(ioActionFlags,
-                                      inTimeStamp,
-                                      inBusNumber,
-                                      inNumberFrames);
+  // If we don't have an audio unit yet, or the audio unit is uninitialized,
+  // there is no work to do.
+  if (!audio_unit_ ||
+      audio_unit_->GetState() < VoiceProcessingAudioUnit::kInitialized) {
+    return;
+  }
+
+  // The audio unit is already initialized or started.
+  // Check to see if the sample rate or buffer size has changed.
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  const double session_sample_rate = session.sampleRate;
+  const NSTimeInterval session_buffer_duration = session.IOBufferDuration;
+  const size_t session_frames_per_buffer =
+      static_cast<size_t>(session_sample_rate * session_buffer_duration + .5);
+  const double current_sample_rate = playout_parameters_.sample_rate();
+  const size_t current_frames_per_buffer =
+      playout_parameters_.frames_per_buffer();
+  RTCLog(@"Handling playout sample rate change to: %f\n"
+          "  Session sample rate: %f frames_per_buffer: %lu\n"
+          "  ADM sample rate: %f frames_per_buffer: %lu",
+         sample_rate,
+         session_sample_rate, (unsigned long)session_frames_per_buffer,
+         current_sample_rate, (unsigned long)current_frames_per_buffer);;
+
+  // Sample rate and buffer size are the same, no work to do.
+  if (std::abs(current_sample_rate - session_sample_rate) <= DBL_EPSILON &&
+      current_frames_per_buffer == session_frames_per_buffer) {
+    return;
+  }
+
+  // We need to adjust our format and buffer sizes.
+  // The stream format is about to be changed and it requires that we first
+  // stop and uninitialize the audio unit to deallocate its resources.
+  RTCLog(@"Stopping and uninitializing audio unit to adjust buffers.");
+  bool restart_audio_unit = false;
+  if (audio_unit_->GetState() == VoiceProcessingAudioUnit::kStarted) {
+    audio_unit_->Stop();
+    restart_audio_unit = true;
+  }
+  if (audio_unit_->GetState() == VoiceProcessingAudioUnit::kInitialized) {
+    audio_unit_->Uninitialize();
+  }
+
+  // Allocate new buffers given the new stream format.
+  SetupAudioBuffersForActiveAudioSession();
+
+  // Initialize the audio unit again with the new sample rate.
+  RTC_DCHECK_EQ(playout_parameters_.sample_rate(), session_sample_rate);
+  if (!audio_unit_->Initialize(session_sample_rate)) {
+    RTCLogError(@"Failed to initialize the audio unit with sample rate: %f",
+                session_sample_rate);
+    return;
+  }
+
+  // Restart the audio unit if it was already running.
+  if (restart_audio_unit && !audio_unit_->Start()) {
+    RTCLogError(@"Failed to start audio unit with sample rate: %f",
+                session_sample_rate);
+    return;
+  }
+  RTCLog(@"Successfully handled sample rate change.");
 }
 
-
-OSStatus
-    AudioDeviceIOS::RecordProcessImpl(AudioUnitRenderActionFlags *ioActionFlags,
-                                      const AudioTimeStamp *inTimeStamp,
-                                      uint32_t inBusNumber,
-                                      uint32_t inNumberFrames) {
-    // Setup some basic stuff
-    // Use temp buffer not to lock up recording buffer more than necessary
-    // todo: Make dataTmp a member variable with static size that holds
-    //       max possible frames?
-    int16_t* dataTmp = new int16_t[inNumberFrames];
-    memset(dataTmp, 0, 2*inNumberFrames);
-
-    AudioBufferList abList;
-    abList.mNumberBuffers = 1;
-    abList.mBuffers[0].mData = dataTmp;
-    abList.mBuffers[0].mDataByteSize = 2*inNumberFrames;  // 2 bytes/sample
-    abList.mBuffers[0].mNumberChannels = 1;
-
-    // Get data from mic
-    OSStatus res = AudioUnitRender(_auVoiceProcessing,
-                                   ioActionFlags, inTimeStamp,
-                                   inBusNumber, inNumberFrames, &abList);
-    if (res != 0) {
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "  Error getting rec data, error = %d", res);
-
-        if (_recWarning > 0) {
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                         "  Pending rec warning exists");
-        }
-        _recWarning = 1;
-
-        delete [] dataTmp;
-        return 0;
-    }
-
-    if (_recording) {
-        // Insert all data in temp buffer into recording buffers
-        // There is zero or one buffer partially full at any given time,
-        // all others are full or empty
-        // Full means filled with noSamp10ms samples.
-
-        const unsigned int noSamp10ms = _adbSampFreq / 100;
-        unsigned int dataPos = 0;
-        uint16_t bufPos = 0;
-        int16_t insertPos = -1;
-        unsigned int nCopy = 0;  // Number of samples to copy
-
-        while (dataPos < inNumberFrames) {
-            // Loop over all recording buffers or
-            // until we find the partially full buffer
-            // First choice is to insert into partially full buffer,
-            // second choice is to insert into empty buffer
-            bufPos = 0;
-            insertPos = -1;
-            nCopy = 0;
-            while (bufPos < N_REC_BUFFERS) {
-                if ((_recordingLength[bufPos] > 0)
-                    && (_recordingLength[bufPos] < noSamp10ms)) {
-                    // Found the partially full buffer
-                    insertPos = static_cast<int16_t>(bufPos);
-                    // Don't need to search more, quit loop
-                    bufPos = N_REC_BUFFERS;
-                } else if ((-1 == insertPos)
-                           && (0 == _recordingLength[bufPos])) {
-                    // Found an empty buffer
-                    insertPos = static_cast<int16_t>(bufPos);
-                }
-                ++bufPos;
-            }
-
-            // Insert data into buffer
-            if (insertPos > -1) {
-                // We found a non-full buffer, copy data to it
-                unsigned int dataToCopy = inNumberFrames - dataPos;
-                unsigned int currentRecLen = _recordingLength[insertPos];
-                unsigned int roomInBuffer = noSamp10ms - currentRecLen;
-                nCopy = (dataToCopy < roomInBuffer ? dataToCopy : roomInBuffer);
-
-                memcpy(&_recordingBuffer[insertPos][currentRecLen],
-                       &dataTmp[dataPos], nCopy*sizeof(int16_t));
-                if (0 == currentRecLen) {
-                    _recordingSeqNumber[insertPos] = _recordingCurrentSeq;
-                    ++_recordingCurrentSeq;
-                }
-                _recordingBufferTotalSize += nCopy;
-                // Has to be done last to avoid interrupt problems
-                // between threads
-                _recordingLength[insertPos] += nCopy;
-                dataPos += nCopy;
-            } else {
-                // Didn't find a non-full buffer
-                WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                             "  Could not insert into recording buffer");
-                if (_recWarning > 0) {
-                    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                                 "  Pending rec warning exists");
-                }
-                _recWarning = 1;
-                dataPos = inNumberFrames;  // Don't try to insert more
-            }
-        }
-    }
-
-    delete [] dataTmp;
-
-    return 0;
+void AudioDeviceIOS::UpdateAudioDeviceBuffer() {
+  LOGI() << "UpdateAudioDevicebuffer";
+  // AttachAudioBuffer() is called at construction by the main class but check
+  // just in case.
+  RTC_DCHECK(audio_device_buffer_) << "AttachAudioBuffer must be called first";
+  // Inform the audio device buffer (ADB) about the new audio format.
+  audio_device_buffer_->SetPlayoutSampleRate(playout_parameters_.sample_rate());
+  audio_device_buffer_->SetPlayoutChannels(playout_parameters_.channels());
+  audio_device_buffer_->SetRecordingSampleRate(
+      record_parameters_.sample_rate());
+  audio_device_buffer_->SetRecordingChannels(record_parameters_.channels());
 }
 
-OSStatus
-    AudioDeviceIOS::PlayoutProcess(void *inRefCon,
-                                   AudioUnitRenderActionFlags *ioActionFlags,
-                                   const AudioTimeStamp *inTimeStamp,
-                                   UInt32 inBusNumber,
-                                   UInt32 inNumberFrames,
-                                   AudioBufferList *ioData) {
-    AudioDeviceIOS* ptrThis = static_cast<AudioDeviceIOS*>(inRefCon);
+void AudioDeviceIOS::SetupAudioBuffersForActiveAudioSession() {
+  LOGI() << "SetupAudioBuffersForActiveAudioSession";
+  // Verify the current values once the audio session has been activated.
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  double sample_rate = session.sampleRate;
+  NSTimeInterval io_buffer_duration = session.IOBufferDuration;
+  RTCLog(@"%@", session);
 
-    return ptrThis->PlayoutProcessImpl(inNumberFrames, ioData);
+  // Log a warning message for the case when we are unable to set the preferred
+  // hardware sample rate but continue and use the non-ideal sample rate after
+  // reinitializing the audio parameters. Most BT headsets only support 8kHz or
+  // 16kHz.
+  RTCAudioSessionConfiguration* webRTCConfig =
+      [RTCAudioSessionConfiguration webRTCConfiguration];
+  if (sample_rate != webRTCConfig.sampleRate) {
+    LOG(LS_WARNING) << "Unable to set the preferred sample rate";
+  }
+
+  // At this stage, we also know the exact IO buffer duration and can add
+  // that info to the existing audio parameters where it is converted into
+  // number of audio frames.
+  // Example: IO buffer size = 0.008 seconds <=> 128 audio frames at 16kHz.
+  // Hence, 128 is the size we expect to see in upcoming render callbacks.
+  playout_parameters_.reset(sample_rate, playout_parameters_.channels(),
+                            io_buffer_duration);
+  RTC_DCHECK(playout_parameters_.is_complete());
+  record_parameters_.reset(sample_rate, record_parameters_.channels(),
+                           io_buffer_duration);
+  RTC_DCHECK(record_parameters_.is_complete());
+  LOG(LS_INFO) << " frames per I/O buffer: "
+               << playout_parameters_.frames_per_buffer();
+  LOG(LS_INFO) << " bytes per I/O buffer: "
+               << playout_parameters_.GetBytesPerBuffer();
+  RTC_DCHECK_EQ(playout_parameters_.GetBytesPerBuffer(),
+                record_parameters_.GetBytesPerBuffer());
+
+  // Update the ADB parameters since the sample rate might have changed.
+  UpdateAudioDeviceBuffer();
+
+  // Create a modified audio buffer class which allows us to ask for,
+  // or deliver, any number of samples (and not only multiple of 10ms) to match
+  // the native audio unit buffer size.
+  RTC_DCHECK(audio_device_buffer_);
+  fine_audio_buffer_.reset(new FineAudioBuffer(
+      audio_device_buffer_, playout_parameters_.GetBytesPerBuffer(),
+      playout_parameters_.sample_rate()));
+
+  // The extra/temporary playoutbuffer must be of this size to avoid
+  // unnecessary memcpy while caching data between successive callbacks.
+  const int required_playout_buffer_size =
+      fine_audio_buffer_->RequiredPlayoutBufferSizeBytes();
+  LOG(LS_INFO) << " required playout buffer size: "
+               << required_playout_buffer_size;
+  playout_audio_buffer_.reset(new SInt8[required_playout_buffer_size]);
+
+  // Allocate AudioBuffers to be used as storage for the received audio.
+  // The AudioBufferList structure works as a placeholder for the
+  // AudioBuffer structure, which holds a pointer to the actual data buffer
+  // in |record_audio_buffer_|. Recorded audio will be rendered into this memory
+  // at each input callback when calling AudioUnitRender().
+  const int data_byte_size = record_parameters_.GetBytesPerBuffer();
+  record_audio_buffer_.reset(new SInt8[data_byte_size]);
+  memset(record_audio_buffer_.get(), 0, data_byte_size);
+  audio_record_buffer_list_.mNumberBuffers = 1;
+  AudioBuffer* audio_buffer = &audio_record_buffer_list_.mBuffers[0];
+  audio_buffer->mNumberChannels = record_parameters_.channels();
+  audio_buffer->mDataByteSize = data_byte_size;
+  audio_buffer->mData = record_audio_buffer_.get();
 }
 
-OSStatus
-    AudioDeviceIOS::PlayoutProcessImpl(uint32_t inNumberFrames,
-                                       AudioBufferList *ioData) {
-    // Setup some basic stuff
-//    assert(sizeof(short) == 2); // Assumption for implementation
+bool AudioDeviceIOS::CreateAudioUnit() {
+  RTC_DCHECK(!audio_unit_);
 
-    int16_t* data =
-        static_cast<int16_t*>(ioData->mBuffers[0].mData);
-    unsigned int dataSizeBytes = ioData->mBuffers[0].mDataByteSize;
-    unsigned int dataSize = dataSizeBytes/2;  // Number of samples
-        if (dataSize != inNumberFrames) {  // Should always be the same
-        WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                     "dataSize (%u) != inNumberFrames (%u)",
-                     dataSize, (unsigned int)inNumberFrames);
-        if (_playWarning > 0) {
-            WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                         "  Pending play warning exists");
-        }
-        _playWarning = 1;
-    }
-    memset(data, 0, dataSizeBytes);  // Start with empty buffer
+  audio_unit_.reset(new VoiceProcessingAudioUnit(this));
+  if (!audio_unit_->Init()) {
+    audio_unit_.reset();
+    return false;
+  }
 
-
-    // Get playout data from Audio Device Buffer
-
-    if (_playing) {
-        unsigned int noSamp10ms = _adbSampFreq / 100;
-        // todo: Member variable and allocate when samp freq is determined
-        int16_t* dataTmp = new int16_t[noSamp10ms];
-        memset(dataTmp, 0, 2*noSamp10ms);
-        unsigned int dataPos = 0;
-        int noSamplesOut = 0;
-        unsigned int nCopy = 0;
-
-        // First insert data from playout buffer if any
-        if (_playoutBufferUsed > 0) {
-            nCopy = (dataSize < _playoutBufferUsed) ?
-                    dataSize : _playoutBufferUsed;
-            if (nCopy != _playoutBufferUsed) {
-                // todo: If dataSize < _playoutBufferUsed
-                //       (should normally never be)
-                //       we must move the remaining data
-                WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                             "nCopy (%u) != _playoutBufferUsed (%u)",
-                             nCopy, _playoutBufferUsed);
-                if (_playWarning > 0) {
-                    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                                 "  Pending play warning exists");
-                }
-                _playWarning = 1;
-            }
-            memcpy(data, _playoutBuffer, 2*nCopy);
-            dataPos = nCopy;
-            memset(_playoutBuffer, 0, sizeof(_playoutBuffer));
-            _playoutBufferUsed = 0;
-        }
-
-        // Now get the rest from Audio Device Buffer
-        while (dataPos < dataSize) {
-            // Update playout delay
-            UpdatePlayoutDelay();
-
-            // Ask for new PCM data to be played out using the AudioDeviceBuffer
-            noSamplesOut = _ptrAudioBuffer->RequestPlayoutData(noSamp10ms);
-
-            // Get data from Audio Device Buffer
-            noSamplesOut =
-                _ptrAudioBuffer->GetPlayoutData(
-                    reinterpret_cast<int8_t*>(dataTmp));
-            // Cast OK since only equality comparison
-            if (noSamp10ms != (unsigned int)noSamplesOut) {
-                // Should never happen
-                WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                             "noSamp10ms (%u) != noSamplesOut (%d)",
-                             noSamp10ms, noSamplesOut);
-
-                if (_playWarning > 0) {
-                    WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id,
-                                 "  Pending play warning exists");
-                }
-                _playWarning = 1;
-            }
-
-            // Insert as much as fits in data buffer
-            nCopy = (dataSize-dataPos) > noSamp10ms ?
-                    noSamp10ms : (dataSize-dataPos);
-            memcpy(&data[dataPos], dataTmp, 2*nCopy);
-
-            // Save rest in playout buffer if any
-            if (nCopy < noSamp10ms) {
-                memcpy(_playoutBuffer, &dataTmp[nCopy], 2*(noSamp10ms-nCopy));
-                _playoutBufferUsed = noSamp10ms - nCopy;
-            }
-
-            // Update loop/index counter, if we copied less than noSamp10ms
-            // samples we shall quit loop anyway
-            dataPos += noSamp10ms;
-        }
-
-        delete [] dataTmp;
-    }
-
-    return 0;
+  return true;
 }
 
-void AudioDeviceIOS::UpdatePlayoutDelay() {
-    ++_playoutDelayMeasurementCounter;
+void AudioDeviceIOS::UpdateAudioUnit(bool can_play_or_record) {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTCLog(@"Updating audio unit state. CanPlayOrRecord=%d IsInterrupted=%d",
+         can_play_or_record, is_interrupted_);
 
-    if (_playoutDelayMeasurementCounter >= 100) {
-        // Update HW and OS delay every second, unlikely to change
+  if (is_interrupted_) {
+    RTCLog(@"Ignoring audio unit update due to interruption.");
+    return;
+  }
 
-        // Since this is eventually rounded to integral ms, add 0.5ms
-        // here to get round-to-nearest-int behavior instead of
-        // truncation.
-        double totalDelaySeconds = 0.0005;
+  // If we're not initialized we don't need to do anything. Audio unit will
+  // be initialized on initialization.
+  if (!audio_is_initialized_)
+    return;
 
-        // HW output latency
-        AVAudioSession* session = [AVAudioSession sharedInstance];
-        double latency = session.outputLatency;
-        assert(latency >= 0);
-        totalDelaySeconds += latency;
+  // If we're initialized, we must have an audio unit.
+  RTC_DCHECK(audio_unit_);
 
-        // HW buffer duration
-        double ioBufferDuration = session.IOBufferDuration;
-        assert(ioBufferDuration >= 0);
-        totalDelaySeconds += ioBufferDuration;
+  bool should_initialize_audio_unit = false;
+  bool should_uninitialize_audio_unit = false;
+  bool should_start_audio_unit = false;
+  bool should_stop_audio_unit = false;
 
-        // AU latency
-        Float64 f64(0);
-        UInt32 size = sizeof(f64);
-        OSStatus result = AudioUnitGetProperty(
-            _auVoiceProcessing, kAudioUnitProperty_Latency,
-            kAudioUnitScope_Global, 0, &f64, &size);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                         "error AU latency (result=%d)", result);
-        }
-        assert(f64 >= 0);
-        totalDelaySeconds += f64;
+  switch (audio_unit_->GetState()) {
+    case VoiceProcessingAudioUnit::kInitRequired:
+      RTCLog(@"VPAU state: InitRequired");
+      RTC_NOTREACHED();
+      break;
+    case VoiceProcessingAudioUnit::kUninitialized:
+      RTCLog(@"VPAU state: Uninitialized");
+      should_initialize_audio_unit = can_play_or_record;
+      should_start_audio_unit = should_initialize_audio_unit &&
+          (playing_ || recording_);
+      break;
+    case VoiceProcessingAudioUnit::kInitialized:
+      RTCLog(@"VPAU state: Initialized");
+      should_start_audio_unit =
+          can_play_or_record && (playing_ || recording_);
+      should_uninitialize_audio_unit = !can_play_or_record;
+      break;
+    case VoiceProcessingAudioUnit::kStarted:
+      RTCLog(@"VPAU state: Started");
+      RTC_DCHECK(playing_ || recording_);
+      should_stop_audio_unit = !can_play_or_record;
+      should_uninitialize_audio_unit = should_stop_audio_unit;
+      break;
+  }
 
-        // To ms
-        _playoutDelay = static_cast<uint32_t>(totalDelaySeconds / 1000);
-
-        // Reset counter
-        _playoutDelayMeasurementCounter = 0;
+  if (should_initialize_audio_unit) {
+    RTCLog(@"Initializing audio unit for UpdateAudioUnit");
+    ConfigureAudioSession();
+    SetupAudioBuffersForActiveAudioSession();
+    if (!audio_unit_->Initialize(playout_parameters_.sample_rate())) {
+      RTCLogError(@"Failed to initialize audio unit.");
+      return;
     }
+  }
 
-    // todo: Add playout buffer?
+  if (should_start_audio_unit) {
+    RTCLog(@"Starting audio unit for UpdateAudioUnit");
+    // Log session settings before trying to start audio streaming.
+    RTCAudioSession* session = [RTCAudioSession sharedInstance];
+    RTCLog(@"%@", session);
+    if (!audio_unit_->Start()) {
+      RTCLogError(@"Failed to start audio unit.");
+      return;
+    }
+  }
+
+  if (should_stop_audio_unit) {
+    RTCLog(@"Stopping audio unit for UpdateAudioUnit");
+    if (!audio_unit_->Stop()) {
+      RTCLogError(@"Failed to stop audio unit.");
+      return;
+    }
+  }
+
+  if (should_uninitialize_audio_unit) {
+    RTCLog(@"Uninitializing audio unit for UpdateAudioUnit");
+    audio_unit_->Uninitialize();
+    UnconfigureAudioSession();
+  }
 }
 
-void AudioDeviceIOS::UpdateRecordingDelay() {
-    ++_recordingDelayMeasurementCounter;
-
-    if (_recordingDelayMeasurementCounter >= 100) {
-        // Update HW and OS delay every second, unlikely to change
-
-        // Since this is eventually rounded to integral ms, add 0.5ms
-        // here to get round-to-nearest-int behavior instead of
-        // truncation.
-        double totalDelaySeconds = 0.0005;
-
-        // HW input latency
-        AVAudioSession* session = [AVAudioSession sharedInstance];
-        double latency = session.inputLatency;
-        assert(latency >= 0);
-        totalDelaySeconds += latency;
-
-        // HW buffer duration
-        double ioBufferDuration = session.IOBufferDuration;
-        assert(ioBufferDuration >= 0);
-        totalDelaySeconds += ioBufferDuration;
-
-        // AU latency
-        Float64 f64(0);
-        UInt32 size = sizeof(f64);
-        OSStatus result = AudioUnitGetProperty(
-             _auVoiceProcessing, kAudioUnitProperty_Latency,
-             kAudioUnitScope_Global, 0, &f64, &size);
-        if (0 != result) {
-            WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id,
-                         "error AU latency (result=%d)", result);
-        }
-        assert(f64 >= 0);
-        totalDelaySeconds += f64;
-
-        // To ms
-        _recordingDelayHWAndOS =
-            static_cast<uint32_t>(totalDelaySeconds / 1000);
-
-        // Reset counter
-        _recordingDelayMeasurementCounter = 0;
-    }
-
-    _recordingDelay = _recordingDelayHWAndOS;
-
-    // ADB recording buffer size, update every time
-    // Don't count the one next 10 ms to be sent, then convert samples => ms
-    const uint32_t noSamp10ms = _adbSampFreq / 100;
-    if (_recordingBufferTotalSize > noSamp10ms) {
-        _recordingDelay +=
-            (_recordingBufferTotalSize - noSamp10ms) / (_adbSampFreq / 1000);
-    }
+void AudioDeviceIOS::ConfigureAudioSession() {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTCLog(@"Configuring audio session.");
+  if (has_configured_session_) {
+    RTCLogWarning(@"Audio session already configured.");
+    return;
+  }
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  [session lockForConfiguration];
+  [session configureWebRTCSession:nil];
+  [session unlockForConfiguration];
+  has_configured_session_ = true;
+  RTCLog(@"Configured audio session.");
 }
 
-bool AudioDeviceIOS::RunCapture(void* ptrThis) {
-    return static_cast<AudioDeviceIOS*>(ptrThis)->CaptureWorkerThread();
+void AudioDeviceIOS::UnconfigureAudioSession() {
+  RTC_DCHECK(thread_checker_.CalledOnValidThread());
+  RTCLog(@"Unconfiguring audio session.");
+  if (!has_configured_session_) {
+    RTCLogWarning(@"Audio session already unconfigured.");
+    return;
+  }
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  [session lockForConfiguration];
+  [session unconfigureWebRTCSession:nil];
+  [session unlockForConfiguration];
+  has_configured_session_ = false;
+  RTCLog(@"Unconfigured audio session.");
 }
 
-bool AudioDeviceIOS::CaptureWorkerThread() {
-    if (_recording) {
-        int bufPos = 0;
-        unsigned int lowestSeq = 0;
-        int lowestSeqBufPos = 0;
-        bool foundBuf = true;
-        const unsigned int noSamp10ms = _adbSampFreq / 100;
+bool AudioDeviceIOS::InitPlayOrRecord() {
+  LOGI() << "InitPlayOrRecord";
 
-        while (foundBuf) {
-            // Check if we have any buffer with data to insert
-            // into the Audio Device Buffer,
-            // and find the one with the lowest seq number
-            foundBuf = false;
-            for (bufPos = 0; bufPos < N_REC_BUFFERS; ++bufPos) {
-                if (noSamp10ms == _recordingLength[bufPos]) {
-                    if (!foundBuf) {
-                        lowestSeq = _recordingSeqNumber[bufPos];
-                        lowestSeqBufPos = bufPos;
-                        foundBuf = true;
-                    } else if (_recordingSeqNumber[bufPos] < lowestSeq) {
-                        lowestSeq = _recordingSeqNumber[bufPos];
-                        lowestSeqBufPos = bufPos;
-                    }
-                }
-            }  // for
+  // There should be no audio unit at this point.
+  if (!CreateAudioUnit()) {
+    return false;
+  }
 
-            // Insert data into the Audio Device Buffer if found any
-            if (foundBuf) {
-                // Update recording delay
-                UpdateRecordingDelay();
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  // Subscribe to audio session events.
+  [session pushDelegate:audio_session_observer_];
 
-                // Set the recorded buffer
-                _ptrAudioBuffer->SetRecordedBuffer(
-                    reinterpret_cast<int8_t*>(
-                        _recordingBuffer[lowestSeqBufPos]),
-                        _recordingLength[lowestSeqBufPos]);
+  // Lock the session to make configuration changes.
+  [session lockForConfiguration];
+  NSError* error = nil;
+  if (![session beginWebRTCSession:&error]) {
+    [session unlockForConfiguration];
+    RTCLogError(@"Failed to begin WebRTC session: %@",
+                error.localizedDescription);
+    return false;
+  }
 
-                // Don't need to set the current mic level in ADB since we only
-                // support digital AGC,
-                // and besides we cannot get or set the IOS mic level anyway.
+  // If we are ready to play or record, initialize the audio unit.
+  if (session.canPlayOrRecord) {
+    ConfigureAudioSession();
+    SetupAudioBuffersForActiveAudioSession();
+    audio_unit_->Initialize(playout_parameters_.sample_rate());
+  }
 
-                // Set VQE info, use clockdrift == 0
-                _ptrAudioBuffer->SetVQEData(_playoutDelay, _recordingDelay, 0);
+  // Release the lock.
+  [session unlockForConfiguration];
 
-                // Deliver recorded samples at specified sample rate, mic level
-                // etc. to the observer using callback
-                _ptrAudioBuffer->DeliverRecordedData();
+  return true;
+}
 
-                // Make buffer available
-                _recordingSeqNumber[lowestSeqBufPos] = 0;
-                _recordingBufferTotalSize -= _recordingLength[lowestSeqBufPos];
-                // Must be done last to avoid interrupt problems between threads
-                _recordingLength[lowestSeqBufPos] = 0;
-            }
-        }  // while (foundBuf)
-    }  // if (_recording)
+void AudioDeviceIOS::ShutdownPlayOrRecord() {
+  LOGI() << "ShutdownPlayOrRecord";
 
-    {
-        // Normal case
-        // Sleep thread (5ms) to let other threads get to work
-        // todo: Is 5 ms optimal? Sleep shorter if inserted into the Audio
-        //       Device Buffer?
-        timespec t;
-        t.tv_sec = 0;
-        t.tv_nsec = 5*1000*1000;
-        nanosleep(&t, NULL);
-    }
+  // Stop the audio unit to prevent any additional audio callbacks.
+  audio_unit_->Stop();
 
-    return true;
+  // Close and delete the voice-processing I/O unit.
+  audio_unit_.reset();
+
+  // Remove audio session notification observers.
+  RTCAudioSession* session = [RTCAudioSession sharedInstance];
+  [session removeDelegate:audio_session_observer_];
+
+  // All I/O should be stopped or paused prior to deactivating the audio
+  // session, hence we deactivate as last action.
+  [session lockForConfiguration];
+  UnconfigureAudioSession();
+  [session endWebRTCSession:nil];
+  [session unlockForConfiguration];
 }
 
 }  // namespace webrtc

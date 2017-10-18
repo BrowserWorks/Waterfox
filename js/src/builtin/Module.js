@@ -2,6 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+function CallModuleResolveHook(module, specifier, expectedMinimumState)
+{
+    let requestedModule = HostResolveImportedModule(module, specifier);
+    if (requestedModule.state < expectedMinimumState)
+        ThrowInternalError(JSMSG_BAD_MODULE_STATE);
+
+    return requestedModule;
+}
+
 // 15.2.1.16.2 GetExportedNames(exportStarSet)
 function ModuleGetExportedNames(exportStarSet = [])
 {
@@ -42,7 +51,8 @@ function ModuleGetExportedNames(exportStarSet = [])
     let starExportEntries = module.starExportEntries;
     for (let i = 0; i < starExportEntries.length; i++) {
         let e = starExportEntries[i];
-        let requestedModule = HostResolveImportedModule(module, e.moduleRequest);
+        let requestedModule = CallModuleResolveHook(module, e.moduleRequest,
+                                                    MODULE_STATE_INSTANTIATED);
         let starNames = callFunction(requestedModule.getExportedNames, requestedModule,
                                      exportStarSet);
         for (let j = 0; j < starNames.length; j++) {
@@ -55,12 +65,12 @@ function ModuleGetExportedNames(exportStarSet = [])
     return exportedNames;
 }
 
-// 15.2.1.16.3 ResolveExport(exportName, resolveSet, exportStarSet)
-function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
+// 15.2.1.16.3 ResolveExport(exportName, resolveSet)
+function ModuleResolveExport(exportName, resolveSet = [])
 {
     if (!IsObject(this) || !IsModule(this)) {
         return callFunction(CallModuleMethodIfWrapped, this, exportName, resolveSet,
-                            exportStarSet, "ModuleResolveExport");
+                            "ModuleResolveExport");
     }
 
     // Step 1
@@ -74,14 +84,14 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
     }
 
     // Step 3
-    _DefineDataProperty(resolveSet, resolveSet.length, {module: module, exportName: exportName});
+    _DefineDataProperty(resolveSet, resolveSet.length, {module, exportName});
 
     // Step 4
     let localExportEntries = module.localExportEntries;
     for (let i = 0; i < localExportEntries.length; i++) {
         let e = localExportEntries[i];
         if (exportName === e.exportName)
-            return {module: module, bindingName: e.localName};
+            return {module, bindingName: e.localName};
     }
 
     // Step 5
@@ -89,37 +99,30 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
     for (let i = 0; i < indirectExportEntries.length; i++) {
         let e = indirectExportEntries[i];
         if (exportName === e.exportName) {
-            let importedModule = HostResolveImportedModule(module, e.moduleRequest);
-            let indirectResolution = callFunction(importedModule.resolveExport, importedModule,
-                                                  e.importName, resolveSet, exportStarSet);
-            if (indirectResolution !== null)
-                return indirectResolution;
+            let importedModule = CallModuleResolveHook(module, e.moduleRequest,
+                                                       MODULE_STATE_PARSED);
+            return callFunction(importedModule.resolveExport, importedModule, e.importName,
+                                resolveSet);
         }
     }
 
     // Step 6
     if (exportName === "default") {
         // A default export cannot be provided by an export *.
-        ThrowSyntaxError(JSMSG_BAD_DEFAULT_EXPORT);
+        return null;
     }
 
     // Step 7
-    if (callFunction(ArrayIncludes, exportStarSet, module))
-        return null;
-
-    // Step 8
-    _DefineDataProperty(exportStarSet, exportStarSet.length, module);
-
-    // Step 9
     let starResolution = null;
 
-    // Step 10
+    // Step 8
     let starExportEntries = module.starExportEntries;
     for (let i = 0; i < starExportEntries.length; i++) {
         let e = starExportEntries[i];
-        let importedModule = HostResolveImportedModule(module, e.moduleRequest);
+        let importedModule = CallModuleResolveHook(module, e.moduleRequest,
+                                                   MODULE_STATE_PARSED);
         let resolution = callFunction(importedModule.resolveExport, importedModule,
-                                      exportName, resolveSet, exportStarSet);
+                                      exportName, resolveSet);
         if (resolution === "ambiguous")
             return resolution;
 
@@ -136,6 +139,7 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
         }
     }
 
+    // Step 9
     return starResolution;
 }
 
@@ -187,24 +191,25 @@ function GetModuleEnvironment(module)
 {
     assert(IsModule(module), "Non-module passed to GetModuleEnvironment");
 
-    let env = UnsafeGetReservedSlot(module, MODULE_OBJECT_ENVIRONMENT_SLOT);
-    assert(env === undefined || env === null || IsModuleEnvironment(env),
-          "Module environment slot contains unexpected value");
-
     // Check for a previous failed attempt to instantiate this module. This can
     // only happen due to a bug in the module loader.
-    if (env === null)
+    if (module.state == MODULE_STATE_FAILED)
         ThrowInternalError(JSMSG_MODULE_INSTANTIATE_FAILED);
+
+    let env = UnsafeGetReservedSlot(module, MODULE_OBJECT_ENVIRONMENT_SLOT);
+    assert(env === undefined || IsModuleEnvironment(env),
+           "Module environment slot contains unexpected value");
 
     return env;
 }
 
 function RecordInstantationFailure(module)
 {
-    // Set the module's environment slot to 'null' to indicate a failed module
-    // instantiation.
+    // Set the module's state to 'failed' to indicate a failed module
+    // instantiation and reset the environment slot to 'undefined'.
     assert(IsModule(module), "Non-module passed to RecordInstantationFailure");
-    UnsafeSetReservedSlot(module, MODULE_OBJECT_ENVIRONMENT_SLOT, null);
+    SetModuleState(module, MODULE_STATE_FAILED);
+    UnsafeSetReservedSlot(module, MODULE_OBJECT_ENVIRONMENT_SLOT, undefined);
 }
 
 // 15.2.1.16.4 ModuleDeclarationInstantiation()
@@ -218,18 +223,20 @@ function ModuleDeclarationInstantiation()
 
     // Step 5
     if (GetModuleEnvironment(module) !== undefined)
-        return;
+        return undefined;
 
     // Step 7
     CreateModuleEnvironment(module);
     let env = GetModuleEnvironment(module);
+
+    SetModuleState(this, MODULE_STATE_INSTANTIATED);
 
     try {
         // Step 8
         let requestedModules = module.requestedModules;
         for (let i = 0; i < requestedModules.length; i++) {
             let required = requestedModules[i];
-            let requiredModule = HostResolveImportedModule(module, required);
+            let requiredModule = CallModuleResolveHook(module, required, MODULE_STATE_PARSED);
             callFunction(requiredModule.declarationInstantiation, requiredModule);
         }
 
@@ -248,7 +255,8 @@ function ModuleDeclarationInstantiation()
         let importEntries = module.importEntries;
         for (let i = 0; i < importEntries.length; i++) {
             let imp = importEntries[i];
-            let importedModule = HostResolveImportedModule(module, imp.moduleRequest);
+            let importedModule = CallModuleResolveHook(module, imp.moduleRequest,
+                                                       MODULE_STATE_INSTANTIATED);
             if (imp.importName === "*") {
                 let namespace = GetModuleNamespace(importedModule);
                 CreateNamespaceBinding(env, imp.localName, namespace);
@@ -259,11 +267,13 @@ function ModuleDeclarationInstantiation()
                     ThrowSyntaxError(JSMSG_MISSING_IMPORT, imp.importName);
                 if (resolution === "ambiguous")
                     ThrowSyntaxError(JSMSG_AMBIGUOUS_IMPORT, imp.importName);
+                if (resolution.module.state < MODULE_STATE_INSTANTIATED)
+                    ThrowInternalError(JSMSG_BAD_MODULE_STATE);
                 CreateImportBinding(env, imp.localName, resolution.module, resolution.bindingName);
             }
         }
 
-        // Step 16.iv
+        // Step 17.a.iii
         InstantiateModuleFunctionDeclarations(module);
     } catch (e) {
         RecordInstantationFailure(module);
@@ -281,29 +291,24 @@ function ModuleEvaluation()
     // Step 1
     let module = this;
 
+    if (module.state < MODULE_STATE_INSTANTIATED)
+        ThrowInternalError(JSMSG_BAD_MODULE_STATE);
+
     // Step 4
-    if (module.evaluated)
+    if (module.state == MODULE_STATE_EVALUATED)
         return undefined;
 
     // Step 5
-    SetModuleEvaluated(this);
+    SetModuleState(this, MODULE_STATE_EVALUATED);
 
     // Step 6
     let requestedModules = module.requestedModules;
     for (let i = 0; i < requestedModules.length; i++) {
         let required = requestedModules[i];
-        let requiredModule = HostResolveImportedModule(module, required);
+        let requiredModule = CallModuleResolveHook(module, required, MODULE_STATE_INSTANTIATED);
         callFunction(requiredModule.evaluation, requiredModule);
     }
 
     return EvaluateModule(module);
 }
 _SetCanonicalName(ModuleEvaluation, "ModuleEvaluation");
-
-function ModuleNamespaceEnumerate()
-{
-    if (!IsObject(this) || !IsModuleNamespace(this))
-        return callFunction(CallModuleMethodIfWrapped, this, "ModuleNamespaceEnumerate");
-
-    return CreateListIterator(ModuleNamespaceExports(this));
-}

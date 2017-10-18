@@ -17,7 +17,7 @@ function test() {
 
   // If a sidebar is already open, close it.
   if (!document.getElementById("sidebar-box").hidden) {
-    info("Unexpected sidebar found - a previous test failed to cleanup correctly");
+    ok(false, "Unexpected sidebar found - a previous test failed to cleanup correctly");
     SidebarUI.hide();
   }
 
@@ -27,7 +27,7 @@ function test() {
 
   tests.push({
     _itemID: null,
-    init: function(aCallback) {
+    init(aCallback) {
       // Add a bookmark to the Unfiled Bookmarks folder.
       this._itemID = PlacesUtils.bookmarks.insertBookmark(
         PlacesUtils.unfiledBookmarksFolderId, PlacesUtils._uri(TEST_URL),
@@ -35,12 +35,12 @@ function test() {
       );
       aCallback();
     },
-    prepare: function() {
+    prepare() {
     },
-    selectNode: function(tree) {
+    selectNode(tree) {
       tree.selectItems([this._itemID]);
     },
-    cleanup: function(aCallback) {
+    cleanup(aCallback) {
       PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
       executeSoon(aCallback);
     },
@@ -50,23 +50,23 @@ function test() {
   });
 
   tests.push({
-    init: function(aCallback) {
+    init(aCallback) {
       // Add a history entry.
       let uri = PlacesUtils._uri(TEST_URL);
       PlacesTestUtils.addVisits({
-        uri: uri, visitDate: Date.now() * 1000,
+        uri, visitDate: Date.now() * 1000,
         transition: PlacesUtils.history.TRANSITION_TYPED
       }).then(aCallback);
     },
-    prepare: function() {
+    prepare() {
       sidebar.contentDocument.getElementById("byvisited").doCommand();
     },
-    selectNode: function(tree) {
+    selectNode(tree) {
       tree.selectNode(tree.view.nodeForTreeIndex(0));
       is(tree.selectedNode.uri, TEST_URL, "The correct visit has been selected");
       is(tree.selectedNode.itemId, -1, "The selected node is not bookmarked");
     },
-    cleanup: function(aCallback) {
+    cleanup(aCallback) {
       PlacesTestUtils.clearHistory().then(aCallback);
     },
     sidebarName: HISTORY_SIDEBAR_ID,
@@ -80,7 +80,6 @@ function test() {
     });
 
     sidebar.addEventListener("load", function() {
-      sidebar.removeEventListener("load", arguments.callee, true);
       executeSoon(function() {
         currentTest.prepare();
 
@@ -94,13 +93,13 @@ function test() {
 
           aSubject.Dialog.ui.button0.click();
 
-          executeSoon(function () {
+          executeSoon(function() {
               SidebarUI.hide();
               currentTest.cleanup(postFunc);
             });
         }
-        Services.obs.addObserver(observer, "common-dialog-loaded", false);
-        Services.obs.addObserver(observer, "tabmodal-dialog-loaded", false);
+        Services.obs.addObserver(observer, "common-dialog-loaded");
+        Services.obs.addObserver(observer, "tabmodal-dialog-loaded");
 
         let tree = sidebar.contentDocument.getElementById(currentTest.treeName);
 
@@ -115,7 +114,7 @@ function test() {
         // box, which means that the click actually worked, so it's good enough
         // for the purpose of this test.
       });
-    }, true);
+    }, {capture: true, once: true});
   }
 
   function changeSidebarDirection(aDirection) {
@@ -130,10 +129,9 @@ function test() {
 
     if (tests.length == 0) {
       finish();
-    }
-    else {
+    } else {
       // Create a new tab and run the test.
-      gBrowser.selectedTab = gBrowser.addTab();
+      gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
       currentTest = tests.shift();
       testPlacesPanel(function() {
                         changeSidebarDirection("ltr");

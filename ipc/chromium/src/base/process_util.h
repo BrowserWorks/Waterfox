@@ -36,6 +36,7 @@
 #include <unistd.h>
 #endif
 
+#include "base/child_privileges.h"
 #include "base/command_line.h"
 #include "base/process.h"
 
@@ -47,7 +48,7 @@ typedef IO_COUNTERS IoCounters;
 struct ProcessEntry {
   int pid;
   int ppid;
-  char szExeFile[NAME_MAX + 1];
+  char szExeFile[_POSIX_PATH_MAX + 1];
 };
 
 struct IoCounters {
@@ -74,7 +75,8 @@ enum ProcessArchitecture {
   PROCESS_ARCH_X86_64 = 0x2,
   PROCESS_ARCH_PPC = 0x4,
   PROCESS_ARCH_ARM = 0x8,
-  PROCESS_ARCH_MIPS = 0x10
+  PROCESS_ARCH_MIPS = 0x10,
+  PROCESS_ARCH_ARM64 = 0x20
 };
 
 inline ProcessArchitecture GetCurrentProcessArchitecture()
@@ -90,6 +92,8 @@ inline ProcessArchitecture GetCurrentProcessArchitecture()
   currentArchitecture = base::PROCESS_ARCH_ARM;
 #elif defined(ARCH_CPU_MIPS)
   currentArchitecture = base::PROCESS_ARCH_MIPS;
+#elif defined(ARCH_CPU_ARM64)
+  currentArchitecture = base::PROCESS_ARCH_ARM64;
 #endif
   return currentArchitecture;
 }
@@ -114,13 +118,10 @@ ProcessHandle GetCurrentProcessHandle();
 bool OpenProcessHandle(ProcessId pid, ProcessHandle* handle);
 
 // Converts a PID to a process handle. On Windows the handle is opened
-// with more access rights and must only be used by trusted code. Parameter
-// error can be used to get the error code in opening the process handle.
+// with more access rights and must only be used by trusted code.
 // You have to close returned handle using CloseProcessHandle. Returns true
 // on success.
-bool OpenPrivilegedProcessHandle(ProcessId pid,
-                                 ProcessHandle* handle,
-                                 int64_t* error = nullptr);
+bool OpenPrivilegedProcessHandle(ProcessId pid, ProcessHandle* handle);
 
 // Closes the process handle opened by OpenProcessHandle.
 void CloseProcessHandle(ProcessHandle process);
@@ -142,13 +143,6 @@ void SetAllFDsToCloseOnExec();
 // that there aren't any other threads.
 void CloseSuperfluousFds(const base::InjectiveMultimap& saved_map);
 #endif
-
-enum ChildPrivileges {
-  PRIVILEGES_DEFAULT,
-  PRIVILEGES_UNPRIVILEGED,
-  PRIVILEGES_INHERIT,
-  PRIVILEGES_LAST
-};
 
 #if defined(OS_WIN)
 // Runs the given application name with the given command line. Normally, the

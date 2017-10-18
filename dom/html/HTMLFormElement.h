@@ -85,12 +85,16 @@ public:
 
   virtual EventStates IntrinsicState() const override;
 
+  // EventTarget
+  virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
+
   // nsIContent
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
                                 nsAttrValue& aResult) override;
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult WillHandleEvent(
                      EventChainPostVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
@@ -101,16 +105,13 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
+  virtual nsresult BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                 const nsAttrValueOrString* aValue,
+                                 bool aNotify) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   /**
    * Forget all information about the current submission (and the fact that we
@@ -118,7 +119,8 @@ public:
    */
   void ForgetCurrentSubmission();
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLFormElement,
                                            nsGenericHTMLElement)
@@ -137,24 +139,15 @@ public:
    * Remove an element from the lookup table maintained by the form.
    * We can't fold this method into RemoveElement() because when
    * RemoveElement() is called it doesn't know if the element is
-   * removed because the id attribute has changed, or bacause the
+   * removed because the id attribute has changed, or because the
    * name attribute has changed.
    *
    * @param aElement the element to remove
    * @param aName the name or id of the element to remove
-   * @param aRemoveReason describe why this element is removed. If the element
-   *        is removed because it's removed from the form, it will be removed
-   *        from the past names map too, otherwise it will stay in the past
-   *        names map.
    * @return NS_OK if the element was successfully removed.
    */
-  enum RemoveElementReason {
-    AttributeUpdated,
-    ElementRemoved
-  };
   nsresult RemoveElementFromTable(nsGenericHTMLFormElement* aElement,
-                                  const nsAString& aName,
-                                  RemoveElementReason aRemoveReason);
+                                  const nsAString& aName);
 
   /**
    * Add an element to end of this form's list of elements
@@ -184,7 +177,7 @@ public:
    * @param aElement the image element to remove
    * @return NS_OK if the element was successfully removed.
    */
-  nsresult RemoveImageElement(mozilla::dom::HTMLImageElement* aElement);
+  nsresult RemoveImageElement(HTMLImageElement* aElement);
 
   /**
    * Remove an image element from the lookup table maintained by the form.
@@ -197,16 +190,15 @@ public:
    * @param aName the name or id of the element to remove
    * @return NS_OK if the element was successfully removed.
    */
-  nsresult RemoveImageElementFromTable(mozilla::dom::HTMLImageElement* aElement,
-                                      const nsAString& aName,
-                                      RemoveElementReason aRemoveReason);
+  nsresult RemoveImageElementFromTable(HTMLImageElement* aElement,
+                                      const nsAString& aName);
   /**
    * Add an image element to the end of this form's list of image elements
    *
    * @param aElement the element to add
    * @return NS_OK if the element was successfully added
    */
-  nsresult AddImageElement(mozilla::dom::HTMLImageElement* aElement);
+  nsresult AddImageElement(HTMLImageElement* aElement);
 
   /**
    * Add an image element to the lookup table maintained by the form.
@@ -215,8 +207,8 @@ public:
    * AddImageElement() is called, the image attributes can change.
    * The name or id attributes of the image are used as a key into the table.
    */
-  nsresult AddImageElementToTable(mozilla::dom::HTMLImageElement* aChild,
-                                 const nsAString& aName);
+  nsresult AddImageElementToTable(HTMLImageElement* aChild,
+                                  const nsAString& aName);
 
    /**
     * Returns true if implicit submission of this form is disabled. For more
@@ -278,6 +270,15 @@ public:
   bool CheckValidFormSubmission();
 
   /**
+   * Check whether submission can proceed for this form.  This basically
+   * implements steps 1-4 (more or less) of
+   * <https://html.spec.whatwg.org/multipage/forms.html#concept-form-submit>.
+   * aSubmitter, if not null, is the "submitter" from that algorithm.  Therefore
+   * it must be a valid submit control.
+   */
+  bool SubmissionCanProceed(Element* aSubmitter);
+
+  /**
    * Walk over the form elements and call SubmitNamesValues() on them to get
    * their data pumped into the FormSubmitter.
    *
@@ -313,7 +314,8 @@ public:
     SetHTMLAttr(nsGkAtoms::acceptcharset, aValue, aRv);
   }
 
-  // XPCOM GetAction() is OK
+  void GetAction(nsString& aValue);
+
   void SetAction(const nsAString& aValue, ErrorResult& aRv)
   {
     SetHTMLAttr(nsGkAtoms::action, aValue, aRv);
@@ -408,34 +410,19 @@ public:
   static void
   AssertDocumentOrder(const nsTArray<nsGenericHTMLFormElement*>& aControls,
                       nsIContent* aForm);
+  static void
+  AssertDocumentOrder(const nsTArray<RefPtr<nsGenericHTMLFormElement>>& aControls,
+                      nsIContent* aForm);
 #endif
 
   js::ExpandoAndGeneration mExpandoAndGeneration;
-
-  void RequestAutocomplete();
 
 protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void PostPasswordEvent();
-  void EventHandled() { mFormPasswordEventDispatcher = nullptr; }
 
-  class FormPasswordEventDispatcher final : public AsyncEventDispatcher
-  {
-  public:
-    FormPasswordEventDispatcher(HTMLFormElement* aEventNode,
-                                const nsAString& aEventType)
-      : AsyncEventDispatcher(aEventNode, aEventType, true, true)
-    {}
-
-    NS_IMETHOD Run() override
-    {
-      static_cast<HTMLFormElement*>(mTarget.get())->EventHandled();
-      return AsyncEventDispatcher::Run();
-    }
-  };
-
-  RefPtr<FormPasswordEventDispatcher> mFormPasswordEventDispatcher;
+  RefPtr<AsyncEventDispatcher> mFormPasswordEventDispatcher;
 
   class RemoveElementRunnable;
   friend class RemoveElementRunnable;
@@ -443,7 +430,8 @@ protected:
   class RemoveElementRunnable : public Runnable {
   public:
     explicit RemoveElementRunnable(HTMLFormElement* aForm)
-      : mForm(aForm)
+      : Runnable("dom::HTMLFormElement::RemoveElementRunnable")
+      , mForm(aForm)
     {}
 
     NS_IMETHOD Run() override {
@@ -541,6 +529,10 @@ protected:
   // Insert a element into the past names map.
   void AddToPastNamesMap(const nsAString& aName, nsISupports* aChild);
 
+  // Remove the given element from the past names map.  The element must be an
+  // nsGenericHTMLFormElement or HTMLImageElement.
+  void RemoveElementFromPastNamesMap(Element* aElement);
+
   nsresult
   AddElementToTableInternal(
     nsInterfaceHashtable<nsStringHashKey,nsISupports>& aTable,
@@ -567,27 +559,11 @@ protected:
   /** The list of controls (form.elements as well as stuff not in elements) */
   RefPtr<HTMLFormControlsCollection> mControls;
   /** The currently selected radio button of each group */
-  nsRefPtrHashtable<nsStringCaseInsensitiveHashKey, HTMLInputElement> mSelectedRadioButtons;
+  nsRefPtrHashtable<nsStringHashKey, HTMLInputElement> mSelectedRadioButtons;
   /** The number of required radio button of each group */
   nsDataHashtable<nsStringCaseInsensitiveHashKey,uint32_t> mRequiredRadioButtonCounts;
   /** The value missing state of each group */
   nsDataHashtable<nsStringCaseInsensitiveHashKey,bool> mValueMissingRadioGroups;
-  /** Whether we are currently processing a submit event or not */
-  bool mGeneratingSubmit;
-  /** Whether we are currently processing a reset event or not */
-  bool mGeneratingReset;
-  /** Whether we are submitting currently */
-  bool mIsSubmitting;
-  /** Whether the submission is to be deferred in case a script triggers it */
-  bool mDeferSubmission;
-  /** Whether we notified NS_FORMSUBMIT_SUBJECT listeners already */
-  bool mNotifiedObservers;
-  /** If we notified the listeners early, what was the result? */
-  bool mNotifiedObserversResult;
-  /** Keep track of what the popup state was when the submit was initiated */
-  PopupControlState mSubmitPopupState;
-  /** Keep track of whether a submission was user-initiated or not */
-  bool mSubmitInitiatedFromUserInput;
 
   /** The pending submission object */
   nsAutoPtr<HTMLFormSubmission> mPendingSubmission;
@@ -609,7 +585,7 @@ protected:
   // This is needed to properly clean up the bi-directional references
   // (both weak and strong) between the form and its HTMLImageElements.
 
-  nsTArray<mozilla::dom::HTMLImageElement*> mImageElements;  // Holds WEAK references
+  nsTArray<HTMLImageElement*> mImageElements;  // Holds WEAK references
 
   // A map from an ID or NAME attribute to the HTMLImageElement(s), this
   // hash holds strong references either to the named HTMLImageElement, or
@@ -624,6 +600,9 @@ protected:
 
   nsInterfaceHashtable<nsStringHashKey,nsISupports> mPastNameLookupTable;
 
+  /** Keep track of what the popup state was when the submit was initiated */
+  PopupControlState mSubmitPopupState;
+
   /**
    * Number of invalid and candidate for constraint validation elements in the
    * form the last time UpdateValidity has been called.
@@ -631,6 +610,20 @@ protected:
    */
   int32_t mInvalidElementsCount;
 
+  /** Whether we are currently processing a submit event or not */
+  bool mGeneratingSubmit;
+  /** Whether we are currently processing a reset event or not */
+  bool mGeneratingReset;
+  /** Whether we are submitting currently */
+  bool mIsSubmitting;
+  /** Whether the submission is to be deferred in case a script triggers it */
+  bool mDeferSubmission;
+  /** Whether we notified NS_FORMSUBMIT_SUBJECT listeners already */
+  bool mNotifiedObservers;
+  /** If we notified the listeners early, what was the result? */
+  bool mNotifiedObserversResult;
+  /** Keep track of whether a submission was user-initiated or not */
+  bool mSubmitInitiatedFromUserInput;
   /**
    * Whether the submission of this form has been ever prevented because of
    * being invalid.

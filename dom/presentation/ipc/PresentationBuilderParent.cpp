@@ -11,6 +11,98 @@
 namespace mozilla {
 namespace dom {
 
+namespace {
+
+class PresentationSessionTransportIPC final :
+  public nsIPresentationSessionTransport
+{
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIPRESENTATIONSESSIONTRANSPORT
+
+  PresentationSessionTransportIPC(PresentationParent* aParent,
+                                  const nsAString& aSessionId,
+                                  uint8_t aRole)
+    : mParent(aParent)
+    , mSessionId(aSessionId)
+    , mRole(aRole)
+  {
+    MOZ_ASSERT(mParent);
+  }
+
+private:
+  virtual ~PresentationSessionTransportIPC() = default;
+
+  RefPtr<PresentationParent> mParent;
+  nsString mSessionId;
+  uint8_t mRole;
+};
+
+NS_IMPL_ISUPPORTS(PresentationSessionTransportIPC,
+                  nsIPresentationSessionTransport)
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::GetCallback(
+                           nsIPresentationSessionTransportCallback** aCallback)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::SetCallback(
+                            nsIPresentationSessionTransportCallback* aCallback)
+{
+  if (aCallback) {
+    aCallback->NotifyTransportReady();
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::GetSelfAddress(nsINetAddr** aSelfAddress)
+{
+  MOZ_ASSERT(false, "Not expected.");
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::EnableDataNotification()
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::Send(const nsAString& aData)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::SendBinaryMsg(const nsACString& aData)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::SendBlob(nsIDOMBlob* aBlob)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationSessionTransportIPC::Close(nsresult aReason)
+{
+  if (NS_WARN_IF(!mParent->SendNotifyCloseSessionTransport(mSessionId,
+                                                           mRole,
+                                                           aReason))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+} // anonymous namespace
+
 NS_IMPL_ISUPPORTS(PresentationBuilderParent,
                   nsIPresentationSessionTransportBuilder,
                   nsIPresentationDataChannelSessionTransportBuilder)
@@ -18,15 +110,12 @@ NS_IMPL_ISUPPORTS(PresentationBuilderParent,
 PresentationBuilderParent::PresentationBuilderParent(PresentationParent* aParent)
   : mParent(aParent)
 {
-  MOZ_COUNT_CTOR(PresentationBuilderParent);
 }
 
 PresentationBuilderParent::~PresentationBuilderParent()
 {
-  MOZ_COUNT_DTOR(PresentationBuilderParent);
-
   if (mNeedDestroyActor) {
-    NS_WARN_IF(!Send__delete__(this));
+    Unused << NS_WARN_IF(!Send__delete__(this));
   }
 }
 
@@ -39,11 +128,15 @@ PresentationBuilderParent::BuildDataChannelTransport(
   mBuilderListener = aListener;
 
   RefPtr<PresentationSessionInfo> info = static_cast<PresentationSessionInfo*>(aListener);
+  nsAutoString sessionId(info->GetSessionId());
   if (NS_WARN_IF(!mParent->SendPPresentationBuilderConstructor(this,
-                                                               nsString(info->GetSessionId()),
+                                                               sessionId,
                                                                aRole))) {
     return NS_ERROR_FAILURE;
   }
+  mIPCSessionTransport = new PresentationSessionTransportIPC(mParent,
+                                                             sessionId,
+                                                             aRole);
   mNeedDestroyActor = true;
   mParent = nullptr;
   return NS_OK;
@@ -102,75 +195,69 @@ PresentationBuilderParent::ActorDestroy(ActorDestroyReason aWhy)
   mBuilderListener = nullptr;
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendOffer(const nsString& aSDP)
 {
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendOffer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendAnswer(const nsString& aSDP)
 {
   RefPtr<DCPresentationChannelDescription> description =
     new DCPresentationChannelDescription(aSDP);
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendAnswer(description)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvSendIceCandidate(const nsString& aCandidate)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->SendIceCandidate(aCandidate)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvClose(const nsresult& aReason)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->Close(aReason)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
 // Delegate to nsIPresentationSessionTransportBuilderListener
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvOnSessionTransport()
 {
-  // To avoid releasing |this| in this method
-  NS_DispatchToMainThread(NS_NewRunnableFunction([this]() -> void {
+  RefPtr<PresentationBuilderParent> kungFuDeathGrip = this;
+  Unused <<
     NS_WARN_IF(!mBuilderListener ||
-               NS_FAILED(mBuilderListener->OnSessionTransport(nullptr)));
-  }));
-
-  nsCOMPtr<nsIPresentationSessionTransportCallback>
-    callback(do_QueryInterface(mBuilderListener));
-
-  callback->NotifyTransportReady();
-  return true;
+               NS_FAILED(mBuilderListener->OnSessionTransport(mIPCSessionTransport)));
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 PresentationBuilderParent::RecvOnSessionTransportError(const nsresult& aReason)
 {
   if (NS_WARN_IF(!mBuilderListener ||
                  NS_FAILED(mBuilderListener->OnError(aReason)))) {
-    return false;
+    return IPC_FAIL_NO_REASON(this);
   }
-  return true;
+  return IPC_OK();
 }
 
 } // namespace dom

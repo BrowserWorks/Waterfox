@@ -4,13 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: Workers")
+
 # Public stuff.
 EXPORTS.mozilla.dom += [
     'FileReaderSync.h',
     'ServiceWorkerCommon.h',
     'ServiceWorkerContainer.h',
     'ServiceWorkerEvents.h',
-    'ServiceWorkerMessageEvent.h',
     'ServiceWorkerRegistrar.h',
     'ServiceWorkerRegistration.h',
     'WorkerLocation.h',
@@ -66,7 +68,6 @@ UNIFIED_SOURCES += [
     'ServiceWorkerManagerChild.cpp',
     'ServiceWorkerManagerParent.cpp',
     'ServiceWorkerManagerService.cpp',
-    'ServiceWorkerMessageEvent.cpp',
     'ServiceWorkerPrivate.cpp',
     'ServiceWorkerRegisterJob.cpp',
     'ServiceWorkerRegistrar.cpp',
@@ -75,6 +76,8 @@ UNIFIED_SOURCES += [
     'ServiceWorkerScriptCache.cpp',
     'ServiceWorkerUnregisterJob.cpp',
     'ServiceWorkerUpdateJob.cpp',
+    'ServiceWorkerUpdaterChild.cpp',
+    'ServiceWorkerUpdaterParent.cpp',
     'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
     'WorkerDebuggerManager.cpp',
@@ -89,6 +92,7 @@ UNIFIED_SOURCES += [
 
 IPDL_SOURCES += [
     'PServiceWorkerManager.ipdl',
+    'PServiceWorkerUpdater.ipdl',
     'ServiceWorkerRegistrarTypes.ipdlh',
 ]
 
@@ -96,6 +100,7 @@ LOCAL_INCLUDES += [
     '../base',
     '../system',
     '/dom/base',
+    '/dom/bindings',
     '/xpcom/build',
     '/xpcom/threads',
 ]

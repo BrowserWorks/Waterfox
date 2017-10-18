@@ -7,8 +7,8 @@
 # ***** END LICENSE BLOCK *****
 """ gecko_migration.py
 
-Merge day script for gecko (mozilla-central -> mozilla-aurora,
-mozilla-aurora -> mozilla-beta, mozilla-beta -> mozilla-release).
+Merge day script for gecko (mozilla-central -> mozilla-beta,
+mozilla-beta -> mozilla-release).
 
 Ported largely from
 http://hg.mozilla.org/build/tools/file/084bc4e2fc76/release/beta2release.py
@@ -30,11 +30,10 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.selfserve import SelfServeMixin
 from mozharness.mozilla.updates.balrog import BalrogMixin
 from mozharness.mozilla.buildbot import BuildbotMixin
-from mozharness.mozilla.repo_manupulation import MercurialRepoManipulationMixin
+from mozharness.mozilla.repo_manipulation import MercurialRepoManipulationMixin
 
 VALID_MIGRATION_BEHAVIORS = (
-    "beta_to_release", "aurora_to_beta", "central_to_aurora", "release_to_esr",
-    "bump_second_digit",
+    "beta_to_release", "central_to_beta", "release_to_esr", "bump_second_digit",
 )
 
 
@@ -170,7 +169,7 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
     def query_commit_dirs(self):
         dirs = self.query_abs_dirs()
         commit_dirs = [dirs['abs_to_dir']]
-        if self.config['migration_behavior'] == 'central_to_aurora':
+        if self.config['migration_behavior'] == 'central_to_beta':
             commit_dirs.append(dirs['abs_from_dir'])
         return commit_dirs
 
@@ -288,8 +287,8 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         self.write_to_file(clobber_file, new_contents)
 
     def bump_version(self, cwd, curr_version, next_version, curr_suffix,
-                     next_suffix, bump_major=False):
-        """ Bump versions (m-c, m-a, m-b).
+                     next_suffix, bump_major=False, use_config_suffix=False):
+        """ Bump versions (m-c, m-b).
 
             At some point we may want to unhardcode these filenames into config
             """
@@ -297,7 +296,10 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         next_weave_version = str(int(curr_weave_version) + 1)
         for f in self.config["version_files"]:
             from_ = "%s.0%s" % (curr_version, curr_suffix)
-            to = "%s.0%s%s" % (next_version, next_suffix, f["suffix"])
+            if use_config_suffix:
+                to = "%s.0%s%s" % (next_version, next_suffix, f["suffix"])
+            else:
+                to = "%s.0%s" % (next_version, next_suffix)
             self.replace(os.path.join(cwd, f["file"]), from_, to)
 
         # only applicable for m-c
@@ -308,14 +310,14 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
                 "static const unsigned int kVersion = %s;" % next_version
             )
             self.replace(
-                os.path.join(cwd, "services/sync/moz.build"),
-                "DEFINES['weave_version'] = '1.%s.0'" % curr_weave_version,
-                "DEFINES['weave_version'] = '1.%s.0'" % next_weave_version
+                os.path.join(cwd, "services/sync/modules/constants.js"),
+                'WEAVE_VERSION: "1.%s.0"' % curr_weave_version,
+                'WEAVE_VERSION: "1.%s.0"' % next_weave_version
             )
 
     # Branch-specific workflow helper methods {{{1
-    def central_to_aurora(self, end_tag):
-        """ mozilla-central -> mozilla-aurora behavior.
+    def central_to_beta(self, end_tag):
+        """ mozilla-central -> mozilla-beta behavior.
 
             We could have all of these individually toggled by flags, but
             by separating into workflow methods we can be more precise about
@@ -323,48 +325,21 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
             staging beta user repo migrations.
             """
         dirs = self.query_abs_dirs()
-        self.info("Reverting locales")
-        hg = self.query_exe("hg", return_type="list")
-        for f in self.config["locale_files"]:
-            self.run_command(
-                hg + ["revert", "-r", end_tag, f],
-                cwd=dirs['abs_to_dir'],
-                error_list=HgErrorList,
-                halt_on_failure=True,
-            )
-        next_ma_version = self.get_version(dirs['abs_to_dir'])[0]
-        self.bump_version(dirs['abs_to_dir'], next_ma_version, next_ma_version, "a1", "a2")
+        next_mb_version = self.get_version(dirs['abs_to_dir'])[0]
+        self.bump_version(dirs['abs_to_dir'], next_mb_version, next_mb_version, "a1", "", use_config_suffix=True)
         self.apply_replacements()
         # bump m-c version
         curr_mc_version = self.get_version(dirs['abs_from_dir'])[0]
         next_mc_version = str(int(curr_mc_version) + 1)
         self.bump_version(
             dirs['abs_from_dir'], curr_mc_version, next_mc_version, "a1", "a1",
-            bump_major=True
+            bump_major=True,
+            use_config_suffix=False
         )
         # touch clobber files
         self.touch_clobber_file(dirs['abs_from_dir'])
         self.touch_clobber_file(dirs['abs_to_dir'])
 
-    def aurora_to_beta(self, *args, **kwargs):
-        """ mozilla-aurora -> mozilla-beta behavior.
-
-            We could have all of these individually toggled by flags, but
-            by separating into workflow methods we can be more precise about
-            what happens in each workflow, while allowing for things like
-            staging beta user repo migrations.
-            """
-        dirs = self.query_abs_dirs()
-        mb_version = self.get_version(dirs['abs_to_dir'])[0]
-        self.bump_version(dirs['abs_to_dir'], mb_version, mb_version, "a2", "")
-        self.apply_replacements()
-        self.touch_clobber_file(dirs['abs_to_dir'])
-        # TODO mozconfig diffing
-        # The build/tools version only checks the mozconfigs from hgweb, so
-        # can't help pre-push.  The in-tree mozconfig diffing requires a mach
-        # virtualenv to be installed.  If we want this sooner we can put this
-        # in the push action; otherwise we may just wait until we have in-tree
-        # mozconfig checking.
 
     def beta_to_release(self, *args, **kwargs):
         """ mozilla-beta -> mozilla-release behavior.
@@ -392,10 +367,9 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
     def release_to_esr(self, *args, **kwargs):
         """ mozilla-release -> mozilla-esrNN behavior. """
         dirs = self.query_abs_dirs()
-        for to_transplant in self.config.get("transplant_patches", []):
-            self.transplant(repo=to_transplant["repo"],
-                            changeset=to_transplant["changeset"],
-                            cwd=dirs['abs_to_dir'])
+        for to_graft in self.config.get("graft_patches", []):
+            self.graft(repo=to_graft["repo"], changeset=to_graft["changeset"],
+                       cwd=dirs['abs_to_dir'])
         self.apply_replacements()
         self.touch_clobber_file(dirs['abs_to_dir'])
 
@@ -404,20 +378,27 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         for f, from_, to in self.config["replacements"]:
             self.replace(os.path.join(dirs['abs_to_dir'], f), from_, to)
 
-    def transplant(self, repo, changeset, cwd):
-        """Transplant a Mercurial changeset from a remote repository."""
+    def graft(self, repo, changeset, cwd):
+        """Graft a Mercurial changeset from a remote repository."""
         hg = self.query_exe("hg", return_type="list")
-        cmd = hg + ["--config", "extensions.transplant=", "transplant",
-                    "--source", repo, changeset]
-        self.info("Transplanting %s from %s" % (changeset, repo))
+        self.info("Pulling %s from %s" % (changeset, repo))
+        pull_cmd = hg + ["pull", "-r", changeset, repo]
+        status = self.run_command(
+            pull_cmd,
+            cwd=cwd,
+            error_list=HgErrorList,
+        )
+        if status != 0:
+            self.fatal("Cannot pull %s from %s properly" % (changeset, repo))
+        cmd = hg + ["graft", changeset]
+        self.info("Grafting %s from %s" % (changeset, repo))
         status = self.run_command(
             cmd,
             cwd=cwd,
             error_list=HgErrorList,
         )
         if status != 0:
-            self.fatal("Cannot transplant %s from %s properly" %
-                       (changeset, repo))
+            self.fatal("Cannot graft %s from %s properly" % (changeset, repo))
 
     def pull_from_repo(self, from_dir, to_dir, revision=None, branch=None):
         """ Pull from one repo to another. """
@@ -453,17 +434,16 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         next_version = list(version)
         # bump the second digit
         next_version[1] = str(int(next_version[1]) + 1)
-        # in case we have third digit, reset it to 0
-        if len(next_version) > 2:
-            next_version[2] = '0'
-        next_version = ".".join(next_version)
+        # Take major+minor and append '0' accordng to Firefox version schema.
+        # 52.0 will become 52.1.0, not 52.1
+        next_version = ".".join(next_version[:2] + ['0'])
         for f in self.config["version_files"]:
             self.replace(os.path.join(dirs['abs_to_dir'], f["file"]),
                          curr_version, next_version + f["suffix"])
         self.touch_clobber_file(dirs['abs_to_dir'])
 
     def pull(self):
-        """ Pull tools first, then use hgtool for the gecko repos
+        """ Pull tools first, then clone the gecko repos
             """
         repos = [{
             "repo": self.config["tools_repo_url"],
@@ -485,7 +465,6 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         base_from_rev = self.query_from_revision()
         base_to_rev = self.query_to_revision()
         base_tag = self.config['base_tag'] % {'major_version': from_fx_major_version}
-        end_tag = self.config['end_tag'] % {'major_version': to_fx_major_version}
         self.hg_tag(
             dirs['abs_from_dir'], base_tag, user=self.config['hg_user'],
             revision=base_from_rev,
@@ -505,10 +484,14 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
                 dirs['abs_to_dir'], old_head=base_to_rev, new_head=new_from_rev,
                 user=self.config['hg_user'],
             )
-        self.hg_tag(
-            dirs['abs_to_dir'], end_tag, user=self.config['hg_user'],
-            revision=base_to_rev, force=True,
-        )
+
+        end_tag = self.config.get('end_tag')
+        if end_tag:
+            end_tag = end_tag % {'major_version': to_fx_major_version}
+            self.hg_tag(
+                dirs['abs_to_dir'], end_tag, user=self.config['hg_user'],
+                revision=base_to_rev, force=True,
+            )
         # Call beta_to_release etc.
         if not hasattr(self, self.config['migration_behavior']):
             self.fatal("Don't know how to proceed with migration_behavior %s !" % self.config['migration_behavior'])

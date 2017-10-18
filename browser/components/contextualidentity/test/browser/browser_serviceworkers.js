@@ -12,7 +12,7 @@ const NUM_USER_CONTEXTS = 3;
 // returns the newly opened tab
 function openTabInUserContext(uri, userContextId) {
   // open the tab in the correct userContextId
-  let tab = gBrowser.addTab(uri, {userContextId});
+  let tab = BrowserTestUtils.addTab(gBrowser, uri, {userContextId});
 
   // select tab and make sure its browser is focused
   gBrowser.selectedTab = tab;
@@ -21,18 +21,17 @@ function openTabInUserContext(uri, userContextId) {
   return tab;
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   // make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true]
-    ]}, resolve);
-  });
+  await SpecialPowers.pushPrefEnv({"set": [
+    ["privacy.userContext.enabled", true],
+    ["dom.ipc.processCount", 1]
+  ]});
 });
 
 let infos = [];
 
-add_task(function* test() {
+add_task(async function test() {
   // Open the same URI in multiple user contexts, and make sure we have a
   // separate service worker in each of the contexts
   for (let userContextId = 0; userContextId < NUM_USER_CONTEXTS; userContextId++) {
@@ -40,20 +39,20 @@ add_task(function* test() {
     let tab = openTabInUserContext(URI, userContextId);
 
     // wait for tab load
-    yield BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
+    await BrowserTestUtils.browserLoaded(gBrowser.getBrowserForTab(tab));
 
     // remove the tab
     gBrowser.removeTab(tab);
   }
 
   if (!allRegistered()) {
-    yield promiseAllRegistered();
+    await promiseAllRegistered();
   }
   ok(true, "all service workers are registered");
 
   // Unregistered all service workers added in this test
   for (let info of infos) {
-    yield promiseUnregister(info);
+    await promiseUnregister(info);
   }
 });
 
@@ -79,7 +78,7 @@ function allRegistered() {
 function promiseAllRegistered() {
   return new Promise(function(resolve) {
     let listener = {
-      onRegister: function() {
+      onRegister() {
         if (allRegistered()) {
           swm.removeListener(listener);
           resolve();
@@ -93,11 +92,11 @@ function promiseAllRegistered() {
 function promiseUnregister(info) {
   return new Promise(function(resolve) {
     swm.unregister(info.principal, {
-      unregisterSucceeded: function(aState) {
+      unregisterSucceeded(aState) {
         ok(aState, "ServiceWorkerRegistration exists");
         resolve();
       },
-      unregisterFailed: function(aState) {
+      unregisterFailed(aState) {
         ok(false, "unregister should succeed");
       }
     }, info.scope);

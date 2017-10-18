@@ -14,7 +14,9 @@ using namespace mozilla::dom;
 
 namespace mozilla {
 
-AudioNodeExternalInputStream::AudioNodeExternalInputStream(AudioNodeEngine* aEngine, TrackRate aSampleRate)
+AudioNodeExternalInputStream::AudioNodeExternalInputStream(
+  AudioNodeEngine* aEngine,
+  TrackRate aSampleRate)
   : AudioNodeStream(aEngine, NO_STREAM_FLAGS, aSampleRate)
 {
   MOZ_COUNT_CTOR(AudioNodeExternalInputStream);
@@ -152,10 +154,15 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   MediaStream* source = mInputs[0]->GetSource();
   AutoTArray<AudioSegment,1> audioSegments;
   uint32_t inputChannels = 0;
-  for (StreamTracks::TrackIter tracks(source->mTracks, MediaSegment::AUDIO);
+  for (StreamTracks::TrackIter tracks(source->mTracks);
        !tracks.IsEnded(); tracks.Next()) {
     const StreamTracks::Track& inputTrack = *tracks;
     if (!mInputs[0]->PassTrackThrough(tracks->GetID())) {
+      continue;
+    }
+
+    if (inputTrack.GetSegment()->GetType() == MediaSegment::VIDEO) {
+      MOZ_ASSERT(false, "AudioNodeExternalInputStream shouldn't have video tracks");
       continue;
     }
 

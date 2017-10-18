@@ -5,24 +5,22 @@
 /* CSS Variables specific to this panel that aren't defined by the themes */
 .theme-light {
   --rule-highlight-background-color: #ffee99;
+  --rule-overridden-item-border-color: var(--theme-content-color3);
 }
 
 .theme-dark {
   --rule-highlight-background-color: #594724;
+  --rule-overridden-item-border-color: var(--theme-content-color1);
 }
 
 .theme-firebug {
   --rule-highlight-background-color: #ffee99;
   --rule-property-name: darkgreen;
   --rule-property-value: darkblue;
+  --rule-overridden-item-border-color: var(--theme-content-color2);
 }
 
 /* Rule View Tabpanel */
-
-.theme-firebug .ruleview {
-  font-family: monospace;
-  font-size: 11px;
-}
 
 #sidebar-panel-ruleview {
   margin: 0;
@@ -30,6 +28,9 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
+  /* Override the min-width from .inspector-tabpanel, as the rule panel can support small
+     widths */
+  min-width: 100px;
 }
 
 /* Rule View Toolbar */
@@ -52,22 +53,64 @@
   display: flex;
 }
 
-#pseudo-class-panel {
+.ruleview-reveal-panel {
   display: flex;
-  height: 24px;
   overflow: hidden;
-  transition: height 150ms ease;
 }
 
-#pseudo-class-panel[hidden] {
-  height: 0px;
+.ruleview-reveal-panel[hidden] {
+  display: none;
 }
 
-#pseudo-class-panel > label {
+.ruleview-reveal-panel label {
   -moz-user-select: none;
   flex-grow: 1;
   display: flex;
   align-items: center;
+}
+
+/* Class toggle panel */
+#ruleview-class-panel:not([hidden]) {
+  /* The class panel can contain 0 to N classes, so we can't hardcode a height here like
+     we do for the pseudo-class panel. Unfortunately, that means we don't get the height
+     transition when toggling the panel */
+  flex-direction: column;
+}
+
+#ruleview-class-panel .add-class {
+  margin: 0;
+  border-width: 0 0 1px 0;
+  padding: 2px 6px;
+  border-radius: 0;
+}
+
+#ruleview-class-panel .classes {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+#ruleview-class-panel .classes {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+#ruleview-class-panel .classes label {
+  flex: 0 0;
+  max-width: 50%;
+}
+
+#ruleview-class-panel .classes label span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#ruleview-class-panel .no-classes {
+  flex: 1;
+  color: var(--theme-body-color-inactive);
+  margin: 0;
+  text-align: center;
 }
 
 /* Rule View Container */
@@ -125,34 +168,50 @@
 }
 
 .ruleview-computedlist,
+.ruleview-overridden-items[hidden],
 .ruleview-overridden-rule-filter[hidden],
-.ruleview-warning[hidden] {
+.ruleview-warning[hidden],
+.ruleview-overridden .ruleview-grid {
   display: none;
 }
 
 .ruleview-computedlist[user-open],
-.ruleview-computedlist[filter-open] {
+.ruleview-computedlist[filter-open],
+.ruleview-overridden-items {
   display: block;
 }
 
 .ruleview-rule-source {
   text-align: end;
   float: right;
+  max-width: 100%;
+
+  /* Force RTL direction to crop the source link at the beginning. */
+  direction: rtl;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
   -moz-user-select: none;
   margin-bottom: 2px;
 }
 
-.ruleview-rule-source > label {
-  cursor: pointer;
+.ruleview-rule-source-label {
+  white-space: nowrap;
   margin: 0;
+  cursor: pointer;
+
+  /* Create an LTR embed to avoid special characters being shifted to the start due to the
+     parent node direction: rtl; */
+  direction: ltr;
+  unicode-bidi: embed
 }
 
 .ruleview-rule-source[unselectable],
-.ruleview-rule-source[unselectable] > label {
+.ruleview-rule-source[unselectable] > .ruleview-rule-source-label {
   cursor: default;
 }
 
-.theme-firebug .ruleview-rule-source label {
+.theme-firebug .ruleview-rule-source-label {
   font-family: var(--proportional-font-family);
   font-weight: bold;
   color: #0000FF;
@@ -293,7 +352,7 @@
 }
 
 .ruleview-overridden-rule-filter {
-  background-image: url(images/filter.svg#filterinput);
+  background-image: url(chrome://devtools/skin/images/filter.svg#filterinput);
   background-size: 11px 11px;
   margin-inline-start: 5px;
   display: inline-block;
@@ -325,6 +384,11 @@
   display: inline-block;
 }
 
+.ruleview-rule .ruleview-expander.theme-twisty:dir(rtl) {
+  /* for preventing .theme-twisty's wrong direction in rtl; Bug 1296648 */
+  transform: none;
+}
+
 .ruleview-newproperty {
   /* (enable checkbox width: 12px) + (expander width: 15px) */
   margin-inline-start: 27px;
@@ -346,17 +410,70 @@
   margin-inline-start: 35px;
 }
 
-.ruleview-swatch {
+.ruleview-overridden-items {
+  margin: 0px 0px 0px 5px;
+  list-style: none;
+  line-height: 1.5em;
+}
+
+.ruleview-overridden-item {
+  position: relative;
+}
+
+.ruleview-overridden-item::before {
+  position: absolute;
+  left: -15px;
+  top: 0px;
+  content: '';
+  display: block;
+  border-left: 0.5px solid var(--rule-overridden-item-border-color);
+  height: 0.8em;
+  border-bottom: 0.5px solid var(--rule-overridden-item-border-color);
+  width: 10px;
+}
+
+.ruleview-overridden-item::after {
+  position: absolute;
+  left: -15px;
+  bottom: -7px;
+  content: '';
+  display: block;
+  border-left: 0.5px solid var(--rule-overridden-item-border-color);
+  height: 100%;
+}
+
+.ruleview-overridden-item:last-child:after {
+  display: none;
+}
+
+.ruleview-grid,
+.ruleview-swatch,
+.ruleview-shape {
   cursor: pointer;
   border-radius: 50%;
-  width: 0.9em;
-  height: 0.9em;
+  width: 1em;
+  height: 1em;
   vertical-align: middle;
   /* align the swatch with its value */
   margin-top: -1px;
   margin-inline-end: 5px;
   display: inline-block;
   position: relative;
+}
+
+.ruleview-grid {
+  background: url("chrome://devtools/skin/images/grid.svg");
+  border-radius: 0;
+}
+
+.ruleview-shape {
+  background: url("chrome://devtools/skin/images/tool-shadereditor.svg");
+  border-radius: 0;
+  background-size: 1em;
+}
+
+.ruleview-shape-point.active {
+  background-color: var(--rule-highlight-background-color);
 }
 
 .ruleview-colorswatch::before {
@@ -483,19 +600,23 @@
   filter: url(images/filters.svg#checked-icon-state);
 }
 
+.ruleview-grid.active,
 .ruleview-selectorhighlighter:active,
-.ruleview-selectorhighlighter.highlighted {
+.ruleview-selectorhighlighter.highlighted,
+.ruleview-shape.active {
   filter: url(images/filters.svg#checked-icon-state) brightness(0.9);
 }
 
 #ruleview-add-rule-button::before {
   background-image: url("chrome://devtools/skin/images/add.svg");
-  background-size: cover;
 }
 
 #pseudo-class-panel-toggle::before {
   background-image: url("chrome://devtools/skin/images/pseudo-class.svg");
-  background-size: cover;
+}
+
+#class-panel-toggle::before {
+  content: ".cls";
 }
 
 .ruleview-overridden-rule-filter {

@@ -28,7 +28,7 @@ FixedTableLayoutStrategy::~FixedTableLayoutStrategy()
 }
 
 /* virtual */ nscoord
-FixedTableLayoutStrategy::GetMinISize(nsRenderingContext* aRenderingContext)
+FixedTableLayoutStrategy::GetMinISize(gfxContext* aRenderingContext)
 {
   DISPLAY_MIN_WIDTH(mTableFrame, mMinISize);
   if (mMinISize != NS_INTRINSIC_WIDTH_UNKNOWN) {
@@ -69,9 +69,8 @@ FixedTableLayoutStrategy::GetMinISize(nsRenderingContext* aRenderingContext)
     nscoord spacing = mTableFrame->GetColSpacing(col);
     const nsStyleCoord *styleISize = &colFrame->StylePosition()->ISize(wm);
     if (styleISize->ConvertsToLength()) {
-      result += nsLayoutUtils::ComputeISizeValue(aRenderingContext,
-                                                 colFrame, 0, 0, 0,
-                                                 *styleISize);
+      result += colFrame->ComputeISizeValue(aRenderingContext,
+                                            0, 0, 0, *styleISize);
     } else if (styleISize->GetUnit() == eStyleUnit_Percent) {
       // do nothing
     } else {
@@ -119,7 +118,7 @@ FixedTableLayoutStrategy::GetMinISize(nsRenderingContext* aRenderingContext)
 }
 
 /* virtual */ nscoord
-FixedTableLayoutStrategy::GetPrefISize(nsRenderingContext* aRenderingContext,
+FixedTableLayoutStrategy::GetPrefISize(gfxContext* aRenderingContext,
                                        bool aComputingSize)
 {
   // It's theoretically possible to do something much better here that
@@ -213,9 +212,8 @@ FixedTableLayoutStrategy::ComputeColumnISizes(const ReflowInput& aReflowInput)
     const nsStyleCoord *styleISize = &colFrame->StylePosition()->ISize(wm);
     nscoord colISize;
     if (styleISize->ConvertsToLength()) {
-      colISize = nsLayoutUtils::ComputeISizeValue(aReflowInput.mRenderingContext,
-                                                  colFrame, 0, 0, 0,
-                                                  *styleISize);
+      colISize = colFrame->ComputeISizeValue(aReflowInput.mRenderingContext,
+                                             0, 0, 0, *styleISize);
       specTotal += colISize;
     } else if (styleISize->GetUnit() == eStyleUnit_Percent) {
       float pct = styleISize->GetPercentValue();

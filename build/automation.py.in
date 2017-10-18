@@ -36,18 +36,11 @@ from mozscreenshot import printstatus, dump_screen
 # ---------------------------------------------------------------
 
 _DEFAULT_PREFERENCE_FILE = os.path.join(SCRIPT_DIR, 'prefs_general.js')
-_DEFAULT_APPS_FILE = os.path.join(SCRIPT_DIR, 'webapps_mochitest.json')
 
 _DEFAULT_WEB_SERVER = "127.0.0.1"
 _DEFAULT_HTTP_PORT = 8888
 _DEFAULT_SSL_PORT = 4443
 _DEFAULT_WEBSOCKET_PORT = 9988
-
-# from nsIPrincipal.idl
-_APP_STATUS_NOT_INSTALLED = 0
-_APP_STATUS_INSTALLED     = 1
-_APP_STATUS_PRIVILEGED    = 2
-_APP_STATUS_CERTIFIED     = 3
 
 #expand _DIST_BIN = __XPC_BIN_PATH__
 #expand _IS_WIN32 = len("__WIN32__") != 0
@@ -186,20 +179,11 @@ class Automation(object):
       if Automation().IS_WIN32:
         import platform
         pid = "%i" % self.pid
-        if platform.release() == "2000":
-          # Windows 2000 needs 'kill.exe' from the 
-          #'Windows 2000 Resource Kit tools'. (See bug 475455.)
-          try:
-            subprocess.Popen(["kill", "-f", pid]).wait()
-          except:
-            self.log.info("TEST-UNEXPECTED-FAIL | automation.py | Missing 'kill' utility to kill process with pid=%s. Kill it manually!", pid)
-        else:
-          # Windows XP and later.
-          subprocess.Popen(["taskkill", "/F", "/PID", pid]).wait()
+        subprocess.Popen(["taskkill", "/F", "/PID", pid]).wait()
       else:
         os.kill(self.pid, signal.SIGKILL)
 
-  def environment(self, env=None, xrePath=None, crashreporter=True, debugger=False, dmdPath=None, lsanPath=None):
+  def environment(self, env=None, xrePath=None, crashreporter=True, debugger=False, dmdPath=None, lsanPath=None, ubsanPath=None):
     if xrePath == None:
       xrePath = self.DIST_BIN
     if env == None:
@@ -244,7 +228,7 @@ class Automation(object):
     env['XRE_NO_WINDOWS_CRASH_DIALOG'] = '1'
 
     # Set WebRTC logging in case it is not set yet
-    env.setdefault('MOZ_LOG', 'signaling:3,mtransport:4,datachannel:4,jsep:4,MediaPipelineFactory:4')
+    env.setdefault('MOZ_LOG', 'signaling:3,mtransport:4,DataChannel:4,jsep:4,MediaPipelineFactory:4')
     env.setdefault('R_LOG_LEVEL', '6')
     env.setdefault('R_LOG_DESTINATION', 'stderr')
     env.setdefault('R_LOG_VERBOSE', '1')
@@ -601,7 +585,7 @@ class Automation(object):
     if os.path.exists(processLog):
       os.unlink(processLog)
 
-    return status
+    return status, self.lastTestSeen
 
   def elf_arm(self, filename):
     data = open(filename, 'rb').read(20)

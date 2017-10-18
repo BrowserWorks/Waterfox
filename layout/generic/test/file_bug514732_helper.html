@@ -17,7 +17,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=514732
 <div id="log">log:<br/></div>
 <br/><br/>
 
-<script class="testbody" style="width: 300; height: 150;" type="text/javascript;version=1.8">
+<script class="testbody" style="width: 300; height: 150;" type="text/javascript">
 // Import test API
 var is = window.opener.is;
 var ok = window.opener.ok;
@@ -83,7 +83,7 @@ function waitInterrupt(result, gen) {
 
 function testPhoom(isCapturing, x, y, expectEvent) {
 
-  var eventGen = (function() {
+  var eventGen = (function*() {
     var innerdoc = document.getElementById('testframe').contentDocument;
 
     for (var doc of [document, innerdoc]) {
@@ -163,8 +163,6 @@ function testPhoom(isCapturing, x, y, expectEvent) {
     }
 
     setTimeout(nextTest, 0);
-
-    yield;
   })();
 
   setTimeout(function() { eventGen.next(); }, 0);
@@ -281,7 +279,7 @@ window
     logln("go...");
     nextTest();
   }
-}, false);
+});
 
 document.getElementById("testframe").contentWindow
 .addEventListener('load', function(ev) {
@@ -290,7 +288,7 @@ document.getElementById("testframe").contentWindow
     logln("go...");
     nextTest();
   }
-}, false);
+});
 
 // window.opener says: SimpleTest.waitForExplicitFinish();
 

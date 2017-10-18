@@ -9,8 +9,10 @@
 
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
+#include "mozilla/WeakPtr.h"
 #include "mozilla/TimeStamp.h"
 
+class nsDocShell;
 class nsIURI;
 
 typedef unsigned long long DOMTimeMilliSec;
@@ -26,7 +28,7 @@ public:
     TYPE_RESERVED = 255,
   };
 
-  nsDOMNavigationTiming();
+  explicit nsDOMNavigationTiming(nsDocShell* aDocShell);
 
   NS_INLINE_DECL_REFCOUNTING(nsDOMNavigationTiming)
 
@@ -80,8 +82,17 @@ public:
   {
     return mLoadEventEnd;
   }
+  DOMTimeMilliSec GetTimeToNonBlankPaint() const
+  {
+    return TimeStampToDOM(mNonBlankPaintTimeStamp);
+  }
 
-  void NotifyNavigationStart();
+  enum class DocShellState : uint8_t {
+    eActive,
+    eInactive
+  };
+
+  void NotifyNavigationStart(DocShellState aDocShellState);
   void NotifyFetchStart(nsIURI* aURI, Type aNavigationType);
   void NotifyBeforeUnload();
   void NotifyUnloadAccepted(nsIURI* aOldURI);
@@ -97,9 +108,13 @@ public:
   void NotifyDOMComplete(nsIURI* aURI);
   void NotifyDOMContentLoadedStart(nsIURI* aURI);
   void NotifyDOMContentLoadedEnd(nsIURI* aURI);
+
+  void NotifyNonBlankPaintForRootContentDocument();
+  void NotifyDocShellStateChanged(DocShellState aDocShellState);
+
   DOMTimeMilliSec TimeStampToDOM(mozilla::TimeStamp aStamp) const;
 
-  inline DOMHighResTimeStamp TimeStampToDOMHighRes(mozilla::TimeStamp aStamp)
+  inline DOMHighResTimeStamp TimeStampToDOMHighRes(mozilla::TimeStamp aStamp) const
   {
     mozilla::TimeDuration duration = aStamp - mNavigationStartTimeStamp;
     return duration.ToMilliseconds();
@@ -111,12 +126,17 @@ private:
 
   void Clear();
 
+  bool IsTopLevelContentDocument() const;
+
+  mozilla::WeakPtr<nsDocShell> mDocShell;
+
   nsCOMPtr<nsIURI> mUnloadedURI;
   nsCOMPtr<nsIURI> mLoadedURI;
 
   Type mNavigationType;
   DOMHighResTimeStamp mNavigationStartHighRes;
   mozilla::TimeStamp mNavigationStartTimeStamp;
+  mozilla::TimeStamp mNonBlankPaintTimeStamp;
   DOMTimeMilliSec DurationFromStart();
 
   DOMTimeMilliSec mBeforeUnloadStart;
@@ -141,6 +161,7 @@ private:
   bool mDOMContentLoadedEventStartSet : 1;
   bool mDOMContentLoadedEventEndSet : 1;
   bool mDOMCompleteSet : 1;
+  bool mDocShellHasBeenActiveSinceNavigationStart : 1;
 };
 
 #endif /* nsDOMNavigationTiming_h___ */

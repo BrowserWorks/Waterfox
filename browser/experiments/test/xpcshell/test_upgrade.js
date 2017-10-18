@@ -4,9 +4,6 @@
 "use strict";
 Cu.import("resource:///modules/experiments/Experiments.jsm");
 
-const SEC_IN_ONE_DAY  = 24 * 60 * 60;
-const MS_IN_ONE_DAY   = SEC_IN_ONE_DAY * 1000;
-
 var cacheData = {
   _enabled: true,
   _manifestData: {
@@ -31,20 +28,20 @@ var cacheData = {
   _branch: null
 };
 
-add_task(function* test_valid() {
+add_task(async function test_valid() {
   let e = new Experiments.ExperimentEntry();
   Assert.ok(e.initFromCacheData(cacheData));
   Assert.ok(e.enabled);
 });
 
-add_task(function* test_upgrade() {
+add_task(async function test_upgrade() {
   let e = new Experiments.ExperimentEntry();
   delete cacheData._branch;
   Assert.ok(e.initFromCacheData(cacheData));
   Assert.ok(e.enabled);
 });
 
-add_task(function* test_missing() {
+add_task(async function test_missing() {
   let e = new Experiments.ExperimentEntry();
   delete cacheData._name;
   Assert.ok(!e.initFromCacheData(cacheData));

@@ -11,6 +11,7 @@
 #include "IndexedDatabaseManager.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/SystemGroup.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/IDBFactoryBinding.h"
 #include "mozilla/dom/TabChild.h"
@@ -44,6 +45,7 @@
 namespace mozilla {
 namespace dom {
 
+using namespace mozilla::dom::indexedDB;
 using namespace mozilla::dom::quota;
 using namespace mozilla::ipc;
 
@@ -99,9 +101,6 @@ IDBFactory::IDBFactory()
   , mBackgroundActorFailed(false)
   , mPrivateBrowsingMode(false)
 {
-#ifdef DEBUG
-  mOwningThread = PR_GetCurrentThread();
-#endif
   AssertIsOnOwningThread();
 }
 
@@ -168,6 +167,8 @@ IDBFactory::CreateForWindow(nsPIDOMWindowInner* aWindow,
   factory->mPrincipalInfo = Move(principalInfo);
   factory->mWindow = aWindow;
   factory->mTabChild = TabChild::GetFrom(aWindow);
+  factory->mEventTarget =
+    nsGlobalWindow::Cast(aWindow)->EventTargetFor(TaskCategory::Other);
   factory->mInnerWindowID = aWindow->WindowID();
   factory->mPrivateBrowsingMode =
     loadContext && loadContext->UsePrivateBrowsing();
@@ -299,6 +300,8 @@ IDBFactory::CreateForJSInternal(JSContext* aCx,
   factory->mPrincipalInfo = aPrincipalInfo.forget();
   factory->mOwningObject = aOwningObject;
   mozilla::HoldJSObjects(factory.get());
+  factory->mEventTarget = NS_IsMainThread() ?
+    SystemGroup::EventTargetFor(TaskCategory::Other) : GetCurrentThreadEventTarget();
   factory->mInnerWindowID = aInnerWindowID;
 
   factory.forget(aFactory);
@@ -407,32 +410,30 @@ IDBFactory::AllowedForPrincipal(nsIPrincipal* aPrincipal,
     *aIsSystemPrincipal = false;
   }
 
-  bool isNullPrincipal;
-  if (NS_WARN_IF(NS_FAILED(aPrincipal->GetIsNullPrincipal(&isNullPrincipal))) ||
-      isNullPrincipal) {
+  if (aPrincipal->GetIsNullPrincipal()) {
     return false;
   }
 
   return true;
 }
 
-#ifdef DEBUG
+void
+IDBFactory::UpdateActiveTransactionCount(int32_t aDelta)
+{
+  AssertIsOnOwningThread();
+  if (mWindow) {
+    mWindow->UpdateActiveIndexedDBTransactionCount(aDelta);
+  }
+}
 
 void
-IDBFactory::AssertIsOnOwningThread() const
+IDBFactory::UpdateActiveDatabaseCount(int32_t aDelta)
 {
-  MOZ_ASSERT(mOwningThread);
-  MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+  AssertIsOnOwningThread();
+  if (mWindow) {
+    mWindow->UpdateActiveIndexedDBDatabaseCount(aDelta);
+  }
 }
-
-PRThread*
-IDBFactory::OwningThread() const
-{
-  MOZ_ASSERT(mOwningThread);
-  return mOwningThread;
-}
-
-#endif // DEBUG
 
 bool
 IDBFactory::IsChrome() const
@@ -456,6 +457,7 @@ already_AddRefed<IDBOpenDBRequest>
 IDBFactory::Open(JSContext* aCx,
                  const nsAString& aName,
                  uint64_t aVersion,
+                 CallerType aCallerType,
                  ErrorResult& aRv)
 {
   return OpenInternal(aCx,
@@ -464,6 +466,7 @@ IDBFactory::Open(JSContext* aCx,
                       Optional<uint64_t>(aVersion),
                       Optional<StorageType>(),
                       /* aDeleting */ false,
+                      aCallerType,
                       aRv);
 }
 
@@ -471,6 +474,7 @@ already_AddRefed<IDBOpenDBRequest>
 IDBFactory::Open(JSContext* aCx,
                  const nsAString& aName,
                  const IDBOpenDBOptions& aOptions,
+                 CallerType aCallerType,
                  ErrorResult& aRv)
 {
   return OpenInternal(aCx,
@@ -479,6 +483,7 @@ IDBFactory::Open(JSContext* aCx,
                       aOptions.mVersion,
                       aOptions.mStorage,
                       /* aDeleting */ false,
+                      aCallerType,
                       aRv);
 }
 
@@ -486,6 +491,7 @@ already_AddRefed<IDBOpenDBRequest>
 IDBFactory::DeleteDatabase(JSContext* aCx,
                            const nsAString& aName,
                            const IDBOpenDBOptions& aOptions,
+                           CallerType aCallerType,
                            ErrorResult& aRv)
 {
   return OpenInternal(aCx,
@@ -494,6 +500,7 @@ IDBFactory::DeleteDatabase(JSContext* aCx,
                       Optional<uint64_t>(),
                       aOptions.mStorage,
                       /* aDeleting */ true,
+                      aCallerType,
                       aRv);
 }
 
@@ -527,13 +534,14 @@ IDBFactory::OpenForPrincipal(JSContext* aCx,
                              nsIPrincipal* aPrincipal,
                              const nsAString& aName,
                              uint64_t aVersion,
+                             SystemCallerGuarantee aGuarantee,
                              ErrorResult& aRv)
 {
   MOZ_ASSERT(aPrincipal);
   if (!NS_IsMainThread()) {
-    MOZ_CRASH("Figure out security checks for workers!");
+    MOZ_CRASH("Figure out security checks for workers!  What's this aPrincipal "
+              "we have on a worker thread?");
   }
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   return OpenInternal(aCx,
                       aPrincipal,
@@ -541,6 +549,7 @@ IDBFactory::OpenForPrincipal(JSContext* aCx,
                       Optional<uint64_t>(aVersion),
                       Optional<StorageType>(),
                       /* aDeleting */ false,
+                      aGuarantee,
                       aRv);
 }
 
@@ -549,13 +558,14 @@ IDBFactory::OpenForPrincipal(JSContext* aCx,
                              nsIPrincipal* aPrincipal,
                              const nsAString& aName,
                              const IDBOpenDBOptions& aOptions,
+                             SystemCallerGuarantee aGuarantee,
                              ErrorResult& aRv)
 {
   MOZ_ASSERT(aPrincipal);
   if (!NS_IsMainThread()) {
-    MOZ_CRASH("Figure out security checks for workers!");
+    MOZ_CRASH("Figure out security checks for workers!  What's this aPrincipal "
+              "we have on a worker thread?");
   }
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   return OpenInternal(aCx,
                       aPrincipal,
@@ -563,6 +573,7 @@ IDBFactory::OpenForPrincipal(JSContext* aCx,
                       aOptions.mVersion,
                       aOptions.mStorage,
                       /* aDeleting */ false,
+                      aGuarantee,
                       aRv);
 }
 
@@ -571,13 +582,14 @@ IDBFactory::DeleteForPrincipal(JSContext* aCx,
                                nsIPrincipal* aPrincipal,
                                const nsAString& aName,
                                const IDBOpenDBOptions& aOptions,
+                               SystemCallerGuarantee aGuarantee,
                                ErrorResult& aRv)
 {
   MOZ_ASSERT(aPrincipal);
   if (!NS_IsMainThread()) {
-    MOZ_CRASH("Figure out security checks for workers!");
+    MOZ_CRASH("Figure out security checks for workers!  What's this aPrincipal "
+              "we have on a worker thread?");
   }
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   return OpenInternal(aCx,
                       aPrincipal,
@@ -585,6 +597,7 @@ IDBFactory::DeleteForPrincipal(JSContext* aCx,
                       Optional<uint64_t>(),
                       aOptions.mStorage,
                       /* aDeleting */ true,
+                      aGuarantee,
                       aRv);
 }
 
@@ -595,6 +608,7 @@ IDBFactory::OpenInternal(JSContext* aCx,
                          const Optional<uint64_t>& aVersion,
                          const Optional<StorageType>& aStorageType,
                          bool aDeleting,
+                         CallerType aCallerType,
                          ErrorResult& aRv)
 {
   MOZ_ASSERT(mWindow || mOwningObject);
@@ -607,9 +621,11 @@ IDBFactory::OpenInternal(JSContext* aCx,
 
   if (aPrincipal) {
     if (!NS_IsMainThread()) {
-      MOZ_CRASH("Figure out security checks for workers!");
+      MOZ_CRASH("Figure out security checks for workers!  What's this "
+                "aPrincipal we have on a worker thread?");
     }
-    MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+    MOZ_ASSERT(aCallerType == CallerType::System);
+    MOZ_DIAGNOSTIC_ASSERT(mPrivateBrowsingMode == (aPrincipal->GetPrivateBrowsingId() > 0));
 
     if (NS_WARN_IF(NS_FAILED(PrincipalToPrincipalInfo(aPrincipal,
                                                       &principalInfo)))) {
@@ -776,6 +792,10 @@ IDBFactory::BackgroundActorCreated(PBackgroundChild* aBackgroundActor,
   {
     BackgroundFactoryChild* actor = new BackgroundFactoryChild(this);
 
+    // Set EventTarget for the top-level actor.
+    // All child actors created later inherit the same event target.
+    aBackgroundActor->SetEventTargetForActor(actor, EventTarget());
+    MOZ_ASSERT(actor->GetActorEventTarget());
     mBackgroundActor =
       static_cast<BackgroundFactoryChild*>(
         aBackgroundActor->SendPBackgroundIDBFactoryConstructor(actor,
@@ -872,6 +892,9 @@ IDBFactory::InitiateRequest(IDBOpenDBRequest* aRequest,
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   }
 
+  MOZ_ASSERT(actor->GetActorEventTarget(),
+    "The event target shall be inherited from its manager actor.");
+
   return NS_OK;
 }
 
@@ -886,7 +909,6 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTION_CLASS(IDBFactory)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBFactory)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 

@@ -15,7 +15,10 @@ VsyncBridgeParent::Start(Endpoint<PVsyncBridgeParent>&& aEndpoint)
   RefPtr<VsyncBridgeParent> parent = new VsyncBridgeParent();
 
   RefPtr<Runnable> task = NewRunnableMethod<Endpoint<PVsyncBridgeParent>&&>(
-    parent, &VsyncBridgeParent::Open, Move(aEndpoint));
+    "gfx::VsyncBridgeParent::Open",
+    parent,
+    &VsyncBridgeParent::Open,
+    Move(aEndpoint));
   CompositorThreadHolder::Loop()->PostTask(task.forget());
 
   return parent;
@@ -25,6 +28,7 @@ VsyncBridgeParent::VsyncBridgeParent()
  : mOpen(false)
 {
   MOZ_COUNT_CTOR(VsyncBridgeParent);
+  mCompositorThreadRef = CompositorThreadHolder::GetSingleton();
 }
 
 VsyncBridgeParent::~VsyncBridgeParent()
@@ -35,7 +39,7 @@ VsyncBridgeParent::~VsyncBridgeParent()
 void
 VsyncBridgeParent::Open(Endpoint<PVsyncBridgeParent>&& aEndpoint)
 {
-  if (!aEndpoint.Bind(this, nullptr)) {
+  if (!aEndpoint.Bind(this)) {
     // We can't recover from this.
     MOZ_CRASH("Failed to bind VsyncBridgeParent to endpoint");
   }
@@ -43,11 +47,11 @@ VsyncBridgeParent::Open(Endpoint<PVsyncBridgeParent>&& aEndpoint)
   mOpen = true;
 }
 
-bool
+mozilla::ipc::IPCResult
 VsyncBridgeParent::RecvNotifyVsync(const TimeStamp& aTimeStamp, const uint64_t& aLayersId)
 {
   CompositorBridgeParent::NotifyVsync(aTimeStamp, aLayersId);
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -55,10 +59,18 @@ VsyncBridgeParent::Shutdown()
 {
   MessageLoop* ccloop = CompositorThreadHolder::Loop();
   if (MessageLoop::current() != ccloop) {
-    ccloop->PostTask(NewRunnableMethod(this, &VsyncBridgeParent::Shutdown));
+    ccloop->PostTask(NewRunnableMethod("gfx::VsyncBridgeParent::ShutdownImpl",
+                                       this,
+                                       &VsyncBridgeParent::ShutdownImpl));
     return;
   }
 
+  ShutdownImpl();
+}
+
+void
+VsyncBridgeParent::ShutdownImpl()
+{
   if (mOpen) {
     Close();
     mOpen = false;
@@ -69,6 +81,7 @@ void
 VsyncBridgeParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   mOpen = false;
+  mCompositorThreadRef = nullptr;
 }
 
 void

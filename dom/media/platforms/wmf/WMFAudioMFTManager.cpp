@@ -6,12 +6,13 @@
 
 #include "WMFAudioMFTManager.h"
 #include "MediaInfo.h"
+#include "TimeUnits.h"
 #include "VideoUtils.h"
 #include "WMFUtils.h"
-#include "nsTArray.h"
-#include "TimeUnits.h"
-#include "mozilla/Telemetry.h"
+#include "mozilla/AbstractThread.h"
 #include "mozilla/Logging.h"
+#include "mozilla/Telemetry.h"
+#include "nsTArray.h"
 
 #define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
@@ -85,8 +86,6 @@ WMFAudioMFTManager::WMFAudioMFTManager(
   const AudioInfo& aConfig)
   : mAudioChannels(aConfig.mChannels)
   , mAudioRate(aConfig.mRate)
-  , mAudioFrameSum(0)
-  , mMustRecaptureAudioPosition(true)
 {
   MOZ_COUNT_CTOR(WMFAudioMFTManager);
 
@@ -175,10 +174,10 @@ WMFAudioMFTManager::Init()
   hr = outputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
   NS_ENSURE_TRUE(SUCCEEDED(hr), false);
 
-  hr = outputType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
+  hr = outputType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_Float);
   NS_ENSURE_TRUE(SUCCEEDED(hr), false);
 
-  hr = outputType->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+  hr = outputType->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32);
   NS_ENSURE_TRUE(SUCCEEDED(hr), false);
 
   hr = decoder->SetMediaTypes(inputType, outputType);
@@ -194,7 +193,7 @@ WMFAudioMFTManager::Input(MediaRawData* aSample)
 {
   return mDecoder->Input(aSample->Data(),
                          uint32_t(aSample->Size()),
-                         aSample->mTime);
+                         aSample->mTime.ToMicroseconds());
 }
 
 HRESULT
@@ -234,6 +233,9 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
       return hr;
     }
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE) {
+      hr = mDecoder->SetDecoderOutputType(true /* check all attribute */,
+                                          nullptr,
+                                          nullptr);
       hr = UpdateOutputType();
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
       // Catch infinite loops, but some decoders perform at least 2 stream
@@ -250,11 +252,12 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
 
   if (!sample) {
     LOG("Audio MFTDecoder returned success but null output.");
-    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([]() -> void {
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction("WMFAudioMFTManager::Output",
+                                                        []() -> void {
       LOG("Reporting telemetry AUDIO_MFT_OUTPUT_NULL_SAMPLES");
-      Telemetry::Accumulate(Telemetry::ID::AUDIO_MFT_OUTPUT_NULL_SAMPLES, 1);
+      Telemetry::Accumulate(Telemetry::HistogramID::AUDIO_MFT_OUTPUT_NULL_SAMPLES, 1);
     });
-    AbstractThread::MainThread()->Dispatch(task.forget());
+    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
     return E_FAIL;
   }
 
@@ -262,7 +265,8 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
   hr = sample->ConvertToContiguousBuffer(getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  BYTE* data = nullptr; // Note: *data will be owned by the IMFMediaBuffer, we don't need to free it.
+  BYTE* data = nullptr; // Note: *data will be owned by the IMFMediaBuffer, we
+                        // don't need to free it.
   DWORD maxLength = 0, currentLength = 0;
   hr = buffer->Lock(&data, &maxLength, &currentLength);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
@@ -301,8 +305,8 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
     mAudioTimeOffset = media::TimeUnit::FromMicroseconds(timestampHns / 10);
     mMustRecaptureAudioPosition = false;
   }
-  // We can assume PCM 16 output.
-  int32_t numSamples = currentLength / 2;
+  // Output is made of floats.
+  int32_t numSamples = currentLength / sizeof(float);
   int32_t numFrames = numSamples / mAudioChannels;
   MOZ_ASSERT(numFrames >= 0);
   MOZ_ASSERT(numSamples >= 0);
@@ -317,10 +321,7 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
     return E_OUTOFMEMORY;
   }
 
-  int16_t* pcm = (int16_t*)data;
-  for (int32_t i = 0; i < numSamples; ++i) {
-    audioData[i] = AudioSampleToFloat(pcm[i]);
-  }
+  PodCopy(audioData.Data(), reinterpret_cast<float*>(data), numSamples);
 
   buffer->Unlock();
 
@@ -334,8 +335,8 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
   NS_ENSURE_TRUE(duration.IsValid(), E_FAIL);
 
   aOutData = new AudioData(aStreamOffset,
-                           timestamp.ToMicroseconds(),
-                           duration.ToMicroseconds(),
+                           timestamp,
+                           duration,
                            numFrames,
                            Move(audioData),
                            mAudioChannels,

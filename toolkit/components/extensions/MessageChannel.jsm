@@ -108,11 +108,13 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionUtils",
+                                  "resource://gre/modules/ExtensionUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 
+XPCOMUtils.defineLazyGetter(this, "MessageManagerProxy",
+                            () => ExtensionUtils.MessageManagerProxy);
 
 /**
  * Handles the mapping and dispatching of messages to their registered
@@ -138,14 +140,14 @@ class FilteringMessageManager {
    *        data:
    *          An object describing the message, as defined in
    *          `MessageChannel.addListener`.
-   * @param {nsIMessageManager} messageManager
+   * @param {nsIMessageListenerManager} messageManager
    */
   constructor(messageName, callback, messageManager) {
     this.messageName = messageName;
     this.callback = callback;
     this.messageManager = messageManager;
 
-    this.messageManager.addMessageListener(this.messageName, this);
+    this.messageManager.addMessageListener(this.messageName, this, true);
 
     this.handlers = new Map();
   }
@@ -155,7 +157,7 @@ class FilteringMessageManager {
    * passes the result to our message callback.
    */
   receiveMessage({data, target}) {
-    let handlers = Array.from(this.getHandlers(data.messageName, data.recipient));
+    let handlers = Array.from(this.getHandlers(data.messageName, data.sender || null, data.recipient));
 
     data.target = target;
     this.callback(handlers, data);
@@ -167,14 +169,17 @@ class FilteringMessageManager {
    *
    * @param {string|number} messageName
    *     The message for which to return handlers.
+   * @param {object} sender
+   *     The sender data on which to filter handlers.
    * @param {object} recipient
    *     The recipient data on which to filter handlers.
    */
-  * getHandlers(messageName, recipient) {
+  * getHandlers(messageName, sender, recipient) {
     let handlers = this.handlers.get(messageName) || new Set();
     for (let handler of handlers) {
       if (MessageChannel.matchesFilter(handler.messageFilterStrict || {}, recipient) &&
-          MessageChannel.matchesFilter(handler.messageFilterPermissive || {}, recipient, false)) {
+          MessageChannel.matchesFilter(handler.messageFilterPermissive || {}, recipient, false) &&
+          (!handler.filterMessage || handler.filterMessage(sender, recipient))) {
         yield handler;
       }
     }
@@ -188,7 +193,7 @@ class FilteringMessageManager {
    * @param {object} handler
    *     An opaque handler object. The object may have a
    *     `messageFilterStrict` and/or a `messageFilterPermissive`
-   *     property on which to filter messages.
+   *     property and/or a `filterMessage` method on which to filter messages.
    *
    *     Final dispatching is handled by the message callback passed to
    *     the constructor.
@@ -210,7 +215,9 @@ class FilteringMessageManager {
    *     The handler object to unregister.
    */
   removeHandler(messageName, handler) {
-    this.handlers.get(messageName).delete(handler);
+    if (this.handlers.has(messageName)) {
+      this.handlers.get(messageName).delete(handler);
+    }
   }
 }
 
@@ -243,7 +250,7 @@ class FilteringMessageManagerMap extends Map {
    * Returns, and possibly creates, a message broker for the given
    * message manager.
    *
-   * @param {nsIMessageSender} target
+   * @param {nsIMessageListenerManager} target
    *     The message manager for which to return a broker.
    *
    * @returns {FilteringMessageManager}
@@ -271,12 +278,10 @@ class FilteringMessageManagerMap extends Map {
 const MESSAGE_MESSAGE = "MessageChannel:Message";
 const MESSAGE_RESPONSE = "MessageChannel:Response";
 
-let gChannelId = 0;
-
 this.MessageChannel = {
   init() {
-    Services.obs.addObserver(this, "message-manager-close", false);
-    Services.obs.addObserver(this, "message-manager-disconnect", false);
+    Services.obs.addObserver(this, "message-manager-close");
+    Services.obs.addObserver(this, "message-manager-disconnect");
 
     this.messageManagers = new FilteringMessageManagerMap(
       MESSAGE_MESSAGE, this._handleMessage.bind(this));
@@ -289,6 +294,12 @@ this.MessageChannel = {
      * received or waiting to be sent. @see _addPendingResponse
      */
     this.pendingResponses = new Set();
+
+    /**
+     * Contains the message name of a limited number of aborted response
+     * handlers, the responses for which will be ignored.
+     */
+    this.abortedResponses = new ExtensionUtils.LimitedSet(30);
   },
 
   RESULT_SUCCESS: 0,
@@ -299,7 +310,7 @@ this.MessageChannel = {
   RESULT_NO_RESPONSE: 5,
 
   REASON_DISCONNECTED: {
-    result: this.RESULT_DISCONNECTED,
+    result: 1, // this.RESULT_DISCONNECTED
     message: "Message manager disconnected",
   },
 
@@ -338,7 +349,28 @@ this.MessageChannel = {
   RESPONSE_ALL: 2,
 
   /**
-   * Returns true if the peroperties of the `data` object match those in
+   * Fire-and-forget: The sender of this message does not expect a reply.
+   */
+  RESPONSE_NONE: 3,
+
+  /**
+   * Initializes message handlers for the given message managers if needed.
+   *
+   * @param {Array<nsIMessageListenerManager>} messageManagers
+   */
+  setupMessageManagers(messageManagers) {
+    for (let mm of messageManagers) {
+      // This call initializes a FilteringMessageManager for |mm| if needed.
+      // The FilteringMessageManager must be created to make sure that senders
+      // of messages that expect a reply, such as MessageChannel:Message, do
+      // actually receive a default reply even if there are no explicit message
+      // handlers.
+      this.messageManagers.get(mm);
+    }
+  },
+
+  /**
+   * Returns true if the properties of the `data` object match those in
    * the `filter` object. Matching is done on a strict equality basis,
    * and the behavior varies depending on the value of the `strict`
    * parameter.
@@ -347,11 +379,11 @@ this.MessageChannel = {
    *    The filter object to match against.
    * @param {object} data
    *    The data object being matched.
-   * @param {boolean} [strict=false]
+   * @param {boolean} [strict=true]
    *    If true, all properties in the `filter` object have a
    *    corresponding property in `data` with the same value. If
    *    false, properties present in both objects must have the same
-   *    balue.
+   *    value.
    * @returns {boolean} True if the objects match.
    */
   matchesFilter(filter, data, strict = true) {
@@ -368,7 +400,7 @@ this.MessageChannel = {
   /**
    * Adds a message listener to the given message manager.
    *
-   * @param {nsIMessageSender|[nsIMessageSender]} targets
+   * @param {nsIMessageListenerManager|Array<nsIMessageListenerManager>} targets
    *    The message managers on which to listen.
    * @param {string|number} messageName
    *    The name of the message to listen for.
@@ -420,9 +452,16 @@ this.MessageChannel = {
    *        object if the `recipient` object passed to `sendMessage`
    *        matches this filter, as determined by `matchesFilter` with
    *        `strict=false`.
+   *
+   *      filterMessage:
+   *        An optional function that prevents the handler from handling a
+   *        message by returning `false`. See `getHandlers` for the parameters.
    */
   addListener(targets, messageName, handler) {
-    for (let target of [].concat(targets)) {
+    if (!Array.isArray(targets)) {
+      targets = [targets];
+    }
+    for (let target of targets) {
       this.messageManagers.get(target).addHandler(messageName, handler);
     }
   },
@@ -430,7 +469,7 @@ this.MessageChannel = {
   /**
    * Removes a message listener from the given message manager.
    *
-   * @param {nsIMessageSender|Array<nsIMessageSender>} targets
+   * @param {nsIMessageListenerManager|Array<nsIMessageListenerManager>} targets
    *    The message managers on which to stop listening.
    * @param {string|number} messageName
    *    The name of the message to stop listening for.
@@ -438,7 +477,10 @@ this.MessageChannel = {
    *    The handler to stop dispatching to.
    */
   removeListener(targets, messageName, handler) {
-    for (let target of [].concat(targets)) {
+    if (!Array.isArray(targets)) {
+      targets = [targets];
+    }
+    for (let target of targets) {
       if (this.messageManagers.has(target)) {
         this.messageManagers.get(target).removeHandler(messageName, handler);
       }
@@ -468,7 +510,8 @@ this.MessageChannel = {
    *    for the message to be received.
    * @param {object} [options.sender]
    *    A structured-clone-compatible object to identify the message
-   *    sender. This object may also be used as a filter to prematurely
+   *    sender. This object may also be used to avoid delivering the
+   *    message to the sender, and as a filter to prematurely
    *    abort responses when the sender is being destroyed.
    *    @see `abortResponses`.
    * @param {integer} [options.responseType=RESPONSE_SINGLE]
@@ -481,12 +524,24 @@ this.MessageChannel = {
     let recipient = options.recipient || {};
     let responseType = options.responseType || this.RESPONSE_SINGLE;
 
-    let channelId = gChannelId++;
+    let channelId = ExtensionUtils.getUniqueId();
     let message = {messageName, channelId, sender, recipient, data, responseType};
+
+    if (responseType == this.RESPONSE_NONE) {
+      try {
+        target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+      } catch (e) {
+        // Caller is not expecting a reply, so dump the error to the console.
+        Cu.reportError(e);
+        return Promise.reject(e);
+      }
+      return Promise.resolve();  // Not expecting any reply.
+    }
 
     let deferred = PromiseUtils.defer();
     deferred.sender = recipient;
     deferred.messageManager = target;
+    deferred.channelId = channelId;
 
     this._addPendingResponse(deferred);
 
@@ -501,7 +556,11 @@ this.MessageChannel = {
     };
     deferred.promise.then(cleanup, cleanup);
 
-    target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+    try {
+      target.sendAsyncMessage(MESSAGE_MESSAGE, message);
+    } catch (e) {
+      deferred.reject(e);
+    }
     return deferred.promise;
   },
 
@@ -563,20 +622,28 @@ this.MessageChannel = {
    *
    * @param {Array<MessageHandler>} handlers
    * @param {object} data
-   * @param {nsIMessageSender|nsIMessageManagerOwner} data.target
+   * @param {nsIMessageSender|{messageManager:nsIMessageSender}} data.target
    */
   _handleMessage(handlers, data) {
-    // The target passed to `receiveMessage` is sometimes a message manager
-    // owner instead of a message manager, so make sure to convert it to a
-    // message manager first if necessary.
-    let {target} = data;
-    if (!(target instanceof Ci.nsIMessageSender)) {
-      target = target.messageManager;
+    if (data.responseType == this.RESPONSE_NONE) {
+      handlers.forEach(handler => {
+        // The sender expects no reply, so dump any errors to the console.
+        new Promise(resolve => {
+          resolve(handler.receiveMessage(data));
+        }).catch(e => {
+          Cu.reportError(e.stack ? `${e}\n${e.stack}` : e.message || e);
+        });
+      });
+      // Note: Unhandled messages are silently dropped.
+      return;
     }
+
+    let target = new MessageManagerProxy(data.target);
 
     let deferred = {
       sender: data.sender,
       messageManager: target,
+      channelId: data.channelId,
     };
     deferred.promise = new Promise((resolve, reject) => {
       deferred.reject = reject;
@@ -594,6 +661,16 @@ this.MessageChannel = {
         target.sendAsyncMessage(MESSAGE_RESPONSE, response);
       },
       error => {
+        if (target.isDisconnected) {
+          // Target is disconnected. We can't send an error response, so
+          // don't even try.
+          if (error.result !== this.RESULT_DISCONNECTED &&
+              error.result !== this.RESULT_NO_RESPONSE) {
+            Cu.reportError(Cu.getClassName(error, false) === "Object" ? error.message : error);
+          }
+          return;
+        }
+
         let response = {
           result: this.RESULT_ERROR,
           messageName: data.channelId,
@@ -616,6 +693,10 @@ this.MessageChannel = {
         }
 
         target.sendAsyncMessage(MESSAGE_RESPONSE, response);
+      }).catch(e => {
+        Cu.reportError(e);
+      }).then(() => {
+        target.dispose();
       });
 
     this._addPendingResponse(deferred);
@@ -629,13 +710,18 @@ this.MessageChannel = {
    *
    * @param {Array<MessageHandler>} handlers
    * @param {object} data
-   * @param {nsIMessageSender|nsIMessageManagerOwner} data.target
+   * @param {nsIMessageSender|{messageManager:nsIMessageSender}} data.target
    */
   _handleResponse(handlers, data) {
     // If we have an error at this point, we have handler to report it to,
     // so just log it.
     if (handlers.length == 0) {
-      Cu.reportError(`No matching message response handler for ${data.messageName}`);
+      if (this.abortedResponses.has(data.messageName)) {
+        this.abortedResponses.delete(data.messageName);
+        Services.console.logStringMessage(`Ignoring response to aborted listener for ${data.messageName}`);
+      } else {
+        Cu.reportError(`No matching message response handler for ${data.messageName}`);
+      }
     } else if (handlers.length > 1) {
       Cu.reportError(`Multiple matching response handlers for ${data.messageName}`);
     } else if (data.result === this.RESULT_SUCCESS) {
@@ -696,6 +782,8 @@ this.MessageChannel = {
   abortResponses(sender, reason = this.REASON_DISCONNECTED) {
     for (let response of this.pendingResponses) {
       if (this.matchesFilter(sender, response.sender)) {
+        this.pendingResponses.delete(response);
+        this.abortedResponses.add(response.channelId);
         response.reject(reason);
       }
     }
@@ -705,7 +793,7 @@ this.MessageChannel = {
    * Aborts any pending message responses to the broker for the given
    * message manager.
    *
-   * @param {nsIMessageSender} target
+   * @param {nsIMessageListenerManager} target
    *    The message manager for which to abort brokers.
    * @param {object} reason
    *    An object describing the reason the responses were aborted.
@@ -714,7 +802,8 @@ this.MessageChannel = {
    */
   abortMessageManager(target, reason) {
     for (let response of this.pendingResponses) {
-      if (response.messageManager === target) {
+      if (MessageManagerProxy.matches(response.messageManager, target)) {
+        this.abortedResponses.add(response.channelId);
         response.reject(reason);
       }
     }

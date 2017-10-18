@@ -25,6 +25,12 @@ from buildconfig import (
 )
 
 
+def fake_short_path(path):
+    if sys.platform.startswith('win'):
+        return '/'.join(p.split(' ', 1)[0] + '~1' if ' 'in p else p
+                        for p in mozpath.split(path))
+    return path
+
 def ensure_exe_extension(path):
     if sys.platform.startswith('win'):
         return path + '.exe'
@@ -83,14 +89,17 @@ class ConfigureTestSandbox(ConfigureSandbox):
             self._subprocess_paths[environ['CONFIG_SHELL']] = self.shell
             paths.append(environ['CONFIG_SHELL'])
         self._environ = copy.copy(environ)
+        self._subprocess_paths[mozpath.join(topsrcdir, 'build/win32/vswhere.exe')] = self.vswhere
 
         vfs = ConfigureTestVFS(paths)
 
-        self.OS = ReadOnlyNamespace(path=ReadOnlyNamespace(**{
-            k: v if k not in ('exists', 'isfile')
-            else getattr(vfs, k)
-            for k, v in ConfigureSandbox.OS.path.__dict__.iteritems()
-        }))
+        os_path = {
+            k: getattr(vfs, k) for k in dir(vfs) if not k.startswith('_')
+        }
+
+        os_path.update(self.OS.path.__dict__)
+
+        self.imported_os = ReadOnlyNamespace(path=ReadOnlyNamespace(**os_path))
 
         super(ConfigureTestSandbox, self).__init__(config, environ, *args,
                                                    **kwargs)
@@ -120,13 +129,58 @@ class ConfigureTestSandbox(ConfigureSandbox):
         if what == 'os.environ':
             return self._environ
 
+        if what == 'ctypes.wintypes':
+            return ReadOnlyNamespace(
+                LPCWSTR=0,
+                LPWSTR=1,
+                DWORD=2,
+            )
+
+        if what == 'ctypes':
+            class CTypesFunc(object):
+                def __init__(self, func):
+                    self._func = func
+
+                def __call__(self, *args, **kwargs):
+                    return self._func(*args, **kwargs)
+
+
+            return ReadOnlyNamespace(
+                create_unicode_buffer=self.create_unicode_buffer,
+                windll=ReadOnlyNamespace(
+                    kernel32=ReadOnlyNamespace(
+                        GetShortPathNameW=CTypesFunc(self.GetShortPathNameW),
+                    )
+                ),
+            )
+
+        if what == '_winreg':
+            def OpenKey(*args, **kwargs):
+                raise WindowsError()
+
+            return ReadOnlyNamespace(
+                HKEY_LOCAL_MACHINE=0,
+                OpenKey=OpenKey,
+            )
+
         return super(ConfigureTestSandbox, self)._get_one_import(what)
 
-    def which(self, command, path=None):
+    def create_unicode_buffer(self, *args, **kwargs):
+        class Buffer(object):
+            def __init__(self):
+                self.value = ''
+
+        return Buffer()
+
+    def GetShortPathNameW(self, path_in, path_out, length):
+        path_out.value = fake_short_path(path_in)
+        return length
+
+    def which(self, command, path=None, exts=None):
         for parent in (path or self._search_path):
             c = mozpath.abspath(mozpath.join(parent, command))
             for candidate in (c, ensure_exe_extension(c)):
-                if self.OS.path.exists(candidate):
+                if self.imported_os.path.exists(candidate):
                     return candidate
         raise WhichError()
 
@@ -161,6 +215,18 @@ class ConfigureTestSandbox(ConfigureSandbox):
         if script in self._subprocess_paths:
             return self._subprocess_paths[script](stdin, args[1:])
         return 127, '', 'File not found'
+
+    def vswhere(self, stdin, args):
+        return 0, '[]', ''
+
+    def get_config(self, name):
+        # Like the loop in ConfigureSandbox.run, but only execute the code
+        # associated with the given config item.
+        for func, args in self._execution_queue:
+            if (func == self._resolve_and_set and args[0] is self._config
+                    and args[1] == name):
+                func(*args)
+                return self._config.get(name)
 
 
 class BaseConfigureTest(unittest.TestCase):

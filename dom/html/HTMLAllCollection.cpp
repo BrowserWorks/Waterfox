@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/HTMLAllCollectionBinding.h"
 #include "mozilla/dom/Nullable.h"
+#include "mozilla/dom/Element.h"
 #include "nsHTMLDocument.h"
 
 namespace mozilla {
@@ -69,7 +70,6 @@ static bool
 IsAllNamedElement(nsIContent* aContent)
 {
   return aContent->IsAnyOfHTMLElements(nsGkAtoms::a,
-                                       nsGkAtoms::applet,
                                        nsGkAtoms::button,
                                        nsGkAtoms::embed,
                                        nsGkAtoms::form,
@@ -86,14 +86,14 @@ IsAllNamedElement(nsIContent* aContent)
 }
 
 static bool
-DocAllResultMatch(nsIContent* aContent, int32_t aNamespaceID, nsIAtom* aAtom,
+DocAllResultMatch(Element* aElement, int32_t aNamespaceID, nsIAtom* aAtom,
                   void* aData)
 {
-  if (aContent->GetID() == aAtom) {
+  if (aElement->GetID() == aAtom) {
     return true;
   }
 
-  nsGenericHTMLElement* elm = nsGenericHTMLElement::FromContent(aContent);
+  nsGenericHTMLElement* elm = nsGenericHTMLElement::FromContent(aElement);
   if (!elm) {
     return false;
   }
@@ -110,15 +110,12 @@ DocAllResultMatch(nsIContent* aContent, int32_t aNamespaceID, nsIAtom* aAtom,
 nsContentList*
 HTMLAllCollection::GetDocumentAllList(const nsAString& aID)
 {
-  if (nsContentList* docAllList = mNamedMap.GetWeak(aID)) {
-    return docAllList;
-  }
-
-  nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
-  RefPtr<nsContentList> docAllList =
-    new nsContentList(mDocument, DocAllResultMatch, nullptr, nullptr, true, id);
-  mNamedMap.Put(aID, docAllList);
-  return docAllList;
+  return mNamedMap.LookupForAdd(aID).OrInsert(
+    [this, &aID] () {
+      nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
+      return new nsContentList(mDocument, DocAllResultMatch, nullptr,
+                               nullptr, true, id);
+    });
 }
 
 void

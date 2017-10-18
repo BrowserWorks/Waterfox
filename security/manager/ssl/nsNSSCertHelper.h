@@ -9,19 +9,18 @@
 #define INET6_ADDRSTRLEN 46
 #endif
 
-#include "ScopedNSSTypes.h"
 #include "certt.h"
 #include "nsString.h"
 
 uint32_t
-getCertType(CERTCertificate *cert);
-
-CERTCertNicknames*
-getNSSCertNicknamesFromCertList(const mozilla::UniqueCERTCertList& certList);
+getCertType(CERTCertificate* cert);
 
 nsresult
-GetCertFingerprintByOidTag(CERTCertificate* nsscert,
-                           SECOidTag aOidTag, 
-                           nsCString &fp);
+GetCertFingerprintByOidTag(CERTCertificate* nsscert, SECOidTag aOidTag,
+                           nsCString& fp);
+
+// Must be used on the main thread only.
+nsresult
+GetPIPNSSBundleString(const char* stringName, nsAString& result);
 
 #endif // nsNSSCertHelper_h

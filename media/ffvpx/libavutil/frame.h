@@ -1,5 +1,4 @@
 /*
- *
  * This file is part of FFmpeg.
  *
  * FFmpeg is free software; you can redistribute it and/or
@@ -177,6 +176,10 @@ typedef struct AVFrameSideData {
  * Similarly fields that are marked as to be only accessed by
  * av_opt_ptr() can be reordered. This allows 2 forks to add fields
  * without breaking compatibility with each other.
+ *
+ * Fields can be accessed through AVOptions, the name string used, matches the
+ * C structure field name for fields accessible through AVOptions. The AVClass
+ * for AVFrame can be obtained from avcodec_get_frame_class()
  */
 typedef struct AVFrame {
 #define AV_NUM_DATA_POINTERS 8
@@ -188,6 +191,9 @@ typedef struct AVFrame {
      * see avcodec_align_dimensions2(). Some filters and swscale can read
      * up to 16 bytes beyond the planes, if these filters are to be used,
      * then 16 extra bytes must be allocated.
+     *
+     * NOTE: Except for hwaccel formats, pointers not needed by the format
+     * MUST be set to NULL.
      */
     uint8_t *data[AV_NUM_DATA_POINTERS];
 
@@ -261,10 +267,14 @@ typedef struct AVFrame {
      */
     int64_t pts;
 
+#if FF_API_PKT_PTS
     /**
      * PTS copied from the AVPacket that was decoded to produce this frame.
+     * @deprecated use the pts field instead
      */
+    attribute_deprecated
     int64_t pkt_pts;
+#endif
 
     /**
      * DTS copied from the AVPacket that triggered returning this frame. (if frame threading isn't used)
@@ -322,7 +332,7 @@ typedef struct AVFrame {
     int palette_has_changed;
 
     /**
-     * reordered opaque 64bit (generally an integer or a double precision float
+     * reordered opaque 64 bits (generally an integer or a double precision float
      * PTS but can be anything).
      * The user sets AVCodecContext.reordered_opaque to represent the input at
      * that time,
@@ -379,6 +389,7 @@ typedef struct AVFrame {
 
 /**
  * @defgroup lavu_frame_flags AV_FRAME_FLAGS
+ * @ingroup lavu_frame
  * Flags describing additional frame properties.
  *
  * @{
@@ -388,6 +399,10 @@ typedef struct AVFrame {
  * The frame data may be corrupted, e.g. due to decoding errors.
  */
 #define AV_FRAME_FLAG_CORRUPT       (1 << 0)
+/**
+ * A flag to mark the frames which need to be decoded, but shouldn't be output.
+ */
+#define AV_FRAME_FLAG_DISCARD   (1 << 2)
 /**
  * @}
  */
@@ -512,6 +527,11 @@ typedef struct AVFrame {
      */
     AVBufferRef *qp_table_buf;
 #endif
+    /**
+     * For hwaccel-format frames, this should be a reference to the
+     * AVHWFramesContext describing the frame.
+     */
+    AVBufferRef *hw_frames_ctx;
 } AVFrame;
 
 /**
@@ -583,6 +603,10 @@ void av_frame_free(AVFrame **frame);
  * If src is not reference counted, new buffers are allocated and the data is
  * copied.
  *
+ * @warning: dst MUST have been either unreferenced with av_frame_unref(dst),
+ *           or newly allocated with av_frame_alloc() before calling this
+ *           function, or undefined behavior will occur.
+ *
  * @return 0 on success, a negative AVERROR on error
  */
 int av_frame_ref(AVFrame *dst, const AVFrame *src);
@@ -603,6 +627,10 @@ void av_frame_unref(AVFrame *frame);
 
 /**
  * Move everything contained in src to dst and reset src.
+ *
+ * @warning: dst is not unreferenced, but directly overwritten without reading
+ *           or deallocating its contents. Call av_frame_unref(dst) manually
+ *           before calling this function to ensure that no memory is leaked.
  */
 void av_frame_move_ref(AVFrame *dst, AVFrame *src);
 
@@ -617,6 +645,10 @@ void av_frame_move_ref(AVFrame *dst, AVFrame *src);
  * This function will fill AVFrame.data and AVFrame.buf arrays and, if
  * necessary, allocate and fill AVFrame.extended_data and AVFrame.extended_buf.
  * For planar formats, one buffer will be allocated for each plane.
+ *
+ * @warning: if frame already has been allocated, calling this function will
+ *           leak memory. In addition, undefined behavior can occur in certain
+ *           cases.
  *
  * @param frame frame in which to store the new buffers.
  * @param align required buffer size alignment

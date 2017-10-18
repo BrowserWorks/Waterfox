@@ -15,8 +15,8 @@ var Clipboard = Cc["@mozilla.org/widget/clipboard;1"].getService(Ci.nsIClipboard
 var HasFindClipboard = Clipboard.supportsFindClipboard();
 
 function addTabWithText(aText, aCallback) {
-  let newTab = gBrowser.addTab("data:text/html;charset=utf-8,<h1 id='h1'>" +
-                               aText + "</h1>");
+  let newTab = BrowserTestUtils.addTab(gBrowser, "data:text/html;charset=utf-8,<h1 id='h1'>" +
+                                       aText + "</h1>");
   tabs.push(newTab);
   gBrowser.selectedTab = newTab;
 }
@@ -33,7 +33,7 @@ var newWindow;
 
 function test() {
   waitForExplicitFinish();
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     while (tabs.length) {
       gBrowser.removeTab(tabs.pop());
     }
@@ -79,13 +79,12 @@ function continueTests1() {
 
 function continueTests2() {
   gBrowser.removeEventListener("DOMContentLoaded", continueTests2, true);
-  waitForCondition(() => !gFindBar.getElement("highlight").checked,
-                   continueTests3,
-                   "Highlight never reset!");
+  ok(gFindBar.getElement("highlight").checked, "Highlight never reset!");
+  continueTests3();
 }
 
 function continueTests3() {
-  ok(!gFindBar.getElement("highlight").checked, "Highlight button reset!");
+  ok(gFindBar.getElement("highlight").checked, "Highlight button reset!");
   gFindBar.close();
   ok(gFindBar.hidden, "First tab doesn't show find bar!");
   gBrowser.selectedTab = tabs[1];
@@ -128,9 +127,9 @@ function checkNewWindow() {
   if (!HasFindClipboard) {
     is(newWindow.gFindBar._findField.value, texts[1],
        "New window find bar has correct find value!");
+    ok(!newWindow.gFindBar.getElement("find-next").disabled,
+       "New window findbar has enabled buttons!");
   }
-  ok(!newWindow.gFindBar.getElement("find-next").disabled,
-     "New window findbar has enabled buttons!");
   newWindow.close();
   finish();
 }

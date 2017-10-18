@@ -28,7 +28,7 @@ function runTest() {
 
   // Dirty the frames.
   document.getElementById("display").style.width = "700px";
-  svgText.removeChild(svgText.firstChild);
+  svgText.firstChild.remove();
 
   // Paint without flushing layout.  If the test fails, we'll trigger
   // an assertion.
@@ -38,7 +38,7 @@ function runTest() {
   SimpleTest.finish();
 }
 
-window.addEventListener("load", runTest, false);
+window.addEventListener("load", runTest);
 
 SimpleTest.waitForExplicitFinish();
 </script>

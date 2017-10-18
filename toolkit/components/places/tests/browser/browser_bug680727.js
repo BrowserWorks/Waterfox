@@ -6,8 +6,7 @@
 /* TEST_PATH=toolkit/components/places/tests/browser/browser_bug680727.js make -C $(OBJDIR) mochitest-browser-chrome */
 
 
-const kUniqueURI = Services.io.newURI("http://mochi.test:8888/#bug_680727",
-                                      null, null);
+const kUniqueURI = Services.io.newURI("http://mochi.test:8888/#bug_680727");
 var gAsyncHistory =
   Cc["@mozilla.org/browser/history;1"].getService(Ci.mozIAsyncHistory);
 
@@ -38,7 +37,7 @@ function test() {
   });
 }
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // listen to loading the neterror page. (offline mode)
 function errorListener() {
   ok(Services.io.offline, "Services.io.offline is true.");
@@ -77,7 +76,7 @@ function errorAsyncListener(aURI, aIsVisited) {
   });
 }
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // listen to reload of neterror.
 function reloadListener() {
   // This listener catches "DOMContentLoaded" on being called
@@ -102,8 +101,8 @@ function reloadAsyncListener(aURI, aIsVisited) {
   PlacesTestUtils.clearHistory().then(finish);
 }
 
-registerCleanupFunction(function* () {
+registerCleanupFunction(async function() {
   Services.prefs.setIntPref("network.proxy.type", proxyPrefValue);
   Services.io.offline = false;
-  yield BrowserTestUtils.removeTab(ourTab);
+  await BrowserTestUtils.removeTab(ourTab);
 });

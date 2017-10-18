@@ -5,7 +5,7 @@
 %include ../../shared/customizableui/panelUI.inc.css
 
 .panel-subviews {
-  background-color: -moz-field;
+  background-color: var(--arrowpanel-background);
 }
 
 #PanelUI-contents #zoom-out-btn {
@@ -30,8 +30,9 @@
 #BMB_bookmarksPopup menupopup[placespopup=true] > hbox {
   /* emulating chrome://browser/content/places/menu.xml#places-popup-arrow but without the arrow */
   box-shadow: 0 0 4px rgba(0,0,0,0.2);
-  background: var(--panel-arrowcontent-background);
-  border: var(--panel-arrowcontent-border);
+  background: var(--arrowpanel-background);
+  color: var(--arrowpanel-color);
+  border: 1px solid var(--arrowpanel-border-color);
   border-radius: 3.5px;
   margin-top: -4px;
 }
@@ -110,18 +111,20 @@ toolbarbutton.social-provider-menuitem > .toolbarbutton-icon {
 
 menu.subviewbutton > .menu-right {
   -moz-appearance: none;
-  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow);
+  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg);
+  -moz-context-properties: fill;
+  fill: MenuText;
   /* Reset the rect we inherit from the button: */
   -moz-image-region: auto;
 }
 
 menu[disabled="true"].subviewbutton > .menu-right {
-  list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow-disabled);
+  fill: GrayText;
 }
 
-@media not all and (-moz-windows-default-theme) {
+@media (-moz-windows-default-theme: 0) {
   menu[_moz-menuactive].subviewbutton > .menu-right {
-    list-style-image: url(chrome://browser/skin/customizableui/menu-arrow.svg#arrow-hover);
+    fill: HighlightText;
   }
 }
 
@@ -130,117 +133,40 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 }
 
 /* Win8 and beyond. */
-@media not all and (-moz-os-version: windows-xp) {
-  @media not all and (-moz-os-version: windows-vista) {
-    @media not all and (-moz-os-version: windows-win7) {
-      panelview .toolbarbutton-1,
-      .subviewbutton,
-      .widget-overflow-list .toolbarbutton-1,
-      .panelUI-grid .toolbarbutton-1 > .toolbarbutton-menubutton-button,
-      #BMB_bookmarksPopup menupopup[placespopup=true] > hbox,
-      #edit-controls@inAnyPanel@,
-      #zoom-controls@inAnyPanel@,
-      #edit-controls@inAnyPanel@ > toolbarbutton,
-      #zoom-controls@inAnyPanel@ > toolbarbutton {
-        border-radius: 0;
-      }
-    }
+@media not all and (-moz-os-version: windows-win7) {
+  panelview .toolbarbutton-1,
+  .subviewbutton,
+  .widget-overflow-list .toolbarbutton-1,
+  .panelUI-grid .toolbarbutton-1 > .toolbarbutton-menubutton-button,
+  #BMB_bookmarksPopup menupopup[placespopup=true] > hbox,
+  #edit-controls@inAnyPanel@,
+  #zoom-controls@inAnyPanel@,
+  #edit-controls@inAnyPanel@ > toolbarbutton,
+  #zoom-controls@inAnyPanel@ > toolbarbutton {
+    border-radius: 0;
   }
 }
 
-@media not all and (-moz-windows-default-theme) {
-  #edit-controls@inAnyPanel@ > #copy-button,
-  #zoom-controls@inAnyPanel@ > #zoom-reset-button,
-  .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton {
-    border: 1px solid transparent;
-  }
+/* START photon adjustments */
 
-  panelview .toolbarbutton-1@buttonStateHover@,
-  .widget-overflow-list .toolbarbutton-1@buttonStateHover@,
-  .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton@buttonStateHover@ {
-    border-color: ThreeDLightShadow !important;
-  }
-
-  toolbarbutton.subviewbutton@buttonStateHover@,
-  menu.subviewbutton@menuStateHover@,
-  menuitem.subviewbutton@menuStateHover@ {
-    border-color: Highlight;
-  }
-
-  panelview:not(#PanelUI-mainView) .toolbarbutton-1@buttonStateHover@,
-  toolbarbutton.subviewbutton@buttonStateHover@,
-  menu.subviewbutton@menuStateHover@,
-  menuitem.subviewbutton@menuStateHover@,
-  .widget-overflow-list .toolbarbutton-1@buttonStateHover@ {
-    background-color: Highlight;
-    color: highlighttext;
-  }
-
-  panelview .toolbarbutton-1:-moz-any(@buttonStateActive@,[checked=true]),
-  toolbarbutton.subviewbutton@buttonStateActive@,
-  menu.subviewbutton@menuStateActive@,
-  menuitem.subviewbutton@menuStateActive@,
-  .widget-overflow-list .toolbarbutton-1@buttonStateActive@,
-  .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton@buttonStateActive@ {
-    background-color: Highlight;
-    border-color: ThreeDLightShadow;
-    color: highlighttext;
-    box-shadow: none;
-  }
-
-  panelview .toolbarbutton-1[disabled],
-  toolbarbutton.subviewbutton[disabled],
-  menu.subviewbutton[disabled],
-  menuitem.subviewbutton[disabled],
-  .widget-overflow-list .toolbarbutton-1[disabled],
-  .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton[disabled] {
-    text-shadow: none;
-  }
-
-  #PanelUI-fxa-label,
-  #PanelUI-help,
-  #PanelUI-customize {
-    border: 1px solid transparent;
-  }
-
-  #PanelUI-fxa-label:not([disabled]):hover,
-  #PanelUI-help:not([disabled]):hover,
-  #PanelUI-customize:hover,
-  #PanelUI-fxa-label:not([disabled]):hover:active,
-  #PanelUI-help:not([disabled]):hover:active,
-  #PanelUI-customize:hover:active {
-    border-color: ThreeDLightShadow;
-    box-shadow: none;
-  }
-
-  #BMB_bookmarksPopup .menu-text,
-  #BMB_bookmarksPopup menupopup {
-    color: -moz-FieldText;
-  }
-
-  #BMB_bookmarksPopup .subviewbutton[disabled=true] > .menu-text {
-    color: GrayText;
-  }
-
-  #BMB_bookmarksPopup menupopup[placespopup=true] > hbox {
-    box-shadow: none;
-    background: -moz-field;
-    border: 1px solid ThreeDShadow;
-  }
-
-  .subviewbutton.panel-subview-footer,
-  #BMB_bookmarksPopup .subviewbutton.panel-subview-footer {
-    color: ButtonText;
-  }
-
-  .subviewbutton@menuStateMenuActive@,
-  menuitem.panel-subview-footer@menuStateHover@,
-  .subviewbutton.panel-subview-footer@buttonStateHover@,
-  .subviewbutton.panel-subview-footer@buttonStateActive@,
-  .subviewbutton@menuStateHover@ > .menu-accel-container,
-  .PanelUI-subView .subviewbutton[shortcut]@buttonStateHover@::after,
-  #BMB_bookmarksPopup .panel-subview-footer@menuStateMenuActive@ > .menu-text {
-    background-color: Highlight;
-    color: highlighttext !important;
-  }
+photonpanelmultiview .subviewbutton > .toolbarbutton-text,
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon,
+photonpanelmultiview .panel-banner-item > .toolbarbutton-multiline-text {
+  margin: 0;
 }
+
+photonpanelmultiview .subviewbutton > .toolbarbutton-icon {
+  padding: 0;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item) > .toolbarbutton-text {
+  padding-inline-start: 8px;
+}
+
+photonpanelmultiview .subviewbutton:-moz-any([image],[targetURI],.cui-withicon,
+  .restoreallitem, .bookmark-item)[checked="true"] > .toolbarbutton-icon {
+  visibility: visible;
+}
+
+/* END photon adjustments */

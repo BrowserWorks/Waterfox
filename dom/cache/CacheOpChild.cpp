@@ -70,18 +70,23 @@ CacheOpChild::CacheOpChild(CacheWorkerHolder* aWorkerHolder,
   , mParent(aParent)
   , mPromise(aPromise)
 {
-  MOZ_ASSERT(mGlobal);
-  MOZ_ASSERT(mParent);
-  MOZ_ASSERT(mPromise);
+  MOZ_DIAGNOSTIC_ASSERT(mGlobal);
+  MOZ_DIAGNOSTIC_ASSERT(mParent);
+  MOZ_DIAGNOSTIC_ASSERT(mPromise);
 
   MOZ_ASSERT_IF(!NS_IsMainThread(), aWorkerHolder);
-  SetWorkerHolder(aWorkerHolder);
+
+  RefPtr<CacheWorkerHolder> workerHolder =
+    CacheWorkerHolder::PreferBehavior(aWorkerHolder,
+                                      CacheWorkerHolder::PreventIdleShutdownStart);
+
+  SetWorkerHolder(workerHolder);
 }
 
 CacheOpChild::~CacheOpChild()
 {
   NS_ASSERT_OWNINGTHREAD(CacheOpChild);
-  MOZ_ASSERT(!mPromise);
+  MOZ_DIAGNOSTIC_ASSERT(!mPromise);
 }
 
 void
@@ -99,20 +104,20 @@ CacheOpChild::ActorDestroy(ActorDestroyReason aReason)
   RemoveWorkerHolder();
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheOpChild::Recv__delete__(const ErrorResult& aRv,
                              const CacheOpResult& aResult)
 {
   NS_ASSERT_OWNINGTHREAD(CacheOpChild);
 
   if (NS_WARN_IF(aRv.Failed())) {
-    MOZ_ASSERT(aResult.type() == CacheOpResult::Tvoid_t);
+    MOZ_DIAGNOSTIC_ASSERT(aResult.type() == CacheOpResult::Tvoid_t);
     // TODO: Remove this const_cast (bug 1152078).
     // It is safe for now since this ErrorResult is handed off to us by IPDL
     // and is thrown into the trash afterwards.
     mPromise->MaybeReject(const_cast<ErrorResult&>(aRv));
     mPromise = nullptr;
-    return true;
+    return IPC_OK();
   }
 
   switch (aResult.type()) {
@@ -128,7 +133,7 @@ CacheOpChild::Recv__delete__(const ErrorResult& aRv,
     }
     case CacheOpResult::TCachePutAllResult:
     {
-      mPromise->MaybeResolve(JS::UndefinedHandleValue);
+      mPromise->MaybeResolveWithUndefined();
       break;
     }
     case CacheOpResult::TCacheDeleteResult:
@@ -155,7 +160,22 @@ CacheOpChild::Recv__delete__(const ErrorResult& aRv,
     {
       auto actor = static_cast<CacheChild*>(
         aResult.get_StorageOpenResult().actorChild());
-      actor->SetWorkerHolder(GetWorkerHolder());
+
+      // If we have a success status then we should have an actor.  Gracefully
+      // reject instead of crashing, though, if we get a nullptr here.
+      MOZ_DIAGNOSTIC_ASSERT(actor);
+      if (!actor) {
+        ErrorResult status;
+        status.ThrowTypeError<MSG_CACHE_OPEN_FAILED>();
+        mPromise->MaybeReject(status);
+        break;
+      }
+
+      RefPtr<CacheWorkerHolder> workerHolder =
+        CacheWorkerHolder::PreferBehavior(GetWorkerHolder(),
+                                          CacheWorkerHolder::AllowIdleShutdownStart);
+
+      actor->SetWorkerHolder(workerHolder);
       RefPtr<Cache> cache = new Cache(mGlobal, actor);
       mPromise->MaybeResolve(cache);
       break;
@@ -176,7 +196,7 @@ CacheOpChild::Recv__delete__(const ErrorResult& aRv,
 
   mPromise = nullptr;
 
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -212,7 +232,7 @@ void
 CacheOpChild::HandleResponse(const CacheResponseOrVoid& aResponseOrVoid)
 {
   if (aResponseOrVoid.type() == CacheResponseOrVoid::Tvoid_t) {
-    mPromise->MaybeResolve(JS::UndefinedHandleValue);
+    mPromise->MaybeResolveWithUndefined();
     return;
   }
 

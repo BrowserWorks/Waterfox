@@ -14,6 +14,7 @@
 namespace mozilla
 {
 
+class AbstractThread;
 class DOMMediaStream;
 
 /**

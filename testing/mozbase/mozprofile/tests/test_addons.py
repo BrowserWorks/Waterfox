@@ -9,6 +9,9 @@ import shutil
 import tempfile
 import unittest
 import urllib2
+import zipfile
+
+import mozunit
 
 from manifestparser import ManifestParser
 import mozfile
@@ -110,6 +113,45 @@ class TestAddonsManager(unittest.TestCase):
         self.assertEqual(os.listdir(self.tmpdir), [])
 
         server.stop()
+
+    def test_install_webextension_from_dir(self):
+        addon = os.path.join(here, 'addons', 'apply-css.xpi')
+        zipped = zipfile.ZipFile(addon)
+        try:
+            zipped.extractall(self.tmpdir)
+        finally:
+            zipped.close()
+        self.am.install_from_path(self.tmpdir)
+        self.assertEqual(len(self.am.installed_addons), 1)
+        self.assertTrue(os.path.isdir(self.am.installed_addons[0]))
+
+    def test_install_webextension(self):
+        server = mozhttpd.MozHttpd(docroot=os.path.join(here, 'addons'))
+        server.start()
+        try:
+            addon = server.get_url() + 'apply-css.xpi'
+            self.am.install_from_path(addon)
+        finally:
+            server.stop()
+
+        self.assertEqual(len(self.am.downloaded_addons), 1)
+        self.assertTrue(os.path.isfile(self.am.downloaded_addons[0]))
+        self.assertIn('test-webext@quality.mozilla.org.xpi',
+                      os.path.basename(self.am.downloaded_addons[0]))
+
+    def test_install_webextension_sans_id(self):
+        server = mozhttpd.MozHttpd(docroot=os.path.join(here, 'addons'))
+        server.start()
+        try:
+            addon = server.get_url() + 'apply-css-sans-id.xpi'
+            self.am.install_from_path(addon)
+        finally:
+            server.stop()
+
+        self.assertEqual(len(self.am.downloaded_addons), 1)
+        self.assertTrue(os.path.isfile(self.am.downloaded_addons[0]))
+        self.assertIn('temporary-addon.xpi',
+                      os.path.basename(self.am.downloaded_addons[0]))
 
     def test_install_from_path_xpi(self):
         addons_to_install = []
@@ -258,10 +300,10 @@ class TestAddonsManager(unittest.TestCase):
         # Generate installer stubs for all possible types of addons
         addons = []
         addons.append(generate_addon('test-addon-invalid-no-manifest@mozilla.org',
-                      path=self.tmpdir,
-                      xpi=False))
+                                     path=self.tmpdir,
+                                     xpi=False))
         addons.append(generate_addon('test-addon-invalid-no-id@mozilla.org',
-                      path=self.tmpdir))
+                                     path=self.tmpdir))
 
         self.am.install_from_path(self.tmpdir)
 
@@ -412,4 +454,4 @@ class TestAddonsManager(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

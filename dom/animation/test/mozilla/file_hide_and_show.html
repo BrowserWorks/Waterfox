@@ -8,6 +8,11 @@
   }
 }
 
+div.pseudo::before {
+  animation: move 0.01s;
+  content: 'content';
+}
+
 </style>
 <body>
 <script>
@@ -125,8 +130,66 @@ test(function(t) {
   assert_not_equals(div.getAnimations()[0], animation,
                     'Restarted animation is a newly-generated animation');
 
-}, 'Animation which has already finished starts playing when its parent ' +
+}, 'Animation with fill:forwards which has already finished starts playing ' +
+   'when its parent element is shown from "display:none" state');
+
+test(function(t) {
+  var parentElement = addDiv(t);
+  var div = addDiv(t, { style: 'animation: move 100s' });
+  parentElement.appendChild(div);
+  assert_equals(div.getAnimations().length, 1,
+                'display:initial element has animations');
+
+  var animation = div.getAnimations()[0];
+  animation.finish();
+  assert_equals(div.getAnimations().length, 0,
+                'Element does not have finished animations');
+
+  parentElement.style.display = 'none';
+  assert_equals(animation.playState, 'idle',
+                'The animation.playState should be idle');
+  assert_equals(div.getAnimations().length, 0,
+                'Element in display:none subtree has no animations');
+
+  parentElement.style.display = '';
+  assert_equals(div.getAnimations().length, 1,
+                'Element which is no longer in display:none subtree has ' +
+                'animations again');
+
+  assert_not_equals(div.getAnimations()[0], animation,
+                    'Restarted animation is a newly-generated animation');
+
+}, 'CSS Animation which has already finished starts playing when its parent ' +
    'element is shown from "display:none" state');
+
+promise_test(function(t) {
+  var div = addDiv(t, { 'class': 'pseudo' });
+  var eventWatcher = new EventWatcher(t, div, 'animationend');
+
+  assert_equals(document.getAnimations().length, 1,
+                'CSS animation on pseudo element');
+
+  return eventWatcher.wait_for('animationend').then(function() {
+    assert_equals(document.getAnimations().length, 0,
+                  'No CSS animation on pseudo element after the animation ' +
+                  'finished');
+
+    // Remove the class which generated this pseudo element.
+    div.classList.remove('pseudo');
+
+    // We need to wait for two frames to process re-framing.
+    // The callback of 'animationend' is processed just before rAF callbacks,
+    // and rAF callbacks are processed before re-framing process, so waiting for
+    // one rAF callback is not sufficient.
+    return waitForAnimationFrames(2);
+  }).then(function() {
+    // Add the class again to re-generate pseudo element.
+    div.classList.add('pseudo');
+    assert_equals(document.getAnimations().length, 1,
+                  'A new CSS animation on pseudo element');
+  });
+}, 'CSS animation on pseudo element restarts after the pseudo element that ' +
+   'had a finished CSS animation is re-generated');
 
 done();
 </script>

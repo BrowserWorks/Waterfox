@@ -7,6 +7,7 @@
 
 #include "IMMHandler.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/WindowsVersion.h"
 #include "nsWindowDefs.h"
 #include "WinTextEventDispatcherListener.h"
 
@@ -47,6 +48,7 @@ bool IMEHandler::sPluginHasFocus = false;
 #ifdef NS_ENABLE_TSF
 bool IMEHandler::sIsInTSFMode = false;
 bool IMEHandler::sIsIMMEnabled = true;
+bool IMEHandler::sAssociateIMCOnlyWhenIMM_IMEActive = false;
 decltype(SetInputScopes)* IMEHandler::sSetInputScopes = nullptr;
 #endif // #ifdef NS_ENABLE_TSF
 
@@ -62,6 +64,10 @@ IMEHandler::Initialize()
   sIsInTSFMode = TSFTextStore::IsInTSFMode();
   sIsIMMEnabled =
     !sIsInTSFMode || Preferences::GetBool("intl.tsf.support_imm", true);
+  sAssociateIMCOnlyWhenIMM_IMEActive =
+    sIsIMMEnabled &&
+    Preferences::GetBool("intl.tsf.associate_imc_only_when_imm_ime_is_active",
+                         false);
   if (!sIsInTSFMode) {
     // When full TSFTextStore is not available, try to use SetInputScopes API
     // to enable at least InputScope. Use GET_MODULE_HANDLE_EX_FLAG_PIN to
@@ -173,7 +179,7 @@ IMEHandler::ProcessMessage(nsWindow* aWindow, UINT aMessage,
     }
     // IME isn't implemented with IMM, IMMHandler shouldn't handle any
     // messages.
-    if (!TSFTextStore::IsIMM_IME()) {
+    if (!IsIMMActive()) {
       return false;
     }
   }
@@ -188,8 +194,9 @@ IMEHandler::ProcessMessage(nsWindow* aWindow, UINT aMessage,
 bool
 IMEHandler::IsIMMActive()
 {
-  return TSFTextStore::IsIMM_IME();
+  return TSFTextStore::IsIMM_IMEActive();
 }
+
 #endif // #ifdef NS_ENABLE_TSF
 
 // static
@@ -334,31 +341,31 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
 }
 
 // static
-nsIMEUpdatePreference
-IMEHandler::GetUpdatePreference()
+IMENotificationRequests
+IMEHandler::GetIMENotificationRequests()
 {
   // While a plugin has focus, neither TSFTextStore nor IMMHandler needs
   // notifications.
   if (sPluginHasFocus) {
-    return nsIMEUpdatePreference();
+    return IMENotificationRequests();
   }
 
 #ifdef NS_ENABLE_TSF
   if (IsTSFAvailable()) {
     if (!sIsIMMEnabled) {
-      return TSFTextStore::GetIMEUpdatePreference();
+      return TSFTextStore::GetIMENotificationRequests();
     }
     // Even if TSF is available, the active IME may be an IMM-IME.
-    // Unfortunately, changing the result of GetUpdatePreference() while an
-    // editor has focus isn't supported by IMEContentObserver nor
+    // Unfortunately, changing the result of GetIMENotificationRequests() while
+    // an editor has focus isn't supported by IMEContentObserver nor
     // ContentCacheInParent.  Therefore, we need to request whole notifications
     // which are necessary either IMMHandler or TSFTextStore.
-    return IMMHandler::GetIMEUpdatePreference() |
-             TSFTextStore::GetIMEUpdatePreference();
+    return IMMHandler::GetIMENotificationRequests() |
+             TSFTextStore::GetIMENotificationRequests();
   }
 #endif //NS_ENABLE_TSF
 
-  return IMMHandler::GetIMEUpdatePreference();
+  return IMMHandler::GetIMENotificationRequests();
 }
 
 // static
@@ -391,8 +398,9 @@ IMEHandler::OnDestroyWindow(nsWindow* aWindow)
   // here because TabParent already lost the reference to the nsWindow when
   // it receives from the remote process.
   if (sFocusedWindow == aWindow) {
-    NS_ASSERTION(aWindow->GetInputContext().IsOriginContentProcess(),
-      "input context of focused widget should be set from a remote process");
+    MOZ_ASSERT(aWindow->GetInputContext().IsOriginContentProcess(),
+      "input context of focused widget should've been set by a remote process "
+      "if IME focus isn't cleared before destroying the widget");
     NotifyIME(aWindow, IMENotification(NOTIFY_IME_OF_BLUR));
   }
 
@@ -407,6 +415,15 @@ IMEHandler::OnDestroyWindow(nsWindow* aWindow)
 #endif // #ifdef NS_ENABLE_TSF
   AssociateIMEContext(aWindow, true);
 }
+
+#ifdef NS_ENABLE_TSF
+// static
+bool
+IMEHandler::NeedsToAssociateIMC()
+{
+  return !sAssociateIMCOnlyWhenIMM_IMEActive || !IsIMMActive();
+}
+#endif // #ifdef NS_ENABLE_TSF
 
 // static
 void
@@ -439,8 +456,8 @@ IMEHandler::SetInputContext(nsWindow* aWindow,
     TSFTextStore::SetInputContext(aWindow, aInputContext, aAction);
     if (IsTSFAvailable()) {
       if (sIsIMMEnabled) {
-        // Associate IME context for IMM-IMEs.
-        AssociateIMEContext(aWindow, enable);
+        // Associate IMC with aWindow only when it's necessary.
+        AssociateIMEContext(aWindow, enable && NeedsToAssociateIMC());
       } else if (oldInputContext.mIMEState.mEnabled == IMEState::PLUGIN) {
         // Disassociate the IME context from the window when plugin loses focus
         // in pure TSF mode.
@@ -468,15 +485,15 @@ IMEHandler::SetInputContext(nsWindow* aWindow,
 
 // static
 void
-IMEHandler::AssociateIMEContext(nsWindow* aWindow, bool aEnable)
+IMEHandler::AssociateIMEContext(nsWindowBase* aWindowBase, bool aEnable)
 {
-  IMEContext context(aWindow);
+  IMEContext context(aWindowBase);
   if (aEnable) {
     context.AssociateDefaultContext();
     return;
   }
   // Don't disassociate the context after the window is destroyed.
-  if (aWindow->Destroyed()) {
+  if (aWindowBase->Destroyed()) {
     return;
   }
   context.Disassociate();
@@ -493,7 +510,7 @@ IMEHandler::InitInputContext(nsWindow* aWindow, InputContext& aInputContext)
   if (sIsInTSFMode) {
     TSFTextStore::SetInputContext(aWindow, aInputContext,
       InputContextAction(InputContextAction::CAUSE_UNKNOWN,
-                         InputContextAction::GOT_FOCUS));
+                         InputContextAction::WIDGET_CREATED));
     // IME context isn't necessary in pure TSF mode.
     if (!sIsIMMEnabled) {
       AssociateIMEContext(aWindow, false);
@@ -523,6 +540,45 @@ IMEHandler::CurrentKeyboardLayoutHasIME()
   return IMMHandler::IsIMEAvailable();
 }
 #endif // #ifdef DEBUG
+
+// static
+void
+IMEHandler::OnKeyboardLayoutChanged()
+{
+  // Be aware, this method won't be called until TSFStaticSink starts to
+  // observe active TIP change.  If you need to be notified of this, you
+  // need to create TSFStaticSink::Observe() or something and call it
+  // TSFStaticSink::EnsureInitActiveTIPKeyboard() forcibly.
+
+  if (!sIsIMMEnabled || !IsTSFAvailable()) {
+    return;
+  }
+
+  // We don't need to do anything when sAssociateIMCOnlyWhenIMM_IMEActive is
+  // false because IMContext won't be associated/disassociated when changing
+  // active keyboard layout/IME.
+  if (!sAssociateIMCOnlyWhenIMM_IMEActive) {
+    return;
+  }
+
+  // If there is no TSFTextStore which has focus, i.e., no editor has focus,
+  // nothing to do here.
+  nsWindowBase* windowBase = TSFTextStore::GetEnabledWindowBase();
+  if (!windowBase) {
+    return;
+  }
+
+  // If IME isn't available, nothing to do here.
+  InputContext inputContext = windowBase->GetInputContext();
+  if (!WinUtils::IsIMEEnabled(inputContext)) {
+    return;
+  }
+
+  // Associate or Disassociate IMC if it's necessary.
+  // Note that this does nothing if the window has already associated with or
+  // disassociated from the window.
+  AssociateIMEContext(windowBase, NeedsToAssociateIMC());
+}
 
 // static
 void
@@ -877,7 +933,7 @@ void
 IMEHandler::ShowOnScreenKeyboard()
 {
   nsAutoString cachedPath;
-  nsresult result = Preferences::GetString(kOskPathPrefName, &cachedPath);
+  nsresult result = Preferences::GetString(kOskPathPrefName, cachedPath);
   if (NS_FAILED(result) || cachedPath.IsEmpty()) {
     wchar_t path[MAX_PATH];
     // The path to TabTip.exe is defined at the following registry key.
@@ -922,8 +978,8 @@ IMEHandler::ShowOnScreenKeyboard()
       } else {
         PWSTR path = nullptr;
         HRESULT hres =
-          WinUtils::SHGetKnownFolderPath(FOLDERID_ProgramFilesCommon, 0,
-                                         nullptr, &path);
+          SHGetKnownFolderPath(FOLDERID_ProgramFilesCommon, 0,
+                               nullptr, &path);
         if (FAILED(hres) || !path) {
           return;
         }

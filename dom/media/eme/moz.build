@@ -18,6 +18,7 @@ EXPORTS.mozilla.dom += [
 EXPORTS.mozilla += [
     'CDMCaps.h',
     'CDMProxy.h',
+    'DecryptorProxyCallback.h',
     'DetailedPromise.h',
     'EMEUtils.h',
 ]
@@ -35,6 +36,9 @@ UNIFIED_SOURCES += [
     'MediaKeySystemAccess.cpp',
     'MediaKeySystemAccessManager.cpp',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+  DIRS += ['mediadrm']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

@@ -18,9 +18,9 @@
     *  and must also match the values used by ICU's UCharDirection.
     */
 
-enum nsCharType   { 
-  eCharType_LeftToRight              = 0, 
-  eCharType_RightToLeft              = 1, 
+enum nsCharType   {
+  eCharType_LeftToRight              = 0,
+  eCharType_RightToLeft              = 1,
   eCharType_EuropeanNumber           = 2,
   eCharType_EuropeanNumberSeparator  = 3,
   eCharType_EuropeanNumberTerminator = 4,
@@ -28,8 +28,8 @@ enum nsCharType   {
   eCharType_CommonNumberSeparator    = 6,
   eCharType_BlockSeparator           = 7,
   eCharType_SegmentSeparator         = 8,
-  eCharType_WhiteSpaceNeutral        = 9, 
-  eCharType_OtherNeutral             = 10, 
+  eCharType_WhiteSpaceNeutral        = 9,
+  eCharType_OtherNeutral             = 10,
   eCharType_LeftToRightEmbedding     = 11,
   eCharType_LeftToRightOverride      = 12,
   eCharType_RightToLeftArabic        = 13,
@@ -111,10 +111,19 @@ typedef enum nsCharType nsCharType;
    * Return false, otherwise
    */
 #define LRM_CHAR 0x200e
+#define RLM_CHAR 0x200f
+
 #define LRE_CHAR 0x202a
+#define RLE_CHAR 0x202b
+#define PDF_CHAR 0x202c
+#define LRO_CHAR 0x202d
 #define RLO_CHAR 0x202e
+
 #define LRI_CHAR 0x2066
+#define RLI_CHAR 0x2067
+#define FSI_CHAR 0x2068
 #define PDI_CHAR 0x2069
+
 #define ALM_CHAR 0x061C
    inline bool IsBidiControl(uint32_t aChar) {
      return ((LRE_CHAR <= aChar && aChar <= RLO_CHAR) ||
@@ -124,10 +133,31 @@ typedef enum nsCharType nsCharType;
    }
 
   /**
-   * Give an nsString.
+   * Give a UTF-32 codepoint
+   * Return true if the codepoint is a Bidi control character that may result
+   * in RTL directionality and therefore needs to trigger bidi resolution;
+   * return false otherwise.
+   */
+   inline bool IsBidiControlRTL(uint32_t aChar) {
+     return aChar == RLM_CHAR ||
+            aChar == RLE_CHAR ||
+            aChar == RLO_CHAR ||
+            aChar == RLI_CHAR ||
+            aChar == ALM_CHAR;
+   }
+
+  /**
+   * Give a 16-bit (UTF-16) text buffer and length
    * @return true if the string contains right-to-left characters
    */
-   bool HasRTLChars(const nsAString& aString);
+   bool HasRTLChars(const char16_t* aText, uint32_t aLength);
+
+  /**
+   * Convenience function to call the above on an nsAString.
+   */
+   inline bool HasRTLChars(const nsAString& aString) {
+     return HasRTLChars(aString.BeginReading(), aString.Length());
+   }
 
 // These values are shared with Preferences dialog
 //  ------------------
@@ -139,12 +169,6 @@ typedef enum nsCharType nsCharType;
 #define IBMBIDI_TEXTDIRECTION_STR       "bidi.direction"
 #define IBMBIDI_TEXTTYPE_STR            "bidi.texttype"
 #define IBMBIDI_NUMERAL_STR             "bidi.numeral"
-#define IBMBIDI_SUPPORTMODE_STR         "bidi.support"
-
-#define IBMBIDI_TEXTDIRECTION       1
-#define IBMBIDI_TEXTTYPE            2
-#define IBMBIDI_NUMERAL             4
-#define IBMBIDI_SUPPORTMODE         5
 
 //  ------------------
 //  Text Direction
@@ -170,29 +194,19 @@ typedef enum nsCharType nsCharType;
 #define IBMBIDI_NUMERAL_HINDI         4 //  4 = hindinumeralBidi
 #define IBMBIDI_NUMERAL_PERSIANCONTEXT 5 // 5 = persiancontextnumeralBidi
 #define IBMBIDI_NUMERAL_PERSIAN       6 //  6 = persiannumeralBidi
-//  ------------------
-//  Support Mode
-//  ------------------
-//  bidi.support
-#define IBMBIDI_SUPPORTMODE_MOZILLA     1 //  1 = mozillaBidisupport *
-#define IBMBIDI_SUPPORTMODE_OSBIDI      2 //  2 = OsBidisupport
-#define IBMBIDI_SUPPORTMODE_DISABLE     3 //  3 = disableBidisupport
 
 #define IBMBIDI_DEFAULT_BIDI_OPTIONS              \
         ((IBMBIDI_TEXTDIRECTION_LTR<<0)         | \
          (IBMBIDI_TEXTTYPE_CHARSET<<4)          | \
-         (IBMBIDI_NUMERAL_NOMINAL<<8)          | \
-         (IBMBIDI_SUPPORTMODE_MOZILLA<<12))
+         (IBMBIDI_NUMERAL_NOMINAL<<8))
 
 #define GET_BIDI_OPTION_DIRECTION(bo) (((bo)>>0) & 0x0000000F) /* 4 bits for DIRECTION */
 #define GET_BIDI_OPTION_TEXTTYPE(bo) (((bo)>>4) & 0x0000000F) /* 4 bits for TEXTTYPE */
 #define GET_BIDI_OPTION_NUMERAL(bo) (((bo)>>8) & 0x0000000F) /* 4 bits for NUMERAL */
-#define GET_BIDI_OPTION_SUPPORT(bo) (((bo)>>12) & 0x0000000F) /* 4 bits for SUPPORT */
 
 #define SET_BIDI_OPTION_DIRECTION(bo, dir) {(bo)=((bo) & 0xFFFFFFF0)|(((dir)& 0x0000000F)<<0);}
 #define SET_BIDI_OPTION_TEXTTYPE(bo, tt) {(bo)=((bo) & 0xFFFFFF0F)|(((tt)& 0x0000000F)<<4);}
 #define SET_BIDI_OPTION_NUMERAL(bo, num) {(bo)=((bo) & 0xFFFFF0FF)|(((num)& 0x0000000F)<<8);}
-#define SET_BIDI_OPTION_SUPPORT(bo, sup) {(bo)=((bo) & 0xFFFF0FFF)|(((sup)& 0x0000000F)<<12);}
 
 /* Constants related to the position of numerics in the codepage */
 #define START_HINDI_DIGITS              0x0660
@@ -250,7 +264,8 @@ typedef enum nsCharType nsCharType;
 #define IS_IN_SMP_RTL_BLOCK(c) (((0x10800 <= (c)) && ((c) <= 0x10fff)) || \
                                 ((0x1e800 <= (c)) && ((c) <= 0x1eFFF)))
 #define UCS2_CHAR_IS_BIDI(c) ((IS_IN_BMP_RTL_BLOCK(c)) || \
-                              (IS_RTL_PRESENTATION_FORM(c)))
+                              (IS_RTL_PRESENTATION_FORM(c)) || \
+                              (c) == 0xD802 || (c) == 0xD803)
 #define UTF32_CHAR_IS_BIDI(c)  ((IS_IN_BMP_RTL_BLOCK(c)) || \
                                (IS_RTL_PRESENTATION_FORM(c)) || \
                                (IS_IN_SMP_RTL_BLOCK(c)))

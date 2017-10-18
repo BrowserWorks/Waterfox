@@ -2,19 +2,20 @@
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-/* exported createHttpServer, promiseConsoleOutput */
+/* exported createHttpServer, promiseConsoleOutput, cleanupDir, testEnv */
 
-Components.utils.import("resource://gre/modules/Task.jsm");
+Components.utils.import("resource://gre/modules/AppConstants.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Timer.jsm");
+Components.utils.import("resource://testing-common/AddonTestUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ContentTask",
+                                  "resource://testing-common/ContentTask.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Extension",
                                   "resource://gre/modules/Extension.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionData",
                                   "resource://gre/modules/Extension.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
-                                  "resource://gre/modules/ExtensionManagement.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionTestUtils",
                                   "resource://testing-common/ExtensionXPCShellUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
@@ -25,8 +26,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
                                   "resource://gre/modules/Schemas.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-                                  "resource://gre/modules/Services.jsm");
+
+// These values may be changed in later head files and tested in check_remote
+// below.
+Services.prefs.setBoolPref("extensions.webextensions.remote", false);
+const testEnv = {
+  expectRemote: false,
+};
+
+add_task(function check_remote() {
+  Assert.equal(WebExtensionPolicy.useRemoteWebExtensions, testEnv.expectRemote, "useRemoteWebExtensions matches");
+  Assert.equal(WebExtensionPolicy.isExtensionProcess, !testEnv.expectRemote, "testing from extension process");
+});
 
 ExtensionTestUtils.init(this);
 
@@ -54,7 +65,11 @@ function createHttpServer(port = -1) {
   return server;
 }
 
-var promiseConsoleOutput = Task.async(function* (task) {
+if (AppConstants.platform === "android") {
+  Services.io.offline = true;
+}
+
+var promiseConsoleOutput = async function(task) {
   const DONE = `=== console listener ${Math.random()} done ===`;
 
   let listener;
@@ -72,13 +87,38 @@ var promiseConsoleOutput = Task.async(function* (task) {
 
   Services.console.registerListener(listener);
   try {
-    let result = yield task();
+    let result = await task();
 
     Services.console.logStringMessage(DONE);
-    yield awaitListener;
+    await awaitListener;
 
     return {messages, result};
   } finally {
     Services.console.unregisterListener(listener);
   }
-});
+};
+
+// Attempt to remove a directory.  If the Windows OS is still using the
+// file sometimes remove() will fail.  So try repeatedly until we can
+// remove it or we give up.
+function cleanupDir(dir) {
+  let count = 0;
+  return new Promise((resolve, reject) => {
+    function tryToRemoveDir() {
+      count += 1;
+      try {
+        dir.remove(true);
+      } catch (e) {
+        // ignore
+      }
+      if (!dir.exists()) {
+        return resolve();
+      }
+      if (count >= 25) {
+        return reject(`Failed to cleanup directory: ${dir}`);
+      }
+      setTimeout(tryToRemoveDir, 100);
+    }
+    tryToRemoveDir();
+  });
+}

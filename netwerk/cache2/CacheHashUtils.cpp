@@ -4,6 +4,7 @@
 
 #include "CacheHashUtils.h"
 
+#include "mozilla/BasePrincipal.h"
 #include "plstr.h"
 
 namespace mozilla {
@@ -37,7 +38,6 @@ CacheHash::Hash(const char *aData, uint32_t aSize, uint32_t aInitval)
   const uint8_t *k = reinterpret_cast<const uint8_t*>(aData);
   uint32_t a, b, c, len;
 
-//  length = PL_strlen(key);
   /* Set up the internal state */
   len = aSize;
   a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
@@ -185,6 +185,20 @@ CacheHash::GetHash16()
 {
   Hash32_t hash = GetHash();
   return (hash & 0xFFFF);
+}
+
+OriginAttrsHash
+GetOriginAttrsHash(const mozilla::OriginAttributes &aOA)
+{
+  nsAutoCString suffix;
+  aOA.CreateSuffix(suffix);
+
+  SHA1Sum sum;
+  SHA1Sum::Hash hash;
+  sum.update(suffix.BeginReading(), suffix.Length());
+  sum.finish(hash);
+
+  return BigEndian::readUint64(&hash);
 }
 
 } // namespace net

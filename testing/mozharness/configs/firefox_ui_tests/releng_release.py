@@ -13,21 +13,12 @@ external_tools_path = os.path.join(
 
 
 config = {
-    'env': {
-        'PIP_TRUSTED_HOST': 'pypi.pub.build.mozilla.org',
-    },
-
     # General local variable overwrite
     'exes': {
         'gittool.py': [
             # Bug 1227079 - Python executable eeded to get it executed on Windows
             sys.executable,
             os.path.join(external_tools_path, 'gittool.py')
-        ],
-        'hgtool.py': [
-            # Bug 1227079 - Python executable eeded to get it executed on Windows
-            sys.executable,
-            os.path.join(external_tools_path, 'hgtool.py')
         ],
     },
 

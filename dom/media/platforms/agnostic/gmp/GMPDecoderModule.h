@@ -25,11 +25,10 @@
 
 namespace mozilla {
 
-class GMPDecoderModule : public PlatformDecoderModule {
+class GMPDecoderModule : public PlatformDecoderModule
+{
 public:
   GMPDecoderModule();
-
-  virtual ~GMPDecoderModule();
 
   // Decode thread.
   already_AddRefed<MediaDataDecoder>
@@ -39,23 +38,15 @@ public:
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const CreateDecoderParams& aParams) override;
 
-  ConversionRequired
-  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
-
   bool
   SupportsMimeType(const nsACString& aMimeType,
                    DecoderDoctorDiagnostics* aDiagnostics) const override;
 
-  // Main thread only.
-  static void Init();
-
-  static const Maybe<nsCString> PreferredGMP(const nsACString& aMimeType);
-
   static bool SupportsMimeType(const nsACString& aMimeType,
                                const Maybe<nsCString>& aGMP);
 
-  // Main thread only.
-  static void UpdateUsableCodecs();
+private:
+  virtual ~GMPDecoderModule();
 };
 
 } // namespace mozilla

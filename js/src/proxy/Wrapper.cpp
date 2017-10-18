@@ -12,6 +12,7 @@
 #include "js/Proxy.h"
 #include "vm/ErrorObject.h"
 #include "vm/ProxyObject.h"
+#include "vm/RegExpObject.h"
 #include "vm/WrapperObject.h"
 
 #include "jsobjinlines.h"
@@ -21,7 +22,7 @@
 using namespace js;
 
 bool
-Wrapper::finalizeInBackground(Value priv) const
+Wrapper::finalizeInBackground(const Value& priv) const
 {
     if (!priv.isObject())
         return true;
@@ -29,13 +30,16 @@ Wrapper::finalizeInBackground(Value priv) const
     /*
      * Make the 'background-finalized-ness' of the wrapper the same as the
      * wrapped object, to allow transplanting between them.
-     *
-     * If the wrapped object is in the nursery then we know it doesn't have a
-     * finalizer, and so background finalization is ok.
      */
-    if (IsInsideNursery(&priv.toObject()))
-        return true;
-    return IsBackgroundFinalized(priv.toObject().asTenured().getAllocKind());
+    JSObject* wrapped = MaybeForwarded(&priv.toObject());
+    gc::AllocKind wrappedKind;
+    if (IsInsideNursery(wrapped)) {
+        JSRuntime *rt = wrapped->runtimeFromActiveCooperatingThread();
+        wrappedKind = wrapped->allocKindForTenure(rt->gc.nursery());
+    } else {
+        wrappedKind = wrapped->asTenured().getAllocKind();
+    }
+    return IsBackgroundFinalized(wrappedKind);
 }
 
 bool
@@ -72,13 +76,13 @@ Wrapper::delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult&
     return DeleteProperty(cx, target, id, result);
 }
 
-bool
-Wrapper::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const
+JSObject*
+Wrapper::enumerate(JSContext* cx, HandleObject proxy) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return GetIterator(cx, target, 0, objp);
+    return GetIterator(cx, target, 0);
 }
 
 bool
@@ -260,18 +264,18 @@ Wrapper::className(JSContext* cx, HandleObject proxy) const
 }
 
 JSString*
-Wrapper::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const
+Wrapper::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return fun_toStringHelper(cx, target, indent);
+    return fun_toStringHelper(cx, target, isToSource);
 }
 
-bool
-Wrapper::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const
+RegExpShared*
+Wrapper::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return RegExpToShared(cx, target, g);
+    return RegExpToShared(cx, target);
 }
 
 bool
@@ -300,7 +304,8 @@ Wrapper::isConstructor(JSObject* obj) const
 JSObject*
 Wrapper::weakmapKeyDelegate(JSObject* proxy) const
 {
-    return UncheckedUnwrap(proxy);
+    // This may be called during GC.
+    return UncheckedUnwrapWithoutExpose(proxy);
 }
 
 JSObject*
@@ -312,9 +317,9 @@ Wrapper::New(JSContext* cx, JSObject* obj, const Wrapper* handler,
 }
 
 JSObject*
-Wrapper::Renew(JSContext* cx, JSObject* existing, JSObject* obj, const Wrapper* handler)
+Wrapper::Renew(JSObject* existing, JSObject* obj, const Wrapper* handler)
 {
-    existing->as<ProxyObject>().renew(cx, handler, ObjectValue(*obj));
+    existing->as<ProxyObject>().renew(handler, ObjectValue(*obj));
     return existing;
 }
 
@@ -330,14 +335,43 @@ Wrapper::wrappedObject(JSObject* wrapper)
 {
     MOZ_ASSERT(wrapper->is<WrapperObject>());
     JSObject* target = wrapper->as<ProxyObject>().target();
-    if (target)
-        JS::ExposeObjectToActiveJS(target);
+
+    // Eagerly unmark gray wrapper targets so we can assert that we don't create
+    // black to gray edges. An incremental GC will eventually mark the targets
+    // of black wrappers black but while it is in progress we can observe gray
+    // targets. Expose rather than returning a gray object in this case.
+    if (target) {
+        if (wrapper->isMarkedBlack())
+            MOZ_ASSERT(JS::ObjectIsNotGray(target));
+        if (!wrapper->isMarkedGray())
+            JS::ExposeObjectToActiveJS(target);
+    }
+
     return target;
+}
+
+JS_FRIEND_API(JSObject*)
+js::UncheckedUnwrapWithoutExpose(JSObject* wrapped)
+{
+    while (true) {
+        if (!wrapped->is<WrapperObject>() || MOZ_UNLIKELY(IsWindowProxy(wrapped)))
+            break;
+        wrapped = wrapped->as<WrapperObject>().target();
+
+        // This can be called from Wrapper::weakmapKeyDelegate() on a wrapper
+        // whose referent has been moved while it is still unmarked.
+        if (wrapped)
+            wrapped = MaybeForwarded(wrapped);
+    }
+    return wrapped;
 }
 
 JS_FRIEND_API(JSObject*)
 js::UncheckedUnwrap(JSObject* wrapped, bool stopAtWindowProxy, unsigned* flagsp)
 {
+    MOZ_ASSERT(!JS::CurrentThreadIsHeapCollecting());
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(wrapped->runtimeFromAnyThread()));
+
     unsigned flags = 0;
     while (true) {
         if (!wrapped->is<WrapperObject>() ||
@@ -346,12 +380,7 @@ js::UncheckedUnwrap(JSObject* wrapped, bool stopAtWindowProxy, unsigned* flagsp)
             break;
         }
         flags |= Wrapper::wrapperHandler(wrapped)->flags();
-        wrapped = wrapped->as<ProxyObject>().private_().toObjectOrNull();
-
-        // This can be called from Wrapper::weakmapKeyDelegate() on a wrapper
-        // whose referent has been moved while it is still unmarked.
-        if (wrapped)
-            wrapped = MaybeForwarded(wrapped);
+        wrapped = Wrapper::wrappedObject(wrapped);
     }
     if (flagsp)
         *flagsp = flags;
@@ -372,14 +401,23 @@ js::CheckedUnwrap(JSObject* obj, bool stopAtWindowProxy)
 JS_FRIEND_API(JSObject*)
 js::UnwrapOneChecked(JSObject* obj, bool stopAtWindowProxy)
 {
+    MOZ_ASSERT(!JS::CurrentThreadIsHeapCollecting());
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(obj->runtimeFromAnyThread()));
+
     if (!obj->is<WrapperObject>() ||
-        MOZ_UNLIKELY(IsWindowProxy(obj) && stopAtWindowProxy))
+        MOZ_UNLIKELY(stopAtWindowProxy && IsWindowProxy(obj)))
     {
         return obj;
     }
 
     const Wrapper* handler = Wrapper::wrapperHandler(obj);
     return handler->hasSecurityPolicy() ? nullptr : Wrapper::wrappedObject(obj);
+}
+
+void
+js::ReportAccessDenied(JSContext* cx)
+{
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_OBJECT_ACCESS_DENIED);
 }
 
 const char Wrapper::family = 0;
@@ -399,7 +437,7 @@ js::TransparentObjectWrapper(JSContext* cx, HandleObject existing, HandleObject 
 
 ErrorCopier::~ErrorCopier()
 {
-    JSContext* cx = ac->context()->asJSContext();
+    JSContext* cx = ac->context();
 
     // The provenance of Debugger.DebuggeeWouldRun is the topmost locking
     // debugger compartment; it should not be copied around.

@@ -7,7 +7,10 @@
 #ifndef mozilla_dom_AnimationPerformanceWarning_h
 #define mozilla_dom_AnimationPerformanceWarning_h
 
-#include "mozilla/InitializerList.h"
+#include <initializer_list>
+
+#include "mozilla/Maybe.h"
+#include "nsTArray.h"
 
 class nsXPIDLString;
 
@@ -17,12 +20,13 @@ namespace mozilla {
 struct AnimationPerformanceWarning
 {
   enum class Type : uint8_t {
-    ContentTooSmall,
     ContentTooLarge,
+    ContentTooLargeArea,
     TransformBackfaceVisibilityHidden,
     TransformPreserve3D,
     TransformSVG,
     TransformWithGeometricProperties,
+    TransformWithSyncGeometricAnimations,
     TransformFrameInactive,
     OpacityFrameInactive,
     HasRenderingObserver,

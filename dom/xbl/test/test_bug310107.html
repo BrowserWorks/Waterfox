@@ -26,7 +26,7 @@ function runTest() {
   window.doc = win.document;
   is(window.el.prop, 2, "Unexpected prop value at load");
 
-  win.location = "data:text/html,<body onload='window.opener.loadDone()'>";
+  win.location = "file_bug310107.html";
 }
 
 function loadDone() {
@@ -35,7 +35,7 @@ function loadDone() {
      "document didn't get bfcached?");
 
   // Remove our node from the DOM
-  window.el.parentNode.removeChild(window.el);
+  window.el.remove();
 
   is(window.el.prop, undefined, "Binding should have been detached");
   is(typeof(window.el.prop), "undefined", "Really undefined");

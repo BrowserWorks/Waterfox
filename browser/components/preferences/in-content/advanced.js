@@ -2,10 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from preferences.js */
+
 // Load DownloadUtils module for convertByteUnits
 Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
 Components.utils.import("resource://gre/modules/LoadContextInfo.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "SiteDataManager",
+                                  "resource:///modules/SiteDataManager.jsm");
 
 const PREF_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 
@@ -15,10 +20,8 @@ var gAdvancedPane = {
   /**
    * Brings the appropriate tab to the front and initializes various bits of UI.
    */
-  init: function ()
-  {
-    function setEventListener(aId, aEventType, aCallback)
-    {
+  init() {
+    function setEventListener(aId, aEventType, aCallback) {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gAdvancedPane));
     }
@@ -30,61 +33,62 @@ var gAdvancedPane = {
     if (preference.value !== null)
         advancedPrefs.selectedIndex = preference.value;
 
-#ifdef MOZ_UPDATER
-    let onUnload = function () {
-      window.removeEventListener("unload", onUnload, false);
-      Services.prefs.removeObserver("app.update.", this);
-    }.bind(this);
-    window.addEventListener("unload", onUnload, false);
-    Services.prefs.addObserver("app.update.", this, false);
-    this.updateReadPrefs();
-#endif
-    this.updateOfflineApps();
-#ifdef MOZ_CRASHREPORTER
-    this.initSubmitCrashes();
-#endif
+    if (AppConstants.MOZ_UPDATER) {
+      let onUnload = () => {
+        window.removeEventListener("unload", onUnload);
+        Services.prefs.removeObserver("app.update.", this);
+      };
+      window.addEventListener("unload", onUnload);
+      Services.prefs.addObserver("app.update.", this);
+      this.updateReadPrefs();
+    }
+    if (AppConstants.MOZ_CRASHREPORTER) {
+      this.initSubmitCrashes();
+    }
     this.initTelemetry();
-#ifdef MOZ_TELEMETRY_REPORTING
     this.initSubmitHealthReport();
-#endif
     this.updateOnScreenKeyboardVisibility();
     this.updateCacheSizeInputField();
     this.updateActualCacheSize();
-    this.updateActualAppCacheSize();
+
+    if (Services.prefs.getBoolPref("browser.storageManager.enabled")) {
+      Services.obs.addObserver(this, "sitedatamanager:sites-updated");
+      Services.obs.addObserver(this, "sitedatamanager:updating-sites");
+      let unload = () => {
+        window.removeEventListener("unload", unload);
+        Services.obs.removeObserver(this, "sitedatamanager:sites-updated");
+        Services.obs.removeObserver(this, "sitedatamanager:updating-sites");
+      };
+      window.addEventListener("unload", unload);
+      SiteDataManager.updateSites();
+      setEventListener("clearSiteDataButton", "command",
+                       gAdvancedPane.clearSiteData);
+      setEventListener("siteDataSettings", "command",
+                       gAdvancedPane.showSiteDataSettings);
+
+      let url = Services.urlFormatter.formatURLPref("app.support.baseURL") + "storage-permissions";
+      document.getElementById("siteDataLearnMoreLink").setAttribute("href", url);
+      let siteDataGroup = document.getElementById("siteDataGroup");
+      siteDataGroup.hidden = false;
+    }
 
     setEventListener("layers.acceleration.disabled", "change",
                      gAdvancedPane.updateHardwareAcceleration);
     setEventListener("advancedPrefs", "select",
                      gAdvancedPane.tabSelectionChanged);
-#ifdef MOZ_TELEMETRY_REPORTING
     setEventListener("submitHealthReportBox", "command",
                      gAdvancedPane.updateSubmitHealthReport);
-#endif
-#ifdef MOZ_CRASHREPORTER
-    setEventListener("submitCrashesBox", "command",
-                     gAdvancedPane.updateSubmitCrashes);
-#endif
+
     setEventListener("connectionSettings", "command",
                      gAdvancedPane.showConnections);
     setEventListener("clearCacheButton", "command",
                      gAdvancedPane.clearCache);
-    setEventListener("clearOfflineAppCacheButton", "command",
-                     gAdvancedPane.clearOfflineAppCache);
-    setEventListener("offlineNotifyExceptions", "command",
-                     gAdvancedPane.showOfflineExceptions);
-    setEventListener("offlineAppsList", "select",
-                     gAdvancedPane.offlineAppSelected);
-    let bundlePrefs = document.getElementById("bundlePreferences");
-    document.getElementById("offlineAppsList")
-            .style.height = bundlePrefs.getString("offlineAppsList.height");
-    setEventListener("offlineAppsListRemove", "command",
-                     gAdvancedPane.removeOfflineApp);
-#ifdef MOZ_UPDATER
-    setEventListener("updateRadioGroup", "command",
-                     gAdvancedPane.updateWritePrefs);
-    setEventListener("showUpdateHistory", "command",
-                     gAdvancedPane.showUpdates);
-#endif
+    if (AppConstants.MOZ_UPDATER) {
+      setEventListener("updateRadioGroup", "command",
+                       gAdvancedPane.updateWritePrefs);
+      setEventListener("showUpdateHistory", "command",
+                       gAdvancedPane.showUpdates);
+    }
     setEventListener("viewCertificatesButton", "command",
                      gAdvancedPane.showCertificates);
     setEventListener("viewSecurityDevicesButton", "command",
@@ -92,26 +96,53 @@ var gAdvancedPane = {
     setEventListener("cacheSize", "change",
                      gAdvancedPane.updateCacheSizePref);
 
-#ifdef MOZ_WIDGET_GTK
-    // GTK tabbox' allow the scroll wheel to change the selected tab,
-    // but we don't want this behavior for the in-content preferences.
-    let tabsElement = document.getElementById("tabsElement");
-    tabsElement.addEventListener("DOMMouseScroll", event => {
-      event.stopPropagation();
-    }, true);
-#endif
+    if (Services.prefs.getBoolPref("browser.preferences.offlineGroup.enabled")) {
+      this.updateOfflineApps();
+      this.updateActualAppCacheSize();
+      setEventListener("offlineNotifyExceptions", "command",
+                      gAdvancedPane.showOfflineExceptions);
+      setEventListener("offlineAppsList", "select",
+                      gAdvancedPane.offlineAppSelected);
+      setEventListener("offlineAppsListRemove", "command",
+                      gAdvancedPane.removeOfflineApp);
+      setEventListener("clearOfflineAppCacheButton", "command",
+                      gAdvancedPane.clearOfflineAppCache);
+      let bundlePrefs = document.getElementById("bundlePreferences");
+      document.getElementById("offlineAppsList")
+              .style.height = bundlePrefs.getString("offlineAppsList.height");
+      let offlineGroup = document.getElementById("offlineGroup");
+      offlineGroup.hidden = false;
+    }
+
+    if (AppConstants.MOZ_WIDGET_GTK) {
+      // GTK tabbox' allow the scroll wheel to change the selected tab,
+      // but we don't want this behavior for the in-content preferences.
+      let tabsElement = document.getElementById("tabsElement");
+      tabsElement.addEventListener("DOMMouseScroll", event => {
+        event.stopPropagation();
+      }, true);
+    }
   },
 
   /**
    * Stores the identity of the current tab in preferences so that the selected
    * tab can be persisted between openings of the preferences window.
    */
-  tabSelectionChanged: function ()
-  {
+  tabSelectionChanged() {
     if (!this._inited)
       return;
     var advancedPrefs = document.getElementById("advancedPrefs");
     var preference = document.getElementById("browser.preferences.advanced.selectedTabIndex");
+
+    // tabSelectionChanged gets called twice due to the selectedIndex being set
+    // by both the selectedItem and selectedPanel callstacks. This guard is used
+    // to prevent double-counting in Telemetry.
+    if (preference.valueFromPreferences != advancedPrefs.selectedIndex) {
+      Services.telemetry
+              .getHistogramById("FX_PREFERENCES_CATEGORY_OPENED")
+              .add(telemetryBucketForCategory("advanced"));
+    }
+
     preference.valueFromPreferences = advancedPrefs.selectedIndex;
   },
 
@@ -158,8 +189,7 @@ var gAdvancedPane = {
    * the current value to enable proper pref restoration if the checkbox is
    * never changed.
    */
-  readCheckSpelling: function ()
-  {
+  readCheckSpelling() {
     var pref = document.getElementById("layout.spellcheckDefault");
     this._storedSpellCheck = pref.value;
 
@@ -171,46 +201,61 @@ var gAdvancedPane = {
    * preserving the preference's "hidden" value if the preference is
    * unchanged and represents a value not strictly allowed in UI.
    */
-  writeCheckSpelling: function ()
-  {
+  writeCheckSpelling() {
     var checkbox = document.getElementById("checkSpelling");
-    return checkbox.checked ? (this._storedSpellCheck == 2 ? 2 : 1) : 0;
+    if (checkbox.checked) {
+      if (this._storedSpellCheck == 2) {
+        return 2;
+      }
+      return 1;
+    }
+    return 0;
   },
 
   /**
-   * security.OCSP.enabled is an integer value for legacy reasons.
-   * A value of 1 means OCSP is enabled. Any other value means it is disabled.
+   * readEnableOCSP is used by the preferences UI to determine whether or not
+   * the checkbox for OCSP fetching should be checked (it returns true if it
+   * should be checked and false otherwise). The about:config preference
+   * "security.OCSP.enabled" is an integer rather than a boolean, so it can't be
+   * directly mapped from {true,false} to {checked,unchecked}. The possible
+   * values for "security.OCSP.enabled" are:
+   * 0: fetching is disabled
+   * 1: fetch for all certificates
+   * 2: fetch only for EV certificates
+   * Hence, if "security.OCSP.enabled" is non-zero, the checkbox should be
+   * checked. Otherwise, it should be unchecked.
    */
-  readEnableOCSP: function ()
-  {
+  readEnableOCSP() {
     var preference = document.getElementById("security.OCSP.enabled");
     // This is the case if the preference is the default value.
     if (preference.value === undefined) {
       return true;
     }
-    return preference.value == 1;
+    return preference.value != 0;
   },
 
   /**
-   * See documentation for readEnableOCSP.
+   * writeEnableOCSP is used by the preferences UI to map the checked/unchecked
+   * state of the OCSP fetching checkbox to the value that the preference
+   * "security.OCSP.enabled" should be set to (it returns that value). See the
+   * readEnableOCSP documentation for more background. We unfortunately don't
+   * have enough information to map from {true,false} to all possible values for
+   * "security.OCSP.enabled", but a reasonable alternative is to map from
+   * {true,false} to {<the default value>,0}. That is, if the box is checked,
+   * "security.OCSP.enabled" will be set to whatever default it should be, given
+   * the platform and channel. If the box is unchecked, the preference will be
+   * set to 0. Obviously this won't work if the default is 0, so we will have to
+   * revisit this if we ever set it to 0.
    */
-  writeEnableOCSP: function ()
-  {
+  writeEnableOCSP() {
     var checkbox = document.getElementById("enableOCSP");
-    return checkbox.checked ? 1 : 0;
+    var defaults = Services.prefs.getDefaultBranch(null);
+    var defaultValue = defaults.getIntPref("security.OCSP.enabled");
+    return checkbox.checked ? defaultValue : 0;
   },
 
-  /**
-   * When the user toggles the layers.acceleration.disabled pref,
-   * sync its new value to the gfx.direct2d.disabled pref too.
-   */
-  updateHardwareAcceleration: function()
-  {
-#ifdef XP_WIN
-    var fromPref = document.getElementById("layers.acceleration.disabled");
-    var toPref = document.getElementById("gfx.direct2d.disabled");
-    toPref.value = fromPref.value;
-#endif
+  updateHardwareAcceleration() {
+    // Placeholder for restart
   },
 
   // DATA CHOICES TAB
@@ -218,7 +263,7 @@ var gAdvancedPane = {
   /**
    * Set up or hide the Learn More links for various data collection options
    */
-  _setupLearnMoreLink: function (pref, element) {
+  _setupLearnMoreLink(pref, element) {
     // set up the Learn More link with the correct URL
     let url = Services.prefs.getCharPref(pref);
     let el = document.getElementById(element);
@@ -233,32 +278,9 @@ var gAdvancedPane = {
   /**
    *
    */
-  initSubmitCrashes: function ()
-  {
+  initSubmitCrashes() {
     this._setupLearnMoreLink("toolkit.crashreporter.infoURL",
                              "crashReporterLearnMore");
-
-    var checkbox = document.getElementById("submitCrashesBox");
-    try {
-      var cr = Components.classes["@mozilla.org/toolkit/crash-reporter;1"].
-               getService(Components.interfaces.nsICrashReporter);
-      checkbox.checked = cr.submitReports;
-    } catch (e) {
-      checkbox.style.display = "none";
-    }
-  },
-
-  /**
-   *
-   */
-  updateSubmitCrashes: function ()
-  {
-    var checkbox = document.getElementById("submitCrashesBox");
-    try {
-      var cr = Components.classes["@mozilla.org/toolkit/crash-reporter;1"].
-               getService(Components.interfaces.nsICrashReporter);
-      cr.submitReports = checkbox.checked;
-    } catch (e) { }
   },
 
   /**
@@ -266,20 +288,19 @@ var gAdvancedPane = {
    *
    * In all cases, set up the Learn More link sanely.
    */
-  initTelemetry: function ()
-  {
-#ifdef MOZ_TELEMETRY_REPORTING
+  initTelemetry() {
     this._setupLearnMoreLink("toolkit.telemetry.infoURL", "telemetryLearnMore");
-#endif
+    // If we're not sending any Telemetry, disable the telemetry upload checkbox as well.
+    if (!AppConstants.MOZ_TELEMETRY_REPORTING) {
+      document.getElementById("submitTelemetryBox").setAttribute("disabled", "true");
+    }
   },
 
   /**
    * Set the status of the telemetry controls based on the input argument.
    * @param {Boolean} aEnabled False disables the controls, true enables them.
    */
-  setTelemetrySectionEnabled: function (aEnabled)
-  {
-#ifdef MOZ_TELEMETRY_REPORTING
+  setTelemetrySectionEnabled(aEnabled) {
     // If FHR is disabled, additional data sharing should be disabled as well.
     let disabled = !aEnabled;
     document.getElementById("submitTelemetryBox").disabled = disabled;
@@ -288,36 +309,38 @@ var gAdvancedPane = {
       Services.prefs.setBoolPref("toolkit.telemetry.enabled", false);
     }
     document.getElementById("telemetryDataDesc").disabled = disabled;
-#endif
   },
 
-#ifdef MOZ_TELEMETRY_REPORTING
   /**
    * Initialize the health report service reference and checkbox.
    */
-  initSubmitHealthReport: function () {
+  initSubmitHealthReport() {
     this._setupLearnMoreLink("datareporting.healthreport.infoURL", "FHRLearnMore");
 
     let checkbox = document.getElementById("submitHealthReportBox");
 
-    if (Services.prefs.prefIsLocked(PREF_UPLOAD_ENABLED)) {
+    // Telemetry is only sending data if MOZ_TELEMETRY_REPORTING is defined.
+    // We still want to display the preferences panel if that's not the case, but
+    // we want it to be disabled and unchecked.
+    if (Services.prefs.prefIsLocked(PREF_UPLOAD_ENABLED) ||
+        !AppConstants.MOZ_TELEMETRY_REPORTING) {
       checkbox.setAttribute("disabled", "true");
       return;
     }
 
-    checkbox.checked = Services.prefs.getBoolPref(PREF_UPLOAD_ENABLED);
+    checkbox.checked = Services.prefs.getBoolPref(PREF_UPLOAD_ENABLED) &&
+                       AppConstants.MOZ_TELEMETRY_REPORTING;
     this.setTelemetrySectionEnabled(checkbox.checked);
   },
 
   /**
    * Update the health report preference with state from checkbox.
    */
-  updateSubmitHealthReport: function () {
+  updateSubmitHealthReport() {
     let checkbox = document.getElementById("submitHealthReportBox");
     Services.prefs.setBoolPref(PREF_UPLOAD_ENABLED, checkbox.checked);
     this.setTelemetrySectionEnabled(checkbox.checked);
   },
-#endif
 
   updateOnScreenKeyboardVisibility() {
     if (AppConstants.platform == "win") {
@@ -341,23 +364,40 @@ var gAdvancedPane = {
   /**
    * Displays a dialog in which proxy settings may be changed.
    */
-  showConnections: function ()
-  {
-    openDialog("chrome://browser/content/preferences/connection.xul",
-               "mozilla:connectionmanager",
-               "modal=yes",
-               null);
+  showConnections() {
+    gSubDialog.open("chrome://browser/content/preferences/connection.xul");
+  },
+
+  showSiteDataSettings() {
+    gSubDialog.open("chrome://browser/content/preferences/siteDataSettings.xul");
+  },
+
+  toggleSiteData(shouldShow) {
+    let clearButton = document.getElementById("clearSiteDataButton");
+    let settingsButton = document.getElementById("siteDataSettings");
+    clearButton.disabled = !shouldShow;
+    settingsButton.disabled = !shouldShow;
+  },
+
+  updateTotalDataSizeLabel(usage) {
+    let prefStrBundle = document.getElementById("bundlePreferences");
+    let totalSiteDataSizeLabel = document.getElementById("totalSiteDataSize");
+    if (usage < 0) {
+      totalSiteDataSizeLabel.textContent = prefStrBundle.getString("loadingSiteDataSize");
+    } else {
+      let size = DownloadUtils.convertByteUnits(usage);
+      totalSiteDataSizeLabel.textContent = prefStrBundle.getFormattedString("totalSiteDataSize", size);
+    }
   },
 
   // Retrieves the amount of space currently used by disk cache
-  updateActualCacheSize: function ()
-  {
+  updateActualCacheSize() {
     var actualSizeLabel = document.getElementById("actualDiskCacheSize");
     var prefStrBundle = document.getElementById("bundlePreferences");
 
     // Needs to root the observer since cache service keeps only a weak reference.
     this.observer = {
-      onNetworkCacheDiskConsumption: function(consumption) {
+      onNetworkCacheDiskConsumption(consumption) {
         var size = DownloadUtils.convertByteUnits(consumption);
         // The XBL binding for the string bundle may have been destroyed if
         // the page was closed before this callback was executed.
@@ -383,12 +423,91 @@ var gAdvancedPane = {
     } catch (e) {}
   },
 
+  updateCacheSizeUI(smartSizeEnabled) {
+    document.getElementById("useCacheBefore").disabled = smartSizeEnabled;
+    document.getElementById("cacheSize").disabled = smartSizeEnabled;
+    document.getElementById("useCacheAfter").disabled = smartSizeEnabled;
+  },
+
+  readSmartSizeEnabled() {
+    // The smart_size.enabled preference element is inverted="true", so its
+    // value is the opposite of the actual pref value
+    var disabled = document.getElementById("browser.cache.disk.smart_size.enabled").value;
+    this.updateCacheSizeUI(!disabled);
+  },
+
+  /**
+   * Converts the cache size from units of KB to units of MB and stores it in
+   * the textbox element.
+   */
+  updateCacheSizeInputField() {
+    let cacheSizeElem = document.getElementById("cacheSize");
+    let cachePref = document.getElementById("browser.cache.disk.capacity");
+    cacheSizeElem.value = cachePref.value / 1024;
+    if (cachePref.locked)
+      cacheSizeElem.disabled = true;
+  },
+
+  /**
+   * Updates the cache size preference once user enters a new value.
+   * We intentionally do not set preference="browser.cache.disk.capacity"
+   * onto the textbox directly, as that would update the pref at each keypress
+   * not only after the final value is entered.
+   */
+  updateCacheSizePref() {
+    let cacheSizeElem = document.getElementById("cacheSize");
+    let cachePref = document.getElementById("browser.cache.disk.capacity");
+    // Converts the cache size as specified in UI (in MB) to KB.
+    let intValue = parseInt(cacheSizeElem.value, 10);
+    cachePref.value = isNaN(intValue) ? 0 : intValue * 1024;
+  },
+
+  /**
+   * Clears the cache.
+   */
+  clearCache() {
+    try {
+      var cache = Components.classes["@mozilla.org/netwerk/cache-storage-service;1"]
+                            .getService(Components.interfaces.nsICacheStorageService);
+      cache.clear();
+    } catch (ex) {}
+    this.updateActualCacheSize();
+  },
+
+  clearSiteData() {
+    let flags =
+      Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
+      Services.prompt.BUTTON_TITLE_CANCEL * Services.prompt.BUTTON_POS_1 +
+      Services.prompt.BUTTON_POS_0_DEFAULT;
+    let prefStrBundle = document.getElementById("bundlePreferences");
+    let title = prefStrBundle.getString("clearSiteDataPromptTitle");
+    let text = prefStrBundle.getString("clearSiteDataPromptText");
+    let btn0Label = prefStrBundle.getString("clearSiteDataNow");
+
+    let result = Services.prompt.confirmEx(
+      window, title, text, flags, btn0Label, null, null, null, {});
+    if (result == 0) {
+      SiteDataManager.removeAll();
+    }
+  },
+
+  // Methods for Offline Apps(Appcache)
+
+  /**
+   * Clears the application cache.
+   */
+  clearOfflineAppCache() {
+    Components.utils.import("resource:///modules/offlineAppCache.jsm");
+    OfflineAppCacheHelper.clear();
+
+    this.updateActualAppCacheSize();
+    this.updateOfflineApps();
+  },
+
   // Retrieves the amount of space currently used by offline cache
-  updateActualAppCacheSize: function ()
-  {
+  updateActualAppCacheSize() {
     var visitor = {
-      onCacheStorageInfo: function (aEntryCount, aConsumption, aCapacity, aDiskDirectory)
-      {
+      onCacheStorageInfo(aEntryCount, aConsumption, aCapacity, aDiskDirectory) {
         var actualSizeLabel = document.getElementById("actualAppCacheSize");
         var sizeStrings = DownloadUtils.convertByteUnits(aConsumption);
         var prefStrBundle = document.getElementById("bundlePreferences");
@@ -411,97 +530,25 @@ var gAdvancedPane = {
     } catch (e) {}
   },
 
-  updateCacheSizeUI: function (smartSizeEnabled)
-  {
-    document.getElementById("useCacheBefore").disabled = smartSizeEnabled;
-    document.getElementById("cacheSize").disabled = smartSizeEnabled;
-    document.getElementById("useCacheAfter").disabled = smartSizeEnabled;
-  },
-
-  readSmartSizeEnabled: function ()
-  {
-    // The smart_size.enabled preference element is inverted="true", so its
-    // value is the opposite of the actual pref value
-    var disabled = document.getElementById("browser.cache.disk.smart_size.enabled").value;
-    this.updateCacheSizeUI(!disabled);
-  },
-
-  /**
-   * Converts the cache size from units of KB to units of MB and stores it in
-   * the textbox element.
-   */
-  updateCacheSizeInputField()
-  {
-    let cacheSizeElem = document.getElementById("cacheSize");
-    let cachePref = document.getElementById("browser.cache.disk.capacity");
-    cacheSizeElem.value = cachePref.value / 1024;
-    if (cachePref.locked)
-      cacheSizeElem.disabled = true;
-  },
-
-  /**
-   * Updates the cache size preference once user enters a new value.
-   * We intentionally do not set preference="browser.cache.disk.capacity"
-   * onto the textbox directly, as that would update the pref at each keypress
-   * not only after the final value is entered.
-   */
-  updateCacheSizePref()
-  {
-    let cacheSizeElem = document.getElementById("cacheSize");
-    let cachePref = document.getElementById("browser.cache.disk.capacity");
-    // Converts the cache size as specified in UI (in MB) to KB.
-    let intValue = parseInt(cacheSizeElem.value, 10);
-    cachePref.value = isNaN(intValue) ? 0 : intValue * 1024;
-  },
-
-  /**
-   * Clears the cache.
-   */
-  clearCache: function ()
-  {
-    try {
-      var cache = Components.classes["@mozilla.org/netwerk/cache-storage-service;1"]
-                            .getService(Components.interfaces.nsICacheStorageService);
-      cache.clear();
-    } catch(ex) {}
-    this.updateActualCacheSize();
-  },
-
-  /**
-   * Clears the application cache.
-   */
-  clearOfflineAppCache: function ()
-  {
-    Components.utils.import("resource:///modules/offlineAppCache.jsm");
-    OfflineAppCacheHelper.clear();
-
-    this.updateActualAppCacheSize();
-    this.updateOfflineApps();
-  },
-
-  readOfflineNotify: function()
-  {
+  readOfflineNotify() {
     var pref = document.getElementById("browser.offline-apps.notify");
     var button = document.getElementById("offlineNotifyExceptions");
     button.disabled = !pref.value;
     return pref.value;
   },
 
-  showOfflineExceptions: function()
-  {
+  showOfflineExceptions() {
     var bundlePreferences = document.getElementById("bundlePreferences");
-    var params = { blockVisible     : false,
-                   sessionVisible   : false,
-                   allowVisible     : false,
-                   prefilledHost    : "",
-                   permissionType   : "offline-app",
-                   manageCapability : Components.interfaces.nsIPermissionManager.DENY_ACTION,
-                   windowTitle      : bundlePreferences.getString("offlinepermissionstitle"),
-                   introText        : bundlePreferences.getString("offlinepermissionstext") };
-    openDialog("chrome://browser/content/preferences/permissions.xul",
-               "Browser:Permissions",
-               "modal=yes",
-               params);
+    var params = { blockVisible: false,
+                   sessionVisible: false,
+                   allowVisible: false,
+                   prefilledHost: "",
+                   permissionType: "offline-app",
+                   manageCapability: Components.interfaces.nsIPermissionManager.DENY_ACTION,
+                   windowTitle: bundlePreferences.getString("offlinepermissionstitle"),
+                   introText: bundlePreferences.getString("offlinepermissionstext") };
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
   },
 
   // XXX: duplicated in browser.js
@@ -518,7 +565,7 @@ var gAdvancedPane = {
 
     let usage = 0;
     for (let group of groups) {
-      let uri = Services.io.newURI(group, null, null);
+      let uri = Services.io.newURI(group);
       if (perm.matchesURI(uri, true)) {
         let cache = cacheService.getActiveCache(group);
         usage += cache.usage;
@@ -531,14 +578,13 @@ var gAdvancedPane = {
   /**
    * Updates the list of offline applications
    */
-  updateOfflineApps: function ()
-  {
+  updateOfflineApps() {
     var pm = Components.classes["@mozilla.org/permissionmanager;1"]
                        .getService(Components.interfaces.nsIPermissionManager);
 
     var list = document.getElementById("offlineAppsList");
     while (list.firstChild) {
-      list.removeChild(list.firstChild);
+      list.firstChild.remove();
     }
 
     var groups;
@@ -572,8 +618,7 @@ var gAdvancedPane = {
     }
   },
 
-  offlineAppSelected: function()
-  {
+  offlineAppSelected() {
     var removeButton = document.getElementById("offlineAppsListRemove");
     var list = document.getElementById("offlineAppsList");
     if (list.selectedItem) {
@@ -583,8 +628,7 @@ var gAdvancedPane = {
     }
   },
 
-  removeOfflineApp: function()
-  {
+  removeOfflineApp() {
     var list = document.getElementById("offlineAppsList");
     var item = list.selectedItem;
     var origin = item.getAttribute("origin");
@@ -615,7 +659,7 @@ var gAdvancedPane = {
                            getService(Components.interfaces.nsIApplicationCacheService);
         var groups = cacheService.getGroups();
         for (var i = 0; i < groups.length; i++) {
-          var uri = Services.io.newURI(groups[i], null, null);
+          var uri = Services.io.newURI(groups[i]);
           if (perm.matchesURI(uri, true)) {
             var cache = cacheService.getActiveCache(groups[i]);
             cache.discard();
@@ -629,6 +673,7 @@ var gAdvancedPane = {
     gAdvancedPane.offlineAppSelected();
     this.updateActualAppCacheSize();
   },
+  // Methods for Offline Apps(Appcache) end
 
   // UPDATE TAB
 
@@ -647,7 +692,6 @@ var gAdvancedPane = {
    * - true if updates to search engines are enabled, false otherwise
    */
 
-#ifdef MOZ_UPDATER
   /**
    * Selects the item of the radiogroup based on the pref values and locked
    * states.
@@ -665,80 +709,78 @@ var gAdvancedPane = {
    *                   ii    t/f    f       false
    *                   ii    t/f    *t*     *true*
    */
-  updateReadPrefs: function ()
-  {
-    var enabledPref = document.getElementById("app.update.enabled");
-    var autoPref = document.getElementById("app.update.auto");
-    var radiogroup = document.getElementById("updateRadioGroup");
+  updateReadPrefs() {
+    if (AppConstants.MOZ_UPDATER) {
+      var enabledPref = document.getElementById("app.update.enabled");
+      var autoPref = document.getElementById("app.update.auto");
+      var radiogroup = document.getElementById("updateRadioGroup");
 
-    if (!enabledPref.value)   // Don't care for autoPref.value in this case.
-      radiogroup.value="manual";    // 3. Never check for updates.
-    else if (autoPref.value)  // enabledPref.value && autoPref.value
-      radiogroup.value="auto";      // 1. Automatically install updates
-    else                      // enabledPref.value && !autoPref.value
-      radiogroup.value="checkOnly"; // 2. Check, but let me choose
+      if (!enabledPref.value)   // Don't care for autoPref.value in this case.
+        radiogroup.value = "manual";    // 3. Never check for updates.
+      else if (autoPref.value)  // enabledPref.value && autoPref.value
+        radiogroup.value = "auto";      // 1. Automatically install updates
+      else                      // enabledPref.value && !autoPref.value
+        radiogroup.value = "checkOnly"; // 2. Check, but let me choose
 
-    var canCheck = Components.classes["@mozilla.org/updates/update-service;1"].
-                     getService(Components.interfaces.nsIApplicationUpdateService).
-                     canCheckForUpdates;
-    // canCheck is false if the enabledPref is false and locked,
-    // or the binary platform or OS version is not known.
-    // A locked pref is sufficient to disable the radiogroup.
-    radiogroup.disabled = !canCheck || enabledPref.locked || autoPref.locked;
+      var canCheck = Components.classes["@mozilla.org/updates/update-service;1"].
+                       getService(Components.interfaces.nsIApplicationUpdateService).
+                       canCheckForUpdates;
+      // canCheck is false if the enabledPref is false and locked,
+      // or the binary platform or OS version is not known.
+      // A locked pref is sufficient to disable the radiogroup.
+      radiogroup.disabled = !canCheck || enabledPref.locked || autoPref.locked;
 
-#ifdef MOZ_MAINTENANCE_SERVICE
-    // Check to see if the maintenance service is installed.
-    // If it is don't show the preference at all.
-    var installed;
-    try {
-      var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
-                .createInstance(Components.interfaces.nsIWindowsRegKey);
-      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,
-               "SOFTWARE\\Mozilla\\MaintenanceService",
-               wrk.ACCESS_READ | wrk.WOW64_64);
-      installed = wrk.readIntValue("Installed");
-      wrk.close();
-    } catch(e) {
+      if (AppConstants.MOZ_MAINTENANCE_SERVICE) {
+        // Check to see if the maintenance service is installed.
+        // If it is don't show the preference at all.
+        var installed;
+        try {
+          var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
+                    .createInstance(Components.interfaces.nsIWindowsRegKey);
+          wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,
+                   "SOFTWARE\\Mozilla\\MaintenanceService",
+                   wrk.ACCESS_READ | wrk.WOW64_64);
+          installed = wrk.readIntValue("Installed");
+          wrk.close();
+        } catch (e) {
+        }
+        if (installed != 1) {
+          document.getElementById("useService").hidden = true;
+        }
+      }
     }
-    if (installed != 1) {
-      document.getElementById("useService").hidden = true;
-    }
-#endif
   },
 
   /**
    * Sets the pref values based on the selected item of the radiogroup.
    */
-  updateWritePrefs: function ()
-  {
-    var enabledPref = document.getElementById("app.update.enabled");
-    var autoPref = document.getElementById("app.update.auto");
-    var radiogroup = document.getElementById("updateRadioGroup");
-    switch (radiogroup.value) {
-      case "auto":      // 1. Automatically install updates for Desktop only
-        enabledPref.value = true;
-        autoPref.value = true;
-        break;
-      case "checkOnly": // 2. Check, but let me choose
-        enabledPref.value = true;
-        autoPref.value = false;
-        break;
-      case "manual":    // 3. Never check for updates.
-        enabledPref.value = false;
-        autoPref.value = false;
+  updateWritePrefs() {
+    if (AppConstants.MOZ_UPDATER) {
+      var enabledPref = document.getElementById("app.update.enabled");
+      var autoPref = document.getElementById("app.update.auto");
+      var radiogroup = document.getElementById("updateRadioGroup");
+      switch (radiogroup.value) {
+        case "auto":      // 1. Automatically install updates for Desktop only
+          enabledPref.value = true;
+          autoPref.value = true;
+          break;
+        case "checkOnly": // 2. Check, but let me choose
+          enabledPref.value = true;
+          autoPref.value = false;
+          break;
+        case "manual":    // 3. Never check for updates.
+          enabledPref.value = false;
+          autoPref.value = false;
+      }
     }
   },
 
   /**
    * Displays the history of installed updates.
    */
-  showUpdates: function ()
-  {
-    var prompter = Components.classes["@mozilla.org/updates/update-prompt;1"]
-                             .createInstance(Components.interfaces.nsIUpdatePrompt);
-    prompter.showUpdateHistory(window);
+  showUpdates() {
+    gSubDialog.open("chrome://mozapps/content/update/history.xul");
   },
-#endif
 
   // ENCRYPTION TAB
 
@@ -757,30 +799,34 @@ var gAdvancedPane = {
   /**
    * Displays the user's certificates and associated options.
    */
-  showCertificates: function ()
-  {
-    openDialog("chrome://pippki/content/certManager.xul",
-               "mozilla:certmanager",
-               "modal=yes", null);
+  showCertificates() {
+    gSubDialog.open("chrome://pippki/content/certManager.xul");
   },
 
   /**
    * Displays a dialog from which the user can manage his security devices.
    */
-  showSecurityDevices: function ()
-  {
-    openDialog("chrome://pippki/content/device_manager.xul",
-               "mozilla:devicemanager",
-               "modal=yes", null);
+  showSecurityDevices() {
+    gSubDialog.open("chrome://pippki/content/device_manager.xul");
   },
 
-#ifdef MOZ_UPDATER
-  observe: function (aSubject, aTopic, aData) {
-    switch(aTopic) {
+  observe(aSubject, aTopic, aData) {
+    switch (aTopic) {
       case "nsPref:changed":
         this.updateReadPrefs();
         break;
+
+      case "sitedatamanager:updating-sites":
+        // While updating, we want to disable this section and display loading message until updated
+        this.toggleSiteData(false);
+        this.updateTotalDataSizeLabel(-1);
+        break;
+
+      case "sitedatamanager:sites-updated":
+        this.toggleSiteData(true);
+        SiteDataManager.getTotalUsage()
+          .then(this.updateTotalDataSizeLabel.bind(this));
+        break;
     }
   },
-#endif
 };

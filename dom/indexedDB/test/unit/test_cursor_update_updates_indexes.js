@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
   const START_DATA = "hi";
@@ -26,11 +26,11 @@ function testSteps()
     let info = objectStoreInfo[i];
 
     ok(true, "1");
-    request = indexedDB.open(name, i + 1);
+    let request = indexedDB.open(name, i + 1);
     request.onerror = errorHandler;
     request.onupgradeneeded = grabEventAndContinueHandler;
     request.onsuccess = grabEventAndContinueHandler;
-    event = yield undefined;
+    let event = yield undefined;
 
     let db = event.target.result;
 
@@ -94,6 +94,4 @@ function testSteps()
   }
 
   finishTest();
-  yield undefined;
 }
-

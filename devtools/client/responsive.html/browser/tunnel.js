@@ -7,8 +7,13 @@
 const { Ci } = require("chrome");
 const Services = require("Services");
 const { Task } = require("devtools/shared/task");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { BrowserElementWebNavigation } = require("./web-navigation");
+const { getStack } = require("devtools/shared/platform/stack");
+
+// A symbol used to hold onto the frame loader from the outer browser while tunneling.
+const FRAME_LOADER = Symbol("devtools/responsive/frame-loader");
+// Export for use in tests.
+exports.OUTER_FRAME_LOADER_SYMBOL = FRAME_LOADER;
 
 function debug(msg) {
   // console.log(msg);
@@ -19,6 +24,7 @@ function debug(msg) {
  * list at /devtools/client/responsive.html/docs/browser-swap.md.
  */
 const SWAPPED_BROWSER_STATE = [
+  "_remoteFinder",
   "_securityUI",
   "_documentURI",
   "_documentContentType",
@@ -77,13 +83,53 @@ function tunnelToInnerBrowser(outer, inner) {
         throw new Error("The inner browser must be remote.");
       }
 
+      // Various browser methods access the `frameLoader` property, including:
+      //   * `saveBrowser` from contentAreaUtils.js
+      //   * `docShellIsActive` from remote-browser.xml
+      //   * `hasContentOpener` from remote-browser.xml
+      //   * `preserveLayers` from remote-browser.xml
+      //   * `receiveMessage` from SessionStore.jsm
+      // In general, these methods are interested in the `frameLoader` for the content,
+      // so we redirect them to the inner browser's `frameLoader`.
+      outer[FRAME_LOADER] = outer.frameLoader;
+      Object.defineProperty(outer, "frameLoader", {
+        get() {
+          let stack = getStack();
+          // One exception is `receiveMessage` from SessionStore.jsm.  SessionStore
+          // expects data updates to come in as messages targeted to a <xul:browser>.
+          // In addition, it verifies[1] correctness by checking that the received
+          // message's `targetFrameLoader` property matches the `frameLoader` of the
+          // <xul:browser>. To keep SessionStore functioning as expected, we give it the
+          // outer `frameLoader` as if nothing has changed.
+          // [1]: https://dxr.mozilla.org/mozilla-central/rev/b1b18f25c0ea69d9ee57c4198d577dfcd0129ce1/browser/components/sessionstore/SessionStore.jsm#716
+          if (stack.caller.filename.endsWith("SessionStore.jsm")) {
+            return outer[FRAME_LOADER];
+          }
+          return inner.frameLoader;
+        },
+        configurable: true,
+        enumerable: true,
+      });
+
+      // The `outerWindowID` of the content is used by browser actions like view source
+      // and print.  They send the ID down to the client to find the right content frame
+      // to act on.
+      Object.defineProperty(outer, "outerWindowID", {
+        get() {
+          return inner.outerWindowID;
+        },
+        configurable: true,
+        enumerable: true,
+      });
+
       // The `permanentKey` property on a <xul:browser> is used to index into various maps
       // held by the session store.  When you swap content around with
       // `_swapBrowserDocShells`, these keys are also swapped so they follow the content.
       // This means the key that matches the content is on the inner browser.  Since we
       // want the browser UI to believe the page content is part of the outer browser, we
       // copy the content's `permanentKey` up to the outer browser.
-      copyPermanentKey(outer, inner);
+      debug("Copy inner permanentKey to outer browser");
+      outer.permanentKey = inner.permanentKey;
 
       // Replace the outer browser's native messageManager with a message manager tunnel
       // which we can use to route messages of interest to the inner browser instead.
@@ -99,13 +145,8 @@ function tunnelToInnerBrowser(outer, inner) {
       // even though it's not true.  Since the actions the browser UI performs are sent
       // down to the inner browser by this tunnel, the tab's remoteness effectively is the
       // remoteness of the inner browser.
-      Object.defineProperty(outer, "isRemoteBrowser", {
-        get() {
-          return true;
-        },
-        configurable: true,
-        enumerable: true,
-      });
+      outer.setAttribute("remote", "true");
+      outer.setAttribute("remoteType", inner.remoteType);
 
       // Clear out any cached state that references the current non-remote XBL binding,
       // such as form fill controllers.  Otherwise they will remain in place and leak the
@@ -122,9 +163,9 @@ function tunnelToInnerBrowser(outer, inner) {
       // The constructor of the new XBL binding is run asynchronously and there is no
       // event to signal its completion.  Spin an event loop to watch for properties that
       // are set by the contructor.
-      while (!outer._remoteWebNavigation) {
-        Services.tm.currentThread.processNextEvent(true);
-      }
+      Services.tm.spinEventLoopUntil(() => {
+        return outer._remoteWebNavigation;
+      });
 
       // Replace the `webNavigation` object with our own version which tries to use
       // mozbrowser APIs where possible.  This replaces the webNavigation object that the
@@ -146,47 +187,73 @@ function tunnelToInnerBrowser(outer, inner) {
       let filteredProgressListener = gBrowser._tabFilters.get(tab);
       outer.webProgress.addProgressListener(filteredProgressListener);
 
+      // Add the inner browser to tabbrowser's WeakMap from browser to tab.  This assists
+      // with tabbrowser's processing of some events such as MozLayerTreeReady which
+      // bubble up from the remote content frame and trigger tabbrowser to lookup the tab
+      // associated with the browser that triggered the event.
+      gBrowser._tabForBrowser.set(inner, tab);
+
       // All of the browser state from content was swapped onto the inner browser.  Pull
       // this state up to the outer browser.
       for (let property of SWAPPED_BROWSER_STATE) {
         outer[property] = inner[property];
       }
 
-      // Wants to access the content's `frameLoader`, so we'll redirect it to
-      // inner browser.
-      Object.defineProperty(outer, "hasContentOpener", {
+      // Expose `PopupNotifications` on the content's owner global.
+      // This is used by PermissionUI.jsm for permission doorhangers.
+      // Note: This pollutes the responsive.html tool UI's global.
+      Object.defineProperty(inner.ownerGlobal, "PopupNotifications", {
         get() {
-          return inner.frameLoader.tabParent.hasContentOpener;
+          return outer.ownerGlobal.PopupNotifications;
         },
         configurable: true,
         enumerable: true,
       });
 
-      // Wants to access the content's `frameLoader`, so we'll redirect it to
-      // inner browser.
-      Object.defineProperty(outer, "docShellIsActive", {
+      // Expose `whereToOpenLink` on the content's owner global.
+      // This is used by ContentClick.jsm when opening links in ways other than just
+      // navigating the viewport.
+      // Note: This pollutes the responsive.html tool UI's global.
+      Object.defineProperty(inner.ownerGlobal, "whereToOpenLink", {
         get() {
-          return inner.frameLoader.tabParent.docShellIsActive;
-        },
-        set(value) {
-          inner.frameLoader.tabParent.docShellIsActive = value;
+          return outer.ownerGlobal.whereToOpenLink;
         },
         configurable: true,
         enumerable: true,
       });
 
-      // Wants to access the content's `frameLoader`, so we'll redirect it to
-      // inner browser.
-      outer.setDocShellIsActiveAndForeground = value => {
-        inner.frameLoader.tabParent.setDocShellIsActiveAndForeground(value);
-      };
+      // Add mozbrowser event handlers
+      inner.addEventListener("mozbrowseropenwindow", this);
     }),
+
+    handleEvent(event) {
+      if (event.type != "mozbrowseropenwindow") {
+        return;
+      }
+
+      // Minimal support for <a target/> and window.open() which just ensures we at
+      // least open them somewhere (in a new tab).  The following things are ignored:
+      //   * Specific target names (everything treated as _blank)
+      //   * Window features
+      //   * window.opener
+      // These things are deferred for now, since content which does depend on them seems
+      // outside the main focus of RDM.
+      let { detail } = event;
+      event.preventDefault();
+      let uri = Services.io.newURI(detail.url);
+      // This API is used mainly because it's near the path used for <a target/> with
+      // regular browser tabs (which calls `openURIInFrame`).  The more elaborate APIs
+      // that support openers, window features, etc. didn't seem callable from JS and / or
+      // this event doesn't give enough info to use them.
+      browserWindow.browserDOMWindow
+        .openURI(uri, null, Ci.nsIBrowserDOMWindow.OPEN_NEWTAB,
+                 Ci.nsIBrowserDOMWindow.OPEN_NEW,
+                 outer.contentPrincipal);
+    },
 
     stop() {
       let tab = gBrowser.getTabForBrowser(outer);
       let filteredProgressListener = gBrowser._tabFilters.get(tab);
-      browserWindow = null;
-      gBrowser = null;
 
       // The browser's state has changed over time while the tunnel was active.  Push the
       // the current state down to the inner browser, so that it follows the content in
@@ -195,6 +262,9 @@ function tunnelToInnerBrowser(outer, inner) {
         inner[property] = outer[property];
       }
 
+      // Remove the inner browser from the WeakMap from browser to tab.
+      gBrowser._tabForBrowser.delete(inner);
+
       // Remove the progress listener we added manually.
       outer.webProgress.removeProgressListener(filteredProgressListener);
 
@@ -202,53 +272,40 @@ function tunnelToInnerBrowser(outer, inner) {
       outer.destroy();
       outer.style.MozBinding = "";
 
-      // Reset overridden XBL properties and methods.  Deleting the override
-      // means it will fallback to the original XBL binding definitions which
-      // are on the prototype.
-      delete outer.isRemoteBrowser;
-      delete outer.hasContentOpener;
-      delete outer.docShellIsActive;
-      delete outer.setDocShellIsActiveAndForeground;
+      // Reset @remote since this is now back to a regular, non-remote browser
+      outer.setAttribute("remote", "false");
+      outer.removeAttribute("remoteType");
+
+      // Delete browser window properties exposed on content's owner global
+      delete inner.ownerGlobal.PopupNotifications;
+      delete inner.ownerGlobal.whereToOpenLink;
+
+      // Remove mozbrowser event handlers
+      inner.removeEventListener("mozbrowseropenwindow", this);
 
       mmTunnel.destroy();
       mmTunnel = null;
+
+      // Reset overridden XBL properties and methods.  Deleting the override
+      // means it will fallback to the original XBL binding definitions which
+      // are on the prototype.
+      delete outer.frameLoader;
+      delete outer[FRAME_LOADER];
+      delete outer.outerWindowID;
 
       // Invalidate outer's permanentKey so that SessionStore stops associating
       // things that happen to the outer browser with the content inside in the
       // inner browser.
       outer.permanentKey = { id: "zombie" };
+
+      browserWindow = null;
+      gBrowser = null;
     },
 
   };
 }
 
 exports.tunnelToInnerBrowser = tunnelToInnerBrowser;
-
-function copyPermanentKey(outer, inner) {
-  // When we're in the process of swapping content around, we end up receiving a
-  // SessionStore:update message which lists the container page that is loaded into the
-  // outer browser (that we're hiding the inner browser within) as part of its history.
-  // We want SessionStore's view of the history for our tab to only have the page content
-  // of the inner browser, so we want to hide this message from SessionStore, but we have
-  // no direct mechanism to do so.  As a workaround, we wait until the one errant message
-  // has gone by, and then we copy the permanentKey after that, since the permanentKey is
-  // what SessionStore uses to identify each browser.
-  let outerMM = outer.frameLoader.messageManager;
-  let onHistoryEntry = message => {
-    let history = message.data.data.history;
-    if (!history || !history.entries) {
-      // Wait for a message that contains history data
-      return;
-    }
-    outerMM.removeMessageListener("SessionStore:update", onHistoryEntry);
-    debug("Got session update for outer browser");
-    DevToolsUtils.executeSoon(() => {
-      debug("Copy inner permanentKey to outer browser");
-      outer.permanentKey = inner.permanentKey;
-    });
-  };
-  outerMM.addMessageListener("SessionStore:update", onHistoryEntry);
-}
 
 /**
  * This module allows specific messages of interest to be directed from the
@@ -272,11 +329,6 @@ MessageManagerTunnel.prototype = {
    * the outer browser's real message manager.
    */
   PASS_THROUGH_METHODS: [
-    "killChild",
-    "assertPermission",
-    "assertContainApp",
-    "assertAppHasPermission",
-    "assertAppHasStatus",
     "removeDelayedFrameScript",
     "getDelayedFrameScripts",
     "loadProcessScript",
@@ -327,6 +379,8 @@ MessageManagerTunnel.prototype = {
     "Forms:HideDropDown",
     "InPermitUnload",
     "PermitUnload",
+    // Messages sent to tabbrowser.xml
+    "contextmenu",
     // Messages sent to SelectParentHelper.jsm
     "Forms:UpdateDropDown",
     // Messages sent to browser.js
@@ -339,13 +393,45 @@ MessageManagerTunnel.prototype = {
   ],
 
   OUTER_TO_INNER_MESSAGE_PREFIXES: [
+    // Messages sent from nsContextMenu.js
+    "ContextMenu:",
     // Messages sent from DevTools
     "debug:",
+    // Messages sent from findbar.xml
+    "Findbar:",
+    // Messages sent from RemoteFinder.jsm
+    "Finder:",
+    // Messages sent from InlineSpellChecker.jsm
+    "InlineSpellChecker:",
+    // Messages sent from pageinfo.js
+    "PageInfo:",
+    // Messages sent from printUtils.js
+    "Printing:",
+    // Messages sent from browser-social.js
+    "Social:",
+    "PageMetadata:",
+    // Messages sent from viewSourceUtils.js
+    "ViewSource:",
   ],
 
   INNER_TO_OUTER_MESSAGE_PREFIXES: [
+    // Messages sent to nsContextMenu.js
+    "ContextMenu:",
     // Messages sent to DevTools
     "debug:",
+    // Messages sent to findbar.xml
+    "Findbar:",
+    // Messages sent to RemoteFinder.jsm
+    "Finder:",
+    // Messages sent to pageinfo.js
+    "PageInfo:",
+    // Messages sent to printUtils.js
+    "Printing:",
+    // Messages sent to browser-social.js
+    "Social:",
+    "PageMetadata:",
+    // Messages sent to viewSourceUtils.js
+    "ViewSource:",
   ],
 
   OUTER_TO_INNER_FRAME_SCRIPTS: [
@@ -354,17 +440,17 @@ MessageManagerTunnel.prototype = {
   ],
 
   get outerParentMM() {
-    if (!this.outer.frameLoader) {
+    if (!this.outer[FRAME_LOADER]) {
       return null;
     }
-    return this.outer.frameLoader.messageManager;
+    return this.outer[FRAME_LOADER].messageManager;
   },
 
   get outerChildMM() {
     // This is only possible because we require the outer browser to be
     // non-remote, so we're able to reach into its window and use the child
     // side message manager there.
-    let docShell = this.outer.frameLoader.docShell;
+    let docShell = this.outer[FRAME_LOADER].docShell;
     return docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                    .getInterface(Ci.nsIContentFrameMessageManager);
   },
@@ -378,13 +464,11 @@ MessageManagerTunnel.prototype = {
 
   init() {
     for (let method of this.PASS_THROUGH_METHODS) {
-      // Workaround bug 449811 to ensure a fresh binding each time through the loop
-      let _method = method;
-      this[_method] = (...args) => {
+      this[method] = (...args) => {
         if (!this.outerParentMM) {
           return null;
         }
-        return this.outerParentMM[_method](...args);
+        return this.outerParentMM[method](...args);
       };
     }
 
@@ -393,7 +477,7 @@ MessageManagerTunnel.prototype = {
       this.tunneledMessageNames.add(name);
     }
 
-    Services.obs.addObserver(this, "message-manager-close", false);
+    Services.obs.addObserver(this, "message-manager-close");
 
     // Replace the outer browser's messageManager with this tunnel
     Object.defineProperty(this.outer, "messageManager", {
@@ -428,13 +512,11 @@ MessageManagerTunnel.prototype = {
     // ensure it keeps working after tunnel close, rewrite the overidden methods as pass
     // through methods.
     for (let method of this.OVERRIDDEN_METHODS) {
-      // Workaround bug 449811 to ensure a fresh binding each time through the loop
-      let _method = method;
-      this[_method] = (...args) => {
+      this[method] = (...args) => {
         if (!this.outerParentMM) {
           return null;
         }
-        return this.outerParentMM[_method](...args);
+        return this.outerParentMM[method](...args);
       };
     }
   },
@@ -506,14 +588,18 @@ MessageManagerTunnel.prototype = {
     this.innerParentMM.sendAsyncMessage(name, ...args);
   },
 
-  receiveMessage({ name, data, objects, principal }) {
+  receiveMessage({ name, data, objects, principal, sync }) {
     if (!this._shouldTunnelInnerToOuter(name)) {
       debug(`Received unexpected message ${name}`);
-      return;
+      return undefined;
     }
 
-    debug(`${name} inner -> outer`);
+    debug(`${name} inner -> outer, sync: ${sync}`);
+    if (sync) {
+      return this.outerChildMM.sendSyncMessage(name, data, objects, principal);
+    }
     this.outerChildMM.sendAsyncMessage(name, data, objects, principal);
+    return undefined;
   },
 
   _shouldTunnelOuterToInner(name) {

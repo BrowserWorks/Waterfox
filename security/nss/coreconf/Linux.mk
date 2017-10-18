@@ -3,6 +3,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+CC     ?= gcc
+CCC    ?= g++
+RANLIB ?= ranlib
+
 include $(CORE_DEPTH)/coreconf/UNIX.mk
 
 #
@@ -15,10 +19,6 @@ endif
 ifeq ($(USE_PTHREADS),1)
 	IMPL_STRATEGY = _PTH
 endif
-
-CC			= gcc
-CCC			= g++
-RANLIB			= ranlib
 
 DEFAULT_COMPILER = gcc
 
@@ -106,16 +106,6 @@ ifneq ($(OS_TARGET),Android)
 LIBC_TAG		= _glibc
 endif
 
-ifeq ($(OS_RELEASE),2.0)
-	OS_REL_CFLAGS	+= -DLINUX2_0
-	MKSHLIB		= $(CC) -shared -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
-	ifdef MAPFILE
-		MKSHLIB += -Wl,--version-script,$(MAPFILE)
-	endif
-	PROCESS_MAP_FILE = grep -v ';-' $< | \
-         sed -e 's,;+,,' -e 's; DATA ;;' -e 's,;;,,' -e 's,;.*,;,' > $@
-endif
-
 ifdef BUILD_OPT
 ifeq (11,$(ALLOW_OPT_CODE_SIZE)$(OPT_CODE_SIZE))
 	OPTIMIZER = -Os
@@ -139,14 +129,15 @@ ifeq ($(USE_PTHREADS),1)
 OS_PTHREAD = -lpthread 
 endif
 
-OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) -pipe -ffunction-sections -fdata-sections -DLINUX -Dlinux -DHAVE_STRERROR
+OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) -pipe -ffunction-sections -fdata-sections -DHAVE_STRERROR
+ifeq ($(KERNEL),Linux)
+	OS_CFLAGS	+= -DLINUX -Dlinux
+endif
 OS_LIBS			= $(OS_PTHREAD) -ldl -lc
 
 ifdef USE_PTHREADS
 	DEFINES		+= -D_REENTRANT
 endif
-
-ARCH			= linux
 
 DSO_CFLAGS		= -fPIC
 DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
@@ -156,10 +147,8 @@ DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
 # Also, -z defs conflicts with Address Sanitizer, which emits relocations
 # against the libsanitizer runtime built into the main executable.
 ZDEFS_FLAG		= -Wl,-z,defs
-ifneq ($(USE_ASAN),1)
 DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
-endif
-LDFLAGS			+= $(ARCHFLAG)
+LDFLAGS			+= $(ARCHFLAG) -z noexecstack
 
 # On Maemo, we need to use the -rpath-link flag for even the standard system
 # library directories.
@@ -167,7 +156,6 @@ ifdef _SBOX_DIR
 LDFLAGS			+= -Wl,-rpath-link,/usr/lib:/lib
 endif
 
-# INCLUDES += -I/usr/include -Y/usr/include/linux
 G++INCLUDES		= -I/usr/include/g++
 
 #
@@ -202,7 +190,6 @@ RPATH = -Wl,-rpath,'$$ORIGIN:/opt/sun/private/lib'
 endif
 endif
 
-OS_REL_CFLAGS   += -DLINUX2_1
 MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
 
 ifdef MAPFILE
@@ -215,4 +202,8 @@ ifeq ($(OS_RELEASE),2.4)
 DEFINES += -DNO_FORK_CHECK
 endif
 
-include $(CORE_DEPTH)/coreconf/sanitizers.mk
+ifdef USE_GCOV
+OS_CFLAGS += --coverage
+LDFLAGS += --coverage
+DSO_LDOPTS += --coverage
+endif

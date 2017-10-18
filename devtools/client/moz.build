@@ -21,8 +21,6 @@ DIRS += [
     'netmonitor',
     'performance',
     'preferences',
-    'projecteditor',
-    'promisedebugger',
     'responsive.html',
     'responsivedesign',
     'scratchpad',
@@ -53,3 +51,6 @@ DevToolsModules(
     'definitions.js',
     'menus.js',
 )
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Developer Tools')

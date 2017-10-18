@@ -34,7 +34,7 @@ const PrefsTarget = Class({
 
     // start listening to preference changes
     let observer = prefTargetNS(this).observer = onChange.bind(this);
-    branch.addObserver('', observer, false);
+    branch.addObserver('', observer);
 
     // Make sure to destroy this on unload
     unload(destroy.bind(this));
@@ -56,6 +56,6 @@ function destroy() {
 
   // stop listening to preference changes
   let branch = prefTargetNS(this).branch;
-  branch.removeObserver('', prefTargetNS(this).observer, false);
+  branch.removeObserver('', prefTargetNS(this).observer);
   prefTargetNS(this).observer = null;
 }

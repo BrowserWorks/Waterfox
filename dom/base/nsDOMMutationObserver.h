@@ -126,7 +126,7 @@ public:
   RefPtr<nsDOMMutationRecord> mNext;
   nsCOMPtr<nsISupports>         mOwner;
 };
- 
+
 // Base class just prevents direct access to
 // members to make sure we go through getters/setters.
 class nsMutationReceiverBase : public nsStubAnimationObserver
@@ -234,17 +234,40 @@ public:
   {
     mTransientReceivers.RemoveObject(aClone);
   }
-  
+
 protected:
   nsMutationReceiverBase(nsINode* aTarget, nsDOMMutationObserver* aObserver)
-  : mTarget(aTarget), mObserver(aObserver), mRegisterTarget(aTarget)
+    : mTarget(aTarget)
+    , mObserver(aObserver)
+    , mRegisterTarget(aTarget)
+    , mSubtree(false)
+    , mChildList(false)
+    , mCharacterData(false)
+    , mCharacterDataOldValue(false)
+    , mNativeAnonymousChildList(false)
+    , mAttributes(false)
+    , mAllAttributes(false)
+    , mAttributeOldValue(false)
+    , mAnimations(false)
   {
   }
 
   nsMutationReceiverBase(nsINode* aRegisterTarget,
                          nsMutationReceiverBase* aParent)
-  : mTarget(nullptr), mObserver(nullptr), mParent(aParent),
-    mRegisterTarget(aRegisterTarget), mKungFuDeathGrip(aParent->Target())
+    : mTarget(nullptr)
+    , mObserver(nullptr)
+    , mParent(aParent)
+    , mRegisterTarget(aRegisterTarget)
+    , mKungFuDeathGrip(aParent->Target())
+    , mSubtree(false)
+    , mChildList(false)
+    , mCharacterData(false)
+    , mCharacterDataOldValue(false)
+    , mNativeAnonymousChildList(false)
+    , mAttributes(false)
+    , mAllAttributes(false)
+    , mAttributeOldValue(false)
+    , mAnimations(false)
   {
     NS_ASSERTION(mParent->Subtree(), "Should clone a non-subtree observer!");
   }
@@ -302,7 +325,7 @@ protected:
   // While we have transient receivers, keep the original mutation receiver
   // alive so it doesn't go away and disconnect all its transient receivers.
   nsCOMPtr<nsINode>                  mKungFuDeathGrip;
-  
+
 private:
   bool                               mSubtree;
   bool                               mChildList;
@@ -369,7 +392,6 @@ public:
 
   void Disconnect(bool aRemoveFromObserver);
 
-  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
   NS_DECL_ISUPPORTS
 
   NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTEWILLCHANGE
@@ -636,7 +658,7 @@ class nsAutoMutationBatch
 public:
   nsAutoMutationBatch()
   : mPreviousBatch(nullptr), mBatchTarget(nullptr), mRemovalDone(false),
-    mFromFirstToLast(false), mAllowNestedBatches(false)    
+    mFromFirstToLast(false), mAllowNestedBatches(false)
   {
   }
 
@@ -691,11 +713,11 @@ public:
       if (sCurrentBatch->mObservers[i].mObserver == aObserver) {
         if (aWantsChildList) {
           sCurrentBatch->mObservers[i].mWantsChildList = aWantsChildList;
-        } 
+        }
         return;
       }
     }
-    BatchObserver* bo = sCurrentBatch->mObservers.AppendElement(); 
+    BatchObserver* bo = sCurrentBatch->mObservers.AppendElement();
     bo->mObserver = aObserver;
     bo->mWantsChildList = aWantsChildList;
   }
@@ -737,7 +759,7 @@ private:
     nsDOMMutationObserver* mObserver;
     bool                   mWantsChildList;
   };
-  
+
   static nsAutoMutationBatch* sCurrentBatch;
   nsAutoMutationBatch* mPreviousBatch;
   AutoTArray<BatchObserver, 2> mObservers;

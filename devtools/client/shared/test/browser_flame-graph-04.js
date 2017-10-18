@@ -1,15 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 // Tests that text metrics in the flame graph widget work properly.
 
-var HTML_NS = "http://www.w3.org/1999/xhtml";
-var {LocalizationHelper} = require("devtools/client/shared/l10n");
-var {FlameGraph} = require("devtools/client/shared/widgets/FlameGraph");
-var {FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE} = require("devtools/client/shared/widgets/FlameGraph");
-var {FLAME_GRAPH_BLOCK_TEXT_FONT_FAMILY} = require("devtools/client/shared/widgets/FlameGraph");
-
-var L10N = new LocalizationHelper();
+const HTML_NS = "http://www.w3.org/1999/xhtml";
+const {ELLIPSIS} = require("devtools/shared/l10n");
+const {FlameGraph} = require("devtools/client/shared/widgets/FlameGraph");
+const {FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE} = require("devtools/client/shared/widgets/FlameGraph");
+const {FLAME_GRAPH_BLOCK_TEXT_FONT_FAMILY} = require("devtools/client/shared/widgets/FlameGraph");
 
 add_task(function* () {
   yield addTab("about:blank");
@@ -18,7 +18,7 @@ add_task(function* () {
 });
 
 function* performTest() {
-  let [host, win, doc] = yield createHost();
+  let [host,, doc] = yield createHost();
   let graph = new FlameGraph(doc.body, 1);
   yield graph.ready();
 
@@ -31,7 +31,7 @@ function* performTest() {
 function testGraph(graph) {
   is(graph._averageCharWidth, getAverageCharWidth(),
     "The average char width was calculated correctly.");
-  is(graph._overflowCharWidth, getCharWidth(L10N.ellipsis),
+  is(graph._overflowCharWidth, getCharWidth(ELLIPSIS),
     "The ellipsis char width was calculated correctly.");
 
   let text = "This text is maybe overflowing";
@@ -54,10 +54,10 @@ function testGraph(graph) {
   isnot(text50px, text,
     "The fitted text for 50px width is correct (1).");
 
-  ok(text50px.includes(L10N.ellipsis),
+  ok(text50px.includes(ELLIPSIS),
     "The fitted text for 50px width is correct (2).");
 
-  is(graph._getFittedText(text, FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE + 1), L10N.ellipsis,
+  is(graph._getFittedText(text, FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE + 1), ELLIPSIS,
     "The fitted text for text font size width is correct.");
 
   is(graph._getFittedText(text, 1), "",
@@ -66,8 +66,9 @@ function testGraph(graph) {
 
 function getAverageCharWidth() {
   let letterWidthsSum = 0;
-  let start = 32; // space
-  let end = 123; // "z"
+
+  let start = " ".charCodeAt(0);
+  let end = "z".charCodeAt(0) + 1;
 
   for (let i = start; i < end; i++) {
     let char = String.fromCharCode(i);

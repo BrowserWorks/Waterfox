@@ -86,6 +86,7 @@ public:
   void ClearSimple();
 
   double HighestStartTime();
+  double HighestEndTime();
 
 private:
   ~SourceBufferList();
@@ -96,6 +97,7 @@ private:
 
   RefPtr<MediaSource> mMediaSource;
   nsTArray<RefPtr<SourceBuffer> > mSourceBuffers;
+  const RefPtr<AbstractThread> mAbstractMainThread;
 };
 
 } // namespace dom

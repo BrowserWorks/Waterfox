@@ -14,17 +14,15 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1000870
     <script type="text/javascript">
       SimpleTest.waitForExplicitFinish();
       function startTest() {
-        var iframe = document.getElementById("testFrame");
-        iframe.src = "pointerevent_pointerleave_pen-manual.html";
+        runTestInNewWindow("pointerevent_pointerleave_pen-manual.html");
       }
       function executeTest(int_win) {
-        sendMouseEvent(int_win, "target0", "mousedown",  {inputSource:MouseEvent.MOZ_SOURCE_PEN});
-        sendMouseEvent(int_win, "target0", "mouseup",    {inputSource:MouseEvent.MOZ_SOURCE_PEN});
-        sendMouseEvent(int_win, "target0", "mouseleave", {inputSource:MouseEvent.MOZ_SOURCE_PEN});
+        sendMouseEvent(int_win, "target0", "mousedown",   {inputSource:MouseEvent.MOZ_SOURCE_PEN});
+        sendMouseEvent(int_win, "target0", "mouseup",     {inputSource:MouseEvent.MOZ_SOURCE_PEN});
+        sendMouseEvent(int_win, "target0", "mousecancel", {inputSource:MouseEvent.MOZ_SOURCE_PEN});
       }
     </script>
   </head>
   <body>
-    <iframe id="testFrame" height="800" width="1000"></iframe>
   </body>
 </html>

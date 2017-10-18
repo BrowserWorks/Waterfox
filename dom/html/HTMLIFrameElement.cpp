@@ -6,10 +6,10 @@
 
 #include "mozilla/dom/HTMLIFrameElement.h"
 #include "mozilla/dom/HTMLIFrameElementBinding.h"
+#include "mozilla/GenericSpecifiedValuesInlines.h"
 #include "nsMappedAttributes.h"
 #include "nsAttrValueInlines.h"
 #include "nsError.h"
-#include "nsRuleData.h"
 #include "nsStyleConsts.h"
 #include "nsContentUtils.h"
 #include "nsSandboxFlags.h"
@@ -53,6 +53,7 @@ NS_IMPL_STRING_ATTR(HTMLIFrameElement, Scrolling, scrolling)
 NS_IMPL_URI_ATTR(HTMLIFrameElement, Src, src)
 NS_IMPL_STRING_ATTR(HTMLIFrameElement, Width, width)
 NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowFullscreen, allowfullscreen)
+NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowPaymentRequest, allowpaymentrequest)
 NS_IMPL_STRING_ATTR(HTMLIFrameElement, Srcdoc, srcdoc)
 
 NS_IMETHODIMP
@@ -101,9 +102,9 @@ HTMLIFrameElement::ParseAttribute(int32_t aNamespaceID,
 
 void
 HTMLIFrameElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
-                                         nsRuleData* aData)
+                                         GenericSpecifiedValues* aData)
 {
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Border)) {
+  if (aData->ShouldComputeStyleStruct(NS_STYLE_INHERIT_BIT(Border))) {
     // frameborder: 0 | 1 (| NO | YES in quirks mode)
     // If frameborder is 0 or No, set border to 0
     // else leave it as the value set in html.css
@@ -113,43 +114,15 @@ HTMLIFrameElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       if (NS_STYLE_FRAME_0 == frameborder ||
           NS_STYLE_FRAME_NO == frameborder ||
           NS_STYLE_FRAME_OFF == frameborder) {
-        nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidth();
-        if (borderLeftWidth->GetUnit() == eCSSUnit_Null)
-          borderLeftWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
-        nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidth();
-        if (borderRightWidth->GetUnit() == eCSSUnit_Null)
-          borderRightWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
-        nsCSSValue* borderTopWidth = aData->ValueForBorderTopWidth();
-        if (borderTopWidth->GetUnit() == eCSSUnit_Null)
-          borderTopWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
-        nsCSSValue* borderBottomWidth = aData->ValueForBorderBottomWidth();
-        if (borderBottomWidth->GetUnit() == eCSSUnit_Null)
-          borderBottomWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
+        aData->SetPixelValueIfUnset(eCSSProperty_border_top_width, 0.0f);
+        aData->SetPixelValueIfUnset(eCSSProperty_border_right_width, 0.0f);
+        aData->SetPixelValueIfUnset(eCSSProperty_border_bottom_width, 0.0f);
+        aData->SetPixelValueIfUnset(eCSSProperty_border_left_width, 0.0f);
       }
     }
   }
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Position)) {
-    // width: value
-    nsCSSValue* width = aData->ValueForWidth();
-    if (width->GetUnit() == eCSSUnit_Null) {
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
-      if (value && value->Type() == nsAttrValue::eInteger)
-        width->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel);
-      else if (value && value->Type() == nsAttrValue::ePercent)
-        width->SetPercentValue(value->GetPercentValue());
-    }
 
-    // height: value
-    nsCSSValue* height = aData->ValueForHeight();
-    if (height->GetUnit() == eCSSUnit_Null) {
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::height);
-      if (value && value->Type() == nsAttrValue::eInteger)
-        height->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel);
-      else if (value && value->Type() == nsAttrValue::ePercent)
-        height->SetPercentValue(value->GetPercentValue());
-    }
-  }
-
+  nsGenericHTMLElement::MapImageSizeAttributesInto(aAttributes, aData);
   nsGenericHTMLElement::MapImageAlignAttributeInto(aAttributes, aData);
   nsGenericHTMLElement::MapCommonAttributesInto(aAttributes, aData);
 }
@@ -169,7 +142,7 @@ HTMLIFrameElement::IsAttributeMapped(const nsIAtom* aAttribute) const
     sImageAlignAttributeMap,
     sCommonAttributeMap,
   };
-  
+
   return FindAttributeDependence(aAttribute, map);
 }
 
@@ -182,54 +155,49 @@ HTMLIFrameElement::GetAttributeMappingFunction() const
 }
 
 nsresult
-HTMLIFrameElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify)
-{
-  nsresult rv = nsGenericHTMLFrameElement::SetAttr(aNameSpaceID, aName,
-                                                   aPrefix, aValue, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (aNameSpaceID == kNameSpaceID_None && aName == nsGkAtoms::srcdoc) {
-    // Don't propagate error here. The attribute was successfully set, that's
-    // what we should reflect.
-    LoadSrc();
-  }
-
-  return NS_OK;
-}
-
-nsresult
 HTMLIFrameElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                bool aNotify)
+                                const nsAttrValue* aOldValue, bool aNotify)
 {
-  if (aName == nsGkAtoms::sandbox &&
-      aNameSpaceID == kNameSpaceID_None && mFrameLoader) {
-    // If we have an nsFrameLoader, apply the new sandbox flags.
-    // Since this is called after the setter, the sandbox flags have
-    // alreay been updated.
-    mFrameLoader->ApplySandboxFlags(GetSandboxFlags());
+  AfterMaybeChangeAttr(aNameSpaceID, aName, aNotify);
+
+  if (aNameSpaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::sandbox) {
+      if (mFrameLoader) {
+        // If we have an nsFrameLoader, apply the new sandbox flags.
+        // Since this is called after the setter, the sandbox flags have
+        // alreay been updated.
+        mFrameLoader->ApplySandboxFlags(GetSandboxFlags());
+      }
+    }
   }
   return nsGenericHTMLFrameElement::AfterSetAttr(aNameSpaceID, aName, aValue,
-                                                 aNotify);
+                                                 aOldValue, aNotify);
 }
 
 nsresult
-HTMLIFrameElement::UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify)
+HTMLIFrameElement::OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
+                                          const nsAttrValueOrString& aValue,
+                                          bool aNotify)
 {
-  // Invoke on the superclass.
-  nsresult rv = nsGenericHTMLFrameElement::UnsetAttr(aNameSpaceID, aAttribute, aNotify);
-  NS_ENSURE_SUCCESS(rv, rv);
+  AfterMaybeChangeAttr(aNamespaceID, aName, aNotify);
 
-  if (aNameSpaceID == kNameSpaceID_None &&
-      aAttribute == nsGkAtoms::srcdoc) {
-    // Fall back to the src attribute, if any
-    LoadSrc();
+  return nsGenericHTMLFrameElement::OnAttrSetButNotChanged(aNamespaceID, aName,
+                                                           aValue, aNotify);
+}
+
+void
+HTMLIFrameElement::AfterMaybeChangeAttr(int32_t aNamespaceID,
+                                        nsIAtom* aName,
+                                        bool aNotify)
+{
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::srcdoc) {
+      // Don't propagate errors from LoadSrc. The attribute was successfully
+      // set/unset, that's what we should reflect.
+      LoadSrc();
+    }
   }
-
-  return NS_OK;
 }
 
 uint32_t

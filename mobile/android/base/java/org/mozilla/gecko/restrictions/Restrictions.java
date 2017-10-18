@@ -15,12 +15,6 @@ import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
-import org.mozilla.gecko.restrictions.DefaultConfiguration;
-import org.mozilla.gecko.restrictions.GuestProfileConfiguration;
-import org.mozilla.gecko.restrictions.Restrictable;
-import org.mozilla.gecko.restrictions.RestrictedProfileConfiguration;
-import org.mozilla.gecko.restrictions.RestrictionCache;
-import org.mozilla.gecko.restrictions.RestrictionConfiguration;
 
 @RobocopTarget
 public class Restrictions {
@@ -54,11 +48,6 @@ public class Restrictions {
     private static boolean isGuestProfile(Context context) {
         if (configuration != null) {
             return configuration instanceof GuestProfileConfiguration;
-        }
-
-        GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
-        if (geckoInterface != null) {
-            return geckoInterface.getProfile().inGuestMode();
         }
 
         return GeckoProfile.get(context).inGuestMode();
@@ -97,7 +86,7 @@ public class Restrictions {
         return getConfiguration(context).canLoadUrl(url);
     }
 
-    @WrapForJNI
+    @WrapForJNI(calledFrom = "gecko")
     public static boolean isUserRestricted() {
         return isUserRestricted(GeckoAppShell.getApplicationContext());
     }
@@ -110,7 +99,7 @@ public class Restrictions {
         return getConfiguration(context).isAllowed(restrictable);
     }
 
-    @WrapForJNI
+    @WrapForJNI(calledFrom = "gecko")
     public static boolean isAllowed(int action, String url) {
         final Restrictable restrictable;
         try {

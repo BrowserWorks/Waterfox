@@ -9,14 +9,17 @@
 
 #include "nsXPLookAndFeel.h"
 #include "nsLookAndFeel.h"
+#include "HeadlessLookAndFeel.h"
 #include "nsCRT.h"
 #include "nsFont.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ServoStyleSet.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/widget/WidgetMessageUtils.h"
 
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
 #include "qcms.h"
 
 #ifdef DEBUG
@@ -249,11 +252,11 @@ bool nsXPLookAndFeel::sUseNativeColors = true;
 bool nsXPLookAndFeel::sUseStandinsForNativeColors = false;
 bool nsXPLookAndFeel::sFindbarModalHighlight = false;
 
-nsLookAndFeel* nsXPLookAndFeel::sInstance = nullptr;
+nsXPLookAndFeel* nsXPLookAndFeel::sInstance = nullptr;
 bool nsXPLookAndFeel::sShutdown = false;
 
 // static
-nsLookAndFeel*
+nsXPLookAndFeel*
 nsXPLookAndFeel::GetInstance()
 {
   if (sInstance) {
@@ -262,7 +265,11 @@ nsXPLookAndFeel::GetInstance()
 
   NS_ENSURE_TRUE(!sShutdown, nullptr);
 
-  sInstance = new nsLookAndFeel();
+  if (gfxPlatform::IsHeadless()) {
+    sInstance = new widget::HeadlessLookAndFeel();
+  } else {
+    sInstance = new nsLookAndFeel();
+  }
   return sInstance;
 }
 
@@ -327,7 +334,7 @@ void
 nsXPLookAndFeel::ColorPrefChanged (unsigned int index, const char *prefName)
 {
   nsAutoString colorStr;
-  nsresult rv = Preferences::GetString(prefName, &colorStr);
+  nsresult rv = Preferences::GetString(prefName, colorStr);
   if (NS_FAILED(rv)) {
     return;
   }
@@ -381,7 +388,7 @@ void
 nsXPLookAndFeel::InitColorFromPref(int32_t i)
 {
   nsAutoString colorStr;
-  nsresult rv = Preferences::GetString(sColorPrefs[i], &colorStr);
+  nsresult rv = Preferences::GetString(sColorPrefs[i], colorStr);
   if (NS_FAILED(rv) || colorStr.IsEmpty()) {
     return;
   }
@@ -437,6 +444,8 @@ nsXPLookAndFeel::OnPrefChanged(const char* aPref, void* aClosure)
 void
 nsXPLookAndFeel::Init()
 {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+
   // Say we're already initialized, and take the chance that it might fail;
   // protects against some other process writing to our static variables.
   sInitialized = true;
@@ -444,7 +453,9 @@ nsXPLookAndFeel::Init()
   // XXX If we could reorganize the pref names, we should separate the branch
   //     for each types.  Then, we could reduce the unnecessary loop from
   //     nsXPLookAndFeel::OnPrefChanged().
-  Preferences::RegisterCallback(OnPrefChanged, "ui.");
+  Preferences::RegisterPrefixCallback(OnPrefChanged, "ui.");
+  // We really do just want the accessibility.tabfocus pref, not other prefs
+  // that start with that string.
   Preferences::RegisterCallback(OnPrefChanged, "accessibility.tabfocus");
 
   unsigned int i;
@@ -474,9 +485,9 @@ nsXPLookAndFeel::Init()
     mozilla::dom::ContentChild* cc =
       mozilla::dom::ContentChild::GetSingleton();
 
-    nsTArray<LookAndFeelInt> lookAndFeelIntCache;
-    cc->SendGetLookAndFeelCache(&lookAndFeelIntCache);
-    LookAndFeel::SetIntCache(lookAndFeelIntCache);
+    LookAndFeel::SetIntCache(cc->LookAndFeelCache());
+    // This is only ever used once during initialization, and can be cleared now.
+    cc->LookAndFeelCache().Clear();
   }
 }
 
@@ -647,6 +658,11 @@ nsXPLookAndFeel::GetStandinForNativeColor(ColorID aID)
       result = NS_RGB(0x3F, 0x3F, 0x3F); break;
     case eColorID__moz_mac_secondaryhighlight:
       result = NS_RGB(0xD4, 0xD4, 0xD4); break;
+    case eColorID__moz_win_accentcolor:
+      // Seems to be the default color (hardcoded because of bug 1065998)
+      result = NS_RGB(0x9E, 0x9E, 0x9E); break;
+    case eColorID__moz_win_accentcolortext:
+      result = NS_RGB(0x00, 0x00, 0x00); break;
     case eColorID__moz_win_mediatext:
       result = NS_RGB(0xFF, 0xFF, 0xFF); break;
     case eColorID__moz_win_communicationstext:
@@ -769,12 +785,14 @@ nsXPLookAndFeel::GetColorImpl(ColorID aID, bool aUseStandinsForNativeColors,
   }
 
   // There are no system color settings for these, so set them manually
+#ifndef XP_MACOSX
   if (aID == eColorID_TextSelectBackgroundDisabled) {
     // This is used to gray out the selection when it's not focused
     // Used with nsISelectionController::SELECTION_DISABLED
     aResult = NS_RGB(0xb0, 0xb0, 0xb0);
     return NS_OK;
   }
+#endif
 
   if (aID == eColorID_TextSelectBackgroundAttention) {
     if (sFindbarModalHighlight) {
@@ -808,20 +826,27 @@ nsXPLookAndFeel::GetColorImpl(ColorID aID, bool aUseStandinsForNativeColors,
   }
 
   if (sUseNativeColors && NS_SUCCEEDED(NativeGetColor(aID, aResult))) {
-    if ((gfxPlatform::GetCMSMode() == eCMSMode_All) &&
-         !IsSpecialColor(aID, aResult)) {
-      qcms_transform *transform = gfxPlatform::GetCMSInverseRGBTransform();
-      if (transform) {
-        uint8_t color[3];
-        color[0] = NS_GET_R(aResult);
-        color[1] = NS_GET_G(aResult);
-        color[2] = NS_GET_B(aResult);
-        qcms_transform_data(transform, color, color, 1);
-        aResult = NS_RGB(color[0], color[1], color[2]);
+    if (!mozilla::ServoStyleSet::IsInServoTraversal()) {
+      MOZ_ASSERT(NS_IsMainThread());
+      // Make sure the preferences are initialized. In the normal run,
+      // they would already be, because gfxPlatform would have been created,
+      // but with some addon, that is not the case. See Bug 1357307.
+      gfxPrefs::GetSingleton();
+      if ((gfxPlatform::GetCMSMode() == eCMSMode_All) &&
+           !IsSpecialColor(aID, aResult)) {
+        qcms_transform *transform = gfxPlatform::GetCMSInverseRGBTransform();
+        if (transform) {
+          uint8_t color[3];
+          color[0] = NS_GET_R(aResult);
+          color[1] = NS_GET_G(aResult);
+          color[2] = NS_GET_B(aResult);
+          qcms_transform_data(transform, color, color, 1);
+          aResult = NS_RGB(color[0], color[1], color[2]);
+        }
       }
-    }
 
-    CACHE_COLOR(aID, aResult);
+      CACHE_COLOR(aID, aResult);
+    }
     return NS_OK;
   }
 
@@ -963,6 +988,13 @@ void
 LookAndFeel::Refresh()
 {
   nsLookAndFeel::GetInstance()->RefreshImpl();
+}
+
+// static
+void
+LookAndFeel::NativeInit()
+{
+  nsLookAndFeel::GetInstance()->NativeInit();
 }
 
 // static

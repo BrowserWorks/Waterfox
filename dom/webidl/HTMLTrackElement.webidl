@@ -7,16 +7,17 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#the-track-element
  */
 
+[HTMLConstructor]
 interface HTMLTrackElement : HTMLElement {
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
   attribute DOMString kind;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
   attribute DOMString src;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
   attribute DOMString srclang;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
   attribute DOMString label;
-  [SetterThrows, Pure]
+  [CEReactions, SetterThrows, Pure]
   attribute boolean default;
 
   const unsigned short NONE = 0;

@@ -6,71 +6,67 @@
 
 #include "mozilla/dom/FallbackEncoding.h"
 
-#include "mozilla/dom/EncodingUtils.h"
-#include "nsUConvPropertySearch.h"
-#include "nsIChromeRegistry.h"
+#include "mozilla/Encoding.h"
+#include "mozilla/intl/LocaleService.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
+#include "nsIObserverService.h"
+#include "nsUConvPropertySearch.h"
+
+using mozilla::intl::LocaleService;
 
 namespace mozilla {
 namespace dom {
 
-static const nsUConvProp localesFallbacks[] = {
+static constexpr nsUConvProp localesFallbacks[] = {
 #include "localesfallbacks.properties.h"
 };
 
-static const nsUConvProp domainsFallbacks[] = {
+static constexpr nsUConvProp domainsFallbacks[] = {
 #include "domainsfallbacks.properties.h"
 };
 
-static const nsUConvProp nonParticipatingDomains[] = {
+static constexpr nsUConvProp nonParticipatingDomains[] = {
 #include "nonparticipatingdomains.properties.h"
 };
+
+NS_IMPL_ISUPPORTS(FallbackEncoding, nsIObserver)
 
 FallbackEncoding* FallbackEncoding::sInstance = nullptr;
 bool FallbackEncoding::sGuessFallbackFromTopLevelDomain = true;
 
 FallbackEncoding::FallbackEncoding()
+  : mFallback(nullptr)
 {
-  MOZ_COUNT_CTOR(FallbackEncoding);
   MOZ_ASSERT(!FallbackEncoding::sInstance,
              "Singleton already exists.");
 }
 
-FallbackEncoding::~FallbackEncoding()
+NotNull<const Encoding*>
+FallbackEncoding::Get()
 {
-  MOZ_COUNT_DTOR(FallbackEncoding);
-}
-
-void
-FallbackEncoding::Get(nsACString& aFallback)
-{
-  if (!mFallback.IsEmpty()) {
-    aFallback = mFallback;
-    return;
+  if (mFallback) {
+    return WrapNotNull(mFallback);
   }
 
-  const nsAdoptingCString& override =
-    Preferences::GetCString("intl.charset.fallback.override");
+  nsAutoCString override;
+  Preferences::GetCString("intl.charset.fallback.override", override);
   // Don't let the user break things by setting the override to unreasonable
   // values via about:config
-  if (!EncodingUtils::FindEncodingForLabel(override, mFallback) ||
-      !EncodingUtils::IsAsciiCompatible(mFallback) ||
-      mFallback.EqualsLiteral("UTF-8")) {
-    mFallback.Truncate();
+  auto encoding = Encoding::ForLabel(override);
+  if (!encoding || !encoding->IsAsciiCompatible() ||
+      encoding == UTF_8_ENCODING) {
+    mFallback = nullptr;
+  } else {
+    mFallback = encoding;
   }
 
-  if (!mFallback.IsEmpty()) {
-    aFallback = mFallback;
-    return;
+  if (mFallback) {
+    return WrapNotNull(mFallback);
   }
 
   nsAutoCString locale;
-  nsCOMPtr<nsIXULChromeRegistry> registry =
-    mozilla::services::GetXULChromeRegistryService();
-  if (registry) {
-    registry->GetSelectedLocale(NS_LITERAL_CSTRING("global"), locale);
-  }
+  LocaleService::GetInstance()->GetAppLocaleAsLangTag(locale);
 
   // Let's lower case the string just in case unofficial language packs
   // don't stick to conventions.
@@ -83,9 +79,8 @@ FallbackEncoding::Get(nsACString& aFallback)
       locale.EqualsLiteral("zh-hk") ||
       locale.EqualsLiteral("zh-mo") ||
       locale.EqualsLiteral("zh-hant")) {
-    mFallback.AssignLiteral("Big5");
-    aFallback = mFallback;
-    return;
+    mFallback = BIG5_ENCODING;
+    return WrapNotNull(mFallback);
   }
 
   // Throw away regions and other variants to accommodate weird stuff seen
@@ -95,20 +90,23 @@ FallbackEncoding::Get(nsACString& aFallback)
     locale.Truncate(index);
   }
 
+  nsAutoCString fallback;
   if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
-      localesFallbacks, ArrayLength(localesFallbacks), locale, mFallback))) {
-    mFallback.AssignLiteral("windows-1252");
+      localesFallbacks, ArrayLength(localesFallbacks), locale, fallback))) {
+    mFallback = WINDOWS_1252_ENCODING;
+  } else {
+    mFallback = Encoding::ForName(fallback);
   }
 
-  aFallback = mFallback;
+  return WrapNotNull(mFallback);
 }
 
-void
-FallbackEncoding::FromLocale(nsACString& aFallback)
+NotNull<const Encoding*>
+FallbackEncoding::FromLocale()
 {
   MOZ_ASSERT(FallbackEncoding::sInstance,
              "Using uninitialized fallback cache.");
-  FallbackEncoding::sInstance->Get(aFallback);
+  return FallbackEncoding::sInstance->Get();
 }
 
 // PrefChangedFunc
@@ -120,6 +118,16 @@ FallbackEncoding::PrefChanged(const char*, void*)
   FallbackEncoding::sInstance->Invalidate();
 }
 
+NS_IMETHODIMP
+FallbackEncoding::Observe(nsISupports *aSubject, const char *aTopic,
+                         const char16_t *aData)
+{
+  MOZ_ASSERT(FallbackEncoding::sInstance,
+             "Observe callback called with null fallback cache.");
+  FallbackEncoding::sInstance->Invalidate();
+  return NS_OK;
+}
+
 void
 FallbackEncoding::Initialize()
 {
@@ -129,11 +137,13 @@ FallbackEncoding::Initialize()
   Preferences::RegisterCallback(FallbackEncoding::PrefChanged,
                                 "intl.charset.fallback.override",
                                 nullptr);
-  Preferences::RegisterCallback(FallbackEncoding::PrefChanged,
-                                "general.useragent.locale",
-                                nullptr);
   Preferences::AddBoolVarCache(&sGuessFallbackFromTopLevelDomain,
                                "intl.charset.fallback.tld");
+
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->AddObserver(sInstance, "intl:requested-locales-changed", true);
+  }
 }
 
 void
@@ -141,6 +151,10 @@ FallbackEncoding::Shutdown()
 {
   MOZ_ASSERT(FallbackEncoding::sInstance,
              "Releasing non-existent fallback cache.");
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->RemoveObserver(sInstance, "intl:requested-locales-changed");
+  }
   delete FallbackEncoding::sInstance;
   FallbackEncoding::sInstance = nullptr;
 }
@@ -156,14 +170,15 @@ FallbackEncoding::IsParticipatingTopLevelDomain(const nsACString& aTLD)
       dummy));
 }
 
-void
-FallbackEncoding::FromTopLevelDomain(const nsACString& aTLD,
-                                     nsACString& aFallback)
+NotNull<const Encoding*>
+FallbackEncoding::FromTopLevelDomain(const nsACString& aTLD)
 {
+  nsAutoCString fallback;
   if (NS_FAILED(nsUConvPropertySearch::SearchPropertyValue(
-      domainsFallbacks, ArrayLength(domainsFallbacks), aTLD, aFallback))) {
-    aFallback.AssignLiteral("windows-1252");
+      domainsFallbacks, ArrayLength(domainsFallbacks), aTLD, fallback))) {
+    return WINDOWS_1252_ENCODING;
   }
+  return Encoding::ForName(fallback);
 }
 
 } // namespace dom

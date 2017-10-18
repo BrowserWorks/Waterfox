@@ -97,6 +97,8 @@ html, body, #app, #memory-tool {
 
 .devtools-toolbar > label {
   margin-inline-end: 5px;
+  display: flex;
+  align-items: center;
 }
 
 #select-view {
@@ -395,6 +397,10 @@ html, body, #app, #memory-tool {
   padding-inline-end: 5px;
 }
 
+.children-pointer:dir(rtl) {
+  transform: scaleX(-1);
+}
+
 /**
  * Heap tree view columns
  */
@@ -436,7 +442,8 @@ html, body, #app, #memory-tool {
    * These subcolumns may have specific widths or need to flex.
    */
   display: flex;
-  text-align: end;
+  /* Make sure units/decimals/... are always vertically aligned to right in both LTR and RTL locales */
+  text-align: right;
   border-inline-end: var(--cell-border-color) 1px solid;
 }
 
@@ -463,16 +470,21 @@ html, body, #app, #memory-tool {
 
 .heap-tree-item-name {
   /**
-   * Flex: contains an .arrow and some text, which need to be laid out
-   * horizontally, vertically aligned in the middle of the container.
-   */
-  display: flex;
-  align-items: center;
-  /**
    * Flexing to fill out remaining vertical space.
    * @see .header and .heap-tree-item */
   flex: 1;
   padding-inline-start: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heap-tree-item-name .arrow {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.heap-tree-item-name .frame-link {
+  display: inline-block;
 }
 
 /**
@@ -486,7 +498,11 @@ html, body, #app, #memory-tool {
 }
 
 .heap-tree-number {
-  padding-inline-start: 3px;
+  padding: 0 3px;
+  flex: 1;
+  color: var(--theme-content-color3);
+  /* Make sure number doesn't appear backwards on RTL locales */
+  direction: ltr;
 }
 
 .heap-tree-percent {
@@ -499,11 +515,6 @@ html, body, #app, #memory-tool {
   font-family: var(--monospace-font-family);
 }
 
-.heap-tree-number {
-  flex: 1;
-  color: var(--theme-content-color3);
-}
-
 .heap-tree-percent {
   width: 4ch;
 }
@@ -514,19 +525,16 @@ html, body, #app, #memory-tool {
 }
 
 .heap-tree-item-individuals {
-  width: 38px;
-  min-width: 20px;
+  min-width: 38px;
   overflow: hidden;
   margin: 0;
 }
 
 .heap-tree-item-individuals > button {
-  height: 10px;
   width: 32px;
-
   /* Override default styles for toolbar buttons to fix entire row height. */
   margin: 0 auto !important;
-  padding: 0;
+  color: inherit;
 }
 
 /**
@@ -591,45 +599,43 @@ html, body, #app, #memory-tool {
  * Dagre-D3 graphs
  */
 
+svg {
+  --arrow-color: var(--theme-splitter-color);
+  --text-color: var(--theme-body-color-alt);
+}
+
+.theme-dark svg {
+  --arrow-color: var(--theme-body-color-alt);
+}
+
+svg #arrowhead {
+  /* !important is needed to override inline style */
+  fill: var(--arrow-color) !important;
+}
+
 .edgePath path {
   stroke-width: 1px;
   fill: none;
-}
-
-.theme-dark .edgePath path {
-  stroke: var(--theme-body-color-alt);
-}
-.theme-light .edgePath path {
-  stroke: var(--theme-splitter-color);
+  stroke: var(--arrow-color);
 }
 
 g.edgeLabel rect {
   fill: var(--theme-body-background);
 }
+
 g.edgeLabel tspan {
-  fill: var(--theme-body-color-alt);
+  fill: var(--text-color);
 }
 
 .nodes rect {
   stroke-width: 1px;
-}
-
-.nodes rect {
-  stroke: var(--theme-tab-toolbar-background);
-}
-.theme-light rect {
-  fill: var(--theme-tab-toolbar-background);
-}
-.theme-dark rect {
+  stroke: var(--theme-splitter-color);
   fill: var(--theme-toolbar-background);
 }
 
 text {
-  font-weight: 300;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-  font-size: 14px;
-}
-
-text {
-  fill: var(--theme-body-color-alt);
+  font-size: 1.25em;
+  fill: var(--text-color);
+  /* Make sure text stays inside its container in RTL locales */
+  direction: ltr;
 }

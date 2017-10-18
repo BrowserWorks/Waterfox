@@ -295,7 +295,7 @@
     runTest( ecss, "SyntaxError: Fragment", fragment, false );
     cacheCheck( "Fragment", fragment );
 
-    root.parentNode.removeChild( root );
+    root.remove( );
     
     interfaceCheck(document, "Document");
     runTest( css, "Document", document, true );
@@ -476,7 +476,7 @@
             // make sure it kicks in immediately
             document.body.offsetWidth;
           }
-          var view = document.defaultView.getComputedStyle(div, null);
+          var view = document.defaultView.getComputedStyle(div);
           var bg = view.getPropertyValue("background-color") || div.style.backgroundColor;
           if (needToggle) {
             window.frameElement.style.display = "none";

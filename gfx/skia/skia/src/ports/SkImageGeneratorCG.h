@@ -22,7 +22,7 @@ public:
     static SkImageGenerator* NewFromEncodedCG(SkData* data);
 
 protected:
-    SkData* onRefEncodedData(SK_REFENCODEDDATA_CTXPARAM) override;
+    SkData* onRefEncodedData(GrContext* ctx) override;
 
     bool onGetPixels(const SkImageInfo& info, void* pixels, size_t rowBytes, SkPMColor ctable[],
             int* ctableCount) override;
@@ -35,7 +35,7 @@ private:
     SkImageGeneratorCG(const SkImageInfo& info, const void* imageSrc, SkData* data);
 
     SkAutoTCallVProc<const void, CFRelease> fImageSrc;
-    SkAutoTUnref<SkData>                    fData;
+    sk_sp<SkData>                           fData;
 
     typedef SkImageGenerator INHERITED;
 };

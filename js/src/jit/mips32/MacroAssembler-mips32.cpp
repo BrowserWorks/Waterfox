@@ -79,9 +79,16 @@ MacroAssemblerMIPSCompat::convertUInt32ToDouble(Register src, FloatRegister dest
 
 static const double TO_DOUBLE_HIGH_SCALE = 0x100000000;
 
-void
-MacroAssemblerMIPSCompat::convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest)
+bool
+MacroAssemblerMIPSCompat::convertUInt64ToDoubleNeedsTemp()
 {
+    return false;
+}
+
+void
+MacroAssemblerMIPSCompat::convertUInt64ToDouble(Register64 src, FloatRegister dest, Register temp)
+{
+    MOZ_ASSERT(temp == Register::Invalid());
     convertUInt32ToDouble(src.high, dest);
     loadConstantDouble(TO_DOUBLE_HIGH_SCALE, ScratchDoubleReg);
     asMasm().mulDouble(ScratchDoubleReg, dest);
@@ -195,17 +202,6 @@ MacroAssemblerMIPS::ma_li(Register dest, ImmWord imm)
     ma_li(dest, Imm32(uint32_t(imm.value)));
 }
 
-// This method generates lui and ori instruction pair that can be modified by
-// UpdateLuiOriValue, either during compilation (eg. Assembler::bind), or
-// during execution (eg. jit::PatchJump).
-void
-MacroAssemblerMIPS::ma_liPatchable(Register dest, Imm32 imm)
-{
-    m_buffer.ensureSpace(2 * sizeof(uint32_t));
-    as_lui(dest, Imm16::Upper(imm).encode());
-    as_ori(dest, dest, Imm16::Lower(imm).encode());
-}
-
 void
 MacroAssemblerMIPS::ma_liPatchable(Register dest, ImmPtr imm)
 {
@@ -221,8 +217,9 @@ MacroAssemblerMIPS::ma_liPatchable(Register dest, ImmWord imm)
 // Arithmetic-based ops.
 
 // Add.
+template <typename L>
 void
-MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Register rt, Label* overflow)
+MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Register rt, L overflow)
 {
     Label goodAddition;
     as_addu(rd, rs, rt);
@@ -237,8 +234,16 @@ MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Register rt, La
     bind(&goodAddition);
 }
 
+template void
+MacroAssemblerMIPS::ma_addTestOverflow<Label*>(Register rd, Register rs,
+                                               Register rt, Label* overflow);
+template void
+MacroAssemblerMIPS::ma_addTestOverflow<wasm::TrapDesc>(Register rd, Register rs, Register rt,
+                                                       wasm::TrapDesc overflow);
+
+template <typename L>
 void
-MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Imm32 imm, Label* overflow)
+MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Imm32 imm, L overflow)
 {
     // Check for signed range because of as_addiu
     // Check for unsigned range because of as_xori
@@ -260,6 +265,13 @@ MacroAssemblerMIPS::ma_addTestOverflow(Register rd, Register rs, Imm32 imm, Labe
         ma_addTestOverflow(rd, rs, ScratchRegister, overflow);
     }
 }
+
+template void
+MacroAssemblerMIPS::ma_addTestOverflow<Label*>(Register rd, Register rs,
+                                               Imm32 imm, Label* overflow);
+template void
+MacroAssemblerMIPS::ma_addTestOverflow<wasm::TrapDesc>(Register rd, Register rs, Imm32 imm,
+                                                       wasm::TrapDesc overflow);
 
 // Subtract.
 void
@@ -781,7 +793,7 @@ MacroAssemblerMIPSCompat::movePtr(ImmPtr imm, Register dest)
 void
 MacroAssemblerMIPSCompat::movePtr(wasm::SymbolicAddress imm, Register dest)
 {
-    append(AsmJSAbsoluteAddress(CodeOffset(nextOffset().getOffset()), imm));
+    append(wasm::SymbolicAccess(CodeOffset(nextOffset().getOffset()), imm));
     ma_liPatchable(dest, ImmWord(-1));
 }
 
@@ -905,6 +917,31 @@ MacroAssemblerMIPSCompat::loadDouble(const BaseIndex& src, FloatRegister dest)
 }
 
 void
+MacroAssemblerMIPSCompat::loadUnalignedDouble(const BaseIndex& src, Register temp,
+                                              FloatRegister dest)
+{
+    computeScaledAddress(src, SecondScratchReg);
+
+    if (Imm16::IsInSignedRange(src.offset) && Imm16::IsInSignedRange(src.offset + 7)) {
+        as_lwl(temp, SecondScratchReg, src.offset + INT64LOW_OFFSET + 3);
+        as_lwr(temp, SecondScratchReg, src.offset + INT64LOW_OFFSET);
+        moveToDoubleLo(temp, dest);
+        as_lwl(temp, SecondScratchReg, src.offset + INT64HIGH_OFFSET + 3);
+        as_lwr(temp, SecondScratchReg, src.offset + INT64HIGH_OFFSET);
+        moveToDoubleHi(temp, dest);
+    } else {
+        ma_li(ScratchRegister, Imm32(src.offset));
+        as_daddu(ScratchRegister, SecondScratchReg, ScratchRegister);
+        as_lwl(temp, ScratchRegister, INT64LOW_OFFSET + 3);
+        as_lwr(temp, ScratchRegister, INT64LOW_OFFSET);
+        moveToDoubleLo(temp, dest);
+        as_lwl(temp, ScratchRegister, INT64HIGH_OFFSET + 3);
+        as_lwr(temp, ScratchRegister, INT64HIGH_OFFSET);
+        moveToDoubleHi(temp, dest);
+    }
+}
+
+void
 MacroAssemblerMIPSCompat::loadFloatAsDouble(const Address& address, FloatRegister dest)
 {
     ma_ls(dest, address);
@@ -929,6 +966,25 @@ MacroAssemblerMIPSCompat::loadFloat32(const BaseIndex& src, FloatRegister dest)
 {
     computeScaledAddress(src, SecondScratchReg);
     ma_ls(dest, Address(SecondScratchReg, src.offset));
+}
+
+void
+MacroAssemblerMIPSCompat::loadUnalignedFloat32(const BaseIndex& src, Register temp,
+                                               FloatRegister dest)
+{
+    computeScaledAddress(src, SecondScratchReg);
+
+    if (Imm16::IsInSignedRange(src.offset) && Imm16::IsInSignedRange(src.offset + 3)) {
+        as_lwl(temp, SecondScratchReg, src.offset + 3);
+        as_lwr(temp, SecondScratchReg, src.offset);
+    } else {
+        ma_li(ScratchRegister, Imm32(src.offset));
+        as_daddu(ScratchRegister, SecondScratchReg, ScratchRegister);
+        as_lwl(temp, ScratchRegister, 3);
+        as_lwr(temp, ScratchRegister, 0);
+    }
+
+    moveToFloat32(temp, dest);
 }
 
 void
@@ -1065,28 +1121,46 @@ MacroAssemblerMIPSCompat::storePtr(Register src, AbsoluteAddress dest)
 }
 
 void
-MacroAssemblerMIPSCompat::clampIntToUint8(Register reg)
+MacroAssemblerMIPSCompat::storeUnalignedFloat32(FloatRegister src, Register temp,
+                                                const BaseIndex& dest)
 {
-    // look at (reg >> 8) if it is 0, then src shouldn't be clamped
-    // if it is <0, then we want to clamp to 0,
-    // otherwise, we wish to clamp to 255
-    Label done;
-    ma_move(ScratchRegister, reg);
-    asMasm().rshiftPtrArithmetic(Imm32(8), ScratchRegister);
-    ma_b(ScratchRegister, ScratchRegister, &done, Assembler::Zero, ShortJump);
-    {
-        Label negative;
-        ma_b(ScratchRegister, ScratchRegister, &negative, Assembler::Signed, ShortJump);
-        {
-            ma_li(reg, Imm32(255));
-            ma_b(&done, ShortJump);
-        }
-        bind(&negative);
-        {
-            ma_move(reg, zero);
-        }
+    computeScaledAddress(dest, SecondScratchReg);
+    moveFromFloat32(src, temp);
+
+    if (Imm16::IsInSignedRange(dest.offset) && Imm16::IsInSignedRange(dest.offset + 3)) {
+        as_swl(temp, SecondScratchReg, dest.offset + 3);
+        as_swr(temp, SecondScratchReg, dest.offset);
+    } else {
+        ma_li(ScratchRegister, Imm32(dest.offset));
+        as_daddu(ScratchRegister, SecondScratchReg, ScratchRegister);
+        as_swl(temp, ScratchRegister, 3);
+        as_swr(temp, ScratchRegister, 0);
     }
-    bind(&done);
+}
+
+void
+MacroAssemblerMIPSCompat::storeUnalignedDouble(FloatRegister src, Register temp,
+                                               const BaseIndex& dest)
+{
+    computeScaledAddress(dest, SecondScratchReg);
+
+    if (Imm16::IsInSignedRange(dest.offset) && Imm16::IsInSignedRange(dest.offset + 7)) {
+        moveFromDoubleLo(src, temp);
+        as_swl(temp, SecondScratchReg, dest.offset + INT64LOW_OFFSET + 3);
+        as_swr(temp, SecondScratchReg, dest.offset + INT64LOW_OFFSET);
+        moveFromDoubleHi(src, temp);
+        as_swl(temp, SecondScratchReg, dest.offset + INT64HIGH_OFFSET + 3);
+        as_swr(temp, SecondScratchReg, dest.offset + INT64HIGH_OFFSET);
+    } else {
+        ma_li(ScratchRegister, Imm32(dest.offset));
+        as_daddu(ScratchRegister, SecondScratchReg, ScratchRegister);
+        moveFromDoubleLo(src, temp);
+        as_swl(temp, ScratchRegister, INT64LOW_OFFSET + 3);
+        as_swr(temp, ScratchRegister, INT64LOW_OFFSET);
+        moveFromDoubleHi(src, temp);
+        as_swl(temp, ScratchRegister, INT64HIGH_OFFSET + 3);
+        as_swr(temp, ScratchRegister, INT64HIGH_OFFSET);
+    }
 }
 
 // Note: this function clobbers the input register.
@@ -1402,31 +1476,16 @@ MacroAssemblerMIPSCompat::extractTag(const BaseIndex& address, Register scratch)
 uint32_t
 MacroAssemblerMIPSCompat::getType(const Value& val)
 {
-    jsval_layout jv = JSVAL_TO_IMPL(val);
-    return jv.s.tag;
+    return val.toNunboxTag();
 }
 
 void
 MacroAssemblerMIPSCompat::moveData(const Value& val, Register data)
 {
-    jsval_layout jv = JSVAL_TO_IMPL(val);
-    if (val.isMarkable())
-        ma_li(data, ImmGCPtr(reinterpret_cast<gc::Cell*>(val.toGCThing())));
+    if (val.isGCThing())
+        ma_li(data, ImmGCPtr(val.toGCThing()));
     else
-        ma_li(data, Imm32(jv.s.payload.i32));
-}
-
-void
-MacroAssemblerMIPSCompat::moveValue(const Value& val, Register type, Register data)
-{
-    MOZ_ASSERT(type != data);
-    ma_li(type, Imm32(getType(val)));
-    moveData(val, data);
-}
-void
-MacroAssemblerMIPSCompat::moveValue(const Value& val, const ValueOperand& dest)
-{
-    moveValue(val, dest.typeReg(), dest.payloadReg());
+        ma_li(data, Imm32(val.toNunboxPayload()));
 }
 
 /* There are 3 paths trough backedge jump. They are listed here in the order
@@ -1794,7 +1853,7 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     // No exception handler. Load the error value, load the new stack pointer
     // and return from the entry frame.
     bind(&entryFrame);
-    moveValue(MagicValue(JS_ION_ERROR), JSReturnOperand);
+    asMasm().moveValue(MagicValue(JS_ION_ERROR), JSReturnOperand);
     loadPtr(Address(StackPointer, offsetof(ResumeFromException, stackPointer)), StackPointer);
 
     // We're going to be returning by the ion calling convention
@@ -1840,7 +1899,7 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     {
         Label skipProfilingInstrumentation;
         // Test if profiler enabled.
-        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->spsProfiler().addressOfEnabled());
+        AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->geckoProfiler().addressOfEnabled());
         asMasm().branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
                           &skipProfilingInstrumentation);
         profilerExitFrame();
@@ -1980,8 +2039,8 @@ MacroAssemblerMIPSCompat::toggledCall(JitCode* target, bool enabled)
 void
 MacroAssemblerMIPSCompat::profilerEnterFrame(Register framePtr, Register scratch)
 {
-    AbsoluteAddress activation(GetJitContext()->runtime->addressOfProfilingActivation());
-    loadPtr(activation, scratch);
+    asMasm().loadJSContext(scratch);
+    loadPtr(Address(scratch, offsetof(JSContext, profilingActivation_)), scratch);
     storePtr(framePtr, Address(scratch, JitActivation::offsetOfLastProfilingFrame()));
     storePtr(ImmPtr(nullptr), Address(scratch, JitActivation::offsetOfLastProfilingCallSite()));
 }
@@ -1990,6 +2049,13 @@ void
 MacroAssemblerMIPSCompat::profilerExitFrame()
 {
     branch(GetJitContext()->runtime->jitRuntime()->getProfilerExitFrameTail());
+}
+
+void
+MacroAssembler::subFromStackPtr(Imm32 imm32)
+{
+    if (imm32.value)
+        asMasm().subPtr(imm32, StackPointer);
 }
 
 //{{{ check_macroassembler_style
@@ -2053,20 +2119,13 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
     MOZ_ASSERT(diffG == 0);
 }
 
-void
-MacroAssembler::reserveStack(uint32_t amount)
-{
-    if (amount)
-        asMasm().subPtr(Imm32(amount), StackPointer);
-    adjustFrame(amount);
-}
-
 // ===============================================================
 // ABI function calls.
 
 void
 MacroAssembler::setupUnalignedABICall(Register scratch)
 {
+    MOZ_ASSERT(!IsCompilingWasm(), "wasm should only use aligned ABI calls");
     setupABICall();
     dynamicAlignment_ = true;
 
@@ -2079,7 +2138,7 @@ MacroAssembler::setupUnalignedABICall(Register scratch)
 }
 
 void
-MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
+MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromWasm)
 {
     MOZ_ASSERT(inCall_);
     uint32_t stackForCall = abiArgs_.stackBytesConsumedSoFar();
@@ -2090,7 +2149,7 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
     if (dynamicAlignment_) {
         stackForCall += ComputeByteAlignment(stackForCall, ABIStackAlignment);
     } else {
-        uint32_t alignmentAtPrologue = callFromAsmJS ? sizeof(AsmJSFrame) : 0;
+        uint32_t alignmentAtPrologue = callFromWasm ? sizeof(wasm::Frame) : 0;
         stackForCall += ComputeByteAlignment(stackForCall + framePushed() + alignmentAtPrologue,
                                              ABIStackAlignment);
     }
@@ -2118,7 +2177,7 @@ MacroAssembler::callWithABIPre(uint32_t* stackAdjust, bool callFromAsmJS)
 }
 
 void
-MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result)
+MacroAssembler::callWithABIPost(uint32_t stackAdjust, MoveOp::Type result, bool callFromWasm)
 {
     // Restore ra value (as stored in callWithABIPre()).
     loadPtr(Address(StackPointer, stackAdjust - sizeof(intptr_t)), ra);
@@ -2175,7 +2234,7 @@ MacroAssembler::branchValueIsNurseryObject(Condition cond, const Address& addres
 
     branchTestObject(Assembler::NotEqual, address, cond == Assembler::Equal ? &done : label);
     loadPtr(address, temp);
-    branchPtrInNurseryRange(cond, temp, InvalidReg, label);
+    branchPtrInNurseryChunk(cond, temp, InvalidReg, label);
 
     bind(&done);
 }
@@ -2189,7 +2248,7 @@ MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value,
     Label done;
 
     branchTestObject(Assembler::NotEqual, value, cond == Assembler::Equal ? &done : label);
-    branchPtrInNurseryRange(cond, value.payloadReg(), temp, label);
+    branchPtrInNurseryChunk(cond, value.payloadReg(), temp, label);
 
     bind(&done);
 }
@@ -2220,8 +2279,8 @@ MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
 // Memory access primitives.
 template <typename T>
 void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
-                                  MIRType slotType)
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
+                                  const T& dest, MIRType slotType)
 {
     if (valueType == MIRType::Double) {
         storeDouble(value.reg().typedReg().fpu(), dest);
@@ -2240,10 +2299,10 @@ MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, c
 }
 
 template void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const Address& dest,
-                                  MIRType slotType);
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
+                                  const Address& dest, MIRType slotType);
 template void
-MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
-                                  MIRType slotType);
+MacroAssembler::storeUnboxedValue(const ConstantOrRegister& value, MIRType valueType,
+                                  const BaseIndex& dest, MIRType slotType);
 
 //}}} check_macroassembler_style

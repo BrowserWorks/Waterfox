@@ -7,6 +7,10 @@ MOZ_AUTOMATION_L10N_CHECK=0
 ac_add_options --enable-debug
 ac_add_options --enable-dmd
 
+# Disable stylo until bug 1356926 is fixed and we have >= llvm39 on centos.
+ac_add_options --disable-stylo
+unset LLVM_CONFIG
+
 # Use Clang as specified in manifest
 export CC="$topsrcdir/clang/bin/clang"
 export CXX="$topsrcdir/clang/bin/clang++"
@@ -14,13 +18,9 @@ export CXX="$topsrcdir/clang/bin/clang++"
 # Add the static checker
 ac_add_options --enable-clang-plugin
 
-# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
-ac_add_options --enable-warnings-as-errors
-
 . "$topsrcdir/build/unix/mozconfig.stdcxx"
 
 export PKG_CONFIG_LIBDIR=/usr/lib64/pkgconfig:/usr/share/pkgconfig
 . $topsrcdir/build/unix/mozconfig.gtk
 
 . "$topsrcdir/build/mozconfig.common.override"
-. "$topsrcdir/build/mozconfig.cache"

@@ -130,7 +130,7 @@ IsCompatiblePropertyDescriptor(JSContext* cx, bool extensible, Handle<PropertyDe
 ScriptedProxyHandler::handlerObject(const JSObject* proxy)
 {
     MOZ_ASSERT(proxy->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    return proxy->as<ProxyObject>().extra(ScriptedProxyHandler::HANDLER_EXTRA).toObjectOrNull();
+    return proxy->as<ProxyObject>().reservedSlot(ScriptedProxyHandler::HANDLER_EXTRA).toObjectOrNull();
 }
 
 // ES8 rev 0c1bd3004329336774cbc90de727cd0cf5f11e93 7.3.9 GetMethod,
@@ -158,7 +158,7 @@ GetProxyTrap(JSContext* cx, HandleObject handler, HandlePropertyName name, Mutab
         if (!bytes)
             return false;
 
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_TRAP, bytes.ptr());
+        JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_BAD_TRAP, bytes.ptr());
         return false;
     }
 
@@ -173,7 +173,7 @@ ScriptedProxyHandler::getPrototype(JSContext* cx, HandleObject proxy,
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -205,7 +205,8 @@ ScriptedProxyHandler::getPrototype(JSContext* cx, HandleObject proxy,
 
     // Step 8.
     if (!handlerProto.isObjectOrNull()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_GETPROTOTYPEOF_TRAP_RETURN);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                  JSMSG_BAD_GETPROTOTYPEOF_TRAP_RETURN);
         return false;
     }
 
@@ -227,7 +228,8 @@ ScriptedProxyHandler::getPrototype(JSContext* cx, HandleObject proxy,
 
     // Step 12.
     if (handlerProto.toObjectOrNull() != targetProto) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCONSISTENT_GETPROTOTYPEOF_TRAP);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                  JSMSG_INCONSISTENT_GETPROTOTYPEOF_TRAP);
         return false;
     }
 
@@ -244,7 +246,7 @@ ScriptedProxyHandler::setPrototype(JSContext* cx, HandleObject proxy, HandleObje
     // Steps 1-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -296,7 +298,8 @@ ScriptedProxyHandler::setPrototype(JSContext* cx, HandleObject proxy, HandleObje
 
     // Step 13.
     if (proto != targetProto) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCONSISTENT_SETPROTOTYPEOF_TRAP);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                  JSMSG_INCONSISTENT_SETPROTOTYPEOF_TRAP);
         return false;
     }
 
@@ -320,7 +323,7 @@ ScriptedProxyHandler::setImmutablePrototype(JSContext* cx, HandleObject proxy,
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     if (!target) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -335,7 +338,7 @@ ScriptedProxyHandler::preventExtensions(JSContext* cx, HandleObject proxy,
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -371,8 +374,8 @@ ScriptedProxyHandler::preventExtensions(JSContext* cx, HandleObject proxy,
             return false;
 
         if (targetIsExtensible) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                                 JSMSG_CANT_REPORT_AS_NON_EXTENSIBLE);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                                      JSMSG_CANT_REPORT_AS_NON_EXTENSIBLE);
             return false;
         }
 
@@ -391,7 +394,7 @@ ScriptedProxyHandler::isExtensible(JSContext* cx, HandleObject proxy, bool* exte
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -426,7 +429,7 @@ ScriptedProxyHandler::isExtensible(JSContext* cx, HandleObject proxy, bool* exte
 
     // Step 9.
     if (targetResult != booleanTrapResult) {
-       JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_EXTENSIBILITY);
+       JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_EXTENSIBILITY);
        return false;
     }
 
@@ -443,7 +446,7 @@ ScriptedProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -472,7 +475,7 @@ ScriptedProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy
 
     // Step 9.
     if (!trapResult.isUndefined() && !trapResult.isObject()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_GETOWN_OBJORUNDEF);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_GETOWN_OBJORUNDEF);
         return false;
     }
 
@@ -491,7 +494,7 @@ ScriptedProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy
 
         // Step 11b.
         if (!targetDesc.configurable()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NC_AS_NE);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NC_AS_NE);
             return false;
         }
 
@@ -502,7 +505,7 @@ ScriptedProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy
 
         // Step 11e.
         if (!extensibleTarget) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
             return false;
         }
 
@@ -531,19 +534,19 @@ ScriptedProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy
 
     // Step 16.
     if (!valid) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_INVALID);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_INVALID);
         return false;
     }
 
     // Step 17.
     if (!resultDesc.configurable()) {
         if (!targetDesc.object()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NE_AS_NC);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NE_AS_NC);
             return false;
         }
 
         if (targetDesc.configurable()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_C_AS_NC);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_C_AS_NC);
             return false;
         }
     }
@@ -562,7 +565,7 @@ ScriptedProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -623,13 +626,13 @@ ScriptedProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId
     if (!targetDesc.object()) {
         // Step 15a.
         if (!extensibleTarget) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_NEW);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_NEW);
             return false;
         }
 
         // Step 15b.
         if (settingConfigFalse) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_NE_AS_NC);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_NE_AS_NC);
             return false;
         }
     } else {
@@ -639,7 +642,7 @@ ScriptedProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId
             return false;
 
         if (!valid || (settingConfigFalse && targetDesc.configurable())) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_INVALID);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_DEFINE_INVALID);
             return false;
         }
     }
@@ -654,7 +657,7 @@ static bool
 CreateFilteredListFromArrayLike(JSContext* cx, HandleValue v, AutoIdVector& props)
 {
     // Step 2.
-    RootedObject obj(cx, NonNullObject(cx, v));
+    RootedObject obj(cx, NonNullObjectWithName(cx, "return value of the ownKeys trap", v));
     if (!obj)
         return false;
 
@@ -674,7 +677,7 @@ CreateFilteredListFromArrayLike(JSContext* cx, HandleValue v, AutoIdVector& prop
 
         // Step 6c.
         if (!next.isString() && !next.isSymbol()) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ONWKEYS_STR_SYM);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_ONWKEYS_STR_SYM);
             return false;
         }
 
@@ -701,7 +704,7 @@ ScriptedProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdV
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -765,25 +768,17 @@ ScriptedProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdV
         return props.appendAll(trapResult);
 
     // Step 16.
+    // The algorithm below always removes all occurences of the same key
+    // at once, so we can use a set here.
     Rooted<GCHashSet<jsid>> uncheckedResultKeys(cx, GCHashSet<jsid>(cx));
     if (!uncheckedResultKeys.init(trapResult.length()))
         return false;
 
-    bool foundDuplicate = false;
     for (size_t i = 0, len = trapResult.length(); i < len; i++) {
         MOZ_ASSERT(!JSID_IS_VOID(trapResult[i]));
 
-        // This dup-checking (and complaining only if we reach the end of the
-        // overall algorithm, but not if we exit early without erroring) is
-        // dumb, but it's ECMA state of the art right now.  This should be
-        // fixed in <https://github.com/tc39/ecma262/issues/461>.
-        auto ptr = uncheckedResultKeys.lookupForAdd(trapResult[i]);
-        if (!ptr) {
-            if (!uncheckedResultKeys.add(ptr, trapResult[i]))
-                return false;
-        } else {
-            foundDuplicate = true;
-        }
+        if (!uncheckedResultKeys.put(trapResult[i]))
+            return false;
     }
 
     // Step 17.
@@ -794,7 +789,7 @@ ScriptedProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdV
 
         // Step 17a.
         if (!ptr) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_SKIP_NC);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_SKIP_NC);
             return false;
         }
 
@@ -814,7 +809,7 @@ ScriptedProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdV
 
         // Step 19a.
         if (!ptr) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
             return false;
         }
 
@@ -823,8 +818,8 @@ ScriptedProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdV
     }
 
     // Step 20.
-    if (!uncheckedResultKeys.empty() || foundDuplicate) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NEW);
+    if (!uncheckedResultKeys.empty()) {
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NEW);
         return false;
     }
 
@@ -840,7 +835,7 @@ ScriptedProxyHandler::delete_(JSContext* cx, HandleObject proxy, HandleId id,
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -899,7 +894,7 @@ ScriptedProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* 
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -939,7 +934,7 @@ ScriptedProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* 
         if (desc.object()) {
             // Step 9b(i).
             if (!desc.configurable()) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NC_AS_NE);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_NC_AS_NE);
                 return false;
             }
 
@@ -950,7 +945,7 @@ ScriptedProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* 
 
             // Step 9b(iii).
             if (!extensible) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_REPORT_E_AS_NE);
                 return false;
             }
         }
@@ -969,7 +964,7 @@ ScriptedProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receive
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -1017,7 +1012,7 @@ ScriptedProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receive
             if (!SameValue(cx, trapResult, desc.value(), &same))
                 return false;
             if (!same) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MUST_REPORT_SAME_VALUE);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MUST_REPORT_SAME_VALUE);
                 return false;
             }
         }
@@ -1025,7 +1020,7 @@ ScriptedProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receive
         // Step 10b.
         if (desc.isAccessorDescriptor() && !desc.configurable() && desc.getterObject() == nullptr) {
             if (!trapResult.isUndefined()) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MUST_REPORT_UNDEFINED);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MUST_REPORT_UNDEFINED);
                 return false;
             }
         }
@@ -1044,7 +1039,7 @@ ScriptedProxyHandler::set(JSContext* cx, HandleObject proxy, HandleId id, Handle
     // Steps 2-4.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -1097,14 +1092,14 @@ ScriptedProxyHandler::set(JSContext* cx, HandleObject proxy, HandleId id, Handle
             if (!SameValue(cx, v, desc.value(), &same))
                 return false;
             if (!same) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_NW_NC);
+                JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_NW_NC);
                 return false;
             }
         }
 
         // Step 11b.
         if (desc.isAccessorDescriptor() && !desc.configurable() && desc.setterObject() == nullptr) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_WO_SETTER);
+            JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_CANT_SET_WO_SETTER);
             return false;
         }
     }
@@ -1120,7 +1115,7 @@ ScriptedProxyHandler::call(JSContext* cx, HandleObject proxy, const CallArgs& ar
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -1167,7 +1162,7 @@ ScriptedProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArg
     // Steps 1-3.
     RootedObject handler(cx, ScriptedProxyHandler::handlerObject(proxy));
     if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
         return false;
     }
 
@@ -1216,7 +1211,7 @@ ScriptedProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArg
 
     // Step 9.
     if (!args.rval().isObject()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_CONSTRUCT_OBJECT);
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_CONSTRUCT_OBJECT);
         return false;
     }
 
@@ -1261,25 +1256,21 @@ const char*
 ScriptedProxyHandler::className(JSContext* cx, HandleObject proxy) const
 {
     // Right now the caller is not prepared to handle failures.
-    RootedObject target(cx, proxy->as<ProxyObject>().target());
-    if (!target)
-        return BaseProxyHandler::className(cx, proxy);
-
-    return GetObjectClassName(cx, target);
+    return BaseProxyHandler::className(cx, proxy);
 }
+
 JSString*
-ScriptedProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const
+ScriptedProxyHandler::fun_toString(JSContext* cx, HandleObject proxy, bool isToSource) const
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
-                         js_Function_str, js_toString_str, "object");
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
+                              js_Function_str, js_toString_str, "object");
     return nullptr;
 }
 
-bool
-ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const
+RegExpShared*
+ScriptedProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy) const
 {
     MOZ_CRASH("Should not end up in ScriptedProxyHandler::regexp_toShared");
-    return false;
 }
 
 bool
@@ -1294,7 +1285,7 @@ bool
 ScriptedProxyHandler::isCallable(JSObject* obj) const
 {
     MOZ_ASSERT(obj->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    uint32_t callConstruct = obj->as<ProxyObject>().extra(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
+    uint32_t callConstruct = obj->as<ProxyObject>().reservedSlot(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
     return !!(callConstruct & IS_CALLABLE);
 }
 
@@ -1302,7 +1293,7 @@ bool
 ScriptedProxyHandler::isConstructor(JSObject* obj) const
 {
     MOZ_ASSERT(obj->as<ProxyObject>().handler() == &ScriptedProxyHandler::singleton);
-    uint32_t callConstruct = obj->as<ProxyObject>().extra(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
+    uint32_t callConstruct = obj->as<ProxyObject>().reservedSlot(IS_CALLCONSTRUCT_EXTRA).toPrivateUint32();
     return !!(callConstruct & IS_CONSTRUCTOR);
 }
 
@@ -1321,30 +1312,30 @@ static bool
 ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName)
 {
     if (args.length() < 2) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
-                             callerName, "1", "s");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
+                                  callerName, "1", "s");
         return false;
     }
 
     // Step 1.
-    RootedObject target(cx, NonNullObject(cx, args[0]));
+    RootedObject target(cx, NonNullObjectArg(cx, "`target`", callerName, args[0]));
     if (!target)
         return false;
 
     // Step 2.
     if (IsRevokedScriptedProxy(target)) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_ARG_REVOKED, "1");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_ARG_REVOKED, "1");
         return false;
     }
 
     // Step 3.
-    RootedObject handler(cx, NonNullObject(cx, args[1]));
+    RootedObject handler(cx, NonNullObjectArg(cx, "`handler`", callerName, args[1]));
     if (!handler)
         return false;
 
     // Step 4.
     if (IsRevokedScriptedProxy(handler)) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_ARG_REVOKED, "2");
+        JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_PROXY_ARG_REVOKED, "2");
         return false;
     }
 
@@ -1357,13 +1348,13 @@ ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName)
 
     // Step 9 (reordered).
     Rooted<ProxyObject*> proxy(cx, &proxy_->as<ProxyObject>());
-    proxy->setExtra(ScriptedProxyHandler::HANDLER_EXTRA, ObjectValue(*handler));
+    proxy->setReservedSlot(ScriptedProxyHandler::HANDLER_EXTRA, ObjectValue(*handler));
 
     // Step 7.
     uint32_t callable = target->isCallable() ? ScriptedProxyHandler::IS_CALLABLE : 0;
     uint32_t constructor = target->isConstructor() ? ScriptedProxyHandler::IS_CONSTRUCTOR : 0;
-    proxy->setExtra(ScriptedProxyHandler::IS_CALLCONSTRUCT_EXTRA,
-                    PrivateUint32Value(callable | constructor));
+    proxy->setReservedSlot(ScriptedProxyHandler::IS_CALLCONSTRUCT_EXTRA,
+                           PrivateUint32Value(callable | constructor));
 
     // Step 10.
     args.rval().setObject(*proxy);
@@ -1395,7 +1386,7 @@ RevokeProxy(JSContext* cx, unsigned argc, Value* vp)
         MOZ_ASSERT(p->is<ProxyObject>());
 
         p->as<ProxyObject>().setSameCompartmentPrivate(NullValue());
-        p->as<ProxyObject>().setExtra(ScriptedProxyHandler::HANDLER_EXTRA, NullValue());
+        p->as<ProxyObject>().setReservedSlot(ScriptedProxyHandler::HANDLER_EXTRA, NullValue());
     }
 
     args.rval().setUndefined();

@@ -31,7 +31,7 @@ var TEST_PAGES = [
   {
     url: URL_PREFIX + "developer.mozilla.org/en/XULRunner/Build_Instructions.html",
     expected: {
-      title: "Building XULRunner",
+      title: "Building XULRunner | MDN",
       byline: null,
       excerpt: "XULRunner is built using basically the same process as Firefox or other applications. Please read and follow the general Build Documentation for instructions on how to get sources and set up build prerequisites.",
     }
@@ -79,8 +79,8 @@ add_task(function* test_migrate_cache() {
 
     // This will always happen because there is no pre-existing data store.
     request.onupgradeneeded = event => {
-      let cacheDB = event.target.result;
-      cacheDB.createObjectStore("articles", { keyPath: "url" });
+      let cacheDB2 = event.target.result;
+      cacheDB2.createObjectStore("articles", { keyPath: "url" });
     };
 
     request.onsuccess = event => resolve(event.target.result);

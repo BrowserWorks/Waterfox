@@ -6,6 +6,8 @@
 
 #include "Base64.h"
 
+#include "mozilla/ScopeExit.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "nsIInputStream.h"
 #include "nsString.h"
 #include "nsTArray.h"
@@ -94,7 +96,7 @@ struct EncodeInputStream_State
 };
 
 template<typename T>
-NS_METHOD
+nsresult
 EncodeInputStream_Encoder(nsIInputStream* aStream,
                           void* aClosure,
                           const char* aFromSegment,
@@ -199,10 +201,10 @@ EncodeInputStream(nsIInputStream* aInputStream,
                                     &read);
     if (NS_FAILED(rv)) {
       if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
-        NS_RUNTIMEABORT("Not implemented for async streams!");
+        MOZ_CRASH("Not implemented for async streams!");
       }
       if (rv == NS_ERROR_NOT_IMPLEMENTED) {
-        NS_RUNTIMEABORT("Requires a stream that implements ReadSegments!");
+        MOZ_CRASH("Requires a stream that implements ReadSegments!");
       }
       return rv;
     }
@@ -291,22 +293,21 @@ Base64Encode(const char* aBinary, uint32_t aBinaryLen, char** aBase64)
 
   // Don't ask PR_Base64Encode to encode empty strings.
   if (aBinaryLen == 0) {
-    char* base64 = (char*)moz_xmalloc(1);
-    base64[0] = '\0';
-    *aBase64 = base64;
+    *aBase64 = (char*)moz_xmalloc(1);
+    (*aBase64)[0] = '\0';
     return NS_OK;
   }
 
+  *aBase64 = nullptr;
   uint32_t base64Len = ((aBinaryLen + 2) / 3) * 4;
 
   // Add one byte for null termination.
-  char* base64 = (char*)malloc(base64Len + 1);
+  UniqueFreePtr<char[]> base64((char*)malloc(base64Len + 1));
   if (!base64) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  if (!PL_Base64Encode(aBinary, aBinaryLen, base64)) {
-    free(base64);
+  if (!PL_Base64Encode(aBinary, aBinaryLen, base64.get())) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -314,7 +315,7 @@ Base64Encode(const char* aBinary, uint32_t aBinaryLen, char** aBase64)
   // the buffer in. Do that manually.
   base64[base64Len] = '\0';
 
-  *aBase64 = base64;
+  *aBase64 = base64.release();
   return NS_OK;
 }
 
@@ -340,8 +341,7 @@ Base64Encode(const nsACString& aBinary, nsACString& aBase64)
   }
 
   char* base64 = aBase64.BeginWriting();
-  if (!base64 ||
-      !PL_Base64Encode(aBinary.BeginReading(), aBinary.Length(), base64)) {
+  if (!PL_Base64Encode(aBinary.BeginReading(), aBinary.Length(), base64)) {
     aBase64.Truncate();
     return NS_ERROR_INVALID_ARG;
   }
@@ -357,17 +357,87 @@ Base64Encode(const nsACString& aBinary, nsACString& aBase64)
 nsresult
 Base64Encode(const nsAString& aBinary, nsAString& aBase64)
 {
-  NS_LossyConvertUTF16toASCII binary(aBinary);
+  auto truncater = mozilla::MakeScopeExit([&]() { aBase64.Truncate(); });
+
+  // XXX We should really consider decoding directly from the string, rather
+  // than making a separate copy here.
+  nsAutoCString binary;
+  if (!binary.SetCapacity(aBinary.Length(), mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  LossyCopyUTF16toASCII(aBinary, binary);
+
   nsAutoCString base64;
 
   nsresult rv = Base64Encode(binary, base64);
-  if (NS_SUCCEEDED(rv)) {
-    CopyASCIItoUTF16(base64, aBase64);
-  } else {
-    aBase64.Truncate();
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!CopyASCIItoUTF16(base64, aBase64, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
 
+  truncater.release();
+
   return rv;
+}
+
+static nsresult
+Base64DecodeHelper(const char* aBase64, uint32_t aBase64Len, char* aBinary,
+                   uint32_t* aBinaryLen)
+{
+  MOZ_ASSERT(aBinary);
+  if (!PL_Base64Decode(aBase64, aBase64Len, aBinary)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  // PL_Base64Decode doesn't null terminate the buffer for us when we pass
+  // the buffer in. Do that manually, taking into account the number of '='
+  // characters we were passed.
+  if (aBase64Len != 0 && aBase64[aBase64Len - 1] == '=') {
+    if (aBase64Len > 1 && aBase64[aBase64Len - 2] == '=') {
+      *aBinaryLen -= 2;
+    } else {
+      *aBinaryLen -= 1;
+    }
+  }
+  aBinary[*aBinaryLen] = '\0';
+  return NS_OK;
+}
+
+nsresult
+Base64Decode(const char* aBase64, uint32_t aBase64Len, char** aBinary,
+             uint32_t* aBinaryLen)
+{
+  // Check for overflow.
+  if (aBase64Len > UINT32_MAX / 3) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Don't ask PR_Base64Decode to decode the empty string.
+  if (aBase64Len == 0) {
+    *aBinary = (char*)moz_xmalloc(1);
+    (*aBinary)[0] = '\0';
+    *aBinaryLen = 0;
+    return NS_OK;
+  }
+
+  *aBinary = nullptr;
+  *aBinaryLen = (aBase64Len * 3) / 4;
+
+  // Add one byte for null termination.
+  UniqueFreePtr<char[]> binary((char*)malloc(*aBinaryLen + 1));
+  if (!binary) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  nsresult rv =
+    Base64DecodeHelper(aBase64, aBase64Len, binary.get(), aBinaryLen);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  *aBinary = binary.release();
+  return NS_OK;
 }
 
 nsresult
@@ -386,44 +456,46 @@ Base64Decode(const nsACString& aBase64, nsACString& aBinary)
 
   uint32_t binaryLen = ((aBase64.Length() * 3) / 4);
 
-  char* binary;
-
   // Add one byte for null termination.
-  if (aBinary.SetCapacity(binaryLen + 1, fallible) &&
-      (binary = aBinary.BeginWriting()) &&
-      PL_Base64Decode(aBase64.BeginReading(), aBase64.Length(), binary)) {
-    // PL_Base64Decode doesn't null terminate the buffer for us when we pass
-    // the buffer in. Do that manually, taking into account the number of '='
-    // characters we were passed.
-    if (!aBase64.IsEmpty() && aBase64[aBase64.Length() - 1] == '=') {
-      if (aBase64.Length() > 1 && aBase64[aBase64.Length() - 2] == '=') {
-        binaryLen -= 2;
-      } else {
-        binaryLen -= 1;
-      }
-    }
-    binary[binaryLen] = '\0';
-
-    aBinary.SetLength(binaryLen);
-    return NS_OK;
+  if (!aBinary.SetCapacity(binaryLen + 1, fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  aBinary.Truncate();
-  return NS_ERROR_INVALID_ARG;
+  char* binary = aBinary.BeginWriting();
+  nsresult rv = Base64DecodeHelper(aBase64.BeginReading(), aBase64.Length(),
+                                   binary, &binaryLen);
+  if (NS_FAILED(rv)) {
+    aBinary.Truncate();
+    return rv;
+  }
+
+  aBinary.SetLength(binaryLen);
+  return NS_OK;
 }
 
 nsresult
 Base64Decode(const nsAString& aBase64, nsAString& aBinary)
 {
-  NS_LossyConvertUTF16toASCII base64(aBase64);
+  auto truncater = mozilla::MakeScopeExit([&]() { aBinary.Truncate(); });
+
+  // XXX We should really consider decoding directly from the string, rather
+  // than making a separate copy here.
+  nsAutoCString base64;
+  if (!base64.SetCapacity(aBase64.Length(), mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  LossyCopyUTF16toASCII(aBase64, base64);
+
   nsAutoCString binary;
 
   nsresult rv = Base64Decode(base64, binary);
-  if (NS_SUCCEEDED(rv)) {
-    CopyASCIItoUTF16(binary, aBinary);
-  } else {
-    aBinary.Truncate();
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!CopyASCIItoUTF16(binary, aBinary, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
   }
+
+  truncater.release();
 
   return rv;
 }

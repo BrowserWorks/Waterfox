@@ -20,23 +20,45 @@
 namespace mozilla {
 namespace gfx {
 
+class GlyphRenderingOptionsCG : public GlyphRenderingOptions
+{
+public:
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GlyphRenderingOptionsCG, override)
+
+  explicit GlyphRenderingOptionsCG(const Color &aFontSmoothingBackgroundColor)
+    : mFontSmoothingBackgroundColor(aFontSmoothingBackgroundColor)
+  {}
+
+  const Color &FontSmoothingBackgroundColor() const { return mFontSmoothingBackgroundColor; }
+
+  virtual FontType GetType() const override { return FontType::MAC; }
+
+private:
+  Color mFontSmoothingBackgroundColor;
+};
+
 class ScaledFontMac : public ScaledFontBase
 {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontMac)
-  ScaledFontMac(CGFontRef aFont, Float aSize);
-  virtual ~ScaledFontMac();
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontMac, override)
+  ScaledFontMac(CGFontRef aFont, const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize, bool aOwnsFont = false);
+  ~ScaledFontMac();
 
-  virtual FontType GetType() const { return FontType::MAC; }
+  FontType GetType() const override { return FontType::MAC; }
 #ifdef USE_SKIA
-  virtual SkTypeface* GetSkTypeface();
+  SkTypeface* GetSkTypeface() override;
 #endif
-  virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
-  virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint);
-  virtual bool GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton);
+  already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget) override;
+
+  bool GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton) override;
+
+  bool CanSerialize() override { return true; }
+
+#ifdef USE_CAIRO_SCALED_FONT
+  cairo_font_face_t* GetCairoFontFace() override;
+#endif
 
 private:
-  friend class DrawTargetCG;
   friend class DrawTargetSkia;
   CGFontRef mFont;
   CTFontRef mCTFont; // only created if CTFontDrawGlyphs is available, otherwise null

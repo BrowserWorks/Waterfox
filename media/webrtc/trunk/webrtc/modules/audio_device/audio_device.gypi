@@ -20,13 +20,13 @@
       ],
       'include_dirs': [
         '.',
-        '../interface',
+        '../include',
         'include',
         'dummy',  # Contains dummy audio device implementations.
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          '../interface',
+          '../include',
           'include',
         ],
       },
@@ -38,17 +38,13 @@
         'audio_device_buffer.h',
         'audio_device_generic.cc',
         'audio_device_generic.h',
-        'audio_device_utility.cc',
-        'audio_device_utility.h',
-        'audio_device_impl.cc',
-        'audio_device_impl.h',
         'audio_device_config.h',
         'dummy/audio_device_dummy.cc',
         'dummy/audio_device_dummy.h',
-        'dummy/audio_device_utility_dummy.cc',
-        'dummy/audio_device_utility_dummy.h',
         'dummy/file_audio_device.cc',
         'dummy/file_audio_device.h',
+        'fine_audio_buffer.cc',
+        'fine_audio_buffer.h',
       ],
       'conditions': [
         ['build_with_mozilla==1', {
@@ -92,20 +88,9 @@
             'android',
           ],
         }], # OS==android
-        ['moz_widget_toolkit_gonk==1', {
-          'cflags_mozilla': [
-            '-I$(ANDROID_SOURCE)/frameworks/wilhelm/include',
-            '-I$(ANDROID_SOURCE)/frameworks/av/include',
-            '-I$(ANDROID_SOURCE)/system/media/wilhelm/include',
-            '-I$(ANDROID_SOURCE)/system/media/audio_effects/include',
-            '-I$(ANDROID_SOURCE)/frameworks/native/include',
-          ],
-          'include_dirs': [
-            'android',
-          ],
-        }], # moz_widget_toolkit_gonk==1
         ['enable_android_opensl==1', {
           'include_dirs': [
+            'dom/media/systemservices',
             'opensl',
           ],
         }], # enable_android_opensl
@@ -123,260 +108,209 @@
         }],
         ['include_internal_audio_device==1', {
           'sources': [
-            'linux/audio_device_utility_linux.cc',
-            'linux/audio_device_utility_linux.h',
-            'linux/latebindingsymboltable_linux.cc',
-            'linux/latebindingsymboltable_linux.h',
-            'ios/audio_device_ios.mm',
-            'ios/audio_device_ios.h',
-            'ios/audio_device_utility_ios.cc',
-            'ios/audio_device_utility_ios.h',
-            'mac/audio_device_mac.cc',
-            'mac/audio_device_mac.h',
-            'mac/audio_device_utility_mac.cc',
-            'mac/audio_device_utility_mac.h',
-            'mac/audio_mixer_manager_mac.cc',
-            'mac/audio_mixer_manager_mac.h',
-            'mac/portaudio/pa_memorybarrier.h',
-            'mac/portaudio/pa_ringbuffer.c',
-            'mac/portaudio/pa_ringbuffer.h',
-            'win/audio_device_core_win.cc',
-            'win/audio_device_core_win.h',
-            'win/audio_device_wave_win.cc',
-            'win/audio_device_wave_win.h',
-            'win/audio_device_utility_win.cc',
-            'win/audio_device_utility_win.h',
-            'win/audio_mixer_manager_win.cc',
-            'win/audio_mixer_manager_win.h',
+            'audio_device_impl.cc',
+            'audio_device_impl.h',
             # used externally for getUserMedia
             'opensl/single_rw_fifo.cc',
             'opensl/single_rw_fifo.h',
-            'android/audio_device_template.h',
-            'android/audio_manager.cc',
-            'android/audio_manager.h',
-            'android/audio_manager_jni.cc',
-            'android/audio_manager_jni.h',
-            'android/audio_record_jni.cc',
-            'android/audio_record_jni.h',
-            'android/audio_track_jni.cc',
-            'android/audio_track_jni.h',
           ],
           'conditions': [
-	    ['moz_widget_toolkit_gonk==1', {
-              'sources': [
-                # references to android/audio_manager to avoid platform-specific limits
-	        'gonk/audio_manager.cc',
-                'gonk/audio_manager.h',
-	      ],
-	    }],
-            ['OS=="android" or moz_widget_toolkit_gonk==1', {
-              'link_settings': {
-                'libraries': [
-                  '-llog',
-                  '-lOpenSLES',
-                ],
-              },
+            ['use_dummy_audio_file_devices==1', {
+              'defines': [
+               'WEBRTC_DUMMY_FILE_DEVICES',
+              ],
+            }, { # use_dummy_audio_file_devices==0, so use a platform device.
               'conditions': [
-                ['enable_android_opensl==1', {
+                ['OS=="android"', {
                   'sources': [
-                    'opensl/fine_audio_buffer.cc',
-                    'opensl/fine_audio_buffer.h',
-                    'opensl/low_latency_event_posix.cc',
-                    'opensl/low_latency_event.h',
-                    'opensl/opensles_common.cc',
-                    'opensl/opensles_common.h',
-                    'opensl/opensles_input.cc',
-                    'opensl/opensles_input.h',
-                    'opensl/opensles_output.h',
-                    'shared/audio_device_utility_shared.cc',
-                    'shared/audio_device_utility_shared.h',
+                    'android/audio_device_template.h',
+                    'android/audio_manager.cc',
+                    'android/audio_manager.h',
+                    'android/audio_record_jni.cc',
+                    'android/audio_record_jni.h',
+                    'android/audio_track_jni.cc',
+                    'android/audio_track_jni.h',
+                    'android/build_info.cc',
+                    'android/build_info.h',
+                    'android/opensles_common.cc',
+                    'android/opensles_common.h',
+                    'android/opensles_player.cc',
+                    'android/opensles_player.h',
+                    'android/opensles_recorder.cc',
+                    'android/opensles_recorder.h',
                   ],
-                }, {
+                  'link_settings': {
+                    'libraries': [
+                      '-llog',
+                      '-lOpenSLES',
+                    ],
+                  },
+                }],
+                ['OS=="linux"', {
+                  'link_settings': {
+                    'libraries': [
+                      '-ldl',
+                    ],
+                  },
+                }],
+                ['include_sndio_audio==1', {
+                  'link_settings': {
+                    'libraries': [
+                      '-lsndio',
+                    ],
+                  },
                   'sources': [
-                    'shared/audio_device_utility_shared.cc',
-                    'shared/audio_device_utility_shared.h',
+                    'sndio/audio_device_sndio.cc',
+                    'sndio/audio_device_sndio.h',
                   ],
                 }],
-                ['enable_android_opensl_output==1', {
-                  'sources': [
-                    'opensl/opensles_output.cc'
+                ['include_alsa_audio==1', {
+                  'cflags_mozilla': [
+                    '$(MOZ_ALSA_CFLAGS)',
                   ],
                   'defines': [
-                    'WEBRTC_ANDROID_OPENSLES_OUTPUT',
+                    'LINUX_ALSA',
+                  ],
+                  'link_settings': {
+                    'libraries': [
+                      '-lX11',
+                    ],
+                  },
+                  'sources': [
+                    'linux/alsasymboltable_linux.cc',
+                    'linux/alsasymboltable_linux.h',
+                    'linux/audio_device_alsa_linux.cc',
+                    'linux/audio_device_alsa_linux.h',
+                    'linux/audio_mixer_manager_alsa_linux.cc',
+                    'linux/audio_mixer_manager_alsa_linux.h',
+                    'linux/latebindingsymboltable_linux.cc',
+                    'linux/latebindingsymboltable_linux.h',
                   ],
                 }],
-              ],
-            }],
-            ['OS=="linux"', {
-              'link_settings': {
-                'libraries': [
-                  '-ldl','-lX11',
-                ],
-              },
-            }],
-            ['include_sndio_audio==1', {
-              'link_settings': {
-                'libraries': [
-                  '-lsndio',
-                ],
-              },
-              'sources': [
-                'sndio/audio_device_sndio.cc',
-                'sndio/audio_device_sndio.h',
-                'sndio/audio_device_utility_sndio.cc',
-                'sndio/audio_device_utility_sndio.h',
-              ],
-            }],
-            ['include_alsa_audio==1', {
-              'cflags_mozilla': [
-                '$(MOZ_ALSA_CFLAGS)',
-              ],
-              'defines': [
-                'LINUX_ALSA',
-              ],
-              'sources': [
-                'linux/alsasymboltable_linux.cc',
-                'linux/alsasymboltable_linux.h',
-                'linux/audio_device_alsa_linux.cc',
-                'linux/audio_device_alsa_linux.h',
-                'linux/audio_mixer_manager_alsa_linux.cc',
-                'linux/audio_mixer_manager_alsa_linux.h',
-              ],
-            }],
-            ['include_pulse_audio==1', {
-              'cflags_mozilla': [
-                '$(MOZ_PULSEAUDIO_CFLAGS)',
-              ],
-              'defines': [
-                'LINUX_PULSE',
-              ],
-              'sources': [
-                'linux/audio_device_pulse_linux.cc',
-                'linux/audio_device_pulse_linux.h',
-                'linux/audio_mixer_manager_pulse_linux.cc',
-                'linux/audio_mixer_manager_pulse_linux.h',
-                'linux/pulseaudiosymboltable_linux.cc',
-                'linux/pulseaudiosymboltable_linux.h',
-              ],
-            }],
-            ['OS=="mac"', {
-              'link_settings': {
-                'libraries': [
-                  '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
-                  '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
-                ],
-              },
-            }],
-            ['OS=="ios"', {
-              'xcode_settings': {
-                'CLANG_ENABLE_OBJC_ARC': 'YES',
-              },
-              'link_settings': {
-                'xcode_settings': {
-                  'OTHER_LDFLAGS': [
-                    '-framework AudioToolbox',
-                    '-framework AVFoundation',
-                    '-framework Foundation',
+                ['include_pulse_audio==1', {
+                  'cflags_mozilla': [
+                    '$(MOZ_PULSEAUDIO_CFLAGS)',
                   ],
-                },
-              },
-            }],
-            ['OS=="win"', {
-              'link_settings': {
-                'libraries': [
-                  # Required for the built-in WASAPI AEC.
-                  '-ldmoguids.lib',
-                  '-lwmcodecdspuuid.lib',
-                  '-lamstrmid.lib',
-                  '-lmsdmo.lib',
-                ],
-              },
-            }],
+                  'defines': [
+                    'LINUX_PULSE',
+                  ],
+                  'link_settings': {
+                    'libraries': [
+                      '-lX11',
+                    ],
+                  },
+                  'sources': [
+                    'linux/audio_device_pulse_linux.cc',
+                    'linux/audio_device_pulse_linux.h',
+                    'linux/audio_mixer_manager_pulse_linux.cc',
+                    'linux/audio_mixer_manager_pulse_linux.h',
+                    'linux/latebindingsymboltable_linux.cc',
+                    'linux/latebindingsymboltable_linux.h',
+                    'linux/pulseaudiosymboltable_linux.cc',
+                    'linux/pulseaudiosymboltable_linux.h',
+                  ],
+                }],
+                ['OS=="mac"', {
+                  'sources': [
+                    'mac/audio_device_mac.cc',
+                    'mac/audio_device_mac.h',
+                    'mac/audio_mixer_manager_mac.cc',
+                    'mac/audio_mixer_manager_mac.h',
+                    'mac/portaudio/pa_memorybarrier.h',
+                    'mac/portaudio/pa_ringbuffer.c',
+                    'mac/portaudio/pa_ringbuffer.h',
+                  ],
+                  'link_settings': {
+                    'libraries': [
+                      '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                      '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    ],
+                  },
+                }],
+                ['OS=="ios"', {
+                  'dependencies': [
+                    '<(webrtc_root)/base/base.gyp:rtc_base',
+                    '<(webrtc_root)/sdk/sdk.gyp:rtc_sdk_common_objc',
+                  ],
+                  'export_dependent_settings': [
+                    '<(webrtc_root)/sdk/sdk.gyp:rtc_sdk_common_objc',
+                  ],
+                  'sources': [
+                    'ios/audio_device_ios.h',
+                    'ios/audio_device_ios.mm',
+                    'ios/audio_device_not_implemented_ios.mm',
+                    'ios/audio_session_observer.h',
+                    'ios/objc/RTCAudioSession+Configuration.mm',
+                    'ios/objc/RTCAudioSession+Private.h',
+                    'ios/objc/RTCAudioSession.h',
+                    'ios/objc/RTCAudioSession.mm',
+                    'ios/objc/RTCAudioSessionConfiguration.h',
+                    'ios/objc/RTCAudioSessionConfiguration.m',
+                    'ios/objc/RTCAudioSessionDelegateAdapter.h',
+                    'ios/objc/RTCAudioSessionDelegateAdapter.mm',
+                    'ios/voice_processing_audio_unit.h',
+                    'ios/voice_processing_audio_unit.mm',
+                  ],
+                  'xcode_settings': {
+                    'CLANG_ENABLE_OBJC_ARC': 'YES',
+                  },
+                  'link_settings': {
+                    'xcode_settings': {
+                      'OTHER_LDFLAGS': [
+                        '-framework AudioToolbox',
+                        '-framework AVFoundation',
+                        '-framework Foundation',
+                        '-framework UIKit',
+                      ],
+                    },
+                  },
+                }],
+                ['OS=="win"', {
+                  'sources': [
+                    'win/audio_device_core_win.cc',
+                    'win/audio_device_core_win.h',
+                    'win/audio_device_wave_win.cc',
+                    'win/audio_device_wave_win.h',
+                    'win/audio_mixer_manager_win.cc',
+                    'win/audio_mixer_manager_win.h',
+                  ],
+                  'link_settings': {
+                    'libraries': [
+                      # Required for the built-in WASAPI AEC.
+                      '-ldmoguids.lib',
+                      '-lwmcodecdspuuid.lib',
+                      '-lamstrmid.lib',
+                      '-lmsdmo.lib',
+                    ],
+                  },
+                }],
+                ['OS=="win" and clang==1', {
+                  'msvs_settings': {
+                    'VCCLCompilerTool': {
+                      'AdditionalOptions': [
+                        # Disable warnings failing when compiling with Clang on Windows.
+                        # https://bugs.chromium.org/p/webrtc/issues/detail?id=5366
+                        '-Wno-bool-conversion',
+                        '-Wno-delete-non-virtual-dtor',
+                        '-Wno-logical-op-parentheses',
+                        '-Wno-microsoft-extra-qualification',
+                        '-Wno-microsoft-goto',
+                        '-Wno-missing-braces',
+                        '-Wno-parentheses-equality',
+                        '-Wno-reorder',
+                        '-Wno-shift-overflow',
+                        '-Wno-tautological-compare',
+                        '-Wno-unused-private-field',
+                      ],
+                    },
+                  },
+                }],
+              ], # conditions (for non-dummy devices)
+            }], # use_dummy_audio_file_devices check
           ], # conditions
         }], # include_internal_audio_device==1
       ], # conditions
     },
   ],
-  'conditions': [
-    ['include_tests==1', {
-      'targets': [
-        {
-          'target_name': 'audio_device_tests',
-         'type': 'executable',
-         'dependencies': [
-            'audio_device',
-            'webrtc_utility',
-            '<(webrtc_root)/test/test.gyp:test_support_main',
-            '<(DEPTH)/testing/gtest.gyp:gtest',
-            '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
-          ],
-          'sources': [
-            'test/audio_device_test_api.cc',
-            'test/audio_device_test_defines.h',
-          ],
-        },
-        {
-          'target_name': 'audio_device_test_func',
-          'type': 'executable',
-          'dependencies': [
-            'audio_device',
-            'webrtc_utility',
-            '<(webrtc_root)/common_audio/common_audio.gyp:common_audio',
-            '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
-            '<(webrtc_root)/test/test.gyp:test_support',
-            '<(DEPTH)/testing/gtest.gyp:gtest',
-          ],
-          'sources': [
-            'test/audio_device_test_func.cc',
-            'test/audio_device_test_defines.h',
-            'test/func_test_manager.cc',
-            'test/func_test_manager.h',
-          ],
-        },
-      ], # targets
-      'conditions': [
-        ['test_isolation_mode != "noop"', {
-          'targets': [
-            {
-              'target_name': 'audio_device_tests_run',
-              'type': 'none',
-              'dependencies': [
-                'audio_device_tests',
-              ],
-              'includes': [
-                '../../build/isolate.gypi',
-              ],
-              'sources': [
-                'audio_device_tests.isolate',
-              ],
-            },
-          ],
-        }],
-        ['OS=="android"', {
-          'targets': [
-            {
-              'target_name': 'audio_device_unittest',
-              'type': 'executable',
-              'dependencies': [
-                'audio_device',
-                'webrtc_utility',
-                '<(DEPTH)/testing/gmock.gyp:gmock',
-                '<(DEPTH)/testing/gtest.gyp:gtest',
-                '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
-                '<(webrtc_root)/test/test.gyp:test_support_main',
-              ],
-              'sources': [
-                'android/audio_manager.cc',
-                'android/audio_manager.h',
-                'android/fine_audio_buffer_unittest.cc',
-                'android/low_latency_event_unittest.cc',
-                'android/single_rw_fifo_unittest.cc',
-                'mock/mock_audio_device_buffer.h',
-              ],
-            },
-          ],
-        }],
-      ],
-    }], # include_tests
-  ],
 }
+

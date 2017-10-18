@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from ../../../toolkit/mozapps/preferences/fontbuilder.js */
+
 // browser.display.languageList LOCK ALL when LOCKED
 
 const kDefaultFontType          = "font.default.%LANG%";
@@ -17,8 +19,7 @@ const kFontSizeFmtFixed         = "font.size.fixed.%LANG%";
 const kFontMinSizeFmt           = "font.minimum-size.%LANG%";
 
 var gFontsDialog = {
-  _selectLanguageGroup: function (aLanguageGroup)
-  {
+  _selectLanguageGroup(aLanguageGroup) {
     var prefs = [{ format: kDefaultFontType,          type: "string",   element: "defaultFontType", fonttype: null},
                  { format: kFontNameFmtSerif,         type: "fontname", element: "serif",      fonttype: "serif"       },
                  { format: kFontNameFmtSansSerif,     type: "fontname", element: "sans-serif", fonttype: "sans-serif"  },
@@ -40,14 +41,14 @@ var gFontsDialog = {
         preference.setAttribute("type", prefs[i].type);
         preferences.appendChild(preference);
       }
-      
+
       if (!prefs[i].element)
         continue;
-        
+
       var element = document.getElementById(prefs[i].element);
       if (element) {
         element.setAttribute("preference", preference.id);
-      
+
         if (prefs[i].fonttype)
           FontBuilder.buildFontList(aLanguageGroup, prefs[i].fonttype, element);
 
@@ -55,33 +56,24 @@ var gFontsDialog = {
       }
     }
   },
-  
-  readFontLanguageGroup: function ()
-  {
+
+  readFontLanguageGroup() {
     var languagePref = document.getElementById("font.language.group");
     this._selectLanguageGroup(languagePref.value);
     return undefined;
   },
-  
-  readUseDocumentFonts: function ()
-  {
+
+  readUseDocumentFonts() {
     var preference = document.getElementById("browser.display.use_document_fonts");
     return preference.value == 1;
   },
-  
-  writeUseDocumentFonts: function ()
-  {
+
+  writeUseDocumentFonts() {
     var useDocumentFonts = document.getElementById("useDocumentFonts");
     return useDocumentFonts.checked ? 1 : 0;
   },
 
-  onBeforeAccept: function ()
-  {
-    // Only care in in-content prefs
-    if (!window.frameElement) {
-      return true;
-    }
-
+  onBeforeAccept() {
     let preferences = document.querySelectorAll("preference[id*='font.minimum-size']");
     // It would be good if we could avoid touching languages the pref pages won't use, but
     // unfortunately the language group APIs (deducing language groups from language codes)
@@ -91,7 +83,7 @@ var gFontsDialog = {
       return prefEl.value > 24 && prefEl.value != prefEl.valueFromPreferences;
     });
     if (!preferences.length) {
-      return;
+      return true;
     }
 
     let strings = document.getElementById("bundlePreferences");
@@ -106,4 +98,3 @@ var gFontsDialog = {
     return buttonChosen == 0;
   },
 };
-

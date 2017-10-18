@@ -46,7 +46,7 @@ instance to represent each presentation, or it may use a single
 For a `Debugger.Source` instance representing the serialized text of a block
 of WebAssembly code, its properties provide the serialized text as a string.
 
-Currently only entire modules evaluated via `Wasm.instantiateModule` are
+Currently only entire modules evaluated via `new WebAssembly.Module` are
 represented. SpiderMonkey constructs exactly one `Debugger.Source` for each
 underlying WebAssembly module per [`Debugger`][debugger-object] instance.
 
@@ -67,21 +67,6 @@ differ, no such emphasized headings will appear.
 A `Debugger.Source` instance inherits the following accessor properties
 from its prototype:
 
-`canonicalId`
-:   **If the instance refers to JavaScript source**, a stable, unique
-    identifier for the source referent. This identifier is suitable for
-    checking if two `Debugger.Source` instances originating from different
-    `Debugger` instances refer to the same source that was compiled by
-    SpiderMonkey. The `canonicalId` is reliable even when the source does not
-    have a URL, or shares the same URL as another source but has different
-    source text. It is more efficient to compare `canonicalId`s than to
-    compare source text character-by-character. The `canonicalId` is not
-    suitable for ordering comparisons such as "greater than" or "less
-    than". It is not suitable for checking the equality of sources across
-    worker threads.
-
-    **If the instance refers to WebAssembly code**, throw a `TypeError`.
-
 `text`
 :   **If the instance refers to JavaScript source**, the JavaScript source
     code, as a string. The value satisfies the `Program`,
@@ -90,23 +75,23 @@ from its prototype:
 
     **If the instance refers to WebAssembly code**, the serialized text
     representation. The format is yet to be specified in the WebAssembly
-    standard. Currently, the text is an s-expression based syntax.
+    standard. Currently, the text is an s-expression based syntax. The text
+    generation is disabled if the Debugger has the `allowWasmBinarySource`
+    property set, the `"[wasm]"` value will be returned in this case.
 
-`enclosingStart` <i>(future plan)</i>
-:   The position within the enclosing document at which this source's text
-    starts. This is a zero-based character offset. (The length of this
-    script within the enclosing document is `source.length`.)
-
-`lineCount` <i>(future plan)</i>
-:   The number of lines in the source code. If there are characters after
-    the last newline in the source code, those count as a final line;
-    otherwise, `lineCount` is equal to the number of newlines in the source
-    code.
+`binary`
+:   **If the instance refers to WebAssembly code** and the Debugger has
+    the `allowWasmBinarySource` property set, a Uint8Array that contains the
+    WebAssembly bytecode.
 
 `url`
-:   **If the instance refers to JavaScript source**, the URL from which this
-    source was loaded, if this source was loaded from a URL. Otherwise, this
-    is `undefined`. Source may be loaded from a URL in the following ways:
+:   **If the instance refers to JavaScript source**, the filename or URL from
+    which this script's code was loaded. For scripts created by `eval` or the
+    `Function` constructor, this may be a synthesized filename, starting with a
+    valid URL and followed by information tracking how the code was introduced
+    into the system; the entire string is not a valid URL. For
+    `Function.prototype`'s script, this is `null`. Source may be loaded from a
+    URL in the following ways:
 
     * The URL may appear as the `src` attribute of a `<script>` element
       in markup text.
@@ -122,7 +107,7 @@ from its prototype:
     return `undefined`.)
 
     **If the instance refers to WebAssembly code**, the URL of the script that
-    called `Wasm.instantiateModule` with the string `"> wasm"` appended.
+    called `new WebAssembly.Module` with the string `"> wasm"` appended.
 
 `sourceMapURL`
 :   **If the instance refers to JavaScript source**, if this source was
@@ -137,11 +122,16 @@ from its prototype:
 
     This property is writable, so you can change the source map URL by
     setting it. All Debugger.Source objects referencing the same
-    source will see the change. Setting an empty string has no affect
+    source will see the change. Setting an empty string has no effect
     and will not change existing value.
 
     **If the instance refers to WebAssembly code**, `null`. Attempts to write
     to this property throw a `TypeError`.
+
+`displayURL`
+:   If the script had a special `//# sourceURL` comment, as described in
+    the source maps specification, then this property's value holds
+    the string that was given.  Otherwise, this is `null`.
 
 `element`
 :   The [`Debugger.Object`][object] instance referring to the DOM element to which
@@ -181,6 +171,8 @@ from its prototype:
     * `"eval"`, for code passed to `eval`.
 
     * `"Function"`, for code passed to the `Function` constructor.
+
+    * `"Function.prototype"`, for `Function.prototype` internally generated code.
 
     * `"Worker"`, for code loaded by calling the Web worker constructor—the
       worker's main script.
@@ -244,43 +236,3 @@ from its prototype:
     **If the instance refers to WebAssembly code**, `introductionScript` is
     the [`Debugger.Script`][script] instance referring to the same underlying
     WebAssembly module. `introductionOffset` is `undefined`.
-
-
-## Function Properties of the Debugger.Source Prototype Object
-
-<code>substring(<i>start</i>, [<i>end</i>])</code> <i>(future plan)</i>
-:   Return a substring of this instance's `source` property, starting at
-    <i>start</i> and extending to, but not including, <i>end</i>. If
-    <i>end</i> is `undefined`, the substring returned extends to the end of
-    the source.
-
-    Both indices are zero-based. If either is `NaN` or negative, it is
-    replaced with zero. If either is greater than the length of the source,
-    it is replaced with the length of the source. If <i>start</i> is larger
-    than <i>end</i>, they are swapped. (This is meant to be consistent with
-    the way `String.prototype.substring` interprets its arguments.)
-
-<code>lineToPosition(<i>line</i>)</code> <i>(future plan)</i>
-:   Return an object of the form
-    <code>{ line:<i>line</i>, start:<i>start</i>, length:<i>length</i> }</code>, where
-    <i>start</i> is the character index within `source` of the first
-    character of line number <i>line</i>, and <i>length</i> is the length of
-    that line in characters, including the final newline, if any. The first
-    line is numbered one. If <i>line</i> is negative or greater than the
-    number of lines in this `Debugger.Source` instance, then return `null`.
-
-<code>positionToLine(<i>start</i>)</code> <i>(future plan)</i>
-:   Return an object of the form
-    <code>{ line:<i>line</i>, start:<i>start</i>, length:<i>length</i> }</code>, where
-    <i>line</i> is the line number containing the character position
-    <i>start</i>, and <i>length</i> is the length of that line in
-    characters, including the final newline, if any. The first line is
-    numbered one. If <i>start</i> is negative or greater than the length of
-    the source code, then return `null`.
-
-<code>findScripts(<i>query</i>)</code> <i>(future plan)</i>
-:   Return an array of [`Debugger.Script`][script] instances for all debuggee scripts
-    matching <i>query</i> that are produced from this `Debugger.Source`
-    instance. Aside from the restriction to scripts produced from this
-    source, <i>query</i> is interpreted as for
-    `Debugger.prototype.findScripts`.

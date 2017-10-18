@@ -82,23 +82,21 @@ this.EXPORTED_SYMBOLS = [
  *                              .then(null, Components.utils.reportError);
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
+// Globals
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 
 const Timer = Components.Constructor("@mozilla.org/timer;1", "nsITimer",
                                      "initWithCallback");
 
-////////////////////////////////////////////////////////////////////////////////
-//// DeferredTask
+// DeferredTask
 
 /**
  * Sets up a task whose execution can be triggered after a delay.
@@ -114,7 +112,7 @@ const Timer = Components.Constructor("@mozilla.org/timer;1", "nsITimer",
  *        task, except on finalization, when the task may restart immediately
  *        after the previous execution finished.
  */
-this.DeferredTask = function (aTaskFn, aDelayMs) {
+this.DeferredTask = function(aTaskFn, aDelayMs) {
   this._taskFn = aTaskFn;
   this._delayMs = aDelayMs;
 }
@@ -163,8 +161,7 @@ this.DeferredTask.prototype = {
   /**
    * Actually starts the timer with the delay specified on construction.
    */
-  _startTimer: function ()
-  {
+  _startTimer() {
     this._timer = new Timer(this._timerCallback.bind(this), this._delayMs,
                             Ci.nsITimer.TYPE_ONE_SHOT);
   },
@@ -187,8 +184,7 @@ this.DeferredTask.prototype = {
    *       try/catch/finally clause in the task.  The "finalize" method can be
    *       used in the common case of waiting for completion on shutdown.
    */
-  arm: function ()
-  {
+  arm() {
     if (this._finalized) {
       throw new Error("Unable to arm timer, the object has been finalized.");
     }
@@ -210,7 +206,7 @@ this.DeferredTask.prototype = {
    * This method stops any currently running timer, thus the delay will restart
    * from its original value in case the "arm" method is called again.
    */
-  disarm: function () {
+  disarm() {
     this._armed = false;
     if (this._timer) {
       // Calling the "cancel" method and discarding the timer reference makes
@@ -240,7 +236,7 @@ this.DeferredTask.prototype = {
    * @resolves After the last execution of the task is finished.
    * @rejects Never.
    */
-  finalize: function () {
+  finalize() {
     if (this._finalized) {
       throw new Error("The object has been already finalized.");
     }
@@ -264,9 +260,8 @@ this.DeferredTask.prototype = {
   /**
    * Timer callback used to run the delayed task.
    */
-  _timerCallback: function ()
-  {
-    let runningDeferred = Promise.defer();
+  _timerCallback() {
+    let runningDeferred = PromiseUtils.defer();
 
     // All these state changes must occur at the same time directly inside the
     // timer callback, to prevent race conditions and to ensure that all the
@@ -277,9 +272,9 @@ this.DeferredTask.prototype = {
     this._armed = false;
     this._runningPromise = runningDeferred.promise;
 
-    runningDeferred.resolve(Task.spawn(function* () {
+    runningDeferred.resolve((async () => {
       // Execute the provided function asynchronously.
-      yield Task.spawn(this._taskFn).then(null, Cu.reportError);
+      await this._runTask();
 
       // Now that the task has finished, we check the state of the object to
       // determine if we should restart the task again.
@@ -291,13 +286,29 @@ this.DeferredTask.prototype = {
           // property should return false while the task is running, and should
           // remain false after the last execution terminates.
           this._armed = false;
-          yield Task.spawn(this._taskFn).then(null, Cu.reportError);
+          await this._runTask();
         }
       }
 
       // Indicate that the execution of the task has finished.  This happens
       // synchronously with the previous state changes in the function.
       this._runningPromise = null;
-    }.bind(this)).then(null, Cu.reportError));
+    })().catch(Cu.reportError));
+  },
+
+  /**
+   * Executes the associated task and catches exceptions.
+   */
+  async _runTask() {
+    try {
+      let result = this._taskFn();
+      if (Object.prototype.toString.call(result) == "[object Generator]") {
+        await Task.spawn(result); // eslint-disable-line mozilla/no-task
+      } else {
+        await result;
+      }
+    } catch (ex) {
+      Cu.reportError(ex);
+    }
   },
 };

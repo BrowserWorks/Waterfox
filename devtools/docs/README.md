@@ -1,41 +1,33 @@
 # Firefox Developer Tools
 
-Hello! This documentation is for developers who want to work on the
-developer tools. If you are looking for general docs about how to use
-the tools, checkout [this MDN
-page](https://developer.mozilla.org/en-US/docs/Tools).
+**Hello!**
 
-These docs explain how the developer tools work at high-level, as well
-as providing links to reference documentation. This is a good starting
-point if you are a new contributor, or want to learn how our protocol,
-a specific tool, or something else works.
+This documentation is for developers who want to work on the developer tools. [Get started here](./getting-started/).
 
-If you are looking to **start hacking** on the developer tools, all of
-this information is documented on the
-[Hacking](https://wiki.mozilla.org/DevTools/Hacking) wiki page.
+If you are looking for end user documentation, check out [this MDN page](https://developer.mozilla.org/en-US/docs/Tools) instead.
 
-A very quick version:
+Happy developing!
 
-```
-$ hg clone http://hg.mozilla.org/integration/fx-team
-$ ./mach build
-$ ./mach run -P development
-```
+## About this documentation
 
-You can also clone via git from
-`https://github.com/mozilla/gecko-dev.git`. Note that the workflow for
-submitting patches may be a little different if using git.
+This guide is built with MarkDown files and [GitBook](https://github.com/GitbookIO/gitbook).
 
-Please see the [Hacking](https://wiki.mozilla.org/DevTools/Hacking)
-page for a lot more information!
+The source code for this documentation is distributed with the source code for the tools, in the `docs/` folder.
 
-All of our **coding standards** are documented on the [Coding
-Standards](https://wiki.mozilla.org/DevTools/CodingStandards) wiki
-page.
+If you want to contribute to the documentation, [clone the repository](./getting-started/build.md#getting-the-code), make your changes locally, and then regenerate the book to see how it looks like before submitting a patch:
 
-We use ESLint to enforce coding standards, and if you can run it
-straight from the command like this:
+```bash
+# Install GitBook locally
+npm install -g gitbook-cli
 
-```
-./mach eslint path/to/directory
+# Go into the docs directory
+cd /path/to/mozilla-central/devtools/docs/
+
+# Generate the docs and start a local server
+gitbook serve
+
+# You can now navigate to localhost:4000 to see the output
+
+# Or build the book only (this places the output into `docs/_book`)
+gitbook build
 ```

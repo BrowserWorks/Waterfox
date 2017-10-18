@@ -29,7 +29,7 @@ toolbarbutton[disabled="true"],
 toolbarbutton[disabled="true"]:hover,
 toolbarbutton[disabled="true"]:hover:active,
 toolbarbutton[disabled="true"][open="true"] {
-  color: -moz-mac-disabledtoolbartext !important;
+  color: -moz-mac-disabledtoolbartext;
 }
 
 /* ::::: toolbarbutton menu ::::: */
@@ -97,7 +97,6 @@ toolbarbutton[type="menu-button"][disabled="true"]:hover:active {
 .toolbarbutton-badge:-moz-window-inactive {
   background-color: rgb(230,230,230);
   box-shadow: none;
-  border: 1px solid rgb(206,206,206);
   color: rgb(192,192,192);
 }
 

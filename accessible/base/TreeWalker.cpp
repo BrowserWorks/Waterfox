@@ -52,9 +52,38 @@ TreeWalker::
   MOZ_COUNT_CTOR(TreeWalker);
 }
 
+TreeWalker::
+  TreeWalker(DocAccessible* aDocument, nsIContent* aAnchorNode) :
+  mDoc(aDocument), mContext(nullptr), mAnchorNode(aAnchorNode),
+  mARIAOwnsIdx(0),
+  mChildFilter(nsIContent::eSkipPlaceholderContent | nsIContent::eAllChildren),
+  mFlags(eWalkCache),
+  mPhase(eAtStart)
+{
+  MOZ_ASSERT(aAnchorNode, "No anchor node for the accessible tree walker");
+  MOZ_COUNT_CTOR(TreeWalker);
+}
+
 TreeWalker::~TreeWalker()
 {
   MOZ_COUNT_DTOR(TreeWalker);
+}
+
+Accessible*
+TreeWalker::Scope(nsIContent* aAnchorNode)
+{
+  Reset();
+
+  mAnchorNode = aAnchorNode;
+
+  bool skipSubtree = false;
+  Accessible* acc = AccessibleFor(aAnchorNode, 0, &skipSubtree);
+  if (acc) {
+    mPhase = eAtEnd;
+    return acc;
+  }
+
+  return skipSubtree ? nullptr : Next();
 }
 
 bool
@@ -62,9 +91,7 @@ TreeWalker::Seek(nsIContent* aChildNode)
 {
   MOZ_ASSERT(aChildNode, "Child cannot be null");
 
-  mPhase = eAtStart;
-  mStateStack.Clear();
-  mARIAOwnsIdx = 0;
+  Reset();
 
   if (mAnchorNode == aChildNode) {
     return true;
@@ -114,7 +141,7 @@ TreeWalker::Seek(nsIContent* aChildNode)
 }
 
 Accessible*
-TreeWalker::Next(nsIContent* aStopNode)
+TreeWalker::Next()
 {
   if (mStateStack.IsEmpty()) {
     if (mPhase == eAtEnd) {
@@ -143,10 +170,6 @@ TreeWalker::Next(nsIContent* aStopNode)
 
   dom::AllChildrenIterator* top = &mStateStack[mStateStack.Length() - 1];
   while (top) {
-    if (aStopNode && top->Get() == aStopNode) {
-      return nullptr;
-    }
-
     while (nsIContent* childNode = top->GetNextChild()) {
       bool skipSubtree = false;
       Accessible* child = AccessibleFor(childNode, mFlags, &skipSubtree);
@@ -154,13 +177,9 @@ TreeWalker::Next(nsIContent* aStopNode)
         return child;
       }
 
-      // Walk down the subtree if allowed, otherwise check if we have reached
-      // a stop node.
+      // Walk down the subtree if allowed.
       if (!skipSubtree && childNode->IsElement()) {
         top = PushState(childNode, true);
-      }
-      else if (childNode == aStopNode) {
-        return nullptr;
       }
     }
     top = PopState();
@@ -175,7 +194,7 @@ TreeWalker::Next(nsIContent* aStopNode)
       mPhase = eAtEnd;
       return nullptr;
     }
-    return Next(aStopNode);
+    return Next();
   }
 
   nsINode* contextNode = mContext->GetNode();
@@ -188,7 +207,7 @@ TreeWalker::Next(nsIContent* aStopNode)
     top = PushState(parent, true);
     if (top->Seek(mAnchorNode)) {
       mAnchorNode = parent;
-      return Next(aStopNode);
+      return Next();
     }
 
     // XXX We really should never get here, it means we're trying to find an
@@ -198,7 +217,7 @@ TreeWalker::Next(nsIContent* aStopNode)
     mAnchorNode = parent;
   }
 
-  return Next(aStopNode);
+  return Next();
 }
 
 Accessible*

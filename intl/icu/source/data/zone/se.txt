@@ -1,32 +1,8 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/se.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 se{
-    Version{"2.1.19.14"}
+    Version{"2.1.31.33"}
     zoneStrings{
-        "America:Curacao"{
-            ec{"Curaçao"}
-        }
-        "America:Merida"{
-            ec{"Mérida"}
-        }
-        "America:Sao_Paulo"{
-            ec{"São Paulo"}
-        }
-        "America:St_Barthelemy"{
-            ec{"Saint Barthélemy"}
-        }
-        "Antarctica:DumontDUrville"{
-            ec{"Dumont d’Urville"}
-        }
-        "Etc:Unknown"{
-            ec{"dovdameahttun áigeavádat"}
-        }
         "meta:Europe_Central"{
             ld{"gaska-Eurohpá geassiáigi"}
             lg{"gaska-Eurohpá áigi"}

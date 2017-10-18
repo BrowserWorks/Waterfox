@@ -4,12 +4,21 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "WebVR")
+
 EXPORTS.mozilla.dom += [
-    'VRDevice.h',
+    'VRDisplay.h',
+    'VRDisplayEvent.h',
+    'VREventObserver.h',
+    'VRServiceTest.h'
     ]
 
 UNIFIED_SOURCES = [
-    'VRDevice.cpp',
+    'VRDisplay.cpp',
+    'VRDisplayEvent.cpp',
+    'VREventObserver.cpp',
+    'VRServiceTest.cpp'
     ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -18,3 +27,6 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/dom/base'
 ]
+
+MOCHITEST_MANIFESTS += ['test/mochitest/mochitest.ini']
+REFTEST_MANIFESTS += ['test/reftest/reftest.list']

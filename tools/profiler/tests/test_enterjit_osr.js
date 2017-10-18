@@ -10,7 +10,7 @@ function run_test() {
     if (!p)
         return;
 
-    // This test assumes that it's starting on an empty SPS stack.
+    // This test assumes that it's starting on an empty profiler stack.
     // (Note that the other profiler tests also assume the profiler
     // isn't already started.)
     do_check_true(!p.IsActive());
@@ -18,7 +18,7 @@ function run_test() {
     const ms = 5;
     p.StartProfiler(100, ms, ["js"], 1);
 
-    function arbitrary_name(){
+    function arbitrary_name() {
         // A frame for |arbitrary_name| has been pushed.  Do a sequence of
         // increasingly long spins until we get a sample.
         var delayMS = 5;
@@ -35,7 +35,7 @@ function run_test() {
                 return pr;
             delayMS *= 2;
         }
-    };
+    }
 
     var profile = arbitrary_name();
 

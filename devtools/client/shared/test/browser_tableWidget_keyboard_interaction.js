@@ -6,17 +6,7 @@
 
 "use strict";
 
-const TEST_URI = "data:text/xml;charset=UTF-8,<?xml version='1.0'?>" +
-  "<?xml-stylesheet href='chrome://global/skin/global.css'?>" +
-
-  // Uncomment these lines to help with visual debugging. When uncommented they
-  // dump a couple of thousand errors in the log (bug 1258285)
-  // "<?xml-stylesheet href='chrome://devtools/skin/light-theme.css'?>" +
-  // "<?xml-stylesheet href='chrome://devtools/skin/widgets.css'?>" +
-
-  "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'" +
-  " title='Table Widget' width='600' height='500'>" +
-  "<box flex='1' class='theme-light'/></window>";
+const TEST_URI = CHROME_URL_ROOT + "doc_tableWidget_keyboard_interaction.xul";
 const TEST_OPT = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
 const {TableWidget} = require("devtools/client/shared/widgets/TableWidget");
@@ -27,9 +17,7 @@ function test() {
   waitForExplicitFinish();
   let win = Services.ww.openWindow(null, TEST_URI, "_blank", TEST_OPT, null);
 
-  win.addEventListener("load", function onLoad() {
-    win.removeEventListener("load", onLoad, false);
-
+  win.addEventListener("load", function () {
     waitForFocus(function () {
       doc = win.document;
       table = new TableWidget(doc.querySelector("box"), {
@@ -46,7 +34,7 @@ function test() {
       });
       startTests();
     });
-  });
+  }, {once: true});
 }
 
 function endTests() {

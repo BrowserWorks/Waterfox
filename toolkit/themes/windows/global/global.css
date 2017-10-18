@@ -21,6 +21,14 @@ menulist > menupopup {
   -moz-binding: url("chrome://global/content/bindings/popup.xml#popup-scrollbars");
 }
 
+/* ::::: Variables ::::: */
+:root {
+  --arrowpanel-padding: 10px;
+  --arrowpanel-background: -moz-field;
+  --arrowpanel-color: -moz-FieldText;
+  --arrowpanel-border-color: ThreeDShadow;
+}
+
 /* ::::: root elements ::::: */
 
 window,
@@ -53,7 +61,7 @@ window.dialog {
 }
 
 .message-icon {
-  list-style-image: url("chrome://global/skin/icons/information-32.png");
+  list-style-image: url("chrome://global/skin/icons/info.svg");
 }
 
 .alert-dialog #info\.icon,
@@ -126,8 +134,10 @@ statusbarpanel:not(.statusbar-resizerpanel):-moz-lwtheme {
 /* XXXBlake yeah, shoot me -- these don't belong here.  I'll move them later. */
 
 sidebarheader {
-  height: 25px;
+  min-height: 25px;
   background-color: -moz-Dialog;
+  color: -moz-dialogText;
+  text-shadow: none;
   -moz-appearance: toolbox;
   border-bottom: 1px solid ThreeDShadow;
   border-top: 1px solid ThreeDHighlight;
@@ -148,8 +158,7 @@ toolbar[mode="text"] .toolbarbutton-text {
 
 /* ::::: miscellaneous formatting ::::: */
 
-:root:-moz-lwtheme,
-[lwthemefooter="true"] {
+:root:-moz-lwtheme {
   -moz-appearance: none;
 }
 
@@ -161,8 +170,7 @@ toolbar[mode="text"] .toolbarbutton-text {
   text-shadow: 1px 1px 1.5px black;
 }
 
-statusbar:-moz-lwtheme,
-sidebarheader:-moz-lwtheme {
+statusbar:-moz-lwtheme {
   -moz-appearance: none;
   background: none;
   border-style: none;
@@ -289,6 +297,8 @@ popupnotificationcontent {
   margin-top: .5em;
 }
 
+%include ../../shared/notification-popup.inc.css
+
 /* :::::: autoscroll popup ::::: */
 
 .autoscroller {
@@ -342,9 +352,7 @@ popupnotificationcontent {
   width: 20px;
 }
 
-@media (-moz-os-version: windows-xp),
-       (-moz-os-version: windows-vista),
-       (-moz-os-version: windows-win7) {
+@media (-moz-os-version: windows-win7) {
   .close-icon {
     -moz-image-region: rect(0, 16px, 16px, 0);
   }
@@ -378,9 +386,7 @@ popupnotificationcontent {
     -moz-image-region: rect(0, 120px, 40px, 80px);
   }
 
-  @media (-moz-os-version: windows-xp),
-         (-moz-os-version: windows-vista),
-         (-moz-os-version: windows-win7) {
+  @media (-moz-os-version: windows-win7) {
     .close-icon {
       -moz-image-region: rect(0, 32px, 32px, 0);
     }

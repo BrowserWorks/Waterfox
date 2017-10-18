@@ -5,6 +5,8 @@
 #ifndef BASE_SYNCHRONIZATION_LOCK_IMPL_H_
 #define BASE_SYNCHRONIZATION_LOCK_IMPL_H_
 
+#include "base/base_export.h"
+#include "base/macros.h"
 #include "build/build_config.h"
 
 #if defined(OS_WIN)
@@ -12,9 +14,6 @@
 #elif defined(OS_POSIX)
 #include <pthread.h>
 #endif
-
-#include "base/base_export.h"
-#include "base/basictypes.h"
 
 namespace base {
 namespace internal {
@@ -25,9 +24,9 @@ namespace internal {
 class BASE_EXPORT LockImpl {
  public:
 #if defined(OS_WIN)
-  typedef CRITICAL_SECTION NativeHandle;
+  using NativeHandle = SRWLOCK;
 #elif defined(OS_POSIX)
-  typedef pthread_mutex_t NativeHandle;
+  using NativeHandle =  pthread_mutex_t;
 #endif
 
   LockImpl();
@@ -48,6 +47,11 @@ class BASE_EXPORT LockImpl {
   // TODO(awalker): refactor lock and condition variables so that this is
   // unnecessary.
   NativeHandle* native_handle() { return &native_handle_; }
+
+#if defined(OS_POSIX)
+  // Whether this lock will attempt to use priority inheritance.
+  static bool PriorityInheritanceAvailable();
+#endif
 
  private:
   NativeHandle native_handle_;

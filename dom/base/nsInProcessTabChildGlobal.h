@@ -37,6 +37,8 @@ class nsInProcessTabChildGlobal : public mozilla::DOMEventTargetHelper,
 {
   typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
 
+  using mozilla::dom::ipc::MessageManagerCallback::GetProcessMessageManager;
+
 public:
   nsInProcessTabChildGlobal(nsIDocShell* aShell, nsIContent* aOwner,
                             nsFrameMessageManager* aChrome);
@@ -75,6 +77,7 @@ public:
   }
   NS_IMETHOD GetContent(mozIDOMWindowProxy** aContent) override;
   NS_IMETHOD GetDocShell(nsIDocShell** aDocShell) override;
+  NS_IMETHOD GetTabEventTarget(nsIEventTarget** aTarget) override;
 
   NS_DECL_NSIINPROCESSCONTENTFRAMEMESSAGEMANAGER
 
@@ -94,7 +97,7 @@ public:
                                       JS::Handle<JSObject *> aCpows,
                                       nsIPrincipal* aPrincipal) override;
 
-  virtual nsresult PreHandleEvent(
+  virtual nsresult GetEventTargetParent(
                      mozilla::EventChainPreVisitor& aVisitor) override;
   NS_IMETHOD AddEventListener(const nsAString& aType,
                               nsIDOMEventListener* aListener,
@@ -141,11 +144,7 @@ public:
   }
 
   virtual JSObject* GetGlobalJSObject() override {
-    if (!mGlobal) {
-      return nullptr;
-    }
-
-    return mGlobal->GetJSObject();
+    return mGlobal;
   }
   virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -164,10 +163,9 @@ protected:
   bool mInitialized;
   bool mLoadingScript;
 
-  // Is this the message manager for an in-process <iframe mozbrowser> or
-  // <iframe mozapp>?  This affects where events get sent, so it affects
-  // PreHandleEvent.
-  bool mIsBrowserOrAppFrame;
+  // Is this the message manager for an in-process <iframe mozbrowser>? This
+  // affects where events get sent, so it affects GetEventTargetParent.
+  bool mIsBrowserFrame;
   bool mPreventEventsEscaping;
 
   // We keep a strong reference to the frameloader after we've started

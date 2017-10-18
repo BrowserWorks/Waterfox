@@ -3,14 +3,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PCompositorBridge;
+include GraphicsMessages;
+include MemoryReportTypes;
+include protocol PCompositorManager;
 include protocol PImageBridge;
+include protocol PProfiler;
 include protocol PVRManager;
 include protocol PVsyncBridge;
+include protocol PUiCompositorController;
+include protocol PVideoDecoderManager;
 
-using mozilla::TimeDuration from "mozilla/TimeStamp.h";
-using mozilla::CSSToLayoutDeviceScale from "Units.h";
-using mozilla::gfx::IntSize from "mozilla/gfx/2D.h";
+using base::ProcessId from "base/process.h";
+using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using mozilla::Telemetry::Accumulation from "mozilla/TelemetryComms.h";
+using mozilla::Telemetry::KeyedAccumulation from "mozilla/TelemetryComms.h";
+using mozilla::Telemetry::ScalarAction from "mozilla/TelemetryComms.h";
+using mozilla::Telemetry::KeyedScalarAction from "mozilla/TelemetryComms.h";
+using mozilla::Telemetry::ChildEventData from "mozilla/TelemetryComms.h";
+using mozilla::Telemetry::DiscardedData from "mozilla/TelemetryComms.h";
+using mozilla::gfx::Feature from "gfxFeature.h";
+using mozilla::gfx::Fallback from "gfxFallback.h";
 
 namespace mozilla {
 namespace gfx {
@@ -20,6 +32,7 @@ union GfxPrefValue {
   int32_t;
   uint32_t;
   float;
+  nsCString;
 };
 
 struct GfxPrefSetting {
@@ -27,30 +40,90 @@ struct GfxPrefSetting {
   GfxPrefValue value;
 };
 
+struct LayerTreeIdMapping {
+  uint64_t layersId;
+  ProcessId ownerId;
+};
+
 sync protocol PGPU
 {
 parent:
   // Sent by the UI process to initiate core settings.
-  async Init(GfxPrefSetting[] prefs);
+  async Init(GfxPrefSetting[] prefs,
+             GfxVarUpdate[] vars,
+             DevicePrefs devicePrefs,
+             LayerTreeIdMapping[] mapping);
 
+  async InitCompositorManager(Endpoint<PCompositorManagerParent> endpoint);
   async InitVsyncBridge(Endpoint<PVsyncBridgeParent> endpoint);
   async InitImageBridge(Endpoint<PImageBridgeParent> endpoint);
   async InitVRManager(Endpoint<PVRManagerParent> endpoint);
+  async InitUiCompositorController(uint64_t rootLayerTreeId, Endpoint<PUiCompositorControllerParent> endpoint);
+  async InitProfiler(Endpoint<PProfilerChild> endpoint);
 
-  // Called to update a gfx preference.
+  // Called to update a gfx preference or variable.
   async UpdatePref(GfxPrefSetting pref);
-
-  // Create a new top-level compositor.
-  async NewWidgetCompositor(Endpoint<PCompositorBridgeParent> endpoint,
-                            CSSToLayoutDeviceScale scale,
-                            TimeDuration vsyncRate,
-                            bool useExternalSurface,
-                            IntSize surfaceSize);
+  async UpdateVar(GfxVarUpdate var);
 
   // Create a new content-process compositor bridge.
-  async NewContentCompositorBridge(Endpoint<PCompositorBridgeParent> endpoint);
+  async NewContentCompositorManager(Endpoint<PCompositorManagerParent> endpoint);
   async NewContentImageBridge(Endpoint<PImageBridgeParent> endpoint);
   async NewContentVRManager(Endpoint<PVRManagerParent> endpoint);
+  async NewContentVideoDecoderManager(Endpoint<PVideoDecoderManagerParent> endpoint);
+
+  // Called to notify the GPU process of who owns a layersId.
+  sync AddLayerTreeIdMapping(LayerTreeIdMapping mapping);
+  async RemoveLayerTreeIdMapping(LayerTreeIdMapping mapping);
+
+  // Request the current DeviceStatus from the GPU process. This blocks until
+  // one is available (i.e., Init has completed).
+  sync GetDeviceStatus() returns (GPUDeviceData status);
+
+  // Have a message be broadcasted to the GPU process by the GPU process
+  // observer service.
+  async NotifyGpuObservers(nsCString aTopic);
+
+  async RequestMemoryReport(uint32_t generation,
+                            bool anonymize,
+                            bool minimizeMemoryUsage,
+                            MaybeFileDesc DMDFile);
+
+child:
+  // Sent when the GPU process has initialized devices. This occurs once, after
+  // Init().
+  async InitComplete(GPUDeviceData data);
+
+  // Sent when APZ detects checkerboarding and apz checkerboard reporting is enabled.
+  async ReportCheckerboard(uint32_t severity, nsCString log);
+
+  // Graphics errors, analogous to PContent::GraphicsError
+  async GraphicsError(nsCString aError);
+
+  async InitCrashReporter(Shmem shmem, NativeThreadId threadId);
+
+  // Have a message be broadcasted to the UI process by the UI process
+  // observer service.
+  async NotifyUiObservers(nsCString aTopic);
+
+  // Messages for reporting telemetry to the UI process.
+  async AccumulateChildHistograms(Accumulation[] accumulations);
+  async AccumulateChildKeyedHistograms(KeyedAccumulation[] accumulations);
+  async UpdateChildScalars(ScalarAction[] actions);
+  async UpdateChildKeyedScalars(KeyedScalarAction[] actions);
+  async RecordChildEvents(ChildEventData[] events);
+  async RecordDiscardedData(DiscardedData data);
+
+  async NotifyDeviceReset(GPUDeviceData status);
+
+  async AddMemoryReport(MemoryReport aReport);
+  async FinishMemoryReport(uint32_t aGeneration);
+
+  // Update the UI process after a feature's status has changed. This is used
+  // outside of the normal startup flow.
+  async UpdateFeature(Feature aFeature, FeatureFailure aChange);
+
+  // Notify about:support/Telemetry that a fallback occurred.
+  async UsedFallback(Fallback aFallback, nsCString message);
 };
 
 } // namespace gfx

@@ -141,6 +141,8 @@ int av_parser_parse2(AVCodecParserContext *s, AVCodecContext *avctx,
     int index, i;
     uint8_t dummy_buf[AV_INPUT_BUFFER_PADDING_SIZE];
 
+    av_assert1(avctx->codec_id != AV_CODEC_ID_NONE);
+
     /* Parsers only work for the specified codec ids. */
     av_assert1(avctx->codec_id == s->parser->codec_ids[0] ||
                avctx->codec_id == s->parser->codec_ids[1] ||
@@ -180,6 +182,11 @@ int av_parser_parse2(AVCodecParserContext *s, AVCodecContext *avctx,
     index = s->parser->parser_parse(s, avctx, (const uint8_t **) poutbuf,
                                     poutbuf_size, buf, buf_size);
     av_assert0(index > -0x20000000); // The API does not allow returning AVERROR codes
+#define FILL(name) if(s->name > 0 && avctx->name <= 0) avctx->name = s->name
+    if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+        FILL(field_order);
+    }
+
     /* update the file pointer */
     if (*poutbuf_size) {
         /* fill the data for the current frame */

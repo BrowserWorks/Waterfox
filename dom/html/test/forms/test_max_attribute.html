@@ -5,7 +5,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=635499
 -->
 <head>
   <title>Test for Bug 635499</title>
-  <script type="application/javascript" src="/MochiKit/packed.js"></script>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -27,12 +26,11 @@ var data = [
   { type: 'url', apply: false },
   { type: 'email', apply: false },
   { type: 'password', apply: false },
-  { type: 'datetime', apply: true, todo: true },
   { type: 'date', apply: true },
   { type: 'month', apply: true },
-  { type: 'week', apply: true, todo: true },
+  { type: 'week', apply: true },
   { type: 'time', apply: true },
-  { type: 'datetime-local', apply: true, todo: true },
+  { type: 'datetime-local', apply: true },
   { type: 'number', apply: true },
   { type: 'range', apply: true },
   { type: 'color', apply: false },
@@ -71,7 +69,8 @@ function checkValidity(aElement, aValidity, aApply, aRangeApply)
      "element overflow status should be " + !aValidity);
   var overflowMsg =
         (aElement.type == "date" || aElement.type == "time" ||
-         aElement.type == "month") ?
+         aElement.type == "month" || aElement.type == "week" ||
+         aElement.type == "datetime-local") ?
         ("Please select a value that is no later than " + aElement.max + ".") :
         ("Please select a value that is no more than " + aElement.max + ".");
   is(aElement.validationMessage,
@@ -97,11 +96,6 @@ function checkValidity(aElement, aValidity, aApply, aRangeApply)
 for (var test of data) {
   input.type = test.type;
   var apply = test.apply;
-
-  if (test.todo) {
-    todo_is(input.type, test.type, test.type + " isn't implemented yet");
-    continue;
-  }
 
   // The element should be valid. Range should not apply when @min and @max are
   // undefined, except if the input type is 'range' (since that type has a
@@ -148,6 +142,12 @@ for (var test of data) {
       break;
     case 'month':
       input.max = '2016-12';
+      break;
+    case 'week':
+      input.max = '2016-W39';
+      break;
+    case 'datetime-local':
+      input.max = '2016-12-31T23:59:59';
       break;
     default:
       ok(false, 'please, add a case for this new type (' + input.type + ')');
@@ -372,6 +372,85 @@ for (var test of data) {
       checkValidity(input, false, apply, apply);
 
       input.value = '0049-12';
+      checkValidity(input, true, apply, apply);
+
+      input.max = '';
+      checkValidity(input, true, apply, false);
+
+      input.max = 'foo';
+      checkValidity(input, true, apply, false);
+
+      break;
+    case 'week':
+      input.value = '2016-W01';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-W39';
+      checkValidity(input, true, apply, apply);
+
+      input.value = 'foo';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2017-W01';
+      checkValidity(input, false, apply, apply);
+
+      input.max = '2017-W01';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2017-W52';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '1000-W01';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2100-W01';
+      checkValidity(input, false, apply, apply);
+
+      input.max = '0050-W01';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '0049-W52';
+      checkValidity(input, true, apply, apply);
+
+      input.max = '';
+      checkValidity(input, true, apply, false);
+
+      input.max = 'foo';
+      checkValidity(input, true, apply, false);
+
+      break;
+    case 'datetime-local':
+      input.value = '2016-01-01T12:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-12-31T23:59:59';
+      checkValidity(input, true, apply, apply);
+
+      input.value = 'foo';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2016-12-31T23:59:59.123';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '2017-01-01T10:00';
+      checkValidity(input, false, apply, apply);
+
+      input.max = '2017-01-01T10:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2017-01-01T10:00:30';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '1000-01-01T12:00';
+      checkValidity(input, true, apply, apply);
+
+      input.value = '2100-01-01T12:00';
+      checkValidity(input, false, apply, apply);
+
+      input.max = '0050-12-31T23:59:59.999';
+      checkValidity(input, false, apply, apply);
+
+      input.value = '0050-12-31T23:59:59';
       checkValidity(input, true, apply, apply);
 
       input.max = '';

@@ -13,9 +13,13 @@ Contents:
 
    localeswitching
    uitelemetry
+   activitystreamtelemetry
+   downloadcontenttelemetry
    adjust
    defaultdomains
    bouncer
+   shutdown
+   push
 
 Indices and tables
 ==================

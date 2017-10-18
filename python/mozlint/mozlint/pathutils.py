@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import
 
 import os
 
@@ -22,8 +22,12 @@ class FilterPath(object):
         if self._finder:
             return self._finder
         self._finder = FileFinder(
-            self.path, find_executables=False, ignore=self.exclude)
+            self.path, ignore=self.exclude)
         return self._finder
+
+    @property
+    def ext(self):
+        return os.path.splitext(self.path)[1].strip('.')
 
     @property
     def exists(self):
@@ -58,24 +62,32 @@ class FilterPath(object):
         return repr(self.path)
 
 
-def filterpaths(paths, include=None, exclude=None):
+def filterpaths(paths, linter, **lintargs):
     """Filters a list of paths.
 
-    Given a list of paths, and a list of include and exclude
-    directives, return the set of paths that should be linted.
+    Given a list of paths, and a linter definition plus extra
+    arguments, return the set of paths that should be linted.
 
     :param paths: A starting list of paths to possibly lint.
-    :param include: A list of include directives. May contain glob patterns.
-    :param exclude: A list of exclude directives. May contain glob patterns.
-    :returns: A tuple containing a list of file paths to lint, and a list
-              of file paths that should be excluded (but that the algorithm
-              was unable to apply).
+    :param linter: A linter definition.
+    :param lintargs: Extra arguments passed to the linter.
+    :returns: A list of file paths to lint.
     """
-    if not include and not exclude:
+    include = linter.get('include', [])
+    exclude = lintargs.get('exclude', [])
+    exclude.extend(linter.get('exclude', []))
+    root = lintargs['root']
+
+    if not lintargs.get('use_filters', True) or (not include and not exclude):
         return paths
 
-    include = map(FilterPath, include or [])
-    exclude = map(FilterPath, exclude or [])
+    def normalize(path):
+        if not os.path.isabs(path):
+            path = os.path.join(root, path)
+        return FilterPath(path)
+
+    include = map(normalize, include)
+    exclude = map(normalize, exclude)
 
     # Paths with and without globs will be handled separately,
     # pull them apart now.
@@ -85,9 +97,17 @@ def filterpaths(paths, include=None, exclude=None):
     includeglobs = [p for p in include if not p.exists]
     excludeglobs = [p for p in exclude if not p.exists]
 
+    extensions = linter.get('extensions')
     keep = set()
     discard = set()
     for path in map(FilterPath, paths):
+        # Exclude bad file extensions
+        if extensions and path.isfile and path.ext not in extensions:
+            continue
+
+        if path.match(excludeglobs):
+            continue
+
         # First handle include/exclude directives
         # that exist (i.e don't have globs)
         for inc in includepaths:
@@ -121,15 +141,38 @@ def filterpaths(paths, include=None, exclude=None):
             # by an exclude directive.
             if not path.match(includeglobs):
                 continue
-            elif path.match(excludeglobs):
-                continue
+
             keep.add(path)
         elif path.isdir:
             # If the specified path is a directory, use a
             # FileFinder to resolve all relevant globs.
-            path.exclude = excludeglobs
+            path.exclude = [e.path for e in excludeglobs]
             for pattern in includeglobs:
                 for p, f in path.finder.find(pattern.path):
                     keep.add(path.join(p))
 
-    return ([f.path for f in keep], [f.path for f in discard])
+    # Only pass paths we couldn't exclude here to the underlying linter
+    lintargs['exclude'] = [f.path for f in discard]
+    return [f.path for f in keep]
+
+
+def findobject(path):
+    """
+    Find a Python object given a path of the form <modulepath>:<objectpath>.
+    Conceptually equivalent to
+
+        def find_object(modulepath, objectpath):
+            import <modulepath> as mod
+            return mod.<objectpath>
+    """
+    if path.count(':') != 1:
+        raise ValueError(
+            'python path {!r} does not have the form "module:object"'.format(path))
+
+    modulepath, objectpath = path.split(':')
+    obj = __import__(modulepath)
+    for a in modulepath.split('.')[1:]:
+        obj = getattr(obj, a)
+    for a in objectpath.split('.'):
+        obj = getattr(obj, a)
+    return obj

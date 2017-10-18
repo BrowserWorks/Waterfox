@@ -79,7 +79,7 @@ public:
    * Sub classes can SetImage() to update the image being appended to the
    * output stream. It will be appended on the next NotifyPull from MSG.
    */
-  void SetImage(const RefPtr<layers::Image>& aImage);
+  void SetImage(const RefPtr<layers::Image>& aImage, const TimeStamp& aTime);
 
   /*
    * Makes sure any internal resources this driver is holding that may create
@@ -112,7 +112,13 @@ public:
   // WebIDL
   HTMLCanvasElement* Canvas() const { return mCanvas; }
   void RequestFrame();
+
   dom::FrameCaptureListener* FrameCaptureListener();
+
+  /**
+   * Stops capturing for this stream at mCanvas.
+   */
+  void StopCapture();
 
   /**
    * Create a CanvasCaptureMediaStream whose underlying stream is a SourceMediaStream.

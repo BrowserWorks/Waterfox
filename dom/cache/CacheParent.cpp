@@ -25,20 +25,20 @@ CacheParent::CacheParent(cache::Manager* aManager, CacheId aCacheId)
   , mCacheId(aCacheId)
 {
   MOZ_COUNT_CTOR(cache::CacheParent);
-  MOZ_ASSERT(mManager);
+  MOZ_DIAGNOSTIC_ASSERT(mManager);
   mManager->AddRefCacheId(mCacheId);
 }
 
 CacheParent::~CacheParent()
 {
   MOZ_COUNT_DTOR(cache::CacheParent);
-  MOZ_ASSERT(!mManager);
+  MOZ_DIAGNOSTIC_ASSERT(!mManager);
 }
 
 void
 CacheParent::ActorDestroy(ActorDestroyReason aReason)
 {
-  MOZ_ASSERT(mManager);
+  MOZ_DIAGNOSTIC_ASSERT(mManager);
   mManager->ReleaseCacheId(mCacheId);
   mManager = nullptr;
 }
@@ -65,23 +65,23 @@ CacheParent::DeallocPCacheOpParent(PCacheOpParent* aActor)
   return true;
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheParent::RecvPCacheOpConstructor(PCacheOpParent* aActor,
                                      const CacheOpArgs& aOpArgs)
 {
   auto actor = static_cast<CacheOpParent*>(aActor);
   actor->Execute(mManager);
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 CacheParent::RecvTeardown()
 {
   if (!Send__delete__(this)) {
     // child process is gone, warn and allow actor to clean up normally
     NS_WARNING("Cache failed to send delete.");
   }
-  return true;
+  return IPC_OK();
 }
 
 } // namespace cache

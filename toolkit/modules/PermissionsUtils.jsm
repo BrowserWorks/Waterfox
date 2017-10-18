@@ -16,10 +16,7 @@ function importPrefBranch(aPrefBranch, aPermission, aAction) {
   let list = Services.prefs.getChildList(aPrefBranch, {});
 
   for (let pref of list) {
-    let origins = "";
-    try {
-      origins = Services.prefs.getCharPref(pref);
-    } catch (e) {}
+    let origins = Services.prefs.getCharPref(pref, "");
 
     if (!origins)
       continue;
@@ -35,8 +32,8 @@ function importPrefBranch(aPrefBranch, aPermission, aAction) {
         // reasons, we convert these hosts into http:// and https:// permissions
         // on default ports.
         try {
-          let httpURI = Services.io.newURI("http://" + origin, null, null);
-          let httpsURI = Services.io.newURI("https://" + origin, null, null);
+          let httpURI = Services.io.newURI("http://" + origin);
+          let httpsURI = Services.io.newURI("https://" + origin);
 
           principals = [
             Services.scriptSecurityManager.createCodebasePrincipal(httpURI, {}),
@@ -81,7 +78,7 @@ this.PermissionsUtils = {
    * @param aPermission Permission name to be passsed to the Permissions
    *                    Manager.
    */
-  importFromPrefs: function(aPrefBranch, aPermission) {
+  importFromPrefs(aPrefBranch, aPermission) {
     if (!aPrefBranch.endsWith("."))
       aPrefBranch += ".";
 

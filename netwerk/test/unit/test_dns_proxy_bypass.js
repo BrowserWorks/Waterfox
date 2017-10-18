@@ -16,7 +16,7 @@ var dnsRequestObserver = {
   register: function() {
     this.obs = Cc["@mozilla.org/observer-service;1"].
       getService(Ci.nsIObserverService);
-    this.obs.addObserver(this, "dns-resolution-request", false);
+    this.obs.addObserver(this, "dns-resolution-request");
   },
 
   unregister: function() {
@@ -70,7 +70,7 @@ function run_test() {
                     Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                     Ci.nsIContentPolicy.TYPE_WEBSOCKET);
 
-  var uri = ioService.newURI(url, null, null);
+  var uri = ioService.newURI(url);
   chan.asyncOpen(uri, url, 0, listener, null);
   do_test_pending();
 }

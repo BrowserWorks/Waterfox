@@ -12,7 +12,7 @@
 
 namespace mozilla {
 
-class PrincipalOriginAttributes;
+class OriginAttributes;
 
 namespace ipc {
 class BackgroundChildImpl;
@@ -33,18 +33,25 @@ public:
     mShuttingDown = true;
   }
 
-  virtual bool RecvNotifyRegister(const ServiceWorkerRegistrationData& aData)
+  virtual mozilla::ipc::IPCResult RecvNotifyRegister(const ServiceWorkerRegistrationData& aData)
                                                                        override;
 
-  virtual bool RecvNotifySoftUpdate(const PrincipalOriginAttributes& aOriginAttributes,
-                                    const nsString& aScope) override;
+  virtual mozilla::ipc::IPCResult RecvNotifySoftUpdate(const OriginAttributes& aOriginAttributes,
+                                                       const nsString& aScope) override;
 
-  virtual bool RecvNotifyUnregister(const PrincipalInfo& aPrincipalInfo,
-                                    const nsString& aScope) override;
+  virtual mozilla::ipc::IPCResult RecvNotifyUnregister(const PrincipalInfo& aPrincipalInfo,
+                                                       const nsString& aScope) override;
 
-  virtual bool RecvNotifyRemove(const nsCString& aHost) override;
+  virtual mozilla::ipc::IPCResult RecvNotifyRemove(const nsCString& aHost) override;
 
-  virtual bool RecvNotifyRemoveAll() override;
+  virtual mozilla::ipc::IPCResult RecvNotifyRemoveAll() override;
+
+  virtual PServiceWorkerUpdaterChild*
+  AllocPServiceWorkerUpdaterChild(const OriginAttributes& originAttributes,
+                                  const nsCString& scope) override;
+
+  virtual bool
+  DeallocPServiceWorkerUpdaterChild(PServiceWorkerUpdaterChild* aActor) override;
 
 private:
   ServiceWorkerManagerChild()

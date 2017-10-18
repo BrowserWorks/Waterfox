@@ -40,6 +40,8 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+import org.mozilla.gecko.sync.telemetry.TelemetryCollector;
+import org.mozilla.gecko.sync.telemetry.TelemetryStageCollector;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -72,6 +74,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, CryptoException, URISyntaxException {
     super();
     session = initializeSession();
+    telemetryStageCollector = new TelemetryStageCollector(new TelemetryCollector());
+    telemetryStageCollector.getSyncCollector().setIDs("mockUID", "mockDeviceID");
   }
 
   // Static so we can set it during the constructor. This is so evil.
@@ -765,9 +769,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     final String expectedGUID = remoteRecord.guid;
 
     this.addCommands(remoteRecord);
-    assertEquals(1, toUpload.size());
+    assertEquals(1, modifiedClientsToUpload.size());
 
-    final ClientRecord recordToUpload = toUpload.get(0);
+    final ClientRecord recordToUpload = modifiedClientsToUpload.get(0);
     assertEquals(4, recordToUpload.commands.size());
     assertEquals(expectedGUID, recordToUpload.guid);
     assertEquals(null, recordToUpload.version);
@@ -782,9 +786,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     final String expectedGUID = remoteRecord.guid;
 
     this.addCommands(remoteRecord);
-    assertEquals(1, toUpload.size());
+    assertEquals(1, modifiedClientsToUpload.size());
 
-    final ClientRecord recordToUpload = toUpload.get(0);
+    final ClientRecord recordToUpload = modifiedClientsToUpload.get(0);
     assertEquals(4, recordToUpload.commands.size());
     assertEquals(expectedGUID, recordToUpload.guid);
     assertEquals("12a1", recordToUpload.version);

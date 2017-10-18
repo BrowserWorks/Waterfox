@@ -10,9 +10,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import org.mozilla.gecko.R;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import android.content.Context;
 import android.view.View;
@@ -20,6 +18,7 @@ import android.view.View;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.toolbar.SiteIdentityPopup;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import java.util.Locale;
 
@@ -47,7 +46,7 @@ public class ContentSecurityDoorHanger extends DoorHanger {
             mMessage.setText(message);
         }
 
-        final JSONObject options = config.getOptions();
+        final GeckoBundle options = config.getOptions();
         if (options != null) {
             setOptions(options);
         }
@@ -66,35 +65,35 @@ public class ContentSecurityDoorHanger extends DoorHanger {
     }
 
     @Override
-    public void setOptions(final JSONObject options) {
+    public void setOptions(final GeckoBundle options) {
         super.setOptions(options);
-        final JSONObject link = options.optJSONObject("link");
+
+        final GeckoBundle link = options.getBundle("link");
         if (link != null) {
-            try {
-                final String linkLabel = link.getString("label");
-                final String linkUrl = link.getString("url");
-                addLink(linkLabel, linkUrl);
-            } catch (JSONException e) { }
+            final String linkLabel = link.getString("label");
+            final String linkUrl = link.getString("url");
+            addLink(linkLabel, linkUrl);
         }
 
-        final JSONObject trackingProtection = options.optJSONObject("tracking_protection");
+        final GeckoBundle trackingProtection = options.getBundle("tracking_protection");
         if (trackingProtection != null) {
             mTitle.setVisibility(VISIBLE);
             mTitle.setText(R.string.doorhanger_tracking_title);
-            try {
-                final boolean enabled = trackingProtection.getBoolean("enabled");
-                if (enabled) {
-                    mMessage.setText(R.string.doorhanger_tracking_message_enabled);
-                    mSecurityState.setText(R.string.doorhanger_tracking_state_enabled);
-                    mSecurityState.setTextColor(ContextCompat.getColor(getContext(), R.color.affirmative_green));
-                } else {
-                    mMessage.setText(R.string.doorhanger_tracking_message_disabled);
-                    mSecurityState.setText(R.string.doorhanger_tracking_state_disabled);
-                    mSecurityState.setTextColor(ContextCompat.getColor(getContext(), R.color.rejection_red));
-                }
-                mMessage.setVisibility(VISIBLE);
-                mSecurityState.setVisibility(VISIBLE);
-            } catch (JSONException e) { }
+
+            final boolean enabled = trackingProtection.getBoolean("enabled");
+            if (enabled) {
+                mMessage.setText(R.string.doorhanger_tracking_message_enabled);
+                mSecurityState.setText(R.string.doorhanger_tracking_state_enabled);
+                mSecurityState.setTextColor(ContextCompat.getColor(getContext(),
+                                            R.color.affirmative_green));
+            } else {
+                mMessage.setText(R.string.doorhanger_tracking_message_disabled);
+                mSecurityState.setText(R.string.doorhanger_tracking_state_disabled);
+                mSecurityState.setTextColor(ContextCompat.getColor(getContext(),
+                                            R.color.rejection_red));
+            }
+            mMessage.setVisibility(VISIBLE);
+            mSecurityState.setVisibility(VISIBLE);
         }
     }
 
@@ -106,21 +105,17 @@ public class ContentSecurityDoorHanger extends DoorHanger {
                 final String expandedExtra = mType.toString().toLowerCase(Locale.US) + "-" + telemetryExtra;
                 Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.DOORHANGER, expandedExtra);
 
-                final JSONObject response = new JSONObject();
-                try {
-                    switch (mType) {
-                        case TRACKING:
-                            response.put("allowContent", (id == SiteIdentityPopup.ButtonType.DISABLE.ordinal()));
-                            response.put("contentType", ("tracking"));
-                            break;
-                        default:
-                            Log.w(LOGTAG, "Unknown doorhanger type " + mType.toString());
-                    }
-                } catch (JSONException e) {
-                    Log.e(LOGTAG, "Error creating onClick response", e);
+                final GeckoBundle response = new GeckoBundle(2);
+                if (mType == Type.TRACKING) {
+                    response.putBoolean("allowContent",
+                                        id == SiteIdentityPopup.ButtonType.DISABLE.ordinal());
+                    response.putString("contentType", "tracking");
+                } else {
+                    Log.w(LOGTAG, "Unknown doorhanger type " + mType.toString());
                 }
 
-                mOnButtonClickListener.onButtonClick(response, ContentSecurityDoorHanger.this);
+                mOnButtonClickListener.onButtonClick(
+                        response, ContentSecurityDoorHanger.this);
             }
         };
     }

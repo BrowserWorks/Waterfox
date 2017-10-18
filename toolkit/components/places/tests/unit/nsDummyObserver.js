@@ -10,32 +10,32 @@ const Ci = Components.interfaces;
 
 // Dummy boomark/history observer
 function DummyObserver() {
-  Services.obs.notifyObservers(null, "dummy-observer-created", null);
+  Services.obs.notifyObservers(null, "dummy-observer-created");
 }
 
 DummyObserver.prototype = {
   // history observer
-  onBeginUpdateBatch: function () {},
-  onEndUpdateBatch: function () {},
-  onVisit: function (aURI, aVisitID, aTime, aSessionID, aReferringID, aTransitionType) {
-    Services.obs.notifyObservers(null, "dummy-observer-visited", null);
+  onBeginUpdateBatch() {},
+  onEndUpdateBatch() {},
+  onVisit(aURI, aVisitID, aTime, aSessionID, aReferringID, aTransitionType) {
+    Services.obs.notifyObservers(null, "dummy-observer-visited");
   },
-  onTitleChanged: function () {},
-  onDeleteURI: function () {},
-  onClearHistory: function () {},
-  onPageChanged: function () {},
-  onDeleteVisits: function () {},
+  onTitleChanged() {},
+  onDeleteURI() {},
+  onClearHistory() {},
+  onPageChanged() {},
+  onDeleteVisits() {},
 
   // bookmark observer
-  //onBeginUpdateBatch: function() {},
-  //onEndUpdateBatch: function() {},
-  onItemAdded: function(aItemId, aParentId, aIndex, aItemType, aURI) {
-    Services.obs.notifyObservers(null, "dummy-observer-item-added", null);
+  // onBeginUpdateBatch: function() {},
+  // onEndUpdateBatch: function() {},
+  onItemAdded(aItemId, aParentId, aIndex, aItemType, aURI) {
+    Services.obs.notifyObservers(null, "dummy-observer-item-added");
   },
-  onItemChanged: function () {},
-  onItemRemoved: function() {},
-  onItemVisited: function() {},
-  onItemMoved: function() {},
+  onItemChanged() {},
+  onItemRemoved() {},
+  onItemVisited() {},
+  onItemMoved() {},
 
   classID: Components.ID("62e221d3-68c3-4e1a-8943-a27beb5005fe"),
 

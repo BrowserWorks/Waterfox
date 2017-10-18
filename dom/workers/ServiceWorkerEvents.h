@@ -11,13 +11,11 @@
 #include "mozilla/dom/ExtendableEventBinding.h"
 #include "mozilla/dom/ExtendableMessageEventBinding.h"
 #include "mozilla/dom/FetchEventBinding.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/workers/bindings/ServiceWorker.h"
-
-#ifndef MOZ_SIMPLEPUSH
-#include "mozilla/dom/File.h"
-#endif
+#include "mozilla/dom/workers/Workers.h"
 
 #include "nsProxyRelease.h"
 #include "nsContentUtils.h"
@@ -28,7 +26,6 @@ namespace mozilla {
 namespace dom {
 class Blob;
 class MessagePort;
-class MessagePortList;
 class Request;
 class ResponseOrPromise;
 
@@ -55,16 +52,31 @@ public:
 
 class ExtendableEvent : public Event
 {
+public:
+  class ExtensionsHandler {
+  public:
+    virtual bool
+    WaitOnPromise(Promise& aPromise) = 0;
+
+    NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
+  };
+
+private:
+  RefPtr<ExtensionsHandler> mExtensionsHandler;
+
 protected:
-  nsTArray<RefPtr<Promise>> mPromises;
+  bool
+  WaitOnPromise(Promise& aPromise);
 
   explicit ExtendableEvent(mozilla::dom::EventTarget* aOwner);
   ~ExtendableEvent() {}
 
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ExtendableEvent, Event)
   NS_FORWARD_TO_EVENT
+
+  void
+  SetKeepAliveHandler(ExtensionsHandler* aExtensionsHandler);
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -80,6 +92,7 @@ public:
     bool trusted = e->Init(aOwner);
     e->InitEvent(aType, aOptions.mBubbles, aOptions.mCancelable);
     e->SetTrusted(trusted);
+    e->SetComposed(aOptions.mComposed);
     return e.forget();
   }
 
@@ -95,9 +108,6 @@ public:
 
   void
   WaitUntil(JSContext* aCx, Promise& aPromise, ErrorResult& aRv);
-
-  already_AddRefed<Promise>
-  GetPromise();
 
   virtual ExtendableEvent* AsExtendableEvent() override
   {
@@ -126,7 +136,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(FetchEvent, ExtendableEvent)
 
   // Note, we cannot use NS_FORWARD_TO_EVENT because we want a different
-  // PreventDefault(JSContext*) override.
+  // PreventDefault(JSContext*, CallerType) override.
   NS_FORWARD_NSIDOMEVENT(Event::)
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
@@ -179,13 +189,11 @@ public:
   Default();
 
   void
-  PreventDefault(JSContext* aCx) override;
+  PreventDefault(JSContext* aCx, CallerType aCallerType) override;
 
   void
   ReportCanceled();
 };
-
-#ifndef MOZ_SIMPLEPUSH
 
 class PushMessageData final : public nsISupports,
                               public nsWrapperCache
@@ -214,7 +222,7 @@ private:
   nsString mDecodedText;
   ~PushMessageData();
 
-  NS_METHOD EnsureDecodedText();
+  nsresult EnsureDecodedText();
   uint8_t* GetContentsCopy();
 };
 
@@ -255,7 +263,6 @@ public:
     return mData;
   }
 };
-#endif /* ! MOZ_SIMPLEPUSH */
 
 class ExtendableMessageEvent final : public ExtendableEvent
 {
@@ -265,7 +272,7 @@ class ExtendableMessageEvent final : public ExtendableEvent
   RefPtr<ServiceWorkerClient> mClient;
   RefPtr<ServiceWorker> mServiceWorker;
   RefPtr<MessagePort> mMessagePort;
-  RefPtr<MessagePortList> mPorts;
+  nsTArray<RefPtr<MessagePort>> mPorts;
 
 protected:
   explicit ExtendableMessageEvent(EventTarget* aOwner);
@@ -313,13 +320,7 @@ public:
     return NS_OK;
   }
 
-  MessagePortList* GetPorts() const;
-
-  void SetPorts(MessagePortList* aPorts);
-
-  void SetSource(ServiceWorkerClient* aClient);
-
-  void SetSource(ServiceWorker* aServiceWorker);
+  void GetPorts(nsTArray<RefPtr<MessagePort>>& aPorts);
 };
 
 END_WORKERS_NAMESPACE

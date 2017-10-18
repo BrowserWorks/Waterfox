@@ -103,6 +103,8 @@ public:
 
   void NotifyReset();
 
+  bool IsLoaded();
+
 private:
   /**
    * Converts the TextTrackCue's cuetext into a tree of DOM objects
@@ -150,6 +152,8 @@ private:
 
   void ReportTelemetryForTrack(TextTrack* aTextTrack) const;
   void ReportTelemetryForCue();
+
+  bool IsShutdown() const;
 
   // If there is at least one cue has been added to the cue list once, we would
   // report the usage of cue to Telemetry.

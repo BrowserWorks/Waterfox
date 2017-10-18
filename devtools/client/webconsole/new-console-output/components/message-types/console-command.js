@@ -9,43 +9,46 @@
 // React & Redux
 const {
   createFactory,
-  DOM: dom,
   PropTypes
 } = require("devtools/client/shared/vendor/react");
-const { ConsoleCommand: ConsoleCommandType } = require("devtools/client/webconsole/new-console-output/types");
-const MessageIcon = createFactory(require("devtools/client/webconsole/new-console-output/components/message-icon").MessageIcon);
+const Message = createFactory(require("devtools/client/webconsole/new-console-output/components/message"));
 
 ConsoleCommand.displayName = "ConsoleCommand";
 
 ConsoleCommand.propTypes = {
-  message: PropTypes.instanceOf(ConsoleCommandType).isRequired,
+  message: PropTypes.object.isRequired,
+  timestampsVisible: PropTypes.bool.isRequired,
+  serviceContainer: PropTypes.object,
 };
 
 /**
  * Displays input from the console.
  */
 function ConsoleCommand(props) {
-  const { message } = props;
+  const {
+    message,
+    timestampsVisible,
+    serviceContainer,
+  } = props;
 
-  const icon = MessageIcon({severity: message.severity});
+  const {
+    indent,
+    source,
+    type,
+    level,
+    messageText: messageBody,
+  } = message;
 
-  // @TODO Use of "is" is a temporary hack to get the category and severity
-  // attributes to be applied. There are targeted in webconsole's CSS rules,
-  // so if we remove this hack, we have to modify the CSS rules accordingly.
-  return dom.div({
-    class: "message",
-    ariaLive: "off",
-    is: "fdt-message",
-    category: message.category,
-    severity: message.severity
-  },
-    // @TODO add timestamp
-    // @TODO add indent if necessary
-    icon,
-    dom.span({className: "message-body-wrapper message-body devtools-monospace"},
-      dom.span({}, message.messageText)
-    )
-  );
+  return Message({
+    source,
+    type,
+    level,
+    topLevelClasses: [],
+    messageBody,
+    serviceContainer,
+    indent,
+    timestampsVisible,
+  });
 }
 
-module.exports.ConsoleCommand = ConsoleCommand;
+module.exports = ConsoleCommand;

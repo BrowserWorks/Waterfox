@@ -8,7 +8,6 @@
 #include "LayerScope.h"
 
 #include "nsAppRunner.h"
-#include "Composer2D.h"
 #include "Effects.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/MathAlgorithms.h"
@@ -143,10 +142,10 @@ private:
        SocketListener() { }
 
        /* nsIServerSocketListener */
-       NS_IMETHODIMP OnSocketAccepted(nsIServerSocket *aServ,
-                                      nsISocketTransport *aTransport) override;
-       NS_IMETHODIMP OnStopListening(nsIServerSocket *aServ,
-                                   nsresult aStatus) override
+       NS_IMETHOD OnSocketAccepted(nsIServerSocket *aServ,
+                                   nsISocketTransport *aTransport) override;
+       NS_IMETHOD OnStopListening(nsIServerSocket *aServ,
+                                  nsresult aStatus) override
        {
            return NS_OK;
        }
@@ -171,7 +170,7 @@ private:
         bool WriteToStream(void *aPtr, uint32_t aSize);
 
         // nsIInputStreamCallback
-        NS_IMETHODIMP OnInputStreamReady(nsIAsyncInputStream *aStream) override;
+        NS_IMETHOD OnInputStreamReady(nsIAsyncInputStream *aStream) override;
 
     private:
         virtual ~SocketHandler() { CloseConnection(); }
@@ -345,11 +344,12 @@ private:
     class CreateServerSocketRunnable : public Runnable
     {
     public:
-        explicit CreateServerSocketRunnable(LayerScopeManager *aLayerScopeManager)
-            : mLayerScopeManager(aLayerScopeManager)
-        {
+      explicit CreateServerSocketRunnable(LayerScopeManager* aLayerScopeManager)
+        : Runnable("layers::LayerScopeManager::CreateServerSocketRunnable")
+        , mLayerScopeManager(aLayerScopeManager)
+      {
         }
-        NS_IMETHOD Run() {
+        NS_IMETHOD Run() override {
             mLayerScopeManager->mWebSocketManager =
                 mozilla::MakeUnique<LayerScopeWebSocketManager>();
             return NS_OK;
@@ -460,101 +460,6 @@ public:
 protected:
     int64_t mFrameStamp;
 };
-
-#ifdef MOZ_WIDGET_GONK
-// B2G optimization.
-class DebugGLGraphicBuffer final: public DebugGLData {
-public:
-    DebugGLGraphicBuffer(void *layerRef,
-                         GLenum target,
-                         GLuint name,
-                         const LayerRenderState &aState,
-                         bool aIsMask,
-                         UniquePtr<Packet> aPacket)
-        : DebugGLData(Packet::TEXTURE),
-          mLayerRef(reinterpret_cast<uint64_t>(layerRef)),
-          mTarget(target),
-          mName(name),
-          mState(aState),
-          mIsMask(aIsMask),
-          mPacket(Move(aPacket))
-    {
-    }
-
-    virtual bool Write() override {
-        return WriteToStream(*mPacket);
-    }
-
-    bool TryPack(bool packData) {
-        android::sp<android::GraphicBuffer> buffer = mState.mSurface;
-        MOZ_ASSERT(buffer.get());
-
-        mPacket->set_type(mDataType);
-        TexturePacket* tp = mPacket->mutable_texture();
-        tp->set_layerref(mLayerRef);
-        tp->set_name(mName);
-        tp->set_target(mTarget);
-        tp->set_ismask(mIsMask);
-
-        int pFormat = buffer->getPixelFormat();
-        if (HAL_PIXEL_FORMAT_RGBA_8888 != pFormat &&
-            HAL_PIXEL_FORMAT_RGBX_8888 != pFormat) {
-            return false;
-        }
-
-        int32_t stride = buffer->getStride() * 4;
-        int32_t height = buffer->getHeight();
-        int32_t width = buffer->getWidth();
-        int32_t sourceSize = stride * height;
-        if (sourceSize <= 0) {
-            return false;
-        }
-
-        uint32_t dFormat = mState.FormatRBSwapped() ?
-                           LOCAL_GL_BGRA : LOCAL_GL_RGBA;
-        tp->set_dataformat(dFormat);
-        tp->set_dataformat((1 << 16 | tp->dataformat()));
-        tp->set_width(width);
-        tp->set_height(height);
-        tp->set_stride(stride);
-
-        if (packData) {
-            uint8_t* grallocData = nullptr;
-            if (BAD_VALUE == buffer->lock(GRALLOC_USAGE_SW_READ_OFTEN |
-                                           GRALLOC_USAGE_SW_WRITE_NEVER,
-                                           reinterpret_cast<void**>(&grallocData)))
-            {
-                return false;
-            }
-            // Do not return before buffer->unlock();
-            auto compressedData =
-                 MakeUnique<char[]>(LZ4::maxCompressedSize(sourceSize));
-            int compressedSize = LZ4::compress((char*)grallocData,
-                                               sourceSize,
-                                               compressedData.get());
-
-            if (compressedSize > 0) {
-                tp->set_data(compressedData.get(), compressedSize);
-            } else {
-                buffer->unlock();
-                return false;
-             }
-
-            buffer->unlock();
-        }
-
-        return true;
-    }
-
-private:
-    uint64_t mLayerRef;
-    GLenum mTarget;
-    GLuint mName;
-    const LayerRenderState &mState;
-    bool mIsMask;
-    UniquePtr<Packet> mPacket;
-};
-#endif
 
 class DebugGLTextureData final: public DebugGLData {
 public:
@@ -723,7 +628,7 @@ public:
                     size_t aRects,
                     const gfx::Rect* aLayerRects,
                     const gfx::Rect* aTextureRects,
-                    const std::list<GLuint> aTexIDs,
+                    const std::list<GLuint>& aTexIDs,
                     void* aLayerRef)
         : DebugGLData(Packet::DRAW),
           mOffsetX(aOffsetX),
@@ -797,7 +702,7 @@ public:
               mHost(host)
         {  }
 
-        NS_IMETHODIMP Run() override {
+        NS_IMETHOD Run() override {
             mHost->mList.insertBack(mData);
             return NS_OK;
         }
@@ -821,7 +726,7 @@ public:
             : mHost(host)
         {  }
 
-        NS_IMETHODIMP Run() override {
+        NS_IMETHOD Run() override {
             mHost->RemoveData();
             return NS_OK;
         }
@@ -843,7 +748,7 @@ public:
             : mHost(host)
         {  }
 
-        NS_IMETHODIMP Run() override {
+        NS_IMETHOD Run() override {
             // Sendout all appended debug data.
             DebugGLData *d = nullptr;
             while ((d = mHost->mList.popFirst()) != nullptr) {
@@ -883,7 +788,7 @@ public:
 protected:
     virtual ~DebugDataSender() {}
     void RemoveData() {
-        MOZ_ASSERT(NS_GetCurrentThread() == mThread);
+        MOZ_ASSERT(mThread->SerialEventTarget()->IsOnCurrentThread());
         if (mList.isEmpty())
             return;
 
@@ -947,13 +852,6 @@ private:
                                   bool aFlipY,
                                   bool aIsMask,
                                   UniquePtr<Packet> aPacket);
-#ifdef MOZ_WIDGET_GONK
-    static bool SendGraphicBuffer(GLContext* aGLContext,
-                                  void* aLayerRef,
-                                  TextureSourceOGL* aSource,
-                                  const TexturedEffect* aEffect,
-                                  bool aIsMask);
-#endif
     static void SetAndSendTexture(GLContext* aGLContext,
                                   void* aLayerRef,
                                   TextureSourceOGL* aSource,
@@ -1021,7 +919,8 @@ SenderHelper::SendLayer(LayerComposite* aLayer,
         case Layer::TYPE_PAINTED: {
             // Get CompositableHost and Compositor
             CompositableHost* compHost = aLayer->GetCompositableHost();
-            Compositor* comp = compHost->GetCompositor();
+            TextureSourceProvider* provider = compHost->GetTextureSourceProvider();
+            Compositor* comp = provider->AsCompositor();
             // Send EffectChain only for CompositorOGL
             if (LayersBackend::LAYERS_OPENGL == comp->GetBackendType()) {
                 CompositorOGL* compOGL = comp->AsCompositorOGL();
@@ -1110,51 +1009,6 @@ SenderHelper::SendTextureSource(GLContext* aGLContext,
 
 }
 
-#ifdef MOZ_WIDGET_GONK
-bool
-SenderHelper::SendGraphicBuffer(GLContext* aGLContext,
-                                void* aLayerRef,
-                                TextureSourceOGL* aSource,
-                                const TexturedEffect* aEffect,
-                                bool aIsMask) {
-    GLuint texID = GetTextureID(aGLContext, aSource);
-    if (HasTextureIdBeenSent(texID)) {
-        return false;
-    }
-    if (!aEffect->mState.mSurface.get()) {
-        return false;
-    }
-
-    // Expose packet creation here, so we could dump primary texture effect attributes.
-    auto packet = MakeUnique<layerscope::Packet>();
-    layerscope::TexturePacket* texturePacket = packet->mutable_texture();
-    texturePacket->set_mpremultiplied(aEffect->mPremultiplied);
-    DumpFilter(texturePacket, aEffect->mSamplingFilter);
-    DumpRect(texturePacket->mutable_mtexturecoords(), aEffect->mTextureCoords);
-
-    GLenum target = aSource->GetTextureTarget();
-    mozilla::UniquePtr<DebugGLGraphicBuffer> package =
-        MakeUnique<DebugGLGraphicBuffer>(aLayerRef, target, texID, aEffect->mState, aIsMask, Move(packet));
-
-    // The texure content in this TexureHost is not altered,
-    // we don't need to send it again.
-    bool changed = gLayerScopeManager.GetContentMonitor()->IsChangedOrNew(
-        aEffect->mState.mTexture);
-    if (!package->TryPack(changed)) {
-        return false;
-    }
-
-    // Transfer ownership to SocketManager.
-    gLayerScopeManager.GetSocketManager()->AppendDebugData(package.release());
-    sSentTextureIds.push_back(texID);
-
-    gLayerScopeManager.CurrentSession().mTexIDs.push_back(texID);
-
-    gLayerScopeManager.GetContentMonitor()->ClearChangedHost(aEffect->mState.mTexture);
-    return true;
-}
-#endif
-
 void
 SenderHelper::SetAndSendTexture(GLContext* aGLContext,
                                 void* aLayerRef,
@@ -1179,12 +1033,6 @@ SenderHelper::SendTexturedEffect(GLContext* aGLContext,
     if (!source) {
         return;
     }
-
-#ifdef MOZ_WIDGET_GONK
-    if (SendGraphicBuffer(aGLContext, aLayerRef, source, aEffect, false)) {
-        return;
-    }
-#endif
 
     // Fallback texture sending path.
     SetAndSendTexture(aGLContext, aLayerRef, source, aEffect);
@@ -1312,7 +1160,7 @@ LayerScopeWebSocketManager::SocketHandler::OpenStream(nsISocketTransport* aTrans
                                 0,
                                 getter_AddRefs(debugInputStream));
     mInputStream = do_QueryInterface(debugInputStream);
-    mInputStream->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+    mInputStream->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
 }
 
 bool
@@ -1387,7 +1235,7 @@ LayerScopeWebSocketManager::SocketHandler::OnInputStreamReady(nsIAsyncInputStrea
         if (WebSocketHandshake(protocolString)) {
             mState = HandshakeSuccess;
             mConnected = true;
-            mInputStream->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+            mInputStream->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
         } else {
             mState = HandshakeFailed;
         }
@@ -1517,7 +1365,7 @@ LayerScopeWebSocketManager::SocketHandler::HandleSocketMessage(nsIAsyncInputStre
         // TODO: combine packets if we have to read more than once
 
         if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
-            mInputStream->AsyncWait(this, 0, 0, NS_GetCurrentThread());
+            mInputStream->AsyncWait(this, 0, 0, GetCurrentThreadEventTarget());
             return NS_OK;
         }
 
@@ -1722,7 +1570,7 @@ LayerScopeWebSocketManager::SocketHandler::CloseConnection()
 LayerScopeWebSocketManager::LayerScopeWebSocketManager()
     : mHandlerMutex("LayerScopeWebSocketManager::mHandlerMutex")
 {
-    NS_NewThread(getter_AddRefs(mDebugSenderThread));
+    NS_NewNamedThread("LayerScope", getter_AddRefs(mDebugSenderThread));
 
     mServerSocket = do_CreateInstance(NS_SERVERSOCKET_CONTRACTID);
     int port = gfxPrefs::LayerScopePort();
@@ -1782,7 +1630,7 @@ NS_IMETHODIMP LayerScopeWebSocketManager::SocketListener::OnSocketAccepted(
 void
 LayerScope::Init()
 {
-    if (!gfxPrefs::LayerScopeEnabled()) {
+    if (!gfxPrefs::LayerScopeEnabled() || XRE_IsGPUProcess()) {
         return;
     }
 

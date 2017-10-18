@@ -13,6 +13,7 @@ const {
 const { nodeSpec } = require("devtools/shared/specs/node");
 require("devtools/shared/specs/styles");
 require("devtools/shared/specs/highlighters");
+require("devtools/shared/specs/layout");
 
 exports.nodeSpec = nodeSpec;
 
@@ -103,6 +104,10 @@ const walkerSpec = generateActorSpec({
     },
     "picker-node-picked": {
       type: "pickerNodePicked",
+      node: Arg(0, "disconnectedNode")
+    },
+    "picker-node-previewed": {
+      type: "pickerNodePreviewed",
       node: Arg(0, "disconnectedNode")
     },
     "picker-node-hovered": {
@@ -229,7 +234,8 @@ const walkerSpec = generateActorSpec({
       request: {
         node: Arg(0, "domnode"),
         pseudoClass: Arg(1),
-        parents: Option(2)
+        parents: Option(2),
+        enabled: Option(2, "boolean"),
       },
       response: {}
     },
@@ -362,7 +368,21 @@ const walkerSpec = generateActorSpec({
       response: {
         node: RetVal("nullable:disconnectedNode")
       }
-    }
+    },
+    getLayoutInspector: {
+      request: {},
+      response: {
+        actor: RetVal("layout")
+      }
+    },
+    getOffsetParent: {
+      request: {
+        node: Arg(0, "nullable:domnode")
+      },
+      response: {
+        node: RetVal("nullable:domnode")
+      }
+    },
   }
 });
 
@@ -427,6 +447,12 @@ const inspectorSpec = generateActorSpec({
     cancelPickColorFromPage: {
       request: {},
       response: {}
+    },
+    supportsHighlighters: {
+      request: {},
+      response: {
+        value: RetVal("boolean")
+      }
     }
   }
 });

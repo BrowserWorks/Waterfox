@@ -3,6 +3,11 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* Bug 661762 */
 
+// Use the old webconsole since scratchpad focus isn't working on new one (Bug 1304794)
+Services.prefs.setBoolPref("devtools.webconsole.new-frontend-enabled", false);
+registerCleanupFunction(function* () {
+  Services.prefs.clearUserPref("devtools.webconsole.new-frontend-enabled");
+});
 
 function test()
 {
@@ -20,10 +25,8 @@ function test()
   // on the location link. After that we check which Scratchpad window
   // is currently active (it should be the older one).
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function onLoad() {
-    gBrowser.selectedBrowser.removeEventListener("load", onLoad, true);
-
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
+  gBrowser.selectedBrowser.addEventListener("load", function () {
     openScratchpad(function () {
       let sw = gScratchpadWindow;
       let {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
@@ -38,7 +41,7 @@ function test()
         });
       });
     });
-  }, true);
+  }, {capture: true, once: true});
 
   content.location = "data:text/html;charset=utf8,<p>test window focus for Scratchpad.";
 }
@@ -56,9 +59,7 @@ function testFocus(sw, hud) {
     is(loc.getAttribute("data-line"), "1", "line value is correct");
     is(loc.getAttribute("data-column"), "1", "column value is correct");
 
-    sw.addEventListener("focus", function onFocus() {
-      sw.removeEventListener("focus", onFocus, true);
-
+    sw.addEventListener("focus", function () {
       let win = Services.wm.getMostRecentWindow("devtools:scratchpad");
 
       ok(win, "there are active Scratchpad windows");
@@ -69,7 +70,7 @@ function testFocus(sw, hud) {
       // close the second window ourselves.
       sw.close();
       finish();
-    }, true);
+    }, {capture: true, once: true});
 
     // Simulate a click on the "Scratchpad/N:1" link.
     EventUtils.synthesizeMouse(loc, 2, 2, {}, hud.iframeWindow);

@@ -35,21 +35,21 @@ PostMessageEvent::PostMessageEvent(nsGlobalWindow* aSource,
                                    nsIPrincipal* aProvidedPrincipal,
                                    nsIDocument* aSourceDocument,
                                    bool aTrustedCaller)
-: StructuredCloneHolder(CloningSupported, TransferringSupported,
-                        StructuredCloneScope::SameProcessSameThread),
-  mSource(aSource),
-  mCallerOrigin(aCallerOrigin),
-  mTargetWindow(aTargetWindow),
-  mProvidedPrincipal(aProvidedPrincipal),
-  mSourceDocument(aSourceDocument),
-  mTrustedCaller(aTrustedCaller)
+  : Runnable("dom::PostMessageEvent")
+  , StructuredCloneHolder(CloningSupported,
+                          TransferringSupported,
+                          StructuredCloneScope::SameProcessSameThread)
+  , mSource(aSource)
+  , mCallerOrigin(aCallerOrigin)
+  , mTargetWindow(aTargetWindow)
+  , mProvidedPrincipal(aProvidedPrincipal)
+  , mSourceDocument(aSourceDocument)
+  , mTrustedCaller(aTrustedCaller)
 {
-  MOZ_COUNT_CTOR(PostMessageEvent);
 }
 
 PostMessageEvent::~PostMessageEvent()
 {
-  MOZ_COUNT_DTOR(PostMessageEvent);
 }
 
 NS_IMETHODIMP
@@ -107,18 +107,29 @@ PostMessageEvent::Run()
     //       don't do that in other places it seems better to hold the line for
     //       now.  Long-term, we want HTML5 to address this so that we can
     //       be compliant while being safer.
-    if (!BasePrincipal::Cast(targetPrin)->EqualsIgnoringAddonId(mProvidedPrincipal)) {
+    if (!targetPrin->Equals(mProvidedPrincipal)) {
+      OriginAttributes sourceAttrs = mProvidedPrincipal->OriginAttributesRef();
+      OriginAttributes targetAttrs = targetPrin->OriginAttributesRef();
+
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mAppId == targetAttrs.mAppId,
+        "Target and source should have the same mAppId attribute.");
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mUserContextId == targetAttrs.mUserContextId,
+        "Target and source should have the same userContextId attribute.");
+      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mInIsolatedMozBrowser == targetAttrs.mInIsolatedMozBrowser,
+        "Target and source should have the same inIsolatedMozBrowser attribute.");
+
+      if (!nsContentUtils::IsSystemOrExpandedPrincipal(targetPrin) &&
+          !nsContentUtils::IsSystemOrExpandedPrincipal(mProvidedPrincipal) &&
+          !mTrustedCaller) {
+        MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mPrivateBrowsingId == targetAttrs.mPrivateBrowsingId,
+          "Target and source should have the same mPrivateBrowsingId attribute.");
+      }
+
       nsAutoString providedOrigin, targetOrigin;
       nsresult rv = nsContentUtils::GetUTFOrigin(targetPrin, targetOrigin);
       NS_ENSURE_SUCCESS(rv, rv);
       rv = nsContentUtils::GetUTFOrigin(mProvidedPrincipal, providedOrigin);
       NS_ENSURE_SUCCESS(rv, rv);
-
-      MOZ_DIAGNOSTIC_ASSERT(providedOrigin != targetOrigin ||
-                            (BasePrincipal::Cast(mProvidedPrincipal)->OriginAttributesRef() ==
-                              BasePrincipal::Cast(targetPrin)->OriginAttributesRef()),
-                            "Unexpected postMessage call to a window with mismatched "
-                            "origin attributes");
 
       const char16_t* params[] = { providedOrigin.get(), targetOrigin.get() };
 
@@ -147,18 +158,18 @@ PostMessageEvent::Run()
     new MessageEvent(eventTarget, nullptr, nullptr);
 
 
-  Nullable<WindowProxyOrMessagePort> source;
+  Nullable<WindowProxyOrMessagePortOrServiceWorker> source;
   source.SetValue().SetAsWindowProxy() = mSource ? mSource->AsOuter() : nullptr;
+
+  Sequence<OwningNonNull<MessagePort>> ports;
+  if (!TakeTransferredPortsAsSequence(ports)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   event->InitMessageEvent(nullptr, NS_LITERAL_STRING("message"),
                           false /*non-bubbling */, false /*cancelable */,
                           messageData, mCallerOrigin,
-                          EmptyString(), source, nullptr);
-
-  nsTArray<RefPtr<MessagePort>> ports = TakeTransferredPorts();
-
-  event->SetPorts(new MessagePortList(static_cast<dom::Event*>(event.get()),
-                                      ports));
+                          EmptyString(), source, ports);
 
   // We can't simply call dispatchEvent on the window because doing so ends
   // up flipping the trusted bit on the event, and we don't want that to

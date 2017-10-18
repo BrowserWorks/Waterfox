@@ -7,28 +7,24 @@ Cu.import("resource://services-sync/util.js");
 Cu.import("resource://testing-common/services/sync/fakeservices.js");
 Cu.import("resource://testing-common/services/sync/utils.js");
 
-function test_urls() {
+add_task(async function test_urls() {
   _("URL related Service properties correspond to preference settings.");
   try {
-    ensureLegacyIdentityManager();
-    do_check_true(!!Service.serverURL); // actual value may change
     do_check_eq(Service.clusterURL, "");
-    do_check_eq(Service.userBaseURL, undefined);
+    do_check_false(Service.userBaseURL);
     do_check_eq(Service.infoURL, undefined);
     do_check_eq(Service.storageURL, undefined);
     do_check_eq(Service.metaURL, undefined);
 
     _("The 'clusterURL' attribute updates preferences and cached URLs.");
-    Service.identity.username = "johndoe";
 
     // Since we don't have a cluster URL yet, these will still not be defined.
     do_check_eq(Service.infoURL, undefined);
-    do_check_eq(Service.userBaseURL, undefined);
+    do_check_false(Service.userBaseURL);
     do_check_eq(Service.storageURL, undefined);
     do_check_eq(Service.metaURL, undefined);
 
-    Service.serverURL = "http://weave.server/";
-    Service.clusterURL = "http://weave.cluster/";
+    Service.clusterURL = "http://weave.cluster/1.1/johndoe/";
 
     do_check_eq(Service.userBaseURL, "http://weave.cluster/1.1/johndoe/");
     do_check_eq(Service.infoURL,
@@ -38,43 +34,13 @@ function test_urls() {
     do_check_eq(Service.metaURL,
                 "http://weave.cluster/1.1/johndoe/storage/meta/global");
 
-    _("The 'miscURL' and 'userURL' attributes can be relative to 'serverURL' or absolute.");
-    Svc.Prefs.set("miscURL", "relative/misc/");
-    Svc.Prefs.set("userURL", "relative/user/");
-    do_check_eq(Service.miscAPI,
-                "http://weave.server/relative/misc/1.0/");
-    do_check_eq(Service.userAPIURI,
-                "http://weave.server/relative/user/1.0/");
-
-    Svc.Prefs.set("miscURL", "http://weave.misc.services/");
-    Svc.Prefs.set("userURL", "http://weave.user.services/");
-    do_check_eq(Service.miscAPI, "http://weave.misc.services/1.0/");
-    do_check_eq(Service.userAPIURI, "http://weave.user.services/1.0/");
-
-    do_check_eq(Service.pwResetURL,
-                "http://weave.server/weave-password-reset");
-
-    _("Empty/false value for 'username' resets preference.");
-    Service.identity.username = "";
-    do_check_eq(Svc.Prefs.get("username"), undefined);
-    do_check_eq(Service.identity.username, null);
-
-    _("The 'serverURL' attributes updates/resets preferences.");
-    // Identical value doesn't do anything
-    Service.serverURL = Service.serverURL;
-    do_check_eq(Service.clusterURL, "http://weave.cluster/");
-
-    Service.serverURL = "http://different.auth.node/";
-    do_check_eq(Svc.Prefs.get("serverURL"), "http://different.auth.node/");
-    do_check_eq(Service.clusterURL, "");
-
   } finally {
     Svc.Prefs.resetBranch("");
   }
-}
+});
 
 
-function test_syncID() {
+add_test(function test_syncID() {
   _("Service.syncID is auto-generated, corresponds to preference.");
   new FakeGUIDService();
 
@@ -92,10 +58,11 @@ function test_syncID() {
   } finally {
     Svc.Prefs.resetBranch("");
     new FakeGUIDService();
+    run_next_test();
   }
-}
+});
 
-function test_locked() {
+add_test(function test_locked() {
   _("The 'locked' attribute can be toggled with lock() and unlock()");
 
   // Defaults to false
@@ -109,10 +76,5 @@ function test_locked() {
 
   Service.unlock();
   do_check_eq(Service.locked, false);
-}
-
-function run_test() {
-  test_urls();
-  test_syncID();
-  test_locked();
-}
+  run_next_test();
+});

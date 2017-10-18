@@ -4,11 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'Safe Browsing')
+
 TEST_DIRS += ['tests']
 
 XPIDL_SOURCES += [
     'nsIUrlClassifierDBService.idl',
     'nsIUrlClassifierHashCompleter.idl',
+    'nsIUrlClassifierInfo.idl',
     'nsIUrlClassifierPrefixSet.idl',
     'nsIUrlClassifierStreamUpdater.idl',
     'nsIUrlClassifierUtils.idl',
@@ -24,18 +28,22 @@ UNIFIED_SOURCES += [
     'ChunkSet.cpp',
     'Classifier.cpp',
     'LookupCache.cpp',
+    'LookupCacheV4.cpp',
     'nsCheckSummedOutputStream.cpp',
     'nsUrlClassifierDBService.cpp',
+    'nsUrlClassifierInfo.cpp',
     'nsUrlClassifierProxies.cpp',
     'nsUrlClassifierUtils.cpp',
     'protobuf/safebrowsing.pb.cc',
     'ProtocolParser.cpp',
+    'RiceDeltaDecoder.cpp',
 ]
 
 # define conflicting LOG() macros
 SOURCES += [
     'nsUrlClassifierPrefixSet.cpp',
     'nsUrlClassifierStreamUpdater.cpp',
+    'VariableLengthPrefixSet.cpp',
 ]
 
 # contains variables that conflict with LookupCache.cpp
@@ -46,10 +54,6 @@ SOURCES += [
 EXTRA_COMPONENTS += [
     'nsURLClassifier.manifest',
     'nsUrlClassifierHashCompleter.js',
-]
-
-# Same as JS components that are run through the pre-processor.
-EXTRA_PP_COMPONENTS += [
     'nsUrlClassifierLib.js',
     'nsUrlClassifierListManager.js',
 ]
@@ -61,18 +65,26 @@ EXTRA_JS_MODULES += [
 EXPORTS += [
     'Entries.h',
     'LookupCache.h',
+    'LookupCacheV4.h',
     'nsUrlClassifierPrefixSet.h',
     'protobuf/safebrowsing.pb.h',
+    'VariableLengthPrefixSet.h',
 ]
 
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '../build',
-    '/ipc/chromium/src',
 ]
 
 CXXFLAGS += CONFIG['SQLITE_CFLAGS']
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
+
+if CONFIG['NIGHTLY_BUILD'] or CONFIG['MOZ_DEBUG']:
+    DEFINES['MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES'] = True
+
+SPHINX_TREES['url-classifier'] = 'docs'
+
+include('/ipc/chromium/chromium-config.mozbuild')

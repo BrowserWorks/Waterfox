@@ -13,6 +13,7 @@
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/WidgetUtils.h"        // for ScreenRotation
 #include "mozilla/layers/LayersTypes.h"  // for BufferMode, LayersBackend, etc
+#include "mozilla/TimeStamp.h"
 #include "nsAString.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for gfxContext::AddRef, etc
@@ -24,6 +25,7 @@ class nsIWidget;
 namespace mozilla {
 namespace layers {
 
+class DisplayItemLayer;
 class ImageFactory;
 class ImageLayer;
 class PaintLayerContext;
@@ -74,6 +76,8 @@ protected:
   virtual ~BasicLayerManager();
 
 public:
+  BasicLayerManager* AsBasicLayerManager() override { return this; }
+
   /**
    * Set the default target context that will be used when BeginTransaction
    * is called. This can only be called outside a transaction.
@@ -95,8 +99,8 @@ public:
   virtual bool IsWidgetLayerManager() override { return mWidget != nullptr; }
   virtual bool IsInactiveLayerManager() override { return mType == BLM_INACTIVE; }
 
-  virtual void BeginTransaction() override;
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) override;
+  virtual bool BeginTransaction() override;
+  virtual bool BeginTransactionWithTarget(gfxContext* aTarget) override;
   virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) override;
   virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
                               void* aCallbackData,
@@ -112,7 +116,10 @@ public:
   virtual already_AddRefed<ImageLayer> CreateImageLayer() override;
   virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() override;
   virtual already_AddRefed<ColorLayer> CreateColorLayer() override;
+  virtual already_AddRefed<TextLayer> CreateTextLayer() override;
+  virtual already_AddRefed<BorderLayer> CreateBorderLayer() override;
   virtual already_AddRefed<ReadbackLayer> CreateReadbackLayer() override;
+  virtual already_AddRefed<DisplayItemLayer> CreateDisplayItemLayer() override;
   virtual ImageFactory *GetImageFactory();
 
   virtual LayersBackend GetBackendType() override { return LayersBackend::LAYERS_BASIC; }
@@ -162,6 +169,11 @@ public:
   virtual int32_t GetMaxTextureSize() const override { return INT32_MAX; }
   bool CompositorMightResample() { return mCompositorMightResample; }
 
+  TimeStamp GetCompositionTime() const
+  {
+    return mCompositionTime;
+  }
+
 protected:
   enum TransactionPhase {
     PHASE_NONE, PHASE_CONSTRUCTION, PHASE_DRAWING, PHASE_FORWARD
@@ -192,6 +204,11 @@ protected:
 
   void FlashWidgetUpdateArea(gfxContext* aContext);
 
+  void SetCompositionTime(TimeStamp aTimeStamp)
+  {
+    mCompositionTime = aTimeStamp;
+  }
+
   // Widget whose surface should be used as the basis for PaintedLayer
   // buffers.
   nsIWidget* mWidget;
@@ -207,6 +224,8 @@ protected:
   bool mUsingDefaultTarget;
   bool mTransactionIncomplete;
   bool mCompositorMightResample;
+
+  TimeStamp mCompositionTime;
 };
 
 } // namespace layers

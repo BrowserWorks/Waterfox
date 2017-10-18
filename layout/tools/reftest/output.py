@@ -3,7 +3,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
-import os
 import threading
 
 from mozlog.formatters import TbplFormatter
@@ -37,6 +36,7 @@ class ReftestFormatter(TbplFormatter):
     def test_end(self, data):
         extra = data.get('extra', {})
         status = data['status']
+        test = data['test']
 
         status_msg = "TEST-"
         if 'expected' in data:
@@ -47,24 +47,19 @@ class ReftestFormatter(TbplFormatter):
             status_msg += status
             if extra.get('status_msg') == 'Random':
                 status_msg += "(EXPECTED RANDOM)"
-        test = self.id_str(data['test'])
-        if 'message' in data:
-            status_details = data['message']
-        elif isinstance(data['test'], tuple):
-            status_details = 'image comparison ({})'.format(data['test'][1])
-        else:
-            status_details = '(LOAD ONLY)'
 
-        output_text = "%s | %s | %s" % (status_msg, test, status_details)
-        if 'differences' in extra:
-            diff_msg = (", max difference: %(max_difference)s"
-                        ", number of differing pixels: %(differences)s") % extra
-            diagnostic_data = ("REFTEST   IMAGE 1 (TEST): %(image1)s\n"
-                               "REFTEST   IMAGE 2 (REFERENCE): %(image2)s") % extra
-            output_text += '%s\n%s' % (diff_msg, diagnostic_data)
-        elif "image1" in extra:
-            diagnostic_data = "REFTEST   IMAGE: %(image1)s" % extra
-            output_text += '\n%s' % diagnostic_data
+        output_text = "%s | %s | %s" % (status_msg, test, data.get("message", ""))
+        if "reftest_screenshots" in extra:
+            screenshots = extra["reftest_screenshots"]
+            image_1 = screenshots[0]["screenshot"]
+
+            if len(screenshots) == 3:
+                image_2 = screenshots[2]["screenshot"]
+                output_text += ("\nREFTEST   IMAGE 1 (TEST): data:image/png;base64,%s\n"
+                                "REFTEST   IMAGE 2 (REFERENCE): data:image/png;base64,%s") % (
+                                image_1, image_2)
+            elif len(screenshots) == 1:
+                output_text += "\nREFTEST   IMAGE: data:image/png;base64,%s" % image_1
 
         output_text += "\nREFTEST TEST-END | %s" % test
         return "%s\n" % output_text
@@ -99,11 +94,6 @@ class ReftestFormatter(TbplFormatter):
         lines.append("REFTEST SUITE-END | Shutdown")
         return "INFO | Result summary:\n{}\n".format('\n'.join(lines))
 
-    def id_str(self, test_id):
-        if isinstance(test_id, basestring):
-            return test_id
-        return test_id[0]
-
 
 class OutputHandler(object):
     """Process the output of a process during a test run and translate
@@ -114,13 +104,12 @@ class OutputHandler(object):
     def __init__(self, log, utilityPath, symbolsPath=None):
         self.stack_fixer_function = get_stack_fixer_function(utilityPath, symbolsPath)
         self.log = log
-        # needed for b2gautomation.py
-        self.suite_finished = False
 
     def __call__(self, line):
         # need to return processed messages to appease remoteautomation.py
         if not line.strip():
             return []
+        line = line.decode('utf-8', errors='replace')
 
         try:
             data = json.loads(line)
@@ -129,9 +118,6 @@ class OutputHandler(object):
             return [line]
 
         if isinstance(data, dict) and 'action' in data:
-            if data['action'] == 'suite_end':
-                self.suite_finished = True
-
             self.log.log_raw(data)
         else:
             self.verbatim(json.dumps(data))

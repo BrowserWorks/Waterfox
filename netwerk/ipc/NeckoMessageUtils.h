@@ -97,7 +97,7 @@ struct ParamTraits<mozilla::net::NetAddr>
 #if defined(XP_UNIX)
     } else if (aParam.raw.family == AF_LOCAL) {
       // Train's already off the rails:  let's get a stack trace at least...
-      NS_RUNTIMEABORT("Error: please post stack trace to "
+      MOZ_CRASH("Error: please post stack trace to "
                       "https://bugzilla.mozilla.org/show_bug.cgi?id=661158");
       aMsg->WriteBytes(aParam.local.path, sizeof(aParam.local.path));
 #endif
@@ -108,7 +108,7 @@ struct ParamTraits<mozilla::net::NetAddr>
         CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("Unknown NetAddr socket family"), msg);
       }
 #endif
-      NS_RUNTIMEABORT("Unknown socket family");
+      MOZ_CRASH("Unknown socket family");
     }
   }
 
@@ -147,6 +147,7 @@ struct ParamTraits<mozilla::net::ResourceTimingStruct>
     WriteParam(aMsg, aParam.domainLookupStart);
     WriteParam(aMsg, aParam.domainLookupEnd);
     WriteParam(aMsg, aParam.connectStart);
+    WriteParam(aMsg, aParam.secureConnectionStart);
     WriteParam(aMsg, aParam.connectEnd);
     WriteParam(aMsg, aParam.requestStart);
     WriteParam(aMsg, aParam.responseStart);
@@ -169,6 +170,7 @@ struct ParamTraits<mozilla::net::ResourceTimingStruct>
     return ReadParam(aMsg, aIter, &aResult->domainLookupStart) &&
            ReadParam(aMsg, aIter, &aResult->domainLookupEnd) &&
            ReadParam(aMsg, aIter, &aResult->connectStart) &&
+           ReadParam(aMsg, aIter, &aResult->secureConnectionStart) &&
            ReadParam(aMsg, aIter, &aResult->connectEnd) &&
            ReadParam(aMsg, aIter, &aResult->requestStart) &&
            ReadParam(aMsg, aIter, &aResult->responseStart) &&

@@ -4,32 +4,36 @@
 
 #include "VideoUtils.h"
 
-#include "mozilla/Base64.h"
-#include "mozilla/TaskQueue.h"
-#include "mozilla/Telemetry.h"
-#include "mozilla/Function.h"
-
+#include "ImageContainer.h"
+#include "MediaContainerType.h"
 #include "MediaPrefs.h"
 #include "MediaResource.h"
 #include "TimeUnits.h"
-#include "nsMathUtils.h"
-#include "nsSize.h"
 #include "VorbisUtils.h"
-#include "ImageContainer.h"
+#include "mozilla/Base64.h"
 #include "mozilla/SharedThreadPool.h"
-#include "nsIRandomGenerator.h"
-#include "nsIServiceManager.h"
-#include "nsServiceManagerUtils.h"
-#include "nsIConsoleService.h"
-#include "nsThreadUtils.h"
+#include "mozilla/TaskQueue.h"
+#include "mozilla/Telemetry.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentTypeParser.h"
+#include "nsIConsoleService.h"
+#include "nsIRandomGenerator.h"
+#include "nsIServiceManager.h"
+#include "nsMathUtils.h"
+#include "nsServiceManagerUtils.h"
+#include "nsSize.h"
+#include "nsThreadUtils.h"
 
+#include <functional>
 #include <stdint.h>
 
 namespace mozilla {
 
+NS_NAMED_LITERAL_CSTRING(kEMEKeySystemClearkey, "org.w3.clearkey");
+NS_NAMED_LITERAL_CSTRING(kEMEKeySystemWidevine, "com.widevine.alpha");
+
 using layers::PlanarYCbCrImage;
+using media::TimeUnit;
 
 CheckedInt64 SaferMultDiv(int64_t aValue, uint32_t aMul, uint32_t aDiv) {
   int64_t major = aValue / aDiv;
@@ -43,11 +47,11 @@ CheckedInt64 FramesToUsecs(int64_t aFrames, uint32_t aRate) {
   return SaferMultDiv(aFrames, USECS_PER_S, aRate);
 }
 
-media::TimeUnit FramesToTimeUnit(int64_t aFrames, uint32_t aRate) {
+TimeUnit FramesToTimeUnit(int64_t aFrames, uint32_t aRate) {
   int64_t major = aFrames / aRate;
   int64_t remainder = aFrames % aRate;
-  return media::TimeUnit::FromMicroseconds(major) * USECS_PER_S +
-    (media::TimeUnit::FromMicroseconds(remainder) * USECS_PER_S) / aRate;
+  return TimeUnit::FromMicroseconds(major) * USECS_PER_S +
+    (TimeUnit::FromMicroseconds(remainder) * USECS_PER_S) / aRate;
 }
 
 // Converts from microseconds to number of audio frames, given the specified
@@ -57,7 +61,7 @@ CheckedInt64 UsecsToFrames(int64_t aUsecs, uint32_t aRate) {
 }
 
 // Format TimeUnit as number of frames at given rate.
-CheckedInt64 TimeUnitToFrames(const media::TimeUnit& aTime, uint32_t aRate) {
+CheckedInt64 TimeUnitToFrames(const TimeUnit& aTime, uint32_t aRate) {
   return UsecsToFrames(aTime.ToMicroseconds(), aRate);
 }
 
@@ -107,8 +111,8 @@ media::TimeIntervals GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStr
   // Special case completely cached files.  This also handles local files.
   if (aStream->IsDataCachedToEndOfResource(0)) {
     buffered +=
-      media::TimeInterval(media::TimeUnit::FromMicroseconds(0),
-                          media::TimeUnit::FromMicroseconds(aDurationUsecs));
+      media::TimeInterval(TimeUnit::Zero(),
+                          TimeUnit::FromMicroseconds(aDurationUsecs));
     return buffered;
   }
 
@@ -131,9 +135,8 @@ media::TimeIntervals GetEstimatedBufferedTimeRanges(mozilla::MediaResource* aStr
     int64_t endUs = BytesToTime(endOffset, totalBytes, aDurationUsecs);
     if (startUs != endUs) {
       buffered +=
-        media::TimeInterval(media::TimeUnit::FromMicroseconds(startUs),
-
-                              media::TimeUnit::FromMicroseconds(endUs));
+        media::TimeInterval(TimeUnit::FromMicroseconds(startUs),
+                            TimeUnit::FromMicroseconds(endUs));
     }
     startOffset = aStream->GetNextCachedData(endOffset);
   }
@@ -305,10 +308,10 @@ GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
 }
 
 already_AddRefed<TaskQueue>
-CreateMediaDecodeTaskQueue()
+CreateMediaDecodeTaskQueue(const char* aName)
 {
   RefPtr<TaskQueue> queue = new TaskQueue(
-    GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
+    GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER), aName);
   return queue.forget();
 }
 
@@ -318,8 +321,9 @@ SimpleTimer::Cancel() {
 #ifdef DEBUG
     nsCOMPtr<nsIEventTarget> target;
     mTimer->GetTarget(getter_AddRefs(target));
-    nsCOMPtr<nsIThread> thread(do_QueryInterface(target));
-    MOZ_ASSERT(NS_GetCurrentThread() == thread);
+    bool onCurrent;
+    nsresult rv = target->IsOnCurrentThread(&onCurrent);
+    MOZ_ASSERT(NS_SUCCEEDED(rv) && onCurrent);
 #endif
     mTimer->Cancel();
     mTimer = nullptr;
@@ -337,19 +341,26 @@ SimpleTimer::Notify(nsITimer *timer) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+SimpleTimer::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("SimpleTimer");
+  return NS_OK;
+}
+
 nsresult
-SimpleTimer::Init(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
+SimpleTimer::Init(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIEventTarget* aTarget)
 {
   nsresult rv;
 
   // Get target thread first, so we don't have to cancel the timer if it fails.
-  nsCOMPtr<nsIThread> target;
+  nsCOMPtr<nsIEventTarget> target;
   if (aTarget) {
     target = aTarget;
   } else {
-    rv = NS_GetMainThread(getter_AddRefs(target));
-    if (NS_FAILED(rv)) {
-      return rv;
+    target = GetMainThreadEventTarget();
+    if (!target) {
+      return NS_ERROR_NOT_AVAILABLE;
     }
   }
 
@@ -359,7 +370,7 @@ SimpleTimer::Init(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
   }
   // Note: set target before InitWithCallback in case the timer fires before
   // we change the event target.
-  rv = timer->SetTarget(aTarget);
+  rv = timer->SetTarget(target);
   if (NS_FAILED(rv)) {
     timer->Cancel();
     return rv;
@@ -374,10 +385,10 @@ SimpleTimer::Init(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
   return NS_OK;
 }
 
-NS_IMPL_ISUPPORTS(SimpleTimer, nsITimerCallback)
+NS_IMPL_ISUPPORTS(SimpleTimer, nsITimerCallback, nsINamed)
 
 already_AddRefed<SimpleTimer>
-SimpleTimer::Create(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
+SimpleTimer::Create(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIEventTarget* aTarget)
 {
   RefPtr<SimpleTimer> t(new SimpleTimer());
   if (NS_FAILED(t->Init(aTask, aTimeoutMs, aTarget))) {
@@ -391,9 +402,9 @@ LogToBrowserConsole(const nsAString& aMsg)
 {
   if (!NS_IsMainThread()) {
     nsString msg(aMsg);
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableFunction([msg]() { LogToBrowserConsole(msg); });
-    NS_DispatchToMainThread(task.forget(), NS_DISPATCH_NORMAL);
+    nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction(
+      "LogToBrowserConsole", [msg]() { LogToBrowserConsole(msg); });
+    SystemGroup::Dispatch(TaskCategory::Other, task.forget());
     return;
   }
   nsCOMPtr<nsIConsoleService> console(
@@ -413,7 +424,7 @@ ParseCodecsString(const nsAString& aCodecs, nsTArray<nsString>& aOutCodecs)
   bool expectMoreTokens = false;
   nsCharSeparatedTokenizer tokenizer(aCodecs, ',');
   while (tokenizer.hasMoreTokens()) {
-    const nsSubstring& token = tokenizer.nextToken();
+    const nsAString& token = tokenizer.nextToken();
     expectMoreTokens = tokenizer.separatorAfterCurrentToken();
     aOutCodecs.AppendElement(token);
   }
@@ -453,7 +464,9 @@ IsAACCodecString(const nsAString& aCodec)
 {
   return
     aCodec.EqualsLiteral("mp4a.40.2") || // MPEG4 AAC-LC
+    aCodec.EqualsLiteral("mp4a.40.02") || // MPEG4 AAC-LC(for compatibility)
     aCodec.EqualsLiteral("mp4a.40.5") || // MPEG4 HE-AAC
+    aCodec.EqualsLiteral("mp4a.40.05") || // MPEG4 HE-AAC(for compatibility)
     aCodec.EqualsLiteral("mp4a.67") || // MPEG2 AAC-LC
     aCodec.EqualsLiteral("mp4a.40.29");  // MPEG4 HE-AACv2
 }
@@ -470,6 +483,52 @@ IsVP9CodecString(const nsAString& aCodec)
 {
   return aCodec.EqualsLiteral("vp9") ||
          aCodec.EqualsLiteral("vp9.0");
+}
+
+template <int N>
+static bool
+StartsWith(const nsACString& string, const char (&prefix)[N])
+{
+    if (N - 1 > string.Length()) {
+      return false;
+    }
+    return memcmp(string.Data(), prefix, N - 1) == 0;
+}
+
+UniquePtr<TrackInfo>
+CreateTrackInfoWithMIMEType(const nsACString& aCodecMIMEType)
+{
+  UniquePtr<TrackInfo> trackInfo;
+  if (StartsWith(aCodecMIMEType, "audio/")) {
+    trackInfo.reset(new AudioInfo());
+    trackInfo->mMimeType = aCodecMIMEType;
+  } else if (StartsWith(aCodecMIMEType, "video/")) {
+    trackInfo.reset(new VideoInfo());
+    trackInfo->mMimeType = aCodecMIMEType;
+  }
+  return trackInfo;
+}
+
+UniquePtr<TrackInfo>
+CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
+  const nsACString& aCodecMIMEType,
+  const MediaContainerType& aContainerType)
+{
+  UniquePtr<TrackInfo> trackInfo = CreateTrackInfoWithMIMEType(aCodecMIMEType);
+  if (trackInfo) {
+    VideoInfo* videoInfo = trackInfo->GetAsVideoInfo();
+    if (videoInfo) {
+      Maybe<int32_t> maybeWidth = aContainerType.ExtendedType().GetWidth();
+      if (maybeWidth && *maybeWidth > 0) {
+        videoInfo->mImage.width = *maybeWidth;
+      }
+      Maybe<int32_t> maybeHeight = aContainerType.ExtendedType().GetHeight();
+      if (maybeHeight && *maybeHeight > 0) {
+        videoInfo->mImage.height = *maybeHeight;
+      }
+    }
+  }
+  return trackInfo;
 }
 
 } // end namespace mozilla

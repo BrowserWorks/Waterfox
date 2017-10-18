@@ -22,7 +22,6 @@ if (SharedAll.Constants.Win) {
 } else {
   throw new Error("I am neither under Windows nor under a Posix system");
 }
-var {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 /**
@@ -50,21 +49,21 @@ this.read = function(path, options = {}) {
     return Promise.reject(new TypeError("Invalid type for option bytes"));
   }
 
-  let deferred = Promise.defer();
-  Internals.read(path,
-    options,
-    function onSuccess(success) {
-      success.QueryInterface(Ci.nsINativeOSFileResult);
-      if ("outExecutionDuration" in options) {
-        options.outExecutionDuration =
-          success.executionDurationMS +
-          (options.outExecutionDuration || 0);
+  return new Promise((resolve, reject) => {
+    Internals.read(path,
+      options,
+      function onSuccess(success) {
+        success.QueryInterface(Ci.nsINativeOSFileResult);
+        if ("outExecutionDuration" in options) {
+          options.outExecutionDuration =
+            success.executionDurationMS +
+            (options.outExecutionDuration || 0);
+        }
+        resolve(success.result);
+      },
+      function onError(operation, oserror) {
+        reject(new SysAll.Error(operation, oserror, path));
       }
-      deferred.resolve(success.result);
-    },
-    function onError(operation, oserror) {
-      deferred.reject(new SysAll.Error(operation, oserror, path));
-    }
-  );
-  return deferred.promise;
+    );
+  });
 };

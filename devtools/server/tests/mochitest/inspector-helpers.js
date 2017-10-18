@@ -1,3 +1,9 @@
+/* exported attachURL, promiseDone, assertOwnershipTrees, checkMissing, checkAvailable,
+   promiseOnce, isSrcChange, isUnretained, isNewRoot, assertSrcChange, assertUnload,
+   assertFrameLoad, assertChildList, waitForMutation, addTest, addAsyncTest,
+   runNextTest */
+"use strict";
+
 var Cu = Components.utils;
 
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
@@ -14,7 +20,6 @@ Services.prefs.setBoolPref("devtools.debugger.log", true);
 SimpleTest.registerCleanupFunction(function () {
   Services.prefs.clearUserPref("devtools.debugger.log");
 });
-
 
 if (!DebuggerServer.initialized) {
   DebuggerServer.init();
@@ -40,8 +45,8 @@ SimpleTest.registerCleanupFunction(function () {
  * and disconnect its debugger client.
  */
 function attachURL(url, callback) {
-  var win = window.open(url, "_blank");
-  var client = null;
+  let win = window.open(url, "_blank");
+  let client = null;
 
   let cleanup = () => {
     if (client) {
@@ -62,8 +67,9 @@ function attachURL(url, callback) {
         client.listTabs(response => {
           for (let tab of response.tabs) {
             if (tab.url === url) {
-              window.removeEventListener("message", loadListener, false);
-              client.attachTab(tab.actor, function (aResponse, aTabClient) {
+              window.removeEventListener("message", loadListener);
+              // eslint-disable-next-line max-nested-callbacks
+              client.attachTab(tab.actor, function (_response, _tabClient) {
                 try {
                   callback(null, client, tab, win.document);
                 } catch (ex) {
@@ -77,7 +83,7 @@ function attachURL(url, callback) {
         });
       });
     }
-  }, false);
+  });
 
   return cleanup;
 }
@@ -121,19 +127,22 @@ function serverOwnershipSubtree(walker, node) {
 }
 
 function serverOwnershipTree(walker) {
-  let serverWalker = DebuggerServer._searchAllConnectionsForActor(walker.actorID);
+  let serverWalker = DebuggerServer.searchAllConnectionsForActor(walker.actorID);
 
   return {
     root: serverOwnershipSubtree(serverWalker, serverWalker.rootDoc),
-    orphaned: [...serverWalker._orphaned].map(o => serverOwnershipSubtree(serverWalker, o.rawNode)),
-    retained: [...serverWalker._retainedOrphans].map(o => serverOwnershipSubtree(serverWalker, o.rawNode))
+    orphaned: [...serverWalker._orphaned]
+              .map(o => serverOwnershipSubtree(serverWalker, o.rawNode)),
+    retained: [...serverWalker._retainedOrphans]
+              .map(o => serverOwnershipSubtree(serverWalker, o.rawNode))
   };
 }
 
 function clientOwnershipSubtree(node) {
   return {
     name: node.actorID,
-    children: sortOwnershipChildren(node.treeChildren().map(child => clientOwnershipSubtree(child)))
+    children: sortOwnershipChildren(node.treeChildren()
+              .map(child => clientOwnershipSubtree(child)))
   };
 }
 
@@ -156,7 +165,8 @@ function ownershipTreeSize(tree) {
 function assertOwnershipTrees(walker) {
   let serverTree = serverOwnershipTree(walker);
   let clientTree = clientOwnershipTree(walker);
-  is(JSON.stringify(clientTree, null, " "), JSON.stringify(serverTree, null, " "), "Server and client ownership trees should match.");
+  is(JSON.stringify(clientTree, null, " "), JSON.stringify(serverTree, null, " "),
+     "Server and client ownership trees should match.");
 
   return ownershipTreeSize(clientTree.root);
 }
@@ -189,14 +199,15 @@ function checkAvailable(client, actorID) {
     to: actorID,
     type: "garbageAvailableTest",
   }, response => {
-    is(response.error, "unrecognizedPacketType", "node list actor should be contactable.");
+    is(response.error, "unrecognizedPacketType",
+       "node list actor should be contactable.");
     deferred.resolve(undefined);
   });
   return deferred.promise;
 }
 
-function promiseDone(promise) {
-  promise.then(null, err => {
+function promiseDone(currentPromise) {
+  currentPromise.catch(err => {
     ok(false, "Promise failed: " + err);
     if (err.stack) {
       dump(err.stack);
@@ -206,10 +217,6 @@ function promiseDone(promise) {
 }
 
 // Mutation list testing
-
-function isSrcChange(change) {
-  return (change.type === "attributes" && change.attributeName === "src");
-}
 
 function assertAndStrip(mutations, message, test) {
   let size = mutations.length;
@@ -245,7 +252,8 @@ function isNewRoot(change) {
 // Make sure an iframe's src attribute changed and then
 // strip that mutation out of the list.
 function assertSrcChange(mutations) {
-  return assertAndStrip(mutations, "Should have had an iframe source change.", isSrcChange);
+  return assertAndStrip(mutations, "Should have had an iframe source change.",
+                        isSrcChange);
 }
 
 // Make sure there's an unload in the mutation list and strip
@@ -285,14 +293,13 @@ function waitForMutation(walker, test, mutations = []) {
   return deferred.promise;
 }
 
-
 var _tests = [];
 function addTest(test) {
   _tests.push(test);
 }
 
 function addAsyncTest(generator) {
-  _tests.push(() => Task.spawn(generator).then(null, ok.bind(null, false)));
+  _tests.push(() => Task.spawn(generator).catch(ok.bind(null, false)));
 }
 
 function runNextTest() {
@@ -300,7 +307,7 @@ function runNextTest() {
     SimpleTest.finish();
     return;
   }
-  var fn = _tests.shift();
+  let fn = _tests.shift();
   try {
     fn();
   } catch (ex) {

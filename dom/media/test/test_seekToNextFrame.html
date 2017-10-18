@@ -38,7 +38,12 @@ function startTest(test, token) {
           callSeekToNextFrame();
       },
       () => {
-        ok(false, "seekToNextFrame() failed.");
+        // When seek reaches the end, the promise is resolved before 'ended'
+        // is fired. The resolver calls callSeekToNextFrame() to schedule
+        // another seek and then the 'ended' handler calls finish() to shut
+        // down the MediaDecoder which will reject the seek promise. So we don't
+        // raise an error in this case.
+        ok(v.finished, "seekToNextFrame() failed.");
       }
     );
   }
@@ -49,8 +54,8 @@ function startTest(test, token) {
 
   var finish = function() {
     v.finished = true;
-    v.removeEventListener("loadedmetadata", onLoadedmetadata, false);
-    v.removeEventListener("seeking", onSeeking, false);
+    v.removeEventListener("loadedmetadata", onLoadedmetadata);
+    v.removeEventListener("seeking", onSeeking);
     removeNodeAndSource(v);
     manager.finished(v.token);
   }
@@ -65,9 +70,9 @@ function startTest(test, token) {
     v.seenSeeking = true;
   }}(test, v);
 
-  v.addEventListener("loadedmetadata", onLoadedmetadata, false);
-  v.addEventListener("seeking", onSeeking, false);
-  v.addEventListener("ended", onEnded, false);
+  v.addEventListener("loadedmetadata", onLoadedmetadata);
+  v.addEventListener("seeking", onSeeking);
+  v.addEventListener("ended", onEnded);
 
   document.body.appendChild(v);
 }

@@ -19,7 +19,7 @@ Adding a test
 
         <fineprint> Some names are forbidden. Do not name your test browser.js,
         shell.js, template.js, user.js, js-test-driver-begin.js, or
-        js-test-driver-end.js, or any of the names of the files in supporting/.
+        js-test-driver-end.js.
         </fineprint>
 
 Adjusting when and how a test runs
@@ -28,7 +28,7 @@ Adjusting when and how a test runs
         // |reftest| <failure-type> -- <comment>
 
     Where <failure-type> is a standard reftest <failure-type> string, as documented by:
-        http://mxr.mozilla.org/mozilla-central/source/layout/tools/reftest/README.txt
+        http://dxr.mozilla.org/mozilla-central/source/layout/tools/reftest/README.txt
 
     Example:
         // |reftest| skip-if(!xulRuntime.shell) -- does not always dismiss alert

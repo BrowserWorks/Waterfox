@@ -25,7 +25,7 @@
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING
 #include "nsReadableUtils.h"            // for EmptyString
 #include "nsString.h"                   // for nsAutoString, nsString, etc
-#include "nsStringFwd.h"                // for nsAFlatString
+#include "nsStringFwd.h"                // for nsString
 
 class nsISupports;
 
@@ -327,8 +327,7 @@ nsListItemCommand::GetCurrentState(nsIEditor* aEditor,
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool inList = false;
-  if (!bMixed)
-  {
+  if (!bMixed) {
     if (bLI) {
       inList = mTagName == nsGkAtoms::li;
     } else if (bDT) {
@@ -418,8 +417,7 @@ nsRemoveListCommand::DoCommand(const char *aCommandName, nsISupports *refCon)
   nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
     // This removes any list type
     rv = editor->RemoveList(EmptyString());
   }
@@ -464,8 +462,7 @@ nsIndentCommand::DoCommand(const char *aCommandName, nsISupports *refCon)
   nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
     rv = editor->Indent(NS_LITERAL_STRING("indent"));
   }
 
@@ -583,15 +580,14 @@ nsMultiStateCommand::DoCommandParams(const char *aCommandName,
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
       nsAutoString tString;
 
       if (aParams) {
         nsXPIDLCString s;
         rv = aParams->GetCStringValue(STATE_ATTRIBUTE, getter_Copies(s));
         if (NS_SUCCEEDED(rv))
-          tString.AssignWithConversion(s);
+          CopyASCIItoUTF16(s, tString);
         else
           rv = aParams->GetStringValue(STATE_ATTRIBUTE, tString);
       }
@@ -609,8 +605,7 @@ nsMultiStateCommand::GetCommandStateParams(const char *aCommandName,
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
       rv = GetCurrentState(editor, aParams);
   }
   return rv;
@@ -633,10 +628,9 @@ nsParagraphStateCommand::GetCurrentState(nsIEditor *aEditor,
   bool outMixed;
   nsAutoString outStateString;
   nsresult rv = htmlEditor->GetParagraphState(&outMixed, outStateString);
-  if (NS_SUCCEEDED(rv))
-  {
+  if (NS_SUCCEEDED(rv)) {
     nsAutoCString tOutStateString;
-    tOutStateString.AssignWithConversion(outStateString);
+    LossyCopyUTF16toASCII(outStateString, tOutStateString);
     aParams->SetBooleanValue(STATE_MIXED,outMixed);
     aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   }
@@ -670,8 +664,7 @@ nsFontFaceStateCommand::GetCurrentState(nsIEditor *aEditor,
   nsAutoString outStateString;
   bool outMixed;
   nsresult rv = htmlEditor->GetFontFaceState(&outMixed, outStateString);
-  if (NS_SUCCEEDED(rv))
-  {
+  if (NS_SUCCEEDED(rv)) {
     aParams->SetBooleanValue(STATE_MIXED,outMixed);
     aParams->SetCStringValue(STATE_ATTRIBUTE, NS_ConvertUTF16toUTF8(outStateString).get());
   }
@@ -714,8 +707,6 @@ nsFontSizeStateCommand::nsFontSizeStateCommand()
 {
 }
 
-//  nsAutoCString tOutStateString;
-//  tOutStateString.AssignWithConversion(outStateString);
 nsresult
 nsFontSizeStateCommand::GetCurrentState(nsIEditor *aEditor,
                                         nsICommandParams *aParams)
@@ -735,7 +726,7 @@ nsFontSizeStateCommand::GetCurrentState(nsIEditor *aEditor,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString tOutStateString;
-  tOutStateString.AssignWithConversion(outStateString);
+  LossyCopyUTF16toASCII(outStateString, tOutStateString);
   aParams->SetBooleanValue(STATE_MIXED, anyHas && !allHas);
   aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   aParams->SetBooleanValue(STATE_ENABLED, true);
@@ -798,7 +789,7 @@ nsFontColorStateCommand::GetCurrentState(nsIEditor *aEditor,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString tOutStateString;
-  tOutStateString.AssignWithConversion(outStateString);
+  LossyCopyUTF16toASCII(outStateString, tOutStateString);
   aParams->SetBooleanValue(STATE_MIXED, outMixed);
   aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   return NS_OK;
@@ -839,7 +830,7 @@ nsHighlightColorStateCommand::GetCurrentState(nsIEditor *aEditor,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString tOutStateString;
-  tOutStateString.AssignWithConversion(outStateString);
+  LossyCopyUTF16toASCII(outStateString, tOutStateString);
   aParams->SetBooleanValue(STATE_MIXED, outMixed);
   aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   return NS_OK;
@@ -896,7 +887,7 @@ nsBackgroundColorStateCommand::GetCurrentState(nsIEditor *aEditor,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString tOutStateString;
-  tOutStateString.AssignWithConversion(outStateString);
+  LossyCopyUTF16toASCII(outStateString, tOutStateString);
   aParams->SetBooleanValue(STATE_MIXED, outMixed);
   aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   return NS_OK;
@@ -933,8 +924,7 @@ nsAlignCommand::GetCurrentState(nsIEditor *aEditor, nsICommandParams *aParams)
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoString outStateString;
-  switch (firstAlign)
-  {
+  switch (firstAlign) {
     default:
     case nsIHTMLEditor::eLeft:
       outStateString.AssignLiteral("left");
@@ -953,7 +943,7 @@ nsAlignCommand::GetCurrentState(nsIEditor *aEditor, nsICommandParams *aParams)
       break;
   }
   nsAutoCString tOutStateString;
-  tOutStateString.AssignWithConversion(outStateString);
+  LossyCopyUTF16toASCII(outStateString, tOutStateString);
   aParams->SetBooleanValue(STATE_MIXED,outMixed);
   aParams->SetCStringValue(STATE_ATTRIBUTE, tOutStateString.get());
   return NS_OK;
@@ -982,8 +972,7 @@ nsAbsolutePositioningCommand::IsCommandEnabled(const char * aCommandName,
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   nsCOMPtr<nsIHTMLAbsPosEditor> htmlEditor = do_QueryInterface(aCommandRefCon);
-  if (htmlEditor)
-  {
+  if (htmlEditor) {
     bool isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1057,8 +1046,8 @@ nsDecreaseZIndexCommand::IsCommandEnabled(const char * aCommandName,
   *outCmdEnabled = false;
   if (positionedElement) {
     int32_t z;
-    nsresult res = htmlEditor->GetElementZIndex(positionedElement, &z);
-    NS_ENSURE_SUCCESS(res, res);
+    nsresult rv = htmlEditor->GetElementZIndex(positionedElement, &z);
+    NS_ENSURE_SUCCESS(rv, rv);
     *outCmdEnabled = (z > 0);
   }
 
@@ -1171,8 +1160,7 @@ nsRemoveStylesCommand::DoCommand(const char *aCommandName,
   nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
     rv = editor->RemoveAllInlineProperties();
   }
 
@@ -1219,8 +1207,7 @@ nsIncreaseFontSizeCommand::DoCommand(const char *aCommandName,
   nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
     rv = editor->IncreaseFontSize();
   }
 
@@ -1267,8 +1254,7 @@ nsDecreaseFontSizeCommand::DoCommand(const char *aCommandName,
   nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(refCon);
 
   nsresult rv = NS_OK;
-  if (editor)
-  {
+  if (editor) {
     rv = editor->DecreaseFontSize();
   }
 
@@ -1420,7 +1406,8 @@ nsInsertTagCommand::DoCommandParams(const char *aCommandName,
   nsXPIDLCString s;
   nsresult rv = aParams->GetCStringValue(STATE_ATTRIBUTE, getter_Copies(s));
   NS_ENSURE_SUCCESS(rv, rv);
-  nsAutoString attrib; attrib.AssignWithConversion(s);
+  nsAutoString attrib;
+  CopyASCIItoUTF16(s, attrib);
 
   if (attrib.IsEmpty())
     return NS_ERROR_INVALID_ARG;

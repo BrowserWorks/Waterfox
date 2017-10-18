@@ -38,8 +38,8 @@ const testcases = [
     // Cherokee (Restricted script)
     ["ᏣᎳᎩ",     "xn--f9dt7l",                        false, false, false],
 
-    // Yi (Aspirational script)
-    ["ꆈꌠꁱꂷ", "xn--4o7a6e1x64c",                  false, true,  true],
+    // Yi (former Aspirational script, now Restricted per Unicode 10.0 update to UAX 31)
+    ["ꆈꌠꁱꂷ", "xn--4o7a6e1x64c",                  false, false,  false],
 
     // Greek alone
     ["πλάτων",   "xn--hxa3ahjw4a",                   false, true,  true],
@@ -295,12 +295,7 @@ const profiles = ["ASCII", "high", "moderate"];
 function run_test() {
     var pbi = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
     var oldProfile = pbi.getCharPref("network.IDN.restriction_profile", "moderate");
-    var oldWhiteListCom;
-    try {
-        oldWhitelistCom = pbi.getBoolPref("network.IDN.whitelist.com");
-    } catch(e) {
-        oldWhitelistCom = false;
-    }
+    var oldWhitelistCom = pbi.getBoolPref("network.IDN.whitelist.com", false);
     var idnService = Cc["@mozilla.org/network/idn-service;1"].getService(Ci.nsIIDNService);
 
     for (var i = 0; i < profiles.length; ++i) {

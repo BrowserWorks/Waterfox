@@ -8,16 +8,16 @@
 #define mozilla_dom_HTMLScriptElement_h
 
 #include "nsIDOMHTMLScriptElement.h"
-#include "nsScriptElement.h"
 #include "nsGenericHTMLElement.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/ScriptElement.h"
 
 namespace mozilla {
 namespace dom {
 
 class HTMLScriptElement final : public nsGenericHTMLElement,
                                 public nsIDOMHTMLScriptElement,
-                                public nsScriptElement
+                                public ScriptElement
 {
 public:
   using Element::GetText;
@@ -30,7 +30,6 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML) override;
-  using nsGenericHTMLElement::SetInnerHTML;
   virtual void SetInnerHTML(const nsAString& aInnerHTML,
                             mozilla::ErrorResult& aError) override;
 
@@ -53,11 +52,14 @@ public:
                               const nsAString& aValue,
                               nsAttrValue& aResult) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult,
+                         bool aPreallocateChildren) const override;
 
   // Element
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   // WebIDL
   void SetText(const nsAString& aValue, ErrorResult& rv);
@@ -89,12 +91,15 @@ public:
   }
   bool Async();
   void SetAsync(bool aValue, ErrorResult& rv);
+  bool NoModule();
+  void SetNoModule(bool aValue, ErrorResult& rv);
 
 protected:
   virtual ~HTMLScriptElement();
 
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
-  // nsScriptElement
+
+  // ScriptElement
   virtual bool HasScriptContent() override;
 };
 

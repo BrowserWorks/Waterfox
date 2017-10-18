@@ -73,15 +73,14 @@ add_test(function setup_browser() {
     BrowserApp.closeTab(BrowserApp.getTabForBrowser(gBrowser));
   });
 
-  Services.obs.addObserver(visitObserver, "link-visited", false);
+  Services.obs.addObserver(visitObserver, "link-visited");
 
   // Load a blank page
   let url = "about:blank";
   gBrowser = BrowserApp.addTab(url, { selected: true, parentId: BrowserApp.selectedTab.id }).browser;
-  gBrowser.addEventListener("load", function startTests(event) {
-    gBrowser.removeEventListener("load", startTests, true);
-    Services.tm.mainThread.dispatch(run_next_test, Ci.nsIThread.DISPATCH_NORMAL);
-  }, true);
+  gBrowser.addEventListener("load", function(event) {
+    Services.tm.dispatchToMainThread(run_next_test);
+  }, {capture: true, once: true});
 });
 
 add_task(function* () {

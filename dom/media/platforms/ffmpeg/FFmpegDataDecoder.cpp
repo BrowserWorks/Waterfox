@@ -4,8 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/SyncRunnable.h"
-#include "mozilla/TaskQueue.h"
 
 #include <string.h>
 #ifdef __GNUC__
@@ -14,25 +12,22 @@
 
 #include "FFmpegLog.h"
 #include "FFmpegDataDecoder.h"
+#include "mozilla/TaskQueue.h"
 #include "prsystem.h"
 
-namespace mozilla
-{
+namespace mozilla {
 
 StaticMutex FFmpegDataDecoder<LIBAV_VER>::sMonitor;
 
-  FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(FFmpegLibWrapper* aLib,
-                                                  TaskQueue* aTaskQueue,
-                                                  MediaDataDecoderCallback* aCallback,
-                                                  AVCodecID aCodecID)
+FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(FFmpegLibWrapper* aLib,
+                                                TaskQueue* aTaskQueue,
+                                                AVCodecID aCodecID)
   : mLib(aLib)
-  , mCallback(aCallback)
   , mCodecContext(nullptr)
   , mFrame(NULL)
   , mExtraData(nullptr)
   , mCodecID(aCodecID)
   , mTaskQueue(aTaskQueue)
-  , mIsFlushing(false)
 {
   MOZ_ASSERT(aLib);
   MOZ_COUNT_CTOR(FFmpegDataDecoder);
@@ -86,90 +81,53 @@ FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
     return NS_ERROR_FAILURE;
   }
 
-  if (mCodecContext->codec_type == AVMEDIA_TYPE_AUDIO &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_FLT &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_FLTP &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_S16 &&
-      mCodecContext->sample_fmt != AV_SAMPLE_FMT_S16P) {
-    NS_WARNING("FFmpeg audio decoder outputs unsupported audio format.");
-    return NS_ERROR_FAILURE;
-  }
-
   FFMPEG_LOG("FFmpeg init successful.");
   return NS_OK;
 }
 
-nsresult
+RefPtr<ShutdownPromise>
 FFmpegDataDecoder<LIBAV_VER>::Shutdown()
 {
   if (mTaskQueue) {
-    nsCOMPtr<nsIRunnable> runnable =
-      NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessShutdown);
-    mTaskQueue->Dispatch(runnable.forget());
-  } else {
-    ProcessShutdown();
+    RefPtr<FFmpegDataDecoder<LIBAV_VER>> self = this;
+    return InvokeAsync(mTaskQueue, __func__, [self, this]() {
+      ProcessShutdown();
+      return ShutdownPromise::CreateAndResolve(true, __func__);
+    });
   }
-  return NS_OK;
+  ProcessShutdown();
+  return ShutdownPromise::CreateAndResolve(true, __func__);
 }
 
-void
-FFmpegDataDecoder<LIBAV_VER>::ProcessDecode(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+FFmpegDataDecoder<LIBAV_VER>::Decode(MediaRawData* aSample)
 {
-  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
-  if (mIsFlushing) {
-    return;
-  }
-  switch (DoDecode(aSample)) {
-    case DecodeResult::DECODE_ERROR:
-      mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-      break;
-    case DecodeResult::FATAL_ERROR:
-      mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
-      break;
-    default:
-      if (mTaskQueue->IsEmpty()) {
-        mCallback->InputExhausted();
-      }
-  }
+  return InvokeAsync<MediaRawData*>(mTaskQueue, this, __func__,
+                                    &FFmpegDataDecoder::ProcessDecode, aSample);
 }
 
-nsresult
-FFmpegDataDecoder<LIBAV_VER>::Input(MediaRawData* aSample)
-{
-  mTaskQueue->Dispatch(NewRunnableMethod<RefPtr<MediaRawData>>(
-    this, &FFmpegDataDecoder::ProcessDecode, aSample));
-  return NS_OK;
-}
-
-nsresult
+RefPtr<MediaDataDecoder::FlushPromise>
 FFmpegDataDecoder<LIBAV_VER>::Flush()
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
-  mIsFlushing = true;
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessFlush);
-  SyncRunnable::DispatchToThread(mTaskQueue, runnable);
-  mIsFlushing = false;
-  return NS_OK;
+  return InvokeAsync(mTaskQueue, this, __func__,
+                     &FFmpegDataDecoder<LIBAV_VER>::ProcessFlush);
 }
 
-nsresult
+RefPtr<MediaDataDecoder::DecodePromise>
 FFmpegDataDecoder<LIBAV_VER>::Drain()
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod(this, &FFmpegDataDecoder<LIBAV_VER>::ProcessDrain);
-  mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
+  return InvokeAsync(mTaskQueue, this, __func__,
+                     &FFmpegDataDecoder<LIBAV_VER>::ProcessDrain);
 }
 
-void
+RefPtr<MediaDataDecoder::FlushPromise>
 FFmpegDataDecoder<LIBAV_VER>::ProcessFlush()
 {
   MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
   if (mCodecContext) {
     mLib->avcodec_flush_buffers(mCodecContext);
   }
+  return FlushPromise::CreateAndResolve(true, __func__);
 }
 
 void

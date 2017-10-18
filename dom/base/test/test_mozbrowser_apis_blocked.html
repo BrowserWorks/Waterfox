@@ -9,18 +9,16 @@
 </head>
 
 <body>
-<script type="application/javascript;version=1.8">
-  add_task(function*() {
-    yield new Promise(resolve => {
-      SpecialPowers.pushPrefEnv(
-        { "set": [["dom.mozBrowserFramesEnabled", true]] },
-        resolve);
-    });
+<script type="application/javascript">
+  add_task(async function() {
+    await SpecialPowers.pushPrefEnv(
+      { "set": [["dom.mozBrowserFramesEnabled", true],
+                ["network.disable.ipc.security", true]] });
   });
 
-  add_task(function*() {
+  add_task(async function() {
     // Create <iframe mozbrowser>
-    let frame = yield loadFrame({
+    let frame = await loadFrame({
       mozbrowser: "true"
     });
 

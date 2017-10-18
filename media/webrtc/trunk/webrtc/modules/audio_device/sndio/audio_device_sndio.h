@@ -11,11 +11,13 @@
 #ifndef WEBRTC_AUDIO_DEVICE_AUDIO_DEVICE_SNDIO_H
 #define WEBRTC_AUDIO_DEVICE_AUDIO_DEVICE_SNDIO_H
 
+#include <memory>
+
 #include <sndio.h>
 
 #include "webrtc/modules/audio_device/audio_device_generic.h"
-#include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
-#include "webrtc/system_wrappers/interface/thread_wrapper.h"
+#include "webrtc/system_wrappers/include/critical_section_wrapper.h"
+#include "webrtc/base/platform_thread.h"
 
 namespace webrtc
 {
@@ -30,7 +32,7 @@ public:
         AudioDeviceModule::AudioLayer& audioLayer) const override;
 
     // Main initializaton and termination
-    virtual int32_t Init() override;
+    virtual InitStatus Init() override;
     virtual int32_t Terminate() override;
     virtual bool Initialized() const override;
 
@@ -169,8 +171,8 @@ private:
 
     CriticalSectionWrapper& _critSect;
 
-    rtc::scoped_ptr<ThreadWrapper> _ptrThreadRec;
-    rtc::scoped_ptr<ThreadWrapper> _ptrThreadPlay;
+    std::unique_ptr<rtc::PlatformThread> _ptrThreadRec;
+    std::unique_ptr<rtc::PlatformThread> _ptrThreadPlay;
 
     int32_t _id;
 

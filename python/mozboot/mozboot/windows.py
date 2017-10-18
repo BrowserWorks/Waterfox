@@ -8,6 +8,7 @@ import subprocess
 
 from mozboot.base import BaseBootstrapper
 
+
 class WindowsBootstrapper(BaseBootstrapper):
     '''Bootstrapper for msys2 based environments for building in Windows.'''
 
@@ -66,6 +67,10 @@ class WindowsBootstrapper(BaseBootstrapper):
 
     def install_mobile_android_artifact_mode_packages(self):
         raise NotImplementedError('We do not support building Android on Windows. Sorry!')
+
+    def ensure_stylo_packages(self, state_dir, checkout_root):
+        import stylo
+        self.install_tooltool_clang_package(state_dir, checkout_root, stylo.WINDOWS)
 
     def _update_package_manager(self):
         self.pacman_update()

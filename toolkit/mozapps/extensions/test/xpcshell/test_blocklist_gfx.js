@@ -3,8 +3,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-const TEST_APP_ID            = "xpcshell@tests.mozilla.org";
-
 
 const EVENT_NAME = "blocklist-data-gfxItems";
 
@@ -36,7 +34,7 @@ function run_test() {
 }
 
 
-add_task(function* test_sends_serialized_data() {
+add_task(async function test_sends_serialized_data() {
   const blocklist = Blocklist();
   blocklist._gfxEntries = [SAMPLE_GFX_RECORD];
 
@@ -46,14 +44,14 @@ add_task(function* test_sends_serialized_data() {
                    "versionRange:0,*";
   let received;
   const observe = (subject, topic, data) => { received = data };
-  Services.obs.addObserver(observe, EVENT_NAME, false);
+  Services.obs.addObserver(observe, EVENT_NAME);
   blocklist._notifyObserversBlocklistGFX();
   equal(received, expected);
   Services.obs.removeObserver(observe, EVENT_NAME);
 });
 
 
-add_task(function* test_parsing_fails_if_devices_contains_comma() {
+add_task(async function test_parsing_fails_if_devices_contains_comma() {
   const input = "<blocklist xmlns=\"http://www.mozilla.org/2006/addons-blocklist\">" +
   "<gfxItems>" +
   " <gfxBlacklistEntry>" +
@@ -71,7 +69,7 @@ add_task(function* test_parsing_fails_if_devices_contains_comma() {
 });
 
 
-add_task(function* test_empty_values_are_ignored() {
+add_task(async function test_empty_values_are_ignored() {
   const input = "<blocklist xmlns=\"http://www.mozilla.org/2006/addons-blocklist\">" +
   "<gfxItems>" +
   " <gfxBlacklistEntry>" +
@@ -82,13 +80,13 @@ add_task(function* test_empty_values_are_ignored() {
   const blocklist = Blocklist();
   let received;
   const observe = (subject, topic, data) => { received = data };
-  Services.obs.addObserver(observe, EVENT_NAME, false);
+  Services.obs.addObserver(observe, EVENT_NAME);
   blocklist._loadBlocklistFromString(input);
   ok(received.indexOf("os" < 0));
   Services.obs.removeObserver(observe, EVENT_NAME);
 });
 
-add_task(function* test_empty_devices_are_ignored() {
+add_task(async function test_empty_devices_are_ignored() {
   const input = "<blocklist xmlns=\"http://www.mozilla.org/2006/addons-blocklist\">" +
   "<gfxItems>" +
   " <gfxBlacklistEntry>" +
@@ -99,13 +97,13 @@ add_task(function* test_empty_devices_are_ignored() {
   const blocklist = Blocklist();
   let received;
   const observe = (subject, topic, data) => { received = data };
-  Services.obs.addObserver(observe, EVENT_NAME, false);
+  Services.obs.addObserver(observe, EVENT_NAME);
   blocklist._loadBlocklistFromString(input);
   ok(received.indexOf("devices" < 0));
   Services.obs.removeObserver(observe, EVENT_NAME);
 });
 
-add_task(function* test_version_range_default_values() {
+add_task(async function test_version_range_default_values() {
   const input = "<blocklist xmlns=\"http://www.mozilla.org/2006/addons-blocklist\">" +
   "<gfxItems>" +
   " <gfxBlacklistEntry>" +
@@ -139,7 +137,7 @@ add_task(function* test_version_range_default_values() {
   equal(blocklist._gfxEntries[4].versionRange.maxVersion, "*");
 });
 
-add_task(function* test_blockid_attribute() {
+add_task(async function test_blockid_attribute() {
   const input = "<blocklist xmlns=\"http://www.mozilla.org/2006/addons-blocklist\">" +
   "<gfxItems>" +
   " <gfxBlacklistEntry blockID=\"g60\">" +

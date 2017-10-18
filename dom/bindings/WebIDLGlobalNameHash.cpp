@@ -8,7 +8,9 @@
 #include "js/GCAPI.h"
 #include "mozilla/HashFunctions.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/dom/DOMJSClass.h"
 #include "mozilla/dom/DOMJSProxyHandler.h"
+#include "mozilla/dom/PrototypeList.h"
 #include "mozilla/dom/RegisterBindings.h"
 #include "nsIMemoryReporter.h"
 #include "nsTHashtable.h"
@@ -47,7 +49,7 @@ struct MOZ_STACK_CLASS WebIDLNameTableKey
   const char* mLatin1String;
   const char16_t* mTwoBytesString;
   size_t mLength;
-  uint32_t mHash;
+  PLDHashNumber mHash;
 };
 
 struct WebIDLNameTableEntry : public PLDHashEntryHdr
@@ -58,12 +60,14 @@ struct WebIDLNameTableEntry : public PLDHashEntryHdr
   explicit WebIDLNameTableEntry(KeyTypePointer aKey)
     : mNameOffset(0),
       mNameLength(0),
+      mConstructorId(constructors::id::_ID_Count),
       mDefine(nullptr),
       mEnabled(nullptr)
   {}
   WebIDLNameTableEntry(WebIDLNameTableEntry&& aEntry)
     : mNameOffset(aEntry.mNameOffset),
       mNameLength(aEntry.mNameLength),
+      mConstructorId(aEntry.mConstructorId),
       mDefine(aEntry.mDefine),
       mEnabled(aEntry.mEnabled)
   {}
@@ -100,6 +104,7 @@ struct WebIDLNameTableEntry : public PLDHashEntryHdr
 
   uint16_t mNameOffset;
   uint16_t mNameLength;
+  constructors::id::ID mConstructorId;
   WebIDLGlobalNameHash::DefineGlobalName mDefine;
   // May be null if enabled unconditionally
   WebIDLGlobalNameHash::ConstructorEnabled* mEnabled;
@@ -123,10 +128,11 @@ public:
       sWebIDLGlobalNames ?
       sWebIDLGlobalNames->ShallowSizeOfIncludingThis(MallocSizeOf) : 0;
 
-    return MOZ_COLLECT_REPORT("explicit/dom/webidl-globalnames", KIND_HEAP,
-                              UNITS_BYTES, amount,
-                              "Memory used by the hash table for WebIDL's "
-                              "global names.");
+    MOZ_COLLECT_REPORT(
+      "explicit/dom/webidl-globalnames", KIND_HEAP, UNITS_BYTES, amount,
+      "Memory used by the hash table for WebIDL's global names.");
+
+    return NS_OK;
   }
 };
 
@@ -153,7 +159,8 @@ WebIDLGlobalNameHash::Shutdown()
 void
 WebIDLGlobalNameHash::Register(uint16_t aNameOffset, uint16_t aNameLength,
                                DefineGlobalName aDefine,
-                               ConstructorEnabled* aEnabled)
+                               ConstructorEnabled* aEnabled,
+                               constructors::id::ID aConstructorId)
 {
   const char* name = sNames + aNameOffset;
   WebIDLNameTableKey key(name, aNameLength);
@@ -162,6 +169,7 @@ WebIDLGlobalNameHash::Register(uint16_t aNameOffset, uint16_t aNameLength,
   entry->mNameLength = aNameLength;
   entry->mDefine = aDefine;
   entry->mEnabled = aEnabled;
+  entry->mConstructorId = aConstructorId;
 }
 
 /* static */
@@ -211,8 +219,14 @@ WebIDLGlobalNameHash::DefineIfEnabled(JSContext* aCx,
   }
 
   {
+    // It's safe to pass "&global" here, because we've already unwrapped it, but
+    // for general sanity better to not have debug code even having the
+    // appearance of mutating things that opt code uses.
+#ifdef DEBUG
+    JS::Rooted<JSObject*> temp(aCx, global);
     DebugOnly<nsGlobalWindow*> win;
-    MOZ_ASSERT(NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, win)));
+    MOZ_ASSERT(NS_SUCCEEDED(UNWRAP_OBJECT(Window, &temp, win)));
+#endif
   }
 
   if (checkEnabledForScope && !checkEnabledForScope(aCx, global)) {
@@ -299,18 +313,28 @@ WebIDLGlobalNameHash::MayResolve(jsid aId)
 }
 
 /* static */
-void
+bool
 WebIDLGlobalNameHash::GetNames(JSContext* aCx, JS::Handle<JSObject*> aObj,
-                               nsTArray<nsString>& aNames)
+                               NameType aNameType, JS::AutoIdVector& aNames)
 {
+  // aObj is always a Window here, so GetProtoAndIfaceCache on it is safe.
+  ProtoAndIfaceCache* cache = GetProtoAndIfaceCache(aObj);
   for (auto iter = sWebIDLGlobalNames->Iter(); !iter.Done(); iter.Next()) {
     const WebIDLNameTableEntry* entry = iter.Get();
-    if (!entry->mEnabled || entry->mEnabled(aCx, aObj)) {
-      AppendASCIItoUTF16(nsDependentCString(sNames + entry->mNameOffset,
-                                            entry->mNameLength),
-                         *aNames.AppendElement());
+    // If aNameType is not AllNames, only include things whose entry slot in the
+    // ProtoAndIfaceCache is null.
+    if ((aNameType == AllNames ||
+         !cache->HasEntryInSlot(entry->mConstructorId)) &&
+        (!entry->mEnabled || entry->mEnabled(aCx, aObj))) {
+      JSString* str = JS_AtomizeStringN(aCx, sNames + entry->mNameOffset,
+                                        entry->mNameLength);
+      if (!str || !aNames.append(NON_INTEGER_ATOM_TO_JSID(str))) {
+        return false;
+      }
     }
   }
+
+  return true;
 }
 
 } // namespace dom

@@ -22,7 +22,11 @@
 }
 
 *|*::-moz-table-wrapper {
+  /* The inherited properties here need to be safe to have on both the
+   * table and the table wrapper, generally because code ignores them
+   * for the table. */
   display: inherit !important; /* table or inline-table */
+  -moz-top-layer: inherit !important;
   margin: inherit ! important;
   padding: 0 ! important;
   border: none ! important;
@@ -39,15 +43,20 @@
   page-break-inside: inherit;
   vertical-align: inherit; /* needed for inline-table */
   line-height: inherit; /* needed for vertical-align on inline-table */
-  align-self: inherit;
-  justify-self: inherit;
-  order: inherit;   /* needed for "order" to work on table flex/grid items */
   /* Bug 722777 */
   transform: inherit;
   transform-origin: inherit;
   /* Bug 724750 */
   backface-visibility: inherit;
   clip: inherit;
+  /* When the table wrapper is a Flex/Grid item we need these: */
+  align-self: inherit;
+  justify-self: inherit;
+  grid-column-start: inherit;
+  grid-column-end: inherit;
+  grid-row-start: inherit;
+  grid-row-end: inherit;
+  order: inherit;
 }
 
 *|*::-moz-table-row {
@@ -123,7 +132,7 @@
 
 /* Miscellaneous */
 
-*|*::-moz-anonymous-block, *|*::-moz-cell-content {
+*|*::-moz-cell-content {
   display: block !important;
   position: static !important;
   unicode-bidi: inherit;
@@ -131,8 +140,10 @@
   overflow-clip-box: inherit;
 }
 
-*|*::-moz-anonymous-block, *|*::-moz-anonymous-positioned-block {
+*|*::-moz-block-inside-inline-wrapper {
+  display: block !important;
   /* we currently inherit from the inline that is split */
+  position: inherit; /* static or relative or sticky */
   outline: inherit;
   outline-offset: inherit;
   clip-path: inherit;
@@ -142,6 +153,16 @@
   text-decoration: inherit;
   -moz-box-ordinal-group: inherit !important;
   overflow-clip-box: inherit;
+  unicode-bidi: inherit;
+  text-overflow: inherit;
+  /* The properties below here don't apply if our position is static,
+     and we do want them to have an effect if it's not, so it's fine
+     to always inherit them. */
+  top: inherit;
+  left: inherit;
+  bottom: inherit;
+  right: inherit;
+  z-index: inherit;
 }
 
 *|*::-moz-xul-anonymous-block {
@@ -160,13 +181,12 @@
   /* The display doesn't affect the kind of frame constructed here.  This just
      affects auto-width sizing of the block we create. */
   display: block;
-  -moz-box-orient: inherit;
   /* make unicode-bidi inherit, otherwise it has no effect on text inputs and
      blocks with overflow: scroll; */
   unicode-bidi: inherit;
   text-overflow: inherit;
   /* Please keep the Multicol/Flex/Grid/Align sections below in sync with
-     ::-moz-fieldset-content in forms.css */
+     ::-moz-fieldset-content/::-moz-button-content in forms.css */
   /* Multicol container */
   -moz-column-count: inherit;
   -moz-column-width: inherit;
@@ -176,6 +196,11 @@
   /* Flex container */
   flex-direction: inherit;
   flex-wrap: inherit;
+  /* -webkit-box container (aliased from -webkit versions to -moz versions) */
+  -moz-box-orient: inherit;
+  -moz-box-direction: inherit;
+  -moz-box-pack: inherit;
+  -moz-box-align: inherit;
   /* Grid container */
   grid-auto-columns: inherit;
   grid-auto-rows: inherit;
@@ -242,6 +267,7 @@
   display: block !important;
   background: white;
   box-shadow: 5px 5px 8px #202020;
+  box-decoration-break: clone;
   margin: 0.125in 0.25in;
 }
 
@@ -252,20 +278,6 @@
 
 *|*::-moz-pagebreak {
   display: block !important;
-}
-
-*|*::-moz-anonymous-positioned-block {
-  display: block !important;
-  position: inherit; /* relative or sticky */
-  top: inherit;
-  left: inherit;
-  bottom: inherit;
-  right: inherit;
-  z-index: inherit;
-  clip: inherit;
-  opacity: inherit;
-  unicode-bidi: inherit;
-  text-overflow: inherit;
 }
 
 /* Printing */
@@ -349,47 +361,60 @@ div:-moz-native-anonymous.moz-accessiblecaret {
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret,
-div:-moz-native-anonymous.moz-accessiblecaret > div.image,
-div:-moz-native-anonymous.moz-accessiblecaret > div.bar {
+div:-moz-native-anonymous.moz-accessiblecaret > #text-overlay,
+div:-moz-native-anonymous.moz-accessiblecaret > #image,
+div:-moz-native-anonymous.moz-accessiblecaret > #bar {
   position: absolute;
   z-index: 2147483647;
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret > div.image {
-  background-position: center bottom;
-  background-size: 100%;
-  background-repeat: no-repeat;
-  background-origin: content-box;
+div:-moz-native-anonymous.moz-accessiblecaret > #text-overlay,
+div:-moz-native-anonymous.moz-accessiblecaret > #image {
   top: 0;
   width: 100%;
-  height: 100%;
 
   /* Override this property in moz-custom-content-container to make dummy touch
    * listener work. */
   pointer-events: auto;
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret > div.bar {
+div:-moz-native-anonymous.moz-accessiblecaret > #image {
+  background-position: center top;
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  height: 100%;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret > #bar {
   margin-left: 49%;
   background-color: #008aa0;
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret.no-bar > div.bar {
+div:-moz-native-anonymous.moz-accessiblecaret.no-bar > #bar {
   display: none;
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+div:-moz-native-anonymous.moz-accessiblecaret.normal > #image {
   background-image: url("resource://gre-resources/accessiblecaret-normal@1x.png");
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-  background-image: url("resource://gre-resources/accessiblecaret-tilt-left@1x.png");
+div:-moz-native-anonymous.moz-accessiblecaret.left > #text-overlay,
+div:-moz-native-anonymous.moz-accessiblecaret.left > #image {
   margin-left: -39%;
 }
 
-div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-  background-image: url("resource://gre-resources/accessiblecaret-tilt-right@1x.png");
+div:-moz-native-anonymous.moz-accessiblecaret.left > #image {
+  background-image: url("resource://gre-resources/accessiblecaret-tilt-left@1x.png");
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.right > #text-overlay,
+div:-moz-native-anonymous.moz-accessiblecaret.right > #image {
   margin-left: 41%;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.right > #image {
+  background-image: url("resource://gre-resources/accessiblecaret-tilt-right@1x.png");
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.none {
@@ -397,43 +422,43 @@ div:-moz-native-anonymous.moz-accessiblecaret.none {
 }
 
 @media (min-resolution: 1.5dppx) {
-  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > #image {
     background-image: url("resource://gre-resources/accessiblecaret-normal@1.5x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.left > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-left@1.5x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.right > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-right@1.5x.png");
   }
 }
 
 @media (min-resolution: 2dppx) {
-  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > #image {
     background-image: url("resource://gre-resources/accessiblecaret-normal@2x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.left > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-left@2x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.right > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-right@2x.png");
   }
 }
 
 @media (min-resolution: 2.25dppx) {
-  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > #image {
     background-image: url("resource://gre-resources/accessiblecaret-normal@2.25x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.left > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-left@2.25x.png");
   }
 
-  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+  div:-moz-native-anonymous.moz-accessiblecaret.right > #image {
     background-image: url("resource://gre-resources/accessiblecaret-tilt-right@2.25x.png");
   }
 }

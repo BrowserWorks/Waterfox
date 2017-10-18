@@ -22,8 +22,8 @@ var TrackingProtection = {
     this.icon = $("#tracking-protection-icon");
 
     this.updateEnabled();
-    Services.prefs.addObserver(this.PREF_ENABLED_GLOBALLY, this, false);
-    Services.prefs.addObserver(this.PREF_ENABLED_IN_PRIVATE_WINDOWS, this, false);
+    Services.prefs.addObserver(this.PREF_ENABLED_GLOBALLY, this);
+    Services.prefs.addObserver(this.PREF_ENABLED_IN_PRIVATE_WINDOWS, this);
 
     this.activeTooltipText =
       gNavigatorBundle.getString("trackingProtection.icon.activeTooltip");
@@ -141,8 +141,7 @@ var TrackingProtection = {
     // nsChannelClassifier::ShouldEnableTrackingProtection.
     // Any scheme turned into https is correct.
     let normalizedUrl = Services.io.newURI(
-      "https://" + gBrowser.selectedBrowser.currentURI.hostPort,
-      null, null);
+      "https://" + gBrowser.selectedBrowser.currentURI.hostPort);
 
     // Add the current host in the 'trackingprotection' consumer of
     // the permission manager using a normalized URI. This effectively
@@ -168,8 +167,7 @@ var TrackingProtection = {
     // of the permission manager. This effectively removes this host
     // from the tracking protection allowlist.
     let normalizedUrl = Services.io.newURI(
-      "https://" + gBrowser.selectedBrowser.currentURI.hostPort,
-      null, null);
+      "https://" + gBrowser.selectedBrowser.currentURI.hostPort);
 
     if (PrivateBrowsingUtils.isBrowserPrivate(gBrowser.selectedBrowser)) {
       PrivateBrowsingUtils.removeFromTrackingAllowlist(normalizedUrl);
@@ -196,7 +194,7 @@ var TrackingProtection = {
     }
   },
 
-  showIntroPanel: Task.async(function*() {
+  async showIntroPanel() {
     let brandBundle = document.getElementById("bundle_brand");
     let brandShortName = brandBundle.getString("brandShortName");
 
@@ -211,7 +209,8 @@ var TrackingProtection = {
         // Ignore the fragment in case the intro is shown on the tour page
         // (e.g. if the user manually visited the tour or clicked the link from
         // about:privatebrowsing) so we can avoid a reload.
-        ignoreFragment: true,
+        ignoreFragment: "whenComparingAndReplace",
+        triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
       });
     };
 
@@ -227,7 +226,7 @@ var TrackingProtection = {
       },
     ];
 
-    let panelTarget = yield UITour.getTarget(window, "trackingProtection");
+    let panelTarget = await UITour.getTarget(window, "trackingProtection");
     UITour.initForBrowser(gBrowser.selectedBrowser, window);
     UITour.showInfo(window, panelTarget,
                     gNavigatorBundle.getString("trackingProtection.intro.title"),
@@ -235,5 +234,5 @@ var TrackingProtection = {
                                                         [brandShortName]),
                     undefined, buttons,
                     { closeButtonCallback: () => this.dontShowIntroPanelAgain() });
-  }),
+  },
 };

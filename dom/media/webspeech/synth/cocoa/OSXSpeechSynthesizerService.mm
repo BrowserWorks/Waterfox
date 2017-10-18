@@ -43,7 +43,7 @@ public:
 
   NS_DECL_NSISPEECHTASKCALLBACK
 
-  void OnWillSpeakWord(uint32_t aIndex);
+  void OnWillSpeakWord(uint32_t aIndex, uint32_t aLength);
   void OnError(uint32_t aIndex);
   void OnDidFinishSpeaking();
 
@@ -137,14 +137,15 @@ SpeechTaskCallback::GetTimeDurationFromStart()
 }
 
 void
-SpeechTaskCallback::OnWillSpeakWord(uint32_t aIndex)
+SpeechTaskCallback::OnWillSpeakWord(uint32_t aIndex, uint32_t aLength)
 {
   mCurrentIndex = aIndex < mOffsets.Length() ? mOffsets[aIndex] : mCurrentIndex;
   if (!mTask) {
     return;
   }
   mTask->DispatchBoundary(NS_LITERAL_STRING("word"),
-                          GetTimeDurationFromStart(), mCurrentIndex);
+                          GetTimeDurationFromStart(),
+                          mCurrentIndex, aLength, 1);
 }
 
 void
@@ -185,7 +186,7 @@ SpeechTaskCallback::OnDidFinishSpeaking()
 - (void)speechSynthesizer:(NSSpeechSynthesizer *)aSender
             willSpeakWord:(NSRange)aRange ofString:(NSString*)aString
 {
-  mCallback->OnWillSpeakWord(aRange.location);
+  mCallback->OnWillSpeakWord(aRange.location, aRange.length);
 }
 
 - (void)speechSynthesizer:(NSSpeechSynthesizer *)aSender
@@ -223,7 +224,8 @@ class RegisterVoicesRunnable final : public Runnable
 public:
   RegisterVoicesRunnable(OSXSpeechSynthesizerService* aSpeechService,
                          nsTArray<OSXVoice>& aList)
-    : mSpeechService(aSpeechService)
+    : Runnable("RegisterVoicesRunnable")
+    , mSpeechService(aSpeechService)
     , mVoices(aList)
   {
   }
@@ -231,9 +233,7 @@ public:
   NS_IMETHOD Run() override;
 
 private:
-  ~RegisterVoicesRunnable()
-  {
-  }
+  ~RegisterVoicesRunnable() override = default;
 
   // This runnable always use sync mode.  It is unnecesarry to reference object
   OSXSpeechSynthesizerService* mSpeechService;
@@ -270,16 +270,15 @@ class EnumVoicesRunnable final : public Runnable
 {
 public:
   explicit EnumVoicesRunnable(OSXSpeechSynthesizerService* aSpeechService)
-    : mSpeechService(aSpeechService)
+    : Runnable("EnumVoicesRunnable")
+    , mSpeechService(aSpeechService)
   {
   }
 
   NS_IMETHOD Run() override;
 
 private:
-  ~EnumVoicesRunnable()
-  {
-  }
+  ~EnumVoicesRunnable() override = default;
 
   RefPtr<OSXSpeechSynthesizerService> mSpeechService;
 };
@@ -343,9 +342,6 @@ OSXSpeechSynthesizerService::OSXSpeechSynthesizerService()
 {
 }
 
-OSXSpeechSynthesizerService::~OSXSpeechSynthesizerService()
-{
-}
 
 bool
 OSXSpeechSynthesizerService::Init()

@@ -13,8 +13,8 @@
 // between different Linux architectures.
 
 #include "mozilla/Maybe.h"
-#include "sandbox/linux/services/linux_syscalls.h"
 #include "sandbox/linux/bpf_dsl/policy.h"
+#include "sandbox/linux/system_headers/linux_syscalls.h"
 
 namespace mozilla {
 
@@ -105,8 +105,6 @@ public:
 #define CASES_FOR_statfs   case __NR_statfs64: case __NR_statfs
 #define CASES_FOR_fstatfs   case __NR_fstatfs64: case __NR_fstatfs
 #define CASES_FOR_fcntl   case __NR_fcntl64
-// We're using the 32-bit version on 32-bit desktop for some reason.
-#define CASES_FOR_getdents   case __NR_getdents64: case __NR_getdents
 // FIXME: we might not need the compat cases for these on non-Android:
 #define CASES_FOR_lseek   case __NR_lseek: case __NR__llseek
 #define CASES_FOR_ftruncate   case __NR_ftruncate: case __NR_ftruncate64
@@ -118,9 +116,15 @@ public:
 #define CASES_FOR_fstatfs   case __NR_fstatfs
 #define CASES_FOR_statfs   case __NR_statfs
 #define CASES_FOR_fcntl   case __NR_fcntl
-#define CASES_FOR_getdents   case __NR_getdents
 #define CASES_FOR_lseek   case __NR_lseek
 #define CASES_FOR_ftruncate   case __NR_ftruncate
+#endif
+
+// getdents is not like the other FS-related syscalls with a "64" variant
+#ifdef __NR_getdents
+#define CASES_FOR_getdents   case __NR_getdents64: case __NR_getdents
+#else
+#define CASES_FOR_getdents   case __NR_getdents64
 #endif
 
 #ifdef __NR_sigprocmask

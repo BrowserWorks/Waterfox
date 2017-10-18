@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var Ci = Components.interfaces;
 var Cu = Components.utils;
 
@@ -121,7 +123,7 @@ addMessageListener(
     eventManager.start();
 
     function contentStarted() {
-      let accDoc = Utils.AccRetrieval.getAccessibleFor(content.document);
+      let accDoc = Utils.AccService.getAccessibleFor(content.document);
       if (accDoc && !Utils.getState(accDoc).contains(States.BUSY)) {
         sendAsyncMessage('AccessFu:ContentStarted');
       } else {

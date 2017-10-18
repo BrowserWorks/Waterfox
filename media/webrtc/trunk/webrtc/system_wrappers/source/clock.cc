@@ -8,20 +8,20 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "webrtc/system_wrappers/interface/clock.h"
+#include "webrtc/system_wrappers/include/clock.h"
 
 #if defined(_WIN32)
 // Windows needs to be included before mmsystem.h
 #include "webrtc/base/win32.h"
 #include <MMSystem.h>
-#elif ((defined WEBRTC_LINUX) || (defined WEBRTC_BSD) || (defined WEBRTC_MAC))
+#elif ((defined WEBRTC_LINUX) || (defined WEBRTC_MAC) || (defined WEBRTC_BSD))
 #include <sys/time.h>
 #include <time.h>
 #endif
 
 #include "webrtc/base/criticalsection.h"
-#include "webrtc/system_wrappers/interface/rw_lock_wrapper.h"
-#include "webrtc/system_wrappers/interface/tick_util.h"
+#include "webrtc/base/timeutils.h"
+#include "webrtc/system_wrappers/include/rw_lock_wrapper.h"
 
 namespace webrtc {
 
@@ -37,13 +37,13 @@ class RealTimeClock : public Clock {
   // Return a timestamp in milliseconds relative to some arbitrary source; the
   // source is fixed for this clock.
   int64_t TimeInMilliseconds() const override {
-    return TickTime::MillisecondTimestamp();
+    return rtc::TimeMillis();
   }
 
   // Return a timestamp in microseconds relative to some arbitrary source; the
   // source is fixed for this clock.
   int64_t TimeInMicroseconds() const override {
-    return TickTime::MicrosecondTimestamp();
+    return rtc::TimeMicros();
   }
 
   // Retrieve an NTP absolute timestamp in seconds and fractions of a second.
@@ -155,9 +155,9 @@ class WindowsRealTimeClock : public RealTimeClock {
   }
 
   static ReferencePoint GetSystemReferencePoint() {
-    ReferencePoint ref = {0};
-    FILETIME ft0 = {0};
-    FILETIME ft1 = {0};
+    ReferencePoint ref = {};
+    FILETIME ft0 = {};
+    FILETIME ft1 = {};
     // Spin waiting for a change in system time. As soon as this change happens,
     // get the matching call for timeGetTime() as soon as possible. This is
     // assumed to be the most accurate offset that we can get between
@@ -179,13 +179,13 @@ class WindowsRealTimeClock : public RealTimeClock {
   }
 
   // mutable as time-accessing functions are const.
-  mutable rtc::CriticalSection crit_;
+  rtc::CriticalSection crit_;
   mutable DWORD last_time_ms_;
   mutable LONG num_timer_wraps_;
   const ReferencePoint ref_point_;
 };
 
-#elif ((defined WEBRTC_LINUX) || (defined WEBRTC_BSD) || (defined WEBRTC_MAC))
+#elif ((defined WEBRTC_LINUX) || (defined WEBRTC_MAC)) || (defined WEBRTC_BSD)
 class UnixRealTimeClock : public RealTimeClock {
  public:
   UnixRealTimeClock() {}

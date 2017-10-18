@@ -9,7 +9,7 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "GMPParent.h"
 #include "gmp-storage.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/EndianUtils.h"
 #include "nsClassHashtable.h"
 #include "prio.h"
@@ -299,14 +299,6 @@ public:
     // the record is less likely to be corrupted.
     PR_Sync(record->mFileDesc);
 
-    return GMPNoErr;
-  }
-
-  GMPErr GetRecordNames(nsTArray<nsCString>& aOutRecordNames) const override
-  {
-    for (auto iter = mRecords.ConstIter(); !iter.Done(); iter.Next()) {
-      aOutRecordNames.AppendElement(iter.UserData()->mRecordName);
-    }
     return GMPNoErr;
   }
 

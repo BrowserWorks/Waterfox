@@ -5,6 +5,8 @@
 #ifndef SANDBOX_LINUX_SECCOMP_BPF_BPF_TESTS_H__
 #define SANDBOX_LINUX_SECCOMP_BPF_BPF_TESTS_H__
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/macros.h"
 #include "build/build_config.h"
@@ -102,12 +104,12 @@ class BPFTesterSimpleDelegate : public BPFTesterDelegate {
  public:
   explicit BPFTesterSimpleDelegate(void (*test_function)(void))
       : test_function_(test_function) {}
-  virtual ~BPFTesterSimpleDelegate() {}
+  ~BPFTesterSimpleDelegate() override {}
 
-  virtual scoped_ptr<bpf_dsl::Policy> GetSandboxBPFPolicy() override {
-    return scoped_ptr<bpf_dsl::Policy>(new PolicyClass());
+  std::unique_ptr<bpf_dsl::Policy> GetSandboxBPFPolicy() override {
+    return std::unique_ptr<bpf_dsl::Policy>(new PolicyClass());
   }
-  virtual void RunTestFunction() override {
+  void RunTestFunction() override {
     DCHECK(test_function_);
     test_function_();
   }

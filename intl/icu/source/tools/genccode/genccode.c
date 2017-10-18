@@ -1,10 +1,12 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
  *******************************************************************************
- *   Copyright (C) 1999-2013, International Business Machines
+ *   Copyright (C) 1999-2016, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *******************************************************************************
  *   file name:  gennames.c
- *   encoding:   US-ASCII
+ *   encoding:   UTF-8
  *   tab size:   8 (not used)
  *   indentation:4
  *
@@ -98,7 +100,7 @@ main(int argc, char* argv[]) {
     options[kOptDestDir].value = ".";
 
     /* read command line options */
-    argc=u_parseArgs(argc, argv, sizeof(options)/sizeof(options[0]), options);
+    argc=u_parseArgs(argc, argv, UPRV_LENGTHOF(options), options);
 
     /* error handling, printing usage message */
     if(argc<0) {

@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
 EXPORTS.mozilla.dom += [
     'Performance.h',
     'PerformanceEntry.h',
@@ -13,6 +16,7 @@ EXPORTS.mozilla.dom += [
     'PerformanceObserver.h',
     'PerformanceObserverEntryList.h',
     'PerformanceResourceTiming.h',
+    'PerformanceService.h',
     'PerformanceTiming.h',
 ]
 
@@ -26,6 +30,7 @@ UNIFIED_SOURCES += [
     'PerformanceObserver.cpp',
     'PerformanceObserverEntryList.cpp',
     'PerformanceResourceTiming.cpp',
+    'PerformanceService.cpp',
     'PerformanceTiming.cpp',
     'PerformanceWorker.cpp',
 ]

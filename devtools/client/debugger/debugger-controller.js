@@ -7,7 +7,7 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-const DBG_STRINGS_URI = "chrome://devtools/locale/debugger.properties";
+const DBG_STRINGS_URI = "devtools/client/locales/debugger.properties";
 const NEW_SOURCE_IGNORED_URLS = ["debugger eval code", "XStringBundle"];
 const NEW_SOURCE_DISPLAY_DELAY = 200; // ms
 const FETCH_SOURCE_RESPONSE_DELAY = 200; // ms
@@ -51,9 +51,9 @@ const EVENTS = {
   BREAKPOINT_HIDDEN_IN_EDITOR: "Debugger:BreakpointHiddenInEditor",
   BREAKPOINT_HIDDEN_IN_PANE: "Debugger:BreakpointHiddenInPane",
 
-  // When a conditional breakpoint's popup is showing or hiding.
-  CONDITIONAL_BREAKPOINT_POPUP_SHOWING: "Debugger:ConditionalBreakpointPopupShowing",
-  CONDITIONAL_BREAKPOINT_POPUP_HIDING: "Debugger:ConditionalBreakpointPopupHiding",
+  // When a conditional breakpoint's popup is shown/hidden.
+  CONDITIONAL_BREAKPOINT_POPUP_SHOWN: "Debugger:ConditionalBreakpointPopupShown",
+  CONDITIONAL_BREAKPOINT_POPUP_HIDDEN: "Debugger:ConditionalBreakpointPopupHidden",
 
   // When event listeners are fetched or event breakpoints are updated.
   EVENT_LISTENERS_FETCHED: "Debugger:EventListenersFetched",
@@ -144,9 +144,9 @@ var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var promise = require("devtools/shared/deprecated-sync-thenables");
 var Editor = require("devtools/client/sourceeditor/editor");
 var DebuggerEditor = require("devtools/client/sourceeditor/debugger");
-var {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
+var Tooltip = require("devtools/client/shared/widgets/tooltip/Tooltip");
 var FastListWidget = require("devtools/client/shared/widgets/FastListWidget");
-var {LocalizationHelper} = require("devtools/client/shared/l10n");
+var {LocalizationHelper, ELLIPSIS} = require("devtools/shared/l10n");
 var {PrefsHelper} = require("devtools/client/shared/prefs");
 var {Task} = require("devtools/shared/task");
 
@@ -275,9 +275,12 @@ var DebuggerController = {
     this.client = client;
     this.activeThread = this._toolbox.threadClient;
 
+    let wasmBinarySource = !!this.client.mainRoot.traits.wasmBinarySource;
+
     // Disable asm.js so that we can set breakpoints and other things
-    // on asm.js scripts
-    yield this.reconfigureThread({ observeAsmJS: true });
+    // on asm.js scripts. For WebAssembly modules allow using of binary
+    // source if supported.
+    yield this.reconfigureThread({ observeAsmJS: true, wasmBinarySource, });
     yield this.connectThread();
 
     // We need to call this to sync the state of the resume
@@ -1211,7 +1214,6 @@ var Prefs = new PrefsHelper("devtools", {
   workersEnabled: ["Bool", "debugger.workers"],
   editorTabSize: ["Int", "editor.tabsize"],
   autoBlackBox: ["Bool", "debugger.auto-black-box"],
-  promiseDebuggerEnabled: ["Bool", "debugger.promise"]
 });
 
 /**

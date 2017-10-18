@@ -17,6 +17,7 @@
 //
 // Unit test compact language detector, CLD2
 //
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 
 // Test strings.
 const kTeststr_en =
@@ -38,24 +39,20 @@ const kTeststr_az_Latn = " a az qalıb breyn rinq intellektual oyunu üzrə yar�
 const kTeststr_ba_Cyrl = " арналђан бындай ђилми эш тіркињлњ тњјге тапєыр нњшер ителњ ғинуар бєхет именлектє етешлектє ауыл ўќмерџєре хеџмєт юлын ћайлаѓанда";
 const kTeststr_be_Cyrl = " а друкаваць іх не было тэхнічна магчыма бліжэй за вільню тым самым часам нямецкае кіраўніцтва прапаноўвала апроч ўвядзення лацінкі яе";
 const kTeststr_bg_Cyrl = " а дума попада в състояние на изпитание ключовите думи с предсказана малко под то изискване на страниците за търсене в";
-//const kTeststr_bh_Deva = " विकिपीडिया इंटरनेट आधारित एक मुक्त ज्ञानकोष परियोजना ह ई विकि के रुप मेँ बा यानी एगो अईसन जाल पृष्ठ जे सभन के संपादन करे के छूट देवेला विकिपीडिया शब्द विकि अउर इनसाइक्लोपीडिया ज्ञानकोष शब्दन के मिला के बनल बा विकिपीडिया एक बहुभाषीय प्रकल्प ह अउर स्वयंसेवकन के सहकार से निर्मित बा जेहु के भी इंटरनेट तक पहुँच बा ऊ विकिपीडिया पर लिख सकत बा अउर लेखन के संपादन कर सकत बा";
 // From 10% testing part of new lang=bh scrape
 const kTeststr_bh_Deva = "काल में उनका हमला से बचे खाती एहिजा भाग के अइले आ भोजपुर नाम से नगर बसवले. एकरा बारे में विस्तार से जानकारी नीचे दीहल गइल बा. बाकिर आश्चर्यजनक रूप से मालवा के राजा भोज के बिहार आवे आ भोजपुर नगर बसावे आ चाहे भोजपुरी के साथे उनकर कवनो संबंध होखे के कवनो जानकारी भोपाल के भोज संस्थान आ चाहे मध्य प्रदेश के इतिहासकार लोगन के तनिको नइखे. हालांकि ऊ सब लोग एह बात के मानत बा कि एकरा बारे में अबहीं तकले मूर्ति बनवइलें. राजा भोज के जवना जगहा पऽ वाग्देवी के दर्शन भइल रहे, ओही स्थान पऽ एह मूर्ति के स्थापना कइल गइल. अब अगर एह मंदिर के एह शिलालेख के तस्वीर (पृष्ठ संख्या 33 पऽ प्रकाशित) रउआ धेयान से देखीं तऽ एकरा पऽ कैथी लिपि में -सीताराम- लिखल साफ लउकत बा. कैथी भोजपुरी के बहुत प्रचलित लिपि रहल बिया. एकरा बारे में कवनो शंका संदेह बिहार-यूपी के जानकार लोगन में नइखे. एल. एस. एस. वो माले के लिखल पढ़ीं ";
 
 const kTeststr_bi_Latn = " king wantaem nomo hem i sakem setan mo ol rabis enjel blong hem oli aot long heven oli kamdaon long wol taswe ol samting oli kam nogud olgeta long wol ya stat long revelesen ol faet kakae i sot ol sik mo fasin blong brekem loa oli kam antap olgeta samting";
 const kTeststr_blu_Latn = " Kuv hlub koj txawm lub ntuj yuav si ntshi nphaus los kuv tsis ua siab nkaug txawm ntiab teb yuav si ntshi nphaus los kuv tseem ua lon tsaug vim kuv hlub koj tag lub siab";
 const kTeststr_blu_Latn2 = "Kuv hnov Txhiaj Xeeb Vaj, co-owner of Hmong Village Shopping Center, hais ua hnub ua hmo tias kom Hmoob yuav tsum txhawb Hmoob thiab listed cov mini-shops uas nyob rau hauv nws lub MALL txhua txhua kom sawv daws mus txhawb, tiam sis uas cas zaum twg twb pom nws mus kav kiav hauv taj laj qhabmeem (Sun Foods) xwb tiag. Nag hmo kuv pom nws mus shopping nrog nws poj niam hauv Sun Foods. Thaum tawm mus txog nraum parking lot kuv thiaj txhob txwm mus ze ze seb ua li nws mus yuav dab tsi tiag, thiab seb tej uas nws yuav ntawd puas muaj nyob ntawm tej kiab khw Hmoob. Surprised!!! Vuag.... txhua yam nws yuav hauv Sun Foods peb Hmoob cov khw yeej muaj tag nrho. Peb niaj hnub nqua hu kom Hmoob yuav tsum pab Hmoob yog pab li no lod?";
-//const kTeststr_bn_Beng = " ংখ্যা নমুনায়ন বিন্যাস পরিসংখ্যানিক মডেল পরিসংখ্যানিক সিদ্ধান্ত ফাংশন পরিসংখ্যানিক";
 // From 10% testing part of new lang=bn scrape
 const kTeststr_bn_Beng = "গ্যালারির ৩৮ বছর পূর্তিতে মূল্যছাড় অর্থনীতি বিএনপির ওয়াক আউট তপন চৌধুরী হারবাল অ্যাসোসিয়েশনের সভাপতি আন্তর্জাতিক পরামর্শক বোর্ড দিয়ে শরিয়াহ্ ইনন্ডেক্স করবে সিএসই মালিকপক্ষের কান্না, শ্রমিকের অনিশ্চয়তা মতিঝিলে সমাবেশ নিষিদ্ধ: এফবিসিসিআইয়ের ধন্যবাদ বিনোদন বিশেষ প্রতিবেদন বাংলালিংকের গ্র্যান্ডমাস্টার সিজন-৩ ব্রাজিলে বিশ্বকাপ ফুটবল আয়োজনবিরোধী বিক্ষোভ দেশের নিরাপত্তার  চেয়ে অনেক বেশি সচেতন । প্রার্থীদের দক্ষতা  ও যোগ্যতার পাশাপাশি তারা জাতীয় ইস্যুগুলোতে প্রাধান্য দিয়েছেন । ” পাঁচটি সিটিতে ২০ লাখ ভোটারদের দিয়ে জাতীয় নির্বাচনে ৮ কোটি ভোটারদের সঙ্গে তুলনা করা যাবে কি একজন দর্শকের এমন প্রশ্নে জবাবে আব্দুল্লাহ আল নোমান বলেন , “ এই পাঁচটি সিটি কর্পোরেশন নির্বাচন দেশের পাঁচটি বড় বিভাগের প্রতিনিধিত্ব করছে । এছাড়া এখানকার ভোটার রা সবাই সচেতন । তারা";
 
-//const kTeststr_bo_Tibt = " གང ནི ཀུན ལ སྦྱར པ དང ཅན ལྡན བདག པོའི སྒྲ ག ད བ ས ན མ པ ང འ ར ལ མཐའ མེད པ བདག པོའི སྒྲ ལ པ ཉིད དོ མ མི མིན";
 // From 10% testing part of new lang=bo scrape
 const kTeststr_bo_Tibt = " ་གྱིས་ཁ་ཆེའི་ཕྱག་འཚལ་ཁང་ཞིག་བཤིག་སྲིད་པ། ཡར་ཀླུང་གཙང་པོར་ཆ ུ་མཛོང་བརྒྱག་རྒྱུའི་ལས་འཆར་ལ་རྒྱ་གར་གྱི་སེམས་ཚབས། རྒྱ་གརགྱི་མཚོ་འོག་དམག་གྲུར་སྦར་གས་བྱུང་བ། པ་ཀི་སི་ཏན་གྱིས་རྒྱ་གར་ལ་མི་སེར་བསད་པའི་སྐྱོན་འཛུགས་བྱས་པ། རྩོམ་ཡིག་མང་བ། འབྲེལ་མཐུད་བརྒྱུད་ལམ། ཐོན་སྐྱེད་དང་སྲི་ཞུ། ་ཐོག་དེབ་བཞི་ དཔར་འགྲེམས་གནང་ཡོད་པ་དང་བོད་ཡིག་དྲ་ཚིགས་ཁག་ནང་ལ་ཡང་རྩོམ་ཡང་ཡང་བྲིས་གནང་མཁན་རེད། ལེ་ཚན་ཁག ལེ་ཚན་ཁག འབྲེལ་ཡོད། འགྲེམ་སྟོན། རྒྱུད་ལམ་སྣ་མང་ཡིག་མཛོད། བཀོལ་སྤྱོད་པའི་འཇོག་ཡུལ་དྲ་ངོས། སྔོན་མ། རྗེས་མ། བསྟན་འཛིན་བདེ་སྐྱིད། ཚེ་རིང་རྣམ་རྒྱལ། བསྟན་འཛིན་ངག་དབང་། ཡོལ་གདོང་ཚེ་རིང་ལྷག་པ།  ་དབང་ ཕྱུག་གཉིས་ཀྱིས་བརྗོད་གཞི་བྱེ་བྲག་པ་ཞིག་ལ་བགྲོ་གླེང་གཏིང་ཟབ་བྱེད་པའི་གཟའ་ འཁོར་གཉིས་རེའི་མཚམས་ཀྱི་ལེ་ཚན་ཞིག་ཡིན། དཔྱད་ཞིབ་ཀྱིས་རྒྱ་ནག་ནང་ཁུལ་གྱི་འགྱུར་ལྡོག་དང༌། རྒྱ་ནག་དང་རྒྱལ་སྤྱིའི་འབྲེལ་བར་དམིགས་སུ་བཀར་ནས་བགྲོ་གླེང་བྱེད་ཀྱི་ཡོད།། རྒྱང་སྲིང་དུས་ཚོད།";
 
 const kTeststr_br_Latn = " a chom met leuskel a ra e blas da jack irons dilabour hag aet kuit eus what is this dibab a reont da c houde michael beinhorn evit produiñ an trede pladenn kavet e vez ar ganaouennoù buhan ha buhan ganto setu stummet ar bladenn adkavet e vez enni funk";
 const kTeststr_bs_Cyrl = "историја босне књ историја босне књ историја босне књ историја босне књ ";
-//const kTeststr_bs_Latn = " a radi bržeg rada pošto rom radi sporije nego ram izvorni rom se isključuje a dio ram a se rezerviše te se u njega ne ploča procesor ram memorija grafička kartica zvučna kartica modem mrežna kartica napojna jedinica uređaji za pohranjivanje";
 // From 10% testing part of new lang=bs scrape
 const kTeststr_bs_Latn = "Novi predsjednik Mešihata Islamske zajednice u Srbiji (IZuS) i muftija dr. Mevlud ef. Dudić izjavio je u intervjuu za Anadolu Agency (AA) kako je uvjeren da će doći do vraćanja jedinstva među muslimanima i unutar Islamske zajednice na prostoru Sandžaka, te da je njegova ruka pružena za povratak svih u okrilje Islamske zajednice u Srbiji nakon skoro sedam godina podjela u tom dijelu Srbije. Dudić je za predsjednika Mešihata IZ u Srbiji izabran 4. januara, a zvanična inauguracija će biti obavljena u prvoj polovini februara. Kako se očekuje, prisustvovat će joj i reisu-l-ulema Islamske zajednice u Srbiji Husein ef. Kavazović koji će i zvanično promovirati Dudića u novog prvog čovjeka IZ u Srbiji. Dudić će danas boraviti u prvoj zvaničnoj posjeti reisu Kavazoviću, što je njegov privi simbolični potez nakon imenovanja. ";
 
@@ -64,7 +61,7 @@ const kTeststr_ceb_Latn = "Ang Sugbo usa sa mga labing ugmad nga lalawigan sa na
 const kTeststr_ceb_Latn2 = "Ang mga komyun sa Pransiya duol-duol sa inkorporadong mga lungsod ug mga dakbayan sa Estados Unidos. Wala kini susamang istruktura sa Hiniusang Gingharian (UK) tungod kay ang estado niini taliwala sa di-metropolitan nga distrito ug sa sibil nga parokya. Wala usab kini susamang istruktura sa Pilipinas.";
 const kTeststr_chr_Cher = "ᎠᎢᏍᎩ ᎠᏟᎶᏍᏗ ᏥᏄᏍᏛᎩ ᎦᎫᏍᏛᏅᎯ ᎾᎥᎢ";
 const kTeststr_co_Latn = " a prupusitu di risultati for utilizà a scatula per ricercà ind issi risultati servore errore u servore ha incuntratu una errore pruvisoria é ùn ha pussutu compie a vostra dumanda per piacè acimenta dinò ind una minuta tuttu listessu ligami truvà i";
-const  kTeststr_crs_Latn = "Sesel ou menm nou sel patri. Kot nou viv dan larmoni. Lazwa, lanmour ek lape. Nou remersye Bondye. Preserv labote nou pei. Larises nou losean. En leritaz byen presye. Pour boner nou zanfan. Reste touzour dan linite. Fer monte nou paviyon. Ansanm pou tou leternite. Koste Seselwa!";
+const kTeststr_crs_Latn = "Sesel ou menm nou sel patri. Kot nou viv dan larmoni. Lazwa, lanmour ek lape. Nou remersye Bondye. Preserv labote nou pei. Larises nou losean. En leritaz byen presye. Pour boner nou zanfan. Reste touzour dan linite. Fer monte nou paviyon. Ansanm pou tou leternite. Koste Seselwa!";
 const kTeststr_cs_Latn = " a akci opakujte film uložen vykreslit gmail tokio smazat obsah adresáře nelze načíst systémový profil jednotky smoot okud používáte pro určení polokoule značky z západ nebo v východ používejte nezáporné hodnoty zeměpisné délky nelze";
 const kTeststr_cy_Latn = " a chofrestru eich cyfrif ymwelwch a unwaith i chi greu eich cyfrif mi fydd yn cael ei hysbysu o ch cyfeiriad ebost newydd fel eich bod yn gallu cadw mewn cysylltiad drwy gmail os nad ydych chi wedi clywed yn barod am gmail mae n gwasanaeth gwebost";
 const kTeststr_da_Latn = " a z tallene og punktummer der er tilladte log ud angiv den ønskede adgangskode igen november gem personlige oplysninger kontrolspørgsmål det sidste tegn i dit brugernavn skal være et bogstav a z eller tal skriv de tegn du kan se i billedet nedenfor";
@@ -99,20 +96,18 @@ const kTeststr_ht_Latn = " ak pitit tout sosyete a chita se pou sa leta dwe pwot
 const kTeststr_hu_Latn = " a felhasználóim a google azonosító szöveget ikor látják a felhasználóim a google azonosító szöveget felhasználók a google azonosító szöveget fogják látni minden tranzakció után ha a vásárlását regisztrációját oldalunk";
 const kTeststr_hy_Armn = " ա յ եվ նա հիացած աչքերով նայում է հինգհարկանի շենքի տարօրինակ փոքրիկ քառակուսի պատուհաններին դեռ մենք շատ ենք հետամնաց ասում է նա այսպես է";
 const kTeststr_ia_Latn = " super le sitos que tu visita isto es necessari pro render disponibile alcun functionalitates del barra de utensiles a fin que nos pote monstrar informationes ulterior super un sito le barra de utensiles debe dicer a nos le";
-//const kTeststr_id_Latn = "Geng: Pengembaraan Bermula adalah film animasi 3D CGI pertama yang diproduksi di Malaysia. Film ini dibuat oleh Les' Copaque Production (LCP) dan dirilis di bioskop-bioskop seluruh Malaysia pada 12 Februari 2009. Film Geng pertama kali diluncurkan dalam sebuah acara peluncuran pada 11 September 2007 bersama dengan serial animasi pendek Upin & Ipin yang berhubungan dengan film tersebut. Pembuatan film ini didukung oleh berbagai pihak seperti Kementerian Sains, Teknologi dan Inovasi Malaysia (MOSTI) dengan memberi bantuan berupa dana sebesar RM1 juta.";
 // From 10% testing part of new lang=id scrape
 const kTeststr_id_Latn = "berdiri setelah pengurusnya yang berusia 83 tahun, Fayzrahman Satarov, mendeklarasikan diri sebagai nabi dan rumahnya sebagai negara Islam Satarov digambarkan sebagai mantan ulama Islam  tahun 1970-an. Pengikutnya didorong membaca manuskripnya dan kebanyakan dilarang meninggalkan tempat persembunyian bawah tanah di dasar gedung delapan lantai mereka. Jaksa membuka penyelidikan kasus kriminal pada kelompok itu dan menyatakan akan membubarkan kelompok kalau tetap melakukan kegiatan ilegal seperti mencegah anggotanya mencari bantuan medis atau pendidikan. Sampai sekarang pihak berwajib belum melakukan penangkapan meskipun polisi mencurigai adanya tindak kekerasan pada anak. Pengadilan selanjutnya akan memutuskan apakah anak-anak diizinkan tetap tinggal dengan orang tua mereka. Kazan yang berada sekitar 800 kilometer di timur Moskow merupakan wilayah Tatarstan yang";
 
 const kTeststr_ie_Latn = " abhorre exceptiones in li derivation plu cardinal por un l i es li regularità del flexion conjugation ples comparar latino sine flexione e li antiqui projectes naturalistic queles have quasi null regules de derivation ma si on nu examina li enunciationes";
 const kTeststr_ig_Latn = "Chineke bụ aha ọzọ ndï omenala Igbo kpọro Chukwu. Mgbe ndị bekee bịara, ha mee ya nke ndi Christian. N'echiche ndi ekpere chi Omenala Ndi Igbo, Christianity, Judaism, ma Islam, Chineke nwere ọtụtụ utu aha, ma nwee nanị otu aha. Ụzọ abụọ e si akpọ aha ahụ bụ Jehovah ma Ọ bụ Yahweh. Na ọtụtụ Akwụkwọ Nsọ, e wepụla aha Chineke ma jiri utu aha bụ Onyenwe Anyị ma ọ bụ Chineke dochie ya. Ma mgbe e dere akwụkwọ nsọ, aha ahụ bụ Jehova pụtara n’ime ya, ihe dị ka ugboro pụkụ asaa(7,000).";
-//const kTeststr_ik_Latn = " kuubuuraqabniqsuq ataruamik colville mi aasii tavrani siku kilaabman sulukpaukkat makua niksisugrufagivut tavrani sunaimña atifa quaqqat ii quaqqat aasii ukiabmagu utiqhuta tamaufa utqiabvifñun aasiiñ tatpaaffaqapta tuvaaqatinifarufa aasiiñ";
 // From 10% testing part of new lang=ik scrape
 const kTeststr_ik_Latn = "sabvaqjuktuq sabvaba atiqaqpa atiqaqpa ibiq iebiq ixafich niuqtulgiññatif uvani natural gas tatpikka ufasiksigiruaq maaffa savaannafarufa mi tatkivani navy qanuqjugugguuq taaptuma inna uqsrunik ivaqjiqhutik       taktuk allualiuqtuq sigukun nanuq puuvraatuq taktuum amugaa kalumnitigun nanuq agliruq allualiuqtuq";
 
 const kTeststr_is_Latn = " a afköst leitarorða þinna leitarorð neikvæð leitarorð auglýsingahópa byggja upp aðallista yfir ný leitarorð fyrir auglýsingahópana og skoða ítarleg gögn um árangur leitarorða eins og samkeppni auglýsenda og leitarmagn er krafist notkun";
 const kTeststr_it_Latn = " a causa di un intervento di manutenzione del sistema fino alle ore circa ora legale costa del pacifico del novembre le campagne esistenti continueranno a essere pubblicate come di consueto anche durante questo breve periodo di inattività ci scusiamo per";
 const kTeststr_iu_Cans = "ᐃᑯᒪᒻᒪᑦ ᕿᓈᖏᓐᓇᓲᖑᒻᒪᑦ ᑎᑎᖅᑕᓕᒫᖅᓃᕕᑦ ᑎᑦᕆᐊᑐᓐᖏᑦᑕᑎᑦ ᑎᑎᖅᑕᑉᐱᑦ ᓯᕗᓂᖓᓂ ᑎᑎᖅᖃᖅ ᑎᑎᕆᐊᑐᓐᖏᑕᐃᑦ ᕿᓂᓲᖑᔪᒍᑦ ᑎᑎᖅᑕᓕᒫᖅᓃᕕᑦ";
-const kTeststr_iw_Hebr = " או לערוך את העדפות ההפצה אנא עקוב אחרי השלבים הבאים כנס לחשבון האישי שלך ב";
+const kTeststr_he_Hebr = " או לערוך את העדפות ההפצה אנא עקוב אחרי השלבים הבאים כנס לחשבון האישי שלך ב";
 const kTeststr_ja_Hani = " このペ ジでは アカウントに指定された予算の履歴を一覧にしています それぞれの項目には 予算額と特定期間のステ タスが表示されます 現在または今後の予算を設定するには";
 const kTeststr_jw_Latn = " account ten server niki kalian username meniko tanpo judul cacahe account nggonanmu wes pol pesen mu wes diguwak pesenan mu wes di simpen sante wae pesenan mu wes ke kirim mbuh tekan ora pesenan e ke kethok pesenan mu wes ke kirim mbuh tekan ora pesenan";
 const kTeststr_ka_Geor = " ა ბირთვიდან მიღებული ელემენტი მენდელეევის პერიოდულ სიტემაში გადაინაცვლებს ორი უჯრით";
@@ -124,7 +119,6 @@ const kTeststr_kl_Latn = " at nittartakkalli uani toqqarsimasatta akornanni nitt
 const kTeststr_km_Khmr = " ក ខ គ ឃ ង ច ឆ ជ ឈ ញ ដ ឋ ឌ ឍ ណ ត ថ ទ ធ ន ប ផ ព ភ ម យ រ ល វ ស ហ ឡ អ ឥ ឦ ឧ ឪ ឫ ឬ ឯ ឱ ទាំងអស់";
 const kTeststr_kn_Knda = " ಂಠಯ್ಯನವರು ತುಮಕೂರು ಜಿಲ್ಲೆಯ ಚಿಕ್ಕನಾಯಕನಹಳ್ಳಿ ತಾಲ್ಲೂಕಿನ ತೀರ್ಥಪುರ ವೆಂಬ ಸಾಧಾರಣ ಹಳ್ಳಿಯ ಶ್ಯಾನುಭೋಗರ";
 const kTeststr_ko_Hani = " 개별적으로 리포트 액세스 권한을 부여할 수 있습니다 액세스 권한 부여사용자에게 프로필 리포트에 액세스할 수 있는 권한을 부여하시려면 가용 프로필 상자에서 프로필 이름을 선택한 다음";
-//const kTeststr_ks_Arab = "پیٹھ سٮ۪اگت! آکھ آزاد گیانکوشٖٔ ہۄ کٲنٛسِہ تِہ ہٮ۪کُن اٮ۪ڑِٹ۔ تور چھک ٢٢٨ مَضموٗنن منز کٲشُر ویکیپیٖڈیا چھُ آکھ مَنصوٗبہٕ خٲطرٕ بنَاوُن آکھ گیانکوشٖٔ سۭتۍ آزاد منز 280 زَبانَن تٔمِس یۄسہٕ ژٕ سۭتۍ تُہُنٛد گیان ہُرٮ۪ر کَرُن ہٮ۪کُن";
 // From 10% testing part of new lang=ks scrape
 const kTeststr_ks_Arab = " ژماں سرابن منز  گرٲن چھِہ خابٕک کھلونہٕ ؤڈراواں   تُلتِھ نِیَس تہٕ گوشہِ گوشہِ مندچھاوى۪س   دِلس چھُہ وون٘ت وُچھان از ستم قلم  صبوٝرٕ وول مسٲفر لیۆکھُن بێتابن منز   ورل سوال چھُہ تراواں جوابن منز    کالہٕ پھۯستہٕ پھن٘ب پگَہہ پہ   پۆت نظر دِژ نہٕ ژھالہٕ مٔت آرن     مٲنز مسول متھان چھےٚ مس والن  وۅن چھےٚ غارن تہِ نارٕ ژھٹھ ژاپان  رێش تۅرگ تراوٕہن تہٕ ون رٹہٕ ہن  ہوشہِ ہێۆچھ نہٕ پوشنوٝلس نِش  مۅہرٕ دی دی زٕلاں چھِ زى۪و حرفن  لۆدرٕ پھٔل ہى۪تھ ملر عازمؔ  سۆدرٕ کھۅنہِ منز منگاں چھُہ ندرى۪ن پن   ژے تھى۪کی یہِ مسٲفر پنن وُڈو تہٕ پڑاو   گٕتَو گٕتَو چھےٚ یہِ کۅل بُتھ تہٕ بانہٕ سٕہہ گۅردٕ چھہِ سپداں دمہٕ پُھٹ  چھِٹہ پونپر پکھہٕ داران سُہ یتى۪ن تۯاوِ  کم نظر دۯاکھ تہٕ باسیوے سُہ مۆہ ہیو یێران  مےٚ ژى۪تُرمُت چھُہ سُلی تس چھےٚ کتى۪ن تھپھ  شاد مس کراں وُچھ مےٚ خون  ژٕ خبر کیازِ کراں دۯاکھ تمِس پى۪ٹھ ماتم  أز کہِ شبہٕ آو مےٚ بێیہِ پیش سفر زانہِ خدا  دارِ پى۪ٹھ ژٲنگ ہنا تھو زِ ژے چھےٚ مێون  أنہٕ کپٹاں چھُہ زٕژن سون مظفّر عازمؔ  پوشہ برگن چھُہ سُواں چاکھ سُہ الماس قلم   لوِ کٔ ڈ نوِ سرٕ سونتس کل   پروِ بۆر بێیہ از بانبرِ ہۆت  یمبرزلہِ ٹارى۪ن منز نار   وزملہِ کۅسہٕ کتھ کٔر اظہار  کچھہِ منزٕ ؤن رووُم اچھہِ  چشمو ژوپُم کٔنڈ انبار   تماشہِ چھہِ تگاں";
 
@@ -149,7 +143,6 @@ const kTeststr_ml_Mlym = " ം അങ്ങനെ ഞങ്ങള് അവര�
 const kTeststr_mn_Cyrl = " а боловсронгуй болгох орон нутгийн ажил үйлсийг уялдуулж зохицуулах дүрэм журам боловсруулах орон нутгийн өмч хөрөнгө санхүүгийн";
 const kTeststr_mn_Mong = "ᠦᠭᠡ ᠵᠢᠨ ᠴᠢᠨᠭ᠎ᠠ ᠬᠦᠨᠳᠡᠢ ᠵᠢ ᠢᠯᠭᠠᠬᠣ";
 const kTeststr_mr_Deva = "हैदराबाद  उच्चार ऐका (सहाय्य·माहिती)तेलुगू: హైదరాబాదు , उर्दू: حیدر آباد हे भारतातील आंध्र प्रदेश राज्याच्या राजधानीचे शहर आहे. हैदराबादची लोकसंख्या ७७ लाख ४० हजार ३३४ आहे. मोत्यांचे शहर अशी एकेकाळी ओळख असलेल्या या शहराला ऐतिहासिक, सांस्कृतिक आणि स्थापत्यशास्त्रीय वारसा लाभला आहे. १९९० नंतर शिक्षण आणि माहिती तंत्रज्ञान त्याचप्रमाणे औषधनिर्मिती आणि जैवतंत्रज्ञान क्षेत्रातील उद्योगधंद्यांची वाढ शहरात झाली. दक्षिण मध्य भारतातील पर्यटन आणि तेलुगू चित्रपटनिर्मितीचे हैदराबाद हे केंद्र आहे";
-//const kTeststr_ms_Latn = "daripada dirinya hirako shinji seorang pemuda merujuk diri mereka sebagai vizard shinji telah cuba untuk menyakinkan ichigo untuk menyertai kumpulan mereka mengatakan bahawa hanya dia sahaja yang mampu mengajar ichigo teknik untuk mengawal hollow";
 // From 10% testing part of new lang=ms scrape
 const kTeststr_ms_Latn = "pengampunan beramai-ramai supaya mereka pulang ke rumah masing-masing. Orang-orang besarnya enggan mengiktiraf sultan yang dilantik oleh Belanda sebagai Yang DiPertuan Selangor. Orang ramai pula tidak mahu menjalankan perniagaan bijih timah dengan Belanda, selagi raja yang berhak tidak ditabalkan. Perdagang yang lain dibekukan terus kerana untuk membalas jasa beliau yang membantu Belanda menentang Riau, Johor dan Selangor. Di antara tiga orang Sultan juga dipandang oleh rakyat sebagai seorang sultan yang paling gigih. 1 | 2 SULTAN Sebagai ganti Sultan Ibrahim ditabalkan Raja Muhammad iaitu Raja Muda. Walaupun baginda bukan anak isteri pertama bergelar Sultan Muhammad bersemayam di Kuala Selangor juga. Pentadbiran baginda yang lemah itu menyebabkan Kuala Selangor menjadi sarang ioleh Cina di Lukut tidak diambil tindakan, sedangkan baginda sendiri banyak berhutang kepada 1";
 
@@ -194,7 +187,6 @@ const kTeststr_sn_Latn = " chete vanyori vanotevera vakabatsira kunyora zvikamu 
 const kTeststr_so_Latn = " a oo maanta bogga koobaad ugu qoran yahey beesha caalamka laakiin si kata oo beesha caalamku ula guntato soomaaliya waxa aan shaki ku jirin in aakhirataanka dadka soomaalida oo kaliya ay yihiin ku soomaaliya ka saari kara dhibka ay ku jirto";
 const kTeststr_sq_Latn = " a do të kërkoni nga beogradi që të njohë pavarësinë e kosovës zoti thaçi prishtina është gati ta njoh pavarësinë e serbisë ndërsa natyrisht se do të kërkohet një gjë e tillë që edhe beogradi ta njoh shtetin e pavarur dhe sovran të";
 const kTeststr_sr_Cyrl = "балчак балчак на мапи србије уреди демографија у насељу балчак живи пунолетна становника а просечна старост становништва износи година";
-//const kTeststr_sr_Latn = " autonomnih pokrajina saveznim zakonom može se propisati poseban sastav organizacija i delokrug saveta za poslove narodne odbrane članove saveta federacije bira na predlog predsedništva savezna skupština iz reda društveno političkih i drugih javnih";
 const kTeststr_sr_Latn = "Društvo | četvrtak 1.08.2013 | 13:43 Krade se i izvorska voda Izvor:  Gornji Milanovac -- U gružanskom selu Belo Polje prošle noći ukradeno je više od 10.000 litara kojima je obijen bazen. Bazen je bio zaključan i propisno obezbeđen.";
 
 const kTeststr_sr_ME_Latn = "savjet pobjeda a radi bržeg rada pošto rom radi sporije nego ram izvorni rom se isključuje a dio ram a se rezerviše te se u njega ne ploča procesor ram memorija grafička kartica zvučna kartica modem mrežna kartica napojna jedinica uređaji za pohranjivanje";
@@ -320,7 +312,7 @@ const kTestPairs = [
   ["lg", "GANDA", kTeststr_lg_Latn],
   ["de", "GERMAN", kTeststr_de_Latn],
   ["ht", "HAITIAN_CREOLE", kTeststr_ht_Latn],
-  ["iw", "HEBREW", kTeststr_iw_Hebr],
+  ["he", "HEBREW", kTeststr_he_Hebr],
   ["hi", "HINDI", kTeststr_hi_Deva],
   ["hmn", "HMONG", kTeststr_blu_Latn],
   ["hu", "HUNGARIAN", kTeststr_hu_Latn],
@@ -378,12 +370,12 @@ const kTestPairs = [
 
 // Cross-check the main quadgram table build date
 // Change the expected language each time it is rebuilt
-  //["WELSH", kTeststr_version],   // 2013.07.15
   ["az", "AZERBAIJANI", kTeststr_version]   // 2014.01.31
 ];
 
 Components.utils.import("resource://gre/modules/Timer.jsm");
-let detectorModule = Components.utils.import("resource:///modules/translation/LanguageDetector.jsm");
+let detectorModule = Components.utils.import("resource:///modules/translation/LanguageDetector.jsm", {});
+const LanguageDetector = detectorModule.LanguageDetector;
 
 function check_result(result, langCode, expected) {
   equal(result.language, langCode, "Expected language code");
@@ -410,7 +402,7 @@ function check_result(result, langCode, expected) {
   equal(result.confident, !expected[0], "Expected confidence");
 }
 
-add_task(function* test_pairs() {
+add_task(async function test_pairs() {
   for (let item of kTestPairs) {
     let params = [item[2],
                   { text: item[2], tld: "com", language: item[0], encoding: "utf-8" }]
@@ -421,7 +413,7 @@ add_task(function* test_pairs() {
       // Otherwise, fall back to the first set of expected values.
       let expected = item[3 + i] || item[3] || [];
 
-      let result = yield LanguageDetector.detectLanguage(param);
+      let result = await LanguageDetector.detectLanguage(param);
       check_result(result, item[0], expected);
     }
   }
@@ -429,7 +421,7 @@ add_task(function* test_pairs() {
 
 // Test that the worker is flushed shortly after processing a large
 // string.
-add_task(function* test_worker_flush() {
+add_task(async function test_worker_flush() {
   let test_string = kTeststr_fr_en_Latn;
   let test_item = kTestPairs.find(item => item[2] == test_string);
 
@@ -441,7 +433,7 @@ add_task(function* test_worker_flush() {
   equal(detectorModule.workerManager._idleTimeout, null,
         "Should have no idle timeout to start with");
 
-  let result = yield LanguageDetector.detectLanguage(test_string);
+  let result = await LanguageDetector.detectLanguage(test_string);
 
   // Make sure the results are still correct.
   check_result(result, test_item[0], test_item[3]);
@@ -455,7 +447,7 @@ add_task(function* test_worker_flush() {
      "Should have a worker promise");
 
   // Wait for the idle timeout to elapse.
-  yield new Promise(resolve => setTimeout(resolve, detectorModule.IDLE_TIMEOUT));
+  await new Promise(resolve => setTimeout(resolve, detectorModule.IDLE_TIMEOUT));
 
   equal(detectorModule.workerManager._idleTimeout, null,
         "Should have no idle timeout after it has elapsed");
@@ -466,7 +458,7 @@ add_task(function* test_worker_flush() {
 
   // We should still be able to use the language detector after its
   // worker has been flushed.
-  result = yield LanguageDetector.detectLanguage(test_string);
+  result = await LanguageDetector.detectLanguage(test_string);
 
   // Make sure the results are still correct.
   check_result(result, test_item[0], test_item[3]);

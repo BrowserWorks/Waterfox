@@ -41,14 +41,8 @@ nsSVGGFrame::Init(nsIContent*       aContent,
 }
 #endif /* DEBUG */
 
-nsIAtom *
-nsSVGGFrame::GetType() const
-{
-  return nsGkAtoms::svgGFrame;
-}
-
 //----------------------------------------------------------------------
-// nsISVGChildFrame methods
+// nsSVGDisplayableFrame methods
 
 void
 nsSVGGFrame::NotifySVGChanged(uint32_t aFlags)

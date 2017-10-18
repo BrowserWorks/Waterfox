@@ -308,7 +308,7 @@ exports.testSelectionContextInNewTab = function (assert, done) {
     link.click();
 
     let tablistener = event => {
-      this.tabBrowser.tabContainer.removeEventListener("TabOpen", tablistener, false);
+      this.tabBrowser.tabContainer.removeEventListener("TabOpen", tablistener);
       let tab = event.target;
       let browser = tab.linkedBrowser;
       this.loadFrameScript(browser);
@@ -331,7 +331,7 @@ exports.testSelectionContextInNewTab = function (assert, done) {
         });
       }, true);
     };
-    this.tabBrowser.tabContainer.addEventListener("TabOpen", tablistener, false);
+    this.tabBrowser.tabContainer.addEventListener("TabOpen", tablistener);
   });
 };
 
@@ -2631,7 +2631,7 @@ exports.testItemNoLabel = function (assert, done) {
   test.done();
 }
 
-
+/* bug 1302854 - disabled this subtest as it is intermittent
 // Tests that items can have an empty data property
 exports.testItemNoData = function (assert, done) {
   let test = new TestHelper(assert, done);
@@ -2686,6 +2686,7 @@ exports.testItemNoData = function (assert, done) {
     });
   });
 }
+*/
 
 
 exports.testItemNoAccessKey = function (assert, done) {

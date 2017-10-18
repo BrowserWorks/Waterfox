@@ -15,6 +15,8 @@
 
 #include "nsDebug.h"
 
+#include "mozilla/Sprintf.h"
+
 @interface CALayer (ContentsScale)
 - (double)contentsScale;
 - (void)setContentsScale:(double)scale;
@@ -68,7 +70,7 @@ CGBitmapContextSetDataFunc CGBitmapContextSetDataPtr = NULL;
   ::CGContextTranslateCTM(aCGContext, 0, self.bounds.size.height);
   ::CGContextScaleCTM(aCGContext, (CGFloat) 1, (CGFloat) -1);
 
-  mUpdateRect = nsIntRect(0, 0, self.bounds.size.width, self.bounds.size.height);
+  mUpdateRect = nsIntRect::Truncate(0, 0, self.bounds.size.width, self.bounds.size.height);
 
   mDrawFunc(aCGContext, mPluginInstance, mUpdateRect);
 
@@ -222,12 +224,11 @@ bool mozilla::plugins::PluginUtilsOSX::SetProcessName(const char* aProcessName) 
     return false;
   }
 
-  NSString *currentName = [[[NSBundle mainBundle] localizedInfoDictionary] 
+  NSString *currentName = [[[NSBundle mainBundle] localizedInfoDictionary]
                               objectForKey:(NSString *)kCFBundleNameKey];
 
   char formattedName[1024];
-  snprintf(formattedName, sizeof(formattedName), 
-      "%s %s", [currentName UTF8String], aProcessName);
+  SprintfLiteral(formattedName, "%s %s", [currentName UTF8String], aProcessName);
 
   aProcessName = formattedName;
 

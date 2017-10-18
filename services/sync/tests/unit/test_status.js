@@ -11,15 +11,14 @@ function run_test() {
   do_check_eq(Status.service, STATUS_OK);
   do_check_eq(Status.sync, SYNC_SUCCEEDED);
   do_check_eq(Status.login, LOGIN_SUCCEEDED);
-  for (let name in Status.engines) {
-    do_throw('Status.engines should be empty.');
+  if (Status.engines.length) {
+    do_throw("Status.engines should be empty.");
   }
   do_check_eq(Status.partial, false);
 
 
   // Check login status
   for (let code of [LOGIN_FAILED_NO_USERNAME,
-                    LOGIN_FAILED_NO_PASSWORD,
                     LOGIN_FAILED_NO_PASSPHRASE]) {
     Status.login = code;
     do_check_eq(Status.login, code);
@@ -73,8 +72,8 @@ function run_test() {
 
   do_check_eq(Status.service, STATUS_OK);
   do_check_eq(Status.sync, SYNC_SUCCEEDED);
-  for (name in Status.engines) {
-    do_throw('Status.engines should be empty.');
+  if (Status.engines.length) {
+    do_throw("Status.engines should be empty.");
   }
 
 

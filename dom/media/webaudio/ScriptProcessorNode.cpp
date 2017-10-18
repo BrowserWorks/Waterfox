@@ -375,7 +375,8 @@ private:
       Command(AudioNodeStream* aStream,
               already_AddRefed<ThreadSharedFloatArrayBufferList> aInputBuffer,
               double aPlaybackTime)
-        : mStream(aStream)
+        : mozilla::Runnable("Command")
+        , mStream(aStream)
         , mInputBuffer(aInputBuffer)
         , mPlaybackTime(aPlaybackTime)
       {
@@ -428,7 +429,7 @@ private:
         if (mInputBuffer) {
           ErrorResult rv;
           inputBuffer =
-            AudioBuffer::Create(context, inputChannelCount,
+            AudioBuffer::Create(context->GetOwner(), inputChannelCount,
                                 aNode->BufferSize(), context->SampleRate(),
                                 mInputBuffer.forget(), rv);
           if (rv.Failed()) {
@@ -468,13 +469,14 @@ private:
       double mPlaybackTime;
     };
 
-    NS_DispatchToMainThread(new Command(aStream, mInputBuffer.forget(),
-                                        playbackTime));
+    RefPtr<Command> command = new Command(aStream, mInputBuffer.forget(),
+                                          playbackTime);
+    mAbstractMainThread->Dispatch(command.forget());
   }
 
   friend class ScriptProcessorNode;
 
-  AudioNodeStream* mDestination;
+  RefPtr<AudioNodeStream> mDestination;
   nsAutoPtr<SharedBuffers> mSharedBuffers;
   RefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
   const uint32_t mBufferSize;
@@ -504,7 +506,8 @@ ScriptProcessorNode::ScriptProcessorNode(AudioContext* aContext,
                                   BufferSize(),
                                   aNumberOfInputChannels);
   mStream = AudioNodeStream::Create(aContext, engine,
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+                                    AudioNodeStream::NO_STREAM_FLAGS,
+                                    aContext->Graph());
 }
 
 ScriptProcessorNode::~ScriptProcessorNode()

@@ -12,10 +12,9 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        # 'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
-    'stage_platform': 'linux64-cc',
+    'stage_platform': 'linux64-ccov',
     'platform_supports_post_upload_to_latest': False,
     'enable_signing': False,
     'enable_talos_sendchange': False,
@@ -23,7 +22,6 @@ config = {
     #### 64 bit build specific #####
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
-        'MOZ_AUTOMATION': '1',
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',

@@ -3,12 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-/* globals
-  waitForExplicitFinish, whenNewWindowLoaded, whenNewTabLoaded,
-  executeSoon, registerCleanupFunction, finish, is
-*/
-/* exported test */
-
 // This test makes sure that opening a new tab in private browsing mode opens about:privatebrowsing
 function test() {
   // initialization
@@ -29,7 +23,7 @@ function test() {
       }
 
       is(aWindow.gBrowser.currentURI.spec, newTabURL,
-        "URL of NewTab should be " + newTabURL + " in " + mode +  " mode");
+        "URL of NewTab should be " + newTabURL + " in " + mode + " mode");
 
       aWindow.gBrowser.removeTab(aWindow.gBrowser.selectedTab);
       aCallback();
@@ -57,11 +51,11 @@ function test() {
   testOnWindow({}, function(aWin) {
     doTest(false, aWin, function() {
       // then test when on private mode
-      testOnWindow({private: true}, function(aWin) {
-        doTest(true, aWin, function() {
+      testOnWindow({private: true}, function(aWin2) {
+        doTest(true, aWin2, function() {
           // then test again when not on private mode
-          testOnWindow({}, function(aWin) {
-            doTest(false, aWin, finish);
+          testOnWindow({}, function(aWin3) {
+            doTest(false, aWin3, finish);
           });
         });
       });

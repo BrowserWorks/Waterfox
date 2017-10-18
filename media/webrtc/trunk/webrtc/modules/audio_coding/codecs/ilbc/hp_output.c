@@ -30,9 +30,9 @@ void WebRtcIlbcfix_HpOutput(
     int16_t *y,      /* (i/o) Filter state yhi[n-1] ylow[n-1]
                                                                    yhi[n-2] ylow[n-2] */
     int16_t *x,      /* (i/o) Filter state x[n-1] x[n-2] */
-    int16_t len)      /* (i)   Number of samples to filter */
+    size_t len)      /* (i)   Number of samples to filter */
 {
-  int i;
+  size_t i;
   int32_t tmpW32;
   int32_t tmpW32b;
 
@@ -48,7 +48,7 @@ void WebRtcIlbcfix_HpOutput(
     tmpW32 = (tmpW32>>15);
     tmpW32 += y[0] * ba[3];  /* (-a[1])*y[i-1] (high part) */
     tmpW32 += y[2] * ba[4];  /* (-a[2])*y[i-2] (high part) */
-    tmpW32 = (tmpW32<<1);
+    tmpW32 *= 2;
 
     tmpW32 += signal[i] * ba[0];  /* b[0]*x[0] */
     tmpW32 += x[0] * ba[1];  /* b[1]*x[i-1] */
@@ -77,11 +77,11 @@ void WebRtcIlbcfix_HpOutput(
     } else if (tmpW32<-268435456) {
       tmpW32 = WEBRTC_SPL_WORD32_MIN;
     } else {
-      tmpW32 <<= 3;
+      tmpW32 *= 8;
     }
 
     y[0] = (int16_t)(tmpW32 >> 16);
-    y[1] = (int16_t)((tmpW32 - (y[0] << 16)) >> 1);
+    y[1] = (int16_t)((tmpW32 & 0xffff) >> 1);
 
   }
 

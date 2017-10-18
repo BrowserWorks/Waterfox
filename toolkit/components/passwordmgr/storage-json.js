@@ -12,7 +12,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
@@ -27,7 +26,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gUUIDGenerator",
                                    "@mozilla.org/uuid-generator;1",
                                    "nsIUUIDGenerator");
 
-this.LoginManagerStorage_json = function () {};
+this.LoginManagerStorage_json = function() {};
 
 this.LoginManagerStorage_json.prototype = {
   classID: Components.ID("{c00c432d-a0c9-46d7-bef6-9c45b4d07341}"),
@@ -52,10 +51,10 @@ this.LoginManagerStorage_json.prototype = {
                                   "logins.json");
       this._store = new LoginStore(jsonPath);
 
-      return Task.spawn(function* () {
+      return (async () => {
         // Load the data asynchronously.
         this.log("Opening database at", this._store.path);
-        yield this._store.load();
+        await this._store.load();
 
         // The import from previous versions operates the first time
         // that this built-in storage back-end is used.  This may be
@@ -72,19 +71,19 @@ this.LoginManagerStorage_json.prototype = {
         // Import only happens asynchronously.
         let sqlitePath = OS.Path.join(OS.Constants.Path.profileDir,
                                       "signons.sqlite");
-        if (yield OS.File.exists(sqlitePath)) {
+        if (await OS.File.exists(sqlitePath)) {
           let loginImport = new LoginImport(this._store, sqlitePath);
           // Failures during import, for example due to a corrupt
           // file or a schema version that is too old, will not
           // prevent us from marking the operation as completed.
           // At the next startup, we will not try the import again.
-          yield loginImport.import().catch(Cu.reportError);
+          await loginImport.import().catch(Cu.reportError);
           this._store.saveSoon();
         }
 
         // We won't attempt import again on next startup.
         Services.prefs.setBoolPref("signon.importedFromSqlite", true);
-      }.bind(this)).catch(Cu.reportError);
+      })().catch(Cu.reportError);
     } catch (e) {
       this.log("Initialization failed:", e);
       throw new Error("Initialization failed");
@@ -97,7 +96,7 @@ this.LoginManagerStorage_json.prototype = {
    */
   terminate() {
     this._store._saver.disarm();
-    return this._store.save();
+    return this._store._save();
   },
 
   addLogin(login) {
@@ -141,7 +140,7 @@ this.LoginManagerStorage_json.prototype = {
       encryptedUsername:   encUsername,
       encryptedPassword:   encPassword,
       guid:                loginClone.guid,
-      encType:             encType,
+      encType,
       timeCreated:         loginClone.timeCreated,
       timeLastUsed:        loginClone.timeLastUsed,
       timePasswordChanged: loginClone.timePasswordChanged,
@@ -150,7 +149,8 @@ this.LoginManagerStorage_json.prototype = {
     this._store.saveSoon();
 
     // Send a notification that a login was added.
-    this._sendNotification("addLogin", loginClone);
+    LoginHelper.notifyStorageChanged("addLogin", loginClone);
+    return loginClone;
   },
 
   removeLogin(login) {
@@ -166,7 +166,7 @@ this.LoginManagerStorage_json.prototype = {
       this._store.saveSoon();
     }
 
-    this._sendNotification("removeLogin", storedLogin);
+    LoginHelper.notifyStorageChanged("removeLogin", storedLogin);
   },
 
   modifyLogin(oldLogin, newLoginData) {
@@ -180,8 +180,7 @@ this.LoginManagerStorage_json.prototype = {
 
     // Check if the new GUID is duplicate.
     if (newLogin.guid != oldStoredLogin.guid &&
-        !this._isGuidUnique(newLogin.guid))
-    {
+        !this._isGuidUnique(newLogin.guid)) {
       throw new Error("specified GUID already exists");
     }
 
@@ -218,7 +217,7 @@ this.LoginManagerStorage_json.prototype = {
       }
     }
 
-    this._sendNotification("modifyLogin", [oldStoredLogin, newLogin]);
+    LoginHelper.notifyStorageChanged("modifyLogin", [oldStoredLogin, newLogin]);
   },
 
   /**
@@ -283,8 +282,6 @@ this.LoginManagerStorage_json.prototype = {
     schemeUpgrades: false,
   }) {
     this._store.ensureDataReady();
-
-    let conditions = [];
 
     function match(aLogin) {
       for (let field in matchData) {
@@ -366,8 +363,6 @@ this.LoginManagerStorage_json.prototype = {
 
   /**
    * Removes all logins from storage.
-   *
-   * Disabled hosts are kept, as one presumably doesn't want to erase those.
    */
   removeAllLogins() {
     this._store.ensureDataReady();
@@ -376,59 +371,18 @@ this.LoginManagerStorage_json.prototype = {
     this._store.data.logins = [];
     this._store.saveSoon();
 
-    this._sendNotification("removeAllLogins", null);
-  },
-
-  getAllDisabledHosts(count) {
-    this._store.ensureDataReady();
-
-    let disabledHosts = this._store.data.disabledHosts.slice(0);
-
-    this.log("_getAllDisabledHosts: returning", disabledHosts.length, "disabled hosts.");
-    if (count)
-      count.value = disabledHosts.length; // needed for XPCOM
-    return disabledHosts;
-  },
-
-  getLoginSavingEnabled(hostname) {
-    this._store.ensureDataReady();
-
-    this.log("Getting login saving is enabled for", hostname);
-    return this._store.data.disabledHosts.indexOf(hostname) == -1;
-  },
-
-  setLoginSavingEnabled(hostname, enabled) {
-    this._store.ensureDataReady();
-
-    // Throws if there are bogus values.
-    LoginHelper.checkHostnameValue(hostname);
-
-    this.log("Setting login saving enabled for", hostname, "to", enabled);
-    let foundIndex = this._store.data.disabledHosts.indexOf(hostname);
-    if (enabled) {
-      if (foundIndex != -1) {
-        this._store.data.disabledHosts.splice(foundIndex, 1);
-        this._store.saveSoon();
-      }
-    } else {
-      if (foundIndex == -1) {
-        this._store.data.disabledHosts.push(hostname);
-        this._store.saveSoon();
-      }
-    }
-
-    this._sendNotification(enabled ? "hostSavingEnabled" : "hostSavingDisabled", hostname);
+    LoginHelper.notifyStorageChanged("removeAllLogins", null);
   },
 
   findLogins(count, hostname, formSubmitURL, httpRealm) {
     let loginData = {
-      hostname: hostname,
-      formSubmitURL: formSubmitURL,
-      httpRealm: httpRealm
+      hostname,
+      formSubmitURL,
+      httpRealm
     };
     let matchData = { };
     for (let field of ["hostname", "formSubmitURL", "httpRealm"])
-      if (loginData[field] != '')
+      if (loginData[field] != "")
         matchData[field] = loginData[field];
     let [logins, ids] = this._searchLogins(matchData);
 
@@ -441,15 +395,14 @@ this.LoginManagerStorage_json.prototype = {
   },
 
   countLogins(hostname, formSubmitURL, httpRealm) {
-    let count = {};
     let loginData = {
-      hostname: hostname,
-      formSubmitURL: formSubmitURL,
-      httpRealm: httpRealm
+      hostname,
+      formSubmitURL,
+      httpRealm
     };
     let matchData = { };
     for (let field of ["hostname", "formSubmitURL", "httpRealm"])
-      if (loginData[field] != '')
+      if (loginData[field] != "")
         matchData[field] = loginData[field];
     let [logins, ids] = this._searchLogins(matchData);
 
@@ -466,25 +419,6 @@ this.LoginManagerStorage_json.prototype = {
   },
 
   /**
-   * Send a notification when stored data is changed.
-   */
-  _sendNotification(changeType, data) {
-    let dataObject = data;
-    // Can't pass a raw JS string or array though notifyObservers(). :-(
-    if (data instanceof Array) {
-      dataObject = Cc["@mozilla.org/array;1"].
-                   createInstance(Ci.nsIMutableArray);
-      for (let i = 0; i < data.length; i++)
-        dataObject.appendElement(data[i], false);
-    } else if (typeof(data) == "string") {
-      dataObject = Cc["@mozilla.org/supports-string;1"].
-                   createInstance(Ci.nsISupportsString);
-      dataObject.data = data;
-    }
-    Services.obs.notifyObservers(dataObject, "passwordmgr-storage-changed", changeType);
-  },
-
-  /**
    * Returns an array with two items: [id, login]. If the login was not
    * found, both items will be null. The returned login contains the actual
    * stored login (useful for looking at the actual nsILoginMetaInfo values).
@@ -492,7 +426,7 @@ this.LoginManagerStorage_json.prototype = {
   _getIdForLogin(login) {
     let matchData = { };
     for (let field of ["hostname", "formSubmitURL", "httpRealm"])
-      if (login[field] != '')
+      if (login[field] != "")
         matchData[field] = login[field];
     let [logins, ids] = this._searchLogins(matchData);
 

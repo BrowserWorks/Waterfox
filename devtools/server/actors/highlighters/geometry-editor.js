@@ -4,14 +4,10 @@
 
 "use strict";
 
-const { extend } = require("sdk/core/heritage");
 const { AutoRefreshHighlighter } = require("./auto-refresh");
-const {
-  CanvasFrameAnonymousContentHelper, getCSSStyleRules, getComputedStyle,
-  createSVGNode, createNode } = require("./utils/markup");
-
-const { setIgnoreLayoutChanges,
-  getAdjustedQuads } = require("devtools/shared/layout/utils");
+const { CanvasFrameAnonymousContentHelper, getCSSStyleRules, getComputedStyle,
+        createSVGNode, createNode } = require("./utils/markup");
+const { setIgnoreLayoutChanges, getAdjustedQuads } = require("devtools/shared/layout/utils");
 
 const GEOMETRY_LABEL_SIZE = 6;
 
@@ -95,7 +91,7 @@ var GeoProp = {
  * @return {Object}
  */
 function getOffsetParent(node) {
-  let win = node.ownerDocument.defaultView;
+  let win = node.ownerGlobal;
 
   let offsetParent = node.offsetParent;
   if (offsetParent &&
@@ -205,36 +201,38 @@ exports.getDefinedGeometryProperties = getDefinedGeometryProperties;
  * Note that the class name contains the word Editor because the aim is for the
  * handles to be draggable in content to make the geometry editable.
  */
-function GeometryEditorHighlighter(highlighterEnv) {
-  AutoRefreshHighlighter.call(this, highlighterEnv);
+class GeometryEditorHighlighter extends AutoRefreshHighlighter {
+  constructor(highlighterEnv) {
+    super(highlighterEnv);
 
-  // The list of element geometry properties that can be set.
-  this.definedProperties = new Map();
+    this.ID_CLASS_PREFIX = "geometry-editor-";
 
-  this.markup = new CanvasFrameAnonymousContentHelper(highlighterEnv,
-    this._buildMarkup.bind(this));
+    // The list of element geometry properties that can be set.
+    this.definedProperties = new Map();
 
-  let { pageListenerTarget } = this.highlighterEnv;
+    this.markup = new CanvasFrameAnonymousContentHelper(highlighterEnv,
+      this._buildMarkup.bind(this));
 
-  // Register the geometry editor instance to all events we're interested in.
-  DOM_EVENTS.forEach(type => pageListenerTarget.addEventListener(type, this));
+    let { pageListenerTarget } = this.highlighterEnv;
 
-  // Register the mousedown event for each Geometry Editor's handler.
-  // Those events are automatically removed when the markup is destroyed.
-  let onMouseDown = this.handleEvent.bind(this);
+    // Register the geometry editor instance to all events we're interested in.
+    DOM_EVENTS.forEach(type => pageListenerTarget.addEventListener(type, this));
 
-  for (let side of GeoProp.SIDES) {
-    this.getElement("handler-" + side)
-      .addEventListener("mousedown", onMouseDown);
+    // Register the mousedown event for each Geometry Editor's handler.
+    // Those events are automatically removed when the markup is destroyed.
+    let onMouseDown = this.handleEvent.bind(this);
+
+    for (let side of GeoProp.SIDES) {
+      this.getElement("handler-" + side)
+        .addEventListener("mousedown", onMouseDown);
+    }
+
+    this.onWillNavigate = this.onWillNavigate.bind(this);
+
+    this.highlighterEnv.on("will-navigate", this.onWillNavigate);
   }
-}
 
-GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
-  typeName: "GeometryEditorHighlighter",
-
-  ID_CLASS_PREFIX: "geometry-editor-",
-
-  _buildMarkup: function () {
+  _buildMarkup() {
     let container = createNode(this.win, {
       attributes: {"class": "highlighter-container"}
     });
@@ -360,9 +358,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     }
 
     return container;
-  },
+  }
 
-  destroy: function () {
+  destroy() {
     // Avoiding exceptions if `destroy` is called multiple times; and / or the
     // highlighter environment was already destroyed.
     if (!this.highlighterEnv) {
@@ -371,8 +369,10 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
     let { pageListenerTarget } = this.highlighterEnv;
 
-    DOM_EVENTS.forEach(type =>
-      pageListenerTarget.removeEventListener(type, this));
+    if (pageListenerTarget) {
+      DOM_EVENTS.forEach(type =>
+        pageListenerTarget.removeEventListener(type, this));
+    }
 
     AutoRefreshHighlighter.prototype.destroy.call(this);
 
@@ -380,19 +380,24 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     this.definedProperties.clear();
     this.definedProperties = null;
     this.offsetParent = null;
-  },
+  }
 
-  handleEvent: function (event, id) {
+  handleEvent(event, id) {
     // No event handling if the highlighter is hidden
     if (this.getElement("root").hasAttribute("hidden")) {
       return;
     }
 
-    const { type, pageX, pageY } = event;
+    const { target, type, pageX, pageY } = event;
 
     switch (type) {
       case "pagehide":
-        this.destroy();
+        // If a page hide event is triggered for current window's highlighter, hide the
+        // highlighter.
+        if (target.defaultView === this.win) {
+          this.destroy();
+        }
+
         break;
       case "mousedown":
         // The mousedown event is intended only for the handler
@@ -468,13 +473,13 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
         break;
     }
-  },
+  }
 
-  getElement: function (id) {
+  getElement(id) {
     return this.markup.getElement(this.ID_CLASS_PREFIX + id);
-  },
+  }
 
-  _show: function () {
+  _show() {
     this.computedStyle = getComputedStyle(this.currentNode);
     let pos = this.computedStyle.position;
     // XXX: sticky positioning is ignored for now. To be implemented next.
@@ -492,9 +497,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     this.getElement("root").removeAttribute("hidden");
 
     return true;
-  },
+  }
 
-  _update: function () {
+  _update() {
     // At each update, the position or/and size may have changed, so get the
     // list of defined properties, and re-position the arrows and highlighters.
     this.definedProperties = getDefinedGeometryProperties(this.currentNode);
@@ -515,9 +520,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     let node = this.currentNode;
     this.markup.scaleRootElement(node, this.ID_CLASS_PREFIX + "root");
 
-    setIgnoreLayoutChanges(false, node.ownerDocument.documentElement);
+    setIgnoreLayoutChanges(false, this.highlighterEnv.document.documentElement);
     return true;
-  },
+  }
 
   /**
    * Update the offset parent rectangle.
@@ -531,7 +536,7 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
    * - the node has no offset parent at all: the offsetParent rectangle is
    *   hidden.
    */
-  updateOffsetParent: function () {
+  updateOffsetParent() {
     // Get the offsetParent, if any.
     this.offsetParent = getOffsetParent(this.currentNode);
     // And the offsetParent quads.
@@ -572,9 +577,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     } else {
       el.setAttribute("hidden", "true");
     }
-  },
+  }
 
-  updateCurrentNode: function () {
+  updateCurrentNode() {
     let box = this.getElement("current-node");
     let {p1, p2, p3, p4} = this.currentQuads.margin[0];
     let attr = p1.x + "," + p1.y + " " +
@@ -583,9 +588,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
                p4.x + "," + p4.y;
     box.setAttribute("points", attr);
     box.removeAttribute("hidden");
-  },
+  }
 
-  _hide: function () {
+  _hide() {
     setIgnoreLayoutChanges(true);
 
     this.getElement("root").setAttribute("hidden", "true");
@@ -595,19 +600,18 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
 
     this.definedProperties.clear();
 
-    setIgnoreLayoutChanges(false,
-      this.currentNode.ownerDocument.documentElement);
-  },
+    setIgnoreLayoutChanges(false, this.highlighterEnv.document.documentElement);
+  }
 
-  hideArrows: function () {
+  hideArrows() {
     for (let side of GeoProp.SIDES) {
       this.getElement("arrow-" + side).setAttribute("hidden", "true");
       this.getElement("label-" + side).setAttribute("hidden", "true");
       this.getElement("handler-" + side).setAttribute("hidden", "true");
     }
-  },
+  }
 
-  updateArrows: function () {
+  updateArrows() {
     this.hideArrows();
 
     // Position arrows always end at the node's margin box.
@@ -646,7 +650,7 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       if (GeoProp.isInverted(side)) {
         return this.offsetParent.dimension[GeoProp.mainAxisSize(side)];
       }
-      return -1 * this.currentNode.ownerDocument.defaultView["scroll" +
+      return -1 * this.currentNode.ownerGlobal["scroll" +
                                               GeoProp.axis(side).toUpperCase()];
     };
 
@@ -664,9 +668,9 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
       this.updateArrow(side, mainAxisStartPos, mainAxisEndPos, crossAxisPos,
                        sideProp.cssRule.style.getPropertyValue(side));
     }
-  },
+  }
 
-  updateArrow: function (side, mainStart, mainEnd, crossPos, labelValue) {
+  updateArrow(side, mainStart, mainEnd, crossPos, labelValue) {
     let arrowEl = this.getElement("arrow-" + side);
     let labelEl = this.getElement("label-" + side);
     let labelTextEl = this.getElement("label-text-" + side);
@@ -703,5 +707,12 @@ GeometryEditorHighlighter.prototype = extend(AutoRefreshHighlighter.prototype, {
     labelEl.removeAttribute("hidden");
     labelTextEl.setTextContent(labelValue);
   }
-});
+
+  onWillNavigate({ isTopLevel }) {
+    if (isTopLevel) {
+      this.hide();
+    }
+  }
+}
+
 exports.GeometryEditorHighlighter = GeometryEditorHighlighter;

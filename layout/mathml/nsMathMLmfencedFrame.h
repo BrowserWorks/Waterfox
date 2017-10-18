@@ -17,12 +17,12 @@ class nsFontMetrics;
 
 class nsMathMLmfencedFrame final : public nsMathMLContainerFrame {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsMathMLmfencedFrame)
 
   friend nsIFrame* NS_NewMathMLmfencedFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
   virtual void
-  SetAdditionalStyleContext(int32_t          aIndex, 
+  SetAdditionalStyleContext(int32_t          aIndex,
                             nsStyleContext*  aStyleContext) override;
   virtual nsStyleContext*
   GetAdditionalStyleContext(int32_t aIndex) const override;
@@ -45,7 +45,7 @@ public:
                                 const nsDisplayListSet& aLists) override;
 
   virtual void
-  GetIntrinsicISizeMetrics(nsRenderingContext* aRenderingContext,
+  GetIntrinsicISizeMetrics(gfxContext* aRenderingContext,
                            ReflowOutput& aDesiredSize) override;
 
   virtual nsresult
@@ -62,9 +62,8 @@ public:
   FixInterFrameSpacing(ReflowOutput& aDesiredSize) override;
 
   // helper routines to format the MathMLChars involved here
-  static nsresult
-  ReflowChar(nsPresContext*       aPresContext,
-             DrawTarget*          aDrawTarget,
+  nsresult
+  ReflowChar(DrawTarget*          aDrawTarget,
              nsFontMetrics&       aFontMetrics,
              float                aFontSizeInflation,
              nsMathMLChar*        aMathMLChar,
@@ -96,9 +95,16 @@ public:
   }
 
 protected:
-  explicit nsMathMLmfencedFrame(nsStyleContext* aContext) : nsMathMLContainerFrame(aContext) {}
+  explicit nsMathMLmfencedFrame(nsStyleContext* aContext)
+    : nsMathMLContainerFrame(aContext, kClassID)
+    , mOpenChar(nullptr)
+    , mCloseChar(nullptr)
+    , mSeparatorsChar(nullptr)
+    , mSeparatorsCount(0)
+  {}
+
   virtual ~nsMathMLmfencedFrame();
-  
+
   nsMathMLChar* mOpenChar;
   nsMathMLChar* mCloseChar;
   nsMathMLChar* mSeparatorsChar;

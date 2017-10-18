@@ -1,7 +1,10 @@
+"use strict";
+
 const StandardURL = Components.Constructor("@mozilla.org/network/standard-url;1",
                                            "nsIStandardURL",
                                            "init");
 const nsIStandardURL = Components.interfaces.nsIStandardURL;
+const gPrefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
 
 function symmetricEquality(expect, a, b)
 {
@@ -14,7 +17,7 @@ function symmetricEquality(expect, a, b)
     /* We don't check port in the loop, because it can be defaulted in
        some cases. */
     ["spec", "prePath", "scheme", "userPass", "username", "password",
-     "hostPort", "host", "path", "filePath", "param", "query",
+     "hostPort", "host", "path", "filePath", "query",
      "ref", "directory", "fileName", "fileBaseName", "fileExtension"]
       .map(function(prop) {
 	dump("Testing '"+ prop + "'\n");
@@ -179,9 +182,9 @@ add_test(function test_ipv6()
 
   url = stringToURL("http://example.com");
   url.hostPort = "2001:1";
-  do_check_eq(url.host, "2001");
+  do_check_eq(url.host, "0.0.7.209");
   do_check_eq(url.port, 1);
-  do_check_eq(url.hostPort, "2001:1");
+  do_check_eq(url.hostPort, "0.0.7.209:1");
   run_next_test();
 });
 
@@ -305,6 +308,18 @@ add_test(function test_filterWhitespace()
 {
   var url = stringToURL(" \r\n\th\nt\rt\tp://ex\r\n\tample.com/path\r\n\t/\r\n\tto the/fil\r\n\te.e\r\n\txt?que\r\n\try#ha\r\n\tsh \r\n\t ");
   do_check_eq(url.spec, "http://example.com/path/to%20the/file.ext?query#hash");
+
+  // These setters should escape \r\n\t, not filter them.
+  var url = stringToURL("http://test.com/path?query#hash");
+  url.filePath = "pa\r\n\tth";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?query#hash");
+  url.query = "qu\r\n\tery";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?qu%0D%0A%09ery#hash");
+  url.ref = "ha\r\n\tsh";
+  do_check_eq(url.spec, "http://test.com/pa%0D%0A%09th?qu%0D%0A%09ery#ha%0D%0A%09sh");
+  url.fileName = "fi\r\n\tle.name";
+  do_check_eq(url.spec, "http://test.com/fi%0D%0A%09le.name?qu%0D%0A%09ery#ha%0D%0A%09sh");
+
   run_next_test();
 });
 
@@ -317,6 +332,14 @@ add_test(function test_backslashReplacement()
   do_check_eq(url.spec, "http://test.com/example.org/path/to/file");
   do_check_eq(url.host, "test.com");
   do_check_eq(url.path, "/example.org/path/to/file");
+
+  run_next_test();
+});
+
+add_test(function test_authority_host()
+{
+  Assert.throws(() => { stringToURL("http:"); }, "TYPE_AUTHORITY should have host");
+  Assert.throws(() => { stringToURL("http:///"); }, "TYPE_AUTHORITY should have host");
 
   run_next_test();
 });
@@ -363,6 +386,176 @@ add_test(function test_encode_C0_and_space()
   do_check_eq(url.spec, "http://example.com/pa%00th?qu%00ery#ha%00sh");
   url.fileName = "fi\0le.name";
   do_check_eq(url.spec, "http://example.com/fi%00le.name?qu%00ery#ha%00sh");
+
+  run_next_test();
+});
+
+add_test(function test_ipv4Normalize()
+{
+  var localIPv4s =
+    ["http://127.0.0.1",
+     "http://127.0.1",
+     "http://127.1",
+     "http://2130706433",
+     "http://0177.00.00.01",
+     "http://0177.00.01",
+     "http://0177.01",
+     "http://00000000000000000000000000177.0000000.0000000.0001",
+     "http://000000177.0000001",
+     "http://017700000001",
+     "http://0x7f.0x00.0x00.0x01",
+     "http://0x7f.0x01",
+     "http://0x7f000001",
+     "http://0x007f.0x0000.0x0000.0x0001",
+     "http://000177.0.00000.0x0001",
+     "http://127.0.0.1.",
+    ].map(stringToURL);
+
+  var url;
+  for (url of localIPv4s) {
+    do_check_eq(url.spec, "http://127.0.0.1/");
+  }
+
+  // These should treated as a domain instead of an IPv4.
+  var nonIPv4s =
+    ["http://0xfffffffff/",
+     "http://0x100000000/",
+     "http://4294967296/",
+     "http://1.2.0x10000/",
+     "http://1.0x1000000/",
+     "http://256.0.0.1/",
+     "http://1.256.1/",
+     "http://-1.0.0.0/",
+     "http://1.2.3.4.5/",
+     "http://010000000000000000/",
+     "http://2+3/",
+     "http://0.0.0.-1/",
+     "http://1.2.3.4../",
+     "http://1..2/",
+     "http://.1.2.3.4/",
+     "resource://123/",
+     "resource://4294967296/",
+    ];
+  var spec;
+  for (spec of nonIPv4s) {
+    url = stringToURL(spec);
+    do_check_eq(url.spec, spec);
+  }
+
+  var url = stringToURL("resource://path/to/resource/");
+  url.host = "123";
+  do_check_eq(url.host, "123");
+
+  run_next_test();
+});
+
+add_test(function test_invalidHostChars() {
+  var url = stringToURL("http://example.org/");
+  for (let i = 0; i <= 0x20; i++) {
+    Assert.throws(() => { url.host = "a" + String.fromCharCode(i) + "b"; }, "Trying to set hostname containing char code: " + i);
+  }
+  for (let c of "@[]*<>|:\"") {
+    Assert.throws(() => { url.host = "a" + c; }, "Trying to set hostname containing char: " + c);
+  }
+
+  // It also can't contain /, \, #, ?, but we treat these characters as
+  // hostname separators, so there is no way to set them and fail.
+  run_next_test();
+});
+
+add_test(function test_normalize_ipv6() {
+  var url = stringToURL("http://example.com");
+  url.host = "[::192.9.5.5]";
+  do_check_eq(url.spec, "http://[::c009:505]/");
+
+  run_next_test();
+});
+
+add_test(function test_emptyPassword() {
+  var url = stringToURL("http://a:@example.com");
+  do_check_eq(url.spec, "http://a@example.com/");
+  url.password = "pp";
+  do_check_eq(url.spec, "http://a:pp@example.com/");
+  url.password = "";
+  do_check_eq(url.spec, "http://a@example.com/");
+  url.userPass = "xxx:";
+  do_check_eq(url.spec, "http://xxx@example.com/");
+  url.password = "zzzz";
+  do_check_eq(url.spec, "http://xxx:zzzz@example.com/");
+  url.userPass = "xxxxx:yyyyyy";
+  do_check_eq(url.spec, "http://xxxxx:yyyyyy@example.com/");
+  url.userPass = "z:";
+  do_check_eq(url.spec, "http://z@example.com/");
+  url.password = "ppppppppppp";
+  do_check_eq(url.spec, "http://z:ppppppppppp@example.com/");
+  run_next_test();
+});
+
+do_register_cleanup(function () {
+  gPrefs.clearUserPref("network.standard-url.punycode-host");
+});
+
+add_test(function test_idna_host() {
+  // See bug 945240 - this test makes sure that URLs return a punycode hostname
+  // when the pref is set, or unicode otherwise.
+
+  // First we test that the old behaviour still works properly for all methods
+  // that return strings containing the hostname
+
+  gPrefs.setBoolPref("network.standard-url.punycode-host", false);
+  let url = stringToURL("http://user:password@ält.example.org:8080/path?query#etc");
+
+  equal(url.host, "ält.example.org");
+  equal(url.hostPort, "ält.example.org:8080");
+  equal(url.prePath, "http://user:password@ält.example.org:8080");
+  equal(url.spec, "http://user:password@ält.example.org:8080/path?query#etc");
+  equal(url.specIgnoringRef, "http://user:password@ält.example.org:8080/path?query");
+  equal(url.QueryInterface(Components.interfaces.nsISensitiveInfoHiddenURI).getSensitiveInfoHiddenSpec(), "http://user:****@ält.example.org:8080/path?query#etc");
+
+  equal(url.displayHost, "ält.example.org");
+  equal(url.displayHostPort, "ält.example.org:8080");
+  equal(url.displaySpec, "http://user:password@ält.example.org:8080/path?query#etc");
+
+  equal(url.asciiHost, "xn--lt-uia.example.org");
+  equal(url.asciiHostPort, "xn--lt-uia.example.org:8080");
+  equal(url.asciiSpec, "http://user:password@xn--lt-uia.example.org:8080/path?query#etc");
+
+  url.ref = ""; // SetRef calls InvalidateCache()
+  equal(url.spec, "http://user:password@ält.example.org:8080/path?query");
+  equal(url.displaySpec, "http://user:password@ält.example.org:8080/path?query");
+  equal(url.asciiSpec, "http://user:password@xn--lt-uia.example.org:8080/path?query");
+
+  url = stringToURL("http://user:password@www.ält.com:8080/path?query#etc");
+  url.ref = "";
+  equal(url.spec, "http://user:password@www.ält.com:8080/path?query");
+
+  // We also check that the default behaviour changes once we filp the pref
+  gPrefs.setBoolPref("network.standard-url.punycode-host", true);
+
+  url = stringToURL("http://user:password@ält.example.org:8080/path?query#etc");
+  equal(url.host, "xn--lt-uia.example.org");
+  equal(url.hostPort, "xn--lt-uia.example.org:8080");
+  equal(url.prePath, "http://user:password@xn--lt-uia.example.org:8080");
+  equal(url.spec, "http://user:password@xn--lt-uia.example.org:8080/path?query#etc");
+  equal(url.specIgnoringRef, "http://user:password@xn--lt-uia.example.org:8080/path?query");
+  equal(url.QueryInterface(Components.interfaces.nsISensitiveInfoHiddenURI).getSensitiveInfoHiddenSpec(), "http://user:****@xn--lt-uia.example.org:8080/path?query#etc");
+
+  equal(url.displayHost, "ält.example.org");
+  equal(url.displayHostPort, "ält.example.org:8080");
+  equal(url.displaySpec, "http://user:password@ält.example.org:8080/path?query#etc");
+
+  equal(url.asciiHost, "xn--lt-uia.example.org");
+  equal(url.asciiHostPort, "xn--lt-uia.example.org:8080");
+  equal(url.asciiSpec, "http://user:password@xn--lt-uia.example.org:8080/path?query#etc");
+
+  url.ref = ""; // SetRef calls InvalidateCache()
+  equal(url.spec, "http://user:password@xn--lt-uia.example.org:8080/path?query");
+  equal(url.displaySpec, "http://user:password@ält.example.org:8080/path?query");
+  equal(url.asciiSpec, "http://user:password@xn--lt-uia.example.org:8080/path?query");
+
+  url = stringToURL("http://user:password@www.ält.com:8080/path?query#etc");
+  url.ref = "";
+  equal(url.spec, "http://user:password@www.xn--lt-uia.com:8080/path?query");
 
   run_next_test();
 });

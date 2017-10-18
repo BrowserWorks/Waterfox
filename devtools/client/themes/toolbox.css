@@ -12,7 +12,7 @@
   --command-paintflashing-image: url(images/command-paintflashing.svg);
   --command-screenshot-image: url(images/command-screenshot.svg);
   --command-responsive-image: url(images/command-responsivemode.svg);
-  --command-scratchpad-image: url(images/command-scratchpad.svg);
+  --command-scratchpad-image: url(images/tool-scratchpad.svg);
   --command-pick-image: url(images/command-pick.svg);
   --command-frames-image: url(images/command-frames.svg);
   --command-splitconsole-image: url(images/command-console.svg);
@@ -49,29 +49,95 @@
   padding: 0;
   background: var(--theme-tab-toolbar-background);
   border-bottom-color: var(--theme-splitter-color);
+  display: flex;
 }
 
-#toolbox-tabs {
+.toolbox-tabs-wrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+}
+
+.toolbox-tabs-wrapper .all-tools-menu {
+  border-inline-end: 1px solid var(--theme-splitter-color);
+  border-top-width: 0;
+  border-bottom-width: 0;
+}
+
+.toolbox-tabs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
   margin: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Set flex attribute to Toolbox buttons and Picker container so,
+   they don't overlap with the tab bar */
+#toolbox-buttons-start,
+#toolbox-buttons-end {
+  display: flex;
+  align-items: stretch;
+}
+
+#toolbox-buttons-start {
+  border: solid 0 var(--theme-splitter-color);
+  border-inline-end-width: 1px;
 }
 
 /* Toolbox tabs */
-
 .devtools-tab {
-  -moz-appearance: none;
-  -moz-binding: url("chrome://global/content/bindings/general.xml#control-item");
-  -moz-box-align: center;
+  position: relative;
+  display: flex;
+  align-items: center;
   min-width: 32px;
   min-height: 24px;
-  max-width: 100px;
   margin: 0;
   padding: 0;
   border-style: solid;
   border-width: 0;
   border-inline-start-width: 1px;
-  -moz-box-align: center;
-  -moz-user-focus: normal;
-  -moz-box-flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-color: transparent;
+}
+
+
+.devtools-tab-label {
+  mask-image: linear-gradient(to left, transparent 0, black 6px);
+  /* Set the end padding on the label to make sure the label gets faded out properly */
+  padding-inline-end: 10px;
+  min-width: 1px;
+}
+
+.devtools-tab-label:-moz-locale-dir(rtl) {
+  mask-image: linear-gradient(to right, transparent 0, black 6px);
+}
+
+/* Hide tab icons when the viewport width is limited */
+@media (max-width: 700px) {
+  .devtools-tab-label {
+    /* Set the end padding on the label to make sure the label gets faded out properly */
+    padding-inline-end: 5px;
+  }
+
+  .devtools-tab:not(.devtools-tab-icon-only) {
+    padding-inline-start: 5px !important;
+  }
+
+  /* Hide the icons */
+  .devtools-tab:not(.devtools-tab-icon-only) > img {
+    display: none;
+  }
+}
+
+.devtools-tab-icon-only {
+  min-width: 24px;
 }
 
 /* Save space on the tab-strip in Firebug theme */
@@ -94,7 +160,7 @@
 }
 
 .devtools-tab:hover {
-  background-color: var(--toolbar-tab-hover);
+  background-color: var(--theme-toolbar-hover);
 }
 
 .theme-dark .devtools-tab:hover:active {
@@ -102,20 +168,16 @@
 }
 
 .devtools-tab:hover:active {
-  background-color: var(--toolbar-tab-hover-active);
+  background-color: var(--theme-toolbar-hover-active);
 }
 
-.theme-dark .devtools-tab:not([selected])[highlighted] {
-  background-color: hsla(99, 100%, 14%, .3);
-}
-
-.theme-light .devtools-tab:not([selected])[highlighted] {
-  background-color: rgba(44, 187, 15, .2);
+.devtools-tab:not(.selected).highlighted {
+  background-color: var(--theme-toolbar-background-alt);
 }
 
 /* Display execution pointer in the Debugger tab to indicate
    that the debugger is paused. */
-.theme-firebug #toolbox-tab-jsdebugger.devtools-tab:not([selected])[highlighted] {
+.theme-firebug #toolbox-tab-jsdebugger.devtools-tab:not(.selected).highlighted {
   background-color: rgba(89, 178, 234, .2);
   background-image: url(chrome://devtools/skin/images/firebug/tool-debugger-paused.svg);
   background-repeat: no-repeat;
@@ -123,27 +185,30 @@
   background-position: 3px 6px;
 }
 
-.devtools-tab > image {
+.devtools-tab > img {
   border: none;
   margin: 0;
-  margin-inline-start: 4px;
-  opacity: 0.6;
+  margin-inline-start: 10px;
+  margin-inline-end: 5px;
+  opacity: 0.8;
   max-height: 16px;
   width: 16px; /* Prevents collapse during theme switching */
+  vertical-align: text-top;
+  flex-shrink: 0;
 }
 
 /* Support invertable icon flags and make icon white when it's on a blue background */
-.theme-light .devtools-tab[icon-invertable="light-theme"]:not([selected]) > image,
-.devtools-tab[icon-invertable="dark-theme"][selected] > image {
+.theme-light .devtools-tab.icon-invertable-light-theme:not(.selected) > img,
+.devtools-tab.icon-invertable-dark-theme.selected > img {
   filter: invert(1);
 }
 
 /* Don't apply any filter to non-invertable command button icons */
 .command-button:not(.command-button-invertable),
-/* [icon-invertable="light-theme"] icons are white, so do not invert them for the dark theme */
-.theme-dark .devtools-tab[icon-invertable="light-theme"] > image,
+/* icon-invertable-light-theme icons are white, so do not invert them for the dark theme */
+.theme-dark .devtools-tab.icon-invertable-light-theme > img,
 /* Since "highlighted" icons are green, we should omit the filter */
-.devtools-tab[icon-invertable][highlighted]:not([selected]) > image {
+.devtools-tab.icon-invertable.highlighted:not(.selected) > img {
   filter: none;
 }
 
@@ -152,76 +217,54 @@
   margin: 0 4px;
 }
 
-.devtools-tab:hover > image {
-  opacity: 0.8;
-}
-
-.devtools-tab:active > image,
-.devtools-tab[selected] > image {
+.devtools-tab:hover > img,
+.devtools-tab:active > img,
+.devtools-tab.selected > img {
   opacity: 1;
 }
 
-.devtools-tabbar .devtools-tab[selected],
-.devtools-tabbar .devtools-tab[selected]:hover:active {
+.devtools-tabbar .devtools-tab.selected,
+.devtools-tabbar .devtools-tab.selected:hover:active {
   color: var(--theme-selection-color);
   background-color: var(--theme-selection-background);
 }
 
-#toolbox-tabs .devtools-tab[selected],
-#toolbox-tabs .devtools-tab[highlighted] {
-  border-width: 0;
-  padding-inline-start: 1px;
+.toolbox-tabs .devtools-tab.selected,
+.toolbox-tabs .devtools-tab.highlighted,
+.toolbox-tabs .devtools-tab.selected + .devtools-tab,
+.toolbox-tabs .devtools-tab.highlighted + .devtools-tab {
+  border-inline-start-color: transparent;
 }
 
-#toolbox-tabs .devtools-tab[selected]:last-child,
-#toolbox-tabs .devtools-tab[highlighted]:last-child {
-  padding-inline-end: 1px;
-}
-
-#toolbox-tabs .devtools-tab[selected] + .devtools-tab,
-#toolbox-tabs .devtools-tab[highlighted] + .devtools-tab {
-  border-inline-start-width: 0;
-  padding-inline-start: 1px;
-}
-
-#toolbox-tabs .devtools-tab:first-child[selected] {
+.toolbox-tabs .devtools-tab:first-child {
   border-inline-start-width: 0;
 }
 
-#toolbox-tabs .devtools-tab:last-child {
+.toolbox-tabs .devtools-tab:last-child {
   border-inline-end-width: 1px;
 }
 
-.devtools-tab:not([highlighted]) > .highlighted-icon,
-.devtools-tab[selected] > .highlighted-icon,
-.devtools-tab:not([selected])[highlighted] > .default-icon {
-  visibility: collapse;
+.devtools-tab:not(.highlighted) > .highlighted-icon,
+.devtools-tab.selected > .highlighted-icon,
+.devtools-tab:not(.selected).highlighted > .default-icon {
+  display: none;
 }
 
 /* The options tab is special - it doesn't have the same parent
    as the other tabs (toolbox-option-container vs toolbox-tabs) */
-#toolbox-option-container .devtools-tab:not([selected]) {
-  background-color: transparent;
-}
 #toolbox-option-container .devtools-tab {
   border-color: transparent;
   border-width: 0;
   padding-inline-start: 1px;
 }
-#toolbox-tab-options > image {
-  margin: 0 8px;
+#toolbox-option-container img {
+  margin: 0 3px;
 }
 
 /* Toolbox controls */
 
-#toolbox-controls > button,
-#toolbox-dock-buttons > button {
-  -moz-appearance: none;
-  -moz-user-focus: normal;
-  border: none;
-  margin: 0 4px;
-  min-width: 16px;
-  width: 16px;
+#toolbox-controls, #toolbox-dock-buttons {
+  display: flex;
 }
 
 /* Save space in Firebug theme */
@@ -247,12 +290,6 @@
   background-image: var(--dock-undock-image);
 }
 
-#toolbox-dock-bottom-minimize {
-  /* Bug 1177463 - The minimize button is currently hidden until we agree on
-     the UI for it, and until bug 1173849 is fixed too. */
-  display: none;
-}
-
 #toolbox-dock-bottom-minimize::before {
   background-image: url("chrome://devtools/skin/images/dock-bottom-minimize@2x.png");
 }
@@ -261,7 +298,16 @@
   background-image: url("chrome://devtools/skin/images/dock-bottom-maximize@2x.png");
 }
 
-#toolbox-buttons:empty + .devtools-separator,
+/**
+ * Ensure that when the toolbar collapses in on itself when there is not enough room
+ * that it still looks reasonable.
+ */
+.devtools-tabbar > div {
+  background-color: var(--theme-tab-toolbar-background);
+  z-index: 0;
+}
+
+#toolbox-buttons-end:empty + .devtools-separator,
 .devtools-separator[invisible] {
   visibility: hidden;
 }
@@ -272,43 +318,20 @@
 
 /* Command buttons */
 
-.command-button {
-  padding: 0;
-  margin: 0;
+.command-button,
+#toolbox-controls > button,
+#toolbox-dock-buttons > button {
+  /* !important is needed to override .devtools-button rules in common.css */
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
   position: relative;
-  -moz-user-focus: normal;
+  min-width: 24px;
 }
 
-.command-button::before {
-  opacity: 0.7;
-}
-
-.command-button:hover {
-  background-color: var(--toolbar-tab-hover);
-}
-
-.theme-light .command-button:hover {
-  background-color: inherit;
-}
-
-.command-button:hover:active,
-.command-button[checked=true]:not(:hover) {
-  background-color: var(--toolbar-tab-hover-active)
-}
-
-.theme-light .command-button:hover:active,
-.theme-light .command-button[checked=true]:not(:hover) {
-  background-color: inherit;
-}
-
-.command-button:hover::before {
-  opacity: 0.85;
-}
-
-.command-button:hover:active::before,
-.command-button[checked=true]::before,
-.command-button[open=true]::before {
-  opacity: 1;
+#command-button-pick {
+  min-width: 32px;
 }
 
 /* Command button images */
@@ -358,7 +381,8 @@
 }
 
 #command-button-frames {
-  background: url("chrome://devtools/skin/images/dropmarker.svg") no-repeat right;
+  background-image: url("chrome://devtools/skin/images/dropmarker.svg");
+  background-repeat: no-repeat;
 
   /* Override background-size from the command-button.
    The drop down arrow is smaller */
@@ -366,7 +390,11 @@
   min-width: 32px;
 }
 
-#command-button-frames:-moz-dir(rtl) {
+#command-button-frames:-moz-locale-dir(ltr) {
+  background-position: right;
+}
+
+#command-button-frames:-moz-locale-dir(rtl) {
   background-position: left;
 }
 

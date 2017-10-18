@@ -10,8 +10,7 @@ const URL = BASE + "/file_WebRequest_page2.html";
 
 var requested = [];
 
-function onBeforeRequest(details)
-{
+function onBeforeRequest(details) {
   info(`onBeforeRequest ${details.url}`);
   if (details.url.startsWith(BASE)) {
     requested.push(details.url);
@@ -20,8 +19,7 @@ function onBeforeRequest(details)
 
 var sendHeaders = [];
 
-function onBeforeSendHeaders(details)
-{
+function onBeforeSendHeaders(details) {
   info(`onBeforeSendHeaders ${details.url}`);
   if (details.url.startsWith(BASE)) {
     sendHeaders.push(details.url);
@@ -30,8 +28,7 @@ function onBeforeSendHeaders(details)
 
 var completed = [];
 
-function onResponseStarted(details)
-{
+function onResponseStarted(details) {
   if (details.url.startsWith(BASE)) {
     completed.push(details.url);
   }
@@ -41,8 +38,7 @@ const expected_urls = [BASE + "/file_style_good.css",
                        BASE + "/file_style_bad.css",
                        BASE + "/file_style_redirect.css"];
 
-function removeDupes(list)
-{
+function removeDupes(list) {
   let j = 0;
   for (let i = 1; i < list.length; i++) {
     if (list[i] != list[j]) {
@@ -55,8 +51,7 @@ function removeDupes(list)
   list.length = j + 1;
 }
 
-function compareLists(list1, list2, kind)
-{
+function compareLists(list1, list2, kind) {
   list1.sort();
   removeDupes(list1);
   list2.sort();
@@ -64,16 +59,21 @@ function compareLists(list1, list2, kind)
   is(String(list1), String(list2), `${kind} URLs correct`);
 }
 
-add_task(function* filter_urls() {
+add_task(async function setup() {
+  // Disable rcwn to make cache behavior deterministic.
+  await SpecialPowers.pushPrefEnv({set: [["network.http.rcwn.enabled", false]]});
+});
+
+add_task(async function filter_urls() {
   let filter = {urls: new MatchPattern("*://*/*_style_*")};
 
   WebRequest.onBeforeRequest.addListener(onBeforeRequest, filter, ["blocking"]);
   WebRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, filter, ["blocking"]);
   WebRequest.onResponseStarted.addListener(onResponseStarted, filter);
 
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
 
-  yield waitForLoad();
+  await waitForLoad();
 
   gBrowser.removeCurrentTab();
 
@@ -86,16 +86,16 @@ add_task(function* filter_urls() {
   WebRequest.onResponseStarted.removeListener(onResponseStarted);
 });
 
-add_task(function* filter_types() {
+add_task(async function filter_types() {
   let filter = {types: ["stylesheet"]};
 
   WebRequest.onBeforeRequest.addListener(onBeforeRequest, filter, ["blocking"]);
   WebRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, filter, ["blocking"]);
   WebRequest.onResponseStarted.addListener(onResponseStarted, filter);
 
-  gBrowser.selectedTab = gBrowser.addTab(URL);
+  gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL);
 
-  yield waitForLoad();
+  await waitForLoad();
 
   gBrowser.removeCurrentTab();
 
@@ -110,9 +110,8 @@ add_task(function* filter_types() {
 
 function waitForLoad(browser = gBrowser.selectedBrowser) {
   return new Promise(resolve => {
-    browser.addEventListener("load", function listener() {
-      browser.removeEventListener("load", listener, true);
+    browser.addEventListener("load", function() {
       resolve();
-    }, true);
+    }, {capture: true, once: true});
   });
 }

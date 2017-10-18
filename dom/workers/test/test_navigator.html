@@ -18,42 +18,10 @@ Tests of DOM Worker Navigator
 
 </div>
 <pre id="test">
-<script class="testbody" language="javascript">
-
-  var worker = new Worker("navigator_worker.js");
-
-  worker.onmessage = function(event) {
-    var args = JSON.parse(event.data);
-
-    if (args.name == "testFinished") {
-      SimpleTest.finish();
-      return;
-    }
-
-    if (typeof navigator[args.name] == "undefined") {
-      ok(false, "Navigator has no '" + args.name + "' property!");
-      return;
-    }
-
-    if (args.name === "languages") {
-      is(navigator.languages.toString(), args.value.toString(), "languages matches");
-      return;
-    }
-
-    is(navigator[args.name], args.value,
-       "Mismatched navigator string for " + args.name + "!");
-  };
-
-  worker.onerror = function(event) {
-    ok(false, "Worker had an error: " + event.message);
-    SimpleTest.finish();
-  }
-
-  worker.postMessage({ 'isB2G': SpecialPowers.isB2G });
-
-  SimpleTest.waitForExplicitFinish();
-
+<script>
+  ok(!self.isSecureContext, "This test should not be running in a secure context");
 </script>
+<script type="text/javascript" src="test_navigator.js"></script>
 </pre>
 </body>
 </html>

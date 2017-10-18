@@ -1,0 +1,66 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include "nsISupports.idl"
+
+interface nsIFrameLoader;
+
+[scriptable, uuid(14e5a0cb-e223-4202-95e8-fe53275193ea)]
+interface nsIBrowser : nsISupports
+{
+  /**
+   * Gets an optional frame loader that is "related" to this browser.
+   * If this exists, then we should attempt to use the same content parent as
+   * this frame loader for any new tab parents.  For example, view source
+   * browsers set this to the frame loader for the original content to ensure
+   * they are loaded in the same process as the content.
+   */
+  readonly attribute nsIFrameLoader sameProcessAsFrameLoader;
+
+  /*
+   * Called by the child to inform the parent that links are dropped into
+   * content area.
+   *
+   * @param linksCount length of links
+   * @param links a flat array of url, name, and type for each link
+   * @param triggeringPrincipal a principal that initiated loading
+   *                            of the dropped links
+   */
+  void dropLinks(in unsigned long linksCount,
+                 [array, size_is(linksCount)] in wstring links);
+
+  /**
+   * Flags for controlling the behavior of swapBrowsers
+   */
+
+  /**
+   * The default options. This is used for swapping browsers between windows
+   */
+  const unsigned long SWAP_DEFAULT = 0;
+
+  /**
+   * If this bit is set, swapping the browsers will not swap the permanentKey of
+   * the browsers. This is used when performing cross process loads by swapping
+   * browsers.
+   */
+  const unsigned long SWAP_KEEP_PERMANENT_KEY = 0x1;
+
+  /**
+   * Swapping of frameloaders are usually initiated from a frameloader owner
+   * or other components operating on frameloader owners. This is done by calling
+   * swapFrameLoaders at MozFrameLoaderOwner webidl interface.
+   *
+   * This function aimed to provide the other way around -
+   * if the swapping is initiated from frameloader itself or other platform level
+   * components, it uses this interface to delegate the swapping request to
+   * frameloader owners and ask them to re-initiate frameloader swapping, so that
+   * frameloader owners such as <xul:browser> can setup their properties and /
+   * or listeners properly on swapping.
+   */
+  void swapBrowsers(in nsIBrowser aOtherBrowser, in unsigned long aFlags);
+
+  /**
+   * Close the browser (usually means to remove a tab).
+   */
+  void closeBrowser();
+};

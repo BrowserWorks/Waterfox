@@ -94,7 +94,7 @@ nsInputStreamTransport::OpenInputStream(uint32_t flags,
     // XXX if the caller requests an unbuffered stream, then perhaps
     //     we'd want to simply return mSource; however, then we would
     //     not be reading mSource on a background thread.  is this ok?
- 
+
     bool nonblocking = !(flags & OPEN_BLOCKING);
 
     net_ResolveSegmentParams(segsize, segcount);
@@ -260,7 +260,7 @@ private:
     }
 
     nsCOMPtr<nsIAsyncOutputStream>  mPipeOut;
- 
+
     // while the copy is active, these members may only be accessed from the
     // nsIOutputStream implementation.
     nsCOMPtr<nsITransportEventSink> mEventSink;
@@ -308,7 +308,7 @@ nsOutputStreamTransport::OpenOutputStream(uint32_t flags,
     // XXX if the caller requests an unbuffered stream, then perhaps
     //     we'd want to simply return mSink; however, then we would
     //     not be writing to mSink on a background thread.  is this ok?
- 
+
     bool nonblocking = !(flags & OPEN_BLOCKING);
 
     net_ResolveSegmentParams(segsize, segcount);
@@ -434,40 +434,6 @@ nsOutputStreamTransport::IsNonBlocking(bool *result)
     return NS_OK;
 }
 
-#ifdef MOZ_NUWA_PROCESS
-#include "ipc/Nuwa.h"
-
-class STSThreadPoolListener final : public nsIThreadPoolListener
-{
-public:
-    NS_DECL_THREADSAFE_ISUPPORTS
-    NS_DECL_NSITHREADPOOLLISTENER
-
-    STSThreadPoolListener() {}
-
-protected:
-    ~STSThreadPoolListener() {}
-};
-
-NS_IMPL_ISUPPORTS(STSThreadPoolListener, nsIThreadPoolListener)
-
-NS_IMETHODIMP
-STSThreadPoolListener::OnThreadCreated()
-{
-    if (IsNuwaProcess()) {
-        NuwaMarkCurrentThread(nullptr, nullptr);
-    }
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-STSThreadPoolListener::OnThreadShuttingDown()
-{
-    return NS_OK;
-}
-
-#endif	// MOZ_NUWA_PROCESS
-
 //-----------------------------------------------------------------------------
 // nsStreamTransportService
 //-----------------------------------------------------------------------------
@@ -488,11 +454,6 @@ nsStreamTransportService::Init()
     mPool->SetThreadLimit(25);
     mPool->SetIdleThreadLimit(1);
     mPool->SetIdleThreadTimeout(PR_SecondsToInterval(30));
-#ifdef MOZ_NUWA_PROCESS
-    if (IsNuwaProcess()) {
-	mPool->SetListener(new STSThreadPoolListener());
-    }
-#endif
 
     nsCOMPtr<nsIObserverService> obsSvc =
         mozilla::services::GetObserverService();
@@ -533,6 +494,20 @@ NS_IMETHODIMP
 nsStreamTransportService::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP_(bool)
+nsStreamTransportService::IsOnCurrentThreadInfallible()
+{
+    nsCOMPtr<nsIThreadPool> pool;
+    {
+        mozilla::MutexAutoLock lock(mShutdownLock);
+        pool = mPool;
+    }
+    if (!pool) {
+      return false;
+    }
+    return pool->IsOnCurrentThread();
 }
 
 NS_IMETHODIMP
@@ -596,6 +571,67 @@ nsStreamTransportService::Observe(nsISupports *subject, const char *topic,
     mPool = nullptr;
   }
   return NS_OK;
+}
+
+class AvailableEvent final : public Runnable
+{
+public:
+  AvailableEvent(nsIInputStream* stream,
+                 nsIInputAvailableCallback* callback)
+    : Runnable("net::AvailableEvent")
+    , mStream(stream)
+    , mCallback(callback)
+    , mDoingCallback(false)
+    , mSize(0)
+    , mResultForCallback(NS_OK)
+  {
+    mCallbackTarget = GetCurrentThreadEventTarget();
+  }
+
+    NS_IMETHOD Run() override
+    {
+        if (mDoingCallback) {
+            // pong
+            mCallback->OnInputAvailableComplete(mSize, mResultForCallback);
+            mCallback = nullptr;
+        } else {
+            // ping
+            mResultForCallback = mStream->Available(&mSize);
+            mStream = nullptr;
+            mDoingCallback = true;
+
+            nsCOMPtr<nsIRunnable> event(this); // overly cute
+            mCallbackTarget->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
+            mCallbackTarget = nullptr;
+        }
+        return NS_OK;
+    }
+
+private:
+    virtual ~AvailableEvent() { }
+
+    nsCOMPtr<nsIInputStream> mStream;
+    nsCOMPtr<nsIInputAvailableCallback> mCallback;
+    nsCOMPtr<nsIEventTarget> mCallbackTarget;
+    bool mDoingCallback;
+    uint64_t mSize;
+    nsresult mResultForCallback;
+};
+
+NS_IMETHODIMP
+nsStreamTransportService::InputAvailable(nsIInputStream *stream,
+                                         nsIInputAvailableCallback *callback)
+{
+    nsCOMPtr<nsIThreadPool> pool;
+    {
+        mozilla::MutexAutoLock lock(mShutdownLock);
+        if (mIsShutdown) {
+            return NS_ERROR_NOT_INITIALIZED;
+        }
+        pool = mPool;
+    }
+    nsCOMPtr<nsIRunnable> event = new AvailableEvent(stream, callback);
+    return pool->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
 }
 
 } // namespace net

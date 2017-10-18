@@ -41,10 +41,16 @@ interface nsIAddonPolicyService : nsISupports
   ACString getGeneratedBackgroundPageUrl(in ACString aAddonId);
 
   /**
-   * Returns true if unprivileged code associated with the given addon may load
-   * data from |aURI|.
+   * Returns true if the addon was granted the |aPerm| API permission.
    */
-  boolean addonMayLoadURI(in AString aAddonId, in nsIURI aURI);
+  boolean addonHasPermission(in AString aAddonId, in AString aPerm);
+
+  /**
+   * Returns true if unprivileged code associated with the given addon may load
+   * data from |aURI|.  If |aExplicit| is true, the <all_urls> permission and
+   * permissive host globs are ignored when checking for a match.
+   */
+  boolean addonMayLoadURI(in AString aAddonId, in nsIURI aURI, [optional] in boolean aExplicit);
 
   /**
    * Returns true if a given extension:// URI is web-accessible.

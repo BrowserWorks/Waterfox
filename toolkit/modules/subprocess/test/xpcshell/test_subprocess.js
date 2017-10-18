@@ -1,13 +1,14 @@
+/* eslint-disable mozilla/no-arbitrary-setTimeout */
 "use strict";
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 
 
 const env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
 
 const MAX_ROUND_TRIP_TIME_MS = AppConstants.DEBUG || AppConstants.ASAN ? 18 : 9;
+const MAX_RETRIES = 5;
 
 let PYTHON;
 let PYTHON_BIN;
@@ -22,27 +23,27 @@ let read = pipe => {
 };
 
 
-let readAll = Task.async(function* (pipe) {
+let readAll = async function(pipe) {
   let result = [];
   let string;
-  while ((string = yield pipe.readString())) {
+  while ((string = await pipe.readString())) {
     result.push(string);
   }
 
   return result.join("");
-});
+};
 
 
-add_task(function* setup() {
-  PYTHON = yield Subprocess.pathSearch(env.get("PYTHON"));
+add_task(async function setup() {
+  PYTHON = await Subprocess.pathSearch(env.get("PYTHON"));
 
   PYTHON_BIN = OS.Path.basename(PYTHON);
   PYTHON_DIR = OS.Path.dirname(PYTHON);
 });
 
 
-add_task(function* test_subprocess_io() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_io() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -76,9 +77,9 @@ add_task(function* test_subprocess_io() {
 
   let outputPromise = read(proc.stdout);
 
-  yield new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
-  let [output] = yield Promise.all([
+  let [output] = await Promise.all([
     outputPromise,
     proc.stdin.write(LINE1),
   ]);
@@ -90,9 +91,9 @@ add_task(function* test_subprocess_io() {
   // read.
   let inputPromise = proc.stdin.write(LINE2);
 
-  yield new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
-  [output] = yield Promise.all([
+  [output] = await Promise.all([
     read(proc.stdout),
     inputPromise,
   ]);
@@ -104,23 +105,23 @@ add_task(function* test_subprocess_io() {
 
   inputPromise = proc.stdin.write(JSON.stringify(JSON_BLOB) + "\n");
 
-  output = yield proc.stdout.readUint32().then(count => {
+  output = await proc.stdout.readUint32().then(count => {
     return proc.stdout.readJSON(count);
   });
 
   Assert.deepEqual(output, JSON_BLOB, "Got expected JSON output");
 
 
-  yield proc.stdin.close();
+  await proc.stdin.close();
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_large_io() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_large_io() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -138,26 +139,26 @@ add_task(function* test_subprocess_large_io() {
   proc.stdin.write(msg);
   proc.stdin.write(LINE);
 
-  let output = yield read(proc.stdout);
+  let output = await read(proc.stdout);
   equal(output, msg, "Got the expected output");
 
-  output = yield read(proc.stdout);
+  output = await read(proc.stdout);
   equal(output, msg, "Got the expected output");
 
-  output = yield read(proc.stdout);
+  output = await read(proc.stdout);
   equal(output, LINE, "Got the expected output");
 
   proc.stdin.close();
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_huge() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_huge() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -169,87 +170,91 @@ add_task(function* test_subprocess_huge() {
 
   proc.stdin.write(msg);
 
-  let output = yield read(proc.stdout);
+  let output = await read(proc.stdout);
   equal(output, msg, "Got the expected output");
 
   proc.stdin.close();
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_round_trip_perf() {
-  let proc = yield Subprocess.call({
-    command: PYTHON,
-    arguments: ["-u", TEST_SCRIPT, "echo"],
-  });
+add_task(async function test_subprocess_round_trip_perf() {
+  let roundTripTime = Infinity;
+  for (let i = 0; i < MAX_RETRIES && roundTripTime > MAX_ROUND_TRIP_TIME_MS; i++) {
+    let proc = await Subprocess.call({
+      command: PYTHON,
+      arguments: ["-u", TEST_SCRIPT, "echo"],
+    });
 
 
-  const LINE = "I'm a leaf on the wind.\n";
+    const LINE = "I'm a leaf on the wind.\n";
 
-  let now = Date.now();
-  const COUNT = 1000;
-  for (let i = 0; i < COUNT; i++) {
-    let [output] = yield Promise.all([
-      read(proc.stdout),
-      proc.stdin.write(LINE),
-    ]);
+    let now = Date.now();
+    const COUNT = 1000;
+    for (let j = 0; j < COUNT; j++) {
+      let [output] = await Promise.all([
+        read(proc.stdout),
+        proc.stdin.write(LINE),
+      ]);
 
-    // We don't want to log this for every iteration, but we still need
-    // to fail if it goes wrong.
-    if (output !== LINE) {
-      equal(output, LINE, "Got expected output");
+      // We don't want to log this for every iteration, but we still need
+      // to fail if it goes wrong.
+      if (output !== LINE) {
+        equal(output, LINE, "Got expected output");
+      }
     }
+
+    roundTripTime = (Date.now() - now) / COUNT;
+
+    await proc.stdin.close();
+
+    let {exitCode} = await proc.wait();
+
+    equal(exitCode, 0, "Got expected exit code");
   }
 
-  let roundTripTime = (Date.now() - now) / COUNT;
   ok(roundTripTime <= MAX_ROUND_TRIP_TIME_MS,
      `Expected round trip time (${roundTripTime}ms) to be less than ${MAX_ROUND_TRIP_TIME_MS}ms`);
-
-  yield proc.stdin.close();
-
-  let {exitCode} = yield proc.wait();
-
-  equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_stderr_default() {
+add_task(async function test_subprocess_stderr_default() {
   const LINE1 = "I'm a leaf on the wind.\n";
   const LINE2 = "Watch how I soar.\n";
 
-  let proc = yield Subprocess.call({
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "print", LINE1, LINE2],
   });
 
   equal(proc.stderr, undefined, "There should be no stderr pipe by default");
 
-  let stdout = yield readAll(proc.stdout);
+  let stdout = await readAll(proc.stdout);
 
   equal(stdout, LINE1, "Got the expected stdout output");
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_stderr_pipe() {
+add_task(async function test_subprocess_stderr_pipe() {
   const LINE1 = "I'm a leaf on the wind.\n";
   const LINE2 = "Watch how I soar.\n";
 
-  let proc = yield Subprocess.call({
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "print", LINE1, LINE2],
     stderr: "pipe",
   });
 
-  let [stdout, stderr] = yield Promise.all([
+  let [stdout, stderr] = await Promise.all([
     readAll(proc.stdout),
     readAll(proc.stderr),
   ]);
@@ -258,17 +263,17 @@ add_task(function* test_subprocess_stderr_pipe() {
   equal(stderr, LINE2, "Got the expected stderr output");
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_stderr_merged() {
+add_task(async function test_subprocess_stderr_merged() {
   const LINE1 = "I'm a leaf on the wind.\n";
   const LINE2 = "Watch how I soar.\n";
 
-  let proc = yield Subprocess.call({
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "print", LINE1, LINE2],
     stderr: "stdout",
@@ -276,33 +281,33 @@ add_task(function* test_subprocess_stderr_merged() {
 
   equal(proc.stderr, undefined, "There should be no stderr pipe by default");
 
-  let stdout = yield readAll(proc.stdout);
+  let stdout = await readAll(proc.stdout);
 
   equal(stdout, LINE1 + LINE2, "Got the expected merged stdout output");
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_read_after_exit() {
+add_task(async function test_subprocess_read_after_exit() {
   const LINE1 = "I'm a leaf on the wind.\n";
   const LINE2 = "Watch how I soar.\n";
 
-  let proc = yield Subprocess.call({
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "print", LINE1, LINE2],
     stderr: "pipe",
   });
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
   equal(exitCode, 0, "Process exited with expected code");
 
 
-  let [stdout, stderr] = yield Promise.all([
+  let [stdout, stderr] = await Promise.all([
     readAll(proc.stdout),
     readAll(proc.stderr),
   ]);
@@ -312,8 +317,8 @@ add_task(function* test_subprocess_read_after_exit() {
 });
 
 
-add_task(function* test_subprocess_lazy_close_output() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_lazy_close_output() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -328,23 +333,23 @@ add_task(function* test_subprocess_lazy_close_output() {
   let closedPromise = proc.stdin.close();
 
 
-  let output1 = yield read(proc.stdout);
-  let output2 = yield read(proc.stdout);
+  let output1 = await read(proc.stdout);
+  let output2 = await read(proc.stdout);
 
-  yield Promise.all([...writePromises, closedPromise]);
+  await Promise.all([...writePromises, closedPromise]);
 
   equal(output1, LINE1, "Got expected output");
   equal(output2, LINE2, "Got expected output");
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_lazy_close_input() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_lazy_close_input() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -358,21 +363,21 @@ add_task(function* test_subprocess_lazy_close_input() {
   proc.stdin.write(LINE);
   proc.stdin.close();
 
-  let len = yield readPromise;
+  let len = await readPromise;
   equal(len, LINE.length);
 
-  yield closedPromise;
+  await closedPromise;
 
 
   // Don't test for a successful exit here. The process may exit with a
   // write error if we close the pipe after it's written the message
   // size but before it's written the message.
-  yield proc.wait();
+  await proc.wait();
 });
 
 
-add_task(function* test_subprocess_force_close() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_force_close() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -380,7 +385,7 @@ add_task(function* test_subprocess_force_close() {
   let readPromise = proc.stdout.readUint32();
   let closedPromise = proc.stdout.close(true);
 
-  yield Assert.rejects(
+  await Assert.rejects(
     readPromise,
     function(e) {
       equal(e.errorCode, Subprocess.ERROR_END_OF_FILE,
@@ -389,27 +394,27 @@ add_task(function* test_subprocess_force_close() {
     },
     "Promise should be rejected when file is closed");
 
-  yield closedPromise;
-  yield proc.stdin.close();
+  await closedPromise;
+  await proc.stdin.close();
 
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_eof() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_eof() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
 
   let readPromise = proc.stdout.readUint32();
 
-  yield proc.stdin.close();
+  await proc.stdin.close();
 
-  yield Assert.rejects(
+  await Assert.rejects(
     readPromise,
     function(e) {
       equal(e.errorCode, Subprocess.ERROR_END_OF_FILE,
@@ -418,14 +423,14 @@ add_task(function* test_subprocess_eof() {
     },
     "Promise should be rejected on EOF");
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_invalid_json() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_invalid_json() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -435,10 +440,10 @@ add_task(function* test_subprocess_invalid_json() {
   proc.stdin.write(LINE);
   proc.stdin.close();
 
-  let count = yield proc.stdout.readUint32();
+  let count = await proc.stdout.readUint32();
   let readPromise = proc.stdout.readJSON(count);
 
-  yield Assert.rejects(
+  await Assert.rejects(
     readPromise,
     function(e) {
       equal(e.errorCode, Subprocess.ERROR_INVALID_JSON,
@@ -447,15 +452,15 @@ add_task(function* test_subprocess_invalid_json() {
     },
     "Promise should be rejected on EOF");
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
 if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
-  add_task(function* test_subprocess_inherited_descriptors() {
-    let {ctypes, libc, win32} = Cu.import("resource://gre/modules/subprocess/subprocess_win.jsm");
+  add_task(async function test_subprocess_inherited_descriptors() {
+    let {ctypes, libc, win32} = Cu.import("resource://gre/modules/subprocess/subprocess_win.jsm", {});
 
     let secAttr = new win32.SECURITY_ATTRIBUTES();
     secAttr.nLength = win32.SECURITY_ATTRIBUTES.size;
@@ -464,7 +469,7 @@ if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
     let handles = win32.createPipe(secAttr, 0);
 
 
-    let proc = yield Subprocess.call({
+    let proc = await Subprocess.call({
       command: PYTHON,
       arguments: ["-u", TEST_SCRIPT, "echo"],
     });
@@ -484,26 +489,26 @@ if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
 
     proc.stdin.close();
 
-    let {exitCode} = yield proc.wait();
+    let {exitCode} = await proc.wait();
 
     equal(exitCode, 0, "Got expected exit code");
   });
 }
 
 
-add_task(function* test_subprocess_wait() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_wait() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "exit", "42"],
   });
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 42, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_pathSearch() {
+add_task(async function test_subprocess_pathSearch() {
   let promise = Subprocess.call({
     command: PYTHON_BIN,
     arguments: ["-u", TEST_SCRIPT, "exit", "13"],
@@ -512,7 +517,7 @@ add_task(function* test_subprocess_pathSearch() {
     },
   });
 
-  yield Assert.rejects(
+  await Assert.rejects(
     promise,
     function(error) {
       return error.errorCode == Subprocess.ERROR_BAD_EXECUTABLE;
@@ -521,40 +526,44 @@ add_task(function* test_subprocess_pathSearch() {
 });
 
 
-add_task(function* test_subprocess_workdir() {
-  let procDir = yield OS.File.getCurrentDirectory();
-  let tmpDir = OS.Constants.Path.tmpDir;
+add_task(async function test_subprocess_workdir() {
+  let procDir = await OS.File.getCurrentDirectory();
+  let tmpDirFile = Components.classes["@mozilla.org/file/local;1"]
+                     .createInstance(Components.interfaces.nsILocalFile);
+  tmpDirFile.initWithPath(OS.Constants.Path.tmpDir);
+  tmpDirFile.normalize();
+  let tmpDir = tmpDirFile.path;
 
   notEqual(procDir, tmpDir,
            "Current process directory must not be the current temp directory");
 
-  function* pwd(options) {
-    let proc = yield Subprocess.call(Object.assign({
+  async function pwd(options) {
+    let proc = await Subprocess.call(Object.assign({
       command: PYTHON,
       arguments: ["-u", TEST_SCRIPT, "pwd"],
     }, options));
 
-    let pwd = read(proc.stdout);
+    let pwdOutput = read(proc.stdout);
 
-    let {exitCode} = yield proc.wait();
+    let {exitCode} = await proc.wait();
     equal(exitCode, 0, "Got expected exit code");
 
-    return pwd;
+    return pwdOutput;
   }
 
-  let dir = yield pwd({});
+  let dir = await pwd({});
   equal(dir, procDir, "Process should normally launch in current process directory");
 
-  dir = yield pwd({workdir: tmpDir});
+  dir = await pwd({workdir: tmpDir});
   equal(dir, tmpDir, "Process should launch in the directory specified in `workdir`");
 
-  dir = yield OS.File.getCurrentDirectory();
+  dir = await OS.File.getCurrentDirectory();
   equal(dir, procDir, "`workdir` should not change the working directory of the current process");
 });
 
 
-add_task(function* test_subprocess_term() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_term() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
@@ -564,42 +573,42 @@ add_task(function* test_subprocess_term() {
   let retVal = AppConstants.platform == "win" ? -9 : -15;
 
   // Kill gracefully with the default timeout of 300ms.
-  let {exitCode} = yield proc.kill();
+  let {exitCode} = await proc.kill();
 
   equal(exitCode, retVal, "Got expected exit code");
 
-  ({exitCode} = yield proc.wait());
+  ({exitCode} = await proc.wait());
 
   equal(exitCode, retVal, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_kill() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_kill() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "echo"],
   });
 
   // Force kill with no gracefull termination timeout.
-  let {exitCode} = yield proc.kill(0);
+  let {exitCode} = await proc.kill(0);
 
   equal(exitCode, -9, "Got expected exit code");
 
-  ({exitCode} = yield proc.wait());
+  ({exitCode} = await proc.wait());
 
   equal(exitCode, -9, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_kill_timeout() {
-  let proc = yield Subprocess.call({
+add_task(async function test_subprocess_kill_timeout() {
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "ignore_sigterm"],
   });
 
   // Wait for the process to set up its signal handler and tell us it's
   // ready.
-  let msg = yield read(proc.stdout);
+  let msg = await read(proc.stdout);
   equal(msg, "Ready", "Process is ready");
 
   // Kill gracefully with the default timeout of 300ms.
@@ -607,7 +616,7 @@ add_task(function* test_subprocess_kill_timeout() {
   const TIMEOUT = 300;
   let startTime = Date.now();
 
-  let {exitCode} = yield proc.kill(TIMEOUT);
+  let {exitCode} = await proc.kill(TIMEOUT);
 
   // Graceful termination is not supported on Windows, so don't bother
   // testing the timeout there.
@@ -618,13 +627,13 @@ add_task(function* test_subprocess_kill_timeout() {
 
   equal(exitCode, -9, "Got expected exit code");
 
-  ({exitCode} = yield proc.wait());
+  ({exitCode} = await proc.wait());
 
   equal(exitCode, -9, "Got expected exit code");
 });
 
 
-add_task(function* test_subprocess_arguments() {
+add_task(async function test_subprocess_arguments() {
   let args = [
     String.raw`C:\Program Files\Company\Program.exe`,
     String.raw`\\NETWORK SHARE\Foo Directory${"\\"}`,
@@ -634,85 +643,124 @@ add_task(function* test_subprocess_arguments() {
     String.raw`Thing \" with "" "\" \\\" \\\\" quotes\\" \\`,
   ];
 
-  let proc = yield Subprocess.call({
+  let proc = await Subprocess.call({
     command: PYTHON,
     arguments: ["-u", TEST_SCRIPT, "print_args", ...args],
   });
 
   for (let [i, arg] of args.entries()) {
-    let val = yield read(proc.stdout);
+    let val = await read(proc.stdout);
     equal(val, arg, `Got correct value for args[${i}]`);
   }
 
-  let {exitCode} = yield proc.wait();
+  let {exitCode} = await proc.wait();
 
   equal(exitCode, 0, "Got expected exit code");
 });
 
 
-// Windows XP can't handle launching Python with a partial environment.
-if (!AppConstants.isPlatformAndVersionAtMost("win", "5.2")) {
-  add_task(function* test_subprocess_environment() {
-    let proc = yield Subprocess.call({
+add_task(async function test_subprocess_environment() {
+  let environment =  {
+    FOO: "BAR",
+  };
+
+  // Our Windows environment can't handle launching python without
+  // PATH variables.
+  if (AppConstants.platform == "win") {
+    Object.assign(environment, {
+      PATH: env.get("PATH"),
+      PATHEXT: env.get("PATHEXT"),
+    });
+  }
+
+  env.set("BAR", "BAZ");
+
+  let proc = await Subprocess.call({
+    command: PYTHON,
+    arguments: ["-u", TEST_SCRIPT, "env", "FOO", "BAR"],
+    environment,
+  });
+
+  let foo = await read(proc.stdout);
+  let bar = await read(proc.stdout);
+
+  equal(foo, "BAR", "Got expected $FOO value");
+  equal(bar, "", "Got expected $BAR value");
+
+  let {exitCode} = await proc.wait();
+
+  equal(exitCode, 0, "Got expected exit code");
+});
+
+
+add_task(async function test_subprocess_environmentAppend() {
+  env.set("VALUE_FROM_BASE_ENV", "untouched");
+
+  let proc = await Subprocess.call({
+    command: PYTHON,
+    arguments: ["-u", TEST_SCRIPT, "env", "VALUE_FROM_BASE_ENV", "VALUE_APPENDED_ONCE"],
+    environmentAppend: true,
+    environment: {
+      VALUE_APPENDED_ONCE: "soon empty",
+    },
+  });
+
+  let valueFromBaseEnv = await read(proc.stdout);
+  let valueAppendedOnce = await read(proc.stdout);
+
+  equal(valueFromBaseEnv, "untouched", "Got expected $VALUE_FROM_BASE_ENV value");
+  equal(valueAppendedOnce, "soon empty", "Got expected $VALUE_APPENDED_ONCE value");
+
+  let {exitCode} = await proc.wait();
+
+  equal(exitCode, 0, "Got expected exit code");
+
+  proc = await Subprocess.call({
+    command: PYTHON,
+    arguments: ["-u", TEST_SCRIPT, "env", "VALUE_FROM_BASE_ENV", "VALUE_APPENDED_ONCE"],
+    environmentAppend: true,
+  });
+
+  valueFromBaseEnv = await read(proc.stdout);
+  valueAppendedOnce = await read(proc.stdout);
+
+  equal(valueFromBaseEnv, "untouched", "Got expected $VALUE_FROM_BASE_ENV value");
+  equal(valueAppendedOnce, "", "Got expected $VALUE_APPENDED_ONCE value");
+
+  ({exitCode} = await proc.wait());
+
+  equal(exitCode, 0, "Got expected exit code");
+});
+
+if (AppConstants.platform !== "win") {
+  add_task(async function test_subprocess_nonASCII() {
+    const {libc} = Cu.import("resource://gre/modules/subprocess/subprocess_unix.jsm", {});
+
+    // Use TextDecoder rather than a string with a \xff escape, since
+    // the latter will automatically be normalized to valid UTF-8.
+    let val = new TextDecoder().decode(Uint8Array.of(1, 255));
+
+    libc.setenv("FOO", Uint8Array.from(val + "\0", c => c.charCodeAt(0)), 1);
+
+    let proc = await Subprocess.call({
       command: PYTHON,
-      arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
-      environment: {
-        FOO: "BAR",
-      },
+      arguments: ["-u", TEST_SCRIPT, "env", "FOO"],
     });
 
-    let path = yield read(proc.stdout);
-    let foo = yield read(proc.stdout);
+    let foo = await read(proc.stdout);
 
-    equal(path, "", "Got expected $PATH value");
-    equal(foo, "BAR", "Got expected $FOO value");
+    equal(foo, val, "Got expected $FOO value");
 
-    let {exitCode} = yield proc.wait();
+    env.set("FOO", "");
+
+    let {exitCode} = await proc.wait();
 
     equal(exitCode, 0, "Got expected exit code");
   });
 }
 
 
-add_task(function* test_subprocess_environmentAppend() {
-  let proc = yield Subprocess.call({
-    command: PYTHON,
-    arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
-    environmentAppend: true,
-    environment: {
-      FOO: "BAR",
-    },
-  });
-
-  let path = yield read(proc.stdout);
-  let foo = yield read(proc.stdout);
-
-  equal(path, env.get("PATH"), "Got expected $PATH value");
-  equal(foo, "BAR", "Got expected $FOO value");
-
-  let {exitCode} = yield proc.wait();
-
-  equal(exitCode, 0, "Got expected exit code");
-
-  proc = yield Subprocess.call({
-    command: PYTHON,
-    arguments: ["-u", TEST_SCRIPT, "env", "PATH", "FOO"],
-    environmentAppend: true,
-  });
-
-  path = yield read(proc.stdout);
-  foo = yield read(proc.stdout);
-
-  equal(path, env.get("PATH"), "Got expected $PATH value");
-  equal(foo, "", "Got expected $FOO value");
-
-  ({exitCode} = yield proc.wait());
-
-  equal(exitCode, 0, "Got expected exit code");
-});
-
-
-add_task(function* test_bad_executable() {
+add_task(async function test_bad_executable() {
   // Test with a non-executable file.
 
   let textFile = do_get_file("data_text_file.txt").path;
@@ -722,7 +770,7 @@ add_task(function* test_bad_executable() {
     arguments: [],
   });
 
-  yield Assert.rejects(
+  await Assert.rejects(
     promise,
     function(error) {
       if (AppConstants.platform == "win") {
@@ -738,7 +786,7 @@ add_task(function* test_bad_executable() {
     arguments: [],
   });
 
-  yield Assert.rejects(
+  await Assert.rejects(
     promise,
     function(error) {
       return error.errorCode == Subprocess.ERROR_BAD_EXECUTABLE;
@@ -747,13 +795,13 @@ add_task(function* test_bad_executable() {
 });
 
 
-add_task(function* test_cleanup() {
-  let {SubprocessImpl} = Cu.import("resource://gre/modules/Subprocess.jsm");
+add_task(async function test_cleanup() {
+  let {SubprocessImpl} = Cu.import("resource://gre/modules/Subprocess.jsm", {});
 
   let worker = SubprocessImpl.Process.getWorker();
 
-  let openFiles = yield worker.call("getOpenFiles", []);
-  let processes = yield worker.call("getProcesses", []);
+  let openFiles = await worker.call("getOpenFiles", []);
+  let processes = await worker.call("getProcesses", []);
 
   equal(openFiles.size, 0, "No remaining open files");
   equal(processes.size, 0, "No remaining processes");

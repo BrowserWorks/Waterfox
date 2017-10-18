@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.IOUtils;
+import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.BroadcastReceiver;
@@ -153,9 +155,12 @@ public final class ANRReporter extends BroadcastReceiver
                 .command("/system/bin/getprop", "dalvik.vm.stack-trace-file")
                 .redirectErrorStream(true)
                 .start();
+
+            BufferedReader buf = null;
             try {
-                BufferedReader buf = new BufferedReader(
-                    new InputStreamReader(propProc.getInputStream()), TRACES_LINE_SIZE);
+                buf = new BufferedReader(
+                    new InputStreamReader(
+                            propProc.getInputStream(), StringUtils.UTF_8), TRACES_LINE_SIZE);
                 String propVal = buf.readLine();
                 if (DEBUG) {
                     Log.d(LOGTAG, "getprop returned " + String.valueOf(propVal));
@@ -174,6 +179,8 @@ public final class ANRReporter extends BroadcastReceiver
                 }
             } finally {
                 propProc.destroy();
+
+                IOUtils.safeStreamClose(buf);
             }
         } catch (IOException e) {
             Log.w(LOGTAG, e);
@@ -184,10 +191,7 @@ public final class ANRReporter extends BroadcastReceiver
     }
 
     private static File getPingFile() {
-        if (GeckoAppShell.getContext() == null) {
-            return null;
-        }
-        GeckoProfile profile = GeckoAppShell.getGeckoInterface().getProfile();
+        final GeckoProfile profile = GeckoThread.getActiveProfile();
         if (profile == null) {
             return null;
         }
@@ -218,7 +222,8 @@ public final class ANRReporter extends BroadcastReceiver
                 Log.d(LOGTAG, "trying to match package: " + pkgName);
             }
             BufferedReader traces = new BufferedReader(
-                new FileReader(tracesFile), TRACES_BLOCK_SIZE);
+                    new InputStreamReader(new FileInputStream(
+                            tracesFile), StringUtils.UTF_8), TRACES_BLOCK_SIZE);
             try {
                 for (int count = 0; count < LINES_TO_IDENTIFY_TRACES; count++) {
                     String line = traces.readLine();

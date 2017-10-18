@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <windows.h>
 
+#include "base/child_privileges.h"
+
 namespace sandbox {
   class BrokerServices;
   class TargetPolicy;
@@ -24,6 +26,12 @@ public:
 
   static void Initialize(sandbox::BrokerServices* aBrokerServices);
 
+  /**
+   * Cache directory paths for use in policy rules. Must be called on main
+   * thread.
+   */
+  static void CacheRulesDirectories();
+
   bool LaunchApp(const wchar_t *aPath,
                  const wchar_t *aArguments,
                  const bool aEnableLogging,
@@ -32,8 +40,12 @@ public:
 
   // Security levels for different types of processes
 #if defined(MOZ_CONTENT_SANDBOX)
-  void SetSecurityLevelForContentProcess(int32_t aSandboxLevel);
+  void SetSecurityLevelForContentProcess(int32_t aSandboxLevel,
+                                         base::ChildPrivileges aPrivs);
 #endif
+
+  void SetSecurityLevelForGPUProcess(int32_t aSandboxLevel);
+
   bool SetSecurityLevelForPluginProcess(int32_t aSandboxLevel);
   enum SandboxLevel {
     LockDown,
@@ -43,8 +55,6 @@ public:
 
   // File system permissions
   bool AllowReadFile(wchar_t const *file);
-  bool AllowReadWriteFile(wchar_t const *file);
-  bool AllowDirectory(wchar_t const *dir);
 
   // Exposes AddTargetPeer from broker services, so that none sandboxed
   // processes can be added as handle duplication targets.
@@ -55,6 +65,7 @@ public:
 
 private:
   static sandbox::BrokerServices *sBrokerService;
+  static bool sRunningFromNetworkDrive;
   sandbox::TargetPolicy *mPolicy;
 };
 

@@ -97,8 +97,8 @@ public:
         return mInner->GetTargets(aSource, aProperty, aTruthValue, aTargets);
     }
 
-    NS_IMETHOD Assert(nsIRDFResource* aSource, 
-                      nsIRDFResource* aProperty, 
+    NS_IMETHOD Assert(nsIRDFResource* aSource,
+                      nsIRDFResource* aProperty,
                       nsIRDFNode* aTarget,
                       bool aTruthValue) override {
         return mInner->Assert(aSource, aProperty, aTarget, aTruthValue);
@@ -165,19 +165,19 @@ public:
     NS_IMETHOD GetAllCmds(nsIRDFResource* aSource,
                               nsISimpleEnumerator/*<nsIRDFResource>*/** aCommands) override;
 
-    NS_IMETHOD IsCommandEnabled(nsISupportsArray/*<nsIRDFResource>*/* aSources,
+    NS_IMETHOD IsCommandEnabled(nsISupports* aSources,
                                 nsIRDFResource*   aCommand,
-                                nsISupportsArray/*<nsIRDFResource>*/* aArguments,
+                                nsISupports* aArguments,
                                 bool* aResult) override;
 
-    NS_IMETHOD DoCommand(nsISupportsArray/*<nsIRDFResource>*/* aSources,
+    NS_IMETHOD DoCommand(nsISupports* aSources,
                          nsIRDFResource*   aCommand,
-                         nsISupportsArray/*<nsIRDFResource>*/* aArguments) override;
+                         nsISupports* aArguments) override;
 
     NS_IMETHOD BeginUpdateBatch() override {
         return mInner->BeginUpdateBatch();
     }
-                                                                                
+
     NS_IMETHOD EndUpdateBatch() override {
         return mInner->EndUpdateBatch();
     }
@@ -277,7 +277,7 @@ LocalStoreImpl::Flush()
     // assertion until we sort out the ordering of how we write
     // everything to the localstore, flush it, and disconnect it when
     // we're getting profile-change notifications.
-    NS_WARN_IF_FALSE(remote != nullptr, "not an nsIRDFRemoteDataSource");
+    NS_WARNING_ASSERTION(remote != nullptr, "not an nsIRDFRemoteDataSource");
 	if (! remote)
         return NS_ERROR_UNEXPECTED;
 
@@ -340,7 +340,7 @@ LocalStoreImpl::CreateLocalStore(nsIFile* aFile)
     rv = NS_NewLocalFileOutputStream(getter_AddRefs(outStream), aFile);
     if (NS_FAILED(rv)) return rv;
 
-    const char defaultRDF[] = 
+    const char defaultRDF[] =
         "<?xml version=\"1.0\"?>\n" \
         "<RDF:RDF xmlns:RDF=\"" RDF_NAMESPACE_URI "\"\n" \
         "         xmlns:NC=\""  NC_NAMESPACE_URI "\">\n" \
@@ -404,13 +404,13 @@ LocalStoreImpl::LoadData()
 
     // Read the datasource synchronously.
     rv = remote->Refresh(true);
-    
+
     if (NS_FAILED(rv)) {
         // Load failed, delete and recreate a fresh localstore
         aFile->Remove(true);
         rv = CreateLocalStore(aFile);
         if (NS_FAILED(rv)) return rv;
-        
+
         rv = remote->Refresh(true);
     }
 
@@ -441,22 +441,20 @@ LocalStoreImpl::GetAllCmds(nsIRDFResource* aSource,
 }
 
 NS_IMETHODIMP
-LocalStoreImpl::IsCommandEnabled(nsISupportsArray/*<nsIRDFResource>*/* aSources,
+LocalStoreImpl::IsCommandEnabled(nsISupports* aSources,
                                  nsIRDFResource*   aCommand,
-                                 nsISupportsArray/*<nsIRDFResource>*/* aArguments,
+                                 nsISupports* aArguments,
                                  bool* aResult)
 {
-    *aResult = true;
-    return NS_OK;
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-LocalStoreImpl::DoCommand(nsISupportsArray* aSources,
+LocalStoreImpl::DoCommand(nsISupports* aSources,
                           nsIRDFResource*   aCommand,
-                          nsISupportsArray* aArguments)
+                          nsISupports* aArguments)
 {
-    // no-op
-    return NS_OK;
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

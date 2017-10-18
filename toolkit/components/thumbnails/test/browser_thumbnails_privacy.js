@@ -6,7 +6,7 @@ const URL = "://example.com/browser/toolkit/components/thumbnails/" +
             "test/privacy_cache_control.sjs";
 
 function* runTests() {
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     Services.prefs.clearUserPref(PREF_DISK_CACHE_SSL);
   });
 
@@ -59,7 +59,7 @@ function checkCombinations(aCombinations, aResult) {
 }
 
 function testCombination(combi, url, aCombinations, aResult) {
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, url);
   let browser = gBrowser.selectedBrowser;
 
   whenLoaded(browser, () => {

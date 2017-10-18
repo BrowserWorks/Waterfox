@@ -10,7 +10,7 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
 #include "mozilla/EditorBase.h"         // for EditorBase
 #include "mozilla/dom/Element.h"        // for Element, nsINode
-#include "nsAString.h"                  // for nsAString_internal::IsEmpty
+#include "nsAString.h"                  // for nsAString::IsEmpty
 #include "nsCOMPtr.h"                   // for nsCOMPtr, operator==, etc.
 #include "nsCaseTreatment.h"
 #include "nsDebug.h"                    // for NS_PRECONDITION, etc.
@@ -128,15 +128,6 @@ bool
 HTMLEditUtils::IsParagraph(nsIDOMNode* aNode)
 {
   return EditorBase::NodeIsType(aNode, nsGkAtoms::p);
-}
-
-/**
- * IsHR() returns true if aNode is an horizontal rule.
- */
-bool
-HTMLEditUtils::IsHR(nsIDOMNode* aNode)
-{
-  return EditorBase::NodeIsType(aNode, nsGkAtoms::hr);
 }
 
 /**
@@ -346,8 +337,7 @@ HTMLEditUtils::IsLink(nsINode* aNode)
   MOZ_ASSERT(aNode);
 
   nsCOMPtr<nsIDOMHTMLAnchorElement> anchor = do_QueryInterface(aNode);
-  if (anchor)
-  {
+  if (anchor) {
     nsAutoString tmpText;
     if (NS_SUCCEEDED(anchor->GetHref(tmpText)) && !tmpText.IsEmpty()) {
       return true;
@@ -463,26 +453,24 @@ HTMLEditUtils::IsFormWidget(nsINode* aNode)
 }
 
 bool
-HTMLEditUtils::SupportsAlignAttr(nsIDOMNode* aNode)
+HTMLEditUtils::SupportsAlignAttr(nsINode& aNode)
 {
-  MOZ_ASSERT(aNode);
-  nsCOMPtr<nsIAtom> nodeAtom = EditorBase::GetTag(aNode);
-  return (nodeAtom == nsGkAtoms::hr)
-      || (nodeAtom == nsGkAtoms::table)
-      || (nodeAtom == nsGkAtoms::tbody)
-      || (nodeAtom == nsGkAtoms::tfoot)
-      || (nodeAtom == nsGkAtoms::thead)
-      || (nodeAtom == nsGkAtoms::tr)
-      || (nodeAtom == nsGkAtoms::td)
-      || (nodeAtom == nsGkAtoms::th)
-      || (nodeAtom == nsGkAtoms::div)
-      || (nodeAtom == nsGkAtoms::p)
-      || (nodeAtom == nsGkAtoms::h1)
-      || (nodeAtom == nsGkAtoms::h2)
-      || (nodeAtom == nsGkAtoms::h3)
-      || (nodeAtom == nsGkAtoms::h4)
-      || (nodeAtom == nsGkAtoms::h5)
-      || (nodeAtom == nsGkAtoms::h6);
+  return aNode.IsAnyOfHTMLElements(nsGkAtoms::hr,
+                                   nsGkAtoms::table,
+                                   nsGkAtoms::tbody,
+                                   nsGkAtoms::tfoot,
+                                   nsGkAtoms::thead,
+                                   nsGkAtoms::tr,
+                                   nsGkAtoms::td,
+                                   nsGkAtoms::th,
+                                   nsGkAtoms::div,
+                                   nsGkAtoms::p,
+                                   nsGkAtoms::h1,
+                                   nsGkAtoms::h2,
+                                   nsGkAtoms::h3,
+                                   nsGkAtoms::h4,
+                                   nsGkAtoms::h5,
+                                   nsGkAtoms::h6);
 }
 
 // We use bitmasks to test containment of elements. Elements are marked to be
@@ -518,9 +506,9 @@ HTMLEditUtils::SupportsAlignAttr(nsIDOMNode* aNode)
 #define GROUP_FORMCONTROL      (1 << 6)
 
 // address, applet, article, aside, blockquote, button, center, del, details,
-// dir, div, dl, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header,
-// hgroup, hr, iframe, ins, main, map, menu, nav, noframes, noscript, object,
-// ol, p, pre, table, section, summary, ul
+// dialog, dir, div, dl, fieldset, figure, footer, form, h1, h2, h3, h4, h5,
+// h6, header, hgroup, hr, iframe, ins, main, map, menu, nav, noframes,
+// noscript, object, ol, p, pre, table, section, summary, ul
 #define GROUP_BLOCK            (1 << 7)
 
 // frame, frameset
@@ -606,6 +594,10 @@ static const ElementInfo kElements[eHTMLTag_userdefined] = {
   ELEM(acronym, true, true, GROUP_PHRASE, GROUP_INLINE_ELEMENT),
   ELEM(address, true, true, GROUP_BLOCK,
        GROUP_INLINE_ELEMENT | GROUP_P),
+  // While applet is no longer a valid tag, removing it here breaks the editor
+  // (compiles, but causes many tests to fail in odd ways). This list is tracked
+  // against the main HTML Tag list, so any changes will require more than just
+  // removing entries.
   ELEM(applet, true, true, GROUP_SPECIAL | GROUP_BLOCK,
        GROUP_FLOW_ELEMENT | GROUP_OBJECT_CONTENT),
   ELEM(area, false, false, GROUP_MAP_CONTENT, GROUP_NONE),
@@ -639,6 +631,7 @@ static const ElementInfo kElements[eHTMLTag_userdefined] = {
   ELEM(del, true, true, GROUP_PHRASE | GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(details, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(dfn, true, true, GROUP_PHRASE, GROUP_INLINE_ELEMENT),
+  ELEM(dialog, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(dir, true, false, GROUP_BLOCK, GROUP_LI),
   ELEM(div, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(dl, true, false, GROUP_BLOCK, GROUP_DL_CONTENT),

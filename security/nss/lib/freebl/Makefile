@@ -110,6 +110,7 @@ endif
 # NSS_X86_OR_X64 means the target is either x86 or x64
 ifeq (,$(filter-out i386 x386 x86 x86_64,$(CPU_ARCH)))
         DEFINES += -DNSS_X86_OR_X64
+        CFLAGS += -mpclmul -maes
 ifneq (,$(USE_64)$(USE_X32))
         DEFINES += -DNSS_X64
 else
@@ -232,8 +233,6 @@ ifeq ($(CPU_ARCH),x86)
     DEFINES += -DMP_ASSEMBLY_MULTIPLY -DMP_ASSEMBLY_SQUARE 
     DEFINES += -DMP_ASSEMBLY_DIV_2DX1D -DMP_USE_UINT_DIGIT
     DEFINES += -DMP_IS_LITTLE_ENDIAN
-    # The floating point ECC code doesn't work on Linux x86 (bug 311432).
-    #ECL_USE_FP = 1
 endif
 ifeq ($(CPU_ARCH),arm)
     DEFINES += -DMP_ASSEMBLY_MULTIPLY -DMP_ASSEMBLY_SQUARE 
@@ -430,7 +429,6 @@ ifeq ($(CPU_ARCH),sparc)
 	ASFILES  = mpv_sparcv8.s montmulfv8.s
 	DEFINES  += -DMP_NO_MP_WORD -DMP_USE_UINT_DIGIT -DMP_ASSEMBLY_MULTIPLY
 	DEFINES  += -DMP_USING_MONT_MULF -DMP_MONT_USE_MP_MUL
-	ECL_USE_FP = 1
     endif
     ifdef USE_ABI64_INT
 	# this builds for Sparc v9a pure 64-bit architecture
@@ -443,7 +441,6 @@ ifeq ($(CPU_ARCH),sparc)
 	ASFILES   = mpv_sparcv9.s montmulfv9.s
 	DEFINES  += -DMP_NO_MP_WORD -DMP_USE_UINT_DIGIT -DMP_ASSEMBLY_MULTIPLY
 	DEFINES  += -DMP_USING_MONT_MULF -DMP_MONT_USE_MP_MUL
-	ECL_USE_FP = 1
     endif
 
 else
@@ -491,27 +488,23 @@ else
  	endif
     endif
 endif # Solaris for non-sparc family CPUs
-endif # target == SunOS
-
-ifndef NSS_DISABLE_ECC
-    ifdef ECL_USE_FP
-	#enable floating point ECC code	
-	DEFINES  += -DECL_USE_FP
-	ECL_SRCS += ecp_fp160.c ecp_fp192.c ecp_fp224.c ecp_fp.c
-	ECL_HDRS += ecp_fp.h
-    endif
-endif
+endif # target == SunO
 
 # poly1305-donna-x64-sse2-incremental-source.c requires __int128 support
 # in GCC 4.6.0.
-ifdef CC_IS_CLANG
-    HAVE_INT128_SUPPORT = 1
-else ifeq (1,$(CC_IS_GCC))
-    ifneq (,$(filter 4.6 4.7 4.8 4.9,$(word 1,$(GCC_VERSION)).$(word 2,$(GCC_VERSION))))
-        HAVE_INT128_SUPPORT = 1
-    endif
-    ifeq (,$(filter 0 1 2 3 4,$(word 1,$(GCC_VERSION))))
-        HAVE_INT128_SUPPORT = 1
+ifdef USE_64
+    ifdef CC_IS_CLANG
+            HAVE_INT128_SUPPORT = 1
+            DEFINES += -DHAVE_INT128_SUPPORT
+    else ifeq (1,$(CC_IS_GCC))
+        ifneq (,$(filter 4.6 4.7 4.8 4.9,$(word 1,$(GCC_VERSION)).$(word 2,$(GCC_VERSION))))
+            HAVE_INT128_SUPPORT = 1
+            DEFINES += -DHAVE_INT128_SUPPORT
+        endif
+        ifeq (,$(filter 0 1 2 3 4,$(word 1,$(GCC_VERSION))))
+            HAVE_INT128_SUPPORT = 1
+            DEFINES += -DHAVE_INT128_SUPPORT
+        endif
     endif
 endif
 
@@ -523,13 +516,7 @@ ifndef NSS_DISABLE_CHACHAPOLY
             EXTRA_SRCS += poly1305.c
         endif
 
-        ifeq ($(OS_TARGET),SunOS)
-        ifndef NS_USE_GCC
-            CHACHA_NO_SSE2 = 1
-        endif
-        endif
-
-        ifdef CHACHA_NO_SSE2
+        ifneq (1,$(CC_IS_GCC))
             EXTRA_SRCS += chacha20.c
         else
             EXTRA_SRCS += chacha20_vec.c
@@ -539,6 +526,19 @@ ifndef NSS_DISABLE_CHACHAPOLY
         EXTRA_SRCS += chacha20.c
     endif # x86_64
 endif # NSS_DISABLE_CHACHAPOLY
+
+ifeq (,$(filter-out i386 x386 x86 x86_64,$(CPU_ARCH)))
+    # All intel architectures get the 64 bit version
+    # With custom uint128 if necessary (faster than generic 32 bit version).
+    ECL_SRCS += curve25519_64.c
+else
+    # All non intel architectures get the generic 32 bit implementation (slow!)
+    ECL_SRCS += curve25519_32.c
+endif
+
+ifndef HAVE_INT128_SUPPORT
+    ECL_SRCS += uint128.c
+endif
 
 #######################################################################
 # (5) Execute "global" rules. (OPTIONAL)                              #
@@ -589,7 +589,7 @@ $(ECL_OBJS): $(ECL_HDRS)
 
 
 
-$(OBJDIR)/sysrand$(OBJ_SUFFIX): sysrand.c unix_rand.c win_rand.c os2_rand.c
+$(OBJDIR)/sysrand$(OBJ_SUFFIX): sysrand.c unix_rand.c win_rand.c
 
 $(OBJDIR)/$(PROG_PREFIX)mpprime$(OBJ_SUFFIX): primes.c
 

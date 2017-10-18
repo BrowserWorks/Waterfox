@@ -1,0 +1,9 @@
+[
+    {
+        "filename": "mitmproxy-recording-set-win10.zip",
+        "size": 9181715,
+        "digest": "61a4b32fc0a6b8408dce38872d8ac1a6a0e46622ef571c20d3e15b5f91709765268885b6a21126e79e75289c862312e22a91d8000ef6c7ada594bf677229574d",
+        "algorithm": "sha512",
+        "unpack": false
+    }
+]

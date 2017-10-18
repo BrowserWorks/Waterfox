@@ -21,11 +21,11 @@
         ["dom.serviceWorkers.enabled", true],
         ["dom.serviceWorkers.testing.enabled", true],
       ]}, function () {
-        Task.spawn(function* () {
+        (async function() {
           let iframe = $("iframe");
           let promise = waitForIframeLoad(iframe);
           iframe.src = IFRAME_URL;
-          yield promise;
+          await promise;
 
           // The change handler is not guaranteed to be called within the same
           // tick of the event loop as the one in which the change happened.
@@ -46,59 +46,89 @@
             ok(registration.activeWorker === null);
 
             return waitForServiceWorkerRegistrationChange(registration, function  () {
-              is(registration.scriptSpec, EXAMPLE_URL + "worker.js");
-              ok(registration.installingWorker !== null);
-              is(registration.installingWorker.scriptSpec, EXAMPLE_URL + "worker.js");
+              // Got change event for updating (byte-check)
+              ok(registration.installingWorker === null);
               ok(registration.waitingWorker === null);
               ok(registration.activeWorker === null);
 
-              return waitForServiceWorkerRegistrationChange(registration, function () {
-                ok(registration.installingWorker === null);
-                ok(registration.waitingWorker !== null);
+              return waitForServiceWorkerRegistrationChange(registration, function  () {
+                is(registration.scriptSpec, EXAMPLE_URL + "worker.js");
+                ok(registration.installingWorker !== null);
+                is(registration.installingWorker.scriptSpec, EXAMPLE_URL + "worker.js");
+                ok(registration.waitingWorker === null);
                 ok(registration.activeWorker === null);
 
                 return waitForServiceWorkerRegistrationChange(registration, function () {
                   ok(registration.installingWorker === null);
-                  ok(registration.waitingWorker === null);
-                  ok(registration.activeWorker !== null);
+                  ok(registration.waitingWorker !== null);
+                  ok(registration.activeWorker === null);
 
-                  return registration;
+                  return waitForServiceWorkerRegistrationChange(registration, function () {
+                    // Activating
+                    ok(registration.installingWorker === null);
+                    ok(registration.waitingWorker === null);
+                    ok(registration.activeWorker !== null);
+
+                    return waitForServiceWorkerRegistrationChange(registration, function () {
+                      // Activated
+                      ok(registration.installingWorker === null);
+                      ok(registration.waitingWorker === null);
+                      ok(registration.activeWorker !== null);
+
+                      return registration;
+                    });
+                  });
                 });
               });
             });
           });
           iframe.contentWindow.postMessage("register", "*");
-          let registration = yield promise;
+          let registration = await promise;
 
           promise = waitForServiceWorkerRegistrationChange(registration, function () {
-            is(registration.scriptSpec, EXAMPLE_URL + "worker2.js");
-            ok(registration.installingWorker !== null);
-            is(registration.installingWorker.scriptSpec, EXAMPLE_URL + "worker2.js");
+            // Got change event for updating (byte-check)
+            ok(registration.installingWorker === null);
             ok(registration.waitingWorker === null);
             ok(registration.activeWorker !== null);
 
             return waitForServiceWorkerRegistrationChange(registration, function () {
-              ok(registration.installingWorker === null);
-              ok(registration.waitingWorker !== null);
+              is(registration.scriptSpec, EXAMPLE_URL + "worker2.js");
+              ok(registration.installingWorker !== null);
+              is(registration.installingWorker.scriptSpec, EXAMPLE_URL + "worker2.js");
+              ok(registration.waitingWorker === null);
               ok(registration.activeWorker !== null);
 
               return waitForServiceWorkerRegistrationChange(registration, function () {
                 ok(registration.installingWorker === null);
-                ok(registration.waitingWorker === null);
+                ok(registration.waitingWorker !== null);
                 ok(registration.activeWorker !== null);
 
-                return registration;
+                return waitForServiceWorkerRegistrationChange(registration, function () {
+                  // Activating
+                  ok(registration.installingWorker === null);
+                  ok(registration.waitingWorker === null);
+                  ok(registration.activeWorker !== null);
+
+                  return waitForServiceWorkerRegistrationChange(registration, function () {
+                    // Activated
+                    ok(registration.installingWorker === null);
+                    ok(registration.waitingWorker === null);
+                    ok(registration.activeWorker !== null);
+
+                    return registration;
+                  });
+                });
               });
             });
           });
           iframe.contentWindow.postMessage("register", "*");
-          yield promise;
+          await promise;
 
           iframe.contentWindow.postMessage("unregister", "*");
-          yield waitForUnregister(EXAMPLE_URL);
+          await waitForUnregister(EXAMPLE_URL);
 
           SimpleTest.finish();
-        });
+        })();
       });
     }
 

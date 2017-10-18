@@ -19,7 +19,7 @@ var gTests = [
 function test() {
   waitForExplicitFinish();
 
-  let tab = gBrowser.selectedTab = gBrowser.addTab();
+  let tab = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
   let searchObserver = function search_observer(aSubject, aTopic, aData) {
     let engine = aSubject.QueryInterface(Ci.nsISearchEngine);
@@ -33,7 +33,7 @@ function test() {
 
     Services.search.defaultEngine = engine;
 
-    registerCleanupFunction(function () {
+    registerCleanupFunction(function() {
       Services.search.removeEngine(engine);
     });
 
@@ -41,9 +41,9 @@ function test() {
     executeSoon(nextTest);
   };
 
-  Services.obs.addObserver(searchObserver, "browser-search-engine-modified", false);
+  Services.obs.addObserver(searchObserver, "browser-search-engine-modified");
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     gBrowser.removeTab(tab);
 
     Services.obs.removeObserver(searchObserver, "browser-search-engine-modified");
@@ -66,7 +66,7 @@ function nextTest() {
 function doTest() {
   info("Running test: " + gCurrTest.name);
 
-  waitForLoad(function () {
+  waitForLoad(function() {
     let loadedText = gBrowser.contentDocument.body.textContent;
     ok(loadedText, "search page loaded");
     let needle = "searchterms=" + gCurrTest.expectText;

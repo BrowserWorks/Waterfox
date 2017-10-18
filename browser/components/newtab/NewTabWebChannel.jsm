@@ -1,14 +1,3 @@
-/* global
-   NewTabPrefsProvider,
-   Services,
-   EventEmitter,
-   Preferences,
-   XPCOMUtils,
-   WebChannel,
-   NewTabRemoteResources
-*/
-/* exported NewTabWebChannel */
-
 "use strict";
 
 this.EXPORTED_SYMBOLS = ["NewTabWebChannel"];
@@ -16,7 +5,6 @@ this.EXPORTED_SYMBOLS = ["NewTabWebChannel"];
 const {utils: Cu} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "NewTabPrefsProvider",
                                   "resource:///modules/NewTabPrefsProvider.jsm");
@@ -25,7 +13,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "NewTabRemoteResources",
 XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
                                   "resource://gre/modules/WebChannel.jsm");
 XPCOMUtils.defineLazyGetter(this, "EventEmitter", function() {
-  const {EventEmitter} = Cu.import("resource://devtools/shared/event-emitter.js", {});
+  const {EventEmitter} = Cu.import("resource://gre/modules/EventEmitter.jsm", {});
   return EventEmitter;
 });
 
@@ -145,6 +133,10 @@ NewTabWebChannelImpl.prototype = {
    * Obtains all known browser refs
    */
   _getBrowserRefs() {
+    // Some code may try to emit messages after teardown.
+    if (!this._browsers) {
+      return [];
+    }
     let refs = [];
     for (let bRef of this._browsers) {
       /*
@@ -188,7 +180,7 @@ NewTabWebChannelImpl.prototype = {
 
     try {
       let msg = JSON.parse(message);
-      this.emit(msg.type, {data: msg.data, target: target});
+      this.emit(msg.type, {data: msg.data, target});
     } catch (err) {
       Cu.reportError(err);
     }
@@ -252,9 +244,9 @@ NewTabWebChannelImpl.prototype = {
    * Sets up the internal state
    */
   setupState() {
-    this._prefs.enabled = Preferences.get(PREF_ENABLED, false);
+    this._prefs.enabled = Services.prefs.getBoolPref(PREF_ENABLED, false);
 
-    let mode = Preferences.get(PREF_MODE, "production");
+    let mode = Services.prefs.getStringPref(PREF_MODE, "production");
     if (!(mode in NewTabRemoteResources.MODE_CHANNEL_MAP)) {
       mode = "production";
     }
@@ -263,7 +255,7 @@ NewTabWebChannelImpl.prototype = {
     this._browsers = new Set();
 
     if (this._prefs.enabled) {
-      this._channel = new WebChannel(this.chanId, Services.io.newURI(this.origin, null, null));
+      this._channel = new WebChannel(this.chanId, Services.io.newURI(this.origin));
       this._channel.listen(this._incomingMessage);
     }
   },

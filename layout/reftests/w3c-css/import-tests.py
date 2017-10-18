@@ -7,7 +7,6 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE
 import xml.dom.minidom
 import html5lib
-import filecmp
 import fnmatch
 import shutil
 import sys
@@ -34,6 +33,9 @@ gSubtrees = [
     os.path.join("css-namespaces-3"),
     os.path.join("css-conditional-3"),
     os.path.join("css-values-3"),
+    os.path.join("css-multicol-1"),
+    os.path.join("css-writing-modes-3"),
+    os.path.join("selectors4"),
 ]
 
 gPrefixedProperties = [
@@ -48,6 +50,9 @@ gPrefixedProperties = [
     "column-span",
     "column-width"
 ]
+
+gPrefixRegexp = re.compile(
+    r"([^-#]|^)(" + r"|".join(gPrefixedProperties) + r")\b")
 
 # Map of about:config prefs that need toggling, for a given test subdirectory.
 # Entries should look like:
@@ -85,11 +90,20 @@ def log_output_of(subprocess):
 def write_log_header():
     global gLog, gSrcPath
     gLog.write("Importing revision: ")
-    log_output_of(Popen(["hg", "parent", "--template={node}"],
+    log_output_of(Popen(["git", "rev-parse", "HEAD"],
                   stdout=PIPE, cwd=gSrcPath))
     gLog.write("\nfrom repository: ")
-    log_output_of(Popen(["hg", "paths", "default"],
-                  stdout=PIPE, cwd=gSrcPath))
+    branches = Popen(["git", "branch", "--format",
+                      "%(HEAD)%(upstream:lstrip=2)"],
+                     stdout=PIPE, cwd=gSrcPath)
+    for branch in branches.stdout:
+        if branch[0] == "*":
+            upstream = branch[1:].split("/")[0]
+            break
+    if len(upstream.strip()) == 0:
+        raise StandardError("No upstream repository found")
+    log_output_of(Popen(["git", "remote", "get-url", upstream],
+                        stdout=PIPE, cwd=gSrcPath))
     gLog.write("\n")
 
 def remove_existing_dirs():
@@ -132,13 +146,11 @@ def copy_file(test, srcfile, destname, isSupportFile=False):
     if not os.path.exists(destdir):
         os.makedirs(destdir)
     if os.path.exists(destfile):
-        if filecmp.cmp(srcfile, destfile):
-            print "Warning: duplicate file {}".format(destname)
-            return
         raise StandardError("file " + destfile + " already exists")
-    copy_and_prefix(test, srcfile, destfile, gPrefixedProperties, isSupportFile)
+    copy_and_prefix(test, srcfile, destfile, isSupportFile)
 
-def copy_support_files(test, dirname, spec):
+def copy_support_files(test, dirname):
+    global gSrcPath
     if dirname in support_dirs_mapped:
         return
     support_dirs_mapped.add(dirname)
@@ -146,28 +158,33 @@ def copy_support_files(test, dirname, spec):
     if not os.path.exists(support_dir):
         return
     for dirpath, dirnames, filenames in os.walk(support_dir):
-        for fn in filenames:
-            if fn == "LOCK":
+        for srcname in filenames:
+            if srcname == "LOCK":
                 continue
-            full_fn = os.path.join(dirpath, fn)
-            copy_file(test, full_fn, os.path.join(spec, "support", full_fn[len(support_dir)+1:]), True)
+            full_srcname = os.path.join(dirpath, srcname)
+            destname = to_unix_path_sep(os.path.relpath(full_srcname, gSrcPath))
+            copy_file(test, full_srcname, destname, True)
 
-def map_file(fn, spec):
-    if fn in filemap:
-        return filemap[fn]
-    destname = os.path.join(spec, os.path.basename(fn))
-    filemap[fn] = destname
-    load_flags_for(fn, spec)
-    copy_file(destname, fn, destname, False)
-    copy_support_files(destname, os.path.dirname(fn), spec)
+def map_file(srcname):
+    global gSrcPath
+    srcname = to_unix_path_sep(os.path.normpath(srcname))
+    if srcname in filemap:
+        return filemap[srcname]
+    destname = to_unix_path_sep(os.path.relpath(srcname, gSrcPath))
+    destdir = os.path.dirname(destname)
+    filemap[srcname] = destname
+    load_flags_for(srcname, destname)
+    copy_file(destname, srcname, destname, False)
+    copy_support_files(destname, os.path.dirname(srcname))
     return destname
 
-def load_flags_for(fn, spec):
+def load_flags_for(srcname, destname):
     global gTestFlags
-    document = get_document_for(fn)
-    destname = os.path.join(spec, os.path.basename(fn))
     gTestFlags[destname] = []
 
+    if not (is_html(srcname) or is_xml(srcname)):
+        return
+    document = get_document_for(srcname)
     for meta in document.getElementsByTagName("meta"):
         name = meta.getAttribute("name")
         if name == "flags":
@@ -176,21 +193,27 @@ def load_flags_for(fn, spec):
 def is_html(fn):
     return fn.endswith(".htm") or fn.endswith(".html")
 
-def get_document_for(fn):
+def is_xml(fn):
+    return fn.endswith(".xht") or fn.endswith(".xml") or fn.endswith(".xhtml") or fn.endswith(".svg")
+
+def get_document_for(srcname):
     document = None # an xml.dom.minidom document
-    if is_html(fn):
+    if is_html(srcname):
         # An HTML file
-        f = open(fn, "rb")
+        f = open(srcname, "rb")
         parser = html5lib.HTMLParser(tree=html5lib.treebuilders.getTreeBuilder("dom"))
         document = parser.parse(f)
         f.close()
     else:
         # An XML file
-        document = xml.dom.minidom.parse(fn)
+        document = xml.dom.minidom.parse(srcname)
     return document
 
-def add_test_items(fn, spec):
-    document = get_document_for(fn)
+def add_test_items(srcname):
+    if not (is_html(srcname) or is_xml(srcname)):
+        map_file(srcname)
+        return None
+    document = get_document_for(srcname)
     refs = []
     notrefs = []
     for link in document.getElementsByTagName("link"):
@@ -201,30 +224,28 @@ def add_test_items(fn, spec):
             arr = notrefs
         else:
             continue
-        arr.append(os.path.join(os.path.dirname(fn), str(link.getAttribute("href"))))
+        if str(link.getAttribute("href")) != "":
+            arr.append(os.path.join(os.path.dirname(srcname), str(link.getAttribute("href"))))
+        else:
+            gLog.write("Warning: href attribute found empty in " + srcname + "\n")
     if len(refs) > 1:
         raise StandardError("Need to add code to specify which reference we want to match.")
-    if spec is None:
-        for subtree in gSubtrees:
-            if fn.startswith(subtree):
-                spec = os.path.basename(subtree)
-                break
-        else:
-            raise StandardError("Could not associate test " + fn + " with specification")
     for ref in refs:
-        tests.append(["==", map_file(fn, spec), map_file(ref, spec)])
+        tests.append(["==", map_file(srcname), map_file(ref)])
     for notref in notrefs:
-        tests.append(["!=", map_file(fn, spec), map_file(notref, spec)])
+        tests.append(["!=", map_file(srcname), map_file(notref)])
     # Add chained references too
     for ref in refs:
-        add_test_items(ref, spec=spec)
+        add_test_items(ref)
     for notref in notrefs:
-        add_test_items(notref, spec=spec)
+        add_test_items(notref)
 
-AHEM_DECL_CONTENT = """@font-face {
+AHEM_FONT_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "../fonts/Ahem.ttf"))
+AHEM_DECL_CONTENT = """@font-face {{
   font-family: Ahem;
-  src: url("../../../fonts/Ahem.ttf");
-}"""
+  src: url("{}");
+}}"""
 AHEM_DECL_HTML = """<style type="text/css">
 """ + AHEM_DECL_CONTENT + """
 </style>
@@ -234,8 +255,8 @@ AHEM_DECL_XML = """<style type="text/css"><![CDATA[
 ]]></style>
 """
 
-def copy_and_prefix(test, aSourceFileName, aDestFileName, aProps, isSupportFile=False):
-    global gTestFlags
+def copy_and_prefix(test, aSourceFileName, aDestFileName, isSupportFile=False):
+    global gTestFlags, gPrefixRegexp
     newFile = open(aDestFileName, 'wb')
     unPrefixedFile = open(aSourceFileName, 'rb')
     testName = aDestFileName[len(gDestPath)+1:]
@@ -247,11 +268,12 @@ def copy_and_prefix(test, aSourceFileName, aDestFileName, aProps, isSupportFile=
         if not isSupportFile and not ahemFontAdded and 'ahem' in gTestFlags[test] and re.search(searchRegex, line):
             # First put our ahem font declation before the first <style>
             # element
-            newFile.write(AHEM_DECL_HTML if is_html(aDestFileName) else AHEM_DECL_XML)
+            template = AHEM_DECL_HTML if is_html(aDestFileName) else AHEM_DECL_XML
+            ahemPath = os.path.relpath(AHEM_FONT_PATH, os.path.dirname(aDestFileName))
+            newFile.write(template.format(to_unix_path_sep(ahemPath)))
             ahemFontAdded = True
 
-        for rule in aProps:
-            replacementLine = replacementLine.replace(rule, "-moz-" + rule)
+        replacementLine = gPrefixRegexp.sub(r"\1-moz-\2", replacementLine)
         newFile.write(replacementLine)
 
     newFile.close()
@@ -261,9 +283,9 @@ def read_options():
     global gArgs, gOptions
     op = OptionParser()
     op.usage = \
-    '''%prog <clone of hg repository>
-            Import reftests from a W3C hg repository clone. The location of
-            the local clone of the hg repository must be given on the command
+    '''%prog <clone of git repository>
+            Import CSS reftests from a web-platform-tests git repository clone.
+            The location of the git repository must be given on the command
             line.'''
     (gOptions, gArgs) = op.parse_args()
     if len(gArgs) != 1:
@@ -275,8 +297,12 @@ def setup_paths():
     # (We currently expect the argument to have a trailing slash.)
     gSrcPath = gArgs[0]
     if not os.path.isdir(gSrcPath) or \
-    not os.path.isdir(os.path.join(gSrcPath, ".hg")):
-        raise StandardError("source path does not appear to be a mercurial clone")
+       not os.path.isdir(os.path.join(gSrcPath, ".git")):
+        raise StandardError("source path does not appear to be a git clone")
+    gSrcPath = os.path.join(gSrcPath, "css") + "/"
+    if not os.path.isdir(gSrcPath):
+        raise StandardError("source path does not appear to be " +
+                            "a wpt clone which contains css tests")
 
     gDestPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "received")
     newSubtrees = []
@@ -314,7 +340,7 @@ def main():
     populate_test_files()
 
     for t in gTestfiles:
-        add_test_items(t, spec=None)
+        add_test_items(t)
 
     listfile = open(os.path.join(gDestPath, "reftest.list"), "wb")
     listfile.write("# THIS FILE IS AUTOGENERATED BY {0}\n# DO NOT EDIT!\n".format(os.path.basename(__file__)))
@@ -338,8 +364,6 @@ def main():
         test[key] = to_unix_path_sep(test[key])
         test[key + 1] = to_unix_path_sep(test[key + 1])
         testKey = test[key]
-        if 'ahem' in testFlags:
-            test = ["HTTP(../../..)"] + test
         fail = []
         for pattern, failureType in gFailList:
             if pattern.match(testKey):

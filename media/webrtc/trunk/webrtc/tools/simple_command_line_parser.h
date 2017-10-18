@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "webrtc/base/constructormagic.h"
-#include "webrtc/test/testsupport/gtest_prod_util.h"
+#include "webrtc/base/gtest_prod_util.h"
 
 // This is a very basic command line parsing class. We pass the command line
 // arguments and their number and the class forms a vector out of these. Than we
@@ -91,7 +91,7 @@ class CommandLineParser {
   FRIEND_TEST_ALL_PREFIXES(CommandLineParserTest, GetCommandLineFlagName);
   FRIEND_TEST_ALL_PREFIXES(CommandLineParserTest, GetCommandLineFlagValue);
 
-  DISALLOW_COPY_AND_ASSIGN(CommandLineParser);
+  RTC_DISALLOW_COPY_AND_ASSIGN(CommandLineParser);
 };
 
 }  // namespace test

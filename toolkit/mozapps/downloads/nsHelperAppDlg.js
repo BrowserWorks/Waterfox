@@ -104,7 +104,6 @@ Components.utils.import("resource://gre/modules/DownloadPaths.jsm");
 Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
 Components.utils.import("resource://gre/modules/Downloads.jsm");
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
-Components.utils.import("resource://gre/modules/Task.jsm");
 
 /* ctor
  */
@@ -163,11 +162,15 @@ nsUnknownContentTypeDialog.prototype = {
   // activate the OK button.  So we wait a bit before doing opening it.
   reallyShow: function() {
     try {
-      var ir = this.mContext.QueryInterface(Components.interfaces.nsIInterfaceRequestor);
-      var dwi = ir.getInterface(Components.interfaces.nsIDOMWindow);
-      var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+      let ir = this.mContext.QueryInterface(Components.interfaces.nsIInterfaceRequestor);
+      let docShell = ir.getInterface(Components.interfaces.nsIDocShell);
+      let rootWin = docShell.QueryInterface(Ci.nsIDocShellTreeItem)
+                                 .rootTreeItem
+                                 .QueryInterface(Ci.nsIInterfaceRequestor)
+                                 .getInterface(Ci.nsIDOMWindow);
+      let ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
                          .getService(Components.interfaces.nsIWindowWatcher);
-      this.mDialog = ww.openWindow(dwi,
+      this.mDialog = ww.openWindow(rootWin,
                                    "chrome://mozapps/content/downloads/unknownContentType.xul",
                                    null,
                                    "chrome,centerscreen,titlebar,dialog=yes,dependent",
@@ -245,18 +248,15 @@ nsUnknownContentTypeDialog.prototype = {
       }
     }
 
-    Task.spawn(function() {
+    (async () => {
       if (!aForcePrompt) {
         // Check to see if the user wishes to auto save to the default download
         // folder without prompting. Note that preference might not be set.
-        let autodownload = false;
-        try {
-          autodownload = prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR);
-        } catch (e) { }
+        let autodownload = prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR, false);
 
         if (autodownload) {
           // Retrieve the user's default download directory
-          let preferredDir = yield Downloads.getPreferredDownloadsDirectory();
+          let preferredDir = await Downloads.getPreferredDownloadsDirectory();
           let defaultFolder = new FileUtils.File(preferredDir);
 
           try {
@@ -269,6 +269,9 @@ nsUnknownContentTypeDialog.prototype = {
 
           // Check to make sure we have a valid directory, otherwise, prompt
           if (result) {
+            // Notifications for CloudStorage API consumers to show offer
+            // prompts while downloading. See Bug 1365129
+            Services.obs.notifyObservers(null, "cloudstorage-prompt-notification", result.path);
             // This path is taken when we have a writable default download directory.
             aLauncher.saveDestinationAvailable(result);
             return;
@@ -305,62 +308,64 @@ nsUnknownContentTypeDialog.prototype = {
       // Default to lastDir if it is valid, otherwise use the user's default
       // downloads directory.  getPreferredDownloadsDirectory should always
       // return a valid directory path, so we can safely default to it.
-      let preferredDir = yield Downloads.getPreferredDownloadsDirectory();
+      let preferredDir = await Downloads.getPreferredDownloadsDirectory();
       picker.displayDirectory = new FileUtils.File(preferredDir);
 
-      gDownloadLastDir.getFileAsync(aLauncher.source, function LastDirCallback(lastDir) {
+      gDownloadLastDir.getFileAsync(aLauncher.source, lastDir => {
         if (lastDir && isUsableDirectory(lastDir))
           picker.displayDirectory = lastDir;
 
-        if (picker.show() == nsIFilePicker.returnCancel) {
-          // null result means user cancelled.
-          aLauncher.saveDestinationAvailable(null);
-          return;
-        }
-
-        // Be sure to save the directory the user chose through the Save As...
-        // dialog  as the new browser.download.dir since the old one
-        // didn't exist.
-        result = picker.file;
-
-        if (result) {
-          try {
-            // Remove the file so that it's not there when we ensure non-existence later;
-            // this is safe because for the file to exist, the user would have had to
-            // confirm that he wanted the file overwritten.
-            // Only remove file if final name exists
-            if (result.exists() && this.getFinalLeafName(result.leafName) == result.leafName)
-              result.remove(false);
-          }
-          catch (ex) {
-            // As it turns out, the failure to remove the file, for example due to
-            // permission error, will be handled below eventually somehow.
+        picker.open(returnValue => {
+          if (returnValue == nsIFilePicker.returnCancel) {
+            // null result means user cancelled.
+            aLauncher.saveDestinationAvailable(null);
+            return;
           }
 
-          var newDir = result.parent.QueryInterface(Components.interfaces.nsILocalFile);
+          // Be sure to save the directory the user chose through the Save As...
+          // dialog  as the new browser.download.dir since the old one
+          // didn't exist.
+          result = picker.file;
 
-          // Do not store the last save directory as a pref inside the private browsing mode
-          gDownloadLastDir.setFile(aLauncher.source, newDir);
-
-          try {
-            result = this.validateLeafName(newDir, result.leafName, null);
-          }
-          catch (ex) {
-            // When the chosen download directory is write-protected,
-            // display an informative error message.
-            // In all cases, download will be stopped.
-
-            if (ex.result == Components.results.NS_ERROR_FILE_ACCESS_DENIED) {
-              this.displayBadPermissionAlert();
-              aLauncher.saveDestinationAvailable(null);
-              return;
+          if (result) {
+            try {
+              // Remove the file so that it's not there when we ensure non-existence later;
+              // this is safe because for the file to exist, the user would have had to
+              // confirm that he wanted the file overwritten.
+              // Only remove file if final name exists
+              if (result.exists() && this.getFinalLeafName(result.leafName) == result.leafName)
+                result.remove(false);
+            }
+            catch (ex) {
+              // As it turns out, the failure to remove the file, for example due to
+              // permission error, will be handled below eventually somehow.
             }
 
+            var newDir = result.parent.QueryInterface(Components.interfaces.nsILocalFile);
+
+            // Do not store the last save directory as a pref inside the private browsing mode
+            gDownloadLastDir.setFile(aLauncher.source, newDir);
+
+            try {
+              result = this.validateLeafName(newDir, result.leafName, null);
+            }
+            catch (ex) {
+              // When the chosen download directory is write-protected,
+              // display an informative error message.
+              // In all cases, download will be stopped.
+
+              if (ex.result == Components.results.NS_ERROR_FILE_ACCESS_DENIED) {
+                this.displayBadPermissionAlert();
+                aLauncher.saveDestinationAvailable(null);
+                return;
+              }
+
+            }
           }
-        }
-        aLauncher.saveDestinationAvailable(result);
-      }.bind(this));
-    }.bind(this)).then(null, Components.utils.reportError);
+          aLauncher.saveDestinationAvailable(result);
+        });
+      });
+    })().catch(Components.utils.reportError);
   },
 
   getFinalLeafName: function (aLeafName, aFileExt)
@@ -531,7 +536,7 @@ nsUnknownContentTypeDialog.prototype = {
 
       // XXXben - menulist won't init properly, hack.
       var openHandler = this.dialogElement("openHandler");
-      openHandler.parentNode.removeChild(openHandler);
+      openHandler.remove();
       var openHandlerBox = this.dialogElement("openHandlerBox");
       openHandlerBox.appendChild(openHandler);
     }
@@ -867,9 +872,9 @@ nsUnknownContentTypeDialog.prototype = {
   // See if the user changed things, and if so, update the
   // mimeTypes.rdf entry for this mime type.
   updateHelperAppPref: function() {
-    var ha = new this.mDialog.HelperApps();
-    ha.updateTypeInfo(this.mLauncher.MIMEInfo);
-    ha.destroy();
+    var handlerInfo = this.mLauncher.MIMEInfo;
+    var hs = Cc["@mozilla.org/uriloader/handler-service;1"].getService(Ci.nsIHandlerService);
+    hs.store(handlerInfo);
   },
 
   // onOK:
@@ -1066,9 +1071,7 @@ nsUnknownContentTypeDialog.prototype = {
         // Remember the file they chose to run.
         this.chosenApp = params.handlerApp;
       }
-    }
-    else {
-#if MOZ_WIDGET_GTK == 3
+    } else if ("@mozilla.org/applicationchooser;1" in Components.classes) {
       var nsIApplicationChooser = Components.interfaces.nsIApplicationChooser;
       var appChooser = Components.classes["@mozilla.org/applicationchooser;1"]
                                  .createInstance(nsIApplicationChooser);
@@ -1083,7 +1086,7 @@ nsUnknownContentTypeDialog.prototype = {
       appChooser.open(this.mLauncher.MIMEInfo.MIMEType, appChooserCallback);
       // The finishChooseApp is called from appChooserCallback
       return;
-#else
+    } else {
       var nsIFilePicker = Components.interfaces.nsIFilePicker;
       var fp = Components.classes["@mozilla.org/filepicker;1"]
                          .createInstance(nsIFilePicker);
@@ -1101,8 +1104,8 @@ nsUnknownContentTypeDialog.prototype = {
         localHandlerApp.executable = fp.file;
         this.chosenApp = localHandlerApp;
       }
-#endif // MOZ_WIDGET_GTK == 3
     }
+
     this.finishChooseApp();
   },
 

@@ -91,7 +91,7 @@ bool SkParsePath::FromSVGString(const char data[], SkPath* result) {
             break;
         }
         char ch = data[0];
-        if (is_digit(ch) || ch == '-' || ch == '+') {
+        if (is_digit(ch) || ch == '-' || ch == '+' || ch == '.') {
             if (op == '\0') {
                 return false;
             }
@@ -261,7 +261,7 @@ void SkParsePath::ToSVGString(const SkPath& path, SkString* str) {
                 stream.write("Z", 1);
                 break;
             case SkPath::kDone_Verb:
-                str->resize(stream.getOffset());
+                str->resize(stream.bytesWritten());
                 stream.copyTo(str->writable_str());
             return;
         }

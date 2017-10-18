@@ -21,15 +21,31 @@ class HeapSnapshot;
 namespace dom {
 
 class ArrayBufferViewOrArrayBuffer;
+class PrecompiledScript;
+class Promise;
 
 class ThreadSafeChromeUtils
 {
+private:
+  // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
+  static void SaveHeapSnapshotShared(GlobalObject& global,
+                                     const HeapSnapshotBoundaries& boundaries,
+                                     nsAString& filePath,
+                                     nsAString& snapshotId,
+                                     ErrorResult& rv);
+
 public:
   // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
   static void SaveHeapSnapshot(GlobalObject& global,
                                const HeapSnapshotBoundaries& boundaries,
                                nsAString& filePath,
                                ErrorResult& rv);
+
+  // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
+  static void SaveHeapSnapshotGetId(GlobalObject& global,
+                                    const HeapSnapshotBoundaries& boundaries,
+                                    nsAString& snapshotId,
+                                    ErrorResult& rv);
 
   // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
   static already_AddRefed<devtools::HeapSnapshot> ReadHeapSnapshot(GlobalObject& global,
@@ -89,8 +105,25 @@ public:
                           const dom::OriginAttributesDictionary& aB);
 
   static bool
-  IsOriginAttributesEqualIgnoringAddonId(const dom::OriginAttributesDictionary& aA,
-                                         const dom::OriginAttributesDictionary& aB);
+  IsOriginAttributesEqual(const dom::OriginAttributesDictionary& aA,
+                          const dom::OriginAttributesDictionary& aB);
+
+  static bool
+  IsOriginAttributesEqualIgnoringFPD(const dom::OriginAttributesDictionary& aA,
+                                     const dom::OriginAttributesDictionary& aB)
+  {
+    return aA.mAppId == aB.mAppId &&
+           aA.mInIsolatedMozBrowser == aB.mInIsolatedMozBrowser &&
+           aA.mUserContextId == aB.mUserContextId &&
+           aA.mPrivateBrowsingId == aB.mPrivateBrowsingId;
+  }
+
+  // Implemented in js/xpconnect/loader/ChromeScriptLoader.cpp
+  static already_AddRefed<Promise>
+  CompileScript(GlobalObject& aGlobal,
+                const nsAString& aUrl,
+                const dom::CompileScriptOptionsDictionary& aOptions,
+                ErrorResult& aRv);
 };
 
 } // namespace dom

@@ -31,8 +31,8 @@ public:
     : mIsNotNull(false)
     , mIsPrivateBitValid(false)
     , mIsContent(false)
-    , mUsePrivateBrowsing(false)
     , mUseRemoteTabs(false)
+    , mUseTrackingProtection(false)
   {
     Init(nullptr);
   }
@@ -52,9 +52,9 @@ public:
   // mIsNotNull is false, i.e., child LoadContext was null.
   bool mIsPrivateBitValid;
   bool mIsContent;
-  bool mUsePrivateBrowsing;
   bool mUseRemoteTabs;
-  mozilla::DocShellOriginAttributes mOriginAttributes;
+  bool mUseTrackingProtection;
+  mozilla::OriginAttributes mOriginAttributes;
 };
 
 // Function to serialize over IPDL
@@ -71,8 +71,8 @@ struct ParamTraits<SerializedLoadContext>
     WriteParam(aMsg, aParam.mIsNotNull);
     WriteParam(aMsg, aParam.mIsContent);
     WriteParam(aMsg, aParam.mIsPrivateBitValid);
-    WriteParam(aMsg, aParam.mUsePrivateBrowsing);
     WriteParam(aMsg, aParam.mUseRemoteTabs);
+    WriteParam(aMsg, aParam.mUseTrackingProtection);
     WriteParam(aMsg, suffix);
   }
 
@@ -82,14 +82,12 @@ struct ParamTraits<SerializedLoadContext>
     if (!ReadParam(aMsg, aIter, &aResult->mIsNotNull) ||
         !ReadParam(aMsg, aIter, &aResult->mIsContent) ||
         !ReadParam(aMsg, aIter, &aResult->mIsPrivateBitValid) ||
-        !ReadParam(aMsg, aIter, &aResult->mUsePrivateBrowsing) ||
         !ReadParam(aMsg, aIter, &aResult->mUseRemoteTabs) ||
+        !ReadParam(aMsg, aIter, &aResult->mUseTrackingProtection) ||
         !ReadParam(aMsg, aIter, &suffix)) {
       return false;
     }
-    aResult->mOriginAttributes.PopulateFromSuffix(suffix);
-
-    return true;
+    return aResult->mOriginAttributes.PopulateFromSuffix(suffix);
   }
 };
 

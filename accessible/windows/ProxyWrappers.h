@@ -15,8 +15,8 @@ namespace a11y {
 
 class ProxyAccessibleWrap : public AccessibleWrap
 {
-  public:
-  ProxyAccessibleWrap(ProxyAccessible* aProxy) :
+public:
+  explicit ProxyAccessibleWrap(ProxyAccessible* aProxy) :
     AccessibleWrap(nullptr, nullptr)
   {
     mType = eProxyType;
@@ -28,12 +28,17 @@ class ProxyAccessibleWrap : public AccessibleWrap
     mBits.proxy = nullptr;
     mStateFlags |= eIsDefunct;
   }
+
+  virtual void GetNativeInterface(void** aOutAccessible) override
+  {
+    mBits.proxy->GetCOMInterface(aOutAccessible);
+  }
 };
 
 class HyperTextProxyAccessibleWrap : public HyperTextAccessibleWrap
 {
 public:
-  HyperTextProxyAccessibleWrap(ProxyAccessible* aProxy) :
+  explicit HyperTextProxyAccessibleWrap(ProxyAccessible* aProxy) :
     HyperTextAccessibleWrap(nullptr, nullptr)
   {
     mType = eProxyType;
@@ -43,14 +48,19 @@ public:
   virtual void Shutdown() override
   {
     mBits.proxy = nullptr;
- mStateFlags |= eIsDefunct;
+    mStateFlags |= eIsDefunct;
+  }
+
+  virtual void GetNativeInterface(void** aOutAccessible) override
+  {
+    mBits.proxy->GetCOMInterface(aOutAccessible);
   }
 };
 
 class DocProxyAccessibleWrap : public HyperTextProxyAccessibleWrap
 {
 public:
-  DocProxyAccessibleWrap(ProxyAccessible* aProxy) :
+  explicit DocProxyAccessibleWrap(ProxyAccessible* aProxy) :
     HyperTextProxyAccessibleWrap(aProxy)
   { mGenericTypes |= eDocument; }
 

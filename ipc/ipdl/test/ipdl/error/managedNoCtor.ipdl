@@ -1,7 +1,9 @@
+//error: constructor declaration required for managed protocol `managedNoCtor' (managed by protocol `managerNoCtor')
+
 include protocol managerNoCtor;
 
 protocol managedNoCtor {
     manager managerNoCtor;
     // empty
-child: __delete__();
+child: async __delete__();
 };

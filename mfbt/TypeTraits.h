@@ -46,7 +46,7 @@ typename AddRvalueReference<T>::Type DeclVal();
 template<typename T, T Value>
 struct IntegralConstant
 {
-  static const T value = Value;
+  static constexpr T value = Value;
   typedef T ValueType;
   typedef IntegralConstant<T, Value> Type;
 };
@@ -571,6 +571,79 @@ struct IsUnsignedHelper<T, false, false, NoCV> : FalseType {};
  */
 template<typename T>
 struct IsUnsigned : detail::IsUnsignedHelper<T> {};
+
+namespace detail {
+
+struct DoIsDefaultConstructibleImpl
+{
+  template<typename T, typename = decltype(T())>
+  static TrueType test(int);
+  template<typename T>
+  static FalseType test(...);
+};
+
+template<typename T>
+struct IsDefaultConstructibleImpl : public DoIsDefaultConstructibleImpl
+{
+  typedef decltype(test<T>(0)) Type;
+};
+
+} // namespace detail
+
+/**
+ * IsDefaultConstructible determines whether a type has a public default
+ * constructor.
+ *
+ * struct S0 {};                    // Implicit default constructor.
+ * struct S1 { S1(); };
+ * struct S2 { explicit S2(int); }; // No implicit default constructor when
+ *                                  // another one is present.
+ * struct S3 { S3() = delete; };
+ * class C4 { C4(); };              // Default constructor is private.
+ *
+ * mozilla::IsDefaultConstructible<int>::value is true;
+ * mozilla::IsDefaultConstructible<S0>::value is true;
+ * mozilla::IsDefaultConstructible<S1>::value is true;
+ * mozilla::IsDefaultConstructible<S2>::value is false;
+ * mozilla::IsDefaultConstructible<S3>::value is false;
+ * mozilla::IsDefaultConstructible<S4>::value is false.
+ */
+template<typename T>
+struct IsDefaultConstructible
+  : public detail::IsDefaultConstructibleImpl<T>::Type
+{};
+
+namespace detail {
+
+struct DoIsDestructibleImpl
+{
+  template<typename T, typename = decltype(DeclVal<T&>().~T())>
+  static TrueType test(int);
+  template<typename T>
+  static FalseType test(...);
+};
+
+template<typename T>
+struct IsDestructibleImpl : public DoIsDestructibleImpl
+{
+  typedef decltype(test<T>(0)) Type;
+};
+
+} // namespace detail
+
+/**
+ * IsDestructible determines whether a type has a public destructor.
+ *
+ * struct S0 {};                    // Implicit default destructor.
+ * struct S1 { ~S1(); };
+ * class C2 { ~C2(); };             // private destructor.
+ *
+ * mozilla::IsDestructible<S0>::value is true;
+ * mozilla::IsDestructible<S1>::value is true;
+ * mozilla::IsDestructible<C2>::value is false.
+ */
+template<typename T>
+struct IsDestructible : public detail::IsDestructibleImpl<T>::Type {};
 
 /* 20.9.5 Type property queries [meta.unary.prop.query] */
 

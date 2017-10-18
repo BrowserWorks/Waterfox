@@ -54,13 +54,83 @@
       }, "Check cloned response's body");
 
       promise_test(function(test) {
-        var disturbedResponse = new Response();
+        var disturbedResponse = new Response("data");
         return disturbedResponse.text().then(function() {
             assert_true(disturbedResponse.bodyUsed, "response is disturbed");
             assert_throws(new TypeError() , function() { disturbedResponse.clone(); },
               "Expect TypeError exception");
         });
       }, "Cannot clone a disturbed response");
+
+    promise_test(function(t) {
+        var clone;
+        var result;
+        var response;
+        return fetch('../resources/trickle.py?count=2&delay=100').then(function(res) {
+            clone = res.clone();
+            response = res;
+            return clone.arrayBuffer();
+        }).then(function(r) {
+            assert_equals(r.byteLength, 26);
+            result = r;
+            return response.arrayBuffer();
+        }).then(function(r) {
+            assert_array_equals(r, result, "cloned responses should provide the same data");
+        });
+     }, 'Cloned responses should provide the same data');
+
+    promise_test(function(t) {
+        var clone;
+        return fetch('../resources/trickle.py?count=2&delay=100').then(function(res) {
+            clone = res.clone();
+            res.body.cancel();
+            assert_true(res.bodyUsed);
+            assert_false(clone.bodyUsed);
+            return clone.arrayBuffer();
+        }).then(function(r) {
+            assert_equals(r.byteLength, 26);
+            assert_true(clone.bodyUsed);
+        });
+    }, 'Cancelling stream should not affect cloned one');
+
+function testReadableStreamClone(initialBuffer, bufferType)
+{
+    promise_test(function(test) {
+        var response = new Response(new ReadableStream({start : function(controller) {
+            controller.enqueue(initialBuffer);
+            controller.close();
+        }}));
+
+        var clone = response.clone();
+        var stream1 = response.body;
+        var stream2 = clone.body;
+
+        var buffer;
+        return stream1.getReader().read().then(function(data) {
+            assert_false(data.done);
+            assert_true(data.value === initialBuffer, "Buffer of being-cloned response stream is the same as the original buffer");
+            return stream2.getReader().read();
+        }).then(function(data) {
+            assert_false(data.done);
+            assert_array_equals(data.value, initialBuffer, "Cloned buffer chunks have the same content");
+            assert_equals(Object.getPrototypeOf(data.value), Object.getPrototypeOf(initialBuffer), "Cloned buffers have the same type");
+            assert_true(data.value !== initialBuffer, "Buffer of cloned response stream is a clone of the original buffer");
+        });
+    }, "Check response clone use structureClone for teed ReadableStreams (" + bufferType  + "chunk)");
+}
+
+var arrayBuffer = new ArrayBuffer(16);
+testReadableStreamClone(new Int8Array(arrayBuffer, 1), "Int8Array");
+testReadableStreamClone(new Int16Array(arrayBuffer, 2, 2), "Int16Array");
+testReadableStreamClone(new Int32Array(arrayBuffer), "Int32Array");
+testReadableStreamClone(arrayBuffer, "ArrayBuffer");
+testReadableStreamClone(new Uint8Array(arrayBuffer), "Uint8Array");
+testReadableStreamClone(new Uint8ClampedArray(arrayBuffer), "Uint8ClampedArray");
+testReadableStreamClone(new Uint16Array(arrayBuffer, 2), "Uint16Array");
+testReadableStreamClone(new Uint32Array(arrayBuffer), "Uint32Array");
+testReadableStreamClone(new Float32Array(arrayBuffer), "Float32Array");
+testReadableStreamClone(new Float64Array(arrayBuffer), "Float64Array");
+testReadableStreamClone(new DataView(arrayBuffer, 2, 8), "DataView");
     </script>
   </body>
 </html>

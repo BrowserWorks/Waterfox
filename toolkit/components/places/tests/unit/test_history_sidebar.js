@@ -7,11 +7,6 @@
 // Get history service
 var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
          getService(Ci.nsINavHistoryService);
-var bh = hs.QueryInterface(Ci.nsIBrowserHistory);
-var bs = Cc["@mozilla.org/browser/nav-bookmarks-service;1"].
-         getService(Ci.nsINavBookmarksService);
-var ps = Cc["@mozilla.org/preferences-service;1"].
-         getService(Ci.nsIPrefBranch);
 
 /**
  * Adds a test URI visit to the database.
@@ -23,7 +18,7 @@ var ps = Cc["@mozilla.org/preferences-service;1"].
  * @param aDayOffset
  *        number of days to add, pass a negative value to subtract them.
  */
-function* task_add_normalized_visit(aURI, aTime, aDayOffset) {
+async function task_add_normalized_visit(aURI, aTime, aDayOffset) {
   var dateObj = new Date(aTime);
   // Normalize to midnight
   dateObj.setHours(0);
@@ -36,9 +31,9 @@ function* task_add_normalized_visit(aURI, aTime, aDayOffset) {
                        previousDateObj.getTimezoneOffset()) * 60 * 1000;
   // Substract aDayOffset
   var PRTimeWithOffset = (previousDateObj.getTime() - DSTCorrection) * 1000;
-  var timeInMs = new Date(PRTimeWithOffset/1000);
+  var timeInMs = new Date(PRTimeWithOffset / 1000);
   print("Adding visit to " + aURI.spec + " at " + timeInMs);
-  yield PlacesTestUtils.addVisits({
+  await PlacesTestUtils.addVisits({
     uri: aURI,
     visitDate: PRTimeWithOffset
   });
@@ -54,12 +49,13 @@ function days_for_x_months_ago(aNowObj, aMonths) {
   oldTime.setMinutes(0);
   oldTime.setSeconds(0);
   // Stay larger for eventual timezone issues, add 2 days.
-  return parseInt((aNowObj - oldTime) / (1000*60*60*24)) + 2;
+  return parseInt((aNowObj - oldTime) / (1000 * 60 * 60 * 24)) + 2;
 }
 
 var nowObj = new Date();
 // This test relies on en-US locale
 // Offset is number of days
+/* eslint-disable comma-spacing */
 var containers = [
   { label: "Today"               , offset: 0                                 , visible: true },
   { label: "Yesterday"           , offset: -1                                , visible: true },
@@ -72,27 +68,28 @@ var containers = [
   { label: ""                    , offset: -days_for_x_months_ago(nowObj, 4) , visible: true },
   { label: "Older than 6 months" , offset: -days_for_x_months_ago(nowObj, 5) , visible: true },
 ];
+/* eslint-enable comma-spacing */
 
 var visibleContainers = containers.filter(
-  function(aContainer) {return aContainer.visible});
+  function(aContainer) { return aContainer.visible });
 
 /**
  * Asynchronous task that fills history and checks containers' labels.
  */
-function* task_fill_history() {
+add_task(async function task_fill_history() {
   print("\n\n*** TEST Fill History\n");
   // We can't use "now" because our hardcoded offsets would be invalid for some
   // date.  So we hardcode a date.
   for (let i = 0; i < containers.length; i++) {
     let container = containers[i];
-    var testURI = uri("http://mirror"+i+".mozilla.com/b");
-    yield task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
-    testURI = uri("http://mirror"+i+".mozilla.com/a");
-    yield task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
-    testURI = uri("http://mirror"+i+".google.com/b");
-    yield task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
-    testURI = uri("http://mirror"+i+".google.com/a");
-    yield task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
+    var testURI = uri("http://mirror" + i + ".mozilla.com/b");
+    await task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
+    testURI = uri("http://mirror" + i + ".mozilla.com/a");
+    await task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
+    testURI = uri("http://mirror" + i + ".google.com/b");
+    await task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
+    testURI = uri("http://mirror" + i + ".google.com/a");
+    await task_add_normalized_visit(testURI, nowObj.getTime(), container.offset);
     // Bug 485703 - Hide date containers not containing additional entries
     //              compared to previous ones.
     // Check after every new container is added.
@@ -122,7 +119,7 @@ function* task_fill_history() {
   }
   do_check_eq(cc, visibleContainers.length);
   root.containerOpen = false;
-}
+});
 
 /**
  * Bug 485703 - Hide date containers not containing additional entries compared
@@ -166,7 +163,7 @@ function check_visit(aOffset) {
  * Queries history grouped by date and site, checking containers' labels and
  * children.
  */
-function test_RESULTS_AS_DATE_SITE_QUERY() {
+add_task(async function test_RESULTS_AS_DATE_SITE_QUERY() {
   print("\n\n*** TEST RESULTS_AS_DATE_SITE_QUERY\n");
   var options = hs.getNewQueryOptions();
   options.resultType = options.RESULTS_AS_DATE_SITE_QUERY;
@@ -225,12 +222,12 @@ function test_RESULTS_AS_DATE_SITE_QUERY() {
   site1.containerOpen = false;
   dayNode.containerOpen = false;
   root.containerOpen = false;
-}
+});
 
 /**
  * Queries history grouped by date, checking containers' labels and children.
  */
-function test_RESULTS_AS_DATE_QUERY() {
+add_task(async function test_RESULTS_AS_DATE_QUERY() {
   print("\n\n*** TEST RESULTS_AS_DATE_QUERY\n");
   var options = hs.getNewQueryOptions();
   options.resultType = options.RESULTS_AS_DATE_QUERY;
@@ -281,16 +278,19 @@ function test_RESULTS_AS_DATE_QUERY() {
 
   dayNode.containerOpen = false;
   root.containerOpen = false;
-}
+});
 
 /**
  * Queries history grouped by site, checking containers' labels and children.
  */
-function test_RESULTS_AS_SITE_QUERY() {
+add_task(async function test_RESULTS_AS_SITE_QUERY() {
   print("\n\n*** TEST RESULTS_AS_SITE_QUERY\n");
   // add a bookmark with a domain not in the set of visits in the db
-  var itemId = bs.insertBookmark(bs.toolbarFolder, uri("http://foobar"),
-                                 bs.DEFAULT_INDEX, "");
+  let bookmark = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: "http://foobar",
+    title: ""
+  });
 
   var options = hs.getNewQueryOptions();
   options.resultType = options.RESULTS_AS_SITE_QUERY;
@@ -346,13 +346,13 @@ function test_RESULTS_AS_SITE_QUERY() {
   root.containerOpen = false;
 
   // Cleanup.
-  bs.removeItem(itemId);
-}
+  await PlacesUtils.bookmarks.remove(bookmark.guid);
+});
 
 /**
  * Checks that queries grouped by date do liveupdate correctly.
  */
-function* task_test_date_liveupdate(aResultType) {
+async function task_test_date_liveupdate(aResultType) {
   var midnight = nowObj;
   midnight.setHours(0);
   midnight.setMinutes(0);
@@ -380,21 +380,23 @@ function* task_test_date_liveupdate(aResultType) {
 
   // Add a visit for "Today".  This should add back the missing "Today"
   // container.
-  yield task_add_normalized_visit(uri("http://www.mozilla.org/"), nowObj.getTime(), 0);
+  await task_add_normalized_visit(uri("http://www.mozilla.org/"), nowObj.getTime(), 0);
   do_check_eq(root.childCount, visibleContainers.length);
 
   last7Days.containerOpen = false;
   root.containerOpen = false;
 
   // TEST 2. Test that the query correctly updates even if it is not root.
-  var itemId = bs.insertBookmark(bs.toolbarFolder,
-                                 uri("place:type=" + aResultType),
-                                 bs.DEFAULT_INDEX, "");
+  var bookmark = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: "place:type=" + aResultType,
+    title: "",
+  });
 
   // Query toolbar and open our query container, then check again liveupdate.
   options = hs.getNewQueryOptions();
   query = hs.getNewQuery();
-  query.setFolders([bs.toolbarFolder], 1);
+  query.setFolders([PlacesUtils.toolbarFolderId], 1);
   result = hs.executeQuery(query, options);
   root = result.root;
   root.containerOpen = true;
@@ -407,35 +409,28 @@ function* task_test_date_liveupdate(aResultType) {
   hs.removePagesByTimeframe(midnight.getTime() * 1000, Date.now() * 1000);
   do_check_eq(dateContainer.childCount, visibleContainers.length - 1);
   // Add a visit for "Today".
-  yield task_add_normalized_visit(uri("http://www.mozilla.org/"), nowObj.getTime(), 0);
+  await task_add_normalized_visit(uri("http://www.mozilla.org/"), nowObj.getTime(), 0);
   do_check_eq(dateContainer.childCount, visibleContainers.length);
 
   dateContainer.containerOpen = false;
   root.containerOpen = false;
 
   // Cleanup.
-  bs.removeItem(itemId);
+  await PlacesUtils.bookmarks.remove(bookmark.guid);
 }
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_history_sidebar()
-{
+function run_test() {
   // If we're dangerously close to a date change, just bail out.
   if (nowObj.getHours() == 23 && nowObj.getMinutes() >= 50) {
     return;
   }
 
-  yield task_fill_history();
-  test_RESULTS_AS_DATE_SITE_QUERY();
-  test_RESULTS_AS_DATE_QUERY();
-  test_RESULTS_AS_SITE_QUERY();
+  run_next_test();
+}
 
-  yield task_test_date_liveupdate(Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_SITE_QUERY);
-  yield task_test_date_liveupdate(Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_QUERY);
+add_task(async function test_history_sidebar() {
+  await task_test_date_liveupdate(Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_SITE_QUERY);
+  await task_test_date_liveupdate(Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_QUERY);
 
   // The remaining views are
   //   RESULTS_AS_URI + SORT_BY_VISITCOUNT_DESCENDING

@@ -15,12 +15,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=975978
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
-function IsWindows7OrLater() {
-  var re = /Windows NT (\d.\d)/;
-  var winver = navigator.userAgent.match(re);
-  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.1;
-}
-
 SimpleTest.waitForExplicitFinish();
 
 // MP4 video with display size is difference to decode frame size.
@@ -40,7 +34,7 @@ v.addEventListener("error", function(ev) {
     todo(false, "This platform doesn't support to retrieve MP4 metadata.");
     SimpleTest.finish();
   }
-}, false);
+});
 
 v.src = resource.name;
 v.preload = "auto";

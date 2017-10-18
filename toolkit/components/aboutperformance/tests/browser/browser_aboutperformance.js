@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* eslint-env mozilla/frame-script */
+
 "use strict";
 
 Cu.import("resource://testing-common/ContentTask.jsm", this);
@@ -59,7 +61,7 @@ function frameScript() {
         }
       }
     }
-    Services.obs.addObserver(observer, "about:performance-update-complete", false);
+    Services.obs.addObserver(observer, "about:performance-update-complete");
     Services.obs.notifyObservers(null, "test-about:performance-test-driver", JSON.stringify(options));
   });
 
@@ -67,8 +69,8 @@ function frameScript() {
     let exn = null;
     try {
       let reFullname = /Full name: (.+)/;
-      let reFps = /Impact on framerate: (\d+)\/10( \((\d+) alerts\))?/;
-      let reCpu = /CPU usage: (\d+)%/
+      let reFps = /Impact on framerate: ((\d+) high-impacts, (\d+) medium-impact|(\d+)\/10)?/;
+      let reCPU = /CPU usage: (\d+)%/;
       let reCpow = /Blocking process calls: (\d+)%( \((\d+) alerts\))?/;
 
       let getContentOfSelector = function(eltContainer, selector, re) {
@@ -89,9 +91,14 @@ function frameScript() {
       }
 
       // Additional sanity check
-      for (let eltContent of content.document.querySelectorAll("delta")) {
+      let deltas = content.document.querySelectorAll(".delta");
+      if (!deltas.length) {
+        throw new Error("No deltas found to check!");
+      }
+
+      for (let eltContent of deltas) {
         // Do we have an attribute "impact"? Is it a number between 0 and 10?
-        let impact = eltContent.classList.getAttribute("impact");
+        let impact = eltContent.getAttribute("impact");
         let value = Number.parseInt(impact);
         if (isNaN(value) || value < 0 || value > 10) {
           throw new Error(`Incorrect value ${value}`);
@@ -106,35 +113,39 @@ function frameScript() {
         // Do we have a full name? Does it make sense?
         getContentOfSelector(eltContent, "li.name", reFullname);
 
+        let eltDetails = eltContent.querySelector("ul.details");
+
         // Do we have an impact on framerate? Does it make sense?
-        let [, jankStr,, alertsStr] = getContentOfSelector(eltDetails, "li.fps", reFps);
-        let jank = Number.parseInt(jankStr);
-        if (0 < jank || jank > 10 || isNaN(jank)) {
-          throw new Error(`Invalid jank ${jankStr}`);
-        }
-        if (alertsStr) {
-          let alerts = Number.parseInt(alertsStr);
-          if (0 < alerts || isNaN(alerts)) {
-            throw new Error(`Invalid alerts ${alertsStr}`);
+        if (!eltDetails.querySelector("li.fps").textContent.includes("no impact")) {
+          let [, jankStr,, alertsStr] = getContentOfSelector(eltDetails, "li.fps", reFps);
+          let jank = Number.parseInt(jankStr);
+          if (jank < 0 || jank > 10 || isNaN(jank)) {
+            throw new Error(`Invalid jank ${jankStr}`);
+          }
+          if (alertsStr) {
+            let alerts = Number.parseInt(alertsStr);
+            if (alerts < 0 || isNaN(alerts)) {
+              throw new Error(`Invalid alerts ${alertsStr}`);
+            }
           }
         }
 
         // Do we have a CPU usage? Does it make sense?
         let [, cpuStr] = getContentOfSelector(eltDetails, "li.cpu", reCPU);
         let cpu = Number.parseInt(cpuStr);
-        if (0 < cpu || isNaN(cpu)) { // Note that cpu can be > 100%.
+        if (cpu < 0 || isNaN(cpu)) { // Note that cpu can be > 100%.
           throw new Error(`Invalid CPU ${cpuStr}`);
         }
 
         // Do we have CPOW? Does it make sense?
         let [, cpowStr,, alertsStr2] = getContentOfSelector(eltDetails, "li.cpow", reCpow);
         let cpow = Number.parseInt(cpowStr);
-        if (0 < cpow || isNaN(cpow)) {
+        if (cpow < 0 || isNaN(cpow)) {
           throw new Error(`Invalid cpow ${cpowStr}`);
         }
         if (alertsStr2) {
           let alerts = Number.parseInt(alertsStr2);
-          if (0 < alerts || isNaN(alerts)) {
+          if (alerts < 0 || isNaN(alerts)) {
             throw new Error(`Invalid alerts ${alertsStr2}`);
           }
         }
@@ -154,29 +165,25 @@ function frameScript() {
     let observer = function(subject, topic, mode) {
       Services.obs.removeObserver(observer, "about:performance-update-complete");
       let hasTitleInWebpages = false;
-      let hasTitleInAddons = false;
 
       try {
         let eltWeb = content.document.getElementById("webpages");
-        let eltAddons = content.document.getElementById("addons");
-        if (!eltWeb || !eltAddons) {
-          dump(`aboutperformance-test:hasItems: the page is not ready yet webpages:${eltWeb}, addons:${eltAddons}\n`);
+        if (!eltWeb) {
+          dump(`aboutperformance-test:hasItems: the page is not ready yet webpages:${eltWeb}\n`);
           return;
         }
 
-        let addonTitles = Array.from(eltAddons.querySelectorAll("span.title"), elt => elt.textContent);
         let webTitles = Array.from(eltWeb.querySelectorAll("span.title"), elt => elt.textContent);
 
-        hasTitleInAddons = addonTitles.includes(title);
         hasTitleInWebpages = webTitles.includes(title);
       } catch (ex) {
         Cu.reportError("Error in content: " + ex);
         Cu.reportError(ex.stack);
       } finally {
-        sendAsyncMessage("aboutperformance-test:hasItems", {hasTitleInAddons, hasTitleInWebpages, mode});
+        sendAsyncMessage("aboutperformance-test:hasItems", {hasTitleInWebpages, mode});
       }
     }
-    Services.obs.addObserver(observer, "about:performance-update-complete", false);
+    Services.obs.addObserver(observer, "about:performance-update-complete");
     Services.obs.notifyObservers(null, "test-about:performance-test-driver", JSON.stringify(options));
   });
 }
@@ -184,24 +191,24 @@ function frameScript() {
 var gTabAboutPerformance = null;
 var gTabContent = null;
 
-add_task(function* init() {
+add_task(async function init() {
   info("Setting up about:performance");
-  gTabAboutPerformance = gBrowser.selectedTab = gBrowser.addTab("about:performance");
-  yield ContentTask.spawn(gTabAboutPerformance.linkedBrowser, null, frameScript);
+  gTabAboutPerformance = gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, "about:performance");
+  await ContentTask.spawn(gTabAboutPerformance.linkedBrowser, null, frameScript);
 
   info(`Setting up ${URL}`);
-  gTabContent = gBrowser.addTab(URL);
-  yield ContentTask.spawn(gTabContent.linkedBrowser, null, frameScript);
+  gTabContent = BrowserTestUtils.addTab(gBrowser, URL);
+  await ContentTask.spawn(gTabContent.linkedBrowser, null, frameScript);
 });
 
-var promiseExpectContent = Task.async(function*(options) {
+var promiseExpectContent = async function(options) {
   let title = "Testing about:performance " + Math.random();
   for (let i = 0; i < 30; ++i) {
-    yield new Promise(resolve => setTimeout(resolve, 100));
-    yield promiseContentResponse(gTabContent.linkedBrowser, "aboutperformance-test:setTitle", title);
-    let {hasTitleInWebpages, hasTitleInAddons, mode} = (yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", {title, options}));
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await promiseContentResponse(gTabContent.linkedBrowser, "aboutperformance-test:setTitle", title);
+    let {hasTitleInWebpages, mode} = (await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:hasItems", {title, options}));
 
-    info(`aboutperformance-test:hasItems ${hasTitleInAddons}, ${hasTitleInWebpages}, ${mode}, ${options.displayRecent}`);
+    info(`aboutperformance-test:hasItems ${hasTitleInWebpages}, ${mode}, ${options.displayRecent}`);
     if (!hasTitleInWebpages) {
       info(`Title not found in webpages`);
       continue;
@@ -210,9 +217,8 @@ var promiseExpectContent = Task.async(function*(options) {
       info(`Wrong mode`);
       continue;
     }
-    Assert.ok(!hasTitleInAddons, "The title appears in webpages, but not in addons");
 
-    let { ok, error } = yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:checkSanity", {options});
+    let { ok, error } = await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:checkSanity", {options});
     if (ok) {
       info("aboutperformance-test:checkSanity: success");
     }
@@ -222,19 +228,19 @@ var promiseExpectContent = Task.async(function*(options) {
     return true;
   }
   return false;
-});
+};
 
 // Test that we can find the title of a webpage in about:performance
-add_task(function* test_find_title() {
+add_task(async function test_find_title() {
     for (let displayRecent of [true, false]) {
-      info(`Testing with autoRefresh, in ${displayRecent?"recent":"global"} mode`);
-      let found = yield promiseExpectContent({autoRefresh: 100, displayRecent});
+      info(`Testing with autoRefresh, in ${displayRecent ? "recent" : "global"} mode`);
+      let found = await promiseExpectContent({autoRefresh: 100, displayRecent});
       Assert.ok(found, `The page title appears when about:performance is set to auto-refresh`);
     }
 });
 
 // Test that we can close/reload tabs using the corresponding buttons
-add_task(function* test_close_tab() {
+add_task(async function test_close_tab() {
   let tabs = new Map();
   let closeObserver = function({type, originalTarget: tab}) {
     dump(`closeObserver: ${tab}, ${tab.constructor.name}, ${tab.tagName}, ${type}\n`);
@@ -256,44 +262,44 @@ add_task(function* test_close_tab() {
     for (let mode of ["close", "reload"]) {
       let URL = `about:about?display-recent=${displayRecent}&mode=${mode}&salt=${Math.random()}`;
       info(`Setting up ${URL}`);
-      let tab = gBrowser.addTab(URL);
-      yield ContentTask.spawn(tab.linkedBrowser, null, frameScript);
+      let tab = BrowserTestUtils.addTab(gBrowser, URL);
+      await ContentTask.spawn(tab.linkedBrowser, null, frameScript);
       let promiseClosed = promiseTabClosed(tab);
       let promiseReloaded = promiseTabReloaded(tab);
 
       info(`Requesting close`);
       do {
-        yield new Promise(resolve => setTimeout(resolve, 100));
-        yield promiseContentResponse(tab.linkedBrowser, "aboutperformance-test:setTitle", URL);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await promiseContentResponse(tab.linkedBrowser, "aboutperformance-test:setTitle", URL);
 
-        let {ok, found, error} = yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:closeTab", {url: URL, autoRefresh: true, mode, displayRecent});
+        let {ok, found, error} = await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:closeTab", {url: URL, autoRefresh: true, mode, displayRecent});
         Assert.ok(ok, `Message aboutperformance-test:closeTab was handled correctly ${JSON.stringify(error)}`);
-        info(`URL ${URL} ${found?"found":"hasn't been found yet"}`);
+        info(`URL ${URL} ${found ? "found" : "hasn't been found yet"}`);
         if (found) {
           break;
         }
-      } while(true);
+      } while (true);
 
       if (mode == "close") {
         info(`Waiting for close`);
-        yield promiseClosed;
+        await promiseClosed;
       } else {
         info(`Waiting for reload`);
-        yield promiseReloaded;
-        yield BrowserTestUtils.removeTab(tab);
+        await promiseReloaded;
+        await BrowserTestUtils.removeTab(tab);
       }
     }
   }
 });
 
-add_task(function* cleanup() {
+add_task(async function cleanup() {
   // Cleanup
   info("Cleaning up");
-  yield promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:done", null);
+  await promiseContentResponse(gTabAboutPerformance.linkedBrowser, "aboutperformance-test:done", null);
 
   info("Closing tabs");
   for (let tab of gBrowser.tabs) {
-    yield BrowserTestUtils.removeTab(tab);
+    await BrowserTestUtils.removeTab(tab);
   }
 
   info("Done");

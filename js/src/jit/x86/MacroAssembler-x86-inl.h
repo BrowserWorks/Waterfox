@@ -191,6 +191,21 @@ MacroAssembler::addConstantDouble(double d, FloatRegister dest)
     propagateOOM(dbl->uses.append(CodeOffset(masm.size())));
 }
 
+CodeOffset
+MacroAssembler::add32ToPtrWithPatch(Register src, Register dest)
+{
+    if (src != dest)
+        movePtr(src, dest);
+    addlWithPatch(Imm32(0), dest);
+    return CodeOffset(currentOffset());
+}
+
+void
+MacroAssembler::patchAdd32ToPtr(CodeOffset offset, Imm32 imm)
+{
+    patchAddl(offset, imm.value);
+}
+
 void
 MacroAssembler::subPtr(Register src, Register dest)
 {
@@ -524,7 +539,7 @@ MacroAssembler::rotateLeft64(Imm32 count, Register64 src, Register64 dest, Regis
     MOZ_ASSERT(src == dest, "defineReuseInput");
 
     int32_t amount = count.value & 0x3f;
-    if (amount % 0x1f != 0) {
+    if ((amount & 0x1f) != 0) {
         movl(dest.high, temp);
         shldl(Imm32(amount & 0x1f), dest.low, dest.high);
         shldl(Imm32(amount & 0x1f), temp, dest.low);
@@ -608,6 +623,17 @@ MacroAssembler::popcnt64(Register64 src, Register64 dest, Register tmp)
     }
     addl(dest.high, dest.low);
     xorl(dest.high, dest.high);
+}
+
+// ===============================================================
+// Condition functions
+
+template <typename T1, typename T2>
+void
+MacroAssembler::cmpPtrSet(Condition cond, T1 lhs, T2 rhs, Register dest)
+{
+    cmpPtr(lhs, rhs);
+    emitSet(cond, dest);
 }
 
 // ===============================================================
@@ -892,8 +918,22 @@ MacroAssembler::branchTestBooleanTruthy(bool truthy, const ValueOperand& value, 
 void
 MacroAssembler::branchTestMagic(Condition cond, const Address& valaddr, JSWhyMagic why, Label* label)
 {
-    branchTestMagic(cond, valaddr, label);
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+
+    Label notMagic;
+    if (cond == Assembler::Equal)
+        branchTestMagic(Assembler::NotEqual, valaddr, &notMagic);
+    else
+        branchTestMagic(Assembler::NotEqual, valaddr, label);
+
     branch32(cond, ToPayload(valaddr), Imm32(why), label);
+    bind(&notMagic);
+}
+
+void
+MacroAssembler::branchToComputedAddress(const BaseIndex& addr)
+{
+    jmp(Operand(addr));
 }
 
 // ========================================================================
@@ -953,6 +993,25 @@ MacroAssembler::truncateDoubleToUInt64(Address src, Address dest, Register temp,
     store32(temp, Address(dest.base, dest.offset + INT64HIGH_OFFSET));
 
     bind(&done);
+}
+
+// ========================================================================
+// wasm support
+
+template <class L>
+void
+MacroAssembler::wasmBoundsCheck(Condition cond, Register index, Register boundsCheckLimit, L label)
+{
+    cmp32(index, boundsCheckLimit);
+    j(cond, label);
+}
+
+template <class L>
+void
+MacroAssembler::wasmBoundsCheck(Condition cond, Register index, Address boundsCheckLimit, L label)
+{
+    cmp32(index, Operand(boundsCheckLimit));
+    j(cond, label);
 }
 
 //}}} check_macroassembler_style

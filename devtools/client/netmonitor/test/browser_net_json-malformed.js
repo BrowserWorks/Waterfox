@@ -1,74 +1,74 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
  * Tests if malformed JSON responses are handled correctly.
  */
 
-function test() {
-  initNetMonitor(JSON_MALFORMED_URL).then(([aTab, aDebuggee, aMonitor]) => {
-    info("Starting test... ");
+add_task(function* () {
+  let { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
+  let { tab, monitor } = yield initNetMonitor(JSON_MALFORMED_URL);
+  info("Starting test... ");
 
-    let { document, Editor, NetMonitorView } = aMonitor.panelWin;
-    let { RequestsMenu } = NetMonitorView;
+  let { document, store, windowRequire } = monitor.panelWin;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
+  let {
+    getDisplayedRequests,
+    getSortedRequests,
+  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
 
-    RequestsMenu.lazyUpdate = false;
+  store.dispatch(Actions.batchEnable(false));
 
-    waitForNetworkEvents(aMonitor, 1).then(() => {
-      verifyRequestItemTarget(RequestsMenu.getItemAtIndex(0),
-        "GET", CONTENT_TYPE_SJS + "?fmt=json-malformed", {
-          status: 200,
-          statusText: "OK",
-          type: "json",
-          fullMimeType: "text/json; charset=utf-8"
-        });
+  let wait = waitForNetworkEvents(monitor, 1);
+  yield ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+    content.wrappedJSObject.performRequests();
+  });
+  yield wait;
 
-      EventUtils.sendMouseEvent({ type: "mousedown" },
-        document.getElementById("details-pane-toggle"));
-      EventUtils.sendMouseEvent({ type: "mousedown" },
-        document.querySelectorAll("#details-pane tab")[3]);
-
-      let tab = document.querySelectorAll("#details-pane tab")[3];
-      let tabpanel = document.querySelectorAll("#details-pane tabpanel")[3];
-
-      let RESPONSE_BODY_DISPLAYED = aMonitor.panelWin.EVENTS.RESPONSE_BODY_DISPLAYED;
-      waitFor(aMonitor.panelWin, RESPONSE_BODY_DISPLAYED).then(() => {
-        is(tab.getAttribute("selected"), "true",
-          "The response tab in the network details pane should be selected.");
-
-        is(tabpanel.querySelector("#response-content-info-header")
-          .hasAttribute("hidden"), false,
-          "The response info header doesn't have the intended visibility.");
-        is(tabpanel.querySelector("#response-content-info-header")
-          .getAttribute("value"),
-          "SyntaxError: JSON.parse: unexpected non-whitespace character after JSON data at line 1 column 40 of the JSON data",
-          "The response info header doesn't have the intended value attribute.");
-        is(tabpanel.querySelector("#response-content-info-header")
-          .getAttribute("tooltiptext"),
-          "SyntaxError: JSON.parse: unexpected non-whitespace character after JSON data at line 1 column 40 of the JSON data",
-          "The response info header doesn't have the intended tooltiptext attribute.");
-
-        is(tabpanel.querySelector("#response-content-json-box")
-          .hasAttribute("hidden"), true,
-          "The response content json box doesn't have the intended visibility.");
-        is(tabpanel.querySelector("#response-content-textarea-box")
-          .hasAttribute("hidden"), false,
-          "The response content textarea box doesn't have the intended visibility.");
-        is(tabpanel.querySelector("#response-content-image-box")
-          .hasAttribute("hidden"), true,
-          "The response content image box doesn't have the intended visibility.");
-
-        NetMonitorView.editor("#response-content-textarea").then((aEditor) => {
-          is(aEditor.getText(), "{ \"greeting\": \"Hello malformed JSON!\" },",
-            "The text shown in the source editor is incorrect.");
-          is(aEditor.getMode(), Editor.modes.js,
-            "The mode active in the source editor is incorrect.");
-
-          teardown(aMonitor).then(finish);
-        });
-      });
+  verifyRequestItemTarget(
+    document,
+    getDisplayedRequests(store.getState()),
+    getSortedRequests(store.getState()).get(0),
+    "GET",
+    CONTENT_TYPE_SJS + "?fmt=json-malformed",
+    {
+      status: 200,
+      statusText: "OK",
+      type: "json",
+      fullMimeType: "text/json; charset=utf-8"
     });
 
-    aDebuggee.performRequests();
-  });
-}
+  wait = waitForDOM(document, "#response-panel .CodeMirror-code");
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".network-details-panel-toggle"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector("#response-tab"));
+  yield wait;
+
+  let tabpanel = document.querySelector("#response-panel");
+  is(tabpanel.querySelector(".response-error-header") === null, false,
+    "The response error header doesn't have the intended visibility.");
+  is(tabpanel.querySelector(".response-error-header").textContent,
+    "SyntaxError: JSON.parse: unexpected non-whitespace character after JSON data" +
+      " at line 1 column 40 of the JSON data",
+    "The response error header doesn't have the intended text content.");
+  is(tabpanel.querySelector(".response-error-header").getAttribute("title"),
+    "SyntaxError: JSON.parse: unexpected non-whitespace character after JSON data" +
+      " at line 1 column 40 of the JSON data",
+    "The response error header doesn't have the intended tooltiptext attribute.");
+  let jsonView = tabpanel.querySelector(".tree-section .treeLabel") || {};
+  is(jsonView.textContent === L10N.getStr("jsonScopeName"), false,
+    "The response json view doesn't have the intended visibility.");
+  is(tabpanel.querySelector(".CodeMirror-code") === null, false,
+    "The response editor doesn't have the intended visibility.");
+  is(tabpanel.querySelector(".response-image-box") === null, true,
+    "The response image box doesn't have the intended visibility.");
+
+  is(document.querySelector(".CodeMirror-line").textContent,
+    "{ \"greeting\": \"Hello malformed JSON!\" },",
+    "The text shown in the source editor is incorrect.");
+
+  yield teardown(monitor);
+});

@@ -3,28 +3,9 @@
 
 import os
 import sys
-import re
-import json
-from subprocess import check_output, CalledProcessError
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "lint", "eslint"))
+from hook_helper import is_lintable, runESLint
 
-lintable = re.compile(r'.+\.(?:js|jsm|jsx|xml|html)$')
-ignored = 'File ignored because of a matching ignore pattern. Use "--no-ignore" to override.'
-
-def is_lintable(filename):
-    return lintable.match(filename)
-
-def display(ui, output):
-    results = json.loads(output)
-    for file in results:
-        path = os.path.relpath(file["filePath"])
-        for message in file["messages"]:
-            if message["message"] == ignored:
-                continue
-
-            if "line" in message:
-                ui.warn("%s:%d:%d %s\n" % (path, message["line"], message["column"], message["message"]))
-            else:
-                ui.warn("%s: %s\n" % (path, message["message"]))
 
 def eslinthook(ui, repo, node=None, **opts):
     ctx = repo[node]
@@ -37,12 +18,10 @@ def eslinthook(ui, repo, node=None, **opts):
     if len(files) == 0:
         return
 
-    try:
-        output = check_output(["eslint", "--format", "json", "--plugin", "html"] + files)
-        display(ui, output)
-    except CalledProcessError as ex:
-        display(ui, ex.output)
-        ui.warn("ESLint found problems in your changes, please correct them.\n")
+    if not runESLint(ui.warn, files):
+        ui.warn("Note: ESLint failed, but the commit will still happen. "
+                "Please fix before pushing.\n")
+
 
 def reposetup(ui, repo):
     ui.setconfig('hooks', 'commit.eslint', eslinthook)

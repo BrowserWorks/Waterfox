@@ -6,8 +6,7 @@
 
 var FontBuilder = {
   _enumerator: null,
-  get enumerator ()
-  {
+  get enumerator() {
     if (!this._enumerator) {
       this._enumerator = Components.classes["@mozilla.org/gfx/fontenumerator;1"]
                                    .createInstance(Components.interfaces.nsIFontEnumerator);
@@ -17,11 +16,10 @@ var FontBuilder = {
 
   _allFonts: null,
   _langGroupSupported: false,
-  buildFontList: function (aLanguage, aFontType, aMenuList)
-  {
+  buildFontList(aLanguage, aFontType, aMenuList) {
     // Reset the list
     while (aMenuList.hasChildNodes())
-      aMenuList.removeChild(aMenuList.firstChild);
+      aMenuList.firstChild.remove();
 
     var defaultFont = null;
     // Load Font Lists
@@ -79,8 +77,7 @@ var FontBuilder = {
           menuitem.setAttribute("value", this._allFonts[i]);
           menuitem.setAttribute("label", this._allFonts[i]);
           popup.appendChild(menuitem);
-        }
-        else {
+        } else {
           builtItem = builtItem.nextSibling;
           builtItemValue = builtItem ? builtItem.getAttribute("value") : null;
         }
@@ -89,8 +86,7 @@ var FontBuilder = {
     aMenuList.appendChild(popup);
   },
 
-  readFontSelection(aElement)
-  {
+  readFontSelection(aElement) {
     // Determine the appropriate value to select, for the following cases:
     // - there is no setting
     // - the font selected by the user is no longer present (e.g. deleted from
@@ -104,23 +100,9 @@ var FontBuilder = {
         return undefined;
     }
 
-    // The first item will be a reasonable choice only if the font backend
-    // supports language-specific enumaration.
-    let defaultValue = this._langGroupSupported ?
-                       aElement.firstChild.firstChild.getAttribute("value") : "";
-    let fontNameList = preference.name.replace(".name.", ".name-list.");
-    let prefFontNameList = document.getElementById(fontNameList);
-    if (!prefFontNameList || !prefFontNameList.value)
-      return defaultValue;
-
-    let fontNames = prefFontNameList.value.split(",");
-
-    for (let i = 0; i < fontNames.length; ++i) {
-      let fontName = this.enumerator.getStandardFamilyName(fontNames[i].trim());
-      let fontItems = aElement.getElementsByAttribute("value", fontName);
-      if (fontItems.length)
-        return fontItems[0].getAttribute("value");
-    }
-    return defaultValue;
+    // Otherwise, use "default" font of current system which is computed
+    // with "font.name-list.*".  If "font.name.*" is empty string, it means
+    // "default".  So, return empty string in this case.
+    return "";
   }
 };

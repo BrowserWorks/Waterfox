@@ -36,7 +36,7 @@ public:
     void Main();
 
 protected:
-    virtual bool
+    virtual mozilla::ipc::IPCResult
     RecvTest(const JSONVariant& i,
              JSONVariant* o) override;
 
@@ -54,7 +54,7 @@ protected:
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
-            fail("unexpected destruction!");  
+            fail("unexpected destruction!");
         passed("ok");
         QuitParent();
     }
@@ -79,7 +79,7 @@ public:
     virtual ~TestJSONChild() { }
 
 protected:
-    virtual bool
+    virtual mozilla::ipc::IPCResult
     RecvStart() override;
 
     virtual PTestHandleChild* AllocPTestHandleChild() override

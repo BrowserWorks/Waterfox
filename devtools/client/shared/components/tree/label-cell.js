@@ -23,27 +23,44 @@ define(function (require, exports, module) {
     // See the TreeView component for details related
     // to the 'member' object.
     propTypes: {
+      id: PropTypes.string.isRequired,
       member: PropTypes.object.isRequired
     },
 
     render: function () {
+      let id = this.props.id;
       let member = this.props.member;
       let level = member.level || 0;
 
       // Compute indentation dynamically. The deeper the item is
       // inside the hierarchy, the bigger is the left padding.
       let rowStyle = {
-        "paddingLeft": (level * 16) + "px",
+        "paddingInlineStart": (level * 16) + "px",
       };
+
+      let iconClassList = ["treeIcon"];
+      if (member.hasChildren && member.loading) {
+        iconClassList.push("devtools-throbber");
+      } else if (member.hasChildren) {
+        iconClassList.push("theme-twisty");
+      }
+      if (member.open) {
+        iconClassList.push("open");
+      }
 
       return (
         td({
           className: "treeLabelCell",
           key: "default",
-          style: rowStyle},
-          span({ className: "treeIcon" }),
+          style: rowStyle,
+          role: "presentation"},
+          span({
+            className: iconClassList.join(" "),
+            role: "presentation"
+          }),
           span({
             className: "treeLabel " + member.type + "Label",
+            "aria-labelledby": id,
             "data-level": level
           }, member.name)
         )

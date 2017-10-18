@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* Webconsole specific theme variables */
+.theme-light,
 .theme-firebug {
   --error-color: #FF0000;
   --error-background-color: #FFEBEB;
@@ -53,12 +54,16 @@ a {
   margin-inline-end: 6px;
 }
 
-.theme-firebug .message[severity="error"] {
+.theme-firebug .message[severity="error"],
+.theme-light .message.error,
+.theme-firebug .message.error {
   color: var(--error-color);
   background-color: var(--error-background-color);
 }
 
-.theme-firebug .message[severity="warn"] {
+.theme-firebug .message[severity="warn"],
+.theme-light .message.warn,
+.theme-firebug .message.warn {
   background-color: var(--warning-background-color);
 }
 
@@ -110,6 +115,12 @@ a {
   max-width: 40%;
 }
 
+.stack-trace {
+  /* The markup contains extra whitespace to improve formatting of clipboard text.
+     Make sure this whitespace doesn't affect the HTML rendering */
+  white-space: normal;
+}
+
 .stack-trace .frame-link-source,
 .message-location .frame-link-source {
   /* Makes the file name truncated (and ellipsis shown) on the left side */
@@ -151,6 +162,7 @@ a {
   direction: ltr;
   overflow: auto;
   -moz-user-select: text;
+  position: relative;
 }
 
 /* The width on #output-container is set to a hardcoded px in webconsole.js
@@ -209,11 +221,13 @@ a {
   background-color: var(--theme-selection-background-semitransparent) !important;
 }
 
-.theme-light .message[severity=error] {
+.theme-light .message[severity=error],
+.theme-light .message.error {
   background-color: rgba(255, 150, 150, 0.3);
 }
 
-.theme-dark .message[severity=error] {
+.theme-dark .message[severity=error],
+.theme-dark .message.error {
   background-color: rgba(235, 83, 104, 0.17);
 }
 
@@ -232,20 +246,24 @@ a {
   border-inline-end: solid var(--theme-body-color-alt) 6px;
 }
 
-.message[category=network][severity=error] > .icon::before {
+.message[category=network][severity=error] > .icon::before,
+.message.network.error > .icon::before {
   background-position: -12px 0;
 }
 
-.message[category=network] > .message-body {
+.message[category=network] > .message-body,
+.message.network > .message-body {
   display: flex;
   flex-wrap: wrap;
 }
 
-.message[category=network] .method {
+.message[category=network] .method,
+.message.network .method {
   flex: none;
 }
 
-.message[category=network]:not(.navigation-marker) .url {
+.message[category=network]:not(.navigation-marker) .url,
+.message.network:not(.navigation-marker) .url {
   flex: 1 1 auto;
   /* Make sure the URL is very small initially, let flex change width as needed. */
   width: 100px;
@@ -255,12 +273,14 @@ a {
   text-overflow: ellipsis;
 }
 
-.message[category=network] .status {
+.message[category=network] .status,
+.message.network .status {
   flex: none;
   margin-inline-start: 6px;
 }
 
-.message[category=network].mixed-content .url {
+.message[category=network].mixed-content .url,
+.message.network.mixed-content .url {
   color: var(--theme-highlight-red);
 }
 
@@ -269,7 +289,8 @@ a {
   margin: 0 6px;
 }
 
-.message[category=network] .xhr {
+.message[category=network] .xhr,
+.message.network .xhr {
   background-color: var(--theme-body-color-alt);
   color: var(--theme-body-background);
   border-radius: 3px;
@@ -287,15 +308,18 @@ a {
   border-color: #1BA2CC;
 }
 
-.message[category=cssparser] > .indent {
+.message[category=cssparser] > .indent,
+.message.cssparser > .indent  {
   border-inline-end: solid #00b6f0 6px;
 }
 
-.message[category=cssparser][severity=error] > .icon::before {
+.message[category=cssparser][severity=error] > .icon::before,
+.message.cssparser.error > .icon::before {
   background-position: -12px -12px;
 }
 
-.message[category=cssparser][severity=warn] > .icon::before {
+.message[category=cssparser][severity=warn] > .icon::before,
+.message.cssparser.warn > .icon::before {
   background-position: -24px -12px;
 }
 
@@ -305,15 +329,18 @@ a {
   border-color: #E98A00;
 }
 
-.message[category=exception] > .indent {
+.message[category=exception] > .indent,
+.message.exception > .indent {
   border-inline-end: solid #fb9500 6px;
 }
 
-.message[category=exception][severity=error] > .icon::before {
+.message[category=exception][severity=error] > .icon::before,
+.message.exception.error > .icon::before {
   background-position: -12px -24px;
 }
 
-.message[category=exception][severity=warn] > .icon::before {
+.message[category=exception][severity=warn] > .icon::before,
+.message.exception.warn > .icon::before {
   background-position: -24px -24px;
 }
 
@@ -323,7 +350,8 @@ a {
   border-color: #929292;
 }
 
-.message[category=console] > .indent {
+.message[category=console] > .indent,
+.message.console-api > .indent {
   border-inline-end: solid #cbcbcb 6px;
 }
 
@@ -350,25 +378,39 @@ a {
   border-color: rgb(76, 143, 76);
 }
 
-.message[category=server] > .indent {
+.message[category=server] > .indent,
+.message.server > .indent {
   border-inline-end: solid #90B090 6px;
 }
 
 /* Input and output styles */
 .message[category=input] > .indent,
-.message[category=output] > .indent {
+.message[category=output] > .indent,
+.message.command > .indent,
+.message.result > .indent {
   border-inline-end: solid #808080 6px;
 }
 
-.message[category=input] > .icon::before {
+.message[category=input] > .icon::before,
+.message.command > .icon::before {
   background-position: -48px -36px;
 }
 
-.message[category=output] > .icon::before {
+.message[category=output] > .icon::before,
+.message.result > .icon::before {
   background-position: -60px -36px;
 }
 
 /* JSTerm Styles */
+
+html #jsterm-wrapper,
+html .jsterm-stack-node,
+html .jsterm-input-node-html,
+html #webconsole-notificationbox {
+  flex: 0;
+  width: 100vw;
+}
+
 .jsterm-input-container {
   background-color: var(--theme-tab-toolbar-background);
   border-top: 1px solid var(--theme-splitter-color);
@@ -457,7 +499,8 @@ a {
 
 /* Security styles */
 
-.message[category=security] > .indent {
+.message[category=security] > .indent,
+.message.security > .indent {
   border-inline-end: solid red 6px;
 }
 
@@ -466,11 +509,13 @@ a {
   border-color: #D12C2C;
 }
 
-.message[category=security][severity=error] > .icon::before {
+.message[category=security][severity=error] > .icon::before,
+.message.security.error > .icon::before {
   background-position: -12px -48px;
 }
 
-.message[category=security][severity=warn] > .icon::before {
+.message[category=security][severity=warn] > .icon::before,
+.message.security.warn > .icon::before {
   background-position: -24px -48px;
 }
 
@@ -516,15 +561,18 @@ a {
   line-height: 1.25em;
 }
 
-.theme-light .message[severity=error] .stacktrace {
+.theme-light .message[severity=error] .stacktrace,
+.theme-light .message.error .stacktrace {
   background-color: rgba(255, 255, 255, 0.5);
 }
 
-.theme-dark .message[severity=error] .stacktrace {
+.theme-dark .message[severity=error] .stacktrace,
+.theme-dark .message.error .stacktrace {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.message[open] .stacktrace {
+.message[open] .stacktrace,
+.message.open .stacktrace {
   display: block;
 }
 
@@ -533,6 +581,12 @@ a {
   vertical-align: middle;
   margin: 3px 0 0 0;
   flex-shrink: 0;
+}
+
+/*Do not mirror the twisty because container force to ltr */
+.message .theme-twisty:dir(rtl),
+.message .theme-twisty:-moz-locale-dir(rtl) {
+  transform: none;
 }
 
 .cm-s-mozilla a[class] {
@@ -565,6 +619,42 @@ a.learn-more-link.webconsole-learn-more-link {
 .elementNode:hover .open-inspector:active,
 .open-inspector:active {
   filter: url(images/filters.svg#checked-icon-state) brightness(0.9);
+}
+
+/* Old console frontend filters */
+.devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-button {
+  -moz-appearance: none;
+  color: inherit;
+  border-width: 0;
+  -moz-box-orient: horizontal;
+  padding: 0;
+}
+
+.devtools-toolbarbutton[type=menu-button] {
+  padding: 0 1px;
+  -moz-box-align: stretch;
+  --toolbarbutton-checked-color: var(--theme-body-color);
+  --toolbarbutton-checked-background: var(--theme-selection-background-semitransparent);
+}
+
+.devtools-toolbarbutton > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
+  margin-inline-end: 4px;
+}
+
+.devtools-menulist > .menulist-dropmarker {
+  -moz-appearance: none;
+  display: -moz-box;
+  list-style-image: url("chrome://devtools/skin/images/dropmarker.svg");
+  -moz-box-align: center;
+  min-width: 16px;
+}
+
+.devtools-toolbarbutton[type=menu] > .toolbarbutton-menu-dropmarker,
+.devtools-toolbarbutton[type=menu-button] > .toolbarbutton-menubutton-dropmarker {
+  -moz-appearance: none !important;
+  list-style-image: url("chrome://devtools/skin/images/dropmarker.svg");
+  -moz-box-align: center;
+  padding: 0 3px;
 }
 
 @media (max-width: 500px) {
@@ -608,7 +698,7 @@ a.learn-more-link.webconsole-learn-more-link {
 
 /*
  * This hardcoded width likely due to a toolkit Windows specific bug.
- * See http://hg.mozilla.org/mozilla-central/annotate/f38d6df93cad/toolkit/themes/winstripe/global/textbox-aero.css#l7
+ * See https://hg.mozilla.org/mozilla-central/annotate/f38d6df93cad/toolkit/themes/winstripe/global/textbox-aero.css#l7
  */
 
 :root[platform="win"] .hud-filter-box {
@@ -624,3 +714,198 @@ a.learn-more-link.webconsole-learn-more-link {
   border-left: 1px solid #D7D7D7;
   border-right: 1px solid #D7D7D7;
 }
+
+
+/* NEW CONSOLE STYLES */
+
+#output-wrapper > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+#output-container {
+  height: 100%;
+}
+
+.webconsole-output-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  -moz-user-focus: normal;
+}
+
+.webconsole-filterbar-wrapper {
+  flex-grow: 0;
+}
+
+.webconsole-output {
+  flex: 1;
+  overflow: auto;
+}
+
+.webconsole-filterbar-primary {
+  display: flex;
+}
+
+.devtools-toolbar.webconsole-filterbar-secondary {
+  height: initial;
+}
+
+.webconsole-filterbar-primary .devtools-plaininput {
+  flex: 1 1 100%;
+}
+
+.webconsole-output-wrapper .message-flex-body > .message-body {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.webconsole-output-wrapper .message-body > * {
+  flex-shrink: 0;
+}
+
+.webconsole-output.hideTimestamps > .message > .timestamp {
+  display: none;
+}
+
+.message.startGroup .message-body > .objectBox-string,
+.message.startGroupCollapsed .message-body > .objectBox-string {
+  color: var(--theme-body-color);
+  font-weight: bold;
+}
+
+.webconsole-output-wrapper .message > .icon {
+  margin: 3px 0 0 0;
+  padding: 0 0 0 6px;
+}
+
+.message.error > .icon::before {
+  background-position: -12px -36px;
+}
+
+.message.warn > .icon::before {
+  background-position: -24px -36px;
+}
+
+.message.info > .icon::before {
+  background-position: -36px -36px;
+}
+
+.message.network .method {
+  margin-inline-end: 5px;
+}
+
+.network .message-flex-body > .message-body {
+  display: flex;
+}
+
+.webconsole-output-wrapper .message .indent {
+  display: inline-block;
+  border-inline-end: solid 1px var(--theme-splitter-color);
+}
+.webconsole-output-wrapper .message .indent[data-indent="0"] {
+  border-inline-end: none;
+}
+
+.message.startGroup .indent,
+.message.startGroupCollapsed .indent {
+  border-inline-end-color: transparent;
+  margin-inline-end: 5px;
+}
+
+.message.startGroup .icon,
+.message.startGroupCollapsed .icon {
+  display: none;
+}
+
+/*
+ * Open DOMNode in inspector button. Style need to be reset in the new
+ * console since its style is already defined in reps.css .
+ */
+.webconsole-output-wrapper .open-inspector {
+  background: unset;
+  padding-left: unset;
+  margin-left: unset;
+  cursor: unset;
+}
+
+/* console.table() */
+.new-consoletable {
+  width: 100%;
+  border-collapse: collapse;
+  --consoletable-border: 1px solid var(--table-splitter-color);
+}
+
+.new-consoletable thead,
+.new-consoletable tbody {
+  background-color: var(--theme-body-background);
+}
+
+.new-consoletable th {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+  margin: 0;
+  padding: 5px 0 0;
+  font-weight: inherit;
+  border-inline-end: var(--consoletable-border);
+  border-bottom: var(--consoletable-border);
+}
+
+.new-consoletable tr:nth-of-type(even) {
+  background-color: var(--table-zebra-background);
+}
+
+.new-consoletable td {
+  padding: 3px 4px;
+  min-width: 100px;
+  -moz-user-focus: normal;
+  color: var(--theme-body-color);
+  border-inline-end: var(--consoletable-border);
+  height: 1.25em;
+  line-height: 1.25em;
+}
+
+/* Layout */
+
+.webconsole-output {
+  flex: 1;
+  direction: ltr;
+  overflow: auto;
+  -moz-user-select: text;
+  position: relative;
+}
+
+html,
+body,
+#app-wrapper {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+#app-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+body #output-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.webconsole-output-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Object Inspector */

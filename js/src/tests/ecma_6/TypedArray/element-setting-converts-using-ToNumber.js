@@ -1,3 +1,4 @@
+// |reftest| slow
 /*
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/licenses/publicdomain/
@@ -16,11 +17,7 @@ print(BUGNUMBER + ": " + summary);
  * BEGIN TEST *
  **************/
 
-var ctors = [Int8Array, Uint8Array, Uint8ClampedArray,
-             Int16Array, Uint16Array,
-             Int32Array, Uint32Array,
-             Float32Array, Float64Array];
-ctors.forEach(function(TypedArray) {
+anyTypedArrayConstructors.forEach(function(TypedArray) {
   var ta = new TypedArray(1);
   assertEq(ta[0], 0);
 

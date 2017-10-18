@@ -23,25 +23,21 @@
   locale/@AB_CD@/browser/browser.properties       (%chrome/browser.properties)
   locale/@AB_CD@/browser/config.dtd               (%chrome/config.dtd)
   locale/@AB_CD@/browser/config.properties        (%chrome/config.properties)
-  locale/@AB_CD@/browser/localepicker.properties  (%chrome/localepicker.properties)
   locale/@AB_CD@/browser/checkbox.dtd             (%chrome/checkbox.dtd)
-  locale/@AB_CD@/browser/notification.dtd         (%chrome/notification.dtd)
   locale/@AB_CD@/browser/devicePrompt.properties  (%chrome/devicePrompt.properties)
   locale/@AB_CD@/browser/pippki.properties        (%chrome/pippki.properties)
-  locale/@AB_CD@/browser/sync.dtd                 (%chrome/sync.dtd)
   locale/@AB_CD@/browser/sync.properties          (%chrome/sync.properties)
-  locale/@AB_CD@/browser/prompt.dtd               (%chrome/prompt.dtd)
-  locale/@AB_CD@/browser/feedback.dtd             (%chrome/feedback.dtd)
   locale/@AB_CD@/browser/phishing.dtd             (%chrome/phishing.dtd)
   locale/@AB_CD@/browser/handling.properties      (%chrome/handling.properties)
   locale/@AB_CD@/browser/aboutLogins.dtd          (%chrome/aboutLogins.dtd)
   locale/@AB_CD@/browser/aboutLogins.properties  (%chrome/aboutLogins.properties)
-#ifndef RELEASE_BUILD
+#ifndef RELEASE_OR_BETA
   locale/@AB_CD@/browser/webcompatReporter.properties (%chrome/webcompatReporter.properties)
 #endif
 % resource search-plugins chrome://browser/locale/searchplugins/
 
 # overrides for toolkit l10n, also for en-US
+# keep this file list in sync with l10n.toml and filter.py
 relativesrcdir toolkit/locales:
   locale/@AB_CD@/browser/overrides/about.dtd                       (%chrome/global/about.dtd)
   locale/@AB_CD@/browser/overrides/aboutAbout.dtd                  (%chrome/global/aboutAbout.dtd)
@@ -53,7 +49,6 @@ relativesrcdir toolkit/locales:
   locale/@AB_CD@/browser/overrides/intl.css                        (%chrome/global/intl.css)
   locale/@AB_CD@/browser/overrides/passwordmgr.properties          (%chrome/passwordmgr/passwordmgr.properties)
   locale/@AB_CD@/browser/overrides/search/search.properties        (%chrome/search/search.properties)
-  locale/@AB_CD@/browser/overrides/update/updates.properties       (%chrome/mozapps/update/updates.properties)
 # plugins
   locale/@AB_CD@/browser/overrides/plugins/pluginproblem.dtd       (%chrome/pluginproblem/pluginproblem.dtd)
 # about:support
@@ -81,7 +76,6 @@ relativesrcdir toolkit/locales:
 % override chrome://global/locale/intl.css chrome://browser/locale/overrides/intl.css
 % override chrome://passwordmgr/locale/passwordmgr.properties chrome://browser/locale/overrides/passwordmgr/passwordmgr.properties
 % override chrome://global/locale/search/search.properties chrome://browser/locale/overrides/search/search.properties
-% override chrome://mozapps/locale/update/updates.properties chrome://browser/locale/overrides/update/updates.properties
 % override chrome://pluginproblem/locale/pluginproblem.dtd chrome://browser/locale/overrides/plugins/pluginproblem.dtd
 % override chrome://global/locale/aboutSupport.dtd chrome://browser/locale/overrides/global/aboutSupport.dtd
 % override chrome://global/locale/aboutSupport.properties chrome://browser/locale/overrides/global/aboutSupport.properties
@@ -93,6 +87,7 @@ relativesrcdir toolkit/locales:
 % override chrome://global/locale/aboutWebrtc.properties chrome://browser/locale/overrides/global/aboutWebrtc.properties
 
 # overrides for dom l10n, also for en-US
+# keep this file list in sync with filter.py
 relativesrcdir dom/locales:
   locale/@AB_CD@/browser/overrides/global.dtd                  (%chrome/global.dtd)
   locale/@AB_CD@/browser/overrides/AccessFu.properties         (%chrome/accessibility/AccessFu.properties)

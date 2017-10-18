@@ -12,15 +12,16 @@
 
 #include "nsISupports.idl"
 
+interface nsIMutableArray;
 interface nsILayoutHistoryState;
 interface nsIContentViewer;
 interface nsIURI;
 interface nsIInputStream;
 interface nsIDocShellTreeItem;
-interface nsISupportsArray;
 interface nsIStructuredCloneContainer;
 interface nsIBFCacheEntry;
 interface nsIPrincipal;
+interface nsISHistory;
 
 %{C++
 #include "nsRect.h"
@@ -47,6 +48,12 @@ interface nsISHEntry : nsISupports
      * URI. The object returned is of type nsIURI
      */
     attribute nsIURI originalURI;
+
+    /**
+     * URL as stored from nsILoadInfo.resultPrincipalURI.  See nsILoadInfo
+     * for more details.
+     */
+    attribute nsIURI resultPrincipalURI;
 
     /**
      *  This flag remembers whether channel has LOAD_REPLACE set.
@@ -119,7 +126,7 @@ interface nsISHEntry : nsISupports
     void clearChildShells();
 
     /** Saved refresh URI list for the content viewer */
-    attribute nsISupportsArray refreshURIList;
+    attribute nsIMutableArray refreshURIList;
 
     /**
      * Ensure that the cached presentation members are self-consistent.
@@ -138,6 +145,12 @@ interface nsISHEntry : nsISupports
 
     /** LayoutHistoryState for scroll position and form values */
     attribute nsILayoutHistoryState layoutHistoryState;
+
+    /**
+     * Initialises the LayoutHistoryState if it doesn't already exist
+     * and returns a reference to it.
+     */
+    nsILayoutHistoryState initLayoutHistoryState();
 
     /** parent of this entry */
     attribute nsISHEntry parent;
@@ -192,7 +205,8 @@ interface nsISHEntry : nsISupports
                            in nsILayoutHistoryState layoutHistoryState,
                            in nsISupports cacheKey, in ACString contentType,
                            in nsIPrincipal triggeringPrincipal,
-                           in unsigned long long docshellID,
+                           in nsIPrincipal principalToInherit,
+                           in nsIDRef docshellID,
                            in boolean dynamicCreation);
 
     nsISHEntry clone();
@@ -211,6 +225,12 @@ interface nsISHEntry : nsISupports
      * came from.
      */
     attribute nsIPrincipal triggeringPrincipal;
+
+    /**
+     * Get the principal, if any, that is used when the inherit flag
+     * is set.
+     */
+    attribute nsIPrincipal principalToInherit;
 
     /**
      * Get/set data associated with this history state via a pushState() call,
@@ -250,7 +270,12 @@ interface nsISHEntry : nsISupports
     /**
      * The history ID of the docshell.
      */
-    attribute unsigned long long docshellID;
+    attribute nsIDPtr docshellID;
+
+    /**
+     * Helper method for accessing this value from C++
+     */
+    [noscript, notxpcom] nsID DocshellID();
 
     readonly attribute nsIBFCacheEntry BFCacheEntry;
 
@@ -308,6 +333,19 @@ interface nsISHEntry : nsISupports
      * if true == "manual", false == "auto".
      */
     attribute boolean scrollRestorationIsManual;
+
+    /**
+     * Flag to indicate that the history entry was originally loaded in the
+     * current process. This flag does not survive a browser process switch.
+     */
+    readonly attribute boolean loadedInThisProcess;
+
+    /**
+     * The session history it belongs to. It's usually only set on root entries.
+     * SHEntry is strictly bound to the SHistory it belongs to; it should not be
+     * changed once set to a non-null value.
+     */
+    [noscript] attribute nsISHistory SHistory;
 };
 
 [scriptable, uuid(bb66ac35-253b-471f-a317-3ece940f04c5)]

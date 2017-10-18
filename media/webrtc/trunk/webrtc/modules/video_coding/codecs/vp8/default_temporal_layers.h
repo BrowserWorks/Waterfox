@@ -12,7 +12,11 @@
 #ifndef WEBRTC_MODULES_VIDEO_CODING_CODECS_VP8_DEFAULT_TEMPORAL_LAYERS_H_
 #define WEBRTC_MODULES_VIDEO_CODING_CODECS_VP8_DEFAULT_TEMPORAL_LAYERS_H_
 
+#include <vector>
+
 #include "webrtc/modules/video_coding/codecs/vp8/temporal_layers.h"
+
+#include "webrtc/base/optional.h"
 
 namespace webrtc {
 
@@ -24,20 +28,23 @@ class DefaultTemporalLayers : public TemporalLayers {
 
   // Returns the recommended VP8 encode flags needed. May refresh the decoder
   // and/or update the reference buffers.
-  virtual int EncodeFlags(uint32_t timestamp);
+  int EncodeFlags(uint32_t timestamp) override;
 
-  virtual bool ConfigureBitrates(int bitrate_kbit,
-                                 int max_bitrate_kbit,
-                                 int framerate,
-                                 vpx_codec_enc_cfg_t* cfg);
+  // Update state based on new bitrate target and incoming framerate.
+  // Returns the bitrate allocation for the active temporal layers.
+  std::vector<uint32_t> OnRatesUpdated(int bitrate_kbps,
+                                       int max_bitrate_kbps,
+                                       int framerate) override;
 
-  virtual void PopulateCodecSpecific(bool base_layer_sync,
-                                     CodecSpecificInfoVP8* vp8_info,
-                                     uint32_t timestamp);
+  bool UpdateConfiguration(vpx_codec_enc_cfg_t* cfg) override;
 
-  virtual void FrameEncoded(unsigned int size, uint32_t timestamp) {}
+  void PopulateCodecSpecific(bool base_layer_sync,
+                             CodecSpecificInfoVP8* vp8_info,
+                             uint32_t timestamp) override;
 
-  virtual int CurrentLayerId() const;
+  void FrameEncoded(unsigned int size, uint32_t timestamp, int qp) override {}
+
+  int CurrentLayerId() const override;
 
  private:
   enum TemporalReferences {
@@ -75,7 +82,7 @@ class DefaultTemporalLayers : public TemporalLayers {
   };
   enum { kMaxTemporalPattern = 16 };
 
-  int number_of_temporal_layers_;
+  const int number_of_temporal_layers_;
   int temporal_ids_length_;
   int temporal_ids_[kMaxTemporalPattern];
   int temporal_pattern_length_;
@@ -84,6 +91,7 @@ class DefaultTemporalLayers : public TemporalLayers {
   uint8_t pattern_idx_;
   uint32_t timestamp_;
   bool last_base_layer_sync_;
+  rtc::Optional<std::vector<uint32_t>> new_bitrates_kbps_;
 };
 
 }  // namespace webrtc

@@ -111,7 +111,7 @@ ImageAccessible::ActionNameAt(uint8_t aIndex, nsAString& aName)
 {
   aName.Truncate();
   if (IsLongDescIndex(aIndex) && HasLongDesc())
-    aName.AssignLiteral("showlongdesc"); 
+    aName.AssignLiteral("showlongdesc");
   else
     LinkableAccessible::ActionNameAt(aIndex, aName);
 }
@@ -138,6 +138,8 @@ ImageAccessible::DoAction(uint8_t aIndex)
 
   nsCOMPtr<nsPIDOMWindowOuter> tmp;
   return NS_SUCCEEDED(piWindow->Open(spec, EmptyString(), EmptyString(),
+                                     /* aLoadInfo = */ nullptr,
+                                     /* aForceNoOpener = */ false,
                                      getter_AddRefs(tmp)));
 }
 

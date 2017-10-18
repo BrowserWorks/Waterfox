@@ -2,15 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import Wait
+from marionette_harness import MarionetteTestCase
 
-from firefox_ui_harness.testcases import FirefoxTestCase
 
-
-class TestEVCertificate(FirefoxTestCase):
+class TestEVCertificate(PuppeteerMixin, MarionetteTestCase):
 
     def setUp(self):
-        FirefoxTestCase.setUp(self)
+        super(TestEVCertificate, self).setUp()
 
         self.locationbar = self.browser.navbar.locationbar
         self.identity_popup = self.locationbar.identity_popup
@@ -21,30 +21,26 @@ class TestEVCertificate(FirefoxTestCase):
         try:
             self.browser.switch_to()
             self.identity_popup.close(force=True)
-            self.windows.close_all([self.browser])
+            self.puppeteer.windows.close_all([self.browser])
         finally:
-            FirefoxTestCase.tearDown(self)
+            super(TestEVCertificate, self).tearDown()
 
     def test_ev_certificate(self):
         with self.marionette.using_context('content'):
             self.marionette.navigate(self.url)
 
-        # The lock icon should be shown
-        self.assertIn('identity-secure',
-                      self.locationbar.connection_icon.value_of_css_property('list-style-image'))
-
         # Check the identity box
-        self.assertEqual(self.locationbar.identity_box.get_attribute('className'),
+        self.assertEqual(self.locationbar.identity_box.get_property('className'),
                          'verifiedIdentity')
 
         # Get the information from the certificate
         cert = self.browser.tabbar.selected_tab.certificate
-        address = self.security.get_address_from_certificate(cert)
+        address = self.puppeteer.security.get_address_from_certificate(cert)
 
         # Check the identity popup label displays
-        self.assertEqual(self.locationbar.identity_organization_label.get_attribute('value'),
+        self.assertEqual(self.locationbar.identity_organization_label.get_property('value'),
                          cert['organization'])
-        self.assertEqual(self.locationbar.identity_country_label.get_attribute('value'),
+        self.assertEqual(self.locationbar.identity_country_label.get_property('value'),
                          '(' + address['country'] + ')')
 
         # Open the identity popup
@@ -54,7 +50,7 @@ class TestEVCertificate(FirefoxTestCase):
         self.assertEqual(self.identity_popup.element.get_attribute('connection'), 'secure-ev')
 
         # For EV certificates no hostname but the organization name is shown
-        self.assertEqual(self.identity_popup.view.main.host.get_attribute('textContent'),
+        self.assertEqual(self.identity_popup.view.main.host.get_property('textContent'),
                          cert['organization'])
 
         # Only the secure label is visible in the main view
@@ -77,23 +73,20 @@ class TestEVCertificate(FirefoxTestCase):
         self.assertEqual(insecure_label.value_of_css_property('display'), 'none')
 
         # Check the organization name
-        self.assertEqual(security_view.owner.get_attribute('textContent'),
-                         cert['organization'])
+        self.assertEqual(security_view.owner.get_property('textContent'), cert['organization'])
 
         # Check the owner location string
         # More information:
         # hg.mozilla.org/mozilla-central/file/eab4a81e4457/browser/base/content/browser.js#l7012
-        location = self.browser.get_property('identity.identified.state_and_country')
+        location = self.browser.localize_property('identity.identified.state_and_country')
         location = location.replace('%S', address['state'], 1).replace('%S', address['country'])
         location = address['city'] + '\n' + location
-        self.assertEqual(security_view.owner_location.get_attribute('textContent'),
-                         location)
+        self.assertEqual(security_view.owner_location.get_property('textContent'), location)
 
         # Check the verifier
-        l10n_verifier = self.browser.get_property('identity.identified.verifier')
+        l10n_verifier = self.browser.localize_property('identity.identified.verifier')
         l10n_verifier = l10n_verifier.replace('%S', cert['issuerOrganization'])
-        self.assertEqual(security_view.verifier.get_attribute('textContent'),
-                         l10n_verifier)
+        self.assertEqual(security_view.verifier.get_property('textContent'), l10n_verifier)
 
         # Open the Page Info window by clicking the More Information button
         page_info = self.browser.open_page_info_window(
@@ -105,14 +98,14 @@ class TestEVCertificate(FirefoxTestCase):
 
             # Verify the domain listed on the security panel
             self.assertIn(cert['commonName'],
-                          page_info.deck.security.domain.get_attribute('value'))
+                          page_info.deck.security.domain.get_property('value'))
 
             # Verify the owner listed on the security panel
-            self.assertEqual(page_info.deck.security.owner.get_attribute('value'),
+            self.assertEqual(page_info.deck.security.owner.get_property('value'),
                              cert['organization'])
 
             # Verify the verifier listed on the security panel
-            self.assertEqual(page_info.deck.security.verifier.get_attribute('value'),
+            self.assertEqual(page_info.deck.security.verifier.get_property('value'),
                              cert['issuerOrganization'])
         finally:
             page_info.close()

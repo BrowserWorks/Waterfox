@@ -22,21 +22,17 @@ class BufferMediaResource : public MediaResource
 public:
   BufferMediaResource(const uint8_t* aBuffer,
                       uint32_t aLength,
-                      nsIPrincipal* aPrincipal,
-                      const nsACString& aContentType) :
-    mBuffer(aBuffer),
-    mLength(aLength),
-    mOffset(0),
-    mPrincipal(aPrincipal),
-    mContentType(aContentType)
+                      nsIPrincipal* aPrincipal)
+    : mBuffer(aBuffer)
+    , mLength(aLength)
+    , mOffset(0)
+    , mPrincipal(aPrincipal)
   {
-    MOZ_COUNT_CTOR(BufferMediaResource);
   }
 
 protected:
   virtual ~BufferMediaResource()
   {
-    MOZ_COUNT_DTOR(BufferMediaResource);
   }
 
 private:
@@ -49,12 +45,6 @@ private:
     nsCOMPtr<nsIPrincipal> principal = mPrincipal;
     return principal.forget();
   }
-  bool CanClone() override { return false; }
-  already_AddRefed<MediaResource> CloneData(MediaResourceCallback*) override
-  {
-    return nullptr;
-  }
-
   // These methods are called off the main thread.
   // The mode is initially MODE_PLAYBACK.
   void SetReadMode(MediaCacheStream::ReadMode aMode) override {}
@@ -70,6 +60,9 @@ private:
     mOffset = aOffset + *aBytes;
     return NS_OK;
   }
+  // Memory-based and no locks, caching discouraged.
+  bool ShouldCacheReads() override { return false; }
+
   int64_t Tell() override { return mOffset; }
 
   void Pin() override {}
@@ -77,7 +70,10 @@ private:
   double GetDownloadRate(bool* aIsReliable) override { *aIsReliable = false; return 0.; }
   int64_t GetLength() override { return mLength; }
   int64_t GetNextCachedData(int64_t aOffset) override { return aOffset; }
-  int64_t GetCachedDataEnd(int64_t aOffset) override { return mLength; }
+  int64_t GetCachedDataEnd(int64_t aOffset) override
+  {
+    return std::max(aOffset, int64_t(mLength));
+  }
   bool IsDataCachedToEndOfResource(int64_t aOffset) override { return true; }
   bool IsSuspendedByCache() override { return false; }
   bool IsSuspended() override { return false; }
@@ -107,19 +103,12 @@ private:
 
   bool IsTransportSeekable() override { return true; }
 
-  const nsCString& GetContentType() const override
-  {
-    return mContentType;
-  }
-
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
     // - mBuffer
     // - mPrincipal
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
-    size += mContentType.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
-
     return size;
   }
 
@@ -133,7 +122,6 @@ private:
   uint32_t mLength;
   uint32_t mOffset;
   nsCOMPtr<nsIPrincipal> mPrincipal;
-  const nsCString mContentType;
 };
 
 } // namespace mozilla

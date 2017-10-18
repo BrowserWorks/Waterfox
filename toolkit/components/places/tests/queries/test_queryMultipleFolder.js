@@ -3,29 +3,25 @@
 
 "use strict";
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* test_queryMultipleFolders() {
+add_task(async function test_queryMultipleFolders() {
   // adding bookmarks in the folders
   let folderIds = [];
   let bookmarkIds = [];
   for (let i = 0; i < 3; ++i) {
-    let folder = yield PlacesUtils.bookmarks.insert({
+    let folder = await PlacesUtils.bookmarks.insert({
       parentGuid: PlacesUtils.bookmarks.menuGuid,
       type: PlacesUtils.bookmarks.TYPE_FOLDER,
       title: `Folder${i}`
     });
-    folderIds.push(yield PlacesUtils.promiseItemId(folder.guid));
+    folderIds.push(await PlacesUtils.promiseItemId(folder.guid));
 
-    for(let j = 0; j < 7; ++j) {
-      let bm = yield PlacesUtils.bookmarks.insert({
-        parentGuid: (yield PlacesUtils.promiseItemGuid(folderIds[i])),
+    for (let j = 0; j < 7; ++j) {
+      let bm = await PlacesUtils.bookmarks.insert({
+        parentGuid: (await PlacesUtils.promiseItemGuid(folderIds[i])),
         url: `http://Bookmark${i}_${j}.com`,
         title: ""
       });
-      bookmarkIds.push(yield PlacesUtils.promiseItemId(bm.guid));
+      bookmarkIds.push(await PlacesUtils.promiseItemId(bm.guid));
     }
   }
 
@@ -35,9 +31,9 @@ add_task(function* test_queryMultipleFolders() {
   let maxResults = 20;
   let queryString = "place:" + folderIds.map((id) => {
     return "folder=" + id;
-  }).join('&') + "&sort=5&maxResults=" + maxResults;
+  }).join("&") + "&sort=5&maxResults=" + maxResults;
   PlacesUtils.history.queryStringToQueries(queryString, query, {}, options);
-  let rootNode = PlacesUtils.history.executeQuery(query.value[0],options.value).root;
+  let rootNode = PlacesUtils.history.executeQuery(query.value[0], options.value).root;
   rootNode.containerOpen = true;
   let resultLength = rootNode.childCount;
   Assert.equal(resultLength, maxResults);

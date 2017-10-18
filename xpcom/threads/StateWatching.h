@@ -8,9 +8,10 @@
 #define StateWatching_h_
 
 #include "mozilla/AbstractThread.h"
+#include "mozilla/Logging.h"
 #include "mozilla/TaskDispatcher.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 
 #include "nsISupportsImpl.h"
 
@@ -255,7 +256,10 @@ private:
       mStrongRef = mOwner; // Hold the owner alive while notifying.
 
       // Queue up our notification jobs to run in a stable state.
-      mOwnerThread->TailDispatcher().AddDirectTask(NewRunnableMethod(this, &PerCallbackWatcher::DoNotify));
+      mOwnerThread->TailDispatcher().AddDirectTask(
+        NewRunnableMethod("WatchManager::PerCallbackWatcher::DoNotify",
+                          this,
+                          &PerCallbackWatcher::DoNotify));
     }
 
     bool CallbackMethodIs(CallbackMethod aMethod) const
@@ -271,7 +275,9 @@ private:
       MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
       MOZ_ASSERT(mStrongRef);
       RefPtr<OwnerType> ref = mStrongRef.forget();
-      ((*ref).*mCallbackMethod)();
+      if (!mDestroyed) {
+        ((*ref).*mCallbackMethod)();
+      }
     }
 
     OwnerType* mOwner; // Never null.

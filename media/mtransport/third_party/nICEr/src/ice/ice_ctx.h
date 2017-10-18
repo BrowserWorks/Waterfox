@@ -63,6 +63,7 @@ typedef struct nr_ice_stun_server_ {
   } u;
   int id;
   int transport;
+  int tls; /* Whether to use TLS or not */
 } nr_ice_stun_server;
 
 typedef struct nr_ice_turn_server_ {
@@ -111,6 +112,13 @@ typedef struct nr_ice_stun_id_ {
 
 typedef STAILQ_HEAD(nr_ice_stun_id_head_,nr_ice_stun_id_) nr_ice_stun_id_head;
 
+typedef struct nr_ice_stats_ {
+  UINT2 stun_retransmits;
+  UINT2 turn_401s;
+  UINT2 turn_403s;
+  UINT2 turn_438s;
+} nr_ice_stats;
+
 struct nr_ice_ctx_ {
   UINT4 flags;
   char *label;
@@ -154,18 +162,22 @@ struct nr_ice_ctx_ {
   void *trickle_cb_arg;
 
   char force_net_interface[MAXIFNAME];
+  nr_ice_stats stats;
 };
 
 int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp);
 int nr_ice_ctx_create_with_credentials(char *label, UINT4 flags, char* ufrag, char* pwd, nr_ice_ctx **ctxp);
-#define NR_ICE_CTX_FLAGS_OFFERER                           1
-#define NR_ICE_CTX_FLAGS_ANSWERER                          (1<<1)
-#define NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION             (1<<2)
-#define NR_ICE_CTX_FLAGS_LITE                              (1<<3)
-#define NR_ICE_CTX_FLAGS_RELAY_ONLY                        (1<<4)
-#define NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS                (1<<5)
+#define NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION             (1)
+#define NR_ICE_CTX_FLAGS_LITE                              (1<<1)
+#define NR_ICE_CTX_FLAGS_RELAY_ONLY                        (1<<2)
+#define NR_ICE_CTX_FLAGS_HIDE_HOST_CANDIDATES              (1<<3)
+#define NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS                (1<<4)
+#define NR_ICE_CTX_FLAGS_ONLY_PROXY                        (1<<5)
 
+void nr_ice_ctx_add_flags(nr_ice_ctx *ctx, UINT4 flags);
+void nr_ice_ctx_remove_flags(nr_ice_ctx *ctx, UINT4 flags);
 int nr_ice_ctx_destroy(nr_ice_ctx **ctxp);
+int nr_ice_set_local_addresses(nr_ice_ctx *ctx, nr_local_addr* stun_addrs, int stun_addr_ct);
 int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg);
 int nr_ice_add_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);
 void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg);
@@ -187,6 +199,8 @@ int nr_ice_ctx_set_trickle_cb(nr_ice_ctx *ctx, nr_ice_trickle_candidate_cb cb, v
 int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);
 int nr_ice_get_new_ice_ufrag(char** ufrag);
 int nr_ice_get_new_ice_pwd(char** pwd);
+// accumulate a count without worrying about rollover
+void nr_ice_accumulate_count(UINT2* orig_count, UINT2 new_count);
 
 #define NR_ICE_MAX_ATTRIBUTE_SIZE 256
 

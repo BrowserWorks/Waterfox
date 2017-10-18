@@ -6,20 +6,17 @@
   <head>
     <title>Indexed Database Test</title>
 
-    <script type="text/javascript;version=1.7">
-    let testIsIDBDatabase;
-    let testException;
-
+    <script type="text/javascript">
     function runTest() {
-      let w = new Worker('browser_permissionsWorker.js');
+      let w = new Worker("browser_permissionsWorker.js");
       w.onmessage = function(e) {
-        if (e.data.status == 'success') {
-          testIsIDBDatabase = e.data.isIDBDatabase;
+        let message;
+        if (e.data.status == "success") {
+          message = "ok";
         } else {
-          testException = e.data.error;
+          message = e.data.error;
         }
-
-        setTimeout(testFinishedCallback, 0, testIsIDBDatabase, testException);
+        postMessage(message, "*");
       }
 
       const name = window.location.pathname;

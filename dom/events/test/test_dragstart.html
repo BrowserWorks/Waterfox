@@ -45,8 +45,6 @@ function afterDragTests()
               "NoModificationAllowedError", "setDataAt when read only");
   expectError(() => gDataTransfer.mozClearDataAt("text/plain", 0),
               "NoModificationAllowedError", "clearDataAt when read only");
-  expectError(() => gDataTransfer.setDragImage(draggable, 10, 10),
-              "NoModificationAllowedError", "setDragImage when read only");
   expectError(() => gDataTransfer.addElement(draggable),
               "NoModificationAllowedError", "addElement when read only");
 
@@ -57,8 +55,8 @@ function afterDragTests()
                     false, true, false, false, 0, null, null);
   $("synthetic").dispatchEvent(evt);
 
-  var evt = document.createEvent("dragevents");
-  ok(evt instanceof DragEvent, "synthetic dragevents class")
+  var evt = document.createEvent("dragevent");
+  ok(evt instanceof DragEvent, "synthetic dragevent class")
   evt.initDragEvent("dragover", true, true, window, 0, 40, 35, 20, 15,
                     true, false, true, true, 2, document.documentElement, null);
   $("synthetic2").dispatchEvent(evt);
@@ -118,7 +116,7 @@ function doDragStartSelection(event)
   gDataTransfer = dt;
 
   var types = dt.types;
-  is(types instanceof DOMStringList, true, "initial types is a DOMStringList");
+  ok(Array.isArray(types), "initial types is an Array");
   checkTypes(dt, ["text/_moz_htmlcontext", "text/_moz_htmlinfo", "text/html", "text/plain"], 0, "initial selection");
 
   is(dt.getData("text/plain"), "This is a draggable bit of text.", "initial selection text/plain");
@@ -148,7 +146,7 @@ function test_DataTransfer(dt)
   is(dt.mozItemCount, 0, "empty itemCount");
 
   var types = dt.types;
-  is(types instanceof DOMStringList, true, "empty types is a DOMStringList");
+  ok(Array.isArray(types), "empty types is an Array");
   checkTypes(dt, [], 0, "empty");
   is(dt.getData("text/plain"), "", "empty data is empty");
 
@@ -316,6 +314,23 @@ function test_DataTransfer(dt)
   dt.mozSetDataAt("application/-moz-node", "draggable", 2);
   is(dt.mozItemCount, 3, "setDataAt node itemCount");
   checkOneDataItem(dt, ["application/-moz-node"], ["draggable"], 2, "setDataAt node item at index 2");
+
+  // Try to add and then remove a non-string type to the DataTransfer and ensure
+  // that the type appears in DataTransfer.types. These calls need to be called
+  // with SpecialPowers.wrap(), as adding and removing non-string/file types to
+  // DataTransfer is chrome-only.
+  {
+    SpecialPowers.wrap(dt).mozSetDataAt("application/-x-body", document.body, 0);
+    let found = false;
+    for (let i = 0; i < dt.types.length; ++i) {
+      if (dt.types[i] == "application/-x-body") {
+        found = true;
+        break;
+      }
+    }
+    ok(found, "Data should appear in datatransfer.types despite having a non-string type");
+    SpecialPowers.wrap(dt).mozClearDataAt("application/-x-body", 0);
+  }
 
   dt.mozClearDataAt("text/html", 1);
   is(dt.mozItemCount, 3, "clearDataAt itemCount");

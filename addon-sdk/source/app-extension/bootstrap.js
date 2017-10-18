@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// @see http://mxr.mozilla.org/mozilla-central/source/js/src/xpconnect/loader/mozJSComponentLoader.cpp
+// @see http://dxr.mozilla.org/mozilla-central/source/js/src/xpconnect/loader/mozJSComponentLoader.cpp
 
 'use strict';
 
@@ -116,7 +116,7 @@ function startup(data, reasonCode) {
       replace(uuidRe, '$1');
 
     let prefixURI = 'resource://' + domain + '/';
-    let resourcesURI = ioService.newURI(rootURI + '/resources/', null, null);
+    let resourcesURI = ioService.newURI(rootURI + '/resources/');
     setResourceSubstitution(domain, resourcesURI);
 
     // Create path to URLs mapping supported by loader.
@@ -179,7 +179,7 @@ function startup(data, reasonCode) {
 
       // Maps the given file:// URI to a resource:// in order to avoid various
       // failure that happens with file:// URI and be close to production env
-      let resourcesURI = ioService.newURI(fileURI, null, null);
+      let resourcesURI = ioService.newURI(fileURI);
       let resName = 'extensions.modules.' + domain + '.commonjs.path' + name;
       setResourceSubstitution(resName, resourcesURI);
 
@@ -256,6 +256,9 @@ function startup(data, reasonCode) {
 
     let module = cuddlefish.Module('sdk/loader/cuddlefish', cuddlefishURI);
     let require = cuddlefish.Require(loader, module);
+
+    // Init the 'sdk/webextension' module from the bootstrap addon parameter.
+    require("sdk/webextension").initFromBootstrapAddonParam(data);
 
     require('sdk/addon/runner').startup(reason, {
       loader: loader,

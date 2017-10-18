@@ -20,7 +20,7 @@
 #include "nsITimer.h"
 
 class nsIThread;
-class nsINode;
+class nsIPrincipal;
 
 // The SDK shipping with VC11 has renamed IAsyncOperation to
 // IDataObjectAsyncCapability.  We try to detect this, and rename this in our
@@ -93,7 +93,7 @@ protected:
   nsCOMPtr<nsIThread> mIOThread;
 
   public: // construction, destruction
-    nsDataObj(nsIURI *uri = nullptr);
+    explicit nsDataObj(nsIURI *uri = nullptr);
     virtual ~nsDataObj();
 
 	public: // IUnknown methods - see iunknown.h for documentation
@@ -238,7 +238,7 @@ protected:
     class CStream : public IStream, public nsIStreamListener
     {
       nsCOMPtr<nsIChannel> mChannel;
-      nsTArray<uint8_t> mChannelData;
+      FallibleTArray<uint8_t> mChannelData;
       bool mChannelRead;
       nsresult mChannelResult;
       uint32_t mStreamRead;
@@ -251,7 +251,7 @@ protected:
       CStream();
       nsresult Init(nsIURI *pSourceURI,
                     uint32_t aContentPolicyType,
-                    nsINode* aRequestingNode);
+                    nsIPrincipal* aRequestingPrincipal);
 
       NS_DECL_ISUPPORTS
       NS_DECL_NSIREQUESTOBSERVER
@@ -289,9 +289,7 @@ protected:
 
     bool LookupArbitraryFormat(FORMATETC *aFormat, LPDATAENTRY *aDataEntry, BOOL aAddorUpdate);
     bool CopyMediumData(STGMEDIUM *aMediumDst, STGMEDIUM *aMediumSrc, LPFORMATETC aFormat, BOOL aSetData);
-    static void RemoveTempFile(nsITimer* aTimer, void* aClosure);
 };
 
 
 #endif  // _NSDATAOBJ_H_
-

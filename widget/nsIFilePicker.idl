@@ -112,11 +112,24 @@ interface nsIFilePicker : nsISupports
 
  /**
   * Set the directory that the file open/save dialog initially displays
+  * Note that, if displaySpecialDirectory has been already set, this value will
+  * be ignored.
   *
   * @param      displayDirectory  the name of the directory
   *
   */
   attribute nsIFile displayDirectory;
+
+ /**
+  * Set the directory that the file open/save dialog initially displays using
+  * one of the special name as such as 'Desk', 'TmpD', and so on.
+  * Note that, if displayDirectory has been already set, this value will be
+  * ignored.
+  *
+  * @param      displaySpecialDirectory  the name of the special directory
+  *
+  */
+  attribute AString displaySpecialDirectory;
 
 
  /**
@@ -165,6 +178,8 @@ interface nsIFilePicker : nsISupports
   attribute boolean addToRecentDocs;
 
  /**
+  * This method is **deprecated**. Please use open()
+  *
   * Show File Dialog. The dialog is displayed modally.
   *
   * @return returnOK if the user selects OK, returnCancel if the user selects cancel

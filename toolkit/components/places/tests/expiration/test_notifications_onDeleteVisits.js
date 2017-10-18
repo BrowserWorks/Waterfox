@@ -58,11 +58,7 @@ var tests = [
 
 ];
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function* test_notifications_onDeleteVisits() {
+add_task(async function test_notifications_onDeleteVisits() {
   // Set interval to a large value so we don't expire on it.
   setInterval(3600); // 1h
 
@@ -70,16 +66,22 @@ add_task(function* test_notifications_onDeleteVisits() {
   setMaxPages(0);
 
   for (let testIndex = 1; testIndex <= tests.length; testIndex++) {
-    let currentTest = tests[testIndex -1];
+    let currentTest = tests[testIndex - 1];
     print("\nTEST " + testIndex + ": " + currentTest.desc);
     currentTest.receivedNotifications = 0;
 
     // Setup visits.
-    let now = getExpirablePRTime();
+    let timeInMicroseconds = getExpirablePRTime(8);
+
+    function newTimeInMicroseconds() {
+      timeInMicroseconds = timeInMicroseconds + 1000;
+      return timeInMicroseconds;
+    }
+
     for (let j = 0; j < currentTest.visitsPerPage; j++) {
       for (let i = 0; i < currentTest.addPages; i++) {
         let page = "http://" + testIndex + "." + i + ".mozilla.org/";
-        yield PlacesTestUtils.addVisits({ uri: uri(page), visitDate: now++ });
+        await PlacesTestUtils.addVisits({ uri: uri(page), visitDate: newTimeInMicroseconds() });
       }
     }
 
@@ -87,7 +89,7 @@ add_task(function* test_notifications_onDeleteVisits() {
     currentTest.bookmarks = [];
     for (let i = 0; i < currentTest.addBookmarks; i++) {
       let page = "http://" + testIndex + "." + i + ".mozilla.org/";
-      yield PlacesUtils.bookmarks.insert({
+      await PlacesUtils.bookmarks.insert({
         parentGuid: PlacesUtils.bookmarks.unfiledGuid,
         title: null,
         url: page
@@ -96,29 +98,29 @@ add_task(function* test_notifications_onDeleteVisits() {
     }
 
     // Observe history.
-    historyObserver = {
+    let historyObserver = {
       onBeginUpdateBatch: function PEX_onBeginUpdateBatch() {},
       onEndUpdateBatch: function PEX_onEndUpdateBatch() {},
-      onClearHistory: function() {},
-      onVisit: function() {},
-      onTitleChanged: function() {},
-      onDeleteURI: function(aURI, aGUID, aReason) {
+      onClearHistory() {},
+      onVisit() {},
+      onTitleChanged() {},
+      onDeleteURI(aURI, aGUID, aReason) {
         // Check this uri was not bookmarked.
         do_check_eq(currentTest.bookmarks.indexOf(aURI.spec), -1);
         do_check_valid_places_guid(aGUID);
         do_check_eq(aReason, Ci.nsINavHistoryObserver.REASON_EXPIRED);
       },
-      onPageChanged: function() {},
-      onDeleteVisits: function(aURI, aTime, aGUID, aReason) {
+      onPageChanged() {},
+      onDeleteVisits(aURI, aTime, aGUID, aReason) {
         currentTest.receivedNotifications++;
         do_check_guid_for_uri(aURI, aGUID);
         do_check_eq(aReason, Ci.nsINavHistoryObserver.REASON_EXPIRED);
       },
     };
-    hs.addObserver(historyObserver, false);
+    hs.addObserver(historyObserver);
 
     // Expire now.
-    yield promiseForceExpirationStep(currentTest.limitExpiration);
+    await promiseForceExpirationStep(currentTest.limitExpiration);
 
     hs.removeObserver(historyObserver, false);
 
@@ -126,11 +128,11 @@ add_task(function* test_notifications_onDeleteVisits() {
                 currentTest.expectedNotifications);
 
     // Clean up.
-    yield PlacesUtils.bookmarks.eraseEverything();
-    yield PlacesTestUtils.clearHistory();
+    await PlacesUtils.bookmarks.eraseEverything();
+    await PlacesTestUtils.clearHistory();
   }
 
   clearMaxPages();
-  yield PlacesUtils.bookmarks.eraseEverything();
-  yield PlacesTestUtils.clearHistory();
+  await PlacesUtils.bookmarks.eraseEverything();
+  await PlacesTestUtils.clearHistory();
 });

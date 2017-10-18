@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "Splendid Test";
 
@@ -47,7 +47,7 @@ function testSteps()
 
   let uri = Components.classes["@mozilla.org/network/io-service;1"]
                       .getService(Components.interfaces.nsIIOService)
-                      .newURI("http://appdata.example.com", null, null);
+                      .newURI("http://appdata.example.com");
   let ssm = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
                       .getService(Components.interfaces.nsIScriptSecurityManager);
   let principal = ssm.createCodebasePrincipal(uri, {});

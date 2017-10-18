@@ -9,18 +9,19 @@
 
 /* exported SubprocessImpl */
 
-/* globals BaseProcess, PromiseWorker */
-
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+
+Cu.importGlobalProperties(["TextDecoder"]);
 
 var EXPORTED_SYMBOLS = ["SubprocessImpl"];
 
 Cu.import("resource://gre/modules/ctypes.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/subprocess/subprocess_common.jsm");
 
+/* import-globals-from subprocess_shared.js */
+/* import-globals-from subprocess_shared_unix.js */
 Services.scriptloader.loadSubScript("resource://gre/modules/subprocess/subprocess_shared.js", this);
 Services.scriptloader.loadSubScript("resource://gre/modules/subprocess/subprocess_shared_unix.js", this);
 
@@ -76,6 +77,21 @@ class Process extends BaseProcess {
   }
 }
 
+// Convert a null-terminated char pointer into a sized char array, and then
+// convert that into a JS typed array.
+// The resulting array will not be null-terminated.
+function ptrToUint8Array(input) {
+  let {cast, uint8_t} = ctypes;
+
+  let len = 0;
+  for (let ptr = cast(input, uint8_t.ptr); ptr.contents; ptr = ptr.increment()) {
+    len++;
+  }
+
+  let aryPtr = cast(input, uint8_t.array(len).ptr);
+  return new Uint8Array(aryPtr.contents);
+}
+
 var SubprocessUnix = {
   Process,
 
@@ -91,24 +107,37 @@ var SubprocessUnix = {
       environ = libc.environ;
     }
 
-    for (let envp = environ; !envp.contents.isNull(); envp = envp.increment()) {
-      let str = envp.contents.readString();
+    const EQUAL = "=".charCodeAt(0);
+    let decoder = new TextDecoder("utf-8", {fatal: true});
 
-      let idx = str.indexOf("=");
-      if (idx >= 0) {
-        yield [str.slice(0, idx),
-               str.slice(idx + 1)];
+    function decode(array) {
+      try {
+        return decoder.decode(array);
+      } catch (e) {
+        return array;
+      }
+    }
+
+    for (let envp = environ; !envp.contents.isNull(); envp = envp.increment()) {
+      let buf = ptrToUint8Array(envp.contents);
+
+      for (let i = 0; i < buf.length; i++) {
+        if (buf[i] == EQUAL) {
+          yield [decode(buf.subarray(0, i)),
+                 decode(buf.subarray(i + 1))];
+          break;
+        }
       }
     }
   },
 
-  isExecutableFile: Task.async(function* isExecutable(path) {
+  isExecutableFile: async function isExecutable(path) {
     if (!OS.Path.split(path).absolute) {
       return false;
     }
 
     try {
-      let info = yield OS.File.stat(path);
+      let info = await OS.File.stat(path);
 
       // FIXME: We really want access(path, X_OK) here, but OS.File does not
       // support it.
@@ -116,7 +145,7 @@ var SubprocessUnix = {
     } catch (e) {
       return false;
     }
-  }),
+  },
 
   /**
    * Searches for the given executable file in the system executable
@@ -134,10 +163,10 @@ var SubprocessUnix = {
    *        in the search.
    * @returns {Promise<string>}
    */
-  pathSearch: Task.async(function* (bin, environment) {
+  async pathSearch(bin, environment) {
     let split = OS.Path.split(bin);
     if (split.absolute) {
-      if (yield this.isExecutableFile(bin)) {
+      if (await this.isExecutableFile(bin)) {
         return bin;
       }
       let error = new Error(`File at path "${bin}" does not exist, or is not executable`);
@@ -146,21 +175,21 @@ var SubprocessUnix = {
     }
 
     let dirs = [];
-    if (environment.PATH) {
+    if (typeof environment.PATH === "string") {
       dirs = environment.PATH.split(":");
     }
 
     for (let dir of dirs) {
       let path = OS.Path.join(dir, bin);
 
-      if (yield this.isExecutableFile(path)) {
+      if (await this.isExecutableFile(path)) {
         return path;
       }
     }
     let error = new Error(`Executable not found: ${bin}`);
     error.errorCode = SubprocessConstants.ERROR_BAD_EXECUTABLE;
     throw error;
-  }),
+  },
 };
 
 var SubprocessImpl = SubprocessUnix;

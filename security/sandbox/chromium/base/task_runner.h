@@ -5,15 +5,13 @@
 #ifndef BASE_TASK_RUNNER_H_
 #define BASE_TASK_RUNNER_H_
 
+#include <stddef.h>
+
 #include "base/base_export.h"
-#include "base/basictypes.h"
 #include "base/callback_forward.h"
+#include "base/location.h"
 #include "base/memory/ref_counted.h"
 #include "base/time/time.h"
-
-namespace tracked_objects {
-class Location;
-} // namespace tracked_objects
 
 namespace base {
 
@@ -104,7 +102,7 @@ class BASE_EXPORT TaskRunner
   //  public:
   //    void GetData() {
   //      scoped_refptr<DataBuffer> buffer = new DataBuffer();
-  //      target_thread_.message_loop_proxy()->PostTaskAndReply(
+  //      target_thread_.task_runner()->PostTaskAndReply(
   //          FROM_HERE,
   //          base::Bind(&DataBuffer::AddData, buffer),
   //          base::Bind(&DataLoader::OnDataReceived, AsWeakPtr(), buffer));

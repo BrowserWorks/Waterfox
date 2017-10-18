@@ -11,54 +11,20 @@ MOCHITEST_MANIFESTS += ['mochitests/mochitest.ini']
 
 XPCSHELL_TESTS_MANIFESTS += [
     'unit/xpcshell.ini',
-    'unit/xpcshell_b2g.ini',
     'unit_ipc/xpcshell.ini',
 ]
 
-GeckoSimplePrograms([
-    'PropertiesTest',
-    'ReadNTLM',
-    'TestBlockingSocket',
-    'TestDNS',
-    'TestIncrementalDownload',
-    'TestOpen',
-    'TestProtocols',
-    'TestServ',
-    'TestStreamLoader',
-    'TestUpload',
-    'TestURLParser',
-    'urltest',
-])
-
-# XXX Make this work in libxul builds.
-#SIMPLE_PROGRAMS += [
-#    TestIDN',
-#    TestIOThreads',
-#    TestSocketTransport',
-#    TestStreamPump',
-#    TestStreamTransport',
-#    TestUDPSocketProvider',
-#]
-
-CppUnitTests([
-    'TestBind',
-    'TestCookie',
-    'TestUDPSocket',
-])
-
-RESOURCE_FILES += [
-    'urlparse.dat',
-    'urlparse_unx.dat',
+FINAL_LIBRARY = 'xul-gtest'
+UNIFIED_SOURCES += [
+    'TestBind.cpp',
+    'TestCookie.cpp',
+    'TestUDPSocket.cpp',
 ]
 
-USE_LIBS += ['static:js']
-
-if CONFIG['ENABLE_INTL_API'] and CONFIG['MOZ_ICU_DATA_ARCHIVE']:
-    # The ICU libraries linked into libmozjs will not include the ICU data,
-    # so link it directly.
-    USE_LIBS += ['icudata']
-
-CXXFLAGS += CONFIG['TK_CFLAGS']
+if CONFIG['OS_TARGET'] == 'WINNT':
+    UNIFIED_SOURCES += [
+        'TestNamedPipeService.cpp',
+    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

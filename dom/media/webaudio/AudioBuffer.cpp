@@ -27,7 +27,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioBuffer)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(AudioBuffer)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(AudioBuffer)
@@ -141,32 +140,29 @@ AudioBufferMemoryTracker::UnregisterAudioBufferInternal(const AudioBuffer* aAudi
 MOZ_DEFINE_MALLOC_SIZE_OF(AudioBufferMemoryTrackerMallocSizeOf)
 
 NS_IMETHODIMP
-AudioBufferMemoryTracker::CollectReports(nsIHandleReportCallback* handleReport,
-                                         nsISupports* data, bool)
+AudioBufferMemoryTracker::CollectReports(nsIHandleReportCallback* aHandleReport,
+                                         nsISupports* aData, bool)
 {
- size_t amount = 0;
- nsresult rv;
+  size_t amount = 0;
 
- for (auto iter = mBuffers.Iter(); !iter.Done(); iter.Next()) {
-   amount += iter.Get()->GetKey()->SizeOfIncludingThis(AudioBufferMemoryTrackerMallocSizeOf);
- }
+  for (auto iter = mBuffers.Iter(); !iter.Done(); iter.Next()) {
+    amount += iter.Get()->GetKey()->SizeOfIncludingThis(AudioBufferMemoryTrackerMallocSizeOf);
+  }
 
- rv = handleReport->Callback(EmptyCString(),
-                             NS_LITERAL_CSTRING("explicit/webaudio/audiobuffer"),
-                             KIND_HEAP, UNITS_BYTES, amount,
-                             NS_LITERAL_CSTRING("Memory used by AudioBuffer"
-                                                " objects (Web Audio)"),
-                             data);
- NS_ENSURE_SUCCESS(rv, rv);
+  MOZ_COLLECT_REPORT(
+    "explicit/webaudio/audiobuffer", KIND_HEAP, UNITS_BYTES, amount,
+    "Memory used by AudioBuffer objects (Web Audio).");
 
- return NS_OK;
+  return NS_OK;
 }
 
-AudioBuffer::AudioBuffer(AudioContext* aContext, uint32_t aNumberOfChannels,
-                         uint32_t aLength, float aSampleRate,
+AudioBuffer::AudioBuffer(nsPIDOMWindowInner* aWindow,
+                         uint32_t aNumberOfChannels,
+                         uint32_t aLength,
+                         float aSampleRate,
                          already_AddRefed<ThreadSharedFloatArrayBufferList>
                            aInitialContents)
-  : mOwnerWindow(do_GetWeakReference(aContext->GetOwner())),
+  : mOwnerWindow(do_GetWeakReference(aWindow)),
     mSharedChannels(aInitialContents),
     mLength(aLength),
     mSampleRate(aSampleRate)
@@ -182,17 +178,34 @@ AudioBuffer::~AudioBuffer()
 {
   AudioBufferMemoryTracker::UnregisterAudioBuffer(this);
   ClearJSChannels();
+  mozilla::DropJSObjects(this);
+}
+
+/* static */ already_AddRefed<AudioBuffer>
+AudioBuffer::Constructor(const GlobalObject& aGlobal,
+                         const AudioBufferOptions& aOptions,
+                         ErrorResult& aRv)
+{
+  if (!aOptions.mNumberOfChannels) {
+    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    return nullptr;
+  }
+
+  nsCOMPtr<nsPIDOMWindowInner> window =
+    do_QueryInterface(aGlobal.GetAsSupports());
+
+  return Create(window, aOptions.mNumberOfChannels, aOptions.mLength,
+                aOptions.mSampleRate, aRv);
 }
 
 void
 AudioBuffer::ClearJSChannels()
 {
   mJSChannels.Clear();
-  mozilla::DropJSObjects(this);
 }
 
 /* static */ already_AddRefed<AudioBuffer>
-AudioBuffer::Create(AudioContext* aContext, uint32_t aNumberOfChannels,
+AudioBuffer::Create(nsPIDOMWindowInner* aWindow, uint32_t aNumberOfChannels,
                     uint32_t aLength, float aSampleRate,
                     already_AddRefed<ThreadSharedFloatArrayBufferList>
                       aInitialContents,
@@ -210,7 +223,7 @@ AudioBuffer::Create(AudioContext* aContext, uint32_t aNumberOfChannels,
   }
 
   RefPtr<AudioBuffer> buffer =
-    new AudioBuffer(aContext, aNumberOfChannels, aLength, aSampleRate,
+    new AudioBuffer(aWindow, aNumberOfChannels, aLength, aSampleRate,
                     Move(aInitialContents));
 
   return buffer.forget();
@@ -349,9 +362,6 @@ AudioBuffer::GetChannelData(JSContext* aJSContext, uint32_t aChannel,
     return;
   }
 
-  if (mJSChannels[aChannel]) {
-    JS::ExposeObjectToActiveJS(mJSChannels[aChannel]);
-  }
   aRetval.set(mJSChannels[aChannel]);
 }
 
@@ -376,25 +386,19 @@ AudioBuffer::StealJSArrayDataIntoSharedChannels(JSContext* aJSContext)
   RefPtr<ThreadSharedFloatArrayBufferList> result =
     new ThreadSharedFloatArrayBufferList(mJSChannels.Length());
   for (uint32_t i = 0; i < mJSChannels.Length(); ++i) {
-    if (mJSChannels[i]) {
-      JS::ExposeObjectToActiveJS(mJSChannels[i]);
-    }
     JS::Rooted<JSObject*> arrayBufferView(aJSContext, mJSChannels[i]);
     bool isSharedMemory;
     JS::Rooted<JSObject*> arrayBuffer(aJSContext,
                                       JS_GetArrayBufferViewBuffer(aJSContext,
                                                                   arrayBufferView,
                                                                   &isSharedMemory));
-    if (arrayBuffer) {
-      JS::ExposeObjectToActiveJS(arrayBuffer);
-    }
     // The channel data arrays should all have originated in
     // RestoreJSChannelData, where they are created unshared.
     MOZ_ASSERT(!isSharedMemory);
-    auto stolenData = arrayBuffer
-      ? static_cast<float*>(JS_StealArrayBufferContents(aJSContext,
-                                                        arrayBuffer))
-      : nullptr;
+    auto stolenData =
+      arrayBuffer ? static_cast<float*>(
+                      JS_StealArrayBufferContents(aJSContext, arrayBuffer))
+                  : nullptr;
     if (stolenData) {
       result->SetData(i, stolenData, js_free, stolenData);
     } else {

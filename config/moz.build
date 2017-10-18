@@ -15,7 +15,6 @@ NO_VISIBILITY_FLAGS = True
 CONFIGURE_SUBST_FILES += [
     'doxygen.cfg',
     'makefiles/test/Makefile',
-    'tests/makefiles/autodeps/Makefile',
     'tests/src-simple/Makefile',
 ]
 
@@ -32,12 +31,8 @@ if CONFIG['HOST_OS_ARCH'] != 'WINNT':
 if CONFIG['MOZ_SYSTEM_ICU']:
     DEFINES['MOZ_SYSTEM_ICU'] = True
 
-PYTHON_UNIT_TESTS += [
-    'tests/test_mozbuild_reading.py',
-    'tests/unit-expandlibs.py',
-    'tests/unit-mozunit.py',
-    'tests/unit-nsinstall.py',
-    'tests/unit-printprereleasesuffix.py',
+PYTHON_UNITTEST_MANIFESTS += [
+    'tests/python.ini',
 ]
 
 if CONFIG['GNU_CC'] and CONFIG['MOZ_OPTIMIZE']:

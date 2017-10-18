@@ -14,6 +14,7 @@
 #include "mozilla/ArenaObjectID.h"
 #include "mozilla/Assertions.h"
 #include "nsStyleStruct.h"
+#include "nsStyleContext.h"
 
 namespace mozilla {
 
@@ -21,17 +22,12 @@ template<typename T>
 void
 ArenaRefPtr<T>::AssertValidType()
 {
-#ifdef DEBUG
-  bool ok =
-#define PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT(name_) \
-    T::ArenaObjectID() == eArenaObjectID_##name_ ||
-#include "nsPresArenaObjectList.h"
-#undef PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT
-    false;
-  MOZ_ASSERT(ok, "ArenaRefPtr<T> template parameter T must be declared in "
-                 "nsPresArenaObjectList with "
-                 "PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT");
-#endif
+  // If adding new types, please update nsPresArena::ClearArenaRefPtrWithoutDeregistering
+  // as well
+  static_assert(IsSame<T, GeckoStyleContext>::value || IsSame<T, nsStyleContext>::value,
+                 "ArenaRefPtr<T> template parameter T must be declared in "
+                 "nsPresArenaObjectList and explicitly handled in"
+                 "nsPresArena.cpp");
 }
 
 } // namespace mozilla
@@ -43,5 +39,6 @@ nsPresArena::RegisterArenaRefPtr(mozilla::ArenaRefPtr<T>* aPtr)
   MOZ_ASSERT(!mArenaRefPtrs.Contains(aPtr));
   mArenaRefPtrs.Put(aPtr, T::ArenaObjectID());
 }
+
 
 #endif

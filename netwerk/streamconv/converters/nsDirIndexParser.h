@@ -25,7 +25,7 @@ public:
     NS_DECL_NSISTREAMLISTENER
     NS_DECL_NSIREQUESTOBSERVER
     NS_DECL_NSIDIRINDEXPARSER
-    
+
     nsDirIndexParser();
     nsresult Init();
 
@@ -47,11 +47,11 @@ protected:
     nsCString    mBuf;
     int32_t      mLineStart;
     bool         mHasDescription;
-    int*         mFormat;
+    int          mFormat[8];
 
     nsresult ProcessData(nsIRequest *aRequest, nsISupports *aCtxt);
     nsresult ParseFormat(const char* buf);
-    nsresult ParseData(nsIDirIndex* aIdx, char* aDataStr);
+    nsresult ParseData(nsIDirIndex* aIdx, char* aDataStr, int32_t lineLen);
 
     struct Field {
         const char *mName;

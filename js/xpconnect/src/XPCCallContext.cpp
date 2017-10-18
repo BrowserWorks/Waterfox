@@ -15,7 +15,10 @@ using namespace mozilla;
 using namespace xpc;
 using namespace JS;
 
-#define IS_TEAROFF_CLASS(clazz) ((clazz) == &XPC_WN_Tearoff_JSClass)
+static inline bool IsTearoffClass(const js::Class* clazz)
+{
+    return clazz == &XPC_WN_Tearoff_JSClass;
+}
 
 XPCCallContext::XPCCallContext(JSContext* cx,
                                HandleObject obj    /* = nullptr               */,
@@ -27,7 +30,7 @@ XPCCallContext::XPCCallContext(JSContext* cx,
     :   mAr(cx),
         mState(INIT_FAILED),
         mXPC(nsXPConnect::XPConnect()),
-        mXPCJSRuntime(nullptr),
+        mXPCJSContext(nullptr),
         mJSContext(cx),
         mWrapper(nullptr),
         mTearOff(nullptr),
@@ -39,12 +42,12 @@ XPCCallContext::XPCCallContext(JSContext* cx,
     if (!mXPC)
         return;
 
-    mXPCJSRuntime = XPCJSRuntime::Get();
+    mXPCJSContext = XPCJSContext::Get();
 
     // hook into call context chain.
-    mPrevCallContext = mXPCJSRuntime->SetCallContext(this);
+    mPrevCallContext = mXPCJSContext->SetCallContext(this);
 
-    mState = HAVE_RUNTIME;
+    mState = HAVE_CONTEXT;
 
     if (!obj)
         return;
@@ -57,24 +60,21 @@ XPCCallContext::XPCCallContext(JSContext* cx,
 
     JSObject* unwrapped = js::CheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
     if (!unwrapped) {
-        JS_ReportError(mJSContext, "Permission denied to call method on |this|");
+        JS_ReportErrorASCII(mJSContext, "Permission denied to call method on |this|");
         mState = INIT_FAILED;
         return;
     }
     const js::Class* clasp = js::GetObjectClass(unwrapped);
     if (IS_WN_CLASS(clasp)) {
         mWrapper = XPCWrappedNative::Get(unwrapped);
-    } else if (IS_TEAROFF_CLASS(clasp)) {
+    } else if (IsTearoffClass(clasp)) {
         mTearOff = (XPCWrappedNativeTearOff*)js::GetObjectPrivate(unwrapped);
         mWrapper = XPCWrappedNative::Get(
           &js::GetReservedSlot(unwrapped,
                                XPC_WN_TEAROFF_FLAT_OBJECT_SLOT).toObject());
     }
-    if (mWrapper) {
-        if (mTearOff)
-            mScriptableInfo = nullptr;
-        else
-            mScriptableInfo = mWrapper->GetScriptableInfo();
+    if (mWrapper && !mTearOff) {
+        mScriptable = mWrapper->GetScriptable();
     }
 
     if (!JSID_IS_VOID(name))
@@ -125,7 +125,7 @@ void
 XPCCallContext::SetCallInfo(XPCNativeInterface* iface, XPCNativeMember* member,
                             bool isSetter)
 {
-    CHECK_STATE(HAVE_RUNTIME);
+    CHECK_STATE(HAVE_CONTEXT);
 
     // We are going straight to the method info and need not do a lookup
     // by id.
@@ -197,77 +197,19 @@ XPCCallContext::SystemIsBeingShutDown()
     // can be making this call on one thread for call contexts on another
     // thread.
     NS_WARNING("Shutting Down XPConnect even through there is a live XPCCallContext");
-    mXPCJSRuntime = nullptr;
+    mXPCJSContext = nullptr;
     mState = SYSTEM_SHUTDOWN;
+    mSet = nullptr;
+    mInterface = nullptr;
+
     if (mPrevCallContext)
         mPrevCallContext->SystemIsBeingShutDown();
 }
 
 XPCCallContext::~XPCCallContext()
 {
-    if (mXPCJSRuntime) {
-        DebugOnly<XPCCallContext*> old = mXPCJSRuntime->SetCallContext(mPrevCallContext);
+    if (mXPCJSContext) {
+        DebugOnly<XPCCallContext*> old = mXPCJSContext->SetCallContext(mPrevCallContext);
         MOZ_ASSERT(old == this, "bad pop from per thread data");
     }
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetCallee(nsISupports * *aCallee)
-{
-    nsCOMPtr<nsISupports> rval = mWrapper ? mWrapper->GetIdentityObject() : nullptr;
-    rval.forget(aCallee);
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetCalleeMethodIndex(uint16_t* aCalleeMethodIndex)
-{
-    *aCalleeMethodIndex = mMethodIndex;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetCalleeInterface(nsIInterfaceInfo * *aCalleeInterface)
-{
-    nsCOMPtr<nsIInterfaceInfo> rval = mInterface->GetInterfaceInfo();
-    rval.forget(aCalleeInterface);
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetCalleeClassInfo(nsIClassInfo * *aCalleeClassInfo)
-{
-    nsCOMPtr<nsIClassInfo> rval = mWrapper ? mWrapper->GetClassInfo() : nullptr;
-    rval.forget(aCalleeClassInfo);
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetJSContext(JSContext * *aJSContext)
-{
-    JS_AbortIfWrongThread(mJSContext);
-    *aJSContext = mJSContext;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetArgc(uint32_t* aArgc)
-{
-    *aArgc = (uint32_t) mArgc;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetArgvPtr(Value** aArgvPtr)
-{
-    *aArgvPtr = mArgv;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-XPCCallContext::GetPreviousCallContext(nsAXPCNativeCallContext** aResult)
-{
-  NS_ENSURE_ARG_POINTER(aResult);
-  *aResult = GetPrevCallContext();
-  return NS_OK;
 }

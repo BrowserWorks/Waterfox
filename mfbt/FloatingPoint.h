@@ -117,7 +117,7 @@ struct FloatingPoint : public SelectTrait<T>
 
 /** Determines whether a float/double is NaN. */
 template<typename T>
-static MOZ_ALWAYS_INLINE constexpr bool
+static MOZ_ALWAYS_INLINE bool
 IsNaN(T aValue)
 {
   /*
@@ -186,6 +186,18 @@ IsNegativeZero(T aValue)
   return bits == Traits::kSignBit;
 }
 
+/** Determines wether a float/double represents +0. */
+template<typename T>
+static MOZ_ALWAYS_INLINE bool
+IsPositiveZero(T aValue)
+{
+  /* All bits are zero if the value is +0. */
+  typedef FloatingPoint<T> Traits;
+  typedef typename Traits::Bits Bits;
+  Bits bits = BitwiseCast<Bits>(aValue);
+  return bits == 0;
+}
+
 /**
  * Returns 0 if a float/double is NaN or infinite;
  * otherwise, the float/double is returned.
@@ -244,21 +256,65 @@ NegativeInfinity()
   return BitwiseCast<T>(Traits::kSignBit | Traits::kExponentBits);
 }
 
+/**
+ * Computes the bit pattern for a NaN with the specified sign bit and
+ * significand bits.
+ */
+template<typename T,
+         int SignBit,
+         typename FloatingPoint<T>::Bits Significand>
+struct SpecificNaNBits
+{
+  using Traits = FloatingPoint<T>;
 
-/** Constructs a NaN value with the specified sign bit and significand bits. */
+  static_assert(SignBit == 0 || SignBit == 1, "bad sign bit");
+  static_assert((Significand & ~Traits::kSignificandBits) == 0,
+                "significand must only have significand bits set");
+  static_assert(Significand & Traits::kSignificandBits,
+                "significand must be nonzero");
+
+  static constexpr typename Traits::Bits value =
+    (SignBit * Traits::kSignBit) | Traits::kExponentBits | Significand;
+};
+
+/**
+ * Constructs a NaN value with the specified sign bit and significand bits.
+ *
+ * There is also a variant that returns the value directly.  In most cases, the
+ * two variants should be identical.  However, in the specific case of x86
+ * chips, the behavior differs: returning floating-point values directly is done
+ * through the x87 stack, and x87 loads and stores turn signaling NaNs into
+ * quiet NaNs... silently.  Returning floating-point values via outparam,
+ * however, is done entirely within the SSE registers when SSE2 floating-point
+ * is enabled in the compiler, which has semantics-preserving behavior you would
+ * expect.
+ *
+ * If preserving the distinction between signaling NaNs and quiet NaNs is
+ * important to you, you should use the outparam version.  In all other cases,
+ * you should use the direct return version.
+ */
 template<typename T>
-static MOZ_ALWAYS_INLINE T
-SpecificNaN(int signbit, typename FloatingPoint<T>::Bits significand)
+static MOZ_ALWAYS_INLINE void
+SpecificNaN(int signbit, typename FloatingPoint<T>::Bits significand, T* result)
 {
   typedef FloatingPoint<T> Traits;
   MOZ_ASSERT(signbit == 0 || signbit == 1);
   MOZ_ASSERT((significand & ~Traits::kSignificandBits) == 0);
   MOZ_ASSERT(significand & Traits::kSignificandBits);
 
-  T t = BitwiseCast<T>((signbit ? Traits::kSignBit : 0) |
-                       Traits::kExponentBits |
-                       significand);
-  MOZ_ASSERT(IsNaN(t));
+  BitwiseCast<T>((signbit ? Traits::kSignBit : 0) |
+                  Traits::kExponentBits |
+                  significand,
+                  result);
+  MOZ_ASSERT(IsNaN(*result));
+}
+
+template<typename T>
+static MOZ_ALWAYS_INLINE T
+SpecificNaN(int signbit, typename FloatingPoint<T>::Bits significand)
+{
+  T t;
+  SpecificNaN(signbit, significand, &t);
   return t;
 }
 

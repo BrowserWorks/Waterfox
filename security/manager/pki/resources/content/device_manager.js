@@ -3,8 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const nsIFilePicker = Components.interfaces.nsIFilePicker;
-const nsFilePicker = "@mozilla.org/filepicker;1";
 const nsIPKCS11Slot = Components.interfaces.nsIPKCS11Slot;
 const nsIPKCS11Module = Components.interfaces.nsIPKCS11Module;
 const nsPKCS11ModuleDB = "@mozilla.org/security/pkcs11moduledb;1";
@@ -24,54 +22,47 @@ var secmoddb;
 var skip_enable_buttons = false;
 
 var smartCardObserver = {
-  observe: function() {
+  observe() {
     onSmartCardChange();
   }
 };
 
-function DeregisterSmartCardObservers()
-{
+function DeregisterSmartCardObservers() {
   Services.obs.removeObserver(smartCardObserver, "smartcard-insert");
   Services.obs.removeObserver(smartCardObserver, "smartcard-remove");
 }
 
 /* Do the initial load of all PKCS# modules and list them. */
-function LoadModules()
-{
+function LoadModules() {
   bundle = document.getElementById("pippki_bundle");
   secmoddb = Components.classes[nsPKCS11ModuleDB].getService(nsIPKCS11ModuleDB);
-  Services.obs.addObserver(smartCardObserver, "smartcard-insert", false);
-  Services.obs.addObserver(smartCardObserver, "smartcard-remove", false);
+  Services.obs.addObserver(smartCardObserver, "smartcard-insert");
+  Services.obs.addObserver(smartCardObserver, "smartcard-remove");
 
   RefreshDeviceList();
 }
 
-function getPKCS11()
-{
+function getPKCS11() {
   return Components.classes[nsPKCS11ContractID].getService(nsIPKCS11);
 }
 
-function getNSSString(name)
-{
+function getNSSString(name) {
   return document.getElementById("pipnss_bundle").getString(name);
 }
 
-function doPrompt(msg)
-{
+function doPrompt(msg) {
   let prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].
     getService(Components.interfaces.nsIPromptService);
   prompts.alert(window, null, msg);
 }
 
-function doConfirm(msg)
-{
+function doConfirm(msg) {
   let prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].
     getService(Components.interfaces.nsIPromptService);
   return prompts.confirm(window, null, msg);
 }
 
-function RefreshDeviceList()
-{
+function RefreshDeviceList() {
   let modules = secmoddb.listModules();
   while (modules.hasMoreElements()) {
     let module = modules.getNext().QueryInterface(nsIPKCS11Module);
@@ -89,8 +80,7 @@ function RefreshDeviceList()
   SetFIPSButton();
 }
 
-function SetFIPSButton()
-{
+function SetFIPSButton() {
   var fipsButton = document.getElementById("fipsbutton");
   var label;
   if (secmoddb.isFIPSEnabled) {
@@ -111,8 +101,7 @@ function SetFIPSButton()
 /* Add a module to the tree.  slots is the array of slots in the module,
  * to be represented as children.
  */
-function AddModule(module, slots)
-{
+function AddModule(module, slots) {
   var tree = document.getElementById("device_list");
   var item  = document.createElement("treeitem");
   var row  = document.createElement("treerow");
@@ -142,9 +131,8 @@ var selected_slot;
 var selected_module;
 
 /* get the slot selected by the user (can only be one-at-a-time) */
-function getSelectedItem()
-{
-  var tree = document.getElementById('device_tree');
+function getSelectedItem() {
+  var tree = document.getElementById("device_tree");
   if (tree.currentIndex < 0) return;
   var item = tree.contentView.getItemAtIndex(tree.currentIndex);
   selected_slot = null;
@@ -170,8 +158,7 @@ function getSelectedItem()
   }
 }
 
-function enableButtons()
-{
+function enableButtons() {
   if (skip_enable_buttons) {
     return;
   }
@@ -202,34 +189,29 @@ function enableButtons()
     }
     showSlotInfo();
   }
-  var thebutton = document.getElementById('login_button');
-  thebutton.setAttribute("disabled", login_toggle);
-  thebutton = document.getElementById('logout_button');
-  thebutton.setAttribute("disabled", logout_toggle);
-  thebutton = document.getElementById('change_pw_button');
-  thebutton.setAttribute("disabled", pw_toggle);
-  thebutton = document.getElementById('unload_button');
-  thebutton.setAttribute("disabled", unload_toggle);
-  // not implemented
-  //thebutton = document.getElementById('change_slotname_button');
-  //thebutton.setAttribute("disabled", toggle);
+  document.getElementById("login_button")
+          .setAttribute("disabled", login_toggle);
+  document.getElementById("logout_button")
+          .setAttribute("disabled", logout_toggle);
+  document.getElementById("change_pw_button")
+          .setAttribute("disabled", pw_toggle);
+  document.getElementById("unload_button")
+          .setAttribute("disabled", unload_toggle);
 }
 
 // clear the display of information for the slot
-function ClearInfoList()
-{
+function ClearInfoList() {
   let infoList = document.getElementById("info_list");
   while (infoList.hasChildNodes()) {
-    infoList.removeChild(infoList.firstChild);
+    infoList.firstChild.remove();
   }
 }
 
-function ClearDeviceList()
-{
+function ClearDeviceList() {
   ClearInfoList();
 
   skip_enable_buttons = true;
-  var tree = document.getElementById('device_tree');
+  var tree = document.getElementById("device_tree");
   tree.view.selection.clearSelection();
   skip_enable_buttons = false;
 
@@ -237,14 +219,13 @@ function ClearDeviceList()
   // module that just changed.
   let deviceList = document.getElementById("device_list");
   while (deviceList.hasChildNodes()) {
-    deviceList.removeChild(deviceList.firstChild);
+    deviceList.firstChild.remove();
   }
 }
 
 
 // show a list of info about a slot
-function showSlotInfo()
-{
+function showSlotInfo() {
   var present = true;
   ClearInfoList();
   switch (selected_slot.status) {
@@ -280,6 +261,8 @@ function showSlotInfo()
                 bundle.getString("devinfo_stat_ready"),
                 "tok_status");
      break;
+   default:
+     return;
   }
   AddInfoRow(bundle.getString("devinfo_desc"),
              selected_slot.desc, "slot_desc");
@@ -294,8 +277,7 @@ function showSlotInfo()
   }
 }
 
-function showModuleInfo()
-{
+function showModuleInfo() {
   ClearInfoList();
   AddInfoRow(bundle.getString("devinfo_modname"),
              selected_module.name, "module_name");
@@ -304,8 +286,7 @@ function showModuleInfo()
 }
 
 // add a row to the info list, as [col1 col2] (ex.: ["status" "logged in"])
-function AddInfoRow(col1, col2, cell_id)
-{
+function AddInfoRow(col1, col2, cell_id) {
   var tree = document.getElementById("info_list");
   var item  = document.createElement("treeitem");
   var row  = document.createElement("treerow");
@@ -323,8 +304,7 @@ function AddInfoRow(col1, col2, cell_id)
 }
 
 // log in to a slot
-function doLogin()
-{
+function doLogin() {
   getSelectedItem();
   // here's the workaround - login functions are with token
   var selected_token = selected_slot.getToken();
@@ -345,8 +325,7 @@ function doLogin()
 }
 
 // log out of a slot
-function doLogout()
-{
+function doLogout() {
   getSelectedItem();
   // here's the workaround - login functions are with token
   var selected_token = selected_slot.getToken();
@@ -366,22 +345,19 @@ function doLogout()
 }
 
 // load a new device
-function doLoad()
-{
+function doLoad() {
   window.open("load_device.xul", "loaddevice", "chrome,centerscreen,modal");
   ClearDeviceList();
   RefreshDeviceList();
 }
 
-function deleteSelected()
-{
+function deleteSelected() {
   getSelectedItem();
   if (selected_module &&
       doConfirm(getNSSString("DelModuleWarning"))) {
     try {
       getPKCS11().deleteModule(selected_module.name);
-    }
-    catch (e) {
+    } catch (e) {
       doPrompt(getNSSString("DelModuleError"));
       return false;
     }
@@ -391,8 +367,7 @@ function deleteSelected()
   return false;
 }
 
-function doUnload()
-{
+function doUnload() {
   if (deleteSelected()) {
     ClearDeviceList();
     RefreshDeviceList();
@@ -400,9 +375,8 @@ function doUnload()
 }
 
 // handle card insertion and removal
-function onSmartCardChange()
-{
-  var tree = document.getElementById('device_tree');
+function onSmartCardChange() {
+  var tree = document.getElementById("device_tree");
   var index = tree.currentIndex;
   tree.currentIndex = 0;
   ClearDeviceList();
@@ -411,8 +385,7 @@ function onSmartCardChange()
   enableButtons();
 }
 
-function changePassword()
-{
+function changePassword() {
   getSelectedItem();
   let params = Components.classes[nsDialogParamBlock]
                          .createInstance(nsIDialogParamBlock);
@@ -423,44 +396,9 @@ function changePassword()
   enableButtons();
 }
 
-// browse fs for PKCS#11 device
-function doBrowseFiles()
-{
-  var srbundle = document.getElementById("pippki_bundle");
-  var fp = Components.classes[nsFilePicker].createInstance(nsIFilePicker);
-  fp.init(window,
-          srbundle.getString("loadPK11TokenDialog"),
-          nsIFilePicker.modeOpen);
-  fp.appendFilters(nsIFilePicker.filterAll);
-  if (fp.show() == nsIFilePicker.returnOK) {
-    var pathbox = document.getElementById("device_path");
-    pathbox.setAttribute("value", fp.file.path);
-  }
-}
-
-function doLoadDevice()
-{
-  var name_box = document.getElementById("device_name");
-  var path_box = document.getElementById("device_path");
-  try {
-    getPKCS11().addModule(name_box.value, path_box.value, 0, 0);
-  } catch (e) {
-    if (e.result == Components.results.NS_ERROR_ILLEGAL_VALUE) {
-      doPrompt(getNSSString("AddModuleDup"));
-    } else {
-      doPrompt(getNSSString("AddModuleFailure"));
-    }
-
-    return false;
-  }
-  return true;
-}
-
 // -------------------------------------   Old code
 
-function showTokenInfo()
-{
-  //ClearInfoList();
+function showTokenInfo() {
   var selected_token = selected_slot.getToken();
   AddInfoRow(bundle.getString("devinfo_label"),
              selected_token.tokenLabel, "tok_label");
@@ -474,8 +412,7 @@ function showTokenInfo()
              selected_token.tokenFWVersion, "tok_fwv");
 }
 
-function toggleFIPS()
-{
+function toggleFIPS() {
   if (!secmoddb.isFIPSEnabled) {
     // A restriction of FIPS mode is, the password must be set
     // In FIPS mode the password must be non-empty.
@@ -483,20 +420,16 @@ function toggleFIPS()
 
     var tokendb = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
     var internal_token = tokendb.getInternalKeyToken(); // nsIPK11Token
-    var slot = secmoddb.findSlotByName(internal_token.tokenName);
-    switch (slot.status) {
-      case nsIPKCS11Slot.SLOT_UNINITIALIZED:
-      case nsIPKCS11Slot.SLOT_READY:
-        // Token has either no or an empty password.
-        doPrompt(bundle.getString("fips_nonempty_password_required"));
-        return;
+    if (!internal_token.hasPassword) {
+      // Token has either no or an empty password.
+      doPrompt(bundle.getString("fips_nonempty_password_required"));
+      return;
     }
   }
 
   try {
     secmoddb.toggleFIPSMode();
-  }
-  catch (e) {
+  } catch (e) {
     doPrompt(bundle.getString("unable_to_toggle_fips"));
     return;
   }

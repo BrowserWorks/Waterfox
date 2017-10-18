@@ -1,5 +1,6 @@
 <!doctype html>
 <title>SVG interface tests</title>
+<meta name=timeout content=long>
 <div id=log></div>
 <script src=/resources/testharness.js></script>
 <script src=/resources/testharnessreport.js></script>
@@ -13,6 +14,9 @@ interface ProcessingInstruction : Node {};
 interface Element : Node {};
 interface HTMLElement : Element {};
 [PrimaryGlobal] interface Window {};
+
+// Just need to know that DOMStringMap exists; its details are tested elsewhere.
+interface DOMStringMap { };
 
 [TreatNonObjectAsNull]
 callback EventHandlerNonNull = any (Event event);
@@ -358,6 +362,7 @@ dictionary DOMMatrixInit {
 interface SVGElement : Element {
 
   [SameObject] readonly attribute SVGAnimatedString className;
+  [SameObject] readonly attribute DOMStringMap dataset;
 
   readonly attribute SVGSVGElement? ownerSVGElement;
   readonly attribute SVGElement? viewportElement;
@@ -387,8 +392,12 @@ interface SVGGraphicsElement : SVGElement {
 SVGGraphicsElement implements SVGTests;
 
 interface SVGGeometryElement : SVGGraphicsElement {
+  [SameObject] readonly attribute SVGAnimatedNumber pathLength;
+
   boolean isPointInFill(DOMPoint point);
   boolean isPointInStroke(DOMPoint point);
+  float getTotalLength();
+  DOMPoint getPointAtLength(float distance);
 };
 
 interface SVGNumber {
@@ -532,7 +541,6 @@ interface SVGStringList {
   setter void (unsigned long index, DOMString newItem);
 };
 
-[NoInterfaceObject]
 interface SVGUnitTypes {
   // Unit Types
   const unsigned short SVG_UNIT_TYPE_UNKNOWN = 0;
@@ -569,7 +577,7 @@ interface SVGURIReference {
 };
 
 partial interface Document {
-  readonly attribute SVGSVGElement rootElement;
+  readonly attribute SVGSVGElement? rootElement;
 };
 
 interface SVGSVGElement : SVGGraphicsElement {
@@ -735,11 +743,6 @@ interface SVGAnimatedPreserveAspectRatio {
 };
 
 interface SVGPathElement : SVGGeometryElement {
-
-  [SameObject] readonly attribute SVGAnimatedNumber pathLength;
-
-  float getTotalLength();
-  DOMPoint getPointAtLength(float distance);
 };
 
 interface SVGRectElement : SVGGeometryElement {
@@ -918,7 +921,6 @@ interface SVGGradientElement : SVGElement {
 };
 
 SVGGradientElement implements SVGURIReference;
-SVGGradientElement implements SVGUnitTypes;
 
 interface SVGLinearGradientElement : SVGGradientElement {
   [SameObject] readonly attribute SVGAnimatedLength x1;
@@ -961,7 +963,6 @@ interface SVGPatternElement : SVGElement {
 
 SVGPatternElement implements SVGFitToViewBox;
 SVGPatternElement implements SVGURIReference;
-SVGPatternElement implements SVGUnitTypes;
 
 interface SVGHatchElement : SVGElement {
 };
@@ -982,14 +983,6 @@ interface SVGScriptElement : SVGElement {
 };
 
 SVGScriptElement implements SVGURIReference;
-
-interface SVGZoomEvent : UIEvent {
-  [SameObject] readonly attribute DOMRectReadOnly zoomRectScreen;
-  readonly attribute float previousScale;
-  [SameObject] readonly attribute DOMPointReadOnly previousTranslate;
-  readonly attribute float newScale;
-  [SameObject] readonly attribute DOMPointReadOnly newTranslate;
-};
 
 interface SVGAElement : SVGGraphicsElement {
   [SameObject] readonly attribute SVGAnimatedString target;
@@ -1012,7 +1005,6 @@ interface SVGFilterElement : SVGElement {
 };
 
 SVGFilterElement implements SVGURIReference;
-SVGFilterElement implements SVGUnitTypes;
 
 [NoInterfaceObject]
 interface SVGFilterPrimitiveStandardAttributes {
@@ -1433,7 +1425,7 @@ idlArray.add_idls(idls);
 idlArray.add_objects({
   SVGAnimatedBoolean: ['feConvolveMatrix.preserveAlpha'],
   SVGAnimatedString: ['a.target'],
-  SVGStringList: ['a.requiredFeatures'],
+  SVGStringList: ['a.requiredExtensions'],
   SVGAnimatedEnumeration: ['text.lengthAdjust'],
   SVGAnimatedInteger: ['feConvolveMatrix.orderX'],
   SVGNumber: ['svg.createSVGNumber()'],

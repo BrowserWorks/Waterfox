@@ -42,11 +42,10 @@ OpaqueCrossCompartmentWrapper::delete_(JSContext* cx, HandleObject wrapper, Hand
     return result.succeed();
 }
 
-bool
-OpaqueCrossCompartmentWrapper::enumerate(JSContext* cx, HandleObject wrapper,
-                                         MutableHandleObject objp) const
+JSObject*
+OpaqueCrossCompartmentWrapper::enumerate(JSContext* cx, HandleObject wrapper) const
 {
-    return BaseProxyHandler::enumerate(cx, wrapper, objp);
+    return BaseProxyHandler::enumerate(cx, wrapper);
 }
 
 bool
@@ -184,10 +183,10 @@ OpaqueCrossCompartmentWrapper::className(JSContext* cx,
 
 JSString*
 OpaqueCrossCompartmentWrapper::fun_toString(JSContext* cx, HandleObject proxy,
-                                            unsigned indent) const
+                                            bool isToSource) const
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO, js_Function_str,
-                         js_toString_str, "object");
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
+                              js_Function_str, js_toString_str, "object");
     return nullptr;
 }
 

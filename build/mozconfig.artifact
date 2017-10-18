@@ -1,0 +1,6 @@
+# Common options for testing artifact builds in automation.
+
+# Enable the artifact build.
+ac_add_options --enable-artifact-builds
+
+. "$topsrcdir/build/mozconfig.no-compile"

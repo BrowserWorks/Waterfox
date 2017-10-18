@@ -19,10 +19,10 @@ Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 function badCertListener() {}
 badCertListener.prototype = {
-  getInterface: function (aIID) {
+  getInterface(aIID) {
     return this.QueryInterface(aIID);
   },
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (aIID.equals(Components.interfaces.nsIBadCertListener2) ||
         aIID.equals(Components.interfaces.nsIInterfaceRequestor) ||
         aIID.equals(Components.interfaces.nsISupports)) {
@@ -31,7 +31,7 @@ badCertListener.prototype = {
 
     throw new Error(Components.results.NS_ERROR_NO_INTERFACE);
   },
-  handle_test_result: function () {
+  handle_test_result() {
     if (gSSLStatus) {
       gCert = gSSLStatus.QueryInterface(Components.interfaces.nsISSLStatus).serverCert;
     }
@@ -63,7 +63,7 @@ function initExceptionDialog() {
     if (args[0].location) {
       // We were pre-seeded with a location.
       document.getElementById("locationTextBox").value = args[0].location;
-      document.getElementById('checkCertButton').disabled = false;
+      document.getElementById("checkCertButton").disabled = false;
 
       if (args[0].sslStatus) {
         gSSLStatus = args[0].sslStatus;
@@ -106,7 +106,7 @@ function checkCert() {
   var req = new XMLHttpRequest();
   try {
     if (uri) {
-      req.open('GET', uri.prePath, false);
+      req.open("GET", uri.prePath, false);
       req.channel.notificationCallbacks = new badCertListener();
       req.send(null);
     }
@@ -134,6 +134,10 @@ function checkCert() {
 /**
  * Build and return a URI, based on the information supplied in the
  * Certificate Location fields
+ *
+ * @returns {nsIURI}
+ *          URI constructed from the information supplied on success, null
+ *          otherwise.
  */
 function getURI() {
   // Use fixup service instead of just ioservice's newURI since it's quite
@@ -176,7 +180,7 @@ function resetDialog() {
  * Called by input textboxes to manage UI state
  */
 function handleTextChange() {
-  var checkCertButton = document.getElementById('checkCertButton');
+  var checkCertButton = document.getElementById("checkCertButton");
   checkCertButton.disabled = !(document.getElementById("locationTextBox").value);
   if (gNeedReset) {
     gNeedReset = false;
@@ -212,8 +216,7 @@ function updateCertStatus() {
           use1 = true;
           shortDesc = exs;
           longDesc  = exl;
-        }
-        else {
+        } else {
           use2 = true;
           shortDesc2 = exs;
           longDesc2  = exl;
@@ -249,8 +252,7 @@ function updateCertStatus() {
       pe.checked = !inPrivateBrowsing;
 
       setText("headerDescription", gPKIBundle.getString("addExceptionInvalidHeader"));
-    }
-    else {
+    } else {
       shortDesc = "addExceptionValidShort";
       longDesc  = "addExceptionValidLong";
       gDialog.getButton("extra1").disabled = true;
@@ -264,9 +266,8 @@ function updateCertStatus() {
     // Notify observers about the availability of the certificate
     Components.classes["@mozilla.org/observer-service;1"]
               .getService(Components.interfaces.nsIObserverService)
-              .notifyObservers(null, "cert-exception-ui-ready", null);
-  }
-  else if (gChecking) {
+              .notifyObservers(null, "cert-exception-ui-ready");
+  } else if (gChecking) {
     shortDesc = "addExceptionCheckingShort";
     longDesc  = "addExceptionCheckingLong2";
     // We're checking the certificate, so we disable the Get Certificate
@@ -276,8 +277,7 @@ function updateCertStatus() {
     document.getElementById("viewCertButton").disabled = true;
     gDialog.getButton("extra1").disabled = true;
     document.getElementById("permanent").disabled = true;
-  }
-  else {
+  } else {
     shortDesc = "addExceptionNoCertShort";
     longDesc  = "addExceptionNoCertLong2";
     // We're done checking the certificate, so allow the user to check it again.
@@ -299,6 +299,8 @@ function updateCertStatus() {
     setText("status3Description", gPKIBundle.getString(shortDesc3));
     setText("status3LongDescription", gPKIBundle.getString(longDesc3));
   }
+
+  window.sizeToContent();
 
   gNeedReset = true;
 }
@@ -361,7 +363,7 @@ function addException() {
 }
 
 /**
- * Returns true if this dialog is in private browsing mode.
+ * @returns {Boolean} Whether this dialog is in private browsing mode.
  */
 function inPrivateBrowsingMode() {
   return PrivateBrowsingUtils.isWindowPrivate(window);

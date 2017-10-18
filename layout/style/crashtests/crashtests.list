@@ -1,5 +1,4 @@
 load 105619-1.html
-load 147777-1.html
 load 187671-1.html
 load 192408-1.html
 load 285727-1.html
@@ -28,7 +27,7 @@ load 437170-1.html
 load 437532-1.html
 load 439184-1.html
 load 444237-1.html
-load 444848-1.html 
+load 444848-1.html
 load 447776-1.html
 load 447783-1.html
 load 448161-1.html
@@ -76,7 +75,6 @@ load 621596-1.html
 load 622314-1.xhtml
 load 637242.xhtml
 load 645142.html
-== 645951-1.html 645951-1-ref.html
 load 652976-1.svg
 load 665209-1.html
 load 671799-1.html
@@ -103,6 +101,7 @@ load 862113.html
 load 867487.html
 load 873222.html
 load 880862.html
+load 894245-1.html
 load 915440.html
 load 927734-1.html
 load 930270-1.html
@@ -111,14 +110,14 @@ load 945048-1.html
 load 972199-1.html
 load 989965-1.html
 load 992333-1.html
-pref(dom.webcomponents.enabled,true) load 1017798-1.html
+pref(dom.webcomponents.enabled,true) load 1017798-1.html # bug 1323689
 load 1028514-1.html
 load 1066089-1.html
 load 1074651-1.html
 load 1135534.html
 pref(dom.webcomponents.enabled,true) load 1089463-1.html
 pref(layout.css.expensive-style-struct-assertions.enabled,true) load 1136010-1.html
-pref(layout.css.expensive-style-struct-assertions.enabled,true) load 1146101-1.html
+asserts-if(stylo,0-2) pref(layout.css.expensive-style-struct-assertions.enabled,true) load 1146101-1.html # bug 1324677
 load 1153693-1.html
 load 1161320-1.html
 pref(dom.animations-api.core.enabled,true) load 1161320-2.html
@@ -133,23 +132,72 @@ load 1223688-1.html
 load 1223694-1.html
 load 1226400-1.html
 load 1227501-1.html
+load 1228789-1.html
 load 1230408-1.html
 load 1233135-1.html
 load 1233135-2.html
 load 1238660-1.html
 load 1245260-1.html
 load 1247865-1.html
-load 1264396-1.html
+asserts-if(stylo,0-1) load 1264396-1.html # bug 1324677
+load 1264949.html
 # The following test relies on -webkit-text-fill-color being behind the
 # layout.css.prefixes.webkit pref
 pref(layout.css.prefixes.webkit,false) load 1265611-1.html
-load border-image-visited-link.html
-load font-face-truncated-src.html 
-load large_border_image_width.html
-load long-url-list-stack-overflow.html
-pref(layout.css.background-clip-text.enabled,true) load 1264949.html
-pref(layout.css.background-clip-text.enabled,true) load 1270795.html
-pref(layout.css.background-clip-text.enabled,true) load 1275026.html
+load 1270795.html
+load 1275026.html
 load 1278463-1.html
-pref(dom.animations-api.core.enabled,true) load 1277908-1.html
+pref(dom.animations-api.core.enabled,true) load 1277908-1.html # bug 1323652
 load 1277908-2.html
+load 1282076-1.html
+pref(dom.animations-api.core.enabled,true) load 1282076-2.html
+pref(dom.animations-api.core.enabled,true) load 1290994-1.html
+pref(dom.animations-api.core.enabled,true) load 1290994-2.html
+pref(dom.animations-api.core.enabled,true) load 1290994-3.html
+load 1290994-4.html
+load 1314531.html
+load 1315889-1.html
+load 1315894-1.html
+load 1319072-1.html
+HTTP load 1320423-1.html
+load 1321357-1.html
+load 1328535-1.html
+load 1331272.html
+HTTP load 1333001-1.html
+pref(dom.animations-api.core.enabled,true) load 1340344.html
+load 1342316-1.html
+load 1356601-1.html
+load 1370793-1.xhtml
+load 1371450-1.html
+load 1374175-1.html
+load 1375812-1.html
+load 1377053-1.html
+load 1377256-1.html
+load 1378064-1.html
+load 1378814.html
+load 1380800.html
+load link-transition-before.html
+load 1381420-1.html
+load 1381682.html
+load 1382672.html
+load 1382710.html
+pref(dom.animations-api.core.enabled,true) load 1383493-1.html
+load 1383001.html
+load 1383001-2.html
+load 1383319.html
+pref(dom.animations-api.core.enabled,true) load 1383589-1.html
+load 1383975.html
+load border-image-visited-link.html
+load content-only-on-link-before.html
+load content-only-on-visited-before.html
+load font-face-truncated-src.html
+load large_border_image_width.html
+load link-transition-before.html
+load long-url-list-stack-overflow.html
+load 1383981.html
+load 1383981-2.html
+load 1384824-1.html
+load 1384824-2.html
+load 1387481-1.html
+load 1387499.html
+load 1391577.html

@@ -3,6 +3,8 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- eslint-env mozilla/browser-window -->
+
 <!DOCTYPE bindings [
 <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
 %notificationDTD;
@@ -124,7 +126,7 @@
                             label="&translation.options.neverForSite.label;"
                             accesskey="&translation.options.neverForSite.accesskey;"/>
               <xul:menuseparator/>
-              <xul:menuitem oncommand="openPreferences('paneContent');"
+              <xul:menuitem oncommand="openPreferences('paneGeneral', {origin:'translationInfobar'});"
                             label="&translation.options.preferences.label;"
                             accesskey="&translation.options.preferences.accesskey;"/>
               <xul:menuitem class="subviewbutton panel-subview-footer"
@@ -156,7 +158,7 @@
                 onget="return this._getAnonElt('translationStates').selectedIndex;">
         <setter>
           <![CDATA[
-          let deck = this._getAnonElt('translationStates');
+          let deck = this._getAnonElt("translationStates");
 
           let activeElt = document.activeElement;
           if (activeElt && deck.contains(activeElt))
@@ -224,7 +226,7 @@
             let engineIndex = Object.keys(Translation.supportedEngines)
               .indexOf(Translation.translationEngine);
             if (engineIndex != -1) {
-              this._getAnonElt('translationEngine').selectedIndex = engineIndex;
+              this._getAnonElt("translationEngine").selectedIndex = engineIndex;
             }
 
             const kWelcomePref = "browser.translation.ui.welcomeMessageShown";
@@ -232,9 +234,7 @@
                 this.translation.browser != gBrowser.selectedBrowser)
               return;
 
-            this.addEventListener("transitionend", function onShown() {
-              this.removeEventListener("transitionend", onShown);
-
+            this.addEventListener("transitionend", function() {
               // These strings are hardcoded because they need to reach beta
               // without riding the trains.
               let localizedStrings = {
@@ -264,9 +264,7 @@
                      "C\u1EA3m \u01A1n"]
               };
 
-              let locale = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                             .getService(Ci.nsIXULChromeRegistry)
-                             .getSelectedLocale("browser");
+              let locale = Services.locale.getAppLocaleAsLangTag();
               if (!(locale in localizedStrings))
                 locale = "en";
               let strings = localizedStrings[locale];
@@ -281,7 +279,7 @@
                               "bottomcenter topleft");
 
               Services.prefs.setBoolPref(kWelcomePref, true);
-            });
+            }, {once: true});
           ]]>
         </body>
       </method>

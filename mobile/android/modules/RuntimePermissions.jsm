@@ -8,16 +8,16 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 this.EXPORTED_SYMBOLS = ["RuntimePermissions"];
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 // See: http://developer.android.com/reference/android/Manifest.permission.html
+const ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
 const CAMERA = "android.permission.CAMERA";
-const WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
 const RECORD_AUDIO = "android.permission.RECORD_AUDIO";
+const WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
 
 var RuntimePermissions = {
+  ACCESS_FINE_LOCATION: ACCESS_FINE_LOCATION,
   CAMERA: CAMERA,
   RECORD_AUDIO: RECORD_AUDIO,
   WRITE_EXTERNAL_STORAGE: WRITE_EXTERNAL_STORAGE,
@@ -32,10 +32,31 @@ var RuntimePermissions = {
     let permissions = [].concat(permission);
 
     let msg = {
-      type: 'RuntimePermissions:Prompt',
-      permissions: permissions
+      type: 'RuntimePermissions:Check',
+      permissions: permissions,
+      shouldPrompt: true
     };
 
-    return Messaging.sendRequestForResult(msg);
+    let window = Services.wm.getMostRecentWindow("navigator:browser");
+    return window.WindowEventDispatcher.sendRequestForResult(msg);
+  },
+
+  /**
+    * Check whether the specified permissions have already been granted or not.
+    *
+    * @returns A promise resolving to true if all the permissions are already granted or false if any of the
+    *          permissions are not granted.
+    */
+  checkPermissions: function(permission) {
+    let permissions = [].concat(permission);
+
+    let msg = {
+      type: 'RuntimePermissions:Check',
+      permissions: permissions,
+      shouldPrompt: false
+    };
+
+    let window = Services.wm.getMostRecentWindow("navigator:browser");
+    return window.WindowEventDispatcher.sendRequestForResult(msg);
   }
 };

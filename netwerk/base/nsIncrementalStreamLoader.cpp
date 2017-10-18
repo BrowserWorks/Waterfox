@@ -87,8 +87,7 @@ NS_IMETHODIMP
 nsIncrementalStreamLoader::OnStopRequest(nsIRequest* request, nsISupports *ctxt,
                                          nsresult aStatus)
 {
-  PROFILER_LABEL("nsIncrementalStreamLoader", "OnStopRequest",
-    js::ProfileEntry::Category::NETWORK);
+  AUTO_PROFILER_LABEL("nsIncrementalStreamLoader::OnStopRequest", NETWORK);
 
   if (mObserver) {
     // provide nsIIncrementalStreamLoader::request during call to OnStreamComplete
@@ -104,14 +103,14 @@ nsIncrementalStreamLoader::OnStopRequest(nsIRequest* request, nsISupports *ctxt,
     }
     // done.. cleanup
     ReleaseData();
-    mRequest = 0;
-    mObserver = 0;
-    mContext = 0;
+    mRequest = nullptr;
+    mObserver = nullptr;
+    mContext = nullptr;
   }
   return NS_OK;
 }
 
-NS_METHOD
+nsresult
 nsIncrementalStreamLoader::WriteSegmentFun(nsIInputStream *inStr,
                                            void *closure,
                                            const char *fromSegment,
@@ -197,7 +196,7 @@ nsIncrementalStreamLoader::OnDataAvailable(nsIRequest* request, nsISupports *ctx
   }
   uint32_t countRead;
   nsresult rv = inStr->ReadSegments(WriteSegmentFun, this, count, &countRead);
-  mRequest = 0;
+  mRequest = nullptr;
   return rv;
 }
 

@@ -47,8 +47,6 @@ var testCases = [
   },
 ];
 
-///////////////////////////////////////////////////////////////////////////////
-
 /**
  * Returns the default search scope for a given folder.
  *
@@ -137,8 +135,7 @@ function search(aFolderId, aSearchStr, aExpectedScopeButtonId) {
   if (aSearchStr) {
     is(query.searchTerms, aSearchStr,
        "Content tree's searchTerms should be text in search box");
-  }
-  else {
+  } else {
     is(query.hasSearchTerms, false,
        "Content tree's searchTerms should not exist after search reset");
   }
@@ -159,8 +156,6 @@ function onLibraryAvailable() {
   PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
   PlacesTestUtils.clearHistory().then(finish);
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 function test() {
   waitForExplicitFinish();

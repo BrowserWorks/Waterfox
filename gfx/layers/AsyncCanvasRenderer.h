@@ -14,7 +14,7 @@
 
 class nsICanvasRenderingContextInternal;
 class nsIInputStream;
-class nsIThread;
+class nsISerialEventTarget;
 
 namespace mozilla {
 
@@ -79,8 +79,8 @@ public:
   }
 
   // Active thread means the thread which spawns GLContext.
-  void SetActiveThread();
-  void ResetActiveThread();
+  void SetActiveEventTarget();
+  void ResetActiveEventTarget();
 
   // This will readback surface and return the surface
   // in the DataSourceSurface.
@@ -106,9 +106,9 @@ public:
     return gfx::IntSize(mWidth, mHeight);
   }
 
-  uint64_t GetCanvasClientAsyncID() const
+  CompositableHandle GetCanvasClientAsyncHandle() const
   {
-    return mCanvasClientAsyncID;
+    return mCanvasClientAsyncHandle;
   }
 
   CanvasClient* GetCanvasClient() const
@@ -116,7 +116,7 @@ public:
     return mCanvasClient;
   }
 
-  already_AddRefed<nsIThread> GetActiveThread();
+  already_AddRefed<nsISerialEventTarget> GetActiveEventTarget();
 
   // The lifetime is controllered by HTMLCanvasElement.
   // Only accessed in main thread.
@@ -140,7 +140,7 @@ private:
 
   uint32_t mWidth;
   uint32_t mHeight;
-  uint64_t mCanvasClientAsyncID;
+  CompositableHandle mCanvasClientAsyncHandle;
 
   // The lifetime of this pointer is controlled by OffscreenCanvas
   // Can be accessed in active thread and ImageBridge thread.
@@ -159,7 +159,7 @@ private:
   Mutex mMutex;
 
   // Can be accessed in any thread, need protect by mutex.
-  nsCOMPtr<nsIThread> mActiveThread;
+  nsCOMPtr<nsISerialEventTarget> mActiveEventTarget;
 };
 
 } // namespace layers

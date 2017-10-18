@@ -93,7 +93,11 @@ for ((i=0; $i<$num_files; i=$i+1)); do
 
   dir=$(dirname "$f")
   mkdir -p "$workdir/$dir"
-  $BZIP2 -cz9 "$targetdir/$f" > "$workdir/$f"
+  if [[ -n $MAR_OLD_FORMAT ]]; then
+    $BZIP2 -cz9 "$targetdir/$f" > "$workdir/$f"
+  else
+    $XZ --compress --x86 --lzma2 --format=xz --check=crc64 --force --stdout "$targetdir/$f" > "$workdir/$f"
+  fi
   copy_perm "$targetdir/$f" "$workdir/$f"
 
   targetfiles="$targetfiles \"$f\""
@@ -104,10 +108,21 @@ notice ""
 notice "Adding file and directory remove instructions from file 'removed-files'"
 append_remove_instructions "$targetdir" "$updatemanifestv2" "$updatemanifestv3"
 
-$BZIP2 -z9 "$updatemanifestv2" && mv -f "$updatemanifestv2.bz2" "$updatemanifestv2"
-$BZIP2 -z9 "$updatemanifestv3" && mv -f "$updatemanifestv3.bz2" "$updatemanifestv3"
+if [[ -n $MAR_OLD_FORMAT ]]; then
+  $BZIP2 -z9 "$updatemanifestv2" && mv -f "$updatemanifestv2.bz2" "$updatemanifestv2"
+  $BZIP2 -z9 "$updatemanifestv3" && mv -f "$updatemanifestv3.bz2" "$updatemanifestv3"
+else
+  $XZ --compress --x86 --lzma2 --format=xz --check=crc64 --force "$updatemanifestv2" && mv -f "$updatemanifestv2.xz" "$updatemanifestv2"
+  $XZ --compress --x86 --lzma2 --format=xz --check=crc64 --force "$updatemanifestv3" && mv -f "$updatemanifestv3.xz" "$updatemanifestv3"
+fi
 
-eval "$MAR -C \"$workdir\" -c output.mar $targetfiles"
+mar_command="$MAR"
+if [[ -n $MOZ_PRODUCT_VERSION ]]
+then
+  mar_command="$mar_command -V $MOZ_PRODUCT_VERSION"
+fi
+mar_command="$mar_command -C \"$workdir\" -c output.mar"
+eval "$mar_command $targetfiles"
 mv -f "$workdir/output.mar" "$archive"
 
 # cleanup

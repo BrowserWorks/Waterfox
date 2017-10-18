@@ -24,8 +24,8 @@
  * This preference is a workaround to allow users/sysadmins to identify
  * that the profile exists on an NFS share whose implementation
  * is incompatible with SQLite's default locking implementation.
- * Bug 433129 attempted to automatically identify such file-systems, 
- * but a reliable way was not found and it was determined that the fallback 
+ * Bug 433129 attempted to automatically identify such file-systems,
+ * but a reliable way was not found and it was determined that the fallback
  * locking is slower than POSIX locking, so we do not want to do it by default.
 */
 #define PREF_NFS_FILESYSTEM   "storage.nfs_filesystem"
@@ -37,11 +37,11 @@ using namespace mozilla::dom::quota;
 
 struct Histograms {
   const char *name;
-  const Telemetry::ID readB;
-  const Telemetry::ID writeB;
-  const Telemetry::ID readMS;
-  const Telemetry::ID writeMS;
-  const Telemetry::ID syncMS;
+  const Telemetry::HistogramID readB;
+  const Telemetry::HistogramID writeB;
+  const Telemetry::HistogramID readMS;
+  const Telemetry::HistogramID writeMS;
+  const Telemetry::HistogramID syncMS;
 };
 
 #define SQLITE_TELEMETRY(FILENAME, HGRAM) \
@@ -65,24 +65,26 @@ Histograms gHistograms[] = {
  */
 class IOThreadAutoTimer {
 public:
-  /** 
+  /**
    * IOThreadAutoTimer measures time spent in IO. Additionally it
    * automatically determines whether IO is happening on the main
    * thread and picks an appropriate histogram.
    *
    * @param id takes a telemetry histogram id. The id+1 must be an
-   * equivalent histogram for the main thread. Eg, MOZ_SQLITE_OPEN_MS 
+   * equivalent histogram for the main thread. Eg, MOZ_SQLITE_OPEN_MS
    * is followed by MOZ_SQLITE_OPEN_MAIN_THREAD_MS.
    *
    * @param aOp optionally takes an IO operation to report through the
    * IOInterposer. Filename will be reported as NULL, and reference will be
    * either "sqlite-mainthread" or "sqlite-otherthread".
    */
-  explicit IOThreadAutoTimer(Telemetry::ID aId,
+  explicit IOThreadAutoTimer(Telemetry::HistogramID aId,
     IOInterposeObserver::Operation aOp = IOInterposeObserver::OpNone)
     : start(TimeStamp::Now()),
-      id(aId),
-      op(aOp)
+      id(aId)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
+      , op(aOp)
+#endif
   {
   }
 
@@ -94,8 +96,10 @@ public:
    */
   explicit IOThreadAutoTimer(IOInterposeObserver::Operation aOp)
     : start(TimeStamp::Now()),
-      id(Telemetry::HistogramCount),
-      op(aOp)
+      id(Telemetry::HistogramCount)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
+      , op(aOp)
+#endif
   {
   }
 
@@ -104,13 +108,13 @@ public:
     TimeStamp end(TimeStamp::Now());
     uint32_t mainThread = NS_IsMainThread() ? 1 : 0;
     if (id != Telemetry::HistogramCount) {
-      Telemetry::AccumulateTimeDelta(static_cast<Telemetry::ID>(id + mainThread),
+      Telemetry::AccumulateTimeDelta(static_cast<Telemetry::HistogramID>(id + mainThread),
                                      start, end);
     }
     // We don't report SQLite I/O on Windows because we have a comprehensive
     // mechanism for intercepting I/O on that platform that captures a superset
     // of the data captured here.
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN)
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
     if (IOInterposer::IsObservedOperation(op)) {
       const char* main_ref  = "sqlite-mainthread";
       const char* other_ref = "sqlite-otherthread";
@@ -121,13 +125,15 @@ public:
       // Report observation
       IOInterposer::Report(ob);
     }
-#endif /* defined(MOZ_ENABLE_PROFILER_SPS) && !defined(XP_WIN) */
+#endif /* defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN) */
   }
 
 private:
   const TimeStamp start;
-  const Telemetry::ID id;
+  const Telemetry::HistogramID id;
+#if defined(MOZ_GECKO_PROFILER) && !defined(XP_WIN)
   IOInterposeObserver::Operation op;
+#endif
 };
 
 struct telemetry_file {
@@ -751,7 +757,7 @@ xDlError(sqlite3_vfs *vfs, int nByte, char *zErrMsg)
   orig_vfs->xDlError(orig_vfs, nByte, zErrMsg);
 }
 
-void 
+void
 (*xDlSym(sqlite3_vfs *vfs, void *pHdle, const char *zSym))(void){
   sqlite3_vfs *orig_vfs = static_cast<sqlite3_vfs*>(vfs->pAppData);
   return orig_vfs->xDlSym(orig_vfs, pHdle, zSym);
@@ -837,7 +843,7 @@ sqlite3_vfs* ConstructTelemetryVFS()
 #define EXPECTED_VFS     "unix"
 #define EXPECTED_VFS_NFS "unix-excl"
 #endif
-  
+
   bool expected_vfs;
   sqlite3_vfs *vfs;
   if (Preferences::GetBool(PREF_NFS_FILESYSTEM)) {

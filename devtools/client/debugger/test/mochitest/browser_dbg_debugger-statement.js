@@ -31,9 +31,9 @@ function test() {
       })
       .then(testEarlyDebuggerStatement)
       .then(testDebuggerStatement)
-      .then(closeConnection)
+      .then(() => gClient.close())
       .then(finish)
-      .then(null, aError => {
+      .catch(aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
   });
@@ -79,12 +79,6 @@ function testDebuggerStatement([aGrip, aResponse]) {
   // Reach around the debugging protocol and execute the debugger statement.
   callInTab(gTab, "runDebuggerStatement");
 
-  return deferred.promise;
-}
-
-function closeConnection() {
-  let deferred = promise.defer();
-  gClient.close(deferred.resolve);
   return deferred.promise;
 }
 

@@ -21,8 +21,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
 
@@ -31,9 +29,6 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
-                                  "resource://gre/modules/CloudSync.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
                                   "resource://services-sync/main.js");
@@ -145,6 +140,34 @@ let InternalFaviconLoader = {
   },
 
   /**
+   * Remove a particular favicon load's loading data from our map tracking
+   * load data per chrome window.
+   *
+   * @param win
+   *        the chrome window in which we should look for this load
+   * @param filterData ({innerWindowID, uri, callback})
+   *        the data we should use to find this particular load to remove.
+   *
+   * @return the loadData object we removed, or null if we didn't find any.
+   */
+  _removeLoadDataFromWindowMap(win, {innerWindowID, uri, callback}) {
+    let loadDataForWindow = gFaviconLoadDataMap.get(win);
+    if (loadDataForWindow) {
+      let itemIndex = loadDataForWindow.findIndex(loadData => {
+        return loadData.innerWindowID == innerWindowID &&
+               loadData.uri.equals(uri) &&
+               loadData.callback.request == callback.request;
+      });
+      if (itemIndex != -1) {
+        let loadData = loadDataForWindow[itemIndex];
+        loadDataForWindow.splice(itemIndex, 1);
+        return loadData;
+      }
+    }
+    return null;
+  },
+
+  /**
    * Create a function to use as a nsIFaviconDataCallback, so we can remove cancelling
    * information when the request succeeds. Note that right now there are some edge-cases,
    * such as about: URIs with chrome:// favicons where the success callback is not invoked.
@@ -154,18 +177,13 @@ let InternalFaviconLoader = {
   _makeCompletionCallback(win, id) {
     return {
       onComplete(uri) {
-        let loadDataForWindow = gFaviconLoadDataMap.get(win);
-        if (loadDataForWindow) {
-          let itemIndex = loadDataForWindow.findIndex(loadData => {
-            return loadData.innerWindowID == id &&
-                   loadData.uri.equals(uri) &&
-                   loadData.callback.request == this.request;
-          });
-          if (itemIndex != -1) {
-            let loadData = loadDataForWindow[itemIndex];
-            clearTimeout(loadData.timerID);
-            loadDataForWindow.splice(itemIndex, 1);
-          }
+        let loadData = InternalFaviconLoader._removeLoadDataFromWindowMap(win, {
+          uri,
+          innerWindowID: id,
+          callback: this,
+        });
+        if (loadData) {
+          clearTimeout(loadData.timerID);
         }
         delete this.request;
       },
@@ -178,7 +196,7 @@ let InternalFaviconLoader = {
     }
     this._initialized = true;
 
-    Services.obs.addObserver(this, "inner-window-destroyed", false);
+    Services.obs.addObserver(this, "inner-window-destroyed");
     Services.ppmm.addMessageListener("Toolkit:inner-window-destroyed", msg => {
       this.removeRequestsForInner(msg.data);
     });
@@ -224,6 +242,7 @@ let InternalFaviconLoader = {
     let loadData = {innerWindowID, uri, callback};
     loadData.timerID = setTimeout(() => {
       this._cancelRequest(loadData, "it timed out");
+      this._removeLoadDataFromWindowMap(win, loadData);
     }, FAVICON_REQUEST_TIMEOUT);
     let loadDataForWindow = gFaviconLoadDataMap.get(win);
     loadDataForWindow.push(loadData);
@@ -271,7 +290,7 @@ this.PlacesUIUtils = {
     let str = PluralForm.get(aNumber, bundle.GetStringFromName(aKey));
 
     // Replace #1 with aParams[0], #2 with aParams[1], and so on.
-    return str.replace(/\#(\d+)/g, function (matchedId, matchedNumber) {
+    return str.replace(/\#(\d+)/g, function(matchedId, matchedNumber) {
       let param = aParams[parseInt(matchedNumber, 10) - 1];
       return param !== undefined ? param : matchedId;
     });
@@ -306,8 +325,7 @@ this.PlacesUIUtils = {
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
   _getURIItemCopyTransaction:
-  function PUIU__getURIItemCopyTransaction(aData, aContainer, aIndex)
-  {
+  function PUIU__getURIItemCopyTransaction(aData, aContainer, aIndex) {
     let transactions = [];
     if (aData.dateAdded) {
       transactions.push(
@@ -322,7 +340,7 @@ this.PlacesUIUtils = {
 
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
@@ -376,22 +394,18 @@ this.PlacesUIUtils = {
             transactions.push(
               PlacesUIUtils._getLivemarkCopyTransaction(node, aContainer, index)
             );
-          }
-          else {
+          } else {
             transactions.push(
               PlacesUIUtils._getFolderCopyTransaction(node, aContainer, index)
             );
           }
-        }
-        else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
+        } else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
           transactions.push(new PlacesCreateSeparatorTransaction(-1, index));
-        }
-        else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE) {
+        } else if (node.type == PlacesUtils.TYPE_X_MOZ_PLACE) {
           transactions.push(
             PlacesUIUtils._getURIItemCopyTransaction(node, -1, index)
           );
-        }
-        else {
+        } else {
           throw new Error("Unexpected item under a bookmarks folder");
         }
       }
@@ -434,7 +448,7 @@ this.PlacesUIUtils = {
 
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
@@ -460,8 +474,7 @@ this.PlacesUIUtils = {
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
   _getLivemarkCopyTransaction:
-  function PUIU__getLivemarkCopyTransaction(aData, aContainer, aIndex)
-  {
+  function PUIU__getLivemarkCopyTransaction(aData, aContainer, aIndex) {
     if (!aData.livemark || !aData.annos) {
       throw new Error("node is not a livemark");
     }
@@ -469,11 +482,10 @@ this.PlacesUIUtils = {
     let feedURI, siteURI;
     let annos = [];
     if (aData.annos) {
-      annos = aData.annos.filter(function (aAnno) {
+      annos = aData.annos.filter(function(aAnno) {
         if (aAnno.name == PlacesUtils.LMANNO_FEEDURI) {
           feedURI = PlacesUtils._uri(aAnno.value);
-        }
-        else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
+        } else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
           siteURI = PlacesUtils._uri(aAnno.value);
         }
         return this._copyableAnnotations.includes(aAnno.name)
@@ -501,8 +513,7 @@ this.PlacesUIUtils = {
    *         the move/insert.
    */
   makeTransaction:
-  function PUIU_makeTransaction(data, type, container, index, copy)
-  {
+  function PUIU_makeTransaction(data, type, container, index, copy) {
     switch (data.type) {
       case PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER:
         if (copy) {
@@ -511,7 +522,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       case PlacesUtils.TYPE_X_MOZ_PLACE:
         if (copy || data.id == -1) { // Id is -1 if the place is not bookmarked.
           return this._getURIItemCopyTransaction(data, container, index);
@@ -519,7 +529,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       case PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR:
         if (copy) {
           // There is no data in a separator, so copying it just amounts to
@@ -529,7 +538,6 @@ this.PlacesUIUtils = {
 
         // Otherwise move the item.
         return new PlacesMoveItemTransaction(data.id, container, index);
-        break;
       default:
         if (type == PlacesUtils.TYPE_X_MOZ_URL ||
             type == PlacesUtils.TYPE_UNICODE ||
@@ -563,17 +571,17 @@ this.PlacesUIUtils = {
    * @return  a Places Transaction that can be transacted for performing the
    *          move/insert command.
    */
-  getTransactionForData: function(aData, aType, aNewParentGuid, aIndex, aCopy) {
+  getTransactionForData(aData, aType, aNewParentGuid, aIndex, aCopy) {
     if (!this.SUPPORTED_FLAVORS.includes(aData.type))
       throw new Error(`Unsupported '${aData.type}' data type`);
 
     if ("itemGuid" in aData) {
       if (!this.PLACES_FLAVORS.includes(aData.type))
-        throw new Error (`itemGuid unexpectedly set on ${aData.type} data`);
+        throw new Error(`itemGuid unexpectedly set on ${aData.type} data`);
 
-      let info = { guid: aData.itemGuid
-                 , newParentGuid: aNewParentGuid
-                 , newIndex: aIndex };
+      let info = { guid: aData.itemGuid,
+                   newParentGuid: aNewParentGuid,
+                   newIndex: aIndex };
       if (aCopy) {
         info.excludingAnnotation = "Places/SmartBookmark";
         return PlacesTransactions.Copy(info);
@@ -589,16 +597,16 @@ this.PlacesUIUtils = {
       throw new Error("Can't copy a container from a legacy-transactions build");
 
     if (aData.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
-      return PlacesTransactions.NewSeparator({ parentGuid: aNewParentGuid
-                                             , index: aIndex });
+      return PlacesTransactions.NewSeparator({ parentGuid: aNewParentGuid,
+                                               index: aIndex });
     }
 
     let title = aData.type != PlacesUtils.TYPE_UNICODE ? aData.title
                                                        : aData.uri;
-    return PlacesTransactions.NewBookmark({ uri: NetUtil.newURI(aData.uri)
-                                          , title: title
-                                          , parentGuid: aNewParentGuid
-                                          , index: aIndex });
+    return PlacesTransactions.NewBookmark({ url: Services.io.newURI(aData.uri),
+                                            title,
+                                            parentGuid: aNewParentGuid,
+                                            index: aIndex });
   },
 
   /**
@@ -655,6 +663,10 @@ this.PlacesUIUtils = {
    */
   getViewForNode: function PUIU_getViewForNode(aNode) {
     let node = aNode;
+
+    if (node.localName == "panelview" && node._placesView) {
+      return node._placesView;
+    }
 
     // The view for a <menu> of which its associated menupopup is a places
     // view, is the menupopup.
@@ -776,7 +788,7 @@ this.PlacesUIUtils = {
    *        a node, except the root node of a query.
    * @return true if the aNode represents a removable entry, false otherwise.
    */
-  canUserRemove: function (aNode) {
+  canUserRemove(aNode) {
     let parentNode = aNode.parent;
     if (!parentNode) {
       // canUserRemove doesn't accept root nodes.
@@ -824,15 +836,13 @@ this.PlacesUIUtils = {
    * @note livemark "folders" are considered read-only (but see bug 1072833).
    * @return true if aItemId points to a read-only folder, false otherwise.
    */
-  isContentsReadOnly: function (aNodeOrItemId) {
+  isContentsReadOnly(aNodeOrItemId) {
     let itemId;
     if (typeof(aNodeOrItemId) == "number") {
       itemId = aNodeOrItemId;
-    }
-    else if (PlacesUtils.nodeIsFolder(aNodeOrItemId)) {
+    } else if (PlacesUtils.nodeIsFolder(aNodeOrItemId)) {
       itemId = PlacesUtils.getConcreteItemId(aNodeOrItemId);
-    }
-    else {
+    } else {
       throw new Error("invalid value for aNodeOrItemId");
     }
 
@@ -860,8 +870,7 @@ this.PlacesUIUtils = {
   /**
    * Gives the user a chance to cancel loading lots of tabs at once
    */
-  _confirmOpenInTabs:
-  function PUIU__confirmOpenInTabs(numTabsToOpen, aWindow) {
+  confirmOpenInTabs(numTabsToOpen, aWindow) {
     const WARN_ON_OPEN_PREF = "browser.tabs.warnOnOpen";
     var reallyOpen = true;
 
@@ -935,20 +944,24 @@ this.PlacesUIUtils = {
     if (where == "window") {
       // There is no browser window open, thus open a new one.
       var uriList = PlacesUtils.toISupportsString(urls.join("|"));
-      var args = Cc["@mozilla.org/supports-array;1"].
-                  createInstance(Ci.nsISupportsArray);
-      args.AppendElement(uriList);
+      var args = Cc["@mozilla.org/array;1"].
+                  createInstance(Ci.nsIMutableArray);
+      args.appendElement(uriList);
       browserWindow = Services.ww.openWindow(aWindow,
                                              "chrome://browser/content/browser.xul",
                                              null, "chrome,dialog=no,all", args);
       return;
     }
 
-    var loadInBackground = where == "tabshifted" ? true : false;
+    var loadInBackground = where == "tabshifted";
     // For consistency, we want all the bookmarks to open in new tabs, instead
     // of having one of them replace the currently focused tab.  Hence we call
     // loadTabs with aReplace set to false.
-    browserWindow.gBrowser.loadTabs(urls, loadInBackground, false);
+    browserWindow.gBrowser.loadTabs(urls, {
+      inBackground: loadInBackground,
+      replace: false,
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
   },
 
   openLiveMarkNodesInTabs:
@@ -957,14 +970,14 @@ this.PlacesUIUtils = {
 
     PlacesUtils.livemarks.getLivemark({id: aNode.itemId})
       .then(aLivemark => {
-        urlsToOpen = [];
+        let urlsToOpen = [];
 
         let nodes = aLivemark.getNodesForContainer(aNode);
         for (let node of nodes) {
           urlsToOpen.push({uri: node.uri, isBookmark: false});
         }
 
-        if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+        if (this.confirmOpenInTabs(urlsToOpen.length, window)) {
           this._openTabset(urlsToOpen, aEvent, window);
         }
       }, Cu.reportError);
@@ -975,7 +988,7 @@ this.PlacesUIUtils = {
     let window = aView.ownerWindow;
 
     let urlsToOpen = PlacesUtils.getURLsForContainerNode(aNode);
-    if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+    if (this.confirmOpenInTabs(urlsToOpen.length, window)) {
       this._openTabset(urlsToOpen, aEvent, window);
     }
   },
@@ -984,7 +997,7 @@ this.PlacesUIUtils = {
     let window = aView.ownerWindow;
 
     let urlsToOpen = [];
-    for (var i=0; i < aNodes.length; i++) {
+    for (var i = 0; i < aNodes.length; i++) {
       // Skip over separators and folders.
       if (PlacesUtils.nodeIsURI(aNodes[i]))
         urlsToOpen.push({uri: aNodes[i].uri, isBookmark: PlacesUtils.nodeIsBookmark(aNodes[i])});
@@ -1001,12 +1014,10 @@ this.PlacesUIUtils = {
    * @param   aEvent
    *          The DOM mouse/key event with modifier keys set that track the
    *          user's preferred destination window or tab.
-   * @param   aView
-   *          The controller associated with aNode.
    */
   openNodeWithEvent:
-  function PUIU_openNodeWithEvent(aNode, aEvent, aView) {
-    let window = aView.ownerWindow;
+  function PUIU_openNodeWithEvent(aNode, aEvent) {
+    let window = aEvent.target.ownerGlobal;
     this._openNodeIn(aNode, window.whereToOpenLink(aEvent, false, true), window);
   },
 
@@ -1020,7 +1031,7 @@ this.PlacesUIUtils = {
     this._openNodeIn(aNode, aWhere, window, aPrivate);
   },
 
-  _openNodeIn: function PUIU_openNodeIn(aNode, aWhere, aWindow, aPrivate=false) {
+  _openNodeIn: function PUIU_openNodeIn(aNode, aWhere, aWindow, aPrivate = false) {
     if (aNode && PlacesUtils.nodeIsURI(aNode) &&
         this.checkURLSecurity(aNode, aWindow)) {
       let isBookmark = PlacesUtils.nodeIsBookmark(aNode);
@@ -1084,13 +1095,11 @@ this.PlacesUIUtils = {
                            (host ? "/" + this.ellipsis + "/" : "") + fileName :
                            uri.path);
         }
-      }
-      catch (e) {
+      } catch (e) {
         // Use (no title) for non-standard URIs (data:, javascript:, ...)
         title = "";
       }
-    }
-    else
+    } else
       title = aNode.title;
 
     return title || this.getString("noTitle");
@@ -1102,8 +1111,13 @@ this.PlacesUIUtils = {
     return this.leftPaneQueries;
   },
 
-  // Get the folder id for the organizer left-pane folder.
   get leftPaneFolderId() {
+    delete this.leftPaneFolderId;
+    return this.leftPaneFolderId = this.maybeRebuildLeftPane();
+  },
+
+  // Get the folder id for the organizer left-pane folder.
+  maybeRebuildLeftPane() {
     let leftPaneRoot = -1;
     let allBookmarksId;
 
@@ -1119,15 +1133,15 @@ this.PlacesUIUtils = {
       "Tags": { title: this.getString("OrganizerQueryTags") },
       "AllBookmarks": { title: this.getString("OrganizerQueryAllBookmarks") },
       "BookmarksToolbar":
-        { title: null,
+        { title: "",
           concreteTitle: PlacesUtils.getString("BookmarksToolbarFolderTitle"),
           concreteId: PlacesUtils.toolbarFolderId },
       "BookmarksMenu":
-        { title: null,
+        { title: "",
           concreteTitle: PlacesUtils.getString("BookmarksMenuFolderTitle"),
           concreteId: PlacesUtils.bookmarksMenuFolderId },
       "UnfiledBookmarks":
-        { title: null,
+        { title: "",
           concreteTitle: PlacesUtils.getString("OtherBookmarksFolderTitle"),
           concreteId: PlacesUtils.unfiledBookmarksFolderId },
     };
@@ -1149,17 +1163,15 @@ this.PlacesUIUtils = {
         as.removeItemAnnotation(aItemId, PlacesUIUtils.ORGANIZER_QUERY_ANNO);
         // This will throw if the annotation is an orphan.
         bs.removeItem(aItemId);
-      }
-      catch(e) { /* orphan anno */ }
+      } catch (e) { /* orphan anno */ }
     }
 
     // Returns true if item really exists, false otherwise.
     function itemExists(aItemId) {
       try {
-        bs.getItemIndex(aItemId);
-        return true;
-      }
-      catch(e) {
+        let index = bs.getItemIndex(aItemId);
+        return index > -1;
+      } catch (e) {
         return false;
       }
     }
@@ -1170,8 +1182,7 @@ this.PlacesUIUtils = {
       // Something went wrong, we cannot have more than one left pane folder,
       // remove all left pane folders and continue.  We will create a new one.
       items.forEach(safeRemoveItem);
-    }
-    else if (items.length == 1 && items[0] != -1) {
+    } else if (items.length == 1 && items[0] != -1) {
       leftPaneRoot = items[0];
       // Check that organizer left pane root is valid.
       let version = as.getItemAnnotation(leftPaneRoot, this.ORGANIZER_FOLDER_ANNO);
@@ -1190,12 +1201,12 @@ this.PlacesUIUtils = {
       delete this.leftPaneQueries;
       this.leftPaneQueries = {};
 
-      let items = as.getItemsWithAnnotation(this.ORGANIZER_QUERY_ANNO);
+      let queryItems = as.getItemsWithAnnotation(this.ORGANIZER_QUERY_ANNO);
       // While looping through queries we will also check for their validity.
       let queriesCount = 0;
       let corrupt = false;
-      for (let i = 0; i < items.length; i++) {
-        let queryName = as.getItemAnnotation(items[i], this.ORGANIZER_QUERY_ANNO);
+      for (let i = 0; i < queryItems.length; i++) {
+        let queryName = as.getItemAnnotation(queryItems[i], this.ORGANIZER_QUERY_ANNO);
 
         // Some extension did use our annotation to decorate their items
         // with icons, so we should check only our elements, to avoid dataloss.
@@ -1203,7 +1214,7 @@ this.PlacesUIUtils = {
           continue;
 
         let query = queries[queryName];
-        query.itemId = items[i];
+        query.itemId = queryItems[i];
 
         if (!itemExists(query.itemId)) {
           // Orphan annotation, bail out and create a new left pane root.
@@ -1213,7 +1224,7 @@ this.PlacesUIUtils = {
 
         // Check that all queries have valid parents.
         let parentId = bs.getFolderIdForItem(query.itemId);
-        if (!items.includes(parentId) && parentId != leftPaneRoot) {
+        if (!queryItems.includes(parentId) && parentId != leftPaneRoot) {
           // The parent is not part of the left pane, bail out and create a new
           // left pane root.
           corrupt = true;
@@ -1242,13 +1253,11 @@ this.PlacesUIUtils = {
         // Queries number is wrong, so the left pane must be corrupt.
         // Note: we can't just remove the leftPaneRoot, because some query could
         // have a bad parent, so we have to remove all items one by one.
-        items.forEach(safeRemoveItem);
+        queryItems.forEach(safeRemoveItem);
         safeRemoveItem(leftPaneRoot);
-      }
-      else {
+      } else {
         // Everything is fine, return the current left pane folder.
-        delete this.leftPaneFolderId;
-        return this.leftPaneFolderId = leftPaneRoot;
+        return leftPaneRoot;
       }
     }
 
@@ -1286,8 +1295,7 @@ this.PlacesUIUtils = {
           as.setItemAnnotation(folderId, PlacesUIUtils.ORGANIZER_FOLDER_ANNO,
                                PlacesUIUtils.ORGANIZER_LEFTPANE_VERSION,
                                0, as.EXPIRE_NEVER);
-        }
-        else {
+        } else {
           // Mark as special organizer folder.
           as.setItemAnnotation(folderId, PlacesUIUtils.ORGANIZER_QUERY_ANNO, aFolderName,
                            0, as.EXPIRE_NEVER);
@@ -1342,8 +1350,7 @@ this.PlacesUIUtils = {
     };
     bs.runInBatchMode(callback, null);
 
-    delete this.leftPaneFolderId;
-    return this.leftPaneFolderId = leftPaneRoot;
+    return leftPaneRoot;
   },
 
   /**
@@ -1371,16 +1378,14 @@ this.PlacesUIUtils = {
       try {
         queryName = PlacesUtils.annotations.
                                 getItemAnnotation(aItemId, this.ORGANIZER_QUERY_ANNO);
-      }
-      catch (ex) {
+      } catch (ex) {
         // doesn't have the annotation
         queryName = "";
       }
-    }
-    else {
+    } else {
       // If the left pane has already been built, use the name->id map
       // cached in PlacesUIUtils.
-      for (let [name, id] in Iterator(this.leftPaneQueries)) {
+      for (let [name, id] of Object.entries(this.leftPaneQueries)) {
         if (aItemId == id)
           queryName = name;
       }
@@ -1388,7 +1393,7 @@ this.PlacesUIUtils = {
     return queryName;
   },
 
-  shouldShowTabsFromOtherComputersMenuitem: function() {
+  shouldShowTabsFromOtherComputersMenuitem() {
     let weaveOK = Weave.Status.checkSetup() != Weave.CLIENT_NOT_CONFIGURED &&
                   Weave.Svc.Prefs.get("firstSync", "") != "notReady";
     return weaveOK;
@@ -1428,68 +1433,6 @@ this.PlacesUIUtils = {
   },
 
   /**
-   * WARNING TO ADDON AUTHORS: DO NOT USE THIS METHOD. IT"S LIKELY TO BE REMOVED IN A
-   * FUTURE RELEASE.
-   *
-   * Helpers for consumers of editBookmarkOverlay which don't have a node as their input.
-   * Given a partial node-like object, having at least the itemId property set, this
-   * method completes the rest of the properties necessary for initialising the edit
-   * overlay with it.
-   *
-   * @param aNodeLike
-   *        an object having at least the itemId nsINavHistoryResultNode property set,
-   *        along with any other properties available.
-   */
-  completeNodeLikeObjectForItemId(aNodeLike) {
-    if (this.useAsyncTransactions) {
-      // When async-transactions are enabled, node-likes must have
-      // bookmarkGuid set, and we cannot set it synchronously.
-      throw new Error("completeNodeLikeObjectForItemId cannot be used when " +
-                      "async transactions are enabled");
-    }
-    if (!("itemId" in aNodeLike))
-      throw new Error("itemId missing in aNodeLike");
-
-    let itemId = aNodeLike.itemId;
-    let defGetter = XPCOMUtils.defineLazyGetter.bind(XPCOMUtils, aNodeLike);
-
-    if (!("title" in aNodeLike))
-      defGetter("title", () => PlacesUtils.bookmarks.getItemTitle(itemId));
-
-    if (!("uri" in aNodeLike)) {
-      defGetter("uri", () => {
-        let uri = null;
-        try {
-          uri = PlacesUtils.bookmarks.getBookmarkURI(itemId);
-        }
-        catch(ex) { }
-        return uri ? uri.spec : "";
-      });
-    }
-
-    if (!("type" in aNodeLike)) {
-      defGetter("type", () => {
-        if (aNodeLike.uri.length > 0) {
-          if (/^place:/.test(aNodeLike.uri)) {
-            if (this.isFolderShortcutQueryString(aNodeLike.uri))
-              return Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT;
-
-            return Ci.nsINavHistoryResultNode.RESULT_TYPE_QUERY;
-          }
-
-          return Ci.nsINavHistoryResultNode.RESULT_TYPE_URI;
-        }
-
-        let itemType = PlacesUtils.bookmarks.getItemType(itemId);
-        if (itemType == PlacesUtils.bookmarks.TYPE_FOLDER)
-          return Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER;
-
-        throw new Error("Unexpected item type");
-      });
-    }
-  },
-
-  /**
    * Helpers for consumers of editBookmarkOverlay which don't have a node as their input.
    *
    * Given a bookmark object for either a url bookmark or a folder, returned by
@@ -1501,12 +1444,18 @@ this.PlacesUIUtils = {
    * @return a node-like object suitable for initialising editBookmarkOverlay.
    * @throws if aFetchInfo is representing a separator.
    */
-  promiseNodeLikeFromFetchInfo: Task.async(function* (aFetchInfo) {
+  async promiseNodeLikeFromFetchInfo(aFetchInfo) {
     if (aFetchInfo.itemType == PlacesUtils.bookmarks.TYPE_SEPARATOR)
       throw new Error("promiseNodeLike doesn't support separators");
 
+    let parent = {
+      itemId: await PlacesUtils.promiseItemId(aFetchInfo.parentGuid),
+      bookmarkGuid: aFetchInfo.parentGuid,
+      type: Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER
+    };
+
     return Object.freeze({
-      itemId: yield PlacesUtils.promiseItemId(aFetchInfo.guid),
+      itemId: await PlacesUtils.promiseItemId(aFetchInfo.guid),
       bookmarkGuid: aFetchInfo.guid,
       title: aFetchInfo.title,
       uri: aFetchInfo.url !== undefined ? aFetchInfo.url.href : "",
@@ -1526,9 +1475,13 @@ this.PlacesUIUtils = {
         }
 
         return Ci.nsINavHistoryResultNode.RESULT_TYPE_URI;
+      },
+
+      get parent() {
+        return parent;
       }
     });
-  }),
+  },
 
   /**
    * Shortcut for calling promiseNodeLikeFromFetchInfo on the result of
@@ -1536,12 +1489,12 @@ this.PlacesUIUtils = {
    *
    * @see promiseNodeLikeFromFetchInfo above and Bookmarks.fetch in Bookmarks.jsm.
    */
-  fetchNodeLike: Task.async(function* (aGuidOrInfo) {
-    let info = yield PlacesUtils.bookmarks.fetch(aGuidOrInfo);
+  async fetchNodeLike(aGuidOrInfo) {
+    let info = await PlacesUtils.bookmarks.fetch(aGuidOrInfo);
     if (!info)
       return null;
-    return (yield this.promiseNodeLikeFromFetchInfo(info));
-  })
+    return this.promiseNodeLikeFromFetchInfo(info);
+  }
 };
 
 
@@ -1568,8 +1521,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ellipsis", function() {
 XPCOMUtils.defineLazyGetter(PlacesUIUtils, "useAsyncTransactions", function() {
   try {
     return Services.prefs.getBoolPref("browser.places.useAsyncTransactions");
-  }
-  catch(ex) { }
+  } catch (ex) { }
   return false;
 });
 
@@ -1671,8 +1623,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
      *        boolean value.
      * @return nsITransaction object.
      */
-    setLoadInSidebar: function(aItemId, aLoadInSidebar)
-    {
+    setLoadInSidebar(aItemId, aLoadInSidebar) {
       let annoObj = { name: PlacesUIUtils.LOAD_IN_SIDEBAR_ANNO,
                       type: Ci.nsIAnnotationService.TYPE_INT32,
                       flags: 0,
@@ -1690,8 +1641,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
     *        new description.
     * @return nsITransaction object.
     */
-    editItemDescription: function(aItemId, aDescription)
-    {
+    editItemDescription(aItemId, aDescription) {
       let annoObj = { name: PlacesUIUtils.DESCRIPTION_ANNO,
                       type: Ci.nsIAnnotationService.TYPE_STRING,
                       flags: 0,
@@ -1700,8 +1650,7 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
       return new PlacesSetItemAnnotationTransaction(aItemId, annoObj);
     },
 
-    ////////////////////////////////////////////////////////////////////////////
-    //// nsITransactionManager forwarders.
+    // nsITransactionManager forwarders.
 
     beginBatch: () =>
       PlacesUtils.transactionManager.beginBatch(null),

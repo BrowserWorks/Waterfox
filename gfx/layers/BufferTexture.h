@@ -26,22 +26,24 @@ public:
                                    LayersBackend aLayersBackend,
                                    TextureFlags aFlags,
                                    TextureAllocationFlags aAllocFlags,
-                                   ClientIPCAllocator* aAllocator);
+                                   LayersIPCChannel* aAllocator);
 
-  static BufferTextureData* CreateForYCbCr(ClientIPCAllocator* aAllocator,
+  static BufferTextureData* CreateForYCbCr(KnowsCompositor* aAllocator,
                                            gfx::IntSize aYSize,
                                            gfx::IntSize aCbCrSize,
                                            StereoMode aStereoMode,
+                                           YUVColorSpace aYUVColorSpace,
                                            TextureFlags aTextureFlags);
 
   // It is generally better to use CreateForYCbCr instead.
   // This creates a half-initialized texture since we don't know the sizes and
   // offsets in the buffer.
-  static BufferTextureData* CreateForYCbCrWithBufferSize(ClientIPCAllocator* aAllocator,
+  static BufferTextureData* CreateForYCbCrWithBufferSize(KnowsCompositor* aAllocator,
                                                          int32_t aSize,
+                                                         YUVColorSpace aYUVColorSpace,
                                                          TextureFlags aTextureFlags);
 
-  virtual bool Lock(OpenMode aMode, FenceHandle*) override { return true; }
+  virtual bool Lock(OpenMode aMode) override { return true; }
 
   virtual void Unlock() override {}
 
@@ -63,6 +65,8 @@ public:
 
   Maybe<gfx::IntSize> GetCbCrSize() const;
 
+  Maybe<YUVColorSpace> GetYUVColorSpace() const;
+
   Maybe<StereoMode> GetStereoMode() const;
 
 protected:
@@ -70,7 +74,7 @@ protected:
 
   gfx::SurfaceFormat GetFormat() const;
 
-  static BufferTextureData* CreateInternal(ClientIPCAllocator* aAllocator,
+  static BufferTextureData* CreateInternal(LayersIPCChannel* aAllocator,
                                            const BufferDescriptor& aDesc,
                                            gfx::BackendType aMoz2DBackend,
                                            int32_t aBufferSize,

@@ -8,14 +8,14 @@ module.metadata = {
 };
 
 const { Cc, Ci } = require("chrome");
-const { getPreferedLocales, findClosestLocale } = require("./locale");
-const { readURI } = require("../net/url");
-const { resolve } = require("../core/promise");
+lazyRequire(this, "./locale", "getPreferedLocales", "findClosestLocale");
+lazyRequire(this, "../net/url", "readURI");
+lazyRequire(this, "../core/promise", "resolve");
 
 function parseJsonURI(uri) {
   return readURI(uri).
     then(JSON.parse).
-    then(null, function (error) {
+    catch(function (error) {
       throw Error("Failed to parse locale file:\n" + uri + "\n" + error);
     });
 }

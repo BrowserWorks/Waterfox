@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "domstubs.idl"
+#include "nsIRequest.idl"
 
 interface mozIDOMWindow;
 interface nsPIDOMWindowInner;
@@ -29,10 +30,26 @@ interface nsIWorkerDebugger;
 [scriptable, builtinclass, uuid(76e357ed-208d-4e4c-9165-1c4059707879)]
 interface nsIServiceWorkerInfo : nsISupports
 {
+  // State values below should match the ServiceWorkerState enumeration.
+  const unsigned short STATE_INSTALLING = 0;
+  const unsigned short STATE_INSTALLED = 1;
+  const unsigned short STATE_ACTIVATING = 2;
+  const unsigned short STATE_ACTIVATED = 3;
+  const unsigned short STATE_REDUNDANT = 4;
+  const unsigned short STATE_UNKNOWN = 5;
+
   readonly attribute DOMString scriptSpec;
   readonly attribute DOMString cacheName;
 
+  readonly attribute unsigned short state;
+
   readonly attribute nsIWorkerDebugger debugger;
+
+  readonly attribute bool handlesFetchEvents;
+
+  readonly attribute PRTime installedTime;
+  readonly attribute PRTime activatedTime;
+  readonly attribute PRTime redundantTime;
 
   void attachDebugger();
 
@@ -52,6 +69,8 @@ interface nsIServiceWorkerRegistrationInfo : nsISupports
 
   readonly attribute DOMString scope;
   readonly attribute DOMString scriptSpec;
+
+  readonly attribute PRTime lastUpdateTime;
 
   readonly attribute nsIServiceWorkerInfo installingWorker;
   readonly attribute nsIServiceWorkerInfo waitingWorker;
@@ -88,7 +107,10 @@ interface nsIServiceWorkerManager : nsISupports
    *
    * Returns a Promise.
    */
-  nsISupports register(in mozIDOMWindow aWindow, in nsIURI aScope, in nsIURI aScriptURI);
+  nsISupports register(in mozIDOMWindow aWindow,
+                       in nsIURI aScope,
+                       in nsIURI aScriptURI,
+                       in nsLoadFlags aLoadFlags);
 
   /**
    * Unregister an existing ServiceWorker registration for `aScope`.

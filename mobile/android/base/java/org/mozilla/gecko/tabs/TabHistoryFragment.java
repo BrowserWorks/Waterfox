@@ -7,10 +7,10 @@ package org.mozilla.gecko.tabs;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoApplication;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -86,8 +86,9 @@ public class TabHistoryFragment extends Fragment implements OnItemClickListener,
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String index = String.valueOf(toIndex - position);
-        GeckoAppShell.notifyObservers("Session:Navigate", index);
+        final GeckoBundle data = new GeckoBundle(1);
+        data.putInt("index", toIndex - position);
+        EventDispatcher.getInstance().dispatch("Session:Navigate", data);
         dismiss();
     }
 
@@ -125,7 +126,10 @@ public class TabHistoryFragment extends Fragment implements OnItemClickListener,
         dismissed = false;
         transaction.add(containerViewId, this, tag);
         transaction.addToBackStack(tag);
-        backStackId = transaction.commit();
+        // Populating the tab history requires a gecko call (which can be slow) - therefore the app
+        // state by the time we try to show this fragment is unknown, and we could be in the
+        // middle of shutting down:
+        backStackId = transaction.commitAllowingStateLoss();
     }
 
     // Pop the fragment from backstack if it exists.

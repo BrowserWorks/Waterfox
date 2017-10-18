@@ -20,7 +20,11 @@ static float ExponentialInterpolate(double t0, float v0, double t1, float v1, do
 
 static float ExponentialApproach(double t0, double v0, float v1, double timeConstant, double t)
 {
-  return v1 + (v0 - v1) * expf(-(t - t0) / timeConstant);
+  if (!mozilla::dom::WebAudioUtils::FuzzyEqual(timeConstant, 0.0)) {
+    return v1 + (v0 - v1) * expf(-(t - t0) / timeConstant);
+  } else {
+    return v1;
+  }
 }
 
 static float ExtractValueFromCurve(double startTime, float* aCurve, uint32_t aCurveLength, double duration, double t)
@@ -33,109 +37,20 @@ static float ExtractValueFromCurve(double startTime, float* aCurve, uint32_t aCu
   if (ratio >= 1.0) {
     return aCurve[aCurveLength - 1];
   }
-  return aCurve[uint32_t(aCurveLength * ratio)];
+  uint32_t current = uint32_t(floor((aCurveLength - 1) * ratio));
+  uint32_t next = current + 1;
+  double step = duration / double(aCurveLength - 1);
+  if (next < aCurveLength) {
+    double t0 = current * step;
+    double t1 = next * step;
+    return LinearInterpolate(t0, aCurve[current], t1, aCurve[next], t - startTime);
+  } else {
+    return aCurve[current];
+  }
 }
 
 namespace mozilla {
 namespace dom {
-
-template <class ErrorResult> bool
-AudioEventTimeline::ValidateEvent(AudioTimelineEvent& aEvent,
-                                  ErrorResult& aRv)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  auto TimeOf = [](const AudioTimelineEvent& aEvent) -> double {
-    return aEvent.template Time<double>();
-  };
-
-  // Validate the event itself
-  if (!WebAudioUtils::IsTimeValid(TimeOf(aEvent)) ||
-      !WebAudioUtils::IsTimeValid(aEvent.mTimeConstant)) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return false;
-  }
-
-  if (aEvent.mType == AudioTimelineEvent::SetValueCurve) {
-    if (!aEvent.mCurve || !aEvent.mCurveLength) {
-      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-      return false;
-    }
-    for (uint32_t i = 0; i < aEvent.mCurveLength; ++i) {
-      if (!IsValid(aEvent.mCurve[i])) {
-        aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-        return false;
-      }
-    }
-  }
-
-  if (aEvent.mType == AudioTimelineEvent::SetTarget &&
-      WebAudioUtils::FuzzyEqual(aEvent.mTimeConstant, 0.0)) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return false;
-  }
-
-  bool timeAndValueValid = IsValid(aEvent.mValue) &&
-                           IsValid(aEvent.mDuration);
-  if (!timeAndValueValid) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return false;
-  }
-
-  // Make sure that non-curve events don't fall within the duration of a
-  // curve event.
-  for (unsigned i = 0; i < mEvents.Length(); ++i) {
-    if (mEvents[i].mType == AudioTimelineEvent::SetValueCurve &&
-        !(aEvent.mType == AudioTimelineEvent::SetValueCurve &&
-          TimeOf(aEvent) == TimeOf(mEvents[i])) &&
-        TimeOf(mEvents[i]) <= TimeOf(aEvent) &&
-        TimeOf(mEvents[i]) + mEvents[i].mDuration >= TimeOf(aEvent)) {
-      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-      return false;
-    }
-  }
-
-  // Make sure that curve events don't fall in a range which includes other
-  // events.
-  if (aEvent.mType == AudioTimelineEvent::SetValueCurve) {
-    for (unsigned i = 0; i < mEvents.Length(); ++i) {
-      // In case we have two curve at the same time
-      if (mEvents[i].mType == AudioTimelineEvent::SetValueCurve &&
-          TimeOf(mEvents[i]) == TimeOf(aEvent)) {
-        continue;
-      }
-      if (TimeOf(mEvents[i]) > TimeOf(aEvent) &&
-          TimeOf(mEvents[i]) < TimeOf(aEvent) + aEvent.mDuration) {
-        aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-        return false;
-      }
-    }
-  }
-
-  // Make sure that invalid values are not used for exponential curves
-  if (aEvent.mType == AudioTimelineEvent::ExponentialRamp) {
-    if (aEvent.mValue <= 0.f) {
-      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-      return false;
-    }
-    const AudioTimelineEvent* previousEvent = GetPreviousEvent(TimeOf(aEvent));
-    if (previousEvent) {
-      if (previousEvent->mValue <= 0.f) {
-        aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-        return false;
-      }
-    } else {
-      if (mValue <= 0.f) {
-        aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-        return false;
-      }
-    }
-  }
-  return true;
-}
-template bool
-AudioEventTimeline::ValidateEvent(AudioTimelineEvent& aEvent,
-                                  ErrorResult& aRv);
 
 // This method computes the AudioParam value at a given time based on the event timeline
 template<class TimeType> void
@@ -184,8 +99,10 @@ AudioEventTimeline::GetValuesAtTimeHelper(TimeType aTime, float* aBuffer,
         // Find the last event with the same time
         while (eventIndex < mEvents.Length() - 1 &&
                TimesEqual(aTime, TimeOf(mEvents[eventIndex + 1]))) {
+          mLastComputedValue = GetValueAtTimeOfEvent<TimeType>(&mEvents[eventIndex]);
           ++eventIndex;
         }
+
         timeMatchesEventIndex = true;
         break;
       }
@@ -196,31 +113,7 @@ AudioEventTimeline::GetValuesAtTimeHelper(TimeType aTime, float* aBuffer,
     if (timeMatchesEventIndex) {
       // The time matches one of the events exactly.
       MOZ_ASSERT(TimesEqual(aTime, TimeOf(mEvents[eventIndex])));
-
-      switch (mEvents[eventIndex].mType) {
-        case AudioTimelineEvent::SetTarget:
-          // SetTarget nodes can be handled no matter what their next node is
-          // (if they have one).
-          // Follow the curve, without regard to the next event, starting at
-          // the last value of the last event.
-          mComputedValue =
-            ExponentialApproach(TimeOf(mEvents[eventIndex]),
-                                mLastComputedValue, mEvents[eventIndex].mValue,
-                                mEvents[eventIndex].mTimeConstant, aTime);
-          break;
-        case AudioTimelineEvent::SetValueCurve:
-          // SetValueCurve events can be handled no matter what their event
-          // node is (if they have one)
-          mComputedValue =
-            ExtractValueFromCurve(TimeOf(mEvents[eventIndex]),
-                                  mEvents[eventIndex].mCurve,
-                                  mEvents[eventIndex].mCurveLength,
-                                  mEvents[eventIndex].mDuration, aTime);
-          break;
-        default:
-          // For other event types
-          mComputedValue = mEvents[eventIndex].mValue;
-      }
+      mComputedValue = GetValueAtTimeOfEvent<TimeType>(&mEvents[eventIndex]);
     } else {
       mComputedValue = GetValuesAtTimeHelperInternal(aTime, previous, next);
     }
@@ -234,6 +127,34 @@ AudioEventTimeline::GetValuesAtTimeHelper(double aTime, float* aBuffer,
 template void
 AudioEventTimeline::GetValuesAtTimeHelper(int64_t aTime, float* aBuffer,
                                           const size_t aSize);
+
+template<class TimeType> float
+AudioEventTimeline::GetValueAtTimeOfEvent(const AudioTimelineEvent* aNext)
+{
+  TimeType time = aNext->template Time<TimeType>();
+  switch (aNext->mType) {
+    case AudioTimelineEvent::SetTarget:
+      // SetTarget nodes can be handled no matter what their next node is
+      // (if they have one).
+      // Follow the curve, without regard to the next event, starting at
+      // the last value of the last event.
+      return ExponentialApproach(time,
+                                 mLastComputedValue, aNext->mValue,
+                                 aNext->mTimeConstant, time);
+      break;
+    case AudioTimelineEvent::SetValueCurve:
+      // SetValueCurve events can be handled no matter what their event
+      // node is (if they have one)
+      return ExtractValueFromCurve(time,
+                                   aNext->mCurve,
+                                   aNext->mCurveLength,
+                                   aNext->mDuration, time);
+      break;
+    default:
+      // For other event types
+      return aNext->mValue;
+  }
+}
 
 template<class TimeType> float
 AudioEventTimeline::GetValuesAtTimeHelperInternal(TimeType aTime,
@@ -257,7 +178,7 @@ AudioEventTimeline::GetValuesAtTimeHelperInternal(TimeType aTime,
                                aPrevious->mTimeConstant, aTime);
   }
 
-  // SetValueCurve events can be handled no mattar what their next node is
+  // SetValueCurve events can be handled no matter what their next node is
   // (if they have one)
   if (aPrevious->mType == AudioTimelineEvent::SetValueCurve) {
     return ExtractValueFromCurve(TimeOf(aPrevious),

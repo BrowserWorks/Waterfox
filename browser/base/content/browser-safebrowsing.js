@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Note: this file is not shipped (through jar.mn)
-// if MOZ_SAFE_BROWSING is not defined.
+// This file is loaded into the browser window scope.
+/* eslint-env mozilla/browser-window */
 
 var gSafeBrowsing = {
 
-  setReportPhishingMenu: function() {
+  setReportPhishingMenu() {
     // In order to detect whether or not we're at the phishing warning
     // page, we have to check the documentURI instead of the currentURI.
     // This is because when the DocShell loads an error page, the
@@ -42,10 +42,27 @@ var gSafeBrowsing = {
 
   /**
    * Used to report a phishing page or a false positive
-   * @param name String One of "Phish", "Error", "Malware" or "MalwareError"
+   *
+   * @param name
+   *        String One of "PhishMistake", "MalwareMistake", or "Phish"
+   * @param info
+   *        Information about the reasons for blocking the resource.
+   *        In the case false positive, it may contain SafeBrowsing
+   *        matching list and provider of the list
    * @return String the report phishing URL.
    */
-  getReportURL: function(name) {
-    return SafeBrowsing.getReportURL(name, gBrowser.currentURI);
+  getReportURL(name, info) {
+    let reportInfo = info;
+    if (!reportInfo) {
+      let pageUri = gBrowser.currentURI.clone();
+
+      // Remove the query to avoid including potentially sensitive data
+      if (pageUri instanceof Ci.nsIURL) {
+        pageUri.query = "";
+      }
+
+      reportInfo = { uri: pageUri.asciiSpec };
+    }
+    return SafeBrowsing.getReportURL(name, reportInfo);
   }
 }

@@ -16,21 +16,20 @@
 // The label for button is specified through generated content
 // in the ua.css file.
 
-class nsGfxButtonControlFrame : public nsHTMLButtonControlFrame,
-                                public nsIAnonymousContentCreator
+class nsGfxButtonControlFrame final
+  : public nsHTMLButtonControlFrame
+  , public nsIAnonymousContentCreator
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsGfxButtonControlFrame)
 
   explicit nsGfxButtonControlFrame(nsStyleContext* aContext);
 
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
-  virtual nsresult HandleEvent(nsPresContext* aPresContext, 
+  virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
-
-  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
@@ -42,13 +41,10 @@ public:
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) override;
-  virtual nsIFrame* CreateFrameFor(nsIContent* aContent) override;
 
   virtual nsresult AttributeChanged(int32_t         aNameSpaceID,
                                     nsIAtom*        aAttribute,
                                     int32_t         aModType) override;
-
-  virtual bool IsLeaf() const override;
 
   virtual nsContainerFrame* GetContentInsertionFrame() override;
 

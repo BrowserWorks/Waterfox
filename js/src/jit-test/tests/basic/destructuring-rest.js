@@ -12,13 +12,7 @@ assertThrowsInstanceOf(() => new Function('[...!a] = []'), SyntaxError, 'unary e
 assertThrowsInstanceOf(() => new Function('[...a+b] = []'), SyntaxError, 'binary expression');
 assertThrowsInstanceOf(() => new Function('var [...a.x] = []'), SyntaxError, 'lvalue expression in declaration');
 assertThrowsInstanceOf(() => new Function('var [...(b)] = []'), SyntaxError);
-
-// XXX: The way the current parser works, a trailing comma is lost before we
-//      check for destructuring.  See bug 1041341. Once fixed, please update
-//      this assertion.
-assertThrowsInstanceOf(() =>
-	assertThrowsInstanceOf(() => new Function('[...b,] = []'), SyntaxError)
-	, Error);
+assertThrowsInstanceOf(() => new Function('[...b,] = []'), SyntaxError);
 
 assertThrowsInstanceOf(() => {
   try {
@@ -138,10 +132,9 @@ function testArgumentFunction(pattern, input, binding) {
     'return ' + binding
   )(input);
 }
-// XXX: ES6 requires the `Function` constructor to accept arbitrary
-// `BindingElement`s as formal parameters. See Bug 1037939.
-// Once fixed, please update the assertions below.
-assertThrowsInstanceOf(() => testDeclaration(testArgumentFunction), SyntaxError);
+// ES6 requires the `Function` constructor to accept arbitrary
+// `BindingElement`s as formal parameters.
+testDeclaration(testArgumentFunction);
 
 function testThrow(pattern, input, binding) {
   binding = binding || 'rest';

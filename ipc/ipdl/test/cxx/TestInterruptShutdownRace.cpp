@@ -46,15 +46,16 @@ TestInterruptShutdownRaceParent::Main()
         fail("sending Start");
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptShutdownRaceParent::RecvStartDeath()
 {
     // this will be ordered before the OnMaybeDequeueOne event of
     // Orphan in the queue
-    MessageLoop::current()->PostTask(
-        NewNonOwningRunnableMethod(this,
-				   &TestInterruptShutdownRaceParent::StartShuttingDown));
-    return true;
+    MessageLoop::current()->PostTask(NewNonOwningRunnableMethod(
+      "_ipdltest::TestInterruptShutdownRaceParent::StartShuttingDown",
+      this,
+      &TestInterruptShutdownRaceParent::StartShuttingDown));
+    return IPC_OK();
 }
 
 void
@@ -82,14 +83,14 @@ TestInterruptShutdownRaceParent::StartShuttingDown()
     // |this| has been deleted, be mindful
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptShutdownRaceParent::RecvOrphan()
 {
     // it would be nice to fail() here, but we'll process this message
     // while waiting for the reply CallExit().  The OnMaybeDequeueOne
     // task will still be in the queue, it just wouldn't have had any
     // work to do, if we hadn't deleted ourself
-    return true;
+    return IPC_OK();
 }
 
 //-----------------------------------------------------------------------------
@@ -105,7 +106,7 @@ TestInterruptShutdownRaceChild::~TestInterruptShutdownRaceChild()
     MOZ_COUNT_DTOR(TestInterruptShutdownRaceChild);
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptShutdownRaceChild::RecvStart()
 {
     if (!SendStartDeath())
@@ -118,15 +119,15 @@ TestInterruptShutdownRaceChild::RecvStart()
     if (!SendOrphan())
         fail("sending Orphan");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptShutdownRaceChild::AnswerExit()
 {
     _exit(0);
     NS_RUNTIMEABORT("unreached");
-    return false;
+    return IPC_FAIL_NO_REASON(this);
 }
 
 

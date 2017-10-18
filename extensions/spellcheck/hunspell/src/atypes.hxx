@@ -1,6 +1,8 @@
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
+ * Copyright (C) 2002-2017 Németh László
+ *
  * The contents of this file are subject to the Mozilla Public License Version
  * 1.1 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +13,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Hunspell, based on MySpell.
- *
- * The Initial Developers of the Original Code are
- * Kevin Hendricks (MySpell) and Németh László (Hunspell).
- * Portions created by the Initial Developers are Copyright (C) 2002-2005
- * the Initial Developers. All Rights Reserved.
+ * Hunspell is based on MySpell which is Copyright (C) 2002 Kevin Hendricks.
  *
  * Contributor(s): David Einstein, Davide Prina, Giuseppe Modugno,
  * Gianluca Turconi, Simon Brouwer, Noll János, Bíró Árpád,
@@ -38,8 +35,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-#ifndef _ATYPES_HXX_
-#define _ATYPES_HXX_
+#ifndef ATYPES_HXX_
+#define ATYPES_HXX_
 
 #ifndef HUNSPELL_WARNING
 #include <stdio.h>
@@ -55,15 +52,15 @@ static inline void HUNSPELL_WARNING(FILE*, const char*, ...) {}
 // HUNSTEM def.
 #define HUNSTEM
 
-#include "hashmgr.hxx"
 #include "w_char.hxx"
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #define SETSIZE 256
 #define CONTSIZE 65536
 
-// affentry options
+// AffEntry options
 #define aeXPRODUCT (1 << 0)
 #define aeUTF8 (1 << 1)
 #define aeALIASF (1 << 2)
@@ -85,8 +82,6 @@ static inline void HUNSPELL_WARNING(FILE*, const char*, ...) {}
 #define SPELL_ORIGCAP (1 << 5)
 #define SPELL_WARN (1 << 6)
 
-#define MAXLNLEN 8192
-
 #define MINCPDLEN 3
 #define MAXCOMPOUND 10
 #define MAXCONDLEN 20
@@ -100,46 +95,25 @@ static inline void HUNSPELL_WARNING(FILE*, const char*, ...) {}
 
 #define TESTAFF(a, b, c) (std::binary_search(a, a + c, b))
 
-struct affentry {
-  std::string strip;
-  std::string appnd;
-  char numconds;
-  char opts;
-  unsigned short aflag;
-  unsigned short* contclass;
-  short contclasslen;
-  union {
-    char conds[MAXCONDLEN];
-    struct {
-      char conds1[MAXCONDLEN_1];
-      char* conds2;
-    } l;
-  } c;
-  char* morphcode;
-};
-
 struct guessword {
   char* word;
   bool allow;
   char* orig;
 };
 
-struct mapentry {
-  char** set;
-  int len;
-};
-
-struct flagentry {
-  FLAG* def;
-  int len;
-};
+typedef std::vector<std::string> mapentry;
+typedef std::vector<FLAG> flagentry;
 
 struct patentry {
-  char* pattern;
-  char* pattern2;
-  char* pattern3;
+  std::string pattern;
+  std::string pattern2;
+  std::string pattern3;
   FLAG cond;
   FLAG cond2;
+  patentry()
+    : cond(FLAG_NULL)
+    , cond2(FLAG_NULL) {
+  }
 };
 
 #endif

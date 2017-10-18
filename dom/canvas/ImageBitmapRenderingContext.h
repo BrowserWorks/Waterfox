@@ -56,7 +56,7 @@ public:
   NS_IMETHOD SetDimensions(int32_t aWidth, int32_t aHeight) override;
 
   NS_IMETHOD InitializeWithDrawTarget(nsIDocShell* aDocShell,
-                                      gfx::DrawTarget* aTarget) override;
+                                      NotNull<gfx::DrawTarget*> aTarget) override;
 
   virtual mozilla::UniquePtr<uint8_t[]> GetImageBuffer(int32_t* aFormat) override;
   NS_IMETHOD GetInputStream(const char* aMimeType,
@@ -64,9 +64,9 @@ public:
                             nsIInputStream** aStream) override;
 
   virtual already_AddRefed<mozilla::gfx::SourceSurface>
-  GetSurfaceSnapshot(bool* aPremultAlpha = nullptr) override;
+  GetSurfaceSnapshot(gfxAlphaType* aOutAlphaType) override;
 
-  NS_IMETHOD SetIsOpaque(bool aIsOpaque) override;
+  virtual void SetIsOpaque(bool aIsOpaque) override;
   virtual bool GetIsOpaque() override;
   NS_IMETHOD Reset() override;
   virtual already_AddRefed<Layer> GetCanvasLayer(nsDisplayListBuilder* aBuilder,

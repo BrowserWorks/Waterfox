@@ -5,9 +5,12 @@
 
 "use strict";
 
-var Cu = Components.utils;
-const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const {parseDeclarations, _parseCommentDeclarations} = require("devtools/shared/css-parsing-utils");
+const {require} = Components.utils.import("resource://devtools/shared/Loader.jsm", {});
+const {
+  parseDeclarations,
+  _parseCommentDeclarations,
+  parseNamedDeclarations
+} = require("devtools/shared/css/parsing-utils");
 const {isCssPropertyKnown} = require("devtools/server/actors/css-properties");
 
 const TEST_DATA = [
@@ -239,12 +242,13 @@ const TEST_DATA = [
     }]
   },
   {
-    input: "content: \"a not s\\\
-          o very long title\"",
-    expected: [
-      {name: "content", value: '"a not s\\\
-          o very long title"', priority: "", offsets: [0, 46]}
-    ]
+    input: "content: \"a not s\\          o very long title\"",
+    expected: [{
+      name: "content",
+      value: '"a not s\\          o very long title"',
+      priority: "",
+      offsets: [0, 46]
+    }]
   },
   // Test calc with nested parentheses
   {
@@ -327,10 +331,11 @@ const TEST_DATA = [
   {
     parseComments: true,
     input: "<!-- color: red; --> color: blue;",
-    expected: [{name: "color", value: "red", priority: "",
-                offsets: [5, 16]},
-               {name: "color", value: "blue", priority: "",
-                offsets: [21, 33]}]
+    expected: [
+      {name: "color", value: "red", priority: "",
+       offsets: [5, 16]},
+      {name: "color", value: "blue", priority: "",
+       offsets: [21, 33]}]
   },
 
   // Don't error on an empty comment.
@@ -353,11 +358,19 @@ const TEST_DATA = [
     input: "color: blue \\9 no\\_need",
     expected: [{name: "color", value: "blue \\9 no_need", priority: "", offsets: [0, 23]}]
   },
+
+  // Regression test for bug 1297890 - don't paste tokens.
+  {
+    parseComments: true,
+    input: "stroke-dasharray: 1/*ThisIsAComment*/2;",
+    expected: [{name: "stroke-dasharray", value: "1 2", priority: "", offsets: [0, 39]}]
+  },
 ];
 
 function run_test() {
   run_basic_tests();
   run_comment_tests();
+  run_named_tests();
 }
 
 // Test parseDeclarations.
@@ -404,6 +417,28 @@ function run_comment_tests() {
     do_print("Test input string " + test.input);
     let output = _parseCommentDeclarations(isCssPropertyKnown, test.input, 0,
                                            test.input.length + 4);
+    deepEqual(output, test.expected);
+  }
+}
+
+const NAMED_DATA = [
+  {
+    input: "position:absolute;top50px;height:50px;",
+    expected: [
+      {name: "position", value: "absolute", priority: "", terminator: "",
+       offsets: [0, 18], colonOffsets: [8, 9]},
+      {name: "height", value: "50px", priority: "", terminator: "",
+       offsets: [26, 38], colonOffsets: [32, 33]}
+    ],
+  },
+];
+
+// Test parseNamedDeclarations.
+function run_named_tests() {
+  for (let test of NAMED_DATA) {
+    do_print("Test input string " + test.input);
+    let output = parseNamedDeclarations(isCssPropertyKnown, test.input, true);
+    do_print(JSON.stringify(output));
     deepEqual(output, test.expected);
   }
 }

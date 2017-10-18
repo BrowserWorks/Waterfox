@@ -7,21 +7,21 @@
 const SHORTCUT_URL = "place:folder=2";
 const QUERY_URL = "place:sort=8&maxResults=10";
 
-add_task(function* copy_toolbar_shortcut() {
-  let library = yield promiseLibrary();
+add_task(async function copy_toolbar_shortcut() {
+  let library = await promiseLibrary();
 
-  registerCleanupFunction(function () {
+  registerCleanupFunction(function() {
     library.close();
     PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
   });
 
   library.PlacesOrganizer.selectLeftPaneQuery("BookmarksToolbar");
 
-  yield promiseClipboard(function () { library.PlacesOrganizer._places.controller.copy(); },
+  await promiseClipboard(function() { library.PlacesOrganizer._places.controller.copy(); },
                          PlacesUtils.TYPE_X_MOZ_PLACE);
 
   library.PlacesOrganizer.selectLeftPaneQuery("UnfiledBookmarks");
-  library.ContentTree.view.controller.paste();
+  await library.ContentTree.view.controller.paste();
 
   let toolbarCopyNode = library.ContentTree.view.view.nodeForTreeIndex(0);
   is(toolbarCopyNode.type,
@@ -35,16 +35,16 @@ add_task(function* copy_toolbar_shortcut() {
      "original is still a folder shortcut");
 });
 
-add_task(function* copy_history_query() {
-  let library = yield promiseLibrary();
+add_task(async function copy_history_query() {
+  let library = await promiseLibrary();
 
   library.PlacesOrganizer.selectLeftPaneQuery("History");
 
-  yield promiseClipboard(function () { library.PlacesOrganizer._places.controller.copy(); },
+  await promiseClipboard(function() { library.PlacesOrganizer._places.controller.copy(); },
                          PlacesUtils.TYPE_X_MOZ_PLACE);
 
   library.PlacesOrganizer.selectLeftPaneQuery("UnfiledBookmarks");
-  library.ContentTree.view.controller.paste();
+  await library.ContentTree.view.controller.paste();
 
   let historyCopyNode = library.ContentTree.view.view.nodeForTreeIndex(0);
   is(historyCopyNode.type,

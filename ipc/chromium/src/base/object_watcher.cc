@@ -21,6 +21,8 @@ public:
   Delegate* delegate;        // Delegate to notify when signaled
   bool did_signal;           // DoneWaiting was called
 
+  Watch() : mozilla::Runnable("ObjectWatcher::Watch") {}
+
   NS_IMETHOD Run() override {
     // The watcher may have already been torn down, in which case we need to
     // just get out of dodge.
@@ -38,7 +40,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-ObjectWatcher::ObjectWatcher() : watch_(NULL) {
+ObjectWatcher::ObjectWatcher() : watch_(nullptr) {
 }
 
 ObjectWatcher::~ObjectWatcher() {
@@ -99,7 +101,7 @@ bool ObjectWatcher::StopWatching() {
   // anything once it is run.
   watch_->watcher = NULL;
 
-  watch_ = NULL;
+  watch_ = nullptr;
 
   MessageLoop::current()->RemoveDestructionObserver(this);
   return true;
@@ -125,7 +127,9 @@ void CALLBACK ObjectWatcher::DoneWaiting(void* param, BOOLEAN timed_out) {
   // We rely on the locking in PostTask() to ensure that a memory barrier is
   // provided, which in turn ensures our change to did_signal can be observed
   // on the target thread.
-  watch->origin_loop->PostTask(addrefedWatch.forget());
+  if (watch->origin_loop->IsAcceptingTasks()) {
+    watch->origin_loop->PostTask(addrefedWatch.forget());
+  }
 }
 
 void ObjectWatcher::WillDestroyCurrentMessageLoop() {

@@ -3,30 +3,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PGMP;
-include protocol PGMPService;
 include protocol PGMPVideoDecoder;
 include protocol PGMPVideoEncoder;
 include protocol PGMPDecryptor;
-include protocol PGMPAudioDecoder;
+include protocol PChromiumCDM;
 
 namespace mozilla {
 namespace gmp {
 
 intr protocol PGMPContent
 {
-  bridges PGMPService, PGMP;
-
-  manages PGMPAudioDecoder;
   manages PGMPDecryptor;
   manages PGMPVideoDecoder;
   manages PGMPVideoEncoder;
+  manages PChromiumCDM;
 
 child:
-  async PGMPAudioDecoder();
   async PGMPDecryptor();
-  async PGMPVideoDecoder();
+  async PGMPVideoDecoder(uint32_t aDecryptorId);
   async PGMPVideoEncoder();
+  async PChromiumCDM();
 };
 
 } // namespace gmp

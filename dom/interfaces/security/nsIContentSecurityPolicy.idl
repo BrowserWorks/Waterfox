@@ -9,6 +9,7 @@ interface nsIURI;
 interface nsIChannel;
 interface nsIDocShell;
 interface nsIDOMDocument;
+interface nsIEventTarget;
 interface nsIPrincipal;
 interface nsIURI;
 
@@ -66,7 +67,7 @@ interface nsIContentSecurityPolicy : nsISerializable
    * Accessor method for a read-only string version of the policy at a given
    * index.
    */
-  AString getPolicy(in unsigned long index);
+  [binaryname(GetPolicyString)] AString getPolicy(in unsigned long index);
 
   /**
    * Accessor method for a read-only pointer the policy object at a given
@@ -96,6 +97,11 @@ interface nsIContentSecurityPolicy : nsISerializable
    * an upgrade.
    */
   readonly attribute bool blockAllMixedContent;
+
+  /**
+   * Returns whether this policy enforces the frame-ancestors directive.
+   */
+  readonly attribute bool enforcesFrameAncestors;
 
   /**
    * Obtains the referrer policy (as integer) for this browsing context as
@@ -131,6 +137,7 @@ interface nsIContentSecurityPolicy : nsISerializable
    * Whether this policy allows inline script or style.
    * @param aContentPolicyType Either TYPE_SCRIPT or TYPE_STYLESHEET
    * @param aNonce The nonce string to check against the policy
+   * @param aParserCreated If the script element was created by the HTML Parser
    * @param aContent  The content of the inline resource to hash
    *        (and compare to the hashes listed in the policy)
    * @param aLineNumber The line number of the inline resource
@@ -141,6 +148,7 @@ interface nsIContentSecurityPolicy : nsISerializable
    */
   boolean getAllowsInline(in nsContentPolicyType aContentPolicyType,
                           in AString aNonce,
+                          in boolean aParserCreated,
                           in AString aContent,
                           in unsigned long aLineNumber);
 
@@ -218,6 +226,10 @@ interface nsIContentSecurityPolicy : nsISerializable
   void setRequestContext(in nsIDOMDocument aDocument,
                          in nsIPrincipal aPrincipal);
 
+  /**
+   *  Ensure we have a nsIEventTarget to use to label CSPReportSenderRunnable
+   */
+  [noscript] void ensureEventTarget(in nsIEventTarget aEventTarget);
 
   /*
    * Checks if a CSP requires Subresource Integrity (SRI)

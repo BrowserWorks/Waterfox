@@ -37,28 +37,29 @@ enum nsSortState_direction {
   nsSortState_ascending,
   nsSortState_natural
 };
-  
+
 // the sort state holds info about the current sort
 struct nsSortState
 {
   bool initialized;
-  bool invertSort;
-  bool inbetweenSeparatorSort;
-  bool sortStaticsLast;
-  bool isContainerRDFSeq;
+  MOZ_INIT_OUTSIDE_CTOR bool invertSort;
+  MOZ_INIT_OUTSIDE_CTOR bool inbetweenSeparatorSort;
+  MOZ_INIT_OUTSIDE_CTOR bool sortStaticsLast;
+  MOZ_INIT_OUTSIDE_CTOR bool isContainerRDFSeq;
 
   uint32_t sortHints;
 
-  nsSortState_direction direction;
+  MOZ_INIT_OUTSIDE_CTOR nsSortState_direction direction;
   nsAutoString sort;
   nsCOMArray<nsIAtom> sortKeys;
 
   nsCOMPtr<nsIXULTemplateQueryProcessor> processor;
   nsCOMPtr<nsIContent> lastContainer;
-  bool lastWasFirst, lastWasLast;
+  MOZ_INIT_OUTSIDE_CTOR bool lastWasFirst, lastWasLast;
 
   nsSortState()
     : initialized(false),
+      isContainerRDFSeq(false),
       sortHints(0)
   {
   }

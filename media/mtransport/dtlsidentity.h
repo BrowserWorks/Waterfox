@@ -9,10 +9,11 @@
 #include <string>
 
 #include "m_cpp_utils.h"
+#include "mozilla/Move.h"
 #include "mozilla/RefPtr.h"
 #include "nsISupportsImpl.h"
-#include "sslt.h"
 #include "ScopedNSSTypes.h"
+#include "sslt.h"
 
 // All code in this module requires NSS to be live.
 // Callers must initialize NSS and implement the nsNSSShutdownObject
@@ -22,10 +23,10 @@ namespace mozilla {
 class DtlsIdentity final {
  public:
   // This constructor takes ownership of privkey and cert.
-  DtlsIdentity(SECKEYPrivateKey *privkey,
-               CERTCertificate *cert,
+  DtlsIdentity(UniqueSECKEYPrivateKey privkey,
+               UniqueCERTCertificate cert,
                SSLKEAType authType)
-      : private_key_(privkey), cert_(cert), auth_type_(authType) {}
+      : private_key_(Move(privkey)), cert_(Move(cert)), auth_type_(authType) {}
 
   // This is only for use in tests, or for external linkage.  It makes a (bad)
   // instance of this class.
@@ -33,8 +34,8 @@ class DtlsIdentity final {
 
   // These don't create copies or transfer ownership. If you want these to live
   // on, make a copy.
-  CERTCertificate *cert() const { return cert_; }
-  SECKEYPrivateKey *privkey() const { return private_key_; }
+  const UniqueCERTCertificate& cert() const { return cert_; }
+  const UniqueSECKEYPrivateKey& privkey() const { return private_key_; }
   // Note: this uses SSLKEAType because that is what the libssl API requires.
   // This is a giant confusing mess, but libssl indexes certificates based on a
   // key exchange type, not authentication type (as you might have reasonably
@@ -45,7 +46,7 @@ class DtlsIdentity final {
                               uint8_t *digest,
                               size_t size,
                               size_t *digest_length) const;
-  static nsresult ComputeFingerprint(const CERTCertificate *cert,
+  static nsresult ComputeFingerprint(const UniqueCERTCertificate& cert,
                                      const std::string algorithm,
                                      uint8_t *digest,
                                      size_t size,
@@ -59,12 +60,11 @@ class DtlsIdentity final {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DtlsIdentity)
 
  private:
-  ~DtlsIdentity();
+  ~DtlsIdentity() {}
   DISALLOW_COPY_ASSIGN(DtlsIdentity);
 
-  ScopedSECKEYPrivateKey private_key_;
-  CERTCertificate *cert_;  // TODO: Using a smart pointer here causes link
-                           // errors.
+  UniqueSECKEYPrivateKey private_key_;
+  UniqueCERTCertificate cert_;
   SSLKEAType auth_type_;
 };
 }  // close namespace

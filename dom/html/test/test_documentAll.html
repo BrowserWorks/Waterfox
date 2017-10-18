@@ -22,7 +22,7 @@ Tests for document.all
   <a id="id3">E</a>
   <a id="id3">F</a>
 </div>
-<iframe id="subframe" src="data:text/html,<span id='x'></span>"
+<iframe id="subframe" srcdoc="<span id='x'></span>"
         style="display: none"></iframe>
 <pre id="test">
 <script class="testbody" type="text/javascript">
@@ -110,7 +110,7 @@ is(document.all.length, expectedLength, "grew correctly");
 
 // Check which elements the 'name' attribute works on
 var elementNames =
-  ['applet','abbr','acronym','address','area','a','b','base',
+  ['abbr','acronym','address','area','a','b','base',
    'bgsound','big','blockquote','br','canvas','center','cite','code',
    'col','colgroup','dd','del','dfn','dir','div','dir','dl','dt','em','embed',
    'fieldset','font','form','frame','frameset','head','i','iframe','img',
@@ -122,7 +122,7 @@ var elementNames =
    'bdo','legend','listing','style','script','tbody','caption','meta',
    'optgroup','button','span','strike','strong','td'].sort();
 var hasName =
-  ['applet','a','embed','form','iframe','img','input','object','textarea',
+  ['a','embed','form','iframe','img','input','object','textarea',
    'select','map','meta','button','frame','frameset'].sort();
 
 elementNames.forEach(function (name) {
@@ -153,7 +153,7 @@ addLoadEvent(function() {
 
 // Utility functions
 function rC(node) {
-  node.parentNode.removeChild(node);
+  node.remove();
 }
 function testArraysSame(a1, a2) {
   return Array.prototype.every.call(a1, function(e, index) {

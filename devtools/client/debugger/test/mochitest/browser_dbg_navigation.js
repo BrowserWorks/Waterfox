@@ -29,7 +29,7 @@ function test() {
       .then(testNavigate)
       .then(testDetach)
       .then(finish)
-      .then(null, aError => {
+      .catch(aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
   });
@@ -63,7 +63,7 @@ function testDetach(aActor) {
   gClient.addOneTimeListener("tabDetached", (aType, aPacket) => {
     ok(true, "Got a tab detach notification.");
     is(aPacket.from, aActor, "tab detach message comes from the expected actor");
-    gClient.close(deferred.resolve);
+    deferred.resolve(gClient.close());
   });
 
   removeTab(gBrowser.selectedTab);

@@ -18,11 +18,11 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/File.h"
 
 class nsINode;
 class nsITransferable;
-class nsISupportsArray;
 class nsILoadContext;
 
 namespace mozilla {
@@ -133,24 +133,35 @@ public:
     }
   }
 
-  void SetDragImage(Element& aElement, int32_t aX, int32_t aY,
-                    ErrorResult& aRv);
+  void SetDragImage(Element& aElement, int32_t aX, int32_t aY);
+  void UpdateDragImage(Element& aElement, int32_t aX, int32_t aY);
 
-  already_AddRefed<DOMStringList> GetTypes(ErrorResult& rv) const;
+  void GetTypes(nsTArray<nsString>& aTypes, CallerType aCallerType) const;
 
-  void GetData(const nsAString& aFormat, nsAString& aData, ErrorResult& aRv);
+  void GetData(const nsAString& aFormat, nsAString& aData,
+               nsIPrincipal& aSubjectPrincipal,
+               ErrorResult& aRv);
 
   void SetData(const nsAString& aFormat, const nsAString& aData,
+               nsIPrincipal& aSubjectPrincipal,
                ErrorResult& aRv);
 
   void ClearData(const mozilla::dom::Optional<nsAString>& aFormat,
+                 nsIPrincipal& aSubjectPrincipal,
                  mozilla::ErrorResult& aRv);
 
-  FileList* GetFiles(mozilla::ErrorResult& aRv);
+  already_AddRefed<FileList>
+  GetFiles(nsIPrincipal& aSubjectPrincipal,
+           mozilla::ErrorResult& aRv);
 
-  already_AddRefed<Promise> GetFilesAndDirectories(ErrorResult& aRv);
+  already_AddRefed<Promise>
+  GetFilesAndDirectories(nsIPrincipal& aSubjectPrincipal,
+                         mozilla::ErrorResult& aRv);
 
-  already_AddRefed<Promise> GetFiles(bool aRecursiveFlag, ErrorResult& aRv);
+  already_AddRefed<Promise>
+  GetFiles(bool aRecursiveFlag,
+           nsIPrincipal& aSubjectPrincipal,
+           ErrorResult& aRv);
 
 
   void AddElement(Element& aElement, mozilla::ErrorResult& aRv);
@@ -167,17 +178,21 @@ public:
   }
 
   already_AddRefed<DOMStringList> MozTypesAt(uint32_t aIndex,
+                                             CallerType aCallerType,
                                              mozilla::ErrorResult& aRv) const;
 
   void MozClearDataAt(const nsAString& aFormat, uint32_t aIndex,
+                      nsIPrincipal& aSubjectPrincipal,
                       mozilla::ErrorResult& aRv);
 
   void MozSetDataAt(JSContext* aCx, const nsAString& aFormat,
                     JS::Handle<JS::Value> aData, uint32_t aIndex,
+                    nsIPrincipal& aSubjectPrincipal,
                     mozilla::ErrorResult& aRv);
 
   void MozGetDataAt(JSContext* aCx, const nsAString& aFormat,
                     uint32_t aIndex, JS::MutableHandle<JS::Value> aRetval,
+                    nsIPrincipal& aSubjectPrincipal,
                     mozilla::ErrorResult& aRv);
 
   bool MozUserCancelled() const
@@ -195,21 +210,34 @@ public:
   nsresult GetDataAtNoSecurityCheck(const nsAString& aFormat, uint32_t aIndex,
                                     nsIVariant** aData);
 
+  DataTransferItemList* Items() const {
+    return mItems;
+  }
+
   // a readonly dataTransfer cannot have new data added or existing data
   // removed. Only the dropEffect and effectAllowed may be modified.
-  DataTransferItemList* Items() const { return mItems; }
+  bool IsReadOnly() const {
+    return mReadOnly;
+  }
+  void SetReadOnly() {
+    mReadOnly = true;
+  }
 
-  bool IsReadOnly() const { return mReadOnly; }
-  void SetReadOnly() { mReadOnly = true; }
-
-  int32_t ClipboardType() const { return mClipboardType; }
-  EventMessage GetEventMessage() const { return mEventMessage; }
+  int32_t ClipboardType() const {
+    return mClipboardType;
+  }
+  EventMessage GetEventMessage() const {
+    return mEventMessage;
+  }
+  bool IsCrossDomainSubFrameDrop() const {
+    return mIsCrossDomainSubFrameDrop;
+  }
 
   // converts the data into an array of nsITransferable objects to be used for
   // drag and drop or clipboard operations.
-  already_AddRefed<nsISupportsArray> GetTransferables(nsIDOMNode* aDragTarget);
+  already_AddRefed<nsIArray> GetTransferables(nsIDOMNode* aDragTarget);
 
-  already_AddRefed<nsISupportsArray>
+  already_AddRefed<nsIArray>
   GetTransferables(nsILoadContext* aLoadContext);
 
   // converts the data for a single item at aIndex into an nsITransferable
@@ -258,6 +286,15 @@ public:
   // Text and text/unicode become text/plain, and URL becomes text/uri-list
   void GetRealFormat(const nsAString& aInFormat, nsAString& aOutFormat) const;
 
+  static bool PrincipalMaySetData(const nsAString& aFormat,
+                                  nsIVariant* aData,
+                                  nsIPrincipal* aPrincipal);
+
+  // Notify the DataTransfer that the list returned from GetTypes may have
+  // changed.  This can happen due to items we care about for purposes of
+  // GetTypes being added or removed or changing item kinds.
+  void TypesListMayHaveChanged();
+
 protected:
 
   // caches text and uri-list data formats that exist in the drag service or
@@ -270,7 +307,7 @@ protected:
   void CacheExternalDragFormats();
 
   // caches the formats that exist in the clipboard
-  void CacheExternalClipboardFormats();
+  void CacheExternalClipboardFormats(bool aPlainTextOnly);
 
   FileList* GetFilesInternal(ErrorResult& aRv, nsIPrincipal* aSubjectPrincipal);
   nsresult GetDataAtInternal(const nsAString& aFormat, uint32_t aIndex,
@@ -290,6 +327,7 @@ protected:
                                  nsIPrincipal* aPrincipal);
 
   void MozClearDataAtHelper(const nsAString& aFormat, uint32_t aIndex,
+                            nsIPrincipal& aSubjectPrincipal,
                             mozilla::ErrorResult& aRv);
 
   nsCOMPtr<nsISupports> mParent;
@@ -343,4 +381,3 @@ NS_DEFINE_STATIC_IID_ACCESSOR(DataTransfer, NS_DATATRANSFER_IID)
 } // namespace mozilla
 
 #endif /* mozilla_dom_DataTransfer_h */
-

@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AnimValuesStyleRule.h"
+#include "mozilla/GeckoStyleContext.h"
 #include "nsRuleData.h"
-#include "nsStyleContext.h"
 
 namespace mozilla {
 
@@ -15,7 +15,7 @@ NS_IMPL_ISUPPORTS(AnimValuesStyleRule, nsIStyleRule)
 void
 AnimValuesStyleRule::MapRuleInfoInto(nsRuleData* aRuleData)
 {
-  nsStyleContext *contextParent = aRuleData->mStyleContext->GetParent();
+  GeckoStyleContext* contextParent = aRuleData->mStyleContext->GetParent();
   if (contextParent && contextParent->HasPseudoElementData()) {
     // Don't apply transitions or animations to things inside of
     // pseudo-elements.
@@ -32,17 +32,14 @@ AnimValuesStyleRule::MapRuleInfoInto(nsRuleData* aRuleData)
     return;
   }
 
-  for (uint32_t i = 0, i_end = mPropertyValuePairs.Length(); i < i_end; ++i) {
-    PropertyStyleAnimationValuePair& pair = mPropertyValuePairs[i];
+  for (auto iter = mAnimationValues.ConstIter(); !iter.Done(); iter.Next()) {
+    nsCSSPropertyID property = static_cast<nsCSSPropertyID>(iter.Key());
     if (aRuleData->mSIDs & nsCachedStyleData::GetBitForSID(
-                             nsCSSProps::kSIDTable[pair.mProperty]))
-    {
-      nsCSSValue *prop = aRuleData->ValueFor(pair.mProperty);
+                             nsCSSProps::kSIDTable[property])) {
+      nsCSSValue *prop = aRuleData->ValueFor(property);
       if (prop->GetUnit() == eCSSUnit_Null) {
-#ifdef DEBUG
-        bool ok =
-#endif
-          StyleAnimationValue::UncomputeValue(pair.mProperty, pair.mValue,
+        DebugOnly<bool> ok =
+          StyleAnimationValue::UncomputeValue(property, iter.Data(),
                                               *prop);
         MOZ_ASSERT(ok, "could not store computed value");
       }
@@ -56,6 +53,43 @@ AnimValuesStyleRule::MightMapInheritedStyleData()
   return mStyleBits & NS_STYLE_INHERITED_STRUCT_MASK;
 }
 
+bool
+AnimValuesStyleRule::GetDiscretelyAnimatedCSSValue(nsCSSPropertyID aProperty,
+                                                   nsCSSValue* aValue)
+{
+  MOZ_ASSERT(false, "GetDiscretelyAnimatedCSSValue is not implemented yet");
+  return false;
+}
+
+void
+AnimValuesStyleRule::AddValue(nsCSSPropertyID aProperty,
+                              const StyleAnimationValue &aValue)
+{
+  MOZ_ASSERT(aProperty != eCSSProperty_UNKNOWN,
+             "Unexpected css property");
+  mAnimationValues.Put(aProperty, aValue);
+  mStyleBits |=
+    nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
+}
+
+void
+AnimValuesStyleRule::AddValue(nsCSSPropertyID aProperty,
+                              StyleAnimationValue&& aValue)
+{
+  MOZ_ASSERT(aProperty != eCSSProperty_UNKNOWN,
+             "Unexpected css property");
+  mAnimationValues.Put(aProperty, Move(aValue));
+  mStyleBits |=
+    nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
+}
+
+bool
+AnimValuesStyleRule::GetValue(nsCSSPropertyID aProperty,
+                              StyleAnimationValue& aValue) const
+{
+  return mAnimationValues.Get(aProperty, &aValue);
+}
+
 #ifdef DEBUG
 void
 AnimValuesStyleRule::List(FILE* out, int32_t aIndent) const
@@ -65,12 +99,13 @@ AnimValuesStyleRule::List(FILE* out, int32_t aIndent) const
     str.AppendLiteral("  ");
   }
   str.AppendLiteral("[anim values] { ");
-  for (uint32_t i = 0, i_end = mPropertyValuePairs.Length(); i < i_end; ++i) {
-    const PropertyStyleAnimationValuePair& pair = mPropertyValuePairs[i];
-    str.Append(nsCSSProps::GetStringValue(pair.mProperty));
+  for (auto iter = mAnimationValues.ConstIter(); !iter.Done(); iter.Next()) {
+    nsCSSPropertyID property = static_cast<nsCSSPropertyID>(iter.Key());
+    str.Append(nsCSSProps::GetStringValue(property));
     str.AppendLiteral(": ");
     nsAutoString value;
-    StyleAnimationValue::UncomputeValue(pair.mProperty, pair.mValue, value);
+    Unused <<
+      StyleAnimationValue::UncomputeValue(property, iter.Data(), value);
     AppendUTF16toUTF8(value, str);
     str.AppendLiteral("; ");
   }

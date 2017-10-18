@@ -11,6 +11,7 @@
 #include "jsfriendapi.h"
 
 #include "gc/Marking.h"
+#include "vm/Shape.h"
 
 #include "jsgcinlines.h"
 
@@ -63,7 +64,7 @@ WatchpointMap::watch(JSContext* cx, HandleObject obj, HandleId id,
 {
     MOZ_ASSERT(JSID_IS_STRING(id) || JSID_IS_INT(id) || JSID_IS_SYMBOL(id));
 
-    if (!obj->setWatched(cx))
+    if (!JSObject::setWatched(cx, obj))
         return false;
 
     Watchpoint w(handler, closure, false);
@@ -80,20 +81,10 @@ WatchpointMap::watch(JSContext* cx, HandleObject obj, HandleId id,
 }
 
 void
-WatchpointMap::unwatch(JSObject* obj, jsid id,
-                       JSWatchPointHandler* handlerp, JSObject** closurep)
+WatchpointMap::unwatch(JSObject* obj, jsid id)
 {
-    if (Map::Ptr p = map.lookup(WatchKey(obj, id))) {
-        if (handlerp)
-            *handlerp = p->value().handler;
-        if (closurep) {
-            // Read barrier to prevent an incorrectly gray closure from escaping the
-            // watchpoint. See the comment before UnmarkGrayChildren in gc/Marking.cpp
-            JS::ExposeObjectToActiveJS(p->value().closure);
-            *closurep = p->value().closure;
-        }
+    if (Map::Ptr p = map.lookup(WatchKey(obj, id)))
         map.remove(p);
-    }
 }
 
 void
@@ -145,7 +136,7 @@ WatchpointMap::triggerWatchpoint(JSContext* cx, HandleObject obj, HandleId id, M
 }
 
 bool
-WatchpointMap::markIteratively(JSTracer* trc)
+WatchpointMap::markIteratively(GCMarker* marker)
 {
     bool marked = false;
     for (Map::Enum e(map); !e.empty(); e.popFront()) {
@@ -153,10 +144,10 @@ WatchpointMap::markIteratively(JSTracer* trc)
         JSObject* priorKeyObj = entry.key().object;
         jsid priorKeyId(entry.key().id.get());
         bool objectIsLive =
-            IsMarked(const_cast<PreBarrieredObject*>(&entry.key().object));
+            IsMarked(marker->runtime(), const_cast<PreBarrieredObject*>(&entry.key().object));
         if (objectIsLive || entry.value().held) {
             if (!objectIsLive) {
-                TraceEdge(trc, const_cast<PreBarrieredObject*>(&entry.key().object),
+                TraceEdge(marker, const_cast<PreBarrieredObject*>(&entry.key().object),
                            "held Watchpoint object");
                 marked = true;
             }
@@ -164,10 +155,10 @@ WatchpointMap::markIteratively(JSTracer* trc)
             MOZ_ASSERT(JSID_IS_STRING(priorKeyId) ||
                        JSID_IS_INT(priorKeyId) ||
                        JSID_IS_SYMBOL(priorKeyId));
-            TraceEdge(trc, const_cast<PreBarrieredId*>(&entry.key().id), "WatchKey::id");
+            TraceEdge(marker, const_cast<PreBarrieredId*>(&entry.key().id), "WatchKey::id");
 
-            if (entry.value().closure && !IsMarked(&entry.value().closure)) {
-                TraceEdge(trc, &entry.value().closure, "Watchpoint::closure");
+            if (entry.value().closure && !IsMarked(marker->runtime(), &entry.value().closure)) {
+                TraceEdge(marker, &entry.value().closure, "Watchpoint::closure");
                 marked = true;
             }
 
@@ -180,27 +171,31 @@ WatchpointMap::markIteratively(JSTracer* trc)
 }
 
 void
-WatchpointMap::markAll(JSTracer* trc)
+WatchpointMap::trace(JSTracer* trc)
 {
     for (Map::Enum e(map); !e.empty(); e.popFront()) {
         Map::Entry& entry = e.front();
-        WatchKey key = entry.key();
-        WatchKey prior = key;
-        MOZ_ASSERT(JSID_IS_STRING(prior.id) || JSID_IS_INT(prior.id) || JSID_IS_SYMBOL(prior.id));
+        JSObject* object = entry.key().object;
+        jsid id = entry.key().id;
+        JSObject* priorObject = object;
+        jsid priorId = id;
+        MOZ_ASSERT(JSID_IS_STRING(priorId) || JSID_IS_INT(priorId) || JSID_IS_SYMBOL(priorId));
 
-        TraceEdge(trc, const_cast<PreBarrieredObject*>(&key.object),
-                   "held Watchpoint object");
-        TraceEdge(trc, const_cast<PreBarrieredId*>(&key.id), "WatchKey::id");
+        TraceManuallyBarrieredEdge(trc, &object, "held Watchpoint object");
+        TraceManuallyBarrieredEdge(trc, &id, "WatchKey::id");
         TraceEdge(trc, &entry.value().closure, "Watchpoint::closure");
 
-        if (prior.object != key.object || prior.id != key.id)
-            e.rekeyFront(key);
+        if (priorObject != object || priorId != id)
+            e.rekeyFront(WatchKey(object, id));
     }
 }
 
-void
+/* static */ void
 WatchpointMap::sweepAll(JSRuntime* rt)
 {
+    // This is called during compacting GC. Watchpoint closure pointers can be
+    // cross-compartment so we have to sweep all watchpoint maps, not just those
+    // owned by compartments we are compacting.
     for (GCCompartmentsIter c(rt); !c.done(); c.next()) {
         if (WatchpointMap* wpmap = c->watchpointMap)
             wpmap->sweep();

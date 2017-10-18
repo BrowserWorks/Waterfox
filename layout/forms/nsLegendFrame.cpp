@@ -22,19 +22,11 @@ NS_NewLegendFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 #endif
 
   nsIFrame* f = new (aPresShell) nsLegendFrame(aContext);
-  if (f) {
-    f->AddStateBits(NS_BLOCK_FLOAT_MGR | NS_BLOCK_MARGIN_ROOT);
-  }
+  f->AddStateBits(NS_BLOCK_FORMATTING_CONTEXT_STATE_BITS);
   return f;
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsLegendFrame)
-
-nsIAtom*
-nsLegendFrame::GetType() const
-{
-  return nsGkAtoms::legendFrame; 
-}
 
 void
 nsLegendFrame::DestroyFrom(nsIFrame* aDestructRoot)

@@ -4,13 +4,25 @@ fuzzy-if(skiaContent,2,13) == dynamic-legend-scroll-1.html dynamic-legend-scroll
 == fieldset-percentage-padding-1.html fieldset-percentage-padding-1-ref.html
 == fieldset-scroll-1.html fieldset-scroll-1-ref.html
 == fieldset-scrolled-1.html fieldset-scrolled-1-ref.html
-random-if(B2G||Mulet) == fieldset-overflow-auto-1.html fieldset-overflow-auto-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-fuzzy-if(winWidget&&!layersGPUAccelerated,121,221) == positioned-container-1.html positioned-container-1-ref.html
+== fieldset-overflow-auto-1.html fieldset-overflow-auto-1-ref.html
+fuzzy-if(winWidget&&!layersGPUAccelerated,140,276) == positioned-container-1.html positioned-container-1-ref.html
 == relpos-legend-1.html relpos-legend-1-ref.html
 == relpos-legend-2.html relpos-legend-2-ref.html
-skip-if((B2G&&browserIsRemote)||Mulet) == sticky-legend-1.html sticky-legend-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+== relpos-legend-3.html relpos-legend-3-ref.html
+== relpos-legend-4.html relpos-legend-4-ref.html
+== sticky-legend-1.html sticky-legend-1-ref.html
 fuzzy-if(skiaContent,1,40768) == abs-pos-child-sizing.html abs-pos-child-sizing-ref.html
 == overflow-hidden.html overflow-hidden-ref.html
 == legend-rtl.html legend-rtl-ref.html
 == fieldset-grid-001.html fieldset-grid-001-ref.html
 == fieldset-flexbox-001.html fieldset-flexbox-001-ref.html
+== fieldset-min-width-1a.html fieldset-min-width-1-ref.html
+== fieldset-min-width-1b.html fieldset-min-width-1-ref.html
+== fieldset-min-width-2a.html fieldset-min-width-2-ref.html
+== fieldset-min-width-2b.html fieldset-min-width-2-ref.html
+== legend-overlapping-right-border-1.html legend-overlapping-right-border-1-ref.html
+== fieldset-border-image-1a.html fieldset-border-image-1-ref.html
+== fieldset-border-image-1b.html fieldset-border-image-1-ref.html
+== fieldset-border-image-2a.html fieldset-border-image-2-ref.html
+== fieldset-border-image-2b.html fieldset-border-image-2-ref.html
+== dynamic-text-indent.html dynamic-text-indent-ref.html

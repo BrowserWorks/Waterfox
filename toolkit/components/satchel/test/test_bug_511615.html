@@ -23,6 +23,7 @@ Test for Form History Autocomplete Untrusted Events: Bug 511615
 
 <pre id="test">
 <script class="testbody" type="text/javascript">
+/* import-globals-from satchel_common.js */
 
 var resolvePopupShownListener;
 registerPopupShownListener(() => resolvePopupShownListener());
@@ -50,6 +51,9 @@ SimpleTest.requestFlakyTimeout("Must ensure that an event does not happen.");
 
 /**
  * Checks that the popup does not open in response to the given function.
+ *
+ * @param {Function} triggerFn - function that triggers an event
+ * @returns {Promise}
  */
 function expectPopupDoesNotOpen(triggerFn) {
   let popupShown = waitForNextPopup();
@@ -62,6 +66,9 @@ function expectPopupDoesNotOpen(triggerFn) {
 
 /**
  * Checks that the selected index in the popup still matches the given value.
+ *
+ * @param {number} expectedIndex
+ * @returns {Promise}
  */
 function checkSelectedIndexAfterResponseTime(expectedIndex) {
   return new Promise(resolve => {
@@ -72,29 +79,34 @@ function checkSelectedIndexAfterResponseTime(expectedIndex) {
   });
 }
 
+let input = $_(1, "field1");
+
 function doKeyUnprivileged(key) {
   let keyName = "DOM_VK_" + key.toUpperCase();
-  let keycode, charcode, alwaysVal;
+  let keycode, charcode, alwaysval;
 
   if (key.length == 1) {
-      keycode = 0;
-      charcode = key.charCodeAt(0);
-      alwaysval = charcode;
+    keycode = 0;
+    charcode = key.charCodeAt(0);
+    alwaysval = charcode;
   } else {
-      keycode = KeyEvent[keyName];
-      if (!keycode)
-          throw "invalid keyname in test";
-      charcode = 0;
-      alwaysval = keycode;
+    keycode = KeyEvent[keyName];
+    if (!keycode) {
+      throw new Error("invalid keyname in test");
+    }
+    charcode = 0;
+    alwaysval = keycode;
   }
 
-  let dnEvent = document.createEvent('KeyboardEvent');
-  let prEvent = document.createEvent('KeyboardEvent');
-  let upEvent = document.createEvent('KeyboardEvent');
+  let dnEvent = document.createEvent("KeyboardEvent");
+  let prEvent = document.createEvent("KeyboardEvent");
+  let upEvent = document.createEvent("KeyboardEvent");
 
+  /* eslint-disable no-multi-spaces */
   dnEvent.initKeyEvent("keydown",  true, true, null, false, false, false, false, alwaysval, 0);
   prEvent.initKeyEvent("keypress", true, true, null, false, false, false, false, keycode, charcode);
   upEvent.initKeyEvent("keyup",    true, true, null, false, false, false, false, alwaysval, 0);
+  /* eslint-enable no-multi-spaces */
 
   input.dispatchEvent(dnEvent);
   input.dispatchEvent(prEvent);
@@ -102,37 +114,37 @@ function doKeyUnprivileged(key) {
 }
 
 function doClickWithMouseEventUnprivileged() {
-  let dnEvent = document.createEvent('MouseEvent');
-  let upEvent = document.createEvent('MouseEvent');
-  let ckEvent = document.createEvent('MouseEvent');
+  let dnEvent = document.createEvent("MouseEvent");
+  let upEvent = document.createEvent("MouseEvent");
+  let ckEvent = document.createEvent("MouseEvent");
 
+  /* eslint-disable no-multi-spaces, max-len */
   dnEvent.initMouseEvent("mousedown",  true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
   upEvent.initMouseEvent("mouseup",    true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
   ckEvent.initMouseEvent("mouseclick", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+  /* eslint-enable no-multi-spaces, max-len */
 
   input.dispatchEvent(dnEvent);
   input.dispatchEvent(upEvent);
   input.dispatchEvent(ckEvent);
 }
 
-let input = $_(1, "field1");
-
-add_task(function* test_initialize() {
-  yield new Promise(resolve => updateFormHistory([
-    { op : "remove" },
-    { op : "add", fieldname : "field1", value : "value1" },
-    { op : "add", fieldname : "field1", value : "value2" },
-    { op : "add", fieldname : "field1", value : "value3" },
-    { op : "add", fieldname : "field1", value : "value4" },
-    { op : "add", fieldname : "field1", value : "value5" },
-    { op : "add", fieldname : "field1", value : "value6" },
-    { op : "add", fieldname : "field1", value : "value7" },
-    { op : "add", fieldname : "field1", value : "value8" },
-    { op : "add", fieldname : "field1", value : "value9" },
+add_task(async function test_initialize() {
+  await new Promise(resolve => updateFormHistory([
+    { op: "remove" },
+    { op: "add", fieldname: "field1", value: "value1" },
+    { op: "add", fieldname: "field1", value: "value2" },
+    { op: "add", fieldname: "field1", value: "value3" },
+    { op: "add", fieldname: "field1", value: "value4" },
+    { op: "add", fieldname: "field1", value: "value5" },
+    { op: "add", fieldname: "field1", value: "value6" },
+    { op: "add", fieldname: "field1", value: "value7" },
+    { op: "add", fieldname: "field1", value: "value8" },
+    { op: "add", fieldname: "field1", value: "value9" },
   ], resolve));
 });
 
-add_task(function* test_untrusted_events_ignored() {
+add_task(async function test_untrusted_events_ignored() {
   // The autocomplete popup should not open from untrusted events.
   for (let triggerFn of [
     () => input.focus(),
@@ -147,13 +159,13 @@ add_task(function* test_untrusted_events_ignored() {
   ]) {
     // We must wait for the entire timeout for each individual test, because the
     // next event in the list might prevent the popup from opening.
-    yield expectPopupDoesNotOpen(triggerFn);
+    await expectPopupDoesNotOpen(triggerFn);
   }
 
   // A privileged key press will actually open the popup.
   let popupShown = waitForNextPopup();
   doKey("down");
-  yield popupShown;
+  await popupShown;
 
   // The selected autocomplete item should not change from untrusted events.
   for (let triggerFn of [
@@ -161,13 +173,13 @@ add_task(function* test_untrusted_events_ignored() {
     () => doKeyUnprivileged("page_down"),
   ]) {
     triggerFn();
-    yield checkSelectedIndexAfterResponseTime(-1);
+    await checkSelectedIndexAfterResponseTime(-1);
   }
 
   // A privileged key press will actually change the selected index.
   let indexChanged = new Promise(resolve => notifySelectedIndex(0, resolve));
   doKey("down");
-  yield indexChanged;
+  await indexChanged;
 
   // The selected autocomplete item should not change and it should not be
   // possible to use it from untrusted events.
@@ -181,7 +193,7 @@ add_task(function* test_untrusted_events_ignored() {
     () => doKeyUnprivileged("return"),
   ]) {
     triggerFn();
-    yield checkSelectedIndexAfterResponseTime(0);
+    await checkSelectedIndexAfterResponseTime(0);
     is(input.value, "", "The selected item should not have been used.");
   }
 

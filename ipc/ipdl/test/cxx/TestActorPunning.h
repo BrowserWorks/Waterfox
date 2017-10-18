@@ -30,15 +30,17 @@ protected:
     PTestActorPunningSubParent* AllocPTestActorPunningSubParent() override;
     bool DeallocPTestActorPunningSubParent(PTestActorPunningSubParent* a) override;
 
-    virtual bool RecvPun(PTestActorPunningSubParent* a, const Bad& bad) override;
+    virtual mozilla::ipc::IPCResult RecvPun(PTestActorPunningSubParent* a, const Bad& bad) override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown == why)
-            fail("should have died from error!");  
+            fail("should have died from error!");
         passed("ok");
         QuitParent();
     }
+
+    virtual void HandleFatalError(const char* aProtocolName, const char* aErrorMsg) const override;
 };
 
 class TestActorPunningPunnedParent :
@@ -76,7 +78,7 @@ protected:
     PTestActorPunningSubChild* AllocPTestActorPunningSubChild() override;
     bool DeallocPTestActorPunningSubChild(PTestActorPunningSubChild* a) override;
 
-    virtual bool RecvStart() override;
+    virtual mozilla::ipc::IPCResult RecvStart() override;
 
     virtual void ActorDestroy(ActorDestroyReason why) override
     {
@@ -99,7 +101,7 @@ public:
     TestActorPunningSubChild() {}
     virtual ~TestActorPunningSubChild() {}
 
-    virtual bool RecvBad() override;
+    virtual mozilla::ipc::IPCResult RecvBad() override;
 };
 
 

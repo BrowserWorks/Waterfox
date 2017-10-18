@@ -27,12 +27,12 @@ add_task(function* () {
 });
 
 function* testPressingEnterCommitsChanges(swatch, ruleView) {
-  let bezierTooltip = ruleView.tooltips.cubicBezier;
+  let bezierTooltip = ruleView.tooltips.getTooltip("cubicBezier");
 
   info("Showing the tooltip");
-  let onShown = bezierTooltip.tooltip.once("shown");
+  let onBezierWidgetReady = bezierTooltip.once("ready");
   swatch.click();
-  yield onShown;
+  yield onBezierWidgetReady;
 
   let widget = yield bezierTooltip.widget;
   info("Simulating a change of curve in the widget");
@@ -53,7 +53,7 @@ function* testPressingEnterCommitsChanges(swatch, ruleView) {
   // Pressing RETURN ends up doing 2 rule-view updates, one for the preview and
   // one for the commit when the tooltip closes.
   let onRuleViewChanged = waitForNEvents(ruleView, "ruleview-changed", 2);
-  EventUtils.sendKey("RETURN", widget.parent.ownerDocument.defaultView);
+  focusAndSendKey(widget.parent.ownerDocument.defaultView, "RETURN");
   yield onRuleViewChanged;
 
   let style = yield getComputedStyleProperty("body", null,

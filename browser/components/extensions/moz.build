@@ -4,13 +4,32 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files("**"):
+    BUG_COMPONENT = ("Toolkit", "WebExtensions: Untriaged")
+
 JAR_MANIFESTS += ['jar.mn']
 
 EXTRA_COMPONENTS += [
     'extensions-browser.manifest',
 ]
 
+EXTRA_JS_MODULES += [
+    'ExtensionPopups.jsm',
+    'ParseBreakpadSymbols-worker.js',
+    'ParseCppFiltSymbols-worker.js',
+    'ParseNMSymbols-worker.js',
+    'ParseSymbols.jsm',
+]
+
 DIRS += ['schemas']
 
-BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
-XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
+BROWSER_CHROME_MANIFESTS += [
+    'test/browser/browser-remote.ini',
+    'test/browser/browser.ini',
+]
+
+MOCHITEST_MANIFESTS += ['test/mochitest/mochitest.ini']
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/xpcshell/xpcshell-remote.ini',
+    'test/xpcshell/xpcshell.ini',
+]

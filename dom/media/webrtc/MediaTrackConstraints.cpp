@@ -4,6 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MediaTrackConstraints.h"
+#include "nsIScriptError.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
 
 #include <limits>
@@ -11,6 +12,9 @@
 #include <iterator>
 
 namespace mozilla {
+
+using dom::ConstrainBooleanParameters;
+using dom::OwningLongOrConstrainLongRange;
 
 template<class ValueType>
 template<class ConstrainRange>
@@ -294,6 +298,10 @@ NormalizedConstraints::NormalizedConstraints(
   : NormalizedConstraintSet(*aOthers[0])
   , mBadConstraint(nullptr)
 {
+  for (auto& entry : aOthers[0]->mAdvanced) {
+    mAdvanced.push_back(entry);
+  }
+
   // Create a list of member pointers.
   nsTArray<MemberPtrType> list;
   NormalizedConstraints dummy(dom::MediaTrackConstraints(), &list);
@@ -364,11 +372,14 @@ FlattenedConstraints::FlattenedConstraints(const NormalizedConstraints& aOther)
     if (mEchoCancellation.Intersects(set.mEchoCancellation)) {
         mEchoCancellation.Intersect(set.mEchoCancellation);
     }
-    if (mMozNoiseSuppression.Intersects(set.mMozNoiseSuppression)) {
-        mMozNoiseSuppression.Intersect(set.mMozNoiseSuppression);
+    if (mNoiseSuppression.Intersects(set.mNoiseSuppression)) {
+        mNoiseSuppression.Intersect(set.mNoiseSuppression);
     }
-    if (mMozAutoGainControl.Intersects(set.mMozAutoGainControl)) {
-        mMozAutoGainControl.Intersect(set.mMozAutoGainControl);
+    if (mAutoGainControl.Intersects(set.mAutoGainControl)) {
+        mAutoGainControl.Intersect(set.mAutoGainControl);
+    }
+    if (mChannelCount.Intersects(set.mChannelCount)) {
+        mChannelCount.Intersect(set.mChannelCount);
     }
   }
 }
@@ -441,7 +452,8 @@ MediaConstraintsHelper::FindBadConstraint(
       mDeviceId(MockDevice::HasThreadSafeRefCnt::value ? aDeviceId : nsString()) {}
 
     uint32_t GetBestFitnessDistance(
-        const nsTArray<const NormalizedConstraintSet*>& aConstraintSets)
+        const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
+        bool aIsChrome)
     {
       return mMediaEngineSource->GetBestFitnessDistance(aConstraintSets,
                                                         mDeviceId);
@@ -459,6 +471,33 @@ MediaConstraintsHelper::FindBadConstraint(
   nsTArray<RefPtr<MockDevice>> devices;
   devices.AppendElement(new MockDevice(&aMediaEngineSource, aDeviceId));
   return FindBadConstraint(aConstraints, devices);
+}
+
+void
+MediaConstraintsHelper::ConvertOldWithWarning(
+    const dom::OwningBooleanOrConstrainBooleanParameters& old,
+    dom::OwningBooleanOrConstrainBooleanParameters& to,
+    const char* aMessageName,
+    nsPIDOMWindowInner* aWindow) {
+  if ((old.IsBoolean() ||
+       old.GetAsConstrainBooleanParameters().mExact.WasPassed() ||
+       old.GetAsConstrainBooleanParameters().mIdeal.WasPassed()) &&
+      !(to.IsBoolean() ||
+        to.GetAsConstrainBooleanParameters().mExact.WasPassed() ||
+        to.GetAsConstrainBooleanParameters().mIdeal.WasPassed())) {
+    nsCOMPtr<nsIDocument> doc = aWindow->GetDoc();
+    if (doc) {
+      nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+                                      NS_LITERAL_CSTRING("DOM"), doc,
+                                      nsContentUtils::eDOM_PROPERTIES,
+                                      aMessageName);
+    }
+    if (old.IsBoolean()) {
+      to.SetAsBoolean() = old.GetAsBoolean();
+    } else {
+      to.SetAsConstrainBooleanParameters() = old.GetAsConstrainBooleanParameters();
+    }
+  }
 }
 
 }

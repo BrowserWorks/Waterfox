@@ -10,6 +10,7 @@
 
 #include "webrtc/common_audio/vad/vad_core.h"
 
+#include "webrtc/base/sanitizer.h"
 #include "webrtc/common_audio/signal_processing/include/signal_processing_library.h"
 #include "webrtc/common_audio/vad/vad_filterbank.h"
 #include "webrtc/common_audio/vad/vad_gmm.h"
@@ -110,6 +111,15 @@ static int32_t WeightedAverage(int16_t* data, int16_t offset,
   return weighted_average;
 }
 
+// An s16 x s32 -> s32 multiplication that's allowed to overflow. (It's still
+// undefined behavior, so not a good idea; this just makes UBSan ignore the
+// violation, so that our old code can continue to do what it's always been
+// doing.)
+static inline int32_t OverflowingMulS16ByS32ToS32(int16_t a, int32_t b)
+    RTC_NO_SANITIZE("signed-integer-overflow") {
+  return a * b;
+}
+
 // Calculates the probabilities for both speech and background noise using
 // Gaussian Mixture Models (GMM). A hypothesis-test is performed to decide which
 // type of signal is most probable.
@@ -122,7 +132,7 @@ static int32_t WeightedAverage(int16_t* data, int16_t offset,
 //
 // - returns              : the VAD decision (0 - noise, 1 - speech).
 static int16_t GmmProbability(VadInstT* self, int16_t* features,
-                              int16_t total_power, int frame_length) {
+                              int16_t total_power, size_t frame_length) {
   int channel, k;
   int16_t feature_minimum;
   int16_t h0, h1;
@@ -378,7 +388,7 @@ static int16_t GmmProbability(VadInstT* self, int16_t* features,
 
           // (Q14 >> 2) * Q12 = Q24.
           tmp_s16 = (ngprvec[gaussian] + 2) >> 2;
-          tmp2_s32 = tmp_s16 * tmp1_s32;
+          tmp2_s32 = OverflowingMulS16ByS32ToS32(tmp_s16, tmp1_s32);
           // Q20  * approx 0.001 (2^-10=0.0009766), hence,
           // (Q24 >> 14) = (Q24 >> 4) / 2^10 = Q20.
           tmp1_s32 = tmp2_s32 >> 14;
@@ -596,16 +606,16 @@ int WebRtcVad_set_mode_core(VadInstT* self, int mode) {
 // probability for both speech and background noise.
 
 int WebRtcVad_CalcVad48khz(VadInstT* inst, const int16_t* speech_frame,
-                           int frame_length) {
+                           size_t frame_length) {
   int vad;
-  int i;
+  size_t i;
   int16_t speech_nb[240];  // 30 ms in 8 kHz.
   // |tmp_mem| is a temporary memory used by resample function, length is
   // frame length in 10 ms (480 samples) + 256 extra.
   int32_t tmp_mem[480 + 256] = { 0 };
-  const int kFrameLen10ms48khz = 480;
-  const int kFrameLen10ms8khz = 80;
-  int num_10ms_frames = frame_length / kFrameLen10ms48khz;
+  const size_t kFrameLen10ms48khz = 480;
+  const size_t kFrameLen10ms8khz = 80;
+  size_t num_10ms_frames = frame_length / kFrameLen10ms48khz;
 
   for (i = 0; i < num_10ms_frames; i++) {
     WebRtcSpl_Resample48khzTo8khz(speech_frame,
@@ -621,9 +631,10 @@ int WebRtcVad_CalcVad48khz(VadInstT* inst, const int16_t* speech_frame,
 }
 
 int WebRtcVad_CalcVad32khz(VadInstT* inst, const int16_t* speech_frame,
-                           int frame_length)
+                           size_t frame_length)
 {
-    int len, vad;
+    size_t len;
+    int vad;
     int16_t speechWB[480]; // Downsampled speech frame: 960 samples (30ms in SWB)
     int16_t speechNB[240]; // Downsampled speech frame: 480 samples (30ms in WB)
 
@@ -643,9 +654,10 @@ int WebRtcVad_CalcVad32khz(VadInstT* inst, const int16_t* speech_frame,
 }
 
 int WebRtcVad_CalcVad16khz(VadInstT* inst, const int16_t* speech_frame,
-                           int frame_length)
+                           size_t frame_length)
 {
-    int len, vad;
+    size_t len;
+    int vad;
     int16_t speechNB[240]; // Downsampled speech frame: 480 samples (30ms in WB)
 
     // Wideband: Downsample signal before doing VAD
@@ -659,7 +671,7 @@ int WebRtcVad_CalcVad16khz(VadInstT* inst, const int16_t* speech_frame,
 }
 
 int WebRtcVad_CalcVad8khz(VadInstT* inst, const int16_t* speech_frame,
-                          int frame_length)
+                          size_t frame_length)
 {
     int16_t feature_vector[kNumChannels], total_power;
 

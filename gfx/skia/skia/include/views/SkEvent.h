@@ -8,9 +8,13 @@
 #ifndef SkEvent_DEFINED
 #define SkEvent_DEFINED
 
-#include "SkDOM.h"
 #include "SkMetaData.h"
 #include "SkString.h"
+
+class SkDOM;
+struct SkDOMNode;
+
+#include "../private/SkLeanWindows.h"
 
 /** Unique 32bit id used to identify an instance of SkEventSink. When events are
     posted, they are posted to a specific sinkID. When it is time to dispatch the
@@ -178,7 +182,7 @@ public:
     const SkMetaData& getMetaData() const { return fMeta; }
 
     /** Call this to initialize the event from the specified XML node */
-    void inflate(const SkDOM&, const SkDOM::Node*);
+    void inflate(const SkDOM&, const SkDOMNode*);
 
     SkDEBUGCODE(void dump(const char title[] = NULL);)
 

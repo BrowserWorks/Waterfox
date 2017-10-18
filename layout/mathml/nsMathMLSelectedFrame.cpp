@@ -12,19 +12,6 @@ nsMathMLSelectedFrame::~nsMathMLSelectedFrame()
 {
 }
 
-void
-nsMathMLSelectedFrame::Init(nsIContent*       aContent,
-                            nsContainerFrame* aParent,
-                            nsIFrame*         aPrevInFlow)
-{
-  // Init our local attributes
-  mInvalidMarkup = false;
-  mSelectedFrame = nullptr;
-
-  // Let the base class do the rest
-  nsMathMLContainerFrame::Init(aContent, aParent, aPrevInFlow);
-}
-
 NS_IMETHODIMP
 nsMathMLSelectedFrame::TransmitAutomaticData()
 {
@@ -100,7 +87,7 @@ nsMathMLSelectedFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
 /* virtual */
 LogicalSize
-nsMathMLSelectedFrame::ComputeSize(nsRenderingContext *aRenderingContext,
+nsMathMLSelectedFrame::ComputeSize(gfxContext *aRenderingContext,
                                    WritingMode aWM,
                                    const LogicalSize& aCBSize,
                                    nscoord aAvailableISize,
@@ -140,7 +127,7 @@ nsMathMLSelectedFrame::Reflow(nsPresContext*          aPresContext,
 {
   MarkInReflow();
   mPresentationData.flags &= ~NS_MATHML_ERROR;
-  aStatus = NS_FRAME_COMPLETE;
+  aStatus.Reset();
   aDesiredSize.ClearSize();
   aDesiredSize.SetBlockStartAscent(0);
   mBoundingMetrics = nsBoundingMetrics();

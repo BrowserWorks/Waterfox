@@ -26,7 +26,7 @@ public:
     {
         MOZ_CRASH("shouldn't depend on this context");
     }
-    bool isStripSpaceAllowed(const txXPathNode& aNode)
+    nsresult isStripSpaceAllowed(const txXPathNode& aNode, bool& aAllowed)
     {
         MOZ_CRASH("shouldn't depend on this context");
     }
@@ -80,7 +80,7 @@ txXPathOptimizer::optimize(Expr* aInExpr, Expr** aOutExpr)
         if (NS_SUCCEEDED(rv)) {
             *aOutExpr = new txLiteralExpr(exprRes);
         }
-        
+
         return NS_OK;
     }
 
@@ -244,7 +244,7 @@ txXPathOptimizer::optimizeUnion(Expr* aInExpr, Expr** aOutExpr)
             if (step->getAxisIdentifier() != axis) {
                 continue;
             }
-            
+
             // Create a txUnionNodeTest if needed
             if (!unionTest) {
                 nsAutoPtr<txNodeTest> owner(unionTest = new txUnionNodeTest);
@@ -273,7 +273,7 @@ txXPathOptimizer::optimizeUnion(Expr* aInExpr, Expr** aOutExpr)
             uni->setSubExprAt(0, nullptr);
             *aOutExpr = currentStep;
 
-            // Return right away since we no longer have a union            
+            // Return right away since we no longer have a union
             return NS_OK;
         }
     }

@@ -125,10 +125,13 @@ base + "/* #a {color: red} */",
 // CSS2.1 section 4.3.6
 base + "#a {color: rgb(255, 0, 0%)}",
 base + "#a {color: rgb(100%, 0, 0)}",
-base + "#a {color: rgb(255.0, 0, 0)}",
 "#a {color: rgb(0, 128, 0)}",
 "#a {color: rgb(0%, 50%, 0%)}",
 "#a {color: rgb(0%, 49.999999999999%, 0%)}",
+
+// CSS-Color-4
+// https://drafts.csswg.org/css-color/#rgb-functions
+"#a {color: rgb(0, 128.0, 0)}",
 ], prop: "color", pseudo: ""
 },
 
@@ -246,7 +249,11 @@ var doTests = function() {
   frame.contentDocument.close();
 };
 
-doTests();
+// Running a debug build on the Android emulator is slooow and collecting
+// all the session history this test amasses through repeated navigations
+// adds considerably to the running time. Therefore, we restrict the
+// amount of session history we keep around during this test.
+SpecialPowers.pushPrefEnv({"set": [['browser.sessionhistory.max_entries', 4]]}, doTests);
 
 };
 

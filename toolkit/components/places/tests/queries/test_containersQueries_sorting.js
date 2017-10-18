@@ -12,14 +12,7 @@
  * This test is for global testing sorting containers queries.
  */
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals and Constants
-
-var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
-         getService(Ci.nsINavHistoryService);
-var bh = hs.QueryInterface(Ci.nsIBrowserHistory);
-var tagging = Cc["@mozilla.org/browser/tagging-service;1"].
-              getService(Ci.nsITaggingService);
+// Globals and Constants
 
 var resultTypes = [
   {value: Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_QUERY, name: "RESULTS_AS_DATE_QUERY"},
@@ -54,8 +47,7 @@ var tags = [
   "test",
 ];
 
-////////////////////////////////////////////////////////////////////////////////
-//// Test Runner
+// Test Runner
 
 /**
  * Enumerates all the sequences of the cartesian product of the arrays contained
@@ -88,8 +80,7 @@ var tags = [
  *         computed
  * @return the total number of sequences in the product
  */
-function cartProd(aSequences, aCallback)
-{
+function cartProd(aSequences, aCallback) {
   if (aSequences.length === 0)
     return 0;
 
@@ -130,8 +121,7 @@ function cartProd(aSequences, aCallback)
         // All element pointers are past the ends of their sequences.
         if (seqPtr < 0)
           done = true;
-      }
-      else break;
+      } else break;
     }
   }
   return numProds;
@@ -181,8 +171,7 @@ function test_query_callback(aSequence) {
     // Date containers are always sorted by date descending.
     check_children_sorting(root,
                            Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING);
-  }
-  else
+  } else
     check_children_sorting(root, sortingMode.value);
 
   // Now Check sorting of the first child container.
@@ -204,14 +193,12 @@ function test_query_callback(aSequence) {
     check_children_sorting(innerContainer,
                            Ci.nsINavHistoryQueryOptions.SORT_BY_TITLE_ASCENDING);
     innerContainer.containerOpen = false;
-  }
-  else if (resultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_TAG_QUERY) {
+  } else if (resultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_TAG_QUERY) {
     // Sorting mode for tag contents is hardcoded for now, to allow for faster
     // duplicates filtering.
     check_children_sorting(container,
                            Ci.nsINavHistoryQueryOptions.SORT_BY_NONE);
-  }
-  else
+  } else
     check_children_sorting(container, sortingMode.value);
 
   container.containerOpen = false;
@@ -248,15 +235,13 @@ function test_result_sortingMode_change(aResult, aResultType, aOriginalSortingMo
       // Date containers are always sorted by date descending.
       check_children_sorting(root,
                              Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING);
-    }
-    else if (aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY &&
+    } else if (aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY &&
              (aOriginalSortingMode.value == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_ASCENDING ||
               aOriginalSortingMode.value == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING)) {
       // Site containers don't have a good time property to sort by.
       check_children_sorting(root,
                              Ci.nsINavHistoryQueryOptions.SORT_BY_NONE);
-    }
-    else
+    } else
       check_children_sorting(root, aOriginalSortingMode.value);
 
     // Now Check sorting of the first child container.
@@ -276,21 +261,18 @@ function test_result_sortingMode_change(aResult, aResultType, aOriginalSortingMo
       innerContainer.containerOpen = true;
       check_children_sorting(innerContainer, aForcedSortingMode.value);
       innerContainer.containerOpen = false;
-    }
-    else {
+    } else {
       if (aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_QUERY ||
           aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_DATE_SITE_QUERY ||
           aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY) {
         // Date containers are always sorted by date descending.
         check_children_sorting(root, Ci.nsINavHistoryQueryOptions.SORT_BY_NONE);
-      }
-      else if (aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY &&
+      } else if (aResultType.value == Ci.nsINavHistoryQueryOptions.RESULTS_AS_SITE_QUERY &&
              (aOriginalSortingMode.value == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_ASCENDING ||
               aOriginalSortingMode.value == Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING)) {
         // Site containers don't have a good time property to sort by.
         check_children_sorting(root, Ci.nsINavHistoryQueryOptions.SORT_BY_NONE);
-      }
-      else
+      } else
         check_children_sorting(root, aOriginalSortingMode.value);
 
       // Children should always be sorted.
@@ -330,38 +312,38 @@ function check_children_sorting(aRootNode, aExpectedSortingMode) {
 
   // Get a comparator based on expected sortingMode.
   var comparator;
-  switch(aExpectedSortingMode) {
+  switch (aExpectedSortingMode) {
     case Ci.nsINavHistoryQueryOptions.SORT_BY_NONE:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return 0;
       }
       break;
     case Ci.nsINavHistoryQueryOptions.SORT_BY_TITLE_ASCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return caseInsensitiveStringComparator(a.title, b.title);
       }
       break;
     case Ci.nsINavHistoryQueryOptions.SORT_BY_TITLE_DESCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return -caseInsensitiveStringComparator(a.title, b.title);
       }
       break;
     case Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_ASCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return a.time - b.time;
       }
       break;
     case Ci.nsINavHistoryQueryOptions.SORT_BY_DATE_DESCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return b.time - a.time;
       }
     case Ci.nsINavHistoryQueryOptions.SORT_BY_DATEADDED_ASCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return a.dateAdded - b.dateAdded;
       }
       break;
     case Ci.nsINavHistoryQueryOptions.SORT_BY_DATEADDED_DESCENDING:
-      comparator = function (a, b) {
+      comparator = function(a, b) {
         return b.dateAdded - a.dateAdded;
       }
       break;
@@ -381,16 +363,9 @@ function check_children_sorting(aRootNode, aExpectedSortingMode) {
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//// Main
+// Main
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_containersQueries_sorting()
-{
+add_task(async function test_containersQueries_sorting() {
   // Add visits, bookmarks and tags to our database.
   var timeInMilliseconds = Date.now();
   var visitCount = 0;
@@ -408,7 +383,7 @@ add_task(function* test_containersQueries_sorting()
       isTag: true,
       tagArray: tags,
       isInQuery: true }));
-  yield task_populateDB(visits);
+  await task_populateDB(visits);
 
   cartProd([resultTypes, sortingModes], test_query_callback);
 });

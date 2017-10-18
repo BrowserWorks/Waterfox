@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 *******************************************************************************
 * Copyright (C) 2010-2015, International Business Machines Corporation and
@@ -228,7 +230,7 @@ void NumberingSystem::setAlgorithmic(UBool c) {
     algorithmic = c;
 }
 
-void NumberingSystem::setDesc(UnicodeString d) {
+void NumberingSystem::setDesc(const UnicodeString &d) {
     desc.setTo(d);
 }
 void NumberingSystem::setName(const char *n) {

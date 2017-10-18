@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+# flake8: noqa
 
 from copy import deepcopy
 import os
 import unittest
+
+import mozunit
 
 from manifestparser.filters import (
     subsuite,
@@ -144,7 +147,7 @@ class BuiltinFilters(unittest.TestCase):
         tests = deepcopy(self.tests)
         tests = list(sub1(tests, {}))
         self.assertNotIn(self.tests[5], tests)
-        self.assertEquals(len(tests), len(self.tests)-1)
+        self.assertEquals(len(tests), len(self.tests) - 1)
 
         tests = deepcopy(self.tests)
         tests = list(sub2(tests, {}))
@@ -179,3 +182,7 @@ class BuiltinFilters(unittest.TestCase):
         tests = list(ftags2(tests, {}))
         self.assertEquals(len(tests), 1)
         self.assertIn(self.tests[7], tests)
+
+
+if __name__ == '__main__':
+    mozunit.main()

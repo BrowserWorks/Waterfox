@@ -5,18 +5,35 @@
 /* eslint-env browser */
 "use strict";
 
-const { createClass, DOM: dom } = require("devtools/client/shared/vendor/react");
+const { createClass, DOM: dom, PropTypes } = require("devtools/client/shared/vendor/react");
+
+const Services = require("Services");
+
+const Strings = Services.strings.createBundle(
+  "chrome://devtools/locale/aboutdebugging.properties");
 
 module.exports = createClass({
   displayName: "AddonsInstallError",
+
+  propTypes: {
+    error: PropTypes.string,
+    retryInstall: PropTypes.func,
+  },
 
   render() {
     if (!this.props.error) {
       return null;
     }
     let text = `There was an error during installation: ${this.props.error}`;
-    return dom.div({ className: "addons-install-error" },
-                   dom.div({ className: "warning" }),
-                   dom.span({}, text));
+    return dom.div(
+      { className: "addons-install-error" },
+      dom.span(
+        {},
+        dom.div({ className: "warning" }),
+        dom.span({}, text),
+      ),
+      dom.button(
+        { className: "addons-install-retry", onClick: this.props.retryInstall },
+        Strings.GetStringFromName("retryTemporaryInstall")));
   }
 });

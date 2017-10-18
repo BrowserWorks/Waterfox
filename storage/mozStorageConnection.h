@@ -69,8 +69,16 @@ public:
    *        - |mozIStorageAsyncConnection|;
    *        If |false|, the result also implements synchronous interface:
    *        - |mozIStorageConnection|.
+   * @param aIgnoreLockingMode
+   *        If |true|, ignore locks in force on the file. Only usable with
+   *        read-only connections. Defaults to false.
+   *        Use with extreme caution. If sqlite ignores locks, reads may fail
+   *        indicating database corruption (the database won't actually be
+   *        corrupt) or produce wrong results without any indication that has
+   *        happened.
    */
-  Connection(Service *aService, int aFlags, bool aAsyncOnly);
+  Connection(Service *aService, int aFlags, bool aAsyncOnly,
+             bool aIgnoreLockingMode = false);
 
   /**
    * Creates the connection to an in-memory database.
@@ -94,6 +102,11 @@ public:
    *        does not exist.
    */
   nsresult initialize(nsIFileURL *aFileURL);
+
+  /**
+   * Same as initialize, but to be used on the async thread.
+   */
+  nsresult initializeOnAsyncThread(nsIFile* aStorageFile);
 
   /**
    * Fetches runtime status information for this connection.
@@ -131,7 +144,10 @@ public:
    * the thread may be re-claimed if left idle, so you should call this
    * method just before you dispatch and not save the reference.
    *
-   * @returns an event target suitable for asynchronous statement execution.
+   * This must be called from the opener thread.
+   *
+   * @return an event target suitable for asynchronous statement execution.
+   * @note This method will return null once AsyncClose() has been called.
    */
   nsIEventTarget *getAsyncExecutionTarget();
 
@@ -141,7 +157,6 @@ public:
    * asynchronous statements (they are serialized on mAsyncExecutionThread).
    * Currently protects:
    *  - Connection.mAsyncExecutionThreadShuttingDown
-   *  - Connection.mAsyncExecutionThread
    *  - Connection.mConnectionClosed
    *  - AsyncExecuteStatements.mCancelRequested
    */
@@ -169,7 +184,7 @@ public:
   /**
    * Shuts down the passed-in async thread.
    */
-  void shutdownAsyncThread(nsIThread *aAsyncThread);
+  void shutdownAsyncThread();
 
   /**
    * Obtains the filename of the connection.  Useful for logging.
@@ -215,7 +230,24 @@ public:
   bool connectionReady();
 
   /**
-   * True if this connection is shutting down but not yet closed.
+   * Thread-aware version of connectionReady, results per caller's thread are:
+   *  - owner thread: Same as connectionReady().  True means we have a valid,
+   *    un-closed database connection and it's not going away until you invoke
+   *    Close() or AsyncClose().
+   *  - async thread: Returns true at all times because you can't schedule
+   *    runnables against the async thread after AsyncClose() has been called.
+   *    Therefore, the connection is still around if your code is running.
+   *  - any other thread: Race-prone Lies!  If you are main-thread code in
+   *    mozStorageService iterating over the list of connections, you need to
+   *    acquire the sharedAsyncExecutionMutex for the connection, invoke
+   *    connectionReady() while holding it, and then continue to hold it while
+   *    you do whatever you need to do.  This is because of off-main-thread
+   *    consumers like dom/cache and IndexedDB and other QuotaManager clients.
+   */
+  bool isConnectionReadyOnThisThread();
+
+  /**
+   * True if this connection has inited shutdown.
    */
   bool isClosing();
 
@@ -223,8 +255,22 @@ public:
    * True if the underlying connection is closed.
    * Any sqlite resources may be lost when this returns true, so nothing should
    * try to use them.
+   * This locks on sharedAsyncExecutionMutex.
    */
   bool isClosed();
+
+  /**
+   * Same as isClosed(), but takes a proof-of-lock instead of locking internally.
+   */
+  bool isClosed(MutexAutoLock& lock);
+
+  /**
+   * True if the async execution thread is alive and able to be used (i.e., it
+   * is not in the process of shutting down.)
+   *
+   * This must be called from the opener thread.
+   */
+  bool isAsyncExecutionThreadAvailable();
 
   nsresult initializeClone(Connection *aClone, bool aReadOnly);
 
@@ -298,6 +344,8 @@ private:
    * Lazily created thread for asynchronous statement execution.  Consumers
    * should use getAsyncExecutionTarget rather than directly accessing this
    * field.
+   *
+   * This must be modified only on the opener thread.
    */
   nsCOMPtr<nsIThread> mAsyncExecutionThread;
 
@@ -315,14 +363,6 @@ private:
    * sharedAsyncExecutionMutex.
    */
   bool mAsyncExecutionThreadShuttingDown;
-
-  /**
-   * Tracks whether the async thread has been initialized and Shutdown() has
-   * not yet been invoked on it.
-   */
-#ifdef DEBUG
-  bool mAsyncExecutionThreadIsAlive;
-#endif
 
   /**
    * Set to true just prior to calling sqlite3_close on the
@@ -356,6 +396,11 @@ private:
    */
   const int mFlags;
 
+  /**
+   * Stores whether we should ask sqlite3_open_v2 to ignore locking.
+   */
+  const bool mIgnoreLockingMode;
+
   // This is here for two reasons: 1) It's used to make sure that the
   // connections do not outlive the service.  2) Our custom collating functions
   // call its localeCompareStrings() method.
@@ -385,13 +430,14 @@ public:
   CallbackComplete(nsresult aStatus,
                    nsISupports* aValue,
                    already_AddRefed<mozIStorageCompletionCallback> aCallback)
-    : mStatus(aStatus)
+    : Runnable("storage::CallbackComplete")
+    , mStatus(aStatus)
     , mValue(aValue)
     , mCallback(aCallback)
   {
   }
 
-  NS_IMETHOD Run() {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT(NS_IsMainThread());
     nsresult rv = mCallback->Complete(mStatus, mValue);
 

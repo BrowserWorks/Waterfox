@@ -1,3 +1,5 @@
+"use strict";
+
 Cu.import("resource://gre/modules/OSCrypto.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -78,31 +80,12 @@ var crypto = new OSCrypto();
 var dbConn;
 
 function promiseSetPassword(login) {
-  return new Promise((resolve, reject) => {
-    let stmt = dbConn.createAsyncStatement(`
-      UPDATE logins
-      SET password_value = :password_value
-      WHERE rowid = :rowid
-    `);
-    let passwordValue = crypto.stringToArray(crypto.encryptData(login.password));
-    stmt.bindBlobByName("password_value", passwordValue, passwordValue.length);
-    stmt.params.rowid = login.id;
-
-    stmt.executeAsync({
-      handleError(aError) {
-        reject("Error with the query: " + aError.message);
-      },
-
-      handleCompletion(aReason) {
-        if (aReason === Ci.mozIStorageStatementCallback.REASON_FINISHED){
-          resolve();
-        } else {
-          reject("Query has failed: " + aReason);
-        }
-      },
-    });
-    stmt.finalize();
-  });
+  let passwordValue = new Uint8Array(crypto.stringToArray(crypto.encryptData(login.password)));
+  return dbConn.execute(`UPDATE logins
+                         SET password_value = :password_value
+                         WHERE rowid = :rowid
+                        `, { password_value: passwordValue,
+                             rowid: login.id });
 }
 
 function checkLoginsAreEqual(passwordManagerLogin, chromeLogin, id) {
@@ -143,21 +126,21 @@ function generateDifferentLogin(login) {
   return newLogin;
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   let loginDataFile = do_get_file("AppData/Local/Google/Chrome/User Data/Default/Login Data");
-  dbConn = Services.storage.openUnsharedDatabase(loginDataFile);
+  dbConn = await Sqlite.openConnection({ path: loginDataFile.path });
   registerFakePath("LocalAppData", do_get_file("AppData/Local/"));
 
   do_register_cleanup(() => {
     Services.logins.removeAllLogins();
-    dbConn.asyncClose();
     crypto.finalize();
+    return dbConn.close();
   });
 });
 
-add_task(function* test_importIntoEmptyDB() {
+add_task(async function test_importIntoEmptyDB() {
   for (let login of TEST_LOGINS) {
-    yield promiseSetPassword(login);
+    await promiseSetPassword(login);
   }
 
   let migrator = MigrationUtils.getMigrator("chrome");
@@ -167,10 +150,12 @@ add_task(function* test_importIntoEmptyDB() {
   Assert.equal(logins.length, 0, "There are no logins initially");
 
   // Migrate the logins.
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
 
   logins = Services.logins.getAllLogins({});
   Assert.equal(logins.length, TEST_LOGINS.length, "Check login count after importing the data");
+  Assert.equal(logins.length, MigrationUtils._importQuantities.logins,
+               "Check telemetry matches the actual import.");
 
   for (let i = 0; i < TEST_LOGINS.length; i++) {
     checkLoginsAreEqual(logins[i], TEST_LOGINS[i], i + 1);
@@ -178,7 +163,7 @@ add_task(function* test_importIntoEmptyDB() {
 });
 
 // Test that existing logins for the same primary key don't get overwritten
-add_task(function* test_importExistingLogins() {
+add_task(async function test_importExistingLogins() {
   let migrator = MigrationUtils.getMigrator("chrome");
   Assert.ok(migrator.sourceExists, "Sanity check the source exists");
 
@@ -201,11 +186,13 @@ add_task(function* test_importExistingLogins() {
     checkLoginsAreEqual(logins[i], newLogins[i], i + 1);
   }
   // Migrate the logins.
-  yield promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
+  await promiseMigration(migrator, MigrationUtils.resourceTypes.PASSWORDS, PROFILE);
 
   logins = Services.logins.getAllLogins({});
   Assert.equal(logins.length, TEST_LOGINS.length,
                "Check there are still the same number of logins after re-importing the data");
+  Assert.equal(logins.length, MigrationUtils._importQuantities.logins,
+               "Check telemetry matches the actual import.");
 
   for (let i = 0; i < newLogins.length; i++) {
     checkLoginsAreEqual(logins[i], newLogins[i], i + 1);

@@ -5,10 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIServiceManager.h"
+#include "nsNamedPipeIOLayer.h"
 #include "nsSOCKSSocketProvider.h"
 #include "nsSOCKSIOLayer.h"
 #include "nsCOMPtr.h"
 #include "nsError.h"
+
+using mozilla::OriginAttributes;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -23,7 +26,7 @@ nsSOCKSSocketProvider::CreateV4(nsISupports *aOuter, REFNSIID aIID, void **aResu
     if (!inst)
         rv = NS_ERROR_OUT_OF_MEMORY;
     else
-        rv = inst->QueryInterface(aIID, aResult); 
+        rv = inst->QueryInterface(aIID, aResult);
     return rv;
 }
 
@@ -36,32 +39,43 @@ nsSOCKSSocketProvider::CreateV5(nsISupports *aOuter, REFNSIID aIID, void **aResu
     if (!inst)
         rv = NS_ERROR_OUT_OF_MEMORY;
     else
-        rv = inst->QueryInterface(aIID, aResult); 
+        rv = inst->QueryInterface(aIID, aResult);
     return rv;
 }
 
 NS_IMETHODIMP
 nsSOCKSSocketProvider::NewSocket(int32_t family,
-                                 const char *host, 
+                                 const char *host,
                                  int32_t port,
                                  nsIProxyInfo *proxy,
+                                 const OriginAttributes &originAttributes,
                                  uint32_t flags,
                                  PRFileDesc **result,
                                  nsISupports **socksInfo)
 {
     PRFileDesc *sock;
-    
-    sock = PR_OpenTCPSocket(family);
-    if (!sock)
-        return NS_ERROR_OUT_OF_MEMORY;
+
+#if defined(XP_WIN)
+    nsAutoCString proxyHost;
+    proxy->GetHost(proxyHost);
+    if (IsNamedPipePath(proxyHost)) {
+        sock = CreateNamedPipeLayer();
+    } else
+#endif
+    {
+        sock = PR_OpenTCPSocket(family);
+        if (!sock) {
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+    }
 
     nsresult rv = nsSOCKSIOLayerAddToSocket(family,
-                                            host, 
+                                            host,
                                             port,
                                             proxy,
                                             mVersion,
                                             flags,
-                                            sock, 
+                                            sock,
                                             socksInfo);
     if (NS_SUCCEEDED(rv)) {
         *result = sock;
@@ -76,19 +90,20 @@ nsSOCKSSocketProvider::AddToSocket(int32_t family,
                                    const char *host,
                                    int32_t port,
                                    nsIProxyInfo *proxy,
+                                   const OriginAttributes &originAttributes,
                                    uint32_t flags,
                                    PRFileDesc *sock,
                                    nsISupports **socksInfo)
 {
     nsresult rv = nsSOCKSIOLayerAddToSocket(family,
-                                            host, 
+                                            host,
                                             port,
                                             proxy,
                                             mVersion,
                                             flags,
-                                            sock, 
+                                            sock,
                                             socksInfo);
-    
+
     if (NS_FAILED(rv))
         rv = NS_ERROR_SOCKET_CREATE_FAILED;
     return rv;

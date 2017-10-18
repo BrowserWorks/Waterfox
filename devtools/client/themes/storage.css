@@ -15,7 +15,7 @@
 }
 
 #storage-tree .tree-widget-item[type="store"]:after {
-  background-image: url(chrome://devtools/skin/images/filetypes/store.svg);
+  background-image: url(chrome://devtools/skin/images/tool-storage.svg);
   background-size: 18px 18px;
   background-position: -1px 0;
 }
@@ -30,6 +30,20 @@
 #storage-sidebar {
   max-width: 500px;
   min-width: 250px;
+}
+
+#storage-toolbar .add-button::before {
+  background-image: url("chrome://devtools/skin/images/add.svg");
+  -moz-user-focus: normal;
+}
+
+#storage-toolbar .devtools-button {
+  min-width: 0;
+}
+
+#storage-toolbar .devtools-button hbox,
+#storage-toolbar .sidebar-toggle[hidden] {
+  display: none;
 }
 
 /* Responsive sidebar */

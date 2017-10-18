@@ -68,7 +68,6 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
   "resource://gre/modules/PlacesBackups.jsm");
@@ -140,19 +139,19 @@ this.BookmarkHTMLUtils = Object.freeze({
    * @rejects JavaScript exception.
    */
   importFromURL: function BHU_importFromURL(aSpec, aInitialImport) {
-    return Task.spawn(function* () {
+    return (async function() {
       notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN, aInitialImport);
       try {
         let importer = new BookmarkImporter(aInitialImport);
-        yield importer.importFromURL(aSpec);
+        await importer.importFromURL(aSpec);
 
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS, aInitialImport);
-      } catch(ex) {
+      } catch (ex) {
         Cu.reportError("Failed to import bookmarks from " + aSpec + ": " + ex);
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED, aInitialImport);
         throw ex;
       }
-    });
+    })();
   },
 
   /**
@@ -176,22 +175,22 @@ this.BookmarkHTMLUtils = Object.freeze({
       aFilePath = aFilePath.path;
     }
 
-    return Task.spawn(function* () {
+    return (async function() {
       notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_BEGIN, aInitialImport);
       try {
-        if (!(yield OS.File.exists(aFilePath))) {
+        if (!(await OS.File.exists(aFilePath))) {
           throw new Error("Cannot import from nonexisting html file: " + aFilePath);
         }
         let importer = new BookmarkImporter(aInitialImport);
-        yield importer.importFromURL(OS.Path.toFileURI(aFilePath));
+        await importer.importFromURL(OS.Path.toFileURI(aFilePath));
 
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_SUCCESS, aInitialImport);
-      } catch(ex) {
+      } catch (ex) {
         Cu.reportError("Failed to import bookmarks from " + aFilePath + ": " + ex);
         notifyObservers(PlacesUtils.TOPIC_BOOKMARKS_RESTORE_FAILED, aInitialImport);
         throw ex;
       }
-    });
+    })();
   },
 
   /**
@@ -212,13 +211,13 @@ this.BookmarkHTMLUtils = Object.freeze({
                          "https://developer.mozilla.org/docs/JavaScript_OS.File");
       aFilePath = aFilePath.path;
     }
-    return Task.spawn(function* () {
-      let [bookmarks, count] = yield PlacesBackups.getBookmarksTree();
+    return (async function() {
+      let [bookmarks, count] = await PlacesBackups.getBookmarksTree();
       let startTime = Date.now();
 
       // Report the time taken to convert the tree to HTML.
       let exporter = new BookmarkExporter(bookmarks);
-      yield exporter.exportToFile(aFilePath);
+      await exporter.exportToFile(aFilePath);
 
       try {
         Services.telemetry
@@ -229,7 +228,7 @@ this.BookmarkHTMLUtils = Object.freeze({
       }
 
       return count;
-    });
+    })();
   },
 
   get defaultPath() {
@@ -314,7 +313,11 @@ function Frame(aFrameId) {
 
 function BookmarkImporter(aInitialImport) {
   this._isImportDefaults = aInitialImport;
-  this._frames = new Array();
+  // The bookmark change source, used to determine the sync status and change
+  // counter.
+  this._source = aInitialImport ? PlacesUtils.bookmarks.SOURCE_IMPORT_REPLACE :
+                                  PlacesUtils.bookmarks.SOURCE_IMPORT;
+  this._frames = [];
   this._frames.push(new Frame(PlacesUtils.bookmarksMenuFolderId));
 }
 
@@ -349,7 +352,8 @@ BookmarkImporter.prototype = {
         containerId =
           PlacesUtils.bookmarks.createFolder(frame.containerId,
                                              containerTitle,
-                                             PlacesUtils.bookmarks.DEFAULT_INDEX);
+                                             PlacesUtils.bookmarks.DEFAULT_INDEX,
+                                             /* aGuid */ null, this._source);
         break;
       case Container_Places:
         containerId = PlacesUtils.placesRootId;
@@ -370,15 +374,15 @@ BookmarkImporter.prototype = {
 
     if (frame.previousDateAdded > 0) {
       try {
-        PlacesUtils.bookmarks.setItemDateAdded(containerId, frame.previousDateAdded);
-      } catch(e) {
+        PlacesUtils.bookmarks.setItemDateAdded(containerId, frame.previousDateAdded, this._source);
+      } catch (e) {
       }
       frame.previousDateAdded = 0;
     }
     if (frame.previousLastModifiedDate > 0) {
       try {
-        PlacesUtils.bookmarks.setItemLastModified(containerId, frame.previousLastModifiedDate);
-      } catch(e) {
+        PlacesUtils.bookmarks.setItemLastModified(containerId, frame.previousLastModifiedDate, this._source);
+      } catch (e) {
       }
       // don't clear last-modified, in case there's a description
     }
@@ -401,8 +405,10 @@ BookmarkImporter.prototype = {
     try {
       frame.previousId =
         PlacesUtils.bookmarks.insertSeparator(frame.containerId,
-                                              PlacesUtils.bookmarks.DEFAULT_INDEX);
-    } catch(e) {}
+                                              PlacesUtils.bookmarks.DEFAULT_INDEX,
+                                              /* aGuid */ null,
+                                              this._source);
+    } catch (e) {}
   },
 
   /**
@@ -513,8 +519,6 @@ BookmarkImporter.prototype = {
     let keyword = this._safeTrim(aElt.getAttribute("shortcuturl"));
     let postData = this._safeTrim(aElt.getAttribute("post_data"));
     let webPanel = this._safeTrim(aElt.getAttribute("web_panel"));
-    let micsumGenURI = this._safeTrim(aElt.getAttribute("micsum_gen_uri"));
-    let generatedTitle = this._safeTrim(aElt.getAttribute("generated_title"));
     let dateAdded = this._safeTrim(aElt.getAttribute("add_date"));
     let lastModified = this._safeTrim(aElt.getAttribute("last_modified"));
     let tags = this._safeTrim(aElt.getAttribute("tags"));
@@ -531,7 +535,7 @@ BookmarkImporter.prototype = {
       // feed since href is optional for them.
       try {
         frame.previousLink = NetUtil.newURI(href);
-      } catch(e) {
+      } catch (e) {
         if (!frame.previousFeed) {
           frame.previousLink = null;
           return;
@@ -564,8 +568,10 @@ BookmarkImporter.prototype = {
         PlacesUtils.bookmarks.insertBookmark(frame.containerId,
                                              frame.previousLink,
                                              PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                             "");
-    } catch(e) {
+                                             /* aTitle */ "",
+                                             /* aGuid */ null,
+                                             this._source);
+    } catch (e) {
       return;
     }
 
@@ -573,8 +579,8 @@ BookmarkImporter.prototype = {
     if (dateAdded) {
       try {
         PlacesUtils.bookmarks.setItemDateAdded(frame.previousId,
-          this._convertImportedDateToInternalDate(dateAdded));
-      } catch(e) {
+          this._convertImportedDateToInternalDate(dateAdded), this._source);
+      } catch (e) {
       }
     }
 
@@ -582,8 +588,8 @@ BookmarkImporter.prototype = {
     if (tags) {
       try {
         let tagsArray = tags.split(",");
-        PlacesUtils.tagging.tagURI(frame.previousLink, tagsArray);
-      } catch(e) {
+        PlacesUtils.tagging.tagURI(frame.previousLink, tagsArray, this._source);
+      } catch (e) {
       }
     }
 
@@ -592,12 +598,12 @@ BookmarkImporter.prototype = {
       let iconUriObject;
       try {
         iconUriObject = NetUtil.newURI(iconUri);
-      } catch(e) {
+      } catch (e) {
       }
       if (icon || iconUriObject) {
         try {
           this._setFaviconForURI(frame.previousLink, iconUriObject, icon);
-        } catch(e) {
+        } catch (e) {
         }
       }
     }
@@ -606,7 +612,8 @@ BookmarkImporter.prototype = {
     if (keyword) {
       let kwPromise = PlacesUtils.keywords.insert({ keyword,
                                                     url: frame.previousLink.spec,
-                                                    postData });
+                                                    postData,
+                                                    source: this._source });
       this._importPromises.push(kwPromise);
     }
 
@@ -617,14 +624,15 @@ BookmarkImporter.prototype = {
                                                   LOAD_IN_SIDEBAR_ANNO,
                                                   1,
                                                   0,
-                                                  PlacesUtils.annotations.EXPIRE_NEVER);
-      } catch(e) {
+                                                  PlacesUtils.annotations.EXPIRE_NEVER,
+                                                  this._source);
+      } catch (e) {
       }
     }
 
     // Import last charset.
     if (lastCharset) {
-      let chPromise = PlacesUtils.setCharsetForURI(frame.previousLink, lastCharset);
+      let chPromise = PlacesUtils.setCharsetForURI(frame.previousLink, lastCharset, this._source);
       this._importPromises.push(chPromise);
     }
   },
@@ -648,7 +656,8 @@ BookmarkImporter.prototype = {
       let prevFrame = this._previousFrame;
       if (prevFrame.previousLastModifiedDate > 0) {
         PlacesUtils.bookmarks.setItemLastModified(frame.containerId,
-                                                  prevFrame.previousLastModifiedDate);
+                                                  prevFrame.previousLastModifiedDate,
+                                                  this._source);
       }
       this._frames.pop();
     }
@@ -680,14 +689,16 @@ BookmarkImporter.prototype = {
           "index": PlacesUtils.bookmarks.DEFAULT_INDEX,
           "feedURI": frame.previousFeed,
           "siteURI": frame.previousLink,
+          "source": this._source,
         });
         this._importPromises.push(lmPromise);
       } else if (frame.previousLink) {
         // This is a common bookmark.
         PlacesUtils.bookmarks.setItemTitle(frame.previousId,
-                                           frame.previousText);
+                                           frame.previousText,
+                                           this._source);
       }
-    } catch(e) {
+    } catch (e) {
     }
 
 
@@ -695,8 +706,9 @@ BookmarkImporter.prototype = {
     if (frame.previousId > 0 && frame.previousLastModifiedDate > 0) {
       try {
         PlacesUtils.bookmarks.setItemLastModified(frame.previousId,
-                                                  frame.previousLastModifiedDate);
-      } catch(e) {
+                                                  frame.previousLastModifiedDate,
+                                                  this._source);
+      } catch (e) {
       }
       // Note: don't clear previousLastModifiedDate, because if this item has a
       // description, we'll need to set it again.
@@ -710,7 +722,7 @@ BookmarkImporter.prototype = {
     if (aElt.namespaceURI != "http://www.w3.org/1999/xhtml") {
       return;
     }
-    switch(aElt.localName) {
+    switch (aElt.localName) {
       case "h1":
         this._handleHead1Begin(aElt);
         break;
@@ -758,9 +770,10 @@ BookmarkImporter.prototype = {
                                                       DESCRIPTION_ANNO,
                                                       frame.previousText,
                                                       0,
-                                                      PlacesUtils.annotations.EXPIRE_NEVER);
+                                                      PlacesUtils.annotations.EXPIRE_NEVER,
+                                                      this._source);
           }
-        } catch(e) {
+        } catch (e) {
         }
         frame.previousText = "";
 
@@ -783,7 +796,8 @@ BookmarkImporter.prototype = {
         }
 
         if (itemId > 0 && lastModified > 0) {
-          PlacesUtils.bookmarks.setItemLastModified(itemId, lastModified);
+          PlacesUtils.bookmarks.setItemLastModified(itemId, lastModified,
+                                                    this._source);
         }
       }
       frame.inDescription = false;
@@ -792,7 +806,7 @@ BookmarkImporter.prototype = {
     if (aElt.namespaceURI != "http://www.w3.org/1999/xhtml") {
       return;
     }
-    switch(aElt.localName) {
+    switch (aElt.localName) {
       case "dl":
       case "ul":
       case "menu":
@@ -884,9 +898,8 @@ BookmarkImporter.prototype = {
   _convertImportedDateToInternalDate: function convertImportedDateToInternalDate(aDate) {
     if (aDate && !isNaN(aDate)) {
       return parseInt(aDate) * 1000000; // in bookmarks.html this value is in seconds, not microseconds
-    } else {
-      return Date.now();
     }
+    return Date.now();
   },
 
   runBatched: function runBatched(aDoc) {
@@ -895,9 +908,9 @@ BookmarkImporter.prototype = {
     }
 
     if (this._isImportDefaults) {
-      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.bookmarksMenuFolderId);
-      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.toolbarFolderId);
-      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId);
+      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.bookmarksMenuFolderId, this._source);
+      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.toolbarFolderId, this._source);
+      PlacesUtils.bookmarks.removeFolderChildren(PlacesUtils.unfiledBookmarksFolderId, this._source);
     }
 
     let current = aDoc;
@@ -935,16 +948,16 @@ BookmarkImporter.prototype = {
     PlacesUtils.bookmarks.runInBatchMode(this, aDoc);
   },
 
-  importFromURL: Task.async(function* (href) {
+  async importFromURL(href) {
     this._importPromises = [];
-    yield new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
                   .createInstance(Ci.nsIXMLHttpRequest);
       xhr.onload = () => {
         try {
           this._walkTreeForImport(xhr.responseXML);
           resolve();
-        } catch(e) {
+        } catch (e) {
           reject(e);
         }
       };
@@ -959,11 +972,11 @@ BookmarkImporter.prototype = {
     // TODO (bug 1095427) once converted to the new bookmarks API, methods will
     // yield, so this hack should not be needed anymore.
     try {
-      yield Promise.all(this._importPromises);
+      await Promise.all(this._importPromises);
     } finally {
       delete this._importPromises;
     }
-  }),
+  },
 };
 
 function BookmarkExporter(aBookmarksTree) {
@@ -990,7 +1003,7 @@ function BookmarkExporter(aBookmarksTree) {
 
 BookmarkExporter.prototype = {
   exportToFile: function exportToFile(aFilePath) {
-    return Task.spawn(function* () {
+    return (async () => {
       // Create a file that can be accessed by the current user only.
       let out = FileUtils.openAtomicFileOutputStream(new FileUtils.File(aFilePath));
       try {
@@ -1002,10 +1015,10 @@ BookmarkExporter.prototype = {
           // Write bookmarks in UTF-8.
           this._converterOut = Cc["@mozilla.org/intl/converter-output-stream;1"]
                                .createInstance(Ci.nsIConverterOutputStream);
-          this._converterOut.init(bufferedOut, "utf-8", 0, 0);
+          this._converterOut.init(bufferedOut, "utf-8");
           try {
             this._writeHeader();
-            yield this._writeContainer(this._root);
+            await this._writeContainer(this._root);
             // Retain the target file on success only.
             bufferedOut.QueryInterface(Ci.nsISafeOutputStream).finish();
           } finally {
@@ -1018,24 +1031,24 @@ BookmarkExporter.prototype = {
       } finally {
         out.close();
       }
-    }.bind(this));
+    })();
   },
 
   _converterOut: null,
 
-  _write: function (aText) {
+  _write(aText) {
     this._converterOut.writeString(aText || "");
   },
 
-  _writeAttribute: function (aName, aValue) {
-    this._write(' ' +  aName + '="' + aValue + '"');
+  _writeAttribute(aName, aValue) {
+    this._write(" " + aName + '="' + aValue + '"');
   },
 
-  _writeLine: function (aText) {
+  _writeLine(aText) {
     this._write(aText + "\n");
   },
 
-  _writeHeader: function () {
+  _writeHeader() {
     this._writeLine("<!DOCTYPE NETSCAPE-Bookmark-file-1>");
     this._writeLine("<!-- This is an automatically generated file.");
     this._writeLine("     It will be read and overwritten.");
@@ -1045,12 +1058,11 @@ BookmarkExporter.prototype = {
     this._writeLine("<TITLE>Bookmarks</TITLE>");
   },
 
-  *_writeContainer(aItem, aIndent = "") {
+  async _writeContainer(aItem, aIndent = "") {
     if (aItem == this._root) {
       this._writeLine("<H1>" + escapeHtmlEntities(this._root.title) + "</H1>");
       this._writeLine("");
-    }
-    else {
+    } else {
       this._write(aIndent + "<DT><H3");
       this._writeDateAttributes(aItem);
 
@@ -1065,30 +1077,30 @@ BookmarkExporter.prototype = {
 
     this._writeLine(aIndent + "<DL><p>");
     if (aItem.children)
-      yield this._writeContainerContents(aItem, aIndent);
+      await this._writeContainerContents(aItem, aIndent);
     if (aItem == this._root)
       this._writeLine(aIndent + "</DL>");
     else
       this._writeLine(aIndent + "</DL><p>");
   },
 
-  *_writeContainerContents(aItem, aIndent) {
+  async _writeContainerContents(aItem, aIndent) {
     let localIndent = aIndent + EXPORT_INDENT;
 
     for (let child of aItem.children) {
       if (child.annos && child.annos.some(anno => anno.name == PlacesUtils.LMANNO_FEEDURI)) {
         this._writeLivemark(child, localIndent);
       } else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER) {
-        yield this._writeContainer(child, localIndent);
+        await this._writeContainer(child, localIndent);
       } else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
         this._writeSeparator(child, localIndent);
       } else {
-        yield this._writeItem(child, localIndent);
+        await this._writeItem(child, localIndent);
       }
     }
   },
 
-  _writeSeparator: function (aItem, aIndent) {
+  _writeSeparator(aItem, aIndent) {
     this._write(aIndent + "<HR");
     // We keep exporting separator titles, but don't support them anymore.
     if (aItem.title)
@@ -1096,7 +1108,7 @@ BookmarkExporter.prototype = {
     this._write(">");
   },
 
-  _writeLivemark: function (aItem, aIndent) {
+  _writeLivemark(aItem, aIndent) {
     this._write(aIndent + "<DT><A");
     let feedSpec = aItem.annos.find(anno => anno.name == PlacesUtils.LMANNO_FEEDURI).value;
     this._writeAttribute("FEEDURL", escapeUrl(feedSpec));
@@ -1107,10 +1119,9 @@ BookmarkExporter.prototype = {
     this._writeDescription(aItem, aIndent);
   },
 
-  *_writeItem(aItem, aIndent) {
-    let uri = null;
+  async _writeItem(aItem, aIndent) {
     try {
-      uri = NetUtil.newURI(aItem.uri);
+      NetUtil.newURI(aItem.uri);
     } catch (ex) {
       // If the item URI is invalid, skip the item instead of failing later.
       return;
@@ -1119,7 +1130,7 @@ BookmarkExporter.prototype = {
     this._write(aIndent + "<DT><A");
     this._writeAttribute("HREF", escapeUrl(aItem.uri));
     this._writeDateAttributes(aItem);
-    yield this._writeFaviconAttribute(aItem);
+    await this._writeFaviconAttribute(aItem);
 
     if (aItem.keyword) {
       this._writeAttribute("SHORTCUTURL", escapeHtmlEntities(aItem.keyword));
@@ -1137,7 +1148,7 @@ BookmarkExporter.prototype = {
     this._writeDescription(aItem, aIndent);
   },
 
-  _writeDateAttributes: function (aItem) {
+  _writeDateAttributes(aItem) {
     if (aItem.dateAdded)
       this._writeAttribute("ADD_DATE",
                            Math.floor(aItem.dateAdded / MICROSEC_PER_SEC));
@@ -1146,12 +1157,12 @@ BookmarkExporter.prototype = {
                            Math.floor(aItem.lastModified / MICROSEC_PER_SEC));
   },
 
-  *_writeFaviconAttribute(aItem) {
+  async _writeFaviconAttribute(aItem) {
     if (!aItem.iconuri)
       return;
     let favicon;
     try {
-      favicon  = yield PlacesUtils.promiseFaviconData(aItem.uri);
+      favicon  = await PlacesUtils.promiseFaviconData(aItem.uri);
     } catch (ex) {
       Components.utils.reportError("Unexpected Error trying to fetch icon data");
       return;
@@ -1166,7 +1177,7 @@ BookmarkExporter.prototype = {
     }
   },
 
-  _writeDescription: function (aItem, aIndent) {
+  _writeDescription(aItem, aIndent) {
     let descriptionAnno = aItem.annos &&
                           aItem.annos.find(anno => anno.name == DESCRIPTION_ANNO);
     if (descriptionAnno)

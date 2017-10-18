@@ -11,48 +11,21 @@ profileDir.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "42");
 startupManager();
 
-const { Management } = Components.utils.import("resource://gre/modules/Extension.jsm", {});
+async function testSimpleIconsetParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-function promiseAddonStartup() {
-  return new Promise(resolve => {
-    let listener = (evt, extension) => {
-      Management.off("startup", listener);
-      resolve(extension);
-    };
-
-    Management.on("startup", listener);
-  });
-}
-
-// Test simple icon set parsing
-add_task(function*() {
-  writeWebManifestForExtension({
-    name: "Web Extension Name",
-    version: "1.0",
-    manifest_version: 2,
-    applications: {
-      gecko: {
-        id: ID
-      }
-    },
-    icons: {
-      16: "icon16.png",
-      32: "icon32.png",
-      48: "icon48.png",
-      64: "icon64.png"
-    }
-  }, profileDir);
-
-  yield promiseRestartManager();
-  yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseWebExtensionStartup(ID),
+  ]);
 
   let uri = do_get_addon_root_uri(profileDir, ID);
 
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
-  function check_icons(addon) {
-    deepEqual(addon.icons, {
+  function check_icons(addon_copy) {
+    deepEqual(addon_copy.icons, {
         16: uri + "icon16.png",
         32: uri + "icon32.png",
         48: uri + "icon48.png",
@@ -75,43 +48,28 @@ add_task(function*() {
   check_icons(addon);
 
   // check if icons are persisted through a restart
-  yield promiseRestartManager();
-  yield promiseAddonStartup();
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseWebExtensionStartup(ID),
+  ]);
 
-  addon = yield promiseAddonByID(ID);
+  addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   check_icons(addon);
 
   addon.uninstall();
+}
 
-  yield promiseRestartManager();
-});
+async function testRetinaIconsetParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-// Test AddonManager.getPreferredIconURL for retina screen sizes
-add_task(function*() {
-  writeWebManifestForExtension({
-    name: "Web Extension Name",
-    version: "1.0",
-    manifest_version: 2,
-    applications: {
-      gecko: {
-        id: ID
-      }
-    },
-    icons: {
-      32: "icon32.png",
-      48: "icon48.png",
-      64: "icon64.png",
-      128: "icon128.png",
-      256: "icon256.png"
-    }
-  }, profileDir);
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseWebExtensionStartup(ID),
+  ]);
 
-  yield promiseRestartManager();
-  yield promiseAddonStartup();
-
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
 
   let uri = do_get_addon_root_uri(profileDir, ID);
@@ -130,30 +88,18 @@ add_task(function*() {
   }), uri + "icon128.png");
 
   addon.uninstall();
+}
 
-  yield promiseRestartManager();
-});
+async function testNoIconsParsing(manifest) {
+  await promiseWriteWebManifestForExtension(manifest, profileDir);
 
-// Handles no icons gracefully
-add_task(function*() {
-  writeWebManifestForExtension({
-    name: "Web Extension Name",
-    version: "1.0",
-    manifest_version: 2,
-    applications: {
-      gecko: {
-        id: ID
-      }
-    }
-  }, profileDir);
+  await Promise.all([
+    promiseRestartManager(),
+    manifest.theme || promiseWebExtensionStartup(ID),
+  ]);
 
-  yield promiseRestartManager();
-  yield promiseAddonStartup();
-
-  let addon = yield promiseAddonByID(ID);
+  let addon = await promiseAddonByID(ID);
   do_check_neq(addon, null);
-
-  let uri = do_get_addon_root_uri(profileDir, ID);
 
   deepEqual(addon.icons, {});
 
@@ -163,7 +109,109 @@ add_task(function*() {
   equal(AddonManager.getPreferredIconURL(addon, 128), null);
 
   addon.uninstall();
+}
 
-  yield promiseRestartManager();
+// Test simple icon set parsing
+add_task(async function() {
+  await testSimpleIconsetParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    },
+    icons: {
+      16: "icon16.png",
+      32: "icon32.png",
+      48: "icon48.png",
+      64: "icon64.png"
+    }
+  });
+
+  // Now for theme-type extensions too.
+  await testSimpleIconsetParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    },
+    icons: {
+      16: "icon16.png",
+      32: "icon32.png",
+      48: "icon48.png",
+      64: "icon64.png"
+    },
+    theme: { images: { headerURL: "example.png" } }
+  });
 });
 
+// Test AddonManager.getPreferredIconURL for retina screen sizes
+add_task(async function() {
+  await testRetinaIconsetParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    },
+    icons: {
+      32: "icon32.png",
+      48: "icon48.png",
+      64: "icon64.png",
+      128: "icon128.png",
+      256: "icon256.png"
+    }
+  });
+
+  await testRetinaIconsetParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    },
+    icons: {
+      32: "icon32.png",
+      48: "icon48.png",
+      64: "icon64.png",
+      128: "icon128.png",
+      256: "icon256.png"
+    },
+    theme: { images: { headerURL: "example.png" } }
+  });
+});
+
+// Handles no icons gracefully
+add_task(async function() {
+  await testNoIconsParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    }
+  });
+
+  await testNoIconsParsing({
+    name: "Web Extension Name",
+    version: "1.0",
+    manifest_version: 2,
+    applications: {
+      gecko: {
+        id: ID
+      }
+    },
+    theme: { images: { headerURL: "example.png" } }
+  });
+});

@@ -15,6 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class BlobImpl;
+class FileSystemGetFileOrDirectoryParams;
 
 class GetFileOrDirectoryTaskChild final : public FileSystemTaskChildBase
 {
@@ -22,7 +23,6 @@ public:
   static already_AddRefed<GetFileOrDirectoryTaskChild>
   Create(FileSystemBase* aFileSystem,
          nsIFile* aTargetPath,
-         bool aDirectoryOnly,
          ErrorResult& aRv);
 
   virtual
@@ -30,9 +30,6 @@ public:
 
   already_AddRefed<Promise>
   GetPromise();
-
-  virtual void
-  GetPermissionAccessType(nsCString& aAccess) const override;
 
 protected:
   virtual FileSystemParams
@@ -46,16 +43,15 @@ protected:
   HandlerCallback() override;
 
 private:
-  // If aDirectoryOnly is set, we should ensure that the target is a directory.
-  GetFileOrDirectoryTaskChild(FileSystemBase* aFileSystem,
-                              nsIFile* aTargetPath,
-                              bool aDirectoryOnly);
+  GetFileOrDirectoryTaskChild(nsIGlobalObject* aGlobalObject,
+                              FileSystemBase* aFileSystem,
+                              nsIFile* aTargetPath);
 
   RefPtr<Promise> mPromise;
   nsCOMPtr<nsIFile> mTargetPath;
 
-  // Whether we get a directory.
-  bool mIsDirectory;
+  RefPtr<File> mResultFile;
+  RefPtr<Directory> mResultDirectory;
 };
 
 class GetFileOrDirectoryTaskParent final : public FileSystemTaskParentBase
@@ -67,8 +63,8 @@ public:
          FileSystemRequestParent* aParent,
          ErrorResult& aRv);
 
-  virtual void
-  GetPermissionAccessType(nsCString& aAccess) const override;
+  nsresult
+  GetTargetPath(nsAString& aPath) const override;
 
 protected:
   virtual FileSystemResponseValue

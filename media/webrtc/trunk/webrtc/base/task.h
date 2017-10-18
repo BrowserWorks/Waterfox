@@ -11,9 +11,10 @@
 #ifndef WEBRTC_BASE_TASK_H__
 #define WEBRTC_BASE_TASK_H__
 
+#include <stdint.h>
+
 #include <string>
-#include "webrtc/base/basictypes.h"
-#include "webrtc/base/scoped_ptr.h"
+
 #include "webrtc/base/sigslot.h"
 #include "webrtc/base/taskparent.h"
 
@@ -95,7 +96,7 @@ class Task : public TaskParent {
   Task(TaskParent *parent);
   ~Task() override;
 
-  int32 unique_id() { return unique_id_; }
+  int32_t unique_id() { return unique_id_; }
 
   void Start();
   void Step();
@@ -103,14 +104,14 @@ class Task : public TaskParent {
   bool HasError() const { return (GetState() == STATE_ERROR); }
   bool Blocked() const { return blocked_; }
   bool IsDone() const { return done_; }
-  int64 ElapsedTime();
+  int64_t ElapsedTime();
 
   // Called from outside to stop task without any more callbacks
   void Abort(bool nowake = false);
 
   bool TimedOut();
 
-  int64 timeout_time() const { return timeout_time_; }
+  int64_t timeout_time() const { return timeout_time_; }
   int timeout_seconds() const { return timeout_seconds_; }
   void set_timeout_seconds(int timeout_seconds);
 
@@ -134,7 +135,7 @@ class Task : public TaskParent {
   // Called inside to advise that the task should wake and signal an error
   void Error();
 
-  int64 CurrentTime();
+  int64_t CurrentTime();
 
   virtual std::string GetStateName(int state) const;
   virtual int Process(int state);
@@ -160,13 +161,13 @@ class Task : public TaskParent {
   bool aborted_;
   bool busy_;
   bool error_;
-  int64 start_time_;
-  int64 timeout_time_;
+  int64_t start_time_;
+  int64_t timeout_time_;
   int timeout_seconds_;
   bool timeout_suspended_;
-  int32 unique_id_;
-  
-  static int32 unique_id_seed_;
+  int32_t unique_id_;
+
+  static int32_t unique_id_seed_;
 };
 
 }  // namespace rtc

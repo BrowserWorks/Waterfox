@@ -1,3 +1,5 @@
+/* eslint-env mozilla/frame-script */
+
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/Timer.jsm");
@@ -58,7 +60,7 @@ function handlePrompt(action, isTabModal, isSelect) {
     promptState = getPromptState(ui);
     dismissPrompt(ui, action);
   }
-  sendAsyncMessage("promptHandled", { promptState: promptState });
+  sendAsyncMessage("promptHandled", { promptState });
   return true;
 }
 
@@ -202,7 +204,7 @@ function getDialogDoc() {
   // that has either commonDialog.xul or selectDialog.xul loaded.
   var wm = Cc["@mozilla.org/appshell/window-mediator;1"].
            getService(Ci.nsIWindowMediator);
-  //var enumerator = wm.getEnumerator("navigator:browser");
+  // var enumerator = wm.getEnumerator("navigator:browser");
   var enumerator = wm.getXULWindowEnumerator(null);
 
   while (enumerator.hasMoreElements()) {

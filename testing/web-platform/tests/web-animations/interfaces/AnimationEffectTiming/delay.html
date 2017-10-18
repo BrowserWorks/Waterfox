@@ -6,11 +6,15 @@
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script src="../../testcommon.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
 <body>
 <div id="log"></div>
 <script>
 'use strict';
+
+test(function(t) {
+  var anim = createDiv(t).animate(null);
+  assert_equals(anim.effect.timing.delay, 0);
+}, 'Test default value');
 
 test(function(t) {
   var div = createDiv(t);
@@ -57,6 +61,19 @@ test(function(t) {
   assert_equals(anim.effect.getComputedTiming().progress, 1);
   assert_equals(anim.effect.getComputedTiming().currentIteration, 0);
 }, 'Test finishing an animation using a large negative delay');
+
+test(function(t) {
+  var div = createDiv(t);
+  var anim = div.animate(null);
+  for (let invalid of [NaN, Infinity]) {
+    assert_throws({ name: 'TypeError' }, function() {
+      anim.effect.timing.delay = invalid;
+    }, 'setting ' + invalid);
+    assert_throws({ name: 'TypeError' }, function() {
+      div.animate({}, { delay: invalid });
+    }, 'animate() with ' + invalid);
+  }
+}, 'Setting invalid values should throw TypeError');
 
 </script>
 </body>

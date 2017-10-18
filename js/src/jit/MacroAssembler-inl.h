@@ -9,6 +9,8 @@
 
 #include "jit/MacroAssembler.h"
 
+#include "mozilla/MathAlgorithms.h"
+
 #if defined(JS_CODEGEN_X86)
 # include "jit/x86/MacroAssembler-x86-inl.h"
 #elif defined(JS_CODEGEN_X64)
@@ -24,6 +26,8 @@
 #elif !defined(JS_CODEGEN_NONE)
 # error "Unknown architecture!"
 #endif
+
+#include "wasm/WasmBuiltins.h"
 
 namespace js {
 namespace jit {
@@ -82,14 +86,29 @@ void
 MacroAssembler::call(const wasm::CallSiteDesc& desc, const Register reg)
 {
     CodeOffset l = call(reg);
-    append(desc, l, framePushed());
+    append(desc, l);
 }
 
 void
-MacroAssembler::call(const wasm::CallSiteDesc& desc, uint32_t callee)
+MacroAssembler::call(const wasm::CallSiteDesc& desc, uint32_t funcDefIndex)
 {
     CodeOffset l = callWithPatch();
-    append(desc, l, framePushed(), callee);
+    append(desc, l, funcDefIndex);
+}
+
+void
+MacroAssembler::call(const wasm::CallSiteDesc& desc, wasm::Trap trap)
+{
+    CodeOffset l = callWithPatch();
+    append(desc, l, trap);
+}
+
+void
+MacroAssembler::call(const wasm::CallSiteDesc& desc, wasm::SymbolicAddress imm)
+{
+    MOZ_ASSERT(wasm::NeedsBuiltinThunk(imm), "only for functions which may appear in profiler");
+    call(imm);
+    append(desc, CodeOffset(currentOffset()));
 }
 
 // ===============================================================
@@ -272,9 +291,9 @@ MacroAssembler::PushStubCode()
 }
 
 void
-MacroAssembler::enterExitFrame(const VMFunction* f)
+MacroAssembler::enterExitFrame(Register cxreg, Register scratch, const VMFunction* f)
 {
-    linkExitFrame();
+    linkExitFrame(cxreg, scratch);
     // Push the JitCode pointer. (Keep the code alive, when on the stack)
     PushStubCode();
     // Push VMFunction pointer, to mark arguments.
@@ -282,18 +301,18 @@ MacroAssembler::enterExitFrame(const VMFunction* f)
 }
 
 void
-MacroAssembler::enterFakeExitFrame(enum ExitFrameTokenValues token)
+MacroAssembler::enterFakeExitFrame(Register cxreg, Register scratch, enum ExitFrameTokenValues token)
 {
-    linkExitFrame();
+    linkExitFrame(cxreg, scratch);
     Push(Imm32(token));
     Push(ImmPtr(nullptr));
 }
 
 void
-MacroAssembler::enterFakeExitFrameForNative(bool isConstructing)
+MacroAssembler::enterFakeExitFrameForNative(Register cxreg, Register scratch, bool isConstructing)
 {
-    enterFakeExitFrame(isConstructing ? ConstructNativeExitFrameLayoutToken
-                                      : CallNativeExitFrameLayoutToken);
+    enterFakeExitFrame(cxreg, scratch, isConstructing ? ConstructNativeExitFrameLayoutToken
+                                                      : CallNativeExitFrameLayoutToken);
 }
 
 void
@@ -306,6 +325,20 @@ bool
 MacroAssembler::hasSelfReference() const
 {
     return selfReferencePatch_.bound();
+}
+
+// ===============================================================
+// Move instructions
+
+void
+MacroAssembler::moveValue(const ConstantOrRegister& src, const ValueOperand& dest)
+{
+    if (src.constant()) {
+        moveValue(src.value(), dest);
+        return;
+    }
+
+    moveValue(src.reg(), dest);
 }
 
 // ===============================================================
@@ -387,6 +420,27 @@ MacroAssembler::branchIfRope(Register str, Label* label)
 }
 
 void
+MacroAssembler::branchIfRopeOrExternal(Register str, Register temp, Label* label)
+{
+    Address flags(str, JSString::offsetOfFlags());
+    move32(Imm32(JSString::TYPE_FLAGS_MASK), temp);
+    and32(flags, temp);
+
+    static_assert(JSString::ROPE_FLAGS == 0, "Rope type flags must be 0");
+    branchTest32(Assembler::Zero, temp, temp, label);
+
+    branch32(Assembler::Equal, temp, Imm32(JSString::EXTERNAL_FLAGS), label);
+}
+
+void
+MacroAssembler::branchIfNotRope(Register str, Label* label)
+{
+    Address flags(str, JSString::offsetOfFlags());
+    static_assert(JSString::ROPE_FLAGS == 0, "Rope type flags must be 0");
+    branchTest32(Assembler::NonZero, flags, Imm32(JSString::TYPE_FLAGS_MASK), label);
+}
+
+void
 MacroAssembler::branchLatin1String(Register string, Label* label)
 {
     branchTest32(Assembler::NonZero, Address(string, JSString::offsetOfFlags()),
@@ -422,6 +476,20 @@ MacroAssembler::branchIfInterpreted(Register fun, Label* label)
     Address address(fun, JSFunction::offsetOfNargs());
     int32_t bit = IMM32_16ADJ(JSFunction::INTERPRETED);
     branchTest32(Assembler::NonZero, address, Imm32(bit), label);
+}
+
+void
+MacroAssembler::branchIfObjectEmulatesUndefined(Register objReg, Register scratch,
+                                                Label* slowCheck, Label* label)
+{
+    // The branches to out-of-line code here implement a conservative version
+    // of the JSObject::isWrapper test performed in EmulatesUndefined.
+    loadObjClass(objReg, scratch);
+
+    branchTestClassIsProxy(true, scratch, slowCheck);
+
+    Address flags(scratch, Class::offsetOfFlags());
+    branchTest32(Assembler::NonZero, flags, Imm32(JSCLASS_EMULATES_UNDEFINED), label);
 }
 
 void
@@ -470,22 +538,6 @@ void
 MacroAssembler::branchTestObjGroup(Condition cond, Register obj, Register group, Label* label)
 {
     branchPtr(cond, Address(obj, JSObject::offsetOfGroup()), group, label);
-}
-
-void
-MacroAssembler::branchTestObjectTruthy(bool truthy, Register objReg, Register scratch,
-                                       Label* slowCheck, Label* checked)
-{
-    // The branches to out-of-line code here implement a conservative version
-    // of the JSObject::isWrapper test performed in EmulatesUndefined.  If none
-    // of the branches are taken, we can check class flags directly.
-    loadObjClass(objReg, scratch);
-    Address flags(scratch, Class::offsetOfFlags());
-
-    branchTestClassIsProxy(true, scratch, slowCheck);
-
-    Condition cond = truthy ? Assembler::Zero : Assembler::NonZero;
-    branchTest32(cond, flags, Imm32(JSCLASS_EMULATES_UNDEFINED), checked);
 }
 
 void
@@ -705,6 +757,12 @@ MacroAssembler::addStackPtrTo(T t)
     addPtr(getStackPointer(), t);
 }
 
+void
+MacroAssembler::reserveStack(uint32_t amount)
+{
+    subFromStackPtr(Imm32(amount));
+    adjustFrame(amount);
+}
 #endif // !JS_CODEGEN_ARM64
 
 template <typename T>
@@ -725,7 +783,7 @@ MacroAssembler::assertStackAlignment(uint32_t alignment, int32_t offset /* = 0 *
 {
 #ifdef DEBUG
     Label ok, bad;
-    MOZ_ASSERT(IsPowerOfTwo(alignment));
+    MOZ_ASSERT(mozilla::IsPowerOfTwo(alignment));
 
     // Wrap around the offset to be a non-negative number.
     offset %= alignment;
@@ -747,6 +805,16 @@ MacroAssembler::assertStackAlignment(uint32_t alignment, int32_t offset /* = 0 *
     breakpoint();
     bind(&ok);
 #endif
+}
+
+void
+MacroAssembler::storeCallBoolResult(Register reg)
+{
+    if (reg != ReturnReg)
+        mov(ReturnReg, reg);
+    // C++ compilers like to only use the bottom byte for bools, but we
+    // need to maintain the entire register.
+    and32(Imm32(0xFF), reg);
 }
 
 void

@@ -11,12 +11,14 @@ DIRS += [
 DevToolsModules(
     'auto-refresh.js',
     'box-model.js',
+    'css-grid.js',
     'css-transform.js',
     'eye-dropper.js',
     'geometry-editor.js',
     'measuring-tool.js',
-    'rect.js',
+    'paused-debugger.js',
     'rulers.js',
     'selector.js',
+    'shapes.js',
     'simple-outline.js'
 )

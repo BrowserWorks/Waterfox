@@ -4,10 +4,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env browser */
+
 "use strict";
 
 const { DOM, createClass, PropTypes, createFactory } = require("devtools/client/shared/vendor/react");
 const Tabs = createFactory(require("devtools/client/shared/components/tabs/tabs").Tabs);
+
+const Menu = require("devtools/client/framework/menu");
+const MenuItem = require("devtools/client/framework/menu-item");
 
 // Shortcuts
 const { div } = DOM;
@@ -19,14 +24,56 @@ let Tabbar = createClass({
   displayName: "Tabbar",
 
   propTypes: {
+    children: PropTypes.array,
+    menuDocument: PropTypes.object,
     onSelect: PropTypes.func,
+    showAllTabsMenu: PropTypes.bool,
+    activeTabId: PropTypes.string,
+    renderOnlySelected: PropTypes.bool,
+  },
+
+  getDefaultProps: function () {
+    return {
+      menuDocument: window.parent.document,
+      showAllTabsMenu: false,
+    };
   },
 
   getInitialState: function () {
+    let { activeTabId, children = [] } = this.props;
+    let tabs = this.createTabs(children);
+    let activeTab = tabs.findIndex((tab, index) => tab.id === activeTabId);
+
     return {
-      tabs: [],
-      activeTab: 0
+      activeTab: activeTab === -1 ? 0 : activeTab,
+      tabs,
     };
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    let { activeTabId, children = [] } = nextProps;
+    let tabs = this.createTabs(children);
+    let activeTab = tabs.findIndex((tab, index) => tab.id === activeTabId);
+
+    if (activeTab !== this.state.activeTab ||
+        (children !== this.props.children)) {
+      this.setState({
+        activeTab: activeTab === -1 ? 0 : activeTab,
+        tabs,
+      });
+    }
+  },
+
+  createTabs: function (children) {
+    return children
+      .filter((panel) => panel)
+      .map((panel, index) =>
+        Object.assign({}, children[index], {
+          id: panel.props.id || index,
+          panel,
+          title: panel.props.title,
+        })
+      );
   },
 
   // Public API
@@ -43,7 +90,11 @@ let Tabbar = createClass({
       newState.activeTab = tabs.length - 1;
     }
 
-    this.setState(newState);
+    this.setState(newState, () => {
+      if (this.props.onSelect && selected) {
+        this.props.onSelect(id);
+      }
+    });
   },
 
   toggleTab: function (tabId, isVisible) {
@@ -98,7 +149,7 @@ let Tabbar = createClass({
   getTabIndex: function (tabId) {
     let tabIndex = -1;
     this.state.tabs.forEach((tab, index) => {
-      if (tab.id == tabId) {
+      if (tab.id === tabId) {
         tabIndex = index;
       }
     });
@@ -125,6 +176,34 @@ let Tabbar = createClass({
     }
   },
 
+  onAllTabsMenuClick: function (event) {
+    let menu = new Menu();
+    let target = event.target;
+
+    // Generate list of menu items from the list of tabs.
+    this.state.tabs.forEach((tab) => {
+      menu.append(new MenuItem({
+        label: tab.title,
+        type: "checkbox",
+        checked: this.getCurrentTabId() === tab.id,
+        click: () => this.select(tab.id),
+      }));
+    });
+
+    // Show a drop down menu with frames.
+    // XXX Missing menu API for specifying target (anchor)
+    // and relative position to it. See also:
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XUL/Method/openPopup
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1274551
+    let rect = target.getBoundingClientRect();
+    let screenX = target.ownerDocument.defaultView.mozInnerScreenX;
+    let screenY = target.ownerDocument.defaultView.mozInnerScreenY;
+    menu.popup(rect.left + screenX, rect.bottom + screenY,
+      { doc: this.props.menuDocument });
+
+    return menu;
+  },
+
   // Rendering
 
   renderTab: function (tab) {
@@ -141,15 +220,17 @@ let Tabbar = createClass({
   },
 
   render: function () {
-    let tabs = this.state.tabs.map(tab => {
-      return this.renderTab(tab);
-    });
+    let tabs = this.state.tabs.map((tab) => this.renderTab(tab));
 
     return (
       div({className: "devtools-sidebar-tabs"},
         Tabs({
+          onAllTabsMenuClick: this.onAllTabsMenuClick,
+          renderOnlySelected: this.props.renderOnlySelected,
+          showAllTabsMenu: this.props.showAllTabsMenu,
           tabActive: this.state.activeTab,
-          onAfterChange: this.onTabChanged},
+          onAfterChange: this.onTabChanged,
+        },
           tabs
         )
       )

@@ -1,18 +1,9 @@
-﻿// ***************************************************************************
-// *
-// * Copyright (C) 2015 International Business Machines
-// * Corporation and others. All Rights Reserved.
-// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/en_GB.xml
-// *
-// ***************************************************************************
+﻿// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html#License
 en_GB{
     %%Parent{"en_001"}
-    Version{"2.1.19.79"}
+    Version{"2.1.31.33"}
     zoneStrings{
-        "Europe:London"{
-            sd{"BST"}
-        }
         "meta:Europe_Central"{
             sd{"CEST"}
             sg{"CET"}

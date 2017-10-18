@@ -11,6 +11,7 @@
 #include "nsIInputStream.h"
 #include "nsIWebVTTParserWrapper.h"
 #include "nsComponentManagerUtils.h"
+#include "nsIAsyncVerifyRedirectCallback.h"
 
 namespace mozilla {
 namespace dom {
@@ -77,6 +78,7 @@ WebVTTListener::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
   if (mElement) {
     mElement->OnChannelRedirect(aOldChannel, aNewChannel, aFlags);
   }
+  cb->OnRedirectVerifyCallback(NS_OK);
   return NS_OK;
 }
 
@@ -84,6 +86,7 @@ NS_IMETHODIMP
 WebVTTListener::OnStartRequest(nsIRequest* aRequest,
                                nsISupports* aContext)
 {
+  VTT_LOG("WebVTTListener::OnStartRequest\n");
   return NS_OK;
 }
 
@@ -92,6 +95,7 @@ WebVTTListener::OnStopRequest(nsIRequest* aRequest,
                               nsISupports* aContext,
                               nsresult aStatus)
 {
+  VTT_LOG("WebVTTListener::OnStopRequest\n");
   if (NS_FAILED(aStatus)) {
     mElement->SetReadyState(TextTrackReadyState::FailedToLoad);
   }
@@ -106,7 +110,7 @@ WebVTTListener::OnStopRequest(nsIRequest* aRequest,
   return aStatus;
 }
 
-NS_METHOD
+nsresult
 WebVTTListener::ParseChunk(nsIInputStream* aInStream, void* aClosure,
                            const char* aFromSegment, uint32_t aToOffset,
                            uint32_t aCount, uint32_t* aWriteCount)
@@ -131,6 +135,7 @@ WebVTTListener::OnDataAvailable(nsIRequest* aRequest,
                                 uint64_t aOffset,
                                 uint32_t aCount)
 {
+  VTT_LOG("WebVTTListener::OnDataAvailable\n");
   uint32_t count = aCount;
   while (count > 0) {
     uint32_t read;
@@ -152,8 +157,9 @@ WebVTTListener::OnCue(JS::Handle<JS::Value> aCue, JSContext* aCx)
     return NS_ERROR_FAILURE;
   }
 
-  TextTrackCue* cue;
-  nsresult rv = UNWRAP_OBJECT(VTTCue, &aCue.toObject(), cue);
+  JS::Rooted<JSObject*> obj(aCx, &aCue.toObject());
+  TextTrackCue* cue = nullptr;
+  nsresult rv = UNWRAP_OBJECT(VTTCue, &obj, cue);
   NS_ENSURE_SUCCESS(rv, rv);
 
   cue->SetTrackElement(mElement);

@@ -6,13 +6,21 @@
  * found in the LICENSE file.
  */
 
-#include "SkTypes.h"
+#include "SkMalloc.h"
 
+#include "SkTypes.h"
 #include "mozilla/mozalloc.h"
 #include "mozilla/mozalloc_abort.h"
 #include "mozilla/mozalloc_oom.h"
+#include "prenv.h"
 
 void sk_abort_no_print() {
+#ifdef SK_DEBUG
+    const char* env = PR_GetEnv("MOZ_SKIA_DISABLE_ASSERTS");
+    if (env && *env != '0') {
+        return;
+    }
+#endif
     mozalloc_abort("Abort from sk_abort");
 }
 

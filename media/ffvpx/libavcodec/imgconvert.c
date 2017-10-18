@@ -57,19 +57,11 @@ enum AVPixelFormat avcodec_find_best_pix_fmt_of_2(enum AVPixelFormat dst_pix_fmt
     return av_find_best_pix_fmt_of_2(dst_pix_fmt1, dst_pix_fmt2, src_pix_fmt, has_alpha, loss_ptr);
 }
 
-#if AV_HAVE_INCOMPATIBLE_LIBAV_ABI
-enum AVPixelFormat avcodec_find_best_pix_fmt2(const enum AVPixelFormat *pix_fmt_list,
-                                            enum AVPixelFormat src_pix_fmt,
-                                            int has_alpha, int *loss_ptr){
-    return avcodec_find_best_pix_fmt_of_list(pix_fmt_list, src_pix_fmt, has_alpha, loss_ptr);
-}
-#else
 enum AVPixelFormat avcodec_find_best_pix_fmt2(enum AVPixelFormat dst_pix_fmt1, enum AVPixelFormat dst_pix_fmt2,
                                             enum AVPixelFormat src_pix_fmt, int has_alpha, int *loss_ptr)
 {
     return avcodec_find_best_pix_fmt_of_2(dst_pix_fmt1, dst_pix_fmt2, src_pix_fmt, has_alpha, loss_ptr);
 }
-#endif
 
 enum AVPixelFormat avcodec_find_best_pix_fmt_of_list(const enum AVPixelFormat *pix_fmt_list,
                                             enum AVPixelFormat src_pix_fmt,
@@ -231,33 +223,5 @@ int av_picture_pad(AVPicture *dst, const AVPicture *src, int height, int width,
 
     return 0;
 }
-
-#ifdef TEST
-
-int main(void){
-    int i;
-    int err=0;
-    int skip = 0;
-
-    for (i=0; i<AV_PIX_FMT_NB*2; i++) {
-        const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(i);
-        if(!desc || !desc->name) {
-            skip ++;
-            continue;
-        }
-        if (skip) {
-            av_log(NULL, AV_LOG_INFO, "%3d unused pixel format values\n", skip);
-            skip = 0;
-        }
-        av_log(NULL, AV_LOG_INFO, "pix fmt %s yuv_plan:%d avg_bpp:%d\n", desc->name, is_yuv_planar(desc), av_get_padded_bits_per_pixel(desc));
-        if ((!(desc->flags & AV_PIX_FMT_FLAG_ALPHA)) != (desc->nb_components != 2 && desc->nb_components != 4)) {
-            av_log(NULL, AV_LOG_ERROR, "Alpha flag mismatch\n");
-            err = 1;
-        }
-    }
-    return err;
-}
-
-#endif
 FF_ENABLE_DEPRECATION_WARNINGS
 #endif /* FF_API_AVPICTURE */

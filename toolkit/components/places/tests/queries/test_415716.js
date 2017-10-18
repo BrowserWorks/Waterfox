@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function modHistoryTypes(val){
-  switch(val % 8) {
+function modHistoryTypes(val) {
+  switch (val % 8) {
     case 0:
     case 1:
       return TRANSITION_LINK;
@@ -27,17 +27,11 @@ function modHistoryTypes(val){
   return TRANSITION_TYPED;
 }
 
-function run_test()
-{
-  run_next_test();
-}
-
 /**
  * Builds a test database by hand using various times, annotations and
  * visit numbers for this test
  */
-add_task(function* test_buildTestDatabase()
-{
+add_task(async function test_buildTestDatabase() {
   // This is the set of visits that we will match - our min visit is 2 so that's
   // why we add more visits to the same URIs.
   let testURI = uri("http://www.foo.com");
@@ -62,7 +56,7 @@ add_task(function* test_buildTestDatabase()
     });
   }
 
-  yield PlacesTestUtils.addVisits(places);
+  await PlacesTestUtils.addVisits(places);
 
   PlacesUtils.annotations.setPageAnnotation(testURI, testAnnoName,
                                             testAnnoVal, 0, 0);
@@ -77,8 +71,7 @@ add_task(function* test_buildTestDatabase()
  * minVisits == 2 &&
  * maxVisits == 10
  */
-add_task(function test_execute()
-{
+add_task(function test_execute() {
   let query = PlacesUtils.history.getNewQuery();
   query.annotation = "moz-test-places/testing123";
   query.beginTime = daybefore * 1000;
@@ -98,11 +91,11 @@ add_task(function test_execute()
   root.containerOpen = true;
   let cc = root.childCount;
   dump("----> cc is: " + cc + "\n");
-  for(let i = 0; i < root.childCount; ++i) {
+  for (let i = 0; i < root.childCount; ++i) {
     let resultNode = root.getChild(i);
     let accesstime = Date(resultNode.time / 1000);
     dump("----> result: " + resultNode.uri + "   Date: " + accesstime.toLocaleString() + "\n");
   }
-  do_check_eq(cc,0);
+  do_check_eq(cc, 0);
   root.containerOpen = false;
 });

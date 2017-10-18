@@ -24,17 +24,21 @@ function runTest() {
     document.body.appendChild(e.detail.frameElement);
 
     e.detail.frameElement.addEventListener('mozbrowserlocationchange', function(e) {
-      if (e.detail == "http://example.com/#2") {
+      if (e.detail.url == "http://example.com/#2") {
         ok(true, "Got locationchange to http://example.com/#2");
         SimpleTest.finish();
       }
       else {
-        ok(true, "Got locationchange to " + e.detail);
+        ok(true, "Got locationchange to " + e.detail.url);
       }
     });
 
     SimpleTest.executeSoon(function() {
       var iframe2 = document.createElement('iframe');
+      // Make sure that iframe1 and iframe2 are in the same TabGroup by linking
+      // them through opener. Right now this API requires chrome privileges, as
+      // it is on MozFrameLoaderOwner.
+      SpecialPowers.wrap(iframe2).presetOpenerWindow(iframe1.contentWindow);
       iframe2.setAttribute('mozbrowser', 'true');
 
       iframe2.addEventListener('mozbrowseropenwindow', function(e) {

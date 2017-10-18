@@ -5,17 +5,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MFTDecoder.h"
-#include "nsThreadUtils.h"
 #include "WMFUtils.h"
 #include "mozilla/Logging.h"
+#include "nsThreadUtils.h"
 
 #define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 
 MFTDecoder::MFTDecoder()
-  : mMFTProvidesOutputSamples(false)
-  , mDiscontinuity(true)
 {
   memset(&mInputStreamInfo, 0, sizeof(MFT_INPUT_STREAM_INFO));
   memset(&mOutputStreamInfo, 0, sizeof(MFT_OUTPUT_STREAM_INFO));
@@ -34,7 +32,8 @@ MFTDecoder::Create(const GUID& aMFTClsID)
                         nullptr,
                         CLSCTX_INPROC_SERVER,
                         IID_IMFTransform,
-                        reinterpret_cast<void**>(static_cast<IMFTransform**>(getter_AddRefs(mDecoder))));
+                        reinterpret_cast<void**>(static_cast<IMFTransform**>(
+                          getter_AddRefs(mDecoder))));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   return S_OK;
@@ -52,7 +51,7 @@ MFTDecoder::SetMediaTypes(IMFMediaType* aInputType,
   HRESULT hr = mDecoder->SetInputType(0, aInputType, 0);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  hr = SetDecoderOutputType(aCallback, aData);
+  hr = SetDecoderOutputType(true /* match all attributes */, aCallback, aData);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   hr = mDecoder->GetInputStreamInfo(0, &mInputStreamInfo);
@@ -77,19 +76,34 @@ MFTDecoder::GetAttributes()
 }
 
 HRESULT
-MFTDecoder::SetDecoderOutputType(ConfigureOutputCallback aCallback, void* aData)
+MFTDecoder::SetDecoderOutputType(bool aMatchAllAttributes,
+                                 ConfigureOutputCallback aCallback,
+                                 void* aData)
 {
   NS_ENSURE_TRUE(mDecoder != nullptr, E_POINTER);
 
+  GUID currentSubtype = {0};
+  HRESULT hr = mOutputType->GetGUID(MF_MT_SUBTYPE, &currentSubtype);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
   // Iterate the enumerate the output types, until we find one compatible
   // with what we need.
-  HRESULT hr;
   RefPtr<IMFMediaType> outputType;
   UINT32 typeIndex = 0;
-  while (SUCCEEDED(mDecoder->GetOutputAvailableType(0, typeIndex++, getter_AddRefs(outputType)))) {
-    BOOL resultMatch;
-    hr = mOutputType->Compare(outputType, MF_ATTRIBUTES_MATCH_OUR_ITEMS, &resultMatch);
-    if (SUCCEEDED(hr) && resultMatch == TRUE) {
+  while (SUCCEEDED(mDecoder->GetOutputAvailableType(
+    0, typeIndex++, getter_AddRefs(outputType)))) {
+    GUID outSubtype = {0};
+    hr = outputType->GetGUID(MF_MT_SUBTYPE, &outSubtype);
+    NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+
+    BOOL resultMatch = currentSubtype == outSubtype;
+
+    if (resultMatch && aMatchAllAttributes) {
+      hr = mOutputType->Compare(outputType, MF_ATTRIBUTES_MATCH_OUR_ITEMS,
+                                &resultMatch);
+      NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+    }
+    if (resultMatch == TRUE) {
       if (aCallback) {
         hr = aCallback(outputType, aData);
         NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
@@ -100,7 +114,8 @@ MFTDecoder::SetDecoderOutputType(ConfigureOutputCallback aCallback, void* aData)
       hr = mDecoder->GetOutputStreamInfo(0, &mOutputStreamInfo);
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-      mMFTProvidesOutputSamples = IsFlagSet(mOutputStreamInfo.dwFlags, MFT_OUTPUT_STREAM_PROVIDES_SAMPLES);
+      mMFTProvidesOutputSamples = IsFlagSet(mOutputStreamInfo.dwFlags,
+                                            MFT_OUTPUT_STREAM_PROVIDES_SAMPLES);
 
       return S_OK;
     }
@@ -132,9 +147,12 @@ MFTDecoder::CreateInputSample(const uint8_t* aData,
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   RefPtr<IMFMediaBuffer> buffer;
-  int32_t bufferSize = std::max<uint32_t>(uint32_t(mInputStreamInfo.cbSize), aDataSize);
-  UINT32 alignment = (mInputStreamInfo.cbAlignment > 1) ? mInputStreamInfo.cbAlignment - 1 : 0;
-  hr = wmf::MFCreateAlignedMemoryBuffer(bufferSize, alignment, getter_AddRefs(buffer));
+  int32_t bufferSize =
+    std::max<uint32_t>(uint32_t(mInputStreamInfo.cbSize), aDataSize);
+  UINT32 alignment =
+    (mInputStreamInfo.cbAlignment > 1) ? mInputStreamInfo.cbAlignment - 1 : 0;
+  hr = wmf::MFCreateAlignedMemoryBuffer(
+    bufferSize, alignment, getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   DWORD maxLength = 0;
@@ -175,8 +193,10 @@ MFTDecoder::CreateOutputSample(RefPtr<IMFSample>* aOutSample)
 
   RefPtr<IMFMediaBuffer> buffer;
   int32_t bufferSize = mOutputStreamInfo.cbSize;
-  UINT32 alignment = (mOutputStreamInfo.cbAlignment > 1) ? mOutputStreamInfo.cbAlignment - 1 : 0;
-  hr = wmf::MFCreateAlignedMemoryBuffer(bufferSize, alignment, getter_AddRefs(buffer));
+  UINT32 alignment =
+    (mOutputStreamInfo.cbAlignment > 1) ? mOutputStreamInfo.cbAlignment - 1 : 0;
+  hr = wmf::MFCreateAlignedMemoryBuffer(
+    bufferSize, alignment, getter_AddRefs(buffer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   hr = sample->AddBuffer(buffer);
@@ -217,13 +237,6 @@ MFTDecoder::Output(RefPtr<IMFSample>* aOutput)
   }
 
   if (hr == MF_E_TRANSFORM_STREAM_CHANGE) {
-    // Type change, probably geometric aperture change.
-    // Reconfigure decoder output type, so that GetOutputMediaType()
-    // returns the new type, and return the error code to caller.
-    // This is an expected failure, so don't warn on encountering it.
-    hr = SetDecoderOutputType(nullptr, nullptr);
-    NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
-    // Return the error, so that the caller knows to retry.
     return MF_E_TRANSFORM_STREAM_CHANGE;
   }
 

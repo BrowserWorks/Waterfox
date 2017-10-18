@@ -205,6 +205,8 @@
 	<true/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>LSFileQuarantineEnabled</key>
+	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.9.0</string>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
@@ -218,5 +220,9 @@
 	</dict>
   <key>NSDisablePersistence</key>
   <true/>
+  <key>MozillaDeveloperRepoPath</key>
+  <string>%MOZ_DEVELOPER_REPO_PATH%</string>
+  <key>MozillaDeveloperObjPath</key>
+  <string>%MOZ_DEVELOPER_OBJ_PATH%</string>
 </dict>
 </plist>

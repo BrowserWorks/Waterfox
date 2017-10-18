@@ -29,27 +29,6 @@ using namespace JS;
 
 // static
 void
-XPCStringConvert::FreeZoneCache(JS::Zone* zone)
-{
-    // Put the zone user data into an AutoPtr (which will do the cleanup for us),
-    // and null out the user data (which may already be null).
-    nsAutoPtr<ZoneStringCache> cache(static_cast<ZoneStringCache*>(JS_GetZoneUserData(zone)));
-    JS_SetZoneUserData(zone, nullptr);
-}
-
-// static
-void
-XPCStringConvert::ClearZoneCache(JS::Zone* zone)
-{
-    ZoneStringCache* cache = static_cast<ZoneStringCache*>(JS_GetZoneUserData(zone));
-    if (cache) {
-        cache->mBuffer = nullptr;
-        cache->mString = nullptr;
-    }
-}
-
-// static
-void
 XPCStringConvert::FinalizeLiteral(const JSStringFinalizer* fin, char16_t* chars)
 {
 }
@@ -81,9 +60,10 @@ XPCStringConvert::ReadableToJSVal(JSContext* cx,
     uint32_t length = readable.Length();
 
     if (readable.IsLiteral()) {
-        JSString* str = JS_NewExternalString(cx,
-                                             static_cast<const char16_t*>(readable.BeginReading()),
-                                             length, &sLiteralFinalizer);
+        bool ignored;
+        JSString* str = JS_NewMaybeExternalString(cx,
+                                                  static_cast<const char16_t*>(readable.BeginReading()),
+                                                  length, &sLiteralFinalizer, &ignored);
         if (!str)
             return false;
         vp.setString(str);

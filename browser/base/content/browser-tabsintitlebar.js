@@ -7,12 +7,12 @@
 // this one on platforms which don't have CAN_DRAW_IN_TITLEBAR defined.
 
 var TabsInTitlebar = {
-  init: function () {
+  init() {
     if (this._initialized) {
       return;
     }
     this._readPref();
-    Services.prefs.addObserver(this._prefName, this, false);
+    Services.prefs.addObserver(this._prefName, this);
 
     // We need to update the appearance of the titlebar when the menu changes
     // from the active to the inactive state. We can't, however, rely on
@@ -49,17 +49,15 @@ var TabsInTitlebar = {
     }
   },
 
-  allowedBy: function (condition, allow) {
+  allowedBy(condition, allow) {
     if (allow) {
       if (condition in this._disallowed) {
         delete this._disallowed[condition];
         this._update(true);
       }
-    } else {
-      if (!(condition in this._disallowed)) {
-        this._disallowed[condition] = null;
-        this._update(true);
-      }
+    } else if (!(condition in this._disallowed)) {
+      this._disallowed[condition] = null;
+      this._update(true);
     }
   },
 
@@ -71,18 +69,18 @@ var TabsInTitlebar = {
     return document.documentElement.getAttribute("tabsintitlebar") == "true";
   },
 
-  observe: function (subject, topic, data) {
+  observe(subject, topic, data) {
     if (topic == "nsPref:changed")
       this._readPref();
   },
 
-  handleEvent: function (aEvent) {
+  handleEvent(aEvent) {
     if (aEvent.type == "resolutionchange" && aEvent.target == window) {
       this._update(true);
     }
   },
 
-  _onMenuMutate: function (aMutations) {
+  _onMenuMutate(aMutations) {
     for (let mutation of aMutations) {
       if (mutation.attributeName == "inactive" ||
           mutation.attributeName == "autohide") {
@@ -98,12 +96,12 @@ var TabsInTitlebar = {
   _prefName: "browser.tabs.drawInTitlebar",
   _lastSizeMode: null,
 
-  _readPref: function () {
+  _readPref() {
     this.allowedBy("pref",
                    Services.prefs.getBoolPref(this._prefName));
   },
 
-  _update: function (aForce=false) {
+  _update(aForce = false) {
     let $ = id => document.getElementById(id);
     let rect = ele => ele.getBoundingClientRect();
     let verticalMargins = cstyle => parseFloat(cstyle.marginBottom) + parseFloat(cstyle.marginTop);
@@ -117,8 +115,6 @@ var TabsInTitlebar = {
       this._updateOnInit = true;
       return;
     }
-
-    let allowed = true;
 
     if (!aForce) {
       // _update is called on resize events, because the window is not ready
@@ -140,10 +136,7 @@ var TabsInTitlebar = {
       }
     }
 
-    for (let something in this._disallowed) {
-      allowed = false;
-      break;
-    }
+    let allowed = (Object.keys(this._disallowed)).length == 0;
 
     let titlebar = $("titlebar");
     let titlebarContent = $("titlebar-content");
@@ -182,6 +175,16 @@ var TabsInTitlebar = {
       let titlebarContentHeight = rect(titlebarContent).height;
 
       // Begin setting CSS properties which will cause a reflow
+
+      if (AppConstants.MOZ_PHOTON_THEME &&
+          AppConstants.isPlatformAndVersionAtLeast("win", "10.0")) {
+        if (!menuHeight && window.windowState == window.STATE_MAXIMIZED) {
+          titlebarContentHeight = Math.max(titlebarContentHeight, fullTabsHeight);
+          $("titlebar-buttonbox").style.height = titlebarContentHeight + "px";
+        } else {
+          $("titlebar-buttonbox").style.removeProperty("height");
+        }
+      }
 
       // If the menubar is around (menuHeight is non-zero), try to adjust
       // its full height (i.e. including margins) to match the titlebar,
@@ -228,9 +231,9 @@ var TabsInTitlebar = {
       }
 
       // Then add a negative margin to the titlebar, so that the following elements
-      // will overlap it by the lesser of the titlebar height or the tabstrip+menu.
-      let minTitlebarOrTabsHeight = Math.min(titlebarContentHeight, tabAndMenuHeight);
-      titlebar.style.marginBottom = "-" + minTitlebarOrTabsHeight + "px";
+      // will overlap it by the greater of the titlebar height or the tabstrip+menu.
+      let maxTitlebarOrTabsHeight = Math.max(titlebarContentHeight, tabAndMenuHeight);
+      titlebar.style.marginBottom = "-" + maxTitlebarOrTabsHeight + "px";
 
       // Finally, size the placeholders:
       if (AppConstants.platform == "macosx") {
@@ -254,18 +257,19 @@ var TabsInTitlebar = {
       menubar.style.paddingBottom = "";
     }
 
-    ToolbarIconColor.inferFromText();
-    if (CustomizationHandler.isCustomizing()) {
+    ToolbarIconColor.inferFromText("tabsintitlebar", TabsInTitlebar.enabled);
+
+    if (document.documentElement.hasAttribute("customizing")) {
       gCustomizeMode.updateLWTStyling();
     }
   },
 
-  _sizePlaceholder: function (type, width) {
-    Array.forEach(document.querySelectorAll(".titlebar-placeholder[type='"+ type +"']"),
-                  function (node) { node.width = width; });
+  _sizePlaceholder(type, width) {
+    Array.forEach(document.querySelectorAll(".titlebar-placeholder[type='" + type + "']"),
+                  function(node) { node.width = width; });
   },
 
-  uninit: function () {
+  uninit() {
     this._initialized = false;
     removeEventListener("resolutionchange", this);
     Services.prefs.removeObserver(this._prefName, this);
@@ -298,11 +302,11 @@ function updateTitlebarDisplay() {
       }
       document.documentElement.setAttribute("drawtitle", "true");
     }
-  } else { // not OS X
-    if (TabsInTitlebar.enabled)
-      document.documentElement.setAttribute("chromemargin", "0,2,2,2");
-    else
-      document.documentElement.removeAttribute("chromemargin");
+  } else if (TabsInTitlebar.enabled) {
+    // not OS X
+    document.documentElement.setAttribute("chromemargin", "0,2,2,2");
+  } else {
+    document.documentElement.removeAttribute("chromemargin");
   }
 }
 

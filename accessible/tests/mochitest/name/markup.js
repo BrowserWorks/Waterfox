@@ -69,7 +69,7 @@ var gTestIterator =
         this.ruleSetElm.getAttribute("defaultName") : null;
       testName(this.elm, defaultName,
                "Default name test (" + gTestIterator.testID + "). ");
-      testAbsentAttrs(this.elm, {"explicit-name" : "true"});
+      testAbsentAttrs(this.elm, {"explicit-name": "true"});
 
       this.markupIdx++;
       if (this.markupIdx == this.markupElms.length) {
@@ -138,8 +138,6 @@ function testNamesForMarkupRules(aMarkupElm, aContainer)
   var testID = aMarkupElm.getAttribute("id");
   if (gDumpToConsole)
     dump("\nProcessing markup rules '" + testID + "'\n");
-
-  var serializer = new XMLSerializer();
 
   var expr = "//html/body/div[@id='test']/" + aMarkupElm.getAttribute("ref");
   var elm = evaluateXPath(document, expr, htmlDocResolver)[0];
@@ -219,9 +217,9 @@ function testNameForAttrRule(aElm, aRule)
   testName(aElm, name, msg);
 
   if (aRule.getAttribute("explict-name") != "false")
-    testAttrs(aElm, {"explicit-name" : "true"}, true);
+    testAttrs(aElm, {"explicit-name": "true"}, true);
   else
-    testAbsentAttrs(aElm, {"explicit-name" : "true"});
+    testAbsentAttrs(aElm, {"explicit-name": "true"});
 
   // If @recreated attribute is used then this attribute change recreates an
   // accessible. Wait for reorder event in this case or otherwise proceed next
@@ -289,7 +287,7 @@ function testNameForElmRule(aElm, aRule)
 
   var msg = "Element '" + tagname + "' test (" + gTestIterator.testID + ").";
   testName(aElm, labelElm.getAttribute("textequiv"), msg);
-  testAttrs(aElm, {"explicit-name" : "true"}, true);
+  testAttrs(aElm, {"explicit-name": "true"}, true);
 
   var parentNode = labelElm.parentNode;
 
@@ -307,7 +305,7 @@ function testNameForSubtreeRule(aElm, aRule)
 {
   var msg = "From subtree test (" + gTestIterator.testID + ").";
   testName(aElm, aElm.getAttribute("textequiv"), msg);
-  testAbsentAttrs(aElm, {"explicit-name" : "true"});
+  testAbsentAttrs(aElm, {"explicit-name": "true"});
 
   if (gDumpToConsole) {
     dump("\nProcessed from subtree rule. Wait for reorder event on " +
@@ -316,7 +314,7 @@ function testNameForSubtreeRule(aElm, aRule)
   waitForEvent(EVENT_REORDER, aElm, gTestIterator.iterateNext, gTestIterator);
 
   while (aElm.firstChild)
-    aElm.removeChild(aElm.firstChild);
+    aElm.firstChild.remove();
 }
 
 /**
@@ -376,7 +374,7 @@ function evaluateXPath(aNode, aExpr, aResolver)
 
 function htmlDocResolver(aPrefix) {
   var ns = {
-    'html' : 'http://www.w3.org/1999/xhtml'
+    'html': 'http://www.w3.org/1999/xhtml'
   };
   return ns[aPrefix] || null;
 }

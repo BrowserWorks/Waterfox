@@ -7,8 +7,8 @@
 #include "WMFMediaDataDecoder.h"
 #include "VideoUtils.h"
 #include "WMFUtils.h"
-#include "nsTArray.h"
 #include "mozilla/Telemetry.h"
+#include "nsTArray.h"
 
 #include "mozilla/Logging.h"
 #include "mozilla/SyncRunnable.h"
@@ -18,13 +18,9 @@
 namespace mozilla {
 
 WMFMediaDataDecoder::WMFMediaDataDecoder(MFTManager* aMFTManager,
-                                         TaskQueue* aTaskQueue,
-                                         MediaDataDecoderCallback* aCallback)
+                                         TaskQueue* aTaskQueue)
   : mTaskQueue(aTaskQueue)
-  , mCallback(aCallback)
   , mMFTManager(aMFTManager)
-  , mIsFlushing(false)
-  , mIsShutDown(false)
 {
 }
 
@@ -66,27 +62,29 @@ SendTelemetry(unsigned long hr)
   }
 
   nsCOMPtr<nsIRunnable> runnable = NS_NewRunnableFunction(
+    "SendTelemetry",
     [sample] {
       Telemetry::Accumulate(Telemetry::MEDIA_WMF_DECODE_ERROR, sample);
     });
-  NS_DispatchToMainThread(runnable);
+
+  SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
 }
 
-nsresult
+RefPtr<ShutdownPromise>
 WMFMediaDataDecoder::Shutdown()
 {
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
-  if (mTaskQueue) {
-    mTaskQueue->Dispatch(NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessShutdown));
-  } else {
-    ProcessShutdown();
-  }
   mIsShutDown = true;
-  return NS_OK;
+
+  if (mTaskQueue) {
+    return InvokeAsync(mTaskQueue, this, __func__,
+                       &WMFMediaDataDecoder::ProcessShutdown);
+  }
+  return ProcessShutdown();
 }
 
-void
+RefPtr<ShutdownPromise>
 WMFMediaDataDecoder::ProcessShutdown()
 {
   if (mMFTManager) {
@@ -96,114 +94,125 @@ WMFMediaDataDecoder::ProcessShutdown()
       SendTelemetry(S_OK);
     }
   }
+  return ShutdownPromise::CreateAndResolve(true, __func__);
 }
 
 // Inserts data into the decoder's pipeline.
-nsresult
-WMFMediaDataDecoder::Input(MediaRawData* aSample)
+RefPtr<MediaDataDecoder::DecodePromise>
+WMFMediaDataDecoder::Decode(MediaRawData* aSample)
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod<RefPtr<MediaRawData>>(
-      this,
-      &WMFMediaDataDecoder::ProcessDecode,
-      RefPtr<MediaRawData>(aSample));
-  mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
+  return InvokeAsync<MediaRawData*>(mTaskQueue, this, __func__,
+                                    &WMFMediaDataDecoder::ProcessDecode,
+                                    aSample);
 }
 
-void
+RefPtr<MediaDataDecoder::DecodePromise>
+WMFMediaDataDecoder::ProcessError(HRESULT aError, const char* aReason)
+{
+  if (!mRecordedError) {
+    SendTelemetry(aError);
+    mRecordedError = true;
+  }
+  return DecodePromise::CreateAndReject(
+    MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                RESULT_DETAIL("%s:%x", aReason, aError)),
+    __func__);
+}
+
+RefPtr<MediaDataDecoder::DecodePromise>
 WMFMediaDataDecoder::ProcessDecode(MediaRawData* aSample)
 {
-  if (mIsFlushing) {
-    // Skip sample, to be released by runnable.
-    return;
+  DecodedData results;
+  HRESULT hr = mMFTManager->Input(aSample);
+  if (hr == MF_E_NOTACCEPTING) {
+    ProcessOutput(results);
+    hr = mMFTManager->Input(aSample);
   }
 
-  HRESULT hr = mMFTManager->Input(aSample);
   if (FAILED(hr)) {
     NS_WARNING("MFTManager rejected sample");
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-    if (!mRecordedError) {
-      SendTelemetry(hr);
-      mRecordedError = true;
-    }
-    return;
+    return ProcessError(hr, "MFTManager::Input");
   }
 
+  mDrainStatus = DrainStatus::DRAINABLE;
   mLastStreamOffset = aSample->mOffset;
 
-  ProcessOutput();
+  hr = ProcessOutput(results);
+  if (SUCCEEDED(hr) || hr == MF_E_TRANSFORM_NEED_MORE_INPUT) {
+    return DecodePromise::CreateAndResolve(Move(results), __func__);
+  }
+  return ProcessError(hr, "MFTManager::Output");
 }
 
-void
-WMFMediaDataDecoder::ProcessOutput()
+HRESULT
+WMFMediaDataDecoder::ProcessOutput(DecodedData& aResults)
 {
   RefPtr<MediaData> output;
   HRESULT hr = S_OK;
-  while (SUCCEEDED(hr = mMFTManager->Output(mLastStreamOffset, output)) &&
-         output) {
+  while (SUCCEEDED(hr = mMFTManager->Output(mLastStreamOffset, output))) {
+    MOZ_ASSERT(output.get(), "Upon success, we must receive an output");
     mHasSuccessfulOutput = true;
-    mCallback->Output(output);
-  }
-  if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT) {
-    if (mTaskQueue->IsEmpty()) {
-      mCallback->InputExhausted();
-    }
-  } else if (FAILED(hr)) {
-    NS_WARNING("WMFMediaDataDecoder failed to output data");
-    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
-    if (!mRecordedError) {
-      SendTelemetry(hr);
-      mRecordedError = true;
+    aResults.AppendElement(Move(output));
+    if (mDrainStatus == DrainStatus::DRAINING) {
+      break;
     }
   }
+  return hr;
 }
 
-void
+RefPtr<MediaDataDecoder::FlushPromise>
 WMFMediaDataDecoder::ProcessFlush()
 {
   if (mMFTManager) {
     mMFTManager->Flush();
   }
+  mDrainStatus = DrainStatus::DRAINED;
+  return FlushPromise::CreateAndResolve(true, __func__);
 }
 
-nsresult
+RefPtr<MediaDataDecoder::FlushPromise>
 WMFMediaDataDecoder::Flush()
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
-  mIsFlushing = true;
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessFlush);
-  SyncRunnable::DispatchToThread(mTaskQueue, runnable);
-  mIsFlushing = false;
-  return NS_OK;
+  return InvokeAsync(mTaskQueue, this, __func__,
+                     &WMFMediaDataDecoder::ProcessFlush);
 }
 
-void
+RefPtr<MediaDataDecoder::DecodePromise>
 WMFMediaDataDecoder::ProcessDrain()
 {
-  if (!mIsFlushing && mMFTManager) {
+  if (!mMFTManager || mDrainStatus == DrainStatus::DRAINED) {
+    return DecodePromise::CreateAndResolve(DecodedData(), __func__);
+  }
+
+  if (mDrainStatus != DrainStatus::DRAINING) {
     // Order the decoder to drain...
     mMFTManager->Drain();
-    // Then extract all available output.
-    ProcessOutput();
+    mDrainStatus = DrainStatus::DRAINING;
   }
-  mCallback->DrainComplete();
+
+  // Then extract all available output.
+  DecodedData results;
+  HRESULT hr = ProcessOutput(results);
+  if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT) {
+    mDrainStatus = DrainStatus::DRAINED;
+  }
+  if (SUCCEEDED(hr) || hr == MF_E_TRANSFORM_NEED_MORE_INPUT) {
+    return DecodePromise::CreateAndResolve(Move(results), __func__);
+  }
+  return ProcessError(hr, "MFTManager::Output");
 }
 
-nsresult
+RefPtr<MediaDataDecoder::DecodePromise>
 WMFMediaDataDecoder::Drain()
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
-  mTaskQueue->Dispatch(NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessDrain));
-  return NS_OK;
+  return InvokeAsync(mTaskQueue, this, __func__,
+                     &WMFMediaDataDecoder::ProcessDrain);
 }
 
 bool
@@ -213,38 +222,15 @@ WMFMediaDataDecoder::IsHardwareAccelerated(nsACString& aFailureReason) const {
   return mMFTManager && mMFTManager->IsHardwareAccelerated(aFailureReason);
 }
 
-nsresult
-WMFMediaDataDecoder::ConfigurationChanged(const TrackInfo& aConfig)
-{
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
-
-  nsCOMPtr<nsIRunnable> runnable =
-    NewRunnableMethod<UniquePtr<TrackInfo>&&>(
-    this,
-    &WMFMediaDataDecoder::ProcessConfigurationChanged,
-    aConfig.Clone());
-  mTaskQueue->Dispatch(runnable.forget());
-  return NS_OK;
-
-}
-
-void
-WMFMediaDataDecoder::ProcessConfigurationChanged(UniquePtr<TrackInfo>&& aConfig)
-{
-  if (mMFTManager) {
-    mMFTManager->ConfigurationChanged(*aConfig);
-  }
-}
-
 void
 WMFMediaDataDecoder::SetSeekThreshold(const media::TimeUnit& aTime)
 {
-  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
   RefPtr<WMFMediaDataDecoder> self = this;
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableFunction([self, aTime]() {
+    NS_NewRunnableFunction("WMFMediaDataDecoder::SetSeekThreshold",
+                           [self, aTime]() {
     media::TimeUnit threshold = aTime;
     self->mMFTManager->SetSeekThreshold(threshold);
   });

@@ -32,13 +32,15 @@ ContentHostBase::~ContentHostBase()
 }
 
 void
-ContentHostTexture::Composite(LayerComposite* aLayer,
+ContentHostTexture::Composite(Compositor* aCompositor,
+                              LayerComposite* aLayer,
                               EffectChain& aEffectChain,
                               float aOpacity,
                               const gfx::Matrix4x4& aTransform,
                               const SamplingFilter aSamplingFilter,
                               const IntRect& aClipRect,
-                              const nsIntRegion* aVisibleRegion)
+                              const nsIntRegion* aVisibleRegion,
+                              const Maybe<gfx::Polygon>& aGeometry)
 {
   NS_ASSERTION(aVisibleRegion, "Requires a visible region");
 
@@ -61,8 +63,7 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
 
   RefPtr<TexturedEffect> effect = CreateTexturedEffect(mTextureSource.get(),
                                                        mTextureSourceOnWhite.get(),
-                                                       aSamplingFilter, true,
-                                                       GetRenderState());
+                                                       aSamplingFilter, true);
   if (!effect) {
     return;
   }
@@ -180,14 +181,17 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
                                         Float(tileRegionRect.y) / texRect.height,
                                         Float(tileRegionRect.width) / texRect.width,
                                         Float(tileRegionRect.height) / texRect.height);
-          GetCompositor()->DrawQuad(rect, aClipRect, aEffectChain, aOpacity, aTransform);
+
+          aCompositor->DrawGeometry(rect, aClipRect, aEffectChain,
+                                    aOpacity, aTransform, aGeometry);
+
           if (usingTiles) {
             DiagnosticFlags diagnostics = DiagnosticFlags::CONTENT | DiagnosticFlags::BIGIMAGE;
             if (iterOnWhite) {
               diagnostics |= DiagnosticFlags::COMPONENT_ALPHA;
             }
-            GetCompositor()->DrawDiagnostics(diagnostics, rect, aClipRect,
-                                             aTransform, mFlashCounter);
+            aCompositor->DrawDiagnostics(diagnostics, rect, aClipRect,
+                                         aTransform, mFlashCounter);
           }
         }
       }
@@ -209,8 +213,28 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
   if (iterOnWhite) {
     diagnostics |= DiagnosticFlags::COMPONENT_ALPHA;
   }
-  GetCompositor()->DrawDiagnostics(diagnostics, nsIntRegion(mBufferRect), aClipRect,
-                                   aTransform, mFlashCounter);
+  aCompositor->DrawDiagnostics(diagnostics, nsIntRegion(mBufferRect), aClipRect,
+                               aTransform, mFlashCounter);
+}
+
+RefPtr<TextureSource>
+ContentHostTexture::AcquireTextureSource()
+{
+  if (!mTextureHost || !mTextureHost->AcquireTextureSource(mTextureSource)) {
+    return nullptr;
+  }
+  return mTextureSource.get();
+}
+
+RefPtr<TextureSource>
+ContentHostTexture::AcquireTextureSourceOnWhite()
+{
+  if (!mTextureHostOnWhite ||
+      !mTextureHostOnWhite->AcquireTextureSource(mTextureSourceOnWhite))
+  {
+    return nullptr;
+  }
+  return mTextureSourceOnWhite.get();
 }
 
 void
@@ -251,14 +275,14 @@ ContentHostTexture::UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
 }
 
 void
-ContentHostTexture::SetCompositor(Compositor* aCompositor)
+ContentHostTexture::SetTextureSourceProvider(TextureSourceProvider* aProvider)
 {
-  ContentHostBase::SetCompositor(aCompositor);
+  ContentHostBase::SetTextureSourceProvider(aProvider);
   if (mTextureHost) {
-    mTextureHost->SetCompositor(aCompositor);
+    mTextureHost->SetTextureSourceProvider(aProvider);
   }
   if (mTextureHostOnWhite) {
-    mTextureHostOnWhite->SetCompositor(aCompositor);
+    mTextureHostOnWhite->SetTextureSourceProvider(aProvider);
   }
 }
 
@@ -318,11 +342,8 @@ AddWrappedRegion(const nsIntRegion& aInput, nsIntRegion& aOutput,
 bool
 ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
                                         const nsIntRegion& aUpdated,
-                                        const nsIntRegion& aOldValidRegionBack,
-                                        nsIntRegion* aUpdatedRegionBack)
+                                        const nsIntRegion& aOldValidRegionBack)
 {
-  aUpdatedRegionBack->SetEmpty();
-
   if (!mTextureHost) {
     mInitialised = false;
     return true; // FIXME should we return false? Returning true for now
@@ -381,13 +402,10 @@ ContentHostSingleBuffered::UpdateThebes(const ThebesBufferData& aData,
 bool
 ContentHostDoubleBuffered::UpdateThebes(const ThebesBufferData& aData,
                                         const nsIntRegion& aUpdated,
-                                        const nsIntRegion& aOldValidRegionBack,
-                                        nsIntRegion* aUpdatedRegionBack)
+                                        const nsIntRegion& aOldValidRegionBack)
 {
   if (!mTextureHost) {
     mInitialised = false;
-
-    *aUpdatedRegionBack = aUpdated;
     return true;
   }
 
@@ -402,8 +420,6 @@ ContentHostDoubleBuffered::UpdateThebes(const ThebesBufferData& aData,
 
   mBufferRect = aData.rect();
   mBufferRotation = aData.rotation();
-
-  *aUpdatedRegionBack = aUpdated;
 
   // Save the current valid region of our front buffer, because if
   // we're double buffering, it's going to be the valid region for the
@@ -439,22 +455,6 @@ ContentHostTexture::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 }
 
 
-LayerRenderState
-ContentHostTexture::GetRenderState()
-{
-  if (!mTextureHost) {
-    return LayerRenderState();
-  }
-
-  LayerRenderState result = mTextureHost->GetRenderState();
-
-  if (mBufferRotation != nsIntPoint()) {
-    result.mFlags |= LayerRenderStateFlags::BUFFER_ROTATION;
-  }
-  result.SetOffset(GetOriginOffset());
-  return result;
-}
-
 already_AddRefed<TexturedEffect>
 ContentHostTexture::GenEffect(const gfx::SamplingFilter aSamplingFilter)
 {
@@ -472,8 +472,7 @@ ContentHostTexture::GenEffect(const gfx::SamplingFilter aSamplingFilter)
   }
   return CreateTexturedEffect(mTextureSource.get(),
                               mTextureSourceOnWhite.get(),
-                              aSamplingFilter, true,
-                              GetRenderState());
+                              aSamplingFilter, true);
 }
 
 already_AddRefed<gfx::DataSourceSurface>

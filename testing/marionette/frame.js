@@ -11,6 +11,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 this.EXPORTED_SYMBOLS = ["frame"];
 
+/** @namespace */
 this.frame = {};
 
 const FRAME_SCRIPT = "chrome://marionette/content/listener.js";
@@ -61,6 +62,7 @@ frame.Manager = class {
   /**
    * Receives all messages from content messageManager.
    */
+  /*eslint-disable*/
   receiveMessage(message) {
     switch (message.name) {
       case "MarionetteFrame:getInterruptedState":
@@ -123,6 +125,7 @@ frame.Manager = class {
         }
     }
   }
+  /*eslint-enable*/
 
   getOopFrame(winId, frameId) {
     // get original frame window
@@ -220,7 +223,6 @@ frame.Manager = class {
     mm.addWeakMessageListener("Marionette:switchToModalOrigin", this.driver);
     mm.addWeakMessageListener("Marionette:switchedToFrame", this.driver);
     mm.addWeakMessageListener("Marionette:getVisibleCookies", this.driver);
-    mm.addWeakMessageListener("Marionette:getImportedScripts", this.driver.importedScripts);
     mm.addWeakMessageListener("Marionette:register", this.driver);
     mm.addWeakMessageListener("Marionette:listenersAttached", this.driver);
     mm.addWeakMessageListener("MarionetteFrame:handleModal", this);
@@ -248,7 +250,8 @@ frame.Manager = class {
     mm.removeWeakMessageListener("Marionette:shareData", this.driver);
     mm.removeWeakMessageListener("Marionette:switchedToFrame", this.driver);
     mm.removeWeakMessageListener("Marionette:getVisibleCookies", this.driver);
-    mm.removeWeakMessageListener("Marionette:getImportedScripts", this.driver.importedScripts);
+    mm.removeWeakMessageListener(
+        "Marionette:getImportedScripts", this.driver.importedScripts);
     mm.removeWeakMessageListener("Marionette:listenersAttached", this.driver);
     mm.removeWeakMessageListener("Marionette:register", this.driver);
     mm.removeWeakMessageListener("MarionetteFrame:handleModal", this);

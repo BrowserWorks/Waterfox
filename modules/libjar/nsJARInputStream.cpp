@@ -1,12 +1,15 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* nsJARInputStream.cpp
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsJARInputStream.h"
 #include "zipstruct.h"         // defines ZIP compression codes
+#ifdef MOZ_JAR_BROTLI
+#include "decode.h"  // brotli
+#endif
 #include "nsZipArchive.h"
 
 #include "nsEscape.h"
@@ -38,23 +41,32 @@ nsJARInputStream::InitFile(nsJAR *aJar, nsZipItem *item)
     mMode = MODE_CLOSED;
     //-- prepare for the compression type
     switch (item->Compression()) {
-       case STORED: 
+       case STORED:
            mMode = MODE_COPY;
            break;
 
        case DEFLATED:
            rv = gZlibInit(&mZs);
            NS_ENSURE_SUCCESS(rv, rv);
-    
+
            mMode = MODE_INFLATE;
            mInCrc = item->CRC32();
            mOutCrc = crc32(0L, Z_NULL, 0);
            break;
 
+#ifdef MOZ_JAR_BROTLI
+       case MOZ_JAR_BROTLI:
+           mBrotliState = BrotliCreateState(nullptr, nullptr, nullptr);
+           mMode = MODE_BROTLI;
+           mInCrc = item->CRC32();
+           mOutCrc = crc32(0L, Z_NULL, 0);
+           break;
+#endif
+
        default:
            return NS_ERROR_NOT_IMPLEMENTED;
     }
-   
+
     // Must keep handle to filepointer and mmap structure as long as we need access to the mmapped data
     mFd = aJar->mZip->GetFD();
     mZs.next_in = (Bytef *)aJar->mZip->GetData(item);
@@ -78,7 +90,7 @@ nsJARInputStream::InitDirectory(nsJAR* aJar,
 
     // Mark it as closed, in case something fails in initialisation
     mMode = MODE_CLOSED;
-    
+
     // Keep the zipReader for getting the actual zipItems
     mJar = aJar;
     nsZipFind *find;
@@ -147,7 +159,7 @@ nsJARInputStream::InitDirectory(nsJAR* aJar,
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsJARInputStream::Available(uint64_t *_retval)
 {
     // A lot of callers don't check the error code.
@@ -166,6 +178,9 @@ nsJARInputStream::Available(uint64_t *_retval)
         break;
 
       case MODE_INFLATE:
+#ifdef MOZ_JAR_BROTLI
+      case MODE_BROTLI:
+#endif
       case MODE_COPY:
         *_retval = mOutSize - mZs.total_out;
         break;
@@ -195,7 +210,10 @@ MOZ_WIN_MEM_TRY_BEGIN
         return ReadDirectory(aBuffer, aCount, aBytesRead);
 
       case MODE_INFLATE:
-        if (mFd) {
+#ifdef MOZ_JAR_BROTLI
+      case MODE_BROTLI:
+#endif
+        if (mZs.total_out < mOutSize) {
           rv = ContinueInflate(aBuffer, aCount, aBytesRead);
         }
         // be aggressive about releasing the file!
@@ -246,31 +264,66 @@ nsJARInputStream::Close()
     if (mMode == MODE_INFLATE) {
         inflateEnd(&mZs);
     }
+#ifdef MOZ_JAR_BROTLI
+    if (mMode == MODE_BROTLI) {
+        BrotliDestroyState(mBrotliState);
+    }
+#endif
     mMode = MODE_CLOSED;
     mFd = nullptr;
     return NS_OK;
 }
 
-nsresult 
+nsresult
 nsJARInputStream::ContinueInflate(char* aBuffer, uint32_t aCount,
                                   uint32_t* aBytesRead)
 {
+    bool finished = false;
+
     // No need to check the args, ::Read did that, but assert them at least
     NS_ASSERTION(aBuffer,"aBuffer parameter must not be null");
     NS_ASSERTION(aBytesRead,"aBytesRead parameter must not be null");
 
     // Keep old total_out count
     const uint32_t oldTotalOut = mZs.total_out;
-    
+
     // make sure we aren't reading too much
     mZs.avail_out = std::min(aCount, (mOutSize-oldTotalOut));
     mZs.next_out = (unsigned char*)aBuffer;
 
-    // now inflate
-    int zerr = inflate(&mZs, Z_SYNC_FLUSH);
-    if ((zerr != Z_OK) && (zerr != Z_STREAM_END)) {
-        nsZipArchive::sFileCorruptedReason = "nsJARInputStream: error while inflating";
-        return NS_ERROR_FILE_CORRUPTED;
+#ifndef MOZ_JAR_BROTLI
+    MOZ_ASSERT(mMode == MODE_INFLATE);
+#endif
+    if (mMode == MODE_INFLATE) {
+        // now inflate
+        int zerr = inflate(&mZs, Z_SYNC_FLUSH);
+        if ((zerr != Z_OK) && (zerr != Z_STREAM_END)) {
+            nsZipArchive::sFileCorruptedReason = "nsJARInputStream: error while inflating";
+            return NS_ERROR_FILE_CORRUPTED;
+        }
+        finished = (zerr == Z_STREAM_END);
+#ifdef MOZ_JAR_BROTLI
+    } else {
+        MOZ_ASSERT(mMode == MODE_BROTLI);
+        /* The brotli library wants size_t, but z_stream only contains
+         * unsigned int for avail_* and unsigned long for total_*.
+         * So use temporary stack values. */
+        size_t avail_in = mZs.avail_in;
+        size_t avail_out = mZs.avail_out;
+        size_t total_out = mZs.total_out;
+        BrotliResult result = BrotliDecompressStream(
+            &avail_in, const_cast<const unsigned char**>(&mZs.next_in),
+            &avail_out, &mZs.next_out, &total_out, mBrotliState);
+        /* We don't need to update avail_out, it's not used outside this
+         * function. */
+        mZs.total_out = total_out;
+        mZs.avail_in = avail_in;
+        if (result == BROTLI_RESULT_ERROR) {
+            nsZipArchive::sFileCorruptedReason = "nsJARInputStream: brotli decompression error";
+            return NS_ERROR_FILE_CORRUPTED;
+        }
+        finished = (result == BROTLI_RESULT_SUCCESS);
+#endif
     }
 
     *aBytesRead = (mZs.total_out - oldTotalOut);
@@ -280,8 +333,10 @@ nsJARInputStream::ContinueInflate(char* aBuffer, uint32_t aCount,
 
     // be aggressive about ending the inflation
     // for some reason we don't always get Z_STREAM_END
-    if (zerr == Z_STREAM_END || mZs.total_out == mOutSize) {
-        inflateEnd(&mZs);
+    if (finished || mZs.total_out == mOutSize) {
+        if (mMode == MODE_INFLATE) {
+            inflateEnd(&mZs);
+        }
 
         // stop returning valid data as soon as we know we have a bad CRC
         if (mOutCrc != mInCrc) {
@@ -336,14 +391,14 @@ nsJARInputStream::ReadDirectory(char* aBuffer, uint32_t aCount, uint32_t *aBytes
             // of the directory name as the offset into the string
             // NS_EscapeURL adds the escaped URL to the give string buffer
             NS_EscapeURL(entryName + mNameLen,
-                         entryNameLen - mNameLen, 
+                         entryNameLen - mNameLen,
                          esc_Minimal | esc_AlwaysCopy,
                          mBuffer);
 
             mBuffer.Append(' ');
             mBuffer.AppendInt(ze->RealSize(), 10);
             mBuffer.Append(itemLastModTime); // starts/ends with ' '
-            if (ze->IsDirectory()) 
+            if (ze->IsDirectory())
                 mBuffer.AppendLiteral("DIRECTORY\n");
             else
                 mBuffer.AppendLiteral("FILE\n");

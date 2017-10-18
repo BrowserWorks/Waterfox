@@ -11,6 +11,7 @@
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
 #include "WinUtils.h"
 #endif
+#include "GMPLog.h"
 
 #include "base/string_util.h"
 #include "base/process_util.h"
@@ -42,14 +43,6 @@ GMPProcessParent::~GMPProcessParent()
 bool
 GMPProcessParent::Launch(int32_t aTimeoutMs)
 {
-  nsCOMPtr<nsIFile> path;
-  if (!GetEMEVoucherPath(getter_AddRefs(path))) {
-    NS_WARNING("GMPProcessParent can't get EME voucher path!");
-    return false;
-  }
-  nsAutoCString voucherPath;
-  path->GetNativePath(voucherPath);
-
   vector<string> args;
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
@@ -59,10 +52,13 @@ GMPProcessParent::Launch(int32_t aTimeoutMs)
   // symbolic links or junction points. Sometimes the Users folder has been
   // moved to another drive using a junction point, so allow for this specific
   // case. See bug 1236680 for details.
-  if (!widget::WinUtils::ResolveMovedUsersFolder(wGMPPath)) {
-    NS_WARNING("ResolveMovedUsersFolder failed for GMP path.");
+  if (!widget::WinUtils::ResolveJunctionPointsAndSymLinks(wGMPPath)) {
+    GMP_LOG("ResolveJunctionPointsAndSymLinks failed for GMP path=%S",
+            wGMPPath.c_str());
+    NS_WARNING("ResolveJunctionPointsAndSymLinks failed for GMP path.");
     return false;
   }
+  GMP_LOG("GMPProcessParent::Launch() resolved path to %S", wGMPPath.c_str());
 
   // If the GMP path is a network path that is not mapped to a drive letter,
   // then we need to fix the path format for the sandbox rule.
@@ -82,8 +78,6 @@ GMPProcessParent::Launch(int32_t aTimeoutMs)
   args.push_back(mGMPPath);
 #endif
 
-  args.push_back(string(voucherPath.BeginReading(), voucherPath.EndReading()));
-
   return SyncLaunch(args, aTimeoutMs, base::GetCurrentProcessArchitecture());
 }
 
@@ -91,7 +85,8 @@ void
 GMPProcessParent::Delete(nsCOMPtr<nsIRunnable> aCallback)
 {
   mDeletedCallback = aCallback;
-  XRE_GetIOMessageLoop()->PostTask(NewNonOwningRunnableMethod(this, &GMPProcessParent::DoDelete));
+  XRE_GetIOMessageLoop()->PostTask(NewNonOwningRunnableMethod(
+    "gmp::GMPProcessParent::DoDelete", this, &GMPProcessParent::DoDelete));
 }
 
 void

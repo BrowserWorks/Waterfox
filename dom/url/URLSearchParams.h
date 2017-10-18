@@ -13,13 +13,13 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
 #include "nsISupports.h"
-#include "nsIUnicodeDecoder.h"
 #include "nsIXMLHttpRequest.h"
 
 namespace mozilla {
 namespace dom {
 
 class URLSearchParams;
+class USVStringSequenceSequenceOrUSVStringUSVStringRecordOrUSVString;
 
 class URLSearchParamsObserver : public nsISupports
 {
@@ -42,14 +42,6 @@ public:
   {
     DeleteAll();
   }
-
-  explicit URLParams(const URLParams& aOther)
-    : mParams(aOther.mParams)
-  {}
-
-  URLParams(const URLParams&& aOther)
-    : mParams(Move(aOther.mParams))
-  {}
 
   class ForEachIterator
   {
@@ -77,7 +69,7 @@ public:
 
   void Get(const nsAString& aName, nsString& aRetval);
 
-  void GetAll(const nsAString& aName, nsTArray<nsString >& aRetval);
+  void GetAll(const nsAString& aName, nsTArray<nsString>& aRetval);
 
   void Set(const nsAString& aName, const nsAString& aValue);
 
@@ -85,8 +77,7 @@ public:
 
   bool Has(const nsAString& aName);
 
-  // Returns true if aName was found and deleted, false otherwise.
-  bool Delete(const nsAString& aName);
+  void Delete(const nsAString& aName);
 
   void DeleteAll()
   {
@@ -110,6 +101,8 @@ public:
     return mParams[aIndex].mValue;
   }
 
+  nsresult Sort();
+
   bool
   ReadStructuredClone(JSStructuredCloneReader* aReader);
 
@@ -127,7 +120,6 @@ private:
   };
 
   nsTArray<Param> mParams;
-  nsCOMPtr<nsIUnicodeDecoder> mDecoder;
 };
 
 class URLSearchParams final : public nsIXHRSendable,
@@ -144,9 +136,6 @@ public:
   explicit URLSearchParams(nsISupports* aParent,
                            URLSearchParamsObserver* aObserver=nullptr);
 
-  URLSearchParams(nsISupports* aParent,
-                  const URLSearchParams& aOther);
-
   // WebIDL methods
   nsISupports* GetParentObject() const
   {
@@ -157,11 +146,8 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<URLSearchParams>
-  Constructor(const GlobalObject& aGlobal, const nsAString& aInit,
-              ErrorResult& aRv);
-
-  static already_AddRefed<URLSearchParams>
-  Constructor(const GlobalObject& aGlobal, URLSearchParams& aInit,
+  Constructor(const GlobalObject& aGlobal,
+              const USVStringSequenceSequenceOrUSVStringUSVStringRecordOrUSVString& aInit,
               ErrorResult& aRv);
 
   void ParseInput(const nsACString& aInput);
@@ -183,6 +169,8 @@ public:
   uint32_t GetIterableLength() const;
   const nsAString& GetKeyAtIndex(uint32_t aIndex) const;
   const nsAString& GetValueAtIndex(uint32_t aIndex) const;
+
+  void Sort(ErrorResult& aRv);
 
   void Stringify(nsString& aRetval) const
   {

@@ -42,10 +42,8 @@ class nsString;
 
 extern nsXREDirProvider* gDirServiceProvider;
 
-// NOTE: gAppData will be null in embedded contexts. The "size" parameter
-// will be the size of the original structure passed to XRE_main, but the
-// structure will have all of the members available.
-extern const nsXREAppData* gAppData;
+// NOTE: gAppData will be null in embedded contexts.
+extern const mozilla::XREAppData* gAppData;
 extern bool gSafeMode;
 
 extern int    gArgc;
@@ -97,6 +95,13 @@ WriteConsoleLog();
 void
 OverrideDefaultLocaleIfNeeded();
 
+/**
+ * Allow exit() calls to complete. This should be done from a proper Gecko
+ * shutdown path. Otherwise we aim to catch improper shutdowns.
+ */
+void
+MozExpectedExit();
+
 #ifdef XP_WIN
 void
 UseParentConsole();
@@ -113,6 +118,9 @@ namespace mozilla {
 namespace startup {
 extern GeckoProcessType sChildProcessType;
 } // namespace startup
+
+const char* PlatformBuildID();
+
 } // namespace mozilla
 
 /**
@@ -127,5 +135,9 @@ void SetupErrorHandling(const char* progname);
  * represents not blocking.
  */
 uint32_t MultiprocessBlockPolicy();
+
+#ifdef MOZ_WIDGET_GTK
+const char* DetectDisplay();
+#endif
 
 #endif // nsAppRunner_h__

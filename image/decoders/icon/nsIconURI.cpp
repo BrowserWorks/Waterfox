@@ -9,11 +9,11 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/Sprintf.h"
 
 #include "nsIIOService.h"
 #include "nsIURL.h"
 #include "nsNetUtil.h"
-#include "prprf.h"
 #include "plstr.h"
 #include <stdlib.h>
 
@@ -94,7 +94,7 @@ nsMozIconURI::GetSpec(nsACString& aSpec)
     aSpec += kSizeStrings[mIconSize];
   } else {
     char buf[20];
-    PR_snprintf(buf, sizeof(buf), "%d", mSize);
+    SprintfLiteral(buf, "%d", mSize);
     aSpec.Append(buf);
   }
 
@@ -115,6 +115,24 @@ NS_IMETHODIMP
 nsMozIconURI::GetSpecIgnoringRef(nsACString& result)
 {
   return GetSpec(result);
+}
+
+NS_IMETHODIMP
+nsMozIconURI::GetDisplaySpec(nsACString& aUnicodeSpec)
+{
+  return GetSpec(aUnicodeSpec);
+}
+
+NS_IMETHODIMP
+nsMozIconURI::GetDisplayHostPort(nsACString& aUnicodeHostPort)
+{
+  return GetHostPort(aUnicodeHostPort);
+}
+
+NS_IMETHODIMP
+nsMozIconURI::GetDisplayHost(nsACString& aUnicodeHost)
+{
+  return GetHost(aUnicodeHost);
 }
 
 NS_IMETHODIMP
@@ -329,6 +347,12 @@ nsMozIconURI::SetHostPort(const nsACString& aHostPort)
 }
 
 NS_IMETHODIMP
+nsMozIconURI::SetHostAndPort(const nsACString& aHostPort)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
 nsMozIconURI::GetHost(nsACString& aHost)
 {
   return NS_ERROR_FAILURE;
@@ -366,6 +390,32 @@ nsMozIconURI::SetPath(const nsACString& aPath)
 }
 
 NS_IMETHODIMP
+nsMozIconURI::GetFilePath(nsACString& aFilePath)
+{
+  aFilePath.Truncate();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsMozIconURI::SetFilePath(const nsACString& aFilePath)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+nsMozIconURI::GetQuery(nsACString& aQuery)
+{
+  aQuery.Truncate();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsMozIconURI::SetQuery(const nsACString& aQuery)
+{
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
 nsMozIconURI::GetRef(nsACString& aRef)
 {
   aRef.Truncate();
@@ -381,14 +431,18 @@ nsMozIconURI::SetRef(const nsACString& aRef)
 NS_IMETHODIMP
 nsMozIconURI::Equals(nsIURI* other, bool* result)
 {
+  *result = false;
   NS_ENSURE_ARG_POINTER(other);
   NS_PRECONDITION(result, "null pointer");
 
   nsAutoCString spec1;
   nsAutoCString spec2;
 
-  other->GetSpec(spec2);
-  GetSpec(spec1);
+  nsresult rv = GetSpec(spec1);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = other->GetSpec(spec2);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   if (!PL_strcasecmp(spec1.get(), spec2.get())) {
     *result = true;
   } else {

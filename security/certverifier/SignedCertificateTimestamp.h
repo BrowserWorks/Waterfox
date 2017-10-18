@@ -8,7 +8,6 @@
 #define SignedCertificateTimestamp_h
 
 #include "mozilla/Vector.h"
-
 #include "pkix/Input.h"
 #include "pkix/Result.h"
 
@@ -79,26 +78,20 @@ struct SignedCertificateTimestamp
     V1 = 0,
   };
 
-  // Source of the SCT - supplementary, not defined in CT RFC.
-  // Note: The numeric values are used within histograms and should not change
-  // or be re-assigned.
-  enum class Origin {
-    Embedded = 0,
-    TLSExtension = 1,
-    OCSPResponse = 2,
-  };
-
   Version version;
   Buffer logId;
+  // "timestamp" is the current time in milliseconds, measured since the epoch,
+  // ignoring leap seconds. See RFC 6962, Section 3.2.
   uint64_t timestamp;
   Buffer extensions;
   DigitallySigned signature;
-  Origin origin;
 };
-
 
 inline pkix::Result BufferToInput(const Buffer& buffer, pkix::Input& input)
 {
+  if (buffer.length() == 0) {
+    return pkix::Result::FATAL_ERROR_LIBRARY_FAILURE;
+  }
   return input.Init(buffer.begin(), buffer.length());
 }
 

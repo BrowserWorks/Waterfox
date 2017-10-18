@@ -4,6 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# interfaces/*/ are annotated per directory, this is for new files
+with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM")
+
+with Files("plugins/**"):
+    BUG_COMPONENT = ("Core", "Plug-ins")
+
 JAR_MANIFESTS += ['jar.mn']
 
 interfaces = [
@@ -12,7 +19,6 @@ interfaces = [
     'core',
     'html',
     'events',
-    'settings',
     'stylesheets',
     'sidebar',
     'css',
@@ -27,60 +33,49 @@ interfaces = [
     'offline',
     'geolocation',
     'notification',
-    'permission',
     'svg',
     'smil',
-    'apps',
     'push',
+    'payments',
 ]
 
 DIRS += ['interfaces/' + i for i in interfaces]
 
 DIRS += [
     'animation',
-    'apps',
     'base',
-    'bluetooth',
-    'archivereader',
     'bindings',
     'battery',
     'browser-element',
     'cache',
     'canvas',
-    'cellbroadcast',
-    'contacts',
+    'commandhandler',
+    'credentialmanagement',
     'crypto',
-    'phonenumberutils',
-    'alarm',
-    'devicestorage',
     'encoding',
     'events',
     'fetch',
+    'file',
     'filehandle',
     'filesystem',
     'flyweb',
-    'fmradio',
     'gamepad',
     'geolocation',
     'grid',
     'html',
-    'icc',
-    'inputport',
     'json',
     'jsurl',
     'asmjscache',
     'mathml',
     'media',
-    'mobileconnection',
     'notification',
     'offline',
     'power',
+    'push',
     'quota',
     'security',
-    'settings',
     'storage',
     'svg',
-    'mobilemessage',
     'time',
     'locales',
     'network',
@@ -91,67 +86,35 @@ DIRS += [
     'system',
     'ipc',
     'workers',
-    'camera',
     'audiochannel',
     'broadcastchannel',
     'messagechannel',
     'promise',
     'smil',
-    'telephony',
-    'tv',
     'url',
-    'voicemail',
-    'inputmethod',
+    'webauthn',
     'webidl',
     'xbl',
     'xml',
     'xslt',
     'xul',
-    'resourcestats',
     'manifest',
     'vr',
-    'newapps',
     'u2f',
     'console',
     'performance',
+    'webbrowserpersist',
     'xhr',
+    'worklet',
+    'script',
+    'payments',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += ['plugins/ipc/hangui']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    DIRS += [
-        'speakermanager',
-        'tethering',
-        'wifi',
-    ]
-
-if CONFIG['MOZ_B2G_RIL']:
-    DIRS += [
-        'wappush',
-    ]
-
-if CONFIG['MOZ_PAY']:
-    DIRS += ['payment']
-
-if CONFIG['MOZ_NFC']:
-    DIRS += ['nfc']
-
-if CONFIG['MOZ_SIMPLEPUSH']:
-    DIRS += ['simplepush']
-else:
-    DIRS += ['push']
-
 if CONFIG['MOZ_SECUREELEMENT']:
     DIRS += ['secureelement']
-
-if CONFIG['MOZ_B2G']:
-    DIRS += [
-        'downloads',
-        'identity',
-        'mobileid'
-    ]
 
 DIRS += ['presentation']
 
@@ -160,6 +123,6 @@ TEST_DIRS += [
     'imptests',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3', 'cocoa', 'windows', 'android'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3', 'cocoa', 'windows'):
     TEST_DIRS += ['plugins/test']
 

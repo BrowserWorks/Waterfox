@@ -16,16 +16,19 @@
 #include "nsTHashtable.h"
 #include "nsToolkitCompsCID.h"
 #include "nsURIHashKey.h"
+#include "nsINamed.h"
 #include "nsITimer.h"
 #include "Database.h"
+#include "imgITools.h"
 #include "mozilla/storage.h"
 #include "mozilla/Attributes.h"
 
 #include "FaviconHelpers.h"
 
-// Most icons will be smaller than this rough estimate of the size of an
-// uncompressed 16x16 RGBA image of the same dimensions.
-#define MAX_ICON_FILESIZE(s) ((uint32_t) s*s*4)
+// The target dimension in pixels for favicons we store, in reverse order.
+static uint16_t sFaviconSizes[8] = {
+  256, 192, 144, 96, 64, 48, 32, 16
+};
 
 // forward class definitions
 class mozIStorageStatementCallback;
@@ -49,6 +52,7 @@ public:
 class nsFaviconService final : public nsIFaviconService
                              , public mozIAsyncFavicons
                              , public nsITimerCallback
+                             , public nsINamed
 {
 public:
   nsFaviconService();
@@ -78,26 +82,27 @@ public:
     return gFaviconService;
   }
 
+  /**
+   * Fetch and migrate favicons from an unsupported payload to a supported one.
+   */
+  static void ConvertUnsupportedPayloads(mozIStorageConnection* aDBConn);
+
   // addition to API for strings to prevent excessive parsing of URIs
   nsresult GetFaviconLinkForIconString(const nsCString& aIcon, nsIURI** aOutput);
-  void GetFaviconSpecForIconString(const nsCString& aIcon, nsACString& aOutput);
 
-  nsresult OptimizeFaviconImage(const uint8_t* aData, uint32_t aDataLen,
-                                const nsACString& aMimeType,
-                                nsACString& aNewData, nsACString& aNewMimeType);
-  int32_t GetOptimizedIconDimension() { return mOptimizedIconDimension; }
+  nsresult OptimizeIconSizes(mozilla::places::IconData& aIcon);
 
   /**
    * Obtains the favicon data asynchronously.
    *
-   * @param aFaviconURI
-   *        The URI representing the favicon we are looking for.
+   * @param aFaviconSpec
+   *        The spec of the URI representing the favicon we are looking for.
    * @param aCallback
    *        The callback where results or errors will be dispatch to.  In the
    *        returned result, the favicon binary data will be at index 0, and the
    *        mime type will be at index 1.
    */
-  nsresult GetFaviconDataAsync(nsIURI* aFaviconURI,
+  nsresult GetFaviconDataAsync(const nsCString& aFaviconSpec,
                                mozIStorageStatementCallback* aCallback);
 
   /**
@@ -113,17 +118,30 @@ public:
   void SendFaviconNotifications(nsIURI* aPageURI, nsIURI* aFaviconURI,
                                 const nsACString& aGUID);
 
+  static mozilla::Atomic<int64_t> sLastInsertedIconId;
+  static void StoreLastInsertedId(const nsACString& aTable,
+                                  const int64_t aLastInsertedId);
+
   NS_DECL_ISUPPORTS
   NS_DECL_NSIFAVICONSERVICE
   NS_DECL_MOZIASYNCFAVICONS
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSINAMED
 
 private:
+  imgITools* GetImgTools() {
+    if (!mImgTools) {
+      mImgTools = do_CreateInstance("@mozilla.org/image/tools;1");
+    }
+    return mImgTools;
+  }
+
   ~nsFaviconService();
 
   RefPtr<mozilla::places::Database> mDB;
 
   nsCOMPtr<nsITimer> mExpireUnassociatedIconsTimer;
+  nsCOMPtr<imgITools> mImgTools;
 
   static nsFaviconService* gFaviconService;
 
@@ -134,12 +152,6 @@ private:
    * they get back. May be null, in which case it needs initialization.
    */
   nsCOMPtr<nsIURI> mDefaultIcon;
-
-  // The target dimension, in pixels, for favicons we optimize.
-  // If we find images that are as large or larger than an uncompressed RGBA
-  // image of this size (mOptimizedIconDimension*mOptimizedIconDimension*4),
-  // we will try to optimize it.
-  int32_t mOptimizedIconDimension;
 
   uint32_t mFailedFaviconSerial;
   nsDataHashtable<nsCStringHashKey, uint32_t> mFailedFavicons;

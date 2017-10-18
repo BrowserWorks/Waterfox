@@ -111,7 +111,8 @@ class ClientFocusRunnable final : public Runnable
 
 public:
   ClientFocusRunnable(uint64_t aWindowId, PromiseWorkerProxy* aPromiseProxy)
-    : mWindowId(aWindowId)
+    : mozilla::Runnable("ClientFocusRunnable")
+    , mWindowId(aWindowId)
     , mPromiseProxy(aPromiseProxy)
   {
     MOZ_ASSERT(mPromiseProxy);
@@ -183,7 +184,7 @@ ServiceWorkerWindowClient::Focus(ErrorResult& aRv) const
     if (promiseProxy) {
       RefPtr<ClientFocusRunnable> r = new ClientFocusRunnable(mWindowId,
                                                               promiseProxy);
-      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+      MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
     } else {
       promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
     }
@@ -204,18 +205,21 @@ public:
                                            nsIWebProgressListener)
 
   WebProgressListener(PromiseWorkerProxy* aPromiseProxy,
+                      ServiceWorkerPrivate* aServiceWorkerPrivate,
                       nsPIDOMWindowOuter* aWindow, nsIURI* aBaseURI)
     : mPromiseProxy(aPromiseProxy)
+    , mServiceWorkerPrivate(aServiceWorkerPrivate)
     , mWindow(aWindow)
     , mBaseURI(aBaseURI)
   {
     MOZ_ASSERT(aPromiseProxy);
+    MOZ_ASSERT(aServiceWorkerPrivate);
     MOZ_ASSERT(aWindow);
     MOZ_ASSERT(aWindow->IsOuterWindow());
     MOZ_ASSERT(aBaseURI);
     AssertIsOnMainThread();
 
-    mPromiseProxy->StoreISupports(static_cast<nsIWebProgressListener*>(this));
+    mServiceWorkerPrivate->StoreISupports(static_cast<nsIWebProgressListener*>(this));
   }
 
   NS_IMETHOD
@@ -227,6 +231,8 @@ public:
       return NS_OK;
     }
 
+    // This is safe because our caller holds a strong ref.
+    mServiceWorkerPrivate->RemoveISupports(static_cast<nsIWebProgressListener*>(this));
     aWebProgress->RemoveProgressListener(this);
 
     WorkerPrivate* workerPrivate;
@@ -308,6 +314,7 @@ private:
   ~WebProgressListener() {}
 
   RefPtr<PromiseWorkerProxy> mPromiseProxy;
+  RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
   nsCOMPtr<nsPIDOMWindowOuter> mWindow;
   nsCOMPtr<nsIURI> mBaseURI;
 };
@@ -315,7 +322,7 @@ private:
 NS_IMPL_CYCLE_COLLECTING_ADDREF(WebProgressListener)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(WebProgressListener)
 NS_IMPL_CYCLE_COLLECTION(WebProgressListener, mPromiseProxy,
-                         mWindow)
+                         mServiceWorkerPrivate, mWindow)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(WebProgressListener)
   NS_INTERFACE_MAP_ENTRY(nsIWebProgressListener)
@@ -327,15 +334,21 @@ class ClientNavigateRunnable final : public Runnable
   uint64_t mWindowId;
   nsString mUrl;
   nsCString mBaseUrl;
+  nsString mScope;
   RefPtr<PromiseWorkerProxy> mPromiseProxy;
-  WorkerPrivate* mWorkerPrivate;
+  MOZ_INIT_OUTSIDE_CTOR WorkerPrivate* mWorkerPrivate;
 
 public:
-  ClientNavigateRunnable(uint64_t aWindowId, const nsAString& aUrl,
+  ClientNavigateRunnable(uint64_t aWindowId,
+                         const nsAString& aUrl,
+                         const nsAString& aScope,
                          PromiseWorkerProxy* aPromiseProxy)
-    : mWindowId(aWindowId)
+    : mozilla::Runnable("ClientNavigateRunnable")
+    , mWindowId(aWindowId)
     , mUrl(aUrl)
+    , mScope(aScope)
     , mPromiseProxy(aPromiseProxy)
+    , mWorkerPrivate(nullptr)
   {
     MOZ_ASSERT(aPromiseProxy);
     MOZ_ASSERT(aPromiseProxy->GetWorkerPrivate());
@@ -359,6 +372,7 @@ public:
       WorkerPrivate::LocationInfo& info = mWorkerPrivate->GetLocationInfo();
       mBaseUrl = info.mHref;
       principal = mWorkerPrivate->GetPrincipal();
+      MOZ_DIAGNOSTIC_ASSERT(principal);
     }
 
     nsCOMPtr<nsIURI> baseUrl;
@@ -367,11 +381,6 @@ public:
 
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return RejectPromise(NS_ERROR_TYPE_ERR);
-    }
-
-    rv = principal->CheckMayLoad(url, true, false);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return RejectPromise(rv);
     }
 
     nsGlobalWindow* window;
@@ -386,8 +395,25 @@ public:
       return NS_ERROR_FAILURE;
     }
 
+    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    if (!swm) {
+      return NS_ERROR_FAILURE;
+    }
+
+    RefPtr<ServiceWorkerRegistrationInfo> registration =
+      swm->GetRegistration(principal, NS_ConvertUTF16toUTF8(mScope));
+    if (NS_WARN_IF(!registration)) {
+      return NS_ERROR_FAILURE;
+    }
+    RefPtr<ServiceWorkerInfo> serviceWorkerInfo =
+      registration->GetServiceWorkerInfoById(mWorkerPrivate->ServiceWorkerID());
+    if (NS_WARN_IF(!serviceWorkerInfo)) {
+      return NS_ERROR_FAILURE;
+    }
+
     nsCOMPtr<nsIWebProgressListener> listener =
-      new WebProgressListener(mPromiseProxy, window->GetOuterWindow(), baseUrl);
+      new WebProgressListener(mPromiseProxy, serviceWorkerInfo->WorkerPrivate(),
+                              window->GetOuterWindow(), baseUrl);
 
     rv = webProgress->AddProgressListener(
       listener, nsIWebProgress::NOTIFY_STATE_DOCUMENT);
@@ -471,19 +497,18 @@ private:
     nsCOMPtr<nsIDocShellLoadInfo> loadInfo;
     nsresult rv = docShell->CreateLoadInfo(getter_AddRefs(loadInfo));
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
+      return NS_ERROR_TYPE_ERR;
     }
 
     loadInfo->SetTriggeringPrincipal(aPrincipal);
-    loadInfo->SetReferrer(doc->GetOriginalURI());
     loadInfo->SetReferrerPolicy(doc->GetReferrerPolicy());
-    loadInfo->SetLoadType(nsIDocShellLoadInfo::loadStopContentAndReplace);
+    loadInfo->SetLoadType(nsIDocShellLoadInfo::loadStopContent);
     loadInfo->SetSourceDocShell(docShell);
     rv =
       docShell->LoadURI(aUrl, loadInfo, nsIWebNavigation::LOAD_FLAGS_NONE, true);
 
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
+      return NS_ERROR_TYPE_ERR;
     }
 
     *aWindow = window;
@@ -511,12 +536,17 @@ ServiceWorkerWindowClient::Navigate(const nsAString& aUrl, ErrorResult& aRv)
     return promise.forget();
   }
 
+  ServiceWorkerGlobalScope* globalScope =
+    static_cast<ServiceWorkerGlobalScope*>(workerPrivate->GlobalScope());
+  nsString scope;
+  globalScope->GetScope(scope);
+
   RefPtr<PromiseWorkerProxy> promiseProxy =
     PromiseWorkerProxy::Create(workerPrivate, promise);
   if (promiseProxy) {
     RefPtr<ClientNavigateRunnable> r =
-      new ClientNavigateRunnable(mWindowId, aUrl, promiseProxy);
-    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+      new ClientNavigateRunnable(mWindowId, aUrl, scope, promiseProxy);
+    MOZ_ALWAYS_SUCCEEDS(workerPrivate->DispatchToMainThread(r.forget()));
   } else {
     promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
   }

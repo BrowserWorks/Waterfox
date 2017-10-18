@@ -32,6 +32,7 @@ ssl3_InitGather(sslGather *gs)
     gs->readOffset = 0;
     gs->dtlsPacketOffset = 0;
     gs->dtlsPacket.len = 0;
+    gs->rejectV2Records = PR_FALSE;
     status = sslBuffer_Grow(&gs->buf, 4096);
     return status;
 }
@@ -97,7 +98,7 @@ ssl3_GatherData(sslSocket *ss, sslGather *gs, int flags, ssl2Gather *ssl2gs)
     PORT_Assert(ss->opt.noLocks || ssl_HaveRecvBufLock(ss));
     if (gs->state == GS_INIT) {
         gs->state = GS_HEADER;
-        gs->remainder = 5;
+        gs->remainder = ss->ssl3.hs.shortHeaders ? 2 : 5;
         gs->offset = 0;
         gs->writeOffset = 0;
         gs->readOffset = 0;
@@ -147,12 +148,27 @@ ssl3_GatherData(sslSocket *ss, sslGather *gs, int flags, ssl2Gather *ssl2gs)
         switch (gs->state) {
             case GS_HEADER:
                 /* Check for SSLv2 handshakes. Always assume SSLv3 on clients,
-                 * support SSLv2 handshakes only when ssl2gs != NULL. */
-                if (!ssl2gs || ssl3_isLikelyV3Hello(gs->hdr)) {
-                    /* Should have an SSLv3 record header in gs->hdr. Extract
+                 * support SSLv2 handshakes only when ssl2gs != NULL.
+                 * Always assume v3 after we received the first record. */
+                if (!ssl2gs ||
+                    ss->gs.rejectV2Records ||
+                    ssl3_isLikelyV3Hello(gs->hdr)) {
+                    /* Should have a non-SSLv2 record header in gs->hdr. Extract
                      * the length of the following encrypted data, and then
-                     * read in the rest of the SSL3 record into gs->inbuf. */
-                    gs->remainder = (gs->hdr[3] << 8) | gs->hdr[4];
+                     * read in the rest of the record into gs->inbuf. */
+                    if (ss->ssl3.hs.shortHeaders) {
+                        PRUint16 len = (gs->hdr[0] << 8) | gs->hdr[1];
+                        if (!(len & 0x8000)) {
+                            SSL_DBG(("%d: SSL3[%d]: incorrectly formatted header"));
+                            SSL3_SendAlert(ss, alert_fatal, illegal_parameter);
+                            gs->state = GS_INIT;
+                            PORT_SetError(SSL_ERROR_BAD_MAC_READ);
+                            return SECFailure;
+                        }
+                        gs->remainder = len & ~0x8000;
+                    } else {
+                        gs->remainder = (gs->hdr[3] << 8) | gs->hdr[4];
+                    }
                 } else {
                     /* Probably an SSLv2 record header. No need to handle any
                      * security escapes (gs->hdr[0] & 0x40) as we wouldn't get
@@ -171,7 +187,7 @@ ssl3_GatherData(sslSocket *ss, sslGather *gs, int flags, ssl2Gather *ssl2gs)
                 /* This is the max length for an encrypted SSLv3+ fragment. */
                 if (!v2HdrLength &&
                     gs->remainder > (MAX_FRAGMENT_LENGTH + 2048)) {
-                    SSL3_SendAlert(ss, alert_fatal, unexpected_message);
+                    SSL3_SendAlert(ss, alert_fatal, record_overflow);
                     gs->state = GS_INIT;
                     PORT_SetError(SSL_ERROR_RX_RECORD_TOO_LONG);
                     return SECFailure;
@@ -193,13 +209,28 @@ ssl3_GatherData(sslSocket *ss, sslGather *gs, int flags, ssl2Gather *ssl2gs)
                  * many into the gs->hdr[] buffer. Copy them over into inbuf so
                  * that we can properly process the hello record later. */
                 if (v2HdrLength) {
+                    /* Reject v2 records that don't even carry enough data to
+                     * resemble a valid ClientHello header. */
+                    if (gs->remainder < SSL_HL_CLIENT_HELLO_HBYTES) {
+                        SSL3_SendAlert(ss, alert_fatal, illegal_parameter);
+                        PORT_SetError(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+                        return SECFailure;
+                    }
+
+                    PORT_Assert(lbp);
                     gs->inbuf.len = 5 - v2HdrLength;
                     PORT_Memcpy(lbp, gs->hdr + v2HdrLength, gs->inbuf.len);
                     gs->remainder -= gs->inbuf.len;
                     lbp += gs->inbuf.len;
                 }
 
-                break; /* End this case.  Continue around the loop. */
+                if (gs->remainder > 0) {
+                    break; /* End this case.  Continue around the loop. */
+                }
+
+            /* FALL THROUGH if (gs->remainder == 0) as we just received
+                 * an empty record and there's really no point in calling
+                 * ssl_DefRecv() with buf=NULL and len=0. */
 
             case GS_DATA:
                 /*
@@ -207,6 +238,10 @@ ssl3_GatherData(sslSocket *ss, sslGather *gs, int flags, ssl2Gather *ssl2gs)
                 */
                 SSL_TRC(10, ("%d: SSL[%d]: got record of %d bytes",
                              SSL_GETPID(), ss->fd, gs->inbuf.len));
+
+                /* reject any v2 records from now on */
+                ss->gs.rejectV2Records = PR_TRUE;
+
                 gs->state = GS_INIT;
                 return 1;
         }
@@ -458,22 +493,21 @@ ssl3_GatherCompleteHandshake(sslSocket *ss, int flags)
                  * If it's a change cipher spec, alert, or handshake message,
                  * ss->gs.buf.len will be 0 when ssl3_HandleRecord returns SECSuccess.
                  */
-                cText.type = (SSL3ContentType)ss->gs.hdr[0];
-                cText.version = (ss->gs.hdr[1] << 8) | ss->gs.hdr[2];
+                if (ss->ssl3.hs.shortHeaders) {
+                    cText.type = content_application_data;
+                    cText.version = SSL_LIBRARY_VERSION_TLS_1_0;
+                } else {
+                    cText.type = (SSL3ContentType)ss->gs.hdr[0];
+                    cText.version = (ss->gs.hdr[1] << 8) | ss->gs.hdr[2];
+                }
 
                 if (IS_DTLS(ss)) {
-                    int i;
+                    sslSequenceNumber seq_num;
 
                     cText.version = dtls_DTLSVersionToTLSVersion(cText.version);
                     /* DTLS sequence number */
-                    cText.seq_num.high = 0;
-                    cText.seq_num.low = 0;
-                    for (i = 0; i < 4; i++) {
-                        cText.seq_num.high <<= 8;
-                        cText.seq_num.low <<= 8;
-                        cText.seq_num.high |= ss->gs.hdr[3 + i];
-                        cText.seq_num.low |= ss->gs.hdr[7 + i];
-                    }
+                    PORT_Memcpy(&seq_num, &ss->gs.hdr[3], sizeof(seq_num));
+                    cText.seq_num = PR_ntohll(seq_num);
                 }
 
                 cText.buf = &ss->gs.inbuf;

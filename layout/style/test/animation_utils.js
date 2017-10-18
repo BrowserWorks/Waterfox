@@ -46,9 +46,9 @@ function advance_clock(milliseconds) {
     function listener(event) {
       gEventsReceived.push(event);
     }
-    gElem.addEventListener("animationstart", listener, false);
-    gElem.addEventListener("animationiteration", listener, false);
-    gElem.addEventListener("animationend", listener, false);
+    gElem.addEventListener("animationstart", listener);
+    gElem.addEventListener("animationiteration", listener);
+    gElem.addEventListener("animationend", listener);
   }
 
   function check_events(eventsExpected, desc) {
@@ -248,8 +248,8 @@ function runOMTATest(aTestFunction, aOnSkip, specialPowersForPrefs) {
 
     // Common clean up code
     var cleanUp = function() {
-      div.parentNode.removeChild(div);
-      style.parentNode.removeChild(style);
+      div.remove();
+      style.remove();
       if (utils.isTestControllingRefreshes) {
         utils.restoreNormalRefresh();
       }
@@ -371,9 +371,12 @@ function runOMTATest(aTestFunction, aOnSkip, specialPowersForPrefs) {
     SpecialPowers.DOMWindowUtils.advanceTimeAndRefresh(0);
 
     // Run test
-    generator = aTestFunc();
-    return step()
-    .catch(function(err) {
+    var promise = aTestFunc();
+    if (!promise.then) {
+      generator = promise;
+      promise = step();
+    }
+    return promise.catch(function(err) {
       ok(false, err.message);
       if (typeof aOnAbort == "function") {
         aOnAbort();
@@ -402,6 +405,15 @@ const ExpectComparisonTo = {
   Pass: 1,
   Fail: 2
 };
+
+// FIXME: Bug 1340005: We use |RawServoAnimationValue| on the main thread if
+// enabling Servo style backend, and still use |StyleAnimationValue| on the
+// compositor thread. |RawServoAnimationValue| rounds the interpolated results
+// to a nearest |app_units::Au| (i.e. i32), so we might have a tiny difference
+// between the results from getOMTAStyle() and getComputedStyle().
+// Note: 1 AU ~= 60 CSS pixel unit.
+const isStylo = SpecialPowers.DOMWindowUtils.isStyledByServo;
+const toleranceForServoBackend = isStylo ? 0.5 / 60.0 : 0.0;
 
 (function() {
   window.omta_todo_is = function(elem, property, expected, runningOn, desc,
@@ -505,7 +517,7 @@ const ExpectComparisonTo = {
                   " - got " + computedStr);
         return;
       }
-      okOrTodo(compare(computedValue, actualValue, 0),
+      okOrTodo(compare(computedValue, actualValue, toleranceForServoBackend),
                desc + ": OMTA style and computed style should be equal" +
                " - OMTA " + actualStr + ", computed " + computedStr);
     }

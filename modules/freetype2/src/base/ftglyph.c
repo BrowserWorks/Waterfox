@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType convenience functions to handle glyphs (body).              */
 /*                                                                         */
-/*  Copyright 1996-2005, 2007, 2008, 2010, 2012-2014 by                    */
+/*  Copyright 1996-2016 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -82,7 +82,7 @@
     }
     else
     {
-      FT_Bitmap_New( &glyph->bitmap );
+      FT_Bitmap_Init( &glyph->bitmap );
       error = FT_Bitmap_Copy( library, &slot->bitmap, &glyph->bitmap );
     }
 
@@ -125,23 +125,25 @@
     FT_BitmapGlyph  glyph = (FT_BitmapGlyph)bitmap_glyph;
 
 
-    cbox->xMin = glyph->left << 6;
-    cbox->xMax = cbox->xMin + ( glyph->bitmap.width << 6 );
-    cbox->yMax = glyph->top << 6;
-    cbox->yMin = cbox->yMax - ( glyph->bitmap.rows << 6 );
+    cbox->xMin = glyph->left * 64;
+    cbox->xMax = cbox->xMin + (FT_Pos)( glyph->bitmap.width * 64 );
+    cbox->yMax = glyph->top * 64;
+    cbox->yMin = cbox->yMax - (FT_Pos)( glyph->bitmap.rows * 64 );
   }
 
 
-  FT_DEFINE_GLYPH(ft_bitmap_glyph_class,
+  FT_DEFINE_GLYPH(
+    ft_bitmap_glyph_class,
+
     sizeof ( FT_BitmapGlyphRec ),
     FT_GLYPH_FORMAT_BITMAP,
 
-    ft_bitmap_glyph_init,
-    ft_bitmap_glyph_done,
-    ft_bitmap_glyph_copy,
-    0,                          /* FT_Glyph_TransformFunc */
-    ft_bitmap_glyph_bbox,
-    0                           /* FT_Glyph_PrepareFunc   */
+    ft_bitmap_glyph_init,    /* FT_Glyph_InitFunc       glyph_init      */
+    ft_bitmap_glyph_done,    /* FT_Glyph_DoneFunc       glyph_done      */
+    ft_bitmap_glyph_copy,    /* FT_Glyph_CopyFunc       glyph_copy      */
+    NULL,                    /* FT_Glyph_TransformFunc  glyph_transform */
+    ft_bitmap_glyph_bbox,    /* FT_Glyph_GetBBoxFunc    glyph_bbox      */
+    NULL                     /* FT_Glyph_PrepareFunc    glyph_prepare   */
   )
 
 
@@ -173,7 +175,9 @@
     }
 
     /* allocate new outline */
-    error = FT_Outline_New( library, source->n_points, source->n_contours,
+    error = FT_Outline_New( library,
+                            (FT_UInt)source->n_points,
+                            source->n_contours,
                             &glyph->outline );
     if ( error )
       goto Exit;
@@ -205,8 +209,10 @@
     FT_Library       library = FT_GLYPH( source )->library;
 
 
-    error = FT_Outline_New( library, source->outline.n_points,
-                            source->outline.n_contours, &target->outline );
+    error = FT_Outline_New( library,
+                            (FT_UInt)source->outline.n_points,
+                            source->outline.n_contours,
+                            &target->outline );
     if ( !error )
       FT_Outline_Copy( &source->outline, &target->outline );
 
@@ -256,16 +262,18 @@
   }
 
 
-  FT_DEFINE_GLYPH( ft_outline_glyph_class,
+  FT_DEFINE_GLYPH(
+    ft_outline_glyph_class,
+
     sizeof ( FT_OutlineGlyphRec ),
     FT_GLYPH_FORMAT_OUTLINE,
 
-    ft_outline_glyph_init,
-    ft_outline_glyph_done,
-    ft_outline_glyph_copy,
-    ft_outline_glyph_transform,
-    ft_outline_glyph_bbox,
-    ft_outline_glyph_prepare
+    ft_outline_glyph_init,      /* FT_Glyph_InitFunc       glyph_init      */
+    ft_outline_glyph_done,      /* FT_Glyph_DoneFunc       glyph_done      */
+    ft_outline_glyph_copy,      /* FT_Glyph_CopyFunc       glyph_copy      */
+    ft_outline_glyph_transform, /* FT_Glyph_TransformFunc  glyph_transform */
+    ft_outline_glyph_bbox,      /* FT_Glyph_GetBBoxFunc    glyph_bbox      */
+    ft_outline_glyph_prepare    /* FT_Glyph_PrepareFunc    glyph_prepare   */
   )
 
 
@@ -287,7 +295,7 @@
      FT_Glyph   glyph  = NULL;
 
 
-     *aglyph = 0;
+     *aglyph = NULL;
 
      if ( !FT_ALLOC( glyph, clazz->glyph_size ) )
      {
@@ -399,9 +407,9 @@
     if ( error )
       goto Exit;
 
-    /* copy advance while converting it to 16.16 format */
-    glyph->advance.x = slot->advance.x << 10;
-    glyph->advance.y = slot->advance.y << 10;
+    /* copy advance while converting 26.6 to 16.16 format */
+    glyph->advance.x = slot->advance.x * 1024;
+    glyph->advance.y = slot->advance.y * 1024;
 
     /* now import the image from the glyph slot */
     error = clazz->glyph_init( glyph, slot );
@@ -538,8 +546,8 @@
     /* we render the glyph into a glyph bitmap using a `dummy' glyph slot */
     /* then calling FT_Render_Glyph_Internal()                            */
 
-    FT_MEM_ZERO( &dummy, sizeof ( dummy ) );
-    FT_MEM_ZERO( &dummy_internal, sizeof ( dummy_internal ) );
+    FT_ZERO( &dummy );
+    FT_ZERO( &dummy_internal );
     dummy.internal = &dummy_internal;
     dummy.library  = library;
     dummy.format   = clazz->glyph_format;

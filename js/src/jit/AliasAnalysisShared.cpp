@@ -70,13 +70,10 @@ GetObject(const MDefinition* ins)
     if (!ins->getAliasSet().isStore() && !ins->getAliasSet().isLoad())
         return nullptr;
 
+    // Note: only return the object if that objects owns that property.
+    // I.e. the poperty isn't on the prototype chain.
     const MDefinition* object = nullptr;
     switch (ins->op()) {
-      case MDefinition::Op_GetPropertyCache:
-        if (!ins->toGetPropertyCache()->idempotent())
-            return nullptr;
-        object = ins->getOperand(0);
-        break;
       case MDefinition::Op_InitializedLength:
       case MDefinition::Op_LoadElement:
       case MDefinition::Op_LoadUnboxedScalar:
@@ -90,6 +87,7 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_ArrayLength:
       case MDefinition::Op_SetArrayLength:
       case MDefinition::Op_StoreElementHole:
+      case MDefinition::Op_FallibleStoreElement:
       case MDefinition::Op_TypedObjectDescr:
       case MDefinition::Op_Slots:
       case MDefinition::Op_Elements:
@@ -125,8 +123,11 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_LoadElementHole:
       case MDefinition::Op_TypedArrayElements:
       case MDefinition::Op_TypedObjectElements:
+      case MDefinition::Op_CopyLexicalEnvironmentObject:
+      case MDefinition::Op_IsPackedArray:
         object = ins->getOperand(0);
         break;
+      case MDefinition::Op_GetPropertyCache:
       case MDefinition::Op_LoadTypedArrayElementStatic:
       case MDefinition::Op_StoreTypedArrayElementStatic:
       case MDefinition::Op_GetDOMProperty:
@@ -142,6 +143,7 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_AtomicTypedArrayElementBinop:
       case MDefinition::Op_AsmJSLoadHeap:
       case MDefinition::Op_AsmJSStoreHeap:
+      case MDefinition::Op_WasmLoadTls:
       case MDefinition::Op_WasmLoad:
       case MDefinition::Op_WasmStore:
       case MDefinition::Op_AsmJSCompareExchangeHeap:

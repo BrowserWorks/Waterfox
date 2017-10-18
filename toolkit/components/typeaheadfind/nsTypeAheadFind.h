@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsComponentManagerUtils.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsISelectionController.h"
 #include "nsIController.h"
@@ -44,19 +45,19 @@ protected:
   nsresult PrefsReset();
 
   void SaveFind();
-  void PlayNotFoundSound(); 
+  void PlayNotFoundSound();
   nsresult GetWebBrowserFind(nsIDocShell *aDocShell,
                              nsIWebBrowserFind **aWebBrowserFind);
 
-  void RangeStartsInsideLink(nsIDOMRange *aRange, nsIPresShell *aPresShell, 
+  void RangeStartsInsideLink(nsIDOMRange *aRange, nsIPresShell *aPresShell,
                              bool *aIsInsideLink, bool *aIsStartingLink);
 
-  void GetSelection(nsIPresShell *aPresShell, nsISelectionController **aSelCon, 
+  void GetSelection(nsIPresShell *aPresShell, nsISelectionController **aSelCon,
                     nsISelection **aDomSel);
   // *aNewRange may not be collapsed.  If you want to collapse it in a
   // particular way, you need to do it yourself.
   bool IsRangeVisible(nsIPresShell *aPresShell, nsPresContext *aPresContext,
-                        nsIDOMRange *aRange, bool aMustBeVisible, 
+                        nsIDOMRange *aRange, bool aMustBeVisible,
                         bool aGetTopVisibleLeaf, nsIDOMRange **aNewRange,
                         bool *aUsesIndependentSelection);
   nsresult FindItNow(nsIPresShell *aPresShell, bool aIsLinksOnly,
@@ -95,7 +96,7 @@ protected:
   // If we destroy mSoundInterface before sound has played, it won't play
   nsCOMPtr<nsISound> mSoundInterface;
   bool mIsSoundInitialized;
-  
+
   // where selection was when user started the find
   nsCOMPtr<nsIDOMRange> mStartFindRange;
   nsCOMPtr<nsIDOMRange> mSearchRange;

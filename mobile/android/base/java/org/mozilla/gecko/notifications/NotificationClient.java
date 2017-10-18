@@ -5,209 +5,323 @@
 
 package org.mozilla.gecko.notifications;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.text.TextUtils;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
-import java.util.LinkedList;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoActivityMonitor;
+import org.mozilla.gecko.GeckoApp;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoService;
+import org.mozilla.gecko.NotificationListener;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.gfx.BitmapUtils;
 
 /**
- * Client for posting notifications through a NotificationHandler.
+ * Client for posting notifications.
  */
-public abstract class NotificationClient {
+public final class NotificationClient implements NotificationListener {
     private static final String LOGTAG = "GeckoNotificationClient";
+    /* package */ static final String CLICK_ACTION = AppConstants.ANDROID_PACKAGE_NAME + ".NOTIFICATION_CLICK";
+    /* package */ static final String CLOSE_ACTION = AppConstants.ANDROID_PACKAGE_NAME + ".NOTIFICATION_CLOSE";
+    /* package */ static final String PERSISTENT_INTENT_EXTRA = "persistentIntent";
 
-    private volatile NotificationHandler mHandler;
-    private boolean mReady;
-    private final LinkedList<Runnable> mTaskQueue = new LinkedList<Runnable>();
-    private final ConcurrentHashMap<Integer, UpdateRunnable> mUpdatesMap =
-            new ConcurrentHashMap<Integer, UpdateRunnable>();
+    private final Context mContext;
+    private final NotificationManagerCompat mNotificationManager;
+
+    private final HashMap<String, Notification> mNotifications = new HashMap<>();
 
     /**
-     * Runnable that is reused between update notifications.
+     * Notification associated with this service's foreground state.
      *
-     * Updates happen frequently, so reusing Runnables prevents frequent dynamic allocation.
+     * {@link android.app.Service#startForeground(int, android.app.Notification)}
+     * associates the foreground with exactly one notification from the service.
+     * To keep Fennec alive during downloads (and to make sure it can be killed
+     * once downloads are complete), we make sure that the foreground is always
+     * associated with an active progress notification if and only if at least
+     * one download is in progress.
      */
-    private class UpdateRunnable implements Runnable {
-        private long mProgress;
-        private long mProgressMax;
-        private String mAlertText;
-        final private int mNotificationID;
+    private String mForegroundNotification;
 
-        public UpdateRunnable(int notificationID) {
-            mNotificationID = notificationID;
+    public NotificationClient(Context context) {
+        mContext = context.getApplicationContext();
+        mNotificationManager = NotificationManagerCompat.from(mContext);
+    }
+
+    @Override // NotificationListener
+    public void showNotification(String name, String cookie, String title,
+                                 String text, String host, String imageUrl) {
+        showNotification(name, cookie, title, text, host, imageUrl, /* data */ null);
+    }
+
+    @Override // NotificationListener
+    public void showPersistentNotification(String name, String cookie, String title,
+                                           String text, String host, String imageUrl,
+                                           String data) {
+        showNotification(name, cookie, title, text, host, imageUrl, data != null ? data : "");
+    }
+
+    private void showNotification(String name, String cookie, String title,
+                                  String text, String host, String imageUrl,
+                                  String persistentData) {
+        // Put the strings into the intent as an URI
+        // "alert:?name=<name>&cookie=<cookie>"
+        String packageName = mContext.getPackageName();
+        String className = AppConstants.MOZ_ANDROID_BROWSER_INTENT_CLASS;
+
+        final Activity currentActivity =
+                GeckoActivityMonitor.getInstance().getCurrentActivity();
+        if (currentActivity != null) {
+            className = currentActivity.getClass().getName();
+        }
+        final Uri dataUri = (new Uri.Builder())
+                .scheme("moz-notification")
+                .authority(packageName)
+                .path(className)
+                .appendQueryParameter("name", name)
+                .appendQueryParameter("cookie", cookie)
+                .build();
+
+        final Intent clickIntent = new Intent(CLICK_ACTION);
+        clickIntent.setClass(mContext, NotificationReceiver.class);
+        clickIntent.setData(dataUri);
+
+        if (persistentData != null) {
+            final Intent persistentIntent = GeckoService.getIntentToCreateServices(
+                    mContext, "persistent-notification-click", persistentData);
+            clickIntent.putExtra(PERSISTENT_INTENT_EXTRA, persistentIntent);
         }
 
-        public synchronized boolean updateProgress(long progress, long progressMax, String alertText) {
-            if (progress == mProgress
-                    && mProgressMax == progressMax
-                    && TextUtils.equals(mAlertText, alertText)) {
-                return false;
-            }
+        final PendingIntent clickPendingIntent = PendingIntent.getBroadcast(
+                mContext, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            mProgress = progress;
-            mProgressMax = progressMax;
-            mAlertText = alertText;
-            return true;
+        final Intent closeIntent = new Intent(CLOSE_ACTION);
+        closeIntent.setClass(mContext, NotificationReceiver.class);
+        closeIntent.setData(dataUri);
+
+        if (persistentData != null) {
+            final Intent persistentIntent = GeckoService.getIntentToCreateServices(
+                    mContext, "persistent-notification-close", persistentData);
+            closeIntent.putExtra(PERSISTENT_INTENT_EXTRA, persistentIntent);
         }
 
-        @Override
-        public void run() {
-            long progress;
-            long progressMax;
-            String alertText;
+        final PendingIntent closePendingIntent = PendingIntent.getBroadcast(
+                mContext, 0, closeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-            synchronized (this) {
-                progress = mProgress;
-                progressMax = mProgressMax;
-                alertText = mAlertText;
-            }
+        add(name, imageUrl, host, title, text, clickPendingIntent, closePendingIntent);
+        GeckoAppShell.onNotificationShow(name, cookie);
+    }
 
-            mHandler.update(mNotificationID, progress, progressMax, alertText);
-        }
+    @Override // NotificationListener
+    public void closeNotification(String name)
+    {
+        remove(name);
     }
 
     /**
-     * Adds a notification.
+     * Adds a notification; used for web notifications.
      *
-     * @see NotificationHandler#add(int, String, String, String, String, PendingIntent, PendingIntent)
+     * @param name           the unique name of the notification
+     * @param imageUrl       URL of the image to use
+     * @param alertTitle     title of the notification
+     * @param alertText      text of the notification
+     * @param contentIntent  Intent used when the notification is clicked
+     * @param deleteIntent   Intent used when the notification is closed
      */
-    public synchronized void add(final int notificationID, final String aImageUrl, final String aHost,
-                                 final String aAlertTitle, final String aAlertText,
-                                 final PendingIntent contentIntent, final PendingIntent deleteIntent) {
-        mTaskQueue.add(new Runnable() {
-            @Override
-            public void run() {
-                mHandler.add(notificationID, aImageUrl, aHost, aAlertTitle, aAlertText, contentIntent, deleteIntent);
-            }
-        });
-        notify();
+    private void add(final String name, final String imageUrl, final String host,
+                     final String alertTitle, final String alertText,
+                     final PendingIntent contentIntent, final PendingIntent deleteIntent) {
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext)
+                .setContentTitle(alertTitle)
+                .setContentText(alertText)
+                .setSmallIcon(R.drawable.ic_status_logo)
+                .setContentIntent(contentIntent)
+                .setDeleteIntent(deleteIntent)
+                .setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_SOUND)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(alertText)
+                        .setSummaryText(host));
 
-        if (!mReady) {
-            bind();
+        // Fetch icon.
+        if (!imageUrl.isEmpty()) {
+            final Bitmap image = BitmapUtils.decodeUrl(imageUrl);
+            builder.setLargeIcon(image);
         }
+
+        builder.setWhen(System.currentTimeMillis());
+        final Notification notification = builder.build();
+
+        synchronized (this) {
+            mNotifications.put(name, notification);
+        }
+
+        mNotificationManager.notify(name, 0, notification);
     }
 
     /**
-     * Adds a notification.
+     * Adds a notification; used for Fennec app notifications.
      *
-     * @see NotificationHandler#add(int, Notification)
+     * @param name           the unique name of the notification
+     * @param notification   the Notification to add
      */
-    public synchronized void add(final int notificationID, final Notification notification) {
-        mTaskQueue.add(new Runnable() {
-            @Override
-            public void run() {
-                mHandler.add(notificationID, notification);
-            }
-        });
-        notify();
+    public synchronized void add(final String name, final Notification notification) {
+        final boolean ongoing = isOngoing(notification);
 
-        if (!mReady) {
-            bind();
+        if (ongoing != isOngoing(mNotifications.get(name))) {
+            // In order to change notification from ongoing to non-ongoing, or vice versa,
+            // we have to remove the previous notification, because ongoing notifications
+            // use a different id value than non-ongoing notifications.
+            onNotificationClose(name);
+        }
+
+        mNotifications.put(name, notification);
+
+        if (!ongoing) {
+            mNotificationManager.notify(name, 0, notification);
+            return;
+        }
+
+        // Ongoing
+        if (mForegroundNotification == null) {
+            setForegroundNotificationLocked(name, notification);
+        } else if (mForegroundNotification.equals(name)) {
+            // Shortcut to update the current foreground notification, instead of
+            // going through the service.
+            mNotificationManager.notify(R.id.foregroundNotification, notification);
         }
     }
 
     /**
      * Updates a notification.
      *
-     * @see NotificationHandler#update(int, long, long, String)
+     * @param name          Name of existing notification
+     * @param progress      progress of item being updated
+     * @param progressMax   max progress of item being updated
+     * @param alertText     text of the notification
      */
-    public void update(final int notificationID, final long aProgress, final long aProgressMax,
-                       final String aAlertText) {
-        UpdateRunnable runnable = mUpdatesMap.get(notificationID);
-
-        if (runnable == null) {
-            runnable = new UpdateRunnable(notificationID);
-            mUpdatesMap.put(notificationID, runnable);
+    public void update(final String name, final long progress,
+                       final long progressMax, final String alertText) {
+        Notification notification;
+        synchronized (this) {
+            notification = mNotifications.get(name);
         }
-
-        // If we've already posted an update with these values, there's no
-        // need to do it again.
-        if (!runnable.updateProgress(aProgress, aProgressMax, aAlertText)) {
+        if (notification == null) {
             return;
         }
 
-        synchronized (this) {
-            if (mReady) {
-                mTaskQueue.add(runnable);
-                notify();
-            }
+        notification = new NotificationCompat.Builder(mContext)
+                .setContentText(alertText)
+                .setSmallIcon(notification.icon)
+                .setWhen(notification.when)
+                .setContentIntent(notification.contentIntent)
+                .setProgress((int) progressMax, (int) progress, false)
+                .build();
+
+        add(name, notification);
+    }
+
+    /* package */ synchronized Notification onNotificationClose(final String name) {
+        mNotificationManager.cancel(name, 0);
+
+        final Notification notification = mNotifications.remove(name);
+        if (notification != null) {
+            updateForegroundNotificationLocked(name);
         }
+        return notification;
     }
 
     /**
      * Removes a notification.
      *
-     * @see NotificationHandler#remove(int)
+     * @param name Name of existing notification
      */
-    public synchronized void remove(final int notificationID) {
-        mTaskQueue.add(new Runnable() {
-            @Override
-            public void run() {
-                mHandler.remove(notificationID);
-                mUpdatesMap.remove(notificationID);
-            }
-        });
-
-        // If mReady == false, we haven't added any notifications yet. That can happen if Fennec is being
-        // started in response to clicking a notification. Call bind() to ensure the task we posted above is run.
-        if (!mReady) {
-            bind();
+    public synchronized void remove(final String name) {
+        final Notification notification = onNotificationClose(name);
+        if (notification == null || notification.deleteIntent == null) {
+            return;
         }
 
-        notify();
+        // Canceling the notification doesn't trigger the delete intent, so we
+        // have to trigger it manually.
+        try {
+            notification.deleteIntent.send();
+        } catch (final PendingIntent.CanceledException e) {
+            // Ignore.
+        }
     }
 
     /**
-     * Determines whether a notification is showing progress.
+     * Determines whether the service is done.
      *
-     * @see NotificationHandler#isOngoing(int)
+     * The service is considered finished when all notifications have been
+     * removed.
+     *
+     * @return whether all notifications have been removed
      */
-    public boolean isOngoing(int notificationID) {
-        final NotificationHandler handler = mHandler;
-        return handler != null && handler.isOngoing(notificationID);
+    public synchronized boolean isDone() {
+        return mNotifications.isEmpty();
     }
 
-    protected void bind() {
-        mReady = true;
+    /**
+     * Determines whether a notification should hold a foreground service to keep Gecko alive
+     *
+     * @param name           the name of the notification to check
+     * @return               whether the notification is ongoing
+     */
+    public synchronized boolean isOngoing(final String name) {
+        return isOngoing(mNotifications.get(name));
     }
 
-    protected void unbind() {
-        mReady = false;
-        mUpdatesMap.clear();
+    /**
+     * Determines whether a notification should hold a foreground service to keep Gecko alive
+     *
+     * @param notification   the notification to check
+     * @return               whether the notification is ongoing
+     */
+    public boolean isOngoing(final Notification notification) {
+        if (notification != null && (notification.flags & Notification.FLAG_ONGOING_EVENT) != 0) {
+            return true;
+        }
+        return false;
     }
 
-    protected void connectHandler(NotificationHandler handler) {
-        mHandler = handler;
-        new Thread(new NotificationRunnable()).start();
+    private void setForegroundNotificationLocked(final String name,
+                                                 final Notification notification) {
+        mForegroundNotification = name;
+
+        final Intent intent = new Intent(mContext, NotificationService.class);
+        intent.putExtra(NotificationService.EXTRA_NOTIFICATION, notification);
+        mContext.startService(intent);
     }
 
-    private class NotificationRunnable implements Runnable {
-        @Override
-        public void run() {
-            Runnable r;
-            try {
-                while (true) {
-                    // Synchronize polls to prevent tasks from being added to the queue
-                    // during the isDone check.
-                    synchronized (NotificationClient.this) {
-                        r = mTaskQueue.poll();
-                        while (r == null) {
-                            if (mHandler.isDone()) {
-                                unbind();
-                                return;
-                            }
-                            NotificationClient.this.wait();
-                            r = mTaskQueue.poll();
-                        }
-                    }
-                    r.run();
-                }
-            } catch (InterruptedException e) {
-                Log.e(LOGTAG, "Notification task queue processing interrupted", e);
+    private void updateForegroundNotificationLocked(final String oldName) {
+        if (mForegroundNotification == null || !mForegroundNotification.equals(oldName)) {
+            return;
+        }
+
+        // If we're removing the notification associated with the
+        // foreground, we need to pick another active notification to act
+        // as the foreground notification.
+        for (final String name : mNotifications.keySet()) {
+            final Notification notification = mNotifications.get(name);
+            if (isOngoing(notification)) {
+                setForegroundNotificationLocked(name, notification);
+                return;
             }
         }
+
+        setForegroundNotificationLocked(null, null);
     }
 }

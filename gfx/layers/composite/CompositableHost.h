@@ -14,6 +14,7 @@
 #include "mozilla/RefPtr.h"             // for RefPtr, RefCounted, etc
 #include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for Point
+#include "mozilla/gfx/Polygon.h"        // for Polygon
 #include "mozilla/gfx/Rect.h"           // for Rect
 #include "mozilla/gfx/Types.h"          // for SamplingFilter
 #include "mozilla/ipc/ProtocolUtils.h"
@@ -38,13 +39,32 @@ namespace layers {
 
 class Layer;
 class LayerComposite;
+class ImageHost;
 class Compositor;
-class ImageContainerParent;
 class ThebesBufferData;
 class TiledContentHost;
 class CompositableParentManager;
-class PCompositableParent;
+class WebRenderImageHost;
+class ContentHostTexture;
 struct EffectChain;
+
+struct ImageCompositeNotificationInfo {
+  base::ProcessId mImageBridgeProcessId;
+  ImageCompositeNotification mNotification;
+};
+
+struct AsyncCompositableRef
+{
+  AsyncCompositableRef()
+   : mProcessId(mozilla::ipc::kInvalidProcessId)
+  {}
+  AsyncCompositableRef(base::ProcessId aProcessId, const CompositableHandle& aHandle)
+   : mProcessId(aProcessId), mHandle(aHandle)
+  {}
+  explicit operator bool() const { return !!mHandle; }
+  base::ProcessId mProcessId;
+  CompositableHandle mHandle;
+};
 
 /**
  * The compositor-side counterpart to CompositableClient. Responsible for
@@ -66,7 +86,7 @@ protected:
   virtual ~CompositableHost();
 
 public:
-  NS_INLINE_DECL_REFCOUNTING(CompositableHost)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositableHost)
   explicit CompositableHost(const TextureInfo& aTextureInfo);
 
   static already_AddRefed<CompositableHost> Create(const TextureInfo& aTextureInfo);
@@ -74,26 +94,26 @@ public:
   virtual CompositableType GetType() = 0;
 
   // If base class overrides, it should still call the parent implementation
-  virtual void SetCompositor(Compositor* aCompositor);
+  virtual void SetTextureSourceProvider(TextureSourceProvider* aProvider);
 
   // composite the contents of this buffer host to the compositor's surface
-  virtual void Composite(LayerComposite* aLayer,
+  virtual void Composite(Compositor* aCompositor,
+                         LayerComposite* aLayer,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
                          const gfx::SamplingFilter aSamplingFilter,
                          const gfx::IntRect& aClipRect,
-                         const nsIntRegion* aVisibleRegion = nullptr) = 0;
+                         const nsIntRegion* aVisibleRegion = nullptr,
+                         const Maybe<gfx::Polygon>& aGeometry = Nothing()) = 0;
 
   /**
    * Update the content host.
-   * aUpdated is the region which should be updated
-   * aUpdatedRegionBack is the region in aNewBackResult which has been updated
+   * aUpdated is the region which should be updated.
    */
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
-                            const nsIntRegion& aOldValidRegionBack,
-                            nsIntRegion* aUpdatedRegionBack)
+                            const nsIntRegion& aOldValidRegionBack)
   {
     NS_ERROR("should be implemented or not used");
     return false;
@@ -107,8 +127,6 @@ public:
   virtual TextureHost* GetAsTextureHost(gfx::IntRect* aPictureRect = nullptr) {
     return nullptr;
   }
-
-  virtual LayerRenderState GetRenderState() = 0;
 
   virtual gfx::IntSize GetImageSize() const
   {
@@ -125,17 +143,15 @@ public:
 
   void RemoveMaskEffect();
 
-  Compositor* GetCompositor() const
-  {
-    return mCompositor;
-  }
+  TextureSourceProvider* GetTextureSourceProvider() const;
 
   Layer* GetLayer() const { return mLayer; }
   void SetLayer(Layer* aLayer) { mLayer = aLayer; }
 
-  virtual void SetImageContainer(ImageContainerParent* aImageContainer) {}
-
+  virtual ContentHostTexture* AsContentHostTexture() { return nullptr; }
+  virtual ImageHost* AsImageHost() { return nullptr; }
   virtual TiledContentHost* AsTiledContentHost() { return nullptr; }
+  virtual WebRenderImageHost* AsWebRenderImageHost() { return nullptr; }
 
   typedef uint32_t AttachFlags;
   static const AttachFlags NO_FLAGS = 0;
@@ -144,13 +160,13 @@ public:
   static const AttachFlags FORCE_DETACH = 2;
 
   virtual void Attach(Layer* aLayer,
-                      Compositor* aCompositor,
+                      TextureSourceProvider* aProvider,
                       AttachFlags aFlags = NO_FLAGS)
   {
-    MOZ_ASSERT(aCompositor, "Compositor is required");
+    MOZ_ASSERT(aProvider);
     NS_ASSERTION(aFlags & ALLOW_REATTACH || !mAttached,
                  "Re-attaching compositables must be explicitly authorised");
-    SetCompositor(aCompositor);
+    SetTextureSourceProvider(aProvider);
     SetLayer(aLayer);
     mAttached = true;
     mKeepAttached = aFlags & KEEP_ATTACHED;
@@ -175,9 +191,6 @@ public:
   }
   bool IsAttached() { return mAttached; }
 
-  static void
-  ReceivedDestroy(PCompositableParent* aActor);
-
   virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix="",
                     bool aDumpHtml=false) { }
@@ -193,14 +206,10 @@ public:
     gfx::IntRect mPictureRect;
     int32_t mFrameID;
     int32_t mProducerID;
-    int32_t mInputFrameID;
   };
   virtual void UseTextureHost(const nsTArray<TimedTexture>& aTextures);
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
                                          TextureHost* aTextureOnWhite);
-  virtual void UseOverlaySource(OverlaySource aOverlay,
-                                const gfx::IntRect& aPictureRect) { }
-
   virtual void RemoveTextureHost(TextureHost* aTexture);
 
   // Called every time this is composited
@@ -209,23 +218,12 @@ public:
                   ? DIAGNOSTIC_FLASH_COUNTER_MAX : mFlashCounter + 1;
   }
 
-  static PCompositableParent*
-  CreateIPDLActor(CompositableParentManager* mgr,
-                  const TextureInfo& textureInfo,
-                  uint64_t asyncID,
-                  PImageContainerParent* aImageContainer = nullptr);
+  uint64_t GetCompositorBridgeID() const { return mCompositorBridgeID; }
 
-  static bool DestroyIPDLActor(PCompositableParent* actor);
+  const AsyncCompositableRef& GetAsyncRef() const { return mAsyncRef; }
+  void SetAsyncRef(const AsyncCompositableRef& aRef) { mAsyncRef = aRef; }
 
-  static CompositableHost* FromIPDLActor(PCompositableParent* actor);
-
-  uint64_t GetCompositorID() const { return mCompositorID; }
-
-  uint64_t GetAsyncID() const { return mAsyncID; }
-
-  void SetCompositorID(uint64_t aID) { mCompositorID = aID; }
-
-  void SetAsyncID(uint64_t aID) { mAsyncID = aID; }
+  void SetCompositorBridgeID(uint64_t aID) { mCompositorBridgeID = aID; }
 
   virtual bool Lock() { return false; }
 
@@ -235,18 +233,21 @@ public:
     return nullptr;
   }
 
-  virtual int32_t GetLastInputFrameID() const { return -1; }
-
   /// Called when shutting down the layer tree.
   /// This is a good place to clear all potential gpu resources before the widget
   /// is is destroyed.
   virtual void CleanupResources() {}
 
+  virtual void BindTextureSource() {}
+
+protected:
+  HostLayerManager* GetLayerManager() const;
+
 protected:
   TextureInfo mTextureInfo;
-  uint64_t mAsyncID;
-  uint64_t mCompositorID;
-  RefPtr<Compositor> mCompositor;
+  AsyncCompositableRef mAsyncRef;
+  uint64_t mCompositorBridgeID;
+  RefPtr<TextureSourceProvider> mTextureSourceProvider;
   Layer* mLayer;
   uint32_t mFlashCounter; // used when the pref "layers.flash-borders" is true.
   bool mAttached;
@@ -275,43 +276,6 @@ private:
   RefPtr<CompositableHost> mHost;
   bool mSucceeded;
 };
-
-/**
- * Global CompositableMap, to use in the compositor thread only.
- *
- * PCompositable and PLayer can, in the case of async textures, be managed by
- * different top level protocols. In this case they don't share the same
- * communication channel and we can't send an OpAttachCompositable (PCompositable,
- * PLayer) message.
- *
- * In order to attach a layer and the right compositable if the the compositable
- * is async, we store references to the async compositables in a CompositableMap
- * that is accessed only on the compositor thread. During a layer transaction we
- * send the message OpAttachAsyncCompositable(ID, PLayer), and on the compositor
- * side we lookup the ID in the map and attach the corresponding compositable to
- * the layer.
- *
- * CompositableMap must be global because the image bridge doesn't have any
- * reference to whatever we have created with PLayerTransaction. So, the only way to
- * actually connect these two worlds is to have something global that they can
- * both query (in the same  thread). The map is not allocated the map on the 
- * stack to avoid the badness of static initialization.
- *
- * Also, we have a compositor/PLayerTransaction protocol/etc. per layer manager, and the
- * ImageBridge is used by all the existing compositors that have a video, so
- * there isn't an instance or "something" that lives outside the boudaries of a
- * given layer manager on the compositor thread except the image bridge and the
- * thread itself.
- */
-namespace CompositableMap {
-  void Create();
-  void Destroy();
-  PCompositableParent* Get(uint64_t aID);
-  void Set(uint64_t aID, PCompositableParent* aParent);
-  void Erase(uint64_t aID);
-  void Clear();
-} // namespace CompositableMap
-
 
 } // namespace layers
 } // namespace mozilla

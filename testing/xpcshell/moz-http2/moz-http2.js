@@ -277,6 +277,11 @@ function handleRequest(req, res) {
     content = '<head> <script src="push.js"/></head>body text';
   }
 
+  else if (u.pathname === "/push.js") {
+    content = '// comments';
+    res.setHeader("pushed", "no");
+  }
+
   else if (u.pathname === "/push2") {
     push = res.push('/push2.js');
     push.writeHead(200, {
@@ -339,14 +344,15 @@ function handleRequest(req, res) {
 
     push3 = res.push(
         { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/3', method : 'GET',
-          headers: {'x-pushed-request': 'true'}});
+          headers: {'x-pushed-request': 'true', 'Accept-Encoding' : 'br'}});
     push3.writeHead(200, {
       'pushed' : 'yes',
-      'content-length' : 1,
+      'content-length' : 6,
       'subresource' : '3',
+      'content-encoding' : 'br',
       'X-Connection-Http2': 'yes'
     });
-    push3.end('3');
+    push3.end(new Buffer([0x8b, 0x00, 0x80, 0x33, 0x0a, 0x03])); // '3\n'
 
     content = '0';
   }
@@ -496,21 +502,19 @@ function handleRequest(req, res) {
   else if (u.pathname === "/altsvc1") {
     if (req.httpVersionMajor != 2 ||
       req.scheme != "http" ||
-      req.headers['alt-used'] != ("localhost:" + serverPort)) {
-      res.setHeader('Connection', 'close');
+      req.headers['alt-used'] != ("foo.example.com:" + serverPort)) {
       res.writeHead(400);
       res.end("WHAT?");
       return;
-   }
-   // test the alt svc frame for use with altsvc2
-   res.altsvc("localhost", serverPort, "h2", 3600, req.headers['x-redirect-origin']);
+    }
+    // test the alt svc frame for use with altsvc2
+    res.altsvc("foo.example.com", serverPort, "h2", 3600, req.headers['x-redirect-origin']);
   }
 
   else if (u.pathname === "/altsvc2") {
     if (req.httpVersionMajor != 2 ||
       req.scheme != "http" ||
-      req.headers['alt-used'] != ("localhost:" + serverPort)) {
-      res.setHeader('Connection', 'close');
+      req.headers['alt-used'] != ("foo.example.com:" + serverPort)) {
       res.writeHead(400);
       res.end("WHAT?");
       return;
@@ -521,6 +525,14 @@ function handleRequest(req, res) {
   else if (u.pathname === "/altsvc-test") {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Alt-Svc', 'h2=' + req.headers['x-altsvc']);
+  }
+
+  else if (u.pathname === "/.well-known/http-opportunistic") {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(200, "OK");
+    res.end('{"http://' + req.headers['host'] + '": { "tls-ports": [' + serverPort + '] }}');
+    return;
   }
 
   // for PushService tests.
@@ -717,20 +729,122 @@ function handleRequest(req, res) {
 
   // for use with test_immutable.js
   else if (u.pathname === "/immutable-test-without-attribute") {
-     res.setHeader('Cache-Control', 'max-age=100000');
-     res.setHeader('Etag', '1');
-     if (req.headers["if-none-match"]) {
-       res.setHeader("x-conditional", "true");
-     }
+    res.setHeader('Cache-Control', 'max-age=100000');
+    res.setHeader('Etag', '1');
+    if (req.headers["if-none-match"]) {
+      res.setHeader("x-conditional", "true");
+    }
     // default response from here
   }
   else if (u.pathname === "/immutable-test-with-attribute") {
     res.setHeader('Cache-Control', 'max-age=100000, immutable');
     res.setHeader('Etag', '2');
-     if (req.headers["if-none-match"]) {
-       res.setHeader("x-conditional", "true");
-     }
-   // default response from here
+    if (req.headers["if-none-match"]) {
+      res.setHeader("x-conditional", "true");
+    }
+    // default response from here
+  }
+  else if (u.pathname === "/origin-4") {
+   var originList = [ ];
+   req.stream.connection.originFrame(originList);
+   res.setHeader("x-client-port", req.remotePort);
+  }
+  else if (u.pathname === "/origin-6") {
+   var originList = [ "https://alt1.example.com:" + serverPort,
+                      "https://alt2.example.com:" + serverPort,
+                      "https://bar.example.com:" + serverPort ];
+   req.stream.connection.originFrame(originList);
+   res.setHeader("x-client-port", req.remotePort);
+  }
+  else if (u.pathname === "/origin-11-a") {
+    res.setHeader("x-client-port", req.remotePort);
+
+    pushb = res.push(
+        { hostname: 'foo.example.com:' + serverPort, port: serverPort, path : '/origin-11-b', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushb.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushb.end('1');
+
+    pushc = res.push(
+        { hostname: 'bar.example.com:' + serverPort, port: serverPort, path : '/origin-11-c', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushc.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushc.end('1');
+
+    pushd = res.push(
+        { hostname: 'madeup.example.com:' + serverPort, port: serverPort, path : '/origin-11-d', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushd.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushd.end('1');
+
+    pushe = res.push(
+        { hostname: 'alt1.example.com:' + serverPort, port: serverPort, path : '/origin-11-e', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+    pushe.writeHead(200, {
+      'pushed' : 'yes',
+      'content-length' : 1
+      });
+    pushe.end('1');
+  }
+  else if (u.pathname.substring(0,8) === "/origin-") { // test_origin.js coalescing
+    res.setHeader("x-client-port", req.remotePort);
+  }
+
+  else if (u.pathname === "/statusphrase") {
+    // Fortunately, the node-http2 API is dumb enough to allow this right on
+    // through, so we can easily test rejecting this on gecko's end.
+    res.writeHead("200 OK");
+    res.end(content);
+    return;
+  }
+
+  else if (u.pathname === "/doublepush") {
+    push1 = res.push('/doublypushed');
+    push1.writeHead(200, {
+      'content-type': 'text/plain',
+      'pushed' : 'yes',
+      'content-length' : 6,
+      'X-Connection-Http2': 'yes'
+    });
+    push1.end('pushed');
+
+    push2 = res.push('/doublypushed');
+    push2.writeHead(200, {
+      'content-type': 'text/plain',
+      'pushed' : 'yes',
+      'content-length' : 6,
+      'X-Connection-Http2': 'yes'
+    });
+    push2.end('pushed');
+  }
+
+  else if (u.pathname === "/doublypushed") {
+    content = 'not pushed';
+  }
+
+  else if (u.pathname === "/diskcache") {
+    content = "this was pulled via h2";
+  }
+
+  else if (u.pathname === "/pushindisk") {
+    var pushedContent = "this was pushed via h2";
+    push = res.push('/diskcache');
+    push.writeHead(200, {
+      'content-type': 'text/html',
+      'pushed' : 'yes',
+      'content-length' : pushedContent.length,
+      'X-Connection-Http2': 'yes'
+    });
+    push.end(pushedContent);
   }
 
   res.setHeader('Content-Type', 'text/html');
@@ -743,12 +857,15 @@ function handleRequest(req, res) {
 
 // Set up the SSL certs for our server - this server has a cert for foo.example.com
 // signed by netwerk/tests/unit/CA.cert.der
-//var log_module = node_http2_root + "/test/util";
 var options = {
   key: fs.readFileSync(__dirname + '/http2-key.pem'),
   cert: fs.readFileSync(__dirname + '/http2-cert.pem'),
-  //, log: require(log_module).createLogger('server')
 };
+
+if (process.env.HTTP2_LOG !== undefined) {
+  var log_module = node_http2_root + "/test/util";
+  options.log = require(log_module).createLogger('server')
+}
 
 var server = http2.createServer(options, handleRequest);
 

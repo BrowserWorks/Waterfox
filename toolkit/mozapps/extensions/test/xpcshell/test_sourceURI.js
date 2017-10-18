@@ -10,7 +10,6 @@ const PREF_GETADDONS_CACHE_ENABLED       = "extensions.getAddons.cache.enabled";
 
 const PORT          = gServer.identity.primaryPort;
 const BASE_URL      = "http://localhost:" + PORT;
-const DEFAULT_URL   = "about:blank";
 
 var addon = {
   id: "addon@tests.mozilla.org",
@@ -30,7 +29,7 @@ function backgroundUpdate(aCallback) {
   Services.obs.addObserver(function() {
     Services.obs.removeObserver(arguments.callee, "addons-background-update-complete");
     aCallback();
-  }, "addons-background-update-complete", false);
+  }, "addons-background-update-complete");
 
   AddonManagerPrivate.backgroundUpdateCheck();
 }
@@ -54,10 +53,10 @@ function run_test() {
     backgroundUpdate(function() {
       restartManager();
 
-      AddonManager.getAddonByID("addon@tests.mozilla.org", function(a) {
-        do_check_neq(a, null);
-        do_check_neq(a.sourceURI, null);
-        do_check_eq(a.sourceURI.spec, "http://www.example.com/testaddon.xpi");
+      AddonManager.getAddonByID("addon@tests.mozilla.org", function(a2) {
+        do_check_neq(a2, null);
+        do_check_neq(a2.sourceURI, null);
+        do_check_eq(a2.sourceURI.spec, "http://www.example.com/testaddon.xpi");
 
         do_test_finished();
       });

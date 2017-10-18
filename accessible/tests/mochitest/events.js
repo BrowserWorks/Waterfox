@@ -112,7 +112,7 @@ function waveOverImageMap(aImageMapID)
 {
   var imageMapNode = getNode(aImageMapID);
   synthesizeMouse(imageMapNode, 10, 10, { type: "mousemove" },
-                  imageMapNode.ownerDocument.defaultView);
+                  imageMapNode.ownerGlobal);
 }
 
 /**
@@ -337,7 +337,7 @@ function eventQueue(aEventType)
               if (matchIdx == -1 || eventSeq.length > 0)
                 matchIdx = scnIdx;
 
-              // Report everythign is ok.
+              // Report everything is ok.
               for (var idx = 0; idx < eventSeq.length; idx++) {
                 var checker = eventSeq[idx];
 
@@ -346,15 +346,15 @@ function eventQueue(aEventType)
                   "' succeed. ";
 
                 if (checker.unexpected) {
-                  if (checker.todo) {
-                    todo(false, "Event " + typeStr + " event is still missing");
-                  }
-                  else {
-                    ok(true, msg + "There's no unexpected " + typeStr + " event.");
-                  }
+                  ok(true, msg + `There's no unexpected '${typeStr}' event.`);
                 }
                 else {
-                  ok(true, msg + "Event " + typeStr + " was handled.");
+                  if (checker.todo) {
+                    todo(false, `Todo event '${typeStr}' was caught`);
+                  }
+                  else {
+                    ok(true, `${msg} Event '${typeStr}' was handled.`);
+                  }
                 }
               }
             }
@@ -378,15 +378,13 @@ function eventQueue(aEventType)
                 ok(false, msg + "Dupe " + typeStr + " event.");
 
               if (checker.unexpected) {
-                if (checker.todo) {
-                  todo(checker.wasCaught,
-                       "Event " + typeStr + " event is still missing");
-                }
-                else if (checker.wasCaught) {
+                if (checker.wasCaught) {
                   ok(false, msg + "There's unexpected " + typeStr + " event.");
                 }
-              } else if (!checker.wasCaught) {
-                ok(false, msg + typeStr + " event was missed.");
+              }
+              else if (!checker.wasCaught) {
+                var rf = checker.todo ? todo : ok;
+                rf(false, `${msg} '${typeStr} event is missed.`);
               }
             }
           }
@@ -507,7 +505,7 @@ function eventQueue(aEventType)
         // (i.e. event types are matched, targets differs).
         if (!checker.unexpected && checker.unique &&
             eventQueue.compareEventTypes(checker, aEvent)) {
-          var isExppected = false;
+          var isExpected = false;
           for (var jdx = 0; jdx < eventSeq.length; jdx++) {
             isExpected = eventQueue.compareEvents(eventSeq[jdx], aEvent);
             if (isExpected)
@@ -538,7 +536,16 @@ function eventQueue(aEventType)
       }
 
       // Check if handled event matches any expected async events.
+      var haveUnmatchedAsync = false;
       for (idx = 0; idx < eventSeq.length; idx++) {
+        if (eventSeq[idx] instanceof orderChecker && haveUnmatchedAsync) {
+            break;
+        }
+
+        if (!eventSeq[idx].wasCaught) {
+          haveUnmatchedAsync = true;
+        }
+
         if (!eventSeq[idx].unexpected && eventSeq[idx].async) {
           if (eventQueue.compareEvents(eventSeq[idx], aEvent)) {
             this.processMatchedChecker(aEvent, eventSeq[idx], scnIdx, idx);
@@ -553,6 +560,16 @@ function eventQueue(aEventType)
       var invoker = this.getInvoker();
       if ("check" in invoker)
         invoker.check(aEvent);
+    }
+
+    for (idx = 0; idx < eventSeq.length; idx++) {
+      if (!eventSeq[idx].wasCaught) {
+        if (eventSeq[idx] instanceof orderChecker) {
+          eventSeq[idx].wasCaught++;
+        } else {
+          break;
+        }
+      }
     }
 
     // If we don't have more events to wait then schedule next invoker.
@@ -596,7 +613,9 @@ function eventQueue(aEventType)
 
     while (aEventSeq.idx < aEventSeq.length &&
            (aEventSeq[aEventSeq.idx].unexpected ||
+            aEventSeq[aEventSeq.idx].todo ||
             aEventSeq[aEventSeq.idx].async ||
+            aEventSeq[aEventSeq.idx] instanceof orderChecker ||
             aEventSeq[aEventSeq.idx].wasCaught > 0)) {
       aEventSeq.idx++;
     }
@@ -612,7 +631,8 @@ function eventQueue(aEventType)
       // Check if we have unhandled async (can be anywhere in the sequance) or
       // sync expcected events yet.
       for (var idx = 0; idx < aEventSeq.length; idx++) {
-        if (!aEventSeq[idx].unexpected && !aEventSeq[idx].wasCaught)
+        if (!aEventSeq[idx].unexpected && !aEventSeq[idx].todo &&
+            !aEventSeq[idx].wasCaught && !(aEventSeq[idx] instanceof orderChecker))
           return true;
       }
 
@@ -636,7 +656,7 @@ function eventQueue(aEventType)
     for (var scnIdx = 0; scnIdx < this.mScenarios.length; scnIdx++) {
       var eventSeq = this.mScenarios[scnIdx];
       for (var idx = 0; idx < eventSeq.length; idx++) {
-        if (eventSeq[idx].unexpected)
+        if (eventSeq[idx].unexpected || eventSeq[idx].todo)
           return false;
       }
     }
@@ -648,7 +668,7 @@ function eventQueue(aEventType)
     function eventQueue_isUnexpectedEventsScenario(aScenario)
   {
     for (var idx = 0; idx < aScenario.length; idx++) {
-      if (!aScenario[idx].unexpected)
+      if (!aScenario[idx].unexpected && !aScenario[idx].todo)
         break;
     }
 
@@ -814,7 +834,7 @@ function eventQueue(aEventType)
 
   this.mDefEventType = aEventType;
 
-  this.mInvokers = new Array();
+  this.mInvokers = [];
   this.mIndex = -1;
   this.mScenarios = null;
 
@@ -949,7 +969,7 @@ eventQueue.logEvent = function eventQueue_logEvent(aOrigEvent, aMatchedChecker,
 
   var currType = eventQueue.getEventTypeAsString(aMatchedChecker);
   var currTargetDescr = eventQueue.getEventTargetDescr(aMatchedChecker);
-  var consoleMsg = "*****\nScenario " + aScenarioIdx + 
+  var consoleMsg = "*****\nScenario " + aScenarioIdx +
     ", event " + aEventIdx + " matched: " + currType + "\n" + infoMsg + "\n*****";
   gLogger.logToConsole(consoleMsg);
 
@@ -1005,7 +1025,7 @@ function sequence()
     this.items[this.idx].startProcess();
   }
 
-  this.items = new Array();
+  this.items = [];
   this.idx = -1;
 }
 
@@ -1020,7 +1040,7 @@ function sequence()
 function defineScenario(aInvoker, aEventSeq, aUnexpectedEventSeq)
 {
   if (!("scenarios" in aInvoker))
-    aInvoker.scenarios = new Array();
+    aInvoker.scenarios = [];
 
   // Create unified event sequence concatenating expected and unexpected
   // events.
@@ -1295,8 +1315,8 @@ function synthFocus(aNodeOrID, aCheckerOrEventSeq)
     this.DOMNode.focus();
   }
 
-  this.getID = function synthFocus_getID() 
-  { 
+  this.getID = function synthFocus_getID()
+  {
     return prettyName(aNodeOrID) + " focus";
   }
 }
@@ -1316,8 +1336,8 @@ function synthFocusOnFrame(aNodeOrID, aCheckerOrEventSeq)
     this.DOMNode.body.focus();
   }
 
-  this.getID = function synthFocus_getID() 
-  { 
+  this.getID = function synthFocus_getID()
+  {
     return prettyName(aNodeOrID) + " frame document focus";
   }
 }
@@ -1577,7 +1597,7 @@ function moveCaretToDOMPoint(aID, aDOMPointNodeID, aDOMPointOffset,
     if (this.focusNode)
       this.focusNode.focus();
 
-    var selection = this.DOMPointNode.ownerDocument.defaultView.getSelection();
+    var selection = this.DOMPointNode.ownerGlobal.getSelection();
     var selRange = selection.getRangeAt(0);
     selRange.setStart(this.DOMPointNode, aDOMPointOffset);
     selRange.collapse(true);
@@ -1680,14 +1700,23 @@ function invokerChecker(aEventType, aTargetOrFunc, aTargetFuncArg, aIsAsync)
 }
 
 /**
+ * event checker that forces preceeding async events to happen before this
+ * checker.
+ */
+function orderChecker()
+{
+  // XXX it doesn't actually work to inherit from invokerChecker, but maybe we
+  // should fix that?
+  //  this.__proto__ = new invokerChecker(null, null, null, false);
+}
+
+/**
  * Generic invoker checker for todo events.
  */
 function todo_invokerChecker(aEventType, aTargetOrFunc, aTargetFuncArg)
 {
   this.__proto__ = new invokerChecker(aEventType, aTargetOrFunc,
                                       aTargetFuncArg, true);
-
-  this.unexpected = true;
   this.todo = true;
 }
 
@@ -1734,13 +1763,27 @@ function nofocusChecker(aID)
  * Text inserted/removed events checker.
  * @param aFromUser  [in, optional] kNotFromUserInput or kFromUserInput
  */
-function textChangeChecker(aID, aStart, aEnd, aTextOrFunc, aIsInserted, aFromUser)
+function textChangeChecker(aID, aStart, aEnd, aTextOrFunc, aIsInserted, aFromUser, aAsync)
 {
   this.target = getNode(aID);
   this.type = aIsInserted ? EVENT_TEXT_INSERTED : EVENT_TEXT_REMOVED;
   this.startOffset = aStart;
   this.endOffset = aEnd;
   this.textOrFunc = aTextOrFunc;
+  this.async = aAsync;
+
+  this.match = function stextChangeChecker_match(aEvent)
+  {
+    if (!(aEvent instanceof nsIAccessibleTextChangeEvent) ||
+        aEvent.accessible !== getAccessible(this.target)) {
+      return false;
+    }
+
+    let tcEvent = aEvent.QueryInterface(nsIAccessibleTextChangeEvent);
+    let modifiedText = (typeof this.textOrFunc === "function") ?
+      this.textOrFunc() : this.textOrFunc;
+    return modifiedText === tcEvent.modifiedText;
+  };
 
   this.check = function textChangeChecker_check(aEvent)
   {
@@ -1948,7 +1991,7 @@ function selChangeSeq(aUnselectedID, aSelectedID)
   }
 
   // Return two possible scenarios: depending on widget type when selection is
-  // moved the the order of items that get selected and unselected may vary. 
+  // moved the the order of items that get selected and unselected may vary.
   return [
     [
       new stateChangeChecker(STATE_SELECTED, false, false, aUnselectedID),
@@ -2077,7 +2120,7 @@ function listenA11yEvents(aStartToListen)
   if (aStartToListen) {
     // Add observer when adding the first applicant only.
     if (!(gA11yEventApplicantsCount++))
-      Services.obs.addObserver(gA11yEventObserver, "accessible-event", false);
+      Services.obs.addObserver(gA11yEventObserver, "accessible-event");
   } else {
     // Remove observer when there are no more applicants only.
     // '< 0' case should not happen, but just in case: removeObserver() will throw.
@@ -2089,7 +2132,7 @@ function listenA11yEvents(aStartToListen)
 function addA11yEventListener(aEventType, aEventHandler)
 {
   if (!(aEventType in gA11yEventListeners))
-    gA11yEventListeners[aEventType] = new Array();
+    gA11yEventListeners[aEventType] = [];
 
   var listenersArray = gA11yEventListeners[aEventType];
   var index = listenersArray.indexOf(aEventHandler);
@@ -2108,7 +2151,7 @@ function removeA11yEventListener(aEventType, aEventHandler)
     return false;
 
   listenersArray.splice(index, 1);
-  
+
   if (!listenersArray.length) {
     gA11yEventListeners[aEventType] = null;
     delete gA11yEventListeners[aEventType];
@@ -2227,21 +2270,19 @@ var gLogger =
 function sequenceItem(aProcessor, aEventType, aTarget, aItemID)
 {
   // private
-  
+
   this.startProcess = function sequenceItem_startProcess()
   {
     this.queue.invoke();
   }
-  
-  var item = this;
-  
+
   this.queue = new eventQueue();
   this.queue.onFinish = function()
   {
     aProcessor.onProcessed();
     return DO_NOT_FINISH_TEST;
   }
-  
+
   var invoker = {
     invoke: function invoker_invoke() {
       return aProcessor.process();
@@ -2252,7 +2293,7 @@ function sequenceItem(aProcessor, aEventType, aTarget, aItemID)
     },
     eventSeq: [ new invokerChecker(aEventType, aTarget) ]
   };
-  
+
   this.queue.push(invoker);
 }
 

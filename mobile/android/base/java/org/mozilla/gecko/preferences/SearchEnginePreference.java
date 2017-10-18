@@ -4,14 +4,13 @@
 
 package org.mozilla.gecko.preferences;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SnackbarBuilder;
-import org.mozilla.gecko.favicons.Favicons;
-import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
-import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
-import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.gecko.icons.IconCallback;
+import org.mozilla.gecko.icons.IconDescriptor;
+import org.mozilla.gecko.icons.IconResponse;
+import org.mozilla.gecko.icons.Icons;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.widget.FaviconView;
 
 import android.app.Activity;
@@ -21,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.design.widget.Snackbar;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -60,13 +60,13 @@ public class SearchEnginePreference extends CustomListPreference {
         super.onBindView(view);
 
         // We synchronise to avoid a race condition between this and the favicon loading callback in
-        // setSearchEngineFromJSON.
+        // setSearchEngineFromBundle.
         synchronized (bitmapLock) {
             // Set the icon in the FaviconView.
             mFaviconView = ((FaviconView) view.findViewById(R.id.search_engine_icon));
 
             if (mIconBitmap != null) {
-                mFaviconView.updateAndScaleImage(mIconBitmap, getTitle().toString());
+                mFaviconView.updateAndScaleImage(IconResponse.create(mIconBitmap));
             }
         }
     }
@@ -139,56 +139,44 @@ public class SearchEnginePreference extends CustomListPreference {
     }
 
     /**
-     * Configure this Preference object from the Gecko search engine JSON object.
-     * @param geckoEngineJSON The Gecko-formatted JSON object representing the search engine.
-     * @throws JSONException If the JSONObject is invalid.
+     * Configure this Preference object from the Gecko search engine object.
+     * @param geckoEngine The Gecko-formatted object representing the search engine.
      */
-    public void setSearchEngineFromJSON(JSONObject geckoEngineJSON) throws JSONException {
-        mIdentifier = geckoEngineJSON.getString("identifier");
+    public void setSearchEngineFromBundle(GeckoBundle geckoEngine) {
+        mIdentifier = geckoEngine.getString("identifier");
 
         // A null JS value gets converted into a string.
-        if (mIdentifier.equals("null")) {
+        if (mIdentifier == null || mIdentifier.equals("null")) {
             mIdentifier = "other";
         }
 
-        final String engineName = geckoEngineJSON.getString("name");
+        final String engineName = geckoEngine.getString("name");
         final SpannableString titleSpannable = new SpannableString(engineName);
 
         setTitle(titleSpannable);
 
-        final String iconURI = geckoEngineJSON.getString("iconURI");
+        final String iconURI = geckoEngine.getString("iconURI");
+        if (TextUtils.isEmpty(iconURI)) {
+            return;
+        }
+
         // Keep a reference to the bitmap - we'll need it later in onBindView.
         try {
-            final int desiredWidth;
-            if (mFaviconView != null) {
-                desiredWidth = mFaviconView.getWidth();
-            } else {
-                // largestFaviconSize is initialized when Favicons is attached to a
-                // context, which occurs during GeckoApp.onCreate. That might not
-                // ever happen (leaving it at 0), so we fall back.
-                if (Favicons.largestFaviconSize == 0) {
-                    desiredWidth = 128;
-                } else {
-                    desiredWidth = Favicons.largestFaviconSize;
-                }
-            }
-
-            Favicons.getSizedFavicon(getContext(), mIdentifier, iconURI,
-                Favicons.LoadType.PRIVILEGED, // We have an internal store of search engine icons, hence we're always loading PRIVILEGED icons here
-                desiredWidth, 0,
-                new OnFaviconLoadedListener() {
-                    @Override
-                    public void onFaviconLoaded(String url, String faviconURL, Bitmap favicon) {
-                        synchronized (bitmapLock) {
-                            mIconBitmap = favicon;
+            Icons.with(getContext())
+                    .pageUrl(mIdentifier)
+                    .icon(IconDescriptor.createGenericIcon(iconURI))
+                    .privileged(true)
+                    .build()
+                    .execute(new IconCallback() {
+                        @Override
+                        public void onIconResponse(IconResponse response) {
+                            mIconBitmap = response.getBitmap();
 
                             if (mFaviconView != null) {
-                                mFaviconView.updateAndScaleImage(mIconBitmap, getTitle().toString());
+                                mFaviconView.updateAndScaleImage(response);
                             }
                         }
-                    }
-                }
-            );
+                    });
         } catch (IllegalArgumentException e) {
             Log.e(LOGTAG, "IllegalArgumentException creating Bitmap. Most likely a zero-length bitmap.", e);
         } catch (NullPointerException e) {

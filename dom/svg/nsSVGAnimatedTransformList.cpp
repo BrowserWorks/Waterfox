@@ -167,10 +167,10 @@ nsSVGAnimatedTransformList::IsExplicitlySet() const
   return mIsAttrSet || !mBaseVal.IsEmpty() || mAnimVal;
 }
 
-nsISMILAttr*
+UniquePtr<nsISMILAttr>
 nsSVGAnimatedTransformList::ToSMILAttr(nsSVGElement* aSVGElement)
 {
-  return new SMILAnimatedTransformList(this, aSVGElement);
+  return MakeUnique<SMILAnimatedTransformList>(this, aSVGElement);
 }
 
 nsresult
@@ -273,7 +273,7 @@ nsSVGAnimatedTransformList::SMILAnimatedTransformList::ParseParameterList(
   while (tokenizer.hasMoreTokens()) {
     float f;
     if (!SVGContentUtils::ParseNumber(tokenizer.nextToken(), f)) {
-      return -1;    
+      return -1;
     }
     if (numArgsFound < aNVars) {
       aVars[numArgsFound] = f;

@@ -11,8 +11,8 @@
 #include "Layers.h"
 #include "ImageContainer.h"
 #include "ImageTypes.h"
-#include "prmem.h"
 #include "nsContentUtils.h"
+#include "MediaStreamGraph.h"
 
 #include "nsIFilePicker.h"
 #include "nsIPrefService.h"
@@ -32,7 +32,7 @@ namespace mozilla {
 
 using namespace mozilla::gfx;
 
-NS_IMPL_ISUPPORTS(MediaEngineDefaultVideoSource, nsITimerCallback)
+NS_IMPL_ISUPPORTS(MediaEngineDefaultVideoSource, nsITimerCallback, nsINamed)
 /**
  * Default video source.
  */
@@ -44,7 +44,9 @@ MediaEngineDefaultVideoSource::MediaEngineDefaultVideoSource()
   : MediaEngineVideoSource()
 #endif
   , mTimer(nullptr)
+#ifndef MOZ_WEBRTC
   , mMonitor("Fake video")
+#endif
   , mCb(16), mCr(16)
 {
   mImageContainer =
@@ -58,14 +60,12 @@ void
 MediaEngineDefaultVideoSource::GetName(nsAString& aName) const
 {
   aName.AssignLiteral(u"Default Video Device");
-  return;
 }
 
 void
 MediaEngineDefaultVideoSource::GetUUID(nsACString& aUUID) const
 {
   aUUID.AssignLiteral("1041FCBD-3F12-4F7B-9E9B-1EC556DD5676");
-  return;
 }
 
 uint32_t
@@ -87,7 +87,7 @@ nsresult
 MediaEngineDefaultVideoSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
                                         const nsString& aDeviceId,
-                                        const nsACString& aOrigin,
+                                        const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
                                         AllocationHandle** aOutHandle,
                                         const char** aOutBadConstraint)
 {
@@ -104,11 +104,22 @@ MediaEngineDefaultVideoSource::Allocate(const dom::MediaTrackConstraints &aConst
   }
 
 
+  // emulator debug is very, very slow; reduce load on it with smaller/slower fake video
   mOpts = aPrefs;
   mOpts.mWidth = c.mWidth.Get(aPrefs.mWidth ? aPrefs.mWidth :
-                              MediaEngine::DEFAULT_43_VIDEO_WIDTH);
+#ifdef DEBUG
+                              MediaEngine::DEFAULT_43_VIDEO_WIDTH/2
+#else
+                              MediaEngine::DEFAULT_43_VIDEO_WIDTH
+#endif
+                              );
   mOpts.mHeight = c.mHeight.Get(aPrefs.mHeight ? aPrefs.mHeight :
-                                MediaEngine::DEFAULT_43_VIDEO_HEIGHT);
+#ifdef DEBUG
+                                MediaEngine::DEFAULT_43_VIDEO_HEIGHT/2
+#else
+                                MediaEngine::DEFAULT_43_VIDEO_HEIGHT
+#endif
+                                );
   mState = kAllocated;
   *aOutHandle = nullptr;
   return NS_OK;
@@ -136,7 +147,7 @@ static void AllocateSolidColorFrame(layers::PlanarYCbCrData& aData,
   int yLen = aWidth*aHeight;
   int cbLen = yLen>>2;
   int crLen = cbLen;
-  uint8_t* frame = (uint8_t*) PR_Malloc(yLen+cbLen+crLen);
+  uint8_t* frame = (uint8_t*) malloc(yLen+cbLen+crLen);
   memset(frame, aY, yLen);
   memset(frame+yLen, aCb, cbLen);
   memset(frame+yLen+cbLen, aCr, crLen);
@@ -156,7 +167,7 @@ static void AllocateSolidColorFrame(layers::PlanarYCbCrData& aData,
 
 static void ReleaseFrame(layers::PlanarYCbCrData& aData)
 {
-  PR_Free(aData.mYChannel);
+  free(aData.mYChannel);
 }
 
 nsresult
@@ -178,8 +189,8 @@ MediaEngineDefaultVideoSource::Start(SourceMediaStream* aStream, TrackID aID,
   mTrackID = aID;
 
   // Start timer for subsequent frames
-#if defined(MOZ_WIDGET_GONK) && defined(DEBUG)
-// B2G emulator debug is very, very slow and has problems dealing with realtime audio inputs
+#if defined(MOZ_WIDGET_ANDROID) && defined(DEBUG)
+// emulator debug is very, very slow and has problems dealing with realtime audio inputs
   mTimer->InitWithCallback(this, (1000 / mOpts.mFPS)*10, nsITimer::TYPE_REPEATING_SLACK);
 #else
   mTimer->InitWithCallback(this, 1000 / mOpts.mFPS, nsITimer::TYPE_REPEATING_SLACK);
@@ -277,6 +288,13 @@ MediaEngineDefaultVideoSource::Notify(nsITimer* aTimer)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+MediaEngineDefaultVideoSource::GetName(nsACString& aName)
+{
+  aName.AssignLiteral("MediaEngineDefaultVideoSource");
+  return NS_OK;
+}
+
 void
 MediaEngineDefaultVideoSource::NotifyPull(MediaStreamGraph* aGraph,
                                           SourceMediaStream *aSource,
@@ -356,14 +374,13 @@ private:
 /**
  * Default audio source.
  */
-NS_IMPL_ISUPPORTS(MediaEngineDefaultAudioSource, nsITimerCallback)
+
+NS_IMPL_ISUPPORTS0(MediaEngineDefaultAudioSource)
 
 MediaEngineDefaultAudioSource::MediaEngineDefaultAudioSource()
   : MediaEngineAudioSource(kReleased)
-  , mPrincipalHandle(PRINCIPAL_HANDLE_NONE)
-  , mTimer(nullptr)
-{
-}
+  , mLastNotify(0)
+{}
 
 MediaEngineDefaultAudioSource::~MediaEngineDefaultAudioSource()
 {}
@@ -372,14 +389,12 @@ void
 MediaEngineDefaultAudioSource::GetName(nsAString& aName) const
 {
   aName.AssignLiteral(u"Default Audio Device");
-  return;
 }
 
 void
 MediaEngineDefaultAudioSource::GetUUID(nsACString& aUUID) const
 {
   aUUID.AssignLiteral("B7CBD7C1-53EF-42F9-8353-73F61C70C092");
-  return;
 }
 
 uint32_t
@@ -401,7 +416,7 @@ nsresult
 MediaEngineDefaultAudioSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
                                         const nsString& aDeviceId,
-                                        const nsACString& aOrigin,
+                                        const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
                                         AllocationHandle** aOutHandle,
                                         const char** aOutBadConstraint)
 {
@@ -442,41 +457,15 @@ MediaEngineDefaultAudioSource::Start(SourceMediaStream* aStream, TrackID aID,
     return NS_ERROR_FAILURE;
   }
 
-  mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
-  if (!mTimer) {
-    return NS_ERROR_FAILURE;
-  }
-
-  mSource = aStream;
-
-  // We try to keep the appended data at this size.
-  // Make it two timer intervals to try to avoid underruns.
-  mBufferSize = 2 * (AUDIO_RATE * DEFAULT_AUDIO_TIMER_MS) / 1000;
-
   // AddTrack will take ownership of segment
   AudioSegment* segment = new AudioSegment();
-  AppendToSegment(*segment, mBufferSize);
-  mSource->AddAudioTrack(aID, AUDIO_RATE, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
+  aStream->AddAudioTrack(aID, AUDIO_RATE, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
 
   // Remember TrackID so we can finish later
   mTrackID = aID;
 
-  // Remember PrincipalHandle since we don't append in NotifyPull.
-  mPrincipalHandle = aPrincipalHandle;
-
-  mLastNotify = TimeStamp::Now();
-
-  // 1 Audio frame per 10ms
-#if defined(MOZ_WIDGET_GONK) && defined(DEBUG)
-// B2G emulator debug is very, very slow and has problems dealing with realtime audio inputs
-  mTimer->InitWithCallback(this, DEFAULT_AUDIO_TIMER_MS*10,
-                           nsITimer::TYPE_REPEATING_PRECISE_CAN_SKIP);
-#else
-  mTimer->InitWithCallback(this, DEFAULT_AUDIO_TIMER_MS,
-                           nsITimer::TYPE_REPEATING_PRECISE_CAN_SKIP);
-#endif
+  mLastNotify = 0;
   mState = kStarted;
-
   return NS_OK;
 }
 
@@ -486,13 +475,6 @@ MediaEngineDefaultAudioSource::Stop(SourceMediaStream *aSource, TrackID aID)
   if (mState != kStarted) {
     return NS_ERROR_FAILURE;
   }
-  if (!mTimer) {
-    return NS_ERROR_FAILURE;
-  }
-
-  mTimer->Cancel();
-  mTimer = nullptr;
-
   aSource->EndTrack(aID);
 
   mState = kStopped;
@@ -511,7 +493,8 @@ MediaEngineDefaultAudioSource::Restart(AllocationHandle* aHandle,
 
 void
 MediaEngineDefaultAudioSource::AppendToSegment(AudioSegment& aSegment,
-                                               TrackTicks aSamples)
+                                               TrackTicks aSamples,
+                                               const PrincipalHandle& aPrincipalHandle)
 {
   RefPtr<SharedBuffer> buffer = SharedBuffer::Create(aSamples * sizeof(int16_t));
   int16_t* dest = static_cast<int16_t*>(buffer->Data());
@@ -519,28 +502,24 @@ MediaEngineDefaultAudioSource::AppendToSegment(AudioSegment& aSegment,
   mSineGenerator->generate(dest, aSamples);
   AutoTArray<const int16_t*,1> channels;
   channels.AppendElement(dest);
-  aSegment.AppendFrames(buffer.forget(), channels, aSamples, mPrincipalHandle);
+  aSegment.AppendFrames(buffer.forget(), channels, aSamples, aPrincipalHandle);
 }
 
-NS_IMETHODIMP
-MediaEngineDefaultAudioSource::Notify(nsITimer* aTimer)
+void
+MediaEngineDefaultAudioSource::NotifyPull(MediaStreamGraph* aGraph,
+                                          SourceMediaStream *aSource,
+                                          TrackID aID,
+                                          StreamTime aDesiredTime,
+                                          const PrincipalHandle& aPrincipalHandle)
 {
-  TimeStamp now = TimeStamp::Now();
-  TimeDuration timeSinceLastNotify = now - mLastNotify;
-  mLastNotify = now;
-  TrackTicks samplesSinceLastNotify =
-    RateConvertTicksRoundUp(AUDIO_RATE, 1000000, timeSinceLastNotify.ToMicroseconds());
-
-  // If it's been longer since the last Notify() than mBufferSize holds, we
-  // have underrun and the MSG had to append silence while waiting for us
-  // to push more data. In this case we reset to mBufferSize again.
-  TrackTicks samplesToAppend = std::min(samplesSinceLastNotify, mBufferSize);
-
+  MOZ_ASSERT(aID == mTrackID);
   AudioSegment segment;
-  AppendToSegment(segment, samplesToAppend);
-  mSource->AppendToTrack(mTrackID, &segment);
-
-  return NS_OK;
+  // avoid accumulating rounding errors
+  TrackTicks desired = aSource->TimeToTicksRoundUp(AUDIO_RATE, aDesiredTime);
+  TrackTicks delta = desired - mLastNotify;
+  mLastNotify += delta;
+  AppendToSegment(segment, delta, aPrincipalHandle);
+  aSource->AppendToTrack(mTrackID, &segment);
 }
 
 void
@@ -559,8 +538,6 @@ MediaEngineDefault::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
   RefPtr<MediaEngineVideoSource> newSource = new MediaEngineDefaultVideoSource();
   mVSources.AppendElement(newSource);
   aVSources->AppendElement(newSource);
-
-  return;
 }
 
 void
@@ -585,7 +562,6 @@ MediaEngineDefault::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
     mASources.AppendElement(newSource);
     aASources->AppendElement(newSource);
   }
-  return;
 }
 
 } // namespace mozilla

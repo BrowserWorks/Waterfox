@@ -42,7 +42,11 @@ public:
 
     virtual gfxPlatformFontList* CreatePlatformFontList() override;
 
-    bool IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags) override;
+    void
+    GetSystemFontFamilyList(InfallibleTArray<mozilla::dom::FontFamilyListEntry>*
+                            aFontFamilies) override;
+
+    bool IsFontFormatSupported(uint32_t aFormatFlags) override;
 
     virtual void GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
                                         Script aRunScript,

@@ -6,6 +6,7 @@
 #ifndef mozilla_image_DrawResult_h
 #define mozilla_image_DrawResult_h
 
+#include <cstdint> // for uint8_t
 #include "mozilla/Attributes.h"
 #include "mozilla/Likely.h"
 
@@ -82,6 +83,22 @@ operator&=(DrawResult& aLeft, const DrawResult aRight)
   aLeft = aLeft & aRight;
   return aLeft;
 }
+
+/**
+ * A struct used during painting to provide input flags to determine how
+ * imagelib draw calls should behave and an output DrawResult to return
+ * information about the result of any imagelib draw calls that may have
+ * occurred.
+ */
+struct imgDrawingParams {
+  explicit imgDrawingParams(uint32_t aImageFlags = 0)
+    : imageFlags(aImageFlags), result(DrawResult::SUCCESS)
+  {}
+
+  const uint32_t imageFlags; // imgIContainer::FLAG_* image flags to pass to
+                             // image lib draw calls.
+  DrawResult result;         // To return results from image lib painting.
+};
 
 } // namespace image
 } // namespace mozilla

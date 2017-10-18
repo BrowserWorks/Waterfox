@@ -10,8 +10,22 @@
 #include "compiler/translator/ParseContext.h"
 #include "angle_gl.h"
 
+namespace sh
+{
+
 namespace
 {
+
+int GetLoopSymbolId(TIntermLoop *loop)
+{
+    // Here we assume all the operations are valid, because the loop node is
+    // already validated before this call.
+    TIntermSequence *declSeq = loop->getInit()->getAsDeclarationNode()->getSequence();
+    TIntermBinary *declInit  = (*declSeq)[0]->getAsBinaryNode();
+    TIntermSymbol *symbol    = declInit->getLeft()->getAsSymbolNode();
+
+    return symbol->getId();
+}
 
 // Traverses a node to check if it represents a constant index expression.
 // Definition:
@@ -25,10 +39,8 @@ namespace
 class ValidateConstIndexExpr : public TIntermTraverser
 {
   public:
-    ValidateConstIndexExpr(TLoopStack& stack)
-        : TIntermTraverser(true, false, false),
-          mValid(true),
-          mLoopStack(stack)
+    ValidateConstIndexExpr(const std::vector<int> &loopSymbols)
+        : TIntermTraverser(true, false, false), mValid(true), mLoopSymbolIds(loopSymbols)
     {
     }
 
@@ -41,14 +53,15 @@ class ValidateConstIndexExpr : public TIntermTraverser
         // constant index expression.
         if (mValid)
         {
-            mValid = (symbol->getQualifier() == EvqConst) ||
-                     (mLoopStack.findLoop(symbol));
+            bool isLoopSymbol = std::find(mLoopSymbolIds.begin(), mLoopSymbolIds.end(),
+                                          symbol->getId()) != mLoopSymbolIds.end();
+            mValid = (symbol->getQualifier() == EvqConst) || isLoopSymbol;
         }
     }
 
   private:
     bool mValid;
-    TLoopStack& mLoopStack;
+    const std::vector<int> mLoopSymbolIds;
 };
 
 }  // namespace anonymous
@@ -77,9 +90,9 @@ bool ValidateLimitations::IsLimitedForLoop(TIntermLoop *loop)
     TIntermNode *body = loop->getBody();
     if (body != nullptr)
     {
-        validate.mLoopStack.push(loop);
+        validate.mLoopSymbolIds.push_back(GetLoopSymbolId(loop));
         body->traverse(&validate);
-        validate.mLoopStack.pop();
+        validate.mLoopSymbolIds.pop_back();
     }
     return (validate.mNumErrors == 0);
 }
@@ -137,9 +150,9 @@ bool ValidateLimitations::visitLoop(Visit, TIntermLoop *node)
     TIntermNode *body = node->getBody();
     if (body != NULL)
     {
-        mLoopStack.push(node);
+        mLoopSymbolIds.push_back(GetLoopSymbolId(node));
         body->traverse(this);
-        mLoopStack.pop();
+        mLoopSymbolIds.pop_back();
     }
 
     // The loop is fully processed - no need to visit children.
@@ -160,12 +173,13 @@ void ValidateLimitations::error(TSourceLoc loc,
 
 bool ValidateLimitations::withinLoopBody() const
 {
-    return !mLoopStack.empty();
+    return !mLoopSymbolIds.empty();
 }
 
 bool ValidateLimitations::isLoopIndex(TIntermSymbol *symbol)
 {
-    return mLoopStack.findLoop(symbol) != NULL;
+    return std::find(mLoopSymbolIds.begin(), mLoopSymbolIds.end(), symbol->getId()) !=
+           mLoopSymbolIds.end();
 }
 
 bool ValidateLimitations::validateLoopType(TIntermLoop *node)
@@ -213,8 +227,8 @@ int ValidateLimitations::validateForLoopInit(TIntermLoop *node)
     // init-declaration has the form:
     //     type-specifier identifier = constant-expression
     //
-    TIntermAggregate *decl = init->getAsAggregate();
-    if ((decl == NULL) || (decl->getOp() != EOpDeclaration))
+    TIntermDeclaration *decl = init->getAsDeclarationNode();
+    if (decl == nullptr)
     {
         error(init->getLine(), "Invalid init declaration", "for");
         return -1;
@@ -423,7 +437,8 @@ bool ValidateLimitations::validateFunctionCall(TIntermAggregate *node)
 
     bool valid = true;
     TSymbolTable& symbolTable = GetGlobalParseContext()->symbolTable;
-    TSymbol* symbol = symbolTable.find(node->getName(), GetGlobalParseContext()->getShaderVersion());
+    TSymbol *symbol           = symbolTable.find(node->getFunctionSymbolInfo()->getName(),
+                                       GetGlobalParseContext()->getShaderVersion());
     ASSERT(symbol && symbol->isFunction());
     TFunction *function = static_cast<TFunction *>(symbol);
     for (ParamIndex::const_iterator i = pIndex.begin();
@@ -470,7 +485,7 @@ bool ValidateLimitations::isConstIndexExpr(TIntermNode *node)
 {
     ASSERT(node != NULL);
 
-    ValidateConstIndexExpr validate(mLoopStack);
+    ValidateConstIndexExpr validate(mLoopSymbolIds);
     node->traverse(&validate);
     return validate.isValid();
 }
@@ -495,3 +510,4 @@ bool ValidateLimitations::validateIndexing(TIntermBinary *node)
     return valid;
 }
 
+}  // namespace sh

@@ -32,7 +32,7 @@
 #include "certt.h"
 #include "certdb.h"
 
-/* #include "secmod.h" */
+#include "secmod.h"
 #include "pk11func.h"
 #include "secoid.h"
 
@@ -3229,6 +3229,10 @@ SEC_PrintCertificateAndTrust(CERTCertificate *cert,
     SECStatus rv;
     SECItem data;
     CERTCertTrust certTrust;
+    PK11SlotList *slotList;
+    PRBool falseAttributeFound = PR_FALSE;
+    PRBool trueAttributeFound = PR_FALSE;
+    const char *moz_policy_ca_info = NULL;
 
     data.data = cert->derCert.data;
     data.len = cert->derCert.len;
@@ -3238,6 +3242,35 @@ SEC_PrintCertificateAndTrust(CERTCertificate *cert,
     if (rv) {
         return (SECFailure);
     }
+
+    slotList = PK11_GetAllSlotsForCert(cert, NULL);
+    if (slotList) {
+        PK11SlotListElement *se = PK11_GetFirstSafe(slotList);
+        for (; se; se = PK11_GetNextSafe(slotList, se, PR_FALSE)) {
+            CK_OBJECT_HANDLE handle = PK11_FindCertInSlot(se->slot, cert, NULL);
+            if (handle != CK_INVALID_HANDLE) {
+                PORT_SetError(0);
+                if (PK11_HasAttributeSet(se->slot, handle,
+                                         CKA_NSS_MOZILLA_CA_POLICY, PR_FALSE)) {
+                    trueAttributeFound = PR_TRUE;
+                } else if (!PORT_GetError()) {
+                    falseAttributeFound = PR_TRUE;
+                }
+            }
+        }
+        PK11_FreeSlotList(slotList);
+    }
+
+    if (trueAttributeFound) {
+        moz_policy_ca_info = "true (attribute present)";
+    } else if (falseAttributeFound) {
+        moz_policy_ca_info = "false (attribute present)";
+    } else {
+        moz_policy_ca_info = "false (attribute missing)";
+    }
+    SECU_Indent(stdout, 1);
+    printf("Mozilla-CA-Policy: %s\n", moz_policy_ca_info);
+
     if (trust) {
         SECU_PrintTrustFlags(stdout, trust,
                              "Certificate Trust Flags", 1);
@@ -3830,5 +3863,100 @@ SECU_ParseSSLVersionRangeString(const char *input,
         return SECFailure;
     }
 
+    return SECSuccess;
+}
+
+SSLNamedGroup
+groupNameToNamedGroup(char *name)
+{
+    if (PL_strlen(name) == 4) {
+        if (!strncmp(name, "P256", 4)) {
+            return ssl_grp_ec_secp256r1;
+        }
+        if (!strncmp(name, "P384", 4)) {
+            return ssl_grp_ec_secp384r1;
+        }
+        if (!strncmp(name, "P521", 4)) {
+            return ssl_grp_ec_secp521r1;
+        }
+    }
+    if (PL_strlen(name) == 6) {
+        if (!strncmp(name, "x25519", 6)) {
+            return ssl_grp_ec_curve25519;
+        }
+        if (!strncmp(name, "FF2048", 6)) {
+            return ssl_grp_ffdhe_2048;
+        }
+        if (!strncmp(name, "FF3072", 6)) {
+            return ssl_grp_ffdhe_3072;
+        }
+        if (!strncmp(name, "FF4096", 6)) {
+            return ssl_grp_ffdhe_4096;
+        }
+        if (!strncmp(name, "FF6144", 6)) {
+            return ssl_grp_ffdhe_6144;
+        }
+        if (!strncmp(name, "FF8192", 6)) {
+            return ssl_grp_ffdhe_8192;
+        }
+    }
+
+    return ssl_grp_none;
+}
+
+SECStatus
+parseGroupList(const char *arg, SSLNamedGroup **enabledGroups,
+               unsigned int *enabledGroupsCount)
+{
+    SSLNamedGroup *groups;
+    char *str;
+    char *p;
+    unsigned int numValues = 0;
+    unsigned int count = 0;
+
+    /* Count the number of groups. */
+    str = PORT_Strdup(arg);
+    if (!str) {
+        return SECFailure;
+    }
+    p = strtok(str, ",");
+    while (p) {
+        ++numValues;
+        p = strtok(NULL, ",");
+    }
+    PORT_Free(str);
+    str = NULL;
+    groups = PORT_ZNewArray(SSLNamedGroup, numValues);
+    if (!groups) {
+        goto done;
+    }
+
+    /* Get group names. */
+    str = PORT_Strdup(arg);
+    if (!str) {
+        goto done;
+    }
+    p = strtok(str, ",");
+    while (p) {
+        SSLNamedGroup group = groupNameToNamedGroup(p);
+        if (group == ssl_grp_none) {
+            count = 0;
+            goto done;
+        }
+        groups[count++] = group;
+        p = strtok(NULL, ",");
+    }
+
+done:
+    if (str) {
+        PORT_Free(str);
+    }
+    if (!count) {
+        PORT_Free(groups);
+        return SECFailure;
+    }
+
+    *enabledGroupsCount = count;
+    *enabledGroups = groups;
     return SECSuccess;
 }

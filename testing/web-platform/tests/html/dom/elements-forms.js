@@ -79,8 +79,7 @@ var formElements = {
     formTarget: "string",
     name: "string",
     type: {type: "enum", keywords: ["submit", "reset", "button"], defaultVal: "submit"},
-    value: "string",
-    // TODO: menu
+    value: "string"
   },
   select: {
     autofocus: "boolean",
@@ -105,7 +104,7 @@ var formElements = {
     // TODO: autocomplete is special.
     // autocomplete: {type: "enum", keywords: ["on", "off"], defaultVal: "on"},
     autofocus: "boolean",
-    cols: {type: "limited unsigned long", defaultVal: 20},
+    cols: {type: "limited unsigned long with fallback", defaultVal: 20},
     dirName: "string",
     disabled: "boolean",
     inputMode: {type: "enum", keywords: ["verbatim", "latin", "latin-name", "latin-prose", "full-width-latin", "kana", "katakana", "numeric", "tel", "email", "url"]},
@@ -114,7 +113,7 @@ var formElements = {
     placeholder: "string",
     readOnly: "boolean",
     required: "boolean",
-    rows: {type: "limited unsigned long", defaultVal: 2},
+    rows: {type: "limited unsigned long with fallback", defaultVal: 2},
     wrap: "string",
   },
   keygen: {

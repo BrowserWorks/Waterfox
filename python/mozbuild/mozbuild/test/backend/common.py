@@ -33,23 +33,85 @@ CONFIGS = defaultdict(lambda: {
     'non_global_defines': [],
     'substs': {'OS_TARGET': 'WINNT'},
 }, {
-    'android_eclipse': {
-        'defines': {
-            'MOZ_ANDROID_MIN_SDK_VERSION': '15',
-        },
-        'non_global_defines': [],
-        'substs': {
-            'ANDROID_TARGET_SDK': '16',
-            'MOZ_WIDGET_TOOLKIT': 'android',
-        },
-    },
     'binary-components': {
         'defines': {},
         'non_global_defines': [],
         'substs': {
             'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
             'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
             'COMPILE_ENVIRONMENT': '1',
+        },
+    },
+    'rust-library': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_TARGET': 'x86_64-unknown-linux-gnu',
+            'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
+        },
+    },
+    'host-rust-library': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
+            'RUST_TARGET': 'armv7-linux-androideabi',
+            'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
+        },
+    },
+    'host-rust-library-features': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_HOST_TARGET': 'x86_64-unknown-linux-gnu',
+            'RUST_TARGET': 'armv7-linux-androideabi',
+            'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
+        },
+    },
+    'rust-library-features': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_TARGET': 'x86_64-unknown-linux-gnu',
+            'LIB_PREFIX': 'lib',
+            'RUST_LIB_PREFIX': 'lib',
+            'LIB_SUFFIX': 'a',
+            'RUST_LIB_SUFFIX': 'a',
+        },
+    },
+    'rust-programs': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'RUST_TARGET': 'i686-pc-windows-msvc',
+            'RUST_HOST_TARGET': 'i686-pc-windows-msvc',
+            'BIN_SUFFIX': '.exe',
+            'HOST_BIN_SUFFIX': '.exe',
+        },
+    },
+    'test-support-binaries-tracked': {
+        'defines': {},
+        'non_global_defines': [],
+        'substs': {
+            'COMPILE_ENVIRONMENT': '1',
+            'LIB_SUFFIX': 'dll',
+            'BIN_SUFFIX': '.exe',
         },
     },
     'sources': {

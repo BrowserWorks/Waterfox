@@ -115,7 +115,7 @@ ViewSourceBrowser.prototype = {
   receiveMessage(message) {
     let data = message.data;
 
-    switch(message.name) {
+    switch (message.name) {
       case "ViewSource:PromptAndGoToLine":
         this.promptAndGoToLine();
         break;
@@ -186,13 +186,13 @@ ViewSourceBrowser.prototype = {
     }
 
     if (browser) {
+      this.browser.sameProcessAsFrameLoader = browser.frameLoader;
+
       // If we're dealing with a remote browser, then the browser
       // for view source needs to be remote as well.
-      this.updateBrowserRemoteness(browser.isRemoteBrowser);
-    } else {
-      if (outerWindowID) {
-        throw new Error("Must supply the browser if passing the outerWindowID");
-      }
+      this.updateBrowserRemoteness(browser.isRemoteBrowser, browser.remoteType);
+    } else if (outerWindowID) {
+      throw new Error("Must supply the browser if passing the outerWindowID");
     }
 
     this.sendAsyncMessage("ViewSource:LoadSource",
@@ -221,9 +221,12 @@ ViewSourceBrowser.prototype = {
    *        True if the browser should be made remote. If the browsers
    *        remoteness already matches this value, this function does
    *        nothing.
+   * @param remoteType
+   *        The type of remote browser process.
    */
-  updateBrowserRemoteness(shouldBeRemote) {
-    if (this.browser.isRemoteBrowser != shouldBeRemote) {
+  updateBrowserRemoteness(shouldBeRemote, remoteType) {
+    if (this.browser.isRemoteBrowser != shouldBeRemote ||
+        this.browser.remoteType != remoteType) {
       // In this base case, where we are handed a <browser> someone else is
       // managing, we don't know for sure that it's safe to toggle remoteness.
       // For view source in a window, this is overridden to actually do the
@@ -247,7 +250,7 @@ ViewSourceBrowser.prototype = {
         this.bundle.GetStringFromName("goToLineText"),
         input,
         null,
-        {value:0});
+        {value: 0});
 
     if (!ok)
       return;

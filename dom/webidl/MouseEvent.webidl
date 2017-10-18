@@ -12,10 +12,16 @@
 
 [Constructor(DOMString typeArg, optional MouseEventInit mouseEventInitDict)]
 interface MouseEvent : UIEvent {
+  [NeedsCallerType]
   readonly attribute long           screenX;
+  [NeedsCallerType]
   readonly attribute long           screenY;
   readonly attribute long           clientX;
   readonly attribute long           clientY;
+  [BinaryName="clientX"]
+  readonly attribute long           x;
+  [BinaryName="clientY"]
+  readonly attribute long           y;
   readonly attribute long           offsetX;
   readonly attribute long           offsetY;
   readonly attribute boolean        ctrlKey;
@@ -32,21 +38,21 @@ interface MouseEvent : UIEvent {
   readonly attribute long           movementY;
 
   // Deprecated in DOM Level 3:
-  void                              initMouseEvent(DOMString typeArg, 
-                                                   boolean canBubbleArg, 
-                                                   boolean cancelableArg, 
-                                                   Window? viewArg,
-                                                   long detailArg, 
-                                                   long screenXArg, 
-                                                   long screenYArg, 
-                                                   long clientXArg, 
-                                                   long clientYArg, 
-                                                   boolean ctrlKeyArg, 
-                                                   boolean altKeyArg, 
-                                                   boolean shiftKeyArg, 
-                                                   boolean metaKeyArg, 
-                                                   short buttonArg,
-                                                   EventTarget? relatedTargetArg);
+void initMouseEvent(DOMString typeArg,
+                    optional boolean canBubbleArg = false,
+                    optional boolean cancelableArg = false,
+                    optional Window? viewArg = null,
+                    optional long detailArg = 0,
+                    optional long screenXArg = 0,
+                    optional long screenYArg = 0,
+                    optional long clientXArg = 0,
+                    optional long clientYArg = 0,
+                    optional boolean ctrlKeyArg = false,
+                    optional boolean altKeyArg = false,
+                    optional boolean shiftKeyArg = false,
+                    optional boolean metaKeyArg = false,
+                    optional short buttonArg = 0,
+                    optional EventTarget? relatedTargetArg = null);
   // Introduced in DOM Level 3:
   boolean                           getModifierState(DOMString keyArg);
 };
@@ -71,11 +77,6 @@ dictionary MouseEventInit : EventModifierInit {
 // Mozilla extensions
 partial interface MouseEvent
 {
-  [BinaryName="movementX", Pref="pointer-lock-api.prefixed.enabled"]
-  readonly attribute long mozMovementX;
-  [BinaryName="movementY", Pref="pointer-lock-api.prefixed.enabled"]
-  readonly attribute long mozMovementY;
-
   // Finger or touch pressure event value
   // ranges between 0.0 and 1.0
   readonly attribute float mozPressure;
@@ -90,23 +91,23 @@ partial interface MouseEvent
 
   readonly attribute unsigned short mozInputSource;
 
-  void                initNSMouseEvent(DOMString typeArg,
-                                       boolean canBubbleArg,
-                                       boolean cancelableArg,
-                                       Window? viewArg,
-                                       long detailArg,
-                                       long screenXArg,
-                                       long screenYArg,
-                                       long clientXArg,
-                                       long clientYArg,
-                                       boolean ctrlKeyArg,
-                                       boolean altKeyArg,
-                                       boolean shiftKeyArg,
-                                       boolean metaKeyArg,
-                                       short buttonArg,
-                                       EventTarget? relatedTargetArg,
-                                       float pressure,
-                                       unsigned short inputSourceArg);
+  void initNSMouseEvent(DOMString typeArg,
+                        optional boolean canBubbleArg = false,
+                        optional boolean cancelableArg = false,
+                        optional Window? viewArg = null,
+                        optional long detailArg = 0,
+                        optional long screenXArg = 0,
+                        optional long screenYArg = 0,
+                        optional long clientXArg = 0,
+                        optional long clientYArg = 0,
+                        optional boolean ctrlKeyArg = false,
+                        optional boolean altKeyArg = false,
+                        optional boolean shiftKeyArg = false,
+                        optional boolean metaKeyArg = false,
+                        optional short buttonArg = 0,
+                        optional EventTarget? relatedTargetArg = null,
+                        optional float pressure = 0,
+                        optional unsigned short inputSourceArg = 0);
   [ChromeOnly]
   readonly attribute boolean hitCluster; // True when touch occurs in a cluster of links
 

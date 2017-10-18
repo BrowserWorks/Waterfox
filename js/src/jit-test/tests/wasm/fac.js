@@ -1,6 +1,3 @@
-// |jit-test| test-also-wasm-baseline
-load(libdir + "wasm.js");
-
 // This is fac-opt from fac.wast in the official testsuite, changed to use
 // i32 instead of i64.
 assertEq(wasmEvalText(`(module
@@ -19,4 +16,4 @@ assertEq(wasmEvalText(`(module
   )
 
   (export "" 0)
-)`)(10), 3628800);
+)`).exports[""](10), 3628800);

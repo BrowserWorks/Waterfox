@@ -127,7 +127,9 @@ MOZCONFIG_OUT_FILTERED := $(filter-out $(START_COMMENT)%,$(MOZCONFIG_OUT_LINES))
 ifdef AUTOCLOBBER
 export AUTOCLOBBER=1
 endif
+ifdef MOZ_PGO
 export MOZ_PGO
+endif
 
 ifdef MOZ_PARALLEL_BUILD
   MOZ_MAKE_FLAGS := $(filter-out -j%,$(MOZ_MAKE_FLAGS))
@@ -310,7 +312,7 @@ EXTRA_CONFIG_DEPS := \
 
 $(CONFIGURES): %: %.in $(EXTRA_CONFIG_DEPS)
 	@echo Generating $@
-	sed '1,/^divert/d' $< > $@
+	cp -f $< $@
 	chmod +x $@
 
 CONFIG_STATUS_DEPS := \
@@ -326,6 +328,10 @@ CONFIG_STATUS_DEPS := \
   $(TOPSRCDIR)/testing/mozbase/packages.txt \
   $(OBJDIR)/.mozconfig.json \
   $(NULL)
+
+# Include a dep file emitted by configure to track Python files that
+# may influence the result of configure.
+-include $(OBJDIR)/configure.d
 
 CONFIGURE_ENV_ARGS += \
   MAKE='$(MAKE)' \
@@ -464,18 +470,6 @@ else
 endif
 endif
 
-cleansrcdir:
-	@cd $(TOPSRCDIR); \
-	if [ -f Makefile ]; then \
-	  $(MAKE) distclean ; \
-	else \
-	  echo 'Removing object files from srcdir...'; \
-	  rm -fr `find . -type d \( -name .deps -print -o -name CVS \
-	          -o -exec test ! -d {}/CVS \; \) -prune \
-	          -o \( -name '*.[ao]' -o -name '*.so' \) -type f -print`; \
-	   build/autoconf/clean-config.sh; \
-	fi;
-
 echo-variable-%:
 	@echo $($*)
 
@@ -489,7 +483,6 @@ echo-variable-%:
     realbuild \
     build \
     profiledbuild \
-    cleansrcdir \
     pull_all \
     build_all \
     clobber \

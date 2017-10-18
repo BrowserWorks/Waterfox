@@ -9,45 +9,22 @@
 {
   'targets': [
     {
-      'target_name': 'G711',
+      'target_name': 'g711',
       'type': 'static_library',
       'dependencies': [
         'audio_encoder_interface',
+        'audio_decoder_interface',
       ],
-      'include_dirs': [
-        'include',
-        '<(webrtc_root)',
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          'include',
-          '<(webrtc_root)',
-        ],
-      },
       'sources': [
-        'include/g711_interface.h',
-        'include/audio_encoder_pcm.h',
+        'audio_decoder_pcm.cc',
+        'audio_decoder_pcm.h',
+        'audio_encoder_pcm.cc',
+        'audio_encoder_pcm.h',
         'g711_interface.c',
+        'g711_interface.h',
         'g711.c',
         'g711.h',
-        'audio_encoder_pcm.cc',
       ],
     },
   ], # targets
-  'conditions': [
-    ['include_tests==1', {
-      'targets': [
-        {
-          'target_name': 'g711_test',
-          'type': 'executable',
-          'dependencies': [
-            'G711',
-          ],
-          'sources': [
-            'test/testG711.cc',
-          ],
-        },
-      ], # targets
-    }], # include_tests
-  ], # conditions
 }

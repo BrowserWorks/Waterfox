@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const data = { key: 5, index: 10 };
 
@@ -22,7 +22,7 @@ function testSteps()
 
   let objectStore = db.createObjectStore("foo", { keyPath: "key",
                                                   autoIncrement: true });
-  let index = objectStore.createIndex("foo", "index");
+  objectStore.createIndex("foo", "index");
 
   event.target.onsuccess = continueToNextStep;
   yield undefined;
@@ -72,5 +72,4 @@ function testSteps()
   ok(key === undefined, "Got the right value");
 
   finishTest();
-  yield undefined;
 }

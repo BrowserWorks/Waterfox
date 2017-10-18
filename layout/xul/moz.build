@@ -99,8 +99,10 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../base',
     '../generic',
+    '../painting',
     '../style',
     '/dom/base',
+    '/dom/xul',
 ]
 
 if CONFIG['GNU_CXX']:

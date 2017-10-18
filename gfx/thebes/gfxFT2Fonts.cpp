@@ -45,10 +45,11 @@ gfxFT2Font::ShapeText(DrawTarget     *aDrawTarget,
                       uint32_t        aLength,
                       Script          aScript,
                       bool            aVertical,
+                      RoundingFlags   aRounding,
                       gfxShapedText  *aShapedText)
 {
     if (!gfxFont::ShapeText(aDrawTarget, aText, aOffset, aLength, aScript,
-                            aVertical, aShapedText)) {
+                            aVertical, aRounding, aShapedText)) {
         // harfbuzz must have failed(?!), just render raw glyphs
         AddRange(aText, aOffset, aLength, aShapedText);
         PostShapingFixup(aDrawTarget, aText, aOffset, aLength,
@@ -89,7 +90,7 @@ gfxFT2Font::AddRange(const char16_t *aText, uint32_t aOffset,
             cgd = cgdNext;
             cgdNext = nullptr;
         } else {
-            cgd = GetGlyphDataForChar(ch);
+            cgd = GetGlyphDataForChar(face, ch);
         }
 
         FT_UInt gid = cgd->glyphIndex;
@@ -107,7 +108,7 @@ gfxFT2Font::AddRange(const char16_t *aText, uint32_t aOffset,
             if (FT_HAS_KERNING(face) && i + 1 < aLength) {
                 chNext = aText[i + 1];
                 if (chNext != 0) {
-                    cgdNext = GetGlyphDataForChar(chNext);
+                    cgdNext = GetGlyphDataForChar(face, chNext);
                     gidNext = cgdNext->glyphIndex;
                     if (gidNext && gidNext != spaceGlyph)
                         lsbDeltaNext = cgdNext->lsbDelta;
@@ -156,11 +157,12 @@ gfxFT2Font::AddRange(const char16_t *aText, uint32_t aOffset,
     }
 }
 
-gfxFT2Font::gfxFT2Font(cairo_scaled_font_t *aCairoFont,
+gfxFT2Font::gfxFT2Font(const RefPtr<mozilla::gfx::UnscaledFontFreeType>& aUnscaledFont,
+                       cairo_scaled_font_t *aCairoFont,
                        FT2FontEntry *aFontEntry,
                        const gfxFontStyle *aFontStyle,
                        bool aNeedsBold)
-    : gfxFT2FontBase(aCairoFont, aFontEntry, aFontStyle)
+    : gfxFT2FontBase(aUnscaledFont, aCairoFont, aFontEntry, aFontStyle)
     , mCharGlyphCache(32)
 {
     NS_ASSERTION(mFontEntry, "Unable to find font entry for font.  Something is whack.");
@@ -172,11 +174,8 @@ gfxFT2Font::~gfxFT2Font()
 }
 
 void
-gfxFT2Font::FillGlyphDataForChar(uint32_t ch, CachedGlyphData *gd)
+gfxFT2Font::FillGlyphDataForChar(FT_Face face, uint32_t ch, CachedGlyphData *gd)
 {
-    gfxFT2LockedFace faceLock(this);
-    FT_Face face = faceLock.get();
-
     if (!face->charmap || face->charmap->encoding != FT_ENCODING_UNICODE) {
         FT_Select_Charmap(face, FT_ENCODING_UNICODE);
     }

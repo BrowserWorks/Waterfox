@@ -57,12 +57,16 @@ interface nsIPrefBranch : nsISupports
    * Called to get the state of an individual boolean preference.
    *
    * @param aPrefName The boolean preference to get the state of.
+   * @param aDefaultValue The value to return if the preference is not set.
    *
    * @return boolean  The value of the requested boolean preference.
    *
    * @see setBoolPref
    */
-  boolean getBoolPref(in string aPrefName);
+  [optional_argc,binaryname(GetBoolPrefWithDefault)]
+  boolean getBoolPref(in string aPrefName, [optional] in boolean aDefaultValue);
+  [noscript,binaryname(GetBoolPref)]
+  boolean getBoolPrefXPCOM(in string aPrefName);
 
   /**
    * Called to set the state of an individual boolean preference.
@@ -83,26 +87,34 @@ interface nsIPrefBranch : nsISupports
    * are converted to floating point numbers.
    *
    * @param aPrefName The floating point preference to get the state of.
+   * @param aDefaultValue The value to return if the preference is not set.
    *
    * @return float  The value of the requested floating point preference.
    *
    * @see setCharPref
    */
-  float getFloatPref(in string aPrefName);
+  [optional_argc,binaryname(GetFloatPrefWithDefault)]
+  float getFloatPref(in string aPrefName, [optional] in float aDefaultValue);
+  [noscript,binaryname(GetFloatPref)]
+  float getFloatPrefXPCOM(in string aPrefName);
 
   /**
-   * Called to get the state of an individual string preference.
+   * Called to get the state of an individual ascii string preference.
    *
    * @param aPrefName The string preference to retrieve.
+   * @param aDefaultValue The string to return if the preference is not set.
    *
    * @return string   The value of the requested string preference.
    *
    * @see setCharPref
    */
-  string getCharPref(in string aPrefName);
+  [optional_argc,binaryname(GetCharPrefWithDefault)]
+  string getCharPref(in string aPrefName, [optional] in string aDefaultValue);
+  [noscript,binaryname(GetCharPref)]
+  string getCharPrefXPCOM(in string aPrefName);
 
   /**
-   * Called to set the state of an individual string preference.
+   * Called to set the state of an individual ascii string preference.
    *
    * @param aPrefName The string preference to set.
    * @param aValue    The string value to set the preference to.
@@ -115,15 +127,46 @@ interface nsIPrefBranch : nsISupports
   void setCharPref(in string aPrefName, in string aValue);
 
   /**
+   * Called to get the state of an individual unicode string preference.
+   *
+   * @param aPrefName The string preference to retrieve.
+   * @param aDefaultValue The string to return if the preference is not set.
+   *
+   * @return string   The value of the requested string preference.
+   *
+   * @see setStringPref
+   */
+  [optional_argc]
+  AUTF8String getStringPref(in string aPrefName,
+                            [optional] in AUTF8String aDefaultValue);
+
+  /**
+   * Called to set the state of an individual unicode string preference.
+   *
+   * @param aPrefName The string preference to set.
+   * @param aValue    The string value to set the preference to.
+   *
+   * @throws Error if setting failed or the preference has a default
+             value of a type other than string.
+   *
+   * @see getStringPref
+   */
+  void setStringPref(in string aPrefName, in AUTF8String aValue);
+
+  /**
    * Called to get the state of an individual integer preference.
    *
    * @param aPrefName The integer preference to get the value of.
+   * @param aDefaultValue The value to return if the preference is not set.
    *
    * @return long     The value of the requested integer preference.
    *
    * @see setIntPref
    */
-  long getIntPref(in string aPrefName);
+  [optional_argc,binaryname(GetIntPrefWithDefault)]
+  long getIntPref(in string aPrefName, [optional] in long aDefaultValue);
+  [noscript,binaryname(GetIntPref)]
+  long getIntPrefXPCOM(in string aPrefName);
 
   /**
    * Called to set the state of an individual integer preference.
@@ -148,6 +191,7 @@ interface nsIPrefBranch : nsISupports
    *                  represents. Interfaces currently supported are:
    *                    - nsIFile
    *                    - nsISupportsString (UniChar)
+   *                      (deprecated; see getStringPref)
    *                    - nsIPrefLocalizedString (Localized UniChar)
    * @param aValue    The XPCOM object into which to the complex preference 
    *                  value should be retrieved.
@@ -169,6 +213,7 @@ interface nsIPrefBranch : nsISupports
    *                  represents. Interfaces currently supported are:
    *                    - nsIFile
    *                    - nsISupportsString (UniChar)
+   *                      (deprecated; see setStringPref)
    *                    - nsIPrefLocalizedString (Localized UniChar)
    * @param aValue    The XPCOM object from which to set the complex preference 
    *                  value.
@@ -378,7 +423,7 @@ interface nsIPrefBranch : nsISupports
    * @see removeObserver
    */
   void addObserver(in string aDomain, in nsIObserver aObserver,
-                   in boolean aHoldWeak);
+                   [optional] in boolean aHoldWeak);
 
   /**
    * Remove a preference change observer.

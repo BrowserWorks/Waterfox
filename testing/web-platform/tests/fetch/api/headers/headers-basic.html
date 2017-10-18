@@ -57,7 +57,7 @@
           assert_equals(headers.get(name), String(headerDict[name]),
             "name: " + name + " has value: " + headerDict[name]);
         }
-      }, "Create headers with OpenEndedDictionary");
+      }, "Create headers with record");
 
       test(function() {
         var headers = new Headers(headerDict);
@@ -66,7 +66,16 @@
           assert_equals(headers2.get(name), String(headerDict[name]),
             "name: " + name + " has value: " + headerDict[name]);
         }
-      }, "Create headers whith existing headers");
+      }, "Create headers with existing headers");
+
+      test(function() {
+        var headers = new Headers()
+        headers[Symbol.iterator] = function *() {
+          yield ["test", "test"]
+        }
+        var headers2 = new Headers(headers)
+        assert_equals(headers2.get("test"), "test")
+      }, "Create headers with existing headers with custom iterator");
 
       test(function() {
         var headers = new Headers();
@@ -120,14 +129,29 @@
                                "Content-Types": "value6"
       };
       var sortedHeaderDict = {};
+      var headerValues = [];
       var sortedHeaderKeys = Object.keys(headerEntriesDict).map(function(value) {
         sortedHeaderDict[value.toLowerCase()] = headerEntriesDict[value];
+        headerValues.push(headerEntriesDict[value]);
         return value.toLowerCase();
       }).sort();
+
+      var iteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf([][Symbol.iterator]()));
+      function checkIteratorProperties(iterator) {
+        var prototype = Object.getPrototypeOf(iterator);
+        assert_equals(Object.getPrototypeOf(prototype), iteratorPrototype);
+
+        var descriptor = Object.getOwnPropertyDescriptor(prototype, "next");
+        assert_true(descriptor.configurable, "configurable");
+        assert_true(descriptor.enumerable, "enumerable");
+        assert_true(descriptor.writable, "writable");
+      }
 
       test(function() {
         var headers = new Headers(headerEntriesDict);
         var actual = headers.keys();
+        checkIteratorProperties(actual);
+
         sortedHeaderKeys.forEach(function(key) {
             entry = actual.next();
             assert_false(entry.done);
@@ -135,11 +159,15 @@
         });
         assert_true(actual.next().done);
         assert_true(actual.next().done);
+
+        for (key of headers.keys())
+            assert_true(sortedHeaderKeys.indexOf(key) != -1);
       }, "Check keys method");
 
       test(function() {
         var headers = new Headers(headerEntriesDict);
         var actual = headers.values();
+        checkIteratorProperties(actual);
 
         sortedHeaderKeys.forEach(function(key) {
             entry = actual.next();
@@ -148,11 +176,15 @@
         });
         assert_true(actual.next().done);
         assert_true(actual.next().done);
+
+        for (value of headers.values())
+            assert_true(headerValues.indexOf(value) != -1);
       }, "Check values method");
 
       test(function() {
         var headers = new Headers(headerEntriesDict);
         var actual = headers.entries();
+        checkIteratorProperties(actual);
 
         sortedHeaderKeys.forEach(function(key) {
             entry = actual.next();
@@ -162,6 +194,9 @@
         });
         assert_true(actual.next().done);
         assert_true(actual.next().done);
+
+        for (entry of headers.entries())
+            assert_equals(entry[1], sortedHeaderDict[entry[0]]);
       }, "Check entries method");
 
       test(function() {

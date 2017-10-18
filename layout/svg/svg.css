@@ -11,6 +11,10 @@ style, script, symbol {
  display: none;
 }
 
+symbol:-moz-use-shadow-tree-root {
+  display: inline !important;
+}
+
 switch {
  -moz-binding: none !important;
 }
@@ -74,6 +78,11 @@ foreignObject {
   filter: inherit;
   mask: inherit;
   opacity: inherit;
+}
+
+*:-moz-focusring {
+  /* Don't specify the outline-color, we should always use initial value. */
+  outline: 1px dotted;
 }
 
 /* nsDocumentViewer::CreateStyleSet doesn't load ua.css.

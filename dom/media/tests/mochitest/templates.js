@@ -62,29 +62,6 @@ function dumpSdp(test) {
   }
 }
 
-function waitForIceConnected(test, pc) {
-  if (!pc.iceCheckingRestartExpected) {
-    if (pc.isIceConnected()) {
-      info(pc + ": ICE connection state log: " + pc.iceConnectionLog);
-      ok(true, pc + ": ICE is in connected state");
-      return Promise.resolve();
-    }
-
-    if (!pc.isIceConnectionPending()) {
-      dumpSdp(test);
-      var details = pc + ": ICE is already in bad state: " + pc.iceConnectionState;
-      ok(false, details);
-      return Promise.reject(new Error(details));
-    }
-  }
-
-  return pc.waitForIceConnected()
-    .then(() => {
-      info(pc + ": ICE connection state log: " + pc.iceConnectionLog);
-      ok(pc.isIceConnected(), pc + ": ICE switched to 'connected' state");
-    });
-}
-
 // We need to verify that at least one candidate has been (or will be) gathered.
 function waitForAnIceCandidate(pc) {
   return new Promise(resolve => {
@@ -113,12 +90,12 @@ function checkTrackStats(pc, rtpSenderOrReceiver, outbound) {
       (audio ? "audio" : "video") + " rtp track id " + track.id;
   return pc.getStats(track).then(stats => {
     ok(pc.hasStat(stats, {
-      type: outbound ? "outboundrtp" : "inboundrtp",
+      type: outbound ? "outbound-rtp" : "inbound-rtp",
       isRemote: false,
       mediaType: audio ? "audio" : "video"
     }), msg + " - found expected stats");
     ok(!pc.hasStat(stats, {
-      type: outbound ? "inboundrtp" : "outboundrtp",
+      type: outbound ? "inbound-rtp" : "outbound-rtp",
       isRemote: false
     }), msg + " - did not find extra stats with wrong direction");
     ok(!pc.hasStat(stats, {
@@ -141,7 +118,7 @@ var commandsPeerConnectionInitial = [
       test.setupSignalingClient();
       test.registerSignalingCallback("ice_candidate", function (message) {
         var pc = test.pcRemote ? test.pcRemote : test.pcLocal;
-        pc.storeOrAddIceCandidate(new RTCIceCandidate(message.ice_candidate));
+        pc.storeOrAddIceCandidate(message.ice_candidate);
       });
       test.registerSignalingCallback("end_of_trickle_ice", function (message) {
         test.signalingMessagesFinished();
@@ -399,11 +376,17 @@ var commandsPeerConnectionOfferAnswer = [
   },
 
   function PC_LOCAL_WAIT_FOR_ICE_CONNECTED(test) {
-    return waitForIceConnected(test, test.pcLocal);
+    return test.pcLocal.waitForIceConnected()
+    .then(() => {
+      info(test.pcLocal + ": ICE connection state log: " + test.pcLocal.iceConnectionLog);
+    });
   },
 
   function PC_REMOTE_WAIT_FOR_ICE_CONNECTED(test) {
-    return waitForIceConnected(test, test.pcRemote);
+    return test.pcRemote.waitForIceConnected()
+    .then(() => {
+      info(test.pcRemote + ": ICE connection state log: " + test.pcRemote.iceConnectionLog);
+    });
   },
 
   function PC_LOCAL_VERIFY_ICE_GATHERING(test) {
@@ -425,6 +408,8 @@ var commandsPeerConnectionOfferAnswer = [
   function PC_LOCAL_CHECK_STATS(test) {
     return test.pcLocal.getStats().then(stats => {
       test.pcLocal.checkStats(stats, test.testOptions.steeplechase);
+    }).then(() => {
+      test.pcLocal.getStatsLegacy(null, test.pcLocal.checkLegacyStatTypeNames, e => {});
     });
   },
 
@@ -493,7 +478,7 @@ var commandsPeerConnectionOfferAnswer = [
     }
   },
   function PC_REMOTE_VERIFY_SDP_AFTER_END_OF_TRICKLE(test) {
-    if (test.pcRemote.endOfTrickelSdp) {
+    if (test.pcRemote.endOfTrickleSdp) {
       /* In case the endOfTrickleSdp promise is resolved already it will win the
        * race because it gets evaluated first. But if endOfTrickleSdp is still
        * pending the rejection will win the race. */
@@ -507,9 +492,10 @@ var commandsPeerConnectionOfferAnswer = [
   }
 ];
 
-function PC_LOCAL_REMOVE_VP8_FROM_OFFER(test) {
+function PC_LOCAL_REMOVE_ALL_BUT_H264_FROM_OFFER(test) {
   isnot(test.originalOffer.sdp.search("H264/90000"), -1, "H.264 should be present in the SDP offer");
-  test.originalOffer.sdp = sdputils.removeVP8(test.originalOffer.sdp);
+    test.originalOffer.sdp = sdputils.removeCodec(sdputils.removeCodec(sdputils.removeCodec(
+	test.originalOffer.sdp, 120), 121, 97));
   info("Updated H264 only offer: " + JSON.stringify(test.originalOffer));
 };
 
@@ -521,6 +507,16 @@ function PC_LOCAL_REMOVE_BUNDLE_FROM_OFFER(test) {
 function PC_LOCAL_REMOVE_RTCPMUX_FROM_OFFER(test) {
   test.originalOffer.sdp = sdputils.removeRtcpMux(test.originalOffer.sdp);
   info("Updated no RTCP-Mux offer: " + JSON.stringify(test.originalOffer));
+};
+
+function PC_LOCAL_REMOVE_SSRC_FROM_OFFER(test) {
+  test.originalOffer.sdp = sdputils.removeSSRCs(test.originalOffer.sdp);
+  info("Updated no SSRCs offer: " + JSON.stringify(test.originalOffer));
+};
+
+function PC_REMOTE_REMOVE_SSRC_FROM_ANSWER(test) {
+  test.originalAnswer.sdp = sdputils.removeSSRCs(test.originalAnswer.sdp);
+  info("Updated no SSRCs answer: " + JSON.stringify(test.originalAnswerr));
 };
 
 var addRenegotiation = (chain, commands, checks) => {

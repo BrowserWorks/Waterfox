@@ -11,12 +11,15 @@
 #include "nsCOMPtr.h"
 class nsIContent;
 class nsAString;
-class nsIEditor;
 class nsISelectionController;
 class nsFrameSelection;
 class nsTextControlFrame;
 
 namespace mozilla {
+
+class ErrorResult;
+class TextEditor;
+
 namespace dom {
 class Element;
 } // namespace dom
@@ -106,7 +109,7 @@ public:
    * The return value is null if the control does not support an editor
    * (for example, if it is a checkbox.)
    */
-  NS_IMETHOD_(nsIEditor*) GetTextEditor() = 0;
+  NS_IMETHOD_(mozilla::TextEditor*) GetTextEditor() = 0;
 
   /**
    * Get the selection controller object associated with the text editor.
@@ -139,7 +142,7 @@ public:
   /**
    * Get the anonymous root node for the text control.
    */
-  NS_IMETHOD_(nsIContent*) GetRootEditorNode() = 0;
+  NS_IMETHOD_(mozilla::dom::Element*) GetRootEditorNode() = 0;
 
   /**
    * Create the placeholder anonymous node for the text control and returns it.
@@ -152,14 +155,44 @@ public:
   NS_IMETHOD_(mozilla::dom::Element*) GetPlaceholderNode() = 0;
 
   /**
+   * Create the preview anonymous node for the text control and returns it.
+   */
+  NS_IMETHOD_(mozilla::dom::Element*) CreatePreviewNode() = 0;
+
+  /**
+   * Get the preview anonymous node for the text control.
+   */
+  NS_IMETHOD_(mozilla::dom::Element*) GetPreviewNode() = 0;
+
+  /**
+   * Update preview value for the text control.
+   */
+  NS_IMETHOD_(void) SetPreviewValue(const nsAString& aValue) = 0;
+
+  /**
+   * Get the current preview value for text control.
+   */
+  NS_IMETHOD_(void) GetPreviewValue(nsAString& aValue) = 0;
+
+  /**
+   * Enable preview for text control.
+   */
+  NS_IMETHOD_(void) EnablePreview() = 0;
+
+  /**
+   * Find out whether this control enables preview for form autofoll.
+   */
+  NS_IMETHOD_(bool) IsPreviewEnabled() = 0;
+
+  /**
    * Initialize the keyboard event listeners.
    */
   NS_IMETHOD_(void) InitializeKeyboardEventListeners() = 0;
 
   /**
-   * Update the placeholder visibility based on the element's state.
+   * Update the visibility of both the placholder and preview text based on the element's state.
    */
-  NS_IMETHOD_(void) UpdatePlaceholderVisibility(bool aNotify) = 0;
+  NS_IMETHOD_(void) UpdateOverlayTextVisibility(bool aNotify) = 0;
 
   /**
    * Returns the current expected placeholder visibility state.
@@ -167,16 +200,27 @@ public:
   NS_IMETHOD_(bool) GetPlaceholderVisibility() = 0;
 
   /**
+   * Returns the current expected preview visibility state.
+   */
+  NS_IMETHOD_(bool) GetPreviewVisibility() = 0;
+
+  /**
    * Callback called whenever the value is changed.
    */
-  NS_IMETHOD_(void) OnValueChanged(bool aNotify) = 0;
+  NS_IMETHOD_(void) OnValueChanged(bool aNotify, bool aWasInteractiveUserChange) = 0;
+
+  /**
+   * Helpers for value manipulation from SetRangeText.
+   */
+  virtual void GetValueFromSetRangeText(nsAString& aValue) = 0;
+  virtual nsresult SetValueFromSetRangeText(const nsAString& aValue) = 0;
 
   static const int32_t DEFAULT_COLS = 20;
   static const int32_t DEFAULT_ROWS = 1;
   static const int32_t DEFAULT_ROWS_TEXTAREA = 2;
   static const int32_t DEFAULT_UNDO_CAP = 1000;
 
-  // wrap can be one of these three values.  
+  // wrap can be one of these three values.
   typedef enum {
     eHTMLTextWrap_Off     = 1,    // "off"
     eHTMLTextWrap_Hard    = 2,    // "hard"

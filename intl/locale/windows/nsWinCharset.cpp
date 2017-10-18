@@ -9,15 +9,12 @@
 #include "nsUConvPropertySearch.h"
 #include <windows.h>
 #include "nsWin32Locale.h"
-#include "nsCOMPtr.h"
-#include "nsReadableUtils.h"
-#include "nsServiceManagerUtils.h"
+#include "nsString.h"
 #include "nsPlatformCharset.h"
-#include "nsEncoderDecoderUtils.h"
 
 using namespace mozilla;
 
-static const nsUConvProp kWinCharsets[] = {
+static constexpr nsUConvProp kWinCharsets[] = {
 #include "wincharset.properties.h"
 };
 
@@ -49,7 +46,7 @@ nsPlatformCharset::MapToCharset(nsAString& inANSICodePage, nsACString& outCharse
   return rv;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPlatformCharset::GetCharset(nsPlatformCharsetSel selector,
                               nsACString& oResult)
 {
@@ -58,31 +55,6 @@ nsPlatformCharset::GetCharset(nsPlatformCharsetSel selector,
 }
 
 NS_IMETHODIMP
-nsPlatformCharset::GetDefaultCharsetForLocale(const nsAString& localeName, nsACString& oResult)
-{
-  LCID                      localeAsLCID;
-
-  //
-  // convert locale name to a code page (through the LCID)
-  //
-  nsresult rv;
-  oResult.Truncate();
-
-  rv = nsWin32Locale::GetPlatformLocale(localeName, &localeAsLCID);
-  if (NS_FAILED(rv)) { return rv; }
-
-  wchar_t acp_name[6];
-  if (GetLocaleInfoW(localeAsLCID, LOCALE_IDEFAULTANSICODEPAGE, acp_name,
-                     ArrayLength(acp_name))==0) {
-    return NS_ERROR_FAILURE; 
-  }
-  nsAutoString acp_key(NS_LITERAL_STRING("acp."));
-  acp_key.Append(acp_name);
-
-  return MapToCharset(acp_key, oResult);
-}
-
-NS_IMETHODIMP 
 nsPlatformCharset::Init()
 {
   return NS_OK;

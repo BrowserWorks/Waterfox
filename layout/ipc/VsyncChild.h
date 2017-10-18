@@ -38,14 +38,22 @@ public:
 
   // Bind a VsyncObserver into VsyncChild after ipc channel connected.
   void SetVsyncObserver(VsyncObserver* aVsyncObserver);
+  // GetVsyncRate is a getter for mVsyncRate which sends a requests to
+  // VsyncParent to retreive the hardware vsync rate if mVsyncRate
+  // hasn't already been set.
   TimeDuration GetVsyncRate();
+  // VsyncRate is a getter for mVsyncRate which always returns
+  // mVsyncRate directly, potentially returning
+  // TimeDuration::Forever() if mVsyncRate hasn't been set by calling
+  // GetVsyncRate.
+  TimeDuration VsyncRate();
 
 private:
   VsyncChild();
   virtual ~VsyncChild();
 
-  virtual bool RecvNotify(const TimeStamp& aVsyncTimestamp) override;
-  virtual bool RecvVsyncRate(const float& aVsyncRate) override;
+  virtual mozilla::ipc::IPCResult RecvNotify(const TimeStamp& aVsyncTimestamp) override;
+  virtual mozilla::ipc::IPCResult RecvVsyncRate(const float& aVsyncRate) override;
   virtual void ActorDestroy(ActorDestroyReason aActorDestroyReason) override;
 
   bool mObservingVsync;

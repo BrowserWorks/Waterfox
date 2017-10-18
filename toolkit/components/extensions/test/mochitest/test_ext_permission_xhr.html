@@ -15,8 +15,8 @@
 
 /* eslint-disable mozilla/balanced-listeners */
 
-add_task(function* test_simple() {
-  function runTests(cx) {
+add_task(async function test_simple() {
+  async function runTests(cx) {
     function xhr(XMLHttpRequest) {
       return (url) => {
         return new Promise((resolve, reject) => {
@@ -38,31 +38,33 @@ add_task(function* test_simple() {
         browser.test.fail(`${cx}.${fetch.name} fail listener`);
       }
 
+      /* eslint-disable no-else-return */
       if (shouldFail) {
         return fetch("http://example.org/example.txt").then(failListener, passListener);
       } else {
         return fetch("http://example.com/example.txt").then(passListener, failListener);
       }
+      /* eslint-enable no-else-return */
     }
 
-    return run(true, xhr(XMLHttpRequest))
-      .then(() => run(false, xhr(XMLHttpRequest)))
-      .then(() => run(true, xhr(window.XMLHttpRequest)))
-      .then(() => run(false, xhr(window.XMLHttpRequest)))
-      .then(() => run(true, fetch))
-      .then(() => run(false, fetch))
-      .then(() => run(true, window.fetch))
-      .then(() => run(false, window.fetch))
-      .catch(err => {
-        browser.test.fail(`Error: ${err} :: ${err.stack}`);
-        browser.test.notifyFail("permission_xhr");
-      });
+    try {
+      await run(true, xhr(XMLHttpRequest));
+      await run(false, xhr(XMLHttpRequest));
+      await run(true, xhr(window.XMLHttpRequest));
+      await run(false, xhr(window.XMLHttpRequest));
+      await run(true, fetch);
+      await run(false, fetch);
+      await run(true, window.fetch);
+      await run(false, window.fetch);
+    } catch (err) {
+      browser.test.fail(`Error: ${err} :: ${err.stack}`);
+      browser.test.notifyFail("permission_xhr");
+    }
   }
 
-  function background(runTests) {
-    runTests("bg").then(() => {
-      browser.test.notifyPass("permission_xhr");
-    });
+  async function background(runTestsFn) {
+    await runTestsFn("bg");
+    browser.test.notifyPass("permission_xhr");
   }
 
   let extensionData = {
@@ -75,41 +77,41 @@ add_task(function* test_simple() {
       }],
     },
     files: {
-      "content.js": "new " + function(runTests) {
-        runTests("content").then(() => {
-          window.wrappedJSObject.privilegedFetch = fetch;
-          window.wrappedJSObject.privilegedXHR = XMLHttpRequest;
+      "content.js": `(${async runTestsFn => {
+        await runTestsFn("content");
 
-          window.addEventListener("message", function rcv({data}) {
-            switch (data.msg) {
-              case "test":
-                break;
+        window.wrappedJSObject.privilegedFetch = fetch;
+        window.wrappedJSObject.privilegedXHR = XMLHttpRequest;
 
-              case "assertTrue":
-                browser.test.assertTrue(data.condition, data.description);
-                break;
+        window.addEventListener("message", function rcv({data}) {
+          switch (data.msg) {
+            case "test":
+              break;
 
-              case "finish":
-                window.removeEventListener("message", rcv, false);
-                browser.test.sendMessage("content-script-finished");
-                break;
-            }
-          }, false);
-          window.postMessage("test", "*");
+            case "assertTrue":
+              browser.test.assertTrue(data.condition, data.description);
+              break;
+
+            case "finish":
+              window.removeEventListener("message", rcv);
+              browser.test.sendMessage("content-script-finished");
+              break;
+          }
         });
-      } + `(${runTests})`,
+        window.postMessage("test", "*");
+      }})(${runTests})`,
     },
   };
 
   let extension = ExtensionTestUtils.loadExtension(extensionData);
-  yield extension.startup();
+  await extension.startup();
 
   let win = window.open("file_permission_xhr.html");
-  yield extension.awaitMessage("content-script-finished");
+  await extension.awaitMessage("content-script-finished");
   win.close();
 
-  yield extension.awaitFinish("permission_xhr");
-  yield extension.unload();
+  await extension.awaitFinish("permission_xhr");
+  await extension.unload();
 });
 </script>
 

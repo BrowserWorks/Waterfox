@@ -89,44 +89,44 @@ Graph Generation
 Graph generation, as run via ``mach taskgraph decision``, proceeds as follows:
 
 #. For all kinds, generate all tasks.  The result is the "full task set"
-#. Create links between tasks using kind-specific mechanisms.  The result is
-   the "full task graph".
-#. Select the target tasks (based on try syntax or a tree-specific
-   specification).  The result is the "target task set".
+#. Create dependency links between tasks using kind-specific mechanisms.  The
+   result is the "full task graph".
+#. Filter the target tasks (based on a series of filters, such as try syntax,
+   tree-specific specifications, etc). The result is the "target task set".
 #. Based on the full task graph, calculate the transitive closure of the target
    task set.  That is, the target tasks and all requirements of those tasks.
    The result is the "target task graph".
-#. Optimize the target task graph based on kind-specific optimization methods.
+#. Optimize the target task graph using task-specific optimization methods.
    The result is the "optimized task graph" with fewer nodes than the target
-   task graph.
-#. Create tasks for all tasks in the optimized task graph.
+   task graph.  See :ref:`optimization`.
+#. Morph the graph. Morphs are like syntactic sugar: they keep the same meaning,
+   but express it in a lower-level way. These generally work around limitations
+   in the TaskCluster platform, such as number of dependencies or routes in
+   a task.
+#. Create tasks for all tasks in the morphed task graph.
 
-Optimization
-------------
+Transitive Closure
+..................
 
-The objective of optimization to remove as many tasks from the graph as
-possible, as efficiently as possible, thereby delivering useful results as
-quickly as possible.  For example, ideally if only a test script is modified in
-a push, then the resulting graph contains only the corresponding test suite
-task.
+Transitive closure is a fancy name for this sort of operation:
 
-A task is said to be "optimized" when it is either replaced with an equivalent,
-already-existing task, or dropped from the graph entirely.
+ * start with a set of tasks
+ * add all tasks on which any of those tasks depend
+ * repeat until nothing changes
 
-A task can be optimized if all of its dependencies can be optimized and none of
-its inputs have changed.  For a task on which no other tasks depend (a "leaf
-task"), the optimizer can determine what has changed by looking at the
-version-control history of the push: if the relevant files are not modified in
-the push, then it considers the inputs unchanged.  For tasks on which other
-tasks depend ("non-leaf tasks"), the optimizer must replace the task with
-another, equivalent task, so it generates a hash of all of the inputs and uses
-that to search for a matching, existing task.
+The effect is this: imagine you start with a linux32 test job and a linux64 test job.
+In the first round, each test task depends on the test docker image task, so add that image task.
+Each test also depends on a build, so add the linux32 and linux64 build tasks.
 
-In some cases, such as try pushes, tasks in the target task set have been
-explicitly requested and are thus excluded from optimization. In other cases,
-the target task set is almost the entire task graph, so targetted tasks are
-considered for optimization.  This behavior is controlled with the
-``optimize_target_tasks`` parameter.
+Then repeat: the test docker image task is already present, as are the build
+tasks, but those build tasks depend on the build docker image task.  So add
+that build docker image task.  Repeat again: this time, none of the tasks in
+the set depend on a task not in the set, so nothing changes and the process is
+complete.
+
+And as you can see, the graph we've built now includes everything we wanted
+(the test jobs) plus everything required to do that (docker images, builds).
+
 
 Action Tasks
 ------------
@@ -146,13 +146,15 @@ So for instance, if you had already requested a build task in the ``try`` comman
 and you wish to add a test which depends on this build, the original build task
 is re-used.
 
-This feature is only present on ``try`` pushes for now.
+Action Tasks are currently scheduled by
+[pulse_actions](https://github.com/mozilla/pulse_actions). This feature is only
+present on ``try`` pushes for now.
 
 Mach commands
 -------------
 
 A number of mach subcommands are available aside from ``mach taskgraph
-decision`` to make this complex system more accesssible to those trying to
+decision`` to make this complex system more accessible to those trying to
 understand or modify it.  They allow you to run portions of the
 graph-generation process and output the results.
 
@@ -178,6 +180,15 @@ parameter file.  The parameter keys and values are described in
 :doc:`parameters`; using that information, you may modify an existing
 ``parameters.yml`` or create your own.
 
+By default, the above commands will only output a list of tasks. Use `-J` flag
+to output full task definitions. For example:
+
+.. code-block:: shell
+
+    $ ./mach taskgraph optimized -J -p ~/Downloads/parameters.yml
+
+See :doc:`how-tos` for further practical tips.
+
 Task Parameterization
 ---------------------
 
@@ -188,7 +199,7 @@ using simple parameterized values, as follows:
 ``{"relative-datestamp": "certain number of seconds/hours/days/years"}``
     Objects of this form will be replaced with an offset from the current time
     just before the ``queue.createTask`` call is made.  For example, an
-    artifact expiration might be specified as ``{"relative-timestamp": "1
+    artifact expiration might be specified as ``{"relative-datestamp": "1
     year"}``.
 
 ``{"task-reference": "string containing <dep-name>"}``
@@ -197,12 +208,6 @@ using simple parameterized values, as follows:
     the named dependency substituted for ``<dep-name>`` in the string.
     Multiple labels may be substituted in a single string, and ``<<>`` can be
     used to escape a literal ``<``.
-
-
-The ``mach taskgraph action-task`` subcommand is used by Action Tasks to
-create a task graph of the requested jobs and its non-optimized dependencies.
-Action Tasks are currently scheduled by
-[pulse_actions](https://github.com/mozilla/pulse_actions)
 
 Taskgraph JSON Format
 ---------------------
@@ -215,6 +220,9 @@ containing a mapping from label to taskId.  Each task in the graph is
 represented as a JSON object.
 
 Each task has the following properties:
+
+``kind``
+   The name of this task's kind
 
 ``task_id``
    The task's taskId (only for optimized task graphs)
@@ -229,12 +237,11 @@ Each task has the following properties:
    The task's in-graph dependencies, represented as an object mapping
    dependency name to label (or to taskId for optimized task graphs)
 
+``optimizations``
+   The optimizations to be applied to this task
+
 ``task``
    The task's TaskCluster task definition.
-
-``kind_implementation``
-   The module and the class name which was used to implement this particular task.
-   It is always of the form ``<module-path>:<object-path>``
 
 The results from each command are in the same format, but with some differences
 in the content:

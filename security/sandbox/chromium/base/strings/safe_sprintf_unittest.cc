@@ -4,13 +4,17 @@
 
 #include "base/strings/safe_sprintf.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <limits>
+#include <memory>
 
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/macros.h"
+#include "build/build_config.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 // Death tests on Android are currently very flaky. No need to add more flaky
@@ -61,7 +65,7 @@ TEST(SafeSPrintfTest, NoArguments) {
   // always add a trailing NUL; it always deduplicates '%' characters).
   static const char text[] = "hello world";
   char ref[20], buf[20];
-  memset(ref, 'X', sizeof(char) * arraysize(buf));
+  memset(ref, 'X', sizeof(ref));
   memcpy(buf, ref, sizeof(buf));
 
   // A negative buffer size should always result in an error.
@@ -201,7 +205,7 @@ TEST(SafeSPrintfTest, ASANFriendlyBufferTest) {
   // There is a more complicated test in PrintLongString() that covers a lot
   // more edge case, but it is also harder to debug in case of a failure.
   const char kTestString[] = "This is a test";
-  scoped_ptr<char[]> buf(new char[sizeof(kTestString)]);
+  std::unique_ptr<char[]> buf(new char[sizeof(kTestString)]);
   EXPECT_EQ(static_cast<ssize_t>(sizeof(kTestString) - 1),
             SafeSNPrintf(buf.get(), sizeof(kTestString), kTestString));
   EXPECT_EQ(std::string(kTestString), std::string(buf.get()));
@@ -365,7 +369,7 @@ void PrintLongString(char* buf, size_t sz) {
 
   // Allocate slightly more space, so that we can verify that SafeSPrintf()
   // never writes past the end of the buffer.
-  scoped_ptr<char[]> tmp(new char[sz+2]);
+  std::unique_ptr<char[]> tmp(new char[sz + 2]);
   memset(tmp.get(), 'X', sz+2);
 
   // Use SafeSPrintf() to output a complex list of arguments:
@@ -379,7 +383,7 @@ void PrintLongString(char* buf, size_t sz) {
   char* out = tmp.get();
   size_t out_sz = sz;
   size_t len;
-  for (scoped_ptr<char[]> perfect_buf;;) {
+  for (std::unique_ptr<char[]> perfect_buf;;) {
     size_t needed = SafeSNPrintf(out, out_sz,
 #if defined(NDEBUG)
                             "A%2cong %s: %d %010X %d %p%7s", 'l', "string", "",

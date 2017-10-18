@@ -36,6 +36,8 @@ Types = (
     'nsresult',
     'nsString',
     'nsCString',
+    'nsDependentSubstring',
+    'nsDependentCSubstring',
     'mozilla::ipc::Shmem',
     'mozilla::ipc::FileDescriptor'
 )
@@ -50,6 +52,7 @@ HeaderIncludes = (
     'nsTArray.h',
     'mozilla/ipc/ProtocolUtils.h',
     'nsTHashtable.h',
+    'mozilla/OperatorNewExtensions.h',
 )
 
 CppIncludes = (

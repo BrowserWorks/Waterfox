@@ -21,28 +21,23 @@ const WORKER_URL =
 
 // Generic constants.
 
-// ms
-const GRAPH_RESIZE_EVENTS_DRAIN = 100;
+const GRAPH_RESIZE_EVENTS_DRAIN = 100; // ms
 const GRAPH_WHEEL_ZOOM_SENSITIVITY = 0.00075;
 const GRAPH_WHEEL_SCROLL_SENSITIVITY = 0.1;
-// px
-const GRAPH_WHEEL_MIN_SELECTION_WIDTH = 10;
+const GRAPH_WHEEL_MIN_SELECTION_WIDTH = 10; // px
 
-// px
-const GRAPH_SELECTION_BOUNDARY_HOVER_LINE_WIDTH = 4;
-const GRAPH_SELECTION_BOUNDARY_HOVER_THRESHOLD = 10;
-const GRAPH_MAX_SELECTION_LEFT_PADDING = 1;
-const GRAPH_MAX_SELECTION_RIGHT_PADDING = 1;
+const GRAPH_SELECTION_BOUNDARY_HOVER_LINE_WIDTH = 4; // px
+const GRAPH_SELECTION_BOUNDARY_HOVER_THRESHOLD = 10; // px
+const GRAPH_MAX_SELECTION_LEFT_PADDING = 1; // px
+const GRAPH_MAX_SELECTION_RIGHT_PADDING = 1; // px
 
-// px
-const GRAPH_REGION_LINE_WIDTH = 1;
+const GRAPH_REGION_LINE_WIDTH = 1; // px
 const GRAPH_REGION_LINE_COLOR = "rgba(237,38,85,0.8)";
 
-// px
-const GRAPH_STRIPE_PATTERN_WIDTH = 16;
-const GRAPH_STRIPE_PATTERN_HEIGHT = 16;
-const GRAPH_STRIPE_PATTERN_LINE_WIDTH = 2;
-const GRAPH_STRIPE_PATTERN_LINE_SPACING = 4;
+const GRAPH_STRIPE_PATTERN_WIDTH = 16; // px
+const GRAPH_STRIPE_PATTERN_HEIGHT = 16; // px
+const GRAPH_STRIPE_PATTERN_LINE_WIDTH = 2; // px
+const GRAPH_STRIPE_PATTERN_LINE_SPACING = 4; // px
 
 /**
  * Small data primitives for all graphs.
@@ -128,7 +123,7 @@ this.AbstractCanvasGraph = function (parent, name, sharpness) {
     this._width = canvas.width = bounds.width * this._pixelRatio;
     this._height = canvas.height = bounds.height * this._pixelRatio;
     this._ctx = canvas.getContext("2d");
-    this._ctx.mozImageSmoothingEnabled = false;
+    this._ctx.imageSmoothingEnabled = false;
 
     this._cursor = new GraphCursor();
     this._selection = new GraphArea();
@@ -1243,10 +1238,9 @@ AbstractCanvasGraph.prototype = {
 AbstractCanvasGraph.createIframe = function (url, parent, callback) {
   let iframe = parent.ownerDocument.createElementNS(HTML_NS, "iframe");
 
-  iframe.addEventListener("DOMContentLoaded", function onLoad() {
-    iframe.removeEventListener("DOMContentLoaded", onLoad);
+  iframe.addEventListener("DOMContentLoaded", function () {
     callback(iframe);
-  });
+  }, {once: true});
 
   // Setting 100% width on the frame and flex on the parent allows the graph
   // to properly shrink when the window is resized to be smaller.

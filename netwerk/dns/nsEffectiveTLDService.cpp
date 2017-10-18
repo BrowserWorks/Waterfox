@@ -127,10 +127,12 @@ NS_IMETHODIMP
 nsEffectiveTLDService::CollectReports(nsIHandleReportCallback* aHandleReport,
                                       nsISupports* aData, bool aAnonymize)
 {
-  return MOZ_COLLECT_REPORT(
+  MOZ_COLLECT_REPORT(
     "explicit/network/effective-TLD-service", KIND_HEAP, UNITS_BYTES,
     SizeOfIncludingThis(EffectiveTLDServiceMallocSizeOf),
     "Memory used by the effective TLD service.");
+
+  return NS_OK;
 }
 
 size_t
@@ -270,7 +272,7 @@ nsEffectiveTLDService::GetBaseDomainInternal(nsCString  &aHostname,
   const char *end = currDomain + aHostname.Length();
   // Default value of *eTLD is currDomain as set in the while loop below
   const char *eTLD = nullptr;
-  while (1) {
+  while (true) {
     // sanity check the string we're about to look up: it should not begin with
     // a '.'; this would mean the hostname began with a '.' or had an
     // embedded '..' sequence.
@@ -284,19 +286,18 @@ nsEffectiveTLDService::GetBaseDomainInternal(nsCString  &aHostname,
         // wildcard rules imply an eTLD one level inferior to the match.
         eTLD = prevDomain;
         break;
-
-      } else if (entry->IsNormal() || !nextDot) {
+      }
+      if (entry->IsNormal() || !nextDot) {
         // specific match, or we've hit the top domain level
         eTLD = currDomain;
         break;
-
-      } else if (entry->IsException()) {
+      }
+      if (entry->IsException()) {
         // exception rules imply an eTLD one level superior to the match.
         eTLD = nextDot + 1;
         break;
       }
     }
-
     if (!nextDot) {
       // we've hit the top domain level; use it by default.
       eTLD = currDomain;
@@ -326,7 +327,7 @@ nsEffectiveTLDService::GetBaseDomainInternal(nsCString  &aHostname,
     begin = aHostname.get();
     iter = eTLD;
 
-    while (1) {
+    while (true) {
       if (iter == begin)
         break;
 

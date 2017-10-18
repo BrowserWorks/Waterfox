@@ -14,12 +14,9 @@ const {
 DefaultRenderer.displayName = "DefaultRenderer";
 
 function DefaultRenderer(props) {
-  // @TODO Use of "is" is a temporary hack to get the category and severity
-  // attributes to be applied. There are targeted in webconsole's CSS rules,
-  // so if we remove this hack, we have to modify the CSS rules accordingly.
   return dom.div({},
     "This message type is not supported yet."
   );
 }
 
-module.exports.DefaultRenderer = DefaultRenderer;
+module.exports = DefaultRenderer;

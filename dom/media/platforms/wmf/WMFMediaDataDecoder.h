@@ -7,21 +7,21 @@
 #if !defined(WMFMediaDataDecoder_h_)
 #define WMFMediaDataDecoder_h_
 
-
-#include "WMF.h"
 #include "MFTDecoder.h"
+#include "PlatformDecoderModule.h"
+#include "WMF.h"
 #include "mozilla/RefPtr.h"
 #include "nsAutoPtr.h"
-#include "PlatformDecoderModule.h"
 
 namespace mozilla {
 
 // Encapsulates the initialization of the MFTDecoder appropriate for decoding
 // a given stream, and the process of converting the IMFSample produced
 // by the MFT into a MediaData object.
-class MFTManager {
+class MFTManager
+{
 public:
-  virtual ~MFTManager() {}
+  virtual ~MFTManager() { }
 
   // Submit a compressed sample for decoding.
   // This should forward to the MFTDecoder after performing
@@ -37,12 +37,13 @@ public:
   virtual HRESULT Output(int64_t aStreamOffset,
                          RefPtr<MediaData>& aOutput) = 0;
 
-  void Flush() {
+  virtual void Flush()
+  {
     mDecoder->Flush();
     mSeekTargetThreshold.reset();
   }
 
-  void Drain()
+  virtual void Drain()
   {
     if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
       NS_WARNING("Failed to send DRAIN command to MFT");
@@ -52,16 +53,23 @@ public:
   // Destroys all resources.
   virtual void Shutdown() = 0;
 
-  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const { return false; }
+  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const
+  {
+    return false;
+  }
 
   virtual TrackInfo::TrackType GetType() = 0;
 
-  virtual void ConfigurationChanged(const TrackInfo& aConfig) {}
-
   virtual const char* GetDescriptionName() const = 0;
 
-  virtual void SetSeekThreshold(const media::TimeUnit& aTime) {
+  virtual void SetSeekThreshold(const media::TimeUnit& aTime)
+  {
     mSeekTargetThreshold = Some(aTime);
+  }
+
+  virtual MediaDataDecoder::ConversionRequired NeedsConversion() const
+  {
+    return MediaDataDecoder::ConversionRequired::kNeedNone;
   }
 
 protected:
@@ -76,60 +84,60 @@ protected:
 // the higher-level logic that drives mapping the MFT to the async
 // MediaDataDecoder interface. The specifics of decoding the exact stream
 // type are handled by MFTManager and the MFTDecoder it creates.
-class WMFMediaDataDecoder : public MediaDataDecoder {
+class WMFMediaDataDecoder : public MediaDataDecoder
+{
 public:
-  WMFMediaDataDecoder(MFTManager* aOutputSource,
-                      TaskQueue* aTaskQueue,
-                      MediaDataDecoderCallback* aCallback);
+  WMFMediaDataDecoder(MFTManager* aOutputSource, TaskQueue* aTaskQueue);
   ~WMFMediaDataDecoder();
 
   RefPtr<MediaDataDecoder::InitPromise> Init() override;
 
-  nsresult Input(MediaRawData* aSample);
+  RefPtr<DecodePromise> Decode(MediaRawData* aSample) override;
 
-  nsresult Flush() override;
+  RefPtr<DecodePromise> Drain() override;
 
-  nsresult Drain() override;
+  RefPtr<FlushPromise> Flush() override;
 
-  nsresult Shutdown() override;
+  RefPtr<ShutdownPromise> Shutdown() override;
 
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
-
-  nsresult ConfigurationChanged(const TrackInfo& aConfig) override;
 
   const char* GetDescriptionName() const override
   {
     return mMFTManager ? mMFTManager->GetDescriptionName() : "";
   }
 
+  ConversionRequired NeedsConversion() const override
+  {
+    MOZ_ASSERT(mMFTManager);
+    return mMFTManager->NeedsConversion();
+  }
+
   virtual void SetSeekThreshold(const media::TimeUnit& aTime) override;
 
 private:
 
+  RefPtr<DecodePromise> ProcessError(HRESULT aError, const char* aReason);
+
   // Called on the task queue. Inserts the sample into the decoder, and
   // extracts output if available.
-  void ProcessDecode(MediaRawData* aSample);
+  RefPtr<DecodePromise> ProcessDecode(MediaRawData* aSample);
 
   // Called on the task queue. Extracts output if available, and delivers
   // it to the reader. Called after ProcessDecode() and ProcessDrain().
-  void ProcessOutput();
+  HRESULT ProcessOutput(DecodedData& aResults);
 
   // Called on the task queue. Orders the MFT to flush.  There is no output to
   // extract.
-  void ProcessFlush();
+  RefPtr<FlushPromise> ProcessFlush();
 
   // Called on the task queue. Orders the MFT to drain, and then extracts
   // all available output.
-  void ProcessDrain();
+  RefPtr<DecodePromise> ProcessDrain();
 
-  void ProcessShutdown();
-
-  // Called on the task queue. Tell the MFT that the next Input will have a
-  // different configuration (typically resolution change).
-  void ProcessConfigurationChanged(UniquePtr<TrackInfo>&& aConfig);
+  RefPtr<ShutdownPromise> ProcessShutdown();
 
   const RefPtr<TaskQueue> mTaskQueue;
-  MediaDataDecoderCallback* mCallback;
 
   nsAutoPtr<MFTManager> mMFTManager;
 
@@ -137,12 +145,15 @@ private:
   // This is used to approximate the decoder's position in the media resource.
   int64_t mLastStreamOffset;
 
-  // Set on reader/decode thread calling Flush() to indicate that output is
-  // not required and so input samples on mTaskQueue need not be processed.
-  // Cleared on mTaskQueue.
-  Atomic<bool> mIsFlushing;
+  bool mIsShutDown = false;
 
-  bool mIsShutDown;
+  enum class DrainStatus
+  {
+    DRAINED,
+    DRAINABLE,
+    DRAINING,
+  };
+  DrainStatus mDrainStatus = DrainStatus::DRAINED;
 
   // For telemetry
   bool mHasSuccessfulOutput = false;

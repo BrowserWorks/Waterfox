@@ -2,11 +2,14 @@
 
 import io
 import os
-import unittest
+
+import mozunit
+
 import proctest
 from mozprocess import processhandler
 
 here = os.path.dirname(os.path.abspath(__file__))
+
 
 class ProcTestOutput(proctest.ProcTest):
     """ Class to test operations related to output handling """
@@ -28,7 +31,7 @@ class ProcTestOutput(proctest.ProcTest):
         """
         Process output stream does not buffer
         """
-        expected = '\n'.join([str(n) for n in range(0,10)])
+        expected = '\n'.join([str(n) for n in range(0, 10)])
 
         stream = io.BytesIO()
         buf = io.BufferedRandom(stream)
@@ -40,7 +43,7 @@ class ProcTestOutput(proctest.ProcTest):
         p.run()
         p.wait()
         for i in range(5, 10):
-            stream.write(str(i)+'\n')
+            stream.write(str(i) + '\n')
 
         buf.flush()
         self.assertEquals(stream.getvalue().strip(), expected)
@@ -52,5 +55,6 @@ class ProcTestOutput(proctest.ProcTest):
 
         self.determine_status(p, False, ())
 
+
 if __name__ == '__main__':
-    unittest.main()
+    mozunit.main()

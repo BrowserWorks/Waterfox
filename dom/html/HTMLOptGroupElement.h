@@ -35,19 +35,21 @@ public:
   virtual void RemoveChildAt(uint32_t aIndex, bool aNotify) override;
 
   // nsIContent
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
 
-  virtual EventStates IntrinsicState() const override;
- 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) override;
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   virtual nsIDOMNode* AsDOMNode() override { return this; }
 
   virtual bool IsDisabled() const override {
-    return HasAttr(kNameSpaceID_None, nsGkAtoms::disabled);
+    return State().HasState(NS_EVENT_STATE_DISABLED);
   }
 
   bool Disabled() const
@@ -59,7 +61,10 @@ public:
      SetHTMLBoolAttr(nsGkAtoms::disabled, aValue, aError);
   }
 
-  // The XPCOM GetLabel is OK for us
+  void GetLabel(nsAString& aValue) const
+  {
+    GetHTMLAttr(nsGkAtoms::label, aValue);
+  }
   void SetLabel(const nsAString& aLabel, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::label, aLabel, aError);

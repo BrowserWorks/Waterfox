@@ -62,11 +62,34 @@ ChannelSplitterNode::ChannelSplitterNode(AudioContext* aContext,
 {
   mStream = AudioNodeStream::Create(aContext,
                                     new ChannelSplitterNodeEngine(this),
-                                    AudioNodeStream::NO_STREAM_FLAGS);
+                                    AudioNodeStream::NO_STREAM_FLAGS,
+                                    aContext->Graph());
 }
 
-ChannelSplitterNode::~ChannelSplitterNode()
+/* static */ already_AddRefed<ChannelSplitterNode>
+ChannelSplitterNode::Create(AudioContext& aAudioContext,
+                            const ChannelSplitterOptions& aOptions,
+                            ErrorResult& aRv)
 {
+  if (aAudioContext.CheckClosed(aRv)) {
+    return nullptr;
+  }
+
+  if (aOptions.mNumberOfOutputs == 0 ||
+      aOptions.mNumberOfOutputs > WebAudioUtils::MaxChannelCount) {
+    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    return nullptr;
+  }
+
+  RefPtr<ChannelSplitterNode> audioNode =
+    new ChannelSplitterNode(&aAudioContext, aOptions.mNumberOfOutputs);
+
+  audioNode->Initialize(aOptions, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  return audioNode.forget();
 }
 
 JSObject*
@@ -77,4 +100,3 @@ ChannelSplitterNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProt
 
 } // namespace dom
 } // namespace mozilla
-

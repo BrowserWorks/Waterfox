@@ -24,6 +24,7 @@
 #include "mozilla/Mutex.h"
 #include "DataChannelProtocol.h"
 #include "DataChannelListener.h"
+#include "mozilla/net/NeckoTargetHolder.h"
 #ifdef SCTP_DTLS_SUPPORTED
 #include "mtransport/sigslot.h"
 #include "mtransport/transportflow.h"
@@ -91,9 +92,10 @@ public:
 };
 
 // One per PeerConnection
-class DataChannelConnection
+class DataChannelConnection final
+  : public net::NeckoTargetHolder
 #ifdef SCTP_DTLS_SUPPORTED
-  : public sigslot::has_slots<>
+  , public sigslot::has_slots<>
 #endif
 {
   virtual ~DataChannelConnection();
@@ -111,7 +113,8 @@ public:
     virtual void NotifyDataChannel(already_AddRefed<DataChannel> channel) = 0;
   };
 
-  explicit DataChannelConnection(DataConnectionListener *listener);
+  explicit DataChannelConnection(DataConnectionListener *listener,
+                                 nsIEventTarget *aTarget);
 
   bool Init(unsigned short aPort, uint16_t aNumStreams, bool aUsingDtls);
   void Destroy(); // So we can spawn refs tied to runnables in shutdown
@@ -255,7 +258,7 @@ private:
 #endif
 
   // Exists solely for proxying release of the TransportFlow to the STS thread
-  static void ReleaseTransportFlow(RefPtr<TransportFlow> aFlow) {}
+  static void ReleaseTransportFlow(const RefPtr<TransportFlow>& aFlow) {}
 
   // Data:
   // NOTE: while this array will auto-expand, increases in the number of
@@ -285,10 +288,10 @@ private:
 };
 
 #define ENSURE_DATACONNECTION \
-  do { if (!mConnection) { DATACHANNEL_LOG(("%s: %p no connection!",__FUNCTION__, this)); return; } } while (0)
+  do { MOZ_ASSERT(mConnection); if (!mConnection) { return; } } while (0)
 
 #define ENSURE_DATACONNECTION_RET(x) \
-  do { if (!mConnection) { DATACHANNEL_LOG(("%s: %p no connection!",__FUNCTION__, this)); return (x); } } while (0)
+  do { MOZ_ASSERT(mConnection); if (!mConnection) { return (x); } } while (0)
 
 class DataChannel {
 public:
@@ -323,6 +326,7 @@ public:
     , mFlags(flags)
     , mIsRecvBinary(false)
     , mBufferedThreshold(0) // default from spec
+    , mMainThreadEventTarget(connection->GetNeckoTarget())
     {
       NS_ASSERTION(mConnection,"NULL connection");
     }
@@ -334,7 +338,12 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DataChannel)
 
   // when we disconnect from the connection after stream RESET
-  void DestroyLocked();
+  void StreamClosedLocked();
+
+  // Complete dropping of the link between DataChannel and the connection.
+  // After this, except for a few methods below listed to be safe, you can't
+  // call into DataChannel.
+  void ReleaseConnection();
 
   // Close this DataChannel.  Can be called multiple times.  MUST be called
   // before destroying the DataChannel (state must be CLOSED or CLOSING).
@@ -349,7 +358,7 @@ public:
       ENSURE_DATACONNECTION_RET(false);
 
       if (mStream != INVALID_STREAM)
-        return (mConnection->SendMsg(mStream, aMsg) > 0);
+        return (mConnection->SendMsg(mStream, aMsg) >= 0);
       else
         return false;
     }
@@ -360,7 +369,7 @@ public:
       ENSURE_DATACONNECTION_RET(false);
 
       if (mStream != INVALID_STREAM)
-        return (mConnection->SendBinaryMsg(mStream, aMsg) > 0);
+        return (mConnection->SendBinaryMsg(mStream, aMsg) >= 0);
       else
         return false;
     }
@@ -371,7 +380,7 @@ public:
       ENSURE_DATACONNECTION_RET(false);
 
       if (mStream != INVALID_STREAM)
-        return (mConnection->SendBlob(mStream, aBlob) > 0);
+        return (mConnection->SendBlob(mStream, aBlob) == 0);
       else
         return false;
     }
@@ -443,6 +452,7 @@ private:
   nsCString mRecvBuffer;
   nsTArray<nsAutoPtr<BufferedMsg>> mBufferedData; // GUARDED_BY(mConnection->mLock)
   nsTArray<nsCOMPtr<nsIRunnable>> mQueuedMessages;
+  nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
 };
 
 // used to dispatch notifications of incoming data to the main thread
@@ -462,39 +472,51 @@ public:
     NO_LONGER_BUFFERED,
   };  /* types */
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection,
-                                DataChannel *aChannel,
-                                nsCString   &aData,  // XXX this causes inefficiency
-                                int32_t     aLen)
-    : mType(aType),
-      mChannel(aChannel),
-      mConnection(aConnection),
-      mData(aData),
-      mLen(aLen) {}
+  DataChannelOnMessageAvailable(
+    int32_t aType,
+    DataChannelConnection* aConnection,
+    DataChannel* aChannel,
+    nsCString& aData, // XXX this causes inefficiency
+    int32_t aLen)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+    , mConnection(aConnection)
+    , mData(aData)
+    , mLen(aLen)
+  {
+  }
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannel *aChannel)
-    : mType(aType),
-      mChannel(aChannel) {}
+  DataChannelOnMessageAvailable(int32_t aType, DataChannel* aChannel)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+  {
+  }
   // XXX is it safe to leave mData/mLen uninitialized?  This should only be
   // used for notifications that don't use them, but I'd like more
   // bulletproof compile-time checking.
 
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection,
-                                DataChannel *aChannel)
-    : mType(aType),
-      mChannel(aChannel),
-      mConnection(aConnection) {}
+  DataChannelOnMessageAvailable(int32_t aType,
+                                DataChannelConnection* aConnection,
+                                DataChannel* aChannel)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mChannel(aChannel)
+    , mConnection(aConnection)
+  {
+  }
 
   // for ON_CONNECTION/ON_DISCONNECTED
-  DataChannelOnMessageAvailable(int32_t     aType,
-                                DataChannelConnection *aConnection)
-    : mType(aType),
-      mConnection(aConnection) {}
+  DataChannelOnMessageAvailable(int32_t aType,
+                                DataChannelConnection* aConnection)
+    : Runnable("DataChannelOnMessageAvailable")
+    , mType(aType)
+    , mConnection(aConnection)
+  {
+  }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 

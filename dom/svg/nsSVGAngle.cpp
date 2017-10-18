@@ -48,7 +48,7 @@ IsValidUnitType(uint16_t unit)
   return false;
 }
 
-static void 
+static void
 GetUnitString(nsAString& unit, uint16_t unitType)
 {
   if (IsValidUnitType(unitType)) {
@@ -59,15 +59,14 @@ GetUnitString(nsAString& unit, uint16_t unitType)
   }
 
   NS_NOTREACHED("Unknown unit type");
-  return;
 }
 
 static uint16_t
 GetUnitTypeForString(const nsAString& unitStr)
 {
-  if (unitStr.IsEmpty()) 
+  if (unitStr.IsEmpty())
     return SVG_ANGLETYPE_UNSPECIFIED;
-                   
+
   nsIAtom *unitAtom = NS_GetStaticAtom(unitStr);
 
   if (unitAtom) {
@@ -256,7 +255,7 @@ nsSVGAngle::SetBaseValueString(const nsAString &aValueAsString,
 {
   float value;
   uint16_t unitType;
-  
+
   if (!GetValueFromString(aValueAsString, value, &unitType)) {
      return NS_ERROR_DOM_SYNTAX_ERR;
   }
@@ -350,12 +349,12 @@ SVGAnimatedAngle::~SVGAnimatedAngle()
   sSVGAnimatedAngleTearoffTable.RemoveTearoff(mVal);
 }
 
-nsISMILAttr*
+UniquePtr<nsISMILAttr>
 nsSVGAngle::ToSMILAttr(nsSVGElement *aSVGElement)
 {
   if (aSVGElement->NodeInfo()->Equals(nsGkAtoms::marker, kNameSpaceID_SVG)) {
     SVGMarkerElement *marker = static_cast<SVGMarkerElement*>(aSVGElement);
-    return new SMILOrient(marker->GetOrientType(), this, aSVGElement);
+    return MakeUnique<SMILOrient>(marker->GetOrientType(), this, aSVGElement);
   }
   // SMILOrient would not be useful for general angle attributes (also,
   // "orient" is the only animatable <angle>-valued attribute in SVG 1.1).

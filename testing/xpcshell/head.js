@@ -10,6 +10,19 @@
  * for more information.
  */
 
+/* defined by the harness */
+/* globals _HEAD_FILES, _HEAD_JS_PATH, _JSDEBUGGER_PORT, _JSCOV_DIR,
+    _MOZINFO_JS_PATH, _TEST_FILE, _TEST_NAME, _TESTING_MODULES_DIR:true */
+
+/* defined by XPCShellImpl.cpp */
+/* globals load, sendCommand */
+
+/* must be defined by tests using do_await_remote_message/do_send_remote_message */
+/* globals Cc, Ci */
+
+/* may be defined in test files */
+/* globals run_test */
+
 var _quit = false;
 var _passed = true;
 var _tests_pending = 0;
@@ -17,12 +30,17 @@ var _cleanupFunctions = [];
 var _pendingTimers = [];
 var _profileInitialized = false;
 
+// Assigned in do_load_child_test_harness.
+var _XPCSHELL_PROCESS;
+
 // Register the testing-common resource protocol early, to have access to its
 // modules.
 _register_modules_protocol_handler();
 
 var _Promise = Components.utils.import("resource://gre/modules/Promise.jsm", {}).Promise;
 var _PromiseTestUtils = Components.utils.import("resource://testing-common/PromiseTestUtils.jsm", {}).PromiseTestUtils;
+var _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
+Components.utils.importGlobalProperties(["XMLHttpRequest"]);
 
 // Support a common assertion library, Assert.jsm.
 var AssertCls = Components.utils.import("resource://testing-common/Assert.jsm", null).Assert;
@@ -35,14 +53,13 @@ var Assert = new AssertCls(function(err, message, stack) {
   }
 });
 
-
-var _add_params = function (params) {
+var _add_params = function(params) {
   if (typeof _XPCSHELL_PROCESS != "undefined") {
     params.xpcshell_process = _XPCSHELL_PROCESS;
   }
 };
 
-var _dumpLog = function (raw_msg) {
+var _dumpLog = function(raw_msg) {
   dump("\n" + JSON.stringify(raw_msg) + "\n");
 }
 
@@ -64,8 +81,7 @@ try {
   runningInParent = Components.classes["@mozilla.org/xre/runtime;1"].
                     getService(Components.interfaces.nsIXULRuntime).processType
                     == Components.interfaces.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
-}
-catch (e) { }
+} catch (e) { }
 
 // Only if building of places is enabled.
 if (runningInParent &&
@@ -91,8 +107,7 @@ try {
       prefs.setCharPref("network.dns.ipv4OnlyDomains", "localhost");
     }
   }
-}
-catch (e) { }
+} catch (e) { }
 
 // Configure crash reporting, if possible
 // We rely on the Python harness to set MOZ_CRASHREPORTER,
@@ -108,8 +123,7 @@ try {
     crashReporter.UpdateCrashEventsDir();
     crashReporter.minidumpPath = do_get_minidumpdir();
   }
-}
-catch (e) { }
+} catch (e) { }
 
 // Configure a console listener so messages sent to it are logged as part
 // of the test.
@@ -120,14 +134,14 @@ try {
   }
 
   let listener = {
-    QueryInterface : function(iid) {
+    QueryInterface(iid) {
       if (!iid.equals(Components.interfaces.nsISupports) &&
           !iid.equals(Components.interfaces.nsIConsoleListener)) {
         throw Components.results.NS_NOINTERFACE;
       }
       return this;
     },
-    observe : function (msg) {
+    observe(msg) {
       if (typeof do_print === "function")
         do_print("CONSOLE_MESSAGE: (" + levelNames[msg.logLevel] + ") " + msg.toString());
     }
@@ -164,7 +178,7 @@ function _Timer(func, delay) {
   _pendingTimers.push(timer);
 }
 _Timer.prototype = {
-  QueryInterface: function(iid) {
+  QueryInterface(iid) {
     if (iid.equals(Components.interfaces.nsITimerCallback) ||
         iid.equals(Components.interfaces.nsISupports))
       return this;
@@ -172,7 +186,7 @@ _Timer.prototype = {
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
 
-  notify: function(timer) {
+  notify(timer) {
     _pendingTimers.splice(_pendingTimers.indexOf(timer), 1);
 
     // The current nsITimer implementation can undershoot, but even if it
@@ -202,14 +216,11 @@ function _do_main() {
 
   _testLogger.info("running event loop");
 
-  var thr = Components.classes["@mozilla.org/thread-manager;1"]
-                      .getService().currentThread;
+  var tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
 
-  while (!_quit)
-    thr.processNextEvent(true);
+  tm.spinEventLoopUntil(() => _quit);
 
-  while (thr.hasPendingEvents())
-    thr.processNextEvent(true);
+  tm.spinEventLoopUntilEmpty();
 }
 
 function _do_quit() {
@@ -238,8 +249,7 @@ var _fakeIdleService = {
     return this.registrar.contractIDToCID(this.contractID);
   },
 
-  activate: function FIS_activate()
-  {
+  activate: function FIS_activate() {
     if (!this.originalFactory) {
       // Save original factory.
       this.originalFactory =
@@ -254,8 +264,7 @@ var _fakeIdleService = {
     }
   },
 
-  deactivate: function FIS_deactivate()
-  {
+  deactivate: function FIS_deactivate() {
     if (this.originalFactory) {
       // Unregister the mock.
       this.registrar.unregisterFactory(this.CID, this.factory);
@@ -268,17 +277,16 @@ var _fakeIdleService = {
 
   factory: {
     // nsIFactory
-    createInstance: function (aOuter, aIID)
-    {
+    createInstance(aOuter, aIID) {
       if (aOuter) {
         throw Components.results.NS_ERROR_NO_AGGREGATION;
       }
       return _fakeIdleService.QueryInterface(aIID);
     },
-    lockFactory: function (aLock) {
+    lockFactory(aLock) {
       throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
     },
-    QueryInterface: function(aIID) {
+    QueryInterface(aIID) {
       if (aIID.equals(Components.interfaces.nsIFactory) ||
           aIID.equals(Components.interfaces.nsISupports)) {
         return this;
@@ -291,10 +299,10 @@ var _fakeIdleService = {
   get idleTime() {
     return 0;
   },
-  addIdleObserver: function () {},
-  removeIdleObserver: function () {},
+  addIdleObserver() {},
+  removeIdleObserver() {},
 
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     // Useful for testing purposes, see test_get_idle.js.
     if (aIID.equals(Components.interfaces.nsIFactory)) {
       return this.factory;
@@ -439,14 +447,14 @@ function _setupDebuggerServer(breakpointFiles, callback) {
   };
 
   for (let topic of TOPICS) {
-    obsSvc.addObserver(observe, topic, false);
+    obsSvc.addObserver(observe, topic);
   }
   return DebuggerServer;
 }
 
 function _initDebugging(port) {
   let initialized = false;
-  let DebuggerServer = _setupDebuggerServer(_TEST_FILE, () => {initialized = true;});
+  let DebuggerServer = _setupDebuggerServer(_TEST_FILE, () => { initialized = true; });
 
   do_print("");
   do_print("*******************************************************************");
@@ -469,12 +477,14 @@ function _initDebugging(port) {
   listener.open();
 
   // spin an event loop until the debugger connects.
-  let thr = Components.classes["@mozilla.org/thread-manager;1"]
-              .getService().currentThread;
-  while (!initialized) {
+  let tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
+  tm.spinEventLoopUntil(() => {
+    if (initialized) {
+      return true;
+    }
     do_print("Still waiting for debugger to connect...");
-    thr.processNextEvent(true);
-  }
+    return false;
+  });
   // NOTE: if you want to debug the harness itself, you can now add a 'debugger'
   // statement anywhere and it will stop - but we've already added a breakpoint
   // for the first line of the test scripts, so we just continue...
@@ -503,7 +513,7 @@ function _execute_test() {
   _PromiseTestUtils.Assert = Assert;
 
   let coverageCollector = null;
-  if (typeof _JSCOV_DIR === 'string') {
+  if (typeof _JSCOV_DIR === "string") {
     let _CoverageCollector = Components.utils.import("resource://testing-common/CoverageUtils.jsm", {}).CoverageCollector;
     coverageCollector = new _CoverageCollector(_JSCOV_DIR);
   }
@@ -519,12 +529,6 @@ function _execute_test() {
     this[func] = Assert[func].bind(Assert);
   }
 
-  if (_gTestHasOnly) {
-    _gTests = _gTests.filter(([props,]) => {
-      return ("_only" in props) && props._only;
-    });
-  }
-
   try {
     do_test_pending("MAIN run_test");
     // Check if run_test() is defined. If defined, run it.
@@ -536,13 +540,13 @@ function _execute_test() {
       run_next_test();
     }
 
-    if (coverageCollector != null) {
-      coverageCollector.recordTestCoverage(_TEST_FILE[0]);
-    }
-
     do_test_finished("MAIN run_test");
     _do_main();
     _PromiseTestUtils.assertNoUncaughtRejections();
+
+    if (coverageCollector != null) {
+      coverageCollector.recordTestCoverage(_TEST_FILE[0]);
+    }
   } catch (e) {
     _passed = false;
     // do_check failures are already logged and set _quit to true and throw
@@ -550,9 +554,6 @@ function _execute_test() {
     // has already been logged so there is no need to log it again. It's
     // possible that this will mask an NS_ERROR_ABORT that happens after a
     // do_check failure though.
-    if (coverageCollector != null) {
-      coverageCollector.recordTestCoverage(_TEST_FILE[0]);
-    }
 
     if (!_quit || e != Components.results.NS_ERROR_ABORT) {
       let extra = {};
@@ -570,14 +571,11 @@ function _execute_test() {
       }
       _testLogger.error(message, extra);
     }
+  } finally {
+    if (coverageCollector != null) {
+      coverageCollector.finalize();
+    }
   }
-
-  if (coverageCollector != null) {
-    coverageCollector.finalize();
-  }
-
-  // _TAIL_FILES is dynamically defined by <runxpcshelltests.py>.
-  _load_files(_TAIL_FILES);
 
   // Execute all of our cleanup functions.
   let reportCleanupError = function(ex) {
@@ -599,28 +597,19 @@ function _execute_test() {
                       });
   };
 
-  let func;
-  while ((func = _cleanupFunctions.pop())) {
-    let result;
-    try {
-      result = func();
-    } catch (ex) {
-      reportCleanupError(ex);
-      continue;
-    }
-    if (result && typeof result == "object"
-        && "then" in result && typeof result.then == "function") {
-      // This is a promise, wait until it is satisfied before proceeding
-      let complete = false;
-      let promise = result.then(null, reportCleanupError);
-      promise = promise.then(() => complete = true);
-      let thr = Components.classes["@mozilla.org/thread-manager;1"]
-                  .getService().currentThread;
-      while (!complete) {
-        thr.processNextEvent(true);
+  let complete = _cleanupFunctions.length == 0;
+  _Task.spawn(function*() {
+    for (let func of _cleanupFunctions.reverse()) {
+      try {
+        yield func();
+      } catch (ex) {
+        reportCleanupError(ex);
       }
     }
-  }
+    _cleanupFunctions = [];
+  }).catch(reportCleanupError).then(() => complete = true);
+  let tm = Components.classes["@mozilla.org/thread-manager;1"].getService();
+  tm.spinEventLoopUntil(() => complete);
 
   // Restore idle service to avoid leaks.
   _fakeIdleService.deactivate();
@@ -630,10 +619,10 @@ function _execute_test() {
     // the end of the current test, to ensure correct cleanup on shutdown.
     let obs = Components.classes["@mozilla.org/observer-service;1"]
                         .getService(Components.interfaces.nsIObserverService);
-    obs.notifyObservers(null, "profile-change-net-teardown", null);
-    obs.notifyObservers(null, "profile-change-teardown", null);
-    obs.notifyObservers(null, "profile-before-change", null);
-    obs.notifyObservers(null, "profile-before-change-qm", null);
+    obs.notifyObservers(null, "profile-change-net-teardown");
+    obs.notifyObservers(null, "profile-change-teardown");
+    obs.notifyObservers(null, "profile-before-change");
+    obs.notifyObservers(null, "profile-before-change-qm");
 
     _profileInitialized = false;
   }
@@ -675,7 +664,7 @@ function _wrap_with_quotes_if_necessary(val) {
   return typeof val == "string" ? '"' + val + '"' : val;
 }
 
-/************** Functions to be used from the tests **************/
+/* ************* Functions to be used from the tests ************* */
 
 /**
  * Prints a message to the output log.
@@ -706,8 +695,8 @@ function do_execute_soon(callback, aName) {
   var tm = Components.classes["@mozilla.org/thread-manager;1"]
                      .getService(Components.interfaces.nsIThreadManager);
 
-  tm.mainThread.dispatch({
-    run: function() {
+  tm.dispatchToMainThread({
+    run() {
       try {
         callback();
       } catch (e) {
@@ -720,18 +709,17 @@ function do_execute_soon(callback, aName) {
           let stack = e.stack ? _format_stack(e.stack) : null;
           _testLogger.testStatus(_TEST_NAME,
                                  funcName,
-                                 'FAIL',
-                                 'PASS',
+                                 "FAIL",
+                                 "PASS",
                                  _exception_message(e),
                                  stack);
           _do_quit();
         }
-      }
-      finally {
+      } finally {
         do_test_finished(funcName);
       }
     }
-  }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+  });
 }
 
 /**
@@ -874,22 +862,20 @@ function do_report_result(passed, text, stack, todo) {
                              "PASS",
                              message);
     }
+  } else if (todo) {
+    _testLogger.testStatus(_TEST_NAME,
+                           name,
+                           "FAIL",
+                           "FAIL",
+                           message);
   } else {
-    if (todo) {
-      _testLogger.testStatus(_TEST_NAME,
-                             name,
-                             "FAIL",
-                             "FAIL",
-                             message);
-    } else {
-      _testLogger.testStatus(_TEST_NAME,
-                             name,
-                             "FAIL",
-                             "PASS",
-                             message,
-                             _format_stack(stack));
-      _abort_failed_test();
-    }
+    _testLogger.testStatus(_TEST_NAME,
+                           name,
+                           "FAIL",
+                           "PASS",
+                           message,
+                           _format_stack(stack));
+    _abort_failed_test();
   }
 }
 
@@ -939,7 +925,7 @@ function do_check_null(condition, stack) {
   Assert.equal(condition, null);
 }
 
-function todo_check_null(condition, stack=Components.stack.caller) {
+function todo_check_null(condition, stack = Components.stack.caller) {
   todo_check_eq(condition, null, stack);
 }
 function do_check_matches(pattern, value) {
@@ -949,10 +935,9 @@ function do_check_matches(pattern, value) {
 // Check that |func| throws an nsIException that has
 // |Components.results[resultName]| as the value of its 'result' property.
 function do_check_throws_nsIException(func, resultName,
-                                      stack=Components.stack.caller, todo=false)
-{
+                                      stack = Components.stack.caller, todo = false) {
   let expected = Components.results[resultName];
-  if (typeof expected !== 'number') {
+  if (typeof expected !== "number") {
     do_throw("do_check_throws_nsIException requires a Components.results" +
              " property name, not " + uneval(resultName), stack);
   }
@@ -981,16 +966,15 @@ function do_check_throws_nsIException(func, resultName,
 
 // Produce a human-readable form of |exception|. This looks up
 // Components.results values, tries toString methods, and so on.
-function legible_exception(exception)
-{
+function legible_exception(exception) {
   switch (typeof exception) {
-    case 'object':
+    case "object":
     if (exception instanceof Components.interfaces.nsIException) {
       return "nsIException instance: " + uneval(exception.toString());
     }
     return exception.toString();
 
-    case 'number':
+    case "number":
     for (let name in Components.results) {
       if (exception === Components.results[name]) {
         return "Components.results." + name;
@@ -1004,14 +988,14 @@ function legible_exception(exception)
 }
 
 function do_check_instanceof(value, constructor,
-                             stack=Components.stack.caller, todo=false) {
+                             stack = Components.stack.caller, todo = false) {
   do_report_result(value instanceof constructor,
                    "value should be an instance of " + constructor.name,
                    stack, todo);
 }
 
 function todo_check_instanceof(value, constructor,
-                             stack=Components.stack.caller) {
+                             stack = Components.stack.caller) {
   do_check_instanceof(value, constructor, stack, true);
 }
 
@@ -1056,8 +1040,7 @@ function do_get_file(path, allowNonexistent) {
     }
 
     return lf;
-  }
-  catch (ex) {
+  } catch (ex) {
     do_throw(ex.toString(), Components.stack.caller);
   }
 
@@ -1098,20 +1081,21 @@ function do_parse_document(aPath, aType) {
                Components.stack.caller);
   }
 
-  var lf = do_get_file(aPath);
-  const C_i = Components.interfaces;
-  const parserClass = "@mozilla.org/xmlextras/domparser;1";
-  const streamClass = "@mozilla.org/network/file-input-stream;1";
-  var stream = Components.classes[streamClass]
-                         .createInstance(C_i.nsIFileInputStream);
-  stream.init(lf, -1, -1, C_i.nsIFileInputStream.CLOSE_ON_EOF);
-  var parser = Components.classes[parserClass]
-                         .createInstance(C_i.nsIDOMParser);
-  var doc = parser.parseFromStream(stream, null, lf.fileSize, aType);
-  parser = null;
-  stream = null;
-  lf = null;
-  return doc;
+  let file = do_get_file(aPath),
+      ios = Components.classes["@mozilla.org/network/io-service;1"]
+            .getService(Components.interfaces.nsIIOService),
+      url = ios.newFileURI(file).spec;
+  file = null;
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.responseType = "document";
+    xhr.onerror = reject;
+    xhr.onload = () => {
+      resolve(xhr.response);
+    };
+    xhr.send();
+  });
 }
 
 /**
@@ -1121,8 +1105,7 @@ function do_parse_document(aPath, aType) {
  * @param aFunction
  *        The function to be called when the test harness has finished running.
  */
-function do_register_cleanup(aFunction)
-{
+function do_register_cleanup(aFunction) {
   _cleanupFunctions.push(aFunction);
 }
 
@@ -1158,9 +1141,8 @@ function do_get_minidumpdir() {
                          .createInstance(Components.interfaces.nsILocalFile);
     file.initWithPath(path);
     return file;
-  } else {
-    return do_get_tempdir();
   }
+  return do_get_tempdir();
 }
 
 /**
@@ -1187,7 +1169,7 @@ function do_get_profile(notifyProfileAfterChange = false) {
   let dirSvc = Components.classes["@mozilla.org/file/directory_service;1"]
                          .getService(Components.interfaces.nsIProperties);
   let provider = {
-    getFile: function(prop, persistent) {
+    getFile(prop, persistent) {
       persistent.value = true;
       if (prop == "ProfD" || prop == "ProfLD" || prop == "ProfDS" ||
           prop == "ProfLDS" || prop == "TmpD") {
@@ -1195,7 +1177,7 @@ function do_get_profile(notifyProfileAfterChange = false) {
       }
       return null;
     },
-    QueryInterface: function(iid) {
+    QueryInterface(iid) {
       if (iid.equals(Components.interfaces.nsIDirectoryServiceProvider) ||
           iid.equals(Components.interfaces.nsISupports)) {
         return this;
@@ -1244,8 +1226,7 @@ function do_get_profile(notifyProfileAfterChange = false) {
  * (Note that you may use sendCommand without calling this function first;  you
  * simply won't have any of the functions in this file available.)
  */
-function do_load_child_test_harness()
-{
+function do_load_child_test_harness() {
   // Make sure this isn't called from child process
   if (!runningInParent) {
     do_throw("run_test_in_child cannot be called from child!");
@@ -1262,13 +1243,12 @@ function do_load_child_test_harness()
         "const _HEAD_JS_PATH=" + uneval(_HEAD_JS_PATH) + "; "
       + "const _HEAD_FILES=" + uneval(_HEAD_FILES) + "; "
       + "const _MOZINFO_JS_PATH=" + uneval(_MOZINFO_JS_PATH) + "; "
-      + "const _TAIL_FILES=" + uneval(_TAIL_FILES) + "; "
       + "const _TEST_NAME=" + uneval(_TEST_NAME) + "; "
       // We'll need more magic to get the debugger working in the child
       + "const _JSDEBUGGER_PORT=0; "
-      + "const _XPCSHELL_PROCESS='child';";
+      + "_XPCSHELL_PROCESS='child';";
 
-  if (typeof _JSCOV_DIR === 'string') {
+  if (typeof _JSCOV_DIR === "string") {
     command += " const _JSCOV_DIR=" + uneval(_JSCOV_DIR) + ";";
   }
 
@@ -1293,12 +1273,11 @@ function do_load_child_test_harness()
  *        complete.  If provided, the function must call do_test_finished();
  * @return Promise Resolved when the test in the child is complete.
  */
-function run_test_in_child(testFile, optionalCallback)
-{
+function run_test_in_child(testFile, optionalCallback) {
   return new Promise((resolve) => {
     var callback = () => {
       resolve();
-      if (typeof optionalCallback == 'undefined') {
+      if (typeof optionalCallback == "undefined") {
         do_test_finished();
       } else {
         optionalCallback();
@@ -1326,11 +1305,10 @@ function run_test_in_child(testFile, optionalCallback)
  *        the function must call do_test_finished().
  * @return Promise Promise that is resolved when the message is received.
  */
-function do_await_remote_message(name, optionalCallback)
-{
+function do_await_remote_message(name, optionalCallback) {
   return new Promise((resolve) => {
     var listener = {
-      receiveMessage: function(message) {
+      receiveMessage(message) {
         if (message.name == name) {
           mm.removeMessageListener(name, listener);
           resolve();
@@ -1363,58 +1341,12 @@ function do_send_remote_message(name) {
   var sender;
   if (runningInParent) {
     mm = Cc["@mozilla.org/parentprocessmessagemanager;1"].getService(Ci.nsIMessageBroadcaster);
-    sender = 'broadcastAsyncMessage';
+    sender = "broadcastAsyncMessage";
   } else {
     mm = Cc["@mozilla.org/childprocessmessagemanager;1"].getService(Ci.nsISyncMessageSender);
-    sender = 'sendAsyncMessage';
+    sender = "sendAsyncMessage";
   }
   mm[sender](name);
-}
-
-/**
- * Helper function to add the _only property to add_task/add_test function when
- * running it as add_task.only(...).
- *
- * @param addFunc
- *        The parent function to call, e.g. add_task or add_test.
- * @param funcOrProperties
- *        A function to be run or an object represents test properties.
- * @param func
- *        A function to be run only if the funcOrProperies is not a function.
- */
-function _add_only(addFunc, funcOrProperties, func) {
-  _gTestHasOnly = true;
-  if (typeof funcOrProperties == "function") {
-    func = funcOrProperties;
-    funcOrProperties = {};
-  }
-
-  if (typeof funcOrProperties == "object") {
-    funcOrProperties._only = true;
-  }
-  return addFunc(funcOrProperties, func);
-}
-
-/**
- * Helper function to skip the test using e.g. add_task.skip(...)
- *
- * @param addFunc
- *        The parent function to call, e.g. add_task or add_test.
- * @param funcOrProperties
- *        A function to be run or an object represents test properties.
- * @param func
- *        A function to be run only if the funcOrProperies is not a function.
- */
-function _add_skip(addFunc, funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    func = funcOrProperties;
-    funcOrProperties = {};
-  }
-
-  if (typeof funcOrProperties == "object") {
-    funcOrProperties.skip_if = () => true;
-  }
-  return addFunc(funcOrProperties, func);
 }
 
 /**
@@ -1427,6 +1359,8 @@ function _add_skip(addFunc, funcOrProperties, func) {
  *                    evaluated whether the test is skipped or not.
  * @param func
  *        A function to be run only if the funcOrProperies is not a function.
+ * @param isTask
+ *        Optional flag that indicates whether `func` is a task. Defaults to `false`.
  *
  * Each test function must call run_next_test() when it's done. Test files
  * should call run_next_test() in their run_test function to execute all
@@ -1435,35 +1369,35 @@ function _add_skip(addFunc, funcOrProperties, func) {
  * @return the test function that was passed in.
  */
 var _gTests = [];
-function add_test(funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    _gTests.push([{ _isTask: false }, funcOrProperties]);
-  } else if (typeof funcOrProperties == "object") {
-    funcOrProperties._isTask = false;
-    _gTests.push([funcOrProperties, func]);
+var _gRunOnlyThisTest = null;
+function add_test(properties, func = properties, isTask = false) {
+  if (typeof properties == "function") {
+    properties = { isTask };
+    _gTests.push([properties, func]);
+  } else if (typeof properties == "object") {
+    properties.isTask = isTask;
+    _gTests.push([properties, func]);
   } else {
     do_throw("add_test() should take a function or an object and a function");
   }
+  func.skip = () => properties.skip_if = () => true;
+  func.only = () => _gRunOnlyThisTest = func;
   return func;
 }
-add_test.only = _add_only.bind(undefined, add_test);
-add_test.skip = _add_skip.bind(undefined, add_test);
 
 /**
  * Add a test function which is a Task function.
  *
  * @param funcOrProperties
- *        A generator function to be run or an object represents test
- *        properties.
+ *        An async function to be run or an object represents test properties.
  *        Supported properties:
  *          skip_if : An arrow function which has an expression to be
  *                    evaluated whether the test is skipped or not.
  * @param func
- *        A generator function to be run only if the funcOrProperies is not a
- *        function.
+ *        An async function to be run only if the funcOrProperies is not a function.
  *
- * Task functions are functions fed into Task.jsm's Task.spawn(). They are
- * generators that emit promises.
+ * Task functions are functions fed into Task.jsm's Task.spawn(). They are async
+ * functions that emit promises.
  *
  * If an exception is thrown, a do_check_* comparison fails, or if a rejected
  * promise is yielded, the test function aborts immediately and the test is
@@ -1476,17 +1410,17 @@ add_test.skip = _add_skip.bind(undefined, add_test);
  *
  * Example usage:
  *
- * add_task(function* test() {
- *   let result = yield Promise.resolve(true);
+ * add_task(async function test() {
+ *   let result = await Promise.resolve(true);
  *
  *   do_check_true(result);
  *
- *   let secondary = yield someFunctionThatReturnsAPromise(result);
+ *   let secondary = await someFunctionThatReturnsAPromise(result);
  *   do_check_eq(secondary, "expected value");
  * });
  *
- * add_task(function* test_early_return() {
- *   let result = yield somethingThatReturnsAPromise();
+ * add_task(async function test_early_return() {
+ *   let result = await somethingThatReturnsAPromise();
  *
  *   if (!result) {
  *     // Test is ended immediately, with success.
@@ -1498,28 +1432,17 @@ add_test.skip = _add_skip.bind(undefined, add_test);
  *
  * add_task({
  *   skip_if: () => !("@mozilla.org/telephony/volume-service;1" in Components.classes),
- * }, function* test_volume_service() {
+ * }, async function test_volume_service() {
  *   let volumeService = Cc["@mozilla.org/telephony/volume-service;1"]
  *     .getService(Ci.nsIVolumeService);
  *   ...
  * });
  */
-function add_task(funcOrProperties, func) {
-  if (typeof funcOrProperties == "function") {
-    _gTests.push([{ _isTask: true }, funcOrProperties]);
-  } else if (typeof funcOrProperties == "object") {
-    funcOrProperties._isTask = true;
-    _gTests.push([funcOrProperties, func]);
-  } else {
-    do_throw("add_task() should take a function or an object and a function");
-  }
+function add_task(properties, func = properties) {
+  return add_test(properties, func, true);
 }
-add_task.only = _add_only.bind(undefined, add_task);
-add_task.skip = _add_skip.bind(undefined, add_task);
 
-var _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
 _Task.Debugging.maintainStack = true;
-
 
 /**
  * Runs the next test function from the list of async tests.
@@ -1527,24 +1450,25 @@ _Task.Debugging.maintainStack = true;
 var _gRunningTest = null;
 var _gTestIndex = 0; // The index of the currently running test.
 var _gTaskRunning = false;
-var _gTestHasOnly = false;
-function run_next_test()
-{
+function run_next_test() {
   if (_gTaskRunning) {
     throw new Error("run_next_test() called from an add_task() test function. " +
                     "run_next_test() should not be called from inside add_task() " +
                     "under any circumstances!");
   }
 
-  function _run_next_test()
-  {
+  function _run_next_test() {
     if (_gTestIndex < _gTests.length) {
       // Check for uncaught rejections as early and often as possible.
       _PromiseTestUtils.assertNoUncaughtRejections();
       let _properties;
-      [_properties, _gRunningTest,] = _gTests[_gTestIndex++];
-      if (typeof(_properties.skip_if) == "function" && _properties.skip_if()) {
-        let _condition = _properties.skip_if.toSource().replace(/\(\)\s*=>\s*/, "");
+      [_properties, _gRunningTest, ] = _gTests[_gTestIndex++];
+      if ((typeof(_properties.skip_if) == "function" && _properties.skip_if()) ||
+          (_gRunOnlyThisTest && _gRunningTest != _gRunOnlyThisTest)) {
+        let _condition = _gRunOnlyThisTest ? "only one task may run." :
+          _properties.skip_if.toSource().replace(/\(\)\s*=>\s*/, "");
+        if (_condition == "true")
+          _condition = "explicitly skipped."
         let _message = _gRunningTest.name
           + " skipped because the following conditions were"
           + " met: (" + _condition + ")";
@@ -1559,7 +1483,7 @@ function run_next_test()
       _testLogger.info(_TEST_NAME + " | Starting " + _gRunningTest.name);
       do_test_pending(_gRunningTest.name);
 
-      if (_properties._isTask) {
+      if (_properties.isTask) {
         _gTaskRunning = true;
         _Task.spawn(_gRunningTest).then(() => {
           _gTaskRunning = false;
@@ -1606,7 +1530,6 @@ try {
     prefs.setBoolPref("geo.provider.testing", true);
   }
 } catch (e) { }
-
 // We need to avoid hitting the network with certain components.
 try {
   if (runningInParent) {
@@ -1614,10 +1537,13 @@ try {
       .getService(Components.interfaces.nsIPrefBranch);
 
     prefs.setCharPref("media.gmp-manager.url.override", "http://%(server)s/dummy-gmp-manager.xml");
+    prefs.setCharPref("media.gmp-manager.updateEnabled", false);
     prefs.setCharPref("extensions.systemAddon.update.url", "http://%(server)s/dummy-system-addons.xml");
-    prefs.setCharPref("browser.selfsupport.url", "https://%(server)s/selfsupport-dummy/");
+    prefs.setCharPref("extensions.shield-recipe-client.api_url",
+                      "https://%(server)s/selfsupport-dummy/");
     prefs.setCharPref("toolkit.telemetry.server", "https://%(server)s/telemetry-dummy");
     prefs.setCharPref("browser.search.geoip.url", "https://%(server)s/geoip-dummy");
+    prefs.setCharPref("browser.safebrowsing.downloads.remote.url", "https://%(server)s/safebrowsing-dummy");
   }
 } catch (e) { }
 

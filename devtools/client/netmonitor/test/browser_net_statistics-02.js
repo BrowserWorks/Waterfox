@@ -4,39 +4,49 @@
 "use strict";
 
 /**
- * Tests if the network inspector view is shown when the target navigates
- * away while in the statistics view.
+ * Test if the correct filtering predicates are used when filtering from
+ * the performance analysis view.
  */
 
 add_task(function* () {
-  let [, debuggee, monitor] = yield initNetMonitor(STATISTICS_URL);
+  let { monitor } = yield initNetMonitor(FILTERING_URL);
   info("Starting test... ");
 
   let panel = monitor.panelWin;
-  let { EVENTS, NetMonitorView } = panel;
-  is(NetMonitorView.currentFrontendMode, "network-inspector-view",
-      "The initial frontend mode is correct.");
+  let { document, store, windowRequire } = panel;
+  let Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
-  let onChartDisplayed = Promise.all([
-    waitFor(panel, EVENTS.PRIMED_CACHE_CHART_DISPLAYED),
-    waitFor(panel, EVENTS.EMPTY_CACHE_CHART_DISPLAYED)
-  ]);
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-html-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-css-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-js-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-ws-button"));
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".requests-list-filter-other-button"));
+  testFilterButtonsCustom(monitor, [0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]);
+  info("The correct filtering predicates are used before entering perf. analysis mode.");
 
-  info("Displaying statistics view");
-  NetMonitorView.toggleFrontendMode();
-  yield onChartDisplayed;
-  is(NetMonitorView.currentFrontendMode, "network-statistics-view",
-        "The frontend mode is currently in the statistics view.");
+  store.dispatch(Actions.openStatistics(true));
 
-  info("Reloading page");
-  let onWillNavigate = waitFor(panel, EVENTS.TARGET_WILL_NAVIGATE);
-  let onDidNavigate = waitFor(panel, EVENTS.TARGET_DID_NAVIGATE);
-  debuggee.location.reload();
-  yield onWillNavigate;
-  is(NetMonitorView.currentFrontendMode, "network-inspector-view",
-          "The frontend mode switched back to the inspector view.");
-  yield onDidNavigate;
-  is(NetMonitorView.currentFrontendMode, "network-inspector-view",
-            "The frontend mode is still in the inspector view.");
+  ok(document.querySelector(".statistics-panel"),
+    "The main panel is switched to the statistics panel.");
+
+  yield waitUntil(
+    () => document.querySelectorAll(".pie-chart-container:not([placeholder=true])")
+                  .length == 2);
+  ok(true, "Two real pie charts appear to be rendered correctly.");
+
+  EventUtils.sendMouseEvent({ type: "click" },
+    document.querySelector(".pie-chart-slice"));
+
+  ok(document.querySelector(".monitor-panel"),
+    "The main panel is switched back to the monitor panel.");
+
+  testFilterButtons(monitor, "html");
+  info("The correct filtering predicate is used when exiting perf. analysis mode.");
+
   yield teardown(monitor);
 });

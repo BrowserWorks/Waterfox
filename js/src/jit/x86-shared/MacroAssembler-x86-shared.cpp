@@ -316,7 +316,8 @@ MacroAssemblerX86Shared::asmMergeWith(const MacroAssemblerX86Shared& other)
 }
 
 void
-MacroAssemblerX86Shared::minMaxDouble(FloatRegister first, FloatRegister second, bool handleNaN, bool isMax)
+MacroAssemblerX86Shared::minMaxDouble(FloatRegister first, FloatRegister second, bool canBeNaN,
+                                      bool isMax)
 {
     Label done, nan, minMaxInst;
 
@@ -327,7 +328,7 @@ MacroAssemblerX86Shared::minMaxDouble(FloatRegister first, FloatRegister second,
     // will sometimes be hard on the branch predictor.
     vucomisd(second, first);
     j(Assembler::NotEqual, &minMaxInst);
-    if (handleNaN)
+    if (canBeNaN)
         j(Assembler::Parity, &nan);
 
     // Ordered and equal. The operands are bit-identical unless they are zero
@@ -342,7 +343,7 @@ MacroAssemblerX86Shared::minMaxDouble(FloatRegister first, FloatRegister second,
     // x86's min/max are not symmetric; if either operand is a NaN, they return
     // the read-only operand. We need to return a NaN if either operand is a
     // NaN, so we explicitly check for a NaN in the read-write operand.
-    if (handleNaN) {
+    if (canBeNaN) {
         bind(&nan);
         vucomisd(first, first);
         j(Assembler::Parity, &done);
@@ -360,7 +361,8 @@ MacroAssemblerX86Shared::minMaxDouble(FloatRegister first, FloatRegister second,
 }
 
 void
-MacroAssemblerX86Shared::minMaxFloat32(FloatRegister first, FloatRegister second, bool handleNaN, bool isMax)
+MacroAssemblerX86Shared::minMaxFloat32(FloatRegister first, FloatRegister second, bool canBeNaN,
+                                       bool isMax)
 {
     Label done, nan, minMaxInst;
 
@@ -371,7 +373,7 @@ MacroAssemblerX86Shared::minMaxFloat32(FloatRegister first, FloatRegister second
     // will sometimes be hard on the branch predictor.
     vucomiss(second, first);
     j(Assembler::NotEqual, &minMaxInst);
-    if (handleNaN)
+    if (canBeNaN)
         j(Assembler::Parity, &nan);
 
     // Ordered and equal. The operands are bit-identical unless they are zero
@@ -386,7 +388,7 @@ MacroAssemblerX86Shared::minMaxFloat32(FloatRegister first, FloatRegister second
     // x86's min/max are not symmetric; if either operand is a NaN, they return
     // the read-only operand. We need to return a NaN if either operand is a
     // NaN, so we explicitly check for a NaN in the read-write operand.
-    if (handleNaN) {
+    if (canBeNaN) {
         bind(&nan);
         vucomiss(first, first);
         j(Assembler::Parity, &done);
@@ -403,86 +405,6 @@ MacroAssemblerX86Shared::minMaxFloat32(FloatRegister first, FloatRegister second
     bind(&done);
 }
 
-void
-MacroAssemblerX86Shared::outOfLineWasmTruncateCheck(FloatRegister input, MIRType fromType,
-                                                    MIRType toType, bool isUnsigned,
-                                                    Label* rejoin)
-{
-    // Eagerly take care of NaNs.
-    Label inputIsNaN;
-    if (fromType == MIRType::Double)
-        asMasm().branchDouble(Assembler::DoubleUnordered, input, input, &inputIsNaN);
-    else if (fromType == MIRType::Float32)
-        asMasm().branchFloat(Assembler::DoubleUnordered, input, input, &inputIsNaN);
-    else
-        MOZ_CRASH("unexpected type in visitOutOfLineWasmTruncateCheck");
-
-    Label fail;
-
-    // Handle special values (not needed for unsigned values).
-    if (!isUnsigned) {
-        if (toType == MIRType::Int32) {
-            // MWasmTruncateToInt32
-            if (fromType == MIRType::Double) {
-                // We've used vcvttsd2si. The only valid double values that can
-                // truncate to INT32_MIN are in ]INT32_MIN - 1; INT32_MIN].
-                asMasm().loadConstantDouble(double(INT32_MIN) - 1.0, ScratchDoubleReg);
-                asMasm().branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg, &fail);
-
-                asMasm().loadConstantDouble(double(INT32_MIN), ScratchDoubleReg);
-                asMasm().branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg, &fail);
-            } else {
-                MOZ_ASSERT(fromType == MIRType::Float32);
-
-                // We've used vcvttss2si. Check that the input wasn't
-                // float(INT32_MIN), which is the only legimitate input that
-                // would truncate to INT32_MIN.
-                asMasm().loadConstantFloat32(float(INT32_MIN), ScratchFloat32Reg);
-                asMasm().branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg, &fail);
-            }
-        } else {
-            // MWasmTruncateToInt64
-            MOZ_ASSERT(toType == MIRType::Int64);
-            if (fromType == MIRType::Double) {
-                // We've used vcvtsd2sq. The only legit value whose i64
-                // truncation is INT64_MIN is double(INT64_MIN): exponent is so
-                // high that the highest resolution around is much more than 1.
-                asMasm().loadConstantDouble(double(int64_t(INT64_MIN)), ScratchDoubleReg);
-                asMasm().branchDouble(Assembler::DoubleNotEqual, input, ScratchDoubleReg, &fail);
-            } else {
-                // We've used vcvtss2sq. Same comment applies.
-                MOZ_ASSERT(fromType == MIRType::Float32);
-                asMasm().loadConstantFloat32(float(int64_t(INT64_MIN)), ScratchFloat32Reg);
-                asMasm().branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg, &fail);
-            }
-        }
-        jump(rejoin);
-    } else {
-        if (toType == MIRType::Int64) {
-            if (fromType == MIRType::Double) {
-                asMasm().loadConstantDouble(double(-0.0), ScratchDoubleReg);
-                asMasm().branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg, &fail);
-                asMasm().loadConstantDouble(double(-1.0), ScratchDoubleReg);
-                asMasm().branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg, &fail);
-            } else {
-                MOZ_ASSERT(fromType == MIRType::Float32);
-                asMasm().loadConstantFloat32(double(-0.0), ScratchDoubleReg);
-                asMasm().branchFloat(Assembler::DoubleGreaterThan, input, ScratchFloat32Reg, &fail);
-                asMasm().loadConstantFloat32(double(-1.0), ScratchDoubleReg);
-                asMasm().branchFloat(Assembler::DoubleLessThanOrEqual, input, ScratchFloat32Reg, &fail);
-            }
-            jump(rejoin);
-        }
-    }
-
-    // Handle errors.
-    bind(&fail);
-    jump(wasm::JumpTarget::IntegerOverflow);
-
-    bind(&inputIsNaN);
-    jump(wasm::JumpTarget::InvalidConversionToInteger);
-}
-
 //{{{ check_macroassembler_style
 // ===============================================================
 // MacroAssembler high-level usage.
@@ -490,6 +412,12 @@ MacroAssemblerX86Shared::outOfLineWasmTruncateCheck(FloatRegister input, MIRType
 void
 MacroAssembler::flush()
 {
+}
+
+void
+MacroAssembler::comment(const char* msg)
+{
+    masm.comment(msg);
 }
 
 // ===============================================================
@@ -523,6 +451,44 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
             storeFloat32(reg, spillAddress);
         else if (reg.isSimd128())
             storeUnalignedSimd128Float(reg, spillAddress);
+        else
+            MOZ_CRASH("Unknown register type.");
+    }
+    MOZ_ASSERT(numFpu == 0);
+    // x64 padding to keep the stack aligned on uintptr_t. Keep in sync with
+    // GetPushBytesInSize.
+    diffF -= diffF % sizeof(uintptr_t);
+    MOZ_ASSERT(diffF == 0);
+}
+
+void
+MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest, Register)
+{
+    FloatRegisterSet fpuSet(set.fpus().reduceSetForPush());
+    unsigned numFpu = fpuSet.size();
+    int32_t diffF = fpuSet.getPushSizeInBytes();
+    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
+
+    MOZ_ASSERT(dest.offset >= diffG + diffF);
+
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
+        diffG -= sizeof(intptr_t);
+        dest.offset -= sizeof(intptr_t);
+        storePtr(*iter, dest);
+    }
+    MOZ_ASSERT(diffG == 0);
+
+    for (FloatRegisterBackwardIterator iter(fpuSet); iter.more(); ++iter) {
+        FloatRegister reg = *iter;
+        diffF -= reg.size();
+        numFpu -= 1;
+        dest.offset -= reg.size();
+        if (reg.isDouble())
+            storeDouble(reg, dest);
+        else if (reg.isSingle())
+            storeFloat32(reg, dest);
+        else if (reg.isSimd128())
+            storeUnalignedSimd128Float(reg, dest);
         else
             MOZ_CRASH("Unknown register type.");
     }
@@ -635,6 +601,13 @@ MacroAssembler::Push(FloatRegister t)
 }
 
 void
+MacroAssembler::PushFlags()
+{
+    pushFlags();
+    adjustFrame(sizeof(intptr_t));
+}
+
+void
 MacroAssembler::Pop(const Operand op)
 {
     pop(op);
@@ -660,6 +633,19 @@ MacroAssembler::Pop(const ValueOperand& val)
 {
     popValue(val);
     implicitPop(sizeof(Value));
+}
+
+void
+MacroAssembler::PopFlags()
+{
+    popFlags();
+    implicitPop(sizeof(intptr_t));
+}
+
+void
+MacroAssembler::PopStackPtr()
+{
+    Pop(StackPointer);
 }
 
 // ===============================================================
@@ -719,22 +705,37 @@ MacroAssembler::patchCall(uint32_t callerOffset, uint32_t calleeOffset)
     Assembler::patchCall(callerOffset, calleeOffset);
 }
 
+void
+MacroAssembler::callAndPushReturnAddress(Register reg)
+{
+    call(reg);
+}
+
+void
+MacroAssembler::callAndPushReturnAddress(Label* label)
+{
+    call(label);
+}
+
+// ===============================================================
+// Patchable near/far jumps.
+
 CodeOffset
-MacroAssembler::thunkWithPatch()
+MacroAssembler::farJumpWithPatch()
 {
-    return Assembler::thunkWithPatch();
+    return Assembler::farJumpWithPatch();
 }
 
 void
-MacroAssembler::patchThunk(uint32_t thunkOffset, uint32_t targetOffset)
+MacroAssembler::patchFarJump(CodeOffset farJump, uint32_t targetOffset)
 {
-    Assembler::patchThunk(thunkOffset, targetOffset);
+    Assembler::patchFarJump(farJump, targetOffset);
 }
 
 void
-MacroAssembler::repatchThunk(uint8_t* code, uint32_t thunkOffset, uint32_t targetOffset)
+MacroAssembler::repatchFarJump(uint8_t* code, uint32_t farJumpOffset, uint32_t targetOffset)
 {
-    Assembler::repatchThunk(code, thunkOffset, targetOffset);
+    Assembler::repatchFarJump(code, farJumpOffset, targetOffset);
 }
 
 CodeOffset
@@ -755,16 +756,26 @@ MacroAssembler::patchNearJumpToNop(uint8_t* jump)
     Assembler::patchJumpToTwoByteNop(jump);
 }
 
-void
-MacroAssembler::callAndPushReturnAddress(Register reg)
+CodeOffset
+MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc)
 {
-    call(reg);
+    CodeOffset offset(currentOffset());
+    masm.nop_five();
+    append(desc, CodeOffset(currentOffset()));
+    MOZ_ASSERT_IF(!oom(), size() - offset.offset() == ToggledCallSize(nullptr));
+    return offset;
 }
 
 void
-MacroAssembler::callAndPushReturnAddress(Label* label)
+MacroAssembler::patchNopToCall(uint8_t* callsite, uint8_t* target)
 {
-    call(label);
+    Assembler::patchFiveByteNopToCall(callsite, target);
+}
+
+void
+MacroAssembler::patchCallToNop(uint8_t* callsite)
+{
+    Assembler::patchCallToFiveByteNop(callsite);
 }
 
 // ===============================================================
@@ -782,6 +793,143 @@ MacroAssembler::pushFakeReturnAddress(Register scratch)
 
     addCodeLabel(cl);
     return retAddr;
+}
+
+// wasm specific methods, used in both the wasm baseline compiler and ion.
+
+// RAII class that generates the jumps to traps when it's destructed, to
+// prevent some code duplication in the outOfLineWasmTruncateXtoY methods.
+struct MOZ_RAII AutoHandleWasmTruncateToIntErrors
+{
+    MacroAssembler& masm;
+    Label inputIsNaN;
+    Label fail;
+    wasm::BytecodeOffset off;
+
+    explicit AutoHandleWasmTruncateToIntErrors(MacroAssembler& masm, wasm::BytecodeOffset off)
+      : masm(masm), off(off)
+    { }
+
+    ~AutoHandleWasmTruncateToIntErrors() {
+        // Handle errors.
+        masm.bind(&fail);
+        masm.jump(wasm::TrapDesc(off, wasm::Trap::IntegerOverflow, masm.framePushed()));
+
+        masm.bind(&inputIsNaN);
+        masm.jump(wasm::TrapDesc(off, wasm::Trap::InvalidConversionToInteger, masm.framePushed()));
+    }
+};
+
+void
+MacroAssembler::wasmTruncateDoubleToInt32(FloatRegister input, Register output, Label* oolEntry)
+{
+    vcvttsd2si(input, output);
+    cmp32(output, Imm32(1));
+    j(Assembler::Overflow, oolEntry);
+}
+
+void
+MacroAssembler::wasmTruncateFloat32ToInt32(FloatRegister input, Register output, Label* oolEntry)
+{
+    vcvttss2si(input, output);
+    cmp32(output, Imm32(1));
+    j(Assembler::Overflow, oolEntry);
+}
+
+void
+MacroAssembler::outOfLineWasmTruncateDoubleToInt32(FloatRegister input, bool isUnsigned,
+                                                   wasm::BytecodeOffset off, Label* rejoin)
+{
+    AutoHandleWasmTruncateToIntErrors traps(*this, off);
+
+    // Eagerly take care of NaNs.
+    branchDouble(Assembler::DoubleUnordered, input, input, &traps.inputIsNaN);
+
+    // Handle special values (not needed for unsigned values).
+    if (isUnsigned)
+        return;
+
+    // We've used vcvttsd2si. The only valid double values that can
+    // truncate to INT32_MIN are in ]INT32_MIN - 1; INT32_MIN].
+    loadConstantDouble(double(INT32_MIN) - 1.0, ScratchDoubleReg);
+    branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg, &traps.fail);
+
+    loadConstantDouble(double(INT32_MIN), ScratchDoubleReg);
+    branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg, &traps.fail);
+    jump(rejoin);
+}
+
+void
+MacroAssembler::outOfLineWasmTruncateFloat32ToInt32(FloatRegister input, bool isUnsigned,
+                                                    wasm::BytecodeOffset off, Label* rejoin)
+{
+    AutoHandleWasmTruncateToIntErrors traps(*this, off);
+
+    // Eagerly take care of NaNs.
+    branchFloat(Assembler::DoubleUnordered, input, input, &traps.inputIsNaN);
+
+    // Handle special values (not needed for unsigned values).
+    if (isUnsigned)
+        return;
+
+    // We've used vcvttss2si. Check that the input wasn't
+    // float(INT32_MIN), which is the only legimitate input that
+    // would truncate to INT32_MIN.
+    loadConstantFloat32(float(INT32_MIN), ScratchFloat32Reg);
+    branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg, &traps.fail);
+    jump(rejoin);
+}
+
+void
+MacroAssembler::outOfLineWasmTruncateDoubleToInt64(FloatRegister input, bool isUnsigned,
+                                                   wasm::BytecodeOffset off, Label* rejoin)
+{
+    AutoHandleWasmTruncateToIntErrors traps(*this, off);
+
+    // Eagerly take care of NaNs.
+    branchDouble(Assembler::DoubleUnordered, input, input, &traps.inputIsNaN);
+
+    // Handle special values.
+    if (isUnsigned) {
+        loadConstantDouble(-0.0, ScratchDoubleReg);
+        branchDouble(Assembler::DoubleGreaterThan, input, ScratchDoubleReg, &traps.fail);
+        loadConstantDouble(-1.0, ScratchDoubleReg);
+        branchDouble(Assembler::DoubleLessThanOrEqual, input, ScratchDoubleReg, &traps.fail);
+        jump(rejoin);
+        return;
+    }
+
+    // We've used vcvtsd2sq. The only legit value whose i64
+    // truncation is INT64_MIN is double(INT64_MIN): exponent is so
+    // high that the highest resolution around is much more than 1.
+    loadConstantDouble(double(int64_t(INT64_MIN)), ScratchDoubleReg);
+    branchDouble(Assembler::DoubleNotEqual, input, ScratchDoubleReg, &traps.fail);
+    jump(rejoin);
+}
+
+void
+MacroAssembler::outOfLineWasmTruncateFloat32ToInt64(FloatRegister input, bool isUnsigned,
+                                                    wasm::BytecodeOffset off, Label* rejoin)
+{
+    AutoHandleWasmTruncateToIntErrors traps(*this, off);
+
+    // Eagerly take care of NaNs.
+    branchFloat(Assembler::DoubleUnordered, input, input, &traps.inputIsNaN);
+
+    // Handle special values.
+    if (isUnsigned) {
+        loadConstantFloat32(-0.0f, ScratchFloat32Reg);
+        branchFloat(Assembler::DoubleGreaterThan, input, ScratchFloat32Reg, &traps.fail);
+        loadConstantFloat32(-1.0f, ScratchFloat32Reg);
+        branchFloat(Assembler::DoubleLessThanOrEqual, input, ScratchFloat32Reg, &traps.fail);
+        jump(rejoin);
+        return;
+    }
+
+    // We've used vcvtss2sq. See comment in outOfLineWasmTruncateDoubleToInt64.
+    loadConstantFloat32(float(int64_t(INT64_MIN)), ScratchFloat32Reg);
+    branchFloat(Assembler::DoubleNotEqual, input, ScratchFloat32Reg, &traps.fail);
+    jump(rejoin);
 }
 
 //}}} check_macroassembler_style

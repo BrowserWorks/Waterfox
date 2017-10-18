@@ -30,6 +30,12 @@ LIRGeneratorARM64::useByteOpRegister(MDefinition* mir)
 }
 
 LAllocation
+LIRGeneratorARM64::useByteOpRegisterAtStart(MDefinition* mir)
+{
+    MOZ_CRASH("useByteOpRegister");
+}
+
+LAllocation
 LIRGeneratorARM64::useByteOpRegisterOrNonDoubleConstant(MDefinition* mir)
 {
     MOZ_CRASH("useByteOpRegisterOrNonDoubleConstant");
@@ -210,15 +216,15 @@ LIRGeneratorARM64::lowerUrshD(MUrsh* mir)
 }
 
 void
-LIRGeneratorARM64::visitAsmJSNeg(MAsmJSNeg* ins)
+LIRGeneratorARM64::visitWasmNeg(MWasmNeg* ins)
 {
-    MOZ_CRASH("visitAsmJSNeg");
+    MOZ_CRASH("visitWasmNeg");
 }
 
 void
-LIRGeneratorARM64::visitAsmSelect(MAsmSelect* ins)
+LIRGeneratorARM64::visitWasmSelect(MWasmSelect* ins)
 {
-    MOZ_CRASH("visitAsmSelect");
+    MOZ_CRASH("visitWasmSelect");
 }
 
 void
@@ -234,15 +240,15 @@ LIRGeneratorARM64::lowerUMod(MMod* mod)
 }
 
 void
-LIRGeneratorARM64::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins)
+LIRGeneratorARM64::visitWasmUnsignedToDouble(MWasmUnsignedToDouble* ins)
 {
-    MOZ_CRASH("visitAsmJSUnsignedToDouble");
+    MOZ_CRASH("visitWasmUnsignedToDouble");
 }
 
 void
-LIRGeneratorARM64::visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins)
+LIRGeneratorARM64::visitWasmUnsignedToFloat32(MWasmUnsignedToFloat32* ins)
 {
-    MOZ_CRASH("visitAsmJSUnsignedToFloat32");
+    MOZ_CRASH("visitWasmUnsignedToFloat32");
 }
 
 void
@@ -328,12 +334,6 @@ LIRGeneratorARM64::visitRandom(MRandom* ins)
 
 void
 LIRGeneratorARM64::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
-{
-    MOZ_CRASH("NY");
-}
-
-void
-LIRGeneratorARM64::visitWasmBoundsCheck(MWasmBoundsCheck* ins)
 {
     MOZ_CRASH("NY");
 }

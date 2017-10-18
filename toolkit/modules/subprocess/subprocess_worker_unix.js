@@ -6,8 +6,10 @@
 "use strict";
 
 /* exported Process */
-/* globals BaseProcess, BasePipe */
 
+/* import-globals-from subprocess_shared.js */
+/* import-globals-from subprocess_shared_unix.js */
+/* import-globals-from subprocess_worker_common.js */
 importScripts("resource://gre/modules/subprocess/subprocess_shared.js",
               "resource://gre/modules/subprocess/subprocess_shared_unix.js",
               "resource://gre/modules/subprocess/subprocess_worker_common.js");
@@ -138,18 +140,22 @@ class InputPipe extends Pipe {
     return buffer;
   }
 
-
   /**
    * Called when one of the IO operations matching the `pollEvents` mask may be
    * performed without blocking.
+   *
+   * @returns {boolean}
+   *        True if any data was successfully read.
    */
   onReady() {
+    let result = false;
     let reads = this.pending;
     while (reads.length) {
       let {resolve, length} = reads[0];
 
       let buffer = this.readBuffer(length);
       if (buffer) {
+        result = true;
         this.shiftPending();
         resolve(buffer);
       } else {
@@ -160,6 +166,7 @@ class InputPipe extends Pipe {
     if (reads.length == 0) {
       io.updatePollFds();
     }
+    return result;
   }
 }
 
@@ -458,19 +465,25 @@ class Process extends BaseProcess {
     let status = ctypes.int();
 
     let res = libc.waitpid(this.pid, status.address(), LIBC.WNOHANG);
-    if (res == this.pid) {
-      let sig = unix.WTERMSIG(status.value);
-      if (sig) {
-        this.exitCode = -sig;
-      } else {
-        this.exitCode = unix.WEXITSTATUS(status.value);
-      }
-
-      this.fd.dispose();
-      io.updatePollFds();
-      this.resolveExit(this.exitCode);
-      return this.exitCode;
+    // If there's a failure here and we get any errno other than EINTR, it
+    // means that the process has been reaped by another thread (most likely
+    // the nspr process wait thread), and its actual exit status is not
+    // available to us. In that case, we have to assume success.
+    if (res == 0 || (res == -1 && ctypes.errno == LIBC.EINTR)) {
+      return null;
     }
+
+    let sig = unix.WTERMSIG(status.value);
+    if (sig) {
+      this.exitCode = -sig;
+    } else {
+      this.exitCode = unix.WEXITSTATUS(status.value);
+    }
+
+    this.fd.dispose();
+    io.updatePollFds();
+    this.resolveExit(this.exitCode);
+    return this.exitCode;
   }
 }
 
@@ -500,6 +513,7 @@ io = {
       this.signal.cleanup();
       this.signal = null;
 
+      self.postMessage({msg: "close"});
       self.close();
     }
   },
@@ -566,10 +580,16 @@ io = {
 
         let handler = handlers[i];
         try {
+          let success = false;
           if (pollfd.revents & handler.pollEvents) {
-            handler.onReady();
+            success = handler.onReady();
           }
-          if (pollfd.revents & (LIBC.POLLERR | LIBC.POLLHUP | LIBC.POLLNVAL)) {
+          // Only call the error handler in this iteration if we didn't also
+          // have a success. This is necessary because Linux systems set POLLHUP
+          // on a pipe when it's closed but there's still buffered data to be
+          // read, and Darwin sets POLLIN and POLLHUP on a closed pipe, even
+          // when there's no data to be read.
+          if (!success && (pollfd.revents & (LIBC.POLLERR | LIBC.POLLHUP | LIBC.POLLNVAL))) {
             handler.onError();
           }
         } catch (e) {

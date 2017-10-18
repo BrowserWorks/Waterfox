@@ -15,7 +15,7 @@ template <AllowGC allowGC>
 JitCode*
 Linker::newCode(JSContext* cx, CodeKind kind, bool hasPatchableBackedges /* = false */)
 {
-    MOZ_ASSERT(masm.numAsmJSAbsoluteAddresses() == 0);
+    MOZ_ASSERT(masm.numSymbolicAccesses() == 0);
     MOZ_ASSERT_IF(hasPatchableBackedges, kind == ION_CODE);
 
     gc::AutoSuppressGC suppressGC(cx);
@@ -31,9 +31,10 @@ Linker::newCode(JSContext* cx, CodeKind kind, bool hasPatchableBackedges /* = fa
     bytesNeeded = AlignBytes(bytesNeeded, sizeof(void*));
 
     ExecutableAllocator& execAlloc = hasPatchableBackedges
-        ? cx->runtime()->jitRuntime()->backedgeExecAlloc()
-        : cx->runtime()->jitRuntime()->execAlloc();
-    uint8_t* result = (uint8_t*)execAlloc.alloc(bytesNeeded, &pool, kind);
+                                     ? cx->runtime()->jitRuntime()->backedgeExecAlloc()
+                                     : cx->runtime()->jitRuntime()->execAlloc();
+
+    uint8_t* result = (uint8_t*)execAlloc.alloc(cx, bytesNeeded, &pool, kind);
     if (!result)
         return fail(cx);
 
@@ -53,7 +54,7 @@ Linker::newCode(JSContext* cx, CodeKind kind, bool hasPatchableBackedges /* = fa
     code->copyFrom(masm);
     masm.link(code);
     if (masm.embedsNurseryPointers())
-        cx->runtime()->gc.storeBuffer.putWholeCell(code);
+        cx->zone()->group()->storeBuffer().putWholeCell(code);
     return code;
 }
 

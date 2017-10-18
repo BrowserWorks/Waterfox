@@ -39,11 +39,13 @@
 #include "nsIDOMWindowUtils.h"
 #include "nsIDOMWindow.h"
 #include "nsINetworkInterceptController.h"
-#include "nsNullPrincipal.h"
+#include "NullPrincipal.h"
 #include "nsICorsPreflightCallback.h"
 #include "nsISupportsImpl.h"
+#include "nsHttpChannel.h"
 #include "mozilla/LoadInfo.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsQueryObject.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -56,30 +58,17 @@ static bool gDisableCORSPrivateData = false;
 static void
 LogBlockedRequest(nsIRequest* aRequest,
                   const char* aProperty,
-                  const char16_t* aParam)
+                  const char16_t* aParam,
+                  nsIHttpChannel* aCreatingChannel)
 {
   nsresult rv = NS_OK;
-
-  // Build the error object and log it to the console
-  nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to log blocked cross-site request (no console)");
-    return;
-  }
-
-  nsCOMPtr<nsIScriptError> scriptError =
-    do_CreateInstance(NS_SCRIPTERROR_CONTRACTID, &rv);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to log blocked cross-site request (no scriptError)");
-    return;
-  }
 
   nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
   nsCOMPtr<nsIURI> aUri;
   channel->GetURI(getter_AddRefs(aUri));
   nsAutoCString spec;
   if (aUri) {
-    aUri->GetSpec(spec);
+    spec = aUri->GetSpecOrDefault();
   }
 
   // Generate the error message
@@ -98,34 +87,19 @@ LogBlockedRequest(nsIRequest* aRequest,
 
   nsAutoString msg(blockedMessage.get());
 
-  // query innerWindowID and log to web console, otherwise log to
-  // the error to the browser console.
-  uint64_t innerWindowID = nsContentUtils::GetInnerWindowID(aRequest);
+  if (XRE_IsParentProcess()) {
+    if (aCreatingChannel) {
+      rv = aCreatingChannel->LogBlockedCORSRequest(msg);
+      if (NS_SUCCEEDED(rv)) {
+        return;
+      }
+    }
+    NS_WARNING("Failed to log blocked cross-site request to web console from parent->child, falling back to browser console");
+  }
 
-  if (innerWindowID > 0) {
-    rv = scriptError->InitWithWindowID(msg,
-                                       EmptyString(), // sourceName
-                                       EmptyString(), // sourceLine
-                                       0,             // lineNumber
-                                       0,             // columnNumber
-                                       nsIScriptError::warningFlag,
-                                       "CORS",
-                                       innerWindowID);
-  }
-  else {
-    rv = scriptError->Init(msg,
-                           EmptyString(), // sourceName
-                           EmptyString(), // sourceLine
-                           0,             // lineNumber
-                           0,             // columnNumber
-                           nsIScriptError::warningFlag,
-                           "CORS");
-  }
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to log blocked cross-site request (scriptError init failed)");
-    return;
-  }
-  console->LogMessage(scriptError);
+  // log message ourselves
+  uint64_t innerWindowID = nsContentUtils::GetInnerWindowID(aRequest);
+  nsCORSListenerProxy::LogBlockedCORSRequest(innerWindowID, msg);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -431,7 +405,8 @@ nsCORSListenerProxy::nsCORSListenerProxy(nsIStreamListener* aOuter,
     mOriginHeaderPrincipal(aRequestingPrincipal),
     mWithCredentials(aWithCredentials && !gDisableCORSPrivateData),
     mRequestApproved(false),
-    mHasBeenCrossSite(false)
+    mHasBeenCrossSite(false),
+    mMutex("nsCORSListenerProxy")
 {
 }
 
@@ -447,10 +422,14 @@ nsCORSListenerProxy::Init(nsIChannel* aChannel, DataURIHandling aAllowDataURI)
 
   nsresult rv = UpdateChannel(aChannel, aAllowDataURI, UpdateType::Default);
   if (NS_FAILED(rv)) {
-    mOuterListener = nullptr;
+    {
+      MutexAutoLock lock(mMutex);
+      mOuterListener = nullptr;
+    }
     mRequestingPrincipal = nullptr;
     mOriginHeaderPrincipal = nullptr;
     mOuterNotificationCallbacks = nullptr;
+    mHttpChannel = nullptr;
   }
 #ifdef DEBUG
   mInited = true;
@@ -491,12 +470,22 @@ nsCORSListenerProxy::OnStartRequest(nsIRequest* aRequest,
     }
 
     aRequest->Cancel(NS_ERROR_DOM_BAD_URI);
-    mOuterListener->OnStartRequest(aRequest, aContext);
+    nsCOMPtr<nsIStreamListener> listener;
+    {
+      MutexAutoLock lock(mMutex);
+      listener = mOuterListener;
+    }
+    listener->OnStartRequest(aRequest, aContext);
 
     return NS_ERROR_DOM_BAD_URI;
   }
 
-  return mOuterListener->OnStartRequest(aRequest, aContext);
+  nsCOMPtr<nsIStreamListener> listener;
+  {
+    MutexAutoLock lock(mMutex);
+    listener = mOuterListener;
+  }
+  return listener->OnStartRequest(aRequest, aContext);
 }
 
 namespace {
@@ -540,22 +529,29 @@ nsCORSListenerProxy::CheckRequestApproved(nsIRequest* aRequest)
   if (!mHasBeenCrossSite) {
     return NS_OK;
   }
+  nsCOMPtr<nsIHttpChannel> topChannel;
+  topChannel.swap(mHttpChannel);
 
   if (gDisableCORS) {
-    LogBlockedRequest(aRequest, "CORSDisabled", nullptr);
+    LogBlockedRequest(aRequest, "CORSDisabled", nullptr, topChannel);
     return NS_ERROR_DOM_BAD_URI;
   }
 
   // Check if the request failed
   nsresult status;
   nsresult rv = aRequest->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_SUCCESS(status, status);
+  if (NS_FAILED(rv)) {
+   return rv;
+  }
+
+  if (NS_FAILED(status)) {
+    return status;
+  }
 
   // Test that things worked on a HTTP level
   nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aRequest);
   if (!http) {
-    LogBlockedRequest(aRequest, "CORSRequestNotHttp", nullptr);
+    LogBlockedRequest(aRequest, "CORSRequestNotHttp", nullptr, topChannel);
     return NS_ERROR_DOM_BAD_URI;
   }
 
@@ -577,24 +573,38 @@ nsCORSListenerProxy::CheckRequestApproved(nsIRequest* aRequest)
   // check for duplicate headers
   rv = http->VisitOriginalResponseHeaders(visitor);
   if (NS_FAILED(rv)) {
-    LogBlockedRequest(aRequest, "CORSAllowOriginNotMatchingOrigin", nullptr);
+    LogBlockedRequest(aRequest, "CORSAllowOriginNotMatchingOrigin", nullptr, topChannel);
     return rv;
   }
 
   rv = http->GetResponseHeader(
     NS_LITERAL_CSTRING("Access-Control-Allow-Origin"), allowedOriginHeader);
   if (NS_FAILED(rv)) {
-    LogBlockedRequest(aRequest, "CORSMissingAllowOrigin", nullptr);
+    LogBlockedRequest(aRequest, "CORSMissingAllowOrigin", nullptr, topChannel);
     return rv;
   }
 
+  // Bug 1210985 - Explicitly point out the error that the credential is
+  // not supported if the allowing origin is '*'. Note that this check
+  // has to be done before the condition
+  //
+  // >> if (mWithCredentials || !allowedOriginHeader.EqualsLiteral("*"))
+  //
+  // below since "if (A && B)" is included in "if (A || !B)".
+  //
+  if (mWithCredentials && allowedOriginHeader.EqualsLiteral("*")) {
+    LogBlockedRequest(aRequest, "CORSNotSupportingCredentials", nullptr, topChannel);
+    return NS_ERROR_DOM_BAD_URI;
+  }
+
   if (mWithCredentials || !allowedOriginHeader.EqualsLiteral("*")) {
+    MOZ_ASSERT(!nsContentUtils::IsExpandedPrincipal(mOriginHeaderPrincipal));
     nsAutoCString origin;
     nsContentUtils::GetASCIIOrigin(mOriginHeaderPrincipal, origin);
 
     if (!allowedOriginHeader.Equals(origin)) {
       LogBlockedRequest(aRequest, "CORSAllowOriginNotMatchingOrigin",
-                        NS_ConvertUTF8toUTF16(allowedOriginHeader).get());
+                        NS_ConvertUTF8toUTF16(allowedOriginHeader).get(), topChannel);
       return NS_ERROR_DOM_BAD_URI;
     }
   }
@@ -606,7 +616,7 @@ nsCORSListenerProxy::CheckRequestApproved(nsIRequest* aRequest)
       NS_LITERAL_CSTRING("Access-Control-Allow-Credentials"), allowCredentialsHeader);
 
     if (!allowCredentialsHeader.EqualsLiteral("true")) {
-      LogBlockedRequest(aRequest, "CORSMissingAllowCredentials", nullptr);
+      LogBlockedRequest(aRequest, "CORSMissingAllowCredentials", nullptr, topChannel);
       return NS_ERROR_DOM_BAD_URI;
     }
   }
@@ -620,9 +630,14 @@ nsCORSListenerProxy::OnStopRequest(nsIRequest* aRequest,
                                    nsresult aStatusCode)
 {
   MOZ_ASSERT(mInited, "nsCORSListenerProxy has not been initialized properly");
-  nsresult rv = mOuterListener->OnStopRequest(aRequest, aContext, aStatusCode);
-  mOuterListener = nullptr;
+  nsCOMPtr<nsIStreamListener> listener;
+  {
+    MutexAutoLock lock(mMutex);
+    listener = mOuterListener.forget();
+  }
+  nsresult rv = listener->OnStopRequest(aRequest, aContext, aStatusCode);
   mOuterNotificationCallbacks = nullptr;
+  mHttpChannel = nullptr;
   return rv;
 }
 
@@ -641,8 +656,13 @@ nsCORSListenerProxy::OnDataAvailable(nsIRequest* aRequest,
   if (!mRequestApproved) {
     return NS_ERROR_DOM_BAD_URI;
   }
-  return mOuterListener->OnDataAvailable(aRequest, aContext, aInputStream,
-                                         aOffset, aCount);
+  nsCOMPtr<nsIStreamListener> listener;
+  {
+    MutexAutoLock lock(mMutex);
+    listener = mOuterListener;
+  }
+  return listener->OnDataAvailable(aRequest, aContext, aInputStream,
+                                   aOffset, aCount);
 }
 
 void
@@ -743,7 +763,7 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
         if (NS_SUCCEEDED(rv) && !equal) {
           // Spec says to set our source origin to a unique origin.
           mOriginHeaderPrincipal =
-            nsNullPrincipal::CreateWithInheritedAttributes(oldChannelPrincipal);
+            NullPrincipal::CreateWithInheritedAttributes(oldChannelPrincipal);
         }
       }
 
@@ -779,12 +799,16 @@ nsCORSListenerProxy::CheckListenerChain()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (nsCOMPtr<nsIThreadRetargetableStreamListener> retargetableListener =
-        do_QueryInterface(mOuterListener)) {
-    return retargetableListener->CheckListenerChain();
+  nsCOMPtr<nsIThreadRetargetableStreamListener> retargetableListener;
+  {
+    MutexAutoLock lock(mMutex);
+    retargetableListener = do_QueryInterface(mOuterListener);
+  }
+  if (!retargetableListener) {
+    return NS_ERROR_NO_INTERFACE;
   }
 
-  return NS_ERROR_NO_INTERFACE;
+  return retargetableListener->CheckListenerChain();
 }
 
 // Please note that the CSP directive 'upgrade-insecure-requests' relies
@@ -848,6 +872,10 @@ CheckUpgradeInsecureRequestsPreventsCORS(nsIPrincipal* aRequestingPrincipal,
   rv = aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
   NS_ENSURE_SUCCESS(rv, false);
 
+  if (!loadInfo) {
+    return false;
+  }
+
   // lets see if the loadInfo indicates that the request will
   // be upgraded before fetching any data from the netwerk.
   return loadInfo->GetUpgradeInsecureRequests();
@@ -893,6 +921,9 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
+  // TODO: Bug 1353683
+  // consider calling SetBlockedRequest in nsCORSListenerProxy::UpdateChannel
+  //
   // Check that the uri is ok to load
   rv = nsContentUtils::GetSecurityManager()->
     CheckLoadURIWithPrincipal(mRequestingPrincipal, uri,
@@ -937,6 +968,12 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
   uri->GetUserPass(userpass);
   NS_ENSURE_TRUE(userpass.IsEmpty(), NS_ERROR_DOM_BAD_URI);
 
+  // If we have an expanded principal here, we'll reject the CORS request,
+  // because we can't send a useful Origin header which is required for CORS.
+  if (nsContentUtils::IsExpandedPrincipal(mOriginHeaderPrincipal)) {
+    return NS_ERROR_DOM_BAD_URI;
+  }
+
   // Add the Origin header
   nsAutoCString origin;
   rv = nsContentUtils::GetASCIIOrigin(mOriginHeaderPrincipal, origin);
@@ -962,6 +999,8 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
+  mHttpChannel = http;
+
   return NS_OK;
 }
 
@@ -983,7 +1022,7 @@ nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel, UpdateType aUpda
   nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aChannel);
   NS_ENSURE_TRUE(http, NS_ERROR_DOM_BAD_URI);
   nsAutoCString method;
-  http->GetRequestMethod(method);
+  Unused << http->GetRequestMethod(method);
   if (!method.LowerCaseEqualsLiteral("get") &&
       !method.LowerCaseEqualsLiteral("post") &&
       !method.LowerCaseEqualsLiteral("head")) {
@@ -1090,8 +1129,8 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
 
   // The "Access-Control-Max-Age" header should return an age in seconds.
   nsAutoCString headerVal;
-  http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Max-Age"),
-                          headerVal);
+  Unused << http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Max-Age"),
+                                    headerVal);
   if (headerVal.IsEmpty()) {
     return;
   }
@@ -1100,7 +1139,7 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
   // http://dev.w3.org/2006/waf/access-control (digits 0-9 with no leading or
   // trailing non-whitespace characters).
   uint32_t age = 0;
-  nsCSubstring::const_char_iterator iter, end;
+  nsACString::const_char_iterator iter, end;
   headerVal.BeginReading(iter);
   headerVal.EndReading(end);
   while (iter != end) {
@@ -1136,8 +1175,9 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
 
   // The "Access-Control-Allow-Methods" header contains a comma separated
   // list of method names.
-  http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Methods"),
-                          headerVal);
+  Unused <<
+    http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Methods"),
+                            headerVal);
 
   nsCCharSeparatedTokenizer methods(headerVal, ',');
   while(methods.hasMoreTokens()) {
@@ -1166,8 +1206,9 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
 
   // The "Access-Control-Allow-Headers" header contains a comma separated
   // list of method names.
-  http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Headers"),
-                          headerVal);
+  Unused <<
+    http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Headers"),
+                            headerVal);
 
   nsCCharSeparatedTokenizer headers(headerVal, ',');
   while(headers.hasMoreTokens()) {
@@ -1276,19 +1317,20 @@ nsCORSPreflightListener::CheckPreflightRequestApproved(nsIRequest* aRequest)
   nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aRequest);
   nsCOMPtr<nsIHttpChannelInternal> internal = do_QueryInterface(aRequest);
   NS_ENSURE_STATE(internal);
+  nsCOMPtr<nsIHttpChannel> parentHttpChannel = do_QueryInterface(mCallback);
 
   bool succeedded;
   rv = http->GetRequestSucceeded(&succeedded);
   if (NS_FAILED(rv) || !succeedded) {
-    LogBlockedRequest(aRequest, "CORSPreflightDidNotSucceed", nullptr);
+    LogBlockedRequest(aRequest, "CORSPreflightDidNotSucceed", nullptr, parentHttpChannel);
     return NS_ERROR_DOM_BAD_URI;
   }
 
   nsAutoCString headerVal;
   // The "Access-Control-Allow-Methods" header contains a comma separated
   // list of method names.
-  http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Methods"),
-                          headerVal);
+  Unused << http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Methods"),
+                                    headerVal);
   bool foundMethod = mPreflightMethod.EqualsLiteral("GET") ||
                        mPreflightMethod.EqualsLiteral("HEAD") ||
                        mPreflightMethod.EqualsLiteral("POST");
@@ -1300,20 +1342,20 @@ nsCORSPreflightListener::CheckPreflightRequestApproved(nsIRequest* aRequest)
     }
     if (!NS_IsValidHTTPToken(method)) {
       LogBlockedRequest(aRequest, "CORSInvalidAllowMethod",
-                        NS_ConvertUTF8toUTF16(method).get());
+                        NS_ConvertUTF8toUTF16(method).get(), parentHttpChannel);
       return NS_ERROR_DOM_BAD_URI;
     }
     foundMethod |= mPreflightMethod.Equals(method);
   }
   if (!foundMethod) {
-    LogBlockedRequest(aRequest, "CORSMethodNotFound", nullptr);
+    LogBlockedRequest(aRequest, "CORSMethodNotFound", nullptr, parentHttpChannel);
     return NS_ERROR_DOM_BAD_URI;
   }
 
   // The "Access-Control-Allow-Headers" header contains a comma separated
   // list of header names.
-  http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Headers"),
-                          headerVal);
+  Unused << http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Headers"),
+                                    headerVal);
   nsTArray<nsCString> headers;
   nsCCharSeparatedTokenizer headerTokens(headerVal, ',');
   while(headerTokens.hasMoreTokens()) {
@@ -1323,7 +1365,7 @@ nsCORSPreflightListener::CheckPreflightRequestApproved(nsIRequest* aRequest)
     }
     if (!NS_IsValidHTTPToken(header)) {
       LogBlockedRequest(aRequest, "CORSInvalidAllowHeader",
-                        NS_ConvertUTF8toUTF16(header).get());
+                        NS_ConvertUTF8toUTF16(header).get(), parentHttpChannel);
       return NS_ERROR_DOM_BAD_URI;
     }
     headers.AppendElement(header);
@@ -1332,7 +1374,7 @@ nsCORSPreflightListener::CheckPreflightRequestApproved(nsIRequest* aRequest)
     if (!headers.Contains(mPreflightHeaders[i],
                           nsCaseInsensitiveCStringArrayComparator())) {
       LogBlockedRequest(aRequest, "CORSMissingAllowHeaderFromPreflight",
-                        NS_ConvertUTF8toUTF16(mPreflightHeaders[i]).get());
+                        NS_ConvertUTF8toUTF16(mPreflightHeaders[i]).get(), parentHttpChannel);
       return NS_ERROR_DOM_BAD_URI;
     }
   }
@@ -1362,6 +1404,7 @@ nsCORSListenerProxy::RemoveFromCorsPreflightCache(nsIURI* aURI,
   }
 }
 
+// static
 nsresult
 nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
                                         nsICorsPreflightCallback* aCallback,
@@ -1371,14 +1414,15 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
   *aPreflightChannel = nullptr;
 
   if (gDisableCORS) {
-    LogBlockedRequest(aRequestChannel, "CORSDisabled", nullptr);
+    nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aRequestChannel);
+    LogBlockedRequest(aRequestChannel, "CORSDisabled", nullptr, http);
     return NS_ERROR_DOM_BAD_URI;
   }
 
   nsAutoCString method;
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(aRequestChannel));
   NS_ENSURE_TRUE(httpChannel, NS_ERROR_UNEXPECTED);
-  httpChannel->GetRequestMethod(method);
+  Unused << httpChannel->GetRequestMethod(method);
 
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_GetFinalChannelURI(aRequestChannel, getter_AddRefs(uri));
@@ -1467,6 +1511,13 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
                      method, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Set the CORS preflight channel's warning reporter to be the same as the
+  // requesting channel so that all log messages are able to be reported through
+  // the warning reporter.
+  RefPtr<nsHttpChannel> reqCh = do_QueryObject(aRequestChannel);
+  RefPtr<nsHttpChannel> preCh = do_QueryObject(preHttp);
+  preCh->SetWarningReporter(reqCh->GetWarningReporter());
+
   nsTArray<nsCString> preflightHeaders;
   if (!aUnsafeHeaders.IsEmpty()) {
     for (uint32_t i = 0; i < aUnsafeHeaders.Length(); ++i) {
@@ -1503,4 +1554,53 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
   preflightChannel.forget(aPreflightChannel);
 
   return NS_OK;
+}
+
+// static
+void
+nsCORSListenerProxy::LogBlockedCORSRequest(uint64_t aInnerWindowID,
+                                           const nsAString& aMessage)
+{
+  nsresult rv = NS_OK;
+
+  // Build the error object and log it to the console
+  nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID, &rv));
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Failed to log blocked cross-site request (no console)");
+    return;
+  }
+
+  nsCOMPtr<nsIScriptError> scriptError =
+    do_CreateInstance(NS_SCRIPTERROR_CONTRACTID, &rv);
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Failed to log blocked cross-site request (no scriptError)");
+    return;
+  }
+
+  // query innerWindowID and log to web console, otherwise log to
+  // the error to the browser console.
+  if (aInnerWindowID > 0) {
+    rv = scriptError->InitWithWindowID(aMessage,
+                                       EmptyString(), // sourceName
+                                       EmptyString(), // sourceLine
+                                       0,             // lineNumber
+                                       0,             // columnNumber
+                                       nsIScriptError::warningFlag,
+                                       "CORS",
+                                       aInnerWindowID);
+  }
+  else {
+    rv = scriptError->Init(aMessage,
+                           EmptyString(), // sourceName
+                           EmptyString(), // sourceLine
+                           0,             // lineNumber
+                           0,             // columnNumber
+                           nsIScriptError::warningFlag,
+                           "CORS");
+  }
+  if (NS_FAILED(rv)) {
+    NS_WARNING("Failed to log blocked cross-site request (scriptError init failed)");
+    return;
+  }
+  console->LogMessage(scriptError);
 }

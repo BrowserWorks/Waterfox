@@ -7,7 +7,7 @@
 SimpleTest.waitForExplicitFinish();
 SimpleTest.requestFlakyTimeout("untriaged");
 browserElementTestHelpers.setEnabledPref(true);
-browserElementTestHelpers.setAccessibleCaretEnabledPref(true);
+browserElementTestHelpers.setupAccessibleCaretPref();
 browserElementTestHelpers.addPermission();
 const { Services } = SpecialPowers.Cu.import('resource://gre/modules/Services.jsm');
 
@@ -60,9 +60,7 @@ function runTest() {
   gTextarea = document.createElement('textarea');
   document.body.appendChild(gTextarea);
 
-  iframeOuter.addEventListener("mozbrowserloadend", function onloadend(e) {
-    iframeOuter.removeEventListener("mozbrowserloadend", onloadend);
-
+  iframeOuter.addEventListener("mozbrowserloadend", function(e) {
     if (createEmbededFrame) {
       var contentWin = SpecialPowers.wrap(iframeOuter)
                              .QueryInterface(SpecialPowers.Ci.nsIFrameLoaderOwner)
@@ -72,17 +70,16 @@ function runTest() {
       iframeInner.setAttribute('mozbrowser', true);
       iframeInner.setAttribute('remote', 'false');
       contentDoc.body.appendChild(iframeInner);
-      iframeInner.addEventListener("mozbrowserloadend", function onloadendinner(e) {
-        iframeInner.removeEventListener("mozbrowserloadend", onloadendinner);
+      iframeInner.addEventListener("mozbrowserloadend", function(e) {
         mm = SpecialPowers.getBrowserFrameMessageManager(iframeInner);
         dispatchTest(e);
-      });
+      }, {once: true});
     } else {
       iframeInner = iframeOuter;
       mm = SpecialPowers.getBrowserFrameMessageManager(iframeInner);
       dispatchTest(e);
     }
-  });
+  }, {once: true});
 }
 
 function doCommand(cmd) {
@@ -97,11 +94,10 @@ function doCommand(cmd) {
 }
 
 function dispatchTest(e) {
-  iframeInner.addEventListener("mozbrowserloadend", function onloadend2(e) {
-    iframeInner.removeEventListener("mozbrowserloadend", onloadend2);
+  iframeInner.addEventListener("mozbrowserloadend", function(e) {
     iframeInner.focus();
     SimpleTest.executeSoon(function() { testSelectAll(e); });
-  });
+  }, {once: true});
 
   switch (state) {
     case 0: // test for textarea
@@ -191,14 +187,13 @@ function testSelectAll(e) {
   // Skip mozbrowser test if we're at child process.
   if (!isChildProcess()) {
     let eventName = "mozbrowsercaretstatechanged";
-    iframeOuter.addEventListener(eventName, function caretchangeforselectall(e) {
-      iframeOuter.removeEventListener(eventName, caretchangeforselectall, true);
+    iframeOuter.addEventListener(eventName, function(e) {
       ok(true, "got mozbrowsercaretstatechanged event." + stateMeaning);
       ok(e.detail, "event.detail is not null." + stateMeaning);
       ok(e.detail.width != 0, "event.detail.width is not zero" + stateMeaning);
       ok(e.detail.height != 0, "event.detail.height is not zero" + stateMeaning);
       SimpleTest.executeSoon(function() { testCopy1(e); });
-    }, true);
+    }, {capture: true, once: true});
   }
 
   mm.addMessageListener('content-focus', function messageforfocus(msg) {

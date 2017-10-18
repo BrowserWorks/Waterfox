@@ -120,7 +120,7 @@ var NewPrefDialog = {
 
     this._prefNameInputElt.focus();
 
-    window.addEventListener("keypress", this.handleKeypress, false);
+    window.addEventListener("keypress", this.handleKeypress);
   },
 
   // When we want to cancel/hide the new pref dialog / un-shield the prefs list
@@ -128,7 +128,7 @@ var NewPrefDialog = {
     this._newPrefsDialog.classList.remove("show");
     this._prefsShield.removeAttribute("shown");
 
-    window.removeEventListener("keypress", this.handleKeypress, false);
+    window.removeEventListener("keypress", this.handleKeypress);
   },
 
   // Watch user key input so we can provide Enter key action, commit input values
@@ -147,7 +147,7 @@ var NewPrefDialog = {
 
     switch(this.type) {
       case "boolean":
-        Services.prefs.setBoolPref(this._prefNameInputElt.value, (this._booleanValue.value == "true") ? true : false);
+        Services.prefs.setBoolPref(this._prefNameInputElt.value, !!(this._booleanValue.value == "true"));
         break;
       case "string":
         Services.prefs.setCharPref(this._prefNameInputElt.value, this._stringValue.value);
@@ -219,7 +219,7 @@ var AboutConfig = {
     this.bufferFilterInput();
 
     // Setup the prefs observers
-    Services.prefs.addObserver("", this, false);
+    Services.prefs.addObserver("", this);
   },
 
   // Uninit the main AboutConfig dialog
@@ -240,11 +240,11 @@ var AboutConfig = {
       clearTimeout(this._filterChangeTimer);
     }
 
-    this._filterChangeTimer = setTimeout((function() {
+    this._filterChangeTimer = setTimeout(() => {
       this._filterChangeTimer = null;
       // Display updated prefs list when filterInput value settles
       this._displayNewList();
-    }).bind(this), FILTER_CHANGE_TRIGGER);
+    }, FILTER_CHANGE_TRIGGER);
   },
 
   // Update displayed list when filterInput value changes
@@ -265,9 +265,9 @@ var AboutConfig = {
     window.onscroll = this.onScroll.bind(this);
 
     // Pause for screen to settle, then ensure at top
-    setTimeout((function() {
+    setTimeout(() => {
       window.scrollTo(0, 0);
-    }).bind(this), INITIAL_PAGE_DELAY);
+    }, INITIAL_PAGE_DELAY);
   },
 
   // Clear the displayed preferences list
@@ -346,13 +346,13 @@ var AboutConfig = {
     // Clear any previous selection
     if (currentSelection) {
       currentSelection.classList.remove("selected");
-      currentSelection.removeEventListener("keypress", this.handleKeypress, false);
+      currentSelection.removeEventListener("keypress", this.handleKeypress);
     }
 
     // Set any current selection
     if (aSelection) {
       aSelection.classList.add("selected");
-      aSelection.addEventListener("keypress", this.handleKeypress, false);
+      aSelection.addEventListener("keypress", this.handleKeypress);
     }
   },
 
@@ -584,21 +584,20 @@ Pref.prototype = {
       this.li.addEventListener("click",
         function(aEvent) {
           AboutConfig.selected = AboutConfig.getLINodeForEvent(aEvent);
-        },
-        false
+        }
       );
 
       // Contextmenu callback to identify selected list item
       this.li.addEventListener("contextmenu",
         function(aEvent) {
           AboutConfig.contextMenuLINode = AboutConfig.getLINodeForEvent(aEvent);
-        },
-        false
+        }
       );
 
       this.li.setAttribute("contextmenu", "prefs-context-menu");
 
       // Create list item outline, bind to object actions
+      // eslint-disable-next-line no-unsanitized/property
       this.li.innerHTML =
         "<div class='pref-name' " +
             "onclick='AboutConfig.selectOrToggleBoolPref(event);'>" +

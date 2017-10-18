@@ -15,8 +15,6 @@ var Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
@@ -27,10 +25,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
  * posted on the event loop of the main thread is processed.
  */
 function promiseResolvedLater(aValue) {
-  let deferred = Promise.defer();
-  Services.tm.mainThread.dispatch(() => deferred.resolve(aValue),
-                                  Ci.nsIThread.DISPATCH_NORMAL);
-  return deferred.promise;
+  return new Promise(resolve => {
+    Services.tm.dispatchToMainThread(() => resolve(aValue));
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////

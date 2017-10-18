@@ -14,13 +14,12 @@
 class nsBackdropFrame final : public nsFrame
 {
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_FRAMEARENA_HELPERS(nsBackdropFrame)
 
   explicit nsBackdropFrame(nsStyleContext* aContext)
-    : nsFrame(aContext) { }
+    : nsFrame(aContext, kClassID)
+  {}
 
-  // nsIFrame overrides
-  virtual nsIAtom* GetType() const override;
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
@@ -29,14 +28,15 @@ public:
   virtual void BuildDisplayList(nsDisplayListBuilder* aBuilder,
                                 const nsRect& aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
-  virtual LogicalSize ComputeAutoSize(nsRenderingContext *aRenderingContext,
-                                      WritingMode aWM,
-                                      const LogicalSize& aCBSize,
-                                      nscoord aAvailableISize,
-                                      const LogicalSize& aMargin,
-                                      const LogicalSize& aBorder,
-                                      const LogicalSize& aPadding,
-                                      bool aShrinkWrap) override;
+  virtual mozilla::LogicalSize
+    ComputeAutoSize(gfxContext*                 aRenderingContext,
+                    mozilla::WritingMode        aWM,
+                    const mozilla::LogicalSize& aCBSize,
+                    nscoord                     aAvailableISize,
+                    const mozilla::LogicalSize& aMargin,
+                    const mozilla::LogicalSize& aBorder,
+                    const mozilla::LogicalSize& aPadding,
+                    ComputeSizeFlags            aFlags) override;
   virtual void Reflow(nsPresContext* aPresContext,
                       ReflowOutput& aDesiredSize,
                       const ReflowInput& aReflowInput,

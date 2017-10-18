@@ -16,10 +16,11 @@
 
 #include "gc/Barrier.h"
 #include "gc/Marking.h"
-
 #include "js/GCHashTable.h"
 #include "js/RootingAPI.h"
 #include "js/TypeDecls.h"
+#include "js/Utility.h"
+#include "vm/String.h"
 
 namespace js {
 class AutoLockForExclusiveAccess;
@@ -31,35 +32,50 @@ class Symbol : public js::gc::TenuredCell
 {
   private:
     SymbolCode code_;
+
+    // Each Symbol gets its own hash code so that we don't have to use
+    // addresses as hash codes (a security hazard).
+    js::HashNumber hash_;
+
     JSAtom* description_;
 
     // The minimum allocation size is sizeof(JSString): 16 bytes on 32-bit
-    // architectures and 24 bytes on 64-bit.  8 bytes of padding makes Symbol
+    // architectures and 24 bytes on 64-bit.  A size_t of padding makes Symbol
     // the minimum size on both.
-    uint64_t unused2_;
+    size_t unused_;
 
-    Symbol(SymbolCode code, JSAtom* desc)
-        : code_(code), description_(desc)
+    Symbol(SymbolCode code, js::HashNumber hash, JSAtom* desc)
+        : code_(code), hash_(hash), description_(desc)
     {
-        // Silence warnings about unused2 being... unused.
-        (void)unused2_;
+        // Silence warnings about unused_ being... unused.
+        (void)unused_;
     }
 
     Symbol(const Symbol&) = delete;
     void operator=(const Symbol&) = delete;
 
     static Symbol*
-    newInternal(js::ExclusiveContext* cx, SymbolCode code, JSAtom* description,
-                js::AutoLockForExclusiveAccess& lock);
+    newInternal(JSContext* cx, SymbolCode code, js::HashNumber hash,
+                JSAtom* description, js::AutoLockForExclusiveAccess& lock);
 
   public:
-    static Symbol* new_(js::ExclusiveContext* cx, SymbolCode code, JSString* description);
-    static Symbol* for_(js::ExclusiveContext* cx, js::HandleString description);
+    static Symbol* new_(JSContext* cx, SymbolCode code, JSString* description);
+    static Symbol* for_(JSContext* cx, js::HandleString description);
 
     JSAtom* description() const { return description_; }
     SymbolCode code() const { return code_; }
+    js::HashNumber hash() const { return hash_; }
 
     bool isWellKnownSymbol() const { return uint32_t(code_) < WellKnownSymbolLimit; }
+
+    // An "interesting symbol" is a well-known symbol, like @@toStringTag,
+    // that's often looked up on random objects but is usually not present. We
+    // optimize this by setting a flag on the object's BaseShape when such
+    // symbol properties are added, so we can optimize lookups on objects that
+    // don't have the BaseShape flag.
+    bool isInterestingSymbol() const {
+        return code_ == SymbolCode::toStringTag || code_ == SymbolCode::toPrimitive;
+    }
 
     static const JS::TraceKind TraceKind = JS::TraceKind::Symbol;
     inline void traceChildren(JSTracer* trc) {
@@ -93,7 +109,7 @@ struct HashSymbolsByDescription
     typedef JSAtom* Lookup;
 
     static HashNumber hash(Lookup l) {
-        return HashNumber(reinterpret_cast<uintptr_t>(l));
+        return HashNumber(l->hash());
     }
     static bool match(Key sym, Lookup l) {
         return sym->description() == l;
@@ -132,10 +148,10 @@ bool
 SymbolDescriptiveString(JSContext* cx, JS::Symbol* sym, JS::MutableHandleValue result);
 
 bool
-IsSymbolOrSymbolWrapper(JS::Value v);
+IsSymbolOrSymbolWrapper(const JS::Value& v);
 
 JS::Symbol*
-ToSymbolPrimitive(JS::Value v);
+ToSymbolPrimitive(const JS::Value& v);
 
 } /* namespace js */
 

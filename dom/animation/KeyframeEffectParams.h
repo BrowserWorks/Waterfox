@@ -7,52 +7,19 @@
 #ifndef mozilla_KeyframeEffectParams_h
 #define mozilla_KeyframeEffectParams_h
 
-#include "nsCSSProps.h"
-#include "nsString.h"
+// X11 has a #define for None
+#ifdef None
+#undef None
+#endif
+#include "mozilla/dom/KeyframeEffectBinding.h" // IterationCompositeOperation
 
 namespace mozilla {
 
-enum class SpacingMode
-{
-  distribute,
-  paced
-};
-
 struct KeyframeEffectParams
 {
-  void GetSpacingAsString(nsAString& aSpacing) const
-  {
-    if (mSpacingMode == SpacingMode::distribute) {
-      aSpacing.AssignLiteral("distribute");
-    } else {
-      aSpacing.AssignLiteral("paced(");
-      aSpacing.AppendASCII(nsCSSProps::GetStringValue(mPacedProperty).get());
-      aSpacing.AppendLiteral(")");
-    }
-  }
-
-  /**
-   * Parse spacing string.
-   *
-   * @param aSpacing The input spacing string.
-   * @param [out] aSpacingMode The parsed spacing mode.
-   * @param [out] aPacedProperty The parsed CSS property if using paced spacing.
-   * @param [out] aInvalidPacedProperty A string that, if we parsed a string of
-   *                                    the form 'paced(<ident>)' where <ident>
-   *                                    is not a recognized animatable property,
-   *                                    will be set to <ident>.
-   * @param [out] aRv The error result.
-   */
-  static void ParseSpacing(const nsAString& aSpacing,
-                           SpacingMode& aSpacingMode,
-                           nsCSSProperty& aPacedProperty,
-                           nsAString& aInvalidPacedProperty,
-                           ErrorResult& aRv);
-
-  // FIXME: Bug 1216843: Add IterationCompositeOperations and
-  //        Bug 1216844: Add CompositeOperation
-  SpacingMode mSpacingMode = SpacingMode::distribute;
-  nsCSSProperty mPacedProperty = eCSSProperty_UNKNOWN;
+  dom::IterationCompositeOperation mIterationComposite =
+    dom::IterationCompositeOperation::Replace;
+  dom::CompositeOperation mComposite = dom::CompositeOperation::Replace;
 };
 
 } // namespace mozilla

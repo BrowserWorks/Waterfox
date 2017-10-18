@@ -21,7 +21,7 @@ profileDir.append("extensions");
 // when expected
 var gLWThemeChanged = false;
 var LightweightThemeObserver = {
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic != "lightweight-theme-styling-update")
       return;
 
@@ -31,10 +31,10 @@ var LightweightThemeObserver = {
 
 AM_Cc["@mozilla.org/observer-service;1"]
      .getService(Components.interfaces.nsIObserverService)
-     .addObserver(LightweightThemeObserver, "lightweight-theme-styling-update", false);
+     .addObserver(LightweightThemeObserver, "lightweight-theme-styling-update");
 
 
-function run_test() {
+async function run_test() {
   do_test_pending();
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
@@ -80,7 +80,7 @@ function run_test() {
     }]
   }, profileDir);
 
-  startupManager();
+  await promiseStartupManager();
   // Make sure we only register once despite multiple calls
   AddonManager.addInstallListener(InstallListener);
   AddonManager.addAddonListener(AddonListener);
@@ -158,8 +158,9 @@ function run_test_1() {
   });
 }
 
-function check_test_1() {
-  restartManager();
+async function check_test_1() {
+  await promiseRestartManager();
+
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "theme2/1.0");
 
   AddonManager.getAddonsByIDs(["theme1@tests.mozilla.org",
@@ -190,12 +191,13 @@ function check_test_1() {
 
 // Removing the active theme should fall back to the default (not ideal in this
 // case since we don't have the default theme installed)
-function run_test_2() {
+async function run_test_2() {
   var dest = profileDir.clone();
   dest.append(do_get_expected_addon_name("theme2@tests.mozilla.org"));
   dest.remove(true);
 
-  restartManager();
+  await promiseRestartManager();
+
   do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "classic/1.0");
 
   AddonManager.getAddonsByIDs(["theme1@tests.mozilla.org",
@@ -297,8 +299,7 @@ function run_test_3() {
       addons.forEach(function(a) {
         if (a.id == "1@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);
@@ -375,8 +376,7 @@ function run_test_4() {
       addons.forEach(function(a) {
         if (a.id == "2@personas.mozilla.org") {
           seen = true;
-        }
-        else {
+        } else {
           dump("Checking theme " + a.id + "\n");
           do_check_false(a.isActive);
           do_check_true(a.userDisabled);
@@ -857,27 +857,27 @@ function run_test_15() {
       do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "theme1/1.0");
       AddonManager.getAddonsByIDs(["default@tests.mozilla.org",
                                    "theme1@tests.mozilla.org"],
-                                   callback_soon(function([d, t1]) {
-        do_check_true(d.userDisabled);
-        do_check_false(d.appDisabled);
-        do_check_false(d.isActive);
+                                   callback_soon(function([d_2, t1_2]) {
+        do_check_true(d_2.userDisabled);
+        do_check_false(d_2.appDisabled);
+        do_check_false(d_2.isActive);
 
-        do_check_false(t1.userDisabled);
-        do_check_false(t1.appDisabled);
-        do_check_true(t1.isActive);
+        do_check_false(t1_2.userDisabled);
+        do_check_false(t1_2.appDisabled);
+        do_check_true(t1_2.isActive);
 
         restartManager("2");
 
         do_check_eq(Services.prefs.getCharPref(PREF_GENERAL_SKINS_SELECTEDSKIN), "theme1/1.0");
         AddonManager.getAddonsByIDs(["default@tests.mozilla.org",
-                                     "theme1@tests.mozilla.org"], function([d, t1]) {
-          do_check_true(d.userDisabled);
-          do_check_false(d.appDisabled);
-          do_check_false(d.isActive);
+                                     "theme1@tests.mozilla.org"], function([d_3, t1_3]) {
+          do_check_true(d_3.userDisabled);
+          do_check_false(d_3.appDisabled);
+          do_check_false(d_3.isActive);
 
-          do_check_false(t1.userDisabled);
-          do_check_false(t1.appDisabled);
-          do_check_true(t1.isActive);
+          do_check_false(t1_3.userDisabled);
+          do_check_false(t1_3.appDisabled);
+          do_check_true(t1_3.isActive);
 
           do_execute_soon(run_test_16);
         });
@@ -943,14 +943,14 @@ function run_test_18() {
 
     AddonManager.getAddonsByIDs(["default@tests.mozilla.org",
                                  "theme1@tests.mozilla.org"],
-                                 callback_soon(function([d, t1]) {
-      do_check_true(d.userDisabled);
-      do_check_false(d.appDisabled);
-      do_check_false(d.isActive);
+                                 callback_soon(function([d_2, t1_2]) {
+      do_check_true(d_2.userDisabled);
+      do_check_false(d_2.appDisabled);
+      do_check_false(d_2.isActive);
 
-      do_check_false(t1.userDisabled);
-      do_check_false(t1.appDisabled);
-      do_check_true(t1.isActive);
+      do_check_false(t1_2.userDisabled);
+      do_check_false(t1_2.appDisabled);
+      do_check_true(t1_2.isActive);
 
       prepare_test({
         "theme1@tests.mozilla.org": [
@@ -960,28 +960,28 @@ function run_test_18() {
           "onEnabling",
         ]
       });
-      t1.userDisabled = true;
+      t1_2.userDisabled = true;
       ensure_test_completed();
 
-      do_check_false(d.userDisabled);
-      do_check_false(d.appDisabled);
-      do_check_false(d.isActive);
+      do_check_false(d_2.userDisabled);
+      do_check_false(d_2.appDisabled);
+      do_check_false(d_2.isActive);
 
-      do_check_true(t1.userDisabled);
-      do_check_false(t1.appDisabled);
-      do_check_true(t1.isActive);
+      do_check_true(t1_2.userDisabled);
+      do_check_false(t1_2.appDisabled);
+      do_check_true(t1_2.isActive);
 
       restartManager();
 
       AddonManager.getAddonsByIDs(["default@tests.mozilla.org",
-                                   "theme1@tests.mozilla.org"], function([d, t1]) {
-        do_check_false(d.userDisabled);
-        do_check_false(d.appDisabled);
-        do_check_true(d.isActive);
+                                   "theme1@tests.mozilla.org"], function([d_3, t1_3]) {
+        do_check_false(d_3.userDisabled);
+        do_check_false(d_3.appDisabled);
+        do_check_true(d_3.isActive);
 
-        do_check_true(t1.userDisabled);
-        do_check_false(t1.appDisabled);
-        do_check_false(t1.isActive);
+        do_check_true(t1_3.userDisabled);
+        do_check_false(t1_3.appDisabled);
+        do_check_false(t1_3.isActive);
 
         do_execute_soon(run_test_19);
       });
@@ -1038,8 +1038,7 @@ function run_test_20() {
     try {
       d.userDisabled = true;
       do_throw("Disabling the default theme should throw an exception");
-    }
-    catch (e) {
+    } catch (e) {
     }
 
     do_execute_soon(run_test_21);
@@ -1068,7 +1067,7 @@ function run_test_21() {
 
     AddonManager.getAddonByID("1@personas.mozilla.org", function(p1) {
       AddonManager.addAddonListener({
-        onEnabling: function(aAddon) {
+        onEnabling(aAddon) {
           do_check_false(hasFlag(aAddon.permissions, AddonManager.PERM_CAN_ENABLE));
           do_check_true(hasFlag(aAddon.pendingOperations, AddonManager.PENDING_ENABLE));
 
@@ -1124,14 +1123,14 @@ function run_test_22() {
     restartManager();
 
     AddonManager.getAddonsByIDs(["default@tests.mozilla.org",
-                                 "1@personas.mozilla.org"], function([d, p1]) {
-      do_check_true(d.userDisabled);
-      do_check_false(d.appDisabled);
-      do_check_false(d.isActive);
+                                 "1@personas.mozilla.org"], function([d_2, p1_2]) {
+      do_check_true(d_2.userDisabled);
+      do_check_false(d_2.appDisabled);
+      do_check_false(d_2.isActive);
 
-      do_check_false(p1.userDisabled);
-      do_check_false(p1.appDisabled);
-      do_check_true(p1.isActive);
+      do_check_false(p1_2.userDisabled);
+      do_check_false(p1_2.appDisabled);
+      do_check_true(p1_2.isActive);
 
       end_test();
     });

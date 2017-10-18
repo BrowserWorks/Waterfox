@@ -3,6 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko;
+
+import org.mozilla.gecko.util.GeckoBundle;
+
 import android.database.Cursor;
 
 public interface Actions {
@@ -26,11 +29,20 @@ public interface Actions {
         /** Blocks until the event has been received and returns data associated with the event. */
         public String blockForEventData();
 
+        /** Blocks until the event has been received and returns data associated with the event. */
+        public GeckoBundle blockForBundle();
+
         /**
          * Blocks until the event has been received, or until the timeout has been exceeded.
          * Returns the data associated with the event, if applicable.
          */
         public String blockForEventDataWithTimeout(long millis);
+
+        /**
+         * Blocks until the event has been received, or until the timeout has been exceeded.
+         * Returns the data associated with the event, if applicable.
+         */
+        public GeckoBundle blockForBundleWithTimeout(long millis);
 
         /** Polls to see if the event has been received. Once this returns true, subsequent calls will also return true. */
         public boolean eventReceived();
@@ -44,12 +56,27 @@ public interface Actions {
         public void blockUntilClear(long millis);
     }
 
+    public enum EventType {
+        GECKO,
+        UI,
+        BACKGROUND
+    }
+
     /**
-     * Sends an event to Gecko.
+     * Sends an event to the global EventDispatcher instance.
      *
-     * @param geckoEvent The geckoEvent JSONObject's type
+     * @param event The event type
+     * @param data Data associated with the event
      */
-    void sendGeckoEvent(String geckoEvent, String data);
+    void sendGlobalEvent(String event, GeckoBundle data);
+
+    /**
+     * Sends an event to the GeckoApp-specific EventDispatcher instance.
+     *
+     * @param event The event type
+     * @param data Data associated with the event
+     */
+    void sendWindowEvent(String event, GeckoBundle data);
 
     public interface PrefWaiter {
         boolean isFinished();
@@ -86,13 +113,24 @@ public interface Actions {
     void removePrefsObserver(PrefWaiter handler);
 
     /**
-     * Listens for a gecko event to be sent from the Gecko instance.
+     * Listens for an event on the global EventDispatcher instance.
      * The returned object can be used to test if the event has been
      * received. Note that only one event is listened for.
      *
-     * @param geckoEvent The geckoEvent JSONObject's type
+     * @param type The thread type for the event
+     * @param event The name for the event
      */
-    RepeatedEventExpecter expectGeckoEvent(String geckoEvent);
+    RepeatedEventExpecter expectGlobalEvent(EventType type, String event);
+
+    /**
+     * Listens for an event on the global EventDispatcher instance.
+     * The returned object can be used to test if the event has been
+     * received. Note that only one event is listened for.
+     *
+     * @param type The thread type for the event
+     * @param event The name for the event
+     */
+    RepeatedEventExpecter expectWindowEvent(EventType type, String event);
 
     /**
      * Listens for a paint event. Note that calling expectPaint() will

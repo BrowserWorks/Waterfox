@@ -1,4 +1,4 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */ 
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -97,8 +97,7 @@ function safeGetCharPref(pref, defaultValue) {
       getService(Ci.nsIPrefBranch);
   try {
     return prefs.getCharPref(pref);
-  }
-  catch (e) {
+  } catch (e) {
   }
   return defaultValue;
 }
@@ -224,10 +223,9 @@ FeedConverter.prototype = {
               try {
                 let title = feed.title ? feed.title.plainText() : "";
                 let desc = feed.subtitle ? feed.subtitle.plainText() : "";
-                let feedReader = safeGetCharPref(getPrefActionForType(feedType), "bookmarks");
-                feedService.addToClientReader(result.uri.spec, title, desc, feed.type, feedReader);
+                feedService.addToClientReader(result.uri.spec, title, desc, feed.type, handler);
                 return;
-              } catch(ex) { /* fallback to preview mode */ }
+              } catch (ex) { /* fallback to preview mode */ }
           }
         }
       }
@@ -252,7 +250,7 @@ FeedConverter.prototype = {
         feedService.addFeedResult(result);
 
         // Now load the actual XUL document.
-        let aboutFeedsURI = ios.newURI("about:feeds", null, null);
+        let aboutFeedsURI = ios.newURI("about:feeds");
         chromeChannel = ios.newChannelFromURIWithLoadInfo(aboutFeedsURI, loadInfo);
         chromeChannel.originalURI = result.uri;
 
@@ -265,9 +263,8 @@ FeedConverter.prototype = {
       }
 
       chromeChannel.loadGroup = this._request.loadGroup;
-      chromeChannel.asyncOpen(this._listener, null);
-    }
-    finally {
+      chromeChannel.asyncOpen2(this._listener);
+    } finally {
       this._releaseHandles();
     }
   },
@@ -299,9 +296,10 @@ FeedConverter.prototype = {
         request.cancel(Cr.NS_BINDING_ABORTED);
         return;
       }
-      let noSniff = httpChannel.getResponseHeader("X-Moz-Is-Feed");
-    }
-    catch (ex) {
+
+      // Note: this throws if the header is not set.
+      httpChannel.getResponseHeader("X-Moz-Is-Feed");
+    } catch (ex) {
       this._sniffed = true;
     }
 
@@ -340,7 +338,7 @@ FeedConverter.prototype = {
     if (iid.equals(Ci.nsIFeedResultListener) ||
         iid.equals(Ci.nsIStreamConverter) ||
         iid.equals(Ci.nsIStreamListener) ||
-        iid.equals(Ci.nsIRequestObserver)||
+        iid.equals(Ci.nsIRequestObserver) ||
         iid.equals(Ci.nsISupports))
       return this;
     throw Cr.NS_ERROR_NO_INTERFACE;
@@ -504,6 +502,30 @@ GenericProtocolHandler.prototype = {
     return this._http.allowPort(port, scheme);
   },
 
+  _getTelemetrySchemeId() {
+    // Gets a scheme id from 1-8
+    let schemeId;
+    if (!this._telemetrySubScheme) {
+      schemeId = 1;
+    } else {
+      switch (this._telemetryInnerScheme) {
+        case "http":
+          schemeId = 2;
+          break;
+        case "https":
+          schemeId = 3;
+          break;
+        default:
+          // Invalid scheme
+          schemeId = 4;
+      }
+    }
+    if (this._scheme === "pcast") {
+      schemeId += 4;
+    }
+    return schemeId;
+  },
+
   newURI(spec, originalCharset, baseURI) {
     // Feed URIs can be either nested URIs of the form feed:realURI (in which
     // case we create a nested URI for the realURI) or feed://example.com, in
@@ -513,9 +535,13 @@ GenericProtocolHandler.prototype = {
     if (spec.substr(0, scheme.length) != scheme)
       throw Cr.NS_ERROR_MALFORMED_URI;
 
+    this._telemetrySubScheme = spec.substr(scheme.length, 2) != "//";
+
     let prefix = spec.substr(scheme.length, 2) == "//" ? "http:" : "";
     let inner = Services.io.newURI(spec.replace(scheme, prefix),
                                    originalCharset, baseURI);
+    this._telemetryInnerScheme = inner.scheme;
+
 
     if (!["http", "https"].includes(inner.scheme))
       throw Cr.NS_ERROR_MALFORMED_URI;
@@ -530,6 +556,9 @@ GenericProtocolHandler.prototype = {
     let channel = Cc["@mozilla.org/network/io-service;1"].
                   getService(Ci.nsIIOService).
                   newChannelFromURIWithLoadInfo(inner, aLoadInfo);
+
+    const schemeId = this._getTelemetrySchemeId();
+    Services.telemetry.getHistogramById("FEED_PROTOCOL_USAGE").add(schemeId);
 
     if (channel instanceof Components.interfaces.nsIHttpChannel)
       // Set this so we know this is supposed to be a feed
@@ -547,13 +576,13 @@ GenericProtocolHandler.prototype = {
 };
 
 function FeedProtocolHandler() {
-  this._init('feed');
+  this._init("feed");
 }
 FeedProtocolHandler.prototype = new GenericProtocolHandler();
 FeedProtocolHandler.prototype.classID = Components.ID("{4f91ef2e-57ba-472e-ab7a-b4999e42d6c0}");
 
 function PodCastProtocolHandler() {
-  this._init('pcast');
+  this._init("pcast");
 }
 PodCastProtocolHandler.prototype = new GenericProtocolHandler();
 PodCastProtocolHandler.prototype.classID = Components.ID("{1c31ed79-accd-4b94-b517-06e0c81999d5}");

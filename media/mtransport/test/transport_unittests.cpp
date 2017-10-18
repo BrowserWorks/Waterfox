@@ -72,11 +72,11 @@ class TransportLayerDummy : public TransportLayer {
     *destroyed_ = true;
   }
 
-  virtual nsresult InitInternal() {
+  nsresult InitInternal() override {
     return allow_init_ ? NS_OK : NS_ERROR_FAILURE;
   }
 
-  virtual TransportResult SendPacket(const unsigned char *data, size_t len) {
+  TransportResult SendPacket(const unsigned char *data, size_t len) override {
     MOZ_CRASH();  // Should never be called.
     return 0;
   }
@@ -102,7 +102,7 @@ class TransportLayerLossy : public TransportLayer {
   TransportLayerLossy() : loss_mask_(0), packet_(0), inspector_(nullptr) {}
   ~TransportLayerLossy () {}
 
-  virtual TransportResult SendPacket(const unsigned char *data, size_t len) {
+  TransportResult SendPacket(const unsigned char *data, size_t len) override {
     MOZ_MTLOG(ML_NOTICE, LAYER_INFO << "SendPacket(" << len << ")");
 
     if (loss_mask_ & (1 << (packet_ % 32))) {
@@ -139,7 +139,7 @@ class TransportLayerLossy : public TransportLayer {
   TRANSPORT_LAYER_ID("lossy")
 
  protected:
-  virtual void WasInserted() {
+  void WasInserted() override {
     downward_->SignalPacketReceived.
         connect(this,
                 &TransportLayerLossy::PacketReceived);
@@ -434,17 +434,14 @@ namespace {
 class TransportTestPeer : public sigslot::has_slots<> {
  public:
   TransportTestPeer(nsCOMPtr<nsIEventTarget> target, std::string name, MtransportTestUtils* utils)
-      : name_(name), target_(target),
+      : name_(name), offerer_(name == "P1"), target_(target),
         received_packets_(0),received_bytes_(0),flow_(new TransportFlow(name)),
         loopback_(new TransportLayerLoopback()),
         logging_(new TransportLayerLogging()),
         lossy_(new TransportLayerLossy()),
         dtls_(new TransportLayerDtls()),
         identity_(DtlsIdentity::Generate()),
-        ice_ctx_(NrIceCtxHandler::Create(name,
-                                         name == "P2" ?
-                                         TransportLayerDtls::CLIENT :
-                                         TransportLayerDtls::SERVER)),
+        ice_ctx_(NrIceCtxHandler::Create(name)),
         streams_(), candidates_(),
         peer_(nullptr),
         gathering_complete_(false),
@@ -459,9 +456,9 @@ class TransportTestPeer : public sigslot::has_slots<> {
     EXPECT_TRUE(NS_SUCCEEDED(ice_ctx_->ctx()->SetStunServers(stun_servers)));
 
     dtls_->SetIdentity(identity_);
-    dtls_->SetRole(name == "P2" ?
-                   TransportLayerDtls::CLIENT :
-                   TransportLayerDtls::SERVER);
+    dtls_->SetRole(offerer_ ?
+                   TransportLayerDtls::SERVER :
+                   TransportLayerDtls::CLIENT);
 
     nsresult res = identity_->ComputeFingerprint("sha-1",
                                              fingerprint_,
@@ -578,13 +575,11 @@ class TransportTestPeer : public sigslot::has_slots<> {
   }
 
   void TweakCiphers(PRFileDesc* fd) {
-    for (auto it = enabled_cipersuites_.begin();
-         it != enabled_cipersuites_.end(); ++it) {
-      SSL_CipherPrefSet(fd, *it, PR_TRUE);
+    for (unsigned short& enabled_cipersuite : enabled_cipersuites_) {
+      SSL_CipherPrefSet(fd, enabled_cipersuite, PR_TRUE);
     }
-    for (auto it = disabled_cipersuites_.begin();
-         it != disabled_cipersuites_.end(); ++it) {
-      SSL_CipherPrefSet(fd, *it, PR_FALSE);
+    for (unsigned short& disabled_cipersuite : disabled_cipersuites_) {
+      SSL_CipherPrefSet(fd, disabled_cipersuite, PR_FALSE);
     }
   }
 
@@ -640,7 +635,11 @@ class TransportTestPeer : public sigslot::has_slots<> {
 
     // Start gathering
     test_utils_->sts_target()->Dispatch(
-        WrapRunnableRet(&res, ice_ctx_->ctx(), &NrIceCtx::StartGathering),
+        WrapRunnableRet(&res,
+                        ice_ctx_->ctx(),
+                        &NrIceCtx::StartGathering,
+                        false,
+                        false),
         NS_DISPATCH_SYNC);
     ASSERT_TRUE(NS_SUCCEEDED(res));
   }
@@ -696,7 +695,8 @@ class TransportTestPeer : public sigslot::has_slots<> {
 
     // Start checks on the other peer.
     test_utils_->sts_target()->Dispatch(
-      WrapRunnableRet(&res, peer_->ice_ctx_->ctx(), &NrIceCtx::StartChecks),
+      WrapRunnableRet(&res, peer_->ice_ctx_->ctx(), &NrIceCtx::StartChecks,
+                      offerer_),
       NS_DISPATCH_SYNC);
     ASSERT_TRUE(NS_SUCCEEDED(res));
   }
@@ -800,6 +800,7 @@ class TransportTestPeer : public sigslot::has_slots<> {
 
  private:
   std::string name_;
+  bool offerer_;
   nsCOMPtr<nsIEventTarget> target_;
   size_t received_packets_;
   size_t received_bytes_;
@@ -911,11 +912,6 @@ class TransportTest : public MtransportTest {
     ConnectSocketInternal();
     ASSERT_EQ_WAIT(s1, p1_->state(), 10000);
     ASSERT_EQ_WAIT(s2, p2_->state(), 10000);
-  }
-
-  void InitIce() {
-    p1_->InitIce();
-    p2_->InitIce();
   }
 
   void ConnectIce() {
@@ -1208,7 +1204,7 @@ TEST_F(TransportTest, TestTransferIceMaxSize) {
    * of 9216 bytes, which then results in the DTLS layer discarding the packet.
    * Therefore we leave some headroom (according to
    * https://bugzilla.mozilla.org/show_bug.cgi?id=1214269#c29 256 bytes should
-   * be save choice) here for the DTLS bytes to make it safely into the 
+   * be save choice) here for the DTLS bytes to make it safely into the
    * receiving buffer in nICEr. */
   TransferTest(1, 8960);
 }

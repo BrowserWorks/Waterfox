@@ -12,6 +12,7 @@
 #define nsRuleData_h_
 
 #include "mozilla/CSSVariableDeclarations.h"
+#include "mozilla/GenericSpecifiedValues.h"
 #include "mozilla/RuleNodeCacheConditions.h"
 #include "mozilla/SheetType.h"
 #include "nsAutoPtr.h"
@@ -20,19 +21,20 @@
 #include "nsStyleStructFwd.h"
 
 class nsPresContext;
-class nsStyleContext;
 struct nsRuleData;
+
+namespace mozilla {
+class GeckoStyleContext;
+} // namespace mozilla
 
 typedef void (*nsPostResolveFunc)(void* aStyleStruct, nsRuleData* aData);
 
-struct nsRuleData
+struct nsRuleData final : mozilla::GenericSpecifiedValues
 {
-  const uint32_t mSIDs;
   mozilla::RuleNodeCacheConditions mConditions;
   bool mIsImportantRule;
   mozilla::SheetType mLevel;
-  nsPresContext* const mPresContext;
-  nsStyleContext* const mStyleContext;
+  mozilla::GeckoStyleContext* const mStyleContext;
 
   // We store nsCSSValues needed to compute the data for one or more
   // style structs (specified by the bitfield mSIDs).  These are stored
@@ -50,8 +52,10 @@ struct nsRuleData
 
   nsAutoPtr<mozilla::CSSVariableDeclarations> mVariables;
 
-  nsRuleData(uint32_t aSIDs, nsCSSValue* aValueStorage,
-             nsPresContext* aContext, nsStyleContext* aStyleContext);
+  nsRuleData(uint32_t aSIDs,
+             nsCSSValue* aValueStorage,
+             nsPresContext* aContext,
+             mozilla::GeckoStyleContext* aStyleContext);
 
 #ifdef DEBUG
   ~nsRuleData();
@@ -66,7 +70,7 @@ struct nsRuleData
    * This function must only be called if the given property is in
    * mSIDs.
    */
-  nsCSSValue* ValueFor(nsCSSProperty aProperty)
+  nsCSSValue* ValueFor(nsCSSPropertyID aProperty)
   {
     MOZ_ASSERT(aProperty < eCSSProperty_COUNT_no_shorthands,
                "invalid or shorthand property");
@@ -78,13 +82,13 @@ struct nsRuleData
     // include that here since it includes us.
     MOZ_ASSERT(mSIDs & (1 << sid),
                "calling nsRuleData::ValueFor on property not in mSIDs");
-    MOZ_ASSERT(indexInStruct != size_t(-1),
-               "logical property");
+    MOZ_ASSERT(indexInStruct != size_t(-1), "logical property");
 
     return mValueStorage + mValueOffsets[sid] + indexInStruct;
   }
 
-  const nsCSSValue* ValueFor(nsCSSProperty aProperty) const {
+  const nsCSSValue* ValueFor(nsCSSPropertyID aProperty) const
+  {
     return const_cast<nsRuleData*>(this)->ValueFor(aProperty);
   }
 
@@ -120,9 +124,74 @@ struct nsRuleData
   #undef CSS_PROP
   #undef CSS_PROP_PUBLIC_OR_PRIVATE
 
+  // GenericSpecifiedValues overrides
+  bool PropertyIsSet(nsCSSPropertyID aId)
+  {
+    return ValueFor(aId)->GetUnit() != eCSSUnit_Null;
+  }
+
+  void SetIdentStringValue(nsCSSPropertyID aId, const nsString& aValue)
+  {
+    ValueFor(aId)->SetStringValue(aValue, eCSSUnit_Ident);
+  }
+
+  void SetIdentAtomValue(nsCSSPropertyID aId, nsIAtom* aValue)
+  {
+    nsCOMPtr<nsIAtom> atom = aValue;
+    ValueFor(aId)->SetAtomIdentValue(atom.forget());
+  }
+
+  void SetKeywordValue(nsCSSPropertyID aId, int32_t aValue)
+  {
+    ValueFor(aId)->SetIntValue(aValue, eCSSUnit_Enumerated);
+  }
+
+  void SetIntValue(nsCSSPropertyID aId, int32_t aValue)
+  {
+    ValueFor(aId)->SetIntValue(aValue, eCSSUnit_Integer);
+  }
+
+  void SetPixelValue(nsCSSPropertyID aId, float aValue)
+  {
+    ValueFor(aId)->SetFloatValue(aValue, eCSSUnit_Pixel);
+  }
+
+  void SetLengthValue(nsCSSPropertyID aId, nsCSSValue aValue)
+  {
+    nsCSSValue* val = ValueFor(aId);
+    *val = aValue;
+  }
+
+  void SetNumberValue(nsCSSPropertyID aId, float aValue)
+  {
+    ValueFor(aId)->SetFloatValue(aValue, eCSSUnit_Number);
+  }
+
+  void SetPercentValue(nsCSSPropertyID aId, float aValue)
+  {
+    ValueFor(aId)->SetPercentValue(aValue);
+  }
+
+  void SetAutoValue(nsCSSPropertyID aId) {
+    ValueFor(aId)->SetAutoValue();
+  }
+
+  void SetCurrentColor(nsCSSPropertyID aId)
+  {
+    ValueFor(aId)->SetIntValue(NS_COLOR_CURRENTCOLOR, eCSSUnit_EnumColor);
+  }
+
+  void SetColorValue(nsCSSPropertyID aId, nscolor aValue)
+  {
+    ValueFor(aId)->SetColorValue(aValue);
+  }
+
+  void SetFontFamily(const nsString& aValue);
+  void SetTextDecorationColorOverride();
+  void SetBackgroundImage(nsAttrValue& aValue);
+
 private:
   inline size_t GetPoisonOffset();
-
 };
 
 #endif

@@ -21,7 +21,7 @@ public:
   bool Entangle(const nsID& aDestinationUUID,
                 const uint32_t& aSequenceID);
 
-  bool Entangled(const nsTArray<MessagePortMessage>& aMessages);
+  bool Entangled(const nsTArray<ClonedMessageData>& aMessages);
 
   void Close();
   void CloseAndDelete();
@@ -41,15 +41,15 @@ public:
                          const uint32_t& aSequenceID);
 
 private:
-  virtual bool RecvPostMessages(nsTArray<MessagePortMessage>&& aMessages)
+  virtual mozilla::ipc::IPCResult RecvPostMessages(nsTArray<ClonedMessageData>&& aMessages)
                                                                        override;
 
-  virtual bool RecvDisentangle(nsTArray<MessagePortMessage>&& aMessages)
+  virtual mozilla::ipc::IPCResult RecvDisentangle(nsTArray<ClonedMessageData>&& aMessages)
                                                                        override;
 
-  virtual bool RecvStopSendingData() override;
+  virtual mozilla::ipc::IPCResult RecvStopSendingData() override;
 
-  virtual bool RecvClose() override;
+  virtual mozilla::ipc::IPCResult RecvClose() override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 

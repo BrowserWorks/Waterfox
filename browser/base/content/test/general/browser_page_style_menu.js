@@ -11,7 +11,7 @@
  * @return Promise
  */
 function promiseStylesheetsUpdated(browser) {
-  return ContentTask.spawn(browser, { PAGE }, function*(args) {
+  return ContentTask.spawn(browser, { PAGE }, async function(args) {
     return new Promise((resolve) => {
       addEventListener("pageshow", function onPageShow(e) {
         if (e.target.location == args.PAGE) {
@@ -29,11 +29,11 @@ const PAGE = "http://example.com/browser/browser/base/content/test/general/page_
  * Test that the right stylesheets do (and others don't) show up
  * in the page style menu.
  */
-add_task(function*() {
-  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
+add_task(async function() {
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:blank", false);
   let browser = tab.linkedBrowser;
-  yield BrowserTestUtils.loadURI(browser, PAGE);
-  yield promiseStylesheetsUpdated(browser);
+  await BrowserTestUtils.loadURI(browser, PAGE);
+  await promiseStylesheetsUpdated(browser);
 
   let menupopup = document.getElementById("pageStyleMenu").menupopup;
   gPageStyleMenu.fillPopup(menupopup);
@@ -50,9 +50,9 @@ add_task(function*() {
     checked: el.getAttribute("checked") == "true",
   }));
 
-  let validLinks = yield ContentTask.spawn(gBrowser.selectedBrowser, items, function(items) {
-    let validLinks = 0;
-    Array.forEach(content.document.querySelectorAll("link, style"), function (el) {
+  let validLinks = await ContentTask.spawn(gBrowser.selectedBrowser, items, function(contentItems) {
+    let contentValidLinks = 0;
+    Array.forEach(content.document.querySelectorAll("link, style"), function(el) {
       var title = el.getAttribute("title");
       var rel = el.getAttribute("rel");
       var media = el.getAttribute("media");
@@ -60,7 +60,7 @@ add_task(function*() {
                      " with rel=\"" + rel + "\"" +
                      (media ? " and media=\"" + media + "\"" : "");
 
-      var item = items.filter(item => item.label == title);
+      var item = contentItems.filter(aItem => aItem.label == title);
       var found = item.length == 1;
       var checked = found && item[0].checked;
 
@@ -69,17 +69,17 @@ add_task(function*() {
           ok(!found, idstring + " should not show up in page style menu");
           break;
         case "0-todo":
-          validLinks++;
+          contentValidLinks++;
           todo(!found, idstring + " should not show up in page style menu");
           ok(!checked, idstring + " should not be selected");
           break;
         case "1":
-          validLinks++;
+          contentValidLinks++;
           ok(found, idstring + " should show up in page style menu");
           ok(!checked, idstring + " should not be selected");
           break;
         case "2":
-          validLinks++;
+          contentValidLinks++;
           ok(found, idstring + " should show up in page style menu");
           ok(checked, idstring + " should be selected");
           break;
@@ -87,11 +87,11 @@ add_task(function*() {
           throw "data-state attribute is missing or has invalid value";
       }
     });
-    return validLinks;
+    return contentValidLinks;
   });
 
   ok(items.length, "At least one item in the menu");
   is(items.length, validLinks, "all valid links found");
 
-  yield BrowserTestUtils.removeTab(tab);
+  await BrowserTestUtils.removeTab(tab);
 });

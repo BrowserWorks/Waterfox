@@ -63,6 +63,9 @@ class MacroAssemblerMIPS64 : public MacroAssemblerMIPSShared
     void ma_liPatchable(Register dest, ImmPtr imm);
     void ma_liPatchable(Register dest, ImmWord imm, LiFlags flags = Li48);
 
+    // Negate
+    void ma_dnegu(Register rd, Register rs);
+
     // Shift operations
     void ma_dsll(Register rd, Register rt, Imm32 shift);
     void ma_dsrl(Register rd, Register rt, Imm32 shift);
@@ -79,6 +82,8 @@ class MacroAssemblerMIPS64 : public MacroAssemblerMIPSShared
     void ma_dins(Register rt, Register rs, Imm32 pos, Imm32 size);
     void ma_dext(Register rt, Register rs, Imm32 pos, Imm32 size);
 
+    void ma_dctz(Register rd, Register rs);
+
     // load
     void ma_load(Register dest, Address address, LoadStoreSize size = SizeWord,
                  LoadStoreExtension extension = SignExtend);
@@ -92,11 +97,14 @@ class MacroAssemblerMIPS64 : public MacroAssemblerMIPSShared
     void ma_daddu(Register rd, Register rs, Imm32 imm);
     void ma_daddu(Register rd, Register rs);
     void ma_daddu(Register rd, Imm32 imm);
-    void ma_addTestOverflow(Register rd, Register rs, Register rt, Label* overflow);
-    void ma_addTestOverflow(Register rd, Register rs, Imm32 imm, Label* overflow);
+    template <typename L>
+    void ma_addTestOverflow(Register rd, Register rs, Register rt, L overflow);
+    template <typename L>
+    void ma_addTestOverflow(Register rd, Register rs, Imm32 imm, L overflow);
 
     // subtract
     void ma_dsubu(Register rd, Register rs, Imm32 imm);
+    void ma_dsubu(Register rd, Register rs);
     void ma_dsubu(Register rd, Imm32 imm);
     void ma_subTestOverflow(Register rd, Register rs, Register rt, Label* overflow);
 
@@ -213,8 +221,8 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     }
 
     void writeDataRelocation(const Value& val) {
-        if (val.isMarkable()) {
-            gc::Cell* cell = reinterpret_cast<gc::Cell *>(val.toGCThing());
+        if (val.isGCThing()) {
+            gc::Cell* cell = val.toGCThing();
             if (cell && gc::IsInsideNursery(cell))
                 embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(currentOffset());
@@ -318,7 +326,7 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         branch(code);
     }
 
-    void jump(wasm::JumpTarget target) {
+    void jump(wasm::TrapDesc target) {
         ma_b(target);
     }
 
@@ -488,13 +496,12 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     void pushValue(ValueOperand val);
     void popValue(ValueOperand val);
     void pushValue(const Value& val) {
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        if (val.isMarkable()) {
+        if (val.isGCThing()) {
             writeDataRelocation(val);
-            movWithPatch(ImmWord(jv.asBits), ScratchRegister);
+            movWithPatch(ImmWord(val.asRawBits()), ScratchRegister);
             push(ScratchRegister);
         } else {
-            push(ImmWord(jv.asBits));
+            push(ImmWord(val.asRawBits()));
         }
     }
     void pushValue(JSValueType type, Register reg) {
@@ -872,12 +879,14 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     void loadInt32x2(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadInt32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadInt32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x4(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeInt32x1(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x1(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x2(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x2(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x3(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void storeInt32x3(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x4(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
     void loadAlignedSimd128Int(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedSimd128Int(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedSimd128Int(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
@@ -887,6 +896,9 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
 
     void loadFloat32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void loadFloat32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadFloat32x4(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeFloat32x4(FloatRegister src, const Address& addr) { MOZ_CRASH("NYI"); }
+
     void loadAlignedSimd128Float(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedSimd128Float(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedSimd128Float(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
@@ -896,6 +908,7 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
 
     void loadDouble(const Address& addr, FloatRegister dest);
     void loadDouble(const BaseIndex& src, FloatRegister dest);
+    void loadUnalignedDouble(const BaseIndex& src, Register temp, FloatRegister dest);
 
     // Load a float value into a register, then expand it to a double.
     void loadFloatAsDouble(const Address& addr, FloatRegister dest);
@@ -903,6 +916,7 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
 
     void loadFloat32(const Address& addr, FloatRegister dest);
     void loadFloat32(const BaseIndex& src, FloatRegister dest);
+    void loadUnalignedFloat32(const BaseIndex& src, Register temp, FloatRegister dest);
 
     void store8(Register src, const Address& address);
     void store8(Imm32 imm, const Address& address);
@@ -926,6 +940,10 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         store32(src, address);
     }
 
+    void store64(Imm64 imm, Address address) {
+        storePtr(ImmWord(imm.value), address);
+    }
+
     void store64(Register64 src, Address address) {
         storePtr(src.reg, address);
     }
@@ -936,6 +954,10 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     void storePtr(Register src, const Address& address);
     void storePtr(Register src, const BaseIndex& address);
     void storePtr(Register src, AbsoluteAddress dest);
+
+    void storeUnalignedFloat32(FloatRegister src, Register temp, const BaseIndex& dest);
+    void storeUnalignedDouble(FloatRegister src, Register temp, const BaseIndex& dest);
+
     void moveDouble(FloatRegister src, FloatRegister dest) {
         as_movd(dest, src);
     }
@@ -944,9 +966,14 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         moveToDouble(zero, reg);
     }
 
-    void clampIntToUint8(Register reg);
+    void convertInt64ToDouble(Register src, FloatRegister dest);
+    void convertInt64ToFloat32(Register src, FloatRegister dest);
 
-    void convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest);
+    void convertUInt64ToDouble(Register src, FloatRegister dest);
+    void convertUInt64ToFloat32(Register src, FloatRegister dest);
+
+    static bool convertUInt64ToDoubleNeedsTemp();
+    void convertUInt64ToDouble(Register64 src, FloatRegister dest, Register temp);
 
     void breakpoint();
 
@@ -958,20 +985,15 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
     // convert it to double. Else, branch to failure.
     void ensureDouble(const ValueOperand& source, FloatRegister dest, Label* failure);
 
-    template <typename T1, typename T2>
-    void cmpPtrSet(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
-    {
-        ma_cmp_set(dest, lhs, rhs, cond);
-    }
     void cmpPtrSet(Assembler::Condition cond, Address lhs, ImmPtr rhs, Register dest);
     void cmpPtrSet(Assembler::Condition cond, Register lhs, Address rhs, Register dest);
 
-    template <typename T1, typename T2>
-    void cmp32Set(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
+    void cmp32Set(Assembler::Condition cond, Register lhs, Address rhs, Register dest);
+
+    void cmp64Set(Assembler::Condition cond, Register lhs, Imm32 rhs, Register dest)
     {
         ma_cmp_set(dest, lhs, rhs, cond);
     }
-    void cmp32Set(Assembler::Condition cond, Register lhs, Address rhs, Register dest);
 
   protected:
     bool buildOOLFakeExitFrame(void* fakeReturnAddr);
@@ -990,22 +1012,17 @@ class MacroAssemblerMIPS64Compat : public MacroAssemblerMIPS64
         as_nop();
     }
 
-    BufferOffset ma_BoundsCheck(Register bounded) {
-        BufferOffset bo = m_buffer.nextOffset();
-        ma_liPatchable(bounded, ImmWord(0));
-        return bo;
-    }
-
     void moveFloat32(FloatRegister src, FloatRegister dest) {
         as_movs(dest, src);
     }
 
     void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
-        loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
+        loadPtr(Address(GlobalReg, globalDataOffset - WasmGlobalRegBias), dest);
     }
-    void loadAsmJSHeapRegisterFromGlobalData() {
-        MOZ_ASSERT(Imm16::IsInSignedRange(wasm::HeapGlobalDataOffset - AsmJSGlobalRegBias));
-        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
+    void loadWasmPinnedRegsFromTls() {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalData)), GlobalReg);
+        ma_daddu(GlobalReg, Imm32(WasmGlobalRegBias));
     }
 
     // Instrumentation for entering and leaving the profiler.

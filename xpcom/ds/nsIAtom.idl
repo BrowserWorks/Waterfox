@@ -37,9 +37,15 @@ interface nsIAtom : nsISupports
   size_t SizeOfIncludingThis(in MallocSizeOf aMallocSizeOf);
 
 %{C++
-  // note this is NOT virtual so this won't muck with the vtable!
+  // note these are NOT virtual so they won't muck with the vtable!
+  inline bool Equals(char16ptr_t aString, uint32_t aLength) const
+  {
+    return mLength == aLength &&
+           memcmp(mString, aString, mLength * sizeof(char16_t)) == 0;
+  }
+
   inline bool Equals(const nsAString& aString) const {
-    return aString.Equals(nsDependentString(mString, mLength));
+    return Equals(aString.BeginReading(), aString.Length());
   }
 
   inline bool IsStaticAtom() const {
@@ -54,7 +60,7 @@ interface nsIAtom : nsISupports
     return mLength;
   }
 
-  inline void ToString(nsAString& aBuf) {
+  inline void ToString(nsAString& aBuf) const {
     // See the comment on |mString|'s declaration.
     nsStringBuffer::FromData(mString)->ToString(mLength, aBuf);
   }
@@ -120,6 +126,11 @@ extern already_AddRefed<nsIAtom> NS_Atomize(const char16_t* aUTF16String);
 extern already_AddRefed<nsIAtom> NS_Atomize(const nsAString& aUTF16String);
 
 /**
+ * An optimized version of the method above for the main thread.
+ */
+extern already_AddRefed<nsIAtom> NS_AtomizeMainThread(const nsAString& aUTF16String);
+
+/**
  * Return a count of the total number of atoms currently
  * alive in the system.
  */
@@ -139,7 +150,7 @@ extern void NS_SealStaticAtomTable();
 class nsAtomString : public nsString
 {
 public:
-  explicit nsAtomString(nsIAtom* aAtom)
+  explicit nsAtomString(const nsIAtom* aAtom)
   {
     aAtom->ToString(*this);
   }
@@ -157,7 +168,7 @@ public:
 class nsDependentAtomString : public nsDependentString
 {
 public:
-  explicit nsDependentAtomString(nsIAtom* aAtom)
+  explicit nsDependentAtomString(const nsIAtom* aAtom)
     : nsDependentString(aAtom->GetUTF16String(), aAtom->GetLength())
   {
   }

@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* import-globals-from preferences.js */
+
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
  "resource://gre/modules/LoginHelper.jsm");
 
@@ -13,10 +15,8 @@ var gSecurityPane = {
   /**
    * Initializes master password UI.
    */
-  init: function ()
-  {
-    function setEventListener(aId, aEventType, aCallback)
-    {
+  init() {
+    function setEventListener(aId, aEventType, aCallback) {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gSecurityPane));
     }
@@ -52,8 +52,7 @@ var gSecurityPane = {
    * Enables/disables the add-ons Exceptions button depending on whether
    * or not add-on installation warnings are displayed.
    */
-  readWarnAddonInstall: function ()
-  {
+  readWarnAddonInstall() {
     var warn = document.getElementById("xpinstall.whitelist.required");
     var exceptions = document.getElementById("addonExceptions");
 
@@ -66,13 +65,12 @@ var gSecurityPane = {
   /**
    * Displays the exceptions lists for add-on installation warnings.
    */
-  showAddonExceptions: function ()
-  {
+  showAddonExceptions() {
     var bundlePrefs = document.getElementById("bundlePreferences");
 
     var params = this._addonParams;
     if (!params.windowTitle || !params.introText) {
-      params.windowTitle = bundlePrefs.getString("addons_permissions_title");
+      params.windowTitle = bundlePrefs.getString("addons_permissions_title2");
       params.introText = bundlePrefs.getString("addonspermissionstext");
     }
 
@@ -106,8 +104,7 @@ var gSecurityPane = {
    * passwords are never saved. When browser is set to start in Private
    * Browsing mode, the "Remember passwords" UI is useless, so we disable it.
    */
-  readSavePasswords: function ()
-  {
+  readSavePasswords() {
     var pref = document.getElementById("signon.rememberSignons");
     var excepts = document.getElementById("passwordExceptions");
 
@@ -115,20 +112,31 @@ var gSecurityPane = {
       document.getElementById("savePasswords").disabled = true;
       excepts.disabled = true;
       return false;
-    } else {
-      excepts.disabled = !pref.value;
-      // don't override pref value in UI
-      return undefined;
     }
+    excepts.disabled = !pref.value;
+    // don't override pref value in UI
+    return undefined;
   },
 
   /**
    * Displays a dialog in which the user can view and modify the list of sites
    * where passwords are never saved.
    */
-  showPasswordExceptions: function ()
-  {
-    gSubDialog.open("chrome://passwordmgr/content/passwordManagerExceptions.xul");
+  showPasswordExceptions() {
+    var bundlePrefs = document.getElementById("bundlePreferences");
+    var params = {
+      blockVisible: true,
+      sessionVisible: false,
+      allowVisible: false,
+      hideStatusColumn: true,
+      prefilledHost: "",
+      permissionType: "login-saving",
+      windowTitle: bundlePrefs.getString("savedLoginsExceptions_title"),
+      introText: bundlePrefs.getString("savedLoginsExceptions_desc2")
+    };
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
   },
 
   /**
@@ -137,8 +145,7 @@ var gSecurityPane = {
    * The master password is controlled by various bits of NSS functionality, so
    * the UI for it can't be controlled by the normal preference bindings.
    */
-  _initMasterPasswordUI: function ()
-  {
+  _initMasterPasswordUI() {
     var noMP = !LoginHelper.isMasterPasswordSet();
 
     var button = document.getElementById("changeMasterPassword");
@@ -167,24 +174,32 @@ var gSecurityPane = {
       safeBrowsingMalwarePref.value = enableSafeBrowsing.checked;
 
       if (enableSafeBrowsing.checked) {
-        blockDownloads.removeAttribute("disabled");
-        if (blockDownloads.checked) {
+        if (blockDownloads) {
+          blockDownloads.removeAttribute("disabled");
+          if (blockDownloads.checked) {
+            blockUncommonUnwanted.removeAttribute("disabled");
+          }
+        } else {
           blockUncommonUnwanted.removeAttribute("disabled");
         }
       } else {
-        blockDownloads.setAttribute("disabled", "true");
+        if (blockDownloads) {
+          blockDownloads.setAttribute("disabled", "true");
+        }
         blockUncommonUnwanted.setAttribute("disabled", "true");
       }
     });
 
-    blockDownloads.addEventListener("command", function() {
-      blockDownloadsPref.value = blockDownloads.checked;
-      if (blockDownloads.checked) {
-        blockUncommonUnwanted.removeAttribute("disabled");
-      } else {
-        blockUncommonUnwanted.setAttribute("disabled", "true");
-      }
-    });
+    if (blockDownloads) {
+      blockDownloads.addEventListener("command", function() {
+        blockDownloadsPref.value = blockDownloads.checked;
+        if (blockDownloads.checked) {
+          blockUncommonUnwanted.removeAttribute("disabled");
+        } else {
+          blockUncommonUnwanted.setAttribute("disabled", "true");
+        }
+      });
+    }
 
     blockUncommonUnwanted.addEventListener("command", function() {
       blockUnwantedPref.value = blockUncommonUnwanted.checked;
@@ -192,10 +207,17 @@ var gSecurityPane = {
 
       let malware = malwareTable.value
         .split(",")
-        .filter(x => x !== "goog-unwanted-shavar" && x !== "test-unwanted-simple");
+        .filter(x => x !== "goog-unwanted-proto" &&
+                     x !== "goog-unwanted-shavar" &&
+                     x !== "test-unwanted-simple");
 
       if (blockUncommonUnwanted.checked) {
-        malware.push("goog-unwanted-shavar");
+        if (malware.indexOf("goog-malware-shavar") != -1) {
+          malware.push("goog-unwanted-shavar");
+        } else {
+          malware.push("goog-unwanted-proto");
+        }
+
         malware.push("test-unwanted-simple");
       }
 
@@ -209,13 +231,18 @@ var gSecurityPane = {
 
     enableSafeBrowsing.checked = safeBrowsingPhishingPref.value && safeBrowsingMalwarePref.value;
     if (!enableSafeBrowsing.checked) {
-      blockDownloads.setAttribute("disabled", "true");
+      if (blockDownloads) {
+        blockDownloads.setAttribute("disabled", "true");
+      }
+
       blockUncommonUnwanted.setAttribute("disabled", "true");
     }
 
-    blockDownloads.checked = blockDownloadsPref.value;
-    if (!blockDownloadsPref.value) {
-      blockUncommonUnwanted.setAttribute("disabled", "true");
+    if (blockDownloads) {
+      blockDownloads.checked = blockDownloadsPref.value;
+      if (!blockDownloadsPref.value) {
+        blockUncommonUnwanted.setAttribute("disabled", "true");
+      }
     }
 
     blockUncommonUnwanted.checked = blockUnwantedPref.value && blockUncommonPref.value;
@@ -226,8 +253,7 @@ var gSecurityPane = {
    * "use master password" checkbox, and prompts for master password removal if
    * one is set.
    */
-  updateMasterPasswordButton: function ()
-  {
+  updateMasterPasswordButton() {
     var checkbox = document.getElementById("useMasterPassword");
     var button = document.getElementById("changeMasterPassword");
     button.disabled = !checkbox.checked;
@@ -250,8 +276,7 @@ var gSecurityPane = {
    * the current master password.  When the dialog is dismissed, master password
    * UI is automatically updated.
    */
-  _removeMasterPassword: function ()
-  {
+  _removeMasterPassword() {
     var secmodDB = Cc["@mozilla.org/security/pkcs11moduledb;1"].
                    getService(Ci.nsIPKCS11ModuleDB);
     if (secmodDB.isFIPSEnabled) {
@@ -262,8 +287,7 @@ var gSecurityPane = {
                           bundle.getString("pw_change_failed_title"),
                           bundle.getString("pw_change2empty_in_fips_mode"));
       this._initMasterPasswordUI();
-    }
-    else {
+    } else {
       gSubDialog.open("chrome://mozapps/content/preferences/removemp.xul",
                       null, null, this._initMasterPasswordUI.bind(this));
     }
@@ -272,8 +296,7 @@ var gSecurityPane = {
   /**
    * Displays a dialog in which the master password may be changed.
    */
-  changeMasterPassword: function ()
-  {
+  changeMasterPassword() {
     gSubDialog.open("chrome://mozapps/content/preferences/changemp.xul",
                     "resizable=no", null, this._initMasterPasswordUI.bind(this));
   },
@@ -282,8 +305,7 @@ var gSecurityPane = {
    * Shows the sites where the user has saved passwords and the associated login
    * information.
    */
-  showPasswords: function ()
-  {
+  showPasswords() {
     gSubDialog.open("chrome://passwordmgr/content/passwordManager.xul");
   }
 

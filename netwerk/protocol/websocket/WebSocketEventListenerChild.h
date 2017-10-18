@@ -7,6 +7,7 @@
 #ifndef mozilla_net_WebSocketEventListenerChild_h
 #define mozilla_net_WebSocketEventListenerChild_h
 
+#include "mozilla/net/NeckoTargetHolder.h"
 #include "mozilla/net/PWebSocketEventListenerChild.h"
 
 namespace mozilla {
@@ -15,35 +16,37 @@ namespace net {
 class WebSocketEventService;
 
 class WebSocketEventListenerChild final : public PWebSocketEventListenerChild
+                                        , public NeckoTargetHolder
 {
 public:
   NS_INLINE_DECL_REFCOUNTING(WebSocketEventListenerChild)
 
-  explicit WebSocketEventListenerChild(uint64_t aInnerWindowID);
+  explicit WebSocketEventListenerChild(uint64_t aInnerWindowID,
+                                       nsIEventTarget* aTarget);
 
-  bool RecvWebSocketCreated(const uint32_t& aWebSocketSerialID,
-                            const nsString& aURI,
-                            const nsCString& aProtocols) override;
+  mozilla::ipc::IPCResult RecvWebSocketCreated(const uint32_t& aWebSocketSerialID,
+                                               const nsString& aURI,
+                                               const nsCString& aProtocols) override;
 
-  bool RecvWebSocketOpened(const uint32_t& aWebSocketSerialID,
-                           const nsString& aEffectiveURI,
-                           const nsCString& aProtocols,
-                           const nsCString& aExtensions) override;
+  mozilla::ipc::IPCResult RecvWebSocketOpened(const uint32_t& aWebSocketSerialID,
+                                              const nsString& aEffectiveURI,
+                                              const nsCString& aProtocols,
+                                              const nsCString& aExtensions) override;
 
-  bool RecvWebSocketMessageAvailable(const uint32_t& aWebSocketSerialID,
-                                     const nsCString& aData,
-                                     const uint16_t& aMessageType) override;
+  mozilla::ipc::IPCResult RecvWebSocketMessageAvailable(const uint32_t& aWebSocketSerialID,
+                                                        const nsCString& aData,
+                                                        const uint16_t& aMessageType) override;
 
-  bool RecvWebSocketClosed(const uint32_t& aWebSocketSerialID,
-                          const bool& aWasClean,
-                          const uint16_t& aCode,
-                          const nsString& aReason) override;
+  mozilla::ipc::IPCResult RecvWebSocketClosed(const uint32_t& aWebSocketSerialID,
+                                              const bool& aWasClean,
+                                              const uint16_t& aCode,
+                                              const nsString& aReason) override;
 
-  bool RecvFrameReceived(const uint32_t& aWebSocketSerialID,
-                         const WebSocketFrameData& aFrameData) override;
+  mozilla::ipc::IPCResult RecvFrameReceived(const uint32_t& aWebSocketSerialID,
+                                            const WebSocketFrameData& aFrameData) override;
 
-  bool RecvFrameSent(const uint32_t& aWebSocketSerialID,
-                     const WebSocketFrameData& aFrameData) override;
+  mozilla::ipc::IPCResult RecvFrameSent(const uint32_t& aWebSocketSerialID,
+                                        const WebSocketFrameData& aFrameData) override;
 
   void Close();
 

@@ -37,9 +37,6 @@ const Cr = Components.results;
 const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/TelemetryStopwatch.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "console",
   "resource://gre/modules/Console.jsm");
@@ -49,6 +46,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "StartupPerformance",
   "resource:///modules/sessionstore/StartupPerformance.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CrashMonitor",
   "resource://gre/modules/CrashMonitor.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 const STATE_RUNNING_STR = "running";
 
@@ -65,7 +64,7 @@ consoleMsg.init(aMsg, aException.fileName, null, aException.lineNumber, 0, Ci.ns
   Services.console.logMessage(consoleMsg);
 }
 
-var gOnceInitializedDeferred = (function () {
+var gOnceInitializedDeferred = (function() {
   let deferred = {};
 
   deferred.promise = new Promise((resolve, reject) => {
@@ -97,7 +96,7 @@ SessionStartup.prototype = {
    * Initialize the component
    */
   init: function sss_init() {
-    Services.obs.notifyObservers(null, "sessionstore-init-started", null);
+    Services.obs.notifyObservers(null, "sessionstore-init-started");
     StartupPerformance.init();
 
     // do not need to initialize anything in auto-started private browsing sessions
@@ -127,12 +126,12 @@ SessionStartup.prototype = {
    * @param source The Session State string read from disk.
    * @param parsed The object obtained by parsing |source| as JSON.
    */
-  _onSessionFileRead: function ({source, parsed, noFilesFound}) {
+  _onSessionFileRead({source, parsed, noFilesFound}) {
     this._initialized = true;
 
     // Let observers modify the state before it is used
     let supportsStateString = this._createSupportsString(source);
-    Services.obs.notifyObservers(supportsStateString, "sessionstore-state-read", "");
+    Services.obs.notifyObservers(supportsStateString, "sessionstore-state-read");
     let stateString = supportsStateString.data;
 
     if (stateString != source) {
@@ -152,10 +151,20 @@ SessionStartup.prototype = {
     if (this._initialState == null) {
       // No valid session found.
       this._sessionType = Ci.nsISessionStartup.NO_SESSION;
-      Services.obs.notifyObservers(null, "sessionstore-state-finalized", "");
+      Services.obs.notifyObservers(null, "sessionstore-state-finalized");
       gOnceInitializedDeferred.resolve();
       return;
     }
+
+    let initialState = this._initialState;
+    Services.tm.idleDispatchToMainThread(() => {
+      let pinnedTabCount = initialState.windows.reduce((winAcc, win) => {
+        return winAcc + win.tabs.reduce((tabAcc, tab) => {
+          return tabAcc + (tab.pinned ? 1 : 0);
+        }, 0);
+      }, 0);
+      Services.telemetry.scalarSet("browser.engagement.restored_pinned_tabs_count", pinnedTabCount);
+    }, 60000);
 
     let shouldResumeSessionOnce = Services.prefs.getBoolPref("browser.sessionstore.resume_session_once");
     let shouldResumeSession = shouldResumeSessionOnce ||
@@ -173,35 +182,30 @@ SessionStartup.prototype = {
         // If the previous session finished writing the final state, we'll
         // assume there was no crash.
         this._previousSessionCrashed = !checkpoints["sessionstore-final-state-write-complete"];
-
-      } else {
+      } else if (noFilesFound) {
         // If the Crash Monitor could not load a checkpoints file it will
         // provide null. This could occur on the first run after updating to
         // a version including the Crash Monitor, or if the checkpoints file
         // was removed, or on first startup with this profile, or after Firefox Reset.
 
-        if (noFilesFound) {
-          // There was no checkpoints file and no sessionstore.js or its backups
-          // so we will assume that this was a fresh profile.
-          this._previousSessionCrashed = false;
+        // There was no checkpoints file and no sessionstore.js or its backups
+        // so we will assume that this was a fresh profile.
+        this._previousSessionCrashed = false;
+      } else {
+        // If this is the first run after an update, sessionstore.js should
+        // still contain the session.state flag to indicate if the session
+        // crashed. If it is not present, we will assume this was not the first
+        // run after update and the checkpoints file was somehow corrupted or
+        // removed by a crash.
+        //
+        // If the session.state flag is present, we will fallback to using it
+        // for crash detection - If the last write of sessionstore.js had it
+        // set to "running", we crashed.
+        let stateFlagPresent = (this._initialState.session &&
+                                this._initialState.session.state);
 
-        } else {
-          // If this is the first run after an update, sessionstore.js should
-          // still contain the session.state flag to indicate if the session
-          // crashed. If it is not present, we will assume this was not the first
-          // run after update and the checkpoints file was somehow corrupted or
-          // removed by a crash.
-          //
-          // If the session.state flag is present, we will fallback to using it
-          // for crash detection - If the last write of sessionstore.js had it
-          // set to "running", we crashed.
-          let stateFlagPresent = (this._initialState.session &&
-                                  this._initialState.session.state);
-
-
-          this._previousSessionCrashed = !stateFlagPresent ||
-            (this._initialState.session.state == STATE_RUNNING_STR);
-        }
+        this._previousSessionCrashed = !stateFlagPresent ||
+          (this._initialState.session.state == STATE_RUNNING_STR);
       }
 
       // Report shutdown success via telemetry. Shortcoming here are
@@ -225,7 +229,7 @@ SessionStartup.prototype = {
         Services.obs.addObserver(this, "browser:purge-session-history", true);
 
       // We're ready. Notify everyone else.
-      Services.obs.notifyObservers(null, "sessionstore-state-finalized", "");
+      Services.obs.notifyObservers(null, "sessionstore-state-finalized");
       gOnceInitializedDeferred.resolve();
     });
   },
@@ -293,7 +297,7 @@ SessionStartup.prototype = {
    * crash, this method returns false.
    * @returns bool
    */
-  isAutomaticRestoreEnabled: function () {
+  isAutomaticRestoreEnabled() {
     return Services.prefs.getBoolPref("browser.sessionstore.resume_session_once") ||
            Services.prefs.getIntPref("browser.startup.page") == BROWSER_STARTUP_RESUME_SESSION;
   },
@@ -302,7 +306,7 @@ SessionStartup.prototype = {
    * Determines whether there is a pending session restore.
    * @returns bool
    */
-  _willRestore: function () {
+  _willRestore() {
     return this._sessionType == Ci.nsISessionStartup.RECOVER_SESSION ||
            this._sessionType == Ci.nsISessionStartup.RESUME_SESSION;
   },
@@ -344,10 +348,10 @@ SessionStartup.prototype = {
   },
 
   /* ........ QueryInterface .............. */
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIObserver,
-                                          Ci.nsISupportsWeakReference,
-                                          Ci.nsISessionStartup]),
-  classID:          Components.ID("{ec7a6c20-e081-11da-8ad9-0800200c9a66}")
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                         Ci.nsISupportsWeakReference,
+                                         Ci.nsISessionStartup]),
+  classID: Components.ID("{ec7a6c20-e081-11da-8ad9-0800200c9a66}")
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([SessionStartup]);

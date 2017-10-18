@@ -23,156 +23,26 @@
   <preference id="engine.passwords"
               name="services.sync.engine.passwords"
               type="bool"/>
+  <preference id="engine.addresses"
+              name="services.sync.engine.addresses"
+              type="bool"/>
+  <preference id="engine.creditcards"
+              name="services.sync.engine.creditcards"
+              type="bool"/>
 </preferences>
 
 <script type="application/javascript"
         src="chrome://browser/content/preferences/in-content/sync.js"/>
-<script type="application/javascript"
-        src="chrome://browser/content/sync/utils.js"/>
 
 <hbox id="header-sync"
       class="header"
       hidden="true"
       data-category="paneSync">
   <label class="header-name" flex="1">&paneSync.title;</label>
-  <button class="help-button"
-          aria-label="&helpButton.label;"/>
+  <html:a class="help-button text-link" target="_blank" aria-label="&helpButton.label;"></html:a>
 </hbox>
 
 <deck id="weavePrefsDeck" data-category="paneSync" hidden="true">
-  <!-- These panels are for the "legacy" sync provider -->
-  <vbox id="noAccount" align="center">
-    <spacer flex="1"/>
-    <description id="syncDesc">
-      &weaveDesc.label;
-    </description>
-    <separator/>
-    <label id="noAccountSetup" class="text-link">
-      &setupButton.label;
-    </label>
-    <vbox id="pairDevice">
-      <separator/>
-      <label id="noAccountPair" class="text-link">
-        &pairDevice.label;
-      </label>
-    </vbox>
-    <spacer flex="3"/>
-  </vbox>
-
-  <vbox id="hasAccount">
-    <groupbox class="syncGroupBox">
-      <!-- label is set to account name -->
-      <caption id="accountCaption" align="center">
-        <image id="accountCaptionImage"/>
-        <label id="accountName"/>
-      </caption>
-
-      <hbox>
-        <button type="menu"
-                label="&manageAccount.label;"
-                accesskey="&manageAccount.accesskey;">
-          <menupopup>
-            <menuitem id="syncChangePassword" label="&changePassword2.label;"/>
-            <menuitem id="syncResetPassphrase" label="&myRecoveryKey.label;"/>
-            <menuseparator/>
-            <menuitem id="syncReset" label="&resetSync2.label;"/>
-          </menupopup>
-        </button>
-      </hbox>
-
-      <hbox>
-        <label id="syncAddDeviceLabel"
-               class="text-link">
-          &pairDevice.label;
-        </label>
-      </hbox>
-
-      <vbox>
-        <label>&syncMy.label;</label>
-        <richlistbox id="syncEnginesList"
-                     orient="vertical">
-          <richlistitem>
-            <checkbox label="&engine.addons.label;"
-                      accesskey="&engine.addons.accesskey;"
-                      preference="engine.addons"/>
-          </richlistitem>
-          <richlistitem>
-            <checkbox label="&engine.bookmarks.label;"
-                      accesskey="&engine.bookmarks.accesskey;"
-                      preference="engine.bookmarks"/>
-          </richlistitem>
-          <richlistitem>
-            <checkbox label="&engine.passwords.label;"
-                      accesskey="&engine.passwords.accesskey;"
-                      preference="engine.passwords"/>
-          </richlistitem>
-          <richlistitem>
-            <checkbox label="&engine.prefs.label;"
-                      accesskey="&engine.prefs.accesskey;"
-                      preference="engine.prefs"/>
-          </richlistitem>
-          <richlistitem>
-            <checkbox label="&engine.history.label;"
-                      accesskey="&engine.history.accesskey;"
-                      preference="engine.history"/>
-          </richlistitem>
-          <richlistitem>
-            <checkbox label="&engine.tabs.label;"
-                      accesskey="&engine.tabs.accesskey;"
-                      preference="engine.tabs"/>
-          </richlistitem>
-        </richlistbox>
-      </vbox>
-    </groupbox>
-
-    <groupbox class="syncGroupBox">
-      <grid>
-        <columns>
-          <column/>
-          <column flex="1"/>
-        </columns>
-        <rows>
-          <row align="center">
-            <label accesskey="&syncDeviceName.accesskey;"
-                   control="syncComputerName">
-              &syncDeviceName.label;
-            </label>
-            <textbox id="syncComputerName"/>
-          </row>
-        </rows>
-      </grid>
-      <hbox>
-        <label id="unlinkDevice" class="text-link">
-          &unlinkDevice.label;
-        </label>
-      </hbox>
-    </groupbox>
-    <vbox id="tosPP-normal">
-      <label id="tosPP-normal-ToS" class="text-link">
-        &prefs.tosLink.label;
-      </label>
-      <label id="tosPP-normal-PP" class="text-link">
-        &prefs.ppLink.label;
-      </label>
-    </vbox>
-  </vbox>
-
-  <vbox id="needsUpdate" align="center" pack="center">
-    <hbox>
-      <label id="loginError"/>
-      <label id="loginErrorUpdatePass" class="text-link">
-        &updatePass.label;
-      </label>
-      <label id="loginErrorResetPass" class="text-link">
-        &resetPass.label;
-      </label>
-    </hbox>
-    <label id="loginErrorStartOver" class="text-link">
-      &unlinkDevice.label;
-    </label>
-  </vbox>
-
-  <!-- These panels are for the Firefox Accounts identity provider -->
   <vbox id="noFxaAccount">
     <hbox>
       <vbox id="fxaContentWrapper">
@@ -186,9 +56,9 @@
               </vbox>
               <vbox flex="1">
                 <label id="signedOutAccountBoxTitle">&signedOut.accountBox.title;</label>
-                <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="noFxaSignUp" label="&signedOut.accountBox.create;"></button>
-                  <button id="noFxaSignIn" label="&signedOut.accountBox.signin;"></button>
+                <hbox class="fxaAccountBoxButtons">
+                  <button id="noFxaSignUp" label="&signedOut.accountBox.create;" accesskey="&signedOut.accountBox.create.accesskey;"></button>
+                  <button id="noFxaSignIn" label="&signedOut.accountBox.signin;" accesskey="&signedOut.accountBox.signin.accesskey;"></button>
                 </hbox>
               </vbox>
             </hbox>
@@ -196,7 +66,7 @@
         </groupbox>
       </vbox>
       <vbox>
-        <image class="fxaSyncIllustration"/>
+        <html:img class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
       </vbox>
     </hbox>
     <label class="fxaMobilePromo">
@@ -224,19 +94,19 @@
               <vbox align="center" pack="center">
                 <image id="fxaProfileImage" class="actionable"
                     role="button"
-                    onclick="gSyncPane.openChangeProfileImage(event);" hidden="true"
+                    onclick="gSyncPane.openChangeProfileImage(event);"
                     onkeypress="gSyncPane.openChangeProfileImage(event);"
                     tooltiptext="&profilePicture.tooltip;"/>
               </vbox>
               <vbox flex="1" pack="center">
                 <label id="fxaDisplayName" hidden="true"/>
                 <label id="fxaEmailAddress1"/>
-                <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="fxaUnlinkButton" label="&disconnect.label;"/>
-                  <label id="verifiedManage" class="text-link"
-                         onclick="gSyncPane.openManageFirefoxAccount(event);"
+                <hbox class="fxaAccountBoxButtons">
+                  <button id="fxaUnlinkButton" label="&disconnect.label;" accesskey="&disconnect.accesskey;"/>
+                  <html:a id="verifiedManage" target="_blank"
+                         accesskey="&verifiedManage.accesskey;"
                          onkeypress="gSyncPane.openManageFirefoxAccount(event);"><!--
-                  -->&verifiedManage.label;</label>
+                  -->&verifiedManage.label;</html:a>
                 </hbox>
               </vbox>
             </hbox>
@@ -255,9 +125,9 @@
                     &signedInUnverified.aftername.label;
                   </description>
                 </hbox>
-                <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="verifyFxaAccount">&verify.label;</button>
-                  <button id="unverifiedUnlinkFxaAccount">&forget.label;</button>
+                <hbox class="fxaAccountBoxButtons">
+                  <button id="verifyFxaAccount" label="&verify.label;" accesskey="&verify.accesskey;"></button>
+                  <button id="unverifiedUnlinkFxaAccount" label="&forget.label;" accesskey="&forget.accesskey;"></button>
                 </hbox>
               </vbox>
             </hbox>
@@ -276,9 +146,9 @@
                     &signedInLoginFailure.aftername.label;
                   </description>
                 </hbox>
-                <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="rejectReSignIn">&signIn.label;</button>
-                  <button id="rejectUnlinkFxaAccount">&forget.label;</button>
+                <hbox class="fxaAccountBoxButtons">
+                  <button id="rejectReSignIn" label="&signIn.label;" accesskey="&signIn.accesskey;"></button>
+                  <button id="rejectUnlinkFxaAccount" label="&forget.label;" accesskey="&forget.accesskey;"></button>
                 </hbox>
               </vbox>
             </hbox>
@@ -288,39 +158,44 @@
           <caption><label>&signedIn.engines.label;</label></caption>
           <hbox id="fxaSyncEngines">
             <vbox align="start" flex="1">
-              <checkbox label="&engine.tabs.label;"
+              <checkbox label="&engine.tabs.label2;"
                         accesskey="&engine.tabs.accesskey;"
                         preference="engine.tabs"/>
               <checkbox label="&engine.bookmarks.label;"
                         accesskey="&engine.bookmarks.accesskey;"
                         preference="engine.bookmarks"/>
-              <checkbox label="&engine.passwords.label;"
-                        accesskey="&engine.passwords.accesskey;"
+              <checkbox label="&engine.logins.label;"
+                        accesskey="&engine.logins.accesskey;"
                         preference="engine.passwords"/>
-            </vbox>
-            <vbox align="start" flex="1">
               <checkbox label="&engine.history.label;"
                         accesskey="&engine.history.accesskey;"
                         preference="engine.history"/>
+            </vbox>
+            <vbox align="start" flex="1">
               <checkbox label="&engine.addons.label;"
                         accesskey="&engine.addons.accesskey;"
                         preference="engine.addons"/>
               <checkbox label="&engine.prefs.label;"
                         accesskey="&engine.prefs.accesskey;"
                         preference="engine.prefs"/>
+              <checkbox label="&engine.addresses.label;"
+                        accesskey="&engine.addresses.accesskey;"
+                        preference="engine.addresses"/>
+              <checkbox label="&engine.creditcards.label;"
+                        accesskey="&engine.creditcards.accesskey;"
+                        preference="engine.creditcards"/>
             </vbox>
             <spacer/>
           </hbox>
         </groupbox>
       </vbox>
       <vbox>
-        <image class="fxaSyncIllustration"/>
+        <html:img  class="fxaSyncIllustration" src="chrome://browser/skin/fxa/sync-illustration.svg"/>
       </vbox>
     </hbox>
     <groupbox>
       <caption>
-        <label accesskey="&syncDeviceName.accesskey;"
-               control="fxaSyncComputerName">
+        <label control="fxaSyncComputerName">
           &fxaSyncDeviceName.label;
         </label>
       </caption>
@@ -328,24 +203,25 @@
         <textbox id="fxaSyncComputerName" disabled="true"/>
         <hbox>
           <button id="fxaChangeDeviceName"
-                  label="&changeSyncDeviceName.label;"/>
+                  label="&changeSyncDeviceName.label;"
+                  accesskey="&changeSyncDeviceName.accesskey;"/>
           <button id="fxaCancelChangeDeviceName"
                   label="&cancelChangeSyncDeviceName.label;"
+                  accesskey="&cancelChangeSyncDeviceName.accesskey;"
                   hidden="true"/>
           <button id="fxaSaveChangeDeviceName"
                   label="&saveChangeSyncDeviceName.label;"
+                  accesskey="&saveChangeSyncDeviceName.accesskey;"
                   hidden="true"/>
         </hbox>
       </hbox>
     </groupbox>
     <label class="fxaMobilePromo">
         &mobilePromo3.start;<!-- We put these comments to avoid inserting white spaces
-        --><label class="androidLink text-link"
-                  href="https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
+        --><label class="androidLink text-link" id="fxaMobilePromo-android-hasFxaAccount"><!--
         -->&mobilePromo3.androidLink;</label><!--
         -->&mobilePromo3.iOSBefore;<!--
-        --><label class="iOSLink text-link"
-                  href="https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
+        --><label class="iOSLink text-link" id="fxaMobilePromo-ios-hasFxaAccount"><!--
         -->&mobilePromo3.iOSLink;</label><!--
         -->&mobilePromo3.end;
     </label>

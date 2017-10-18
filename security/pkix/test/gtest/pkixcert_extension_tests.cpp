@@ -76,7 +76,7 @@ private:
     return Success;
   }
 
-  Result IsChainValid(const DERArray&, Time) override
+  Result IsChainValid(const DERArray&, Time, const CertPolicyId&) override
   {
     return Success;
   }
@@ -121,6 +121,11 @@ struct ExtensionTestcase
   ByteString extension;
   Result expectedResult;
 };
+
+::std::ostream& operator<<(::std::ostream& os, const ExtensionTestcase&)
+{
+  return os << "TODO (bug 1318770)";
+}
 
 static const ExtensionTestcase EXTENSION_TESTCASES[] =
 {

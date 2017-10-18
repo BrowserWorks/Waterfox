@@ -4,10 +4,12 @@
 
 #include "crashreporter.h"
 
-#include <dirent.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include <algorithm>
+
+#include <dirent.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace CrashReporter;
 using std::string;
@@ -66,4 +68,105 @@ void UIPruneSavedDumps(const std::string& directory)
 
     dumpfiles.pop_back();
   }
+}
+
+bool UIRunProgram(const std::string& exename,
+                  const std::vector<std::string>& args,
+                  bool wait)
+{
+  pid_t pid = fork();
+
+  if (pid == -1) {
+    return false;
+  } else if (pid == 0) {
+    // Child
+    size_t argvLen = args.size() + 2;
+    char** argv = new char*[argvLen];
+
+    argv[0] = const_cast<char*>(exename.c_str());
+
+    for (size_t i = 0; i < args.size(); i++) {
+      argv[i + 1] = const_cast<char*>(args[i].c_str());
+    }
+
+    argv[argvLen - 1] = nullptr;
+
+    // Run the program
+    int rv = execv(exename.c_str(), argv);
+    delete[] argv;
+
+    if (rv == -1) {
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    // Parent
+    if (wait) {
+      waitpid(pid, nullptr, 0);
+    }
+  }
+
+  return true;
+}
+
+bool UIEnsurePathExists(const string& path)
+{
+  int ret = mkdir(path.c_str(), S_IRWXU);
+  int e = errno;
+  if (ret == -1 && e != EEXIST)
+    return false;
+
+  return true;
+}
+
+bool UIFileExists(const string& path)
+{
+  struct stat sb;
+  int ret = stat(path.c_str(), &sb);
+  if (ret == -1 || !(sb.st_mode & S_IFREG))
+    return false;
+
+  return true;
+}
+
+bool UIDeleteFile(const string& file)
+{
+  return (unlink(file.c_str()) != -1);
+}
+
+std::ifstream* UIOpenRead(const string& filename, bool binary)
+{
+  std::ios_base::openmode mode = std::ios::in;
+
+  if (binary) {
+    mode = mode | std::ios::binary;
+  }
+
+  return new std::ifstream(filename.c_str(), mode);
+}
+
+std::ofstream* UIOpenWrite(const string& filename,
+                           bool append, // append=false
+                           bool binary) // binary=false
+{
+  std::ios_base::openmode mode = std::ios::out;
+
+  if (append) {
+    mode = mode | std::ios::app;
+  }
+
+  if (binary) {
+    mode = mode | std::ios::binary;
+  }
+
+  return new std::ofstream(filename.c_str(), mode);
+}
+
+string UIGetEnv(const string name)
+{
+  const char *var = getenv(name.c_str());
+  if (var && *var) {
+    return var;
+  }
+
+  return "";
 }

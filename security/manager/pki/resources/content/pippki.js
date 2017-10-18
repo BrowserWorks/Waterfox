@@ -16,7 +16,7 @@ function setText(id, value) {
     return;
   }
   if (element.hasChildNodes()) {
-    element.removeChild(element.firstChild);
+    element.firstChild.remove();
   }
   element.appendChild(document.createTextNode(value));
 }
@@ -33,30 +33,27 @@ function viewCertHelper(parent, cert) {
   cd.viewCert(parent, cert);
 }
 
-function getDERString(cert)
-{
+function getDERString(cert) {
   var length = {};
   var derArray = cert.getRawDER(length);
-  var derString = '';
+  var derString = "";
   for (var i = 0; i < derArray.length; i++) {
     derString += String.fromCharCode(derArray[i]);
   }
   return derString;
 }
 
-function getPKCS7String(cert, chainMode)
-{
+function getPKCS7String(cert, chainMode) {
   var length = {};
   var pkcs7Array = cert.exportAsCMS(chainMode, length);
-  var pkcs7String = '';
+  var pkcs7String = "";
   for (var i = 0; i < pkcs7Array.length; i++) {
     pkcs7String += String.fromCharCode(pkcs7Array[i]);
   }
   return pkcs7String;
 }
 
-function getPEMString(cert)
-{
+function getPEMString(cert) {
   var derb64 = btoa(getDERString(cert));
   // Wrap the Base64 string into lines of 64 characters with CRLF line breaks
   // (as specified in RFC 1421).
@@ -66,15 +63,40 @@ function getPEMString(cert)
          + "\r\n-----END CERTIFICATE-----\r\n";
 }
 
-function alertPromptService(title, message)
-{
+function alertPromptService(title, message) {
   var ps = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].
            getService(Components.interfaces.nsIPromptService);
   ps.alert(window, title, message);
 }
 
-function exportToFile(parent, cert)
-{
+const DEFAULT_CERT_EXTENSION = "crt";
+
+/**
+ * Generates a filename for a cert suitable to set as the |defaultString|
+ * attribute on an nsIFilePicker.
+ *
+ * @param {nsIX509Cert} cert
+ *        The cert to generate a filename for.
+ * @returns {String}
+ *          Generated filename.
+ */
+function certToFilename(cert) {
+  let filename = cert.displayName;
+
+  // Remove unneeded and/or unsafe characters.
+  filename = filename.replace(/\s/g, "")
+                     .replace(/\./g, "")
+                     .replace(/\\/g, "")
+                     .replace(/\//g, "");
+
+  // nsIFilePicker.defaultExtension is more of a suggestion to some
+  // implementations, so we include the extension in the file name as well. This
+  // is what the documentation for nsIFilePicker.defaultString says we should do
+  // anyways.
+  return `${filename}.${DEFAULT_CERT_EXTENSION}`;
+}
+
+function exportToFile(parent, cert) {
   var bundle = document.getElementById("pippki_bundle");
   if (!cert) {
     return;
@@ -85,17 +107,8 @@ function exportToFile(parent, cert)
            createInstance(nsIFilePicker);
   fp.init(parent, bundle.getString("SaveCertAs"),
           nsIFilePicker.modeSave);
-  let filename = cert.commonName;
-  if (filename.length == 0) {
-    filename = cert.windowTitle;
-  }
-  // Remove all whitespace from the default filename, and try and ensure that
-  // an extension is included by default.
-  // Note: defaultExtension is more of a suggestion to some file picker
-  //       implementations, so we include the extension in the default file name
-  //       as well.
-  fp.defaultString = filename.replace(/\s*/g, "") + ".crt";
-  fp.defaultExtension = "crt";
+  fp.defaultString = certToFilename(cert);
+  fp.defaultExtension = DEFAULT_CERT_EXTENSION;
   fp.appendFilter(bundle.getString("CertFormatBase64"), "*.crt; *.pem");
   fp.appendFilter(bundle.getString("CertFormatBase64Chain"), "*.crt; *.pem");
   fp.appendFilter(bundle.getString("CertFormatDER"), "*.der");
@@ -107,7 +120,7 @@ function exportToFile(parent, cert)
     return;
   }
 
-  var content = '';
+  var content = "";
   switch (fp.filterIndex) {
     case 1:
       content = getPEMString(cert);

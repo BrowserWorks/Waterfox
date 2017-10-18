@@ -48,7 +48,9 @@
 
 #include "nsDocLoader.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Preferences.h"
+#include "nsContentUtils.h"
 
 mozilla::LazyLogModule nsURILoader::mLog("URILoader");
 
@@ -234,6 +236,41 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest *request, nsISupport
     if (204 == responseCode || 205 == responseCode) {
       return NS_BINDING_ABORTED;
     }
+
+    static bool sLargeAllocationTestingAllHttpLoads = false;
+    static bool sLargeAllocationHeaderEnabled = false;
+    static bool sCachedLargeAllocationPref = false;
+    if (!sCachedLargeAllocationPref) {
+      sCachedLargeAllocationPref = true;
+      mozilla::Preferences::AddBoolVarCache(&sLargeAllocationHeaderEnabled,
+                                            "dom.largeAllocationHeader.enabled");
+      mozilla::Preferences::AddBoolVarCache(&sLargeAllocationTestingAllHttpLoads,
+                                            "dom.largeAllocation.testing.allHttpLoads");
+    }
+
+    if (sLargeAllocationHeaderEnabled) {
+      if (sLargeAllocationTestingAllHttpLoads) {
+        nsCOMPtr<nsIURI> uri;
+        rv = httpChannel->GetURI(getter_AddRefs(uri));
+        if (NS_SUCCEEDED(rv) && uri) {
+          bool httpScheme = false;
+          bool httpsScheme = false;
+          uri->SchemeIs("http", &httpScheme);
+          uri->SchemeIs("https", &httpsScheme);
+          if ((httpScheme || httpsScheme) &&
+              nsContentUtils::AttemptLargeAllocationLoad(httpChannel)) {
+            return NS_BINDING_ABORTED;
+          }
+        }
+      }
+
+      // If we have a Large-Allocation header, let's check if we should perform a process switch.
+      nsAutoCString largeAllocationHeader;
+      rv = httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Large-Allocation"), largeAllocationHeader);
+      if (NS_SUCCEEDED(rv) && nsContentUtils::AttemptLargeAllocationLoad(httpChannel)) {
+        return NS_BINDING_ABORTED;
+      }
+    }
   }
 
   //
@@ -247,7 +284,7 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest *request, nsISupport
   if (NS_FAILED(rv)) return rv;
 
   if (NS_FAILED(status)) {
-    LOG_ERROR(("  Request failed, status: 0x%08X", rv));
+    LOG_ERROR(("  Request failed, status: 0x%08" PRIX32, static_cast<uint32_t>(rv)));
   
     //
     // The transaction has already reported an error - so it will be torn
@@ -258,7 +295,8 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest *request, nsISupport
 
   rv = DispatchContent(request, aCtxt);
 
-  LOG(("  After dispatch, m_targetStreamListener: 0x%p, rv: 0x%08X", m_targetStreamListener.get(), rv));
+  LOG(("  After dispatch, m_targetStreamListener: 0x%p, rv: 0x%08" PRIX32,
+       m_targetStreamListener.get(), static_cast<uint32_t>(rv)));
 
   NS_ASSERTION(NS_SUCCEEDED(rv) || !m_targetStreamListener,
                "Must not have an m_targetStreamListener with a failure return!");
@@ -268,7 +306,7 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStartRequest(nsIRequest *request, nsISupport
   if (m_targetStreamListener)
     rv = m_targetStreamListener->OnStartRequest(request, aCtxt);
 
-  LOG(("  OnStartRequest returning: 0x%08X", rv));
+  LOG(("  OnStartRequest returning: 0x%08" PRIX32, static_cast<uint32_t>(rv)));
   
   return rv;
 }
@@ -283,9 +321,9 @@ nsDocumentOpenInfo::CheckListenerChain()
   if (retargetableListener) {
     rv = retargetableListener->CheckListenerChain();
   }
-  LOG(("[0x%p] nsDocumentOpenInfo::CheckListenerChain %s listener %p rv %x",
+  LOG(("[0x%p] nsDocumentOpenInfo::CheckListenerChain %s listener %p rv %" PRIx32,
        this, (NS_SUCCEEDED(rv) ? "success" : "failure"),
-       (nsIStreamListener*)m_targetStreamListener, rv));
+       (nsIStreamListener*)m_targetStreamListener, static_cast<uint32_t>(rv)));
   return rv;
 }
 
@@ -315,7 +353,7 @@ NS_IMETHODIMP nsDocumentOpenInfo::OnStopRequest(nsIRequest *request, nsISupports
 
     // If this is a multipart stream, we could get another
     // OnStartRequest after this... reset state.
-    m_targetStreamListener = 0;
+    m_targetStreamListener = nullptr;
     mContentType.Truncate();
     listener->OnStopRequest(request, aCtxt, aStatus);
   }
@@ -519,8 +557,8 @@ nsresult nsDocumentOpenInfo::DispatchContent(nsIRequest *request, nsISupports * 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(request));
   if (httpChannel) {
     bool requestSucceeded;
-    httpChannel->GetRequestSucceeded(&requestSucceeded);
-    if (!requestSucceeded) {
+    rv = httpChannel->GetRequestSucceeded(&requestSucceeded);
+    if (NS_FAILED(rv) || !requestSucceeded) {
       // returning error from OnStartRequest will cancel the channel
       return NS_ERROR_FILE_NOT_FOUND;
     }
@@ -816,7 +854,7 @@ NS_IMETHODIMP nsURILoader::OpenURI(nsIChannel *channel,
     // the preferred protocol handler. 
 
     // But for now, I'm going to let necko do the work for us....
-    rv = channel->AsyncOpen(loader, nullptr);
+    rv = channel->AsyncOpen2(loader);
 
     // no content from this load - that's OK.
     if (rv == NS_ERROR_NO_CONTENT) {

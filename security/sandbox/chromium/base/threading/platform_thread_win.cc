@@ -4,6 +4,9 @@
 
 #include "base/threading/platform_thread.h"
 
+#include <stddef.h>
+
+#include "base/debug/activity_tracker.h"
 #include "base/debug/alias.h"
 #include "base/debug/profiler.h"
 #include "base/logging.h"
@@ -11,7 +14,6 @@
 #include "base/threading/thread_restrictions.h"
 #include "base/tracked_objects.h"
 #include "base/win/scoped_handle.h"
-#include "base/win/windows_version.h"
 
 namespace base {
 
@@ -46,6 +48,7 @@ void SetNameInternal(PlatformThreadId thread_id, const char* name) {
 struct ThreadParams {
   PlatformThread::Delegate* delegate;
   bool joinable;
+  ThreadPriority priority;
 };
 
 DWORD __stdcall ThreadFunc(void* params) {
@@ -53,6 +56,9 @@ DWORD __stdcall ThreadFunc(void* params) {
   PlatformThread::Delegate* delegate = thread_params->delegate;
   if (!thread_params->joinable)
     base::ThreadRestrictions::SetSingletonAllowed(false);
+
+  if (thread_params->priority != ThreadPriority::NORMAL)
+    PlatformThread::SetCurrentThreadPriority(thread_params->priority);
 
   // Retrieve a copy of the thread handle to use as the key in the
   // thread name mapping.
@@ -83,33 +89,33 @@ DWORD __stdcall ThreadFunc(void* params) {
         PlatformThread::CurrentId());
   }
 
-  return NULL;
+  return 0;
 }
 
-// CreateThreadInternal() matches PlatformThread::Create(), except that
-// |out_thread_handle| may be NULL, in which case a non-joinable thread is
-// created.
+// CreateThreadInternal() matches PlatformThread::CreateWithPriority(), except
+// that |out_thread_handle| may be nullptr, in which case a non-joinable thread
+// is created.
 bool CreateThreadInternal(size_t stack_size,
                           PlatformThread::Delegate* delegate,
-                          PlatformThreadHandle* out_thread_handle) {
+                          PlatformThreadHandle* out_thread_handle,
+                          ThreadPriority priority) {
   unsigned int flags = 0;
-  if (stack_size > 0 && base::win::GetVersion() >= base::win::VERSION_XP) {
+  if (stack_size > 0) {
     flags = STACK_SIZE_PARAM_IS_A_RESERVATION;
-  } else {
-    stack_size = 0;
   }
 
   ThreadParams* params = new ThreadParams;
   params->delegate = delegate;
-  params->joinable = out_thread_handle != NULL;
+  params->joinable = out_thread_handle != nullptr;
+  params->priority = priority;
 
   // Using CreateThread here vs _beginthreadex makes thread creation a bit
   // faster and doesn't require the loader lock to be available.  Our code will
   // have to work running on CreateThread() threads anyway, since we run code
   // on the Windows thread pool, etc.  For some background on the difference:
   //   http://www.microsoft.com/msj/1099/win32/win321099.aspx
-  void* thread_handle = CreateThread(
-      NULL, stack_size, ThreadFunc, params, flags, NULL);
+  void* thread_handle =
+      ::CreateThread(nullptr, stack_size, ThreadFunc, params, flags, nullptr);
   if (!thread_handle) {
     delete params;
     return false;
@@ -126,18 +132,17 @@ bool CreateThreadInternal(size_t stack_size,
 
 // static
 PlatformThreadId PlatformThread::CurrentId() {
-  return GetCurrentThreadId();
+  return ::GetCurrentThreadId();
 }
 
 // static
 PlatformThreadRef PlatformThread::CurrentRef() {
-  return PlatformThreadRef(GetCurrentThreadId());
+  return PlatformThreadRef(::GetCurrentThreadId());
 }
 
 // static
 PlatformThreadHandle PlatformThread::CurrentHandle() {
-  NOTIMPLEMENTED(); // See OpenThread()
-  return PlatformThreadHandle();
+  return PlatformThreadHandle(::GetCurrentThread());
 }
 
 // static
@@ -155,7 +160,7 @@ void PlatformThread::Sleep(TimeDelta duration) {
 }
 
 // static
-void PlatformThread::SetName(const char* name) {
+void PlatformThread::SetName(const std::string& name) {
   ThreadIdNameManager::GetInstance()->SetName(CurrentId(), name);
 
   // On Windows only, we don't need to tell the profiler about the "BrokerEvent"
@@ -164,7 +169,7 @@ void PlatformThread::SetName(const char* name) {
   // which would also (as a side effect) initialize the profiler in this unused
   // context, including setting up thread local storage, etc.  The performance
   // impact is not terrible, but there is no reason to do initialize it.
-  if (0 != strcmp(name, "BrokerEvent"))
+  if (name != "BrokerEvent")
     tracked_objects::ThreadData::InitializeThreadContext(name);
 
   // The debugger needs to be around to catch the name in the exception.  If
@@ -174,7 +179,7 @@ void PlatformThread::SetName(const char* name) {
   if (!::IsDebuggerPresent() && !base::debug::IsBinaryInstrumented())
     return;
 
-  SetNameInternal(CurrentId(), name);
+  SetNameInternal(CurrentId(), name.c_str());
 }
 
 // static
@@ -183,30 +188,33 @@ const char* PlatformThread::GetName() {
 }
 
 // static
-bool PlatformThread::Create(size_t stack_size, Delegate* delegate,
-                            PlatformThreadHandle* thread_handle) {
-  DCHECK(thread_handle);
-  return CreateThreadInternal(stack_size, delegate, thread_handle);
-}
-
-// static
 bool PlatformThread::CreateWithPriority(size_t stack_size, Delegate* delegate,
                                         PlatformThreadHandle* thread_handle,
                                         ThreadPriority priority) {
-  bool result = Create(stack_size, delegate, thread_handle);
-  if (result)
-    SetThreadPriority(*thread_handle, priority);
-  return result;
+  DCHECK(thread_handle);
+  return CreateThreadInternal(stack_size, delegate, thread_handle, priority);
 }
 
 // static
 bool PlatformThread::CreateNonJoinable(size_t stack_size, Delegate* delegate) {
-  return CreateThreadInternal(stack_size, delegate, NULL);
+  return CreateNonJoinableWithPriority(stack_size, delegate,
+                                       ThreadPriority::NORMAL);
+}
+
+// static
+bool PlatformThread::CreateNonJoinableWithPriority(size_t stack_size,
+                                                   Delegate* delegate,
+                                                   ThreadPriority priority) {
+  return CreateThreadInternal(stack_size, delegate, nullptr /* non-joinable */,
+                              priority);
 }
 
 // static
 void PlatformThread::Join(PlatformThreadHandle thread_handle) {
-  DCHECK(thread_handle.handle_);
+  // Record the event that this thread is blocking upon (for hang diagnosis).
+  base::debug::ScopedThreadJoinActivity thread_activity(&thread_handle);
+
+  DCHECK(thread_handle.platform_handle());
   // TODO(willchan): Enable this check once I can get it to work for Windows
   // shutdown.
   // Joining another thread may block the current thread for a long time, since
@@ -218,32 +226,70 @@ void PlatformThread::Join(PlatformThreadHandle thread_handle) {
 
   // Wait for the thread to exit.  It should already have terminated but make
   // sure this assumption is valid.
-  DWORD result = WaitForSingleObject(thread_handle.handle_, INFINITE);
-  if (result != WAIT_OBJECT_0) {
-    // Debug info for bug 127931.
-    DWORD error = GetLastError();
-    debug::Alias(&error);
-    debug::Alias(&result);
-    debug::Alias(&thread_handle.handle_);
-    CHECK(false);
-  }
-
-  CloseHandle(thread_handle.handle_);
+  CHECK_EQ(WAIT_OBJECT_0,
+           WaitForSingleObject(thread_handle.platform_handle(), INFINITE));
+  CloseHandle(thread_handle.platform_handle());
 }
 
 // static
-void PlatformThread::SetThreadPriority(PlatformThreadHandle handle,
-                                       ThreadPriority priority) {
+void PlatformThread::Detach(PlatformThreadHandle thread_handle) {
+  CloseHandle(thread_handle.platform_handle());
+}
+
+// static
+bool PlatformThread::CanIncreaseCurrentThreadPriority() {
+  return true;
+}
+
+// static
+void PlatformThread::SetCurrentThreadPriority(ThreadPriority priority) {
+  int desired_priority = THREAD_PRIORITY_ERROR_RETURN;
   switch (priority) {
-    case kThreadPriority_Normal:
-      ::SetThreadPriority(handle.handle_, THREAD_PRIORITY_NORMAL);
+    case ThreadPriority::BACKGROUND:
+      desired_priority = THREAD_PRIORITY_LOWEST;
       break;
-    case kThreadPriority_RealtimeAudio:
-      ::SetThreadPriority(handle.handle_, THREAD_PRIORITY_TIME_CRITICAL);
+    case ThreadPriority::NORMAL:
+      desired_priority = THREAD_PRIORITY_NORMAL;
+      break;
+    case ThreadPriority::DISPLAY:
+      desired_priority = THREAD_PRIORITY_ABOVE_NORMAL;
+      break;
+    case ThreadPriority::REALTIME_AUDIO:
+      desired_priority = THREAD_PRIORITY_TIME_CRITICAL;
       break;
     default:
       NOTREACHED() << "Unknown priority.";
       break;
+  }
+  DCHECK_NE(desired_priority, THREAD_PRIORITY_ERROR_RETURN);
+
+#if DCHECK_IS_ON()
+  const BOOL success =
+#endif
+      ::SetThreadPriority(PlatformThread::CurrentHandle().platform_handle(),
+                          desired_priority);
+  DPLOG_IF(ERROR, !success) << "Failed to set thread priority to "
+                            << desired_priority;
+}
+
+// static
+ThreadPriority PlatformThread::GetCurrentThreadPriority() {
+  int priority =
+      ::GetThreadPriority(PlatformThread::CurrentHandle().platform_handle());
+  switch (priority) {
+    case THREAD_PRIORITY_LOWEST:
+      return ThreadPriority::BACKGROUND;
+    case THREAD_PRIORITY_NORMAL:
+      return ThreadPriority::NORMAL;
+    case THREAD_PRIORITY_ABOVE_NORMAL:
+      return ThreadPriority::DISPLAY;
+    case THREAD_PRIORITY_TIME_CRITICAL:
+      return ThreadPriority::REALTIME_AUDIO;
+    case THREAD_PRIORITY_ERROR_RETURN:
+      DPCHECK(false) << "GetThreadPriority error";  // Falls through.
+    default:
+      NOTREACHED() << "Unexpected priority: " << priority;
+      return ThreadPriority::NORMAL;
   }
 }
 

@@ -9,6 +9,7 @@
 #include "nsAutoPtr.h"
 #include "nsIFileStreams.h"
 #include "nsIFile.h"
+#include "nsICloneableInputStream.h"
 #include "nsIInputStream.h"
 #include "nsIOutputStream.h"
 #include "nsISafeOutputStream.h"
@@ -55,10 +56,19 @@ protected:
      */
     int32_t mBehaviorFlags;
 
-    /**
-     * Whether we have a pending open (see DEFER_OPEN in the IDL file).
-     */
-    bool mDeferredOpen;
+    enum {
+      // This is the default value. It will be changed by Deserialize or Init.
+      eUnitialized,
+      // The opening has been deferred. See DEFER_OPEN.
+      eDeferredOpen,
+      // The file has been opened. mFD is not null.
+      eOpened,
+      // The file has been closed. mFD is null.
+      eClosed,
+      // Something bad happen in the Open() or in Deserialize(). The actual
+      // error value is stored in mErrorValue.
+      eError
+    } mState;
 
     struct OpenParams {
         nsCOMPtr<nsIFile> localFile;
@@ -70,6 +80,8 @@ protected:
      * Data we need to do an open.
      */
     OpenParams mOpenParams;
+
+    nsresult mErrorValue;
 
     /**
      * Prepares the data we need to open the file, and either does the open now
@@ -93,24 +105,30 @@ protected:
     virtual nsresult DoOpen();
 
     /**
-     * If there is a pending open, do it now. It's important for this to be
-     * inline since we do it in almost every stream API call.
+     * Based on mState, this method does the opening, return an error, or do
+     * nothing. If the return value is not NS_OK, please, return it back to the
+     * callee.
      */
     inline nsresult DoPendingOpen();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class nsFileInputStream : public nsFileStreamBase,
-                          public nsIFileInputStream,
-                          public nsILineInputStream,
-                          public nsIIPCSerializableInputStream
+// nsFileInputStream is cloneable only on the parent process because only there
+// it can open the same file multiple times.
+
+class nsFileInputStream : public nsFileStreamBase
+                        , public nsIFileInputStream
+                        , public nsILineInputStream
+                        , public nsIIPCSerializableInputStream
+                        , public nsICloneableInputStream
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIFILEINPUTSTREAM
     NS_DECL_NSILINEINPUTSTREAM
     NS_DECL_NSIIPCSERIALIZABLEINPUTSTREAM
+    NS_DECL_NSICLONEABLEINPUTSTREAM
 
     NS_IMETHOD Close() override;
     NS_IMETHOD Tell(int64_t *aResult) override;
@@ -171,47 +189,8 @@ protected:
      * Init() analogues.
      */
     nsresult Open(nsIFile* file, int32_t ioFlags, int32_t perm);
-};
 
-////////////////////////////////////////////////////////////////////////////////
-
-class nsPartialFileInputStream : public nsFileInputStream,
-                                 public nsIPartialFileInputStream
-{
-public:
-    using nsFileInputStream::Init;
-    using nsFileInputStream::Read;
-    NS_DECL_ISUPPORTS_INHERITED
-    NS_DECL_NSIPARTIALFILEINPUTSTREAM
-    NS_DECL_NSIIPCSERIALIZABLEINPUTSTREAM
-
-    nsPartialFileInputStream()
-      : mStart(0), mLength(0), mPosition(0), mDeferredSeek(false)
-    { }
-
-    NS_IMETHOD Tell(int64_t *aResult) override;
-    NS_IMETHOD Available(uint64_t *aResult) override;
-    NS_IMETHOD Read(char* aBuf, uint32_t aCount, uint32_t* aResult) override;
-    NS_IMETHOD Seek(int32_t aWhence, int64_t aOffset) override;
-
-    static nsresult
-    Create(nsISupports *aOuter, REFNSIID aIID, void **aResult);
-
-protected:
-    ~nsPartialFileInputStream()
-    { }
-
-    inline nsresult DoPendingSeek();
-
-private:
-    uint64_t TruncateSize(uint64_t aSize) {
-          return std::min<uint64_t>(mLength - mPosition, aSize);
-    }
-
-    uint64_t mStart;
-    uint64_t mLength;
-    uint64_t mPosition;
-    bool mDeferredSeek;
+    bool IsCloneable() const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -254,9 +233,9 @@ public:
 
     virtual nsresult DoOpen() override;
 
-    NS_IMETHODIMP Close() override;
-    NS_IMETHODIMP Write(const char *buf, uint32_t count, uint32_t *result) override;
-    NS_IMETHODIMP Init(nsIFile* file, int32_t ioFlags, int32_t perm, int32_t behaviorFlags) override;
+    NS_IMETHOD Close() override;
+    NS_IMETHOD Write(const char *buf, uint32_t count, uint32_t *result) override;
+    NS_IMETHOD Init(nsIFile* file, int32_t ioFlags, int32_t perm, int32_t behaviorFlags) override;
 
 protected:
     virtual ~nsAtomicFileOutputStream()
@@ -300,7 +279,7 @@ public:
     NS_FORWARD_NSIINPUTSTREAM(nsFileStreamBase::)
 
     // Can't use NS_FORWARD_NSIOUTPUTSTREAM due to overlapping methods
-    // Close() and IsNonBlocking() 
+    // Close() and IsNonBlocking()
     NS_IMETHOD Flush() override
     {
         return nsFileStreamBase::Flush();

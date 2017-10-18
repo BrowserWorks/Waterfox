@@ -1,18 +1,18 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* exported DevToolsUtils, DevToolsLoader */
+
 "use strict";
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-var Cu = Components.utils;
-var Cr = Components.results;
 
-const {require, DevToolsLoader, devtools} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { require, DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 
-DevToolsUtils.testing = true;
+flags.testing = true;
 do_register_cleanup(() => {
-  DevToolsUtils.testing = false;
+  flags.testing = false;
 });
 
 // Register a console listener, so console messages don't just disappear
@@ -22,25 +22,22 @@ do_register_cleanup(() => {
 // failures, set this to true.
 var ALLOW_CONSOLE_ERRORS = false;
 
-var errorCount = 0;
 var listener = {
-  observe: function (aMessage) {
-    errorCount++;
+  observe: function (message) {
+    let string;
     try {
-      // If we've been given an nsIScriptError, then we can print out
-      // something nicely formatted, for tools like Emacs to pick up.
-      var scriptError = aMessage.QueryInterface(Ci.nsIScriptError);
-      dump(aMessage.sourceName + ":" + aMessage.lineNumber + ": " +
-           scriptErrorFlagsToKind(aMessage.flags) + ": " +
-           aMessage.errorMessage + "\n");
-      var string = aMessage.errorMessage;
-    } catch (x) {
+      message.QueryInterface(Ci.nsIScriptError);
+      dump(message.sourceName + ":" + message.lineNumber + ": " +
+           scriptErrorFlagsToKind(message.flags) + ": " +
+           message.errorMessage + "\n");
+      string = message.errorMessage;
+    } catch (ex) {
       // Be a little paranoid with message, as the whole goal here is to lose
       // no information.
       try {
-        var string = "" + aMessage.message;
-      } catch (x) {
-        var string = "<error converting error message to string>";
+        string = "" + message.message;
+      } catch (e) {
+        string = "<error converting error message to string>";
       }
     }
 

@@ -44,7 +44,8 @@ public:
   // nsIDOMHTMLAreaElement
   NS_DECL_NSIDOMHTMLAREAELEMENT
 
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
+  virtual nsresult GetEventTargetParent(
+                     EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(EventChainPostVisitor& aVisitor) override;
   virtual bool IsLink(nsIURI** aURI) const override;
   virtual void GetLinkTarget(nsAString& aTarget) override;
@@ -55,18 +56,9 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult,
+                         bool aPreallocateChildren) const override;
 
   virtual EventStates IntrinsicState() const override;
 
@@ -113,7 +105,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::ping, aPing, aError);
   }
-  
+
   void GetRel(DOMString& aValue)
   {
     GetHTMLAttr(nsGkAtoms::rel, aValue);
@@ -122,7 +114,7 @@ public:
   void SetRel(const nsAString& aRel, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::rel, aRel, aError);
-  } 
+  }
   nsDOMTokenList* RelList();
 
   void SetReferrerPolicy(const nsAString& aValue, mozilla::ErrorResult& rv)
@@ -180,10 +172,21 @@ public:
     GetHref(aResult);
   }
 
+  virtual void NodeInfoChanged(nsIDocument* aOldDoc) final override
+  {
+    ClearHasPendingLinkUpdate();
+    nsGenericHTMLElement::NodeInfoChanged(aOldDoc);
+  }
+
 protected:
   virtual ~HTMLAreaElement();
 
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
 
   RefPtr<nsDOMTokenList > mRelList;
 };

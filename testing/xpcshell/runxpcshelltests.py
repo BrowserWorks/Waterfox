@@ -11,7 +11,6 @@ import math
 import mozdebug
 import mozinfo
 import os
-import os.path
 import random
 import re
 import shutil
@@ -21,10 +20,11 @@ import tempfile
 import time
 import traceback
 
-from collections import deque, namedtuple
-from distutils import dir_util
-from multiprocessing import cpu_count
 from argparse import ArgumentParser
+from collections import defaultdict, deque, namedtuple
+from distutils import dir_util
+from functools import partial
+from multiprocessing import cpu_count
 from subprocess import Popen, PIPE, STDOUT
 from tempfile import mkdtemp, gettempdir
 from threading import (
@@ -40,10 +40,15 @@ try:
 except Exception:
     HAVE_PSUTIL = False
 
-from automation import Automation
 from xpcshellcommandline import parser_desktop
 
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
+
+try:
+    from mozbuild.base import MozbuildObject
+    build = MozbuildObject.from_environment(cwd=SCRIPT_DIR)
+except ImportError:
+    build = None
 
 HARNESS_TIMEOUT = 5 * 60
 
@@ -69,6 +74,7 @@ from manifestparser import TestManifest
 from manifestparser.filters import chunk_by_slice, tags, pathprefix
 from mozlog import commandline
 import mozcrash
+import mozfile
 import mozinfo
 from mozrunner.utils import get_stack_fixer_function
 
@@ -116,6 +122,7 @@ class XPCShellTestThread(Thread):
 
         self.appPath = kwargs.get('appPath')
         self.xrePath = kwargs.get('xrePath')
+        self.utility_path = kwargs.get('utility_path')
         self.testingModulesDir = kwargs.get('testingModulesDir')
         self.debuggerInfo = kwargs.get('debuggerInfo')
         self.jsDebuggerInfo = kwargs.get('jsDebuggerInfo')
@@ -191,7 +198,7 @@ class XPCShellTestThread(Thread):
           Simple wrapper to remove (recursively) a given directory.
           On a remote system, we need to overload this to work on the remote filesystem.
         """
-        shutil.rmtree(dirname)
+        mozfile.remove(dirname)
 
     def poll(self, proc):
         """
@@ -240,7 +247,7 @@ class XPCShellTestThread(Thread):
           Simple wrapper to launch a process.
           On a remote system, this is more complex and we need to overload this function.
         """
-        # timeout is needed by remote and b2g xpcshell to extend the
+        # timeout is needed by remote xpcshell to extend the
         # devicemanager.shell() timeout. It is not used in this function.
         if HAVE_PSUTIL:
             popen_func = psutil.Popen
@@ -270,9 +277,7 @@ class XPCShellTestThread(Thread):
         self.log.info("%s | environment: %s" % (name, list(changedEnv)))
 
     def killTimeout(self, proc):
-        Automation().killAndGetStackNoScreenshot(proc.pid,
-                                                 self.appPath,
-                                                 self.debuggerInfo)
+        mozcrash.kill_and_get_minidump(proc.pid, self.tempDir, utility_path=self.utility_path)
 
     def postCheck(self, proc):
         """Checks for a still-running test process, kills it and fails the test if found.
@@ -280,7 +285,13 @@ class XPCShellTestThread(Thread):
         cause removeDir() to fail - so check for the process and kill it if needed.
         """
         if proc and self.poll(proc) is None:
-            self.kill(proc)
+            if HAVE_PSUTIL:
+                try:
+                    self.kill(proc)
+                except psutil.NoSuchProcess:
+                    pass
+            else:
+                self.kill(proc)
             message = "%s | Process still running after test!" % self.test_object['id']
             if self.retry:
                 self.log.info(message)
@@ -371,30 +382,26 @@ class XPCShellTestThread(Thread):
         mozinfo.output_to_file(mozInfoJSPath)
         return mozInfoJSPath
 
-    def buildCmdHead(self, headfiles, tailfiles, xpcscmd):
+    def buildCmdHead(self, headfiles, xpcscmd):
         """
-          Build the command line arguments for the head and tail files,
+          Build the command line arguments for the head files,
           along with the address of the webserver which some tests require.
 
           On a remote system, this is overloaded to resolve quoting issues over a secondary command line.
         """
         cmdH = ", ".join(['"' + f.replace('\\', '/') + '"'
                        for f in headfiles])
-        cmdT = ", ".join(['"' + f.replace('\\', '/') + '"'
-                       for f in tailfiles])
 
         dbgport = 0 if self.jsDebuggerInfo is None else self.jsDebuggerInfo.port
 
         return xpcscmd + \
                 ['-e', 'const _SERVER_ADDR = "localhost"',
                  '-e', 'const _HEAD_FILES = [%s];' % cmdH,
-                 '-e', 'const _TAIL_FILES = [%s];' % cmdT,
                  '-e', 'const _JSDEBUGGER_PORT = %d;' % dbgport,
                 ]
 
-    def getHeadAndTailFiles(self, test):
-        """Obtain lists of head- and tail files.  Returns a tuple
-        containing a list of head files and a list of tail files.
+    def getHeadFiles(self, test):
+        """Obtain lists of head- files.  Returns a list of head files.
         """
         def sanitize_list(s, kind):
             for f in s.strip().split(' '):
@@ -412,13 +419,11 @@ class XPCShellTestThread(Thread):
                 yield path
 
         headlist = test.get('head', '')
-        taillist = test.get('tail', '')
-        return (list(sanitize_list(headlist, 'head')),
-                list(sanitize_list(taillist, 'tail')))
+        return list(sanitize_list(headlist, 'head'))
 
     def buildXpcsCmd(self):
         """
-          Load the root head.js file as the first file in our test path, before other head, test, and tail files.
+          Load the root head.js file as the first file in our test path, before other head, and test files.
           On a remote system, we overload this to add additional command line arguments, so this gets overloaded.
         """
         # - NOTE: if you rename/add any of the constants set here, update
@@ -618,8 +623,8 @@ class XPCShellTestThread(Thread):
         self.mozInfoJSPath = self.setupMozinfoJS()
 
         self.buildXpcsCmd()
-        head_files, tail_files = self.getHeadAndTailFiles(self.test_object)
-        cmdH = self.buildCmdHead(head_files, tail_files, self.xpcsCmd)
+        head_files = self.getHeadFiles(self.test_object)
+        cmdH = self.buildCmdHead(head_files, self.xpcsCmd)
 
         # The test file will have to be loaded after the head files.
         cmdT = self.buildCmdTestFile(path)
@@ -660,6 +665,10 @@ class XPCShellTestThread(Thread):
 
         if self.test_object.get('subprocess') == 'true':
             self.env['PYTHON'] = sys.executable
+
+        if self.test_object.get('headless', False):
+            self.env["MOZ_HEADLESS"] = '1'
+            self.env["DISPLAY"] = '77' # Set a fake display.
 
         testTimeoutInterval = self.harness_timeout
         # Allow a test to request a multiple of the timeout if it is expected to take long
@@ -824,6 +833,22 @@ class XPCShellTests(object):
                                   "to set path explicitly." % (ini_path,))
             sys.exit(1)
 
+    def normalizeTest(self, root, test_object):
+        path = test_object.get('file_relpath', test_object['relpath'])
+        if 'dupe-manifest' in test_object and 'ancestor-manifest' in test_object:
+            test_object['id'] = '%s:%s' % (os.path.basename(test_object['ancestor-manifest']), path)
+        else:
+            test_object['id'] = path
+
+        if root:
+            test_object['manifest'] = os.path.relpath(test_object['manifest'], root)
+
+        if os.sep != '/':
+            for key in ('id', 'manifest'):
+                test_object[key] = test_object[key].replace(os.sep, '/')
+
+        return test_object
+
     def buildTestList(self, test_tags=None, test_paths=None):
         """
           read the xpcshell.ini manifest and set self.alltests to be
@@ -842,6 +867,11 @@ class XPCShellTests(object):
 
         mp = self.getTestManifest(self.manifest)
 
+        root = mp.rootdir
+        if build and not root:
+            root = build.topsrcdir
+        normalize = partial(self.normalizeTest, root)
+
         filters = []
         if test_tags:
             filters.append(tags(test_tags))
@@ -852,7 +882,7 @@ class XPCShellTests(object):
         if self.singleFile is None and self.totalChunks > 1:
             filters.append(chunk_by_slice(self.thisChunk, self.totalChunks))
         try:
-            self.alltests = mp.active_tests(filters=filters, **mozinfo.info)
+            self.alltests = map(normalize, mp.active_tests(filters=filters, **mozinfo.info))
         except TypeError:
             sys.stderr.write("*** offending mozinfo.info: %s\n" % repr(mozinfo.info))
             raise
@@ -918,6 +948,15 @@ class XPCShellTests(object):
         # enable non-local connections for the purposes of local testing.
         # Don't override the user's choice here.  See bug 1049688.
         self.env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
+        if self.mozInfo.get("topsrcdir") is not None:
+            self.env["MOZ_DEVELOPER_REPO_DIR"] = self.mozInfo["topsrcdir"].encode()
+        if self.mozInfo.get("topobjdir") is not None:
+            self.env["MOZ_DEVELOPER_OBJ_DIR"] = self.mozInfo["topobjdir"].encode()
+
+        # Disable the content process sandbox for the xpcshell tests. They
+        # currently attempt to do things like bind() sockets, which is not
+        # compatible with the sandbox.
+        self.env["MOZ_DISABLE_CONTENT_SANDBOX"] = "1"
 
     def buildEnvironment(self):
         """
@@ -943,7 +982,9 @@ class XPCShellTests(object):
         usingTSan = "tsan" in self.mozInfo and self.mozInfo["tsan"]
         if usingASan or usingTSan:
             # symbolizer support
-            llvmsym = os.path.join(self.xrePath, "llvm-symbolizer")
+            llvmsym = os.path.join(
+                self.xrePath,
+                "llvm-symbolizer" + self.mozInfo["bin_suffix"].encode('ascii'))
             if os.path.isfile(llvmsym):
                 if usingASan:
                     self.env["ASAN_SYMBOLIZER_PATH"] = llvmsym
@@ -985,54 +1026,57 @@ class XPCShellTests(object):
 
     def trySetupNode(self):
         """
-          Run node for SPDY tests, if available, and updates mozinfo as appropriate.
+          Run node for HTTP/2 tests, if available, and updates mozinfo as appropriate.
         """
-        nodeMozInfo = {'hasNode': False} # Assume the worst
-        nodeBin = None
+        if os.getenv('MOZ_ASSUME_NODE_RUNNING', None):
+            self.log.info('Assuming required node servers are already running')
+            if not os.getenv('MOZHTTP2_PORT', None):
+                self.log.warning('MOZHTTP2_PORT environment variable not set. Tests requiring http/2 will fail.')
+            return
 
         # We try to find the node executable in the path given to us by the user in
         # the MOZ_NODE_PATH environment variable
-        localPath = os.getenv('MOZ_NODE_PATH', None)
-        if localPath and os.path.exists(localPath) and os.path.isfile(localPath):
-            nodeBin = localPath
+        nodeBin = os.getenv('MOZ_NODE_PATH', None)
+        if not nodeBin:
+            self.log.warning('MOZ_NODE_PATH environment variable not set. Tests requiring http/2 will fail.')
+            return
 
-        if nodeBin:
-            self.log.info('Found node at %s' % (nodeBin,))
+        if not os.path.exists(nodeBin) or not os.path.isfile(nodeBin):
+            error = 'node not found at MOZ_NODE_PATH %s' % (nodeBin)
+            self.log.error(error)
+            raise IOError(error)
 
-            def startServer(name, serverJs):
-                if os.path.exists(serverJs):
-                    # OK, we found our SPDY server, let's try to get it running
-                    self.log.info('Found %s at %s' % (name, serverJs))
-                    try:
-                        # We pipe stdin to node because the spdy server will exit when its
-                        # stdin reaches EOF
-                        process = Popen([nodeBin, serverJs], stdin=PIPE, stdout=PIPE,
-                                stderr=PIPE, env=self.env, cwd=os.getcwd())
-                        self.nodeProc[name] = process
+        self.log.info('Found node at %s' % (nodeBin,))
 
-                        # Check to make sure the server starts properly by waiting for it to
-                        # tell us it's started
-                        msg = process.stdout.readline()
-                        if 'server listening' in msg:
-                            nodeMozInfo['hasNode'] = True
-                            searchObj = re.search( r'SPDY server listening on port (.*)', msg, 0)
-                            if searchObj:
-                              self.env["MOZSPDY_PORT"] = searchObj.group(1)
-                            searchObj = re.search( r'HTTP2 server listening on port (.*)', msg, 0)
-                            if searchObj:
-                              self.env["MOZHTTP2_PORT"] = searchObj.group(1)
-                    except OSError, e:
-                        # This occurs if the subprocess couldn't be started
-                        self.log.error('Could not run %s server: %s' % (name, str(e)))
+        def startServer(name, serverJs):
+            if not os.path.exists(serverJs):
+                error = '%s not found at %s' % (name, serverJs)
+                self.log.error(error)
+                raise IOError(error)
 
-            myDir = os.path.split(os.path.abspath(__file__))[0]
-            startServer('moz-spdy', os.path.join(myDir, 'moz-spdy', 'moz-spdy.js'))
-            startServer('moz-http2', os.path.join(myDir, 'moz-http2', 'moz-http2.js'))
-        elif os.getenv('MOZ_ASSUME_NODE_RUNNING', None):
-            self.log.info('Assuming required node servers are already running')
-            nodeMozInfo['hasNode'] = True
+            # OK, we found our server, let's try to get it running
+            self.log.info('Found %s at %s' % (name, serverJs))
+            try:
+                # We pipe stdin to node because the server will exit when its
+                # stdin reaches EOF
+                process = Popen([nodeBin, serverJs], stdin=PIPE, stdout=PIPE,
+                        stderr=PIPE, env=self.env, cwd=os.getcwd())
+                self.nodeProc[name] = process
 
-        mozinfo.update(nodeMozInfo)
+                # Check to make sure the server starts properly by waiting for it to
+                # tell us it's started
+                msg = process.stdout.readline()
+                if 'server listening' in msg:
+                    searchObj = re.search( r'HTTP2 server listening on port (.*)', msg, 0)
+                    if searchObj:
+                      self.env["MOZHTTP2_PORT"] = searchObj.group(1)
+            except OSError, e:
+                # This occurs if the subprocess couldn't be started
+                self.log.error('Could not run %s server: %s' % (name, str(e)))
+                raise
+
+        myDir = os.path.split(os.path.abspath(__file__))[0]
+        startServer('moz-http2', os.path.join(myDir, 'moz-http2', 'moz-http2.js'))
 
     def shutdownNode(self):
         """
@@ -1070,16 +1114,6 @@ class XPCShellTests(object):
         self.failCount += test.failCount
         self.todoCount += test.todoCount
 
-    def makeTestId(self, test_object):
-        """Calculate an identifier for a test based on its path or a combination of
-        its path and the source manifest."""
-
-        relpath_key = 'file_relpath' if 'file_relpath' in test_object else 'relpath'
-        path = test_object[relpath_key].replace('\\', '/');
-        if 'dupe-manifest' in test_object and 'ancestor-manifest' in test_object:
-            return '%s:%s' % (os.path.basename(test_object['ancestor-manifest']), path)
-        return path
-
     def runTests(self, xpcshell=None, xrePath=None, appPath=None, symbolsPath=None,
                  manifest=None, testPaths=None, mobileArgs=None, tempDir=None,
                  interactive=False, verbose=False, keepGoing=False, logfiles=True,
@@ -1090,7 +1124,8 @@ class XPCShellTests(object):
                  testClass=XPCShellTestThread, failureManifest=None,
                  log=None, stream=None, jsDebugger=False, jsDebuggerPort=0,
                  test_tags=None, dump_tests=None, utility_path=None,
-                 rerun_failures=False, failure_manifest=None, jscovdir=None, **otherOptions):
+                 rerun_failures=False, threadCount=NUM_THREADS,
+                 failure_manifest=None, jscovdir=None, **otherOptions):
         """Run xpcshell tests.
 
         |xpcshell|, is the xpcshell executable to use to run the tests.
@@ -1173,6 +1208,7 @@ class XPCShellTests(object):
 
         self.xpcshell = xpcshell
         self.xrePath = xrePath
+        self.utility_path = utility_path
         self.appPath = appPath
         self.symbolsPath = symbolsPath
         self.tempDir = os.path.normpath(tempDir or tempfile.gettempdir())
@@ -1190,6 +1226,7 @@ class XPCShellTests(object):
         self.pluginsPath = pluginsPath
         self.sequential = sequential
         self.failure_manifest = failure_manifest
+        self.threadCount = threadCount or NUM_THREADS
         self.jscovdir = jscovdir
 
         self.testCount = 0
@@ -1222,9 +1259,13 @@ class XPCShellTests(object):
 
         mozinfo.update(self.mozInfo)
 
+        # Add a flag to mozinfo to indicate that code coverage is enabled.
+        if self.jscovdir:
+            mozinfo.update({"coverage": True})
+
         self.stack_fixer_function = None
-        if utility_path and os.path.exists(utility_path):
-            self.stack_fixer_function = get_stack_fixer_function(utility_path, self.symbolsPath)
+        if self.utility_path and os.path.exists(self.utility_path):
+            self.stack_fixer_function = get_stack_fixer_function(self.utility_path, self.symbolsPath)
 
         # buildEnvironment() needs mozInfo, so we call it after mozInfo is initialized.
         self.buildEnvironment()
@@ -1237,8 +1278,8 @@ class XPCShellTests(object):
         if "appname" in self.mozInfo:
             appDirKey = self.mozInfo["appname"] + "-appdir"
 
-        # We have to do this before we build the test list so we know whether or
-        # not to run tests that depend on having the node spdy server
+        # We have to do this before we run tests that depend on having the node
+        # http/2 server.
         self.trySetupNode()
 
         pStdout, pStderr = self.getPipes()
@@ -1256,6 +1297,7 @@ class XPCShellTests(object):
         kwargs = {
             'appPath': self.appPath,
             'xrePath': self.xrePath,
+            'utility_path': self.utility_path,
             'testingModulesDir': self.testingModulesDir,
             'debuggerInfo': self.debuggerInfo,
             'jsDebuggerInfo': self.jsDebuggerInfo,
@@ -1317,7 +1359,6 @@ class XPCShellTests(object):
             # are re-run.
 
             path = test_object['path']
-            test_object['id'] = self.makeTestId(test_object)
 
             if self.singleFile and not path.endswith(self.singleFile):
                 continue
@@ -1339,15 +1380,19 @@ class XPCShellTests(object):
         if self.sequential:
             self.log.info("Running tests sequentially.")
         else:
-            self.log.info("Using at most %d threads." % NUM_THREADS)
+            self.log.info("Using at most %d threads." % self.threadCount)
 
-        # keep a set of NUM_THREADS running tests and start running the
-        # tests in the queue at most NUM_THREADS at a time
+        # keep a set of threadCount running tests and start running the
+        # tests in the queue at most threadCount at a time
         running_tests = set()
         keep_going = True
         exceptions = []
         tracebacks = []
-        self.log.suite_start([t['id'] for t in self.alltests])
+
+        tests_by_manifest = defaultdict(list)
+        for test in self.alltests:
+            tests_by_manifest[test['manifest']].append(test['id'])
+        self.log.suite_start(tests_by_manifest)
 
         while tests_queue or running_tests:
             # if we're not supposed to continue and all of the running tests
@@ -1356,7 +1401,7 @@ class XPCShellTests(object):
                 break
 
             # if there's room to run more tests, start running them
-            while keep_going and tests_queue and (len(running_tests) < NUM_THREADS):
+            while keep_going and tests_queue and (len(running_tests) < self.threadCount):
                 test = tests_queue.popleft()
                 running_tests.add(test)
                 test.start()

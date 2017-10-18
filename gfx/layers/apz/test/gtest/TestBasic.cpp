@@ -6,6 +6,7 @@
 
 #include "APZCBasicTester.h"
 #include "APZTestCommon.h"
+#include "gfxPrefs.h"
 #include "InputUtils.h"
 
 TEST_F(APZCBasicTester, Overzoom) {
@@ -313,6 +314,23 @@ TEST_F(APZCBasicTester, OverScroll_Bug1152051b) {
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
 
+// Tests that the page doesn't get stuck in an
+// overscroll animation after a low-velocity pan.
+TEST_F(APZCBasicTester, OverScrollAfterLowVelocityPan_Bug1343775) {
+  SCOPED_GFX_PREF(APZOverscrollEnabled, bool, true);
+
+  // Pan into overscroll with a velocity less than the
+  // apz.fling_min_velocity_threshold preference.
+  Pan(apzc, 10, 30);
+
+  EXPECT_TRUE(apzc->IsOverscrolled());
+
+  apzc->AdvanceAnimationsUntilEnd();
+
+  // Check that we recovered from overscroll.
+  EXPECT_FALSE(apzc->IsOverscrolled());
+}
+
 TEST_F(APZCBasicTester, OverScrollAbort) {
   SCOPED_GFX_PREF(APZOverscrollEnabled, bool, true);
 
@@ -344,7 +362,7 @@ TEST_F(APZCBasicTester, OverScrollPanningAbort) {
   // the pan does not end.
   int touchStart = 500;
   int touchEnd = 10;
-  Pan(apzc, touchStart, touchEnd, true); // keep finger down
+  Pan(apzc, touchStart, touchEnd, PanOptions::KeepFingerDown);
   EXPECT_TRUE(apzc->IsOverscrolled());
 
   // Check that calling CancelAnimation() while the user is still panning

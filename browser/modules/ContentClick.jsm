@@ -11,17 +11,17 @@ var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "ContentClick" ];
 
-Cu.import("resource:///modules/PlacesUIUtils.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
+                                  "resource:///modules/PlacesUIUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
+                                  "resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 var ContentClick = {
-  init: function() {
-    let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
-    mm.addMessageListener("Content:Click", this);
-  },
-
-  receiveMessage: function (message) {
+  // Listeners are added in nsBrowserGlue.js
+  receiveMessage(message) {
     switch (message.name) {
       case "Content:Click":
         this.contentAreaClick(message.json, message.target)
@@ -29,7 +29,7 @@ var ContentClick = {
     }
   },
 
-  contentAreaClick: function (json, browser) {
+  contentAreaClick(json, browser) {
     // This is heavily based on contentAreaClick from browser.js (Bug 903016)
     // The json is set up in a way to look like an Event.
     let window = browser.ownerGlobal;
@@ -47,14 +47,14 @@ var ContentClick = {
       // This is the Opera convention for a special link that, when clicked,
       // allows to add a sidebar panel.  The link's title attribute contains
       // the title that should be used for the sidebar panel.
-      PlacesUIUtils.showBookmarkDialog({ action: "add"
-                                       , type: "bookmark"
-                                       , uri: Services.io.newURI(json.href, null, null)
-                                       , title: json.title
-                                       , loadBookmarkInSidebar: true
-                                       , hiddenRows: [ "description"
-                                                     , "location"
-                                                     , "keyword" ]
+      PlacesUIUtils.showBookmarkDialog({ action: "add",
+                                         type: "bookmark",
+                                         uri: Services.io.newURI(json.href),
+                                         title: json.title,
+                                         loadBookmarkInSidebar: true,
+                                         hiddenRows: [ "description",
+                                                        "location",
+                                                        "keyword" ]
                                        }, window);
       return;
     }
@@ -77,11 +77,17 @@ var ContentClick = {
 
     // Todo(903022): code for where == save
 
-    let params = { charset: browser.characterSet,
-                   referrerURI: browser.documentURI,
-                   referrerPolicy: json.referrerPolicy,
-                   noReferrer: json.noReferrer,
-                   allowMixedContent: json.allowMixedContent };
+    let params = {
+      charset: browser.characterSet,
+      referrerURI: browser.documentURI,
+      referrerPolicy: json.referrerPolicy,
+      noReferrer: json.noReferrer,
+      allowMixedContent: json.allowMixedContent,
+      isContentWindowPrivate: json.isContentWindowPrivate,
+      originPrincipal: json.originPrincipal,
+      triggeringPrincipal: json.triggeringPrincipal,
+      frameOuterWindowID: json.frameOuterWindowID,
+    };
 
     // The new tab/window must use the same userContextId.
     if (json.originAttributes.userContextId) {

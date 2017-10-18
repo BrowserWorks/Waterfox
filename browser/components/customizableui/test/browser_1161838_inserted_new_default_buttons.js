@@ -21,9 +21,6 @@ function test() {
   is(gFuturePlacements.size, 0,
      "No change to future placements initially.");
 
-  let currentVersion = CustomizableUIBSPass.kVersion;
-
-
   // Add our widget to the defaults:
   let testWidgetNew = {
     id: "test-messing-with-default-placements-new-pref",
@@ -58,7 +55,7 @@ function test() {
   CustomizableUIInternal._placeNewDefaultWidgetsInArea(CustomizableUI.AREA_NAVBAR);
 
   let indexInSavedPlacements = savedPlacements.indexOf(testWidgetNew.id);
-  info("Saved placements: " + savedPlacements.join(', '));
+  info("Saved placements: " + savedPlacements.join(", "));
   isnot(indexInSavedPlacements, -1, "Widget should have been inserted");
   is(indexInSavedPlacements, savedPlacements.indexOf("bookmarks-menu-button") + 1,
      "Widget should be in the right place.");
@@ -79,4 +76,3 @@ function test() {
   gPalette.delete(testWidgetNew.id);
   CustomizableUI.reset();
 }
-

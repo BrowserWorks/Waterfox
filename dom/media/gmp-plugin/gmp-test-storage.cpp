@@ -68,7 +68,7 @@ WriteRecord(const std::string& aRecordName,
             GMPTask* aOnFailure)
 {
   GMPRecord* record;
-  WriteRecordClient* client = new WriteRecordClient();
+  auto* client = new WriteRecordClient();
   auto err = GMPOpenRecord(aRecordName.c_str(),
                            aRecordName.size(),
                            &record,
@@ -139,7 +139,7 @@ ReadRecord(const std::string& aRecordName,
 {
   MOZ_ASSERT(aContinuation);
   GMPRecord* record;
-  ReadRecordClient* client = new ReadRecordClient();
+  auto* client = new ReadRecordClient();
   auto err = GMPOpenRecord(aRecordName.c_str(),
                            aRecordName.size(),
                            &record,
@@ -223,11 +223,4 @@ GMPOpenRecord(const std::string& aRecordName,
               OpenContinuation* aContinuation)
 {
   OpenRecordClient::Open(aRecordName, aContinuation);
-}
-
-GMPErr
-GMPEnumRecordNames(RecvGMPRecordIteratorPtr aRecvIteratorFunc,
-                   void* aUserArg)
-{
-  return g_platform_api->getrecordenumerator(aRecvIteratorFunc, aUserArg);
 }

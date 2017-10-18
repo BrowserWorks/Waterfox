@@ -24,12 +24,14 @@ TestInterruptRacesParent::Main()
         fail("sending Start()");
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::RecvStartRace()
 {
-    MessageLoop::current()->PostTask(
-        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::OnRaceTime));
-    return true;
+  MessageLoop::current()->PostTask(NewNonOwningRunnableMethod(
+    "_ipdltest::TestInterruptRacesParent::OnRaceTime",
+    this,
+    &TestInterruptRacesParent::OnRaceTime));
+  return IPC_OK();
 }
 
 void
@@ -44,16 +46,18 @@ TestInterruptRacesParent::OnRaceTime()
     mHasReply = true;
 
     MessageLoop::current()->PostTask(
-        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::Test2));
+      NewNonOwningRunnableMethod("_ipdltest::TestInterruptRacesParent::Test2",
+                                 this,
+                                 &TestInterruptRacesParent::Test2));
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::AnswerRace(bool* hasReply)
 {
     if (mHasReply)
         fail("apparently the parent won the Interrupt race!");
     *hasReply = hasReply;
-    return true;
+    return IPC_OK();
 }
 
 void
@@ -71,10 +75,12 @@ TestInterruptRacesParent::Test2()
     puts("  passed");
 
     MessageLoop::current()->PostTask(
-        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::Test3));
+      NewNonOwningRunnableMethod("_ipdltest::TestInterruptRacesParent::Test3",
+                                 this,
+                                 &TestInterruptRacesParent::Test3));
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::AnswerStackFrame()
 {
     if (!SendWakeup())
@@ -87,7 +93,7 @@ TestInterruptRacesParent::AnswerStackFrame()
     if (!mChildHasReply)
         fail("child should have got a reply already");
 
-    return true;
+    return IPC_OK();
 }
 
 void
@@ -103,7 +109,7 @@ TestInterruptRacesParent::Test3()
     Close();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::AnswerStackFrame3()
 {
     if (!SendWakeup3())
@@ -112,26 +118,26 @@ TestInterruptRacesParent::AnswerStackFrame3()
     if (!CallChild())
         fail("can't set up race condition");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::AnswerParent()
 {
     mAnsweredParent = true;
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesParent::RecvGetAnsweredParent(bool* answeredParent)
 {
     *answeredParent = mAnsweredParent;
-    return true;
+    return IPC_OK();
 }
 
 //-----------------------------------------------------------------------------
 // child
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::RecvStart()
 {
     puts("Test 1");
@@ -144,10 +150,10 @@ TestInterruptRacesChild::RecvStart()
         fail("problem calling Race()");
 
     mHasReply = true;
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::AnswerRace(bool* hasReply)
 {
     if (!mHasReply)
@@ -155,10 +161,10 @@ TestInterruptRacesChild::AnswerRace(bool* hasReply)
 
     *hasReply = mHasReply;
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::AnswerStackFrame()
 {
     // reset for the second test
@@ -170,10 +176,10 @@ TestInterruptRacesChild::AnswerStackFrame()
     if (!mHasReply)
         fail("should have had reply by now");
 
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::RecvWakeup()
 {
     bool dontcare;
@@ -181,26 +187,26 @@ TestInterruptRacesChild::RecvWakeup()
         fail("can't set up race condition");
 
     mHasReply = true;
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::AnswerStackFrame3()
 {
     if (!CallStackFrame3())
         fail("can't set up stack frame");
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::RecvWakeup3()
 {
     if (!CallParent())
         fail("can't set up race condition");
-    return true;
+    return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestInterruptRacesChild::AnswerChild()
 {
     bool parentAnsweredParent;
@@ -213,7 +219,7 @@ TestInterruptRacesChild::AnswerChild()
     if (parentAnsweredParent)
         fail("parent was supposed to win the race!");
 
-    return true;
+    return IPC_OK();
 }
 
 } // namespace _ipdltest

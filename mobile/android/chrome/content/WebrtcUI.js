@@ -28,9 +28,15 @@ var WebrtcUI = {
   // See browser/modules/webrtcUI.jsm for details.
 
   observe: function(aSubject, aTopic, aData) {
-    if (aTopic === "getUserMedia:request") {
+    if (aTopic === "getUserMedia:ask-device-permission") {
       RuntimePermissions
-        .waitForPermissions(this._determineNeededRuntimePermissions(aSubject))
+        .waitForPermissions(this._determineNeededRuntimePermissions(aData))
+        .then(_ => {
+          Services.obs.notifyObservers(aSubject, "getUserMedia:got-device-permission");
+        });
+    } else if (aTopic === "getUserMedia:request") {
+      RuntimePermissions
+        .checkPermissions(this._determineNeededRuntimePermissions(aSubject))
         .then((permissionGranted) => {
           if (permissionGranted) {
             WebrtcUI.handleGumRequest(aSubject, aTopic, aData);
@@ -58,7 +64,7 @@ var WebrtcUI = {
 
   notify: function() {
     let windows = MediaManagerService.activeMediaCaptureWindows;
-    let count = windows.Count();
+    let count = windows.length;
     let msg = {};
     if (count == 0) {
       if (this._notificationId) {
@@ -76,7 +82,7 @@ var WebrtcUI = {
       let cameraActive = false;
       let audioActive = false;
       for (let i = 0; i < count; i++) {
-        let win = windows.GetElementAt(i);
+        let win = windows.queryElementAt(i, Ci.nsIDOMWindow);
         let hasAudio = {};
         let hasVideo = {};
         MediaManagerService.mediaCaptureWindowState(win, hasVideo, hasAudio);
@@ -150,19 +156,19 @@ var WebrtcUI = {
     {
       label: Strings.browser.GetStringFromName("getUserMedia.shareRequest.label"),
       callback: function(checked /* ignored */, inputs) {
-        let allowedDevices = Cc["@mozilla.org/supports-array;1"].createInstance(Ci.nsISupportsArray);
+        let allowedDevices = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
 
         let audioId = 0;
         if (inputs && inputs.audioDevice != undefined)
           audioId = inputs.audioDevice;
         if (audioDevices[audioId])
-          allowedDevices.AppendElement(audioDevices[audioId]);
+          allowedDevices.appendElement(audioDevices[audioId]);
 
         let videoId = 0;
         if (inputs && inputs.videoSource != undefined)
           videoId = inputs.videoSource;
         if (videoDevices[videoId]) {
-          allowedDevices.AppendElement(videoDevices[videoId]);
+          allowedDevices.appendElement(videoDevices[videoId]);
           let perms = Services.perms;
           // Although the lifetime is "session" it will be removed upon
           // use so it's more of a one-shot.
@@ -178,7 +184,16 @@ var WebrtcUI = {
   _determineNeededRuntimePermissions: function(aSubject) {
     let permissions = [];
 
-    let constraints = aSubject.getConstraints();
+    let constraints;
+    if (typeof aSubject === "string") {
+      constraints = {
+        video: aSubject === "video" || aSubject === "all",
+        audio: aSubject === "audio" || aSubject === "all",
+      };
+    } else {
+      constraints = aSubject.getConstraints();
+    }
+
     if (constraints.video) {
       permissions.push(RuntimePermissions.CAMERA);
     }

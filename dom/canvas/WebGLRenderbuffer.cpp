@@ -47,7 +47,7 @@ EmulatePackedDepthStencil(gl::GLContext* gl)
 }
 
 WebGLRenderbuffer::WebGLRenderbuffer(WebGLContext* webgl)
-    : WebGLContextBoundObject(webgl)
+    : WebGLRefCountedObject(webgl)
     , mPrimaryRB( DoCreateRenderbuffer(webgl->gl) )
     , mEmulatePackedDepthStencil( EmulatePackedDepthStencil(webgl->gl) )
     , mSecondaryRB(0)
@@ -205,7 +205,7 @@ WebGLRenderbuffer::RenderbufferStorage(const char* funcName, uint32_t samples,
     MOZ_ASSERT(usage->maxSamplesKnown);
 
     if (samples > usage->maxSamples) {
-        mContext->ErrorInvalidValue("%s: `samples` is out of the valid range.", funcName);
+        mContext->ErrorInvalidOperation("%s: `samples` is out of the valid range.", funcName);
         return;
     }
 
@@ -218,13 +218,15 @@ WebGLRenderbuffer::RenderbufferStorage(const char* funcName, uint32_t samples,
         return;
     }
 
+    mContext->OnDataAllocCall();
+
     mSamples = samples;
     mFormat = usage;
     mWidth = width;
     mHeight = height;
     mImageDataStatus = WebGLImageDataStatus::UninitializedImageData;
 
-    InvalidateStatusOfAttachedFBs();
+    InvalidateStatusOfAttachedFBs(funcName);
 }
 
 void
@@ -278,7 +280,7 @@ WebGLRenderbuffer::GetRenderbufferParameter(RBTarget target,
 
     case LOCAL_GL_RENDERBUFFER_INTERNAL_FORMAT:
         {
-            GLenum ret = 0;
+            GLenum ret = LOCAL_GL_RGBA4;
             if (mFormat) {
                 ret = mFormat->format->sizedFormat;
 

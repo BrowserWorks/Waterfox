@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,23 +14,14 @@
 
 "use strict";
 
-////////////////////////////////////////////////////////////////////////////////
-//// Globals
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-                                  "resource://gre/modules/Promise.jsm");
-
-////////////////////////////////////////////////////////////////////////////////
-//// DownloadLegacyTransfer
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 
 /**
  * nsITransfer implementation that provides a bridge to a Download object.
@@ -62,27 +51,21 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
  * expectations, for example by ensuring the target file exists when the
  * download is successful, even if the source has a size of zero bytes.
  */
-function DownloadLegacyTransfer()
-{
-  this._deferDownload = Promise.defer();
+function DownloadLegacyTransfer() {
+  this._deferDownload = PromiseUtils.defer();
 }
 
 DownloadLegacyTransfer.prototype = {
   classID: Components.ID("{1b4c85df-cbdd-4bb6-b04e-613caece083c}"),
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsISupports
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                          Ci.nsIWebProgressListener2,
                                          Ci.nsITransfer]),
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsIWebProgressListener
-
+  // nsIWebProgressListener
   onStateChange: function DLT_onStateChange(aWebProgress, aRequest, aStateFlags,
-                                            aStatus)
-  {
+                                            aStatus) {
     if (!Components.isSuccessCode(aStatus)) {
       this._componentFailed = true;
     }
@@ -90,10 +73,20 @@ DownloadLegacyTransfer.prototype = {
     if ((aStateFlags & Ci.nsIWebProgressListener.STATE_START) &&
         (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
 
-      // If the request's response has been blocked by Windows Parental Controls
-      // with an HTTP 450 error code, we must cancel the request synchronously.
-      let blockedByParentalControls = aRequest instanceof Ci.nsIHttpChannel &&
+      let blockedByParentalControls = false;
+      // If it is a failed download, aRequest.responseStatus doesn't exist.
+      // (missing file on the server, network failure to download)
+      try {
+        // If the request's response has been blocked by Windows Parental Controls
+        // with an HTTP 450 error code, we must cancel the request synchronously.
+        blockedByParentalControls = aRequest instanceof Ci.nsIHttpChannel &&
                                       aRequest.responseStatus == 450;
+      } catch (e) {
+        if (e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
+          aRequest.cancel(Cr.NS_BINDING_ABORTED);
+        }
+      }
+
       if (blockedByParentalControls) {
         aRequest.cancel(Cr.NS_BINDING_ABORTED);
       }
@@ -123,12 +116,12 @@ DownloadLegacyTransfer.prototype = {
             this._cancelable.cancel(Cr.NS_ERROR_ABORT);
             if (this._cancelable instanceof Ci.nsIWebBrowserPersist) {
               // This component will not send the STATE_STOP notification.
-              download.saver.onTransferFinished(aRequest, Cr.NS_ERROR_ABORT);
+              download.saver.onTransferFinished(Cr.NS_ERROR_ABORT);
               this._cancelable = null;
             }
           }
         });
-      }).then(null, Cu.reportError);
+      }).catch(Cu.reportError);
     } else if ((aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) &&
         (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
       // The last file has been received, or the download failed.  Wait for the
@@ -141,30 +134,30 @@ DownloadLegacyTransfer.prototype = {
           download.saver.setSignatureInfo(this._signatureInfo);
           download.saver.setRedirects(this._redirects);
         }
-        download.saver.onTransferFinished(aRequest, aStatus);
-      }).then(null, Cu.reportError);
+        download.saver.onTransferFinished(aStatus);
+      }).catch(Cu.reportError);
 
       // Release the reference to the component executing the download.
       this._cancelable = null;
     }
   },
 
+  // nsIWebProgressListener
   onProgressChange: function DLT_onProgressChange(aWebProgress, aRequest,
                                                   aCurSelfProgress,
                                                   aMaxSelfProgress,
                                                   aCurTotalProgress,
-                                                  aMaxTotalProgress)
-  {
+                                                  aMaxTotalProgress) {
     this.onProgressChange64(aWebProgress, aRequest, aCurSelfProgress,
                             aMaxSelfProgress, aCurTotalProgress,
                             aMaxTotalProgress);
   },
 
-  onLocationChange: function () { },
+  onLocationChange() { },
 
+  // nsIWebProgressListener
   onStatusChange: function DLT_onStatusChange(aWebProgress, aRequest, aStatus,
-                                              aMessage)
-  {
+                                              aMessage) {
     // The status change may optionally be received in addition to the state
     // change, but if no network request actually started, it is possible that
     // we only receive a status change with an error status code.
@@ -173,42 +166,36 @@ DownloadLegacyTransfer.prototype = {
 
       // Wait for the associated Download object to be available.
       this._deferDownload.promise.then(function DLT_OSC_onDownload(aDownload) {
-        aDownload.saver.onTransferFinished(aRequest, aStatus);
-      }).then(null, Cu.reportError);
+        aDownload.saver.onTransferFinished(aStatus);
+      }).catch(Cu.reportError);
     }
   },
 
-  onSecurityChange: function () { },
+  onSecurityChange() { },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsIWebProgressListener2
-
+  // nsIWebProgressListener2
   onProgressChange64: function DLT_onProgressChange64(aWebProgress, aRequest,
                                                       aCurSelfProgress,
                                                       aMaxSelfProgress,
                                                       aCurTotalProgress,
-                                                      aMaxTotalProgress)
-  {
+                                                      aMaxTotalProgress) {
     // Wait for the associated Download object to be available.
     this._deferDownload.promise.then(function DLT_OPC64_onDownload(aDownload) {
       aDownload.saver.onProgressBytes(aCurTotalProgress, aMaxTotalProgress);
-    }).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
   },
 
+  // nsIWebProgressListener2
   onRefreshAttempted: function DLT_onRefreshAttempted(aWebProgress, aRefreshURI,
-                                                      aMillis, aSameURI)
-  {
+                                                      aMillis, aSameURI) {
     // Indicate that refreshes and redirects are allowed by default.  However,
     // note that download components don't usually call this method at all.
     return true;
   },
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// nsITransfer
-
+  // nsITransfer
   init: function DLT_init(aSource, aTarget, aDisplayName, aMIMEInfo, aStartTime,
-                          aTempFile, aCancelable, aIsPrivate)
-  {
+                          aTempFile, aCancelable, aIsPrivate) {
     this._cancelable = aCancelable;
 
     let launchWhenSucceeded = false, contentType = null, launcherPath = null;
@@ -233,10 +220,10 @@ DownloadLegacyTransfer.prototype = {
       target: { path: aTarget.QueryInterface(Ci.nsIFileURL).file.path,
                 partFilePath: aTempFile && aTempFile.path },
       saver: "legacy",
-      launchWhenSucceeded: launchWhenSucceeded,
-      contentType: contentType,
-      launcherPath: launcherPath
-    }).then(function DLT_I_onDownload(aDownload) {
+      launchWhenSucceeded,
+      contentType,
+      launcherPath
+    }).then(aDownload => {
       // Legacy components keep partial data when they use a ".part" file.
       if (aTempFile) {
         aDownload.tryToKeepPartialData = true;
@@ -250,26 +237,20 @@ DownloadLegacyTransfer.prototype = {
 
       // Add the download to the list, allowing it to be seen and canceled.
       return Downloads.getList(Downloads.ALL).then(list => list.add(aDownload));
-    }.bind(this)).then(null, Cu.reportError);
+    }).catch(Cu.reportError);
   },
 
-  setSha256Hash: function (hash)
-  {
+  setSha256Hash(hash) {
     this._sha256Hash = hash;
   },
 
-  setSignatureInfo: function (signatureInfo)
-  {
+  setSignatureInfo(signatureInfo) {
     this._signatureInfo = signatureInfo;
   },
 
-  setRedirects: function (redirects)
-  {
+  setRedirects(redirects) {
     this._redirects = redirects;
   },
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// Private methods and properties
 
   /**
    * This deferred object contains a promise that is resolved with the Download
@@ -300,8 +281,5 @@ DownloadLegacyTransfer.prototype = {
    */
   _signatureInfo: null,
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//// Module
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([DownloadLegacyTransfer]);

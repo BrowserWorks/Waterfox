@@ -40,17 +40,17 @@ function makeID(id) {
 exports.makeID = makeID;
 
 function simulateCommand(ele) {
-  let window = ele.ownerDocument.defaultView;
+  let window = ele.ownerGlobal;
   let { document } = window;
   var evt = document.createEvent('XULCommandEvent');
   evt.initCommandEvent('command', true, true, window,
-    0, false, false, false, false, null);
+    0, false, false, false, false, null, 0);
   ele.dispatchEvent(evt);
 }
 exports.simulateCommand = simulateCommand;
 
 function simulateClick(ele) {
-  let window = ele.ownerDocument.defaultView;
+  let window = ele.ownerGlobal;
   let { document } = window;
   let evt = document.createEvent('MouseEvents');
   evt.initMouseEvent('click', true, true, window,

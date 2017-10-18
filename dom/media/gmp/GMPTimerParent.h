@@ -20,13 +20,13 @@ namespace gmp {
 class GMPTimerParent : public PGMPTimerParent {
 public:
   NS_INLINE_DECL_REFCOUNTING(GMPTimerParent)
-  explicit GMPTimerParent(nsIThread* aGMPThread);
+  explicit GMPTimerParent(nsISerialEventTarget* aGMPEventTarget);
 
   void Shutdown();
 
 protected:
-  bool RecvSetTimer(const uint32_t& aTimerId,
-                    const uint32_t& aTimeoutMs) override;
+  mozilla::ipc::IPCResult RecvSetTimer(const uint32_t& aTimerId,
+                                       const uint32_t& aTimeoutMs) override;
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
 private:
@@ -50,7 +50,7 @@ private:
 
   nsTHashtable<nsPtrHashKey<Context>> mTimers;
 
-  nsCOMPtr<nsIThread> mGMPThread;
+  nsCOMPtr<nsISerialEventTarget> mGMPEventTarget;
 
   bool mIsOpen;
 };

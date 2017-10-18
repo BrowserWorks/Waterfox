@@ -25,7 +25,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=426082
 <p><label for="button" id="label">Label</label></p>
 <p id="outside">Something under the label</p>
 <pre id="test">
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 /** Test for Bug 426082 **/
 
@@ -61,20 +61,21 @@ var gNeedsPaint = false;
 function executeTests() {
   var testYielder = tests();
   function execNext() {
-    try {
-      if (!gNeedsPaint) {
-        testYielder.next();
-        button.getBoundingClientRect(); // Flush.
-        gNeedsPaint = true;
+    if (!gNeedsPaint) {
+      let {done} = testYielder.next();
+      if (done) {
+        return;
       }
-      SimpleTest.executeSoon(execNext);
-    } catch (e) {}
+      button.getBoundingClientRect(); // Flush.
+      gNeedsPaint = true;
+    }
+    SimpleTest.executeSoon(execNext);
   }
   execNext();
 }
 
-function tests() {
-  window.addEventListener("MozAfterPaint", paintListener, false);
+function* tests() {
+  window.addEventListener("MozAfterPaint", paintListener);
   normalButtonCanvas = takeSnapshot();
   // Press the button.
   sendMouseEvent("mousemove", button);
@@ -119,11 +120,11 @@ function tests() {
   sendMouseEvent("mousemove", label);
   sendMouseEvent("mousedown", label);
   yield undefined;
-  label.parentNode.removeChild(label);
+  label.remove();
   yield undefined;
   compareSnapshots_(normalButtonCanvas, currentSnapshot, true, "Removing the label should have unpressed the button.");
   sendMouseEvent("mouseup", label);
-  window.removeEventListener("MozAfterPaint", paintListener, false);
+  window.removeEventListener("MozAfterPaint", paintListener);
   window.opener.finishTests();
  }
 

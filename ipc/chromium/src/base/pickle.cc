@@ -10,6 +10,8 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/TypeTraits.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/ipc/ProtocolUtils.h"
 
 #include <stdlib.h>
 
@@ -24,11 +26,22 @@
 static_assert(MOZ_ALIGNOF(Pickle::memberAlignmentType) >= MOZ_ALIGNOF(uint32_t),
               "Insufficient alignment");
 
+#ifndef MOZ_TASK_TRACER
 static const uint32_t kHeaderSegmentCapacity = 64;
+#else
+// TaskTracer would add extra fields to the header to carry task ID and
+// other information.
+// \see class Message::HeaderTaskTracer
+static const uint32_t kHeaderSegmentCapacity = 128;
+#endif
 
 static const uint32_t kDefaultSegmentCapacity = 4096;
 
 static const char kBytePaddingMarker = char(0xbf);
+
+// Note: we round the time to the nearest millisecond. So a min value of 1 ms
+// actually captures from 500us and above.
+static const uint32_t kMinTelemetryIPCReadLatencyMs = 1;
 
 namespace {
 
@@ -85,7 +98,8 @@ struct Copier<T, size, true>
 } // anonymous namespace
 
 PickleIterator::PickleIterator(const Pickle& pickle)
-   : iter_(pickle.buffers_.Iter()) {
+   : iter_(pickle.buffers_.Iter())
+   , start_(mozilla::TimeStamp::Now()) {
   iter_.Advance(pickle.buffers_, pickle.header_size_);
 }
 
@@ -112,8 +126,10 @@ void Pickle::UpdateIter(PickleIterator* iter, uint32_t bytes) const {
 
 // Payload is sizeof(Pickle::memberAlignmentType) aligned.
 
-Pickle::Pickle(uint32_t header_size)
-    : buffers_(AlignInt(header_size), kHeaderSegmentCapacity, kDefaultSegmentCapacity),
+Pickle::Pickle(uint32_t header_size, size_t segment_capacity)
+    : buffers_(AlignInt(header_size),
+               segment_capacity ? segment_capacity : kHeaderSegmentCapacity,
+               segment_capacity ? segment_capacity : kDefaultSegmentCapacity),
       header_(nullptr),
       header_size_(AlignInt(header_size)) {
   DCHECK(static_cast<memberAlignmentType>(header_size) >= sizeof(Header));
@@ -396,10 +412,11 @@ bool Pickle::ReadWString(PickleIterator* iter, std::wstring* result) const {
   return true;
 }
 
-bool Pickle::FlattenBytes(PickleIterator* iter, const char** data, uint32_t length,
-                          uint32_t alignment) {
+bool Pickle::ExtractBuffers(PickleIterator* iter, size_t length, BufferList* buffers,
+                            uint32_t alignment) const
+{
   DCHECK(iter);
-  DCHECK(data);
+  DCHECK(buffers);
   DCHECK(alignment == 4 || alignment == 8);
   DCHECK(intptr_t(header_) % alignment == 0);
 
@@ -412,11 +429,11 @@ bool Pickle::FlattenBytes(PickleIterator* iter, const char** data, uint32_t leng
     return false;
   }
 
-  if (!buffers_.FlattenBytes(iter->iter_, data, length)) {
+  bool success;
+  *buffers = const_cast<BufferList*>(&buffers_)->Extract(iter->iter_, length, &success);
+  if (!success) {
     return false;
   }
-
-  header_ = reinterpret_cast<Header*>(buffers_.Start());
 
   return iter->iter_.AdvanceAcrossSegments(buffers_, AlignInt(length) - length);
 }
@@ -442,13 +459,27 @@ bool Pickle::ReadSentinel(PickleIterator* iter, uint32_t sentinel) const {
   return found == sentinel;
 }
 
+bool Pickle::IgnoreSentinel(PickleIterator* iter) const {
+  uint32_t found;
+  return ReadUInt32(iter, &found);
+}
+
 bool Pickle::WriteSentinel(uint32_t sentinel) {
   return WriteUInt32(sentinel);
 }
 #endif
 
-void Pickle::EndRead(PickleIterator& iter) const {
+void Pickle::EndRead(PickleIterator& iter, uint32_t ipcMsgType) const {
   DCHECK(iter.iter_.Done());
+
+  if (NS_IsMainThread() && ipcMsgType != 0) {
+    uint32_t latencyMs = round((mozilla::TimeStamp::Now() - iter.start_).ToMilliseconds());
+    if (latencyMs >= kMinTelemetryIPCReadLatencyMs) {
+      mozilla::Telemetry::Accumulate(mozilla::Telemetry::IPC_READ_MAIN_THREAD_LATENCY_MS,
+                                     nsDependentCString(mozilla::ipc::StringFromIPCMessageType(ipcMsgType)),
+                                     latencyMs);
+    }
+  }
 }
 
 void Pickle::BeginWrite(uint32_t length, uint32_t alignment) {
@@ -506,7 +537,7 @@ bool Pickle::WriteBytes(const void* data, uint32_t data_len, uint32_t alignment)
 }
 
 bool Pickle::WriteString(const std::string& value) {
-#ifdef MOZ_FAULTY
+#ifdef FUZZING
   std::string v(value);
   Singleton<mozilla::ipc::Faulty>::get()->FuzzString(v);
   if (!WriteInt(static_cast<int>(v.size())))
@@ -522,7 +553,7 @@ bool Pickle::WriteString(const std::string& value) {
 }
 
 bool Pickle::WriteWString(const std::wstring& value) {
-#ifdef MOZ_FAULTY
+#ifdef FUZZING
   std::wstring v(value);
   Singleton<mozilla::ipc::Faulty>::get()->FuzzWString(v);
   if (!WriteInt(static_cast<int>(v.size())))
@@ -540,7 +571,7 @@ bool Pickle::WriteWString(const std::wstring& value) {
 }
 
 bool Pickle::WriteData(const char* data, uint32_t length) {
-#ifdef MOZ_FAULTY
+#ifdef FUZZING
   std::string v(data, length);
   Singleton<mozilla::ipc::Faulty>::get()->FuzzData(v, v.size());
   return WriteInt(v.size()) && WriteBytes(v.data(), v.size());

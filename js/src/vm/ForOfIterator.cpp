@@ -66,7 +66,7 @@ ForOfIterator::init(HandleValue iterable, NonIterableBehavior nonIterableBehavio
         UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, iterable, nullptr);
         if (!bytes)
             return false;
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_ITERABLE, bytes.get());
+        JS_ReportErrorNumberLatin1(cx, GetErrorMessage, nullptr, JSMSG_NOT_ITERABLE, bytes.get());
         return false;
     }
 
@@ -74,10 +74,10 @@ ForOfIterator::init(HandleValue iterable, NonIterableBehavior nonIterableBehavio
     if (!js::Call(cx, callee, iterable, &res))
         return false;
 
-    iterator = ToObject(cx, res);
-    if (!iterator)
-        return false;
+    if (!res.isObject())
+        return ThrowCheckIsObject(cx, CheckIsObjectKind::GetIterator);
 
+    iterator = &res.toObject();
     return true;
 }
 
@@ -135,10 +135,10 @@ ForOfIterator::next(MutableHandleValue vp, bool* done)
     if (!js::Call(cx_, v, iterator, &v))
         return false;
 
-    RootedObject resultObj(cx_, ToObject(cx_, v));
-    if (!resultObj)
-        return false;
+    if (!v.isObject())
+        return ThrowCheckIsObject(cx_, CheckIsObjectKind::IteratorNext);
 
+    RootedObject resultObj(cx_, &v.toObject());
     if (!GetProperty(cx_, resultObj, resultObj, cx_->names().done, &v))
         return false;
 
@@ -149,6 +149,54 @@ ForOfIterator::next(MutableHandleValue vp, bool* done)
     }
 
     return GetProperty(cx_, resultObj, resultObj, cx_->names().value, vp);
+}
+
+// ES 2017 draft 0f10dba4ad18de92d47d421f378233a2eae8f077 7.4.6.
+// When completion.[[Type]] is throw.
+void
+ForOfIterator::closeThrow()
+{
+    MOZ_ASSERT(iterator);
+
+    RootedValue completionException(cx_);
+    if (cx_->isExceptionPending()) {
+        if (!GetAndClearException(cx_, &completionException))
+            completionException.setUndefined();
+    }
+
+    // Steps 1-2 (implicit)
+
+    // Step 3 (partial).
+    RootedValue returnVal(cx_);
+    if (!GetProperty(cx_, iterator, iterator, cx_->names().return_, &returnVal))
+        return;
+
+    // Step 4.
+    if (returnVal.isUndefined()) {
+        cx_->setPendingException(completionException);
+        return;
+    }
+
+    // Step 3 (remaining part)
+    if (!returnVal.isObject()) {
+        JS_ReportErrorNumberASCII(cx_, GetErrorMessage, nullptr, JSMSG_RETURN_NOT_CALLABLE);
+        return;
+    }
+    RootedObject returnObj(cx_, &returnVal.toObject());
+    if (!returnObj->isCallable()) {
+        JS_ReportErrorNumberASCII(cx_, GetErrorMessage, nullptr, JSMSG_RETURN_NOT_CALLABLE);
+        return;
+    }
+
+    // Step 5.
+    RootedValue innerResultValue(cx_);
+    if (!js::Call(cx_, returnVal, iterator, &innerResultValue)) {
+        if (cx_->isExceptionPending())
+            cx_->clearPendingException();
+    }
+
+    // Step 6.
+    cx_->setPendingException(completionException);
 }
 
 bool

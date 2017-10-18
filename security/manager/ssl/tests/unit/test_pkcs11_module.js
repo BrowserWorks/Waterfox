@@ -58,42 +58,57 @@ function checkTestModuleExists() {
   return testModule;
 }
 
-function run_test() {
-  let libraryFile = Services.dirsvc.get("CurWorkD", Ci.nsILocalFile);
-  libraryFile.append("pkcs11testmodule");
-  libraryFile.append(ctypes.libraryName("pkcs11testmodule"));
-  ok(libraryFile.exists(), "The pkcs11testmodule file should exist");
+function checkModuleTelemetry(additionalExpectedModule = undefined) {
+  let expectedModules = [
+    "NSS Internal PKCS #11 Module",
+    `${AppConstants.DLL_PREFIX}nssckbi${AppConstants.DLL_SUFFIX}`,
+  ];
+  if (additionalExpectedModule) {
+    expectedModules.push(additionalExpectedModule);
+  }
+  expectedModules.sort();
+  let telemetryService = Cc["@mozilla.org/base/telemetry;1"]
+                           .getService(Ci.nsITelemetry);
+  let telemetry = telemetryService.snapshotKeyedScalars(
+    Ci.nsITelemetry.DATASET_RELEASE_CHANNEL_OPTOUT).parent;
+  let moduleTelemetry = telemetry["security.pkcs11_modules_loaded"];
+  let actualModules = [];
+  Object.keys(moduleTelemetry).forEach((key) => {
+    ok(moduleTelemetry[key], "each keyed scalar should be true");
+    actualModules.push(key);
+  });
+  actualModules.sort();
+  equal(actualModules.length, expectedModules.length,
+        "the number of actual and expected loaded modules should be the same");
+  for (let i in actualModules) {
+    equal(actualModules[i], expectedModules[i],
+          "actual and expected module names should match");
+  }
+}
 
+function run_test() {
   // Check that if we have never added the test module, that we don't find it
   // in the module list.
   checkTestModuleNotPresent();
+  checkModuleTelemetry();
 
   // Check that adding the test module makes it appear in the module list.
-  let pkcs11 = Cc["@mozilla.org/security/pkcs11;1"].getService(Ci.nsIPKCS11);
-  do_register_cleanup(() => {
-    try {
-      pkcs11.deleteModule("PKCS11 Test Module");
-    } catch (e) {
-      // deleteModule() throws if the module we tell it to delete is missing,
-      // or if some other thing went wrong. Since we're just cleaning up,
-      // there's nothing to do even if the call fails. In addition, we delete
-      // the test module during a normal run of this test file, so we need to
-      // catch the exception that is raised to not have the test fail.
-    }
-  });
-  pkcs11.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
+  loadPKCS11TestModule(true);
+  checkModuleTelemetry(
+    `${AppConstants.DLL_PREFIX}pkcs11testmodule${AppConstants.DLL_SUFFIX}`);
   let testModule = checkTestModuleExists();
 
   // Check that listing the slots for the test module works.
   let slots = testModule.listSlots();
-  let testModuleSlotCount = 0;
+  let testModuleSlotNames = [];
   while (slots.hasMoreElements()) {
     let slot = slots.getNext().QueryInterface(Ci.nsIPKCS11Slot);
-    equal(slot.name, "Test PKCS11 Slot",
-          "Test module slot should have correct name");
-    testModuleSlotCount++;
+    testModuleSlotNames.push(slot.name);
   }
-  equal(testModuleSlotCount, 1, "Test module should only have one slot");
+  testModuleSlotNames.sort();
+  const expectedSlotNames = ["Test PKCS11 Slot", "Test PKCS11 Slot 二"];
+  deepEqual(testModuleSlotNames, expectedSlotNames,
+            "Actual and expected slot names should be equal");
 
   // Check that finding the test slot by name is possible, and that trying to
   // find a non-present slot fails.
@@ -121,8 +136,11 @@ function run_test() {
         "Spot check: actual and expected internal 'slot' names should be equal");
   throws(() => gModuleDB.findSlotByName("Not Present"), /NS_ERROR_FAILURE/,
          "Non-present 'slot' should not be findable by name via the module DB");
+  throws(() => gModuleDB.findSlotByName(""), /NS_ERROR_ILLEGAL_VALUE/,
+         "nsIPKCS11ModuleDB.findSlotByName should throw given an empty name");
 
   // Check that deleting the test module makes it disappear from the module list.
+  let pkcs11 = Cc["@mozilla.org/security/pkcs11;1"].getService(Ci.nsIPKCS11);
   pkcs11.deleteModule("PKCS11 Test Module");
   checkTestModuleNotPresent();
 

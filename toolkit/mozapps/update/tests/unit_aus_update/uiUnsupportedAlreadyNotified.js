@@ -2,7 +2,23 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+Cu.import("resource://testing-common/MockRegistrar.jsm");
+
+const WindowWatcher = {
+  openWindow(aParent, aUrl, aName, aFeatures, aArgs) {
+    check_showUpdateAvailable();
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
+};
+
+const WindowMediator = {
+  getMostRecentWindow(aWindowType) {
+    return null;
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
+};
 
 function run_test() {
   setupTestCommon();
@@ -12,9 +28,8 @@ function run_test() {
             "update when the unsupported notification has already been " +
             "shown (bug 843497)");
 
-  setUpdateURLOverride();
-  // The mock XMLHttpRequest is MUCH faster
-  overrideXHR(callHandleEvent);
+  start_httpserver();
+  setUpdateURL(gURLData + gHTTPHandlerPath);
   standardInit();
 
   let windowWatcherCID =
@@ -51,40 +66,9 @@ function check_test() {
   Assert.ok(true,
             PREF_APP_UPDATE_BACKGROUNDERRORS + " preference should not exist");
 
-  doTestFinish();
-}
-
-// Callback function used by the custom XMLHttpRequest implementation to
-// call the nsIDOMEventListener's handleEvent method for onload.
-function callHandleEvent(aXHR) {
-  aXHR.status = 400;
-  aXHR.responseText = gResponseBody;
-  try {
-    let parser = Cc["@mozilla.org/xmlextras/domparser;1"].
-                 createInstance(Ci.nsIDOMParser);
-    aXHR.responseXML = parser.parseFromString(gResponseBody, "application/xml");
-  } catch (e) {
-  }
-  let e = { target: aXHR };
-  aXHR.onload(e);
+  stop_httpserver(doTestFinish);
 }
 
 function check_showUpdateAvailable() {
   do_throw("showUpdateAvailable should not have called openWindow!");
 }
-
-const WindowWatcher = {
-  openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
-    check_showUpdateAvailable();
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
-};
-
-const WindowMediator = {
-  getMostRecentWindow: function(aWindowType) {
-    return null;
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
-};

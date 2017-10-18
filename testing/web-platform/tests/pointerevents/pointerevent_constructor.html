@@ -30,7 +30,11 @@
             var testHeight = 5;
             var testTiltX = -45;
             var testTiltY = 30;
+            var testButton = 0;
+            var testButtons = 1;
             var testPressure = 0.4;
+            var testTangentialPressure = 0.5;
+            var testTwist = 286;
             var testIsPrimary = true;
 
             on_event(target0, "pointerover", this.step_func(function(event) {
@@ -40,16 +44,20 @@
                     ["custom cancelable", event.cancelable, testCancelable],
                     ["custom pointerId", event.pointerId, testPointerId],
                     ["custom pointerType", event.pointerType, testPointerType],
+                    ["custom button", event.button, testButton],
+                    ["custom buttons", event.buttons, testButtons],
                     ["custom width", event.width, testWidth],
                     ["custom height", event.height, testHeight],
                     ["custom clientX", event.clientX, testClientX],
                     ["custom clientY", event.clientY, testClientY],
                     ["custom tiltX", event.tiltX, testTiltX],
                     ["custom tiltY", event.tiltY, testTiltY],
+                    ["custom twist", event.twist, testTwist],
                     ["custom isPrimary", event.isPrimary, testIsPrimary]
                 ]);
                 test(function() {
                     assert_approx_equals(event.pressure, testPressure, 0.00000001, "custom pressure: ");
+                    assert_approx_equals(event.tangentialPressure, testTangentialPressure, 0.00000001, "custom tangential pressure: ");
                 }, "custom pressure: ");
             }));
 
@@ -62,6 +70,8 @@
                     ["default tiltX", event.tiltX, 0],
                     ["default tiltY", event.tiltY, 0],
                     ["default pressure", event.pressure, 0],
+                    ["default tangentialPressure", event.tangentialPressure, 0],
+                    ["default twist", event.twist, 0],
                     ["default isPrimary", event.isPrimary, false]
                 ]);
             }));
@@ -80,7 +90,11 @@
                 clientY: testClientY,
                 tiltX: testTiltX,
                 tiltY: testTiltY,
+                button: testButton,
+                buttons: testButtons,
                 pressure: testPressure,
+                tangentialPressure: testTangentialPressure,
+                twist: testTwist,
                 isPrimary: testIsPrimary
                 });
                 // A PointerEvent created with a PointerEvent constructor must have all its attributes set to the corresponding values provided to the constructor.

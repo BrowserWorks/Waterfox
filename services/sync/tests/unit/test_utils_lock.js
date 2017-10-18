@@ -8,12 +8,12 @@ function do_check_begins(thing, startsWith) {
     do_throw(thing + " doesn't begin with " + startsWith);
 }
 
-function run_test() {
+add_task(async function run_test() {
   let ret, rightThis, didCall;
   let state, lockState, lockedState, unlockState;
   let obj = {
     _lock: Utils.lock,
-    lock: function() {
+    lock() {
       lockState = ++state;
       if (this._locked) {
         lockedState = ++state;
@@ -22,34 +22,34 @@ function run_test() {
       this._locked = true;
       return true;
     },
-    unlock: function() {
+    unlock() {
       unlockState = ++state;
       this._locked = false;
     },
 
-    func: function() {
+    func() {
       return this._lock("Test utils lock",
-                        function() {
-                          rightThis = this == obj;
-                          didCall = true;
-                          return 5;
-                        })();
+                              async function() {
+                                rightThis = this == obj;
+                                didCall = true;
+                                return 5;
+                              })();
     },
 
-    throwy: function() {
+    throwy() {
       return this._lock("Test utils lock throwy",
-                        function() {
-                          rightThis = this == obj;
-                          didCall = true;
-                          this.throwy();
-                        })();
+                              async function() {
+                                rightThis = this == obj;
+                                didCall = true;
+                                return this.throwy();
+                              })();
     }
   };
 
   _("Make sure a normal call will call and return");
   rightThis = didCall = false;
   state = 0;
-  ret = obj.func();
+  ret = await obj.func();
   do_check_eq(ret, 5);
   do_check_true(rightThis);
   do_check_true(didCall);
@@ -61,12 +61,11 @@ function run_test() {
   ret = null;
   rightThis = didCall = false;
   try {
-    ret = obj.throwy();
+    ret = await obj.throwy();
     do_throw("throwy internal call should have thrown!");
-  }
-  catch(ex) {
+  } catch (ex) {
     // Should throw an Error, not a string.
-    do_check_begins(ex, "Could not acquire lock");
+    do_check_begins(ex.message, "Could not acquire lock");
   }
   do_check_eq(ret, null);
   do_check_true(rightThis);
@@ -76,4 +75,4 @@ function run_test() {
   do_check_eq(lockedState, 5);
   do_check_eq(unlockState, 6);
   do_check_eq(state, 6);
-}
+});

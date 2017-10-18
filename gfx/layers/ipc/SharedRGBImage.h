@@ -38,7 +38,7 @@ protected:
   ~SharedRGBImage();
 
 public:
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
+  virtual TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
 
   virtual uint8_t* GetBuffer() override;
 
@@ -51,6 +51,7 @@ private:
   gfx::IntSize mSize;
   RefPtr<ImageClient> mCompositable;
   RefPtr<TextureClient> mTextureClient;
+  nsCountedRef<nsMainThreadSourceSurfaceRef> mSourceSurface;
 };
 
 } // namespace layers

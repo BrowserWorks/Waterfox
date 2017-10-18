@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<body>
+<script src=/resources/testharness.js></script>
+<script src=/resources/testharnessreport.js></script>
+<script src=/feature-policy/resources/featurepolicy.js></script>
+<script>
+'use strict';
+var same_origin_src = '/feature-policy/resources/feature-policy-usb.html';
+var cross_origin_src = 'https://{{domains[www]}}:{{ports[https][0]}}' +
+  same_origin_src;
+var feature_name = 'Feature policy "usb"';
+var header = 'allow="usb" attribute';
+
+async_test(t => {
+  test_feature_availability(
+      'usb.getDevices()', t, same_origin_src,
+      expect_feature_available_default, 'usb');
+}, feature_name + ' can be enabled in same-origin iframe using ' + header);
+
+async_test(t => {
+  test_feature_availability(
+      'usb.getDevices()', t, cross_origin_src,
+      expect_feature_available_default, 'usb');
+}, feature_name + ' can be enabled in cross-origin iframe using ' + header);
+</script>
+</body>

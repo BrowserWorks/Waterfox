@@ -7,14 +7,14 @@
 const kToolbarName = "test-new-overflowable-toolbar";
 const kTestWidgetPrefix = "test-widget-for-overflowable-toolbar-";
 
-add_task(function* addOverflowingToolbar() {
+add_task(async function addOverflowingToolbar() {
   let originalWindowWidth = window.outerWidth;
 
   let widgetIds = [];
   for (let i = 0; i < 10; i++) {
     let id = kTestWidgetPrefix + i;
     widgetIds.push(id);
-    let spec = {id: id, type: "button", removable: true, label: "test", tooltiptext: "" + i};
+    let spec = {id, type: "button", removable: true, label: "test", tooltiptext: "" + i};
     CustomizableUI.createWidget(spec);
   }
 
@@ -36,7 +36,7 @@ add_task(function* addOverflowingToolbar() {
   isnot(oldChildCount, 0, "Toolbar should have non-overflowing widgets");
 
   window.resizeTo(400, window.outerHeight);
-  yield waitForCondition(() => toolbarNode.hasAttribute("overflowing"));
+  await waitForCondition(() => toolbarNode.hasAttribute("overflowing"));
   ok(toolbarNode.hasAttribute("overflowing"), "Should have an overflowing toolbar.");
   ok(toolbarNode.customizationTarget.childElementCount < oldChildCount, "Should have fewer children.");
   ok(overflowableList.childElementCount > oldOverflowCount, "Should have more overflowed widgets.");
@@ -45,7 +45,7 @@ add_task(function* addOverflowingToolbar() {
 });
 
 
-add_task(function* asyncCleanup() {
+add_task(async function asyncCleanup() {
   removeCustomToolbars();
-  yield resetCustomization();
+  await resetCustomization();
 });

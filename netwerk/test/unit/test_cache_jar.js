@@ -2,6 +2,7 @@ Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
   return "http://localhost:" + httpserv.identity.primaryPort + "/cached";
@@ -26,22 +27,6 @@ function makeChan(url, appId, inIsolatedMozBrowser, userContextId) {
                                      inIsolatedMozBrowser: inIsolatedMozBrowser,
                                      userContextId: userContextId,
                                    };
-  chan.notificationCallbacks = {
-    appId: appId,
-    isInIsolatedMozBrowserElement: inIsolatedMozBrowser,
-    userContextId: userContextId,
-    originAttributes: {
-      appId: appId,
-      inIsolatedMozBrowser: inIsolatedMozBrowser,
-      userContextId: userContextId,
-    },
-    QueryInterface: function(iid) {
-      if (iid.equals(Ci.nsILoadContext))
-        return this;
-      throw Cr.NS_ERROR_NO_INTERFACE;
-    },
-    getInterface: function(iid) { return this.QueryInterface(iid); }
-  };
   return chan;
 }
 
@@ -63,12 +48,10 @@ var fourthTests = [
   [0, false, 1, 1], [0, true, 1, 0], [1, false, 1, 0], [1, true, 1, 0]
 ];
 
-function run_all_tests() {
+async function run_all_tests() {
   for (let test of firstTests) {
     handlers_called = 0;
-    var chan = makeChan(URL, test[0], test[1], test[2]);
-    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[3]));
-    yield undefined;
+    await test_channel(...test);
   }
 
   // We can't easily cause webapp data to be cleared from the child process, so skip
@@ -80,37 +63,30 @@ function run_all_tests() {
   let attrs_inBrowser = JSON.stringify({ appId:1, inIsolatedMozBrowser:true });
   let attrs_notInBrowser = JSON.stringify({ appId:1 });
 
-  Services.obs.notifyObservers(null, "clear-origin-data", attrs_inBrowser);
+  Services.obs.notifyObservers(null, "clear-origin-attributes-data", attrs_inBrowser);
 
   for (let test of secondTests) {
     handlers_called = 0;
-    var chan = makeChan(URL, test[0], test[1], test[2]);
-    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[3]));
-    yield undefined;
+    await test_channel(...test);
   }
 
-  Services.obs.notifyObservers(null, "clear-origin-data", attrs_notInBrowser);
-  Services.obs.notifyObservers(null, "clear-origin-data", attrs_inBrowser);
+  Services.obs.notifyObservers(null, "clear-origin-attributes-data", attrs_notInBrowser);
+  Services.obs.notifyObservers(null, "clear-origin-attributes-data", attrs_inBrowser);
 
   for (let test of thirdTests) {
     handlers_called = 0;
-    var chan = makeChan(URL, test[0], test[1], test[2]);
-    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[3]));
-    yield undefined;
+    await test_channel(...test);
   }
 
   let attrs_userContextId = JSON.stringify({ userContextId: 1 });
-  Services.obs.notifyObservers(null, "clear-origin-data", attrs_userContextId);
+  Services.obs.notifyObservers(null, "clear-origin-attributes-data", attrs_userContextId);
 
   for (let test of fourthTests) {
     handlers_called = 0;
-    var chan = makeChan(URL, test[0], test[1], test[2]);
-    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[3]));
-    yield undefined;
+    await test_channel(...test);
   }
 }
 
-var gTests;
 function run_test() {
   do_get_profile();
   if (!newCacheBackEndUsed()) {
@@ -118,25 +94,32 @@ function run_test() {
     return;
   }
   do_test_pending();
+
+  Services.prefs.setBoolPref("network.http.rcwn.enabled", false);
+
   httpserv = new HttpServer();
   httpserv.registerPathHandler("/cached", cached_handler);
   httpserv.start(-1);
-  gTests = run_all_tests();
-  gTests.next();
-}
-
-function doneFirstLoad(req, buffer, expected) {
-  // Load it again, make sure it hits the cache
-  var nc = req.notificationCallbacks.getInterface(Ci.nsILoadContext);
-  var chan = makeChan(URL, nc.appId, nc.isInIsolatedMozBrowserElement, nc.userContextId);
-  chan.asyncOpen2(new ChannelListener(doneSecondLoad, expected));
-}
-
-function doneSecondLoad(req, buffer, expected) {
-  do_check_eq(handlers_called, expected);
-  try {
-    gTests.next();
-  } catch (x) {
+  run_all_tests().then(() => {
     do_test_finished();
-  }
+  });
+}
+
+function test_channel(appId, inIsolatedMozBrowser, userContextId, expected) {
+  return new Promise(resolve => {
+    var chan = makeChan(URL, appId, inIsolatedMozBrowser, userContextId);
+    chan.asyncOpen2(new ChannelListener(doneFirstLoad.bind(null, resolve), expected));
+  });
+}
+
+function doneFirstLoad(resolve, req, buffer, expected) {
+  // Load it again, make sure it hits the cache
+  var oa = req.loadInfo.originAttributes;
+  var chan = makeChan(URL, oa.appId, oa.isInIsolatedMozBrowserElement, oa.userContextId);
+  chan.asyncOpen2(new ChannelListener(doneSecondLoad.bind(null, resolve), expected));
+}
+
+function doneSecondLoad(resolve, req, buffer, expected) {
+  do_check_eq(handlers_called, expected);
+  resolve();
 }

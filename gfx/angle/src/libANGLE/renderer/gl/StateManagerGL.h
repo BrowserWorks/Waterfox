@@ -27,6 +27,7 @@ class State;
 namespace rx
 {
 
+class FramebufferGL;
 class FunctionsGL;
 class TransformFeedbackGL;
 class QueryGL;
@@ -123,6 +124,9 @@ class StateManagerGL final : angle::NonCopyable
                            GLuint packBuffer);
 
     void setFramebufferSRGBEnabled(bool enabled);
+    void setFramebufferSRGBEnabledForFramebuffer(bool enabled, const FramebufferGL *framebuffer);
+
+    void setDitherEnabled(bool enabled);
 
     void setMultisamplingStateEnabled(bool enabled);
     void setSampleAlphaToOneStateEnabled(bool enabled);
@@ -146,7 +150,11 @@ class StateManagerGL final : angle::NonCopyable
                                    GLsizei instanceCount,
                                    const GLvoid **outIndices);
 
-    gl::Error pauseTransformFeedback(const gl::ContextState &data);
+    void pauseTransformFeedback();
+    void pauseAllQueries();
+    void pauseQuery(GLenum type);
+    void resumeAllQueries();
+    void resumeQuery(GLenum type);
     gl::Error onMakeCurrent(const gl::ContextState &data);
 
     void syncState(const gl::State &state, const gl::State::DirtyBits &glDirtyBits);
@@ -264,6 +272,7 @@ class StateManagerGL final : angle::NonCopyable
     GLint mClearStencil;
 
     bool mFramebufferSRGBEnabled;
+    bool mDitherEnabled;
     bool mTextureCubemapSeamlessEnabled;
 
     bool mMultisamplingEnabled;

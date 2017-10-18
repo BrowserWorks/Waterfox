@@ -10,6 +10,8 @@ import tempfile
 import unittest
 import mozfile
 
+import mozunit
+
 from mozprofile.profile import Profile
 
 
@@ -24,8 +26,8 @@ class CloneCleanupTest(unittest.TestCase):
         path = tempfile.mktemp()
         self.addCleanup(mozfile.remove, path)
         self.profile = Profile(path,
-                          preferences={'foo': 'bar'},
-                          restore=False)
+                               preferences={'foo': 'bar'},
+                               restore=False)
         user_js = os.path.join(self.profile.profile, 'user.js')
         self.assertTrue(os.path.exists(user_js))
 
@@ -60,5 +62,4 @@ class CloneCleanupTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
-
+    mozunit.main()

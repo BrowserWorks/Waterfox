@@ -2,40 +2,34 @@
  * This test checks that window activation state is set properly with multiple tabs.
  */
 
-var testPage = "data:text/html,<body><style>:-moz-window-inactive { background-color: red; }</style><div id='area'></div></body>";
+/* eslint-env mozilla/frame-script */
+
+const testPage = getRootDirectory(gTestPath) + "file_window_activation.html";
+const testPage2 = getRootDirectory(gTestPath) + "file_window_activation2.html";
 
 var colorChangeNotifications = 0;
 var otherWindow;
 
 var browser1, browser2;
 
-function test() {
-  waitForExplicitFinish();
-  waitForFocus(reallyRunTests);
-}
+add_task(async function reallyRunTests() {
 
-function reallyRunTests() {
+  let tab1 = await BrowserTestUtils.openNewForegroundTab(gBrowser, testPage);
+  browser1 = tab1.linkedBrowser;
 
-  let tab1 = gBrowser.addTab();
-  let tab2 = gBrowser.addTab();
-  browser1 = gBrowser.getBrowserForTab(tab1);
-  browser2 = gBrowser.getBrowserForTab(tab2);
+  // This can't use openNewForegroundTab because if we focus tab2 now, we
+  // won't send a focus event during test 6, further down in this file.
+  let tab2 = BrowserTestUtils.addTab(gBrowser, testPage);
+  browser2 = tab2.linkedBrowser;
+  await BrowserTestUtils.browserLoaded(browser2);
+
+  browser1.messageManager.loadFrameScript("data:,(" + childFunction.toString() + ")();", true);
+  browser2.messageManager.loadFrameScript("data:,(" + childFunction.toString() + ")();", true);
 
   gURLBar.focus();
 
-  var loadCount = 0;
-  function check()
-  {
-    // wait for both tabs to load
-    if (++loadCount != 2) {
-      return;
-    }
-
-    browser1.removeEventListener("load", check, true);
-    browser2.removeEventListener("load", check, true);
-
-    sendGetBackgroundRequest(true);
-  }
+  let testFinished = {};
+  testFinished.promise = new Promise(resolve => testFinished.resolve = resolve);
 
   // The test performs four checks, using -moz-window-inactive on two child tabs.
   // First, the initial state should be transparent. The second check is done
@@ -47,10 +41,10 @@ function reallyRunTests() {
 
     switch (colorChangeNotifications) {
       case 1:
-        is(message.data.color, "transparent", "first window initial");
+        is(message.data.color, "rgba(0, 0, 0, 0)", "first window initial");
         break;
       case 2:
-        is(message.data.color, "transparent", "second window initial");
+        is(message.data.color, "rgba(0, 0, 0, 0)", "second window initial");
         runOtherWindowTests();
         break;
       case 3:
@@ -62,18 +56,18 @@ function reallyRunTests() {
         otherWindow.close();
         break;
       case 5:
-        is(message.data.color, "transparent", "first window raised");
+        is(message.data.color, "rgba(0, 0, 0, 0)", "first window raised");
         break;
       case 6:
-        is(message.data.color, "transparent", "second window raised");
+        is(message.data.color, "rgba(0, 0, 0, 0)", "second window raised");
         gBrowser.selectedTab = tab2;
         break;
       case 7:
-        is(message.data.color, "transparent", "first window after tab switch");
+        is(message.data.color, "rgba(0, 0, 0, 0)", "first window after tab switch");
         break;
       case 8:
-        is(message.data.color, "transparent", "second window after tab switch");
-        finishTest();
+        is(message.data.color, "rgba(0, 0, 0, 0)", "second window after tab switch");
+        testFinished.resolve();
         break;
       case 9:
         ok(false, "too many color change notifications");
@@ -96,40 +90,31 @@ function reallyRunTests() {
     ok(message.data.ok, "Test:DeactivateEvent");
   });
 
-  browser1.addEventListener("load", check, true);
-  browser2.addEventListener("load", check, true);
-  browser1.contentWindow.location = testPage;
-  browser2.contentWindow.location = testPage;
-
-  browser1.messageManager.loadFrameScript("data:,(" + childFunction.toString() + ")();", true);
-  browser2.messageManager.loadFrameScript("data:,(" + childFunction.toString() + ")();", true);
-
   gBrowser.selectedTab = tab1;
-}
 
-function sendGetBackgroundRequest(ifChanged)
-{
-  browser1.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged: ifChanged });
-  browser2.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged: ifChanged });
+  // Start the test.
+  sendGetBackgroundRequest(true);
+
+  await testFinished.promise;
+
+  await BrowserTestUtils.removeTab(tab1);
+  await BrowserTestUtils.removeTab(tab2);
+  otherWindow = null;
+});
+
+function sendGetBackgroundRequest(ifChanged) {
+  browser1.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged });
+  browser2.messageManager.sendAsyncMessage("Test:GetBackgroundColor", { ifChanged });
 }
 
 function runOtherWindowTests() {
-  otherWindow = window.open("data:text/html,<body>Hi</body>", "", "chrome");
-  waitForFocus(function () {
+  otherWindow = window.open(testPage2, "", "chrome");
+  waitForFocus(function() {
     sendGetBackgroundRequest(true);
   }, otherWindow);
 }
 
-function finishTest()
-{
-  gBrowser.removeCurrentTab();
-  gBrowser.removeCurrentTab();
-  otherWindow = null;
-  finish();
-}
-
-function childFunction()
-{
+function childFunction() {
   let oldColor = null;
 
   let expectingResponse = false;
@@ -140,9 +125,9 @@ function childFunction()
     ifChanged = message.data.ifChanged;
   });
 
-  content.addEventListener("focus", function () {
+  content.addEventListener("focus", function() {
     sendAsyncMessage("Test:FocusReceived", { });
-  }, false);
+  });
 
   var windowGotActivate = false;
   var windowGotDeactivate = false;
@@ -150,20 +135,20 @@ function childFunction()
       sendAsyncMessage("Test:ActivateEvent", { ok: !windowGotActivate });
       windowGotActivate = false;
     });
-  
+
   addEventListener("deactivate", function() {
       sendAsyncMessage("Test:DeactivateEvent", { ok: !windowGotDeactivate });
       windowGotDeactivate = false;
     });
   content.addEventListener("activate", function() {
-      windowGotActivate = true;;
+      windowGotActivate = true;
     });
-  
+
   content.addEventListener("deactivate", function() {
       windowGotDeactivate = true;
     });
 
-  content.setInterval(function () {
+  content.setInterval(function() {
     if (!expectingResponse) {
       return;
     }
@@ -173,11 +158,11 @@ function childFunction()
       return; /* hasn't loaded yet */
     }
 
-    let color = content.getComputedStyle(area, "").backgroundColor;
+    let color = content.getComputedStyle(area).backgroundColor;
     if (oldColor != color || !ifChanged) {
       expectingResponse = false;
       oldColor = color;
-      sendAsyncMessage("Test:BackgroundColorChanged", { color: color });
+      sendAsyncMessage("Test:BackgroundColorChanged", { color });
     }
   }, 20);
 }

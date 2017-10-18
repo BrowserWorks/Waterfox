@@ -4,10 +4,6 @@
 
 "use strict";
 
-// FIXME: Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed.
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Unknown sheet source");
-
 // Test the links from the rule-view to the styleeditor
 
 const STYLESHEET_URL = "data:text/css," + encodeURIComponent(
@@ -180,8 +176,8 @@ function* testDisabledStyleEditor(view, toolbox) {
 function testRuleViewLinkLabel(view) {
   let link = getRuleViewLinkByIndex(view, 2);
   let labelElem = link.querySelector(".ruleview-rule-source-label");
-  let value = labelElem.getAttribute("value");
-  let tooltipText = labelElem.getAttribute("tooltiptext");
+  let value = labelElem.textContent;
+  let tooltipText = labelElem.getAttribute("title");
 
   is(value, EXTERNAL_STYLESHEET_FILE_NAME + ":1",
     "rule view stylesheet display value matches filename and line number");

@@ -10,6 +10,12 @@
  * liability, trademark and document use rules apply.
  */
 
+dictionary ChannelSplitterOptions : AudioNodeOptions {
+             unsigned long numberOfOutputs = 6;
+};
+
+[Pref="dom.webaudio.enabled",
+ Constructor(BaseAudioContext context, optional ChannelSplitterOptions options)]
 interface ChannelSplitterNode : AudioNode {
 
 };

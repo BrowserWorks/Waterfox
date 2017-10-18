@@ -12,6 +12,8 @@
 #ifndef nsAttrValue_h___
 #define nsAttrValue_h___
 
+#include <type_traits>
+
 #include "nscore.h"
 #include "nsStringGlue.h"
 #include "nsStringBuffer.h"
@@ -24,19 +26,19 @@
 #include "nsIAtom.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/EnumTypeTraits.h"
 
 // Undefine LoadImage to prevent naming conflict with Windows.
 #undef LoadImage
 
 class nsAString;
 class nsIDocument;
-class nsStyledElementNotElementCSSInlineStyle;
+class nsStyledElement;
 struct MiscContainer;
-struct ServoDeclarationBlock;
 
 namespace mozilla {
+class DeclarationBlock;
 namespace css {
-class Declaration;
 struct URLValue;
 struct ImageValue;
 } // namespace css
@@ -95,8 +97,7 @@ public:
     ePercent =      0x0F, // 1111
     // Values below here won't matter, they'll be always stored in the 'misc'
     // struct.
-    eGeckoCSSDeclaration = 0x10,
-    eServoCSSDeclaration,
+    eCSSDeclaration = 0x10,
     eURL,
     eImage,
     eAtomArray,
@@ -122,7 +123,8 @@ public:
   nsAttrValue(const nsAttrValue& aOther);
   explicit nsAttrValue(const nsAString& aValue);
   explicit nsAttrValue(nsIAtom* aValue);
-  nsAttrValue(mozilla::css::Declaration* aValue, const nsAString* aSerialized);
+  nsAttrValue(already_AddRefed<mozilla::DeclarationBlock> aValue,
+              const nsAString* aSerialized);
   explicit nsAttrValue(const nsIntMargin& aValue);
   ~nsAttrValue();
 
@@ -147,8 +149,7 @@ public:
   void SetTo(int16_t aInt);
   void SetTo(int32_t aInt, const nsAString* aSerialized);
   void SetTo(double aValue, const nsAString* aSerialized);
-  void SetTo(mozilla::css::Declaration* aValue, const nsAString* aSerialized);
-  void SetTo(ServoDeclarationBlock* aDeclarationBlock,
+  void SetTo(already_AddRefed<mozilla::DeclarationBlock> aValue,
              const nsAString* aSerialized);
   void SetTo(mozilla::css::URLValue* aValue, const nsAString* aSerialized);
   void SetTo(const nsIntMargin& aValue);
@@ -200,8 +201,7 @@ public:
   inline int16_t GetEnumValue() const;
   inline float GetPercentValue() const;
   inline AtomArray* GetAtomArrayValue() const;
-  inline mozilla::css::Declaration* GetGeckoCSSDeclarationValue() const;
-  inline ServoDeclarationBlock* GetServoCSSDeclarationValue() const;
+  inline mozilla::DeclarationBlock* GetCSSDeclarationValue() const;
   inline mozilla::css::URLValue* GetURLValue() const;
   inline mozilla::css::ImageValue* GetImageValue() const;
   inline double GetDoubleValue() const;
@@ -261,10 +261,29 @@ public:
    * EnumTable myTable[] = {
    *   { "string1", 1 },
    *   { "string2", 2 },
-   *   { 0 }
+   *   { nullptr, 0 }
    * }
    */
   struct EnumTable {
+    // EnumTable can be initialized either with an int16_t value
+    // or a value of an enumeration type that can fit within an int16_t.
+
+    constexpr EnumTable(const char* aTag, int16_t aValue)
+      : tag(aTag)
+      , value(aValue)
+    {
+    }
+
+    template<typename T,
+             typename = typename std::enable_if<std::is_enum<T>::value>::type>
+    constexpr EnumTable(const char* aTag, T aValue)
+      : tag(aTag)
+      , value(static_cast<int16_t>(aValue))
+    {
+      static_assert(mozilla::EnumTypeFitsWithin<T, int16_t>::value,
+                    "aValue must be an enum that fits within int16_t");
+    }
+
     /** The string the value maps to */
     const char* tag;
     /** The enum value that maps to this string */
@@ -322,6 +341,18 @@ public:
                             int32_t aMax = INT32_MAX);
 
   /**
+   * Parse a string value into an integer with a fallback for invalid values.
+   * Also allows clamping to a maximum value to support col/colgroup.span (this
+   * is not per spec right now).
+   *
+   * @param aString the string to parse
+   * @param aDefault the default value
+   * @param aMax the maximum value (if value is greater it will be clamped)
+   */
+  void ParseIntWithFallback(const nsAString& aString, int32_t aDefault,
+                            int32_t aMax = INT32_MAX);
+
+  /**
    * Parse a string value into a non-negative integer.
    * This method follows the rules for parsing non-negative integer from:
    * http://dev.w3.org/html5/spec/infrastructure.html#rules-for-parsing-non-negative-integers
@@ -330,6 +361,19 @@ public:
    * @return whether the value is valid
    */
   bool ParseNonNegativeIntValue(const nsAString& aString);
+
+  /**
+   * Parse a string value into a clamped non-negative integer.
+   * This method follows the rules for parsing non-negative integer from:
+   * https://html.spec.whatwg.org/multipage/infrastructure.html#clamped-to-the-range
+   *
+   * @param aString the string to parse
+   * @param aDefault value to return for negative or invalid values
+   * @param aMin minimum value
+   * @param aMax maximum value
+   */
+  void ParseClampedNonNegativeInt(const nsAString& aString, int32_t aDefault,
+                                  int32_t aMin, int32_t aMax);
 
   /**
    * Parse a string value into a positive integer.
@@ -392,7 +436,7 @@ public:
    * @param aElement the element the attribute is set on.
    */
   bool ParseStyleAttribute(const nsAString& aString,
-                           nsStyledElementNotElementCSSInlineStyle* aElement);
+                           nsStyledElement* aElement);
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 

@@ -568,8 +568,8 @@ CERT_CompareRDN(const CERTRDN *a, const CERTRDN *b)
 SECComparison
 CERT_CompareName(const CERTName *a, const CERTName *b)
 {
-    CERTRDN **ardns, *ardn;
-    CERTRDN **brdns, *brdn;
+    CERTRDN **ardns;
+    CERTRDN **brdns;
     int ac, bc;
     SECComparison rv = SECEqual;
 
@@ -587,15 +587,8 @@ CERT_CompareName(const CERTName *a, const CERTName *b)
     if (ac > bc)
         return SECGreaterThan;
 
-    for (;;) {
-        ardn = *ardns++;
-        brdn = *brdns++;
-        if (!ardn) {
-            break;
-        }
-        rv = CERT_CompareRDN(ardn, brdn);
-        if (rv)
-            return rv;
+    while (rv == SECEqual && *ardns) {
+        rv = CERT_CompareRDN(*ardns++, *brdns++);
     }
     return rv;
 }
@@ -606,7 +599,10 @@ CERT_DecodeAVAValue(const SECItem *derAVAValue)
 {
     SECItem *retItem;
     const SEC_ASN1Template *theTemplate = NULL;
-    enum { conv_none, conv_ucs4, conv_ucs2, conv_iso88591 } convert = conv_none;
+    enum { conv_none,
+           conv_ucs4,
+           conv_ucs2,
+           conv_iso88591 } convert = conv_none;
     SECItem avaValue = { siBuffer, 0 };
     PORTCheapArenaPool tmpArena;
 

@@ -21,7 +21,47 @@ function PromptService() {
 PromptService.prototype = {
   classID: Components.ID("{9a61149b-2276-4a0a-b79c-be994ad106cf}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+  QueryInterface: XPCOMUtils.generateQI([
+      Ci.nsIObserver, Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+
+  loadSubscript: function(aName, aScript) {
+    let sandbox = {};
+    Services.scriptloader.loadSubScript(aScript, sandbox);
+    return sandbox[aName];
+  },
+
+  /* ----------  nsIObserver  ---------- */
+  observe: function(aSubject, aTopic, aData) {
+    switch (aTopic) {
+      case "app-startup": {
+        Services.obs.addObserver(this, "chrome-document-global-created");
+        Services.obs.addObserver(this, "content-document-global-created");
+        break;
+      }
+      case "chrome-document-global-created":
+      case "content-document-global-created": {
+        let win = aSubject.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDocShell).QueryInterface(Ci.nsIDocShellTreeItem)
+                          .rootTreeItem.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDOMWindow);
+        if (win !== aSubject) {
+          // Only attach to top-level windows.
+          return;
+        }
+        if (!this.selectHelper) {
+          this.selectHelper = this.loadSubscript(
+              "SelectHelper", "chrome://browser/content/SelectHelper.js");
+        }
+        if (!this.inputWidgetHelper) {
+          this.inputWidgetHelper = this.loadSubscript(
+              "InputWidgetHelper", "chrome://browser/content/InputWidgetHelper.js");
+        }
+        win.addEventListener("click", this.selectHelper, /* capture */ true);
+        win.addEventListener("click", this.inputWidgetHelper, /* capture */ true);
+        break;
+      }
+    }
+  },
 
   /* ----------  nsIPromptFactory  ---------- */
   // XXX Copied from nsPrompter.js.
@@ -160,9 +200,7 @@ InternalPrompt.prototype = {
     });
 
     // Spin this thread while we wait for a result
-    let thread = Services.tm.currentThread;
-    while (retval == null)
-      thread.processNextEvent(true);
+    Services.tm.spinEventLoopUntil(() => retval != null);
 
     if (this._domWin) {
       let winUtils = this._domWin.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
@@ -491,7 +529,7 @@ InternalPrompt.prototype = {
       }
     }
 
-    Services.tm.mainThread.dispatch(runnable, Ci.nsIThread.DISPATCH_NORMAL);
+    Services.tm.dispatchToMainThread(runnable);
   },
 
   asyncPromptAuth: function asyncPromptAuth(aChannel, aCallback, aContext, aLevel, aAuthInfo) {
@@ -584,7 +622,7 @@ var PromptUtils = {
     if (httpRealm.test(aRealmString))
       return [null, null, null];
 
-    let uri = Services.io.newURI(aRealmString, null, null);
+    let uri = Services.io.newURI(aRealmString);
     let pathname = "";
 
     if (uri.path != "/")
@@ -672,7 +710,7 @@ var PromptUtils = {
     this.pwmgr.modifyLogin(aLogin, propBag);
   },
 
-  // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPrompt.cpp#388
+  // JS port of http://mxr.mozilla.org/mozilla-central/source/toolkit/components/windowwatcher/nsPrompt.cpp#388
   makeDialogText: function pu_makeDialogText(aChannel, aAuthInfo) {
     let isProxy    = (aAuthInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY);
     let isPassOnly = (aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD);
@@ -695,21 +733,21 @@ var PromptUtils = {
 
     let text;
     if (isProxy) {
-      text = this.bundle.formatStringFromName("EnterLoginForProxy2", [realm, displayHost], 2);
+      text = this.bundle.formatStringFromName("EnterLoginForProxy3", [realm, displayHost], 2);
     } else if (isPassOnly) {
       text = this.bundle.formatStringFromName("EnterPasswordFor", [username, displayHost], 2);
     } else if (isCrossOrig) {
-      text = this.bundle.formatStringFromName("EnterUserPasswordForCrossOrigin", [displayHost], 1);
+      text = this.bundle.formatStringFromName("EnterUserPasswordForCrossOrigin2", [displayHost], 1);
     } else if (!realm) {
       text = this.bundle.formatStringFromName("EnterUserPasswordFor2", [displayHost], 1);
     } else {
-      text = this.bundle.formatStringFromName("EnterLoginForRealm2", [realm, displayHost], 2);
+      text = this.bundle.formatStringFromName("EnterLoginForRealm3", [realm, displayHost], 2);
     }
 
-    return text.replace(/\n{1,}/g,' ');
+    return text;
   },
 
-  // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPromptUtils.h#89
+  // JS port of http://mxr.mozilla.org/mozilla-central/source/toolkit/components/windowwatcher/nsPromptUtils.h#89
   getAuthHostPort: function pu_getAuthHostPort(aChannel, aAuthInfo) {
     let uri = aChannel.URI;
     let res = { host: null, port: -1 };

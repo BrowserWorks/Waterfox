@@ -12,8 +12,8 @@ import types
 
 
 SEARCH_PATHS = [
-    'marionette',
-    'marionette/marionette/runner/mixins/browsermob-proxy-py',
+    'marionette/harness',
+    'marionette/harness/marionette_harness/runner/mixins/browsermob-proxy-py',
     'marionette/client',
     'mochitest',
     'mozbase/manifestparser',
@@ -37,14 +37,18 @@ SEARCH_PATHS = [
     'reftest',
     'tools/mach',
     'tools/wptserve',
+    'web-platform',
+    'web-platform/tests/tools/wptrunner',
     'xpcshell',
 ]
 
 # Individual files providing mach commands.
 MACH_MODULES = [
+    'marionette/mach_test_package_commands.py',
     'mochitest/mach_test_package_commands.py',
     'reftest/mach_test_package_commands.py',
     'tools/mach/mach/commands/commandinfo.py',
+    'web-platform/mach_test_package_commands.py',
     'xpcshell/mach_test_package_commands.py',
 ]
 
@@ -75,6 +79,9 @@ CATEGORIES = {
 }
 
 
+IS_WIN = sys.platform in ('win32', 'cygwin')
+
+
 def ancestors(path, depth=0):
     """Emit the parent directories of a path."""
     count = 1
@@ -87,17 +94,43 @@ def ancestors(path, depth=0):
         count += 1
 
 
+def activate_mozharness_venv(context):
+    """Activate the mozharness virtualenv in-process."""
+    venv = os.path.join(context.mozharness_workdir,
+                        context.mozharness_config.get('virtualenv_path', 'venv'))
+
+    if not os.path.isdir(venv):
+        print("No mozharness virtualenv detected at '{}'.".format(venv))
+        return 1
+
+    venv_bin = os.path.join(venv, 'Scripts' if IS_WIN else 'bin')
+    activate_path = os.path.join(venv_bin, 'activate_this.py')
+
+    execfile(activate_path, dict(__file__=activate_path))
+
+    if isinstance(os.environ['PATH'], unicode):
+        os.environ['PATH'] = os.environ['PATH'].encode('utf-8')
+
+    # sys.executable is used by mochitest-media to start the websocketprocessbridge,
+    # for some reason it doesn't get set when calling `activate_this.py` so set it
+    # here instead.
+    binary = 'python'
+    if IS_WIN:
+        binary += '.exe'
+    sys.executable = os.path.join(venv_bin, binary)
+
+
 def find_firefox(context):
     """Try to automagically find the firefox binary."""
     import mozinstall
     search_paths = []
 
     # Check for a mozharness setup
-    if context.mozharness_config:
-        with open(context.mozharness_config, 'r') as f:
-            config = json.load(f)
-        workdir = os.path.join(config['base_work_dir'], config['work_dir'])
-        search_paths.append(os.path.join(workdir, 'application'))
+    config = context.mozharness_config
+    if config and 'binary_path' in config:
+        return config['binary_path']
+    elif config:
+        search_paths.append(os.path.join(context.mozharness_workdir, 'application'))
 
     # Check for test-stage setup
     dist_bin = os.path.join(os.path.dirname(context.package_root), 'bin')
@@ -111,6 +144,15 @@ def find_firefox(context):
             continue
 
 
+def find_hostutils(context):
+    workdir = context.mozharness_workdir
+    hostutils = os.path.join(workdir, 'hostutils')
+    for fname in os.listdir(hostutils):
+        fpath = os.path.join(hostutils, fname)
+        if os.path.isdir(fpath) and fname.startswith('host-utils'):
+            return fpath
+
+
 def normalize_test_path(test_root, path):
     if os.path.isabs(path) or os.path.exists(path):
         return os.path.normpath(os.path.abspath(path))
@@ -119,6 +161,8 @@ def normalize_test_path(test_root, path):
         test_path = os.path.join(parent, path)
         if os.path.exists(test_path):
             return os.path.normpath(os.path.abspath(test_path))
+    # Not a valid path? Return as is and let test harness deal with it
+    return path
 
 
 def bootstrap(test_package_root):
@@ -136,25 +180,38 @@ def bootstrap(test_package_root):
     import mach.main
 
     def populate_context(context, key=None):
-        if key is not None:
+        if key is None:
+            context.package_root = test_package_root
+            context.bin_dir = os.path.join(test_package_root, 'bin')
+            context.certs_dir = os.path.join(test_package_root, 'certs')
+            context.module_dir = os.path.join(test_package_root, 'modules')
+            context.ancestors = ancestors
+            context.normalize_test_path = normalize_test_path
             return
 
-        context.package_root = test_package_root
-        context.bin_dir = os.path.join(test_package_root, 'bin')
-        context.certs_dir = os.path.join(test_package_root, 'certs')
-        context.modules_dir = os.path.join(test_package_root, 'modules')
+        # The values for the following 'key's will be set lazily, and cached
+        # after first being invoked.
+        if key == 'firefox_bin':
+            return find_firefox(context)
 
-        context.ancestors = ancestors
-        context.find_firefox = types.MethodType(find_firefox, context)
-        context.normalize_test_path = normalize_test_path
+        if key == 'hostutils':
+            return find_hostutils(context)
 
-        # Search for a mozharness localconfig.json
-        context.mozharness_config = None
-        for dir_path in ancestors(test_package_root):
-            mozharness_config = os.path.join(dir_path, 'logs', 'localconfig.json')
-            if os.path.isfile(mozharness_config):
-                context.mozharness_config = mozharness_config
-                break
+        if key == 'mozharness_config':
+            for dir_path in ancestors(context.package_root):
+                mozharness_config = os.path.join(dir_path, 'logs', 'localconfig.json')
+                if os.path.isfile(mozharness_config):
+                    with open(mozharness_config, 'rb') as f:
+                        return json.load(f)
+            return {}
+
+        if key == 'mozharness_workdir':
+            config = context.mozharness_config
+            if config:
+                return os.path.join(config['base_work_dir'], config['work_dir'])
+
+        if key == 'activate_mozharness_venv':
+            return types.MethodType(activate_mozharness_venv, context)
 
     mach = mach.main.Mach(os.getcwd())
     mach.populate_context_handler = populate_context

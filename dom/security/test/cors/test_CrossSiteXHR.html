@@ -14,7 +14,7 @@
   
 </div>
 <pre id="test">
-<script class="testbody" type="application/javascript;version=1.8">
+<script class="testbody" type="application/javascript">
 
 const runPreflightTests = 1;
 const runCookieTests = 1;
@@ -30,15 +30,15 @@ function initTest() {
 
 function initTestCallback() {
   window.addEventListener("message", function(e) {
-    gen.send(e.data);
-  }, false);
+    gen.next(e.data);
+  });
 
   gen = runTest();
   
   gen.next()
 }
 
-function runTest() {
+function* runTest() {
   var loader = document.getElementById('loader');
   var loaderWindow = loader.contentWindow;
   loader.onload = function () { gen.next() };
@@ -673,7 +673,7 @@ function runTest() {
       reqHeaders =
         escape(Object.keys(test.headers)
                .filter(isUnsafeHeader)
-               .map(String.toLowerCase)
+               .map(s => s.toLowerCase())
                .sort()
                .join(","));
       req.url += reqHeaders ? "&requestHeaders=" + reqHeaders : "";
@@ -743,7 +743,7 @@ function runTest() {
             is(res.responseHeaders[header], test.responseHeaders[header],
                "|xhr.getResponseHeader()|wrong response header (" + header + ") in test for " +
                test.toSource());
-            is(res.allResponseHeaders[header], test.responseHeaders[header],
+            is(res.allResponseHeaders[header.toLowerCase()], test.responseHeaders[header],
               "|xhr.getAllResponseHeaderss()|wrong response header (" + header + ") in test for " +
               test.toSource());
           }
@@ -1451,8 +1451,6 @@ function runTest() {
 
 
   SimpleTest.finish();
-
-  yield undefined;
 }
 
 </script>

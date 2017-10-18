@@ -15,6 +15,7 @@ button {
   padding-left: 20px;
   padding-right: 20px;
   min-width: 100px;
+  margin: 0 4px;
 }
 
 /* Category panels */
@@ -22,7 +23,7 @@ button {
 .category {
   display: flex;
   flex-direction: row;
-  align-content: center;
+  align-items: center;
 }
 
 .category-name {
@@ -42,13 +43,10 @@ button {
 
 .panel {
   max-width: 800px;
+  margin-bottom: 35px;
 }
 
 /* Targets */
-
-.targets {
-  margin-bottom: 35px;
-}
 
 .target-list {
   margin: 0;
@@ -60,14 +58,12 @@ button {
   min-height: 34px;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: start;
 }
 
 .target-icon {
   height: 24px;
-  margin: 6px 5px 0 0;
-  /* Override the icon alignment and center it using margin-top. */
-  align-self: flex-start;
+  margin-inline-end: 5px;
 }
 
 .target-icon:not([src]) {
@@ -80,6 +76,7 @@ button {
 
 .target {
   flex: 1;
+  margin-top: 2px;
   /* This is silly: https://bugzilla.mozilla.org/show_bug.cgi?id=1086218#c4. */
   min-width: 0;
 }
@@ -114,7 +111,39 @@ button {
 }
 
 .target-detail > :not(:first-child) {
-  margin-left: 8px;
+  margin-inline-start: 8px;
+}
+
+.target-status {
+  box-sizing: border-box;
+  display: inline-block;
+
+  min-width: 50px;
+  margin-top: 4px;
+  margin-inline-end: 5px;
+  padding: 2px;
+
+  border-width: 1px;
+  border-style: solid;
+
+  font-size: 0.6em;
+  text-align: center;
+}
+
+.target-status-stopped {
+  border-color: grey;
+  background-color: lightgrey;
+}
+
+.target-status-running {
+  border-color: limegreen;
+  background-color: palegreen;
+}
+
+.target-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .addons-controls {
@@ -122,36 +151,75 @@ button {
   flex-direction: row;
 }
 
-.addons-install-error {
-  background-color: #f3b0b0;
+.addons-install-error,
+.service-worker-multi-process {
   padding: 5px 10px;
-  margin: 5px 4px 5px 0px;
+  margin-top: 5px;
+  margin-inline-end: 4px;
 }
 
-.service-worker-disabled .warning,
-.addons-install-error .warning {
+.addons-install-error {
+  align-items: center;
+  background-color: #f3b0b0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.service-worker-multi-process {
+  background-color: #ffeebb;
+  line-height: 1.5em;
+}
+
+.service-worker-multi-process .update-button {
+  margin: 5px 0;
+}
+
+.warning {
   background-image: url(chrome://devtools/skin/images/alerticon-warning.png);
   background-size: 13px 12px;
-  margin-right: 10px;
   display: inline-block;
   width: 13px;
   height: 12px;
+  margin-inline-end: 10px;
 }
 
 @media (min-resolution: 1.1dppx) {
-  .service-worker-disabled .warning,
-  .addons-install-error .warning {
+  .warning {
     background-image: url(chrome://devtools/skin/images/alerticon-warning@2x.png);
   }
+}
+
+.addons-install-error .warning,
+.service-worker-multi-process .warning {
+  /* The warning icon can be hard to see on red / yellow backgrounds, this turns the icon
+  to a black icon. */
+  filter: brightness(0%);
 }
 
 .addons-options {
   flex: 1;
 }
 
-.addons-debugging-label {
+.service-worker-disabled-label,
+.addons-debugging-label,
+.addons-web-ext-tip {
   display: inline-block;
-  margin: 0 5px 5px 0;
+  margin-inline-end: 1ch;
+}
+
+.addons-tip {
+  display: flex;
+  align-items: center;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  background-image: url(chrome://devtools/skin/images/help.svg);
+  background-repeat: no-repeat;
+  padding-inline-start: 32px;
+  height: 24px;
+}
+
+.addons-tip-icon {
+  margin-inline-end: 1ch;
 }
 
 .error-page {
@@ -165,4 +233,146 @@ button {
 
 .error-page .error-page-details {
   color: gray;
+}
+
+#addons-panel h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.addon-target-container {
+  background: #fff;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.12);
+  list-style-type: none;
+  font-size: 13px;
+  margin: 0 0 8px;
+  padding: 4px 16px;
+  transition: box-shadow 150ms;
+}
+
+.addon-target-container:hover {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.addon-target-container .target {
+  align-items: center;
+  display: flex;
+  margin: 0;
+  padding: 16px 0;
+}
+
+.addon-target-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.addon-target-actions {
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.addon-target-container .target-icon {
+  margin-inline-end: 16px;
+}
+
+.addon-target-container .name {
+  align-self: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.addon-target-info {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+}
+
+.addon-target-info-label {
+  padding-inline-end: 8px;
+  padding-bottom: 8px;
+}
+
+.addon-target-info-label:last-of-type {
+  padding-bottom: 16px;
+}
+
+.addon-target-info-content {
+  margin: 0;
+}
+
+.addon-target-info-more {
+  padding-left: 1ch;
+}
+
+.addon-target-button {
+  background: none;
+  border: none;
+  color: #0087ff;
+  font-size: 13px;
+  margin: 12px;
+  min-width: auto;
+  padding: 4px;
+  transition: color 150ms;
+}
+
+.addon-target-button:active,
+.addon-target-button:hover,
+.addon-target-button:enabled:hover:active {
+  background: none;
+}
+
+.addon-target-button:disabled {
+  color: #999;
+  opacity: 1;
+}
+
+.addon-target-button:enabled:focus,
+.addon-target-button:enabled:hover {
+  background: none;
+  color: #0052cc;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.addon-target-button:enabled:hover:active {
+  color: #003399;
+  text-decoration: none;
+}
+
+.addon-target-button:first-of-type {
+  /* Subtract the start padding so the button is still a bigger click target but
+   * lines up with the icon. */
+  margin-inline-start: -4px;
+}
+
+.addon-target-messages {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  margin-bottom: 16px;
+  padding: 0 0 12px 0;
+}
+
+.addon-target-message {
+  list-style-type: none;
+  padding: 4px 0;
+}
+
+.addon-target-message:first-of-type {
+  padding-top: 0;
+}
+
+.addon-target-warning-message {
+  color: #a47f00;
+}
+
+/* We want the ellipsis on the left-hand-side, so make the parent RTL
+ * with an ellipsis and the child can be LTR. */
+.file-path {
+  direction: rtl;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-path-inner {
+  direction: ltr;
+  unicode-bidi: plaintext;
 }

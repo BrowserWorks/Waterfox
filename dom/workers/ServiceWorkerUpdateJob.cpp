@@ -98,9 +98,14 @@ public:
   ComparisonResult(nsresult aStatus,
                    bool aInCacheAndEqual,
                    const nsAString& aNewCacheName,
-                   const nsACString& aMaxScope) override
+                   const nsACString& aMaxScope,
+                   nsLoadFlags aLoadFlags) override
   {
-    mJob->ComparisonResult(aStatus, aInCacheAndEqual, aNewCacheName, aMaxScope);
+    mJob->ComparisonResult(aStatus,
+                           aInCacheAndEqual,
+                           aNewCacheName,
+                           aMaxScope,
+                           aLoadFlags);
   }
 
   NS_INLINE_DECL_REFCOUNTING(ServiceWorkerUpdateJob::CompareCallback, override)
@@ -167,9 +172,11 @@ public:
 ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(nsIPrincipal* aPrincipal,
                                                const nsACString& aScope,
                                                const nsACString& aScriptSpec,
-                                               nsILoadGroup* aLoadGroup)
+                                               nsILoadGroup* aLoadGroup,
+                                               nsLoadFlags aLoadFlags)
   : ServiceWorkerJob(Type::Update, aPrincipal, aScope, aScriptSpec)
   , mLoadGroup(aLoadGroup)
+  , mLoadFlags(aLoadFlags)
 {
 }
 
@@ -185,9 +192,11 @@ ServiceWorkerUpdateJob::ServiceWorkerUpdateJob(Type aType,
                                                nsIPrincipal* aPrincipal,
                                                const nsACString& aScope,
                                                const nsACString& aScriptSpec,
-                                               nsILoadGroup* aLoadGroup)
+                                               nsILoadGroup* aLoadGroup,
+                                               nsLoadFlags aLoadFlags)
   : ServiceWorkerJob(aType, aPrincipal, aScope, aScriptSpec)
   , mLoadGroup(aLoadGroup)
+  , mLoadFlags(aLoadFlags)
 {
 }
 
@@ -237,7 +246,8 @@ ServiceWorkerUpdateJob::AsyncExecute()
   AssertIsOnMainThread();
   MOZ_ASSERT(GetType() == Type::Update);
 
-  if (Canceled()) {
+  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+  if (Canceled() || !swm) {
     FailUpdateJob(NS_ERROR_DOM_ABORT_ERR);
     return;
   }
@@ -246,7 +256,6 @@ ServiceWorkerUpdateJob::AsyncExecute()
   //
   //  https://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html#update-algorithm
 
-  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
   RefPtr<ServiceWorkerRegistrationInfo> registration =
     swm->GetRegistration(mPrincipal, mScope);
 
@@ -318,15 +327,23 @@ ServiceWorkerUpdateJob::Update()
   }
 }
 
+nsLoadFlags
+ServiceWorkerUpdateJob::GetLoadFlags() const
+{
+  return mLoadFlags;
+}
+
 void
 ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
                                          bool aInCacheAndEqual,
                                          const nsAString& aNewCacheName,
-                                         const nsACString& aMaxScope)
+                                         const nsACString& aMaxScope,
+                                         nsLoadFlags aLoadFlags)
 {
   AssertIsOnMainThread();
 
-  if (NS_WARN_IF(Canceled())) {
+  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+  if (NS_WARN_IF(Canceled() || !swm)) {
     FailUpdateJob(NS_ERROR_DOM_ABORT_ERR);
     return;
   }
@@ -364,6 +381,8 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
     }
   }
 
+  mLoadFlags = aLoadFlags;
+
   nsAutoCString defaultAllowedPrefix;
   rv = GetRequiredScopeStringPrefix(scriptURI, defaultAllowedPrefix,
                                     eUseDirectory);
@@ -390,8 +409,7 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
     rv = nsContentUtils::FormatLocalizedString(nsContentUtils::eDOM_PROPERTIES,
                                                "ServiceWorkerScopePathMismatch",
                                                params, message);
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to format localized string");
-    RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+    NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to format localized string");
     swm->ReportToAllClients(mScope,
                             message,
                             EmptyString(),
@@ -415,12 +433,15 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
   RefPtr<ServiceWorkerInfo> sw =
     new ServiceWorkerInfo(mRegistration->mPrincipal,
                           mRegistration->mScope,
-                          mScriptSpec, aNewCacheName);
+                          mScriptSpec,
+                          aNewCacheName,
+                          mLoadFlags);
 
   mRegistration->SetEvaluating(sw);
 
   nsMainThreadPtrHandle<ServiceWorkerUpdateJob> handle(
-      new nsMainThreadPtrHolder<ServiceWorkerUpdateJob>(this));
+      new nsMainThreadPtrHolder<ServiceWorkerUpdateJob>(
+        "ServiceWorkerUpdateJob", this));
   RefPtr<LifeCycleEventCallback> callback = new ContinueUpdateRunnable(handle);
 
   ServiceWorkerPrivate* workerPrivate = sw->WorkerPrivate();
@@ -438,7 +459,8 @@ ServiceWorkerUpdateJob::ContinueUpdateAfterScriptEval(bool aScriptEvaluationResu
 {
   AssertIsOnMainThread();
 
-  if (Canceled()) {
+  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+  if (Canceled() || !swm) {
     FailUpdateJob(NS_ERROR_DOM_ABORT_ERR);
     return;
   }
@@ -456,14 +478,15 @@ ServiceWorkerUpdateJob::ContinueUpdateAfterScriptEval(bool aScriptEvaluationResu
     return;
   }
 
-  Install();
+  Install(swm);
 }
 
 void
-ServiceWorkerUpdateJob::Install()
+ServiceWorkerUpdateJob::Install(ServiceWorkerManager* aSWM)
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(!Canceled());
+  MOZ_DIAGNOSTIC_ASSERT(!Canceled());
+  MOZ_DIAGNOSTIC_ASSERT(aSWM);
 
   MOZ_ASSERT(!mRegistration->GetInstalling());
 
@@ -479,23 +502,27 @@ ServiceWorkerUpdateJob::Install()
   // The job promise cannot be rejected after this point, but the job can
   // still fail; e.g. if the install event handler throws, etc.
 
-  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-
   // fire the updatefound event
   nsCOMPtr<nsIRunnable> upr =
     NewRunnableMethod<RefPtr<ServiceWorkerRegistrationInfo>>(
-      swm,
+      "dom::workers::ServiceWorkerManager::"
+      "FireUpdateFoundOnServiceWorkerRegistrations",
+      aSWM,
       &ServiceWorkerManager::FireUpdateFoundOnServiceWorkerRegistrations,
       mRegistration);
   NS_DispatchToMainThread(upr);
 
   // Call ContinueAfterInstallEvent(false) on main thread if the SW
   // script fails to load.
-  nsCOMPtr<nsIRunnable> failRunnable = NewRunnableMethod<bool>
-    (this, &ServiceWorkerUpdateJob::ContinueAfterInstallEvent, false);
+  nsCOMPtr<nsIRunnable> failRunnable = NewRunnableMethod<bool>(
+    "dom::workers::ServiceWorkerUpdateJob::ContinueAfterInstallEvent",
+    this,
+    &ServiceWorkerUpdateJob::ContinueAfterInstallEvent,
+    false);
 
   nsMainThreadPtrHandle<ServiceWorkerUpdateJob> handle(
-    new nsMainThreadPtrHolder<ServiceWorkerUpdateJob>(this));
+    new nsMainThreadPtrHolder<ServiceWorkerUpdateJob>(
+      "ServiceWorkerUpdateJob", this));
   RefPtr<LifeCycleEventCallback> callback = new ContinueInstallRunnable(handle);
 
   // Send the install event to the worker thread
@@ -515,7 +542,13 @@ ServiceWorkerUpdateJob::ContinueAfterInstallEvent(bool aInstallEventSuccess)
     return FailUpdateJob(NS_ERROR_DOM_ABORT_ERR);
   }
 
-  MOZ_ASSERT(mRegistration->GetInstalling());
+  // If we haven't been canceled we should have a registration.  There appears
+  // to be a path where it gets cleared before we call into here.  Assert
+  // to try to catch this condition, but don't crash in release.
+  MOZ_DIAGNOSTIC_ASSERT(mRegistration);
+  if (!mRegistration) {
+    return FailUpdateJob(NS_ERROR_DOM_ABORT_ERR);
+  }
 
   // Continue executing the Install algorithm at step 12.
 
@@ -526,6 +559,7 @@ ServiceWorkerUpdateJob::ContinueAfterInstallEvent(bool aInstallEventSuccess)
     return;
   }
 
+  MOZ_DIAGNOSTIC_ASSERT(mRegistration->GetInstalling());
   mRegistration->TransitionInstallingToWaiting();
 
   Finish(NS_OK);

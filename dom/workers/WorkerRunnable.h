@@ -401,9 +401,12 @@ protected:
 
 public:
   // Dispatch the runnable to the main thread.  If dispatch to main thread
-  // fails, or if the worker is shut down while dispatching, an error will be
-  // reported on aRv.  In that case the error MUST be propagated out to script.
-  void Dispatch(ErrorResult& aRv);
+  // fails, or if the worker is in a state equal or greater of aFailStatus, an
+  // error will be reported on aRv. Normally you want to use 'Terminating' for
+  // aFailStatus, except if you want an infallible runnable. In this case, use
+  // 'Killing'.
+  // In that case the error MUST be propagated out to script.
+  void Dispatch(Status aFailStatus, ErrorResult& aRv);
 
 private:
   NS_IMETHOD Run() override;
@@ -412,6 +415,12 @@ private:
 // This runnable is an helper class for dispatching something from a worker
 // thread to the main-thread and back to the worker-thread. During this
 // operation, this class will keep the worker alive.
+// The purpose of RunBackOnWorkerThreadForCleanup() must be used, as the name
+// says, only to release resources, no JS has to be executed, no timers, or
+// other things. The reason of such limitations is that, in order to execute
+// this method in any condition (also when the worker is shutting down), a
+// Control Runnable is used, and, this could generate a reordering of existing
+// runnables.
 class WorkerProxyToMainThreadRunnable : public Runnable
 {
 protected:
@@ -423,7 +432,7 @@ protected:
   virtual void RunOnMainThread() = 0;
 
   // After this second method is called on the worker-thread.
-  virtual void RunBackOnWorkerThread() = 0;
+  virtual void RunBackOnWorkerThreadForCleanup() = 0;
 
 public:
   bool Dispatch();

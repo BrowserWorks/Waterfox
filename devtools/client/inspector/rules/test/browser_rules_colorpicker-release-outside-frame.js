@@ -51,15 +51,15 @@ add_task(function* () {
 });
 
 function* openColorPickerForSwatch(swatch, view) {
-  let cPicker = view.tooltips.colorPicker;
+  let cPicker = view.tooltips.getTooltip("colorPicker");
   ok(cPicker, "The rule-view has the expected colorPicker property");
 
   let cPickerPanel = cPicker.tooltip.panel;
   ok(cPickerPanel, "The XUL panel for the color picker exists");
 
-  let onShown = cPicker.tooltip.once("shown");
+  let onColorPickerReady = cPicker.once("ready");
   swatch.click();
-  yield onShown;
+  yield onColorPickerReady;
 
   ok(true, "The color picker was shown on click of the color swatch");
 

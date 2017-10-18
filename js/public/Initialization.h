@@ -50,7 +50,7 @@ JS_SetICUMemoryFunctions(JS_ICUAllocFn allocFn,
 
 /**
  * Initialize SpiderMonkey, returning true only if initialization succeeded.
- * Once this method has succeeded, it is safe to call JS_NewRuntime and other
+ * Once this method has succeeded, it is safe to call JS_NewContext and other
  * JSAPI methods.
  *
  * This method must be called before any other JSAPI method is used on any
@@ -84,6 +84,22 @@ JS_InitWithFailureDiagnostic(void)
 #else
     return JS::detail::InitWithFailureDiagnostic(false);
 #endif
+}
+
+/*
+ * Returns true if SpiderMonkey has been initialized successfully, even if it has
+ * possibly been shut down.
+ *
+ * Note that it is the responsibility of the embedder to call JS_Init() and
+ * JS_ShutDown() at the correct times, and therefore this API should ideally not
+ * be necessary to use.  This is only intended to be used in cases where the
+ * embedder isn't in full control of deciding whether to initialize SpiderMonkey
+ * or hand off the task to another consumer.
+ */
+inline bool
+JS_IsInitialized(void)
+{
+  return JS::detail::libraryInitState != JS::detail::InitState::Uninitialized;
 }
 
 /**

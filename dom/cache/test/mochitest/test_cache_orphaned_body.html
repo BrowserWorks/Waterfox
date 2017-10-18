@@ -37,9 +37,36 @@ function storageUsage() {
     var qms = SpecialPowers.Services.qms;
     var principal = SpecialPowers.wrap(document).nodePrincipal;
     var cb = SpecialPowers.wrapCallback(function(request) {
-      resolve(request.usage, request.fileUsage);
+      var result = request.result;
+      resolve(result.usage, result.fileUsage);
     });
     qms.getUsageForPrincipal(principal, cb);
+  });
+}
+
+function groupUsage() {
+  return new Promise(function(resolve, reject) {
+   navigator.storage.estimate().then(storageEstimation => {
+     resolve(storageEstimation.usage, 0);
+   });
+  });
+}
+
+function workerGroupUsage() {
+  return new Promise(function(resolve, reject) {
+    function workerScript() {
+      navigator.storage.estimate().then(storageEstimation => {
+        postMessage(storageEstimation.usage);
+      });
+    }
+
+    let url =
+      URL.createObjectURL(new Blob(["(", workerScript.toSource(), ")()"]));
+
+    let worker = new Worker(url);
+    worker.onmessage = function (e) {
+      resolve(e.data, 0);
+    };
   });
 }
 
@@ -62,7 +89,8 @@ SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPrefEnv({
   "set": [["dom.caches.enabled", true],
           ["dom.caches.testing.enabled", true],
-          ["dom.quotaManager.testing", true]],
+          ["dom.quotaManager.testing", true],
+          ["dom.storageManager.enabled", true]],
 }, function() {
   var name = 'orphanedBodyOwner';
   var cache = null;
@@ -140,6 +168,26 @@ SpecialPowers.pushPrefEnv({
   }).then(function(usage) {
     fullUsage = usage;
     ok(fullUsage > initialUsage, 'disk usage should have grown');
+  })
+
+  // Test groupUsage()
+  .then(function() {
+    return resetStorage();
+  }).then(function() {
+    return groupUsage();
+  }).then(function(usage) {
+    fullUsage = usage;
+    ok(fullUsage > initialUsage, 'disk group usage should have grown');
+  })
+
+  // Test workerGroupUsage()
+  .then(function() {
+    return resetStorage();
+  }).then(function() {
+    return workerGroupUsage();
+  }).then(function(usage) {
+    fullUsage = usage;
+    ok(fullUsage > initialUsage, 'disk group usage on worker should have grown');
   })
 
   // Now perform a new Cache operation that will reopen the origin.  This

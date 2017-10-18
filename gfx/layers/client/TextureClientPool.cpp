@@ -38,6 +38,7 @@ ClearCallback(nsITimer *aTimer, void *aClosure)
 }
 
 TextureClientPool::TextureClientPool(LayersBackend aLayersBackend,
+                                     int32_t aMaxTextureSize,
                                      gfx::SurfaceFormat aFormat,
                                      gfx::IntSize aSize,
                                      TextureFlags aFlags,
@@ -47,6 +48,7 @@ TextureClientPool::TextureClientPool(LayersBackend aLayersBackend,
                                      uint32_t aPoolUnusedSize,
                                      TextureForwarder* aAllocator)
   : mBackend(aLayersBackend)
+  , mMaxTextureSize(aMaxTextureSize)
   , mFormat(aFormat)
   , mSize(aSize)
   , mFlags(aFlags)
@@ -160,6 +162,7 @@ TextureClientPool::AllocateTextureClient()
       TextureClient::CreateForDrawing(mSurfaceAllocator,
                                       mFormat, mSize,
                                       mBackend,
+                                      mMaxTextureSize,
                                       BackendSelector::Content,
                                       mFlags);
   }
@@ -176,15 +179,23 @@ TextureClientPool::ResetTimers()
   if (mShrinkTimeoutMsec &&
       mTextureClients.size() + mTextureClientsDeferred.size() > mPoolUnusedSize) {
     TCP_LOG("TexturePool %p scheduling a shrink-to-max-size\n", this);
-    mShrinkTimer->InitWithFuncCallback(ShrinkCallback, this, mShrinkTimeoutMsec,
-                                       nsITimer::TYPE_ONE_SHOT);
+    mShrinkTimer->InitWithNamedFuncCallback(
+      ShrinkCallback,
+      this,
+      mShrinkTimeoutMsec,
+      nsITimer::TYPE_ONE_SHOT,
+      "layers::TextureClientPool::ResetTimers");
   }
 
   // Clear pool after a period of inactivity to reduce memory consumption
   if (mClearTimeoutMsec) {
     TCP_LOG("TexturePool %p scheduling a clear\n", this);
-    mClearTimer->InitWithFuncCallback(ClearCallback, this, mClearTimeoutMsec,
-                                      nsITimer::TYPE_ONE_SHOT);
+    mClearTimer->InitWithNamedFuncCallback(
+      ClearCallback,
+      this,
+      mClearTimeoutMsec,
+      nsITimer::TYPE_ONE_SHOT,
+      "layers::TextureClientPool::ResetTimers");
   }
 }
 
@@ -283,7 +294,7 @@ void
 TextureClientPool::ReturnUnlockedClients()
 {
   for (auto it = mTextureClientsDeferred.begin(); it != mTextureClientsDeferred.end();) {
-    MOZ_ASSERT((*it)->GetReadLock()->GetReadCount() >= 1);
+    MOZ_ASSERT((*it)->GetReadLock()->AsNonBlockingLock()->GetReadCount() >= 1);
     // Last count is held by the lock itself.
     if (!(*it)->IsReadLocked()) {
       mTextureClients.push(*it);

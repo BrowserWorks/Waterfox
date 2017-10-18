@@ -58,8 +58,8 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     // X64 helpers.
     /////////////////////////////////////////////////////////////////
     void writeDataRelocation(const Value& val) {
-        if (val.isMarkable()) {
-            gc::Cell* cell = reinterpret_cast<gc::Cell*>(val.toGCThing());
+        if (val.isGCThing()) {
+            gc::Cell* cell = val.toGCThing();
             if (cell && gc::IsInsideNursery(cell))
                 embedsNurseryPointers_ = true;
             dataRelocations_.writeUnsigned(masm.currentOffset());
@@ -132,12 +132,11 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     template <typename T>
     void storeValue(const Value& val, const T& dest) {
         ScratchRegisterScope scratch(asMasm());
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        if (val.isMarkable()) {
-            movWithPatch(ImmWord(jv.asBits), scratch);
+        if (val.isGCThing()) {
+            movWithPatch(ImmWord(val.asRawBits()), scratch);
             writeDataRelocation(val);
         } else {
-            mov(ImmWord(jv.asBits), scratch);
+            mov(ImmWord(val.asRawBits()), scratch);
         }
         movq(scratch, Operand(dest));
     }
@@ -172,14 +171,13 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         pop(val.valueReg());
     }
     void pushValue(const Value& val) {
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        if (val.isMarkable()) {
+        if (val.isGCThing()) {
             ScratchRegisterScope scratch(asMasm());
-            movWithPatch(ImmWord(jv.asBits), scratch);
+            movWithPatch(ImmWord(val.asRawBits()), scratch);
             writeDataRelocation(val);
             push(scratch);
         } else {
-            push(ImmWord(jv.asBits));
+            push(ImmWord(val.asRawBits()));
         }
     }
     void pushValue(JSValueType type, Register reg) {
@@ -191,18 +189,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         push(Operand(addr));
     }
 
-    void moveValue(const Value& val, Register dest) {
-        jsval_layout jv = JSVAL_TO_IMPL(val);
-        movWithPatch(ImmWord(jv.asBits), dest);
-        writeDataRelocation(val);
-    }
-    void moveValue(const Value& src, const ValueOperand& dest) {
-        moveValue(src, dest.valueReg());
-    }
-    void moveValue(const ValueOperand& src, const ValueOperand& dest) {
-        if (src.valueReg() != dest.valueReg())
-            movq(src.valueReg(), dest.valueReg());
-    }
     void boxValue(JSValueType type, Register src, Register dest);
 
     Condition testUndefined(Condition cond, Register tag) {
@@ -516,13 +502,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         testq(rhs, lhs);
     }
 
-    template <typename T1, typename T2>
-    void cmpPtrSet(Assembler::Condition cond, T1 lhs, T2 rhs, Register dest)
-    {
-        cmpPtr(lhs, rhs);
-        emitSet(cond, dest);
-    }
-
     /////////////////////////////////////////////////////////////////
     // Common interface.
     /////////////////////////////////////////////////////////////////
@@ -573,6 +552,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     void loadPtr(const Address& address, Register dest) {
         movq(Operand(address), dest);
     }
+    void load64(const Address& address, Register dest) {
+        movq(Operand(address), dest);
+    }
     void loadPtr(const Operand& src, Register dest) {
         movq(src, dest);
     }
@@ -616,6 +598,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         movq(scratch, Operand(address));
     }
     void storePtr(Register src, const Address& address) {
+        movq(src, Operand(address));
+    }
+    void store64(Register src, const Address& address) {
         movq(src, Operand(address));
     }
     void storePtr(Register src, const BaseIndex& address) {
@@ -711,7 +696,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         emitSet(cond, dest);
     }
 
-    void boxDouble(FloatRegister src, const ValueOperand& dest) {
+    void boxDouble(FloatRegister src, const ValueOperand& dest, FloatRegister) {
         vmovq(src, dest.valueReg());
     }
     void boxNonDouble(JSValueType type, Register src, const ValueOperand& dest) {
@@ -798,6 +783,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
             andq(src, dest);
         }
     }
+    void unboxNonDouble(const Address& src, Register dest) {
+        unboxNonDouble(Operand(src), dest);
+    }
 
     void unboxString(const ValueOperand& src, Register dest) { unboxNonDouble(src, dest); }
     void unboxString(const Operand& src, Register dest) { unboxNonDouble(src, dest); }
@@ -864,24 +852,32 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
 
     void loadConstantDouble(double d, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
+
     void loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest);
     void loadConstantSimd128Float(const SimdConstant& v, FloatRegister dest);
 
-    void convertInt64ToDouble(Register input, FloatRegister output);
-    void convertInt64ToFloat32(Register input, FloatRegister output);
+    void convertInt64ToDouble(Register64 input, FloatRegister output);
+    void convertInt64ToFloat32(Register64 input, FloatRegister output);
+    static bool convertUInt64ToDoubleNeedsTemp();
+    void convertUInt64ToDouble(Register64 input, FloatRegister output, Register temp);
+    void convertUInt64ToFloat32(Register64 input, FloatRegister output, Register temp);
 
-    void convertUInt64ToDouble(Register input, FloatRegister output);
-    void convertUInt64ToFloat32(Register input, FloatRegister output);
-
-    void wasmTruncateDoubleToInt64(FloatRegister input, Register output, Label* oolEntry,
+    void wasmTruncateDoubleToInt64(FloatRegister input, Register64 output, Label* oolEntry,
                                    Label* oolRejoin, FloatRegister tempDouble);
-    void wasmTruncateDoubleToUInt64(FloatRegister input, Register output, Label* oolEntry,
+    void wasmTruncateDoubleToUInt64(FloatRegister input, Register64 output, Label* oolEntry,
                                     Label* oolRejoin, FloatRegister tempDouble);
 
-    void wasmTruncateFloat32ToInt64(FloatRegister input, Register output, Label* oolEntry,
+    void wasmTruncateFloat32ToInt64(FloatRegister input, Register64 output, Label* oolEntry,
                                     Label* oolRejoin, FloatRegister tempDouble);
-    void wasmTruncateFloat32ToUInt64(FloatRegister input, Register output, Label* oolEntry,
+    void wasmTruncateFloat32ToUInt64(FloatRegister input, Register64 output, Label* oolEntry,
                                      Label* oolRejoin, FloatRegister tempDouble);
+
+    void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, globalArea) + globalDataOffset), dest);
+    }
+    void loadWasmPinnedRegsFromTls() {
+        loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, memoryBase)), HeapReg);
+    }
 
   public:
     Condition testInt32Truthy(bool truthy, const ValueOperand& operand) {
@@ -932,15 +928,17 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     }
 
     void convertUInt32ToDouble(Register src, FloatRegister dest) {
+        // Zero the output register to break dependencies, see convertInt32ToDouble.
+        zeroDouble(dest);
+
         vcvtsq2sd(src, dest, dest);
     }
 
     void convertUInt32ToFloat32(Register src, FloatRegister dest) {
-        vcvtsq2ss(src, dest, dest);
-    }
+        // Zero the output register to break dependencies, see convertInt32ToDouble.
+        zeroDouble(dest);
 
-    void convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest) {
-        vcvtsi2sdq(src.reg, dest);
+        vcvtsq2ss(src, dest, dest);
     }
 
     inline void incrementInt32Value(const Address& addr);

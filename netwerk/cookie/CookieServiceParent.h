@@ -7,10 +7,9 @@
 #define mozilla_net_CookieServiceParent_h
 
 #include "mozilla/net/PCookieServiceParent.h"
-#include "SerializedLoadContext.h"
 
 class nsCookieService;
-namespace mozilla { class NeckoOriginAttributes; }
+namespace mozilla { class OriginAttributes; }
 
 namespace mozilla {
 namespace net {
@@ -22,31 +21,19 @@ public:
   virtual ~CookieServiceParent();
 
 protected:
-  MOZ_MUST_USE bool
-  GetOriginAttributesFromParams(const IPC::SerializedLoadContext &aLoadContext,
-                                NeckoOriginAttributes& aAttrs,
-                                bool& aIsPrivate);
-
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool RecvGetCookieString(const URIParams& aHost,
-                                   const bool& aIsForeign,
-                                   const bool& aFromHttp,
-                                   const IPC::SerializedLoadContext&
-                                         loadContext,
-                                   nsCString* aResult) override;
+  virtual mozilla::ipc::IPCResult RecvGetCookieString(const URIParams& aHost,
+                                                      const bool& aIsForeign,
+                                                      const OriginAttributes& aAttrs,
+                                                      nsCString* aResult) override;
 
-  virtual bool RecvSetCookieString(const URIParams& aHost,
-                                   const bool& aIsForeign,
-                                   const nsCString& aCookieString,
-                                   const nsCString& aServerTime,
-                                   const bool& aFromHttp,
-                                   const IPC::SerializedLoadContext&
-                                         loadContext) override;
-
-  virtual mozilla::ipc::IProtocol*
-  CloneProtocol(Channel* aChannel,
-                mozilla::ipc::ProtocolCloneContext* aCtx) override;
+  virtual mozilla::ipc::IPCResult RecvSetCookieString(const URIParams& aHost,
+                                                      const bool& aIsForeign,
+                                                      const nsCString& aCookieString,
+                                                      const nsCString& aServerTime,
+                                                      const OriginAttributes& aAttrs,
+                                                      const bool& aFromHttp) override;
 
   RefPtr<nsCookieService> mCookieService;
 };

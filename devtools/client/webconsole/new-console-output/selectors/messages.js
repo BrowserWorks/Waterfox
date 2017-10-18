@@ -5,18 +5,60 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { getLogLimit } = require("devtools/client/webconsole/new-console-output/selectors/prefs");
-
-function getAllMessages(state) {
-  let messages = state.messages;
-  let messageCount = messages.count();
-  let logLimit = getLogLimit(state);
-
-  if (messageCount > logLimit) {
-    return messages.splice(0, messageCount - logLimit);
-  }
-
-  return messages;
+function getAllMessagesById(state) {
+  return state.messages.messagesById;
 }
 
-exports.getAllMessages = getAllMessages;
+function getMessage(state, id) {
+  return getAllMessagesById(state).get(id);
+}
+
+function getAllMessagesUiById(state) {
+  return state.messages.messagesUiById;
+}
+
+function getAllMessagesTableDataById(state) {
+  return state.messages.messagesTableDataById;
+}
+
+function getAllMessagesObjectPropertiesById(state) {
+  return state.messages.messagesObjectPropertiesById;
+}
+
+function getAllMessagesObjectEntriesById(state) {
+  return state.messages.messagesObjectEntriesById;
+}
+
+function getAllGroupsById(state) {
+  return state.messages.groupsById;
+}
+
+function getCurrentGroup(state) {
+  return state.messages.currentGroup;
+}
+
+function getVisibleMessages(state) {
+  return state.messages.visibleMessages;
+}
+
+function getAllRepeatById(state) {
+  return state.messages.repeatById;
+}
+
+function getAllNetworkMessagesUpdateById(state) {
+  return state.messages.networkMessagesUpdateById;
+}
+
+module.exports = {
+  getMessage,
+  getAllMessagesById,
+  getAllMessagesUiById,
+  getAllMessagesTableDataById,
+  getAllGroupsById,
+  getCurrentGroup,
+  getVisibleMessages,
+  getAllRepeatById,
+  getAllNetworkMessagesUpdateById,
+  getAllMessagesObjectPropertiesById,
+  getAllMessagesObjectEntriesById,
+};

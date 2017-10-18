@@ -47,13 +47,13 @@
 .variables-view-container {
   overflow-x: hidden;
   overflow-y: auto;
+  direction: ltr;
 }
 
 .variables-view-element-details:not([open]) {
   display: none;
 }
 
-.variables-view-scope,
 .variable-or-property {
   -moz-user-focus: normal;
 }

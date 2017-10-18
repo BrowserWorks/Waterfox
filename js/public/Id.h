@@ -69,12 +69,6 @@ JS_PUBLIC_API(jsid)
 INTERNED_STRING_TO_JSID(JSContext* cx, JSString* str);
 
 static MOZ_ALWAYS_INLINE bool
-JSID_IS_ZERO(jsid id)
-{
-    return JSID_BITS(id) == 0;
-}
-
-static MOZ_ALWAYS_INLINE bool
 JSID_IS_INT(jsid id)
 {
     return !!(JSID_BITS(id) & JSID_TYPE_INT);
@@ -84,7 +78,8 @@ static MOZ_ALWAYS_INLINE int32_t
 JSID_TO_INT(jsid id)
 {
     MOZ_ASSERT(JSID_IS_INT(id));
-    return ((uint32_t)JSID_BITS(id)) >> 1;
+    uint32_t bits = static_cast<uint32_t>(JSID_BITS(id)) >> 1;
+    return static_cast<int32_t>(bits);
 }
 
 #define JSID_INT_MIN  0
@@ -101,7 +96,8 @@ INT_TO_JSID(int32_t i)
 {
     jsid id;
     MOZ_ASSERT(INT_FITS_IN_JSID(i));
-    JSID_BITS(id) = ((i << 1) | JSID_TYPE_INT);
+    uint32_t bits = (static_cast<uint32_t>(i) << 1) | JSID_TYPE_INT;
+    JSID_BITS(id) = static_cast<size_t>(bits);
     return id;
 }
 
@@ -184,14 +180,25 @@ namespace js {
 template <>
 struct BarrierMethods<jsid>
 {
+    static gc::Cell* asGCThingOrNull(jsid id) {
+        if (JSID_IS_STRING(id))
+            return reinterpret_cast<gc::Cell*>(JSID_TO_STRING(id));
+        if (JSID_IS_SYMBOL(id))
+            return reinterpret_cast<gc::Cell*>(JSID_TO_SYMBOL(id));
+        return nullptr;
+    }
     static void postBarrier(jsid* idp, jsid prev, jsid next) {}
+    static void exposeToJS(jsid id) {
+        if (JSID_IS_GCTHING(id))
+            js::gc::ExposeGCThingToActiveJS(JSID_TO_GCTHING(id));
+    }
 };
 
 // If the jsid is a GC pointer type, convert to that type and call |f| with
 // the pointer. If the jsid is not a GC type, calls F::defaultValue.
 template <typename F, typename... Args>
 auto
-DispatchTyped(F f, jsid& id, Args&&... args)
+DispatchTyped(F f, const jsid& id, Args&&... args)
   -> decltype(f(static_cast<JSString*>(nullptr), mozilla::Forward<Args>(args)...))
 {
     if (JSID_IS_STRING(id))

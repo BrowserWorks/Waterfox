@@ -1,10 +1,12 @@
+// This file also defines a frame script.
+/* eslint-env mozilla/frame-script */
+
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
 var Cr = Components.results;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/BrowserUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const baseURL = "http://mochi.test:8888/browser/" +
@@ -13,8 +15,7 @@ const baseURL = "http://mochi.test:8888/browser/" +
 var contentSecManager = Cc["@mozilla.org/contentsecuritymanager;1"]
                           .getService(Ci.nsIContentSecurityManager);
 
-function forEachWindow(f)
-{
+function forEachWindow(f) {
   let wins = Services.wm.getEnumerator("navigator:browser");
   while (wins.hasMoreElements()) {
     let win = wins.getNext();
@@ -22,20 +23,17 @@ function forEachWindow(f)
   }
 }
 
-function addLoadListener(target, listener)
-{
-  target.addEventListener("load", function handler(event) {
-    target.removeEventListener("load", handler, true);
+function addLoadListener(target, listener) {
+  target.addEventListener("load", function(event) {
     return listener(event);
-  }, true);
+  }, {capture: true, once: true});
 }
 
 var gWin;
 var gBrowser;
 var ok, is, info;
 
-function removeTab(tab, done)
-{
+function removeTab(tab, done) {
   // Remove the tab in a different turn of the event loop. This way
   // the nested event loop in removeTab doesn't conflict with the
   // event listener shims.
@@ -47,11 +45,10 @@ function removeTab(tab, done)
 
 // Make sure that the shims for window.content, browser.contentWindow,
 // and browser.contentDocument are working.
-function testContentWindow()
-{
+function testContentWindow() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
@@ -64,7 +61,7 @@ function testContentWindow()
       ok(browser.contentDocument.getElementById("link"), "link present in document");
 
       // FIXME: Waiting on bug 1073631.
-      //is(browser.contentWindow.wrappedJSObject.global, 3, "global available on document");
+      // is(browser.contentWindow.wrappedJSObject.global, 3, "global available on document");
 
       removeTab(tab, resolve);
     });
@@ -73,13 +70,12 @@ function testContentWindow()
 
 // Test for bug 1060046 and bug 1072607. We want to make sure that
 // adding and removing listeners works as expected.
-function testListeners()
-{
+function testListeners() {
   return new Promise(function(resolve, reject) {
     const url1 = baseURL + "browser_addonShims_testpage.html";
     const url2 = baseURL + "browser_addonShims_testpage2.html";
 
-    let tab = gBrowser.addTab(url2);
+    let tab = BrowserTestUtils.addTab(gBrowser, url2); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       function dummyHandler() {}
@@ -129,8 +125,7 @@ function testListeners()
 // Test for bug 1059207. We want to make sure that adding a capturing
 // listener and a non-capturing listener to the same element works as
 // expected.
-function testCapturing()
-{
+function testCapturing() {
   return new Promise(function(resolve, reject) {
     let capturingCount = 0;
     let nonCapturingCount = 0;
@@ -148,10 +143,10 @@ function testCapturing()
     }
 
     gBrowser.addEventListener("mousedown", capturingHandler, true);
-    gBrowser.addEventListener("mousedown", nonCapturingHandler, false);
+    gBrowser.addEventListener("mousedown", nonCapturingHandler);
 
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       let win = browser.contentWindow;
@@ -168,7 +163,7 @@ function testCapturing()
       is(nonCapturingCount, 1, "bubbling handler fired");
 
       gBrowser.removeEventListener("mousedown", capturingHandler, true);
-      gBrowser.removeEventListener("mousedown", nonCapturingHandler, false);
+      gBrowser.removeEventListener("mousedown", nonCapturingHandler);
 
       removeTab(tab, resolve);
     });
@@ -177,8 +172,7 @@ function testCapturing()
 
 // Make sure we get observer notifications that normally fire in the
 // child.
-function testObserver()
-{
+function testObserver() {
   return new Promise(function(resolve, reject) {
     let observerFired = 0;
 
@@ -186,11 +180,11 @@ function testObserver()
       Services.obs.removeObserver(observer, "document-element-inserted");
       observerFired++;
     }
-    Services.obs.addObserver(observer, "document-element-inserted", false);
+    Services.obs.addObserver(observer, "document-element-inserted");
 
     let count = 0;
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     browser.addEventListener("load", function handler() {
       count++;
@@ -210,15 +204,12 @@ function testObserver()
 // Test for bug 1072472. Make sure that creating a sandbox to run code
 // in the content window works. This is essentially a test for
 // Greasemonkey.
-function testSandbox()
-{
+function testSandbox() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
-    browser.addEventListener("load", function handler() {
-      browser.removeEventListener("load", handler);
-
+    browser.addEventListener("load", function() {
       let sandbox = Cu.Sandbox(browser.contentWindow,
                                {sandboxPrototype: browser.contentWindow,
                                 wantXrays: false});
@@ -239,17 +230,16 @@ function testSandbox()
          "EP sandbox code ran successfully");
 
       removeTab(tab, resolve);
-    }, true);
+    }, {capture: true, once: true});
   });
 }
 
 // Test for bug 1095305. We just want to make sure that loading some
 // unprivileged content from an add-on package doesn't crash.
-function testAddonContent()
-{
+function testAddonContent() {
   let chromeRegistry = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
     .getService(Components.interfaces.nsIChromeRegistry);
-  let base = chromeRegistry.convertChromeURL(BrowserUtils.makeURI("chrome://addonshim1/content/"));
+  let base = chromeRegistry.convertChromeURL(Services.io.newURI("chrome://addonshim1/content/"));
 
   let res = Services.io.getProtocolHandler("resource")
     .QueryInterface(Ci.nsIResProtocolHandler);
@@ -257,7 +247,7 @@ function testAddonContent()
 
   return new Promise(function(resolve, reject) {
     const url = "resource://addonshim1/page.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
       res.setSubstitution("addonshim1", null);
@@ -270,8 +260,7 @@ function testAddonContent()
 // Test for bug 1102410. We check that multiple nsIAboutModule's can be
 // registered in the parent, and that the child can browse to each of
 // the registered about: pages.
-function testAboutModuleRegistration()
-{
+function testAboutModuleRegistration() {
   let Registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
 
   let modulesToUnregister = new Map();
@@ -283,43 +272,41 @@ function testAboutModuleRegistration()
   }
 
   TestChannel.prototype = {
-    asyncOpen: function(listener, context) {
+    asyncOpen(listener, context) {
       let stream = this.open();
       let runnable = {
         run: () => {
           try {
             listener.onStartRequest(this, context);
-          } catch(e) {}
+          } catch (e) {}
           try {
             listener.onDataAvailable(this, context, stream, 0, stream.available());
-          } catch(e) {}
+          } catch (e) {}
           try {
             listener.onStopRequest(this, context, Cr.NS_OK);
-          } catch(e) {}
+          } catch (e) {}
         }
       };
-      Services.tm.currentThread.dispatch(runnable, Ci.nsIEventTarget.DISPATCH_NORMAL);
+      Services.tm.dispatchToMainThread(runnable);
     },
 
-    asyncOpen2: function(listener) {
+    asyncOpen2(listener) {
       // throws an error if security checks fail
       var outListener = contentSecManager.performSecurityCheck(this, listener);
       return this.asyncOpen(outListener, null);
     },
 
-    open: function() {
+    open() {
       function getWindow(channel) {
-        try
-        {
+        try {
           if (channel.notificationCallbacks)
             return channel.notificationCallbacks.getInterface(Ci.nsILoadContext).associatedWindow;
-        } catch(e) {}
+        } catch (e) {}
 
-        try
-        {
+        try {
           if (channel.loadGroup && channel.loadGroup.notificationCallbacks)
             return channel.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext).associatedWindow;
-        } catch(e) {}
+        } catch (e) {}
 
         return null;
       }
@@ -334,22 +321,22 @@ function testAboutModuleRegistration()
       return stream;
     },
 
-    open2: function() {
+    open2() {
       // throws an error if security checks fail
       contentSecManager.performSecurityCheck(this, null);
       return this.open();
     },
 
-    isPending: function() {
+    isPending() {
       return false;
     },
-    cancel: function() {
+    cancel() {
       throw Cr.NS_ERROR_NOT_IMPLEMENTED;
     },
-    suspend: function() {
+    suspend() {
       throw Cr.NS_ERROR_NOT_IMPLEMENTED;
     },
-    resume: function() {
+    resume() {
       throw Cr.NS_ERROR_NOT_IMPLEMENTED;
     },
 
@@ -391,7 +378,7 @@ function testAboutModuleRegistration()
     };
 
     let factory = {
-      createInstance: function(outer, iid) {
+      createInstance(outer, iid) {
         if (outer) {
           throw Cr.NS_ERROR_NO_AGGREGATION;
         }
@@ -441,15 +428,17 @@ function testAboutModuleRegistration()
    */
   let testAboutModulesWork = (browser) => {
     let testConnection = () => {
+      // This section is loaded into a frame script.
+      /* global content:false */
       let request = new content.XMLHttpRequest();
       try {
         request.open("GET", "about:test1", false);
         request.send(null);
         if (request.status != 200) {
-          throw(`about:test1 response had status ${request.status} - expected 200`);
+          throw (`about:test1 response had status ${request.status} - expected 200`);
         }
         if (request.responseText.indexOf("test1") == -1) {
-          throw(`about:test1 response had result ${request.responseText}`);
+          throw (`about:test1 response had result ${request.responseText}`);
         }
 
         request = new content.XMLHttpRequest();
@@ -457,16 +446,16 @@ function testAboutModuleRegistration()
         request.send(null);
 
         if (request.status != 200) {
-          throw(`about:test2 response had status ${request.status} - expected 200`);
+          throw (`about:test2 response had status ${request.status} - expected 200`);
         }
         if (request.responseText.indexOf("test2") == -1) {
-          throw(`about:test2 response had result ${request.responseText}`);
+          throw (`about:test2 response had result ${request.responseText}`);
         }
 
         sendAsyncMessage("test:result", {
           pass: true,
         });
-      } catch(e) {
+      } catch (e) {
         sendAsyncMessage("test:result", {
           pass: false,
           errorMsg: e.toString(),
@@ -498,7 +487,7 @@ function testAboutModuleRegistration()
     // content process. It needs chrome privs because otherwise the
     // XHRs for about:test[12] will fail with a privilege error
     // despite the presence of URI_SAFE_FOR_UNTRUSTED_CONTENT.
-    let newTab = gBrowser.addTab("chrome://addonshim1/content/page.html");
+    let newTab = BrowserTestUtils.addTab(gBrowser, "chrome://addonshim1/content/page.html"); // eslint-disable-line no-undef
     gBrowser.selectedTab = newTab;
     let browser = newTab.linkedBrowser;
 
@@ -511,15 +500,14 @@ function testAboutModuleRegistration()
   });
 }
 
-function testProgressListener()
-{
+function testProgressListener() {
   const url = baseURL + "browser_addonShims_testpage.html";
 
   let sawGlobalLocChange = false;
   let sawTabsLocChange = false;
 
   let globalListener = {
-    onLocationChange: function(webProgress, request, uri) {
+    onLocationChange(webProgress, request, uri) {
       if (uri.spec == url) {
         sawGlobalLocChange = true;
         ok(request instanceof Ci.nsIHttpChannel, "Global listener channel is an HTTP channel");
@@ -528,7 +516,7 @@ function testProgressListener()
   };
 
   let tabsListener = {
-    onLocationChange: function(browser, webProgress, request, uri) {
+    onLocationChange(browser, webProgress, request, uri) {
       if (uri.spec == url) {
         sawTabsLocChange = true;
         ok(request instanceof Ci.nsIHttpChannel, "Tab listener channel is an HTTP channel");
@@ -541,7 +529,7 @@ function testProgressListener()
   info("Added progress listeners");
 
   return new Promise(function(resolve, reject) {
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     addLoadListener(tab.linkedBrowser, function handler() {
       ok(sawGlobalLocChange, "Saw global onLocationChange");
@@ -554,11 +542,10 @@ function testProgressListener()
   });
 }
 
-function testRootTreeItem()
-{
+function testRootTreeItem() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
@@ -578,11 +565,10 @@ function testRootTreeItem()
   });
 }
 
-function testImportNode()
-{
+function testImportNode() {
   return new Promise(function(resolve, reject) {
     const url = baseURL + "browser_addonShims_testpage.html";
-    let tab = gBrowser.addTab(url);
+    let tab = BrowserTestUtils.addTab(gBrowser, url); // eslint-disable-line no-undef
     gBrowser.selectedTab = tab;
     let browser = tab.linkedBrowser;
     addLoadListener(browser, function handler() {
@@ -603,8 +589,7 @@ function testImportNode()
   });
 }
 
-function runTests(win, funcs)
-{
+function runTests(win, funcs) {
   ok = funcs.ok;
   is = funcs.is;
   info = funcs.info;
@@ -629,25 +614,20 @@ function runTests(win, funcs)
  bootstrap.js API
 */
 
-function startup(aData, aReason)
-{
+function startup(aData, aReason) {
   forEachWindow(win => {
     win.runAddonShimTests = (funcs) => runTests(win, funcs);
   });
 }
 
-function shutdown(aData, aReason)
-{
+function shutdown(aData, aReason) {
   forEachWindow(win => {
     delete win.runAddonShimTests;
   });
 }
 
-function install(aData, aReason)
-{
+function install(aData, aReason) {
 }
 
-function uninstall(aData, aReason)
-{
+function uninstall(aData, aReason) {
 }
-

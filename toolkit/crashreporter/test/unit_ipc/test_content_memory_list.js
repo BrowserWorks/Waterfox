@@ -1,10 +1,10 @@
 // Any copyright is dedicated to the Public Domain.
 // http://creativecommons.org/publicdomain/zero/1.0/
 
+/* import-globals-from ../unit/head_crashreporter.js */
 load("../unit/head_crashreporter.js");
 
-function run_test()
-{
+function run_test() {
   var is_win7_or_newer = false;
   var ph = Components.classes["@mozilla.org/network/protocol;1?name=http"]
              .getService(Components.interfaces.nsIHttpProtocolHandler);

@@ -78,8 +78,11 @@ class NS_CYCLE_COLLECTION_INNERCLASS                                        \
  : public nsXPCOMCycleCollectionParticipant                                 \
 {                                                                           \
 public:                                                                     \
+  constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS (bool aSkip = false)    \
+    : nsXPCOMCycleCollectionParticipant(aSkip) {}                           \
+                                                                            \
   NS_IMETHOD_(void) Unlink(void *p) override;                               \
-  NS_IMETHOD Traverse(void *p, nsCycleCollectionTraversalCallback &cb)      \
+  NS_IMETHOD TraverseNative(void *p, nsCycleCollectionTraversalCallback &cb)\
     override;                                                               \
   NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(_class)                        \
   NS_IMETHOD_(void) DeleteCycleCollectable(void* p) override                \
@@ -105,9 +108,9 @@ static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
 // Put this in your class's constructor:
 #define NS_INIT_AGGREGATED(outer)                                           \
-  PR_BEGIN_MACRO                                                            \
+  do {                                                                      \
     fOuter = outer ? outer : &fAggregated;                                  \
-  PR_END_MACRO
+  } while(0)
 
 
 // Put this in your class's implementation file:
@@ -278,7 +281,7 @@ _class::AggregatedQueryInterface(REFNSIID aIID, void** aInstancePtr)        \
 
 #define NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_AGGREGATED(_class)          \
   NS_IMETHODIMP                                                             \
-  NS_CYCLE_COLLECTION_CLASSNAME(_class)::Traverse                           \
+  NS_CYCLE_COLLECTION_CLASSNAME(_class)::TraverseNative                     \
                          (void *p, nsCycleCollectionTraversalCallback &cb)  \
   {                                                                         \
     nsISupports *s = static_cast<nsISupports*>(p);                          \

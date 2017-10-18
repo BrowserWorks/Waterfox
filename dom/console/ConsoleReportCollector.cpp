@@ -6,6 +6,8 @@
 
 #include "mozilla/ConsoleReportCollector.h"
 
+#include "nsIConsoleService.h"
+#include "nsIScriptError.h"
 #include "nsNetUtil.h"
 
 namespace mozilla {
@@ -37,46 +39,75 @@ ConsoleReportCollector::AddConsoleReport(uint32_t aErrorFlags,
 }
 
 void
-ConsoleReportCollector::FlushConsoleReports(nsIDocument* aDocument)
+ConsoleReportCollector::FlushReportsToConsole(uint64_t aInnerWindowID,
+                                              ReportAction aAction)
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   nsTArray<PendingReport> reports;
 
   {
     MutexAutoLock lock(mMutex);
-    mPendingReports.SwapElements(reports);
+    if (aAction == ReportAction::Forget) {
+      mPendingReports.SwapElements(reports);
+    } else {
+      reports = mPendingReports;
+    }
   }
 
   for (uint32_t i = 0; i < reports.Length(); ++i) {
     PendingReport& report = reports[i];
 
-    // It would be nice if we did not have to do this since ReportToConsole()
-    // just turns around and converts it back to a spec.
-    nsCOMPtr<nsIURI> uri;
-    nsresult rv = NS_NewURI(getter_AddRefs(uri), report.mSourceFileURI);
-    if (NS_FAILED(rv)) {
+    nsXPIDLString errorText;
+    nsresult rv;
+    if (!report.mStringParams.IsEmpty()) {
+      rv = nsContentUtils::FormatLocalizedString(report.mPropertiesFile,
+                                                 report.mMessageName.get(),
+                                                 report.mStringParams,
+                                                 errorText);
+    } else {
+      rv = nsContentUtils::GetLocalizedString(report.mPropertiesFile,
+                                              report.mMessageName.get(),
+                                              errorText);
+    }
+    if (NS_WARN_IF(NS_FAILED(rv))) {
       continue;
     }
 
-    // Convert back from nsTArray<nsString> to the char16_t** format required
-    // by our l10n libraries and ReportToConsole. (bug 1219762)
-    UniquePtr<const char16_t*[]> params;
-    uint32_t paramsLength = report.mStringParams.Length();
-    if (paramsLength > 0) {
-      params = MakeUnique<const char16_t*[]>(paramsLength);
-      for (uint32_t j = 0; j < paramsLength; ++j) {
-        params[j] = report.mStringParams[j].get();
+    // It would be nice if we did not have to do this since ReportToConsole()
+    // just turns around and converts it back to a spec.
+    nsCOMPtr<nsIURI> uri;
+    if (!report.mSourceFileURI.IsEmpty()) {
+      nsresult rv = NS_NewURI(getter_AddRefs(uri), report.mSourceFileURI);
+      MOZ_ALWAYS_SUCCEEDS(rv);
+      if (NS_FAILED(rv)) {
+        continue;
       }
     }
 
-    nsContentUtils::ReportToConsole(report.mErrorFlags, report.mCategory,
-                                    aDocument, report.mPropertiesFile,
-                                    report.mMessageName.get(),
-                                    params.get(),
-                                    paramsLength, uri, EmptyString(),
-                                    report.mLineNumber, report.mColumnNumber);
+    nsContentUtils::ReportToConsoleByWindowID(errorText,
+                                              report.mErrorFlags,
+                                              report.mCategory,
+                                              aInnerWindowID,
+                                              uri,
+                                              EmptyString(),
+                                              report.mLineNumber,
+                                              report.mColumnNumber);
   }
+}
+
+void
+ConsoleReportCollector::FlushConsoleReports(nsIDocument* aDocument,
+                                            ReportAction aAction)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  FlushReportsToConsole(aDocument ? aDocument->InnerWindowID() : 0, aAction);
+}
+
+void
+ConsoleReportCollector::FlushConsoleReports(nsILoadGroup* aLoadGroup,
+                                            ReportAction aAction)
+{
+  FlushReportsToConsole(nsContentUtils::GetInnerWindowID(aLoadGroup), aAction);
 }
 
 void
@@ -98,6 +129,14 @@ ConsoleReportCollector::FlushConsoleReports(nsIConsoleReportCollector* aCollecto
                                  report.mLineNumber, report.mColumnNumber,
                                  report.mMessageName, report.mStringParams);
   }
+}
+
+void
+ConsoleReportCollector::ClearConsoleReports()
+{
+  MutexAutoLock lock(mMutex);
+
+  mPendingReports.Clear();
 }
 
 ConsoleReportCollector::~ConsoleReportCollector()

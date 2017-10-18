@@ -160,6 +160,11 @@ struct EKUTestcase
   Result expectedResultCA;
 };
 
+::std::ostream& operator<<(::std::ostream& os, const EKUTestcase&)
+{
+  return os << "TODO (bug 1318770)";
+}
+
 class CheckExtendedKeyUsageTest
   : public ::testing::Test
   , public ::testing::WithParamInterface<EKUTestcase>
@@ -480,6 +485,11 @@ struct EKUChainTestcase
   Result expectedResult;
 };
 
+::std::ostream& operator<<(::std::ostream& os, const EKUChainTestcase&)
+{
+  return os << "TODO (bug 1318770)";
+}
+
 class CheckExtendedKeyUsageChainTest
   : public ::testing::Test
   , public ::testing::WithParamInterface<EKUChainTestcase>
@@ -553,7 +563,7 @@ private:
     return Success;
   }
 
-  Result IsChainValid(const DERArray&, Time) override
+  Result IsChainValid(const DERArray&, Time, const CertPolicyId&) override
   {
     return Success;
   }

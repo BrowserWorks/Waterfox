@@ -6,12 +6,12 @@
 
 #include "nsEnvironment.h"
 #include "prenv.h"
-#include "prprf.h"
 #include "nsBaseHashtable.h"
 #include "nsHashKeys.h"
 #include "nsPromiseFlatString.h"
 #include "nsDependentString.h"
 #include "nsNativeCharsetUtils.h"
+#include "mozilla/Printf.h"
 
 using namespace mozilla;
 
@@ -145,18 +145,18 @@ nsEnvironment::Set(const nsAString& aName, const nsAString& aValue)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  char* newData = PR_smprintf("%s=%s",
-                              nativeName.get(),
-                              nativeVal.get());
+  SmprintfPointer newData = mozilla::Smprintf("%s=%s",
+                                              nativeName.get(),
+                                              nativeVal.get());
   if (!newData) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  PR_SetEnv(newData);
+  PR_SetEnv(newData.get());
   if (entry->mData) {
-    PR_smprintf_free(entry->mData);
+    free(entry->mData);
   }
-  entry->mData = newData;
+  entry->mData = newData.release();
   return NS_OK;
 }
 

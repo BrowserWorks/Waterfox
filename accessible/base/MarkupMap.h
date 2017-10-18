@@ -19,7 +19,7 @@ MARKUPMAP(acronym,
 
 MARKUPMAP(article,
           New_HyperText,
-          roles::DOCUMENT,
+          roles::ARTICLE,
           Attr(xmlroles, article))
 
 MARKUPMAP(aside,
@@ -94,6 +94,10 @@ MARKUPMAP(h5,
 MARKUPMAP(h6,
           New_HyperText,
           roles::HEADING)
+
+MARKUPMAP(input,
+          New_HTMLInput,
+          0)
 
 MARKUPMAP(label,
           New_HTMLLabel,

@@ -31,11 +31,12 @@ interface nsIObjectLoadingContent : nsISupports
   /**
    * See notes in nsObjectLoadingContent.h
    */
-  const unsigned long TYPE_LOADING  = 0;
-  const unsigned long TYPE_IMAGE    = 1;
-  const unsigned long TYPE_PLUGIN   = 2;
-  const unsigned long TYPE_DOCUMENT = 3;
-  const unsigned long TYPE_NULL     = 4;
+  const unsigned long TYPE_LOADING     = 0;
+  const unsigned long TYPE_IMAGE       = 1;
+  const unsigned long TYPE_PLUGIN      = 2;
+  const unsigned long TYPE_FAKE_PLUGIN = 3;
+  const unsigned long TYPE_DOCUMENT    = 4;
+  const unsigned long TYPE_NULL        = 5;
 
   const unsigned long PLUGIN_ACTIVE               = 0xFF;
 
@@ -126,11 +127,6 @@ interface nsIObjectLoadingContent : nsISupports
                                 in boolean submittedCrashReport);
 
   /**
-   * This method will play a plugin that has been stopped by click-to-play.
-   */
-  void playPlugin();
-
-  /**
    * Forces a re-evaluation and reload of the tag, optionally invalidating its
    * click-to-play state.  This can be used when the MIME type that provides a
    * type has changed, for instance, to force the tag to re-evalulate the
@@ -170,22 +166,7 @@ interface nsIObjectLoadingContent : nsISupports
   readonly attribute nsIURI srcURI;
 
   /**
-   * The plugin's current state of fallback content. This property
-   * only makes sense if the plugin is not activated.
+   * Disable the use of fake plugins and reload the tag if necessary.
    */
-  readonly attribute unsigned long pluginFallbackType;
-
-  /**
-   * If this object currently owns a running plugin, regardless of whether or
-   * not one is pending spawn/despawn.
-   */
-  readonly attribute bool hasRunningPlugin;
-
-  /**
-   * If this plugin runs out-of-process, it has a runID to differentiate
-   * between different times the plugin process has been instantiated.
-   *
-   * This throws NS_ERROR_NOT_IMPLEMENTED for in-process plugins.
-   */
-  readonly attribute unsigned long runID;
+  void skipFakePlugins();
 };

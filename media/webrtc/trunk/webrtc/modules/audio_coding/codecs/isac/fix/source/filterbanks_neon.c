@@ -14,7 +14,8 @@
 // C code is at end of this file.
 
 #include <arm_neon.h>
-#include <assert.h>
+
+#include "webrtc/base/checks.h"
 
 void WebRtcIsacfix_AllpassFilter2FixDec16Neon(
     int16_t* data_ch1,  // Input and output in channel 1, in Q0
@@ -24,17 +25,18 @@ void WebRtcIsacfix_AllpassFilter2FixDec16Neon(
     const int length,  // Length of the data buffers
     int32_t* filter_state_ch1,  // Filter state for channel 1, in Q16
     int32_t* filter_state_ch2) {  // Filter state for channel 2, in Q16
-  assert(length % 2 == 0);
+  RTC_DCHECK_EQ(0, length % 2);
   int n = 0;
   int16x4_t factorv;
   int16x4_t datav;
   int32x4_t statev;
-  int32x2_t tmp;
 
   // Load factor_ch1 and factor_ch2.
-  tmp = vld1_dup_s32((int32_t*)factor_ch1);
-  tmp = vld1_lane_s32((int32_t*)factor_ch2, tmp, 1);
-  factorv = vreinterpret_s16_s32(tmp);
+  factorv = vld1_dup_s16(factor_ch1);
+  factorv = vld1_lane_s16(factor_ch1 + 1, factorv, 1);
+  factorv = vld1_lane_s16(factor_ch2, factorv, 2);
+  factorv = vld1_lane_s16(factor_ch2 + 1, factorv, 3);
+
   // Load filter_state_ch1[0] and filter_state_ch2[0].
   statev = vld1q_dup_s32(filter_state_ch1);
   statev = vld1q_lane_s32(filter_state_ch2, statev, 2);

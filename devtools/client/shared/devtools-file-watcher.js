@@ -14,7 +14,7 @@ const HOTRELOAD_PREF = "devtools.loader.hotreload";
 function resolveResourcePath(uri) {
   const handler = Services.io.getProtocolHandler("resource")
         .QueryInterface(Ci.nsIResProtocolHandler);
-  const resolved = handler.resolveURI(Services.io.newURI(uri, null, null));
+  const resolved = handler.resolveURI(Services.io.newURI(uri));
   return resolved.replace(/file:\/\//, "");
 }
 
@@ -72,7 +72,7 @@ const onPrefChange = function () {
 
 Services.prefs.addObserver(HOTRELOAD_PREF, {
   observe: onPrefChange
-}, false);
+});
 onPrefChange();
 
 EventEmitter.decorate(module.exports);

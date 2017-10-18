@@ -30,19 +30,31 @@ public:
 
   /// Must be matched 1:1 by an EndPrinting/AbortPrinting call.
   virtual nsresult BeginPrinting(const nsAString& aTitle,
-                                 const nsAString& aPrintToFileName) {
+                                 const nsAString& aPrintToFileName,
+                                 int32_t aStartPage,
+                                 int32_t aEndPage) {
     return NS_OK;
   }
   virtual nsresult EndPrinting() {
     return NS_OK;
   }
   virtual nsresult AbortPrinting() {
+#ifdef DEBUG
+    mHasActivePage = false;
+#endif
     return NS_OK;
   }
   virtual nsresult BeginPage() {
+#ifdef DEBUG
+    MOZ_ASSERT(!mHasActivePage, "Missing EndPage() call");
+    mHasActivePage = true;
+#endif
     return NS_OK;
   }
   virtual nsresult EndPage() {
+#ifdef DEBUG
+    mHasActivePage = false;
+#endif
     return NS_OK;
   }
 
@@ -78,6 +90,10 @@ public:
    * the e10s content process if printing output can't otherwise be transfered
    * over to the parent process using the normal DrawTarget type.
    *
+   * NOTE: this should only be called between BeginPage()/EndPage() calls, and
+   * the returned DrawTarget should not be drawn to after EndPage() has been
+   * called.
+   *
    * XXX For consistency with the old code this takes a size parameter even
    * though we already have the size passed to our subclass's CreateOrNull
    * factory methods.  The size passed to the factory method comes from
@@ -111,6 +127,14 @@ public:
   MakeDrawTarget(const IntSize& aSize,
                  DrawEventRecorder* aRecorder = nullptr);
 
+  /**
+   * Returns a reference DrawTarget. Unlike MakeDrawTarget, this method is not
+   * restricted to being called between BeginPage()/EndPage() calls, and the
+   * returned DrawTarget it is still valid to use after EndPage() has been
+   * called.
+   */
+  virtual already_AddRefed<DrawTarget> GetReferenceDrawTarget(DrawEventRecorder* aRecorder);
+
 protected:
 
   // Only created via subclass's constructors
@@ -119,13 +143,26 @@ protected:
   // Protected because we're refcounted
   virtual ~PrintTarget();
 
-  already_AddRefed<DrawTarget>
-  CreateRecordingDrawTarget(DrawEventRecorder* aRecorder,
-                            DrawTarget* aDrawTarget);
+  static already_AddRefed<DrawTarget>
+  CreateWrapAndRecordDrawTarget(DrawEventRecorder* aRecorder,
+                                DrawTarget* aDrawTarget);
 
   cairo_surface_t* mCairoSurface;
+  RefPtr<DrawTarget> mRefDT; // reference DT
+
+  // Early on during printing we expect to be called without a recorder in
+  // order to gather metrics for reflow.  However, in a content process, once
+  // we go on to paint we then expect to be called with a recorder.  Hence why
+  // we have this separate recording reference DrawTarget (which wraps mRefDT).
+  RefPtr<DrawTarget> mRecordingRefDT;
+
   IntSize mSize;
   bool mIsFinished;
+#ifdef DEBUG
+  bool mHasActivePage;
+  // owned by mRecordingRefDT, so kept alive for our entire lifetime if set:
+  DrawEventRecorder* mRecorder;
+#endif
 };
 
 } // namespace gfx

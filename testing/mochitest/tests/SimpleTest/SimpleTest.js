@@ -92,6 +92,8 @@ if (typeof(repr) == 'undefined') {
                 ostring = (1 / o > 0) ? "+0" : "-0";
             } else if (typeof o === "string") {
                 ostring = JSON.stringify(o);
+            } else if (Array.isArray(o)) {
+                ostring = "[" + o.map(val => repr(val)).join(", ") + "]";
             } else {
                 ostring = (o + "");
             }
@@ -202,7 +204,7 @@ if (typeof(computedStyle) == 'undefined') {
         if (typeof(document.defaultView) == 'undefined' || document === null) {
             return undefined;
         }
-        var style = document.defaultView.getComputedStyle(elem, null);
+        var style = document.defaultView.getComputedStyle(elem);
         if (typeof(style) == 'undefined' || style === null) {
             return undefined;
         }
@@ -218,13 +220,46 @@ SimpleTest._tests = [];
 SimpleTest._stopOnLoad = true;
 SimpleTest._cleanupFunctions = [];
 SimpleTest._timeoutFunctions = [];
+SimpleTest._inChaosMode = false;
+// When using failure pattern file to filter unexpected issues,
+// SimpleTest.expected would be an array of [pattern, expected count],
+// and SimpleTest.num_failed would be an array of actual counts which
+// has the same length as SimpleTest.expected.
 SimpleTest.expected = 'pass';
 SimpleTest.num_failed = 0;
-SimpleTest._inChaosMode = false;
+
+function usesFailurePatterns() {
+  return Array.isArray(SimpleTest.expected);
+}
+
+/**
+ * Checks whether there is any failure pattern matches the given error
+ * message, and if found, bumps the counter of the failure pattern.
+ * Returns whether a matched failure pattern is found.
+ */
+function recordIfMatchesFailurePattern(name, diag) {
+  let index = SimpleTest.expected.findIndex(([pat, count]) => {
+    return pat == null ||
+      (typeof name == "string" && name.includes(pat)) ||
+      (typeof diag == "string" && diag.includes(pat));
+  });
+  if (index >= 0) {
+    SimpleTest.num_failed[index]++;
+    return true;
+  }
+  return false;
+}
 
 SimpleTest.setExpected = function () {
   if (parent.TestRunner) {
-    SimpleTest.expected = parent.TestRunner.expected;
+    if (!Array.isArray(parent.TestRunner.expected)) {
+      SimpleTest.expected = parent.TestRunner.expected;
+    } else {
+      // Assertions are checked by the runner.
+      SimpleTest.expected = parent.TestRunner.expected.filter(([pat]) => pat != "ASSERTION");
+      SimpleTest.num_failed = new Array(SimpleTest.expected.length);
+      SimpleTest.num_failed.fill(0);
+    }
   }
 }
 SimpleTest.setExpected();
@@ -232,7 +267,7 @@ SimpleTest.setExpected();
 /**
  * Something like assert.
 **/
-SimpleTest.ok = function (condition, name, diag) {
+SimpleTest.ok = function (condition, name, diag, stack = null) {
 
     var test = {'result': !!condition, 'name': name, 'diag': diag};
     if (SimpleTest.expected == 'fail') {
@@ -242,13 +277,22 @@ SimpleTest.ok = function (condition, name, diag) {
       }
       var successInfo = {status:"FAIL", expected:"FAIL", message:"TEST-KNOWN-FAIL"};
       var failureInfo = {status:"PASS", expected:"FAIL", message:"TEST-UNEXPECTED-PASS"};
+    } else if (!test.result && usesFailurePatterns()) {
+      if (recordIfMatchesFailurePattern(name, diag)) {
+        test.result = true;
+        // Add a mark for unexpected failures suppressed by failure pattern.
+        name = '[suppressed] ' + name;
+      }
+      var successInfo = {status:"FAIL", expected:"FAIL", message:"TEST-KNOWN-FAIL"};
+      var failureInfo = {status:"FAIL", expected:"PASS", message:"TEST-UNEXPECTED-FAIL"};
     } else {
       var successInfo = {status:"PASS", expected:"PASS", message:"TEST-PASS"};
       var failureInfo = {status:"FAIL", expected:"PASS", message:"TEST-UNEXPECTED-FAIL"};
     }
 
-    var stack = null;
-    if (!condition) {
+    if (condition) {
+        stack = null;
+    } else if (!stack) {
       stack = (new Error).stack.replace(/^(.*@)http:\/\/mochi.test:8888\/tests\//gm, '    $1').split('\n');
       stack.splice(0, 1);
       stack = stack.join('\n');
@@ -295,6 +339,16 @@ SimpleTest.doesThrow = function(fn, name) {
 
 SimpleTest.todo = function(condition, name, diag) {
     var test = {'result': !!condition, 'name': name, 'diag': diag, todo: true};
+    if (test.result && usesFailurePatterns() &&
+        recordIfMatchesFailurePattern(name, diag)) {
+      // Flipping the result to false so we don't get unexpected result. There
+      // is no perfect way here. A known failure can trigger unexpected pass,
+      // in which case, tagging it as KNOWN-FAIL probably makes more sense than
+      // marking it PASS.
+      test.result = false;
+      // Add a mark for unexpected failures suppressed by failure pattern.
+      name = '[suppressed] ' + name;
+    }
     var successInfo = {status:"PASS", expected:"FAIL", message:"TEST-UNEXPECTED-PASS"};
     var failureInfo = {status:"FAIL", expected:"FAIL", message:"TEST-KNOWN-FAIL"};
     SimpleTest._logResult(test, successInfo, failureInfo);
@@ -305,7 +359,7 @@ SimpleTest.todo = function(condition, name, diag) {
  * Returns the absolute URL to a test data file from where tests
  * are served. i.e. the file doesn't necessarely exists where tests
  * are executed.
- * (For b2g and android, mochitest are executed on the device, while
+ * (For android, mochitest are executed on the device, while
  * all mochitest html (and others) files are served from the test runner
  * slave)
  */
@@ -651,7 +705,7 @@ SimpleTest._pendingWaitForFocusCount = 0;
  * cannot be resolved with CPOWs). If you require the focused window,
  * you should use waitForFocus instead.
  */
-SimpleTest.promiseFocus = function *(targetWindow, expectBlankPage)
+SimpleTest.promiseFocus = function (targetWindow, expectBlankPage)
 {
     return new Promise(function (resolve, reject) {
         SimpleTest.waitForFocus(win => {
@@ -938,10 +992,16 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
         SimpleTest.waitForClipboard_polls = 0;
     }
 
+    var lastValue;
     function wait(validatorFn, successFn, failureFn, flavor) {
+        if (SimpleTest.waitForClipboard_polls == 0) {
+          lastValue = undefined;
+        }
+
         if (++SimpleTest.waitForClipboard_polls > maxPolls) {
             // Log the failure.
             SimpleTest.ok(aExpectFailure, "Timed out while polling clipboard for pasted data");
+            dump("Got this value: " + lastValue);
             reset();
             failureFn();
             return;
@@ -958,6 +1018,7 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
             reset();
             successFn();
         } else {
+            lastValue = data;
             SimpleTest._originalSetTimeout.apply(window, [function() { return wait(validatorFn, successFn, failureFn, flavor); }, 100]);
         }
     }
@@ -1070,6 +1131,24 @@ SimpleTest.finish = function() {
 
         SimpleTest._logResult(test, successInfo, failureInfo);
         SimpleTest._tests.push(test);
+    } else if (usesFailurePatterns()) {
+        SimpleTest.expected.forEach(([pat, expected_count], i) => {
+            let count = SimpleTest.num_failed[i];
+            let diag;
+            if (expected_count === null && count == 0) {
+                diag = "expected some failures but got none";
+            } else if (expected_count !== null && expected_count != count) {
+                diag = `expected ${expected_count} failures but got ${count}`;
+            } else {
+                return;
+            }
+            var name = pat ? `failure pattern \`${pat}\` in this test` : "failures in this test";
+            var test = {'result': false, name, diag};
+            var successInfo = {status:"PASS", expected:"PASS", message:"TEST-PASS"};
+            var failureInfo = {status:"FAIL", expected:"PASS", message:"TEST-UNEXPECTED-FAIL"};
+            SimpleTest._logResult(test, successInfo, failureInfo);
+            SimpleTest._tests.push(test);
+        });
     }
 
     SimpleTest._timeoutFunctions = [];
@@ -1371,38 +1450,22 @@ if (isPrimaryTestWindow) {
 
 SimpleTest.DNE = {dne: 'Does not exist'};
 SimpleTest.LF = "\r\n";
-SimpleTest._isRef = function (object) {
-    var type = typeof(object);
-    return type == 'object' || type == 'function';
-};
 
 
 SimpleTest._deepCheck = function (e1, e2, stack, seen) {
     var ok = false;
-    // Either they're both references or both not.
-    var sameRef = !(!SimpleTest._isRef(e1) ^ !SimpleTest._isRef(e2));
-    if (e1 == null && e2 == null) {
+    if (Object.is(e1, e2)) {
+        // Handles identical primitives and references.
         ok = true;
-    } else if (e1 != null ^ e2 != null) {
+    } else if (typeof e1 != "object" || typeof e2 != "object" || e1 === null || e2 === null) {
+        // If either argument is a primitive or function, don't consider the arguments the same.
         ok = false;
-    } else if (e1 == SimpleTest.DNE ^ e2 == SimpleTest.DNE) {
+    } else if (e1 == SimpleTest.DNE || e2 == SimpleTest.DNE) {
         ok = false;
-    } else if (sameRef && e1 == e2) {
-        // Handles primitives and any variables that reference the same
-        // object, including functions.
-        ok = true;
     } else if (SimpleTest.isa(e1, 'Array') && SimpleTest.isa(e2, 'Array')) {
         ok = SimpleTest._eqArray(e1, e2, stack, seen);
-    } else if (typeof e1 == "object" && typeof e2 == "object") {
-        ok = SimpleTest._eqAssoc(e1, e2, stack, seen);
-    } else if (typeof e1 == "number" && typeof e2 == "number"
-               && isNaN(e1) && isNaN(e2)) {
-        ok = true;
     } else {
-        // If we get here, they're not the same (function references must
-        // always simply reference the same function).
-        stack.push({ vals: [e1, e2] });
-        ok = false;
+        ok = SimpleTest._eqAssoc(e1, e2, stack, seen);
     }
     return ok;
 };
@@ -1430,11 +1493,11 @@ SimpleTest._eqArray = function (a1, a2, stack, seen) {
     var ok = true;
     // Only examines enumerable attributes. Only works for numeric arrays!
     // Associative arrays return 0. So call _eqAssoc() for them, instead.
-    var max = a1.length > a2.length ? a1.length : a2.length;
+    var max = Math.max(a1.length, a2.length);
     if (max == 0) return SimpleTest._eqAssoc(a1, a2, stack, seen);
     for (var i = 0; i < max; i++) {
-        var e1 = i > a1.length - 1 ? SimpleTest.DNE : a1[i];
-        var e2 = i > a2.length - 1 ? SimpleTest.DNE : a2[i];
+        var e1 = i < a1.length ? a1[i] : SimpleTest.DNE;
+        var e2 = i < a2.length ? a2[i] : SimpleTest.DNE;
         stack.push({ type: 'Array', idx: i, vals: [e1, e2] });
         ok = SimpleTest._deepCheck(e1, e2, stack, seen);
         if (ok) {
@@ -1475,8 +1538,8 @@ SimpleTest._eqAssoc = function (o1, o2, stack, seen) {
     var o2Size = 0; for (var i in o2) o2Size++;
     var bigger = o1Size > o2Size ? o1 : o2;
     for (var i in bigger) {
-        var e1 = o1[i] == undefined ? SimpleTest.DNE : o1[i];
-        var e2 = o2[i] == undefined ? SimpleTest.DNE : o2[i];
+        var e1 = i in o1 ? o1[i] : SimpleTest.DNE;
+        var e2 = i in o2 ? o2[i] : SimpleTest.DNE;
         stack.push({ type: 'Object', idx: i, vals: [e1, e2] });
         ok = SimpleTest._deepCheck(e1, e2, stack, seen)
         if (ok) {
@@ -1495,7 +1558,7 @@ SimpleTest._formatStack = function (stack) {
         var type = entry['type'];
         var idx = entry['idx'];
         if (idx != null) {
-            if (/^\d+$/.test(idx)) {
+            if (type == 'Array') {
                 // Numeric array index.
                 variable += '[' + idx + ']';
             } else {
@@ -1515,39 +1578,26 @@ SimpleTest._formatStack = function (stack) {
     var out = "Structures begin differing at:" + SimpleTest.LF;
     for (var i = 0; i < vals.length; i++) {
         var val = vals[i];
-        if (val == null) {
-            val = 'undefined';
+        if (val === SimpleTest.DNE) {
+            val = "Does not exist";
         } else {
-            val == SimpleTest.DNE ? "Does not exist" : "'" + val + "'";
+            val = repr(val);
         }
+        out += vars[i] + ' = ' + val + SimpleTest.LF;
     }
-
-    out += vars[0] + ' = ' + vals[0] + SimpleTest.LF;
-    out += vars[1] + ' = ' + vals[1] + SimpleTest.LF;
 
     return '    ' + out;
 };
 
 
 SimpleTest.isDeeply = function (it, as, name) {
-    var ok;
-    // ^ is the XOR operator.
-    if (SimpleTest._isRef(it) ^ SimpleTest._isRef(as)) {
-        // One's a reference, one isn't.
-        ok = false;
-    } else if (!SimpleTest._isRef(it) && !SimpleTest._isRef(as)) {
-        // Neither is an object.
-        ok = SimpleTest.is(it, as, name);
+    var stack = [{ vals: [it, as] }];
+    var seen = [];
+    if ( SimpleTest._deepCheck(it, as, stack, seen)) {
+        SimpleTest.ok(true, name);
     } else {
-        // We have two objects. Do a deep comparison.
-        var stack = [], seen = [];
-        if ( SimpleTest._deepCheck(it, as, stack, seen)) {
-            ok = SimpleTest.ok(true, name);
-        } else {
-            ok = SimpleTest.ok(false, name, SimpleTest._formatStack(stack));
-        }
+        SimpleTest.ok(false, name, SimpleTest._formatStack(stack));
     }
-    return ok;
 };
 
 SimpleTest.typeOf = function (object) {
@@ -1645,7 +1695,7 @@ function getAndroidSdk() {
             gAndroidSdk = -1;
         } else {
             // See nsSystemInfo.cpp, the getProperty('version') returns different value
-            // on each platforms, so we need to distinguish the android and B2G platform.
+            // on each platforms, so we need to distinguish the android platform.
             var versionString = nav.userAgent.indexOf("Android") != -1 ?
                                 'version' : 'sdk_version';
             gAndroidSdk = SpecialPowers.Cc['@mozilla.org/system-info;1']
@@ -1655,4 +1705,10 @@ function getAndroidSdk() {
         document.documentElement.removeChild(iframe);
     }
     return gAndroidSdk;
+}
+
+// Request complete log when using failure patterns so that failure info
+// from infra can be useful.
+if (usesFailurePatterns()) {
+  SimpleTest.requestCompleteLog();
 }

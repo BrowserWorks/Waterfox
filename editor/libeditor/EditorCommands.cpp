@@ -5,9 +5,10 @@
 
 #include "EditorCommands.h"
 
-#include "mozFlushType.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/FlushType.h"
+#include "mozilla/TextEditor.h"
 #include "nsCOMPtr.h"
 #include "nsCRT.h"
 #include "nsDebug.h"
@@ -866,7 +867,7 @@ SelectionMoveCommands::DoCommand(const char* aCommandName,
   if (doc) {
     // Most of the commands below (possibly all of them) need layout to
     // be up to date.
-    doc->FlushPendingNotifications(Flush_Layout);
+    doc->FlushPendingNotifications(FlushType::Layout);
   }
 
   nsCOMPtr<nsISelectionController> selCont;
@@ -951,7 +952,13 @@ NS_IMETHODIMP
 InsertPlaintextCommand::DoCommand(const char* aCommandName,
                                   nsISupports* aCommandRefCon)
 {
-  return NS_ERROR_NOT_IMPLEMENTED;
+  // No value is equivalent to empty string
+  nsCOMPtr<nsIPlaintextEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (NS_WARN_IF(!editor)) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  return editor->InsertText(EmptyString());
 }
 
 NS_IMETHODIMP
@@ -969,10 +976,7 @@ InsertPlaintextCommand::DoCommandParams(const char* aCommandName,
   nsresult rv = aParams->GetStringValue(STATE_DATA, text);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!text.IsEmpty())
-    return editor->InsertText(text);
-
-  return NS_OK;
+  return editor->InsertText(text);
 }
 
 NS_IMETHODIMP
@@ -980,7 +984,123 @@ InsertPlaintextCommand::GetCommandStateParams(const char* aCommandName,
                                               nsICommandParams* aParams,
                                               nsISupports* aCommandRefCon)
 {
-  NS_ENSURE_ARG_POINTER(aParams);
+  if (NS_WARN_IF(!aParams)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  bool aIsEnabled = false;
+  IsCommandEnabled(aCommandName, aCommandRefCon, &aIsEnabled);
+  return aParams->SetBooleanValue(STATE_ENABLED, aIsEnabled);
+}
+
+/******************************************************************************
+ * mozilla::InsertParagraphCommand
+ ******************************************************************************/
+
+NS_IMETHODIMP
+InsertParagraphCommand::IsCommandEnabled(const char* aCommandName,
+                                         nsISupports* aCommandRefCon,
+                                         bool* aIsEnabled)
+{
+  if (NS_WARN_IF(!aIsEnabled)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (NS_WARN_IF(!editor)) {
+    *aIsEnabled = false;
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  return editor->GetIsSelectionEditable(aIsEnabled);
+}
+
+NS_IMETHODIMP
+InsertParagraphCommand::DoCommand(const char* aCommandName,
+                                  nsISupports* aCommandRefCon)
+{
+  nsCOMPtr<nsIPlaintextEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (NS_WARN_IF(!editor)) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  TextEditor* textEditor = static_cast<TextEditor*>(editor.get());
+
+  return textEditor->TypedText(EmptyString(), TextEditor::eTypedBreak);
+}
+
+NS_IMETHODIMP
+InsertParagraphCommand::DoCommandParams(const char* aCommandName,
+                                        nsICommandParams* aParams,
+                                        nsISupports* aCommandRefCon)
+{
+  return DoCommand(aCommandName, aCommandRefCon);
+}
+
+NS_IMETHODIMP
+InsertParagraphCommand::GetCommandStateParams(const char* aCommandName,
+                                              nsICommandParams* aParams,
+                                              nsISupports* aCommandRefCon)
+{
+  if (NS_WARN_IF(!aParams)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  bool aIsEnabled = false;
+  IsCommandEnabled(aCommandName, aCommandRefCon, &aIsEnabled);
+  return aParams->SetBooleanValue(STATE_ENABLED, aIsEnabled);
+}
+
+/******************************************************************************
+ * mozilla::InsertLineBreakCommand
+ ******************************************************************************/
+
+NS_IMETHODIMP
+InsertLineBreakCommand::IsCommandEnabled(const char* aCommandName,
+                                         nsISupports* aCommandRefCon,
+                                         bool* aIsEnabled)
+{
+  if (NS_WARN_IF(!aIsEnabled)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (NS_WARN_IF(!editor)) {
+    *aIsEnabled = false;
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  return editor->GetIsSelectionEditable(aIsEnabled);
+}
+
+NS_IMETHODIMP
+InsertLineBreakCommand::DoCommand(const char* aCommandName,
+                                  nsISupports* aCommandRefCon)
+{
+  nsCOMPtr<nsIPlaintextEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (NS_WARN_IF(!editor)) {
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  TextEditor* textEditor = static_cast<TextEditor*>(editor.get());
+
+  return textEditor->TypedText(EmptyString(), TextEditor::eTypedBR);
+}
+
+NS_IMETHODIMP
+InsertLineBreakCommand::DoCommandParams(const char* aCommandName,
+                                        nsICommandParams* aParams,
+                                        nsISupports* aCommandRefCon)
+{
+  return DoCommand(aCommandName, aCommandRefCon);
+}
+
+NS_IMETHODIMP
+InsertLineBreakCommand::GetCommandStateParams(const char* aCommandName,
+                                              nsICommandParams* aParams,
+                                              nsISupports* aCommandRefCon)
+{
+  if (NS_WARN_IF(!aParams)) {
+    return NS_ERROR_INVALID_ARG;
+  }
 
   bool aIsEnabled = false;
   IsCommandEnabled(aCommandName, aCommandRefCon, &aIsEnabled);

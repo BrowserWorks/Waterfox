@@ -11,10 +11,16 @@
 #include "mozilla/layers/TextureD3D11.h"
 #include "mozilla/layers/CompositableClient.h"
 #include "mozilla/layers/CompositableForwarder.h"
+#include "mozilla/gfx/DeviceManagerDx.h"
 #include "d3d11.h"
+#include "gfxPrefs.h"
+#include "DXVA2Manager.h"
+#include <memory>
 
 namespace mozilla {
 namespace layers {
+
+using namespace gfx;
 
 D3D11ShareHandleImage::D3D11ShareHandleImage(const gfx::IntSize& aSize,
                                              const gfx::IntRect& aRect)
@@ -25,10 +31,29 @@ D3D11ShareHandleImage::D3D11ShareHandleImage(const gfx::IntSize& aSize,
 }
 
 bool
-D3D11ShareHandleImage::AllocateTexture(D3D11RecycleAllocator* aAllocator)
+D3D11ShareHandleImage::AllocateTexture(D3D11RecycleAllocator* aAllocator, ID3D11Device* aDevice)
 {
-  mTextureClient = aAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::B8G8R8A8, mSize);
-  return !!mTextureClient;
+  if (aAllocator) {
+    if (aAllocator->VendorId() == 0x8086 || gfxPrefs::PDMWMFUseNV12Format()) {
+      mTextureClient = aAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::NV12, mSize);
+    } else {
+      mTextureClient = aAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::B8G8R8A8, mSize);
+    }
+    if (mTextureClient) {
+      mTexture = static_cast<D3D11TextureData*>(mTextureClient->GetInternalData())->GetD3D11Texture();
+      return true;
+    }
+    return false;
+  } else {
+    MOZ_ASSERT(aDevice);
+    CD3D11_TEXTURE2D_DESC newDesc(DXGI_FORMAT_B8G8R8A8_UNORM,
+                                  mSize.width, mSize.height, 1, 1,
+                                  D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+    newDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+    HRESULT hr = aDevice->CreateTexture2D(&newDesc, nullptr, getter_AddRefs(mTexture));
+    return SUCCEEDED(hr);
+  }
 }
 
 gfx::IntSize
@@ -38,7 +63,7 @@ D3D11ShareHandleImage::GetSize()
 }
 
 TextureClient*
-D3D11ShareHandleImage::GetTextureClient(CompositableClient* aClient)
+D3D11ShareHandleImage::GetTextureClient(KnowsCompositor* aForwarder)
 {
   return mTextureClient;
 }
@@ -48,7 +73,7 @@ D3D11ShareHandleImage::GetAsSourceSurface()
 {
   RefPtr<ID3D11Texture2D> texture = GetTexture();
   if (!texture) {
-    NS_WARNING("Cannot readback from shared texture because no texture is available.");
+    gfxWarning() << "Cannot readback from shared texture because no texture is available.";
     return nullptr;
   }
 
@@ -58,6 +83,30 @@ D3D11ShareHandleImage::GetAsSourceSurface()
   D3D11_TEXTURE2D_DESC desc;
   texture->GetDesc(&desc);
 
+  HRESULT hr;
+
+  if (desc.Format == DXGI_FORMAT_NV12) {
+    nsAutoCString error;
+    std::unique_ptr<DXVA2Manager> manager(DXVA2Manager::CreateD3D11DXVA(nullptr, error, device));
+
+    if (!manager) {
+      gfxWarning() << "Failed to create DXVA2 manager!";
+      return nullptr;
+    }
+
+    RefPtr<ID3D11Texture2D> outTexture;
+
+    hr = manager->CopyToBGRATexture(texture, getter_AddRefs(outTexture));
+
+    if (FAILED(hr)) {
+      gfxWarning() << "Failed to copy NV12 to BGRA texture.";
+      return nullptr;
+    }
+
+    texture = outTexture;
+    texture->GetDesc(&desc);
+  }
+
   CD3D11_TEXTURE2D_DESC softDesc(desc.Format, desc.Width, desc.Height);
   softDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
   softDesc.BindFlags = 0;
@@ -66,7 +115,7 @@ D3D11ShareHandleImage::GetAsSourceSurface()
   softDesc.Usage = D3D11_USAGE_STAGING;
 
   RefPtr<ID3D11Texture2D> softTexture;
-  HRESULT hr = device->CreateTexture2D(&softDesc,
+  hr = device->CreateTexture2D(&softDesc,
                                        NULL,
                                        static_cast<ID3D11Texture2D**>(getter_AddRefs(softTexture)));
 
@@ -81,7 +130,19 @@ D3D11ShareHandleImage::GetAsSourceSurface()
     return nullptr;
   }
 
+  RefPtr<IDXGIKeyedMutex> mutex;
+  hr = texture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
+
+  if (SUCCEEDED(hr) && mutex) {
+    hr = mutex->AcquireSync(0, 2000);
+    if (hr != S_OK) {
+      NS_WARNING("Acquire sync didn't manage to return within 2 seconds.");
+    }
+  }
   context->CopyResource(softTexture, texture);
+  if (SUCCEEDED(hr) && mutex) {
+    mutex->ReleaseSync(0);
+  }
 
   RefPtr<gfx::DataSourceSurface> surface =
     gfx::Factory::CreateDataSourceSurface(mSize, gfx::SurfaceFormat::B8G8R8A8);
@@ -115,7 +176,29 @@ D3D11ShareHandleImage::GetAsSourceSurface()
 
 ID3D11Texture2D*
 D3D11ShareHandleImage::GetTexture() const {
-  return static_cast<D3D11TextureData*>(mTextureClient->GetInternalData())->GetD3D11Texture();
+  return mTexture;
+}
+
+D3D11RecycleAllocator::D3D11RecycleAllocator(KnowsCompositor* aAllocator,
+                                             ID3D11Device* aDevice)
+  : TextureClientRecycleAllocator(aAllocator)
+  , mDevice(aDevice)
+{
+  mVendorId = 0;
+  RefPtr<IDXGIDevice> dxgiDevice;
+  HRESULT hr = mDevice->QueryInterface(
+    static_cast<IDXGIDevice**>(getter_AddRefs(dxgiDevice)));
+  if (SUCCEEDED(hr)) {
+    RefPtr<IDXGIAdapter> adapter;
+    hr = dxgiDevice->GetAdapter(adapter.StartAssignment());
+    if (SUCCEEDED(hr)) {
+      DXGI_ADAPTER_DESC adapterDesc;
+      hr = adapter->GetDesc(&adapterDesc);
+      if (SUCCEEDED(hr)) {
+        mVendorId = adapterDesc.VendorId;
+      }
+    }
+  }
 }
 
 already_AddRefed<TextureClient>
@@ -127,19 +210,24 @@ D3D11RecycleAllocator::Allocate(gfx::SurfaceFormat aFormat,
 {
   return CreateD3D11TextureClientWithDevice(aSize, aFormat,
                                             aTextureFlags, aAllocFlags,
-                                            mDevice, mSurfaceAllocator);
+                                            mDevice, mSurfaceAllocator->GetTextureForwarder());
 }
 
 already_AddRefed<TextureClient>
 D3D11RecycleAllocator::CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
                                              const gfx::IntSize& aSize)
 {
+  TextureAllocationFlags allocFlags = TextureAllocationFlags::ALLOC_DEFAULT;
+  if (gfxPrefs::PDMWMFUseSyncTexture() || mDevice == DeviceManagerDx::Get()->GetCompositorDevice()) {
+    // If our device is the compositor device, we don't need any synchronization in practice.
+    allocFlags = TextureAllocationFlags::ALLOC_MANUAL_SYNCHRONIZATION;
+  }
   RefPtr<TextureClient> textureClient =
     CreateOrRecycle(aFormat,
                     aSize,
                     BackendSelector::Content,
                     layers::TextureFlags::DEFAULT,
-                    TextureAllocationFlags::ALLOC_MANUAL_SYNCHRONIZATION);
+                    allocFlags);
   return textureClient.forget();
 }
 

@@ -8,7 +8,7 @@ Bug 970517 - Storage inspector front end - tests
   <title>Storage inspector test for correct values in the sidebar</title>
 </head>
 <body>
-<script type="application/javascript;version=1.7">
+<script type="application/javascript">
 "use strict";
 let partialHostname = location.hostname.match(/^[^.]+(\..*)$/)[1];
 let cookieExpiresTime = 2000000000000;
@@ -19,6 +19,9 @@ document.cookie = "c1=" + JSON.stringify([
   }]) + "; expires=" + new Date(cookieExpiresTime).toGMTString() +
   "; path=/browser";
 document.cookie = "cs2=sessionCookie; path=/; domain=" + partialHostname;
+// URLEncoded cookie
+document.cookie = "c_encoded=" + encodeURIComponent(JSON.stringify({foo: {foo1: "bar"}}));
+
 // ... and some local storage items ..
 const es6 = "for";
 localStorage.setItem("ls1", JSON.stringify({

@@ -8,6 +8,7 @@
 
 #include "nsRect.h"
 #include "nsStyleContext.h"
+#include "nsStyleContextInlines.h"
 #include "nsBidiUtils.h"
 
 // It is the caller's responsibility to operate on logical-coordinate objects
@@ -42,6 +43,11 @@ enum PhysicalAxis {
   eAxisVertical      = 0x0,
   eAxisHorizontal    = 0x1
 };
+
+inline LogicalAxis GetOrthogonalAxis(LogicalAxis aAxis)
+{
+  return aAxis == eLogicalAxisBlock ? eLogicalAxisInline : eLogicalAxisBlock;
+}
 
 inline bool IsInline(LogicalSide aSide) { return aSide & 0x2; }
 inline bool IsBlock(LogicalSide aSide) { return !IsInline(aSide); }
@@ -294,7 +300,7 @@ public:
                   NS_STYLE_WRITING_MODE_VERTICAL_LR == 3 &&
                   eLogicalAxisBlock == 0 &&
                   eLogicalAxisInline == 1 &&
-                  eAxisVertical == 0 && 
+                  eAxisVertical == 0 &&
                   eAxisHorizontal == 1,
                   "unexpected writing-mode, logical axis or physical axis "
                   "constant values");
@@ -319,11 +325,11 @@ public:
     // two-bit values:
     //   bit 0 = the eOrientationMask value
     //   bit 1 = the eBlockFlowMask value
-    static const mozilla::css::Side kLogicalBlockSides[][2] = {
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // horizontal-tb
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // vertical-rl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // (horizontal-bt)
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // vertical-lr
+    static const mozilla::Side kLogicalBlockSides[][2] = {
+      { eSideTop,    eSideBottom },  // horizontal-tb
+      { eSideRight,  eSideLeft   },  // vertical-rl
+      { eSideBottom, eSideTop    },  // (horizontal-bt)
+      { eSideLeft,   eSideRight  },  // vertical-lr
     };
 
     // Ignore the SIDEWAYS_MASK bit of the writing-mode value, as this has no
@@ -347,23 +353,23 @@ public:
     // is no horizontal-bt writing-mode, and no text-orientation value that
     // produces "inverted" text. (The former 'sideways-left' value, no longer
     // in the spec, would have produced this in vertical-rl mode.)
-    static const mozilla::css::Side kLogicalInlineSides[][2] = {
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb               ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                 ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb               rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                 rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted) ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // sideways-lr                 rtl
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted) rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // sideways-lr                 ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted) rtl
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      (inverted) rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted) ltr
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      (inverted) ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)             ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                 ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)             rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                 rtl
+    static const mozilla::Side kLogicalInlineSides[][2] = {
+      { eSideLeft,   eSideRight  },  // horizontal-tb               ltr
+      { eSideTop,    eSideBottom },  // vertical-rl                 ltr
+      { eSideRight,  eSideLeft   },  // horizontal-tb               rtl
+      { eSideBottom, eSideTop    },  // vertical-rl                 rtl
+      { eSideRight,  eSideLeft   },  // (horizontal-bt)  (inverted) ltr
+      { eSideTop,    eSideBottom },  // sideways-lr                 rtl
+      { eSideLeft,   eSideRight  },  // (horizontal-bt)  (inverted) rtl
+      { eSideBottom, eSideTop    },  // sideways-lr                 ltr
+      { eSideLeft,   eSideRight  },  // horizontal-tb    (inverted) rtl
+      { eSideTop,    eSideBottom },  // vertical-rl      (inverted) rtl
+      { eSideRight,  eSideLeft   },  // horizontal-tb    (inverted) ltr
+      { eSideBottom, eSideTop    },  // vertical-rl      (inverted) ltr
+      { eSideLeft,   eSideRight  },  // (horizontal-bt)             ltr
+      { eSideTop,    eSideBottom },  // vertical-lr                 ltr
+      { eSideRight,  eSideLeft   },  // (horizontal-bt)             rtl
+      { eSideBottom, eSideTop    },  // vertical-lr                 rtl
     };
 
     // Inline axis sides depend on all three of writing-mode, text-orientation
@@ -399,7 +405,7 @@ public:
    * given the current writing mode.
    * (This is the inverse of the PhysicalSide() method above.)
    */
-  LogicalSide LogicalSideForPhysicalSide(mozilla::css::Side aSide) const
+  LogicalSide LogicalSideForPhysicalSide(mozilla::Side aSide) const
   {
     // indexes are four-bit values:
     //   bit 0 = the eOrientationMask value
@@ -458,7 +464,7 @@ public:
   {
     auto side = static_cast<LogicalSide>(aDir);
     if (IsInline(side)) {
-      return !IsInlineReversed() ? side : GetOppositeSide(side);
+      return IsBidiLTR() ? side : GetOppositeSide(side);
     }
     return !IsLineInverted() ? side : GetOppositeSide(side);
   }
@@ -585,6 +591,35 @@ public:
   bool IsOrthogonalTo(const WritingMode& aOther) const
   {
     return IsVertical() != aOther.IsVertical();
+  }
+
+  /**
+   * Returns true if this WritingMode's aLogicalAxis has the same physical
+   * start side as the parallel axis of WritingMode |aOther|.
+   *
+   * @param aLogicalAxis The axis to compare from this WritingMode.
+   * @param aOther The other WritingMode (from which we'll choose the axis
+   *               that's parallel to this WritingMode's aLogicalAxis, for
+   *               comparison).
+   */
+  bool ParallelAxisStartsOnSameSide(LogicalAxis aLogicalAxis,
+                                    const WritingMode& aOther) const
+  {
+    Side myStartSide =
+      this->PhysicalSide(MakeLogicalSide(aLogicalAxis,
+                                         eLogicalEdgeStart));
+
+    // Figure out which of aOther's axes is parallel to |this| WritingMode's
+    // aLogicalAxis, and get its physical start side as well.
+    LogicalAxis otherWMAxis = aOther.IsOrthogonalTo(*this) ?
+      GetOrthogonalAxis(aLogicalAxis) : aLogicalAxis;
+    Side otherWMStartSide =
+      aOther.PhysicalSide(MakeLogicalSide(otherWMAxis,
+                                          eLogicalEdgeStart));
+
+    NS_ASSERTION(myStartSide % 2 == otherWMStartSide % 2,
+                 "Should end up with sides in the same physical axis");
+    return myStartSide == otherWMStartSide;
   }
 
   uint8_t GetBits() const { return mWritingMode; }
@@ -749,6 +784,16 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return mPoint.y;
+  }
+  nscoord LineRelative(WritingMode aWritingMode,
+                       const nsSize& aContainerSize) const // line-axis
+  {
+    CHECK_WRITING_MODE(aWritingMode);
+    if (aWritingMode.IsBidiLTR()) {
+      return I();
+    }
+    return (aWritingMode.IsVertical() ? aContainerSize.height
+                                      : aContainerSize.width) - I();
   }
 
   /**
@@ -1459,7 +1504,7 @@ public:
   LogicalRect(WritingMode aWritingMode,
               const LogicalPoint& aOrigin,
               const LogicalSize& aSize)
-    : 
+    :
 #ifdef DEBUG
       mWritingMode(aWritingMode),
 #endif
@@ -2001,26 +2046,28 @@ nsStylePosition::MaxBSizeDependsOnContainer(mozilla::WritingMode aWM) const
                           : MaxHeightDependsOnContainer();
 }
 
-inline uint8_t
+inline mozilla::StyleFloat
 nsStyleDisplay::PhysicalFloats(mozilla::WritingMode aWM) const
 {
-  if (mFloat == NS_STYLE_FLOAT_INLINE_START) {
-    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_LEFT : NS_STYLE_FLOAT_RIGHT;
+  using StyleFloat = mozilla::StyleFloat;
+  if (mFloat == StyleFloat::InlineStart) {
+    return aWM.IsBidiLTR() ? StyleFloat::Left : StyleFloat::Right;
   }
-  if (mFloat == NS_STYLE_FLOAT_INLINE_END) {
-    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_RIGHT : NS_STYLE_FLOAT_LEFT;
+  if (mFloat == StyleFloat::InlineEnd) {
+    return aWM.IsBidiLTR() ? StyleFloat::Right : StyleFloat::Left;
   }
   return mFloat;
 }
 
-inline uint8_t
+inline mozilla::StyleClear
 nsStyleDisplay::PhysicalBreakType(mozilla::WritingMode aWM) const
 {
-  if (mBreakType == NS_STYLE_CLEAR_INLINE_START) {
-    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_LEFT : NS_STYLE_CLEAR_RIGHT;
+  using StyleClear = mozilla::StyleClear;
+  if (mBreakType == StyleClear::InlineStart) {
+    return aWM.IsBidiLTR() ? StyleClear::Left : StyleClear::Right;
   }
-  if (mBreakType == NS_STYLE_CLEAR_INLINE_END) {
-    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_RIGHT : NS_STYLE_CLEAR_LEFT;
+  if (mBreakType == StyleClear::InlineEnd) {
+    return aWM.IsBidiLTR() ? StyleClear::Right : StyleClear::Left;
   }
   return mBreakType;
 }

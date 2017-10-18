@@ -5,22 +5,18 @@ set -x -e -v
 
 WORKSPACE=$HOME/workspace
 HOME_DIR=$WORKSPACE/build
-UPLOAD_DIR=$WORKSPACE/artifacts
+UPLOAD_DIR=$HOME/artifacts
 
-# Fetch our toolchain from tooltool
-cd $HOME_DIR
-wget -O tooltool.py https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py
-chmod +x tooltool.py
-: TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/home/worker/tooltool-cache}
-export TOOLTOOL_CACHE
-cd src
-$HOME_DIR/tooltool.py -m browser/config/tooltool-manifests/linux64/releng.manifest fetch
+cd $HOME_DIR/src
+
+. taskcluster/scripts/misc/tooltool-download.sh
 
 # gets a bit too verbose here
 set +x
 
 cd build/build-clang
-./build-clang.py -c clang-static-analysis-linux64.json
+# |mach python| sets up a virtualenv for us!
+../../mach python ./build-clang.py -c clang-static-analysis-linux64.json
 
 set -x
 

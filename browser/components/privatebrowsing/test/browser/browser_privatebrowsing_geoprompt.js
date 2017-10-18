@@ -5,50 +5,50 @@
 // This test makes sure that the geolocation prompt does not show a remember
 // control inside the private browsing mode.
 
-add_task(function* test() {
-  const testPageURL = "http://mochi.test:8888/browser/" +
+add_task(async function test() {
+  const testPageURL = "https://example.com/browser/" +
     "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_geoprompt_page.html";
 
   function checkGeolocation(aPrivateMode, aWindow) {
-    return Task.spawn(function* () {
+    return (async function() {
       aWindow.gBrowser.selectedTab = aWindow.gBrowser.addTab(testPageURL);
-      yield BrowserTestUtils.browserLoaded(aWindow.gBrowser.selectedBrowser);
+      await BrowserTestUtils.browserLoaded(aWindow.gBrowser.selectedBrowser);
 
       let notification = aWindow.PopupNotifications.getNotification("geolocation");
 
       // Wait until the notification is available.
-      while (!notification){
-        yield new Promise(resolve => { executeSoon(resolve); });
-        let notification = aWindow.PopupNotifications.getNotification("geolocation");
+      while (!notification) {
+        await new Promise(resolve => { executeSoon(resolve); });
+        notification = aWindow.PopupNotifications.getNotification("geolocation");
       }
 
       if (aPrivateMode) {
         // Make sure the notification is correctly displayed without a remember control
-        is(notification.secondaryActions.length, 0, "Secondary actions shouldn't exist (always/never remember)");
+        ok(!notification.options.checkbox.show, "Secondary actions should exist (always/never remember)");
       } else {
-        ok(notification.secondaryActions.length > 1, "Secondary actions should exist (always/never remember)");
+        ok(notification.options.checkbox.show, "Secondary actions should exist (always/never remember)");
       }
       notification.remove();
 
       aWindow.gBrowser.removeCurrentTab();
-    });
-  };
+    })();
+  }
 
-  let win = yield BrowserTestUtils.openNewBrowserWindow();
+  let win = await BrowserTestUtils.openNewBrowserWindow();
   let browser = win.gBrowser.selectedBrowser;
   browser.loadURI(testPageURL);
-  yield BrowserTestUtils.browserLoaded(browser);
+  await BrowserTestUtils.browserLoaded(browser);
 
-  yield checkGeolocation(false, win);
+  await checkGeolocation(false, win);
 
-  let privateWin = yield BrowserTestUtils.openNewBrowserWindow({private: true});
+  let privateWin = await BrowserTestUtils.openNewBrowserWindow({private: true});
   let privateBrowser = privateWin.gBrowser.selectedBrowser;
   privateBrowser.loadURI(testPageURL);
-  yield BrowserTestUtils.browserLoaded(privateBrowser);
+  await BrowserTestUtils.browserLoaded(privateBrowser);
 
-  yield checkGeolocation(true, privateWin);
+  await checkGeolocation(true, privateWin);
 
   // Cleanup
-  yield BrowserTestUtils.closeWindow(win);
-  yield BrowserTestUtils.closeWindow(privateWin);
+  await BrowserTestUtils.closeWindow(win);
+  await BrowserTestUtils.closeWindow(privateWin);
 });

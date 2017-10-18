@@ -2,7 +2,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 #include "nsXMLPrettyPrinter.h"
 #include "nsContentUtils.h"
 #include "nsICSSDeclaration.h"
@@ -105,7 +105,7 @@ nsXMLPrettyPrinter::PrettyPrint(nsIDocument* aDocument,
     rv = nsSyncLoadService::LoadDocument(xslUri, nsIContentPolicy::TYPE_XSLT,
                                          nsContentUtils::GetSystemPrincipal(),
                                          nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                                         nullptr, true, mozilla::net::RP_Default,
+                                         nullptr, true, mozilla::net::RP_Unset,
                                          getter_AddRefs(xslDocument));
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -193,8 +193,8 @@ nsXMLPrettyPrinter::MaybeUnhook(nsIContent* aContent)
         // since AddScriptRunner _could_ in theory run us
         // synchronously
         mUnhookPending = true;
-        nsContentUtils::AddScriptRunner(
-          NewRunnableMethod(this, &nsXMLPrettyPrinter::Unhook));
+        nsContentUtils::AddScriptRunner(NewRunnableMethod(
+          "nsXMLPrettyPrinter::Unhook", this, &nsXMLPrettyPrinter::Unhook));
     }
 }
 

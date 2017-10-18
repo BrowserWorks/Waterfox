@@ -16,11 +16,6 @@ UNIFIED_SOURCES += [
     'nsLayoutStatics.cpp',
 ]
 
-if CONFIG['MOZ_NFC']:
-    LOCAL_INCLUDES += [
-        '/dom/nfc'
-    ]
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 LOCAL_INCLUDES += [
@@ -29,6 +24,7 @@ LOCAL_INCLUDES += [
     '../generic',
     '../inspector',
     '../mathml',
+    '../painting',
     '../style',
     '../tables',
     '../xul',
@@ -36,7 +32,7 @@ LOCAL_INCLUDES += [
     '/docshell/base',
     '/dom/audiochannel',
     '/dom/base',
-    '/dom/camera',
+    '/dom/bindings',
     '/dom/canvas',
     '/dom/filesystem',
     '/dom/geolocation',
@@ -45,10 +41,8 @@ LOCAL_INCLUDES += [
     '/dom/jsurl',
     '/dom/media',
     '/dom/offline',
-    '/dom/speakermanager',
     '/dom/storage',
     '/dom/svg',
-    '/dom/telephony',
     '/dom/xbl',
     '/dom/xslt/base',
     '/dom/xslt/xml',
@@ -79,20 +73,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     LOCAL_INCLUDES += [
         '/dom/system',
         '/dom/system/android',
-    ]
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
-    LOCAL_INCLUDES += [
-        '/dom/system/gonk',
-    ]
-
-if CONFIG['MOZ_B2G_FM']:
-    LOCAL_INCLUDES += [
-        '/dom/fmradio',
-    ]
-
-if CONFIG['MOZ_B2G_BT']:
-    LOCAL_INCLUDES += [
-        '/dom/bluetooth/common',
     ]
 
 if CONFIG['MOZ_WEBSPEECH']:

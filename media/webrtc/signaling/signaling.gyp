@@ -74,9 +74,10 @@
         './src/sdp/sipcc',
         '../../../dom/base',
         '../../../dom/media',
+        '../../../dom/media/platforms',
         '../../../media/mtransport',
         '../trunk',
-        '../../libyuv/include',
+        '../../libyuv/libyuv/include',
         '../../mtransport/third_party/nrappkit/src/util/libekr',
       ],
 
@@ -99,8 +100,6 @@
         './src/media-conduit/AudioConduit.cpp',
         './src/media-conduit/VideoConduit.h',
         './src/media-conduit/VideoConduit.cpp',
-        './src/media-conduit/CodecStatistics.h',
-        './src/media-conduit/CodecStatistics.cpp',
         './src/media-conduit/RunningStat.h',
         # Common
         './src/common/CommonTypes.h',
@@ -132,6 +131,8 @@
         './src/mediapipeline/MediaPipeline.cpp',
         './src/mediapipeline/MediaPipelineFilter.h',
         './src/mediapipeline/MediaPipelineFilter.cpp',
+        './src/mediapipeline/RtpLogger.h',
+        './src/mediapipeline/RtpLogger.cpp',
          # SDP
          './src/sdp/sipcc/ccsdp.h',
          './src/sdp/sipcc/cpr_string.c',
@@ -224,27 +225,6 @@
             '../../../netwerk/srtp/src/crypto/include',
           ],
         }],
-        ['moz_webrtc_omx==1', {
-          'sources': [
-            './src/media-conduit/WebrtcOMXH264VideoCodec.cpp',
-            './src/media-conduit/OMXVideoCodec.cpp',
-          ],
-          'include_dirs': [
-            # hack on hack to re-add it after SrtpFlow removes it
-            '../../../dom/media/omx',
-            '../../../gfx/layers/client',
-          ],
-          'cflags_mozilla': [
-            '-I$(ANDROID_SOURCE)/frameworks/av/include/media/stagefright',
-            '-I$(ANDROID_SOURCE)/frameworks/av/include',
-            '-I$(ANDROID_SOURCE)/frameworks/native/include/media/openmax',
-            '-I$(ANDROID_SOURCE)/frameworks/native/include',
-            '-I$(ANDROID_SOURCE)/frameworks/native/opengl/include',
-          ],
-          'defines' : [
-            'MOZ_WEBRTC_OMX'
-          ],
-        }],
         ['moz_webrtc_mediacodec==1', {
           'include_dirs': [
             '../../../widget/android',
@@ -260,9 +240,6 @@
           ],
         }],
         ['(build_for_test==0) and (build_for_standalone==0)', {
-          'defines' : [
-            'MOZILLA_INTERNAL_API',
-          ],
           'sources': [
             './src/peerconnection/MediaStreamList.cpp',
             './src/peerconnection/MediaStreamList.h',
@@ -276,15 +253,15 @@
           ],
           'defines' : [
             'NO_CHROMIUM_LOGGING',
-            'USE_FAKE_MEDIA_STREAMS',
             'USE_FAKE_PCOBSERVER',
-            'MOZILLA_EXTERNAL_LINKAGE',
           ],
         }],
         ['build_for_standalone==0', {
           'sources': [
             './src/media-conduit/GmpVideoCodec.cpp',
+            './src/media-conduit/MediaDataDecoderCodec.cpp',
             './src/media-conduit/WebrtcGmpVideoCodec.cpp',
+            './src/media-conduit/WebrtcMediaDataDecoderCodec.cpp',
           ],
         }],
         ['build_for_standalone!=0', {
@@ -292,11 +269,14 @@
             './test'
           ],
           'defines' : [
-            'MOZILLA_INTERNAL_API',
-            'MOZILLA_EXTERNAL_LINKAGE',
             'NO_CHROMIUM_LOGGING',
-            'USE_FAKE_MEDIA_STREAMS',
             'USE_FAKE_PCOBSERVER',
+          ],
+        }],
+        # See webrtc/base/task_queue.h
+        ['OS!="mac" and OS!="ios" and OS!="win"', {
+          'defines': [
+            'WEBRTC_BUILD_LIBEVENT',
           ],
         }],
         ['(OS=="linux") or (OS=="android")', {
@@ -358,6 +338,7 @@
           ],
           'defines': [
             'WEBRTC_POSIX',
+            'WEBRTC_MAC',
             'OS_MACOSX',
             'SIP_OS_OSX',
             'OSX',
@@ -366,6 +347,17 @@
 
           'cflags_mozilla': [
           ],
+        }],
+        ['clang == 1', {
+          'cflags_mozilla': [
+            '-Wno-inconsistent-missing-override',
+            '-Wno-macro-redefined',
+         ],
+        }],
+        ['libfuzzer == 1', {
+          'cflags_mozilla': [
+            '-fsanitize-coverage=trace-pc-guard',
+         ],
         }],
       ],
     },

@@ -4,11 +4,7 @@
 browser.jar:
 %  content browser %content/browser/ contentaccessible=yes
 #ifdef XP_MACOSX
-%  overlay chrome://mozapps/content/downloads/downloads.xul chrome://browser/content/downloadManagerOverlay.xul
 %  overlay chrome://mozapps/content/update/updates.xul chrome://browser/content/softwareUpdateOverlay.xul
-#endif
-#ifdef XP_WIN
-%  overlay chrome://browser/content/browser.xul chrome://browser/content/win6BrowserOverlay.xul os=WINNT osversion>=6
 #endif
 %  overlay chrome://global/content/viewSource.xul chrome://browser/content/viewSourceOverlay.xul
 %  overlay chrome://global/content/viewPartialSource.xul chrome://browser/content/viewSourceOverlay.xul
@@ -31,7 +27,7 @@ browser.jar:
         content/browser/abouthome/settings.png        (content/abouthome/settings.png)
         content/browser/abouthome/restore.png         (content/abouthome/restore.png)
         content/browser/abouthome/restore-large.png   (content/abouthome/restore-large.png)
-        content/browser/abouthome/mozilla.png         (content/abouthome/mozilla.png)
+        content/browser/abouthome/mozilla.svg         (content/abouthome/mozilla.svg)
         content/browser/abouthome/snippet1@2x.png      (content/abouthome/snippet1@2x.png)
         content/browser/abouthome/snippet2@2x.png      (content/abouthome/snippet2@2x.png)
         content/browser/abouthome/downloads@2x.png     (content/abouthome/downloads@2x.png)
@@ -42,7 +38,6 @@ browser.jar:
         content/browser/abouthome/settings@2x.png      (content/abouthome/settings@2x.png)
         content/browser/abouthome/restore@2x.png       (content/abouthome/restore@2x.png)
         content/browser/abouthome/restore-large@2x.png (content/abouthome/restore-large@2x.png)
-        content/browser/abouthome/mozilla@2x.png       (content/abouthome/mozilla@2x.png)
 
         content/browser/aboutNetError.xhtml            (content/aboutNetError.xhtml)
 
@@ -56,9 +51,6 @@ browser.jar:
         content/browser/aboutaccounts/aboutaccounts.css                       (content/aboutaccounts/aboutaccounts.css)
         content/browser/aboutaccounts/main.css                                (content/aboutaccounts/main.css)
         content/browser/aboutaccounts/normalize.css                           (content/aboutaccounts/normalize.css)
-        content/browser/aboutaccounts/images/fox.png                          (content/aboutaccounts/images/fox.png)
-        content/browser/aboutaccounts/images/graphic_sync_intro.png           (content/aboutaccounts/images/graphic_sync_intro.png)
-        content/browser/aboutaccounts/images/graphic_sync_intro@2x.png        (content/aboutaccounts/images/graphic_sync_intro@2x.png)
 
 
         content/browser/aboutRobots-icon.png          (content/aboutRobots-icon.png)
@@ -68,31 +60,27 @@ browser.jar:
         content/browser/aboutTabCrashed.css           (content/aboutTabCrashed.css)
         content/browser/aboutTabCrashed.js            (content/aboutTabCrashed.js)
         content/browser/aboutTabCrashed.xhtml         (content/aboutTabCrashed.xhtml)
-*       content/browser/aboutTabGroupsMigration.xhtml (content/aboutTabGroupsMigration.xhtml)
-        content/browser/aboutTabGroupsMigration.js    (content/aboutTabGroupsMigration.js)
 *       content/browser/browser.css                   (content/browser.css)
         content/browser/browser.js                    (content/browser.js)
 *       content/browser/browser.xul                   (content/browser.xul)
         content/browser/browser-addons.js             (content/browser-addons.js)
+        content/browser/browser-captivePortal.js      (content/browser-captivePortal.js)
         content/browser/browser-ctrlTab.js            (content/browser-ctrlTab.js)
         content/browser/browser-customization.js      (content/browser-customization.js)
         content/browser/browser-data-submission-info-bar.js (content/browser-data-submission-info-bar.js)
-        content/browser/browser-devedition.js         (content/browser-devedition.js)
+        content/browser/browser-compacttheme.js       (content/browser-compacttheme.js)
         content/browser/browser-feeds.js              (content/browser-feeds.js)
         content/browser/browser-fullScreenAndPointerLock.js  (content/browser-fullScreenAndPointerLock.js)
         content/browser/browser-fullZoom.js           (content/browser-fullZoom.js)
-        content/browser/browser-fxaccounts.js         (content/browser-fxaccounts.js)
         content/browser/browser-gestureSupport.js     (content/browser-gestureSupport.js)
         content/browser/browser-media.js              (content/browser-media.js)
+        content/browser/browser-pageActions.js        (content/browser-pageActions.js)
         content/browser/browser-places.js             (content/browser-places.js)
         content/browser/browser-plugins.js            (content/browser-plugins.js)
-        content/browser/browser-refreshblocker.js     (content/browser-refreshblocker.js)
-#ifdef MOZ_SAFE_BROWSING
         content/browser/browser-safebrowsing.js       (content/browser-safebrowsing.js)
-#endif
         content/browser/browser-sidebar.js            (content/browser-sidebar.js)
         content/browser/browser-social.js             (content/browser-social.js)
-        content/browser/browser-syncui.js             (content/browser-syncui.js)
+        content/browser/browser-sync.js               (content/browser-sync.js)
 *       content/browser/browser-tabPreviews.xml       (content/browser-tabPreviews.xml)
 #ifdef CAN_DRAW_IN_TITLEBAR
         content/browser/browser-tabsintitlebar.js       (content/browser-tabsintitlebar.js)
@@ -101,39 +89,32 @@ browser.jar:
 #endif
         content/browser/browser-thumbnails.js         (content/browser-thumbnails.js)
         content/browser/browser-trackingprotection.js (content/browser-trackingprotection.js)
-*       content/browser/chatWindow.xul                (content/chatWindow.xul)
         content/browser/tab-content.js                (content/tab-content.js)
         content/browser/content.js                    (content/content.js)
         content/browser/social-content.js             (content/social-content.js)
-        content/browser/defaultthemes/1.footer.jpg    (content/defaultthemes/1.footer.jpg)
+        content/browser/default-theme-icon.svg        (content/default-theme-icon.svg)
         content/browser/defaultthemes/1.header.jpg    (content/defaultthemes/1.header.jpg)
         content/browser/defaultthemes/1.icon.jpg      (content/defaultthemes/1.icon.jpg)
         content/browser/defaultthemes/1.preview.jpg   (content/defaultthemes/1.preview.jpg)
-        content/browser/defaultthemes/2.footer.jpg    (content/defaultthemes/2.footer.jpg)
         content/browser/defaultthemes/2.header.jpg    (content/defaultthemes/2.header.jpg)
         content/browser/defaultthemes/2.icon.jpg      (content/defaultthemes/2.icon.jpg)
         content/browser/defaultthemes/2.preview.jpg   (content/defaultthemes/2.preview.jpg)
-        content/browser/defaultthemes/3.footer.png    (content/defaultthemes/3.footer.png)
         content/browser/defaultthemes/3.header.png    (content/defaultthemes/3.header.png)
         content/browser/defaultthemes/3.icon.png      (content/defaultthemes/3.icon.png)
         content/browser/defaultthemes/3.preview.png   (content/defaultthemes/3.preview.png)
-        content/browser/defaultthemes/4.footer.png    (content/defaultthemes/4.footer.png)
         content/browser/defaultthemes/4.header.png    (content/defaultthemes/4.header.png)
         content/browser/defaultthemes/4.icon.png      (content/defaultthemes/4.icon.png)
         content/browser/defaultthemes/4.preview.png   (content/defaultthemes/4.preview.png)
-        content/browser/defaultthemes/5.footer.png    (content/defaultthemes/5.footer.png)
         content/browser/defaultthemes/5.header.png    (content/defaultthemes/5.header.png)
         content/browser/defaultthemes/5.icon.jpg      (content/defaultthemes/5.icon.jpg)
         content/browser/defaultthemes/5.preview.jpg   (content/defaultthemes/5.preview.jpg)
-        content/browser/defaultthemes/devedition.header.png   (content/defaultthemes/devedition.header.png)
-        content/browser/defaultthemes/devedition.icon.png     (content/defaultthemes/devedition.icon.png)
-        content/browser/gcli_sec_bad.svg              (content/gcli_sec_bad.svg)
-        content/browser/gcli_sec_good.svg             (content/gcli_sec_good.svg)
-        content/browser/gcli_sec_moderate.svg         (content/gcli_sec_moderate.svg)
+        content/browser/defaultthemes/compact.header.png    (content/defaultthemes/compact.header.png)
+        content/browser/defaultthemes/compactdark.icon.svg  (content/defaultthemes/compactdark.icon.svg)
+        content/browser/defaultthemes/compactlight.icon.svg (content/defaultthemes/compactlight.icon.svg)
         content/browser/newtab/newTab.xhtml           (content/newtab/newTab.xhtml)
 *       content/browser/newtab/newTab.js              (content/newtab/newTab.js)
         content/browser/newtab/newTab.css             (content/newtab/newTab.css)
-        content/browser/newtab/newTab.inadjacent.json         (content/newtab/newTab.inadjacent.json)
+        content/browser/newtab/alternativeDefaultSites.json   (content/newtab/alternativeDefaultSites.json)
 *       content/browser/pageinfo/pageInfo.xul         (content/pageinfo/pageInfo.xul)
         content/browser/pageinfo/pageInfo.js          (content/pageinfo/pageInfo.js)
         content/browser/pageinfo/pageInfo.css         (content/pageinfo/pageInfo.css)
@@ -142,62 +123,48 @@ browser.jar:
         content/browser/pageinfo/feeds.xml            (content/pageinfo/feeds.xml)
         content/browser/pageinfo/permissions.js       (content/pageinfo/permissions.js)
         content/browser/pageinfo/security.js          (content/pageinfo/security.js)
-        content/browser/sync/aboutSyncTabs.xul        (content/sync/aboutSyncTabs.xul)
-        content/browser/sync/aboutSyncTabs.js         (content/sync/aboutSyncTabs.js)
-        content/browser/sync/aboutSyncTabs.css        (content/sync/aboutSyncTabs.css)
-        content/browser/sync/aboutSyncTabs-bindings.xml  (content/sync/aboutSyncTabs-bindings.xml)
-        content/browser/sync/setup.xul                (content/sync/setup.xul)
-        content/browser/sync/addDevice.js             (content/sync/addDevice.js)
-        content/browser/sync/addDevice.xul            (content/sync/addDevice.xul)
-        content/browser/sync/setup.js                 (content/sync/setup.js)
-        content/browser/sync/genericChange.xul        (content/sync/genericChange.xul)
-        content/browser/sync/genericChange.js         (content/sync/genericChange.js)
-        content/browser/sync/key.xhtml                (content/sync/key.xhtml)
-        content/browser/sync/utils.js                 (content/sync/utils.js)
-*       content/browser/sync/customize.xul            (content/sync/customize.xul)
-        content/browser/sync/customize.js             (content/sync/customize.js)
-        content/browser/sync/customize.css            (content/sync/customize.css)
+        content/browser/robot.ico                     (content/robot.ico)
+        content/browser/static-robot.png              (content/static-robot.png)
         content/browser/safeMode.css                  (content/safeMode.css)
         content/browser/safeMode.js                   (content/safeMode.js)
         content/browser/safeMode.xul                  (content/safeMode.xul)
         content/browser/sanitize.js                   (content/sanitize.js)
-*       content/browser/sanitize.xul                  (content/sanitize.xul)
-*       content/browser/sanitizeDialog.js             (content/sanitizeDialog.js)
+        content/browser/sanitize.xul                  (content/sanitize.xul)
+        content/browser/sanitizeDialog.js             (content/sanitizeDialog.js)
         content/browser/sanitizeDialog.css            (content/sanitizeDialog.css)
         content/browser/contentSearchUI.js            (content/contentSearchUI.js)
         content/browser/contentSearchUI.css           (content/contentSearchUI.css)
         content/browser/tabbrowser.css                (content/tabbrowser.css)
         content/browser/tabbrowser.xml                (content/tabbrowser.xml)
-        content/browser/urlbarBindings.xml            (content/urlbarBindings.xml)
+*       content/browser/urlbarBindings.xml            (content/urlbarBindings.xml)
         content/browser/utilityOverlay.js             (content/utilityOverlay.js)
+        content/browser/usercontext-briefcase.svg     (content/usercontext-briefcase.svg)
+        content/browser/usercontext-cart.svg          (content/usercontext-cart.svg)
+        content/browser/usercontext-circle.svg        (content/usercontext-circle.svg)
+        content/browser/usercontext-dollar.svg        (content/usercontext-dollar.svg)
+        content/browser/usercontext-fingerprint.svg   (content/usercontext-fingerprint.svg)
         content/browser/web-panels.js                 (content/web-panels.js)
 *       content/browser/web-panels.xul                (content/web-panels.xul)
+        content/browser/webext-panels.js              (content/webext-panels.js)
+*       content/browser/webext-panels.xul             (content/webext-panels.xul)
 *       content/browser/baseMenuOverlay.xul           (content/baseMenuOverlay.xul)
-*       content/browser/nsContextMenu.js              (content/nsContextMenu.js)
+        content/browser/nsContextMenu.js              (content/nsContextMenu.js)
 # XXX: We should exclude this one as well (bug 71895)
 *       content/browser/hiddenWindow.xul              (content/hiddenWindow.xul)
 #ifdef XP_MACOSX
 *       content/browser/macBrowserOverlay.xul         (content/macBrowserOverlay.xul)
-*       content/browser/downloadManagerOverlay.xul    (content/downloadManagerOverlay.xul)
-*       content/browser/softwareUpdateOverlay.xul  (content/softwareUpdateOverlay.xul)
+*       content/browser/softwareUpdateOverlay.xul     (content/softwareUpdateOverlay.xul)
 #endif
 *       content/browser/viewSourceOverlay.xul         (content/viewSourceOverlay.xul)
 #ifndef XP_MACOSX
 *       content/browser/webrtcIndicator.xul           (content/webrtcIndicator.xul)
         content/browser/webrtcIndicator.js            (content/webrtcIndicator.js)
 #endif
-#ifdef XP_WIN
-        content/browser/win6BrowserOverlay.xul        (content/win6BrowserOverlay.xul)
-#endif
-        content/browser/socialmarks.xml               (content/socialmarks.xml)
-        content/browser/socialchat.xml                (content/socialchat.xml)
 # the following files are browser-specific overrides
 *       content/browser/license.html                  (/toolkit/content/license.html)
 % override chrome://global/content/license.html chrome://browser/content/license.html
-#ifdef MOZ_SAFE_BROWSING
         content/browser/report-phishing-overlay.xul     (content/report-phishing-overlay.xul)
         content/browser/blockedSite.xhtml               (content/blockedSite.xhtml)
 % overlay chrome://browser/content/browser.xul chrome://browser/content/report-phishing-overlay.xul
-#endif
 
 % override chrome://global/content/netError.xhtml chrome://browser/content/aboutNetError.xhtml

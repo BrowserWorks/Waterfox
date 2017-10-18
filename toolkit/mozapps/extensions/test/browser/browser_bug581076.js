@@ -4,7 +4,6 @@
 
 // Bug 581076 - No "See all results" link present when searching for add-ons and not all are displayed (extensions.getAddons.maxResults)
 
-const PREF_GETADDONS_BROWSESEARCHRESULTS = "extensions.getAddons.search.browseURL";
 const PREF_GETADDONS_GETSEARCHRESULTS = "extensions.getAddons.search.url";
 const PREF_GETADDONS_MAXRESULTS = "extensions.getAddons.maxResults";
 const SEARCH_URL = TESTROOT + "browser_searching.xml";
@@ -86,7 +85,6 @@ add_test(function() {
 });
 
 add_test(function() {
-    debugger;
   info("Searching remotely - more results than cap");
   Services.prefs.setIntPref(PREF_GETADDONS_MAXRESULTS, 3);
   search(true, function() {

@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PCrashReporter;
 include protocol PGMPContent;
 include protocol PGMPTimer;
 include protocol PGMPStorage;
@@ -15,29 +14,22 @@ namespace gmp {
 
 intr protocol PGMP
 {
-  parent opens PGMPContent;
-
-  manages PCrashReporter;
   manages PGMPTimer;
   manages PGMPStorage;
 
 parent:
-  async PCrashReporter(NativeThreadId tid);
+  async InitCrashReporter(Shmem shmem, NativeThreadId threadId);
   async PGMPTimer();
   async PGMPStorage();
 
   async PGMPContentChildDestroyed();
 
-  async AsyncShutdownComplete();
-  async AsyncShutdownRequired();
-
 child:
-  async BeginAsyncShutdown();
   async CrashPluginNow();
   intr StartPlugin(nsString adapter);
-  async SetNodeId(nsCString nodeId);
   async PreloadLibs(nsCString libs);
   async CloseActive();
+  async InitGMPContentChild(Endpoint<PGMPContentChild> endpoint);
 };
 
 } // namespace gmp

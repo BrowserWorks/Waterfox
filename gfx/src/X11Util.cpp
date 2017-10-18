@@ -29,10 +29,9 @@ FindVisualAndDepth(Display* aDisplay, VisualID aVisualID,
         }
     }
 
-    NS_ASSERTION(aVisualID == None, "VisualID not on Screen.");
+    NS_ASSERTION(aVisualID == X11None, "VisualID not on Screen.");
     *aVisual = nullptr;
     *aDepth = 0;
-    return;
 }
 
 void
@@ -57,11 +56,15 @@ ScopedXErrorHandler::ErrorHandler(Display *, XErrorEvent *ev)
     return 0;
 }
 
-ScopedXErrorHandler::ScopedXErrorHandler()
+ScopedXErrorHandler::ScopedXErrorHandler(bool aAllowOffMainThread)
 {
-    // Off main thread usage is not safe in general, but OMTC GL layers uses this
-    // with the main thread blocked, which makes it safe.
-    NS_WARN_IF_FALSE(NS_IsMainThread(), "ScopedXErrorHandler being called off main thread, may cause issues");
+    if (!aAllowOffMainThread) {
+      // Off main thread usage is not safe in general, but OMTC GL layers uses this
+      // with the main thread blocked, which makes it safe.
+      NS_WARNING_ASSERTION(
+        NS_IsMainThread(),
+        "ScopedXErrorHandler being called off main thread, may cause issues");
+    }
     // let sXErrorPtr point to this object's mXError object, but don't reset this mXError object!
     // think of the case of nested ScopedXErrorHandler's.
     mOldXErrorPtr = sXErrorPtr;

@@ -20,12 +20,6 @@ checkbox {
   padding-inline-end: 2px;
 }
 
-.checkbox-label-box {
-  margin-inline-start: 2px;
-  border: 1px solid transparent;
-  padding: 0px 1px;
-}
-
 .checkbox-icon {
   margin-inline-end: 2px;
 }
@@ -37,14 +31,10 @@ checkbox {
 /* ..... focused state ..... */
 
 checkbox:-moz-focusring > .checkbox-label-box {
-  border: 1px dotted ThreeDDarkShadow;
+  outline: 1px dotted;
 }
 
 /* ..... disabled state ..... */
-
-checkbox[disabled="true"] > .checkbox-check {
-  background-color: -moz-Dialog;
-}
 
 checkbox[disabled="true"] {
   color: GrayText;
@@ -60,27 +50,7 @@ checkbox[disabled="true"]:-moz-system-metric(windows-classic) {
 .checkbox-check {
   -moz-appearance: checkbox;
   -moz-box-align: center;
-  border: 2px solid;
-  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
-  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
-  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
-  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
   min-width: 13px;
   min-height: 13px;
-  background: -moz-Field no-repeat 50% 50%;
+  margin-inline-end: 3px;
 }
-  
-checkbox:hover:active > .checkbox-check {
-  background-color: -moz-Dialog;
-}
-
-/* ..... checked state ..... */
-
-checkbox[checked="true"] > .checkbox-check {
-  background-image: url("chrome://global/skin/checkbox/cbox-check.gif");
-}
-
-checkbox[checked="true"][disabled="true"] > .checkbox-check {
-  background-image: url("chrome://global/skin/checkbox/cbox-check-dis.gif") !important
-}
-

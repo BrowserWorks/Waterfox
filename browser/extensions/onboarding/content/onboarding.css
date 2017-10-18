@@ -1,0 +1,581 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#onboarding-overlay * {
+  box-sizing: border-box;
+}
+
+#onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Ensuring we can put the overlay over elements using
+     z-index on original page */
+  z-index: 20999;
+  color: #4d4d4d;
+  background: rgb(54, 57, 89, 0.8); /* #363959, 0.8 opacity */
+  display: none;
+}
+
+#onboarding-overlay.onboarding-opened {
+  display: block;
+}
+
+#onboarding-overlay-button {
+  z-index: 20998;
+  padding: 0;
+  position: absolute;
+  cursor: pointer;
+  top: 34px;
+  offset-inline-start: 34px;
+  border: none;
+  /* Set to none so no grey contrast background in the high-contrast mode */
+  background: none;
+}
+
+/* Keyboard focus styling */
+#onboarding-overlay-button:-moz-focusring {
+  outline: solid 2px rgba(0, 0, 0, 0.1);
+  -moz-outline-radius: 5px;
+  outline-offset: 5px;
+  transition: outline-offset 150ms;
+}
+
+#onboarding-overlay-button-icon {
+  width: 36px;
+  vertical-align: top;
+}
+
+#onboarding-notification-icon::after,
+#onboarding-overlay-button::after {
+  background: #5ce6e6;
+  font-size: 12px;
+  border: 1px solid #fff;
+  text-align: center;
+  color: #10404a;
+  box-sizing: content-box;
+}
+
+#onboarding-overlay-button::after {
+  content: attr(aria-label);
+  display: inline-block;
+  offset-inline-start: 39px;
+  border-radius: 22px;
+  padding: 5px 8px;
+  width: 110px;
+  margin-inline-start: 3px;
+  margin-top: -5px;
+}
+
+#onboarding-overlay-dialog,
+.onboarding-hidden,
+#onboarding-tour-sync-page[data-login-state=logged-in] .show-on-logged-out,
+#onboarding-tour-sync-page[data-login-state=logged-out] .show-on-logged-in {
+  display: none;
+}
+
+.onboarding-close-btn {
+   position: absolute;
+   top: 15px;
+   offset-inline-end: 15px;
+   cursor: pointer;
+   width: 16px;
+   height: 16px;
+   padding: 12px;
+   border: none;
+   background: var(--onboarding-overlay-dialog-background-color);
+ }
+
+.onboarding-close-btn::before {
+  content: url(chrome://browser/skin/sidebar/close.svg);
+  display: block;
+  margin-top: -8px;
+  margin-inline-start: -8px;
+}
+
+.onboarding-close-btn:-moz-any(:hover, :active, :focus, :-moz-focusring),
+#onboarding-notification-close-btn:-moz-any(:hover, :active, :focus, :-moz-focusring) {
+  background-color: rgba(204, 204, 204, 0.6);
+}
+
+#onboarding-overlay.onboarding-opened > #onboarding-overlay-dialog {
+  --onboarding-overlay-dialog-background-color: #f5f5f7;
+  width: 960px;
+  height: 510px;
+  background: var(--onboarding-overlay-dialog-background-color);
+  border: 1px solid rgba(9, 6, 13, 0.1); /* #09060D, 0.1 opacity */
+  border-radius: 3px;
+  position: relative;
+  margin: 0 calc(50% - 480px);
+  top: calc(50% - 255px);
+  display: grid;
+  grid-template-rows: [dialog-start] 70px [page-start] 1fr [footer-start] 30px [dialog-end];
+  grid-template-columns: [dialog-start] 230px [page-start] 1fr [dialog-end];
+}
+
+@media (max-height: 510px) {
+  #onboarding-overlay.onboarding-opened > #onboarding-overlay-dialog {
+    top: 0;
+  }
+}
+
+#onboarding-overlay-dialog > header {
+  grid-row: dialog-start / page-start;
+  grid-column: dialog-start / tour-end;
+  margin-top: 22px;
+  margin-bottom: 0;
+  margin-inline-end: 0;
+  margin-inline-start: 36px;
+  font-size: 22px;
+  font-weight: 200;
+}
+
+#onboarding-overlay-dialog > nav {
+  grid-row: dialog-start / footer-start;
+  grid-column-start: dialog-start;
+  margin-top: 40px;
+  margin-bottom: 0;
+  margin-inline-end: 0;
+  margin-inline-start: 0;
+  padding: 0;
+}
+
+#onboarding-overlay-dialog > footer {
+  grid-row: footer-start;
+  grid-column: dialog-start / tour-end;
+  font-size: 13px;
+}
+
+#onboarding-tour-hidden-checkbox {
+  margin-inline-start: 27px;
+  margin-inline-end: 10px;
+}
+
+/* Onboarding tour list */
+#onboarding-tour-list {
+  margin: 40px 0 0 0;
+  padding: 0;
+  margin-inline-start: 16px;
+}
+
+#onboarding-tour-list .onboarding-tour-item-container {
+  list-style: none;
+  outline: none;
+}
+
+#onboarding-tour-list .onboarding-tour-item {
+  pointer-events: none;
+  display: list-item;
+  padding-inline-start: 49px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  margin-bottom: 9px;
+  background-repeat: no-repeat;
+  background-position: left 17px top 14px;
+  background-size: 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#onboarding-tour-list .onboarding-tour-item:dir(rtl) {
+  background-position-x: right 17px;
+}
+
+#onboarding-tour-list .onboarding-tour-item.onboarding-complete::before {
+  content: url("img/icons_tour-complete.svg");
+  position: relative;
+  offset-inline-start: 3px;
+  top: -10px;
+  float: inline-start;
+}
+
+#onboarding-tour-list .onboarding-tour-item.onboarding-complete {
+  padding-inline-start: 29px;
+}
+
+#onboarding-tour-list .onboarding-tour-item.onboarding-active,
+#onboarding-tour-list .onboarding-tour-item-container:hover .onboarding-tour-item {
+  color: #0A84FF;
+  /* With 1px transparent outline, could see a border in the high-constrast mode */
+  outline: 1px solid transparent;
+}
+
+/* Default browser tour */
+#onboarding-tour-is-default-browser-msg {
+  font-size: 16px;
+  line-height: 21px;
+  float: inline-end;
+  margin-inline-end: 26px;
+  margin-top: -32px;
+  text-align: center;
+}
+
+/* Sync tour */
+#onboarding-tour-sync-page form {
+  text-align: center;
+}
+
+#onboarding-tour-sync-page form > h3 {
+  text-align: center;
+  margin: 0;
+  font-size: 22px;
+  font-weight: normal;
+}
+
+#onboarding-tour-sync-page form > p {
+  text-align: center;
+  margin: 3px 0 0 0;
+  font-size: 15px;
+  font-weight: normal;
+}
+
+#onboarding-tour-sync-page form > input {
+  margin-top: 10px;
+  height: 40px;
+  width: 80%;
+  padding: 7px;
+}
+
+#onboarding-tour-sync-page form > #onboarding-tour-sync-button {
+  padding: 10px 20px;
+  min-width: 40%;
+  margin: 15px 0;
+  float: none;
+}
+
+/* Onboarding tour pages */
+.onboarding-tour-page {
+  grid-row: page-start / footer-end;
+  grid-column: page-start;
+  display: grid;
+  grid-template-rows: [tour-page-start] 393px [tour-button-start] 1fr [tour-page-end];
+  grid-template-columns: [tour-page-start] 368px [tour-content-start] 1fr [tour-page-end];
+}
+
+.onboarding-tour-description {
+  grid-row: tour-page-start / tour-page-end;
+  grid-column: tour-page-start / tour-content-start;
+  font-size: 15px;
+  line-height: 22px;
+  padding-inline-start: 40px;
+  padding-inline-end: 28px;
+}
+
+.onboarding-tour-description > h1 {
+  font-size: 36px;
+  margin-top: 16px;
+  font-weight: 300;
+  line-height: 44px;
+}
+
+.onboarding-tour-content {
+  grid-row: tour-page-start / tour-button-start;
+  grid-column: tour-content-start / tour-page-end;
+  padding: 0;
+  text-align: end;
+}
+
+.onboarding-tour-content > img {
+  width: 352px;
+  margin: 0;
+}
+
+/* These illustrations need to be stuck on the right side to the border. Thus we
+   need to flip them horizontally on RTL . */
+.onboarding-tour-content > img:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.onboarding-tour-content > iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.onboarding-tour-page.onboarding-no-button > .onboarding-tour-content {
+  grid-row: tour-page-start / tour-page-end;
+  grid-column: tour-content-start / tour-page-end;
+}
+
+.onboarding-tour-button-container {
+  grid-row: tour-button-start / tour-page-end;
+  grid-column: tour-content-start / tour-page-end;
+}
+
+.onboarding-tour-page.onboarding-no-button > .onboarding-tour-button-container {
+  display: none;
+  grid-row: tour-page-end;
+  grid-column: tour-page-end;
+}
+
+.onboarding-tour-action-button {
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 21px;
+  background: #0a84ff;
+  /* With 1px transparent border, could see a border in the high-constrast mode */
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: #fff;
+  float: inline-end;
+  margin-inline-end: 26px;
+  margin-top: -32px;
+}
+
+/* Remove default dotted outline around buttons' text */
+.onboarding-tour-action-button::-moz-focus-inner,
+#onboarding-overlay-button::-moz-focus-inner,
+#onboarding-notification-action-btn::-moz-focus-inner {
+  border: 0;
+}
+
+/* Keyboard focus specific outline */
+.onboarding-tour-action-button:-moz-focusring,
+#onboarding-notification-action-btn:-moz-focusring,
+#onboarding-tour-list .onboarding-tour-item:focus {
+  outline: 2px solid rgba(0,149,221,0.5);
+  outline-offset: 1px;
+  -moz-outline-radius: 2px;
+}
+
+.onboarding-tour-action-button:hover:not([disabled]) ,
+#onboarding-notification-action-btn:hover {
+  background: #0060df;
+  cursor: pointer;
+}
+
+.onboarding-tour-action-button:active:not([disabled]),
+#onboarding-notification-action-btn:active  {
+  background: #003EAA;
+}
+
+.onboarding-tour-action-button:disabled {
+  opacity: 0.5;
+}
+
+/* Tour Icons */
+#onboarding-tour-search,
+#onboarding-tour-singlesearch {
+  background-image: url("img/icons_search.svg");
+}
+
+#onboarding-tour-search.onboarding-active,
+#onboarding-tour-search:hover,
+#onboarding-tour-singlesearch.onboarding-active,
+#onboarding-tour-singlesearch:hover {
+  background-image: url("img/icons_search-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-search] #onboarding-notification-tour-icon,
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-singlesearch] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_search-notification.svg");
+}
+
+#onboarding-tour-private-browsing {
+  background-image: url("img/icons_private.svg");
+}
+
+#onboarding-tour-private-browsing.onboarding-active,
+#onboarding-tour-private-browsing:hover {
+  background-image: url("img/icons_private-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-private-browsing] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_private-notification.svg");
+}
+
+#onboarding-tour-addons {
+  background-image: url("img/icons_addons.svg");
+}
+
+#onboarding-tour-addons.onboarding-active,
+#onboarding-tour-addons:hover {
+  background-image: url("img/icons_addons-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-addons] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_addons-notification.svg");
+}
+
+#onboarding-tour-customize {
+  background-image: url("img/icons_customize.svg");
+}
+
+#onboarding-tour-customize.onboarding-active,
+#onboarding-tour-customize:hover {
+  background-image: url("img/icons_customize-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-customize] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_customize-notification.svg");
+}
+
+
+#onboarding-tour-default-browser {
+  background-image: url("img/icons_default.svg");
+}
+
+#onboarding-tour-default-browser.onboarding-active,
+#onboarding-tour-default-browser:hover {
+  background-image: url("img/icons_default-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-default-browser] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_default-notification.svg");
+}
+
+#onboarding-tour-sync {
+  background-image: url("img/icons_sync.svg");
+}
+
+#onboarding-tour-sync.onboarding-active,
+#onboarding-tour-sync:hover {
+  background-image: url("img/icons_sync-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-sync] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_sync-notification.svg");
+}
+
+#onboarding-tour-library {
+  background-image: url("img/icons_search.svg");
+}
+
+#onboarding-tour-library.onboarding-active,
+#onboarding-tour-library:hover,
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-library] #onboarding-notification-tour-icon {
+  background-image: url("img/icons_search-colored.svg");
+}
+
+#onboarding-tour-performance {
+  background-image: url("img/icons_performance.svg");
+}
+
+#onboarding-tour-performance.onboarding-active,
+#onboarding-tour-performance:hover {
+  background-image: url("img/icons_performance-colored.svg");
+}
+
+#onboarding-notification-bar[data-target-tour-id=onboarding-tour-performance] #onboarding-notification-tour-icon {
+  /* TODO: Placeholder icon. It should be replaced upon assets are available.
+           This is tracking in Bug 1382520. */
+  background-image: url("img/icons_sync-notification.svg");
+}
+
+/* Tour Notifications */
+#onboarding-notification-bar {
+  --onboarding-notification-bar-background-color: rgba(255, 255, 255, 0.97);
+  position: fixed;
+  z-index: 20998; /* We want this always under #onboarding-overlay */
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 122px;
+  min-width: 640px;
+  background: var(--onboarding-notification-bar-background-color);
+  border-top: 2px solid #e9e9e9;
+  transition: transform 0.8s;
+  transform: translateY(122px);
+}
+
+#onboarding-notification-bar.onboarding-opened {
+  transition: none;
+  transform: translateY(0px);
+}
+
+#onboarding-notification-icon {
+  height: 36px;
+  background: url("img/overlay-icon.svg") no-repeat;
+  background-size: 36px;
+  background-position: 34px;
+  padding-inline-start: 190px;
+  position: absolute;
+  offset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+#onboarding-notification-icon:dir(rtl) {
+  background-position: right 34px center;
+}
+
+#onboarding-notification-icon::after {
+  --height: 22px;
+  --vpadding: 3px;
+  position: absolute;
+  content: attr(aria-label);
+  top: 0;
+  offset-inline-start: 73px;
+  line-height: calc(var(--height) - var(--vpadding) * 2);
+  border-radius: calc(var(--height) / 2);
+  padding: var(--vpadding) 10px;
+}
+
+#onboarding-notification-close-btn {
+  background: var(--onboarding-notification-bar-background-color);
+  position: absolute;
+  offset-block-start: 50%;
+  offset-inline-end: 34px;
+  transform: translateY(-50%);
+}
+
+#onboarding-notification-message-section {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#onboarding-notification-body {
+  width: 500px;
+  margin: 0 15px;
+  color: #0c0c0d;
+  display: inline-block;
+  max-height: 100%;
+  overflow: auto;
+  padding: 15px 0;
+  box-sizing: border-box;
+}
+
+#onboarding-notification-body * {
+  font-size: 13px
+}
+
+#onboarding-notification-tour-title {
+  margin: 0;
+  font-weight: bold;
+}
+
+#onboarding-notification-tour-icon {
+  min-width: 64px;
+  height: 64px;
+  background-size: 64px;
+  background-repeat: no-repeat;
+}
+
+#onboarding-notification-action-btn {
+  background: #0a84ff;
+  /* With 1px transparent border, could see a border in the high-constrast mode */
+  border: 1px solid transparent;
+  border-radius: 0;
+  padding: 10px 20px;
+  font-size: 14px;
+  color: #fff;
+  min-width: 130px;
+}
+
+@media all and (max-width: 960px) {
+  #onboarding-notification-icon {
+    display: none;
+  }
+}
+@media all and (max-width: 720px) {
+  #onboarding-notification-body {
+    width: 340px;
+  }
+}

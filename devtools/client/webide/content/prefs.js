@@ -7,15 +7,13 @@
 const Cu = Components.utils;
 const {Services} = Cu.import("resource://gre/modules/Services.jsm", {});
 
-window.addEventListener("load", function onLoad() {
-  window.removeEventListener("load", onLoad);
-
+window.addEventListener("load", function () {
   // Listen to preference changes
   let inputs = document.querySelectorAll("[data-pref]");
   for (let i of inputs) {
     let pref = i.dataset.pref;
-    Services.prefs.addObserver(pref, FillForm, false);
-    i.addEventListener("change", SaveForm, false);
+    Services.prefs.addObserver(pref, FillForm);
+    i.addEventListener("change", SaveForm);
   }
 
   // Buttons
@@ -26,17 +24,16 @@ window.addEventListener("load", function onLoad() {
   // Initialize the controls
   FillForm();
 
-}, true);
+}, {capture: true, once: true});
 
-window.addEventListener("unload", function onUnload() {
-  window.removeEventListener("unload", onUnload);
+window.addEventListener("unload", function () {
   let inputs = document.querySelectorAll("[data-pref]");
   for (let i of inputs) {
     let pref = i.dataset.pref;
-    i.removeEventListener("change", SaveForm, false);
-    Services.prefs.removeObserver(pref, FillForm, false);
+    i.removeEventListener("change", SaveForm);
+    Services.prefs.removeObserver(pref, FillForm);
   }
-}, true);
+}, {capture: true, once: true});
 
 function CloseUI() {
   window.parent.UI.openProject();

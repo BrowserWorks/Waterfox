@@ -29,11 +29,31 @@ class ProxyObject : public ShapedObject
                       "proxy object size must match GC thing size");
         static_assert(offsetof(ProxyObject, data) == detail::ProxyDataOffset,
                       "proxy object layout must match shadow interface");
+        static_assert(offsetof(ProxyObject, data.reservedSlots) == offsetof(shadow::Object, slots),
+                      "Proxy reservedSlots must overlay native object slots field");
     }
+
+    static JS::Result<ProxyObject*, JS::OOM&>
+    create(JSContext* cx, const js::Class* clasp, Handle<TaggedProto> proto,
+           js::gc::AllocKind allocKind, js::NewObjectKind newKind);
 
   public:
     static ProxyObject* New(JSContext* cx, const BaseProxyHandler* handler, HandleValue priv,
                             TaggedProto proto_, const ProxyOptions& options);
+
+    // Proxies usually store their ProxyValueArray inline in the object.
+    // There's one unfortunate exception: when a proxy is swapped with another
+    // object, and the sizes don't match, we malloc the ProxyValueArray.
+    void* inlineDataStart() const {
+        return (void*)(uintptr_t(this) + sizeof(ProxyObject));
+    }
+    bool usingInlineValueArray() const {
+        return data.values() == inlineDataStart();
+    }
+    void setInlineValueArray() {
+        data.reservedSlots = &reinterpret_cast<detail::ProxyValueArray*>(inlineDataStart())->reservedSlots;
+    }
+    MOZ_MUST_USE bool initExternalValueArrayAfterSwap(JSContext* cx, const Vector<Value>& values);
 
     const Value& private_() {
         return GetProxyPrivate(this);
@@ -43,7 +63,7 @@ class ProxyObject : public ShapedObject
     void setSameCompartmentPrivate(const Value& priv);
 
     GCPtrValue* slotOfPrivate() {
-        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->values->privateSlot);
+        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->values()->privateSlot);
     }
 
     JSObject* target() const {
@@ -58,29 +78,29 @@ class ProxyObject : public ShapedObject
         SetProxyHandler(this, handler);
     }
 
-    static size_t offsetOfValues() {
-        return offsetof(ProxyObject, data.values);
+    static size_t offsetOfReservedSlots() {
+        return offsetof(ProxyObject, data.reservedSlots);
     }
     static size_t offsetOfHandler() {
         return offsetof(ProxyObject, data.handler);
     }
-    static size_t offsetOfExtraSlotInValues(size_t slot) {
-        MOZ_ASSERT(slot < detail::PROXY_EXTRA_SLOTS);
-        return offsetof(detail::ProxyValueArray, extraSlots) + slot * sizeof(Value);
+
+    size_t numReservedSlots() const {
+        return JSCLASS_RESERVED_SLOTS(getClass());
+    }
+    const Value& reservedSlot(size_t n) const {
+        return GetProxyReservedSlot(const_cast<ProxyObject*>(this), n);
     }
 
-    const Value& extra(size_t n) const {
-        return GetProxyExtra(const_cast<ProxyObject*>(this), n);
+    void setReservedSlot(size_t n, const Value& extra) {
+        SetProxyReservedSlot(this, n, extra);
     }
 
-    void setExtra(size_t n, const Value& extra) {
-        SetProxyExtra(this, n, extra);
-    }
+    gc::AllocKind allocKindForTenure() const;
 
   private:
-    GCPtrValue* slotOfExtra(size_t n) {
-        MOZ_ASSERT(n < detail::PROXY_EXTRA_SLOTS);
-        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->values->extraSlots[n]);
+    GCPtrValue* reservedSlotPtr(size_t n) {
+        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->reservedSlots->slots[n]);
     }
 
     static bool isValidProxyClass(const Class* clasp) {
@@ -88,24 +108,21 @@ class ProxyObject : public ShapedObject
         // are "sane". They have to quack enough like proxies for us to belive
         // they should be treated as such.
 
-        // proxy_Trace is just a trivial wrapper around ProxyObject::trace for
-        // friend api exposure.
-
         // Proxy classes are not allowed to have call or construct hooks directly. Their
         // callability is instead decided by handler()->isCallable().
         return clasp->isProxy() &&
-               clasp->isTrace(proxy_Trace) &&
+               clasp->isTrace(ProxyObject::trace) &&
                !clasp->getCall() && !clasp->getConstruct();
     }
 
   public:
-    static unsigned grayLinkExtraSlot(JSObject* obj);
+    static unsigned grayLinkReservedSlot(JSObject* obj);
 
-    void renew(JSContext* cx, const BaseProxyHandler* handler, Value priv);
+    void renew(const BaseProxyHandler* handler, const Value& priv);
 
     static void trace(JSTracer* trc, JSObject* obj);
 
-    void nuke(const BaseProxyHandler* handler);
+    void nuke();
 
     // There is no class_ member to force specialization of JSObject::is<T>().
     // The implementation in JSObject is incorrect for proxies since it doesn't

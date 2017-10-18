@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     window.title                  "Settings - Site Data">
+<!ENTITY     hostCol.label                 "Site">
+<!ENTITY     statusCol.label               "Status">
+<!ENTITY     usageCol.label                "Storage">
+<!ENTITY     searchTextboxPlaceHolder             "Search websites">
+<!ENTITY     searchTextboxPlaceHolder.accesskey   "S">
+<!ENTITY     removeSelected.label          "Remove Selected">
+<!ENTITY     removeSelected.accesskey      "r">
+<!ENTITY     save.label                    "Save Changes">
+<!ENTITY     save.accesskey                "a">
+<!ENTITY     cancel.label                  "Cancel">
+<!ENTITY     cancel.accesskey              "C">
+<!ENTITY     removingDialog.title          "Removing Site Data">
+<!ENTITY     removingSelected.description  "Removing site data will also remove related cookies and offline web content. This may log you out of websites. Are you sure you want to make the changes?">
+<!ENTITY     siteTree.label                "The following website cookies will be removed:">

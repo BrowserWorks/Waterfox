@@ -10,7 +10,7 @@
 </head>
 <body>
 <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test for connection establishing timeout of B2G Presentation API at receiver side</a>
-<script type="application/javascript;version=1.8">
+<script type="application/javascript">
 
 'use strict';
 
@@ -26,7 +26,7 @@ function setup() {
     var promise = new Promise(function(aResolve, aReject) {
       // In order to trigger timeout, do not resolve the promise.
     });
-    obs.notifyObservers(promise, 'setup-request-promise', null);
+    obs.notifyObservers(promise, 'setup-request-promise');
 
     aResolve();
   });
@@ -68,9 +68,9 @@ function runTests() {
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPermissions([
   {type: 'presentation-device-manage', allow: false, context: document},
-  {type: 'presentation', allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
+                                      ["dom.presentation.receiver.enabled", true],
                                       ["dom.presentation.session_transport.data_channel.enable", false],
                                       ["presentation.receiver.loading.timeout", 10]]},
                             runTests);

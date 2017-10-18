@@ -7,7 +7,6 @@ package org.mozilla.gecko.util;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
@@ -16,6 +15,8 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
+
+import org.mozilla.gecko.AppConstants;
 
 public class DrawableUtil {
 
@@ -26,8 +27,8 @@ public class DrawableUtil {
     public static Drawable tintDrawable(@NonNull final Context context,
                                         @DrawableRes final int drawableID,
                                         @ColorInt final int color) {
-        final Drawable icon = DrawableCompat.wrap(
-                ContextCompat.getDrawable(context, drawableID).mutate());
+        final Drawable icon = DrawableCompat.wrap(ResourceDrawableUtils.getDrawable(context, drawableID)
+                .mutate());
         DrawableCompat.setTint(icon, color);
         return icon;
     }
@@ -53,6 +54,13 @@ public class DrawableUtil {
             @NonNull final ColorStateList colorList) {
         final Drawable wrappedDrawable = DrawableCompat.wrap(drawable.mutate());
         DrawableCompat.setTintList(wrappedDrawable, colorList);
+
+        // DrawableCompat on pre-L doesn't handle its bounds correctly, and by default therefore won't
+        // be rendered - we need to manually copy the bounds as a workaround:
+        if (AppConstants.Versions.preMarshmallow) {
+            wrappedDrawable.setBounds(0, 0, wrappedDrawable.getIntrinsicHeight(), wrappedDrawable.getIntrinsicHeight());
+        }
+
         return wrappedDrawable;
     }
 }

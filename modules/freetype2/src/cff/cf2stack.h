@@ -36,8 +36,8 @@
 /***************************************************************************/
 
 
-#ifndef __CF2STACK_H__
-#define __CF2STACK_H__
+#ifndef CF2STACK_H_
+#define CF2STACK_H_
 
 
 FT_BEGIN_HEADER
@@ -62,15 +62,17 @@ FT_BEGIN_HEADER
   {
     FT_Memory         memory;
     FT_Error*         error;
-    CF2_StackNumber   buffer[CF2_OPERAND_STACK_SIZE];
+    CF2_StackNumber*  buffer;
     CF2_StackNumber*  top;
+    FT_UInt           stackSize;
 
   } CF2_StackRec, *CF2_Stack;
 
 
   FT_LOCAL( CF2_Stack )
   cf2_stack_init( FT_Memory  memory,
-                  FT_Error*  error );
+                  FT_Error*  error,
+                  FT_UInt    stackSize );
   FT_LOCAL( void )
   cf2_stack_free( CF2_Stack  stack );
 
@@ -92,6 +94,19 @@ FT_BEGIN_HEADER
   FT_LOCAL( CF2_Fixed )
   cf2_stack_getReal( CF2_Stack  stack,
                      CF2_UInt   idx );
+  FT_LOCAL( void )
+  cf2_stack_setReal( CF2_Stack  stack,
+                     CF2_UInt   idx,
+                     CF2_Fixed  val );
+
+  FT_LOCAL( void )
+  cf2_stack_pop( CF2_Stack  stack,
+                 CF2_UInt   num );
+
+  FT_LOCAL( void )
+  cf2_stack_roll( CF2_Stack  stack,
+                  CF2_Int    count,
+                  CF2_Int    idx );
 
   FT_LOCAL( void )
   cf2_stack_clear( CF2_Stack  stack );
@@ -100,7 +115,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* __CF2STACK_H__ */
+#endif /* CF2STACK_H_ */
 
 
 /* END */

@@ -8,19 +8,17 @@ this.EXPORTED_SYMBOLS = ["BrowserIDManager", "AuthenticationError"];
 
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
+Cu.import("resource://gre/modules/FxAccounts.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/tokenserverclient.js");
 Cu.import("resource://services-crypto/utils.js");
-Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/util.js");
-Cu.import("resource://services-common/tokenserverclient.js");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://services-sync/constants.js");
-Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource://services-sync/stages/cluster.js");
-Cu.import("resource://gre/modules/FxAccounts.jsm");
 
 // Lazy imports to prevent unnecessary load on startup.
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
@@ -32,7 +30,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "BulkKeyBundle",
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
                                   "resource://gre/modules/FxAccounts.jsm");
 
-XPCOMUtils.defineLazyGetter(this, 'log', function() {
+XPCOMUtils.defineLazyGetter(this, "log", function() {
   let log = Log.repository.getLogger("Sync.BrowserIDManager");
   log.level = Log.Level[Svc.Prefs.get("log.logger.identity")] || Log.Level.Error;
   return log;
@@ -45,13 +43,12 @@ Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 const OBSERVER_TOPICS = [
   fxAccountsCommon.ONLOGIN_NOTIFICATION,
   fxAccountsCommon.ONLOGOUT_NOTIFICATION,
+  fxAccountsCommon.ON_ACCOUNT_STATE_CHANGE_NOTIFICATION,
 ];
-
-const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync-setup.ui.showCustomizationDialog";
 
 function deriveKeyBundle(kB) {
   let out = CryptoUtils.hkdf(kB, undefined,
-                             "identity.mozilla.com/picl/v1/oldsync", 2*32);
+                             "identity.mozilla.com/picl/v1/oldsync", 2 * 32);
   let bundle = new BulkKeyBundle();
   // [encryptionKey, hmacKey]
   bundle.keyPair = [out.slice(0, 32), out.slice(32, 64)];
@@ -71,7 +68,7 @@ function AuthenticationError(details, source) {
 }
 
 AuthenticationError.prototype = {
-  toString: function() {
+  toString() {
     return "AuthenticationError(" + this.details + ")";
   }
 }
@@ -88,8 +85,6 @@ this.BrowserIDManager = function BrowserIDManager() {
 };
 
 this.BrowserIDManager.prototype = {
-  __proto__: IdentityManager.prototype,
-
   _fxaService: null,
   _tokenServerClient: null,
   // https://docs.services.mozilla.com/token/apis.html
@@ -105,45 +100,37 @@ this.BrowserIDManager.prototype = {
   // we don't consider the lack of a keybundle as a failure state.
   _shouldHaveSyncKeyBundle: false,
 
-  get needsCustomization() {
-    try {
-      return Services.prefs.getBoolPref(PREF_SYNC_SHOW_CUSTOMIZATION);
-    } catch (e) {
-      return false;
-    }
-  },
-
   hashedUID() {
-    if (!this._token) {
-      throw new Error("hashedUID: Don't have token");
+    if (!this._hashedUID) {
+      throw new Error("hashedUID: Don't seem to have previously seen a token");
     }
-    return this._token.hashed_fxa_uid
+    return this._hashedUID;
   },
 
-  initialize: function() {
+  // Return a hashed version of a deviceID, suitable for telemetry.
+  hashedDeviceID(deviceID) {
+    let uid = this.hashedUID();
+    // Combine the raw device id with the metrics uid to create a stable
+    // unique identifier that can't be mapped back to the user's FxA
+    // identity without knowing the metrics HMAC key.
+    return Utils.sha256(deviceID + uid);
+  },
+
+  deviceID() {
+    return this._signedInUser && this._signedInUser.deviceId;
+  },
+
+  initialize() {
     for (let topic of OBSERVER_TOPICS) {
-      Services.obs.addObserver(this, topic, false);
+      Services.obs.addObserver(this, topic);
     }
-    // and a background fetch of account data just so we can set this.account,
-    // so we have a username available before we've actually done a login.
-    // XXX - this is actually a hack just for tests and really shouldn't be
-    // necessary. Also, you'd think it would be safe to allow this.account to
-    // be set to null when there's no user logged in, but argue with the test
-    // suite, not with me :)
-    this._fxaService.getSignedInUser().then(accountData => {
-      if (accountData) {
-        this.account = accountData.email;
-      }
-    }).catch(err => {
-      // As above, this is only for tests so it is safe to ignore.
-    });
   },
 
   /**
    * Ensure the user is logged in.  Returns a promise that resolves when
    * the user is logged in, or is rejected if the login attempt has failed.
    */
-  ensureLoggedIn: function() {
+  ensureLoggedIn() {
     if (!this._shouldHaveSyncKeyBundle && this.whenReadyToAuthenticate) {
       // We are already in the process of logging in.
       return this.whenReadyToAuthenticate.promise;
@@ -167,7 +154,7 @@ this.BrowserIDManager.prototype = {
     return this.whenReadyToAuthenticate.promise;
   },
 
-  finalize: function() {
+  finalize() {
     // After this is called, we can expect Service.identity != this.
     for (let topic of OBSERVER_TOPICS) {
       Services.obs.removeObserver(this, topic);
@@ -176,27 +163,14 @@ this.BrowserIDManager.prototype = {
     this._signedInUser = null;
   },
 
-  offerSyncOptions: function () {
-    // If the user chose to "Customize sync options" when signing
-    // up with Firefox Accounts, ask them to choose what to sync.
-    const url = "chrome://browser/content/sync/customize.xul";
-    const features = "centerscreen,chrome,modal,dialog,resizable=no";
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
-
-    let data = {accepted: false};
-    win.openDialog(url, "_blank", features, data);
-
-    return data;
-  },
-
-  initializeWithCurrentIdentity: function(isInitialSync=false) {
+  initializeWithCurrentIdentity(isInitialSync = false) {
     // While this function returns a promise that resolves once we've started
     // the auth process, that process is complete when
     // this.whenReadyToAuthenticate.promise resolves.
     this._log.trace("initializeWithCurrentIdentity");
 
     // Reset the world before we do anything async.
-    this.whenReadyToAuthenticate = Promise.defer();
+    this.whenReadyToAuthenticate = PromiseUtils.defer();
     this.whenReadyToAuthenticate.promise.catch(err => {
       this._log.error("Could not authenticate", err);
     });
@@ -211,14 +185,13 @@ this.BrowserIDManager.prototype = {
     return this._fxaService.getSignedInUser().then(accountData => {
       if (!accountData) {
         this._log.info("initializeWithCurrentIdentity has no user logged in");
-        this.account = null;
         // and we are as ready as we can ever be for auth.
         this._shouldHaveSyncKeyBundle = true;
         this.whenReadyToAuthenticate.reject("no user is logged in");
         return;
       }
 
-      this.account = accountData.email;
+      this.username = accountData.email;
       this._updateSignedInUser(accountData);
       // The user must be verified before we can do anything at all; we kick
       // this and the rest of initialization off in the background (ie, we
@@ -226,23 +199,16 @@ this.BrowserIDManager.prototype = {
       this._log.info("Waiting for user to be verified.");
       this._fxaService.whenVerified(accountData).then(accountData => {
         this._updateSignedInUser(accountData);
-        this._log.info("Starting fetch for key bundle.");
-        if (this.needsCustomization) {
-          let data = this.offerSyncOptions();
-          if (data.accepted) {
-            Services.prefs.clearUserPref(PREF_SYNC_SHOW_CUSTOMIZATION);
 
-            // Mark any non-selected engines as declined.
-            Weave.Service.engineManager.declineDisabled();
-          } else {
-            // Log out if the user canceled the dialog.
-            return this._fxaService.signOut();
-          }
-        }
-      }).then(() => {
+        this._log.info("Starting fetch for key bundle.");
         return this._fetchTokenForUser();
       }).then(token => {
         this._token = token;
+        if (token) {
+          // We may not have a token if the master-password is locked - but we
+          // still treat this as "success" so we don't prompt for re-authentication.
+          this._hashedUID = token.hashed_fxa_uid; // see _ensureValidToken for why we do this...
+        }
         this._shouldHaveSyncKeyBundle = true; // and we should actually have one...
         this.whenReadyToAuthenticate.resolve();
         this._log.info("Background fetch for key bundle done");
@@ -250,7 +216,7 @@ this.BrowserIDManager.prototype = {
         if (isInitialSync) {
           this._log.info("Doing initial sync actions");
           Svc.Prefs.set("firstSync", "resetClient");
-          Services.obs.notifyObservers(null, "weave:service:setup-complete", null);
+          Services.obs.notifyObservers(null, "weave:service:setup-complete");
           Weave.Utils.nextTick(Weave.Service.sync, Weave.Service);
         }
       }).catch(authErr => {
@@ -265,7 +231,7 @@ this.BrowserIDManager.prototype = {
     });
   },
 
-  _updateSignedInUser: function(userData) {
+  _updateSignedInUser(userData) {
     // This object should only ever be used for a single user.  It is an
     // error to update the data if the user changes (but updates are still
     // necessary, as each call may add more attributes to the user).
@@ -276,7 +242,7 @@ this.BrowserIDManager.prototype = {
     this._signedInUser = userData;
   },
 
-  logout: function() {
+  logout() {
     // This will be called when sync fails (or when the account is being
     // unlinked etc).  It may have failed because we got a 401 from a sync
     // server, so we nuke the token.  Next time sync runs and wants an
@@ -285,26 +251,57 @@ this.BrowserIDManager.prototype = {
     this._token = null;
   },
 
-  observe: function (subject, topic, data) {
+  observe(subject, topic, data) {
     this._log.debug("observed " + topic);
     switch (topic) {
-    case fxAccountsCommon.ONLOGIN_NOTIFICATION:
+    case fxAccountsCommon.ONLOGIN_NOTIFICATION: {
+      // If our existing Sync state is that we needed to reauth, clear that
+      // state now - it will get reset back if a problem persists.
+      if (Weave.Status.login == LOGIN_FAILED_LOGIN_REJECTED) {
+        Weave.Status.login = LOGIN_SUCCEEDED;
+      }
       // This should only happen if we've been initialized without a current
       // user - otherwise we'd have seen the LOGOUT notification and been
       // thrown away.
       // The exception is when we've initialized with a user that needs to
       // reauth with the server - in that case we will also get here, but
-      // should have the same identity.
+      // should have the same identity, and so we pass `false` into
+      // initializeWithCurrentIdentity so that we won't do a full sync for our
+      // first sync if we can avoid it.
       // initializeWithCurrentIdentity will throw and log if these constraints
       // aren't met (indirectly, via _updateSignedInUser()), so just go ahead
       // and do the init.
-      this.initializeWithCurrentIdentity(true);
-      break;
+      let firstLogin = !this.username;
+      this.initializeWithCurrentIdentity(firstLogin);
+
+      if (!firstLogin) {
+        // We still want to trigger these even if it isn't our first login.
+        // Note that the promise returned by `initializeWithCurrentIdentity`
+        // is resolved at the start of authentication, but we don't want to fire
+        // this event or start the next sync until after authentication is done
+        // (which is signaled by `this.whenReadyToAuthenticate.promise` resolving).
+        this.whenReadyToAuthenticate.promise.then(() => {
+          Services.obs.notifyObservers(null, "weave:service:setup-complete");
+          return Async.promiseYield();
+        }).then(() => {
+          return Weave.Service.sync();
+        }).catch(e => {
+          this._log.warn("Failed to trigger setup complete notification", e);
+        });
+      }
+    } break;
 
     case fxAccountsCommon.ONLOGOUT_NOTIFICATION:
-      Weave.Service.startOver();
+      Async.promiseSpinningly(Weave.Service.startOver());
       // startOver will cause this instance to be thrown away, so there's
       // nothing else to do.
+      break;
+
+    case fxAccountsCommon.ON_ACCOUNT_STATE_CHANGE_NOTIFICATION:
+      // throw away token and fetch a new one
+      this.resetCredentials();
+      this._ensureValidToken().catch(err =>
+        this._log.error("Error while fetching a new token", err));
       break;
     }
   },
@@ -312,7 +309,7 @@ this.BrowserIDManager.prototype = {
   /**
    * Compute the sha256 of the message bytes.  Return bytes.
    */
-  _sha256: function(message) {
+  _sha256(message) {
     let hasher = Cc["@mozilla.org/security/hash;1"]
                     .createInstance(Ci.nsICryptoHash);
     hasher.init(hasher.SHA256);
@@ -324,14 +321,14 @@ this.BrowserIDManager.prototype = {
    *
    * Return string: hex(first16Bytes(sha256(kBbytes)))
    */
-  _computeXClientState: function(kBbytes) {
+  _computeXClientState(kBbytes) {
     return CommonUtils.bytesAsHex(this._sha256(kBbytes).slice(0, 16), false);
   },
 
   /**
    * Provide override point for testing token expiration.
    */
-  _now: function() {
+  _now() {
     return this._fxaService.now()
   },
 
@@ -339,80 +336,55 @@ this.BrowserIDManager.prototype = {
     return this._fxaService.localtimeOffsetMsec;
   },
 
-  usernameFromAccount: function(val) {
-    // we don't differentiate between "username" and "account"
-    return val;
-  },
-
-  /**
-   * Obtains the HTTP Basic auth password.
-   *
-   * Returns a string if set or null if it is not set.
-   */
-  get basicPassword() {
-    this._log.error("basicPassword getter should be not used in BrowserIDManager");
-    return null;
-  },
-
-  /**
-   * Set the HTTP basic password to use.
-   *
-   * Changes will not persist unless persistSyncCredentials() is called.
-   */
-  set basicPassword(value) {
-    throw "basicPassword setter should be not used in BrowserIDManager";
-  },
-
-  /**
-   * Obtain the Sync Key.
-   *
-   * This returns a 26 character "friendly" Base32 encoded string on success or
-   * null if no Sync Key could be found.
-   *
-   * If the Sync Key hasn't been set in this session, this will look in the
-   * password manager for the sync key.
-   */
-  get syncKey() {
-    if (this.syncKeyBundle) {
-      // TODO: This is probably fine because the code shouldn't be
-      // using the sync key directly (it should use the sync key
-      // bundle), but I don't like it. We should probably refactor
-      // code that is inspecting this to not do validation on this
-      // field directly and instead call a isSyncKeyValid() function
-      // that we can override.
-      return "99999999999999999999999999";
-    }
-    else {
-      return null;
-    }
-  },
-
-  set syncKey(value) {
-    throw "syncKey setter should be not used in BrowserIDManager";
-  },
-
   get syncKeyBundle() {
     return this._syncKeyBundle;
+  },
+
+  get username() {
+    return Svc.Prefs.get("username", null);
+  },
+
+  /**
+   * Set the username value.
+   *
+   * Changing the username has the side-effect of wiping credentials.
+   */
+  set username(value) {
+    if (value) {
+      value = value.toLowerCase();
+
+      if (value == this.username) {
+        return;
+      }
+
+      Svc.Prefs.set("username", value);
+    } else {
+      Svc.Prefs.reset("username");
+    }
+
+    // If we change the username, we interpret this as a major change event
+    // and wipe out the credentials.
+    this._log.info("Username changed. Removing stored credentials.");
+    this.resetCredentials();
   },
 
   /**
    * Resets/Drops all credentials we hold for the current user.
    */
-  resetCredentials: function() {
-    this.resetSyncKey();
+  resetCredentials() {
+    this.resetSyncKeyBundle();
     this._token = null;
+    this._hashedUID = null;
     // The cluster URL comes from the token, so resetting it to empty will
     // force Sync to not accidentally use a value from an earlier token.
     Weave.Service.clusterURL = null;
   },
 
   /**
-   * Resets/Drops the sync key we hold for the current user.
+   * Resets/Drops the sync key bundle we hold for the current user.
    */
-  resetSyncKey: function() {
-    this._syncKey = null;
+  resetSyncKeyBundle() {
     this._syncKeyBundle = null;
-    this._syncKeyUpdated = true;
     this._shouldHaveSyncKeyBundle = false;
   },
 
@@ -422,15 +394,27 @@ this.BrowserIDManager.prototype = {
    * allows us to avoid a network request for when we actually need the
    * migration info.
    */
-  prefetchMigrationSentinel: function(service) {
+  prefetchMigrationSentinel(service) {
     // nothing to do here until we decide to migrate away from FxA.
   },
 
   /**
     * Return credentials hosts for this identity only.
     */
-  _getSyncCredentialsHosts: function() {
+  _getSyncCredentialsHosts() {
     return Utils.getSyncCredentialsHostsFxA();
+  },
+
+  /**
+   * Deletes Sync credentials from the password manager.
+   */
+  deleteSyncCredentials() {
+    for (let host of this._getSyncCredentialsHosts()) {
+      let logins = Services.logins.findLogins({}, host, "", "");
+      for (let login of logins) {
+        Services.logins.removeLogin(login);
+      }
+    }
   },
 
   /**
@@ -447,6 +431,7 @@ this.BrowserIDManager.prototype = {
                      " due to previous failure");
       return this._authFailureReason;
     }
+
     // TODO: need to revisit this. Currently this isn't ready to go until
     // both the username and syncKeyBundle are both configured and having no
     // username seems to make things fail fast so that's good.
@@ -459,7 +444,7 @@ this.BrowserIDManager.prototype = {
 
   // Do we currently have keys, or do we have enough that we should be able
   // to successfully fetch them?
-  _canFetchKeys: function() {
+  _canFetchKeys() {
     let userData = this._signedInUser;
     // a keyFetchToken means we can almost certainly grab them.
     // kA and kB means we already have them.
@@ -472,7 +457,7 @@ this.BrowserIDManager.prototype = {
    * Returns a promise that resolves with the current auth state after
    * attempting to unlock.
    */
-  unlockAndVerifyAuthState: function() {
+  unlockAndVerifyAuthState() {
     if (this._canFetchKeys()) {
       log.debug("unlockAndVerifyAuthState already has (or can fetch) sync keys");
       return Promise.resolve(STATUS_OK);
@@ -507,13 +492,13 @@ this.BrowserIDManager.prototype = {
    * Do we have a non-null, not yet expired token for the user currently
    * signed in?
    */
-  hasValidToken: function() {
+  hasValidToken() {
     // If pref is set to ignore cached authentication credentials for debugging,
     // then return false to force the fetching of a new token.
     let ignoreCachedAuthCredentials = false;
     try {
       ignoreCachedAuthCredentials = Svc.Prefs.get("debug.ignoreCachedAuthCredentials");
-    } catch(e) {
+    } catch (e) {
       // Pref doesn't exist
     }
     if (ignoreCachedAuthCredentials) {
@@ -546,7 +531,7 @@ this.BrowserIDManager.prototype = {
   // Refresh the sync token for our user. Returns a promise that resolves
   // with a token (which may be null in one sad edge-case), or rejects with an
   // error.
-  _fetchTokenForUser: function() {
+  _fetchTokenForUser() {
     // tokenServerURI is mis-named - convention is uri means nsISomething...
     let tokenServerURI = this._tokenServerUrl;
     let log = this._log;
@@ -566,7 +551,7 @@ this.BrowserIDManager.prototype = {
       // This is called at login time and every time we need a new token - in
       // the latter case we already have kA and kB, so optimise that case.
       if (userData.kA && userData.kB) {
-        return;
+        return null;
       }
       log.info("Fetching new keys");
       return this._fxaService.getKeys().then(
@@ -579,8 +564,8 @@ this.BrowserIDManager.prototype = {
 
     let getToken = assertion => {
       log.debug("Getting a token");
-      let deferred = Promise.defer();
-      let cb = function (err, token) {
+      let deferred = PromiseUtils.defer();
+      let cb = function(err, token) {
         if (err) {
           return deferred.reject(err);
         }
@@ -596,7 +581,7 @@ this.BrowserIDManager.prototype = {
 
     let getAssertion = () => {
       log.info("Getting an assertion from", tokenServerURI);
-      let audience = Services.io.newURI(tokenServerURI, null, null).prePath;
+      let audience = Services.io.newURI(tokenServerURI).prePath;
       return fxa.getAssertion(audience);
     };
 
@@ -667,29 +652,43 @@ this.BrowserIDManager.prototype = {
 
   // Returns a promise that is resolved when we have a valid token for the
   // current user stored in this._token.  When resolved, this._token is valid.
-  _ensureValidToken: function() {
+  _ensureValidToken() {
     if (this.hasValidToken()) {
       this._log.debug("_ensureValidToken already has one");
       return Promise.resolve();
     }
+    const notifyStateChanged =
+      () => Services.obs.notifyObservers(null, "weave:service:login:change");
     // reset this._token as a safety net to reduce the possibility of us
     // repeatedly attempting to use an invalid token if _fetchTokenForUser throws.
     this._token = null;
     return this._fetchTokenForUser().then(
       token => {
         this._token = token;
+        // we store the hashed UID from the token so that if we see a transient
+        // error fetching a new token we still know the "most recent" hashed
+        // UID for telemetry.
+        if (token) {
+          // We may not have a token if the master-password is locked.
+          this._hashedUID = token.hashed_fxa_uid;
+        }
+        notifyStateChanged();
+      },
+      error => {
+        notifyStateChanged();
+        throw error
       }
     );
   },
 
-  getResourceAuthenticator: function () {
+  getResourceAuthenticator() {
     return this._getAuthenticationHeader.bind(this);
   },
 
   /**
    * Obtain a function to be used for adding auth to RESTRequest instances.
    */
-  getRESTRequestAuthenticator: function() {
+  getRESTRequestAuthenticator() {
     return this._addAuthenticationHeader.bind(this);
   },
 
@@ -697,7 +696,7 @@ this.BrowserIDManager.prototype = {
    * @return a Hawk HTTP Authorization Header, lightly wrapped, for the .uri
    * of a RESTRequest or AsyncResponse object.
    */
-  _getAuthenticationHeader: function(httpObject, method) {
+  _getAuthenticationHeader(httpObject, method) {
     let cb = Async.makeSpinningCallback();
     this._ensureValidToken().then(cb, cb);
     // Note that in failure states we return null, causing the request to be
@@ -727,14 +726,14 @@ this.BrowserIDManager.prototype = {
     let options = {
       now: this._now(),
       localtimeOffsetMsec: this._localtimeOffsetMsec,
-      credentials: credentials,
+      credentials,
     };
 
     let headerValue = CryptoUtils.computeHAWK(httpObject.uri, method, options);
     return {headers: {authorization: headerValue.field}};
   },
 
-  _addAuthenticationHeader: function(request, method) {
+  _addAuthenticationHeader(request, method) {
     let header = this._getAuthenticationHeader(request, method);
     if (!header) {
       return null;
@@ -743,7 +742,7 @@ this.BrowserIDManager.prototype = {
     return request;
   },
 
-  createClusterManager: function(service) {
+  createClusterManager(service) {
     return new BrowserIDClusterManager(service);
   },
 
@@ -762,14 +761,42 @@ this.BrowserIDManager.prototype = {
  */
 
 function BrowserIDClusterManager(service) {
-  ClusterManager.call(this, service);
+  this._log = log;
+  this.service = service;
 }
 
 BrowserIDClusterManager.prototype = {
-  __proto__: ClusterManager.prototype,
+  get identity() {
+    return this.service.identity;
+  },
 
-  _findCluster: function() {
-    let endPointFromIdentityToken = function() {
+  /**
+   * Determine the cluster for the current user and update state.
+   */
+  setCluster() {
+    // Make sure we didn't get some unexpected response for the cluster.
+    let cluster = this._findCluster();
+    this._log.debug("Cluster value = " + cluster);
+    if (cluster == null) {
+      return false;
+    }
+
+    // Convert from the funky "String object with additional properties" that
+    // resource.js returns to a plain-old string.
+    cluster = cluster.toString();
+    // Don't update stuff if we already have the right cluster
+    if (cluster == this.service.clusterURL) {
+      return false;
+    }
+
+    this._log.debug("Setting cluster to " + cluster);
+    this.service.clusterURL = cluster;
+
+    return true;
+  },
+
+  _findCluster() {
+    let endPointFromIdentityToken = () => {
       // The only reason (in theory ;) that we can end up with a null token
       // is when this.identity._canFetchKeys() returned false.  In turn, this
       // should only happen if the master-password is locked or the credentials
@@ -790,10 +817,10 @@ BrowserIDClusterManager.prototype = {
       }
       log.debug("_findCluster returning " + endpoint);
       return endpoint;
-    }.bind(this);
+    };
 
     // Spinningly ensure we are ready to authenticate and have a valid token.
-    let promiseClusterURL = function() {
+    let promiseClusterURL = () => {
       return this.identity.whenReadyToAuthenticate.promise.then(
         () => {
           // We need to handle node reassignment here.  If we are being asked
@@ -808,13 +835,12 @@ BrowserIDClusterManager.prototype = {
         }
       ).then(endPointFromIdentityToken
       );
-    }.bind(this);
+    };
 
     let cb = Async.makeSpinningCallback();
-    promiseClusterURL().then(function (clusterURL) {
+    promiseClusterURL().then(function(clusterURL) {
       cb(null, clusterURL);
-    }).then(
-      null, err => {
+    }).catch(err => {
       log.info("Failed to fetch the cluster URL", err);
       // service.js's verifyLogin() method will attempt to fetch a cluster
       // URL when it sees a 401.  If it gets null, it treats it as a "real"
@@ -839,7 +865,7 @@ BrowserIDClusterManager.prototype = {
     return cb.wait();
   },
 
-  getUserBaseURL: function() {
+  getUserBaseURL() {
     // Legacy Sync and FxA Sync construct the userBaseURL differently. Legacy
     // Sync appends path components onto an empty path, and in FxA Sync the
     // token server constructs this for us in an opaque manner. Since the

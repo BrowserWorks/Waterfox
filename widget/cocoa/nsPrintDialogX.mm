@@ -4,9 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Preferences.h"
 
 #include "nsPrintDialogX.h"
 #include "nsIPrintSettings.h"
+#include "nsIPrintSettingsService.h"
 #include "nsPrintSettingsX.h"
 #include "nsCOMPtr.h"
 #include "nsQueryObject.h"
@@ -49,6 +51,9 @@ nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSett
   if (!settingsX)
     return NS_ERROR_FAILURE;
 
+  nsCOMPtr<nsIPrintSettingsService> printSettingsSvc
+    = do_GetService("@mozilla.org/gfx/printsettings-service;1");
+
   // Set the print job title
   char16_t** docTitles;
   uint32_t titleCount;
@@ -68,6 +73,9 @@ nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSett
     titleCount = 0;
   }
 
+  // Read default print settings from prefs
+  printSettingsSvc->InitPrintSettingsFromPrefs(settingsX, true,
+    nsIPrintSettings::kInitSaveNativeData);
   NSPrintInfo* printInfo = settingsX->GetCocoaPrintInfo();
 
   // Put the print info into the current print operation, since that's where
@@ -97,8 +105,6 @@ nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSett
   if (!copy) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
-  settingsX->SetCocoaPrintInfo(copy);
-  [copy release];
 
   [NSPrintOperation setCurrentOperation:nil];
   [tmpView release];
@@ -106,8 +112,53 @@ nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSett
   if (button != NSFileHandlingPanelOKButton)
     return NS_ERROR_ABORT;
 
+  settingsX->SetCocoaPrintInfo(copy);
+  settingsX->InitUnwriteableMargin();
+
+  // Save settings unless saving is pref'd off
+  if (Preferences::GetBool("print.save_print_settings", false)) {
+    printSettingsSvc->SavePrintSettingsToPrefs(settingsX, true,
+      nsIPrintSettings::kInitSaveNativeData);
+  }
+
+  // Get coordinate space resolution for converting paper size units to inches
+  NSWindow *win = [[NSApplication sharedApplication] mainWindow];
+  if (win) {
+    NSDictionary *devDesc = [win deviceDescription];
+    if (devDesc) {
+      NSSize res = [[devDesc objectForKey: NSDeviceResolution] sizeValue];
+      float scale = [win backingScaleFactor];
+      if (scale > 0) {
+        settingsX->SetInchesScale(res.width / scale, res.height / scale);
+      }
+    }
+  }
+
   // Export settings.
   [viewController exportSettings];
+
+  // If "ignore scaling" is checked, overwrite scaling factor with 1.
+  bool isShrinkToFitChecked;
+  settingsX->GetShrinkToFit(&isShrinkToFitChecked);
+  if (isShrinkToFitChecked) {
+    NSMutableDictionary* dict = [copy dictionary];
+    if (dict) {
+      [dict setObject: [NSNumber numberWithFloat: 1]
+               forKey: NSPrintScalingFactor];
+    }
+    // Set the scaling factor to 100% in the NSPrintInfo
+    // object so that it will not affect the paper size
+    // retrieved from the PMPageFormat routines.
+    [copy setScalingFactor:1.0];
+  } else {
+    aSettings->SetScaling([copy scalingFactor]);
+  }
+
+  // Set the adjusted paper size now that we've updated
+  // the scaling factor.
+  settingsX->InitAdjustedPaperSize();
+
+  [copy release];
 
   int16_t pageRange;
   aSettings->GetPrintRange(&pageRange);
@@ -134,6 +185,8 @@ NS_IMETHODIMP
 nsPrintDialogServiceX::ShowPageSetup(nsPIDOMWindowOuter *aParent,
                                      nsIPrintSettings *aNSSettings)
 {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
   NS_PRECONDITION(aParent, "aParent must not be null");
   NS_PRECONDITION(aNSSettings, "aSettings must not be null");
   NS_ENSURE_TRUE(aNSSettings, NS_ERROR_FAILURE);
@@ -149,6 +202,8 @@ nsPrintDialogServiceX::ShowPageSetup(nsPIDOMWindowOuter *aParent,
   nsCocoaUtils::CleanUpAfterNativeAppModalDialog();
 
   return button == NSFileHandlingPanelOKButton ? NS_OK : NS_ERROR_ABORT;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
 }
 
 // Accessory view
@@ -253,7 +308,7 @@ static const char sHeaderFooterTags[][4] =  {"", "&T", "&U", "&D", "&P", "&PT"};
     return @"";
 
   nsXPIDLString intlString;
-  mPrintBundle->GetStringFromName(NS_ConvertUTF8toUTF16(aKey).get(), getter_Copies(intlString));
+  mPrintBundle->GetStringFromName(aKey, getter_Copies(intlString));
   NSMutableString* s = [NSMutableString stringWithUTF8String:NS_ConvertUTF16toUTF8(intlString).get()];
 
   // Remove all underscores (they're used in the GTK dialog for accesskeys).

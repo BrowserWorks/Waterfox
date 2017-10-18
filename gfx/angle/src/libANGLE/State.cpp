@@ -50,6 +50,7 @@ State::State()
       mLineWidth(0),
       mGenerateMipmapHint(GL_NONE),
       mFragmentShaderDerivativeHint(GL_NONE),
+      mBindGeneratesResource(true),
       mNearZ(0),
       mFarZ(0),
       mReadFramebuffer(nullptr),
@@ -59,7 +60,8 @@ State::State()
       mActiveSampler(0),
       mPrimitiveRestart(false),
       mMultiSampling(false),
-      mSampleAlphaToOne(false)
+      mSampleAlphaToOne(false),
+      mFramebufferSRGB(true)
 {
 }
 
@@ -70,8 +72,9 @@ State::~State()
 
 void State::initialize(const Caps &caps,
                        const Extensions &extensions,
-                       GLuint clientVersion,
-                       bool debug)
+                       const Version &clientVersion,
+                       bool debug,
+                       bool bindGeneratesResource)
 {
     mMaxDrawBuffers = caps.maxDrawBuffers;
     mMaxCombinedTextureImageUnits = caps.maxCombinedTextureImageUnits;
@@ -137,6 +140,8 @@ void State::initialize(const Caps &caps,
     mGenerateMipmapHint = GL_DONT_CARE;
     mFragmentShaderDerivativeHint = GL_DONT_CARE;
 
+    mBindGeneratesResource = bindGeneratesResource;
+
     mLineWidth = 1.0f;
 
     mViewport.x = 0;
@@ -155,15 +160,19 @@ void State::initialize(const Caps &caps,
 
     mVertexAttribCurrentValues.resize(caps.maxVertexAttributes);
 
-    mUniformBuffers.resize(caps.maxCombinedUniformBlocks);
+    mUniformBuffers.resize(caps.maxUniformBufferBindings);
 
     mSamplerTextures[GL_TEXTURE_2D].resize(caps.maxCombinedTextureImageUnits);
     mSamplerTextures[GL_TEXTURE_CUBE_MAP].resize(caps.maxCombinedTextureImageUnits);
-    if (clientVersion >= 3)
+    if (clientVersion >= Version(3, 0))
     {
         // TODO: These could also be enabled via extension
         mSamplerTextures[GL_TEXTURE_2D_ARRAY].resize(caps.maxCombinedTextureImageUnits);
         mSamplerTextures[GL_TEXTURE_3D].resize(caps.maxCombinedTextureImageUnits);
+    }
+    if (clientVersion >= Version(3, 1))
+    {
+        mSamplerTextures[GL_TEXTURE_2D_MULTISAMPLE].resize(caps.maxCombinedTextureImageUnits);
     }
     if (extensions.eglImageExternal || extensions.eglStreamConsumerExternal)
     {
@@ -219,6 +228,7 @@ void State::reset()
     }
 
     mArrayBuffer.set(NULL);
+    mDrawIndirectBuffer.set(NULL);
     mRenderbuffer.set(NULL);
 
     if (mProgram)
@@ -627,11 +637,21 @@ void State::setEnableFeature(GLenum feature, bool enabled)
       case GL_DITHER:                        setDither(enabled);                break;
       case GL_PRIMITIVE_RESTART_FIXED_INDEX: setPrimitiveRestart(enabled);      break;
       case GL_RASTERIZER_DISCARD:            setRasterizerDiscard(enabled);     break;
+      case GL_SAMPLE_MASK:
+          if (enabled)
+          {
+              // Enabling this feature is not implemented yet.
+              UNIMPLEMENTED();
+          }
+          break;
       case GL_DEBUG_OUTPUT_SYNCHRONOUS:
           mDebug.setOutputSynchronous(enabled);
           break;
       case GL_DEBUG_OUTPUT:
           mDebug.setOutputEnabled(enabled);
+          break;
+      case GL_FRAMEBUFFER_SRGB_EXT:
+          setFramebufferSRGB(enabled);
           break;
       default:                               UNREACHABLE();
     }
@@ -654,10 +674,17 @@ bool State::getEnableFeature(GLenum feature) const
       case GL_DITHER:                        return isDitherEnabled();
       case GL_PRIMITIVE_RESTART_FIXED_INDEX: return isPrimitiveRestartEnabled();
       case GL_RASTERIZER_DISCARD:            return isRasterizerDiscardEnabled();
+      case GL_SAMPLE_MASK:
+          UNIMPLEMENTED();
+          return false;
       case GL_DEBUG_OUTPUT_SYNCHRONOUS:
           return mDebug.isOutputSynchronous();
       case GL_DEBUG_OUTPUT:
           return mDebug.isOutputEnabled();
+      case GL_BIND_GENERATES_RESOURCE_CHROMIUM:
+          return isBindGeneratesResourceEnabled();
+      case GL_FRAMEBUFFER_SRGB_EXT:
+          return getFramebufferSRGB();
       default:                               UNREACHABLE(); return false;
     }
 }
@@ -686,6 +713,11 @@ void State::setFragmentShaderDerivativeHint(GLenum hint)
     // TODO: Propagate the hint to shader translator so we can write
     // ddx, ddx_coarse, or ddx_fine depending on the hint.
     // Ignore for now. It is valid for implementations to ignore hint.
+}
+
+bool State::isBindGeneratesResourceEnabled() const
+{
+    return mBindGeneratesResource;
 }
 
 void State::setViewportParams(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -1094,6 +1126,12 @@ GLuint State::getArrayBufferId() const
     return mArrayBuffer.id();
 }
 
+void State::setDrawIndirectBufferBinding(Buffer *buffer)
+{
+    mDrawIndirectBuffer.set(buffer);
+    mDirtyBits.set(DIRTY_BIT_DRAW_INDIRECT_BUFFER_BINDING);
+}
+
 void State::setGenericUniformBufferBinding(Buffer *buffer)
 {
     mGenericUniformBuffer.set(buffer);
@@ -1144,15 +1182,23 @@ Buffer *State::getTargetBuffer(GLenum target) const
       case GL_PIXEL_UNPACK_BUFFER:       return mUnpack.pixelBuffer.get();
       case GL_TRANSFORM_FEEDBACK_BUFFER: return mTransformFeedback->getGenericBuffer().get();
       case GL_UNIFORM_BUFFER:            return mGenericUniformBuffer.get();
+      case GL_ATOMIC_COUNTER_BUFFER:
+          UNIMPLEMENTED();
+          return nullptr;
+      case GL_SHADER_STORAGE_BUFFER:
+          UNIMPLEMENTED();
+          return nullptr;
+      case GL_DRAW_INDIRECT_BUFFER:
+          return mDrawIndirectBuffer.get();
       default: UNREACHABLE();            return NULL;
     }
 }
 
 void State::detachBuffer(GLuint bufferName)
 {
-    BindingPointer<Buffer> *buffers[] = {&mArrayBuffer,        &mCopyReadBuffer,
-                                         &mCopyWriteBuffer,    &mPack.pixelBuffer,
-                                         &mUnpack.pixelBuffer, &mGenericUniformBuffer};
+    BindingPointer<Buffer> *buffers[] = {
+        &mArrayBuffer,      &mCopyReadBuffer,     &mCopyWriteBuffer,     &mDrawIndirectBuffer,
+        &mPack.pixelBuffer, &mUnpack.pixelBuffer, &mGenericUniformBuffer};
     for (auto buffer : buffers)
     {
         if (buffer->id() == bufferName)
@@ -1445,6 +1491,17 @@ GLuint State::getPathStencilMask() const
     return mPathStencilMask;
 }
 
+void State::setFramebufferSRGB(bool sRGB)
+{
+    mFramebufferSRGB = sRGB;
+    mDirtyBits.set(DIRTY_BIT_FRAMEBUFFER_SRGB);
+}
+
+bool State::getFramebufferSRGB() const
+{
+    return mFramebufferSRGB;
+}
+
 void State::getBooleanv(GLenum pname, GLboolean *params)
 {
     switch (pname)
@@ -1485,6 +1542,12 @@ void State::getBooleanv(GLenum pname, GLboolean *params)
           break;
       case GL_SAMPLE_ALPHA_TO_ONE_EXT:
           *params = mSampleAlphaToOne;
+          break;
+      case GL_BIND_GENERATES_RESOURCE_CHROMIUM:
+          *params = isBindGeneratesResourceEnabled() ? GL_TRUE : GL_FALSE;
+          break;
+      case GL_FRAMEBUFFER_SRGB_EXT:
+          *params = getFramebufferSRGB() ? GL_TRUE : GL_FALSE;
           break;
       default:
         UNREACHABLE();
@@ -1554,6 +1617,9 @@ void State::getIntegerv(const ContextState &data, GLenum pname, GLint *params)
     switch (pname)
     {
       case GL_ARRAY_BUFFER_BINDING:                     *params = mArrayBuffer.id();                              break;
+      case GL_DRAW_INDIRECT_BUFFER_BINDING:
+          *params = mDrawIndirectBuffer.id();
+          break;
       case GL_ELEMENT_ARRAY_BUFFER_BINDING:             *params = getVertexArray()->getElementArrayBuffer().id(); break;
         //case GL_FRAMEBUFFER_BINDING:                    // now equivalent to GL_DRAW_FRAMEBUFFER_BINDING_ANGLE
       case GL_DRAW_FRAMEBUFFER_BINDING_ANGLE:           *params = mDrawFramebuffer->id();                         break;
@@ -1730,6 +1796,11 @@ void State::getIntegerv(const ContextState &data, GLenum pname, GLint *params)
         *params =
             getSamplerTextureId(static_cast<unsigned int>(mActiveSampler), GL_TEXTURE_2D_ARRAY);
         break;
+      case GL_TEXTURE_BINDING_EXTERNAL_OES:
+          ASSERT(mActiveSampler < mMaxCombinedTextureImageUnits);
+          *params = getSamplerTextureId(static_cast<unsigned int>(mActiveSampler),
+                                        GL_TEXTURE_EXTERNAL_OES);
+          break;
       case GL_UNIFORM_BUFFER_BINDING:
         *params = mGenericUniformBuffer.id();
         break;

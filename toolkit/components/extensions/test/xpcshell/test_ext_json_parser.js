@@ -2,10 +2,10 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* test_json_parser() {
+add_task(async function test_json_parser() {
   const ID = "json@test.web.extension";
 
-  let xpi = Extension.generateXPI(ID, {
+  let xpi = Extension.generateXPI({
     files: {
       "manifest.json": String.raw`{
         // This is a manifest.
@@ -27,11 +27,11 @@ add_task(function* test_json_parser() {
 
   let extension = new ExtensionData(uri);
 
-  yield extension.readManifest();
+  await extension.parseManifest();
 
   Assert.deepEqual(extension.rawManifest, expectedManifest,
                    "Manifest with correctly-filtered comments");
 
-  Services.obs.notifyObservers(xpi, "flush-cache-entry", null);
+  Services.obs.notifyObservers(xpi, "flush-cache-entry");
   xpi.remove(false);
 });

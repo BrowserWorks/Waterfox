@@ -5,7 +5,7 @@
 // Test that various combinations of icon details specs, for both paths
 // and ImageData objects, result in the correct image being displayed in
 // all display resolutions.
-add_task(function* testDetailsObjects() {
+add_task(async function testDetailsObjects() {
   function background() {
     function getImageData(color) {
       let canvas = document.createElement("canvas");
@@ -184,10 +184,12 @@ add_task(function* testDetailsObjects() {
       let detailString = JSON.stringify(details);
       browser.test.log(`Setting browerAction/pageAction to ${detailString} expecting URLs ${JSON.stringify(details.resolutions)}`);
 
-      browser.browserAction.setIcon(Object.assign({tabId}, details.details));
-      browser.pageAction.setIcon(Object.assign({tabId}, details.details));
-
-      browser.test.sendMessage("iconSet");
+      Promise.all([
+        browser.browserAction.setIcon(Object.assign({tabId}, details.details)),
+        browser.pageAction.setIcon(Object.assign({tabId}, details.details)),
+      ]).then(() => {
+        browser.test.sendMessage("iconSet");
+      });
     });
 
     // Generate a list of tests and resolutions to send back to the test
@@ -256,16 +258,17 @@ add_task(function* testDetailsObjects() {
 
   const RESOLUTION_PREF = "layout.css.devPixelsPerPx";
 
-  let pageActionId = makeWidgetId(extension.id) + "-page-action";
+  await extension.startup();
+
+  let pageActionId = `${makeWidgetId(extension.id)}-page-action`;
   let browserActionWidget = getBrowserActionWidget(extension);
 
-
-  yield extension.startup();
-  let tests = yield extension.awaitMessage("ready");
-
+  let tests = await extension.awaitMessage("ready");
   for (let test of tests) {
     extension.sendMessage("setIcon", test);
-    yield extension.awaitMessage("iconSet");
+    await extension.awaitMessage("iconSet");
+
+    await promiseAnimationFrame();
 
     let browserActionButton = browserActionWidget.forWindow(window).node;
     let pageActionImage = document.getElementById(pageActionId);
@@ -273,7 +276,7 @@ add_task(function* testDetailsObjects() {
 
     // Test icon sizes in the toolbar/urlbar.
     for (let resolution of Object.keys(test.resolutions)) {
-      yield SpecialPowers.pushPrefEnv({set: [[RESOLUTION_PREF, resolution]]});
+      await SpecialPowers.pushPrefEnv({set: [[RESOLUTION_PREF, resolution]]});
 
       is(window.devicePixelRatio, +resolution, "window has the required resolution");
 
@@ -284,7 +287,7 @@ add_task(function* testDetailsObjects() {
       let isLegacy = browserActionButton.classList.contains("toolbarbutton-legacy-addon");
       is(isLegacy, test.legacy, "Legacy class should be present?");
 
-      yield SpecialPowers.popPrefEnv();
+      await SpecialPowers.popPrefEnv();
     }
 
     if (!test.menuResolutions) {
@@ -292,238 +295,31 @@ add_task(function* testDetailsObjects() {
     }
 
 
-    // Test icon sizes in the menu panel.
-    CustomizableUI.addWidgetToArea(browserActionWidget.id,
-                                   CustomizableUI.AREA_PANEL);
+    if (!gPhotonStructure) {
+      // Test icon sizes in the menu panel.
+      CustomizableUI.addWidgetToArea(browserActionWidget.id,
+                                     CustomizableUI.AREA_PANEL);
 
-    yield showBrowserAction(extension);
-    browserActionButton = browserActionWidget.forWindow(window).node;
+      await showBrowserAction(extension);
+      browserActionButton = browserActionWidget.forWindow(window).node;
 
-    for (let resolution of Object.keys(test.menuResolutions)) {
-      yield SpecialPowers.pushPrefEnv({set: [[RESOLUTION_PREF, resolution]]});
+      for (let resolution of Object.keys(test.menuResolutions)) {
+        await SpecialPowers.pushPrefEnv({set: [[RESOLUTION_PREF, resolution]]});
 
-      is(window.devicePixelRatio, +resolution, "window has the required resolution");
+        is(window.devicePixelRatio, +resolution, "window has the required resolution");
 
-      let imageURL = test.menuResolutions[resolution];
-      is(getListStyleImage(browserActionButton), imageURL, `browser action has the correct menu image at ${resolution}x resolution`);
+        let imageURL = test.menuResolutions[resolution];
+        is(getListStyleImage(browserActionButton), imageURL, `browser action has the correct menu image at ${resolution}x resolution`);
 
-      yield SpecialPowers.popPrefEnv();
-    }
+        await SpecialPowers.popPrefEnv();
+      }
 
-    yield closeBrowserAction(extension);
+      await closeBrowserAction(extension);
 
-    CustomizableUI.addWidgetToArea(browserActionWidget.id,
-                                   CustomizableUI.AREA_NAVBAR);
-  }
-
-  yield extension.unload();
-});
-
-// Test that an error is thrown when providing invalid icon sizes
-add_task(function* testInvalidIconSizes() {
-  let extension = ExtensionTestUtils.loadExtension({
-    manifest: {
-      "browser_action": {},
-      "page_action": {},
-    },
-
-    background: function() {
-      browser.tabs.query({active: true, currentWindow: true}, tabs => {
-        let tabId = tabs[0].id;
-
-        let promises = [];
-        for (let api of ["pageAction", "browserAction"]) {
-          // helper function to run setIcon and check if it fails
-          let assertSetIconThrows = function(detail, error, message) {
-            detail.tabId = tabId;
-            promises.push(
-              browser[api].setIcon(detail).then(
-                () => {
-                  browser.test.fail("Expected an error on invalid icon size.");
-                  browser.test.notifyFail("setIcon with invalid icon size");
-                },
-                error => {
-                  browser.test.succeed("setIcon with invalid icon size");
-                }));
-          };
-
-          let imageData = new ImageData(1, 1);
-
-          // test invalid icon size inputs
-          for (let type of ["path", "imageData"]) {
-            let img = type == "imageData" ? imageData : "test.png";
-
-            assertSetIconThrows({[type]: {"abcdef": img}});
-            assertSetIconThrows({[type]: {"48px": img}});
-            assertSetIconThrows({[type]: {"20.5": img}});
-            assertSetIconThrows({[type]: {"5.0": img}});
-            assertSetIconThrows({[type]: {"-300": img}});
-            assertSetIconThrows({[type]: {"abc": img, "5": img}});
-          }
-
-          assertSetIconThrows({imageData: {"abcdef": imageData}, path: {"5": "test.png"}});
-          assertSetIconThrows({path: {"abcdef": "test.png"}, imageData: {"5": imageData}});
-        }
-
-        Promise.all(promises).then(() => {
-          browser.test.notifyPass("setIcon with invalid icon size");
-        });
-      });
-    }
-  });
-
-  yield Promise.all([extension.startup(), extension.awaitFinish("setIcon with invalid icon size")]);
-
-  yield extension.unload();
-});
-
-
-// Test that default icon details in the manifest.json file are handled
-// correctly.
-add_task(function* testDefaultDetails() {
-  // TODO: Test localized variants.
-  let icons = [
-    "foo/bar.png",
-    "/foo/bar.png",
-    {"19": "foo/bar.png"},
-    {"38": "foo/bar.png"},
-    {"19": "foo/bar.png", "38": "baz/quux.png"},
-  ];
-
-  let expectedURL = new RegExp(String.raw`^moz-extension://[^/]+/foo/bar\.png$`);
-
-  for (let icon of icons) {
-    let extension = ExtensionTestUtils.loadExtension({
-      manifest: {
-        "browser_action": {"default_icon": icon},
-        "page_action": {"default_icon": icon},
-      },
-
-      background: function() {
-        browser.tabs.query({active: true, currentWindow: true}, tabs => {
-          let tabId = tabs[0].id;
-
-          browser.pageAction.show(tabId).then(() => {
-            browser.test.sendMessage("ready");
-          });
-        });
-      },
-
-      files: {
-        "foo/bar.png": imageBuffer,
-        "baz/quux.png": imageBuffer,
-      },
-    });
-
-    yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
-
-    let browserActionId = makeWidgetId(extension.id) + "-browser-action";
-    let pageActionId = makeWidgetId(extension.id) + "-page-action";
-
-    let browserActionButton = document.getElementById(browserActionId);
-    let image = getListStyleImage(browserActionButton);
-
-    ok(expectedURL.test(image), `browser action image ${image} matches ${expectedURL}`);
-
-    let pageActionImage = document.getElementById(pageActionId);
-    image = getListStyleImage(pageActionImage);
-
-    ok(expectedURL.test(image), `page action image ${image} matches ${expectedURL}`);
-
-    yield extension.unload();
-
-    let node = document.getElementById(pageActionId);
-    is(node, null, "pageAction image removed from document");
-  }
-});
-
-
-// Check that attempts to load a privileged URL as an icon image fail.
-add_task(function* testSecureURLsDenied() {
-  // Test URLs passed to setIcon.
-
-  let extension = ExtensionTestUtils.loadExtension({
-    manifest: {
-      "browser_action": {},
-      "page_action": {},
-    },
-
-    background: function() {
-      browser.tabs.query({active: true, currentWindow: true}, tabs => {
-        let tabId = tabs[0].id;
-
-        let urls = ["chrome://browser/content/browser.xul",
-                    "javascript:true"];
-
-        let promises = [];
-        for (let url of urls) {
-          for (let api of ["pageAction", "browserAction"]) {
-            promises.push(
-              browser[api].setIcon({tabId, path: url}).then(
-                () => {
-                  browser.test.fail(`Load of '${url}' succeeded. Expected failure.`);
-                  browser.test.notifyFail("setIcon security tests");
-                },
-                error => {
-                  browser.test.succeed(`Load of '${url}' failed. Expected failure. ${error}`);
-                }));
-          }
-        }
-
-        Promise.all(promises).then(() => {
-          browser.test.notifyPass("setIcon security tests");
-        });
-      });
-    },
-  });
-
-  yield extension.startup();
-
-  yield extension.awaitFinish("setIcon security tests");
-  yield extension.unload();
-});
-
-
-add_task(function* testSecureManifestURLsDenied() {
-  // Test URLs included in the manifest.
-
-  let urls = ["chrome://browser/content/browser.xul",
-              "javascript:true"];
-
-  let apis = ["browser_action", "page_action"];
-
-  for (let url of urls) {
-    for (let api of apis) {
-      info(`TEST ${api} icon url: ${url}`);
-
-      let matchURLForbidden = url => ({
-        message: new RegExp(`match the format "strictRelativeUrl"`),
-      });
-
-      let messages = [matchURLForbidden(url)];
-
-      let waitForConsole = new Promise(resolve => {
-        // Not necessary in browser-chrome tests, but monitorConsole gripes
-        // if we don't call it.
-        SimpleTest.waitForExplicitFinish();
-
-        SimpleTest.monitorConsole(resolve, messages);
-      });
-
-      let extension = ExtensionTestUtils.loadExtension({
-        manifest: {
-          [api]: {
-            "default_icon": url,
-          },
-        },
-      });
-
-      yield Assert.rejects(extension.startup(),
-                           null,
-                           "Manifest rejected");
-
-      SimpleTest.endMonitorConsole();
-      yield waitForConsole;
+      CustomizableUI.addWidgetToArea(browserActionWidget.id,
+                                     CustomizableUI.AREA_NAVBAR);
     }
   }
+
+  await extension.unload();
 });

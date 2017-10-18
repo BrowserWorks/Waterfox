@@ -20,24 +20,12 @@ TokenizerIgnoreNothing(char16_t /* aChar */)
 } // anonymous namespace
 
 /* static */ bool
-FileSystemUtils::IsDescendantPath(nsIFile* aFile,
-                                  nsIFile* aDescendantFile)
+FileSystemUtils::IsDescendantPath(const nsAString& aPath,
+                                  const nsAString& aDescendantPath)
 {
-  nsAutoString path;
-  nsresult rv = aFile->GetPath(path);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
-  }
-
-  nsAutoString descendantPath;
-  rv = aDescendantFile->GetPath(descendantPath);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return false;
-  }
-
   // Check the sub-directory path to see if it has the parent path as prefix.
-  if (descendantPath.Length() <= path.Length() ||
-      !StringBeginsWith(descendantPath, path)) {
+  if (!aDescendantPath.Equals(aPath) &&
+      !StringBeginsWith(aDescendantPath, aPath)) {
     return false;
   }
 
@@ -81,6 +69,29 @@ FileSystemUtils::IsValidRelativeDOMPath(const nsAString& aPath,
   }
 
   return true;
+}
+
+/* static */ nsresult
+FileSystemUtils::DispatchRunnable(nsIGlobalObject* aGlobal,
+                                  already_AddRefed<nsIRunnable>&& aRunnable)
+{
+  nsCOMPtr<nsIRunnable> runnable = aRunnable;
+
+  nsCOMPtr<nsIEventTarget> target;
+  if (!aGlobal) {
+    target = SystemGroup::EventTargetFor(TaskCategory::Other);
+  } else {
+    target = aGlobal->EventTargetFor(TaskCategory::Other);
+  }
+
+  MOZ_ASSERT(target);
+
+  nsresult rv = target->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
 }
 
 } // namespace dom

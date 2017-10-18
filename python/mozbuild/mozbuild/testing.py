@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import json
+import cPickle as pickle
 import os
 import sys
 
@@ -51,30 +51,35 @@ class TestMetadata(object):
     configuration.
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, all_tests, test_defaults=None):
         self._tests_by_path = OrderedDefaultDict(list)
         self._tests_by_flavor = defaultdict(set)
         self._test_dirs = set()
 
-        if filename:
-            with open(filename, 'rt') as fh:
-                test_data, manifest_support_files = json.load(fh)
+        with open(all_tests, 'rb') as fh:
+            test_data = pickle.load(fh)
+        defaults = None
+        if test_defaults:
+            with open(test_defaults, 'rb') as fh:
+                defaults = pickle.load(fh)
+        for path, tests in test_data.items():
+            for metadata in tests:
+                if defaults:
+                    defaults_manifests = [metadata['manifest']]
 
-                for path, tests in test_data.items():
-                    for metadata in tests:
-                        # Many tests inherit their "support-files" from a manifest
-                        # level default, so we store these separately to save
-                        # disk space, and propagate them to each test when
-                        # de-serializing here.
-                        manifest = metadata['manifest']
-                        support_files = manifest_support_files.get(manifest)
-                        if support_files and 'support-files' not in metadata:
-                            metadata['support-files'] = support_files
-                        self._tests_by_path[path].append(metadata)
-                        self._test_dirs.add(os.path.dirname(path))
+                    ancestor_manifest = metadata.get('ancestor-manifest')
+                    if ancestor_manifest:
+                        defaults_manifests.append(ancestor_manifest)
 
-                        flavor = metadata.get('flavor')
-                        self._tests_by_flavor[flavor].add(path)
+                    for manifest in defaults_manifests:
+                        manifest_defaults = defaults.get(manifest)
+                        if manifest_defaults:
+                            metadata = manifestparser.combine_fields(manifest_defaults,
+                                                                     metadata)
+                self._tests_by_path[path].append(metadata)
+                self._test_dirs.add(os.path.dirname(path))
+                flavor = metadata.get('flavor')
+                self._tests_by_flavor[flavor].add(path)
 
     def tests_with_flavor(self, flavor):
         """Obtain all tests having the specified flavor.
@@ -179,12 +184,23 @@ class TestResolver(MozbuildObject):
 
         # If installing tests is going to result in re-generating the build
         # backend, we need to do this here, so that the updated contents of
-        # all-tests.json make it to the set of tests to run.
-        self._run_make(target='run-tests-deps', pass_thru=True,
-                       print_directory=False)
+        # all-tests.pkl make it to the set of tests to run.
+        self._run_make(
+            target='backend.TestManifestBackend', pass_thru=True, print_directory=False,
+            filename=mozpath.join(self.topsrcdir, 'build', 'rebuild-backend.mk'),
+            append_env={
+                b'PYTHON': self.virtualenv_manager.python_path,
+                b'BUILD_BACKEND_FILES': b'backend.TestManifestBackend',
+                b'BACKEND_GENERATION_SCRIPT': mozpath.join(
+                    self.topsrcdir, 'build', 'gen_test_backend.py'),
+            },
+        )
 
-        self._tests = TestMetadata(filename=os.path.join(self.topobjdir,
-            'all-tests.json'))
+        self._tests = TestMetadata(os.path.join(self.topobjdir,
+                                                'all-tests.pkl'),
+                                   test_defaults=os.path.join(self.topobjdir,
+                                                              'test-defaults.pkl'))
+
         self._test_rewrites = {
             'a11y': os.path.join(self.topobjdir, '_tests', 'testing',
                 'mochitest', 'a11y'),
@@ -260,10 +276,12 @@ class TestResolver(MozbuildObject):
 # Keys are variable prefixes and values are tuples describing how these
 # manifests should be handled:
 #
-#    (flavor, install_prefix, package_tests)
+#    (flavor, install_root, install_subdir, package_tests)
 #
 # flavor identifies the flavor of this test.
-# install_prefix is the path prefix of where to install the files in
+# install_root is the path prefix to install the files starting from the root
+#     directory and not as specified by the manifest location. (bug 972168)
+# install_subdir is the path of where to install the files in
 #     the tests directory.
 # package_tests indicates whether to package test files into the test
 #     package; suites that compile the test files should not install
@@ -275,13 +293,15 @@ TEST_MANIFESTS = dict(
     ANDROID_INSTRUMENTATION=('instrumentation', 'instrumentation', '.', False),
     JETPACK_PACKAGE=('jetpack-package', 'testing/mochitest', 'jetpack-package', True),
     JETPACK_ADDON=('jetpack-addon', 'testing/mochitest', 'jetpack-addon', False),
+    FIREFOX_UI_FUNCTIONAL=('firefox-ui-functional', 'firefox-ui', '.', False),
+    FIREFOX_UI_UPDATE=('firefox-ui-update', 'firefox-ui', '.', False),
+    PUPPETEER_FIREFOX=('firefox-ui-functional', 'firefox-ui', '.', False),
+    PYTHON_UNITTEST=('python', 'python', '.', False),
 
     # marionette tests are run from the srcdir
     # TODO(ato): make packaging work as for other test suites
     MARIONETTE=('marionette', 'marionette', '.', False),
-    MARIONETTE_LOOP=('marionette', 'marionette', '.', False),
     MARIONETTE_UNIT=('marionette', 'marionette', '.', False),
-    MARIONETTE_UPDATE=('marionette', 'marionette', '.', False),
     MARIONETTE_WEBAPI=('marionette', 'marionette', '.', False),
 
     METRO_CHROME=('metro-chrome', 'testing/mochitest', 'metro', True),
@@ -300,8 +320,7 @@ WEB_PLATFORM_TESTS_FLAVORS = ('web-platform-tests',)
 def all_test_flavors():
     return ([v[0] for v in TEST_MANIFESTS.values()] +
             list(REFTEST_FLAVORS) +
-            list(WEB_PLATFORM_TESTS_FLAVORS) +
-            ['python'])
+            list(WEB_PLATFORM_TESTS_FLAVORS))
 
 class TestInstallInfo(object):
     def __init__(self):
@@ -329,7 +348,6 @@ class SupportFilesConverter(object):
     """
     def __init__(self):
         self._fields = (('head', set()),
-                        ('tail', set()),
                         ('support-files', set()),
                         ('generated-files', set()))
 
@@ -371,7 +389,7 @@ class SupportFilesConverter(object):
                 elif pattern[0] == '!':
                     info.deferred_installs.add(pattern)
                 # We only support globbing on support-files because
-                # the harness doesn't support * for head and tail.
+                # the harness doesn't support * for head.
                 elif '*' in pattern and field == 'support-files':
                     info.pattern_installs.append((manifest_dir, pattern, out_dir))
                 # "absolute" paths identify files that are to be
@@ -411,9 +429,9 @@ def _resolve_installs(paths, topobjdir, manifest):
     by the build backend corresponding to those keys, and add them
     to the given manifest.
     """
-    filename = os.path.join(topobjdir, 'test-installs.json')
-    with open(filename, 'r') as fh:
-        resolved_installs = json.load(fh)
+    filename = os.path.join(topobjdir, 'test-installs.pkl')
+    with open(filename, 'rb') as fh:
+        resolved_installs = pickle.load(fh)
 
     for path in paths:
         path = path[2:]
@@ -426,9 +444,9 @@ def _resolve_installs(paths, topobjdir, manifest):
         for install_info in installs:
             try:
                 if len(install_info) == 3:
-                    manifest.add_pattern_symlink(*install_info)
+                    manifest.add_pattern_link(*install_info)
                 if len(install_info) == 2:
-                    manifest.add_symlink(*install_info)
+                    manifest.add_link(*install_info)
             except ValueError:
                 # A duplicate value here is pretty likely when running
                 # multiple directories at once, and harmless.
@@ -477,9 +495,9 @@ def install_test_files(topsrcdir, topobjdir, tests_root, test_objs):
     for source, dest in set(install_info.installs):
         if dest in install_info.external_installs:
             continue
-        manifest.add_symlink(source, dest)
+        manifest.add_link(source, dest)
     for base, pattern, dest in install_info.pattern_installs:
-        manifest.add_pattern_symlink(base, pattern, dest)
+        manifest.add_pattern_link(base, pattern, dest)
 
     _resolve_installs(install_info.deferred_installs, topobjdir, manifest)
 
@@ -499,7 +517,8 @@ def read_manifestparser_manifest(context, manifest_path):
     path = mozpath.normpath(mozpath.join(context.srcdir, manifest_path))
     return manifestparser.TestManifest(manifests=[path], strict=True,
                                        rootdir=context.config.topsrcdir,
-                                       finder=context._finder)
+                                       finder=context._finder,
+                                       handle_defaults=False)
 
 def read_reftest_manifest(context, manifest_path):
     import reftest

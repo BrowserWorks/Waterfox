@@ -5,20 +5,19 @@
 
 /*
   nsPluginsDirWin.cpp
-  
+
   Windows implementation of the nsPluginsDir/nsPluginsFile classes.
-  
+
   by Alex Musil
  */
 
 #include "mozilla/ArrayUtils.h" // ArrayLength
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Printf.h"
 
 #include "nsPluginsDir.h"
 #include "prlink.h"
 #include "plstr.h"
-#include "prmem.h"
-#include "prprf.h"
 
 #include "windows.h"
 #include "winbase.h"
@@ -99,11 +98,11 @@ static char* GetVersion(void* verbuf)
   ::VerQueryValueW(verbuf, L"\\", (void **)&fileInfo, &fileInfoLen);
 
   if (fileInfo) {
-    return PR_smprintf("%ld.%ld.%ld.%ld",
-                       HIWORD(fileInfo->dwFileVersionMS),
-                       LOWORD(fileInfo->dwFileVersionMS),
-                       HIWORD(fileInfo->dwFileVersionLS),
-                       LOWORD(fileInfo->dwFileVersionLS));
+    return mozilla::Smprintf("%ld.%ld.%ld.%ld",
+                      HIWORD(fileInfo->dwFileVersionMS),
+                      LOWORD(fileInfo->dwFileVersionMS),
+                      HIWORD(fileInfo->dwFileVersionLS),
+                      LOWORD(fileInfo->dwFileVersionLS)).release();
   }
 
   return nullptr;
@@ -145,13 +144,13 @@ static char** MakeStringArray(uint32_t variants, char* data)
   // The number of variants has been calculated based on the mime
   // type array. Plugins are not explicitely required to match
   // this number in two other arrays: file extention array and mime
-  // description array, and some of them actually don't. 
+  // description array, and some of them actually don't.
   // We should handle such situations gracefully
 
   if ((variants <= 0) || !data)
     return nullptr;
 
-  char ** array = (char **)PR_Calloc(variants, sizeof(char *));
+  char** array = (char**) calloc(variants, sizeof(char *));
   if (!array)
     return nullptr;
 
@@ -165,7 +164,7 @@ static char** MakeStringArray(uint32_t variants, char* data)
     array[i] = PL_strdup(start);
 
     if (!p) {
-      // nothing more to look for, fill everything left 
+      // nothing more to look for, fill everything left
       // with empty strings and break
       while(++i < variants)
         array[i] = PL_strdup("");
@@ -189,7 +188,7 @@ static void FreeStringArray(uint32_t variants, char ** array)
       array[i] = nullptr;
     }
   }
-  PR_Free(array);
+  free(array);
 }
 
 static bool CanLoadPlugin(char16ptr_t aBinaryPath)
@@ -363,7 +362,7 @@ nsresult nsPluginFile::GetPluginInfo(nsPluginInfo& info, PRLibrary **outLibrary)
   versionsize = ::GetFileVersionInfoSizeW(lpFilepath, &zerome);
 
   if (versionsize > 0)
-    verbuf = PR_Malloc(versionsize);
+    verbuf = malloc(versionsize);
   if (!verbuf)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -396,7 +395,7 @@ nsresult nsPluginFile::GetPluginInfo(nsPluginInfo& info, PRLibrary **outLibrary)
     rv = NS_ERROR_FAILURE;
   }
 
-  PR_Free(verbuf);
+  free(verbuf);
 
   return rv;
 }
@@ -425,7 +424,7 @@ nsresult nsPluginFile::FreePluginInfo(nsPluginInfo& info)
     PL_strfree(info.fFileName);
 
   if (info.fVersion)
-    PR_smprintf_free(info.fVersion);
+    free(info.fVersion);
 
   ZeroMemory((void *)&info, sizeof(info));
 

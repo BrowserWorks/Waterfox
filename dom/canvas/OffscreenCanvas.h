@@ -7,6 +7,7 @@
 #ifndef MOZILLA_DOM_OFFSCREENCANVAS_H_
 #define MOZILLA_DOM_OFFSCREENCANVAS_H_
 
+#include "gfxTypes.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/RefPtr.h"
@@ -124,7 +125,7 @@ public:
     return mCurrentContext;
   }
 
-  already_AddRefed<gfx::SourceSurface> GetSurfaceSnapshot(bool* aPremultAlpha = nullptr);
+  already_AddRefed<gfx::SourceSurface> GetSurfaceSnapshot(gfxAlphaType* aOutAlphaType = nullptr);
 
   static already_AddRefed<OffscreenCanvas>
   CreateFromCloneData(nsIGlobalObject* aGlobal, OffscreenCanvasCloneData* aData);
@@ -204,7 +205,7 @@ private:
 
   layers::LayersBackend mCompositorBackendType;
 
-  layers::CanvasClient* mCanvasClient;
+  RefPtr<layers::CanvasClient> mCanvasClient;
   RefPtr<layers::AsyncCanvasRenderer> mCanvasRenderer;
 };
 

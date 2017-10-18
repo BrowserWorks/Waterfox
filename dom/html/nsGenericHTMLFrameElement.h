@@ -36,6 +36,7 @@ public:
     , mIsPrerendered(false)
     , mBrowserFrameListenersRegistered(false)
     , mFrameLoaderCreationDisallowed(false)
+    , mReallyIsBrowser(false)
   {
   }
 
@@ -52,24 +53,13 @@ public:
                               bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
                               bool aNullParent = true) override;
-  nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                   const nsAString& aValue, bool aNotify)
-  {
-    return SetAttr(aNameSpaceID, aName, nullptr, aValue, aNotify);
-  }
-  virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                           nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) override;
-  virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) override;
-  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue,
-                                bool aNotify) override;
   virtual void DestroyContent() override;
 
-  nsresult CopyInnerTo(mozilla::dom::Element* aDest);
+  nsresult CopyInnerTo(mozilla::dom::Element* aDest, bool aPreallocateChildren);
 
   virtual int32_t TabIndexDefault() override;
+
+  virtual nsIMozBrowserFrame* GetAsMozBrowserFrame() override { return this; }
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGenericHTMLFrameElement,
                                            nsGenericHTMLElement)
@@ -80,9 +70,13 @@ public:
   void SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
                         mozilla::ErrorResult& aError);
 
-  void SwapFrameLoaders(RefPtr<nsFrameLoader>& aOtherLoader,
+  void SwapFrameLoaders(nsIFrameLoaderOwner* aOtherLoaderOwner,
                         mozilla::ErrorResult& rv);
 
+  void PresetOpenerWindow(mozIDOMWindowProxy* aOpenerWindow,
+                          mozilla::ErrorResult& aRv);
+
+  static void InitStatics();
   static bool BrowserFramesEnabled();
 
   /**
@@ -102,11 +96,20 @@ protected:
   // it makes sense.
   void EnsureFrameLoader();
   nsresult LoadSrc();
-  nsIDocument* GetContentDocument();
+  nsIDocument* GetContentDocument(nsIPrincipal& aSubjectPrincipal);
   nsresult GetContentDocument(nsIDOMDocument** aContentDocument);
   already_AddRefed<nsPIDOMWindowOuter> GetContentWindow();
 
+  virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
+                                const nsAttrValue* aValue,
+                                const nsAttrValue* aOldValue,
+                                bool aNotify) override;
+  virtual nsresult OnAttrSetButNotChanged(int32_t aNamespaceID, nsIAtom* aName,
+                                          const nsAttrValueOrString& aValue,
+                                          bool aNotify) override;
+
   RefPtr<nsFrameLoader> mFrameLoader;
+  nsCOMPtr<nsPIDOMWindowOuter> mOpenerWindow;
 
   /**
    * True when the element is created by the parser using the
@@ -118,6 +121,7 @@ protected:
   bool mIsPrerendered;
   bool mBrowserFrameListenersRegistered;
   bool mFrameLoaderCreationDisallowed;
+  bool mReallyIsBrowser;
 
   // This flag is only used by <iframe>. See HTMLIFrameElement::
   // FullscreenFlag() for details. It is placed here so that we
@@ -125,7 +129,19 @@ protected:
   bool mFullscreenFlag = false;
 
 private:
-  void GetManifestURLByType(nsIAtom *aAppType, nsAString& aOut);
+  void GetManifestURL(nsAString& aOut);
+
+  /**
+   * This function is called by AfterSetAttr and OnAttrSetButNotChanged.
+   * It will be called whether the value is being set or unset.
+   *
+   * @param aNamespaceID the namespace of the attr being set
+   * @param aName the localname of the attribute being set
+   * @param aValue the value being set or null if the value is being unset
+   * @param aNotify Whether we plan to notify document observers.
+   */
+  void AfterMaybeChangeAttr(int32_t aNamespaceID, nsIAtom* aName,
+                            const nsAttrValueOrString* aValue, bool aNotify);
 };
 
 #endif // nsGenericHTMLFrameElement_h

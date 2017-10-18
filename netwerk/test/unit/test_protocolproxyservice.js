@@ -17,6 +17,9 @@
 // run_myipaddress_test();
 // run_failed_script_test();
 // run_isresolvable_test();
+
+"use strict";
+
 Cu.import("resource://gre/modules/NetUtil.jsm");
 
 var ios = Components.classes["@mozilla.org/network/io-service;1"]
@@ -166,7 +169,7 @@ resolveCallback.prototype = {
     return this;
   },
 
-  onProxyAvailable : function (req, uri, pi, status) {
+  onProxyAvailable : function (req, channel, pi, status) {
     this.nextFunction(pi);
   }
 };
@@ -266,7 +269,7 @@ function filter_test0_5(pi)
 function run_filter_test_uri() {
   var cb = new resolveCallback();
   cb.nextFunction = filter_test_uri0_1;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var uri = ios.newURI("http://www.mozilla.org/");
   pps.asyncResolve(uri, 0, cb);
 }
 
@@ -282,7 +285,7 @@ function filter_test_uri0_1(pi) {
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test_uri0_2;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var uri = ios.newURI("http://www.mozilla.org/");
   pps.asyncResolve(uri, 0, cb);
 }
 
@@ -295,7 +298,7 @@ function filter_test_uri0_2(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test_uri0_3;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var uri = ios.newURI("http://www.mozilla.org/");
   pps.asyncResolve(uri, 0, cb);
 }
 
@@ -310,7 +313,7 @@ function filter_test_uri0_3(pi)
 
   var cb = new resolveCallback();
   cb.nextFunction = filter_test_uri0_4;
-  var uri = ios.newURI("http://www.mozilla.org/", null, null);
+  var uri = ios.newURI("http://www.mozilla.org/");
   pps.asyncResolve(uri, 0, cb);
 }
 
@@ -496,14 +499,14 @@ TestResolveCallback.prototype = {
   },
 
   onProxyAvailable:
-  function TestResolveCallback_onProxyAvailable(req, uri, pi, status) {
-    dump("*** uri=" + uri.spec + ", status=" + status + "\n");
+  function TestResolveCallback_onProxyAvailable(req, channel, pi, status) {
+    dump("*** channelURI=" + channel.URI.spec + ", status=" + status + "\n");
 
     if (this.type == null) {
       do_check_eq(pi, null);
     } else {
       do_check_neq(req, null);
-      do_check_neq(uri, null);
+      do_check_neq(channel, null);
       do_check_eq(status, 0);
       do_check_neq(pi, null);
       check_proxy(pi, this.type, "foopy", 8080, 0, -1, true);
@@ -567,47 +570,6 @@ function run_pac3_test() {
 }
 
 function run_pac4_test() {
-  var appId = 10;
-  var isInIsolatedMozBrowser = true;
-  var appOrigin = "apps://browser.gaiamobile.com";
-
-  // We have to setup a profile, otherwise indexed db used by webapps
-  // will throw random exception when trying to get profile folder.
-  do_get_profile();
-
-  // We also need a valid nsIXulAppInfo service as Webapps.jsm is querying it.
-  Cu.import("resource://testing-common/AppInfo.jsm");
-  updateAppInfo();
-
-  // Mock getAppByLocalId() to return testing app origin.
-  Cu.import("resource://gre/modules/AppsUtils.jsm");
-  AppsUtils.getAppByLocalId = function(aAppId) {
-    var app = { origin: appOrigin };
-    return app;
-  };
-
-  var pac = 'data:text/plain,' +
-            'function FindProxyForURL(url, host) {' +
-            ' if (myAppId() == ' + appId +
-            ' && isInIsolatedMozBrowser() == ' + isInIsolatedMozBrowser +
-            ' && myAppOrigin() == "' + appOrigin + '")' +
-            '   return "PROXY foopy:8080; DIRECT";' +
-            '}';
-  var channel = NetUtil.newChannel({
-    uri: "http://www.mozilla.org/",
-    loadUsingSystemPrincipal: true
-  });
-  channel.notificationCallbacks =
-    AppsUtils.createLoadContext(appId, isInIsolatedMozBrowser);
-
-  // Configure PAC
-  prefs.setIntPref("network.proxy.type", 2);
-  prefs.setCharPref("network.proxy.autoconfig_url", pac);
-
-  var req = pps.asyncResolve(channel, 0, new TestResolveCallback("http", run_pac5_test));
-}
-
-function run_pac5_test() {
   // Bug 1251332
   let wRange = [
     ["SUN", "MON", "SAT", "MON"], // for Sun
@@ -654,11 +616,11 @@ TestResolveCancelationCallback.prototype = {
   },
 
   onProxyAvailable:
-  function TestResolveCancelationCallback_onProxyAvailable(req, uri, pi, status) {
-    dump("*** uri=" + uri.spec + ", status=" + status + "\n");
+  function TestResolveCancelationCallback_onProxyAvailable(req, channel, pi, status) {
+    dump("*** channelURI=" + channel.URI.spec + ", status=" + status + "\n");
 
     do_check_neq(req, null);
-    do_check_neq(uri, null);
+    do_check_neq(channel, null);
     do_check_eq(status, Components.results.NS_ERROR_ABORT);
     do_check_eq(pi, null);
 
@@ -742,6 +704,7 @@ function host_filter_cb(proxy)
 var uriStrUseProxyList;
 var uriStrUseProxyList;
 var hostFilterList;
+var uriStrFilterList;
 
 function run_proxy_host_filters_test() {
   // Get prefs object from DOM
@@ -916,7 +879,7 @@ function failed_script_callback(pi)
   // test that on-modify-request contains the proxy info too
   var obs = Components.classes["@mozilla.org/observer-service;1"].getService();
   obs = obs.QueryInterface(Components.interfaces.nsIObserverService);
-  obs.addObserver(directFilterListener, "http-on-modify-request", false);
+  obs.addObserver(directFilterListener, "http-on-modify-request");
 
   var chan = NetUtil.newChannel({
     uri: "http://127.0.0.1:7247",

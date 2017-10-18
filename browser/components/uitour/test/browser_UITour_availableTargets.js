@@ -4,14 +4,17 @@ var gTestTab;
 var gContentAPI;
 var gContentWindow;
 
-var hasWebIDE = Services.prefs.getBoolPref("devtools.webide.widget.enabled");
 var hasPocket = Services.prefs.getBoolPref("extensions.pocket.enabled");
+var isPhoton = Services.prefs.getBoolPref("browser.photon.structure.enabled");
+var hasQuit = !isPhoton ||
+              AppConstants.platform != "macosx";
+var hasLibrary = isPhoton || false;
 
 requestLongerTimeout(2);
 add_task(setup_UITourTest);
 
-add_UITour_task(function* test_availableTargets() {
-  let data = yield getConfigurationPromise("availableTargets");
+add_UITour_task(async function test_availableTargets() {
+  let data = await getConfigurationPromise("availableTargets");
   ok_targets(data, [
     "accountStatus",
     "addons",
@@ -19,29 +22,29 @@ add_UITour_task(function* test_availableTargets() {
     "backForward",
     "bookmarks",
     "customize",
+    "devtools",
     "help",
     "home",
-    "devtools",
+      ...(hasLibrary ? ["library"] : []),
       ...(hasPocket ? ["pocket"] : []),
     "privateWindow",
-    "quit",
+      ...(hasQuit ? ["quit"] : []),
     "readerMode-urlBar",
     "search",
     "searchIcon",
     "trackingProtection",
     "urlbar",
-      ...(hasWebIDE ? ["webide"] : [])
   ]);
 
   ok(UITour.availableTargetsCache.has(window),
      "Targets should now be cached");
 });
 
-add_UITour_task(function* test_availableTargets_changeWidgets() {
+add_UITour_task(async function test_availableTargets_changeWidgets() {
   CustomizableUI.removeWidgetFromArea("bookmarks-menu-button");
   ok(!UITour.availableTargetsCache.has(window),
      "Targets should be evicted from cache after widget change");
-  let data = yield getConfigurationPromise("availableTargets");
+  let data = await getConfigurationPromise("availableTargets");
   ok_targets(data, [
     "accountStatus",
     "addons",
@@ -51,15 +54,15 @@ add_UITour_task(function* test_availableTargets_changeWidgets() {
     "help",
     "devtools",
     "home",
+      ...(hasLibrary ? ["library"] : []),
       ...(hasPocket ? ["pocket"] : []),
     "privateWindow",
-    "quit",
+      ...(hasQuit ? ["quit"] : []),
     "readerMode-urlBar",
     "search",
     "searchIcon",
     "trackingProtection",
     "urlbar",
-      ...(hasWebIDE ? ["webide"] : [])
   ]);
 
   ok(UITour.availableTargetsCache.has(window),
@@ -69,11 +72,11 @@ add_UITour_task(function* test_availableTargets_changeWidgets() {
      "Targets should not be cached after reset");
 });
 
-add_UITour_task(function* test_availableTargets_exceptionFromGetTarget() {
+add_UITour_task(async function test_availableTargets_exceptionFromGetTarget() {
   // The query function for the "search" target will throw if it's not found.
   // Make sure the callback still fires with the other available targets.
   CustomizableUI.removeWidgetFromArea("search-container");
-  let data = yield getConfigurationPromise("availableTargets");
+  let data = await getConfigurationPromise("availableTargets");
   // Default minus "search" and "searchIcon"
   ok_targets(data, [
     "accountStatus",
@@ -82,16 +85,16 @@ add_UITour_task(function* test_availableTargets_exceptionFromGetTarget() {
     "backForward",
     "bookmarks",
     "customize",
+    "devtools",
     "help",
     "home",
-    "devtools",
+      ...(hasLibrary ? ["library"] : []),
       ...(hasPocket ? ["pocket"] : []),
     "privateWindow",
-    "quit",
+      ...(hasQuit ? ["quit"] : []),
     "readerMode-urlBar",
     "trackingProtection",
     "urlbar",
-      ...(hasWebIDE ? ["webide"] : [])
   ]);
 
   CustomizableUI.reset();

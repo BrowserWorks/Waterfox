@@ -7,10 +7,6 @@ this.EXPORTED_SYMBOLS = ["Locale"];
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Preferences.jsm");
-
-const PREF_MATCH_OS_LOCALE            = "intl.locale.matchOS";
-const PREF_SELECTED_LOCALE            = "general.useragent.locale";
 
 this.Locale = {
   /**
@@ -18,15 +14,7 @@ this.Locale = {
    * @return  the selected locale or "en-US" if none is selected
    */
   getLocale() {
-    if (Preferences.get(PREF_MATCH_OS_LOCALE, false))
-      return Services.locale.getLocaleComponentForUserAgent();
-    try {
-      let locale = Preferences.get(PREF_SELECTED_LOCALE, null, Ci.nsIPrefLocalizedString);
-      if (locale)
-        return locale;
-    }
-    catch (e) {}
-    return Preferences.get(PREF_SELECTED_LOCALE, "en-US");
+    return Services.locale.getRequestedLocale() || "en-US";
   },
 
   /**

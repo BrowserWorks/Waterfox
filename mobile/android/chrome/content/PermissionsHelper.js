@@ -5,7 +5,8 @@
 
 var PermissionsHelper = {
   _permissonTypes: ["password", "geolocation", "popup", "indexedDB",
-                    "offline-app", "desktop-notification", "plugins", "native-intent"],
+                    "offline-app", "desktop-notification", "plugins", "native-intent",
+                    "flyweb-publish-server"],
   _permissionStrings: {
     "password": {
       label: "password.logins",
@@ -16,6 +17,11 @@ var PermissionsHelper = {
       label: "geolocation.location",
       allowed: "geolocation.allow",
       denied: "geolocation.dontAllow"
+    },
+    "flyweb-publish-server": {
+      label: "flyWebPublishServer.publishServer",
+      allowed: "flyWebPublishServer.allow",
+      denied: "flyWebPublishServer.dontAllow"
     },
     "popup": {
       label: "blockPopups.label2",
@@ -49,13 +55,15 @@ var PermissionsHelper = {
     }
   },
 
-  observe: function observe(aSubject, aTopic, aData) {
+  onEvent: function onEvent(event, data, callback) {
     let uri = BrowserApp.selectedBrowser.currentURI;
     let check = false;
 
-    switch (aTopic) {
+    switch (event) {
       case "Permissions:Check":
         check = true;
+        // fall-through
+
       case "Permissions:Get":
         let permissions = [];
         for (let i = 0; i < this._permissonTypes.length; i++) {
@@ -67,7 +75,7 @@ var PermissionsHelper = {
             continue;
 
           if (check) {
-            Messaging.sendRequest({
+            GlobalEventDispatcher.sendRequest({
               type: "Permissions:CheckResult",
               hasPermissions: true
             });
@@ -90,7 +98,7 @@ var PermissionsHelper = {
         }
 
         if (check) {
-          Messaging.sendRequest({
+          GlobalEventDispatcher.sendRequest({
             type: "Permissions:CheckResult",
             hasPermissions: false
           });
@@ -100,7 +108,7 @@ var PermissionsHelper = {
         // Keep track of permissions, so we know which ones to clear
         this._currentPermissions = permissions;
 
-        Messaging.sendRequest({
+        WindowEventDispatcher.sendRequest({
           type: "Permissions:Data",
           permissions: permissions
         });
@@ -108,7 +116,7 @@ var PermissionsHelper = {
  
       case "Permissions:Clear":
         // An array of the indices of the permissions we want to clear
-        let permissionsToClear = JSON.parse(aData);
+        let permissionsToClear = data.permissions;
         let privacyContext = BrowserApp.selectedBrowser.docShell
                                .QueryInterface(Ci.nsILoadContext);
 

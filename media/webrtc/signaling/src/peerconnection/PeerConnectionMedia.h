@@ -14,19 +14,18 @@
 
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/net/StunAddrsRequestChild.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIProtocolProxyCallback.h"
 
 #include "signaling/src/jsep/JsepSession.h"
 #include "AudioSegment.h"
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "Layers.h"
 #include "VideoUtils.h"
 #include "ImageLayers.h"
 #include "VideoSegment.h"
 #include "MediaStreamTrack.h"
-#endif
 
 class nsIPrincipal;
 
@@ -143,11 +142,9 @@ public:
                             dom::MediaStreamTrack& aNewTrack,
                             const std::string& newTrackId);
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   void UpdateSinkIdentity_m(dom::MediaStreamTrack* aTrack,
                             nsIPrincipal* aPrincipal,
                             const PeerIdentity* aSinkIdentity);
-#endif
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(LocalSourceStreamInfo)
 
@@ -156,12 +153,11 @@ private:
       const std::string& trackId);
 };
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 class RemoteTrackSource : public dom::MediaStreamTrackSource
 {
 public:
   explicit RemoteTrackSource(nsIPrincipal* aPrincipal, const nsString& aLabel)
-    : dom::MediaStreamTrackSource(aPrincipal, true, aLabel) {}
+    : dom::MediaStreamTrackSource(aPrincipal, aLabel) {}
 
   dom::MediaSourceEnum GetMediaSource() const override
   {
@@ -170,9 +166,14 @@ public:
 
   already_AddRefed<PledgeVoid>
   ApplyConstraints(nsPIDOMWindowInner* aWindow,
-                   const dom::MediaTrackConstraints& aConstraints) override;
+                   const dom::MediaTrackConstraints& aConstraints,
+                   dom::CallerType aCallerType) override;
 
-  void Stop() override { NS_ERROR("Can't stop a remote source!"); }
+  void Stop() override
+  {
+    // XXX (Bug 1314270): Implement rejection logic if necessary when we have
+    //                    clarity in the spec.
+  }
 
   void SetPrincipal(nsIPrincipal* aPrincipal)
   {
@@ -183,7 +184,6 @@ public:
 protected:
   virtual ~RemoteTrackSource() {}
 };
-#endif
 
 class RemoteSourceStreamInfo : public SourceStreamInfo {
   ~RemoteSourceStreamInfo() {}
@@ -200,9 +200,7 @@ class RemoteSourceStreamInfo : public SourceStreamInfo {
   void RemoveTrack(const std::string& trackId) override;
   void SyncPipeline(RefPtr<MediaPipelineReceive> aPipeline);
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   void UpdatePrincipal_m(nsIPrincipal* aPrincipal);
-#endif
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RemoteSourceStreamInfo)
 
@@ -224,12 +222,6 @@ class RemoteSourceStreamInfo : public SourceStreamInfo {
   void StartReceiving();
 
  private:
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
-  // MediaStreamTrackSources associated with this remote stream.
-  // We use them for updating their principal if that's needed.
-  std::vector<RefPtr<RemoteTrackSource>> mTrackSources;
-#endif
-
   // True iff SetPullEnabled(true) has been called on the DOMMediaStream. This
   // happens when offer/answer concludes.
   bool mReceiving;
@@ -272,7 +264,8 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   // Activate or remove ICE transports at the conclusion of offer/answer,
   // or when rollback occurs.
-  void ActivateOrRemoveTransports(const JsepSession& aSession);
+  void ActivateOrRemoveTransports(const JsepSession& aSession,
+                                  const bool forceIceTcp);
 
   // Start ICE checks.
   void StartIceChecks(const JsepSession& session);
@@ -293,6 +286,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // Process a trickle ICE candidate.
   void AddIceCandidate(const std::string& candidate, const std::string& mid,
                        uint32_t aMLine);
+
+  // Handle notifications of network online/offline events.
+  void UpdateNetworkState(bool online);
 
   // Handle complete media pipelines.
   nsresult UpdateMediaPipelines(const JsepSession& session);
@@ -336,7 +332,6 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
                         const std::string& aNewStreamId,
                         const std::string& aNewTrackId);
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // In cases where the peer isn't yet identified, we disable the pipeline (not
   // the stream, that would potentially affect others), so that it sends
   // black/silence.  Once the peer is identified, re-enable those streams.
@@ -349,7 +344,6 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // When we finally learn who is on the other end, we need to change the ownership
   // on streams
   void UpdateRemoteStreamPrincipals_m(nsIPrincipal* aPrincipal);
-#endif
 
   bool AnyCodecHasPluginID(uint64_t aPluginID);
 
@@ -412,13 +406,13 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
         static_cast<VideoSessionConduit*>(it->second.second.get()));
   }
 
+  void AddVideoConduit(size_t level, const RefPtr<VideoSessionConduit> &aConduit) {
+    mConduits[level] = std::make_pair(true, aConduit);
+  }
+
   // Add a conduit
   void AddAudioConduit(size_t level, const RefPtr<AudioSessionConduit> &aConduit) {
     mConduits[level] = std::make_pair(false, aConduit);
-  }
-
-  void AddVideoConduit(size_t level, const RefPtr<VideoSessionConduit> &aConduit) {
-    mConduits[level] = std::make_pair(true, aConduit);
   }
 
   // ICE state signals
@@ -435,23 +429,37 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   sigslot::signal1<uint16_t>
       SignalEndOfLocalCandidates;
 
+  RefPtr<WebRtcCallWrapper> mCall;
+
  private:
+  void InitLocalAddrs(); // for stun local address IPC request
   nsresult InitProxy();
   class ProtocolProxyQueryHandler : public nsIProtocolProxyCallback {
    public:
     explicit ProtocolProxyQueryHandler(PeerConnectionMedia *pcm) :
       pcm_(pcm) {}
 
-    NS_IMETHODIMP OnProxyAvailable(nsICancelable *request,
-                                   nsIChannel *aChannel,
-                                   nsIProxyInfo *proxyinfo,
-                                   nsresult result) override;
+    NS_IMETHOD OnProxyAvailable(nsICancelable *request,
+                                nsIChannel *aChannel,
+                                nsIProxyInfo *proxyinfo,
+                                nsresult result) override;
     NS_DECL_ISUPPORTS
 
    private:
     void SetProxyOnPcm(nsIProxyInfo& proxyinfo);
     RefPtr<PeerConnectionMedia> pcm_;
     virtual ~ProtocolProxyQueryHandler() {}
+  };
+
+  class StunAddrsHandler : public net::StunAddrsListener {
+   public:
+    explicit StunAddrsHandler(PeerConnectionMedia *pcm) :
+      pcm_(pcm) {}
+    void OnStunAddrsAvailable(
+        const mozilla::net::NrIceStunAddrArray& addrs) override;
+   private:
+    RefPtr<PeerConnectionMedia> pcm_;
+    virtual ~StunAddrsHandler() {}
   };
 
   // Shutdown media transport. Must be called on STS thread.
@@ -474,8 +482,9 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void GatherIfReady();
   void FlushIceCtxOperationQueueIfReady();
   void PerformOrEnqueueIceCtxOperation(nsIRunnable* runnable);
-  void EnsureIceGathering_s();
+  void EnsureIceGathering_s(bool aDefaultRouteOnly, bool aProxyOnly);
   void StartIceChecks_s(bool aIsControlling,
+                        bool aIsOfferer,
                         bool aIsIceLite,
                         const std::vector<std::string>& aIceOptionsList);
 
@@ -483,6 +492,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void FinalizeIceRestart_s();
   void RollbackIceRestart_s();
   bool GetPrefDefaultAddressOnly() const;
+  bool GetPrefProxyOnly() const;
 
   void ConnectSignals(NrIceCtx *aCtx, NrIceCtx *aOldCtx=nullptr);
 
@@ -490,6 +500,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void AddIceCandidate_s(const std::string& aCandidate, const std::string& aMid,
                          uint32_t aMLine);
 
+  void UpdateNetworkState_s(bool online);
 
   // ICE events
   void IceGatheringStateChange_s(NrIceCtx* ctx,
@@ -524,7 +535,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
                               uint16_t aDefaultRtcpPort,
                               uint16_t aMLine);
   bool IsIceCtxReady() const {
-    return mProxyResolveCompleted;
+    return mProxyResolveCompleted && mLocalAddrsCompleted;
   }
 
   // The parent PC
@@ -578,6 +589,15 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   // Used to track the state of ice restart
   IceRestartState mIceRestartState;
+
+  // Used to cancel incoming stun addrs response
+  RefPtr<net::StunAddrsRequestChild> mStunAddrsRequest;
+
+  // Used to track the state of the stun addr IPC request
+  bool mLocalAddrsCompleted;
+
+  // Used to store the result of the stun addr IPC request
+  nsTArray<NrIceStunAddr> mStunAddrs;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(PeerConnectionMedia)
 };

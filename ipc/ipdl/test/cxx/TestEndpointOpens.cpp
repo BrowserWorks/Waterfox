@@ -54,12 +54,12 @@ OpenParent(TestEndpointOpensOpenedParent* aParent,
   // Open the actor on the off-main thread to park it there.
   // Messages will be delivered to this thread's message loop
   // instead of the main thread's.
-  if (!aEndpoint.Bind(aParent, nullptr)) {
+  if (!aEndpoint.Bind(aParent)) {
     fail("binding Parent");
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensParent::RecvStartSubprotocol(
   mozilla::ipc::Endpoint<PTestEndpointOpensOpenedParent>&& endpoint)
 {
@@ -74,7 +74,7 @@ TestEndpointOpensParent::RecvStartSubprotocol(
   gParentThread->message_loop()->PostTask(
     NewRunnableFunction(OpenParent, a, mozilla::Move(endpoint)));
 
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -90,25 +90,31 @@ TestEndpointOpensParent::ActorDestroy(ActorDestroyReason why)
   QuitParent();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensOpenedParent::RecvHello()
 {
   AssertNotMainThread();
-  return SendHi();
+  if (!SendHi()) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensOpenedParent::RecvHelloSync()
 {
   AssertNotMainThread();
-  return true;
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensOpenedParent::AnswerHelloRpc()
 {
   AssertNotMainThread();
-  return CallHiRpc();
+  if (!CallHiRpc()) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  return IPC_OK();
 }
 
 static void
@@ -156,7 +162,7 @@ OpenChild(TestEndpointOpensOpenedChild* aChild,
   // Open the actor on the off-main thread to park it there.
   // Messages will be delivered to this thread's message loop
   // instead of the main thread's.
-  if (!endpoint.Bind(aChild, nullptr)) {
+  if (!endpoint.Bind(aChild)) {
     fail("binding child endpoint");
   }
 
@@ -166,7 +172,7 @@ OpenChild(TestEndpointOpensOpenedChild* aChild,
   }
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensChild::RecvStart()
 {
   Endpoint<PTestEndpointOpensOpenedParent> parent;
@@ -193,7 +199,7 @@ TestEndpointOpensChild::RecvStart()
     fail("send StartSubprotocol");
   }
 
-  return true;
+  return IPC_OK();
 }
 
 void
@@ -208,7 +214,7 @@ TestEndpointOpensChild::ActorDestroy(ActorDestroyReason why)
   QuitChild();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensOpenedChild::RecvHi()
 {
   AssertNotMainThread();
@@ -226,17 +232,19 @@ TestEndpointOpensOpenedChild::RecvHi()
   // Need to close the channel without message-processing frames on
   // the C++ stack
   MessageLoop::current()->PostTask(
-    NewNonOwningRunnableMethod(this, &TestEndpointOpensOpenedChild::Close));
-  return true;
+    NewNonOwningRunnableMethod("ipc::IToplevelProtocol::Close",
+                               this,
+                               &TestEndpointOpensOpenedChild::Close));
+  return IPC_OK();
 }
 
-bool
+mozilla::ipc::IPCResult
 TestEndpointOpensOpenedChild::AnswerHiRpc()
 {
   AssertNotMainThread();
 
   mGotHi = true;              // d00d
-  return true;
+  return IPC_OK();
 }
 
 static void
@@ -247,7 +255,9 @@ ShutdownTestEndpointOpensOpenedChild(TestEndpointOpensOpenedChild* child,
 
   // Kick off main-thread shutdown.
   gMainThread->PostTask(
-    NewNonOwningRunnableMethod(gOpensChild, &TestEndpointOpensChild::Close));
+    NewNonOwningRunnableMethod("ipc::IToplevelProtocol::Close",
+                               gOpensChild,
+                               &TestEndpointOpensChild::Close));
 }
 
 void

@@ -456,8 +456,7 @@ nsHttpServer.prototype =
             self._notifyStopped();
           }
         };
-      gThreadManager.currentThread
-                    .dispatch(stopEvent, Ci.nsIThread.DISPATCH_NORMAL);
+      gThreadManager.dispatchToMainThread(stopEvent);
     }
   },
 
@@ -1646,7 +1645,7 @@ RequestReader.prototype =
       {
         var uri = Cc["@mozilla.org/network/io-service;1"]
                     .getService(Ci.nsIIOService)
-                    .newURI(fullPath, null, null);
+                    .newURI(fullPath);
         fullPath = uri.path;
         scheme = uri.scheme;
         host = metadata._host = uri.asciiHost;
@@ -2695,8 +2694,7 @@ ServerHandler.prototype =
 
       let writeMore = function writeMore()
       {
-        gThreadManager.currentThread
-                      .dispatch(writeData, Ci.nsIThread.DISPATCH_NORMAL);
+        gThreadManager.dispatchToMainThread(writeData);
       }
 
       var input = new BinaryInputStream(fis);
@@ -3767,13 +3765,13 @@ Response.prototype =
       // way to handle both cases without removing bodyOutputStream access and
       // moving its effective write(data, length) method onto Response, which
       // would be slower and require more code than this anyway.
-      gThreadManager.currentThread.dispatch({
+      gThreadManager.dispatchToMainThread({
         run: function()
         {
           dumpn("*** canceling copy asynchronously...");
           copier.cancel(Cr.NS_ERROR_UNEXPECTED);
         }
-      }, Ci.nsIThread.DISPATCH_NORMAL);
+      });
     }
     else
     {
@@ -4522,7 +4520,7 @@ WriteThroughCopier.prototype =
         }
       };
 
-    gThreadManager.currentThread.dispatch(event, Ci.nsIThread.DISPATCH_NORMAL);
+    gThreadManager.dispatchToMainThread(event);
   },
 
   /**
@@ -4797,7 +4795,7 @@ nsHttpHeaders.prototype =
 
     // The following three headers are stored as arrays because their real-world
     // syntax prevents joining individual headers into a single header using
-    // ",". See also <http://hg.mozilla.org/mozilla-central/diff/9b2a99adc05e/netwerk/protocol/http/src/nsHttpHeaderArray.cpp#l77>
+    // ",". See also <https://hg.mozilla.org/mozilla-central/diff/9b2a99adc05e/netwerk/protocol/http/src/nsHttpHeaderArray.cpp#l77>
     if (merge && name in this._headers)
     {
       if (name === "www-authenticate" ||
@@ -5177,13 +5175,9 @@ function server(port, basePath)
   srv.registerContentType("sjs", SJS_TYPE);
   srv.start(port);
 
-  var thread = gThreadManager.currentThread;
-  while (!srv.isStopped())
-    thread.processNextEvent(true);
+  gThreadManager.spinEventLoopUntil(() => srv.isStopped());
 
-  // get rid of any pending requests
-  while (thread.hasPendingEvents())
-    thread.processNextEvent(true);
+  gThreadManager.spinEventLoopUntilEmpty();
 
   DEBUG = false;
 }

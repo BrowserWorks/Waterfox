@@ -27,7 +27,6 @@
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
-#include "prprf.h"
 #include "prenv.h"
 #include "nsCRT.h"
 
@@ -110,9 +109,7 @@ FindExtensionParameterInCommand(const char* aParameterName,
 }
 
 
-nsXRemoteService::nsXRemoteService()
-{    
-}
+nsXRemoteService::nsXRemoteService() = default;
 
 void
 nsXRemoteService::XRemoteBaseStartup(const char *aAppName, const char *aProfileName)
@@ -131,7 +128,7 @@ nsXRemoteService::XRemoteBaseStartup(const char *aAppName, const char *aProfileN
     }
 }
 
-void 
+void
 nsXRemoteService::HandleCommandsFor(Window aWindowId)
 {
   // set our version
@@ -223,7 +220,7 @@ nsXRemoteService::HandleNewProperty(XID aWindowId, Display* aDisplay,
     return true;
   }
 
-  else if (aChangedAtom == sMozResponseAtom) {
+  if (aChangedAtom == sMozResponseAtom) {
     // client accepted the response.  party on wayne.
     return true;
   }

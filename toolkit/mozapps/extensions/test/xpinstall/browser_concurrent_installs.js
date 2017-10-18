@@ -6,7 +6,7 @@ var gQueuedForInstall = [];
 var gResults = [];
 
 function frame_script() {
-  /*globals addMessageListener, sendAsyncMessage*/
+  /* globals addMessageListener, sendAsyncMessage*/
   addMessageListener("Test:StartInstall", () => {
     content.document.getElementById("installnow").click()
   });
@@ -21,7 +21,7 @@ function frame_script() {
 }
 
 var gAddonAndWindowListener = {
-  onOpenWindow: function(win) {
+  onOpenWindow(win) {
     var window = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
     info("Window opened");
 
@@ -37,8 +37,8 @@ var gAddonAndWindowListener = {
       window.document.documentElement.acceptDialog();
     }, window);
   },
-  onCloseWindow: function(win) { },
-  onInstallEnded: function(install) {
+  onCloseWindow(win) { },
+  onInstallEnded(install) {
     install.cancel();
   },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediatorListener])
@@ -49,12 +49,8 @@ function installNext() {
   tab.linkedBrowser.messageManager.sendAsyncMessage("Test:StartInstall");
 }
 
-function winForTab(t) {
-  return t.linkedBrowser.contentWindow;
-}
-
 function createTab(url) {
-  let tab = gBrowser.addTab(url);
+  let tab = BrowserTestUtils.addTab(gBrowser, url);
   tab.linkedBrowser.messageManager.loadFrameScript("data:,(" + frame_script.toString() + ")();", true);
 
   tab.linkedBrowser.messageManager.addMessageListener("Test:InstallComplete", ({data}) => {

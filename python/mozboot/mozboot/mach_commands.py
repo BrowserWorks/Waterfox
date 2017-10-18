@@ -19,10 +19,16 @@ class Bootstrap(object):
 
     @Command('bootstrap', category='devenv',
              description='Install required system packages for building.')
-    def bootstrap(self):
+    @CommandArgument('--application-choice',
+                     default=None,
+                     help='Pass in an application choice (see mozboot.bootstrap.APPLICATIONS) '
+                     'instead of using the default interactive prompt.')
+    @CommandArgument('--no-interactive', dest='no_interactive', action='store_true',
+                     help='Answer yes to any (Y/n) interactive prompts.')
+    def bootstrap(self, application_choice=None, no_interactive=False):
         from mozboot.bootstrap import Bootstrapper
 
-        bootstrapper = Bootstrapper()
+        bootstrapper = Bootstrapper(choice=application_choice, no_interactive=no_interactive)
         bootstrapper.bootstrap()
 
 

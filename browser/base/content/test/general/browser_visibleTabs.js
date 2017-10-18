@@ -4,15 +4,15 @@
 
 "use strict";
 
-add_task(function* () {
+add_task(async function() {
   // There should be one tab when we start the test
   let [origTab] = gBrowser.visibleTabs;
 
   // Add a tab that will get pinned
-  let pinned = gBrowser.addTab();
+  let pinned = BrowserTestUtils.addTab(gBrowser);
   gBrowser.pinTab(pinned);
 
-  let testTab = gBrowser.addTab();
+  let testTab = BrowserTestUtils.addTab(gBrowser);
 
   let visible = gBrowser.visibleTabs;
   is(visible.length, 3, "3 tabs should be open");

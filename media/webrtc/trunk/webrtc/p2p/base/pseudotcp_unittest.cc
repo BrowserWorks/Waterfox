@@ -27,9 +27,8 @@ static const int kBlockSize = 4096;
 
 class PseudoTcpForTest : public cricket::PseudoTcp {
  public:
-  PseudoTcpForTest(cricket::IPseudoTcpNotify* notify, uint32 conv)
-      : PseudoTcp(notify, conv) {
-  }
+  PseudoTcpForTest(cricket::IPseudoTcpNotify* notify, uint32_t conv)
+      : PseudoTcp(notify, conv) {}
 
   bool isReceiveBufferFull() const {
     return PseudoTcp::isReceiveBufferFull();
@@ -127,7 +126,7 @@ class PseudoTcpTestBase : public testing::Test,
   //   virtual void OnTcpReadable(PseudoTcp* tcp)
   // and
   //   virtual void OnTcpWritable(PseudoTcp* tcp)
-  virtual void OnTcpClosed(PseudoTcp* tcp, uint32 error) {
+  virtual void OnTcpClosed(PseudoTcp* tcp, uint32_t error) {
     // Consider ourselves closed when the remote side gets OnTcpClosed.
     // TODO: OnTcpClosed is only ever notified in case of error in
     // the current implementation.  Solicited close is not (yet) supported.
@@ -141,27 +140,27 @@ class PseudoTcpTestBase : public testing::Test,
                                      const char* buffer, size_t len) {
     // Randomly drop the desired percentage of packets.
     // Also drop packets that are larger than the configured MTU.
-    if (rtc::CreateRandomId() % 100 < static_cast<uint32>(loss_)) {
+    if (rtc::CreateRandomId() % 100 < static_cast<uint32_t>(loss_)) {
       LOG(LS_VERBOSE) << "Randomly dropping packet, size=" << len;
     } else if (len > static_cast<size_t>(std::min(local_mtu_, remote_mtu_))) {
       LOG(LS_VERBOSE) << "Dropping packet that exceeds path MTU, size=" << len;
     } else {
       int id = (tcp == &local_) ? MSG_RPACKET : MSG_LPACKET;
       std::string packet(buffer, len);
-      rtc::Thread::Current()->PostDelayed(delay_, this, id,
-          rtc::WrapMessageData(packet));
+      rtc::Thread::Current()->PostDelayed(RTC_FROM_HERE, delay_, this, id,
+                                          rtc::WrapMessageData(packet));
     }
     return WR_SUCCESS;
   }
 
   void UpdateLocalClock() { UpdateClock(&local_, MSG_LCLOCK); }
   void UpdateRemoteClock() { UpdateClock(&remote_, MSG_RCLOCK); }
-  void UpdateClock(PseudoTcp* tcp, uint32 message) {
+  void UpdateClock(PseudoTcp* tcp, uint32_t message) {
     long interval = 0;  // NOLINT
     tcp->GetNextClock(PseudoTcp::Now(), interval);
     interval = std::max<int>(interval, 0L);  // sometimes interval is < 0
     rtc::Thread::Current()->Clear(this, message);
-    rtc::Thread::Current()->PostDelayed(interval, this, message);
+    rtc::Thread::Current()->PostDelayed(RTC_FROM_HERE, interval, this, message);
   }
 
   virtual void OnMessage(rtc::Message* message) {
@@ -209,7 +208,8 @@ class PseudoTcpTestBase : public testing::Test,
 class PseudoTcpTest : public PseudoTcpTestBase {
  public:
   void TestTransfer(int size) {
-    uint32 start, elapsed;
+    uint32_t start;
+    int32_t elapsed;
     size_t received;
     // Create some dummy data to send.
     send_stream_.ReserveSize(size);
@@ -221,13 +221,13 @@ class PseudoTcpTest : public PseudoTcpTestBase {
     // Prepare the receive stream.
     recv_stream_.ReserveSize(size);
     // Connect and wait until connected.
-    start = rtc::Time();
+    start = rtc::Time32();
     EXPECT_EQ(0, Connect());
     EXPECT_TRUE_WAIT(have_connected_, kConnectTimeoutMs);
     // Sending will start from OnTcpWriteable and complete when all data has
     // been received.
     EXPECT_TRUE_WAIT(have_disconnected_, kTransferTimeoutMs);
-    elapsed = rtc::TimeSince(start);
+    elapsed = rtc::Time32() - start;
     recv_stream_.GetSize(&received);
     // Ensure we closed down OK and we got the right data.
     // TODO: Ensure the errors are cleared properly.
@@ -326,7 +326,7 @@ class PseudoTcpTestPingPong : public PseudoTcpTestBase {
     bytes_per_send_ = bytes;
   }
   void TestPingPong(int size, int iterations) {
-    uint32 start, elapsed;
+    uint32_t start, elapsed;
     iterations_remaining_ = iterations;
     receiver_ = &remote_;
     sender_ = &local_;
@@ -340,7 +340,7 @@ class PseudoTcpTestPingPong : public PseudoTcpTestBase {
     // Prepare the receive stream.
     recv_stream_.ReserveSize(size);
     // Connect and wait until connected.
-    start = rtc::Time();
+    start = rtc::Time32();
     EXPECT_EQ(0, Connect());
     EXPECT_TRUE_WAIT(have_connected_, kConnectTimeoutMs);
     // Sending will start from OnTcpWriteable and stop when the required
@@ -457,7 +457,7 @@ class PseudoTcpTestReceiveWindow : public PseudoTcpTestBase {
     EXPECT_EQ(0, Connect());
     EXPECT_TRUE_WAIT(have_connected_, kConnectTimeoutMs);
 
-    rtc::Thread::Current()->Post(this, MSG_WRITE);
+    rtc::Thread::Current()->Post(RTC_FROM_HERE, this, MSG_WRITE);
     EXPECT_TRUE_WAIT(have_disconnected_, kTransferTimeoutMs);
 
     ASSERT_EQ(2u, send_position_.size());
@@ -489,12 +489,12 @@ class PseudoTcpTestReceiveWindow : public PseudoTcpTestBase {
     }
   }
 
-  uint32 EstimateReceiveWindowSize() const {
-    return static_cast<uint32>(recv_position_[0]);
+  uint32_t EstimateReceiveWindowSize() const {
+    return static_cast<uint32_t>(recv_position_[0]);
   }
 
-  uint32 EstimateSendWindowSize() const {
-    return static_cast<uint32>(send_position_[0] - recv_position_[0]);
+  uint32_t EstimateSendWindowSize() const {
+    return static_cast<uint32_t>(send_position_[0] - recv_position_[0]);
   }
 
  private:
@@ -563,7 +563,7 @@ class PseudoTcpTestReceiveWindow : public PseudoTcpTestBase {
       // If there are non-clock messages remaining, attempt to continue sending
       // after giving those messages time to process, which should free up the
       // send buffer.
-      rtc::Thread::Current()->PostDelayed(10, this, MSG_WRITE);
+      rtc::Thread::Current()->PostDelayed(RTC_FROM_HERE, 10, this, MSG_WRITE);
     } else {
       if (!remote_.isReceiveBufferFull()) {
         LOG(LS_ERROR) << "This shouldn't happen - the send buffer is full, "

@@ -178,9 +178,9 @@ nsXBLProtoImpl::InstallImplementation(nsXBLPrototypeBinding* aPrototypeBinding,
   return NS_OK;
 }
 
-nsresult 
+nsresult
 nsXBLProtoImpl::InitTargetObjects(nsXBLPrototypeBinding* aBinding,
-                                  nsIContent* aBoundElement, 
+                                  nsIContent* aBoundElement,
                                   JS::MutableHandle<JSObject*> aTargetClassObject,
                                   bool* aTargetIsNew)
 {
@@ -239,8 +239,8 @@ nsXBLProtoImpl::InitTargetObjects(nsXBLPrototypeBinding* aBinding,
 nsresult
 nsXBLProtoImpl::CompilePrototypeMembers(nsXBLPrototypeBinding* aBinding)
 {
-  // We want to pre-compile our implementation's members against a "prototype context". Then when we actually 
-  // bind the prototype to a real xbl instance, we'll clone the pre-compiled JS into the real instance's 
+  // We want to pre-compile our implementation's members against a "prototype context". Then when we actually
+  // bind the prototype to a real xbl instance, we'll clone the pre-compiled JS into the real instance's
   // context.
   AutoJSAPI jsapi;
   if (NS_WARN_IF(!jsapi.Init(xpc::CompilationScope())))
@@ -513,9 +513,9 @@ nsXBLProtoImpl::Write(nsIObjectOutputStream* aStream,
   return aStream->Write8(XBLBinding_Serialize_NoMoreItems);
 }
 
-nsresult
-NS_NewXBLProtoImpl(nsXBLPrototypeBinding* aBinding, 
-                   const char16_t* aClassName, 
+void
+NS_NewXBLProtoImpl(nsXBLPrototypeBinding* aBinding,
+                   const char16_t* aClassName,
                    nsXBLProtoImpl** aResult)
 {
   nsXBLProtoImpl* impl = new nsXBLProtoImpl();
@@ -523,13 +523,13 @@ NS_NewXBLProtoImpl(nsXBLPrototypeBinding* aBinding,
     impl->mClassName = aClassName;
   } else {
     nsCString spec;
-    aBinding->BindingURI()->GetSpec(spec);
+    nsresult rv = aBinding->BindingURI()->GetSpec(spec);
+    // XXX: should handle this better
+    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
     impl->mClassName = NS_ConvertUTF8toUTF16(spec);
   }
 
   aBinding->SetImplementation(impl);
   *aResult = impl;
-
-  return NS_OK;
 }
 

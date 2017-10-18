@@ -52,6 +52,8 @@
 #include "nsCharTraits.h"
 #include "harfbuzz/hb.h"
 
+using namespace mozilla::unicode;
+
 #define MOD(sp) ((sp) % PAREN_STACK_DEPTH)
 #define LIMIT_INC(sp) (((sp) < PAREN_STACK_DEPTH)? (sp) + 1 : PAREN_STACK_DEPTH)
 #define INC(sp,count) (MOD((sp) + (count)))
@@ -107,12 +109,17 @@ gfxScriptItemizer::fixup(Script newScriptCode)
     }
 }
 
+// We regard the current char as having the same script as the in-progress run
+// if either script code is Common or Inherited, or if the run script appears
+// in the character's ScriptExtensions, or if the char is a cluster extender.
 static inline bool
-SameScript(Script runScript, Script currCharScript)
+SameScript(Script runScript, Script currCharScript, uint32_t aCurrCh)
 {
     return runScript <= Script::INHERITED ||
            currCharScript <= Script::INHERITED ||
-           currCharScript == runScript;
+           currCharScript == runScript ||
+           IsClusterExtender(aCurrCh) ||
+           HasScript(aCurrCh, runScript);
 }
 
 gfxScriptItemizer::gfxScriptItemizer(const char16_t *src, uint32_t length)
@@ -194,7 +201,7 @@ gfxScriptItemizer::Next(uint32_t& aRunStart, uint32_t& aRunLimit,
             }
         }
 
-        if (SameScript(scriptCode, sc)) {
+        if (SameScript(scriptCode, sc, ch)) {
             if (scriptCode <= Script::INHERITED &&
                 sc > Script::INHERITED)
             {

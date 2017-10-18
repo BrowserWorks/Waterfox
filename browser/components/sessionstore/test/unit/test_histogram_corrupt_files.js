@@ -20,22 +20,24 @@ Cu.import("resource:///modules/sessionstore/SessionFile.jsm", this);
 
 /**
  * A utility function for resetting the histogram and the contents
- * of the backup directory.
+ * of the backup directory. This will also compress the file using lz4 compression.
  */
-function reset_session(backups = {}) {
+function promise_reset_session(backups = {}) {
+  return (async function() {
+    // Reset the histogram.
+    Telemetry.getHistogramById(HistogramId).clear();
 
-  // Reset the histogram.
-  Telemetry.getHistogramById(HistogramId).clear();
-
-  // Reset the contents of the backups directory
-  OS.File.makeDir(SessionFile.Paths.backups);
-  for (let key of SessionFile.Paths.loadOrder) {
-    if (backups.hasOwnProperty(key)) {
-      OS.File.copy(backups[key], SessionFile.Paths[key]);
-    } else {
-      OS.File.remove(SessionFile.Paths[key]);
+    // Reset the contents of the backups directory
+    OS.File.makeDir(SessionFile.Paths.backups);
+    for (let key of SessionFile.Paths.loadOrder) {
+      if (backups.hasOwnProperty(key)) {
+        let s = await OS.File.read(backups[key]);
+        await OS.File.writeAtomic(SessionFile.Paths[key], s, {compression: "lz4"});
+      } else {
+        await OS.File.remove(SessionFile.Paths[key]);
+      }
     }
-  }
+  })();
 }
 
 /**
@@ -43,7 +45,7 @@ function reset_session(backups = {}) {
  * it has to be registered in "toolkit/components/telemetry/Histograms.json".
  * This test ensures that the histogram is registered and empty.
  */
-add_task(function* test_ensure_histogram_exists_and_empty() {
+add_task(async function test_ensure_histogram_exists_and_empty() {
   let s = Telemetry.getHistogramById(HistogramId).snapshot();
   Assert.equal(s.sum, 0, "Initially, the sum of probes is 0");
 });
@@ -52,11 +54,11 @@ add_task(function* test_ensure_histogram_exists_and_empty() {
  * Makes sure that the histogram is negatively updated when no
  * backup files are present.
  */
-add_task(function* test_no_files_exist() {
+add_task(async function test_no_files_exist() {
   // No session files are available to SessionFile.
-  reset_session();
+  await promise_reset_session();
 
-  yield SessionFile.read();
+  await SessionFile.read();
   // Checking if the histogram is updated negatively
   let h = Telemetry.getHistogramById(HistogramId);
   let s = h.snapshot();
@@ -68,18 +70,18 @@ add_task(function* test_no_files_exist() {
  * Makes sure that the histogram is negatively updated when at least one
  * backup file is not corrupted.
  */
-add_task(function* test_one_file_valid() {
+add_task(async function test_one_file_valid() {
   // Corrupting some backup files.
   let invalidSession = "data/sessionstore_invalid.js";
   let validSession = "data/sessionstore_valid.js";
-  reset_session({
-    clean : invalidSession,
+  await promise_reset_session({
+    clean: invalidSession,
     cleanBackup: validSession,
     recovery: invalidSession,
     recoveryBackup: invalidSession
   });
 
-  yield SessionFile.read();
+  await SessionFile.read();
   // Checking if the histogram is updated negatively.
   let h = Telemetry.getHistogramById(HistogramId);
   let s = h.snapshot();
@@ -91,17 +93,17 @@ add_task(function* test_one_file_valid() {
  * Makes sure that the histogram is positively updated when all
  * backup files are corrupted.
  */
-add_task(function* test_all_files_corrupt() {
+add_task(async function test_all_files_corrupt() {
   // Corrupting all backup files.
   let invalidSession = "data/sessionstore_invalid.js";
-  reset_session({
-    clean : invalidSession,
+  await promise_reset_session({
+    clean: invalidSession,
     cleanBackup: invalidSession,
     recovery: invalidSession,
     recoveryBackup: invalidSession
   });
 
-  yield SessionFile.read();
+  await SessionFile.read();
   // Checking if the histogram is positively updated.
   let h = Telemetry.getHistogramById(HistogramId);
   let s = h.snapshot();

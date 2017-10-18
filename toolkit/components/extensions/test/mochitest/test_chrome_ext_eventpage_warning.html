@@ -7,7 +7,7 @@
   <script src="chrome://mochikit/content/tests/SimpleTest/ExtensionTestUtils.js"></script>
   <script type="text/javascript" src="chrome_head.js"></script>
   <script type="text/javascript" src="head.js"></script>
-  <link rel="stylesheet" href="chrome://mochikit/contents/tests/SimpleTest/test.css"/>
+  <link rel="stylesheet" href="chrome://mochikit/content/tests/SimpleTest/test.css"/>
 </head>
 <body>
 
@@ -25,16 +25,16 @@ function createEventPageExtension(eventPage) {
       "background": eventPage,
     },
     files: {
-      "event-page-script.js": `(${eventPageScript})()`,
+      "event-page-script.js": eventPageScript,
       "event-page.html": `<html><head>
         <meta charset="utf-8">
-        <script src="event-page-script.js"></${"script"}>
+        <script src="event-page-script.js"><\/script>
       </head></html>`,
     },
   });
 }
 
-add_task(function* test_eventpages() {
+add_task(async function test_eventpages() {
   // Used in other tests to prevent the monitorConsole to grip.
   SimpleTest.waitForExplicitFinish();
 
@@ -66,14 +66,14 @@ add_task(function* test_eventpages() {
     let extension = createEventPageExtension(eventPage);
 
     info("load complete");
-    let [, x] = yield Promise.all([extension.startup(), extension.awaitMessage("running")]);
+    let [, x] = await Promise.all([extension.startup(), extension.awaitMessage("running")]);
     is(x, 1, "got correct value from extension");
     info("test complete");
-    yield extension.unload();
+    await extension.unload();
     info("extension unloaded successfully");
 
     SimpleTest.endMonitorConsole();
-    yield waitForConsole;
+    await waitForConsole;
 
     waitForConsole = new Promise(resolve => {
       SimpleTest.monitorConsole(resolve, [{
@@ -89,14 +89,14 @@ add_task(function* test_eventpages() {
     });
 
     info("load complete");
-    [, x] = yield Promise.all([extension.startup(), extension.awaitMessage("running")]);
+    [, x] = await Promise.all([extension.startup(), extension.awaitMessage("running")]);
     is(x, 1, "got correct value from extension");
     info("test complete");
-    yield extension.unload();
+    await extension.unload();
     info("extension unloaded successfully");
 
     SimpleTest.endMonitorConsole();
-    yield waitForConsole;
+    await waitForConsole;
   }
 });
 

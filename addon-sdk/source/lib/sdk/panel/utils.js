@@ -10,17 +10,17 @@ module.metadata = {
 
 const { Cc, Ci } = require("chrome");
 const { Services } = require("resource://gre/modules/Services.jsm");
-const { setTimeout } = require("../timers");
-const { platform } = require("../system");
-const { getMostRecentBrowserWindow, getOwnerBrowserWindow,
-        getHiddenWindow, getScreenPixelsPerCSSPixel } = require("../window/utils");
+lazyRequire(this, "../timers", "setTimeout");
+lazyRequire(this, "../system", "platform");
+lazyRequire(this, "../window/utils", "getMostRecentBrowserWindow", "getOwnerBrowserWindow",
+            "getScreenPixelsPerCSSPixel");
 
-const { create: createFrame, swapFrameLoaders, getDocShell } = require("../frame/utils");
-const { window: addonWindow } = require("../addon/window");
-const { isNil } = require("../lang/type");
-const { data } = require('../self');
+lazyRequire(this, "../frame/utils", { "create": "createFrame" }, "swapFrameLoaders", "getDocShell");
+lazyRequire(this, "../addon/window", { "window": "addonWindow" });
+lazyRequire(this, "../lang/type", "isNil");
+lazyRequire(this, '../self', "data");
 
-const events = require("../system/events");
+lazyRequireModule(this, "../system/events", "events");
 
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -138,7 +138,7 @@ function display(panel, options, anchor) {
     // The XUL Panel has an arrow, so the margin needs to be reset
     // to the default value.
     panel.style.margin = "";
-    let { CustomizableUI, window } = anchor.ownerDocument.defaultView;
+    let { CustomizableUI, window } = anchor.ownerGlobal;
 
     // In Australis, widgets may be positioned in an overflow panel or the
     // menu panel.
@@ -253,8 +253,9 @@ function setupPanelFrame(frame) {
   frame.setAttribute("flex", 1);
   frame.setAttribute("transparent", "transparent");
   frame.setAttribute("autocompleteenabled", true);
+  frame.setAttribute("tooltip", "aHTMLTooltip");
   if (platform === "darwin") {
-    frame.style.borderRadius = "6px";
+    frame.style.borderRadius = "var(--arrowpanel-border-radius, 3.5px)";
     frame.style.padding = "1px";
   }
 }
@@ -330,7 +331,7 @@ function make(document, options) {
   for (let event of ["popupshowing", "popuphiding", "popupshown", "popuphidden"])
     panel.addEventListener(event, onPanelStateChange);
 
-  panel.addEventListener("click", onPanelClick, false);
+  panel.addEventListener("click", onPanelClick);
 
   // Panel content document can be either in panel `viewFrame` or in
   // a `backgroundFrame` depending on panel state. Listeners are set
@@ -366,7 +367,7 @@ function attach(panel, document) {
 exports.attach = attach;
 
 function detach(panel) {
-  if (panel.parentNode) panel.parentNode.removeChild(panel);
+  if (panel.parentNode) panel.remove();
 }
 exports.detach = detach;
 

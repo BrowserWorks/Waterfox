@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import datetime
 import json
 import socket
 import time
@@ -42,7 +41,7 @@ class Command(Message):
         self.params = params
 
     def __str__(self):
-        return "<Command id=%s, name=%s, params=%s>" % (self.id, self.name, self.params)
+        return "<Command id={0}, name={1}, params={2}>".format(self.id, self.name, self.params)
 
     def to_msg(self):
         msg = [Command.TYPE, self.id, self.name, self.params]
@@ -65,7 +64,7 @@ class Response(Message):
         self.result = result
 
     def __str__(self):
-        return "<Response id=%s, error=%s, result=%s>" % (self.id, self.error, self.result)
+        return "<Response id={0}, error={1}, result={2}>".format(self.id, self.error, self.result)
 
     def to_msg(self):
         msg = [Response.TYPE, self.id, self.error, self.result]
@@ -126,13 +125,23 @@ class TcpTransport(object):
         """
         self.addr = addr
         self.port = port
-        self.socket_timeout = socket_timeout
+        self._socket_timeout = socket_timeout
 
         self.protocol = 1
         self.application_type = None
         self.last_id = 0
         self.expected_response = None
         self.sock = None
+
+    @property
+    def socket_timeout(self):
+        return self._socket_timeout
+
+    @socket_timeout.setter
+    def socket_timeout(self, value):
+        if self.sock:
+            self.sock.settimeout(value)
+        self._socket_timeout = value
 
     def _unmarshal(self, packet):
         msg = None
@@ -199,7 +208,7 @@ class TcpTransport(object):
 
                 bytes_to_recv = int(length) - len(remaining)
 
-        raise socket.timeout("Connection timed out after %ds" % self.socket_timeout)
+        raise socket.timeout("Connection timed out after {}s".format(self.socket_timeout))
 
     def connect(self):
         """Connect to the server and process the hello message we expect
@@ -241,14 +250,14 @@ class TcpTransport(object):
                 self.expected_response = obj
         else:
             data = json.dumps(obj)
-        payload = "%s:%s" % (len(data), data)
+        payload = "{0}:{1}".format(len(data), data)
 
         totalsent = 0
         while totalsent < len(payload):
             sent = self.sock.send(payload[totalsent:])
             if sent == 0:
-                raise IOError("Socket error after sending %d of %d bytes" %
-                              (totalsent, len(payload)))
+                raise IOError("Socket error after sending {0} of {1} bytes"
+                              .format(totalsent, len(payload)))
             else:
                 totalsent += sent
 
@@ -275,35 +284,25 @@ class TcpTransport(object):
         return self.receive()
 
     def close(self):
-        """Close the socket."""
+        """Close the socket.
+
+        First forces the socket to not send data anymore, and then explicitly
+        close it to free up its resources.
+
+        See: https://docs.python.org/2/howto/sockets.html#disconnecting
+        """
         if self.sock:
-            self.sock.shutdown(socket.SHUT_RDWR)
+            try:
+                self.sock.shutdown(socket.SHUT_RDWR)
+            except IOError as exc:
+                # If the socket is already closed, don't care about:
+                #   Errno  57: Socket not connected
+                #   Errno 107: Transport endpoint is not connected
+                if exc.errno not in (57, 107):
+                    raise
+
             self.sock.close()
             self.sock = None
 
     def __del__(self):
         self.close()
-
-
-def wait_for_port(host, port, timeout=60):
-    """Wait for the specified host/port to become available."""
-    starttime = datetime.datetime.now()
-    poll_interval = 0.1
-    while datetime.datetime.now() - starttime < datetime.timedelta(seconds=timeout):
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.5)
-            sock.connect((host, port))
-            data = sock.recv(16)
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
-            if ":" in data:
-                return True
-        except socket.error:
-            pass
-        finally:
-            if sock is not None:
-                sock.close()
-        time.sleep(poll_interval)
-    return False

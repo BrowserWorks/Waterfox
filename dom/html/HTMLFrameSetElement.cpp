@@ -9,6 +9,7 @@
 #include "mozilla/dom/EventHandlerBinding.h"
 #include "nsGlobalWindow.h"
 #include "mozilla/UniquePtrExtensions.h"
+#include "nsAttrValueOrString.h"
 
 NS_IMPL_NS_NEW_HTML_ELEMENT(FrameSet)
 
@@ -30,7 +31,7 @@ NS_IMPL_ISUPPORTS_INHERITED(HTMLFrameSetElement, nsGenericHTMLElement,
 
 NS_IMPL_ELEMENT_CLONE(HTMLFrameSetElement)
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 HTMLFrameSetElement::SetCols(const nsAString& aCols)
 {
   ErrorResult rv;
@@ -47,7 +48,7 @@ HTMLFrameSetElement::GetCols(nsAString& aCols)
   return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 HTMLFrameSetElement::SetRows(const nsAString& aRows)
 {
   ErrorResult rv;
@@ -65,43 +66,45 @@ HTMLFrameSetElement::GetRows(nsAString& aRows)
 }
 
 nsresult
-HTMLFrameSetElement::SetAttr(int32_t aNameSpaceID,
-                             nsIAtom* aAttribute,
-                             nsIAtom* aPrefix,
-                             const nsAString& aValue,
-                             bool aNotify)
+HTMLFrameSetElement::BeforeSetAttr(int32_t aNamespaceID, nsIAtom* aName,
+                                   const nsAttrValueOrString* aValue,
+                                   bool aNotify)
 {
-  nsresult rv;
   /* The main goal here is to see whether the _number_ of rows or
-   *  columns has changed.  If it has, we need to reframe; otherwise
-   *  we want to reflow.  So we set mCurrentRowColHint here, then call
-   *  nsGenericHTMLElement::SetAttr, which will end up calling
-   *  GetAttributeChangeHint and notifying layout with that hint.
-   *  Once nsGenericHTMLElement::SetAttr returns, we want to go back to our
-   *  normal hint, which is NS_STYLE_HINT_REFLOW.
+   * columns has changed. If it has, we need to reframe; otherwise
+   * we want to reflow.
+   * Ideally, the style hint would be changed back to reflow after the reframe
+   * has been performed. Unfortunately, however, the reframe will be performed
+   * by the call to nsNodeUtils::AttributeChanged, which occurs *after*
+   * AfterSetAttr is called, leaving us with no convenient way of changing the
+   * value back to reflow afterwards. However, nsNodeUtils::AttributeChanged is
+   * effectively the only consumer of this value, so as long as we always set
+   * the value correctly here, we should be fine.
    */
-  if (aAttribute == nsGkAtoms::rows && aNameSpaceID == kNameSpaceID_None) {
-    int32_t oldRows = mNumRows;
-    ParseRowCol(aValue, mNumRows, &mRowSpecs);
+  mCurrentRowColHint = NS_STYLE_HINT_REFLOW;
+  if (aNamespaceID == kNameSpaceID_None) {
+    if (aName == nsGkAtoms::rows) {
+      if (aValue) {
+        int32_t oldRows = mNumRows;
+        ParseRowCol(aValue->String(), mNumRows, &mRowSpecs);
 
-    if (mNumRows != oldRows) {
-      mCurrentRowColHint = nsChangeHint_ReconstructFrame;
-    }
-  } else if (aAttribute == nsGkAtoms::cols &&
-             aNameSpaceID == kNameSpaceID_None) {
-    int32_t oldCols = mNumCols;
-    ParseRowCol(aValue, mNumCols, &mColSpecs);
+        if (mNumRows != oldRows) {
+          mCurrentRowColHint = nsChangeHint_ReconstructFrame;
+        }
+      }
+    } else if (aName == nsGkAtoms::cols) {
+      if (aValue) {
+        int32_t oldCols = mNumCols;
+        ParseRowCol(aValue->String(), mNumCols, &mColSpecs);
 
-    if (mNumCols != oldCols) {
-      mCurrentRowColHint = nsChangeHint_ReconstructFrame;
+        if (mNumCols != oldCols) {
+          mCurrentRowColHint = nsChangeHint_ReconstructFrame;
+        }
+      }
     }
   }
 
-  rv = nsGenericHTMLElement::SetAttr(aNameSpaceID, aAttribute, aPrefix,
-                                     aValue, aNotify);
-  mCurrentRowColHint = NS_STYLE_HINT_REFLOW;
-
-  return rv;
+  return nsGenericHTMLElement::BeforeSetAttr(aNamespaceID, aName, aValue, aNotify);
 }
 
 nsresult
@@ -112,7 +115,7 @@ HTMLFrameSetElement::GetRowSpec(int32_t *aNumValues,
   NS_PRECONDITION(aSpecs, "Must have a pointer to an array of nsFramesetSpecs");
   *aNumValues = 0;
   *aSpecs = nullptr;
-  
+
   if (!mRowSpecs) {
     const nsAttrValue* value = GetParsedAttr(nsGkAtoms::rows);
     if (value && value->Type() == nsAttrValue::eString) {
@@ -182,7 +185,7 @@ HTMLFrameSetElement::ParseAttribute(int32_t aNamespaceID,
       return aResult.ParseIntWithBounds(aValue, 0, 100);
     }
   }
-  
+
   return nsGenericHTMLElement::ParseAttribute(aNamespaceID, aAttribute, aValue,
                                               aResult);
 }
@@ -223,7 +226,7 @@ HTMLFrameSetElement::ParseRowCol(const nsAString & aValue,
   // also remove leading/trailing commas (bug 31482)
   spec.StripChars(" \n\r\t\"\'");
   spec.Trim(",");
-  
+
   // Count the commas. Don't count more than X commas (bug 576447).
   static_assert(NS_MAX_FRAMESET_SPEC_COUNT * sizeof(nsFramesetSpec) < (1 << 30),
                 "Too many frameset specs allowed to allocate");
@@ -243,7 +246,7 @@ HTMLFrameSetElement::ParseRowCol(const nsAString & aValue,
 
   // Pre-grab the compat mode; we may need it later in the loop.
   bool isInQuirks = InNavQuirksMode(OwnerDoc());
-      
+
   // Parse each comma separated token
 
   int32_t start = 0;
@@ -305,7 +308,7 @@ HTMLFrameSetElement::ParseRowCol(const nsAString & aValue,
           specs[i].mValue = 1;
         }
       }
-        
+
       // Catch zero and negative frame sizes for Nav compatibility
       // Nav resized absolute and relative frames to "1" and
       // percent frames to an even percentage of the width
@@ -334,7 +337,7 @@ HTMLFrameSetElement::ParseRowCol(const nsAString & aValue,
 }
 
 bool
-HTMLFrameSetElement::IsEventAttributeName(nsIAtom *aName)
+HTMLFrameSetElement::IsEventAttributeNameInternal(nsIAtom *aName)
 {
   return nsContentUtils::IsEventAttributeName(aName,
                                               EventNameType_HTML |

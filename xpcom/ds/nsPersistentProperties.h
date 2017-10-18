@@ -9,9 +9,9 @@
 
 #include "nsIPersistentProperties2.h"
 #include "PLDHashTable.h"
-#include "plarena.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
+#include "mozilla/ArenaAllocator.h"
 #include "mozilla/Attributes.h"
 
 class nsIUnicharInputStream;
@@ -35,7 +35,7 @@ protected:
   nsCOMPtr<nsIUnicharInputStream> mIn;
 
   PLDHashTable mTable;
-  PLArenaPool mArena;
+  mozilla::ArenaAllocator<2048,4> mArena;
 };
 
 class nsPropertyElement final : public nsIPropertyElement
@@ -54,7 +54,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPROPERTYELEMENT
 
-  static NS_METHOD Create(nsISupports* aOuter, REFNSIID aIID, void** aResult);
+  static nsresult Create(nsISupports* aOuter, REFNSIID aIID, void** aResult);
 
 private:
   ~nsPropertyElement() {}

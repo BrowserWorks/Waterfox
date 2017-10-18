@@ -12,10 +12,6 @@
                   name="browser.search.hiddenOneOffs"
                   type="unichar"/>
 
-      <preference id="browser.search.redirectWindowsSearch"
-                  name="browser.search.redirectWindowsSearch"
-                  type="bool"/>
-
     </preferences>
 
     <script type="application/javascript"
@@ -28,8 +24,7 @@
           hidden="true"
           data-category="paneSearch">
       <label class="header-name" flex="1">&paneSearch.title;</label>
-      <button class="help-button"
-              aria-label="&helpButton.label;"/>
+      <html:a class="help-button" target="_blank" aria-label="&helpButton.label;"></html:a>
     </hbox>
 
     <!-- Default Search Engine -->
@@ -52,10 +47,6 @@
           <label flex="1">&urlBarSuggestionsPermanentPB.label;</label>
         </hbox>
       </vbox>
-      <checkbox id="redirectSearchCheckbox"
-                label="&redirectWindowsSearch.label;"
-                accesskey="&redirectWindowsSearch.accesskey;"
-                preference="browser.search.redirectWindowsSearch"/>
     </groupbox>
 
     <groupbox id="oneClickSearchProvidersGroup" data-category="paneSearch">
@@ -63,7 +54,7 @@
       <label>&chooseWhichOneToDisplay.label;</label>
 
       <tree id="engineList" flex="1" rows="8" hidecolumnpicker="true" editable="true"
-            seltype="single">
+            seltype="single" allowunderflowscroll="true">
         <treechildren id="engineChildren" flex="1"/>
         <treecols>
           <treecol id="engineShown" type="checkbox" editable="true" sortable="false"/>

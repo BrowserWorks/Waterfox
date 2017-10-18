@@ -25,7 +25,6 @@ import org.mozilla.gecko.FennecNativeActions;
 import org.mozilla.gecko.FennecNativeDriver;
 import org.mozilla.gecko.FennecTalosAssert;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.updater.UpdateServiceHelper;
 
@@ -218,7 +217,7 @@ public abstract class BaseRobocopTest extends ActivityInstrumentationTestCase2<A
             if ("1".equals(quitAndFinish)) {
                 // Request the browser force quit and wait for it to take effect.
                 Log.i(LOGTAG, "Requesting force quit.");
-                mActions.sendGeckoEvent("Robocop:Quit", null);
+                mActions.sendGlobalEvent("Robocop:Quit", null);
                 mSolo.sleep(ROBOCOP_QUIT_WAIT_MS);
 
                 // If still running, finish activities as recommended by Robotium.

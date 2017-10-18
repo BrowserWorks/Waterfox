@@ -83,7 +83,7 @@ this.RESTRequest = function RESTRequest(uri) {
   // If we don't have an nsIURI object yet, make one. This will throw if
   // 'uri' isn't a valid URI string.
   if (!(uri instanceof Ci.nsIURI)) {
-    uri = Services.io.newURI(uri, null, null);
+    uri = Services.io.newURI(uri);
   }
   this.uri = uri;
 
@@ -102,7 +102,7 @@ RESTRequest.prototype = {
     Ci.nsIChannelEventSink
   ]),
 
-  /*** Public API: ***/
+  /** Public API: **/
 
   /**
    * A constant boolean that indicates whether this object will automatically
@@ -281,7 +281,7 @@ RESTRequest.prototype = {
    */
   abort: function abort() {
     if (this.status != this.SENT && this.status != this.IN_PROGRESS) {
-      throw "Can only abort a request that has been sent.";
+      throw new Error("Can only abort a request that has been sent.");
     }
 
     this.status = this.ABORTED;
@@ -293,11 +293,11 @@ RESTRequest.prototype = {
     }
   },
 
-  /*** Implementation stuff ***/
+  /** Implementation stuff **/
 
   dispatch: function dispatch(method, data, onComplete, onProgress) {
     if (this.status != this.NOT_SENT) {
-      throw "Request has already been sent!";
+      throw new Error("Request has already been sent!");
     }
 
     this.method = method;
@@ -320,7 +320,7 @@ RESTRequest.prototype = {
     // Set request headers.
     let headers = this._headers;
     for (let key in headers) {
-      if (key == 'authorization') {
+      if (key == "authorization") {
         this._log.trace("HTTP Header " + key + ": ***** (suppressed)");
       } else {
         this._log.trace("HTTP Header " + key + ": " + headers[key]);
@@ -412,7 +412,7 @@ RESTRequest.prototype = {
     this.onComplete(error);
   },
 
-  /*** nsIStreamListener ***/
+  /** nsIStreamListener **/
 
   onStartRequest: function onStartRequest(channel) {
     if (this.status == this.ABORTED) {
@@ -523,14 +523,18 @@ RESTRequest.prototype = {
         this._converterStream = Cc["@mozilla.org/intl/converter-input-stream;1"]
                                    .createInstance(Ci.nsIConverterInputStream);
       }
-
       this._converterStream.init(stream, channel.contentCharset, 0,
                                  this._converterStream.DEFAULT_REPLACEMENT_CHARACTER);
 
       try {
-        let str = {};
-        let num = this._converterStream.readString(count, str);
-        if (num != 0) {
+        let remaining = count;
+        while (remaining > 0) {
+          let str = {};
+          let num = this._converterStream.readString(remaining, str);
+          if (!num) {
+            break;
+          }
+          remaining -= num;
           this.response.body += str.value;
         }
       } catch (ex) {
@@ -573,13 +577,13 @@ RESTRequest.prototype = {
     this.delayTimeout();
   },
 
-  /*** nsIInterfaceRequestor ***/
+  /** nsIInterfaceRequestor **/
 
-  getInterface: function(aIID) {
+  getInterface(aIID) {
     return this.QueryInterface(aIID);
   },
 
-  /*** nsIBadCertListener2 ***/
+  /** nsIBadCertListener2 **/
 
   notifyCertProblem: function notifyCertProblem(socketInfo, sslStatus, targetHost) {
     this._log.warn("Invalid HTTPS certificate encountered!");
@@ -601,7 +605,7 @@ RESTRequest.prototype = {
     return isInternal && isSameURI;
   },
 
-  /*** nsIChannelEventSink ***/
+  /** nsIChannelEventSink **/
   asyncOnChannelRedirect:
     function asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
 
@@ -707,7 +711,7 @@ RESTResponse.prototype = {
     try {
       this._log.trace("Processing response headers.");
       let channel = this.request.channel.QueryInterface(Ci.nsIHttpChannel);
-      channel.visitResponseHeaders(function (header, value) {
+      channel.visitResponseHeaders(function(header, value) {
         headers[header.toLowerCase()] = value;
       });
     } catch (ex) {

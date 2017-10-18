@@ -34,6 +34,7 @@ config = {
         "installer-ssl": {
             "product-name": "Firefox-%(version)s-SSL",
             "check_uptake": True,
+            "alias": "firefox-beta-latest-ssl",
             "ssl-only": True,
             "add-locales": True,
             "paths": {
@@ -67,21 +68,12 @@ config = {
             "add-locales": True,
             "paths": {
                 "win32": {
-                    "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Setup%%20Stub%%20%(version)s.exe",
+                    "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Installer.exe",
                     "bouncer-platform": "win",
                 },
-            },
-        },
-        "sha1-installer": {
-            "product-name": "Firefox-%(version)s-sha1",
-            "check_uptake": True,
-            "alias": "firefox-beta-sha1",
-            "ssl-only": True,
-            "add-locales": True,
-            "paths": {
-                "win32": {
-                    "path": "/firefox/releases/%(version)s/win32-sha1/:lang/Firefox%%20Setup%%20%(version)s.exe",
-                    "bouncer-platform": "win",
+                "win64": {
+                    "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Installer.exe",
+                    "bouncer-platform": "win64",
                 },
             },
         },
@@ -113,6 +105,7 @@ config = {
                 },
             },
         },
+    },
     },
     "partials": {
         "releases-dir": {

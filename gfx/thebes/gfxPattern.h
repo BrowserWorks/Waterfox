@@ -48,13 +48,11 @@ public:
      * to the current transform.
      */
     mozilla::gfx::Pattern *GetPattern(const mozilla::gfx::DrawTarget *aTarget,
-                                      mozilla::gfx::Matrix *aOriginalUserToDevice = nullptr);
+                                      const mozilla::gfx::Matrix *aOriginalUserToDevice = nullptr);
     bool IsOpaque();
 
     // clamp, repeat, reflect
     void SetExtend(mozilla::gfx::ExtendMode aExtend);
-
-    int CairoStatus();
 
     void SetSamplingFilter(mozilla::gfx::SamplingFilter aSamplingFilter);
     mozilla::gfx::SamplingFilter SamplingFilter() const;

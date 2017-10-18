@@ -8,26 +8,67 @@
 
 #include "ScaledFontBase.h"
 
-#include <fontconfig/fontconfig.h>
-#include <cairo.h>
+#include <cairo-ft.h>
 
 namespace mozilla {
 namespace gfx {
 
+class NativeFontResourceFontconfig;
+class UnscaledFontFontconfig;
+
 class ScaledFontFontconfig : public ScaledFontBase
 {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontFontconfig)
-  ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern, Float aSize);
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontFontconfig, override)
+  ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern,
+                       const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize);
   ~ScaledFontFontconfig();
 
-  virtual FontType GetType() const { return FontType::FONTCONFIG; }
+  FontType GetType() const override { return FontType::FONTCONFIG; }
 
 #ifdef USE_SKIA
-  virtual SkTypeface* GetSkTypeface();
+  SkTypeface* GetSkTypeface() override;
 #endif
 
+  bool CanSerialize() override { return true; }
+
+  bool GetFontInstanceData(FontInstanceDataOutput aCb, void* aBaton) override;
+
 private:
+  friend class NativeFontResourceFontconfig;
+  friend class UnscaledFontFontconfig;
+
+  struct InstanceData
+  {
+    enum {
+      ANTIALIAS       = 1 << 0,
+      AUTOHINT        = 1 << 1,
+      EMBEDDED_BITMAP = 1 << 2,
+      EMBOLDEN        = 1 << 3,
+      VERTICAL_LAYOUT = 1 << 4,
+      HINT_METRICS    = 1 << 5
+    };
+
+    InstanceData(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern);
+
+    void SetupPattern(FcPattern* aPattern) const;
+    void SetupFontOptions(cairo_font_options_t* aFontOptions) const;
+    void SetupFontMatrix(cairo_matrix_t* aFontMatrix) const;
+
+    uint8_t mFlags;
+    uint8_t mHintStyle;
+    uint8_t mSubpixelOrder;
+    uint8_t mLcdFilter;
+    Float mScale;
+    Float mSkew;
+  };
+
+  static already_AddRefed<ScaledFont>
+    CreateFromInstanceData(const InstanceData& aInstanceData,
+                           UnscaledFontFontconfig* aUnscaledFont,
+                           Float aSize,
+                           NativeFontResource* aNativeFontResource = nullptr);
+
   FcPattern* mPattern;
 };
 

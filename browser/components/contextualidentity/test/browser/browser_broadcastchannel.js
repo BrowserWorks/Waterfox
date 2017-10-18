@@ -6,39 +6,37 @@ const URI = BASE_ORIGIN +
 
 // opens `uri' in a new tab with the provided userContextId and focuses it.
 // returns the newly opened tab
-function* openTabInUserContext(uri, userContextId) {
+async function openTabInUserContext(uri, userContextId) {
   // open the tab in the correct userContextId
-  let tab = gBrowser.addTab(uri, {userContextId});
+  let tab = BrowserTestUtils.addTab(gBrowser, uri, {userContextId});
 
   // select tab and make sure its browser is focused
   gBrowser.selectedTab = tab;
   tab.ownerGlobal.focus();
 
   let browser = gBrowser.getBrowserForTab(tab);
-  yield BrowserTestUtils.browserLoaded(browser);
+  await BrowserTestUtils.browserLoaded(browser);
   return {tab, browser};
 }
 
-add_task(function* setup() {
+add_task(async function setup() {
   // make sure userContext is enabled.
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["privacy.userContext.enabled", true]
-    ]}, resolve);
-  });
+  await SpecialPowers.pushPrefEnv({"set": [
+    ["privacy.userContext.enabled", true]
+  ]});
 });
 
-add_task(function* test() {
-  let receiver = yield* openTabInUserContext(URI, 2);
+add_task(async function test() {
+  let receiver = await openTabInUserContext(URI, 2);
 
   let channelName = "contextualidentity-broadcastchannel";
 
   // reflect the received message on title
-  yield ContentTask.spawn(receiver.browser, channelName,
-    function (name) {
+  await ContentTask.spawn(receiver.browser, channelName,
+    function(name) {
       content.window.testPromise = new content.window.Promise(resolve => {
         content.window.bc = new content.window.BroadcastChannel(name);
-        content.window.bc.onmessage = function (e) {
+        content.window.bc.onmessage = function(e) {
           content.document.title += e.data;
           resolve();
         }
@@ -46,18 +44,18 @@ add_task(function* test() {
     }
   );
 
-  let sender1 = yield* openTabInUserContext(URI, 1);
-  let sender2 = yield* openTabInUserContext(URI, 2);
+  let sender1 = await openTabInUserContext(URI, 1);
+  let sender2 = await openTabInUserContext(URI, 2);
   sender1.message = "Message from user context #1";
   sender2.message = "Message from user context #2";
 
   // send a message from a tab in different user context first
   // then send a message from a tab in the same user context
   for (let sender of [sender1, sender2]) {
-    yield ContentTask.spawn(
+    await ContentTask.spawn(
         sender.browser,
         { name: channelName, message: sender.message },
-        function (opts) {
+        function(opts) {
           let bc = new content.window.BroadcastChannel(opts.name);
           bc.postMessage(opts.message);
         });
@@ -65,9 +63,9 @@ add_task(function* test() {
 
   // Since sender1 sends before sender2, if the title is exactly
   // sender2's message, sender1's message must've been blocked
-  yield ContentTask.spawn(receiver.browser, sender2.message,
-    function* (message) {
-      yield content.window.testPromise.then(function() {
+  await ContentTask.spawn(receiver.browser, sender2.message,
+    async function(message) {
+      await content.window.testPromise.then(function() {
         is(content.document.title, message,
            "should only receive messages from the same user context");
       });

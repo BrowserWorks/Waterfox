@@ -4,13 +4,15 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CanvasCaptureMediaStream.h"
+
 #include "DOMMediaStream.h"
-#include "gfxPlatform.h"
 #include "ImageContainer.h"
 #include "MediaStreamGraph.h"
+#include "MediaStreamListener.h"
+#include "gfxPlatform.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/dom/CanvasCaptureMediaStreamBinding.h"
 #include "mozilla/gfx/2D.h"
-#include "mozilla/Atomics.h"
 #include "nsContentUtils.h"
 
 using namespace mozilla::layers;
@@ -31,7 +33,6 @@ public:
     , mTrackId(aTrackId)
     , mPrincipalHandle(aPrincipalHandle)
     , mMutex("CanvasCaptureMediaStream OutputStreamDriver::StreamListener")
-    , mImage(nullptr)
   {
     MOZ_ASSERT(mSourceStream);
   }
@@ -40,24 +41,26 @@ public:
     mEnded = true;
   }
 
-  void SetImage(const RefPtr<layers::Image>& aImage)
+  void SetImage(const RefPtr<layers::Image>& aImage, const TimeStamp& aTime)
   {
     MutexAutoLock lock(mMutex);
     mImage = aImage;
+    mImageTime = aTime;
   }
 
   void NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) override
   {
     // Called on the MediaStreamGraph thread.
+    MOZ_ASSERT(mSourceStream);
     StreamTime delta = aDesiredTime - mSourceStream->GetEndOfAppendedData(mTrackId);
     if (delta > 0) {
       MutexAutoLock lock(mMutex);
-      MOZ_ASSERT(mSourceStream);
 
       RefPtr<Image> image = mImage;
       IntSize size = image ? image->GetSize() : IntSize(0, 0);
       VideoSegment segment;
-      segment.AppendFrame(image.forget(), delta, size, mPrincipalHandle);
+      segment.AppendFrame(image.forget(), delta, size, mPrincipalHandle, false,
+                          mImageTime);
 
       mSourceStream->AppendToTrack(mTrackId, &segment);
     }
@@ -79,6 +82,7 @@ private:
   Mutex mMutex;
   // The below members are protected by mMutex.
   RefPtr<layers::Image> mImage;
+  TimeStamp mImageTime;
 };
 
 OutputStreamDriver::OutputStreamDriver(SourceMediaStream* aSourceStream,
@@ -111,10 +115,11 @@ OutputStreamDriver::~OutputStreamDriver()
 }
 
 void
-OutputStreamDriver::SetImage(const RefPtr<layers::Image>& aImage)
+OutputStreamDriver::SetImage(const RefPtr<layers::Image>& aImage,
+                             const TimeStamp& aTime)
 {
   if (mStreamListener) {
-    mStreamListener->SetImage(aImage);
+    mStreamListener->SetImage(aImage, aTime);
   }
 }
 
@@ -139,7 +144,11 @@ public:
     if (!mTimer) {
       return;
     }
-    mTimer->InitWithFuncCallback(&TimerTick, this, int(1000 / mFPS), nsITimer::TYPE_REPEATING_SLACK);
+    mTimer->InitWithNamedFuncCallback(&TimerTick,
+                                      this,
+                                      int(1000 / mFPS),
+                                      nsITimer::TYPE_REPEATING_SLACK,
+                                      "dom::TimerDriver::TimerDriver");
   }
 
   static void TimerTick(nsITimer* aTimer, void* aClosure)
@@ -150,7 +159,7 @@ public:
     driver->RequestFrameCapture();
   }
 
-  void NewFrame(already_AddRefed<Image> aImage) override
+  void NewFrame(already_AddRefed<Image> aImage, const TimeStamp& aTime) override
   {
     RefPtr<Image> image = aImage;
 
@@ -159,7 +168,7 @@ public:
     }
 
     mFrameCaptureRequested = false;
-    SetImage(image.forget());
+    SetImage(image.forget(), aTime);
   }
 
   void Forget() override
@@ -188,7 +197,7 @@ public:
                       const PrincipalHandle& aPrincipalHandle)
     : OutputStreamDriver(aSourceStream, aTrackId, aPrincipalHandle) {}
 
-  void NewFrame(already_AddRefed<Image> aImage) override
+  void NewFrame(already_AddRefed<Image> aImage, const TimeStamp& aTime) override
   {
     // Don't reset `mFrameCaptureRequested` since AutoDriver shall always have
     // `mFrameCaptureRequested` set to true.
@@ -196,7 +205,7 @@ public:
     // after something changed.
 
     RefPtr<Image> image = aImage;
-    SetImage(image.forget());
+    SetImage(image.forget(), aTime);
   }
 
 protected:
@@ -238,7 +247,6 @@ CanvasCaptureMediaStream::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGive
 void
 CanvasCaptureMediaStream::RequestFrame()
 {
-  MOZ_ASSERT(mOutputStreamDriver);
   if (mOutputStreamDriver) {
     mOutputStreamDriver->RequestFrameCapture();
   }
@@ -272,7 +280,8 @@ CanvasCaptureMediaStream::CreateSourceStream(nsPIDOMWindowInner* aWindow,
   RefPtr<CanvasCaptureMediaStream> stream = new CanvasCaptureMediaStream(aWindow, aCanvas);
   MediaStreamGraph* graph =
     MediaStreamGraph::GetInstance(MediaStreamGraph::SYSTEM_THREAD_DRIVER,
-                                  AudioChannel::Normal);
+                                  AudioChannel::Normal,
+                                  aWindow);
   stream->InitSourceStream(graph);
   return stream.forget();
 }
@@ -281,6 +290,17 @@ FrameCaptureListener*
 CanvasCaptureMediaStream::FrameCaptureListener()
 {
   return mOutputStreamDriver;
+}
+
+void
+CanvasCaptureMediaStream::StopCapture()
+{
+  if (!mOutputStreamDriver) {
+    return;
+  }
+
+  mOutputStreamDriver->Forget();
+  mOutputStreamDriver = nullptr;
 }
 
 } // namespace dom

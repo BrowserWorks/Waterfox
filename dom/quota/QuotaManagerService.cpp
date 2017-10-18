@@ -11,7 +11,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
@@ -60,6 +60,25 @@ TestingPrefChangedCallback(const char* aPrefName,
   gTestingMode = Preferences::GetBool(aPrefName);
 }
 
+nsresult
+CheckedPrincipalToPrincipalInfo(nsIPrincipal* aPrincipal,
+                                PrincipalInfo& aPrincipalInfo)
+{
+  MOZ_ASSERT(aPrincipal);
+
+  nsresult rv = PrincipalToPrincipalInfo(aPrincipal, &aPrincipalInfo);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (aPrincipalInfo.type() != PrincipalInfo::TContentPrincipalInfo &&
+      aPrincipalInfo.type() != PrincipalInfo::TSystemPrincipalInfo) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  return NS_OK;
+}
+
 class AbortOperationsRunnable final
   : public Runnable
 {
@@ -67,7 +86,8 @@ class AbortOperationsRunnable final
 
 public:
   explicit AbortOperationsRunnable(ContentParentId aContentParentId)
-    : mContentParentId(aContentParentId)
+    : Runnable("dom::quota::AbortOperationsRunnable")
+    , mContentParentId(aContentParentId)
   { }
 
 private:
@@ -438,15 +458,19 @@ QuotaManagerService::PerformIdleMaintenance()
 #ifdef MOZ_WIDGET_ANDROID
   // Android XPCShell doesn't load the AndroidBridge that is needed to make
   // GetCurrentBatteryInformation work...
-  if (!QuotaManager::kRunningXPCShellTests)
+  if (!QuotaManager::IsRunningXPCShellTests())
 #endif
   {
+    // In order to give the correct battery level, hal must have registered
+    // battery observers.
+    RegisterBatteryObserver(this);
     GetCurrentBatteryInformation(&batteryInfo);
+    UnregisterBatteryObserver(this);
   }
 
   // If we're running XPCShell because we always want to be able to test this
   // code so pretend that we're always charging.
-  if (QuotaManager::kRunningXPCShellTests) {
+  if (QuotaManager::IsRunningXPCShellTests()) {
     batteryInfo.level() = 100;
     batteryInfo.charging() = true;
   }
@@ -455,7 +479,7 @@ QuotaManagerService::PerformIdleMaintenance()
     return;
   }
 
-  if (QuotaManager::kRunningXPCShellTests) {
+  if (QuotaManager::IsRunningXPCShellTests()) {
     // We don't want user activity to impact this code if we're running tests.
     Unused << Observe(nullptr, OBSERVER_TOPIC_IDLE, nullptr);
   } else if (!mIdleObserverRegistered) {
@@ -481,8 +505,10 @@ QuotaManagerService::RemoveIdleObserver()
       do_GetService(kIdleServiceContractId);
     MOZ_ASSERT(idleService);
 
-    MOZ_ALWAYS_SUCCEEDS(
-      idleService->RemoveIdleObserver(this, kIdleObserverTimeSec));
+    // Ignore the return value of RemoveIdleObserver, it may fail if the
+    // observer has already been unregistered during shutdown.
+    Unused <<
+      idleService->RemoveIdleObserver(this, kIdleObserverTimeSec);
 
     mIdleObserverRegistered = false;
   }
@@ -495,6 +521,98 @@ NS_IMPL_QUERY_INTERFACE(QuotaManagerService,
                         nsIObserver)
 
 NS_IMETHODIMP
+QuotaManagerService::Init(nsIQuotaRequest** _retval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+
+  if (NS_WARN_IF(!gTestingMode)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  RefPtr<Request> request = new Request();
+
+  InitParams params;
+
+  nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
+
+  nsresult rv = InitiateRequest(info);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  request.forget(_retval);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+QuotaManagerService::InitStoragesForPrincipal(
+                                             nsIPrincipal* aPrincipal,
+                                             const nsACString& aPersistenceType,
+                                             nsIQuotaRequest** _retval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+
+  if (NS_WARN_IF(!gTestingMode)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  RefPtr<Request> request = new Request();
+
+  InitOriginParams params;
+
+  nsresult rv = CheckedPrincipalToPrincipalInfo(aPrincipal,
+                                                params.principalInfo());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  Nullable<PersistenceType> persistenceType;
+  rv = NullablePersistenceTypeFromText(aPersistenceType, &persistenceType);
+  if (NS_WARN_IF(NS_FAILED(rv)) || persistenceType.IsNull()) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  params.persistenceType() = persistenceType.Value();
+
+  nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
+
+  rv = InitiateRequest(info);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  request.forget(_retval);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+QuotaManagerService::GetUsage(nsIQuotaUsageCallback* aCallback,
+                              bool aGetAll,
+                              nsIQuotaUsageRequest** _retval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aCallback);
+
+  RefPtr<UsageRequest> request = new UsageRequest(aCallback);
+
+  AllUsageParams params;
+
+  params.getAll() = aGetAll;
+
+  nsAutoPtr<PendingRequestInfo> info(new UsageRequestInfo(request, params));
+
+  nsresult rv = InitiateRequest(info);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  request.forget(_retval);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
                                           nsIQuotaUsageCallback* aCallback,
                                           bool aGetGroupUsage,
@@ -503,21 +621,15 @@ QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipal);
   MOZ_ASSERT(aCallback);
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   RefPtr<UsageRequest> request = new UsageRequest(aPrincipal, aCallback);
 
-  UsageParams params;
+  OriginUsageParams params;
 
-  PrincipalInfo& principalInfo = params.principalInfo();
-  nsresult rv = PrincipalToPrincipalInfo(aPrincipal, &principalInfo);
+  nsresult rv = CheckedPrincipalToPrincipalInfo(aPrincipal,
+                                                params.principalInfo());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
-  }
-
-  if (principalInfo.type() != PrincipalInfo::TContentPrincipalInfo &&
-      principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo) {
-    return NS_ERROR_UNEXPECTED;
   }
 
   params.getGroupUsage() = aGetGroupUsage;
@@ -537,7 +649,6 @@ NS_IMETHODIMP
 QuotaManagerService::Clear(nsIQuotaRequest** _retval)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   if (NS_WARN_IF(!gTestingMode)) {
     return NS_ERROR_UNEXPECTED;
@@ -561,26 +672,29 @@ QuotaManagerService::Clear(nsIQuotaRequest** _retval)
 NS_IMETHODIMP
 QuotaManagerService::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
                                                const nsACString& aPersistenceType,
+                                               bool aClearAll,
                                                nsIQuotaRequest** _retval)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipal);
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
+
+  nsCString suffix;
+  aPrincipal->OriginAttributesRef().CreateSuffix(suffix);
+
+  if (NS_WARN_IF(aClearAll && !suffix.IsEmpty())) {
+    // The originAttributes should be default originAttributes when the
+    // aClearAll flag is set.
+    return NS_ERROR_INVALID_ARG;
+  }
 
   RefPtr<Request> request = new Request(aPrincipal);
 
   ClearOriginParams params;
 
-  PrincipalInfo& principalInfo = params.principalInfo();
-
-  nsresult rv = PrincipalToPrincipalInfo(aPrincipal, &principalInfo);
+  nsresult rv = CheckedPrincipalToPrincipalInfo(aPrincipal,
+                                                params.principalInfo());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
-  }
-
-  if (principalInfo.type() != PrincipalInfo::TContentPrincipalInfo &&
-      principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo) {
-    return NS_ERROR_UNEXPECTED;
   }
 
   Nullable<PersistenceType> persistenceType;
@@ -595,6 +709,8 @@ QuotaManagerService::ClearStoragesForPrincipal(nsIPrincipal* aPrincipal,
     params.persistenceType() = persistenceType.Value();
     params.persistenceTypeIsExplicit() = true;
   }
+
+  params.clearAll() = aClearAll;
 
   nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
 
@@ -611,7 +727,6 @@ NS_IMETHODIMP
 QuotaManagerService::Reset(nsIQuotaRequest** _retval)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsCallerChrome());
 
   if (NS_WARN_IF(!gTestingMode)) {
     return NS_ERROR_UNEXPECTED;
@@ -633,6 +748,64 @@ QuotaManagerService::Reset(nsIQuotaRequest** _retval)
 }
 
 NS_IMETHODIMP
+QuotaManagerService::Persisted(nsIPrincipal* aPrincipal,
+                               nsIQuotaRequest** _retval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aPrincipal);
+  MOZ_ASSERT(_retval);
+
+  RefPtr<Request> request = new Request(aPrincipal);
+
+  PersistedParams params;
+
+  nsresult rv = CheckedPrincipalToPrincipalInfo(aPrincipal,
+                                                params.principalInfo());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
+
+  rv = InitiateRequest(info);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  request.forget(_retval);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+QuotaManagerService::Persist(nsIPrincipal* aPrincipal,
+                             nsIQuotaRequest** _retval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aPrincipal);
+  MOZ_ASSERT(_retval);
+
+  RefPtr<Request> request = new Request(aPrincipal);
+
+  PersistParams params;
+
+  nsresult rv = CheckedPrincipalToPrincipalInfo(aPrincipal,
+                                                params.principalInfo());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
+
+  rv = InitiateRequest(info);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  request.forget(_retval);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 QuotaManagerService::Observe(nsISupports* aSubject,
                              const char* aTopic,
                              const char16_t* aData)
@@ -645,13 +818,13 @@ QuotaManagerService::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  if (!strcmp(aTopic, "clear-origin-data")) {
+  if (!strcmp(aTopic, "clear-origin-attributes-data")) {
     RefPtr<Request> request = new Request();
 
-    ClearOriginsParams requestParams;
-    requestParams.pattern() = nsDependentString(aData);
+    ClearDataParams params;
+    params.pattern() = nsDependentString(aData);
 
-    nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, requestParams));
+    nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, params));
 
     nsresult rv = InitiateRequest(info);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -694,6 +867,13 @@ QuotaManagerService::Observe(nsISupports* aSubject,
 
   MOZ_ASSERT_UNREACHABLE("Should never get here!");
   return NS_OK;
+}
+
+void
+QuotaManagerService::Notify(const hal::BatteryInformation& aBatteryInfo)
+{
+  // This notification is received when battery data changes. We don't need to
+  // deal with this notification.
 }
 
 NS_IMETHODIMP

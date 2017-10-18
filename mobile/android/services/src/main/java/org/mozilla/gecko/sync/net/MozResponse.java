@@ -18,6 +18,8 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.util.IOUtils;
+import org.mozilla.gecko.util.StringUtils;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
@@ -79,7 +81,7 @@ public class MozResponse {
       return null;
     }
 
-    InputStreamReader is = new InputStreamReader(entity.getContent());
+    InputStreamReader is = new InputStreamReader(entity.getContent(), StringUtils.UTF_8);
     // Oh, Java, you are so evil.
     body = new Scanner(is).useDelimiter("\\A").next();
     return body;
@@ -105,12 +107,12 @@ public class MozResponse {
       throw new IOException("no entity");
     }
 
-    InputStream content = entity.getContent();
+    Reader in = null;
     try {
-      Reader in = new BufferedReader(new InputStreamReader(content, "UTF-8"));
+      in = new BufferedReader(new InputStreamReader(entity.getContent(), StringUtils.UTF_8));
       return new ExtendedJSONObject(in);
     } finally {
-      content.close();
+      IOUtils.safeStreamClose(in);
     }
   }
 
@@ -149,7 +151,7 @@ public class MozResponse {
     response = res;
   }
 
-  private String getNonMissingHeader(String h) {
+  protected String getNonMissingHeader(String h) {
     if (!this.hasHeader(h)) {
       return null;
     }

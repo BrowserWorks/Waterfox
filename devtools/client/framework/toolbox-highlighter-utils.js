@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,7 +6,7 @@
 
 const promise = require("promise");
 const {Task} = require("devtools/shared/task");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const flags = require("devtools/shared/flags");
 
 /**
  * Client-side highlighter shared module.
@@ -33,7 +31,6 @@ const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 exports.getHighlighterUtils = function (toolbox) {
   if (!toolbox || !toolbox.target) {
     throw new Error("Missing or invalid toolbox passed to getHighlighterUtils");
-    return;
   }
 
   // Exported API properties will go here
@@ -93,14 +90,15 @@ exports.getHighlighterUtils = function (toolbox) {
 
   /**
    * Start/stop the element picker on the debuggee target.
+   * @param {Boolean} doFocus - Optionally focus the content area once the picker is
+   *                            activated.
    * @return A promise that resolves when done
    */
-  let togglePicker = exported.togglePicker = function () {
+  exported.togglePicker = function (doFocus) {
     if (isPicking) {
-      return stopPicker();
-    } else {
-      return startPicker();
+      return cancelPicker();
     }
+    return startPicker(doFocus);
   };
 
   /**
@@ -109,25 +107,28 @@ exports.getHighlighterUtils = function (toolbox) {
    * on the target page to highlight the hovered/picked element.
    * Depending on the server-side capabilities, this may fire events when nodes
    * are hovered.
+   * @param {Boolean} doFocus - Optionally focus the content area once the picker is
+   *                            activated.
    * @return A promise that resolves when the picker has started or immediately
    * if it is already started
    */
-  let startPicker = exported.startPicker = requireInspector(function* () {
+  let startPicker = exported.startPicker = requireInspector(function* (doFocus = false) {
     if (isPicking) {
       return;
     }
     isPicking = true;
 
-    toolbox.pickerButtonChecked = true;
+    toolbox.pickerButton.isChecked = true;
     yield toolbox.selectTool("inspector");
-    toolbox.on("select", stopPicker);
+    toolbox.on("select", cancelPicker);
 
     if (isRemoteHighlightable()) {
       toolbox.walker.on("picker-node-hovered", onPickerNodeHovered);
       toolbox.walker.on("picker-node-picked", onPickerNodePicked);
+      toolbox.walker.on("picker-node-previewed", onPickerNodePreviewed);
       toolbox.walker.on("picker-node-canceled", onPickerNodeCanceled);
 
-      yield toolbox.highlighter.pick();
+      yield toolbox.highlighter.pick(doFocus);
       toolbox.emit("picker-started");
     } else {
       // If the target doesn't have the highlighter actor, we can use the
@@ -151,12 +152,13 @@ exports.getHighlighterUtils = function (toolbox) {
     }
     isPicking = false;
 
-    toolbox.pickerButtonChecked = false;
+    toolbox.pickerButton.isChecked = false;
 
     if (isRemoteHighlightable()) {
       yield toolbox.highlighter.cancelPick();
       toolbox.walker.off("picker-node-hovered", onPickerNodeHovered);
       toolbox.walker.off("picker-node-picked", onPickerNodePicked);
+      toolbox.walker.off("picker-node-previewed", onPickerNodePreviewed);
       toolbox.walker.off("picker-node-canceled", onPickerNodeCanceled);
     } else {
       // If the target doesn't have the highlighter actor, use the walker's
@@ -164,8 +166,16 @@ exports.getHighlighterUtils = function (toolbox) {
       yield toolbox.walker.cancelPick();
     }
 
-    toolbox.off("select", stopPicker);
+    toolbox.off("select", cancelPicker);
     toolbox.emit("picker-stopped");
+  });
+
+  /**
+   * Stop the picker, but also emit an event that the picker was canceled.
+   */
+  let cancelPicker = exported.cancelPicker = Task.async(function* () {
+    yield stopPicker();
+    toolbox.emit("picker-canceled");
   });
 
   /**
@@ -186,12 +196,21 @@ exports.getHighlighterUtils = function (toolbox) {
   }
 
   /**
+   * When a node has been shift-clicked (previewed) while the highlighter is in
+   * picker mode
+   * @param {Object} data Information about the picked node
+   */
+  function onPickerNodePreviewed(data) {
+    toolbox.selection.setNodeFront(data.node, "picker-node-previewed");
+  }
+
+  /**
    * When the picker is canceled, stop the picker, and make sure the toolbox
    * gets the focus.
    */
   function onPickerNodeCanceled() {
-    stopPicker();
-    toolbox.frame.focus();
+    cancelPicker();
+    toolbox.win.focus();
   }
 
   /**
@@ -217,7 +236,7 @@ exports.getHighlighterUtils = function (toolbox) {
       yield toolbox.walker.highlight(nodeFront);
     }
 
-    toolbox.emit("node-highlight", nodeFront, options.toSource());
+    toolbox.emit("node-highlight", nodeFront);
   });
 
   /**
@@ -227,8 +246,7 @@ exports.getHighlighterUtils = function (toolbox) {
    * highlightNodeFront, so it has the same signature.
    * @see highlightNodeFront
    */
-  let highlightDomValueGrip = exported.highlightDomValueGrip = requireInspector(
-  function* (valueGrip, options = {}) {
+  exported.highlightDomValueGrip = requireInspector(function* (valueGrip, options = {}) {
     let nodeFront = yield gripToNodeFront(valueGrip);
     if (nodeFront) {
       yield highlightNodeFront(nodeFront, options);
@@ -250,19 +268,19 @@ exports.getHighlighterUtils = function (toolbox) {
   /**
    * Hide the highlighter.
    * @param {Boolean} forceHide Only really matters in test mode (when
-   * DevToolsUtils.testing is true). In test mode, hovering over several nodes
+   * flags.testing is true). In test mode, hovering over several nodes
    * in the markup view doesn't hide/show the highlighter to ease testing. The
    * highlighter stays visible at all times, except when the mouse leaves the
    * markup view, which is when this param is passed to true
    * @return a promise that resolves when the highlighter is hidden
    */
-  let unhighlight = exported.unhighlight = Task.async(
-  function* (forceHide = false) {
-    forceHide = forceHide || !DevToolsUtils.testing;
+  exported.unhighlight = Task.async(function* (forceHide = false) {
+    forceHide = forceHide || !flags.testing;
 
     // Note that if isRemoteHighlightable is true, there's no need to hide the
     // highlighter as the walker uses setTimeout to hide it after some time
-    if (isNodeFrontHighlighted && forceHide && toolbox.highlighter && isRemoteHighlightable()) {
+    if (isNodeFrontHighlighted && forceHide && toolbox.highlighter &&
+        isRemoteHighlightable()) {
       isNodeFrontHighlighted = false;
       yield toolbox.highlighter.hideBoxModel();
     }
@@ -283,8 +301,7 @@ exports.getHighlighterUtils = function (toolbox) {
    * methods and needs to be released by the consumer when not needed anymore.
    * @return a promise that resolves to the highlighter
    */
-  let getHighlighterByType = exported.getHighlighterByType = requireInspector(
-  function* (typeName) {
+  exported.getHighlighterByType = requireInspector(function* (typeName) {
     let highlighter = null;
 
     if (supportsCustomHighlighters()) {
@@ -293,7 +310,6 @@ exports.getHighlighterUtils = function (toolbox) {
 
     return highlighter || promise.reject("The target doesn't support " +
         `creating highlighters by types or ${typeName} is unknown`);
-
   });
 
   // Return the public API

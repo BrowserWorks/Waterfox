@@ -8,6 +8,7 @@
 
 #include "compiler/translator/AddDefaultReturnStatements.h"
 #include "compiler/translator/ArrayReturnValueToOutParameter.h"
+#include "compiler/translator/BreakVariableAliasingInInnerLoops.h"
 #include "compiler/translator/EmulatePrecision.h"
 #include "compiler/translator/ExpandIntegerPowExpressions.h"
 #include "compiler/translator/IntermNodePatternMatcher.h"
@@ -15,6 +16,7 @@
 #include "compiler/translator/RemoveDynamicIndexing.h"
 #include "compiler/translator/RewriteElseBlocks.h"
 #include "compiler/translator/RewriteTexelFetchOffset.h"
+#include "compiler/translator/RewriteUnaryMinusOperatorInt.h"
 #include "compiler/translator/SeparateArrayInitialization.h"
 #include "compiler/translator/SeparateDeclarations.h"
 #include "compiler/translator/SeparateExpressionsReturningArrays.h"
@@ -22,27 +24,33 @@
 #include "compiler/translator/SplitSequenceOperator.h"
 #include "compiler/translator/UnfoldShortCircuitToIf.h"
 
+namespace sh
+{
+
 TranslatorHLSL::TranslatorHLSL(sh::GLenum type, ShShaderSpec spec, ShShaderOutput output)
     : TCompiler(type, spec, output)
 {
 }
 
-void TranslatorHLSL::translate(TIntermNode *root, int compileOptions)
+void TranslatorHLSL::translate(TIntermNode *root, ShCompileOptions compileOptions)
 {
     const ShBuiltInResources &resources = getResources();
     int numRenderTargets = resources.EXT_draw_buffers ? resources.MaxDrawBuffers : 1;
 
     sh::AddDefaultReturnStatements(root);
 
-    SeparateDeclarations(root);
-
     // Note that SimplifyLoopConditions needs to be run before any other AST transformations that
     // may need to generate new statements from loop conditions or loop expressions.
     SimplifyLoopConditions(root,
                            IntermNodePatternMatcher::kExpressionReturningArray |
                                IntermNodePatternMatcher::kUnfoldedShortCircuitExpression |
-                               IntermNodePatternMatcher::kDynamicIndexingOfVectorOrMatrixInLValue,
+                               IntermNodePatternMatcher::kDynamicIndexingOfVectorOrMatrixInLValue |
+                               IntermNodePatternMatcher::kMultiDeclaration,
                            getTemporaryIndex(), getSymbolTable(), getShaderVersion());
+
+    // Note that separate declarations need to be run before other AST transformations that
+    // generate new statements from expressions.
+    SeparateDeclarations(root);
 
     SplitSequenceOperator(root,
                           IntermNodePatternMatcher::kExpressionReturningArray |
@@ -75,6 +83,12 @@ void TranslatorHLSL::translate(TIntermNode *root, int compileOptions)
         sh::RewriteElseBlocks(root, getTemporaryIndex());
     }
 
+    // Work around an HLSL compiler frontend aliasing optimization bug.
+    // TODO(cwallez) The date is 2016-08-25, Microsoft said the bug would be fixed
+    // in the next release of d3dcompiler.dll, it would be nice to detect the DLL
+    // version and only apply the workaround if it is too old.
+    sh::BreakVariableAliasingInInnerLoops(root);
+
     bool precisionEmulation =
         getResources().WEBGL_debug_shader_precision && getPragma().debugShaderPrecision;
 
@@ -94,8 +108,13 @@ void TranslatorHLSL::translate(TIntermNode *root, int compileOptions)
 
     if ((compileOptions & SH_REWRITE_TEXELFETCHOFFSET_TO_TEXELFETCH) != 0)
     {
-        sh::RewriteTexelFetchOffset(root, getTemporaryIndex(), getSymbolTable(),
-                                    getShaderVersion());
+        sh::RewriteTexelFetchOffset(root, getSymbolTable(), getShaderVersion());
+    }
+
+    if (((compileOptions & SH_REWRITE_INTEGER_UNARY_MINUS_OPERATOR) != 0) &&
+        getShaderType() == GL_VERTEX_SHADER)
+    {
+        sh::RewriteUnaryMinusOperatorInt(root);
     }
 
     sh::OutputHLSL outputHLSL(getShaderType(), getShaderVersion(), getExtensionBehavior(),
@@ -128,3 +147,5 @@ const std::map<std::string, unsigned int> *TranslatorHLSL::getUniformRegisterMap
 {
     return &mUniformRegisterMap;
 }
+
+}  // namespace sh

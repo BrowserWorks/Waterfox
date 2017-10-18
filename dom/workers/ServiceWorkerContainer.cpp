@@ -143,20 +143,12 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
   }
 
   nsCOMPtr<nsIURI> baseURI;
-
-  nsIDocument* doc = GetEntryDocument();
-  if (doc) {
-    baseURI = doc->GetBaseURI();
+  nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
+  if (window) {
+    baseURI = window->GetDocBaseURI();
   } else {
-    // XXXnsm. One of our devtools browser test calls register() from a content
-    // script where there is no valid entry document. Use the window to resolve
-    // the uri in that case.
-    nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
-    nsCOMPtr<nsPIDOMWindowOuter> outerWindow;
-    if (window && (outerWindow = window->GetOuterWindow()) &&
-        outerWindow->GetServiceWorkersTestingEnabled()) {
-      baseURI = window->GetDocBaseURI();
-    }
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
   }
 
   nsresult rv;
@@ -193,8 +185,9 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
     rv = NS_NewURI(getter_AddRefs(scopeURI), aOptions.mScope.Value(),
                    nullptr, baseURI);
     if (NS_WARN_IF(NS_FAILED(rv))) {
+      nsIURI* uri = baseURI ? baseURI : scriptURI;
       nsAutoCString spec;
-      baseURI->GetSpec(spec);
+      uri->GetSpec(spec);
       NS_ConvertUTF8toUTF16 wSpec(spec);
       aRv.ThrowTypeError<MSG_INVALID_SCOPE>(aOptions.mScope.Value(), wSpec);
       return nullptr;
@@ -206,9 +199,14 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
     }
   }
 
+  // This is a quick fix for temporarily turning off script loading setting when
+  // registering a service worker. This should be removed in Bug 1353636.
+  nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
+
   // The spec says that the "client" passed to Register() must be the global
   // where the ServiceWorkerContainer was retrieved from.
-  aRv = swm->Register(GetOwner(), scopeURI, scriptURI, getter_AddRefs(promise));
+  aRv = swm->Register(GetOwner(), scopeURI, scriptURI, loadFlags,
+                      getter_AddRefs(promise));
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }

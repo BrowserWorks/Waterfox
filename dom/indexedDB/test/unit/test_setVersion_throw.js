@@ -5,7 +5,7 @@
 
 var testGenerator = testSteps();
 
-function testSteps()
+function* testSteps()
 {
   const name = this.window ? window.location.pathname : "test_setVersion_throw";
 
@@ -39,6 +39,7 @@ function testSteps()
   request.onupgradeneeded = function(event) {
     info("Got upgradeneeded event for db 2");
     expectUncaughtException(true);
+    // eslint-disable-next-line no-undef
     trigger_js_exception_by_calling_a_nonexistent_function();
   };
   event = yield undefined;
@@ -50,5 +51,4 @@ function testSteps()
   is(event.target.error.name, "AbortError", "Request has AbortError");
 
   finishTest();
-  yield undefined;
 }

@@ -10,6 +10,19 @@
 
 BEGIN_WORKERS_NAMESPACE
 
+static_assert(nsIServiceWorkerInfo::STATE_INSTALLING == static_cast<uint16_t>(ServiceWorkerState::Installing),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+static_assert(nsIServiceWorkerInfo::STATE_INSTALLED == static_cast<uint16_t>(ServiceWorkerState::Installed),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+static_assert(nsIServiceWorkerInfo::STATE_ACTIVATING == static_cast<uint16_t>(ServiceWorkerState::Activating),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+static_assert(nsIServiceWorkerInfo::STATE_ACTIVATED == static_cast<uint16_t>(ServiceWorkerState::Activated),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+static_assert(nsIServiceWorkerInfo::STATE_REDUNDANT == static_cast<uint16_t>(ServiceWorkerState::Redundant),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+static_assert(nsIServiceWorkerInfo::STATE_UNKNOWN == static_cast<uint16_t>(ServiceWorkerState::EndGuard_),
+              "ServiceWorkerState enumeration value should match state values from nsIServiceWorkerInfo.");
+
 NS_IMPL_ISUPPORTS(ServiceWorkerInfo, nsIServiceWorkerInfo)
 
 NS_IMETHODIMP
@@ -29,6 +42,15 @@ ServiceWorkerInfo::GetCacheName(nsAString& aCacheName)
 }
 
 NS_IMETHODIMP
+ServiceWorkerInfo::GetState(uint16_t* aState)
+{
+  MOZ_ASSERT(aState);
+  AssertIsOnMainThread();
+  *aState = static_cast<uint16_t>(mState);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 ServiceWorkerInfo::GetDebugger(nsIWorkerDebugger** aResult)
 {
   if (NS_WARN_IF(!aResult)) {
@@ -36,6 +58,42 @@ ServiceWorkerInfo::GetDebugger(nsIWorkerDebugger** aResult)
   }
 
   return mServiceWorkerPrivate->GetDebugger(aResult);
+}
+
+NS_IMETHODIMP
+ServiceWorkerInfo::GetHandlesFetchEvents(bool* aValue)
+{
+  MOZ_ASSERT(aValue);
+  AssertIsOnMainThread();
+  *aValue = HandlesFetch();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ServiceWorkerInfo::GetInstalledTime(PRTime* _retval)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(_retval);
+  *_retval = mInstalledTime;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ServiceWorkerInfo::GetActivatedTime(PRTime* _retval)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(_retval);
+  *_retval = mActivatedTime;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ServiceWorkerInfo::GetRedundantTime(PRTime* _retval)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(_retval);
+  *_retval = mRedundantTime;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -86,14 +144,15 @@ class ChangeStateUpdater final : public Runnable
 public:
   ChangeStateUpdater(const nsTArray<ServiceWorker*>& aInstances,
                      ServiceWorkerState aState)
-    : mState(aState)
+    : Runnable("dom::workers::ChangeStateUpdater")
+    , mState(aState)
   {
     for (size_t i = 0; i < aInstances.Length(); ++i) {
       mInstances.AppendElement(aInstances[i]);
     }
   }
 
-  NS_IMETHODIMP Run()
+  NS_IMETHOD Run() override
   {
     // We need to update the state of all instances atomically before notifying
     // them to make sure that the observed state for all instances inside
@@ -149,17 +208,27 @@ ServiceWorkerInfo::UpdateState(ServiceWorkerState aState)
 ServiceWorkerInfo::ServiceWorkerInfo(nsIPrincipal* aPrincipal,
                                      const nsACString& aScope,
                                      const nsACString& aScriptSpec,
-                                     const nsAString& aCacheName)
+                                     const nsAString& aCacheName,
+                                     nsLoadFlags aLoadFlags)
   : mPrincipal(aPrincipal)
   , mScope(aScope)
   , mScriptSpec(aScriptSpec)
   , mCacheName(aCacheName)
+  , mLoadFlags(aLoadFlags)
   , mState(ServiceWorkerState::EndGuard_)
   , mServiceWorkerID(GetNextID())
+  , mCreationTime(PR_Now())
+  , mCreationTimeStamp(TimeStamp::Now())
+  , mInstalledTime(0)
+  , mActivatedTime(0)
+  , mRedundantTime(0)
   , mServiceWorkerPrivate(new ServiceWorkerPrivate(this))
   , mSkipWaitingFlag(false)
+  , mHandlesFetch(Unknown)
 {
   MOZ_ASSERT(mPrincipal);
+  // cache origin attributes so we can use them off main thread
+  mOriginAttributes = mPrincipal->OriginAttributesRef();
   MOZ_ASSERT(!mScope.IsEmpty());
   MOZ_ASSERT(!mScriptSpec.IsEmpty());
   MOZ_ASSERT(!mCacheName.IsEmpty());
@@ -200,6 +269,39 @@ ServiceWorkerInfo::GetOrCreateInstance(nsPIDOMWindowInner* aWindow)
   }
 
   return ref.forget();
+}
+
+void
+ServiceWorkerInfo::UpdateInstalledTime()
+{
+  MOZ_ASSERT(mState == ServiceWorkerState::Installed);
+  MOZ_ASSERT(mInstalledTime == 0);
+
+  mInstalledTime =
+    mCreationTime + static_cast<PRTime>((TimeStamp::Now() -
+                                         mCreationTimeStamp).ToMicroseconds());
+}
+
+void
+ServiceWorkerInfo::UpdateActivatedTime()
+{
+  MOZ_ASSERT(mState == ServiceWorkerState::Activated);
+  MOZ_ASSERT(mActivatedTime == 0);
+
+  mActivatedTime =
+    mCreationTime + static_cast<PRTime>((TimeStamp::Now() -
+                                         mCreationTimeStamp).ToMicroseconds());
+}
+
+void
+ServiceWorkerInfo::UpdateRedundantTime()
+{
+  MOZ_ASSERT(mState == ServiceWorkerState::Redundant);
+  MOZ_ASSERT(mRedundantTime == 0);
+
+  mRedundantTime =
+    mCreationTime + static_cast<PRTime>((TimeStamp::Now() -
+                                         mCreationTimeStamp).ToMicroseconds());
 }
 
 END_WORKERS_NAMESPACE

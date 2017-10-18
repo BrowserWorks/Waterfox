@@ -1,13 +1,11 @@
 == input-valid.html input-ref.html
 fuzzy(11,4) fuzzy-if(skiaContent,2,10) == input-customerror.html input-ref.html
-skip-if(B2G||Mulet) == input-disabled.html input-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-skip-if(B2G||Mulet) == input-dyn-disabled.html input-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+== input-disabled.html input-ref.html
+== input-dyn-disabled.html input-ref.html
 == input-dyn-not-disabled.html input-ref.html
 == input-readonly.html input-ref.html
 == input-dyn-readonly.html input-ref.html
 == input-dyn-not-readonly.html input-ref.html
-== input-maxlength-valid.html input-ref.html
-== input-maxlength-invalid.html input-withtext-ref.html
 == input-required-valid.html input-withtext-ref.html
 == input-required-invalid.html input-ref.html
 == input-button.html input-button-ref.html

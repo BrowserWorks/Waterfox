@@ -87,8 +87,11 @@ class BaseTimer_Helper {
   // We have access to the timer_ member so we can orphan this task.
   class TimerTask : public mozilla::Runnable {
    public:
-    explicit TimerTask(TimeDelta delay) : delay_(delay) {
-      // timer_ is set in InitiateDelayedTask.
+     explicit TimerTask(TimeDelta delay)
+       : mozilla::Runnable("base::BaseTimer_Helper::TimerTask")
+       , delay_(delay)
+     {
+       // timer_ is set in InitiateDelayedTask.
     }
     virtual ~TimerTask() {}
     BaseTimer_Helper* timer_;
@@ -176,7 +179,7 @@ class BaseTimer : public BaseTimer_Helper {
         // Task is old.  So, if the Timer points to a different task, assume
         // that the Timer has already taken care of properly setting the task.
         if (self->delayed_task_ == this)
-          self->delayed_task_ = NULL;
+          self->delayed_task_ = nullptr;
         // By now the delayed_task_ in the Timer does not point to us anymore.
         // We should reset our own timer_ because the Timer can not do this
         // for us in its destructor.

@@ -40,7 +40,7 @@ class TalosRunner(MozbuildObject):
         self.config_file_path = os.path.join(self._topobjdir, 'testing',
                                              'talos-in_tree_conf.json')
         self.binary_path = self.get_binary_path()
-        self.virtualenv_script = os.path.join(self.topsrcdir, 'python',
+        self.virtualenv_script = os.path.join(self.topsrcdir, 'third_party', 'python',
                                               'virtualenv', 'virtualenv.py')
         self.virtualenv_path = os.path.join(self._topobjdir, 'testing',
                                             'talos-venv')
@@ -52,6 +52,8 @@ class TalosRunner(MozbuildObject):
             'run_local': True,
             'talos_json': self.talos_json,
             'binary_path': self.binary_path,
+            'repo_path': self.topsrcdir,
+            'obj_path': self.topobjdir,
             'log_name': 'talos',
             'virtualenv_path': self.virtualenv_path,
             'pypi_url': 'http://pypi.python.org/simple',
@@ -64,9 +66,15 @@ class TalosRunner(MozbuildObject):
             'default_actions': [
                 'populate-webroot',
                 'create-virtualenv',
+                'setup-mitmproxy',
                 'run-tests',
             ],
+            'download_tooltool': True,
             'talos_extra_options': ['--develop'] + self.talos_args,
+            'python3_manifest': {
+                'win32': 'python3.manifest',
+                'win64': 'python3_x64.manifest',
+            }
         }
 
     def make_args(self):

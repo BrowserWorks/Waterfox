@@ -4,13 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function run_test()
-{
-  run_next_test();
-}
-
-add_task(function* test_execute()
-{
+add_task(async function test_execute() {
   let count_visited_URIs = ["http://www.test-link.com/",
                             "http://www.test-typed.com/",
                             "http://www.test-bookmark.com/",
@@ -23,7 +17,7 @@ add_task(function* test_execute()
                                "http://www.test-reload.com/"];
 
   // add visits, one for each transition type
-  yield PlacesTestUtils.addVisits([
+  await PlacesTestUtils.addVisits([
     { uri: uri("http://www.test-link.com/"),
       transition: TRANSITION_LINK },
     { uri: uri("http://www.test-typed.com/"),
@@ -46,10 +40,10 @@ add_task(function* test_execute()
 
   // check that all links are marked as visited
   for (let visited_uri of count_visited_URIs) {
-    do_check_true(yield promiseIsURIVisited(uri(visited_uri)));
+    do_check_true(await promiseIsURIVisited(uri(visited_uri)));
   }
   for (let visited_uri of notcount_visited_URIs) {
-    do_check_true(yield promiseIsURIVisited(uri(visited_uri)));
+    do_check_true(await promiseIsURIVisited(uri(visited_uri)));
   }
 
   // check that visit_count does not take in count embed and downloads

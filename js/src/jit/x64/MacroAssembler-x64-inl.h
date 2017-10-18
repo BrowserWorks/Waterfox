@@ -90,6 +90,12 @@ MacroAssembler::orPtr(Imm32 imm, Register dest)
 }
 
 void
+MacroAssembler::and64(Register64 src, Register64 dest)
+{
+    andq(src.reg, dest.reg);
+}
+
+void
 MacroAssembler::or64(Register64 src, Register64 dest)
 {
     orq(src.reg, dest.reg);
@@ -199,6 +205,21 @@ void
 MacroAssembler::add64(Imm64 imm, Register64 dest)
 {
     addPtr(ImmWord(imm.value), dest.reg);
+}
+
+CodeOffset
+MacroAssembler::add32ToPtrWithPatch(Register src, Register dest)
+{
+    if (src != dest)
+        movePtr(src, dest);
+    addqWithPatch(Imm32(0), dest);
+    return CodeOffset(currentOffset());
+}
+
+void
+MacroAssembler::patchAdd32ToPtr(CodeOffset offset, Imm32 imm)
+{
+    patchAddq(offset, imm.value);
 }
 
 void
@@ -447,6 +468,17 @@ MacroAssembler::rotateRight64(Imm32 count, Register64 src, Register64 dest, Regi
 {
     MOZ_ASSERT(temp == InvalidReg);
     rotateRight64(count, src, dest);
+}
+
+// ===============================================================
+// Condition functions
+
+template <typename T1, typename T2>
+void
+MacroAssembler::cmpPtrSet(Condition cond, T1 lhs, T2 rhs, Register dest)
+{
+    cmpPtr(lhs, rhs);
+    emitSet(cond, dest);
 }
 
 // ===============================================================
@@ -740,6 +772,13 @@ MacroAssembler::branchTestMagic(Condition cond, const Address& valaddr, JSWhyMag
     cmpPtr(valaddr, ImmWord(magic));
     j(cond, label);
 }
+
+void
+MacroAssembler::branchToComputedAddress(const BaseIndex& address)
+{
+    jmp(Operand(address));
+}
+
 // ========================================================================
 // Truncate floating point.
 

@@ -8,6 +8,7 @@
 #include "nsReadableUtils.h"
 #include "nsDependentSubstring.h"
 #include "nsString.h"
+#include "mozilla/IntegerPrintfMacros.h"
 
 
 /**
@@ -24,7 +25,8 @@ CacheLogPrintPath(mozilla::LogLevel level, const char * format, nsIFile * item)
     if (NS_SUCCEEDED(rv)) {
         MOZ_LOG(gCacheLog, level, (format, path.get()));
     } else {
-        MOZ_LOG(gCacheLog, level, ("GetNativePath failed: %x", rv));
+        MOZ_LOG(gCacheLog, level, ("GetNativePath failed: %" PRIx32,
+                                   static_cast<uint32_t>(rv)));
     }
 }
 
@@ -54,13 +56,13 @@ ClientIDFromCacheKey(const nsACString&  key, char ** result)
 
     nsReadingIterator<char> colon;
     key.BeginReading(colon);
-        
+
     nsReadingIterator<char> start;
     key.BeginReading(start);
-        
+
     nsReadingIterator<char> end;
     key.EndReading(end);
-        
+
     if (FindCharInReadable(':', colon, end)) {
         *result = ToNewCString( Substring(start, colon));
         if (!*result) rv = NS_ERROR_OUT_OF_MEMORY;
@@ -79,10 +81,10 @@ ClientKeyFromCacheKey(const nsCString& key, nsACString &result)
 
     nsReadingIterator<char> start;
     key.BeginReading(start);
-        
+
     nsReadingIterator<char> end;
     key.EndReading(end);
-        
+
     if (FindCharInReadable(':', start, end)) {
         ++start;  // advance past clientID ':' delimiter
         result.Assign(Substring(start, end));

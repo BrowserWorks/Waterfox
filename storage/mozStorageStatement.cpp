@@ -26,6 +26,7 @@
 #include "nsDOMClassInfo.h"
 
 #include "mozilla/Logging.h"
+#include "mozilla/Printf.h"
 
 
 extern mozilla::LazyLogModule gStorageLog;
@@ -50,13 +51,13 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetInterfaces(uint32_t *_count, nsIID ***_array) override
   {
     return NS_CI_INTERFACE_GETTER_NAME(Statement)(_count, _array);
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetScriptableHelper(nsIXPCScriptable **_helper) override
   {
     static StatementJSHelper sJSHelper;
@@ -64,35 +65,35 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetContractID(char **_contractID) override
   {
     *_contractID = nullptr;
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetClassDescription(char **_desc) override
   {
     *_desc = nullptr;
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetClassID(nsCID **_id) override
   {
     *_id = nullptr;
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetFlags(uint32_t *_flags) override
   {
     *_flags = 0;
     return NS_OK;
   }
 
-  NS_IMETHODIMP
+  NS_IMETHOD
   GetClassIDNoAlloc(nsCID *_cid) override
   {
     return NS_ERROR_NOT_AVAILABLE;
@@ -122,7 +123,8 @@ Statement::initialize(Connection *aDBConnection,
                       const nsACString &aSQLStatement)
 {
   MOZ_ASSERT(aDBConnection, "No database connection given!");
-  MOZ_ASSERT(!aDBConnection->isClosed(), "Database connection should be valid");
+  MOZ_ASSERT(aDBConnection->isConnectionReadyOnThisThread(),
+             "Database connection should be valid");
   MOZ_ASSERT(!mDBStatement, "Statement already initialized!");
   MOZ_ASSERT(aNativeConnection, "No native connection given!");
 
@@ -343,68 +345,42 @@ Statement::internalFinalize(bool aDestructing)
 
   int srv = SQLITE_OK;
 
-  if (!mDBConnection->isClosed()) {
-    //
-    // The connection is still open. While statement finalization and
-    // closing may, in some cases, take place in two distinct threads,
-    // we have a guarantee that the connection will remain open until
-    // this method terminates:
-    //
-    // a. The connection will be closed synchronously. In this case,
-    // there is no race condition, as everything takes place on the
-    // same thread.
-    //
-    // b. The connection is closed asynchronously and this code is
-    // executed on the opener thread. In this case, asyncClose() has
-    // not been called yet and will not be called before we return
-    // from this function.
-    //
-    // c. The connection is closed asynchronously and this code is
-    // executed on the async execution thread. In this case,
-    // AsyncCloseConnection::Run() has not been called yet and will
-    // not be called before we return from this function.
-    //
-    // In either case, the connection is still valid, hence closing
-    // here is safe.
-    //
-    MOZ_LOG(gStorageLog, LogLevel::Debug, ("Finalizing statement '%s' during garbage-collection",
-                                        ::sqlite3_sql(mDBStatement)));
-    srv = ::sqlite3_finalize(mDBStatement);
-  }
+  {
+    // If the statement ends up being finalized twice, the second finalization
+    // would apply to a dangling pointer and may cause unexpected consequences.
+    // Thus we must be sure that the connection state won't change during this
+    // operation, to avoid racing with finalizations made by the closing
+    // connection.  See Connection::internalClose().
+    MutexAutoLock lockedScope(mDBConnection->sharedAsyncExecutionMutex);
+    if (!mDBConnection->isClosed(lockedScope)) {
+      MOZ_LOG(gStorageLog, LogLevel::Debug, ("Finalizing statement '%s' during garbage-collection",
+                                          ::sqlite3_sql(mDBStatement)));
+      srv = ::sqlite3_finalize(mDBStatement);
+    }
 #ifdef DEBUG
-  else {
-    //
-    // The database connection is either closed or closing. The sqlite
-    // statement has either been finalized already by the connection
-    // or is about to be finalized by the connection.
-    //
-    // Finalizing it here would be useless and segfaultish.
-    //
+    else {
+      // The database connection is closed. The sqlite
+      // statement has either been finalized already by the connection
+      // or is about to be finalized by the connection.
+      //
+      // Finalizing it here would be useless and segfaultish.
+      //
+      // Note that we can't display the statement itself, as the data structure
+      // is not valid anymore. However, the address shown here should help
+      // developers correlate with the more complete debug message triggered
+      // by AsyncClose().
 
-    char *msg = ::PR_smprintf("SQL statement (%x) should have been finalized"
-      " before garbage-collection. For more details on this statement, set"
-      " NSPR_LOG_MESSAGES=mozStorage:5 .",
-      mDBStatement);
+      SmprintfPointer msg = ::mozilla::Smprintf("SQL statement (%p) should have been finalized"
+        " before garbage-collection. For more details on this statement, set"
+        " NSPR_LOG_MESSAGES=mozStorage:5 .",
+        mDBStatement);
+      NS_WARNING(msg.get());
 
-    //
-    // Note that we can't display the statement itself, as the data structure
-    // is not valid anymore. However, the address shown here should help
-    // developers correlate with the more complete debug message triggered
-    // by AsyncClose().
-    //
-
-#if 0
-    // Deactivate the warning until we have fixed the exising culprit
-    // (see bug 914070).
-    NS_WARNING(msg);
-#endif // 0
-
-    MOZ_LOG(gStorageLog, LogLevel::Warning, (msg));
-
-    ::PR_smprintf_free(msg);
+      // Use %s so we aren't exposing random strings to printf interpolation.
+      MOZ_LOG(gStorageLog, LogLevel::Warning, ("%s", msg.get()));
+    }
+#endif // DEBUG
   }
-
-#endif
 
   mDBStatement = nullptr;
 
@@ -579,8 +555,7 @@ Statement::Execute()
 NS_IMETHODIMP
 Statement::ExecuteStep(bool *_moreResults)
 {
-  PROFILER_LABEL("Statement", "ExecuteStep",
-    js::ProfileEntry::Category::STORAGE);
+  AUTO_PROFILER_LABEL("Statement::ExecuteStep", STORAGE);
 
   if (!mDBStatement)
     return NS_ERROR_NOT_INITIALIZED;
@@ -593,7 +568,7 @@ Statement::ExecuteStep(bool *_moreResults)
       return NS_ERROR_UNEXPECTED;
 
     BindingParamsArray::iterator row = mParamsArray->begin();
-    nsCOMPtr<IStorageBindingParamsInternal> bindingInternal = 
+    nsCOMPtr<IStorageBindingParamsInternal> bindingInternal =
       do_QueryInterface(*row);
     nsCOMPtr<mozIStorageError> error = bindingInternal->bind(mDBStatement);
     if (error) {
@@ -649,19 +624,6 @@ Statement::GetState(int32_t *_state)
   else
     *_state = MOZ_STORAGE_STATEMENT_READY;
 
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-Statement::GetColumnDecltype(uint32_t aParamIndex,
-                             nsACString &_declType)
-{
-  if (!mDBStatement)
-    return NS_ERROR_NOT_INITIALIZED;
-
-  ENSURE_INDEX_VALUE(aParamIndex, mResultColumnCount);
-
-  _declType.Assign(::sqlite3_column_decltype(mDBStatement, aParamIndex));
   return NS_OK;
 }
 
@@ -772,7 +734,6 @@ Statement::GetUTF8String(uint32_t aIndex,
   if (type == mozIStorageStatement::VALUE_TYPE_NULL) {
     // NULL columns should have IsVoid set to distinguish them from the empty
     // string.
-    _value.Truncate(0);
     _value.SetIsVoid(true);
   }
   else {
@@ -795,7 +756,6 @@ Statement::GetString(uint32_t aIndex,
   if (type == mozIStorageStatement::VALUE_TYPE_NULL) {
     // NULL columns should have IsVoid set to distinguish them from the empty
     // string.
-    _value.Truncate(0);
     _value.SetIsVoid(true);
   } else {
     const char16_t *value =
@@ -896,7 +856,7 @@ Statement::GetIsNull(uint32_t aIndex,
 //// mozIStorageBindingParams
 
 BOILERPLATE_BIND_PROXIES(
-  Statement, 
+  Statement,
   if (!mDBStatement) return NS_ERROR_NOT_INITIALIZED;
 )
 

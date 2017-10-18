@@ -5,7 +5,6 @@ var h2Port;
 var prefs;
 var spdypref;
 var http2pref;
-var tlspref;
 var altsvcpref1;
 var altsvcpref2;
 
@@ -34,13 +33,11 @@ function run_test() {
 
   spdypref = prefs.getBoolPref("network.http.spdy.enabled");
   http2pref = prefs.getBoolPref("network.http.spdy.enabled.http2");
-  tlspref = prefs.getBoolPref("network.http.spdy.enforce-tls-profile");
   altsvcpref1 = prefs.getBoolPref("network.http.altsvc.enabled");
   altsvcpref2 = prefs.getBoolPref("network.http.altsvc.oe", true);
 
   prefs.setBoolPref("network.http.spdy.enabled", true);
   prefs.setBoolPref("network.http.spdy.enabled.http2", true);
-  prefs.setBoolPref("network.http.spdy.enforce-tls-profile", false);
   prefs.setBoolPref("network.http.altsvc.enabled", true);
   prefs.setBoolPref("network.http.altsvc.oe", true);
   prefs.setCharPref("network.dns.localDomains", "foo.example.com, bar.example.com");
@@ -55,6 +52,7 @@ function run_test() {
 
   h1Foo = new HttpServer();
   h1Foo.registerPathHandler("/altsvc-test", h1Server);
+  h1Foo.registerPathHandler("/.well-known/http-opportunistic", h1ServerWK);
   h1Foo.start(-1);
   h1Foo.identity.setPrimary("http", "foo.example.com", h1Foo.identity.primaryPort);
 
@@ -97,10 +95,22 @@ function h1Server(metadata, response) {
   response.bodyOutputStream.write(body, body.length);
 }
 
+function h1ServerWK(metadata, response) {
+  response.setStatusLine(metadata.httpVersion, 200, "OK");
+  response.setHeader("Content-Type", "application/json", false);
+  response.setHeader("Connection", "close", false);
+  response.setHeader("Cache-Control", "no-cache", false);
+  response.setHeader("Access-Control-Allow-Origin", "*", false);
+  response.setHeader("Access-Control-Allow-Method", "GET", false);
+  response.setHeader("Access-Control-Allow-Headers", "x-altsvc", false);
+
+  var body = '{"http://foo.example.com:' + h1Foo.identity.primaryPort + '": { "tls-ports": [' + h2Port + '] }}';
+  response.bodyOutputStream.write(body, body.length);
+}
+
 function resetPrefs() {
   prefs.setBoolPref("network.http.spdy.enabled", spdypref);
   prefs.setBoolPref("network.http.spdy.enabled.http2", http2pref);
-  prefs.setBoolPref("network.http.spdy.enforce-tls-profile", tlspref);
   prefs.setBoolPref("network.http.altsvc.enabled", altsvcpref1);
   prefs.setBoolPref("network.http.altsvc.oe", altsvcpref2);
   prefs.clearUserPref("network.dns.localDomains");
@@ -118,7 +128,7 @@ function readFile(file) {
 function addCertFromFile(certdb, filename, trustString) {
   let certFile = do_get_file(filename, false);
   let der = readFile(certFile);
-  certdb.addCert(der, trustString, null);
+  certdb.addCert(der, trustString);
 }
 
 function makeChan(origin) {
@@ -131,10 +141,11 @@ function makeChan(origin) {
 var origin;
 var xaltsvc;
 var retryCounter = 0;
-var loadWithoutAltSvc = false;
+var loadWithoutClearingMappings = false;
 var nextTest;
 var expectPass = true;
 var waitFor = 0;
+var originAttributes = {};
 
 var Listener = function() {};
 Listener.prototype = {
@@ -161,10 +172,12 @@ Listener.prototype = {
       routed = request.getRequestHeader("Alt-Used");
     } catch (e) {}
     dump("routed is " + routed + "\n");
+    do_check_eq(Components.isSuccessCode(status), expectPass);
 
     if (waitFor != 0) {
       do_check_eq(routed, "");
       do_test_pending();
+      loadWithoutClearingMappings = true;
       do_timeout(waitFor, doTest);
       waitFor = 0;
       xaltsvc = "NA";
@@ -177,6 +190,7 @@ Listener.prototype = {
     } else {
       dump ("poll later for alt svc mapping\n");
       do_test_pending();
+      loadWithoutClearingMappings = true;
       do_timeout(500, doTest);
     }
 
@@ -202,8 +216,14 @@ function doTest()
   if (xaltsvc != "NA") {
     chan.setRequestHeader("x-altsvc", xaltsvc, false);
   }
-  chan.loadFlags = Ci.nsIRequest.LOAD_FRESH_CONNECTION |
-	           Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
+  if (loadWithoutClearingMappings) {
+    chan.loadFlags = Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
+  } else {
+    chan.loadFlags = Ci.nsIRequest.LOAD_FRESH_CONNECTION |
+                     Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
+  }
+  loadWithoutClearingMappings = false;
+  chan.loadInfo.originAttributes = originAttributes;
   chan.asyncOpen2(listener);
 }
 
@@ -298,23 +318,29 @@ function doTest7()
 }
 
 // http://bar via h2 on bar
+// should not use TLS/h2 because h2BarRoute is not auth'd for bar
+// however the test ought to PASS (i.e. get a 200) because fallback
+// to plaintext happens.. thus the timeout
 function doTest8()
 {
   dump("doTest8()\n");
   origin = httpBarOrigin;
   xaltsvc = h2BarRoute;
   expectPass = true;
+  waitFor = 500;
   nextTest = doTest9;
   do_test_pending();
   doTest();
 }
 
-// http://bar served from h2=:port
+// http://bar served from h2=:port, which is like the bar route in 8
 function doTest9()
 {
   dump("doTest9()\n");
   origin = httpBarOrigin;
   xaltsvc = h2Route;
+  expectPass = true;
+  waitFor = 500;
   nextTest = doTest10;
   do_test_pending();
   doTest();
@@ -342,9 +368,76 @@ function doTest11()
   origin = httpBarOrigin;
   xaltsvc = h2FooRoute;
   expectPass = true;
-  waitFor = 1000;
+  waitFor = 500;
+  nextTest = doTest12;
+  do_test_pending();
+  doTest();
+}
+
+// Test 12-15:
+// Insert a cache of http://foo served from h2=:port with origin attributes.
+function doTest12()
+{
+  dump("doTest12()\n");
+  origin = httpFooOrigin;
+  xaltsvc = h2Route;
+  originAttributes = {
+    userContextId: 1,
+    firstPartyDomain: "a.com",
+  };
+  nextTest = doTest13;
+  do_test_pending();
+  doTest();
+  xaltsvc = h2FooRoute;
+}
+
+// Make sure we get a cache miss with a different userContextId.
+function doTest13()
+{
+  dump("doTest13()\n");
+  origin = httpFooOrigin;
+  xaltsvc = 'NA';
+  originAttributes = {
+    userContextId: 2,
+    firstPartyDomain: "a.com",
+  };
+  loadWithoutClearingMappings = true;
+  nextTest = doTest14;
+  do_test_pending();
+  doTest();
+}
+
+// Make sure we get a cache miss with a different firstPartyDomain.
+function doTest14()
+{
+  dump("doTest14()\n");
+  origin = httpFooOrigin;
+  xaltsvc = 'NA';
+  originAttributes = {
+    userContextId: 1,
+    firstPartyDomain: "b.com",
+  };
+  loadWithoutClearingMappings = true;
+  nextTest = doTest15;
+  do_test_pending();
+  doTest();
+}
+//
+// Make sure we get a cache hit with the same origin attributes.
+function doTest15()
+{
+  dump("doTest15()\n");
+  origin = httpFooOrigin;
+  xaltsvc = 'NA';
+  originAttributes = {
+    userContextId: 1,
+    firstPartyDomain: "a.com",
+  };
+  loadWithoutClearingMappings = true;
   nextTest = testsDone;
   do_test_pending();
   doTest();
+  // This ensures a cache hit.
+  xaltsvc = h2FooRoute;
 }
 

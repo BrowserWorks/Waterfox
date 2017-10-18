@@ -15,8 +15,7 @@ function test() {
          "key_close should be disabled when a pinned-tab is selected");
       is(elemAttr("menu_close", "key"), "",
          "menu_close shouldn't have a key set when a pinned is selected");
-    }
-    else {
+    } else {
       is(elemAttr("key_close", "disabled"), "",
          "key_closed shouldn't have disabled state set when a non-pinned tab is selected");
       is(elemAttr("menu_close", "key"), "key_close",
@@ -29,7 +28,7 @@ function test() {
 
   testState(false);
 
-  let pinnedTab = gBrowser.addTab("about:blank");
+  let pinnedTab = BrowserTestUtils.addTab(gBrowser, "about:blank");
   gBrowser.pinTab(pinnedTab);
 
   // Just pinning the tab shouldn't change the key state.
@@ -41,7 +40,7 @@ function test() {
 
   gBrowser.selectedTab = lastSelectedTab;
   testState(false);
-  
+
   gBrowser.selectedTab = pinnedTab;
   testState(true);
 
@@ -49,7 +48,7 @@ function test() {
   gBrowser.unpinTab(pinnedTab);
   testState(false);
 
-  gBrowser.pinTab(pinnedTab);  
+  gBrowser.pinTab(pinnedTab);
   testState(true);
 
   // Test updating the key state after removing the tab.

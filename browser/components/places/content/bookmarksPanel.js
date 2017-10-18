@@ -9,16 +9,16 @@ function init() {
 }
 
 function searchBookmarks(aSearchString) {
-  var tree = document.getElementById('bookmarks-view');
+  var tree = document.getElementById("bookmarks-view");
   if (!aSearchString)
     tree.place = tree.place;
   else
     tree.applyFilter(aSearchString,
                      [PlacesUtils.bookmarksMenuFolderId,
                       PlacesUtils.unfiledBookmarksFolderId,
-                      PlacesUtils.toolbarFolderId]);
+                      PlacesUtils.toolbarFolderId,
+                      PlacesUtils.mobileFolderId]);
 }
 
 window.addEventListener("SidebarFocused",
-                        () => document.getElementById("search-box").focus(),
-                        false);
+                        () => document.getElementById("search-box").focus());

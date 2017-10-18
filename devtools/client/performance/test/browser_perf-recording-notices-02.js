@@ -11,6 +11,7 @@ const { SIMPLE_URL } = require("devtools/client/performance/test/helpers/urls");
 const { initPerformanceInNewTab, teardownToolboxAndRemoveTab } = require("devtools/client/performance/test/helpers/panel-utils");
 const { startRecording, stopRecording } = require("devtools/client/performance/test/helpers/actions");
 const { once } = require("devtools/client/performance/test/helpers/event-utils");
+const { setSelectedRecording } = require("devtools/client/performance/test/helpers/recording-utils");
 
 add_task(function* () {
   let { panel } = yield initPerformanceInNewTab({
@@ -18,7 +19,12 @@ add_task(function* () {
     win: window
   });
 
-  let { EVENTS, $, PerformanceController, PerformanceView, RecordingsView } = panel.panelWin;
+  let {
+    EVENTS,
+    $,
+    PerformanceController,
+    PerformanceView,
+  } = panel.panelWin;
 
   let MAIN_CONTAINER = $("#performance-view");
   let CONTENT = $("#performance-view-content");
@@ -36,18 +42,20 @@ add_task(function* () {
   is(DETAILS_CONTAINER.selectedPanel, RECORDING, "Showing recording panel.");
 
   let selected = once(PerformanceController, EVENTS.RECORDING_SELECTED);
-  RecordingsView.selectedIndex = 0;
+  setSelectedRecording(panel, 0);
   yield selected;
 
-  is(PerformanceView.getState(), "recorded", "Correct state during recording but selecting a completed recording.");
+  is(PerformanceView.getState(), "recorded",
+     "Correct state during recording but selecting a completed recording.");
   is(MAIN_CONTAINER.selectedPanel, CONTENT, "Showing main view with timeline.");
   is(DETAILS_CONTAINER.selectedPanel, DETAILS, "Showing recorded panel.");
 
   selected = once(PerformanceController, EVENTS.RECORDING_SELECTED);
-  RecordingsView.selectedIndex = 1;
+  setSelectedRecording(panel, 1);
   yield selected;
 
-  is(PerformanceView.getState(), "recording", "Correct state when switching back to recording in progress.");
+  is(PerformanceView.getState(), "recording",
+     "Correct state when switching back to recording in progress.");
   is(MAIN_CONTAINER.selectedPanel, CONTENT, "Showing main view with timeline.");
   is(DETAILS_CONTAINER.selectedPanel, RECORDING, "Showing recording panel.");
 

@@ -5,15 +5,19 @@
  * found in the LICENSE file.
  */
 
-#include "GrContext.h"
-#include "GrDrawContext.h"
 #include "GrYUVProvider.h"
-#include "effects/GrYUVEffect.h"
-
+#include "GrClip.h"
+#include "GrContext.h"
+#include "GrContextPriv.h"
+#include "GrRenderTargetContext.h"
+#include "GrTextureProxy.h"
+#include "SkAutoMalloc.h"
 #include "SkCachedData.h"
 #include "SkRefCnt.h"
 #include "SkResourceCache.h"
 #include "SkYUVPlanesCache.h"
+#include "effects/GrSRGBEffect.h"
+#include "effects/GrYUVEffect.h"
 
 namespace {
 /**
@@ -27,8 +31,8 @@ public:
 
 private:
     // we only use one or the other of these
-    SkAutoTUnref<SkCachedData>  fCachedData;
-    SkAutoMalloc                fStorage;
+    sk_sp<SkCachedData>  fCachedData;
+    SkAutoMalloc         fStorage;
 };
 }
 
@@ -74,13 +78,15 @@ bool YUVScoper::init(GrYUVProvider* provider, SkYUVPlanesCache::Info* yuvInfo, v
 
         if (useCache) {
             // Decoding is done, cache the resulting YUV planes
-            SkYUVPlanesCache::Add(provider->onGetID(), fCachedData, yuvInfo);
+            SkYUVPlanesCache::Add(provider->onGetID(), fCachedData.get(), yuvInfo);
         }
     }
     return true;
 }
 
-GrTexture* GrYUVProvider::refAsTexture(GrContext* ctx, const GrSurfaceDesc& desc, bool useCache) {
+sk_sp<GrTextureProxy> GrYUVProvider::refAsTextureProxy(GrContext* ctx,
+                                                       const GrSurfaceDesc& desc,
+                                                       bool useCache) {
     SkYUVPlanesCache::Info yuvInfo;
     void* planes[3];
     YUVScoper scoper;
@@ -89,60 +95,69 @@ GrTexture* GrYUVProvider::refAsTexture(GrContext* ctx, const GrSurfaceDesc& desc
     }
 
     GrSurfaceDesc yuvDesc;
+    yuvDesc.fOrigin = kTopLeft_GrSurfaceOrigin;
     yuvDesc.fConfig = kAlpha_8_GrPixelConfig;
-    SkAutoTUnref<GrTexture> yuvTextures[3];
+    sk_sp<GrSurfaceContext> yuvTextureContexts[3];
     for (int i = 0; i < 3; i++) {
         yuvDesc.fWidth  = yuvInfo.fSizeInfo.fSizes[i].fWidth;
         yuvDesc.fHeight = yuvInfo.fSizeInfo.fSizes[i].fHeight;
         // TODO: why do we need this check?
-        bool needsExactTexture =
+        SkBackingFit fit =
                 (yuvDesc.fWidth  != yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fWidth) ||
-                (yuvDesc.fHeight != yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fHeight);
-        if (needsExactTexture) {
-            yuvTextures[i].reset(ctx->textureProvider()->createTexture(yuvDesc, SkBudgeted::kYes));
-        } else {
-            yuvTextures[i].reset(ctx->textureProvider()->createApproxTexture(yuvDesc));
+                (yuvDesc.fHeight != yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fHeight)
+                    ? SkBackingFit::kExact : SkBackingFit::kApprox;
+
+        yuvTextureContexts[i] = ctx->contextPriv().makeDeferredSurfaceContext(yuvDesc, fit,
+                                                                              SkBudgeted::kYes);
+        if (!yuvTextureContexts[i]) {
+            return nullptr;
         }
-        if (!yuvTextures[i] ||
-            !yuvTextures[i]->writePixels(0, 0, yuvDesc.fWidth, yuvDesc.fHeight, yuvDesc.fConfig,
-                                         planes[i], yuvInfo.fSizeInfo.fWidthBytes[i])) {
-                return nullptr;
-            }
+
+        const SkImageInfo ii = SkImageInfo::MakeA8(yuvDesc.fWidth, yuvDesc.fHeight);
+        if (!yuvTextureContexts[i]->writePixels(ii, planes[i],
+                                                yuvInfo.fSizeInfo.fWidthBytes[i], 0, 0)) {
+            return nullptr;
+        }
     }
 
-    GrSurfaceDesc rtDesc = desc;
-    rtDesc.fFlags = rtDesc.fFlags | kRenderTarget_GrSurfaceFlag;
-
-    SkAutoTUnref<GrTexture> result(ctx->textureProvider()->createTexture(rtDesc, SkBudgeted::kYes,
-                                                                         nullptr, 0));
-    if (!result) {
+    // We never want to perform color-space conversion during the decode
+    sk_sp<GrRenderTargetContext> renderTargetContext(ctx->makeRenderTargetContext(
+                                                                          SkBackingFit::kExact,
+                                                                          desc.fWidth, desc.fHeight,
+                                                                          desc.fConfig, nullptr,
+                                                                          desc.fSampleCnt));
+    if (!renderTargetContext) {
         return nullptr;
     }
-
-    GrRenderTarget* renderTarget = result->asRenderTarget();
-    SkASSERT(renderTarget);
 
     GrPaint paint;
-    // We may be decoding an sRGB image, but the result of our linear math on the YUV planes
-    // is already in sRGB in that case. Don't convert (which will make the image too bright).
-    paint.setDisableOutputConversionToSRGB(true);
-    SkAutoTUnref<const GrFragmentProcessor> yuvToRgbProcessor(
-                                        GrYUVEffect::CreateYUVToRGB(yuvTextures[0],
-                                                                    yuvTextures[1],
-                                                                    yuvTextures[2],
-                                                                    yuvInfo.fSizeInfo.fSizes,
-                                                                    yuvInfo.fColorSpace));
-    paint.addColorFragmentProcessor(yuvToRgbProcessor);
-    paint.setPorterDuffXPFactory(SkXfermode::kSrc_Mode);
-    const SkRect r = SkRect::MakeIWH(yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fWidth,
-            yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fHeight);
+    sk_sp<GrFragmentProcessor> yuvToRgbProcessor(
+        GrYUVEffect::MakeYUVToRGB(ctx->resourceProvider(),
+                                  yuvTextureContexts[0]->asTextureProxyRef(),
+                                  yuvTextureContexts[1]->asTextureProxyRef(),
+                                  yuvTextureContexts[2]->asTextureProxyRef(),
+                                  yuvInfo.fSizeInfo.fSizes, yuvInfo.fColorSpace, false));
+    paint.addColorFragmentProcessor(std::move(yuvToRgbProcessor));
 
-    SkAutoTUnref<GrDrawContext> drawContext(ctx->drawContext(renderTarget));
-    if (!drawContext) {
-        return nullptr;
+    // If we're decoding an sRGB image, the result of our linear math on the YUV planes is already
+    // in sRGB. (The encoding is just math on bytes, with no concept of color spaces.) So, we need
+    // to output the results of that math directly to the buffer that we will then consider sRGB.
+    // If we have sRGB write control, we can just tell the HW not to do the Linear -> sRGB step.
+    // Otherwise, we do our shader math to go from YUV -> sRGB, manually convert sRGB -> Linear,
+    // then let the HW convert Linear -> sRGB.
+    if (GrPixelConfigIsSRGB(desc.fConfig)) {
+        if (ctx->caps()->srgbWriteControl()) {
+            paint.setDisableOutputConversionToSRGB(true);
+        } else {
+            paint.addColorFragmentProcessor(GrSRGBEffect::Make(GrSRGBEffect::Mode::kSRGBToLinear));
+        }
     }
 
-    drawContext->drawRect(GrClip::WideOpen(), paint, SkMatrix::I(), r);
+    paint.setPorterDuffXPFactory(SkBlendMode::kSrc);
+    const SkRect r = SkRect::MakeIWH(yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fWidth,
+                                     yuvInfo.fSizeInfo.fSizes[SkYUVSizeInfo::kY].fHeight);
 
-    return result.release();
+    renderTargetContext->drawRect(GrNoClip(), std::move(paint), GrAA::kNo, SkMatrix::I(), r);
+
+    return renderTargetContext->asTextureProxyRef();
 }

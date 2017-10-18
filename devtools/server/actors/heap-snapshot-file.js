@@ -5,7 +5,6 @@
 "use strict";
 
 const protocol = require("devtools/shared/protocol");
-const { method, Arg } = protocol;
 const Services = require("Services");
 const { Task } = require("devtools/shared/task");
 
@@ -25,9 +24,7 @@ loader.lazyRequireGetter(this, "HeapSnapshotFileUtils",
  */
 exports.HeapSnapshotFileActor = protocol.ActorClassWithSpec(heapSnapshotFileSpec, {
   initialize: function (conn, parent) {
-    if (Services.appInfo &&
-        (Services.appInfo.processType !==
-         Services.appInfo.PROCESS_TYPE_DEFAULT)) {
+    if (Services.appinfo.processType !== Services.appinfo.PROCESS_TYPE_DEFAULT) {
       const err = new Error("Attempt to create a HeapSnapshotFileActor in a " +
                             "child process! The HeapSnapshotFileActor *MUST* " +
                             "be in the parent process!");

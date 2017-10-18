@@ -30,9 +30,9 @@ function colorToHex(aColor) {
  *  (r << 16 | g << 8 | b).
  */
 function hexToColor(aString) {
-  return parseInt(aString.substring(1,3), 16) << 16 |
-         parseInt(aString.substring(3,5), 16) << 8 |
-         parseInt(aString.substring(5,7), 16);
+  return parseInt(aString.substring(1, 3), 16) << 16 |
+         parseInt(aString.substring(3, 5), 16) << 8 |
+         parseInt(aString.substring(5, 7), 16);
 }
 
 /**
@@ -70,11 +70,11 @@ function run_test() {
   try {
     // If GSettings is available, then the GConf tests
     // will fail
-    var gsettings = Cc["@mozilla.org/gsettings-service;1"].
-                    getService(Ci.nsIGSettingsService).
-                    getCollectionForSchema("org.gnome.desktop.background");
+    Cc["@mozilla.org/gsettings-service;1"].
+      getService(Ci.nsIGSettingsService).
+      getCollectionForSchema("org.gnome.desktop.background");
     return;
-  } catch(e) { }
+  } catch (e) { }
 
   gGConf = Cc["@mozilla.org/gnome-gconf-service;1"].
            getService(Ci.nsIGConfService);

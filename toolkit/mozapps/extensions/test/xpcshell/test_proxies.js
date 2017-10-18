@@ -39,11 +39,6 @@ var METADATA = {
 
 const ios = AM_Cc["@mozilla.org/network/io-service;1"].getService(AM_Ci.nsIIOService);
 
-const LocalFile = Components.Constructor("@mozilla.org/file/local;1",
-                                         "nsILocalFile", "initWithPath");
-const Process = Components.Constructor("@mozilla.org/process/util;1",
-                                       "nsIProcess", "init");
-
 const gHaveSymlinks = AppConstants.platform != "win";
 
 
@@ -93,7 +88,7 @@ function run_test() {
   run_next_test();
 }
 
-function* run_proxy_tests() {
+async function run_proxy_tests() {
   if (!gHaveSymlinks) {
     ADDONS = ADDONS.filter(a => a.type != "symlink");
   }
@@ -111,9 +106,8 @@ function* run_proxy_tests() {
 
     if (addon.type == "proxy") {
       writeFile(addon.directory.path, addon.proxyFile)
-    }
-    else if (addon.type == "symlink") {
-      yield createSymlink(addon.directory, addon.proxyFile)
+    } else if (addon.type == "symlink") {
+      await createSymlink(addon.directory, addon.proxyFile)
     }
   }
 
@@ -123,9 +117,7 @@ function* run_proxy_tests() {
   // add-ons have been removed at startup.
   checkAddonsExist();
 
-  return new Promise(resolve => {
-    AddonManager.getAddonsByIDs(ADDONS.map(addon => addon.id), resolve);
-  }).then(addons => {
+  return AddonManager.getAddonsByIDs(ADDONS.map(addon => addon.id)).then(addons => {
     try {
       for (let [i, addon] of addons.entries()) {
         // Ensure that valid proxied add-ons were installed properly on
@@ -179,14 +171,13 @@ function* run_proxy_tests() {
           addon.proxyFile.remove(false);
         } catch (e) {}
       }
-    }
-    catch (e) {
+    } catch (e) {
       do_throw(e);
     }
   });
 }
 
-function* run_symlink_tests() {
+async function run_symlink_tests() {
   // Check that symlinks are not followed out of a directory tree
   // when deleting an add-on.
 
@@ -208,7 +199,7 @@ function* run_symlink_tests() {
 
   let symlink = addonDirectory.clone();
   symlink.append(tempDirectory.leafName);
-  yield createSymlink(tempDirectory, symlink);
+  await createSymlink(tempDirectory, symlink);
 
   // Make sure that the symlink was created properly.
   let file = symlink.clone();
@@ -218,9 +209,7 @@ function* run_symlink_tests() {
 
   startupManager();
 
-  return new Promise(resolve => {
-    AddonManager.getAddonByID(METADATA.id, resolve);
-  }).then(addon => {
+  return AddonManager.getAddonByID(METADATA.id).then(addon => {
     do_check_neq(addon, null);
 
     addon.uninstall();

@@ -16,10 +16,10 @@ function test() {
     "Unsigned XPI": {
       URL: TESTROOT + "amosigned.xpi",
       IconURL: TESTROOT + "icon.png",
-      toString: function() { return this.URL; }
+      toString() { return this.URL; }
     }
   }));
-  expectedTab = gBrowser.addTab();
+  expectedTab = BrowserTestUtils.addTab(gBrowser);
   expectedTab.linkedBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
 }
 

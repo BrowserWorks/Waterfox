@@ -1,4 +1,4 @@
-function test () {
+function test() {
   requestLongerTimeout(3);
   waitForExplicitFinish();
 
@@ -6,19 +6,19 @@ function test () {
 
   function loadListener() {
     function testLocation(link, url, next) {
-      var tabOpenListener = new TabOpenListener(url, function () {
-          gBrowser.removeTab(this.tab);
-      }, function () {
+      new TabOpenListener(url, function() {
+        gBrowser.removeTab(this.tab);
+      }, function() {
         next();
       });
 
-      ContentTask.spawn(gBrowser.selectedBrowser, link, link => {
-        content.document.getElementById(link).click();
+      ContentTask.spawn(gBrowser.selectedBrowser, link, contentLink => {
+        content.document.getElementById(contentLink).click();
       });
     }
 
     function testLink(link, name, next) {
-      addWindowListener("chrome://mozapps/content/downloads/unknownContentType.xul", function (win) {
+      addWindowListener("chrome://mozapps/content/downloads/unknownContentType.xul", function(win) {
         ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
           Assert.equal(content.document.getElementById("unload-flag").textContent,
             "Okay", "beforeunload shouldn't have fired");
@@ -29,8 +29,8 @@ function test () {
         });
       });
 
-      ContentTask.spawn(gBrowser.selectedBrowser, link, link => {
-        content.document.getElementById(link).click();
+      ContentTask.spawn(gBrowser.selectedBrowser, link, contentLink => {
+        content.document.getElementById(contentLink).click();
       });
     }
 
@@ -41,7 +41,7 @@ function test () {
             testLink.bind(null, "link5", "javascript.txt",
               testLink.bind(null, "link6", "test.blob",
                 testLocation.bind(null, "link7", "http://example.com/",
-                  function () {
+                  function() {
                     if (isHTTPS) {
                       finish();
                     } else {
@@ -64,7 +64,7 @@ function test () {
 
 function addWindowListener(aURL, aCallback) {
   Services.wm.addListener({
-    onOpenWindow: function(aXULWindow) {
+    onOpenWindow(aXULWindow) {
       info("window opened, waiting for focus");
       Services.wm.removeListener(this);
 
@@ -75,8 +75,8 @@ function addWindowListener(aURL, aCallback) {
         aCallback(domwindow);
       }, domwindow);
     },
-    onCloseWindow: function(aXULWindow) { },
-    onWindowTitleChange: function(aXULWindow, aNewTitle) { }
+    onCloseWindow(aXULWindow) { },
+    onWindowTitleChange(aXULWindow, aNewTitle) { }
   });
 }
 
@@ -88,7 +88,7 @@ function TabOpenListener(url, opencallback, closecallback) {
   this.opencallback = opencallback;
   this.closecallback = closecallback;
 
-  gBrowser.tabContainer.addEventListener("TabOpen", this, false);
+  gBrowser.tabContainer.addEventListener("TabOpen", this);
 }
 
 TabOpenListener.prototype = {
@@ -98,13 +98,13 @@ TabOpenListener.prototype = {
   tab: null,
   browser: null,
 
-  handleEvent: function(event) {
+  handleEvent(event) {
     if (event.type == "TabOpen") {
-      gBrowser.tabContainer.removeEventListener("TabOpen", this, false);
+      gBrowser.tabContainer.removeEventListener("TabOpen", this);
       this.tab = event.originalTarget;
       this.browser = this.tab.linkedBrowser;
       BrowserTestUtils.browserLoaded(this.browser, false, this.url).then(() => {
-        this.tab.addEventListener("TabClose", this, false);
+        this.tab.addEventListener("TabClose", this);
         var url = this.browser.currentURI.spec;
         is(url, this.url, "Should have opened the correct tab");
         this.opencallback();
@@ -112,7 +112,7 @@ TabOpenListener.prototype = {
     } else if (event.type == "TabClose") {
       if (event.originalTarget != this.tab)
         return;
-      this.tab.removeEventListener("TabClose", this, false);
+      this.tab.removeEventListener("TabClose", this);
       this.opencallback = null;
       this.tab = null;
       this.browser = null;

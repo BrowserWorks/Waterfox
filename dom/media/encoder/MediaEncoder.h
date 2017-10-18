@@ -9,14 +9,36 @@
 #include "mozilla/DebugOnly.h"
 #include "TrackEncoder.h"
 #include "ContainerWriter.h"
+#include "CubebUtils.h"
 #include "MediaStreamGraph.h"
 #include "MediaStreamListener.h"
 #include "nsAutoPtr.h"
+#include "MediaStreamVideoSink.h"
 #include "nsIMemoryReporter.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Atomics.h"
 
 namespace mozilla {
+
+class MediaStreamVideoRecorderSink : public MediaStreamVideoSink
+{
+public:
+  explicit MediaStreamVideoRecorderSink(VideoTrackEncoder* aEncoder)
+    : mVideoEncoder(aEncoder)
+    , mSuspended(false) {}
+
+  // MediaStreamVideoSink methods
+  virtual void SetCurrentFrames(const VideoSegment& aSegment) override;
+  virtual void ClearFrames() override {}
+
+  void Resume() { mSuspended = false; }
+  void Suspend() { mSuspended = true; }
+
+private:
+  virtual ~MediaStreamVideoRecorderSink() {}
+  VideoTrackEncoder* mVideoEncoder;
+  Atomic<bool> mSuspended;
+};
 
 /**
  * MediaEncoder is the framework of encoding module, it controls and manages
@@ -54,6 +76,7 @@ namespace mozilla {
  */
 class MediaEncoder : public DirectMediaStreamListener
 {
+  friend class MediaStreamVideoRecorderSink;
 public :
   enum {
     ENCODE_METADDATA,
@@ -72,6 +95,7 @@ public :
     : mWriter(aWriter)
     , mAudioEncoder(aAudioEncoder)
     , mVideoEncoder(aVideoEncoder)
+    , mVideoSink(new MediaStreamVideoRecorderSink(mVideoEncoder))
     , mStartTime(TimeStamp::Now())
     , mMIMEType(aMIMEType)
     , mSizeOfBuffer(0)
@@ -79,32 +103,19 @@ public :
     , mShutdown(false)
     , mDirectConnected(false)
     , mSuspended(false)
+    , mMicrosecondsSpentPaused(0)
+    , mLastMuxedTimestamp(0)
 {}
 
   ~MediaEncoder() {};
 
-  enum SuspendState {
-    RECORD_NOT_SUSPENDED,
-    RECORD_SUSPENDED,
-    RECORD_RESUMED
-  };
-
   /* Note - called from control code, not on MSG threads. */
-  void Suspend()
-  {
-    mSuspended = RECORD_SUSPENDED;
-  }
+  void Suspend();
 
   /**
    * Note - called from control code, not on MSG threads.
-   * Arm to collect the Duration of the next video frame and give it
-   * to the next frame, in order to avoid any possible loss of sync. */
-  void Resume()
-  {
-    if (mSuspended == RECORD_SUSPENDED) {
-      mSuspended = RECORD_RESUMED;
-    }
-  }
+   * Calculates time spent paused in order to offset frames. */
+  void Resume();
 
   /**
    * Tells us which Notify to pay attention to for media
@@ -155,7 +166,8 @@ public :
   static already_AddRefed<MediaEncoder> CreateEncoder(const nsAString& aMIMEType,
                                                       uint32_t aAudioBitrate, uint32_t aVideoBitrate,
                                                       uint32_t aBitrate,
-                                                      uint8_t aTrackTypes = ContainerWriter::CREATE_AUDIO_TRACK);
+                                                      uint8_t aTrackTypes = ContainerWriter::CREATE_AUDIO_TRACK,
+                                                      TrackRate aTrackRate = CubebUtils::PreferredSampleRate());
   /**
    * Encodes the raw track data and returns the final container data. Assuming
    * it is called on a single worker thread. The buffer of container data is
@@ -197,16 +209,16 @@ public :
   static bool IsWebMEncoderEnabled();
 #endif
 
-#ifdef MOZ_OMX_ENCODER
-  static bool IsOMXEncoderEnabled();
-#endif
-
   MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
   /*
    * Measure the size of the buffer, and memory occupied by mAudioEncoder
    * and mVideoEncoder
    */
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
+  MediaStreamVideoRecorderSink* GetVideoSink() {
+    return mVideoSink.get();
+  }
 
 private:
   // Get encoded data from trackEncoder and write to muxer
@@ -216,13 +228,25 @@ private:
   nsAutoPtr<ContainerWriter> mWriter;
   nsAutoPtr<AudioTrackEncoder> mAudioEncoder;
   nsAutoPtr<VideoTrackEncoder> mVideoEncoder;
+  RefPtr<MediaStreamVideoRecorderSink> mVideoSink;
   TimeStamp mStartTime;
   nsString mMIMEType;
   int64_t mSizeOfBuffer;
   int mState;
   bool mShutdown;
   bool mDirectConnected;
-  Atomic<int> mSuspended;
+  // Tracks if the encoder is suspended (paused). Used on the main thread and
+  // MediaRecorder's read thread.
+  Atomic<bool> mSuspended;
+  // Timestamp of when the last pause happened. Should only be accessed on the
+  // main thread.
+  TimeStamp mLastPauseStartTime;
+  // Exposes the time spend paused in microseconds. Read by the main thread
+  // and MediaRecorder's read thread. Should only be written by main thread.
+  Atomic<uint64_t> mMicrosecondsSpentPaused;
+  // The timestamp of the last muxed sample. Should only be used on
+  // MediaRecorder's read thread.
+  uint64_t mLastMuxedTimestamp;
   // Get duration from create encoder, for logging purpose
   double GetEncodeTimeStamp()
   {

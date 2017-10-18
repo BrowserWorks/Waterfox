@@ -14,13 +14,17 @@
 #include "nsIDNSRecord.h"
 #include "nsISOCKSSocketInfo.h"
 #include "nsISocketProvider.h"
+#include "nsNamedPipeIOLayer.h"
 #include "nsSOCKSIOLayer.h"
 #include "nsNetCID.h"
 #include "nsIDNSListener.h"
 #include "nsICancelable.h"
 #include "nsThreadUtils.h"
+#include "nsIFile.h"
+#include "nsIFileProtocolHandler.h"
 #include "mozilla/Logging.h"
 #include "mozilla/net/DNS.h"
+#include "mozilla/Unused.h"
 
 using mozilla::LogLevel;
 using namespace mozilla::net;
@@ -81,9 +85,14 @@ public:
     int16_t GetPollFlags() const;
     bool IsConnected() const { return mState == SOCKS_CONNECTED; }
     void ForgetFD() { mFD = nullptr; }
+    void SetNamedPipeFD(PRFileDesc *fd) { mFD = fd; }
 
 private:
-    virtual ~nsSOCKSSocketInfo() { HandshakeFinished(); }
+    virtual ~nsSOCKSSocketInfo()
+    {
+        ForgetFD();
+        HandshakeFinished();
+    }
 
     void HandshakeFinished(PRErrorCode err = 0);
     PRStatus StartDNS(PRFileDesc *fd);
@@ -110,6 +119,85 @@ private:
     void WantRead(uint32_t sz);
     PRStatus ReadFromSocket(PRFileDesc *fd);
     PRStatus WriteToSocket(PRFileDesc *fd);
+
+    bool IsLocalProxy()
+    {
+        nsAutoCString proxyHost;
+        mProxy->GetHost(proxyHost);
+        return IsHostLocalTarget(proxyHost);
+    }
+
+    nsresult SetLocalProxyPath(const nsACString& aLocalProxyPath,
+                               NetAddr* aProxyAddr)
+    {
+#ifdef XP_UNIX
+        nsresult rv;
+        MOZ_ASSERT(aProxyAddr);
+
+        nsCOMPtr<nsIProtocolHandler> protocolHandler(
+            do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "file", &rv));
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+            return rv;
+        }
+
+        nsCOMPtr<nsIFileProtocolHandler> fileHandler(
+            do_QueryInterface(protocolHandler, &rv));
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+            return rv;
+        }
+
+        nsCOMPtr<nsIFile> socketFile;
+        rv = fileHandler->GetFileFromURLSpec(aLocalProxyPath,
+                                             getter_AddRefs(socketFile));
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+            return rv;
+        }
+
+        nsAutoCString path;
+        if (NS_WARN_IF(NS_FAILED(rv = socketFile->GetNativePath(path)))) {
+            return rv;
+        }
+
+        if (sizeof(aProxyAddr->local.path) <= path.Length()) {
+            NS_WARNING("domain socket path too long.");
+            return NS_ERROR_FAILURE;
+        }
+
+        aProxyAddr->raw.family = AF_UNIX;
+        strcpy(aProxyAddr->local.path, path.get());
+
+        return NS_OK;
+#elif defined(XP_WIN)
+        MOZ_ASSERT(aProxyAddr);
+
+        if (sizeof(aProxyAddr->local.path) <= aLocalProxyPath.Length()) {
+            NS_WARNING("pipe path too long.");
+            return NS_ERROR_FAILURE;
+        }
+
+        aProxyAddr->raw.family = AF_LOCAL;
+        strcpy(aProxyAddr->local.path, PromiseFlatCString(aLocalProxyPath).get());
+        return NS_OK;
+#else
+        mozilla::Unused << aLocalProxyPath;
+        mozilla::Unused << aProxyAddr;
+        return NS_ERROR_NOT_IMPLEMENTED;
+#endif
+    }
+
+    bool
+    SetupNamedPipeLayer(PRFileDesc *fd)
+    {
+#if defined(XP_WIN)
+        if (IsLocalProxy()) {
+            // nsSOCKSIOLayer handshaking only works under blocking mode
+            // unfortunately. Remember named pipe's FD to switch between modes.
+            SetNamedPipeFD(fd->lower);
+            return true;
+        }
+#endif
+        return false;
+    }
 
 private:
     State     mState;
@@ -283,42 +371,42 @@ nsSOCKSSocketInfo::Init(int32_t version, int32_t family, nsIProxyInfo *proxy, co
 
 NS_IMPL_ISUPPORTS(nsSOCKSSocketInfo, nsISOCKSSocketInfo, nsIDNSListener)
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::GetExternalProxyAddr(NetAddr * *aExternalProxyAddr)
 {
     memcpy(*aExternalProxyAddr, &mExternalProxyAddr, sizeof(NetAddr));
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::SetExternalProxyAddr(NetAddr *aExternalProxyAddr)
 {
     memcpy(&mExternalProxyAddr, aExternalProxyAddr, sizeof(NetAddr));
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::GetDestinationAddr(NetAddr * *aDestinationAddr)
 {
     memcpy(*aDestinationAddr, &mDestinationAddr, sizeof(NetAddr));
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::SetDestinationAddr(NetAddr *aDestinationAddr)
 {
     memcpy(&mDestinationAddr, aDestinationAddr, sizeof(NetAddr));
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::GetInternalProxyAddr(NetAddr * *aInternalProxyAddr)
 {
     memcpy(*aInternalProxyAddr, &mInternalProxyAddr, sizeof(NetAddr));
     return NS_OK;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSOCKSSocketInfo::SetInternalProxyAddr(NetAddr *aInternalProxyAddr)
 {
     memcpy(&mInternalProxyAddr, aInternalProxyAddr, sizeof(NetAddr));
@@ -337,6 +425,16 @@ nsSOCKSSocketInfo::HandshakeFinished(PRErrorCode err)
 {
     if (err == 0) {
         mState = SOCKS_CONNECTED;
+#if defined(XP_WIN)
+        // Switch back to nonblocking mode after finishing handshaking.
+        if (IsLocalProxy() && mFD) {
+            PRSocketOptionData opt_nonblock;
+            opt_nonblock.option = PR_SockOpt_Nonblocking;
+            opt_nonblock.value.non_blocking = PR_TRUE;
+            PR_SetSocketOption(mFD, &opt_nonblock);
+            mFD = nullptr;
+        }
+#endif
     } else {
         mState = SOCKS_FAILED;
         PR_SetError(PR_UNKNOWN_ERROR, err);
@@ -368,10 +466,12 @@ nsSOCKSSocketInfo::StartDNS(PRFileDesc *fd)
     nsCString proxyHost;
     mProxy->GetHost(proxyHost);
 
+    mozilla::OriginAttributes attrs;
+
     mFD  = fd;
-    nsresult rv = dns->AsyncResolve(proxyHost, 0, this,
-                                    NS_GetCurrentThread(),
-                                    getter_AddRefs(mLookup));
+    nsresult rv = dns->AsyncResolveNative(proxyHost, 0, this,
+                                          mozilla::GetCurrentThreadEventTarget(), attrs,
+                                          getter_AddRefs(mLookup));
 
     if (NS_FAILED(rv)) {
         LOGERROR(("socks: DNS lookup for SOCKS proxy %s failed",
@@ -420,29 +520,40 @@ nsSOCKSSocketInfo::ConnectToProxy(PRFileDesc *fd)
         mVersion = 5;
     }
 
+    nsAutoCString proxyHost;
+    mProxy->GetHost(proxyHost);
+
     int32_t proxyPort;
     mProxy->GetPort(&proxyPort);
 
     int32_t addresses = 0;
     do {
-        if (addresses++)
-            mDnsRec->ReportUnusable(proxyPort);
-        
-        rv = mDnsRec->GetNextAddr(proxyPort, &mInternalProxyAddr);
-        // No more addresses to try? If so, we'll need to bail
-        if (NS_FAILED(rv)) {
-            nsCString proxyHost;
-            mProxy->GetHost(proxyHost);
-            LOGERROR(("socks: unable to connect to SOCKS proxy, %s",
-                     proxyHost.get()));
-            return PR_FAILURE;
-        }
+        if (IsLocalProxy()) {
+            rv = SetLocalProxyPath(proxyHost, &mInternalProxyAddr);
+            if (NS_FAILED(rv)) {
+                LOGERROR(("socks: unable to connect to SOCKS proxy, %s",
+                         proxyHost.get()));
+                return PR_FAILURE;
+            }
+        } else {
+            if (addresses++) {
+                mDnsRec->ReportUnusable(proxyPort);
+            }
 
-        if (MOZ_LOG_TEST(gSOCKSLog, LogLevel::Debug)) {
-          char buf[kIPv6CStrBufSize];
-          NetAddrToString(&mInternalProxyAddr, buf, sizeof(buf));
-          LOGDEBUG(("socks: trying proxy server, %s:%hu",
-                   buf, ntohs(mInternalProxyAddr.inet.port)));
+            rv = mDnsRec->GetNextAddr(proxyPort, &mInternalProxyAddr);
+            // No more addresses to try? If so, we'll need to bail
+            if (NS_FAILED(rv)) {
+                LOGERROR(("socks: unable to connect to SOCKS proxy, %s",
+                         proxyHost.get()));
+                return PR_FAILURE;
+            }
+
+            if (MOZ_LOG_TEST(gSOCKSLog, LogLevel::Debug)) {
+              char buf[kIPv6CStrBufSize];
+              NetAddrToString(&mInternalProxyAddr, buf, sizeof(buf));
+              LOGDEBUG(("socks: trying proxy server, %s:%hu",
+                       buf, ntohs(mInternalProxyAddr.inet.port)));
+            }
         }
 
         NetAddr proxy = mInternalProxyAddr;
@@ -452,13 +563,29 @@ nsSOCKSSocketInfo::ConnectToProxy(PRFileDesc *fd)
         status = fd->lower->methods->connect(fd->lower, &prProxy, mTimeout);
         if (status != PR_SUCCESS) {
             PRErrorCode c = PR_GetError();
+
             // If EINPROGRESS, return now and check back later after polling
             if (c == PR_WOULD_BLOCK_ERROR || c == PR_IN_PROGRESS_ERROR) {
                 mState = SOCKS_CONNECTING_TO_PROXY;
                 return status;
+            } else if (IsLocalProxy()) {
+                LOGERROR(("socks: connect to domain socket failed (%d)", c));
+                PR_SetError(PR_CONNECT_REFUSED_ERROR, 0);
+                mState = SOCKS_FAILED;
+                return status;
             }
         }
     } while (status != PR_SUCCESS);
+
+#if defined(XP_WIN)
+    // Switch to blocking mode during handshaking
+    if (IsLocalProxy() && mFD) {
+        PRSocketOptionData opt_nonblock;
+        opt_nonblock.option = PR_SockOpt_Nonblocking;
+        opt_nonblock.value.non_blocking = PR_FALSE;
+        PR_SetSocketOption(mFD, &opt_nonblock);
+    }
+#endif
 
     // Connected now, start SOCKS
     if (mVersion == 4)
@@ -492,11 +619,18 @@ nsSOCKSSocketInfo::FixupAddressFamily(PRFileDesc *fd, NetAddr *proxy)
         // mDestinationFamily should not be updated
         return;
     }
+    // There's no PR_NSPR_IO_LAYER required when using named pipe,
+    // we simply ignore the TCP family here.
+    if (SetupNamedPipeLayer(fd)) {
+        return;
+    }
+
     // Get an OS native handle from a specified FileDesc
     PROsfd osfd = PR_FileDesc2NativeHandle(fd);
     if (osfd == -1) {
         return;
     }
+
     // Create a new FileDesc with a specified family
     PRFileDesc *tmpfd = PR_OpenTCPSocket(proxyFamily);
     if (!tmpfd) {
@@ -562,7 +696,7 @@ nsSOCKSSocketInfo::WriteV4ConnectRequest()
 
     MOZ_ASSERT(mState == SOCKS_CONNECTING_TO_PROXY,
                "Invalid state!");
-    
+
     proxy_resolve = mFlags & nsISocketProvider::PROXY_RESOLVES_HOST;
 
     mDataLength = 0;
@@ -774,7 +908,7 @@ nsSOCKSSocketInfo::WriteV5ConnectRequest()
                .WriteUint8(0x05) // version -- 5
                .WriteUint8(0x01) // command -- connect
                .WriteUint8(0x00); // reserved
-   
+
     // We're writing a net port after the if, so we need a buffer allowing
     // to write that much.
     Buffer<sizeof(uint16_t)> buf2;
@@ -817,10 +951,10 @@ nsSOCKSSocketInfo::ReadV5AddrTypeAndLength(uint8_t *type, uint32_t *len)
                "Invalid state!");
     MOZ_ASSERT(mDataLength >= 5,
                "SOCKS 5 connection reply must be at least 5 bytes!");
- 
-    // Seek to the address location 
+
+    // Seek to the address location
     mReadOffset = 3;
-   
+
     *type = ReadUint8();
 
     switch (*type) {
@@ -881,11 +1015,12 @@ nsSOCKSSocketInfo::ReadV5ConnectResponseTop()
                 break;
             case 0x04:
                 LOGERROR(("socks5: connect failed: 04, Host unreachable."));
+                c = PR_BAD_ADDRESS_ERROR;
                 break;
             case 0x05:
                 LOGERROR(("socks5: connect failed: 05, Connection refused."));
                 break;
-            case 0x06:  
+            case 0x06:
                 LOGERROR(("socks5: connect failed: 06, TTL expired."));
                 c = PR_CONNECT_TIMEOUT_ERROR;
                 break;
@@ -971,6 +1106,12 @@ nsSOCKSSocketInfo::DoHandshake(PRFileDesc *fd, int16_t oflags)
 
     switch (mState) {
         case SOCKS_INITIAL:
+            if (IsLocalProxy()) {
+                mState = SOCKS_DNS_COMPLETE;
+                mLookupStatus = NS_OK;
+                return ConnectToProxy(fd);
+            }
+
             return StartDNS(fd);
         case SOCKS_DNS_IN_PROGRESS:
             PR_SetError(PR_IN_PROGRESS_ERROR, 0);
@@ -1211,7 +1352,7 @@ nsSOCKSSocketInfo::WriteToSocket(PRFileDesc *fd)
             }
             break;
         }
-        
+
         mDataIoPtr += rc;
     }
 
@@ -1221,7 +1362,7 @@ nsSOCKSSocketInfo::WriteToSocket(PRFileDesc *fd)
         mReadOffset = 0;
         return PR_SUCCESS;
     }
-    
+
     return PR_FAILURE;
 }
 
@@ -1270,7 +1411,7 @@ nsSOCKSIOLayerConnectContinue(PRFileDesc *fd, int16_t oflags)
     nsSOCKSSocketInfo * info = (nsSOCKSSocketInfo*) fd->secret;
     if (info == nullptr) return PR_FAILURE;
 
-    do { 
+    do {
         status = info->DoHandshake(fd, oflags);
     } while (status == PR_SUCCESS && !info->IsConnected());
 
@@ -1332,7 +1473,7 @@ static PRStatus
 nsSOCKSIOLayerGetName(PRFileDesc *fd, PRNetAddr *addr)
 {
     nsSOCKSSocketInfo * info = (nsSOCKSSocketInfo*) fd->secret;
-    
+
     if (info != nullptr && addr != nullptr) {
         NetAddr temp;
         NetAddr *tempPtr = &temp;
@@ -1372,12 +1513,12 @@ nsSOCKSIOLayerListen(PRFileDesc *fd, int backlog)
 // add SOCKS IO layer to an existing socket
 nsresult
 nsSOCKSIOLayerAddToSocket(int32_t family,
-                          const char *host, 
+                          const char *host,
                           int32_t port,
                           nsIProxyInfo *proxy,
                           int32_t socksVersion,
                           uint32_t flags,
-                          PRFileDesc *fd, 
+                          PRFileDesc *fd,
                           nsISupports** info)
 {
     NS_ENSURE_TRUE((socksVersion == 4) || (socksVersion == 5), NS_ERROR_NOT_INITIALIZED);
@@ -1431,23 +1572,44 @@ nsSOCKSIOLayerAddToSocket(int32_t family,
     {
         // clean up IOLayerStub
         LOGERROR(("Failed to create nsSOCKSSocketInfo()."));
-        PR_DELETE(layer);
+        PR_Free(layer); // PR_CreateIOLayerStub() uses PR_Malloc().
         return NS_ERROR_FAILURE;
     }
 
     NS_ADDREF(infoObject);
     infoObject->Init(socksVersion, family, proxy, host, flags);
     layer->secret = (PRFilePrivate*) infoObject;
-    rv = PR_PushIOLayer(fd, PR_GetLayersIdentity(fd), layer);
+
+    PRDescIdentity fdIdentity = PR_GetLayersIdentity(fd);
+#if defined(XP_WIN)
+    if (fdIdentity == mozilla::net::nsNamedPipeLayerIdentity) {
+        // remember named pipe fd on the info object so that we can switch
+        // blocking and non-blocking mode on the pipe later.
+        infoObject->SetNamedPipeFD(fd);
+    }
+#endif
+    rv = PR_PushIOLayer(fd, fdIdentity, layer);
 
     if (rv == PR_FAILURE) {
         LOGERROR(("PR_PushIOLayer() failed. rv = %x.", rv));
         NS_RELEASE(infoObject);
-        PR_DELETE(layer);
+        PR_Free(layer); // PR_CreateIOLayerStub() uses PR_Malloc().
         return NS_ERROR_FAILURE;
     }
 
     *info = static_cast<nsISOCKSSocketInfo*>(infoObject);
     NS_ADDREF(*info);
     return NS_OK;
+}
+
+bool
+IsHostLocalTarget(const nsACString& aHost)
+{
+#if defined(XP_UNIX)
+    return StringBeginsWith(aHost, NS_LITERAL_CSTRING("file:"));
+#elif defined(XP_WIN)
+    return IsNamedPipePath(aHost);
+#else
+    return false;
+#endif // XP_UNIX
 }

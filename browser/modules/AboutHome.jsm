@@ -10,8 +10,8 @@ var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "AboutHomeUtils", "AboutHome" ];
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
   "resource://gre/modules/AppConstants.jsm");
@@ -21,8 +21,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
   "resource://gre/modules/FxAccounts.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 
 // Url to fetch snippets, in the urlFormatter service format.
 const SNIPPETS_URL_PREF = "browser.aboutHomeSnippets.updateUrl";
@@ -100,19 +98,16 @@ var AboutHome = {
     "AboutHome:Addons",
     "AboutHome:Sync",
     "AboutHome:Settings",
-    "AboutHome:RequestUpdate",
-    "AboutHome:MaybeShowAutoMigrationUndoNotification",
   ],
 
-  init: function() {
-    let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
-
+  init() {
     for (let msg of this.MESSAGES) {
-      mm.addMessageListener(msg, this);
+      Services.mm.addMessageListener(msg, this);
     }
   },
 
-  receiveMessage: function(aMessage) {
+  // Additional listeners are registered in nsBrowserGlue.js
+  receiveMessage(aMessage) {
     let window = aMessage.target.ownerGlobal;
 
     switch (aMessage.name) {
@@ -141,26 +136,30 @@ var AboutHome = {
         break;
 
       case "AboutHome:Sync":
-        window.openPreferences("paneSync", { urlParams: { entrypoint: "abouthome" } });
+        window.openPreferences("paneSync", { urlParams: { entrypoint: "abouthome" }, origin: "aboutHome"  });
         break;
 
       case "AboutHome:Settings":
-        window.openPreferences();
+        window.openPreferences(undefined, {origin: "aboutHome"} );
         break;
 
       case "AboutHome:RequestUpdate":
         this.sendAboutHomeData(aMessage.target);
         break;
 
-      case "AboutHome:MaybeShowAutoMigrationUndoNotification":
-        AutoMigrate.maybeShowUndoNotification(aMessage.target);
+      case "AboutHome:MaybeShowMigrateMessage":
+        AutoMigrate.shouldShowMigratePrompt(aMessage.target).then((prompt) => {
+          if (prompt) {
+            AutoMigrate.showUndoNotificationBar(aMessage.target);
+          }
+        });
         break;
     }
   },
 
   // Send all the chrome-privileged data needed by about:home. This
   // gets re-sent when the search engine changes.
-  sendAboutHomeData: function(target) {
+  sendAboutHomeData(target) {
     let wrapper = {};
     Components.utils.import("resource:///modules/sessionstore/SessionStore.jsm",
       wrapper);
@@ -186,7 +185,7 @@ var AboutHome = {
         let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
         mm.broadcastAsyncMessage("AboutHome:Update", data);
       }
-    }).then(null, function onError(x) {
+    }).catch(function onError(x) {
       Cu.reportError("Error in AboutHome.sendAboutHomeData: " + x);
     });
   },

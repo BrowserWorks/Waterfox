@@ -17,7 +17,7 @@ function promiseNotification(topic) {
       Services.obs.removeObserver(observe, topic);
       resolve();
     }
-    Services.obs.addObserver(observe, topic, false);
+    Services.obs.addObserver(observe, topic);
   });
 }
 
@@ -41,7 +41,7 @@ MockStorageManager.prototype = {
   },
 
   updateAccountData(updatedFields) {
-    for (let [name, value] of Iterator(updatedFields)) {
+    for (let [name, value] of Object.entries(updatedFields)) {
       if (value == null) {
         delete this.accountData[name];
       } else {
@@ -64,9 +64,7 @@ function MockFxAccountsClient() {
   this._verified = false;
 
   this.accountStatus = function(uid) {
-    let deferred = Promise.defer();
-    deferred.resolve(!!uid && (!this._deletedOnServer));
-    return deferred.promise;
+    return Promise.resolve(!!uid && (!this._deletedOnServer));
   };
 
   this.signOut = function() { return Promise.resolve(); };
@@ -82,7 +80,7 @@ MockFxAccountsClient.prototype = {
   __proto__: FxAccountsClient.prototype
 }
 
-function MockFxAccounts(device={}) {
+function MockFxAccounts(device = {}) {
   return new FxAccounts({
     fxAccountsClient: new MockFxAccountsClient(),
     newAccountState(credentials) {
@@ -106,7 +104,7 @@ function MockFxAccounts(device={}) {
   });
 }
 
-function* createMockFxA() {
+async function createMockFxA() {
   let fxa = new MockFxAccounts();
   let credentials = {
     email: "foo@example.com",
@@ -117,7 +115,7 @@ function* createMockFxA() {
     kB: "cafe",
     verified: true
   };
-  yield fxa.setSignedInUser(credentials);
+  await fxa.setSignedInUser(credentials);
   return fxa;
 }
 
@@ -126,15 +124,15 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* testCacheStorage() {
-  let fxa = yield createMockFxA();
+add_task(async function testCacheStorage() {
+  let fxa = await createMockFxA();
 
   // Hook what the impl calls to save to disk.
   let cas = fxa.internal.currentAccountState;
   let origPersistCached = cas._persistCachedTokens.bind(cas)
   cas._persistCachedTokens = function() {
     return origPersistCached().then(() => {
-      Services.obs.notifyObservers(null, "testhelper-fxa-cache-persist-done", null);
+      Services.obs.notifyObservers(null, "testhelper-fxa-cache-persist-done");
     });
   };
 
@@ -146,20 +144,20 @@ add_task(function* testCacheStorage() {
 
   deepEqual(cas.oauthTokens, {"bar|foo": tokenData});
   // wait for background write to complete.
-  yield promiseWritten;
+  await promiseWritten;
 
   // Check the token cache made it to our mocked storage.
   deepEqual(cas.storageManager.accountData.oauthTokens, {"bar|foo": tokenData});
 
   // Drop the token from the cache and ensure it is removed from the json.
   promiseWritten = promiseNotification("testhelper-fxa-cache-persist-done");
-  yield cas.removeCachedToken("token1");
+  await cas.removeCachedToken("token1");
   deepEqual(cas.oauthTokens, {});
-  yield promiseWritten;
+  await promiseWritten;
   deepEqual(cas.storageManager.accountData.oauthTokens, {});
 
   // sign out and the token storage should end up with null.
   let storageManager = cas.storageManager; // .signOut() removes the attribute.
-  yield fxa.signOut( /* localOnly = */ true);
+  await fxa.signOut( /* localOnly = */ true);
   deepEqual(storageManager.accountData, null);
 });

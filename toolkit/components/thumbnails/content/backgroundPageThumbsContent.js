@@ -2,9 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env mozilla/frame-script */
+
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-Cu.importGlobalProperties(['Blob', 'FileReader']);
+Cu.importGlobalProperties(["Blob", "FileReader"]);
 
 Cu.import("resource://gre/modules/PageThumbUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -14,9 +16,17 @@ const STATE_LOADING = 1;
 const STATE_CAPTURING = 2;
 const STATE_CANCELED = 3;
 
+// NOTE: Copied from nsSandboxFlags.h
+/**
+ * This flag prevents content from creating new auxiliary browsing contexts,
+ * e.g. using the target attribute, the window.open() method, or the
+ * showModalDialog() method.
+ */
+const SANDBOXED_AUXILIARY_NAVIGATION = 0x2;
+
 const backgroundPageThumbsContent = {
 
-  init: function () {
+  init() {
     Services.obs.addObserver(this, "document-element-inserted", true);
 
     // We want a low network priority for this service - lower than b/g tabs
@@ -33,6 +43,7 @@ const backgroundPageThumbsContent = {
                        Ci.nsIRequest.INHIBIT_CACHING |
                        Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY;
     docShell.defaultLoadFlags = defaultFlags;
+    docShell.sandboxFlags |= SANDBOXED_AUXILIARY_NAVIGATION;
 
     addMessageListener("BackgroundPageThumbs:capture",
                        this._onCapture.bind(this));
@@ -42,7 +53,7 @@ const backgroundPageThumbsContent = {
       addProgressListener(this, Ci.nsIWebProgress.NOTIFY_STATE_WINDOW);
   },
 
-  observe: function (subj, topic, data) {
+  observe(subj, topic, data) {
     // Arrange to prevent (most) popup dialogs for this window - popups done
     // in the parent (eg, auth) aren't prevented, but alert() etc are.
     // disableDialogs only works on the current inner window, so it has
@@ -59,7 +70,7 @@ const backgroundPageThumbsContent = {
     return docShell.QueryInterface(Ci.nsIWebNavigation);
   },
 
-  _onCapture: function (msg) {
+  _onCapture(msg) {
     this._nextCapture = {
       id: msg.data.id,
       url: msg.data.url,
@@ -77,7 +88,7 @@ const backgroundPageThumbsContent = {
     this._startNextCapture();
   },
 
-  _startNextCapture: function () {
+  _startNextCapture() {
     if (!this._nextCapture)
       return;
     this._currentCapture = this._nextCapture;
@@ -96,7 +107,7 @@ const backgroundPageThumbsContent = {
     }
   },
 
-  onStateChange: function (webProgress, req, flags, status) {
+  onStateChange(webProgress, req, flags, status) {
     if (webProgress.isTopLevel &&
         (flags & Ci.nsIWebProgressListener.STATE_STOP) &&
         this._currentCapture) {
@@ -106,19 +117,16 @@ const backgroundPageThumbsContent = {
           this._finishCurrentCapture();
           delete this._currentCapture;
           this._startNextCapture();
-        }
-        else if (this._state == STATE_CANCELED) {
+        } else if (this._state == STATE_CANCELED) {
           delete this._currentCapture;
           this._startNextCapture();
         }
-      }
-      else if (this._state == STATE_LOADING &&
+      } else if (this._state == STATE_LOADING &&
                Components.isSuccessCode(status)) {
         // The requested page has loaded.  Capture it.
         this._state = STATE_CAPTURING;
         this._captureCurrentPage();
-      }
-      else if (this._state != STATE_CANCELED) {
+      } else if (this._state != STATE_CANCELED) {
         // Something went wrong.  Cancel the capture.  Loading about:blank
         // while onStateChange is still on the stack does not actually stop
         // the request if it redirects, so do it asyncly.
@@ -135,7 +143,7 @@ const backgroundPageThumbsContent = {
     }
   },
 
-  _captureCurrentPage: function () {
+  _captureCurrentPage() {
     let capture = this._currentCapture;
     capture.finalURL = this._webNav.currentURI.spec;
     capture.pageLoadTime = new Date() - capture.pageLoadStartDate;
@@ -152,7 +160,7 @@ const backgroundPageThumbsContent = {
     });
   },
 
-  _finishCurrentCapture: function () {
+  _finishCurrentCapture() {
     let capture = this._currentCapture;
     let fileReader = new FileReader();
     fileReader.onloadend = () => {
@@ -169,7 +177,7 @@ const backgroundPageThumbsContent = {
     fileReader.readAsArrayBuffer(capture.imageBlob);
   },
 
-  _failCurrentCapture: function (reason) {
+  _failCurrentCapture(reason) {
     let capture = this._currentCapture;
     sendAsyncMessage("BackgroundPageThumbs:didCapture", {
       id: capture.id,
@@ -181,6 +189,10 @@ const backgroundPageThumbsContent = {
   // reasons: GC the captured page, and ensure it can't possibly load any more
   // resources.
   _loadAboutBlank: function _loadAboutBlank() {
+    // It's possible we've been destroyed by now, if so don't do anything:
+    if (!docShell) {
+      return;
+    }
     this._webNav.loadURI("about:blank",
                          Ci.nsIWebNavigation.LOAD_FLAGS_STOP_CONTENT,
                          null, null, null);

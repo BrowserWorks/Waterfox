@@ -9,17 +9,17 @@
 #include "IMEStateManager.h"
 #include "nsContentUtils.h"
 #include "nsIContent.h"
-#include "nsIEditor.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "mozilla/AutoRestore.h"
+#include "mozilla/EditorBase.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
-#include "mozilla/unused.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/TabParent.h"
 
 #ifdef XP_MACOSX
@@ -225,7 +225,7 @@ RemoveControlCharactersFrom(nsAString& aStr, TextRangeArray* aRanges)
   size_t i = firstControlCharOffset;
   for (const char16_t* source = sourceBegin + firstControlCharOffset;
        source < sourceEnd; ++source) {
-    if (*source == '\t' || !IsControlChar(*source)) {
+    if (*source == '\t' || *source == '\n' || !IsControlChar(*source)) {
       *curDest = *source;
       ++curDest;
       ++i;
@@ -245,6 +245,17 @@ TextComposition::DispatchCompositionEvent(
                    bool aIsSynthesized)
 {
   mWasCompositionStringEmpty = mString.IsEmpty();
+
+  // If this instance has requested to commit or cancel composition but
+  // is not synthesizing commit event, that means that the IME commits or
+  // cancels the composition asynchronously.  Typically, iBus behaves so.
+  // Then, synthesized events which were dispatched immediately after
+  // the request has already committed our editor's composition string and
+  // told it to web apps.  Therefore, we should ignore the delayed events.
+  if (mRequestedToCommitOrCancel && !aIsSynthesized) {
+    *aStatus = nsEventStatus_eConsumeNoDefault;
+    return;
+  }
 
   // If the content is a container of TabParent, composition should be in the
   // remote process.
@@ -290,17 +301,6 @@ TextComposition::DispatchCompositionEvent(
   }
 
   if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
-    *aStatus = nsEventStatus_eConsumeNoDefault;
-    return;
-  }
-
-  // If this instance has requested to commit or cancel composition but
-  // is not synthesizing commit event, that means that the IME commits or
-  // cancels the composition asynchronously.  Typically, iBus behaves so.
-  // Then, synthesized events which were dispatched immediately after
-  // the request has already committed our editor's composition string and
-  // told it to web apps.  Therefore, we should ignore the delayed events.
-  if (mRequestedToCommitOrCancel && !aIsSynthesized) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
     return;
   }
@@ -439,10 +439,16 @@ TextComposition::GetSelectionStartOffset()
 {
   nsCOMPtr<nsIWidget> widget = mPresContext->GetRootWidget();
   WidgetQueryContentEvent selectedTextEvent(true, eQuerySelectedText, widget);
-  if (mRanges && mRanges->HasClauses()) {
+  // Due to a bug of widget, mRanges may not be nullptr even though composition
+  // string is empty.  So, we need to check it here for avoiding to return
+  // odd start offset.
+  if (!mLastData.IsEmpty() && mRanges && mRanges->HasClauses()) {
     selectedTextEvent.InitForQuerySelectedText(
                         ToSelectionType(mRanges->GetFirstClause()->mRangeType));
   } else {
+    NS_WARNING_ASSERTION(
+      !mLastData.IsEmpty() || !mRanges || !mRanges->HasClauses(),
+      "Shouldn't have empty clause info when composition string is empty");
     selectedTextEvent.InitForQuerySelectedText(SelectionType::eNormal);
   }
 
@@ -610,7 +616,7 @@ nsresult
 TextComposition::NotifyIME(IMEMessage aMessage)
 {
   NS_ENSURE_TRUE(mPresContext, NS_ERROR_NOT_AVAILABLE);
-  return IMEStateManager::NotifyIME(aMessage, mPresContext);
+  return IMEStateManager::NotifyIME(aMessage, mPresContext, mTabParent);
 }
 
 void
@@ -651,38 +657,39 @@ TextComposition::EditorDidHandleCompositionChangeEvent()
 }
 
 void
-TextComposition::StartHandlingComposition(nsIEditor* aEditor)
+TextComposition::StartHandlingComposition(EditorBase* aEditorBase)
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
   MOZ_ASSERT(!HasEditor(), "There is a handling editor already");
-  mEditorWeak = do_GetWeakReference(aEditor);
+  mEditorBaseWeak = do_GetWeakReference(static_cast<nsIEditor*>(aEditorBase));
 }
 
 void
-TextComposition::EndHandlingComposition(nsIEditor* aEditor)
+TextComposition::EndHandlingComposition(EditorBase* aEditorBase)
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
 #ifdef DEBUG
-  nsCOMPtr<nsIEditor> editor = GetEditor();
-  MOZ_ASSERT(editor == aEditor, "Another editor handled the composition?");
+  RefPtr<EditorBase> editorBase = GetEditorBase();
+  MOZ_ASSERT(editorBase == aEditorBase,
+             "Another editor handled the composition?");
 #endif // #ifdef DEBUG
-  mEditorWeak = nullptr;
+  mEditorBaseWeak = nullptr;
 }
 
-already_AddRefed<nsIEditor>
-TextComposition::GetEditor() const
+already_AddRefed<EditorBase>
+TextComposition::GetEditorBase() const
 {
-  nsCOMPtr<nsIEditor> editor = do_QueryReferent(mEditorWeak);
-  return editor.forget();
+  nsCOMPtr<nsIEditor> editor = do_QueryReferent(mEditorBaseWeak);
+  RefPtr<EditorBase> editorBase = static_cast<EditorBase*>(editor.get());
+  return editorBase.forget();
 }
 
 bool
 TextComposition::HasEditor() const
 {
-  nsCOMPtr<nsIEditor> editor = GetEditor();
-  return !!editor;
+  return mEditorBaseWeak && mEditorBaseWeak->IsAlive();
 }
 
 /******************************************************************************
@@ -690,12 +697,13 @@ TextComposition::HasEditor() const
  ******************************************************************************/
 
 TextComposition::CompositionEventDispatcher::CompositionEventDispatcher(
-                                               TextComposition* aComposition,
-                                               nsINode* aEventTarget,
-                                               EventMessage aEventMessage,
-                                               const nsAString& aData,
-                                               bool aIsSynthesizedEvent)
-  : mTextComposition(aComposition)
+  TextComposition* aComposition,
+  nsINode* aEventTarget,
+  EventMessage aEventMessage,
+  const nsAString& aData,
+  bool aIsSynthesizedEvent)
+  : Runnable("TextComposition::CompositionEventDispatcher")
+  , mTextComposition(aComposition)
   , mEventTarget(aEventTarget)
   , mData(aData)
   , mEventMessage(aEventMessage)

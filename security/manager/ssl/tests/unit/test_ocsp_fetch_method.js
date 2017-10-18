@@ -17,7 +17,7 @@ const SERVER_PORT = 8888;
 
 function start_ocsp_responder(expectedCertNames, expectedPaths,
                               expectedMethods) {
-  return startOCSPResponder(SERVER_PORT, "www.example.com", [],
+  return startOCSPResponder(SERVER_PORT, "www.example.com",
                             "test_ocsp_fetch_method", expectedCertNames,
                             expectedPaths, expectedMethods);
 }
@@ -29,8 +29,8 @@ function check_cert_err(cert_name, expected_error) {
 }
 
 function run_test() {
-  addCertFromFile(certdb, "test_ocsp_fetch_method/ca.pem", 'CTu,CTu,CTu');
-  addCertFromFile(certdb, "test_ocsp_fetch_method/int.pem", ',,');
+  addCertFromFile(certdb, "test_ocsp_fetch_method/ca.pem", "CTu,CTu,CTu");
+  addCertFromFile(certdb, "test_ocsp_fetch_method/int.pem", ",,");
 
   // Enabled so that we can force ocsp failure responses.
   Services.prefs.setBoolPref("security.OCSP.require", true);

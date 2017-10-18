@@ -6,7 +6,7 @@
 package org.mozilla.gecko;
 
 import org.mozilla.gecko.util.EventCallback;
-import org.mozilla.gecko.util.NativeJSObject;
+import org.mozilla.gecko.util.GeckoBundle;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -15,6 +15,7 @@ import android.graphics.drawable.InsetDrawable;
 import android.support.annotation.StringRes;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.TextViewCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -172,11 +173,11 @@ public class SnackbarBuilder {
     /**
      * @param object Populate the builder with data from a Gecko Snackbar:Show event.
      */
-    public SnackbarBuilder fromEvent(final NativeJSObject object) {
+    public SnackbarBuilder fromEvent(final GeckoBundle object) {
         message = object.getString("message");
         duration = object.getInt("duration");
 
-        if (object.has("backgroundColor")) {
+        if (object.containsKey("backgroundColor")) {
             final String providedColor = object.getString("backgroundColor");
             try {
                 backgroundColor = Color.parseColor(providedColor);
@@ -185,9 +186,9 @@ public class SnackbarBuilder {
             }
         }
 
-        NativeJSObject actionObject = object.optObject("action", null);
+        GeckoBundle actionObject = object.getBundle("action");
         if (actionObject != null) {
-            action = actionObject.optString("label", null);
+            action = actionObject.getString("label");
         }
         return this;
     }
@@ -214,7 +215,7 @@ public class SnackbarBuilder {
             paddedIcon.setBounds(0, 0, leftPadding + icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
 
             TextView textView = (TextView) snackbar.getView().findViewById(android.support.design.R.id.snackbar_text);
-            textView.setCompoundDrawables(paddedIcon, null, null, null);
+            TextViewCompat.setCompoundDrawablesRelative(textView, paddedIcon, null, null, null);
         }
 
         if (backgroundColor != null) {

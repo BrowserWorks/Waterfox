@@ -4,7 +4,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 function createURI(s) {
   let service = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
-  return service.newURI(s, null, null);
+  return service.newURI(s);
 }
  
 function run_test() {
@@ -24,7 +24,7 @@ function run_test() {
   am.setAuthIdentity("http", "a.example.com", -1, "basic", "realm", "", "example.com", "user2", "pass2", false, app10);
 
   let attrs_inBrowser = JSON.stringify({ appId:1, inIsolatedMozBrowser:true });
-  Services.obs.notifyObservers(null, "clear-origin-data", attrs_inBrowser);
+  Services.obs.notifyObservers(null, "clear-origin-attributes-data", attrs_inBrowser);
   
   var domain = {value: ""}, user = {value: ""}, pass = {value: ""};
   try {

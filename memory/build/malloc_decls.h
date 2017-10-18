@@ -13,7 +13,7 @@
 #ifndef malloc_decls_h
 #  define malloc_decls_h
 
-#  include "jemalloc_types.h"
+#  include "mozjemalloc_types.h"
 
 #ifndef MALLOC_USABLE_SIZE_CONST_PTR
 #define MALLOC_USABLE_SIZE_CONST_PTR const
@@ -43,7 +43,7 @@ typedef MALLOC_USABLE_SIZE_CONST_PTR void * usable_ptr_t;
 MALLOC_DECL(init, void, const malloc_table_t *)
 #  endif
 #  if MALLOC_FUNCS & MALLOC_FUNCS_BRIDGE
-MALLOC_DECL(get_bridge, struct ReplaceMallocBridge*, void)
+MALLOC_DECL(get_bridge, struct ReplaceMallocBridge*)
 #  endif
 #  if MALLOC_FUNCS & MALLOC_FUNCS_MALLOC
 MALLOC_DECL(malloc, void *, size_t)
@@ -59,8 +59,9 @@ MALLOC_DECL(malloc_good_size, size_t, size_t)
 #  endif
 #  if MALLOC_FUNCS & MALLOC_FUNCS_JEMALLOC
 MALLOC_DECL_VOID(jemalloc_stats, jemalloc_stats_t *)
-MALLOC_DECL_VOID(jemalloc_purge_freed_pages, void)
-MALLOC_DECL_VOID(jemalloc_free_dirty_pages, void)
+MALLOC_DECL_VOID(jemalloc_purge_freed_pages)
+MALLOC_DECL_VOID(jemalloc_free_dirty_pages)
+MALLOC_DECL_VOID(jemalloc_thread_local_arena, jemalloc_bool)
 #  endif
 
 #  undef MALLOC_DECL_VOID

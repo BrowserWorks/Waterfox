@@ -7,7 +7,7 @@
 "use strict";
 
 const promise = require("promise");
-const {Rule} = require("devtools/client/inspector/rules/models/rule");
+const Rule = require("devtools/client/inspector/rules/models/rule");
 const {promiseWarn} = require("devtools/client/inspector/shared/utils");
 const {ELEMENT_STYLE} = require("devtools/shared/specs/styles");
 const {getCssProperties} = require("devtools/shared/fronts/css-properties");
@@ -124,7 +124,7 @@ ElementStyle.prototype = {
       }
 
       return undefined;
-    }).then(null, e => {
+    }).catch(e => {
       // populate is often called after a setTimeout,
       // the connection may already be closed.
       if (this.destroyed) {
@@ -409,4 +409,4 @@ UserProperties.prototype = {
   }
 };
 
-exports.ElementStyle = ElementStyle;
+module.exports = ElementStyle;

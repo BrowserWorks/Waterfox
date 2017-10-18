@@ -49,7 +49,7 @@ define(function (require, exports, module) {
    *   getHeaderClass: function(colId);
    *   renderValue: function(object, colId);
    *   renderRow: function(object);
-   *   renderCelL: function(object, colId);
+   *   renderCell: function(object, colId);
    *   renderLabelCell: function(object);
    * }
    */
@@ -62,6 +62,7 @@ define(function (require, exports, module) {
       // The input data object.
       object: PropTypes.any,
       className: PropTypes.string,
+      label: PropTypes.string,
       // Data provider (see also the interface above)
       provider: PropTypes.shape({
         getChildren: PropTypes.func,
@@ -78,7 +79,7 @@ define(function (require, exports, module) {
         getHeaderClass: PropTypes.func,
         renderValue: PropTypes.func,
         renderRow: PropTypes.func,
-        renderCelL: PropTypes.func,
+        renderCell: PropTypes.func,
         renderLabelCell: PropTypes.func,
       }),
       // Custom tree row (node) renderer
@@ -97,6 +98,8 @@ define(function (require, exports, module) {
       onSort: PropTypes.func,
       // A header is displayed if set to true
       header: PropTypes.bool,
+      // Long string is expandable by a toggle button
+      expandableStrings: PropTypes.bool,
       // Array of columns
       columns: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -111,6 +114,7 @@ define(function (require, exports, module) {
         renderRow: null,
         provider: ObjectProvider,
         expandedNodes: new Set(),
+        expandableStrings: true,
         columns: []
       };
     },
@@ -118,8 +122,26 @@ define(function (require, exports, module) {
     getInitialState: function () {
       return {
         expandedNodes: this.props.expandedNodes,
-        columns: ensureDefaultColumn(this.props.columns)
+        columns: ensureDefaultColumn(this.props.columns),
+        selected: null
       };
+    },
+
+    componentWillReceiveProps: function (nextProps) {
+      let { expandedNodes } = nextProps;
+      this.setState(Object.assign({}, this.state, {
+        expandedNodes,
+      }));
+    },
+
+    componentDidUpdate: function () {
+      let selected = this.getSelectedRow(this.rows);
+      if (!selected && this.rows.length > 0) {
+        // TODO: Do better than just selecting the first row again. We want to
+        // select (in order) previous, next or parent in case when selected
+        // row is removed.
+        this.selectRow(this.rows[0].props.member.path);
+      }
     },
 
     // Node expand/collapse
@@ -144,9 +166,75 @@ define(function (require, exports, module) {
 
     // Event Handlers
 
+    onKeyDown: function (event) {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+        event.key)) {
+        event.preventDefault();
+      }
+    },
+
+    onKeyUp: function (event) {
+      let row = this.getSelectedRow(this.rows);
+      if (!row) {
+        return;
+      }
+
+      let index = this.rows.indexOf(row);
+      switch (event.key) {
+        case "ArrowRight":
+          let { hasChildren, open } = row.props.member;
+          if (hasChildren && !open) {
+            this.toggle(this.state.selected);
+          }
+          break;
+        case "ArrowLeft":
+          if (row && row.props.member.open) {
+            this.toggle(this.state.selected);
+          }
+          break;
+        case "ArrowDown":
+          let nextRow = this.rows[index + 1];
+          if (nextRow) {
+            this.selectRow(nextRow.props.member.path);
+          }
+          break;
+        case "ArrowUp":
+          let previousRow = this.rows[index - 1];
+          if (previousRow) {
+            this.selectRow(previousRow.props.member.path);
+          }
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+    },
+
     onClickRow: function (nodePath, event) {
       event.stopPropagation();
-      this.toggle(nodePath);
+      let cell = event.target.closest("td");
+      if (cell && cell.classList.contains("treeLabelCell")) {
+        this.toggle(nodePath);
+      }
+      this.selectRow(nodePath);
+    },
+
+    getSelectedRow: function (rows) {
+      if (!this.state.selected || rows.length === 0) {
+        return null;
+      }
+      return rows.find(row => this.isSelected(row.props.member.path));
+    },
+
+    selectRow: function (nodePath) {
+      this.setState(Object.assign({}, this.state, {
+        selected: nodePath
+      }));
+    },
+
+    isSelected: function (nodePath) {
+      return nodePath === this.state.selected;
     },
 
     // Filtering & Sorting
@@ -179,7 +267,7 @@ define(function (require, exports, module) {
         return [];
       }
 
-      let provider = this.props.provider;
+      let { expandableStrings, provider } = this.props;
       let children = provider.getChildren(parent) || [];
 
       // If the return value is non-array, the children
@@ -192,7 +280,7 @@ define(function (require, exports, module) {
 
       return children.map(child => {
         let key = provider.getKey(child);
-        let nodePath = path + "/" + key;
+        let nodePath = TreeView.subPath(path, key);
         let type = provider.getType(child);
         let hasChildren = provider.hasChildren(child);
 
@@ -201,7 +289,7 @@ define(function (require, exports, module) {
         // Value for actual column is get when a cell is rendered.
         let value = provider.getValue(child);
 
-        if (isLongString(value)) {
+        if (expandableStrings && isLongString(value)) {
           hasChildren = true;
         }
 
@@ -227,7 +315,9 @@ define(function (require, exports, module) {
           // Node path
           path: nodePath,
           // True if the node is hidden (used for filtering)
-          hidden: !this.onFilter(child)
+          hidden: !this.onFilter(child),
+          // True if the node is selected with keyboard
+          selected: this.isSelected(nodePath)
         };
       });
     },
@@ -258,6 +348,8 @@ define(function (require, exports, module) {
           key: member.path,
           member: member,
           columns: this.state.columns,
+          id: member.path,
+          ref: row => row && this.rows.push(row),
           onClick: this.onClickRow.bind(this, member.path)
         });
 
@@ -288,6 +380,7 @@ define(function (require, exports, module) {
     render: function () {
       let root = this.props.object;
       let classNames = ["treeTable"];
+      this.rows = [];
 
       // Use custom class name from props.
       let className = this.props.className;
@@ -312,16 +405,71 @@ define(function (require, exports, module) {
       return (
         DOM.table({
           className: classNames.join(" "),
+          role: "tree",
+          tabIndex: 0,
+          onKeyDown: this.onKeyDown,
+          onKeyUp: this.onKeyUp,
+          "aria-label": this.props.label || "",
+          "aria-activedescendant": this.state.selected,
           cellPadding: 0,
           cellSpacing: 0},
           TreeHeader(props),
-          DOM.tbody({},
-            rows
-          )
+          DOM.tbody({
+            role: "presentation"
+          }, rows)
         )
       );
     }
   });
+
+  TreeView.subPath = function (path, subKey) {
+    return path + "/" + String(subKey).replace(/[\\/]/g, "\\$&");
+  };
+
+  /**
+   * Creates a set with the paths of the nodes that should be expanded by default
+   * according to the passed options.
+   * @param {Object} The root node of the tree.
+   * @param {Object} [optional] An object with the following optional parameters:
+   *   - maxLevel: nodes nested deeper than this level won't be expanded.
+   *   - maxNodes: maximum number of nodes that can be expanded. The traversal is
+         breadth-first, so expanding nodes nearer to the root will be preferred.
+         Sibling nodes will either be all expanded or none expanded.
+   * }
+   */
+  TreeView.getExpandedNodes = function (rootObj,
+    { maxLevel = Infinity, maxNodes = Infinity } = {}
+  ) {
+    let expandedNodes = new Set();
+    let queue = [{
+      object: rootObj,
+      level: 1,
+      path: ""
+    }];
+    while (queue.length) {
+      let {object, level, path} = queue.shift();
+      if (Object(object) !== object) {
+        continue;
+      }
+      let keys = Object.keys(object);
+      if (expandedNodes.size + keys.length > maxNodes) {
+        // Avoid having children half expanded.
+        break;
+      }
+      for (let key of keys) {
+        let nodePath = TreeView.subPath(path, key);
+        expandedNodes.add(nodePath);
+        if (level < maxLevel) {
+          queue.push({
+            object: object[key],
+            level: level + 1,
+            path: nodePath
+          });
+        }
+      }
+    }
+    return expandedNodes;
+  };
 
   // Helpers
 

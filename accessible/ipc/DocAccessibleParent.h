@@ -8,8 +8,8 @@
 #define mozilla_a11y_DocAccessibleParent_h
 
 #include "nsAccessibilityService.h"
-#include "ProxyAccessible.h"
 #include "mozilla/a11y/PDocAccessibleParent.h"
+#include "mozilla/a11y/ProxyAccessible.h"
 #include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 #include "nsISupportsImpl.h"
@@ -28,11 +28,21 @@ class DocAccessibleParent : public ProxyAccessible,
 {
 public:
   DocAccessibleParent() :
-    ProxyAccessible(this), mParentDoc(nullptr),
+    ProxyAccessible(this), mParentDoc(kNoParentDoc),
     mTopLevel(false), mShutdown(false)
-  { MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible); }
+#if defined(XP_WIN)
+                                      , mEmulatedWindowHandle(nullptr)
+#endif // defined(XP_WIN)
+  {
+    MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
+    sMaxDocID++;
+    mActorID = sMaxDocID;
+    MOZ_ASSERT(!LiveDocs().Get(mActorID));
+    LiveDocs().Put(mActorID, this);
+  }
   ~DocAccessibleParent()
   {
+    LiveDocs().Remove(mActorID);
     MOZ_COUNT_DTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
     MOZ_ASSERT(mChildDocs.Length() == 0);
     MOZ_ASSERT(!ParentDoc());
@@ -43,51 +53,76 @@ public:
 
   bool IsShutdown() const { return mShutdown; }
 
+  /**
+   * Mark this actor as shutdown without doing any cleanup.  This should only
+   * be called on actors that have just been initialized, so probably only from
+   * RecvPDocAccessibleConstructor.
+   */
+  void MarkAsShutdown()
+  {
+    MOZ_ASSERT(mChildDocs.IsEmpty());
+    MOZ_ASSERT(mAccessibles.Count() == 0);
+    mShutdown = true;
+  }
+
   /*
    * Called when a message from a document in a child process notifies the main
    * process it is firing an event.
    */
-  virtual bool RecvEvent(const uint64_t& aID, const uint32_t& aType)
+  virtual mozilla::ipc::IPCResult RecvEvent(const uint64_t& aID, const uint32_t& aType)
     override;
 
-  virtual bool RecvShowEvent(const ShowEventData& aData, const bool& aFromUser)
+  virtual mozilla::ipc::IPCResult RecvShowEvent(const ShowEventData& aData, const bool& aFromUser)
     override;
-  virtual bool RecvHideEvent(const uint64_t& aRootID, const bool& aFromUser)
+  virtual mozilla::ipc::IPCResult RecvHideEvent(const uint64_t& aRootID, const bool& aFromUser)
     override;
-  virtual bool RecvStateChangeEvent(const uint64_t& aID,
-                                    const uint64_t& aState,
-                                    const bool& aEnabled) override final;
+  virtual mozilla::ipc::IPCResult RecvStateChangeEvent(const uint64_t& aID,
+                                                       const uint64_t& aState,
+                                                       const bool& aEnabled) override final;
 
-  virtual bool RecvCaretMoveEvent(const uint64_t& aID, const int32_t& aOffset)
-    override final;
+  virtual mozilla::ipc::IPCResult RecvCaretMoveEvent(const uint64_t& aID,
+#if defined(XP_WIN)
+                                                     const LayoutDeviceIntRect& aCaretRect,
+#endif
+                                                     const int32_t& aOffset) override final;
 
-  virtual bool RecvTextChangeEvent(const uint64_t& aID, const nsString& aStr,
-                                   const int32_t& aStart, const uint32_t& aLen,
-                                   const bool& aIsInsert,
-                                   const bool& aFromUser) override;
+  virtual mozilla::ipc::IPCResult RecvTextChangeEvent(const uint64_t& aID, const nsString& aStr,
+                                                      const int32_t& aStart, const uint32_t& aLen,
+                                                      const bool& aIsInsert,
+                                                      const bool& aFromUser) override;
 
-  virtual bool RecvSelectionEvent(const uint64_t& aID,
-                                  const uint64_t& aWidgetID,
-                                  const uint32_t& aType) override;
+#if defined(XP_WIN)
+  virtual mozilla::ipc::IPCResult RecvSyncTextChangeEvent(const uint64_t& aID, const nsString& aStr,
+                                                          const int32_t& aStart, const uint32_t& aLen,
+                                                          const bool& aIsInsert,
+                                                          const bool& aFromUser) override;
 
-  virtual bool RecvRoleChangedEvent(const uint32_t& aRole) override final;
+  virtual mozilla::ipc::IPCResult RecvFocusEvent(const uint64_t& aID,
+                                                 const LayoutDeviceIntRect& aCaretRect) override;
+#endif // defined(XP_WIN)
 
-  virtual bool RecvBindChildDoc(PDocAccessibleParent* aChildDoc, const uint64_t& aID) override;
+  virtual mozilla::ipc::IPCResult RecvSelectionEvent(const uint64_t& aID,
+                                                     const uint64_t& aWidgetID,
+                                                     const uint32_t& aType) override;
+
+  virtual mozilla::ipc::IPCResult RecvRoleChangedEvent(const uint32_t& aRole) override final;
+
+  virtual mozilla::ipc::IPCResult RecvBindChildDoc(PDocAccessibleParent* aChildDoc, const uint64_t& aID) override;
+
   void Unbind()
   {
-    mParent = nullptr;
     if (DocAccessibleParent* parent = ParentDoc()) {
-      parent->mChildDocs.RemoveElement(this);
+      parent->RemoveChildDoc(this);
     }
 
-    mParentDoc = nullptr;
+    SetParent(nullptr);
   }
 
-  virtual bool RecvShutdown() override;
+  virtual mozilla::ipc::IPCResult RecvShutdown() override;
   void Destroy();
   virtual void ActorDestroy(ActorDestroyReason aWhy) override
   {
-    MOZ_DIAGNOSTIC_ASSERT(CheckDocTree());
+    MOZ_ASSERT(CheckDocTree());
     if (!mShutdown)
       Destroy();
   }
@@ -96,14 +131,15 @@ public:
    * Return the main processes representation of the parent document (if any)
    * of the document this object represents.
    */
-  DocAccessibleParent* ParentDoc() const { return mParentDoc; }
+  DocAccessibleParent* ParentDoc() const;
+  static const uint64_t kNoParentDoc = UINT64_MAX;
 
   /*
    * Called when a document in a content process notifies the main process of a
    * new child document.
    */
-  bool AddChildDoc(DocAccessibleParent* aChildDoc, uint64_t aParentID,
-                   bool aCreating = true);
+  ipc::IPCResult AddChildDoc(DocAccessibleParent* aChildDoc,
+                             uint64_t aParentID, bool aCreating = true);
 
   /*
    * Called when the document in the content process this object represents
@@ -111,10 +147,14 @@ public:
    */
   void RemoveChildDoc(DocAccessibleParent* aChildDoc)
   {
-    aChildDoc->Parent()->SetChildDoc(nullptr);
-    mChildDocs.RemoveElement(aChildDoc);
-    aChildDoc->mParentDoc = nullptr;
-    MOZ_ASSERT(aChildDoc->mChildDocs.Length() == 0);
+    ProxyAccessible* parent = aChildDoc->Parent();
+    MOZ_ASSERT(parent);
+    if (parent) {
+      aChildDoc->Parent()->ClearChildDoc(aChildDoc);
+    }
+    DebugOnly<bool> result = mChildDocs.RemoveElement(aChildDoc->mActorID);
+    aChildDoc->mParentDoc = kNoParentDoc;
+    MOZ_ASSERT(result);
   }
 
   void RemoveAccessible(ProxyAccessible* aAccessible)
@@ -140,7 +180,24 @@ public:
 
   size_t ChildDocCount() const { return mChildDocs.Length(); }
   const DocAccessibleParent* ChildDocAt(size_t aIdx) const
-    { return mChildDocs[aIdx]; }
+  { return const_cast<DocAccessibleParent*>(this)->ChildDocAt(aIdx); }
+  DocAccessibleParent* ChildDocAt(size_t aIdx)
+    { return LiveDocs().Get(mChildDocs[aIdx]); }
+
+#if defined(XP_WIN)
+  void MaybeInitWindowEmulation();
+  void SendParentCOMProxy();
+
+  virtual mozilla::ipc::IPCResult RecvGetWindowedPluginIAccessible(
+      const WindowsHandle& aHwnd, IAccessibleHolder* aPluginCOMProxy) override;
+
+  /**
+   * Set emulated native window handle for a document.
+   * @param aWindowHandle emulated native window handle
+   */
+  void SetEmulatedWindowHandle(HWND aWindowHandle);
+  HWND GetEmulatedWindowHandle() const { return mEmulatedWindowHandle; }
+#endif
 
 private:
 
@@ -173,16 +230,34 @@ private:
   MOZ_MUST_USE bool CheckDocTree() const;
   xpcAccessibleGeneric* GetXPCAccessible(ProxyAccessible* aProxy);
 
-  nsTArray<DocAccessibleParent*> mChildDocs;
-  DocAccessibleParent* mParentDoc;
+  nsTArray<uint64_t> mChildDocs;
+  uint64_t mParentDoc;
+
+#if defined(XP_WIN)
+  // The handle associated with the emulated window that contains this document
+  HWND mEmulatedWindowHandle;
+
+#if defined(MOZ_CONTENT_SANDBOX)
+  mscom::PreservedStreamPtr mParentProxyStream;
+#endif // defined(MOZ_CONTENT_SANDBOX)
+#endif // defined(XP_WIN)
 
   /*
    * Conceptually this is a map from IDs to proxies, but we store the ID in the
    * proxy object so we can't use a real map.
    */
   nsTHashtable<ProxyEntry> mAccessibles;
+  uint64_t mActorID;
   bool mTopLevel;
   bool mShutdown;
+
+  static uint64_t sMaxDocID;
+  static nsDataHashtable<nsUint64HashKey, DocAccessibleParent*>&
+    LiveDocs()
+    {
+      static nsDataHashtable<nsUint64HashKey, DocAccessibleParent*> sLiveDocs;
+      return sLiveDocs;
+    }
 };
 
 }

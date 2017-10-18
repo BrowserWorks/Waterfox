@@ -8,7 +8,6 @@ if (Cc === undefined) {
 }
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
@@ -32,7 +31,7 @@ const chromeRegistry = Cc["@mozilla.org/chrome/chrome-registry;1"]
 
 // Installs a single add-on returning a promise for when install is completed
 function installAddon(url) {
-  let chromeURL = Services.io.newURI(url, null, null);
+  let chromeURL = Services.io.newURI(url);
   let file = chromeRegistry.convertChromeURL(chromeURL)
       .QueryInterface(Ci.nsIFileURL).file;
 
@@ -115,23 +114,23 @@ function waitForResults() {
       Services.obs.removeObserver(arguments.callee, "sdk:test:results");
 
       resolve(JSON.parse(data));
-    }, "sdk:test:results", false);
+    }, "sdk:test:results");
   });
 }
 
 // Runs tests for the add-on available at URL.
-var testAddon = Task.async(function*({ url }) {
+var testAddon = async function({ url }) {
   dump("TEST-INFO | jetpack-addon-harness.js | Installing test add-on " + realPath(url) + "\n");
-  let addon = yield installAddon(url);
+  let addon = await installAddon(url);
 
-  let results = yield waitForResults();
+  let results = await waitForResults();
 
   dump("TEST-INFO | jetpack-addon-harness.js | Uninstalling test add-on " + addon.id + "\n");
-  yield uninstallAddon(addon);
+  await uninstallAddon(addon);
 
   dump("TEST-INFO | jetpack-addon-harness.js | Testing add-on " + realPath(url) + " is complete\n");
   return results;
-});
+};
 
 // Sets a set of prefs for test add-ons
 function setPrefs(root, options) {

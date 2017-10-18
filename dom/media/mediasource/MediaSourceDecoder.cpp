@@ -8,6 +8,7 @@
 #include "mozilla/Logging.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "MediaDecoderStateMachine.h"
+#include "MediaShutdownManager.h"
 #include "MediaSource.h"
 #include "MediaSourceResource.h"
 #include "MediaSourceUtils.h"
@@ -25,42 +26,48 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
-MediaSourceDecoder::MediaSourceDecoder(dom::HTMLMediaElement* aElement)
-  : MediaDecoder(aElement)
+MediaSourceDecoder::MediaSourceDecoder(MediaDecoderInit& aInit)
+  : MediaDecoder(aInit)
   , mMediaSource(nullptr)
   , mEnded(false)
 {
-  SetExplicitDuration(UnspecifiedNaN<double>());
-}
-
-MediaDecoder*
-MediaSourceDecoder::Clone(MediaDecoderOwner* aOwner)
-{
-  // TODO: Sort out cloning.
-  return nullptr;
+  mExplicitDuration.Set(Some(UnspecifiedNaN<double>()));
 }
 
 MediaDecoderStateMachine*
 MediaSourceDecoder::CreateStateMachine()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  mDemuxer = new MediaSourceDemuxer();
-  mReader = new MediaFormatReader(this, mDemuxer, GetVideoFrameContainer());
+  mDemuxer = new MediaSourceDemuxer(AbstractMainThread());
+  MediaFormatReaderInit init;
+  init.mVideoFrameContainer = GetVideoFrameContainer();
+  init.mKnowsCompositor = GetCompositor();
+  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
+  init.mFrameStats = mFrameStats;
+  mReader = new MediaFormatReader(init, mDemuxer);
   return new MediaDecoderStateMachine(this, mReader);
 }
 
 nsresult
-MediaSourceDecoder::Load(nsIStreamListener**)
+MediaSourceDecoder::Load(nsIPrincipal* aPrincipal)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!GetStateMachine());
+
+  mResource = new MediaSourceResource(aPrincipal);
+
+  nsresult rv = MediaShutdownManager::Instance().Register(this);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
   SetStateMachine(CreateStateMachine());
   if (!GetStateMachine()) {
     NS_WARNING("Failed to create state machine!");
     return NS_ERROR_FAILURE;
   }
 
-  nsresult rv = GetStateMachine()->Init(this);
+  rv = GetStateMachine()->Init(this);
   NS_ENSURE_SUCCESS(rv, rv);
 
   SetStateMachineParameters();
@@ -98,12 +105,11 @@ MediaSourceDecoder::GetSeekable()
     }
 
     if (buffered.Length()) {
-      seekable +=
-        media::TimeInterval(media::TimeUnit::FromSeconds(0), buffered.GetEnd());
+      seekable += media::TimeInterval(TimeUnit::Zero(), buffered.GetEnd());
     }
   } else {
-    seekable += media::TimeInterval(media::TimeUnit::FromSeconds(0),
-                                    media::TimeUnit::FromSeconds(duration));
+    seekable += media::TimeInterval(TimeUnit::Zero(),
+                                    TimeUnit::FromSeconds(duration));
   }
   MSE_DEBUG("ranges=%s", DumpTimeRanges(seekable).get());
   return seekable;
@@ -123,7 +129,7 @@ MediaSourceDecoder::GetBuffered()
     // Media source object is shutting down.
     return TimeIntervals();
   }
-  media::TimeUnit highestEndTime;
+  TimeUnit highestEndTime;
   nsTArray<media::TimeIntervals> activeRanges;
   media::TimeIntervals buffered;
 
@@ -137,8 +143,7 @@ MediaSourceDecoder::GetBuffered()
       std::max(highestEndTime, activeRanges.LastElement().GetEnd());
   }
 
-  buffered +=
-    media::TimeInterval(media::TimeUnit::FromMicroseconds(0), highestEndTime);
+  buffered += media::TimeInterval(TimeUnit::Zero(), highestEndTime);
 
   for (auto& range : activeRanges) {
     if (mEnded && range.Length()) {
@@ -170,13 +175,6 @@ MediaSourceDecoder::Shutdown()
   MediaDecoder::Shutdown();
 }
 
-/*static*/
-already_AddRefed<MediaResource>
-MediaSourceDecoder::CreateResource(nsIPrincipal* aPrincipal)
-{
-  return RefPtr<MediaResource>(new MediaSourceResource(aPrincipal)).forget();
-}
-
 void
 MediaSourceDecoder::AttachMediaSource(dom::MediaSource* aMediaSource)
 {
@@ -195,7 +193,7 @@ void
 MediaSourceDecoder::Ended(bool aEnded)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  static_cast<MediaSourceResource*>(GetResource())->SetEnded(aEnded);
+  static_cast<MediaSourceResource*>(mResource.get())->SetEnded(aEnded);
   if (aEnded) {
     // We want the MediaSourceReader to refresh its buffered range as it may
     // have been modified (end lined up).
@@ -234,6 +232,7 @@ void
 MediaSourceDecoder::SetMediaSourceDuration(double aDuration)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!IsShutdown());
   if (aDuration >= 0) {
     int64_t checkedDuration;
     if (NS_FAILED(SecondsToUsecs(aDuration, checkedDuration))) {
@@ -248,7 +247,7 @@ MediaSourceDecoder::SetMediaSourceDuration(double aDuration)
 }
 
 void
-MediaSourceDecoder::GetMozDebugReaderData(nsAString& aString)
+MediaSourceDecoder::GetMozDebugReaderData(nsACString& aString)
 {
   if (mReader && mDemuxer) {
     mReader->GetMozDebugReaderData(aString);
@@ -268,20 +267,22 @@ MediaSourceDecoder::NextFrameBufferedStatus()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!mMediaSource ||
-      mMediaSource->ReadyState() == dom::MediaSourceReadyState::Closed) {
+  if (!mMediaSource
+      || mMediaSource->ReadyState() == dom::MediaSourceReadyState::Closed) {
     return MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
   }
 
   // Next frame hasn't been decoded yet.
   // Use the buffered range to consider if we have the next frame available.
-  TimeUnit currentPosition = TimeUnit::FromMicroseconds(CurrentPosition());
-  TimeInterval interval(currentPosition,
-                        currentPosition + media::TimeUnit::FromMicroseconds(DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED),
-                        MediaSourceDemuxer::EOS_FUZZ);
-  return GetBuffered().Contains(ClampIntervalToEnd(interval))
-    ? MediaDecoderOwner::NEXT_FRAME_AVAILABLE
-    : MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
+  auto currentPosition = CurrentPosition();
+  TimeIntervals buffered = GetBuffered();
+  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ / 2);
+  TimeInterval interval(
+    currentPosition,
+    currentPosition + DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED);
+  return buffered.ContainsWithStrictEnd(ClampIntervalToEnd(interval))
+         ? MediaDecoderOwner::NEXT_FRAME_AVAILABLE
+         : MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
 }
 
 bool
@@ -298,21 +299,22 @@ MediaSourceDecoder::CanPlayThrough()
     return false;
   }
   TimeUnit duration = TimeUnit::FromSeconds(mMediaSource->Duration());
-  TimeUnit currentPosition = TimeUnit::FromMicroseconds(CurrentPosition());
+  auto currentPosition = CurrentPosition();
   if (duration.IsInfinite()) {
-    // We can't make an informed decision and just assume that it's a live stream
+    // We can't make an informed decision and just assume that it's a live
+    // stream
     return true;
   } else if (duration <= currentPosition) {
     return true;
   }
-  // If we have data up to the mediasource's duration or 30s ahead, we can
+  // If we have data up to the mediasource's duration or 10s ahead, we can
   // assume that we can play without interruption.
+  TimeIntervals buffered = GetBuffered();
+  buffered.SetFuzz(MediaSourceDemuxer::EOS_FUZZ / 2);
   TimeUnit timeAhead =
-    std::min(duration, currentPosition + TimeUnit::FromSeconds(30));
-  TimeInterval interval(currentPosition,
-                        timeAhead,
-                        MediaSourceDemuxer::EOS_FUZZ);
-  return GetBuffered().Contains(ClampIntervalToEnd(interval));
+    std::min(duration, currentPosition + TimeUnit::FromSeconds(10));
+  TimeInterval interval(currentPosition, timeAhead);
+  return buffered.ContainsWithStrictEnd(ClampIntervalToEnd(interval));
 }
 
 TimeInterval
@@ -323,8 +325,23 @@ MediaSourceDecoder::ClampIntervalToEnd(const TimeInterval& aInterval)
   if (!mEnded) {
     return aInterval;
   }
-  TimeInterval interval(TimeUnit(), TimeUnit::FromSeconds(GetDuration()));
-  return aInterval.Intersection(interval);
+  TimeUnit duration = TimeUnit::FromSeconds(GetDuration());
+  if (duration < aInterval.mStart) {
+    return aInterval;
+  }
+  return TimeInterval(aInterval.mStart,
+                      std::min(aInterval.mEnd, duration),
+                      aInterval.mFuzz);
+}
+
+void
+MediaSourceDecoder::NotifyInitDataArrived()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (mDemuxer) {
+    mDemuxer->NotifyInitDataArrived();
+  }
 }
 
 #undef MSE_DEBUG

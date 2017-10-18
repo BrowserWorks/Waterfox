@@ -19,6 +19,7 @@
 #include <X11/XKBlib.h>
 #include "WidgetUtils.h"
 #include "keysym2ucs.h"
+#include "nsContentUtils.h"
 #include "nsGtkUtils.h"
 #include "nsIBidiKeyboard.h"
 #include "nsServiceManagerUtils.h"
@@ -41,7 +42,6 @@ KeymapWrapper* KeymapWrapper::sInstance = nullptr;
 guint KeymapWrapper::sLastRepeatableHardwareKeyCode = 0;
 KeymapWrapper::RepeatState KeymapWrapper::sRepeatState =
     KeymapWrapper::NOT_PRESSED;
-nsIBidiKeyboard* sBidiKeyboard = nullptr;
 
 static const char* GetBoolName(bool aBool)
 {
@@ -170,6 +170,8 @@ KeymapWrapper::KeymapWrapper() :
     g_object_ref(mGdkKeymap);
     g_signal_connect(mGdkKeymap, "keys-changed",
                      (GCallback)OnKeysChanged, this);
+    g_signal_connect(mGdkKeymap, "direction-changed",
+                     (GCallback)OnDirectionChanged, this);
 
     if (GDK_IS_X11_DISPLAY(gdk_display_get_default()))
         InitXKBExtension();
@@ -361,7 +363,7 @@ KeymapWrapper::InitBySystemSettings()
             Modifier modifier = GetModifierForGDKKeyval(syms[j]);
             MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
                 ("%p InitBySystemSettings, "
-                 "    Mod%d, j=%d, syms[j]=%s(0x%X), modifier=%s",
+                 "    Mod%d, j=%d, syms[j]=%s(0x%lX), modifier=%s",
                  this, modIndex + 1, j, gdk_keyval_name(syms[j]), syms[j],
                  GetModifierName(modifier)));
 
@@ -442,8 +444,9 @@ KeymapWrapper::~KeymapWrapper()
     gdk_window_remove_filter(nullptr, FilterEvents, this);
     g_signal_handlers_disconnect_by_func(mGdkKeymap,
                                          FuncToGpointer(OnKeysChanged), this);
+    g_signal_handlers_disconnect_by_func(mGdkKeymap,
+                                         FuncToGpointer(OnDirectionChanged), this);
     g_object_unref(mGdkKeymap);
-    NS_IF_RELEASE(sBidiKeyboard);
     MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
         ("%p Destructor", this));
 }
@@ -519,6 +522,17 @@ KeymapWrapper::FilterEvents(GdkXEvent* aXEvent,
     return GDK_FILTER_CONTINUE;
 }
 
+static void
+ResetBidiKeyboard()
+{
+    // Reset the bidi keyboard settings for the new GdkKeymap
+    nsCOMPtr<nsIBidiKeyboard> bidiKeyboard = nsContentUtils::GetBidiKeyboard();
+    if (bidiKeyboard) {
+        bidiKeyboard->Reset();
+    }
+    WidgetUtils::SendBidiKeyboardInfoToContent();
+}
+
 /* static */ void
 KeymapWrapper::OnKeysChanged(GdkKeymap *aGdkKeymap,
                              KeymapWrapper* aKeymapWrapper)
@@ -533,14 +547,27 @@ KeymapWrapper::OnKeysChanged(GdkKeymap *aGdkKeymap,
     // We cannot reintialize here becasue we don't have GdkWindow which is using
     // the GdkKeymap.  We'll reinitialize it when next GetInstance() is called.
     sInstance->mInitialized = false;
+    ResetBidiKeyboard();
+}
 
-    // Reset the bidi keyboard settings for the new GdkKeymap
-    if (!sBidiKeyboard) {
-        CallGetService("@mozilla.org/widget/bidikeyboard;1", &sBidiKeyboard);
-    }
-    if (sBidiKeyboard) {
-        sBidiKeyboard->Reset();
-    }
+// static
+void
+KeymapWrapper::OnDirectionChanged(GdkKeymap *aGdkKeymap,
+                                  KeymapWrapper* aKeymapWrapper)
+{
+    // XXX
+    // A lot of diretion-changed signal might be fired on switching bidi
+    // keyboard when using both ibus (with arabic layout) and fcitx (with IME).
+    // See https://github.com/fcitx/fcitx/issues/257
+    //
+    // Also, when using ibus, switching to IM might not cause this signal.
+    // See https://github.com/ibus/ibus/issues/1848
+
+    MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
+        ("OnDirectionChanged, aGdkKeymap=%p, aKeymapWrapper=%p",
+         aGdkKeymap, aKeymapWrapper));
+
+    ResetBidiKeyboard();
 }
 
 /* static */ guint
@@ -579,44 +606,59 @@ KeymapWrapper::AreModifiersActive(Modifiers aModifiers,
     return true;
 }
 
+/* static */ uint32_t
+KeymapWrapper::ComputeCurrentKeyModifiers()
+{
+    return ComputeKeyModifiers(GetCurrentModifierState());
+}
+
+/* static */ uint32_t
+KeymapWrapper::ComputeKeyModifiers(guint aModifierState)
+{
+    KeymapWrapper* keymapWrapper = GetInstance();
+
+    uint32_t keyModifiers = 0;
+    // DOM Meta key should be TRUE only on Mac.  We need to discuss this
+    // issue later.
+    if (keymapWrapper->AreModifiersActive(SHIFT, aModifierState)) {
+        keyModifiers |= MODIFIER_SHIFT;
+    }
+    if (keymapWrapper->AreModifiersActive(CTRL, aModifierState)) {
+        keyModifiers |= MODIFIER_CONTROL;
+    }
+    if (keymapWrapper->AreModifiersActive(ALT, aModifierState)) {
+        keyModifiers |= MODIFIER_ALT;
+    }
+    if (keymapWrapper->AreModifiersActive(META, aModifierState)) {
+        keyModifiers |= MODIFIER_META;
+    }
+    if (keymapWrapper->AreModifiersActive(SUPER, aModifierState) ||
+        keymapWrapper->AreModifiersActive(HYPER, aModifierState)) {
+        keyModifiers |= MODIFIER_OS;
+    }
+    if (keymapWrapper->AreModifiersActive(LEVEL3, aModifierState) ||
+        keymapWrapper->AreModifiersActive(LEVEL5, aModifierState)) {
+        keyModifiers |= MODIFIER_ALTGRAPH;
+    }
+    if (keymapWrapper->AreModifiersActive(CAPS_LOCK, aModifierState)) {
+        keyModifiers |= MODIFIER_CAPSLOCK;
+    }
+    if (keymapWrapper->AreModifiersActive(NUM_LOCK, aModifierState)) {
+        keyModifiers |= MODIFIER_NUMLOCK;
+    }
+    if (keymapWrapper->AreModifiersActive(SCROLL_LOCK, aModifierState)) {
+        keyModifiers |= MODIFIER_SCROLLLOCK;
+    }
+    return keyModifiers;
+}
+
 /* static */ void
 KeymapWrapper::InitInputEvent(WidgetInputEvent& aInputEvent,
                               guint aModifierState)
 {
     KeymapWrapper* keymapWrapper = GetInstance();
 
-    aInputEvent.mModifiers = 0;
-    // DOM Meta key should be TRUE only on Mac.  We need to discuss this
-    // issue later.
-    if (keymapWrapper->AreModifiersActive(SHIFT, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_SHIFT;
-    }
-    if (keymapWrapper->AreModifiersActive(CTRL, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_CONTROL;
-    }
-    if (keymapWrapper->AreModifiersActive(ALT, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_ALT;
-    }
-    if (keymapWrapper->AreModifiersActive(META, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_META;
-    }
-    if (keymapWrapper->AreModifiersActive(SUPER, aModifierState) ||
-        keymapWrapper->AreModifiersActive(HYPER, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_OS;
-    }
-    if (keymapWrapper->AreModifiersActive(LEVEL3, aModifierState) ||
-        keymapWrapper->AreModifiersActive(LEVEL5, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_ALTGRAPH;
-    }
-    if (keymapWrapper->AreModifiersActive(CAPS_LOCK, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_CAPSLOCK;
-    }
-    if (keymapWrapper->AreModifiersActive(NUM_LOCK, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_NUMLOCK;
-    }
-    if (keymapWrapper->AreModifiersActive(SCROLL_LOCK, aModifierState)) {
-        aInputEvent.mModifiers |= MODIFIER_SCROLLLOCK;
-    }
+    aInputEvent.mModifiers = ComputeKeyModifiers(aModifierState);
 
     MOZ_LOG(gKeymapWrapperLog, LogLevel::Debug,
         ("%p InitInputEvent, aModifierState=0x%08X, "
@@ -919,7 +961,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_L:
         case GDK_Hyper_L:
         case GDK_Meta_L:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
+            aKeyEvent.mLocation = eKeyLocationLeft;
             break;
 
         case GDK_Shift_R:
@@ -928,7 +970,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_R:
         case GDK_Hyper_R:
         case GDK_Meta_R:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
+            aKeyEvent.mLocation = eKeyLocationRight;
             break;
 
         case GDK_KP_0:
@@ -966,11 +1008,11 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_KP_Subtract:
         case GDK_KP_Decimal:
         case GDK_KP_Divide:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+            aKeyEvent.mLocation = eKeyLocationNumpad;
             break;
 
         default:
-            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
+            aKeyEvent.mLocation = eKeyLocationStandard;
             break;
     }
 

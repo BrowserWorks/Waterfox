@@ -107,7 +107,7 @@
         curCSS: function (f, l, k)
         {
             l = l.replace(/([A-Z])/g, "-$1").toLowerCase();
-            var c = document.defaultView.getComputedStyle(f, null);
+            var c = document.defaultView.getComputedStyle(f);
             c.getPropertyValue(l);
         },
         clean: function (l, h)
@@ -215,7 +215,7 @@
     });
     function bindReady()
     {
-        document.addEventListener("DOMContentLoaded", D.ready, false);
+        document.addEventListener("DOMContentLoaded", D.ready);
     }
     D.each(["Height", "Width"], function (i, b)
     {

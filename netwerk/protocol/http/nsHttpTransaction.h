@@ -17,11 +17,7 @@
 #include "Http2Push.h"
 #include "mozilla/net/DNS.h"
 #include "ARefBase.h"
-
-#ifdef MOZ_WIDGET_GONK
-#include "nsINetworkInterface.h"
-#include "nsProxyRelease.h"
-#endif
+#include "AlternateServices.h"
 
 //-----------------------------------------------------------------------------
 
@@ -73,20 +69,27 @@ public:
     //        the dispatch target were notifications should be sent.
     // @param callbacks
     //        the notification callbacks to be given to PSM.
+    // @param topLevelOuterContentWindowId
+    //        indicate the top level outer content window in which
+    //        this transaction is being loaded.
     // @param responseBody
     //        the input stream that will contain the response data.  async
     //        wait on this input stream for data.  on first notification,
     //        headers should be available (check transaction status).
     //
-    nsresult Init(uint32_t               caps,
-                  nsHttpConnectionInfo  *connInfo,
-                  nsHttpRequestHead     *reqHeaders,
-                  nsIInputStream        *reqBody,
-                  bool                   reqBodyIncludesHeaders,
-                  nsIEventTarget        *consumerTarget,
-                  nsIInterfaceRequestor *callbacks,
-                  nsITransportEventSink *eventsink,
-                  nsIAsyncInputStream  **responseBody);
+    MOZ_MUST_USE nsresult Init(uint32_t               caps,
+                               nsHttpConnectionInfo  *connInfo,
+                               nsHttpRequestHead     *reqHeaders,
+                               nsIInputStream        *reqBody,
+                               uint64_t               reqContentLength,
+                               bool                   reqBodyIncludesHeaders,
+                               nsIEventTarget        *consumerTarget,
+                               nsIInterfaceRequestor *callbacks,
+                               nsITransportEventSink *eventsink,
+                               uint64_t               topLevelOuterContentWindowId,
+                               nsIAsyncInputStream  **responseBody);
+
+    void OnActivated(bool h2) override;
 
     // attributes
     nsHttpResponseHead    *ResponseHead()   { return mHaveAllHeaders ? mResponseHead : nullptr; }
@@ -118,14 +121,11 @@ public:
     void    SetPriority(int32_t priority) { mPriority = priority; }
     int32_t    Priority()                 { return mPriority; }
 
-    enum Classifier Classification() { return mClassification; }
-
     void PrintDiagnostics(nsCString &log);
 
     // Sets mPendingTime to the current time stamp or to a null time stamp (if now is false)
     void SetPendingTime(bool now = true) { mPendingTime = now ? TimeStamp::Now() : TimeStamp(); }
     const TimeStamp GetPendingTime() { return mPendingTime; }
-    bool UsesPipelining() const { return mCaps & NS_HTTP_ALLOW_PIPELINING; }
 
     // overload of nsAHttpTransaction::RequestContext()
     nsIRequestContext *RequestContext() override { return mRequestContext.get(); }
@@ -148,6 +148,7 @@ public:
 
     // Locked methods to get and set timing info
     const TimingStruct Timings();
+    void BootstrapTimings(TimingStruct times);
     void SetDomainLookupStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
     void SetDomainLookupEnd(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
     void SetConnectStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
@@ -159,6 +160,8 @@ public:
     mozilla::TimeStamp GetDomainLookupStart();
     mozilla::TimeStamp GetDomainLookupEnd();
     mozilla::TimeStamp GetConnectStart();
+    mozilla::TimeStamp GetSecureConnectionStart();
+
     mozilla::TimeStamp GetConnectEnd();
     mozilla::TimeStamp GetRequestStart();
     mozilla::TimeStamp GetResponseStart();
@@ -166,30 +169,47 @@ public:
 
     int64_t GetTransferSize() { return mTransferSize; }
 
+    MOZ_MUST_USE bool Do0RTT() override;
+    MOZ_MUST_USE nsresult Finish0RTT(bool aRestart, bool aAlpnChanged /* ignored */) override;
+
+    // After Finish0RTT early data may have failed but the caller did not request
+    // restart - this indicates that state for dev tools
+    void Refused0RTT();
+
+    MOZ_MUST_USE bool CanDo0RTT() override;
+    MOZ_MUST_USE nsresult RestartOnFastOpenError() override;
+
+    uint64_t TopLevelOuterContentWindowId() override
+    {
+        return mTopLevelOuterContentWindowId;
+    }
+
+    void SetFastOpenStatus(uint8_t aStatus) override;
 private:
     friend class DeleteHttpTransaction;
     virtual ~nsHttpTransaction();
 
-    nsresult Restart();
-    nsresult RestartInProgress();
+    MOZ_MUST_USE nsresult Restart();
     char    *LocateHttpStart(char *buf, uint32_t len,
                              bool aAllowPartialMatch);
-    nsresult ParseLine(nsACString &line);
-    nsresult ParseLineSegment(char *seg, uint32_t len);
-    nsresult ParseHead(char *, uint32_t count, uint32_t *countRead);
-    nsresult HandleContentStart();
-    nsresult HandleContent(char *, uint32_t count, uint32_t *contentRead, uint32_t *contentRemaining);
-    nsresult ProcessData(char *, uint32_t, uint32_t *);
+    MOZ_MUST_USE nsresult ParseLine(nsACString &line);
+    MOZ_MUST_USE nsresult ParseLineSegment(char *seg, uint32_t len);
+    MOZ_MUST_USE nsresult ParseHead(char *, uint32_t count,
+                                    uint32_t *countRead);
+    MOZ_MUST_USE nsresult HandleContentStart();
+    MOZ_MUST_USE nsresult HandleContent(char *, uint32_t count,
+                                        uint32_t *contentRead,
+                                        uint32_t *contentRemaining);
+    MOZ_MUST_USE nsresult ProcessData(char *, uint32_t, uint32_t *);
     void     DeleteSelfOnConsumerThread();
     void     ReleaseBlockingTransaction();
 
-    Classifier Classify();
-    void       CancelPipeline(uint32_t reason);
-
-    static NS_METHOD ReadRequestSegment(nsIInputStream *, void *, const char *,
-                                        uint32_t, uint32_t, uint32_t *);
-    static NS_METHOD WritePipeSegment(nsIOutputStream *, void *, char *,
-                                      uint32_t, uint32_t, uint32_t *);
+    static MOZ_MUST_USE nsresult ReadRequestSegment(nsIInputStream *, void *,
+                                                    const char *, uint32_t,
+                                                    uint32_t, uint32_t *);
+    static MOZ_MUST_USE nsresult WritePipeSegment(nsIOutputStream *, void *,
+                                                  char *, uint32_t, uint32_t,
+                                                  uint32_t *);
 
     bool TimingEnabled() const { return mCaps & NS_HTTP_TIMING_ENABLED; }
 
@@ -198,15 +218,31 @@ private:
     void DisableSpdy() override;
     void ReuseConnectionOnRestartOK(bool reuseOk) override { mReuseOnRestart = reuseOk; }
 
+    // Called right after we parsed the response head.  Checks for connection based
+    // authentication schemes in reponse headers for WWW and Proxy authentication.
+    // If such is found in any of them, NS_HTTP_STICKY_CONNECTION is set in mCaps.
+    // We need the sticky flag be set early to keep the connection from very start
+    // of the authentication process.
+    void CheckForStickyAuthScheme();
+    void CheckForStickyAuthSchemeAt(nsHttpAtom const& header);
+
+    // Called from WriteSegments.  Checks for conditions whether to throttle reading
+    // the content.  When this returns true, WriteSegments returns WOULD_BLOCK.
+    bool ShouldStopReading();
+
 private:
     class UpdateSecurityCallbacks : public Runnable
     {
       public:
         UpdateSecurityCallbacks(nsHttpTransaction* aTrans,
                                 nsIInterfaceRequestor* aCallbacks)
-        : mTrans(aTrans), mCallbacks(aCallbacks) {}
+          : Runnable("net::nsHttpTransaction::UpdateSecurityCallbacks")
+          , mTrans(aTrans)
+          , mCallbacks(aCallbacks)
+        {
+        }
 
-        NS_IMETHOD Run()
+        NS_IMETHOD Run() override
         {
             if (mTrans->mConnection)
                 mTrans->mConnection->SetSecurityCallbacks(mCallbacks);
@@ -246,7 +282,7 @@ private:
 
     int64_t                         mContentLength;   // equals -1 if unknown
     int64_t                         mContentRead;     // count of consumed content bytes
-    int64_t                         mTransferSize; // count of received bytes
+    Atomic<int64_t, ReleaseAcquire> mTransferSize; // count of received bytes
 
     // After a 304/204 or other "no-content" style response we will skip over
     // up to MAX_INVALID_RESPONSE_BODY_SZ bytes when looking for the next
@@ -268,12 +304,11 @@ private:
 
     uint16_t                        mRestartCount;        // the number of times this transaction has been restarted
     uint32_t                        mCaps;
-    enum Classifier                 mClassification;
-    int32_t                         mPipelinePosition;
-    int64_t                         mMaxPipelineObjectSize;
 
     nsHttpVersion                   mHttpVersion;
     uint16_t                        mHttpResponseCode;
+
+    uint32_t                        mCurrentHttpResponseHeaderSize;
 
     // mCapsToClear holds flags that should be cleared in mCaps, e.g. unset
     // NS_HTTP_REFRESH_DNS when DNS refresh request has completed to avoid
@@ -285,10 +320,17 @@ private:
     Atomic<uint32_t>                mCapsToClear;
     Atomic<bool, ReleaseAcquire>    mResponseIsComplete;
 
+    // True iff WriteSegments was called while this transaction should be throttled (stop reading)
+    // Used to resume read on unblock of reading.  Conn manager is responsible for calling back
+    // to resume reading.
+    bool                            mReadingStopped;
+
     // state flags, all logically boolean, but not packed together into a
     // bitfield so as to avoid bitfield-induced races.  See bug 560579.
     bool                            mClosed;
     bool                            mConnected;
+    bool                            mActivated;
+    bool                            mActivatedAsH2;
     bool                            mHaveStatusLine;
     bool                            mHaveAllHeaders;
     bool                            mTransactionDone;
@@ -325,67 +367,7 @@ private:
     // The time when the transaction was submitted to the Connection Manager
     TimeStamp                       mPendingTime;
 
-    class RestartVerifier
-    {
-
-        // When a idemptotent transaction has received part of its response body
-        // and incurs an error it can be restarted. To do this we mark the place
-        // where we stopped feeding the body to the consumer and start the
-        // network call over again. If everything we track (headers, length, etc..)
-        // matches up to the place where we left off then the consumer starts being
-        // fed data again with the new information. This can be done N times up
-        // to the normal restart (i.e. with no response info) limit.
-
-    public:
-        RestartVerifier()
-            : mContentLength(-1)
-            , mAlreadyProcessed(0)
-            , mToReadBeforeRestart(0)
-            , mSetup(false)
-        {}
-        ~RestartVerifier() {}
-
-        void Set(int64_t contentLength, nsHttpResponseHead *head);
-        bool Verify(int64_t contentLength, nsHttpResponseHead *head);
-        bool IsDiscardingContent() { return mToReadBeforeRestart != 0; }
-        bool IsSetup() { return mSetup; }
-        int64_t AlreadyProcessed() { return mAlreadyProcessed; }
-        void SetAlreadyProcessed(int64_t val) {
-            mAlreadyProcessed = val;
-            mToReadBeforeRestart = val;
-        }
-        int64_t ToReadBeforeRestart() { return mToReadBeforeRestart; }
-        void HaveReadBeforeRestart(uint32_t amt)
-        {
-            MOZ_ASSERT(amt <= mToReadBeforeRestart,
-                       "too large of a HaveReadBeforeRestart deduction");
-            mToReadBeforeRestart -= amt;
-        }
-
-    private:
-        // This is the data from the first complete response header
-        // used to make sure that all subsequent response headers match
-
-        int64_t                         mContentLength;
-        nsCString                       mETag;
-        nsCString                       mLastModified;
-        nsCString                       mContentRange;
-        nsCString                       mContentEncoding;
-        nsCString                       mTransferEncoding;
-
-        // This is the amount of data that has been passed to the channel
-        // from previous iterations of the transaction and must therefore
-        // be skipped in the new one.
-        int64_t                         mAlreadyProcessed;
-
-        // The amount of data that must be discarded in the current iteration
-        // (where iteration > 0) to reach the mAlreadyProcessed high water
-        // mark.
-        int64_t                         mToReadBeforeRestart;
-
-        // true when ::Set has been called with a response header
-        bool                            mSetup;
-    } mRestartInProgressVerifier;
+    uint64_t                        mTopLevelOuterContentWindowId;
 
 // For Rate Pacing via an EventTokenBucket
 public:
@@ -407,34 +389,21 @@ public:
     // but later can be dispatched via spdy (not subject to rate pacing).
     void CancelPacing(nsresult reason);
 
+    // Called by the connetion manager on the socket thread when reading for this
+    // previously throttled transaction has to be resumed.
+    void ResumeReading();
+
+    // This examins classification of this transaction whether the Throttleable class
+    // has been set while Leader, Unblocked, DontThrottle has not.
+    bool EligibleForThrottling() const;
+
 private:
     bool mSubmittedRatePacing;
     bool mPassedRatePacing;
     bool mSynchronousRatePaceRequest;
     nsCOMPtr<nsICancelable> mTokenBucketCancel;
-
-// These members are used for network per-app metering (bug 746073)
-// Currently, they are only available on gonk.
-    uint64_t                           mCountRecv;
-    uint64_t                           mCountSent;
-    uint32_t                           mAppId;
-    bool                               mIsInIsolatedMozBrowser;
-#ifdef MOZ_WIDGET_GONK
-    nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
-#endif
-    nsresult                           SaveNetworkStats(bool);
-    void                               CountRecvBytes(uint64_t recvBytes)
-    {
-        mCountRecv += recvBytes;
-        SaveNetworkStats(false);
-    }
-    void                               CountSentBytes(uint64_t sentBytes)
-    {
-        mCountSent += sentBytes;
-        SaveNetworkStats(false);
-    }
 public:
-    void     SetClassOfService(uint32_t cos) { mClassOfService = cos; }
+    void     SetClassOfService(uint32_t cos);
     uint32_t ClassOfService() { return mClassOfService; }
 private:
     uint32_t mClassOfService;
@@ -455,11 +424,25 @@ private:
     RefPtr<ASpdySession> mTunnelProvider;
 
 public:
+    void SetTransactionObserver(TransactionObserver *arg) { mTransactionObserver = arg; }
+private:
+    RefPtr<TransactionObserver> mTransactionObserver;
+public:
     void GetNetworkAddresses(NetAddr &self, NetAddr &peer);
 
 private:
     NetAddr                         mSelfAddr;
     NetAddr                         mPeerAddr;
+
+    bool                            m0RTTInProgress;
+    enum
+    {
+        EARLY_NONE,
+        EARLY_SENT,
+        EARLY_ACCEPTED
+    } mEarlyDataDisposition;
+
+    uint8_t mFastOpenStatus;
 };
 
 } // namespace net

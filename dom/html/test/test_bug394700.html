@@ -19,22 +19,22 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=394700
 
 /** Test for Bug 394700 **/
 
-function remove(q1) { q1.parentNode.removeChild(q1); }
+function remove(q1) { q1.remove(); }
 
 function testSelectedIndex()
 {
-  document.addEventListener("DOMNodeRemoved", foo, false);
+  document.addEventListener("DOMNodeRemoved", foo);
   remove(document.getElementById("B"));
-  document.removeEventListener("DOMNodeRemoved", foo, false);
+  document.removeEventListener("DOMNodeRemoved", foo);
 
   function foo()
   {
-    document.removeEventListener("DOMNodeRemoved", foo, false);
+    document.removeEventListener("DOMNodeRemoved", foo);
     remove(document.getElementById("A"));
   }
   var selectElement = document.getElementsByTagName("select")[0];
-  ok(selectElement.selectedIndex == -1, "Wrong selected index!");
-  ok(selectElement.length == 0, "Select shouldn't have any options!")
+  is(selectElement.selectedIndex, -1, "Wrong selected index!");
+  is(selectElement.length, 0, "Select shouldn't have any options!");
 }
 
 SimpleTest.waitForExplicitFinish();

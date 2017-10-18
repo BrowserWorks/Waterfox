@@ -9,14 +9,15 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/GuardObjects.h"
+#include "mozilla/HashFunctions.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TemplateLib.h"
 
 #include "jsapi.h"
+#include "jsatom.h"
 #include "jsfriendapi.h"
-#include "jspropertytree.h"
 #include "jstypes.h"
 #include "NamespaceImports.h"
 
@@ -30,6 +31,7 @@
 #include "js/UbiNode.h"
 #include "vm/ObjectGroup.h"
 #include "vm/String.h"
+#include "vm/Symbol.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -94,6 +96,12 @@
  * property tree Shapes never change, but shape tables for dictionary mode
  * Shapes can grow and shrink.
  *
+ * To save memory, shape tables can be discarded on GC and recreated when
+ * needed. AutoKeepShapeTables can be used to avoid discarding shape tables
+ * for a particular zone. Methods operating on ShapeTables take either an
+ * AutoCheckCannotGC or AutoKeepShapeTables argument, to help ensure tables
+ * are not purged while we're using them.
+ *
  * There used to be a long, math-heavy comment here explaining why property
  * trees are more space-efficient than alternatives.  This was removed in bug
  * 631138; see that bug for the full details.
@@ -106,12 +114,106 @@
  * a single BaseShape.
  */
 
-#define JSSLOT_FREE(clasp)  JSCLASS_RESERVED_SLOTS(clasp)
+MOZ_ALWAYS_INLINE size_t
+JSSLOT_FREE(const js::Class* clasp)
+{
+    // Proxy classes have reserved slots, but proxies manage their own slot
+    // layout.
+    MOZ_ASSERT(!clasp->isProxy());
+    return JSCLASS_RESERVED_SLOTS(clasp);
+}
 
 namespace js {
 
-class Bindings;
-class StaticBlockScope;
+class Shape;
+struct StackShape;
+
+struct ShapeHasher : public DefaultHasher<Shape*> {
+    typedef Shape* Key;
+    typedef StackShape Lookup;
+
+    static MOZ_ALWAYS_INLINE HashNumber hash(const Lookup& l);
+    static MOZ_ALWAYS_INLINE bool match(Key k, const Lookup& l);
+};
+
+typedef HashSet<Shape*, ShapeHasher, SystemAllocPolicy> KidsHash;
+
+class KidsPointer {
+  private:
+    enum {
+        SHAPE = 0,
+        HASH  = 1,
+        TAG   = 1
+    };
+
+    uintptr_t w;
+
+  public:
+    bool isNull() const { return !w; }
+    void setNull() { w = 0; }
+
+    bool isShape() const { return (w & TAG) == SHAPE && !isNull(); }
+    Shape* toShape() const {
+        MOZ_ASSERT(isShape());
+        return reinterpret_cast<Shape*>(w & ~uintptr_t(TAG));
+    }
+    void setShape(Shape* shape) {
+        MOZ_ASSERT(shape);
+        MOZ_ASSERT((reinterpret_cast<uintptr_t>(static_cast<Shape*>(shape)) & TAG) == 0);
+        w = reinterpret_cast<uintptr_t>(static_cast<Shape*>(shape)) | SHAPE;
+    }
+
+    bool isHash() const { return (w & TAG) == HASH; }
+    KidsHash* toHash() const {
+        MOZ_ASSERT(isHash());
+        return reinterpret_cast<KidsHash*>(w & ~uintptr_t(TAG));
+    }
+    void setHash(KidsHash* hash) {
+        MOZ_ASSERT(hash);
+        MOZ_ASSERT((reinterpret_cast<uintptr_t>(hash) & TAG) == 0);
+        w = reinterpret_cast<uintptr_t>(hash) | HASH;
+    }
+
+#ifdef DEBUG
+    void checkConsistency(Shape* aKid) const;
+#endif
+};
+
+class PropertyTree
+{
+    friend class ::JSFunction;
+
+#ifdef DEBUG
+    JS::Zone* zone_;
+#endif
+
+    bool insertChild(JSContext* cx, Shape* parent, Shape* child);
+
+    PropertyTree();
+
+  public:
+    /*
+     * Use a lower limit for objects that are accessed using SETELEM (o[x] = y).
+     * These objects are likely used as hashmaps and dictionary mode is more
+     * efficient in this case.
+     */
+    enum {
+        MAX_HEIGHT = 512,
+        MAX_HEIGHT_WITH_ELEMENTS_ACCESS = 128
+    };
+
+    explicit PropertyTree(JS::Zone* zone)
+#ifdef DEBUG
+      : zone_(zone)
+#endif
+    {
+    }
+
+    MOZ_ALWAYS_INLINE Shape* inlinedGetChild(JSContext* cx, Shape* parent,
+                                             JS::Handle<StackShape> child);
+    Shape* getChild(JSContext* cx, Shape* parent, JS::Handle<StackShape> child);
+};
+
 class TenuringTracer;
 
 typedef JSGetterOp GetterOp;
@@ -122,6 +224,8 @@ static const uint32_t SHAPE_INVALID_SLOT = JS_BIT(24) - 1;
 static const uint32_t SHAPE_MAXIMUM_SLOT = JS_BIT(24) - 2;
 
 enum class MaybeAdding { Adding = true, NotAdding = false };
+
+class AutoKeepShapeTables;
 
 /*
  * Shapes use multiplicative hashing, but specialized to
@@ -192,6 +296,9 @@ class ShapeTable {
 
     Entry*          entries_;          /* table of ptrs to shared tree nodes */
 
+    template<MaybeAdding Adding>
+    MOZ_ALWAYS_INLINE Entry& searchUnchecked(jsid id);
+
   public:
     explicit ShapeTable(uint32_t nentries)
       : hashShift_(HASH_BITS - MIN_SIZE_LOG2),
@@ -221,13 +328,16 @@ class ShapeTable {
     }
 
     // init() is fallible and reports OOM to the context.
-    bool init(ExclusiveContext* cx, Shape* lastProp);
+    bool init(JSContext* cx, Shape* lastProp);
 
     // change() is fallible but does not report OOM.
-    bool change(ExclusiveContext* cx, int log2Delta);
+    bool change(JSContext* cx, int log2Delta);
 
     template<MaybeAdding Adding>
-    Entry& search(jsid id);
+    MOZ_ALWAYS_INLINE Entry& search(jsid id, const AutoKeepShapeTables&);
+
+    template<MaybeAdding Adding>
+    MOZ_ALWAYS_INLINE Entry& search(jsid id, const JS::AutoCheckCannotGC&);
 
     void trace(JSTracer* trc);
 #ifdef JSGC_HASH_TABLE_CHECKS
@@ -266,7 +376,21 @@ class ShapeTable {
      * and returns false.  This will make any extant pointers into the
      * table invalid.  Don't call this unless needsToGrow() is true.
      */
-    bool grow(ExclusiveContext* cx);
+    bool grow(JSContext* cx);
+};
+
+// Ensures no shape tables are purged in the current zone.
+class MOZ_RAII AutoKeepShapeTables
+{
+    JSContext* cx_;
+    bool prev_;
+
+    AutoKeepShapeTables(const AutoKeepShapeTables&) = delete;
+    void operator=(const AutoKeepShapeTables&) = delete;
+
+  public:
+    explicit inline AutoKeepShapeTables(JSContext* cx);
+    inline ~AutoKeepShapeTables();
 };
 
 /*
@@ -284,13 +408,13 @@ class ShapeTable {
  * whose entries are all owned by that dictionary. Unowned Shapes are all in
  * the property tree.
  *
- * Owned BaseShapes are used for shapes which have shape tables, including
- * the last properties in all dictionaries. Unowned BaseShapes compactly store
- * information common to many shapes. In a given compartment there is a single
- * BaseShape for each combination of BaseShape information. This information
- * is cloned in owned BaseShapes so that information can be quickly looked up
- * for a given object or shape without regard to whether the base shape is
- * owned or not.
+ * Owned BaseShapes are used for shapes which have shape tables, including the
+ * last properties in all dictionaries. Unowned BaseShapes compactly store
+ * information common to many shapes. In a given zone there is a single
+ * BaseShape for each combination of BaseShape information. This information is
+ * cloned in owned BaseShapes so that information can be quickly looked up for a
+ * given object or shape without regard to whether the base shape is owned or
+ * not.
  *
  * All combinations of owned/unowned Shapes/BaseShapes are possible:
  *
@@ -354,7 +478,7 @@ class BaseShape : public gc::TenuredCell
         DELEGATE            =    0x8,
         NOT_EXTENSIBLE      =   0x10,
         INDEXED             =   0x20,
-        /* (0x40 is unused) */
+        HAS_INTERESTING_SYMBOL = 0x40,
         HAD_ELEMENTS_ACCESS =   0x80,
         WATCHED             =  0x100,
         ITERATED_SINGLETON  =  0x200,
@@ -376,7 +500,6 @@ class BaseShape : public gc::TenuredCell
 
   private:
     const Class*        clasp_;        /* Class of referring object. */
-    JSCompartment*      compartment_;  /* Compartment shape belongs to. */
     uint32_t            flags;          /* Vector of above flags. */
     uint32_t            slotSpan_;      /* Object slot span for BaseShapes at
                                          * dictionary last properties. */
@@ -387,20 +510,16 @@ class BaseShape : public gc::TenuredCell
     /* For owned BaseShapes, the shape's shape table. */
     ShapeTable*      table_;
 
+#if JS_BITS_PER_WORD == 32
+    // Ensure sizeof(BaseShape) is a multiple of gc::CellAlignBytes.
+    uint32_t padding_;
+#endif
+
     BaseShape(const BaseShape& base) = delete;
     BaseShape& operator=(const BaseShape& other) = delete;
 
   public:
     void finalize(FreeOp* fop);
-
-    BaseShape(JSCompartment* comp, const Class* clasp, uint32_t objectFlags)
-    {
-        MOZ_ASSERT(!(objectFlags & ~OBJECT_FLAG_MASK));
-        mozilla::PodZero(this);
-        this->clasp_ = clasp;
-        this->flags = objectFlags;
-        this->compartment_ = comp;
-    }
 
     explicit inline BaseShape(const StackBaseShape& base);
 
@@ -422,20 +541,31 @@ class BaseShape : public gc::TenuredCell
     uint32_t getObjectFlags() const { return flags & OBJECT_FLAG_MASK; }
 
     bool hasTable() const { MOZ_ASSERT_IF(table_, isOwned()); return table_ != nullptr; }
-    ShapeTable& table() const { MOZ_ASSERT(table_ && isOwned()); return *table_; }
     void setTable(ShapeTable* table) { MOZ_ASSERT(isOwned()); table_ = table; }
+
+    ShapeTable* maybeTable(const AutoKeepShapeTables&) const {
+        MOZ_ASSERT_IF(table_, isOwned());
+        return table_;
+    }
+    ShapeTable* maybeTable(const JS::AutoCheckCannotGC&) const {
+        MOZ_ASSERT_IF(table_, isOwned());
+        return table_;
+    }
+    void maybePurgeTable() {
+        if (table_ && table_->freeList() == SHAPE_INVALID_SLOT) {
+            js_delete(table_);
+            table_ = nullptr;
+        }
+    }
 
     uint32_t slotSpan() const { MOZ_ASSERT(isOwned()); return slotSpan_; }
     void setSlotSpan(uint32_t slotSpan) { MOZ_ASSERT(isOwned()); slotSpan_ = slotSpan; }
 
-    JSCompartment* compartment() const { return compartment_; }
-    JSCompartment* maybeCompartment() const { return compartment(); }
-
     /*
-     * Lookup base shapes from the compartment's baseShapes table, adding if
-     * not already found.
+     * Lookup base shapes from the zone's baseShapes table, adding if not
+     * already found.
      */
-    static UnownedBaseShape* getUnowned(ExclusiveContext* cx, StackBaseShape& base);
+    static UnownedBaseShape* getUnowned(JSContext* cx, StackBaseShape& base);
 
     /* Get the canonical base shape. */
     inline UnownedBaseShape* unowned();
@@ -464,9 +594,9 @@ class BaseShape : public gc::TenuredCell
   private:
     static void staticAsserts() {
         JS_STATIC_ASSERT(offsetof(BaseShape, clasp_) == offsetof(js::shadow::BaseShape, clasp_));
-        static_assert(sizeof(BaseShape) % gc::CellSize == 0,
+        static_assert(sizeof(BaseShape) % gc::CellAlignBytes == 0,
                       "Things inheriting from gc::Cell must have a size that's "
-                      "a multiple of gc::CellSize");
+                      "a multiple of gc::CellAlignBytes");
     }
 
     void traceShapeTable(JSTracer* trc);
@@ -494,20 +624,18 @@ BaseShape::baseUnowned()
     return unowned_;
 }
 
-/* Entries for the per-compartment baseShapes set of unowned base shapes. */
+/* Entries for the per-zone baseShapes set of unowned base shapes. */
 struct StackBaseShape : public DefaultHasher<ReadBarriered<UnownedBaseShape*>>
 {
     uint32_t flags;
     const Class* clasp;
-    JSCompartment* compartment;
 
     explicit StackBaseShape(BaseShape* base)
       : flags(base->flags & BaseShape::OBJECT_FLAG_MASK),
-        clasp(base->clasp_),
-        compartment(base->compartment())
+        clasp(base->clasp_)
     {}
 
-    inline StackBaseShape(ExclusiveContext* cx, const Class* clasp, uint32_t objectFlags);
+    inline StackBaseShape(JSContext* cx, const Class* clasp, uint32_t objectFlags);
     explicit inline StackBaseShape(Shape* shape);
 
     struct Lookup
@@ -524,24 +652,57 @@ struct StackBaseShape : public DefaultHasher<ReadBarriered<UnownedBaseShape*>>
         {
             MOZ_ASSERT(!base->isOwned());
         }
+
+        explicit Lookup(const ReadBarriered<UnownedBaseShape*>& base)
+          : flags(base.unbarrieredGet()->getObjectFlags()), clasp(base.unbarrieredGet()->clasp())
+        {
+            MOZ_ASSERT(!base.unbarrieredGet()->isOwned());
+        }
     };
 
-    static inline HashNumber hash(const Lookup& lookup);
-    static inline bool match(ReadBarriered<UnownedBaseShape*> key, const Lookup& lookup);
+    static HashNumber hash(const Lookup& lookup) {
+        return mozilla::HashGeneric(lookup.flags, lookup.clasp);
+    }
+    static inline bool match(const ReadBarriered<UnownedBaseShape*>& key, const Lookup& lookup) {
+        return key.unbarrieredGet()->flags == lookup.flags &&
+               key.unbarrieredGet()->clasp_ == lookup.clasp;
+    }
 };
 
-using BaseShapeSet = JS::GCHashSet<ReadBarriered<UnownedBaseShape*>,
-                                   StackBaseShape,
-                                   SystemAllocPolicy>;
+static MOZ_ALWAYS_INLINE js::HashNumber
+HashId(jsid id)
+{
+    // HashGeneric alone would work, but bits of atom and symbol addresses
+    // could then be recovered from the hash code. See bug 1330769.
+    if (MOZ_LIKELY(JSID_IS_ATOM(id)))
+        return JSID_TO_ATOM(id)->hash();
+    if (JSID_IS_SYMBOL(id))
+        return JSID_TO_SYMBOL(id)->hash();
+    return mozilla::HashGeneric(JSID_BITS(id));
+}
+
+template <>
+struct DefaultHasher<jsid>
+{
+    typedef jsid Lookup;
+    static HashNumber hash(jsid id) {
+        return HashId(id);
+    }
+    static bool match(jsid id1, jsid id2) {
+        return id1 == id2;
+    }
+};
+
+using BaseShapeSet = JS::WeakCache<JS::GCHashSet<ReadBarriered<UnownedBaseShape*>,
+                                                 StackBaseShape,
+                                                 SystemAllocPolicy>>;
 
 class Shape : public gc::TenuredCell
 {
     friend class ::JSObject;
     friend class ::JSFunction;
-    friend class Bindings;
     friend class NativeObject;
     friend class PropertyTree;
-    friend class StaticBlockScope;
     friend class TenuringTracer;
     friend struct StackBaseShape;
     friend struct StackShape;
@@ -595,8 +756,13 @@ class Shape : public gc::TenuredCell
     };
 
     template<MaybeAdding Adding = MaybeAdding::NotAdding>
-    static inline Shape* search(ExclusiveContext* cx, Shape* start, jsid id,
-                                ShapeTable::Entry** pentry);
+    static MOZ_ALWAYS_INLINE Shape* search(JSContext* cx, Shape* start, jsid id);
+
+    template<MaybeAdding Adding = MaybeAdding::NotAdding>
+    static inline MOZ_MUST_USE bool search(JSContext* cx, Shape* start, jsid id,
+                                           const AutoKeepShapeTables&,
+                                           Shape** pshape, ShapeTable::Entry** pentry);
+
     static inline Shape* searchNoHashify(Shape* start, jsid id);
 
     void removeFromDictionary(NativeObject* obj);
@@ -606,7 +772,7 @@ class Shape : public gc::TenuredCell
                                     GCPtrShape* dictp);
 
     /* Replace the base shape of the last shape in a non-dictionary lineage with base. */
-    static Shape* replaceLastProperty(ExclusiveContext* cx, StackBaseShape& base,
+    static Shape* replaceLastProperty(JSContext* cx, StackBaseShape& base,
                                       TaggedProto proto, HandleShape shape);
 
     /*
@@ -614,7 +780,7 @@ class Shape : public gc::TenuredCell
      * is thread local, which is the case when we clone the entire shape
      * lineage in preparation for converting an object to dictionary mode.
      */
-    static bool hashify(ExclusiveContext* cx, Shape* shape);
+    static bool hashify(JSContext* cx, Shape* shape);
     void handoffTableTo(Shape* newShape);
 
     void setParent(Shape* p) {
@@ -625,26 +791,47 @@ class Shape : public gc::TenuredCell
         parent = p;
     }
 
-    bool ensureOwnBaseShape(ExclusiveContext* cx) {
+    bool ensureOwnBaseShape(JSContext* cx) {
         if (base()->isOwned())
             return true;
         return makeOwnBaseShape(cx);
     }
 
-    bool makeOwnBaseShape(ExclusiveContext* cx);
+    bool makeOwnBaseShape(JSContext* cx);
+
+    MOZ_ALWAYS_INLINE MOZ_MUST_USE bool maybeCreateTableForLookup(JSContext* cx);
 
   public:
     bool hasTable() const { return base()->hasTable(); }
-    ShapeTable& table() const { return base()->table(); }
+
+    ShapeTable* maybeTable(const AutoKeepShapeTables& keep) const {
+        return base()->maybeTable(keep);
+    }
+    ShapeTable* maybeTable(const JS::AutoCheckCannotGC& check) const {
+        return base()->maybeTable(check);
+    }
+
+    template <typename T>
+    MOZ_MUST_USE ShapeTable* ensureTableForDictionary(JSContext* cx, const T& nogc) {
+        MOZ_ASSERT(inDictionary());
+        if (ShapeTable* table = maybeTable(nogc))
+            return table;
+        if (!hashify(cx, this))
+            return nullptr;
+        ShapeTable* table = maybeTable(nogc);
+        MOZ_ASSERT(table);
+        return table;
+    }
 
     void addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf,
-                                JS::ClassInfo* info) const
+                                JS::ShapeInfo* info) const
     {
-        if (hasTable()) {
+        JS::AutoCheckCannotGC nogc;
+        if (ShapeTable* table = maybeTable(nogc)) {
             if (inDictionary())
-                info->shapesMallocHeapDictTables += table().sizeOfIncludingThis(mallocSizeOf);
+                info->shapesMallocHeapDictTables += table->sizeOfIncludingThis(mallocSizeOf);
             else
-                info->shapesMallocHeapTreeTables += table().sizeOfIncludingThis(mallocSizeOf);
+                info->shapesMallocHeapTreeTables += table->sizeOfIncludingThis(mallocSizeOf);
         }
 
         if (!inDictionary() && kids.isHash())
@@ -661,8 +848,6 @@ class Shape : public gc::TenuredCell
     }
 
     const GCPtrShape& previous() const { return parent; }
-    JSCompartment* compartment() const { return base()->compartment(); }
-    JSCompartment* maybeCompartment() const { return compartment(); }
 
     template <AllowGC allowGC>
     class Range {
@@ -672,11 +857,11 @@ class Shape : public gc::TenuredCell
         typename MaybeRooted<Shape*, allowGC>::RootType cursor;
 
       public:
-        Range(ExclusiveContext* cx, Shape* shape) : cursor(cx, shape) {
+        Range(JSContext* cx, Shape* shape) : cursor(cx, shape) {
             JS_STATIC_ASSERT(allowGC == CanGC);
         }
 
-        explicit Range(Shape* shape) : cursor((ExclusiveContext*) nullptr, shape) {
+        explicit Range(Shape* shape) : cursor((JSContext*) nullptr, shape) {
             JS_STATIC_ASSERT(allowGC == NoGC);
         }
 
@@ -699,7 +884,7 @@ class Shape : public gc::TenuredCell
         return base()->clasp_;
     }
 
-    static Shape* setObjectFlags(ExclusiveContext* cx,
+    static Shape* setObjectFlags(JSContext* cx,
                                  BaseShape::Flag flag, TaggedProto proto, Shape* last);
 
     uint32_t getObjectFlags() const { return base()->getObjectFlags(); }
@@ -746,7 +931,7 @@ class Shape : public gc::TenuredCell
     Shape(const Shape& other) = delete;
 
     /* Allocate a new shape based on the given StackShape. */
-    static inline Shape* new_(ExclusiveContext* cx, Handle<StackShape> other, uint32_t nfixed);
+    static inline Shape* new_(JSContext* cx, Handle<StackShape> other, uint32_t nfixed);
 
     /*
      * Whether this shape has a valid slot value. This may be true even if
@@ -824,9 +1009,6 @@ class Shape : public gc::TenuredCell
                setter() == rawSetter;
     }
 
-    bool set(JSContext* cx, HandleNativeObject obj, HandleObject receiver, MutableHandleValue vp,
-             ObjectOpResult& result);
-
     BaseShape* base() const { return base_.get(); }
 
     bool hasSlot() const {
@@ -844,7 +1026,10 @@ class Shape : public gc::TenuredCell
 
     uint32_t slotSpan(const Class* clasp) const {
         MOZ_ASSERT(!inDictionary());
-        uint32_t free = JSSLOT_FREE(clasp);
+        // Proxy classes have reserved slots, but proxies manage their own slot
+        // layout. This means all non-native object shapes have nfixed == 0 and
+        // slotSpan == 0.
+        uint32_t free = clasp->isProxy() ? 0 : JSSLOT_FREE(clasp);
         return hasMissingSlot() ? free : Max(free, maybeSlot() + 1);
     }
 
@@ -909,8 +1094,9 @@ class Shape : public gc::TenuredCell
     bool hasShadowable() const { return attrs & JSPROP_SHADOWABLE; }
 
     uint32_t entryCount() {
-        if (hasTable())
-            return table().entryCount();
+        JS::AutoCheckCannotGC nogc;
+        if (ShapeTable* table = maybeTable(nogc))
+            return table->entryCount();
         uint32_t count = 0;
         for (Shape::Range<NoGC> r(this); !r.empty(); r.popFront())
             ++count;
@@ -927,10 +1113,12 @@ class Shape : public gc::TenuredCell
         }
         return false;
     }
+    void clearCachedBigEnoughForShapeTable() {
+        flags &= ~(HAS_CACHED_BIG_ENOUGH_FOR_SHAPE_TABLE | CACHED_BIG_ENOUGH_FOR_SHAPE_TABLE);
+    }
 
   public:
     bool isBigEnoughForAShapeTable() {
-        MOZ_ASSERT(!inDictionary());
         MOZ_ASSERT(!hasTable());
 
         // isBigEnoughForAShapeTableSlow is pretty inefficient so we only call
@@ -964,8 +1152,8 @@ class Shape : public gc::TenuredCell
 
     void traceChildren(JSTracer* trc);
 
-    inline Shape* search(ExclusiveContext* cx, jsid id);
-    inline Shape* searchLinear(jsid id);
+    MOZ_ALWAYS_INLINE Shape* search(JSContext* cx, jsid id);
+    MOZ_ALWAYS_INLINE Shape* searchLinear(jsid id);
 
     void fixupAfterMovingGC();
     void fixupGetterSetterForBarrier(JSTracer* trc);
@@ -1012,8 +1200,7 @@ class AccessorShape : public Shape
 inline
 StackBaseShape::StackBaseShape(Shape* shape)
   : flags(shape->getObjectFlags()),
-    clasp(shape->getObjectClass()),
-    compartment(shape->compartment())
+    clasp(shape->getObjectClass())
 {}
 
 class MOZ_RAII AutoRooterGetterSetter
@@ -1021,7 +1208,7 @@ class MOZ_RAII AutoRooterGetterSetter
     class Inner final : private JS::CustomAutoRooter
     {
       public:
-        inline Inner(ExclusiveContext* cx, uint8_t attrs, GetterOp* pgetter_, SetterOp* psetter_);
+        inline Inner(JSContext* cx, uint8_t attrs, GetterOp* pgetter_, SetterOp* psetter_);
 
       private:
         virtual void trace(JSTracer* trc);
@@ -1032,10 +1219,10 @@ class MOZ_RAII AutoRooterGetterSetter
     };
 
   public:
-    inline AutoRooterGetterSetter(ExclusiveContext* cx, uint8_t attrs,
+    inline AutoRooterGetterSetter(JSContext* cx, uint8_t attrs,
                                   GetterOp* pgetter, SetterOp* psetter
                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
-    inline AutoRooterGetterSetter(ExclusiveContext* cx, uint8_t attrs,
+    inline AutoRooterGetterSetter(JSContext* cx, uint8_t attrs,
                                   JSNative* pgetter, JSNative* psetter
                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
 
@@ -1050,15 +1237,15 @@ struct EmptyShape : public js::Shape
       : js::Shape(base, nfixed)
     { }
 
-    static Shape* new_(ExclusiveContext* cx, Handle<UnownedBaseShape*> base, uint32_t nfixed);
+    static Shape* new_(JSContext* cx, Handle<UnownedBaseShape*> base, uint32_t nfixed);
 
     /*
      * Lookup an initial shape matching the given parameters, creating an empty
      * shape if none was found.
      */
-    static Shape* getInitialShape(ExclusiveContext* cx, const Class* clasp,
+    static Shape* getInitialShape(JSContext* cx, const Class* clasp,
                                   TaggedProto proto, size_t nfixed, uint32_t objectFlags = 0);
-    static Shape* getInitialShape(ExclusiveContext* cx, const Class* clasp,
+    static Shape* getInitialShape(JSContext* cx, const Class* clasp,
                                   TaggedProto proto, gc::AllocKind kind, uint32_t objectFlags = 0);
 
     /*
@@ -1066,7 +1253,7 @@ struct EmptyShape : public js::Shape
      * getInitialShape calls, until the new shape becomes unreachable in a GC
      * and the table entry is purged.
      */
-    static void insertInitialShape(ExclusiveContext* cx, HandleShape shape, HandleObject proto);
+    static void insertInitialShape(JSContext* cx, HandleShape shape, HandleObject proto);
 
     /*
      * Some object subclasses are allocated with a built-in set of properties.
@@ -1079,12 +1266,90 @@ struct EmptyShape : public js::Shape
      */
     template<class ObjectSubclass>
     static inline bool
-    ensureInitialCustomShape(ExclusiveContext* cx, Handle<ObjectSubclass*> obj);
+    ensureInitialCustomShape(JSContext* cx, Handle<ObjectSubclass*> obj);
+};
+
+// InitialShapeProto stores either:
+//
+// * A TaggedProto (or ReadBarriered<TaggedProto>).
+//
+// * A JSProtoKey. This is used instead of the TaggedProto if the proto is one
+//   of the global's builtin prototypes. For instance, if the proto is the
+//   initial Object.prototype, we use key_ = JSProto_Object, proto_ = nullptr.
+//
+// Using the JSProtoKey here is an optimization that lets us share more shapes
+// across compartments within a zone.
+template <typename PtrType>
+class InitialShapeProto
+{
+    template <typename T> friend class InitialShapeProto;
+
+    JSProtoKey key_;
+    PtrType proto_;
+
+  public:
+    InitialShapeProto()
+      : key_(JSProto_LIMIT), proto_()
+    {}
+
+    InitialShapeProto(JSProtoKey key, TaggedProto proto)
+      : key_(key), proto_(proto)
+    {}
+
+    template <typename T>
+    explicit InitialShapeProto(const InitialShapeProto<T>& other)
+      : key_(other.key()), proto_(other.proto_)
+    {}
+
+    explicit InitialShapeProto(TaggedProto proto)
+      : key_(JSProto_LIMIT), proto_(proto)
+    {}
+    explicit InitialShapeProto(JSProtoKey key)
+      : key_(key), proto_(nullptr)
+    {
+        MOZ_ASSERT(key < JSProto_LIMIT);
+    }
+
+    JSProtoKey key() const {
+        return key_;
+    }
+    const PtrType& proto() const {
+        return proto_;
+    }
+    void setProto(TaggedProto proto) {
+        proto_ = proto;
+    }
+
+    bool operator==(const InitialShapeProto& other) const {
+        return key_ == other.key_ && proto_ == other.proto_;
+    }
+};
+
+template <>
+struct MovableCellHasher<InitialShapeProto<ReadBarriered<TaggedProto>>>
+{
+    using Key = InitialShapeProto<ReadBarriered<TaggedProto>>;
+    using Lookup = InitialShapeProto<TaggedProto>;
+
+    static bool hasHash(const Lookup& l) {
+        return MovableCellHasher<TaggedProto>::hasHash(l.proto());
+    }
+    static bool ensureHash(const Lookup& l) {
+        return MovableCellHasher<TaggedProto>::ensureHash(l.proto());
+    }
+    static HashNumber hash(const Lookup& l) {
+        HashNumber hash = MovableCellHasher<TaggedProto>::hash(l.proto());
+        return mozilla::AddToHash(hash, l.key());
+    }
+    static bool match(const Key& k, const Lookup& l) {
+        return k.key() == l.key() &&
+               MovableCellHasher<TaggedProto>::match(k.proto().unbarrieredGet(), l.proto());
+    }
 };
 
 /*
- * Entries for the per-compartment initialShapes set indexing initial shapes
- * for objects in the compartment and the associated types.
+ * Entries for the per-zone initialShapes set indexing initial shapes for
+ * objects in the zone and the associated types.
  */
 struct InitialShapeEntry
 {
@@ -1099,39 +1364,66 @@ struct InitialShapeEntry
      * Matching prototype for the entry. The shape of an object determines its
      * prototype, but the prototype cannot be determined from the shape itself.
      */
-    ReadBarriered<TaggedProto> proto;
+    using ShapeProto = InitialShapeProto<ReadBarriered<TaggedProto>>;
+    ShapeProto proto;
 
     /* State used to determine a match on an initial shape. */
     struct Lookup {
+        using ShapeProto = InitialShapeProto<TaggedProto>;
         const Class* clasp;
-        TaggedProto proto;
+        ShapeProto proto;
         uint32_t nfixed;
         uint32_t baseFlags;
 
-        Lookup(const Class* clasp, TaggedProto proto, uint32_t nfixed, uint32_t baseFlags)
+        Lookup(const Class* clasp, ShapeProto proto, uint32_t nfixed, uint32_t baseFlags)
           : clasp(clasp), proto(proto), nfixed(nfixed), baseFlags(baseFlags)
         {}
+
+        explicit Lookup(const InitialShapeEntry& entry)
+          : proto(entry.proto.key(),
+                  entry.proto.proto().unbarrieredGet())
+        {
+            const Shape* shape = entry.shape.unbarrieredGet();
+            clasp = shape->getObjectClass();
+            nfixed = shape->numFixedSlots();
+            baseFlags = shape->getObjectFlags();
+        }
     };
 
     inline InitialShapeEntry();
-    inline InitialShapeEntry(const ReadBarriered<Shape*>& shape,
-                             const ReadBarriered<TaggedProto>& proto);
+    inline InitialShapeEntry(Shape* shape, const Lookup::ShapeProto& proto);
 
-    inline Lookup getLookup() const;
-
-    static inline HashNumber hash(const Lookup& lookup);
-    static inline bool match(const InitialShapeEntry& key, const Lookup& lookup);
-    static void rekey(InitialShapeEntry& k, const InitialShapeEntry& newKey) { k = newKey; }
+    static HashNumber hash(const Lookup& lookup) {
+        HashNumber hash = MovableCellHasher<ShapeProto>::hash(lookup.proto);
+        return mozilla::AddToHash(hash, mozilla::HashGeneric(lookup.clasp, lookup.nfixed));
+    }
+    static inline bool match(const InitialShapeEntry& key, const Lookup& lookup) {
+        const Shape* shape = key.shape.unbarrieredGet();
+        return lookup.clasp == shape->getObjectClass()
+            && lookup.nfixed == shape->numFixedSlots()
+            && lookup.baseFlags == shape->getObjectFlags()
+            && MovableCellHasher<ShapeProto>::match(key.proto, lookup.proto);
+    }
+    static void rekey(InitialShapeEntry& k, const InitialShapeEntry& newKey) {
+        k = newKey;
+    }
 
     bool needsSweep() {
         Shape* ushape = shape.unbarrieredGet();
-        JSObject* protoObj = proto.raw();
+        TaggedProto uproto = proto.proto().unbarrieredGet();
+        JSObject* protoObj = uproto.raw();
         return (gc::IsAboutToBeFinalizedUnbarriered(&ushape) ||
-                (proto.isObject() && gc::IsAboutToBeFinalizedUnbarriered(&protoObj)));
+                (uproto.isObject() && gc::IsAboutToBeFinalizedUnbarriered(&protoObj)));
+    }
+
+    bool operator==(const InitialShapeEntry& other) const {
+        return shape == other.shape && proto == other.proto;
     }
 };
 
-using InitialShapeSet = JS::GCHashSet<InitialShapeEntry, InitialShapeEntry, SystemAllocPolicy>;
+using InitialShapeSet = JS::WeakCache<JS::GCHashSet<InitialShapeEntry,
+                                                    InitialShapeEntry,
+                                                    SystemAllocPolicy>>;
 
 struct StackShape
 {
@@ -1186,11 +1478,6 @@ struct StackShape
     uint32_t slot() const { MOZ_ASSERT(hasSlot() && !hasMissingSlot()); return slot_; }
     uint32_t maybeSlot() const { return slot_; }
 
-    uint32_t slotSpan() const {
-        uint32_t free = JSSLOT_FREE(base->clasp_);
-        return hasMissingSlot() ? free : (maybeSlot() + 1);
-    }
-
     void setSlot(uint32_t slot) {
         MOZ_ASSERT(slot <= SHAPE_INVALID_SLOT);
         slot_ = slot;
@@ -1201,15 +1488,9 @@ struct StackShape
     }
 
     HashNumber hash() const {
-        HashNumber hash = uintptr_t(base);
-
-        /* Accumulate from least to most random so the low bits are most random. */
-        hash = mozilla::RotateLeft(hash, 4) ^ attrs;
-        hash = mozilla::RotateLeft(hash, 4) ^ slot_;
-        hash = mozilla::RotateLeft(hash, 4) ^ HashId(propid);
-        hash = mozilla::RotateLeft(hash, 4) ^ uintptr_t(rawGetter);
-        hash = mozilla::RotateLeft(hash, 4) ^ uintptr_t(rawSetter);
-        return hash;
+        HashNumber hash = HashId(propid);
+        return mozilla::AddToHash(hash,
+                   mozilla::HashGeneric(base, attrs, slot_, rawGetter, rawSetter));
     }
 
     // Traceable implementation.
@@ -1217,9 +1498,10 @@ struct StackShape
     void trace(JSTracer* trc);
 };
 
-template <typename Outer>
-class StackShapeOperations {
-    const StackShape& ss() const { return static_cast<const Outer*>(this)->get(); }
+template <typename Wrapper>
+class WrappedPtrOperations<StackShape, Wrapper>
+{
+    const StackShape& ss() const { return static_cast<const Wrapper*>(this)->get(); }
 
   public:
     bool hasSlot() const { return ss().hasSlot(); }
@@ -1231,9 +1513,11 @@ class StackShapeOperations {
     uint8_t attrs() const { return ss().attrs; }
 };
 
-template <typename Outer>
-class MutableStackShapeOperations : public StackShapeOperations<Outer> {
-    StackShape& ss() { return static_cast<Outer*>(this)->get(); }
+template <typename Wrapper>
+class MutableWrappedPtrOperations<StackShape, Wrapper>
+  : public WrappedPtrOperations<StackShape, Wrapper>
+{
+    StackShape& ss() { return static_cast<Wrapper*>(this)->get(); }
 
   public:
     void updateGetterSetter(GetterOp rawGetter, SetterOp rawSetter) {
@@ -1243,19 +1527,6 @@ class MutableStackShapeOperations : public StackShapeOperations<Outer> {
     void setBase(UnownedBaseShape* base) { ss().base = base; }
     void setAttrs(uint8_t attrs) { ss().attrs = attrs; }
 };
-
-template <>
-class RootedBase<StackShape> : public MutableStackShapeOperations<JS::Rooted<StackShape>>
-{};
-
-template <>
-class HandleBase<StackShape> : public StackShapeOperations<JS::Handle<StackShape>>
-{};
-
-template <>
-class MutableHandleBase<StackShape>
-  : public MutableStackShapeOperations<JS::MutableHandle<StackShape>>
-{};
 
 inline
 Shape::Shape(const StackShape& other, uint32_t nfixed)
@@ -1272,51 +1543,23 @@ Shape::Shape(const StackShape& other, uint32_t nfixed)
     MOZ_ASSERT_IF(allocKind == gc::AllocKind::SHAPE, !other.isAccessorShape());
 #endif
 
+    MOZ_ASSERT_IF(!isEmptyShape(), AtomIsMarked(zone(), propid()));
+
     MOZ_ASSERT_IF(attrs & (JSPROP_GETTER | JSPROP_SETTER), attrs & JSPROP_SHARED);
     kids.setNull();
 }
 
-// This class is used to add a post barrier on the AccessorShape's getter/setter
-// objects. It updates the pointers and the shape's entry in the parent's
-// KidsHash table.
-class ShapeGetterSetterRef : public gc::BufferableRef
+// This class is used to update any shapes in a zone that have nursery objects
+// as getters/setters.  It updates the pointers and the shapes' entries in the
+// parents' KidsHash tables.
+class NurseryShapesRef : public gc::BufferableRef
 {
-    AccessorShape* shape_;
+    Zone* zone_;
 
   public:
-    explicit ShapeGetterSetterRef(AccessorShape* shape) : shape_(shape) {}
-    void trace(JSTracer* trc) override { shape_->fixupGetterSetterForBarrier(trc); }
+    explicit NurseryShapesRef(Zone* zone) : zone_(zone) {}
+    void trace(JSTracer* trc) override;
 };
-
-static inline void
-GetterSetterWriteBarrierPost(AccessorShape* shape)
-{
-    MOZ_ASSERT(shape);
-    if (shape->hasGetterObject()) {
-        gc::StoreBuffer* sb = reinterpret_cast<gc::Cell*>(shape->getterObject())->storeBuffer();
-        if (sb) {
-            sb->putGeneric(ShapeGetterSetterRef(shape));
-            return;
-        }
-    }
-    if (shape->hasSetterObject()) {
-        gc::StoreBuffer* sb = reinterpret_cast<gc::Cell*>(shape->setterObject())->storeBuffer();
-        if (sb) {
-            sb->putGeneric(ShapeGetterSetterRef(shape));
-            return;
-        }
-    }
-}
-
-inline
-AccessorShape::AccessorShape(const StackShape& other, uint32_t nfixed)
-  : Shape(other, nfixed),
-    rawGetter(other.rawGetter),
-    rawSetter(other.rawSetter)
-{
-    MOZ_ASSERT(getAllocKind() == gc::AllocKind::ACCESSOR_SHAPE);
-    GetterSetterWriteBarrierPost(this);
-}
 
 inline
 Shape::Shape(UnownedBaseShape* base, uint32_t nfixed)
@@ -1357,31 +1600,9 @@ Shape::setterObject() const
     return asAccessorShape().setterObj;
 }
 
-inline void
-Shape::initDictionaryShape(const StackShape& child, uint32_t nfixed, GCPtrShape* dictp)
-{
-    if (child.isAccessorShape())
-        new (this) AccessorShape(child, nfixed);
-    else
-        new (this) Shape(child, nfixed);
-    this->flags |= IN_DICTIONARY;
-
-    this->listp = nullptr;
-    if (dictp)
-        insertIntoDictionary(dictp);
-}
-
 inline Shape*
 Shape::searchLinear(jsid id)
 {
-    /*
-     * Non-dictionary shapes can acquire a table at any point the main thread
-     * is operating on it, so other threads inspecting such shapes can't use
-     * their table without racing. This function can be called from any thread
-     * on any non-dictionary shape.
-     */
-    MOZ_ASSERT(!inDictionary());
-
     for (Shape* shape = this; shape; ) {
         if (shape->propidRef() == id)
             return shape;
@@ -1391,63 +1612,12 @@ Shape::searchLinear(jsid id)
     return nullptr;
 }
 
-/*
- * Keep this function in sync with search. It neither hashifies the start
- * shape nor increments linear search count.
- */
-inline Shape*
-Shape::searchNoHashify(Shape* start, jsid id)
-{
-    /*
-     * If we have a table, search in the shape table, else do a linear
-     * search. We never hashify into a table in parallel.
-     */
-    if (start->hasTable()) {
-        ShapeTable::Entry& entry = start->table().search<MaybeAdding::NotAdding>(id);
-        return entry.shape();
-    }
-
-    return start->searchLinear(id);
-}
-
 inline bool
 Shape::matches(const StackShape& other) const
 {
     return propid_.get() == other.propid &&
            matchesParamsAfterId(other.base, other.slot_, other.attrs, other.flags,
                                 other.rawGetter, other.rawSetter);
-}
-
-// Property lookup hooks on objects are required to return a non-nullptr shape
-// to signify that the property has been found. For cases where the property is
-// not actually represented by a Shape, use a dummy value. This includes all
-// properties of non-native objects, and dense elements for native objects.
-// Use separate APIs for these two cases.
-
-template <AllowGC allowGC>
-static inline void
-MarkNonNativePropertyFound(typename MaybeRooted<Shape*, allowGC>::MutableHandleType propp)
-{
-    propp.set(reinterpret_cast<Shape*>(1));
-}
-
-template <AllowGC allowGC>
-static inline void
-MarkDenseOrTypedArrayElementFound(typename MaybeRooted<Shape*, allowGC>::MutableHandleType propp)
-{
-    propp.set(reinterpret_cast<Shape*>(1));
-}
-
-static inline bool
-IsImplicitDenseOrTypedArrayElement(Shape* prop)
-{
-    return prop == reinterpret_cast<Shape*>(1);
-}
-
-static inline bool
-IsImplicitNonNativeProperty(Shape* prop)
-{
-    return prop == reinterpret_cast<Shape*>(1);
 }
 
 Shape*
@@ -1467,9 +1637,9 @@ namespace JS {
 namespace ubi {
 
 template<>
-class Concrete<js::Shape> : TracerConcreteWithCompartment<js::Shape> {
+class Concrete<js::Shape> : TracerConcrete<js::Shape> {
   protected:
-    explicit Concrete(js::Shape *ptr) : TracerConcreteWithCompartment<js::Shape>(ptr) { }
+    explicit Concrete(js::Shape *ptr) : TracerConcrete<js::Shape>(ptr) { }
 
   public:
     static void construct(void *storage, js::Shape *ptr) { new (storage) Concrete(ptr); }
@@ -1481,9 +1651,9 @@ class Concrete<js::Shape> : TracerConcreteWithCompartment<js::Shape> {
 };
 
 template<>
-class Concrete<js::BaseShape> : TracerConcreteWithCompartment<js::BaseShape> {
+class Concrete<js::BaseShape> : TracerConcrete<js::BaseShape> {
   protected:
-    explicit Concrete(js::BaseShape *ptr) : TracerConcreteWithCompartment<js::BaseShape>(ptr) { }
+    explicit Concrete(js::BaseShape *ptr) : TracerConcrete<js::BaseShape>(ptr) { }
 
   public:
     static void construct(void *storage, js::BaseShape *ptr) { new (storage) Concrete(ptr); }

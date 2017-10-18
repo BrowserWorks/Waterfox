@@ -12,8 +12,7 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-function RemoteController(browser)
-{
+function RemoteController(browser) {
   this._browser = browser;
 
   // A map of commands that have had their enabled/disabled state assigned. The
@@ -25,23 +24,23 @@ RemoteController.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIController,
                                          Ci.nsICommandController]),
 
-  isCommandEnabled: function(aCommand) {
+  isCommandEnabled(aCommand) {
     return this._supportedCommands[aCommand] || false;
   },
 
-  supportsCommand: function(aCommand) {
+  supportsCommand(aCommand) {
     return aCommand in this._supportedCommands;
   },
 
-  doCommand: function(aCommand) {
+  doCommand(aCommand) {
     this._browser.messageManager.sendAsyncMessage("ControllerCommands:Do", aCommand);
   },
 
-  getCommandStateWithParams: function(aCommand, aCommandParams) {
+  getCommandStateWithParams(aCommand, aCommandParams) {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
 
-  doCommandWithParams: function(aCommand, aCommandParams) {
+  doCommandWithParams(aCommand, aCommandParams) {
     let cmd = {
       cmd: aCommand,
       params: null
@@ -51,7 +50,7 @@ RemoteController.prototype = {
       // x and y parameter of cmd_lookUpDictionary are device pixel.
       // So we need calculate child process's coordinate using correct unit.
       let rect = this._browser.getBoundingClientRect();
-      let scale = this._browser.ownerDocument.defaultView.devicePixelRatio;
+      let scale = this._browser.ownerGlobal.devicePixelRatio;
       cmd.params = {
         x:  {
           type: "long",
@@ -69,15 +68,15 @@ RemoteController.prototype = {
       "ControllerCommands:DoWithParams", cmd);
   },
 
-  getSupportedCommands: function(aCount, aCommands) {
+  getSupportedCommands(aCount, aCommands) {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
 
-  onEvent: function () {},
+  onEvent() {},
 
   // This is intended to be called from the remote-browser binding to update
   // the enabled and disabled commands.
-  enableDisableCommands: function(aAction,
+  enableDisableCommands(aAction,
                                   aEnabledLength, aEnabledCommands,
                                   aDisabledLength, aDisabledCommands) {
     // Clear the list first
@@ -91,6 +90,6 @@ RemoteController.prototype = {
       this._supportedCommands[aDisabledCommands[c]] = false;
     }
 
-    this._browser.ownerDocument.defaultView.updateCommands(aAction);
+    this._browser.ownerGlobal.updateCommands(aAction);
   }
 };

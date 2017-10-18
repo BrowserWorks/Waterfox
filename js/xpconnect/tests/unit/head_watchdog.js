@@ -56,7 +56,7 @@ function do_log_info(aMessage)
 // from the operation callback.
 function executeSoon(fn) {
   var tm = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager);
-  tm.mainThread.dispatch({run: fn}, Ci.nsIThread.DISPATCH_NORMAL);
+  tm.dispatchToMainThread({run: fn});
 }
 
 //
@@ -95,18 +95,14 @@ function checkWatchdog(expectInterrupt, continuation) {
   });
 }
 
-var gGenerator;
-function continueTest() {
-  gGenerator.next();
-}
-
 function run_test() {
 
   // Run async.
   do_test_pending();
 
-  // Instantiate the generator and kick it off.
-  gGenerator = testBody();
-  gGenerator.next();
+  // Run the async function.
+  testBody().then(() => {
+    do_test_finished();
+  });
 }
 

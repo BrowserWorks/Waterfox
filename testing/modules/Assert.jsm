@@ -56,9 +56,9 @@ const kTruncateLength = 128;
 function truncate(text, newLength = kTruncateLength) {
   if (typeof text == "string") {
     return text.length < newLength ? text : text.slice(0, newLength);
-  } else {
-    return text;
   }
+    return text;
+
 }
 
 function getMessage(error, prefix = "") {
@@ -109,7 +109,7 @@ Assert.AssertionError = function(options) {
   let stack = Components.stack;
   do {
     stack = stack.asyncCaller || stack.caller;
-  } while(stack && stack.filename && stack.filename.includes("Assert.jsm"))
+  } while (stack && stack.filename && stack.filename.includes("Assert.jsm"))
   this.stack = stack;
 };
 
@@ -181,10 +181,10 @@ proto.setReporter = function(reporterFunc) {
  */
 proto.report = function(failed, actual, expected, message, operator) {
   let err = new Assert.AssertionError({
-    message: message,
-    actual: actual,
-    expected: expected,
-    operator: operator
+    message,
+    actual,
+    expected,
+    operator
   });
   if (!this._reporter) {
     // If no custom reporter is set, throw the error.
@@ -314,7 +314,10 @@ function expectedException(actual, expected) {
 
   if (instanceOf(expected, "RegExp")) {
     return expected.test(actual);
-  } else if (actual instanceof expected) {
+  // We need to guard against the right hand parameter of "instanceof" lacking
+  // the "prototype" property, which is true of arrow functions in particular.
+  } else if (!(typeof expected === "function" && !expected.prototype) &&
+             actual instanceof expected) {
     return true;
   } else if (expected.call({}, actual) === true) {
     return true;
@@ -389,7 +392,7 @@ proto.rejects = function(promise, expected, message) {
         this.report(false, err, expected, message);
         resolve();
       }
-    ).then(null, reject);
+    ).catch(reject);
   });
 };
 

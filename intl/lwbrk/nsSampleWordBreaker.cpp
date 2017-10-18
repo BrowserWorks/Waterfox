@@ -25,7 +25,7 @@ bool nsSampleWordBreaker::BreakInBetween(
   if(!aText1 || !aText2 || (0 == aTextLen1) || (0 == aTextLen2))
     return false;
 
-  return (this->GetClass(aText1[aTextLen1-1]) != this->GetClass(aText2[0]));
+  return GetClass(aText1[aTextLen1-1]) != GetClass(aText2[0]);
 }
 
 
@@ -33,16 +33,17 @@ bool nsSampleWordBreaker::BreakInBetween(
 #define ASCII_IS_ALPHA(c)         ((( 'a' <= (c)) && ((c) <= 'z')) || (( 'A' <= (c)) && ((c) <= 'Z')))
 #define ASCII_IS_DIGIT(c)         (( '0' <= (c)) && ((c) <= '9'))
 #define ASCII_IS_SPACE(c)         (( ' ' == (c)) || ( '\t' == (c)) || ( '\r' == (c)) || ( '\n' == (c)))
-#define IS_ALPHABETICAL_SCRIPT(c) ((c) < 0x2E80) 
+#define IS_ALPHABETICAL_SCRIPT(c) ((c) < 0x2E80)
 
-// we change the beginning of IS_HAN from 0x4e00 to 0x3400 to relfect Unicode 3.0 
+// we change the beginning of IS_HAN from 0x4e00 to 0x3400 to relfect Unicode 3.0
 #define IS_HAN(c)              (( 0x3400 <= (c)) && ((c) <= 0x9fff))||(( 0xf900 <= (c)) && ((c) <= 0xfaff))
 #define IS_KATAKANA(c)         (( 0x30A0 <= (c)) && ((c) <= 0x30FF))
 #define IS_HIRAGANA(c)         (( 0x3040 <= (c)) && ((c) <= 0x309F))
 #define IS_HALFWIDTHKATAKANA(c)         (( 0xFF60 <= (c)) && ((c) <= 0xFF9F))
 #define IS_THAI(c)         (0x0E00 == (0xFF80 & (c) )) // Look at the higest 9 bits
 
-uint8_t nsSampleWordBreaker::GetClass(char16_t c)
+/* static */ nsWordBreakClass
+nsIWordBreaker::GetClass(char16_t c)
 {
   // begin of the hack
 
@@ -75,7 +76,7 @@ uint8_t nsSampleWordBreaker::GetClass(char16_t c)
 		  return kWbClassAlphaLetter;
 	  }
   }
-  return 0;
+  return static_cast<nsWordBreakClass>(0);
 }
 
 nsWordRange nsSampleWordBreaker::FindWord(
@@ -93,13 +94,13 @@ nsWordRange nsSampleWordBreaker::FindWord(
   if(!aText || aOffset > aTextLen)
     return range;
 
-  uint8_t c = this->GetClass(aText[aOffset]);
+  nsWordBreakClass c = GetClass(aText[aOffset]);
   uint32_t i;
   // Scan forward
   range.mEnd--;
   for(i = aOffset +1;i <= aTextLen; i++)
   {
-     if( c != this->GetClass(aText[i]))
+     if( c != GetClass(aText[i]))
      {
        range.mEnd = i;
        break;
@@ -110,7 +111,7 @@ nsWordRange nsSampleWordBreaker::FindWord(
   range.mBegin = 0;
   for(i = aOffset ;i > 0; i--)
   {
-     if( c != this->GetClass(aText[i-1]))
+     if( c != GetClass(aText[i-1]))
      {
        range.mBegin = i;
        break;
@@ -124,19 +125,19 @@ nsWordRange nsSampleWordBreaker::FindWord(
   return range;
 }
 
-int32_t nsSampleWordBreaker::NextWord( 
-  const char16_t* aText, uint32_t aLen, uint32_t aPos) 
+int32_t nsSampleWordBreaker::NextWord(
+  const char16_t* aText, uint32_t aLen, uint32_t aPos)
 {
-  int8_t c1, c2;
+  nsWordBreakClass c1, c2;
   uint32_t cur = aPos;
   if (cur == aLen)
     return NS_WORDBREAKER_NEED_MORE_TEXT;
-  c1 = this->GetClass(aText[cur]);
- 
+  c1 = GetClass(aText[cur]);
+
   for(cur++; cur <aLen; cur++)
   {
-     c2 = this->GetClass(aText[cur]);
-     if(c2 != c1) 
+     c2 = GetClass(aText[cur]);
+     if(c2 != c1)
        break;
   }
   if(kWbClassThaiLetter == c1)

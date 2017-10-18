@@ -3,7 +3,6 @@
 
 requestLongerTimeout(2);
 
-Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
 const RELATIVE_DIR = "browser/extensions/pdfjs/test/";
 const TESTROOT = "http://example.com/browser/" + RELATIVE_DIR;
@@ -141,38 +140,38 @@ const TESTS = [
   }
 ];
 
-add_task(function* test() {
+add_task(async function test() {
   let mimeService = Cc["@mozilla.org/mime;1"].getService(Ci.nsIMIMEService);
-  let handlerInfo = mimeService.getFromTypeAndExtension('application/pdf', 'pdf');
+  let handlerInfo = mimeService.getFromTypeAndExtension("application/pdf", "pdf");
 
   // Make sure pdf.js is the default handler.
-  is(handlerInfo.alwaysAskBeforeHandling, false, 'pdf handler defaults to always-ask is false');
-  is(handlerInfo.preferredAction, Ci.nsIHandlerInfo.handleInternally, 'pdf handler defaults to internal');
+  is(handlerInfo.alwaysAskBeforeHandling, false, "pdf handler defaults to always-ask is false");
+  is(handlerInfo.preferredAction, Ci.nsIHandlerInfo.handleInternally, "pdf handler defaults to internal");
 
-  info('Pref action: ' + handlerInfo.preferredAction);
+  info("Pref action: " + handlerInfo.preferredAction);
 
-  yield BrowserTestUtils.withNewTab({ gBrowser, url: "about:blank" },
-    function* (newTabBrowser) {
-      yield waitForPdfJS(newTabBrowser, TESTROOT + "file_pdfjs_test.pdf");
+  await BrowserTestUtils.withNewTab({ gBrowser, url: "about:blank" },
+    async function(newTabBrowser) {
+      await waitForPdfJS(newTabBrowser, TESTROOT + "file_pdfjs_test.pdf");
 
-      yield ContentTask.spawn(newTabBrowser, null, function* () {
+      await ContentTask.spawn(newTabBrowser, null, async function() {
         // Check if PDF is opened with internal viewer
         Assert.ok(content.document.querySelector("div#viewer"), "document content has viewer UI");
         Assert.ok("PDFJS" in content.wrappedJSObject, "window content has PDFJS object");
       });
 
-      yield ContentTask.spawn(newTabBrowser, null, contentSetUp);
+      await ContentTask.spawn(newTabBrowser, null, contentSetUp);
 
-      yield Task.spawn(runTests(newTabBrowser));
+      await runTests(newTabBrowser);
 
-      yield ContentTask.spawn(newTabBrowser, null, function*() {
-        let pageNumber = content.document.querySelector('input#pageNumber');
+      await ContentTask.spawn(newTabBrowser, null, async function() {
+        let pageNumber = content.document.querySelector("input#pageNumber");
         Assert.equal(pageNumber.value, pageNumber.max, "Document is left on the last page");
       });
     });
 });
 
-function* contentSetUp() {
+async function contentSetUp() {
   /**
    * Outline Items gets appended to the document later on we have to
    * wait for them before we start to navigate though document
@@ -182,8 +181,7 @@ function* contentSetUp() {
    */
   function waitForOutlineItems(document) {
     return new Promise((resolve, reject) => {
-      document.addEventListener("outlineloaded", function outlineLoaded(evt) {
-        document.removeEventListener("outlineloaded", outlineLoaded);
+      document.addEventListener("outlineloaded", function(evt) {
         var outlineCount = evt.detail.outlineCount;
 
         if (document.querySelectorAll(".outlineItem").length === outlineCount) {
@@ -191,7 +189,7 @@ function* contentSetUp() {
         } else {
           reject();
         }
-      });
+      }, {once: true});
     });
   }
 
@@ -204,11 +202,10 @@ function* contentSetUp() {
    */
   function setZoomToPageFit(document) {
     return new Promise((resolve) => {
-      document.addEventListener("pagerendered", function onZoom(e) {
-        document.removeEventListener("pagerendered", onZoom);
+      document.addEventListener("pagerendered", function(e) {
         document.querySelector("#viewer").click();
         resolve();
-      });
+      }, {once: true});
 
       var select = document.querySelector("select#scaleSelect");
       select.selectedIndex = 2;
@@ -216,8 +213,8 @@ function* contentSetUp() {
     });
   }
 
-  yield waitForOutlineItems(content.document);
-  yield setZoomToPageFit(content.document);
+  await waitForOutlineItems(content.document);
+  await setZoomToPageFit(content.document);
 }
 
 /**
@@ -229,25 +226,25 @@ function* contentSetUp() {
  * @param test
  * @param callback
  */
-function* runTests(browser) {
-  yield ContentTask.spawn(browser, TESTS, function* (TESTS) {
+async function runTests(browser) {
+  await ContentTask.spawn(browser, TESTS, async function(contentTESTS) {
     let window = content;
     let document = window.document;
 
-    for (let test of TESTS) {
+    for (let test of contentTESTS) {
       let deferred = {};
       deferred.promise = new Promise((resolve, reject) => {
         deferred.resolve = resolve;
         deferred.reject = reject;
       });
 
-      let pageNumber = document.querySelector('input#pageNumber');
+      let pageNumber = document.querySelector("input#pageNumber");
 
       // Add an event-listener to wait for page to change, afterwards resolve the promise
       let timeout = window.setTimeout(() => deferred.reject(), 5000);
-      window.addEventListener('pagechange', function pageChange() {
+      window.addEventListener("pagechange", function pageChange() {
         if (pageNumber.value == test.expectedPage) {
-          window.removeEventListener('pagechange', pageChange);
+          window.removeEventListener("pagechange", pageChange);
           window.clearTimeout(timeout);
           deferred.resolve(+pageNumber.value);
         }
@@ -262,22 +259,22 @@ function* runTests(browser) {
         el.value = test.action.value;
 
       // Dispatch the event for changing the page
+      var ev;
       if (test.action.event == "keydown") {
-        var ev = document.createEvent("KeyboardEvent");
-            ev.initKeyEvent("keydown", true, true, null, false, false, false, false,
-                            test.action.keyCode, 0);
+        ev = document.createEvent("KeyboardEvent");
+        ev.initKeyEvent("keydown", true, true, null, false, false, false, false,
+                        test.action.keyCode, 0);
         el.dispatchEvent(ev);
-      }
-      else {
-        var ev = new Event(test.action.event);
+      } else {
+        ev = new Event(test.action.event);
       }
       el.dispatchEvent(ev);
 
-      let pgNumber = yield deferred.promise;
+      let pgNumber = await deferred.promise;
       Assert.equal(pgNumber, test.expectedPage, test.message);
     }
 
     var viewer = content.wrappedJSObject.PDFViewerApplication;
-    yield viewer.close();
+    await viewer.close();
   });
 }

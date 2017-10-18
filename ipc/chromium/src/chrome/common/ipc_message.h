@@ -11,6 +11,7 @@
 
 #include "base/basictypes.h"
 #include "base/pickle.h"
+#include "mozilla/TimeStamp.h"
 
 #ifdef MOZ_TASK_TRACER
 #include "GeckoTaskTracer.h"
@@ -38,10 +39,15 @@ class Message : public Pickle {
  public:
   typedef uint32_t msgid_t;
 
+  enum NestedLevel {
+    NOT_NESTED = 1,
+    NESTED_INSIDE_SYNC = 2,
+    NESTED_INSIDE_CPOW = 3
+  };
+
   enum PriorityValue {
-    PRIORITY_NORMAL = 1,
-    PRIORITY_HIGH = 2,
-    PRIORITY_URGENT = 3
+    NORMAL_PRIORITY,
+    HIGH_PRIORITY,
   };
 
   enum MessageCompression {
@@ -56,9 +62,17 @@ class Message : public Pickle {
 
   // Initialize a message with a user-defined type, priority value, and
   // destination WebView ID.
-  Message(int32_t routing_id, msgid_t type, PriorityValue priority,
+  //
+  // NOTE: `recordWriteLatency` is only passed by IPDL generated message code,
+  // and is used to trigger the IPC_WRITE_LATENCY_MS telemetry.
+  Message(int32_t routing_id,
+          msgid_t type,
+          uint32_t segmentCapacity = 0, // 0 for the default capacity.
+          NestedLevel nestedLevel = NOT_NESTED,
+          PriorityValue priority = NORMAL_PRIORITY,
           MessageCompression compression = COMPRESSION_NONE,
-          const char* const name="???");
+          const char* const name="???",
+          bool recordWriteLatency=false);
 
   Message(const char* data, int data_len);
 
@@ -67,13 +81,35 @@ class Message : public Pickle {
   Message& operator=(const Message& other) = delete;
   Message& operator=(Message&& other);
 
-  PriorityValue priority() const {
-    return static_cast<PriorityValue>(header()->flags & PRIORITY_MASK);
+  NestedLevel nested_level() const {
+    return static_cast<NestedLevel>(header()->flags & NESTED_MASK);
   }
 
-  void set_priority(int prio) {
-    DCHECK((prio & ~PRIORITY_MASK) == 0);
-    header()->flags = (header()->flags & ~PRIORITY_MASK) | prio;
+  void set_nested_level(NestedLevel nestedLevel) {
+    DCHECK((nestedLevel & ~NESTED_MASK) == 0);
+    header()->flags = (header()->flags & ~NESTED_MASK) | nestedLevel;
+  }
+
+  PriorityValue priority() const {
+    if (header()->flags & PRIO_BIT) {
+      return HIGH_PRIORITY;
+    }
+    return NORMAL_PRIORITY;
+  }
+
+  void set_priority(PriorityValue prio) {
+    header()->flags &= ~PRIO_BIT;
+    if (prio == HIGH_PRIORITY) {
+      header()->flags |= PRIO_BIT;
+    }
+  }
+
+  bool is_constructor() const {
+    return (header()->flags & CONSTRUCTOR_BIT) != 0;
+  }
+
+  void set_constructor() {
+    header()->flags |= CONSTRUCTOR_BIT;
   }
 
   // True if this is a synchronous message.
@@ -112,27 +148,6 @@ class Message : public Pickle {
 
   bool is_reply_error() const {
     return (header()->flags & REPLY_ERROR_BIT) != 0;
-  }
-
-  // Normally when a receiver gets a message and they're blocked on a
-  // synchronous message Send, they buffer a message.  Setting this flag causes
-  // the receiver to be unblocked and the message to be dispatched immediately.
-  void set_unblock(bool unblock) {
-    if (unblock) {
-      header()->flags |= UNBLOCK_BIT;
-    } else {
-      header()->flags &= ~UNBLOCK_BIT;
-    }
-  }
-
-  bool should_unblock() const {
-    return (header()->flags & UNBLOCK_BIT) != 0;
-  }
-
-  // Tells the receiver that the caller is pumping messages while waiting
-  // for the result.
-  bool is_caller_pumping_messages() const {
-    return (header()->flags & PUMPING_MSGS_BIT) != 0;
   }
 
   msgid_t type() const {
@@ -189,6 +204,10 @@ class Message : public Pickle {
     name_ = aName;
   }
 
+  const mozilla::TimeStamp& create_time() const {
+    return create_time_;
+  }
+
 #if defined(OS_POSIX)
   uint32_t num_fds() const;
 #endif
@@ -223,11 +242,24 @@ class Message : public Pickle {
   static void Log(const Message* msg, std::wstring* l) {
   }
 
+  static int HeaderSizeFromData(const char* range_start,
+                                const char* range_end) {
+#ifdef MOZ_TASK_TRACER
+    return ((static_cast<unsigned int>(range_end - range_start) >= sizeof(Header)) &&
+            (reinterpret_cast<const Header*>(range_start)->flags &
+             TASKTRACER_BIT)) ?
+      sizeof(HeaderTaskTracer) : sizeof(Header);
+#else
+    return sizeof(Header);
+#endif
+  }
+
   // Figure out how big the message starting at range_start is. Returns 0 if
   // there's no enough data to determine (i.e., if [range_start, range_end) does
   // not contain enough of the message header to know the size).
   static uint32_t MessageSize(const char* range_start, const char* range_end) {
-    return Pickle::MessageSize(sizeof(Header), range_start, range_end);
+    return Pickle::MessageSize(HeaderSizeFromData(range_start, range_end),
+                               range_start, range_end);
   }
 
 #if defined(OS_POSIX)
@@ -263,22 +295,37 @@ class Message : public Pickle {
     header()->flags |= INTERRUPT_BIT;
   }
 
+#ifdef MOZ_TASK_TRACER
+  void TaskTracerDispatch();
+  class AutoTaskTracerRun
+    : public mozilla::tasktracer::AutoSaveCurTraceInfo {
+    Message& mMsg;
+    uint64_t mTaskId;
+    uint64_t mSourceEventId;
+  public:
+    explicit AutoTaskTracerRun(Message& aMsg);
+    ~AutoTaskTracerRun();
+  };
+#endif
+
 #if !defined(OS_MACOSX)
  protected:
 #endif
 
   // flags
   enum {
-    PRIORITY_MASK   = 0x0003,
-    SYNC_BIT        = 0x0004,
-    REPLY_BIT       = 0x0008,
-    REPLY_ERROR_BIT = 0x0010,
-    UNBLOCK_BIT     = 0x0020,
-    PUMPING_MSGS_BIT= 0x0040,
-    HAS_SENT_TIME_BIT = 0x0080,
-    INTERRUPT_BIT   = 0x0100,
-    COMPRESS_BIT    = 0x0200,
-    COMPRESSALL_BIT = 0x0400,
+    NESTED_MASK     = 0x0003,
+    PRIO_BIT        = 0x0004,
+    SYNC_BIT        = 0x0008,
+    REPLY_BIT       = 0x0010,
+    REPLY_ERROR_BIT = 0x0020,
+    INTERRUPT_BIT   = 0x0040,
+    COMPRESS_BIT    = 0x0080,
+    COMPRESSALL_BIT = 0x0100,
+    CONSTRUCTOR_BIT = 0x0200,
+#ifdef MOZ_TASK_TRACER
+    TASKTRACER_BIT  = 0x0400,
+#endif
   };
 
   struct Header : Pickle::Header {
@@ -302,19 +349,42 @@ class Message : public Pickle {
     uint32_t interrupt_local_stack_depth;
     // Sequence number
     int32_t seqno;
+  };
+
 #ifdef MOZ_TASK_TRACER
+  /**
+   * The type is used as headers of Messages only if TaskTracer is
+   * enabled, or type |Header| would be used instead.
+   */
+  struct HeaderTaskTracer : public Header {
+    uint64_t task_id;
     uint64_t source_event_id;
     uint64_t parent_task_id;
     mozilla::tasktracer::SourceEventType source_event_type;
-#endif
   };
+#endif
 
+#ifdef MOZ_TASK_TRACER
+  bool UseTaskTracerHeader() const {
+    return sizeof(HeaderTaskTracer) == (size() - payload_size());
+  }
+
+  Header* header() {
+    return UseTaskTracerHeader() ?
+      headerT<HeaderTaskTracer>() : headerT<Header>();
+  }
+  const Header* header() const {
+    return UseTaskTracerHeader() ?
+      headerT<HeaderTaskTracer>() : headerT<Header>();
+  }
+#else
   Header* header() {
     return headerT<Header>();
   }
   const Header* header() const {
     return headerT<Header>();
   }
+#endif
 
   void InitLoggingVariables(const char* const name="???");
 
@@ -335,6 +405,8 @@ class Message : public Pickle {
 #endif
 
   const char* name_;
+
+  mozilla::TimeStamp create_time_;
 
 };
 

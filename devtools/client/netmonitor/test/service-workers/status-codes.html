@@ -1,5 +1,6 @@
 <!-- Any copyright is dedicated to the Public Domain.
      http://creativecommons.org/publicdomain/zero/1.0/ -->
+
 <!doctype html>
 
 <html>
@@ -15,6 +16,9 @@
     <p>Status codes test</p>
 
     <script type="text/javascript">
+      /* exported registerServiceWorker, unregisterServiceWorker, performRequests */
+      "use strict";
+
       let swRegistration;
 
       function registerServiceWorker() {
@@ -30,10 +34,9 @@
               if (sw.controller) {
                 resolve();
               } else {
-                sw.addEventListener('controllerchange', function onControllerChange() {
-                  sw.removeEventListener('controllerchange', onControllerChange);
+                sw.addEventListener("controllerchange", function () {
                   resolve();
-                });
+                }, {once: true});
               }
             });
           }).catch(err => {

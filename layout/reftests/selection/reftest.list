@@ -25,13 +25,26 @@ fuzzy-if(skiaContent,1,700) == extend-3i.html extend-3-ref.html
 == extend-4a.html extend-4-ref.html
 == extend-4b.html extend-4-ref.html
 # these 3 random-if(Android) are a difference of Native & Xul, see bug 739714
-random-if(Android||B2G||Mulet) needs-focus != pseudo-element-of-native-anonymous.html pseudo-element-of-native-anonymous-ref.html # bug 676641 # Initial mulet triage: parity with B2G/B2G Desktop
+random-if(Android) needs-focus != pseudo-element-of-native-anonymous.html pseudo-element-of-native-anonymous-ref.html # bug 676641
 # These tests uses Highlight and HighlightText color keywords, they are not same as text selection color on Mac.
-random-if(Android||B2G||Mulet) fails-if(cocoaWidget) needs-focus == non-themed-widget.html non-themed-widget-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
-random-if(Android||B2G||Mulet) fails-if(cocoaWidget) needs-focus == themed-widget.html themed-widget-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+random-if(Android) fails-if(cocoaWidget&&!styloVsGecko) needs-focus == non-themed-widget.html non-themed-widget-ref.html
+random-if(Android) fails-if(cocoaWidget&&!styloVsGecko) needs-focus == themed-widget.html themed-widget-ref.html
 == addrange-1.html addrange-ref.html
 fuzzy-if(skiaContent,1,1200) == addrange-2.html addrange-ref.html
 == splitText-normalize.html splitText-normalize-ref.html
 == modify-range.html modify-range-ref.html
 == dom-mutations.html dom-mutations-ref.html
 fuzzy-if(OSX==1010,9,1) fuzzy-if(OSX&&skiaContent,6,1) fuzzy-if(skiaContent&&!OSX,1,2138) == trailing-space-1.html trailing-space-1-ref.html
+!= invalidation-1-ref.html invalidation-2-ref.html
+== invalidation-1a.html invalidation-1-ref.html
+== invalidation-1b.html invalidation-1-ref.html
+== invalidation-1c.html invalidation-1-ref.html
+== invalidation-1d.html invalidation-1-ref.html
+== invalidation-1e.html invalidation-1-ref.html
+== invalidation-1f.html invalidation-1-ref.html
+== invalidation-2a.html invalidation-2-ref.html
+== invalidation-2b.html invalidation-2-ref.html
+== invalidation-2c.html invalidation-2-ref.html
+== invalidation-2d.html invalidation-2-ref.html
+== invalidation-2e.html invalidation-2-ref.html
+== invalidation-2f.html invalidation-2-ref.html

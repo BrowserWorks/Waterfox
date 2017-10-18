@@ -5,8 +5,10 @@
 user_pref("dom.use_xbl_scopes_for_remote_xul", false);
 user_pref("gfx.color_management.mode", 2);
 user_pref("gfx.color_management.force_srgb", true);
+user_pref("gfx.logging.level", 1);
 user_pref("browser.dom.window.dump.enabled", true);
 user_pref("ui.caretBlinkTime", -1);
+user_pref("ui.caretWidth", 1);
 user_pref("dom.send_after_paint_to_content", true);
 // no slow script dialogs
 user_pref("dom.max_script_run_time", 0);
@@ -18,22 +20,22 @@ user_pref("media.autoplay.enabled", true);
 user_pref("app.update.enabled", false);
 user_pref("app.update.staging.enabled", false);
 user_pref("app.update.url.android", "");
+// Ensure we can load the reftest extension
+user_pref("extensions.allow-non-mpc-extensions", true);
+user_pref("extensions.legacy.enabled", true);
+user_pref("security.turn_off_all_security_so_that_viruses_can_take_over_this_computer", true);
 // Disable addon updates and prefetching so we don't leak them
 user_pref("extensions.update.enabled", false);
 user_pref("extensions.systemAddon.update.url", "http://localhost/dummy-system-addons.xml");
 user_pref("extensions.getAddons.cache.enabled", false);
 // Disable blocklist updates so we don't have them reported as leaks
 user_pref("extensions.blocklist.enabled", false);
-// Make url-classifier updates so rare that they won't affect tests
-user_pref("urlclassifier.updateinterval", 172800);
 // Disable downscale-during-decode, since it makes reftests more difficult.
 user_pref("image.downscale-during-decode.enabled", false);
-// Disable the single-color optimization, since it can cause intermittent
-// oranges and it causes many of our tests to test a different code path
-// than the one that normal images on the web use.
-user_pref("image.single-color-optimization.enabled", false);
 // Checking whether two files are the same is slow on Windows.
-// Setting this pref makes tests run much faster there.
+// Setting this pref makes tests run much faster there. Reftests also
+// rely on this to load downloadable fonts (which are restricted to same
+// origin policy by default) from outside their directory.
 user_pref("security.fileuri.strict_origin_policy", false);
 // Disable the thumbnailing service
 user_pref("browser.pagethumbnails.capturing_disabled", true);
@@ -61,8 +63,8 @@ user_pref("browser.search.isUS", true);
 user_pref("browser.search.countryCode", "US");
 user_pref("browser.search.geoSpecificDefaults", false);
 
-// Make sure SelfSupport doesn't hit the network.
-user_pref("browser.selfsupport.url", "https://localhost/selfsupport-dummy/");
+// Make sure Shield doesn't hit the network.
+user_pref("extensions.shield-recipe-client.api_url", "https://localhost/selfsupport-dummy/");
 
 // use about:blank, not browser.startup.homepage
 user_pref("browser.startup.page", 0);
@@ -74,6 +76,9 @@ user_pref("dom.allow_XUL_XBL_for_file", true);
 // their protocol with the inner URI of the view-source URI
 user_pref("security.view-source.reachable-from-inner-protocol", true);
 
+// Skip data reporting policy notifications.
+user_pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);
+
 // Ensure that telemetry is disabled, so we don't connect to the telemetry
 // server in the middle of the tests.
 user_pref("toolkit.telemetry.enabled", false);
@@ -81,11 +86,17 @@ user_pref("toolkit.telemetry.unified", false);
 // Likewise for safebrowsing.
 user_pref("browser.safebrowsing.phishing.enabled", false);
 user_pref("browser.safebrowsing.malware.enabled", false);
-user_pref("browser.safebrowsing.forbiddenURIs.enabled", false);
 user_pref("browser.safebrowsing.blockedURIs.enabled", false);
+user_pref("browser.safebrowsing.downloads.remote.url", "http://127.0.0.1/safebrowsing-dummy/gethash");
+user_pref("browser.safebrowsing.provider.google.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
+user_pref("browser.safebrowsing.provider.google.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
+user_pref("browser.safebrowsing.provider.google4.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
+user_pref("browser.safebrowsing.provider.google4.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
 // Likewise for tracking protection.
 user_pref("privacy.trackingprotection.enabled", false);
 user_pref("privacy.trackingprotection.pbmode.enabled", false);
+user_pref("browser.safebrowsing.provider.mozilla.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
+user_pref("browser.safebrowsing.provider.mozilla.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
 // And for snippets.
 user_pref("browser.snippets.enabled", false);
 user_pref("browser.snippets.syncPromo.enabled", false);
@@ -94,9 +105,8 @@ user_pref("browser.snippets.firstrunHomepage.enabled", false);
 user_pref("general.useragent.updates.enabled", false);
 // And for webapp updates.  Yes, it is supposed to be an integer.
 user_pref("browser.webapps.checkForUpdates", 0);
-// And for about:newtab content fetch and pings.
+// And for about:newtab content fetch.
 user_pref("browser.newtabpage.directory.source", "data:application/json,{\"reftest\":1}");
-user_pref("browser.newtabpage.directory.ping", "");
 // Only allow add-ons from the profile and app and allow foreign
 // injection
 user_pref("extensions.enabledScopes", 5);
@@ -113,6 +123,7 @@ user_pref("startup.homepage_welcome_url.additional", "");
 user_pref("startup.homepage_override_url", "");
 
 user_pref("media.gmp-manager.url.override", "http://localhost/dummy-gmp-manager.xml");
+user_pref("media.gmp-manager.updateEnabled", false);
 
 // A fake bool pref for "@supports -moz-bool-pref" sanify test.
 user_pref("testing.supports.moz-bool-pref", true);
@@ -121,3 +132,18 @@ user_pref("testing.supports.moz-bool-pref", true);
 // unnecessary I/O pressure on the Places DB (measured to be in the
 // gigabytes).
 user_pref("places.history.enabled", false);
+
+// For Firefox 52 only, ESR will support non-Flash plugins while release will
+// not, so we keep testing the non-Flash pathways
+user_pref("plugin.load_flash_only", false);
+
+user_pref("media.openUnsupportedTypeWithExternalApp", false);
+
+// Disable all recommended Marionette preferences for Gecko tests.
+// The prefs recommended by Marionette are typically geared towards
+// consumer automation; not vendor testing.
+user_pref("marionette.prefs.recommended", false);
+
+// Make sure we don't reach out to the network with pocket or snippets
+user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
+user_pref("browser.newtabpage.activity-stream.feeds.snippets", false);

@@ -28,13 +28,15 @@ class RegisteredProxy
 public:
   RegisteredProxy(uintptr_t aModule, IUnknown* aClassObject,
                   uint32_t aRegCookie, ITypeLib* aTypeLib);
+  RegisteredProxy(IUnknown* aClassObject, uint32_t aRegCookie,
+                  ITypeLib* aTypeLib);
   explicit RegisteredProxy(ITypeLib* aTypeLib);
   RegisteredProxy(RegisteredProxy&& aOther);
   RegisteredProxy& operator=(RegisteredProxy&& aOther);
 
   ~RegisteredProxy();
 
-  HRESULT GetTypeInfoForInterface(REFIID aIid, ITypeInfo** aOutTypeInfo) const;
+  HRESULT GetTypeInfoForGuid(REFGUID aGuid, ITypeInfo** aOutTypeInfo) const;
 
   static bool Find(REFIID aIid, ITypeInfo** aOutTypeInfo);
 
@@ -54,6 +56,9 @@ private:
   IUnknown* mClassObject;
   uint32_t  mRegCookie;
   ITypeLib* mTypeLib;
+#if defined(MOZILLA_INTERNAL_API)
+  bool      mIsRegisteredInMTA;
+#endif // defined(MOZILLA_INTERNAL_API)
 };
 
 enum class RegistrationFlags
@@ -61,6 +66,10 @@ enum class RegistrationFlags
   eUseBinDirectory,
   eUseSystemDirectory
 };
+
+// For our own DLL that we are currently executing in (ie, xul).
+// Assumes corresponding TLB is embedded in resources.
+UniquePtr<RegisteredProxy> RegisterProxy();
 
 // For DLL files. Assumes corresponding TLB is embedded in resources.
 UniquePtr<RegisteredProxy> RegisterProxy(const wchar_t* aLeafName,
@@ -71,6 +80,8 @@ UniquePtr<RegisteredProxy> RegisterTypelib(const wchar_t* aLeafName,
                                            RegistrationFlags aFlags =
                                              RegistrationFlags::eUseBinDirectory);
 
+#if defined(MOZILLA_INTERNAL_API)
+
 /**
  * The COM interceptor uses type library information to build its interface
  * proxies. Unfortunately type libraries do not encode size_is and length_is
@@ -80,21 +91,30 @@ UniquePtr<RegisteredProxy> RegisterTypelib(const wchar_t* aLeafName,
  */
 struct ArrayData
 {
+  enum class Flag
+  {
+    eNone = 0,
+    eAllocatedByServer = 1 // This implies an extra level of indirection
+  };
+
   ArrayData(REFIID aIid, ULONG aMethodIndex, ULONG aArrayParamIndex,
             VARTYPE aArrayParamType, REFIID aArrayParamIid,
-            ULONG aLengthParamIndex)
+            ULONG aLengthParamIndex, Flag aFlag = Flag::eNone)
     : mIid(aIid)
     , mMethodIndex(aMethodIndex)
     , mArrayParamIndex(aArrayParamIndex)
     , mArrayParamType(aArrayParamType)
     , mArrayParamIid(aArrayParamIid)
     , mLengthParamIndex(aLengthParamIndex)
+    , mFlag(aFlag)
   {
   }
+
   ArrayData(const ArrayData& aOther)
   {
     *this = aOther;
   }
+
   ArrayData& operator=(const ArrayData& aOther)
   {
     mIid = aOther.mIid;
@@ -103,14 +123,17 @@ struct ArrayData
     mArrayParamType = aOther.mArrayParamType;
     mArrayParamIid = aOther.mArrayParamIid;
     mLengthParamIndex = aOther.mLengthParamIndex;
+    mFlag = aOther.mFlag;
     return *this;
   }
+
   IID     mIid;
   ULONG   mMethodIndex;
   ULONG   mArrayParamIndex;
   VARTYPE mArrayParamType;
   IID     mArrayParamIid;
   ULONG   mLengthParamIndex;
+  Flag    mFlag;
 };
 
 void RegisterArrayData(const ArrayData* aArrayData, size_t aLength);
@@ -124,6 +147,8 @@ RegisterArrayData(const ArrayData (&aData)[N])
 
 const ArrayData*
 FindArrayData(REFIID aIid, ULONG aMethodIndex);
+
+#endif // defined(MOZILLA_INTERNAL_API)
 
 } // namespace mscom
 } // namespace mozilla

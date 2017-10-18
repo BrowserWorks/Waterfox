@@ -33,9 +33,6 @@ class AsyncPanZoomController;
  * the screen. Instead, we generate a PinchGestureInput and send that. If the
  * touch event is not part of a gesture, we just return nsEventStatus_eIgnore
  * and AsyncPanZoomController is expected to handle it.
- *
- * Android doesn't use this class because it has its own built-in gesture event
- * listeners that should generally be preferred.
  */
 class GestureEventListener final {
 public:
@@ -108,7 +105,8 @@ private:
     // A user put down her finger again right after a single tap thus the
     // gesture can't be a single tap, but rather a double tap. But we're
     // still not sure about that until the user lifts her finger again.
-    // Allowed next states: GESTURE_MULTI_TOUCH_DOWN, GESTURE_NONE.
+    // Allowed next states: GESTURE_MULTI_TOUCH_DOWN, GESTURE_ONE_TOUCH_PINCH,
+    //                      GESTURE_NONE.
     GESTURE_SECOND_SINGLE_TOUCH_DOWN,
 
     // A long touch has happened, but the user still keeps her finger down.
@@ -125,7 +123,12 @@ private:
     // There are two or more fingers on the screen, and the user has already
     // pinched enough for us to start zooming the screen.
     // Allowed next states: GESTURE_NONE
-    GESTURE_PINCH
+    GESTURE_PINCH,
+
+    // The user has double tapped, but not lifted her finger, and moved her
+    // finger more than PINCH_START_THRESHOLD.
+    // Allowed next states: GESTURE_NONE.
+    GESTURE_ONE_TOUCH_PINCH
   };
 
   /**
@@ -142,7 +145,15 @@ private:
 
   void TriggerSingleTapConfirmedEvent();
 
-  bool MoveDistanceIsLarge();
+  bool MoveDistanceExceeds(ScreenCoord aThreshold) const;
+  bool MoveDistanceIsLarge() const;
+  bool SecondTapIsFar() const;
+
+  /**
+   * Returns current vertical span, counting from the where the user first put
+   * her finger down.
+   */
+  ParentLayerCoord GetYSpanFromStartPoint();
 
   /**
    * Do actual state transition and reset substates.
@@ -171,13 +182,13 @@ private:
    * out we are compared to our original pinch span. Note that this does _not_
    * continue to be updated once we jump into the |GESTURE_PINCH| state.
    */
-  float mSpanChange;
+  ParentLayerCoord mSpanChange;
 
   /**
    * Previous span calculated for the purposes of setting inside a
    * PinchGestureInput.
    */
-  float mPreviousSpan;
+  ParentLayerCoord mPreviousSpan;
 
   /* Properties similar to mSpanChange and mPreviousSpan, but for the focus */
   ParentLayerCoord mFocusChange;
@@ -235,6 +246,15 @@ private:
   RefPtr<CancelableRunnable> mMaxTapTimeoutTask;
   void CancelMaxTapTimeoutTask();
   void CreateMaxTapTimeoutTask();
+
+  /**
+   * Tracks whether the single-tap event was already sent to content. This is
+   * needed because it affects how the double-tap gesture, if detected, is
+   * handled. The value is only valid in states GESTURE_FIRST_SINGLE_TOUCH_UP and
+   * GESTURE_SECOND_SINGLE_TOUCH_DOWN; to more easily catch violations it is
+   * stored in a Maybe which is set to Nothing() at all other times.
+   */
+  Maybe<bool> mSingleTapSent;
 };
 
 } // namespace layers

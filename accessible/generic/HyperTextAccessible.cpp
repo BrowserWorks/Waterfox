@@ -65,7 +65,7 @@ HyperTextAccessible::NativeRole()
     return r;
 
   nsIFrame* frame = GetFrame();
-  if (frame && frame->GetType() == nsGkAtoms::inlineFrame)
+  if (frame && frame->IsInlineFrame())
     return roles::TEXT;
 
   return roles::TEXT_CONTAINER;
@@ -96,7 +96,7 @@ HyperTextAccessible::GetBoundsInFrame(nsIFrame* aFrame,
                                       uint32_t aEndRenderedOffset)
 {
   nsPresContext* presContext = mDoc->PresContext();
-  if (aFrame->GetType() != nsGkAtoms::textFrame) {
+  if (!aFrame->IsTextFrame()) {
     return aFrame->GetScreenRectInAppUnits().
       ToNearestPixels(presContext->AppUnitsPerDevPixel());
   }
@@ -444,7 +444,7 @@ HyperTextAccessible::ClosestNotGeneratedDOMPoint(const DOMPoint& aDOMPoint,
 
   // ::before pseudo element
   if (aElementContent &&
-      aElementContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore) {
+      aElementContent->IsGeneratedContentContainerForBefore()) {
     MOZ_ASSERT(aElementContent->GetParent(),
                "::before must have parent element");
     // The first child of its parent (i.e., immediately after the ::before) is
@@ -454,7 +454,7 @@ HyperTextAccessible::ClosestNotGeneratedDOMPoint(const DOMPoint& aDOMPoint,
 
   // ::after pseudo element
   if (aElementContent &&
-      aElementContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentafter) {
+      aElementContent->IsGeneratedContentContainerForAfter()) {
     MOZ_ASSERT(aElementContent->GetParent(),
                "::after must have parent element");
     // The end of its parent (i.e., immediately before the ::after) is good
@@ -539,7 +539,7 @@ HyperTextAccessible::FindOffset(uint32_t aOffset, nsDirection aDirection,
 
   int32_t innerContentOffset = innerOffset;
   if (child->IsTextLeaf()) {
-    NS_ASSERTION(childFrame->GetType() == nsGkAtoms::textFrame, "Wrong frame!");
+    NS_ASSERTION(childFrame->IsTextFrame(), "Wrong frame!");
     RenderedToContentOffset(childFrame, innerOffset, &innerContentOffset);
   }
 
@@ -917,7 +917,7 @@ HyperTextAccessible::TextAttributes(bool aIncludeDefAttrs, int32_t aOffset,
 
   // Compute spelling attributes on text accessible only.
   nsIFrame *offsetFrame = accAtOffset->GetFrame();
-  if (offsetFrame && offsetFrame->GetType() == nsGkAtoms::textFrame) {
+  if (offsetFrame && offsetFrame->IsTextFrame()) {
     int32_t nodeOffset = 0;
     RenderedToContentOffset(offsetFrame, offsetInAcc, &nodeOffset);
 
@@ -1109,7 +1109,7 @@ HyperTextAccessible::NativeAttributes()
   // 'formatting' attribute is deprecated, 'display' attribute should be
   // instead.
   nsIFrame *frame = GetFrame();
-  if (frame && frame->GetType() == nsGkAtoms::blockFrame) {
+  if (frame && frame->IsBlockFrame()) {
     nsAutoString unused;
     attributes->SetStringProperty(NS_LITERAL_CSTRING("formatting"),
                                   NS_LITERAL_STRING("block"), unused);
@@ -1223,7 +1223,7 @@ HyperTextAccessible::OffsetAtPoint(int32_t aX, int32_t aY, uint32_t aCoordType)
       nsSize frameSize = frame->GetSize();
       if (pointInFrame.x < frameSize.width && pointInFrame.y < frameSize.height) {
         // Finished
-        if (frame->GetType() == nsGkAtoms::textFrame) {
+        if (frame->IsTextFrame()) {
           nsIFrame::ContentOffsets contentOffsets =
             frame->GetContentOffsetsFromPointExternal(pointInFrame, nsIFrame::IGNORE_SELECTION_STYLE);
           if (contentOffsets.IsNull() || contentOffsets.content != content) {
@@ -1611,8 +1611,8 @@ HyperTextAccessible::SelectionBoundsAt(int32_t aSelectionNum,
   nsRange* range = ranges[aSelectionNum];
 
   // Get start and end points.
-  nsINode* startNode = range->GetStartParent();
-  nsINode* endNode = range->GetEndParent();
+  nsINode* startNode = range->GetStartContainer();
+  nsINode* endNode = range->GetEndContainer();
   int32_t startOffset = range->StartOffset(), endOffset = range->EndOffset();
 
   // Make sure start is before end, by swapping DOM points.  This occurs when
@@ -1787,22 +1787,23 @@ HyperTextAccessible::SelectionRanges(nsTArray<a11y::TextRange>* aRanges) const
 
   for (uint32_t idx = 0; idx < sel->RangeCount(); idx++) {
     nsRange* DOMRange = sel->GetRangeAt(idx);
-    HyperTextAccessible* startParent =
-      nsAccUtils::GetTextContainer(DOMRange->GetStartParent());
-    HyperTextAccessible* endParent =
-      nsAccUtils::GetTextContainer(DOMRange->GetEndParent());
-    if (!startParent || !endParent)
+    HyperTextAccessible* startContainer =
+      nsAccUtils::GetTextContainer(DOMRange->GetStartContainer());
+    HyperTextAccessible* endContainer =
+      nsAccUtils::GetTextContainer(DOMRange->GetEndContainer());
+    if (!startContainer || !endContainer) {
       continue;
+    }
 
     int32_t startOffset =
-      startParent->DOMPointToOffset(DOMRange->GetStartParent(),
-                                    DOMRange->StartOffset(), false);
+      startContainer->DOMPointToOffset(DOMRange->GetStartContainer(),
+                                       DOMRange->StartOffset(), false);
     int32_t endOffset =
-      endParent->DOMPointToOffset(DOMRange->GetEndParent(),
-                                  DOMRange->EndOffset(), true);
+      endContainer->DOMPointToOffset(DOMRange->GetEndContainer(),
+                                     DOMRange->EndOffset(), true);
 
     TextRange tr(IsTextField() ? const_cast<HyperTextAccessible*>(this) : mDoc,
-                    startParent, startOffset, endParent, endOffset);
+                    startContainer, startOffset, endContainer, endOffset);
     *(aRanges->AppendElement()) = Move(tr);
   }
 }
@@ -1971,8 +1972,7 @@ HyperTextAccessible::ContentToRenderedOffset(nsIFrame* aFrame, int32_t aContentO
     return NS_OK;
   }
 
-  NS_ASSERTION(aFrame->GetType() == nsGkAtoms::textFrame,
-               "Need text frame for offset conversion");
+  NS_ASSERTION(aFrame->IsTextFrame(), "Need text frame for offset conversion");
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
@@ -1996,8 +1996,7 @@ HyperTextAccessible::RenderedToContentOffset(nsIFrame* aFrame, uint32_t aRendere
   *aContentOffset = 0;
   NS_ENSURE_TRUE(aFrame, NS_ERROR_FAILURE);
 
-  NS_ASSERTION(aFrame->GetType() == nsGkAtoms::textFrame,
-               "Need text frame for offset conversion");
+  NS_ASSERTION(aFrame->IsTextFrame(), "Need text frame for offset conversion");
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
@@ -2100,7 +2099,7 @@ HyperTextAccessible::GetDOMPointByFrameOffset(nsIFrame* aFrame, int32_t aOffset,
     aPoint->idx = parent->IndexOf(content) + 1;
     aPoint->node = parent;
 
-  } else if (aFrame->GetType() == nsGkAtoms::textFrame) {
+  } else if (aFrame->IsTextFrame()) {
     nsIContent* content = aFrame->GetContent();
     NS_ENSURE_STATE(content);
 
@@ -2152,7 +2151,7 @@ HyperTextAccessible::GetSpellTextAttr(nsINode* aNode,
 
     // See if the point comes after the range in which case we must continue in
     // case there is another range after this one.
-    nsINode* endNode = range->GetEndParent();
+    nsINode* endNode = range->GetEndContainer();
     int32_t endNodeOffset = range->EndOffset();
     if (nsContentUtils::ComparePoints(aNode, aNodeOffset,
                                       endNode, endNodeOffset) >= 0)
@@ -2162,7 +2161,7 @@ HyperTextAccessible::GetSpellTextAttr(nsINode* aNode,
     // the previous range.  So we check to see if the range starts before the
     // point in which case the point is in the missspelled range, otherwise it
     // must be before the range and after the previous one if any.
-    nsINode* startNode = range->GetStartParent();
+    nsINode* startNode = range->GetStartContainer();
     int32_t startNodeOffset = range->StartOffset();
     if (nsContentUtils::ComparePoints(startNode, startNodeOffset, aNode,
                                       aNodeOffset) <= 0) {
@@ -2189,7 +2188,7 @@ HyperTextAccessible::GetSpellTextAttr(nsINode* aNode,
 
     if (idx > 0) {
       nsRange* prevRange = domSel->GetRangeAt(idx - 1);
-      startOffset = DOMPointToOffset(prevRange->GetEndParent(),
+      startOffset = DOMPointToOffset(prevRange->GetEndContainer(),
                                      prevRange->EndOffset());
     }
 
@@ -2207,7 +2206,7 @@ HyperTextAccessible::GetSpellTextAttr(nsINode* aNode,
   // and that we should use the end offset of the last range to compute the
   // start offset of the text attribute range.
   nsRange* prevRange = domSel->GetRangeAt(rangeCount - 1);
-  startOffset = DOMPointToOffset(prevRange->GetEndParent(),
+  startOffset = DOMPointToOffset(prevRange->GetEndContainer(),
                                  prevRange->EndOffset());
 
   if (startOffset > *aStartOffset)

@@ -7,10 +7,12 @@
 #define mozilla_layers_APZCCallbackHelper_h
 
 #include "FrameMetrics.h"
+#include "InputData.h"
 #include "mozilla/EventForwards.h"
-#include "mozilla/Function.h"
 #include "mozilla/layers/APZUtils.h"
 #include "nsIDOMWindowUtils.h"
+
+#include <functional>
 
 class nsIContent;
 class nsIDocument;
@@ -23,7 +25,7 @@ template<class T> class nsCOMPtr;
 namespace mozilla {
 namespace layers {
 
-typedef function<void(uint64_t, const nsTArray<TouchBehaviorFlags>&)>
+typedef std::function<void(uint64_t, const nsTArray<TouchBehaviorFlags>&)>
         SetAllowedTouchBehaviorCallback;
 
 /* This class contains some helper methods that facilitate implementing the
@@ -107,6 +109,7 @@ public:
                                                        uint64_t aTime,
                                                        const LayoutDevicePoint& aRefPoint,
                                                        Modifiers aModifiers,
+                                                       int32_t aClickCount,
                                                        nsIWidget* aWidget);
 
     /* Dispatch a mouse event with the given parameters.
@@ -118,12 +121,14 @@ public:
                                    int32_t aClickCount,
                                    int32_t aModifiers,
                                    bool aIgnoreRootScrollFrame,
-                                   unsigned short aInputSourceArg);
+                                   unsigned short aInputSourceArg,
+                                   uint32_t aPointerId);
 
     /* Fire a single-tap event at the given point. The event is dispatched
      * via the given widget. */
     static void FireSingleTapEvent(const LayoutDevicePoint& aPoint,
                                    Modifiers aModifiers,
+                                   int32_t aClickCount,
                                    nsIWidget* aWidget);
 
     /* Perform hit-testing on the touch points of |aEvent| to determine
@@ -134,8 +139,12 @@ public:
      * sent to the compositor, which will then post a message back to APZ's
      * controller thread. Otherwise, the provided widget's SetConfirmedTargetAPZC
      * method is invoked immediately.
+     *
+     * Returns true if any displayports need to be set. (A caller may be
+     * interested to know this, because they may need to delay certain actions
+     * until after the displayport comes into effect.)
      */
-    static void SendSetTargetAPZCNotification(nsIWidget* aWidget,
+    static bool SendSetTargetAPZCNotification(nsIWidget* aWidget,
                                               nsIDocument* aDocument,
                                               const WidgetGUIEvent& aEvent,
                                               const ScrollableLayerGuid& aGuid,
@@ -154,6 +163,10 @@ public:
 
     /* Notify content that the repaint flush is complete. */
     static void NotifyFlushComplete(nsIPresShell* aShell);
+
+    static void NotifyAsyncScrollbarDragRejected(const FrameMetrics::ViewID& aScrollId);
+
+    static void NotifyAutoscrollHandledByAPZ(const FrameMetrics::ViewID& aScrollId);
 
     /* Temporarily ignore the Displayport for better paint performance. If at
      * all possible, pass in a presShell if you have one at the call site, we
@@ -187,6 +200,15 @@ public:
      */
     static bool
     IsScrollInProgress(nsIScrollableFrame* aFrame);
+
+    /* Notify content of the progress of a pinch gesture that APZ won't do
+     * zooming for (because the apz.allow_zooming pref is false). This function
+     * will dispatch appropriate WidgetSimpleGestureEvent events to gecko.
+     */
+    static void NotifyPinchGesture(PinchGestureInput::PinchGestureType aType,
+                                   LayoutDeviceCoord aSpanChange,
+                                   Modifiers aModifiers,
+                                   nsIWidget* aWidget);
 private:
   static uint64_t sLastTargetAPZCNotificationInputBlock;
 };

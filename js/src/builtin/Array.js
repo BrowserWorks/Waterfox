@@ -35,16 +35,9 @@ function ArrayIndexOf(searchElement/*, fromIndex*/) {
     }
 
     /* Step 9. */
-    if (IsPackedArray(O)) {
-        for (; k < len; k++) {
-            if (O[k] === searchElement)
-                return k;
-        }
-    } else {
-        for (; k < len; k++) {
-            if (k in O && O[k] === searchElement)
-                return k;
-        }
+    for (; k < len; k++) {
+        if (k in O && O[k] === searchElement)
+            return k;
     }
 
     /* Step 10. */
@@ -53,7 +46,7 @@ function ArrayIndexOf(searchElement/*, fromIndex*/) {
 
 function ArrayStaticIndexOf(list, searchElement/*, fromIndex*/) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.indexOf');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.indexOf");
     var fromIndex = arguments.length > 2 ? arguments[2] : 0;
     return callFunction(ArrayIndexOf, list, searchElement, fromIndex);
 }
@@ -83,16 +76,9 @@ function ArrayLastIndexOf(searchElement/*, fromIndex*/) {
         k = n;
 
     /* Step 8. */
-    if (IsPackedArray(O)) {
-        for (; k >= 0; k--) {
-            if (O[k] === searchElement)
-                return k;
-        }
-    } else {
-        for (; k >= 0; k--) {
-            if (k in O && O[k] === searchElement)
-                return k;
-        }
+    for (; k >= 0; k--) {
+        if (k in O && O[k] === searchElement)
+            return k;
     }
 
     /* Step 9. */
@@ -101,7 +87,7 @@ function ArrayLastIndexOf(searchElement/*, fromIndex*/) {
 
 function ArrayStaticLastIndexOf(list, searchElement/*, fromIndex*/) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.lastIndexOf');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.lastIndexOf");
     var fromIndex;
     if (arguments.length > 2) {
         fromIndex = arguments[2];
@@ -123,7 +109,7 @@ function ArrayEvery(callbackfn/*, thisArg*/) {
 
     /* Step 4. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.every');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.every");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -147,7 +133,7 @@ function ArrayEvery(callbackfn/*, thisArg*/) {
 
 function ArrayStaticEvery(list, callbackfn/*, thisArg*/) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.every');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.every");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
     var T = arguments.length > 2 ? arguments[2] : void 0;
@@ -164,7 +150,7 @@ function ArraySome(callbackfn/*, thisArg*/) {
 
     /* Step 4. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.some');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.some");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -188,20 +174,28 @@ function ArraySome(callbackfn/*, thisArg*/) {
 
 function ArrayStaticSome(list, callbackfn/*, thisArg*/) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.some');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.some");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
     var T = arguments.length > 2 ? arguments[2] : void 0;
     return callFunction(ArraySome, list, callbackfn, T);
 }
 
-/* ES6 draft 2016-1-15 22.1.3.25 Array.prototype.sort (comparefn) */
+// ES2018 draft rev 3bbc87cd1b9d3bf64c3e68ca2fe9c5a3f2c304c0
+// 22.1.3.25 Array.prototype.sort ( comparefn )
 function ArraySort(comparefn) {
-    /* Step 1. */
-    var O = ToObject(this);
+    // Step 1.
+    assert(typeof comparefn === "function", "Only called when a comparator is present");
 
-    /* Step 2. */
+    // Step 2.
+    assert(IsObject(this), "|this| should be an object");
+    var O = this;
+
+    // Step 3.
     var len = ToLength(O.length);
+
+    if (len <= 1)
+      return this;
 
     /* 22.1.3.25.1 Runtime Semantics: SortCompare( x, y ) */
     var wrappedCompareFn = comparefn;
@@ -235,7 +229,7 @@ function ArrayForEach(callbackfn/*, thisArg*/) {
 
     /* Step 4. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.forEach');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.forEach");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -258,7 +252,7 @@ function ArrayForEach(callbackfn/*, thisArg*/) {
 
 function ArrayStaticForEach(list, callbackfn/*, thisArg*/) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.forEach');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.forEach");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
     var T = arguments.length > 2 ? arguments[2] : void 0;
@@ -275,7 +269,7 @@ function ArrayMap(callbackfn/*, thisArg*/) {
 
     /* Step 3. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.map');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.map");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -302,7 +296,7 @@ function ArrayMap(callbackfn/*, thisArg*/) {
 
 function ArrayStaticMap(list, callbackfn/*, thisArg*/) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.map');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.map");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
     var T = arguments.length > 2 ? arguments[2] : void 0;
@@ -319,7 +313,7 @@ function ArrayFilter(callbackfn/*, thisArg*/) {
 
     /* Step 3. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.filter');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.filter");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -350,7 +344,7 @@ function ArrayFilter(callbackfn/*, thisArg*/) {
 
 function ArrayStaticFilter(list, callbackfn/*, thisArg*/) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.filter');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.filter");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
     var T = arguments.length > 2 ? arguments[2] : void 0;
@@ -367,7 +361,7 @@ function ArrayReduce(callbackfn/*, initialValue*/) {
 
     /* Step 4. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.reduce');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.reduce");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -415,13 +409,14 @@ function ArrayReduce(callbackfn/*, initialValue*/) {
 
 function ArrayStaticReduce(list, callbackfn) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.reduce');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.reduce");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
+
     if (arguments.length > 2)
         return callFunction(ArrayReduce, list, callbackfn, arguments[2]);
-    else
-        return callFunction(ArrayReduce, list, callbackfn);
+
+    return callFunction(ArrayReduce, list, callbackfn);
 }
 
 /* ES5 15.4.4.22. */
@@ -434,7 +429,7 @@ function ArrayReduceRight(callbackfn/*, initialValue*/) {
 
     /* Step 4. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.reduce');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.reduce");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
 
@@ -482,13 +477,14 @@ function ArrayReduceRight(callbackfn/*, initialValue*/) {
 
 function ArrayStaticReduceRight(list, callbackfn) {
     if (arguments.length < 2)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.reduceRight');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.reduceRight");
     if (!IsCallable(callbackfn))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, callbackfn));
+
     if (arguments.length > 2)
         return callFunction(ArrayReduceRight, list, callbackfn, arguments[2]);
-    else
-        return callFunction(ArrayReduceRight, list, callbackfn);
+
+    return callFunction(ArrayReduceRight, list, callbackfn);
 }
 
 /* ES6 draft 2013-05-14 15.4.3.23. */
@@ -501,7 +497,7 @@ function ArrayFind(predicate/*, thisArg*/) {
 
     /* Step 6. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.find');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.find");
     if (!IsCallable(predicate))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, predicate));
 
@@ -532,7 +528,7 @@ function ArrayFindIndex(predicate/*, thisArg*/) {
 
     /* Step 6. */
     if (arguments.length === 0)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.prototype.find');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.prototype.find");
     if (!IsCallable(predicate))
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(0, predicate));
 
@@ -731,9 +727,18 @@ function ArrayIteratorNext() {
     var itemKind = UnsafeGetInt32FromReservedSlot(this, ITERATOR_SLOT_ITEM_KIND);
 
     // Step 8-9.
-    var len = IsPossiblyWrappedTypedArray(a)
-              ? PossiblyWrappedTypedArrayLength(a)
-              : ToLength(a.length);
+    var len;
+    if (IsPossiblyWrappedTypedArray(a)) {
+        len = PossiblyWrappedTypedArrayLength(a);
+
+        // If the length is non-zero, the buffer can't be detached.
+        if (len === 0) {
+            if (PossiblyWrappedTypedArrayHasDetachedBuffer(a))
+                ThrowTypeError(JSMSG_TYPED_ARRAY_DETACHED);
+        }
+    } else {
+        len = ToLength(a.length);
+    }
 
     // Step 10.
     if (index >= len) {
@@ -781,8 +786,8 @@ function ArrayKeys() {
     return CreateArrayIterator(this, ITEM_KIND_KEY);
 }
 
-// ES6 draft rev31 (2015/01/15) 22.1.2.1 Array.from(source[, mapfn[, thisArg]]).
-function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
+// ES 2017 draft 0f10dba4ad18de92d47d421f378233a2eae8f077 22.1.2.1
+function ArrayFrom(items, mapfn = undefined, thisArg = undefined) {
     // Step 1.
     var C = this;
 
@@ -792,44 +797,42 @@ function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
         ThrowTypeError(JSMSG_NOT_FUNCTION, DecompileArg(1, mapfn));
     var T = thisArg;
 
-    // Steps 4-5.
+    // Step 4.
     var usingIterator = GetMethod(items, std_iterator);
 
-    // Step 6.
+    // Step 5.
     if (usingIterator !== undefined) {
-        // Steps 6.a-c.
+        // Steps 5.a-c.
         var A = IsConstructor(C) ? new C() : [];
 
-        // Steps 6.d-e.
-        var iterator = GetIterator(items, usingIterator);
-
-        // Step 6.f.
+        // Step 5.d.
         var k = 0;
 
-        // Step 6.g.
-        // These steps cannot be implemented using a for-of loop.
-        // See <https://bugs.ecmascript.org/show_bug.cgi?id=2883>.
-        while (true) {
-            // Steps 6.g.i-iii.
-            var next = callContentFunction(iterator.next, iterator);
-            if (!IsObject(next))
-                ThrowTypeError(JSMSG_NEXT_RETURNED_PRIMITIVE);
+        // Step 5.c, 5.e.
+        var iterator = GetIterator(items, usingIterator);
 
-            // Step 6.g.iv.
-            if (next.done) {
-                A.length = k;
-                return A;
-            }
+        var iteratorWrapper = MakeIteratorWrapper(iterator);
+        for (var nextValue of allowContentIter(iteratorWrapper)) {
+            // Step 5.e.i.
+            // Disabled for performance reason.  We won't hit this case on
+            // normal array, since _DefineDataProperty will throw before it.
+            // We could hit this when |A| is a proxy and it ignores
+            // |_DefineDataProperty|, but it happens only after too long loop.
+            /*
+            if (k >= 0x1fffffffffffff)
+                ThrowTypeError(JSMSG_TOO_LONG_ARRAY);
+            */
 
-            // Steps 6.g.v-vi.
-            var nextValue = next.value;
+            // Steps 5.e.vi-vii.
+            var mappedValue = mapping ? callContentFunction(mapfn, T, nextValue, k) : nextValue;
 
-            // Steps 6.g.vii-viii.
-            var mappedValue = mapping ? callContentFunction(mapfn, thisArg, nextValue, k) : nextValue;
-
-            // Steps 6.g.ix-xi.
+            // Steps 5.e.ii (reordered), 5.e.viii.
             _DefineDataProperty(A, k++, mappedValue);
         }
+
+        // Step 5.e.iv.
+        A.length = k;
+        return A;
     }
 
     // Step 7.
@@ -850,7 +853,7 @@ function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
         var kValue = items[k];
 
         // Steps 16.d-e.
-        var mappedValue = mapping ? callContentFunction(mapfn, thisArg, kValue, k) : kValue;
+        var mappedValue = mapping ? callContentFunction(mapfn, T, kValue, k) : kValue;
 
         // Steps 16.f-g.
         _DefineDataProperty(A, k, mappedValue);
@@ -861,6 +864,19 @@ function ArrayFrom(items, mapfn=undefined, thisArg=undefined) {
 
     // Step 19.
     return A;
+}
+
+function MakeIteratorWrapper(iterator) {
+    // This function is not inlined in ArrayFrom, because function default
+    // parameters combined with nested functions are currently not optimized
+    // correctly.
+    return {
+        // Use a named function expression instead of a method definition, so
+        // we don't create an inferred name for this function at runtime.
+        [std_iterator]: function IteratorMethod() {
+            return iterator;
+        }
+    };
 }
 
 // ES2015 22.1.3.27 Array.prototype.toString.
@@ -877,11 +893,67 @@ function ArrayToString() {
     return callContentFunction(func, array);
 }
 
+// ES2017 draft rev f8a9be8ea4bd97237d176907a1e3080dce20c68f
+// 22.1.3.27 Array.prototype.toLocaleString ([ reserved1 [ , reserved2 ] ])
+// ES2017 Intl draft rev 78bbe7d1095f5ff3760ac4017ed366026e4cb276
+// 13.4.1 Array.prototype.toLocaleString ([ locales [ , options ]])
+function ArrayToLocaleString(locales, options) {
+    // Step 1 (ToObject already performed in native code).
+    assert(IsObject(this), "|this| should be an object");
+    var array = this;
+
+    // Step 2.
+    var len = ToLength(array.length);
+
+    // Step 4.
+    if (len === 0)
+        return "";
+
+    // Step 5.
+    var firstElement = array[0];
+
+    // Steps 6-7.
+    var R;
+    if (firstElement === undefined || firstElement === null) {
+        R = "";
+    } else {
+#if EXPOSE_INTL_API
+        R = ToString(callContentFunction(firstElement.toLocaleString, firstElement, locales, options));
+#else
+        R = ToString(callContentFunction(firstElement.toLocaleString, firstElement));
+#endif
+    }
+
+    // Step 3 (reordered).
+    // We don't (yet?) implement locale-dependent separators.
+    var separator = ",";
+
+    // Steps 8-9.
+    for (var k = 1; k < len; k++) {
+        // Step 9.b.
+        var nextElement = array[k];
+
+        // Steps 9.a, 9.c-e.
+        R += separator;
+        if (!(nextElement === undefined || nextElement === null)) {
+#if EXPOSE_INTL_API
+            R += ToString(callContentFunction(nextElement.toLocaleString, nextElement, locales, options));
+#else
+            R += ToString(callContentFunction(nextElement.toLocaleString, nextElement));
+#endif
+        }
+    }
+
+    // Step 10.
+    return R;
+}
+
 // ES 2016 draft Mar 25, 2016 22.1.2.5.
 function ArraySpecies() {
     // Step 1.
     return this;
 }
+_SetCanonicalName(ArraySpecies, "get [Symbol.species]");
 
 // ES 2016 draft Mar 25, 2016 9.4.2.3.
 function ArraySpeciesCreate(originalArray, length) {
@@ -1027,64 +1099,64 @@ function ArrayConcat(arg1) {
 
 function ArrayStaticConcat(arr, arg1) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.concat');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.concat");
     var args = callFunction(std_Array_slice, arguments, 1);
     return callFunction(std_Function_apply, ArrayConcat, arr, args);
 }
 
 function ArrayStaticJoin(arr, separator) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.join');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.join");
     return callFunction(std_Array_join, arr, separator);
 }
 
 function ArrayStaticReverse(arr) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.reverse');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.reverse");
     return callFunction(std_Array_reverse, arr);
 }
 
 function ArrayStaticSort(arr, comparefn) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.sort');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.sort");
     return callFunction(std_Array_sort, arr, comparefn);
 }
 
 function ArrayStaticPush(arr, arg1) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.push');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.push");
     var args = callFunction(std_Array_slice, arguments, 1);
     return callFunction(std_Function_apply, std_Array_push, arr, args);
 }
 
 function ArrayStaticPop(arr) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.pop');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.pop");
     return callFunction(std_Array_pop, arr);
 }
 
 function ArrayStaticShift(arr) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.shift');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.shift");
     return callFunction(std_Array_shift, arr);
 }
 
 function ArrayStaticUnshift(arr, arg1) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.unshift');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.unshift");
     var args = callFunction(std_Array_slice, arguments, 1);
     return callFunction(std_Function_apply, std_Array_unshift, arr, args);
 }
 
 function ArrayStaticSplice(arr, start, deleteCount) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.splice');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.splice");
     var args = callFunction(std_Array_slice, arguments, 1);
     return callFunction(std_Function_apply, std_Array_splice, arr, args);
 }
 
 function ArrayStaticSlice(arr, start, end) {
     if (arguments.length < 1)
-        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'Array.slice');
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "Array.slice");
     return callFunction(std_Array_slice, arr, start, end);
 }

@@ -1,3 +1,5 @@
+// © 2016 and later: Unicode, Inc. and others.
+// License & terms of use: http://www.unicode.org/copyright.html
 /*
 ************************************************************************
 * Copyright (c) 1997-2012, International Business Machines
@@ -10,7 +12,7 @@
 
 #include "unicode/utypes.h"
 
-#if U_PLATFORM_HAS_WIN32_API
+#if U_PLATFORM_USES_ONLY_WIN32_API
 #   define VC_EXTRALEAN
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
@@ -160,7 +162,7 @@ typedef struct UTimer UTimer;
 typedef void FuntionToBeTimed(void* param);
 
 
-#if U_PLATFORM_HAS_WIN32_API
+#if U_PLATFORM_USES_ONLY_WIN32_API
 
     struct UTimer{
         LARGE_INTEGER start;

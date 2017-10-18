@@ -9,9 +9,9 @@
  */
 
 #import "webrtc/modules/video_capture/mac/avfoundation/video_capture_avfoundation_info_objc.h"
-#include "webrtc/modules/video_capture/include/video_capture.h"
+#include "webrtc/modules/video_capture/video_capture.h"
 #include "webrtc/modules/video_capture/video_capture_config.h"
-#include "webrtc/system_wrappers/interface/trace.h"
+#include "webrtc/system_wrappers/include/trace.h"
 #include "nsDebug.h"
 
 namespace webrtc
@@ -19,16 +19,17 @@ namespace webrtc
 namespace videocapturemodule
 {
 
-VideoCaptureMacAVFoundationInfo::VideoCaptureMacAVFoundationInfo(const int32_t id) :
-    DeviceInfoImpl(id)
+VideoCaptureMacAVFoundationInfo::VideoCaptureMacAVFoundationInfo(const int32_t id)
 {
     nsAutoreleasePool localPool;
     _captureInfo = [[VideoCaptureMacAVFoundationInfoObjC alloc] init];
+    [_captureInfo registerOwner:this];
 }
 
 VideoCaptureMacAVFoundationInfo::~VideoCaptureMacAVFoundationInfo()
 {
     nsAutoreleasePool localPool;
+    [_captureInfo registerOwner:nil];
     [_captureInfo release];
 }
 
@@ -52,7 +53,8 @@ int32_t VideoCaptureMacAVFoundationInfo::GetDeviceName(
     uint32_t deviceNumber, char* deviceNameUTF8,
     uint32_t deviceNameLength, char* deviceUniqueIdUTF8,
     uint32_t deviceUniqueIdUTF8Length, char* productUniqueIdUTF8,
-    uint32_t productUniqueIdUTF8Length)
+    uint32_t productUniqueIdUTF8Length,
+    pid_t* pid)
 {
     nsAutoreleasePool localPool;
     int errNum = [[_captureInfo getDeviceNamesFromIndex:deviceNumber
@@ -96,7 +98,7 @@ int32_t VideoCaptureMacAVFoundationInfo::DisplayCaptureSettingsDialogBox(
     const char* dialogTitleUTF8, void* parentWindow,
     uint32_t positionX, uint32_t positionY)
 {
-    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, _id,
+    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                  "API not supported on Mac OS X.");
     return -1;
 }
@@ -104,7 +106,7 @@ int32_t VideoCaptureMacAVFoundationInfo::DisplayCaptureSettingsDialogBox(
 int32_t VideoCaptureMacAVFoundationInfo::CreateCapabilityMap(
     const char* deviceUniqueIdUTF8)
 {
-    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, _id,
+    WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                  "API not supported on Mac OS X.");
     return -1;
 }
